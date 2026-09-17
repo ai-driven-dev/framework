@@ -4,7 +4,7 @@ Create or update one project recipe at `aidd_docs/recipes/<slug>.md`, scaffolded
 
 ## Input
 
-The recipe topic. Infer description, steps, and verification from the request and research; ask only for a missing decision that changes the recipe's outcome or scope.
+The recipe topic.
 
 ## Output
 
@@ -17,11 +17,12 @@ The recipe file at `aidd_docs/recipes/<slug>.md`, filled from the template.
 3. **Resolve.** Resolve existing recipes with [recipe-locations.md](../references/recipe-locations.md).
    - The project recipe exists: update `aidd_docs/recipes/<slug>.md` in place.
    - Only a bundled recipe exists: ask whether to copy it into `aidd_docs/recipes/<slug>.md` or edit the bundled one. Edit a bundled recipe only when the user asks for that framework-source change.
-4. **Dedup.** For a new recipe, run `list` and rate each near match in an overlap table `| Existing recipe | Source | Shared scope | Overlap |`, where `Overlap` is none, partial, or high.
+4. **Ask.** Ask only for a missing decision that changes the recipe's outcome or scope.
+5. **Dedup.** For a new recipe, run `list` and rate each near match in an overlap table `| Existing recipe | Source | Shared scope | Overlap |`, where `Overlap` is none, partial, or high.
    - On any `high`, recommend updating that recipe instead and ask update-or-create before scaffolding.
-5. **Scaffold.** Scaffold from [recipe-template.md](../assets/recipe-template.md) when needed, applying [recipe-contract.md](../references/recipe-contract.md) to every section while preserving verified commands, examples, limits, screenshots, and evidence and deleting narrative repetition.
-6. **Fill.** Fill every placeholder. Never maintain a separate recipe index; `list` reads the files directly.
-7. **Validate.** Run `validate` (05), fix every deterministic or semantic finding, and rerun both checks until they pass.
+6. **Scaffold.** Scaffold from [recipe-template.md](../assets/recipe-template.md) when needed, applying [recipe-contract.md](../references/recipe-contract.md) to every section while preserving verified commands, examples, limits, screenshots, and evidence and deleting narrative repetition.
+7. **Fill.** Fill every placeholder. Never maintain a separate recipe index; `list` reads the files directly.
+8. **Validate.** Run `validate` (05), fix every deterministic or semantic finding, and rerun both checks until they pass.
 
 ## Test
 

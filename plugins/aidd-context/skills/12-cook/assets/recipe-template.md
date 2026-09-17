@@ -8,10 +8,10 @@
 
 ### 1) <!-- emoji + action title -->
 
-<!-- Start with one benefit or risk sentence. -->
-<!-- Add numbered actions only when the technique has multiple actions. -->
-<!-- Add a typed, copyable command/config/output, a concrete table, or an operational image. -->
+<!-- Start with one sentence naming the benefit or risk, and state where and when this applies. -->
+<!-- Add only the actions needed to perform and verify the technique. Number them when there is more than one. -->
+<!-- Include one typed, copyable command/config/output, concrete table, or operational image from a real source. -->
 
 ## Verify
 
-<!-- Add an observable command output, UI state, or file check; omit only when none exists. -->
+<!-- Add an observable command output, UI state, or file check; omit only when no useful check exists. -->

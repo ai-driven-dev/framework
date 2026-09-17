@@ -1,4 +1,4 @@
-<!-- Read during 03-research. The scouting angles, the bar each candidate must clear, and how to verify them. Not a recipe itself. -->
+<!-- Read by 03-research. The scouting angles, the bar each candidate must clear, and how to verify them. Not a recipe itself. -->
 
 # Research playbook
 

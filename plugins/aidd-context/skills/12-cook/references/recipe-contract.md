@@ -7,7 +7,6 @@ Rules for every recipe file the skill writes.
 ## File
 
 - Project path: `aidd_docs/recipes/<kebab-slug>.md`.
-- Bundled path, only for explicit framework-source edits: `plugins/aidd-context/skills/12-cook/assets/recipes/<kebab-slug>.md`.
 - The recipe opens with the H1 title, then one plain sentence of description — no "Goal:" label, no blockquote, no metadata table.
 - Sections: the description, then the steps. `## Verify` is optional only when no useful observable check exists. End with at most one short conclusion. Never add a `## Related` section: links live inline where they are used.
 - Never add `## Why`: the description states the outcome and each technique states its own benefit or risk.
@@ -45,5 +44,5 @@ Rules for every recipe file the skill writes.
 
 ## Validation
 
-- Run `actions/05-validate.md` after `upsert`, deterministic pass first and semantic pass second; fix and rerun until both pass.
+- After writing, run deterministic validation first and semantic review second; fix and rerun until both pass.
 - Keep standalone validation read-only.

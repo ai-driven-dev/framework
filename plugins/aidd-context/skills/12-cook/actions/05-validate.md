@@ -1,20 +1,13 @@
 # 05 - Validate recipes
 
-Check one recipe or every available recipe without changing files.
-
 ```text
 cook validate <recipe>
 cook validate all
 ```
 
-```md
-@../references/recipe-locations.md
-@../references/recipe-contract.md
-```
-
 ## Input
 
-A recipe named by number from the latest `list`, slug, title, or path; or `all` for every project and bundled recipe.
+The recipe name, title, path, or `all`.
 
 ## Output
 
@@ -37,9 +30,9 @@ Validation is read-only. Never repair, reformat, or rewrite a recipe during this
 
 ## Process
 
-1. **Resolve.** Resolve one recipe with `@../references/recipe-locations.md`, or keep `all` as the full project-plus-bundled scope.
-2. **Check structure.** Run `node <skill-directory>/scripts/validate-recipe.mjs <resolved-path>` or `node <skill-directory>/scripts/validate-recipe.mjs --all`. Preserve its exit code and findings.
-3. **Check semantics.** Apply the Writing, Steps, and Evidence rules from `@../references/recipe-contract.md`; record one line-specific finding per violated rule. For non-JSON snippets, use available native YAML, TOML, and shell parsers and record which languages could not be checked mechanically.
+1. **Resolve.** Resolve one recipe with [recipe-locations.md](../references/recipe-locations.md), or keep `all` as the full project-plus-bundled scope.
+2. **Check structure.** Run the validation script with the resolved recipe path or the `--all` input. Preserve its exit code and findings.
+3. **Check semantics.** Apply the Writing, Steps, and Evidence rules from [recipe-contract.md](../references/recipe-contract.md); record one line-specific finding per violated rule. For non-JSON snippets, use available native YAML, TOML, and shell parsers and record which languages could not be checked mechanically.
 4. **Report.** Merge deterministic and semantic findings into the output table, or print the two success lines. An unavailable optional parser is disclosed but does not fail an otherwise valid recipe. Do not suppress a finding because it requires editorial judgment.
 
 ## Test
