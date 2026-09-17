@@ -109,14 +109,14 @@ export class InMemoryFileAdapter implements FileReader, FileWriter, FileMerger {
         }
       }
     }
-    if (bestMatch === undefined) return key;
+    if (bestMatch === undefined) return norm(path);
     return bestMatch.target + key.slice(bestMatch.link.length);
   }
 
   /** Test-only: declares that `path` is a symlink resolving to `target`, so a test can
    * prove `realpath`-based containment without touching a real filesystem. */
   setSymlink(path: string, target: string): void {
-    this.symlinks.set(norm(resolve(path)), norm(resolve(target)));
+    this.symlinks.set(norm(resolve(path)), norm(target));
   }
 
   async mergeJsonFile(path: string, content: string, strategy: MergeStrategy): Promise<void> {

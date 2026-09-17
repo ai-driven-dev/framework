@@ -16,9 +16,13 @@ describe("Windows realpath fixtures", () => {
     const fs = new InMemoryFileAdapter();
     fs.setSymlink("/project/link", "/foreign");
 
-    expect(await fs.realpath(resolve("/project/link/file"))).toBe(
-      resolve("/foreign/file").replaceAll("\\", "/")
-    );
+    expect(await fs.realpath(resolve("/project/link/file"))).toBe("/foreign/file");
+  });
+
+  it("keeps unsymlinked virtual path identities stable for seeded project claims", async () => {
+    const fs = new InMemoryFileAdapter();
+
+    expect(await fs.realpath("/project/file")).toBe("/project/file");
   });
 
   it("preserves a registered realpath fault when the caller resolves the fixture path", async () => {
