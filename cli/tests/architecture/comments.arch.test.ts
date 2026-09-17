@@ -6,7 +6,7 @@
 import { readdirSync, statSync } from "node:fs";
 import { join, relative } from "node:path";
 import { describe, expect, it } from "vitest";
-import { CLI_ROOT, read, sourceFiles } from "./helpers.js";
+import { CLI_ROOT, canonicalPath, read, sourceFiles } from "./helpers.js";
 
 const COMMENT_LINE = /^\s*(\/\/|\/\*|\*)/;
 const DIRECTIVE = /biome-ignore|@ts-expect-error|eslint-disable/;
@@ -31,7 +31,7 @@ function testFiles(): string[] {
       if (statSync(full).isDirectory()) {
         if (entry === "fixtures" || entry === "snapshots") continue;
         walk(full);
-      } else if (entry.endsWith(".ts")) out.push(relative(CLI_ROOT, full));
+      } else if (entry.endsWith(".ts")) out.push(canonicalPath(relative(CLI_ROOT, full)));
     }
   };
   walk(join(CLI_ROOT, "tests"));
