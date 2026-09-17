@@ -125,6 +125,112 @@ describe("native marketplace source reader", () => {
     }
   });
 
+  it.each([
+    ["null listing", null],
+    ["array listing", []],
+    ["null catalogue", { marketplaces: null }],
+    ["object catalogue", { marketplaces: {} }],
+    ["null row", { marketplaces: [null] }],
+    ["array row", { marketplaces: [[]] }],
+    ["missing name", { marketplaces: [{ root: "/cache" }] }],
+    ["numeric name", { marketplaces: [{ name: 7, root: "/cache" }] }],
+    ["empty name", { marketplaces: [{ name: "", root: "/cache" }] }],
+    ["missing root", { marketplaces: [{ name: "foreign" }] }],
+    ["empty root", { marketplaces: [{ name: "foreign", root: "" }] }],
+  ])("keeps Codex provenance unreadable for a %s", async (_name, payload) => {
+    spawn.mockReturnValue(result(JSON.stringify(payload)));
+
+    const reading = await new NativeMarketplaceSourceReaderAdapter(
+      codexMarketplaceSourceListContract
+    ).read("/project-a");
+
+    expect(reading.entries).toBeUndefined();
+    expect(reading.unreadable).toContain("codex marketplace list could not prove a source");
+  });
+
+  it.each([
+    ["null source", null],
+    ["array source", []],
+    ["missing source type", { source: "/owned" }],
+    ["numeric source type", { sourceType: 7, source: "/owned" }],
+    ["empty source type", { sourceType: "", source: "/owned" }],
+    ["missing source path", { sourceType: "local" }],
+    ["numeric source path", { sourceType: "local", source: 7 }],
+    ["empty source path", { sourceType: "local", source: "" }],
+  ])("does not accept a Codex cache root as proof of a %s", async (_name, source) => {
+    spawn.mockReturnValue(
+      result(
+        JSON.stringify({
+          marketplaces: [{ name: "foreign", root: "/owned/cache", marketplaceSource: source }],
+        })
+      )
+    );
+
+    const reading = await new NativeMarketplaceSourceReaderAdapter(
+      codexMarketplaceSourceListContract
+    ).read("/project-a");
+
+    expect(reading.entries).toBeUndefined();
+    expect(reading.unreadable).toContain("codex marketplace list could not prove a source");
+  });
+
+  it("rejects the whole Codex listing when a later row has no proven source shape", async () => {
+    spawn.mockReturnValue(
+      result(
+        JSON.stringify({
+          marketplaces: [
+            {
+              name: "owned",
+              root: "/owned/cache",
+              marketplaceSource: { sourceType: "local", source: "/owned/source" },
+            },
+            { name: "foreign", root: "/foreign/cache", marketplaceSource: null },
+          ],
+        })
+      )
+    );
+
+    const reading = await new NativeMarketplaceSourceReaderAdapter(
+      codexMarketplaceSourceListContract
+    ).read("/project-a");
+
+    expect(reading.entries).toBeUndefined();
+    expect(reading.unreadable).toContain("codex marketplace list could not prove a source");
+  });
+
+  it.each([
+    ['{"plugins":[]}', "unexpected Codex JSON shape"],
+    ['{"marketplaces":[{"name":"","root":"/cache"}]}', "ambiguous Codex marketplace JSON row"],
+    [
+      '{"marketplaces":[{"name":"foreign","root":"/cache","marketplaceSource":null}]}',
+      "unproven Codex marketplace source shape",
+    ],
+  ])("identifies the provenance repair needed for %s", async (output, diagnosis) => {
+    spawn.mockReturnValue(result(output));
+
+    const reading = await new NativeMarketplaceSourceReaderAdapter(
+      codexMarketplaceSourceListContract
+    ).read("/project-a");
+
+    expect(reading.entries).toBeUndefined();
+    expect(reading.unreadable).toBe(
+      `codex marketplace list could not prove a source: ${diagnosis}`
+    );
+  });
+
+  it("gives an actionable Codex diagnostic without treating a failed listing as absence", async () => {
+    spawn.mockReturnValue(result("", 1, "permission denied"));
+
+    const reading = await new NativeMarketplaceSourceReaderAdapter(
+      codexMarketplaceSourceListContract
+    ).read("/project-a");
+
+    expect(reading.entries).toBeUndefined();
+    expect(reading.unreadable).toBe(
+      "Codex marketplace list --json unavailable; inspect the host CLI and retry: permission denied"
+    );
+  });
+
   it("refuses Copilot 1.0.83's unsupported --json without a human-text fallback", async () => {
     spawn.mockReturnValue(result("", 1, "error: unknown option '--json'"));
 

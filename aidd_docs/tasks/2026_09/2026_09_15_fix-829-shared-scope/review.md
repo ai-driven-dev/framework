@@ -1,9 +1,9 @@
 # Review: #829 shared user-scope plugin safety
 
 - **Verdict**: blocked
-- **Diff**: `origin/next...codex/fix-829-shared-scope` plus uncommitted working-tree test hardening
+- **Diff**: `origin/next...codex/fix-829-shared-scope`; mutation hardening published in `58b5e92b`, CI corrections under verification
 - **Axes run**: code, functional, relevancy
-- **Date**: 2026_09_16
+- **Date**: 2026_09_17
 - **Findings**: 1 critical, 2 warnings, 0 minor
 
 ## Phases
@@ -23,7 +23,7 @@
 - [x] Native readers use verified structured shapes and refuse unsupported outputs — `cli/src/contexts/tools/infrastructure/native-marketplace-source-reader-adapter.ts:45`.
 - [x] User clean rejects orphan/unclaimed machine-global refs and project clean leaves another user's ref enabled — `cli/src/contexts/framework/application/clean/clean-user-scope-use-case.ts:316`, `cli/src/contexts/framework/application/clean-use-case.ts:248`.
 - [x] Multi-tool user clean checks required binary availability before the first host mutation — `cli/tests/contexts/framework/application/clean/clean-user-scope-use-case.integration.test.ts:1158`.
-- [ ] Required mutation scopes are incomplete: the latest local `framework` run passed at 93.5837%, above its 93% floor; 13 other scopes remain unrun — `cli/mutation-scopes.json:31`.
+- [ ] Final-head CI remains pending. Local `framework` passed at 93.5837%; the preceding published head passed twelve other mutation scopes in CI, but `tools-codex` failed at 90% against its 94% floor — `cli/mutation-scopes.json`.
 
 ### Phase 4 — Preserve edited local integration
 
@@ -46,7 +46,7 @@
 
 | Sev | Kind | Phase | Location | Issue | Fix |
 | --- | --- | --- | --- | --- | --- |
-| 🔴 critical | functional | 3 | `cli/mutation-scopes.json:31` | Latest local `framework` score passes at 93.5837%; all 115 reported source files match the working tree. Test changes remain uncommitted and 13 other scopes are unrun. This draft is not merge-ready. | Verify the remaining scope gates on the final tree before a merge-ready verdict. |
+| 🔴 critical | functional | 3 | `cli/mutation-scopes.json` | Framework hardening is published in `58b5e92b`, with a local 93.5837% result and matching source. The preceding head passed twelve other mutation scopes in CI; Codex, Smoke, and Windows failed. Final-head gates are not yet certified. | Correct the failing contracts and verify CI on the final published head before a merge-ready verdict. |
 | 🟡 warning | functional | 3 | `cli/src/contexts/tools/domain/profiles/copilot/native-marketplace-source.ts:4` | Copilot 1.0.83 safely refuses even fresh native activation; #829's preservation need is met, but end-to-end Copilot install is partial. | Verify a structured source reader on a supported binary in a separate follow-up before claiming full support. |
 | 🟡 warning | functional | 5 | `cli/src/contexts/framework/application/plugin/plugin-helpers.ts:58` | User clean validates paths with an injected home, but deletion resolves OS home. Normal OS-home deletion passes; custom injected-home deletion is not certified. | Align validation and deletion home resolution in a bounded follow-up with a custom-home witness. |
 
@@ -56,7 +56,7 @@
 | --- | --- |
 | Verified | 89.5% (17/19) |
 | Files checked | `cli/src/contexts/framework/application/{flows,clean,plugin,ownership,shared,uninstall}`, `cli/src/contexts/tools/{domain,infrastructure}`, relevant E2E/integration tests, `cli/scripts/smoke-collision.sh`, task plan and issue #829 |
-| Unchecked | Phase 3 fresh Copilot — follow-up; Phase 3 remaining thirteen mutation scopes — verification pending. Custom-home cleanup is a separate diagnostic finding. |
+| Unchecked | Phase 3 fresh Copilot — follow-up; final-head CI, including Codex mutation, Smoke, and Windows — verification pending. Twelve other mutation scopes passed on the preceding head, not a fresh certification of the final tree. Custom-home cleanup is a separate diagnostic finding. |
 | Unplanned | Measured bundle-budget increase and smoke harness adaptation support delivery verification; no unrelated feature found. |
 | Draft disposition | User-authorized partial draft only; do not merge or close #829 until the strict gates and Copilot scope decision are resolved. |
 
@@ -68,6 +68,13 @@
 - The final whole-framework incremental run used the existing runner's exported scope arguments, pruning, scoring, and floor check, with concurrency limited to two. It reused 5,954 results, replayed 2,275 mutants, and finished in 9m01s: 7,688 killed, 13 timed out, 465 survived, 63 uncovered; score 93.5836675173168% on 8,229 mutants. The declared 93% gate passed. All 115 reported source files match the frozen working tree; production source, mutation configuration, exclusions, and scripts were unchanged during hardening.
 - Exact comparison with the original baseline gives 563 additional detections and no detection regression. Two unmatched mutation keys concern the previously documented sync warning wording. Against the preceding 90.0595% snapshot, 291 newly detected mutants and one detection loss give a net gain of 290. The retained loss is a static empty-string mutant in `plugin-distribution-reader-adapter.ts:20`; it was also undetected in the original baseline. Its status is not replaced with an earlier favorable result. The framework gate is passed, but the strict overall delivery verdict remains blocked by the other thirteen scopes and the documented partial Copilot verification.
 - Covered additions: post-add source/root/type mismatches and unreadable proof, local alias versus host identity, project versus machine catalogue proof, exact attachment to an already-enabled machine ref while preserving B, exclusive-access update preflight, affected-project warnings, and original I/O error causes.
+
+## Publication and CI corrections — 2026_09_17
+
+- User-authorized publication: `58b5e92b` pushed to PR #870 with hooks active. Pre-commit architecture and lint, commitlint, and pre-push Knip and the full functional suite passed. The PR remains draft; no merge or issue closure.
+- Windows reproduction: the file doubles registered `/project/link`, while callers used a resolved drive-qualified path. Two isolated Windows-path regression tests failed before correction. Symlink and `realpath` fault keys now resolve paths consistently; file-content keys remain unchanged. The focused four-file run passed 57 tests, including external-symlink refusal and project-boundary cases.
+- Smoke now selects the native refusal contract only when Copilot is available; without it, local removal must succeed and warn that the native CLI is unavailable, followed by local reinstall. Both available-host and missing-host runs passed all 33 command families with zero failures. The native refusal run preserved exact project/home bytes.
+- The previous Codex report matched its six source files but omitted the new native marketplace source parser, so its 96.8504% was not a current whole-scope certificate. Added malformed listing/source, mixed-row rejection, and actionable diagnostic witnesses through the public source reader; its 31 integration tests pass. The first fresh complete Codex run passed at 94.1176% on 459 mutants (430 killed, two timed out, 27 survived), covering all seven matching source files. A final run including four added diagnostic cases is under verification, with the 94% floor unchanged.
 - Runtime bottleneck: in the final run Stryker estimated that 91 static mutants (4% of mutants scheduled for replay) would account for 61% of execution time. None were ignored. Harness optimization must preserve their witness coverage and sound cache invalidation.
 - Marketplace-removal additions cover reserved shared-catalogue refusal before registry access, exact user-catalogue selection among competing entries, exact native scope and host name, implicit host ref scope, a proven empty catalogue without plugin claims, missing canonical ledger, and project cleanup without a native mapping or orphan. The two targeted campaigns took 17s and 21s; the final report contains 202 killed / 10 survived across 212 mutants. The surviving empty file-scope literal still resolves to the same user directory; no invalid runtime scope was introduced just to distinguish it.
 - Synchronization additions in `cli/tests/contexts/framework/application/flows/marketplace-sync-settings-scope.integration.test.ts` and `marketplace-sync-source-provenance.integration.test.ts` cover implicit/explicit project synchronization inside the machine lock, user-scope non-reentrancy, lock failure before project reads or host writes, missing/unreadable plugin registries with and without a diagnostic, explicitly absent plugin registries followed by post-add source proof, and Claude catalogue absence versus late unreadability or a newly appearing same-name foreign catalogue. The two targeted campaigns took 50s and 53s; the latest report contains 96 killed / 16 survived / 0 uncovered across 112 mutants. Their overlapping gains were counted once.

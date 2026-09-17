@@ -1,3 +1,4 @@
+import { resolve } from "node:path";
 import { InMemoryFileAdapter } from "./in-memory-file-adapter.js";
 
 type FaultableMethod = "readFile" | "realpath" | "listDirectory" | "deleteDirectory";
@@ -40,5 +41,6 @@ export function errnoError(code: string): NodeJS.ErrnoException {
 }
 
 function faultKey(method: FaultableMethod, path: string): string {
-  return `${method}:${path.replaceAll("\\", "/")}`;
+  const canonicalPath = method === "realpath" ? resolve(path) : path;
+  return `${method}:${canonicalPath.replaceAll("\\", "/")}`;
 }

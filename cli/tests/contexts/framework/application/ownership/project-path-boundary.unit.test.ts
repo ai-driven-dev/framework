@@ -1,3 +1,4 @@
+import { resolve } from "node:path";
 import { describe, expect, it, vi } from "vitest";
 import { assertProjectPathWithinRoot } from "../../../../../src/contexts/framework/application/ownership/project-path-boundary.js";
 import {
@@ -5,7 +6,7 @@ import {
   FaultingFileAdapter,
 } from "../../../../helpers/ports/faulting-file-adapter.js";
 
-const ROOT = "/project";
+const ROOT = resolve("/project");
 
 describe("project-local mutation boundary", () => {
   it.each([ROOT, "/project/../foreign/file", "/project-sibling/file", "/foreign/file"])(

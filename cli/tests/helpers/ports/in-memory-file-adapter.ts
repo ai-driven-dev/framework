@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import { resolve } from "node:path";
 import type { FileMerger } from "../../../src/contexts/tools/domain/ports/file-merger.js";
 import { FileHash } from "../../../src/kernel/file.js";
 import {
@@ -99,7 +100,7 @@ export class InMemoryFileAdapter implements FileReader, FileWriter, FileMerger {
   /** Resolves through the longest matching registered symlink, like a real `fs.realpath`
    * walking a symlinked ancestor; identity when none was declared for the path. */
   async realpath(path: string): Promise<string> {
-    const key = norm(path);
+    const key = norm(resolve(path));
     let bestMatch: { link: string; target: string } | undefined;
     for (const [link, target] of this.symlinks) {
       if (key === link || key.startsWith(`${link}/`)) {
@@ -115,7 +116,7 @@ export class InMemoryFileAdapter implements FileReader, FileWriter, FileMerger {
   /** Test-only: declares that `path` is a symlink resolving to `target`, so a test can
    * prove `realpath`-based containment without touching a real filesystem. */
   setSymlink(path: string, target: string): void {
-    this.symlinks.set(norm(path), norm(target));
+    this.symlinks.set(norm(resolve(path)), norm(resolve(target)));
   }
 
   async mergeJsonFile(path: string, content: string, strategy: MergeStrategy): Promise<void> {

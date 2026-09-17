@@ -389,7 +389,9 @@ if true; then
   (cd "$P_PLUG" && node "$CLI" setup --source local --path "$FRAMEWORK_FIXTURE" --ai all --plugins none --yes >/dev/null 2>&1)
   for t in "${AI_TOOLS[@]}"; do
     run "plugin install aidd-test → $t" 0 "" "$P_PLUG" -- plugin install aidd-test --tool "$t" --yes
-    if [[ "$t" == copilot ]]; then
+    # An absent host permits local removal with a warning; an available host must first
+    # prove its native source. Exercise the matching contract, never infer native absence.
+    if [[ "$t" == copilot ]] && command -v copilot >/dev/null 2>&1; then
       copilot_project_before=$(project_tree_hash "$P_PLUG")
       copilot_home_before=$(project_tree_hash "$HOME")
       run "plugin remove → copilot (unproven source refusal)" 1 \
@@ -403,6 +405,11 @@ if true; then
         || bad "copilot refusal changed project or home bytes"
       run "plugin install --from → copilot (no duplicate after refusal)" 1 \
         "already installed" "$P_PLUG" -- \
+        plugin install aidd-test --tool copilot --from aidd-framework --yes
+    elif [[ "$t" == copilot ]]; then
+      run "plugin remove → copilot (missing host warns, local removal succeeds)" 0 \
+        "copilot CLI not found on PATH" "$P_PLUG" -- plugin remove aidd-test --tool copilot
+      run "plugin install --from → copilot (local reinstall without host)" 0 "" "$P_PLUG" -- \
         plugin install aidd-test --tool copilot --from aidd-framework --yes
     else
       run "plugin remove → $t" 0 "" "$P_PLUG" -- plugin remove aidd-test --tool "$t"
