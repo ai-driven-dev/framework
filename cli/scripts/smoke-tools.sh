@@ -17,7 +17,7 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 CLI="$ROOT/dist/cli.js"
 FRAMEWORK_FIXTURE="$ROOT/tests/fixtures/framework"
 
-AI_TOOLS=(claude cursor copilot codex opencode)
+AI_TOOLS=(claude cursor copilot codex opencode kilo)
 IDE_TOOLS=(vscode)
 
 # Canonical leaf-command surface. Coverage = exercised / total.
@@ -322,7 +322,7 @@ if true; then
   run "sync --force" 0 "" "$BASE" -- sync --force
   repaired "sync --force" "$tgt"
 
-  section "framework install/update/remove --tool × all 5 AI tools + vscode"
+  section "framework install/update/remove --tool × all 6 AI tools + vscode"
   run "framework update (all)" 0 "" "$BASE" -- framework update
   run "framework rules" 0 "" "$BASE" -- framework rules
   run "framework rules --json" 0 "" "$BASE" -- framework rules --json

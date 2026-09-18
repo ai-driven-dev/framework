@@ -220,6 +220,16 @@ describe("buildOpencodeFlatConfig", () => {
     expect(config.theme).toBe("dark");
     expect(config.mcp.user).toEqual(REMOTE_SERVER);
   });
+
+  it("preserves duplicate user instructions while appending generated entries once", () => {
+    const existing = JSON.stringify({
+      instructions: ["user.md", "user.md", ".opencode/rules/**/*.md"],
+    });
+    const config = JSON.parse(buildOpencodeFlatConfig(BASE, existing, {}, ["instructions"])) as {
+      instructions: string[];
+    };
+    expect(config.instructions).toEqual(["user.md", "user.md", ".opencode/rules/**/*.md"]);
+  });
 });
 
 describe("unmergeOpencodeMcp", () => {

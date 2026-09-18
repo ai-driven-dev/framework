@@ -7,6 +7,7 @@ import type { FileWriter } from "../../../../kernel/ports/file-writer.js";
 import type { Hasher } from "../../../../kernel/ports/hasher.js";
 import type { Logger } from "../../../../kernel/ports/logger.js";
 import type { AiToolId } from "../../../../kernel/tool.js";
+import { McpCapability } from "../../../tools/domain/capabilities/mcp-capability.js";
 import { SettingsCapability } from "../../../tools/domain/capabilities/settings-capability.js";
 import type { FileMerger } from "../../../tools/domain/ports/file-merger.js";
 import { getToolConfig, isAiTool } from "../../../tools/domain/registry.js";
@@ -78,14 +79,31 @@ export class InstallRuntimeConfigUseCase {
     if (!isAiTool(toolConfig) || !toolConfig.configOutputPaths) return [];
     const files: InstallationFile[] = [];
     for (const [fileName, outputPath] of Object.entries(toolConfig.configOutputPaths)) {
+      const resolvedPath = await this.resolveConfigPath(toolConfig, fileName, outputPath, options);
       const asset = this.assets.loadConfigAsset(options.toolId, fileName);
       const content = typeof asset === "string" ? asset : JSON.stringify(asset, null, 2);
-      if (await this.isUserOwned(outputPath, options)) continue;
+      if (await this.isUserOwned(resolvedPath, options)) continue;
       files.push(
-        new InstallationFile({ relativePath: outputPath, content, hash: this.hasher.hash(content) })
+        new InstallationFile({
+          relativePath: resolvedPath,
+          content,
+          hash: this.hasher.hash(content),
+        })
       );
     }
     return files;
+  }
+
+  private async resolveConfigPath(
+    toolConfig: Extract<ReturnType<typeof getToolConfig>, { kind: "ai" }>,
+    fileName: string,
+    outputPath: string,
+    options: InstallRuntimeConfigOptions
+  ): Promise<string> {
+    const caps = toolConfig.capabilities as Record<string, unknown>;
+    const mcp = caps.mcp;
+    if (!(mcp instanceof McpCapability) || mcp.params.outputPath !== fileName) return outputPath;
+    return mcp.resolveOutput(options.projectRoot, this.fs);
   }
 
   private buildStaticSettingsFiles(options: InstallRuntimeConfigOptions): InstallationFile[] {

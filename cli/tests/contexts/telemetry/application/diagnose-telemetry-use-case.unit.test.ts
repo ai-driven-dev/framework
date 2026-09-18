@@ -4,6 +4,7 @@ import "../../../../src/contexts/tools/domain/profiles/codex/profile.js";
 import "../../../../src/contexts/tools/domain/profiles/copilot/profile.js";
 import "../../../../src/contexts/tools/domain/profiles/cursor/profile.js";
 import "../../../../src/contexts/tools/domain/profiles/opencode/profile.js";
+import "../../../../src/contexts/tools/domain/profiles/kilo/profile.js";
 import { Manifest } from "../../../../src/contexts/framework/domain/manifest.js";
 import { InstalledPlugin } from "../../../../src/contexts/framework/domain/plugins/installed-plugin.js";
 import type { ManifestRepository } from "../../../../src/contexts/framework/domain/ports/manifest-repository.js";
@@ -650,6 +651,7 @@ describe("DiagnoseTelemetryUseCase — the setup it prints", () => {
 
     expect(result.uncovered).toStrictEqual([
       { tool: "cursor", reason: "It writes no token count in any file it produces." },
+      { tool: "kilo", reason: "Kilo telemetry has not been measured." },
     ]);
   });
 });

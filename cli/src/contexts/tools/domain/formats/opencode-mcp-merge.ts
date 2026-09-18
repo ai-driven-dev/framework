@@ -43,7 +43,8 @@ export function mergeOpencodeMcp(
 export function buildOpencodeFlatConfig(
   baseConfig: string,
   existing: string | null,
-  incoming: Record<string, unknown>
+  incoming: Record<string, unknown>,
+  mergedKeys: readonly string[] = []
 ): string {
   const base = JSON.parse(baseConfig) as Record<string, unknown>;
   const { full, mcp } = parseExisting(existing);
@@ -52,9 +53,19 @@ export function buildOpencodeFlatConfig(
   delete userKeys.mcp;
   const mergedMcp = { ...mcp, ...incoming };
   const result: Record<string, unknown> = { ...base, ...userKeys };
+  for (const key of mergedKeys) {
+    const existingValues = arrayEntries(full[key]);
+    const baseValues = arrayEntries(base[key]);
+    const generated = baseValues.filter((value) => !existingValues.includes(value));
+    result[key] = [...existingValues, ...generated];
+  }
   delete result.mcp;
   if (Object.keys(mergedMcp).length > 0) result.mcp = mergedMcp;
   return JSON.stringify(result, null, 2);
+}
+
+function arrayEntries(value: unknown): readonly unknown[] {
+  return Array.isArray(value) ? value : [];
 }
 
 /** Removes servers previously contributed by a plugin from opencode.json's mcp section. A key

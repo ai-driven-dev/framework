@@ -51,6 +51,7 @@ src/
 │   │   │       ├── codex/
 │   │   │       ├── copilot/
 │   │   │       ├── cursor/
+│   │   │       ├── kilo/
 │   │   │       ├── opencode/
 │   │   │       └── vscode/
 │   │   └── infrastructure/
