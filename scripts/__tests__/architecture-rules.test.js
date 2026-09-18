@@ -33,6 +33,7 @@ function sweepPlugins() {
   walk(pluginsDir);
 
   const violations = [];
+  let skillsWithActions = 0;
   for (const absPath of files) {
     const relPath = path.relative(ROOT, absPath).split(path.sep).join("/");
     // The engine's own classifier decides what is governed — including `assets/` — so the
@@ -45,10 +46,11 @@ function sweepPlugins() {
       actionFileNames = fs.existsSync(actionsDir)
         ? fs.readdirSync(actionsDir).filter((f) => f.endsWith(".md"))
         : [];
+      if (actionFileNames.length > 0) skillsWithActions += 1;
     }
     violations.push(...checkArchitecture(relPath, content, actionFileNames));
   }
-  return violations;
+  return { violations, skillsWithActions };
 }
 
 test("a clean skill with no sibling address and a fully-named action yields no violations", () => {
@@ -168,19 +170,6 @@ test("an action file the Actions section never names yields one violation", () =
   assert.equal(lines[violation.line - 1].trim(), "## Actions");
 });
 
-test("a name the Actions section cites with no action file behind it yields one violation", () => {
-  const content = fixture("phantom-citation-skill/SKILL.md");
-  const filePath = "plugins/aidd-fixture-a/skills/04-phantom-citation/SKILL.md";
-  const violations = checkArchitecture(filePath, content, ["01-step.md"]);
-
-  assert.equal(violations.length, 1);
-  const [violation] = violations;
-  assert.equal(violation.file, filePath);
-  assert.equal(violation.plugin, "aidd-fixture-a");
-  const lines = content.split("\n");
-  assert.equal(lines[violation.line - 1].includes("ghost-step"), true);
-});
-
 test("00-onboard's own reference menus are exempt from orthogonality", () => {
   const content = fixture("onboard-menu.md");
   const filePath = "plugins/aidd-context/skills/00-onboard/references/order/onboard-menu.md";
@@ -199,13 +188,6 @@ test("a bare plugin:skill address is caught, but not one embedded in a longer id
   assert.match(violation.message, /"aidd-fixture-b:01-noop"/);
 });
 
-test("a backticked ordinary word outside the action column is not a phantom citation", () => {
-  const content = fixture("phantom-column-skill/SKILL.md");
-  const filePath = "plugins/aidd-fixture-a/skills/06-phantom-column/SKILL.md";
-  const violations = checkArchitecture(filePath, content, ["01-step.md"]);
-  assert.deepEqual(violations, []);
-});
-
 test("a stem that is a substring of a sibling action's stem is not mistaken for a mention", () => {
   const content = fixture("stem-substring-skill/SKILL.md");
   const filePath = "plugins/aidd-fixture-a/skills/05-stem-substring/SKILL.md";
@@ -219,14 +201,17 @@ test("a stem that is a substring of a sibling action's stem is not mistaken for 
   assert.match(violation.message, /"01-assert\.md"/);
 });
 
-test("a fenced actions/ path citing a file with no action behind it yields one violation", () => {
-  const content = fixture("phantom-path-skill/SKILL.md");
-  const filePath = "plugins/aidd-fixture-a/skills/08-phantom-path/SKILL.md";
-  const violations = checkArchitecture(filePath, content, ["01-step.md"]);
+test("a deleted table row is still caught when unrelated prose loosely contains its word", () => {
+  // Regression for the substring-over-prose bug: "Run them in order, `01 → 04`. The plan is
+  // the culmination." contains the word "plan" in ordinary prose, not as a table cell, an
+  // actions/ path, or a backticked .md filename — so it must not count as naming 04-plan.md.
+  const content = fixture("deleted-row-masked-by-prose-skill/SKILL.md");
+  const filePath = "plugins/aidd-fixture-a/skills/09-deleted-row/SKILL.md";
+  const violations = checkArchitecture(filePath, content, ["01-frame.md", "04-plan.md"]);
 
   assert.equal(violations.length, 1);
   const [violation] = violations;
-  assert.match(violation.message, /actions\/99-absent\.md/);
+  assert.match(violation.message, /"04-plan\.md"/);
 });
 
 test("a skill whose Actions section and action files agree yields no violations", () => {
@@ -240,6 +225,9 @@ test("a skill whose Actions section and action files agree yields no violations"
 });
 
 test("sweeping the repository's own plugins/ tree yields zero violations", () => {
-  const violations = sweepPlugins();
+  const { violations, skillsWithActions } = sweepPlugins();
   assert.deepEqual(violations, []);
+  // A sweep that never actually exercised a skill with action files would pass the same way —
+  // this pins the sweep to the measured count so it cannot go vacuously green.
+  assert.equal(skillsWithActions, 48);
 });

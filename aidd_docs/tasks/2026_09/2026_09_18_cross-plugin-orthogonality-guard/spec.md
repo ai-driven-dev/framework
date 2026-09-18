@@ -10,7 +10,7 @@ An AI-authored edit that would break one of this repository's two named architec
 - The guard is deterministic: the same prospective file content yields the same verdict, with no dependence on model judgement and none on which AI tool made the edit.
 - The guard is produced by the project's own hook-generation capability, so it exists for the AI hosts this repository configures rather than for one.
 - Rule one, cross-plugin orthogonality: a plugin's dispatch surface must not name a sibling plugin by a hardcoded address.
-- Rule two, router coherence: a skill's `## Actions` section must name exactly the actions that skill provides — no action file the section never names, no name the section cites without a file behind it.
+- Rule two, router coherence: a skill's `## Actions` section must cite every action file that skill provides. A citation is a table cell, a fenced `actions/<name>.md` path, or a backticked file name — never a bare word in running prose.
 - The governed surface is the dispatch surface: a skill's `SKILL.md`, its actions and its references, and an agent's definition. A plugin's `assets/` hold content shown to a reader, not dispatch, and are out of the guard's reach by this rule rather than by an unstated path filter.
 - Naming that `docs/ARCHITECTURE.md` declares legitimate stays silent: an agent's permission list and an orchestration reference are responsibility maps and name their provider canonically. Flagging either is a defect of the guard, not of the tree.
 - Every refusal names the file, the line, and the plugin that owns the addressed capability, in terms a reader can act on without opening the rule document.
@@ -23,6 +23,9 @@ An AI-authored edit that would break one of this repository's two named architec
 - A `lefthook` pre-commit gate for these rules. The decider ruled it out on 2026-09-14.
 - A CI job enforcing these rules.
 - Judging whether a skill's prose `description` has gone stale. Nothing mechanically separates stale prose from current prose, so the issue's "router/description mismatch" is served by the router half alone.
+- Refusing a citation with no action file behind it. A citation written seconds before the file it names is indistinguishable from a stale one, and this project's own skill generator writes the router first, so enforcing that direction makes adding an action impossible in either order. The decidable direction — an action file the section never cites — is the one the issue names, and the one enforced.
+- Catching an action file created and never cited. Rule two decides on a write to a `SKILL.md`; an orphan action file is caught at the next write to its skill's router, not at its own creation. Firing on the action file instead is what made both orders of adding an action refuse each other.
+- Reaching into a plugin's `README.md`, which addresses a sibling in two places today. Like `assets/`, it is a document a reader reads, not a dispatch the skill executes.
 - Reaching into a plugin's `assets/`. A recipe sheet names the commands a reader types; that is its subject, not a dispatch this rule governs.
 - Repairing violations that exist in the tree today. That was #406, now closed.
 - Enforcing any architecture rule beyond the two named above.
@@ -34,7 +37,7 @@ An AI-authored edit that would break one of this repository's two named architec
 ## Done-when
 
 - An edit that would leave a skill's dispatch surface holding a sibling plugin's hardcoded address is refused, and the refusal names that file, its line, and the plugin that owns the address.
-- An edit that would leave a skill's `## Actions` section naming an action the skill does not provide, or omitting one it does, is refused, and the refusal names the file and the line.
+- An edit that would leave a skill's `## Actions` section not naming an action file the skill provides is refused, and the refusal names the file and the line. The section names an action by citing it, so a word in prose that happens to match a stem never passes for a mention.
 - An edit that writes an agent permission list, or an orchestration reference, naming its provider canonically is applied with no complaint.
 - Breaking each rule in its fixture turns red exactly the test named for that rule, and no other test.
 - The refusal reaches the author in the same turn as the edit that caused it, before any commit, push, or CI run.

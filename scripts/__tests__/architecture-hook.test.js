@@ -195,43 +195,13 @@ test("a path under assets/ exits zero even when its content addresses a sibling"
   assert.equal(result.stdout, "");
 });
 
-test("a new action file left unnamed in the sibling SKILL.md's Actions section is denied", () => {
+test("writing a new action file is always silent, named or not — rule two fires on the SKILL.md write only", () => {
+  // Order A of adding an action: the action file lands before the SKILL.md row that names it.
+  // A sibling-side check here would deny this exact, routine sequence (issue: adding an action
+  // is impossible in either order); the gap it trades for — an unnamed action file going
+  // uncaught until the next SKILL.md write — is real and recorded outside this file, not hidden.
   const projectDir = makeProjectDir();
   writeFixtureFile(projectDir, "plugins/aidd-fixture-a/skills/01-clean/SKILL.md", CLEAN_SKILL);
-  writeFixtureFile(
-    projectDir,
-    "plugins/aidd-fixture-a/skills/01-clean/actions/01-step.md",
-    "# Step\n"
-  );
-  const filePath = path.join(
-    projectDir,
-    "plugins/aidd-fixture-a/skills/01-clean/actions/02-extra.md"
-  );
-
-  const result = runHook(projectDir, {
-    tool_name: "Write",
-    tool_input: { file_path: filePath, content: "# Extra\n\nDoes something new.\n" },
-  });
-
-  assert.equal(result.status, 0);
-  const reason = parseDenyReason(result.stdout);
-  assert.match(reason, /never names action file "02-extra\.md"/);
-});
-
-test("a new action file the sibling SKILL.md already names is applied with no complaint", () => {
-  const projectDir = makeProjectDir();
-  const SKILL_NAMING_BOTH = [
-    "# Clean skill",
-    "",
-    "## Actions",
-    "",
-    "| # | Action | Role |",
-    "| --- | --- | --- |",
-    "| 01 | `step` | Do the one thing |",
-    "| 02 | `extra` | Do the new thing |",
-    "",
-  ].join("\n");
-  writeFixtureFile(projectDir, "plugins/aidd-fixture-a/skills/01-clean/SKILL.md", SKILL_NAMING_BOTH);
   writeFixtureFile(
     projectDir,
     "plugins/aidd-fixture-a/skills/01-clean/actions/01-step.md",
@@ -388,4 +358,124 @@ test("a MultiEdit whose first edit cannot be applied exits zero", () => {
 
   assert.equal(result.status, 0);
   assert.equal(result.stdout, "");
+});
+
+test("a relative file_path from a differing cwd still resolves the actions directory against the project root", () => {
+  // The hook must resolve tool_input.file_path against CLAUDE_PROJECT_DIR exactly once, the same
+  // way for every filesystem read it performs. Before that fix, actionFileNamesFor derived its
+  // directory from the raw (relative) file_path, which Node then resolves against the process's
+  // actual cwd rather than the project root — silently emptying the action-file list, and with
+  // it, rule two, whenever the two differ.
+  const projectDir = makeProjectDir();
+  const otherCwd = fs.mkdtempSync(path.join(os.tmpdir(), "architecture-hook-othercwd-"));
+  writeFixtureFile(projectDir, "plugins/aidd-fixture-a/skills/01-clean/SKILL.md", CLEAN_SKILL);
+  writeFixtureFile(
+    projectDir,
+    "plugins/aidd-fixture-a/skills/01-clean/actions/01-step.md",
+    "# Step\n"
+  );
+  writeFixtureFile(
+    projectDir,
+    "plugins/aidd-fixture-a/skills/01-clean/actions/02-extra.md",
+    "# Extra\n"
+  );
+
+  const result = spawnSync(process.execPath, [HOOK], {
+    input: JSON.stringify({
+      tool_name: "Write",
+      tool_input: {
+        file_path: "plugins/aidd-fixture-a/skills/01-clean/SKILL.md",
+        content: CLEAN_SKILL,
+      },
+    }),
+    encoding: "utf8",
+    env: { ...process.env, CLAUDE_PROJECT_DIR: projectDir },
+    cwd: otherCwd,
+  });
+
+  assert.equal(result.status, 0);
+  const reason = parseDenyReason(result.stdout);
+  assert.match(reason, /never names action file "02-extra\.md"/);
+});
+
+test("adding an action to an existing skill succeeds file-first (order A)", () => {
+  const projectDir = makeProjectDir();
+  writeFixtureFile(projectDir, "plugins/aidd-fixture-a/skills/01-clean/SKILL.md", CLEAN_SKILL);
+  writeFixtureFile(
+    projectDir,
+    "plugins/aidd-fixture-a/skills/01-clean/actions/01-step.md",
+    "# Step\n"
+  );
+
+  const actionFilePath = path.join(
+    projectDir,
+    "plugins/aidd-fixture-a/skills/01-clean/actions/02-refine.md"
+  );
+  const createAction = runHook(projectDir, {
+    tool_name: "Write",
+    tool_input: { file_path: actionFilePath, content: "# Refine\n" },
+  });
+  assert.equal(createAction.status, 0);
+  assert.equal(createAction.stdout, "");
+
+  fs.writeFileSync(actionFilePath, "# Refine\n", "utf8");
+  const SKILL_NAMING_BOTH = [
+    "# Clean skill",
+    "",
+    "## Actions",
+    "",
+    "| # | Action | Role |",
+    "| --- | --- | --- |",
+    "| 01 | `step` | Do the one thing |",
+    "| 02 | `refine` | Do the new thing |",
+    "",
+  ].join("\n");
+  const skillFilePath = path.join(projectDir, "plugins/aidd-fixture-a/skills/01-clean/SKILL.md");
+  const nameAction = runHook(projectDir, {
+    tool_name: "Write",
+    tool_input: { file_path: skillFilePath, content: SKILL_NAMING_BOTH },
+  });
+  assert.equal(nameAction.status, 0);
+  assert.equal(nameAction.stdout, "");
+});
+
+test("adding an action to an existing skill succeeds citation-first (order B)", () => {
+  const projectDir = makeProjectDir();
+  writeFixtureFile(projectDir, "plugins/aidd-fixture-a/skills/01-clean/SKILL.md", CLEAN_SKILL);
+  writeFixtureFile(
+    projectDir,
+    "plugins/aidd-fixture-a/skills/01-clean/actions/01-step.md",
+    "# Step\n"
+  );
+
+  const SKILL_CITING_REFINE = [
+    "# Clean skill",
+    "",
+    "## Actions",
+    "",
+    "| # | Action | Role |",
+    "| --- | --- | --- |",
+    "| 01 | `step` | Do the one thing |",
+    "| 02 | `refine` | Do the new thing |",
+    "",
+  ].join("\n");
+  const skillFilePath = path.join(projectDir, "plugins/aidd-fixture-a/skills/01-clean/SKILL.md");
+  const citeFirst = runHook(projectDir, {
+    tool_name: "Write",
+    tool_input: { file_path: skillFilePath, content: SKILL_CITING_REFINE },
+  });
+  assert.equal(citeFirst.status, 0);
+  assert.equal(citeFirst.stdout, "");
+
+  fs.writeFileSync(skillFilePath, SKILL_CITING_REFINE, "utf8");
+  const actionFilePath = path.join(
+    projectDir,
+    "plugins/aidd-fixture-a/skills/01-clean/actions/02-refine.md"
+  );
+  const createAction = runHook(projectDir, {
+    tool_name: "Write",
+    tool_input: { file_path: actionFilePath, content: "# Refine\n" },
+  });
+  assert.equal(createAction.status, 0);
+  assert.equal(createAction.stdout, "");
 });

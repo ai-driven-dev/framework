@@ -34,8 +34,7 @@ function readPayload() {
 }
 
 /** Repository-relative, forward-slashed path, or null when it resolves outside the project. */
-function toRepoRelative(filePath) {
-  const root = process.env.CLAUDE_PROJECT_DIR || process.cwd();
+function toRepoRelative(filePath, root) {
   try {
     const rel = path.relative(root, path.resolve(root, filePath));
     if (rel === "" || rel.startsWith("..") || path.isAbsolute(rel)) return null;
@@ -99,42 +98,6 @@ function actionFileNamesFor(relPath, absPath) {
   }
 }
 
-/** Rule two also fires from the action-file side: writing `actions/NN-new.md` can leave the
- * sibling `SKILL.md`'s "## Actions" section out of step just as writing the `SKILL.md` itself
- * can. Reads the sibling `SKILL.md` as it stands on disk, and the action file listing as it
- * will be after this write, then runs the same coherence check the `SKILL.md` write path
- * runs. Returns [] — fails open — when the sibling `SKILL.md` cannot be read. */
-function siblingRouterCoherence(engine, info, actionAbsPath) {
-  if (!info.skillDir) return [];
-  const root = process.env.CLAUDE_PROJECT_DIR || process.cwd();
-  const skillMdRelPath = `${info.skillDir}/SKILL.md`;
-  const skillMdAbsPath = path.join(root, info.skillDir, "SKILL.md");
-
-  let skillContent;
-  try {
-    skillContent = fs.readFileSync(skillMdAbsPath, "utf8");
-  } catch {
-    return [];
-  }
-
-  const actionsDirAbs = path.join(root, info.skillDir, "actions");
-  let names;
-  try {
-    names = fs.readdirSync(actionsDirAbs).filter((name) => name.endsWith(".md"));
-  } catch {
-    names = [];
-  }
-  const newBasename = path.basename(actionAbsPath);
-  const nameSet = new Set(names);
-  if (newBasename.endsWith(".md")) nameSet.add(newBasename);
-
-  try {
-    return engine.checkRouterCoherence(skillMdRelPath, skillContent, Array.from(nameSet));
-  } catch {
-    return [];
-  }
-}
-
 function fixFor(rule, plugin) {
   return rule === "orthogonality"
     ? `name the concept ${plugin} owns instead of addressing it directly`
@@ -172,23 +135,25 @@ function main() {
   const toolInput = payload.tool_input;
   if (!toolInput || typeof toolInput.file_path !== "string" || toolInput.file_path === "") return 0;
 
-  const relPath = toRepoRelative(toolInput.file_path);
+  // Resolved once, against the project root, and reused for every filesystem access below — a
+  // relative `file_path` must never be read against the process's own cwd, which can differ
+  // from CLAUDE_PROJECT_DIR and would otherwise silently empty a readdir this hook depends on.
+  const root = process.env.CLAUDE_PROJECT_DIR || process.cwd();
+  const relPath = toRepoRelative(toolInput.file_path, root);
   if (!relPath) return 0;
 
   const info = engine.classifyFile(relPath);
   if (!info) return 0;
 
-  const content = prospectiveContent(toolName, toolInput);
+  const absPath = path.resolve(root, toolInput.file_path);
+  const content = prospectiveContent(toolName, { ...toolInput, file_path: absPath });
   if (content === null) return 0;
 
-  const actionFileNames = actionFileNamesFor(relPath, toolInput.file_path);
+  const actionFileNames = actionFileNamesFor(relPath, absPath);
 
   let violations;
   try {
     violations = engine.checkArchitecture(relPath, content, actionFileNames);
-    if (info.kind === "action") {
-      violations = violations.concat(siblingRouterCoherence(engine, info, toolInput.file_path));
-    }
   } catch {
     return 0;
   }

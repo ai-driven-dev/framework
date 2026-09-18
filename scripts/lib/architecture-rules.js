@@ -6,8 +6,14 @@
  *
  * Rule one, cross-plugin orthogonality: a plugin's dispatch surface must not name a sibling
  * plugin by a hardcoded address.
- * Rule two, router coherence: a skill's `## Actions` section must name exactly the actions that
- * skill provides.
+ * Rule two, router coherence: a skill's `## Actions` section must name every action file that
+ * skill provides. It checks one direction only — an action file the section never cites. It
+ * used to also flag the opposite direction, a citation with no action file behind it, but that
+ * is indistinguishable from a citation written seconds before the file it names, which is the
+ * order this project's own skill generator documents (create the action, then have the router
+ * name it — or name it first, then create the file). Enforcing it made adding an action to an
+ * existing skill impossible in either order. The direction that remains is decidable at any
+ * moment content is proposed, regardless of what gets written next.
  */
 
 "use strict";
@@ -16,7 +22,8 @@ const ORCHESTRATOR_PLUGIN = "aidd-orchestrator";
 
 // Temporary: `00-onboard`'s reference menus are routing menus whose addresses are what the
 // skill hands a person to type, not a hardcoded sibling provider — so orthogonality stays
-// silent on this one skill directory. See the follow-up issue on 00-onboard runtime discovery.
+// silent on this one skill directory. See #883, the follow-up issue on 00-onboard runtime
+// discovery.
 const ONBOARD_EXEMPT_PREFIX = "plugins/aidd-context/skills/00-onboard/";
 
 const HEADING_RE = /^#{1,6}\s/;
@@ -28,8 +35,13 @@ const SECOND_LEVEL_HEADING_RE = /^##\s+/;
 // because the character right before "aidd-" (a hyphen, a letter, a digit, or another `/`/`@`)
 // rules it out — while a backtick, space, or start of line still lets a bare address through.
 const ADDRESS_RE = /(?<![\w/@-])(?:[@/])?(aidd-[a-z0-9]+(?:-[a-z0-9]+)*):([A-Za-z0-9][\w.-]*)/g;
-const TABLE_TOKEN_RE = /`([a-z][a-z0-9-]*)`/g;
+// The three ways a "## Actions" section cites an action file, per rule two: a table cell that
+// reads as a plain name, an `actions/<name>.md` path, or a backticked `<name>.md` filename.
+// Deliberately narrow — a word loose in prose is never a citation, which is what let a deleted
+// table row hide behind unrelated text that happened to contain the same word.
 const ACTION_PATH_RE = /actions\/([A-Za-z0-9._-]+)\.md/g;
+const BACKTICKED_MD_RE = /`([A-Za-z0-9][A-Za-z0-9._-]*\.md)`/g;
+const CITATION_TOKEN_RE = /^[A-Za-z0-9][A-Za-z0-9._-]*$/;
 
 function toLines(content) {
   return content.split("\n");
@@ -143,17 +155,11 @@ function stemOf(fileName) {
   return fileName.replace(/\.md$/i, "").replace(/^[0-9]+-/, "");
 }
 
-function escapeRegExp(text) {
-  return text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-}
-
-/** Whether `token` occurs in `text` as a whole identifier, not merely as a substring of a
- * longer hyphenated one — "assert" is present in "the `assert` action" but not in
- * "assert-architecture", because hyphen is a token character here, not a boundary. */
-function tokenPresent(text, token) {
-  if (!token) return false;
-  const re = new RegExp(`(?<![A-Za-z0-9-])${escapeRegExp(token)}(?![A-Za-z0-9-])`);
-  return re.test(text);
+/** Strips one layer of matching backticks around a trimmed cell or token, if present. */
+function stripBackticks(text) {
+  const trimmed = text.trim();
+  const match = /^`(.*)`$/.exec(trimmed);
+  return match ? match[1].trim() : trimmed;
 }
 
 /** The `## Actions` section: from the line after its heading up to the next `##` heading (or
@@ -180,51 +186,41 @@ function splitTableCells(line) {
   return withoutEdges.split("|").map((cell) => cell.trim());
 }
 
-function isTableSeparatorRow(cells) {
-  return cells.length > 0 && cells.every((cell) => /^:?-+:?$/.test(cell));
-}
+/** Every citation the "## Actions" section makes to an action file: a table cell that reads as
+ * a plain name, an `actions/<name>.md` path, or a backticked `<name>.md` filename — the three
+ * shapes rule two's own comment names, and nothing else. A word merely present in prose is not
+ * collected here, on purpose: that is exactly what let a deleted table row hide behind
+ * unrelated text that happened to contain the same word. */
+function citationsIn(sectionLines, sectionText) {
+  const citations = new Set();
 
-/** Groups of consecutive table-row offsets (into `sectionLines`) — a `## Actions` section may
- * hold more than one pipe table (an action table, and unrelated prose table such as a trigger
- * glossary), and each is scoped to its own action column independently. */
-function tableBlocks(sectionLines) {
-  const blocks = [];
-  let current = null;
-  sectionLines.forEach((line, offset) => {
-    if (/^\s*\|/.test(line)) {
-      if (!current) {
-        current = [];
-        blocks.push(current);
-      }
-      current.push(offset);
-    } else {
-      current = null;
-    }
-  });
-  return blocks;
-}
-
-/** The column index that carries action names in this table block, found by locating a cell
- * backed by a real action file — the only column a backticked token can be a phantom citation
- * in. -1 when no row backs any column, so an unrelated table (a keyword or trigger glossary,
- * never an action listing) is left unchecked rather than guessed at. */
-function actionColumnOf(offsets, sectionLines, backed) {
-  for (const offset of offsets) {
-    const cells = splitTableCells(sectionLines[offset]);
-    if (isTableSeparatorRow(cells)) continue;
-    for (let col = 0; col < cells.length; col += 1) {
-      TABLE_TOKEN_RE.lastIndex = 0;
-      let match;
-      while ((match = TABLE_TOKEN_RE.exec(cells[col])) !== null) {
-        if (backed.has(match[1].toLowerCase())) return col;
-      }
+  for (const line of sectionLines) {
+    if (!/^\s*\|/.test(line)) continue;
+    for (const rawCell of splitTableCells(line)) {
+      const cell = stripBackticks(rawCell);
+      if (CITATION_TOKEN_RE.test(cell)) citations.add(cell.toLowerCase());
     }
   }
-  return -1;
+
+  ACTION_PATH_RE.lastIndex = 0;
+  let pathMatch;
+  while ((pathMatch = ACTION_PATH_RE.exec(sectionText)) !== null) {
+    citations.add(pathMatch[1].toLowerCase());
+  }
+
+  BACKTICKED_MD_RE.lastIndex = 0;
+  let mdMatch;
+  while ((mdMatch = BACKTICKED_MD_RE.exec(sectionText)) !== null) {
+    citations.add(mdMatch[1].toLowerCase());
+  }
+
+  return citations;
 }
 
 /**
- * Rule two: a skill's `## Actions` section names exactly the actions that skill provides.
+ * Rule two: a skill's `## Actions` section cites every action file that skill provides. It
+ * checks this one direction only — see the module header comment for why the opposite
+ * direction (a citation with no file behind it) is gone rather than narrowed.
  */
 function checkRouterCoherence(filePath, content, actionFileNames) {
   const info = classifyFile(filePath);
@@ -251,24 +247,14 @@ function checkRouterCoherence(filePath, content, actionFileNames) {
   const violations = [];
   const sectionLines = lines.slice(section.startIdx, section.endIdx);
   const sectionText = sectionLines.join("\n");
-
-  const backed = new Set();
-  for (const name of names) {
-    backed.add(name.toLowerCase());
-    backed.add(name.replace(/\.md$/i, "").toLowerCase());
-    backed.add(stemOf(name).toLowerCase());
-  }
+  const citations = citationsIn(sectionLines, sectionText);
 
   for (const name of names) {
-    const stem = stemOf(name);
-    const fullNoExt = name.replace(/\.md$/i, "");
-    if (
-      tokenPresent(sectionText, name) ||
-      tokenPresent(sectionText, fullNoExt) ||
-      tokenPresent(sectionText, stem)
-    ) {
-      continue;
-    }
+    const full = name.toLowerCase();
+    const fullNoExt = name.replace(/\.md$/i, "").toLowerCase();
+    const stem = stemOf(name).toLowerCase();
+    if (citations.has(full) || citations.has(fullNoExt) || citations.has(stem)) continue;
+
     violations.push({
       file: filePath,
       line: section.headingLine,
@@ -277,53 +263,6 @@ function checkRouterCoherence(filePath, content, actionFileNames) {
       message: `${filePath}:${section.headingLine} "## Actions" never names action file "${name}"`,
     });
   }
-
-  for (const offsets of tableBlocks(sectionLines)) {
-    const actionColumn = actionColumnOf(offsets, sectionLines, backed);
-    if (actionColumn === -1) continue; // no row backs any column: not an action table, leave it alone
-
-    for (const offset of offsets) {
-      const cells = splitTableCells(sectionLines[offset]);
-      if (isTableSeparatorRow(cells)) continue;
-      const cell = cells[actionColumn];
-      if (cell === undefined) continue;
-
-      const lineNo = section.startIdx + offset + 1;
-      TABLE_TOKEN_RE.lastIndex = 0;
-      let match;
-      while ((match = TABLE_TOKEN_RE.exec(cell)) !== null) {
-        const token = match[1].toLowerCase();
-        if (!backed.has(token)) {
-          violations.push({
-            file: filePath,
-            line: lineNo,
-            plugin: info.owner,
-            rule: "router-coherence",
-            message: `${filePath}:${lineNo} "## Actions" cites "${match[1]}" with no action file behind it`,
-          });
-        }
-      }
-    }
-  }
-
-  sectionLines.forEach((line, offset) => {
-    const lineNo = section.startIdx + offset + 1;
-
-    ACTION_PATH_RE.lastIndex = 0;
-    let pathMatch;
-    while ((pathMatch = ACTION_PATH_RE.exec(line)) !== null) {
-      const cited = pathMatch[1].toLowerCase();
-      if (!backed.has(cited)) {
-        violations.push({
-          file: filePath,
-          line: lineNo,
-          plugin: info.owner,
-          rule: "router-coherence",
-          message: `${filePath}:${lineNo} "## Actions" cites "actions/${pathMatch[1]}.md" with no action file behind it`,
-        });
-      }
-    }
-  });
 
   return violations;
 }
