@@ -1,0 +1,39 @@
+
+# Plan: Architecture guard on AI-authored edits
+
+## Overview
+
+| Field | Value |
+| --- | --- |
+| **Goal** | Refuse an AI edit that would hardcode a sibling plugin's address, or leave a skill's `## Actions` section out of step with its action files, before the edit lands. |
+| **Source** | [`spec.md`](./spec.md), from [ai-driven-dev/framework#250](https://github.com/ai-driven-dev/framework/issues/250) |
+
+## Phases
+
+| # | Phase | File |
+| --- | --- | --- |
+| 1 | The two rules, as a tested engine | [`phase-1.md`](./phase-1.md) |
+| 2 | The refusal, at the AI host's write moment | [`phase-2.md`](./phase-2.md) |
+
+## Resources
+
+| Source | Verified |
+| --- | --- |
+| `docs/ARCHITECTURE.md`, capability addressing | A capability is addressed only where dispatch is declared: a router's `## Actions` table, an agent's `# Skills you may invoke` list. Agent permission lists and orchestration references legitimately name a provider; recipe skills never do. |
+| <https://code.claude.com/docs/en/hooks> | `PreToolUse` receives `tool_input` before the tool runs — `content` for `Write` — and refuses the call with `hookSpecificOutput.permissionDecision: "deny"` plus a `permissionDecisionReason` the model reads. `PostToolUse` cannot refuse, it only reports after the fact. |
+| `.claude/hooks/check-written-file.js` | The in-repo precedent for a hook that reads the payload from stdin, resolves the written file, and hands a report back in the same turn. |
+| Issue #250, comment of 2026-09-14 | Supersedes the issue body's "Guardrail local et CI": no Git hook, no CI gate, synthetic fixtures, #406 neither blocker nor fixture. |
+| Probe over the 51 skills and 8 plugins in the tree | Both rules, as scoped below, report zero violations on the repository as it stands — orthogonality across 37 real cross-plugin addresses, router coherence across 48 skills that hold action files, in both directions. |
+
+## Decisions
+
+| Decision | Why |
+| --- | --- |
+| `PreToolUse`, not `PostToolUse` | The decision is "prevent the write until it is corrected". `PostToolUse` fires after the file is already on disk; Biome gets away with it only because it rewrites in place, and this guard cannot rewrite prose. |
+| The engine is a plain module, the hook is a thin caller | A rule that is a pure function of (path, prospective content, action-file listing) is testable without a hook, a host, or a tree. The hook contributes only the payload and the refusal. |
+| The governed surface is `SKILL.md`, `actions/`, `references/`, `agents/` | That is where dispatch is declared. `assets/` hold sheets a reader reads — `12-cook`'s recipes name 20 cross-plugin commands on purpose — so they are excluded by a stated rule, never by a quiet path filter. |
+| An orchestrator plugin is exempt wholesale | `docs/ARCHITECTURE.md` makes orchestration references responsibility maps. `aidd-orchestrator` holds 14 of the tree's cross-plugin addresses for exactly that reason. |
+| The router rule reads the `## Actions` section, not the table | `10-todo` names its one action as a path in a fenced block rather than a table row. Scoping to the section and matching either the stem or the file name covers both shapes and still reports zero on the tree. |
+| Unit tests live under `scripts/__tests__/`, and that is not a CI gate on the rules | Pre-commit runs those tests against synthetic fixtures, proving the engine works. Nothing scans the tree at commit time or in CI, which is what the decider ruled out. |
+| Fixtures are written for this task | The spec forbids #406's historical code. Each rule gets a breaking fixture and a legitimate-naming fixture, so a guard that flags a permission list fails its own suite. |
+| The hook is wired for Claude Code alone | It is the only host this repository configures hooks for: `.codex/config.toml` carries a sandbox mode and nothing else. Codex, Cursor and Copilot all expose `PreToolUse` and the same deny shape, but Codex delivers a file edit as an `apply_patch` command string rather than a path and a content, which is a different parse. The engine is host-agnostic, so each adapter is additive and none of them touches a rule. |

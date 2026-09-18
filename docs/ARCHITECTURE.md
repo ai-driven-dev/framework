@@ -155,6 +155,8 @@ Address a capability only where the dispatch is declared: a router's `## Actions
 
 Recipe skills never hardcode a sibling provider. They discover cross-plugin capabilities at runtime through description matching. Agent permission lists and orchestration references are responsibility maps, so they name the current provider with its canonical `/plugin:folder` or `@plugin:agent` address. The orchestrator must verify that provider is installed before calling it.
 
+`scripts/lib/architecture-rules.js` is the guard that decides both rules from a prospective edit's path and content.
+
 This distinction keeps recipe plugins swappable while making orchestration handoffs explicit and auditable.
 
 ## 🔎 See also
