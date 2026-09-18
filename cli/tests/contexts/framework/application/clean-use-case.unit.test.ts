@@ -576,7 +576,7 @@ describe("clean", () => {
           expect(logger.warnMessages).toEqual([
             `codex: '${REF}' is an AIDD-owned machine plugin ref — left enabled; project claim detached after local clean.${suffix}`,
             `codex: '${MARKETPLACE}' carries AIDD-owned machine plugin refs — left registered for explicit user-scope removal.${suffix}`,
-            `codex: cache for '${MARKETPLACE}' left in place, its own removal was not confirmed: /fake-home/.codex/plugins/cache/aidd-framework`,
+            `codex: cache for '${MARKETPLACE}' left in place, its own removal was not confirmed: ${join("/fake-home", ".codex", "plugins", "cache", MARKETPLACE)}`,
           ]);
         }
       );

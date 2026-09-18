@@ -82,7 +82,7 @@ describe("purgeNativeMarketplaceCache", () => {
 
     await purgeNativeMarketplaceCache(fs, logger, reader, CACHE_ROOT, "claude", HOST_NAME, true);
 
-    expect(fs.listAll()).toStrictEqual([neighborPath]);
+    expect(fs.listAll()).toStrictEqual([neighborPath.replaceAll("\\", "/")]);
     expect(fs.getFile(neighborPath)).toBe("other tenant");
     expect(reader.reads).toBe(1);
     expect(logger.warnMessages).toStrictEqual([]);
