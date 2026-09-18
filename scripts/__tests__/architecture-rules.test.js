@@ -302,3 +302,71 @@ test("a glossary table before the router does not blind the router's own column"
   );
   assert.deepEqual(violations, []);
 });
+
+test("a blank line splitting the router table does not unname the rows below it", () => {
+  const content = [
+    "# Split table skill",
+    "",
+    "## Actions",
+    "",
+    "| # | Action | Role |",
+    "| --- | --- | --- |",
+    "| 01 | `first` | Do it |",
+    "",
+    "| 02 | `second` | Then this |",
+    "",
+    "## Transversal rules",
+    "",
+    "- Nothing.",
+  ].join("\n");
+  const violations = checkArchitecture(
+    "plugins/aidd-fixture-a/skills/01-split/SKILL.md",
+    content,
+    ["01-first.md", "02-second.md"]
+  );
+  assert.deepEqual(violations, []);
+});
+
+test("a two-dash separator row still marks the header it follows", () => {
+  const content = [
+    "# Short rule skill",
+    "",
+    "## Actions",
+    "",
+    "| # | Action | Does |",
+    "| -- | --- | --- |",
+    "| 01 | first | Do it |",
+    "",
+    "## Transversal rules",
+    "",
+    "- Nothing.",
+  ].join("\n");
+  const violations = checkArchitecture(
+    "plugins/aidd-fixture-a/skills/01-short-rule/SKILL.md",
+    content,
+    ["01-first.md"]
+  );
+  assert.deepEqual(violations, []);
+});
+
+test("a plural Actions header declares the action column too", () => {
+  const content = [
+    "# Plural header skill",
+    "",
+    "## Actions",
+    "",
+    "| # | Actions | Role |",
+    "| --- | --- | --- |",
+    "| 01 | `first` | Do it |",
+    "",
+    "## Transversal rules",
+    "",
+    "- Nothing.",
+  ].join("\n");
+  const violations = checkArchitecture(
+    "plugins/aidd-fixture-a/skills/01-plural/SKILL.md",
+    content,
+    ["01-first.md"]
+  );
+  assert.deepEqual(violations, []);
+});

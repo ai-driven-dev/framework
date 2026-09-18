@@ -14,7 +14,7 @@ An AI-authored edit that would break one of this repository's two named architec
 - The governed surface is the dispatch surface: a skill's `SKILL.md`, its actions and its references, and an agent's definition. A plugin's `assets/` hold content shown to a reader, not dispatch, and are out of the guard's reach by this rule rather than by an unstated path filter.
 - Naming that `docs/ARCHITECTURE.md` declares legitimate stays silent: an agent's permission list and an orchestration reference are responsibility maps and name their provider canonically. Flagging either is a defect of the guard, not of the tree.
 - Every refusal names the file, the line, and the plugin that owns the addressed capability, in terms a reader can act on without opening the rule document.
-- The guard is silent on the repository as it stands. Two shapes it reads naively, both absent from the tree today: a fenced `## Actions` inside a code block is taken for the section itself, and a fenced `##` line inside the section ends it early. A rule that reports a violation in the current tree is miscalibrated, not vindicated.
+- The guard is silent on the repository as it stands. Three shapes it reads naively, all absent from the tree today: a fenced `## Actions` inside a code block is taken for the section itself, a fenced `##` line inside the section ends it early, and a fenced example table inside the section cites like a real router. A rule that reports a violation in the current tree is miscalibrated, not vindicated.
 - The rules are exercised by purpose-built fixtures. No historical code from #406 is used as a fixture.
 - Each rule is proved by a fixture that breaks it and turns exactly the test named for that rule red, and by a fixture of legitimate naming that stays green.
 
@@ -27,7 +27,7 @@ An AI-authored edit that would break one of this repository's two named architec
 - Catching an action file created and never cited. Rule two decides on a write to a `SKILL.md`; an orphan action file is caught at the next write to its skill's router, not at its own creation. Firing on the action file is what broke the order that creates the file first, and dropping it was the cheaper half of breaking the deadlock. The window is unbounded: that next write may never come, so this is a hole, not a delay.
 - Reaching into a plugin's `README.md`, which addresses a sibling in two places today. Like `assets/`, it is a document a reader reads, not a dispatch the skill executes.
 - Reaching into a plugin's `assets/`. A recipe sheet names the commands a reader types; that is its subject, not a dispatch this rule governs.
-- Repairing violations that exist in the tree today. That was #406, now closed.
+- Repairing violations that exist in the tree today. That was #406, now closed. One line is the stated exception, named in the plan's decisions: a prose sentence in `aidd-dev`'s planning action addressed a sibling skill outright, and leaving it would have made the guard red on its own tree.
 - Enforcing any architecture rule beyond the two named above.
 - Catching a violation introduced outside an AI tool, by a human editing by hand.
 - Catching a write performed through a shell command rather than a write tool. Deciding whether a shell line writes a plugin source means parsing arbitrary shell, which is not the deterministic verdict rule one requires. An agent told to edit through `sed` or a heredoc is therefore ungoverned, and that is stated here rather than left to be discovered.

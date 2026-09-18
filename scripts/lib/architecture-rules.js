@@ -41,6 +41,9 @@ const ADDRESS_RE = /(?<![\w/@-])(?:[@/])?(aidd-[a-z0-9]+(?:-[a-z0-9]+)*):([A-Za-
 // table row hide behind unrelated text that happened to contain the same word.
 const ACTION_PATH_RE = /actions\/([A-Za-z0-9._-]+)\.md/g;
 const BACKTICKED_MD_RE = /`([A-Za-z0-9][A-Za-z0-9._-]*\.md)`/g;
+/** A header cell that declares the action column. Exact on purpose: "Next action" heads a
+ * routing hint, not a dispatch, and reading it as one lets a deleted row hide behind it. */
+const ACTION_HEADER_RE = /^actions?$/i;
 const CITATION_TOKEN_RE = /^[A-Za-z0-9][A-Za-z0-9._-]*$/;
 
 function toLines(content) {
@@ -202,9 +205,9 @@ function tableBlocks(sectionLines) {
 }
 
 /** A `| --- | --- |` row: every cell is dashes and colons, so it declares no column and cites
- * nothing. */
+ * nothing. Two dashes count — `00-onboard` writes `| -- |` and GitHub renders it. */
 function isTableSeparatorRow(cells) {
-  return cells.length > 0 && cells.every((cell) => /^:?-{3,}:?$/.test(cell));
+  return cells.length > 0 && cells.every((cell) => /^:?-+:?$/.test(cell));
 }
 
 /** Every citation the "## Actions" section makes to an action file: a table cell that reads as
@@ -212,19 +215,28 @@ function isTableSeparatorRow(cells) {
  * shapes rule two's own comment names, and nothing else. A word merely present in prose is not
  * collected here, on purpose: that is exactly what let a deleted table row hide behind
  * unrelated text that happened to contain the same word. */
-function citationsIn(sectionLines, sectionText) {
+function citationsIn(sectionLines) {
+  const sectionText = sectionLines.join("\n");
   const citations = new Set();
 
   // Only the column a table declares as its action column counts. A glossary, a trigger column
   // or a "next step" column names things that are not dispatch, and reading them as citations
   // would let a section satisfy rule two while routing nothing. Each table decides for itself:
   // a section may hold a glossary next to its router, and the router must still be read.
+  let actionColumn = -1;
   for (const block of tableBlocks(sectionLines)) {
     const rows = block.map(splitTableCells);
-    const actionColumn = rows[0].findIndex((cell) => /\baction\b/i.test(stripBackticks(cell)));
-    if (actionColumn === -1) continue; // this table declares no action column: it cites nothing
+    const isNewTable = rows.length > 1 && isTableSeparatorRow(rows[1]);
 
-    for (const cells of rows.slice(1)) {
+    // A header row is followed by its `| --- |` separator. A run of rows without one is the
+    // same table resumed after a blank line, and it keeps the column its header declared —
+    // otherwise a purely cosmetic edit refuses every row below the blank line.
+    if (isNewTable) {
+      actionColumn = rows[0].findIndex((cell) => ACTION_HEADER_RE.test(stripBackticks(cell)));
+    }
+    if (actionColumn === -1) continue; // no header declared an action column: this table cites nothing
+
+    for (const cells of isNewTable ? rows.slice(1) : rows) {
       if (isTableSeparatorRow(cells)) continue;
       const cell = stripBackticks(cells[actionColumn] ?? "");
       if (CITATION_TOKEN_RE.test(cell)) citations.add(cell.toLowerCase());
@@ -276,7 +288,7 @@ function checkRouterCoherence(filePath, content, actionFileNames) {
   const violations = [];
   const sectionLines = lines.slice(section.startIdx, section.endIdx);
   const sectionText = sectionLines.join("\n");
-  const citations = citationsIn(sectionLines, sectionText);
+  const citations = citationsIn(sectionLines);
 
   for (const name of names) {
     const full = name.toLowerCase();
