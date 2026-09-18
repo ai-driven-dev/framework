@@ -155,6 +155,8 @@ Address a capability only where the dispatch is declared: a router's `## Actions
 
 Recipe skills never hardcode a sibling provider. They discover cross-plugin capabilities at runtime through description matching. Agent permission lists and orchestration references are responsibility maps, so they name the current provider with its canonical `/plugin:folder` or `@plugin:agent` address. The orchestrator must verify that provider is installed before calling it.
 
+`scripts/lib/architecture-rules.js` is the guard that decides both rules from a prospective edit's path and content. It fires on this repository's AI write path for Claude Code — a `PreToolUse` hook on `Write`/`Edit`/`MultiEdit` — so a contributor on another AI tool is not covered by it. `plugins/aidd-context/skills/00-onboard/**` is exempt from rule one: its reference menus name addresses because those are what the skill hands a person to type, not a hardcoded sibling provider. That exemption is temporary and ends with the follow-up issue on making that skill resolve its providers at runtime. The guard refuses an edit leaving a `## Actions` section without a citation for an action file that exists; it never refuses a citation with no file behind it, because that is how a skill legitimately grows one.
+
 This distinction keeps recipe plugins swappable while making orchestration handoffs explicit and auditable.
 
 ## 🔎 See also
