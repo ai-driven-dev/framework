@@ -471,3 +471,52 @@ test("a fenced ## heading inside the Actions section does not end it early", () 
   );
   assert.deepEqual(violations, []);
 });
+
+test("a backticked file name inside a fenced example does not cite", () => {
+  const fence = "```";
+  const content = [
+    "# Fenced filename skill",
+    "",
+    "## Actions",
+    "",
+    `${fence}md`,
+    "| Action | When |",
+    "| --- | --- |",
+    `| ${"`"}02-gone.md${"`"} | b |`,
+    fence,
+    "",
+    "| Action | When |",
+    "| --- | --- |",
+    "| 01-keep | a |",
+    "",
+    "## Transversal rules",
+    "",
+    "- Nothing.",
+  ].join("\n");
+  const violations = checkArchitecture(
+    "plugins/aidd-fixture-a/skills/01-fenced-name/SKILL.md",
+    content,
+    ["01-keep.md", "02-gone.md"]
+  );
+  assert.equal(violations.length, 1);
+  assert.match(violations[0].message, /never names action file "02-gone\.md"/);
+});
+
+test("a fence nobody closed is not read as a fence at all", () => {
+  const content = [
+    "# Unterminated fence skill",
+    "",
+    "## Actions",
+    "",
+    "```md",
+    "| # | Action | Role |",
+    "| --- | --- | --- |",
+    "| 01 | `first` | Do it |",
+  ].join("\n");
+  const violations = checkArchitecture(
+    "plugins/aidd-fixture-a/skills/01-unterminated/SKILL.md",
+    content,
+    ["01-first.md"]
+  );
+  assert.deepEqual(violations, []);
+});

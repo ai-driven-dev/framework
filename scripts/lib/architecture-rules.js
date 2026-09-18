@@ -169,6 +169,17 @@ function stripBackticks(text) {
  * routes nothing. A fenced `actions/<name>.md` path is the exception — `10-todo` cites its one
  * action that way — so path citations are read from the unblanked lines. */
 function withoutFences(lines) {
+  // An unterminated fence would blank the rest of the file, hiding a `## Actions` that is
+  // visibly there and producing a refusal nobody can act on. Treat it as not a fence at all.
+  let open = null;
+  for (const line of lines) {
+    const match = line.match(/^\s*(`{3,}|~{3,})/);
+    if (!match) continue;
+    if (open === null) open = match[1][0];
+    else if (match[1][0] === open) open = null;
+  }
+  if (open !== null) return lines;
+
   let fence = null;
   return lines.map((line) => {
     const match = line.match(/^\s*(`{3,}|~{3,})/);
@@ -237,7 +248,11 @@ function isTableSeparatorRow(cells) {
  * collected here, on purpose: that is exactly what let a deleted table row hide behind
  * unrelated text that happened to contain the same word. */
 function citationsIn(sectionLines, rawSectionLines) {
-  const sectionText = (rawSectionLines ?? sectionLines).join("\n");
+  const blankedText = sectionLines.join("\n");
+  // Only the `actions/<name>.md` path shape is read through fences, because `10-todo` cites its
+  // one action that way. Every other shape reads the blanked view: a backticked file name inside
+  // a fenced example is an example, and letting it cite reopened the hole fences were blanked for.
+  const pathText = (rawSectionLines ?? sectionLines).join("\n");
   const citations = new Set();
 
   // Only the column a table declares as its action column counts. A glossary, a trigger column
@@ -251,7 +266,10 @@ function citationsIn(sectionLines, rawSectionLines) {
 
     // A header row is followed by its `| --- |` separator. A run of rows without one is the
     // same table resumed after a blank line, and it keeps the column its header declared —
-    // otherwise a purely cosmetic edit refuses every row below the blank line.
+    // otherwise a purely cosmetic edit refuses every row below the blank line. The cost is
+    // stated in the spec: a separator-less run following the router is read as part of it,
+    // so a glossary written without a separator would donate its cells. Neither shape is a
+    // table any renderer accepts, and the false refusal is the worse of the two.
     if (isNewTable) {
       actionColumn = rows[0].findIndex((cell) => ACTION_HEADER_RE.test(stripBackticks(cell)));
     }
@@ -266,13 +284,13 @@ function citationsIn(sectionLines, rawSectionLines) {
 
   ACTION_PATH_RE.lastIndex = 0;
   let pathMatch;
-  while ((pathMatch = ACTION_PATH_RE.exec(sectionText)) !== null) {
+  while ((pathMatch = ACTION_PATH_RE.exec(pathText)) !== null) {
     citations.add(pathMatch[1].toLowerCase());
   }
 
   BACKTICKED_MD_RE.lastIndex = 0;
   let mdMatch;
-  while ((mdMatch = BACKTICKED_MD_RE.exec(sectionText)) !== null) {
+  while ((mdMatch = BACKTICKED_MD_RE.exec(blankedText)) !== null) {
     citations.add(mdMatch[1].toLowerCase());
   }
 
