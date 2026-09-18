@@ -3,7 +3,7 @@ const fs = require("node:fs");
 const path = require("node:path");
 const test = require("node:test");
 
-const { checkArchitecture } = require("../lib/architecture-rules.js");
+const { checkArchitecture, classifyFile } = require("../lib/architecture-rules.js");
 
 const ROOT = path.resolve(__dirname, "../..");
 const FIXTURES = path.join(__dirname, "fixtures/architecture-rules");
@@ -24,7 +24,6 @@ function sweepPlugins() {
     for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
       const full = path.join(dir, entry.name);
       if (entry.isDirectory()) {
-        if (entry.name === "assets") continue;
         walk(full);
       } else if (entry.isFile() && entry.name.endsWith(".md")) {
         files.push(full);
@@ -36,6 +35,9 @@ function sweepPlugins() {
   const violations = [];
   for (const absPath of files) {
     const relPath = path.relative(ROOT, absPath).split(path.sep).join("/");
+    // The engine's own classifier decides what is governed — including `assets/` — so the
+    // walker never keeps a second copy of that rule that could drift from it.
+    if (!classifyFile(relPath)) continue;
     const content = fs.readFileSync(absPath, "utf8");
     let actionFileNames;
     if (path.basename(absPath) === "SKILL.md") {
@@ -81,20 +83,70 @@ test("an agent's Skills you may invoke list addressing siblings yields no violat
   assert.deepEqual(violations, []);
 });
 
-test("an orchestrator plugin is exempt wholesale from both rules", () => {
+test("an orchestrator plugin is exempt from orthogonality alone", () => {
   const content = fixture("orchestrator-skill/SKILL.md");
+  // No actionFileNames: isolates rule one, since rule two short-circuits on an empty list.
   const violations = checkArchitecture(
     "plugins/aidd-orchestrator/skills/99-fixture/SKILL.md",
-    content,
-    ["01-route.md"] // never named in the section; would violate rule 2 if not exempt
+    content
   );
   assert.deepEqual(violations, []);
+});
+
+test("router coherence still applies to an orchestrator plugin", () => {
+  const content = fixture("orchestrator-incoherent-skill/SKILL.md");
+  const filePath = "plugins/aidd-orchestrator/skills/99-fixture/SKILL.md";
+  const violations = checkArchitecture(filePath, content, ["01-route.md"]);
+
+  assert.equal(violations.length, 1);
+  const [violation] = violations;
+  assert.equal(violation.rule, "router-coherence");
+  assert.equal(violation.plugin, "aidd-orchestrator");
 });
 
 test("a file under assets/ yields no violations regardless of content", () => {
   const content = fixture("assets-note.md");
   const violations = checkArchitecture(
     "plugins/aidd-fixture-a/skills/01-clean/assets/note.md",
+    content
+  );
+  assert.deepEqual(violations, []);
+});
+
+test("an action file nested a level deeper than usual is still governed", () => {
+  const content = fixture("nested-action.md");
+  const filePath = "plugins/aidd-fixture-a/skills/01-clean/actions/group/nested-action.md";
+  const violations = checkArchitecture(filePath, content);
+
+  assert.equal(violations.length, 1);
+  const [violation] = violations;
+  assert.equal(violation.plugin, "aidd-fixture-b");
+});
+
+test("a SKILL.md nested a level deeper than usual is still governed", () => {
+  const content = fixture("nested-skill/SKILL.md");
+  const filePath = "plugins/aidd-fixture-a/skills/01-clean/variant/SKILL.md";
+  const violations = checkArchitecture(filePath, content);
+
+  assert.equal(violations.length, 1);
+  const [violation] = violations;
+  assert.equal(violation.plugin, "aidd-fixture-b");
+});
+
+test("a reference file nested two levels under references/ is still governed", () => {
+  const content = fixture("nested-reference.md");
+  const filePath = "plugins/aidd-fixture-a/skills/01-clean/references/state/nested-reference.md";
+  const violations = checkArchitecture(filePath, content);
+
+  assert.equal(violations.length, 1);
+  const [violation] = violations;
+  assert.equal(violation.plugin, "aidd-fixture-b");
+});
+
+test("a SKILL.md nested under assets/ is ungoverned for that reason alone", () => {
+  const content = fixture("nested-assets-skill/SKILL.md");
+  const violations = checkArchitecture(
+    "plugins/aidd-fixture-a/skills/01-clean/assets/nested/SKILL.md",
     content
   );
   assert.deepEqual(violations, []);
@@ -127,6 +179,54 @@ test("a name the Actions section cites with no action file behind it yields one 
   assert.equal(violation.plugin, "aidd-fixture-a");
   const lines = content.split("\n");
   assert.equal(lines[violation.line - 1].includes("ghost-step"), true);
+});
+
+test("00-onboard's own reference menus are exempt from orthogonality", () => {
+  const content = fixture("onboard-menu.md");
+  const filePath = "plugins/aidd-context/skills/00-onboard/references/order/onboard-menu.md";
+  const violations = checkArchitecture(filePath, content);
+  assert.deepEqual(violations, []);
+});
+
+test("a bare plugin:skill address is caught, but not one embedded in a longer identifier", () => {
+  const content = fixture("bare-address-skill/SKILL.md");
+  const filePath = "plugins/aidd-fixture-a/skills/07-bare-address/SKILL.md";
+  const violations = checkArchitecture(filePath, content, ["01-step.md"]);
+
+  assert.equal(violations.length, 1);
+  const [violation] = violations;
+  assert.equal(violation.plugin, "aidd-fixture-b");
+  assert.match(violation.message, /"aidd-fixture-b:01-noop"/);
+});
+
+test("a backticked ordinary word outside the action column is not a phantom citation", () => {
+  const content = fixture("phantom-column-skill/SKILL.md");
+  const filePath = "plugins/aidd-fixture-a/skills/06-phantom-column/SKILL.md";
+  const violations = checkArchitecture(filePath, content, ["01-step.md"]);
+  assert.deepEqual(violations, []);
+});
+
+test("a stem that is a substring of a sibling action's stem is not mistaken for a mention", () => {
+  const content = fixture("stem-substring-skill/SKILL.md");
+  const filePath = "plugins/aidd-fixture-a/skills/05-stem-substring/SKILL.md";
+  const violations = checkArchitecture(filePath, content, [
+    "01-assert.md",
+    "02-assert-architecture.md",
+  ]);
+
+  assert.equal(violations.length, 1);
+  const [violation] = violations;
+  assert.match(violation.message, /"01-assert\.md"/);
+});
+
+test("a fenced actions/ path citing a file with no action behind it yields one violation", () => {
+  const content = fixture("phantom-path-skill/SKILL.md");
+  const filePath = "plugins/aidd-fixture-a/skills/08-phantom-path/SKILL.md";
+  const violations = checkArchitecture(filePath, content, ["01-step.md"]);
+
+  assert.equal(violations.length, 1);
+  const [violation] = violations;
+  assert.match(violation.message, /actions\/99-absent\.md/);
 });
 
 test("a skill whose Actions section and action files agree yields no violations", () => {

@@ -14,11 +14,20 @@
 
 const ORCHESTRATOR_PLUGIN = "aidd-orchestrator";
 
+// Temporary: `00-onboard`'s reference menus are routing menus whose addresses are what the
+// skill hands a person to type, not a hardcoded sibling provider — so orthogonality stays
+// silent on this one skill directory. See the follow-up issue on 00-onboard runtime discovery.
+const ONBOARD_EXEMPT_PREFIX = "plugins/aidd-context/skills/00-onboard/";
+
 const HEADING_RE = /^#{1,6}\s/;
 const SKILLS_INVOKE_HEADING_RE = /^#{1,6}\s+Skills you may invoke\s*$/i;
 const ACTIONS_HEADING_RE = /^##\s+Actions\s*$/i;
 const SECOND_LEVEL_HEADING_RE = /^##\s+/;
-const ADDRESS_RE = /[@/](aidd-[a-z0-9]+(?:-[a-z0-9]+)*):([A-Za-z0-9][\w.-]*)/g;
+// Matches `/plugin:name`, `@plugin:name`, and the bare `plugin:name` form. The lookbehind keeps
+// the left edge from firing inside a longer identifier — `some-aidd-dev:01-x` never matches,
+// because the character right before "aidd-" (a hyphen, a letter, a digit, or another `/`/`@`)
+// rules it out — while a backtick, space, or start of line still lets a bare address through.
+const ADDRESS_RE = /(?<![\w/@-])(?:[@/])?(aidd-[a-z0-9]+(?:-[a-z0-9]+)*):([A-Za-z0-9][\w.-]*)/g;
 const TABLE_TOKEN_RE = /`([a-z][a-z0-9-]*)`/g;
 const ACTION_PATH_RE = /actions\/([A-Za-z0-9._-]+)\.md/g;
 
@@ -28,7 +37,12 @@ function toLines(content) {
 
 /**
  * Classifies a repository-relative path against the governed surface. Returns null for
- * anything else, including everything under an `assets/` directory at any depth.
+ * anything else, including everything under an `assets/` segment at any depth.
+ *
+ * An `actions/` or `references/` segment governs everything beneath it, at any depth, and a
+ * `SKILL.md` is governed at any depth under `skills/` — not only one level down. `skillDir` is
+ * the repository-relative path (`plugins/<owner>/skills/<...>`) of the skill folder itself: the
+ * directory holding `SKILL.md`, or the directory the `actions/`/`references/` segment sits in.
  */
 function classifyFile(filePath) {
   const parts = filePath.split("/").filter(Boolean);
@@ -46,20 +60,27 @@ function classifyFile(filePath) {
 
   if (parts[2] !== "skills") return null;
   const rest = parts.slice(3);
-  if (rest.length < 2) return null;
+  if (rest.length < 1) return null;
 
   const last = rest[rest.length - 1];
-  const parent = rest[rest.length - 2];
+  if (!last.endsWith(".md")) return null;
 
-  if (rest.length === 2 && last === "SKILL.md") {
-    return { owner, kind: "skill", skillDir: rest[0] };
+  const skillDirFor = (segments) => ["plugins", owner, "skills", ...segments].join("/");
+
+  if (last === "SKILL.md") {
+    return { owner, kind: "skill", skillDir: skillDirFor(rest.slice(0, -1)) };
   }
-  if (parent === "actions" && last.endsWith(".md")) {
-    return { owner, kind: "action", skillDir: rest.slice(0, -2).join("/") };
+
+  const actionsIdx = rest.indexOf("actions");
+  if (actionsIdx !== -1) {
+    return { owner, kind: "action", skillDir: skillDirFor(rest.slice(0, actionsIdx)) };
   }
-  if (parent === "references" && last.endsWith(".md")) {
-    return { owner, kind: "reference", skillDir: rest.slice(0, -2).join("/") };
+
+  const referencesIdx = rest.indexOf("references");
+  if (referencesIdx !== -1) {
+    return { owner, kind: "reference", skillDir: skillDirFor(rest.slice(0, referencesIdx)) };
   }
+
   return null;
 }
 
@@ -97,6 +118,7 @@ function exemptAgentLines(lines) {
 function checkOrthogonality(filePath, content) {
   const info = classifyFile(filePath);
   if (!info || info.owner === ORCHESTRATOR_PLUGIN) return [];
+  if (filePath.startsWith(ONBOARD_EXEMPT_PREFIX)) return [];
 
   const lines = toLines(content);
   const exempt = info.kind === "agent" ? exemptAgentLines(lines) : new Set();
@@ -121,6 +143,19 @@ function stemOf(fileName) {
   return fileName.replace(/\.md$/i, "").replace(/^[0-9]+-/, "");
 }
 
+function escapeRegExp(text) {
+  return text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+/** Whether `token` occurs in `text` as a whole identifier, not merely as a substring of a
+ * longer hyphenated one — "assert" is present in "the `assert` action" but not in
+ * "assert-architecture", because hyphen is a token character here, not a boundary. */
+function tokenPresent(text, token) {
+  if (!token) return false;
+  const re = new RegExp(`(?<![A-Za-z0-9-])${escapeRegExp(token)}(?![A-Za-z0-9-])`);
+  return re.test(text);
+}
+
 /** The `## Actions` section: from the line after its heading up to the next `##` heading (or
  * end of file). Returns null when no such heading exists. */
 function findActionsSection(lines) {
@@ -137,12 +172,63 @@ function findActionsSection(lines) {
   return { headingLine: headingIdx + 1, startIdx: headingIdx + 1, endIdx };
 }
 
+/** A table row's cells, trimmed, with the leading and trailing empty cell a `| a | b |` line
+ * produces stripped off. */
+function splitTableCells(line) {
+  const trimmed = line.trim();
+  const withoutEdges = trimmed.replace(/^\|/, "").replace(/\|$/, "");
+  return withoutEdges.split("|").map((cell) => cell.trim());
+}
+
+function isTableSeparatorRow(cells) {
+  return cells.length > 0 && cells.every((cell) => /^:?-+:?$/.test(cell));
+}
+
+/** Groups of consecutive table-row offsets (into `sectionLines`) — a `## Actions` section may
+ * hold more than one pipe table (an action table, and unrelated prose table such as a trigger
+ * glossary), and each is scoped to its own action column independently. */
+function tableBlocks(sectionLines) {
+  const blocks = [];
+  let current = null;
+  sectionLines.forEach((line, offset) => {
+    if (/^\s*\|/.test(line)) {
+      if (!current) {
+        current = [];
+        blocks.push(current);
+      }
+      current.push(offset);
+    } else {
+      current = null;
+    }
+  });
+  return blocks;
+}
+
+/** The column index that carries action names in this table block, found by locating a cell
+ * backed by a real action file — the only column a backticked token can be a phantom citation
+ * in. -1 when no row backs any column, so an unrelated table (a keyword or trigger glossary,
+ * never an action listing) is left unchecked rather than guessed at. */
+function actionColumnOf(offsets, sectionLines, backed) {
+  for (const offset of offsets) {
+    const cells = splitTableCells(sectionLines[offset]);
+    if (isTableSeparatorRow(cells)) continue;
+    for (let col = 0; col < cells.length; col += 1) {
+      TABLE_TOKEN_RE.lastIndex = 0;
+      let match;
+      while ((match = TABLE_TOKEN_RE.exec(cells[col])) !== null) {
+        if (backed.has(match[1].toLowerCase())) return col;
+      }
+    }
+  }
+  return -1;
+}
+
 /**
  * Rule two: a skill's `## Actions` section names exactly the actions that skill provides.
  */
 function checkRouterCoherence(filePath, content, actionFileNames) {
   const info = classifyFile(filePath);
-  if (!info || info.kind !== "skill" || info.owner === ORCHESTRATOR_PLUGIN) return [];
+  if (!info || info.kind !== "skill") return [];
 
   const names = actionFileNames || [];
   if (names.length === 0) return [];
@@ -177,9 +263,9 @@ function checkRouterCoherence(filePath, content, actionFileNames) {
     const stem = stemOf(name);
     const fullNoExt = name.replace(/\.md$/i, "");
     if (
-      sectionText.includes(name) ||
-      sectionText.includes(fullNoExt) ||
-      sectionText.includes(stem)
+      tokenPresent(sectionText, name) ||
+      tokenPresent(sectionText, fullNoExt) ||
+      tokenPresent(sectionText, stem)
     ) {
       continue;
     }
@@ -192,13 +278,20 @@ function checkRouterCoherence(filePath, content, actionFileNames) {
     });
   }
 
-  sectionLines.forEach((line, offset) => {
-    const lineNo = section.startIdx + offset + 1;
+  for (const offsets of tableBlocks(sectionLines)) {
+    const actionColumn = actionColumnOf(offsets, sectionLines, backed);
+    if (actionColumn === -1) continue; // no row backs any column: not an action table, leave it alone
 
-    if (/^\s*\|/.test(line)) {
+    for (const offset of offsets) {
+      const cells = splitTableCells(sectionLines[offset]);
+      if (isTableSeparatorRow(cells)) continue;
+      const cell = cells[actionColumn];
+      if (cell === undefined) continue;
+
+      const lineNo = section.startIdx + offset + 1;
       TABLE_TOKEN_RE.lastIndex = 0;
       let match;
-      while ((match = TABLE_TOKEN_RE.exec(line)) !== null) {
+      while ((match = TABLE_TOKEN_RE.exec(cell)) !== null) {
         const token = match[1].toLowerCase();
         if (!backed.has(token)) {
           violations.push({
@@ -211,6 +304,10 @@ function checkRouterCoherence(filePath, content, actionFileNames) {
         }
       }
     }
+  }
+
+  sectionLines.forEach((line, offset) => {
+    const lineNo = section.startIdx + offset + 1;
 
     ACTION_PATH_RE.lastIndex = 0;
     let pathMatch;

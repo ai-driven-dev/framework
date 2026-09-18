@@ -117,6 +117,47 @@ test("an Edit reconstructing the same content as the denied Write yields the sam
   assert.equal(editReason, writeReason);
 });
 
+test("an Edit whose new_string is a $-replacement token splices it literally, not specially", () => {
+  const projectDir = makeProjectDir();
+  const AGENT_WITH_PERMISSION_LIST = [
+    "# Guardrails",
+    "",
+    "- Never delegate to another agent.",
+    "",
+    "# Skills you may invoke",
+    "",
+    "- `/aidd-dev:02-implement`",
+    "- `/aidd-vcs:01-commit`",
+    "",
+  ].join("\n");
+  const filePath = writeFixtureFile(
+    projectDir,
+    "plugins/aidd-dev/agents/executor.md",
+    AGENT_WITH_PERMISSION_LIST
+  );
+
+  // Removing the heading unmasks the one real sibling address below it (it is no longer under
+  // an exempt "# Skills you may invoke" heading) — a single, genuine violation. A `String.replace`
+  // reconstruction corrupts this: "$'" is a special token even against a plain-string search, so
+  // it re-inserts (and thereby duplicates) everything after the match, producing a second,
+  // spurious violation at a line that holds no such content in the real result.
+  const result = runHook(projectDir, {
+    tool_name: "Edit",
+    tool_input: {
+      file_path: filePath,
+      old_string: "# Skills you may invoke",
+      new_string: "$'",
+    },
+  });
+
+  assert.equal(result.status, 0);
+  const reason = parseDenyReason(result.stdout);
+  assert.match(reason, /plugins\/aidd-dev\/agents\/executor\.md:8 /);
+  // Line 12 only exists in the corrupted (duplicated-tail) reconstruction — its absence here is
+  // what proves the splice was literal, not merely that some deny happened.
+  assert.doesNotMatch(reason, /plugins\/aidd-dev\/agents\/executor\.md:12 /);
+});
+
 test("an Edit whose old_string is absent from the current file exits zero", () => {
   const projectDir = makeProjectDir();
   const filePath = writeFixtureFile(
@@ -148,6 +189,62 @@ test("a path under assets/ exits zero even when its content addresses a sibling"
   const result = runHook(projectDir, {
     tool_name: "Write",
     tool_input: { file_path: filePath, content: SIBLING_ADDRESS_SKILL },
+  });
+
+  assert.equal(result.status, 0);
+  assert.equal(result.stdout, "");
+});
+
+test("a new action file left unnamed in the sibling SKILL.md's Actions section is denied", () => {
+  const projectDir = makeProjectDir();
+  writeFixtureFile(projectDir, "plugins/aidd-fixture-a/skills/01-clean/SKILL.md", CLEAN_SKILL);
+  writeFixtureFile(
+    projectDir,
+    "plugins/aidd-fixture-a/skills/01-clean/actions/01-step.md",
+    "# Step\n"
+  );
+  const filePath = path.join(
+    projectDir,
+    "plugins/aidd-fixture-a/skills/01-clean/actions/02-extra.md"
+  );
+
+  const result = runHook(projectDir, {
+    tool_name: "Write",
+    tool_input: { file_path: filePath, content: "# Extra\n\nDoes something new.\n" },
+  });
+
+  assert.equal(result.status, 0);
+  const reason = parseDenyReason(result.stdout);
+  assert.match(reason, /never names action file "02-extra\.md"/);
+});
+
+test("a new action file the sibling SKILL.md already names is applied with no complaint", () => {
+  const projectDir = makeProjectDir();
+  const SKILL_NAMING_BOTH = [
+    "# Clean skill",
+    "",
+    "## Actions",
+    "",
+    "| # | Action | Role |",
+    "| --- | --- | --- |",
+    "| 01 | `step` | Do the one thing |",
+    "| 02 | `extra` | Do the new thing |",
+    "",
+  ].join("\n");
+  writeFixtureFile(projectDir, "plugins/aidd-fixture-a/skills/01-clean/SKILL.md", SKILL_NAMING_BOTH);
+  writeFixtureFile(
+    projectDir,
+    "plugins/aidd-fixture-a/skills/01-clean/actions/01-step.md",
+    "# Step\n"
+  );
+  const filePath = path.join(
+    projectDir,
+    "plugins/aidd-fixture-a/skills/01-clean/actions/02-extra.md"
+  );
+
+  const result = runHook(projectDir, {
+    tool_name: "Write",
+    tool_input: { file_path: filePath, content: "# Extra\n\nDoes something new.\n" },
   });
 
   assert.equal(result.status, 0);

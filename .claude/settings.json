@@ -17,7 +17,8 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/check-architecture-rules.js\""
+            "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/check-architecture-rules.js\"",
+            "timeout": 60
           }
         ]
       }

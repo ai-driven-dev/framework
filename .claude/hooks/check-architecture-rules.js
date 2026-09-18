@@ -45,10 +45,17 @@ function toRepoRelative(filePath) {
   }
 }
 
+/** Splices `newString` in for `oldString` literally — never through `String.prototype.replace`,
+ * whose replacement string treats `$&`, `` $` ``, `$'` and `$1`-style tokens specially even
+ * when the search pattern is a plain string, corrupting a `new_string` that happens to contain
+ * one. */
 function applyEdit(current, oldString, newString, replaceAll) {
   if (typeof oldString !== "string" || typeof newString !== "string") return null;
   if (!current.includes(oldString)) return null;
-  return replaceAll ? current.split(oldString).join(newString) : current.replace(oldString, newString);
+  if (replaceAll) return current.split(oldString).join(newString);
+
+  const idx = current.indexOf(oldString);
+  return current.slice(0, idx) + newString + current.slice(idx + oldString.length);
 }
 
 /** The prospective file content, or null when it cannot be determined (Write with no string
@@ -87,6 +94,42 @@ function actionFileNamesFor(relPath, absPath) {
   const actionsDir = path.join(path.dirname(absPath), "actions");
   try {
     return fs.readdirSync(actionsDir).filter((name) => name.endsWith(".md"));
+  } catch {
+    return [];
+  }
+}
+
+/** Rule two also fires from the action-file side: writing `actions/NN-new.md` can leave the
+ * sibling `SKILL.md`'s "## Actions" section out of step just as writing the `SKILL.md` itself
+ * can. Reads the sibling `SKILL.md` as it stands on disk, and the action file listing as it
+ * will be after this write, then runs the same coherence check the `SKILL.md` write path
+ * runs. Returns [] — fails open — when the sibling `SKILL.md` cannot be read. */
+function siblingRouterCoherence(engine, info, actionAbsPath) {
+  if (!info.skillDir) return [];
+  const root = process.env.CLAUDE_PROJECT_DIR || process.cwd();
+  const skillMdRelPath = `${info.skillDir}/SKILL.md`;
+  const skillMdAbsPath = path.join(root, info.skillDir, "SKILL.md");
+
+  let skillContent;
+  try {
+    skillContent = fs.readFileSync(skillMdAbsPath, "utf8");
+  } catch {
+    return [];
+  }
+
+  const actionsDirAbs = path.join(root, info.skillDir, "actions");
+  let names;
+  try {
+    names = fs.readdirSync(actionsDirAbs).filter((name) => name.endsWith(".md"));
+  } catch {
+    names = [];
+  }
+  const newBasename = path.basename(actionAbsPath);
+  const nameSet = new Set(names);
+  if (newBasename.endsWith(".md")) nameSet.add(newBasename);
+
+  try {
+    return engine.checkRouterCoherence(skillMdRelPath, skillContent, Array.from(nameSet));
   } catch {
     return [];
   }
@@ -132,7 +175,8 @@ function main() {
   const relPath = toRepoRelative(toolInput.file_path);
   if (!relPath) return 0;
 
-  if (!engine.classifyFile(relPath)) return 0;
+  const info = engine.classifyFile(relPath);
+  if (!info) return 0;
 
   const content = prospectiveContent(toolName, toolInput);
   if (content === null) return 0;
@@ -142,6 +186,9 @@ function main() {
   let violations;
   try {
     violations = engine.checkArchitecture(relPath, content, actionFileNames);
+    if (info.kind === "action") {
+      violations = violations.concat(siblingRouterCoherence(engine, info, toolInput.file_path));
+    }
   } catch {
     return 0;
   }

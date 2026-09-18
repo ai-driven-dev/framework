@@ -27,6 +27,8 @@ An AI-authored edit that would break one of this repository's two named architec
 - Repairing violations that exist in the tree today. That was #406, now closed.
 - Enforcing any architecture rule beyond the two named above.
 - Catching a violation introduced outside an AI tool, by a human editing by hand.
+- Catching a write performed through a shell command rather than a write tool. Deciding whether a shell line writes a plugin source means parsing arbitrary shell, which is not the deterministic verdict rule one requires. An agent told to edit through `sed` or a heredoc is therefore ungoverned, and that is stated here rather than left to be discovered.
+- Making `aidd-context:00-onboard` resolve its providers at runtime. Its reference menus name addresses because those addresses are what it hands a person to type, so it is exempt by a named rule with a follow-up issue behind it, not by silence.
 - Shipping the guard into projects that install this marketplace. The rules govern this repository's own plugin sources.
 
 ## Done-when
@@ -48,5 +50,6 @@ An AI-authored edit that would break one of this repository's two named architec
 ## Context
 
 - Backlog item: [ai-driven-dev/framework#250](https://github.com/ai-driven-dev/framework/issues/250).
+- The `00-onboard` exemption has an expiry, not a pass: [ai-driven-dev/framework#883](https://github.com/ai-driven-dev/framework/issues/883) makes that skill resolve its providers at runtime, and closing it closes the exemption.
 - The issue body's "Guardrail local et CI" section predates the 2026-09-14 comment on the same issue and is superseded by it. The comment is the governing statement: no Git hook, no CI gate, synthetic fixtures, #406 neither blocker nor fixture.
 - The orthogonality rule and its legitimate exceptions are stated in `docs/ARCHITECTURE.md`, under capability addressing: a capability is addressed only where the dispatch is declared, and elsewhere the concept is named instead of the skill that owns it.
