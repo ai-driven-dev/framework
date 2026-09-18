@@ -14,7 +14,7 @@ An AI-authored edit that would break one of this repository's two named architec
 - The governed surface is the dispatch surface: a skill's `SKILL.md`, its actions and its references, and an agent's definition. A plugin's `assets/` hold content shown to a reader, not dispatch, and are out of the guard's reach by this rule rather than by an unstated path filter.
 - Naming that `docs/ARCHITECTURE.md` declares legitimate stays silent: an agent's permission list and an orchestration reference are responsibility maps and name their provider canonically. Flagging either is a defect of the guard, not of the tree.
 - Every refusal names the file, the line, and the plugin that owns the addressed capability, in terms a reader can act on without opening the rule document.
-- The guard is silent on the repository as it stands. A rule that reports a violation in the current tree is miscalibrated, not vindicated.
+- The guard is silent on the repository as it stands. Two shapes it reads naively, both absent from the tree today: a fenced `## Actions` inside a code block is taken for the section itself, and a fenced `##` line inside the section ends it early. A rule that reports a violation in the current tree is miscalibrated, not vindicated.
 - The rules are exercised by purpose-built fixtures. No historical code from #406 is used as a fixture.
 - Each rule is proved by a fixture that breaks it and turns exactly the test named for that rule red, and by a fixture of legitimate naming that stays green.
 
@@ -24,7 +24,7 @@ An AI-authored edit that would break one of this repository's two named architec
 - A CI job enforcing these rules.
 - Judging whether a skill's prose `description` has gone stale. Nothing mechanically separates stale prose from current prose, so the issue's "router/description mismatch" is served by the router half alone.
 - Refusing a citation with no action file behind it. A citation written seconds before the file it names is indistinguishable from a stale one, and this project's own skill generator writes the router first, so enforcing that direction makes adding an action impossible in either order. The decidable direction — an action file the section never cites — is the one the issue names, and the one enforced.
-- Catching an action file created and never cited. Rule two decides on a write to a `SKILL.md`; an orphan action file is caught at the next write to its skill's router, not at its own creation. Firing on the action file instead is what made both orders of adding an action refuse each other.
+- Catching an action file created and never cited. Rule two decides on a write to a `SKILL.md`; an orphan action file is caught at the next write to its skill's router, not at its own creation. Firing on the action file is what broke the order that creates the file first, and dropping it was the cheaper half of breaking the deadlock. The window is unbounded: that next write may never come, so this is a hole, not a delay.
 - Reaching into a plugin's `README.md`, which addresses a sibling in two places today. Like `assets/`, it is a document a reader reads, not a dispatch the skill executes.
 - Reaching into a plugin's `assets/`. A recipe sheet names the commands a reader types; that is its subject, not a dispatch this rule governs.
 - Repairing violations that exist in the tree today. That was #406, now closed.

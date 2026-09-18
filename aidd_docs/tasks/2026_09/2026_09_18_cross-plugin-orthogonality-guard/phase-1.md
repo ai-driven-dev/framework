@@ -50,8 +50,8 @@ journey
     An orchestrator reference names a provider => run the engine over it => no violation: 1: cli
   section Edge case - an action file no section names
     A skill gains an action file its Actions section never mentions => run the engine over it => one violation naming the file: 1: cli
-  section Edge case - a section names an action that does not exist
-    An Actions row cites a name with no file behind it => run the engine over it => one violation naming the file and the row: 1: cli
+  section Edge case - a section whose mention is only prose
+    A word in the section's prose matches an action's stem but no row cites it => run the engine over it => one violation naming the file: 1: cli
 ```
 
 ## Tasks to do
@@ -75,12 +75,12 @@ journey
 
 ### `3)` The router coherence rule
 
-> An Actions section names exactly the actions that exist.
+> An Actions section cites every action that exists.
 
 1. Take the prospective `SKILL.md` content and the names of the skill's action files.
 2. Isolate the `## Actions` section, up to the next second-level heading.
-3. Report an action file the section names by neither its stem nor its file name, and report a name the section cites that no file backs.
-4. Report the line of the section heading when the violation is an absent mention, and the line of the citation when it is a phantom one.
+3. Report an action file the section cites by neither its stem, its file name, nor an `actions/<name>.md` path. Collect a citation from the table's action column, never from running prose.
+4. Report the line of the section heading. A citation with no file behind it is deliberately not reported — it cannot be told apart from one written just before the file it names.
 
 ### `4)` The rule the repository already follows
 
@@ -101,6 +101,6 @@ journey
 | --- | --- |
 | 1 | Every case in the suite fails before the engine exists, each for the missing module |
 | 2 | A skill addressing a sibling yields a violation naming file, line and owning plugin; an agent permission list and an orchestrator reference yield none; a file under `assets/` yields none |
-| 3 | An action file the section never names yields one violation; a cited name with no file yields one violation; a skill whose section and files agree yields none |
+| 3 | An action file the section never cites yields one violation; a stem appearing only in prose does not count as a citation; a skill whose section and files agree yields none |
 | 4 | Sweeping the repository's own `plugins/` yields zero violations |
 | 5 | `docs/ARCHITECTURE.md` names the guard, and the markdown-link check still passes |

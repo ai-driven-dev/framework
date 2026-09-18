@@ -231,3 +231,74 @@ test("sweeping the repository's own plugins/ tree yields zero violations", () =>
   // this pins the sweep to the measured count so it cannot go vacuously green.
   assert.equal(skillsWithActions, 48);
 });
+
+test("a table that declares no action column cites nothing, whatever its cells read", () => {
+  const violations = checkArchitecture(
+    "plugins/aidd-fixture-a/skills/01-glossary/SKILL.md",
+    fixture("glossary-column-skill/SKILL.md"),
+    ["01-step.md"]
+  );
+  assert.equal(violations.length, 1);
+  assert.equal(violations[0].rule, "router-coherence");
+  assert.match(violations[0].message, /never names action file "01-step\.md"/);
+});
+
+test("a name in a column other than the action column does not cite that action", () => {
+  const content = [
+    "# Two column skill",
+    "",
+    "## Actions",
+    "",
+    "| # | Action | Next |",
+    "| --- | --- | --- |",
+    "| 01 | `first` | second |",
+    "",
+    "## Transversal rules",
+    "",
+    "- Nothing.",
+  ].join("\n");
+  const violations = checkArchitecture(
+    "plugins/aidd-fixture-a/skills/01-two-column/SKILL.md",
+    content,
+    ["01-first.md", "02-second.md"]
+  );
+  assert.equal(violations.length, 1);
+  assert.match(violations[0].message, /never names action file "02-second\.md"/);
+});
+
+test("a skill holding action files with no Actions section at all is refused", () => {
+  const violations = checkArchitecture(
+    "plugins/aidd-fixture-a/skills/01-no-section/SKILL.md",
+    fixture("no-actions-section-skill/SKILL.md"),
+    ["01-step.md"]
+  );
+  assert.equal(violations.length, 1);
+  assert.equal(violations[0].rule, "router-coherence");
+  assert.match(violations[0].message, /no "## Actions" section/);
+});
+
+test("a glossary table before the router does not blind the router's own column", () => {
+  const content = [
+    "# Two table skill",
+    "",
+    "## Actions",
+    "",
+    "| Term | Synonym |",
+    "| --- | --- |",
+    "| step | move |",
+    "",
+    "| # | Action | Role |",
+    "| --- | --- | --- |",
+    "| 01 | `first` | Do it |",
+    "",
+    "## Transversal rules",
+    "",
+    "- Nothing.",
+  ].join("\n");
+  const violations = checkArchitecture(
+    "plugins/aidd-fixture-a/skills/01-two-table/SKILL.md",
+    content,
+    ["01-first.md"]
+  );
+  assert.deepEqual(violations, []);
+});

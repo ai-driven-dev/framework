@@ -52,9 +52,7 @@ function toLines(content) {
  * anything else, including everything under an `assets/` segment at any depth.
  *
  * An `actions/` or `references/` segment governs everything beneath it, at any depth, and a
- * `SKILL.md` is governed at any depth under `skills/` — not only one level down. `skillDir` is
- * the repository-relative path (`plugins/<owner>/skills/<...>`) of the skill folder itself: the
- * directory holding `SKILL.md`, or the directory the `actions/`/`references/` segment sits in.
+ * `SKILL.md` is governed at any depth under `skills/` — not only one level down.
  */
 function classifyFile(filePath) {
   const parts = filePath.split("/").filter(Boolean);
@@ -77,20 +75,18 @@ function classifyFile(filePath) {
   const last = rest[rest.length - 1];
   if (!last.endsWith(".md")) return null;
 
-  const skillDirFor = (segments) => ["plugins", owner, "skills", ...segments].join("/");
-
   if (last === "SKILL.md") {
-    return { owner, kind: "skill", skillDir: skillDirFor(rest.slice(0, -1)) };
+    return { owner, kind: "skill" };
   }
 
   const actionsIdx = rest.indexOf("actions");
   if (actionsIdx !== -1) {
-    return { owner, kind: "action", skillDir: skillDirFor(rest.slice(0, actionsIdx)) };
+    return { owner, kind: "action" };
   }
 
   const referencesIdx = rest.indexOf("references");
   if (referencesIdx !== -1) {
-    return { owner, kind: "reference", skillDir: skillDirFor(rest.slice(0, referencesIdx)) };
+    return { owner, kind: "reference" };
   }
 
   return null;
@@ -186,6 +182,31 @@ function splitTableCells(line) {
   return withoutEdges.split("|").map((cell) => cell.trim());
 }
 
+/** The contiguous runs of table rows in a section: each run is one table, so one table's
+ * header never speaks for the next one's columns. */
+function tableBlocks(sectionLines) {
+  const blocks = [];
+  let current = [];
+  for (const line of sectionLines) {
+    if (/^\s*\|/.test(line)) {
+      current.push(line);
+      continue;
+    }
+    if (current.length > 0) {
+      blocks.push(current);
+      current = [];
+    }
+  }
+  if (current.length > 0) blocks.push(current);
+  return blocks;
+}
+
+/** A `| --- | --- |` row: every cell is dashes and colons, so it declares no column and cites
+ * nothing. */
+function isTableSeparatorRow(cells) {
+  return cells.length > 0 && cells.every((cell) => /^:?-{3,}:?$/.test(cell));
+}
+
 /** Every citation the "## Actions" section makes to an action file: a table cell that reads as
  * a plain name, an `actions/<name>.md` path, or a backticked `<name>.md` filename — the three
  * shapes rule two's own comment names, and nothing else. A word merely present in prose is not
@@ -194,10 +215,18 @@ function splitTableCells(line) {
 function citationsIn(sectionLines, sectionText) {
   const citations = new Set();
 
-  for (const line of sectionLines) {
-    if (!/^\s*\|/.test(line)) continue;
-    for (const rawCell of splitTableCells(line)) {
-      const cell = stripBackticks(rawCell);
+  // Only the column a table declares as its action column counts. A glossary, a trigger column
+  // or a "next step" column names things that are not dispatch, and reading them as citations
+  // would let a section satisfy rule two while routing nothing. Each table decides for itself:
+  // a section may hold a glossary next to its router, and the router must still be read.
+  for (const block of tableBlocks(sectionLines)) {
+    const rows = block.map(splitTableCells);
+    const actionColumn = rows[0].findIndex((cell) => /\baction\b/i.test(stripBackticks(cell)));
+    if (actionColumn === -1) continue; // this table declares no action column: it cites nothing
+
+    for (const cells of rows.slice(1)) {
+      if (isTableSeparatorRow(cells)) continue;
+      const cell = stripBackticks(cells[actionColumn] ?? "");
       if (CITATION_TOKEN_RE.test(cell)) citations.add(cell.toLowerCase());
     }
   }

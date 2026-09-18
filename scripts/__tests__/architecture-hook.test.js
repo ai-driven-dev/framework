@@ -479,3 +479,22 @@ test("adding an action to an existing skill succeeds citation-first (order B)", 
   assert.equal(createAction.status, 0);
   assert.equal(createAction.stdout, "");
 });
+
+test("a router refusal says what a citation is, not only that one is missing", () => {
+  const projectDir = makeProjectDir();
+  const rel = "plugins/aidd-fixture-a/skills/01-clean/SKILL.md";
+  const filePath = writeFixtureFile(projectDir, rel, CLEAN_SKILL);
+  writeFixtureFile(projectDir, "plugins/aidd-fixture-a/skills/01-clean/actions/01-step.md", "# step\n");
+  writeFixtureFile(projectDir, "plugins/aidd-fixture-a/skills/01-clean/actions/02-refine.md", "# refine\n");
+
+  const result = runHook(projectDir, {
+    tool_name: "Write",
+    tool_input: { file_path: filePath, content: `${CLEAN_SKILL}\nThe refine step tidies up.\n` },
+  });
+
+  assert.equal(result.status, 0);
+  const reason = parseDenyReason(result.stdout);
+  assert.match(reason, /02-refine\.md/);
+  assert.match(reason, /action column/);
+  assert.match(reason, /a word in prose does not count/);
+});

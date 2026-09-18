@@ -101,7 +101,7 @@ function actionFileNamesFor(relPath, absPath) {
 function fixFor(rule, plugin) {
   return rule === "orthogonality"
     ? `name the concept ${plugin} owns instead of addressing it directly`
-    : `keep "## Actions" naming exactly the action files this skill provides, no more, no fewer`;
+    : 'cite every action file the skill provides in its "## Actions" section. A citation is a cell in the table\'s action column, a fenced `actions/<name>.md` path, or a backticked `<name>.md` file name — a word in prose does not count';
 }
 
 function denyReason(violations) {
