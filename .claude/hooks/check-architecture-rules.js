@@ -1,30 +1,35 @@
 #!/usr/bin/env node
 
 /**
- * PreToolUse guard for Write, Edit and MultiEdit: refuses an AI-authored edit that would leave a plugin's
- * dispatch surface breaking one of the two named architecture rules (issue #250) — cross-plugin
- * orthogonality and router coherence. The rules themselves live in `scripts/lib/architecture-
- * rules.js`, a pure engine this script is the only caller of at write time.
+ * PreToolUse guard: refuses a Write, Edit or MultiEdit that would leave a plugin's dispatch
+ * surface breaking one of the two architecture rules of issue #250. The rules live in
+ * `scripts/lib/architecture-rules.js`; this script only supplies their inputs and speaks the
+ * host's refusal.
  *
- * Fails open on purpose: any unrecognised shape, unparseable payload, unreconstructable edit, or
- * path outside the governed surface exits 0 with no output. This hook gates every write tool call
- * in the repository, so a crash here must never block unrelated work.
+ * It fails open at every step. This hook gates every write in the repository, so an unreadable
+ * payload, an unknown tool, an edit it cannot reconstruct or a crash must let the write through
+ * rather than halt unrelated work.
  */
 
 const fs = require("node:fs");
 const path = require("node:path");
 
-function loadEngine() {
+const WRITE_TOOLS = new Set(["Write", "Edit", "MultiEdit"]);
+const PROCEED = 0;
+
+const CITATION_SHAPES =
+  "a cell under a table header that reads Action, a fenced `actions/<name>.md` path, or a " +
+  "backticked `<name>.md` file name — a word in prose does not count";
+
+function architectureRules() {
   try {
-    // Fixed relative path: this hook always lives two levels below the repo root, at
-    // `.claude/hooks/`, regardless of CLAUDE_PROJECT_DIR or the process cwd.
     return require(path.resolve(__dirname, "..", "..", "scripts", "lib", "architecture-rules.js"));
   } catch {
     return null;
   }
 }
 
-function readPayload() {
+function payloadFromStdin() {
   try {
     const parsed = JSON.parse(fs.readFileSync(0, "utf8"));
     return parsed && typeof parsed === "object" ? parsed : null;
@@ -33,84 +38,75 @@ function readPayload() {
   }
 }
 
-/** Repository-relative, forward-slashed path, or null when it resolves outside the project. */
-function toRepoRelative(filePath, root) {
+function repoRelative(absolutePath, root) {
+  const relative = path.relative(root, absolutePath);
+  if (relative === "" || relative.startsWith("..") || path.isAbsolute(relative)) return null;
+  return relative.split(path.sep).join("/");
+}
+
+function readFile(absolutePath) {
   try {
-    const rel = path.relative(root, path.resolve(root, filePath));
-    if (rel === "" || rel.startsWith("..") || path.isAbsolute(rel)) return null;
-    return rel.split(path.sep).join("/");
+    return fs.readFileSync(absolutePath, "utf8");
   } catch {
     return null;
   }
 }
 
-/** Splices `newString` in for `oldString` literally — never through `String.prototype.replace`,
- * whose replacement string treats `$&`, `` $` ``, `$'` and `$1`-style tokens specially even
- * when the search pattern is a plain string, corrupting a `new_string` that happens to contain
- * one. */
-function applyEdit(current, oldString, newString, replaceAll) {
+/**
+ * Splices literally. `String.prototype.replace` reads `$&`, `` $` ``, `$'` and `$1` in its
+ * replacement even when the pattern is a plain string, which corrupts a `new_string` holding one.
+ */
+function spliced(content, { old_string: oldString, new_string: newString, replace_all: replaceAll }) {
   if (typeof oldString !== "string" || typeof newString !== "string") return null;
-  if (!current.includes(oldString)) return null;
-  if (replaceAll) return current.split(oldString).join(newString);
+  if (!content.includes(oldString)) return null;
+  if (replaceAll) return content.split(oldString).join(newString);
 
-  const idx = current.indexOf(oldString);
-  return current.slice(0, idx) + newString + current.slice(idx + oldString.length);
+  const at = content.indexOf(oldString);
+  return content.slice(0, at) + newString + content.slice(at + oldString.length);
 }
 
-/** The prospective file content, or null when it cannot be determined (Write with no string
- * content, an Edit whose old_string is absent, or the current file cannot be read). */
-function prospectiveContent(toolName, toolInput) {
+function editedContent(absolutePath, edits) {
+  let content = readFile(absolutePath);
+  if (content === null) return null;
+
+  for (const edit of edits) {
+    if (!edit || typeof edit !== "object") return null;
+    content = spliced(content, edit);
+    if (content === null) return null;
+  }
+  return content;
+}
+
+/** What the file will hold if this call goes through, or null when that cannot be determined. */
+function prospectiveContent(toolName, toolInput, absolutePath) {
   if (toolName === "Write") {
     return typeof toolInput.content === "string" ? toolInput.content : null;
   }
-  if (toolName !== "Edit" && toolName !== "MultiEdit") return null;
+  if (toolName === "Edit") return editedContent(absolutePath, [toolInput]);
 
-  let current;
-  try {
-    current = fs.readFileSync(toolInput.file_path, "utf8");
-  } catch {
-    return null;
-  }
-
-  if (toolName === "Edit") {
-    return applyEdit(current, toolInput.old_string, toolInput.new_string, Boolean(toolInput.replace_all));
-  }
-
-  // MultiEdit applies its edits in order, each to the result of the one before.
-  if (!Array.isArray(toolInput.edits) || toolInput.edits.length === 0) return null;
-  for (const edit of toolInput.edits) {
-    if (!edit || typeof edit !== "object") return null;
-    current = applyEdit(current, edit.old_string, edit.new_string, Boolean(edit.replace_all));
-    if (current === null) return null;
-  }
-  return current;
+  const { edits } = toolInput;
+  if (!Array.isArray(edits) || edits.length === 0) return null;
+  return editedContent(absolutePath, edits);
 }
 
-/** The action file names for a SKILL.md path, read from its sibling `actions/` directory.
- * Undefined for anything else, matching the engine's own contract. */
-function actionFileNamesFor(relPath, absPath) {
-  if (path.basename(relPath) !== "SKILL.md") return undefined;
-  const actionsDir = path.join(path.dirname(absPath), "actions");
+/** Rule two needs the skill's action files; the engine never reads them itself. */
+function actionFileNames(relativePath, absolutePath) {
+  if (path.basename(relativePath) !== "SKILL.md") return undefined;
   try {
-    return fs.readdirSync(actionsDir).filter((name) => name.endsWith(".md"));
+    return fs.readdirSync(path.join(path.dirname(absolutePath), "actions")).filter((name) => name.endsWith(".md"));
   } catch {
     return [];
   }
 }
 
-function fixFor(rule, plugin) {
+function howToFix({ rule, plugin }) {
   return rule === "orthogonality"
     ? `name the concept ${plugin} owns instead of addressing it directly`
-    : 'cite every action file the skill provides in its "## Actions" section. A citation is a cell under a table header that reads Action, a fenced `actions/<name>.md` path, or a backticked `<name>.md` file name — a word in prose does not count';
+    : `cite every action file the skill provides in its "## Actions" section. A citation is ${CITATION_SHAPES}`;
 }
 
-function denyReason(violations) {
-  return violations
-    .map((v) => `${v.message}. Fix: ${fixFor(v.rule, v.plugin)}.`)
-    .join("\n");
-}
-
-function deny(reason) {
+function refuse(violations) {
+  const reason = violations.map((v) => `${v.message}. Fix: ${howToFix(v)}.`).join("\n");
   process.stdout.write(
     JSON.stringify({
       hookSpecificOutput: {
@@ -122,50 +118,42 @@ function deny(reason) {
   );
 }
 
-function main() {
-  const engine = loadEngine();
-  if (!engine) return 0;
-
-  const payload = readPayload();
-  if (!payload) return 0;
-
-  const toolName = payload.tool_name;
-  if (toolName !== "Write" && toolName !== "Edit" && toolName !== "MultiEdit") return 0;
-
-  const toolInput = payload.tool_input;
-  if (!toolInput || typeof toolInput.file_path !== "string" || toolInput.file_path === "") return 0;
-
-  // Resolved once, against the project root, and reused for every filesystem access below — a
-  // relative `file_path` must never be read against the process's own cwd, which can differ
-  // from CLAUDE_PROJECT_DIR and would otherwise silently empty a readdir this hook depends on.
-  const root = process.env.CLAUDE_PROJECT_DIR || process.cwd();
-  const relPath = toRepoRelative(toolInput.file_path, root);
-  if (!relPath) return 0;
-
-  const info = engine.classifyFile(relPath);
-  if (!info) return 0;
-
-  const absPath = path.resolve(root, toolInput.file_path);
-  const content = prospectiveContent(toolName, { ...toolInput, file_path: absPath });
-  if (content === null) return 0;
-
-  const actionFileNames = actionFileNamesFor(relPath, absPath);
-
-  let violations;
+function violationsFor(engine, relativePath, content, actions) {
   try {
-    violations = engine.checkArchitecture(relPath, content, actionFileNames);
+    const found = engine.checkArchitecture(relativePath, content, actions);
+    return Array.isArray(found) ? found : [];
   } catch {
-    return 0;
+    return [];
   }
+}
 
-  if (!Array.isArray(violations) || violations.length === 0) return 0;
+function main() {
+  const engine = architectureRules();
+  const payload = payloadFromStdin();
+  if (!engine || !payload) return PROCEED;
 
-  deny(denyReason(violations));
-  return 0;
+  const { tool_name: toolName, tool_input: toolInput } = payload;
+  if (!WRITE_TOOLS.has(toolName)) return PROCEED;
+  if (!toolInput || typeof toolInput.file_path !== "string" || toolInput.file_path === "") return PROCEED;
+
+  // Resolved against the project root, never the process cwd: the two can differ, and a readdir
+  // against the wrong one comes back empty instead of failing.
+  const root = process.env.CLAUDE_PROJECT_DIR || process.cwd();
+  const absolutePath = path.resolve(root, toolInput.file_path);
+  const relativePath = repoRelative(absolutePath, root);
+  if (!relativePath || !engine.classifyFile(relativePath)) return PROCEED;
+
+  const content = prospectiveContent(toolName, toolInput, absolutePath);
+  if (content === null) return PROCEED;
+
+  const violations = violationsFor(engine, relativePath, content, actionFileNames(relativePath, absolutePath));
+  if (violations.length > 0) refuse(violations);
+
+  return PROCEED;
 }
 
 try {
   process.exitCode = main();
 } catch {
-  process.exitCode = 0;
+  process.exitCode = PROCEED;
 }

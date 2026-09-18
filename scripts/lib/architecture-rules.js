@@ -1,229 +1,178 @@
 /**
- * The two named architecture rules (issue #250), as pure functions of a repository-relative
- * path, the prospective file content, and — for a SKILL.md — the names of the skill's action
- * files. Never reads the filesystem: the caller supplies every input, so a hook and a test can
- * hand it the same shape without either touching disk through it.
+ * The two architecture rules of issue #250, as pure functions: the caller supplies the path, the
+ * prospective content and a SKILL.md's action file names, and nothing here reads the filesystem.
  *
- * Rule one, cross-plugin orthogonality: a plugin's dispatch surface must not name a sibling
- * plugin by a hardcoded address.
- * Rule two, router coherence: a skill's `## Actions` section must name every action file that
- * skill provides. It checks one direction only — an action file the section never cites. It
- * used to also flag the opposite direction, a citation with no action file behind it, but that
- * is indistinguishable from a citation written seconds before the file it names, which is the
- * order this project's own skill generator documents (create the action, then have the router
- * name it — or name it first, then create the file). Enforcing it made adding an action to an
- * existing skill impossible in either order. The direction that remains is decidable at any
- * moment content is proposed, regardless of what gets written next.
+ * Why each rule is shaped the way it is — the one-directional router check, the exemptions, the
+ * two table shapes read generously — is in the decisions table of
+ * `aidd_docs/tasks/2026_09/2026_09_18_cross-plugin-orthogonality-guard/plan.md`.
  */
 
 "use strict";
 
 const ORCHESTRATOR_PLUGIN = "aidd-orchestrator";
 
-// Temporary: `00-onboard`'s reference menus are routing menus whose addresses are what the
-// skill hands a person to type, not a hardcoded sibling provider — so orthogonality stays
-// silent on this one skill directory. See #883, the follow-up issue on 00-onboard runtime
-// discovery.
+/** Expires with #883, which makes 00-onboard resolve its providers at runtime. */
 const ONBOARD_EXEMPT_PREFIX = "plugins/aidd-context/skills/00-onboard/";
 
-const HEADING_RE = /^#{1,6}\s/;
-const SKILLS_INVOKE_HEADING_RE = /^#{1,6}\s+Skills you may invoke\s*$/i;
-const ACTIONS_HEADING_RE = /^##\s+Actions\s*$/i;
-const SECOND_LEVEL_HEADING_RE = /^##\s+/;
-// Matches `/plugin:name`, `@plugin:name`, and the bare `plugin:name` form. The lookbehind keeps
-// the left edge from firing inside a longer identifier — `some-aidd-dev:01-x` never matches,
-// because the character right before "aidd-" (a hyphen, a letter, a digit, or another `/`/`@`)
-// rules it out — while a backtick, space, or start of line still lets a bare address through.
-const ADDRESS_RE = /(?<![\w/@-])(?:[@/])?(aidd-[a-z0-9]+(?:-[a-z0-9]+)*):([A-Za-z0-9][\w.-]*)/g;
-// The three ways a "## Actions" section cites an action file, per rule two: a table cell that
-// reads as a plain name, an `actions/<name>.md` path, or a backticked `<name>.md` filename.
-// Deliberately narrow — a word loose in prose is never a citation, which is what let a deleted
-// table row hide behind unrelated text that happened to contain the same word.
-const ACTION_PATH_RE = /actions\/([A-Za-z0-9._-]+)\.md/g;
-const BACKTICKED_MD_RE = /`([A-Za-z0-9][A-Za-z0-9._-]*\.md)`/g;
-/** A header cell that declares the action column. Exact on purpose: "Next action" heads a
- * routing hint, not a dispatch, and reading it as one lets a deleted row hide behind it. */
-const ACTION_HEADER_RE = /^actions?$/i;
-const CITATION_TOKEN_RE = /^[A-Za-z0-9][A-Za-z0-9._-]*$/;
+const ANY_HEADING = /^#{1,6}\s/;
+const PERMISSION_LIST_HEADING = /^#{1,6}\s+Skills you may invoke\s*$/i;
+const ACTIONS_HEADING = /^##\s+Actions\s*$/i;
+const SECOND_LEVEL_HEADING = /^##\s+/;
+const FENCE_MARKER = /^\s*(`{3,}|~{3,})/;
+const TABLE_ROW = /^\s*\|/;
+
+const PLUGIN_ADDRESS = /(?<![\w/@-])(?:[@/])?(aidd-[a-z0-9]+(?:-[a-z0-9]+)*):([A-Za-z0-9][\w.-]*)/g;
+const ACTION_PATH = /actions\/([A-Za-z0-9._-]+)\.md/g;
+const BACKTICKED_FILE_NAME = /`([A-Za-z0-9][A-Za-z0-9._-]*\.md)`/g;
+const ACTION_COLUMN_HEADER = /^actions?$/i;
+const CITATION_TOKEN = /^[A-Za-z0-9][A-Za-z0-9._-]*$/;
+const SEPARATOR_CELL = /^:?-+:?$/;
 
 function toLines(content) {
   return content.split("\n");
 }
 
-/**
- * Classifies a repository-relative path against the governed surface. Returns null for
- * anything else, including everything under an `assets/` segment at any depth.
- *
- * An `actions/` or `references/` segment governs everything beneath it, at any depth, and a
- * `SKILL.md` is governed at any depth under `skills/` — not only one level down.
- */
-function classifyFile(filePath) {
-  const parts = filePath.split("/").filter(Boolean);
-  if (parts[0] !== "plugins" || parts.length < 3) return null;
-  if (parts.includes("assets")) return null;
-
-  const owner = parts[1];
-
-  if (parts[2] === "agents") {
-    if (parts.length === 4 && parts[3].endsWith(".md")) {
-      return { owner, kind: "agent" };
-    }
-    return null;
-  }
-
-  if (parts[2] !== "skills") return null;
-  const rest = parts.slice(3);
-  if (rest.length < 1) return null;
-
-  const last = rest[rest.length - 1];
-  if (!last.endsWith(".md")) return null;
-
-  if (last === "SKILL.md") {
-    return { owner, kind: "skill" };
-  }
-
-  const actionsIdx = rest.indexOf("actions");
-  if (actionsIdx !== -1) {
-    return { owner, kind: "action" };
-  }
-
-  const referencesIdx = rest.indexOf("references");
-  if (referencesIdx !== -1) {
-    return { owner, kind: "reference" };
-  }
-
-  return null;
+function stripBackticks(text) {
+  const trimmed = text.trim();
+  const quoted = /^`(.*)`$/.exec(trimmed);
+  return quoted ? quoted[1].trim() : trimmed;
 }
 
-/** Every `/plugin:name` or `@plugin:name` address, with its 1-indexed line. */
-function findAddresses(content) {
-  const matches = [];
-  toLines(content).forEach((line, idx) => {
-    ADDRESS_RE.lastIndex = 0;
-    let match;
-    while ((match = ADDRESS_RE.exec(line)) !== null) {
-      matches.push({ line: idx + 1, plugin: match[1], text: match[0] });
-    }
-  });
-  return matches;
-}
-
-/** 1-indexed lines under an agent's `# Skills you may invoke` heading, any level, until the
- * next heading of any level. */
-function exemptAgentLines(lines) {
-  const exempt = new Set();
-  let inSection = false;
-  lines.forEach((line, idx) => {
-    if (HEADING_RE.test(line)) {
-      inSection = SKILLS_INVOKE_HEADING_RE.test(line);
-      return;
-    }
-    if (inSection) exempt.add(idx + 1);
-  });
-  return exempt;
-}
-
-/**
- * Rule one: a dispatch surface never names a sibling plugin by a hardcoded address.
- */
-function checkOrthogonality(filePath, content) {
-  const info = classifyFile(filePath);
-  if (!info || info.owner === ORCHESTRATOR_PLUGIN) return [];
-  if (filePath.startsWith(ONBOARD_EXEMPT_PREFIX)) return [];
-
-  const lines = toLines(content);
-  const exempt = info.kind === "agent" ? exemptAgentLines(lines) : new Set();
-
-  const violations = [];
-  for (const address of findAddresses(content)) {
-    if (address.plugin === info.owner) continue;
-    if (exempt.has(address.line)) continue;
-    violations.push({
-      file: filePath,
-      line: address.line,
-      plugin: address.plugin,
-      rule: "orthogonality",
-      message: `${filePath}:${address.line} addresses sibling plugin "${address.plugin}" via "${address.text}"`,
-    });
-  }
-  return violations;
-}
-
-/** Strips a leading `NN-` and a trailing `.md` — "01-frame.md" -> "frame". */
 function stemOf(fileName) {
   return fileName.replace(/\.md$/i, "").replace(/^[0-9]+-/, "");
 }
 
-/** Strips one layer of matching backticks around a trimmed cell or token, if present. */
-function stripBackticks(text) {
-  const trimmed = text.trim();
-  const match = /^`(.*)`$/.exec(trimmed);
-  return match ? match[1].trim() : trimmed;
+function violation(rule, filePath, line, plugin, message) {
+  return { file: filePath, line, plugin, rule, message };
 }
 
-/** The `## Actions` section: from the line after its heading up to the next `##` heading (or
- * end of file). Returns null when no such heading exists. */
-/** The lines of a document with every fenced block blanked, keeping the line count intact so
- * a reported number still points at the right line. A fence holds an example: a `## Actions`
- * inside one is not the section, a `##` inside one does not end it, and a table inside one
- * routes nothing. A fenced `actions/<name>.md` path is the exception — `10-todo` cites its one
- * action that way — so path citations are read from the unblanked lines. */
-function withoutFences(lines) {
-  // An unterminated fence would blank the rest of the file, hiding a `## Actions` that is
-  // visibly there and producing a refusal nobody can act on. Treat it as not a fence at all.
+// --- The governed surface ------------------------------------------------------------------
+
+/** `{ owner, kind }` for a dispatch surface, `null` for anything else. */
+function classifyFile(filePath) {
+  const parts = filePath.split("/").filter(Boolean);
+  const [root, owner, area, ...rest] = parts;
+
+  if (root !== "plugins" || parts.length < 3) return null;
+  if (parts.includes("assets")) return null;
+  if (!rest.at(-1)?.endsWith(".md")) return null;
+
+  if (area === "agents") return rest.length === 1 ? { owner, kind: "agent" } : null;
+  if (area !== "skills") return null;
+
+  if (rest.at(-1) === "SKILL.md") return { owner, kind: "skill" };
+  if (rest.includes("actions")) return { owner, kind: "action" };
+  if (rest.includes("references")) return { owner, kind: "reference" };
+  return null;
+}
+
+// --- Rule one: cross-plugin orthogonality --------------------------------------------------
+
+function addressesIn(content) {
+  const addresses = [];
+  toLines(content).forEach((line, index) => {
+    PLUGIN_ADDRESS.lastIndex = 0;
+    let match;
+    while ((match = PLUGIN_ADDRESS.exec(line)) !== null) {
+      addresses.push({ line: index + 1, plugin: match[1], text: match[0] });
+    }
+  });
+  return addresses;
+}
+
+/** An agent's `# Skills you may invoke` list names its providers on purpose. */
+function permissionListLines(lines) {
+  const listed = new Set();
+  let inList = false;
+  lines.forEach((line, index) => {
+    if (ANY_HEADING.test(line)) inList = PERMISSION_LIST_HEADING.test(line);
+    else if (inList) listed.add(index + 1);
+  });
+  return listed;
+}
+
+function isExemptFromOrthogonality(filePath, owner) {
+  return owner === ORCHESTRATOR_PLUGIN || filePath.startsWith(ONBOARD_EXEMPT_PREFIX);
+}
+
+function checkOrthogonality(filePath, content) {
+  const surface = classifyFile(filePath);
+  if (!surface || isExemptFromOrthogonality(filePath, surface.owner)) return [];
+
+  const lines = toLines(content);
+  const exemptLines = surface.kind === "agent" ? permissionListLines(lines) : new Set();
+
+  return addressesIn(content)
+    .filter(({ plugin, line }) => plugin !== surface.owner && !exemptLines.has(line))
+    .map(({ plugin, line, text }) =>
+      violation(
+        "orthogonality",
+        filePath,
+        line,
+        plugin,
+        `${filePath}:${line} addresses sibling plugin "${plugin}" via "${text}"`
+      )
+    );
+}
+
+// --- Reading a `## Actions` section --------------------------------------------------------
+
+function fenceCharacter(line) {
+  return line.match(FENCE_MARKER)?.[1][0] ?? null;
+}
+
+function hasUnterminatedFence(lines) {
   let open = null;
   for (const line of lines) {
-    const match = line.match(/^\s*(`{3,}|~{3,})/);
-    if (!match) continue;
-    if (open === null) open = match[1][0];
-    else if (match[1][0] === open) open = null;
+    const marker = fenceCharacter(line);
+    if (marker === null) continue;
+    open = open === null ? marker : open === marker ? null : open;
   }
-  if (open !== null) return lines;
+  return open !== null;
+}
 
-  let fence = null;
+/**
+ * Every fenced line blanked, line count intact so a reported number still points at its line. A
+ * fence holds an example, never a router — except an unterminated one, which is not a fence.
+ */
+function withoutFences(lines) {
+  if (hasUnterminatedFence(lines)) return lines;
+
+  let open = null;
   return lines.map((line) => {
-    const match = line.match(/^\s*(`{3,}|~{3,})/);
-    if (fence === null && match) {
-      fence = match[1][0];
-      return "";
-    }
-    if (fence !== null) {
-      if (match && match[1][0] === fence) fence = null;
-      return "";
-    }
-    return line;
+    const marker = fenceCharacter(line);
+    if (open === null && marker === null) return line;
+    if (open === null) open = marker;
+    else if (marker === open) open = null;
+    return "";
   });
 }
 
-function findActionsSection(lines) {
-  const headingIdx = lines.findIndex((line) => ACTIONS_HEADING_RE.test(line));
-  if (headingIdx === -1) return null;
+function actionsSection(lines) {
+  const headingIndex = lines.findIndex((line) => ACTIONS_HEADING.test(line));
+  if (headingIndex === -1) return null;
 
-  let endIdx = lines.length;
-  for (let i = headingIdx + 1; i < lines.length; i += 1) {
-    if (SECOND_LEVEL_HEADING_RE.test(lines[i])) {
-      endIdx = i;
-      break;
-    }
-  }
-  return { headingLine: headingIdx + 1, startIdx: headingIdx + 1, endIdx };
+  const after = lines.slice(headingIndex + 1);
+  const nextHeading = after.findIndex((line) => SECOND_LEVEL_HEADING.test(line));
+
+  return {
+    headingLine: headingIndex + 1,
+    startIndex: headingIndex + 1,
+    endIndex: nextHeading === -1 ? lines.length : headingIndex + 1 + nextHeading,
+  };
 }
 
-/** A table row's cells, trimmed, with the leading and trailing empty cell a `| a | b |` line
- * produces stripped off. */
-function splitTableCells(line) {
-  const trimmed = line.trim();
-  const withoutEdges = trimmed.replace(/^\|/, "").replace(/\|$/, "");
-  return withoutEdges.split("|").map((cell) => cell.trim());
+function tableCells(line) {
+  return line.trim().replace(/^\|/, "").replace(/\|$/, "").split("|").map((cell) => cell.trim());
 }
 
-/** The contiguous runs of table rows in a section: each run is one table, so one table's
- * header never speaks for the next one's columns. */
-function tableBlocks(sectionLines) {
+/** Contiguous runs of table rows: one table's header never speaks for the next one's columns. */
+function tableBlocks(lines) {
   const blocks = [];
   let current = [];
-  for (const line of sectionLines) {
-    if (/^\s*\|/.test(line)) {
+
+  for (const line of lines) {
+    if (TABLE_ROW.test(line)) {
       current.push(line);
       continue;
     }
@@ -233,131 +182,119 @@ function tableBlocks(sectionLines) {
     }
   }
   if (current.length > 0) blocks.push(current);
+
   return blocks;
 }
 
-/** A `| --- | --- |` row: every cell is dashes and colons, so it declares no column and cites
- * nothing. Two dashes count — `00-onboard` writes `| -- |` and GitHub renders it. */
-function isTableSeparatorRow(cells) {
-  return cells.length > 0 && cells.every((cell) => /^:?-+:?$/.test(cell));
+function isSeparatorRow(cells) {
+  return cells.length > 0 && cells.every((cell) => SEPARATOR_CELL.test(cell));
 }
 
-/** Every citation the "## Actions" section makes to an action file: a table cell that reads as
- * a plain name, an `actions/<name>.md` path, or a backticked `<name>.md` filename — the three
- * shapes rule two's own comment names, and nothing else. A word merely present in prose is not
- * collected here, on purpose: that is exactly what let a deleted table row hide behind
- * unrelated text that happened to contain the same word. */
-function citationsIn(sectionLines, rawSectionLines) {
-  const blankedText = sectionLines.join("\n");
-  // Only the `actions/<name>.md` path shape is read through fences, because `10-todo` cites its
-  // one action that way. Every other shape reads the blanked view: a backticked file name inside
-  // a fenced example is an example, and letting it cite reopened the hole fences were blanked for.
-  const pathText = (rawSectionLines ?? sectionLines).join("\n");
-  const citations = new Set();
+function declaredActionColumn(headerCells) {
+  return headerCells.findIndex((cell) => ACTION_COLUMN_HEADER.test(stripBackticks(cell)));
+}
 
-  // Only the column a table declares as its action column counts. A glossary, a trigger column
-  // or a "next step" column names things that are not dispatch, and reading them as citations
-  // would let a section satisfy rule two while routing nothing. Each table decides for itself:
-  // a section may hold a glossary next to its router, and the router must still be read.
+// --- Rule two: router coherence -------------------------------------------------------------
+
+/**
+ * Names cited from the column a table calls `Action`. A run of rows with no separator beneath it
+ * is that table resumed after a blank line, so it keeps the column its header declared.
+ */
+function citationsFromActionColumns(sectionLines) {
+  const cited = new Set();
   let actionColumn = -1;
+
   for (const block of tableBlocks(sectionLines)) {
-    const rows = block.map(splitTableCells);
-    const isNewTable = rows.length > 1 && isTableSeparatorRow(rows[1]);
+    const rows = block.map(tableCells);
+    const declaresItsOwnColumns = rows.length > 1 && isSeparatorRow(rows[1]);
 
-    // A header row is followed by its `| --- |` separator. A run of rows without one is the
-    // same table resumed after a blank line, and it keeps the column its header declared —
-    // otherwise a purely cosmetic edit refuses every row below the blank line. The cost is
-    // stated in the spec: a separator-less run following the router is read as part of it,
-    // so a glossary written without a separator would donate its cells. Neither shape is a
-    // table any renderer accepts, and the false refusal is the worse of the two.
-    if (isNewTable) {
-      actionColumn = rows[0].findIndex((cell) => ACTION_HEADER_RE.test(stripBackticks(cell)));
-    }
-    if (actionColumn === -1) continue; // no header declared an action column: this table cites nothing
+    if (declaresItsOwnColumns) actionColumn = declaredActionColumn(rows[0]);
+    if (actionColumn === -1) continue;
 
-    for (const cells of isNewTable ? rows.slice(1) : rows) {
-      if (isTableSeparatorRow(cells)) continue;
+    for (const cells of declaresItsOwnColumns ? rows.slice(1) : rows) {
+      if (isSeparatorRow(cells)) continue;
       const cell = stripBackticks(cells[actionColumn] ?? "");
-      if (CITATION_TOKEN_RE.test(cell)) citations.add(cell.toLowerCase());
+      if (CITATION_TOKEN.test(cell)) cited.add(cell.toLowerCase());
     }
   }
+  return cited;
+}
 
-  ACTION_PATH_RE.lastIndex = 0;
-  let pathMatch;
-  while ((pathMatch = ACTION_PATH_RE.exec(pathText)) !== null) {
-    citations.add(pathMatch[1].toLowerCase());
-  }
-
-  BACKTICKED_MD_RE.lastIndex = 0;
-  let mdMatch;
-  while ((mdMatch = BACKTICKED_MD_RE.exec(blankedText)) !== null) {
-    citations.add(mdMatch[1].toLowerCase());
-  }
-
-  return citations;
+function matchesOf(pattern, text) {
+  pattern.lastIndex = 0;
+  const found = new Set();
+  let match;
+  while ((match = pattern.exec(text)) !== null) found.add(match[1].toLowerCase());
+  return found;
 }
 
 /**
- * Rule two: a skill's `## Actions` section cites every action file that skill provides. It
- * checks this one direction only — see the module header comment for why the opposite
- * direction (a citation with no file behind it) is gone rather than narrowed.
+ * The three citation shapes. Only the `actions/<name>.md` path is read through a fence, because
+ * `aidd-dev:10-todo` cites its one action that way; a backticked file name inside a fence is an
+ * example. A word loose in prose is never a citation.
  */
-function checkRouterCoherence(filePath, content, actionFileNames) {
-  const info = classifyFile(filePath);
-  if (!info || info.kind !== "skill") return [];
+function citationsIn(blankedLines, rawLines) {
+  return new Set([
+    ...citationsFromActionColumns(blankedLines),
+    ...matchesOf(ACTION_PATH, (rawLines ?? blankedLines).join("\n")),
+    ...matchesOf(BACKTICKED_FILE_NAME, blankedLines.join("\n")),
+  ]);
+}
 
-  const names = actionFileNames || [];
+/** A stem two action files share cites neither: one row would otherwise cover both. */
+function ambiguousStems(actionFileNames) {
+  const seen = new Set();
+  const shared = new Set();
+  for (const name of actionFileNames) {
+    const stem = stemOf(name).toLowerCase();
+    if (seen.has(stem)) shared.add(stem);
+    seen.add(stem);
+  }
+  return shared;
+}
+
+function isCited(actionFileName, citations, sharedStems) {
+  const stem = stemOf(actionFileName).toLowerCase();
+  return (
+    citations.has(actionFileName.toLowerCase()) ||
+    citations.has(actionFileName.replace(/\.md$/i, "").toLowerCase()) ||
+    (!sharedStems.has(stem) && citations.has(stem))
+  );
+}
+
+function checkRouterCoherence(filePath, content, actionFileNames) {
+  const surface = classifyFile(filePath);
+  if (!surface || surface.kind !== "skill") return [];
+
+  const names = actionFileNames ?? [];
   if (names.length === 0) return [];
 
   const rawLines = toLines(content);
   const lines = withoutFences(rawLines);
-  const section = findActionsSection(lines);
+  const section = actionsSection(lines);
 
   if (!section) {
-    return [
-      {
-        file: filePath,
-        line: 1,
-        plugin: info.owner,
-        rule: "router-coherence",
-        message: `${filePath} has action files but no "## Actions" section`,
-      },
-    ];
+    const message = `${filePath} has action files but no "## Actions" section`;
+    return [violation("router-coherence", filePath, 1, surface.owner, message)];
   }
 
-  const violations = [];
-  const sectionLines = lines.slice(section.startIdx, section.endIdx);
-  const citations = citationsIn(sectionLines, rawLines.slice(section.startIdx, section.endIdx));
+  const { startIndex, endIndex, headingLine } = section;
+  const citations = citationsIn(lines.slice(startIndex, endIndex), rawLines.slice(startIndex, endIndex));
+  const sharedStems = ambiguousStems(names);
 
-  // Two action files can share a stem — `01-plan.md` and `04-plan.md` both reduce to `plan`.
-  // One citation would then cover both, and deleting either row would go unnoticed, so a
-  // shared stem speaks for nobody and only the numbered name does.
-  const stemCount = new Map();
-  for (const name of names) {
-    const stem = stemOf(name).toLowerCase();
-    stemCount.set(stem, (stemCount.get(stem) ?? 0) + 1);
-  }
-
-  for (const name of names) {
-    const full = name.toLowerCase();
-    const fullNoExt = name.replace(/\.md$/i, "").toLowerCase();
-    const stem = stemOf(name).toLowerCase();
-    const stemIsOwn = stemCount.get(stem) === 1;
-    if (citations.has(full) || citations.has(fullNoExt) || (stemIsOwn && citations.has(stem))) continue;
-
-    violations.push({
-      file: filePath,
-      line: section.headingLine,
-      plugin: info.owner,
-      rule: "router-coherence",
-      message: `${filePath}:${section.headingLine} "## Actions" never names action file "${name}"`,
-    });
-  }
-
-  return violations;
+  return names
+    .filter((name) => !isCited(name, citations, sharedStems))
+    .map((name) =>
+      violation(
+        "router-coherence",
+        filePath,
+        headingLine,
+        surface.owner,
+        `${filePath}:${headingLine} "## Actions" never names action file "${name}"`
+      )
+    );
 }
 
-/** Both rules, combined. `actionFileNames` is read only when `filePath` is a SKILL.md. */
 function checkArchitecture(filePath, content, actionFileNames) {
   return [
     ...checkOrthogonality(filePath, content),
