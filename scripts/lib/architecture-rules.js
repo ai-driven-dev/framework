@@ -236,7 +236,7 @@ function matchesOf(pattern, text) {
 function citationsIn(blankedLines, rawLines) {
   return new Set([
     ...citationsFromActionColumns(blankedLines),
-    ...matchesOf(ACTION_PATH, (rawLines ?? blankedLines).join("\n")),
+    ...matchesOf(ACTION_PATH, rawLines.join("\n")),
     ...matchesOf(BACKTICKED_FILE_NAME, blankedLines.join("\n")),
   ]);
 }
