@@ -267,8 +267,9 @@ function anotherProjectClaim(project: string, latest: string): TelemetryClaim {
     verdict: "unknown",
     reason: "anchor-in-another-project",
     detail:
-      `this session belongs to ${project}, not to this project — it left its run file there, ` +
-      `and nothing here is evidence about its hook. The newest run file here is from ${latest}`,
+      `this session belongs to ${project}, not to this project — its stored figures name that ` +
+      `project, and nothing here is evidence about its hook. The newest run file here is from ` +
+      latest,
   };
 }
 
