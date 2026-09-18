@@ -97,6 +97,7 @@ function buildUseCase(options: {
   hookTrustReader?: StubHookTrustReader;
   manifestRepo?: ManifestRepository;
   hostRegistries?: ReadonlyMap<AiToolId, HostPluginRegistryReader>;
+  sink?: InMemoryTelemetrySink;
 }) {
   const evidence = options.evidence ?? new StubEvidenceReader();
   const journalReader = new InMemoryRunJournalReader();
@@ -104,6 +105,7 @@ function buildUseCase(options: {
     journalReader.set(journal.session?.vendor_id ?? `no-session-${index}`, journal);
   }
   const hookTrustReader = options.hookTrustReader ?? new StubHookTrustReader();
+  const sink = options.sink ?? new InMemoryTelemetrySink();
   const useCase = new DiagnoseTelemetryUseCase(
     evidence,
     versionControl(options.isRepository ?? true),
@@ -111,7 +113,7 @@ function buildUseCase(options: {
     options.readers ?? new Map(),
     hookTrustReader,
     new InMemoryPersonIdentityStore(),
-    new InMemoryTelemetrySink(),
+    sink,
     new FakeCurrentVersion("9.9.9-check"),
     installedPluginsFromManifest(
       options.manifestRepo ?? {
@@ -123,7 +125,7 @@ function buildUseCase(options: {
     ),
     options.hostRegistries ?? new Map()
   );
-  return { useCase, evidence, hookTrustReader, journalReader };
+  return { useCase, evidence, hookTrustReader, journalReader, sink };
 }
 
 function runOptions(env: NodeJS.ProcessEnv = {}) {
@@ -584,6 +586,76 @@ function useCaseOverIdentity(store: InMemoryPersonIdentityStore): DiagnoseTeleme
     new Map()
   );
 }
+
+const HERE = "git@github.com:acme/widgets.git";
+
+async function sinkHolding(
+  vendorId: string,
+  projectRemote: string
+): Promise<InMemoryTelemetrySink> {
+  const sink = new InMemoryTelemetrySink();
+  await sink.appendRecord(
+    {
+      sink_schema_version: 1,
+      kind: "request",
+      provenance: "local-read",
+      tool: "claude",
+      vendor_id: vendorId,
+      vendor_field: "session_id",
+      step_attribution: "unattributed",
+      project_id: projectRemote,
+      project_field: "project_remote",
+    },
+    new Date("2026-08-20T09:01:00Z")
+  );
+  return sink;
+}
+
+function journalledHere(vendorId: string): RunJournal {
+  const session = sessionStart(vendorId);
+  return journalOf(session && { ...session, project_remote: HERE });
+}
+
+describe("DiagnoseTelemetryUseCase — an anchor inherited from another project", () => {
+  it("names the project the stored figures put the anchored session under", async () => {
+    const { useCase } = buildUseCase({
+      journals: [journalledHere("s-old")],
+      sink: await sinkHolding("s-elsewhere", "git@github.com:acme/other.git"),
+    });
+
+    const result = claimsOf(
+      await useCase.execute(runOptions({ CLAUDE_CODE_SESSION_ID: "s-elsewhere" }))
+    );
+
+    const hookFired = result.claims.find((claim) => claim.claim === "hook-fired");
+    expect(hookFired?.verdict).toBe("unknown");
+    expect(hookFired?.detail).toContain("git@github.com:acme/other.git");
+  });
+
+  it("still fails an anchor the stored figures put in this very project", async () => {
+    const { useCase } = buildUseCase({
+      journals: [journalledHere("s-old")],
+      sink: await sinkHolding("s-mine", HERE),
+    });
+
+    const result = claimsOf(
+      await useCase.execute(runOptions({ CLAUDE_CODE_SESSION_ID: "s-mine" }))
+    );
+
+    expect(result.claims.find((claim) => claim.claim === "hook-fired")?.reason).toBe(
+      "session-left-no-run-file"
+    );
+  });
+
+  it("asks the sink nothing about a session this project journalled itself", async () => {
+    const sink = await sinkHolding("s-1", "git@github.com:acme/other.git");
+    const { useCase } = buildUseCase({ journals: [journalledHere("s-1")], sink });
+
+    const result = claimsOf(await useCase.execute(runOptions({ CLAUDE_CODE_SESSION_ID: "s-1" })));
+
+    expect(result.claims.find((claim) => claim.claim === "hook-fired")?.verdict).toBe("ok");
+  });
+});
 
 describe("DiagnoseTelemetryUseCase — the setup it prints", () => {
   it("names the sink's own root as where records land", async () => {

@@ -20,8 +20,8 @@ const EXTERNAL_REFERENCE: readonly { readonly name: string; readonly pattern: Re
   { name: "pull request", pattern: /\bpull request\b|\bPR\s*#?\d/i },
 ];
 
-/** Comment lines under `src/` and `tests/` may only decrease; a raise needs its reason here: tests/ 2960 to 2984, four guard files and their probes; 2984 to 2987, the reason the display folder is baselined over the size limit. */
-const MAX_COMMENT_LINES = { src: 4471, tests: 2987 };
+/** Comment lines under `src/` and `tests/` may only decrease; a raise needs its reason here: tests/ 2960 to 2984, four guard files and their probes; 2984 to 2987, the reason the display folder is baselined over the size limit; src/ 4471 to 4481, why an inherited session anchor is decidable and why comparing two namings of a project is not. */
+const MAX_COMMENT_LINES = { src: 4481, tests: 2987 };
 
 function testFiles(): string[] {
   const out: string[] = [];
