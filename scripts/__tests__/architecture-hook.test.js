@@ -495,6 +495,6 @@ test("a router refusal says what a citation is, not only that one is missing", (
   assert.equal(result.status, 0);
   const reason = parseDenyReason(result.stdout);
   assert.match(reason, /02-refine\.md/);
-  assert.match(reason, /action column/);
+  assert.match(reason, /table header that reads Action/);
   assert.match(reason, /a word in prose does not count/);
 });

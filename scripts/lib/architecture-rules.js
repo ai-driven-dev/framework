@@ -163,6 +163,27 @@ function stripBackticks(text) {
 
 /** The `## Actions` section: from the line after its heading up to the next `##` heading (or
  * end of file). Returns null when no such heading exists. */
+/** The lines of a document with every fenced block blanked, keeping the line count intact so
+ * a reported number still points at the right line. A fence holds an example: a `## Actions`
+ * inside one is not the section, a `##` inside one does not end it, and a table inside one
+ * routes nothing. A fenced `actions/<name>.md` path is the exception — `10-todo` cites its one
+ * action that way — so path citations are read from the unblanked lines. */
+function withoutFences(lines) {
+  let fence = null;
+  return lines.map((line) => {
+    const match = line.match(/^\s*(`{3,}|~{3,})/);
+    if (fence === null && match) {
+      fence = match[1][0];
+      return "";
+    }
+    if (fence !== null) {
+      if (match && match[1][0] === fence) fence = null;
+      return "";
+    }
+    return line;
+  });
+}
+
 function findActionsSection(lines) {
   const headingIdx = lines.findIndex((line) => ACTIONS_HEADING_RE.test(line));
   if (headingIdx === -1) return null;
@@ -215,8 +236,8 @@ function isTableSeparatorRow(cells) {
  * shapes rule two's own comment names, and nothing else. A word merely present in prose is not
  * collected here, on purpose: that is exactly what let a deleted table row hide behind
  * unrelated text that happened to contain the same word. */
-function citationsIn(sectionLines) {
-  const sectionText = sectionLines.join("\n");
+function citationsIn(sectionLines, rawSectionLines) {
+  const sectionText = (rawSectionLines ?? sectionLines).join("\n");
   const citations = new Set();
 
   // Only the column a table declares as its action column counts. A glossary, a trigger column
@@ -270,7 +291,8 @@ function checkRouterCoherence(filePath, content, actionFileNames) {
   const names = actionFileNames || [];
   if (names.length === 0) return [];
 
-  const lines = toLines(content);
+  const rawLines = toLines(content);
+  const lines = withoutFences(rawLines);
   const section = findActionsSection(lines);
 
   if (!section) {
@@ -287,14 +309,23 @@ function checkRouterCoherence(filePath, content, actionFileNames) {
 
   const violations = [];
   const sectionLines = lines.slice(section.startIdx, section.endIdx);
-  const sectionText = sectionLines.join("\n");
-  const citations = citationsIn(sectionLines);
+  const citations = citationsIn(sectionLines, rawLines.slice(section.startIdx, section.endIdx));
+
+  // Two action files can share a stem — `01-plan.md` and `04-plan.md` both reduce to `plan`.
+  // One citation would then cover both, and deleting either row would go unnoticed, so a
+  // shared stem speaks for nobody and only the numbered name does.
+  const stemCount = new Map();
+  for (const name of names) {
+    const stem = stemOf(name).toLowerCase();
+    stemCount.set(stem, (stemCount.get(stem) ?? 0) + 1);
+  }
 
   for (const name of names) {
     const full = name.toLowerCase();
     const fullNoExt = name.replace(/\.md$/i, "").toLowerCase();
     const stem = stemOf(name).toLowerCase();
-    if (citations.has(full) || citations.has(fullNoExt) || citations.has(stem)) continue;
+    const stemIsOwn = stemCount.get(stem) === 1;
+    if (citations.has(full) || citations.has(fullNoExt) || (stemIsOwn && citations.has(stem))) continue;
 
     violations.push({
       file: filePath,

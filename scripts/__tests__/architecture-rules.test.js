@@ -370,3 +370,104 @@ test("a plural Actions header declares the action column too", () => {
   );
   assert.deepEqual(violations, []);
 });
+
+test("two action files sharing a stem are not both covered by one citation", () => {
+  const content = [
+    "# Shared stem skill",
+    "",
+    "## Actions",
+    "",
+    "| # | Action | Role |",
+    "| --- | --- | --- |",
+    "| 01 | `plan` | Do it |",
+    "",
+    "## Transversal rules",
+    "",
+    "- Nothing.",
+  ].join("\n");
+  const violations = checkArchitecture(
+    "plugins/aidd-fixture-a/skills/01-shared-stem/SKILL.md",
+    content,
+    ["01-plan.md", "04-plan.md"]
+  );
+  assert.equal(violations.length, 2);
+  assert.match(violations[0].message, /never names action file "01-plan\.md"/);
+  assert.match(violations[1].message, /never names action file "04-plan\.md"/);
+});
+
+test("a fenced example table inside the Actions section cites nothing", () => {
+  const content = [
+    "# Fenced example skill",
+    "",
+    "## Actions",
+    "",
+    "| # | Action | Role |",
+    "| --- | --- | --- |",
+    "| 01 | `first` | Do it |",
+    "",
+    "An example of the shape a router takes:",
+    "",
+    "```md",
+    "| 02 | second | Then this |",
+    "```",
+    "",
+    "## Transversal rules",
+    "",
+    "- Nothing.",
+  ].join("\n");
+  const violations = checkArchitecture(
+    "plugins/aidd-fixture-a/skills/01-fenced/SKILL.md",
+    content,
+    ["01-first.md", "02-second.md"]
+  );
+  assert.equal(violations.length, 1);
+  assert.match(violations[0].message, /never names action file "02-second\.md"/);
+});
+
+test("a fenced actions/<name>.md path still cites, the way 10-todo does", () => {
+  const content = [
+    "# Fenced path skill",
+    "",
+    "## Actions",
+    "",
+    "```md",
+    "actions/01-only.md",
+    "```",
+    "",
+    "## Transversal rules",
+    "",
+    "- Nothing.",
+  ].join("\n");
+  const violations = checkArchitecture(
+    "plugins/aidd-fixture-a/skills/01-fenced-path/SKILL.md",
+    content,
+    ["01-only.md"]
+  );
+  assert.deepEqual(violations, []);
+});
+
+test("a fenced ## heading inside the Actions section does not end it early", () => {
+  const content = [
+    "# Fenced heading skill",
+    "",
+    "## Actions",
+    "",
+    "```md",
+    "## Actions",
+    "```",
+    "",
+    "| # | Action | Role |",
+    "| --- | --- | --- |",
+    "| 01 | `first` | Do it |",
+    "",
+    "## Transversal rules",
+    "",
+    "- Nothing.",
+  ].join("\n");
+  const violations = checkArchitecture(
+    "plugins/aidd-fixture-a/skills/01-fenced-heading/SKILL.md",
+    content,
+    ["01-first.md"]
+  );
+  assert.deepEqual(violations, []);
+});
