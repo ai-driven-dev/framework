@@ -79,8 +79,13 @@ describe("resolveSessionProject", () => {
 });
 
 describe("anchorProjectElsewhere", () => {
+  const HERE_REMOTE = "git@github.com:acme/widgets.git";
   const here: readonly SessionProject[] = [
-    { projectId: "git@github.com:acme/widgets.git", projectField: "project_remote" },
+    { projectId: HERE_REMOTE, projectField: "project_remote" },
+  ];
+  const BOTH: readonly SessionProject[] = [
+    ...here,
+    { projectId: "widgets", projectField: "project_id" },
   ];
 
   it("names the project a stored record puts the anchored session under", () => {
@@ -103,6 +108,43 @@ describe("anchorProjectElsewhere", () => {
     expect(
       anchorProjectElsewhere(here, [{ project_id: "widgets", project_field: "project_id" }])
     ).toBeNull();
+  });
+
+  it("reads one project named by both fields as two values, never one match", () => {
+    expect(
+      anchorProjectElsewhere(
+        [...here, { projectId: "acme-other", projectField: "project_id" }],
+        [{ project_id: HERE_REMOTE, project_field: "project_id" }]
+      )
+    ).toBe(HERE_REMOTE);
+  });
+
+  it("names nothing for a record whose field is no field this journal ever wrote", () => {
+    expect(
+      anchorProjectElsewhere(BOTH, [
+        { project_id: "git@github.com:acme/other.git", project_field: "project_slug" },
+      ])
+    ).toBeNull();
+  });
+
+  it("names nothing for a record whose field names a project the record itself does not", () => {
+    expect(anchorProjectElsewhere(BOTH, [{ project_field: "project_id" }])).toBeNull();
+  });
+
+  it("names nothing for a record naming a project by no field at all", () => {
+    expect(anchorProjectElsewhere(BOTH, [{ project_id: "acme-other" }])).toBeNull();
+  });
+
+  it("reads an empty project on a record as naming none", () => {
+    expect(
+      anchorProjectElsewhere(BOTH, [{ project_id: "", project_field: "project_id" }])
+    ).toBeNull();
+  });
+
+  it("names a project the records put the anchor under by directory name", () => {
+    expect(
+      anchorProjectElsewhere(BOTH, [{ project_id: "acme-other", project_field: "project_id" }])
+    ).toBe("acme-other");
   });
 
   it("names nothing when the stored records say nothing about a project", () => {

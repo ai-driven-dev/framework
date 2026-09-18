@@ -649,11 +649,47 @@ describe("DiagnoseTelemetryUseCase — an anchor inherited from another project"
 
   it("asks the sink nothing about a session this project journalled itself", async () => {
     const sink = await sinkHolding("s-1", "git@github.com:acme/other.git");
-    const { useCase } = buildUseCase({ journals: [journalledHere("s-1")], sink });
+    const { useCase } = buildUseCase({
+      journals: [journalOf(undefined), journalledHere("s-old"), journalledHere("s-1")],
+      sink,
+    });
 
     const result = claimsOf(await useCase.execute(runOptions({ CLAUDE_CODE_SESSION_ID: "s-1" })));
 
     expect(result.claims.find((claim) => claim.claim === "hook-fired")?.verdict).toBe("ok");
+    expect(sink.vendorsRead).toStrictEqual([]);
+  });
+
+  it("asks the sink nothing when no anchor names a session at all", async () => {
+    const sink = await sinkHolding("s-elsewhere", "git@github.com:acme/other.git");
+    const { useCase } = buildUseCase({ journals: [journalledHere("s-old")], sink });
+
+    claimsOf(await useCase.execute(runOptions()));
+
+    expect(sink.vendorsRead).toStrictEqual([]);
+  });
+
+  it("asks the sink nothing when no run file here names a project to compare against", async () => {
+    const sink = await sinkHolding("s-elsewhere", "git@github.com:acme/other.git");
+    const { useCase } = buildUseCase({ journals: [journalOf(sessionStart("s-old"))], sink });
+
+    const result = claimsOf(
+      await useCase.execute(runOptions({ CLAUDE_CODE_SESSION_ID: "s-elsewhere" }))
+    );
+
+    expect(result.claims.find((claim) => claim.claim === "hook-fired")?.reason).toBe(
+      "session-left-no-run-file"
+    );
+    expect(sink.vendorsRead).toStrictEqual([]);
+  });
+
+  it("asks the sink about the anchor alone", async () => {
+    const sink = await sinkHolding("s-elsewhere", "git@github.com:acme/other.git");
+    const { useCase } = buildUseCase({ journals: [journalledHere("s-old")], sink });
+
+    claimsOf(await useCase.execute(runOptions({ CLAUDE_CODE_SESSION_ID: "s-elsewhere" })));
+
+    expect(sink.vendorsRead).toStrictEqual(["s-elsewhere"]);
   });
 });
 
