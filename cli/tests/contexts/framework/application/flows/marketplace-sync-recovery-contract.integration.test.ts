@@ -1,6 +1,7 @@
 import "../../../../../src/contexts/tools/domain/profiles/claude/profile.js";
 import "../../../../../src/contexts/tools/domain/profiles/codex/profile.js";
 import "../../../../../src/contexts/tools/domain/profiles/copilot/profile.js";
+import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import { Marketplace } from "../../../../../src/contexts/distribution/domain/marketplace.js";
 import { MarketplaceSyncSettingsUseCase } from "../../../../../src/contexts/framework/application/flows/marketplace-sync-settings-use-case.js";
@@ -131,7 +132,7 @@ async function recovery(options: RecoveryOptions = {}) {
     }),
     ...(options.settings === undefined
       ? {}
-      : { [`${ROOT}/.claude/settings.json`]: options.settings }),
+      : { [resolve(ROOT, ".claude/settings.json")]: options.settings }),
   });
   const logger = new CapturingLogger();
   const pluginReadings = [...(options.plugins ?? [{ location: "host plugins", refs: new Map() }])];
@@ -416,7 +417,8 @@ describe("marketplace sync recovery preserves public ownership and failure outco
     expect(repo.saveCount).toBe(saveCount);
     expect(activator.addedMarketplaces).toEqual([BUILT]);
     expect(manifest.getToolFiles("claude")[0]?.hash.value).toBe(
-      new DeterministicHasher().hash(await fs.readFile(`${ROOT}/.claude/settings.json`)).value
+      new DeterministicHasher().hash(await fs.readFile(resolve(ROOT, ".claude/settings.json")))
+        .value
     );
   });
 
@@ -424,7 +426,7 @@ describe("marketplace sync recovery preserves public ownership and failure outco
     "rebuilds managed settings from a JSON root that is not a settings object: %s",
     async (settings) => {
       const { fs, manifest, result, logger } = await recovery({ settings });
-      const content = await fs.readFile(`${ROOT}/.claude/settings.json`);
+      const content = await fs.readFile(resolve(ROOT, ".claude/settings.json"));
       expect(JSON.parse(content)).toEqual({ enabledPlugins: { [`review@${ALIAS}`]: true } });
       expect(manifest.getToolFiles("claude")[0]?.hash.value).toBe(
         new DeterministicHasher().hash(content).value
@@ -442,7 +444,7 @@ describe("marketplace sync recovery preserves public ownership and failure outco
         enabledPlugins: { [`review@${ALIAS}`]: false, "personal@external": true },
       }),
     });
-    const content = await fs.readFile(`${ROOT}/.claude/settings.json`);
+    const content = await fs.readFile(resolve(ROOT, ".claude/settings.json"));
     expect(JSON.parse(content)).toEqual({
       permissions: { allow: ["Read"] },
       enabledPlugins: { [`review@${ALIAS}`]: false, "personal@external": true },
@@ -518,7 +520,7 @@ async function ownedNativeSettings(
   const projectRepo = new InMemoryManifestRepository(project, ROOT);
   const machineRepo = new InMemoryManifestRepository(machine);
   const registry = new InMemoryMarketplaceRegistry();
-  const fs = new InMemoryFileAdapter({ [`${ROOT}/${settingsPath}`]: settings });
+  const fs = new InMemoryFileAdapter({ [resolve(ROOT, settingsPath)]: settings });
   const identities = new Map<string, string>();
   const initial = new Map<string, NativeMarketplaceSource>();
   for (const [index, name] of names.entries()) {
@@ -615,7 +617,7 @@ describe("proven native catalogues update declarative settings only when require
   it("projects enabled refs from two distinct owned Copilot catalogues into the tracked shared settings", async () => {
     const f = await ownedNativeSettings({ names: ["first", "second"] });
     const result = await f.sync.execute({ projectRoot: ROOT });
-    const content = await f.fs.readFile(`${ROOT}/${f.settingsPath}`);
+    const content = await f.fs.readFile(resolve(ROOT, f.settingsPath));
     expect(result).toEqual({ activated: ["copilot"], binaryMissing: [], warnings: [], errors: [] });
     expect(JSON.parse(content)).toEqual({
       permissions: { allow: ["Read"] },
@@ -638,7 +640,7 @@ describe("proven native catalogues update declarative settings only when require
   it("persists a missing declarative ref's hash even when native and machine ownership are already unchanged", async () => {
     const f = await ownedNativeSettings();
     await f.sync.execute({ projectRoot: ROOT });
-    const content = await f.fs.readFile(`${ROOT}/${f.settingsPath}`);
+    const content = await f.fs.readFile(resolve(ROOT, f.settingsPath));
     expect(JSON.parse(content).enabledPlugins).toEqual({ "review-first@first-catalog": true });
     expect(f.projectRepo.getCurrent()?.getToolFiles("copilot")[0]?.hash.value).toBe(
       f.hasher.hash(content).value
@@ -655,7 +657,7 @@ describe("proven native catalogues update declarative settings only when require
     const f = await ownedNativeSettings({ withPlugins: false, settings });
     const result = await f.sync.execute({ projectRoot: ROOT });
     expect(result).toEqual({ activated: ["copilot"], binaryMissing: [], warnings: [], errors: [] });
-    expect(await f.fs.readFile(`${ROOT}/${f.settingsPath}`)).toBe(settings);
+    expect(await f.fs.readFile(resolve(ROOT, f.settingsPath))).toBe(settings);
     expect(f.logger.warnMessages).toEqual([]);
     expect(f.projectRepo.saveCount).toBe(0);
     expect(f.machineRepo.saveCount).toBe(0);
