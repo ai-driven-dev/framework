@@ -1,6 +1,7 @@
 import "../../../../../src/contexts/tools/domain/profiles/claude/profile.js";
 import "../../../../../src/contexts/tools/domain/profiles/codex/profile.js";
 import "../../../../../src/contexts/tools/domain/profiles/copilot/profile.js";
+import { resolve, sep } from "node:path";
 import { describe, expect, it } from "vitest";
 import { Marketplace } from "../../../../../src/contexts/distribution/domain/marketplace.js";
 import { MarketplaceSyncSettingsUseCase } from "../../../../../src/contexts/framework/application/flows/marketplace-sync-settings-use-case.js";
@@ -806,4 +807,28 @@ describe("shared framework references follow any successful native tool outcome"
       );
     }
   );
+});
+
+// TEMPORARY DIAGNOSTIC — deliberately failing, to read Windows state from the CI log.
+// Delete with the branch.
+describe("WINDOWS DIAGNOSTIC", () => {
+  it("dumps the state the failing tests depend on", async () => {
+    const { fs } = await recovery({ settings: "null" });
+    const read = await fs
+      .readFile(`${ROOT}/.claude/settings.json`)
+      .catch((error: Error) => `THREW ${error.message}`);
+    const viaResolve = await fs
+      .readFile(resolve(ROOT, ".claude/settings.json"))
+      .catch((error: Error) => `THREW ${error.message}`);
+    const state = {
+      sep,
+      ROOT,
+      OLD,
+      resolved: resolve(ROOT, ".claude/settings.json"),
+      keys: fs.listAll(),
+      readTemplate: read,
+      readResolve: viaResolve,
+    };
+    expect(JSON.stringify(state, null, 1)).toBe("DIAGNOSTIC");
+  });
 });
