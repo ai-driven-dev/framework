@@ -5,6 +5,7 @@ import { parsePluginSourceShorthand } from "../../../src/kernel/source.js";
 const marketplaceAdd = vi.fn();
 const marketplaceList = vi.fn();
 const marketplaceRemove = vi.fn();
+const userMarketplaceRemove = vi.fn();
 const marketplaceRefresh = vi.fn();
 const marketplaceCheck = vi.fn();
 const activation = vi.fn();
@@ -17,6 +18,7 @@ vi.mock("../../../src/runtime/wiring/framework.js", () => ({
     marketplaceAddUseCase: { execute: marketplaceAdd },
     marketplaceListUseCase: { execute: marketplaceList },
     marketplaceRemoveUseCase: { execute: marketplaceRemove },
+    userMarketplaceRemoveUseCase: { execute: userMarketplaceRemove },
     marketplaceRefreshUseCase: { execute: marketplaceRefresh },
     marketplaceCheckUseCase: { execute: marketplaceCheck },
     marketplaceSyncSettingsUseCase: { execute: activation },
@@ -61,6 +63,10 @@ beforeEach(() => {
   marketplaceRemove.mockResolvedValue({
     marketplace: { name: "market-b" },
     removedPluginCount: 2,
+  });
+  userMarketplaceRemove.mockResolvedValue({
+    marketplace: { name: "market-b" },
+    removedPluginCount: 1,
   });
   marketplaceRefresh.mockResolvedValue({
     results: [{ name: "market-b", status: "refreshed" }],
@@ -265,6 +271,31 @@ describe("aidd marketplace — a failed read or removal", () => {
 });
 
 describe("aidd marketplace remove", () => {
+  it("routes explicit user removal to machine ownership without re-driving project activation", async () => {
+    expect(await run("remove", "market-b", "--scope", "user")).toEqual([
+      "Marketplace 'market-b' removed (1 plugin(s) cleaned up).",
+    ]);
+    expect(userMarketplaceRemove).toHaveBeenCalledWith({
+      name: "market-b",
+      projectRoot: PROJECT_ROOT,
+      autoConfirm: false,
+      scope: "user",
+    });
+    expect(marketplaceRemove).not.toHaveBeenCalled();
+    expect(activation).not.toHaveBeenCalled();
+  });
+
+  it("refuses an invalid removal scope before wiring or mutation", async () => {
+    vi.spyOn(process, "exit").mockImplementation(() => {
+      throw new Error("exited");
+    });
+    await expect(run("remove", "market-b", "--scope", "machine")).rejects.toThrow("exited");
+    expect(errors.join("")).toBe("Error: Invalid scope 'machine'. Expected 'project' or 'user'.\n");
+    expect(vi.mocked(createDeps)).not.toHaveBeenCalled();
+    expect(marketplaceRemove).not.toHaveBeenCalled();
+    expect(userMarketplaceRemove).not.toHaveBeenCalled();
+  });
+
   it("removes the named one, re-drives every activation, and counts what went with it", async () => {
     expect(await run("remove", "market-b")).toEqual([
       "Marketplace 'market-b' removed (2 plugin(s) cleaned up).",
@@ -273,6 +304,7 @@ describe("aidd marketplace remove", () => {
       name: "market-b",
       projectRoot: PROJECT_ROOT,
       autoConfirm: false,
+      scope: "project",
     });
     expect(activation).toHaveBeenCalledWith({
       projectRoot: PROJECT_ROOT,
@@ -409,7 +441,10 @@ describe("aidd marketplace — the help surface", () => {
     expect(optionsOf("list")).toEqual([
       ["--plugins", "Also fetch and print all plugins from each marketplace catalog", undefined],
     ]);
-    expect(optionsOf("remove")).toEqual([["--yes", "Skip the orphan-cleanup prompt", undefined]]);
+    expect(optionsOf("remove")).toEqual([
+      ["--yes", "Skip the orphan-cleanup prompt", undefined],
+      ["--scope <project|user>", "Remove from project or user scope", "project"],
+    ]);
     expect(optionsOf("refresh")).toEqual([
       ["--force", "Clear cache before re-fetching", undefined],
     ]);

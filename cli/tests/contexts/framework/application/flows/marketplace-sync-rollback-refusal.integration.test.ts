@@ -1,5 +1,5 @@
 import "../../../../../src/contexts/tools/domain/profiles/claude/profile.js";
-import { join } from "node:path";
+import { join, resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import {
   FRAMEWORK_MARKETPLACE_NAME,
@@ -13,6 +13,8 @@ import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
 import { fakeEnsureBuiltMarketplace } from "../../../../helpers/ports/fake-ensure-built-marketplace.js";
 import { FakeHostMarketplaceRegistryReader } from "../../../../helpers/ports/fake-host-marketplace-registry-reader.js";
+import { FakeHostPluginRegistryReader } from "../../../../helpers/ports/fake-host-plugin-registry-reader.js";
+import { FakeNativeMarketplaceSourceReader } from "../../../../helpers/ports/fake-native-marketplace-source-reader.js";
 import { FakeNativePluginActivator } from "../../../../helpers/ports/fake-native-plugin-activator.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
@@ -43,6 +45,22 @@ async function sync(options: {
   const logger = new CapturingLogger();
   const manifest = Manifest.create();
   manifest.addTool("claude", "test", []);
+  const machine = Manifest.create();
+  machine.addTool("claude", "test", []);
+  machine.setNativeRegistrations("claude", {
+    binary: "claude",
+    marketplaces: [
+      {
+        alias: name,
+        hostName: name,
+        ...(options.registeredPath === undefined
+          ? {}
+          : { provenance: { kind: "registry" as const, source: resolve(options.registeredPath) } }),
+      },
+    ],
+    pluginRefs: [],
+    pluginClaims: [],
+  });
   await manifestRepo.save(manifest);
   await registry.save(
     PROJECT_ROOT,
@@ -69,7 +87,9 @@ async function sync(options: {
   const hostReader = new FakeHostMarketplaceRegistryReader({
     location: REGISTRY_LOCATION,
     entries:
-      options.registeredPath === undefined ? new Map() : new Map([[name, options.registeredPath]]),
+      options.registeredPath === undefined
+        ? new Map()
+        : new Map([[name, resolve(options.registeredPath)]]),
   });
   const useCase = new MarketplaceSyncSettingsUseCase(
     fs,
@@ -80,7 +100,33 @@ async function sync(options: {
     new Map([["claude", activator]]),
     fakeEnsureBuiltMarketplace(() => builtDir),
     new Map([["claude", hostReader]]),
-    () => USER_CACHE_ROOT
+    () => USER_CACHE_ROOT,
+    undefined,
+    undefined,
+    undefined,
+    new Map([
+      [
+        "claude",
+        new FakeHostPluginRegistryReader({
+          location: "/home/.claude/plugins/installed_plugins.json",
+          refs: new Map(),
+        }),
+      ],
+    ]),
+    new InMemoryManifestRepository(machine),
+    new Map([
+      [
+        "claude",
+        new FakeNativeMarketplaceSourceReader(
+          activator,
+          "registry",
+          (path) => (path === builtDir ? name : undefined),
+          options.registeredPath === undefined
+            ? new Map()
+            : new Map([[name, { kind: "registry", source: options.registeredPath }]])
+        ),
+      ],
+    ])
   );
   const result = await useCase.execute({
     projectRoot: PROJECT_ROOT,
@@ -139,7 +185,7 @@ describe("the sync write path refuses to roll a host back to an older aidd-frame
       registeredVersion: "1.0.0",
     });
 
-    expect(activator.addedMarketplaces).toEqual([sharedPath("1.0.0")]);
+    expect(activator.addedMarketplaces).toEqual([]);
     expect(result.errors).toEqual([]);
     expect(result.warnings).toEqual([]);
   });
@@ -166,7 +212,13 @@ describe("the sync write path refuses to roll a host back to an older aidd-frame
 
     expect((await manifestRepo.load())?.getNativeRegistrations("claude")).toStrictEqual({
       binary: "claude",
-      marketplaces: [{ alias: MARKETPLACE_NAME, hostName: MARKETPLACE_NAME }],
+      marketplaces: [
+        {
+          alias: MARKETPLACE_NAME,
+          hostName: MARKETPLACE_NAME,
+          provenance: { kind: "registry", source: sharedPath("2.0.0") },
+        },
+      ],
       pluginRefs: [],
     });
   });

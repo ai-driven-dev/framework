@@ -33,6 +33,8 @@ export interface NativeActivation {
   /** Verb this CLI uses to re-index its marketplaces, after `plugin marketplace`. Omit when
    * plugins are not enabled through the CLI. */
   upgradeVerb?: string;
+  /** Exact host command for updating one installed plugin ref. Copilot declares `update`; Codex does not. */
+  updateVerb?: string;
   /** Verb this CLI uses to enable a plugin, after `plugin`. Omit when the tool loads plugins
    * from a project file this CLI writes. */
   enableVerb?: string;

@@ -21,6 +21,7 @@ src/
 │   │   │   ├── global/
 │   │   │   ├── install/
 │   │   │   │   └── content/
+│   │   │   ├── ownership/    # machine plugin claims and safe project detach
 │   │   │   ├── plugin/
 │   │   │   ├── restore/
 │   │   │   ├── setup/

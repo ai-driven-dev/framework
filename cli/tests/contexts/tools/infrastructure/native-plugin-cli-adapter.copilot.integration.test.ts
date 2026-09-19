@@ -83,17 +83,17 @@ describe("CopilotCliAdapter", () => {
     );
   });
 
-  it("refreshes marketplaces via `copilot plugin marketplace update`", () => {
+  it("refreshes only the named marketplace via `copilot plugin marketplace update <name>`", () => {
     mockSpawnSync.mockReturnValue(makeResult({}));
 
     new NativePluginCliAdapter("copilot", {
       upgradeVerb: "update",
       enableVerb: "install",
-    }).upgradeMarketplaces();
+    }).upgradeMarketplaces("owned-catalog");
 
     expect(mockSpawnSync).toHaveBeenCalledWith(
       "copilot",
-      ["plugin", "marketplace", "update"],
+      ["plugin", "marketplace", "update", "owned-catalog"],
       expect.anything()
     );
   });
@@ -111,6 +111,29 @@ describe("CopilotCliAdapter", () => {
       ["plugin", "install", "aidd-context@aidd-framework"],
       expect.anything()
     );
+  });
+
+  it("updates only the exact Copilot plugin ref, not its entire catalogue", () => {
+    mockSpawnSync.mockReturnValue(makeResult({}));
+    new NativePluginCliAdapter("copilot", { updateVerb: "update" }).updatePlugin(
+      "aidd-context@real-catalog"
+    );
+    expect(mockSpawnSync).toHaveBeenCalledWith(
+      "copilot",
+      ["plugin", "update", "aidd-context@real-catalog"],
+      expect.anything()
+    );
+  });
+
+  it("reports a failed targeted Copilot update without retrying a catalogue refresh", () => {
+    mockSpawnSync.mockClear();
+    mockSpawnSync.mockReturnValue(makeResult({ status: 1, stderr: "plugin update failed" }));
+    expect(() =>
+      new NativePluginCliAdapter("copilot", { updateVerb: "update" }).updatePlugin(
+        "aidd-context@real-catalog"
+      )
+    ).toThrow(NativePluginCliError);
+    expect(mockSpawnSync).toHaveBeenCalledTimes(1);
   });
 
   it("throws NativePluginCliError with stderr detail on non-zero exit", () => {

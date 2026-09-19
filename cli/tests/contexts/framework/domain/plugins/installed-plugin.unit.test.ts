@@ -13,6 +13,26 @@ import {
   MalformedPluginScopeError,
 } from "../../../../../src/kernel/errors.js";
 
+it("round-trips exact Cursor project hook provenance through the plugin manifest", () => {
+  const data = makePluginData({
+    projectHooks: {
+      entries: [
+        {
+          event: "preToolUse",
+          command: "node ./.cursor/hooks/my-plugin/pre.js",
+          digest: "a".repeat(32),
+        },
+      ],
+      scripts: { ".cursor/hooks/my-plugin/pre.js": "b".repeat(32) },
+    },
+  });
+  const installed = InstalledPlugin.fromJSON(data);
+  expect(installed.projectHooks?.scripts.get(".cursor/hooks/my-plugin/pre.js")).toBe(
+    "b".repeat(32)
+  );
+  expect(InstalledPlugin.fromJSON(installed.toJSON()).toJSON()).toEqual(data);
+});
+
 const makeDistribution = (strict?: boolean): PluginDistribution =>
   new PluginDistribution({
     manifest: { name: "my-plugin", version: "1.0.0", ...(strict === undefined ? {} : { strict }) },

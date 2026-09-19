@@ -17,7 +17,11 @@ import type {
   ReadonlySkipList,
 } from "../../../../translate/domain/plugin-translation-skip.js";
 import type { Manifest } from "../../../domain/manifest.js";
-import { InstalledPlugin, type PluginScope } from "../../../domain/plugins/installed-plugin.js";
+import {
+  InstalledPlugin,
+  type PluginScope,
+  type ProjectHooksProvenance,
+} from "../../../domain/plugins/installed-plugin.js";
 import { writePluginFiles } from "../../plugin/plugin-helpers.js";
 import {
   isFrameworkPrimeFlatMcp,
@@ -52,20 +56,28 @@ export class ModeBFlatMaterializationTranslator implements PluginTranslator {
     manifest: Manifest,
     marketplace: string | undefined,
     previousMcpEntries: ReadonlyMap<string, string> = new Map(),
-    userScopeDirTaken = false
+    userScopeDirTaken = false,
+    previousProjectHooks?: ProjectHooksProvenance
   ): Promise<{ skipped: ReadonlySkipList }> {
     const ctx = this.resolveFlatToolContext(toolId, dist, projectRoot);
     if (ctx === null) return { skipped: [] };
     const mcp = await this.resolveMcp(dist, toolId, projectRoot, previousMcpEntries);
-    const hooksSkips = await this.projectHooks.materialize(dist, toolId, projectRoot);
-    const allSkipped: ReadonlySkipList = [...ctx.skipped, ...mcp.mcpSkips, ...hooksSkips];
-    if (ctx.files.length === 0 && mcp.mcpEntries.size === 0) return { skipped: allSkipped };
+    const hooks = await this.projectHooks.materializeWithProvenance(
+      dist,
+      toolId,
+      projectRoot,
+      previousProjectHooks
+    );
+    const allSkipped: ReadonlySkipList = [...ctx.skipped, ...mcp.mcpSkips, ...hooks.skipped];
+    if (ctx.files.length === 0 && mcp.mcpEntries.size === 0 && hooks.projectHooks === undefined)
+      return { skipped: allSkipped };
     await this.writeAndRegisterPlugin(
       dist,
       toolId,
       source,
       userScopeDirTaken ? [] : ctx.files,
       mcp.mcpEntries,
+      hooks.projectHooks,
       ctx.componentPaths,
       marketplace,
       ctx.baseDir,
@@ -124,6 +136,7 @@ export class ModeBFlatMaterializationTranslator implements PluginTranslator {
     source: PluginSource,
     files: InstallationFile[],
     mcpEntries: ReadonlyMap<string, string>,
+    projectHooks: ProjectHooksProvenance | undefined,
     componentPaths: ReadonlyMap<string, string>,
     marketplace: string | undefined,
     baseDir: string,
@@ -140,7 +153,7 @@ export class ModeBFlatMaterializationTranslator implements PluginTranslator {
       componentPaths,
       marketplace
     );
-    manifest.addPlugin(toolId, plugin);
+    manifest.addPlugin(toolId, InstalledPlugin.withProjectHooks(plugin, projectHooks));
   }
 
   private async mergeOpencodeMcpEntries(
@@ -156,12 +169,13 @@ export class ModeBFlatMaterializationTranslator implements PluginTranslator {
     const existingContent = await this.readExistingJson(outputPath);
     const rawMcp = dist.components.mcp[0].content;
     const transformed = mcpCap.transform(rawMcp);
-    const { mergedContent, contributedEntries, collisions } = mergeOpencodeMcp(
-      existingContent,
-      transformed,
-      previousMcpEntries,
-      this.hasher
-    );
+    const { mergedContent, contributedEntries, collisions, editedPreviousEntries } =
+      mergeOpencodeMcp(existingContent, transformed, previousMcpEntries, this.hasher);
+    if (editedPreviousEntries.length > 0) {
+      throw new Error(
+        `OpenCode MCP server '${editedPreviousEntries[0]}' was edited after install; reinstall refused.`
+      );
+    }
     if (contributedEntries.size > 0 || previousMcpEntries.size > 0) {
       await this.fs.writeFile(outputPath, mergedContent);
     }

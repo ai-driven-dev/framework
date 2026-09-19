@@ -45,8 +45,8 @@ export async function purgeAllNativeCaches(
  * running, so containment alone proves the path cannot escape the declared root — never that the
  * caller still owns what sits inside it. Two proofs, one per declaration:
  *
- * - a profile declaring `marketplaceRegistry` (claude) is reread after the undo: the name gone
- *   from that registry is the host's own admission nothing there resolves any more;
+ * - a profile declaring `marketplaceRegistry` (claude) also requires a confirmed host removal,
+ *   then rereads the registry: a name gone says nothing there resolves any more;
  * - a profile declaring `pluginCacheDir` alone (codex) drives a host that deletes the cached
  *   content itself and leaves only an empty shell — measured. Emptiness proves no data would be
  *   lost, never that this caller emptied it, so `removed` (the host's own confirmation) is
@@ -79,6 +79,12 @@ export async function purgeNativeMarketplaceCache(
       candidate,
       removed,
       `${binary}: cache for '${hostName}'`
+    );
+    return;
+  }
+  if (!removed) {
+    logger.warn(
+      `${binary}: cache for '${hostName}' left in place, its own removal was not confirmed: ${candidate}`
     );
     return;
   }
