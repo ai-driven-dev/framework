@@ -1,5 +1,5 @@
 import "../../../../../src/contexts/tools/domain/profiles/claude/profile.js";
-import { join } from "node:path";
+import { join, resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import {
   FRAMEWORK_MARKETPLACE_NAME,
@@ -55,7 +55,7 @@ async function sync(options: {
         hostName: name,
         ...(options.registeredPath === undefined
           ? {}
-          : { provenance: { kind: "registry" as const, source: options.registeredPath } }),
+          : { provenance: { kind: "registry" as const, source: resolve(options.registeredPath) } }),
       },
     ],
     pluginRefs: [],
@@ -87,7 +87,9 @@ async function sync(options: {
   const hostReader = new FakeHostMarketplaceRegistryReader({
     location: REGISTRY_LOCATION,
     entries:
-      options.registeredPath === undefined ? new Map() : new Map([[name, options.registeredPath]]),
+      options.registeredPath === undefined
+        ? new Map()
+        : new Map([[name, resolve(options.registeredPath)]]),
   });
   const useCase = new MarketplaceSyncSettingsUseCase(
     fs,
