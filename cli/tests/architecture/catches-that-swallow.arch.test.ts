@@ -5,7 +5,7 @@
 import { readdirSync, statSync } from "node:fs";
 import { join, relative } from "node:path";
 import { describe, expect, it } from "vitest";
-import { CLI_ROOT, read, sourceFiles } from "./helpers.js";
+import { CLI_ROOT, canonicalPath, read, sourceFiles } from "./helpers.js";
 
 /** File → how many empty catches it keeps, and why each is a deliberate best effort. */
 const BASELINE: Readonly<Record<string, { readonly count: number; readonly reason: string }>> = {
@@ -78,7 +78,7 @@ function testFiles(): string[] {
       const full = join(dir, entry);
       if (statSync(full).isDirectory()) {
         if (entry !== "fixtures" && entry !== "snapshots") walk(full);
-      } else if (entry.endsWith(".ts")) out.push(relative(CLI_ROOT, full));
+      } else if (entry.endsWith(".ts")) out.push(canonicalPath(relative(CLI_ROOT, full)));
     }
   };
   walk(join(CLI_ROOT, "tests"));

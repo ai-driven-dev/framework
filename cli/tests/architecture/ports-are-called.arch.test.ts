@@ -5,9 +5,9 @@
  * nothing spells the name as a call, never that a real path reaches it.
  */
 import { readdirSync, readFileSync, statSync } from "node:fs";
-import { join, relative, sep } from "node:path";
+import { join, relative } from "node:path";
 import { describe, expect, it } from "vitest";
-import { CLI_ROOT, expectRatchet, SRC, sourceFiles } from "./helpers.js";
+import { CLI_ROOT, canonicalPath, expectRatchet, SRC, sourceFiles } from "./helpers.js";
 
 /** "ports" must be its own path segment: a substring check also matches `supports/` and
  * `reports/`. */
@@ -17,8 +17,8 @@ function portFiles(): string[] {
     for (const entry of readdirSync(dir)) {
       const full = join(dir, entry);
       if (statSync(full).isDirectory()) walk(full);
-      else if (entry.endsWith(".ts") && /(^|\/)ports\//.test(full.split(sep).join("/"))) {
-        out.push(relative(CLI_ROOT, full));
+      else if (entry.endsWith(".ts") && /(^|\/)ports\//.test(canonicalPath(full))) {
+        out.push(canonicalPath(relative(CLI_ROOT, full)));
       }
     }
   };
