@@ -1,5 +1,5 @@
 import "../../../../../src/contexts/tools/domain/profiles/claude/profile.js";
-import { join } from "node:path";
+import { join, resolve, sep } from "node:path";
 import { describe, expect, it } from "vitest";
 import {
   FRAMEWORK_MARKETPLACE_NAME,
@@ -130,7 +130,7 @@ async function sync(options: {
     projectRoot: PROJECT_ROOT,
     recreateFrameworkIfMissing: options.recreateFrameworkIfMissing,
   });
-  return { result, activator, logger, manifestRepo, fs };
+  return { result, activator, logger, manifestRepo, fs, builtDir };
 }
 
 describe("the sync write path refuses to roll a host back to an older aidd-framework build", () => {
@@ -242,5 +242,53 @@ describe("the sync write path refuses to roll a host back to an older aidd-frame
     expect(result.warnings).toHaveLength(1);
     expect(result.errors).toStrictEqual([]);
     expect(fs.has(staleCacheFile)).toBe(false);
+  });
+});
+
+// TEMPORARY DIAGNOSTIC — deliberately failing, to read Windows spellings from the CI log.
+describe("WINDOWS DIAGNOSTIC", () => {
+  it("dumps every path spelling the four scenarios depend on", async () => {
+    const scenarios = [
+      {
+        label: "newer-shared",
+        requestedVersion: "1.0.0",
+        registeredPath: sharedPath("2.0.0"),
+        registeredVersion: "2.0.0",
+      },
+      {
+        label: "pre-migration",
+        requestedVersion: "1.0.0",
+        registeredPath: `${PROJECT_ROOT}/.aidd/cache/built/${MARKETPLACE_NAME}/claude`,
+      },
+      {
+        label: "older-shared",
+        requestedVersion: "2.0.0",
+        registeredPath: sharedPath("1.0.0"),
+        registeredVersion: "1.0.0",
+      },
+      {
+        label: "exact-same",
+        requestedVersion: "1.0.0",
+        registeredPath: sharedPath("1.0.0"),
+        registeredVersion: "1.0.0",
+      },
+    ];
+    const rows = [];
+    for (const scenario of scenarios) {
+      const { activator, builtDir, fs, result } = await sync(scenario);
+      rows.push({
+        label: scenario.label,
+        registered: scenario.registeredPath,
+        builtDir,
+        realpathBuilt: await fs.realpath(builtDir).catch(() => "THREW"),
+        realpathRegistered: await fs.realpath(scenario.registeredPath).catch(() => "THREW"),
+        added: activator.addedMarketplaces,
+        errors: result.errors.length,
+        warnings: result.warnings.length,
+      });
+    }
+    expect(JSON.stringify({ sep, USER_CACHE_ROOT, PROJECT_ROOT, rows }, null, 1)).toBe(
+      "DIAGNOSTIC"
+    );
   });
 });
