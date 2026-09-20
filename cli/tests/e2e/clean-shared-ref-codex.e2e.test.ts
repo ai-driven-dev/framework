@@ -10,6 +10,16 @@ import { createTestEnv, pathWithoutAidd, runCli } from "./helpers.js";
 const FRAMEWORK_REAL_PATH = resolve(process.cwd(), "tests/fixtures/framework-real");
 const PLUGIN_NAME = "aidd-vcs";
 
+/** Every string a parsed JSON tree holds. Asserting against `JSON.stringify` instead compares
+ * an escaped rendering: on Windows a path's backslashes come back doubled and match nothing. */
+function stringLeavesOf(value: unknown): string[] {
+  if (typeof value === "string") return [value];
+  if (Array.isArray(value)) return value.flatMap(stringLeavesOf);
+  if (value !== null && typeof value === "object")
+    return Object.values(value).flatMap(stringLeavesOf);
+  return [];
+}
+
 async function readJson(path: string): Promise<Record<string, unknown>> {
   return JSON.parse(await readFile(path, "utf-8")) as Record<string, unknown>;
 }
@@ -106,7 +116,7 @@ describe("E2E: clean leaves a codex ref enabled while another project still shar
       const machineManifest = await readJson(
         join(first.fakeHome, ".config", "aidd", "manifest.json")
       );
-      expect(JSON.stringify(machineManifest)).toContain(secondRoot);
+      expect(stringLeavesOf(machineManifest)).toContain(secondRoot);
       const referencesBefore = await readJson(
         join(first.fakeHome, ".config", "aidd", "references.json")
       );
