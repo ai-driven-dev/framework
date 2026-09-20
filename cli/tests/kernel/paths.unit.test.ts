@@ -4,6 +4,7 @@ import {
   parseBuiltMarketplaceDir,
   parseBuiltMarketplaceDirAtAnyRoot,
   parseUserBuiltMarketplaceDir,
+  samePath,
   samePathSegment,
 } from "../../src/kernel/paths.js";
 
@@ -66,5 +67,24 @@ describe("parseBuiltMarketplaceDirAtAnyRoot()", () => {
 describe("samePathSegment()", () => {
   it("tells two different names apart on win32 too", () => {
     expect(samePathSegment("alpha", "beta", "win32")).toBe(false);
+  });
+});
+
+describe("samePath()", () => {
+  it("calls a realpath answer and a stored path the same directory when only separators differ", () => {
+    expect(samePath("/user-cache/built/1.0.0", "\\user-cache\\built\\1.0.0", "win32")).toBe(true);
+  });
+
+  it("still tells two different directories apart", () => {
+    expect(samePath("/user-cache/built/1.0.0", "\\user-cache\\built\\2.0.0", "win32")).toBe(false);
+  });
+
+  it("folds case where the filesystem does, and nowhere else", () => {
+    expect(samePath("/Cache/Built", "/cache/built", "win32")).toBe(true);
+    expect(samePath("/Cache/Built", "/cache/built", "linux")).toBe(false);
+  });
+
+  it("leaves a posix path that legitimately holds a backslash alone on posix", () => {
+    expect(samePath("/odd/a", "/odd\\a", "linux")).toBe(false);
   });
 });
