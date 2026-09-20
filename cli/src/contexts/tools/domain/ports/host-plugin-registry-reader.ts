@@ -24,14 +24,13 @@ export interface HostPluginRegistryReading {
   /** The file consulted, named whatever it answered, so a person can open the same one. */
   readonly location: string;
   /**
-   * Every ref the registry carries, mapped to what it says about it. **Absent, never empty,
-   * when the registry could not be read**: an empty map is a real answer, and keeping the two
-   * apart in the type is what stops a caller inventing "not registered" out of a permissions
-   * error.
+   * Every ref the registry carries. Absent when the file is missing or unreadable; only
+   * `absent: true` proves no registry exists. An empty map is a parsed file with no refs,
+   * distinct from a permissions error.
    */
   readonly refs?: ReadonlyMap<string, HostPluginRegistryEntry>;
-  /** Why the registry could not be read: absent, unreadable, or holding something this reader
-   * will not pretend to understand. Present exactly when `refs` is absent. */
+  readonly absent?: true;
+  /** Why an existing registry could not be read or understood. Never set with `absent`. */
   readonly unreadable?: string;
 }
 

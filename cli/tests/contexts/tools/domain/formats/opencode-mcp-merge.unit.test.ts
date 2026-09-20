@@ -95,6 +95,27 @@ describe("mergeOpencodeMcp", () => {
     expect((parsed.mcp["plugin-server"] as { enabled: boolean }).enabled).toBe(false);
   });
 
+  it("treats a user-edited previously contributed server as a collision on reinstall", () => {
+    const first = mergeOpencodeMcp(
+      null,
+      makeIncoming({ "plugin-server": LOCAL_SERVER }),
+      new Map(),
+      hasher
+    );
+    const edited = makeExisting({ "plugin-server": REMOTE_SERVER });
+    const next = mergeOpencodeMcp(
+      edited,
+      makeIncoming({ "plugin-server": DISABLED_SERVER }),
+      first.contributedEntries,
+      hasher
+    );
+    expect(next.collisions).toHaveLength(1);
+    expect(next.contributedEntries.size).toBe(0);
+    expect((JSON.parse(next.mergedContent) as { mcp: Record<string, unknown> }).mcp).toEqual({
+      "plugin-server": REMOTE_SERVER,
+    });
+  });
+
   it("preserves disabled state (enabled: false) from incoming", () => {
     const { mergedContent } = mergeOpencodeMcp(
       null,
@@ -225,7 +246,7 @@ describe("buildOpencodeFlatConfig", () => {
 describe("unmergeOpencodeMcp", () => {
   it("removes only the tracked entries, preserving other servers", () => {
     const existing = makeExisting({ plugin: LOCAL_SERVER, user: REMOTE_SERVER });
-    const entries = new Map([["plugin", "somehash"]]);
+    const entries = new Map([["plugin", hasher.hash(JSON.stringify(LOCAL_SERVER)).value]]);
     const result = unmergeOpencodeMcp(existing, entries);
     const parsed = JSON.parse(result) as { mcp: Record<string, unknown> };
     expect(parsed.mcp).not.toHaveProperty("plugin");
@@ -247,5 +268,18 @@ describe("unmergeOpencodeMcp", () => {
       mcp: Record<string, unknown>;
     };
     expect(parsed.mcp.server).toEqual(LOCAL_SERVER);
+  });
+
+  it("refuses to unmerge a tracked server changed by the user", () => {
+    const entries = new Map([["plugin", hasher.hash(JSON.stringify(LOCAL_SERVER)).value]]);
+    expect(() => unmergeOpencodeMcp(makeExisting({ plugin: REMOTE_SERVER }), entries)).toThrow(
+      /edited.*plugin|plugin.*edited/
+    );
+  });
+
+  it("refuses an unproven legacy digest before removing a present server", () => {
+    expect(() =>
+      unmergeOpencodeMcp(makeExisting({ plugin: LOCAL_SERVER }), new Map([["plugin", ""]]))
+    ).toThrow(/unproven.*plugin|plugin.*unproven/);
   });
 });

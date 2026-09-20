@@ -7,10 +7,13 @@ import {
 import type { FileReader } from "../../../../kernel/ports/file-reader.js";
 import type { FileWriter } from "../../../../kernel/ports/file-writer.js";
 import type { Logger } from "../../../../kernel/ports/logger.js";
-import type { ToolId } from "../../../../kernel/tool.js";
+import type { AiToolId, ToolId } from "../../../../kernel/tool.js";
 import { isAiToolId } from "../../../../kernel/tool.js";
 import { getToolConfig, isAiTool } from "../../../tools/domain/registry.js";
 import type { Manifest } from "../../domain/manifest.js";
+import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
+import { detachNativePluginRefs } from "../ownership/native-plugin-ownership.js";
+import { detachUserPlugin } from "../ownership/user-plugin-ownership.js";
 import { deletePluginFilesForTool } from "../plugin/plugin-helpers.js";
 
 export interface UninstallToolsOptions {
@@ -28,7 +31,8 @@ export interface UninstallToolsResult {
 export class UninstallToolsUseCase {
   constructor(
     private readonly fs: FileReader & FileWriter,
-    private readonly logger: Logger
+    private readonly logger: Logger,
+    private readonly userManifestRepo?: ManifestRepository
   ) {}
 
   async execute(options: UninstallToolsOptions): Promise<UninstallToolsResult[]> {
@@ -38,6 +42,17 @@ export class UninstallToolsUseCase {
       results.push(await this.removeOneTool(toolId, toolIds, manifest, projectRoot));
     }
     return results;
+  }
+
+  async detachClaimsAfterSave(
+    projectRoot: string,
+    userPlugins: readonly { toolId: AiToolId; name: string }[],
+    nativeRefs: ReadonlyMap<ToolId, readonly string[]>
+  ): Promise<void> {
+    await detachNativePluginRefs(this.userManifestRepo, this.fs, projectRoot, nativeRefs);
+    for (const { toolId, name } of userPlugins) {
+      await detachUserPlugin(this.userManifestRepo, this.fs, toolId, name, projectRoot);
+    }
   }
 
   private async removeOneTool(

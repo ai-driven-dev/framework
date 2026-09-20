@@ -7,6 +7,7 @@ const pluginList = vi.fn();
 const pluginInstall = vi.fn();
 const pluginSearch = vi.fn();
 const pluginUpdate = vi.fn();
+const userPluginUpdate = vi.fn();
 const activation = vi.fn();
 const menuSelect = vi.fn();
 const spawn = vi.fn();
@@ -18,6 +19,7 @@ vi.mock("../../../src/runtime/wiring/framework.js", () => ({
     pluginInstallUseCase: { execute: pluginInstall },
     pluginSearchUseCase: { execute: pluginSearch },
     pluginUpdateUseCase: { execute: pluginUpdate },
+    userPluginUpdateUseCase: { execute: userPluginUpdate },
     marketplaceSyncSettingsUseCase: { execute: activation },
   })),
   createMenuDeps: vi.fn(() => ({ prompter: { select: menuSelect } })),
@@ -57,6 +59,7 @@ beforeEach(() => {
   pluginInstall.mockResolvedValue({ kind: "marketplace", installed: ["aidd-dev"] });
   pluginSearch.mockResolvedValue({ hits: [] });
   pluginUpdate.mockResolvedValue(["aidd-dev"]);
+  userPluginUpdate.mockResolvedValue(["aidd-vcs@aidd-framework"]);
   activation.mockResolvedValue({ binaryMissing: [], errors: [] });
   menuSelect.mockResolvedValue("list");
   spawn.mockResolvedValue(0);
@@ -134,6 +137,7 @@ describe("aidd plugin remove", () => {
       pluginName: "aidd-dev",
       toolIds: "all",
       projectRoot: PROJECT_ROOT,
+      scope: "project",
     });
     expect(activation).toHaveBeenCalledWith({
       projectRoot: PROJECT_ROOT,
@@ -267,12 +271,26 @@ describe("aidd plugin search", () => {
 });
 
 describe("aidd plugin update", () => {
+  it.each(["copilot", "cursor"])("routes %s --scope user to machine ownership", async (toolId) => {
+    expect(await run("update", "aidd-vcs", "--tool", toolId, "--scope", "user")).toEqual([
+      "Updated: aidd-vcs@aidd-framework.",
+    ]);
+    expect(userPluginUpdate).toHaveBeenCalledWith({
+      pluginNames: ["aidd-vcs"],
+      toolIds: [toolId],
+      projectRoot: PROJECT_ROOT,
+      scope: "user",
+    });
+    expect(pluginUpdate).not.toHaveBeenCalled();
+  });
+
   it("sweeps every plugin when none was named, and lists what moved", async () => {
     expect(await run("update")).toEqual(["Updated: aidd-dev."]);
     expect(pluginUpdate).toHaveBeenCalledWith({
       pluginNames: undefined,
       toolIds: "all",
       projectRoot: PROJECT_ROOT,
+      scope: "project",
     });
     expect(activation).toHaveBeenCalledWith({
       projectRoot: PROJECT_ROOT,
@@ -360,9 +378,15 @@ describe("aidd plugin — the help surface", () => {
       ["--tool <toolId>", "Target AI tool (default: all installed)"],
     ];
 
-    expect(optionsOf("remove")).toEqual(tool);
+    expect(optionsOf("remove")).toEqual([
+      ...tool,
+      ["--scope <user|project>", "Removal scope (default: project)"],
+    ]);
     expect(optionsOf("list")).toEqual(tool);
-    expect(optionsOf("update")).toEqual(tool);
+    expect(optionsOf("update")).toEqual([
+      ...tool,
+      ["--scope <user|project>", "Update scope (default: project)"],
+    ]);
   });
 
   it("says what install may be told about the source, the scope and the prompts", () => {

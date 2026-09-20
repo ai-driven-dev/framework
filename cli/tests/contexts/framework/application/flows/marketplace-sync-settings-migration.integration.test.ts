@@ -27,6 +27,8 @@ import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
 import { fakeEnsureBuiltMarketplace } from "../../../../helpers/ports/fake-ensure-built-marketplace.js";
 import { FakeHostMarketplaceRegistryReader } from "../../../../helpers/ports/fake-host-marketplace-registry-reader.js";
+import { FakeHostPluginRegistryReader } from "../../../../helpers/ports/fake-host-plugin-registry-reader.js";
+import { FakeNativeMarketplaceSourceReader } from "../../../../helpers/ports/fake-native-marketplace-source-reader.js";
 import { FakeNativePluginActivator } from "../../../../helpers/ports/fake-native-plugin-activator.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
@@ -36,6 +38,48 @@ const PROJECT_ROOT = "/project";
 const CLAUDE_BUILT_DIR = "/shared/built/claude";
 const CODEX_BUILT_DIR = "/shared/built/codex";
 const CATALOG_RELATIVE = ".claude-plugin/marketplace.json";
+
+function canonicallyOwned(toolId: "claude" | "codex"): Manifest {
+  const machine = Manifest.create();
+  machine.addTool(toolId, "test", []);
+  machine.setNativeRegistrations(toolId, {
+    binary: toolId,
+    marketplaces: [{ alias: FRAMEWORK_MARKETPLACE_NAME, hostName: FRAMEWORK_MARKETPLACE_NAME }],
+    pluginRefs: [],
+    pluginClaims: [],
+  });
+  return machine;
+}
+
+function readableHostPlugins(toolId: "claude" | "codex") {
+  return new Map([
+    [
+      toolId,
+      new FakeHostPluginRegistryReader({
+        location: `/home/${toolId}/plugins`,
+        refs: new Map(),
+      }),
+    ],
+  ]);
+}
+
+function freshClaudeSource(
+  activator: FakeNativePluginActivator,
+  builtDir: string,
+  name = FRAMEWORK_MARKETPLACE_NAME
+) {
+  return new Map([
+    [
+      "claude" as const,
+      new FakeNativeMarketplaceSourceReader(
+        activator,
+        "registry",
+        (path) => (path === builtDir ? name : undefined),
+        new Map()
+      ),
+    ],
+  ]);
+}
 
 function fakeVersion(value: string): VersionReader {
   return { get: () => value };
@@ -145,7 +189,7 @@ describe("MarketplaceSyncSettingsUseCase — codex and copilot refuse the same n
     });
   }
 
-  it("reclaims a codex registration that still names the pre-migration path, by removing then re-adding the shared source", async () => {
+  it("refuses force reclaim for Codex even with an AIDD claim when host source is unreadable", async () => {
     const registry = new InMemoryMarketplaceRegistry();
     await registry.save(PROJECT_ROOT, frameworkAtUserScope());
     const manifest = Manifest.create();
@@ -169,16 +213,31 @@ describe("MarketplaceSyncSettingsUseCase — codex and copilot refuse the same n
       new DeterministicHasher(),
       new CapturingLogger(),
       new Map([["codex", activator]]),
-      fakeEnsureBuiltMarketplace(() => CODEX_BUILT_DIR)
+      fakeEnsureBuiltMarketplace(() => CODEX_BUILT_DIR),
+      new Map(),
+      () => "",
+      undefined,
+      undefined,
+      undefined,
+      readableHostPlugins("codex"),
+      new InMemoryManifestRepository(canonicallyOwned("codex")),
+      new Map([
+        [
+          "codex",
+          { read: async () => ({ location: "/host/codex/catalogues", unreadable: "EACCES" }) },
+        ],
+      ])
     );
 
-    await useCase.execute({ projectRoot: PROJECT_ROOT });
+    const result = await useCase.execute({ projectRoot: PROJECT_ROOT });
 
-    expect(activator.removedMarketplaces).toEqual([FRAMEWORK_MARKETPLACE_NAME]);
-    expect(activator.addedMarketplaces).toEqual([CODEX_BUILT_DIR]);
+    expect(activator.removedMarketplaces).toEqual([]);
+    expect(activator.forcedRemovals).toEqual([]);
+    expect(activator.addedMarketplaces).toEqual([]);
+    expect(result.warnings.join("\n")).toContain("EACCES");
   });
 
-  it("warns with the reclaim message naming the tool that refuses the overwrite", async () => {
+  it("refuses an unproven reserved-name registration without force reclaim", async () => {
     const registry = new InMemoryMarketplaceRegistry();
     await registry.save(PROJECT_ROOT, frameworkAtUserScope());
     const manifest = Manifest.create();
@@ -208,10 +267,12 @@ describe("MarketplaceSyncSettingsUseCase — codex and copilot refuse the same n
 
     const result = await useCase.execute({ projectRoot: PROJECT_ROOT });
 
-    const reclaim =
-      "Marketplace 'aidd-framework' is registered from a different source and codex refuses to overwrite it in place; removing and re-registering it from the shared, machine-scope build. Plugins installed from it are removed and the ones this CLI manages are put back.";
-    expect(result.warnings).toStrictEqual([reclaim]);
-    expect(logger.warnMessages).toStrictEqual([reclaim]);
+    expect(activator.removedMarketplaces).toEqual([]);
+    expect(activator.addedMarketplaces).toEqual([]);
+    expect(result.warnings).toEqual([
+      expect.stringContaining("host source reader unavailable; reconcile manually"),
+    ]);
+    expect(logger.warnMessages).toEqual(result.warnings);
   });
 
   it("never reclaims an arbitrary, non-reserved marketplace name this way — only the framework's own", async () => {
@@ -258,7 +319,7 @@ describe("MarketplaceSyncSettingsUseCase — codex and copilot refuse the same n
 
   // `isUnguardedFrameworkMarketplace` excludes a tool declaring its own marketplace registry
   // from the reclaim door: a registry conflict is a reported error, never a silent remove-add.
-  it("never reclaims the reserved framework name for a tool that declares its own marketplace registry — claude reports the conflict instead", async () => {
+  it("does not force reclaim a reserved name that Claude's registry points at a foreign source", async () => {
     const registry = new InMemoryMarketplaceRegistry();
     await registry.save(PROJECT_ROOT, frameworkAtUserScope());
     const manifest = Manifest.create();
@@ -274,6 +335,11 @@ describe("MarketplaceSyncSettingsUseCase — codex and copilot refuse the same n
         version: "1.0.0",
         plugins: [],
       }),
+      [`/foreign/cache/${CATALOG_RELATIVE}`]: JSON.stringify({
+        name: FRAMEWORK_MARKETPLACE_NAME,
+        version: "1.0.0",
+        plugins: [{ name: "foreign-plugin" }],
+      }),
     });
     const useCase = new MarketplaceSyncSettingsUseCase(
       fs,
@@ -282,7 +348,38 @@ describe("MarketplaceSyncSettingsUseCase — codex and copilot refuse the same n
       new DeterministicHasher(),
       new CapturingLogger(),
       new Map([["claude", activator]]),
-      fakeEnsureBuiltMarketplace(() => CLAUDE_BUILT_DIR)
+      fakeEnsureBuiltMarketplace(() => CLAUDE_BUILT_DIR),
+      new Map([
+        [
+          "claude",
+          new FakeHostMarketplaceRegistryReader({
+            location: "/host/claude/known_marketplaces.json",
+            entries: new Map([[FRAMEWORK_MARKETPLACE_NAME, "/foreign/cache"]]),
+          }),
+        ],
+      ]),
+      () => "",
+      undefined,
+      undefined,
+      undefined,
+      readableHostPlugins("claude"),
+      undefined,
+      new Map([
+        [
+          "claude",
+          {
+            read: async () => ({
+              location: "/host/claude/catalogues",
+              entries: new Map([
+                [
+                  FRAMEWORK_MARKETPLACE_NAME,
+                  { kind: "registry" as const, source: "/foreign/cache" },
+                ],
+              ]),
+            }),
+          },
+        ],
+      ])
       // No `hostMarketplaceRegistries` reader for claude: `guardAgainstConflict` returns
       // "proceed" without reading one, so the exclusion is decided in `reclaimOrReport`.
     );
@@ -291,7 +388,67 @@ describe("MarketplaceSyncSettingsUseCase — codex and copilot refuse the same n
 
     expect(activator.removedMarketplaces).toEqual([]);
     expect(activator.addedMarketplaces).toEqual([]);
-    expect(result.warnings.some((w) => w.includes("skipped:"))).toBe(true);
+    expect(result.errors[0]?.message).toContain("different catalog");
+    expect(result.errors[0]?.message).toContain("/foreign/cache");
+  });
+});
+
+describe("MarketplaceSyncSettingsUseCase — fresh Claude host provenance", () => {
+  async function syncWithHostRegistry(reading: { absent?: true; unreadable?: string }) {
+    const registry = new InMemoryMarketplaceRegistry();
+    await registry.save(PROJECT_ROOT, projectScopeEntry({ kind: "local", path: "." }));
+    const manifest = Manifest.create();
+    manifest.addTool("claude", "test", []);
+    const activator = new FakeNativePluginActivator({ available: true, enablesPlugins: false });
+    const useCase = new MarketplaceSyncSettingsUseCase(
+      new InMemoryFileAdapter(catalogFixture(CLAUDE_BUILT_DIR)),
+      new InMemoryManifestRepository(manifest),
+      registry,
+      new DeterministicHasher(),
+      new CapturingLogger(),
+      new Map([["claude", activator]]),
+      fakeEnsureBuiltMarketplace(() => CLAUDE_BUILT_DIR),
+      new Map([
+        [
+          "claude",
+          new FakeHostMarketplaceRegistryReader({
+            location: "/home/.claude/plugins/known_marketplaces.json",
+            ...reading,
+          }),
+        ],
+      ]),
+      () => "",
+      undefined,
+      undefined,
+      undefined,
+      new Map([
+        [
+          "claude",
+          new FakeHostPluginRegistryReader({
+            location: "/home/.claude/plugins/installed_plugins.json",
+            absent: true,
+          }),
+        ],
+      ]),
+      undefined,
+      freshClaudeSource(activator, CLAUDE_BUILT_DIR)
+    );
+
+    return { activator, result: await useCase.execute({ projectRoot: PROJECT_ROOT }) };
+  }
+
+  it("adds a fresh catalogue when the host registry is explicitly absent", async () => {
+    const { activator, result } = await syncWithHostRegistry({ absent: true });
+
+    expect(activator.addedMarketplaces).toEqual([CLAUDE_BUILT_DIR]);
+    expect(result.warnings).toEqual([]);
+  });
+
+  it("does not add when the host registry exists but cannot be read", async () => {
+    const { activator, result } = await syncWithHostRegistry({ unreadable: "EACCES" });
+
+    expect(activator.addedMarketplaces).toEqual([]);
+    expect(result.warnings.join("\n")).toContain("host registry is unreadable");
   });
 });
 
@@ -308,7 +465,7 @@ describe("MarketplaceSyncSettingsUseCase — the host still tracks another, unmi
     );
   }
 
-  it("registers the shared source without breaking, and records a reference for both this project and the one the host used to point at", async () => {
+  it("leaves another project's cache and both references untouched without source provenance", async () => {
     const foreignProjectCache = builtMarketplaceDir(
       "/other-project",
       FRAMEWORK_MARKETPLACE_NAME,
@@ -358,20 +515,22 @@ describe("MarketplaceSyncSettingsUseCase — the host still tracks another, unmi
       () => USER_CACHE_ROOT,
       undefined,
       noSourceReferences(added),
-      fakeVersion(CURRENT_VERSION)
+      fakeVersion(CURRENT_VERSION),
+      readableHostPlugins("claude"),
+      new InMemoryManifestRepository(canonicallyOwned("claude"))
     );
 
-    await useCase.execute({ projectRoot: PROJECT_ROOT });
+    const before = await fs.readFile(`${foreignProjectCache}/${CATALOG_RELATIVE}`);
+    const result = await useCase.execute({ projectRoot: PROJECT_ROOT });
 
-    // The host is repointed onto the shared build without throwing: same catalog, foreign path,
-    // which `guardAgainstConflict` treats as an ordinary migration.
-    expect(activator.addedMarketplaces).toEqual([sharedBuiltDir()]);
-    const roots = added.map((a) => a.projectRoot);
-    expect(roots).toContain(PROJECT_ROOT);
-    expect(roots).toContain("/other-project");
+    expect(activator.addedMarketplaces).toEqual([]);
+    expect(activator.removedMarketplaces).toEqual([]);
+    expect(added).toEqual([]);
+    expect(await fs.readFile(`${foreignProjectCache}/${CATALOG_RELATIVE}`)).toBe(before);
+    expect(result.warnings.join("\n")).toContain("host source unproven");
   });
 
-  it("never records a reference for the foreign project's own root once that root no longer exists", async () => {
+  it("does not infer ownership or add references when the old project root is gone", async () => {
     const foreignProjectCache = builtMarketplaceDir(
       "/gone-project",
       FRAMEWORK_MARKETPLACE_NAME,
@@ -416,15 +575,18 @@ describe("MarketplaceSyncSettingsUseCase — the host still tracks another, unmi
       () => USER_CACHE_ROOT,
       undefined,
       noSourceReferences(added),
-      fakeVersion(CURRENT_VERSION)
+      fakeVersion(CURRENT_VERSION),
+      readableHostPlugins("claude"),
+      new InMemoryManifestRepository(canonicallyOwned("claude"))
     );
 
-    await useCase.execute({ projectRoot: PROJECT_ROOT });
+    const before = await fs.readFile(`${sharedBuiltDir()}/${CATALOG_RELATIVE}`);
+    const result = await useCase.execute({ projectRoot: PROJECT_ROOT });
 
-    expect(activator.addedMarketplaces).toEqual([sharedBuiltDir()]);
-    const roots = added.map((a) => a.projectRoot);
-    expect(roots).toContain(PROJECT_ROOT);
-    expect(roots).not.toContain("/gone-project");
+    expect(activator.addedMarketplaces).toEqual([]);
+    expect(added).toEqual([]);
+    expect(await fs.readFile(`${sharedBuiltDir()}/${CATALOG_RELATIVE}`)).toBe(before);
+    expect(result.warnings.join("\n")).toContain("host source unproven");
   });
 
   function hostOnForeignCache(): {
@@ -471,7 +633,7 @@ describe("MarketplaceSyncSettingsUseCase — the host still tracks another, unmi
     return { fs, hostReader, registry, manifest, activator };
   }
 
-  it("still repoints the host when this run has nowhere to record references at all", async () => {
+  it("does not repoint a legacy host entry when no reference ledger is available", async () => {
     const { fs, hostReader, registry, manifest, activator } = hostOnForeignCache();
     const useCase = new MarketplaceSyncSettingsUseCase(
       fs,
@@ -482,16 +644,23 @@ describe("MarketplaceSyncSettingsUseCase — the host still tracks another, unmi
       new Map([["claude", activator]]),
       fakeEnsureBuiltMarketplace(() => sharedBuiltDir()),
       new Map([["claude", hostReader]]),
-      () => USER_CACHE_ROOT
+      () => USER_CACHE_ROOT,
+      undefined,
+      undefined,
+      undefined,
+      readableHostPlugins("claude"),
+      new InMemoryManifestRepository(canonicallyOwned("claude"))
     );
 
     const result = await useCase.execute({ projectRoot: PROJECT_ROOT });
 
     expect(result.errors).toStrictEqual([]);
-    expect(activator.addedMarketplaces).toStrictEqual([sharedBuiltDir()]);
+    expect(activator.addedMarketplaces).toStrictEqual([]);
+    expect(activator.removedMarketplaces).toStrictEqual([]);
+    expect(result.warnings.join("\n")).toContain("host source unproven");
   });
 
-  it("still repoints the host, recording nothing, when the version to record under is unknown", async () => {
+  it("does not repoint or record a legacy host entry when the version is unknown", async () => {
     const { fs, hostReader, registry, manifest, activator } = hostOnForeignCache();
     const added: Array<{ version: string; projectRoot: string }> = [];
     const useCase = new MarketplaceSyncSettingsUseCase(
@@ -505,13 +674,18 @@ describe("MarketplaceSyncSettingsUseCase — the host still tracks another, unmi
       new Map([["claude", hostReader]]),
       () => USER_CACHE_ROOT,
       undefined,
-      noSourceReferences(added)
+      noSourceReferences(added),
+      undefined,
+      readableHostPlugins("claude"),
+      new InMemoryManifestRepository(canonicallyOwned("claude"))
     );
 
     const result = await useCase.execute({ projectRoot: PROJECT_ROOT });
 
     expect(result.errors).toStrictEqual([]);
-    expect(activator.addedMarketplaces).toStrictEqual([sharedBuiltDir()]);
+    expect(activator.addedMarketplaces).toStrictEqual([]);
+    expect(activator.removedMarketplaces).toStrictEqual([]);
+    expect(result.warnings.join("\n")).toContain("host source unproven");
     expect(added).toStrictEqual([]);
   });
 });
@@ -737,6 +911,7 @@ describe("MarketplaceSyncSettingsUseCase — purging this project's own pre-migr
   it("purges only after native activation has run against the still-present cache, never before", async () => {
     class OrderObservingActivator implements NativePluginActivator {
       readonly cacheStillPresentAtAdd: boolean[] = [];
+      addedSource?: string;
       constructor(
         private readonly fs: InMemoryFileAdapter,
         private readonly probe: string
@@ -747,7 +922,8 @@ describe("MarketplaceSyncSettingsUseCase — purging this project's own pre-migr
       enablesPlugins(): boolean {
         return false;
       }
-      addMarketplace(): void {
+      addMarketplace(source: string): void {
+        this.addedSource = source;
         this.cacheStillPresentAtAdd.push(this.fs.has(this.probe));
       }
       removeMarketplace(): void {}
@@ -781,7 +957,31 @@ describe("MarketplaceSyncSettingsUseCase — purging this project's own pre-migr
       fakeEnsureBuiltMarketplace(() => CLAUDE_BUILT_DIR),
       new Map(),
       () => "",
-      new MarketplaceRegisterFrameworkUseCase(registry)
+      new MarketplaceRegisterFrameworkUseCase(registry),
+      undefined,
+      undefined,
+      readableHostPlugins("claude"),
+      undefined,
+      new Map([
+        [
+          "claude",
+          {
+            read: async () => ({
+              location: "/host/claude/catalogues",
+              entries: new Map(
+                activator.addedSource === undefined
+                  ? []
+                  : [
+                      [
+                        FRAMEWORK_MARKETPLACE_NAME,
+                        { kind: "registry" as const, source: activator.addedSource },
+                      ],
+                    ]
+              ),
+            }),
+          },
+        ],
+      ])
     );
 
     await useCase.execute({ projectRoot: PROJECT_ROOT, recreateFrameworkIfMissing: true });
@@ -920,19 +1120,23 @@ describe("MarketplaceSyncSettingsUseCase — purging this project's own pre-migr
       ...catalogFixture(CLAUDE_BUILT_DIR),
     });
     fs.setSymlink(OLD_CACHE_DIR, "/etc/evil");
+    const activator = new FakeNativePluginActivator({ available: true, enablesPlugins: false });
     const useCase = new MarketplaceSyncSettingsUseCase(
       fs,
       new InMemoryManifestRepository(manifestWithClaude()),
       registry,
       new DeterministicHasher(),
       logger,
-      new Map([
-        ["claude", new FakeNativePluginActivator({ available: true, enablesPlugins: false })],
-      ]),
+      new Map([["claude", activator]]),
       fakeEnsureBuiltMarketplace(() => CLAUDE_BUILT_DIR),
       new Map(),
       () => "",
-      new MarketplaceRegisterFrameworkUseCase(registry)
+      new MarketplaceRegisterFrameworkUseCase(registry),
+      undefined,
+      undefined,
+      readableHostPlugins("claude"),
+      undefined,
+      freshClaudeSource(activator, CLAUDE_BUILT_DIR)
     );
 
     await useCase.execute({ projectRoot: PROJECT_ROOT, recreateFrameworkIfMissing: true });
@@ -1199,6 +1403,24 @@ describe("MarketplaceSyncSettingsUseCase + DoctorRegistrationUseCase — the ful
         version: CURRENT_VERSION,
         plugins: [],
       }),
+      [`${preMigrationCache}/${CATALOG_RELATIVE}`]: JSON.stringify({
+        name: FRAMEWORK_MARKETPLACE_NAME,
+        version: "1.0.0",
+        plugins: [],
+      }),
+    });
+    const machine = canonicallyOwned("claude");
+    machine.setNativeRegistrations("claude", {
+      binary: "claude",
+      marketplaces: [
+        {
+          alias: FRAMEWORK_MARKETPLACE_NAME,
+          hostName: FRAMEWORK_MARKETPLACE_NAME,
+          provenance: { kind: "registry", source: preMigrationCache },
+        },
+      ],
+      pluginRefs: [],
+      pluginClaims: [],
     });
     const sync = new MarketplaceSyncSettingsUseCase(
       syncFs,
@@ -1212,7 +1434,25 @@ describe("MarketplaceSyncSettingsUseCase + DoctorRegistrationUseCase — the ful
       () => USER_CACHE_ROOT,
       new MarketplaceRegisterFrameworkUseCase(registry),
       undefined,
-      fakeVersion(CURRENT_VERSION)
+      fakeVersion(CURRENT_VERSION),
+      readableHostPlugins("claude"),
+      new InMemoryManifestRepository(machine),
+      new Map([
+        [
+          "claude",
+          {
+            read: async () => ({
+              location: REGISTRY_LOCATION,
+              entries: new Map(
+                [...hostEntries].map(([name, source]) => [
+                  name,
+                  { kind: "registry" as const, source },
+                ])
+              ),
+            }),
+          },
+        ],
+      ])
     );
 
     const syncResult = await sync.execute({

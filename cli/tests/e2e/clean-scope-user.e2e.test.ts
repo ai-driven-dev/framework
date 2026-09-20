@@ -202,8 +202,17 @@ describe("E2E: clean --scope user purges the shared source", () => {
       expect(before).toContain("references.json");
       expect(await readJson(join(userConfigDir, "manifest.json")).catch(() => null)).toBeNull();
 
-      const statusBeforeClean = await gitStatusPorcelain(projectDir);
+      const blocked = await runCli(["clean", "--scope", "user", "--force"], projectDir, fakeHome);
+      expect(blocked.exitCode).toBe(1);
+      expect(blocked.stderr).toContain(projectDir);
 
+      const projectClean = await runCli(
+        ["clean", "--scope", "project", "--force"],
+        projectDir,
+        fakeHome
+      );
+      expect(projectClean.exitCode).toBe(0);
+      const statusBeforeClean = await gitStatusPorcelain(projectDir);
       const cleanResult = await runCli(
         ["clean", "--scope", "user", "--force"],
         projectDir,

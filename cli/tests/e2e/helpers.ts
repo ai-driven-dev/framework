@@ -1,6 +1,6 @@
 import { execFile } from "node:child_process";
 import { accessSync, constants, existsSync } from "node:fs";
-import { copyFile, cp, mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
+import { copyFile, cp, mkdir, mkdtemp, realpath, rm, writeFile } from "node:fs/promises";
 import { homedir, tmpdir } from "node:os";
 import { delimiter, dirname, join, resolve } from "node:path";
 import { promisify } from "node:util";
@@ -57,7 +57,11 @@ export async function createTestEnv(prefix: string): Promise<{
   fakeHome: string;
   cleanup: () => Promise<void>;
 }> {
-  const tempDir = await mkdtemp(join(tmpdir(), `aidd-e2e-${prefix}-`));
+  // `realpath` because the CLI resolves the roots it prints and compares, and `tmpdir()` does
+  // not: Windows hands back the 8.3 short form (`C:\\Users\\RUNNER~1\\…`) and macOS a symlink
+  // (`/var` → `/private/var`). Without this every assertion naming a workspace path compares
+  // two spellings of the same directory.
+  const tempDir = await realpath(await mkdtemp(join(tmpdir(), `aidd-e2e-${prefix}-`)));
   const projectDir = join(tempDir, "project");
   const fakeHome = join(tempDir, "home");
   await mkdir(projectDir, { recursive: true });

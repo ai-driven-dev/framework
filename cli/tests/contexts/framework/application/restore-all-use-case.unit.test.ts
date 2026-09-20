@@ -1,3 +1,4 @@
+import { homedir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { RestoreAllUseCase } from "../../../../src/contexts/framework/application/global/restore-all-use-case.js";
@@ -46,7 +47,8 @@ async function installPlugin(
     deps.hasher,
     deps.logger,
     deps.marketplaceRegistry,
-    fakeEnsureBuiltMarketplace()
+    fakeEnsureBuiltMarketplace(),
+    deps.userManifestRepo
   ).execute({
     source: { kind: "local", path: PLUGIN_FIXTURE },
     toolIds: [toolId],
@@ -188,32 +190,27 @@ describe("RestoreAllUseCase — plugin materialization", () => {
     expect(count()).toBe(1);
   });
 
-  it("restores a corrupted plugin file with exactly one materialization call (cursor — installScope:user tool)", async () => {
-    // A local-source install never reaches restoreViaBuiltTree — that path requires
-    // plugin.marketplace — so this exercises restoreViaTranslate for an installScope:"user" tool.
+  it("leaves a corrupted shared user plugin to explicit user-scope repair (cursor)", async () => {
     const deps = await buildUnitDeps(PROJECT_ROOT);
     await initAndInstall(deps, PROJECT_ROOT, "cursor");
     await seedFromDirectory(deps.fs, PLUGIN_FIXTURE, { useAbsolutePaths: true });
     await installPlugin(deps, "cursor", new PluginDistributionReaderAdapter(deps.fs));
 
-    const manifestAfterInstall = await deps.manifestRepo.load();
+    const manifestAfterInstall = deps.userManifestRepo.getCurrent();
     const plugin = manifestAfterInstall
       ?.getPlugins("cursor")
       .find((p) => p.name === "sample-plugin");
     const trackedRelativePath = [...(plugin?.files.keys() ?? [])][0];
     expect(trackedRelativePath).toBeDefined();
-    // plugin.files keys are relativePath (see restoreViaTranslate); actual fs storage is
-    // keyed by the absolute path the file was written to.
-    const pluginFile = join(PROJECT_ROOT, trackedRelativePath as string);
+    const pluginFile = join(homedir(), ".cursor/plugins/local", trackedRelativePath as string);
     await deps.fs.writeFile(pluginFile, "CORRUPTED CONTENT");
 
-    // Counting reader wired only from here — installPlugin's own read() must not count.
     const { reader, count } = countingReader(deps.fs);
     const useCase = makeRestoreAllUseCase(deps, reader, new OverwritePrompter(), true);
     await useCase.execute(PROJECT_ROOT, false, false);
 
-    expect(deps.fs.getFile(pluginFile)).not.toBe("CORRUPTED CONTENT");
-    expect(count()).toBe(1);
+    expect(deps.fs.getFile(pluginFile)).toBe("CORRUPTED CONTENT");
+    expect(count()).toBe(0);
   });
 
   it("result.pluginNamesRestored lists the restored plugin exactly once", async () => {
@@ -297,7 +294,8 @@ describe("RestoreAllUseCase — plugin materialization", () => {
       deps.hasher,
       deps.logger,
       deps.marketplaceRegistry,
-      fakeEnsureBuiltMarketplace()
+      fakeEnsureBuiltMarketplace(),
+      deps.userManifestRepo
     ).execute({
       source: { kind: "local", path: PLUGIN_FIXTURE },
       toolIds: ["codex"],

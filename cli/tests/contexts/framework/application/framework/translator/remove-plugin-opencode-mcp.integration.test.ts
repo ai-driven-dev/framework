@@ -148,4 +148,44 @@ describe("remove opencode plugin: unmerge MCP entries (Phase 5)", () => {
       })
     ).resolves.not.toThrow();
   });
+
+  it("refuses reinstall when a previously contributed MCP server was user-edited", async () => {
+    const fs = new InMemoryFileAdapter();
+    const translator = new ModeBFlatMaterializationTranslator(
+      fs,
+      new DeterministicHasher(),
+      () => STUB_HOME
+    );
+    const manifest = Manifest.create();
+    manifest.addTool("opencode", "test", []);
+    await translator.addPlugin(
+      buildDist(),
+      "opencode",
+      { kind: "local", path: "/plugin-source" },
+      PROJECT_ROOT,
+      manifest,
+      undefined
+    );
+    const prior = manifest.getPlugins("opencode")[0].mcpEntries;
+    const config = JSON.parse(fs.getFile(OPENCODE_JSON) ?? "null") as {
+      mcp: Record<string, unknown>;
+    };
+    const name = [...prior.keys()][0];
+    config.mcp[name] = USER_SERVER;
+    const edited = JSON.stringify(config);
+    fs.setFile(OPENCODE_JSON, edited);
+    manifest.removePlugin("opencode", PLUGIN_NAME);
+    await expect(
+      translator.addPlugin(
+        buildDist(),
+        "opencode",
+        { kind: "local", path: "/plugin-source" },
+        PROJECT_ROOT,
+        manifest,
+        undefined,
+        prior
+      )
+    ).rejects.toThrow(/edited.*MCP|MCP.*edited/);
+    expect(fs.getFile(OPENCODE_JSON)).toBe(edited);
+  });
 });
