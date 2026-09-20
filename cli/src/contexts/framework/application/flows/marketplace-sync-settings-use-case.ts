@@ -8,6 +8,7 @@ import {
   BUILT_CACHE_SUBDIR,
   parseBuiltMarketplaceDir,
   parseUserBuiltMarketplaceDir,
+  samePath,
   samePathSegment,
 } from "../../../../kernel/paths.js";
 import type { FileReader } from "../../../../kernel/ports/file-reader.js";
@@ -920,10 +921,11 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
     const requestedSource = await this.fs.realpath(builtDir).catch(() => builtDir);
     if (
       proof.sourceStatus === "owned" &&
-      proof.source?.source === requestedSource &&
+      proof.source?.source !== undefined &&
+      samePath(proof.source.source, requestedSource) &&
       (proof.source.kind === "registry" ||
         (proof.source.kind === "effective-list" &&
-          proof.source.root === requestedSource &&
+          samePath(proof.source.root, requestedSource) &&
           proof.source.sourceType === "local"))
     )
       return { hostName, outcome: "registered", claimable: true, provenance: proof.source };
