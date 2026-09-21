@@ -3,12 +3,13 @@
 /**
  * PreToolUse guard: refuses a Write, Edit or MultiEdit that would leave a plugin's dispatch
  * surface breaking one of the two architecture rules of issue #250. The rules live in
- * `scripts/lib/architecture-rules.js`; this script only supplies their inputs and speaks the
- * host's refusal.
+ * `scripts/lib/architecture-rules.js` and their filesystem layer in `architecture-scan.js`;
+ * this script only reconstructs the unwritten content and speaks the host's refusal.
  *
- * It fails open at every step. This hook gates every write in the repository, so an unreadable
- * payload, an unknown tool, an edit it cannot reconstruct or a crash must let the write through
- * rather than halt unrelated work.
+ * It is the fast path, not the gate: `scripts/check-architecture-rules.js` runs on every commit,
+ * whichever tool made the edit. This one only ever sees Claude Code, and it fails open at every
+ * step — an unreadable payload, an unknown tool, an edit it cannot reconstruct or a crash lets
+ * the write through rather than halting unrelated work.
  */
 
 const fs = require("node:fs");
@@ -17,13 +18,13 @@ const path = require("node:path");
 const WRITE_TOOLS = new Set(["Write", "Edit", "MultiEdit"]);
 const PROCEED = 0;
 
-const CITATION_SHAPES =
-  "a cell under a table header that reads Action, a fenced `actions/<name>.md` path, or a " +
-  "backticked `<name>.md` file name — a word in prose does not count";
-
-function architectureRules() {
+function architecture() {
   try {
-    return require(path.resolve(__dirname, "..", "..", "scripts", "lib", "architecture-rules.js"));
+    const lib = path.resolve(__dirname, "..", "..", "scripts", "lib");
+    return {
+      ...require(path.join(lib, "architecture-scan.js")),
+      classifyFile: require(path.join(lib, "architecture-rules.js")).classifyFile,
+    };
   } catch {
     return null;
   }
@@ -89,24 +90,8 @@ function prospectiveContent(toolName, toolInput, absolutePath) {
   return editedContent(absolutePath, edits);
 }
 
-/** Rule two needs the skill's action files; the engine never reads them itself. */
-function actionFileNames(relativePath, absolutePath) {
-  if (path.basename(relativePath) !== "SKILL.md") return undefined;
-  try {
-    return fs.readdirSync(path.join(path.dirname(absolutePath), "actions")).filter((name) => name.endsWith(".md"));
-  } catch {
-    return [];
-  }
-}
-
-function howToFix({ rule, plugin }) {
-  return rule === "orthogonality"
-    ? `name the concept ${plugin} owns instead of addressing it directly`
-    : `cite every action file the skill provides in its "## Actions" section. A citation is ${CITATION_SHAPES}`;
-}
-
-function refuse(violations) {
-  const reason = violations.map((v) => `${v.message}. Fix: ${howToFix(v)}.`).join("\n");
+function refuse(violations, describeFix) {
+  const reason = violations.map((v) => `${v.message}. Fix: ${describeFix(v)}.`).join("\n");
   process.stdout.write(
     JSON.stringify({
       hookSpecificOutput: {
@@ -118,19 +103,10 @@ function refuse(violations) {
   );
 }
 
-function violationsFor(engine, relativePath, content, actions) {
-  try {
-    const found = engine.checkArchitecture(relativePath, content, actions);
-    return Array.isArray(found) ? found : [];
-  } catch {
-    return [];
-  }
-}
-
 function main() {
-  const engine = architectureRules();
+  const rules = architecture();
   const payload = payloadFromStdin();
-  if (!engine || !payload) return PROCEED;
+  if (!rules || !payload) return PROCEED;
 
   const { tool_name: toolName, tool_input: toolInput } = payload;
   if (!WRITE_TOOLS.has(toolName)) return PROCEED;
@@ -141,13 +117,13 @@ function main() {
   const root = process.env.CLAUDE_PROJECT_DIR || process.cwd();
   const absolutePath = path.resolve(root, toolInput.file_path);
   const relativePath = repoRelative(absolutePath, root);
-  if (!relativePath || !engine.classifyFile(relativePath)) return PROCEED;
+  if (!relativePath || !rules.classifyFile(relativePath)) return PROCEED;
 
   const content = prospectiveContent(toolName, toolInput, absolutePath);
   if (content === null) return PROCEED;
 
-  const violations = violationsFor(engine, relativePath, content, actionFileNames(relativePath, absolutePath));
-  if (violations.length > 0) refuse(violations);
+  const violations = rules.violationsForFile(relativePath, content, absolutePath);
+  if (violations.length > 0) refuse(violations, rules.describeFix);
 
   return PROCEED;
 }
