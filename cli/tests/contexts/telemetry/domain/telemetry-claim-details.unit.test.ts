@@ -213,6 +213,27 @@ describe("the hook-fired claim, word for word", () => {
     });
   });
 
+  it("spells out whose project the anchored session is, word for word", () => {
+    const hookFired = claimOf(
+      {
+        journals: [journal({ vendorId: "s-old", sessionStartAt: "2026-08-20T09:00:00Z" })],
+        currentSessionId: "s-elsewhere",
+        anchorInAnotherProject: "git@github.com:acme/other.git",
+      },
+      "hook-fired"
+    );
+
+    expect(hookFired).toStrictEqual({
+      claim: "hook-fired",
+      verdict: "unknown",
+      reason: "anchor-in-another-project",
+      detail:
+        "this session belongs to git@github.com:acme/other.git, not to this project — its " +
+        "stored figures name that project, and nothing here is evidence about its hook. The " +
+        "newest run file here is from 2026-08-20T09:00:00Z",
+    });
+  });
+
   it("spells out the missing anchor beside the newest session_start", () => {
     const hookFired = claimOf(
       { journals: [journal({ vendorId: "s-1", sessionStartAt: "2026-08-20T09:00:00Z" })] },

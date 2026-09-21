@@ -32,6 +32,7 @@ export type TelemetryClaimReason =
   | NoRunFileReason
   | "unrecognised-payload"
   | "session-left-no-run-file"
+  | "anchor-in-another-project"
   | "no-session-anchor"
   | "turn-closed"
   | "only-session-start"
@@ -88,6 +89,10 @@ export interface TelemetryEvidence {
   readonly currentSessionId?: string;
   readonly unrecognisedPayloadAt?: string;
   readonly hookTrust?: TelemetryCodexHookTrust;
+  /** The project the stored records put the anchored session under, present only when that is
+   * decidably not this one: an anchor is inherited by any process nested inside a session,
+   * whatever directory it runs in. */
+  readonly anchorInAnotherProject?: string;
   /** Whether the recorder is declared anywhere this build checks — read the same way
    * `TelemetrySetup`'s own `recorderDeclaration` is, so the two cannot disagree. Never proof
    * the hook will fire: a declaration can be silently dropped. */
@@ -256,13 +261,30 @@ function noAnchorClaim(journals: readonly TelemetryClaimJournal[], latest: strin
   };
 }
 
+function anotherProjectClaim(project: string, latest: string): TelemetryClaim {
+  return {
+    claim: "hook-fired",
+    verdict: "unknown",
+    reason: "anchor-in-another-project",
+    detail:
+      `this session belongs to ${project}, not to this project — its stored figures name that ` +
+      `project, and nothing here is evidence about its hook. The newest run file here is from ` +
+      latest,
+  };
+}
+
 function sessionAnchoredClaim(
   journals: readonly TelemetryClaimJournal[],
   latest: string,
   currentSessionId: string,
-  hookTrust: TelemetryCodexHookTrust | undefined
+  hookTrust: TelemetryCodexHookTrust | undefined,
+  anchorInAnotherProject: string | undefined
 ): TelemetryClaim {
   if (!firedForSession(journals, currentSessionId)) {
+    // Before the trust gate: local trust state says nothing about another project's session.
+    if (anchorInAnotherProject !== undefined) {
+      return anotherProjectClaim(anchorInAnotherProject, latest);
+    }
     if (hookTrust && trustExplainsAbsence(hookTrust)) return untrustedHookClaim(hookTrust);
     return {
       claim: "hook-fired",
@@ -301,7 +323,8 @@ function claimHookFired(evidence: TelemetryEvidence): TelemetryClaim {
     sessionJournals,
     latest,
     evidence.currentSessionId,
-    evidence.hookTrust
+    evidence.hookTrust,
+    evidence.anchorInAnotherProject
   );
 }
 
