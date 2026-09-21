@@ -155,9 +155,7 @@ Address a capability only where the dispatch is declared: a router's `## Actions
 
 Recipe skills never hardcode a sibling provider. They discover cross-plugin capabilities at runtime through description matching. Agent permission lists and orchestration references are responsibility maps, so they name the current provider with its canonical `/plugin:folder` or `@plugin:agent` address. The orchestrator must verify that provider is installed before calling it.
 
-Both rules run as the `architecture-rules` pre-commit job, so a commit is refused whichever tool made the edit.
-
-- `plugins/aidd-context/skills/00-onboard/**` is exempt from the first: its menus name addresses because a person types them. Temporary, until that skill resolves its providers at runtime.
+- `plugins/aidd-context/skills/00-onboard/**` is exempt: its menus name addresses because a person types them. Temporary, until that skill resolves its providers at runtime.
 
 This distinction keeps recipe plugins swappable while making orchestration handoffs explicit and auditable.
 
