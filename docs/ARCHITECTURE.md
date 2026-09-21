@@ -135,7 +135,7 @@ flowchart LR
 
 Recipe skills route to self-contained actions with inputs, outputs, process steps, and tests. An orchestrator with no domain logic may instead route through numbered reference protocols that define handoffs and delegate the work to capabilities discovered at runtime.
 
-A skill never links outside itself. The same tree ships flat, where the skill folder is renamed `<plugin>-<skill>`, or as a marketplace, so no relative path survives both. A bundled script is named plugin-relative in backticks, never linked.
+A skill never links outside itself (`scripts/__tests__/a-skill-links-only-inside-itself.test.js`). The same tree ships flat, where the skill folder is renamed `<plugin>-<skill>`, or as a marketplace, so no relative path survives both. A bundled script is named plugin-relative in backticks, never linked.
 
 ## 🤖 Skills and agents
 
@@ -155,7 +155,10 @@ Address a capability only where the dispatch is declared: a router's `## Actions
 
 Recipe skills never hardcode a sibling provider. They discover cross-plugin capabilities at runtime through description matching. Agent permission lists and orchestration references are responsibility maps, so they name the current provider with its canonical `/plugin:folder` or `@plugin:agent` address. The orchestrator must verify that provider is installed before calling it.
 
-- `plugins/aidd-context/skills/00-onboard/**` is exempt: its menus name addresses because a person types them. Temporary, until that skill resolves its providers at runtime.
+Two paths are exempt, both in `isExemptFromOrthogonality`:
+
+- `plugins/aidd-orchestrator/**`, whose references are responsibility maps.
+- `plugins/aidd-context/skills/00-onboard/**`, whose menus name addresses a person types. Temporary: it ends when that skill resolves its providers at runtime.
 
 This distinction keeps recipe plugins swappable while making orchestration handoffs explicit and auditable.
 

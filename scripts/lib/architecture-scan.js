@@ -13,7 +13,7 @@ const { checkArchitecture, classifyFile } = require("./architecture-rules.js");
 
 const CITATION_SHAPES =
   "a cell under a table header that reads Action, a fenced `actions/<name>.md` path, or a " +
-  "backticked `<name>.md` file name — a word in prose does not count";
+  "backticked `<name>.md` file name. A word in prose does not count";
 
 /** Rule two needs the skill's action files; the engine never reads them itself. */
 function actionFileNames(relativePath, absolutePath) {

@@ -45,7 +45,11 @@ Every `cli` job is globbed on `cli/**`. A change under `kanban/` alone fires no 
 
 Each runs through `scripts/gate-witness.js`, which skips a gate this exact tree already passed: same index, same unstaged edits, same untracked files. A tree that changed while the gate ran is never stamped.
 
-`--no-verify` buys nothing: `validate.yml` re-runs the whole pre-commit over the whole tree on every push and pull request.
+`--no-verify` buys little, not nothing:
+
+- A push to a feature branch fires no workflow.
+- Any pull request fires `ci.yml` and `cli-ci.yml`, whatever its base.
+- Only a pull request targeting `main` or `next` replays the pre-commit, and `validate.yml` drops `cli-biome`, `cli-architecture` and `cli-typecheck` from it.
 
 ## Behavior
 
