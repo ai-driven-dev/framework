@@ -14,6 +14,8 @@ import type { PluginSource } from "../../../../../src/kernel/source.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
 import { fakeEnsureBuiltMarketplace } from "../../../../helpers/ports/fake-ensure-built-marketplace.js";
+import { FakeHostPluginRegistryReader } from "../../../../helpers/ports/fake-host-plugin-registry-reader.js";
+import { FakeNativeMarketplaceSourceReader } from "../../../../helpers/ports/fake-native-marketplace-source-reader.js";
 import { FakeNativePluginActivator } from "../../../../helpers/ports/fake-native-plugin-activator.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
@@ -47,6 +49,8 @@ interface SyncSetup {
   /** Refs that fail to enable — a recoverable, best-effort `NativePluginCliError`. */
   readonly failOnPlugins?: readonly string[];
   readonly activator?: FakeNativePluginActivator;
+  /** Explicitly prove the catalogue is already AIDD-owned before testing exact host refresh. */
+  readonly ownedCatalog?: true;
   readonly marketplaceSource?: (name: string) => PluginSource;
 }
 
@@ -72,9 +76,41 @@ function seededBuiltCatalog(name = "aidd-framework"): InMemoryFileAdapter {
   });
 }
 
+function readableClaudePluginRegistry() {
+  return new Map([
+    [
+      "claude" as const,
+      new FakeHostPluginRegistryReader({
+        location: "/home/.claude/plugins/installed_plugins.json",
+        refs: new Map(),
+      }),
+    ],
+  ]);
+}
+
+function freshClaudeSource(activator: FakeNativePluginActivator, name = "aidd-framework") {
+  return new Map([
+    [
+      "claude" as const,
+      new FakeNativeMarketplaceSourceReader(
+        activator,
+        "registry",
+        (path) => (path === "/built/claude" ? name : undefined),
+        new Map()
+      ),
+    ],
+  ]);
+}
+
 async function sync(setup: SyncSetup = {}) {
   const names = setup.marketplaceNames ?? ["aidd-framework"];
   const fs = seededBuiltCatalog(names[0]);
+  for (const name of names.slice(1)) {
+    await fs.writeFile(
+      `/built/claude-${name}/.claude-plugin/marketplace.json`,
+      JSON.stringify({ name, version: "1.0.0", plugins: [] })
+    );
+  }
   const manifestRepo = new InMemoryManifestRepository();
   const registry = new InMemoryMarketplaceRegistry();
   const logger = new CapturingLogger();
@@ -111,6 +147,22 @@ async function sync(setup: SyncSetup = {}) {
       crashOnAddMarketplace: setup.crashOnAddMarketplace ?? false,
       failOnPlugins: setup.failOnPlugins ?? [],
     });
+  const machine = setup.ownedCatalog ? Manifest.create() : undefined;
+  if (machine !== undefined) {
+    machine.addTool("claude", "test", []);
+    machine.setNativeRegistrations("claude", {
+      binary: "claude",
+      marketplaces: [
+        {
+          alias: names[0],
+          hostName: names[0],
+          provenance: { kind: "registry", source: "/built/claude" },
+        },
+      ],
+      pluginRefs: [],
+      pluginClaims: [],
+    });
+  }
   const useCase = new MarketplaceSyncSettingsUseCase(
     fs,
     manifestRepo,
@@ -118,7 +170,39 @@ async function sync(setup: SyncSetup = {}) {
     new DeterministicHasher(),
     logger,
     new Map([["claude", activator]]),
-    setup.ensureBuilt ?? fakeEnsureBuiltMarketplace()
+    setup.ensureBuilt ?? {
+      execute: async ({ marketplace, target }) => ({
+        builtDir:
+          marketplace.name === names[0]
+            ? `/built/${target}`
+            : `/built/${target}-${marketplace.name}`,
+        version: "test",
+        rebuilt: true,
+      }),
+    },
+    new Map(),
+    () => "",
+    undefined,
+    undefined,
+    undefined,
+    readableClaudePluginRegistry(),
+    machine === undefined ? undefined : new InMemoryManifestRepository(machine),
+    new Map([
+      [
+        "claude",
+        new FakeNativeMarketplaceSourceReader(
+          activator,
+          "registry",
+          (path) =>
+            path === "/built/claude"
+              ? names[0]
+              : names.slice(1).find((name) => path === `/built/claude-${name}`),
+          setup.ownedCatalog
+            ? new Map([[names[0], { kind: "registry", source: "/built/claude" }]])
+            : new Map()
+        ),
+      ],
+    ])
   );
   const result = await useCase.execute({ projectRoot: PROJECT_ROOT });
   const written = (await fs.fileExists(SHARED_SETTINGS))
@@ -340,7 +424,15 @@ describe("toolIds narrows which tool's CLI is driven", () => {
         ["claude", claudeActivator],
         ["codex", codexActivator],
       ]),
-      fakeEnsureBuiltMarketplace()
+      fakeEnsureBuiltMarketplace(),
+      new Map(),
+      () => "",
+      undefined,
+      undefined,
+      undefined,
+      readableClaudePluginRegistry(),
+      undefined,
+      freshClaudeSource(claudeActivator)
     );
 
     const result = await useCase.execute({ projectRoot: PROJECT_ROOT, toolIds: ["claude"] });
@@ -381,7 +473,15 @@ describe("toolIds narrows which tool's CLI is driven", () => {
         ["claude", claudeActivator],
         ["codex", codexActivator],
       ]),
-      fakeEnsureBuiltMarketplace()
+      fakeEnsureBuiltMarketplace(),
+      new Map(),
+      () => "",
+      undefined,
+      undefined,
+      undefined,
+      readableClaudePluginRegistry(),
+      undefined,
+      freshClaudeSource(claudeActivator)
     );
 
     const result = await useCase.execute({ projectRoot: PROJECT_ROOT, toolIds: ["claude"] });
@@ -421,10 +521,10 @@ describe("what a step that could not complete leaves in warnings and errors", ()
   it("warns about a refused marketplace upgrade and still enables the plugin", async () => {
     const activator = new ActivatorFailingAtUpgrade(new NativePluginCliError("registry locked"));
 
-    const { result } = await sync({ activator });
+    const { result } = await sync({ activator, ownedCatalog: true });
 
     expect(result.warnings).toStrictEqual([
-      "Native plugin activation — upgrade marketplaces skipped: registry locked",
+      "Native plugin activation — upgrade marketplace 'aidd-framework' skipped: registry locked",
     ]);
     expect(result.errors).toStrictEqual([]);
     expect(activator.enabledPlugins).toStrictEqual(["aidd-context@aidd-framework"]);
@@ -433,7 +533,7 @@ describe("what a step that could not complete leaves in warnings and errors", ()
   it("reports an activator bug during the upgrade as an error, never as a warning", async () => {
     const activator = new ActivatorFailingAtUpgrade(new Error("activator bug"));
 
-    const { result } = await sync({ activator });
+    const { result } = await sync({ activator, ownedCatalog: true });
 
     expect(result.errors).toStrictEqual([{ scope: "claude", message: "activator bug" }]);
     expect(result.warnings).toStrictEqual([]);
@@ -498,7 +598,15 @@ describe("a project whose manifest also lists a tool with no plugin system", () 
       new DeterministicHasher(),
       new CapturingLogger(),
       new Map([["claude", activator]]),
-      fakeEnsureBuiltMarketplace()
+      fakeEnsureBuiltMarketplace(),
+      new Map(),
+      () => "",
+      undefined,
+      undefined,
+      undefined,
+      readableClaudePluginRegistry(),
+      undefined,
+      freshClaudeSource(activator)
     );
 
     const result = await useCase.execute({ projectRoot: PROJECT_ROOT });

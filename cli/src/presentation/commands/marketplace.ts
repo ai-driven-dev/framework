@@ -1,4 +1,5 @@
 import type { Command } from "commander";
+import { parseInstallScope } from "../../contexts/framework/domain/install-scope.js";
 import type { MarketplaceScope } from "../../kernel/scope.js";
 import { parsePluginSourceShorthand } from "../../kernel/source.js";
 import { createDeps, createMenuDeps } from "../../runtime/wiring/framework.js";
@@ -111,17 +112,23 @@ export function registerMarketplaceCommand(program: Command): void {
     .command("remove <name>")
     .description("Remove a registered plugin marketplace")
     .option("--yes", "Skip the orphan-cleanup prompt")
-    .action(async (name: string, cmdOptions: { yes?: boolean }) => {
+    .option("--scope <project|user>", "Remove from project or user scope", "project")
+    .action(async (name: string, cmdOptions: { yes?: boolean; scope: string }) => {
       const { verbose, output, projectRoot } = parseGlobalOptions(program);
       const errorHandler = new ErrorHandler(output);
       try {
+        const scope = parseInstallScope(cmdOptions.scope) ?? "project";
         const deps = await createDeps(projectRoot, { verbose }, output);
-        const result = await deps.marketplaceRemoveUseCase.execute({
+        const result = await (scope === "user"
+          ? deps.userMarketplaceRemoveUseCase
+          : deps.marketplaceRemoveUseCase
+        ).execute({
           name,
           projectRoot,
           autoConfirm: cmdOptions.yes ?? false,
+          scope,
         });
-        await syncNativeActivation(deps, output, projectRoot);
+        if (scope !== "user") await syncNativeActivation(deps, output, projectRoot);
         printMarketplaceRemoved(output, result.marketplace.name, result.removedPluginCount);
       } catch (error) {
         errorHandler.handle(error);

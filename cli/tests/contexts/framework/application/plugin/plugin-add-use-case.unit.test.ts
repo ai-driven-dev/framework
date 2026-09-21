@@ -3,6 +3,7 @@ import { join } from "node:path";
 import { describe, expect, it, vi } from "vitest";
 import { Marketplace } from "../../../../../src/contexts/distribution/domain/marketplace.js";
 import { PluginAddUseCase } from "../../../../../src/contexts/framework/application/plugin/plugin-add-use-case.js";
+import { Manifest } from "../../../../../src/contexts/framework/domain/manifest.js";
 import { InstalledPlugin } from "../../../../../src/contexts/framework/domain/plugins/installed-plugin.js";
 import type { PluginDistributionReader } from "../../../../../src/contexts/framework/domain/ports/plugin-distribution-reader.js";
 import { PluginDistributionReaderAdapter } from "../../../../../src/contexts/framework/infrastructure/plugin-distribution-reader-adapter.js";
@@ -15,6 +16,7 @@ import type { Logger } from "../../../../../src/kernel/ports/logger.js";
 import { buildUnitDeps, initAndInstall } from "../../../../helpers/ports/build-unit-deps.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { fakeEnsureBuiltMarketplace } from "../../../../helpers/ports/fake-ensure-built-marketplace.js";
+import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
 import { InMemoryMarketplaceRegistry } from "../../../../helpers/ports/in-memory-marketplace-registry.js";
 import { seedFromDirectory } from "../../../../helpers/ports/seed-from-directory.js";
 
@@ -52,7 +54,8 @@ function buildAddUseCase(
     deps.hasher,
     logger,
     registry,
-    fakeEnsureBuiltMarketplace()
+    fakeEnsureBuiltMarketplace(),
+    deps.userManifestRepo
   );
 }
 
@@ -152,7 +155,8 @@ describe("PluginAddUseCase", () => {
         deps.hasher,
         deps.logger,
         registry,
-        fakeEnsureBuiltMarketplace()
+        fakeEnsureBuiltMarketplace(),
+        deps.userManifestRepo
       );
       await useCase.execute({
         source: {
@@ -195,7 +199,8 @@ describe("PluginAddUseCase", () => {
         deps.hasher,
         deps.logger,
         registry,
-        fakeEnsureBuiltMarketplace()
+        fakeEnsureBuiltMarketplace(),
+        deps.userManifestRepo
       );
       await expect(
         useCase.execute({
@@ -235,7 +240,8 @@ describe("PluginAddUseCase", () => {
         deps.hasher,
         deps.logger,
         registry,
-        fakeEnsureBuiltMarketplace()
+        fakeEnsureBuiltMarketplace(),
+        deps.userManifestRepo
       );
       await useCase.execute({
         source: { kind: "local", path: PLUGIN_FIXTURE },
@@ -292,7 +298,8 @@ describe("PluginAddUseCase", () => {
           deps.hasher,
           deps.logger,
           await makeGithubRegistry(PROJECT_ROOT),
-          fakeEnsureBuiltMarketplace()
+          fakeEnsureBuiltMarketplace(),
+          deps.userManifestRepo
         );
         await useCase.execute({
           source: GIT_SUBDIR_SOURCE,
@@ -330,7 +337,8 @@ describe("PluginAddUseCase", () => {
           deps.hasher,
           deps.logger,
           registry,
-          fakeEnsureBuiltMarketplace()
+          fakeEnsureBuiltMarketplace(),
+          deps.userManifestRepo
         );
         await useCase.execute({
           source: GIT_SUBDIR_SOURCE,
@@ -367,7 +375,8 @@ describe("PluginAddUseCase", () => {
           deps.hasher,
           deps.logger,
           registry,
-          fakeEnsureBuiltMarketplace()
+          fakeEnsureBuiltMarketplace(),
+          deps.userManifestRepo
         );
         await useCase.execute({
           source: GIT_SUBDIR_SOURCE,
@@ -382,7 +391,13 @@ describe("PluginAddUseCase", () => {
         const plugins = manifest?.getPlugins("cursor") ?? [];
         const installed = plugins.find((p) => p.name === "sample-plugin");
         expect(installed).toBeDefined();
-        expect(installed?.files.size).toBeGreaterThan(0);
+        expect(installed?.files.size).toBe(0);
+        const machine = deps.userManifestRepo
+          .getCurrent()
+          ?.getPlugins("cursor")
+          .find((p) => p.name === "sample-plugin");
+        expect(machine?.files.size).toBeGreaterThan(0);
+        expect(machine?.dependents).toEqual([PROJECT_ROOT]);
       });
 
       const CURSOR_SKILL = "sample-plugin/skills/demo/SKILL.md";
@@ -416,6 +431,7 @@ describe("PluginAddUseCase", () => {
         const deps = await cursorDeps();
         deps.fs.setFile(cursorSkillAt(), "# Their own skill");
         const logger = new CapturingLogger();
+        const machineWritesBefore = deps.userManifestRepo.saveCount;
 
         await addForCursor(deps, logger);
 
@@ -423,6 +439,8 @@ describe("PluginAddUseCase", () => {
         const entry = deps.manifestRepo.getCurrent()?.getPlugins("cursor")[0];
         expect(entry?.name).toBe("sample-plugin");
         expect(entry?.files.size).toBe(0);
+        expect(deps.userManifestRepo.saveCount).toBe(machineWritesBefore);
+        expect(deps.userManifestRepo.getCurrent()?.getPlugins("cursor") ?? []).toEqual([]);
         expect(logger.warnMessages.join("\n")).toContain(
           join(homedir(), ".cursor/plugins/local", "sample-plugin")
         );
@@ -433,15 +451,25 @@ describe("PluginAddUseCase", () => {
         const manifest = await deps.manifestRepo.load();
         manifest?.addPlugin(
           "cursor",
-          InstalledPlugin.fromMetadata("other-plugin", "1.0.0", GIT_SUBDIR_SOURCE, false, "user")
+          InstalledPlugin.fromMetadata(
+            "other-plugin",
+            "1.0.0",
+            GIT_SUBDIR_SOURCE,
+            false,
+            "user"
+          ).withFiles(new Map([["other-plugin/skills/demo.md", "recorded-hash"]]))
         );
         if (manifest) await deps.manifestRepo.save(manifest);
         deps.fs.setFile(cursorSkillAt(), "# Their own skill");
+        const machineWritesBefore = deps.userManifestRepo.saveCount;
 
         await addForCursor(deps, deps.logger);
 
         expect(deps.fs.getFile(cursorSkillAt())).toBe("# Their own skill");
         expect(pluginNames(deps, "cursor")).toEqual(["other-plugin", "sample-plugin"]);
+        expect(deps.manifestRepo.getCurrent()?.getPlugins("cursor")[0]?.files.size).toBe(1);
+        expect(deps.userManifestRepo.saveCount).toBe(machineWritesBefore);
+        expect(deps.userManifestRepo.getCurrent()?.getPlugins("cursor") ?? []).toEqual([]);
       });
 
       it("still delivers the plugin's project hooks when its user-scope dir is someone else's", async () => {
@@ -470,15 +498,66 @@ describe("PluginAddUseCase", () => {
         expect(deps.manifestRepo.getCurrent()?.getPlugins("cursor")[0]?.files.size).toBe(0);
       });
 
-      it("still overwrites and tracks its own plugin dir when re-installed with replace", async () => {
+      it("project replace refuses legacy hooks without an install digest and preserves shared files", async () => {
         const deps = await cursorDeps();
         await addForCursor(deps, deps.logger);
+        const hooksBefore = deps.fs.getFile(join(PROJECT_ROOT, ".cursor/hooks.json"));
+        const savesBefore = deps.manifestRepo.saveCount;
+        const machineSavesBefore = deps.userManifestRepo.saveCount;
         deps.fs.setFile(`/built/cursor/plugins/${CURSOR_SKILL}`, "# Demo skill v2");
 
-        await addForCursor(deps, deps.logger, true);
+        await expect(addForCursor(deps, deps.logger, true)).rejects.toThrow(
+          /legacy install digest/
+        );
 
-        expect(deps.fs.getFile(cursorSkillAt())).toBe("# Demo skill v2");
+        expect(deps.fs.getFile(cursorSkillAt())).toBe("# Demo skill");
+        expect(deps.fs.getFile(join(PROJECT_ROOT, ".cursor/hooks.json"))).toBe(hooksBefore);
+        expect(deps.manifestRepo.saveCount).toBe(savesBefore);
+        expect(deps.userManifestRepo.saveCount).toBe(machineSavesBefore);
         expect(pluginNames(deps, "cursor")).toEqual(["sample-plugin"]);
+        expect(deps.userManifestRepo.getCurrent()?.getPlugins("cursor")[0]?.dependents).toEqual([
+          PROJECT_ROOT,
+        ]);
+      });
+
+      it("attaches project B to A's canonical Cursor file without rewriting A's bytes", async () => {
+        const deps = await cursorDeps();
+        const logger = new CapturingLogger();
+        await addForCursor(deps, logger);
+        const warningsBeforeB = logger.warnMessages.length;
+        const ownedPath = cursorSkillAt();
+        deps.fs.setFile(ownedPath, "A's own bytes");
+        const projectB = Manifest.create();
+        projectB.addTool("cursor", "1.0.0", []);
+        const projectBRepo = new InMemoryManifestRepository(projectB, "/B");
+        const registryB = await makeGithubRegistry("/B");
+        await new PluginAddUseCase(
+          deps.fs,
+          projectBRepo,
+          deps.pluginFetcher,
+          new PluginDistributionReaderAdapter(deps.fs),
+          deps.hasher,
+          logger,
+          registryB,
+          fakeEnsureBuiltMarketplace(),
+          deps.userManifestRepo
+        ).execute({
+          source: GIT_SUBDIR_SOURCE,
+          toolIds: ["cursor"],
+          projectRoot: "/B",
+          marketplace: "aidd-framework",
+          interactive: false,
+          pluginMetadata: PLUGIN_METADATA,
+        });
+        expect(deps.fs.getFile(ownedPath)).toBe("A's own bytes");
+        expect(projectBRepo.getCurrent()?.getPlugins("cursor")[0]?.files.size).toBe(0);
+        expect(deps.userManifestRepo.getCurrent()?.getPlugins("cursor")[0]?.dependents).toEqual([
+          PROJECT_ROOT,
+          "/B",
+        ]);
+        expect(logger.warnMessages.slice(warningsBeforeB).join("\n")).not.toContain(
+          "was already there and this project did not install it"
+        );
       });
     });
 
@@ -498,7 +577,8 @@ describe("PluginAddUseCase", () => {
           deps.hasher,
           deps.logger,
           registry,
-          fakeEnsureBuiltMarketplace()
+          fakeEnsureBuiltMarketplace(),
+          deps.userManifestRepo
         );
         await useCase.execute({
           source: GIT_SUBDIR_SOURCE,
@@ -530,7 +610,8 @@ describe("PluginAddUseCase", () => {
           deps.hasher,
           deps.logger,
           registry,
-          fakeEnsureBuiltMarketplace()
+          fakeEnsureBuiltMarketplace(),
+          deps.userManifestRepo
         );
         await useCase.execute({
           source: GIT_SUBDIR_SOURCE,
@@ -564,7 +645,8 @@ describe("PluginAddUseCase", () => {
           deps.hasher,
           deps.logger,
           registry,
-          fakeEnsureBuiltMarketplace()
+          fakeEnsureBuiltMarketplace(),
+          deps.userManifestRepo
         );
         await useCase.execute({
           source: GIT_SUBDIR_SOURCE,
@@ -595,7 +677,8 @@ describe("PluginAddUseCase", () => {
           deps.hasher,
           deps.logger,
           registry,
-          fakeEnsureBuiltMarketplace()
+          fakeEnsureBuiltMarketplace(),
+          deps.userManifestRepo
         );
         await useCase.execute({
           source: GIT_SUBDIR_SOURCE,
@@ -629,7 +712,8 @@ describe("PluginAddUseCase", () => {
           deps.hasher,
           deps.logger,
           registry,
-          fakeEnsureBuiltMarketplace()
+          fakeEnsureBuiltMarketplace(),
+          deps.userManifestRepo
         );
         await useCase.execute({
           source: GIT_SUBDIR_SOURCE,
@@ -680,7 +764,8 @@ describe("PluginAddUseCase", () => {
           deps.hasher,
           deps.logger,
           registry,
-          fakeEnsureBuiltMarketplace()
+          fakeEnsureBuiltMarketplace(),
+          deps.userManifestRepo
         );
         await useCase.execute({
           source: { kind: "local", path: PLUGIN_FIXTURE },
@@ -732,7 +817,8 @@ describe("PluginAddUseCase", () => {
         deps.hasher,
         deps.logger,
         registry,
-        fakeEnsureBuiltMarketplace()
+        fakeEnsureBuiltMarketplace(),
+        deps.userManifestRepo
       );
       await useCase.execute({
         source: { kind: "local", path: "/some-plugin" },

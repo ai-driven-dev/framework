@@ -194,6 +194,18 @@ export function pathContainsOrEquals(outer: string, inner: string): boolean {
   return normalizedOuter === normalizedInner || normalizedInner.startsWith(`${normalizedOuter}/`);
 }
 
+/** Whether two paths name the same directory: separators normalised, and case folded the way
+ * a case-insensitive filesystem would — on win32 only, where a backslash separates and case
+ * does not count. Elsewhere a backslash is an ordinary character in a name. Both sides are
+ * expected already resolved — this
+ * compares spelling, it does not resolve. A `realpath` answer and a path a host stored name
+ * the same directory in two spellings on Windows, and `===` calls them different. */
+export function samePath(a: string, b: string, platform: string = process.platform): boolean {
+  if (platform !== "win32") return a === b;
+  const folded = (p: string): string => p.replace(/\\/g, "/").toLowerCase();
+  return folded(a) === folded(b);
+}
+
 /** Either direction: neither may sit inside the other. */
 export function pathsOverlap(a: string, b: string): boolean {
   return pathContainsOrEquals(a, b) || pathContainsOrEquals(b, a);

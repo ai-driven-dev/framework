@@ -104,7 +104,7 @@ function handleFileWritten(payload, host, sessionId) {
   const stated = statedRawPath(payload, host);
   if (!stated) return;
 
-  const target = resolveRunsDir(payload.cwd);
+  const target = resolveRunsDir(readCwd(host, payload));
   if (!target) return;
 
   const relativePath = taskFolderRelativePath(target.repoRoot, realPathOf(stated));

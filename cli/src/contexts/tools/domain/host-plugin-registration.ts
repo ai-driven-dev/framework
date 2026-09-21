@@ -154,7 +154,7 @@ export function answeredRegistry(
   if (reading.refs === undefined) {
     return {
       answer: "unanswerable",
-      detail: `${reading.location} could not be read — ${reading.unreadable ?? "no reason given"}`,
+      detail: `${reading.location} could not be read — ${reading.absent ? "ENOENT" : (reading.unreadable ?? "no reason given")}`,
     };
   }
   return { refs: reading.refs, location: reading.location };

@@ -30,6 +30,16 @@ export class SetupMachineScopeUseCase {
 
   async execute(flow: SetupFlow): Promise<SetupResult> {
     const source = await this.setupMarketplaceRegistration.resolveSourceIfNeeded(flow);
+    if (this.userManifestRepo.withExclusiveAccess !== undefined) {
+      return this.userManifestRepo.withExclusiveAccess(() => this.executeLocked(flow, source));
+    }
+    return this.executeLocked(flow, source);
+  }
+
+  private async executeLocked(
+    flow: SetupFlow,
+    source: Awaited<ReturnType<SetupMarketplaceRegistrationUseCase["resolveSourceIfNeeded"]>>
+  ): Promise<SetupResult> {
     const isNew = await this.initUserManifest();
     await this.setupMarketplaceRegistration.registerIfPresent(flow, source);
     await this.registerUserScopeTools(flow);

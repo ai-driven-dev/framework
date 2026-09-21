@@ -7,7 +7,15 @@ import {
 import type { Prompter } from "../../../kernel/ports/prompter.js";
 import type { MarketplaceScope } from "../../../kernel/scope.js";
 import type { PluginSource } from "../../../kernel/source.js";
-import type { MarketplaceRemoveUseCase } from "../../framework/application/flows/marketplace-remove-use-case.js";
+import type {
+  MarketplaceRemoveOptions,
+  MarketplaceRemoveResult,
+} from "../../framework/application/flows/marketplace-remove-use-case.js";
+
+export interface MarketplaceRemover {
+  execute(options: MarketplaceRemoveOptions): Promise<MarketplaceRemoveResult>;
+}
+
 import { FRAMEWORK_MARKETPLACE_NAME, Marketplace } from "../domain/marketplace.js";
 import type { MarketplaceRegistry } from "../domain/ports/marketplace-registry.js";
 import type { MarketplaceTrustStore } from "../domain/ports/marketplace-trust-store.js";
@@ -32,7 +40,7 @@ export class MarketplaceAddUseCase {
     private readonly trustStore: MarketplaceTrustStore,
     private readonly resolveMarketplace: ResolveMarketplaceUseCase,
     private readonly prompter: Prompter,
-    private readonly removeUseCase: MarketplaceRemoveUseCase
+    private readonly removeUseCase: MarketplaceRemover
   ) {}
 
   async execute(options: MarketplaceAddOptions): Promise<MarketplaceAddResult> {
@@ -69,7 +77,7 @@ export class MarketplaceAddUseCase {
     const found = existing.find((m) => m.name === name);
     if (!found) return;
     if (!overwrite) throw new MarketplaceAlreadyRegisteredError(name);
-    await this.removeUseCase.execute({ name, projectRoot, autoConfirm: true });
+    await this.removeUseCase.execute({ name, projectRoot, autoConfirm: true, scope: found.scope });
   }
 
   private async ensureTrust(options: MarketplaceAddOptions): Promise<void> {

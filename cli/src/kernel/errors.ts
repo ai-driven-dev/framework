@@ -26,6 +26,13 @@ export class InvalidPluginScopeError extends Error {
   }
 }
 
+export class ActiveMachineDependentsError extends Error {
+  constructor(target: string, projects: readonly string[]) {
+    super(`Cannot remove ${target}: active projects still depend on it: ${projects.join(", ")}.`);
+    this.name = "ActiveMachineDependentsError";
+  }
+}
+
 export class AuthenticationError extends Error {
   constructor(source: string) {
     super(`Authentication failed (${source}). Run \`aidd auth login\` to authenticate.`);

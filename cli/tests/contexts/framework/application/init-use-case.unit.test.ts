@@ -23,6 +23,8 @@ describe("init", () => {
 
     const manifest = await deps.manifestRepo.load();
     expect(manifest).not.toBeNull();
+    expect(result.manifest.toJSON()).toEqual(manifest?.toJSON());
+    expect(deps.fs.getFile(join(PROJECT_ROOT, ".gitignore"))).toContain(".aidd/cache/");
     const tools = manifest?.getInstalledToolIds() ?? [];
     expect(tools).toHaveLength(0);
   });
@@ -133,6 +135,19 @@ describe("init", () => {
   });
 
   describe("--force", () => {
+    it("does not create or alter gitignore while reusing an existing manifest", async () => {
+      const deps = await buildUnitDeps(PROJECT_ROOT);
+      await initProject(deps, PROJECT_ROOT);
+      await deps.fs.writeFile(join(PROJECT_ROOT, ".gitignore"), "# User-owned\n");
+      const before = (await deps.manifestRepo.load())?.toJSON();
+      const result = await new InitUseCase(deps.fs, deps.manifestRepo).execute({
+        projectRoot: PROJECT_ROOT,
+        force: true,
+      });
+      expect(result.manifest.toJSON()).toEqual(before);
+      expect(deps.fs.getFile(join(PROJECT_ROOT, ".gitignore"))).toBe("# User-owned\n");
+    });
+
     it("preserves existing manifest tools when --force reinitializes", async () => {
       const deps = await buildUnitDeps(PROJECT_ROOT);
       await initProject(deps, PROJECT_ROOT);

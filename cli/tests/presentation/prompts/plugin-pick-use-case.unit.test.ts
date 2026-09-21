@@ -62,7 +62,8 @@ async function buildUseCase(prompter: Prompter = new KeepPrompter()) {
     deps.hasher,
     deps.logger,
     registry,
-    fakeEnsureBuiltMarketplace()
+    fakeEnsureBuiltMarketplace(),
+    deps.userManifestRepo
   );
   const fetchMarketplaceSource = new FetchMarketplaceSourceUseCase(deps.pluginFetcher);
   const resolveMarketplace = new ResolveMarketplaceUseCase(

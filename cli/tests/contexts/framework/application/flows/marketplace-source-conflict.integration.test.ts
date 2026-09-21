@@ -10,6 +10,8 @@ import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
 import { fakeEnsureBuiltMarketplace } from "../../../../helpers/ports/fake-ensure-built-marketplace.js";
 import { FakeHostMarketplaceRegistryReader } from "../../../../helpers/ports/fake-host-marketplace-registry-reader.js";
+import { FakeHostPluginRegistryReader } from "../../../../helpers/ports/fake-host-plugin-registry-reader.js";
+import { FakeNativeMarketplaceSourceReader } from "../../../../helpers/ports/fake-native-marketplace-source-reader.js";
 import { FakeNativePluginActivator } from "../../../../helpers/ports/fake-native-plugin-activator.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
@@ -43,6 +45,8 @@ interface Setup {
    * reported success but left nothing readable where its own tool profile probes. */
   readonly omitRequestedCatalog?: boolean;
   readonly fs?: InMemoryFileAdapter;
+  /** A prior user manifest claim, not this project's plugin projection, proves catalogue ownership. */
+  readonly ownedCatalog?: true;
 }
 
 class RealpathRefusingFileAdapter extends InMemoryFileAdapter {
@@ -108,6 +112,35 @@ async function sync(setup: Setup = {}) {
       ? []
       : ([[toolId, setup.hostReader]] as [AiToolId, FakeHostMarketplaceRegistryReader][])
   );
+  const hostReading = toolId === "claude" ? await setup.hostReader?.read() : undefined;
+  const registeredSource = hostReading?.entries?.get(catalogName);
+  const currentSource =
+    registeredSource === undefined
+      ? undefined
+      : toolId === "claude"
+        ? ({ kind: "registry", source: registeredSource } as const)
+        : ({
+            kind: "effective-list",
+            root: registeredSource,
+            sourceType: "local",
+            source: registeredSource,
+          } as const);
+  const machine = setup.ownedCatalog ? Manifest.create() : undefined;
+  if (machine !== undefined) {
+    machine.addTool(toolId, "test", []);
+    machine.setNativeRegistrations(toolId, {
+      binary: toolId,
+      marketplaces: [
+        {
+          alias: aiddName,
+          hostName: catalogName,
+          ...(currentSource === undefined ? {} : { provenance: currentSource }),
+        },
+      ],
+      pluginRefs: [],
+      pluginClaims: [],
+    });
+  }
   const useCase = new MarketplaceSyncSettingsUseCase(
     fs,
     manifestRepo,
@@ -116,7 +149,39 @@ async function sync(setup: Setup = {}) {
     logger,
     new Map([[toolId === "claude" ? "claude" : "codex", activator]]),
     fakeEnsureBuiltMarketplace((target) => `/built/${target}`),
-    hostRegistries
+    hostRegistries,
+    () => "",
+    undefined,
+    undefined,
+    undefined,
+    new Map([
+      [
+        toolId,
+        new FakeHostPluginRegistryReader({
+          location: `/home/${toolId}/plugins/installed_plugins.json`,
+          refs: new Map(),
+        }),
+      ],
+    ]),
+    machine === undefined ? undefined : new InMemoryManifestRepository(machine),
+    new Map([
+      [
+        toolId,
+        hostReading?.unreadable !== undefined
+          ? {
+              read: async () => ({
+                location: hostReading.location,
+                unreadable: hostReading.unreadable,
+              }),
+            }
+          : new FakeNativeMarketplaceSourceReader(
+              activator,
+              toolId === "claude" ? "registry" : "effective-list",
+              (path) => (path === builtDir ? catalogName : undefined),
+              currentSource === undefined ? new Map() : new Map([[catalogName, currentSource]])
+            ),
+      ],
+    ])
   );
   const result = await useCase.execute({ projectRoot: PROJECT_ROOT });
   return { result, activator, manifestRepo, builtDir, catalogRelative };
@@ -153,6 +218,7 @@ describe("the sync guard against a marketplace name a host already holds", () =>
     const { result, activator } = await sync({
       hostReader,
       requestedVersion: "2.0.0",
+      ownedCatalog: true,
       requestedPluginNames: ["sample-plugin"],
       registeredCatalog: { path: "/other/src", version: "1.0.0", pluginNames: ["sample-plugin"] },
     });
@@ -169,9 +235,9 @@ describe("the sync guard against a marketplace name a host already holds", () =>
       entries: new Map([["probe-mkt", "/built/claude"]]),
     });
 
-    const { result, activator } = await sync({ hostReader });
+    const { result, activator } = await sync({ hostReader, ownedCatalog: true });
 
-    expect(activator.addedMarketplaces).toEqual(["/built/claude"]);
+    expect(activator.addedMarketplaces).toEqual([]);
     expect(result.errors).toEqual([]);
   });
 
@@ -186,6 +252,7 @@ describe("the sync guard against a marketplace name a host already holds", () =>
     const { result, activator } = await sync({
       hostReader,
       requestedVersion: "1.0.0",
+      ownedCatalog: true,
       requestedPluginNames: ["sample-plugin"],
       registeredCatalog: {
         path: "/other-project/built/claude",
@@ -198,7 +265,7 @@ describe("the sync guard against a marketplace name a host already holds", () =>
     expect(result.errors).toEqual([]);
   });
 
-  it("does not refuse when the registered source no longer resolves to a readable catalog — a dead entry a re-add repairs", async () => {
+  it("refuses an unproven dead entry instead of re-adding over its host name", async () => {
     const hostReader = new FakeHostMarketplaceRegistryReader({
       location: REGISTRY_LOCATION,
       entries: new Map([["probe-mkt", "/gone"]]),
@@ -208,7 +275,8 @@ describe("the sync guard against a marketplace name a host already holds", () =>
     // catalog fails exactly as it would for a directory that no longer exists.
     const { result, activator } = await sync({ hostReader });
 
-    expect(activator.addedMarketplaces).toEqual(["/built/claude"]);
+    expect(activator.addedMarketplaces).toEqual([]);
+    expect(result.warnings.join("\n")).toContain("legacy claim has no source proof");
     expect(result.errors).toEqual([]);
   });
 
@@ -259,7 +327,7 @@ describe("the sync guard against a marketplace name a host already holds", () =>
       {
         scope: "claude",
         message:
-          "Marketplace 'probe-mkt' is already registered from a different catalog: /other/src differs from the one requested, /built/claude — plugins differ (+sample-plugin, -different-plugin), per /home/.claude/plugins/known_marketplaces.json. Run `claude plugin marketplace remove probe-mkt`, then `aidd sync` again to re-register it for this project.",
+          "Marketplace 'probe-mkt' is already registered from a different catalog: /other/src differs from the one requested, /built/claude — plugins differ (+sample-plugin, -different-plugin), per /home/.claude/plugins/known_marketplaces.json. Do not remove a catalogue another user or project may depend on. Reconcile the host source manually before retrying `aidd sync`.",
       },
     ]);
   });
@@ -267,12 +335,14 @@ describe("the sync guard against a marketplace name a host already holds", () =>
   it("registers from the built path as given when that path cannot be resolved", async () => {
     const hostReader = new FakeHostMarketplaceRegistryReader({
       location: REGISTRY_LOCATION,
-      entries: new Map([["probe-mkt", "/built/claude"]]),
+      entries: new Map([["probe-mkt", "/old/claude"]]),
     });
 
     const { result, activator } = await sync({
       hostReader,
       fs: new RealpathRefusingFileAdapter("/built/claude"),
+      ownedCatalog: true,
+      registeredCatalog: { path: "/old/claude" },
     });
 
     expect(result.errors).toStrictEqual([]);
