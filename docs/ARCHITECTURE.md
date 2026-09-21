@@ -135,7 +135,7 @@ flowchart LR
 
 Recipe skills route to self-contained actions with inputs, outputs, process steps, and tests. An orchestrator with no domain logic may instead route through numbered reference protocols that define handoffs and delegate the work to capabilities discovered at runtime.
 
-A skill never links outside itself. The same tree ships flat, where the skill folder is renamed `<plugin>-<skill>`, or as a marketplace, so no relative path survives both. A bundled script is named plugin-relative in backticks, never linked.
+A skill never links outside itself (`scripts/__tests__/a-skill-links-only-inside-itself.test.js`). The same tree ships flat, where the skill folder is renamed `<plugin>-<skill>`, or as a marketplace, so no relative path survives both. A bundled script is named plugin-relative in backticks, never linked.
 
 ## 🤖 Skills and agents
 
@@ -155,7 +155,10 @@ Address a capability only where the dispatch is declared: a router's `## Actions
 
 Recipe skills never hardcode a sibling provider. They discover cross-plugin capabilities at runtime through description matching. Agent permission lists and orchestration references are responsibility maps, so they name the current provider with its canonical `/plugin:folder` or `@plugin:agent` address. The orchestrator must verify that provider is installed before calling it.
 
-`scripts/lib/architecture-rules.js` is the guard that decides both rules from a path and its content, and `architecture-scan.js` is the only place that reads the disk for it. Two callers share them. `scripts/check-architecture-rules.js` runs as the `architecture-rules` pre-commit job, so every edit that reaches a commit is covered whichever tool or person made it, and `validate.yml` replays it over the whole tree on each pull request. The `PreToolUse` hook on `Write`/`Edit`/`MultiEdit` is the fast path on top: it only ever sees Claude Code, but it refuses the write in the same turn instead of at commit time. `plugins/aidd-context/skills/00-onboard/**` is exempt from rule one: its reference menus name addresses because those are what the skill hands a person to type, not a hardcoded sibling provider. That exemption is temporary and ends with the follow-up issue on making that skill resolve its providers at runtime. The guard refuses an edit leaving a `## Actions` section without a citation for an action file that exists; it never refuses a citation with no file behind it, because that is how a skill legitimately grows one.
+Two paths are exempt, both in `isExemptFromOrthogonality`:
+
+- `plugins/aidd-orchestrator/**`, whose references are responsibility maps.
+- `plugins/aidd-context/skills/00-onboard/**`, whose menus name addresses a person types. Temporary: it ends when that skill resolves its providers at runtime.
 
 This distinction keeps recipe plugins swappable while making orchestration handoffs explicit and auditable.
 

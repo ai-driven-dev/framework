@@ -4,9 +4,8 @@
  * The two architecture rules of issue #250, at commit time. The write-time hook only ever sees
  * Claude Code; this sees every edit that reaches a commit, whichever tool or person made it.
  *
- * Paths given as arguments are checked; with none, the whole governed tree is. `--root <dir>`
- * moves both, which is what lets the failing path be exercised against a tree that is not this
- * repository — a gate whose refusal nothing tests is a gate nobody can trust.
+ * Paths given as arguments are checked; with none, the whole governed tree is.
+ * `--root <dir>` moves both, so the refusal can be exercised against another tree.
  */
 
 "use strict";

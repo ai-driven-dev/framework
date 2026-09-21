@@ -1,7 +1,7 @@
 /**
  * The filesystem layer the two rules need: `architecture-rules.js` stays pure, and everything
- * that reads a directory or a file lives here, so the write-time hook and the commit-time check
- * ask the same questions the same way.
+ * that reads a directory or a file lives here, so the rules can be decided without the engine
+ * ever learning what a directory is.
  */
 
 "use strict";
@@ -13,7 +13,7 @@ const { checkArchitecture, classifyFile } = require("./architecture-rules.js");
 
 const CITATION_SHAPES =
   "a cell under a table header that reads Action, a fenced `actions/<name>.md` path, or a " +
-  "backticked `<name>.md` file name — a word in prose does not count";
+  "backticked `<name>.md` file name. A word in prose does not count";
 
 /** Rule two needs the skill's action files; the engine never reads them itself. */
 function actionFileNames(relativePath, absolutePath) {
@@ -27,7 +27,6 @@ function actionFileNames(relativePath, absolutePath) {
   }
 }
 
-/** Violations for content that may not be on disk yet, which is what the write-time hook holds. */
 function violationsForFile(relativePath, content, absolutePath) {
   try {
     const found = checkArchitecture(relativePath, content, actionFileNames(relativePath, absolutePath));
@@ -79,9 +78,7 @@ function scan(root, relativePaths) {
 }
 
 module.exports = {
-  actionFileNames,
   describeFix,
   governedPaths,
   scan,
-  violationsForFile,
 };
