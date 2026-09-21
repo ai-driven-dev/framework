@@ -61,6 +61,14 @@ pre-commit:
           exit 0
         fi
         node scripts/check-skill-argument-hints.mjs
+    architecture-rules:
+      glob: "plugins/*/{skills,agents}/**/*.md"
+      run: |
+        if ! command -v node >/dev/null 2>&1; then
+          echo "ℹ️  node not available; skipping architecture-rules"
+          exit 0
+        fi
+        node scripts/check-architecture-rules.js {files}
     context-imports:
       # Two patterns: "**/" needs a literal slash, so it never matches a repository-root file.
       glob:
