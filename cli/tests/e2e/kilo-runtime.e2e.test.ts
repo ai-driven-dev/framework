@@ -1,7 +1,7 @@
 import { spawn } from "node:child_process";
 import { existsSync } from "node:fs";
 import { mkdir, readdir, readFile, writeFile } from "node:fs/promises";
-import { join } from "node:path";
+import { delimiter, join } from "node:path";
 import { setTimeout as delay } from "node:timers/promises";
 import { describe, expect, it } from "vitest";
 import { REPOSITORY_ROOT } from "../helpers/repository-root.js";
@@ -17,7 +17,7 @@ const KILO_PREFIX = join(
 );
 const KILO_BIN =
   process.platform !== "win32"
-    ? "kilo"
+    ? resolveKiloBin()
     : ([
         join(KILO_PREFIX, "node_modules", "@kilocode", "cli-windows-x64", "bin", "kilo.exe"),
         join(
@@ -31,6 +31,15 @@ const KILO_BIN =
         join(KILO_PREFIX, "node_modules", "@kilocode", "cli-windows-arm64", "bin", "kilo.exe"),
       ].find((path) => existsSync(path)) ?? join(process.env.APPDATA ?? "", "npm", "kilo.cmd"));
 const KILO_SHELL = KILO_BIN.endsWith(".cmd");
+
+function resolveKiloBin(): string {
+  for (const directory of (process.env.PATH ?? "").split(delimiter)) {
+    if (directory === "") continue;
+    const candidate = join(directory, "kilo");
+    if (existsSync(candidate)) return candidate;
+  }
+  return "kilo";
+}
 
 function deferred<T>(): {
   promise: Promise<T>;
