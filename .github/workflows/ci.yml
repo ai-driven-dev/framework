@@ -104,10 +104,12 @@ jobs:
       # Delete this step, credit-release-authors.cjs and its test once a fixed release-please
       # is pinned above. `--notes-file -` in the script edits notes only, never `--latest`, so
       # it cannot undo the pin above (gh only sends `make_latest` when `--latest` is passed).
-      # `continue-on-error`: a crediting failure is cosmetic and must never block the build and
-      # publish jobs below, which only need `release-please`'s outputs, not this step.
+      # `continue-on-error` on both steps below: a crediting failure is cosmetic and must
+      # never block the build and publish jobs below, which only need `release-please`'s
+      # outputs, not this checkout or the credit step it feeds.
       - name: Checkout
         if: ${{ steps.release.outputs.releases_created == 'true' }}
+        continue-on-error: true
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false

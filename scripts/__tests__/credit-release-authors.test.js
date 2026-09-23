@@ -1,10 +1,11 @@
 const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const path = require("node:path");
+const { spawnSync } = require("node:child_process");
 const test = require("node:test");
 const yaml = require("js-yaml");
 
-const { credit, tagsFromOutputs, who } = require("../credit-release-authors.cjs");
+const { credit, tagsFromOutputs, who, creditReleases } = require("../credit-release-authors.cjs");
 
 const root = path.resolve(__dirname, "../..");
 
@@ -85,6 +86,26 @@ test("T6 (bot, brackets in the credit): re-running a dependabot-credited line ne
   assert.equal(twice, once);
 });
 
+test("T8: a no-login name containing parentheses is not re-credited on a second pass", () => {
+  const resolve = () => "Jane (JD) Doe";
+  const once = credit(LINE_A, resolve);
+
+  const twice = credit(once, resolve);
+
+  assert.equal(twice, once);
+  assert.equal(twice, `${LINE_A} (Jane (JD) Doe)`);
+});
+
+test("T8 (closes tail): a no-login name containing parentheses is not re-credited after a closes-tail line", () => {
+  const resolve = () => "Jane (JD) Doe";
+  const once = credit(LINE_CLOSES, resolve);
+
+  const twice = credit(once, resolve);
+
+  assert.equal(twice, once);
+  assert.equal(twice, `${LINE_CLOSES} (Jane (JD) Doe)`);
+});
+
 test("T7: no login resolves, the name is appended without @", () => {
   const resolve = () => "Alex Soyer";
 
@@ -125,6 +146,37 @@ test("tagsFromOutputs: no paths released is an empty list", () => {
   assert.deepEqual(tagsFromOutputs({ paths_released: "[]" }), []);
 });
 
+// --- creditReleases(): reads, credits and writes back only what changed --
+
+test("creditReleases: an already-credited tag's body is read but never written", () => {
+  const outputs = { paths_released: JSON.stringify(["."]), tag_name: "v1.0.0" };
+  const bodies = { "v1.0.0": `${LINE_A} (@blafourcade)` };
+  const writes = [];
+  const read = (tag) => bodies[tag];
+  const write = (tag, body) => writes.push({ tag, body });
+  const resolve = () => "@blafourcade";
+
+  creditReleases("owner/repo", outputs, { read, resolve, write });
+
+  assert.deepEqual(writes, []);
+});
+
+test("creditReleases: a tag whose body changes is written exactly once, with the credited body", () => {
+  const outputs = { paths_released: JSON.stringify([".", "cli"]), tag_name: "v1.0.0", "cli--tag_name": "cli-v1.0.0" };
+  const bodies = {
+    "v1.0.0": LINE_A,
+    "cli-v1.0.0": `${LINE_A} (@blafourcade)`, // already credited: must not be written again
+  };
+  const writes = [];
+  const read = (tag) => bodies[tag];
+  const write = (tag, body) => writes.push({ tag, body });
+  const resolve = () => "@blafourcade";
+
+  creditReleases("owner/repo", outputs, { read, resolve, write });
+
+  assert.deepEqual(writes, [{ tag: "v1.0.0", body: `${LINE_A} (@blafourcade)` }]);
+});
+
 // --- who() on the gh api reply's actual shape ----------------------------
 // Regression: `gh api ... -q '[...] | @tsv'` piped through `.trim()` silently drops a
 // login-less commit's leading tab, so `split("\t")` under-counted the fields and the name
@@ -141,6 +193,48 @@ test("who: a bot login is credited as @dependabot[bot]", () => {
 
 test("who: no login resolves to the plain commit-author name, not @Name", () => {
   assert.equal(who('{"login":"","name":"Alex Soyer"}'), "Alex Soyer");
+});
+
+// --- CLI entry: a bad or missing RELEASE_OUTPUTS fails loud, not silent --
+// Regression: with no guard, a missing or key-less RELEASE_OUTPUTS parses to `{}`,
+// `tagsFromOutputs` reads no paths, the tag loop runs zero times, and the process exits 0
+// having credited nothing and said nothing was wrong. Each case below spawns the real CLI
+// entry on a fake repo; since the guard fires before `main()` ever runs, no case reaches
+// `gh`.
+const SCRIPT = path.join(root, "scripts/credit-release-authors.cjs");
+
+function runScript(env) {
+  return spawnSync(process.execPath, [SCRIPT, "example/none"], { env, encoding: "utf8" });
+}
+
+test("CLI: RELEASE_OUTPUTS missing from the environment exits non-zero with a clear message", () => {
+  const env = { ...process.env };
+  delete env.RELEASE_OUTPUTS;
+
+  const result = runScript(env);
+
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /RELEASE_OUTPUTS/);
+  assert.match(result.stderr, /missing/i);
+});
+
+test("CLI: RELEASE_OUTPUTS holding unparseable JSON exits non-zero with a clear message", () => {
+  const env = { ...process.env, RELEASE_OUTPUTS: "{not json" };
+
+  const result = runScript(env);
+
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /RELEASE_OUTPUTS/);
+  assert.match(result.stderr, /valid JSON/i);
+});
+
+test("CLI: RELEASE_OUTPUTS with no paths_released key exits non-zero with a clear message", () => {
+  const env = { ...process.env, RELEASE_OUTPUTS: JSON.stringify({ release_created: "false" }) };
+
+  const result = runScript(env);
+
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /paths_released/);
 });
 
 // --- ci.yml wiring -------------------------------------------------------
@@ -169,6 +263,28 @@ test("W2: the credit step runs after the release step, with the App token", () =
   assert.equal(creditStep().env.GH_TOKEN, "${{ steps.app-token.outputs.token }}");
 });
 
+test("W4: the credit step's RELEASE_OUTPUTS carries steps.release.outputs verbatim", () => {
+  assert.equal(creditStep().env.RELEASE_OUTPUTS, "${{ toJSON(steps.release.outputs) }}");
+});
+
+test("W5: a checkout step runs immediately before the credit step, so the script exists on disk", () => {
+  const steps = workflow().jobs["release-please"].steps;
+  const creditIndex = steps.findIndex((step) => step.run && /credit-release-authors\.cjs/.test(step.run));
+  const precedingStep = steps[creditIndex - 1];
+
+  assert.ok(precedingStep, "no step precedes the credit step");
+  assert.match(precedingStep.uses || "", /actions\/checkout@/, "the step immediately before the credit step must be a checkout");
+});
+
 test("W3: a crediting failure never blocks the release's build and publish jobs", () => {
   assert.equal(creditStep()["continue-on-error"], true);
+});
+
+test("W6: the checkout step added for crediting never blocks build and publish either", () => {
+  const steps = workflow().jobs["release-please"].steps;
+  const creditIndex = steps.findIndex((step) => step.run && /credit-release-authors\.cjs/.test(step.run));
+  const checkoutStep = steps[creditIndex - 1];
+
+  assert.ok(checkoutStep, "no step precedes the credit step");
+  assert.equal(checkoutStep["continue-on-error"], true, "a checkout failure must not fail the release-please job either");
 });

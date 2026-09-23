@@ -22,12 +22,15 @@ const { execFileSync } = require("node:child_process");
 // full 40-character commit SHA in the URL: `([7fbe889](https://…/commit/<40 hex chars>))`.
 const COMMIT_SHA = /\/commit\/([0-9a-f]{40})\)/;
 
-// A line we already credited ends in a bare, space-preceded parenthetical: `(@login)` or
-// `(Full Name)`. A markdown link's closing parenthesis is never preceded by a space — it sits
-// right after the link text's `]` — so this never matches a `(#N)` or `, closes [#N](url)`
-// tail, and it stays true even when the credited name itself carries brackets, as
-// `@dependabot[bot]` does. That is the one guard that makes re-running the job a no-op.
-const ALREADY_CREDITED = /\s\([^()]*\)$/;
+// Checked only against the text *after* the commit-SHA link, never the whole line: what
+// follows is either nothing, a `, closes [#N](url)` tail, or - once this script already
+// credited the line - a space then the appended `(@login)` / `(Full Name)`. A markdown
+// link's own opening parenthesis is never preceded by a space (it sits right after the link
+// text's `]`), so this never fires on a bare `, closes [#N](url)` tail, and it stays true
+// even when the credited name itself carries parentheses, as "Jane (JD) Doe" does, or
+// brackets, as `@dependabot[bot]` does. That is the one guard that makes re-running the job
+// a no-op.
+const ALREADY_CREDITED = /\s\(/;
 
 /**
  * Credits every line of `body` that names a commit SHA and is not already credited.
@@ -38,7 +41,9 @@ function credit(body, resolve) {
     .split("\n")
     .map((line) => {
       const match = line.match(COMMIT_SHA);
-      if (!match || ALREADY_CREDITED.test(line)) return line;
+      if (!match) return line;
+      const tail = line.slice(match.index + match[0].length);
+      if (ALREADY_CREDITED.test(tail)) return line;
       const who = resolve(match[1]);
       return who ? `${line} (${who})` : line;
     })
@@ -85,17 +90,21 @@ function resolverFor(repo) {
   };
 }
 
-/** Reads, credits and writes back each tag's release body. Never writes a partial body: a
- * `gh` failure on any tag — reading it, resolving one of its commits' authors, or writing it
- * back — throws, naming that tag, before any later tag is touched. */
-function main(repo, outputs) {
+/**
+ * Reads, credits and writes back each tag's release body through the injected `read(tag)`,
+ * `resolve(sha)` and `write(tag, body)`. Writes only the tags crediting actually changed —
+ * that skip is what makes re-running the job over already-credited tags a no-op, and it is
+ * unit-testable here because nothing below this line touches the network directly. Never
+ * writes a partial run: a `read`, `resolve` or `write` failure on any tag throws, naming
+ * that tag, before any later tag is touched.
+ */
+function creditReleases(repo, outputs, { read, resolve, write }) {
   const tags = tagsFromOutputs(outputs);
-  const resolve = resolverFor(repo);
 
   for (const tag of tags) {
     let body;
     try {
-      body = gh("release", "view", tag, "-R", repo, "--json", "body", "-q", ".body");
+      body = read(tag);
     } catch (error) {
       throw new Error(`credit-release-authors: could not read release ${tag}: ${error.message}`);
     }
@@ -112,7 +121,7 @@ function main(repo, outputs) {
     }
 
     try {
-      execFileSync("gh", ["release", "edit", tag, "-R", repo, "--notes-file", "-"], { input: credited, encoding: "utf8" });
+      write(tag, credited);
     } catch (error) {
       throw new Error(`credit-release-authors: could not write release ${tag}: ${error.message}`);
     }
@@ -120,7 +129,16 @@ function main(repo, outputs) {
   }
 }
 
-module.exports = { credit, tagsFromOutputs, who };
+/** Wires `creditReleases` to the real `gh` CLI. The one place this module touches the network. */
+function main(repo, outputs) {
+  creditReleases(repo, outputs, {
+    read: (tag) => gh("release", "view", tag, "-R", repo, "--json", "body", "-q", ".body"),
+    resolve: resolverFor(repo),
+    write: (tag, body) => execFileSync("gh", ["release", "edit", tag, "-R", repo, "--notes-file", "-"], { input: body, encoding: "utf8" }),
+  });
+}
+
+module.exports = { credit, tagsFromOutputs, who, creditReleases };
 
 if (require.main === module) {
   const repo = process.argv[2];
@@ -128,8 +146,19 @@ if (require.main === module) {
     console.error("usage: credit-release-authors.cjs <owner/repo>  (reads RELEASE_OUTPUTS from the environment)");
     process.exit(1);
   }
+  let outputs;
   try {
-    main(repo, JSON.parse(process.env.RELEASE_OUTPUTS || "{}"));
+    outputs = JSON.parse(process.env.RELEASE_OUTPUTS || "");
+  } catch (error) {
+    console.error(`credit-release-authors: RELEASE_OUTPUTS is missing or not valid JSON: ${error.message}`);
+    process.exit(1);
+  }
+  if (!("paths_released" in outputs)) {
+    console.error("credit-release-authors: RELEASE_OUTPUTS carries no paths_released — nothing to credit");
+    process.exit(1);
+  }
+  try {
+    main(repo, outputs);
   } catch (error) {
     console.error(error.message);
     process.exit(1);
