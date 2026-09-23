@@ -4,6 +4,7 @@ import "../../contexts/tools/domain/profiles/claude/profile.js";
 import "../../contexts/tools/domain/profiles/codex/profile.js";
 import "../../contexts/tools/domain/profiles/copilot/profile.js";
 import "../../contexts/tools/domain/profiles/cursor/profile.js";
+import "../../contexts/tools/domain/profiles/kilo/profile.js";
 import "../../contexts/tools/domain/profiles/opencode/profile.js";
 import "../../contexts/tools/domain/profiles/vscode/profile.js";
 import type { HostMarketplaceRegistryReader } from "../../contexts/tools/domain/ports/host-marketplace-registry-reader.js";

@@ -17,7 +17,7 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 CLI="$ROOT/dist/cli.js"
 FRAMEWORK_FIXTURE="$ROOT/tests/fixtures/framework"
 
-AI_TOOLS=(claude cursor copilot codex opencode)
+AI_TOOLS=(claude cursor copilot codex opencode kilo)
 IDE_TOOLS=(vscode)
 
 # Canonical leaf-command surface. Coverage = exercised / total.
@@ -232,15 +232,17 @@ run "marketplace add --overwrite" 0 "" "$P_MKT" -- marketplace add local "$MKT_S
 # Passing `--scope` is not enough: the two values must write to different places.
 P_SCOPE=$(new_project)
 (cd "$P_SCOPE" && node "$CLI" setup --source local --path "$FRAMEWORK_FIXTURE" --ai claude --plugins none --yes >/dev/null 2>&1)
-run "marketplace add --scope project" 0 "" "$P_SCOPE" -- marketplace add scoped "$MKT_SRC" --yes --scope project
+PROJECT_MKT_SRC="$TMPROOT/project-mkt-src"; mkdir -p "$PROJECT_MKT_SRC/.claude-plugin"
+printf '%s' '{"name":"project-mkt","owner":{"name":"smoke"},"version":"1.0.0","plugins":[]}' > "$PROJECT_MKT_SRC/.claude-plugin/marketplace.json"
+run "marketplace add --scope project" 0 "" "$P_SCOPE" -- marketplace add scoped "$PROJECT_MKT_SRC" --yes --scope project
 proj_reg="$P_SCOPE/.aidd/marketplaces.json"
 if [[ -f "$proj_reg" ]] && grep -q "scoped" "$proj_reg"; then
   ok "--scope project writes the project registry"
 else
   bad "--scope project did not write $proj_reg"
 fi
-# A second source with its own manifest name: the tool keys its registry by the name inside
-# the marketplace, so two aidd marketplaces sharing a source would collide rather than scope.
+# A third source with its own manifest name: the tool keys its registry by the name inside
+# the marketplace, so each scope assertion needs a distinct host name.
 USER_MKT_SRC="$TMPROOT/user-mkt-src"; mkdir -p "$USER_MKT_SRC/.claude-plugin"
 printf '%s' '{"name":"user-mkt","owner":{"name":"smoke"},"version":"1.0.0","plugins":[]}' > "$USER_MKT_SRC/.claude-plugin/marketplace.json"
 run "marketplace add --scope user" 0 "" "$P_SCOPE" -- marketplace add userscoped "$USER_MKT_SRC" --yes --scope user
@@ -256,9 +258,9 @@ if command -v claude >/dev/null 2>&1; then
   claude_local="$P_SCOPE/.claude/settings.local.json"
   claude_home="$HOME/.claude/settings.json"
   # Names the marketplace, not the generic `extraKnownMarketplaces` key any declaration would
-  # satisfy. Keyed by `local-mkt`, the catalog's own declared name: this file is written by
+  # satisfy. Keyed by `project-mkt`, the catalog's own declared name: this file is written by
   # `hostName`, never by `scoped`, aidd's local alias for the same entry.
-  if [[ -f "$claude_local" ]] && grep -q '"local-mkt"' "$claude_local"; then
+  if [[ -f "$claude_local" ]] && grep -q '"project-mkt"' "$claude_local"; then
     ok "claude declares the project marketplace at local scope"
   else
     bad "claude has no local-scope declaration in $claude_local"
@@ -349,7 +351,7 @@ if true; then
   run "sync --force" 0 "" "$BASE" -- sync --force
   repaired "sync --force" "$tgt"
 
-  section "framework install/update/remove --tool × all 5 AI tools + vscode"
+  section "framework install/update/remove --tool × all 6 AI tools + vscode"
   run "framework update (all)" 0 "" "$BASE" -- framework update
   run "framework rules" 0 "" "$BASE" -- framework rules
   run "framework rules --json" 0 "" "$BASE" -- framework rules --json

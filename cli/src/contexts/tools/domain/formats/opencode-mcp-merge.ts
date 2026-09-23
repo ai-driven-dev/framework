@@ -49,21 +49,36 @@ export function mergeOpencodeMcp(
 export function buildOpencodeFlatConfig(
   baseConfig: string,
   existing: string | null,
-  incoming: Record<string, unknown>
+  incoming: Record<string, unknown>,
+  mergedKeys: readonly string[] = []
 ): string {
   const base = JSON.parse(baseConfig) as Record<string, unknown>;
   const { full, mcp } = parseExisting(existing);
   const userKeys = { ...full };
   for (const key of Object.keys(base)) delete userKeys[key];
   delete userKeys.mcp;
-  const mergedMcp = { ...mcp, ...incoming };
+  const mergedMcp = { ...mcp };
+  for (const [name, server] of Object.entries(incoming)) {
+    if (!(name in mergedMcp)) mergedMcp[name] = server;
+  }
   const result: Record<string, unknown> = { ...base, ...userKeys };
+  for (const key of mergedKeys) {
+    const existingValues = arrayEntries(full[key]);
+    const baseValues = arrayEntries(base[key]);
+    const generated = baseValues.filter((value) => !existingValues.includes(value));
+    result[key] = [...existingValues, ...generated];
+  }
   delete result.mcp;
   if (Object.keys(mergedMcp).length > 0) result.mcp = mergedMcp;
   return JSON.stringify(result, null, 2);
 }
 
-/** Removes only unchanged servers previously contributed by a plugin. */
+function arrayEntries(value: unknown): readonly unknown[] {
+  return Array.isArray(value) ? value : [];
+}
+
+/** Removes servers previously contributed by a plugin from opencode.json's mcp section. A key
+ * absent from `entries` is left untouched. */
 export function unmergeOpencodeMcp(
   existingContent: string,
   entries: ReadonlyMap<string, string>
