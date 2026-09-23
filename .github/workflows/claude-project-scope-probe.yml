@@ -2,12 +2,15 @@ name: Claude project scope probe
 
 on:
   workflow_dispatch:
+  pull_request:
+    branches: [next]
 
 permissions:
   contents: read
 
 jobs:
   windows:
+    if: github.event_name == 'workflow_dispatch' || github.head_ref == 'chore/claude-windows-scope-probe'
     runs-on: windows-latest
     defaults:
       run:
