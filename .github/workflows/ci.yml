@@ -53,6 +53,10 @@ jobs:
       always() &&
       github.event_name == 'push' &&
       (needs.commitlint.result == 'success' || needs.commitlint.result == 'skipped')
+    # contents: read — only the credit step's checkout needs it, to run the runner's own
+    # source; release-please itself uses the App token, not this permission.
+    permissions:
+      contents: read
     outputs:
       release_created: ${{ steps.release.outputs.release_created }}
       tag_name: ${{ steps.release.outputs.tag_name }}
@@ -92,6 +96,28 @@ jobs:
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
         run: gh release edit "${{ steps.release.outputs.tag_name }}" --latest --repo "${{ github.repository }}"
+
+      # Post-processing, not the native `include-commit-authors` option: that option is a
+      # no-op on the release-please this action bundles (17.x, up to 17.11.2), which drops
+      # the parsed commit's author before the changelog notes ever see one
+      # (googleapis/release-please#2761, fix pending in #2892).
+      # Delete this step, credit-release-authors.cjs and its test once a fixed release-please
+      # is pinned above. `--notes-file -` in the script edits notes only, never `--latest`, so
+      # it cannot undo the pin above (gh only sends `make_latest` when `--latest` is passed).
+      # `continue-on-error`: a crediting failure is cosmetic and must never block the build and
+      # publish jobs below, which only need `release-please`'s outputs, not this step.
+      - name: Checkout
+        if: ${{ steps.release.outputs.releases_created == 'true' }}
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Credit contributors on the created release(s)
+        if: ${{ steps.release.outputs.releases_created == 'true' }}
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          RELEASE_OUTPUTS: ${{ toJSON(steps.release.outputs) }}
+        run: node scripts/credit-release-authors.cjs "${{ github.repository }}"
 
   build-and-attach:
     name: Build and attach marketplace
