@@ -41,6 +41,6 @@ flowchart LR
 
 ## 🚑 Hotfix
 
-1. Branch `hotfix/*` from `main`, fix, PR back to `main`.
+1. Branch `hotfix/*` from `main`, fix, PR back to `main`. `main`'s ruleset allows only a merge commit, so every commit on the branch must be conventional on its own — none is squashed away.
 2. release-please cuts a dedicated patch release.
 3. `main` is back-merged into `next` automatically.

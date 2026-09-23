@@ -75,11 +75,13 @@ jobs:
       # bypass actor. The App token also re-fires the `push: main` and `release: published`
       # workflows a GITHUB_TOKEN merge would not. Guarded on prs_created, since
       # releases_created only fires on merge.
+      # `--merge`, not `--squash`: main.json's pull_request rule allows only a merge commit,
+      # which even a bypass actor cannot get around in pull_request mode (sandbox-proven).
       - name: Auto-merge the Release PR
         if: ${{ steps.release.outputs.prs_created == 'true' }}
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
-        run: gh pr merge "${{ fromJSON(steps.release.outputs.pr).number }}" --squash --admin --repo "${{ github.repository }}"
+        run: gh pr merge "${{ fromJSON(steps.release.outputs.pr).number }}" --merge --admin --repo "${{ github.repository }}"
 
       # GitHub marks whichever release is created last as "Latest", and release-please
       # creates the umbrella and every plugin release in one unordered run — so a plugin
