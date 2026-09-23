@@ -11,7 +11,14 @@ const home = path.join(root, "home");
 const env = { ...process.env, HOME: home, CLAUDE_CONFIG_DIR: path.join(home, ".claude") };
 
 function run(args) {
-  const result = spawnSync("claude", args, { cwd: project, env, encoding: "utf8", timeout: 120000 });
+  const result = spawnSync("claude", args, {
+    cwd: project,
+    env,
+    encoding: "utf8",
+    timeout: 120000,
+    // npm exposes Claude as claude.cmd on Windows. The production adapter uses cmd.exe too.
+    shell: process.platform === "win32",
+  });
   if (result.error || result.status !== 0) {
     throw new Error(`claude ${args.join(" ")} failed: ${result.stderr || result.error?.message || result.status}`);
   }
