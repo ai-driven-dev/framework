@@ -27,7 +27,7 @@ Each tool names the same moment differently and supports a different subset. Cor
 | before compaction  | `PreCompact`       | `PreCompact`    | `preCompact`         | `PreCompact`       |
 | subagent stop      | `SubagentStop`     | `SubagentStop`  | `subagentStop`       | `SubagentStop`     |
 | turn stop          | `Stop`             | `Stop`          | `stop`               | `Stop`             |
-| session end        | `SessionEnd`       | -               | `sessionEnd`         | `SessionEnd`       |
+| session end        | `SessionEnd`       | `SessionEnd`    | `sessionEnd`         | `SessionEnd`       |
 
 Each tool exposes more moments than these. For the full list, read the tool's docs: Claude `https://code.claude.com/docs/en/hooks`, Codex `https://developers.openai.com/codex/hooks`, Cursor `https://cursor.com/docs/hooks`, Copilot `https://docs.github.com/en/copilot/reference/hooks-configuration`. Confirm a moment exists before wiring it. Copilot also accepts the camelCase names (`sessionStart`, `preToolUse`).
 
