@@ -45,7 +45,7 @@ None — no server, no container, no IaC. What ships are release assets and publ
 Branch model in `vcs.md`, cadence and safety rules in [`RELEASE.md`](../../RELEASE.md).
 
 1. release-please opens the Release PR. Only paths with commits bump; the root bumps every cycle. CI auto-merges it with `--merge --admin`, the only method `.github/rulesets/main.json`'s `pull_request` rule allows, so `main` never holds merged but unversioned code.
-2. Merging creates the release and its tags — a root umbrella tag, `cli-v<semver>`, and one `<plugin>-v<semver>` per plugin, `include-component-in-tag: true`. `scripts/credit-release-authors.cjs` then appends each release line's commit author as `(@login)`, working around release-please's `include-commit-authors` being a no-op until [googleapis/release-please#2892](https://github.com/googleapis/release-please/pull/2892) ships — see the comment above the step in `ci.yml` for the tracked issue and when to delete it.
+2. Merging creates the release and its tags — a root umbrella tag, `cli-v<semver>`, and one `<plugin>-v<semver>` per plugin, `include-component-in-tag: true`. `scripts/credit-release-authors.cjs` then appends each line's commit author as `(@login)`: a workaround until [googleapis/release-please#2892](https://github.com/googleapis/release-please/pull/2892) ships.
 3. Release jobs: `build-and-attach` (marketplace bundle), `build-per-tool` (nine distributions), `build-plugin` (one archive per released path), `publish-cli`.
 4. Archives are staged outside the repo tree, uploaded with `gh release upload --clobber`.
 5. `back-merge.yml` folds `main` into `next`.

@@ -4,15 +4,7 @@ const path = require("node:path");
 const test = require("node:test");
 const yaml = require("js-yaml");
 
-/**
- * Every merge this repository's own automation makes into `main` passes `--body ""`. Why an
- * empty body matters here: see the header comment in `scripts/credit-release-authors.cjs`.
- *
- * Each assertion below isolates the exact `gh pr merge` invocation from its surrounding `run`
- * block — a loose `/--body/` match against the whole block would pass on promote.yml's
- * unrelated `gh pr create --body "Automated promotion…"` in the same step, without the fix
- * ever being applied to the merge itself.
- */
+/** Every merge this repository's own automation makes into `main` passes `--body ""`. */
 
 const root = path.resolve(__dirname, "../..");
 
@@ -20,8 +12,7 @@ function loadWorkflow(relativePath) {
   return yaml.load(fs.readFileSync(path.join(root, relativePath), "utf8"));
 }
 
-/** Joins a `run:` block's `\`-continued shell lines into single logical commands, one per
- * array entry, the way the shell itself would see them. */
+/** Joins `\`-continued shell lines into one command per entry. */
 function logicalCommands(run) {
   return run
     .replace(/\\\r?\n\s*/gu, " ")

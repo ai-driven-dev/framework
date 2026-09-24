@@ -9,8 +9,7 @@ const { credit, tagsFromOutputs, who, isMerge, prCredit, creditReleases } = requ
 
 const root = path.resolve(__dirname, "../..");
 
-// Real lines from https://github.com/ai-driven-dev/framework/releases/tag/v5.10.0, read-only,
-// so the transform is pinned against notes release-please actually produced.
+// Real v5.10.0 lines, read-only.
 const LINE_A =
   "* **cli:** a record names the skill its own prompt invoked ([#783](https://github.com/ai-driven-dev/framework/issues/783)) ([7fbe889](https://github.com/ai-driven-dev/framework/commit/7fbe8897cee6ed522d1f52a2124c4109eb101543))";
 const LINE_B =
@@ -150,12 +149,9 @@ test("tagsFromOutputs: no paths released is an empty list", () => {
 });
 
 // --- the merge-commit-body-duplicate safety net --------------------------
-// Why credit() also drops a merge commit's spurious twin: see the header comment in
-// credit-release-authors.cjs.
+// Why credit() also drops a merge commit's spurious twin:
 
-// A real twin pair, read from https://github.com/ai-driven-dev/framework/releases/tag/aidd-context-v1.0.1:
-// 7f57ec9 is the merge commit (2 parents, `gh api .../commits/7f57ec9...` confirmed), 5594ec8
-// is the real, single-parent commit it duplicates.
+// Real twin pair from aidd-context-v1.0.1: 7f57ec9 (merge) duplicates 5594ec8.
 const TWIN_TEXT = "* **aidd-context:** document seven artifacts and tool-agnostic wording";
 const TWIN_MERGE_LINE = `${TWIN_TEXT} ([7f57ec9](https://github.com/ai-driven-dev/framework/commit/7f57ec97e6fa515b07d817d9f692ffdecc1c0a56))`;
 const TWIN_REAL_LINE = `${TWIN_TEXT} ([5594ec8](https://github.com/ai-driven-dev/framework/commit/5594ec8a590caed0ca1d96e945cdee7460216c5f))`;
@@ -185,8 +181,7 @@ test("twin removed: order in the body does not matter", () => {
 });
 
 test("twin removed: still detected when the surviving twin is already credited", () => {
-  // A previous pass may have credited the real commit's line first (order in the body is not
-  // guaranteed); the merge commit's twin must still be recognised and dropped.
+  // The real line may already be credited; the merge twin still goes.
   const creditedRealLine = `${TWIN_REAL_LINE} (@alexsoyes)`;
   const body = [TWIN_MERGE_LINE, creditedRealLine].join("\n");
 
@@ -216,8 +211,6 @@ test("lone merge line: falls back to the commit author when prAuthor resolves fa
 
 test("non-merge lines: two commits sharing identical text are both kept (e.g. a cherry-pick)", () => {
   // This is the test that goes red the moment the merge check is dropped from the twin rule:
-  // with no `isMerge` guard, credit() would treat this pair exactly like the twin above and
-  // silently drop one of two distinct, legitimate commits.
   const otherRealLine = `${TWIN_TEXT} ([aaaaaaa](https://github.com/ai-driven-dev/framework/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa))`;
   const body = [TWIN_REAL_LINE, otherRealLine].join("\n");
   const resolve = (sha) => ({ who: sha === "5594ec8a590caed0ca1d96e945cdee7460216c5f" ? "@alexsoyes" : "@blafourcade", isMerge: false });
@@ -279,10 +272,7 @@ test("creditReleases: a tag whose body changes is written exactly once, with the
 });
 
 // --- who() / isMerge() / prCredit() on the gh api replies' actual shape --
-// Regression: `gh api ... -q '[...] | @tsv'` piped through `.trim()` silently drops a
-// login-less commit's leading tab, so `split("\t")` under-counted the fields and the name
-// got credited as `@Full Name`. `who()` parses jq's own JSON object output instead, which
-// has no such leading-empty-field trap.
+// Regression:
 
 test("who: a commit with a login is credited as @login", () => {
   assert.equal(who('{"login":"blafourcade","name":"Baptiste Lafourcade","parents":1}'), "@blafourcade");
@@ -318,11 +308,7 @@ test("prCredit: falls back to the commit author when the pulls reply names no pu
 });
 
 // --- CLI entry: a bad or missing RELEASE_OUTPUTS fails loud, not silent --
-// Regression: with no guard, a missing or key-less RELEASE_OUTPUTS parses to `{}`,
-// `tagsFromOutputs` reads no paths, the tag loop runs zero times, and the process exits 0
-// having credited nothing and said nothing was wrong. Each case below spawns the real CLI
-// entry on a fake repo; since the guard fires before `main()` ever runs, no case reaches
-// `gh`.
+// Regression:
 const SCRIPT = path.join(root, "scripts/credit-release-authors.cjs");
 
 function runScript(env) {

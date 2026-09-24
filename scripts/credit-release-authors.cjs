@@ -1,76 +1,34 @@
 #!/usr/bin/env node
 /**
- * Appends each release-note line's commit author as `(@login)` (or their name, when they have
- * no GitHub account on the commit) to every GitHub release release-please just created.
+ * Appends each release line's commit author as `(@login)`, or the name when no account, to the
+ * GitHub releases release-please just created. Also drops a merge commit's duplicate line
+ * (see credit()).
  *
- * Workaround, not the real fix: release-please's own `include-commit-authors` option is a
- * no-op, because its commit parser drops the parsed commit's author before its default
- * changelog notes builder ever sees one. Upstream bug:
- * https://github.com/googleapis/release-please/issues/2761
- * Upstream fix, open: https://github.com/googleapis/release-please/pull/2892
- * Delete this script, its test, and its ci.yml step once a release-please carrying that fix
- * is pinned.
- *
- * `credit()` is a pure transform: given a release body and a `sha -> display name` resolver,
- * it returns the body with each creditable line credited. It never touches the network, so
- * every shape release-please's notes take is a fixture, not a live call.
- *
- * Safety net for a merge-commit-body duplicate: this repository merges the Release PR and the
- * weekly promotion with `--body ""` (ci.yml, promote.yml) precisely because GitHub otherwise
- * defaults a merge commit's body to the PR title, and release-please's notes parser (its
- * splitMessages step, in release-please's own commit.js) reads that body as a second,
- * independent conventional commit — duplicating the entry, credited to whoever clicked merge
- * rather than the real author. `--body ""` prevents new duplicates, but an old release already
- * carries one, a manual merge outside this repo's own workflows can still produce one, and
- * nothing here un-splits a body release-please already parsed. So `credit()` also treats a
- * *merge* commit (more than one parent) as suspect: when another bullet in the same body
- * carries the exact same text before its commit link, the merge commit's own bullet is the
- * spurious half of the split and is dropped outright, and the real commit's bullet is credited
- * as usual. A merge commit with no such twin is kept and credited to its pull request's
- * author — the actual contributor — rather than whoever merged it, falling back to the commit
- * author when no pull request is found. A twin group made only of merge-commit bullets (no
- * plain commit twin) is left untouched: nothing here can tell which half, if either, is real.
+ * Workaround: release-please's `include-commit-authors` is a no-op (googleapis/release-please#2761).
+ * Delete this script, its test and its ci.yml step once #2892 ships in the pinned action.
  */
 
 const { execFileSync } = require("node:child_process");
 
-// release-please's default changelog notes link every entry's short SHA display through the
-// full 40-character commit SHA in the URL: `([7fbe889](https://…/commit/<40 hex chars>))`.
+// Every entry links its full commit SHA: `([7fbe889](https://…/commit/<40 hex>))`.
 const COMMIT_SHA = /\/commit\/([0-9a-f]{40})\)/;
 
-// The whole commit-SHA markdown link, leading space included, exactly as release-please emits
-// it: `([7fbe889](https://…/commit/<40 hex chars>))`. Everything before this on the line is
-// the bullet's own text — no commit link, no `, closes [#N](url)` tail, no credit a previous
-// pass appended — so slicing here is enough to compare two bullets for the merge-commit-twin
-// check below, with no separate handling needed for either tail.
+// The commit link; the text before it is the bullet itself.
 const COMMIT_LINK = /\s\(\[[0-9a-f]+\]\(https:\/\/[^\s)]+\/commit\/[0-9a-f]{40}\)\)/;
 
-// Checked only against the text *after* the commit-SHA link, never the whole line: what
-// follows is either nothing, a `, closes [#N](url)` tail, or - once this script already
-// credited the line - a space then the appended `(@login)` / `(Full Name)`. A markdown
-// link's own opening parenthesis is never preceded by a space (it sits right after the link
-// text's `]`), so this never fires on a bare `, closes [#N](url)` tail, and it stays true
-// even when the credited name itself carries parentheses, as "Jane (JD) Doe" does, or
-// brackets, as `@dependabot[bot]` does. That is the one guard that makes re-running the job
-// a no-op.
+// Matched only after the commit link: a credit this script appended. Keeps re-runs a no-op.
 const ALREADY_CREDITED = /\s\(/;
 
-/** The bullet's own text: everything before its commit-SHA link. Two bullets with identical
- * text here are the same conventional-commit entry, wherever their SHA differs. */
+/** The bullet's text before its commit link. */
 function bulletText(line) {
   const link = line.match(COMMIT_LINK);
   return link ? line.slice(0, link.index) : line;
 }
 
 /**
- * Credits every line of `body` that names a commit SHA and is not already credited, and drops
- * a merge commit's line when a plain-commit twin of it exists elsewhere in the same body (see
- * the header comment). `resolve(sha)` returns `{ who, isMerge, prAuthor }`:
- * - `who`: the display name to credit a non-merge line with, or a falsy value to leave it as
- *   is.
- * - `isMerge`: whether the commit has more than one parent.
- * - `prAuthor`: for a merge commit, the display name to credit it with (its pull request's
- *   author, falling back to `who`) - ignored for a non-merge commit.
+ * Credits each commit-linked line. A merge-commit line with a plain-commit twin is dropped (the
+ * repo puts the PR title in a merge commit's body, which release-please parses as a 2nd commit);
+ * a lone one is credited to its PR's author. `resolve(sha)` returns `{ who, isMerge, prAuthor }`.
  */
 function credit(body, resolve) {
   const lines = body.split("\n");
@@ -116,12 +74,7 @@ function credit(body, resolve) {
     .join("\n");
 }
 
-/**
- * The tags release-please created this run, read from `steps.release.outputs` (the
- * release-please-action v5.0.0 outputs, verbatim). The root release's tag is the bare
- * `tag_name` output; every other path's tag is `<path>--tag_name` — `setPathOutput` in the
- * action's own compiled bundle, read at the pinned sha before relying on it.
- */
+/** Tags created this run: root as `tag_name`, other paths as `<path>--tag_name`. */
 function tagsFromOutputs(outputs) {
   const paths = JSON.parse(outputs.paths_released || "[]");
   return paths.map((releasedPath) => (releasedPath === "." ? outputs.tag_name : outputs[`${releasedPath}--tag_name`])).filter(Boolean);
@@ -132,32 +85,19 @@ function gh(...args) {
   return execFileSync("gh", args, { encoding: "utf8" }).trim();
 }
 
-/**
- * Turns one `gh api repos/<repo>/commits/<sha>` JSON reply into the display name `credit()`
- * appends: `@login` when the commit's author has one, the plain commit-author name otherwise.
- * A pure function on the API's own JSON shape, not `@tsv` — a `@tsv` row with an empty first
- * field prints only a leading tab before the name, and `.trim()` (needed to drop the API
- * call's trailing newline) silently eats that tab too, so a login-less commit was reaching
- * `split("\t")` as a one-element array and getting credited as `(@Full Name)`.
- */
+/** `@login`, or the author's name when the commit has no linked account. */
 function who(apiReply) {
   const { login, name } = JSON.parse(apiReply);
   return login ? `@${login}` : name;
 }
 
-/** Whether the same `commits/<sha>` reply names more than one parent - a merge commit. Read
- * off the reply `who()` already gets, so a merge commit costs no extra API call to detect. */
+/** More than one parent: a merge commit. */
 function isMerge(apiReply) {
   const { parents } = JSON.parse(apiReply);
   return Number(parents) > 1;
 }
 
-/**
- * The display name to credit a *merge* commit with: its pull request's author when
- * `gh api repos/<repo>/commits/<sha>/pulls` names one, `who(commitReply)` otherwise - a
- * squash-merged PR GitHub no longer associates with the commit, or a merge with no pull
- * request at all (git merged by hand).
- */
+/** A merge commit's credit: its PR author, else the commit author. */
 function prCredit(commitReply, pullsReply) {
   const prs = JSON.parse(pullsReply);
   const login = prs[0] && prs[0].user && prs[0].user.login;
@@ -180,14 +120,7 @@ function resolverFor(repo) {
   };
 }
 
-/**
- * Reads, credits and writes back each tag's release body through the injected `read(tag)`,
- * `resolve(sha)` and `write(tag, body)`. Writes only the tags crediting actually changed —
- * that skip is what makes re-running the job over already-credited tags a no-op, and it is
- * unit-testable here because nothing below this line touches the network directly. Never
- * writes a partial run: a `read`, `resolve` or `write` failure on any tag throws, naming
- * that tag, before any later tag is touched.
- */
+/** Credits each tag; writes only changed bodies, and throws naming the tag on failure. */
 function creditReleases(repo, outputs, { read, resolve, write }) {
   const tags = tagsFromOutputs(outputs);
 

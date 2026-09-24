@@ -12,9 +12,7 @@ const ruleset = () => JSON.parse(rawFile(".github/rulesets/main.json"));
 
 const pullRequestRule = () => ruleset().rules.find((rule) => rule.type === "pull_request");
 
-// The two workflow steps that merge a pull request into `main`, named explicitly rather than
-// grepped for: `dependabot-auto-merge.yml` also runs `gh pr merge --squash`, but its PRs target
-// `next` (`.github/dependabot.yml`'s `target-branch`), a branch this ruleset never restricts.
+// The steps that merge a pull request into `main`.
 const mergesIntoMain = () => [
   {
     label: "ci.yml release-please job, Auto-merge the Release PR",

@@ -53,8 +53,7 @@ jobs:
       always() &&
       github.event_name == 'push' &&
       (needs.commitlint.result == 'success' || needs.commitlint.result == 'skipped')
-    # contents: read — only the credit step's checkout needs it, to run the runner's own
-    # source; release-please itself uses the App token, not this permission.
+    # contents: read for the credit step's checkout.
     permissions:
       contents: read
     outputs:
@@ -79,10 +78,7 @@ jobs:
       # bypass actor. The App token also re-fires the `push: main` and `release: published`
       # workflows a GITHUB_TOKEN merge would not. Guarded on prs_created, since
       # releases_created only fires on merge.
-      # `--merge`, not `--squash`: main.json's pull_request rule allows only a merge commit,
-      # which even a bypass actor cannot get around in pull_request mode (sandbox-proven).
-      # `--body ""` is defensive: this PR's own merge commit becomes the release commit
-      # itself, which release-please already excludes from that release's own notes.
+      # `--merge`: main allows only merge commits. `--body ""`: a PR-title body is parsed as a 2nd commit.
       - name: Auto-merge the Release PR
         if: ${{ steps.release.outputs.prs_created == 'true' }}
         env:
@@ -99,19 +95,8 @@ jobs:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
         run: gh release edit "${{ steps.release.outputs.tag_name }}" --latest --repo "${{ github.repository }}"
 
-      # Post-processing, not the native `include-commit-authors` option: that option is a
-      # no-op on the release-please this action bundles (17.x, up to 17.11.2), which drops
-      # the parsed commit's author before the changelog notes ever see one
-      # (googleapis/release-please#2761, fix pending in #2892).
-      # Delete this step, credit-release-authors.cjs and its test once a fixed release-please
-      # is pinned above. `--notes-file -` in the script edits notes only, never `--latest`, so
-      # it cannot undo the pin above (gh only sends `make_latest` when `--latest` is passed).
-      # `continue-on-error` on both steps below: a crediting failure is cosmetic and must
-      # never block the build and publish jobs below, which only need `release-please`'s
-      # outputs, not this checkout or the credit step it feeds.
-      # credit-release-authors.cjs also carries a safety net for the merge-commit-body
-      # duplicate the `--body ""` above (and on promote.yml's merge) is meant to prevent —
-      # see that script's header comment.
+      # Credits commit authors; native `include-commit-authors` is broken (release-please#2761).
+      # Remove with the script once #2892 ships. continue-on-error: never blocks the publish jobs.
       - name: Checkout
         if: ${{ steps.release.outputs.releases_created == 'true' }}
         continue-on-error: true
