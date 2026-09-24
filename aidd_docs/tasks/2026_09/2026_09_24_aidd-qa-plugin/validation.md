@@ -6,6 +6,8 @@ status: done
 
 Commands run from the repository root unless noted, with their decisive output line. The gate, host-proof, and architecture tables below were all run against the final working tree, before it was split into commits — not re-run per commit. Each commit's own `pre-commit` hook run exited 0 (a non-zero exit would have aborted the commit), but that hook reads the working tree at commit time, not a diff scoped to that commit's own files; see "Commits" below for what that means for the two intermediate trees.
 
+Review #908 found five defects after the push recorded below: a missing run-verdict rule in `03-run-scenarios.md`, a `load-scope` that never stopped early when no criterion is browser-observable, a duplicate `## Test` bullet, two hand-written docs still describing `06-test` as generic test coverage after `ba2a59a5` narrowed it, and this record's own commit table and push section going stale as later commits (`ba2a59a5`, `e8d3538e`, `cff70e66`) landed without an update. The "Gates" and "Commits" sections below were re-run and rewritten against the tree that fixes all five, described honestly rather than patched to look consistent with what came before.
+
 ## Gates (phase 4, task 1)
 
 | # | Command | Exit | Decisive output |
@@ -19,6 +21,19 @@ Commands run from the repository root unless noted, with their decisive output l
 Root `pnpm install` and `cd cli && pnpm install` were run first — neither `node_modules` existed in this worktree, so `js-yaml` (root) and `vitest` (`cli`) were missing and `cli-architecture` failed with `vitest: command not found` (exit 127) until installed. Not a regression from this change; recorded because it would otherwise have looked like an empty-gate false pass.
 
 One scripts-suite regression was found and fixed as part of this change: `scripts/__tests__/architecture-rules.test.js` pins `skillsWithActions` to the number of skills with an `actions/` dir, swept from the real `plugins/` tree. Adding `aidd-qa:01-acceptance-qa` raises that from 48 to 49; the assertion was updated to `49` (test intent unchanged — it still fails if a sweep silently misses a skill).
+
+### Repair re-run (review #908 follow-up)
+
+Re-run at the final tree (all five review #908 fixes applied, `docs/CATALOG.md`, `plugins/aidd-dev/README.md`, and the three `plugins/aidd-qa/skills/01-acceptance-qa/` files staged together):
+
+| # | Command | Exit | Decisive output |
+| --- | --- | --- | --- |
+| 1 | `pnpm exec lefthook run pre-commit` | 0 | `summary: (done in 54.32 seconds)` — `check-skill-argument-hints`, `doc-duplication`, `markdown-links`, `referenced-paths`, `scripts-tests`, `summarize-plugin-catalogs`, `summarize-telemetry-prompts-doc`, `sync-readme-counts` all `✔️`; embedded `scripts-tests` run: `ℹ tests 503` / `ℹ pass 503` / `ℹ fail 0` / `ℹ skipped 0` |
+| 2 | `node scripts/check-architecture-rules.js` (no args, whole governed tree) | 0 | `✅ Architecture rules: 352 governed file(s) checked, no violation` |
+| 3 | `node scripts/check-tests-leave-git-alone.js -- node --test 'scripts/__tests__/**/*.test.js'` | 0 | `ℹ tests 503` / `ℹ pass 503` / `ℹ fail 0` / `ℹ skipped 0` |
+| 4 | `claude plugin validate plugins/aidd-qa` | 0 | `✔ Validation passed` |
+
+Both scripts-suite entries in this re-run agree on one number, 503 tests / 503 pass / 0 fail / 0 skipped — the earlier 503-pass-vs-501-pass-plus-2-skip split recorded above (gates 1 and 2, phase 4) no longer reproduces on this tree. `architecture-rules`, `json-validity`, `skill-frontmatter`, and `yaml-validity` again reported "no files for inspection" against lefthook's staged-file glob in this checkout, the same quirk noted above; `check-architecture-rules.js` was run explicitly instead, as this task's dispatch required, rather than via `--all-files --job`.
 
 ## Host proof (phase 4, task 2)
 
@@ -64,13 +79,21 @@ No `aidd-<x>:<y>` token for another plugin appears in `plugins/aidd-qa/**` or `p
 
 ## Commits
 
+All commits on this branch (`git log origin/next..HEAD`), oldest first. Rows 1-8 were pushed before this repair started (`cff70e66` confirmed reaching `origin` at push time, "Push" below); rows 9 and 10 are committed by this repair and already carry a real local SHA, not yet re-pushed as this row is written; row 11 is this file's own commit, which cannot state its own SHA.
+
 | # | SHA | Subject |
 | --- | --- | --- |
 | 1 | `3ef728a7` | `feat(aidd-qa): scaffold acceptance QA plugin from browser QA` |
 | 2 | `ffb9c9c5` | `feat(aidd-dev): retire browser-qa to a redirect` |
 | 3 | `50c13400` | `chore(marketplace): register aidd-qa plugin` |
 | 4 | `f5c3dfcb` | `docs(aidd-qa): add the plan and its validation record` |
-| 5 | (this commit) | `docs(aidd-qa): correct the validation record` |
+| 5 | `cd048e6b` | `docs(aidd-qa): correct the validation record` |
+| 6 | `ba2a59a5` | `fix(aidd-dev): scope 06-test to developer-side validation` |
+| 7 | `e8d3538e` | `fix(aidd-qa): restrict criteria sourcing and complete the report contract` |
+| 8 | `cff70e66` | `docs: correct plugin count and the pushed validation record` |
+| 9 | `89243332` | `fix(aidd-qa): add run-verdict rule and stop load-scope early` — `03-run-scenarios.md`, `01-load-scope.md`, `SKILL.md` |
+| 10 | `db49deaa` | `fix(aidd-dev): describe 06-test as developer-side in its README` |
+| 11 | (this repair's final docs commit — this record) | `docs: correct 06-test's catalog description and this validation record` — `docs/CATALOG.md`, this file |
 
 `summarize-plugin-catalogs` and `sync-readme-counts` regenerate `plugins/*/CATALOG.md` and README's counts block from the live working tree, not from the commit's own staged diff — the working tree already held the final content when commit 1 ran, so `plugins/aidd-dev/CATALOG.md` in commit 1 already describes the redirect that only lands in commit 2. That is a known, accepted side effect; it does not change what either commit's hand-authored content says. It also means the two intermediate trees are not independently clean against the gates in this file:
 
@@ -92,7 +115,9 @@ The failing assertion is `E2E: the sandbox a test spawns into > still reaches no
 
 - Root cause, verified rather than guessed: `ls "$(dirname "$(node -p 'process.execPath')")" | grep -xE 'opencode|claude|codex|copilot|cursor-agent'` printed `codex` — this machine's `node` (via nvm) shares a `bin/` directory with a `codex` binary. `pathWithoutAidd()` in `cli/tests/e2e/helpers.ts` builds the sandbox `PATH` from `dirname(process.execPath)` among others, then runs `.filter(withoutDrivableToolBinary)`, which drops any directory holding an AI-tool binary — dropping node's own directory along with it because `codex` sits next to it. Machine-specific: `git diff c3a3355f..HEAD --stat -- cli/` is empty (none of this branch's commits touch `cli/`), and the failing test file was last changed in `95bdbbc3` (2026-09-09), weeks before this task — a pre-existing local gap, not a regression.
 
-No workaround that bypasses or weakens the gate was used: no `--no-verify`, no excluding the job, no editing the test. Instead, the collision itself was fixed for this shell: the `node` binary was copied — not symlinked, since `process.execPath` resolves a symlink back to the original, `codex`-sharing directory — into an isolated directory holding no AI-tool binary, which was then prepended to `PATH` for the push. With that `PATH`, `pnpm exec lefthook run pre-push` passed in full (`cli-knip` ✔️, `cli-test` all passing, no failing file), and `git push -u origin feat/aidd-qa-plugin` completed without `--no-verify`. `cd048e6b` (this correction) and every commit before it on this branch reached `origin`; confirmed with `git ls-remote origin refs/heads/feat/aidd-qa-plugin` printing `cd048e6b9ef9fd0dde512e2720c8e0d9f0dd2596 refs/heads/feat/aidd-qa-plugin`.
+No workaround that bypasses or weakens the gate was used: no `--no-verify`, no excluding the job, no editing the test. Instead, the collision itself was fixed for this shell: the `node` binary was copied — not symlinked, since `process.execPath` resolves a symlink back to the original, `codex`-sharing directory — into an isolated directory holding no AI-tool binary, which was then prepended to `PATH` for the push. With that `PATH`, `pnpm exec lefthook run pre-push` passed in full (`cli-knip` ✔️, `cli-test` all passing, no failing file), and `git push -u origin feat/aidd-qa-plugin` completed without `--no-verify`. `cd048e6b` and every commit before it on this branch reached `origin` at that push; confirmed with `git ls-remote origin refs/heads/feat/aidd-qa-plugin` printing that SHA.
+
+Every push since, through the repair recorded above, used the same mechanism — an isolated directory holding only a copied `node` binary, prepended to `PATH`, never `--no-verify` — because the local `node`/`codex` collision this shell sits on has not changed. This file does not track a single frozen "pushed tip" SHA: the branch's tip is whatever `HEAD` is when the pull request is opened, i.e. the last row of the "Commits" table above at that time. `git ls-remote origin refs/heads/feat/aidd-qa-plugin` is the way to read it, not this paragraph.
 
 ## Deviations from the plan
 
