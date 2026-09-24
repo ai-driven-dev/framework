@@ -19,7 +19,7 @@ Covers code transformation: planning, implementation, assertions, audits, code r
 | [2.3] | [assert](skills/03-assert/SKILL.md) | Assert features work as intended - general assertions, architecture conformance, and frontend UI validation. |
 | [2.4] | [audit](skills/04-audit/SKILL.md) | Perform deep codebase analysis to identify technical debt, dead code, and improvement opportunities. |
 | [2.5] | [review](skills/05-review/SKILL.md) | Review a diff along three axes: code quality, feature behavior against the plan, and relevancy (fit to the need, declared-rule conformance, no rot). |
-| [2.6] | [test](skills/06-test/SKILL.md) | Write and iterate on tests until they pass, and validate user journeys end-to-end in the browser. |
+| [2.6] | [test](skills/06-test/SKILL.md) | Write and iterate on developer-side tests until they pass, and validate user journeys end-to-end in the browser during implementation - no acceptance evidence, no sibling-plugin address. |
 | [2.7] | [refactor](skills/07-refactor/SKILL.md) | Optimize code for performance and fix security vulnerabilities following OWASP guidelines. |
 | [2.8] | [debug](skills/08-debug/SKILL.md) | Reproduce and fix bugs systematically using test-driven workflow, root cause analysis, and hypothesis validation. |
 | [2.9] | [for-sure](skills/09-for-sure/SKILL.md) | Iterative agent loop that tracks attempts and retries until a success condition is met. |
