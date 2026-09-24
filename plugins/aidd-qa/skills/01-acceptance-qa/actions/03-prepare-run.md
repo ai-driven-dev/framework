@@ -1,35 +1,28 @@
 # 03 - Prepare Run
 
-Resolve the application state and scenario paths before retained recording begins.
+Make every scenario executable before recording.
 
 ## Input
 
-Verified prerequisites and the earlier defined scope.
+Verified prerequisites and the locked scope.
 
 ## Output
 
-A successful prepared run with a reachable application, authenticated sessions, deterministic fixtures, executable scenario steps, and proven teardown, plus every scenario rejected here for a missing verified teardown, with its reason.
+Per scenario: fixture, initial URL, minimal steps, expected outcome, proven teardown, and isolated session id. Plus every scenario rejected here, with its reason.
 
 ## Process
 
-1. **Reuse.** Read `aidd_docs/memory/testing.md` first when it exists. 
-   - Resolve Browser QA entry, auth, fixtures, and reset from its `Browser QA` section, then a directly related browser test, then one targeted browser snapshot. 
-   - Stop searching as soon as the run is executable.
+1. **Reuse.** Resolve entry, auth, fixtures, and reset from the `Browser QA` section of `aidd_docs/memory/testing.md` when it exists, then a related browser test, then one targeted snapshot. Stop once executable.
    - Before starting the entry, prove the storage it mounts is test-only when its reset deletes data. Unproven: ask once, never guess.
 2. **Preflight.** Check the application and fixed `1280×720` viewport.
-3. **Authenticate.** Establish the required role before recording. 
-   - Never include login discovery or secret lookup in evidence.
-4. **Fixture.** Use deterministic data satisfying each setup. 
-   - Never choose a live record by guesswork.
-5. **Rehearse** only non-mutating steps and selectors. 
-   - Never execute the final state-changing action merely to rehearse it.
-6. **Reset.** Resolve an executable teardown for every state-changing scenario; reject one without a verified, executable teardown and carry it forward with its reason instead of dropping it. 
-   - If preparation changed state, execute the teardown and verify the baseline now; a future restart is not proof.
-7. **Return.** Keep only the fixture, initial URL, minimal steps, expected outcome, teardown, and isolated session id per scenario, plus any rejected scenario with its reason.
+3. **Authenticate.** Establish the role before recording; never show login discovery or secrets in evidence.
+4. **Fixture.** Use deterministic data per setup; never pick a live record by guesswork.
+5. **Rehearse.** Only non-mutating steps and selectors; never the final state-changing action.
+6. **Reset.** Resolve a verified, executable teardown per state-changing scenario; without one, reject the scenario and carry it forward with its reason. If preparation changed state, run the teardown and verify the baseline now, not at a restart.
 
 ## Test
 
-- A state-changing scenario prepared without a verified, executable teardown is rejected and carried forward, with its reason, rather than dropped.
-- No login discovery, secret lookup, or live record chosen by guesswork appears in evidence.
-- Preparation that changed state runs and verifies its own teardown before the run is marked ready.
-- An entry whose storage is not proven test-only is never started when a reset will delete data; it produces one question.
+- An entry on storage not proven test-only is never started when its reset deletes data; it produces one question.
+- A state-changing scenario without a verified teardown is rejected with its reason.
+- No login discovery, secret, or guessed live record appears in evidence.
+- Preparation that changed state is torn down and verified before the run is ready.

@@ -11,7 +11,7 @@ Acceptance criteria (issue, spec, user story, or the user) and the reviewed cand
 - Scope: at most 1 happy path and its edge cases, each with the criteria it proves.
 - Out of interface: criteria, or quoted parts, with no browser-observable outcome.
 - Rejected: scenario, criterion, reason.
-- Evidence folder.
+- Evidence folder, source label (criteria path), and candidate reference.
 
 ## Process
 
