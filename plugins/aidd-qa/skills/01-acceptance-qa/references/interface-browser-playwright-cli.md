@@ -12,7 +12,7 @@ npx --yes @playwright/cli@0.1.17 -s=qa-<run-id> <command>
 
 Run every command from a temporary directory outside the application repository.
 
-`run-code` takes one `page` argument: pass `async page => { ... }`, never bare statements. Never throw on a product mismatch: check each expected outcome with a bounded `waitFor`, and return `{ step, expected, actual, ok }` per step. Keep stdout, stderr, and exit status visible; no redirects, pipes, command substitutions, or `|| true`. A throw, `SyntaxError`, or non-zero exit is a tooling failure and invalidates the take.
+`run-code` takes one `page` argument: pass `async page => { ... }`, never bare statements. Never throw on a product mismatch: check each expected outcome with a bounded `waitFor`, and return `{ step, expected, actual, ok }` per step. Keep stdout, stderr, and exit status visible; no redirects, pipes, command substitutions, or `|| true` in runner commands. A throw, `SyntaxError`, or non-zero exit is a tooling failure and invalidates the take.
 
 ## Recording
 
@@ -41,6 +41,7 @@ npx --yes @playwright/cli@0.1.17 -s=qa-<run-id>-<scenario-slug> run-code 'async 
   return [{ step: "final action", expected, actual: ok ? expected : "not visible", ok }];
 }'
 npx --yes @playwright/cli@0.1.17 -s=qa-<run-id>-<scenario-slug> video-stop
+# Run the teardown and verify the baseline before closing.
 npx --yes @playwright/cli@0.1.17 -s=qa-<run-id>-<scenario-slug> close
 ```
 
