@@ -96,8 +96,11 @@ Every capability lives in exactly one plugin, chosen by **concern**. This taxono
 | `aidd-orchestrator` | Orchestration        | Coordination |
 | `aidd-ui` 🚧        | UI/UX design         | Execution    |
 | `aidd-telemetry` 🧪 | Measurement          | Observation  |
+| `aidd-qa` 🆕         | Acceptance QA        | Execution    |
 
 `aidd-ui` is alpha: smoke-test only, off the curated install path.
+
+`aidd-qa` is new, off the curated install path until it is proven outside this repository. It validates observable behavior against acceptance criteria and drives a browser to record evidence, so it sits in the Execution layer alongside `aidd-dev`.
 
 `aidd-telemetry` is beta, off the curated install path: opt-in only — a repository must commit `.aidd/config.json` with `telemetry.enabled: true`. Each session appends observations, one JSON object per line, to its own `aidd_docs/runs/<run_id>__<vendor_id>.jsonl`, created on demand and git-ignored; that directory's presence is a location, not a permission. A line is never rewritten, only appended — `session_start`, `turn_end`, `file_written`, `step_start`, `step_end`, `task_declared` and `unrecognised_payload` (a path is repository-relative, never a task_id: task identity is a derivation, and belongs to whatever reads the log). Never a measurement; tokens and cost are joined afterwards from the provider's telemetry.
 

@@ -50,7 +50,7 @@ Branch model in `vcs.md`, cadence and safety rules in [`RELEASE.md`](../../RELEA
 4. Archives are staged outside the repo tree, uploaded with `gh release upload --clobber`.
 5. `back-merge.yml` folds `main` into `next`.
 
-Config: `release-please-config.json`, ten packages. Manifest: `.release-please-manifest.json`.
+Config: `release-please-config.json`, eleven packages. Manifest: `.release-please-manifest.json`.
 
 ## Gotchas
 

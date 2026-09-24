@@ -8,5 +8,6 @@
   "plugins/aidd-refine": "3.0.1",
   "plugins/aidd-ui": "0.2.1-alpha.0",
   "plugins/aidd-telemetry": "0.2.0",
+  "plugins/aidd-qa": "0.1.0",
   "cli": "5.3.0"
 }

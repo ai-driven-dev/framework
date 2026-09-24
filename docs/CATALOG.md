@@ -10,6 +10,7 @@ The exhaustive list of AIDD plugins, skills, and actions. Skills are invoked thr
 - [aidd-orchestrator](#-aidd-orchestrator) - async orchestration (optional)
 - [aidd-ui](#-aidd-ui) - UI / UX (🚧 alpha, not ready)
 - [aidd-telemetry](#-aidd-telemetry) - measurement, hooks and skills (🧪 beta, off the curated path)
+- [aidd-qa](#-aidd-qa) - acceptance QA (🆕 new, off the curated path)
 
 ---
 
@@ -35,7 +36,7 @@ Bootstrap, project init, context-artifact generation, diagrams, learning, and ex
 
 ## 💻 aidd-dev
 
-Code transformation: plan, implement, assert, audit, review, test, refactor, debug, for-sure, todo. Standalone Browser QA records short web evidence.
+Code transformation: plan, implement, assert, audit, review, test, refactor, debug, for-sure, todo.
 
 | Skill           | Role                                                                       | Actions                                                                         |
 | --------------- | -------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
@@ -49,7 +50,7 @@ Code transformation: plan, implement, assert, audit, review, test, refactor, deb
 | `08-debug`      | Reproduce and fix bugs with a test-driven workflow                         | `01-reproduce`, `02-debug`, `03-reflect-issue`                                   |
 | `09-for-sure`   | Iterative loop that retries until a success condition is met               | `01-init-tracking`, `02-auto-accept`, `03-autonomous-loop`                       |
 | `10-todo`       | Split the prompt into independent todos, run one implementer agent per todo in parallel | `01-todo`                                                            |
-| `11-browser-qa` | Record short reviewer videos for browser-scoped happy and edge cases        | `00-prerequisites`, `01-load-scope`, `02-prepare-run`, `03-run-scenarios`     |
+| `11-browser-qa` | Retired: explains that browser QA moved to the `aidd-qa` plugin            | `01-redirect`                                                                 |
 
 ## 📋 aidd-pm
 
@@ -121,3 +122,11 @@ CLI, and each skill says so before doing anything else if it is missing.
 | `00-init`  | Turn measurement on for a project and prove it is recording    | `01-check`, `02-enable`, `03-verify` |
 | `01-cost`  | Answer what a period or one task cost, by step, model and tool | `01-locate`, `02-collect`, `03-report` |
 | `02-check` | Answer whether measurement is actually recording, line by line | `01-locate`, `02-diagnose`        |
+
+## 🎬 aidd-qa
+
+Locks a scenario scope from acceptance criteria, runs it against a reviewed candidate, and hands back a per-scenario verdict with recorded evidence. Browser only, for now.
+
+| Skill               | Role                                                                 | Actions                                                              |
+| ------------------- | --------------------------------------------------------------------- | --------------------------------------------------------------------- |
+| `01-acceptance-qa`  | Lock scenarios from acceptance criteria, run them, and report a verdict per scenario | `00-prerequisites`, `01-load-scope`, `02-prepare-run`, `03-run-scenarios` |

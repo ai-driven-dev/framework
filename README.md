@@ -58,7 +58,7 @@ Why not just write your own commands? → [FAQ](docs/FAQ.md#-why-aidd-instead-of
 
 ### Claude Code
 
-Installs the 6 stable plugins (`aidd-ui` is 🚧 alpha and `aidd-telemetry` 🧪 beta, install separately — see [Plugins](#-plugins)).
+Installs the 6 stable plugins (`aidd-ui` is 🚧 alpha, `aidd-telemetry` 🧪 beta, and `aidd-qa` 🆕 new, install those separately — see [Plugins](#-plugins)).
 
 **In the session** (slash commands)
 
@@ -240,7 +240,7 @@ learning only when it is durable enough to improve the next feature.
 
 ## 🧩 Plugins
 
-Eight plugins covering the whole SDLC — **install all of them**; they work together. (`aidd-ui` is 🚧 **alpha** and `aidd-telemetry` 🧪 **beta** — both off the curated path.)
+Nine plugins covering the whole SDLC — **install the six stable ones**; they work together. (`aidd-ui` is 🚧 **alpha**, `aidd-telemetry` 🧪 **beta**, and `aidd-qa` 🆕 **new** — all three off the curated path.)
 
 <table>
 <tr>
@@ -259,7 +259,7 @@ Project init, memory bank, context-artifact generation, diagrams, learning, expl
 
 `11 skills` · stable
 
-Code transformation: plan, implement, assert, audit, review, test, refactor, debug. Standalone Browser QA records short web evidence.
+Code transformation: plan, implement, assert, audit, review, test, refactor, debug.
 
 </td>
 <td width="33%" valign="top">
@@ -320,7 +320,15 @@ UI / UX design — smoke-test only, not ready for use.
 Answers what a piece of work cost — tokens, models, and which skill spent them. The switch is git-tracked, so it applies to everyone who clones; opt out per person with `AIDD_TELEMETRY=0`. Nothing leaves your machine.
 
 </td>
-<td width="33%" valign="top"></td>
+<td width="33%" valign="top">
+
+### 🎬 [aidd-qa](plugins/aidd-qa/README.md) 🆕
+
+`1 skill` · **new**
+
+Acceptance QA — locks browser scenarios from acceptance criteria and records reviewer evidence.
+
+</td>
 </tr>
 </table>
 
