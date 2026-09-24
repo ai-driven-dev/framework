@@ -53,6 +53,9 @@ jobs:
       always() &&
       github.event_name == 'push' &&
       (needs.commitlint.result == 'success' || needs.commitlint.result == 'skipped')
+    # contents: read for the credit step's checkout.
+    permissions:
+      contents: read
     outputs:
       release_created: ${{ steps.release.outputs.release_created }}
       tag_name: ${{ steps.release.outputs.tag_name }}
@@ -75,11 +78,12 @@ jobs:
       # bypass actor. The App token also re-fires the `push: main` and `release: published`
       # workflows a GITHUB_TOKEN merge would not. Guarded on prs_created, since
       # releases_created only fires on merge.
+      # `--merge`: main allows only merge commits. `--body ""`: a PR-title body is parsed as a 2nd commit.
       - name: Auto-merge the Release PR
         if: ${{ steps.release.outputs.prs_created == 'true' }}
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
-        run: gh pr merge "${{ fromJSON(steps.release.outputs.pr).number }}" --squash --admin --repo "${{ github.repository }}"
+        run: gh pr merge "${{ fromJSON(steps.release.outputs.pr).number }}" --merge --admin --body "" --repo "${{ github.repository }}"
 
       # GitHub marks whichever release is created last as "Latest", and release-please
       # creates the umbrella and every plugin release in one unordered run — so a plugin
@@ -90,6 +94,22 @@ jobs:
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
         run: gh release edit "${{ steps.release.outputs.tag_name }}" --latest --repo "${{ github.repository }}"
+
+      # Credits commit authors; native `include-commit-authors` is broken (release-please#2761).
+      # Remove with the script once #2892 ships. continue-on-error: never blocks the publish jobs.
+      - name: Checkout
+        if: ${{ steps.release.outputs.releases_created == 'true' }}
+        continue-on-error: true
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Credit contributors on the created release(s)
+        if: ${{ steps.release.outputs.releases_created == 'true' }}
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          RELEASE_OUTPUTS: ${{ toJSON(steps.release.outputs) }}
+        run: node scripts/credit-release-authors.cjs "${{ github.repository }}"
 
   build-and-attach:
     name: Build and attach marketplace
