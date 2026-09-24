@@ -8,7 +8,7 @@ Verified prerequisites and the earlier defined scope.
 
 ## Output
 
-A successful prepared run with a reachable application, authenticated sessions, deterministic fixtures, executable scenario steps, and proven teardown.
+A successful prepared run with a reachable application, authenticated sessions, deterministic fixtures, executable scenario steps, and proven teardown, plus every scenario rejected here for a missing verified teardown, with its reason.
 
 ## Process
 
@@ -22,12 +22,12 @@ A successful prepared run with a reachable application, authenticated sessions, 
    - Never choose a live record by guesswork.
 5. **Rehearse** only non-mutating steps and selectors. 
    - Never execute the final state-changing action merely to rehearse it.
-6. **Reset.** Resolve an executable teardown for every state-changing scenario. 
+6. **Reset.** Resolve an executable teardown for every state-changing scenario; reject one without a verified, executable teardown and carry it forward with its reason instead of dropping it. 
    - If preparation changed state, execute the teardown and verify the baseline now; a future restart is not proof.
-7. **Return.** Keep only the fixture, initial URL, minimal steps, expected outcome, teardown, and isolated session id per scenario.
+7. **Return.** Keep only the fixture, initial URL, minimal steps, expected outcome, teardown, and isolated session id per scenario, plus any rejected scenario with its reason.
 
 ## Test
 
-- A state-changing scenario prepared without a verified, executable teardown is rejected.
+- A state-changing scenario prepared without a verified, executable teardown is rejected and carried forward, with its reason, rather than dropped.
 - No login discovery, secret lookup, or live record chosen by guesswork appears in evidence.
 - Preparation that changed state runs and verifies its own teardown before the run is marked ready.

@@ -8,7 +8,8 @@ argument-hint: acceptance criteria | reviewed candidate
 
 ```mermaid
 flowchart LR
-  prerequisites["prerequisites"] --> scope["load-scope"] --> prepare["prepare-run"] --> run["run-scenarios"]
+  prerequisites["prerequisites"] --> scope["load-scope"] --> prepare["prepare-run"] --> run["run-scenarios"] --> report["qa.md"]
+  scope -- skipped --> report
 ```
 
 ## Actions
@@ -18,7 +19,7 @@ Read only the next action's file before running it.
 | #   | Action          | Does                                                       |
 | --- | --------------- | ---------------------------------------------------------- |
 | 00  | `prerequisites` | Verify the browser runner and media dependencies            |
-| 01  | `load-scope`    | Lock one happy path and a bounded set of sourced edge cases, each traced to an acceptance criterion |
+| 01  | `load-scope`    | Lock at most one happy path and a bounded set of sourced edge cases, each traced to an acceptance criterion |
 | 02  | `prepare-run`   | Resolve the shortest deterministic path to executable runs |
 | 03  | `run-scenarios` | Record, normalize, verify, reset, and report every scenario |
 

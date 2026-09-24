@@ -14,4 +14,8 @@
 | Scenario | Criterion | Expected | Actual | Verdict | Duration | Evidence |
 | -------- | --------- | -------- | ------ | ------- | -------- | -------- |
 
+## Rejected
+
+{{scenarios rejected in load-scope or prepare-run, criterion — reason, or "none"}}
+
 {{findings-section-when-needed}}
