@@ -24,6 +24,7 @@ Read only the next action's file before running it.
 
 ## Transversal rules
 
+- When `load-scope`'s Filter step finds no criterion with a browser-observable outcome, it reports verdict `skipped` and stops there; `prerequisites`, `prepare-run`, and `run-scenarios` never run.
 - Run against a reviewed change and never patch the application.
 - Never derive a scenario from the diff or the source code; every scenario traces to an acceptance criterion.
 - Never spawn agents. Batch independent reads and tool checks, but keep state-changing browser work sequential.
