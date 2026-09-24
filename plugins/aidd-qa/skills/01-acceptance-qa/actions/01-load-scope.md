@@ -4,7 +4,7 @@ Lock the smallest defensible acceptance QA scope before execution.
 
 ## Input
 
-Acceptance criteria (issue, spec, or plan) and a reference to the reviewed candidate (branch, commit, or running URL).
+Acceptance criteria (issue, spec, or user story, or criteria the user gives) and a reference to the reviewed candidate (branch, commit, or running URL).
 
 ## Output
 
@@ -16,11 +16,11 @@ Acceptance criteria (issue, spec, or plan) and a reference to the reviewed candi
 
 ## Process
 
-1. **Resolve.** the acceptance criteria for the requested feature (issue, spec, or plan) and the reviewed candidate reference.
+1. **Resolve.** Identify the acceptance criteria for the requested feature (issue, spec, or user story, or criteria the user gives) and the reviewed candidate reference. A plan is never a criteria source.
 2. **Filter.** Keep only criteria with a browser-observable outcome. Collect every other criterion into an out-of-interface list, and never test one of them by reading code.
 3. **Lock.** Lock 1 browser happy path from the criteria's primary journey.
    - Ask one concise question only when the criteria expose multiple browser journeys or conflict.
-4. **Collect.** Include every browser-observable edge case named directly in the acceptance criteria, plus the plan's browser Test Scope when one exists.
+4. **Collect.** Include every browser-observable edge case named directly in the acceptance criteria, plus a plan's browser Test Scope edge case only when it maps to one of those criteria.
    - Never derive a candidate edge case from the diff, the source code, or existing tests.
 5. **Bound.** Deduplicate candidates against the criteria. Rank the edges the criteria actually support by user impact, browser observability, determinism, and proximity to the requested journey.
    - Never pad the set with a candidate the criteria do not support merely to reach a count.
@@ -31,7 +31,8 @@ Acceptance criteria (issue, spec, or plan) and a reference to the reviewed candi
 
 ## Test
 
+- Every locked scenario traces to a criterion from the issue, spec, user story, or the user; a plan is never a criteria source, and a plan's Test Scope edge case is admitted only when it maps to one of those criteria.
 - Every locked scenario traces to a criterion; none is derived from the diff, source code, or existing tests.
 - A criterion with no browser-observable outcome is shown as out of interface, never scoped as a scenario.
-- A scope with fewer than 3 defensible edge cases is shown exactly as defensible, never padded to reach a count.
+- A scope is shown exactly as defensible, never padded with a candidate the criteria do not support merely to reach a count.
 - Conflicting or multiple browser journeys in the criteria produce one concise question, not a guess.
