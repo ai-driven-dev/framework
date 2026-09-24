@@ -88,6 +88,10 @@ The weekly `next` → `main` promotion **must be a merge commit, never a squash 
 2. Force-pushes `main` back to the commit before the bad merge.
 3. Re-enables the ruleset, then re-runs **Promote**.
 
+## 🚑 Hotfix merge
+
+Merge a `hotfix/*` PR with the merge dialog's description box cleared, or `gh pr merge <n> --merge --body ""` — see [`RELEASE.md`](../RELEASE.md#-hotfix) for why an empty body matters here.
+
 ## 📦 Dependencies (Dependabot)
 
 - **Patch + minor bumps auto-merge** once checks pass (`.github/workflows/dependabot-auto-merge.yml`, via the aidd-bot App).

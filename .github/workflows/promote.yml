@@ -67,8 +67,11 @@ jobs:
 
           # `ci:` on purpose: the type is absent from release-please's changelog-sections,
           # so this plumbing commit never surfaces in a changelog, and commitlint accepts it.
+          # `--body ""` is defensive too: release-please's parser still splits this merge's
+          # body into a second `ci:` commit, but `ci:` is absent from changelog-sections, so
+          # both halves stay hidden from the notes either way.
           gh pr merge "$PR" --repo "$REPO" --merge --auto --delete-branch \
-            --subject "ci: promote next to main (#${PR})"
+            --subject "ci: promote next to main (#${PR})" --body ""
 
           # Without a recorded subject GitHub generates one that is not conventional, and
           # commitlint lints main's tip on push.
