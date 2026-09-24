@@ -5,7 +5,7 @@ const { spawnSync } = require("node:child_process");
 const test = require("node:test");
 const yaml = require("js-yaml");
 
-const { credit, tagsFromOutputs, who, creditReleases } = require("../credit-release-authors.cjs");
+const { credit, tagsFromOutputs, who, isMerge, prCredit, creditReleases } = require("../credit-release-authors.cjs");
 
 const root = path.resolve(__dirname, "../..");
 
@@ -22,9 +22,12 @@ const LINE_DEPENDABOT =
 const LINE_NO_SHA = "### Bug Fixes";
 const HEADER = "## [5.10.0](https://github.com/ai-driven-dev/framework/compare/v5.9.0...v5.10.0) (2026-09-09)";
 
+// A non-merge resolver: matches the shape credit() has always expected for a plain commit.
+const nonMerge = (who) => () => ({ who });
+
 test("T1: two contributors, each credited", () => {
   const body = [LINE_A, LINE_B].join("\n");
-  const resolve = (sha) => ({ "7fbe8897cee6ed522d1f52a2124c4109eb101543": "@blafourcade", dccbef25b43943904ec9a3cee3b5c2056d2cfdd6: "@alexsoyes" })[sha];
+  const resolve = (sha) => ({ who: { "7fbe8897cee6ed522d1f52a2124c4109eb101543": "@blafourcade", dccbef25b43943904ec9a3cee3b5c2056d2cfdd6: "@alexsoyes" }[sha] });
 
   const credited = credit(body, resolve);
 
@@ -33,7 +36,7 @@ test("T1: two contributors, each credited", () => {
 
 test("T2: a repeated contributor, credited on each line", () => {
   const body = [LINE_A, LINE_B].join("\n");
-  const resolve = () => "@blafourcade";
+  const resolve = nonMerge("@blafourcade");
 
   const credited = credit(body, resolve);
 
@@ -41,7 +44,7 @@ test("T2: a repeated contributor, credited on each line", () => {
 });
 
 test("T3: a bot, credited as @dependabot[bot]", () => {
-  const resolve = () => "@dependabot[bot]";
+  const resolve = nonMerge("@dependabot[bot]");
 
   const credited = credit(LINE_DEPENDABOT, resolve);
 
@@ -49,7 +52,7 @@ test("T3: a bot, credited as @dependabot[bot]", () => {
 });
 
 test("T4: a line ending in closes #N, credited after it", () => {
-  const resolve = () => "@blafourcade";
+  const resolve = nonMerge("@blafourcade");
 
   const credited = credit(LINE_CLOSES, resolve);
 
@@ -68,7 +71,7 @@ test("T5: a line without a commit SHA, untouched", () => {
 });
 
 test("T6: a line already credited, untouched, and re-running never duplicates", () => {
-  const resolve = () => "@blafourcade";
+  const resolve = nonMerge("@blafourcade");
   const once = credit(LINE_A, resolve);
 
   const twice = credit(once, resolve);
@@ -78,7 +81,7 @@ test("T6: a line already credited, untouched, and re-running never duplicates", 
 });
 
 test("T6 (bot, brackets in the credit): re-running a dependabot-credited line never duplicates", () => {
-  const resolve = () => "@dependabot[bot]";
+  const resolve = nonMerge("@dependabot[bot]");
   const once = credit(LINE_DEPENDABOT, resolve);
 
   const twice = credit(once, resolve);
@@ -87,7 +90,7 @@ test("T6 (bot, brackets in the credit): re-running a dependabot-credited line ne
 });
 
 test("T8: a no-login name containing parentheses is not re-credited on a second pass", () => {
-  const resolve = () => "Jane (JD) Doe";
+  const resolve = nonMerge("Jane (JD) Doe");
   const once = credit(LINE_A, resolve);
 
   const twice = credit(once, resolve);
@@ -97,7 +100,7 @@ test("T8: a no-login name containing parentheses is not re-credited on a second 
 });
 
 test("T8 (closes tail): a no-login name containing parentheses is not re-credited after a closes-tail line", () => {
-  const resolve = () => "Jane (JD) Doe";
+  const resolve = nonMerge("Jane (JD) Doe");
   const once = credit(LINE_CLOSES, resolve);
 
   const twice = credit(once, resolve);
@@ -107,7 +110,7 @@ test("T8 (closes tail): a no-login name containing parentheses is not re-credite
 });
 
 test("T7: no login resolves, the name is appended without @", () => {
-  const resolve = () => "Alex Soyer";
+  const resolve = nonMerge("Alex Soyer");
 
   const credited = credit(LINE_A, resolve);
 
@@ -121,7 +124,7 @@ test("mutation guard: credit() is idempotent on a full multi-section body mixing
     "07a2364e282bc0aee1750250ee5b7594a6a5fe3a": "@dependabot[bot]",
     "4531b7466a03cd136764540e55f5c867dbdcafb5": "@blafourcade",
   };
-  const resolve = (sha) => SHA_TO_WHO[sha];
+  const resolve = (sha) => ({ who: SHA_TO_WHO[sha] });
   const body = [HEADER, LINE_A, LINE_B, LINE_DEPENDABOT, LINE_CLOSES].join("\n");
 
   const once = credit(body, resolve);
@@ -146,6 +149,104 @@ test("tagsFromOutputs: no paths released is an empty list", () => {
   assert.deepEqual(tagsFromOutputs({ paths_released: "[]" }), []);
 });
 
+// --- the merge-commit-body-duplicate safety net --------------------------
+// Why credit() also drops a merge commit's spurious twin: see the header comment in
+// credit-release-authors.cjs.
+
+// A real twin pair, read from https://github.com/ai-driven-dev/framework/releases/tag/aidd-context-v1.0.1:
+// 7f57ec9 is the merge commit (2 parents, `gh api .../commits/7f57ec9...` confirmed), 5594ec8
+// is the real, single-parent commit it duplicates.
+const TWIN_TEXT = "* **aidd-context:** document seven artifacts and tool-agnostic wording";
+const TWIN_MERGE_LINE = `${TWIN_TEXT} ([7f57ec9](https://github.com/ai-driven-dev/framework/commit/7f57ec97e6fa515b07d817d9f692ffdecc1c0a56))`;
+const TWIN_REAL_LINE = `${TWIN_TEXT} ([5594ec8](https://github.com/ai-driven-dev/framework/commit/5594ec8a590caed0ca1d96e945cdee7460216c5f))`;
+
+function twinResolver({ mergeWho = "@blafourcade", realWho = "@blafourcade", prAuthor = "@blafourcade" } = {}) {
+  return (sha) => {
+    if (sha === "7f57ec97e6fa515b07d817d9f692ffdecc1c0a56") return { who: mergeWho, isMerge: true, prAuthor };
+    if (sha === "5594ec8a590caed0ca1d96e945cdee7460216c5f") return { who: realWho, isMerge: false };
+    throw new Error(`unexpected sha ${sha}`);
+  };
+}
+
+test("twin removed: a merge commit's bullet is dropped when a plain-commit twin carries the same text", () => {
+  const body = [TWIN_MERGE_LINE, TWIN_REAL_LINE].join("\n");
+
+  const credited = credit(body, twinResolver({ realWho: "@alexsoyes" }));
+
+  assert.equal(credited, `${TWIN_REAL_LINE} (@alexsoyes)`);
+});
+
+test("twin removed: order in the body does not matter", () => {
+  const body = [TWIN_REAL_LINE, TWIN_MERGE_LINE].join("\n");
+
+  const credited = credit(body, twinResolver({ realWho: "@alexsoyes" }));
+
+  assert.equal(credited, `${TWIN_REAL_LINE} (@alexsoyes)`);
+});
+
+test("twin removed: still detected when the surviving twin is already credited", () => {
+  // A previous pass may have credited the real commit's line first (order in the body is not
+  // guaranteed); the merge commit's twin must still be recognised and dropped.
+  const creditedRealLine = `${TWIN_REAL_LINE} (@alexsoyes)`;
+  const body = [TWIN_MERGE_LINE, creditedRealLine].join("\n");
+
+  const credited = credit(body, twinResolver());
+
+  assert.equal(credited, creditedRealLine);
+});
+
+test("lone merge line: no twin, kept and credited to its pull request's author", () => {
+  const resolve = (sha) => {
+    assert.equal(sha, "7f57ec97e6fa515b07d817d9f692ffdecc1c0a56");
+    return { who: "@whoever-merged", isMerge: true, prAuthor: "@therealauthor" };
+  };
+
+  const credited = credit(TWIN_MERGE_LINE, resolve);
+
+  assert.equal(credited, `${TWIN_MERGE_LINE} (@therealauthor)`);
+});
+
+test("lone merge line: falls back to the commit author when prAuthor resolves falsy", () => {
+  const resolve = () => ({ who: "@whoever-merged", isMerge: true, prAuthor: "" });
+
+  const credited = credit(TWIN_MERGE_LINE, resolve);
+
+  assert.equal(credited, `${TWIN_MERGE_LINE} (@whoever-merged)`);
+});
+
+test("non-merge lines: two commits sharing identical text are both kept (e.g. a cherry-pick)", () => {
+  // This is the test that goes red the moment the merge check is dropped from the twin rule:
+  // with no `isMerge` guard, credit() would treat this pair exactly like the twin above and
+  // silently drop one of two distinct, legitimate commits.
+  const otherRealLine = `${TWIN_TEXT} ([aaaaaaa](https://github.com/ai-driven-dev/framework/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa))`;
+  const body = [TWIN_REAL_LINE, otherRealLine].join("\n");
+  const resolve = (sha) => ({ who: sha === "5594ec8a590caed0ca1d96e945cdee7460216c5f" ? "@alexsoyes" : "@blafourcade", isMerge: false });
+
+  const credited = credit(body, resolve);
+
+  assert.equal(credited, [`${TWIN_REAL_LINE} (@alexsoyes)`, `${otherRealLine} (@blafourcade)`].join("\n"));
+});
+
+test("all-merge twin group: no plain-commit twin exists, both merge bullets are kept untouched", () => {
+  const otherMergeLine = `${TWIN_TEXT} ([bbbbbbb](https://github.com/ai-driven-dev/framework/commit/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb))`;
+  const body = [TWIN_MERGE_LINE, otherMergeLine].join("\n");
+  const resolve = () => ({ who: "@whoever-merged", isMerge: true, prAuthor: "@therealauthor" });
+
+  const credited = credit(body, resolve);
+
+  assert.equal(credited, [`${TWIN_MERGE_LINE} (@therealauthor)`, `${otherMergeLine} (@therealauthor)`].join("\n"));
+});
+
+test("second pass is a no-op after a twin was removed and the survivor credited", () => {
+  const body = [TWIN_MERGE_LINE, TWIN_REAL_LINE].join("\n");
+  const resolve = twinResolver({ realWho: "@alexsoyes" });
+
+  const once = credit(body, resolve);
+  const twice = credit(once, resolve);
+
+  assert.equal(twice, once);
+});
+
 // --- creditReleases(): reads, credits and writes back only what changed --
 
 test("creditReleases: an already-credited tag's body is read but never written", () => {
@@ -154,7 +255,7 @@ test("creditReleases: an already-credited tag's body is read but never written",
   const writes = [];
   const read = (tag) => bodies[tag];
   const write = (tag, body) => writes.push({ tag, body });
-  const resolve = () => "@blafourcade";
+  const resolve = nonMerge("@blafourcade");
 
   creditReleases("owner/repo", outputs, { read, resolve, write });
 
@@ -170,29 +271,50 @@ test("creditReleases: a tag whose body changes is written exactly once, with the
   const writes = [];
   const read = (tag) => bodies[tag];
   const write = (tag, body) => writes.push({ tag, body });
-  const resolve = () => "@blafourcade";
+  const resolve = nonMerge("@blafourcade");
 
   creditReleases("owner/repo", outputs, { read, resolve, write });
 
   assert.deepEqual(writes, [{ tag: "v1.0.0", body: `${LINE_A} (@blafourcade)` }]);
 });
 
-// --- who() on the gh api reply's actual shape ----------------------------
+// --- who() / isMerge() / prCredit() on the gh api replies' actual shape --
 // Regression: `gh api ... -q '[...] | @tsv'` piped through `.trim()` silently drops a
 // login-less commit's leading tab, so `split("\t")` under-counted the fields and the name
 // got credited as `@Full Name`. `who()` parses jq's own JSON object output instead, which
 // has no such leading-empty-field trap.
 
 test("who: a commit with a login is credited as @login", () => {
-  assert.equal(who('{"login":"blafourcade","name":"Baptiste Lafourcade"}'), "@blafourcade");
+  assert.equal(who('{"login":"blafourcade","name":"Baptiste Lafourcade","parents":1}'), "@blafourcade");
 });
 
 test("who: a bot login is credited as @dependabot[bot]", () => {
-  assert.equal(who('{"login":"dependabot[bot]","name":"dependabot[bot]"}'), "@dependabot[bot]");
+  assert.equal(who('{"login":"dependabot[bot]","name":"dependabot[bot]","parents":1}'), "@dependabot[bot]");
 });
 
 test("who: no login resolves to the plain commit-author name, not @Name", () => {
-  assert.equal(who('{"login":"","name":"Alex Soyer"}'), "Alex Soyer");
+  assert.equal(who('{"login":"","name":"Alex Soyer","parents":1}'), "Alex Soyer");
+});
+
+test("isMerge: a single-parent commit is not a merge commit", () => {
+  assert.equal(isMerge('{"login":"","name":"Alex Soyer","parents":1}'), false);
+});
+
+test("isMerge: a two-parent commit is a merge commit", () => {
+  assert.equal(isMerge('{"login":"","name":"Alex Soyer","parents":2}'), true);
+});
+
+test("prCredit: the pull request's author is credited over the commit author", () => {
+  const commitReply = '{"login":"blafourcade","name":"Baptiste Lafourcade","parents":2}';
+  const pullsReply = JSON.stringify([{ user: { login: "alexsoyes" } }]);
+
+  assert.equal(prCredit(commitReply, pullsReply), "@alexsoyes");
+});
+
+test("prCredit: falls back to the commit author when the pulls reply names no pull request", () => {
+  const commitReply = '{"login":"blafourcade","name":"Baptiste Lafourcade","parents":2}';
+
+  assert.equal(prCredit(commitReply, "[]"), "@blafourcade");
 });
 
 // --- CLI entry: a bad or missing RELEASE_OUTPUTS fails loud, not silent --

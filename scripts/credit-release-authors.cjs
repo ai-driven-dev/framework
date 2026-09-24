@@ -14,6 +14,22 @@
  * `credit()` is a pure transform: given a release body and a `sha -> display name` resolver,
  * it returns the body with each creditable line credited. It never touches the network, so
  * every shape release-please's notes take is a fixture, not a live call.
+ *
+ * Safety net for a merge-commit-body duplicate: this repository merges the Release PR and the
+ * weekly promotion with `--body ""` (ci.yml, promote.yml) precisely because GitHub otherwise
+ * defaults a merge commit's body to the PR title, and release-please's notes parser (its
+ * splitMessages step, in release-please's own commit.js) reads that body as a second,
+ * independent conventional commit — duplicating the entry, credited to whoever clicked merge
+ * rather than the real author. `--body ""` prevents new duplicates, but an old release already
+ * carries one, a manual merge outside this repo's own workflows can still produce one, and
+ * nothing here un-splits a body release-please already parsed. So `credit()` also treats a
+ * *merge* commit (more than one parent) as suspect: when another bullet in the same body
+ * carries the exact same text before its commit link, the merge commit's own bullet is the
+ * spurious half of the split and is dropped outright, and the real commit's bullet is credited
+ * as usual. A merge commit with no such twin is kept and credited to its pull request's
+ * author — the actual contributor — rather than whoever merged it, falling back to the commit
+ * author when no pull request is found. A twin group made only of merge-commit bullets (no
+ * plain commit twin) is left untouched: nothing here can tell which half, if either, is real.
  */
 
 const { execFileSync } = require("node:child_process");
@@ -21,6 +37,13 @@ const { execFileSync } = require("node:child_process");
 // release-please's default changelog notes link every entry's short SHA display through the
 // full 40-character commit SHA in the URL: `([7fbe889](https://…/commit/<40 hex chars>))`.
 const COMMIT_SHA = /\/commit\/([0-9a-f]{40})\)/;
+
+// The whole commit-SHA markdown link, leading space included, exactly as release-please emits
+// it: `([7fbe889](https://…/commit/<40 hex chars>))`. Everything before this on the line is
+// the bullet's own text — no commit link, no `, closes [#N](url)` tail, no credit a previous
+// pass appended — so slicing here is enough to compare two bullets for the merge-commit-twin
+// check below, with no separate handling needed for either tail.
+const COMMIT_LINK = /\s\(\[[0-9a-f]+\]\(https:\/\/[^\s)]+\/commit\/[0-9a-f]{40}\)\)/;
 
 // Checked only against the text *after* the commit-SHA link, never the whole line: what
 // follows is either nothing, a `, closes [#N](url)` tail, or - once this script already
@@ -32,20 +55,63 @@ const COMMIT_SHA = /\/commit\/([0-9a-f]{40})\)/;
 // a no-op.
 const ALREADY_CREDITED = /\s\(/;
 
+/** The bullet's own text: everything before its commit-SHA link. Two bullets with identical
+ * text here are the same conventional-commit entry, wherever their SHA differs. */
+function bulletText(line) {
+  const link = line.match(COMMIT_LINK);
+  return link ? line.slice(0, link.index) : line;
+}
+
 /**
- * Credits every line of `body` that names a commit SHA and is not already credited.
- * `resolve(sha)` returns the display name to append, or a falsy value to leave the line as is.
+ * Credits every line of `body` that names a commit SHA and is not already credited, and drops
+ * a merge commit's line when a plain-commit twin of it exists elsewhere in the same body (see
+ * the header comment). `resolve(sha)` returns `{ who, isMerge, prAuthor }`:
+ * - `who`: the display name to credit a non-merge line with, or a falsy value to leave it as
+ *   is.
+ * - `isMerge`: whether the commit has more than one parent.
+ * - `prAuthor`: for a merge commit, the display name to credit it with (its pull request's
+ *   author, falling back to `who`) - ignored for a non-merge commit.
  */
 function credit(body, resolve) {
-  return body
-    .split("\n")
-    .map((line) => {
-      const match = line.match(COMMIT_SHA);
-      if (!match) return line;
-      const tail = line.slice(match.index + match[0].length);
-      if (ALREADY_CREDITED.test(tail)) return line;
-      const who = resolve(match[1]);
-      return who ? `${line} (${who})` : line;
+  const lines = body.split("\n");
+
+  const items = lines.map((line) => {
+    const match = line.match(COMMIT_SHA);
+    if (!match) return { line, sha: null };
+    return { line, sha: match[1], match, text: bulletText(line) };
+  });
+
+  for (const item of items) {
+    if (item.sha) item.meta = resolve(item.sha) || {};
+  }
+
+  const groups = new Map();
+  for (const item of items) {
+    if (!item.sha) continue;
+    if (!groups.has(item.text)) groups.set(item.text, []);
+    groups.get(item.text).push(item);
+  }
+
+  const drop = new Set();
+  for (const group of groups.values()) {
+    if (group.length < 2) continue;
+    const hasPlainCommitTwin = group.some((item) => !item.meta.isMerge);
+    if (!hasPlainCommitTwin) continue; // an all-merge twin group: nothing tells them apart
+    for (const item of group) {
+      if (item.meta.isMerge) drop.add(item);
+    }
+  }
+
+  return items
+    .filter((item) => !drop.has(item))
+    .map((item) => {
+      if (!item.sha) return item.line;
+
+      const tail = item.line.slice(item.match.index + item.match[0].length);
+      if (ALREADY_CREDITED.test(tail)) return item.line;
+
+      const who = item.meta.isMerge ? item.meta.prAuthor || item.meta.who : item.meta.who;
+      return who ? `${item.line} (${who})` : item.line;
     })
     .join("\n");
 }
@@ -79,12 +145,36 @@ function who(apiReply) {
   return login ? `@${login}` : name;
 }
 
+/** Whether the same `commits/<sha>` reply names more than one parent - a merge commit. Read
+ * off the reply `who()` already gets, so a merge commit costs no extra API call to detect. */
+function isMerge(apiReply) {
+  const { parents } = JSON.parse(apiReply);
+  return Number(parents) > 1;
+}
+
+/**
+ * The display name to credit a *merge* commit with: its pull request's author when
+ * `gh api repos/<repo>/commits/<sha>/pulls` names one, `who(commitReply)` otherwise - a
+ * squash-merged PR GitHub no longer associates with the commit, or a merge with no pull
+ * request at all (git merged by hand).
+ */
+function prCredit(commitReply, pullsReply) {
+  const prs = JSON.parse(pullsReply);
+  const login = prs[0] && prs[0].user && prs[0].user.login;
+  return login ? `@${login}` : who(commitReply);
+}
+
 function resolverFor(repo) {
   const cache = new Map();
   return (sha) => {
     if (!cache.has(sha)) {
-      const reply = gh("api", `repos/${repo}/commits/${sha}`, "-q", '{login: (.author.login // ""), name: .commit.author.name}');
-      cache.set(sha, who(reply));
+      const commitReply = gh("api", `repos/${repo}/commits/${sha}`, "-q", '{login: (.author.login // ""), name: .commit.author.name, parents: (.parents | length)}');
+      const merge = isMerge(commitReply);
+      cache.set(sha, {
+        who: who(commitReply),
+        isMerge: merge,
+        prAuthor: merge ? prCredit(commitReply, gh("api", `repos/${repo}/commits/${sha}/pulls`)) : "",
+      });
     }
     return cache.get(sha);
   };
@@ -138,7 +228,7 @@ function main(repo, outputs) {
   });
 }
 
-module.exports = { credit, tagsFromOutputs, who, creditReleases };
+module.exports = { credit, tagsFromOutputs, who, isMerge, prCredit, creditReleases };
 
 if (require.main === module) {
   const repo = process.argv[2];
