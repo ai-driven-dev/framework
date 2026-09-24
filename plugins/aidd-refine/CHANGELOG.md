@@ -1,5 +1,13 @@
 # Changelog
 
+## [3.1.0](https://github.com/ai-driven-dev/framework/compare/aidd-refine-v3.0.1...aidd-refine-v3.1.0) (2026-09-24)
+
+
+### Features
+
+* **aidd-refine:** add conversation improvement workflow ([77c167c](https://github.com/ai-driven-dev/framework/commit/77c167ccef99a727acd818cd35a63953af85c668))
+* **aidd-refine:** add interactive improve report ([1dd99b9](https://github.com/ai-driven-dev/framework/commit/1dd99b9dfe56f9d0ae2fc258c33091fd57d699f5))
+
 ## [3.0.1](https://github.com/ai-driven-dev/framework/compare/aidd-refine-v3.0.0...aidd-refine-v3.0.1) (2026-09-09)
 
 

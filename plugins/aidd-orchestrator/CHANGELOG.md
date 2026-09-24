@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.3.1](https://github.com/ai-driven-dev/framework/compare/aidd-orchestrator-v2.3.0...aidd-orchestrator-v2.3.1) (2026-09-24)
+
+
+### Bug Fixes
+
+* **aidd-orchestrator:** upgrade checkout action ([#878](https://github.com/ai-driven-dev/framework/issues/878)) ([ffad107](https://github.com/ai-driven-dev/framework/commit/ffad107eadb0ff7c039d6d206f9bd3288568f233))
+
 ## [2.3.0](https://github.com/ai-driven-dev/framework/compare/aidd-orchestrator-v2.2.1...aidd-orchestrator-v2.3.0) (2026-09-09)
 
 
