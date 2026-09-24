@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.2.1](https://github.com/ai-driven-dev/framework/compare/aidd-telemetry-v0.2.0...aidd-telemetry-v0.2.1) (2026-09-24)
+
+
+### Bug Fixes
+
+* **telemetry:** opencode reads journal.cjs where the build puts it ([#812](https://github.com/ai-driven-dev/framework/issues/812)) ([ebd7fe9](https://github.com/ai-driven-dev/framework/commit/ebd7fe9d5f38178f01947579f9ee509d08506b8e))
+* **telemetry:** resolve the repository from the host, not from payload.cwd ([#892](https://github.com/ai-driven-dev/framework/issues/892)) ([949642d](https://github.com/ai-driven-dev/framework/commit/949642dabda967cb94a3f8e2d9723899d1ed0612)), closes [#859](https://github.com/ai-driven-dev/framework/issues/859)
+
+
+### Documentation
+
+* **telemetry:** the README says what 00-init runs and what OpenCode cannot ([#871](https://github.com/ai-driven-dev/framework/issues/871)) ([83b0246](https://github.com/ai-driven-dev/framework/commit/83b0246e532d3f76491baabbc8b0b266f00e3590))
+
 ## [0.2.0](https://github.com/ai-driven-dev/framework/compare/aidd-telemetry-v0.1.0...aidd-telemetry-v0.2.0) (2026-09-09)
 
 
