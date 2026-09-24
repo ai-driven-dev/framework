@@ -16,7 +16,7 @@ The macro technical shape: the stack, how the pieces fit, and the decisions behi
 
 ```mermaid
 flowchart LR
-    Manifest[".claude-plugin/marketplace.json"] -->|lists| Plugins["plugins/ · 8"]
+    Manifest[".claude-plugin/marketplace.json"] -->|lists| Plugins["plugins/ · 9"]
     Plugins -->|ships| Surfaces["skills · agents · commands · hooks · rules"]
     CLI["cli/ · aidd"] -->|reads| Manifest
     CLI -->|installs| Target["a project's AI tool dir"]
