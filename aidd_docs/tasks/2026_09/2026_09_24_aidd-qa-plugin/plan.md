@@ -41,6 +41,6 @@ status: implemented
 | `aidd-dev:11-browser-qa` is removed after a first redirect iteration | `aidd-dev` owns no QA surface; `aidd-qa` is the single owner |
 | `aidd-dev:06-test` `test-journey` stays in `aidd-dev` | it is developer-side validation the SDLC Deliver zone runs before commit, not independent acceptance evidence; moving it is outside #908 |
 | Evidence folder stays `qa/` with `happy-path.webm` and `edge-case-<slug>.webm` | the pull-request draft already links `**/qa/*.webm` |
-| Version `0.1.0` in `plugin.json` and the release manifest | new, unproven plugin, same pre-1.0 pattern as `aidd-telemetry` |
+| Version `1.0.0` in `plugin.json` and the release manifest | release-please bumps from there |
 | Not added to `.claude/settings.json` `enabledPlugins` | that list holds only curated plugins; `aidd-ui` and `aidd-telemetry` are absent too |
 | Commits split by path | release-please bumps per path from the commit type |
