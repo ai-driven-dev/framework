@@ -18,7 +18,7 @@ Read only the next action's file before running it.
 
 | #   | Action          | Does                                                       |
 | --- | --------------- | ---------------------------------------------------------- |
-| 01  | `load-scope`    | Lock at most one happy path and a bounded set of sourced edge cases, each traced to an acceptance criterion |
+| 01  | `load-scope`    | Lock at most one happy path and the edge cases its acceptance criteria name |
 | 02  | `prerequisites` | Verify the browser runner and media dependencies            |
 | 03  | `prepare-run`   | Resolve the shortest deterministic path to executable runs |
 | 04  | `run-scenarios` | Record, normalize, verify, reset, and report every scenario |

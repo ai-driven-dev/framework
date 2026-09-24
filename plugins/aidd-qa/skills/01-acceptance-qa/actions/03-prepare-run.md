@@ -15,6 +15,7 @@ A successful prepared run with a reachable application, authenticated sessions, 
 1. **Reuse.** Read `aidd_docs/memory/testing.md` first when it exists. 
    - Resolve Browser QA entry, auth, fixtures, and reset from its `Browser QA` section, then a directly related browser test, then one targeted browser snapshot. 
    - Stop searching as soon as the run is executable.
+   - Before starting the entry, prove the storage it mounts is test-only when its reset deletes data. Unproven: ask once, never guess.
 2. **Preflight.** Check the application and fixed `1280×720` viewport.
 3. **Authenticate.** Establish the required role before recording. 
    - Never include login discovery or secret lookup in evidence.
@@ -23,7 +24,6 @@ A successful prepared run with a reachable application, authenticated sessions, 
 5. **Rehearse** only non-mutating steps and selectors. 
    - Never execute the final state-changing action merely to rehearse it.
 6. **Reset.** Resolve an executable teardown for every state-changing scenario; reject one without a verified, executable teardown and carry it forward with its reason instead of dropping it. 
-   - Before any reset that deletes data, prove it targets test-only storage (dedicated database, volume, or Compose project). Unproven: ask once, never guess.
    - If preparation changed state, execute the teardown and verify the baseline now; a future restart is not proof.
 7. **Return.** Keep only the fixture, initial URL, minimal steps, expected outcome, teardown, and isolated session id per scenario, plus any rejected scenario with its reason.
 
@@ -32,4 +32,4 @@ A successful prepared run with a reachable application, authenticated sessions, 
 - A state-changing scenario prepared without a verified, executable teardown is rejected and carried forward, with its reason, rather than dropped.
 - No login discovery, secret lookup, or live record chosen by guesswork appears in evidence.
 - Preparation that changed state runs and verifies its own teardown before the run is marked ready.
-- A reset whose storage is not proven test-only produces one question, never an execution.
+- An entry whose storage is not proven test-only is never started when a reset will delete data; it produces one question.
