@@ -1,4 +1,4 @@
-# 02 - Prepare Run
+# 03 - Prepare Run
 
 Resolve the application state and scenario paths before retained recording begins.
 
@@ -23,6 +23,7 @@ A successful prepared run with a reachable application, authenticated sessions, 
 5. **Rehearse** only non-mutating steps and selectors. 
    - Never execute the final state-changing action merely to rehearse it.
 6. **Reset.** Resolve an executable teardown for every state-changing scenario; reject one without a verified, executable teardown and carry it forward with its reason instead of dropping it. 
+   - Before any reset that deletes data, prove it targets test-only storage (dedicated database, volume, or Compose project). Unproven: ask once, never guess.
    - If preparation changed state, execute the teardown and verify the baseline now; a future restart is not proof.
 7. **Return.** Keep only the fixture, initial URL, minimal steps, expected outcome, teardown, and isolated session id per scenario, plus any rejected scenario with its reason.
 
@@ -31,3 +32,4 @@ A successful prepared run with a reachable application, authenticated sessions, 
 - A state-changing scenario prepared without a verified, executable teardown is rejected and carried forward, with its reason, rather than dropped.
 - No login discovery, secret lookup, or live record chosen by guesswork appears in evidence.
 - Preparation that changed state runs and verifies its own teardown before the run is marked ready.
+- A reset whose storage is not proven test-only produces one question, never an execution.

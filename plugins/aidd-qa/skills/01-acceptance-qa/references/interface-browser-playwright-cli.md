@@ -10,7 +10,9 @@ Support `@playwright/cli >= 0.1.17`; execute the framework pin `@playwright/cli@
 npx --yes @playwright/cli@0.1.17 -s=qa-<run-id> <command>
 ```
 
-`run-code` takes one `page` argument: pass `async page => { ... }`, never bare statements. Keep stdout, stderr, and exit status visible; no redirects, pipes, command substitutions, or `|| true`. A `SyntaxError` or non-zero exit invalidates the take.
+Run every command from a temporary directory outside the application repository.
+
+`run-code` takes one `page` argument: pass `async page => { ... }`, never bare statements. Never throw on a product mismatch: check each expected outcome with a bounded `waitFor`, and return `{ step, expected, actual, ok }` per step. Keep stdout, stderr, and exit status visible; no redirects, pipes, command substitutions, or `|| true`. A throw, `SyntaxError`, or non-zero exit is a tooling failure and invalidates the take.
 
 ## Recording
 
@@ -33,14 +35,16 @@ npx --yes @playwright/cli@0.1.17 -s=qa-<run-id>-<scenario-slug> run-code 'async 
   await page.mouse.wheel(0, 600);
   await pause(300);
   await page.getByRole("button", { name: "final action" }).click();
-  await page.getByText("observable expected outcome").waitFor({ state: "visible" });
+  const expected = "observable expected outcome";
+  const ok = await page.getByText(expected).waitFor({ state: "visible", timeout: 5000 }).then(() => true, () => false);
   await pause(1000);
+  return [{ step: "final action", expected, actual: ok ? expected : "not visible", ok }];
 }'
 npx --yes @playwright/cli@0.1.17 -s=qa-<run-id>-<scenario-slug> video-stop
 npx --yes @playwright/cli@0.1.17 -s=qa-<run-id>-<scenario-slug> close
 ```
 
-`video-stop` writes to `.playwright-cli/` in the current directory. Name raw files `raw-happy-path.webm` or `raw-edge-case-<scenario-slug>.webm`.
+`video-stop` writes the raw file to the current directory. Name raw files `raw-happy-path.webm` or `raw-edge-case-<scenario-slug>.webm`.
 
 ## Duration
 

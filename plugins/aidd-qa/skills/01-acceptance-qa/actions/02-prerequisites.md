@@ -1,10 +1,10 @@
-# 00 - Prerequisites
+# 02 - Prerequisites
 
-Verify the runner dependencies before resolving the QA scope.
+Verify the runner dependencies once the scope is locked.
 
 ## Input
 
-None.
+The locked scope.
 
 ## Output
 

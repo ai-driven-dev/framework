@@ -7,11 +7,11 @@
 
 ## Out of interface
 
-{{criteria with no browser-observable outcome, or "none"}}
+{{criteria, or quoted parts, with no browser-observable outcome, or "none"}}
 
 ## Scenarios
 
-| Scenario | Criterion | Expected | Actual | Verdict | Duration | Evidence |
+| Scenario | Criteria | Expected | Actual | Verdict | Duration | Evidence |
 | -------- | --------- | -------- | ------ | ------- | -------- | -------- |
 
 ## Rejected
