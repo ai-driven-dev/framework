@@ -50,7 +50,6 @@ Code transformation: plan, implement, assert, audit, review, test, refactor, deb
 | `08-debug`      | Reproduce and fix bugs with a test-driven workflow                         | `01-reproduce`, `02-debug`, `03-reflect-issue`                                   |
 | `09-for-sure`   | Iterative loop that retries until a success condition is met               | `01-init-tracking`, `02-auto-accept`, `03-autonomous-loop`                       |
 | `10-todo`       | Split the prompt into independent todos, run one implementer agent per todo in parallel | `01-todo`                                                            |
-| `11-browser-qa` | Retired: explains that browser QA moved to the `aidd-qa` plugin            | `01-redirect`                                                                 |
 
 ## 📋 aidd-pm
 
@@ -129,4 +128,4 @@ Locks a scenario scope from acceptance criteria, runs it against a reviewed cand
 
 | Skill               | Role                                                                 | Actions                                                              |
 | ------------------- | --------------------------------------------------------------------- | --------------------------------------------------------------------- |
-| `01-acceptance-qa`  | Lock scenarios from acceptance criteria, run them, and report a verdict per scenario | `00-prerequisites`, `01-load-scope`, `02-prepare-run`, `03-run-scenarios` |
+| `01-acceptance-qa`  | Lock scenarios from acceptance criteria, run them, and report a verdict per scenario | `01-load-scope`, `02-prerequisites`, `03-prepare-run`, `04-run-scenarios` |

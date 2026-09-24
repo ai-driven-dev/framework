@@ -24,7 +24,6 @@ Covers code transformation: planning, implementation, assertions, audits, code r
 | [2.8] | [debug](skills/08-debug/SKILL.md) | Reproduce and fix bugs systematically using test-driven workflow, root cause analysis, and hypothesis validation. |
 | [2.9] | [for-sure](skills/09-for-sure/SKILL.md) | Iterative agent loop that tracks attempts and retries until a success condition is met. |
 | [2.10] | [todo](skills/10-todo/SKILL.md) | Split the prompt into independent todos, run one executor agent per todo in parallel, then report a minimal table. |
-| [2.11] | [browser-qa](skills/11-browser-qa/SKILL.md) | Retired. Moved to the `aidd-qa` plugin; this invocation only explains where it went. |
 
 ## Agents
 

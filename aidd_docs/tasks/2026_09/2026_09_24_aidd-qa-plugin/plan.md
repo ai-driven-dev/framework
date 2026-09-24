@@ -1,5 +1,5 @@
 ---
-objective: "An installable, off-curated-path aidd-qa plugin owns browser acceptance QA derived from acceptance criteria, and aidd-dev keeps only a redirect for the old invocation."
+objective: "An installable, off-curated-path aidd-qa plugin owns browser acceptance QA derived from acceptance criteria, and aidd-dev no longer carries browser QA."
 status: implemented
 ---
 
@@ -9,7 +9,7 @@ status: implemented
 
 | Field | Value |
 | --- | --- |
-| **Goal** | Create `aidd-qa`, move Browser QA into it as acceptance QA, retire the `aidd-dev` skill to a redirect, register the plugin everywhere a plugin is registered |
+| **Goal** | Create `aidd-qa`, move Browser QA into it as acceptance QA, remove the `aidd-dev` skill, register the plugin everywhere a plugin is registered |
 | **Source** | https://github.com/ai-driven-dev/framework/issues/908 |
 
 ## Phases
@@ -38,7 +38,7 @@ status: implemented
 | --- | --- |
 | Skill `aidd-qa:01-acceptance-qa`, browser as its only interface, declared in an interface reference | the entry point is named by intention (acceptance validation), so API or CLI interfaces can be added later without renaming; none is claimed now |
 | Layer Execution in the taxonomy | it drives the running application, which the Knowledge firewall forbids |
-| `aidd-dev:11-browser-qa` becomes a one-action redirect, not a deletion | an existing invocation gets an explicit migration message and `aidd-dev` needs no major bump; its description is written so description matching never routes QA work to it |
+| `aidd-dev:11-browser-qa` is removed after a first redirect iteration | `aidd-dev` owns no QA surface; `aidd-qa` is the single owner |
 | `aidd-dev:06-test` `test-journey` stays in `aidd-dev` | it is developer-side validation the SDLC Deliver zone runs before commit, not independent acceptance evidence; moving it is outside #908 |
 | Evidence folder stays `qa/` with `happy-path.webm` and `edge-case-<slug>.webm` | the pull-request draft already links `**/qa/*.webm` |
 | Version `0.1.0` in `plugin.json` and the release manifest | new, unproven plugin, same pre-1.0 pattern as `aidd-telemetry` |
