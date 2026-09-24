@@ -13,7 +13,7 @@ How to operate this repository day to day. This file is the **Maintainer** playb
 | Live backlog & roadmap | [Project board #8](https://github.com/orgs/ai-driven-dev/projects/8) | single source of truth |
 | Roles → access | GitHub teams `trusted-partners` / `certified-members` / `core-team` | mapped to the role ladder |
 | Branch protection | ruleset "main protection" + `.github/rulesets/main.json` | `main` is PR-only |
-| Releases | release-please (`ci.yml`) + `release-please-config.json` | 10 packages (root + 8 plugins + `cli`), auto |
+| Releases | release-please (`ci.yml`) + `release-please-config.json` | 11 packages (root + 9 plugins + `cli`), auto |
 | Pre-commit checks | `lefthook.yml` + `scripts/` | json/yaml/schema/frontmatter/catalogs/counts |
 
 ## 📅 Daily

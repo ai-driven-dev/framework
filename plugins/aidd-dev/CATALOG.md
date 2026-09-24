@@ -19,7 +19,6 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
   - [`skills/08-debug`](#skills08-debug)
   - [`skills/09-for-sure`](#skills09-for-sure)
   - [`skills/10-todo`](#skills10-todo)
-  - [`skills/11-browser-qa`](#skills11-browser-qa)
 
 ---
 
@@ -103,7 +102,7 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 |-------|------|---|
 | `actions` | [01-test.md](skills/06-test/actions/01-test.md) | - |
 | `actions` | [02-test-journey.md](skills/06-test/actions/02-test-journey.md) | - |
-| `-` | [SKILL.md](skills/06-test/SKILL.md) | `Write and iterate tests until they pass, or validate a user journey end to end in the browser. Use when the user wants to add coverage, find what's untested, or walk a flow. Not for auditing test health or debugging a failure.` |
+| `-` | [SKILL.md](skills/06-test/SKILL.md) | `Write and iterate developer-side tests until they pass, or validate a user journey end to end in the browser during implementation. Use when the user wants to add coverage, find what's untested, or walk a flow while building it. Do NOT use for independent acceptance QA or reviewer evidence, auditing test health, or debugging a failure.` |
 
 #### `skills/07-refactor`
 
@@ -144,16 +143,4 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 |-------|------|---|
 | `actions` | [01-todo.md](skills/10-todo/actions/01-todo.md) | - |
 | `-` | [SKILL.md](skills/10-todo/SKILL.md) | `Split the user prompt into independent todos and run one executor agent per todo in parallel, then report a minimal table. Use when the user says "todo" or asks to fan out a multi-part request into parallel implementations.` |
-
-#### `skills/11-browser-qa`
-
-| Group | File | Description |
-|-------|------|---|
-| `actions` | [00-prerequisites.md](skills/11-browser-qa/actions/00-prerequisites.md) | - |
-| `actions` | [01-load-scope.md](skills/11-browser-qa/actions/01-load-scope.md) | - |
-| `actions` | [02-prepare-run.md](skills/11-browser-qa/actions/02-prepare-run.md) | - |
-| `actions` | [03-run-scenarios.md](skills/11-browser-qa/actions/03-run-scenarios.md) | - |
-| `assets` | [qa-report-template.md](skills/11-browser-qa/assets/qa-report-template.md) | - |
-| `references` | [run-scope-playwright-cli.md](skills/11-browser-qa/references/run-scope-playwright-cli.md) | - |
-| `-` | [SKILL.md](skills/11-browser-qa/SKILL.md) | `Run post-review browser QA and produce short named videos for a locked happy path and sourced browser edge cases. Use when the user wants concise reviewer evidence for a web journey. Not for API, CLI, automated tests, diff review, or application fixes.` |
 

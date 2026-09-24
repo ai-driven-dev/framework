@@ -13,7 +13,7 @@ How the project is tested: the layers, the tools, and the conventions. Where tes
 | `cli/` | vitest, four projects — see the CLI bank |
 | `kanban/` | its own vitest suite. It shares no code with `cli/` |
 | Per-tool distributions | golden snapshots in `cli/tests/golden/`, mirrored by the `build-per-tool` CI matrix; Claude Code's own `plugin validate` over a fresh claude build, in `cli-ci.yml` |
-| Browser journeys | `aidd-dev:11-browser-qa`, see below |
+| Browser journeys | `aidd-qa:01-acceptance-qa`, see below |
 
 ## Tools
 
@@ -46,4 +46,4 @@ CI runs more: `validate.yml` re-runs the whole pre-commit over the whole tree on
 
 - Runner: `npx --yes @playwright/cli@0.1.17`, the framework pin. Never `latest` during QA.
 - Also required: `ffmpeg` and `ffprobe`. Output is WebM evidence per scenario.
-- Owned by `aidd-dev:11-browser-qa`; this repository ships the capability, it has no browser journey of its own.
+- Owned by `aidd-qa:01-acceptance-qa`; this repository ships the capability, it has no browser journey of its own.

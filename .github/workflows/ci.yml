@@ -232,6 +232,7 @@ jobs:
             aidd-refine,
             aidd-ui,
             aidd-telemetry,
+            aidd-qa,
           ]
     steps:
       - name: Check if this plugin was released
