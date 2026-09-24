@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
+  "name": "aidd-qa",
+  "version": "0.1.0",
+  "description": "Acceptance QA: validates observable behavior against acceptance criteria and records reviewer evidence. Use when a reviewed candidate needs evidence that it meets its acceptance criteria. Do NOT use for diff review, unit or integration tests, or fixing the application.",
+  "author": {
+    "name": "AI-Driven Dev",
+    "url": "https://github.com/ai-driven-dev"
+  },
+  "skills": [
+    "./skills/01-acceptance-qa"
+  ],
+  "keywords": [
+    "qa",
+    "acceptance",
+    "browser",
+    "evidence"
+  ],
+  "repository": "https://github.com/ai-driven-dev/framework",
+  "homepage": "https://ai-driven.dev",
+  "license": "MIT"
+}

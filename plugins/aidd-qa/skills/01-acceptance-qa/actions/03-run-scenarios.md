@@ -1,6 +1,6 @@
 # 03 - Run Scenarios
 
-Execute, save, and report one clean browser QA take per scenario.
+Execute, save, and report one clean acceptance QA take per scenario.
 
 ## Input
 
@@ -14,8 +14,8 @@ The prepared run, source label, and resolved evidence folder.
 
 1. **Group.** Run at most two read-only scenarios concurrently in isolated sessions. 
    - Run every state-changing scenario sequentially.
-2. **Record.** Apply setup before recording, then follow the recording contract in [run-scope-playwright-cli.md](../references/run-scope-playwright-cli.md).
-3. **Verdict.** Compare actual with expected. 
+2. **Record.** Apply setup before recording, then follow the recording contract in [interface-browser-playwright-cli.md](../references/interface-browser-playwright-cli.md).
+3. **Verdict.** Compare actual with the criterion's expected outcome. 
    - Retain a product failure and mark the run failed.
 4. **Recover.** Discard a setup or tooling failure, reset, and retry once. 
    - A second operational failure blocks the scenario.
@@ -25,5 +25,12 @@ The prepared run, source label, and resolved evidence folder.
 7. **Clean.** Delete raw takes and temporary validation frames only after every final file passes codec, dimension, duration, path, cut-point, and frame checks.
    - Never retain screenshots or alternate media.
 8. **Report.** Fill [qa-report-template.md](../assets/qa-report-template.md) with the source label. 
-   - Keep one result row per scenario and add Findings only for a failure or blocker.
+   - Keep one result row per scenario with its criterion, expected, actual, verdict, and evidence, and add Findings only for a failure or blocker.
 9.  **Return.** Output the verdict and evidence paths, then ask `Open happy-path.webm in the browser for review?`; open the final file there when confirmed.
+
+## Test
+
+- Every reported row names the criterion it proves, its expected outcome, its actual outcome, its verdict, and its evidence path.
+- A raw take or validation frame survives only until every final file passes its codec, dimension, duration, and frame checks.
+- A second operational failure on the same scenario blocks it rather than retrying again.
+- The final evidence files are named exactly `qa/happy-path.webm` and `qa/edge-case-<scenario-slug>.webm`.

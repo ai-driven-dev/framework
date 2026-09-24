@@ -25,3 +25,9 @@ A successful prepared run with a reachable application, authenticated sessions, 
 6. **Reset.** Resolve an executable teardown for every state-changing scenario. 
    - If preparation changed state, execute the teardown and verify the baseline now; a future restart is not proof.
 7. **Return.** Keep only the fixture, initial URL, minimal steps, expected outcome, teardown, and isolated session id per scenario.
+
+## Test
+
+- A state-changing scenario prepared without a verified, executable teardown is rejected.
+- No login discovery, secret lookup, or live record chosen by guesswork appears in evidence.
+- Preparation that changed state runs and verifies its own teardown before the run is marked ready.

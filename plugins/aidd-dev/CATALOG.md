@@ -149,11 +149,6 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 
 | Group | File | Description |
 |-------|------|---|
-| `actions` | [00-prerequisites.md](skills/11-browser-qa/actions/00-prerequisites.md) | - |
-| `actions` | [01-load-scope.md](skills/11-browser-qa/actions/01-load-scope.md) | - |
-| `actions` | [02-prepare-run.md](skills/11-browser-qa/actions/02-prepare-run.md) | - |
-| `actions` | [03-run-scenarios.md](skills/11-browser-qa/actions/03-run-scenarios.md) | - |
-| `assets` | [qa-report-template.md](skills/11-browser-qa/assets/qa-report-template.md) | - |
-| `references` | [run-scope-playwright-cli.md](skills/11-browser-qa/references/run-scope-playwright-cli.md) | - |
-| `-` | [SKILL.md](skills/11-browser-qa/SKILL.md) | `Run post-review browser QA and produce short named videos for a locked happy path and sourced browser edge cases. Use when the user wants concise reviewer evidence for a web journey. Not for API, CLI, automated tests, diff review, or application fixes.` |
+| `actions` | [01-redirect.md](skills/11-browser-qa/actions/01-redirect.md) | - |
+| `-` | [SKILL.md](skills/11-browser-qa/SKILL.md) | `Retired. Explains where browser QA moved. Use only when this skill is invoked by name. Do NOT use to run QA or record evidence.` |
 
