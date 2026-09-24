@@ -103,7 +103,7 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 |-------|------|---|
 | `actions` | [01-test.md](skills/06-test/actions/01-test.md) | - |
 | `actions` | [02-test-journey.md](skills/06-test/actions/02-test-journey.md) | - |
-| `-` | [SKILL.md](skills/06-test/SKILL.md) | `Write and iterate tests until they pass, or validate a user journey end to end in the browser. Use when the user wants to add coverage, find what's untested, or walk a flow. Not for auditing test health or debugging a failure.` |
+| `-` | [SKILL.md](skills/06-test/SKILL.md) | `Write and iterate developer-side tests until they pass, or validate a user journey end to end in the browser during implementation. Use when the user wants to add coverage, find what's untested, or walk a flow while building it. Do NOT use for independent acceptance QA or reviewer evidence, auditing test health, or debugging a failure.` |
 
 #### `skills/07-refactor`
 
