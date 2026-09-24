@@ -106,7 +106,6 @@
     },
     "plugins/aidd-qa": {
       "package-name": "aidd-qa",
-      "release-as": "1.0.0",
       "extra-files": [
         {
           "type": "json",
