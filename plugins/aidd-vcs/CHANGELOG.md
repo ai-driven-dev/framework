@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.4.0](https://github.com/ai-driven-dev/framework/compare/aidd-vcs-v2.3.2...aidd-vcs-v2.4.0) (2026-09-24)
+
+
+### Features
+
+* **aidd-vcs:** recover from scoped commit hook failures ([#743](https://github.com/ai-driven-dev/framework/issues/743)) ([552eda1](https://github.com/ai-driven-dev/framework/commit/552eda143e00bcb8516ced9b24710d5dcc7d3405))
+
 ## [2.3.2](https://github.com/ai-driven-dev/framework/compare/aidd-vcs-v2.3.1...aidd-vcs-v2.3.2) (2026-09-09)
 
 
