@@ -45,7 +45,7 @@ Code transformation: plan, implement, assert, audit, review, test, refactor, deb
 | `03-assert`     | Assert features work - general, architecture, frontend UI                  | `01-assert`, `02-assert-architecture`, `03-assert-frontend`                      |
 | `04-audit`      | Read-only codebase audit across quality pillars                            | `01-code-quality`, `02-architecture`, `03-security`, `04-dependencies`, `05-performance`, `06-tests`, `07-ui` |
 | `05-review`     | Read-only review of a diff - code quality and feature behavior             | `01-review-code`, `02-review-functional`                                         |
-| `06-test`       | Write and iterate developer-side tests, validate journeys in the browser during implementation - no acceptance evidence, no sibling-plugin address | `01-test`, `02-test-journey` |
+| `06-test`       | Write and iterate developer-side tests, validate journeys in the browser during implementation - not independent acceptance QA or reviewer evidence | `01-test`, `02-test-journey` |
 | `07-refactor`   | Improve code without changing behavior across four axes                    | `01-performance`, `02-security`, `03-cleanup`, `04-architecture`                 |
 | `08-debug`      | Reproduce and fix bugs with a test-driven workflow                         | `01-reproduce`, `02-debug`, `03-reflect-issue`                                   |
 | `09-for-sure`   | Iterative loop that retries until a success condition is met               | `01-init-tracking`, `02-auto-accept`, `03-autonomous-loop`                       |
