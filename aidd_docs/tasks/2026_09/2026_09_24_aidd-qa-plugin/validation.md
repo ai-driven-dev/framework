@@ -4,7 +4,7 @@ status: done
 
 # Validation: aidd-qa plugin
 
-Commands run from the repository root unless noted, with their decisive output line. Written after commits 1-3 landed, against the tree each left; commit 4 (this file, plus the rest of the task folder) follows.
+Commands run from the repository root unless noted, with their decisive output line. The gate, host-proof, and architecture tables below were all run against the final working tree, before it was split into commits — not re-run per commit. Each commit's own `pre-commit` hook run exited 0 (a non-zero exit would have aborted the commit), but that hook reads the working tree at commit time, not a diff scoped to that commit's own files; see "Commits" below for what that means for the two intermediate trees.
 
 ## Gates (phase 4, task 1)
 
@@ -69,9 +69,37 @@ No `aidd-<x>:<y>` token for another plugin appears in `plugins/aidd-qa/**` or `p
 | 1 | `3ef728a7` | `feat(aidd-qa): scaffold acceptance QA plugin from browser QA` |
 | 2 | `ffb9c9c5` | `feat(aidd-dev): retire browser-qa to a redirect` |
 | 3 | `50c13400` | `chore(marketplace): register aidd-qa plugin` |
-| 4 | (this commit) | `docs(aidd-qa): add the plan and its validation record` |
+| 4 | `f5c3dfcb` | `docs(aidd-qa): add the plan and its validation record` |
+| 5 | (this commit) | `docs(aidd-qa): correct the validation record` |
 
-Each commit's hook run is the gate evidence for that exact tree: `git show --stat <sha>` lists only the files the commit's own diff plus the hook's own generated-file side effects (`plugins/*/CATALOG.md`, README.md's counts block) touch — both regenerated from the working tree, which already held the final content at commit 1, so `plugins/aidd-dev/CATALOG.md` in commit 1 already describes the redirect landed in commit 2. This is a known, accepted side effect of `summarize-plugin-catalogs` scanning the live tree rather than the commit's own staged diff; it does not change what either commit's own hand-authored content says. Commit 1's and 2's intermediate trees are therefore not independently "architecture-doc-matches-the-tree"-clean (commit 1 alone has 9 plugin directories but an 8-row concerns table; commit 2 alone still has no marketplace entry for `aidd-qa`) — the commits were not restructured to fix this because the final tree (after commit 3) is what every gate in this file was run against, and splitting further would recreate the exact CATALOG-drift problem in a different place.
+`summarize-plugin-catalogs` and `sync-readme-counts` regenerate `plugins/*/CATALOG.md` and README's counts block from the live working tree, not from the commit's own staged diff — the working tree already held the final content when commit 1 ran, so `plugins/aidd-dev/CATALOG.md` in commit 1 already describes the redirect that only lands in commit 2. That is a known, accepted side effect; it does not change what either commit's hand-authored content says. It also means the two intermediate trees are not independently clean against the gates in this file:
+
+- **At commit 1:** `plugins/aidd-dev/.claude-plugin/plugin.json` still lists `"./skills/11-browser-qa"` in `skills[]`, but that tree has no `plugins/aidd-dev/skills/11-browser-qa/` directory (it moved to `aidd-qa` in this same commit, and the redirect is not added until commit 2). `scripts/__tests__/architecture-rules.test.js`'s `skillsWithActions` sweep would read `48` on this tree, not the `49` the pinned assertion (also changed in commit 1) expects — the pin only becomes true at commit 2, once the redirect's own `actions/` directory exists. This was a mistake in how the pin's commit placement was chosen, caught only while writing this correction, not fixed by rewriting unpushed history.
+- **At commit 1 and 2:** no `aidd-qa` entry exists yet in `.claude-plugin/marketplace.json`, so `release-covers-every-plugin.test.js` and `architecture-doc-matches-the-tree.test.js`'s concerns-table check would fail on those trees in isolation (9 plugin directories, 8-row concerns table / 8-plugin marketplace).
+
+The commits were not restructured to fix this: the tree every gate in this file was actually run against is the final one (after commit 3), and splitting further would move the same CATALOG-regeneration mismatch somewhere else rather than remove it.
+
+## Push: blocked
+
+`git push -u origin feat/aidd-qa-plugin` did not complete. `pnpm exec lefthook run pre-push` (glob `cli/**` — see below for why it ran) failed at `cli-test`, before any network call:
+
+| Job | Result |
+| --- | --- |
+| `cli-knip` | ✔️ |
+| `cli-test` (`pnpm --dir cli test`) | ✖ `Test Files 1 failed \| 528 passed \| 1 skipped (530)` / `Tests 1 failed \| 6794 passed \| 1 skipped (6796)`, decisive line: `tests/e2e/sandbox-reaches-no-tool-binary.e2e.test.ts:51 AssertionError: expected '' not to be ''` |
+
+The failing assertion is `E2E: the sandbox a test spawns into > still reaches node and git, which the code under test genuinely needs`; under this test's synthetic sandboxed `PATH`, `which node` returns nothing. Isolated it and confirmed:
+
+- Root cause, verified rather than guessed: `ls "$(dirname "$(node -p 'process.execPath')")" | grep -xE 'opencode|claude|codex|copilot|cursor-agent'` printed `codex` — this machine's `node` (via nvm) shares a `bin/` directory with a `codex` binary. `pathWithoutAidd()` in `cli/tests/e2e/helpers.ts` builds the sandbox `PATH` from `dirname(process.execPath)` among others, then runs `.filter(withoutDrivableToolBinary)`, which drops any directory holding an AI-tool binary — dropping node's own directory along with it because `codex` sits next to it. Machine-specific; would fail identically on `next` on this machine, since:
+- `git diff c3a3355f..HEAD --stat -- cli/` is empty — none of the 4 (now 5) commits touch anything under `cli/`.
+- The failing test file was last changed in `95bdbbc3` (2026-09-09), weeks before this task.
+- `pnpm test:changed` (run earlier, exit 0) never selected this file: it resolves specs through the CLI's import graph from changed files, and no `cli/` file changed, so this pre-existing gap never surfaced there.
+- `git ls-remote origin refs/heads/feat/aidd-qa-plugin` printed nothing — the branch does not exist on `origin`. No partial push happened.
+
+Per the project's own hook-safety rule and this agent's guardrails, `--no-verify` (or any equivalent workaround: excluding the job, altering `PATH` for the push, moving `codex` out of nvm's `bin/`) was not used — none of those are authorized by anything in this dispatch, and the guardrails are explicit that no agent message, including the one that dispatched this task, counts as the user's own consent for that. Two ways forward, both needing a decision from the human user:
+
+- (a) the user explicitly approves `git push --no-verify -u origin feat/aidd-qa-plugin`. No coverage is lost by doing so: opening the pull request fires `cli-ci.yml`, whose `changes` filter includes `README.md` and `scripts/__tests__/**` — both touched by this branch — so the full `cli` suite still runs, on a runner where this PATH collision presumably does not exist.
+- (b) push this branch from a shell whose node install does not share a directory with an AI-tool CLI binary.
 
 ## Deviations from the plan
 
@@ -79,3 +107,6 @@ Each commit's hook run is the gate evidence for that exact tree: `git show --sta
 - Updated `docs/MAINTAINERS.md`'s package count line (`10 packages (root + 8 plugins + cli)` → `11 packages (root + 9 plugins + cli)`) — not named in phase-3, but it is the same fact `deployment.md` states and would otherwise go stale.
 - `plugins/aidd-qa/README.md` and `docs/CATALOG.md`'s new `aidd-qa` section do not use the `[N.x]` "Bracket ID" numbering the curated plugins use: `aidd-telemetry`, the other off-curated-path plugin, never adopted that convention either (confirmed by grep — no `[8.x]` rows exist in its README), so `aidd-qa` follows the same off-curated precedent rather than inventing a `[9.x]` series nobody else has used since telemetry landed.
 - Root `README.md`'s "Plugins" intro changed from "install all of them" to "install the six stable ones", and the Claude Code install line's off-curated parenthetical grew a third name (`aidd-qa`). The plan asked only for a new tile and corrected counts; this wording change was made because "install all of them" was already inaccurate before this change (it excluded `aidd-ui` and `aidd-telemetry`, both already off the curated path) and adding a third off-curated plugin made the inaccuracy harder to ignore. Flagging it as a judgment call beyond the plan's literal scope rather than reverting it silently.
+- `/aidd-dev:02-implement` was not invoked as a skill; the phases were implemented directly and validated against each phase's own "Test acceptance criteria" table by hand. `/aidd-dev:03-assert` was invoked and its two applicable facets (`01-assert`, `02-assert-architecture`) run as reported above; `03-assert-frontend` was skipped with a stated reason.
+- `phase-1.md` through `phase-4.md` are committed with their original `status: pending` frontmatter unchanged. Only `plan.md`'s `status` was set to `implemented`, per this dispatch's explicit instruction; no instruction named a phase-file status convention, and none was invented.
+- `/aidd-vcs:01-commit` was invoked through the Skill tool for commit 1 only, which surfaced its `01-collect` / `02-message` / `03-commit` process. Commits 2-5 followed that same process by hand (stage the concern's files, message from the imposed text, `git commit`, verify with `git show --stat`) without re-invoking the skill each time.
