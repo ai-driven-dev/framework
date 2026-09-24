@@ -93,14 +93,28 @@ describe("telemetrySinkRecordDayKey()", () => {
     step_attribution: "unattributed",
   };
 
-  it("answers the UTC day for a real moment, the fast path and the parsed one alike", () => {
+  it("answers the UTC day for a real moment, whatever its offset", () => {
     expect(telemetrySinkRecordDayKey({ ...BASE, event_timestamp: "2026-08-18T01:00:00Z" })).toBe(
       "2026-08-18"
     );
-    // No `Z` offset - the parsed path, not the sliced one.
     expect(
       telemetrySinkRecordDayKey({ ...BASE, event_timestamp: "2026-08-18T01:00:00+05:00" })
     ).toBe("2026-08-17");
+  });
+
+  it("rolls 24:00 over to the next day, as the moment it names does", () => {
+    expect(telemetrySinkRecordDayKey({ ...BASE, event_timestamp: "2026-09-10T24:00:00Z" })).toBe(
+      "2026-09-11"
+    );
+  });
+
+  it("answers a calendar day for a parseable moment not written in ISO form", () => {
+    expect(
+      telemetrySinkRecordDayKey({ ...BASE, event_timestamp: "Thu, 10 Sep 2026 23:00:00 Z" })
+    ).toBe("2026-09-10");
+    expect(telemetrySinkRecordDayKey({ ...BASE, event_timestamp: "+002026-09-10T10:00:00Z" })).toBe(
+      "2026-09-10"
+    );
   });
 
   it("answers undefined for no moment at all", () => {

@@ -28,4 +28,8 @@ describe("namesTheSameSkill — one skill, two hosts, two spellings", () => {
     expect(namesTheSameSkill("artifact-design", "aidd-context:artifact-design")).toBe(true);
     expect(namesTheSameSkill("artifact-design", "aidd-context:artifact-diagramming")).toBe(false);
   });
+
+  it("drops a one-letter plugin prefix, whose colon sits at index one", () => {
+    expect(namesTheSameSkill("01-plan", "p:01-plan")).toBe(true);
+  });
 });

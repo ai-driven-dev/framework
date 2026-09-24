@@ -20,7 +20,7 @@ type TargetSnapshot = Record<string, string>; // rel-path → sha256
 type GoldenSnapshot = Record<string, TargetSnapshot>; // key → files
 
 const MARKETPLACE_TARGETS = ["copilot", "codex", "claude", "cursor"] as const;
-const FLAT_TARGETS = ["claude", "cursor", "copilot", "codex", "opencode"] as const;
+const FLAT_TARGETS = ["claude", "cursor", "copilot", "codex", "opencode", "kilo"] as const;
 
 const FROZEN_CELLS = new Set<string>([
   ...MARKETPLACE_TARGETS,
@@ -107,7 +107,7 @@ async function captureAllCells(
   return captured;
 }
 
-describe.concurrent("Framework build golden — 9-cell matrix", () => {
+describe.concurrent("Framework build golden — 10-cell matrix", () => {
   // Two full 9-cell builds measured just past the 60s default on a Windows runner, not a
   // hang. Raised per test so no other e2e file's budget moves.
   it("snapshot is deterministic (two captures of each target are byte-identical)", async () => {
@@ -154,7 +154,7 @@ describe.concurrent("Framework build golden — 9-cell matrix", () => {
     }
   }, 120_000);
 
-  it("every one of the 9 cells is byte-identical to its stored baseline", async () => {
+  it("every one of the 10 cells is byte-identical to its stored baseline", async () => {
     const { tempDir, projectDir, fakeHome, cleanup } = await createTestEnv("fb-golden-baseline");
     try {
       const captured = await captureAllCells(projectDir, fakeHome, tempDir);

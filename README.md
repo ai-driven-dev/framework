@@ -11,7 +11,7 @@ Unify **engineering teams** around **standardized workflows** and **shared best 
 🧱 **IDE agnostic** · 🏗️ **Legacy systems** · 🌱 **Token-optimized** · 🇫🇷 **Made in France**
 
 <p>
-  <!--counts:start--><kbd>8 plugins</kbd> · <kbd>50 skills</kbd> · <kbd>2 agents</kbd><!--counts:end-->
+  <!--counts:start--><kbd>9 plugins</kbd> · <kbd>51 skills</kbd> · <kbd>2 agents</kbd><!--counts:end-->
 </p>
 
 [![Open Source](https://img.shields.io/badge/Open_Source-Yes-yellow?logo=open-source-initiative&logoColor=white)](https://opensource.org/)
@@ -37,7 +37,7 @@ Why not just write your own commands? → [FAQ](docs/FAQ.md#-why-aidd-instead-of
 
 ## ✅ Prerequisites
 
-- **An AI coding tool** — Claude Code (native), or Cursor / Copilot / Codex / OpenCode (see [Compatibility](#-compatibility)).
+- **An AI coding tool** — Claude Code (native), or Cursor / Copilot / Codex / OpenCode / Kilo Code (see [Compatibility](#-compatibility)).
 - **[Node](https://nodejs.org) 22 or later** on your `PATH`, only for the plugin that ships hooks ([what they do](docs/ARCHITECTURE.md#-bundled-hooks)); the workflows themselves are markdown and need nothing.
 
 ## 🔌 Compatibility
@@ -49,6 +49,7 @@ Why not just write your own commands? → [FAQ](docs/FAQ.md#-why-aidd-instead-of
 | **GitHub Copilot** | ✅ Supported | Marketplace · Flat |
 | **Codex** | ✅ Supported | Marketplace · Flat |
 | **OpenCode** | ✅ Supported | Flat |
+| **Kilo Code** | ✅ Supported | Flat |
 | **Gemini · Mistral** | 🚧 In progress | — |
 
 <sub>**Marketplace** = installed and updated through your tool's plugin manager. **Flat** = files copied directly into your project, no plugin manager involved. Install steps per tool → [Other tools](#other-tools).</sub>
@@ -57,7 +58,7 @@ Why not just write your own commands? → [FAQ](docs/FAQ.md#-why-aidd-instead-of
 
 ### Claude Code
 
-Installs the 6 stable plugins (`aidd-ui` is 🚧 alpha and `aidd-telemetry` 🧪 beta, install separately — see [Plugins](#-plugins)).
+Installs the 6 stable plugins (`aidd-ui` is 🚧 alpha, `aidd-telemetry` 🧪 beta, and `aidd-qa` 🆕 new, install those separately — see [Plugins](#-plugins)).
 
 **In the session** (slash commands)
 
@@ -174,6 +175,16 @@ codex plugin add aidd-context@aidd-framework   # per plugin
 
 </details>
 
+<details>
+<summary><strong>Kilo Code</strong> — Flat only</summary>
+
+1. Unzip the `kilo-flat` archive into your project root → `.kilo/`, including `.kilo/kilo.jsonc`.
+2. Start a new Kilo session so it loads the generated project plugin.
+
+[Plugins documentation](https://kilo.ai/docs/automate/extending/plugins)
+
+</details>
+
 ## 🚀 Quick start
 
 Three ways in — pick one:
@@ -229,7 +240,7 @@ learning only when it is durable enough to improve the next feature.
 
 ## 🧩 Plugins
 
-Eight plugins covering the whole SDLC — **install all of them**; they work together. (`aidd-ui` is 🚧 **alpha** and `aidd-telemetry` 🧪 **beta** — both off the curated path.)
+Nine plugins covering the whole SDLC — **install the six stable ones**; they work together. (`aidd-ui` is 🚧 **alpha**, `aidd-telemetry` 🧪 **beta**, and `aidd-qa` 🆕 **new** — all three off the curated path.)
 
 <table>
 <tr>
@@ -246,9 +257,9 @@ Project init, memory bank, context-artifact generation, diagrams, learning, expl
 
 ### ⚙️ [aidd-dev](plugins/aidd-dev/README.md)
 
-`11 skills` · stable
+`10 skills` · stable
 
-Code transformation: plan, implement, assert, audit, review, test, refactor, debug. Standalone Browser QA records short web evidence.
+Code transformation: plan, implement, assert, audit, review, test, refactor, debug.
 
 </td>
 <td width="33%" valign="top">
@@ -275,9 +286,9 @@ Three Amigos refinement, Product Briefs, Epics, User Stories, Tasks, Spikes, Def
 
 ### 🪞 [aidd-refine](plugins/aidd-refine/README.md)
 
-`4 skills` · stable
+`5 skills` · stable
 
-Brainstorm, challenge, shadow-areas, fact-check.
+Brainstorm, challenge, shadow-areas, fact-check, improve.
 
 </td>
 <td width="33%" valign="top">
@@ -309,7 +320,15 @@ UI / UX design — smoke-test only, not ready for use.
 Answers what a piece of work cost — tokens, models, and which skill spent them. The switch is git-tracked, so it applies to everyone who clones; opt out per person with `AIDD_TELEMETRY=0`. Nothing leaves your machine.
 
 </td>
-<td width="33%" valign="top"></td>
+<td width="33%" valign="top">
+
+### 🎬 [aidd-qa](plugins/aidd-qa/README.md) 🆕
+
+`1 skill` · **new**
+
+Acceptance QA — locks browser scenarios from acceptance criteria and records reviewer evidence.
+
+</td>
 </tr>
 </table>
 

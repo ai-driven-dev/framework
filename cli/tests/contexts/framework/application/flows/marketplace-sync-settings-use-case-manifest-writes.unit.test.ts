@@ -9,9 +9,12 @@ import type { NativeRegistrations } from "../../../../../src/contexts/framework/
 import { Manifest } from "../../../../../src/contexts/framework/domain/manifest.js";
 import { InstalledPlugin } from "../../../../../src/contexts/framework/domain/plugins/installed-plugin.js";
 import { InstallationFile } from "../../../../../src/kernel/file.js";
+import { builtMarketplaceDir } from "../../../../../src/kernel/paths.js";
 import type { ToolId } from "../../../../../src/kernel/tool.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
+import { FakeHostPluginRegistryReader } from "../../../../helpers/ports/fake-host-plugin-registry-reader.js";
+import { FakeNativeMarketplaceSourceReader } from "../../../../helpers/ports/fake-native-marketplace-source-reader.js";
 import { FakeNativePluginActivator } from "../../../../helpers/ports/fake-native-plugin-activator.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
@@ -42,6 +45,8 @@ interface Setup {
   readonly settingsOnDisk?: string;
   readonly otherTrackedFiles?: readonly string[];
   readonly existingRegistrations?: NativeRegistrations;
+  readonly existingMachineRegistrations?: NativeRegistrations;
+  readonly hostRegisteredSource?: string;
 }
 
 function catalogPath(marketplace: string, target: string): string {
@@ -124,6 +129,12 @@ async function build(setup: Setup = {}) {
   }
   const activator =
     setup.activator ?? new FakeNativePluginActivator({ available: true, enablesPlugins: false });
+  const machineRegistrations = setup.existingMachineRegistrations;
+  const machine = machineRegistrations === undefined ? undefined : Manifest.create();
+  if (machine !== undefined && machineRegistrations !== undefined) {
+    machine.addTool("claude", "test", []);
+    machine.setNativeRegistrations("claude", machineRegistrations);
+  }
   const useCase = new MarketplaceSyncSettingsUseCase(
     fs,
     manifestRepo,
@@ -131,7 +142,47 @@ async function build(setup: Setup = {}) {
     hasher,
     new CapturingLogger(),
     new Map(toolIds.map((toolId) => [toolId, activator])),
-    buildPerMarketplace(setup.failingBuilds ?? [])
+    buildPerMarketplace(setup.failingBuilds ?? []),
+    setup.hostRegisteredSource === undefined
+      ? new Map()
+      : new Map([
+          [
+            "claude",
+            {
+              read: async () => ({
+                location: "/home/.claude/plugins/known_marketplaces.json",
+                entries: new Map([[MARKETPLACE, setup.hostRegisteredSource]]),
+              }),
+            },
+          ],
+        ]),
+    () => "",
+    undefined,
+    undefined,
+    undefined,
+    new Map([
+      [
+        "claude",
+        new FakeHostPluginRegistryReader({
+          location: "/home/.claude/plugins/installed_plugins.json",
+          refs: new Map(),
+        }),
+      ],
+    ]),
+    machine === undefined ? undefined : new InMemoryManifestRepository(machine),
+    new Map([
+      [
+        "claude",
+        new FakeNativeMarketplaceSourceReader(
+          activator,
+          "registry",
+          (path) => names.find((name) => path === `/built/${name}/claude`),
+          setup.hostRegisteredSource === undefined
+            ? new Map()
+            : new Map([[MARKETPLACE, { kind: "registry", source: setup.hostRegisteredSource }]])
+        ),
+      ],
+    ])
   );
   return { useCase, manifestRepo, manifest, fs, hasher };
 }
@@ -147,9 +198,30 @@ function trackedSettingsHash(manifest: Manifest): string | undefined {
 
 const FRAMEWORK_ONLY: NativeRegistrations = {
   binary: "claude",
-  marketplaces: [{ alias: MARKETPLACE, hostName: MARKETPLACE }],
+  marketplaces: [
+    {
+      alias: MARKETPLACE,
+      hostName: MARKETPLACE,
+      provenance: { kind: "registry", source: `/built/${MARKETPLACE}/claude` },
+    },
+  ],
   pluginRefs: [],
 };
+
+function ownedMachineEntry(alias: string, hostName: string, source?: string): NativeRegistrations {
+  return {
+    binary: "claude",
+    marketplaces: [
+      {
+        alias,
+        hostName,
+        ...(source === undefined ? {} : { provenance: { kind: "registry" as const, source } }),
+      },
+    ],
+    pluginRefs: [],
+    pluginClaims: [],
+  };
+}
 
 describe("how many times the manifest is written back", () => {
   it("zero times when a run changed nothing, writing no project file either", async () => {
@@ -329,28 +401,120 @@ describe("when a recorded registration is replaced", () => {
     expect(recorded(manifest)).toStrictEqual({
       binary: "claude",
       marketplaces: [
-        { alias: "market-a", hostName: "market-a" },
-        { alias: "market-b", hostName: "market-b" },
+        {
+          alias: "market-a",
+          hostName: "market-a",
+          provenance: { kind: "registry", source: "/built/market-a/claude" },
+        },
+        {
+          alias: "market-b",
+          hostName: "market-b",
+          provenance: { kind: "registry", source: "/built/market-b/claude" },
+        },
       ],
       pluginRefs: [],
     });
   });
 
-  it("records a marketplace whose build failed under its own alias", async () => {
+  it("records no marketplace whose build failed, this run having registered nothing for it", async () => {
     const { useCase, manifest } = await build({
       marketplaceNames: [MARKETPLACE, "broken"],
       failingBuilds: ["broken"],
+      existingRegistrations: {
+        binary: "claude",
+        marketplaces: [{ alias: "retired", hostName: "retired-catalog" }],
+        pluginRefs: [],
+      },
     });
 
     await useCase.execute({ projectRoot: PROJECT_ROOT });
 
-    expect(recorded(manifest)).toStrictEqual({
-      binary: "claude",
-      marketplaces: [
-        { alias: MARKETPLACE, hostName: MARKETPLACE },
-        { alias: "broken", hostName: "broken" },
-      ],
-      pluginRefs: [],
+    expect(recorded(manifest)?.marketplaces).toStrictEqual(FRAMEWORK_ONLY.marketplaces);
+  });
+
+  it("keeps a marketplace an earlier run registered when its build now fails", async () => {
+    const { useCase, manifest } = await build({
+      marketplaceNames: [MARKETPLACE, "broken"],
+      failingBuilds: ["broken"],
+      existingMachineRegistrations: ownedMachineEntry("broken", "broken-catalog"),
+      existingRegistrations: {
+        binary: "claude",
+        marketplaces: [{ alias: "broken", hostName: "broken-catalog" }],
+        pluginRefs: [],
+      },
     });
+
+    await useCase.execute({ projectRoot: PROJECT_ROOT });
+
+    expect(recorded(manifest)?.marketplaces).toStrictEqual([
+      ...FRAMEWORK_ONLY.marketplaces,
+      { alias: "broken", hostName: "broken-catalog" },
+    ]);
+  });
+});
+
+describe("a marketplace the host refused is not this project's to remove", () => {
+  function refusingHost(registrationState: "live" | "dead"): FakeNativePluginActivator {
+    return new FakeNativePluginActivator({
+      available: true,
+      conflictOnAdd: true,
+      registrationState,
+    });
+  }
+
+  it("records no marketplace the host kept under another registration", async () => {
+    const { useCase, manifest } = await build({ activator: refusingHost("live") });
+
+    await useCase.execute({ projectRoot: PROJECT_ROOT });
+
+    expect(recorded(manifest)?.marketplaces).toStrictEqual([]);
+  });
+
+  it("keeps a marketplace an earlier run registered when the host now refuses it", async () => {
+    const { useCase, manifest } = await build({
+      activator: refusingHost("live"),
+      existingMachineRegistrations: ownedMachineEntry(MARKETPLACE, MARKETPLACE),
+      existingRegistrations: {
+        binary: "claude",
+        marketplaces: [{ alias: MARKETPLACE, hostName: MARKETPLACE }],
+        pluginRefs: [],
+      },
+    });
+
+    await useCase.execute({ projectRoot: PROJECT_ROOT });
+
+    expect(recorded(manifest)?.marketplaces).toStrictEqual([
+      { alias: MARKETPLACE, hostName: MARKETPLACE },
+    ]);
+  });
+
+  it("records no marketplace it failed to take back from a dead registration", async () => {
+    const activator = new FakeNativePluginActivator({
+      available: true,
+      conflictOnAdd: true,
+      registrationState: "dead",
+      throwOnRemove: true,
+    });
+    const { useCase, manifest } = await build({ activator });
+
+    await useCase.execute({ projectRoot: PROJECT_ROOT });
+
+    expect(recorded(manifest)?.marketplaces).toStrictEqual([]);
+  });
+
+  it("records a marketplace this run took back from a dead registration", async () => {
+    const { useCase, manifest } = await build({
+      activator: refusingHost("dead"),
+      existingMachineRegistrations: ownedMachineEntry(
+        MARKETPLACE,
+        MARKETPLACE,
+        builtMarketplaceDir(PROJECT_ROOT, MARKETPLACE, "claude")
+      ),
+      hostRegisteredSource: builtMarketplaceDir(PROJECT_ROOT, MARKETPLACE, "claude"),
+    });
+
+    await useCase.execute({ projectRoot: PROJECT_ROOT });
+
+    expect(recorded(manifest)?.marketplaces).toStrictEqual(FRAMEWORK_ONLY.marketplaces);
   });
 });

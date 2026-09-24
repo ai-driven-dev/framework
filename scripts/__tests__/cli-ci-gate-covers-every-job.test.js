@@ -59,3 +59,83 @@ test("the changes filter names the workflow file itself as relevant", () => {
     `${ownPath} must be a case of the relevance filter, on its own line`
   );
 });
+
+test("only a proven next snapshot tree skips the promotion or main mutation matrix", () => {
+  const workflow = cliCiWorkflow();
+  const changes = workflow.jobs.changes;
+  const promotion = changes.steps.find((step) => step.id === "promotion");
+  const mutation = changes.steps.find((step) => step.id === "mutation");
+
+  assert.equal(workflow.permissions.actions, "read");
+  assert.equal(workflow.permissions.contents, "read");
+  assert.equal(workflow.permissions["pull-requests"], undefined);
+  assert.deepEqual(changes.permissions, {
+    actions: "read",
+    contents: "read",
+    "pull-requests": "read",
+  });
+  assert.equal(changes.outputs.trusted_promotion, "${{ steps.promotion.outputs.trusted }}");
+  assert.equal(promotion.name, "Check whether a promotion snapshot or main merge passed next");
+  assert.match(promotion.run, /EVENT_NAME.*pull_request/);
+  assert.match(promotion.run, /BASE_REF.*main/);
+  assert.equal(promotion.env.HEAD_REPO, "${{ github.event.pull_request.head.repo.full_name }}");
+  assert.match(promotion.run, /HEAD_REF.*\^promote\/next-to-main-\[0-9\]\+\$/);
+  assert.match(promotion.run, /HEAD_REPO" == "\$REPO/);
+  assert.match(promotion.run, /git merge-base --is-ancestor "\$BASE_SHA" "\$HEAD_SHA"/);
+  assert.match(promotion.run, /git rev-parse "\$CURRENT_SHA\^\{tree\}"/);
+  assert.match(promotion.run, /"\$merge_tree" != "\$snapshot_tree"/);
+  assert.match(
+    promotion.run,
+    /actions\/workflows\/cli-ci\.yml\/runs\?branch=next&event=push&status=completed&head_sha=\$HEAD_SHA/
+  );
+  assert.match(promotion.run, /\.conclusion == "success"/);
+  assert.match(promotion.run, /\.name == "cli \/ gate" and \.conclusion == "success"/);
+  assert.match(promotion.run, /reason="could not list successful cli CI push runs"/);
+  assert.match(promotion.run, /reason="could not inspect cli CI run \$run_id"/);
+  assert.match(promotion.run, /echo "promotion mutation reuse: \$reason"/);
+
+  // Main can skip mutations only for the exact two-parent promotion merge whose tree is the
+  // snapshot already gated on next. Any git or associated-PR proof mismatch remains untrusted.
+  assert.match(promotion.run, /EVENT_NAME" == "push" && "\$GITHUB_REF" == "refs\/heads\/main"/);
+  assert.match(promotion.run, /git rev-list --parents -n 1 "\$CURRENT_SHA"/);
+  assert.match(promotion.run, /-z "\$snapshot_sha" \|\| -n "\$\{extra_parent:-\}"/);
+  assert.match(promotion.run, /git rev-parse "\$snapshot_sha\^\{tree\}"/);
+  assert.match(promotion.run, /"\$main_tree" != "\$snapshot_tree"/);
+  assert.match(promotion.run, /\/repos\/\$REPO\/commits\/\$CURRENT_SHA\/pulls/);
+  assert.match(promotion.run, /\.base\.ref == "main"/);
+  assert.match(promotion.run, /\.head\.ref \| test\("\^promote\/next-to-main-\[0-9\]\+\$"\)/);
+  assert.match(promotion.run, /\.merged_at != null/);
+  assert.match(promotion.run, /"\$base_repo" == "\$REPO"/);
+  assert.match(promotion.run, /"\$head_repo" == "\$REPO"/);
+  assert.match(promotion.run, /"\$pr_head_sha" == "\$snapshot_sha"/);
+  assert.match(promotion.run, /"\$merge_commit_sha" == "\$CURRENT_SHA"/);
+  assert.match(promotion.run, /"\$matching_prs" -ne 1/);
+  assert.match(promotion.run, /HEAD_SHA="\$snapshot_sha"/);
+
+  assert.match(mutation.run, /steps\.promotion\.outputs\.trusted.*== "true"/);
+  assert.match(mutation.run, /scopes='\[\]'/);
+  assert.match(mutation.run, /else[\s\S]*mutation-scopes-to-run\.mjs/);
+  assert.equal(workflow.jobs["cli-mutation"].if, "needs.changes.outputs.mutation_scopes != '[]'");
+
+  // These checks validate the current PR merge ref or main commit; reuse never turns them off.
+  for (const name of [
+    "cli-typecheck",
+    "cli-lint",
+    "cli-architecture",
+    "cli-coverage",
+    "cli-smoke",
+    "cli-build",
+    "cli-knip",
+    "identifier-join",
+    "cli-jscpd",
+    "kanban-checks",
+    "windows",
+  ]) {
+    assert.deepEqual(workflow.jobs[name].needs, ["changes"], `${name} must still depend on changes`);
+    assert.equal(
+      workflow.jobs[name].if,
+      "needs.changes.outputs.relevant == 'true'",
+      `${name} must still run for a relevant promotion PR`
+    );
+  }
+});

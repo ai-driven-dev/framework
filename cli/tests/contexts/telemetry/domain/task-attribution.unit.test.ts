@@ -288,4 +288,25 @@ describe("taskUnattributedReason — which of four distinct facts applies", () =
     expect(taskUnattributedReason(intervals, undefined)).toBe("journal-silent");
     expect(taskUnattributedReason(intervals, "not-a-date")).toBe("journal-silent");
   });
+
+  it("reads a record at the journal's very first witnessed moment as inside the journal, not before it", () => {
+    const intervals = buildTaskIntervals(journalOf([WANTED], [TURN_END]));
+    const journalFromMs = Date.parse("2026-08-17T09:30:00Z");
+
+    expect(taskUnattributedReason(intervals, "2026-08-17T09:30:00Z", journalFromMs)).toBe(
+      "precedes-declaration"
+    );
+  });
+
+  it("names precedes-declaration while any declaration still lies ahead of the moment", () => {
+    const intervals = buildTaskIntervals(journalOf([WANTED, OTHER], [TURN_END]));
+
+    expect(taskUnattributedReason(intervals, "2026-08-17T10:05:00Z")).toBe("precedes-declaration");
+  });
+
+  it("reads a record at the very instant of the only declaration as not before it", () => {
+    const intervals = buildTaskIntervals(journalOf([WANTED], [TURN_END]));
+
+    expect(taskUnattributedReason(intervals, WANTED.at)).toBe("journal-silent");
+  });
 });

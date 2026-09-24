@@ -78,6 +78,15 @@
       "metadata": {
         "recommended": false
       }
+    },
+    {
+      "name": "aidd-qa",
+      "source": "./plugins/aidd-qa",
+      "description": "Acceptance QA: validates observable behavior against acceptance criteria and records reviewer evidence. Browser is the only supported interface today.",
+      "strict": true,
+      "metadata": {
+        "recommended": false
+      }
     }
   ]
 }

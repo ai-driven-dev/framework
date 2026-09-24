@@ -10,6 +10,7 @@ The exhaustive list of AIDD plugins, skills, and actions. Skills are invoked thr
 - [aidd-orchestrator](#-aidd-orchestrator) - async orchestration (optional)
 - [aidd-ui](#-aidd-ui) - UI / UX (🚧 alpha, not ready)
 - [aidd-telemetry](#-aidd-telemetry) - measurement, hooks and skills (🧪 beta, off the curated path)
+- [aidd-qa](#-aidd-qa) - acceptance QA (🆕 new, off the curated path)
 
 ---
 
@@ -35,7 +36,7 @@ Bootstrap, project init, context-artifact generation, diagrams, learning, and ex
 
 ## 💻 aidd-dev
 
-Code transformation: plan, implement, assert, audit, review, test, refactor, debug, for-sure, todo. Standalone Browser QA records short web evidence.
+Code transformation: plan, implement, assert, audit, review, test, refactor, debug, for-sure, todo.
 
 | Skill           | Role                                                                       | Actions                                                                         |
 | --------------- | -------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
@@ -44,12 +45,11 @@ Code transformation: plan, implement, assert, audit, review, test, refactor, deb
 | `03-assert`     | Assert features work - general, architecture, frontend UI                  | `01-assert`, `02-assert-architecture`, `03-assert-frontend`                      |
 | `04-audit`      | Read-only codebase audit across quality pillars                            | `01-code-quality`, `02-architecture`, `03-security`, `04-dependencies`, `05-performance`, `06-tests`, `07-ui` |
 | `05-review`     | Read-only review of a diff - code quality and feature behavior             | `01-review-code`, `02-review-functional`                                         |
-| `06-test`       | Write and iterate tests, validate user journeys in the browser             | `01-test`, `02-test-journey`                                                     |
+| `06-test`       | Write and iterate developer-side tests, validate journeys in the browser during implementation - not independent acceptance QA or reviewer evidence | `01-test`, `02-test-journey` |
 | `07-refactor`   | Improve code without changing behavior across four axes                    | `01-performance`, `02-security`, `03-cleanup`, `04-architecture`                 |
 | `08-debug`      | Reproduce and fix bugs with a test-driven workflow                         | `01-reproduce`, `02-debug`, `03-reflect-issue`                                   |
 | `09-for-sure`   | Iterative loop that retries until a success condition is met               | `01-init-tracking`, `02-auto-accept`, `03-autonomous-loop`                       |
 | `10-todo`       | Split the prompt into independent todos, run one implementer agent per todo in parallel | `01-todo`                                                            |
-| `11-browser-qa` | Record short reviewer videos for browser-scoped happy and edge cases        | `00-prerequisites`, `01-load-scope`, `02-prepare-run`, `03-run-scenarios`     |
 
 ## 📋 aidd-pm
 
@@ -83,13 +83,13 @@ Meta-cognition: brainstorm, challenge, blind-spot scan, fact-check.
 
 Version-control workflows: repo init, commit, pull/merge request, release tag, issue.
 
-| Skill             | Role                                                                            | Actions                 |
-| ----------------- | ------------------------------------------------------------------------------- | ----------------------- |
-| `00-repo-init`    | Initialize a repo: git init, default branch, bootstrap commit, optional remote  | `01-init`, `02-publish` |
-| `01-commit`       | Create an atomic conventional commit                                            | `01-commit`             |
-| `02-pull-request` | Create a draft pull or merge request                                            | `01-pull-request`       |
-| `03-release-tag`  | Cut a semver release with annotated tag and notes                              | `01-release-tag`        |
-| `04-issue-create` | Create an issue in the configured ticketing tool                               | `01-issue-create`       |
+| Skill             | Role                                                                           | Actions                                 |
+| ----------------- | ------------------------------------------------------------------------------ | --------------------------------------- |
+| `00-repo-init`    | Initialize a repo: git init, default branch, bootstrap commit, optional remote | `01-init`, `02-publish`                 |
+| `01-commit`       | Commit atomically; safely retry scoped hook fixes                              | `01-collect`, `02-message`, `03-commit` |
+| `02-pull-request` | Create a draft pull or merge request                                           | `01-pull-request`                       |
+| `03-release-tag`  | Cut a semver release with annotated tag and notes                              | `01-release-tag`                        |
+| `04-issue-create` | Create an issue in the configured ticketing tool                               | `01-issue-create`                       |
 
 ## 🎼 aidd-orchestrator
 
@@ -121,3 +121,11 @@ CLI, and each skill says so before doing anything else if it is missing.
 | `00-init`  | Turn measurement on for a project and prove it is recording    | `01-check`, `02-enable`, `03-verify` |
 | `01-cost`  | Answer what a period or one task cost, by step, model and tool | `01-locate`, `02-collect`, `03-report` |
 | `02-check` | Answer whether measurement is actually recording, line by line | `01-locate`, `02-diagnose`        |
+
+## 🎬 aidd-qa
+
+Locks a scenario scope from acceptance criteria, runs it against a reviewed candidate, and hands back a per-scenario verdict with recorded evidence. Browser only, for now.
+
+| Skill               | Role                                                                 | Actions                                                              |
+| ------------------- | --------------------------------------------------------------------- | --------------------------------------------------------------------- |
+| `01-acceptance-qa`  | Lock scenarios from acceptance criteria, run them, and report a verdict per scenario | `01-load-scope`, `02-prerequisites`, `03-prepare-run`, `04-run-scenarios` |

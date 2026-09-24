@@ -159,4 +159,56 @@ describe("mapOpencodeExportToSinkRecords", () => {
     expect(mapOpencodeExportToSinkRecords(null, SESSION_ID)).toEqual([]);
     expect(mapOpencodeExportToSinkRecords({ messages: [] }, SESSION_ID)).toEqual([]);
   });
+
+  it("skips a null message entry rather than throwing", () => {
+    expect(mapOpencodeExportToSinkRecords({ messages: [null] }, SESSION_ID)).toEqual([]);
+  });
+});
+
+const BARE_MESSAGE = {
+  kind: "request",
+  vendor_id: SESSION_ID,
+  vendor_field: "sessionID",
+  turn_id: "msg_1",
+  turn_field: "id",
+};
+
+function recordsOf(info: Record<string, unknown>) {
+  return mapOpencodeExportToSinkRecords(
+    { messages: [{ info: { id: "msg_1", ...info } }] },
+    SESSION_ID
+  );
+}
+
+describe("the record carries exactly the keys the message states", () => {
+  it("holds identity alone when a billed message states no counter, model or time", () => {
+    expect(recordsOf({ tokens: { total: 5 } })).toStrictEqual([BARE_MESSAGE]);
+  });
+
+  it("reads a message whose tokens carry no cache block, without throwing", () => {
+    expect(recordsOf({ tokens: { total: 5, input: 3, output: 2 } })).toStrictEqual([
+      { ...BARE_MESSAGE, input_tokens: 3, output_tokens: 2 },
+    ]);
+  });
+
+  it("leaves a counter unset rather than storing a string figure", () => {
+    expect(recordsOf({ tokens: { total: 5, input: "3", output: 2 } })).toStrictEqual([
+      { ...BARE_MESSAGE, output_tokens: 2 },
+    ]);
+  });
+
+  it("names no model and no turn when neither is a string", () => {
+    const records = mapOpencodeExportToSinkRecords(
+      { messages: [{ info: { id: 42, modelID: 42, tokens: { total: 5 } } }] },
+      SESSION_ID
+    );
+
+    expect(records).toStrictEqual([
+      { kind: "request", vendor_id: SESSION_ID, vendor_field: "sessionID" },
+    ]);
+  });
+
+  it.each([0, -1])("carries no moment for a creation time of %s", (created) => {
+    expect(recordsOf({ tokens: { total: 5 }, time: { created } })).toStrictEqual([BARE_MESSAGE]);
+  });
 });

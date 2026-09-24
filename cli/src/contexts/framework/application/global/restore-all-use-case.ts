@@ -36,6 +36,16 @@ export class RestoreAllUseCase {
     if (manifest === null) throw new NoManifestError();
 
     const effectiveFiles = interactive ? await this.promptForFiles(projectRoot) : undefined;
+    if (effectiveFiles !== undefined && effectiveFiles.length === 0) {
+      return {
+        totalRestored: 0,
+        totalKept: 0,
+        pluginNamesRestored: [],
+        errors,
+        unrestorable: [],
+        nativeOnlyToolIds: [],
+      };
+    }
     const version = this.resolveVersion(manifest);
     const restoreResult = await this.runConfigRestore(
       projectRoot,
@@ -73,12 +83,12 @@ export class RestoreAllUseCase {
         .filter((d) => d.status === "modified" || d.status === "deleted")
         .map((d) => d.relativePath)
     );
-    if (driftedFiles.length === 0) return [];
+    if (driftedFiles.length === 0) return undefined;
     const selected = await this.prompter.checkbox(
       "Select files to restore:",
       driftedFiles.map((f) => ({ name: f, value: f }))
     );
-    return selected.length === 0 ? [] : selected;
+    return selected;
   }
 
   private async runConfigRestore(

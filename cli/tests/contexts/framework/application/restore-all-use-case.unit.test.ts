@@ -1,3 +1,4 @@
+import { homedir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { RestoreAllUseCase } from "../../../../src/contexts/framework/application/global/restore-all-use-case.js";
@@ -46,7 +47,8 @@ async function installPlugin(
     deps.hasher,
     deps.logger,
     deps.marketplaceRegistry,
-    fakeEnsureBuiltMarketplace()
+    fakeEnsureBuiltMarketplace(),
+    deps.userManifestRepo
   ).execute({
     source: { kind: "local", path: PLUGIN_FIXTURE },
     toolIds: [toolId],
@@ -140,6 +142,34 @@ describe("RestoreAllUseCase — the --force flag", () => {
   });
 });
 
+describe("RestoreAllUseCase — an interactive run that ticks nothing", () => {
+  it("restores nothing: an empty selection is a decision, not the absence of one", async () => {
+    const deps = await buildUnitDeps(PROJECT_ROOT);
+    await initAndInstall(deps, PROJECT_ROOT, "claude");
+    const manifest = await deps.manifestRepo.load();
+    const tracked = manifest?.getToolFiles("claude") ?? [];
+    const trackedPath = join(PROJECT_ROOT, tracked[0].relativePath);
+    await deps.fs.writeFile(trackedPath, "EDITED OUTSIDE THE CLI");
+    const prompter = new ScriptedPrompter([ScriptedPrompter.answer.checkbox([])]);
+
+    const result = await makeRestoreAllUseCase(
+      deps,
+      new PluginDistributionReaderAdapter(deps.fs),
+      prompter
+    ).execute(PROJECT_ROOT, false, true);
+
+    expect(deps.fs.getFile(trackedPath)).toBe("EDITED OUTSIDE THE CLI");
+    expect(result).toStrictEqual({
+      totalRestored: 0,
+      totalKept: 0,
+      pluginNamesRestored: [],
+      errors: [],
+      unrestorable: [],
+      nativeOnlyToolIds: [],
+    });
+  });
+});
+
 describe("RestoreAllUseCase — plugin materialization", () => {
   it("restores a corrupted plugin file with exactly one materialization call (translate-mode: claude)", async () => {
     const deps = await buildUnitDeps(PROJECT_ROOT);
@@ -160,32 +190,27 @@ describe("RestoreAllUseCase — plugin materialization", () => {
     expect(count()).toBe(1);
   });
 
-  it("restores a corrupted plugin file with exactly one materialization call (cursor — installScope:user tool)", async () => {
-    // A local-source install never reaches restoreViaBuiltTree — that path requires
-    // plugin.marketplace — so this exercises restoreViaTranslate for an installScope:"user" tool.
+  it("leaves a corrupted shared user plugin to explicit user-scope repair (cursor)", async () => {
     const deps = await buildUnitDeps(PROJECT_ROOT);
     await initAndInstall(deps, PROJECT_ROOT, "cursor");
     await seedFromDirectory(deps.fs, PLUGIN_FIXTURE, { useAbsolutePaths: true });
     await installPlugin(deps, "cursor", new PluginDistributionReaderAdapter(deps.fs));
 
-    const manifestAfterInstall = await deps.manifestRepo.load();
+    const manifestAfterInstall = deps.userManifestRepo.getCurrent();
     const plugin = manifestAfterInstall
       ?.getPlugins("cursor")
       .find((p) => p.name === "sample-plugin");
     const trackedRelativePath = [...(plugin?.files.keys() ?? [])][0];
     expect(trackedRelativePath).toBeDefined();
-    // plugin.files keys are relativePath (see restoreViaTranslate); actual fs storage is
-    // keyed by the absolute path the file was written to.
-    const pluginFile = join(PROJECT_ROOT, trackedRelativePath as string);
+    const pluginFile = join(homedir(), ".cursor/plugins/local", trackedRelativePath as string);
     await deps.fs.writeFile(pluginFile, "CORRUPTED CONTENT");
 
-    // Counting reader wired only from here — installPlugin's own read() must not count.
     const { reader, count } = countingReader(deps.fs);
     const useCase = makeRestoreAllUseCase(deps, reader, new OverwritePrompter(), true);
     await useCase.execute(PROJECT_ROOT, false, false);
 
-    expect(deps.fs.getFile(pluginFile)).not.toBe("CORRUPTED CONTENT");
-    expect(count()).toBe(1);
+    expect(deps.fs.getFile(pluginFile)).toBe("CORRUPTED CONTENT");
+    expect(count()).toBe(0);
   });
 
   it("result.pluginNamesRestored lists the restored plugin exactly once", async () => {
@@ -269,7 +294,8 @@ describe("RestoreAllUseCase — plugin materialization", () => {
       deps.hasher,
       deps.logger,
       deps.marketplaceRegistry,
-      fakeEnsureBuiltMarketplace()
+      fakeEnsureBuiltMarketplace(),
+      deps.userManifestRepo
     ).execute({
       source: { kind: "local", path: PLUGIN_FIXTURE },
       toolIds: ["codex"],
@@ -552,7 +578,7 @@ describe("RestoreAllUseCase — the interactive file picker", () => {
     expect(asked.map((o) => o.files)).toStrictEqual([[KEYBINDINGS]]);
   });
 
-  it("forwards an empty selection as no file at all", async () => {
+  it("never delegates when the user ticked nothing: an empty selection is a decision", async () => {
     const deps = await vscodeProject();
     await deps.fs.writeFile(join(PROJECT_ROOT, KEYBINDINGS), "[]");
     const { asked, delegate } = recordingDelegate();
@@ -563,10 +589,10 @@ describe("RestoreAllUseCase — the interactive file picker", () => {
       true
     );
 
-    expect(asked.map((o) => o.files)).toStrictEqual([[]]);
+    expect(asked).toStrictEqual([]);
   });
 
-  it("asks nothing and selects nothing when no tracked entry drifted", async () => {
+  it("asks nothing and delegates with no selection when no tracked entry drifted", async () => {
     const deps = await vscodeProject();
     const prompter = new CheckboxRecordingPrompter([KEYBINDINGS]);
     const { asked, delegate } = recordingDelegate();
@@ -574,6 +600,6 @@ describe("RestoreAllUseCase — the interactive file picker", () => {
     await restoreAllDelegatingTo(deps, prompter, delegate).execute(PROJECT_ROOT, false, true);
 
     expect(prompter.asks).toStrictEqual([]);
-    expect(asked.map((o) => o.files)).toStrictEqual([[]]);
+    expect(asked.map((o) => o.files)).toStrictEqual([undefined]);
   });
 });

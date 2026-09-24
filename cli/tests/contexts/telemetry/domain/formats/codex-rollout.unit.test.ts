@@ -238,3 +238,156 @@ describe("a token_count re-emitted with an unmoved cumulative", () => {
     expect(mapCodexRolloutToSinkRecords(withoutTotal)[0]?.output_tokens).toBe(20);
   });
 });
+
+const sessionMeta = (id: unknown) => JSON.stringify({ type: "session_meta", payload: { id } });
+const turnContext = (payload: Record<string, unknown>, timestamp?: string) =>
+  JSON.stringify({ type: "turn_context", timestamp, payload });
+const counted = (last: Record<string, unknown>, total?: Record<string, unknown>) =>
+  JSON.stringify({
+    type: "event_msg",
+    payload: { type: "token_count", info: { last_token_usage: last, total_token_usage: total } },
+  });
+const rolloutOf = (...lines: string[]) => mapCodexRolloutToSinkRecords(lines.join("\n"));
+
+const BARE_TURN = {
+  kind: "request",
+  vendor_id: "s-1",
+  vendor_field: "session_meta.id",
+  turn_id: "t-1",
+  turn_field: "turn_id",
+};
+
+describe("a turn is recorded only once its session and turn are named", () => {
+  it("yields no record when session_meta.id is not a string", () => {
+    const records = rolloutOf(
+      sessionMeta(123),
+      turnContext({ turn_id: "t-1" }),
+      counted({ output_tokens: 3 })
+    );
+
+    expect(records).toStrictEqual([]);
+  });
+
+  it("yields no record when no session_meta line names the session", () => {
+    const records = rolloutOf(turnContext({ turn_id: "t-1" }), counted({ output_tokens: 3 }));
+
+    expect(records).toStrictEqual([]);
+  });
+
+  it("yields no record for a turn_context that names no turn_id", () => {
+    const records = rolloutOf(
+      sessionMeta("s-1"),
+      turnContext({ model: "gpt-5.4" }),
+      counted({ output_tokens: 3 })
+    );
+
+    expect(records).toStrictEqual([]);
+  });
+});
+
+describe("the record carries exactly the counters the turn stated", () => {
+  it.each([
+    ["input_tokens", { input_tokens: 7 }, { input_tokens: 7 }],
+    ["output_tokens", { output_tokens: 3 }, { output_tokens: 3 }],
+    ["cached_input_tokens", { cached_input_tokens: 5 }, { cache_read_tokens: 5 }],
+    ["cache_write_input_tokens", { cache_write_input_tokens: 4 }, { cache_creation_tokens: 4 }],
+  ])("holds identity plus %s alone when that is all the turn stated", (_name, last, stored) => {
+    const records = rolloutOf(sessionMeta("s-1"), turnContext({ turn_id: "t-1" }), counted(last));
+
+    expect(records).toStrictEqual([{ ...BARE_TURN, ...stored }]);
+  });
+
+  it("leaves a counter unset rather than coercing a string figure", () => {
+    const records = rolloutOf(
+      sessionMeta("s-1"),
+      turnContext({ turn_id: "t-1" }),
+      counted({ input_tokens: "7", output_tokens: 3 })
+    );
+
+    expect(records).toStrictEqual([{ ...BARE_TURN, output_tokens: 3 }]);
+  });
+
+  it("adds cache_write_input_tokens across the turn's events", () => {
+    const records = rolloutOf(
+      sessionMeta("s-1"),
+      turnContext({ turn_id: "t-1" }),
+      counted({ cache_write_input_tokens: 7 }),
+      counted({ cache_write_input_tokens: 5 })
+    );
+
+    expect(records).toStrictEqual([{ ...BARE_TURN, cache_creation_tokens: 12 }]);
+  });
+});
+
+describe("which lines count", () => {
+  it("counts both events when each states a cumulative with no figure in it", () => {
+    const records = rolloutOf(
+      sessionMeta("s-1"),
+      turnContext({ turn_id: "t-1" }),
+      counted({ output_tokens: 10 }, {}),
+      counted({ output_tokens: 10 }, {})
+    );
+
+    expect(records).toStrictEqual([{ ...BARE_TURN, output_tokens: 20 }]);
+  });
+
+  it("counts a re-emitted event once even when its unmoved cumulative omits a metric", () => {
+    const total = { input_tokens: 100, cached_input_tokens: 0, output_tokens: 10 };
+    const records = rolloutOf(
+      sessionMeta("s-1"),
+      turnContext({ turn_id: "t-1" }),
+      counted({ output_tokens: 10 }, total),
+      counted({ output_tokens: 10 }, total)
+    );
+
+    expect(records).toStrictEqual([{ ...BARE_TURN, output_tokens: 10 }]);
+  });
+
+  it("ignores a token_count carried by a line that is not an event_msg", () => {
+    const records = rolloutOf(
+      sessionMeta("s-1"),
+      turnContext({ turn_id: "t-1" }),
+      JSON.stringify({
+        type: "response_item",
+        payload: { type: "token_count", info: { last_token_usage: { output_tokens: 3 } } },
+      })
+    );
+
+    expect(records).toStrictEqual([]);
+  });
+
+  it("ignores an event_msg that is not a token_count, even one carrying usage", () => {
+    const records = rolloutOf(
+      sessionMeta("s-1"),
+      turnContext({ turn_id: "t-1" }),
+      JSON.stringify({
+        type: "event_msg",
+        payload: { type: "task_started", info: { last_token_usage: { output_tokens: 3 } } },
+      })
+    );
+
+    expect(records).toStrictEqual([]);
+  });
+
+  it("ignores a token_count that carries no info rather than throwing", () => {
+    const records = rolloutOf(
+      sessionMeta("s-1"),
+      turnContext({ turn_id: "t-1" }),
+      JSON.stringify({ type: "event_msg", payload: { type: "token_count" } }),
+      counted({ output_tokens: 3 })
+    );
+
+    expect(records).toStrictEqual([{ ...BARE_TURN, output_tokens: 3 }]);
+  });
+
+  it("skips a half-written line rather than throwing", () => {
+    const records = rolloutOf(
+      sessionMeta("s-1"),
+      turnContext({ turn_id: "t-1" }),
+      '{"type":"event_msg","payload":{"type":"token_co',
+      counted({ output_tokens: 3 })
+    );
+
+    expect(records).toStrictEqual([{ ...BARE_TURN, output_tokens: 3 }]);
+  });
+});

@@ -5,6 +5,7 @@
   "plugins": ["@stryker-mutator/vitest-runner"],
   "ignorePatterns": ["reports"],
   "coverageAnalysis": "perTest",
+  "timeoutMS": 20000,
   "thresholds": {
     "high": 80,
     "low": 60,

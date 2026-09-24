@@ -4,7 +4,11 @@ const path = require("node:path");
 const test = require("node:test");
 
 const root = path.resolve(__dirname, "../..");
-const SCRIPTS = ["cli/scripts/smoke-tools.sh", "cli/scripts/smoke-real.sh"];
+const SCRIPTS = [
+  "cli/scripts/smoke-tools.sh",
+  "cli/scripts/smoke-real.sh",
+  "cli/scripts/smoke-collision.sh",
+];
 
 /** Each `node -e '...'` block, as the text between its opening and closing quote. */
 function inlineNodeBlocks(script) {

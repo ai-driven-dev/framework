@@ -1,4 +1,5 @@
 import { defineConfig } from "vitest/config";
+import { UnloadableFileAsFailedTest } from "./tests/helpers/unloadable-file-as-failed-test.js";
 import { textLoader } from "./tests/helpers/vitest-text-loader.js";
 
 const TEXT_EXTENSIONS = [".md", ".toml"] as const;
@@ -16,9 +17,16 @@ const TEXT_EXTENSIONS = [".md", ".toml"] as const;
  *
  * A plain `test.exclude` does not do this. The workspace file defines the projects, and
  * it wins over a config passed with `--config`; only another workspace replaces it.
+ *
+ * A test file that fails to load still counts. Stryker's vitest runner reads only the tests it
+ * collected, and a file whose import throws collects none, so a static mutant that stops a
+ * module from loading was reported as survived. `UnloadableFileAsFailedTest` gives such a file
+ * one failed test carrying its load error. Vitest types a test with a context only it can build;
+ * that test has none, and nothing reads one once the run has finished.
  */
 export default defineConfig({
   test: {
+    reporters: ["default", new UnloadableFileAsFailedTest()],
     projects: [
       {
         plugins: [textLoader(TEXT_EXTENSIONS)],
@@ -27,6 +35,7 @@ export default defineConfig({
           include: ["tests/**/*.unit.test.ts"],
           globals: false,
           environment: "node",
+          globalSetup: ["./tests/helpers/throwaway-profile.ts"],
         },
       },
       {
@@ -36,6 +45,7 @@ export default defineConfig({
           include: ["tests/**/*.integration.test.ts"],
           globals: false,
           environment: "node",
+          globalSetup: ["./tests/helpers/throwaway-profile.ts"],
           testTimeout: 60000,
         },
       },

@@ -192,7 +192,7 @@ describe("aidd framework install", () => {
 });
 
 describe("aidd framework remove", () => {
-  it("removes one AI tool with no MCP narrowing, and counts every file that went", async () => {
+  it("removes one AI tool, and counts every file that went", async () => {
     uninstallAiTools.mockResolvedValue([
       { toolId: "claude", fileCount: 4 },
       { toolId: "claude", fileCount: 3 },
@@ -202,7 +202,6 @@ describe("aidd framework remove", () => {
     expect(uninstallAiTools).toHaveBeenCalledWith({
       toolIds: ["claude"],
       projectRoot: PROJECT_ROOT,
-      mcpFilter: [],
     });
     expect(uninstallIdeTool).not.toHaveBeenCalled();
   });

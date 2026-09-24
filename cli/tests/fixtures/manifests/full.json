@@ -24,12 +24,6 @@
           }
         }
       ],
-      "excludedMcp": [
-        {
-          "configPath": ".claude/settings.json",
-          "entryKey": "old-server"
-        }
-      ],
       "plugins": [
         {
           "name": "aidd-dev",

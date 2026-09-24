@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+import { join, posix } from "node:path";
 import { describe, expect, it } from "vitest";
 import type {
   ArtifactContract,
@@ -8,6 +10,12 @@ import {
   transformMcpToOpencode,
 } from "../../../../../../src/contexts/tools/domain/profiles/opencode/build.js";
 import { InMemoryFileAdapter } from "../../../../../helpers/ports/in-memory-file-adapter.js";
+import { REPOSITORY_ROOT } from "../../../../../helpers/repository-root.js";
+
+const OPENCODE_PLUGIN_MODULE = readFileSync(
+  join(REPOSITORY_ROOT, "plugins/aidd-telemetry/hooks/opencode-plugin.js"),
+  "utf8"
+);
 
 // Built, not written literally: biome reads a string holding "${...}" as a lost template.
 const ROOT = "$" + "{CLAUDE_PLUGIN_ROOT}";
@@ -71,6 +79,11 @@ describe("transformMcpToOpencode()", () => {
   it("refuses a config that is not a JSON object", () => {
     expect(() => transformMcpToOpencode("[]")).toThrow("MCP config must be a JSON object");
     expect(() => transformMcpToOpencode("{ not json")).toThrow(/Cannot parse MCP config/);
+  });
+
+  it("refuses a config that is null or a bare value", () => {
+    expect(() => transformMcpToOpencode("null")).toThrow("MCP config must be a JSON object");
+    expect(() => transformMcpToOpencode("42")).toThrow("MCP config must be a JSON object");
   });
 });
 
@@ -151,6 +164,16 @@ describe("buildOpencodeFlatContract()", () => {
     );
   });
 
+  it("drops only the trailing .md from the name it gives a flat agent", () => {
+    const transform = supported(buildOpencodeFlatContract().artifacts.agents).transform;
+
+    expect(
+      transform?.("---\ndescription: Helps\n---\nBody.\n", "aidd-dev", "notes.md-helper.md")
+    ).toBe(
+      "---\ndescription: 'Helps'\nname: 'aidd-dev-notes.md-helper'\nmode: 'subagent'\n---\nBody.\n"
+    );
+  });
+
   it("delivers a plugin's own OpenCode module where the loader scans, and every other script apart", () => {
     const hooks = supported(buildOpencodeFlatContract().artifacts.hooks);
 
@@ -167,6 +190,20 @@ describe("buildOpencodeFlatContract()", () => {
       bridgePath: ".opencode/plugin/aidd-dev-hooks.js",
       skipIfSourceHas: "opencode-plugin.js",
     });
+  });
+
+  it("delivers journal.cjs where the shipped plugin module resolves it, not beside the loader", () => {
+    const hooks = supported(buildOpencodeFlatContract().artifacts.hooks);
+    const named =
+      /JOURNAL_SCRIPT = fileURLToPath\(\s*new URL\("([^"]+)", import\.meta\.url\)/u.exec(
+        OPENCODE_PLUGIN_MODULE
+      )?.[1];
+    const loaderEntry = hooks.path("aidd-telemetry", "hooks/opencode-plugin.js");
+
+    expect(named).toBeDefined();
+    expect(posix.normalize(posix.join(posix.dirname(loaderEntry), named ?? ""))).toBe(
+      hooks.path("aidd-telemetry", "hooks/journal.cjs")
+    );
   });
 
   it("generates no bridge for a plugin whose hooks name no event OpenCode delivers", () => {
@@ -233,5 +270,50 @@ describe("buildOpencodeFlatContract()", () => {
       jsonc: fs.has("/out/opencode.jsonc"),
       json: fs.has("/out/opencode.json"),
     }).toStrictEqual({ jsonc: true, json: false });
+  });
+
+  it("builds opencode.json on opencode's own bundled base config", async () => {
+    const fs = new InMemoryFileAdapter();
+
+    await buildOpencodeFlatContract().emitConfigArtifact?.(
+      [],
+      "/out",
+      "/src",
+      fs,
+      { validate: () => undefined },
+      {
+        loadConfigAsset: (tool, name) => {
+          if (tool !== "opencode" || name !== "opencode.json") {
+            throw new Error(`no bundled asset ${tool}/${name}`);
+          }
+          return { $schema: "https://opencode.ai/config.json" };
+        },
+        loadSchema: () => ({}),
+      }
+    );
+
+    expect(JSON.parse(fs.getFile("/out/opencode.json") ?? "null")).toStrictEqual({
+      $schema: "https://opencode.ai/config.json",
+    });
+  });
+
+  it("takes a bundled base config that comes as text as written", async () => {
+    const fs = new InMemoryFileAdapter();
+
+    await buildOpencodeFlatContract().emitConfigArtifact?.(
+      [],
+      "/out",
+      "/src",
+      fs,
+      { validate: () => undefined },
+      {
+        loadConfigAsset: () => '{"$schema":"https://opencode.ai/config.json"}',
+        loadSchema: () => ({}),
+      }
+    );
+
+    expect(JSON.parse(fs.getFile("/out/opencode.json") ?? "null")).toStrictEqual({
+      $schema: "https://opencode.ai/config.json",
+    });
   });
 });

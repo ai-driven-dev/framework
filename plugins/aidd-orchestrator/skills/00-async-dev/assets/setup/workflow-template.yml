@@ -35,7 +35,7 @@ jobs:
       account_secret: ${{ steps.route_account.outputs.account_secret }}
       account_owner: ${{ steps.route_account.outputs.account_owner }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           sparse-checkout: |
             .claude/aidd-orchestrator.json
@@ -149,7 +149,7 @@ jobs:
     if: needs.dispatch.outputs.mode == 'run'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           ref: ${{ needs.dispatch.outputs.ref }}
           fetch-depth: 0
@@ -244,7 +244,7 @@ jobs:
     if: needs.dispatch.outputs.mode == 'review'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           ref: ${{ needs.dispatch.outputs.ref }}
           fetch-depth: 0

@@ -3,6 +3,7 @@ import { join } from "node:path";
 import {
   DuplicatePluginError,
   MissingPluginMetadataError,
+  ToolNotInManifestError,
   VersionMismatchError,
 } from "../../../../kernel/errors.js";
 import type { InstallationFile } from "../../../../kernel/file.js";
@@ -20,15 +21,24 @@ import { getToolConfig, isAiTool } from "../../../tools/domain/registry.js";
 import { PluginContentTranslator } from "../../../translate/domain/content-translator.js";
 import type { PluginDistribution } from "../../../translate/domain/plugin-distribution.js";
 import type { ReadonlySkipList } from "../../../translate/domain/plugin-translation-skip.js";
-import type { Manifest } from "../../domain/manifest.js";
-import { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";
+import { Manifest } from "../../domain/manifest.js";
+import {
+  InstalledPlugin,
+  type ProjectHooksProvenance,
+} from "../../domain/plugins/installed-plugin.js";
 import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
 import type { PluginDistributionReader } from "../../domain/ports/plugin-distribution-reader.js";
 import type { PluginTranslator } from "../framework/translator/plugin-translator.js";
 import { resolvePluginTranslator } from "../framework/translator/resolve-plugin-translator.js";
+import { assertProjectMcpEntriesRemovable } from "../ownership/project-plugin-cleanup.js";
 import type { EnsureBuiltMarketplace } from "../shared/ensure-built-marketplace-use-case.js";
+import { assertProjectHooksRemovable } from "../shared/remove-project-hooks.js";
 import { loadPluginManifest, writePluginFiles } from "./plugin-helpers.js";
-import { resolvePluginToolIds, resolveScopeForInstall } from "./plugin-target-resolution.js";
+import {
+  resolveBaseDirFromRecord,
+  resolvePluginToolIds,
+  resolveScopeForInstall,
+} from "./plugin-target-resolution.js";
 
 export interface PluginAddOptions {
   source: PluginSource;
@@ -55,18 +65,38 @@ export class PluginAddUseCase implements PluginAdd {
     private readonly hasher: Hasher,
     private readonly logger: Logger,
     private readonly marketplaceRegistry: MarketplaceRegistry,
-    private readonly ensureBuilt: EnsureBuiltMarketplace
+    private readonly ensureBuilt: EnsureBuiltMarketplace,
+    private readonly userManifestRepo: ManifestRepository
   ) {}
 
   async execute(options: PluginAddOptions): Promise<void> {
-    const { source, toolIds, projectRoot, marketplace } = options;
-    const manifest = await loadPluginManifest(this.manifestRepo);
-    const resolvedToolIds = resolvePluginToolIds(toolIds, manifest);
-    if (marketplace !== undefined && (await this.isGithubMarketplace(marketplace, projectRoot))) {
-      await this.addGithubMarketplacePlugin(options, resolvedToolIds, manifest);
-    } else {
-      await this.addLocalPlugin(options, resolvedToolIds, manifest, source, projectRoot);
+    if (this.userManifestRepo.withExclusiveAccess !== undefined) {
+      return this.userManifestRepo.withExclusiveAccess(() => this.executeLocked(options));
     }
+    return this.executeLocked(options);
+  }
+
+  private async executeLocked(options: PluginAddOptions): Promise<void> {
+    const { source, toolIds, projectRoot, marketplace } = options;
+    const manifest = Manifest.fromJSON((await loadPluginManifest(this.manifestRepo)).toJSON());
+    const existingMachine = await this.userManifestRepo.load();
+    const machine =
+      existingMachine === null ? Manifest.create() : Manifest.fromJSON(existingMachine.toJSON());
+    const resolvedToolIds = resolvePluginToolIds(toolIds, manifest);
+    const installedBefore = pluginsInstalledBefore(manifest, resolvedToolIds);
+    if (marketplace !== undefined && (await this.isGithubMarketplace(marketplace, projectRoot))) {
+      await this.addGithubMarketplacePlugin(options, resolvedToolIds, manifest, machine);
+    } else {
+      await this.addLocalPlugin(options, resolvedToolIds, manifest, source, projectRoot, machine);
+    }
+    const claimed = await this.recordUserScopeOwnership(
+      manifest,
+      machine,
+      resolvedToolIds,
+      projectRoot,
+      installedBefore
+    );
+    if (claimed) await this.userManifestRepo.save(machine);
     await this.manifestRepo.save(manifest);
   }
 
@@ -79,10 +109,18 @@ export class PluginAddUseCase implements PluginAdd {
   private async addGithubMarketplacePlugin(
     options: PluginAddOptions,
     toolIds: AiToolId[],
-    manifest: Manifest
+    manifest: Manifest,
+    machine: Manifest
   ): Promise<void> {
     const { pluginMetadata } = options;
     if (pluginMetadata === undefined) throw new MissingPluginMetadataError();
+    if (options.replace === true)
+      await this.assertExistingContributionsUnchanged(
+        pluginMetadata.name,
+        toolIds,
+        manifest,
+        options.projectRoot
+      );
     if (options.replace === true) this.dropExistingPlugin(pluginMetadata.name, toolIds, manifest);
     else this.validateNoDuplicates(pluginMetadata.name, toolIds, manifest);
     const adapterMap = this.buildAdapterMap(toolIds);
@@ -94,7 +132,8 @@ export class PluginAddUseCase implements PluginAdd {
         flatToolIds,
         manifest,
         options.source,
-        options.projectRoot
+        options.projectRoot,
+        machine
       );
     }
     await this.registerNativeGithubPlugins(options, nativeToolIds, manifest);
@@ -156,14 +195,27 @@ export class PluginAddUseCase implements PluginAdd {
     resolvedToolIds: AiToolId[],
     manifest: Manifest,
     source: PluginSource,
-    projectRoot: string
+    projectRoot: string,
+    machine: Manifest
   ): Promise<void> {
     const { marketplace, requiredVersion, replace, pluginMetadata } = options;
     const read = await this.readDistribution(source, projectRoot);
     const dist = pluginMetadata === undefined ? read : read.withStrict(pluginMetadata.strict);
     const pluginName = dist.manifest.name;
     this.assertPluginVersionMatches(pluginName, dist.manifest.version, requiredVersion);
-    const { prevMcpMap } = this.prepareForInstall(pluginName, resolvedToolIds, manifest, replace);
+    if (replace === true)
+      await this.assertExistingContributionsUnchanged(
+        pluginName,
+        resolvedToolIds,
+        manifest,
+        projectRoot
+      );
+    const { prevMcpMap, prevHooksMap } = this.prepareForInstall(
+      pluginName,
+      resolvedToolIds,
+      manifest,
+      replace
+    );
     await this.installPluginForAllTools(
       dist,
       resolvedToolIds,
@@ -171,8 +223,24 @@ export class PluginAddUseCase implements PluginAdd {
       projectRoot,
       manifest,
       marketplace,
-      prevMcpMap
+      prevMcpMap,
+      prevHooksMap,
+      machine
     );
+  }
+
+  private async assertExistingContributionsUnchanged(
+    pluginName: string,
+    toolIds: readonly AiToolId[],
+    manifest: Manifest,
+    projectRoot: string
+  ): Promise<void> {
+    for (const toolId of toolIds) {
+      const previous = manifest.getPlugins(toolId).find((plugin) => plugin.name === pluginName);
+      if (previous === undefined) continue;
+      await assertProjectMcpEntriesRemovable(this.fs, previous, toolId, projectRoot);
+      await assertProjectHooksRemovable(this.fs, previous, toolId, projectRoot);
+    }
   }
 
   private prepareForInstall(
@@ -180,14 +248,24 @@ export class PluginAddUseCase implements PluginAdd {
     toolIds: AiToolId[],
     manifest: Manifest,
     replace: boolean | undefined
-  ): { prevMcpMap: Map<AiToolId, ReadonlyMap<string, string>> } {
+  ): {
+    prevMcpMap: Map<AiToolId, ReadonlyMap<string, string>>;
+    prevHooksMap: Map<AiToolId, ProjectHooksProvenance>;
+  } {
     const prevMcpMap = this.collectPreviousMcpEntries(pluginName, toolIds, manifest);
+    const prevHooksMap = new Map<AiToolId, ProjectHooksProvenance>();
+    for (const toolId of toolIds) {
+      const projectHooks = manifest
+        .getPlugins(toolId)
+        .find((p) => p.name === pluginName)?.projectHooks;
+      if (projectHooks !== undefined) prevHooksMap.set(toolId, projectHooks);
+    }
     if (replace === true) {
       this.dropExistingPlugin(pluginName, toolIds, manifest);
     } else {
       this.validateNoDuplicates(pluginName, toolIds, manifest);
     }
-    return { prevMcpMap };
+    return { prevMcpMap, prevHooksMap };
   }
 
   private async installPluginForAllTools(
@@ -197,11 +275,24 @@ export class PluginAddUseCase implements PluginAdd {
     projectRoot: string,
     manifest: Manifest,
     marketplace: string | undefined,
-    prevMcpMap: Map<AiToolId, ReadonlyMap<string, string>>
+    prevMcpMap: Map<AiToolId, ReadonlyMap<string, string>>,
+    prevHooksMap: Map<AiToolId, ProjectHooksProvenance>,
+    machine: Manifest
   ): Promise<void> {
     const allSkipped: ReadonlySkipList[] = [];
     const allNotices: ReadonlyNoticeList[] = [];
     for (const toolId of toolIds) {
+      const foreignDir = await this.userScopeDirNotInstalledHere(
+        dist.manifest.name,
+        toolId,
+        projectRoot,
+        machine
+      );
+      if (foreignDir !== undefined) {
+        this.logger.warn(
+          `${toolId}: ${foreignDir} was already there and this project did not install it — left as found and not tracked, so this project's clean will not delete it.`
+        );
+      }
       const prev = prevMcpMap.get(toolId) ?? new Map();
       const { skipped, notices } = await this.addPluginForTool(
         dist,
@@ -210,13 +301,64 @@ export class PluginAddUseCase implements PluginAdd {
         projectRoot,
         manifest,
         marketplace,
-        prev
+        prev,
+        foreignDir !== undefined ||
+          machine.getPlugins(toolId).some((p) => p.name === dist.manifest.name),
+        prevHooksMap.get(toolId)
       );
       allSkipped.push(skipped);
       allNotices.push(notices);
     }
     this.emitSkipWarnings(allSkipped.flat());
     this.emitInstallNotices(allNotices.flat());
+  }
+
+  private async userScopeDirNotInstalledHere(
+    pluginName: string,
+    toolId: AiToolId,
+    projectRoot: string,
+    machine: Manifest
+  ): Promise<string | undefined> {
+    if (resolveScopeForInstall(toolId) !== "user") return undefined;
+    if (machine.getPlugins(toolId).some((p) => p.name === pluginName)) return undefined;
+    const dir = join(
+      resolveBaseDirFromRecord("user", toolId, projectRoot, nodeHomedir),
+      pluginName
+    );
+    const present = await this.fs.listFilesRecursive(dir);
+    return present.length > 0 ? dir : undefined;
+  }
+
+  private async recordUserScopeOwnership(
+    project: Manifest,
+    machine: Manifest,
+    toolIds: readonly AiToolId[],
+    projectRoot: string,
+    installedBefore: PluginsInstalledBefore
+  ): Promise<boolean> {
+    const root = await this.fs.realpath(projectRoot);
+    let claimed = false;
+    for (const toolId of toolIds) {
+      for (const plugin of project.getPlugins(toolId)) {
+        if (plugin.scope !== "user") continue;
+        const owned = machine.getPlugins(toolId).find((p) => p.name === plugin.name);
+        if (owned === undefined && installedBefore.has(installedKey(toolId, plugin.name))) continue;
+        if (owned === undefined && plugin.files.size === 0) continue;
+        if (!machine.hasTool(toolId)) {
+          const version = project.getToolVersion(toolId);
+          if (version === undefined) throw new ToolNotInManifestError(toolId);
+          machine.addTool(toolId, version, []);
+        }
+        const canonical = (
+          owned ?? InstalledPlugin.withMcpEntries(plugin, new Map())
+        ).withDependents([...(owned?.dependents ?? []), root]);
+        if (owned === undefined) machine.addPlugin(toolId, canonical);
+        else machine.updatePlugin(toolId, canonical);
+        project.updatePlugin(toolId, plugin.withFiles(new Map()));
+        claimed = true;
+      }
+    }
+    return claimed;
   }
 
   private collectPreviousMcpEntries(
@@ -264,7 +406,9 @@ export class PluginAddUseCase implements PluginAdd {
     projectRoot: string,
     manifest: Manifest,
     marketplace: string | undefined,
-    previousMcpEntries: ReadonlyMap<string, string> = new Map()
+    previousMcpEntries: ReadonlyMap<string, string>,
+    userScopeDirTaken: boolean,
+    previousProjectHooks?: ProjectHooksProvenance
   ): Promise<{ skipped: ReadonlySkipList; notices: ReadonlyNoticeList }> {
     const toolConfig = getToolConfig(toolId);
     if (!isAiTool(toolConfig)) return { skipped: [], notices: [] };
@@ -277,7 +421,9 @@ export class PluginAddUseCase implements PluginAdd {
         projectRoot,
         manifest,
         marketplace,
-        previousMcpEntries
+        previousMcpEntries,
+        userScopeDirTaken,
+        previousProjectHooks
       );
       return { ...result, notices: [] };
     }
@@ -367,4 +513,21 @@ export class PluginAddUseCase implements PluginAdd {
       marketplaceRegistry: this.marketplaceRegistry,
     });
   }
+}
+
+type PluginsInstalledBefore = ReadonlySet<string>;
+
+function pluginsInstalledBefore(
+  manifest: Manifest,
+  toolIds: readonly AiToolId[]
+): PluginsInstalledBefore {
+  return new Set(
+    toolIds.flatMap((toolId) =>
+      manifest.getPlugins(toolId).map((p) => installedKey(toolId, p.name))
+    )
+  );
+}
+
+function installedKey(toolId: AiToolId, pluginName: string): string {
+  return `${toolId}/${pluginName}`;
 }

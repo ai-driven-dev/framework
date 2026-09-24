@@ -2,7 +2,7 @@
   "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
   "name": "aidd-dev",
   "version": "2.5.0",
-  "description": "Code transformation: plan, implement, assert, audit, review, test, refactor, debug, for-sure, plus short standalone Browser QA evidence. Hosts engineering agents.",
+  "description": "Code transformation: plan, implement, assert, audit, review, test, refactor, debug, for-sure. Hosts engineering agents.",
   "author": {
     "name": "AI-Driven Dev",
     "url": "https://github.com/ai-driven-dev"
@@ -17,8 +17,7 @@
     "./skills/07-refactor",
     "./skills/08-debug",
     "./skills/09-for-sure",
-    "./skills/10-todo",
-    "./skills/11-browser-qa"
+    "./skills/10-todo"
   ],
   "agents": [
     "./agents/executor.md",

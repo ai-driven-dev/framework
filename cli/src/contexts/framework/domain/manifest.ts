@@ -3,8 +3,6 @@ import type { FileHash, InstallationFile } from "../../../kernel/file.js";
 import type { MergeFileEntry } from "../../../kernel/merge.js";
 import { AIDD_DIR, MANIFEST_FILENAME } from "../../../kernel/paths.js";
 import type { ToolId } from "../../../kernel/tool.js";
-import type { McpExclusion } from "../../tools/domain/mcp-exclusion.js";
-import { addExclusions, removeExclusions } from "./manifest/mcp-exclusions.js";
 import type { NativeRegistrations } from "./manifest/native-registrations.js";
 import {
   addPluginToEntry,
@@ -59,8 +57,7 @@ export class Manifest {
     toolId: ToolId,
     version: string,
     files: InstallationFile[],
-    mergeFiles: MergeFileEntry[] = [],
-    excludedMcp: McpExclusion[] = []
+    mergeFiles: MergeFileEntry[] = []
   ): void {
     const existing = this._tools.get(toolId);
     this._tools.set(
@@ -70,7 +67,6 @@ export class Manifest {
         version,
         files,
         mergeFiles,
-        excludedMcp,
         existingPlugins: existing?.plugins ?? [],
       })
     );
@@ -109,34 +105,6 @@ export class Manifest {
     return tracked;
   }
 
-  getExcludedMcp(toolId: ToolId): readonly McpExclusion[] {
-    return this._tools.get(toolId)?.excludedMcp ?? [];
-  }
-
-  addExcludedMcp(toolId: ToolId, exclusions: McpExclusion[]): void {
-    const entry = this._tools.get(toolId);
-    if (!entry) throw new ToolNotInManifestError(toolId);
-    this._tools.set(toolId, {
-      ...entry,
-      excludedMcp: addExclusions(entry.excludedMcp, exclusions),
-    });
-  }
-
-  removeExcludedMcp(toolId: ToolId, exclusions: McpExclusion[]): void {
-    const entry = this._tools.get(toolId);
-    if (!entry) throw new ToolNotInManifestError(toolId);
-    this._tools.set(toolId, {
-      ...entry,
-      excludedMcp: removeExclusions(entry.excludedMcp, exclusions),
-    });
-  }
-
-  clearExcludedMcp(toolId: ToolId): void {
-    const entry = this._tools.get(toolId);
-    if (!entry) throw new ToolNotInManifestError(toolId);
-    this._tools.set(toolId, { ...entry, excludedMcp: [] });
-  }
-
   updateTrackedFileHash(toolId: ToolId, relativePath: string, hash: FileHash): void {
     const entry = this._tools.get(toolId);
     if (!entry) return;
@@ -146,18 +114,10 @@ export class Manifest {
     });
   }
 
-  updateToolMergeFiles(
-    toolId: ToolId,
-    mergeFiles: MergeFileEntry[],
-    excludedMcp?: McpExclusion[]
-  ): void {
+  updateToolMergeFiles(toolId: ToolId, mergeFiles: MergeFileEntry[]): void {
     const entry = this._tools.get(toolId);
     if (!entry) throw new ToolNotInManifestError(toolId);
-    this._tools.set(toolId, {
-      ...entry,
-      mergeFiles,
-      ...(excludedMcp !== undefined && { excludedMcp }),
-    });
+    this._tools.set(toolId, { ...entry, mergeFiles });
   }
 
   removeTool(toolId: ToolId): void {

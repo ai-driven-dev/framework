@@ -28,9 +28,10 @@ function makeTempDir(prefix) {
   return dir;
 }
 
-// Mirrors what a real install delivers: opencode-plugin.js copied verbatim beside
-// journal.cjs and lib/ (see plugin-content-translator.ts, flatHooksFiles) - not the
-// source tree, so this exercises the exact sibling-file layout OpenCode's loader sees.
+// Mirrors what a real install delivers: OpenCode's loader scans `plugin/` one level deep, so
+// the build puts this plugin's own module there alone, renamed after the plugin, and every
+// other hook script under `hooks/<plugin>/` (opencode-paths.ts) - not the source tree, where
+// they are siblings, so this exercises the split layout the loader actually sees.
 function makeInstalledRepo() {
   const repo = makeTempDir("aidd-opencode-plugin-repo-");
   execFileSync("git", ["init", "-q"], { cwd: repo, env: CLEAN_ENV });
@@ -43,13 +44,17 @@ function makeInstalledRepo() {
     JSON.stringify({ telemetry: { enabled: true, endpoint: "http://127.0.0.1:4318" } })
   );
   const pluginDir = path.join(repo, ".opencode", "plugin");
+  const scriptsDir = path.join(repo, ".opencode", "hooks", "aidd-telemetry");
   fs.mkdirSync(pluginDir, { recursive: true });
+  fs.mkdirSync(scriptsDir, { recursive: true });
   const hooksSrc = path.dirname(PLUGIN_SOURCE);
   for (const entry of fs.readdirSync(hooksSrc, { withFileTypes: true })) {
     if (entry.name === "hooks.json") continue;
-    fs.cpSync(path.join(hooksSrc, entry.name), path.join(pluginDir, entry.name), {
-      recursive: true,
-    });
+    const loaderEntry = entry.name === path.basename(PLUGIN_SOURCE);
+    const target = loaderEntry
+      ? path.join(pluginDir, "aidd-telemetry.js")
+      : path.join(scriptsDir, entry.name);
+    fs.cpSync(path.join(hooksSrc, entry.name), target, { recursive: true });
   }
   // A byte-identical `.mjs` twin, for these tests alone.
   //
@@ -60,8 +65,8 @@ function makeInstalledRepo() {
   // Plain Node does consult it, and there is none to consult: nothing up this tree declares
   // one, so Node reaches the file as typeless, finds ESM syntax, and reparses. Naming the
   // extension explicitly is what these tests do instead, and it is the only difference.
-  const esmTwin = path.join(pluginDir, "opencode-plugin.mjs");
-  fs.copyFileSync(path.join(pluginDir, "opencode-plugin.js"), esmTwin);
+  const esmTwin = path.join(pluginDir, "aidd-telemetry.mjs");
+  fs.copyFileSync(path.join(pluginDir, "aidd-telemetry.js"), esmTwin);
   return { repo, pluginDir, esmTwin };
 }
 

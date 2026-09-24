@@ -157,6 +157,51 @@ describe("OpencodeCostReaderAdapter", () => {
   );
 
   it.skipIf(skipOnWindows)(
+    "names the spawn failure itself, not an exit code, when the command exceeds its timeout",
+    async () => {
+      const env = installStandIn(SLOW_SCRIPT);
+      restorePath = env.restore;
+
+      await expect(new OpencodeCostReaderAdapter(200).read(SESSION_ID)).rejects.toThrow(
+        /^opencode export ses_test_read failed: spawnSync opencode ETIMEDOUT$/
+      );
+    }
+  );
+
+  it.skipIf(skipOnWindows)(
+    "names the exit code and the trimmed stderr on a generic failure",
+    async () => {
+      const env = installStandIn(GENERIC_FAILURE_SCRIPT);
+      restorePath = env.restore;
+
+      await expect(new OpencodeCostReaderAdapter().read(SESSION_ID)).rejects.toThrow(
+        /^opencode export ses_test_read exited with code 2: internal error: storage unavailable$/
+      );
+    }
+  );
+
+  it.skipIf(skipOnWindows)("says so when a failing command wrote nothing to stderr", async () => {
+    const env = installStandIn("#!/bin/sh\nexit 3\n");
+    restorePath = env.restore;
+
+    await expect(new OpencodeCostReaderAdapter().read(SESSION_ID)).rejects.toThrow(
+      /^opencode export ses_test_read exited with code 3: no stderr output$/
+    );
+  });
+
+  it.skipIf(skipOnWindows)(
+    "reads a command killed by a signal as an unknown exit code",
+    async () => {
+      const env = installStandIn("#!/bin/sh\nkill -KILL $$\n");
+      restorePath = env.restore;
+
+      await expect(new OpencodeCostReaderAdapter().read(SESSION_ID)).rejects.toThrow(
+        /^opencode export ses_test_read exited with code unknown: no stderr output$/
+      );
+    }
+  );
+
+  it.skipIf(skipOnWindows)(
     "throws OpencodeExportError when the command answers with something that is not JSON",
     async () => {
       const env = installStandIn('#!/bin/sh\necho "not json"\nexit 0\n');
@@ -165,6 +210,34 @@ describe("OpencodeCostReaderAdapter", () => {
       await expect(new OpencodeCostReaderAdapter().read(SESSION_ID)).rejects.toThrow(
         OpencodeExportError
       );
+    }
+  );
+
+  it.skipIf(skipOnWindows)(
+    "names the parse failure when the command answers with something that is not JSON",
+    async () => {
+      const env = installStandIn('#!/bin/sh\necho "not json"\nexit 0\n');
+      restorePath = env.restore;
+
+      await expect(new OpencodeCostReaderAdapter().read(SESSION_ID)).rejects.toThrow(
+        /^opencode export ses_test_read did not answer with JSON: Unexpected token/
+      );
+    }
+  );
+
+  it.skipIf(skipOnWindows)(
+    "finds the binary in a later PATH entry when the first holds nothing",
+    async () => {
+      const env = installStandIn(WELL_BEHAVED_SCRIPT);
+      restorePath = env.restore;
+      const binDir = process.env.PATH ?? "";
+      const emptyDir = mkdtempSync(join(tmpdir(), "aidd-opencode-first-"));
+      process.env.PATH = `${emptyDir}:${binDir}`;
+
+      const { sessionFound } = await new OpencodeCostReaderAdapter().read(SESSION_ID);
+
+      rmSync(emptyDir, { recursive: true, force: true });
+      expect(sessionFound).toBe(true);
     }
   );
 });

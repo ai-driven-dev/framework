@@ -17,7 +17,7 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 CLI="$ROOT/dist/cli.js"
 FRAMEWORK_FIXTURE="$ROOT/tests/fixtures/framework"
 
-AI_TOOLS=(claude cursor copilot codex opencode)
+AI_TOOLS=(claude cursor copilot codex opencode kilo)
 IDE_TOOLS=(vscode)
 
 # Canonical leaf-command surface. Coverage = exercised / total.
@@ -42,6 +42,27 @@ ok()   { PASS=$((PASS+1)); echo "  ✓ $1"; }
 bad()  { FAIL=$((FAIL+1)); FAILURES+=("$1"$'\n'"${2:-}"); echo "  ✗ $1"; }
 skip() { SKIP=$((SKIP+1)); echo "  ~ $1"; }
 section() { echo; echo "=== $1 === [$(date +%H:%M:%S)]"; }
+project_tree_hash() {
+  (cd "$1" && node -e '
+    const fs = require("node:fs");
+    const path = require("node:path");
+    const hash = require("node:crypto").createHash("sha256");
+    function walk(dir) {
+      for (const entry of fs.readdirSync(dir, { withFileTypes: true }).sort((a, b) => a.name < b.name ? -1 : a.name > b.name ? 1 : 0)) {
+        const absolute = path.join(dir, entry.name);
+        if (entry.isDirectory()) walk(absolute);
+        else if (entry.isFile()) {
+          hash.update(path.relative(process.cwd(), absolute));
+          hash.update("\0");
+          hash.update(fs.readFileSync(absolute));
+          hash.update("\0");
+        }
+      }
+    }
+    walk(process.cwd());
+    process.stdout.write(hash.digest("hex"));
+  ' )
+}
 
 PARENTS=" plugin marketplace auth framework telemetry "
 # A parent one level deeper than PARENTS, so a covered key needs three words there, not two.
@@ -180,14 +201,15 @@ section "update --check"
 out=$(cd "$ROOT" && node "$CLI" update --check 2>&1); rc=$?
 if [[ "$rc" -eq 0 || "$rc" -eq 1 ]]; then mark_covered "update"; ok "update --check (exit $rc)"; else bad "update crashed (exit $rc)" "$out"; fi
 
-# Comparing the file list before and after is the only assertion that proves `--dry-run`
-# wrote nothing.
+# Compare exact file paths and contents before/after: `--dry-run` must write nothing.
 P_DRY=$(new_project)
 (cd "$P_DRY" && node "$CLI" setup --source local --path "$FRAMEWORK_FIXTURE" --ai claude --plugins none --yes >/dev/null 2>&1)
-before_dry=$(cd "$P_DRY" && find . -type f | sort | md5)
+before_dry=$(project_tree_hash "$P_DRY"); before_dry_rc=$?
 run "update --dry-run" "0|1" "" "$P_DRY" -- update --dry-run
-after_dry=$(cd "$P_DRY" && find . -type f | sort | md5)
-if [[ "$before_dry" == "$after_dry" ]]; then
+after_dry=$(project_tree_hash "$P_DRY"); after_dry_rc=$?
+if [[ "$before_dry_rc" -ne 0 || "$after_dry_rc" -ne 0 ]]; then
+  bad "--dry-run project tree hash failed"
+elif [[ "$before_dry" == "$after_dry" ]]; then
   ok "--dry-run wrote nothing"
 else
   bad "--dry-run changed the project tree"
@@ -210,15 +232,17 @@ run "marketplace add --overwrite" 0 "" "$P_MKT" -- marketplace add local "$MKT_S
 # Passing `--scope` is not enough: the two values must write to different places.
 P_SCOPE=$(new_project)
 (cd "$P_SCOPE" && node "$CLI" setup --source local --path "$FRAMEWORK_FIXTURE" --ai claude --plugins none --yes >/dev/null 2>&1)
-run "marketplace add --scope project" 0 "" "$P_SCOPE" -- marketplace add scoped "$MKT_SRC" --yes --scope project
+PROJECT_MKT_SRC="$TMPROOT/project-mkt-src"; mkdir -p "$PROJECT_MKT_SRC/.claude-plugin"
+printf '%s' '{"name":"project-mkt","owner":{"name":"smoke"},"version":"1.0.0","plugins":[]}' > "$PROJECT_MKT_SRC/.claude-plugin/marketplace.json"
+run "marketplace add --scope project" 0 "" "$P_SCOPE" -- marketplace add scoped "$PROJECT_MKT_SRC" --yes --scope project
 proj_reg="$P_SCOPE/.aidd/marketplaces.json"
 if [[ -f "$proj_reg" ]] && grep -q "scoped" "$proj_reg"; then
   ok "--scope project writes the project registry"
 else
   bad "--scope project did not write $proj_reg"
 fi
-# A second source with its own manifest name: the tool keys its registry by the name inside
-# the marketplace, so two aidd marketplaces sharing a source would collide rather than scope.
+# A third source with its own manifest name: the tool keys its registry by the name inside
+# the marketplace, so each scope assertion needs a distinct host name.
 USER_MKT_SRC="$TMPROOT/user-mkt-src"; mkdir -p "$USER_MKT_SRC/.claude-plugin"
 printf '%s' '{"name":"user-mkt","owner":{"name":"smoke"},"version":"1.0.0","plugins":[]}' > "$USER_MKT_SRC/.claude-plugin/marketplace.json"
 run "marketplace add --scope user" 0 "" "$P_SCOPE" -- marketplace add userscoped "$USER_MKT_SRC" --yes --scope user
@@ -234,9 +258,9 @@ if command -v claude >/dev/null 2>&1; then
   claude_local="$P_SCOPE/.claude/settings.local.json"
   claude_home="$HOME/.claude/settings.json"
   # Names the marketplace, not the generic `extraKnownMarketplaces` key any declaration would
-  # satisfy. Keyed by `local-mkt`, the catalog's own declared name: this file is written by
+  # satisfy. Keyed by `project-mkt`, the catalog's own declared name: this file is written by
   # `hostName`, never by `scoped`, aidd's local alias for the same entry.
-  if [[ -f "$claude_local" ]] && grep -q '"local-mkt"' "$claude_local"; then
+  if [[ -f "$claude_local" ]] && grep -q '"project-mkt"' "$claude_local"; then
     ok "claude declares the project marketplace at local scope"
   else
     bad "claude has no local-scope declaration in $claude_local"
@@ -278,8 +302,13 @@ if true; then
   run "setup --release (local source)" 0 "" "$P_REL" -- \
     setup --source local --path "$FRAMEWORK_FIXTURE" --release v1.0.0 --ai claude --plugins none --yes
   for t in "${AI_TOOLS[@]}"; do
-    [[ -d "$BASE/.${t}" || ( "$t" == copilot && -d "$BASE/.github" ) ]] \
-      && ok "$t dir present" || bad "$t dir missing after --ai all"
+    if [[ "$t" == copilot ]]; then
+      [[ ! -d "$BASE/.github" ]] \
+        && ok "copilot declarative settings absent without native source proof" \
+        || bad "copilot declarative settings written without native source proof"
+    else
+      [[ -d "$BASE/.${t}" ]] && ok "$t dir present" || bad "$t dir missing after --ai all"
+    fi
   done
   [[ -d "$BASE/.vscode" ]] && ok "vscode dir present" || bad "vscode dir missing"
   # Cursor is `installScope: "user"`, so its plugin files land under $HOME and never under
@@ -322,7 +351,7 @@ if true; then
   run "sync --force" 0 "" "$BASE" -- sync --force
   repaired "sync --force" "$tgt"
 
-  section "framework install/update/remove --tool × all 5 AI tools + vscode"
+  section "framework install/update/remove --tool × all 6 AI tools + vscode"
   run "framework update (all)" 0 "" "$BASE" -- framework update
   run "framework rules" 0 "" "$BASE" -- framework rules
   run "framework rules --json" 0 "" "$BASE" -- framework rules --json
@@ -362,10 +391,34 @@ if true; then
   (cd "$P_PLUG" && node "$CLI" setup --source local --path "$FRAMEWORK_FIXTURE" --ai all --plugins none --yes >/dev/null 2>&1)
   for t in "${AI_TOOLS[@]}"; do
     run "plugin install aidd-test → $t" 0 "" "$P_PLUG" -- plugin install aidd-test --tool "$t" --yes
-    run "plugin remove → $t" 0 "" "$P_PLUG" -- plugin remove aidd-test --tool "$t"
-    # `--from` names the marketplace explicitly.
-    run "plugin install --from → $t" 0 "" "$P_PLUG" -- \
-      plugin install aidd-test --tool "$t" --from aidd-framework --yes
+    # An absent host permits local removal with a warning; an available host must first
+    # prove its native source. Exercise the matching contract, never infer native absence.
+    if [[ "$t" == copilot ]] && command -v copilot >/dev/null 2>&1; then
+      copilot_project_before=$(project_tree_hash "$P_PLUG")
+      copilot_home_before=$(project_tree_hash "$HOME")
+      run "plugin remove → copilot (unproven source refusal)" 1 \
+        "no recorded native catalogue source" "$P_PLUG" -- plugin remove aidd-test --tool copilot
+      copilot_project_after=$(project_tree_hash "$P_PLUG")
+      copilot_home_after=$(project_tree_hash "$HOME")
+      [[ -n "$copilot_project_before" && -n "$copilot_home_before" && \
+        "$copilot_project_before" == "$copilot_project_after" && \
+        "$copilot_home_before" == "$copilot_home_after" ]] \
+        && ok "copilot refusal wrote no project or home bytes" \
+        || bad "copilot refusal changed project or home bytes"
+      run "plugin install --from → copilot (no duplicate after refusal)" 1 \
+        "already installed" "$P_PLUG" -- \
+        plugin install aidd-test --tool copilot --from aidd-framework --yes
+    elif [[ "$t" == copilot ]]; then
+      run "plugin remove → copilot (missing host warns, local removal succeeds)" 0 \
+        "copilot CLI not found on PATH" "$P_PLUG" -- plugin remove aidd-test --tool copilot
+      run "plugin install --from → copilot (local reinstall without host)" 0 "" "$P_PLUG" -- \
+        plugin install aidd-test --tool copilot --from aidd-framework --yes
+    else
+      run "plugin remove → $t" 0 "" "$P_PLUG" -- plugin remove aidd-test --tool "$t"
+      # `--from` names the marketplace explicitly.
+      run "plugin install --from → $t" 0 "" "$P_PLUG" -- \
+        plugin install aidd-test --tool "$t" --from aidd-framework --yes
+    fi
   done
   run "plugin remove aidd-test (claude)" 0 "" "$P_PLUG" -- plugin remove aidd-test --tool claude
 
@@ -547,14 +600,14 @@ has_subcommands() {
 }
 
 leaves_under() {
-  local path=("$@") name
+  local name
   # `cut -d'|'`: commander prints an alias as `update|upgrade`, one command with two names.
-  for name in $(node "$CLI" "${path[@]}" --help 2>/dev/null | awk '/^Commands:/{f=1;next} f && /^  [a-z]/{print $1}' | cut -d'|' -f1); do
+  for name in $(node "$CLI" "$@" --help 2>/dev/null | awk '/^Commands:/{f=1;next} f && /^  [a-z]/{print $1}' | cut -d'|' -f1); do
     [[ "$name" == "help" ]] && continue
-    if has_subcommands "${path[@]}" "$name"; then
-      leaves_under "${path[@]}" "$name"
+    if has_subcommands "$@" "$name"; then
+      leaves_under "$@" "$name"
     else
-      echo "${path[*]} $name" | sed 's/^ *//'
+      echo "$* $name" | sed 's/^ *//'
     fi
   done
 }

@@ -75,6 +75,13 @@ describe("ORCHESTRATING_SKILLS — declared once, both capture spellings", () =>
     expect(bareOrchestratingSkillNames()).toEqual(["00-async-dev", "01-sdlc", "02-backlog"]);
   });
 
+  it("sorts the bare names whatever order the set was declared in", () => {
+    expect(bareOrchestratingSkillNames(new Set(["zz:b-flow", "b-flow", "a-flow"]))).toStrictEqual([
+      "a-flow",
+      "b-flow",
+    ]);
+  });
+
   it("hands out a project's fourth orchestrator too, without anything else being told about it", () => {
     const extended = new Set([...ORCHESTRATING_SKILLS, "acme:03-release", "03-release"]);
 

@@ -91,19 +91,27 @@ describe("CodexCliAdapter", () => {
     );
   });
 
-  it("upgrades marketplaces via `codex plugin marketplace upgrade`", () => {
+  it("upgrades only the named marketplace via `codex plugin marketplace upgrade <name>`", () => {
     mockSpawnSync.mockReturnValue(makeResult({}));
 
     new NativePluginCliAdapter("codex", {
       upgradeVerb: "upgrade",
       enableVerb: "add",
-    }).upgradeMarketplaces();
+    }).upgradeMarketplaces("owned-catalog");
 
     expect(mockSpawnSync).toHaveBeenCalledWith(
       "codex",
-      ["plugin", "marketplace", "upgrade"],
+      ["plugin", "marketplace", "upgrade", "owned-catalog"],
       expect.anything()
     );
+  });
+
+  it("refuses a targeted plugin update when Codex declares no verified update verb", () => {
+    mockSpawnSync.mockClear();
+    expect(() =>
+      new NativePluginCliAdapter("codex", {}).updatePlugin("aidd-context@real-catalog")
+    ).toThrow(/does not support targeted native plugin update/);
+    expect(mockSpawnSync).not.toHaveBeenCalled();
   });
 
   it("enables a plugin via `codex plugin add <ref>`", () => {

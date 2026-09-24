@@ -15,18 +15,23 @@ import type { AiToolId } from "../../../../../kernel/tool.js";
 import type { MarketplaceRegistry } from "../../../../distribution/domain/ports/marketplace-registry.js";
 import {
   frameworkBuildModeFor,
+  getAiToolConfig,
   resolvePluginsCapability,
 } from "../../../../tools/domain/registry.js";
 import type { PluginDistribution } from "../../../../translate/domain/plugin-distribution.js";
 import type { ReadonlySkipList } from "../../../../translate/domain/plugin-translation-skip.js";
 import type { Manifest } from "../../../domain/manifest.js";
-import { InstalledPlugin } from "../../../domain/plugins/installed-plugin.js";
+import {
+  InstalledPlugin,
+  type ProjectHooksProvenance,
+} from "../../../domain/plugins/installed-plugin.js";
 import { isPluginFileAtDesiredState } from "../../plugin/plugin-helpers.js";
 import {
   resolveBaseDirFromRecord,
   resolveScopeForInstall,
 } from "../../plugin/plugin-target-resolution.js";
 import type { EnsureBuiltMarketplace } from "../../shared/ensure-built-marketplace-use-case.js";
+import { materializeFlatMcp, refreshTrackedMcpConfigHash } from "./flat-mcp-materializer.js";
 import { ModeBFlatMaterializationTranslator } from "./mode-b-flat-materialization-translator.js";
 import type { PluginTranslator } from "./plugin-translator.js";
 import { ProjectHooksMaterializer } from "./project-hooks-materializer.js";
@@ -51,7 +56,9 @@ export class BuiltTreeMaterializationTranslator implements PluginTranslator {
     projectRoot: string,
     manifest: Manifest,
     marketplace: string | undefined,
-    previousMcpEntries: ReadonlyMap<string, string> = new Map()
+    previousMcpEntries: ReadonlyMap<string, string> = new Map(),
+    userScopeDirTaken = false,
+    previousProjectHooks?: ProjectHooksProvenance
   ): Promise<{ skipped: ReadonlySkipList; written?: number }> {
     const resolved =
       marketplace === undefined ? null : await this.findMarketplace(marketplace, projectRoot);
@@ -63,7 +70,9 @@ export class BuiltTreeMaterializationTranslator implements PluginTranslator {
         projectRoot,
         manifest,
         marketplace,
-        previousMcpEntries
+        previousMcpEntries,
+        userScopeDirTaken,
+        previousProjectHooks
       );
     }
     const mode = frameworkBuildModeFor(toolId);
@@ -76,31 +85,54 @@ export class BuiltTreeMaterializationTranslator implements PluginTranslator {
     const builtFiles =
       mode === "flat"
         ? await this.readFlatFiles(builtDir, dist, toolId)
-        : await this.readBuiltFiles(
-            join(builtDir, "plugins", dist.manifest.name),
-            dist.manifest.name
-          );
+        : await readBuiltUserPluginFiles(this.fs, this.hasher, builtDir, dist.manifest.name);
     // The built tree still carries a plugin-scoped `hooks/hooks.json` for a capability declaring
     // `hooksDestination: "project"` — dropped here and materialized through the same project-hooks
     // side channel the local-source route uses, so both land where the tool's own declaration says.
     const deliversHooksToProject = resolvePluginsCapability(toolId)?.hooksDestination === "project";
-    const hooksSkips = deliversHooksToProject
-      ? await this.projectHooks.materialize(dist, toolId, projectRoot)
-      : [];
+    const hooks = deliversHooksToProject
+      ? await this.projectHooks.materializeWithProvenance(
+          dist,
+          toolId,
+          projectRoot,
+          previousProjectHooks
+        )
+      : { skipped: [] as ReadonlySkipList };
     const files = deliversHooksToProject
       ? withoutHooksPrefix(builtFiles, dist.manifest.name)
       : builtFiles;
+    const mcp = await materializeFlatMcp(
+      this.fs,
+      this.hasher,
+      dist,
+      toolId,
+      projectRoot,
+      previousMcpEntries
+    );
+    await refreshTrackedMcpConfigHash(this.fs, manifest, toolId, projectRoot, mcp.outputRelPath);
     const scope = resolveScopeForInstall(toolId);
     const baseDir =
       mode === "flat"
         ? projectRoot
         : resolveBaseDirFromRecord(scope, toolId, projectRoot, this.homedir);
-    const written = await this.writeChangedFiles(files, baseDir);
+    const owned = userScopeDirTaken ? [] : files;
+    const written = await this.writeChangedFiles(owned, baseDir);
     manifest.addPlugin(
       toolId,
-      InstalledPlugin.fromDistribution(dist, source, files, scope, new Map(), marketplace)
+      InstalledPlugin.withProjectHooks(
+        InstalledPlugin.fromDistributionWithMcp(
+          dist,
+          source,
+          owned,
+          mcp.mcpEntries,
+          scope,
+          new Map(),
+          marketplace
+        ),
+        hooks.projectHooks
+      )
     );
-    return { skipped: hooksSkips, written };
+    return { skipped: [...mcp.mcpSkips, ...hooks.skipped], written };
   }
 
   // Skips a file already matching the built content on disk, so a no-op restore reports (and
@@ -116,26 +148,6 @@ export class BuiltTreeMaterializationTranslator implements PluginTranslator {
       written++;
     }
     return written;
-  }
-
-  // Marketplace build emits plugins/<name>/<rel>; user-scope tools install at
-  // <baseDir>/<name>/<rel>, so the manifest relativePath keeps the <name>/ prefix.
-  private async readBuiltFiles(pluginSrc: string, name: string): Promise<InstallationFile[]> {
-    const absPaths = await this.fs.listFilesRecursive(pluginSrc);
-    return Promise.all(
-      absPaths.map(async (abs) => {
-        const rel = posixRelative(pluginSrc, abs);
-        const content = await this.fs.readFile(abs);
-        return new InstallationFile({
-          // relativePath is always "/"-separated (see withoutHooksPrefix and
-          // belongsToPlugin below, both string-matching on "/") - node:path's platform
-          // `join` would answer with "\" on win32, breaking both.
-          relativePath: posix.join(name, rel),
-          content,
-          hash: this.hasher.hash(content),
-        });
-      })
-    );
   }
 
   // Flat build emits the whole marketplace into one workspace. Agents are namespaced by
@@ -155,7 +167,7 @@ export class BuiltTreeMaterializationTranslator implements PluginTranslator {
     const files: InstallationFile[] = [];
     for (const abs of absPaths) {
       const rel = posixRelative(builtDir, abs);
-      if (!this.belongsToPlugin(rel, name) && !hookPaths.has(rel)) continue;
+      if (!this.belongsToPlugin(rel, name, toolId) && !hookPaths.has(rel)) continue;
       const content = await this.fs.readFile(abs);
       files.push(
         new InstallationFile({ relativePath: rel, content, hash: this.hasher.hash(content) })
@@ -164,9 +176,10 @@ export class BuiltTreeMaterializationTranslator implements PluginTranslator {
     return files;
   }
 
-  private belongsToPlugin(rel: string, name: string): boolean {
+  private belongsToPlugin(rel: string, name: string, toolId: AiToolId): boolean {
     const segments = rel.split("/");
-    if (segments[0] !== ".opencode" || segments.length < 3) return false;
+    const toolDirectory = getAiToolConfig(toolId).directory.replace(/\/$/, "");
+    if (segments[0] !== toolDirectory || segments.length < 3) return false;
     // `skills/` nests the whole plugin under one exactly-named segment; every other flat section
     // hyphen-prefixes the leaf segment.
     if (segments[1] === "skills") return segments[2] === name;
@@ -178,7 +191,7 @@ export class BuiltTreeMaterializationTranslator implements PluginTranslator {
     const flatHooksDir = plugins?.flatHooksDir;
     if (plugins === null || flatHooksDir === null || flatHooksDir === undefined) return new Set();
     const name = dist.manifest.name;
-    return new Set(
+    const paths = new Set(
       dist.components.hooks
         .filter((f) => f.relativePath !== "hooks/hooks.json")
         .map((f) =>
@@ -190,6 +203,15 @@ export class BuiltTreeMaterializationTranslator implements PluginTranslator {
           )
         )
     );
+    const bridge = plugins.flatHooksBridge;
+    const hooksJson = dist.components.hooks.find((f) => f.relativePath === "hooks/hooks.json");
+    const hasOwnBridge =
+      bridge !== null &&
+      dist.components.hooks.some((f) => f.relativePath.endsWith(`/${bridge.skipIfSourceHas}`));
+    if (bridge !== null && hooksJson !== undefined && !hasOwnBridge) {
+      if (bridge.generate(hooksJson.content, name) !== null) paths.add(bridge.path(name));
+    }
+    return paths;
   }
 
   private async findMarketplace(name: string, projectRoot: string) {
@@ -202,9 +224,33 @@ export class BuiltTreeMaterializationTranslator implements PluginTranslator {
   }
 }
 
+export async function readBuiltUserPluginFiles(
+  fs: FileReader,
+  hasher: Hasher,
+  builtDir: string,
+  name: string
+): Promise<InstallationFile[]> {
+  const pluginSrc = join(builtDir, "plugins", name);
+  const absPaths = await fs.listFilesRecursive(pluginSrc);
+  return Promise.all(
+    absPaths.map(async (abs) => {
+      const rel = posixRelative(pluginSrc, abs);
+      const content = await fs.readFile(abs);
+      return new InstallationFile({
+        relativePath: posix.join(name, rel),
+        content,
+        hash: hasher.hash(content),
+      });
+    })
+  );
+}
+
 // `readBuiltFiles` prefixes every path with `<name>/`, so a built-tree hooks file always reads
 // `<name>/hooks/<rest>`.
-function withoutHooksPrefix(files: InstallationFile[], pluginName: string): InstallationFile[] {
+export function withoutHooksPrefix(
+  files: InstallationFile[],
+  pluginName: string
+): InstallationFile[] {
   const hooksPrefix = `${pluginName}/hooks/`;
   return files.filter((f) => !f.relativePath.startsWith(hooksPrefix));
 }

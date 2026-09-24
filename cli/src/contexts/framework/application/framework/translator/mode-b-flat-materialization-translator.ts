@@ -1,4 +1,3 @@
-import { join } from "node:path";
 import { CursorProjectScopeUnsupportedError } from "../../../../../kernel/errors.js";
 import type { InstallationFile } from "../../../../../kernel/file.js";
 import type { FileReader } from "../../../../../kernel/ports/file-reader.js";
@@ -6,24 +5,23 @@ import type { FileWriter } from "../../../../../kernel/ports/file-writer.js";
 import type { Hasher } from "../../../../../kernel/ports/hasher.js";
 import type { PluginSource } from "../../../../../kernel/source.js";
 import type { AiToolId } from "../../../../../kernel/tool.js";
-import type { McpCapability } from "../../../../tools/domain/capabilities/mcp-capability.js";
 import type { PluginsCapability } from "../../../../tools/domain/capabilities/plugins-capability.js";
-import { mergeOpencodeMcp } from "../../../../tools/domain/formats/opencode-mcp-merge.js";
 import { getToolConfig, isAiTool } from "../../../../tools/domain/registry.js";
 import { PluginContentTranslator } from "../../../../translate/domain/content-translator.js";
 import type { PluginDistribution } from "../../../../translate/domain/plugin-distribution.js";
-import type {
-  PluginTranslationSkip,
-  ReadonlySkipList,
-} from "../../../../translate/domain/plugin-translation-skip.js";
+import type { ReadonlySkipList } from "../../../../translate/domain/plugin-translation-skip.js";
 import type { Manifest } from "../../../domain/manifest.js";
-import { InstalledPlugin, type PluginScope } from "../../../domain/plugins/installed-plugin.js";
+import {
+  InstalledPlugin,
+  type PluginScope,
+  type ProjectHooksProvenance,
+} from "../../../domain/plugins/installed-plugin.js";
 import { writePluginFiles } from "../../plugin/plugin-helpers.js";
 import {
-  isFrameworkPrimeFlatMcp,
   resolveBaseDirFromRecord,
   resolveScopeForInstall,
 } from "../../plugin/plugin-target-resolution.js";
+import { materializeFlatMcp, refreshTrackedMcpConfigHash } from "./flat-mcp-materializer.js";
 import type { PluginTranslator } from "./plugin-translator.js";
 import { ProjectHooksMaterializer, withoutHooks } from "./project-hooks-materializer.js";
 
@@ -51,20 +49,37 @@ export class ModeBFlatMaterializationTranslator implements PluginTranslator {
     projectRoot: string,
     manifest: Manifest,
     marketplace: string | undefined,
-    previousMcpEntries: ReadonlyMap<string, string> = new Map()
+    previousMcpEntries: ReadonlyMap<string, string> = new Map(),
+    userScopeDirTaken = false,
+    previousProjectHooks?: ProjectHooksProvenance
   ): Promise<{ skipped: ReadonlySkipList }> {
     const ctx = this.resolveFlatToolContext(toolId, dist, projectRoot);
     if (ctx === null) return { skipped: [] };
-    const mcp = await this.resolveMcp(dist, toolId, projectRoot, previousMcpEntries);
-    const hooksSkips = await this.projectHooks.materialize(dist, toolId, projectRoot);
-    const allSkipped: ReadonlySkipList = [...ctx.skipped, ...mcp.mcpSkips, ...hooksSkips];
-    if (ctx.files.length === 0 && mcp.mcpEntries.size === 0) return { skipped: allSkipped };
+    const mcp = await materializeFlatMcp(
+      this.fs,
+      this.hasher,
+      dist,
+      toolId,
+      projectRoot,
+      previousMcpEntries
+    );
+    await refreshTrackedMcpConfigHash(this.fs, manifest, toolId, projectRoot, mcp.outputRelPath);
+    const hooks = await this.projectHooks.materializeWithProvenance(
+      dist,
+      toolId,
+      projectRoot,
+      previousProjectHooks
+    );
+    const allSkipped: ReadonlySkipList = [...ctx.skipped, ...mcp.mcpSkips, ...hooks.skipped];
+    if (ctx.files.length === 0 && mcp.mcpEntries.size === 0 && hooks.projectHooks === undefined)
+      return { skipped: allSkipped };
     await this.writeAndRegisterPlugin(
       dist,
       toolId,
       source,
-      ctx.files,
+      userScopeDirTaken ? [] : ctx.files,
       mcp.mcpEntries,
+      hooks.projectHooks,
       ctx.componentPaths,
       marketplace,
       ctx.baseDir,
@@ -102,27 +117,13 @@ export class ModeBFlatMaterializationTranslator implements PluginTranslator {
     return { caps, files, componentPaths, skipped, baseDir, scope };
   }
 
-  private async resolveMcp(
-    dist: PluginDistribution,
-    toolId: AiToolId,
-    projectRoot: string,
-    previousMcpEntries: ReadonlyMap<string, string>
-  ): Promise<{ mcpEntries: ReadonlyMap<string, string>; mcpSkips: ReadonlySkipList }> {
-    const toolConfig = getToolConfig(toolId);
-    if (!isAiTool(toolConfig)) return { mcpEntries: new Map(), mcpSkips: [] };
-    const caps = toolConfig.capabilities as Record<string, unknown>;
-    if (!isFrameworkPrimeFlatMcp(caps) || dist.components.mcp.length === 0) {
-      return { mcpEntries: new Map(), mcpSkips: [] };
-    }
-    return this.mergeOpencodeMcpEntries(dist, caps, projectRoot, previousMcpEntries, toolId);
-  }
-
   private async writeAndRegisterPlugin(
     dist: PluginDistribution,
     toolId: AiToolId,
     source: PluginSource,
     files: InstallationFile[],
     mcpEntries: ReadonlyMap<string, string>,
+    projectHooks: ProjectHooksProvenance | undefined,
     componentPaths: ReadonlyMap<string, string>,
     marketplace: string | undefined,
     baseDir: string,
@@ -139,56 +140,6 @@ export class ModeBFlatMaterializationTranslator implements PluginTranslator {
       componentPaths,
       marketplace
     );
-    manifest.addPlugin(toolId, plugin);
-  }
-
-  private async mergeOpencodeMcpEntries(
-    dist: PluginDistribution,
-    caps: Record<string, unknown>,
-    projectRoot: string,
-    previousMcpEntries: ReadonlyMap<string, string>,
-    toolId: AiToolId
-  ): Promise<{ mcpEntries: ReadonlyMap<string, string>; mcpSkips: ReadonlySkipList }> {
-    const mcpCap = caps.mcp as McpCapability;
-    const outputRelPath = await mcpCap.resolveOutput(projectRoot, this.fs);
-    const outputPath = join(projectRoot, outputRelPath);
-    const existingContent = await this.readExistingJson(outputPath);
-    const rawMcp = dist.components.mcp[0].content;
-    const transformed = mcpCap.transform(rawMcp);
-    const { mergedContent, contributedEntries, collisions } = mergeOpencodeMcp(
-      existingContent,
-      transformed,
-      previousMcpEntries,
-      this.hasher
-    );
-    if (contributedEntries.size > 0 || previousMcpEntries.size > 0) {
-      await this.fs.writeFile(outputPath, mergedContent);
-    }
-    const mcpSkips = this.collisionsToSkips(collisions, dist.manifest.name, toolId);
-    return { mcpEntries: contributedEntries, mcpSkips };
-  }
-
-  private collisionsToSkips(
-    collisions: ReadonlyArray<string>,
-    pluginName: string,
-    toolId: AiToolId
-  ): ReadonlySkipList {
-    return collisions.map(
-      (reason): PluginTranslationSkip => ({
-        pluginName,
-        component: "mcp",
-        toolId,
-        reason,
-      })
-    );
-  }
-
-  private async readExistingJson(path: string): Promise<string | null> {
-    try {
-      return await this.fs.readFile(path);
-    } catch (err) {
-      if ((err as NodeJS.ErrnoException).code === "ENOENT") return null;
-      throw err;
-    }
+    manifest.addPlugin(toolId, InstalledPlugin.withProjectHooks(plugin, projectHooks));
   }
 }

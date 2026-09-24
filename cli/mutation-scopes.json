@@ -1,9 +1,9 @@
 {
-  "$comment": "The one declaration of what mutation testing covers and the floor each scope must hold. scripts/run-mutation.mjs runs a scope by name and fails below its break; tests/architecture/mutation-covers-source.arch.test.ts checks no source file falls outside both maps, that every scope declares a floor, and that package.json has a script per scope. Globs, never file lists: a list goes stale the day a file is added, and the score does not drop, because the mutants that would have died were never generated. A floor is raised to the measured score after a run, never lowered without the reason here. A scope's mutate is one glob or a list where a leading ! excludes; tools is split one scope per tool profile: a profile is a static declaration whose every mutant reruns each test that loads it, and the five together outlasted every other scope on a two-core runner; vscode's single file stays with the rest.",
+  "$comment": "The one declaration of what mutation testing covers and the floor each scope must hold. scripts/run-mutation.mjs runs a scope by name and fails below its break; tests/architecture/mutation-covers-source.arch.test.ts checks no source file falls outside both maps, that every scope declares a floor, and that package.json has a script per scope. Globs, never file lists: a list goes stale the day a file is added, and the score does not drop, because the mutants that would have died were never generated. A floor is raised to the measured score after a run, never lowered without the reason here. A scope's mutate is one glob or a list where a leading ! excludes; tools is split one scope per tool profile: a profile is a static declaration whose every mutant reruns each test that loads it, and the five together outlasted every other scope on a two-core runner; vscode's single file stays with the rest. canary mutates a fixture, not the product: its one mutant stops a module from loading, which Stryker's vitest runner scores as survived on its own; at 100 the scope fails the day that happens again, so a Stryker or vitest upgrade cannot quietly bypass tests/helpers/unloadable-file-as-failed-test.ts.",
   "scopes": {
     "kernel": {
       "mutate": "src/kernel/**/*.ts",
-      "break": 71
+      "break": 95
     },
     "tools": {
       "mutate": [
@@ -12,13 +12,14 @@
         "!src/contexts/tools/domain/profiles/codex/**/*.ts",
         "!src/contexts/tools/domain/profiles/copilot/**/*.ts",
         "!src/contexts/tools/domain/profiles/cursor/**/*.ts",
+        "!src/contexts/tools/domain/profiles/kilo/**/*.ts",
         "!src/contexts/tools/domain/profiles/opencode/**/*.ts"
       ],
       "break": 94
     },
     "telemetry": {
       "mutate": "src/contexts/telemetry/**/*.ts",
-      "break": 75
+      "break": 93
     },
     "translate": {
       "mutate": "src/contexts/translate/**/*.ts",
@@ -38,27 +39,38 @@
     },
     "runtime": {
       "mutate": "src/runtime/**/*.ts",
-      "break": 67
+      "break": 90
     },
     "tools-claude": {
       "mutate": "src/contexts/tools/domain/profiles/claude/**/*.ts",
-      "break": 92
+      "break": 94
     },
     "tools-codex": {
       "mutate": "src/contexts/tools/domain/profiles/codex/**/*.ts",
-      "break": 87
+      "break": 94
     },
     "tools-copilot": {
       "mutate": "src/contexts/tools/domain/profiles/copilot/**/*.ts",
-      "break": 80
+      "break": 95
     },
     "tools-cursor": {
       "mutate": "src/contexts/tools/domain/profiles/cursor/**/*.ts",
-      "break": 94
+      "break": 97
     },
     "tools-opencode": {
       "mutate": "src/contexts/tools/domain/profiles/opencode/**/*.ts",
-      "break": 81
+      "break": 94
+    },
+    "tools-kilo": {
+      "mutate": "src/contexts/tools/domain/profiles/kilo/**/*.ts",
+      "break": 64
+    },
+    "canary": {
+      "mutate": [
+        "tests/fixtures/stryker-canary/**/*.ts",
+        "!tests/fixtures/stryker-canary/**/*.test.ts"
+      ],
+      "break": 100
     }
   },
   "excluded": {

@@ -5,6 +5,7 @@ import { MarketplaceAddUseCase } from "../../../../src/contexts/distribution/app
 import { ResolveMarketplaceUseCase } from "../../../../src/contexts/distribution/application/resolve-marketplace-use-case.js";
 import { PluginCatalogRepositoryAdapter } from "../../../../src/contexts/distribution/infrastructure/plugin-catalog-repository-adapter.js";
 import { MarketplaceRemoveUseCase } from "../../../../src/contexts/framework/application/flows/marketplace-remove-use-case.js";
+import { ProjectPluginCleanup } from "../../../../src/contexts/framework/application/ownership/project-plugin-cleanup.js";
 import {
   InvalidMarketplaceNameError,
   InvalidPluginManifestError,
@@ -42,7 +43,12 @@ async function buildUseCase(prompter: Prompter = new KeepPrompter()) {
     fetchMarketplaceSource,
     new PluginCatalogRepositoryAdapter(fs)
   );
-  const removeUseCase = new MarketplaceRemoveUseCase(fs, manifestRepo, registry, prompter);
+  const removeUseCase = new MarketplaceRemoveUseCase(
+    new ProjectPluginCleanup(fs),
+    manifestRepo,
+    registry,
+    prompter
+  );
   const useCase = new MarketplaceAddUseCase(
     registry,
     trustStore,

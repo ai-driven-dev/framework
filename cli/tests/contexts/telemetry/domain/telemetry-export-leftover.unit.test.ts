@@ -36,4 +36,8 @@ describe("findLeftoverExportKeys", () => {
   it("reads an env block that is not an object as nothing found", () => {
     expect(findLeftoverExportKeys(JSON.stringify({ env: "not-an-object" }))).toEqual([]);
   });
+
+  it("reads a file whose whole content is a JSON array as nothing found, rather than throwing", () => {
+    expect(findLeftoverExportKeys("[1, 2]")).toEqual([]);
+  });
 });

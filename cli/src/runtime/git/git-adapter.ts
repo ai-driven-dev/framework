@@ -112,7 +112,9 @@ export class GitAdapter implements VersionControl {
     if (!content.includes(line)) return false;
 
     const kept = content.split("\n").filter((entry) => entry.trim() !== line);
+    const executable = await this.fs.isExecutable(hookPath);
     await this.fs.writeFile(hookPath, kept.join("\n"));
+    if (executable) await this.fs.chmodExecutable(hookPath);
     return true;
   }
 

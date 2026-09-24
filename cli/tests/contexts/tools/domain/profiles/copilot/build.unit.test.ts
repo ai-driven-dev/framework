@@ -295,4 +295,12 @@ describe("buildCopilotFlatContract()", () => {
       ].join("\n")
     );
   });
+
+  it("drops only the trailing .md from the name it gives a flat agent", () => {
+    const transform = supported(buildCopilotFlatContract().artifacts.agents).transform;
+
+    expect(
+      transform?.("---\ndescription: Helps\n---\nBody.\n", "aidd-dev", "notes.md-helper.md")
+    ).toBe("---\ndescription: 'Helps'\nname: 'aidd-dev-notes.md-helper'\n---\nBody.\n");
+  });
 });

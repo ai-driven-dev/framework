@@ -193,3 +193,92 @@ describe("TelemetryOffUseCase — taking back what on installed", () => {
     expect(logger.allMessages.join("\n")).not.toContain("still calls the delegate");
   });
 });
+
+describe("TelemetryOffUseCase — what it says, word for word", () => {
+  const SWITCH_LINE = `AIDD telemetry switch -> ${SWITCH_PATH}`;
+
+  it("says only that the switch was already off, on a project that was never on", async () => {
+    const { logger, useCase } = buildUseCase();
+
+    await useCase.execute({ projectRoot: PROJECT_ROOT });
+
+    expect(logger.infoMessages).toStrictEqual([
+      SWITCH_LINE,
+      "AIDD telemetry: already off, unchanged.",
+    ]);
+  });
+
+  it("says only that the switch was already off, on a switch file already off", async () => {
+    const seed = { [SWITCH_PATH]: JSON.stringify({ telemetry: { enabled: false } }) };
+    const { logger, useCase } = buildUseCase(seed);
+
+    await useCase.execute({ projectRoot: PROJECT_ROOT });
+
+    expect(logger.infoMessages).toStrictEqual([
+      SWITCH_LINE,
+      "AIDD telemetry: already off, unchanged.",
+    ]);
+  });
+
+  it("says the switch is off once it turned it off", async () => {
+    const seed = { [SWITCH_PATH]: JSON.stringify({ telemetry: { enabled: true } }) };
+    const { logger, useCase } = buildUseCase(seed);
+
+    await useCase.execute({ projectRoot: PROJECT_ROOT });
+
+    expect(logger.infoMessages).toStrictEqual([SWITCH_LINE, "AIDD telemetry: off."]);
+  });
+
+  it("reads an unparseable switch file as off, rather than crashing on it", async () => {
+    const seed = { [SWITCH_PATH]: "not json" };
+    const { fs, useCase } = buildUseCase(seed);
+
+    const result = await useCase.execute({ projectRoot: PROJECT_ROOT });
+
+    expect(result.switchChanged).toBe(false);
+    expect(fs.getFile(SWITCH_PATH)).toBe("not json");
+  });
+
+  it("names the leftover export file and its keys, and what to do by hand", async () => {
+    const { logger, evidence, useCase } = buildUseCase();
+    const settingsPath = join(PROJECT_ROOT, ".claude", "settings.local.json");
+    evidence.leftoverExport = [
+      { path: settingsPath, keys: ["CLAUDE_CODE_ENABLE_TELEMETRY", "OTEL_EXPORTER_OTLP_ENDPOINT"] },
+    ];
+
+    await useCase.execute({ projectRoot: PROJECT_ROOT });
+
+    expect(logger.warnMessages).toStrictEqual([
+      `${settingsPath} still sets CLAUDE_CODE_ENABLE_TELEMETRY, OTEL_EXPORTER_OTLP_ENDPOINT — ` +
+        "this switch cannot touch a tool's own settings file. Delete these keys from its " +
+        "`env` block by hand to stop that export.",
+    ]);
+  });
+
+  it("names the lefthook job left calling the removed delegate, word for word", async () => {
+    const fs = new InMemoryFileAdapter({}, new DeterministicHasher());
+    const logger = new CapturingLogger();
+    const git: VersionControl = {
+      ...noGit,
+      removeCommitMessageDelegate: async () => ({
+        removed: true,
+        hookManager: "lefthook",
+        managerCallsDelegate: true,
+      }),
+    };
+    const useCase = new TelemetryOffUseCase(fs, logger, new StubTelemetryEvidenceReader(), git);
+
+    await useCase.execute({ projectRoot: PROJECT_ROOT });
+
+    expect(logger.infoMessages).toStrictEqual([
+      SWITCH_LINE,
+      "AIDD telemetry: already off, unchanged.",
+      "New commits will carry no AIDD-Session-Id trailer. Commits already made " +
+        "keep theirs — nothing here rewrites history.",
+      "lefthook.yml still calls the delegate this just removed — that file is not this " +
+        "CLI's to edit, so the job is left in place. Its own `[ -f ]` guard now finds " +
+        "nothing there, so it runs nothing; delete it from " +
+        "lefthook.yml by hand if you want it gone too.",
+    ]);
+  });
+});

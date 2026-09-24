@@ -54,6 +54,36 @@ describe("reading whether Codex has been told it may run the recorder's hook", (
     expect(trust).toMatchObject({ readable: true, trusted: false });
   });
 
+  it("reads a trusted_hash line without the key above it as not trusted", async () => {
+    codexHome('trusted_hash = "abc123"\n');
+
+    expect(await new HookTrustReaderAdapter().read()).toMatchObject({ trusted: false });
+  });
+
+  it("reads the key wherever it sits in the file, not only on its first line", async () => {
+    codexHome(`[projects]\n[other]\n${APPROVED_KEY}\ntrusted_hash = "abc123"\n`);
+
+    expect(await new HookTrustReaderAdapter().read()).toMatchObject({ trusted: true });
+  });
+
+  it("reads a trusted_hash written without spaces around its equals sign as trusted", async () => {
+    codexHome(`${APPROVED_KEY}\ntrusted_hash="abc123"\n`);
+
+    expect(await new HookTrustReaderAdapter().read()).toMatchObject({ trusted: true });
+  });
+
+  it("reads an indented trusted_hash line as trusted", async () => {
+    codexHome(`${APPROVED_KEY}\n    trusted_hash = "abc123"\n`);
+
+    expect(await new HookTrustReaderAdapter().read()).toMatchObject({ trusted: true });
+  });
+
+  it("reads a key whose name merely ends in trusted_hash as not trusted", async () => {
+    codexHome(`${APPROVED_KEY}\nnot_trusted_hash = "abc123"\n`);
+
+    expect(await new HookTrustReaderAdapter().read()).toMatchObject({ trusted: false });
+  });
+
   it("reads a config naming no hook of ours as not trusted", async () => {
     codexHome(
       '[hooks.state."someone-else@1.0.0:hooks/hooks.json:session_start:0:0"]\ntrusted_hash = "x"\n'

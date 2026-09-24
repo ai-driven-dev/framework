@@ -98,7 +98,7 @@ describe("AuthStorage", () => {
       expect(execFileSync).toHaveBeenCalledTimes(1);
       const [command, args] = vi.mocked(execFileSync).mock.calls[0] ?? [];
       expect(command).toBe("icacls");
-      expect(args).toEqual([path, "/inheritance:r", "/grant:r", expect.stringContaining(":(R,W)")]);
+      expect(args).toStrictEqual([path, "/inheritance:r", "/grant:r", "tester:(R,W)"]);
     });
 
     it("names the account from the environment, not the %USERNAME% only a shell would expand", async () => {

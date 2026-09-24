@@ -1,5 +1,8 @@
+import { mkdirSync, mkdtempSync, rmSync, symlinkSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 import { createClaudeCodeTranscriptAccumulator } from "../../../../src/contexts/telemetry/domain/formats/claude-code-transcript.js";
 import { createCodexRolloutAccumulator } from "../../../../src/contexts/telemetry/domain/formats/codex-rollout.js";
 import { TranscriptCostReaderAdapter } from "../../../../src/contexts/telemetry/infrastructure/transcript-cost-reader-adapter.js";
@@ -35,6 +38,33 @@ describe("TranscriptCostReaderAdapter — Claude Code", () => {
 
   it("says it found no session, not that the session cost nothing, when no file names it", async () => {
     expect(await adapter.read("no-such-session")).toEqual({ records: [], sessionFound: false });
+  });
+
+  const created: string[] = [];
+  afterEach(() => {
+    for (const dir of created) rmSync(dir, { recursive: true, force: true });
+    created.length = 0;
+  });
+
+  it("walks only directories and regular files, so a symlink named like a transcript is no session", async () => {
+    const home = mkdtempSync(join(tmpdir(), "aidd-transcript-walk-"));
+    created.push(home);
+    const projectDir = join(home, ".claude", "projects", "fake-project");
+    mkdirSync(projectDir, { recursive: true });
+    symlinkSync(
+      join(HOME_DIR, ".claude", "projects", "fake-project", `${CLAUDE_SID}.jsonl`),
+      join(projectDir, `${CLAUDE_SID}.jsonl`)
+    );
+    const linkedAdapter = new TranscriptCostReaderAdapter(
+      home,
+      CLAUDE_CODE_TRANSCRIPT_LOCATION,
+      createClaudeCodeTranscriptAccumulator
+    );
+
+    await expect(linkedAdapter.read(CLAUDE_SID)).resolves.toEqual({
+      records: [],
+      sessionFound: false,
+    });
   });
 
   it("answers with nothing, not an error, when the declared root does not exist", async () => {

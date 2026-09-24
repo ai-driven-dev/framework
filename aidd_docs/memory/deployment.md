@@ -9,7 +9,7 @@ Where the project runs and how it ships: CI/CD, environments, and release.
 | Workflow | Runs |
 | --- | --- |
 | `ci.yml` | commitlint on pull requests and on `main`'s tip, plus the PR title itself — the subject a squash merge uses — then release-please on `main` and the release jobs |
-| `cli-ci.yml` | the `cli` and `kanban` gates — job list in the CLI bank. No `paths:` filter, deliberately: it runs on every push and pull request, and a `changes` job decides in bash whether the rest has anything to do — `cli/**`, `kanban/**`, `scripts/__tests__/**`, `README.md`, the workflow file itself, and `plugins/aidd-telemetry/**` except its `*.md` prose |
+| `cli-ci.yml` | the `cli` and `kanban` gates — job list in the CLI bank. No `paths:` filter, deliberately: it runs on every push and pull request, and a `changes` job decides in bash whether the rest has anything to do — `cli/**`, `kanban/**`, `scripts/__tests__/**`, `README.md`, the workflow file itself, and `plugins/aidd-telemetry/**` except its `*.md` prose. Mutations skip only for a same-repository numeric `promote/next-to-main-*` snapshot whose `cli / gate` passed in a successful `next` push and whose PR merge tree equals that snapshot with `main` already its ancestor; the resulting `main` push reuses it only for that exact two-parent promotion merge when its tree, associated merged PR, and source snapshot all match. Missing, failed, unreadable, or mismatched Git/API proof keeps normal mutation scopes. All non-mutation checks still run on the current PR merge ref or `main` commit. |
 | `validate.yml` | plugin and marketplace manifests against their schemas, plus the whole pre-commit over the whole tree |
 | `codeql.yml` | code scanning |
 | `promote.yml` | opens the `next` to `main` promote PR, merge auto-merge |
@@ -44,13 +44,13 @@ None — no server, no container, no IaC. What ships are release assets and publ
 
 Branch model in `vcs.md`, cadence and safety rules in [`RELEASE.md`](../../RELEASE.md).
 
-1. release-please opens the Release PR. Only paths with commits bump; the root bumps every cycle. CI auto-merges it with `--squash --admin`, because the branch policy refuses a plain merge, so `main` never holds merged but unversioned code.
-2. Merging creates the release and its tags — a root umbrella tag, `cli-v<semver>`, and one `<plugin>-v<semver>` per plugin, `include-component-in-tag: true`.
+1. release-please opens the Release PR. Only paths with commits bump; the root bumps every cycle. CI auto-merges it with `--merge --admin`, the only method `.github/rulesets/main.json`'s `pull_request` rule allows, so `main` never holds merged but unversioned code.
+2. Merging creates the release and its tags — a root umbrella tag, `cli-v<semver>`, and one `<plugin>-v<semver>` per plugin, `include-component-in-tag: true`. `scripts/credit-release-authors.cjs` then appends each line's commit author as `(@login)`: a workaround until [googleapis/release-please#2892](https://github.com/googleapis/release-please/pull/2892) ships.
 3. Release jobs: `build-and-attach` (marketplace bundle), `build-per-tool` (nine distributions), `build-plugin` (one archive per released path), `publish-cli`.
 4. Archives are staged outside the repo tree, uploaded with `gh release upload --clobber`.
 5. `back-merge.yml` folds `main` into `next`.
 
-Config: `release-please-config.json`, ten packages. Manifest: `.release-please-manifest.json`.
+Config: `release-please-config.json`, eleven packages. Manifest: `.release-please-manifest.json`.
 
 ## Gotchas
 

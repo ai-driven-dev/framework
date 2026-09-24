@@ -4,6 +4,7 @@ import type { PluginTranslationMode } from "../../../../tools/domain/plugin-tran
 import type { PluginDistribution } from "../../../../translate/domain/plugin-distribution.js";
 import type { ReadonlySkipList } from "../../../../translate/domain/plugin-translation-skip.js";
 import type { Manifest } from "../../../domain/manifest.js";
+import type { ProjectHooksProvenance } from "../../../domain/plugins/installed-plugin.js";
 
 /** A translator strategy contract, not a hexagonal port adapter. */
 export interface PluginTranslator {
@@ -23,6 +24,8 @@ export interface PluginTranslator {
     projectRoot: string,
     manifest: Manifest,
     marketplace: string | undefined,
-    previousMcpEntries?: ReadonlyMap<string, string>
+    previousMcpEntries?: ReadonlyMap<string, string>,
+    userScopeDirTaken?: boolean,
+    previousProjectHooks?: ProjectHooksProvenance
   ): Promise<{ skipped: ReadonlySkipList; written?: number }>;
 }

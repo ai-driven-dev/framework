@@ -6,6 +6,7 @@ import {
   SESSION_TRAILER_DELEGATE_FILE,
   SESSION_TRAILER_TOKEN,
   sessionTrailerDelegateScript,
+  sessionTrailerLefthookJob,
 } from "../../../../src/contexts/telemetry/domain/formats/commit-session-trailer.js";
 import type { VersionControl } from "../../../../src/contexts/telemetry/domain/ports/version-control.js";
 import { TelemetryProjectScopeRequiresYesError } from "../../../../src/kernel/errors.js";
@@ -250,5 +251,127 @@ describe("TelemetryOnUseCase — making commits joinable to the session that mad
     await useCase.execute({ projectRoot: PROJECT_ROOT, confirmed: true });
 
     expect(calls).toHaveLength(2);
+  });
+});
+
+describe("TelemetryOnUseCase — what it says, word for word", () => {
+  const SWITCH_LINE = `AIDD telemetry switch -> ${SWITCH_PATH}`;
+  const IGNORED_LINE =
+    "Added aidd_docs/runs/ to .gitignore — the journal names no person, only the " +
+    "repository, the task folders written into, the skills run, and their timings. " +
+    "Delete that line to commit it instead.";
+
+  it("names the command in the refusal it throws without --yes", async () => {
+    const { useCase } = buildUseCase();
+
+    await expect(useCase.execute({ projectRoot: PROJECT_ROOT, confirmed: false })).rejects.toThrow(
+      `aidd telemetry on writes the git-tracked ${SWITCH_PATH}, turning telemetry on for ` +
+        "everyone who clones. Pass --yes to confirm."
+    );
+  });
+
+  it("says the journal was git-ignored, then that the switch is on, and nothing else", async () => {
+    const { logger, useCase } = buildUseCase();
+
+    await useCase.execute({ projectRoot: PROJECT_ROOT, confirmed: true });
+
+    expect(logger.infoMessages).toStrictEqual([SWITCH_LINE, IGNORED_LINE, "AIDD telemetry: on."]);
+    expect(logger.warnMessages).toStrictEqual([]);
+  });
+
+  it("says only that the switch was already on, the second time", async () => {
+    const { logger, useCase } = buildUseCase();
+    await useCase.execute({ projectRoot: PROJECT_ROOT, confirmed: true });
+    logger.reset();
+
+    await useCase.execute({ projectRoot: PROJECT_ROOT, confirmed: true });
+
+    expect(logger.infoMessages).toStrictEqual([
+      SWITCH_LINE,
+      "AIDD telemetry: already on, unchanged.",
+    ]);
+  });
+
+  it("warns which journal files git already tracks, and touches none of them", async () => {
+    const fs = new InMemoryFileAdapter({}, new DeterministicHasher());
+    const logger = new CapturingLogger();
+    const git: VersionControl = {
+      ...noGit,
+      listTrackedFiles: async () => ["aidd_docs/runs/a.jsonl", "aidd_docs/runs/b.jsonl"],
+    };
+    const useCase = new TelemetryOnUseCase(
+      fs,
+      logger,
+      new GitignoreUseCase(fs),
+      git,
+      new InMemoryTelemetrySink()
+    );
+
+    await useCase.execute({ projectRoot: PROJECT_ROOT, confirmed: true });
+
+    expect(logger.warnMessages).toStrictEqual([
+      "Already tracked by git — the repository, the task folders written into, the skills " +
+        "run, and their timings:\n  aidd_docs/runs/a.jsonl\n  aidd_docs/runs/b.jsonl\n" +
+        "Nothing removed or rewritten — your call.",
+    ]);
+  });
+
+  it("says what the trailer line it installed does, and the command undoing it", async () => {
+    const fs = new InMemoryFileAdapter({}, new DeterministicHasher());
+    const logger = new CapturingLogger();
+    const git: VersionControl = {
+      ...noGit,
+      installCommitMessageDelegate: async () => ({ lineAdded: true }),
+    };
+    const useCase = new TelemetryOnUseCase(
+      fs,
+      logger,
+      new GitignoreUseCase(fs),
+      git,
+      new InMemoryTelemetrySink()
+    );
+
+    await useCase.execute({ projectRoot: PROJECT_ROOT, confirmed: true });
+
+    expect(logger.infoMessages).toStrictEqual([
+      SWITCH_LINE,
+      IGNORED_LINE,
+      "Commits made by an AI session will carry an AIDD-Session-Id trailer, so what " +
+        "a session cost can be read per commit. A commit no session made carries nothing. " +
+        "`aidd telemetry off` removes it.",
+      "AIDD telemetry: on.",
+    ]);
+  });
+
+  it("prints the job to add by hand when lefthook owns the hook and does not call the delegate yet", async () => {
+    const fs = new InMemoryFileAdapter({}, new DeterministicHasher());
+    const logger = new CapturingLogger();
+    const git: VersionControl = {
+      ...noGit,
+      installCommitMessageDelegate: async () => ({
+        lineAdded: false,
+        hookManager: "lefthook",
+        managerCallsDelegate: false,
+      }),
+    };
+    const useCase = new TelemetryOnUseCase(
+      fs,
+      logger,
+      new GitignoreUseCase(fs),
+      git,
+      new InMemoryTelemetrySink()
+    );
+
+    await useCase.execute({ projectRoot: PROJECT_ROOT, confirmed: true });
+
+    expect(logger.infoMessages).toStrictEqual([
+      SWITCH_LINE,
+      IGNORED_LINE,
+      "lefthook owns prepare-commit-msg here, so nothing was appended to it. Commits will " +
+        "not carry an AIDD-Session-Id trailer until you " +
+        "add this command under `prepare-commit-msg:` in lefthook.yml:\n\n" +
+        `${sessionTrailerLefthookJob(SESSION_TRAILER_DELEGATE_FILE)}\n`,
+      "AIDD telemetry: on.",
+    ]);
   });
 });

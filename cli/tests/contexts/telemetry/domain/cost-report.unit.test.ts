@@ -6,6 +6,7 @@ import {
   type CostReportInput,
   type CostReportSessionJournal,
   type CostTotals,
+  TotalsAccumulator,
   toMicroUsd,
 } from "../../../../src/contexts/telemetry/domain/cost-report.js";
 import {
@@ -1798,5 +1799,42 @@ describe("buildCostReport — a line on disk holds whatever it holds, not what a
     });
 
     expect(built.activeTimeSeconds).toBe(42);
+  });
+});
+
+describe("buildCostReport — a field with nothing to say is absent, never an undefined key", () => {
+  it("carries exactly the keys an unfiltered, request-only period fills", () => {
+    const built = report({ records: [request({ cost_usd: 1 })] });
+
+    expect(Object.keys(built)).toStrictEqual([
+      "fromDay",
+      "toDay",
+      "sessions",
+      "totals",
+      "bySteps",
+      "byModels",
+      "byAgents",
+      "byPrompts",
+      "byTools",
+      "byProjects",
+      "byTasks",
+      "byBacklog",
+      "byFlows",
+      "byDays",
+      "byPeople",
+      "attributionMix",
+      "undatedRecords",
+      "unreadableLines",
+      "measurementEnabled",
+    ]);
+  });
+});
+
+describe("TotalsAccumulator", () => {
+  it("builds exactly the requests count for a record carrying neither cost nor counters", () => {
+    const accumulator = new TotalsAccumulator();
+    accumulator.add(request());
+
+    expect(accumulator.build()).toStrictEqual({ requests: 1 });
   });
 });

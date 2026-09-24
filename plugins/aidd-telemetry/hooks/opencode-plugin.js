@@ -16,7 +16,13 @@
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
-const JOURNAL_SCRIPT = fileURLToPath(new URL("./journal.cjs", import.meta.url));
+// Not a sibling: OpenCode's loader scans `plugin/` one level deep, so the build delivers this
+// module there alone and every other hook script under `hooks/<plugin>/`. That is the same
+// `../hooks/<plugin>/` the generated bridge resolves (opencode-hooks-bridge.ts's HOOKS_DIR),
+// and build.unit.test.ts checks this literal against where the build actually writes it.
+const JOURNAL_SCRIPT = fileURLToPath(
+  new URL("../hooks/aidd-telemetry/journal.cjs", import.meta.url)
+);
 
 // Never `process.execPath`: OpenCode ships as its own standalone binary, so that path names
 // `opencode` itself, not a Node runtime that can run journal.cjs.

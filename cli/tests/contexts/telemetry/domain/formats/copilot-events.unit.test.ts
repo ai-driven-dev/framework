@@ -120,3 +120,57 @@ describe("mapCopilotEventsToSinkRecords", () => {
     expect(mapCopilotEventsToSinkRecords.length).toBe(2);
   });
 });
+
+const TOKEN_DETAILS = {
+  input: { tokenCount: 10 },
+  output: { tokenCount: 42 },
+  cache_read: { tokenCount: 0 },
+  cache_write: { tokenCount: 21070 },
+};
+
+function shutdown(line: Record<string, unknown>): string {
+  return JSON.stringify({ type: "session.shutdown", ...line });
+}
+
+describe("a shutdown counts only when every counter is stated as a number", () => {
+  it.each(["input", "output", "cache_read", "cache_write"] as const)(
+    "yields nothing, without throwing, when tokenDetails lacks %s",
+    (missing) => {
+      const { [missing]: _dropped, ...tokenDetails } = TOKEN_DETAILS;
+
+      expect(mapCopilotEventsToSinkRecords(shutdown({ data: { tokenDetails } }), SESSION)).toEqual(
+        []
+      );
+    }
+  );
+
+  it("yields nothing when a counter is a string rather than a number", () => {
+    const tokenDetails = { ...TOKEN_DETAILS, input: { tokenCount: "10" } };
+
+    expect(mapCopilotEventsToSinkRecords(shutdown({ data: { tokenDetails } }), SESSION)).toEqual(
+      []
+    );
+  });
+
+  it("yields nothing for a shutdown that carries no data at all", () => {
+    expect(mapCopilotEventsToSinkRecords(shutdown({}), SESSION)).toEqual([]);
+  });
+});
+
+describe("the record carries exactly the keys the shutdown states", () => {
+  it("holds identity and counters alone when the shutdown names no turn and no moment", () => {
+    const content = shutdown({ id: 7, data: { tokenDetails: TOKEN_DETAILS } });
+
+    expect(mapCopilotEventsToSinkRecords(content, SESSION)).toStrictEqual([
+      {
+        kind: "session",
+        vendor_id: SESSION,
+        vendor_field: "sessionId",
+        input_tokens: 10,
+        output_tokens: 42,
+        cache_read_tokens: 0,
+        cache_creation_tokens: 21070,
+      },
+    ]);
+  });
+});

@@ -3,15 +3,18 @@
  * have died were never generated. `mutation-scopes.json` declares the globs, the floor each
  * scope must hold, and what is left out, so a directory belonging to neither fails by name.
  */
-import { existsSync } from "node:fs";
+import { existsSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { HARNESS, scopesToRun } from "../../scripts/mutation-scopes-to-run.mjs";
 import {
   breakVerdict,
+  changedArgs,
+  changedRanges,
   pruneIncremental,
   scoreOf,
   strykerArgs,
+  survivorsOf,
 } from "../../scripts/run-mutation.mjs";
 import { matchesGlob, REPO_ROOT, read, sourceFiles } from "./helpers.js";
 
@@ -44,6 +47,12 @@ function isCovered(path: string, { scopes, excluded }: ScopeDeclaration): boolea
   );
 }
 
+function fixtureFiles(): string[] {
+  return readdirSync(join(REPO_ROOT, "cli/tests/fixtures"), { recursive: true, encoding: "utf8" })
+    .filter((entry) => entry.endsWith(".ts"))
+    .map((entry) => `tests/fixtures/${entry.replaceAll("\\", "/")}`);
+}
+
 describe("mutation covers every source file", () => {
   it("no file under src/ falls outside both the scopes and the exclusions", () => {
     const declared = declaration();
@@ -68,7 +77,7 @@ describe("mutation covers every source file", () => {
     }
     for (const [name, { mutate }] of Object.entries(scopes)) {
       expect(
-        files.some((file) => scopeMatches(mutate, file)),
+        [...files, ...fixtureFiles()].some((file) => scopeMatches(mutate, file)),
         `scope "${name}" (${mutate}) matches no file — it would score an empty set`
       ).toBe(true);
     }
@@ -220,7 +229,53 @@ describe("the guard itself", () => {
         },
       },
     });
-    expect(pruned.files?.["a.ts"]?.mutants).toEqual([{ status: "Killed" }, { status: "Timeout" }]);
+    expect(pruned.files?.["a.ts"]?.mutants).toEqual([{ status: "Killed" }]);
+  });
+
+  it("mutates only the lines a diff adds or changes under src/, never a deletion or another file", () => {
+    const diff = [
+      "diff --git a/src/a.ts b/src/a.ts",
+      "--- a/src/a.ts",
+      "+++ b/src/a.ts",
+      "@@ -10,2 +10,3 @@ function a() {",
+      "@@ -20 +21 @@ function b() {",
+      "@@ -30,4 +31,0 @@ function c() {",
+      "diff --git a/src/b.ts b/src/b.ts",
+      "--- /dev/null",
+      "+++ b/src/b.ts",
+      "@@ -0,0 +1,5 @@",
+      "diff --git a/README.md b/README.md",
+      "+++ b/README.md",
+      "@@ -1 +1 @@",
+    ].join("\n");
+    expect(changedRanges(diff)).toEqual(["src/a.ts:10-12", "src/a.ts:21-21", "src/b.ts:1-5"]);
+    expect(changedArgs(["src/a.ts:10-12", "src/b.ts:1-5"])).toEqual([
+      "run",
+      "--mutate",
+      "src/a.ts:10-12,src/b.ts:1-5",
+    ]);
+  });
+
+  it("names each mutant a test left alive, with its file and line", () => {
+    const report = {
+      files: {
+        "src/a.ts": {
+          mutants: [
+            { status: "Killed", mutatorName: "BooleanLiteral", location: { start: { line: 3 } } },
+            { status: "Survived", mutatorName: "StringLiteral", location: { start: { line: 7 } } },
+            {
+              status: "NoCoverage",
+              mutatorName: "BlockStatement",
+              location: { start: { line: 9 } },
+            },
+          ],
+        },
+      },
+    };
+    expect(survivorsOf(report)).toEqual([
+      "src/a.ts:7 StringLiteral (Survived)",
+      "src/a.ts:9 BlockStatement (NoCoverage)",
+    ]);
   });
 
   it("fails a score under the floor and passes one on it", () => {

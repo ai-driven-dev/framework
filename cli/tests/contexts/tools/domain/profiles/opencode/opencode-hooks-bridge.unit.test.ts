@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { generateOpencodeHooksBridge } from "../../../../../../src/contexts/tools/domain/profiles/opencode/opencode-hooks-bridge.js";
+import {
+  generateOpencodeHooksBridge,
+  parseHooksJsonForBridge,
+} from "../../../../../../src/contexts/tools/domain/profiles/opencode/opencode-hooks-bridge.js";
 
 // Built rather than written as a literal "${CLAUDE_PLUGIN_ROOT}" string: biome reads a plain
 // string holding "${...}" as a forgotten template literal.
@@ -148,11 +151,83 @@ describe("generateOpencodeHooksBridge", () => {
     expect(generateOpencodeHooksBridge(JSON.stringify({ hooks: {} }), "aidd-test")).toBeNull();
   });
 
+  it("generates a bridge for a plugin whose hooks name only Stop", () => {
+    const hooksJson = JSON.stringify({
+      hooks: {
+        Stop: [
+          { hooks: [{ type: "command", command: `node ${ROOT}/hooks/journal.cjs turn-end` }] },
+        ],
+      },
+    });
+
+    expect(generateOpencodeHooksBridge(hooksJson, "aidd-test")).toContain(
+      'const SESSION_START = [];\nconst STOP = [{"script":"journal.cjs","args":["turn-end"]}];\nconst POST_TOOL_USE = [];\n'
+    );
+  });
+
+  it("generates a bridge for a plugin whose hooks name only PostToolUse", () => {
+    const hooksJson = JSON.stringify({
+      hooks: {
+        PostToolUse: [
+          { hooks: [{ type: "command", command: `node ${ROOT}/hooks/journal.cjs tool-used` }] },
+        ],
+      },
+    });
+
+    expect(generateOpencodeHooksBridge(hooksJson, "aidd-test")).toContain(
+      'const SESSION_START = [];\nconst STOP = [];\nconst POST_TOOL_USE = [{"script":"journal.cjs","args":["tool-used"]}];\n'
+    );
+  });
+
+  it("names the bridge's export after the plugin even when its name holds an empty segment", () => {
+    expect(generateOpencodeHooksBridge(THREE_EVENT_HOOKS_JSON, "aidd--sample")).toContain(
+      "export const AiddSampleHooks = async (input) => {"
+    );
+  });
+
   it("drops a hook whose command does not invoke node against its own hooks/ script", () => {
     const hooksJson = JSON.stringify({
       hooks: { Stop: [{ hooks: [{ type: "command", command: `${ROOT}/hooks/check.sh` }] }] },
     });
 
     expect(generateOpencodeHooksBridge(hooksJson, "aidd-test")).toBeNull();
+  });
+});
+
+describe("parseHooksJsonForBridge", () => {
+  const stopCallsOf = (command: string) =>
+    parseHooksJsonForBridge(
+      JSON.stringify({ hooks: { Stop: [{ hooks: [{ type: "command", command }] }] } })
+    ).stop;
+
+  it("splits a hook's arguments on any run of whitespace", () => {
+    expect(stopCallsOf(`node ${ROOT}/hooks/journal.cjs turn-end   --quiet`)).toStrictEqual([
+      { script: "journal.cjs", args: ["turn-end", "--quiet"] },
+    ]);
+  });
+
+  it("reads a command written with surrounding whitespace", () => {
+    expect(stopCallsOf(`  node ${ROOT}/hooks/journal.cjs  `)).toStrictEqual([
+      { script: "journal.cjs", args: [] },
+    ]);
+  });
+
+  it("skips a hook that carries no command, keeping the ones beside it", () => {
+    const hooksJson = JSON.stringify({
+      hooks: {
+        Stop: [
+          {
+            hooks: [
+              { type: "prompt" },
+              { type: "command", command: `node ${ROOT}/hooks/journal.cjs` },
+            ],
+          },
+        ],
+      },
+    });
+
+    expect(parseHooksJsonForBridge(hooksJson).stop).toStrictEqual([
+      { script: "journal.cjs", args: [] },
+    ]);
   });
 });

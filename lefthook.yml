@@ -61,6 +61,14 @@ pre-commit:
           exit 0
         fi
         node scripts/check-skill-argument-hints.mjs
+    architecture-rules:
+      glob: "plugins/*/{skills,agents}/**/*.md"
+      run: |
+        if ! command -v node >/dev/null 2>&1; then
+          echo "ℹ️  node not available; skipping architecture-rules"
+          exit 0
+        fi
+        node scripts/check-architecture-rules.js {files}
     context-imports:
       # Two patterns: "**/" needs a literal slash, so it never matches a repository-root file.
       glob:
@@ -175,10 +183,10 @@ pre-push:
   commands:
     cli-knip:
       glob: "cli/**"
-      run: cd cli && pnpm knip
+      run: node scripts/gate-witness.js cli-knip -- pnpm --dir cli knip
     cli-test:
       glob: "cli/**"
-      run: cd cli && pnpm test
+      run: node scripts/gate-witness.js cli-test -- pnpm --dir cli test
 
 commit-msg:
   commands:

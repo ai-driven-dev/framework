@@ -32,6 +32,11 @@ The version-control conventions this project follows: branches, commits, and the
 - The board does not advance on its own; it is moved by hand, by a human or an agent through `gh`. Board conventions are in `backlog.md`.
 - Automation owns `promote/*` and `back-merge/*`, which follow neither the format nor the table.
 
+## Pull requests
+
+- A pull request stacked on another targets that branch, not `next`. Before merging the base, retarget the dependent one: `gh pr edit <n> --base next`. GitHub closes a pull request whose base branch is deleted, unless the deletion is the merge's own, so never delete a branch another open pull request targets.
+- A squash merge of the base leaves the dependent branch carrying the base's original commits, and it conflicts with `next`. Replay only its own commits: `git rebase --onto origin/next <base's last commit>`, then push with `--force-with-lease`.
+
 ## Commits
 
 - Convention: [Conventional Commits](https://www.conventionalcommits.org/), enforced by `commitlint.config.cjs`. **Read that file before composing a message; if this page and the config disagree, the config wins.**

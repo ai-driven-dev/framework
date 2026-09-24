@@ -95,13 +95,13 @@ function parseBoundary(parsed: RawJournalLine): RunJournalBoundary | null {
   return { type: "step_start", at, skill, ...(turnId === undefined ? {} : { turn_id: turnId }) };
 }
 
-/** A plain checkout writes neither key; `asString` rejects `""`, so a torn or empty value
- * reads as "not stated" rather than as a worktree named nothing. */
+/** A plain checkout writes neither key, and an empty value is dropped with them, so a torn
+ * or empty value reads as "not stated" rather than as a worktree named nothing. */
 function parseWorktree(
   parsed: RawJournalLine
 ): Pick<RunJournalSessionStart, "worktree_id" | "worktree_repo_id"> {
-  const worktreeId = asString(parsed.worktree_id);
-  const worktreeRepoId = asString(parsed.worktree_repo_id);
+  const worktreeId = asString(parsed.worktree_id) || undefined;
+  const worktreeRepoId = asString(parsed.worktree_repo_id) || undefined;
   return {
     ...(worktreeId === undefined ? {} : { worktree_id: worktreeId }),
     ...(worktreeRepoId === undefined ? {} : { worktree_repo_id: worktreeRepoId }),

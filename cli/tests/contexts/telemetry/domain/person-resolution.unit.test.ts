@@ -104,6 +104,19 @@ describe("resolvePerson", () => {
     expect(resolvePerson(null, undefined).resolution).toBe("none");
   });
 
+  it("reads an empty identifier as none carried, naming this machine's own person", () => {
+    expect(resolvePerson(identityWithAlsoMe(), "")).toStrictEqual({
+      resolution: "this-machine",
+      personId: "person-a",
+      displayName: "Ada",
+      identities: ["person-a", "claude-machine-1", "codex-machine-2"],
+    });
+  });
+
+  it("reads an empty identifier against no identity as none, never as an unresolved blank", () => {
+    expect(resolvePerson(null, "")).toStrictEqual({ resolution: "none", identities: [] });
+  });
+
   it("a resolved person carries back every identity behind it, including its canonical one", () => {
     const resolved = resolvePerson(identityWithAlsoMe(), "codex-machine-2");
 

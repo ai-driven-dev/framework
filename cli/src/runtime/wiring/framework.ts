@@ -3,6 +3,7 @@ import "../../contexts/tools/domain/profiles/claude/profile.js";
 import "../../contexts/tools/domain/profiles/codex/profile.js";
 import "../../contexts/tools/domain/profiles/copilot/profile.js";
 import "../../contexts/tools/domain/profiles/cursor/profile.js";
+import "../../contexts/tools/domain/profiles/kilo/profile.js";
 import "../../contexts/tools/domain/profiles/opencode/profile.js";
 import "../../contexts/tools/domain/profiles/vscode/profile.js";
 import { MarketplaceAddUseCase } from "../../contexts/distribution/application/marketplace-add-use-case.js";
@@ -35,6 +36,12 @@ import { InstallIdeToolUseCase } from "../../contexts/framework/application/inst
 import { InstallRuntimeConfigUseCase } from "../../contexts/framework/application/install/install-runtime-config-use-case.js";
 import { PostInstallPipelineUseCase } from "../../contexts/framework/application/install/post-install-pipeline-use-case.js";
 import { ListInstalledRulesUseCase } from "../../contexts/framework/application/list-installed-rules-use-case.js";
+import { NativeHostRegistrationGate } from "../../contexts/framework/application/ownership/native-host-registration-gate.js";
+import { ProjectPluginCleanup } from "../../contexts/framework/application/ownership/project-plugin-cleanup.js";
+import { UserMarketplaceRemoveUseCase } from "../../contexts/framework/application/ownership/user-marketplace-remove-use-case.js";
+import { UserPluginDistributionLoader } from "../../contexts/framework/application/ownership/user-plugin-distribution-loader.js";
+import { UserPluginFileUpdater } from "../../contexts/framework/application/ownership/user-plugin-file-updater.js";
+import { UserPluginUpdateUseCase } from "../../contexts/framework/application/ownership/user-plugin-update-use-case.js";
 import { PluginAddUseCase } from "../../contexts/framework/application/plugin/plugin-add-use-case.js";
 import { PluginInstallFromMarketplaceUseCase } from "../../contexts/framework/application/plugin/plugin-install-from-marketplace-use-case.js";
 import { PluginInstallUseCase } from "../../contexts/framework/application/plugin/plugin-install-use-case.js";
@@ -66,13 +73,21 @@ import { PluginDistributionReaderAdapter } from "../../contexts/framework/infras
 import { UserManifestRepositoryAdapter } from "../../contexts/framework/infrastructure/user-manifest-repository-adapter.js";
 import { UserSourceReferencesAdapter } from "../../contexts/framework/infrastructure/user-source-references-adapter.js";
 import type { FileMerger } from "../../contexts/tools/domain/ports/file-merger.js";
+import type { NativeMarketplaceSourceReader } from "../../contexts/tools/domain/ports/native-marketplace-source-reader.js";
+import { codexMarketplaceSourceListContract } from "../../contexts/tools/domain/profiles/codex/native-marketplace-source.js";
+import { copilotMarketplaceSourceListContract } from "../../contexts/tools/domain/profiles/copilot/native-marketplace-source.js";
 import { hostPluginRegistryReaders } from "../../contexts/tools/infrastructure/host-plugin-registry-reader-adapter.js";
+import {
+  HostRegistryMarketplaceSourceReaderAdapter,
+  NativeMarketplaceSourceReaderAdapter,
+} from "../../contexts/tools/infrastructure/native-marketplace-source-reader-adapter.js";
 import type { AssetProvider } from "../../kernel/ports/asset-provider.js";
 import type { FileReader } from "../../kernel/ports/file-reader.js";
 import type { FileWriter } from "../../kernel/ports/file-writer.js";
 import type { Logger } from "../../kernel/ports/logger.js";
 import type { Prompter } from "../../kernel/ports/prompter.js";
 import type { VersionReader } from "../../kernel/ports/version-reader.js";
+import type { AiToolId } from "../../kernel/tool.js";
 import { CLIOutput } from "../../presentation/output.js";
 import { PluginPickUseCase } from "../../presentation/prompts/plugin-pick-use-case.js";
 import { SetupPluginsPromptUseCase } from "../../presentation/prompts/setup-plugins-prompt-use-case.js";
@@ -85,6 +100,7 @@ import { AuthStorage } from "../auth/auth-storage.js";
 import { GhCliAdapter } from "../auth/gh-cli-adapter.js";
 import { GhTokenAdapter } from "../auth/gh-token-adapter.js";
 import type { CredentialStore } from "../auth/ports/credential-store.js";
+import { atomicWriteFile } from "../filesystem/atomic-write.js";
 import { FileAdapter } from "../filesystem/file-adapter.js";
 import { HasherAdapter } from "../filesystem/hasher-adapter.js";
 import { GitAdapter } from "../git/git-adapter.js";
@@ -126,9 +142,11 @@ interface Deps extends TelemetryDeps {
   pluginRemoveUseCase: PluginRemoveUseCase;
   pluginListUseCase: PluginListUseCase;
   pluginUpdateUseCase: PluginUpdateUseCase;
+  userPluginUpdateUseCase: UserPluginUpdateUseCase;
   marketplaceAddUseCase: MarketplaceAddUseCase;
   marketplaceListUseCase: MarketplaceListUseCase;
   marketplaceRemoveUseCase: MarketplaceRemoveUseCase;
+  userMarketplaceRemoveUseCase: UserMarketplaceRemoveUseCase;
   marketplaceRefreshUseCase: MarketplaceRefreshUseCase;
   marketplaceCheckUseCase: MarketplaceCheckUseCase;
   userSourceReferences: UserSourceReferences;
@@ -191,7 +209,7 @@ export async function createDeps(
   const fs = new FileAdapter(hasher, logger);
   const pluginDistributionReader = new PluginDistributionReaderAdapter(fs);
   const manifestRepo = new ManifestRepositoryAdapter(projectRoot);
-  const userManifestRepo = new UserManifestRepositoryAdapter(userConfigDir);
+  const userManifestRepo = new UserManifestRepositoryAdapter(userConfigDir, atomicWriteFile);
   const http = new HttpClient();
   const authStorage = new AuthStorage();
   const ghCliAdapter = new GhCliAdapter();
@@ -222,6 +240,17 @@ export async function createDeps(
     ? new InquirerPrompterAdapter()
     : new SilentPrompterAdapter();
   const { nativePluginActivators, hostMarketplaceRegistries } = wireTools();
+  const nativeSources = new Map<AiToolId, NativeMarketplaceSourceReader>([
+    ["codex", new NativeMarketplaceSourceReaderAdapter(codexMarketplaceSourceListContract)],
+    ["copilot", new NativeMarketplaceSourceReaderAdapter(copilotMarketplaceSourceListContract)],
+  ]);
+  const claudeMarketplaceRegistry = hostMarketplaceRegistries.get("claude");
+  if (claudeMarketplaceRegistry !== undefined) {
+    nativeSources.set(
+      "claude",
+      new HostRegistryMarketplaceSourceReaderAdapter(claudeMarketplaceRegistry)
+    );
+  }
   // Read once, reused wherever a use case needs the scope a plugin is actually registered
   // at: removal, clean, and doctor's own registration check.
   const hostPluginRegistries = hostPluginRegistryReaders();
@@ -244,14 +273,27 @@ export async function createDeps(
     nativePluginActivators,
     hostPluginRegistries,
     userSourceReferences,
-    marketplaceRegistry
+    marketplaceRegistry,
+    userManifestRepo,
+    nativeSources
   );
   const pluginListUseCase = new PluginListUseCase(manifestRepo);
+  const nativeHostRegistrationGate = new NativeHostRegistrationGate(
+    nativePluginActivators,
+    hostPluginRegistries,
+    nativeSources
+  );
   const marketplaceRemoveUseCase = new MarketplaceRemoveUseCase(
-    fs,
+    new ProjectPluginCleanup(fs, userManifestRepo),
     manifestRepo,
     marketplaceRegistry,
     prompter
+  );
+  const userMarketplaceRemoveUseCase = new UserMarketplaceRemoveUseCase(
+    fs,
+    userManifestRepo,
+    marketplaceRegistry,
+    nativeHostRegistrationGate
   );
   // `marketplace add --overwrite` removes before it adds, and removing deletes installed
   // plugin files — framework work — so the orchestration belongs here rather than pulling
@@ -261,7 +303,12 @@ export async function createDeps(
     marketplaceTrustStore,
     resolveMarketplaceUseCase,
     prompter,
-    marketplaceRemoveUseCase
+    {
+      execute: (options) =>
+        options.scope === "user"
+          ? userMarketplaceRemoveUseCase.execute(options)
+          : marketplaceRemoveUseCase.execute(options),
+    }
   );
   const marketplaceCheckUseCase = new MarketplaceCheckUseCase(
     manifestRepo,
@@ -302,7 +349,10 @@ export async function createDeps(
     userConfigDir,
     marketplaceRegisterFrameworkUseCase,
     userSourceReferences,
-    currentVersionProvider
+    currentVersionProvider,
+    hostPluginRegistries,
+    userManifestRepo,
+    nativeSources
   );
   const pluginAddUseCase = new PluginAddUseCase(
     fs,
@@ -312,7 +362,8 @@ export async function createDeps(
     hasher,
     logger,
     marketplaceRegistry,
-    ensureBuiltMarketplaceUseCase
+    ensureBuiltMarketplaceUseCase,
+    userManifestRepo
   );
   const gitignoreUseCase = new GitignoreUseCase(fs);
   const git = new GitAdapter(fs);
@@ -454,6 +505,17 @@ export async function createDeps(
     hasher,
     builtMaterializationDeps
   );
+  const userPluginUpdateUseCase = new UserPluginUpdateUseCase(
+    userManifestRepo,
+    new UserPluginFileUpdater(
+      fs,
+      new UserPluginDistributionLoader(pluginFetcher, pluginDistributionReader),
+      hasher,
+      builtMaterializationDeps
+    ),
+    logger,
+    nativeHostRegistrationGate
+  );
   const restoreUseCase = new RestoreUseCase(
     fs,
     manifestRepo,
@@ -466,7 +528,7 @@ export async function createDeps(
     assetProvider,
     builtMaterializationDeps
   );
-  const uninstallUseCase = new UninstallUseCase(fs, manifestRepo, logger);
+  const uninstallUseCase = new UninstallUseCase(fs, manifestRepo, logger, userManifestRepo);
   const statusAllUseCase = new StatusAllUseCase(statusUseCase);
   const restoreAllUseCase = new RestoreAllUseCase(
     manifestRepo,
@@ -503,7 +565,9 @@ export async function createDeps(
     hostMarketplaceRegistries,
     undefined,
     userSourceReferences,
-    hostPluginRegistries
+    hostPluginRegistries,
+    userManifestRepo,
+    nativeSources
   );
   const cleanUserScopeUseCase = new CleanUserScopeUseCase(
     fs,
@@ -515,7 +579,9 @@ export async function createDeps(
     hostMarketplaceRegistries,
     homedir,
     userSourceReferences,
-    prompter
+    prompter,
+    nativeSources,
+    hostPluginRegistries
   );
   const doctorAllUseCase = new DoctorAllUseCase(doctorUseCase);
   const listInstalledRulesUseCase = new ListInstalledRulesUseCase(fs);
@@ -544,9 +610,11 @@ export async function createDeps(
     pluginRemoveUseCase,
     pluginListUseCase,
     pluginUpdateUseCase,
+    userPluginUpdateUseCase,
     marketplaceAddUseCase,
     marketplaceListUseCase,
     marketplaceRemoveUseCase,
+    userMarketplaceRemoveUseCase,
     marketplaceRefreshUseCase,
     marketplaceCheckUseCase,
     userSourceReferences,

@@ -53,6 +53,58 @@ describe("RunJournalReaderAdapter", () => {
     ]);
   });
 
+  it("reads an empty worktree id and repo id as not stated, never as a worktree named nothing", async () => {
+    await writeFile(
+      join(runsDir, `${RUN_ID}__${SESSION_ID}.jsonl`),
+      runFileLines({
+        type: "session_start",
+        at: "2026-08-20T09:59:00Z",
+        run_id: RUN_ID,
+        tool: "claude-code",
+        vendor_id: SESSION_ID,
+        worktree_id: "",
+        worktree_repo_id: "",
+      })
+    );
+
+    const journal = await new RunJournalReaderAdapter(projectRoot).read(SESSION_ID);
+
+    expect(journal?.session).toStrictEqual({
+      type: "session_start",
+      at: "2026-08-20T09:59:00Z",
+      run_id: RUN_ID,
+      tool: "claude-code",
+      vendor_id: SESSION_ID,
+    });
+  });
+
+  it("keeps a stated worktree id and repo id as written", async () => {
+    await writeFile(
+      join(runsDir, `${RUN_ID}__${SESSION_ID}.jsonl`),
+      runFileLines({
+        type: "session_start",
+        at: "2026-08-20T09:59:00Z",
+        run_id: RUN_ID,
+        tool: "claude-code",
+        vendor_id: SESSION_ID,
+        worktree_id: "feature-x",
+        worktree_repo_id: "framework",
+      })
+    );
+
+    const journal = await new RunJournalReaderAdapter(projectRoot).read(SESSION_ID);
+
+    expect(journal?.session).toStrictEqual({
+      type: "session_start",
+      at: "2026-08-20T09:59:00Z",
+      run_id: RUN_ID,
+      tool: "claude-code",
+      vendor_id: SESSION_ID,
+      worktree_id: "feature-x",
+      worktree_repo_id: "framework",
+    });
+  });
+
   it("answers null for a session no run file names, rather than the wrong file", async () => {
     await writeFile(
       join(runsDir, `${RUN_ID}__other-session.jsonl`),

@@ -221,3 +221,30 @@ describe("codexAgentMarkdownToToml()", () => {
     });
   });
 });
+
+describe("the name a Codex agent falls back to", () => {
+  it("ignores an empty frontmatter name and names the agent after its plugin and file", () => {
+    expect(
+      codexAgentMarkdownToToml(
+        "---\nname: ''\ndescription: Plans\n---\nBody.\n",
+        "aidd-dev",
+        "planner.md"
+      )
+    ).toBe(
+      'name = "aidd-dev-planner"\ndescription = "Plans"\ndeveloper_instructions = "Body.\\n"\n'
+    );
+  });
+
+  it("drops only the trailing .md from the file it names a flat agent after", () => {
+    expect(
+      codexAgentMarkdownToToml(
+        "---\ndescription: Plans\n---\nBody.\n",
+        "aidd-dev",
+        "notes.md-helper.md",
+        true
+      )
+    ).toBe(
+      'name = "aidd-dev-notes.md-helper"\ndescription = "Plans"\ndeveloper_instructions = "Body.\\n"\n'
+    );
+  });
+});

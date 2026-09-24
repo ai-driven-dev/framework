@@ -96,8 +96,11 @@ Every capability lives in exactly one plugin, chosen by **concern**. This taxono
 | `aidd-orchestrator` | Orchestration        | Coordination |
 | `aidd-ui` 🚧        | UI/UX design         | Execution    |
 | `aidd-telemetry` 🧪 | Measurement          | Observation  |
+| `aidd-qa` 🆕         | Acceptance QA        | Execution    |
 
 `aidd-ui` is alpha: smoke-test only, off the curated install path.
+
+`aidd-qa` is new, off the curated install path until it is proven outside this repository. It validates observable behavior against acceptance criteria and drives a browser to record evidence, so it sits in the Execution layer alongside `aidd-dev`.
 
 `aidd-telemetry` is beta, off the curated install path: opt-in only — a repository must commit `.aidd/config.json` with `telemetry.enabled: true`. Each session appends observations, one JSON object per line, to its own `aidd_docs/runs/<run_id>__<vendor_id>.jsonl`, created on demand and git-ignored; that directory's presence is a location, not a permission. A line is never rewritten, only appended — `session_start`, `turn_end`, `file_written`, `step_start`, `step_end`, `task_declared` and `unrecognised_payload` (a path is repository-relative, never a task_id: task identity is a derivation, and belongs to whatever reads the log). Never a measurement; tokens and cost are joined afterwards from the provider's telemetry.
 
@@ -135,7 +138,7 @@ flowchart LR
 
 Recipe skills route to self-contained actions with inputs, outputs, process steps, and tests. An orchestrator with no domain logic may instead route through numbered reference protocols that define handoffs and delegate the work to capabilities discovered at runtime.
 
-A skill never links outside itself. The same tree ships flat, where the skill folder is renamed `<plugin>-<skill>`, or as a marketplace, so no relative path survives both. A bundled script is named plugin-relative in backticks, never linked.
+A skill never links outside itself (`scripts/__tests__/a-skill-links-only-inside-itself.test.js`). The same tree ships flat, where the skill folder is renamed `<plugin>-<skill>`, or as a marketplace, so no relative path survives both. A bundled script is named plugin-relative in backticks, never linked.
 
 ## 🤖 Skills and agents
 
@@ -154,6 +157,11 @@ Choose by context, not complexity: keep the work visible to the caller → skill
 Address a capability only where the dispatch is declared: a router's `## Actions` table, an agent's `# Skills you may invoke` list. Everywhere else, name the concept the capability owns, never the skill that owns it.
 
 Recipe skills never hardcode a sibling provider. They discover cross-plugin capabilities at runtime through description matching. Agent permission lists and orchestration references are responsibility maps, so they name the current provider with its canonical `/plugin:folder` or `@plugin:agent` address. The orchestrator must verify that provider is installed before calling it.
+
+Two paths are exempt, both in `isExemptFromOrthogonality`:
+
+- `plugins/aidd-orchestrator/**`, whose references are responsibility maps.
+- `plugins/aidd-context/skills/00-onboard/**`, whose menus name addresses a person types. Temporary: it ends when that skill resolves its providers at runtime.
 
 This distinction keeps recipe plugins swappable while making orchestration handoffs explicit and auditable.
 

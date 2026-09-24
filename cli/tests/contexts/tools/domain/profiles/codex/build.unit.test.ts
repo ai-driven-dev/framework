@@ -23,6 +23,14 @@ const HOOKS_JSON = JSON.stringify({
   hooks: { Stop: [{ hooks: [{ type: "command", command: "node journal.cjs" }] }] },
 });
 
+const NO_CONTENT = {
+  hasAgents: false,
+  agentsList: [],
+  skillsList: [],
+  hasHooksJson: false,
+  hasMcpJson: false,
+};
+
 function supported(artifact: ArtifactContract): Extract<ArtifactContract, { supported: true }> {
   if (!artifact.supported) throw new Error("artifact is declared unsupported");
   return artifact;
@@ -92,6 +100,27 @@ describe("buildCodexContract()", () => {
     expect(manifest).toStrictEqual({ name: "aidd-dev" });
   });
 
+  it("copies an author given as a plain name into the manifest", () => {
+    const manifest = buildCodexContract().synthesizeManifest?.(
+      { name: "aidd-dev", author: "AIDD" },
+      NO_CONTENT
+    );
+
+    expect(manifest).toStrictEqual({ name: "aidd-dev", author: "AIDD" });
+  });
+
+  it("copies an author given as an object into the manifest", () => {
+    const manifest = buildCodexContract().synthesizeManifest?.(
+      { name: "aidd-dev", author: { name: "AIDD", email: "team@example.test" } },
+      NO_CONTENT
+    );
+
+    expect(manifest).toStrictEqual({
+      name: "aidd-dev",
+      author: { name: "AIDD", email: "team@example.test" },
+    });
+  });
+
   it("sources skills, agents, mcp and hooks from the plugin tree, and neither rules nor commands", () => {
     const { artifacts } = buildCodexContract();
 
@@ -126,6 +155,14 @@ describe("buildCodexContract()", () => {
       mcp: ".mcp.json",
       hook: "hooks/journal.cjs",
     });
+  });
+
+  it("changes only the trailing .md of a staged agent's name to .toml", () => {
+    const agents = supported(buildCodexContract().artifacts.agents);
+
+    expect(agents.path("aidd-dev", "agents/notes.md-helper.md")).toBe(
+      "codex-agents/notes.md-helper.toml"
+    );
   });
 
   it("keeps only the three frontmatter fields Codex reads in a skill", () => {
@@ -259,6 +296,14 @@ describe("buildCodexFlatContract()", () => {
     );
   });
 
+  it("changes only the trailing .md of a flat agent's name to .toml", () => {
+    const agents = supported(buildCodexFlatContract().artifacts.agents);
+
+    expect(agents.path("aidd-dev", "agents/notes.md-helper.md")).toBe(
+      ".codex/agents/aidd-dev-notes.md-helper.toml"
+    );
+  });
+
   it("names a flat agent after its plugin, whatever its own frontmatter says", () => {
     const transform = supported(buildCodexFlatContract().artifacts.agents).transform;
 
@@ -311,5 +356,22 @@ describe("buildCodexFlatContract()", () => {
       config:
         'project_doc_max_bytes = 262144\n\n[mcp_servers.aidd-dev-context]\ncommand = "node"\n\n[features]\nhooks = true\n',
     });
+  });
+
+  it("writes no mcp_servers table when no built plugin ships an mcp server", async () => {
+    const fs = new InMemoryFileAdapter();
+
+    await buildCodexFlatContract().emitConfigArtifact?.(
+      ["aidd-dev"],
+      "/out",
+      "/src",
+      fs,
+      { validate: () => undefined },
+      { loadConfigAsset: () => ({}), loadSchema: () => ({}) }
+    );
+
+    expect(fs.getFile("/out/.codex/config.toml")).toBe(
+      "project_doc_max_bytes = 262144\n\n[features]\nhooks = true\n"
+    );
   });
 });
