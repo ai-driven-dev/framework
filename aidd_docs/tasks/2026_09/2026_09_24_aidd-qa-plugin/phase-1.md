@@ -10,7 +10,7 @@ status: pending
 
 ```txt
 plugins/aidd-qa/
-├── .claude-plugin/plugin.json                              ✅ name, version 1.0.0, description, skills[]
+├── .claude-plugin/plugin.json                              ✅ name, version 0.1.0, description, skills[]
 ├── README.md                                               ✅ concern, skill table, browser-only scope, install line
 └── skills/01-acceptance-qa/
     ├── SKILL.md                                            ✅ router: prerequisites → load-scope → prepare-run → run-scenarios
@@ -54,7 +54,7 @@ journey
 
 > The plugin declares itself and one skill.
 
-1. `plugin.json` from `aidd-ui`'s shape: `name: aidd-qa`, `version: 1.0.0`, description "Acceptance QA: validates observable behavior against acceptance criteria and records reviewer evidence. Use when … Do NOT use for …", `skills: ["./skills/01-acceptance-qa"]`, keywords.
+1. `plugin.json` from `aidd-ui`'s shape: `name: aidd-qa`, `version: 0.1.0`, description "Acceptance QA: validates observable behavior against acceptance criteria and records reviewer evidence. Use when … Do NOT use for …", `skills: ["./skills/01-acceptance-qa"]`, keywords.
 2. `README.md`: concern, skill table, browser as the only interface today, `/plugin install aidd-qa@aidd-framework`. No sibling-plugin address.
 
 ### `2)` Move the skill

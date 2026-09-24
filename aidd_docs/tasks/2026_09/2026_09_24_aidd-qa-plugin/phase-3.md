@@ -11,7 +11,7 @@ status: pending
 ```txt
 .claude-plugin/marketplace.json            ✏️ aidd-qa entry, strict, metadata.recommended false
 release-please-config.json                 ✏️ plugins/aidd-qa package
-.release-please-manifest.json              ✏️ "plugins/aidd-qa": "1.0.0"
+.release-please-manifest.json              ✏️ "plugins/aidd-qa": "0.1.0"
 .github/workflows/ci.yml                   ✏️ build-plugin matrix gains aidd-qa
 commitlint.config.cjs                      ✏️ scope-enum gains aidd-qa, qa
 docs/ARCHITECTURE.md                       ✏️ concerns table row: aidd-qa, Acceptance QA, Execution + status note
@@ -50,7 +50,7 @@ journey
 > Every release and CI guard sees the plugin.
 
 1. Marketplace entry after `aidd-telemetry`, description by concern, `recommended: false`.
-2. release-please package block copied from `plugins/aidd-ui`; manifest `1.0.0`.
+2. release-please package block copied from `plugins/aidd-ui`; manifest `0.1.0`.
 3. `ci.yml` matrix and commitlint scopes.
 
 ### `2)` Docs and memory
