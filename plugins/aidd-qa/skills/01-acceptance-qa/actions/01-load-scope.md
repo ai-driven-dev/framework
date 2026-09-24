@@ -20,8 +20,8 @@ Acceptance criteria (issue, spec, user story, or the user) and the reviewed cand
 3. **Locate.** Use the source's feature folder, else `aidd_docs/tasks/<yyyy_mm>/<yyyy_mm_dd>_<feature-slug>/`.
 4. **Skip.** Nothing kept: write `qa.md` from [qa-report-template.md](../assets/qa-report-template.md) with verdict `skipped`, then stop.
 5. **Lock.** 1 happy path from the primary journey; edge cases only when a criterion names them. An edge from the diff, code, tests, or an unmapped plan edge is never a candidate. Ask once when journeys conflict or an edge is external or destructive.
-6. **Validate.** Reject a scenario missing a trigger, an observable outcome, or a teardown when it mutates state; keep the reason.
-7. **Show.** Happy path, `Edge case | Criteria | Decision` table, Out of interface and Rejected when non-empty. Never repeat steps.
+6. **Validate.** Reject a scenario missing a trigger or an observable outcome; keep the reason.
+7. **Show.** Evidence folder, happy path, `Edge case | Criteria | Decision` table, Out of interface and Rejected when non-empty. Never repeat steps.
 
 ## Test
 

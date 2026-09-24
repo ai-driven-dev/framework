@@ -12,11 +12,10 @@ A successful prepared run with a reachable application, authenticated sessions, 
 
 ## Process
 
-1. **Preflight.** Check the application and fixed `1280×720` viewport.
-2. **Reuse.** Read `aidd_docs/memory/testing.md` first when it exists. 
-   - Prefer a test-only entry (isolated Compose project, test database) over the development one.
+1. **Reuse.** Read `aidd_docs/memory/testing.md` first when it exists. 
    - Resolve Browser QA entry, auth, fixtures, and reset from its `Browser QA` section, then a directly related browser test, then one targeted browser snapshot. 
    - Stop searching as soon as the run is executable.
+2. **Preflight.** Check the application and fixed `1280×720` viewport.
 3. **Authenticate.** Establish the required role before recording. 
    - Never include login discovery or secret lookup in evidence.
 4. **Fixture.** Use deterministic data satisfying each setup. 
