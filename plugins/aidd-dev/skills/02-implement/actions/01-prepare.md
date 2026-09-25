@@ -12,9 +12,14 @@ The resolved plan on a feature branch with its frontmatter `status: in-progress`
 
 ## Process
 
-1. **Resolve.** Resolve the plan from the arguments. A path must exist and be readable. With neither a readable file nor inline content, stop with `plan not found at <path>`. Never fabricate a plan.
-2. **Branch.** On the default branch, create a feature branch and announce it. On a non-default branch, keep it.
-3. **Mark.** Set plan frontmatter `status: in-progress`. Include it at the first authorized commit checkpoint, or with `implemented` when there is no phase.
+1. **Resolve.** Resolve the plan from the arguments.
+   A path must exist and be readable.
+   With neither a readable file nor inline content, stop with `plan not found at <path>`.
+   Never fabricate a plan.
+2. **Branch.** On the default branch, create a feature branch and announce it.
+   On a non-default branch, keep it.
+3. **Mark.** Set plan frontmatter `status: in-progress`.
+   Include it at the first authorized commit checkpoint, or with `implemented` when there is no phase.
 
 ## Test
 
