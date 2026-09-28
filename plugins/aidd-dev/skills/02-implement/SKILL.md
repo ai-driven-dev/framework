@@ -21,8 +21,22 @@ Before running an action, read its file in `actions/`, not only the table or ass
 
 ## Transversal rules
 
-- Status: drive the plan through `pending → in-progress → implemented` (or `blocked`), and each phase through `pending → in-progress → done`. The `in-progress` values are runtime markers; only `done` and `implemented` need to land in a commit.
-- Commits: one commit per phase, its code together with the phase reaching `done`, plus a final commit for the plan reaching `implemented`. Never leave the tree dirty at a phase boundary. Do not scatter separate `in-progress` status commits: one context now owns both code and status, so there is nothing to guard against.
+- Status: drive the plan through `pending → in-progress → implemented` (or `blocked`), and each phase through `pending → in-progress → done`.
+  Never commit an `in-progress` marker alone.
+- Commit timing: follow the user's explicit instruction, else `AI should auto commit` in VCS memory.
+  `never` or absent means no automatic commits.
+  `after task done` commits a verified `###` category; defer an unverifiable or final category until the phase assertion.
+  `after phase` waits for that assertion; `after feature` and `post-tests` wait for final validation.
+  An explicit commit request without timing also waits for final validation.
+- Commit unit: one coherent `###` category under `## Tasks to do`, including all numbered steps, per commit; never commit per step or checkbox.
+  Keep category changes separable even in shared files; if impossible, report `replan needed`.
+  The last category commit includes phase `done`; commit plan `implemented` separately after final validation.
+  Commit only implementation-owned changes due at the checkpoint; leave unrelated pre-existing edits untouched.
+  Without authorization, leave changes uncommitted.
+- Commit handoff: at a due checkpoint, discover an installed atomic local commit capability by purpose.
+  Delegate staging, message, commit, and hook handling for each due unit.
+  Stop and report if the provider is absent or rejects a commit.
+  Automatic commits require a non-default branch; never request a push.
 
 ## References
 

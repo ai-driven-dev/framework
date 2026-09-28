@@ -8,19 +8,29 @@ The prepared plan on its feature branch, from `01-prepare`.
 
 ## Output
 
-Every phase coded, asserted, and its frontmatter marked `status: done`, with the commits on the branch. Or a stop at `status: blocked` when a human is needed, or a `replan needed` report on any drift from the plan.
+Each phase asserted and marked `status: done`, or a stop at `status: blocked` or `replan needed`.
 
 ## Process
 
-1. **Open.** Walk the phases in order. In a feature folder each is a `phase-<n>.md` next to `plan.md`. Set its `status: in-progress` as a runtime marker; no commit yet.
-2. **Code.** Build the phase scope against its acceptance criteria.
-3. **Assert.** Assert the phase against its acceptance criteria. On failure, repair and repeat. The gate is the assertion passing, not a self-report. Once it passes, set `status: done` and commit the phase as one unit, its code and its status together.
+1. **Open.** Walk the phases in order.
+   In a feature folder each is a `phase-<n>.md` next to `plan.md`.
+   Set its `status: in-progress` as a runtime marker; no commit yet.
+2. **Code by category.** Complete the numbered steps under each `###` heading in `## Tasks to do`; check relevant behavior and retain separable changes.
+   For legacy phases without headings, treat the phase as one category.
+   Hand off only categories due at the current checkpoint.
+3. **Assert the phase.** Assert all acceptance criteria; repair the owning category and repeat on failure.
+   Keep corrections to an earlier committed category separate until an authorized checkpoint.
+   On success, set `status: done`; hand off categories due now and retain the others for finalization.
 4. **Guard.** Stop the loop on either condition:
-   - **Blocked** (see [blocked.md](../references/blocked.md)): set the plan `status: blocked`, commit, stop.
-   - **Drift**: any mismatch with the plan, trivial or substantive, stop and report `replan needed: <reason>`. Never rewrite the plan; replanning is the caller's job.
+   - **Blocked** (see [blocked.md](../references/blocked.md)): set the plan `status: blocked` and stop; do not automatically commit an unverified unit.
+   - **Drift**: any mismatch with the plan, trivial or substantive, stop and report `replan needed: <reason>`.
+     Never rewrite the plan; replanning is the caller's job.
 
 ## Test
 
-- A phase reaches `status: done` only after assert passes against its acceptance criteria, in one commit with its code (`git status --short` shows no dangling phase edits).
-- The branch holds one commit per phase; there are no separate `in-progress` status commits.
+- Each due category has one scoped commit, including all its steps.
+  Any correction to an earlier commit stays scoped to that category.
+- The full assertion passes before `status: done`; when committed, that status rides in the last category's commit.
+- Without authorization, no commits are made.
+  Unrelated pre-existing edits remain untouched.
 - A blocker leaves the plan `status: blocked` with no later phase run.

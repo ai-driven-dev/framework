@@ -12,10 +12,13 @@ The feature validated green with the plan frontmatter `status: implemented`.
 
 ## Process
 
-1. **Verify.** Run the plan's validation commands and tests. Never format code, never run dev mode.
-2. **Mark.** Every phase done and validation green, set the plan `status: implemented` and commit it.
+1. **Verify.** Run the plan's validation commands and tests.
+   Never format code, never run dev mode.
+2. **Mark.** When every phase is done and validation passes, set plan `status: implemented`.
+   Hand off retained categories separately in phase order, then the plan status, at their authorized checkpoints.
+   Without authorization, leave changes uncommitted.
 
 ## Test
 
 - The validation commands exit zero.
-- The plan reads `status: implemented`, committed (`git status --short` shows it clean).
+- The plan reads `status: implemented`; authorized commits include only due implementation changes and status.
