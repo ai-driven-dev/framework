@@ -7,7 +7,6 @@ import copilotVscodeSettings from "../../../assets/configs/copilot/vscode-settin
 };
 import cursorSettings from "../../../assets/configs/cursor/settings.json" with { type: "json" };
 import kiloJson from "../../../assets/configs/kilo/kilo.json" with { type: "json" };
-import mistralSettings from "../../../assets/configs/mistral/settings.json" with { type: "json" };
 import opencodeJson from "../../../assets/configs/opencode/opencode.json" with { type: "json" };
 import vscodeExtensions from "../../../assets/configs/vscode/extensions.json" with { type: "json" };
 import vscodeKeybindings from "../../../assets/configs/vscode/keybindings.json" with {
@@ -31,7 +30,7 @@ const CONFIG_ASSETS: Readonly<Record<ToolId, Readonly<Record<string, ConfigAsset
   kilo: { "kilo.json": kiloJson },
   opencode: { "opencode.json": opencodeJson },
   codex: { "config.toml": codexConfigToml },
-  mistral: { "settings.json": mistralSettings },
+  mistral: {},
   vscode: {
     "settings.json": vscodeSettings,
     "keybindings.json": vscodeKeybindings,

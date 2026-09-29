@@ -10,6 +10,7 @@ import {
   genericFlatSkillPath,
 } from "../../../../../kernel/materialization/flat-paths.js";
 import type { ToolBuildContract } from "../../build-contract.js";
+import { MISTRAL_PLUGIN_ROOT_TOKEN } from "../../formats/plugin-root-token.js";
 import {
   buildClaudeStyleEntry,
   buildClaudeStyleMarketplace,
@@ -24,8 +25,6 @@ import {
 } from "./mistral-paths.js";
 import { convertMistralSkillFrontmatter } from "./mistral-skill-frontmatter.js";
 
-const MISTRAL_PLUGIN_ROOT_TOKEN = "$" + "{MISTRAL_PLUGIN_ROOT}";
-
 export function buildMistralContract(): ToolBuildContract {
   const manifestRelative = OUTPUT_MISTRAL_MANIFEST_RELATIVE;
   const marketplaceRelative = OUTPUT_MISTRAL_MARKETPLACE_RELATIVE;
@@ -35,7 +34,7 @@ export function buildMistralContract(): ToolBuildContract {
     synthesizeManifest: (source, presence) =>
       synthesizeClaudeStyleManifest(source, presence, {
         agentsField: true,
-        hooksField: true,
+        hooksField: false,
       }),
     manifestSchemaName: "plugin-manifest",
     artifacts: {
@@ -55,11 +54,7 @@ export function buildMistralContract(): ToolBuildContract {
         source: { kind: "configFile", srcPath: ".mcp.json" },
         path: () => ".mcp.json",
       },
-      hooks: {
-        supported: true,
-        source: { kind: "hooksBundle", jsonPath: "hooks/hooks.json", scriptDir: "hooks" },
-        path: (_p, rel) => rel,
-      },
+      hooks: { supported: false, skipReason: MISTRAL_HOOKS_SKIP_REASON },
       rules: { supported: false },
       commands: { supported: false },
     },

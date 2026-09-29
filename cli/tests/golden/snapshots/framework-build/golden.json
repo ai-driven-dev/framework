@@ -965,9 +965,7 @@
     "plugins/aidd-context/skills/01-bootstrap/actions/03-audit-candidates.md": "def30caedeca0babb4500b2081fe46bdcaf72ee911e4ad94ae860b068c2ee0e0",
     "plugins/aidd-context/skills/01-bootstrap/actions/04-pick-and-design.md": "1444ede4a16e6df368792d7f214e0bb61912621a9c266205e031ec73151606e7",
     "plugins/aidd-context/skills/01-bootstrap/actions/05-write-install-md.md": "c94afb152683cc29f10d2d4451632265b7fdc763a8a41b69f8ddc2c00b81dfd0",
-    "plugins/aidd-context/hooks/hooks.json": "1f9b4ecb53ede2a9d0e0702b132bd647e1fa66ae96cc09aac7c1f8c3bb0dd479",
-    "plugins/aidd-context/hooks/update_memory.js": "140d7db788452f5f4c32316d522f595a36e06638b19a42d32e42a1a7324b7149",
-    "plugins/aidd-context/.vibe-plugin/plugin.json": "35b4622f6d197f089cf4f621695bdba5fa5faae3ea7c80a8a6102dea1b54bcdc",
+    "plugins/aidd-context/.vibe-plugin/plugin.json": "76770135cfcc157f1058012f7f26f0799578f4644df751369e7e866c83d14704",
     "plugins/aidd-async-dev/skills/03-review/SKILL.md": "e5ad0469954cfc92de1f95e3cb53e70b9f682e35491430aeba1d3c5511a41c06",
     "plugins/aidd-async-dev/skills/03-review/references/stop-conditions.md": "47280ec7ebb0bd2d25bb7bf7dd716f5ef41a0ad8163653fa139981b5283e7ba0",
     "plugins/aidd-async-dev/skills/03-review/evals/scenarios.json": "562d462eedcb589487585a6840d3077a8cce760ea4ecd5e416a8a01b8472d995",
@@ -994,9 +992,8 @@
     "plugins/aidd-async-dev/skills/01-setup/actions/skills/03-generate-workflow.md": "11f7ec6c03284d0524179f71337691301a6362cf77bf3aa666fe41686b4df40b",
     "plugins/aidd-async-dev/skills/01-setup/actions/skills/04-write-config.md": "eb7ecb812e8bdaaeba2e56c71c77bf8c14fce0a2c44311ff7985444617635dd5",
     "plugins/aidd-async-dev/skills/01-setup/actions/skills/05-bootstrap-labels.md": "f53177ce1c58767f1bdfcfa3e72f7d4cc5e3d4fd782c35c3998815317be108b1",
-    "plugins/aidd-async-dev/hooks/hooks.json": "78922a784ee78e9e50587e93628cd3b9d4dfbe49087adc4514e6781cea38cbb9",
     "plugins/aidd-async-dev/agents/async-orchestrator.md": "8b29ba73f27414e75c89c6453c0557212790d00d6becfadba363466999f2c9de",
-    "plugins/aidd-async-dev/.vibe-plugin/plugin.json": "8d9b5b5edc8ac5d51cdb24bc5605b30ed3149616bfbbcc69db45f35d477315d5",
+    "plugins/aidd-async-dev/.vibe-plugin/plugin.json": "04cce92dc7c10e8041807220c255005c0510abbbb0322176f2a8a254808e4466",
     ".vibe-plugin/marketplace.json": "d197f330a5787647d58c7dc20253c8ef8b59c4dce115fdd7f12de45ccec7b18e"
   },
   "claude:flat": {

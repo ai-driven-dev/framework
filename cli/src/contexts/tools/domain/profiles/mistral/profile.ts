@@ -44,9 +44,6 @@ export const mistral: AiTool<HasAgents & HasSkills & HasCommands & HasRules & Ha
     },
     telemetryTaskAttributable: false,
     signalDir: ".vibe/commands",
-    configOutputPaths: {
-      "settings.json": ".vibe/settings.json",
-    },
     buildContracts: { marketplace: buildMistralContract, flat: buildMistralFlatContract },
 
     capabilities: {
