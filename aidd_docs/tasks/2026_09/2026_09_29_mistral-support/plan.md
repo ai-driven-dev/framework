@@ -1,6 +1,6 @@
 ---
 objective: "Reconstruct the mistral-support task record retroactively, review the real shipped diff, and bring the branch to a shippable PR."
-status: in-progress
+status: done
 ---
 
 # Plan: Mistral support, retroactive record and review

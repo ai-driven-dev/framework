@@ -65,11 +65,11 @@ Nothing in this task. Phase 5 concluded every open point:
 
 - Stale committed build output from the merge: removed. `aidd-context/` (158 files) deleted from tree and index; nothing referenced the root path. `.aidd/config.json` untracked (kept on disk): `main`, `upstream/next`, and both merge parents track no such file; the merge resolution introduced it, and untracking aligns the branch with its base. The review's stated reason was wrong on one fact — the branch added only the `.vibe/` ignore line, `.aidd/` predates it — but the conclusion holds on the base-alignment evidence.
 - The dead Claude `hooks.json` marketplace copy: dropped. The marketplace contract now declares hooks unsupported with the same Vibe skip reason as the flat contract; the golden snapshot recaptured, its mistral marketplace cell loses exactly the 3 hook files and no other cell changes.
-- Phase 2's single test failure: filed as a defect (`aidd_docs/backlog/defects/commit-session-trailer-dedup-needs-a-newline.md`), git 2.39.2 sensitivity, proven pre-existing.
-- Phase 4's `rewriteContent` vs `buildInstallPath` warning: superseded by a deeper finding and filed as a defect (`aidd_docs/backlog/defects/vibe-has-no-commands-directory.md`) — Vibe has no commands directory at all, so fixing the rewrite to point deeper into a dead surface serves nothing.
-- New, from phase 5's challenge: the marketplace route emits trees Vibe cannot detect (`.vibe-plugin/plugin.json` matches no documented native or foreign marker; native manifests are `plugin.json` at the plugin root). Filed as `aidd_docs/backlog/defects/vibe-marketplace-trees-are-undetectable.md`. The flat route is the only install-verified path; the challenge confidence is 65% for this reason.
+- Phase 2's single test failure: filed upstream as `ai-driven-dev/framework#940`, git 2.39.2 sensitivity, proven pre-existing.
+- Phase 4's `rewriteContent` vs `buildInstallPath` warning: superseded by a deeper finding and filed upstream as `ai-driven-dev/framework#939` — Vibe has no commands directory at all, so fixing the rewrite to point deeper into a dead surface serves nothing.
+- New, from phase 5's challenge: the marketplace route emits trees Vibe cannot detect (`.vibe-plugin/plugin.json` matches no documented native or foreign marker; native manifests are `plugin.json` at the plugin root). Filed upstream as `ai-driven-dev/framework#938`. The flat route is the only install-verified path; the challenge confidence is 65% for this reason.
 - The empty `.vibe/settings.json` mapping: dropped in phase 5 (Vibe reads `.vibe/config.toml`; a settings.json there was dead), and `MISTRAL_PLUGIN_ROOT_TOKEN` moved into `formats/plugin-root-token.ts` beside the other tools' tokens.
 
 ## Next Move
 
-Finish phase 5's last step: push `feat/mistral-support` to `origin` and open the draft PR against `next` (the push was denied by the session's approval callback; everything else in phase 5 is landed and proven).
+None. The record is concluded: draft PR [ai-driven-dev/framework#937](https://github.com/ai-driven-dev/framework/pull/937) is open against `next`, and the defects are upstream issues #938, #939, #940.
