@@ -32,8 +32,8 @@ status: in-progress
 | Source | Verified |
 | --- | --- |
 | `git diff --stat main...HEAD` | 239 files, +6796/-83; `cli/src` 11 files +327/-13; `cli/tests` 49 files +810/-60; the bulk is golden snapshots and flat-build output |
-| Commit list `main..HEAD` | `f430866c` and `96f9175a` carry identical subjects and timestamps: one feature iterated |
+| Commit list `main..archive` | Two Sep 3 commits carry identical subjects and timestamps: one feature iterated, not two |
 | Repo convention | `aidd_docs/tasks/2026_09/2026_09_23_credit-contributors-release-notes/`, `2026_09_15_fix-829-shared-scope/` (frame, plan, phase, review, challenge, retrospective) |
 | Docs landed during implementation | `2026_09_04_precommit-hooks-debug.md`, `2026_09_08_eisdir-banner-txt-debug.md`, `2026_09_08_mistral-flat-hooks-skip-debug.md`, `2026_09_08_vibe-skill-description-debug.md` (committed in phase 1) |
-| Committed build output at the merge (`f4064900`) | `aidd-context/` (158 files): Mistral plugin snapshot whose `.mistral-plugin/plugin.json` manifest comes from the pre-rebrand Sep 3 mapper and whose `hooks/update_memory.js` (blob `191cde40`) predates the branch's own `plugins/aidd-context` copy (`4cb856ec`); plus `.aidd/config.json` (telemetry off). Neither merge parent had them; the head code emits `.vibe-plugin/` and `.vibe/` |
+| Committed build output at the merge of `main` | `aidd-context/` (158 files): Mistral plugin snapshot whose `.mistral-plugin/plugin.json` manifest comes from the pre-rebrand Sep 3 mapper and whose `hooks/update_memory.js` predates the branch's own `plugins/aidd-context` copy; plus `.aidd/config.json` (telemetry off). Neither merge parent had them; the head code emits `.vibe-plugin/` and `.vibe/` |
 | Head diff breakdown vs `main` | After the phase 1 record commits: 245 files, +6828/-83; `aidd-context/` 5301 churn lines, `cli` 1216, `aidd_docs` 253, `scripts` 129 |
