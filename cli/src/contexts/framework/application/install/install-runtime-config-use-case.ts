@@ -7,7 +7,9 @@ import type { FileWriter } from "../../../../kernel/ports/file-writer.js";
 import type { Hasher } from "../../../../kernel/ports/hasher.js";
 import type { Logger } from "../../../../kernel/ports/logger.js";
 import type { AiToolId } from "../../../../kernel/tool.js";
+import { McpCapability } from "../../../tools/domain/capabilities/mcp-capability.js";
 import { SettingsCapability } from "../../../tools/domain/capabilities/settings-capability.js";
+import { buildOpencodeFlatConfig } from "../../../tools/domain/formats/opencode-mcp-merge.js";
 import type { FileMerger } from "../../../tools/domain/ports/file-merger.js";
 import { getToolConfig, isAiTool } from "../../../tools/domain/registry.js";
 import type { Manifest } from "../../domain/manifest.js";
@@ -78,14 +80,56 @@ export class InstallRuntimeConfigUseCase {
     if (!isAiTool(toolConfig) || !toolConfig.configOutputPaths) return [];
     const files: InstallationFile[] = [];
     for (const [fileName, outputPath] of Object.entries(toolConfig.configOutputPaths)) {
+      const resolvedPath = await this.resolveConfigPath(toolConfig, fileName, outputPath, options);
       const asset = this.assets.loadConfigAsset(options.toolId, fileName);
-      const content = typeof asset === "string" ? asset : JSON.stringify(asset, null, 2);
-      if (await this.isUserOwned(outputPath, options)) continue;
+      let content = typeof asset === "string" ? asset : JSON.stringify(asset, null, 2);
+      if (await this.isUserOwned(resolvedPath, options)) continue;
+      const mcp = (toolConfig.capabilities as Record<string, unknown>).mcp;
+      if (
+        mcp instanceof McpCapability &&
+        mcp.params.outputPath === fileName &&
+        mcp.params.format === "json" &&
+        mcp.params.mergeStrategy === "framework-prime"
+      ) {
+        content = buildOpencodeFlatConfig(
+          content,
+          await this.readExistingConfig(resolvedPath, options.projectRoot),
+          {}
+        );
+      }
       files.push(
-        new InstallationFile({ relativePath: outputPath, content, hash: this.hasher.hash(content) })
+        new InstallationFile({
+          relativePath: resolvedPath,
+          content,
+          hash: this.hasher.hash(content),
+        })
       );
     }
     return files;
+  }
+
+  private async resolveConfigPath(
+    toolConfig: Extract<ReturnType<typeof getToolConfig>, { kind: "ai" }>,
+    fileName: string,
+    outputPath: string,
+    options: InstallRuntimeConfigOptions
+  ): Promise<string> {
+    const caps = toolConfig.capabilities as Record<string, unknown>;
+    const mcp = caps.mcp;
+    if (!(mcp instanceof McpCapability) || mcp.params.outputPath !== fileName) return outputPath;
+    return mcp.resolveOutput(options.projectRoot, this.fs);
+  }
+
+  private async readExistingConfig(
+    relativePath: string,
+    projectRoot: string
+  ): Promise<string | null> {
+    try {
+      return await this.fs.readFile(join(projectRoot, relativePath));
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code === "ENOENT") return null;
+      throw error;
+    }
   }
 
   private buildStaticSettingsFiles(options: InstallRuntimeConfigOptions): InstallationFile[] {

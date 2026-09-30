@@ -66,12 +66,12 @@ const BASELINE: readonly { readonly path: string; readonly named: number }[] = [
   { path: "src/contexts/tools/domain/capabilities/config-refs.ts", named: 1 },
   { path: "src/contexts/tools/domain/capabilities/plugins-capability.ts", named: 3 },
   { path: "src/presentation/commands/setup.ts", named: 2 },
-  { path: "src/presentation/commands/translate.ts", named: 5 },
-  { path: "src/presentation/prompts/menu-use-case.ts", named: 6 },
-  { path: "src/runtime/assets/asset-loader.ts", named: 6 },
-  { path: "src/runtime/wiring/framework.ts", named: 6 },
-  { path: "src/runtime/wiring/tools.ts", named: 6 },
-  { path: "src/runtime/wiring/translate.ts", named: 6 },
+  { path: "src/presentation/commands/translate.ts", named: 6 },
+  { path: "src/presentation/prompts/menu-use-case.ts", named: 7 },
+  { path: "src/runtime/assets/asset-loader.ts", named: 7 },
+  { path: "src/runtime/wiring/framework.ts", named: 7 },
+  { path: "src/runtime/wiring/tools.ts", named: 7 },
+  { path: "src/runtime/wiring/translate.ts", named: 7 },
   // A profile cannot name the adapter reading its transcripts without putting infrastructure
   // in the domain, so the tool-to-reader map lives at the composition root instead.
   { path: "src/runtime/wiring/telemetry.ts", named: 4 },
@@ -87,12 +87,6 @@ const BASELINE: readonly { readonly path: string; readonly named: number }[] = [
   // Cursor's project hooks file, named after the tool whose file it is: the directory it
   // writes into is Cursor's own, not a list a sixth tool joins.
   { path: "src/contexts/tools/domain/formats/cursor-hooks-project-merge.ts", named: 1 },
-  // Flat-mode plugin extraction, keyed to the one path prefix flat materialization writes
-  // (`.opencode/`). A second flat-mode tool would need its own prefix check; there is one.
-  {
-    path: "src/contexts/framework/application/framework/translator/built-tree-materialization-translator.ts",
-    named: 1,
-  },
   // An adapter for exactly one tool, naming its own session-state directory.
   { path: "src/contexts/telemetry/infrastructure/copilot-cost-reader-adapter.ts", named: 1 },
   // An adapter for exactly one tool, naming its own hook-trust config path.

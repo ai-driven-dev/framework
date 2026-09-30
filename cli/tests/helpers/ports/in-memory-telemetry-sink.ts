@@ -52,7 +52,10 @@ export class InMemoryTelemetrySink implements TelemetrySink {
     this.deletedFiles.push(fileName);
   }
 
+  readonly vendorsRead: string[] = [];
+
   async readRecordsForVendor(vendorId: string): Promise<readonly TelemetrySinkRecord[]> {
+    this.vendorsRead.push(vendorId);
     return [...this.files.values()].flat().filter((record) => record.vendor_id === vendorId);
   }
 

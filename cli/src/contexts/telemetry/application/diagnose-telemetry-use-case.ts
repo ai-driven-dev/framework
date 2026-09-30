@@ -18,6 +18,11 @@ import type { TelemetrySink } from "../domain/ports/telemetry-sink.js";
 import type { VersionControl } from "../domain/ports/version-control.js";
 import { resolveSessionAnchor } from "../domain/session-anchor.js";
 import {
+  anchorProjectElsewhere,
+  resolveSessionProject,
+  type SessionProject,
+} from "../domain/session-project.js";
+import {
   attributeMoment,
   buildStepIntervals,
   type StepAttributionSource,
@@ -230,6 +235,7 @@ export class DiagnoseTelemetryUseCase {
     const unrecognisedPayload = await this.evidence.readUnrecognisedPayload(options.projectRoot);
     const hookTrust = await this.resolveHookTrust(options.env, currentSessionId);
     const toolReads = await this.gatherToolReads(journals);
+    const anchorInAnotherProject = await this.resolveAnchorProject(currentSessionId, journals);
     return {
       journals: journals.map(toClaimJournal),
       toolReads,
@@ -237,6 +243,7 @@ export class DiagnoseTelemetryUseCase {
       currentSessionId,
       unrecognisedPayloadAt: unrecognisedPayload?.at,
       hookTrust,
+      ...(anchorInAnotherProject === null ? {} : { anchorInAnotherProject }),
       recorderDeclared: recorderDeclaration.declared,
       recorderDeclarationReadable: recorderDeclaration.unreadable.length === 0,
       foreignSchemaVersions: await this.runJournalReader.listForeignSchemas(),
@@ -256,6 +263,21 @@ export class DiagnoseTelemetryUseCase {
       );
     }
     return null;
+  }
+
+  /** Asked only of an anchor that left no run file here: one journalled here is ours already. */
+  private async resolveAnchorProject(
+    currentSessionId: string | undefined,
+    journals: readonly RunJournal[]
+  ): Promise<string | null> {
+    if (currentSessionId === undefined) return null;
+    if (journals.some((journal) => journal.session?.vendor_id === currentSessionId)) return null;
+    const here = journals
+      .map(resolveSessionProject)
+      .filter((project): project is SessionProject => project !== null);
+    if (here.length === 0) return null;
+    const stored = await this.telemetrySink.readRecordsForVendor(currentSessionId);
+    return anchorProjectElsewhere(here, stored);
   }
 
   // Only Codex gates a hook behind a trust grant it can decline in silence: a session

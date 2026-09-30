@@ -13,10 +13,10 @@ A resolved working tree and decision table, or an unapplied proposal, formatted 
 ## Process
 
 1. **Inspect.** Read the operation, unmerged paths, and conflicted hunks; if none exist, report and stop.
-2. **Decide.** Add one row per conflict to the [resolution table](../assets/resolution-table.md): matching approved rows keep their choice; identical sides keep common content; otherwise propose ours, theirs, or both with a reason.
+2. **Decide.** Add one row per hunk or non-text conflict to the [resolution table](../assets/resolution-table.md): matching approved rows keep their choice; identical sides keep common content; otherwise propose ours, theirs, or both with a reason.
 3. **Gate.** If a proposal lacks approval, return the unchanged table and stop; otherwise confirm approved rows still match.
 4. **Resolve.** Apply every decided row and stage the resolved paths.
-5. **Validate.** Confirm no unmerged paths and a cached whitespace check limited to resolved paths; otherwise report the failed check.
+5. **Validate.** Confirm no unmerged paths and a cached whitespace check limited to resolved paths. Set rows to `Applied` only after both checks succeed; otherwise report the failed check and never mark rows `Applied`.
 
 ## Test
 

@@ -8,6 +8,7 @@ import "../../../../src/contexts/tools/domain/profiles/codex/profile.js";
 import "../../../../src/contexts/tools/domain/profiles/copilot/profile.js";
 import "../../../../src/contexts/tools/domain/profiles/cursor/profile.js";
 import "../../../../src/contexts/tools/domain/profiles/opencode/profile.js";
+import "../../../../src/contexts/tools/domain/profiles/kilo/profile.js";
 import { ReadLocalCostUseCase } from "../../../../src/contexts/telemetry/application/read-local-cost-use-case.js";
 import { mapCodexRolloutToSinkRecords } from "../../../../src/contexts/telemetry/domain/formats/codex-rollout.js";
 import type { RunJournal } from "../../../../src/contexts/telemetry/domain/ports/run-journal-reader.js";

@@ -1,8 +1,9 @@
 import { execFile } from "node:child_process";
-import { delimiter } from "node:path";
+import { copyFile, mkdir, symlink, writeFile } from "node:fs/promises";
+import { delimiter, join } from "node:path";
 import { promisify } from "node:util";
 import { describe, expect, it } from "vitest";
-import { createTestEnv, sandboxedEnv } from "./helpers.js";
+import { createTestEnv, pathWithoutAidd, sandboxedEnv } from "./helpers.js";
 
 const execFileAsync = promisify(execFile);
 
@@ -23,6 +24,30 @@ async function whichUnderSandbox(binary: string, cwd: string, env: NodeJS.Proces
 }
 
 describe("E2E: the sandbox a test spawns into", () => {
+  it("keeps node executable when an AI tool is installed beside it", async () => {
+    const { tempDir, projectDir, fakeHome, cleanup } = await createTestEnv("sandbox-shared-node-");
+    try {
+      const sharedDir = join(tempDir, "bin");
+      await mkdir(sharedDir);
+      const nodePath = join(sharedDir, process.platform === "win32" ? "node.exe" : "node");
+      if (process.platform === "win32") await copyFile(process.execPath, nodePath);
+      else await symlink(process.execPath, nodePath);
+      await writeFile(join(sharedDir, "codex"), "#!/bin/sh\nexit 0\n", { mode: 0o755 });
+
+      const path = pathWithoutAidd(sharedDir);
+      const env = { ...sandboxedEnv(fakeHome), PATH: path, Path: path };
+      expect(path.split(delimiter)).not.toContain(sharedDir);
+      expect(await whichUnderSandbox("codex", projectDir, env)).toBe("");
+      const { stdout } = await execFileAsync("node", ["-p", "process.version"], {
+        cwd: projectDir,
+        env,
+      });
+      expect(stdout.trim()).toBe(process.version);
+    } finally {
+      await cleanup();
+    }
+  });
+
   it("reaches no AI tool binary, whatever the runner has installed", async () => {
     const { projectDir, fakeHome, cleanup } = await createTestEnv("sandbox-path-");
     try {

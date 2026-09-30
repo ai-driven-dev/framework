@@ -189,6 +189,83 @@ describe("InstallRuntimeConfigUseCase", () => {
     expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining(".claude/settings.json"));
   });
 
+  it("writes Kilo's project-local JSONC config on a fresh install", async () => {
+    const deps = await buildUnitDeps(PROJECT_ROOT);
+    await initProject(deps, PROJECT_ROOT);
+    const manifest = (await deps.manifestRepo.load()) ?? Manifest.create();
+
+    await buildUseCase(deps).execute({
+      toolId: "kilo",
+      projectRoot: PROJECT_ROOT,
+      manifest,
+      force: false,
+      version: "1.0.0",
+    });
+
+    expect(deps.fs.has(join(PROJECT_ROOT, ".kilo/kilo.jsonc"))).toBe(true);
+    expect(deps.fs.has(join(PROJECT_ROOT, "kilo.json"))).toBe(false);
+  });
+
+  it("reuses Kilo's existing root JSONC config instead of creating a project-local config", async () => {
+    const deps = await buildUnitDeps(PROJECT_ROOT);
+    await initProject(deps, PROJECT_ROOT);
+    await deps.fs.writeFile(join(PROJECT_ROOT, "kilo.jsonc"), '{"user": true}');
+    const manifest = (await deps.manifestRepo.load()) ?? Manifest.create();
+
+    await buildUseCase(deps).execute({
+      toolId: "kilo",
+      projectRoot: PROJECT_ROOT,
+      manifest,
+      force: false,
+      version: "1.0.0",
+    });
+
+    expect(deps.fs.has(join(PROJECT_ROOT, "kilo.json"))).toBe(false);
+    expect(deps.fs.getFile(join(PROJECT_ROOT, "kilo.jsonc"))).toBe('{"user": true}');
+    expect(deps.fs.has(join(PROJECT_ROOT, ".kilo/kilo.jsonc"))).toBe(false);
+  });
+
+  it.each([
+    ["opencode", "opencode.json"],
+    ["kilo", ".kilo/kilo.jsonc"],
+  ] as const)("preserves %s MCP entries when updating its runtime config", async (toolId, path) => {
+    const deps = await buildUnitDeps(PROJECT_ROOT);
+    await initProject(deps, PROJECT_ROOT);
+    const manifest = (await deps.manifestRepo.load()) ?? Manifest.create();
+
+    await buildUseCase(deps).execute({
+      toolId,
+      projectRoot: PROJECT_ROOT,
+      manifest,
+      force: false,
+      version: "1.0.0",
+    });
+
+    const configPath = join(PROJECT_ROOT, path);
+    const config = JSON.parse(await deps.fs.readFile(configPath)) as Record<string, unknown>;
+    config.mcp = { context: { type: "local", command: "node", args: ["server.js"] } };
+    const merged = JSON.stringify(config, null, 2);
+    await deps.fs.writeFile(configPath, merged);
+    manifest.updateTrackedFileHash(toolId, path, deps.hasher.hash(merged));
+
+    await buildUseCase(deps).execute({
+      toolId,
+      projectRoot: PROJECT_ROOT,
+      manifest,
+      force: true,
+      version: "1.0.0",
+    });
+
+    const updated = JSON.parse(await deps.fs.readFile(configPath)) as {
+      mcp: Record<string, unknown>;
+    };
+    expect(updated.mcp.context).toStrictEqual({
+      type: "local",
+      command: "node",
+      args: ["server.js"],
+    });
+  });
+
   describe("copilot requiresTool gate", () => {
     it("does not create .vscode/settings.json when vscode is not installed", async () => {
       const deps = await buildUnitDeps(PROJECT_ROOT);

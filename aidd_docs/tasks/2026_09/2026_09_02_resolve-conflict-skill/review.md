@@ -11,7 +11,7 @@
 ### Phase 1 — Conflict resolution
 
 - [x] One VCS skill exposes one `resolve` action — `plugins/aidd-vcs/skills/05-resolve-conflict/SKILL.md:23`
-- [x] Each hunk or non-text conflict gets a choice row — `plugins/aidd-vcs/skills/05-resolve-conflict/assets/resolution-table.md:5`
+- [x] Each hunk or non-text conflict gets a choice row — `plugins/aidd-vcs/skills/05-resolve-conflict/actions/01-resolve.md:16`
 - [x] An unapproved proposal changes nothing — `plugins/aidd-vcs/skills/05-resolve-conflict/actions/01-resolve.md:17`
 - [x] Approved matching choices apply and stage resolved paths — `plugins/aidd-vcs/skills/05-resolve-conflict/actions/01-resolve.md:16-18`
 - [x] Validation checks only resolved paths — `plugins/aidd-vcs/skills/05-resolve-conflict/actions/01-resolve.md:19`

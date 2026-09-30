@@ -522,10 +522,13 @@ describe("interactive menu — the command each pick hands over", () => {
   });
 
   it.each([
-    [["inspect", "doctor-tool"], "Tool (e.g. claude, cursor, copilot, codex, opencode, vscode)"],
+    [
+      ["inspect", "doctor-tool"],
+      "Tool (e.g. claude, cursor, copilot, codex, opencode, kilo, vscode)",
+    ],
     [
       ["manage-tools", "framework-install"],
-      "Tool (e.g. claude, cursor, copilot, codex, opencode, vscode)",
+      "Tool (e.g. claude, cursor, copilot, codex, opencode, kilo, vscode)",
     ],
     [["manage-tools", "framework-remove"], "Tool to remove"],
     [["manage-tools", "framework-update-one"], "Tool to update"],

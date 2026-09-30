@@ -1,7 +1,7 @@
 {
   "$schema": "https://json.schemastore.org/claude-code-marketplace.json",
   "name": "aidd-framework",
-  "version": "5.10.0",
+  "version": "5.11.0",
   "description": "Official plugin marketplace for the AI-Driven Development framework",
   "owner": {
     "name": "AI-Driven Dev"
@@ -74,6 +74,15 @@
       "name": "aidd-telemetry",
       "source": "./plugins/aidd-telemetry",
       "description": "Measurement: journals every session so a unit of work can be tied to what it cost. The hooks record on plain node; its three skills reach the `aidd` CLI to turn it on, answer and check.",
+      "strict": true,
+      "metadata": {
+        "recommended": false
+      }
+    },
+    {
+      "name": "aidd-qa",
+      "source": "./plugins/aidd-qa",
+      "description": "Acceptance QA: validates observable behavior against acceptance criteria and records reviewer evidence. Browser is the only supported interface today.",
       "strict": true,
       "metadata": {
         "recommended": false

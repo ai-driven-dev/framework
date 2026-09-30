@@ -1,5 +1,45 @@
 # Changelog
 
+## [5.4.0](https://github.com/ai-driven-dev/framework/compare/cli-v5.3.0...cli-v5.4.0) (2026-09-24)
+
+
+### Features
+
+* **cli:** add Kilo Code support ([#745](https://github.com/ai-driven-dev/framework/issues/745)) ([c3a3355](https://github.com/ai-driven-dev/framework/commit/c3a3355fb3c6f43ba2e60d7f4045609150b61ee7))
+
+
+### Bug Fixes
+
+* **aidd-orchestrator:** upgrade checkout action ([#878](https://github.com/ai-driven-dev/framework/issues/878)) ([ffad107](https://github.com/ai-driven-dev/framework/commit/ffad107eadb0ff7c039d6d206f9bd3288568f233))
+* **cli:** an interactive restore that ticks nothing restores nothing ([#813](https://github.com/ai-driven-dev/framework/issues/813)) ([42f572c](https://github.com/ai-driven-dev/framework/commit/42f572ca757059be6fd4f1c43f24291f737e8b62))
+* **cli:** canonicalize architecture comparison paths on Windows ([#880](https://github.com/ai-driven-dev/framework/issues/880)) ([16c7c65](https://github.com/ai-driven-dev/framework/commit/16c7c65035a16d57bb4551d1104d843a84a28a2e))
+* **cli:** check names an anchor that belongs to another project ([#886](https://github.com/ai-driven-dev/framework/issues/886)) ([1333e32](https://github.com/ai-driven-dev/framework/commit/1333e3275d55ccc30ab2a636e8a9fb0918737032))
+* **cli:** install git hooks from the repository root only ([#861](https://github.com/ai-driven-dev/framework/issues/861)) ([126e88d](https://github.com/ai-driven-dev/framework/commit/126e88da61fb60f05bc31f66e78989f3316e7f51)), closes [#860](https://github.com/ai-driven-dev/framework/issues/860)
+* **cli:** leave what a project did not install to whoever installed it ([#834](https://github.com/ai-driven-dev/framework/issues/834)) ([5e96fde](https://github.com/ai-driven-dev/framework/commit/5e96fdea9d7dfaece9922dcd5c621aaa8bc12985))
+* **cli:** pin fast-uri to the patched Ajv-compatible v3 range ([#830](https://github.com/ai-driven-dev/framework/issues/830)) ([c79565b](https://github.com/ai-driven-dev/framework/commit/c79565b6f7938a0e7e9e5f140e4e50198a6c1c60)), closes [#463](https://github.com/ai-driven-dev/framework/issues/463)
+* **cli:** protect pre-existing user plugins during project clean ([#870](https://github.com/ai-driven-dev/framework/issues/870)) ([61138e0](https://github.com/ai-driven-dev/framework/commit/61138e0888c2dade44c458323af8b2e948364c0d))
+* **cli:** record only the marketplaces a project actually registered ([#835](https://github.com/ai-driven-dev/framework/issues/835)) ([679ab68](https://github.com/ai-driven-dev/framework/commit/679ab68f7f24590ededfa793b6987a771c6d6273)), closes [#833](https://github.com/ai-driven-dev/framework/issues/833)
+* **cli:** run unit and integration tests, and every mutant, in a throwaway home ([#832](https://github.com/ai-driven-dev/framework/issues/832)) ([8c5f820](https://github.com/ai-driven-dev/framework/commit/8c5f820c29d01f093a6cb74f0ec31ebc04252bef)), closes [#831](https://github.com/ai-driven-dev/framework/issues/831)
+* **cli:** telemetry off keeps the person's own commit hook executable ([#818](https://github.com/ai-driven-dev/framework/issues/818)) ([4146c2c](https://github.com/ai-driven-dev/framework/commit/4146c2c382d1bf6344826eafbe2f59875e350642)), closes [#817](https://github.com/ai-driven-dev/framework/issues/817)
+* **telemetry:** a sink record's day comes from the moment it parses to ([#827](https://github.com/ai-driven-dev/framework/issues/827)) ([70f9bca](https://github.com/ai-driven-dev/framework/commit/70f9bcaca05cd9e323c3e4d5c16b3cd2c8ee72eb))
+* **telemetry:** a sink record's day comes from the moment it parses to, never from its text ([70f9bca](https://github.com/ai-driven-dev/framework/commit/70f9bcaca05cd9e323c3e4d5c16b3cd2c8ee72eb)), closes [#825](https://github.com/ai-driven-dev/framework/issues/825)
+* **telemetry:** an empty worktree id in the journal reads as not stated ([#828](https://github.com/ai-driven-dev/framework/issues/828)) ([69298b2](https://github.com/ai-driven-dev/framework/commit/69298b2b9b4c1423008c16a56c5b6b9c7bea183d)), closes [#826](https://github.com/ai-driven-dev/framework/issues/826)
+* **telemetry:** opencode reads journal.cjs where the build puts it ([#812](https://github.com/ai-driven-dev/framework/issues/812)) ([ebd7fe9](https://github.com/ai-driven-dev/framework/commit/ebd7fe9d5f38178f01947579f9ee509d08506b8e))
+
+
+### Miscellaneous
+
+* **cli:** count a test file that fails to load as a failed test in a mutation run ([#852](https://github.com/ai-driven-dev/framework/issues/852)) ([e3b10e9](https://github.com/ai-driven-dev/framework/commit/e3b10e9156426f434ab8bdf73e84b91d983ddc26))
+* **cli:** mutate only the lines a branch changed ([#848](https://github.com/ai-driven-dev/framework/issues/848)) ([8da878f](https://github.com/ai-driven-dev/framework/commit/8da878ff1ec09404d64805efd6ddad41d3fb8cb8)), closes [#842](https://github.com/ai-driven-dev/framework/issues/842)
+* **deps:** bump @inquirer/prompts from 8.7.0 to 8.7.2 in /cli ([#902](https://github.com/ai-driven-dev/framework/issues/902)) ([ac68bed](https://github.com/ai-driven-dev/framework/commit/ac68bedd665f0f9b536658a22016db0cac0c0ef5))
+
+
+### Refactoring
+
+* **cli:** drop the copilot command handler's frontmatter method nothing calls ([#823](https://github.com/ai-driven-dev/framework/issues/823)) ([c628218](https://github.com/ai-driven-dev/framework/commit/c628218a324950667c8b53702a11816833a18a80)), closes [#822](https://github.com/ai-driven-dev/framework/issues/822)
+* **cli:** drop the MCP exclusion no command could reach ([#816](https://github.com/ai-driven-dev/framework/issues/816)) ([dad8527](https://github.com/ai-driven-dev/framework/commit/dad8527d491b8702e88b80a5420701401c7e347b))
+* **cli:** name the MCP launch-command transform after what it does ([#836](https://github.com/ai-driven-dev/framework/issues/836)) ([468a6fd](https://github.com/ai-driven-dev/framework/commit/468a6fdc6eed80337a3f423ff00edeec752eac4d)), closes [#824](https://github.com/ai-driven-dev/framework/issues/824)
+
 ## [5.3.0](https://github.com/ai-driven-dev/framework/compare/cli-v5.2.2...cli-v5.3.0) (2026-09-09)
 
 

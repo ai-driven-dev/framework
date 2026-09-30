@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.6.0](https://github.com/ai-driven-dev/framework/compare/aidd-dev-v2.5.0...aidd-dev-v2.6.0) (2026-09-24)
+
+
+### Features
+
+* **aidd-qa:** create an implementation-independent QA plugin ([#917](https://github.com/ai-driven-dev/framework/issues/917)) ([ca7828d](https://github.com/ai-driven-dev/framework/commit/ca7828d995b9ca7369d8ca4c8da7dd540b82c986))
+* **framework:** refuse an AI edit that breaks a named architecture rule ([#885](https://github.com/ai-driven-dev/framework/issues/885)) ([822f178](https://github.com/ai-driven-dev/framework/commit/822f1786d7569770c08233d9104794078b10e489))
+
 ## [2.5.0](https://github.com/ai-driven-dev/framework/compare/aidd-dev-v2.4.1...aidd-dev-v2.5.0) (2026-09-09)
 
 
