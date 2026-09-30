@@ -36,5 +36,5 @@ The contract every generated skill satisfies. `skill-generate` obeys it too.
 ## Across all of them
 
 - **R17.** One fact, one home. An action acts within a router rule and cites a shared reference, never restating either.
-- **R18.** A citation is a relative markdown link, `[name](path)`, never an `@` include: nothing resolves those. It sits in the sentence that uses it, a `## Process` step to read the file, an `## Output` or `## Test` line to conform to it. Never a block or a line of its own.
+- **R18.** The first citation of a file in each authoring file is a relative Markdown link, `[name](path)`, except for sibling references under R14. Repeat mentions within the same file use only the filename in backticks when unambiguous; retain the link when ambiguous. Never an `@` include: nothing resolves those. A citation sits in the sentence that uses it, a `## Process` step to read the file, an `## Output` or `## Test` line to conform to it. Never a block or a line of its own.
 - **R19.** One file, one artifact. Split two apart only when a path needs one without the other.
