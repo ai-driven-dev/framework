@@ -16,11 +16,13 @@
     {
       "type": "pull_request",
       "parameters": {
+        "allowed_merge_methods": ["merge"],
         "required_approving_review_count": 1,
         "dismiss_stale_reviews_on_push": false,
         "require_code_owner_review": true,
         "require_last_push_approval": false,
-        "required_review_thread_resolution": true
+        "required_review_thread_resolution": true,
+        "require_extra_approval_for_unattributed_changes": true
       }
     },
     {
@@ -29,7 +31,8 @@
         "strict_required_status_checks_policy": false,
         "required_status_checks": [
           {"context": "lefthook (framework-local checks)"},
-          {"context": "Commitlint"}
+          {"context": "Commitlint"},
+          {"context": "cli / gate"}
         ]
       }
     },

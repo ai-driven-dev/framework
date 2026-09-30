@@ -5,6 +5,31 @@ import { fileURLToPath } from "node:url";
 const root = resolve(fileURLToPath(import.meta.url), "../..");
 
 const pkg = JSON.parse(readFileSync(resolve(root, "package.json"), "utf8"));
+// The budget makes growth visible rather than walling it off: a raise is deliberate, is
+// what a reviewer sees, and leaves at most ~2 % headroom over what was measured.
+// The registry of every raise, budget then measurement then what landed:
+// 560 KB: 500.8 KB, measurement across five tools.
+// 590 KB: 567.7 KB, one person resolved across tools and machines.
+// 593 KB: 590.6 KB, the `by_prompt` breakdown.
+// 596 KB: 593.8 KB, `by_agent` telling a main thread from a tool that names no agent.
+// 598 KB: 595.8 KB, the journal reader on a journal's stated schema, plus the refusal reason.
+// 601 KB: 599.0 KB, `aidd ai rules` taking over the rule inventory.
+// 557 KB: 545.7 KB, a reset measured against a stale lockfile, remeasured after the merge.
+// 567 KB: 555.7 KB, the four telemetry axes and `framework rules`.
+// 578 KB: 566.8 KB, OpenCode's hooks bridge.
+// 595 KB: 584.55 KB, the marketplace source-conflict guard.
+// 610 KB: 597.95 KB, the machine-scope migration and the rollback refusal.
+// 625 KB: 612.56 KB, `--scope user` on `setup`, `doctor` and `sync`.
+// 641 KB: 628.26 KB, `clean --scope user` and sync's migration of a pre-shared-source project.
+// 654 KB: 641.0 KB, the shared-plugin, narrowing, hook and Windows-lookup passes.
+// 682 KB: 675.5 KB, canonical per-plugin machine claims, scoped user operations and
+// inter-process ownership guards for Cursor, Codex and Copilot (+31.3 KB over next's 644.2).
+// 710 KB: 703.8 KB, current native host-source proof and exact hook/MCP/user-file provenance
+// guards for #829 (+22.0 KB over the first 829 candidate's 681.8); 0.9% measured headroom.
+// 722 KB: 714.2 KB, exact native-claim partition, multihost preflight, and symlink boundary
+// guards for #829 (+10.4 KB over the preceding 703.8 KB); 1.1% measured headroom.
+// 734 KB: 725.8 KB, Kilo Code's profile, generated bridge, and runtime smoke support (+9.6 KB
+// over next's 716.2 KB); 1.1% measured headroom.
 const budgetKB = pkg.bundleBudgetKB ?? 500;
 const budgetBytes = budgetKB * 1024;
 

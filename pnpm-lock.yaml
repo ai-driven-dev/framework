@@ -1,3 +1,104 @@
+---
+lockfileVersion: '9.0'
+
+importers:
+
+  .:
+    configDependencies: {}
+    packageManagerDependencies:
+      pnpm:
+        specifier: 12.3.4
+        version: 12.3.4
+
+packages:
+
+  '@pnpm/exe.darwin-arm64@12.3.4':
+    resolution: {integrity: sha512-PAyUol8T1+/+ViOiXAt51ECA+QnfXCqz6foL4bW+LsoX0NcVd5XVEM2mRQu+LV4oc7uRz9zf9U0P+XFfuQeDAw==}
+    cpu: [arm64]
+    os: [darwin]
+
+  '@pnpm/exe.darwin-x64@12.3.4':
+    resolution: {integrity: sha512-fxP9JCk0Cdye+ePuj+GJJLMUMTqHGWRdb1dtv4How876uQ2ehxvenpgiYAir/ceO9PsYUZkFTtyZdx+rRu5QOA==}
+    cpu: [x64]
+    os: [darwin]
+
+  '@pnpm/exe.linux-arm64-musl@12.3.4':
+    resolution: {integrity: sha512-FBOt0/7ye6O6q4AllVV5QMviB6qE6fqkeczV/+MDWQsmo+QJrlfsh6X7CpH/tClVpBZEyIbjpUoT8bNhCYBxEg==}
+    cpu: [arm64]
+    os: [linux]
+    libc: [musl]
+
+  '@pnpm/exe.linux-arm64@12.3.4':
+    resolution: {integrity: sha512-t71AVA7LRqiKTyZ5xMYaZc2n5DfdpMbfokZuiIOXHBOM03ECnF0t4iYwaBDqJgVjlKYUOwaF/bRQajGNA4cJ4w==}
+    cpu: [arm64]
+    os: [linux]
+    libc: [glibc]
+
+  '@pnpm/exe.linux-x64-musl@12.3.4':
+    resolution: {integrity: sha512-RPmk7Jb/aYaFvL2iyDN/AtMY+hUEsue732WmXpcuQ9tBpMnGyA5py7Z3+e+qmQaJ0zY/4ni9jJiyPBQHujmv6w==}
+    cpu: [x64]
+    os: [linux]
+    libc: [musl]
+
+  '@pnpm/exe.linux-x64@12.3.4':
+    resolution: {integrity: sha512-2ZqOlSPkfwX1h5cR+FPiWf8+F+2hZT/3TvhUK5sigHqwaQCIiq8R7CGxhndKs63JtcLi2a1Qpo+wX/EoyfjyJQ==}
+    cpu: [x64]
+    os: [linux]
+    libc: [glibc]
+
+  '@pnpm/exe.win32-arm64@12.3.4':
+    resolution: {integrity: sha512-ANyrHqyqco6SXBysUTRF74itDyyraea7IbFsKFdNXTjcFnfycTDx37EwuhdpPYFNSIh2JhUG4fByclsRfiHX7w==}
+    cpu: [arm64]
+    os: [win32]
+
+  '@pnpm/exe.win32-x64@12.3.4':
+    resolution: {integrity: sha512-WH/KqBPY/hq2Tb7SgQltEZytimcjgKRaCRL/aM9CI0c67iKc5TVmHUhIiL3Ux9FB4bWn36i6XewUcScQI+zG8w==}
+    cpu: [x64]
+    os: [win32]
+
+  pnpm@12.3.4:
+    resolution: {integrity: sha512-lhqkH7B32joEpEHZ+OFevAyW2o73ELLrZ7+e58sGEOq9SPH9hfUc/+c4RnhfoPh8VqOocqHYk/hEZ0G1zORUVw==}
+    engines: {node: '>=18.*'}
+    hasBin: true
+
+snapshots:
+
+  '@pnpm/exe.darwin-arm64@12.3.4':
+    optional: true
+
+  '@pnpm/exe.darwin-x64@12.3.4':
+    optional: true
+
+  '@pnpm/exe.linux-arm64-musl@12.3.4':
+    optional: true
+
+  '@pnpm/exe.linux-arm64@12.3.4':
+    optional: true
+
+  '@pnpm/exe.linux-x64-musl@12.3.4':
+    optional: true
+
+  '@pnpm/exe.linux-x64@12.3.4':
+    optional: true
+
+  '@pnpm/exe.win32-arm64@12.3.4':
+    optional: true
+
+  '@pnpm/exe.win32-x64@12.3.4':
+    optional: true
+
+  pnpm@12.3.4:
+    optionalDependencies:
+      '@pnpm/exe.darwin-arm64': 12.3.4
+      '@pnpm/exe.darwin-x64': 12.3.4
+      '@pnpm/exe.linux-arm64': 12.3.4
+      '@pnpm/exe.linux-arm64-musl': 12.3.4
+      '@pnpm/exe.linux-x64': 12.3.4
+      '@pnpm/exe.linux-x64-musl': 12.3.4
+      '@pnpm/exe.win32-arm64': 12.3.4
+      '@pnpm/exe.win32-x64': 12.3.4
+
+---
 lockfileVersion: '9.0'
 
 settings:
@@ -9,11 +110,11 @@ importers:
   .:
     devDependencies:
       '@commitlint/cli':
-        specifier: ^21.2.2
-        version: 21.2.2(@types/node@25.3.5)(conventional-commits-parser@7.1.2)(typescript@5.9.3)
+        specifier: ^21.2.3
+        version: 21.2.3(@types/node@25.3.5)(conventional-commits-parser@7.1.2)(typescript@5.9.3)
       '@commitlint/config-conventional':
-        specifier: ^21.2.2
-        version: 21.2.2
+        specifier: ^21.2.3
+        version: 21.2.3
       ajv:
         specifier: 8.20.0
         version: 8.20.0
@@ -21,11 +122,11 @@ importers:
         specifier: 3.0.1
         version: 3.0.1(ajv@8.20.0)
       js-yaml:
-        specifier: 5.3.0
-        version: 5.3.0
+        specifier: 5.4.2
+        version: 5.4.2
       lefthook:
-        specifier: ^2.1.10
-        version: 2.1.10
+        specifier: ^2.1.14
+        version: 2.1.14
 
 packages:
 
@@ -37,61 +138,61 @@ packages:
     resolution: {integrity: sha512-qehxGkRj55h/ff8EMaJ+cYhyaKlHIxqYDn682wQD7RNp9UujOQsHog2uS0r2vzr4pW+sXf90NeeayjcNaX3fFg==}
     engines: {node: '>=6.9.0'}
 
-  '@commitlint/cli@21.2.2':
-    resolution: {integrity: sha512-a+6hQxIxnpdvSvS2apvttPNbEliYsVC3PqFYDiiB2kjbwIsQsj1urvQ4Tkf70pKYozPalKAuRQmm/GHwndduqA==}
+  '@commitlint/cli@21.2.3':
+    resolution: {integrity: sha512-5yOX6IRjcrIReCxpyAd04hgI/yhUMpVBJ/ouwFV0wk9yx5+fYRDWZWJ5h55Tbedgfol+5m2mU5nqzbB8g3v0vQ==}
     engines: {node: '>=22.12.0'}
     hasBin: true
 
-  '@commitlint/config-conventional@21.2.2':
-    resolution: {integrity: sha512-NxA37SZviusFUEYOQZ5hNnZ1h7O/KiemPkxjOlpzKJNnWxThiwc6/SaZhaPa8fyLvfRBAywhQhJJk8XESHWlpQ==}
+  '@commitlint/config-conventional@21.2.3':
+    resolution: {integrity: sha512-EP2n5DN2GwRWNVrLX0Jx3mpQlW5PfFi9HnD9OJ8hN/H0xFqpCFyHeGDhg+0P8/21iMMcdkcQgbNqmVklebqYsQ==}
     engines: {node: '>=22.12.0'}
 
-  '@commitlint/config-validator@21.2.0':
-    resolution: {integrity: sha512-t7AzNHAKeIdo/3NRGwzpufKHsKkPHmFs/56N2Fnsh0/r0rGtnQzTxk6vnFgjaGr4hdSQKNB50/KAhR9Yk4LJKA==}
+  '@commitlint/config-validator@21.2.3':
+    resolution: {integrity: sha512-JQ13v0GafSM4fBYX8UowSy++07Was20auq0NcTdnzSEq6/05Cq5GBUMIfKkqjzyBwC9sJFmPpKWgLLhH7cygkw==}
     engines: {node: '>=22.12.0'}
 
-  '@commitlint/ensure@21.2.0':
-    resolution: {integrity: sha512-76IF9vDNS13lAzEEik9eKwzt8f9hYhWiwVXZ2AnyLCz5/f511FsEQ3pw1X3/zSQpdRLQU7i5qDMVKyXi1GWjSg==}
+  '@commitlint/ensure@21.2.3':
+    resolution: {integrity: sha512-gEjNKgRocbODI5/sMx2Qc9XOf2/zFTNV2aEK1QZ4gKDKxDC/VR7us3QtIX1C5d5xxHxx0I/tEbYbdSP1Am2LwA==}
     engines: {node: '>=22.12.0'}
 
   '@commitlint/execute-rule@21.0.1':
     resolution: {integrity: sha512-RifH+FmImozKBE6mozhF4K3r2RRKP7SMi/Q/zLCmExtp5e05lhHOUYqGBlFBAGNHaZxU/WYw1XuugYK9jQzqnA==}
     engines: {node: '>=22.12.0'}
 
-  '@commitlint/format@21.2.2':
-    resolution: {integrity: sha512-v6fvxZSc/AvVMROlr3H34+1766bZSYApRUSCAMjWamStPjKMvZ8GdvVA5YW/VQNgbFTmcMz6OYmSTJEvIjPrfA==}
+  '@commitlint/format@21.2.3':
+    resolution: {integrity: sha512-KKwCjXYqA8r295uhLnulDXL9yekdXmj2yp2Q0XsBPhxQ2iPuvRE8F43j7g7yexo69wTdmUQmFz15jpderluzUQ==}
     engines: {node: '>=22.12.0'}
 
-  '@commitlint/is-ignored@21.2.2':
-    resolution: {integrity: sha512-9UoKNgfFE3LU7FrzierCvk3CdDfMDeVGC86qZiT/n0TIjfq/dmZ9MHuXd45OTNRa26ZanmJRxEtmiXk/lEJihg==}
+  '@commitlint/is-ignored@21.2.3':
+    resolution: {integrity: sha512-Ng4nRj/LBAOvc+GQu7bsFW4/fL89LvZ14OOC/ERLbUpnG6QBwWRzY/1oXGwPs3C8YHWjJObin4kLYo2YeEn70w==}
     engines: {node: '>=22.12.0'}
 
-  '@commitlint/lint@21.2.2':
-    resolution: {integrity: sha512-Fy8JxEBzdmsYWFude/61GxXu5O+wEymwiRK2z9GL9R8mCsXphCoGxAFc5iHn5mjlfcSrhiiONE+ksf4KOjnaPg==}
+  '@commitlint/lint@21.2.3':
+    resolution: {integrity: sha512-lUZcSuVLLEDkhge9ERk8Rp+FXQtrUhCK+h328BFnzKXrTuXGdqiYMEpTlNWdZaOrjyMhMJaz354ZaWEGJxcLeg==}
     engines: {node: '>=22.12.0'}
 
-  '@commitlint/load@21.2.2':
-    resolution: {integrity: sha512-0Tt6wDPX167cjKC5D4zhm0+20wJJG+TN/TKovMOspfSe78rOnKX+MNzlVNiu6HyQPZChPJ8QBH31MVt6Bb8fCg==}
+  '@commitlint/load@21.2.3':
+    resolution: {integrity: sha512-cDrL8lOo23Lk7knGzQdjbFcq7z2JgvjwV6PhbESVvEc+Fe21MeLjPKBJi8nKjg7j+jh79CVbVSUbZc104thXRw==}
     engines: {node: '>=22.12.0'}
 
   '@commitlint/message@21.2.0':
     resolution: {integrity: sha512-YxGoiXD/HXNXLJPrQwE5poXa+XH0CBEm+mdvbHQP0g6MV/dmJyUFCzPNzZbxL93GvZ70TmtTK0Z0/IBpAqHv8g==}
     engines: {node: '>=22.12.0'}
 
-  '@commitlint/parse@21.2.2':
-    resolution: {integrity: sha512-MEkobPfvRp+z06Wro8HMG1BDGHzZmj82A1LH1nWeG3ipHpg/x4m6v3wEDvMBIKjRFUnfR3nBeFs3MVCr7UdAmg==}
+  '@commitlint/parse@21.2.3':
+    resolution: {integrity: sha512-Jt61QpF1xA88damCELe8I0FlDZPSpXNc8IhN7z5kZ0EcDYPjdZ+ZHPvsSXl69r2MIlLnNKeHhOn2cmVpziFE9w==}
     engines: {node: '>=22.12.0'}
 
-  '@commitlint/read@21.2.1':
-    resolution: {integrity: sha512-hUW7EJQnNTL0vPOmVMNK4CrnrNBN0nN+JJHReFkdHO5y4iyHeEmTBwuC15OCqUTjxWo7idnH1LftfpWVIaPWIA==}
+  '@commitlint/read@21.2.3':
+    resolution: {integrity: sha512-szAepuLA1vTTr7fuudEg7jYyVHudf+FH+vptU91bhxE1WnE8TKrfTAi44HVllz8XpI8Pvp4GjR/iP5Nshgh+og==}
     engines: {node: '>=22.12.0'}
 
-  '@commitlint/resolve-extends@21.2.2':
-    resolution: {integrity: sha512-RPkJ/IFi7sMUUVbZLqwWFtWw/zRDcfFsmrPSiTMrt5wb7AdxOr86EGQFvmGzef5QKV5IPBWWCujqVTw1RWX44A==}
+  '@commitlint/resolve-extends@21.2.3':
+    resolution: {integrity: sha512-bqJdmAtXgAQel+l02uIsF7rHgKgx1AGZdGBjam7uK4XW54ZAQtB6XAIUXezYprQiCcRMpBh4fHs5JodXK4mVZA==}
     engines: {node: '>=22.12.0'}
 
-  '@commitlint/rules@21.2.2':
-    resolution: {integrity: sha512-eplQzyYkBjYB1HyyRj8hkcK11Y9DU9nuBz7uOKEd6NpE9NGDytLFCAnlRE+OoiK/5sHEJsaz2RGhuWBvYzIbNA==}
+  '@commitlint/rules@21.2.3':
+    resolution: {integrity: sha512-5+YnI/LuTx3JDl9GjqfP2z9x96M8KKDrd+4jOel/T0L1BB3oAmBlSN8xppf63QsudiVEgR8C0gRoAMrPVrms6g==}
     engines: {node: '>=22.12.0'}
 
   '@commitlint/to-lines@21.0.1':
@@ -102,8 +203,8 @@ packages:
     resolution: {integrity: sha512-Y5gmQ+KxzqCrBFJfLvFEPvvwD3LDiNZoTT2yeFBm96M8qhmqSzQc5DvX3rheAaAMjyIvMXOCLS/mWfdpONsjyQ==}
     engines: {node: '>=22.12.0'}
 
-  '@commitlint/types@21.2.0':
-    resolution: {integrity: sha512-7zVFCDB2reMvJH5dmbKnOQPjZEvjdJTH8jc0U/PIPU1r3/+vf5pD1HlfitV2MWsWXrvu7u39iY1lyLUPOaN0Gw==}
+  '@commitlint/types@21.2.3':
+    resolution: {integrity: sha512-sGEA473TlCvhCGNoTBY9OXZVWdscIXdGt0dm8EpB+2MRfmt8LNh/X56P/T3nCtEB+eH5qGEa3odphSAoUxSfSQ==}
     engines: {node: '>=22.12.0'}
 
   '@conventional-changelog/git-client@3.1.2':
@@ -258,8 +359,8 @@ packages:
     resolution: {integrity: sha512-CY6crGq313MX8GkwvB7tzgp99vjQxY1++5y10/BKN/GUfHqWaOGQMNZkBvqSzsZKWk/ijwHlWzzkLulsGHhjWQ==}
     hasBin: true
 
-  js-yaml@5.3.0:
-    resolution: {integrity: sha512-muutsYr+e2+d3rTgUGslq5rxbBlUy3cJ61IsHag2QNDQV+7zXWjkUpmALIajhrlLlrgRUiymj6U3zUr/TMK84Q==}
+  js-yaml@5.4.2:
+    resolution: {integrity: sha512-m+aqu+LwO1O6sIopafj8HUVl5aawITwZQe/yHpMCKjaWBaA/d07B/QdMb3529REftiU+RMMHL3Vlsw3hON7vWg==}
     hasBin: true
 
   json-parse-even-better-errors@2.3.1:
@@ -268,58 +369,58 @@ packages:
   json-schema-traverse@1.0.0:
     resolution: {integrity: sha512-NM8/P9n3XjXhIZn1lLhkFaACTOURQXjWhV4BA/RnOv8xvgqtqpAX9IO4mRQxSx1Rlo4tqzeqb0sOlruaOy3dug==}
 
-  lefthook-darwin-arm64@2.1.10:
-    resolution: {integrity: sha512-nw+X8wRNDoUUV6WSteyKBbcLySq+fsmZt5WV/s50ZJpysmsDKJOUMln6SllNfP+60dzUahAO7REco/2633BsLg==}
+  lefthook-darwin-arm64@2.1.14:
+    resolution: {integrity: sha512-VMUAqY81+8ph7Mc0iROd3JWqj2sOuK7SYDyd8ZgzYVKChCt+Nnz8ehd4gUwprJy7QI28IFSUh1M3wnIRiYh+fA==}
     cpu: [arm64]
     os: [darwin]
 
-  lefthook-darwin-x64@2.1.10:
-    resolution: {integrity: sha512-KQ/bHmvpkFdHMn4pZnUdTf+GuSC+aBBgBTxZT4GW+6cSf+qbErKZBhK7cH6BmILsvx43+VzEArvHYY7YOfRFOQ==}
+  lefthook-darwin-x64@2.1.14:
+    resolution: {integrity: sha512-uSmjcPRU+yB+D6vk+u6WJDnyHlB+XIv1QZw97N2+qNGG2bNSLH/7MuJ6puCdJv+lVPBEO5wBjE3JIbaEzPOQCw==}
     cpu: [x64]
     os: [darwin]
 
-  lefthook-freebsd-arm64@2.1.10:
-    resolution: {integrity: sha512-8su6DwydP7+pv7kG0zCtjphqsw4ouOnfexRUErapy5GTxYBoUOhYz3RSHTSWNRsK6W4jva7FPUh2Lp5/PSn30w==}
+  lefthook-freebsd-arm64@2.1.14:
+    resolution: {integrity: sha512-po/pmjbp/7BjE9RFfeDnh+CeNsA0d+utppOYKB425I7mgI1GcmT8GAZ9DDut4DIutNjVqKL/lzrj+F87Gm40Rg==}
     cpu: [arm64]
     os: [freebsd]
 
-  lefthook-freebsd-x64@2.1.10:
-    resolution: {integrity: sha512-GeAJEFxko3Lk+AsnS3NleAFrpyMLFUKOlgJvPKuU0xHwVEI/z+ZoCcmuO0BX+4CS0NLbZhC/YQAvBASqDvvVdQ==}
+  lefthook-freebsd-x64@2.1.14:
+    resolution: {integrity: sha512-+KiXiFjJf7YdHUYjzhDsklcA5bAFZN+pNcz/NbBftrhVTwzNALNoK+SYEKt+9QJsrzL6tpDWmHHFpeLGp+8t8w==}
     cpu: [x64]
     os: [freebsd]
 
-  lefthook-linux-arm64@2.1.10:
-    resolution: {integrity: sha512-1sHTCmpTWjVMs+yKPBLRNT1kuuIr1yjietlk7rCB6wFPVOS6Ph3o2zPFH2AvW1UymHlqwyHXzBr9EtDpQ7j1mQ==}
+  lefthook-linux-arm64@2.1.14:
+    resolution: {integrity: sha512-bjeJB16ftJaPWGTedssh8ZrqRy1ACfQuTV7a0O3NU1FoIsJtfHOm0o0mV4cPf4q+ZCVCwq1Xf2I11qUpuJFV4Q==}
     cpu: [arm64]
     os: [linux]
 
-  lefthook-linux-x64@2.1.10:
-    resolution: {integrity: sha512-z/VlRB3bh6mBvW3r1rwnJ5vP8z+Krx5gJzkZ4veDXh+6FlRTx8wtd3g3fllOv/yZMxkgmL3fQoFXv05Esa7vBQ==}
+  lefthook-linux-x64@2.1.14:
+    resolution: {integrity: sha512-gYExzjU2w3uKrP1MklbHENS1cXUdCQRIiEJkykI7q4RjhIHi+mQEUAZLxZw93a6jE2pNWaO0me5tB8EbEt4/GQ==}
     cpu: [x64]
     os: [linux]
 
-  lefthook-openbsd-arm64@2.1.10:
-    resolution: {integrity: sha512-430zL8sSIKw5P0YXGG6PB+eAhHa06n0PXuaERaAQE4Ss3odfqwnl5Mq9hQmkEnOS1EGiQEKkd0UHv/i4PtMNIQ==}
+  lefthook-openbsd-arm64@2.1.14:
+    resolution: {integrity: sha512-MCW76gTlEMBF3Ds8O63UTxjaSguha/5zT0U3Vr719I1sXueSpttfRmm/5YfIB4MygB116yA/Vi+DsizT/X0kcg==}
     cpu: [arm64]
     os: [openbsd]
 
-  lefthook-openbsd-x64@2.1.10:
-    resolution: {integrity: sha512-bgkO8PphGZVDhQgCJ524aYYPI5491pVmCiLPGjBIo1AvOSlIyw4N1Y+1C3QfqwEmechzw+Aq16SNc8pqv6UuXg==}
+  lefthook-openbsd-x64@2.1.14:
+    resolution: {integrity: sha512-salAc1PAhLI6xrB9pth5UxALQlTOGvZAfaAvgFwixhkdu8D//uW8zS3faFq31ktd1bDAy5wDI8p9yg+fF5+2uA==}
     cpu: [x64]
     os: [openbsd]
 
-  lefthook-windows-arm64@2.1.10:
-    resolution: {integrity: sha512-5Q6etF0Fla2DDA4ilDySrdNgiR5+W7cJZwnZ69Je3kvWCaWm4wnkuc8FEdjp3kiL2x3ZXipdI00f5vpO8aWmog==}
+  lefthook-windows-arm64@2.1.14:
+    resolution: {integrity: sha512-q3JC6lBrYLzkhXEhfnmFxJF47gSd5JeDweH3aNrHoLGX/KkRiOrk9RSyoRwSuGq03EYxSkJhl1FLj2GUxF7VqQ==}
     cpu: [arm64]
     os: [win32]
 
-  lefthook-windows-x64@2.1.10:
-    resolution: {integrity: sha512-c/XH8YZtylG4XaxzqFfXluvq2LXq2W/p54Bnzn3+Z7E5X2Fk3JlFJAibulMbIt2+w8T7UI/r97ok5GqE4kGaeA==}
+  lefthook-windows-x64@2.1.14:
+    resolution: {integrity: sha512-WwIxdwW1lDAaJUU3ETcKlCtdqluGr3Cy+LjKvP4QIQnFf0FEXL78THstIkZ6k6qhfUn7/WvyqSIf0cbTAKw2nQ==}
     cpu: [x64]
     os: [win32]
 
-  lefthook@2.1.10:
-    resolution: {integrity: sha512-K7mM4WoqMwqfXYK11EHy+lSH1uW8XHni3Yn/bSqyerPkUPygGdf3xn18JoV5HyA06xuQL3ofGAOjG01QX9oJ4w==}
+  lefthook@2.1.14:
+    resolution: {integrity: sha512-Y9TL1dmpRlIdSp73SJ6bb+xAZ4s2SinGTK3pgC9PRWMSjMr2iOfowPGnlSOfAo5fu6S5rdiItsQDxeLEWCGk4g==}
     hasBin: true
 
   lines-and-columns@1.2.4:
@@ -403,14 +504,14 @@ snapshots:
 
   '@babel/helper-validator-identifier@7.29.7': {}
 
-  '@commitlint/cli@21.2.2(@types/node@25.3.5)(conventional-commits-parser@7.1.2)(typescript@5.9.3)':
+  '@commitlint/cli@21.2.3(@types/node@25.3.5)(conventional-commits-parser@7.1.2)(typescript@5.9.3)':
     dependencies:
-      '@commitlint/config-conventional': 21.2.2
-      '@commitlint/format': 21.2.2
-      '@commitlint/lint': 21.2.2
-      '@commitlint/load': 21.2.2(@types/node@25.3.5)(typescript@5.9.3)
-      '@commitlint/read': 21.2.1(conventional-commits-parser@7.1.2)
-      '@commitlint/types': 21.2.0
+      '@commitlint/config-conventional': 21.2.3
+      '@commitlint/format': 21.2.3
+      '@commitlint/lint': 21.2.3
+      '@commitlint/load': 21.2.3(@types/node@25.3.5)(typescript@5.9.3)
+      '@commitlint/read': 21.2.3(conventional-commits-parser@7.1.2)
+      '@commitlint/types': 21.2.3
       tinyexec: 1.3.0
       yargs: 18.1.0
     transitivePeerDependencies:
@@ -419,46 +520,46 @@ snapshots:
       - conventional-commits-parser
       - typescript
 
-  '@commitlint/config-conventional@21.2.2':
+  '@commitlint/config-conventional@21.2.3':
     dependencies:
-      '@commitlint/types': 21.2.0
+      '@commitlint/types': 21.2.3
       conventional-changelog-conventionalcommits: 10.3.0
 
-  '@commitlint/config-validator@21.2.0':
+  '@commitlint/config-validator@21.2.3':
     dependencies:
-      '@commitlint/types': 21.2.0
+      '@commitlint/types': 21.2.3
       ajv: 8.20.0
 
-  '@commitlint/ensure@21.2.0':
+  '@commitlint/ensure@21.2.3':
     dependencies:
-      '@commitlint/types': 21.2.0
+      '@commitlint/types': 21.2.3
       es-toolkit: 1.50.0
 
   '@commitlint/execute-rule@21.0.1': {}
 
-  '@commitlint/format@21.2.2':
+  '@commitlint/format@21.2.3':
     dependencies:
-      '@commitlint/types': 21.2.0
+      '@commitlint/types': 21.2.3
       picocolors: 1.1.1
 
-  '@commitlint/is-ignored@21.2.2':
+  '@commitlint/is-ignored@21.2.3':
     dependencies:
-      '@commitlint/types': 21.2.0
+      '@commitlint/types': 21.2.3
       semver: 7.8.5
 
-  '@commitlint/lint@21.2.2':
+  '@commitlint/lint@21.2.3':
     dependencies:
-      '@commitlint/is-ignored': 21.2.2
-      '@commitlint/parse': 21.2.2
-      '@commitlint/rules': 21.2.2
-      '@commitlint/types': 21.2.0
+      '@commitlint/is-ignored': 21.2.3
+      '@commitlint/parse': 21.2.3
+      '@commitlint/rules': 21.2.3
+      '@commitlint/types': 21.2.3
 
-  '@commitlint/load@21.2.2(@types/node@25.3.5)(typescript@5.9.3)':
+  '@commitlint/load@21.2.3(@types/node@25.3.5)(typescript@5.9.3)':
     dependencies:
-      '@commitlint/config-validator': 21.2.0
+      '@commitlint/config-validator': 21.2.3
       '@commitlint/execute-rule': 21.0.1
-      '@commitlint/resolve-extends': 21.2.2
-      '@commitlint/types': 21.2.0
+      '@commitlint/resolve-extends': 21.2.3
+      '@commitlint/types': 21.2.3
       cosmiconfig: 9.0.2(typescript@5.9.3)
       cosmiconfig-typescript-loader: 6.3.0(@types/node@25.3.5)(cosmiconfig@9.0.2(typescript@5.9.3))(typescript@5.9.3)
       es-toolkit: 1.50.0
@@ -470,36 +571,36 @@ snapshots:
 
   '@commitlint/message@21.2.0': {}
 
-  '@commitlint/parse@21.2.2':
+  '@commitlint/parse@21.2.3':
     dependencies:
-      '@commitlint/types': 21.2.0
+      '@commitlint/types': 21.2.3
       conventional-changelog-angular: 9.3.0
       conventional-commits-parser: 7.1.2
 
-  '@commitlint/read@21.2.1(conventional-commits-parser@7.1.2)':
+  '@commitlint/read@21.2.3(conventional-commits-parser@7.1.2)':
     dependencies:
       '@commitlint/top-level': 21.2.0
-      '@commitlint/types': 21.2.0
+      '@commitlint/types': 21.2.3
       '@conventional-changelog/git-client': 3.1.2(conventional-commits-parser@7.1.2)
       tinyexec: 1.3.0
     transitivePeerDependencies:
       - conventional-commits-filter
       - conventional-commits-parser
 
-  '@commitlint/resolve-extends@21.2.2':
+  '@commitlint/resolve-extends@21.2.3':
     dependencies:
-      '@commitlint/config-validator': 21.2.0
-      '@commitlint/types': 21.2.0
+      '@commitlint/config-validator': 21.2.3
+      '@commitlint/types': 21.2.3
       es-toolkit: 1.50.0
       global-directory: 5.0.0
       resolve-from: 5.0.0
 
-  '@commitlint/rules@21.2.2':
+  '@commitlint/rules@21.2.3':
     dependencies:
-      '@commitlint/ensure': 21.2.0
+      '@commitlint/ensure': 21.2.3
       '@commitlint/message': 21.2.0
       '@commitlint/to-lines': 21.0.1
-      '@commitlint/types': 21.2.0
+      '@commitlint/types': 21.2.3
 
   '@commitlint/to-lines@21.0.1': {}
 
@@ -507,7 +608,7 @@ snapshots:
     dependencies:
       escalade: 3.2.0
 
-  '@commitlint/types@21.2.0':
+  '@commitlint/types@21.2.3':
     dependencies:
       conventional-commits-parser: 7.1.2
       picocolors: 1.1.1
@@ -631,7 +732,7 @@ snapshots:
     dependencies:
       argparse: 2.0.1
 
-  js-yaml@5.3.0:
+  js-yaml@5.4.2:
     dependencies:
       argparse: 2.0.1
 
@@ -639,48 +740,48 @@ snapshots:
 
   json-schema-traverse@1.0.0: {}
 
-  lefthook-darwin-arm64@2.1.10:
+  lefthook-darwin-arm64@2.1.14:
     optional: true
 
-  lefthook-darwin-x64@2.1.10:
+  lefthook-darwin-x64@2.1.14:
     optional: true
 
-  lefthook-freebsd-arm64@2.1.10:
+  lefthook-freebsd-arm64@2.1.14:
     optional: true
 
-  lefthook-freebsd-x64@2.1.10:
+  lefthook-freebsd-x64@2.1.14:
     optional: true
 
-  lefthook-linux-arm64@2.1.10:
+  lefthook-linux-arm64@2.1.14:
     optional: true
 
-  lefthook-linux-x64@2.1.10:
+  lefthook-linux-x64@2.1.14:
     optional: true
 
-  lefthook-openbsd-arm64@2.1.10:
+  lefthook-openbsd-arm64@2.1.14:
     optional: true
 
-  lefthook-openbsd-x64@2.1.10:
+  lefthook-openbsd-x64@2.1.14:
     optional: true
 
-  lefthook-windows-arm64@2.1.10:
+  lefthook-windows-arm64@2.1.14:
     optional: true
 
-  lefthook-windows-x64@2.1.10:
+  lefthook-windows-x64@2.1.14:
     optional: true
 
-  lefthook@2.1.10:
+  lefthook@2.1.14:
     optionalDependencies:
-      lefthook-darwin-arm64: 2.1.10
-      lefthook-darwin-x64: 2.1.10
-      lefthook-freebsd-arm64: 2.1.10
-      lefthook-freebsd-x64: 2.1.10
-      lefthook-linux-arm64: 2.1.10
-      lefthook-linux-x64: 2.1.10
-      lefthook-openbsd-arm64: 2.1.10
-      lefthook-openbsd-x64: 2.1.10
-      lefthook-windows-arm64: 2.1.10
-      lefthook-windows-x64: 2.1.10
+      lefthook-darwin-arm64: 2.1.14
+      lefthook-darwin-x64: 2.1.14
+      lefthook-freebsd-arm64: 2.1.14
+      lefthook-freebsd-x64: 2.1.14
+      lefthook-linux-arm64: 2.1.14
+      lefthook-linux-x64: 2.1.14
+      lefthook-openbsd-arm64: 2.1.14
+      lefthook-openbsd-x64: 2.1.14
+      lefthook-windows-arm64: 2.1.14
+      lefthook-windows-x64: 2.1.14
 
   lines-and-columns@1.2.4: {}
 

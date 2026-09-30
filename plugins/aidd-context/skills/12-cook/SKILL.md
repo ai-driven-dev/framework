@@ -26,6 +26,8 @@ flowchart LR
     apply --> done
 ```
 
+## Actions
+
 Run the flow above. Read only the next action file.
 
 | Action | Does |

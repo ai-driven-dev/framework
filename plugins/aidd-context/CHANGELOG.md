@@ -1,5 +1,36 @@
 # Changelog
 
+## [2.8.1](https://github.com/ai-driven-dev/framework/compare/aidd-context-v2.8.0...aidd-context-v2.8.1) (2026-09-24)
+
+
+### Bug Fixes
+
+* **aidd-context:** document Codex SessionEnd ([#905](https://github.com/ai-driven-dev/framework/issues/905)) ([758010a](https://github.com/ai-driven-dev/framework/commit/758010a6330a69fe06de0732ffb779bb941c68a6)), closes [#618](https://github.com/ai-driven-dev/framework/issues/618)
+
+## [2.8.0](https://github.com/ai-driven-dev/framework/compare/aidd-context-v2.7.0...aidd-context-v2.8.0) (2026-09-09)
+
+
+### Features
+
+* **cli:** one shared framework source per machine, user scope and session telemetry ([#795](https://github.com/ai-driven-dev/framework/issues/795)) ([95bdbbc](https://github.com/ai-driven-dev/framework/commit/95bdbbc3328262b72f5fd2b8034bc9630bf02e2f))
+
+
+### Miscellaneous
+
+* **framework:** reshape the memory bank to its own templates ([#732](https://github.com/ai-driven-dev/framework/issues/732)) ([4fb582e](https://github.com/ai-driven-dev/framework/commit/4fb582e2408cb3cd3a90a83ddf6e2cc2f81dfb38))
+
+## [2.7.0](https://github.com/ai-driven-dev/framework/compare/aidd-context-v2.6.2...aidd-context-v2.7.0) (2026-08-28)
+
+
+### Features
+
+* **aidd-context:** add retrospective lens to learn ([#712](https://github.com/ai-driven-dev/framework/issues/712)) ([5449b39](https://github.com/ai-driven-dev/framework/commit/5449b39b4eb1d6c9414aaff6c1de52fb1ae6b494))
+
+
+### Bug Fixes
+
+* **aidd-context:** load the project memory block in Claude Code ([#721](https://github.com/ai-driven-dev/framework/issues/721)) ([87304fb](https://github.com/ai-driven-dev/framework/commit/87304fbca9ce478131320e7e13d093917a05b8dd))
+
 ## [2.6.2](https://github.com/ai-driven-dev/framework/compare/aidd-context-v2.6.1...aidd-context-v2.6.2) (2026-08-14)
 
 

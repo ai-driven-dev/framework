@@ -108,7 +108,7 @@ Keep durable constraints and validation commands while removing architecture pro
 - Quote only the decisive error line.
 ```
 
-See the local [AGENTS.md template](../../../02-project-memory/assets/templates/AGENTS.md), [Claude Code memory](https://code.claude.com/docs/en/memory), and [Codex AGENTS.md](https://learn.chatgpt.com/docs/agent-configuration/agents-md).
+See the `AGENTS.md` template supplied by the project-memory skill, [Claude Code memory](https://code.claude.com/docs/en/memory), and [Codex AGENTS.md](https://learn.chatgpt.com/docs/agent-configuration/agents-md).
 
 #### 6) 🎯 Scope rules to matching files
 

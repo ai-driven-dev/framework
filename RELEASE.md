@@ -16,7 +16,7 @@ How ships, and what to follow when you open a change. Weekly rolling releases, w
 
 - Almost everything flows through `next` and ships in the weekly release.
 - Only an urgent production fix takes the fast lane straight to `main`.
-- The branch prefix decides the target; the canonical prefix → target table lives in [`aidd_docs/memory/vcs.md`](aidd_docs/memory/vcs.md#types).
+- The branch prefix decides the target; the canonical prefix → target table lives in [`aidd_docs/memory/vcs.md`](aidd_docs/memory/vcs.md#branches).
 
 ```mermaid
 flowchart LR
@@ -41,6 +41,7 @@ flowchart LR
 
 ## 🚑 Hotfix
 
-1. Branch `hotfix/*` from `main`, fix, PR back to `main`.
-2. release-please cuts a dedicated patch release.
-3. `main` is back-merged into `next` automatically.
+1. Branch `hotfix/*` from `main`, fix, PR back to `main`. `.github/rulesets/main.json` declares merge as the only method the PR may use, so write every commit on the branch as conventional on its own — none gets squashed away.
+2. Merge with an empty description — clear the box in the UI, or run `gh pr merge <n> --merge --body ""` — because this repository's merge commits default their body to the PR title, and release-please reads a non-empty body as a second, duplicate commit in the next release's notes.
+3. release-please cuts a dedicated patch release.
+4. `main` is back-merged into `next` automatically.
