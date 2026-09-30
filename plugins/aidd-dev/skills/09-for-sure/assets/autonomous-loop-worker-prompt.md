@@ -4,6 +4,9 @@ Execute this step. Auto-accept everything, act as the user, and make every
 decision yourself (approve prompts, generate keys, install tools, click
 buttons). Do not ask for permission. Just do it.
 
+Worker policy: execute only the assigned step and return concrete evidence. The
+orchestrator retains reflection, framing, and replanning.
+
 Signing in via an existing account (Google Sign-in, GitHub OAuth, SSO) is NOT
 account creation; it uses the user's active browser session. Do it.
 
