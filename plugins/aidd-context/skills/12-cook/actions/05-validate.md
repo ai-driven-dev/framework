@@ -1,39 +1,23 @@
 # 05 - Validate recipes
 
-```text
-cook validate <recipe>
-cook validate all
-```
-
 ## Input
 
 The recipe name, title, path, or `all`.
 
 ## Output
 
-On success:
-
-```text
-PASS: <n> recipe(s) validated.
-Checks: deterministic and semantic; unavailable parsers: <languages or none>.
-```
-
-On failure:
-
-```md
-| File | Line | Rule | Fix |
-| --- | ---: | --- | --- |
-| <path> | <line> | <rule> | <specific correction> |
-```
+A report filled from [validation-report-template.md](../assets/validation-report-template.md).
 
 Validation is read-only. Never repair, reformat, or rewrite a recipe during this action.
 
 ## Process
 
 1. **Resolve.** Resolve one recipe with [recipe-locations.md](../references/recipe-locations.md), or keep `all` as the full project-plus-bundled scope.
-2. **Check structure.** Run the validation script with the resolved recipe path or the `--all` input. Preserve its exit code and findings.
+2. **Check structure.** Locate `skills/12-cook/scripts/validate-recipe.mjs` relative to the installed `aidd-context` plugin root and invoke `node <resolved-script-path> <resolved-recipe-path>` or `node <resolved-script-path> --all` from the project root, preserving its exit code and findings.
 3. **Check semantics.** Apply the Writing, Steps, and Evidence rules from [recipe-contract.md](../references/recipe-contract.md); record one line-specific finding per violated rule. For non-JSON snippets, use available native YAML, TOML, and shell parsers and record which languages could not be checked mechanically.
-4. **Report.** Merge deterministic and semantic findings into the output table, or print the two success lines. An unavailable optional parser is disclosed but does not fail an otherwise valid recipe. Do not suppress a finding because it requires editorial judgment.
+4. **Report.** Fill the report template with merged deterministic and semantic findings, or the success summary.
+   - An unavailable optional parser is disclosed but does not fail an otherwise valid recipe.
+   - Do not suppress a finding because it requires editorial judgment.
 
 ## Test
 

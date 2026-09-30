@@ -1,11 +1,13 @@
+<!-- Fill every placeholder, repeat the step scaffold as needed, and remove all scaffold comments from the finished recipe. Keep the H1 title, plain description sentence, then the steps in this order. -->
 # <!-- Recipe title -->
 
 <!-- Write one plain sentence naming the observable outcome. -->
 
-<!-- Add a table of contents only when the finished recipe has at least 10 steps. -->
+<!-- Add an optional table of contents between the description and steps only when the finished recipe has at least 10 steps; omit it from shorter recipes. -->
 
 ## Steps to <!-- outcome -->
 
+<!-- Name this section for the outcome, never just Steps. Use ### N) <emoji> Title for direct steps, or #### N) <emoji> Title under a ### category. Optional difficulty categories are ### 🟢 Beginner, ### 🟡 Intermediate, and ### 🔴 Expert. Number steps continuously across categories. -->
 ### 1) <!-- emoji + action title -->
 
 <!-- Start with one sentence naming the benefit or risk, and state where and when this applies. -->

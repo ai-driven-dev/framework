@@ -11,12 +11,18 @@ flowchart LR
     unnamed --> list
     named-new --> research
     named-update --> research
+    named-research --> research
     named-apply --> apply
     named-validate --> validate
-    list --> done
-    list --> research
-    research --> upsert --> validate --> done
-    validate -->|findings| upsert
+    list -->|list only| done([done])
+    list -->|create or update| research
+    list -->|select to apply| apply
+    research -->|standalone research| done
+    research -->|create, update, or selected insights| upsert
+    upsert --> validate
+    validate -->|standalone, pass or findings| done
+    validate -->|upsert, pass| done
+    validate -->|upsert, findings: repair| upsert
     apply --> done
 ```
 
@@ -29,7 +35,3 @@ Run the flow above. Read only the next action file.
 | upsert | create or update one recipe |
 | apply | apply one existing recipe |
 | validate | validate one or all recipes |
-
-## Transversal rules
-
-- Read the next action file before running it.

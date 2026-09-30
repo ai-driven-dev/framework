@@ -1,12 +1,10 @@
-<!-- Read by 03-research. The scouting angles, the bar each candidate must clear, and how to verify them. Not a recipe itself. -->
-
 # Research playbook
 
 Guidance for `03-research`: the angles to scout, the criteria each candidate must clear, and the verification each must pass. Define the target with `assets/research-goal-checklist.md` first, and clear `assets/research-checklist.md` before drafting.
 
 ## Angles to cover
 
-Cover every angle. The caller or orchestrator decides whether independent angles need isolated or parallel execution:
+Cover every angle:
 
 - **Alternatives** — competing tools, libraries, or methods that could replace the current approach.
 - **New methods** — techniques that emerged since the recipe was written.

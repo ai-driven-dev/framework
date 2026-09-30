@@ -211,6 +211,7 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `assets` | [recipe-template.md](skills/12-cook/assets/recipe-template.md) | - |
 | `assets` | [research-checklist.md](skills/12-cook/assets/research-checklist.md) | - |
 | `assets` | [research-goal-checklist.md](skills/12-cook/assets/research-goal-checklist.md) | - |
+| `assets` | [validation-report-template.md](skills/12-cook/assets/validation-report-template.md) | - |
 | `references` | [recipe-contract.md](skills/12-cook/references/recipe-contract.md) | - |
 | `references` | [recipe-locations.md](skills/12-cook/references/recipe-locations.md) | - |
 | `references` | [research-playbook.md](skills/12-cook/references/research-playbook.md) | - |

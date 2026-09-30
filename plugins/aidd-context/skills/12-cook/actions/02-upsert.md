@@ -4,7 +4,7 @@ Create or update one project recipe at `aidd_docs/recipes/<slug>.md`, scaffolded
 
 ## Input
 
-The recipe topic.
+The recipe topic and any verified results from `research`.
 
 ## Output
 
@@ -12,7 +12,7 @@ The recipe file at `aidd_docs/recipes/<slug>.md`, filled from the template.
 
 ## Process
 
-1. **Research.** For a new recipe or any substantial update, run `research` (03) on the topic and draft only from its verified results, never from memory.
+1. **Research.** For a new recipe or any substantial update, draft only from verified `research` (03) results, running it on the topic when those results are not already available, never drafting from memory.
 2. **Slug.** Derive a kebab-case `<slug>` from the topic.
 3. **Resolve.** Resolve existing recipes with [recipe-locations.md](../references/recipe-locations.md).
    - The project recipe exists: update `aidd_docs/recipes/<slug>.md` in place.
@@ -22,7 +22,8 @@ The recipe file at `aidd_docs/recipes/<slug>.md`, filled from the template.
    - On any `high`, recommend updating that recipe instead and ask update-or-create before scaffolding.
 6. **Scaffold.** Scaffold from [recipe-template.md](../assets/recipe-template.md) when needed, applying [recipe-contract.md](../references/recipe-contract.md) to every section while preserving verified commands, examples, limits, screenshots, and evidence and deleting narrative repetition.
 7. **Fill.** Fill every placeholder. Never maintain a separate recipe index; `list` reads the files directly.
-8. **Validate.** Run `validate` (05), fix every deterministic or semantic finding, and rerun both checks until they pass.
+8. **Validate.** Run `validate` (05) after the write.
+   - On findings, return to Scaffold and Fill to repair the recipe, then rerun both checks until they pass; reuse verified research rather than restarting it for repairs.
 
 ## Test
 
