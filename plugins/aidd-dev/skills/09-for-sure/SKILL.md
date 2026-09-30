@@ -13,7 +13,7 @@ Run an autonomous loop until a success condition is verified. An interactive pre
 | #   | Action            | Phase                  | Role                                                                       |
 | --- | ----------------- | ---------------------- | -------------------------------------------------------------------------- |
 | 01  | `init-tracking`   | interactive pre-flight | validate the goal, build the journey map, create the tracking file, spawn the loop |
-| 02  | `auto-accept`     | autonomous             | decide and act as the user, stopping only on money or destructive actions  |
+| 02  | `auto-accept`     | autonomous             | decide and act as the user under the auto-accept rules                   |
 | 03  | `autonomous-loop` | autonomous             | spawn one worker per step, verify, retry, evaluate the success condition   |
 
 Run `01` interactively; it spawns `03`, which runs unattended under the `02` auto-accept rules until the success condition passes.
@@ -26,6 +26,7 @@ Before running an action, read its file in `actions/`, not only the table or ass
 - Honesty over escape: never set `status: implemented` until the success condition genuinely passes.
 - Auto-accept: when a decision or approval is needed, act as the user (create accounts, generate keys, approve prompts, install tools), never asking. Stop only on a payment or a destructive action.
 - The loop spawns one worker agent per step and never does the work itself.
+- Worker dispatch: at every launch or relaunch, use the smallest available model with its highest supported reasoning effort. The orchestrator retains reflection, framing, and replanning; workers execute their assigned step and return evidence.
 
 ## Assets
 
