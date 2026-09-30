@@ -8,7 +8,7 @@ The timing, usage, and recommendations tables.
 
 ## Output
 
-An HTML report in a temporary directory with local `report.css` and `report.js`, plus its path and the next-intent question.
+An HTML report in a temporary directory with local `report.css` and `report.js`, plus its path and a next-intent request.
 
 ## Process
 
@@ -17,7 +17,7 @@ An HTML report in a temporary directory with local `report.css` and `report.js`,
    - Remove samples. Escape every injected value; allow only template markup and local assets.
    - Keep `data-prompt` and editable execution instructions as short as possible without losing targets or actions.
    - Write only to the allowed unique temporary directory.
-3. **Return.** Provide its path and end exactly: `Quel changement d’intention général, même minime, appliquons-nous au prochain run pour rendre notre amélioration cumulative et mesurable ?`
+3. **Return.** Return its path. Ask the user, in their language, which small general change in intent to apply next run for cumulative, measurable improvement.
 
 ## Test
 
@@ -26,4 +26,4 @@ An HTML report in a temporary directory with local `report.css` and `report.js`,
 | Edit table | prior file targets only; consolidated or empty row |
 | Report | no samples; unavailable values named; injected evidence inert |
 | Assets | HTML, CSS, and JavaScript resolve locally only |
-| Close | path returned; exact final question |
+| Close | path returned; next intent requested in the user's language |

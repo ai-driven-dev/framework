@@ -8,7 +8,7 @@ The evidence boundary, timing and usage tables, complete conversation, and scope
 
 ## Output
 
-A `## Recommendations` table with `ID | Question | Type | Diagnostic | Evidence | Smallest change | Target | Saving`.
+A `## Recommendations` table with `ID | Focus | Type | Diagnostic | Evidence | Smallest change | Target | Saving`.
 
 ## Process
 
@@ -17,9 +17,10 @@ A `## Recommendations` table with `ID | Question | Type | Diagnostic | Evidence 
    - Prefer a cheap model and low reasoning effort when per-agent overrides are supported; otherwise inherit host defaults.
    - Give the behavior analyst the frozen transcript; give each artifact analyst the boundary, indexed turns, and paths.
    - Give every analyst steps 3–7; require table rows and no writes.
-3. **Question.** Answer all for each scope:
-   - Faster or better next run? What was removable, unclear, or counterproductive?
-   - Where should change live? Would it save `time`, `tokens`, `both`, or `unknown`?
+3. **Reflect.** Ask yourself, for each scope; keep this assessment internal:
+   - How could the next run be faster or better?
+   - What should be removed or clarified? What was counterproductive?
+   - Where should change live? How could it save time or tokens?
    - Which back-and-forth, bottlenecks, or tool calls could be removed, batched, parallelized, or replaced?
 4. **Verify.** Read each named artifact before judging it.
 5. **Assess.** Use `obsolete`, `over-specific-or-time-bound`, `duplicate`, `inconsistent`, `counterproductive`, or `correct`.
@@ -27,7 +28,7 @@ A `## Recommendations` table with `ID | Question | Type | Diagnostic | Evidence 
    - Add only for a demonstrated gap the existing content cannot cover. Preserve useful context and requirements.
    - `correct` means `no change`, never a recommendation.
 6. **Merge.** Deduplicate, then verify cited evidence against the frozen source.
-7. **Render.** Order by question, then `behavior`, `skill`, `knowledge`. Use the fewest actionable words.
+7. **Render.** Order by focus, then `behavior`, `skill`, `knowledge`. Report findings, not the questionnaire. Use the fewest actionable words.
    - Type: `skill`, `behavior`, `knowledge`, or `tooling`.
    - Saving: `time`, `tokens`, `both`, or `unknown`.
    - Use `no change` when evidence supports none.
@@ -37,7 +38,7 @@ A `## Recommendations` table with `ID | Question | Type | Diagnostic | Evidence 
 | Case | Pass |
 | --- | --- |
 | Dispatch | parallel only for multiple isolated scopes; otherwise local |
-| Analysis | every question answered with exact evidence or `no change` |
+| Analysis | internal assessment answers every question with exact evidence or `no change` |
 | Finding | exact turn, tool-call, or read-artifact evidence |
 | No finding | `no change`; no false recommendation |
 | Output | allowed labels, types, savings, and stable order; no `improve` evidence |
