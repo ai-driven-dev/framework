@@ -25,6 +25,7 @@ Before running an action, read its file in `actions/`, not only the table or ass
 - Gate: it returns a pass or fail verdict on the work.
 - Fix loop: the coding and frontend facets fix and re-run until they pass. The architecture facet only reports, never fixes.
 - Stop only when every selected assertion passes a final clean sweep.
+- On supplied CI failures, fixing facets collect all failed checks, repair each reproducible failure locally, and rerun every applicable command in the final sweep; the caller pushes once after green if authorized, with CI-only checks unverified.
 
 ## Assets
 
