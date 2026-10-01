@@ -1,33 +1,37 @@
 # 03 - Research alternatives
 
-Refine the target recipe with a checklist, scout for the highest-value insights, verify each one exists, and propose them as sorted lists.
+Research verified improvements to one recipe or topic.
 
 ## Input
 
-The recipe or topic to modernize, named by number from the latest `list`, slug, title, or topic. If a recipe exists, resolve it from project recipes first, then bundled recipes.
+The recipe or topic to modernize, named by number from the latest list, slug, title, or topic.
 
 ## Output
 
-Three parts, then a recommendation:
-
-1. An alternatives table `| Alternative | What it is | Pros | Cons | Official link |`, sorted by value.
-2. A coverage-gaps list: important sub-topics the recipe omits, each with why it matters.
-3. A counter-intuitive wins list: surprising tips, each with the result it produces.
-
-Every presented item is confirmed to exist, with its latest state and official link. Ephemeral: nothing is written to either recipe home.
+Verified alternatives, coverage gaps, and counter-intuitive wins sorted by value, with a recommendation.
 
 ## Process
 
-1. **Refine.** Fill [research-goal-checklist.md](../assets/research-goal-checklist.md) with the user until the target is precise: outcome, level, scope, grouping. Resolve and read the recipe with [recipe-locations.md](../references/recipe-locations.md) when it exists. Run `list` when it is unnamed.
-2. **Scout.** Cover every angle in [research-playbook.md](../references/research-playbook.md). The caller or orchestrator may isolate or parallelize independent angles; this action never requires a particular delegation mechanism. Return candidates with sources.
-3. **Curate.** Dedupe the candidates. Drop anything that neither beats nor extends the recipe. Sort each bucket by value. Clear [research-checklist.md](../assets/research-checklist.md): gaps filled, unknowns surfaced, claims corroborated.
-4. **Verify.** Apply the playbook's candidate checks. Drop anything that cannot be confirmed against an official source.
-5. **Present.** Render the alternatives table, the coverage-gaps list, and the counter-intuitive wins list, each item carrying its official link, then state a recommendation and why.
-6. **Hand off.** If the user picks insights to keep, route to `upsert` to fold them into the recipe.
+1. **Refine.** Fill [research-goal-checklist.md](../assets/research-goal-checklist.md) with the user until the outcome, level, scope, and grouping are precise.
+   - Resolve and read an existing recipe with [recipe-locations.md](../references/recipe-locations.md).
+2. **Scout.** Cover every angle in [research-playbook.md](../references/research-playbook.md), returning candidates with sources.
+   - The caller may isolate or parallelize independent angles; no particular delegation mechanism is required.
+3. **Curate.** Dedupe the candidates and sort each bucket by value.
+   - Drop anything that neither beats nor extends the recipe.
+   - Clear [research-checklist.md](../assets/research-checklist.md): gaps filled, unknowns surfaced, claims corroborated.
+4. **Verify.** Apply the playbook's candidate checks to confirm each surviving item's existence, latest state, and official link.
+   - Drop anything that cannot be confirmed against an official source.
+5. **Present.** Render the three parts below, each sorted by value with official links, then state a recommendation and why.
+   - Alternatives table: `| Alternative | What it is | Pros | Cons | Official link |`.
+   - Coverage-gaps list: omitted sub-topics and why each matters.
+   - Counter-intuitive wins list: surprising tips and the result each produces.
+   - Keep research ephemeral; do not write files.
 
 ## Test
 
-- The output has an alternatives table with pros and cons, a coverage-gaps list, and a counter-intuitive wins list, plus an explicit recommendation, and nothing is written to disk.
-- Every presented item carries an official link and was confirmed to exist; unverifiable candidates are dropped.
-- Every candidate clears the playbook's evidence and transferability criteria.
-- The research checklist clears (gaps filled, unknowns surfaced, claims confirmed) before any hand-off to `upsert`.
+| Case | Pass |
+| --- | --- |
+| Completed research | Alternatives with pros and cons, coverage gaps, counter-intuitive wins, and a recommendation are presented without writing files |
+| Presented items | Each exists in its latest verified state and carries an official link; unverifiable candidates are dropped |
+| Candidate evidence | Every candidate clears the playbook's evidence and transferability criteria |
+| Research completion | The checklist clears with gaps filled, unknowns surfaced, and claims confirmed before any write hand-off |
