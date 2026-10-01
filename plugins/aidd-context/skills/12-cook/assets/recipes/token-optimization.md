@@ -384,16 +384,16 @@ See [`SNIP`](https://github.com/edouard-claude/snip).
 
 #### 19) 🪝 Automate RTK where supported
 
-Claude Code rewrites eligible Bash calls through a hook; Codex installs `AGENTS.md` guidance and still relies on the agent invoking RTK.
+RTK rewrites eligible shell calls through hooks in Claude Code and Codex CLI when the host supports and trusts the installed hook.
 
 ```bash
 rtk init -g                    # Claude Code hook
-rtk init -g --codex            # Codex instructions
+rtk init -g --codex            # Codex CLI hook + AGENTS.md + RTK.md
 rtk init -g --uninstall        # Remove the Claude Code integration
 rtk init -g --codex --uninstall # Remove the Codex integration
 ```
 
-Verify Claude Code with `/hooks`. For Codex, inspect the generated `AGENTS.md` and `RTK.md`; do not assume transparent rewriting. See [RTK's current client matrix](https://github.com/rtk-ai/rtk/blob/develop/README.md#supported-ai-tools) and [Claude Code filtering hooks](https://code.claude.com/docs/en/costs#offload-processing-to-hooks-and-skills).
+Verify Claude Code with `/hooks`; in Codex CLI, inspect the generated hook, `AGENTS.md`, and `RTK.md`, confirm hook trust, then check that an eligible shell call is rewritten. See [RTK's current client matrix](https://github.com/rtk-ai/rtk/blob/develop/README.md#supported-ai-tools) and [Claude Code filtering hooks](https://code.claude.com/docs/en/costs#offload-processing-to-hooks-and-skills).
 
 #### 20) ✋ Cap Codex tool history
 

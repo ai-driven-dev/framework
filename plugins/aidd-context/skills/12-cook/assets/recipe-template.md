@@ -1,19 +1,52 @@
-<!-- Fill every placeholder, repeat the step scaffold as needed, and remove all scaffold comments from the finished recipe. Keep the H1 title, plain description sentence, then the steps in this order. -->
-# <!-- Recipe title -->
+# <Recipe title>
 
-<!-- Write one plain sentence naming the observable outcome. -->
+<One sentence describing what this recipe gets the reader.>
 
-<!-- Add an optional table of contents between the description and steps only when the finished recipe has at least 10 steps; omit it from shorter recipes. -->
+> Fill every placeholder and remove these instructions. Omit Why, Verify, and difficulty categories when they add no value; without categories, use direct `### N) <emoji> Title` steps.
 
-## Steps to <!-- outcome -->
+## Why
 
-<!-- Name this section for the outcome, never just Steps. Use ### N) <emoji> Title for direct steps, or #### N) <emoji> Title under a ### category. Optional difficulty categories are ### 🟢 Beginner, ### 🟡 Intermediate, and ### 🔴 Expert. Number steps continuously across categories. -->
-### 1) <!-- emoji + action title -->
+<Short and benefit-first, one idea per line. Lead with the keywords a reader would search, **bold** the key terms.>
 
-<!-- Start with one sentence naming the benefit or risk, and state where and when this applies. -->
-<!-- Add only the actions needed to perform and verify the technique. Number them when there is more than one. -->
-<!-- Include one typed, copyable command/config/output, concrete table, or operational image from a real source. -->
+## Steps to <the outcome the reader achieves>
+
+### 🟢 Beginner
+
+#### 1) <emoji> <First step title>
+
+<One benefit-focused line of what and why, in prose.>
+
+1. <where it is, then install it from its URL>
+2. <how to invoke it — its real command or slash>
+
+```bash
+$ <command the reader runs>
+<the useful output it prints, trimmed to what matters>
+```
+
+### 🟡 Intermediate
+
+#### 2) <emoji> <Next step title>
+
+<Benefit-focused what and why, in prose.>
+
+1. <action>
+2. <action>
+
+```<lang>
+<a config or snippet the reader can copy>
+```
+
+### 🔴 Expert
+
+#### 3) <emoji> <Last step title — until the goal is reached>
+
+<Benefit-focused what and why, in prose.>
+
+1. <action>
+
+![<what this screenshot or video shows>](<path-or-url>)
 
 ## Verify
 
-<!-- Add an observable command output, UI state, or file check; omit only when no useful check exists. -->
+- <Optional. An observable check that proves it worked: a command, a UI state, a file that now exists.>

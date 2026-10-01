@@ -1,6 +1,6 @@
 ---
 name: 12-cook
-description: Manage project recipes/how-to sheets by listing, creating, updating, researching, applying, or validating a recipe. Use for recipe, cook, /cook, list, new, update, research, apply, validate.
+description: Manages project recipes and practical guides. Use when the user wants to find a recipe, document a technique, research improvements, follow an existing guide, or check that its steps are usable.
 argument-hint: recipe
 ---
 

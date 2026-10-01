@@ -21,7 +21,9 @@ Validation is read-only. Never repair, reformat, or rewrite a recipe during this
 
 ## Test
 
-- One valid recipe and `all` return PASS without changing tracked files.
-- A structural failure returns the validator table with file, line, rule, fix, and a non-zero exit code.
-- A semantic failure appears in the same table even when the deterministic script passes.
-- JSON is parsed mechanically; YAML, TOML, and shell use available tools, and unavailable parsers appear in the success summary or a relevant failure.
+| Case | Pass |
+| --- | --- |
+| One valid recipe or `all` | PASS is returned without changing tracked files |
+| Structural failure | The table includes file, line, rule, and fix, with a non-zero exit code |
+| Semantic failure after deterministic PASS | The finding appears in the same table |
+| Snippet syntax | JSON is parsed mechanically; available YAML, TOML, and shell tools are used, and unavailable parsers are disclosed |

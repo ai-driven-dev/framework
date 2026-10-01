@@ -215,5 +215,5 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `references` | [recipe-contract.md](skills/12-cook/references/recipe-contract.md) | - |
 | `references` | [recipe-locations.md](skills/12-cook/references/recipe-locations.md) | - |
 | `references` | [research-playbook.md](skills/12-cook/references/research-playbook.md) | - |
-| `-` | [SKILL.md](skills/12-cook/SKILL.md) | `Manage project recipes/how-to sheets by listing, creating, updating, researching, applying, or validating a recipe. Use for recipe, cook, /cook, list, new, update, research, apply, validate.` |
+| `-` | [SKILL.md](skills/12-cook/SKILL.md) | `Manages project recipes and practical guides. Use when the user wants to find a recipe, document a technique, research improvements, follow an existing guide, or check that its steps are usable.` |
 

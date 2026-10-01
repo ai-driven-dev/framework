@@ -20,15 +20,17 @@ The recipe file at `aidd_docs/recipes/<slug>.md`, filled from the template.
 4. **Ask.** Ask only for a missing decision that changes the recipe's outcome or scope.
 5. **Dedup.** For a new recipe, run `list` and rate each near match in an overlap table `| Existing recipe | Source | Shared scope | Overlap |`, where `Overlap` is none, partial, or high.
    - On any `high`, recommend updating that recipe instead and ask update-or-create before scaffolding.
-6. **Scaffold.** Scaffold from [recipe-template.md](../assets/recipe-template.md) when needed, applying [recipe-contract.md](../references/recipe-contract.md) to every section while preserving verified commands, examples, limits, screenshots, and evidence and deleting narrative repetition.
+6. **Scaffold.** Use [recipe-template.md](../assets/recipe-template.md) when needed and apply [recipe-contract.md](../references/recipe-contract.md), preserving verified useful content on updates.
 7. **Fill.** Fill every placeholder. Never maintain a separate recipe index; `list` reads the files directly.
 8. **Validate.** Run `validate` (05) after the write.
    - On findings, return to Scaffold and Fill to repair the recipe, then rerun both checks until they pass; reuse verified research rather than restarting it for repairs.
 
 ## Test
 
-- A new or substantially-updated recipe is drafted from `research` results, not from memory.
-- `aidd_docs/recipes/<slug>.md` exists and passes the recipe contract.
-- `validate` passes after the write; no validation finding is silently waived.
-- A bundled recipe is never overwritten unless the user explicitly asks to change a bundled/framework recipe.
-- A new recipe that highly overlaps an existing project or bundled recipe triggers an update-or-create prompt before scaffolding.
+| Case | Pass |
+| --- | --- |
+| New or substantially updated recipe | The draft uses verified research results rather than memory |
+| Project recipe written | `aidd_docs/recipes/<slug>.md` exists and passes the recipe contract |
+| Validation after writing | Both checks pass and no finding is silently waived |
+| Bundled recipe selected | It is overwritten only on an explicit bundled/framework change request |
+| High overlap with an existing recipe | An update-or-create prompt precedes scaffolding |
