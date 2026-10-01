@@ -14,13 +14,13 @@ Every phase coded, asserted, and its frontmatter marked `status: done`, with the
 
 1. **Open.** Walk the phases in order. In a feature folder each is a `phase-<n>.md` next to `plan.md`. Set its `status: in-progress` as a runtime marker; no commit yet.
 2. **Code.** Build the phase scope against its acceptance criteria.
-3. **Assert.** Assert the phase against its acceptance criteria. On failure, repair and repeat. The gate is the assertion passing, not a self-report. Once it passes, set `status: done` and commit the phase as one unit, its code and its status together.
+3. **Assert.** Validate the phase's acceptance criteria through the real affected workflow using the appropriate interface (browser, CLI, API…). Check actual against expected behavior at every step; fix mismatches and restart from the beginning. Require a full successful run with observable evidence before setting `status: done`; if validation is blocked, report it without claiming success. Commit the phase as one unit, its code and its status together.
 4. **Guard.** Stop the loop on either condition:
    - **Blocked** (see [blocked.md](../references/blocked.md)): set the plan `status: blocked`, commit, stop.
    - **Drift**: any mismatch with the plan, trivial or substantive, stop and report `replan needed: <reason>`. Never rewrite the plan; replanning is the caller's job.
 
 ## Test
 
-- A phase reaches `status: done` only after assert passes against its acceptance criteria, in one commit with its code (`git status --short` shows no dangling phase edits).
+- A phase reaches `status: done` only after a full workflow run passes its acceptance criteria with observable evidence at every step, in one commit with its code (`git status --short` shows no dangling phase edits).
 - The branch holds one commit per phase; there are no separate `in-progress` status commits.
 - A blocker leaves the plan `status: blocked` with no later phase run.
