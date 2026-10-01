@@ -114,9 +114,15 @@ function parseHeadings(lines, fencedLines) {
 }
 
 function baseSlug(text) {
-  return text
+  let plain = "";
+  let tagDepth = 0;
+  for (const character of text) {
+    if (character === "<") tagDepth += 1;
+    else if (character === ">") tagDepth = Math.max(0, tagDepth - 1);
+    else if (tagDepth === 0) plain += character;
+  }
+  return plain
     .toLowerCase()
-    .replace(/<[^>]*>|[<>]/gu, "")
     .replace(/[`*_~]/gu, "")
     .replace(/[\u200d\ufe0e\ufe0f]/gu, "")
     .replace(/[^\p{L}\p{N}\p{M}\s_-]/gu, "")

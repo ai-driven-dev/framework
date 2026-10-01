@@ -18,7 +18,7 @@
 
 - [x] Accept useful Markdown variants while reporting broken structure, examples, and links: `scripts/__tests__/validate-recipe.test.js:139`.
 - [x] Read and inspect the same file descriptor, close it, and report read failures: `plugins/aidd-context/skills/12-cook/scripts/validate-recipe.mjs:39`.
-- [x] Run through symlinked entry points without executing on library import: `plugins/aidd-context/skills/12-cook/scripts/validate-recipe.mjs:498`, `scripts/__tests__/validate-recipe.test.js:391`.
+- [x] Run through symlinked entry points without executing on library import: `plugins/aidd-context/skills/12-cook/scripts/validate-recipe.mjs:504`, `scripts/__tests__/validate-recipe.test.js:391`.
 - [x] Remove punctuation-based description false positives and keep the RTK recipe correction scoped to step 19: `scripts/__tests__/validate-recipe.test.js:208`, `plugins/aidd-context/skills/12-cook/assets/recipes/token-optimization.md:383`.
 
 ## Findings
@@ -33,8 +33,9 @@ None.
 | Files checked | Nine staged cleanup files; independent checker reviewed code, behavior, and relevance |
 | Unchecked | None within the bounded cleanup review |
 | Unplanned | None |
-| Checker execution | 26 guarded validator tests passed; bundled validation returned `PASS: 3 recipe(s) validated.` |
-| Main execution | Global pre-commit passed: 575 script tests, 140 CLI architecture tests, typecheck, lint, manifests, paths, and links |
+| Checker execution | 27 guarded validator tests passed; bundled validation returned `PASS: 3 recipe(s) validated.` |
+| Main execution | Global pre-commit passed: 576 script tests, 140 CLI architecture tests, typecheck, lint, manifests, paths, and links |
 | Snippet syntax | 4 JSON, 2 YAML, 8 TOML, and 9 shell examples parsed successfully |
 | Distribution execution | Fresh Codex flat and Claude marketplace builds each returned the exact three-recipe PASS output |
-| Limits | CodeQL and the new commit's remote CI remain to be checked after push; interactive client workflows were not executed |
+| CI follow-up | The character-based heading parser and LF/CRLF template assertion were independently approved after the first remote run exposed those gaps |
+| Limits | CodeQL and native Windows remain to be confirmed on the follow-up commit after push; interactive client workflows were not executed |

@@ -422,7 +422,9 @@ test("renders the recipe template as visible Markdown", () => {
     path.join(root, "plugins/aidd-context/skills/12-cook/assets/recipe-template.md"),
     "utf8",
   );
-  assert.ok(template.startsWith("# <Recipe title>\n"));
+  for (const content of [template, template.replace(/\r?\n/gu, "\r\n")]) {
+    assert.match(content, /^# <Recipe title>\r?\n/u);
+  }
   assert.ok(!template.includes("<!--"));
   for (const section of ["## Why", "### 🟢 Beginner", "### 🟡 Intermediate", "### 🔴 Expert", "## Verify"]) {
     assert.ok(template.includes(section), section);
@@ -468,6 +470,19 @@ test("resolves heading anchors with inline HTML and encoded local paths", () => 
   lines.push("", "[Reference](reference%20notes.md#details--examples)");
   const item = fixture(lines);
   fs.writeFileSync(path.join(item.directory, "reference notes.md"), "# <em>Details</em> & Examples\n", "utf8");
+  try {
+    const result = run([item.file]);
+    assert.equal(result.status, 0, result.stderr);
+  } finally {
+    fs.rmSync(item.directory, { recursive: true, force: true });
+  }
+});
+
+test("resolves inline text and ignores nested or unterminated tags in heading anchors", () => {
+  const lines = validDirect();
+  lines.push("", "[Inline](reference.md#foobar)", "[Nested](reference.md#startfinish)", "[Unterminated](reference.md#safe)");
+  const item = fixture(lines);
+  fs.writeFileSync(path.join(item.directory, "reference.md"), "# foo<strong>bar</strong>\n## start<outer <inner>hidden>finish\n## safe<script\n", "utf8");
   try {
     const result = run([item.file]);
     assert.equal(result.status, 0, result.stderr);
