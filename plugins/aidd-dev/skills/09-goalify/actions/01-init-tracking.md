@@ -12,7 +12,7 @@ The tracking file at `aidd_docs/tasks/<task-name>.md`, marked created or resumed
 
 ## Process
 
-1. **Resume.** Check `aidd_docs/tasks/` for a file matching the task name and read its frontmatter `status`.
+1. **Resume.** Apply the [model policy](../SKILL.md#transversal-rules), then check `aidd_docs/tasks/` for a file matching the task name and read its frontmatter `status`.
    - `pending` or `in-progress`: report the status (iteration, steps remaining), then skip to Spawn to resume.
    - `implemented`: report "Task already completed" and stop.
    - No file: continue to Collect.
@@ -24,10 +24,14 @@ The tracking file at `aidd_docs/tasks/<task-name>.md`, marked created or resumed
 7. **Map.** Project the whole path as an ASCII map of steps, dependencies, tools, and blockers. Ask the user to confirm and iterate until they do.
 8. **Scaffold.** Load [plan-template.md](../assets/plan-template.md), creating `aidd_docs/tasks/` when missing.
 9. **Create.** Write `aidd_docs/tasks/<task-name>.md` from the template. Fill the frontmatter (`objective`, `success_condition`, `iteration: 0`, `status: pending`), the phases with their tasks and acceptance criteria, and the journey map.
-10. **Spawn.** Read the orchestrator recipe from [03-autonomous-loop.md](./03-autonomous-loop.md) and hand it to the Agent tool with `<task-name>` filled in.
+10. **Spawn.** Apply the router's model policy to launch or resume the orchestrator with [03-autonomous-loop.md](./03-autonomous-loop.md) and `<task-name>` filled in.
 
 ## Test
 
-- The tracking file exists with frontmatter `status: pending` at creation.
-- Its `success_condition` is a runnable command and the journey map is present.
-- Every `[!]` blocker was resolved before the spawn, and an autonomous agent was launched.
+| Case | Pass |
+| --- | --- |
+| New task | The tracking file exists at `aidd_docs/tasks/<task-name>.md` with `status: pending`, a runnable `success_condition`, and a journey map. |
+| Pending or in-progress task | The existing file is retained and the orchestrator resumes from its recorded state. |
+| Implemented task | "Task already completed" is reported and no agent launches. |
+| Unresolved hard prerequisite | No orchestrator launches until every `[!]` is resolved. |
+| Setup or resume | Framing and orchestrator model selections follow the router's model policy. |

@@ -14,7 +14,7 @@ status: pending
 - Interpret comments on this file to help you fill it.
 - Each phase MUST have acceptance criteria.
 - During implementation, the AI may amend this plan. Every AI change MUST be prefixed with 🤖 and include a brief rationale.
-- This file IS the live tracking file for For Sure. State lives in the `status` frontmatter field (`pending → in-progress → implemented`).
+- This file IS the live tracking file for Goalify. State lives in the `status` frontmatter field (`pending → in-progress → implemented`).
 - `success_condition` MUST be a runnable command. The loop sets `status: implemented` only when it passes.
 - Log is APPEND-ONLY. One entry per step attempt. Never rewrite history.
 -->

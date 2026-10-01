@@ -17,7 +17,7 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
   - [`skills/06-test`](#skills06-test)
   - [`skills/07-refactor`](#skills07-refactor)
   - [`skills/08-debug`](#skills08-debug)
-  - [`skills/09-for-sure`](#skills09-for-sure)
+  - [`skills/09-goalify`](#skills09-goalify)
   - [`skills/10-todo`](#skills10-todo)
   - [`skills/11-browser-qa`](#skills11-browser-qa)
 
@@ -126,17 +126,17 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `references` | [mermaid-conventions.md](skills/08-debug/references/mermaid-conventions.md) | `Rules for generating valid, high-quality Mermaid diagrams. Apply when creating or reviewing any Mermaid diagram (flowchart, state, ER, sequence, gantt).` |
 | `-` | [SKILL.md](skills/08-debug/SKILL.md) | `Reproduce and fix a known bug, or find an unknown root cause by hypothesis validation. Use when the user wants to fix a bug, find why something breaks, or reopen a stuck investigation. Not for building a feature or reviewing a diff.` |
 
-#### `skills/09-for-sure`
+#### `skills/09-goalify`
 
 | Group | File | Description |
 |-------|------|---|
-| `actions` | [01-init-tracking.md](skills/09-for-sure/actions/01-init-tracking.md) | - |
-| `actions` | [02-auto-accept.md](skills/09-for-sure/actions/02-auto-accept.md) | - |
-| `actions` | [03-autonomous-loop.md](skills/09-for-sure/actions/03-autonomous-loop.md) | - |
-| `assets` | [autonomous-loop-worker-prompt.md](skills/09-for-sure/assets/autonomous-loop-worker-prompt.md) | - |
-| `assets` | [plan-template.md](skills/09-for-sure/assets/plan-template.md) | - |
-| `references` | [autonomous-loop-log-format.md](skills/09-for-sure/references/autonomous-loop-log-format.md) | - |
-| `-` | [SKILL.md](skills/09-for-sure/SKILL.md) | `Run an iterative agent loop that retries until a runnable success condition passes. Use when the user says "for sure", "keep trying until", or wants guaranteed completion against a success command. Not for one-shot tasks or uncheckable goals.` |
+| `actions` | [01-init-tracking.md](skills/09-goalify/actions/01-init-tracking.md) | - |
+| `actions` | [02-auto-accept.md](skills/09-goalify/actions/02-auto-accept.md) | - |
+| `actions` | [03-autonomous-loop.md](skills/09-goalify/actions/03-autonomous-loop.md) | - |
+| `assets` | [autonomous-loop-worker-prompt.md](skills/09-goalify/assets/autonomous-loop-worker-prompt.md) | - |
+| `assets` | [plan-template.md](skills/09-goalify/assets/plan-template.md) | - |
+| `references` | [autonomous-loop-log-format.md](skills/09-goalify/references/autonomous-loop-log-format.md) | - |
+| `-` | [SKILL.md](skills/09-goalify/SKILL.md) | `Turn a goal into an autonomous loop that replans and retries until a runnable success condition passes. Use when the user says "goalify", "keep trying until", or wants a goal verified by a command. Not for one-shot tasks or uncheckable goals.` |
 
 #### `skills/10-todo`
 
