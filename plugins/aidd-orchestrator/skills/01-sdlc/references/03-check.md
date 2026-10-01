@@ -4,7 +4,7 @@
 
 Use one fresh checker, independent from implementation, to review the candidate against the contract, plan, and validation evidence. After the review clears, the same checker challenges whether the real outcome is trustworthy and serves the user.
 
-Use product or contract findings as the next Frame source. Dispatch independent implementation findings through Todo and keep dependent repairs together in Deliver. Re-enter Check after every new candidate. Open the draft pull request when the checker returns no actionable finding.
+Use product or contract findings as the next Frame source. Dispatch independent implementation findings through Todo and keep dependent repairs together in Deliver. Re-enter Check after every new candidate. A finding that recurs after a pass acted on it is not routed again, repaired or not. It is a decision that requires user authority, and no request opens until it arrives. Open the draft pull request when the checker returns no actionable finding.
 
 ```mermaid
 ---

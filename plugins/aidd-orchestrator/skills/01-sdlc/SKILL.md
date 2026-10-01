@@ -1,14 +1,22 @@
 ---
 name: 01-sdlc
-description: Autonomously orchestrates a request from framing to a draft pull request, isolating implementation, independent review, and final outcome challenge. Use when the user wants to deliver a change end to end. Not for running one development step.
-argument-hint: request
+description: Orchestrates a request from framing to a draft pull request, autonomously or pausing when asked, isolating implementation, independent review, and outcome challenge. Use when the user wants to deliver a change end to end. Not for a single step.
+argument-hint: request | interactive request
 ---
 
 # Skill: sdlc
 
 ## Behavior
 
-Operate autonomously from the request to a draft pull request: decide and act without confirmation, asking only before spending money, taking an irreversible action, or making a decision that requires user authority. Read only the current zone reference. Verify that every named provider is installed before calling it.
+The mode is `auto` unless the request's first word is `interactive`, in any case and with or without leading dashes. A first word of `auto` names the default. Either word matches only as a whole word and is no part of the source. A request carrying nothing else is not one to run; say so and stop.
+
+In `auto`, operate autonomously from the request to a draft pull request: decide and act without confirmation, asking only before spending money, taking an irreversible action, or making a decision that requires user authority. An exception stops the action it guards, not the rest of the request. Say what was withheld and what would release it.
+
+In `interactive`, pause on the contract, on the plan, and on the outcome before the pull request opens. Present what was produced and wait. Dispatch in `interactive` only the steps that produce those three, clarifying and formalizing included, and the rest in `auto`. A spec is how Frame formalizes the contract, not a fourth artifact. Every wait a step takes is that artifact's pause; where it takes none, pause yourself. An artifact produced anew pauses again. An approval ships what was presented.
+
+A refusal at a pause is a finding against that artifact. Contract or spec to Frame, plan to Deliver, outcome to Deliver or to Frame when it changes what is being built. It routes by artifact, never by a finding's kind, and travels with the source. Say so and wait again when it names what the artifact already carries. Only the user bounds this loop.
+
+Read only the current zone reference. Verify that every named provider is installed before calling it.
 
 Spawn specialized agents for isolated work. Parallelize independent work when it is faster. Give each agent one focused task that a smaller model can execute. Repeat the responsible zone when delegated work returns an actionable gap.
 
