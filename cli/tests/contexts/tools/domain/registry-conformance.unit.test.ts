@@ -386,6 +386,10 @@ describe("projectHooksFileOf()", () => {
     expect(projectHooksFileOf("cursor")).toBe(".cursor/hooks.json");
   });
 
+  it("returns .agents/hooks.json for antigravity", () => {
+    expect(projectHooksFileOf("antigravity")).toBe(".agents/hooks.json");
+  });
+
   it("returns undefined for a tool with nothing merged into a project hooks file", () => {
     expect(projectHooksFileOf("claude")).toBeUndefined();
   });

@@ -1947,6 +1947,7 @@
     ".kilo/agents/aidd-dev-reviewer.md": "30e2dbb93309d23fc99cbce36a4fcfd0b6d76e49c3425979827727327ba697a6"
   },
   "antigravity:flat": {
+    ".agents/hooks.json": "d0e9c0b5770709182a2b8769fbc93a510047d3f6fe85066bb2dc2afb51f4dd51",
     ".agents/skills/aidd-vcs-04-issue-create/SKILL.md": "3983ed1c71124786fdf737ec5447637a31b1cc146eff43003978cec50c2ddc67",
     ".agents/skills/aidd-vcs-04-issue-create/evals/scenarios.json": "d113c62aae4867e425737948c39c9f687f56c3d37234eca345a2f65f1a234c30",
     ".agents/skills/aidd-vcs-04-issue-create/assets/CONTRIBUTING.md": "1372c7512c02c26e21643ae523a98d7c90ff92c03633532a8c417b4ca8d9e75f",
@@ -2128,6 +2129,7 @@
     ".agents/skills/aidd-async-dev-01-setup/actions/skills/02-ask-config.md": "986335d1e86a633d0083fe4488aae58266a82ec35d0cdb0b74f0bbcea70e6f4e",
     ".agents/skills/aidd-async-dev-01-setup/actions/skills/03-generate-workflow.md": "11f7ec6c03284d0524179f71337691301a6362cf77bf3aa666fe41686b4df40b",
     ".agents/skills/aidd-async-dev-01-setup/actions/skills/04-write-config.md": "eb7ecb812e8bdaaeba2e56c71c77bf8c14fce0a2c44311ff7985444617635dd5",
-    ".agents/skills/aidd-async-dev-01-setup/actions/skills/05-bootstrap-labels.md": "f53177ce1c58767f1bdfcfa3e72f7d4cc5e3d4fd782c35c3998815317be108b1"
+    ".agents/skills/aidd-async-dev-01-setup/actions/skills/05-bootstrap-labels.md": "f53177ce1c58767f1bdfcfa3e72f7d4cc5e3d4fd782c35c3998815317be108b1",
+    ".agents/hooks/aidd-context/update_memory.js": "140d7db788452f5f4c32316d522f595a36e06638b19a42d32e42a1a7324b7149"
   }
 }

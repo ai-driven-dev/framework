@@ -318,7 +318,7 @@ describe("buildCodexFlatContract()", () => {
     expect({
       script: hooks.path("aidd-dev", "hooks/journal.cjs"),
       mergeDest: hooks.hooksMergeDest?.("/out"),
-      merged: hooks.hooksMerge?.(null, HOOKS_JSON),
+      merged: hooks.hooksMerge?.(null, HOOKS_JSON, "aidd-dev"),
     }).toStrictEqual({
       script: ".codex/hooks/aidd-dev/journal.cjs",
       mergeDest: "/out/.codex/hooks.json",
