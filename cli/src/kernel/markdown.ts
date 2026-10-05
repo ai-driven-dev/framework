@@ -28,6 +28,15 @@ export function parseFrontmatter(content: string): {
   return { frontmatter, body };
 }
 
+function isJsonArray(s: string): boolean {
+  if (!s.startsWith("[")) return false;
+  try {
+    return Array.isArray(JSON.parse(s));
+  } catch {
+    return false;
+  }
+}
+
 export function serializeFrontmatter(frontmatter: Record<string, unknown>, body: string): string {
   if (Object.keys(frontmatter).length === 0) {
     return body.replace(/^\n/, "");
@@ -50,7 +59,7 @@ export function serializeFrontmatter(frontmatter: Record<string, unknown>, body:
     } else {
       const s = String(value);
       // JSON-array strings (e.g. from cursor globs) are emitted raw so they stay as YAML inline arrays.
-      if (s.startsWith("[") && s.endsWith("]")) {
+      if (isJsonArray(s)) {
         lines.push(`${key}: ${s}`);
       } else {
         lines.push(`${key}: '${s.replaceAll("'", "''")}'`);
