@@ -150,6 +150,12 @@ describe("frontmatter, at the edges", () => {
     expect(serializeFrontmatter({ globs: '["a","b"]' }, "body")).toContain('globs: ["a","b"]');
   });
 
+  it("quotes a string that only looks like a list, so it reads back as the same string", () => {
+    const out = serializeFrontmatter({ description: "[WIP] foo [x]" }, "body");
+    expect(out).toContain("description: '[WIP] foo [x]'");
+    expect(parseFrontmatter(out).frontmatter.description).toBe("[WIP] foo [x]");
+  });
+
   it("doubles an apostrophe rather than ending the quoted string early", () => {
     expect(serializeFrontmatter({ name: "it's" }, "body")).toContain("name: 'it''s'");
   });
