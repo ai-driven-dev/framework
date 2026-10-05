@@ -306,6 +306,9 @@ if true; then
       [[ ! -d "$BASE/.github" ]] \
         && ok "copilot declarative settings absent without native source proof" \
         || bad "copilot declarative settings written without native source proof"
+    elif [[ "$t" == antigravity ]]; then
+      # Antigravity reads the shared `.agents/` root, not a directory named after itself.
+      [[ -d "$BASE/.agents/skills" ]] && ok "$t dir present" || bad "$t dir missing after --ai all"
     else
       [[ -d "$BASE/.${t}" ]] && ok "$t dir present" || bad "$t dir missing after --ai all"
     fi
