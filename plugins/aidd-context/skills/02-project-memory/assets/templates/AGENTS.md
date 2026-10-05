@@ -8,7 +8,7 @@
 
 ## Communication
 
-- **Minimize the reader's effort:** reason and prioritize before replying. Lead with the result or recommendation; include only what they need to understand or act.
+- **Minimize the reader's effort:** reason and prioritize before writing. Lead with the result or recommendation. Across chat, documents, and code comments, maximize precision per word: no filler, repetition, or redundant paraphrasing. Preserve necessary facts, constraints, and nuance; include only what the reader needs to understand or act.
 - **Prefer short bullets.** Number ordered steps.
 - **Skip redundant preambles, recaps, and closers.**
 - **Support `works`, `tested`, and `fixed` with evidence.**
@@ -36,7 +36,7 @@ Project docs, memory, specs, and plans live in `aidd_docs/`.
 
 ### Project memory
 
-Read only linked memory files relevant to the task.
+Read only task-relevant context and linked memory files; complete required reads.
 
 <!-- aidd_project_memory:start -->
 <!-- aidd_project_memory:end -->
