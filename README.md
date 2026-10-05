@@ -37,7 +37,7 @@ Why not just write your own commands? → [FAQ](docs/FAQ.md#-why-aidd-instead-of
 
 ## ✅ Prerequisites
 
-- **An AI coding tool** — Claude Code (native), or Cursor / Copilot / Codex / OpenCode / Kilo Code (see [Compatibility](#-compatibility)).
+- **An AI coding tool** — Claude Code (native), or Cursor / Copilot / Codex / OpenCode / Kilo Code / Antigravity CLI (see [Compatibility](#-compatibility)).
 - **[Node](https://nodejs.org) 22 or later** on your `PATH`, only for the plugin that ships hooks ([what they do](docs/ARCHITECTURE.md#-bundled-hooks)); the workflows themselves are markdown and need nothing.
 
 ## 🔌 Compatibility
@@ -50,6 +50,7 @@ Why not just write your own commands? → [FAQ](docs/FAQ.md#-why-aidd-instead-of
 | **Codex** | ✅ Supported | Marketplace · Flat |
 | **OpenCode** | ✅ Supported | Flat |
 | **Kilo Code** | ✅ Supported | Flat |
+| **Antigravity CLI** | ✅ Supported | Flat |
 | **Gemini · Mistral** | 🚧 In progress | — |
 
 <sub>**Marketplace** = installed and updated through your tool's plugin manager. **Flat** = files copied directly into your project, no plugin manager involved. Install steps per tool → [Other tools](#other-tools).</sub>
@@ -182,6 +183,18 @@ codex plugin add aidd-context@aidd-framework   # per plugin
 2. Start a new Kilo session so it loads the generated project plugin.
 
 [Plugins documentation](https://kilo.ai/docs/automate/extending/plugins)
+
+</details>
+
+<details>
+<summary><strong>Antigravity CLI</strong> — Flat only</summary>
+
+1. Unzip the `antigravity-flat` archive into your project root → `.agents/`: skills, agents, and the memory hook in `.agents/hooks.json`.
+2. Start `agy` in the project. A hook already in `.agents/hooks.json` under another name is kept.
+
+Codex flat also writes `.agents/skills/`: removing one of the two from a project that has both deletes skills the other still uses.
+
+[Docs](https://antigravity.google/docs/subagents?tab=cli)
 
 </details>
 

@@ -148,6 +148,7 @@ Roles, promotion, and inactivity rules → [`GOVERNANCE.md`](../GOVERNANCE.md#-r
 - The marketplace is Claude Code native.
 - Other tools are served by per-release archives the `aidd-cli` builds; this repo stays Claude-authored and tool-agnostic in its prose.
 - Keep tool-specific detail in plugin READMEs.
+- Antigravity CLI has no runtime check in CI: a turn needs a Google login. Before a release that touches its profile, run `cd cli && pnpm smoke:antigravity` on a machine where `agy` is logged in. It installs AIDD into a throwaway project, then checks the `agy` log for a skill expansion and the loaded hooks, the project memory for the hook's refresh, and `/agents` for an AIDD agent.
 
 ## 🧱 Build your own plugin
 

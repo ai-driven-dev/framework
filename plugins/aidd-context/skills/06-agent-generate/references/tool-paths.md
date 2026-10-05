@@ -11,8 +11,9 @@ The per-tool agent path and the gate every run executes before writing. Agent sl
 | OpenCode       | `.opencode/agents/<name>.md`     | markdown + frontmatter |
 | GitHub Copilot | `.github/agents/<name>.agent.md` | markdown + frontmatter |
 | Codex CLI      | `.codex/agents/<name>.toml`      | TOML (converted)       |
+| Antigravity CLI | `.agents/agents/<name>/agent.md` | markdown + frontmatter |
 
-Agents are supported on all five tools.
+Agents are supported on all six tools.
 
 ## Frontmatter per tool
 
@@ -25,6 +26,9 @@ The canonical agent carries `name`, `description`, `model`. Emit those a row acc
 | OpenCode       | `name`, `description`, `model`, optional `temperature`, `permission` |
 | GitHub Copilot | `name`, `description`, `model`, optional `tools`            |
 | Codex CLI      | `name`, `description` (drops `model`)                       |
+| Antigravity CLI | `name`, `description`, `model: inherit`, optional `tools` as a YAML list |
+
+`agy` drops in silence an agent whose `model` is not `inherit`, `flash` or `pro`, or whose `tools` is a comma-separated string.
 
 ## Codex TOML conversion
 
@@ -43,7 +47,8 @@ Codex agents are TOML, not markdown. Convert:
 | `.opencode/`                      | OpenCode                              |
 | `.codex/`                         | Codex CLI                             |
 | `.github/copilot-instructions.md` | GitHub Copilot                        |
-| `AGENTS.md`                       | Cursor, OpenCode, or Codex (list all) |
+| `.agents/agents/`, `.agents/rules/` or `.agents/hooks.json` | Antigravity CLI |
+| `AGENTS.md`                       | Cursor, OpenCode, Codex, or Antigravity CLI (list all) |
 
 ## Write targets
 

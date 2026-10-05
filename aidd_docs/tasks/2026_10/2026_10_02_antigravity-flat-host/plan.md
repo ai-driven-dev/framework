@@ -1,6 +1,6 @@
 ---
 objective: "`aidd setup --ai antigravity` and `aidd translate --to antigravity --as flat` write AIDD skills, the memory hook and agents under `.agents/`, which `agy` loads, without touching files AIDD did not write."
-status: in-progress
+status: implemented
 ---
 
 <!-- Fill or omit these sections; never add, rename, or reorder one. -->

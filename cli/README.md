@@ -3,7 +3,7 @@
 `@ai-driven-dev/cli` installs AI tool runtime configs, IDE integrations, and plugins from an AIDD marketplace into a project.
 Every file it writes is hash-tracked in a manifest, so drift is detected and owned files can be restored.
 
-Supported AI tools: Claude Code, Cursor, GitHub Copilot, Codex, OpenCode, Kilo Code. Supported IDE: VS Code.
+Supported AI tools: Claude Code, Cursor, GitHub Copilot, Codex, OpenCode, Kilo Code, Antigravity CLI. Supported IDE: VS Code.
 Requires Node.js >= 22.12, and `git` to fetch marketplace plugins.
 
 ## Install
@@ -137,8 +137,9 @@ Two output layouts, chosen by `--as`:
 | `codex` | yes | yes | `.codex/` |
 | `opencode` | no | yes | `.opencode/` |
 | `kilo` | no | yes | `.kilo/` |
+| `antigravity` | no | yes | `.agents/` |
 
-OpenCode and Kilo Code declare no marketplace contract, so they are flat only. Every other target accepts both layouts.
+OpenCode, Kilo Code and Antigravity CLI declare no marketplace contract, so they are flat only. Every other target accepts both layouts.
 
 ## Environment variables
 
