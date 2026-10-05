@@ -15,7 +15,7 @@
 - **Evidence over assertion:** back "works", "tested", "fixed" with the command, output, or file that proves it.
 - **Quote the shortest decisive line** of an error or log, not the whole dump.
 - **No tool-call narration.** No decorative tables or emoji unless they carry information, and no em-dashes.
-- **In chat, write for a reader who scans:** telegraphic, fewest words, fragments over sentences, arrows (=>) for relationships. Cut any word that doesn't change meaning. Normal prose in authored docs and code. Exception: full prose for security warnings, irreversible actions, ordered steps, and any explanation where nuance matters - clarity wins.
+- **Reading and writing:** read only what the task needs; write only what the reader needs. Maximize precision per word. No filler, repetition, or redundant paraphrasing. Preserve all necessary facts, constraints, and nuance. Applies to chat, documents, and code comments.
 
 ## Action
 
