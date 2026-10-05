@@ -2130,6 +2130,10 @@
     ".agents/skills/aidd-async-dev-01-setup/actions/skills/03-generate-workflow.md": "11f7ec6c03284d0524179f71337691301a6362cf77bf3aa666fe41686b4df40b",
     ".agents/skills/aidd-async-dev-01-setup/actions/skills/04-write-config.md": "eb7ecb812e8bdaaeba2e56c71c77bf8c14fce0a2c44311ff7985444617635dd5",
     ".agents/skills/aidd-async-dev-01-setup/actions/skills/05-bootstrap-labels.md": "f53177ce1c58767f1bdfcfa3e72f7d4cc5e3d4fd782c35c3998815317be108b1",
-    ".agents/hooks/aidd-context/update_memory.js": "140d7db788452f5f4c32316d522f595a36e06638b19a42d32e42a1a7324b7149"
+    ".agents/hooks/aidd-context/update_memory.js": "140d7db788452f5f4c32316d522f595a36e06638b19a42d32e42a1a7324b7149",
+    ".agents/agents/aidd-dev-reviewer/agent.md": "80f7f93f8fe14b7b8983466639155dca76e825c4b2a6a9b9203bd48a41135990",
+    ".agents/agents/aidd-dev-planner/agent.md": "dc5756134837010d3fc117bbd9b47f868a98ca185504877b6cb41f4797098ff9",
+    ".agents/agents/aidd-dev-implementer/agent.md": "bb397194473e1256883f08281deeabc0e2a1e3ed3a1184b8f48e6a47551ded9e",
+    ".agents/agents/aidd-async-dev-async-orchestrator/agent.md": "2d1838d0bb76a5e0db435e0fde792ab8502f2454cc97e1fba2f998b2eb49319d"
   }
 }
