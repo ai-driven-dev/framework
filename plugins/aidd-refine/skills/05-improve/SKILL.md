@@ -26,6 +26,6 @@ Run all three actions without confirmation. Read only the next action file.
 ## Transversal rules
 
 - Stop if the exact complete transcript is unavailable.
-- Assess only named artifacts alongside conversation behavior.
+- Assess conversation behavior, invoked skill resources, applicable project instructions, and task-relevant indexed memory.
 - Never invent metrics, coverage, status, or private reasoning.
 - Keep the project read-only; write only the unique temporary report.

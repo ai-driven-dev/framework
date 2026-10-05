@@ -1,12 +1,36 @@
 (() => {
+  const promptAnchor = "Changements acceptés :";
+
+  function composePrompt(value, accepted, savedLines = new Map(), knownIds = new Set(accepted.map(({ id }) => id))) {
+    const generatedPattern = /^- \[([^\]]+)\] /;
+    const original = value.split("\n");
+
+    for (const line of original) {
+      const match = line.match(generatedPattern);
+      if (match && knownIds.has(match[1])) savedLines.set(match[1], line);
+    }
+
+    const lines = original.filter((line) => {
+      const match = line.match(generatedPattern);
+      return !match || !knownIds.has(match[1]);
+    });
+    const generated = accepted.map(({ id, prompt }) => savedLines.get(id) || `- [${id}] ${prompt}`);
+    const anchorIndex = lines.findIndex((line) => line.trim() === promptAnchor);
+    lines.splice(anchorIndex >= 0 ? anchorIndex + 1 : lines.length, 0, ...generated);
+    return lines.join("\n");
+  }
+
+  if (typeof module !== "undefined") module.exports = { composePrompt };
+  if (typeof document === "undefined") return;
+
   const state = { signal: "all", target: "all" };
   const findings = [...document.querySelectorAll(".finding")];
   const count = document.querySelector("#result-count");
   const empty = document.querySelector("#empty-state");
   const prompt = document.querySelector("#execution-prompt");
   const acceptedCount = document.querySelector("#accepted-count");
-  const promptAnchor = "Changements acceptés :";
-  const closingPrompt = "Une fois le travail validé";
+  const savedPromptLines = new Map();
+  const findingIds = new Set(findings.map((finding) => finding.querySelector(".finding-id").textContent.trim()));
 
   function render() {
     let visible = 0;
@@ -44,22 +68,13 @@
     });
   });
 
-  function updatePrompt(changedFinding) {
+  function updatePrompt() {
     const accepted = findings.filter((finding) => finding.querySelector(".accept-input").checked);
-    const changedInput = changedFinding.querySelector(".accept-input");
-    const id = changedFinding.querySelector(".finding-id").textContent.trim();
-    const prefix = `- [${id}] `;
-    const generatedLine = `${prefix}${changedInput.dataset.prompt}`;
-    const lines = prompt.value.split("\n").filter((line) => !line.startsWith(prefix));
-    const anchorIndex = lines.findIndex((line) => line.trim() === promptAnchor);
-
-    if (changedInput.checked) {
-      const closingIndex = lines.findIndex((line) => line.startsWith(closingPrompt));
-      let insertAt = closingIndex >= 0 ? closingIndex : anchorIndex + 1;
-      if (lines[insertAt - 1] === "") insertAt -= 1;
-      lines.splice(Math.max(insertAt, 0), 0, generatedLine);
-    }
-    prompt.value = lines.join("\n");
+    const entries = accepted.map((finding) => ({
+      id: finding.querySelector(".finding-id").textContent.trim(),
+      prompt: finding.querySelector(".accept-input").dataset.prompt,
+    }));
+    prompt.value = composePrompt(prompt.value, entries, savedPromptLines, findingIds);
 
     const total = accepted.length;
     acceptedCount.textContent = `${total} recommandation${total === 1 ? "" : "s"} acceptée${total === 1 ? "" : "s"}`;
@@ -70,7 +85,7 @@
       const finding = input.closest(".finding");
       finding.classList.toggle("is-accepted", input.checked);
       finding.querySelector(".accept-toggle span").textContent = input.checked ? "Accepté" : "Accepter";
-      updatePrompt(finding);
+      updatePrompt();
     });
   });
 
