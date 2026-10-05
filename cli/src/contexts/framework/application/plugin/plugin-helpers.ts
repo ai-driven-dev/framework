@@ -11,6 +11,7 @@ import type { Manifest } from "../../domain/manifest.js";
 import type { InstalledPlugin, PluginScope } from "../../domain/plugins/installed-plugin.js";
 import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
 import type { PluginTranslator } from "../framework/translator/plugin-translator.js";
+import type { ProjectHooksGuard } from "../shared/remove-project-hooks.js";
 import { resolveBaseDirFromRecord } from "./plugin-target-resolution.js";
 
 export async function loadPluginManifest(manifestRepo: ManifestRepository): Promise<Manifest> {
@@ -93,7 +94,8 @@ export async function materializeViaTranslator(
   toolId: AiToolId,
   plugin: InstalledPlugin,
   projectRoot: string,
-  manifest: Manifest
+  manifest: Manifest,
+  hooksGuard: ProjectHooksGuard = {}
 ): Promise<number> {
   manifest.removePlugin(toolId, plugin.name);
   const { written } = await translator.addPlugin(
@@ -105,7 +107,8 @@ export async function materializeViaTranslator(
     plugin.marketplace,
     plugin.mcpEntries,
     false,
-    plugin.projectHooks
+    plugin.projectHooks,
+    hooksGuard
   );
   return written ?? 0;
 }

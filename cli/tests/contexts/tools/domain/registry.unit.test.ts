@@ -5,6 +5,7 @@ import {
   PluginsCapability,
 } from "../../../../src/contexts/tools/domain/capabilities/plugins-capability.js";
 import type { AiTool } from "../../../../src/contexts/tools/domain/contracts.js";
+import { cursorProjectHooksFormat } from "../../../../src/contexts/tools/domain/formats/cursor-hooks-project-merge.js";
 import {
   getToolConfig,
   hasToolSignals,
@@ -121,6 +122,7 @@ describe("what a tool's plugin capability declares about activation", () => {
           plugins: nativePlugins({
             hooksDestination: "project",
             projectHooksRelativePath: ".cursor/hooks.json",
+            projectHooksFormat: cursorProjectHooksFormat,
           }),
         },
         null

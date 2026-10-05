@@ -21,6 +21,7 @@ import {
   resolveBaseDirFromRecord,
   resolveScopeForInstall,
 } from "../../plugin/plugin-target-resolution.js";
+import type { ProjectHooksGuard } from "../../shared/remove-project-hooks.js";
 import { materializeFlatMcp, refreshTrackedMcpConfigHash } from "./flat-mcp-materializer.js";
 import type { PluginTranslator } from "./plugin-translator.js";
 import { ProjectHooksMaterializer, withoutHooks } from "./project-hooks-materializer.js";
@@ -51,7 +52,8 @@ export class ModeBFlatMaterializationTranslator implements PluginTranslator {
     marketplace: string | undefined,
     previousMcpEntries: ReadonlyMap<string, string> = new Map(),
     userScopeDirTaken = false,
-    previousProjectHooks?: ProjectHooksProvenance
+    previousProjectHooks?: ProjectHooksProvenance,
+    hooksGuard: ProjectHooksGuard = {}
   ): Promise<{ skipped: ReadonlySkipList }> {
     const ctx = this.resolveFlatToolContext(toolId, dist, projectRoot);
     if (ctx === null) return { skipped: [] };
@@ -68,7 +70,8 @@ export class ModeBFlatMaterializationTranslator implements PluginTranslator {
       dist,
       toolId,
       projectRoot,
-      previousProjectHooks
+      previousProjectHooks,
+      hooksGuard
     );
     const allSkipped: ReadonlySkipList = [...ctx.skipped, ...mcp.mcpSkips, ...hooks.skipped];
     if (ctx.files.length === 0 && mcp.mcpEntries.size === 0 && hooks.projectHooks === undefined)
