@@ -54,7 +54,11 @@ import {
   purgeAllNativeCaches,
   type UndoneToolRegistrations,
 } from "./shared/purge-native-marketplace-cache.js";
-import { assertProjectHooksRemovable, removeProjectHooks } from "./shared/remove-project-hooks.js";
+import {
+  assertProjectHooksRemovable,
+  type ProjectHooksGuard,
+  removeProjectHooks,
+} from "./shared/remove-project-hooks.js";
 import { resolveUninstallScopeOrder } from "./shared/resolve-uninstall-scope.js";
 import {
   describeGuardedPluginRefMessage,
@@ -167,7 +171,9 @@ export class CleanUseCase {
       if (!isAiToolId(toolId)) continue;
       for (const plugin of manifest.getPlugins(toolId)) {
         if (projectHooksFileOf(toolId) !== undefined) {
-          await assertProjectHooksRemovable(this.fs, plugin, toolId, options.projectRoot);
+          await assertProjectHooksRemovable(this.fs, plugin, toolId, options.projectRoot, {
+            overwriteEdited: options.force,
+          });
         }
         await assertProjectMcpEntriesRemovable(this.fs, plugin, toolId, options.projectRoot);
       }
@@ -196,7 +202,9 @@ export class CleanUseCase {
     // name (see `purgeNativeCaches`'s own post-conditions).
     await this.purgeNativeCaches(home, undone);
     let deleted = await this.deleteAllToolFiles(manifest, options.projectRoot);
-    deleted += await this.deleteMachineLocalFiles(manifest, options.projectRoot);
+    deleted += await this.deleteMachineLocalFiles(manifest, options.projectRoot, {
+      overwriteEdited: options.force,
+    });
     await this.removeAiddState(options.projectRoot);
     // Exactly what the pipeline added on install, never a subset of it.
     await this.gitignoreUseCase.remove(options.projectRoot, aiddGitignoreEntries(manifest));
@@ -676,11 +684,15 @@ export class CleanUseCase {
   /** The files a tool writes that `plugins[].files` never tracks: a machine-local settings file
    * (`.claude/settings.local.json`) and, for a tool merging a plugin's hooks into its own project
    * file (`.cursor/hooks.json`), the same unmerge `plugin remove` drives one plugin at a time. */
-  private async deleteMachineLocalFiles(manifest: Manifest, projectRoot: string): Promise<number> {
+  private async deleteMachineLocalFiles(
+    manifest: Manifest,
+    projectRoot: string,
+    hooksGuard: ProjectHooksGuard
+  ): Promise<number> {
     let count = 0;
     for (const toolId of manifest.getInstalledToolIds()) {
       count += await this.deleteMachineLocalSettingsFiles(toolId, projectRoot);
-      count += await this.removeProjectHooksForTool(manifest, toolId, projectRoot);
+      count += await this.removeProjectHooksForTool(manifest, toolId, projectRoot, hooksGuard);
     }
     return count;
   }
@@ -703,12 +715,13 @@ export class CleanUseCase {
   private async removeProjectHooksForTool(
     manifest: Manifest,
     toolId: ToolId,
-    projectRoot: string
+    projectRoot: string,
+    hooksGuard: ProjectHooksGuard
   ): Promise<number> {
     if (projectHooksFileOf(toolId) === undefined || !isAiToolId(toolId)) return 0;
     let count = 0;
     for (const plugin of manifest.getPlugins(toolId)) {
-      if (await removeProjectHooks(this.fs, plugin, toolId, projectRoot)) count++;
+      if (await removeProjectHooks(this.fs, plugin, toolId, projectRoot, hooksGuard)) count++;
     }
     return count;
   }
