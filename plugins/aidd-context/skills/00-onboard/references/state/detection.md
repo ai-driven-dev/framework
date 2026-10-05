@@ -10,6 +10,7 @@ A tool is used when its own dir exists, or when a file only that tool reads exis
 | codex    | `.codex/`                                                                            | `AGENTS.md`                        |
 | cursor   | `.cursor/` or `.cursorrules`                                                         | `AGENTS.md`                        |
 | opencode | `.opencode/`                                                                         | `AGENTS.md`                        |
+| antigravity | `.agents/agents/`, `.agents/rules/` or `.agents/hooks.json`                       | `AGENTS.md`                        |
 | copilot  | `.github/copilot-instructions.md` or `.github/{instructions,agents,skills,prompts}/` | `.github/copilot-instructions.md`  |
 
 - Detected tools only. An unused optional tool is omitted, never crossed.

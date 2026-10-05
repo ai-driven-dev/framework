@@ -4,7 +4,7 @@ Where to look for each artifact type per AI tool. Scan-only: the paths and forma
 
 ## Presence signal
 
-A tool is present only when one of its own mapped surfaces below holds a file. A shared parent directory is never a signal by itself.
+A tool is present only when one of its own mapped surfaces below holds a file. A shared parent directory is never a signal by itself. `.agents/skills/` is mapped for both Codex CLI and Antigravity CLI: alone, it signals both.
 
 ## AI quick map - content artifacts
 
@@ -15,6 +15,7 @@ A tool is present only when one of its own mapped surfaces below holds a file. A
 | OpenCode       | `.opencode/agents/`         | `.opencode/commands/`                         | **Not supported** (fold into AGENTS.md)  | `.opencode/skills/`                   | `AGENTS.md`                       |
 | GitHub Copilot | `.github/agents/*.agent.md` | `.github/prompts/*.prompt.md`                 | `.github/instructions/*.instructions.md` | `.github/skills/`                     | `.github/copilot-instructions.md` |
 | Codex CLI      | `.codex/agents/{name}.toml` | **Not supported**                             | Not supported                            | `.agents/skills/aidd-{name}/SKILL.md` | `AGENTS.md`                       |
+| Antigravity CLI | `.agents/agents/{name}/agent.md` | Not mapped                          | `.agents/rules/*.md`                     | `.agents/skills/aidd-{name}/SKILL.md` | `AGENTS.md`                       |
 
 ## AI quick map - hooks, plugins
 
@@ -25,6 +26,7 @@ A tool is present only when one of its own mapped surfaces below holds a file. A
 | OpenCode       | JS/TS module under `.opencode/plugins/` (parse as JS, not JSON)                                | Not supported                |
 | GitHub Copilot | `.github/hooks/*.json` (workspace), `~/.copilot/hooks` (user), `<plugin>/hooks.json` or `<plugin>/hooks/hooks.json` (plugin) | `plugin.json` at plugin root |
 | Codex CLI      | `.codex/hooks.json` (project / user) OR `[hooks]` table in `.codex/config.toml`               | `.codex-plugin/plugin.json`  |
+| Antigravity CLI | `.agents/hooks.json` (project), keyed by hook name                                            | `plugin.json` at plugin root |
 
 ## MCP config per tool
 
@@ -57,3 +59,4 @@ Where to scan when enumerating installed plugins (not the plugin manifest path i
 | OpenCode       | `~/.config/opencode/plugins/` (global JS/TS modules); `~/.cache/opencode/node_modules/` (npm-installed); project `.opencode/plugins/` |
 | GitHub Copilot | macOS: `~/Library/Application Support/Code/agentPlugins/` ; Linux: `~/.config/Code/agentPlugins/` ; Windows: `%APPDATA%\Code\agentPlugins\` ; CLI-installed: `~/.copilot/installed-plugins/` |
 | Codex CLI      | `~/.codex/plugins/cache/$MARKETPLACE/$PLUGIN/$VERSION/` |
+| Antigravity CLI | `~/.gemini/config/plugins/<plugin>/` (`agy plugin install`); project `.agents/plugins/` |

@@ -164,6 +164,17 @@ test("an unknown tool name is rejected", () => {
   assert.match(result.stderr, /unknown tool emacs/u);
 });
 
+test("antigravity refreshes AGENTS.md, the context file agy reads", () => {
+  const result = run({
+    context: `${OPEN}\n${CLOSE}\n`,
+    contextAt: "AGENTS.md",
+    args: ["antigravity"],
+  });
+
+  assert.equal(result.status, 0);
+  assert.match(result.content, /^\[aidd_docs\/memory\/architecture\.md\]\(aidd_docs\/memory\/architecture\.md\)$/mu);
+});
+
 test("a new-marker pair quoted in prose above the block does not hijack the splice", () => {
   const quote = `Upgrade note: the block now uses \`${OPEN}\` and \`${CLOSE}\`.`;
   const result = run({ context: `${quote}\n\n${OPEN}\n${CLOSE}\n` });
