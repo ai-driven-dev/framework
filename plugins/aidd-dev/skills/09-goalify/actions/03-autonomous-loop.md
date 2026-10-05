@@ -12,7 +12,7 @@ The success condition verified and the plan's `status` set to `implemented`, wit
 
 ## Process
 
-1. **Read.** Apply the [model policy](../SKILL.md#transversal-rules), then read the entire file: frontmatter, journey map, steps, and full Log.
+1. **Read.** Apply the router's model policy, then read the entire file: frontmatter, journey map, steps, and full Log.
 2. **Mark.** Increment `iteration` in the frontmatter, setting `status: in-progress` when still `pending`.
 3. **Learn.** Read the Log to learn from prior attempts.
 4. **Next.** Find the next unchecked step.

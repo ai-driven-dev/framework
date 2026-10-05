@@ -12,7 +12,7 @@ The tracking file at `aidd_docs/tasks/<task-name>.md`, marked created or resumed
 
 ## Process
 
-1. **Resume.** Apply the [model policy](../SKILL.md#transversal-rules), then check `aidd_docs/tasks/` for a file matching the task name and read its frontmatter `status`.
+1. **Resume.** Apply the router's model policy, then check `aidd_docs/tasks/` for a file matching the task name and read its frontmatter `status`.
    - `pending` or `in-progress`: report the status (iteration, steps remaining), then skip to Spawn to resume.
    - `implemented`: report "Task already completed" and stop.
    - No file: continue to Collect.
