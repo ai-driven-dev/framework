@@ -6,6 +6,7 @@ import "../../../../src/contexts/tools/domain/profiles/claude/profile.js";
 import "../../../../src/contexts/tools/domain/profiles/codex/profile.js";
 import "../../../../src/contexts/tools/domain/profiles/copilot/profile.js";
 import "../../../../src/contexts/tools/domain/profiles/cursor/profile.js";
+import "../../../../src/contexts/tools/domain/profiles/antigravity/profile.js";
 import "../../../../src/contexts/tools/domain/profiles/kilo/profile.js";
 import "../../../../src/contexts/tools/domain/profiles/opencode/profile.js";
 import "../../../../src/contexts/tools/domain/profiles/vscode/profile.js";
@@ -39,6 +40,8 @@ const registeredAiTools: [string, AiTool<unknown>][] = [
 ].flatMap(([id, config]) =>
   isAiTool(config) ? [[id as string, config] as [string, AiTool<unknown>]] : []
 );
+
+const TOOLS_WITHOUT_A_NATIVE_MARKETPLACE: ReadonlySet<string> = new Set(["antigravity"]);
 
 describe("AiTool contract conformance", () => {
   it("the registry actually contains tools (guards against a no-op suite)", () => {
@@ -90,7 +93,7 @@ describe("AiTool contract conformance", () => {
 
     it("is ingestible when it declares a plugins capability", () => {
       const declaresPlugins = "plugins" in (tool.capabilities as object);
-      if (!declaresPlugins) return;
+      if (!declaresPlugins || TOOLS_WITHOUT_A_NATIVE_MARKETPLACE.has(toolId)) return;
       expect(
         marketplaceProbes().some((probe) => probe.format === toolId),
         `${toolId} declares a plugins capability but its profile declares no marketplace probe — its native marketplace would never be detected`
@@ -289,7 +292,8 @@ describe("projectHooksFileOf()", () => {
 /** Pinned as a table rather than described, so a tool whose install path moves — or a sixth
  * tool added with rules — fails here instead of drifting away from the installer quietly. */
 describe("every tool says where its own installed rules live", () => {
-  const EXPECTED: Readonly<Record<string, { directory: string; extension: string }>> = {
+  const EXPECTED: Readonly<Record<string, { directory: string; extension: string } | null>> = {
+    antigravity: null,
     claude: { directory: ".claude/rules/", extension: ".md" },
     codex: { directory: ".codex/rules/", extension: ".md" },
     copilot: { directory: ".github/instructions/", extension: ".instructions.md" },

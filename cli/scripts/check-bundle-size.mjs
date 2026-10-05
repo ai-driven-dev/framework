@@ -39,6 +39,8 @@ const pkg = JSON.parse(readFileSync(resolve(root, "package.json"), "utf8"));
 // 0.1% measured headroom, with no added runtime dependency.
 // 689 KB: 675.2 KB, that recipe validation merged into the deterministic token measurement
 // (+21.9 KB over the 653.3 KB above); 2.0% measured headroom.
+// 716 KB: 708.1 KB, Antigravity's flat profile (+2.1 KB over next's 706.0 KB); 1.1% measured
+// headroom.
 // 756 KB: 755.6 KB, patched esbuild 0.28.2 emits TypeScript parameter-property fields
 // correctly (+5,008 bytes over 0.27.3); unchanged application and minification settings.
 // 695 KB: 680.6 KB, that esbuild merged into the deterministic token measurement (+5.3 KB over
