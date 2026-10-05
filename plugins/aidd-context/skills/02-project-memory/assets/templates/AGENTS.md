@@ -28,7 +28,7 @@
 - **Ask one sharp question when ambiguity materially changes the scope or outcome.**
 - **Batch independent operations when it saves time or context.**
 - **Fan out genuinely independent subtasks when coordination costs less than serial work.**
-- **Name by responsibility, not mechanism.**
+- **Name by intention and responsibility, not mechanism.**
 
 ## Memory Management
 
