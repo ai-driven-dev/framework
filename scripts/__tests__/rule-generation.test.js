@@ -65,11 +65,12 @@ for (const paths of [[], ["src/domain/**/*.ts", 'tests/quoted"name/**/*.ts']]) t
   const f = fixture(t);
   const description = 'Review "domain": naïve \\ conventions #1';
   const body = "# Review\r\n\r\n- Preserve exact text: café ⚙.\r\n";
-  assert.equal(f.run({ ...rule, description, paths, body }, "claude,cursor,copilot").status, 0);
+  assert.equal(f.run({ ...rule, description, paths, body }, "claude,cursor,copilot,antigravity").status, 0);
   const documents = [
     [".claude/rules/01-standards/1-naming.md", paths.length ? { paths } : null],
     [".cursor/rules/01-standards/1-naming.mdc", { description, ...(paths.length ? { globs: paths.join(",") } : {}), alwaysApply: !paths.length }],
     [".github/instructions/01-naming.instructions.md", { applyTo: paths.length ? paths.join(",") : "**" }],
+    [".agents/rules/1-naming.md", paths.length ? { trigger: "glob", description, globs: paths.join(",") } : { trigger: "always_on", description }],
   ];
   for (const [name, expected] of documents) {
     const text = f.read(name);
@@ -306,6 +307,13 @@ for (const target of ["aidd_docs/rules", ".claude/rules", "AGENTS.md"]) test(`sy
   fs.symlinkSync(outside, path.join(f.project, target));
   const before = f.snapshot();
   assert.notEqual(f.run().status, 0);
+  assert.deepEqual(f.snapshot(), before);
+});
+
+test("Antigravity's 24,000-byte rule file limit refuses prospective writes", (t) => {
+  const f = fixture(t);
+  const before = f.snapshot();
+  assert.notEqual(f.run({ ...rule, body: "x".repeat(24000) }, "antigravity").status, 0);
   assert.deepEqual(f.snapshot(), before);
 });
 

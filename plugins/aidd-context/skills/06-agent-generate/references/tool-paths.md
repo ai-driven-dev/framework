@@ -11,8 +11,9 @@ The per-tool agent path and the gate every run executes before writing. Agent sl
 | OpenCode       | `.opencode/agents/<name>.md`     | markdown + frontmatter |
 | GitHub Copilot | `.github/agents/<name>.agent.md` | markdown + frontmatter |
 | Codex CLI      | `.codex/agents/<name>.toml`      | TOML (converted)       |
+| Antigravity CLI | `.agents/agents/<name>/agent.md` | markdown + frontmatter |
 
-Agents are supported on all five tools.
+Agents are supported on all six tools.
 
 User-level agents, for every project of the user: Claude Code `~/.claude/agents/` (`CLAUDE_CONFIG_DIR`), Codex `~/.codex/agents/` (`CODEX_HOME`), OpenCode `~/.config/opencode/agents/` (`XDG_CONFIG_HOME`), Copilot `~/.copilot/agents/<name>.agent.md` (`COPILOT_HOME`). Cursor documents `~/.cursor/agents/`; prefer the project path. Sources: [Claude](https://code.claude.com/docs/en/sub-agents), [Codex](https://developers.openai.com/codex/subagents), [OpenCode](https://opencode.ai/docs/agents), [Copilot](https://docs.github.com/en/copilot/reference/copilot-cli-reference/cli-config-dir-reference), [Cursor](https://cursor.com/docs/subagents).
 
@@ -29,6 +30,7 @@ The canonical agent carries `name` and `description` and no tool list: every hos
 | OpenCode V2    | `description`, `mode: subagent`, optional `model` as `provider/model#variant`. No `name`: the file path is the ID |
 | GitHub Copilot | `name`, `description`, optional `model`, `reasoningEffort`, `include-custom-instructions` |
 | Codex CLI      | `name`, `description`, optional `model`, `model_reasoning_effort` |
+| Antigravity CLI | `name`, `description`, `model: inherit`, optional `tools` as a YAML list |
 
 Write OpenCode agents for V2 only: V2 still loads V1 definitions, and treats their `tools` and `permission` fields as legacy.
 
@@ -52,7 +54,8 @@ Codex agents are TOML, not markdown. Convert:
 | `.opencode/`                      | OpenCode                              |
 | `.codex/`                         | Codex CLI                             |
 | `.github/copilot-instructions.md` | GitHub Copilot                        |
-| `AGENTS.md`                       | Cursor, OpenCode, or Codex (list all) |
+| `.agents/agents/`, `.agents/rules/` or `.agents/hooks.json` | Antigravity CLI |
+| `AGENTS.md`                       | Cursor, OpenCode, Codex, or Antigravity CLI (list all) |
 
 ## Write targets
 

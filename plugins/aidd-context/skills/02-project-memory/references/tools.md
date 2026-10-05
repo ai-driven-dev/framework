@@ -8,6 +8,7 @@ The AI tools a project can use.
 | codex    | `.codex/`                                                                            | `AGENTS.md`                       |
 | cursor   | `.cursor/` or `.cursorrules`                                                         | `AGENTS.md`                       |
 | opencode | `.opencode/`                                                                         | `AGENTS.md`                       |
+| antigravity | `.agents/agents/`, `.agents/rules/` or `.agents/hooks.json`                       | `AGENTS.md`                       |
 | copilot  | `.github/copilot-instructions.md` or `.github/{instructions,agents,skills,prompts}/` | `.github/copilot-instructions.md` |
 
 - A shared `AGENTS.md` is a wiring target, never a detection signal.
