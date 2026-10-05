@@ -1,3 +1,4 @@
+import "../../../../../../src/contexts/tools/domain/profiles/antigravity/profile.js";
 import "../../../../../../src/contexts/tools/domain/profiles/cursor/profile.js";
 import { join } from "node:path";
 import { describe, expect, it, vi } from "vitest";
@@ -5,6 +6,7 @@ import {
   ProjectHooksMaterializer,
   withoutHooks,
 } from "../../../../../../src/contexts/framework/application/framework/translator/project-hooks-materializer.js";
+import { removeRecordedProjectHooks } from "../../../../../../src/contexts/framework/application/shared/remove-project-hooks.js";
 import {
   type PluginComponentFile,
   PluginDistribution,
@@ -226,6 +228,79 @@ describe("ProjectHooksMaterializer", () => {
         PROJECT_ROOT
       )
     ).rejects.toThrow("EACCES: planted by the test");
+  });
+});
+
+describe("ProjectHooksMaterializer for a flat tool merging into .agents/hooks.json", () => {
+  const AGENTS_HOOKS = join(PROJECT_ROOT, ".agents", "hooks.json");
+  const USER_HOOKS = `${JSON.stringify({ lint: { Stop: [{ command: "./lint.sh" }] } }, null, 2)}\n`;
+
+  it("adds the plugin's key beside the user's, rewrites nothing on a second run, and removes only its own on clean", async () => {
+    const fs = new InMemoryFileAdapter();
+    fs.setFile(AGENTS_HOOKS, USER_HOOKS);
+    const materializer = new ProjectHooksMaterializer(fs);
+    const dist = distWithHooks([hooksManifest("SessionStart"), SCRIPT]);
+
+    const first = await materializer.materializeWithProvenance(dist, "antigravity", PROJECT_ROOT);
+    const afterFirst = fs.getFile(AGENTS_HOOKS);
+    const second = await materializer.materializeWithProvenance(
+      dist,
+      "antigravity",
+      PROJECT_ROOT,
+      first.projectHooks
+    );
+
+    expect(JSON.parse(afterFirst ?? "")).toEqual({
+      lint: { Stop: [{ command: "./lint.sh" }] },
+      [PLUGIN_NAME]: {
+        SessionStart: [
+          { type: "command", command: `cd .. && node ./.agents/hooks/${PLUGIN_NAME}/pre.js` },
+        ],
+      },
+    });
+    expect(fs.getFile(join(PROJECT_ROOT, ".agents/hooks", PLUGIN_NAME, "pre.js"))).toBe(
+      SCRIPT.content
+    );
+    expect(fs.getFile(AGENTS_HOOKS)).toBe(afterFirst);
+
+    await removeRecordedProjectHooks(
+      fs,
+      PLUGIN_NAME,
+      second.projectHooks,
+      "antigravity",
+      PROJECT_ROOT
+    );
+
+    expect(fs.getFile(AGENTS_HOOKS)).toBe(USER_HOOKS);
+    expect(fs.getFile(join(PROJECT_ROOT, ".agents/hooks", PLUGIN_NAME, "pre.js"))).toBeUndefined();
+  });
+
+  it("deletes the hooks file on clean when nothing but the plugin's key was in it", async () => {
+    const fs = new InMemoryFileAdapter();
+    const materializer = new ProjectHooksMaterializer(fs);
+    const { projectHooks } = await materializer.materializeWithProvenance(
+      distWithHooks([hooksManifest("SessionStart"), SCRIPT]),
+      "antigravity",
+      PROJECT_ROOT
+    );
+
+    await removeRecordedProjectHooks(fs, PLUGIN_NAME, projectHooks, "antigravity", PROJECT_ROOT);
+
+    expect(await fs.fileExists(AGENTS_HOOKS)).toBe(false);
+  });
+
+  it("stops on an unparsable hooks file, naming it and leaving it as found", async () => {
+    const fs = new InMemoryFileAdapter();
+    fs.setFile(AGENTS_HOOKS, "{ not json");
+
+    await expect(
+      new ProjectHooksMaterializer(fs).materializeWithProvenance(
+        distWithHooks([hooksManifest("SessionStart"), SCRIPT]),
+        "antigravity",
+        PROJECT_ROOT
+      )
+    ).rejects.toThrow(/^\.agents\/hooks\.json is not valid JSON/);
+    expect(fs.getFile(AGENTS_HOOKS)).toBe("{ not json");
   });
 });
 

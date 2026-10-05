@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { antigravityProjectHooksFormat } from "../../../../../../src/contexts/tools/domain/profiles/antigravity/antigravity-hooks.js";
 import { antigravity } from "../../../../../../src/contexts/tools/domain/profiles/antigravity/profile.js";
 
 describe("antigravity", () => {
@@ -20,14 +21,17 @@ describe("antigravity", () => {
     expect(antigravity.capabilities.skills.accepts(".kilo/skills/x/SKILL.md")).toBe(false);
   });
 
-  it("is a flat host that accepts no hooks until the hooks phase", () => {
+  it("is a flat host merging plugin hooks into .agents/hooks.json, scripts under .agents/hooks/", () => {
     expect(antigravity.capabilities.plugins).toMatchObject({
       mode: "flat",
       flatNamespacePrefix: "aidd-",
       flatSkillLayout: "single-level",
-      acceptsHooks: false,
+      acceptsHooks: true,
+      flatHooksDir: ".agents/hooks/",
+      hooksDestination: "project",
+      projectHooksRelativePath: ".agents/hooks.json",
+      projectHooksFormat: antigravityProjectHooksFormat,
     });
-    expect(antigravity.capabilities.plugins.hooksUnsupportedReason).toContain("phase 3");
     expect(Object.keys(antigravity.capabilities).sort()).toEqual(["plugins", "skills"]);
   });
 

@@ -45,6 +45,7 @@ const PUBLIC_MODULES: Readonly<Record<string, readonly string[]>> = {
     // and the diagnostic that answers whether the tool will run them.
     "src/contexts/tools/domain/formats/flat-hooks-merge.ts",
     "src/contexts/tools/domain/formats/cursor-hooks-project-merge.ts",
+    "src/contexts/tools/domain/formats/project-hooks-format.ts",
     // The variable each tool expands to an installed plugin's directory: a tool declares it,
     // translate substitutes it, the diagnostic looks for it in what was installed.
     "src/contexts/tools/domain/formats/plugin-root-token.ts",

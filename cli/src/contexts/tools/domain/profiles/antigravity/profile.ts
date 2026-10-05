@@ -2,7 +2,12 @@ import { PluginsCapability } from "../../capabilities/plugins-capability.js";
 import { SkillsCapability } from "../../capabilities/skills-capability.js";
 import type { AiTool, HasPlugins, HasSkills } from "../../contracts.js";
 import { registerTool } from "../../registry.js";
-import { ANTIGRAVITY_DIRECTORY } from "./antigravity-paths.js";
+import { antigravityProjectHooksFormat } from "./antigravity-hooks.js";
+import {
+  ANTIGRAVITY_DIRECTORY,
+  ANTIGRAVITY_HOOKS_DIR,
+  ANTIGRAVITY_HOOKS_FILE,
+} from "./antigravity-paths.js";
 import { buildAntigravityFlatContract } from "./build.js";
 
 const TOOL_SUFFIX = ".antigravity.md";
@@ -43,9 +48,11 @@ export const antigravity: AiTool<HasSkills & HasPlugins> = {
       mode: "flat",
       flatNamespacePrefix: "aidd-",
       flatSkillLayout: "single-level",
-      acceptsHooks: false,
-      hooksUnsupportedReason:
-        "Antigravity CLI hooks are not wired yet (follow-up phase 3 of #511: .agents/hooks.json).",
+      acceptsHooks: true,
+      flatHooksDir: ANTIGRAVITY_HOOKS_DIR,
+      hooksDestination: "project",
+      projectHooksRelativePath: ANTIGRAVITY_HOOKS_FILE,
+      projectHooksFormat: antigravityProjectHooksFormat,
     }),
   },
 

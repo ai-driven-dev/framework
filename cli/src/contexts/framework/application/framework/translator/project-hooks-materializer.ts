@@ -1,12 +1,8 @@
 import { dirname, join } from "node:path";
-import {
-  cursorProjectHooksScriptPath,
-  mergeCursorProjectHooksJson,
-} from "../../../../../contexts/tools/domain/formats/cursor-hooks-project-merge.js";
 import type { FileReader } from "../../../../../kernel/ports/file-reader.js";
 import type { FileWriter } from "../../../../../kernel/ports/file-writer.js";
 import type { AiToolId } from "../../../../../kernel/tool.js";
-import { resolvePluginsCapability } from "../../../../tools/domain/registry.js";
+import { projectHooksDeliveryOf } from "../../../../tools/domain/registry.js";
 import {
   type PluginComponentFile,
   PluginDistribution,
@@ -23,6 +19,8 @@ import {
 } from "../../shared/remove-project-hooks.js";
 
 const HOOKS_MANIFEST_PATH = "hooks/hooks.json";
+
+type ProjectHooksDelivery = NonNullable<ReturnType<typeof projectHooksDeliveryOf>>;
 
 /**
  * Delivers a plugin's hooks to the destination a `hooksDestination: "project"` capability names —
@@ -47,10 +45,8 @@ export class ProjectHooksMaterializer {
     projectRoot: string,
     previous?: ProjectHooksProvenance
   ): Promise<{ skipped: ReadonlySkipList; projectHooks?: ProjectHooksProvenance }> {
-    const pluginsCap = resolvePluginsCapability(toolId);
-    if (pluginsCap === null || pluginsCap.hooksDestination !== "project") return { skipped: [] };
-    const projectHooksRelativePath = pluginsCap.projectHooksRelativePath;
-    if (projectHooksRelativePath === null) return { skipped: [] };
+    const delivery = projectHooksDeliveryOf(toolId);
+    if (delivery === null) return { skipped: [] };
     const manifestFile = dist.components.hooks.find((f) => f.relativePath === HOOKS_MANIFEST_PATH);
     if (manifestFile === undefined) {
       if (previous !== undefined) {
@@ -65,15 +61,15 @@ export class ProjectHooksMaterializer {
       return { skipped: [] };
     }
     await assertProjectHooksUnchanged(this.fs, dist.manifest.name, previous, toolId, projectRoot);
-    await this.assertScriptsNotUserOwned(dist, projectRoot, previous);
+    await this.assertScriptsNotUserOwned(dist, projectRoot, delivery, previous);
     const { warnings, entries } = await this.mergeProjectHooksJson(
       dist,
       manifestFile,
       projectRoot,
-      projectHooksRelativePath
+      delivery
     );
-    const scripts = await this.writeProjectHooksScripts(dist, projectRoot);
-    await this.removeObsoleteScripts(previous, scripts, projectRoot);
+    const scripts = await this.writeProjectHooksScripts(dist, projectRoot, delivery);
+    await this.removeObsoleteScripts(previous, scripts, projectRoot, delivery);
     return {
       skipped: warnings.map(
         (reason): PluginTranslationSkip => ({
@@ -91,42 +87,49 @@ export class ProjectHooksMaterializer {
     dist: PluginDistribution,
     manifestFile: PluginComponentFile,
     projectRoot: string,
-    projectHooksRelativePath: string
+    delivery: ProjectHooksDelivery
   ): Promise<{ warnings: readonly string[]; entries: ProjectHooksProvenance["entries"] }> {
-    const destPath = join(projectRoot, projectHooksRelativePath);
+    const destPath = join(projectRoot, delivery.relativePath);
     const existing = await this.readExistingJson(destPath);
-    const { content, warnings } = mergeCursorProjectHooksJson(
+    const { content, warnings } = delivery.format.merge(
       existing,
       manifestFile.content,
       dist.manifest.name
     );
     await this.fs.writeFile(destPath, content);
-    return { warnings, entries: recordedProjectHookEntries(content, dist.manifest.name) };
+    return {
+      warnings,
+      entries: recordedProjectHookEntries(delivery.format, content, dist.manifest.name),
+    };
   }
 
   private async assertScriptsNotUserOwned(
     dist: PluginDistribution,
     projectRoot: string,
+    delivery: ProjectHooksDelivery,
     previous?: ProjectHooksProvenance
   ): Promise<void> {
     for (const file of dist.components.hooks) {
       if (file.relativePath === HOOKS_MANIFEST_PATH) continue;
-      const relativePath = cursorProjectHooksScriptPath(dist.manifest.name, file.relativePath);
+      const relativePath = delivery.format.scriptPath(dist.manifest.name, file.relativePath);
       if (previous?.scripts.has(relativePath) === true) continue;
       if (await this.fs.fileExists(join(projectRoot, relativePath))) {
-        throw new Error(`Cursor hook script '${relativePath}' is user-owned; install refused.`);
+        throw new Error(
+          `${delivery.toolName} hook script '${relativePath}' is user-owned; install refused.`
+        );
       }
     }
   }
 
   private async writeProjectHooksScripts(
     dist: PluginDistribution,
-    projectRoot: string
+    projectRoot: string,
+    delivery: ProjectHooksDelivery
   ): Promise<ReadonlyMap<string, string>> {
     const scripts = new Map<string, string>();
     for (const file of dist.components.hooks) {
       if (file.relativePath === HOOKS_MANIFEST_PATH) continue;
-      const dest = cursorProjectHooksScriptPath(dist.manifest.name, file.relativePath);
+      const dest = delivery.format.scriptPath(dist.manifest.name, file.relativePath);
       await this.fs.writeFile(join(projectRoot, dest), file.content);
       scripts.set(dest, (await this.fs.readFileHash(join(projectRoot, dest))).value);
     }
@@ -136,7 +139,8 @@ export class ProjectHooksMaterializer {
   private async removeObsoleteScripts(
     previous: ProjectHooksProvenance | undefined,
     current: ReadonlyMap<string, string>,
-    projectRoot: string
+    projectRoot: string,
+    delivery: ProjectHooksDelivery
   ): Promise<void> {
     if (previous === undefined) return;
     for (const [relativePath, digest] of previous.scripts) {
@@ -145,7 +149,7 @@ export class ProjectHooksMaterializer {
       if (!(await this.fs.fileExists(path))) continue;
       if ((await this.fs.readFileHash(path)).value !== digest) {
         throw new Error(
-          `Cursor hook script '${relativePath}' was edited during reinstall; removal refused.`
+          `${delivery.toolName} hook script '${relativePath}' was edited during reinstall; removal refused.`
         );
       }
       await this.fs.deleteFile(path);

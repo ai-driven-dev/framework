@@ -3,18 +3,16 @@ import { dirname, join, posix } from "node:path";
 import type { FileReader } from "../../../../kernel/ports/file-reader.js";
 import type { FileWriter } from "../../../../kernel/ports/file-writer.js";
 import type { AiToolId } from "../../../../kernel/tool.js";
-import {
-  cursorProjectHooksScriptDir,
-  unmergeCursorProjectHooksJson,
-} from "../../../tools/domain/formats/cursor-hooks-project-merge.js";
-import { resolvePluginsCapability } from "../../../tools/domain/registry.js";
+import type {
+  ProjectHookEntry,
+  ProjectHooksFormat,
+} from "../../../tools/domain/formats/project-hooks-format.js";
+import { projectHooksDeliveryOf } from "../../../tools/domain/registry.js";
 import type {
   InstalledPlugin,
   ProjectHooksProvenance,
 } from "../../domain/plugins/installed-plugin.js";
 import { assertProjectPathWithinRoot } from "../ownership/project-path-boundary.js";
-
-type HookEntry = { command: string; [key: string]: unknown };
 
 /** Preflight the exact project hook entries and scripts installed by AIDD. Does not mutate. */
 export async function assertProjectHooksUnchanged(
@@ -24,21 +22,21 @@ export async function assertProjectHooksUnchanged(
   toolId: AiToolId,
   projectRoot: string
 ): Promise<{ existing: string | null }> {
-  const cap = resolvePluginsCapability(toolId);
-  if (cap?.hooksDestination !== "project" || cap.projectHooksRelativePath === null) {
-    return { existing: null };
-  }
-  const hooksPath = join(projectRoot, cap.projectHooksRelativePath);
+  const delivery = projectHooksDeliveryOf(toolId);
+  if (delivery === null) return { existing: null };
+  const { format, toolName } = delivery;
+  const hooksPath = join(projectRoot, delivery.relativePath);
   await assertProjectPathWithinRoot(fs, projectRoot, hooksPath);
   const existing = await readExistingJson(fs, hooksPath);
-  const scriptDir = join(projectRoot, cursorProjectHooksScriptDir(pluginName));
+  if (existing !== null) assertParsableJson(existing, delivery.relativePath);
+  const scriptDir = join(projectRoot, format.scriptDir(pluginName));
   await assertProjectPathWithinRoot(fs, projectRoot, scriptDir);
   const scriptsPresent = (await fs.fileExists(scriptDir)) ? await fs.listDirectory(scriptDir) : [];
-  const currentEntries = existing === null ? [] : contributedEntries(existing, pluginName);
+  const currentEntries = existing === null ? [] : format.contributedEntries(existing, pluginName);
   if (provenance === undefined) {
     if (currentEntries.length > 0 || scriptsPresent.length > 0) {
       throw new Error(
-        `Cursor project hooks for '${pluginName}' have an unproven legacy install digest; detach refused.`
+        `${toolName} project hooks for '${pluginName}' have an unproven legacy install digest; detach refused.`
       );
     }
     return { existing };
@@ -54,22 +52,22 @@ export async function assertProjectHooksUnchanged(
     recorded.sort().join("\n") !== current.sort().join("\n")
   ) {
     throw new Error(
-      `Cursor project hooks for '${pluginName}' were edited after install; detach refused.`
+      `${toolName} project hooks for '${pluginName}' were edited after install; detach refused.`
     );
   }
   for (const [relativePath, digest] of provenance.scripts) {
-    assertScriptPath(pluginName, relativePath);
+    assertScriptPath(format, toolName, pluginName, relativePath);
     const path = join(projectRoot, relativePath);
     await assertProjectPathWithinRoot(fs, projectRoot, path);
     if (!(await fs.fileExists(path))) continue;
     if (!/^[0-9a-f]{32}$/.test(digest)) {
       throw new Error(
-        `Cursor hook script '${relativePath}' has an unproven install digest; detach refused.`
+        `${toolName} hook script '${relativePath}' has an unproven install digest; detach refused.`
       );
     }
     if ((await fs.readFileHash(path)).value !== digest) {
       throw new Error(
-        `Cursor hook script '${relativePath}' was edited after install; detach refused.`
+        `${toolName} hook script '${relativePath}' was edited after install; detach refused.`
       );
     }
   }
@@ -93,8 +91,9 @@ export async function removeRecordedProjectHooks(
   toolId: AiToolId,
   projectRoot: string
 ): Promise<boolean> {
-  const cap = resolvePluginsCapability(toolId);
-  if (cap?.hooksDestination !== "project" || cap.projectHooksRelativePath === null) return false;
+  const delivery = projectHooksDeliveryOf(toolId);
+  if (delivery === null) return false;
+  const { format } = delivery;
   const { existing } = await assertProjectHooksUnchanged(
     fs,
     pluginName,
@@ -102,12 +101,13 @@ export async function removeRecordedProjectHooks(
     toolId,
     projectRoot
   );
-  const hooksPath = join(projectRoot, cap.projectHooksRelativePath);
-  const hasEntries = existing !== null && contributedEntries(existing, pluginName).length > 0;
+  const hooksPath = join(projectRoot, delivery.relativePath);
+  const hasEntries =
+    existing !== null && format.contributedEntries(existing, pluginName).length > 0;
   if (hasEntries && existing !== null) {
     await assertProjectPathWithinRoot(fs, projectRoot, hooksPath);
-    const unmerged = unmergeCursorProjectHooksJson(existing, pluginName);
-    if (isHooksFileEmpty(unmerged)) await fs.deleteFile(hooksPath);
+    const unmerged = format.unmerge(existing, pluginName);
+    if (format.isEmpty(unmerged)) await fs.deleteFile(hooksPath);
     else await fs.writeFile(hooksPath, unmerged);
   }
   let removedScript = false;
@@ -131,37 +131,41 @@ export async function removeProjectHooks(
   return removeRecordedProjectHooks(fs, plugin.name, plugin.projectHooks, toolId, projectRoot);
 }
 
-function contributedEntries(
-  content: string,
-  pluginName: string
-): readonly { event: string; entry: HookEntry }[] {
-  const parsed = JSON.parse(content) as { hooks?: Record<string, HookEntry[]> };
-  const marker = cursorProjectHooksScriptDir(pluginName);
-  return Object.entries(parsed.hooks ?? {}).flatMap(([event, entries]) =>
-    entries
-      .filter((entry) => typeof entry.command === "string" && entry.command.includes(marker))
-      .map((entry) => ({ event, entry }))
-  );
-}
-
 /** Hash of one merged hook entry, independent of other plugins' entries. */
-export function digestEntry(entry: HookEntry): string {
+export function digestEntry(entry: ProjectHookEntry): string {
   return createHash("md5").update(JSON.stringify(entry), "utf-8").digest("hex");
 }
 
 export function recordedProjectHookEntries(
+  format: ProjectHooksFormat,
   content: string,
   pluginName: string
 ): ProjectHooksProvenance["entries"] {
-  return contributedEntries(content, pluginName).map(({ event, entry }) => ({
+  return format.contributedEntries(content, pluginName).map(({ event, entry }) => ({
     event,
     command: entry.command,
     digest: digestEntry(entry),
   }));
 }
 
-function assertScriptPath(pluginName: string, relativePath: string): void {
-  const prefix = cursorProjectHooksScriptDir(pluginName);
+/** Merging into a file AIDD cannot parse would mean guessing what it holds. */
+function assertParsableJson(content: string, relativePath: string): void {
+  try {
+    JSON.parse(content);
+  } catch (err) {
+    throw new Error(
+      `${relativePath} is not valid JSON (${(err as Error).message}); left untouched.`
+    );
+  }
+}
+
+function assertScriptPath(
+  format: ProjectHooksFormat,
+  toolName: string,
+  pluginName: string,
+  relativePath: string
+): void {
+  const prefix = format.scriptDir(pluginName);
   if (
     !relativePath.startsWith(prefix) ||
     posix.isAbsolute(relativePath) ||
@@ -169,7 +173,7 @@ function assertScriptPath(pluginName: string, relativePath: string): void {
     posix.normalize(relativePath) !== relativePath
   ) {
     throw new Error(
-      `Cursor hook script path '${relativePath}' has unproven provenance; detach refused.`
+      `${toolName} hook script path '${relativePath}' has unproven provenance; detach refused.`
     );
   }
 }
@@ -181,9 +185,4 @@ async function readExistingJson(fs: FileReader, path: string): Promise<string | 
     if ((err as NodeJS.ErrnoException).code === "ENOENT") return null;
     throw err;
   }
-}
-
-function isHooksFileEmpty(hooksJson: string): boolean {
-  const parsed = JSON.parse(hooksJson) as { hooks?: Record<string, unknown> };
-  return Object.keys(parsed.hooks ?? {}).length === 0;
 }
