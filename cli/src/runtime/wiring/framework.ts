@@ -1,4 +1,5 @@
 import { homedir } from "node:os";
+import "../../contexts/tools/domain/profiles/antigravity/profile.js";
 import "../../contexts/tools/domain/profiles/claude/profile.js";
 import "../../contexts/tools/domain/profiles/codex/profile.js";
 import "../../contexts/tools/domain/profiles/copilot/profile.js";

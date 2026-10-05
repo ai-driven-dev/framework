@@ -47,7 +47,7 @@ describe("smoke-real.sh drives --scope user with the tools the profiles support"
 
   it("leaves out AI tools that declare neither, which setup --scope user refuses", () => {
     const unsupported = aiToolIds().filter((id) => !declaresUserScopeActivation(id));
-    assert.deepEqual([...unsupported].sort(), ["kilo", "opencode"]);
+    assert.deepEqual([...unsupported].sort(), ["antigravity", "kilo", "opencode"]);
     for (const toolId of unsupported) {
       assert.ok(
         !scriptUserAiList().includes(toolId),

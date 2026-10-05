@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { PluginsCapability } from "../../../../src/contexts/tools/domain/capabilities/plugins-capability.js";
+import { antigravity } from "../../../../src/contexts/tools/domain/profiles/antigravity/profile.js";
 import { claude } from "../../../../src/contexts/tools/domain/profiles/claude/profile.js";
 import { codex } from "../../../../src/contexts/tools/domain/profiles/codex/profile.js";
 import { parseToml } from "../../../../src/contexts/tools/domain/profiles/codex/toml.js";
@@ -305,6 +306,12 @@ describe("PluginContentTranslator.translate()", () => {
 
     it("emits rules under .opencode/rules/sample-plugin/", () => {
       expect(pathsFor(opencode)).toContain(".opencode/rules/sample-plugin/standards.md");
+    });
+  });
+
+  describe("antigravity target (flat mode, one-level skills)", () => {
+    it("emits a skill as .agents/skills/<plugin>-<skill>/, never nested under the plugin", () => {
+      expect(pathsFor(antigravity)).toEqual([".agents/skills/sample-plugin-hello/SKILL.md"]);
     });
   });
 
