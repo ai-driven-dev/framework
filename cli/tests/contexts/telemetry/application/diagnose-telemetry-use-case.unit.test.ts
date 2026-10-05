@@ -4,6 +4,7 @@ import "../../../../src/contexts/tools/domain/profiles/codex/profile.js";
 import "../../../../src/contexts/tools/domain/profiles/copilot/profile.js";
 import "../../../../src/contexts/tools/domain/profiles/cursor/profile.js";
 import "../../../../src/contexts/tools/domain/profiles/opencode/profile.js";
+import "../../../../src/contexts/tools/domain/profiles/antigravity/profile.js";
 import "../../../../src/contexts/tools/domain/profiles/kilo/profile.js";
 import { Manifest } from "../../../../src/contexts/framework/domain/manifest.js";
 import { InstalledPlugin } from "../../../../src/contexts/framework/domain/plugins/installed-plugin.js";
@@ -763,6 +764,7 @@ describe("DiagnoseTelemetryUseCase — the setup it prints", () => {
         tool: "kilo",
         reason: "Kilo OpenTelemetry is experimental and not yet supported by AIDD.",
       },
+      { tool: "antigravity", reason: "Antigravity CLI telemetry is not yet supported by AIDD." },
     ]);
   });
 });

@@ -6,6 +6,7 @@ import "../../../../src/contexts/tools/domain/profiles/codex/profile.js";
 import "../../../../src/contexts/tools/domain/profiles/copilot/profile.js";
 import "../../../../src/contexts/tools/domain/profiles/cursor/profile.js";
 import "../../../../src/contexts/tools/domain/profiles/opencode/profile.js";
+import "../../../../src/contexts/tools/domain/profiles/antigravity/profile.js";
 import "../../../../src/contexts/tools/domain/profiles/kilo/profile.js";
 import { ReadLocalCostUseCase } from "../../../../src/contexts/telemetry/application/read-local-cost-use-case.js";
 import { ReportCostUseCase } from "../../../../src/contexts/telemetry/application/report-cost-use-case.js";
@@ -1021,6 +1022,17 @@ describe("ReportCostUseCase — what it assembles for the report", () => {
           export: null,
           journalAttributable: true,
           taskAttributable: true,
+        },
+      },
+      {
+        tool: "antigravity",
+        coverage: "not-covered",
+        reason: "Antigravity CLI telemetry is not yet supported by AIDD.",
+        capability: {
+          localRead: null,
+          export: null,
+          journalAttributable: false,
+          taskAttributable: false,
         },
       },
     ]);
