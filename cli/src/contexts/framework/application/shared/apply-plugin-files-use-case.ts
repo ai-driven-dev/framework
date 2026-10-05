@@ -29,6 +29,8 @@ interface ApplyPluginFilesOptions {
   cacheDir: string;
   manifest: Manifest;
   fileFilter?: ((relativePath: string) => boolean) | null;
+  /** Overwrite a project hook the user edited after install instead of refusing. */
+  force?: boolean;
 }
 
 /** Optional deps that let restore re-materialize through the build pipeline, as install does. */
@@ -78,7 +80,7 @@ export class ApplyPluginFilesUseCase {
     dist: PluginDistribution,
     options: ApplyPluginFilesOptions
   ): Promise<number> {
-    const { toolId, plugin, projectRoot, manifest } = options;
+    const { toolId, plugin, projectRoot, manifest, force = false } = options;
     // Mode A never materializes files, so any manifest-tracked path here is a leftover from a run
     // before that was true. Scoped to the manifest's own keys under the plugin's base dir — never a
     // directory scan — so it cannot touch files the plugin never wrote.
@@ -91,7 +93,9 @@ export class ApplyPluginFilesUseCase {
       );
       await deleteOldFiles(plugin.files, baseDir, this.fs);
     }
-    return materializeViaTranslator(translator, dist, toolId, plugin, projectRoot, manifest);
+    return materializeViaTranslator(translator, dist, toolId, plugin, projectRoot, manifest, {
+      overwriteEdited: force,
+    });
   }
 
   private async restoreViaTranslate(

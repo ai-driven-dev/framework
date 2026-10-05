@@ -1,5 +1,6 @@
 import { CapabilityConfigError } from "../../../../kernel/errors.js";
 import type { FlatHooksLoaderEntry } from "../../../../kernel/materialization/flat-paths.js";
+import type { ProjectHooksFormat } from "../formats/project-hooks-format.js";
 import type { HooksContentFormat } from "../hooks-format.js";
 import type { MarketplaceSettings } from "../marketplace-settings.js";
 import type { PluginTranslationMode } from "../plugin-translation-mode.js";
@@ -63,7 +64,14 @@ export interface NativeActivation {
 /** One variable, as the caller reads it: a profile is a declaration and reaches no global. */
 export type EnvironmentReader = (name: string) => string | undefined;
 
-export interface NativePluginsParams {
+/** A hook lands in the plugin's own dir, or merged into the project hooks file measured to fire. */
+export interface ProjectHooksDelivery {
+  hooksDestination?: "plugin" | "project";
+  projectHooksRelativePath?: string;
+  projectHooksFormat?: ProjectHooksFormat;
+}
+
+export interface NativePluginsParams extends ProjectHooksDelivery {
   mode: "native";
   pluginsDir: string;
   /** Set to `null` to suppress writing a plugin manifest file into the plugin directory. */
@@ -71,13 +79,6 @@ export interface NativePluginsParams {
   mcpRelativePath?: string;
   hooksRelativePath?: string;
   hooksContentFormat?: HooksContentFormat;
-  /** Where a delivered hook actually lands: under this capability's own plugin directory
-   * (default), or merged into the project's own hooks file — the destination measured to
-   * actually fire. Declared per capability, never guessed per tool. */
-  hooksDestination?: "plugin" | "project";
-  /** Where the project-scope hooks file merges into, relative to the project root. Required
-   * exactly when `hooksDestination` is `"project"` — nothing reads it otherwise. */
-  projectHooksRelativePath?: string;
   acceptsMcp?: boolean;
   /** The variable this tool expands to the installed plugin's directory, as written in a
    * hook or MCP command. Absent means nothing is substituted. */
@@ -113,7 +114,7 @@ export interface FlatHooksBridge {
 }
 
 export type FlatHooksSupport =
-  | {
+  | ({
       acceptsHooks: true;
       flatHooksDir: string;
       /**
@@ -124,7 +125,7 @@ export type FlatHooksSupport =
       /** See {@link FlatHooksBridge}. Omit when this loader triggers a plugin's hooks some
        * other way. */
       flatHooksBridge?: FlatHooksBridge;
-    }
+    } & ProjectHooksDelivery)
   | { acceptsHooks: false; hooksUnsupportedReason: string };
 
 /** Flat skills go under `skills/<plugin>/`, or `skills/<plugin>-<skill>/` for a shallow-scan tool. */
@@ -177,6 +178,7 @@ export class PluginsCapability {
   readonly hooksDestination: "plugin" | "project";
   /** Relative to the project root, or `null` when `hooksDestination` is `"plugin"`. */
   readonly projectHooksRelativePath: string | null;
+  readonly projectHooksFormat: ProjectHooksFormat | null;
   /** Where a flat-mode hook lands, relative to the project root, or `null` when this
    * capability accepts no hooks. */
   readonly flatHooksDir: string | null;
@@ -197,6 +199,7 @@ export class PluginsCapability {
     this.translationMode = PluginsCapability.resolveTranslationMode(params);
     this.installScope = PluginsCapability.resolveInstallScope(params);
     PluginsCapability.validateUserScope(params);
+    PluginsCapability.validateProjectHooks(params);
     if (params.mode === "native") {
       this.pluginsDir = params.pluginsDir;
       this.pluginManifestRelativePath = params.pluginManifestRelativePath;
@@ -211,6 +214,7 @@ export class PluginsCapability {
       this.hooksContentFormat = params.hooksContentFormat ?? DEFAULT_HOOKS_FORMAT;
       this.hooksDestination = params.hooksDestination ?? "plugin";
       this.projectHooksRelativePath = params.projectHooksRelativePath ?? null;
+      this.projectHooksFormat = params.projectHooksFormat ?? null;
       this.flatHooksDir = null;
       this.flatHooksLoaderEntry = null;
       this.flatHooksBridge = null;
@@ -236,8 +240,13 @@ export class PluginsCapability {
       this.mcpRelativePath = DEFAULT_MCP_PATH;
       this.hooksRelativePath = DEFAULT_HOOKS_PATH;
       this.hooksContentFormat = DEFAULT_HOOKS_FORMAT;
-      this.hooksDestination = "plugin";
-      this.projectHooksRelativePath = null;
+      this.hooksDestination = params.acceptsHooks
+        ? (params.hooksDestination ?? "plugin")
+        : "plugin";
+      this.projectHooksRelativePath = params.acceptsHooks
+        ? (params.projectHooksRelativePath ?? null)
+        : null;
+      this.projectHooksFormat = params.acceptsHooks ? (params.projectHooksFormat ?? null) : null;
       this.marketplaceSettings = null;
       this.nativeActivation = null;
       this._userPluginsDir = undefined;
@@ -259,6 +268,7 @@ export class PluginsCapability {
       this.hooksContentFormat = DEFAULT_HOOKS_FORMAT;
       this.hooksDestination = "plugin";
       this.projectHooksRelativePath = null;
+      this.projectHooksFormat = null;
       this.marketplaceSettings = null;
       this.nativeActivation = null;
       this._userPluginsDir = undefined;
@@ -302,10 +312,18 @@ export class PluginsCapability {
         "installScope 'user' requires a userPluginsDir resolver function."
       );
     }
-    if (params.hooksDestination === "project" && params.projectHooksRelativePath === undefined) {
+  }
+
+  private static validateProjectHooks(params: PluginsParams): void {
+    if (params.mode === "unsupported" || !params.acceptsHooks) return;
+    if (params.hooksDestination !== "project") return;
+    if (params.projectHooksRelativePath === undefined) {
       throw new CapabilityConfigError(
         "hooksDestination 'project' requires a projectHooksRelativePath."
       );
+    }
+    if (params.projectHooksFormat === undefined) {
+      throw new CapabilityConfigError("hooksDestination 'project' requires a projectHooksFormat.");
     }
   }
 }

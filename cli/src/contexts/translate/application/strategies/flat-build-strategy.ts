@@ -222,10 +222,20 @@ export class FlatBuildStrategy implements BuildOutputStrategy {
     const rewritten = this.rewriteHooksRawPaths(raw, pluginName);
     const destPath = artifact.hooksMergeDest(this.absOut);
     const existing = (await this.fs.fileExists(destPath)) ? await this.fs.readFile(destPath) : null;
-    const { content, warnings } = artifact.hooksMerge(existing, rewritten);
+    if (existing !== null) this.assertParsableJson(existing, destPath);
+    const { content, warnings } = artifact.hooksMerge(existing, rewritten, pluginName);
     for (const w of warnings) this.logger?.warn(w);
     await this.fs.writeFile(destPath, content);
     return 1;
+  }
+
+  private assertParsableJson(content: string, destPath: string): void {
+    try {
+      JSON.parse(content);
+    } catch (err) {
+      const shown = relative(this.absOut, destPath).replace(/\\/g, "/");
+      throw new Error(`${shown} is not valid JSON (${(err as Error).message}); left untouched.`);
+    }
   }
 
   private rewriteHooksRawPaths(raw: string, pluginName: string): string {

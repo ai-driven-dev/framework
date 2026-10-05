@@ -162,6 +162,7 @@ export class RestoreUseCase {
       fileFilter: ctx.fileFilter,
       pluginName: ctx.pluginName,
       toolIds: ctx.toolIds,
+      force: ctx.force,
     });
   }
 
