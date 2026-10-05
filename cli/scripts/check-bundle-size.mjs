@@ -30,6 +30,8 @@ const pkg = JSON.parse(readFileSync(resolve(root, "package.json"), "utf8"));
 // guards for #829 (+10.4 KB over the preceding 703.8 KB); 1.1% measured headroom.
 // 734 KB: 725.8 KB, Kilo Code's profile, generated bridge, and runtime smoke support (+9.6 KB
 // over next's 716.2 KB); 1.1% measured headroom.
+// 742 KB: 734.5 KB, Antigravity's flat profile, project hooks merge and portable agents
+// (+7.4 KB over next's 727.1 KB); 1.0% measured headroom.
 const budgetKB = pkg.bundleBudgetKB ?? 500;
 const budgetBytes = budgetKB * 1024;
 
