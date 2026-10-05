@@ -15,17 +15,10 @@ flowchart LR
 
 ## Actions
 
-Run all three actions without confirmation. Read only the next action file.
+Run all three actions in order without confirmation. Read only the next file in `actions/`. Keep the project read-only; write only the unique temporary report.
 
-| Action | Does |
+| Order | Action |
 | --- | --- |
-| read-conversation | freeze complete evidence and measure visible cost |
-| recommend | analyze relevant scopes and merge grounded findings |
-| target-edits | render minimal edits and an executable prompt |
-
-## Transversal rules
-
-- Stop if the exact complete transcript is unavailable.
-- Assess conversation behavior, invoked skill resources, applicable project instructions, and task-relevant indexed memory.
-- Never invent metrics, coverage, status, or private reasoning.
-- Keep the project read-only; write only the unique temporary report.
+| 1 | `01-read-conversation.md` |
+| 2 | `02-recommend.md` |
+| 3 | `03-target-edits.md` |

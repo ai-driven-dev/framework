@@ -1,5 +1,10 @@
 (() => {
-  const promptAnchor = "Changements acceptés :";
+  const promptMarker = "---";
+
+  function formatCount(count, one, other) {
+    const template = count === 1 ? one : other;
+    return template ? template.replace("{count}", String(count)) : String(count);
+  }
 
   function composePrompt(value, accepted, savedLines = new Map(), knownIds = new Set(accepted.map(({ id }) => id))) {
     const generatedPattern = /^- \[([^\]]+)\] /;
@@ -15,15 +20,16 @@
       return !match || !knownIds.has(match[1]);
     });
     const generated = accepted.map(({ id, prompt }) => savedLines.get(id) || `- [${id}] ${prompt}`);
-    const anchorIndex = lines.findIndex((line) => line.trim() === promptAnchor);
-    lines.splice(anchorIndex >= 0 ? anchorIndex + 1 : lines.length, 0, ...generated);
+    const markerIndex = lines.findIndex((line) => line.trim() === promptMarker);
+    lines.splice(markerIndex >= 0 ? markerIndex : lines.length, 0, ...generated);
     return lines.join("\n");
   }
 
-  if (typeof module !== "undefined") module.exports = { composePrompt };
+  if (typeof module !== "undefined") module.exports = { composePrompt, formatCount };
   if (typeof document === "undefined") return;
 
   const state = { signal: "all", target: "all" };
+  const report = document.querySelector("#report");
   const findings = [...document.querySelectorAll(".finding")];
   const count = document.querySelector("#result-count");
   const empty = document.querySelector("#empty-state");
@@ -40,7 +46,7 @@
       finding.hidden = !(matchesSignal && matchesTarget);
       if (!finding.hidden) visible += 1;
     }
-    count.textContent = `${visible} recommandation${visible === 1 ? "" : "s"}`;
+    count.textContent = formatCount(visible, report.dataset.labelResultOne, report.dataset.labelResultOther);
     empty.hidden = visible !== 0;
   }
 
@@ -60,9 +66,9 @@
       const original = button.textContent;
       try {
         await navigator.clipboard.writeText(button.dataset.copy);
-        button.textContent = "Copié";
+        button.textContent = button.dataset.labelSuccess || original;
       } catch {
-        button.textContent = "Copie indisponible";
+        button.textContent = button.dataset.labelError || original;
       }
       window.setTimeout(() => { button.textContent = original; }, 1400);
     });
@@ -77,14 +83,15 @@
     prompt.value = composePrompt(prompt.value, entries, savedPromptLines, findingIds);
 
     const total = accepted.length;
-    acceptedCount.textContent = `${total} recommandation${total === 1 ? "" : "s"} acceptée${total === 1 ? "" : "s"}`;
+    acceptedCount.textContent = formatCount(total, report.dataset.labelAcceptedOne, report.dataset.labelAcceptedOther);
   }
 
   document.querySelectorAll(".accept-input").forEach((input) => {
     input.addEventListener("change", () => {
       const finding = input.closest(".finding");
       finding.classList.toggle("is-accepted", input.checked);
-      finding.querySelector(".accept-toggle span").textContent = input.checked ? "Accepté" : "Accepter";
+      const label = finding.querySelector(".accept-toggle span");
+      label.textContent = input.checked ? input.dataset.labelOn : input.dataset.labelOff;
       updatePrompt();
     });
   });
@@ -94,11 +101,11 @@
     const original = button.textContent;
     try {
       await navigator.clipboard.writeText(prompt.value);
-      button.textContent = "Prompt copié";
+      button.textContent = button.dataset.labelSuccess || original;
     } catch {
       prompt.focus();
       prompt.select();
-      button.textContent = "Texte sélectionné";
+      button.textContent = button.dataset.labelError || original;
     }
     window.setTimeout(() => { button.textContent = original; }, 1600);
   });

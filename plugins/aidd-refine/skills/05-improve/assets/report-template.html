@@ -1,11 +1,5 @@
 <!doctype html>
-<!--
-  Replace all samples with current evidence. Each actionable `.finding` needs
-  diagnostic/type tags, a maintained source path, minimal edit, evidence, and
-  target/action data-prompt. Put unresolved or non-persistent items in collapsed
-  limitations. Keep report.css/report.js local. Remove this comment in output.
--->
-<html lang="fr">
+<html lang="en">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -17,33 +11,33 @@
   <body>
     <header class="site-header">
       <a class="brand" href="#report" aria-label="AIDD Improve report"><span class="brand-mark" aria-hidden="true">A</span><span>AIDD / improve</span></a>
-      <div class="header-actions"><button class="button" id="print-report" type="button">Imprimer</button></div>
+      <div class="header-actions"><button class="button" id="print-report" type="button">Print</button></div>
     </header>
 
-    <main id="report">
+    <main id="report" data-label-result-one="{count} recommendation" data-label-result-other="{count} recommendations" data-label-accepted-one="{count} recommendation accepted" data-label-accepted-other="{count} recommendations accepted">
       <section class="intro" aria-labelledby="report-title">
-        <h1 id="report-title">Rapport d’amélioration</h1>
-        <p>Exemple · conversation actuelle · couverture partielle · 1 recommandation</p>
+        <h1 id="report-title">Improve report</h1>
+        <p>Example only · fictional content · partial coverage · 1 recommendation</p>
       </section>
 
       <section class="section findings-section" aria-labelledby="findings-title">
-        <div class="section-heading"><h2 id="findings-title">Changements recommandés</h2><p id="result-count" class="result-count" aria-live="polite">1 recommandation</p></div>
+        <div class="section-heading"><h2 id="findings-title">Recommended changes</h2><p id="result-count" class="result-count" aria-live="polite">1 recommendation</p></div>
 
         <details class="filter-panel">
-          <summary>Filtres</summary>
-          <div class="filters" aria-label="Filtrer les recommandations">
+          <summary>Filters</summary>
+          <div class="filters" aria-label="Filter recommendations">
             <div class="filter-group" role="group" aria-label="Diagnostic">
               <span>Diagnostic</span>
-              <button type="button" data-filter="signal" data-value="all" aria-pressed="true">Tous</button>
-              <button type="button" data-filter="signal" data-value="obsolete" aria-pressed="false">Obsolète</button>
-              <button type="button" data-filter="signal" data-value="over-specific-or-time-bound" aria-pressed="false">Trop spécifique</button>
-              <button type="button" data-filter="signal" data-value="duplicate" aria-pressed="false">Doublon</button>
-              <button type="button" data-filter="signal" data-value="inconsistent" aria-pressed="false">Incohérent</button>
-              <button type="button" data-filter="signal" data-value="counterproductive" aria-pressed="false">Contre-productif</button>
+              <button type="button" data-filter="signal" data-value="all" aria-pressed="true">All</button>
+              <button type="button" data-filter="signal" data-value="obsolete" aria-pressed="false">Obsolete</button>
+              <button type="button" data-filter="signal" data-value="over-specific-or-time-bound" aria-pressed="false">Over-specific</button>
+              <button type="button" data-filter="signal" data-value="duplicate" aria-pressed="false">Duplicate</button>
+              <button type="button" data-filter="signal" data-value="inconsistent" aria-pressed="false">Inconsistent</button>
+              <button type="button" data-filter="signal" data-value="counterproductive" aria-pressed="false">Counterproductive</button>
             </div>
-            <div class="filter-group" role="group" aria-label="Type de cible">
-              <span>Cible</span>
-              <button type="button" data-filter="target" data-value="all" aria-pressed="true">Toutes</button>
+            <div class="filter-group" role="group" aria-label="Target type">
+              <span>Target</span>
+              <button type="button" data-filter="target" data-value="all" aria-pressed="true">All</button>
               <button type="button" data-filter="target" data-value="behavior" aria-pressed="false">Behavior</button>
               <button type="button" data-filter="target" data-value="skill" aria-pressed="false">Skill</button>
               <button type="button" data-filter="target" data-value="knowledge" aria-pressed="false">Knowledge</button>
@@ -53,52 +47,52 @@
         </details>
 
         <div class="findings" id="findings-list">
-          <article class="finding" data-signal="inconsistent" data-target="skill">
+          <article class="finding" data-signal="duplicate" data-target="knowledge">
             <header class="finding-header">
               <div class="finding-id">F-001</div>
-              <div class="finding-title"><div class="tags"><span class="tag tag-signal">Incohérent</span><span class="tag">Skill</span></div><h3>Exemple · préciser la preuve d’économie</h3></div>
-              <label class="accept-toggle"><input class="accept-input" type="checkbox" data-prompt="Dans plugins/aidd-refine/skills/05-improve/actions/02-recommend.md, préciser que l’uptime seul ne prouve aucune économie."><span>Accepter</span></label>
+              <div class="finding-title"><div class="tags"><span class="tag tag-signal">Duplicate</span><span class="tag">Knowledge</span></div><h3>Example · remove a fictional duplicate rule</h3></div>
+              <label class="accept-toggle"><input class="accept-input" type="checkbox" data-prompt="In docs/example-guidance.md, remove the second duplicate 'Validate before publishing.' rule." data-label-off="Accept" data-label-on="Accepted"><span>Accept</span></label>
             </header>
             <div class="finding-collapse"><div class="finding-body">
               <div class="change">
-                <div class="change-header"><span>plugins/aidd-refine/skills/05-improve/actions/02-recommend.md</span><button class="copy-path" type="button" data-copy="plugins/aidd-refine/skills/05-improve/actions/02-recommend.md">Copier</button></div>
-                <pre class="diff" aria-label="Modification proposée pour 02-recommend.md"><code><span class="diff-line diff-del"><b>−</b>Claim time savings from blocking-time or resource-impact evidence, never background-process uptime alone.</span>
-<span class="diff-line diff-add"><b>+</b>Claim time savings only from blocking-time or resource-impact evidence; background uptime alone proves none.</span></code></pre>
+                <div class="change-header"><span>docs/example-guidance.md</span><button class="copy-path" type="button" data-copy="docs/example-guidance.md" data-label-success="Copied" data-label-error="Copy unavailable">Copy</button></div>
+                <pre class="diff" aria-label="Proposed change for example-guidance.md"><code><span class="diff-line"><b> </b>Validate before publishing.</span>
+<span class="diff-line diff-del"><b>−</b>Validate before publishing.</span></code></pre>
               </div>
-              <p class="why">Sépare durée observée et impact réel.</p>
-              <details class="evidence-details"><summary>Preuve</summary><p>Le processus observé restait actif sans bloquer la suite.</p></details>
+              <p class="why">One rule carries the same requirement.</p>
+              <details class="evidence-details"><summary>Evidence</summary><p>The fictional source contains the same rule twice.</p></details>
             </div></div>
           </article>
 
         </div>
-        <p class="empty-state" id="empty-state" hidden>Aucune recommandation ne correspond.</p>
+        <p class="empty-state" id="empty-state" hidden>No recommendations match.</p>
 
-        <details class="limitations"><summary>Limites non actionnables · 1</summary><p>Une source citée n’a pas pu être résolue ; aucun changement n’est proposé.</p></details>
+        <details class="limitations"><summary>Non-actionable limitations · 1</summary><p>A cited source could not be resolved, so no change is proposed.</p></details>
       </section>
 
       <section class="section target-section" aria-labelledby="target-title">
-        <div class="section-heading"><h2 id="target-title">Fichiers ciblés</h2><span class="section-total">1 fichier</span></div>
-        <div class="table-wrap"><table><thead><tr><th>Fichier</th><th>+ Ajout</th><th>− Retrait ou clarification</th></tr></thead><tbody>
-          <tr><td><code>plugins/aidd-refine/skills/05-improve/actions/02-recommend.md</code></td><td>« uptime seul = aucune économie prouvée »</td><td>Formulation ambiguë</td></tr>
+        <div class="section-heading"><h2 id="target-title">Target files</h2><span class="section-total">1 file</span></div>
+        <div class="table-wrap"><table><thead><tr><th>File</th><th>+ Added</th><th>− Removed or clarified</th></tr></thead><tbody>
+          <tr><td><code>docs/example-guidance.md</code></td><td>—</td><td>Second duplicate rule</td></tr>
         </tbody></table></div>
       </section>
 
       <details class="section raw-section">
-        <summary>Mesures, chronologie et couverture</summary>
-        <div class="metrics"><p><span>Durée active</span><strong>24 min</strong></p><p><span>Tokens</span><strong>128,4 k</strong></p><p><span>Requêtes</span><strong>42</strong></p><p><span>Coût</span><strong>Inconnu</strong></p></div>
-        <div class="table-wrap"><table><thead><tr><th>Activité</th><th>Temps</th><th>Part</th></tr></thead><tbody><tr><td>Recherche et diagnostic</td><td>12 min</td><td>50 %</td></tr><tr><td>Implémentation</td><td>8 min</td><td>33 %</td></tr><tr><td>Validation</td><td>4 min</td><td>17 %</td></tr></tbody></table></div>
-        <h3>Couverture</h3><p><code>AGENTS.md</code> · checked<br /><code>aidd_docs/memory/testing.md</code> · not reviewed<br /><code>skill export</code> · missing</p>
-        <details class="source-records"><summary>Sources brutes</summary><p><code>run_2026-09-12_01</code> · <code>aidd telemetry report v8</code> · 2026-09-12T02:00Z → 03:00Z</p></details>
+        <summary>Metrics, timeline, and coverage</summary>
+        <div class="metrics"><p><span>Active time</span><strong>24 min</strong></p><p><span>Tokens</span><strong>128.4k</strong></p><p><span>Requests</span><strong>42</strong></p><p><span>Cost</span><strong>Unknown</strong></p></div>
+        <div class="table-wrap"><table><thead><tr><th>Activity</th><th>Time</th><th>Share</th></tr></thead><tbody><tr><td>Research and diagnosis</td><td>12 min</td><td>50%</td></tr><tr><td>Implementation</td><td>8 min</td><td>33%</td></tr><tr><td>Validation</td><td>4 min</td><td>17%</td></tr></tbody></table></div>
+        <h3>Coverage</h3><p><code>AGENTS.md</code> · checked<br /><code>aidd_docs/memory/testing.md</code> · not reviewed<br /><code>skill export</code> · missing</p>
+        <details class="source-records"><summary>Raw sources</summary><p><code>run_2026-09-12_01</code> · <code>aidd telemetry report v8</code> · 2026-09-12T02:00Z → 03:00Z</p></details>
       </details>
 
       <footer class="prompt-builder" aria-labelledby="prompt-title">
-        <div class="prompt-heading"><h2 id="prompt-title">Prompt d’exécution</h2><span id="accepted-count" aria-live="polite">0 recommandation acceptée</span></div>
-        <textarea id="execution-prompt" rows="10" spellcheck="true">Applique uniquement les changements acceptés. Vérifie chaque source, préserve les changements existants, puis valide.
+        <div class="prompt-heading"><h2 id="prompt-title">Execution prompt</h2><span id="accepted-count" aria-live="polite">0 recommendations accepted</span></div>
+        <textarea id="execution-prompt" rows="10" spellcheck="true">Apply only the accepted changes. Verify each source, preserve existing changes, then validate.
 
-Changements acceptés :
+Accepted changes:
 
-Après validation, propose un petit changement général pour améliorer le prochain run et mesurer son effet.</textarea>
-        <div class="prompt-actions"><span>Le texte reste éditable.</span><button class="button" id="copy-prompt" type="button">Copier le prompt</button></div>
+---</textarea>
+        <div class="prompt-actions"><span>The text remains editable.</span><button class="button" id="copy-prompt" type="button" data-label-success="Prompt copied" data-label-error="Text selected">Copy prompt</button></div>
       </footer>
     </main>
   </body>

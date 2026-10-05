@@ -8,25 +8,16 @@ A current conversation, an exact conversation ID, or a complete transcript expor
 
 ## Output
 
-An evidence boundary, a `## Timing` table with `Activity | Observed time | Share | Evidence`, a `## Usage` table with `Metric | Value | Evidence`, and a `Scope | Status | Evidence` index.
+An evidence boundary, a `## Timing` table with `Activity | Observed time | Share | Evidence`, a `## Usage` table with `Metric | Value | Evidence`, and a scope index of encountered resources.
 
 ## Process
 
-1. **Resolve.** Use the host route in [conversation sources](../assets/conversation-sources.md); stop unless it yields the exact complete transcript.
+1. **Resolve.** Use the host route in [conversation sources](../assets/conversation-sources.md). Prefer its complete export or host reader. Match the exact session ID before direct storage; search only for that ID, never unrelated sessions, configuration, or authentication. Stop unless the exact complete transcript is available.
 2. **Freeze.** End before this invocation, or at the export boundary. Exclude every `improve` invocation and report.
-3. **Read once.** Load all in-scope messages, tool calls, results, and timestamps. Index relevant turns, invoked skills with used actions or resources, and applicable project instructions.
-4. **Context.** Read indexed skill resources and applicable `AGENTS.md`. Use the project memory index to read only task-relevant memory; never scan the whole memory library. Mark only read files `checked`; mark unresolved or skipped scopes `missing` or `not reviewed`.
-5. **Measure.** Use only timestamps, elapsed records, and exposed host usage.
+3. **Read once.** Load every in-scope message, tool call, result, and timestamp. Index relevant turns; invoked skills and their used actions or resources; applicable `AGENTS.md`; and task-relevant memory references. Do not read maintained sources yet.
+4. **Measure.** Use only timestamps, elapsed records, and exposed host usage.
    - Group tool time as `research and diagnosis`, `implementation`, `validation`, or `unattributed`.
-   - Include tokens, requests, and cost only when exposed.
+   - Include tokens, requests, and cost only when exposed; otherwise mark them `unavailable`.
    - Separate background-process lifetime from blocking time.
-6. **Render.** Order known activity times descending; mark missing metrics `unavailable`. Never call unattributed or unavailable time private reasoning.
-
-## Test
-
-| Case | Pass |
-| --- | --- |
-| Conversation | exact complete transcript; frozen boundary; no `improve` evidence |
-| Metric | cited host record, timestamp, or elapsed record; otherwise `unavailable` |
-| Time | visible categories only; background lifetime separated; no private-reasoning claim |
-| Scope | exact turns or paths; only read files are `checked` |
+   - Treat private reasoning duration as unavailable unless exposed directly; never infer it.
+5. **Deliver.** Order known activity times descending and cite every value.
