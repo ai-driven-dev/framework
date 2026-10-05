@@ -242,6 +242,20 @@
         "cache_read_tokens": 2000,
         "cache_creation_tokens": 0
       }
+    },
+    {
+      "tool": "antigravity",
+      "coverage": "not-covered",
+      "reason": "Antigravity CLI telemetry is not yet supported by AIDD.",
+      "capability": {
+        "local_read": null,
+        "export": null,
+        "journal_attributable": false,
+        "task_attributable": false
+      },
+      "totals": {
+        "requests": 0
+      }
     }
   ],
   "by_project": [
