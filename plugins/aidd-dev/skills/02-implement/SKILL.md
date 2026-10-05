@@ -6,24 +6,30 @@ argument-hint: plan
 
 # Skill: implement
 
-Run an existing plan to write its code, one phase at a time, until every acceptance criterion holds.
+```mermaid
+flowchart LR
+  prepare --> execute --> finalize --> implemented
+  prepare -->|missing plan| stop
+  execute -->|fix or next phase| execute
+  execute --> blocked
+  execute --> replan
+  finalize -->|validation fails| finalize
+  finalize --> blocked
+  finalize --> replan
+```
 
 ## Actions
 
-| #   | Action     | Role                                            | Input         |
-| --- | ---------- | ----------------------------------------------- | ------------- |
-| 01  | `prepare`  | Resolve the plan, branch, mark it in-progress   | a plan path   |
-| 02  | `execute`  | Loop the phases, code and assert each           | prepared plan |
-| 03  | `finalize` | Verify and mark the plan implemented            | coded phases  |
+Run in order; read each action file in `actions/` before executing it.
 
-Run them in order, `01 → 03`.
-Before running an action, read its file in `actions/`, not only the table or assets.
+| Action   | Does                                  |
+| -------- | ------------------------------------- |
+| prepare  | resolve the plan and branch            |
+| execute  | implement and validate each phase      |
+| finalize | validate and mark the plan implemented |
 
 ## Transversal rules
 
-- Status: drive the plan through `pending → in-progress → implemented` (or `blocked`), and each phase through `pending → in-progress → done`. The `in-progress` values are runtime markers; only `done` and `implemented` need to land in a commit.
-- Commits: one commit per phase, its code together with the phase reaching `done`, plus a final commit for the plan reaching `implemented`. Never leave the tree dirty at a phase boundary. Do not scatter separate `in-progress` status commits: one context now owns both code and status, so there is nothing to guard against.
-
-## References
-
-- `references/blocked.md`: the conditions that make a plan `blocked` and need a human.
+- Status: plan `pending → in-progress → implemented` (or `blocked`); phases `pending → in-progress → done`. `in-progress` is a runtime marker.
+- Commits: one per phase, code and `done` together; one final commit for `implemented`. Keep phase boundaries clean; never commit `in-progress` alone.
+- Formatting: never format code manually; use project formatters or hooks.
