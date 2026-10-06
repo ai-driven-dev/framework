@@ -183,4 +183,12 @@ describe("FilesystemTaskDocumentRepository", () => {
 
     expect(await repository.projectExists(projectPath)).toBe(true);
   });
+
+  it("reports projectExists false when the docs name points at a plain file", async () => {
+    const repository = new FilesystemTaskDocumentRepository(DOCS_DIRECTORY_NAME);
+
+    await writeFile(join(projectPath, DOCS_DIRECTORY_NAME), "not a directory");
+
+    expect(await repository.projectExists(projectPath)).toBe(false);
+  });
 });

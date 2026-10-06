@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -8,10 +8,24 @@ export interface FrontendAssets {
   appJs: string;
 }
 
-const FRONTEND_DIRECTORY_NAME = "kanban-frontend";
+// "kanban-frontend" is where the CLI build copies the assets (cli/tsup.config.ts);
+// "frontend" is their location when running from the kanban sources.
+const FRONTEND_DIRECTORY_CANDIDATES = ["kanban-frontend", "frontend"];
 
 function resolveFrontendDirectory(): string {
-  return join(dirname(fileURLToPath(import.meta.url)), FRONTEND_DIRECTORY_NAME);
+  const moduleDirectory = dirname(fileURLToPath(import.meta.url));
+
+  for (const candidateName of FRONTEND_DIRECTORY_CANDIDATES) {
+    const candidate = join(moduleDirectory, candidateName);
+
+    if (existsSync(candidate)) {
+      return candidate;
+    }
+  }
+
+  throw new Error(
+    `KANBAN_FRONTEND_ASSETS_NOT_FOUND: no frontend assets directory next to ${moduleDirectory}`
+  );
 }
 
 function readAsset(frontendDirectory: string, fileName: string): string {

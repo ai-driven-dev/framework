@@ -1,9 +1,12 @@
 import { describe, expect, it } from "vitest";
+import { readFrontendAssets } from "../../../src/infrastructure/http/frontend-assets.js";
 
 describe("frontend assets", () => {
-  it("loads the module without reading the filesystem at import time", async () => {
-    const assetsModule = await import("../../../src/infrastructure/http/frontend-assets.js");
+  it("reads the real frontend assets when running from the sources", () => {
+    const assets = readFrontendAssets();
 
-    expect(typeof assetsModule.readFrontendAssets).toBe("function");
+    expect(assets.indexHtml).toContain("<!DOCTYPE html>");
+    expect(assets.stylesCss.length).toBeGreaterThan(0);
+    expect(assets.appJs).toContain("EventSource");
   });
 });

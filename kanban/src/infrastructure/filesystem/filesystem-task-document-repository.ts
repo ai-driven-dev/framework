@@ -1,5 +1,5 @@
 import { existsSync } from "node:fs";
-import { readdir, readFile } from "node:fs/promises";
+import { readdir, readFile, stat } from "node:fs/promises";
 import { join, relative } from "node:path";
 import matter from "gray-matter";
 import { normalizeDocumentStatus } from "../../domain/models/document-status.js";
@@ -62,7 +62,12 @@ export class FilesystemTaskDocumentRepository implements TaskDocumentRepository 
   constructor(private readonly docsDirectoryName: string) {}
 
   async projectExists(projectPath: string): Promise<boolean> {
-    return existsSync(join(projectPath, this.docsDirectoryName));
+    try {
+      const stats = await stat(join(projectPath, this.docsDirectoryName));
+      return stats.isDirectory();
+    } catch {
+      return false;
+    }
   }
 
   async findAll(projectPath: string): Promise<TaskDocument[]> {
