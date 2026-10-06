@@ -1,6 +1,6 @@
 ---
 objective: "Setup renders constructor validation failures as clean CLI errors and documents the current user-scope support limits."
-status: implemented
+status: reviewed
 ---
 
 # Plan: Render setup validation errors

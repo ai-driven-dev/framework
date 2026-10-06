@@ -1,5 +1,5 @@
 ---
-status: implemented
+status: reviewed
 ---
 
 # Instruction: Guard setup validation
@@ -63,6 +63,6 @@ Not applicable: command-line validation only.
 ## Test acceptance criteria
 | Task | Acceptance criteria |
 | --- | --- |
-| 1 | Unsupported plugin modes print the existing cause and remedies, exit 1, and emit no exception name, stack frame, or minified bundle; dependencies are not created. Other constructor validation errors use the same boundary. |
+| 1 | Unsupported plugin modes print the existing cause and remedies, exit 1, and emit no exception name, stack frame, or minified bundle; the setup action does not create dependencies. Other constructor validation errors use the same boundary. |
 | 2 | Help and README accurately explain current user-scope setup and plugin installation limitations from source; no installation capability is added. |
 | 3 | Relevant tests, typecheck, architecture checks, and changed-file lint pass; built-binary reproduction runs with isolated user directories. |
