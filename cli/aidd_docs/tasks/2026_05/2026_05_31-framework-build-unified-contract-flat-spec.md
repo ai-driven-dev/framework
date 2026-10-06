@@ -1,6 +1,6 @@
 ---
 name: framework-build-unified-contract-flat
-status: draft
+status: done
 date: 2026-05-31
 supersedes-architecture-of: 2026_05_30-framework-build-multi-target-marketplace (PR #279, marketplace claude+cursor)
 targets: [claude, cursor, copilot, codex, opencode]

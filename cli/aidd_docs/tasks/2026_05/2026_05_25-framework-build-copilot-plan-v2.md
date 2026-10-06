@@ -2,7 +2,7 @@
 date: 2026-05-25
 scope: MVP1
 target_plugin: copilot
-status: ready-for-implementation
+status: done
 kind: delta
 spec: ./2026_05_25-framework-build-copilot-spec.md
 supersedes: ./2026_05_25-framework-build-copilot-plan.md

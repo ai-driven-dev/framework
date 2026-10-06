@@ -1,6 +1,6 @@
 ---
 name: framework-build-copilot-flat
-status: frozen
+status: done
 date: 2026-05-25
 target: copilot
 scope: MVP1-flat

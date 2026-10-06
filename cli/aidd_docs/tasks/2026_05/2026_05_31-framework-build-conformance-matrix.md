@@ -1,6 +1,6 @@
 ---
 name: framework-build-conformance-matrix
-status: verified
+status: reviewed
 date: 2026-05-31
 scope: aidd framework build — 5 tools × 2 modes (marketplace + flat)
 evidence: 34/34 live conformance checks pass (this doc), golden 9-cell matrix, integration + e2e suites, /tmp smoke

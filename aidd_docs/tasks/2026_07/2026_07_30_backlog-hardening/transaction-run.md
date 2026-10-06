@@ -1,5 +1,5 @@
 ---
-status: todo
+status: pending
 ---
 
 # Instruction: close what the live backlog runs left open

@@ -2,7 +2,7 @@
 name: framework-build-multi-target-marketplace-smoke
 date: 2026-05-30
 targets: [claude, cursor]
-status: documented
+status: done
 ---
 
 # Smoke test — `aidd framework build` claude + cursor targets

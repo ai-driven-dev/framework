@@ -1,6 +1,6 @@
 ---
 name: 271-setup-cache-version-fix-plan
-status: ready
+status: done
 date: 2026-05-26
 release: v4.5.1 (patch)
 issue: https://github.com/ai-driven-dev/aidd-cli/issues/271

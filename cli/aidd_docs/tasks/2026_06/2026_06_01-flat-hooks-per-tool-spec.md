@@ -1,6 +1,6 @@
 ---
 name: flat-hooks-per-tool
-status: draft
+status: done
 date: 2026-06-01
 scope: framework build --flat — correct hook config registration per tool
 follows: fix/flat-plugin-prefixed-names (#281)

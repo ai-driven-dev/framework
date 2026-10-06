@@ -1,7 +1,7 @@
 ---
 date: 2026-05-25
 scope: framework-build-copilot-flat MVP1
-status: ready
+status: done
 references_spec: aidd_docs/tasks/2026_05/2026_05_25-framework-build-copilot-flat-spec.md
 branch: feat/framework-build-copilot-flat
 ---

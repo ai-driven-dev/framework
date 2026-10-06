@@ -1,5 +1,5 @@
 ---
-status: framed
+status: proposed
 backlog: ai-driven-dev/framework#703
 branch: fix/install-surfaces-agree
 base: next@627408fb

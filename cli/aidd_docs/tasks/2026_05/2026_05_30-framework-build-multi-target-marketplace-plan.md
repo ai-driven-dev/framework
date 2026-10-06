@@ -1,6 +1,6 @@
 ---
 name: framework-build-multi-target-marketplace
-status: planned
+status: done
 objective: Extend `aidd framework build` marketplace mode to cover claude + cursor (copilot + codex already shipped; opencode deferred), and replace the framework.ts if/else strategy ladder with a (target,mode)→factory registry — copilot/codex output stays byte-identical.
 success_condition: "pnpm biome check && pnpm typecheck && pnpm vitest run all green, AND `node dist/cli.js framework build --source tests/fixtures/framework-real --target cursor --out /tmp/dist-cursor` exits 0 producing `.cursor-plugin/marketplace.json` + `plugins/<p>/.cursor-plugin/plugin.json` (no `tools`/`color` in agent .md), AND `--target claude` produces `.claude-plugin/marketplace.json` + `plugins/<p>/.claude-plugin/plugin.json`, AND copilot+codex golden snapshots are byte-identical to pre-refactor baseline."
 iteration: 0
