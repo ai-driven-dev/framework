@@ -1,6 +1,8 @@
 # Mass campaign
 
-Forty-one independent headless runs against the final text, grouped so that each group measures dispersion rather than presence. A behaviour observed once is an anecdote; a mode that pauses nine times out of ten is unusable.
+Forty-one independent headless runs, grouped so that each group measures dispersion rather than presence. A behaviour observed once is an anecdote; a mode that pauses nine times out of ten is unusable.
+
+The text moved twice after this campaign, under the inline review and then under `03-check.md`'s reorder. What ran on the text as it stands is in `w-batch.md`.
 
 ## Protocol
 

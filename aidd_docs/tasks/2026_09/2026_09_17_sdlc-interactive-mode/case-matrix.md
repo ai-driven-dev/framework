@@ -2,6 +2,8 @@
 
 Every decision edge the orchestration declares, and the run that exercised it. Derived by reading the router and its three zone references end to end, not by recalling what was tested.
 
+The runs named here are this campaign's. The later batch, on the text as it stands, is in `w-batch.md`.
+
 Legend: `done` an observed run covered it · `flight` a run is covering it · `gap` nothing covers it yet · `n/a` unreachable in a sandbox.
 
 ## Router, mode selection
