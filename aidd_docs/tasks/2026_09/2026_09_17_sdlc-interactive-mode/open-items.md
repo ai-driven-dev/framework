@@ -1,6 +1,6 @@
 # Open items
 
-Every defect the case battery turned up that this change does not own. None was introduced by the interactive mode; each is recorded here because the mode made it visible, and several were reported independently by more than one run.
+Every defect the case battery turned up that this change does not own. Four of them were fixed after the fact, and [`design-fixes.md`](./design-fixes.md) records those with the runs that prove them; the rows below are what remains. None was introduced by the interactive mode; each is recorded here because the mode made it visible, and several were reported independently by more than one run.
 
 ## Reported by several runs
 
