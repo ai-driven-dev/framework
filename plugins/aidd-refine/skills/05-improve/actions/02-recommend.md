@@ -18,7 +18,6 @@ A `## Recommendations` table with `ID | Question | Type | Diagnostic | Evidence 
    - Give the behavior analyst the complete frozen transcript; give artifact analysts the same boundary, indexed turns, and exact artifact paths.
    - Request isolated or minimal context for artifact analysts when supported; otherwise analyze every scope locally instead of duplicating the transcript.
    - Do not dispatch an analyst with no relevant evidence.
-   - Give every analyst the assessment priority in step 5.
    - Require table rows only and forbid file writes.
 3. **Question.** Make each analyst answer every prompt for its scope.
    - How could the next run be faster or better?
@@ -26,14 +25,11 @@ A `## Recommendations` table with `ID | Question | Type | Diagnostic | Evidence 
    - Where should the change live?
    - How could it save time or tokens?
    - What work was counterproductive?
-   - What back-and-forth, bottlenecks, or tool calls could have been removed, batched, parallelized, or replaced?
 4. **Verify.** Read a named skill or knowledge file before assessing its information.
 5. **Assess.** Label relevant information `obsolete`, `over-specific-or-time-bound`, `duplicate`, `inconsistent`, `counterproductive`, or `correct`.
-   - For skill and especially knowledge targets, first delete useless or inconsistent information; then consolidate or clarify. Add only for a demonstrated gap that existing content cannot cover.
-   - Preserve context needed to act and valid requirements.
    - Use `correct` when no evidence supports another label, and never render it as a recommendation.
 6. **Merge.** Deduplicate findings across scopes and verify only their cited evidence against the frozen source.
-7. **Render.** Order by question then `behavior`, `skill`, `knowledge`, and write recommendations and copy-ready instructions with the fewest words that preserve meaning and action.
+7. **Render.** Order by question then `behavior`, `skill`, `knowledge`, and describe each change with the fewest unambiguous words.
    - Use `skill`, `behavior`, `knowledge`, or `tooling` as the target type.
    - State `time`, `tokens`, `both`, or `unknown` as its saving.
    - Render `no change` when a scope has no evidence-backed recommendation.
@@ -51,5 +47,4 @@ A `## Recommendations` table with `ID | Question | Type | Diagnostic | Evidence 
 | Information is correct | its scope says `no change` and no recommendation is rendered |
 | A named target is assessed | the target file was read before the verdict |
 | A saving is shown | it is categorical and never an invented amount |
-| Operational efficiency is assessed | the question is answered with exact turn or tool-call evidence for each finding, or `no change` when none is supported |
 | The same evidence is analyzed again | recommendations keep the same order and do not cite an earlier `improve` report |

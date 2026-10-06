@@ -18,7 +18,6 @@ An HTML report in a temporary directory with local `report.css` and `report.js`,
    - Consolidate repeated targets and render each diagnostic's smallest change.
    - Render one `Aucun fichier recommandé | — | —` row when no recommendation needs a file edit.
 3. **Render.** Fill [the report template](../assets/report-template.html) with only measured values and grounded findings, then copy its local CSS and JavaScript beside it.
-   - Keep `data-prompt` instructions and the editable execution prompt as short as possible without losing targets or actions.
    - Remove every sample value and sample finding from the produced report.
    - HTML-escape every injected value; allow only template-owned markup and local asset references.
    - Write only to a unique temporary directory, never the project.
