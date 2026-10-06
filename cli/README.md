@@ -32,7 +32,7 @@ aidd update
 ```
 
 The first command bootstraps the project: manifest, default marketplace, tool configs, plugins.
-`--scope user` on `setup` registers the framework source and native activation machine-wide instead, and writes nothing under the project.
+`--scope user` on `setup` registers the framework source and supported tools machine-wide instead, and writes nothing under the project. See the scope support below.
 
 ## Authentication
 
@@ -67,6 +67,25 @@ Run `aidd --help`, then a group's own `--help`, for flags this page does not rep
 | `aidd update` | Update the CLI itself, aliased `upgrade` |
 
 `setup`, `doctor`, `sync` and `clean` accept `--scope <project|user>`. Project scope is the default and acts on this project alone.
+
+`setup --scope user` requires an explicit supported `--ai` list, no `--ide`, and `--plugins none` (or omit `--plugins` in a scripted run). It records the source and tools in the user registry without installing tool configuration files or enabling plugins. `--ai all` includes unsupported tools and is refused.
+
+| Tool | `setup --scope user` | `plugin install` file scope |
+| --- | --- | --- |
+| `claude` | Registers the source; drives Claude's native CLI at user scope | `project` |
+| `codex` | Registers the source; drives Codex's native CLI machine-wide | `project` |
+| `copilot` | Registers the source; drives Copilot's native CLI machine-wide | `project` |
+| `cursor` | Records the source and tool only; no native activation | `user`, under `~/.cursor/plugins/local/` |
+| `opencode`, `kilo` | Unsupported; use project-scope setup | `project` |
+| `vscode` (`--ide`) | Unsupported; use project-scope setup | Not an AI plugin target |
+
+Native activation requires the corresponding `claude`, `codex`, or `copilot` executable on `PATH`. When it is missing, registration succeeds with a warning and activation remains unrun; install the host CLI, then run `aidd sync --scope user`.
+
+```sh
+aidd setup --scope user --ai claude,codex,copilot --plugins none --yes
+```
+
+Setup registration and plugin installation have separate scope rules. `aidd plugin install <name> --tool cursor --scope user` installs Cursor plugin files in its user directory, while plugin installation for the other AI tools uses project scope. Codex and Copilot's native enablement is machine-wide even though their plugin file scope is `project`. Cursor plugin installation can still write project hooks and the project manifest. User-scope setup does not rewrite global rules, agents, skills, commands, or MCP configuration.
 
 ### Framework
 
