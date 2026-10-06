@@ -1,4 +1,5 @@
 ---
+type: phase
 status: pending
 ---
 

@@ -1,4 +1,5 @@
 ---
+type: plan
 objective: "{What must be true when done. One sentence.}"
 success_condition: "{Runnable command that proves done. Example: 'npm test exits 0 AND coverage > 80%'}"
 iteration: 0

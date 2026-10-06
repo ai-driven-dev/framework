@@ -1,4 +1,5 @@
 ---
+type: plan
 objective: "{What must be true when done. One sentence.}"
 status: pending
 ---
