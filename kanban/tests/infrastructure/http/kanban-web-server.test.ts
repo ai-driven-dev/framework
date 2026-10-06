@@ -1,3 +1,5 @@
+import { request as httpRequest } from "node:http";
+import { createServer as createBlockingServer } from "node:net";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { TaskDocumentWatcher } from "../../../src/domain/ports/task-document-watcher.js";
 import { KanbanWebServer } from "../../../src/infrastructure/http/kanban-web-server.js";
@@ -47,6 +49,7 @@ function createServer(
     projectValidator: (projectPath: string) => Promise<boolean>;
     watcher: ReturnType<typeof createMockWatcher>;
     pinned: boolean;
+    port: number;
   }> = {}
 ): {
   server: KanbanWebServer;
@@ -64,7 +67,7 @@ function createServer(
   };
 
   const server = new KanbanWebServer({
-    port: 0,
+    port: overrides.port ?? 0,
     projectPath: "/tmp/test",
     pinned: overrides.pinned ?? false,
     boardProvider,
@@ -81,6 +84,37 @@ function createServer(
 
 async function fetchFromServer(port: number, path: string): Promise<Response> {
   return fetch(`http://localhost:${port}${path}`);
+}
+
+// fetch() refuses to override Host and Origin, so forged headers go through node:http.
+function rawRequest(
+  port: number,
+  path: string,
+  options: { method?: string; headers?: Record<string, string>; body?: string } = {}
+): Promise<{ status: number | undefined; body: string }> {
+  return new Promise((resolve, reject) => {
+    const req = httpRequest(
+      {
+        host: "127.0.0.1",
+        port,
+        path,
+        method: options.method ?? "GET",
+        headers: options.headers,
+      },
+      (res) => {
+        let body = "";
+        res.on("data", (chunk: Buffer) => {
+          body += chunk.toString("utf-8");
+        });
+        res.on("end", () => resolve({ status: res.statusCode, body }));
+      }
+    );
+    req.on("error", reject);
+    if (options.body !== undefined) {
+      req.write(options.body);
+    }
+    req.end();
+  });
 }
 
 async function readNextSseData(stream: ReadableStream<Uint8Array>): Promise<string> {
@@ -329,5 +363,78 @@ describe("KanbanWebServer", () => {
     expect(res.status).toBe(409);
     expect(body.code).toBe("KANBAN_PROJECT_PINNED");
     expect(ctx.watcher.retarget).not.toHaveBeenCalled();
+  });
+
+  it("rejects start on a busy port and leaves the watcher untouched", async () => {
+    const blocker = createBlockingServer();
+    await new Promise<void>((resolve) => blocker.listen(0, "127.0.0.1", resolve));
+    const address = blocker.address();
+    if (address === null || typeof address === "string") {
+      throw new Error("blocking server has no port");
+    }
+
+    const ctx = createServer({ port: address.port });
+    server = ctx.server;
+
+    await expect(server.start()).rejects.toThrow(/EADDRINUSE/);
+    expect(ctx.watcher.start).not.toHaveBeenCalled();
+
+    await new Promise<void>((resolve) => blocker.close(() => resolve()));
+  });
+
+  it("refuses a request addressed to a non-local host with 403", async () => {
+    const ctx = createServer();
+    server = ctx.server;
+    port = await server.start();
+
+    const res = await rawRequest(port, "/api/tasks", {
+      headers: { Host: "evil.example" },
+    });
+
+    expect(res.status).toBe(403);
+    expect(res.body).toContain("KANBAN_NON_LOCAL_REQUEST");
+  });
+
+  it("refuses a cross-origin POST /api/project and leaves the active path untouched", async () => {
+    const ctx = createServer();
+    server = ctx.server;
+    port = await server.start();
+
+    const res = await rawRequest(port, "/api/project", {
+      method: "POST",
+      headers: {
+        Host: `localhost:${port}`,
+        Origin: "http://evil.example",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ path: "/tmp/other" }),
+    });
+
+    expect(res.status).toBe(403);
+    expect(ctx.watcher.retarget).not.toHaveBeenCalled();
+
+    const project = (await (await fetchFromServer(port, "/api/project")).json()) as {
+      path: string;
+    };
+    expect(project.path).toBe("/tmp/test");
+  });
+
+  it("accepts a POST /api/project sent from the board's own origin", async () => {
+    const ctx = createServer();
+    server = ctx.server;
+    port = await server.start();
+
+    const res = await rawRequest(port, "/api/project", {
+      method: "POST",
+      headers: {
+        Host: `localhost:${port}`,
+        Origin: `http://localhost:${port}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ path: "/tmp/other" }),
+    });
+
+    expect(res.status).toBe(200);
+    expect(ctx.watcher.retarget).toHaveBeenCalledWith("/tmp/other");
   });
 });

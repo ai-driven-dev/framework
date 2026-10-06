@@ -27,6 +27,9 @@ const CONTENT_TYPES: Record<string, string> = {
   json: "application/json; charset=utf-8",
 };
 
+const LOCAL_BIND_ADDRESS = "127.0.0.1";
+const LOCAL_HOSTNAMES = new Set(["localhost", "127.0.0.1", "[::1]"]);
+
 const PROJECT_PINNED_MESSAGE =
   "KANBAN_PROJECT_PINNED: the project path is fixed by the command line";
 const PROJECT_INVALID_REQUEST_MESSAGE =
@@ -46,6 +49,35 @@ function serveJson(res: ServerResponse, status: number, payload: unknown): void 
 
 function serveNotFound(res: ServerResponse): void {
   serveJson(res, 404, { error: "not found" });
+}
+
+function hostnameOf(hostHeader: string): string {
+  return hostHeader.startsWith("[")
+    ? hostHeader.slice(0, hostHeader.indexOf("]") + 1)
+    : (hostHeader.split(":")[0] ?? "");
+}
+
+// The board exposes local filesystem content; only browser requests addressed
+// to the loopback origin may reach it (blocks DNS rebinding and cross-site calls).
+function isLocalRequest(req: IncomingMessage): boolean {
+  const host = req.headers.host;
+
+  if (host === undefined || !LOCAL_HOSTNAMES.has(hostnameOf(host))) {
+    return false;
+  }
+
+  const origin = req.headers.origin;
+
+  if (origin === undefined) {
+    return true;
+  }
+
+  try {
+    const originHostname = new URL(origin).hostname;
+    return LOCAL_HOSTNAMES.has(originHostname) || LOCAL_HOSTNAMES.has(`[${originHostname}]`);
+  } catch {
+    return false;
+  }
 }
 
 function readRequestBody(req: IncomingMessage): Promise<string> {
@@ -87,27 +119,31 @@ export class KanbanWebServer {
   }
 
   async start(): Promise<number> {
-    this.deps.watcher.onChange(() => {
-      void this.fetchAndBroadcast();
-    });
-
     this.server = createServer((req, res) => {
       void this.handleRequest(req, res);
     });
 
-    this.deps.watcher.start(this.activeProjectPath);
-
     const server = this.server;
 
-    return new Promise((resolve) => {
-      server.listen(this.deps.port, () => {
+    const actualPort = await new Promise<number>((resolve, reject) => {
+      server.once("error", (error) => {
+        this.stop();
+        reject(error);
+      });
+      server.listen(this.deps.port, LOCAL_BIND_ADDRESS, () => {
         const address = server.address();
-        const actualPort =
-          typeof address === "object" && address !== null ? address.port : this.deps.port;
-        this.deps.output.print(`Kanban board at http://localhost:${actualPort}`);
-        resolve(actualPort);
+        resolve(typeof address === "object" && address !== null ? address.port : this.deps.port);
       });
     });
+
+    this.deps.watcher.onChange(() => {
+      void this.fetchAndBroadcast();
+    });
+    this.deps.watcher.start(this.activeProjectPath);
+
+    this.deps.output.print(`Kanban board at http://localhost:${actualPort}`);
+
+    return actualPort;
   }
 
   stop(): void {
@@ -121,6 +157,11 @@ export class KanbanWebServer {
   }
 
   private async handleRequest(req: IncomingMessage, res: ServerResponse): Promise<void> {
+    if (!isLocalRequest(req)) {
+      serveJson(res, 403, { error: "forbidden", code: "KANBAN_NON_LOCAL_REQUEST" });
+      return;
+    }
+
     const path = (req.url ?? "/").split("?")[0];
 
     switch (path) {
@@ -201,6 +242,9 @@ export class KanbanWebServer {
     return this.deps
       .boardProvider(this.activeProjectPath)
       .then((board) => this.sseManager.broadcast(board))
-      .catch(() => {});
+      .catch((error: unknown) => {
+        const reason = error instanceof Error ? error.message : String(error);
+        this.deps.output.print(`Failed to refresh the board: ${reason}`);
+      });
   }
 }
