@@ -111,6 +111,15 @@ pre-commit:
         fi
         node scripts/check-doc-duplication.js
 
+    task-status:
+      glob: "{aidd_docs,cli/aidd_docs,kanban/aidd_docs}/**/*.md"
+      run: |
+        if ! command -v node >/dev/null 2>&1; then
+          echo "ℹ️  node not available; skipping task-status"
+          exit 0
+        fi
+        node scripts/check-task-status.js
+
     markdown-links:
       glob: "**/*.md"
       run: |

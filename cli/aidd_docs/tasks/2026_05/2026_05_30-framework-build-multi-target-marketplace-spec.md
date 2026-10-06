@@ -1,6 +1,6 @@
 ---
 name: framework-build-multi-target-marketplace
-status: draft
+status: done
 date: 2026-05-30
 targets: [claude, cursor]   # codex + copilot already shipped; opencode deferred to flat phase
 mode: marketplace (Mode A)

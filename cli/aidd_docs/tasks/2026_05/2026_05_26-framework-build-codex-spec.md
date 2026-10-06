@@ -1,6 +1,6 @@
 ---
 name: framework-build-codex
-status: frozen
+status: done
 date: 2026-05-26
 target: codex
 scope: MVP1 (Mode A + agents hybrid)

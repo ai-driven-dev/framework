@@ -1,5 +1,5 @@
 ---
-status: delivered
+status: done
 backlog: ai-driven-dev/framework#746
 branch: fix/trailer-survives-a-regenerated-hook
 base: next@919aee30

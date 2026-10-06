@@ -1,6 +1,6 @@
 ---
 objective: "Restore tells the truth about what it did, and marketplace-mode plugins are handled the same way on every command."
-status: findings-1-2-done
+status: done
 ---
 
 # Plan: three findings surfaced during the cartography backlog

@@ -1,6 +1,6 @@
 ---
 name: framework-build-codex
-status: planned
+status: done
 date: 2026-05-26
 scope: MVP1 (Mode A + agents hybrid)
 target: codex
