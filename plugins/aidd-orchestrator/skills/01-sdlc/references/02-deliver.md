@@ -2,7 +2,7 @@
 
 ## Behavior
 
-Turn the contract into a proportional plan, then give one executor the plan. The executor implements it and calls the validation skills, which own their checks and repair loops. Include architecture conformance whenever the project documents architecture. Run an end-to-end journey after every other validation when the project's testing memory names one for a surface this change touches, and none otherwise.
+Turn the contract into a proportional plan, then give one executor the plan. The executor implements it and calls the validation skills, which own their checks and repair loops. Include architecture conformance whenever the project documents architecture. Run an end-to-end journey after every other validation when the plan calls for one, and none otherwise.
 
 Commit and push the validated work through the commit skill. Send only the clean committed candidate to Check.
 
