@@ -45,7 +45,10 @@ function useFetchedBoard(
   const loadBoard = useCallback(() => {
     listTaskDocuments
       .execute(projectPath, filters)
-      .then(setBoard)
+      .then((fetchedBoard) => {
+        setBoard(fetchedBoard);
+        setFetchError(undefined);
+      })
       .catch((error: unknown) => {
         setFetchError(describeFetchError(error));
       });

@@ -218,6 +218,42 @@ describe("StatusColumnsView", () => {
     expect(fake.calls.stop).toBe(1);
   });
 
+  it("clears the error and renders the board once a reload succeeds after a failure", async () => {
+    let shouldFail = true;
+    const useCase = new ListTaskDocumentsUseCase({
+      findAll: async () => {
+        if (shouldFail) {
+          throw new Error("transient scan failure");
+        }
+        return [
+          createTaskDocument({ name: "FID-560", filePath: "/p/task-a/plan.md", status: "pending" }),
+        ];
+      },
+      projectExists: async () => true,
+    });
+    const fake = createFakeWatcher();
+
+    const { lastFrame, unmount } = render(
+      createElement(StatusColumnsView, {
+        listTaskDocuments: useCase,
+        projectPath: "/virtual/project",
+        filters: NO_FILTERS,
+        terminalWidth: 100,
+        createWatcher: () => fake.watcher,
+      })
+    );
+
+    await waitForFrame(lastFrame, "transient scan failure");
+
+    shouldFail = false;
+    fake.emitChange();
+
+    const frame = await waitForFrame(lastFrame, "FID-560");
+    expect(frame).not.toContain("transient scan failure");
+
+    unmount();
+  });
+
   it("never touches a watcher when no live factory is provided", async () => {
     const useCase = createUseCase([
       createTaskDocument({ name: "FID-560", filePath: "/p/task-a/plan.md", status: "pending" }),

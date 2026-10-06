@@ -315,6 +315,8 @@
 
     source.onopen = () => {
       setConnected(true);
+      // Changes made while disconnected were never broadcast to this client.
+      loadInitialData();
     };
 
     source.onmessage = (event) => {
