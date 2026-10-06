@@ -16,7 +16,7 @@ Composes capabilities into deterministic, auditable flows. Domain skills retain 
 
 | Bracket ID | Skill | Description |
 |------------|-------|-------------|
-| [6.1] | [sdlc](skills/01-sdlc/SKILL.md) | Orchestration through framing, delivery, independent review, outcome challenge, and PR creation, unsupervised unless asked to pause. |
+| [6.1] | [sdlc](skills/01-sdlc/SKILL.md) | Orchestration through framing, delivery, independent review, outcome challenge, and PR creation. |
 
 ### Use case: `async-dev`
 

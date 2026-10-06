@@ -1,6 +1,6 @@
 ---
 name: 01-sdlc
-description: Orchestrates a request from framing to a draft pull request, autonomously or pausing when asked, isolating implementation, independent review, and outcome challenge. Use when the user wants to deliver a change end to end. Not for a single step.
+description: Orchestrates a request from framing to a draft pull request, isolating implementation, independent review, and final outcome challenge. Use when the user wants to deliver a change end to end. Not for running one development step.
 argument-hint: request | interactive request
 ---
 
@@ -8,7 +8,7 @@ argument-hint: request | interactive request
 
 ## Behavior
 
-The mode is `auto` unless the request's first word is `interactive`, in any case and with or without leading dashes. A first word of `auto` names the default. Either word matches only as a whole word and is no part of the source. A request carrying nothing else is not one to run; say so and stop.
+The mode is `auto` unless the caller asks for `interactive`, named as the request's first whole word and no part of the source. A request carrying nothing else is not one to run; say so and stop.
 
 In `auto`, operate autonomously from the request to a draft pull request: decide and act without confirmation, asking only before spending money, taking an irreversible action, or making a decision that requires user authority. An exception stops the action it guards, not the rest of the request. Say what was withheld and what would release it.
 
@@ -16,7 +16,7 @@ In `interactive`, pause on the contract, on the plan, and on the outcome before 
 
 A refusal at a pause is a finding against that artifact. Contract or spec to Frame, plan to Deliver, outcome to Deliver or to Frame when it changes what is being built. It routes by artifact, never by a finding's kind, and travels with the source. Say so and wait again when it names what the artifact already carries. Only the user bounds this loop.
 
-Read only the current zone reference. Verify that every named provider is installed before calling it.
+A zone that cannot proceed stops the run and says what it would take to resume. Read only the current zone reference. Verify that every named provider is installed before calling it.
 
 Spawn specialized agents for isolated work. Parallelize independent work when it is faster. Give each agent one focused task that a smaller model can execute. Repeat the responsible zone when delegated work returns an actionable gap.
 
@@ -28,17 +28,17 @@ flowchart TD
   subgraph FrameStage["01 Frame"]
     direction TB
     Request["$request"]
-    Frame["01 Frame"]
+    Frame["01 Frame<br/>interactive: pause on the contract"]
   end
 
   subgraph DeliverStage["02 Deliver"]
     direction TB
-    Deliver["02 Deliver"]
+    Deliver["02 Deliver<br/>interactive: pause on the plan"]
   end
 
   subgraph CheckStage["03 Check"]
     direction TB
-    Check["03 Check"]
+    Check["03 Check<br/>interactive: pause on the outcome"]
     PullRequest["$pull_request"]
   end
 
