@@ -1,39 +1,38 @@
-# Checklist a spec is validated against.
-# Each criterion is independently scored. Required criteria must be `fulfilled` for the spec to pass.
+# Checklist a spec is validated against. Each criterion is scored on its own.
 
 criteria:
   - id: target
-    description: A single clear sentence stating what the system must achieve. Unambiguous, verifiable, single target (not multiple disguised as one).
+    description: One sentence, unambiguous and verifiable, naming a single target.
     required: true
     weight: 25
 
   - id: hard_constraints
-    description: Non-negotiable constraints listed explicitly. Each constraint is concrete and testable, not vague.
+    description: Non-negotiable constraints, each concrete and testable.
     required: true
     weight: 20
 
   - id: non_goals
-    description: Out-of-scope items listed explicitly. Reader knows what NOT to build.
+    description: Out-of-scope items listed, so a reader knows what not to build.
     required: true
     weight: 20
 
   - id: done_when
-    description: Completion conditions listed, each an observable outcome a user or the system can be seen producing. Verifiable by observation, not a command and not a feeling.
+    description: Completion conditions, each an observable outcome, never a command.
     required: true
     weight: 25
 
   - id: open_questions
-    description: Every gap listed once in the open questions section, each a precise question, or None when there is none. A gap is an unresolved decision a required section depends on, per references/tbd-marker.md. Spec-wide, no `TBD:` marker sits in any other section. A listed gap does not invalidate the spec; one written anywhere else does.
+    description: Every gap listed once in the open questions section as a precise question, or None. A gap is an unresolved decision a required section depends on. A listed gap is valid; a marker written in any other section is not.
     required: true
     weight: 0
 
   - id: stakeholders
-    description: Decider, owner, and consumer roles identified. Optional but encouraged for non-trivial specs.
+    description: Decider, owner and consumer named.
     required: false
     weight: 5
 
   - id: context
-    description: Relevant background or links provided when needed for downstream decisions.
+    description: Background or links a downstream decision needs.
     required: false
     weight: 5
 
@@ -46,7 +45,4 @@ hard_thresholds:
 
 scoring:
   pass_threshold: 90
-  notes: |
-    A spec is valid when every required criterion is fulfilled AND the weighted score
-    is at or above the pass_threshold. Hard thresholds force `invalid` regardless of score.
-    Implementation details (libraries, patterns, file layout) belong to the plan, not the spec.
+  notes: Valid when every required criterion is fulfilled and the weighted score reaches pass_threshold. A hard threshold forces invalid whatever the score.

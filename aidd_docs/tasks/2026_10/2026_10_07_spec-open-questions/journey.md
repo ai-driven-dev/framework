@@ -92,3 +92,21 @@ outright. So the Skill tool's own registration is still unmeasured, and only it 
 The Skill tool's registration, which no sandbox can exercise while a user-scope install
 shadows it. One model. And no judge classified the entries, so which gaps a draft raises
 rests on reading them.
+
+## After the last cut - pass
+
+The whole skill, cut to what changes a draft: 1379 words to 1050, with a section and a
+reference added. Four sessions through the installed tree and six validator verdicts:
+
+| Measure | Result |
+| --- | --- |
+| every required section present | 4/4 |
+| the open questions section exists | 4/4 |
+| markers outside it | 0/4 |
+| a gap listed in its own section | valid 2/2 |
+| a gap written under `## Context` | invalid 2/2 |
+| `None` | valid 2/2 |
+
+Entries stay high on a thin request, 8, 7 and 6, and 3 on a fully answered one. The cut
+neither fixed nor worsened that; nothing refuses a spec for it.
+
