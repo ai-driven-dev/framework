@@ -41,7 +41,7 @@ The path to `spec.md` in the feature folder, drafted from the template, with the
 | The action completes | `spec.md` exists in the feature folder |
 | The file is validated | every section required by [spec-validator.yml](../assets/spec-validator.yml) is present |
 | The spec is read back | it carries no library name, framework pattern, or source-file layout |
-| A required field is missing | it is listed once under `## Open Questions`, and no required section carries a marker |
+| A required field is missing | it is listed once under `## Open Questions`, and no other section carries a marker |
 | Too vague | no write; one clarifying question returned |
 | The request names a backlog item | the folder's `backlog-link.json` names it, with `written_at` and `written_by` |
 | The request names none | no `backlog-link.json` is written, and nothing errors |

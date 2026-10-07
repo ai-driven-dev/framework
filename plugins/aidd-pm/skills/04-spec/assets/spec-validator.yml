@@ -23,7 +23,7 @@ criteria:
     weight: 25
 
   - id: open_questions
-    description: An Open Questions section present, listing each unresolved decision once as a precise question, or reading None. Checks the section's shape and carries no weight.
+    description: An Open Questions section present, listing each unresolved decision once as a precise question, or reading None.
     required: true
     weight: 0
 

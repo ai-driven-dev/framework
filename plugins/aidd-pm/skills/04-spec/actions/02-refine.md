@@ -15,7 +15,7 @@ The refined spec at the same path, or no change if not written.
 1. **Load.** Read the spec and the findings.
 2. **Map.** Pair each finding with the section it touches.
 3. **Rewrite.** Apply each finding in place: clarify wording, add missing fields, remove invalid claims. Leave untouched sections as they are.
-4. **Gaps.** List every field still unanswered under `## Open Questions` per [tbd-marker.md](../references/tbd-marker.md), never inside the section it would fill.
+4. **Gaps.** Remove from `## Open Questions` every entry the rewrite answered, then list each field still unanswered there per [tbd-marker.md](../references/tbd-marker.md), never inside the section it would fill. Write `None` when no entry remains.
 5. **Check.** Confirm every section the validator requires is present, then overwrite the spec at its path.
 6. **Verify.** Report what changed as `before -> after`, and the verification result.
 
@@ -25,6 +25,7 @@ The refined spec at the same path, or no change if not written.
 | --- | --- |
 | The action completes | the spec still exists at its path with every section required by [spec-validator.yml](../assets/spec-validator.yml) |
 | A finding is resolved | the spec changed at the section it names |
-| A finding cannot be resolved | it is listed once under `## Open Questions`, and no required section carries a marker |
+| A finding resolves an open question | its entry is gone from `## Open Questions`, and the section reads `None` when it was the last |
+| A finding cannot be resolved | it is listed once under `## Open Questions`, and no other section carries a marker |
 | A write happened | the result reports the stable identity, `before -> after` fields, and verification result |
 | No write happened | the result states that no persisted change occurred |
