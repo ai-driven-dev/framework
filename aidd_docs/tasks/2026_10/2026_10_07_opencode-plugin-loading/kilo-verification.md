@@ -48,11 +48,16 @@ No mutation threshold or bundle budget was changed.
   configuration and verifies byte-identical contents after host execution. Exact
   preservation of original JSONC bytes during setup/install/update belongs to the six
   application integration cases above.
+- Two architecture cases exercise a real temporary Git checkout with core.autocrlf=true.
+  They check exact LF bytes for both embedded configuration assets and deliberately
+  remove their attribute rule to prove that the guard detects CRLF conversion. The
+  tests relocate profiles and use an independent temporary .git directory.
 
 Sources of these tests:
 - [Bridge unit tests](../../../../cli/tests/contexts/tools/domain/profiles/kilo/kilo-hooks-bridge.unit.test.ts)
 - [Delivery integration tests](../../../../cli/tests/contexts/framework/application/plugin/kilo-plugin-delivery.integration.test.ts)
 - [Real Kilo runtime test](../../../../cli/tests/e2e/kilo-runtime.e2e.test.ts)
+- [Embedded-config checkout tests](../../../../cli/tests/architecture/bundled-config-checkout.arch.test.ts)
 
 ## Strategy and observed failures
 Released behavior was researched before extending the bridge. The
@@ -93,11 +98,22 @@ recapture changed only that generated file's stored hash; the other nine matrix 
 and all file lists remained unchanged. All three golden tests subsequently passed in
 comparison mode, including deterministic output and the complete ten-cell matrix.
 
+The first updated remote run passed the actual Kilo test on Ubuntu but exposed a Windows
+bundle failure. A separate local clone reproduced its checkout behavior: 89 CRLF lines
+in the OpenCode asset and one in the Codex TOML added 180 escaped bytes to the bundle.
+Identical source built to 751,771 bytes with CRLF and 751,591 with LF. The existing
+cli/.gitattributes now declares assets/configs/** text eol=lf. No algorithm, source
+behavior, dependency or budget changed. The checkout guard failed before this correction
+and passed afterward; removing the rule in its isolated fixture detects both changed
+assets. Raw logs are bundle-crlf-build.log, bundle-lf-build.log and
+bundle-eol-guard-before.log in the evidence directory below.
+
 ```sh
 pnpm --dir cli test:e2e:kilo
 pnpm --dir cli exec vitest run --config vitest.mutation.config.ts tests/contexts/framework/application/plugin/kilo-plugin-delivery.integration.test.ts
 pnpm --dir cli test:mutation:tools-opencode
 pnpm --dir cli test:mutation:tools-kilo
+pnpm --dir cli test:arch
 ```
 
 Local raw evidence includes /tmp/kilo-hooks-runtime-red.log and the following files in
@@ -113,7 +129,9 @@ CLI delivery and spawned hooks execute normally.
   all three hook payloads.
 - Kilo profile suites: 21 passed, including 13 bridge cases. Delivery integration: six
   passed under the mutation configuration.
-- Normal commit checks: 554 repository script tests and 140 architecture checks passed;
+- Normal commit checks: 554 repository script tests passed; final architecture suite:
+  142 passed, including the two added checkout guards. Full pre-push before the checkout
+  extension: 6,833 passed, one opt-in case skipped, 532 files passed; knip passed.
   lint, TypeScript, type honesty, documentation and whitespace checks passed. The lint
   warning about an unused private member in uninstall-use-case.ts is preexisting.
 - Built CLI: 751,591 bytes against the unchanged 751,616-byte budget. This passes with
