@@ -1,6 +1,6 @@
 # Review: OpenCode plugin loading (#953)
 - **Verdict**: approve
-- **Diff**: original review `origin/next...ffa9c44a`; extension `b1a37fe0..3e762c31`
+- **Diff**: original review `origin/next...ffa9c44a`; extension `b1a37fe0..16d8b223`
 - **Axes run**: code, functional, relevancy
 - **Date**: 2026_10_07
 - **Findings**: 0 critical, 0 warning, 0 minor
@@ -52,10 +52,12 @@
 | Unplanned | none; runtime delivery and loader relocation recorded in revised architecture projection |
 | Extension verified | 100% (8/8); original Phase 1 evidence above is retained as historical evidence, not a claim that remote CI for the extension is green. |
 | Extension checker score | 100% (12/12: all eight extension acceptance checks and four baseline checks fulfilled); no severity adjustment. Caller owns the acceptance threshold. |
-| Extension files checked | All changed lines in the nine extension files, generated bridge, runtime harness, six delivery cases, configuration loader, workflow and task evidence; root/CLI coding and testing assertions. |
+| Extension files checked | All changed lines in the ten implementation/evidence files, generated bridge, runtime harness, six delivery cases, configuration loader, workflow, golden baseline and task evidence; root/CLI coding and testing assertions. Subsequent review-artifact commit adds no production changes. |
 | Extension baseline | DRY, consistency within documented host/telemetry limits, minimum relevant scope and no dead/debug production code fulfilled. Observer and deterministic inference remain test-only. |
 | Extension commands run | Independent mutation-config focused tests: 23 passed; complete Kilo profile tests: 21 passed; real Kilo 7.7.5 host: one passed. Final corrected-host green, typecheck and targeted counterproof logs inspected directly after reviewing the correction. |
 | Extension fixed finding | The final snapshot now rejects delayed fourth records. Evidence: `/tmp/aidd-971-repair/kilo-quiescent-runtime-green.log` and `kilo-late-hook-counterproof.log`; temporary copied case removed. Reviewed committed test SHA256: 5f53e7f983654fc777b035840ab34a8fc5dbc5b2127d0b2983151eef5f964559. |
 | Extension configuration proof | Six application use cases preserve original JSONC bytes through setup/add/update. CLI translation intentionally normalizes JSON and adds schema, so the runtime test checks custom values during delivery and exact preservation of the delivered configuration after host execution. |
+| Extension golden repair | The complete pre-push run was withheld with 6,832 passed, one failed and one skipped; sole failure was the stale Kilo generated-context bridge hash. The delta `0528e5ce..16d8b223` changes only that stored hash and its verification note, no source/assertions/floors. Independent structured comparison confirms ten cells, identical file lists and one changed hash: `kilo:flat/.kilo/plugin/aidd-context-hooks.js`, now 1ccdf9253492b1a3663e418d58a542c7d97046964070e332c7bc110d960c45b4. |
+| Extension golden validation | Independent `pnpm --dir cli exec vitest run --project=e2e tests/golden/framework-build-golden.e2e.test.ts`, without recapture: three passed in comparison mode, including deterministic outputs and all ten stored baselines. Raw log: `/tmp/aidd-971-repair/checker-golden-comparison.log`. Runtime test blob remains cfd95913537eb6b22371583b905797190557602c; unchanged source/host/mutation checks were not rerun. |
 | Extension pending evidence | Full current CLI suite and remote required gate not yet established by this checker. No claim that all red CI jobs are repaired remotely; parent must inspect the actual new run. |
 | Extension resource boundary | Built bytes 751,591 against unchanged 751,616 budget; 25 bytes remaining. Thresholds and budgets unchanged; user-owned .gitignore and .hermes.md excluded. |
