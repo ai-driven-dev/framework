@@ -31,4 +31,7 @@ status: implemented
 | Neither filter is widened | `plugins/**` would run 6800 cli tests on a prose edit, and a narrow path list is the hand-maintained duplication that caused this: those paths moved last week |
 | The `cli/` test keeps the adapter crossing | a repository script test cannot import across that boundary, which is the whole reason that test exists |
 | The guard parses the example rather than reading field names | a file that keeps the three strings while ceasing to be JSON is exactly the case that fell between the two guards |
+| The taught example is the first json fence, matched with the sibling's own regex | two guards reading different fences leave one green and the other red, and no gate runs the `cli/` one for `plugins/**`. Measured three times: by content, by an unanchored position rule, and by the sibling's anchored one. Only the third agrees in every case |
+| The taught value is required to be a plain object | the reader funnels every parse through `cli/src/kernel/reading/json-file.ts`, whose predicate this copies, so nothing the reader accepts is refused |
+| The `cli/` test's pinned `owner/repo#123` and its field-set equality are left alone | #972 scopes the Affected file to the scripts guard. Changing a plugin's taught value still lands that test red on `next`, which is the same unwatched-test mechanism and belongs to its own issue |
 | The mutation ships with the guard | `aidd_docs/memory/coding-assertions.md` requires watching the named test go red for the reason it names |

@@ -34,7 +34,13 @@ journey
   section Edge case - a field becomes empty
     set written_by to an empty string => run the guard => it fails, naming the field: 1: system
   section Edge case - the taught example is not the first fence
-    add a fence above it => run the guard => it fails, and the cli sibling fails too: 1: system
+    add a fence above it at line start => run the guard => it fails, and the cli sibling fails too: 1: system
+  section Edge case - a fence the sibling does not see
+    add one after text on the same line => run the guard => it passes, as the sibling does: 1: system
+  section Edge case - the fence markers are gone
+    leave the JSON as prose => run the guard => it fails: 1: system
+  section Edge case - the taught value is not an object
+    teach null or an array => run the guard => it fails, naming the shape: 1: system
   section Teardown
     restore the example => the suite is green again: 5: system
 ```
@@ -58,8 +64,9 @@ journey
 > Two guards reading different fences leave one green and the other red.
 
 1. Read the first json fence, as the `cli/` test does.
-2. Fail naming the file, the field it must carry, and how many fences were read.
-3. Report the parse error when that fence is not JSON.
+2. Match it with the sibling's own regex, line-anchored, so both read the same fence.
+3. Fail naming the file, the field it must carry, and how many fences were read.
+4. Report the parse error when that fence is not JSON, and refuse a value that is not an object.
 
 ### `4)` watch it go red for its own reason
 > The mutation that proves the guard ships with it.

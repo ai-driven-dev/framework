@@ -19,17 +19,17 @@ const ROOT = path.resolve(__dirname, "../..");
 const IDENTIFYING_FIELD = "backlog";
 const REQUIRED_FIELDS = [IDENTIFYING_FIELD, "written_at", "written_by"];
 
-/** The taught example is the first json fence, the same one
- * `cli/tests/contexts/telemetry/infrastructure/task-backlog-skill-shape.integration.test.ts`
- * reads: two guards disagreeing on which fence that is leaves one green and the other red. */
 function shapeOf(value) {
   if (value === null) return "null";
   if (Array.isArray(value)) return "an array";
   return typeof value;
 }
 
+/** The taught example is the first json fence, the same one
+ * `cli/tests/contexts/telemetry/infrastructure/task-backlog-skill-shape.integration.test.ts`
+ * reads: two guards disagreeing on which fence that is leaves one green and the other red. */
 function taughtInMarkdown(file, markdown) {
-  const fences = [...markdown.matchAll(/```json\r?\n([\s\S]*?)\r?\n\s*```/g)].map((m) => m[1]);
+  const fences = [...markdown.matchAll(/^[ \t]*```json\r?\n([\s\S]*?)\r?\n[ \t]*```/gmu)].map((m) => m[1]);
   assert.ok(fences.length > 0, `${file} must teach the example in a json fence`);
 
   const taught = taughtAsJson(file, fences[0]);
@@ -94,7 +94,7 @@ describe("every backlog declaration in this repository is one the report can rea
   });
 
   /** The two skills that teach the file are the only things that decide what gets written,
-   * so they have to teach the same three names, wherever inside each skill the lesson lives — and the same three this test asks for.
+   * so they have to teach the same three names, and the same three this test asks for.
    * Read from the skills rather than trusted: a taught shape drifting away from the reader
    * is exactly what produced the two unreadable files, and a guard restating the fields
    * without checking the lesson would have stayed green through it. The example is parsed,
