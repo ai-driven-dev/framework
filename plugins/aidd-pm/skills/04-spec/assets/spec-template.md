@@ -29,6 +29,12 @@
 - <Observable condition 1>
 - <Observable condition 2>
 
+## Open Questions
+
+<One entry per unresolved decision, in the form `TBD: <precise question>`. Write `None` when nothing is left. Resolve every entry before the spec validates.>
+
+- TBD: <Precise question 1>
+
 ## Stakeholders (optional)
 
 - Decider: <who decides if there's a tradeoff>

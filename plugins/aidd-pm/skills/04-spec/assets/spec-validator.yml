@@ -22,6 +22,11 @@ criteria:
     required: true
     weight: 25
 
+  - id: open_questions
+    description: An Open Questions section present, listing each unresolved decision once as a precise question, or reading None. Checks the section's shape and carries no weight.
+    required: true
+    weight: 0
+
   - id: stakeholders
     description: Decider, owner, and consumer roles identified. Optional but encouraged for non-trivial specs.
     required: false
@@ -37,6 +42,7 @@ hard_thresholds:
   target_unclear_or_multiple_targets: invalid
   done_when_unverifiable: invalid
   contains_implementation_details: invalid
+  open_questions_unresolved: invalid
 
 scoring:
   pass_threshold: 90
