@@ -29,6 +29,7 @@ status: implemented
 | Decision | Why |
 | --- | --- |
 | Keep existing V1 factories and payload mapping; expose them through server on a default definition. | Preserve behavior and avoid running both entrypoints for one host. Verify against the actual V1 loader. |
+| Emit one CLI-owned host adapter under .opencode/hooks, shared by both plugin definitions. | Keep protocol normalization and subscription lifecycle in one place, outside plugin discovery, while each plugin retains its own hook payload mapping. |
 | Correlate V2 tool input/start, call and success events before reusing the V1 handler; map execution completion to turn-end. | The real 2.0.22 run emits granular events, not the declared content snapshots or session.idle. Tool names and inputs arrive before completion. Remove pending calls after success or failure. |
 | Pin real tests to V1 1.18.29 and V2 2.0.22. | Covers the documented compatibility boundary and the failing V2 release named in the issue. |
 | Run real hosts in fresh temporary profiles and projects against a local deterministic model endpoint. | Exercise actual plugin loading, events, memory refresh and journal writes without changing personal configuration or paying for inference. |

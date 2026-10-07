@@ -40,6 +40,18 @@ Both released binaries exited zero and produced all of these effects:
 - The session_start vendor_id matched the actual session ID reported by OpenCode.
 - Neither adapter produced a plugin load error.
 
+After the independent review's duplication finding, the V2 host protocol and subscription
+lifecycle were extracted into one embedded CLI asset. Both modules import the emitted
+`.opencode/hooks/opencode-events.js`; the real V1/V2 runs above were repeated with this
+layout. A fresh `setup` installation, using the temporary local framework source, also
+passed a real V2 session with the same observable effects.
+
+A second project simulated an existing tool manifest without the shared runtime file.
+The actual `plugin install` command installed context and telemetry from the temporary
+local source, backfilled the helper and recorded it once as tool-owned. The preexisting
+model and permission configuration remained byte-identical. A real V2 session then
+produced the same memory, hook and journal effects, with its actual session identity.
+
 The V2 observation stream contained session.created, session.tool.input.started,
 session.tool.called, session.tool.success and session.execution.succeeded. It contained
 neither session.idle nor session.message.content.updated. The adapter therefore correlates
@@ -61,6 +73,8 @@ python3 /tmp/aidd-953-runtime-ryTstm/prepare.py
 node cli/dist/cli.js translate /tmp/aidd-953-runtime-ryTstm/fixture-source --to opencode --as flat --out /tmp/aidd-953-runtime-ryTstm/candidate --force
 python3 /tmp/aidd-953-runtime-ryTstm/probe.py /tmp/aidd-953-runtime-ryTstm/candidate v1
 python3 /tmp/aidd-953-runtime-ryTstm/probe.py /tmp/aidd-953-runtime-ryTstm/candidate v2
+python3 /tmp/aidd-953-runtime-ryTstm/install-existing.py
+python3 /tmp/aidd-953-runtime-ryTstm/probe.py /tmp/aidd-953-runtime-ryTstm/candidate-existing v2
 ```
 
 The V2 command uses run --standalone; neither test starts a persistent background service.
@@ -69,24 +83,28 @@ The installed personal OpenCode 1.14.20 and its profile were not upgraded or use
 ## Automated validation
 
 - Full repository scripts suite through the normal commit hook: 554 passed, zero failures; the hook also verified that tests left git hooks unchanged.
-- Full CLI suite: 6,807 passed, one opt-in Kilo runtime test skipped; 529 files passed.
+- Full CLI suite through the final normal push hook: 6,818 passed, one opt-in Kilo runtime test skipped; 531 files passed. Evidence: push-shared.log in the temporary harness directory.
 - Focused OpenCode and cost-documentation scripts: 48 passed, after observing the stale documentation assertion fail first.
 - All 140 architecture checks passed without increasing comment or empty-catch baselines.
 - Lint, TypeScript, type honesty, knip, duplicate-code budget and whitespace checks passed. Lint retains one existing unused-private-member warning in uninstall-use-case.ts, outside this change.
-- Built CLI: 730.3 KB, below the existing 734 KB budget.
-- Both emitted plugin files passed node --check.
+- Built CLI: 732.2 KB, below the existing 734 KB budget.
+- Both emitted plugin files and the shared runtime module passed node --check.
 - An isolated mutation removing success consumption made the duplicate-task regression fail; the production source was not mutated.
+- After extraction, the same mutation against a copied canonical helper failed the duplicate-task regression; raw failure retained in mutation-shared.log. Existing-installation support tests first failed for missing helpers, then passed for installation, update and preservation of existing helper contents/hashes. Restoration first omitted the helper, then its regression passed after merging the runtime asset declaration.
 
-Architecture conformance: no macro violations; generic translation stays in the tools
-profile, telemetry observes through its existing adapter, and hook tests remain outside
-shipped plugin trees. No micro violations: the source generator remains a pure transform
-and the generated runtime gains no package dependency or cross-plugin import.
+Architecture conformance: generic translation and the canonical host protocol belong to
+the CLI; telemetry observes through its own payload adapter, and hook tests remain outside
+shipped plugin trees. The shared helper is tool-owned, outside plugin discovery, with no
+package dependency or cross-plugin import. Existing-tool plugin installation and update
+backfill only a missing helper, preserving user configuration, existing helper contents,
+ownership and recorded drift hashes. Source fetching and parsing use one shared framework
+entrypoint so the plugin orchestrators gain no extra collaborator.
 
 ## Scope of the evidence
 
 Real runtime coverage is a single-project successful session under V1 1.18.29 and V2
 2.0.22. Regression tests exercise stream cleanup, malformed events, incomplete and failed
-tools, repeated success, concurrent tool identities, and execution termination behavior.
+tools, repeated success, and execution termination behavior.
 Paid inference, global-profile installation, other operating systems and a running host's
 hot reload are not claimed by this local proof. The local deterministic model substitutes
 only inference; OpenCode's plugin loader, event stream, read tool, hook processes and

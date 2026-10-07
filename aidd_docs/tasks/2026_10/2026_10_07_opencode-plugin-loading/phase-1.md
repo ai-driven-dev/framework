@@ -6,11 +6,24 @@ status: done
 
 ## Architecture projection
 ```txt
-cli/src/contexts/tools/domain/profiles/opencode/opencode-hooks-bridge.ts  modify: generated plugin definition and V2 subscription
-plugins/aidd-telemetry/hooks/opencode-plugin.js  modify: telemetry definition and V2 subscription
+cli/assets/configs/opencode/opencode-events.js.txt  create: canonical V2 host adapter
+cli/src/runtime/assets/asset-loader.ts  modify: embed shared host adapter
+cli/tsup.config.ts  modify: bundle text asset
+cli/src/contexts/tools/domain/profiles/opencode/build.ts  modify: emit shared adapter outside plugin discovery
+cli/src/contexts/tools/domain/contracts.ts  modify: tool-owned plugin runtime files
+cli/src/contexts/tools/domain/profiles/opencode/profile.ts  modify: shared runtime file declaration
+cli/src/contexts/framework/application/install/install-runtime-config-use-case.ts  modify: install and backfill missing runtime files
+cli/src/contexts/framework/application/restore/generate-tool-distribution-use-case.ts  modify: retain runtime files in restoration output
+cli/src/contexts/framework/application/plugin/plugin-distribution-loader.ts  move/generalize: shared source retrieval entrypoint for project and user plugins
+cli/src/contexts/framework/application/plugin/plugin-add-use-case.ts  modify: ensure tool runtime before plugin delivery
+cli/src/contexts/framework/application/plugin/plugin-update-use-case.ts  modify: ensure tool runtime before plugin replacement
+cli/src/runtime/wiring/framework.ts  modify: wire shared source retrieval and runtime delivery
+cli/tests/contexts/framework/application/plugin/plugin-runtime-files.integration.test.ts  create: existing installation and update coverage
+cli/src/contexts/tools/domain/profiles/opencode/opencode-hooks-bridge.ts  modify: generated plugin definition using shared host adapter
+plugins/aidd-telemetry/hooks/opencode-plugin.js  modify: telemetry definition using shared host adapter
 cli/tests/contexts/tools/domain/profiles/opencode/opencode-hooks-bridge.unit.test.ts  modify: generated entrypoint and behavioral tests
 cli/tests/e2e/opencode-hooks-bridge-generated.e2e.test.ts  modify: default server/setup consumption in real translate output
-cli/tests/golden/snapshots/framework-build/golden.json  modify: only the emitted OpenCode bridge hash
+cli/tests/golden/snapshots/framework-build/golden.json  modify: OpenCode bridge hash and shared adapter artifact
 scripts/__tests__/opencode-plugin.test.js  modify: actual journal effects through both entrypoints and cleanup
 scripts/__tests__/aidd-telemetry-opencode-payloads.test.js  modify if required: loader export contract and event mappings
 scripts/__tests__/aidd-telemetry-cost-skill.test.js  modify: distinguish V1 omission from observed V2 session announcements
@@ -18,7 +31,7 @@ docs/ARCHITECTURE.md  modify: replace outdated single-factory contract
 plugins/aidd-telemetry/README.md  modify: supported OpenCode versions and measured behavior
 aidd_docs/tasks/2026_10/2026_10_07_opencode-plugin-loading/verification.md  create: research and observed real runtime evidence
 ```
-No files deleted. Add runtime regression coverage only where needed to reproduce a measured V2 difference.
+The existing user-plugin source loader moves to the shared application layer; its callers and constructor fixtures follow the generalized entrypoint. Add runtime regression coverage only where needed to reproduce a measured V2 difference.
 
 ## User Journey
 ```mermaid
@@ -54,7 +67,7 @@ Not applicable: no UI change.
 ### 1) Compatible exports and event handling
 1. Write regression tests and observe the expected failure.
 2. Add default id/server/setup definitions to both modules, preserving named factory seams if the V1 loader permits them without duplicate execution.
-3. Register V2 event handling with cancellable cleanup. Translate data/location session events, correlate granular tool events into completed tool calls, and handle execution completion as turn-end.
+3. Register V2 event handling through one shared host adapter with cancellable cleanup. Translate data/location session events, correlate granular tool events into completed tool calls, and handle execution completion as turn-end. Emit the helper outside the plugin discovery directory and test its installed layout.
 4. Update existing coverage and documentation; run coding and architecture assertions.
 
 ### 2) Real local compatibility proof
