@@ -2,10 +2,6 @@
 
 `TBD: <precise question>`
 
-A gap is an unresolved decision a required section depends on.
-What no required section depends on is not a gap, and neither is an implementation detail.
+A gap is an unresolved decision a required section depends on. Nothing else is one.
 
-The marker lives in the spec's `## Open Questions` section and nowhere else in the spec.
-
-List each gap there as one entry.
-Every other section carries resolved content only, never a marker.
+Every gap goes to the template's open questions section, once, and to no other section.
