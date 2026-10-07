@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import type { Hasher } from "../../../../kernel/ports/hasher.js";
 import { stripJsonComments } from "../../../../kernel/reading/jsonc.js";
 
@@ -24,11 +25,16 @@ export function mergeOpencodeMcp(
   mergedContent: string;
   contributedEntries: ReadonlyMap<string, string>;
   collisions: ReadonlyArray<string>;
+  editedPreviousEntries: ReadonlyArray<string>;
 } {
   const { full, mcp } = parseExisting(existingContent);
   const incoming = parseIncoming(incomingTransformed);
-  const cleaned = stripPreviousEntries(mcp, previousEntriesForThisPlugin);
-  return applyIncoming(full, cleaned, incoming, previousEntriesForThisPlugin, hasher);
+  const { cleaned, editedPreviousEntries } = stripPreviousEntries(
+    mcp,
+    previousEntriesForThisPlugin,
+    hasher
+  );
+  return { ...applyIncoming(full, cleaned, incoming, hasher), editedPreviousEntries };
 }
 
 /**
@@ -43,18 +49,32 @@ export function mergeOpencodeMcp(
 export function buildOpencodeFlatConfig(
   baseConfig: string,
   existing: string | null,
-  incoming: Record<string, unknown>
+  incoming: Record<string, unknown>,
+  mergedKeys: readonly string[] = []
 ): string {
   const base = JSON.parse(baseConfig) as Record<string, unknown>;
   const { full, mcp } = parseExisting(existing);
   const userKeys = { ...full };
   for (const key of Object.keys(base)) delete userKeys[key];
   delete userKeys.mcp;
-  const mergedMcp = { ...mcp, ...incoming };
+  const mergedMcp = { ...mcp };
+  for (const [name, server] of Object.entries(incoming)) {
+    if (!(name in mergedMcp)) mergedMcp[name] = server;
+  }
   const result: Record<string, unknown> = { ...base, ...userKeys };
+  for (const key of mergedKeys) {
+    const existingValues = arrayEntries(full[key]);
+    const baseValues = arrayEntries(base[key]);
+    const generated = baseValues.filter((value) => !existingValues.includes(value));
+    result[key] = [...existingValues, ...generated];
+  }
   delete result.mcp;
   if (Object.keys(mergedMcp).length > 0) result.mcp = mergedMcp;
   return JSON.stringify(result, null, 2);
+}
+
+function arrayEntries(value: unknown): readonly unknown[] {
+  return Array.isArray(value) ? value : [];
 }
 
 /** Removes servers previously contributed by a plugin from opencode.json's mcp section. A key
@@ -65,7 +85,9 @@ export function unmergeOpencodeMcp(
 ): string {
   const parsed = JSON.parse(stripJsonComments(existingContent)) as OpencodeMcpSection;
   const mcp = { ...(parsed.mcp ?? {}) };
-  for (const name of entries.keys()) {
+  for (const [name, digest] of entries) {
+    if (!(name in mcp)) continue;
+    assertContributedServerUnchanged(name, mcp[name], digest);
     delete mcp[name];
   }
   return JSON.stringify({ ...parsed, mcp }, null, 2);
@@ -91,20 +113,23 @@ function parseIncoming(transformed: string): Record<string, unknown> {
 
 function stripPreviousEntries(
   existing: Record<string, unknown>,
-  previous: ReadonlyMap<string, string>
-): Record<string, unknown> {
+  previous: ReadonlyMap<string, string>,
+  hasher: Hasher
+): { cleaned: Record<string, unknown>; editedPreviousEntries: readonly string[] } {
   const result = { ...existing };
-  for (const name of previous.keys()) {
-    delete result[name];
+  const editedPreviousEntries: string[] = [];
+  for (const [name, digest] of previous) {
+    if (!(name in result)) continue;
+    if (hasher.hash(JSON.stringify(result[name])).value === digest) delete result[name];
+    else editedPreviousEntries.push(name);
   }
-  return result;
+  return { cleaned: result, editedPreviousEntries };
 }
 
 function applyIncoming(
   full: Record<string, unknown>,
   cleanedMcp: Record<string, unknown>,
   incoming: Record<string, unknown>,
-  previous: ReadonlyMap<string, string>,
   hasher: Hasher
 ): {
   mergedContent: string;
@@ -115,7 +140,7 @@ function applyIncoming(
   const contributed = new Map<string, string>();
   const collisions: string[] = [];
   for (const [name, server] of Object.entries(incoming)) {
-    if (name in cleanedMcp && !previous.has(name)) {
+    if (name in cleanedMcp) {
       collisions.push(`${name}: ${MCP_COLLISION_REASON}`);
       continue;
     }
@@ -124,4 +149,16 @@ function applyIncoming(
   }
   const mergedContent = JSON.stringify({ ...full, mcp }, null, 2);
   return { mergedContent, contributedEntries: contributed, collisions };
+}
+
+function assertContributedServerUnchanged(name: string, server: unknown, digest: string): void {
+  if (!/^[0-9a-f]{32}$/.test(digest)) {
+    throw new Error(
+      `OpenCode MCP server '${name}' has an unproven install digest; removal refused.`
+    );
+  }
+  const current = createHash("md5").update(JSON.stringify(server), "utf-8").digest("hex");
+  if (current !== digest) {
+    throw new Error(`OpenCode MCP server '${name}' was edited after install; removal refused.`);
+  }
 }

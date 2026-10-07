@@ -3,7 +3,7 @@
 `@ai-driven-dev/cli` installs AI tool runtime configs, IDE integrations, and plugins from an AIDD marketplace into a project.
 Every file it writes is hash-tracked in a manifest, so drift is detected and owned files can be restored.
 
-Supported AI tools: Claude Code, Cursor, GitHub Copilot, Codex, OpenCode. Supported IDE: VS Code.
+Supported AI tools: Claude Code, Cursor, GitHub Copilot, Codex, OpenCode, Kilo Code. Supported IDE: VS Code.
 Requires Node.js >= 22.12, and `git` to fetch marketplace plugins.
 
 ## Install
@@ -32,7 +32,7 @@ aidd update
 ```
 
 The first command bootstraps the project: manifest, default marketplace, tool configs, plugins.
-`--scope user` on `setup` registers the framework source and native activation machine-wide instead, and writes nothing under the project.
+`--scope user` on `setup` registers the framework source and supported tools machine-wide instead, and writes nothing under the project. See the scope support below.
 
 ## Authentication
 
@@ -67,6 +67,22 @@ Run `aidd --help`, then a group's own `--help`, for flags this page does not rep
 | `aidd update` | Update the CLI itself, aliased `upgrade` |
 
 `setup`, `doctor`, `sync` and `clean` accept `--scope <project|user>`. Project scope is the default and acts on this project alone.
+
+`setup --scope user` requires an explicit supported `--ai` list, no `--ide`, and `--plugins none` (or omit `--plugins` in a scripted run). It records the source and tools in the user registry without installing tool configuration files or enabling plugins. `--ai all` includes unsupported tools and is refused.
+
+| Tool | `setup --scope user` |
+| --- | --- |
+| `claude`, `codex`, `copilot` | Registers the source and drives the tool's own CLI |
+| `cursor` | Records the source and tool only; no native activation |
+| `opencode`, `kilo` | Unsupported; use project scope |
+
+Native activation requires the corresponding `claude`, `codex`, or `copilot` executable on `PATH`. When it is missing, registration succeeds with a warning and activation remains unrun; install the host CLI, then run `aidd sync --scope user`.
+
+```sh
+aidd setup --scope user --ai claude,codex,copilot --plugins none --yes
+```
+
+`aidd setup --help` prints the same support list, generated from the registry.
 
 ### Framework
 
@@ -136,8 +152,9 @@ Two output layouts, chosen by `--as`:
 | `copilot` | yes | yes | `.github/` |
 | `codex` | yes | yes | `.codex/` |
 | `opencode` | no | yes | `.opencode/` |
+| `kilo` | no | yes | `.kilo/` |
 
-OpenCode declares no marketplace contract, so it is flat only. Every other target accepts both layouts.
+OpenCode and Kilo Code declare no marketplace contract, so they are flat only. Every other target accepts both layouts.
 
 ## Environment variables
 
@@ -184,6 +201,7 @@ Per tool, the settings file the CLI writes:
 | GitHub Copilot | Plugin recommendations in `.github/copilot/settings.json`, MCP servers in `.vscode/mcp.json`, plus `.vscode/settings.json` when the VS Code tool is installed too |
 | Codex | `.codex/config.toml` |
 | OpenCode | `opencode.json`, or `opencode.jsonc` when that is the one present |
+| Kilo Code | `.kilo/kilo.jsonc` by default; an existing `kilo.json[c]` is reused |
 | VS Code | `.vscode/settings.json`, `.vscode/extensions.json`, `.vscode/keybindings.json` |
 
 ## More

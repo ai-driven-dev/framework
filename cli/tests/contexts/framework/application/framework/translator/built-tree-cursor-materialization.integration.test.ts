@@ -1,5 +1,5 @@
 import "../../../../../../src/contexts/tools/domain/profiles/cursor/profile.js";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { Marketplace } from "../../../../../../src/contexts/distribution/domain/marketplace.js";
 import { BuiltTreeMaterializationTranslator } from "../../../../../../src/contexts/framework/application/framework/translator/built-tree-materialization-translator.js";
 import { Manifest } from "../../../../../../src/contexts/framework/domain/manifest.js";
@@ -37,6 +37,43 @@ async function makeRegistry(): Promise<InMemoryMarketplaceRegistry> {
 }
 
 describe("BuiltTreeMaterializationTranslator — cursor (integration)", () => {
+  it("counts changed files and skips byte-identical files on repeated materialization", async () => {
+    const fs = new InMemoryFileAdapter();
+    fs.setFile(`${BUILT}/plugins/sample-plugin/skills/demo/SKILL.md`, "built skill");
+    const translator = new BuiltTreeMaterializationTranslator(
+      fs,
+      new DeterministicHasher(),
+      () => HOME,
+      fakeEnsureBuiltMarketplace(),
+      await makeRegistry()
+    );
+    const install = () => {
+      const restored = Manifest.create();
+      restored.addTool("cursor", "test", []);
+      return translator.addPlugin(
+        dist(),
+        "cursor",
+        { kind: "local", path: "/source" },
+        PROJECT_ROOT,
+        restored,
+        "aidd-framework"
+      );
+    };
+    const first = await install();
+    expect(first.written).toBe(1);
+    const writes = vi.spyOn(fs, "writeFile");
+    expect((await install()).written).toBe(0);
+    expect(writes).not.toHaveBeenCalled();
+    fs.setFile(
+      `${HOME}/.cursor/plugins/local/sample-plugin/skills/demo/SKILL.md`,
+      "changed by user"
+    );
+    expect((await install()).written).toBe(1);
+    expect(
+      await fs.readFile(`${HOME}/.cursor/plugins/local/sample-plugin/skills/demo/SKILL.md`)
+    ).toBe("built skill");
+  });
+
   it("copies the built plugin subtree verbatim into the user plugin dir", async () => {
     const fs = new InMemoryFileAdapter();
     // Built cursor tree (transformed content already): @ expanded, .mdc rule, dotted .mcp.json.
@@ -76,6 +113,36 @@ describe("BuiltTreeMaterializationTranslator — cursor (integration)", () => {
     expect(fs.getFile(`${base}/.mcp.json`)).toBe("{}");
     const installed = manifest.getPlugins("cursor").find((p) => p.name === "sample-plugin");
     expect(installed?.files.size).toBe(4);
+  });
+
+  it("does not rewrite or claim an occupied Cursor user plugin directory", async () => {
+    const fs = new InMemoryFileAdapter();
+    fs.setFile(`${BUILT}/plugins/sample-plugin/skills/demo/SKILL.md`, "built bytes");
+    const occupied = `${HOME}/.cursor/plugins/local/sample-plugin/skills/demo/SKILL.md`;
+    fs.setFile(occupied, "foreign bytes");
+    const manifest = Manifest.create();
+    manifest.addTool("cursor", "test", []);
+    const translator = new BuiltTreeMaterializationTranslator(
+      fs,
+      new DeterministicHasher(),
+      () => HOME,
+      fakeEnsureBuiltMarketplace(),
+      await makeRegistry()
+    );
+
+    const result = await translator.addPlugin(
+      dist(),
+      "cursor",
+      { kind: "local", path: "/plugin-source" },
+      PROJECT_ROOT,
+      manifest,
+      "aidd-framework",
+      new Map(),
+      true
+    );
+    expect(result.written).toBe(0);
+    expect(fs.getFile(occupied)).toBe("foreign bytes");
+    expect(manifest.getPlugins("cursor")[0]?.files.size).toBe(0);
   });
 
   it("falls back to flat materialization when no marketplace is given (raw local install)", async () => {

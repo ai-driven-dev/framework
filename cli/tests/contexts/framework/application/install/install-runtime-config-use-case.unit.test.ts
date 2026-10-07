@@ -5,6 +5,7 @@ import { Manifest } from "../../../../../src/contexts/framework/domain/manifest.
 import { SettingsCapability } from "../../../../../src/contexts/tools/domain/capabilities/settings-capability.js";
 import { cursor } from "../../../../../src/contexts/tools/domain/profiles/cursor/profile.js";
 import { registerTool } from "../../../../../src/contexts/tools/domain/registry.js";
+import { InstallationFile } from "../../../../../src/kernel/file.js";
 import { extractMergeEntries } from "../../../../../src/kernel/merge.js";
 import type { AssetProvider } from "../../../../../src/kernel/ports/asset-provider.js";
 import {
@@ -30,6 +31,37 @@ function buildUseCase(
 }
 
 describe("InstallRuntimeConfigUseCase", () => {
+  it("writes a text config asset verbatim and records its content hash without warnings", async () => {
+    const deps = await buildUnitDeps(PROJECT_ROOT);
+    await initProject(deps, PROJECT_ROOT);
+    const manifest = (await deps.manifestRepo.load()) ?? Manifest.create();
+    const content = '{ "custom": true }\n';
+    const assets = new StubAssetProvider({ "claude/settings.json": content }, deps.assetProvider);
+
+    const result = await buildUseCase(deps, assets).execute({
+      toolId: "claude",
+      projectRoot: PROJECT_ROOT,
+      manifest,
+      force: false,
+      version: "1.0.0",
+    });
+
+    expect(deps.fs.getFile(join(PROJECT_ROOT, ".claude/settings.json"))).toBe(content);
+    expect(result.files).toStrictEqual([
+      new InstallationFile({
+        relativePath: ".claude/settings.json",
+        content,
+        hash: deps.hasher.hash(content),
+      }),
+    ]);
+    expect(result.fileCount).toBe(1);
+    expect(result.skipped).toBe(false);
+    expect(result.warnings).toStrictEqual([]);
+    expect(manifest.getToolFiles("claude")).toStrictEqual([
+      { relativePath: ".claude/settings.json", hash: deps.hasher.hash(content) },
+    ]);
+  });
+
   it("writes config on fresh install", async () => {
     const deps = await buildUnitDeps(PROJECT_ROOT);
     await initProject(deps, PROJECT_ROOT);
@@ -157,6 +189,83 @@ describe("InstallRuntimeConfigUseCase", () => {
     expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining(".claude/settings.json"));
   });
 
+  it("writes Kilo's project-local JSONC config on a fresh install", async () => {
+    const deps = await buildUnitDeps(PROJECT_ROOT);
+    await initProject(deps, PROJECT_ROOT);
+    const manifest = (await deps.manifestRepo.load()) ?? Manifest.create();
+
+    await buildUseCase(deps).execute({
+      toolId: "kilo",
+      projectRoot: PROJECT_ROOT,
+      manifest,
+      force: false,
+      version: "1.0.0",
+    });
+
+    expect(deps.fs.has(join(PROJECT_ROOT, ".kilo/kilo.jsonc"))).toBe(true);
+    expect(deps.fs.has(join(PROJECT_ROOT, "kilo.json"))).toBe(false);
+  });
+
+  it("reuses Kilo's existing root JSONC config instead of creating a project-local config", async () => {
+    const deps = await buildUnitDeps(PROJECT_ROOT);
+    await initProject(deps, PROJECT_ROOT);
+    await deps.fs.writeFile(join(PROJECT_ROOT, "kilo.jsonc"), '{"user": true}');
+    const manifest = (await deps.manifestRepo.load()) ?? Manifest.create();
+
+    await buildUseCase(deps).execute({
+      toolId: "kilo",
+      projectRoot: PROJECT_ROOT,
+      manifest,
+      force: false,
+      version: "1.0.0",
+    });
+
+    expect(deps.fs.has(join(PROJECT_ROOT, "kilo.json"))).toBe(false);
+    expect(deps.fs.getFile(join(PROJECT_ROOT, "kilo.jsonc"))).toBe('{"user": true}');
+    expect(deps.fs.has(join(PROJECT_ROOT, ".kilo/kilo.jsonc"))).toBe(false);
+  });
+
+  it.each([
+    ["opencode", "opencode.json"],
+    ["kilo", ".kilo/kilo.jsonc"],
+  ] as const)("preserves %s MCP entries when updating its runtime config", async (toolId, path) => {
+    const deps = await buildUnitDeps(PROJECT_ROOT);
+    await initProject(deps, PROJECT_ROOT);
+    const manifest = (await deps.manifestRepo.load()) ?? Manifest.create();
+
+    await buildUseCase(deps).execute({
+      toolId,
+      projectRoot: PROJECT_ROOT,
+      manifest,
+      force: false,
+      version: "1.0.0",
+    });
+
+    const configPath = join(PROJECT_ROOT, path);
+    const config = JSON.parse(await deps.fs.readFile(configPath)) as Record<string, unknown>;
+    config.mcp = { context: { type: "local", command: "node", args: ["server.js"] } };
+    const merged = JSON.stringify(config, null, 2);
+    await deps.fs.writeFile(configPath, merged);
+    manifest.updateTrackedFileHash(toolId, path, deps.hasher.hash(merged));
+
+    await buildUseCase(deps).execute({
+      toolId,
+      projectRoot: PROJECT_ROOT,
+      manifest,
+      force: true,
+      version: "1.0.0",
+    });
+
+    const updated = JSON.parse(await deps.fs.readFile(configPath)) as {
+      mcp: Record<string, unknown>;
+    };
+    expect(updated.mcp.context).toStrictEqual({
+      type: "local",
+      command: "node",
+      args: ["server.js"],
+    });
+  });
+
   describe("copilot requiresTool gate", () => {
     it("does not create .vscode/settings.json when vscode is not installed", async () => {
       const deps = await buildUnitDeps(PROJECT_ROOT);
@@ -244,6 +353,38 @@ describe("InstallRuntimeConfigUseCase", () => {
 
     afterEach(() => {
       registerTool(cursor);
+    });
+
+    it("merges a single declared settings capability and records its keys", async () => {
+      const deps = await buildUnitDeps(PROJECT_ROOT);
+      await initProject(deps, PROJECT_ROOT);
+      registerTool({ ...cursor, capabilities: { ...cursor.capabilities, settings: inline } });
+      const manifest = (await deps.manifestRepo.load()) ?? Manifest.create();
+      deps.fs.setFile(join(PROJECT_ROOT, ".cursor/aidd-static.json"), '{"user.setting": 7}');
+
+      const result = await buildUseCase(deps).execute({
+        toolId: "cursor",
+        projectRoot: PROJECT_ROOT,
+        manifest,
+        force: false,
+        version: "1.0.0",
+      });
+
+      expect(
+        JSON.parse(deps.fs.getFile(join(PROJECT_ROOT, ".cursor/aidd-static.json")) ?? "null")
+      ).toStrictEqual({ "user.setting": 7, static: true });
+      expect(result.files.map((file) => file.relativePath)).toStrictEqual([
+        ".cursor/settings.json",
+        ".cursor/aidd-static.json",
+      ]);
+      expect(result.warnings).toStrictEqual([]);
+      expect(manifest.getMergeFiles("cursor")).toStrictEqual([
+        {
+          relativePath: ".cursor/aidd-static.json",
+          sectionKey: null,
+          entries: extractMergeEntries('{"user.setting":7,"static":true}', null, deps.hasher),
+        },
+      ]);
     });
 
     it("writes inline content and passes over a capability that only consumes", async () => {

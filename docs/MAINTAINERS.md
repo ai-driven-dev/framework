@@ -13,7 +13,7 @@ How to operate this repository day to day. This file is the **Maintainer** playb
 | Live backlog & roadmap | [Project board #8](https://github.com/orgs/ai-driven-dev/projects/8) | single source of truth |
 | Roles → access | GitHub teams `trusted-partners` / `certified-members` / `core-team` | mapped to the role ladder |
 | Branch protection | ruleset "main protection" + `.github/rulesets/main.json` | `main` is PR-only |
-| Releases | release-please (`ci.yml`) + `release-please-config.json` | 10 packages (root + 8 plugins + `cli`), auto |
+| Releases | release-please (`ci.yml`) + `release-please-config.json` | 11 packages (root + 9 plugins + `cli`), auto |
 | Pre-commit checks | `lefthook.yml` + `scripts/` | json/yaml/schema/frontmatter/catalogs/counts |
 
 ## 📅 Daily
@@ -64,11 +64,11 @@ diff <(gh label list --repo ai-driven-dev/framework | cut -f1 | sort) \
 release-please opens/updates a `chore: release main` PR on each push to `main`.
 
 1. (Optional) Review the version bumps + changelog. Authored by the **aidd-bot** App, so its checks run normally.
-2. CI **auto-merges** it with the App token (`--squash --admin`); no human step needed. `--admin` is required because a plain `gh pr merge` is refused even for the bypass App.
+2. CI **auto-merges** it with the App token (`--merge --admin`); no human step needed. `--admin` is required because a plain `gh pr merge` is refused even for the bypass App, and `--merge` matches the single method `.github/rulesets/main.json`'s `pull_request` rule declares for `main`.
 3. CI tags each bumped package, creates the GitHub Releases, and attaches the bundles:
    - `aidd-framework-marketplace-X.Y.Z.zip` (`.claude-plugin/` + `plugins/`)
    - `<plugin>-vX.Y.Z.zip`
-   - `aidd-framework-<tool>-<mode>-X.Y.Z.zip` - per-tool distributions (9 archives: 4 marketplace claude/cursor/copilot/codex + 5 flat incl. opencode), produced by the `build-per-tool` matrix job in `ci.yml`. It builds the CLI from this run's own checkout and runs `translate <source> --to <tool> --out <dir> --as <marketplace|flat>` — no published-version pin to bump.
+   - `aidd-framework-<tool>-<mode>-X.Y.Z.zip` - per-tool distributions (10 archives: 4 marketplace claude/cursor/copilot/codex + 6 flat incl. opencode and kilo), produced by the `build-per-tool` matrix job in `ci.yml`. It builds the CLI from this run's own checkout and runs `translate <source> --to <tool> --out <dir> --as <marketplace|flat>` — no published-version pin to bump.
 
 Versions live in `.release-please-manifest.json`. Forcing a version / pre-release: `release-as` in `release-please-config.json` (remove it after the release ships).
 
@@ -80,13 +80,17 @@ The weekly `next` → `main` promotion **must be a merge commit, never a squash 
 - A rebase keeps the commits but recopies them under new hashes, so git never records that the branches were reconciled. The merge base between `main` and `next` then goes stale, and every later back-merge conflicts on the release metadata release-please rewrites each time — a conflict with no real content behind it.
 - A merge commit does both jobs: the commits land verbatim, and its second parent keeps a shared merge base so the back-merge stays clean.
 - Use the **Promote next to main** workflow (it merges); merging by hand, pick **Create a merge commit** and give it a conventional subject.
-- The Release PR release-please opens is its own single commit and is fine to squash.
+- `.github/rulesets/main.json`'s `pull_request` rule declares `allowed_merge_methods: ["merge"]`. A maintainer still has to push that file to the live `main protection` ruleset before GitHub itself refuses squash and rebase for everyone, the Release PR included; until then this rule is procedural, kept by this runbook and `ci.yml`, not yet enforced server-side.
 
 **Recovery** — a bad squashed promote turns `main` red on `Commitlint` and skips **Release Please**. An admin:
 
 1. Temporarily disables the `main protection` ruleset (Settings → Rules).
 2. Force-pushes `main` back to the commit before the bad merge.
 3. Re-enables the ruleset, then re-runs **Promote**.
+
+## 🚑 Hotfix merge
+
+Merge a `hotfix/*` PR with the merge dialog's description box cleared, or `gh pr merge <n> --merge --body ""` — see [`RELEASE.md`](../RELEASE.md#-hotfix) for why an empty body matters here.
 
 ## 📦 Dependencies (Dependabot)
 

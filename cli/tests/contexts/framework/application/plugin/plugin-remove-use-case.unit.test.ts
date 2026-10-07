@@ -70,7 +70,8 @@ async function installPlugin(
     deps.hasher,
     deps.logger,
     deps.marketplaceRegistry,
-    fakeEnsureBuiltMarketplace()
+    fakeEnsureBuiltMarketplace(),
+    deps.userManifestRepo
   );
   await addUseCase.execute({
     source: { kind: "local", path: fixture },

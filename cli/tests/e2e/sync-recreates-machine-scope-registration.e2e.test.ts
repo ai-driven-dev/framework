@@ -19,7 +19,7 @@ async function readJson(path: string): Promise<Record<string, unknown>> {
 }
 
 describe("E2E: sync recreates a machine-scope registration a fresh clone never carried", () => {
-  it("registers the shared source and this project's own reference, with native activation unavailable", async () => {
+  it("registers the shared marketplace without inventing a host-source reference when activation is unavailable", async () => {
     const origin = await createTestEnv("machine-scope-sync-origin");
     const clone = await createTestEnv("machine-scope-sync-clone");
     try {
@@ -62,10 +62,9 @@ describe("E2E: sync recreates a machine-scope registration a fresh clone never c
       const names = (marketplaces.marketplaces as Array<{ name: string }>).map((m) => m.name);
       expect(names).toContain("aidd-framework");
 
-      const references = await readJson(join(clone.fakeHome, ".config", "aidd", "references.json"));
-      const allProjectRoots = Object.values(references).flat() as string[];
-      const expectedRoot = await realpath(clone.projectDir);
-      expect(allProjectRoots).toContain(expectedRoot);
+      await expect(
+        readFile(join(clone.fakeHome, ".config", "aidd", "references.json"))
+      ).rejects.toMatchObject({ code: "ENOENT" });
     } finally {
       await origin.cleanup();
       await clone.cleanup();

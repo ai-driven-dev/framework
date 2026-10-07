@@ -137,3 +137,96 @@ test("tells the run file what it skipped, rather than reading as complete covera
   assert.ok(fileWrittenCount < MAX_SCAN_ENTRIES + 300, "found every file despite the cap");
   fs.rmSync(repo, { recursive: true, force: true });
 });
+
+// No host declared today can witness a repository resolved from payload.cwd instead of the
+// host: the four naming no written path return before that line, and the one that names a
+// path also carries cwd. A host is a table entry, so the witness is one more entry.
+const TOOLS_INDEX = path.join(root, "plugins/aidd-telemetry/hooks/lib/tools/index.cjs");
+
+const WORKSPACE_HOST = "probe-workspace-host";
+
+const workspaceHostTool = {
+  readSessionId: (payload) => payload.conversationId,
+  readCwd: (payload) => payload.workspacePaths[0],
+  vendorField: null,
+  stepStart: { skillName: () => null, turnIdField: null },
+  writtenPath: (payload) => payload.toolCall.target,
+};
+
+// file-writes.cjs and record.cjs destructure the table at require time, so the entry goes in
+// before they are loaded and both are dropped again on the way out.
+function withWorkspaceHost(run) {
+  const indexId = require.resolve(TOOLS_INDEX);
+  const realExports = require(TOOLS_INDEX);
+  const tools = Object.freeze({ ...realExports.TOOLS_BY_HOST, [WORKSPACE_HOST]: workspaceHostTool });
+  const toolFor = (host) => tools[host] || null;
+  require.cache[indexId].exports = {
+    ...realExports,
+    TOOLS_BY_HOST: tools,
+    toolFor,
+    readCwd: (host, payload) => (toolFor(host) ? toolFor(host).readCwd(payload) : undefined),
+    readSessionId: (host, payload) => (toolFor(host) ? toolFor(host).readSessionId(payload) : undefined),
+  };
+  delete require.cache[require.resolve(FILE_WRITES)];
+  delete require.cache[require.resolve(RECORD)];
+  try {
+    return run({ fileWrites: require(FILE_WRITES), record: require(RECORD) });
+  } finally {
+    require.cache[indexId].exports = realExports;
+    delete require.cache[require.resolve(FILE_WRITES)];
+    delete require.cache[require.resolve(RECORD)];
+  }
+}
+
+test("records the write a host stated when that host names its workspace rather than a cwd", () => {
+  // realpath: the stated path is resolved through realpathSync, and the temporary directory
+  // is a symlink on macOS, so an unresolved root would never prefix it.
+  const repo = fs.realpathSync.native(makeTempDir("aidd-stated-workspace-"));
+  spawnSync("git", ["init", "-q", repo], { encoding: "utf8", env: CLEAN_ENV });
+  writeTelemetryConfig(repo);
+
+  const taskFolder = path.join(repo, "aidd_docs", "tasks", "2026_08", "2026_08_01_workspace-task");
+  fs.mkdirSync(taskFolder, { recursive: true });
+  const written = path.join(taskFolder, "plan.md");
+  fs.writeFileSync(written, "x");
+
+  const vendorId = "workspace-host-session";
+  const runFile = withWorkspaceHost(({ fileWrites, record }) => {
+    const runsDir = path.join(repo, "aidd_docs", "runs");
+    fs.mkdirSync(runsDir, { recursive: true });
+    const runId = record.generateUlid();
+    const filePath = path.join(runsDir, record.runFileName(runId, vendorId));
+    record.appendLine(
+      filePath,
+      record.buildSessionStartLine({
+        at: "2026-08-01T00:00:00Z",
+        runId,
+        projectId: "acme/repo",
+        projectRemote: null,
+        host: WORKSPACE_HOST,
+        vendorId,
+      }),
+    );
+
+    // The hook's own working directory is outside the repository, as a machine-wide hook
+    // declaration leaves it.
+    fileWrites.handleFileWritten(
+      { workspacePaths: [repo], toolCall: { target: written } },
+      WORKSPACE_HOST,
+      vendorId,
+    );
+    return filePath;
+  });
+
+  const lines = fs
+    .readFileSync(runFile, "utf8")
+    .trim()
+    .split("\n")
+    .map((line) => JSON.parse(line));
+  const stated = lines.filter((line) => line.type === "file_written");
+
+  assert.equal(stated.length, 1, "the path the host stated was dropped");
+  assert.equal(stated[0].source, "tool-stated", "and it must say the host stated it, not that a walk found it");
+  assert.equal(stated[0].path, "aidd_docs/tasks/2026_08/2026_08_01_workspace-task/plan.md");
+  fs.rmSync(repo, { recursive: true, force: true });
+});

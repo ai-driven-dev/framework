@@ -1,5 +1,6 @@
 import { homedir as nodeHomedir } from "node:os";
 import { join } from "node:path";
+import { InvalidPluginScopeError } from "../../../../kernel/errors.js";
 import { PLUGIN_CACHE_SUBDIR } from "../../../../kernel/paths.js";
 import type { FileReader } from "../../../../kernel/ports/file-reader.js";
 import type { FileWriter } from "../../../../kernel/ports/file-writer.js";
@@ -29,6 +30,7 @@ export interface PluginUpdateOptions {
   pluginNames?: string[];
   toolIds: AiToolId[] | "all";
   projectRoot: string;
+  scope?: "project" | "user";
 }
 
 export class PluginUpdateUseCase {
@@ -42,6 +44,8 @@ export class PluginUpdateUseCase {
   ) {}
 
   async execute(options: PluginUpdateOptions): Promise<string[]> {
+    if (options.scope === "user")
+      throw new Error("User-scope plugin update requires UserPluginUpdateUseCase.");
     const { pluginNames, toolIds, projectRoot } = options;
     const manifest = await loadPluginManifest(this.manifestRepo);
     const resolvedToolIds = resolvePluginToolIds(toolIds, manifest);
@@ -71,7 +75,7 @@ export class PluginUpdateUseCase {
     const plugins = manifest.getPlugins(toolId);
     const targets = pluginNames
       ? plugins.filter((p) => pluginNames.includes(p.name))
-      : [...plugins];
+      : plugins.filter((plugin) => plugin.scope !== "user");
     const updated: string[] = [];
     for (const plugin of targets) {
       const didUpdate = await this.updateOnePlugin(plugin, toolId, projectRoot, cacheDir, manifest);
@@ -87,6 +91,7 @@ export class PluginUpdateUseCase {
     cacheDir: string,
     manifest: Manifest
   ): Promise<boolean> {
+    if (plugin.scope === "user") throw new InvalidPluginScopeError(toolId, "project", "user");
     const localPath = await this.pluginFetcher.fetch(plugin.source, cacheDir, {
       forceRefresh: true,
     });

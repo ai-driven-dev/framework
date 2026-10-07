@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.8.1](https://github.com/ai-driven-dev/framework/compare/aidd-context-v2.8.0...aidd-context-v2.8.1) (2026-09-24)
+
+
+### Bug Fixes
+
+* **aidd-context:** document Codex SessionEnd ([#905](https://github.com/ai-driven-dev/framework/issues/905)) ([758010a](https://github.com/ai-driven-dev/framework/commit/758010a6330a69fe06de0732ffb779bb941c68a6)), closes [#618](https://github.com/ai-driven-dev/framework/issues/618)
+
 ## [2.8.0](https://github.com/ai-driven-dev/framework/compare/aidd-context-v2.7.0...aidd-context-v2.8.0) (2026-09-09)
 
 

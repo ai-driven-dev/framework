@@ -7,6 +7,7 @@
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join, relative, resolve } from "node:path";
 import { describe, expect, it } from "vitest";
+import { canonicalPath } from "./helpers.js";
 
 const CLI_ROOT = resolve(import.meta.dirname, "..", "..");
 const TESTS_ROOT = join(CLI_ROOT, "tests");
@@ -31,7 +32,7 @@ describe("no test resolves a path into the shared dist/ build output", () => {
   it("every file under tests/ reads the e2e run's own binary, not dist/cli.js", () => {
     const violations = testFiles()
       .filter((file) => CWD_INTO_DIST.test(readFileSync(file, "utf8")))
-      .map((file) => relative(CLI_ROOT, file));
+      .map((file) => canonicalPath(relative(CLI_ROOT, file)));
 
     expect(
       violations,

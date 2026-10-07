@@ -7,4 +7,6 @@ export interface ManifestRepository {
   load(): Promise<Manifest | null>;
   save(manifest: Manifest): Promise<void>;
   delete(): Promise<void>;
+  /** Optional for project repositories; user-scope mutations hold an inter-process lock here. */
+  withExclusiveAccess?<T>(action: () => Promise<T>): Promise<T>;
 }

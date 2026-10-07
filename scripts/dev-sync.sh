@@ -30,10 +30,10 @@ HAVE_MANAGED_OPENCODE=0; command -v aidd-opencode-reload >/dev/null 2>&1 && HAVE
 build_tool() {
   local tool="$1"
   rm -rf "$BUILD/$tool"; mkdir -p "$BUILD/$tool"
-  local mode=()
-  [ "$tool" != opencode ] || mode=(--flat)
-  npx --yes "@ai-driven-dev/cli@${AIDD_CLI_VERSION}" framework build \
-    --source "$FW" --target "$tool" --out "$BUILD/$tool" "${mode[@]}" >/dev/null 2>&1
+  local mode=marketplace
+  [ "$tool" != opencode ] || mode=flat
+  npx --yes "@ai-driven-dev/cli@${AIDD_CLI_VERSION}" translate "$FW" \
+    --to "$tool" --out "$BUILD/$tool" --as "$mode" --force >/dev/null 2>&1
 }
 
 sync_opencode_skills() {

@@ -21,6 +21,7 @@ src/
 │   │   │   ├── global/
 │   │   │   ├── install/
 │   │   │   │   └── content/
+│   │   │   ├── ownership/    # machine plugin claims and safe project detach
 │   │   │   ├── plugin/
 │   │   │   ├── restore/
 │   │   │   ├── setup/
@@ -51,6 +52,7 @@ src/
 │   │   │       ├── codex/
 │   │   │       ├── copilot/
 │   │   │       ├── cursor/
+│   │   │       ├── kilo/
 │   │   │       ├── opencode/
 │   │   │       └── vscode/
 │   │   └── infrastructure/

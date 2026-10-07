@@ -12,9 +12,12 @@ import type {
   HostPluginRegistryReader,
   HostPluginRegistryReading,
 } from "../../../../../src/contexts/tools/domain/ports/host-plugin-registry-reader.js";
+import { builtMarketplaceDir, userBuiltMarketplaceDir } from "../../../../../src/kernel/paths.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
 import { fakeEnsureBuiltMarketplace } from "../../../../helpers/ports/fake-ensure-built-marketplace.js";
+import { FakeHostPluginRegistryReader } from "../../../../helpers/ports/fake-host-plugin-registry-reader.js";
+import { FakeNativeMarketplaceSourceReader } from "../../../../helpers/ports/fake-native-marketplace-source-reader.js";
 import { FakeNativePluginActivator } from "../../../../helpers/ports/fake-native-plugin-activator.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
@@ -63,6 +66,48 @@ function seededBuiltCatalog(): InMemoryFileAdapter {
   });
 }
 
+function readableHostPlugins(refs: readonly string[] = []) {
+  return new Map([
+    [
+      "claude" as const,
+      new FakeHostPluginRegistryReader({
+        location: "/home/dev/.claude/plugins/installed_plugins.json",
+        refs: new Map(refs.map((ref) => [ref, { enabled: true }])),
+      }),
+    ],
+  ]);
+}
+
+function nativeSource(
+  activator: FakeNativePluginActivator,
+  name = MARKETPLACE,
+  initial: ReadonlyMap<string, { kind: "registry"; source: string } | null> = new Map()
+) {
+  return new Map([
+    [
+      "claude" as const,
+      new FakeNativeMarketplaceSourceReader(
+        activator,
+        "registry",
+        (path) => (path === "/built/claude" ? name : undefined),
+        initial
+      ),
+    ],
+  ]);
+}
+
+function ownedMachineCatalog(hostName: string, source: string): InMemoryManifestRepository {
+  const machine = Manifest.create();
+  machine.addTool("claude", "test", []);
+  machine.setNativeRegistrations("claude", {
+    binary: "claude",
+    marketplaces: [{ alias: MARKETPLACE, hostName, provenance: { kind: "registry", source } }],
+    pluginRefs: [],
+    pluginClaims: [],
+  });
+  return new InMemoryManifestRepository(machine);
+}
+
 function buildSync(activator: FakeNativePluginActivator, pluginMarketplace?: string) {
   const registry = new InMemoryMarketplaceRegistry();
   const fs = seededBuiltCatalog();
@@ -80,7 +125,15 @@ function buildSync(activator: FakeNativePluginActivator, pluginMarketplace?: str
       hasher,
       new CapturingLogger(),
       new Map([["claude", activator]]),
-      fakeEnsureBuiltMarketplace()
+      fakeEnsureBuiltMarketplace(),
+      new Map(),
+      () => "",
+      undefined,
+      undefined,
+      undefined,
+      readableHostPlugins(),
+      undefined,
+      nativeSource(activator)
     ),
   };
 }
@@ -190,7 +243,13 @@ describe("nativeRegistrations reflects what the host's own CLI was asked to regi
     const reloaded = await manifestRepo.load();
     expect(reloaded?.getNativeRegistrations("claude")).toEqual({
       binary: "claude",
-      marketplaces: [{ alias: MARKETPLACE, hostName: MARKETPLACE }],
+      marketplaces: [
+        {
+          alias: MARKETPLACE,
+          hostName: MARKETPLACE,
+          provenance: { kind: "registry", source: "/built/claude" },
+        },
+      ],
       pluginRefs: [REF],
     });
   });
@@ -212,7 +271,13 @@ describe("nativeRegistrations reflects what the host's own CLI was asked to regi
     const staleManifest = await manifestRepo.load();
     staleManifest?.setNativeRegistrations("claude", {
       binary: "claude",
-      marketplaces: [{ alias: MARKETPLACE, hostName: MARKETPLACE }],
+      marketplaces: [
+        {
+          alias: MARKETPLACE,
+          hostName: MARKETPLACE,
+          provenance: { kind: "registry", source: "/built/claude" },
+        },
+      ],
       pluginRefs: [REF],
     });
     if (staleManifest) await manifestRepo.save(staleManifest);
@@ -224,7 +289,13 @@ describe("nativeRegistrations reflects what the host's own CLI was asked to regi
     const reloaded = await manifestRepo.load();
     expect(reloaded?.getNativeRegistrations("claude")).toEqual({
       binary: "claude",
-      marketplaces: [{ alias: MARKETPLACE, hostName: MARKETPLACE }],
+      marketplaces: [
+        {
+          alias: MARKETPLACE,
+          hostName: MARKETPLACE,
+          provenance: { kind: "registry", source: "/built/claude" },
+        },
+      ],
       pluginRefs: [REF],
     });
   });
@@ -251,7 +322,15 @@ describe("nativeRegistrations reflects what the host's own CLI was asked to regi
       hasher,
       new CapturingLogger(),
       new Map([["claude", activator]]),
-      fakeEnsureBuiltMarketplace()
+      fakeEnsureBuiltMarketplace(),
+      new Map(),
+      () => "",
+      undefined,
+      undefined,
+      undefined,
+      readableHostPlugins(),
+      undefined,
+      nativeSource(activator, CATALOG_NAME)
     );
     await registry.save(PROJECT_ROOT, marketplace());
 
@@ -262,7 +341,13 @@ describe("nativeRegistrations reflects what the host's own CLI was asked to regi
     const reloaded = await manifestRepo.load();
     expect(reloaded?.getNativeRegistrations("claude")).toEqual({
       binary: "claude",
-      marketplaces: [{ alias: MARKETPLACE, hostName: CATALOG_NAME }],
+      marketplaces: [
+        {
+          alias: MARKETPLACE,
+          hostName: CATALOG_NAME,
+          provenance: { kind: "registry", source: "/built/claude" },
+        },
+      ],
       pluginRefs: [`${PLUGIN}@${CATALOG_NAME}`],
     });
   });
@@ -286,7 +371,15 @@ describe("registering a marketplace does not wait for a plugin to point at it", 
       hasher,
       new CapturingLogger(),
       new Map([["claude", activator]]),
-      fakeEnsureBuiltMarketplace()
+      fakeEnsureBuiltMarketplace(),
+      new Map(),
+      () => "",
+      undefined,
+      undefined,
+      undefined,
+      readableHostPlugins(),
+      undefined,
+      nativeSource(activator)
     );
     await registry.save(PROJECT_ROOT, marketplace());
 
@@ -313,7 +406,15 @@ describe("what native activation leaves behind is not reported as the user's dri
       hasher,
       new CapturingLogger(),
       new Map([["claude", activator]]),
-      fakeEnsureBuiltMarketplace()
+      fakeEnsureBuiltMarketplace(),
+      new Map(),
+      () => "",
+      undefined,
+      undefined,
+      undefined,
+      readableHostPlugins(),
+      undefined,
+      nativeSource(activator)
     );
     await registry.save(PROJECT_ROOT, marketplace());
 
@@ -394,7 +495,36 @@ describe("reclaiming a dead registration asks and acts on the host's own name", 
       hasher,
       new CapturingLogger(),
       new Map([["claude", activator]]),
-      fakeEnsureBuiltMarketplace()
+      fakeEnsureBuiltMarketplace(),
+      new Map([
+        [
+          "claude",
+          {
+            read: async () => ({
+              location: "/home/.claude/plugins/known_marketplaces.json",
+              entries: new Map([
+                [CATALOG_NAME, builtMarketplaceDir(PROJECT_ROOT, MARKETPLACE, "claude")],
+              ]),
+            }),
+          },
+        ],
+      ]),
+      () => "",
+      undefined,
+      undefined,
+      undefined,
+      new Map([["claude", { read: async () => hostReadingOf([]) }]]),
+      ownedMachineCatalog(CATALOG_NAME, builtMarketplaceDir(PROJECT_ROOT, MARKETPLACE, "claude")),
+      nativeSource(
+        activator,
+        CATALOG_NAME,
+        new Map([
+          [
+            CATALOG_NAME,
+            { kind: "registry", source: builtMarketplaceDir(PROJECT_ROOT, MARKETPLACE, "claude") },
+          ],
+        ])
+      )
     );
     await registry.save(PROJECT_ROOT, marketplace());
 
@@ -509,7 +639,15 @@ describe("an unnarrowed run replaces the whole recorded entry (lot 9 review C-B1
       hasher,
       new CapturingLogger(),
       new Map([["claude", activator]]),
-      fakeEnsureBuiltMarketplace()
+      fakeEnsureBuiltMarketplace(),
+      new Map(),
+      () => "",
+      undefined,
+      undefined,
+      undefined,
+      readableHostPlugins(),
+      undefined,
+      nativeSource(activator, LIVE_MARKETPLACE)
     );
     return { useCase, registry, manifestRepo };
   }
@@ -547,10 +685,10 @@ describe("a narrowed run preserves another alias's refs at a shared hostName (lo
   const PLUGIN_X = "plugin-x";
   const PLUGIN_Y = "plugin-y";
 
-  function ensureBuiltKeyedByMarketplace(): EnsureBuiltMarketplace {
+  function ensureBuiltSharedCatalog(): EnsureBuiltMarketplace {
     return {
-      execute: async (options) => ({
-        builtDir: `/built/by-alias/${options.marketplace.name}`,
+      execute: async () => ({
+        builtDir: "/built/by-alias/shared",
         version: "test",
         rebuilt: true,
       }),
@@ -570,15 +708,10 @@ describe("a narrowed run preserves another alias's refs at a shared hostName (lo
     const activator = new FakeNativePluginActivator({ available: true });
     const registry = new InMemoryMarketplaceRegistry();
     const fs = new InMemoryFileAdapter({
-      [`/built/by-alias/${ALIAS_X}/.claude-plugin/marketplace.json`]: JSON.stringify({
+      "/built/by-alias/shared/.claude-plugin/marketplace.json": JSON.stringify({
         name: SHARED_HOST_NAME,
         version: "1.0.0",
-        plugins: [{ name: PLUGIN_X }],
-      }),
-      [`/built/by-alias/${ALIAS_Y}/.claude-plugin/marketplace.json`]: JSON.stringify({
-        name: SHARED_HOST_NAME,
-        version: "1.0.0",
-        plugins: [{ name: PLUGIN_Y }],
+        plugins: [{ name: PLUGIN_X }, { name: PLUGIN_Y }],
       }),
     });
     const manifest = Manifest.create();
@@ -614,7 +747,25 @@ describe("a narrowed run preserves another alias's refs at a shared hostName (lo
       hasher,
       new CapturingLogger(),
       new Map([["claude", activator]]),
-      ensureBuiltKeyedByMarketplace()
+      ensureBuiltSharedCatalog(),
+      new Map(),
+      () => "",
+      undefined,
+      undefined,
+      undefined,
+      readableHostPlugins(),
+      undefined,
+      new Map([
+        [
+          "claude",
+          new FakeNativeMarketplaceSourceReader(
+            activator,
+            "registry",
+            (path) => (path === "/built/by-alias/shared" ? SHARED_HOST_NAME : undefined),
+            new Map()
+          ),
+        ],
+      ])
     );
     await registry.save(PROJECT_ROOT, aliasMarketplace(ALIAS_X));
     await registry.save(PROJECT_ROOT, aliasMarketplace(ALIAS_Y));
@@ -629,7 +780,11 @@ describe("a narrowed run preserves another alias's refs at a shared hostName (lo
 
     const recorded = (await manifestRepo.load())?.getNativeRegistrations("claude");
     expect(recorded?.pluginRefs).toContain(`${PLUGIN_Y}@${SHARED_HOST_NAME}`);
-    expect(recorded?.marketplaces).toContainEqual({ alias: ALIAS_Y, hostName: SHARED_HOST_NAME });
+    expect(recorded?.marketplaces).toContainEqual({
+      alias: ALIAS_Y,
+      hostName: SHARED_HOST_NAME,
+      provenance: { kind: "registry", source: "/built/by-alias/shared" },
+    });
   });
 });
 
@@ -638,14 +793,25 @@ describe("what reclaiming a dead registration says", () => {
   const RECLAIM =
     "Marketplace 'aidd-framework-catalog' was registered to a directory that no longer exists; re-registering it for this project. Plugins installed from it are removed and the ones this CLI manages are put back.";
 
-  function reclaimSync(activator: FakeNativePluginActivator) {
+  function reclaimSync(
+    activator: FakeNativePluginActivator,
+    hostSource = builtMarketplaceDir(PROJECT_ROOT, MARKETPLACE, "claude"),
+    userRoot = ""
+  ) {
     const registry = new InMemoryMarketplaceRegistry();
-    const fs = new InMemoryFileAdapter({
+    class UserRootThatCannotResolve extends InMemoryFileAdapter {
+      override async realpath(path: string): Promise<string> {
+        if (userRoot !== "" && path === userRoot) throw new Error("ENOENT: user cache is absent");
+        return super.realpath(path);
+      }
+    }
+    const fs = new UserRootThatCannotResolve({
       "/built/claude/.claude-plugin/marketplace.json": JSON.stringify({
         name: CATALOG_NAME,
         version: "1.0.0",
         plugins: [],
       }),
+      "/foreign/cache/marker": "foreign bytes",
     });
     const logger = new CapturingLogger();
     const useCase = new MarketplaceSyncSettingsUseCase(
@@ -655,10 +821,91 @@ describe("what reclaiming a dead registration says", () => {
       new DeterministicHasher(),
       logger,
       new Map([["claude", activator]]),
-      fakeEnsureBuiltMarketplace()
+      fakeEnsureBuiltMarketplace(),
+      new Map([
+        [
+          "claude",
+          {
+            read: async () => ({
+              location: "/home/.claude/plugins/known_marketplaces.json",
+              entries: new Map([[CATALOG_NAME, hostSource]]),
+            }),
+          },
+        ],
+      ]),
+      () => userRoot,
+      undefined,
+      undefined,
+      undefined,
+      new Map([["claude", { read: async () => hostReadingOf([]) }]]),
+      ownedMachineCatalog(
+        CATALOG_NAME,
+        hostSource === "/foreign/cache"
+          ? builtMarketplaceDir(PROJECT_ROOT, MARKETPLACE, "claude")
+          : hostSource
+      ),
+      nativeSource(
+        activator,
+        CATALOG_NAME,
+        new Map([[CATALOG_NAME, { kind: "registry", source: hostSource }]])
+      )
     );
-    return { useCase, registry, logger };
+    return { useCase, registry, logger, fs };
   }
+
+  it("leaves a foreign host source and its cache untouched even with a past AIDD claim", async () => {
+    const activator = new FakeNativePluginActivator({
+      available: true,
+      conflictOnAdd: true,
+      registrationState: "dead",
+    });
+    const { useCase, registry, fs } = reclaimSync(activator, "/foreign/cache");
+    await registry.save(PROJECT_ROOT, marketplace());
+
+    const result = await useCase.execute({ projectRoot: PROJECT_ROOT });
+
+    expect(result.warnings.join("\n")).toContain(
+      "current host source differs from AIDD's recorded source"
+    );
+    expect(activator.removedMarketplaces).toEqual([]);
+    expect(activator.forcedRemovals).toEqual([]);
+    expect(activator.addedMarketplaces).toEqual([]);
+    expect(await fs.readFile("/foreign/cache/marker")).toBe("foreign bytes");
+  });
+
+  it("does not force-remove a live registration even when its source is proven", async () => {
+    const activator = new FakeNativePluginActivator({
+      available: true,
+      conflictOnAdd: true,
+      registrationState: "live",
+    });
+    const { useCase, registry } = reclaimSync(activator);
+    await registry.save(PROJECT_ROOT, marketplace());
+
+    await useCase.execute({ projectRoot: PROJECT_ROOT });
+
+    expect(activator.removedMarketplaces).toEqual([]);
+    expect(activator.forcedRemovals).toEqual([]);
+    expect(activator.addedMarketplaces).toEqual([]);
+  });
+
+  it("reclaims a dead registration from an exact AIDD shared user-cache source", async () => {
+    const activator = new FakeNativePluginActivator({
+      available: true,
+      conflictOnAdd: true,
+      registrationState: "dead",
+    });
+    const userRoot = "/home/aidd";
+    const source = userBuiltMarketplaceDir(userRoot, "1.0.0", MARKETPLACE, "claude");
+    const { useCase, registry } = reclaimSync(activator, source, userRoot);
+    await registry.save(PROJECT_ROOT, marketplace());
+
+    await useCase.execute({ projectRoot: PROJECT_ROOT });
+
+    expect(activator.removedMarketplaces).toEqual([CATALOG_NAME]);
+    expect(activator.forcedRemovals).toEqual([true]);
+    expect(activator.addedMarketplaces).toEqual(["/built/claude"]);
+  });
 
   it("names the vanished directory's own registration in the one warning it gives", async () => {
     const activator = new FakeNativePluginActivator({
@@ -690,8 +937,8 @@ describe("what reclaiming a dead registration says", () => {
     expect(result.warnings).toStrictEqual([
       RECLAIM,
       "Native plugin activation — unregister stale marketplace 'aidd-framework-catalog' skipped: marketplace remove aidd-framework-catalog failed: 'aidd-framework-catalog' is not configured or installed",
-      "Native plugin activation — register marketplace 'aidd-framework-catalog' skipped: marketplace is already added from a different source; remove it before adding this source",
     ]);
+    expect(activator.addedMarketplaces).toEqual([]);
     expect(result.errors).toStrictEqual([]);
   });
 });
@@ -705,11 +952,28 @@ function hostReadingOf(refs: readonly string[], enabled = true): HostPluginRegis
 
 function buildSyncReadingHost(
   activator: FakeNativePluginActivator,
-  hostRegistry: HostPluginRegistryReader
+  hostRegistry: HostPluginRegistryReader,
+  catalogOwned = false
 ) {
   const registry = new InMemoryMarketplaceRegistry();
   const manifestRepo = manifestWithPlugin();
   const logger = new CapturingLogger();
+  const machine = catalogOwned ? Manifest.create() : undefined;
+  if (machine !== undefined) {
+    machine.addTool("claude", "test", []);
+    machine.setNativeRegistrations("claude", {
+      binary: "claude",
+      marketplaces: [
+        {
+          alias: MARKETPLACE,
+          hostName: MARKETPLACE,
+          provenance: { kind: "registry", source: "/built/claude" },
+        },
+      ],
+      pluginRefs: [],
+      pluginClaims: [],
+    });
+  }
   const useCase = new MarketplaceSyncSettingsUseCase(
     seededBuiltCatalog(),
     manifestRepo,
@@ -723,7 +987,15 @@ function buildSyncReadingHost(
     undefined,
     undefined,
     undefined,
-    new Map([["claude", hostRegistry]])
+    new Map([["claude", hostRegistry]]),
+    machine === undefined ? undefined : new InMemoryManifestRepository(machine),
+    nativeSource(
+      activator,
+      MARKETPLACE,
+      catalogOwned
+        ? new Map([[MARKETPLACE, { kind: "registry", source: "/built/claude" }]])
+        : new Map()
+    )
   );
   return { useCase, registry, manifestRepo, logger };
 }
@@ -736,19 +1008,25 @@ describe("a ref the host had enabled before this project asked belongs to the pe
     });
     await registry.save(PROJECT_ROOT, marketplace());
 
-    await useCase.execute({ projectRoot: PROJECT_ROOT });
+    const result = await useCase.execute({ projectRoot: PROJECT_ROOT });
 
     expect(activator.enabledPlugins).toEqual([]);
-    expect(logger.infoMessages.join("\n")).toContain(REF);
+    expect(activator.addedMarketplaces).toEqual([]);
+    expect(result.warnings.join("\n")).toContain(`foreign host ref '${REF}'`);
+    expect(logger.warnMessages).toEqual(result.warnings);
     const recorded = (await manifestRepo.load())?.getNativeRegistrations("claude");
     expect(recorded?.pluginRefs).toEqual([]);
   });
 
   it("stays this project's own on the next sync, once the host reports the enable it made", async () => {
     const activator = new FakeNativePluginActivator({ available: true });
-    const { useCase, registry, manifestRepo } = buildSyncReadingHost(activator, {
-      read: async () => hostReadingOf(activator.enabledPlugins),
-    });
+    const { useCase, registry, manifestRepo } = buildSyncReadingHost(
+      activator,
+      {
+        read: async () => hostReadingOf(activator.enabledPlugins),
+      },
+      true
+    );
     await registry.save(PROJECT_ROOT, marketplace());
 
     await useCase.execute({ projectRoot: PROJECT_ROOT });
@@ -764,17 +1042,21 @@ describe("a ref the host had enabled before this project asked belongs to the pe
       { location: "/home/dev/.claude/plugins/installed_plugins.json", unreadable: "ENOENT" },
     ],
     ["lists it disabled", hostReadingOf([REF], false)],
-  ])("is this project's to enable when the host registry %s", async (_case, reading) => {
+  ])("refuses to claim a ref when the host registry %s", async (_case, reading) => {
     const activator = new FakeNativePluginActivator({ available: true });
     const { useCase, registry, manifestRepo } = buildSyncReadingHost(activator, {
       read: async () => reading,
     });
     await registry.save(PROJECT_ROOT, marketplace());
 
-    await useCase.execute({ projectRoot: PROJECT_ROOT });
+    const result = await useCase.execute({ projectRoot: PROJECT_ROOT });
 
-    expect(activator.enabledPlugins).toEqual([REF]);
+    expect(activator.enabledPlugins).toEqual([]);
+    expect(activator.addedMarketplaces).toEqual([]);
+    expect(result.warnings.some((warning) => warning.includes("registration left untouched"))).toBe(
+      true
+    );
     const recorded = (await manifestRepo.load())?.getNativeRegistrations("claude");
-    expect(recorded?.pluginRefs).toEqual([REF]);
+    expect(recorded?.pluginRefs).toEqual([]);
   });
 });

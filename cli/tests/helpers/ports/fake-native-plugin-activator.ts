@@ -11,6 +11,7 @@ export class FakeNativePluginActivator implements NativePluginActivator {
   readonly forcedRemovals: boolean[] = [];
   readonly enabledPlugins: string[] = [];
   readonly uninstalledPlugins: string[] = [];
+  readonly updatedPlugins: string[] = [];
   /** The scope each call actually carried, in call order, never guessed from the ref. */
   readonly enabledPluginScopes: MarketplaceScope[] = [];
   readonly uninstalledPluginScopes: MarketplaceScope[] = [];
@@ -21,6 +22,7 @@ export class FakeNativePluginActivator implements NativePluginActivator {
   private readonly pluginsEnabledHere: boolean;
   private readonly state: "live" | "dead" | "unknown";
   private readonly failOnUninstall: ReadonlySet<string>;
+  private readonly failOnUpdate: ReadonlySet<string>;
   private readonly crashOnAddMarketplace: boolean;
   private readonly crashOnUninstall: boolean;
   private readonly installedAtScope: ReadonlyMap<string, MarketplaceScope>;
@@ -36,6 +38,7 @@ export class FakeNativePluginActivator implements NativePluginActivator {
       /** What the tool answers about a name already registered. */
       registrationState?: "live" | "dead" | "unknown";
       failOnUninstall?: readonly string[];
+      failOnUpdate?: readonly string[];
       crashOnAddMarketplace?: boolean;
       crashOnUninstall?: boolean;
       installedAtScope?: ReadonlyMap<string, MarketplaceScope>;
@@ -48,6 +51,7 @@ export class FakeNativePluginActivator implements NativePluginActivator {
     this.pluginsEnabledHere = options.enablesPlugins ?? true;
     this.state = options.registrationState ?? "unknown";
     this.failOnUninstall = new Set(options.failOnUninstall ?? []);
+    this.failOnUpdate = new Set(options.failOnUpdate ?? []);
     this.crashOnAddMarketplace = options.crashOnAddMarketplace ?? false;
     this.crashOnUninstall = options.crashOnUninstall ?? false;
     this.installedAtScope = options.installedAtScope ?? new Map();
@@ -114,5 +118,11 @@ export class FakeNativePluginActivator implements NativePluginActivator {
       );
     }
     this.uninstalledPlugins.push(pluginRef);
+  }
+
+  updatePlugin(pluginRef: string): void {
+    if (this.failOnUpdate.has(pluginRef))
+      throw new NativePluginCliError(`plugin update '${pluginRef}' failed`);
+    this.updatedPlugins.push(pluginRef);
   }
 }

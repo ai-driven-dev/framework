@@ -134,4 +134,11 @@ describe("the sentence each answer carries", () => {
     expect(entry.answer).toBe("unanswerable");
     expect(entry.detail).toBe(`${REGISTRY} could not be read — no reason given`);
   });
+
+  it("names ENOENT when the host registry is explicitly absent", () => {
+    const entry = only(evidence({ reading: { location: REGISTRY, absent: true } }));
+
+    expect(entry.answer).toBe("unanswerable");
+    expect(entry.detail).toBe(`${REGISTRY} could not be read — ENOENT`);
+  });
 });

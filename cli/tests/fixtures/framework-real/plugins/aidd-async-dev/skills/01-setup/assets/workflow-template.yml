@@ -26,7 +26,7 @@ jobs:
       (github.event_name == 'projects_v2_item')
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           ref: __DEFAULT_BRANCH__
           fetch-depth: 0

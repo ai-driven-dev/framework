@@ -7,7 +7,7 @@ import type { FileReader } from "../../../../kernel/ports/file-reader.js";
 import type { FileWriter } from "../../../../kernel/ports/file-writer.js";
 import type { Logger } from "../../../../kernel/ports/logger.js";
 import type { ToolId } from "../../../../kernel/tool.js";
-import { VALID_TOOL_IDS } from "../../../../kernel/tool.js";
+import { isAiToolId, VALID_TOOL_IDS } from "../../../../kernel/tool.js";
 import type { Manifest } from "../../domain/manifest.js";
 import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
 import { UninstallPluginUseCase } from "./uninstall-plugin-use-case.js";
@@ -30,12 +30,13 @@ export class UninstallUseCase {
   private readonly toolsUninstall: UninstallToolsUseCase;
 
   constructor(
-    fs: FileReader & FileWriter,
+    private readonly fs: FileReader & FileWriter,
     private readonly manifestRepo: ManifestRepository,
-    logger: Logger
+    logger: Logger,
+    userManifestRepo?: ManifestRepository
   ) {
-    this.pluginUninstall = new UninstallPluginUseCase(fs, manifestRepo);
-    this.toolsUninstall = new UninstallToolsUseCase(fs, logger);
+    this.pluginUninstall = new UninstallPluginUseCase(fs, manifestRepo, userManifestRepo);
+    this.toolsUninstall = new UninstallToolsUseCase(fs, logger, userManifestRepo);
   }
 
   async execute(options: UninstallOptions): Promise<UninstallToolResult[]> {
@@ -52,10 +53,24 @@ export class UninstallUseCase {
     }
 
     const manifest = await this.loadAndValidate(toolIds);
+    const userPlugins = toolIds.flatMap((toolId) =>
+      isAiToolId(toolId)
+        ? manifest
+            .getPlugins(toolId)
+            .filter((plugin) => plugin.scope === "user")
+            .map((plugin) => ({ toolId, name: plugin.name }))
+        : []
+    );
+    const nativeRefs = new Map<ToolId, readonly string[]>();
+    for (const toolId of toolIds) {
+      const refs = manifest.getNativeRegistrations(toolId)?.pluginRefs;
+      if (refs !== undefined && refs.length > 0) nativeRefs.set(toolId, refs);
+    }
 
     const results = await this.toolsUninstall.execute({ toolIds, manifest, projectRoot });
 
     await this.manifestRepo.save(manifest);
+    await this.toolsUninstall.detachClaimsAfterSave(projectRoot, userPlugins, nativeRefs);
     return results;
   }
 

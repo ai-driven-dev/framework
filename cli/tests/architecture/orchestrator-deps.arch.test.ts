@@ -10,7 +10,8 @@ const MAX_INJECTED_USE_CASES = 4;
 
 /**
  * Orchestrators over the limit today, each with the count its reason was written around.
- * The list may only shrink, and an entry naming only the file would let one grow in silence.
+ * The list normally shrinks. A separately justified host witness may raise an entry, while
+ * the exact counts still make any unreviewed growth fail this test.
  */
 const BASELINE: readonly { readonly path: string; readonly injected: number }[] = [
   // Six checks, one per thing that can drift, reported at once: the fan-out is the feature.
@@ -26,17 +27,18 @@ const BASELINE: readonly { readonly path: string; readonly injected: number }[] 
     injected: 9,
   },
   { path: "src/contexts/framework/application/restore/restore-use-case.ts", injected: 12 },
-  // Both carry `hostPluginRegistries`, the host's own registry per `AiToolId`: clean asks it the
-  // scope a ref was registered at, sync whether the host enabled a ref before this project did.
-  { path: "src/contexts/framework/application/clean-use-case.ts", injected: 11 },
+  // Host plugin registries prove ref scope/enablement; the added native source reader independently
+  // proves the current catalogue before these flows mutate it. Neither witness replaces the other.
+  { path: "src/contexts/framework/application/clean-use-case.ts", injected: 13 },
   {
     path: "src/contexts/framework/application/flows/marketplace-sync-settings-use-case.ts",
-    injected: 13,
+    injected: 15,
   },
-  // The machine-scope counterpart of `clean-use-case.ts`, same shape and same reason.
+  // Machine clean also needs both witnesses: source ownership and the full host ref list,
+  // because unregistering an owned catalogue could still disable a foreign installed ref.
   {
     path: "src/contexts/framework/application/clean/clean-user-scope-use-case.ts",
-    injected: 10,
+    injected: 12,
   },
   { path: "src/contexts/telemetry/application/diagnose-telemetry-use-case.ts", injected: 10 },
   {
@@ -47,7 +49,7 @@ const BASELINE: readonly { readonly path: string; readonly injected: number }[] 
     path: "src/contexts/framework/application/shared/setup-marketplace-registration-use-case.ts",
     injected: 10,
   },
-  { path: "src/contexts/framework/application/plugin/plugin-add-use-case.ts", injected: 8 },
+  { path: "src/contexts/framework/application/plugin/plugin-add-use-case.ts", injected: 9 },
   { path: "src/contexts/translate/application/strategies/flat-build-strategy.ts", injected: 8 },
   {
     path: "src/contexts/framework/application/doctor/doctor-registration-use-case.ts",
@@ -93,9 +95,9 @@ const BASELINE: readonly { readonly path: string; readonly injected: number }[] 
     injected: 5,
   },
   { path: "src/contexts/translate/application/translate-source.ts", injected: 5 },
-  // Carries `clean`'s own shared-source guard as well, so `plugin remove` in one project
-  // cannot disable a plugin another project on the same machine still needs.
-  { path: "src/contexts/framework/application/plugin/plugin-remove-use-case.ts", injected: 7 },
+  // Carries `clean`'s shared-source guard and the separate current-source witness so a
+  // targeted remove cannot disable another project's plugin or a repointed catalogue.
+  { path: "src/contexts/framework/application/plugin/plugin-remove-use-case.ts", injected: 9 },
 ];
 
 /**

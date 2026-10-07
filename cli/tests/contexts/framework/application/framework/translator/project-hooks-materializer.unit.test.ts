@@ -1,6 +1,6 @@
 import "../../../../../../src/contexts/tools/domain/profiles/cursor/profile.js";
 import { join } from "node:path";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import {
   ProjectHooksMaterializer,
   withoutHooks,
@@ -53,6 +53,119 @@ function distWithHooks(hooks: readonly PluginComponentFile[]): PluginDistributio
 }
 
 describe("ProjectHooksMaterializer", () => {
+  it("refuses a preexisting user-owned script without changing the project's hooks", async () => {
+    const scriptPath = join(PROJECT_ROOT, ".cursor/hooks", PLUGIN_NAME, "extra.js");
+    const fs = new InMemoryFileAdapter();
+    const materializer = new ProjectHooksMaterializer(fs);
+    const first = await materializer.materializeWithProvenance(
+      distWithHooks([hooksManifest("PreToolUse"), SCRIPT]),
+      "cursor",
+      PROJECT_ROOT
+    );
+    const originalHooks = fs.getFile(HOOKS_PATH);
+    fs.setFile(scriptPath, "user script");
+
+    await expect(
+      materializer.materializeWithProvenance(
+        distWithHooks([
+          hooksManifest("PreToolUse"),
+          SCRIPT,
+          { relativePath: "hooks/extra.js", content: "new owned script" },
+        ]),
+        "cursor",
+        PROJECT_ROOT,
+        first.projectHooks
+      )
+    ).rejects.toThrow(/user-owned.*install refused/);
+
+    expect(fs.getFile(scriptPath)).toBe("user script");
+    expect(fs.getFile(HOOKS_PATH)).toBe(originalHooks);
+  });
+
+  it.each(["present", "already missing"] as const)(
+    "reinstall removes only the obsolete owned script when it is %s",
+    async (state) => {
+      const fs = new InMemoryFileAdapter();
+      const materializer = new ProjectHooksMaterializer(fs);
+      const oldPath = join(PROJECT_ROOT, ".cursor/hooks", PLUGIN_NAME, "old.js");
+      const scriptPath = join(PROJECT_ROOT, ".cursor/hooks", PLUGIN_NAME, "pre.js");
+      const userPath = join(PROJECT_ROOT, ".cursor/hooks", PLUGIN_NAME, "notes.txt");
+      const otherPath = join(PROJECT_ROOT, ".cursor/hooks/other-plugin/check.js");
+      const first = await materializer.materializeWithProvenance(
+        distWithHooks([
+          hooksManifest("PreToolUse"),
+          SCRIPT,
+          { relativePath: "hooks/old.js", content: "old script" },
+        ]),
+        "cursor",
+        PROJECT_ROOT
+      );
+      fs.setFile(userPath, "user notes");
+      fs.setFile(otherPath, "other plugin script");
+      const previousHooks = fs.getFile(HOOKS_PATH);
+      if (state === "already missing") await fs.deleteFile(oldPath);
+
+      const second = await materializer.materializeWithProvenance(
+        distWithHooks([
+          hooksManifest("PreToolUse"),
+          { ...SCRIPT, content: "updated owned script" },
+        ]),
+        "cursor",
+        PROJECT_ROOT,
+        first.projectHooks
+      );
+
+      expect(fs.getFile(oldPath)).toBeUndefined();
+      expect(fs.getFile(scriptPath)).toBe("updated owned script");
+      expect(fs.getFile(userPath)).toBe("user notes");
+      expect(fs.getFile(otherPath)).toBe("other plugin script");
+      expect(fs.getFile(HOOKS_PATH)).toBe(previousHooks);
+      expect(second.skipped).toStrictEqual([]);
+      expect(second.projectHooks?.scripts).toStrictEqual(
+        new Map([
+          [`.cursor/hooks/${PLUGIN_NAME}/pre.js`, (await fs.readFileHash(scriptPath)).value],
+        ])
+      );
+    }
+  );
+
+  it("preserves an obsolete script edited after preflight instead of deleting it during reinstall", async () => {
+    const fs = new InMemoryFileAdapter();
+    const materializer = new ProjectHooksMaterializer(fs);
+    const oldPath = join(PROJECT_ROOT, ".cursor/hooks", PLUGIN_NAME, "old.js");
+    const scriptPath = join(PROJECT_ROOT, ".cursor/hooks", PLUGIN_NAME, "pre.js");
+    const first = await materializer.materializeWithProvenance(
+      distWithHooks([
+        hooksManifest("PreToolUse"),
+        SCRIPT,
+        { relativePath: "hooks/old.js", content: "old script" },
+      ]),
+      "cursor",
+      PROJECT_ROOT
+    );
+    const writeFile = fs.writeFile.bind(fs);
+    vi.spyOn(fs, "writeFile").mockImplementation(async (path, content) => {
+      if (path === scriptPath && content === "updated owned script")
+        fs.setFile(oldPath, "concurrent user edit");
+      return writeFile(path, content);
+    });
+
+    await expect(
+      materializer.materializeWithProvenance(
+        distWithHooks([
+          hooksManifest("PreToolUse"),
+          { ...SCRIPT, content: "updated owned script" },
+        ]),
+        "cursor",
+        PROJECT_ROOT,
+        first.projectHooks
+      )
+    ).rejects.toThrow(/edited during reinstall.*removal refused/);
+
+    expect(fs.getFile(oldPath)).toBe("concurrent user edit");
+    expect(first.projectHooks?.scripts.has(`.cursor/hooks/${PLUGIN_NAME}/old.js`)).toBe(true);
+  });
+
   it("merges the plugin's hooks manifest whichever position it holds among the hook files", async () => {
     const fs = new InMemoryFileAdapter();
 

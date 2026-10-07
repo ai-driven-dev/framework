@@ -31,7 +31,8 @@ describe("PluginAddUseCase skip warnings", () => {
         deps.hasher,
         capturingLogger,
         registry,
-        fakeEnsureBuiltMarketplace()
+        fakeEnsureBuiltMarketplace(),
+        deps.userManifestRepo
       );
       await useCase.execute({
         source: { kind: "local", path: PLUGIN_FIXTURE },

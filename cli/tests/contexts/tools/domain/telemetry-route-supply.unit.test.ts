@@ -5,6 +5,7 @@ import "../../../../src/contexts/tools/domain/profiles/claude/profile.js";
 import "../../../../src/contexts/tools/domain/profiles/codex/profile.js";
 import "../../../../src/contexts/tools/domain/profiles/copilot/profile.js";
 import "../../../../src/contexts/tools/domain/profiles/cursor/profile.js";
+import "../../../../src/contexts/tools/domain/profiles/kilo/profile.js";
 import "../../../../src/contexts/tools/domain/profiles/opencode/profile.js";
 import { mapClaudeCodeTranscriptToSinkRecords } from "../../../../src/contexts/telemetry/domain/formats/claude-code-transcript.js";
 import { mapCodexRolloutToSinkRecords } from "../../../../src/contexts/telemetry/domain/formats/codex-rollout.js";

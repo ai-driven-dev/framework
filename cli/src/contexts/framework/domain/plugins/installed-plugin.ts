@@ -41,6 +41,17 @@ export type ComponentPathMap = BrandedMap<"ComponentPathMap">;
 /** MCP server name → MD5 hash of the contributed server JSON (OpenCode merge tracking). */
 export type McpDigestMap = BrandedMap<"McpDigestMap">;
 
+/** Exact merged Cursor hook commands and copied project scripts recorded at install. */
+export interface ProjectHooksProvenance {
+  entries: readonly { event: string; command: string; digest: string }[];
+  scripts: ReadonlyMap<string, string>;
+}
+
+interface ProjectHooksEntryData {
+  entries: { event: string; command: string; digest: string }[];
+  scripts: Record<string, string>;
+}
+
 function asPathHashMap(m: ReadonlyMap<string, string>): PathHashMap {
   return m as PathHashMap;
 }
@@ -64,7 +75,10 @@ export interface PluginEntryData {
   scope: PluginScope;
   componentPaths?: Record<string, string>;
   mcpEntries?: Record<string, string>;
+  projectHooks?: ProjectHooksEntryData;
   marketplace?: string;
+  /** Canonical project roots using machine-owned user-scope files. Only the user manifest owns this list. */
+  dependents?: string[];
 }
 
 export class InstalledPlugin {
@@ -76,7 +90,9 @@ export class InstalledPlugin {
   readonly scope: PluginScope;
   readonly componentPaths: ComponentPathMap;
   readonly mcpEntries: McpDigestMap;
+  readonly projectHooks?: ProjectHooksProvenance;
   readonly marketplace?: string;
+  readonly dependents: readonly string[];
 
   private constructor(params: {
     name: string;
@@ -87,7 +103,9 @@ export class InstalledPlugin {
     scope: PluginScope;
     componentPaths: ComponentPathMap;
     mcpEntries: McpDigestMap;
+    projectHooks?: ProjectHooksProvenance;
     marketplace?: string;
+    dependents: readonly string[];
   }) {
     this.name = params.name;
     this.source = params.source;
@@ -97,7 +115,9 @@ export class InstalledPlugin {
     this.scope = params.scope;
     this.componentPaths = params.componentPaths;
     this.mcpEntries = params.mcpEntries;
+    this.projectHooks = params.projectHooks;
     this.marketplace = params.marketplace;
+    this.dependents = params.dependents;
   }
 
   static fromMetadata(
@@ -133,7 +153,28 @@ export class InstalledPlugin {
       scope: plugin.scope,
       componentPaths: plugin.componentPaths,
       mcpEntries: asMcpDigestMap(mcpEntries),
+      projectHooks: plugin.projectHooks,
       marketplace: plugin.marketplace,
+      dependents: plugin.dependents,
+    });
+  }
+
+  static withProjectHooks(
+    plugin: InstalledPlugin,
+    projectHooks: ProjectHooksProvenance | undefined
+  ): InstalledPlugin {
+    return new InstalledPlugin({
+      name: plugin.name,
+      source: plugin.source,
+      version: plugin.version,
+      strict: plugin.strict,
+      files: plugin.files,
+      scope: plugin.scope,
+      componentPaths: plugin.componentPaths,
+      mcpEntries: plugin.mcpEntries,
+      projectHooks,
+      marketplace: plugin.marketplace,
+      dependents: plugin.dependents,
     });
   }
 
@@ -209,7 +250,15 @@ export class InstalledPlugin {
       scope: data.scope,
       componentPaths: asComponentPathMap(componentPaths),
       mcpEntries: asMcpDigestMap(mcpEntries),
+      projectHooks:
+        data.projectHooks === undefined
+          ? undefined
+          : {
+              entries: data.projectHooks.entries,
+              scripts: new Map(Object.entries(data.projectHooks.scripts)),
+            },
       marketplace: data.marketplace,
+      dependents: data.dependents ?? [],
     });
   }
 
@@ -224,7 +273,14 @@ export class InstalledPlugin {
     };
     if (this.componentPaths.size > 0) data.componentPaths = mapToRecord(this.componentPaths);
     if (this.mcpEntries.size > 0) data.mcpEntries = mapToRecord(this.mcpEntries);
+    if (this.projectHooks !== undefined) {
+      data.projectHooks = {
+        entries: [...this.projectHooks.entries],
+        scripts: mapToRecord(this.projectHooks.scripts),
+      };
+    }
     if (this.marketplace !== undefined) data.marketplace = this.marketplace;
+    if (this.dependents.length > 0) data.dependents = [...this.dependents];
     return data;
   }
 
@@ -242,7 +298,9 @@ export class InstalledPlugin {
       scope: this.scope,
       componentPaths: this.componentPaths,
       mcpEntries: this.mcpEntries,
+      projectHooks: this.projectHooks,
       marketplace: this.marketplace,
+      dependents: this.dependents,
     });
   }
 
@@ -256,7 +314,25 @@ export class InstalledPlugin {
       scope: this.scope,
       componentPaths: this.componentPaths,
       mcpEntries: this.mcpEntries,
+      projectHooks: this.projectHooks,
       marketplace: this.marketplace,
+      dependents: this.dependents,
+    });
+  }
+
+  withDependents(dependents: readonly string[]): InstalledPlugin {
+    return new InstalledPlugin({
+      name: this.name,
+      source: this.source,
+      version: this.version,
+      strict: this.strict,
+      files: this.files,
+      scope: this.scope,
+      componentPaths: this.componentPaths,
+      mcpEntries: this.mcpEntries,
+      projectHooks: this.projectHooks,
+      marketplace: this.marketplace,
+      dependents: [...new Set(dependents)],
     });
   }
 }

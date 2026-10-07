@@ -4,6 +4,7 @@ import "../../../src/contexts/tools/domain/profiles/claude/profile.js";
 import "../../../src/contexts/tools/domain/profiles/codex/profile.js";
 import "../../../src/contexts/tools/domain/profiles/copilot/profile.js";
 import "../../../src/contexts/tools/domain/profiles/cursor/profile.js";
+import "../../../src/contexts/tools/domain/profiles/kilo/profile.js";
 import "../../../src/contexts/tools/domain/profiles/opencode/profile.js";
 import "../../../src/contexts/tools/domain/profiles/vscode/profile.js";
 import { PluginCatalogRepositoryAdapter } from "../../../src/contexts/distribution/infrastructure/plugin-catalog-repository-adapter.js";
@@ -49,6 +50,7 @@ export async function buildUnitDeps(_projectRoot: string) {
   const hasher = new DeterministicHasher();
   const fs = new InMemoryFileAdapter({}, hasher);
   const manifestRepo = new InMemoryManifestRepository();
+  const userManifestRepo = new InMemoryManifestRepository();
   const logger = new CLIOutput(false);
   const assetProvider = new BundledAssetProviderAdapter();
   const pluginFetcher = new FixturePluginFetcher();
@@ -92,6 +94,7 @@ export async function buildUnitDeps(_projectRoot: string) {
     hasher,
     fs,
     manifestRepo,
+    userManifestRepo,
     logger,
     assetProvider,
     pluginFetcher,

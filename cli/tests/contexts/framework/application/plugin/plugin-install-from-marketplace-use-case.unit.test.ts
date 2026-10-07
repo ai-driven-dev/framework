@@ -54,7 +54,8 @@ async function buildUseCase(options: { logger?: Logger | null; prompter?: Prompt
     deps.hasher,
     deps.logger,
     registry,
-    fakeEnsureBuiltMarketplace()
+    fakeEnsureBuiltMarketplace(),
+    deps.userManifestRepo
   );
   const fetchMarketplaceSource = new FetchMarketplaceSourceUseCase(deps.pluginFetcher);
   const logger = options.logger === null ? undefined : (options.logger ?? deps.logger);

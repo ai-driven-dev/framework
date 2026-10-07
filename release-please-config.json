@@ -104,6 +104,16 @@
         }
       ]
     },
+    "plugins/aidd-qa": {
+      "package-name": "aidd-qa",
+      "extra-files": [
+        {
+          "type": "json",
+          "path": ".claude-plugin/plugin.json",
+          "jsonpath": "$.version"
+        }
+      ]
+    },
     "cli": {
       "release-type": "node",
       "package-name": "@ai-driven-dev/cli"

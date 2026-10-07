@@ -1,8 +1,10 @@
-import { rm } from "node:fs/promises";
+import { mkdir, rm, rmdir } from "node:fs/promises";
+import { dirname } from "node:path";
+import { setTimeout as pause } from "node:timers/promises";
 import { userManifestPath } from "../../../kernel/paths.js";
 import type { Manifest } from "../domain/manifest.js";
 import type { ManifestRepository } from "../domain/ports/manifest-repository.js";
-import { readManifestFile, writeManifestFile } from "./manifest-file-io.js";
+import { readManifestFile } from "./manifest-file-io.js";
 
 /**
  * The user-scope counterpart of `ManifestRepositoryAdapter` — same schema, same version and refusal
@@ -14,7 +16,10 @@ import { readManifestFile, writeManifestFile } from "./manifest-file-io.js";
  * a live bug here.
  */
 export class UserManifestRepositoryAdapter implements ManifestRepository {
-  constructor(private readonly userConfigDir: () => string) {}
+  constructor(
+    private readonly userConfigDir: () => string,
+    private readonly atomicWriter: (path: string, content: string) => Promise<void>
+  ) {}
 
   get path(): string {
     return userManifestPath(this.userConfigDir());
@@ -29,10 +34,36 @@ export class UserManifestRepositoryAdapter implements ManifestRepository {
   }
 
   async save(manifest: Manifest): Promise<void> {
-    await writeManifestFile(this.path, manifest);
+    await mkdir(dirname(this.path), { recursive: true });
+    await this.atomicWriter(this.path, JSON.stringify(manifest.toJSON(), null, 2));
   }
 
   async delete(): Promise<void> {
     await rm(this.path, { force: true });
+  }
+
+  async withExclusiveAccess<T>(action: () => Promise<T>): Promise<T> {
+    const lock = `${this.path}.lock`;
+    await mkdir(dirname(lock), { recursive: true });
+    const deadline = Date.now() + 30_000;
+    while (true) {
+      try {
+        await mkdir(lock);
+        break;
+      } catch (error) {
+        if ((error as NodeJS.ErrnoException).code !== "EEXIST") throw error;
+        if (Date.now() >= deadline) {
+          throw new Error(
+            `User manifest is busy: ${lock}. Retry after the other AIDD operation finishes.`
+          );
+        }
+        await pause(100);
+      }
+    }
+    try {
+      return await action();
+    } finally {
+      await rmdir(lock);
+    }
   }
 }

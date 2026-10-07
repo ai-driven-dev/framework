@@ -12,6 +12,8 @@ import type { PluginSource } from "../../../../../../src/kernel/source.js";
 import { CapturingLogger } from "../../../../../helpers/ports/capturing-logger.js";
 import { DeterministicHasher } from "../../../../../helpers/ports/deterministic-hasher.js";
 import { fakeEnsureBuiltMarketplace } from "../../../../../helpers/ports/fake-ensure-built-marketplace.js";
+import { FakeHostPluginRegistryReader } from "../../../../../helpers/ports/fake-host-plugin-registry-reader.js";
+import { FakeNativeMarketplaceSourceReader } from "../../../../../helpers/ports/fake-native-marketplace-source-reader.js";
 import { FakeNativePluginActivator } from "../../../../../helpers/ports/fake-native-plugin-activator.js";
 import { InMemoryFileAdapter } from "../../../../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../../../../helpers/ports/in-memory-manifest-repository.js";
@@ -19,6 +21,45 @@ import { InMemoryMarketplaceRegistry } from "../../../../../helpers/ports/in-mem
 
 const PROJECT_ROOT = "/test-project";
 const MARKETPLACE_NAME = "aidd-framework";
+
+function syncWithProvenFreshHost(
+  fs: InMemoryFileAdapter,
+  manifestRepo: InMemoryManifestRepository,
+  registry: InMemoryMarketplaceRegistry,
+  hasher: DeterministicHasher,
+  logger: CapturingLogger,
+  activator: FakeNativePluginActivator
+): MarketplaceSyncSettingsUseCase {
+  return new MarketplaceSyncSettingsUseCase(
+    fs,
+    manifestRepo,
+    registry,
+    hasher,
+    logger,
+    new Map([["codex", activator]]),
+    fakeEnsureBuiltMarketplace(),
+    new Map(),
+    () => "",
+    undefined,
+    undefined,
+    undefined,
+    new Map([
+      ["codex", new FakeHostPluginRegistryReader({ location: "fake codex", refs: new Map() })],
+    ]),
+    undefined,
+    new Map([
+      [
+        "codex",
+        new FakeNativeMarketplaceSourceReader(
+          activator,
+          "effective-list",
+          (path) => (path === "/built/codex" ? MARKETPLACE_NAME : undefined),
+          new Map()
+        ),
+      ],
+    ])
+  );
+}
 
 /** A readable catalog at the path `fakeEnsureBuiltMarketplace()` resolves "codex" to, at its
  * own `distributionProbes.marketplace` relative path: a real build always leaves one there, and
@@ -112,14 +153,13 @@ describe("install codex plugin via Mode A (integration)", () => {
     const activator = new FakeNativePluginActivator({ available: true });
     await seedCodexPlugin(manifestRepo, registry);
 
-    const useCase = new MarketplaceSyncSettingsUseCase(
+    const useCase = syncWithProvenFreshHost(
       fs,
       manifestRepo,
       registry,
       hasher,
       new CapturingLogger(),
-      new Map([["codex", activator]]),
-      fakeEnsureBuiltMarketplace()
+      activator
     );
     await useCase.execute({ projectRoot: PROJECT_ROOT });
 
@@ -127,7 +167,7 @@ describe("install codex plugin via Mode A (integration)", () => {
     // succeeds outright — no pre-emptive remove on a clean install.
     expect(activator.removedMarketplaces).toEqual([]);
     expect(activator.addedMarketplaces).toEqual(["/built/codex"]);
-    expect(activator.upgradeCount).toBe(1);
+    expect(activator.upgradeCount).toBe(0);
     expect(activator.enabledPlugins).toEqual([`aidd-context@${MARKETPLACE_NAME}`]);
     expect(await fs.fileExists(resolve(PROJECT_ROOT, ".codex/config.json"))).toBe(false);
   });
@@ -143,14 +183,13 @@ describe("install codex plugin via Mode A (integration)", () => {
       repo: "ai-driven-dev/framework",
     });
 
-    const useCase = new MarketplaceSyncSettingsUseCase(
+    const useCase = syncWithProvenFreshHost(
       fs,
       manifestRepo,
       registry,
       new DeterministicHasher(),
       new CapturingLogger(),
-      new Map([["codex", activator]]),
-      fakeEnsureBuiltMarketplace()
+      activator
     );
     await useCase.execute({ projectRoot: PROJECT_ROOT });
 
@@ -170,14 +209,13 @@ describe("install codex plugin via Mode A (integration)", () => {
     });
     await seedTwoCodexPlugins(manifestRepo, registry);
 
-    const useCase = new MarketplaceSyncSettingsUseCase(
+    const useCase = syncWithProvenFreshHost(
       fs,
       manifestRepo,
       registry,
       new DeterministicHasher(),
       logger,
-      new Map([["codex", activator]]),
-      fakeEnsureBuiltMarketplace()
+      activator
     );
     await useCase.execute({ projectRoot: PROJECT_ROOT });
 

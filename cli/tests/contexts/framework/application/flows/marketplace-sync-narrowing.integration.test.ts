@@ -11,6 +11,8 @@ import { Manifest } from "../../../../../src/contexts/framework/domain/manifest.
 import { InstalledPlugin } from "../../../../../src/contexts/framework/domain/plugins/installed-plugin.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
+import { FakeHostPluginRegistryReader } from "../../../../helpers/ports/fake-host-plugin-registry-reader.js";
+import { FakeNativeMarketplaceSourceReader } from "../../../../helpers/ports/fake-native-marketplace-source-reader.js";
 import { FakeNativePluginActivator } from "../../../../helpers/ports/fake-native-plugin-activator.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
@@ -100,7 +102,38 @@ function build(activator: FakeNativePluginActivator) {
       hasher,
       new CapturingLogger(),
       new Map([["claude", activator]]),
-      ensureBuiltPerMarketplace()
+      ensureBuiltPerMarketplace(),
+      new Map(),
+      () => "",
+      undefined,
+      undefined,
+      undefined,
+      new Map([
+        [
+          "claude",
+          new FakeHostPluginRegistryReader({
+            location: "/host/installed_plugins.json",
+            refs: new Map(),
+          }),
+        ],
+      ]),
+      undefined,
+      new Map([
+        [
+          "claude",
+          new FakeNativeMarketplaceSourceReader(
+            activator,
+            "registry",
+            (path) =>
+              path === "/built/market-a"
+                ? "market-a"
+                : path === "/built/market-b"
+                  ? "market-b"
+                  : undefined,
+            new Map()
+          ),
+        ],
+      ])
     ),
   };
 }
@@ -131,7 +164,13 @@ describe("marketplaceNames narrows a sync run to the marketplaces named", () => 
     const reloaded = await manifestRepo.load();
     const registrations = reloaded?.getNativeRegistrations("claude");
     expect(registrations?.marketplaces).toEqual(
-      expect.arrayContaining([{ alias: "market-a", hostName: "market-a" }])
+      expect.arrayContaining([
+        {
+          alias: "market-a",
+          hostName: "market-a",
+          provenance: { kind: "registry", source: "/built/market-a" },
+        },
+      ])
     );
     expect(registrations?.pluginRefs).toEqual(expect.arrayContaining(["plugin-a@market-a"]));
   });
@@ -195,7 +234,13 @@ describe("marketplaceNames narrows a sync run to the marketplaces named", () => 
 
     expect((await manifestRepo.load())?.getNativeRegistrations("claude")).toStrictEqual({
       binary: "claude",
-      marketplaces: [{ alias: "market-b", hostName: "market-b" }],
+      marketplaces: [
+        {
+          alias: "market-b",
+          hostName: "market-b",
+          provenance: { kind: "registry", source: "/built/market-b" },
+        },
+      ],
       pluginRefs: ["plugin-b@market-b"],
     });
   });
@@ -206,8 +251,16 @@ describe("marketplaceNames narrows a sync run to the marketplaces named", () => 
     manifest.setNativeRegistrations("claude", {
       binary: "claude",
       marketplaces: [
-        { alias: "market-a", hostName: "market-a" },
-        { alias: "market-b", hostName: "market-b" },
+        {
+          alias: "market-a",
+          hostName: "market-a",
+          provenance: { kind: "registry", source: "/built/market-a" },
+        },
+        {
+          alias: "market-b",
+          hostName: "market-b",
+          provenance: { kind: "registry", source: "/built/market-b" },
+        },
       ],
       pluginRefs: ["plugin-a@market-a", "plugin-b-old@market-b"],
     });
@@ -223,8 +276,16 @@ describe("marketplaceNames narrows a sync run to the marketplaces named", () => 
     expect((await manifestRepo.load())?.getNativeRegistrations("claude")).toStrictEqual({
       binary: "claude",
       marketplaces: [
-        { alias: "market-a", hostName: "market-a" },
-        { alias: "market-b", hostName: "market-b" },
+        {
+          alias: "market-a",
+          hostName: "market-a",
+          provenance: { kind: "registry", source: "/built/market-a" },
+        },
+        {
+          alias: "market-b",
+          hostName: "market-b",
+          provenance: { kind: "registry", source: "/built/market-b" },
+        },
       ],
       pluginRefs: ["plugin-a@market-a", "plugin-b@market-b"],
     });

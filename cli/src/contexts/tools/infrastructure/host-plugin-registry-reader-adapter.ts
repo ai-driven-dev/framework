@@ -10,6 +10,12 @@ import type {
   HostPluginRegistryReading,
 } from "../domain/ports/host-plugin-registry-reader.js";
 
+function failedRead(location: string, error: unknown): HostPluginRegistryReading {
+  if (error instanceof Error && "code" in error && error.code === "ENOENT")
+    return { location, absent: true };
+  return { location, unreadable: describeError(error) };
+}
+
 /**
  * One reader per host whose own plugin registry was measured; a tool absent from the map is
  * one nothing here claims to know, and the diagnostic reports it unanswerable rather than
@@ -51,7 +57,7 @@ class ClaudeInstalledPluginsReader implements HostPluginRegistryReader {
     try {
       content = await readFile(this.path, "utf8");
     } catch (error) {
-      return { location: this.path, unreadable: describeError(error) };
+      return failedRead(this.path, error);
     }
     try {
       const parsed = JSON.parse(content) as { plugins?: Record<string, ClaudeEntry[]> };
@@ -90,7 +96,7 @@ class CodexConfigPluginsReader implements HostPluginRegistryReader {
     try {
       content = await readFile(this.path, "utf8");
     } catch (error) {
-      return { location: this.path, unreadable: describeError(error) };
+      return failedRead(this.path, error);
     }
     return { location: this.path, refs: scanCodexPluginTables(content) };
   }
@@ -109,7 +115,7 @@ class CopilotSettingsPluginsReader implements HostPluginRegistryReader {
     try {
       content = await readFile(this.path, "utf8");
     } catch (error) {
-      return { location: this.path, unreadable: describeError(error) };
+      return failedRead(this.path, error);
     }
     try {
       const parsed = JSON.parse(content) as { enabledPlugins?: Record<string, unknown> };

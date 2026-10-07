@@ -6,7 +6,7 @@ const root = resolve(fileURLToPath(import.meta.url), "../..");
 
 const pkg = JSON.parse(readFileSync(resolve(root, "package.json"), "utf8"));
 // The budget makes growth visible rather than walling it off: a raise is deliberate, is
-// what a reviewer sees, and leaves ~2 % headroom over what was measured, never more.
+// what a reviewer sees, and leaves at most ~2 % headroom over what was measured.
 // The registry of every raise, budget then measurement then what landed:
 // 560 KB: 500.8 KB, measurement across five tools.
 // 590 KB: 567.7 KB, one person resolved across tools and machines.
@@ -22,6 +22,14 @@ const pkg = JSON.parse(readFileSync(resolve(root, "package.json"), "utf8"));
 // 625 KB: 612.56 KB, `--scope user` on `setup`, `doctor` and `sync`.
 // 641 KB: 628.26 KB, `clean --scope user` and sync's migration of a pre-shared-source project.
 // 654 KB: 641.0 KB, the shared-plugin, narrowing, hook and Windows-lookup passes.
+// 682 KB: 675.5 KB, canonical per-plugin machine claims, scoped user operations and
+// inter-process ownership guards for Cursor, Codex and Copilot (+31.3 KB over next's 644.2).
+// 710 KB: 703.8 KB, current native host-source proof and exact hook/MCP/user-file provenance
+// guards for #829 (+22.0 KB over the first 829 candidate's 681.8); 0.9% measured headroom.
+// 722 KB: 714.2 KB, exact native-claim partition, multihost preflight, and symlink boundary
+// guards for #829 (+10.4 KB over the preceding 703.8 KB); 1.1% measured headroom.
+// 734 KB: 725.8 KB, Kilo Code's profile, generated bridge, and runtime smoke support (+9.6 KB
+// over next's 716.2 KB); 1.1% measured headroom.
 const budgetKB = pkg.bundleBudgetKB ?? 500;
 const budgetBytes = budgetKB * 1024;
 

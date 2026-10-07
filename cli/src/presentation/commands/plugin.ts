@@ -37,18 +37,21 @@ export function registerPluginCommand(program: Command): void {
     .command("remove <name>")
     .description("Remove a plugin from one or all AI tools")
     .option("--tool <toolId>", "Target AI tool (default: all installed)")
-    .action(async (name: string, cmdOptions: { tool?: string }) => {
+    .option("--scope <user|project>", "Removal scope (default: project)")
+    .action(async (name: string, cmdOptions: { tool?: string; scope?: string }) => {
       const { verbose, output, projectRoot } = parseGlobalOptions(program);
       const errorHandler = new ErrorHandler(output);
       try {
         assertValidAiToolId(cmdOptions.tool);
+        const scope = parseInstallScope(cmdOptions.scope) ?? "project";
         const deps = await createDeps(projectRoot, { verbose }, output);
         await deps.pluginRemoveUseCase.execute({
           pluginName: name,
           toolIds: parseToolOption(cmdOptions.tool),
           projectRoot,
+          scope,
         });
-        await syncNativeActivation(deps, output, projectRoot);
+        if (scope === "project") await syncNativeActivation(deps, output, projectRoot);
         printPluginRemoved(output, name);
       } catch (error) {
         errorHandler.handle(error);
@@ -147,18 +150,24 @@ export function registerPluginCommand(program: Command): void {
     .command("update [name]")
     .description("Update one or all plugins for one or all AI tools")
     .option("--tool <toolId>", "Target AI tool (default: all installed)")
-    .action(async (name: string | undefined, cmdOptions: { tool?: string }) => {
+    .option("--scope <user|project>", "Update scope (default: project)")
+    .action(async (name: string | undefined, cmdOptions: { tool?: string; scope?: string }) => {
       const { verbose, output, projectRoot } = parseGlobalOptions(program);
       const errorHandler = new ErrorHandler(output);
       try {
         assertValidAiToolId(cmdOptions.tool);
+        const scope = parseInstallScope(cmdOptions.scope) ?? "project";
         const deps = await createDeps(projectRoot, { verbose }, output);
-        const updated = await deps.pluginUpdateUseCase.execute({
+        const updated = await (scope === "user"
+          ? deps.userPluginUpdateUseCase
+          : deps.pluginUpdateUseCase
+        ).execute({
           pluginNames: name !== undefined ? [name] : undefined,
           toolIds: parseToolOption(cmdOptions.tool),
           projectRoot,
+          scope,
         });
-        await syncNativeActivation(deps, output, projectRoot);
+        if (scope === "project") await syncNativeActivation(deps, output, projectRoot);
         printPluginsUpdated(output, updated);
       } catch (error) {
         errorHandler.handle(error);

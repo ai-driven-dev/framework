@@ -145,6 +145,44 @@ describe("diagnoseTelemetryClaims — hook fired", () => {
     expect(hookFired?.detail).toContain("2026-07-01T09:00:00Z");
   });
 
+  it("names the other project the anchored session belongs to, rather than failing", () => {
+    const result = diagnoseTelemetryClaims(
+      evidence({
+        journals: [journal({ vendorId: "s-old", sessionStartAt: "2026-07-01T09:00:00Z" })],
+        currentSessionId: "s-elsewhere",
+        anchorInAnotherProject: "git@github.com:acme/other.git",
+      })
+    );
+    const hookFired = claim(result, "hook-fired");
+    expect(hookFired?.verdict).toBe("unknown");
+    expect(hookFired?.reason).toBe("anchor-in-another-project");
+    expect(hookFired?.detail).toContain("git@github.com:acme/other.git");
+  });
+
+  it("still fails a session left unproven when no other project claims the anchor", () => {
+    const result = diagnoseTelemetryClaims(
+      evidence({
+        journals: [journal({ vendorId: "s-old", sessionStartAt: "2026-07-01T09:00:00Z" })],
+        currentSessionId: "s-current",
+      })
+    );
+
+    expect(claim(result, "hook-fired")?.reason).toBe("session-left-no-run-file");
+  });
+
+  it("prefers the other project over an untrusted Codex hook", () => {
+    const result = diagnoseTelemetryClaims(
+      evidence({
+        journals: [journal({ vendorId: "s-old", sessionStartAt: "2026-07-01T09:00:00Z" })],
+        currentSessionId: "codex-elsewhere",
+        anchorInAnotherProject: "git@github.com:acme/other.git",
+        hookTrust: { readable: true, trusted: false, configPath: "/home/.codex/config.toml" },
+      })
+    );
+
+    expect(claim(result, "hook-fired")?.reason).toBe("anchor-in-another-project");
+  });
+
   it("cannot tell whether this session's hook fired without an anchor", () => {
     const result = diagnoseTelemetryClaims(
       evidence({ journals: [journal({ vendorId: "s-1", sessionStartAt: "2026-08-20T09:00:00Z" })] })

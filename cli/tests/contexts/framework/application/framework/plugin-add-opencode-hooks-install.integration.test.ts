@@ -29,7 +29,8 @@ async function installSamplePlugin() {
     deps.hasher,
     capturingLogger,
     registry,
-    fakeEnsureBuiltMarketplace()
+    fakeEnsureBuiltMarketplace(),
+    deps.userManifestRepo
   );
   await useCase.execute({
     source: { kind: "local", path: PLUGIN_FIXTURE },

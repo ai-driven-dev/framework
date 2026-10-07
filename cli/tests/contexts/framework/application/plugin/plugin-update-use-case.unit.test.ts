@@ -48,7 +48,8 @@ async function setup(
     deps.hasher,
     deps.logger,
     deps.marketplaceRegistry,
-    fakeEnsureBuiltMarketplace()
+    fakeEnsureBuiltMarketplace(),
+    deps.userManifestRepo
   );
   const updateUseCase = new PluginUpdateUseCase(
     deps.fs,
@@ -87,6 +88,42 @@ function installed(deps: Deps, name: string) {
 }
 
 describe("PluginUpdateUseCase", () => {
+  it("skips machine-owned Cursor plugins in an unnamed project sweep", async () => {
+    const deps = await buildUnitDeps(PROJECT_ROOT);
+    await initAndInstall(deps, PROJECT_ROOT, "cursor");
+    const { addUseCase, updateUseCase } = await setup(deps);
+    await addUseCase.execute({
+      source: { kind: "local", path: PLUGIN_FIXTURE },
+      toolIds: ["cursor"],
+      projectRoot: PROJECT_ROOT,
+      interactive: false,
+    });
+    const machineBefore = deps.userManifestRepo.getCurrent()?.toJSON();
+    expect(await updateUseCase.execute({ toolIds: ["cursor"], projectRoot: PROJECT_ROOT })).toEqual(
+      []
+    );
+    expect(deps.userManifestRepo.getCurrent()?.toJSON()).toEqual(machineBefore);
+  });
+
+  it("refuses an explicitly named Cursor plugin at project scope", async () => {
+    const deps = await buildUnitDeps(PROJECT_ROOT);
+    await initAndInstall(deps, PROJECT_ROOT, "cursor");
+    const { addUseCase, updateUseCase } = await setup(deps);
+    await addUseCase.execute({
+      source: { kind: "local", path: PLUGIN_FIXTURE },
+      toolIds: ["cursor"],
+      projectRoot: PROJECT_ROOT,
+      interactive: false,
+    });
+    await expect(
+      updateUseCase.execute({
+        pluginNames: ["sample-plugin"],
+        toolIds: ["cursor"],
+        projectRoot: PROJECT_ROOT,
+      })
+    ).rejects.toThrow(/does not support scope 'project'/);
+  });
+
   describe("same version", () => {
     it("does not re-write files when version is equal", async () => {
       const deps = await buildUnitDeps(PROJECT_ROOT);

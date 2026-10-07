@@ -48,6 +48,7 @@ export class ApplyPluginFilesUseCase {
   ) {}
 
   async execute(options: ApplyPluginFilesOptions): Promise<number> {
+    if (options.plugin.scope === "user") return 0;
     const localPath = await this.pluginFetcher.fetch(options.plugin.source, options.cacheDir);
     const dist = await this.pluginDistributionReader.read(localPath);
     const translator = this.resolveTranslator(options.toolConfig);

@@ -118,11 +118,11 @@ describe("driving the verbs a tool declares, and only those", () => {
   it("re-indexes marketplaces with the declared verb, and does nothing without one", () => {
     mockSpawnSync.mockReturnValue(makeResult({}));
 
-    adapter().upgradeMarketplaces();
-    adapter({}).upgradeMarketplaces();
+    adapter().upgradeMarketplaces("owned-catalog");
+    adapter({}).upgradeMarketplaces("owned-catalog");
 
     expect(mockSpawnSync.mock.calls.map((call) => call[1])).toStrictEqual([
-      ["plugin", "marketplace", "update"],
+      ["plugin", "marketplace", "update", "owned-catalog"],
     ]);
   });
 
@@ -160,8 +160,8 @@ describe("naming a failure by the tool, the step and what the tool said", () => 
   it("carries the tool's trimmed stderr on a non-zero exit", () => {
     mockSpawnSync.mockReturnValue(makeResult({ status: 1, stderr: "  boom \n" }));
 
-    expect(() => adapter().upgradeMarketplaces()).toThrow(
-      new NativePluginCliError("probe-tool marketplace update failed: boom")
+    expect(() => adapter().upgradeMarketplaces("owned-catalog")).toThrow(
+      new NativePluginCliError("probe-tool marketplace update owned-catalog failed: boom")
     );
   });
 

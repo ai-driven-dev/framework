@@ -27,22 +27,43 @@ export CODEX_HOME="$HOME/.codex"
 unset XDG_CONFIG_HOME AIDD_TELEMETRY_DIR
 
 CODEX_CONFIG="$CODEX_HOME/config.toml"
+CODEX_CACHE_WITNESS="$CODEX_HOME/plugins/cache/aidd-framework/foreign-payload/bytes"
 COPILOT_SETTINGS="$HOME/.copilot/settings.json"
 CURSOR_MANIFEST="$HOME/.cursor/plugins/local/$PLUGIN/.cursor-plugin/plugin.json"
 CODEX_SECTION="[plugins.\"$REF\"]"
 CURSOR_MINE='{"name":"aidd-vcs","version":"0.0.1","mine":true}'
+CODEX_CACHE_MINE='foreign host cache bytes must remain unchanged'
+CODEX_FOREIGN_FIXTURE="$ROOT/tests/fixtures/plugins/codex-format/marketplace-foreign-aidd"
+COPILOT_FOREIGN_FIXTURE="$ROOT/tests/fixtures/plugins/copilot-format/marketplace-multi-sample"
 
 TOOLS=(cursor)
 for t in codex copilot; do
   if command -v "$t" >/dev/null 2>&1; then TOOLS+=("$t"); else skip "$t not installed on PATH"; fi
 done
-mkdir -p "$CODEX_HOME" "$(dirname "$COPILOT_SETTINGS")" "$(dirname "$CURSOR_MANIFEST")"
+mkdir -p "$CODEX_HOME" "$(dirname "$CODEX_CACHE_WITNESS")" "$(dirname "$COPILOT_SETTINGS")" "$(dirname "$CURSOR_MANIFEST")"
 printf '%s\nenabled = true\n' "$CODEX_SECTION" > "$CODEX_CONFIG"
-printf '{"enabledPlugins":{"%s":true}}\n' "$REF" > "$COPILOT_SETTINGS"
+printf '%s\n' "$CODEX_CACHE_MINE" > "$CODEX_CACHE_WITNESS"
+if command -v codex >/dev/null 2>&1; then
+  codex plugin marketplace add "$CODEX_FOREIGN_FIXTURE" --json >"$TMPROOT/codex-seed.log" 2>&1 \
+    && ok "codex: foreign same-name catalogue seeded" || bad "codex: foreign catalogue seed failed"
+fi
+if command -v copilot >/dev/null 2>&1; then
+  copilot plugin marketplace add "$COPILOT_FOREIGN_FIXTURE" >"$TMPROOT/copilot-seed.log" 2>&1 \
+    && ok "copilot: foreign same-name catalogue seeded" || bad "copilot: foreign catalogue seed failed"
+fi
+node -e 'const fs=require("fs");const p=process.argv[1],r=process.argv[2];let s={};try{s=JSON.parse(fs.readFileSync(p,"utf8"))}catch{}s.enabledPlugins={...(s.enabledPlugins||{}),[r]:true};fs.writeFileSync(p,JSON.stringify(s)+"\n")' "$COPILOT_SETTINGS" "$REF"
 printf '%s\n' "$CURSOR_MINE" > "$CURSOR_MANIFEST"
 
 copilot_key() {
   node -e "const s=JSON.parse(require(\"fs\").readFileSync(process.argv[1],\"utf8\"));console.log(String(s.enabledPlugins && s.enabledPlugins[process.argv[2]]))" "$COPILOT_SETTINGS" "$REF" 2>/dev/null || echo unreadable
+}
+
+codex_catalog_source() {
+  codex plugin marketplace list --json 2>/dev/null | node -e 'let s="";process.stdin.on("data",b=>s+=b);process.stdin.on("end",()=>{try{const m=JSON.parse(s).marketplaces.find(x=>x.name==="aidd-framework");console.log(m?.marketplaceSource?.source??"unproven")}catch{console.log("unreadable")}})' 2>/dev/null || echo unreadable
+}
+
+copilot_catalog_source() {
+  node -e 'try{const s=JSON.parse(require("fs").readFileSync(process.argv[1],"utf8"));console.log(s.extraKnownMarketplaces?.["aidd-framework"]?.source?.path??"unproven")}catch{console.log("unreadable")}' "$COPILOT_SETTINGS" 2>/dev/null || echo unreadable
 }
 
 still_theirs() {
@@ -50,9 +71,18 @@ still_theirs() {
   for t in "${TOOLS[@]}"; do
     case "$t" in
       codex) grep -qxF "$CODEX_SECTION" "$CODEX_CONFIG" && ok "codex: the person's $REF is still enabled after $step" \
-        || bad "codex: the person's $REF section is gone after $step" ;;
+        || bad "codex: the person's $REF section is gone after $step"
+        [[ "$(codex_catalog_source)" == "$CODEX_FOREIGN_FIXTURE" ]] \
+          && ok "codex: foreign same-name catalogue source unchanged after $step" \
+          || bad "codex: foreign same-name catalogue source changed after $step"
+        [[ "$(cat "$CODEX_CACHE_WITNESS" 2>/dev/null)" == "$CODEX_CACHE_MINE" ]] \
+          && ok "codex: foreign marketplace cache bytes are unchanged after $step" \
+          || bad "codex: foreign marketplace cache bytes changed or vanished after $step" ;;
       copilot) [[ "$(copilot_key)" == "true" ]] && ok "copilot: the person's $REF is still enabled after $step" \
-        || bad "copilot: the person's $REF reads '$(copilot_key)' after $step" ;;
+        || bad "copilot: the person's $REF reads '$(copilot_key)' after $step"
+        [[ "$(copilot_catalog_source)" == "$COPILOT_FOREIGN_FIXTURE" ]] \
+          && ok "copilot: foreign same-name catalogue source unchanged after $step" \
+          || bad "copilot: foreign same-name catalogue source changed after $step" ;;
       cursor) [[ "$(cat "$CURSOR_MANIFEST" 2>/dev/null)" == "$CURSOR_MINE" ]] && ok "cursor: the person's plugin.json is untouched after $step" \
         || bad "cursor: the person's plugin.json changed or vanished after $step" ;;
     esac

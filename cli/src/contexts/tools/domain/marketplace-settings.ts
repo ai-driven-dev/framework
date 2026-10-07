@@ -12,6 +12,9 @@ export interface MarketplaceSettings {
   settingsPath: string;
   settingsKey: string;
   enabledPluginsKey?: string;
+  /** A true entry installs the plugin when the host next loads this repository. Only project
+   * native refs proven during this run may be projected into this file. */
+  declarativePluginActivationRequiresNativeProof?: boolean;
   /**
    * Where the tool keeps its registered marketplaces, for `doctor`, which checks the tool
    * actually wrote one. A path names a file of its own, which this CLI neither commits nor

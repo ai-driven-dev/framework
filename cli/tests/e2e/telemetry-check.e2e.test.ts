@@ -208,7 +208,7 @@ describe("aidd telemetry check — the journey and its edge cases", () => {
       );
 
       const result = await runCli(["telemetry", "check"], projectDir, fakeHome, {
-        env: { CLAUDE_CODE_SESSION_ID: CLAUDE_SESSION },
+        env: { CODEX_THREAD_ID: "", CLAUDE_CODE_SESSION_ID: CLAUDE_SESSION },
       });
 
       expect(result.exitCode, result.stderr).toBe(0);
@@ -633,7 +633,7 @@ describe("aidd telemetry check — not yet stops being a failure", () => {
       );
 
       const result = await runCli(["telemetry", "check"], projectDir, fakeHome, {
-        env: { CLAUDE_CODE_SESSION_ID: CLAUDE_SESSION },
+        env: { CODEX_THREAD_ID: "", CLAUDE_CODE_SESSION_ID: CLAUDE_SESSION },
       });
 
       expect(result.exitCode, result.stderr).toBe(1);

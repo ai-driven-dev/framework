@@ -182,24 +182,28 @@ describe("ModeBFlatMaterializationTranslator", () => {
       });
     }
 
-    it("drops the servers a previous version contributed even when the new version contributes none", async () => {
+    it("refuses to unmerge an old server whose recorded digest cannot prove its current bytes", async () => {
       const { adapter, fs } = buildAdapter();
       const configPath = join(PROJECT_ROOT, "opencode.json");
-      fs.setFile(configPath, JSON.stringify({ mcp: { "old-tool": { type: "local" } } }));
+      const userContent = JSON.stringify({ mcp: { "old-tool": { type: "local" } } });
+      fs.setFile(configPath, userContent);
       const manifest = Manifest.create();
       manifest.addTool("opencode", "test", []);
 
-      await adapter.addPlugin(
-        mcpDist({}),
-        "opencode",
-        { kind: "local", path: "/plugin-source" },
-        PROJECT_ROOT,
-        manifest,
-        undefined,
-        new Map([["old-tool", "digest-of-old-tool"]])
-      );
+      await expect(
+        adapter.addPlugin(
+          mcpDist({}),
+          "opencode",
+          { kind: "local", path: "/plugin-source" },
+          PROJECT_ROOT,
+          manifest,
+          undefined,
+          new Map([["old-tool", "digest-of-old-tool"]])
+        )
+      ).rejects.toThrow(/edited after install/);
 
-      expect(JSON.parse(fs.getFile(configPath) ?? "null")).toStrictEqual({ mcp: {} });
+      expect(fs.getFile(configPath)).toBe(userContent);
+      expect(manifest.getPlugins("opencode")).toEqual([]);
     });
 
     it("propagates a failure to read the MCP config other than the file being absent", async () => {

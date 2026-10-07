@@ -1,4 +1,4 @@
-import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
+import { chmod, mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
@@ -118,11 +118,12 @@ describe("Claude Code's own installed_plugins.json", () => {
     expect(reading.unreadable).toBeUndefined();
   });
 
-  it("says it could not read an absent registry, and carries no refs at all", async () => {
+  it("distinguishes an absent registry from an unreadable one", async () => {
     const reading = await readerFor("claude").read(PROJECT);
 
     expect(reading.refs).toBeUndefined();
-    expect(reading.unreadable).toBe("ENOENT");
+    expect(reading.absent).toBe(true);
+    expect(reading.unreadable).toBeUndefined();
   });
 
   /**
@@ -254,11 +255,12 @@ describe("Codex's own config.toml", () => {
     expect(refs?.get("b@m")).toEqual({ enabled: false });
   });
 
-  it("says it could not read an absent config, and carries no refs", async () => {
+  it("distinguishes an absent config from an unreadable one", async () => {
     const reading = await readerFor("codex").read(PROJECT);
 
     expect(reading.refs).toBeUndefined();
-    expect(reading.unreadable).toBe("ENOENT");
+    expect(reading.absent).toBe(true);
+    expect(reading.unreadable).toBeUndefined();
   });
 });
 
@@ -307,10 +309,36 @@ describe("Copilot's own settings.json", () => {
     expect(reading.unreadable).toBeUndefined();
   });
 
-  it("says it could not read an absent settings file", async () => {
-    expect((await readerFor("copilot").read(PROJECT)).unreadable).toBe("ENOENT");
+  it("distinguishes an absent settings file from an unreadable one", async () => {
+    const reading = await readerFor("copilot").read(PROJECT);
+    expect(reading.refs).toBeUndefined();
+    expect(reading.absent).toBe(true);
+    expect(reading.unreadable).toBeUndefined();
   });
 });
+
+for (const [tool, path] of [
+  ["claude", ".claude/plugins/installed_plugins.json"],
+  ["codex", ".codex/config.toml"],
+  ["copilot", ".copilot/settings.json"],
+] as const) {
+  it.runIf(process.platform !== "win32" && process.getuid?.() !== 0)(
+    `${tool} keeps an EACCES registry unproven`,
+    async () => {
+      await write(path, "{}\n");
+      const target = join(home, path);
+      await chmod(target, 0o000);
+      try {
+        const reading = await readerFor(tool).read(PROJECT);
+        expect(reading.refs).toBeUndefined();
+        expect(reading.absent).toBeUndefined();
+        expect(reading.unreadable).toMatch(/EACCES|EPERM/);
+      } finally {
+        await chmod(target, 0o600);
+      }
+    }
+  );
+}
 
 describe("Claude Code's registry, at the edges of its shape", () => {
   const PATH = ".claude/plugins/installed_plugins.json";

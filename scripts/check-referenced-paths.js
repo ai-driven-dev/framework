@@ -26,6 +26,14 @@ function topLevelEntries() {
   return new Set(fs.readdirSync(ROOT).filter((entry) => entry !== ".git"));
 }
 
+/**
+ * Paths this repository's prose names as something the reader creates, never as its own content.
+ * `.aidd/config.json` is the telemetry opt-in switch a repository commits to turn measurement on;
+ * this one has not, so that absence is the state the prose describes. The anchor appears as soon
+ * as a contributor runs the CLI in this checkout, which is what turned a page into a refusal.
+ */
+const READER_CREATED = new Set([".aidd/config.json"]);
+
 const BACKTICKED = /`([^`\n]+)`/gu;
 
 function referencedPaths(content, entries = topLevelEntries()) {
@@ -42,6 +50,8 @@ function referencedPaths(content, entries = topLevelEntries()) {
       // Files only: a bare directory is usually a shape rather than a location, and
       // directories drift far less than the files inside them.
       if (!path.extname(token)) continue;
+
+      if (READER_CREATED.has(token)) continue;
 
       const head = token.split("/")[0];
       if (!entries.has(head)) continue;

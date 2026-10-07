@@ -26,6 +26,13 @@ export class InvalidPluginScopeError extends Error {
   }
 }
 
+export class ActiveMachineDependentsError extends Error {
+  constructor(target: string, projects: readonly string[]) {
+    super(`Cannot remove ${target}: active projects still depend on it: ${projects.join(", ")}.`);
+    this.name = "ActiveMachineDependentsError";
+  }
+}
+
 export class AuthenticationError extends Error {
   constructor(source: string) {
     super(`Authentication failed (${source}). Run \`aidd auth login\` to authenticate.`);
@@ -127,6 +134,13 @@ export class OpencodeDualConfigError extends Error {
   constructor() {
     super("Both opencode.json and opencode.jsonc exist. Remove one.");
     this.name = "OpencodeDualConfigError";
+  }
+}
+
+export class KiloDualConfigError extends Error {
+  constructor() {
+    super("Both Kilo JSON and JSONC config variants exist at the same location. Remove one.");
+    this.name = "KiloDualConfigError";
   }
 }
 

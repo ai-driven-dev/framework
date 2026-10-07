@@ -16,6 +16,8 @@ import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
 import { FakeCurrentVersion } from "../../../../helpers/ports/fake-current-version.js";
 import { fakeEnsureBuiltMarketplace } from "../../../../helpers/ports/fake-ensure-built-marketplace.js";
+import { FakeHostPluginRegistryReader } from "../../../../helpers/ports/fake-host-plugin-registry-reader.js";
+import { FakeNativeMarketplaceSourceReader } from "../../../../helpers/ports/fake-native-marketplace-source-reader.js";
 import { FakeNativePluginActivator } from "../../../../helpers/ports/fake-native-plugin-activator.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
@@ -24,14 +26,42 @@ import { InMemoryMarketplaceRegistry } from "../../../../helpers/ports/in-memory
 const PROJECT_ROOT = "/test-project";
 const VERSION = "1.0.0";
 
-/** A manifest with claude installed and no plugin — enough for `sync` to run its
- * settings pass, without a registered activator to drive (no catalog fixture needed). */
+/** A manifest with Claude installed and no plugin, for both registry and activation checks. */
 async function manifestRepoWithClaudeInstalled(): Promise<InMemoryManifestRepository> {
   const manifestRepo = new InMemoryManifestRepository();
   const manifest = Manifest.create();
   manifest.addTool("claude", "test", []);
   await manifestRepo.save(manifest);
   return manifestRepo;
+}
+
+function seedFrameworkCatalog(fs: InMemoryFileAdapter): void {
+  fs.setFile(
+    "/built/claude/.claude-plugin/marketplace.json",
+    JSON.stringify({ name: FRAMEWORK_MARKETPLACE_NAME, version: VERSION, plugins: [] })
+  );
+}
+
+function freshHostProof(activator: FakeNativePluginActivator) {
+  return {
+    pluginRegistries: new Map([
+      [
+        "claude" as const,
+        new FakeHostPluginRegistryReader({ location: "/host/plugins.json", refs: new Map() }),
+      ],
+    ]),
+    sources: new Map([
+      [
+        "claude" as const,
+        new FakeNativeMarketplaceSourceReader(
+          activator,
+          "registry",
+          (path) => (path === "/built/claude" ? FRAMEWORK_MARKETPLACE_NAME : undefined),
+          new Map()
+        ),
+      ],
+    ]),
+  };
 }
 
 function frameworkMarketplace(): Marketplace {
@@ -47,6 +77,7 @@ describe("the shared source's own reference, recorded by sync", () => {
   it("records this project's reference when the framework marketplace is already registered", async () => {
     const fs = new InMemoryFileAdapter({}, new DeterministicHasher());
     fs.setFile(`${PROJECT_ROOT}/marker`, "");
+    seedFrameworkCatalog(fs);
     const manifestRepo = await manifestRepoWithClaudeInstalled();
     const registry = new InMemoryMarketplaceRegistry();
     await registry.save(PROJECT_ROOT, frameworkMarketplace());
@@ -54,6 +85,8 @@ describe("the shared source's own reference, recorded by sync", () => {
       fs,
       () => "/fake-home/.config/aidd"
     );
+    const activator = new FakeNativePluginActivator({ available: true });
+    const proof = freshHostProof(activator);
 
     const useCase = new MarketplaceSyncSettingsUseCase(
       fs,
@@ -61,13 +94,16 @@ describe("the shared source's own reference, recorded by sync", () => {
       registry,
       new DeterministicHasher(),
       new CapturingLogger(),
-      new Map(), // no activators: this run only proves the reference, not native activation
+      new Map([["claude", activator]]),
       fakeEnsureBuiltMarketplace(),
       new Map(),
       () => "",
       undefined,
       userSourceReferences,
-      new FakeCurrentVersion(VERSION)
+      new FakeCurrentVersion(VERSION),
+      proof.pluginRegistries,
+      undefined,
+      proof.sources
     );
 
     await useCase.execute({ projectRoot: PROJECT_ROOT });
@@ -81,6 +117,7 @@ describe("the shared source's own reference, recorded by sync", () => {
     const fs = new InMemoryFileAdapter({}, new DeterministicHasher());
     fs.setFile(`${PROJECT_ROOT}/marker`, "");
     fs.setFile("/fake-home/.config/aidd/references.json", "not json");
+    seedFrameworkCatalog(fs);
     const manifestRepo = await manifestRepoWithClaudeInstalled();
     const registry = new InMemoryMarketplaceRegistry();
     await registry.save(PROJECT_ROOT, frameworkMarketplace());
@@ -89,6 +126,8 @@ describe("the shared source's own reference, recorded by sync", () => {
       () => "/fake-home/.config/aidd"
     );
     const logger = new CapturingLogger();
+    const activator = new FakeNativePluginActivator({ available: true });
+    const proof = freshHostProof(activator);
 
     const useCase = new MarketplaceSyncSettingsUseCase(
       fs,
@@ -96,13 +135,16 @@ describe("the shared source's own reference, recorded by sync", () => {
       registry,
       new DeterministicHasher(),
       logger,
-      new Map(),
+      new Map([["claude", activator]]),
       fakeEnsureBuiltMarketplace(),
       new Map(),
       () => "",
       undefined,
       userSourceReferences,
-      new FakeCurrentVersion(VERSION)
+      new FakeCurrentVersion(VERSION),
+      proof.pluginRegistries,
+      undefined,
+      proof.sources
     );
 
     const result = await useCase.execute({ projectRoot: PROJECT_ROOT });
@@ -155,6 +197,7 @@ describe("the shared source's own reference, recorded by sync", () => {
   it("recreates the framework marketplace when this machine's registry holds nothing at all", async () => {
     const fs = new InMemoryFileAdapter({}, new DeterministicHasher());
     fs.setFile(`${PROJECT_ROOT}/marker`, "");
+    seedFrameworkCatalog(fs);
     const manifestRepo = await manifestRepoWithClaudeInstalled();
     const registry = new InMemoryMarketplaceRegistry(); // empty: nothing registered yet
     const userSourceReferences = new UserSourceReferencesAdapter(
@@ -169,6 +212,8 @@ describe("the shared source's own reference, recorded by sync", () => {
         return { registered: true, scope: "user" as const };
       },
     };
+    const activator = new FakeNativePluginActivator({ available: true });
+    const proof = freshHostProof(activator);
 
     const useCase = new MarketplaceSyncSettingsUseCase(
       fs,
@@ -176,13 +221,16 @@ describe("the shared source's own reference, recorded by sync", () => {
       registry,
       new DeterministicHasher(),
       new CapturingLogger(),
-      new Map(),
+      new Map([["claude", activator]]),
       fakeEnsureBuiltMarketplace(),
       new Map(),
       () => "",
       registerFramework,
       userSourceReferences,
-      new FakeCurrentVersion(VERSION)
+      new FakeCurrentVersion(VERSION),
+      proof.pluginRegistries,
+      undefined,
+      proof.sources
     );
 
     await useCase.execute({ projectRoot: PROJECT_ROOT, recreateFrameworkIfMissing: true });
@@ -190,6 +238,8 @@ describe("the shared source's own reference, recorded by sync", () => {
     expect((await registry.list(PROJECT_ROOT)).map((m) => m.name)).toContain(
       FRAMEWORK_MARKETPLACE_NAME
     );
+    expect(activator.addedMarketplaces).toEqual(["/built/claude"]);
+    await useCase.execute({ projectRoot: PROJECT_ROOT });
     expect(await userSourceReferences.listAllReferencingProjects()).toContain(PROJECT_ROOT);
   });
 

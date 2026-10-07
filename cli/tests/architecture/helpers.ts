@@ -3,12 +3,16 @@
  * enough for a pre-commit hook and cannot be broken by runtime wiring.
  */
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
-import { dirname, join, normalize, relative, resolve } from "node:path";
+import { join, posix, relative, resolve } from "node:path";
 
 export const CLI_ROOT = resolve(import.meta.dirname, "..", "..");
 export const SRC = join(CLI_ROOT, "src");
 
 export const REPO_ROOT = resolve(CLI_ROOT, "..");
+
+export function canonicalPath(path: string): string {
+  return path.replace(/\\/g, "/");
+}
 
 export function sourceFiles(): string[] {
   const out: string[] = [];
@@ -16,7 +20,7 @@ export function sourceFiles(): string[] {
     for (const entry of readdirSync(dir)) {
       const full = join(dir, entry);
       if (statSync(full).isDirectory()) walk(full);
-      else if (entry.endsWith(".ts")) out.push(relative(CLI_ROOT, full));
+      else if (entry.endsWith(".ts")) out.push(canonicalPath(relative(CLI_ROOT, full)));
     }
   };
   walk(SRC);
@@ -37,7 +41,7 @@ export function pluginReadmes(): string[] {
   for (const entry of readdirSync(pluginsDir, { withFileTypes: true })) {
     if (!entry.isDirectory()) continue;
     const readme = join(pluginsDir, entry.name, "README.md");
-    if (existsSync(readme)) found.push(join("plugins", entry.name, "README.md"));
+    if (existsSync(readme)) found.push(canonicalPath(join("plugins", entry.name, "README.md")));
   }
   if (found.length === 0) {
     throw new Error("no plugin README found — the scope of this rule is stale");
@@ -53,11 +57,12 @@ export function pluginReadmes(): string[] {
  */
 export const INTERNAL_IMPORT = /(?:from|import)\s*\(?\s*["'](\.[^"']+|@\/[^"']+)["']/g;
 
-function resolveImportTarget(file: string, specifier: string): string {
+export function resolveImportTarget(file: string, specifier: string): string {
+  const target = canonicalPath(specifier);
   return (
-    specifier.startsWith("@/")
-      ? `src/${specifier.slice(2)}`
-      : normalize(join(dirname(file), specifier))
+    target.startsWith("@/")
+      ? `src/${target.slice(2)}`
+      : posix.join(posix.dirname(canonicalPath(file)), target)
   ).replace(/\.js$/, ".ts");
 }
 

@@ -54,7 +54,7 @@ describe.concurrent("E2E: persona journeys", () => {
         projectDir,
         fakeHome,
         `
-spawn node ${cliPath()}
+spawn ${process.execPath} ${cliPath()}
 expect {
   -re {AI-Driven Development CLI} { puts "BANNER_OK" }
   timeout { puts "TIMEOUT"; exit 1 }
@@ -241,7 +241,7 @@ exit 0
         projectDir,
         fakeHome,
         `
-spawn bash -c "cd '${projectDir}' && node ${cliPath()}"
+spawn bash -c "cd '${projectDir}' && ${process.execPath} ${cliPath()}"
 expect {
   -re {AI-Driven Development CLI} { puts "BANNER_OK" }
   timeout { puts "TIMEOUT"; exit 1 }

@@ -1,10 +1,12 @@
 import { existsSync } from "node:fs";
-import { mkdtemp, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { setTimeout as pause } from "node:timers/promises";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { Manifest } from "../../../../src/contexts/framework/domain/manifest.js";
 import { UserManifestRepositoryAdapter } from "../../../../src/contexts/framework/infrastructure/user-manifest-repository-adapter.js";
+import { atomicWriteFile } from "../../../../src/runtime/filesystem/atomic-write.js";
 
 describe("UserManifestRepositoryAdapter", () => {
   let userConfigDir: string;
@@ -12,7 +14,7 @@ describe("UserManifestRepositoryAdapter", () => {
 
   beforeEach(async () => {
     userConfigDir = await mkdtemp(join(tmpdir(), "aidd-user-manifest-repo-"));
-    adapter = new UserManifestRepositoryAdapter(() => userConfigDir);
+    adapter = new UserManifestRepositoryAdapter(() => userConfigDir, atomicWriteFile);
   });
 
   afterEach(async () => {
@@ -76,6 +78,68 @@ describe("UserManifestRepositoryAdapter", () => {
     });
   });
 
+  describe("exclusive machine mutations", () => {
+    it("fails closed at the bounded deadline without stealing another process's lock", async () => {
+      const lock = `${adapter.path}.lock`;
+      await mkdir(lock);
+      const now = vi.spyOn(Date, "now").mockReturnValueOnce(0).mockReturnValue(30_000);
+      await expect(adapter.withExclusiveAccess(async () => {})).rejects.toThrow(
+        /User manifest is busy.*\.lock/
+      );
+      now.mockRestore();
+      expect(existsSync(lock)).toBe(true);
+    });
+
+    it("serializes two claims so the second reads the first after the lock releases", async () => {
+      const second = new UserManifestRepositoryAdapter(() => userConfigDir, atomicWriteFile);
+      let release = () => {};
+      const held = new Promise<void>((resolve) => {
+        release = resolve;
+      });
+      const firstMutation = adapter.withExclusiveAccess(async () => {
+        const manifest = (await adapter.load()) ?? Manifest.create();
+        manifest.addTool("cursor", "1.0.0", []);
+        await adapter.save(manifest);
+        await held;
+      });
+      await pause(20);
+      expect(existsSync(`${adapter.path}.lock`)).toBe(true);
+      let secondEntered = false;
+      const secondMutation = second.withExclusiveAccess(async () => {
+        secondEntered = true;
+        const manifest = (await second.load()) ?? Manifest.create();
+        manifest.addTool("codex", "1.0.0", []);
+        await second.save(manifest);
+      });
+      await pause(150);
+      expect(secondEntered).toBe(false);
+      release();
+      await Promise.all([firstMutation, secondMutation]);
+      expect((await adapter.load())?.getInstalledToolIds()).toEqual(["cursor", "codex"]);
+      expect(existsSync(`${adapter.path}.lock`)).toBe(false);
+    });
+
+    it("keeps the old JSON and releases the lock when the atomic writer fails", async () => {
+      const baseline = Manifest.create();
+      baseline.addTool("cursor", "1.0.0", []);
+      await adapter.save(baseline);
+      const failing = new UserManifestRepositoryAdapter(
+        () => userConfigDir,
+        async () => {
+          throw new Error("write failed before rename");
+        }
+      );
+      const replacement = Manifest.create();
+      replacement.addTool("codex", "1.0.0", []);
+      await expect(failing.withExclusiveAccess(() => failing.save(replacement))).rejects.toThrow(
+        "write failed before rename"
+      );
+      expect((await adapter.load())?.getInstalledToolIds()).toEqual(["cursor"]);
+      expect(existsSync(`${adapter.path}.lock`)).toBe(false);
+      await expect(adapter.withExclusiveAccess(async () => {})).resolves.toBeUndefined();
+    });
+  });
+
   describe("delete()", () => {
     it("deletes manifest.json from disk", async () => {
       const manifest = Manifest.create();
@@ -108,7 +172,7 @@ describe("UserManifestRepositoryAdapter", () => {
   describe("manifest persistence", () => {
     it("creates the user config dir if it does not exist yet", async () => {
       const freshDir = join(userConfigDir, "not-yet-created");
-      const freshAdapter = new UserManifestRepositoryAdapter(() => freshDir);
+      const freshAdapter = new UserManifestRepositoryAdapter(() => freshDir, atomicWriteFile);
 
       await freshAdapter.save(Manifest.create());
 

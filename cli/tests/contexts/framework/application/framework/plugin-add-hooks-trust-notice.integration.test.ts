@@ -29,7 +29,8 @@ async function installWithLogger(toolId: "codex" | "claude") {
     deps.hasher,
     logger,
     new InMemoryMarketplaceRegistry(),
-    fakeEnsureBuiltMarketplace()
+    fakeEnsureBuiltMarketplace(),
+    deps.userManifestRepo
   );
   await useCase.execute({
     source: { kind: "local", path: PLUGIN_FIXTURE },

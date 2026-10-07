@@ -1,16 +1,24 @@
 import { homedir as nodeHomedir } from "node:os";
 import { dirname, join } from "node:path";
-import { NativePluginCliError, PluginNotFoundError } from "../../../../kernel/errors.js";
+import {
+  ActiveMachineDependentsError,
+  NativePluginCliError,
+  PluginNotFoundError,
+} from "../../../../kernel/errors.js";
 import type { FileReader } from "../../../../kernel/ports/file-reader.js";
 import type { FileWriter } from "../../../../kernel/ports/file-writer.js";
 import type { Logger } from "../../../../kernel/ports/logger.js";
 import { resolveHomeDir } from "../../../../kernel/reading/home-dir.js";
 import type { MarketplaceScope } from "../../../../kernel/scope.js";
-import type { AiToolId } from "../../../../kernel/tool.js";
+import type { AiToolId, ToolId } from "../../../../kernel/tool.js";
 import type { MarketplaceRegistry } from "../../../distribution/domain/ports/marketplace-registry.js";
 import type { McpCapability } from "../../../tools/domain/capabilities/mcp-capability.js";
 import { unmergeOpencodeMcp } from "../../../tools/domain/formats/opencode-mcp-merge.js";
-import type { HostPluginRegistryReader } from "../../../tools/domain/ports/host-plugin-registry-reader.js";
+import type {
+  HostPluginRegistryReader,
+  HostPluginRegistryReading,
+} from "../../../tools/domain/ports/host-plugin-registry-reader.js";
+import type { NativeMarketplaceSourceReader } from "../../../tools/domain/ports/native-marketplace-source-reader.js";
 import type { NativePluginActivator } from "../../../tools/domain/ports/native-plugin-activator.js";
 import {
   getToolConfig,
@@ -24,8 +32,16 @@ import type { Manifest } from "../../domain/manifest.js";
 import type { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";
 import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
 import type { UserSourceReferences } from "../../domain/ports/user-source-references.js";
+import { inspectNativeMarketplaceSource } from "../ownership/native-marketplace-source-proof.js";
+import {
+  detachNativePluginRefs,
+  isMachineOwnedNativeRef,
+} from "../ownership/native-plugin-ownership.js";
+import { assertProjectPathWithinRoot } from "../ownership/project-path-boundary.js";
+import { assertProjectMcpEntriesRemovable } from "../ownership/project-plugin-cleanup.js";
+import { detachUserPlugin } from "../ownership/user-plugin-ownership.js";
 import { resolveCacheCandidate } from "../shared/purge-declared-cache.js";
-import { removeProjectHooks } from "../shared/remove-project-hooks.js";
+import { assertProjectHooksRemovable, removeProjectHooks } from "../shared/remove-project-hooks.js";
 import { resolveUninstallScopeOrder } from "../shared/resolve-uninstall-scope.js";
 import {
   describeGuardedPluginRefMessage,
@@ -35,7 +51,8 @@ import {
   resolveProjectRootForReferences,
   toleratingUnreadableSourceReferences,
 } from "../shared/shared-source-reference-support.js";
-import { loadPluginManifest } from "./plugin-helpers.js";
+import { userScopeFilesSafeToDelete } from "../shared/user-scope-plugin-files.js";
+import { deletePluginFilesForTool, loadPluginManifest } from "./plugin-helpers.js";
 import {
   isFrameworkPrimeFlatMcp,
   resolveBaseDirFromRecord,
@@ -46,6 +63,7 @@ export interface PluginRemoveOptions {
   pluginName: string;
   toolIds: AiToolId[] | "all";
   projectRoot: string;
+  scope?: "project" | "user";
 }
 
 export class PluginRemoveUseCase {
@@ -69,16 +87,230 @@ export class PluginRemoveUseCase {
     /** Resolves the scope this project's own registry recorded for `plugin.marketplace` — the one
      * fact `frameworkSourceIsShared` needs and a plugin record does not carry. Absent treats every
      * marketplace as not shared. */
-    private readonly marketplaceRegistry?: MarketplaceRegistry
+    private readonly marketplaceRegistry?: MarketplaceRegistry,
+    private readonly userManifestRepo?: ManifestRepository,
+    private readonly nativeMarketplaceSources: ReadonlyMap<
+      AiToolId,
+      NativeMarketplaceSourceReader
+    > = new Map()
   ) {}
 
   async execute(options: PluginRemoveOptions): Promise<void> {
+    if (options.scope === "user") {
+      if (this.userManifestRepo === undefined)
+        throw new Error("User manifest repository is required for user-scope plugin removal.");
+      if (this.userManifestRepo.withExclusiveAccess !== undefined) {
+        return this.userManifestRepo.withExclusiveAccess(() => this.removeUserPlugin(options));
+      }
+      return this.removeUserPlugin(options);
+    }
     const { pluginName, toolIds, projectRoot } = options;
     const manifest = await loadPluginManifest(this.manifestRepo);
     const resolvedToolIds = resolvePluginToolIds(toolIds, manifest);
+    for (const toolId of resolvedToolIds) {
+      const plugin = manifest.getPlugins(toolId).find((p) => p.name === pluginName);
+      if (plugin === undefined) continue;
+      await assertProjectMcpEntriesRemovable(this.fs, plugin, toolId, projectRoot);
+      await assertProjectHooksRemovable(this.fs, plugin, toolId, projectRoot);
+      await this.assertProjectNativeSource(
+        plugin,
+        toolId,
+        projectRoot,
+        manifest.getNativeRegistrations(toolId)
+      );
+    }
+    const userTools = resolvedToolIds.filter((toolId) =>
+      manifest.getPlugins(toolId).some((p) => p.name === pluginName && p.scope === "user")
+    );
+    const nativeRefs = new Map<ToolId, readonly string[]>();
+    for (const toolId of resolvedToolIds) {
+      const plugin = manifest.getPlugins(toolId).find((p) => p.name === pluginName);
+      const registrations = manifest.getNativeRegistrations(toolId);
+      if (plugin?.marketplace === undefined || registrations === undefined) continue;
+      const hostName = registrations.marketplaces.find(
+        (m) => m.alias === plugin.marketplace
+      )?.hostName;
+      if (hostName !== undefined) nativeRefs.set(toolId, [`${pluginName}@${hostName}`]);
+    }
     const removed = await this.removeFromTools(pluginName, resolvedToolIds, projectRoot, manifest);
     if (!removed) throw new PluginNotFoundError(pluginName);
     await this.manifestRepo.save(manifest);
+    await detachNativePluginRefs(this.userManifestRepo, this.fs, projectRoot, nativeRefs);
+    for (const toolId of userTools) {
+      await detachUserPlugin(this.userManifestRepo, this.fs, toolId, pluginName, projectRoot);
+    }
+  }
+
+  private async assertProjectNativeSource(
+    plugin: InstalledPlugin,
+    toolId: AiToolId,
+    projectRoot: string,
+    registrations: NativeRegistrations | undefined
+  ): Promise<void> {
+    const activation = resolvePluginsCapability(toolId)?.nativeActivation;
+    if (activation == null || plugin.marketplace === undefined) return;
+    const activator = this.activators.get(activation.binary);
+    if (activator === undefined || !activator.isAvailable()) return;
+    const registration = registrations?.marketplaces.find(
+      (entry) => entry.alias === plugin.marketplace
+    );
+    if (registration === undefined)
+      throw new Error(
+        `${toolId}: '${plugin.name}' has no recorded native catalogue source for '${plugin.marketplace}'; reconcile manually before removal.`
+      );
+    const ref = `${plugin.name}@${registration.hostName}`;
+    if (
+      pluginEnablementIsMachineGlobal(toolId) &&
+      !(await isMachineOwnedNativeRef(this.userManifestRepo, toolId, ref))
+    )
+      throw new Error(
+        `${toolId}: '${ref}' is an unclaimed machine-global host ref; canonical machine claim required before removal.`
+      );
+    if (
+      registrations?.pluginRefs.includes(ref) !== true &&
+      this.activators.get(activation.binary)?.enablesPlugins() !== true
+    )
+      throw new Error(
+        `${toolId}: '${ref}' is not a ref this project enabled; reconcile manually before removal.`
+      );
+    const proof = await inspectNativeMarketplaceSource(
+      this.nativeMarketplaceSources.get(toolId),
+      projectRoot,
+      registration
+    );
+    if (proof.status !== "owned") {
+      throw new Error(
+        proof.reason ??
+          `${toolId}: catalogue '${registration.hostName}' has unproven host source; reconcile manually.`
+      );
+    }
+    if (pluginEnablementIsMachineGlobal(toolId) || registrations?.pluginRefs.includes(ref) !== true)
+      return;
+    const reader = this.hostPluginRegistries.get(toolId);
+    if (reader === undefined)
+      throw new Error(
+        `${toolId}: '${ref}' has no readable host plugin registry; uninstall refused before project changes.`
+      );
+    let reading: HostPluginRegistryReading;
+    try {
+      reading = await reader.read(projectRoot);
+    } catch (error) {
+      throw new Error(
+        `${toolId}: '${ref}' host plugin registry read failed (${error instanceof Error ? error.message : String(error)}); uninstall refused.`
+      );
+    }
+    const current = reading.refs?.get(ref);
+    if (current?.enabled !== true || (current.scope !== "project" && current.scope !== "user"))
+      throw new Error(
+        `${toolId}: '${ref}' is not provably enabled with an exact host scope (${reading.unreadable ?? reading.location}); uninstall refused.`
+      );
+  }
+
+  private async removeUserPlugin(options: PluginRemoveOptions): Promise<void> {
+    const repo = this.userManifestRepo;
+    if (repo === undefined)
+      throw new Error("User manifest repository is required for user-scope plugin removal.");
+    const manifest = await loadPluginManifest(repo);
+    const toolIds = resolvePluginToolIds(options.toolIds, manifest);
+    const targets = toolIds.flatMap((toolId) => {
+      const plugin = manifest
+        .getPlugins(toolId)
+        .find((p) => p.name === options.pluginName && p.scope === "user");
+      return plugin === undefined ? [] : [{ toolId, plugin }];
+    });
+    const nativeTargets = toolIds.flatMap((toolId) => {
+      const registrations = manifest.getNativeRegistrations(toolId);
+      return (registrations?.pluginClaims ?? [])
+        .filter((claim) =>
+          options.pluginName.includes("@")
+            ? claim.ref === options.pluginName
+            : claim.ref.startsWith(`${options.pluginName}@`)
+        )
+        .map((claim) => ({ toolId, registrations: registrations as NativeRegistrations, claim }));
+    });
+    if (targets.length === 0 && nativeTargets.length === 0)
+      throw new PluginNotFoundError(options.pluginName);
+    if (!options.pluginName.includes("@") && nativeTargets.length > 1) {
+      throw new Error(
+        `Native plugin '${options.pluginName}' has multiple catalogues; use the exact <plugin>@<catalogue> ref.`
+      );
+    }
+    const dependents = [
+      ...new Set([
+        ...targets.flatMap(({ plugin }) => plugin.dependents),
+        ...nativeTargets.flatMap(({ claim }) => claim.dependents),
+      ]),
+    ];
+    if (dependents.length > 0) {
+      throw new ActiveMachineDependentsError(
+        `user-scope plugin '${options.pluginName}'`,
+        dependents
+      );
+    }
+    const safeFiles = await Promise.all(
+      targets.map(async ({ toolId, plugin }) => {
+        const files = await userScopeFilesSafeToDelete(
+          this.fs,
+          this.logger,
+          plugin,
+          toolId,
+          resolveHomeDir()
+        );
+        if (files.size !== plugin.files.size)
+          throw new Error(
+            `Refusing partial removal of user-scope plugin '${plugin.name}': a tracked file escaped its boundary.`
+          );
+        return { toolId, plugin, files };
+      })
+    );
+    const nativeRemoval = await Promise.all(
+      nativeTargets.map(async ({ toolId, registrations, claim }) => {
+        const activator = this.activators.get(registrations.binary);
+        const reader = this.hostPluginRegistries.get(toolId);
+        if (activator === undefined || !activator.isAvailable() || reader === undefined) {
+          throw new Error(
+            `Cannot prove or remove AIDD-owned native ref '${claim.ref}': ${registrations.binary} CLI or host registry is unavailable.`
+          );
+        }
+        const onHost = (await reader.read(options.projectRoot)).refs?.get(claim.ref);
+        if (onHost?.enabled !== true)
+          throw new Error(
+            `Cannot prove native ref '${claim.ref}' is still enabled on ${registrations.binary}; no host mutation made.`
+          );
+        const catalogues = registrations.marketplaces.filter((registration) =>
+          claim.ref.endsWith(`@${registration.hostName}`)
+        );
+        if (catalogues.length !== 1) {
+          throw new Error(
+            `Native ref '${claim.ref}' has no exact canonical catalogue source proof; removal refused.`
+          );
+        }
+        const proof = await inspectNativeMarketplaceSource(
+          this.nativeMarketplaceSources.get(toolId),
+          options.projectRoot,
+          catalogues[0]
+        );
+        if (proof.status !== "owned") {
+          throw new Error(proof.reason ?? `Native ref '${claim.ref}' has unproven host source.`);
+        }
+        return { toolId, registrations, claim, activator, scope: onHost.scope ?? "user" };
+      })
+    );
+    for (const target of nativeRemoval) {
+      target.activator.uninstallPlugin(target.claim.ref, target.scope);
+      const claims =
+        target.registrations.pluginClaims?.filter((claim) => claim.ref !== target.claim.ref) ?? [];
+      manifest.setNativeRegistrations(target.toolId, {
+        ...target.registrations,
+        pluginRefs: target.registrations.pluginRefs.filter((ref) => ref !== target.claim.ref),
+        pluginClaims: claims,
+      });
+    }
+    for (const { toolId, plugin, files } of safeFiles) {
+      await deletePluginFilesForTool(files, "user", toolId, options.projectRoot, this.fs, "user");
+      manifest.removePlugin(toolId, plugin.name);
+    }
+    await repo.save(manifest);
   }
 
   private async removeFromTools(
@@ -92,13 +324,36 @@ export class PluginRemoveUseCase {
       const plugins = manifest.getPlugins(toolId);
       const plugin = plugins.find((p) => p.name === pluginName);
       if (plugin === undefined) continue;
+      const registrations = manifest.getNativeRegistrations(toolId);
       const baseDir = resolveBaseDirFromRecord(plugin.scope, toolId, projectRoot, nodeHomedir);
-      const confirmed = await this.removeNativeActivation(plugin, toolId, projectRoot, manifest);
+      const confirmed = await this.removeNativeActivation(
+        plugin,
+        toolId,
+        projectRoot,
+        registrations
+      );
       if (confirmed !== undefined)
-        await this.purgeCachedPlugin(manifest, toolId, plugin, confirmed);
-      await this.deletePluginFiles(plugin.files, baseDir);
+        await this.purgeCachedPlugin(registrations, toolId, plugin, confirmed);
+      if (plugin.scope !== "user") await this.deletePluginFiles(plugin.files, baseDir);
       await this.removeMcpEntries(plugin, toolId, projectRoot);
-      await removeProjectHooks(this.fs, pluginName, toolId, projectRoot);
+      await removeProjectHooks(this.fs, plugin, toolId, projectRoot);
+      const hostName = registrations?.marketplaces.find(
+        (m) => m.alias === plugin.marketplace
+      )?.hostName;
+      const ref = hostName === undefined ? undefined : `${plugin.name}@${hostName}`;
+      const canDetachRef =
+        confirmed === true ||
+        (ref !== undefined &&
+          pluginEnablementIsMachineGlobal(toolId) &&
+          (await isMachineOwnedNativeRef(this.userManifestRepo, toolId, ref)));
+      if (hostName !== undefined && registrations !== undefined && canDetachRef) {
+        manifest.setNativeRegistrations(toolId, {
+          ...registrations,
+          pluginRefs: registrations.pluginRefs.filter(
+            (ref) => ref !== `${plugin.name}@${hostName}`
+          ),
+        });
+      }
       manifest.removePlugin(toolId, pluginName);
       removed = true;
     }
@@ -117,14 +372,21 @@ export class PluginRemoveUseCase {
     plugin: InstalledPlugin,
     toolId: AiToolId,
     projectRoot: string,
-    manifest: Manifest
+    registrations: NativeRegistrations | undefined
   ): Promise<boolean | undefined> {
     const nativeActivation = resolvePluginsCapability(toolId)?.nativeActivation;
     if (nativeActivation == null || plugin.marketplace === undefined) return undefined;
     const activator = this.activators.get(nativeActivation.binary);
     if (activator === undefined) return undefined;
+    if (!activator.isAvailable()) {
+      const hostName = this.hostNameFor(registrations, plugin.marketplace) ?? plugin.marketplace;
+      this.logger.warn(
+        `${nativeActivation.binary} CLI not found on PATH — '${plugin.name}@${hostName}' was not uninstalled from the host; its ref may remain enabled after local removal.`
+      );
+      return false;
+    }
+    await this.assertProjectNativeSource(plugin, toolId, projectRoot, registrations);
     const alias = plugin.marketplace;
-    const registrations = manifest.getNativeRegistrations(toolId);
     const registeredHostName = this.hostNameFor(registrations, alias);
     if (registeredHostName === undefined && registrations !== undefined) {
       this.logger.warn(
@@ -133,6 +395,12 @@ export class PluginRemoveUseCase {
     }
     const hostName = registeredHostName ?? alias;
     const ref = `${plugin.name}@${hostName}`;
+    if (await isMachineOwnedNativeRef(this.userManifestRepo, toolId, ref)) {
+      this.logger.warn(
+        `${toolId}: '${ref}' is an AIDD-owned machine plugin ref — left enabled; this project's claim detaches after local removal.`
+      );
+      return undefined;
+    }
     if (
       registeredHostName !== undefined &&
       activator.enablesPlugins() &&
@@ -272,7 +540,7 @@ export class PluginRemoveUseCase {
    * own `NativeRegistrations`, never the alias, which a host never learns.
    */
   private async purgeCachedPlugin(
-    manifest: Manifest,
+    registrations: NativeRegistrations | undefined,
     toolId: AiToolId,
     plugin: InstalledPlugin,
     confirmed: boolean
@@ -280,7 +548,7 @@ export class PluginRemoveUseCase {
     if (plugin.marketplace === undefined) return;
     const cacheRoot = nativeActivationOf(toolId)?.pluginCacheDir?.(resolveHomeDir());
     if (cacheRoot === undefined) return;
-    const hostName = this.hostNameFor(manifest.getNativeRegistrations(toolId), plugin.marketplace);
+    const hostName = this.hostNameFor(registrations, plugin.marketplace);
     if (hostName === undefined) return;
     const label = `${toolId}: cache for '${plugin.name}'`;
     const candidate = await resolveCacheCandidate(
@@ -315,6 +583,7 @@ export class PluginRemoveUseCase {
     const existing = await this.readExistingJson(outputPath);
     if (existing === null) return;
     const updated = unmergeOpencodeMcp(existing, plugin.mcpEntries);
+    await assertProjectPathWithinRoot(this.fs, projectRoot, outputPath);
     await this.fs.writeFile(outputPath, updated);
   }
 

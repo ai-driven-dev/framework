@@ -36,9 +36,15 @@ describe("E2E: a codex plugin enabled before setup stays with the person who ena
       const clean = await runCli(["clean", "--force"], test.projectDir, test.fakeHome, { env });
       expect(clean.exitCode).toBe(0);
 
-      const log = await readFile(logFile, "utf-8");
-      expect(log).not.toContain(`${PLUGIN_NAME}@`);
-      expect(await readFile(codexConfig, "utf-8")).toContain(THEIR_OWN_ENABLE);
+      const log = await readFile(logFile, "utf-8").catch((error: NodeJS.ErrnoException) => {
+        if (error.code === "ENOENT") return "";
+        throw error;
+      });
+      expect(log).toContain("plugin marketplace list --json");
+      expect(log).not.toContain("plugin marketplace add");
+      expect(log).not.toContain("plugin add");
+      expect(log).not.toContain("plugin remove");
+      expect(await readFile(codexConfig, "utf-8")).toBe(THEIR_OWN_ENABLE);
     } finally {
       await test.cleanup();
     }

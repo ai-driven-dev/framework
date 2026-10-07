@@ -1,4 +1,5 @@
 import "../../../../../src/contexts/tools/domain/profiles/claude/profile.js";
+import "../../../../../src/contexts/tools/domain/profiles/opencode/profile.js";
 import "../../../../../src/contexts/tools/domain/profiles/vscode/profile.js";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
@@ -6,6 +7,10 @@ import {
   marketplaceCatalogProbePath,
   readMarketplaceCatalogIdentity,
 } from "../../../../../src/contexts/framework/application/shared/read-marketplace-catalog-identity.js";
+import {
+  errnoError,
+  FaultingFileAdapter,
+} from "../../../../helpers/ports/faulting-file-adapter.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 
 const DIR = "/marketplace";
@@ -16,6 +21,44 @@ function fsWithCatalog(catalog: unknown): InMemoryFileAdapter {
 }
 
 describe("readMarketplaceCatalogIdentity", () => {
+  it("answers no identity when the declared catalog does not exist", async () => {
+    expect(
+      await readMarketplaceCatalogIdentity(new InMemoryFileAdapter(), "claude", DIR)
+    ).toBeUndefined();
+  });
+
+  it("answers no identity when the declared catalog cannot be read", async () => {
+    const fs = new FaultingFileAdapter({
+      [CATALOG_PATH]: JSON.stringify({ name: "aidd-framework" }),
+    });
+    fs.failOn("readFile", CATALOG_PATH, errnoError("EACCES"));
+
+    expect(await readMarketplaceCatalogIdentity(fs, "claude", DIR)).toBeUndefined();
+  });
+
+  it.each(["not JSON", "null", '{"name":'])(
+    "answers no identity for an unreadable catalog document: %s",
+    async (content) => {
+      const fs = new InMemoryFileAdapter({ [CATALOG_PATH]: content });
+
+      expect(await readMarketplaceCatalogIdentity(fs, "claude", DIR)).toBeUndefined();
+    }
+  );
+
+  it("reads OpenCode's declared catalog path even when a Claude catalog is also present", async () => {
+    const fs = fsWithCatalog({ name: "other-catalog", plugins: [{ name: "other-plugin" }] });
+    fs.setFile(
+      join(DIR, "opencode.json"),
+      JSON.stringify({ name: "opencode-catalog", plugins: [{ name: "opencode-plugin" }] })
+    );
+
+    expect(marketplaceCatalogProbePath("opencode", DIR)).toBe(join(DIR, "opencode.json"));
+    expect(await readMarketplaceCatalogIdentity(fs, "opencode", DIR)).toStrictEqual({
+      name: "opencode-catalog",
+      pluginNames: ["opencode-plugin"],
+    });
+  });
+
   it("reads the name and plugin names the tool's own catalog file declares", async () => {
     const fs = fsWithCatalog({ name: "aidd-framework", plugins: [{ name: "a" }, { name: "b" }] });
 

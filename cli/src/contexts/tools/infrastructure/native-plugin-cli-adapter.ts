@@ -7,6 +7,7 @@ export interface NativePluginCliShape {
   readonly forceRemoveArgs?: readonly string[];
   readonly sourceCheckVerb?: string;
   readonly upgradeVerb?: string;
+  readonly updateVerb?: string;
   readonly enableVerb?: string;
   /** How the tool spells removing a plugin it installed: `remove` for codex, `uninstall` for
    * claude and copilot. Absent where this CLI enables plugins through a file it writes. */
@@ -43,10 +44,11 @@ export class NativePluginCliAdapter extends AbstractNativePluginCliAdapter {
     return this.succeeds(["plugin", "marketplace", verb, name]) ? "live" : "dead";
   }
 
-  upgradeMarketplaces(): void {
+  upgradeMarketplaces(name: string): void {
     const verb = this.shape.upgradeVerb;
     if (verb === undefined) return;
-    this.run(["plugin", "marketplace", verb], `marketplace ${verb}`);
+    if (name.length === 0) throw new Error("A named marketplace is required for native refresh.");
+    this.run(["plugin", "marketplace", verb, name], `marketplace ${verb} ${name}`);
   }
 
   enablePlugin(pluginRef: string, scope: MarketplaceScope = "project"): void {
@@ -56,6 +58,13 @@ export class NativePluginCliAdapter extends AbstractNativePluginCliAdapter {
       ["plugin", verb, pluginRef, ...(this.shape.pluginArgs ?? []), ...this.scopeArgsFor(scope)],
       `plugin ${verb} ${pluginRef}`
     );
+  }
+
+  updatePlugin(pluginRef: string): void {
+    const verb = this.shape.updateVerb;
+    if (verb === undefined)
+      throw new Error(`${this.binary} does not support targeted native plugin update.`);
+    this.run(["plugin", verb, pluginRef], `plugin ${verb} ${pluginRef}`);
   }
 
   /** Undoes what `enablePlugin` did. `scope` must match what `enablePlugin` was called with: a

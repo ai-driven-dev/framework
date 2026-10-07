@@ -1,6 +1,6 @@
 import { resolve } from "node:path";
 import "../../../../../src/contexts/tools/domain/profiles/claude/profile.js";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { Marketplace } from "../../../../../src/contexts/distribution/domain/marketplace.js";
 import { MarketplaceSyncSettingsUseCase } from "../../../../../src/contexts/framework/application/flows/marketplace-sync-settings-use-case.js";
 import { Manifest } from "../../../../../src/contexts/framework/domain/manifest.js";
@@ -9,6 +9,8 @@ import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
 import { FakeCurrentVersion } from "../../../../helpers/ports/fake-current-version.js";
 import { fakeEnsureBuiltMarketplace } from "../../../../helpers/ports/fake-ensure-built-marketplace.js";
+import { FakeHostPluginRegistryReader } from "../../../../helpers/ports/fake-host-plugin-registry-reader.js";
+import { FakeNativeMarketplaceSourceReader } from "../../../../helpers/ports/fake-native-marketplace-source-reader.js";
 import { FakeNativePluginActivator } from "../../../../helpers/ports/fake-native-plugin-activator.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
@@ -42,11 +44,130 @@ function seededBuiltCatalog(): InMemoryFileAdapter {
   });
 }
 
+function freshHostProof(activator: FakeNativePluginActivator) {
+  return {
+    plugins: new Map([
+      [
+        "claude" as const,
+        new FakeHostPluginRegistryReader({
+          location: "/host/installed_plugins.json",
+          refs: new Map(),
+        }),
+      ],
+    ]),
+    sources: new Map([
+      [
+        "claude" as const,
+        new FakeNativeMarketplaceSourceReader(
+          activator,
+          "registry",
+          (path) => (path === "/built/claude" ? MARKETPLACE : undefined),
+          new Map()
+        ),
+      ],
+    ]),
+  };
+}
+
+describe("settings synchronization under the machine ownership lock", () => {
+  async function fixture() {
+    const projectRepo = manifestWithTool();
+    const machineRepo = new InMemoryManifestRepository(Manifest.create());
+    const registry = new InMemoryMarketplaceRegistry();
+    await registry.save(PROJECT_ROOT, marketplace());
+    const fs = seededBuiltCatalog();
+    const activator = new FakeNativePluginActivator({ available: true });
+    const proof = freshHostProof(activator);
+    let locked = false;
+    const accesses: boolean[] = [];
+    const originalLoad = projectRepo.load.bind(projectRepo);
+    const load = vi.spyOn(projectRepo, "load");
+    load.mockImplementation(async () => {
+      accesses.push(locked);
+      return originalLoad();
+    });
+    const acquireLock = vi.fn(() => {});
+    const withExclusiveAccess = async <T>(action: () => Promise<T>): Promise<T> => {
+      acquireLock();
+      locked = true;
+      try {
+        return await action();
+      } finally {
+        locked = false;
+      }
+    };
+    const sync = new MarketplaceSyncSettingsUseCase(
+      fs,
+      projectRepo,
+      registry,
+      new DeterministicHasher(),
+      new CapturingLogger(),
+      new Map([["claude", activator]]),
+      fakeEnsureBuiltMarketplace(),
+      new Map(),
+      () => "",
+      undefined,
+      undefined,
+      undefined,
+      proof.plugins,
+      {
+        path: machineRepo.path,
+        load: () => machineRepo.load(),
+        save: (manifest) => machineRepo.save(manifest),
+        delete: () => machineRepo.delete(),
+        withExclusiveAccess,
+      },
+      proof.sources
+    );
+    return { sync, fs, activator, projectRepo, machineRepo, acquireLock, accesses, load };
+  }
+
+  it.each([undefined, "project"] as const)(
+    "reads project ownership only inside the machine lock for scope %s",
+    async (scope) => {
+      const f = await fixture();
+      const result = await f.sync.execute({ projectRoot: PROJECT_ROOT, scope });
+      expect(result.errors).toEqual([]);
+      expect(f.acquireLock).toHaveBeenCalledTimes(1);
+      expect(f.accesses.length).toBeGreaterThan(0);
+      expect(f.accesses.every(Boolean)).toBe(true);
+      expect(f.activator.addedMarketplaces).toEqual(["/built/claude"]);
+      expect(f.machineRepo.saveCount).toBe(1);
+    }
+  );
+
+  it("does not reacquire the project ownership lock during an explicit user-scope sync", async () => {
+    const f = await fixture();
+    const result = await f.sync.execute({ projectRoot: PROJECT_ROOT, scope: "user" });
+    expect(result.errors).toEqual([]);
+    expect(f.acquireLock).not.toHaveBeenCalled();
+    expect(f.activator.addedMarketplaces).toEqual(["/built/claude"]);
+    expect(f.machineRepo.saveCount).toBe(1);
+  });
+
+  it("propagates a machine lock failure before reading or changing project and host state", async () => {
+    const f = await fixture();
+    const error = new Error("machine ownership lock unavailable");
+    f.acquireLock.mockImplementationOnce(() => {
+      throw error;
+    });
+    await expect(f.sync.execute({ projectRoot: PROJECT_ROOT })).rejects.toBe(error);
+    expect(f.load).not.toHaveBeenCalled();
+    expect(f.projectRepo.saveCount).toBe(0);
+    expect(f.machineRepo.saveCount).toBe(0);
+    expect(f.activator.addedMarketplaces).toEqual([]);
+    expect(f.activator.removedMarketplaces).toEqual([]);
+    expect(f.activator.enabledPlugins).toEqual([]);
+    expect(f.fs.getFile(`${PROJECT_ROOT}/.claude/settings.json`)).toBeUndefined();
+  });
+});
+
 describe("MarketplaceSyncSettingsUseCase — the activation scope a caller asks for", () => {
   it("enables at project scope by default, never claude's own implicit default", async () => {
     const activator = new FakeNativePluginActivator({ available: true, enablesPlugins: false });
     const registry = new InMemoryMarketplaceRegistry();
     await registry.save(PROJECT_ROOT, marketplace());
+    const proof = freshHostProof(activator);
     const useCase = new MarketplaceSyncSettingsUseCase(
       seededBuiltCatalog(),
       manifestWithTool(),
@@ -54,7 +175,15 @@ describe("MarketplaceSyncSettingsUseCase — the activation scope a caller asks 
       new DeterministicHasher(),
       new CapturingLogger(),
       new Map([["claude", activator]]),
-      fakeEnsureBuiltMarketplace()
+      fakeEnsureBuiltMarketplace(),
+      new Map(),
+      () => "",
+      undefined,
+      undefined,
+      undefined,
+      proof.plugins,
+      undefined,
+      proof.sources
     );
 
     await useCase.execute({ projectRoot: PROJECT_ROOT });
@@ -91,6 +220,7 @@ describe("MarketplaceSyncSettingsUseCase — the activation scope a caller asks 
         plugins: [{ name: "aidd-telemetry" }],
       }),
     });
+    const proof = freshHostProof(activator);
     const useCase = new MarketplaceSyncSettingsUseCase(
       catalog,
       new InMemoryManifestRepository(manifest),
@@ -98,7 +228,15 @@ describe("MarketplaceSyncSettingsUseCase — the activation scope a caller asks 
       new DeterministicHasher(),
       new CapturingLogger(),
       new Map([["claude", activator]]),
-      fakeEnsureBuiltMarketplace()
+      fakeEnsureBuiltMarketplace(),
+      new Map(),
+      () => "",
+      undefined,
+      undefined,
+      undefined,
+      proof.plugins,
+      undefined,
+      proof.sources
     );
 
     await useCase.execute({ projectRoot: PROJECT_ROOT, scope: "user" });
@@ -244,6 +382,7 @@ describe("MarketplaceSyncSettingsUseCase — the activation scope a caller asks 
 
   it("still records a shared-source reference at project scope, unaffected", async () => {
     const activator = new FakeNativePluginActivator({ available: true, enablesPlugins: false });
+    const proof = freshHostProof(activator);
     const registry = new InMemoryMarketplaceRegistry();
     await registry.save(PROJECT_ROOT, marketplace());
     const added: Array<{ version: string; projectRoot: string }> = [];
@@ -266,7 +405,10 @@ describe("MarketplaceSyncSettingsUseCase — the activation scope a caller asks 
       () => "",
       undefined,
       userSourceReferences,
-      new FakeCurrentVersion()
+      new FakeCurrentVersion(),
+      proof.plugins,
+      undefined,
+      proof.sources
     );
 
     await useCase.execute({ projectRoot: PROJECT_ROOT });

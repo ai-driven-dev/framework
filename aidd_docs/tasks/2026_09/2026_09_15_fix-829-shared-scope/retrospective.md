@@ -1,0 +1,51 @@
+# #829 delivery retrospective
+
+## Observation and limits
+
+This records the delivery after the request to implement #829 from `origin/next`. The original dirty checkout was not edited; implementation used `framework-829`. Measurements below come from 141 completed command logs dated 2026-09-15 13:58:50–19:07:39 UTC. That 5 h 08 m 49 s window is not the total task duration, and overlapping command durations must not be added to infer elapsed wall time. Final gate results and later work must be appended before closing this report.
+
+## Measured verification cost
+
+| Completed runs | Cumulative command time | Meaning |
+| --- | ---: | --- |
+| 30 Stryker campaigns | 45 m 02 s | 11 framework runs: 26 m 36 s; five changed-lines runs: 9 m 38 s; 14 other targeted runs: 8 m 48 s. |
+| 17 full Vitest passes, excluding Stryker dry-runs | 9 m 06 s | Mean 32.17 s. Ten green passes after the fourth delivery candidate: 5 m 17 s across different trees, not ten equivalent proofs. |
+| First framework mutation campaign | 6 m 44 s | Score 90.1%, below the required 93% floor. Ten subsequent framework relaunches consumed another 19 m 52 s before scores near 93.0–93.1%. |
+
+A later global Stryker attempt aborted at dry-run after 49 s and 4% progress. Reused mutants and static mutants did not make it a valid final report. The team stopped further campaigns until the source and test contract were stable.
+
+## Bottlenecks and their causes
+
+1. The initial destructive-effect matrix omitted native same-name collisions, current effective source changes, foreign host references under an AIDD-owned catalogue, edited project hooks/MCP entries, and edited user-scope files. The first independent checker and the next preflight found these after expensive green gates. A third preflight found `clean` overblocking a shared catalogue, project `plugin remove` still able to uninstall a repointed ref, a new user-created file still able to be overwritten on update, and [Copilot's repository `enabledPlugins` declarative auto-install](https://docs.github.com/en/copilot/reference/copilot-cli-reference/cli-config-dir-reference) possible before the CLI activation refusal. Earlier passing gates were real for their candidate, but not proof for the repaired candidate.
+2. The proof interface changed while old fixtures were being adapted. One change yielded 84 red flow tests; moving the `references.json` write until *proven* registration reopened four reference tests. The contract should have been frozen before bulk fixture work. Positive test doubles must express independently observed host state, not copy the project's claims into the host reader.
+3. The environment was not pinned end to end. Installed Homebrew Node 25 failed to start because `libsimdjson.30.dylib` was missing. Pinning only the parent Node executable was insufficient; spawned tools also needed a Node 24-first `PATH`. A smoke pass reported green while `md5` was missing and both fingerprints were empty. Replacing it with Node SHA-256 exposed a Bash 3.2 empty-array failure, then fixed it. Smoke now hashes path *and content*, rejects failed hash computation, and runs under the system Bash.
+4. Mutation reports were sometimes compared after edits or a changed mutant inventory. Stryker's runner reuse and static `HOME` test fixtures also produced false survivors. Dependency-injected home lookup and targeted single-runner tests corrected this, but they do not validate an old report on a new tree. Mutation output must be bound to an immutable source hash and fixed environment.
+5. Bundle growth was measurable rather than free: first candidate 681.8/682 KB, repaired source/local guards 703.8/710 KB, later path guards 714.2 KB. The final measured budget is 722 KB, 1.1% headroom. This is a reviewable cost of the added guards, not a reason to loosen another gate.
+6. The late checker pass still found an ordering hazard: project clean detached the shared source claim before local file cleanup completed. A later local error could leave the project installed but unclaimed, making user-scope clean appear safe. The Copilot 1.0.83 source listing cannot supply structured proof, so fresh native registration remains intentionally unavailable on that installed version. These are separate findings: the first requires a code repair and failure-injection test; the second requires an explicit functional caveat, not fabricated native source data.
+
+## Next delivery loop, without relaxing quality or determinism
+
+1. Before costly checks, inventory the **installed** host binaries and their documented structured outputs. Run a fake-home, byte-for-byte foreign-state matrix for `sync`, targeted update/remove, uninstall, project clean, and user clean. Include A/B sharing, current source, all host refs, modified hooks/MCP, existing new-path collisions, and indirect repository settings effects. Fail closed where Copilot 1.0.83 cannot prove its current source; do not invent a text parser or upgrade the user's binary.
+2. Freeze the ports, provenance schema, operation ordering, and reference-write point. Adapt legacy fixtures once, with explicit future verified-reader test doubles separate from installed-binary E2E checks. Run targeted red→green tests for each destructive branch and compare untouched paths and contents, not only exit codes.
+3. On a frozen tree, run full Vitest, coverage floors, architecture ratchets, typecheck, lint, duplicate/dead-code checks, build budget, multi-tool smoke and collision smoke. An independent read-only preflight must clear all destructive paths before mutation. A source edit invalidates the complete-tree result for that path; rerun the relevant gates before proceeding.
+4. Run targeted destructive mutants, then all 14 mutation scopes **exclusively** on the frozen source hash under the same Node 24-first `PATH`, `HOME`, and `CODEX_THREAD_ID` fixture contract. Preserve the existing mutation floors; never promote an aborted, stale, or wrong-hash report. A final independent checker inspects both behavior and evidence before delivery.
+
+No saved-time estimate is justified yet: the data measures repeated work, not the counterfactual runtime of the improved loop. The proposed gain is fewer invalidated expensive passes, not fewer acceptance gates.
+
+## Pre-remedy checkpoint, not a completed delivery
+
+The staged diff before the safe-remedy wording change had SHA-256 `e9cab56dbcb0f4a3a164a7e664620439e178d2de84f213c74f6bb8db111e63b6`. Full Vitest passed 521/521 suites and 6,464/6,464 tests in 35.44 s. Coverage passed the same 6,464 tests in 44.25 s: 98.92% lines, 96.51% branches, 99.68% functions. Architecture 131/131, typecheck, lint, knip, jscpd, build 714.3/722 KB, 33/33 command smoke, and foreign-state collision smoke all exited zero. The independent checker found no remaining confirmed security blocker in the implementation, but warned that Copilot 1.0.83 cannot prove a fresh native catalogue source and therefore refuses native activation even for a new profile. The wording change creates a new source SHA; these gates must not be presented as proofs of that newer tree until rerun.
+
+The `framework` mutation scope on that pre-remedy SHA completed in 6 m 49 s with **86.7%**, below its declared **93%** floor. Its report has 7,127 killed, 11 timed out, 895 survived, and 196 uncovered mutants: 8,229 scored mutants, 1,091 undetected. At least 515 more must be detected to reach 93%. Of the undetected mutants, 747 lie on lines changed from `origin/next`; 239 are in `marketplace-sync-settings-use-case.ts`, 108 in `plugin-remove-use-case.ts`, and 64 in `clean-use-case.ts`. The report is real for that earlier tree, not for the later wording-only SHA, and cannot be promoted to green by reusing a prior candidate's score. The remaining 13 scopes were not run after the first required floor failed. No final repairs had been committed or pushed and no draft PR had been opened at this checkpoint.
+
+The account-wide Codex weekly window read 80% used at the last check; no pre-task baseline exists, so attributing that percentage to this delivery would be false. There are no reset credits. This budget constraint does not change the mutation floor; it makes an explicit product decision necessary before any urgent partial delivery.
+
+## What the late failure changes in the proposed loop
+
+The early preflight should include a mutation-capacity estimate on **changed lines** before 14 complete scopes, not a substitute for them. A full-framework run should occur before polishing delivery documents, and its mutant inventory must be checked against added safety branches. This candidate added extensive fail-closed paths whose ordinary and collision tests verify outcome, yet often do not distinguish mutated guards. The remedy is focused negative and positive witness tests around each decision boundary, and possibly simpler control flow where branches duplicate a proof; not raising a threshold, mutating fewer files, or calling the code done on a below-floor score. We cannot quantify how long 515 additional detections would take from current measurements.
+
+## Authorized partial-draft checkpoint
+
+The user authorized a partial draft only if the original #829 preservation behavior is correct. A fresh independent checker compared the staged source with the issue's literal Cursor/Codex/Copilot collision and clean cases, reran 127 targeted tests on eight files, and found no remaining confirmed blocker to those preservation outcomes. This is not certification of the undetected mutants or of fresh Copilot 1.0.83 activation. The checker assigned 80/100 for a draft, not merge approval.
+
+After replacing an inherited destructive, Claude-specific conflict remedy with a host-neutral manual-reconciliation warning, the new source tree passed 521/521 suites and 6,464/6,464 tests in 37.05 s; coverage passed the same tests in 39.87 s at 98.92% lines, 96.51% branches and 99.68% functions. Build measured 714.3/722 KB, command smoke exercised 33/33 leaves with no failure, and foreign-state collision smoke had no failure. The earlier 86.7% framework mutation report does **not** measure this later wording-only tree. Under the explicit waiver, a draft PR may be prepared, but it must not be merged, #829 must not be closed, and the declared mutation floor remains 93% until a fresh campaign meets it.

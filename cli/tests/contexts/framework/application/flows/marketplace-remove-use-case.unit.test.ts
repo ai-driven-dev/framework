@@ -1,12 +1,15 @@
+import { createHash } from "node:crypto";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import "../../../../../src/contexts/tools/domain/profiles/claude/profile.js";
 import "../../../../../src/contexts/tools/domain/profiles/cursor/profile.js";
+import "../../../../../src/contexts/tools/domain/profiles/opencode/profile.js";
 import {
   FRAMEWORK_MARKETPLACE_NAME,
   Marketplace,
 } from "../../../../../src/contexts/distribution/domain/marketplace.js";
 import { MarketplaceRemoveUseCase } from "../../../../../src/contexts/framework/application/flows/marketplace-remove-use-case.js";
+import { ProjectPluginCleanup } from "../../../../../src/contexts/framework/application/ownership/project-plugin-cleanup.js";
 import { Manifest } from "../../../../../src/contexts/framework/domain/manifest.js";
 import { InstalledPlugin } from "../../../../../src/contexts/framework/domain/plugins/installed-plugin.js";
 import {
@@ -82,7 +85,12 @@ function buildUseCase() {
   const fs = new RecordingFileAdapter({}, hasher);
   const manifestRepo = new InMemoryManifestRepository();
   const registry = new InMemoryMarketplaceRegistry();
-  const useCase = new MarketplaceRemoveUseCase(fs, manifestRepo, registry, new KeepPrompter());
+  const useCase = new MarketplaceRemoveUseCase(
+    new ProjectPluginCleanup(fs),
+    manifestRepo,
+    registry,
+    new KeepPrompter()
+  );
   return { useCase, registry, manifestRepo, fs };
 }
 
@@ -157,9 +165,14 @@ describe("MarketplaceRemoveUseCase", () => {
     expect(reloaded?.getPlugins("claude")).toHaveLength(0);
   });
 
-  it("removes a user-scope (cursor) orphan's file from its resolved home directory, not projectRoot", async () => {
+  it("removes a project marketplace's orphan projection without deleting shared Cursor files", async () => {
     const { registry, manifestRepo, fs } = buildUseCase();
-    const useCase = new MarketplaceRemoveUseCase(fs, manifestRepo, registry, new KeepPrompter());
+    const useCase = new MarketplaceRemoveUseCase(
+      new ProjectPluginCleanup(fs),
+      manifestRepo,
+      registry,
+      new KeepPrompter()
+    );
     const manifest = Manifest.create();
     manifest.addTool("cursor", "1.0.0", []);
     const pluginKey = "aidd-context/commands/hello.md";
@@ -196,13 +209,18 @@ describe("MarketplaceRemoveUseCase", () => {
     expect(result.removedPluginCount).toBe(1);
     expect(
       fs.deletedPaths.some((p) => p.endsWith(join(".cursor", "plugins", "local", pluginKey)))
-    ).toBe(true);
+    ).toBe(false);
     expect(fs.deletedPaths).not.toContain(join(PROJECT_ROOT, pluginKey));
   });
 
   it("removes a cursor orphan's file under projectRoot, not ~/.cursor/plugins/local, when the manifest says scope: project", async () => {
     const { registry, manifestRepo, fs } = buildUseCase();
-    const useCase = new MarketplaceRemoveUseCase(fs, manifestRepo, registry, new KeepPrompter());
+    const useCase = new MarketplaceRemoveUseCase(
+      new ProjectPluginCleanup(fs),
+      manifestRepo,
+      registry,
+      new KeepPrompter()
+    );
     const manifest = Manifest.create();
     manifest.addTool("cursor", "1.0.0", []);
     const pluginKey = "aidd-context/commands/hello.md";
@@ -321,6 +339,254 @@ describe("which marketplace a removal takes out", () => {
 });
 
 describe("which plugins a removal orphans", () => {
+  it("keeps A and B Cursor claims when project hooks.json resolves outside the project", async () => {
+    const hooksPath = join(PROJECT_ROOT, ".cursor/hooks.json");
+    const foreignPath = "/foreign/hooks.json";
+    const command = "node ./.cursor/hooks/sample/pre.js";
+    const entry = { command };
+    const content = JSON.stringify({ version: 1, hooks: { preToolUse: [entry] } });
+    const fs = new InMemoryFileAdapter({ [hooksPath]: content, [foreignPath]: content });
+    fs.setSymlink(hooksPath, foreignPath);
+    const plugin = InstalledPlugin.fromJSON({
+      name: "sample",
+      source: { kind: "local", path: "/fixture" },
+      version: "1.0.0",
+      strict: false,
+      files: {},
+      scope: "user",
+      marketplace: "awesome",
+      projectHooks: {
+        entries: [
+          {
+            event: "preToolUse",
+            command,
+            digest: createHash("md5").update(JSON.stringify(entry)).digest("hex"),
+          },
+        ],
+        scripts: {},
+      },
+    });
+    const project = Manifest.create();
+    project.addTool("cursor", "1.0.0", []);
+    project.addPlugin("cursor", plugin);
+    const projectRepo = new InMemoryManifestRepository(project);
+    const machine = Manifest.create();
+    machine.addTool("cursor", "1.0.0", []);
+    machine.addPlugin("cursor", plugin.withDependents([PROJECT_ROOT, "/B"]));
+    const machineRepo = new InMemoryManifestRepository(machine);
+    const registry = new InMemoryMarketplaceRegistry();
+    await registry.save(PROJECT_ROOT, marketplaceNamed("awesome"));
+    const useCase = new MarketplaceRemoveUseCase(
+      new ProjectPluginCleanup(fs, machineRepo),
+      projectRepo,
+      registry,
+      new KeepPrompter()
+    );
+
+    await expect(
+      useCase.execute({ name: "awesome", projectRoot: PROJECT_ROOT, autoConfirm: true })
+    ).rejects.toThrow(/outside.*project/);
+
+    expect(projectRepo.getCurrent()?.getPlugins("cursor")).toHaveLength(1);
+    expect(machineRepo.getCurrent()?.getPlugins("cursor")[0]?.dependents).toEqual([
+      PROJECT_ROOT,
+      "/B",
+    ]);
+    expect(fs.getFile(foreignPath)).toBe(content);
+    expect((await registry.list(PROJECT_ROOT)).some((entry) => entry.name === "awesome")).toBe(
+      true
+    );
+  });
+
+  it("retains the OpenCode orphan and catalogue when MCP output is a symlink outside the project", async () => {
+    const mcpPath = join(PROJECT_ROOT, "opencode.json");
+    const foreignPath = "/foreign/opencode.json";
+    const content = JSON.stringify({
+      mcp: { mine: { type: "local" }, theirs: { type: "remote" } },
+    });
+    const fs = new InMemoryFileAdapter({ [mcpPath]: content, [foreignPath]: content });
+    fs.setSymlink(mcpPath, foreignPath);
+    const manifest = Manifest.create();
+    manifest.addTool("opencode", "1.0.0", []);
+    manifest.addPlugin(
+      "opencode",
+      InstalledPlugin.fromJSON({
+        name: "sample",
+        source: { kind: "local", path: "/fixture" },
+        version: "1.0.0",
+        strict: false,
+        files: {},
+        mcpEntries: {
+          mine: new DeterministicHasher().hash(JSON.stringify({ type: "local" })).value,
+        },
+        scope: "project",
+        marketplace: "awesome",
+      })
+    );
+    const manifestRepo = new InMemoryManifestRepository(manifest);
+    const registry = new InMemoryMarketplaceRegistry();
+    await registry.save(PROJECT_ROOT, marketplaceNamed("awesome"));
+    const useCase = new MarketplaceRemoveUseCase(
+      new ProjectPluginCleanup(fs),
+      manifestRepo,
+      registry,
+      new KeepPrompter()
+    );
+
+    await expect(
+      useCase.execute({ name: "awesome", projectRoot: PROJECT_ROOT, autoConfirm: true })
+    ).rejects.toThrow(/outside.*project|escapes.*project/);
+
+    expect(manifestRepo.saveCount).toBe(0);
+    expect(manifestRepo.getCurrent()?.getPlugins("opencode")).toHaveLength(1);
+    expect(fs.getFile(foreignPath)).toBe(content);
+    expect(fs.getFile(mcpPath)).toBe(content);
+    expect((await registry.list(PROJECT_ROOT)).some((entry) => entry.name === "awesome")).toBe(
+      true
+    );
+  });
+
+  it("retains the OpenCode orphan and catalogue when its project MCP config cannot be rewritten", async () => {
+    const mcpPath = join(PROJECT_ROOT, "opencode.json");
+    const content = JSON.stringify({
+      mcp: { mine: { type: "local" }, theirs: { type: "remote" } },
+    });
+    class RefusingMcpWriteAdapter extends InMemoryFileAdapter {
+      override async writeFile(path: string, value: string): Promise<void> {
+        if (path === mcpPath) throw new Error("MCP write refused");
+        return super.writeFile(path, value);
+      }
+    }
+    const fs = new RefusingMcpWriteAdapter({ [mcpPath]: content });
+    const manifest = Manifest.create();
+    manifest.addTool("opencode", "1.0.0", []);
+    manifest.addPlugin(
+      "opencode",
+      InstalledPlugin.fromJSON({
+        name: "sample",
+        source: { kind: "local", path: "/fixture" },
+        version: "1.0.0",
+        strict: false,
+        files: {},
+        mcpEntries: {
+          mine: new DeterministicHasher().hash(JSON.stringify({ type: "local" })).value,
+        },
+        scope: "project",
+        marketplace: "awesome",
+      })
+    );
+    const manifestRepo = new InMemoryManifestRepository(manifest);
+    const registry = new InMemoryMarketplaceRegistry();
+    await registry.save(PROJECT_ROOT, marketplaceNamed("awesome"));
+    const useCase = new MarketplaceRemoveUseCase(
+      new ProjectPluginCleanup(fs),
+      manifestRepo,
+      registry,
+      new KeepPrompter()
+    );
+
+    await expect(
+      useCase.execute({ name: "awesome", projectRoot: PROJECT_ROOT, autoConfirm: true })
+    ).rejects.toThrow(/MCP write refused/);
+
+    expect(manifestRepo.saveCount).toBe(0);
+    expect(manifestRepo.getCurrent()?.getPlugins("opencode")).toHaveLength(1);
+    expect(fs.getFile(mcpPath)).toBe(content);
+    expect((await registry.list(PROJECT_ROOT)).some((entry) => entry.name === "awesome")).toBe(
+      true
+    );
+  });
+
+  it("unmerges only the orphan's contributed OpenCode MCP server from the project", async () => {
+    const { useCase, registry, manifestRepo, fs } = buildUseCase();
+    const manifest = Manifest.create();
+    manifest.addTool("opencode", "1.0.0", []);
+    manifest.addPlugin(
+      "opencode",
+      InstalledPlugin.fromJSON({
+        name: "sample",
+        source: { kind: "local", path: "/fixture" },
+        version: "1.0.0",
+        strict: false,
+        files: {},
+        mcpEntries: {
+          mine: new DeterministicHasher().hash(JSON.stringify({ type: "local" })).value,
+        },
+        scope: "project",
+        marketplace: "awesome",
+      })
+    );
+    await manifestRepo.save(manifest);
+    const mcpPath = join(PROJECT_ROOT, "opencode.json");
+    fs.setFile(
+      mcpPath,
+      JSON.stringify({ mcp: { mine: { type: "local" }, theirs: { type: "remote" } } })
+    );
+    await registry.save(PROJECT_ROOT, marketplaceNamed("awesome"));
+
+    fs.setFile(
+      mcpPath,
+      JSON.stringify({ mcp: { mine: { type: "user-edited" }, theirs: { type: "remote" } } })
+    );
+    await expect(
+      useCase.execute({ name: "awesome", projectRoot: PROJECT_ROOT, autoConfirm: true })
+    ).rejects.toThrow(/edited/);
+    expect((await manifestRepo.load())?.getPlugins("opencode")).toHaveLength(1);
+    expect((await registry.list(PROJECT_ROOT)).some((entry) => entry.name === "awesome")).toBe(
+      true
+    );
+    fs.setFile(
+      mcpPath,
+      JSON.stringify({ mcp: { mine: { type: "local" }, theirs: { type: "remote" } } })
+    );
+
+    await useCase.execute({ name: "awesome", projectRoot: PROJECT_ROOT, autoConfirm: true });
+
+    expect(JSON.parse(fs.getFile(mcpPath) ?? "null")).toEqual({
+      mcp: { theirs: { type: "remote" } },
+    });
+    expect((await manifestRepo.load())?.getPlugins("opencode")).toEqual([]);
+  });
+
+  it("preflights every orphan before touching A when B's MCP contribution was edited", async () => {
+    const { useCase, registry, manifestRepo, fs } = buildUseCase();
+    const manifest = Manifest.create();
+    manifest.addTool("opencode", "1.0.0", []);
+    for (const name of ["alpha", "beta"]) {
+      manifest.addPlugin(
+        "opencode",
+        InstalledPlugin.fromJSON({
+          name,
+          source: { kind: "local", path: "/fixture" },
+          version: "1.0.0",
+          strict: false,
+          files: {},
+          mcpEntries: {
+            [name]: new DeterministicHasher().hash(JSON.stringify({ type: "local" })).value,
+          },
+          scope: "project",
+          marketplace: "awesome",
+        })
+      );
+    }
+    await manifestRepo.save(manifest);
+    await registry.save(PROJECT_ROOT, marketplaceNamed("awesome"));
+    const path = join(PROJECT_ROOT, "opencode.json");
+    const edited = JSON.stringify({
+      mcp: { alpha: { type: "local" }, beta: { type: "user-edited" } },
+    });
+    fs.setFile(path, edited);
+    await expect(
+      useCase.execute({ name: "awesome", projectRoot: PROJECT_ROOT, autoConfirm: true })
+    ).rejects.toThrow(/edited.*beta|beta.*edited/);
+    expect(fs.getFile(path)).toBe(edited);
+    expect((await manifestRepo.load())?.getPlugins("opencode").map((p) => p.name)).toEqual([
+      "alpha",
+      "beta",
+    ]);
+    expect((await registry.list(PROJECT_ROOT)).some((m) => m.name === "awesome")).toBe(true);
+  });
+
   it("removes the marketplace's own plugins and leaves another marketplace's in place", async () => {
     const { useCase, registry, manifestRepo } = buildUseCase();
     await manifestRepo.save(
@@ -344,7 +610,12 @@ describe("which plugins a removal orphans", () => {
   it("keeps every orphan when the person declines the cleanup, and still drops the marketplace", async () => {
     const { registry, manifestRepo, fs } = buildUseCase();
     const prompter = new ConfirmRecordingPrompter([ScriptedPrompter.answer.confirm(false)]);
-    const useCase = new MarketplaceRemoveUseCase(fs, manifestRepo, registry, prompter);
+    const useCase = new MarketplaceRemoveUseCase(
+      new ProjectPluginCleanup(fs),
+      manifestRepo,
+      registry,
+      prompter
+    );
     await manifestRepo.save(manifestWithPlugins(pluginFrom("awesome", "sample")));
     const awesome = marketplaceNamed("awesome");
     await registry.save(PROJECT_ROOT, awesome);
@@ -365,7 +636,12 @@ describe("which plugins a removal orphans", () => {
   it("asks once, naming how many plugins the cleanup would remove", async () => {
     const { registry, manifestRepo, fs } = buildUseCase();
     const prompter = new ConfirmRecordingPrompter([ScriptedPrompter.answer.confirm(true)]);
-    const useCase = new MarketplaceRemoveUseCase(fs, manifestRepo, registry, prompter);
+    const useCase = new MarketplaceRemoveUseCase(
+      new ProjectPluginCleanup(fs),
+      manifestRepo,
+      registry,
+      prompter
+    );
     await manifestRepo.save(
       manifestWithPlugins(pluginFrom("awesome", "sample"), pluginFrom("awesome", "second"))
     );
@@ -389,7 +665,12 @@ describe("which plugins a removal orphans", () => {
       manifestWithPlugins(pluginFrom("elsewhere", "other"))
     );
     const prompter = new ConfirmRecordingPrompter([ScriptedPrompter.answer.confirm(true)]);
-    const useCase = new MarketplaceRemoveUseCase(fs, manifestRepo, registry, prompter);
+    const useCase = new MarketplaceRemoveUseCase(
+      new ProjectPluginCleanup(fs),
+      manifestRepo,
+      registry,
+      prompter
+    );
     await registry.save(PROJECT_ROOT, marketplaceNamed("awesome"));
 
     await useCase.execute({ name: "awesome", projectRoot: PROJECT_ROOT, autoConfirm: false });
@@ -401,7 +682,12 @@ describe("which plugins a removal orphans", () => {
   it("cleans up without asking when the caller auto-confirms", async () => {
     const { registry, manifestRepo, fs } = buildUseCase();
     const prompter = new ConfirmRecordingPrompter([ScriptedPrompter.answer.confirm(false)]);
-    const useCase = new MarketplaceRemoveUseCase(fs, manifestRepo, registry, prompter);
+    const useCase = new MarketplaceRemoveUseCase(
+      new ProjectPluginCleanup(fs),
+      manifestRepo,
+      registry,
+      prompter
+    );
     await manifestRepo.save(manifestWithPlugins(pluginFrom("awesome", "sample")));
     await registry.save(PROJECT_ROOT, marketplaceNamed("awesome"));
 

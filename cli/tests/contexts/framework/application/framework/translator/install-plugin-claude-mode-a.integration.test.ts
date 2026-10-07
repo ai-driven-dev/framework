@@ -9,6 +9,8 @@ import { PluginDistribution } from "../../../../../../src/contexts/translate/dom
 import { CapturingLogger } from "../../../../../helpers/ports/capturing-logger.js";
 import { DeterministicHasher } from "../../../../../helpers/ports/deterministic-hasher.js";
 import { fakeEnsureBuiltMarketplace } from "../../../../../helpers/ports/fake-ensure-built-marketplace.js";
+import { FakeHostPluginRegistryReader } from "../../../../../helpers/ports/fake-host-plugin-registry-reader.js";
+import { FakeNativeMarketplaceSourceReader } from "../../../../../helpers/ports/fake-native-marketplace-source-reader.js";
 import { FakeNativePluginActivator } from "../../../../../helpers/ports/fake-native-plugin-activator.js";
 import { InMemoryFileAdapter } from "../../../../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../../../../helpers/ports/in-memory-manifest-repository.js";
@@ -16,6 +18,44 @@ import { InMemoryMarketplaceRegistry } from "../../../../../helpers/ports/in-mem
 
 const PROJECT_ROOT = "/test-project";
 const MARKETPLACE_NAME = "aidd-framework";
+
+function syncWithProvenFreshHost(
+  fs: InMemoryFileAdapter,
+  manifestRepo: InMemoryManifestRepository,
+  registry: InMemoryMarketplaceRegistry,
+  hasher: DeterministicHasher,
+  activator: FakeNativePluginActivator
+): MarketplaceSyncSettingsUseCase {
+  return new MarketplaceSyncSettingsUseCase(
+    fs,
+    manifestRepo,
+    registry,
+    hasher,
+    new CapturingLogger(),
+    new Map([["claude", activator]]),
+    fakeEnsureBuiltMarketplace(),
+    new Map(),
+    () => "",
+    undefined,
+    undefined,
+    undefined,
+    new Map([
+      ["claude", new FakeHostPluginRegistryReader({ location: "fake claude", refs: new Map() })],
+    ]),
+    undefined,
+    new Map([
+      [
+        "claude",
+        new FakeNativeMarketplaceSourceReader(
+          activator,
+          "registry",
+          (path) => (path === "/built/claude" ? MARKETPLACE_NAME : undefined),
+          new Map()
+        ),
+      ],
+    ])
+  );
+}
 
 /** A readable catalog at the path the default `fakeEnsureBuiltMarketplace()` resolves
  * "claude" to — a real build always leaves one there, and an unreadable one now fails hard. */
@@ -73,15 +113,7 @@ describe("install claude plugin via Mode A (integration)", () => {
       })
     );
 
-    const useCase = new MarketplaceSyncSettingsUseCase(
-      fs,
-      manifestRepo,
-      registry,
-      hasher,
-      new CapturingLogger(),
-      new Map([["claude", activator]]),
-      fakeEnsureBuiltMarketplace()
-    );
+    const useCase = syncWithProvenFreshHost(fs, manifestRepo, registry, hasher, activator);
     await useCase.execute({ projectRoot: PROJECT_ROOT });
 
     const shared = JSON.parse(
@@ -150,15 +182,7 @@ describe("install claude plugin via Mode A (integration)", () => {
       })
     );
 
-    const useCase = new MarketplaceSyncSettingsUseCase(
-      fs,
-      manifestRepo,
-      registry,
-      hasher,
-      new CapturingLogger(),
-      new Map([["claude", activator]]),
-      fakeEnsureBuiltMarketplace()
-    );
+    const useCase = syncWithProvenFreshHost(fs, manifestRepo, registry, hasher, activator);
 
     // What a project installed before the split looks like: the registration sitting in
     // the committed file, naming a path that belongs to whoever ran the install.
