@@ -48,7 +48,8 @@ journey
 
 1. Keep the form `TBD: <precise question>`.
 2. Say the home is the spec's `## Open Questions` section.
-3. Say each gap is one entry there, and that no required section carries a marker.
+3. Define the unit: a gap is an unresolved decision a required section depends on.
+4. Say each gap is one entry there, and that no other section carries a marker.
 
 ### `2)` give the template the section
 > A spec has a place to put a pending decision.
@@ -67,9 +68,9 @@ journey
 ### `4)` route both actions to the home
 > Neither action places a marker by judgement any more.
 
-1. `01-build.md` step 3: list every missing required field under `## Open Questions` per `tbd-marker.md`, never inside the section it would fill.
-2. `02-refine.md` step 4: the same for a field still unanswered.
-3. Add one test row to each: a gap is listed once under `## Open Questions`, and no required section carries a marker.
+1. `01-build.md` step 3: list every gap under `## Open Questions` per `tbd-marker.md`, never inside the section it would fill.
+2. `02-refine.md` step 4: the same, and remove an entry only once its decision is fully answered.
+3. Add one test row to each: a gap is listed once under `## Open Questions`, and no other section carries a marker.
 
 ### `5)` prove it
 > The change holds under the repository's own gates.

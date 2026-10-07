@@ -30,6 +30,8 @@ status: implemented
 | --- | --- |
 | The home is `## Open Questions`, a required section of the template | it mirrors `prd-template.md`, and the issue names it |
 | Each gap is listed there once, and nowhere else | a gap written in both its eventual section and the list is the same non-determinism with an extra copy |
-| The template's required sections carry resolved content only | a hard constraint that is undecided contradicts the validator's own definition of that section |
+| Every section other than `## Open Questions` carries resolved content only | a hard constraint that is undecided contradicts the validator's own definition of that section, and a copy under an optional section is the second of the two placements the issue measured |
+| One noun, defined once: a gap is an unresolved decision a required section depends on | the template said `unresolved decision`, the reference said `gap` and the actions said `missing required field`. Three units in one skill, and the broadest of them now blocks validation |
+| What no required section depends on is not a gap, and neither is an implementation detail | it excludes over-asking without inventing a subjective category: `SKILL.md`'s `Hold intent, never implementation` and the validator's `contains_implementation_details` are boundaries a drafter already applies |
 | A residual question invalidates the spec through `hard_thresholds`, and the section is checked by a criterion carrying no weight | the required weights already total 90 against a `pass_threshold` of 90, so a weighted addition would need the threshold retuned; a zero weight checks the section's shape and leaves the arithmetic alone |
-| `tbd-marker.md` states the home; the two actions link to it and `SKILL.md` is untouched | one fact, one home — and `check-doc-duplication.js` fails a sentence written in two documents |
+| `tbd-marker.md` states the home; the two actions link to it and `SKILL.md` is untouched | one fact, one home: a rule written in three places drifts in two of them. The guard would not have caught it, since `check-doc-duplication.js` scans only `docs`, the two memory banks and the READMEs |
