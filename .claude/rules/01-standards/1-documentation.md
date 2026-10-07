@@ -14,6 +14,7 @@ paths:
 - Revise existing documents individually.
 - Exclude historical, generated, and fixture content.
 - Preserve contracts, decisions, limits, and procedures.
+- Keep architecture to boundaries and invariants.
 - State actions and verification commands.
 - Link canonical sources for supporting details.
 - Keep memory's operational safeguards self-contained.

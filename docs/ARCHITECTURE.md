@@ -52,28 +52,17 @@ A hook is authored once with `${CLAUDE_PLUGIN_ROOT}`; the installer rewrites it 
 | Cursor         | declared              | `./`                   | Own hook format: the converter rewrites the root to a plugin-relative path before token substitution. No plugin hook observed firing headless; what registers a plugin in Cursor's plugin directory is unknown |
 | OpenCode       | no, by a second route | —                      | See below |
 
-OpenCode runs no declarative hook. Instead, `opencode-hooks-bridge.ts` translates them into `<plugin>-hooks.js` modules for `SessionStart`, `Stop` and `PostToolUse`. Telemetry ships its own adapter, `plugins/aidd-telemetry/hooks/opencode-plugin.js`, because its journal uses a different stdin dialect. Both export a default definition: `server` for V1 1.18.29 or later, `setup` for V2.
+OpenCode uses JS adapters. The CLI owns the shared host protocol; plugins own payload mapping ([telemetry adapter](../plugins/aidd-telemetry/hooks/opencode-plugin.js)). Its helper, `.opencode/hooks/opencode-events.js`, is delivered once outside plugin discovery and tracked as a tool file. Backfill creates only missing helpers, without rewriting user configuration or claiming ownership of existing untracked helpers. Generic `SessionStart` hooks run at host initialization and must be idempotent; telemetry follows actual session events.
 
-- **V1** delivers `session.idle` and completed `message.part.updated` tool parts to an `event` hook. Each plugin keeps its own V1 payload adapter.
-- **V2** uses one shared module, embedded and delivered by the CLI at `.opencode/hooks/opencode-events.js`, outside plugin discovery. Each plugin imports it for V2. It subscribes to `data`-based events over an abortable stream, correlates tool name and input with tool success, and maps execution terminals to turn-end. A shutdown interruption leaves the turn open, since OpenCode resumes it.
-- The bridge fires its idempotent `SessionStart` hooks when either host initializes the module; telemetry records sessions separately from session events.
-- Translation emits the module once and tool installation tracks it as a tool file. Plugin install and update backfill a missing module without rewriting user configuration or claiming an existing untracked one.
+Entrypoints, event mapping and lifecycle belong to the [hook bridge](../cli/src/contexts/tools/domain/profiles/opencode/opencode-hooks-bridge.ts) and [V2 adapter](../cli/assets/configs/opencode/opencode-events.js.txt). Supported versions and limitations are in [telemetry coverage](../plugins/aidd-telemetry/README.md#coverage).
 
 A tool that runs no hook says why, and an install that carries one reports what was skipped.
 
 ## ⚖️ What runs on every event, and what runs when someone asks
 
-`PostToolUse` fires on every tool call, so the code on that path is a bundled hook, not the CLI. The line is therefore **not** "plugin or CLI" but what the code answers to:
+Event hooks run dependency-free Node to keep repeated callbacks lightweight. Capabilities that answer a person or skill live in the CLI, with one implementation.
 
-| | Triggered by | Latency | Runs as |
-| --- | --- | --- | --- |
-| Observing | each tool event | must not be felt | plain Node in `hooks/`, no install, no dependency |
-| Answering | a person or a skill, once | irrelevant | the `aidd` CLI |
-
-- A capability that answers belongs in the CLI even when a plugin asks for it: one implementation cannot drift from a copy of itself.
-- A skill that needs the CLI must say so when it is absent, never silently do nothing. The wording is pinned across those skills by `scripts/__tests__/telemetry-cli-required.test.js`.
-
-Telemetry requires `node` to measure and `aidd` to answer.
+A CLI-backed skill must explicitly report a missing `aidd`, never silently do nothing; the [dependency guard](../scripts/__tests__/telemetry-cli-required.test.js) pins that behavior.
 
 ## 🧠 Plugin concerns and layers
 
@@ -95,7 +84,7 @@ Off the curated install path:
 
 - `aidd-ui`: alpha, smoke-test only.
 - `aidd-qa`: new, until proven outside this repository. Validates observable behavior against acceptance criteria and records browser evidence, hence Execution.
-- `aidd-telemetry`: beta, opt-in. A repository must commit `.aidd/config.json` with `telemetry.enabled: true`. Each session appends one JSON object per line to its own git-ignored `aidd_docs/runs/<run_id>__<vendor_id>.jsonl`, created on demand; the directory's presence is a location, not a permission. Lines are append-only: `session_start`, `turn_end`, `file_written`, `step_start`, `step_end`, `task_declared`, `unrecognised_payload`. Paths are repository-relative, never a task_id: task identity is derived by the reader. It records no measurement; tokens and cost are joined later from the provider's telemetry.
+- `aidd-telemetry`: beta, opt-in through committed `.aidd/config.json` with `telemetry.enabled: true`; a journal directory grants no permission. Session journals are git-ignored, append-only observations. Readers derive task identity and join provider measurements. Format and events belong to the [journal contract](../aidd_docs/runs/README.md).
 
 **Observation** writes only *about* the other layers, never the artifact it describes, and nothing may depend on it.
 
@@ -113,20 +102,9 @@ A skill's `SKILL.md` is a manifest plus a router, loaded on invocation; its body
 title: skill router pattern
 ---
 flowchart LR
-  User["User: '/skill-name'"]
-  Skill["/skill-name"]
-  Action1["actions/01-step.md"]
-  Action2["actions/02-step.md"]
-  ActionN["actions/NN-step.md"]
-  Out["Outputs: files, labels, PRs, audit logs"]
-
-  User --> Skill
-  Skill -->|"choose 1..N"| Action1
-  Skill -->|"choose 1..N"| Action2
-  Skill -->|"choose 1..N"| ActionN
-  Action1 --> Out
-  Action2 --> Out
-  ActionN --> Out
+  User["User: '/skill-name'"] --> Skill["SKILL.md router"]
+  Skill -->|select action| Action["actions/NN-step.md"]
+  Action --> Out["Outputs: files, labels, PRs, audit logs"]
 ```
 
 Recipe skills route to self-contained actions with inputs, outputs, process steps and tests. An orchestrator with no domain logic may instead route through numbered reference protocols that define handoffs and delegate to capabilities discovered at runtime.
@@ -141,7 +119,7 @@ A skill never links outside itself (`scripts/__tests__/a-skill-links-only-inside
 Choose by context, not complexity: keep the work visible to the caller → skill; isolate it and take only the result → agent.
 
 - **Only the high-level orchestrator authorizes spawning.** A recipe skill runs in the caller's context. A bounded fan-out capability may spawn leaf agents only when the orchestrator explicitly delegates that and keeps routing ownership.
-- An orchestrator spawns each isolated step as a leaf agent running a recipe, or runs the recipe itself when isolation is unnecessary. The SDLC owns planning, delegates delivery to `executor` and independent judgments to a fresh `checker`. For independent repair findings it may delegate bounded fan-out to `10-todo`, whose leaf executors report back to the SDLC. A recipe invoked inside an agent never spawns again.
+- An orchestrator runs recipes directly or isolates them in leaf agents. The SDLC owns planning; delivery, independent review and bounded repair follow its [delivery](../plugins/aidd-orchestrator/skills/01-sdlc/references/02-deliver.md) and [check](../plugins/aidd-orchestrator/skills/01-sdlc/references/03-check.md) contracts. Isolated recipes never spawn flow agents.
 - An agent invokes only the recipe skills listed under `# Skills you may invoke`, by canonical `/plugin:folder` address, never an orchestrator skill, and never reads a skill's files.
 - An agent never delegates flow work to another agent. It may spawn a read-only recon helper (for example `Explore`) that mutates and spawns nothing, so the write path stays two layers deep and delegation cannot cycle.
 
