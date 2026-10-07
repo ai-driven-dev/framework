@@ -68,6 +68,12 @@ journey
 3. Fail naming the file, the field it must carry, and how many fences were read.
 4. Report the parse error when that fence is not JSON, and refuse a value that is not an object.
 
+### `5)` keep only the comments the code cannot say
+> Four rounds of accretion, cut back once the rule settled.
+
+1. Drop what the code states a line below.
+2. Keep why the field list is restated rather than imported, that a drifting shape already produced two unreadable files, why the example is parsed, and which fence the sibling reads with its consequence.
+
 ### `4)` watch it go red for its own reason
 > The mutation that proves the guard ships with it.
 
@@ -79,7 +85,8 @@ journey
 ## Test acceptance criteria
 | Task | Acceptance criteria |
 | --- | --- |
-| 1 | the guard passes over a broken example before the change, recorded |
+| 1 | the guard passes over a broken example before the change: measured `pass 3 / fail 0` on `origin/next` with the asset's syntax broken and its three field names kept |
 | 2 | the guard parses both the fenced and the asset form, and names file and field on failure |
 | 3 | a fence added above the taught one fails here and in the `cli/` sibling, with the same verdict |
 | 4 | the fences stripped and an emptied field each turn this guard red, and the suite is green once restored |
+| 5 | no comment restates the code, and no non-derivable reason was lost |

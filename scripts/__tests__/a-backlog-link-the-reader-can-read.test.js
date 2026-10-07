@@ -22,8 +22,10 @@ function shapeOf(value) {
   return typeof value;
 }
 
-/** The first json fence, matched with the regex `task-backlog-skill-shape.integration.test.ts`
- * uses: two guards reading different fences leave one green and the other red. */
+/** The first json fence, matched with the pattern
+ * `cli/tests/contexts/telemetry/infrastructure/task-backlog-skill-shape.integration.test.ts`
+ * uses. No gate runs that sibling on `plugins/**`, so two guards reading different fences
+ * leave this one green and land its red on `next`. */
 function taughtInMarkdown(file, markdown) {
   const fences = [...markdown.matchAll(/^[ \t]*```json\r?\n([\s\S]*?)\r?\n[ \t]*```/gmu)].map((m) => m[1]);
   assert.ok(fences.length > 0, `${file} must teach the example in a json fence`);
