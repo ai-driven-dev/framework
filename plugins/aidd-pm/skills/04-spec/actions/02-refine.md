@@ -15,7 +15,7 @@ The refined spec at the same path, or no change if not written.
 1. **Load.** Read the spec and the findings.
 2. **Map.** Pair each finding with the section it touches.
 3. **Rewrite.** Apply each finding in place: clarify wording, add missing fields, remove invalid claims. Leave untouched sections as they are.
-4. **Gaps.** Drop every entry the rewrite answered in full, rewrite one answered in part to what remains, then list the rest per [tbd-marker.md](../references/tbd-marker.md).
+4. **Gaps.** Drop a resolved entry, narrow a half-answered one, list the rest per [tbd-marker.md](../references/tbd-marker.md).
 5. **Check.** Confirm every section the validator requires is present, then overwrite the spec at its path.
 6. **Verify.** Report what changed as `before -> after`, and the verification result.
 
