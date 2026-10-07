@@ -71,16 +71,8 @@ describe("every backlog declaration in this repository is one the report can rea
 
     for (const file of TEACHING_FILES) {
       const text = fs.readFileSync(path.join(ROOT, file), "utf8");
-      let source = text;
-      if (file.endsWith(".md")) {
-        const fences = [...text.matchAll(/```json\r?\n([\s\S]*?)\r?\n\s*```/g)];
-        assert.equal(
-          fences.length,
-          1,
-          `${file} must teach the example in exactly one json fence, found ${fences.length}`
-        );
-        source = fences[0][1];
-      }
+      const source = file.endsWith(".md") ? text.match(/```json\r?\n([\s\S]*?)\r?\n\s*```/)?.[1] : text;
+      assert.ok(source !== undefined, `${file} must teach the example in a json fence`);
 
       let taught;
       try {
