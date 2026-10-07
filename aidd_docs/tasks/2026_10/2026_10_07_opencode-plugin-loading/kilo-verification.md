@@ -1,186 +1,34 @@
-# Kilo runtime verification and CI repair
+# Kilo verification
 
-## Initial need
-The user requested stronger evidence after the original Kilo smoke test was found to
-replace update_memory.js with a marker and stop at session creation. A loaded plugin and
-a zero exit code did not prove memory refresh or hooks during a complete turn. The user
-also requested correction of the red checks on pull request 971.
+Need: replace a session-only smoke that substituted the memory script with a complete real turn and repair red CI. Research preceded implementation: [plugin contract](https://kilo.ai/docs/automate/extending/plugins), [custom provider](https://kilo.ai/docs/code-with-ai/agents/custom-models), [SDK 7.7.5 types](https://unpkg.com/@kilocode/sdk@7.7.5/dist/v2/gen/types.gen.d.ts).
 
-## Implemented behavior
-The Kilo bridge retains its default id/server descriptor and now supports replayable
-SessionStart, PostToolUse and Stop commands. It obtains the real session ID and project
-directory from released events, dispatches completed tool parts with their name/input,
-filters exact or pipe-separated tool matchers, consumes each tool part once, and resets
-idle suppression on the next busy turn. Session deletion removes tracked state. Hook
-failure remains reported without blocking the host.
+Implementation: map session creation, completed tools and idle to `SessionStart/PostToolUse/Stop`. Preserve actual identity/cwd, parse commands, filter exact or pipe-separated matchers, consume each tool part once, reset idle suppression on busy and release deleted sessions. Report failed hooks without blocking the host.
 
-The mutation Vitest configuration now loads .txt assets as source text, matching the
-ordinary test configuration. Previously six mutation jobs failed their initial tests
-before producing a mutation score because the shared OpenCode adapter was a URL string.
-No mutation threshold or bundle budget was changed.
+## Tests
 
-## Added and strengthened tests
-- Two added bridge unit cases verify Stop/PostToolUse-only declarations and a released
-  session/tool/idle event sequence. The sequence covers real identity and cwd, malformed
-  events, incomplete/failed tools, matcher filtering, duplicate events, another busy
-  turn and session deletion/recreation. Five further cases cover missing hook tables,
-  missing commands, whitespace/argument parsing and balanced hook counts across events.
-  Existing failed-hook coverage expands to nonzero
-  exit, spawn failure and dispatch failure, each reported once without blocking. This
-  adds nine executed unit cases overall; the bridge suite contains thirteen cases.
-- Six added delivery integration cases cover setup, plugin installation and update for
-  each of kilo.jsonc and .kilo/kilo.jsonc. They preserve exact JSONC bytes, comments,
-  model, permissions and user MCP configuration. Installation checks the delivered
-  script, generated bridge and manifest version; update changes script/version and
-  restores a deleted bridge. These execute real application use cases with filesystem
-  and fetch doubles; they do not claim execution of the built CLI or Kilo.
-- The existing opt-in runtime case now runs Kilo 7.7.5 through a complete model turn.
-  The CLI translate command delivers the tested hook modules. The context memory script
-  remains byte-identical to its source and must update AGENTS.md. A deterministic
-  loopback model endpoint requests the real read tool and receives its actual result.
-  An independent observer records host events; captured hooks must contain exactly one
-  SessionStart, PostToolUse(read) and Stop with the actual session ID and input. The
-  test retains skills, agents and MCP discovery checks and verifies shutdown of the
-  server and captured hook processes. Final hook counts and payloads are read after
-  server-process-group shutdown, preventing a late extra record from passing a transient
-  count check. Translation intentionally normalizes JSON and adds its schema; the test
-  checks preservation of custom values during delivery, then snapshots the delivered
-  configuration and verifies byte-identical contents after host execution. Exact
-  preservation of original JSONC bytes during setup/install/update belongs to the six
-  application integration cases above.
-- Two architecture cases exercise a real temporary Git checkout with core.autocrlf=true.
-  They check exact LF bytes for both embedded configuration assets and deliberately
-  remove their attribute rule to prove that the guard detects CRLF conversion. The
-  tests relocate profiles and use an independent temporary .git directory.
+- [Bridge](../../../../cli/tests/contexts/tools/domain/profiles/kilo/kilo-hooks-bridge.unit.test.ts): missing declarations/commands, argument parsing, released lifecycle events, malformed/incomplete/failed tools, matchers, replay, new turns and deleted-session recreation. Nonzero exit, spawn and dispatch failures are reported once.
+- [Delivery](../../../../cli/tests/contexts/framework/application/plugin/kilo-plugin-delivery.integration.test.ts): setup/install/update for `kilo.jsonc` and `.kilo/kilo.jsonc`; exact JSONC bytes, comments, model, permissions and MCP preserved. Verify scripts/manifest version and restore a deleted bridge. These are application use cases with filesystem/fetch doubles.
+- [Checkout](../../../../cli/tests/architecture/bundled-config-checkout.arch.test.ts): isolated real Git checkout with `core.autocrlf=true` preserves LF for embedded assets; removing the attribute rule defeats preservation.
+- [Real Kilo 7.7.5](../../../../cli/tests/e2e/kilo-runtime.e2e.test.ts): actual CLI translation, byte-identical memory script updating `AGENTS.md`, skills/agents/MCP discovery, real read/result and exact hook payloads. Independent host observation and a final snapshot after process-group shutdown reject late duplicates. Assert server/captured-process shutdown and model cleanup. Profiles are isolated; only inference is substituted. Translation may normalize JSON; delivered configuration remains byte-identical during execution.
 
-Sources of these tests:
-- [Bridge unit tests](../../../../cli/tests/contexts/tools/domain/profiles/kilo/kilo-hooks-bridge.unit.test.ts)
-- [Delivery integration tests](../../../../cli/tests/contexts/framework/application/plugin/kilo-plugin-delivery.integration.test.ts)
-- [Real Kilo runtime test](../../../../cli/tests/e2e/kilo-runtime.e2e.test.ts)
-- [Embedded-config checkout tests](../../../../cli/tests/architecture/bundled-config-checkout.arch.test.ts)
-
-## Strategy and observed failures
-Released behavior was researched before extending the bridge. The
-[official plugin documentation](https://kilo.ai/docs/automate/extending/plugins),
-[custom provider documentation](https://kilo.ai/docs/code-with-ai/agents/custom-models)
-and [published SDK 7.7.5 types](https://unpkg.com/@kilocode/sdk@7.7.5/dist/v2/gen/types.gen.d.ts)
-were checked against a real isolated runtime. Its read part emitted pending, running,
-running and completed updates; session.idle ended the turn. Declared types alone were
-not treated as execution evidence.
-
-Before the bridge change, the real turn refreshed memory and read the file, but failed
-with `expected 1 to be 3`: only SessionStart fired. Bridge regressions also failed before
-implementation. The completed runtime case then passed. A first model harness assertion
-incorrectly expected exactly two requests; Kilo also makes a title request. The corrected
-proof checks actual tool-result content instead of assuming a total request count.
-
-The initial-test CI defect was reproduced with the mutation configuration: two existing
-installation/update regressions received the adapter path instead of its source. After
-adding .txt, all four runtime-file tests passed. A complete local OpenCode mutation run
-then passed with score 96.4 against the unchanged floor of 94.
-
-The first local Kilo mutation measurement was 63.7, below its existing floor of 64.
-Additional parser and lifecycle cases raised the score to 67.7. The final scope run
-tested 175 mutants and reused 48 already measured results, 223 total. A separate copied
-bridge with session-state deletion disabled made its lifecycle assertion fail with
-`1 !== 2`; production source was never altered for that counterproof.
-
-Independent review found that a transient three-record poll followed by arrayContaining
-could miss a late fourth hook. The corrected test reads its final snapshot after process
-group shutdown and asserts exactly three records. A copied E2E case injected a fourth
-record at that snapshot and failed with `length of 3 but got 4`; the original test's
-SHA256 was unchanged and the temporary copy was removed. Configuration comparison was
-also scoped to delivered bytes, respecting translation's intentional JSON normalization.
-
-The complete normal pre-push suite then caught one stale golden baseline for the Kilo
-context bridge, with 6,832 tests passing and that single assertion failing. The official
-recapture changed only that generated file's stored hash; the other nine matrix cells
-and all file lists remained unchanged. All three golden tests subsequently passed in
-comparison mode, including deterministic output and the complete ten-cell matrix.
-
-The first updated remote run passed the actual Kilo test on Ubuntu but exposed a Windows
-bundle failure. A separate local clone reproduced its checkout behavior: 89 CRLF lines
-in the OpenCode asset and one in the Codex TOML added 180 escaped bytes to the bundle.
-Identical source built to 751,771 bytes with CRLF and 751,591 with LF. The existing
-cli/.gitattributes now declares assets/configs/** text eol=lf. No algorithm, source
-behavior, dependency or budget changed. The checkout guard failed before this correction
-and passed afterward; removing the rule in its isolated fixture detects both changed
-assets. Raw logs are bundle-crlf-build.log, bundle-lf-build.log and
-bundle-eol-guard-before.log in the evidence directory below.
+Re-run in a disposable environment, as [CI](../../../../.github/workflows/cli-ci.yml) does; the install command replaces its global Kilo executable:
 
 ```sh
+npm install -g @kilocode/cli@7.7.5
 pnpm --dir cli test:e2e:kilo
+pnpm --dir cli exec vitest run --project=unit tests/contexts/tools/domain/profiles/kilo/kilo-hooks-bridge.unit.test.ts
 pnpm --dir cli exec vitest run --config vitest.mutation.config.ts tests/contexts/framework/application/plugin/kilo-plugin-delivery.integration.test.ts
 pnpm --dir cli test:mutation:tools-opencode
 pnpm --dir cli test:mutation:tools-kilo
 pnpm --dir cli test:arch
 ```
 
-Local raw evidence includes /tmp/kilo-hooks-runtime-red.log and the following files in
-/tmp/aidd-971-repair: kilo-quiescent-runtime-green.log, mutation-opencode-local.log,
-mutation-kilo-repair.log, kilo-delete-mutant.log and kilo-late-hook-counterproof.log.
-The research capture used an allowlisted environment with relocated HOME/XDG paths and
-no inherited authentication variables. The committed runtime test follows the same
-isolation approach. Only inference is substituted; Kilo, its event bus, read tool,
-CLI delivery and spawned hooks execute normally.
+The ordinary suite skips the opt-in host case; its dedicated CI job runs it explicitly.
 
-## Local validation of the extension
-- Real pinned runtime: one complete case passed, including actual read-tool results and
-  all three hook payloads.
-- Kilo profile suites: 21 passed, including 13 bridge cases. Delivery integration: six
-  passed under the mutation configuration.
-- Normal commit checks: 554 repository script tests passed; final architecture suite:
-  142 passed, including the two added checkout guards. Full pre-push before the checkout
-  extension: 6,833 passed, one opt-in case skipped, 532 files passed; knip passed.
-  Lint, TypeScript, type honesty, documentation and whitespace checks passed. The lint
-  warning about an unused private member in uninstall-use-case.ts is preexisting.
-- Built CLI: 751,591 bytes against the unchanged 751,616-byte budget. This passes with
-  25 bytes of headroom; future changes need to account for the remaining margin.
-- The dedicated Kilo CI job explicitly runs the host case; the required cli / gate also
-  depends on every selected mutation job. Final remote status is available on
-  [pull request 971](https://github.com/ai-driven-dev/framework/pull/971/checks).
+## Counterproofs and repairs
 
-## CodeQL review follow-up
-The issue author confirmed the requested V1 and real-process acceptance criteria in
-[issue comment](https://github.com/ai-driven-dev/framework/issues/953#issuecomment-6041453916).
-GitHub Advanced Security also raised alerts 102, 103 and 104 on generated test probes:
-their JavaScript embedded temporary output paths through `JSON.stringify`. These paths
-were locally generated and the files were executed by Node/Kilo, not embedded in HTML;
-this review does not establish attacker-controlled injection. Nevertheless, the fixtures
-now contain static JavaScript: the CommonJS capture resolves from `__dirname`, the ESM
-capture uses the hook payload's `cwd`, and the observer uses the host's project directory.
-No path is interpolated into executable source and no alert was dismissed or suppressed.
-The [CodeQL rule](https://codeql.github.com/codeql-query-help/javascript/js-bad-code-sanitization/)
-documents why JSON encoding alone is insufficient for every JavaScript embedding context.
+Before implementation, the real turn fired only `SessionStart`; bridge regressions also failed. A copied deleted-session mutant failed recreation; injecting an extra final hook failed the exact count assertion. Assertions check the actual tool result rather than request totals because Kilo also requests a title.
 
-After this change, the 13 bridge unit cases and the real Kilo 7.7.5 runtime case passed;
-the final three-record assertion, payload checks, observed real read and process shutdown
-checks remain intact. Targeted Biome, TypeScript and whitespace checks also passed.
-On `6daf59f5`, [CodeQL](https://github.com/ai-driven-dev/framework/actions/runs/37664345407)
-passed; all three alerts are `fixed` on `refs/pull/971/merge` and the open-alert API returns
-`[]`. [CLI run](https://github.com/ai-driven-dev/framework/actions/runs/37664345321) also
-finished with 29 successful jobs. Its coverage job was retried after the first runner
-stalled during Ubuntu package installation, before launching tests; the successful retry
-executed the full coverage gate. No test or security finding was skipped to get that result.
+The mutation loader reads `.txt` assets as source, matching normal tests. LF checkout fixes Windows bundle growth; thresholds and budget stay unchanged. A stale golden bridge hash was recaptured without changing file lists; comparison mode then passed. Test probes use static code rather than interpolated paths, addressing the [CodeQL embedding rule](https://codeql.github.com/codeql-query-help/javascript/js-bad-code-sanitization/). No alert was suppressed. The obsolete parser wrapper was removed; representative generator inputs produced byte-identical modules after cleanup. [Final gates](./review.md).
 
-## Final code and comment review
-Independent inspection of all changed production/configuration/documentation and test
-files found two remnants: a Kilo parser wrapper with no production caller and comments
-describing the observed V1 session-announcement fallback as a universal OpenCode limit.
-The wrapper is removed. Its three existing test cases now exercise the delivered
-`generateKiloHooksBridge` entrypoint; all 13 bridge cases remain. Comments are shortened
-and distinguish the V1 fallback from V2 session announcements.
-
-The corrective review reports no remaining finding. Targeted CLI validation passes 30
-cases and root OpenCode validation passes 26; Biome, TypeScript and whitespace checks pass.
-Comparing the previous and current generators on six representative inputs each produces
-byte-identical Kilo and OpenCode modules. No generated runtime template, golden, mutation
-floor or bundle budget changed. The cleanup's complete normal gates and remote checks are
-to be confirmed on the resulting candidate before calling the development finished.
-
-## Limits
-Kilo telemetry and journal/cost attribution remain unsupported. This proof covers one
-successful local turn, plus controlled unit event sequences and application delivery
-tests. Paid providers, global installation, hot reload, exhaustive process-tree auditing
-and Kilo runtime execution on Windows are not claimed. The ordinary suite deliberately
-skips the opt-in host case; the dedicated CI job runs it explicitly.
+Kilo telemetry remains unsupported. Paid providers, global-profile operation, hot reload, exhaustive process-tree auditing and Windows Kilo runtime remain outside this proof.

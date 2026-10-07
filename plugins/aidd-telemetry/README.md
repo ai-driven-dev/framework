@@ -2,46 +2,27 @@
 
 # aidd-telemetry
 
-Know what a piece of work cost: which skill, which step and which task spent the tokens.
+Measure tokens by skill, step and task.
 
-> Status: beta. Proven end to end on Claude Code; the other four tools are covered to the
-> extent their own files allow. Off the curated install path until it has run on other
-> people's machines.
+> Beta. Proven end to end on Claude Code; other tools depend on their recorded data.
+> Excluded from curated installation pending validation on other users' machines.
 
 ## What it is
 
-Your provider can tell you a developer burned four million tokens on Tuesday. This plugin
-tells you which skill spent them, on which task.
+Reports attribute usage to work, with explicit evidence:
 
-```text
-period    2026-08-21 to 2026-08-21
+- `stated by the tool`: exact attribution.
+- `from a journal interval`: inferred attribution.
+- `unattributed`: neither source identifies a step; it does not mean no step ran.
 
-  sessions                  1
-  requests                  3
-  tokens                    116,678    80% cache
-  cost                      amount unknown
-
-  by step    of tokens
-    aidd-ui:01-hello           67%   78,188 tokens    stated by the tool
-    aidd-ui:01-hello           33%   38,490 tokens    from a journal interval
-```
-
-Every figure says how it was attributed. `stated by the tool` is exact, `from a journal
-interval` is an inference, `unattributed` means neither source could say — never "no step
-ran". An unknown is named, never shown as a zero, and no figure is in currency: pricing
-tokens is a separate service's job.
+Unknown values remain unknown, never zero. Reports count tokens; a separate service prices them.
 
 ## Why it exists
 
-A provider meters an account. Only the framework knows its own units of work — the skill,
-the step, the task, the flow — so only it can say what one piece of work cost.
-
-Three things it never does: it never sends anything anywhere, it never stores a prompt, a
-diff or a line of code, and it never records until you turn it on.
+Providers meter accounts; AIDD identifies skills, steps, tasks and flows. Measurement is
+opt-in, local, and excludes prompts, diffs and code.
 
 ## How it works
-
-Two sources exist already. The plugin adds the one thing that joins them.
 
 ```mermaid
 flowchart LR
@@ -60,17 +41,16 @@ flowchart LR
   CLI -->|joins by session, keeps a record| Store --> Answer
 ```
 
-- **The hooks journal.** Every session appends one line per observation to
-  `aidd_docs/runs/<run_id>__<vendor_id>.jsonl`, git-ignored, never rewritten. No token, no
-  cost, no model lands there.
-- **Your tool writes its own transcript**, in its own place and format. It holds the tokens
-  and knows nothing about skills.
-- **`aidd telemetry report` joins the two**, by session, and keeps the result under
-  `~/.config/aidd/telemetry/`. The join cannot happen live: when a hook fires, the tokens
-  for that turn are not written yet.
+- **Hooks** append one line per observation to git-ignored
+  `aidd_docs/runs/<run_id>__<vendor_id>.jsonl`. Journals are never rewritten and contain no
+  tokens, cost or model.
+- **Tools** write transcripts in their own locations and formats: tokens without AIDD skills.
+- **`aidd telemetry report`** joins both by session and stores results under
+  `~/.config/aidd/telemetry/`. Reporting cannot run live: hooks fire before turn tokens are
+  durably written.
 
-Recording depends on nothing but `node`, so a session is measured whether or not `aidd` is
-installed. Allowing and answering go through the CLI, so the figure is computed once.
+Recording requires only `node`, even without `aidd`. Enabling measurement and computing
+reports require the CLI.
 
 ## Getting started
 
@@ -79,14 +59,13 @@ npm install -g @ai-driven-dev/cli
 aidd plugin install aidd-telemetry
 ```
 
-Then ask your AI tool for a skill. Each one stops with the reason if `aidd` does not answer,
-rather than reporting an empty figure.
+Ask your AI tool for a skill. Each stops with an explanation if `aidd` cannot answer.
 
 | Ask your tool for | It runs | You get |
 | --- | --- | --- |
-| `00-init` | `aidd telemetry on`, then reads a run file back | measurement allowed for this project, and proof a session is journalled |
-| `01-cost` | `aidd telemetry report` | what a period or one task consumed, by step, model, task, flow, tool or person |
-| `02-check` | `aidd telemetry check` | whether the chain is actually recording, and what to fix if not |
+| `00-init` | `aidd telemetry on`, then reads a run file back | project opt-in and recording proof |
+| `01-cost` | `aidd telemetry report` | period or task usage by step, model, task, flow, tool or person |
+| `02-check` | `aidd telemetry check` | recording status and required repairs |
 
 ## Coverage
 
@@ -95,50 +74,40 @@ rather than reporting an empty figure.
 | **Claude Code** | ✅ proven on live sessions | ✅ stated by the tool, and by interval | ✅ |
 | **Codex** | ✅ on captured rollouts | ✅ by interval | ✅ |
 | **OpenCode** | ✅ | ❌ no skill call reaches its plugin | ✅ |
-| **Copilot** | ⚠️ session total only, no per-request figure (one cumulative total at shutdown) | ✅ by interval | ✅ |
+| **Copilot** | ⚠️ session total only, no per-request figure (cumulative at shutdown) | ✅ by interval | ✅ |
 | **Cursor** | ❌ no token count in any file it writes | ✅ | ✅ |
 
-A limit a reader has to look up gets read as a zero, so each one is named here:
-
-- **Codex needs one interactive approval.** Its hook trust is per entry and a headless run
-  never sees the prompt, so a Codex session journals nothing until someone approves once.
-- **OpenCode V1 can omit the session announcement.** The first journalable event opens
-  an unannounced session. Without a known session directory, it uses the plugin's startup
-  directory, which can be wrong for a server serving several projects. V2 session events
-  provide their own directory; tool completion and execution completion reach the journal
-  through the V2 event subscription. The adapter targets V1 1.18.29 or later and V2;
-  older V1 releases do not support its default plugin definition.
-- **OpenCode never names a step.** Its plugin forwards task paths and nothing else, so no
-  skill invocation reaches the journal and every OpenCode request is unattributed by step.
-- **These are raw counters, not your tool's usage screen.** A vendor's page weights a cached
-  token by what it charges for it; these are the counts the tool wrote down. The two
-  disagree on cache lines by construction, and neither is wrong.
-- **A period means when the work ran**, not when it was billed, and nothing reconstructs
-  work done before you turned measurement on.
+- **Codex:** approve each hook entry interactively. Headless runs cannot show the trust
+  prompt; sessions record nothing until approval.
+- **OpenCode:** supports V1 ≥ 1.18.29 and V2; older V1 lacks the default plugin definition.
+  OpenCode V1 can omit the session announcement; the first journalable event then opens it.
+  Without a known session directory, it uses the plugin's startup directory, which can be
+  wrong for a server serving several projects.
+  V2 supplies session directories and journals tool and execution completions through its
+  event subscription.
+- **OpenCode steps:** only task paths reach the journal, never skill calls. Every request
+  remains unattributed by step.
+- **Counts:** raw transcript tokens differ from vendor usage screens, which weight cached
+  tokens by price. Neither count is wrong.
+- **Periods:** work time, not billing time. Activity before opt-in cannot be reconstructed.
 
 ## Privacy
 
-- **Nothing leaves the machine.** Every code path that once could is deleted. On a machine
-  where an older version configured an export endpoint, `aidd telemetry check` and
-  `aidd telemetry off` both detect it and name what to remove by hand.
-- **No prompt, no code, no diff.** The stored shape is an allowlist, field by field, in
+- **No export.** `aidd telemetry check` and `aidd telemetry off` detect legacy
+  export endpoints and identify required manual removal.
+- **No prompts, code or diffs.** Stored fields follow
   [the record contract](../../aidd_docs/product/metrics-contract.md).
-- **The switch is a file you commit or do not**, per project (`.aidd/config.json`). Once
-  committed on, it applies to everyone who clones. Refuse it for yourself alone with
-  `AIDD_TELEMETRY=0`, which overrides the file unconditionally.
-- **`off` keeps what you measured**; `aidd telemetry forget` removes it — this project's
-  journal, this machine's records and its identity file — and removes nothing without
-  `--yes`.
-- **Your identity is yours to attach**, through `aidd telemetry identity`. To share figures
-  across a team, point `AIDD_TELEMETRY_DIR` at a shared directory — never
-  `AIDD_USER_CONFIG_DIR`, which also relocates `auth.json` and its GitHub token.
+- **Project opt-in:** committing `.aidd/config.json` with measurement enabled affects all
+  clones. `AIDD_TELEMETRY=0` unconditionally overrides it for yourself.
+- **Retention:** `off` keeps records. `aidd telemetry forget` removes the project's journal,
+  this machine's records and identity file; deletion requires `--yes`.
+- **Identity:** attach it optionally through `aidd telemetry identity`. Share figures using
+  `AIDD_TELEMETRY_DIR`, never `AIDD_USER_CONFIG_DIR`: the latter also relocates `auth.json`
+  and its GitHub token.
 
 ## Where things are written down
 
-- [`aidd_docs/runs/README.md`](../../aidd_docs/runs/README.md): what the journal records,
-  and what it deliberately does not.
+- [`aidd_docs/runs/README.md`](../../aidd_docs/runs/README.md): journal contract.
 - [`cost-report-contract.md`](../../aidd_docs/product/cost-report-contract.md): the object
-  `report --json` prints, and the `backlog-link.json` a task folder may carry to say which
-  backlog item it delivers.
-- [`metrics-contract.md`](../../aidd_docs/product/metrics-contract.md): one stored line, for
-  a service that prices them.
+  printed by `report --json`; optional `backlog-link.json` maps a task to its backlog item.
+- [`metrics-contract.md`](../../aidd_docs/product/metrics-contract.md): stored records for pricing.
