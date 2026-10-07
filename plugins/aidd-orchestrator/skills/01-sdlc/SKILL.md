@@ -1,14 +1,14 @@
 ---
 name: 01-sdlc
-description: Autonomously orchestrates a request from framing to a draft pull request, isolating implementation, independent review, and final outcome challenge. Use when the user wants to deliver a change end to end. Not for running one development step.
-argument-hint: request
+description: Orchestrates a request from framing to a draft pull request, autonomous or supervised, isolating implementation, independent review, and final outcome challenge. Use when the user wants to deliver a change end to end. Not for one step.
+argument-hint: request | interactive request
 ---
 
 # Skill: sdlc
 
 ## Behavior
 
-Operate autonomously from the request to a draft pull request: decide and act without confirmation, asking only before spending money, taking an irreversible action, or making a decision that requires user authority. Read only the current zone reference. Verify that every named provider is installed before calling it.
+Decide the mode as `mode.md` says, then read only it and the current zone's reference. Verify that every named provider is installed before calling it. A zone that cannot proceed stops the run and says what it would take to resume.
 
 Spawn specialized agents for isolated work. Parallelize independent work when it is faster. Give each agent one focused task that a smaller model can execute. Repeat the responsible zone when delegated work returns an actionable gap.
 
@@ -20,17 +20,17 @@ flowchart TD
   subgraph FrameStage["01 Frame"]
     direction TB
     Request["$request"]
-    Frame["01 Frame"]
+    Frame["01 Frame<br/>interactive: pause on the contract"]
   end
 
   subgraph DeliverStage["02 Deliver"]
     direction TB
-    Deliver["02 Deliver"]
+    Deliver["02 Deliver<br/>interactive: pause on the plan"]
   end
 
   subgraph CheckStage["03 Check"]
     direction TB
-    Check["03 Check"]
+    Check["03 Check<br/>interactive: pause on the outcome"]
     PullRequest["$pull_request"]
   end
 
@@ -63,6 +63,7 @@ it drove afterwards then reads as work that belonged to nothing.
 
 | #   | Reference                               |
 | --- | --------------------------------------- |
+| —   | [Mode](references/mode.md)              |
 | 01  | [Frame](references/01-frame.md)         |
 | 02  | [Deliver](references/02-deliver.md)     |
 | 03  | [Check](references/03-check.md)         |
