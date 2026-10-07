@@ -8,18 +8,16 @@ A free-form request, or a path to an existing PRD. A feature name for the folder
 
 ## Output
 
-The path to `spec.md` in the feature folder, drafted from the template, with the ambiguities and assumptions noted, or no write when the request is too vague.
+The path to `spec.md` in the feature folder, drafted from the template, with its gaps listed. No write when the request is too vague.
 
 ## Process
 
-1. **Qualify.** When the request is too vague to draft anything useful, stop and ask for a clearer one.
-2. **Source.** Map the input onto [spec-template.md](../assets/spec-template.md), dropping any implementation detail.
-   - PRD path: lift its target, hard constraints, non-goals, and done-when.
-   - Free-form request: map it directly onto the template sections.
+1. **Qualify.** Stop and ask for a clearer request when this one is too vague to draft.
+2. **Source.** Map the input onto [spec-template.md](../assets/spec-template.md), dropping any implementation detail. From a PRD, lift its target, hard constraints, non-goals and done-when.
 3. **Gaps.** List every gap per [tbd-marker.md](../references/tbd-marker.md).
-4. **Check.** Confirm every section the validator requires is present. Omit an optional section (stakeholders, context) that has nothing to say rather than emit a placeholder.
-5. **Write.** Resolve the feature folder: reuse an existing `aidd_docs/tasks/<yyyy_mm>/<yyyy_mm_dd>_<slug>/` match for this feature, or create one. Save it there.
-6. **Declare.** When the request names a backlog item — a ticket already resolved (e.g. by `/aidd-pm:01-ticket-info`), or a path to its Markdown artefact — and the folder carries no `backlog-link.json` yet, write one there, naming that item on whatever support it lives:
+4. **Check.** Every required section present. Omit an optional one with nothing to say, never a placeholder.
+5. **Write.** Save it in `aidd_docs/tasks/<yyyy_mm>/<yyyy_mm_dd>_<slug>/`, reusing this feature's folder when one exists.
+6. **Declare.** When the request names a backlog item and the folder carries no `backlog-link.json`, write one there:
 
    ```json
    {
@@ -29,10 +27,10 @@ The path to `spec.md` in the feature folder, drafted from the template, with the
    }
    ```
 
-   `backlog` is the one field: a forge reference (`"owner/repo#123"`) or a project-relative Markdown path (`"aidd_docs/backlog/tasks/x.md"`), never both and never a second field for the other support. `written_at` is now, in ISO 8601 UTC; `written_by` is this skill's own name, verbatim.
+   `backlog` is one field, a forge reference or a project-relative Markdown path, never both. `written_at` is now, ISO 8601 UTC.
 
-   When the request names no backlog item, write nothing — a folder with no declaration is a normal state, never an error. When `backlog-link.json` already exists, leave it untouched: it is correctable by hand, and a later run must never overwrite a correction.
-7. **Return.** Surface its path and the notes.
+   Write nothing when the request names none: an undeclared folder is normal. Never overwrite the file, so a correction by hand survives.
+7. **Return.** Its path and its gaps.
 
 ## Test
 
@@ -43,6 +41,6 @@ The path to `spec.md` in the feature folder, drafted from the template, with the
 | The spec is read back | it carries no library name, framework pattern, or source-file layout |
 | A gap exists | it is listed once, in the open questions section only |
 | Too vague | no write; one clarifying question returned |
-| The request names a backlog item | the folder's `backlog-link.json` names it, with `written_at` and `written_by` |
-| The request names none | no `backlog-link.json` is written, and nothing errors |
-| `backlog-link.json` already exists | it is left unchanged, even when the request names a different item |
+| The request names a backlog item | `backlog-link.json` names it, with `written_at` and `written_by` |
+| It names none | no file is written, and nothing errors |
+| The file exists | it is left unchanged, even for a different item |

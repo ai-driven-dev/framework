@@ -8,22 +8,22 @@ The path to the current spec, and the findings to address, a list or free text.
 
 ## Output
 
-The refined spec at the same path, or no change if not written.
+The refined spec at the same path, or no write.
 
 ## Process
 
 1. **Load.** Read the spec and the findings.
 2. **Map.** Pair each finding with the section it touches.
-3. **Rewrite.** Apply each finding in place: clarify wording, add missing fields, remove invalid claims. Leave untouched sections as they are.
+3. **Rewrite.** Apply each finding in place. Leave every other section as it is.
 4. **Gaps.** Drop a resolved entry, narrow a half-answered one, list the rest per [tbd-marker.md](../references/tbd-marker.md).
-5. **Check.** Confirm every section the validator requires is present, then overwrite the spec at its path.
-6. **Verify.** Report what changed as `before -> after`, and the verification result.
+5. **Check.** Every required section present, then overwrite the spec.
+6. **Verify.** Report each change as `before -> after`, with the result.
 
 ## Test
 
 | Case | Pass |
 | --- | --- |
-| The action completes | the spec still exists at its path with every section required by [spec-validator.yml](../assets/spec-validator.yml) |
+| The action completes | the spec is still at its path, with every section [spec-validator.yml](../assets/spec-validator.yml) requires |
 | A finding is resolved | the spec changed at the section it names |
 | A finding resolves a gap | its entry is gone, and the section is empty when it was the last |
 | A finding cannot be resolved | it is listed once, in the open questions section only |

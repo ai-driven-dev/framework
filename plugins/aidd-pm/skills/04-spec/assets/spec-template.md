@@ -17,7 +17,7 @@
 
 ## Non-goals
 
-<Explicit list of what is OUT of scope for this run. Avoid the trap of "we'll do it later" - say it explicitly here so downstream agents don't assume otherwise.>
+<What is out of scope for this run. Say it here, never defer it.>
 
 - <Out-of-scope item 1>
 - <Out-of-scope item 2>
@@ -41,4 +41,4 @@
 
 ## Context (optional)
 
-<Background, links to relevant docs, prior decisions, related tickets, constraints from upstream systems. Keep concise - link out rather than restate.>
+<Background, prior decisions, upstream constraints. Link out, never restate.>
