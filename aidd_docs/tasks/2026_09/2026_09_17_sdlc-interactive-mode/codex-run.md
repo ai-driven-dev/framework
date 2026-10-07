@@ -134,3 +134,39 @@ produce the artifact again, and that sentence would pause for it. The other two
 did not. One reading out of three is below the bar this work has used for
 changing text — the defect it fixed was unanimous — so the sentence stays and the
 reading is recorded here instead.
+
+## Run 2 — the same issue in `auto`, for comparison
+
+Same tool, same issue, same starting commit (`origin/next` 156f5432), a separate
+worktree, and no mode word. `PR #966` opened as a draft on its own.
+
+| | interactive | auto |
+| --- | ----------- | ---- |
+| Pauses | 3, all answered by a person | 0 |
+| Core fix | `new SetupFlow` moved into the existing `try` | identical |
+| Documentation | a table in `cli/README.md` | the same, plus `aidd setup --help` generated from the registry |
+| Other production change | none | `--scope` description reworded, help golden regenerated |
+| Evidence recorded | plan, phase, review, challenge, validation | plan, phase, review, challenge |
+| Commits | 3 | 2 |
+| Draft pull request | withheld at the gate | opened |
+
+Both wrote the two things #891 says were over-claimed, and wrote them correctly:
+PATH presence named as the cause of the missing cells rather than the scope, and
+Cursor's mechanism sourced rather than guessed. `auto` added the recovery step
+(`aidd sync --scope user`) that `interactive` left out, and generated its help
+text from `supportsUserScopeActivation`, which already existed, so that text
+cannot drift from the registry.
+
+Two honest conclusions, neither comfortable:
+
+- **The gates added no quality on this issue.** The autonomous run reached the
+  same fix with the same two traps avoided, and documented them in one more place.
+- **The human at gate 1 made it worse.** Told to drop Kilo on the strength of a
+  stale checkout, the interactive run nearly lost a shipped tool from the
+  documentation and only kept it by contradicting the reviewer. The autonomous run
+  included Kilo unprompted.
+
+What the gates bought was the chance to withhold the pull request, and a record of
+what was decided. What `auto` bought was a slightly wider change: the help text
+and its golden snapshot are a surface the issue did not ask for, defensible under
+"write the state down" but past the minimum.
