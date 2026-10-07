@@ -33,8 +33,8 @@ journey
     break the example's syntax => run the guard => it fails, naming the file: 1: system
   section Edge case - a field becomes empty
     set written_by to an empty string => run the guard => it fails, naming the field: 1: system
-  section Edge case - the example moves
-    rename the taught file => run the guard => it fails instead of passing on a missing file: 1: system
+  section Edge case - the taught example is not the first fence
+    add a fence above it => run the guard => it fails, and the cli sibling fails too: 1: system
   section Teardown
     restore the example => the suite is green again: 5: system
 ```
@@ -54,18 +54,19 @@ journey
 3. Fail with the file and the field named, so the message locates the break.
 4. Keep the `.md` and `.json` forms both readable: one skill fences the example, the other ships it as an asset.
 
-### `3)` find the taught example by what it declares
-> Position is not identity.
+### `3)` agree with the sibling on which fence is the example
+> Two guards reading different fences leave one green and the other red.
 
-1. Select the fence whose parse carries the first required field.
-2. Fail naming the file and how many fences were read, when none carries it.
+1. Read the first json fence, as the `cli/` test does.
+2. Fail naming the file, the field it must carry, and how many fences were read.
+3. Report the parse error when that fence is not JSON.
 
 ### `4)` watch it go red for its own reason
 > The mutation that proves the guard ships with it.
 
 1. Break the syntax again. The guard fails, and the message names that file.
 2. Empty one field. The guard fails, and the message names that field.
-3. Move the taught file. The guard fails rather than passing over an absent one.
+3. Strip the fence markers, leaving the JSON as prose. The guard fails.
 4. Restore, and run the whole suite plus `pnpm exec lefthook run pre-commit`.
 
 ## Test acceptance criteria
@@ -73,5 +74,5 @@ journey
 | --- | --- |
 | 1 | the guard passes over a broken example before the change, recorded |
 | 2 | the guard parses both the fenced and the asset form, and names file and field on failure |
-| 3 | an unrelated fence above the taught one passes, and the same with the taught example broken fails |
+| 3 | a fence added above the taught one fails here and in the `cli/` sibling, with the same verdict |
 | 4 | the fences stripped and an emptied field each turn this guard red, and the suite is green once restored |

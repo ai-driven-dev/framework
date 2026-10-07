@@ -16,30 +16,43 @@ const ROOT = path.resolve(__dirname, "../..");
  * here rather than imported across that boundary — and the second case below is what keeps
  * the restatement honest.
  */
-const REQUIRED_FIELDS = ["backlog", "written_at", "written_by"];
+const IDENTIFYING_FIELD = "backlog";
+const REQUIRED_FIELDS = [IDENTIFYING_FIELD, "written_at", "written_by"];
 
-/** The example a teaching file carries, found by what it declares and not by where it sits: a
- * json fence above the taught one would otherwise be parsed in its place, leaving the guard
- * green over a broken example. */
+/** The taught example is the first json fence, the same one
+ * `cli/tests/contexts/telemetry/infrastructure/task-backlog-skill-shape.integration.test.ts`
+ * reads: two guards disagreeing on which fence that is leaves one green and the other red. */
+function shapeOf(value) {
+  if (value === null) return "null";
+  if (Array.isArray(value)) return "an array";
+  return typeof value;
+}
+
 function taughtInMarkdown(file, markdown) {
   const fences = [...markdown.matchAll(/```json\r?\n([\s\S]*?)\r?\n\s*```/g)].map((m) => m[1]);
-  for (const fence of fences) {
-    try {
-      const candidate = JSON.parse(fence);
-      if (REQUIRED_FIELDS[0] in candidate) return candidate;
-    } catch {}
-  }
-  assert.fail(
-    `${file} must teach an example in a json fence carrying "${REQUIRED_FIELDS[0]}", read ${fences.length} fence(s)`
+  assert.ok(fences.length > 0, `${file} must teach the example in a json fence`);
+
+  const taught = taughtAsJson(file, fences[0]);
+  assert.ok(
+    IDENTIFYING_FIELD in taught,
+    `${file}'s first json fence must be the taught example, carrying "${IDENTIFYING_FIELD}". ` +
+      `Read ${fences.length} fence(s).`
   );
+  return taught;
 }
 
 function taughtAsJson(file, text) {
+  let taught;
   try {
-    return JSON.parse(text);
+    taught = JSON.parse(text);
   } catch (error) {
     assert.fail(`${file} teaches an example that is not JSON: ${error.message}`);
   }
+  assert.ok(
+    taught !== null && typeof taught === "object" && !Array.isArray(taught),
+    `${file} must teach an object, not ${shapeOf(taught)}`
+  );
+  return taught;
 }
 
 function trackedBacklogLinks() {
