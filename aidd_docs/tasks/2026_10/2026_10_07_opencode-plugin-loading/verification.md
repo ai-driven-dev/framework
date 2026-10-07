@@ -80,7 +80,7 @@ python3 /tmp/aidd-953-runtime-ryTstm/probe.py /tmp/aidd-953-runtime-ryTstm/candi
 The V2 command uses run --standalone; neither test starts a persistent background service.
 The installed personal OpenCode 1.14.20 and its profile were not upgraded or used.
 
-## Automated validation
+## Original OpenCode candidate validation
 
 - Full repository scripts suite through the normal commit hook: 554 passed, zero failures; the hook also verified that tests left git hooks unchanged.
 - Full CLI suite through the final normal push hook: 6,818 passed, one opt-in Kilo runtime test skipped; 531 files passed. Evidence: push-shared.log in the temporary harness directory.
@@ -109,3 +109,8 @@ Paid inference, global-profile installation, other operating systems and a runni
 hot reload are not claimed by this local proof. The local deterministic model substitutes
 only inference; OpenCode's plugin loader, event stream, read tool, hook processes and
 journal are real.
+
+## Subsequent verification extension
+The accepted Kilo runtime extension and mutation CI repair are documented in
+[Kilo verification](./kilo-verification.md), with the initial need, implemented behavior,
+added tests, observed failures, commands and limits.

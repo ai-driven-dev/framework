@@ -41,3 +41,14 @@ status: implemented
 - Tests must fail before implementation for the entrypoint or behavior they name.
 - V2 events may differ from V1; capture real events and preserve session identity and task declaration.
 - OpenCode releases older than 1.18.29 do not support the documented default object contract; document the minimum instead of claiming untested backward compatibility.
+
+## Accepted verification extension
+The user subsequently requested stronger Kilo evidence and correction of the red checks
+on the existing pull request. Keep mutation thresholds unchanged and repair the shared
+initial-test failure before judging mutation scores. Exercise the pinned Kilo 7.7.5
+runtime with the real memory script, a deterministic local model turn, observable hook
+payloads and process cleanup. Capture released event shapes before extending supported
+hooks. Validate existing configuration preservation through CLI delivery paths. Kilo
+telemetry remains unsupported; this extension does not claim journal or cost coverage.
+Record commands, observed failures, results and remaining limits in the verification
+report. Re-enter independent review after the new candidate, then update the same PR.
