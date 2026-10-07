@@ -36,7 +36,7 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `references` | [01-frame.md](skills/01-sdlc/references/01-frame.md) | - |
 | `references` | [02-deliver.md](skills/01-sdlc/references/02-deliver.md) | - |
 | `references` | [03-check.md](skills/01-sdlc/references/03-check.md) | - |
-| `-` | [SKILL.md](skills/01-sdlc/SKILL.md) | `Orchestrates a request from framing to a draft pull request, isolating implementation, independent review, and final outcome challenge. Use when the user wants to deliver a change end to end. Not for running one development step.` |
+| `-` | [SKILL.md](skills/01-sdlc/SKILL.md) | `Orchestrates a request from framing to a draft pull request, autonomous or supervised, isolating implementation, independent review, and final outcome challenge. Use when the user wants to deliver a change end to end. Not for one step.` |
 
 #### `skills/02-backlog`
 

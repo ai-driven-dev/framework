@@ -1,6 +1,6 @@
 ---
 name: 01-sdlc
-description: Orchestrates a request from framing to a draft pull request, isolating implementation, independent review, and final outcome challenge. Use when the user wants to deliver a change end to end. Not for running one development step.
+description: Orchestrates a request from framing to a draft pull request, autonomous or supervised, isolating implementation, independent review, and final outcome challenge. Use when the user wants to deliver a change end to end. Not for one step.
 argument-hint: request | interactive request
 ---
 

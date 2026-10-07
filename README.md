@@ -193,7 +193,7 @@ Three ways in — pick one:
 | --- | --- | --- |
 | 🧭 **Guided onboarding** | `/aidd-context:00-onboard` | First time, or unsure what to run — it inspects the project and routes you. |
 | 🧠 **Project memory** | `/aidd-context:02-project-memory` | Build the project memory bank by hand. |
-| ⚙️ **Feature flow** | `/aidd-orchestrator:01-sdlc` | Ship a feature end to end (frame → deliver → check → PR). |
+| ⚙️ **Feature flow** | `/aidd-orchestrator:01-sdlc` | Ship a feature end to end, autonomous by default or supervised with `interactive` (frame → deliver → check → PR). |
 
 The full loop, and how onboarding sets it up:
 
