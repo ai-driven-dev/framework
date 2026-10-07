@@ -31,7 +31,7 @@
 
 ## Open Questions
 
-<One entry per unresolved decision, in the form `TBD: <precise question>`. Write `None` when nothing is left. Resolve every entry before the spec validates.>
+<One entry per gap, in the form `TBD: <precise question>`; what a gap is, `references/tbd-marker.md` defines. Write `None` when nothing is left. Resolve every entry before the spec validates.>
 
 ## Stakeholders (optional)
 

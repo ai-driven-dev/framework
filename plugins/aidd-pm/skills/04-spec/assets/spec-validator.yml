@@ -23,7 +23,7 @@ criteria:
     weight: 25
 
   - id: open_questions
-    description: An Open Questions section present, listing each unresolved decision once as a precise question, or reading None.
+    description: An Open Questions section present, listing each gap (an unresolved decision a required section depends on, per references/tbd-marker.md) once as a precise question, or reading None. Spec-wide - no `TBD:` marker appears anywhere in the spec outside the Open Questions section, in any section including Context.
     required: true
     weight: 0
 

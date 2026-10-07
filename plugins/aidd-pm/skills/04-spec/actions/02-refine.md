@@ -15,7 +15,7 @@ The refined spec at the same path, or no change if not written.
 1. **Load.** Read the spec and the findings.
 2. **Map.** Pair each finding with the section it touches.
 3. **Rewrite.** Apply each finding in place: clarify wording, add missing fields, remove invalid claims. Leave untouched sections as they are.
-4. **Gaps.** Remove from `## Open Questions` every entry the rewrite answered, then list each field still unanswered there per [tbd-marker.md](../references/tbd-marker.md), never inside the section it would fill. Write `None` when no entry remains.
+4. **Gaps.** Remove from `## Open Questions` every entry whose decision the rewrite fully answered, and rewrite one answered in part to the question that remains. Then list each gap still open there as [tbd-marker.md](../references/tbd-marker.md) defines it, never inside the section it would fill. Write `None` when no entry remains.
 5. **Check.** Confirm every section the validator requires is present, then overwrite the spec at its path.
 6. **Verify.** Report what changed as `before -> after`, and the verification result.
 
