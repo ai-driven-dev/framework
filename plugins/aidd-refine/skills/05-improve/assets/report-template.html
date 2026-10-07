@@ -13,15 +13,15 @@
       <a class="brand" href="#report" aria-label="AIDD Improve report"><span class="brand-mark" aria-hidden="true">A</span><span>AIDD / improve</span></a>
     </header>
 
-    <main id="report" data-label-accepted-one="{count} recommendation accepted" data-label-accepted-other="{count} recommendations accepted">
+    <main id="report" data-label-accepted-one="{count} recommendation accepted" data-label-accepted-other="{count} recommendations accepted" data-label-duration-unavailable="Unavailable">
       <section class="intro" aria-labelledby="report-title">
         <h1 id="report-title">Improve report</h1>
-        <p>Fictional example.</p>
+        <p>Fictional example, including all timings.</p>
       </section>
 
-      <section class="recap" aria-label="Conversation recap" data-start="2026-09-12T09:00:00Z" data-end="2026-09-12T09:00:09Z">
+      <section class="recap" aria-label="Conversation recap" data-start="2026-09-12T09:00:00Z" data-end="2026-09-12T10:03:40Z">
         <div class="metrics">
-          <p><span>Elapsed</span><strong>9 s</strong></p>
+          <p><span>Elapsed</span><strong class="duration is-slow">1 h 3 min 40 s</strong></p>
           <p><span>Tokens</span><strong>Unavailable</strong></p>
           <p><span>Calls · includes 2 subcalls</span><strong>6</strong></p>
         </div>
@@ -30,51 +30,61 @@
       <section class="section conversation-section" aria-labelledby="conversation-title">
         <div class="section-heading"><h2 id="conversation-title">Conversation</h2></div>
 
-        <article class="conversation-turn">
+        <details class="conversation-turn" data-start="2026-09-12T09:00:00Z" data-end="2026-09-12T09:01:23Z">
+          <summary><span class="turn-summary"><span class="prompt-preview">Review the project guidance for repetition and unnecessary output. Suggest changes only.</span><span class="duration is-slow" title="Recorded response duration">1 min 23 s</span></span></summary>
           <blockquote class="user-message" data-moment="2026-09-12T09:00:00Z" aria-labelledby="first-prompt-label">
-            <div class="message-meta"><span id="first-prompt-label">User prompt</span><span class="event-delta">Start</span></div>
+            <div class="message-meta"><span id="first-prompt-label">User prompt</span></div>
             <p class="user-prompt">Review the project guidance for repetition and unnecessary output. Suggest changes only.</p>
           </blockquote>
 
           <div class="tool-calls" aria-label="Calls following the first prompt">
             <article class="tool-call" data-call-id="E003" data-moment="2026-09-12T09:00:02Z">
-              <div class="tool-line"><span class="tool-name">read_file</span><code class="tool-target">AGENTS.md</code><span class="event-delta" aria-label="2 seconds since previous displayed item">+2 s</span></div>
+              <div class="tool-line"><span class="tool-name">read_file</span><code class="tool-target">AGENTS.md</code><span class="event-delta duration" data-seconds="2" data-prefix="+" aria-label="2 seconds since previous displayed item">+2 s</span></div>
             </article>
             <article class="tool-call" data-call-id="E006" data-moment="2026-09-12T09:00:04Z">
-              <div class="tool-line"><span class="tool-name">parallel</span><span class="tool-target">2 linked read_file subcalls</span><span class="event-delta" aria-label="2 seconds since previous displayed item">+2 s</span></div>
+              <div class="tool-line"><span class="tool-name">parallel</span><span class="tool-target">2 linked read_file subcalls</span><span class="event-delta duration" data-seconds="2" data-prefix="+" aria-label="2 seconds since previous displayed item">+2 s</span></div>
               <div class="subcalls" aria-label="Linked parallel subcalls">
                 <article class="tool-call" data-call-id="E007" data-parent="E006" data-moment="2026-09-12T09:00:04.100Z">
-                  <div class="tool-line"><span class="tool-name">read_file</span><code class="tool-target">docs/example-review.md</code><span class="event-delta" aria-label="0.1 seconds since previous displayed item">+0.1 s</span></div>
+                  <div class="tool-line"><span class="tool-name">read_file</span><code class="tool-target">docs/example-review.md</code><span class="event-delta duration" data-seconds="0.1" data-prefix="+" aria-label="0.1 seconds since previous displayed item">+0.1 s</span></div>
                 </article>
                 <article class="tool-call" data-call-id="E008" data-parent="E006" data-moment="2026-09-12T09:00:04.200Z">
-                  <div class="tool-line"><span class="tool-name">read_file</span><code class="tool-target">docs/example-guidance.md</code><span class="event-delta" aria-label="0.1 seconds since previous displayed item">+0.1 s</span></div>
+                  <div class="tool-line"><span class="tool-name">read_file</span><code class="tool-target">docs/example-guidance.md</code><span class="event-delta duration" data-seconds="0.1" data-prefix="+" aria-label="0.1 seconds since previous displayed item">+0.1 s</span></div>
                 </article>
               </div>
             </article>
             <article class="tool-call" data-call-id="E012" data-moment="2026-09-12T09:00:05Z">
-              <div class="tool-line"><span class="tool-name">read_file</span><span class="tool-target"><code>docs/example-review-notes.md</code> <span class="call-error">ENOENT</span></span><span class="event-delta" aria-label="0.8 seconds since previous displayed item">+0.8 s</span></div>
+              <div class="tool-line"><span class="tool-name">read_file</span><span class="tool-target"><code>docs/example-review-notes.md</code> <span class="call-error">ENOENT</span></span><span class="event-delta duration" data-seconds="0.8" data-prefix="+" aria-label="0.8 seconds since previous displayed item">+0.8 s</span></div>
             </article>
             <article class="tool-call" data-call-id="E014" data-moment="2026-09-12T09:00:06Z">
-              <div class="tool-line"><span class="tool-name">shell</span><span class="tool-target"><code>rg --files docs -g '*review*'</code> <span class="call-status">retry</span></span><span class="event-delta" aria-label="1 second since previous displayed item">+1 s</span></div>
+              <div class="tool-line"><span class="tool-name">shell</span><span class="tool-target"><code>rg --files docs -g '*review*'</code> <span class="call-status">retry</span></span><span class="event-delta duration" data-seconds="1" data-prefix="+" aria-label="1 second since previous displayed item">+1 s</span></div>
             </article>
           </div>
-        </article>
+        </details>
 
-        <article class="conversation-turn">
-          <blockquote class="user-message" data-moment="2026-09-12T09:00:08Z" aria-labelledby="second-prompt-label">
-            <div class="message-meta"><span id="second-prompt-label">User prompt</span><span class="event-delta" aria-label="2 seconds since previous displayed item">+2 s</span></div>
+        <details class="conversation-turn" data-start="2026-09-12T09:01:30Z" data-end="2026-09-12T09:01:42Z">
+          <summary><span class="turn-summary"><span class="prompt-preview">Show replacements and deletions side by side. Do not invent a new rule for the deleted duplicate.</span><span class="duration" title="Recorded response duration">12 s</span></span></summary>
+          <blockquote class="user-message" data-moment="2026-09-12T09:01:30Z" aria-labelledby="second-prompt-label">
+            <div class="message-meta"><span id="second-prompt-label">User prompt</span></div>
             <p class="user-prompt">Show replacements and deletions side by side. Do not invent a new rule for the deleted duplicate.</p>
           </blockquote>
-        </article>
+        </details>
+
+        <details class="conversation-turn" data-start="2026-09-12T09:02:00Z" data-end="2026-09-12T10:03:40Z">
+          <summary><span class="turn-summary"><span class="prompt-preview">Keep unknown durations unavailable rather than estimating them.</span><span class="duration is-slow" title="Recorded response duration">1 h 1 min 40 s</span></span></summary>
+          <blockquote class="user-message" data-moment="2026-09-12T09:02:00Z" aria-labelledby="third-prompt-label">
+            <div class="message-meta"><span id="third-prompt-label">User prompt</span></div>
+            <p class="user-prompt">Keep unknown durations unavailable rather than estimating them.</p>
+          </blockquote>
+        </details>
       </section>
 
       <section class="section findings-section" aria-labelledby="findings-title">
         <div class="section-heading"><h2 id="findings-title">Recommended changes</h2></div>
 
         <div class="findings" id="findings-list">
-          <article class="finding" data-id="concise-output" data-signal="counterproductive" data-target="behavior">
+          <article class="finding" data-id="concise-output">
             <header class="finding-header">
-              <div class="finding-title"><div class="tags"><span class="tag"><span aria-hidden="true">⚠️</span> Counterproductive</span><span class="tag"><span aria-hidden="true">🧭</span> Behavior</span></div><h3>Replace the full-output requirement</h3></div>
+              <div class="finding-title"><h3>Replace the full-output requirement</h3></div>
               <label class="accept-toggle"><input class="accept-input" type="checkbox" data-prompt="In docs/example-review.md, replace 'Before replying, print every tool result in full.' with 'Report the result and the shortest evidence needed to verify it.'" data-label-off="Accept" data-label-on="Accepted"><span>Accept</span></label>
             </header>
             <div class="finding-collapse"><div class="finding-body">
@@ -87,9 +97,9 @@
               </div>
             </div></div>
           </article>
-          <article class="finding" data-id="duplicate-publishing-rule" data-signal="duplicate" data-target="knowledge">
+          <article class="finding" data-id="duplicate-publishing-rule">
             <header class="finding-header">
-              <div class="finding-title"><div class="tags"><span class="tag"><span aria-hidden="true">♻️</span> Duplicate</span><span class="tag"><span aria-hidden="true">📚</span> Knowledge</span></div><h3>Remove the second publishing rule</h3></div>
+              <div class="finding-title"><h3>Remove the second publishing rule</h3></div>
               <label class="accept-toggle"><input class="accept-input" type="checkbox" data-prompt="In docs/example-guidance.md, remove the second duplicate 'Validate before publishing.' rule." data-label-off="Accept" data-label-on="Accepted"><span>Accept</span></label>
             </header>
             <div class="finding-collapse"><div class="finding-body">

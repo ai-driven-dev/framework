@@ -6,6 +6,25 @@
     return template ? template.replace("{count}", String(count)) : String(count);
   }
 
+  function elapsedSeconds(start, end) {
+    const seconds = (Date.parse(end) - Date.parse(start)) / 1000;
+    return Number.isFinite(seconds) && seconds >= 0 ? seconds : NaN;
+  }
+
+  function formatDuration(seconds, locale = "en", unavailable = "Unavailable") {
+    if (!Number.isFinite(seconds) || seconds < 0) return unavailable;
+    const rounded = Math.round(seconds * 1000) / 1000;
+    const hours = Math.floor(rounded / 3600);
+    const minutes = Math.floor((rounded % 3600) / 60);
+    const remaining = rounded % 60;
+    const number = new Intl.NumberFormat(locale, { maximumFractionDigits: 3 });
+    const parts = [];
+    if (hours) parts.push(`${number.format(hours)} h`);
+    if (minutes) parts.push(`${number.format(minutes)} min`);
+    if (remaining || !parts.length) parts.push(`${number.format(remaining)} s`);
+    return parts.join(" ");
+  }
+
   function composePrompt(value, accepted, savedLines = new Map(), knownIds = new Set(accepted.map(({ id }) => id))) {
     const generatedPattern = /^- \[([^\]]+)\] /;
     const original = value.split("\n");
@@ -25,7 +44,7 @@
     return lines.join("\n");
   }
 
-  if (typeof module !== "undefined") module.exports = { composePrompt, formatCount };
+  if (typeof module !== "undefined") module.exports = { composePrompt, formatCount, elapsedSeconds, formatDuration };
   if (typeof document === "undefined") return;
 
   const report = document.querySelector("#report");
@@ -34,6 +53,18 @@
   const acceptedCount = document.querySelector("#accepted-count");
   const savedPromptLines = new Map();
   const findingIds = new Set(findings.map((finding) => finding.dataset.id));
+
+  document.querySelectorAll(".duration").forEach((node) => {
+    const boundary = node.closest("[data-start]");
+    const raw = node.dataset.seconds;
+    const seconds = raw === undefined
+      ? elapsedSeconds(boundary?.dataset.start, boundary?.dataset.end)
+      : raw.trim() ? Number(raw) : NaN;
+    const known = Number.isFinite(seconds) && seconds >= 0;
+    const label = formatDuration(seconds, document.documentElement?.lang || "en", report.dataset.labelDurationUnavailable || "Unavailable");
+    node.textContent = `${known ? node.dataset.prefix || "" : ""}${label}`;
+    node.classList.toggle("is-slow", known && seconds > 60);
+  });
 
   function updatePrompt() {
     const accepted = findings.filter((finding) => finding.querySelector(".accept-input").checked);
