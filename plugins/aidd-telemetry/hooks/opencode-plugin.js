@@ -39,15 +39,9 @@ function runJournal(event, payload) {
   });
 }
 
-// Only `session.created` carries the session's own `info.directory`; the other events carry
-// `sessionID` alone. A single server can outlive many sessions and serve more than one
-// directory, so this plugin's fixed init-time directory is not a safe stand-in - a turn-end
-// written to the wrong project's journal finds no run file and silently no-ops.
-//
-// `session.created` was never observed reaching this hook, and every `opencode run` is a
-// session OpenCode never announced, so the later events fall back to the init-time directory,
-// which is correct for the single-directory case `opencode run` is. `journalCallsFor` writes
-// it back here, so the session is opened once and every later event reads the same directory.
+// V2's adapter delivers `session.created` with `info.directory`; retain it per session.
+// V1 did not deliver that event, so its first journal call uses and retains the factory's
+// directory, valid for the observed single-directory `opencode run` path.
 const directoryBySessionId = new Map();
 
 // Mirrors `lib/task-declared.cjs`'s own `TASK_PATH_PATTERN`, duplicated rather than
@@ -122,17 +116,9 @@ function sessionIdOf(event) {
   return event.properties?.sessionID;
 }
 
-/** Every journal call one OpenCode event produces, in the order the journal must receive
- * them.
- *
- * OpenCode publishes `session.created` on its own bus and never delivers it to a plugin's
- * event hook, and `opencode run` is always such a session — so `journalCallFor` alone leaves
- * the journal with no `session_start`, no run file, and every later line dropped, while the
- * tool still reads as covered.
- *
- * So the first call for a session nobody announced opens it, carrying the directory that
- * call was already going to use rather than a new guess. An announced session is untouched,
- * and no session is opened twice. */
+/** V1 fallback: open an unannounced session before its first journal call, using that call's
+ * directory. V2's adapter delivers `session.created`, so announced sessions pass through
+ * without a duplicate opening. */
 function journalCallsFor(event, sessionDirectories, fallbackDirectory) {
   const sessionId = sessionIdOf(event);
   const announced = sessionId !== undefined && sessionDirectories.has(sessionId);

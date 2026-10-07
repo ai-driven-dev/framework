@@ -4,17 +4,14 @@ import { join } from "node:path";
 import { setTimeout as delay } from "node:timers/promises";
 import { pathToFileURL } from "node:url";
 import { describe, expect, it, vi } from "vitest";
-import {
-  generateKiloHooksBridge,
-  parseKiloSessionStartHooks,
-} from "../../../../../../src/contexts/tools/domain/profiles/kilo/kilo-hooks-bridge.js";
+import { generateKiloHooksBridge } from "../../../../../../src/contexts/tools/domain/profiles/kilo/kilo-hooks-bridge.js";
 
 const ROOT = "$" + "{CLAUDE_PLUGIN_ROOT}";
 
 describe("Kilo hooks bridge", () => {
   it("keeps only replayable SessionStart commands", () => {
     expect(
-      parseKiloSessionStartHooks(
+      generateKiloHooksBridge(
         JSON.stringify({
           hooks: {
             SessionStart: [
@@ -27,14 +24,15 @@ describe("Kilo hooks bridge", () => {
             ],
             Stop: [{ hooks: [{ command: `node ${ROOT}/hooks/stop.js` }] }],
           },
-        })
+        }),
+        "probe"
       )
-    ).toEqual([{ script: "update_memory.js", args: ["--quiet"] }]);
+    ).toContain('const SESSION_START = [{"script":"update_memory.js","args":["--quiet"]}];');
   });
 
   it("trims replayable commands and separates multiple whitespace arguments", () => {
     expect(
-      parseKiloSessionStartHooks(
+      generateKiloHooksBridge(
         JSON.stringify({
           hooks: {
             SessionStart: [
@@ -46,14 +44,16 @@ describe("Kilo hooks bridge", () => {
               },
             ],
           },
-        })
+        }),
+        "probe"
       )
-    ).toEqual([{ script: "update_memory.js", args: ["--quiet", "--tool", "kilo"] }]);
+    ).toContain(
+      'const SESSION_START = [{"script":"update_memory.js","args":["--quiet","--tool","kilo"]}];'
+    );
   });
 
   it("accepts absent hook tables, events and empty groups", () => {
     for (const value of [{}, { hooks: {} }, { hooks: { SessionStart: [{}] } }]) {
-      expect(parseKiloSessionStartHooks(JSON.stringify(value))).toEqual([]);
       expect(generateKiloHooksBridge(JSON.stringify(value), "probe")).toBeNull();
     }
   });

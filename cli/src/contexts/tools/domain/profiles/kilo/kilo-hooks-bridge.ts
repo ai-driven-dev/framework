@@ -45,10 +45,6 @@ function parseGroups(groups: readonly ClaudeMatcherGroup[] = []): readonly Parse
   );
 }
 
-export function parseKiloSessionStartHooks(rawHooksJson: string): readonly ParsedHookCall[] {
-  return parseGroups((JSON.parse(rawHooksJson) as ClaudeHooksShape).hooks?.SessionStart);
-}
-
 function toIdentifier(plugin: string): string {
   return `${plugin
     .split("-")

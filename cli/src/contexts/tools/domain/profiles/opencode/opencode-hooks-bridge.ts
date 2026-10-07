@@ -5,18 +5,14 @@
  * plugin with V1/server and V2/setup entrypoints, spawning the scripts every host's hooks.json
  * already names over the stdin-JSON contract those scripts already read.
  *
- * Only three events map; anything else is dropped, OpenCode's plugin surface delivering no
- * event those hooks could ride on:
+ * Only three hook events are replayed:
  *
- * - `SessionStart` runs when the generated plugin's own factory is called — once per
- *   server/directory, not once per session, since `session.created` is published on OpenCode's
- *   bus but was never observed delivered to a plugin's `event` hook. Safe only for an
- *   idempotent hook, which every `SessionStart` hook this generator sees today is.
+ * - `SessionStart` runs once per server/directory at factory initialization and requires
+ *   idempotent commands. V1 did not deliver `session.created` to this event hook;
+ *   the V2 adapter delivers it for telemetry's session tracking.
  * - `Stop` maps to V1's `session.idle` or V2's execution terminal, once per turn.
  * - `PostToolUse` maps to `message.part.updated` whose `part.state.status === "completed"`, the
- *   one shape measured live: `part.tool` names the tool, `part.state.input` its arguments.
- *   `tool.execute.after` reads cleaner in OpenCode's own docs but is a separate named hook
- *   `(input, output)`, never an `event({event})` payload, and nothing here has captured it.
+ *   shape measured live: `part.tool` names the tool, `part.state.input` its arguments.
  *
  * A `matcher` on a `PostToolUse` group filters by tool name, exact or pipe-separated
  * alternation; absent, every tool matches.

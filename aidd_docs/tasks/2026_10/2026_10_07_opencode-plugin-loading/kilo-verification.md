@@ -156,8 +156,27 @@ documents why JSON encoding alone is insufficient for every JavaScript embedding
 After this change, the 13 bridge unit cases and the real Kilo 7.7.5 runtime case passed;
 the final three-record assertion, payload checks, observed real read and process shutdown
 checks remain intact. Targeted Biome, TypeScript and whitespace checks also passed.
-Remote CodeQL resolution is to be verified on the resulting candidate; prior green CI
-alone does not establish absence of security findings.
+On `6daf59f5`, [CodeQL](https://github.com/ai-driven-dev/framework/actions/runs/37664345407)
+passed; all three alerts are `fixed` on `refs/pull/971/merge` and the open-alert API returns
+`[]`. [CLI run](https://github.com/ai-driven-dev/framework/actions/runs/37664345321) also
+finished with 29 successful jobs. Its coverage job was retried after the first runner
+stalled during Ubuntu package installation, before launching tests; the successful retry
+executed the full coverage gate. No test or security finding was skipped to get that result.
+
+## Final code and comment review
+Independent inspection of all changed production/configuration/documentation and test
+files found two remnants: a Kilo parser wrapper with no production caller and comments
+describing the observed V1 session-announcement fallback as a universal OpenCode limit.
+The wrapper is removed. Its three existing test cases now exercise the delivered
+`generateKiloHooksBridge` entrypoint; all 13 bridge cases remain. Comments are shortened
+and distinguish the V1 fallback from V2 session announcements.
+
+The corrective review reports no remaining finding. Targeted CLI validation passes 30
+cases and root OpenCode validation passes 26; Biome, TypeScript and whitespace checks pass.
+Comparing the previous and current generators on six representative inputs each produces
+byte-identical Kilo and OpenCode modules. No generated runtime template, golden, mutation
+floor or bundle budget changed. The cleanup's complete normal gates and remote checks are
+to be confirmed on the resulting candidate before calling the development finished.
 
 ## Limits
 Kilo telemetry and journal/cost attribution remain unsupported. This proof covers one
