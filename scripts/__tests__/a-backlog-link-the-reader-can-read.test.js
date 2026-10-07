@@ -60,7 +60,9 @@ describe("every backlog declaration in this repository is one the report can rea
    * so they have to teach the same three names, wherever inside each skill the lesson lives — and the same three this test asks for.
    * Read from the skills rather than trusted: a taught shape drifting away from the reader
    * is exactly what produced the two unreadable files, and a guard restating the fields
-   * without checking the lesson would have stayed green through it. */
+   * without checking the lesson would have stayed green through it. The example is parsed,
+   * not searched: a file that keeps the three names while ceasing to be JSON is unreadable
+   * to the reader all the same. */
   it("is the shape both skills that write it actually teach", () => {
     const TEACHING_FILES = [
       "plugins/aidd-pm/skills/04-spec/assets/backlog-link-template.json",
@@ -69,8 +71,20 @@ describe("every backlog declaration in this repository is one the report can rea
 
     for (const file of TEACHING_FILES) {
       const text = fs.readFileSync(path.join(ROOT, file), "utf8");
+      const source = file.endsWith(".md") ? text.match(/```json\r?\n([\s\S]*?)\r?\n\s*```/)?.[1] : text;
+      assert.ok(source !== undefined, `${file} must teach the example in a json fence`);
+
+      let taught;
+      try {
+        taught = JSON.parse(source);
+      } catch (error) {
+        assert.fail(`${file} teaches an example that is not JSON: ${error.message}`);
+      }
       for (const field of REQUIRED_FIELDS) {
-        assert.ok(text.includes(`"${field}"`), `${file} must teach the field "${field}"`);
+        assert.ok(
+          typeof taught[field] === "string" && taught[field] !== "",
+          `${file} must teach the field "${field}" as a non-empty string`
+        );
       }
     }
   });
