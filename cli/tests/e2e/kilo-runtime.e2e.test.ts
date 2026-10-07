@@ -210,7 +210,8 @@ describeKiloRuntime("E2E: real Kilo runtime", () => {
         },
       };
       const configPath = join(generatedProject, "kilo.jsonc");
-      await writeFile(configPath, JSON.stringify(config));
+      const originalConfig = JSON.stringify(config);
+      await writeFile(configPath, originalConfig);
       const build = await runCli(
         ["translate", REPOSITORY_ROOT, "--to", "kilo", "--as", "flat", "--out", generatedProject],
         projectDir,
@@ -378,6 +379,7 @@ describeKiloRuntime("E2E: real Kilo runtime", () => {
         `import { appendFileSync } from "node:fs"; export default { id: "runtime-observer", server: async () => ({ event: async ({ event }) => appendFileSync(${JSON.stringify(eventPath)}, JSON.stringify(event) + "\\n") }) };`
       );
 
+      const deliveredConfig = await readFile(configPath, "utf8");
       const started = await startKilo(generatedProject, env);
       child = started.child;
       kiloUrl = `http://127.0.0.1:${started.port}`;
@@ -421,6 +423,8 @@ describeKiloRuntime("E2E: real Kilo runtime", () => {
           timeout: 5000,
         })
         .toBe(3);
+      await stopKilo(child);
+      child = undefined;
       const events = (await readFile(eventPath, "utf8"))
         .trim()
         .split("\n")
@@ -441,6 +445,7 @@ describeKiloRuntime("E2E: real Kilo runtime", () => {
         .trim()
         .split("\n")
         .map((line) => JSON.parse(line));
+      expect(calls).toHaveLength(3);
       expect(calls.map((call) => call.payload)).toEqual(
         expect.arrayContaining([
           { hook_event_name: "SessionStart", session_id: sessionId, cwd: generatedProject },
@@ -455,7 +460,7 @@ describeKiloRuntime("E2E: real Kilo runtime", () => {
         ])
       );
       for (const call of calls) await expect.poll(() => alive(call.pid)).toBe(false);
-      expect(JSON.parse(await readFile(configPath, "utf8"))).toMatchObject(config);
+      expect(await readFile(configPath, "utf8")).toBe(deliveredConfig);
     } finally {
       try {
         if (child) await stopKilo(child);

@@ -40,8 +40,14 @@ No mutation threshold or bundle budget was changed.
   loopback model endpoint requests the real read tool and receives its actual result.
   An independent observer records host events; captured hooks must contain exactly one
   SessionStart, PostToolUse(read) and Stop with the actual session ID and input. The
-  test retains skills, agents and MCP discovery checks, checks unchanged project
-  configuration and verifies shutdown of the server and captured hook processes.
+  test retains skills, agents and MCP discovery checks and verifies shutdown of the
+  server and captured hook processes. Final hook counts and payloads are read after
+  server-process-group shutdown, preventing a late extra record from passing a transient
+  count check. Translation intentionally normalizes JSON and adds its schema; the test
+  checks preservation of custom values during delivery, then snapshots the delivered
+  configuration and verifies byte-identical contents after host execution. Exact
+  preservation of original JSONC bytes during setup/install/update belongs to the six
+  application integration cases above.
 
 Sources of these tests:
 - [Bridge unit tests](../../../../cli/tests/contexts/tools/domain/profiles/kilo/kilo-hooks-bridge.unit.test.ts)
@@ -74,6 +80,13 @@ tested 175 mutants and reused 48 already measured results, 223 total. A separate
 bridge with session-state deletion disabled made its lifecycle assertion fail with
 `1 !== 2`; production source was never altered for that counterproof.
 
+Independent review found that a transient three-record poll followed by arrayContaining
+could miss a late fourth hook. The corrected test reads its final snapshot after process
+group shutdown and asserts exactly three records. A copied E2E case injected a fourth
+record at that snapshot and failed with `length of 3 but got 4`; the original test's
+SHA256 was unchanged and the temporary copy was removed. Configuration comparison was
+also scoped to delivered bytes, respecting translation's intentional JSON normalization.
+
 ```sh
 pnpm --dir cli test:e2e:kilo
 pnpm --dir cli exec vitest run --config vitest.mutation.config.ts tests/contexts/framework/application/plugin/kilo-plugin-delivery.integration.test.ts
@@ -81,9 +94,9 @@ pnpm --dir cli test:mutation:tools-opencode
 pnpm --dir cli test:mutation:tools-kilo
 ```
 
-Local raw evidence includes /tmp/kilo-hooks-runtime-red.log,
-/tmp/kilo-runtime-final.log, /tmp/aidd-971-repair/mutation-opencode-local.log,
-/tmp/aidd-971-repair/mutation-kilo-repair.log and kilo-delete-mutant.log in that directory.
+Local raw evidence includes /tmp/kilo-hooks-runtime-red.log and the following files in
+/tmp/aidd-971-repair: kilo-quiescent-runtime-green.log, mutation-opencode-local.log,
+mutation-kilo-repair.log, kilo-delete-mutant.log and kilo-late-hook-counterproof.log.
 The research capture used an allowlisted environment with relocated HOME/XDG paths and
 no inherited authentication variables. The committed runtime test follows the same
 isolation approach. Only inference is substituted; Kilo, its event bus, read tool,
