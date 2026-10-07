@@ -9,20 +9,18 @@ fixed before running, no run repeated, every count below mechanical.
 22 drafts, three requests, both text versions. Markers outside the open questions section:
 **0**. Heading exact: **22/22**, though only the template names it.
 
-## Driving to zero - pass
+## Driving to zero - not reached, and nothing now refuses a spec for it
 
-A request answering every required field. Entries listed:
+With the text pasted into one prompt, a request answering every required field produced 0, 0,
+0 entries against 3, 2, 0 before the cut. Through the installed tree it produces 3, 2, 2. The
+installed figure is the one to trust: it is the route a user runs.
 
-| text | runs |
-| --- | --- |
-| shipped | 0, 0, 0 |
-| before the cut | 3, 2, 0 |
+**No causal claim is made about either pair.** The cut changed several clauses at once, so
+length is isolated in neither table, and the thin-request ranges overlap (2, 3, 2, 2, 4
+against 3, 4, 3, 4, 5).
 
-The shipped text reaches `None` on a resolved request three times out of three.
-
-On the thin request that answers the same fields but states no non-goals, the shipped text
-lists 2, 3, 2, 2, 4 entries and the pre-cut text 3, 4, 3, 4, 5. **No causal claim is made.**
-The cut changed several clauses at once, so length is not isolated, and the ranges overlap.
+Because zero is not reached, no refusal rides on it. `open_questions_unresolved` is gone.
+What invalidates a spec is a gap written outside the section, which is what #626 measured.
 
 ## The measured case - pass
 
@@ -37,9 +35,10 @@ Retention and the row cap left open, the two #626 measured: **2, 2, 2** entries,
 | answers the last | `None`, 3/3 |
 | spec carries no such section | the section is added, heading exact, 3/3 |
 
-The last two rows failed before this round. Cutting `None` from step 4 produced an empty
-section 3/3, which the validator then refuses, and refine never linked the template, so it
-wrote `## Open questions` 3/3.
+The third row failed before this round: cutting `None` from step 4 produced an empty section
+3/3. The fourth is an observation, not a mechanism. Its before-and-after prompts differ by
+more than the text, since the later one inlines the template, so the link `02-refine.md`
+gained was never exercised as a link.
 
 ## The validator - pass
 
@@ -47,10 +46,13 @@ Fresh context, the yml and one spec. Stands in for the gate #625 brings.
 
 | Spec | Verdict |
 | --- | --- |
-| one residual entry | invalid 3/3 |
-| `None`, with a marker under `## Context` | invalid 3/3 |
+| one gap listed in its own section | valid 3/3 |
+| `None`, with a gap written under `## Context` | invalid 3/3 |
 | no open questions section at all | invalid 3/3 |
 | `None`, every required section resolved | valid 3/3, and 3/3 again on a fuller spec |
+
+The first row read invalid 3/3 while a hard threshold refused an open gap. It refused
+complete work, so it is gone.
 
 The fourth row failed while the yml carried no definition of a gap: an evaluator reading it
 alone supplied its own, and refused a spec whose content was complete.

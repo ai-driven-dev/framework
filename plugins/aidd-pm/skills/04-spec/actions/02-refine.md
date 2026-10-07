@@ -23,7 +23,7 @@ The refined spec at the same path, or no write.
 
 | Case | Pass |
 | --- | --- |
-| The action completes | the spec is still at its path, with every section [spec-validator.yml](../assets/spec-validator.yml) requires |
+| The action completes | the spec is still at its path, with every section [spec-template.md](../assets/spec-template.md) requires |
 | A finding is resolved | the spec changed at the section it names |
 | A finding resolves a gap | its entry is gone, and the section reads `None` when it was the last |
 | A finding cannot be resolved | it is listed once, in the open questions section only |

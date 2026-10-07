@@ -15,9 +15,9 @@ The path to `spec.md` in the feature folder, drafted from the template, with its
 1. **Qualify.** Stop and ask for a clearer request when this one is too vague to draft.
 2. **Source.** Map the input onto [spec-template.md](../assets/spec-template.md), dropping any implementation detail. From a PRD, lift its target, hard constraints, non-goals and done-when.
 3. **Gaps.** List every gap per [tbd-marker.md](../references/tbd-marker.md).
-4. **Check.** Every required section present. Omit an optional one with nothing to say, never a placeholder.
+4. **Check.** Every section [spec-template.md](../assets/spec-template.md) requires present. Omit an optional one with nothing to say, never a placeholder.
 5. **Write.** Save it in `aidd_docs/tasks/<yyyy_mm>/<yyyy_mm_dd>_<slug>/`, reusing this feature's folder when one exists.
-6. **Declare.** When the request names a backlog item and the folder carries no `backlog-link.json`, write one there:
+6. **Declare.** A backlog item is a ticket already resolved, or a path to its Markdown artefact, never raw text. When the request names one and the folder carries no `backlog-link.json`, write one there:
 
    ```json
    {
@@ -27,7 +27,7 @@ The path to `spec.md` in the feature folder, drafted from the template, with its
    }
    ```
 
-   `backlog` is one field, a forge reference or a project-relative Markdown path, never both. `written_at` is now, ISO 8601 UTC; `written_by` is this skill's name.
+   `backlog` is the one field, a forge reference (`owner/repo#123`) or a project-relative Markdown path, never both and never a second field for the other support. `written_at` is now, ISO 8601 UTC; `written_by` is this skill's name.
 
    Write nothing when the request names none: an undeclared folder is normal. Never overwrite the file, so a correction by hand survives.
 7. **Return.** Its path and its gaps.

@@ -31,7 +31,7 @@
 
 ## Open Questions
 
-<One entry per gap, per `references/tbd-marker.md`. `None` when there is none. Resolve each before the spec validates.>
+<One entry per gap, per `references/tbd-marker.md`. `None` when there is none. Resolve each before the spec is locked.>
 
 ## Stakeholders (optional)
 

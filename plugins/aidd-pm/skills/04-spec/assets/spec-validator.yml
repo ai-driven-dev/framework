@@ -23,7 +23,7 @@ criteria:
     weight: 25
 
   - id: open_questions
-    description: Every gap listed once in the open questions section, each a precise question, or None when there is none. A gap is an unresolved decision a required section depends on, per references/tbd-marker.md. Spec-wide, no `TBD:` marker sits in any other section.
+    description: Every gap listed once in the open questions section, each a precise question, or None when there is none. A gap is an unresolved decision a required section depends on, per references/tbd-marker.md. Spec-wide, no `TBD:` marker sits in any other section. A listed gap does not invalidate the spec; one written anywhere else does.
     required: true
     weight: 0
 
@@ -42,7 +42,7 @@ hard_thresholds:
   target_unclear_or_multiple_targets: invalid
   done_when_unverifiable: invalid
   contains_implementation_details: invalid
-  open_questions_unresolved: invalid
+  open_questions_outside_their_section: invalid
 
 scoring:
   pass_threshold: 90

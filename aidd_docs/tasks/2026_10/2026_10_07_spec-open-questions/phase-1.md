@@ -35,7 +35,7 @@ journey
     draft a spec from a request that leaves one decision pending => a spec carrying one gap: 5: system
   section Happy path
     read the drafted spec => the gap appears once, under Open Questions: 5: system
-    read its required sections => Target, Hard constraints, Non-goals and Done-when carry resolved content only: 5: system
+    read every other section => each carries resolved content only, Context and Stakeholders included: 5: system
     draft the same spec twice => the gap lands in the same section both times: 5: system
   section Edge case - no gap at all
     every field is answered => draft the spec => Open Questions reads None and the spec validates: 1: system
