@@ -57,20 +57,20 @@ describe("every backlog declaration in this repository is one the report can rea
   });
 
   /** The two skills that teach the file are the only things that decide what gets written,
-   * so they have to teach the same three names — and the same three this test asks for.
+   * so they have to teach the same three names, wherever inside each skill the lesson lives — and the same three this test asks for.
    * Read from the skills rather than trusted: a taught shape drifting away from the reader
    * is exactly what produced the two unreadable files, and a guard restating the fields
    * without checking the lesson would have stayed green through it. */
   it("is the shape both skills that write it actually teach", () => {
-    const TEACHING_ACTIONS = [
-      "plugins/aidd-pm/skills/04-spec/actions/01-build.md",
+    const TEACHING_FILES = [
+      "plugins/aidd-pm/skills/04-spec/assets/backlog-link-template.json",
       "plugins/aidd-dev/skills/01-plan/actions/04-plan.md",
     ];
 
-    for (const action of TEACHING_ACTIONS) {
-      const text = fs.readFileSync(path.join(ROOT, action), "utf8");
+    for (const file of TEACHING_FILES) {
+      const text = fs.readFileSync(path.join(ROOT, file), "utf8");
       for (const field of REQUIRED_FIELDS) {
-        assert.ok(text.includes(`"${field}"`), `${action} must teach the field "${field}"`);
+        assert.ok(text.includes(`"${field}"`), `${file} must teach the field "${field}"`);
       }
     }
   });
