@@ -6,6 +6,7 @@ import "../../../../src/contexts/tools/domain/profiles/claude/profile.js";
 import "../../../../src/contexts/tools/domain/profiles/codex/profile.js";
 import "../../../../src/contexts/tools/domain/profiles/copilot/profile.js";
 import "../../../../src/contexts/tools/domain/profiles/cursor/profile.js";
+import "../../../../src/contexts/tools/domain/profiles/antigravity/profile.js";
 import "../../../../src/contexts/tools/domain/profiles/kilo/profile.js";
 import "../../../../src/contexts/tools/domain/profiles/opencode/profile.js";
 import "../../../../src/contexts/tools/domain/profiles/vscode/profile.js";
@@ -91,9 +92,12 @@ describe("AiTool contract conformance", () => {
       ).toBe(true);
     });
 
+    // A flat-only tool builds no marketplace catalog, so it has no catalog file to probe for.
     it("is ingestible when it declares a plugins capability", () => {
       const declaresPlugins = "plugins" in (tool.capabilities as object);
       if (!declaresPlugins) return;
+      if (tool.buildContracts?.marketplace === undefined && tool.distributionProbes === undefined)
+        return;
       expect(
         marketplaceProbes().some((probe) => probe.format === toolId),
         `${toolId} declares a plugins capability but its profile declares no marketplace probe — its native marketplace would never be detected`
@@ -141,6 +145,7 @@ describe("telemetryLocalRead — exact declarations, phase 2 of local-cost-read"
     copilot: { kind: "declared" },
     cursor: { kind: "unsupported", reason: "token count" },
     kilo: { kind: "unsupported", reason: "OpenTelemetry is experimental" },
+    antigravity: { kind: "unsupported", reason: "not yet supported by AIDD" },
   };
 
   it.each(Object.entries(EXPECTED))("%s", (toolId, expected) => {
@@ -389,7 +394,8 @@ describe("projectHooksFileOf()", () => {
 /** Pinned as a table rather than described, so a tool whose install path moves — or a sixth
  * tool added with rules — fails here instead of drifting away from the installer quietly. */
 describe("every tool says where its own installed rules live", () => {
-  const EXPECTED: Readonly<Record<string, { directory: string; extension: string }>> = {
+  const EXPECTED: Readonly<Record<string, { directory: string; extension: string } | null>> = {
+    antigravity: null,
     claude: { directory: ".claude/rules/", extension: ".md" },
     codex: { directory: ".codex/rules/", extension: ".md" },
     copilot: { directory: ".github/instructions/", extension: ".instructions.md" },

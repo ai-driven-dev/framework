@@ -151,11 +151,10 @@ export class BuiltTreeMaterializationTranslator implements PluginTranslator {
   }
 
   // Flat build emits the whole marketplace into one workspace. Agents are namespaced by
-  // `<plugin>-<name>`; skills instead nest the whole subtree under `skills/<plugin>/`, since a
-  // skill's own script can `require()` a sibling by relative path, which only keeps resolving while
-  // nothing under that subtree is renamed. Hooks land under `flatHooksDir/<plugin>/`, except the
-  // one script that is the loader's own runtime module, renamed to the plugin's name in the
-  // loader's directory — so hook paths are matched by path, never by naming convention.
+  // `<plugin>-<name>`; skills keep their subtree intact, since a skill's script can `require()` a
+  // sibling by relative path, under `skills/<plugin>/` or, `single-level`, `skills/<plugin>-<skill>/`.
+  // Hooks land under `flatHooksDir/<plugin>/`, except the loader's own runtime module, renamed to
+  // the plugin's name in the loader's directory — so hook paths are matched by path, not by name.
   private async readFlatFiles(
     builtDir: string,
     dist: PluginDistribution,
@@ -182,7 +181,11 @@ export class BuiltTreeMaterializationTranslator implements PluginTranslator {
     if (segments[0] !== toolDirectory || segments.length < 3) return false;
     // `skills/` nests the whole plugin under one exactly-named segment; every other flat section
     // hyphen-prefixes the leaf segment.
-    if (segments[1] === "skills") return segments[2] === name;
+    if (segments[1] === "skills") {
+      return resolvePluginsCapability(toolId)?.flatSkillLayout === "single-level"
+        ? segments[2].startsWith(`${name}-`)
+        : segments[2] === name;
+    }
     return segments[2].startsWith(`${name}-`);
   }
 

@@ -17,7 +17,7 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 CLI="$ROOT/dist/cli.js"
 FRAMEWORK_FIXTURE="$ROOT/tests/fixtures/framework"
 
-AI_TOOLS=(claude cursor copilot codex opencode kilo)
+AI_TOOLS=(claude cursor copilot codex opencode kilo antigravity)
 IDE_TOOLS=(vscode)
 
 # Canonical leaf-command surface. Coverage = exercised / total.
@@ -306,6 +306,9 @@ if true; then
       [[ ! -d "$BASE/.github" ]] \
         && ok "copilot declarative settings absent without native source proof" \
         || bad "copilot declarative settings written without native source proof"
+    elif [[ "$t" == antigravity ]]; then
+      # Antigravity reads the shared `.agents/` root, not a directory named after itself.
+      [[ -d "$BASE/.agents/skills" ]] && ok "$t dir present" || bad "$t dir missing after --ai all"
     else
       [[ -d "$BASE/.${t}" ]] && ok "$t dir present" || bad "$t dir missing after --ai all"
     fi

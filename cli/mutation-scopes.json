@@ -8,6 +8,7 @@
     "tools": {
       "mutate": [
         "src/contexts/tools/**/*.ts",
+        "!src/contexts/tools/domain/profiles/antigravity/**/*.ts",
         "!src/contexts/tools/domain/profiles/claude/**/*.ts",
         "!src/contexts/tools/domain/profiles/codex/**/*.ts",
         "!src/contexts/tools/domain/profiles/copilot/**/*.ts",
@@ -60,6 +61,10 @@
     "tools-opencode": {
       "mutate": "src/contexts/tools/domain/profiles/opencode/**/*.ts",
       "break": 94
+    },
+    "tools-antigravity": {
+      "mutate": "src/contexts/tools/domain/profiles/antigravity/**/*.ts",
+      "break": 82
     },
     "tools-kilo": {
       "mutate": "src/contexts/tools/domain/profiles/kilo/**/*.ts",

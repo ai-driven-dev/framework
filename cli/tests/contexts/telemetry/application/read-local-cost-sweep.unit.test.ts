@@ -4,6 +4,7 @@ import "../../../../src/contexts/tools/domain/profiles/codex/profile.js";
 import "../../../../src/contexts/tools/domain/profiles/copilot/profile.js";
 import "../../../../src/contexts/tools/domain/profiles/cursor/profile.js";
 import "../../../../src/contexts/tools/domain/profiles/opencode/profile.js";
+import "../../../../src/contexts/tools/domain/profiles/antigravity/profile.js";
 import "../../../../src/contexts/tools/domain/profiles/kilo/profile.js";
 import {
   type LocalCostToolReport,
@@ -79,6 +80,15 @@ const KILO_NOT_COVERED: LocalCostToolReport = {
   recordsStored: 0,
   sessionsFailed: 0,
   reason: "Kilo OpenTelemetry is experimental and not yet supported by AIDD.",
+};
+
+const ANTIGRAVITY_NOT_COVERED: LocalCostToolReport = {
+  tool: "antigravity",
+  status: "not-covered",
+  recordsFound: 0,
+  recordsStored: 0,
+  sessionsFailed: 0,
+  reason: "Antigravity CLI telemetry is not yet supported by AIDD.",
 };
 
 function sessionJournal(vendorId: string, host = "claude-code"): RunJournal {
@@ -179,6 +189,7 @@ describe("which sessions a sweep reads", () => {
         notAsked("opencode"),
         notAsked("kilo"),
         notAsked("codex"),
+        notAsked("antigravity"),
       ],
     });
   });
@@ -205,6 +216,7 @@ describe("which sessions a sweep reads", () => {
         notAsked("opencode"),
         notAsked("kilo"),
         notAsked("codex"),
+        notAsked("antigravity"),
       ],
       refusedReason:
         "measurement is refused — AIDD_TELEMETRY=0 or the project switch is off; nothing read, " +
@@ -230,6 +242,7 @@ describe("one session's answers, tool by tool", () => {
           notAsked("opencode"),
           KILO_NOT_COVERED,
           notAsked("codex"),
+          ANTIGRAVITY_NOT_COVERED,
         ],
       },
     ]);
