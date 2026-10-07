@@ -1,6 +1,7 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { PluginAddUseCase } from "../../../../src/contexts/framework/application/plugin/plugin-add-use-case.js";
+import { PluginDistributionLoader } from "../../../../src/contexts/framework/application/plugin/plugin-distribution-loader.js";
 import { RestoreUseCase } from "../../../../src/contexts/framework/application/restore/restore-use-case.js";
 import { Manifest } from "../../../../src/contexts/framework/domain/manifest.js";
 import { PluginDistributionReaderAdapter } from "../../../../src/contexts/framework/infrastructure/plugin-distribution-reader-adapter.js";
@@ -33,8 +34,7 @@ async function installPlugin(
   await new PluginAddUseCase(
     deps.fs,
     deps.manifestRepo,
-    deps.pluginFetcher,
-    pluginReader,
+    new PluginDistributionLoader(deps.pluginFetcher, pluginReader),
     deps.hasher,
     deps.logger,
     deps.marketplaceRegistry,

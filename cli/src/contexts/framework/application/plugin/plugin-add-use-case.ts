@@ -15,7 +15,6 @@ import type { Logger } from "../../../../kernel/ports/logger.js";
 import type { PluginSource } from "../../../../kernel/source.js";
 import type { AiToolId } from "../../../../kernel/tool.js";
 import type { MarketplaceRegistry } from "../../../distribution/domain/ports/marketplace-registry.js";
-import type { PluginFetcher } from "../../../distribution/domain/ports/plugin-fetcher.js";
 import type { ReadonlyNoticeList } from "../../../tools/domain/models/plugin-install-notice.js";
 import { getToolConfig, isAiTool } from "../../../tools/domain/registry.js";
 import { PluginContentTranslator } from "../../../translate/domain/content-translator.js";
@@ -27,12 +26,13 @@ import {
   type ProjectHooksProvenance,
 } from "../../domain/plugins/installed-plugin.js";
 import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
-import type { PluginDistributionReader } from "../../domain/ports/plugin-distribution-reader.js";
 import type { PluginTranslator } from "../framework/translator/plugin-translator.js";
 import { resolvePluginTranslator } from "../framework/translator/resolve-plugin-translator.js";
+import type { InstallRuntimeConfigUseCase } from "../install/install-runtime-config-use-case.js";
 import { assertProjectMcpEntriesRemovable } from "../ownership/project-plugin-cleanup.js";
 import type { EnsureBuiltMarketplace } from "../shared/ensure-built-marketplace-use-case.js";
 import { assertProjectHooksRemovable } from "../shared/remove-project-hooks.js";
+import type { PluginDistributionLoader } from "./plugin-distribution-loader.js";
 import { loadPluginManifest, writePluginFiles } from "./plugin-helpers.js";
 import {
   resolveBaseDirFromRecord,
@@ -60,13 +60,13 @@ export class PluginAddUseCase implements PluginAdd {
   constructor(
     private readonly fs: FileWriter & FileReader,
     private readonly manifestRepo: ManifestRepository,
-    private readonly pluginFetcher: PluginFetcher,
-    private readonly pluginDistributionReader: PluginDistributionReader,
+    private readonly distributionLoader: PluginDistributionLoader,
     private readonly hasher: Hasher,
     private readonly logger: Logger,
     private readonly marketplaceRegistry: MarketplaceRegistry,
     private readonly ensureBuilt: EnsureBuiltMarketplace,
-    private readonly userManifestRepo: ManifestRepository
+    private readonly userManifestRepo: ManifestRepository,
+    private readonly pluginRuntime?: Pick<InstallRuntimeConfigUseCase, "ensurePluginRuntimeFiles">
   ) {}
 
   async execute(options: PluginAddOptions): Promise<void> {
@@ -186,8 +186,7 @@ export class PluginAddUseCase implements PluginAdd {
     projectRoot: string
   ): Promise<PluginDistribution> {
     const cacheDir = join(projectRoot, PLUGIN_CACHE_SUBDIR);
-    const localPath = await this.pluginFetcher.fetch(source, cacheDir);
-    return this.pluginDistributionReader.read(localPath);
+    return this.distributionLoader.load(source, cacheDir);
   }
 
   private async addLocalPlugin(
@@ -282,6 +281,7 @@ export class PluginAddUseCase implements PluginAdd {
     const allSkipped: ReadonlySkipList[] = [];
     const allNotices: ReadonlyNoticeList[] = [];
     for (const toolId of toolIds) {
+      await this.pluginRuntime?.ensurePluginRuntimeFiles(toolId, projectRoot, manifest);
       const foreignDir = await this.userScopeDirNotInstalledHere(
         dist.manifest.name,
         toolId,

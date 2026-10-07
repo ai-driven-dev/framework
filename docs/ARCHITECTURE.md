@@ -53,11 +53,17 @@ A hook is authored once, with `${CLAUDE_PLUGIN_ROOT}`, and the installer rewrite
 | OpenCode | no, by a second route | — | Declarative hooks are translated by `opencode-hooks-bridge.ts` into `<plugin>-hooks.js` modules for `SessionStart`, `Stop`, and `PostToolUse`. Telemetry supplies its own adapter in `plugins/aidd-telemetry/hooks/opencode-plugin.js` because its journal uses a different stdin dialect. Both expose a default definition: `server` for V1 1.18.29 or later, `setup` for V2. The declarative hook support column does not describe this module route. |
 
 OpenCode V1 delivers `session.idle` and completed `message.part.updated` tool parts to an
-`event` hook. V2 adapters subscribe to `data`-based events with an abortable stream, correlate
-tool name and input with tool success, and translate execution terminals into turn-end.
+`event` hook. One CLI-owned runtime module subscribes to V2 `data`-based events with an abortable stream, correlates
+tool name and input with tool success, and translates execution terminals into turn-end.
 Shutdown interruptions leave the turn open because OpenCode resumes that execution.
 The generic bridge fires its idempotent `SessionStart` hooks when either host initializes
 the module; telemetry records sessions separately from actual session events.
+
+The CLI embeds this shared module and delivers it under `.opencode/hooks/opencode-events.js`,
+outside plugin discovery. Translation emits it once; tool installation tracks it as a tool
+file. Plugin installation and update backfill a missing module on an existing tool without
+rewriting user configuration or claiming an existing untracked module. Each plugin keeps
+its own V1 payload adapter and imports this common host protocol for V2.
 
 A tool that runs no hook says why, and an install that carries one tells whoever ran it what was skipped.
 

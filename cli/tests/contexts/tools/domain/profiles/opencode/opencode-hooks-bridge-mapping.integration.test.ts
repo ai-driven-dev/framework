@@ -1,7 +1,7 @@
 // The mapping exists only as generated text a real ESM module must expose as a property of its
 // factory, so proving it reaches one means writing and importing that file — integration, not unit.
 import { execFileSync } from "node:child_process";
-import { mkdtemp, readFile, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
@@ -41,7 +41,16 @@ async function importGeneratedModule(): Promise<{
   if (generated === null) throw new Error("expected a generated module");
   const dir = await mkdtemp(join(tmpdir(), "aidd-opencode-bridge-mapping-"));
   tempDirs.push(dir);
-  const modulePath = join(dir, "bridge.mjs");
+  await mkdir(join(dir, "plugin"));
+  await mkdir(join(dir, "hooks"));
+  await writeFile(
+    join(dir, "hooks", "opencode-events.js"),
+    await readFile(
+      join(REPOSITORY_ROOT, "cli/assets/configs/opencode/opencode-events.js.txt"),
+      "utf8"
+    )
+  );
+  const modulePath = join(dir, "plugin", "bridge.mjs");
   await writeFile(modulePath, generated, "utf8");
   const mod: Record<string, unknown> = await import(pathToFileURL(modulePath).href);
   const factory = mod.AiddSampleHooks;

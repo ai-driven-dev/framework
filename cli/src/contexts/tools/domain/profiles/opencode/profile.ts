@@ -27,6 +27,8 @@ import { generateOpencodeHooksBridge } from "./opencode-hooks-bridge.js";
 import {
   makeOpencodeHooksBridgePath,
   OPENCODE_DIRECTORY,
+  OPENCODE_EVENTS_ASSET,
+  OPENCODE_EVENTS_PATH,
   OPENCODE_FLAT_HOOKS_DIR,
   OPENCODE_HOOKS_DIR,
   OPENCODE_PLUGIN_ENTRY_BASENAME,
@@ -66,6 +68,7 @@ export const opencode: AiTool<
   telemetryJournalHost: "opencode",
   signalDir: ".opencode/commands",
   configOutputPaths: { "opencode.json": "opencode.json" },
+  pluginRuntimeFiles: { [OPENCODE_EVENTS_ASSET]: OPENCODE_EVENTS_PATH },
   buildContracts: { flat: buildOpencodeFlatContract },
 
   capabilities: {

@@ -47,6 +47,10 @@ function makeInstalledRepo() {
   const scriptsDir = path.join(repo, ".opencode", "hooks", "aidd-telemetry");
   fs.mkdirSync(pluginDir, { recursive: true });
   fs.mkdirSync(scriptsDir, { recursive: true });
+  fs.copyFileSync(
+    path.resolve(__dirname, "../../cli/assets/configs/opencode/opencode-events.js.txt"),
+    path.join(repo, ".opencode", "hooks", "opencode-events.js")
+  );
   const hooksSrc = path.dirname(PLUGIN_SOURCE);
   for (const entry of fs.readdirSync(hooksSrc, { withFileTypes: true })) {
     if (entry.name === "hooks.json") continue;

@@ -25,12 +25,20 @@ function loadFixture(name) {
 // `export` syntax. OpenCode's own loader consults no such field, and the extension is the
 // only thing that differs from what ships.
 let pluginModulePromise;
+let pluginTempDir;
+test.after(() => {
+  if (pluginTempDir) fs.rmSync(pluginTempDir, { recursive: true, force: true });
+});
 async function pluginModule() {
   if (!pluginModulePromise) {
-    const twin = path.join(
-      fs.mkdtempSync(path.join(os.tmpdir(), "aidd-opencode-payloads-")),
-      "opencode-plugin.mjs"
+    pluginTempDir = fs.mkdtempSync(path.join(os.tmpdir(), "aidd-opencode-payloads-"));
+    fs.mkdirSync(path.join(pluginTempDir, "plugin"));
+    fs.mkdirSync(path.join(pluginTempDir, "hooks"));
+    fs.copyFileSync(
+      path.resolve(__dirname, "../../cli/assets/configs/opencode/opencode-events.js.txt"),
+      path.join(pluginTempDir, "hooks", "opencode-events.js")
     );
+    const twin = path.join(pluginTempDir, "plugin", "opencode-plugin.mjs");
     fs.copyFileSync(PLUGIN_SOURCE, twin);
     pluginModulePromise = import(pathToFileURL(twin).href);
   }

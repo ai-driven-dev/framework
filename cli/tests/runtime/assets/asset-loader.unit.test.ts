@@ -13,6 +13,13 @@ describe("BundledAssetProviderAdapter.loadConfigAsset", () => {
   });
 
   describe("opencode", () => {
+    it("bundles the shared event adapter as executable source text", () => {
+      const asset = provider.loadConfigAsset("opencode", "opencode-events.js");
+
+      expect(typeof asset).toBe("string");
+      expect(asset).toContain("export async function setupOpencodeEvents");
+    });
+
     it("returns parsed opencode.json with instructions array", () => {
       const asset = provider.loadConfigAsset("opencode", "opencode.json") as Record<
         string,

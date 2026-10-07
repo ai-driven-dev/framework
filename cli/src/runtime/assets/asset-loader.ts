@@ -8,6 +8,7 @@ import copilotVscodeSettings from "../../../assets/configs/copilot/vscode-settin
 import cursorSettings from "../../../assets/configs/cursor/settings.json" with { type: "json" };
 import kiloJson from "../../../assets/configs/kilo/kilo.json" with { type: "json" };
 import opencodeJson from "../../../assets/configs/opencode/opencode.json" with { type: "json" };
+import opencodeEvents from "../../../assets/configs/opencode/opencode-events.js.txt";
 import vscodeExtensions from "../../../assets/configs/vscode/extensions.json" with { type: "json" };
 import vscodeKeybindings from "../../../assets/configs/vscode/keybindings.json" with {
   type: "json",
@@ -28,7 +29,7 @@ const CONFIG_ASSETS: Readonly<Record<ToolId, Readonly<Record<string, ConfigAsset
   cursor: { "settings.json": cursorSettings },
   copilot: { "vscode-settings.json": copilotVscodeSettings },
   kilo: { "kilo.json": kiloJson },
-  opencode: { "opencode.json": opencodeJson },
+  opencode: { "opencode.json": opencodeJson, "opencode-events.js": opencodeEvents },
   codex: { "config.toml": codexConfigToml },
   vscode: {
     "settings.json": vscodeSettings,

@@ -10,6 +10,7 @@ import {
   transformMcpToOpencode,
 } from "../../../../../../src/contexts/tools/domain/profiles/opencode/build.js";
 import { InMemoryFileAdapter } from "../../../../../helpers/ports/in-memory-file-adapter.js";
+import { StubAssetProvider } from "../../../../../helpers/ports/stub-asset-provider.js";
 import { REPOSITORY_ROOT } from "../../../../../helpers/repository-root.js";
 
 const OPENCODE_PLUGIN_MODULE = readFileSync(
@@ -88,6 +89,31 @@ describe("transformMcpToOpencode()", () => {
 });
 
 describe("buildOpencodeFlatContract()", () => {
+  it.each(["aidd-dev.js", "aidd-dev-hooks.js"])(
+    "delivers one shared adapter outside plugin discovery when %s was built",
+    async (entry) => {
+      const adapter = "export async function setupOpencodeEvents() {}";
+      const fs = new InMemoryFileAdapter({ [`/out/.opencode/plugin/${entry}`]: "plugin" });
+      const assets = new StubAssetProvider({
+        "opencode/opencode.json": {},
+        "opencode/opencode-events.js": adapter,
+      });
+
+      const written = await buildOpencodeFlatContract().emitConfigArtifact?.(
+        ["aidd-dev"],
+        "/out",
+        "/src",
+        fs,
+        { validate: () => undefined },
+        assets
+      );
+
+      expect(written).toBe(2);
+      expect(fs.getFile("/out/.opencode/hooks/opencode-events.js")).toBe(adapter);
+      expect(fs.has("/out/.opencode/plugin/opencode-events.js")).toBe(false);
+    }
+  );
+
   it("writes no manifest and no marketplace of its own", () => {
     const contract = buildOpencodeFlatContract();
 

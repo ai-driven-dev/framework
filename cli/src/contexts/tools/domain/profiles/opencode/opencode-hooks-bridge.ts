@@ -124,6 +124,7 @@ export function generateOpencodeHooksBridge(rawHooksJson: string, plugin: string
 // (build.ts's skipHooksJson, translated here rather than skipped) - this file is the only
 // trigger this plugin's declared hooks have on OpenCode. See opencode-hooks-bridge.ts for
 // the mapping this generator applies and the measurements behind it.
+import { setupOpencodeEvents } from "../hooks/opencode-events.js";
 import { spawn } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
@@ -228,71 +229,10 @@ export const ${ident} = async (input) => {
 ${ident}.stopCallsFor = stopCallsFor;
 ${ident}.postToolUseCallsFor = postToolUseCallsFor;
 
-// V2's tool lifecycle splits the name, arguments and completion across three events.
-// Keep only in-flight calls; consuming success once prevents duplicate PostToolUse calls.
-function eventsForV2(event, toolCalls) {
-  const data = event?.data;
-  if (typeof data?.sessionID !== "string") return [];
-  const properties = { sessionID: data.sessionID, directory: event.location?.directory };
-  if (event.type === "session.execution.succeeded" || event.type === "session.execution.failed" ||
-      event.type === "session.execution.interrupted") {
-    for (const [key, call] of toolCalls) {
-      if (call.sessionID === data.sessionID) toolCalls.delete(key);
-    }
-    if (event.type === "session.execution.interrupted" && data.reason === "shutdown") return [];
-    return [{ type: "session.idle", properties }];
-  }
-  if (typeof data.assistantMessageID !== "string" || typeof data.id !== "string") return [];
-  const key = JSON.stringify([data.sessionID, data.assistantMessageID, data.id]);
-  if (event.type === "session.tool.input.started" && typeof data.name === "string") {
-    toolCalls.set(key, { sessionID: data.sessionID, name: data.name, directory: properties.directory });
-  } else if (event.type === "session.tool.called") {
-    const call = toolCalls.get(key);
-    if (call) {
-      call.input = data.input;
-      call.directory = properties.directory ?? call.directory;
-    }
-  } else if (event.type === "session.tool.success") {
-    const call = toolCalls.get(key);
-    toolCalls.delete(key);
-    if (call?.input === undefined) return [];
-    return [{ type: "message.part.updated", properties: {
-      ...properties, directory: properties.directory ?? call.directory,
-      part: { type: "tool", tool: call.name, state: { status: "completed", input: call.input } },
-    } }];
-  } else if (event.type === "session.tool.failed") {
-    toolCalls.delete(key);
-  }
-  return [];
-}
-
 export default {
   id: ${JSON.stringify(`${plugin}-hooks`)},
   server: ${ident},
-  setup: async (ctx) => {
-    const controller = new AbortController();
-    const toolCalls = new Map();
-    const hooks = await ${ident}({ directory: ctx.location.directory });
-    // The subscription lives until cleanup. Awaiting it here would block plugin startup.
-    void (async () => {
-      try {
-        for await (const event of ctx.event.subscribe({ signal: controller.signal })) {
-          if (controller.signal.aborted) break;
-          for (const mapped of eventsForV2(event, toolCalls)) {
-            await hooks.event({ event: mapped });
-          }
-        }
-      } catch {
-        // Stream failures and cancellation must not reject into the host.
-        controller.abort();
-        toolCalls.clear();
-      }
-    })();
-    return () => {
-      controller.abort();
-      toolCalls.clear();
-    };
-  },
+  setup: (ctx) => setupOpencodeEvents(ctx, ${ident}),
 };
 `;
 }

@@ -3,6 +3,7 @@ import { join } from "node:path";
 import { describe, expect, it, vi } from "vitest";
 import { Marketplace } from "../../../../../src/contexts/distribution/domain/marketplace.js";
 import { PluginAddUseCase } from "../../../../../src/contexts/framework/application/plugin/plugin-add-use-case.js";
+import { PluginDistributionLoader } from "../../../../../src/contexts/framework/application/plugin/plugin-distribution-loader.js";
 import { Manifest } from "../../../../../src/contexts/framework/domain/manifest.js";
 import { InstalledPlugin } from "../../../../../src/contexts/framework/domain/plugins/installed-plugin.js";
 import type { PluginDistributionReader } from "../../../../../src/contexts/framework/domain/ports/plugin-distribution-reader.js";
@@ -49,8 +50,7 @@ function buildAddUseCase(
   return new PluginAddUseCase(
     deps.fs,
     deps.manifestRepo,
-    deps.pluginFetcher,
-    new PluginDistributionReaderAdapter(deps.fs),
+    new PluginDistributionLoader(deps.pluginFetcher, new PluginDistributionReaderAdapter(deps.fs)),
     deps.hasher,
     logger,
     registry,
@@ -150,8 +150,10 @@ describe("PluginAddUseCase", () => {
       const useCase = new PluginAddUseCase(
         deps.fs,
         deps.manifestRepo,
-        deps.pluginFetcher,
-        new PluginDistributionReaderAdapter(deps.fs),
+        new PluginDistributionLoader(
+          deps.pluginFetcher,
+          new PluginDistributionReaderAdapter(deps.fs)
+        ),
         deps.hasher,
         deps.logger,
         registry,
@@ -194,8 +196,10 @@ describe("PluginAddUseCase", () => {
       const useCase = new PluginAddUseCase(
         deps.fs,
         deps.manifestRepo,
-        deps.pluginFetcher,
-        new PluginDistributionReaderAdapter(deps.fs),
+        new PluginDistributionLoader(
+          deps.pluginFetcher,
+          new PluginDistributionReaderAdapter(deps.fs)
+        ),
         deps.hasher,
         deps.logger,
         registry,
@@ -235,8 +239,10 @@ describe("PluginAddUseCase", () => {
       const useCase = new PluginAddUseCase(
         deps.fs,
         deps.manifestRepo,
-        deps.pluginFetcher,
-        new PluginDistributionReaderAdapter(deps.fs),
+        new PluginDistributionLoader(
+          deps.pluginFetcher,
+          new PluginDistributionReaderAdapter(deps.fs)
+        ),
         deps.hasher,
         deps.logger,
         registry,
@@ -293,8 +299,10 @@ describe("PluginAddUseCase", () => {
         const useCase = new PluginAddUseCase(
           deps.fs,
           deps.manifestRepo,
-          deps.pluginFetcher,
-          new PluginDistributionReaderAdapter(deps.fs),
+          new PluginDistributionLoader(
+            deps.pluginFetcher,
+            new PluginDistributionReaderAdapter(deps.fs)
+          ),
           deps.hasher,
           deps.logger,
           await makeGithubRegistry(PROJECT_ROOT),
@@ -332,8 +340,10 @@ describe("PluginAddUseCase", () => {
         const useCase = new PluginAddUseCase(
           deps.fs,
           deps.manifestRepo,
-          deps.pluginFetcher,
-          new PluginDistributionReaderAdapter(deps.fs),
+          new PluginDistributionLoader(
+            deps.pluginFetcher,
+            new PluginDistributionReaderAdapter(deps.fs)
+          ),
           deps.hasher,
           deps.logger,
           registry,
@@ -370,8 +380,10 @@ describe("PluginAddUseCase", () => {
         const useCase = new PluginAddUseCase(
           deps.fs,
           deps.manifestRepo,
-          deps.pluginFetcher,
-          new PluginDistributionReaderAdapter(deps.fs),
+          new PluginDistributionLoader(
+            deps.pluginFetcher,
+            new PluginDistributionReaderAdapter(deps.fs)
+          ),
           deps.hasher,
           deps.logger,
           registry,
@@ -534,8 +546,10 @@ describe("PluginAddUseCase", () => {
         await new PluginAddUseCase(
           deps.fs,
           projectBRepo,
-          deps.pluginFetcher,
-          new PluginDistributionReaderAdapter(deps.fs),
+          new PluginDistributionLoader(
+            deps.pluginFetcher,
+            new PluginDistributionReaderAdapter(deps.fs)
+          ),
           deps.hasher,
           logger,
           registryB,
@@ -572,8 +586,10 @@ describe("PluginAddUseCase", () => {
         const useCase = new PluginAddUseCase(
           deps.fs,
           deps.manifestRepo,
-          deps.pluginFetcher,
-          new PluginDistributionReaderAdapter(deps.fs),
+          new PluginDistributionLoader(
+            deps.pluginFetcher,
+            new PluginDistributionReaderAdapter(deps.fs)
+          ),
           deps.hasher,
           deps.logger,
           registry,
@@ -605,8 +621,10 @@ describe("PluginAddUseCase", () => {
         const useCase = new PluginAddUseCase(
           deps.fs,
           deps.manifestRepo,
-          deps.pluginFetcher,
-          new PluginDistributionReaderAdapter(deps.fs),
+          new PluginDistributionLoader(
+            deps.pluginFetcher,
+            new PluginDistributionReaderAdapter(deps.fs)
+          ),
           deps.hasher,
           deps.logger,
           registry,
@@ -640,8 +658,10 @@ describe("PluginAddUseCase", () => {
         const useCase = new PluginAddUseCase(
           deps.fs,
           deps.manifestRepo,
-          deps.pluginFetcher,
-          new PluginDistributionReaderAdapter(deps.fs),
+          new PluginDistributionLoader(
+            deps.pluginFetcher,
+            new PluginDistributionReaderAdapter(deps.fs)
+          ),
           deps.hasher,
           deps.logger,
           registry,
@@ -672,8 +692,10 @@ describe("PluginAddUseCase", () => {
         const useCase = new PluginAddUseCase(
           deps.fs,
           deps.manifestRepo,
-          deps.pluginFetcher,
-          new PluginDistributionReaderAdapter(deps.fs),
+          new PluginDistributionLoader(
+            deps.pluginFetcher,
+            new PluginDistributionReaderAdapter(deps.fs)
+          ),
           deps.hasher,
           deps.logger,
           registry,
@@ -707,8 +729,10 @@ describe("PluginAddUseCase", () => {
         const useCase = new PluginAddUseCase(
           deps.fs,
           deps.manifestRepo,
-          deps.pluginFetcher,
-          new PluginDistributionReaderAdapter(deps.fs),
+          new PluginDistributionLoader(
+            deps.pluginFetcher,
+            new PluginDistributionReaderAdapter(deps.fs)
+          ),
           deps.hasher,
           deps.logger,
           registry,
@@ -759,8 +783,10 @@ describe("PluginAddUseCase", () => {
         const useCase = new PluginAddUseCase(
           deps.fs,
           deps.manifestRepo,
-          deps.pluginFetcher,
-          new PluginDistributionReaderAdapter(deps.fs),
+          new PluginDistributionLoader(
+            deps.pluginFetcher,
+            new PluginDistributionReaderAdapter(deps.fs)
+          ),
           deps.hasher,
           deps.logger,
           registry,
@@ -812,8 +838,7 @@ describe("PluginAddUseCase", () => {
       const useCase = new PluginAddUseCase(
         deps.fs,
         deps.manifestRepo,
-        deps.pluginFetcher,
-        zeroFilesReader,
+        new PluginDistributionLoader(deps.pluginFetcher, zeroFilesReader),
         deps.hasher,
         deps.logger,
         registry,
