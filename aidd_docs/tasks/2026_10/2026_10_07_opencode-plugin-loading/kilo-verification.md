@@ -23,9 +23,11 @@ No mutation threshold or bundle budget was changed.
 - Two added bridge unit cases verify Stop/PostToolUse-only declarations and a released
   session/tool/idle event sequence. The sequence covers real identity and cwd, malformed
   events, incomplete/failed tools, matcher filtering, duplicate events, another busy
-  turn and deletion of session state. Existing failed-hook coverage expands to nonzero
+  turn and session deletion/recreation. Five further cases cover missing hook tables,
+  missing commands, whitespace/argument parsing and balanced hook counts across events.
+  Existing failed-hook coverage expands to nonzero
   exit, spawn failure and dispatch failure, each reported once without blocking. This
-  adds four executed unit cases overall; the bridge suite contains eight cases.
+  adds nine executed unit cases overall; the bridge suite contains thirteen cases.
 - Six added delivery integration cases cover setup, plugin installation and update for
   each of kilo.jsonc and .kilo/kilo.jsonc. They preserve exact JSONC bytes, comments,
   model, permissions and user MCP configuration. Installation checks the delivered
@@ -66,18 +68,40 @@ installation/update regressions received the adapter path instead of its source.
 adding .txt, all four runtime-file tests passed. A complete local OpenCode mutation run
 then passed with score 96.4 against the unchanged floor of 94.
 
+The first local Kilo mutation measurement was 63.7, below its existing floor of 64.
+Additional parser and lifecycle cases raised the score to 67.7. The final scope run
+tested 175 mutants and reused 48 already measured results, 223 total. A separate copied
+bridge with session-state deletion disabled made its lifecycle assertion fail with
+`1 !== 2`; production source was never altered for that counterproof.
+
 ```sh
 pnpm --dir cli test:e2e:kilo
 pnpm --dir cli exec vitest run --config vitest.mutation.config.ts tests/contexts/framework/application/plugin/kilo-plugin-delivery.integration.test.ts
 pnpm --dir cli test:mutation:tools-opencode
+pnpm --dir cli test:mutation:tools-kilo
 ```
 
 Local raw evidence includes /tmp/kilo-hooks-runtime-red.log,
-/tmp/kilo-runtime-final.log and /tmp/aidd-971-repair/mutation-opencode-local.log.
+/tmp/kilo-runtime-final.log, /tmp/aidd-971-repair/mutation-opencode-local.log,
+/tmp/aidd-971-repair/mutation-kilo-repair.log and kilo-delete-mutant.log in that directory.
 The research capture used an allowlisted environment with relocated HOME/XDG paths and
 no inherited authentication variables. The committed runtime test follows the same
 isolation approach. Only inference is substituted; Kilo, its event bus, read tool,
 CLI delivery and spawned hooks execute normally.
+
+## Local validation of the extension
+- Real pinned runtime: one complete case passed, including actual read-tool results and
+  all three hook payloads.
+- Kilo profile suites: 21 passed, including 13 bridge cases. Delivery integration: six
+  passed under the mutation configuration.
+- Normal commit checks: 554 repository script tests and 140 architecture checks passed;
+  lint, TypeScript, type honesty, documentation and whitespace checks passed. The lint
+  warning about an unused private member in uninstall-use-case.ts is preexisting.
+- Built CLI: 751,591 bytes against the unchanged 751,616-byte budget. This passes with
+  25 bytes of headroom; future changes need to account for the remaining margin.
+- The dedicated Kilo CI job explicitly runs the host case; the required cli / gate also
+  depends on every selected mutation job. Final remote status is available on
+  [pull request 971](https://github.com/ai-driven-dev/framework/pull/971/checks).
 
 ## Limits
 Kilo telemetry and journal/cost attribution remain unsupported. This proof covers one

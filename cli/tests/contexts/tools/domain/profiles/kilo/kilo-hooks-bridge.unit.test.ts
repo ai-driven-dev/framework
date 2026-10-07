@@ -32,6 +32,46 @@ describe("Kilo hooks bridge", () => {
     ).toEqual([{ script: "update_memory.js", args: ["--quiet"] }]);
   });
 
+  it("trims replayable commands and separates multiple whitespace arguments", () => {
+    expect(
+      parseKiloSessionStartHooks(
+        JSON.stringify({
+          hooks: {
+            SessionStart: [
+              {
+                hooks: [
+                  { command: `  node ${ROOT}/hooks/update_memory.js   --quiet\t--tool  kilo  ` },
+                  {},
+                ],
+              },
+            ],
+          },
+        })
+      )
+    ).toEqual([{ script: "update_memory.js", args: ["--quiet", "--tool", "kilo"] }]);
+  });
+
+  it("accepts absent hook tables, events and empty groups", () => {
+    for (const value of [{}, { hooks: {} }, { hooks: { SessionStart: [{}] } }]) {
+      expect(parseKiloSessionStartHooks(JSON.stringify(value))).toEqual([]);
+      expect(generateKiloHooksBridge(JSON.stringify(value), "probe")).toBeNull();
+    }
+  });
+
+  it.each([
+    ["SessionStart", "Stop"],
+    ["SessionStart", "PostToolUse"],
+    ["Stop", "PostToolUse"],
+  ])("delivers equally sized %s and %s hook groups together", (first, second) => {
+    const group = [{ hooks: [{ command: `node ${ROOT}/hooks/capture.cjs` }] }];
+    expect(
+      generateKiloHooksBridge(
+        JSON.stringify({ hooks: { [first]: group, [second]: group } }),
+        "probe"
+      )
+    ).not.toBeNull();
+  });
+
   it("returns no module when hooks.json has no supported replayable hooks", () => {
     expect(
       generateKiloHooksBridge(JSON.stringify({ hooks: { Stop: [] } }), "aidd-context")
@@ -117,8 +157,10 @@ describe("Kilo hooks bridge", () => {
       });
       await emit(idle);
       await emit({ type: "unknown" });
+      await emit({ type: "session.deleted", properties: { sessionID: "ses_one" } });
+      await emit(created);
       await vi.waitFor(
-        async () => expect((await readFile(output, "utf8")).trim().split("\n")).toHaveLength(4),
+        async () => expect((await readFile(output, "utf8")).trim().split("\n")).toHaveLength(5),
         { timeout: 5000 }
       );
       await delay(100);
@@ -126,7 +168,7 @@ describe("Kilo hooks bridge", () => {
         .trim()
         .split("\n")
         .map((line) => JSON.parse(line));
-      expect(calls).toHaveLength(4);
+      expect(calls).toHaveLength(5);
       expect(calls).toEqual(
         expect.arrayContaining([
           {
@@ -150,6 +192,9 @@ describe("Kilo hooks bridge", () => {
         ])
       );
       expect(calls.filter((call) => call.payload.hook_event_name === "Stop")).toHaveLength(2);
+      expect(calls.filter((call) => call.payload.hook_event_name === "SessionStart")).toHaveLength(
+        2
+      );
     } finally {
       await rm(directory, { recursive: true, force: true });
     }
