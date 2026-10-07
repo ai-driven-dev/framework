@@ -6,9 +6,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import { TaskBacklogAdapter } from "../../../../src/contexts/telemetry/infrastructure/task-backlog-adapter.js";
 import { REPOSITORY_ROOT } from "../../../helpers/repository-root.js";
 
-/** Each skill's own example is fed through the real adapter over a real temp folder, never a
- * stand-in parser, so a field renamed on either side fails here. One skill ships the example
- * as an asset and the other fences it inline, so the loader below accepts both. */
+/** Fed through the real adapter, never a stand-in parser, so a rename on either side fails. */
 const REPO_ROOT = REPOSITORY_ROOT;
 const SPEC_EXAMPLE_JSON = join(
   REPO_ROOT,
@@ -29,8 +27,6 @@ const PLAN_SKILL_MD = join(
   "04-plan.md"
 );
 
-/** The literal example a skill tells an agent to write: the asset's own bytes, or the first
- * fenced json block, tolerant of a numbered-list item's indentation. `null` when none. */
 function taughtExample(path: string): string | null {
   const text = readFileSync(path, "utf8");
   if (path.endsWith(".json")) return text.trim();
