@@ -32,7 +32,7 @@ aidd update
 ```
 
 The first command bootstraps the project: manifest, default marketplace, tool configs, plugins.
-`--scope user` on `setup` registers the framework source and native activation machine-wide instead, and writes nothing under the project.
+`--scope user` on `setup` registers the framework source and supported tools machine-wide instead, and writes nothing under the project. See the scope support below.
 
 ## Authentication
 
@@ -67,6 +67,22 @@ Run `aidd --help`, then a group's own `--help`, for flags this page does not rep
 | `aidd update` | Update the CLI itself, aliased `upgrade` |
 
 `setup`, `doctor`, `sync` and `clean` accept `--scope <project|user>`. Project scope is the default and acts on this project alone.
+
+`setup --scope user` requires an explicit supported `--ai` list, no `--ide`, and `--plugins none` (or omit `--plugins` in a scripted run). It records the source and tools in the user registry without installing tool configuration files or enabling plugins. `--ai all` includes unsupported tools and is refused.
+
+| Tool | `setup --scope user` |
+| --- | --- |
+| `claude`, `codex`, `copilot` | Registers the source and drives the tool's own CLI |
+| `cursor` | Records the source and tool only; no native activation |
+| `opencode`, `kilo` | Unsupported; use project scope |
+
+Native activation requires the corresponding `claude`, `codex`, or `copilot` executable on `PATH`. When it is missing, registration succeeds with a warning and activation remains unrun; install the host CLI, then run `aidd sync --scope user`.
+
+```sh
+aidd setup --scope user --ai claude,codex,copilot --plugins none --yes
+```
+
+`aidd setup --help` prints the same support list, generated from the registry.
 
 ### Framework
 
