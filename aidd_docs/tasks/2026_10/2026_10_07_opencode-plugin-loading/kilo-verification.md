@@ -132,7 +132,7 @@ CLI delivery and spawned hooks execute normally.
 - Normal commit checks: 554 repository script tests passed; final architecture suite:
   142 passed, including the two added checkout guards. Full pre-push before the checkout
   extension: 6,833 passed, one opt-in case skipped, 532 files passed; knip passed.
-  lint, TypeScript, type honesty, documentation and whitespace checks passed. The lint
+  Lint, TypeScript, type honesty, documentation and whitespace checks passed. The lint
   warning about an unused private member in uninstall-use-case.ts is preexisting.
 - Built CLI: 751,591 bytes against the unchanged 751,616-byte budget. This passes with
   25 bytes of headroom; future changes need to account for the remaining margin.

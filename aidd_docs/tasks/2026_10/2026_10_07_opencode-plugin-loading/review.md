@@ -1,6 +1,6 @@
 # Review: OpenCode plugin loading (#953)
 - **Verdict**: approve
-- **Diff**: original review `origin/next...ffa9c44a`; extension `b1a37fe0..16d8b223`
+- **Diff**: original review `origin/next...ffa9c44a`; extension `b1a37fe0..116f791e`
 - **Axes run**: code, functional, relevancy
 - **Date**: 2026_10_07
 - **Findings**: 0 critical, 0 warning, 0 minor
@@ -27,6 +27,11 @@
 - [x] Verify server, captured children and local model shutdown. — `cli/tests/e2e/kilo-runtime.e2e.test.ts:168`, `cli/tests/e2e/kilo-runtime.e2e.test.ts:457`; independent real-host case passed with process/PID assertions, process-group cleanup, closed host port and model server.
 - [x] Keep unsupported telemetry and evidence limits explicit. — `kilo-verification.md`; unchanged Kilo profile declares unsupported telemetry. Journal host detection does not claim the generated Kilo payloads. Other operating systems, paid providers, hot reload and exhaustive process-tree auditing remain unclaimed.
 
+### Phase 3 — Windows embedded-asset checkout repair
+- [x] Repair checkout-dependent bundle growth at the source-byte boundary. — `cli/.gitattributes:12`: extend the existing CLI-owned line-ending policy to embedded configuration assets. Every current asset in this directory is text; no parallel policy, production algorithm, dependency, mutation floor or bundle-budget change.
+- [x] Use an effective guard with real isolated checkout and a removal counterproof. — `cli/tests/architecture/bundled-config-checkout.arch.test.ts:15`: temporary independent Git index, core.autocrlf=true, relocated HOME/USERPROFILE, shared Git-environment sanitizer and cleanup in finally. Both real assets retain LF; removing their rule causes both byte comparisons to change. Independent focused command: two passed.
+- [x] Tie the repair to the actual red Windows check and reproduced build behavior. — `/tmp/aidd-971-repair/windows-ci.log:3766`: Windows build exceeds 734 KB; `bundle-crlf-build.log` reproduces failure, while `bundle-lf-build.log` passes. The LF clone bundle stat is 751,591 bytes under the unchanged 751,616 budget. Before/after guard logs and the final 142-check architecture log inspected; remote success for this new candidate remains pending.
+
 ## Findings
 | Sev | Kind | Phase | Location | Issue | Fix |
 | --- | --- | --- | --- | --- | --- |
@@ -52,7 +57,7 @@
 | Unplanned | none; runtime delivery and loader relocation recorded in revised architecture projection |
 | Extension verified | 100% (8/8); original Phase 1 evidence above is retained as historical evidence, not a claim that remote CI for the extension is green. |
 | Extension checker score | 100% (12/12: all eight extension acceptance checks and four baseline checks fulfilled); no severity adjustment. Caller owns the acceptance threshold. |
-| Extension files checked | All changed lines in the ten implementation/evidence files, generated bridge, runtime harness, six delivery cases, configuration loader, workflow, golden baseline and task evidence; root/CLI coding and testing assertions. Subsequent review-artifact commit adds no production changes. |
+| Extension files checked | All changed lines in the twelve implementation/evidence files, generated bridge, runtime harness, six delivery cases, configuration loader, workflow, golden baseline, checkout attributes/guard and task evidence; root/CLI coding and testing assertions. Subsequent review-artifact commits add no production changes. |
 | Extension baseline | DRY, consistency within documented host/telemetry limits, minimum relevant scope and no dead/debug production code fulfilled. Observer and deterministic inference remain test-only. |
 | Extension commands run | Independent mutation-config focused tests: 23 passed; complete Kilo profile tests: 21 passed; real Kilo 7.7.5 host: one passed. Final corrected-host green, typecheck and targeted counterproof logs inspected directly after reviewing the correction. |
 | Extension fixed finding | The final snapshot now rejects delayed fourth records. Evidence: `/tmp/aidd-971-repair/kilo-quiescent-runtime-green.log` and `kilo-late-hook-counterproof.log`; temporary copied case removed. Reviewed committed test SHA256: 5f53e7f983654fc777b035840ab34a8fc5dbc5b2127d0b2983151eef5f964559. |
@@ -61,3 +66,6 @@
 | Extension golden validation | Independent `pnpm --dir cli exec vitest run --project=e2e tests/golden/framework-build-golden.e2e.test.ts`, without recapture: three passed in comparison mode, including deterministic outputs and all ten stored baselines. Raw log: `/tmp/aidd-971-repair/checker-golden-comparison.log`. Runtime test blob remains cfd95913537eb6b22371583b905797190557602c; unchanged source/host/mutation checks were not rerun. |
 | Extension pending evidence | Full current CLI suite and remote required gate not yet established by this checker. No claim that all red CI jobs are repaired remotely; parent must inspect the actual new run. |
 | Extension resource boundary | Built bytes 751,591 against unchanged 751,616 budget; 25 bytes remaining. Thresholds and budgets unchanged; user-owned .gitignore and .hermes.md excluded. |
+| Windows follow-up score | 100% (3/3 scoped acceptance checks and 4/4 baseline checks); no findings. Existing attribute policy is extended, naming/docs match the byte boundary, two representative real assets suffice for the generic rule, and there are no debug or unused abstractions. |
+| Windows follow-up command | Independent `pnpm --dir cli exec vitest run --project=architecture tests/architecture/bundled-config-checkout.arch.test.ts`: two passed in 55 ms. Raw log: `/tmp/aidd-971-repair/checker-bundle-eol-guard.log`. Full architecture evidence reports 142 passed. |
+| Windows follow-up scope and limits | Candidate `116f791e` changes only CLI checkout attributes, the two checkout cases and their evidence beyond the already reviewed work. Production source, floors and budget unchanged. New full suite and actual Windows/required remote gate remain pending; an isolated Git checkout on this machine does not claim final Windows CI success. |
