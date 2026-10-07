@@ -1,5 +1,5 @@
 ---
-status: pending
+status: done
 ---
 
 # Instruction: the taught example is parsed where it is watched
@@ -54,7 +54,13 @@ journey
 3. Fail with the file and the field named, so the message locates the break.
 4. Keep the `.md` and `.json` forms both readable: one skill fences the example, the other ships it as an asset.
 
-### `3)` watch it go red for its own reason
+### `3)` find the taught example by what it declares
+> Position is not identity.
+
+1. Select the fence whose parse carries the first required field.
+2. Fail naming the file and how many fences were read, when none carries it.
+
+### `4)` watch it go red for its own reason
 > The mutation that proves the guard ships with it.
 
 1. Break the syntax again. The guard fails, and the message names that file.
@@ -67,4 +73,5 @@ journey
 | --- | --- |
 | 1 | the guard passes over a broken example before the change, recorded |
 | 2 | the guard parses both the fenced and the asset form, and names file and field on failure |
-| 3 | three mutations each turn this guard red, and the suite is green once restored |
+| 3 | an unrelated fence above the taught one passes, and the same with the taught example broken fails |
+| 4 | the fences stripped and an emptied field each turn this guard red, and the suite is green once restored |

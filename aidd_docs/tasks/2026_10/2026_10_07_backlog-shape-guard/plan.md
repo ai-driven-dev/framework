@@ -1,6 +1,6 @@
 ---
 objective: "A change confined to the plugin files that teach backlog-link.json fails at pre-commit when it breaks what the reader accepts."
-status: pending
+status: implemented
 ---
 
 # Plan: the guard that runs on plugin changes parses what it guards
