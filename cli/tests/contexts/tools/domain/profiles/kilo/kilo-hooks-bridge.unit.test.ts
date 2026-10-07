@@ -112,7 +112,7 @@ describe("Kilo hooks bridge", () => {
       await mkdir(join(directory, "plugin"));
       await writeFile(
         join(directory, "hooks", "probe", "capture.cjs"),
-        `const fs = require("node:fs"); let body = ""; process.stdin.on("data", chunk => body += chunk); process.stdin.on("end", () => fs.appendFileSync(${JSON.stringify(output)}, JSON.stringify({ args: process.argv.slice(2), payload: JSON.parse(body) }) + "\\n"));`
+        `const fs = require("node:fs"); const { resolve } = require("node:path"); let body = ""; process.stdin.on("data", chunk => body += chunk); process.stdin.on("end", () => fs.appendFileSync(resolve(__dirname, "../../calls.jsonl"), JSON.stringify({ args: process.argv.slice(2), payload: JSON.parse(body) }) + "\\n"));`
       );
       const modulePath = join(directory, "plugin", "bridge.mjs");
       await writeFile(modulePath, generated ?? "");

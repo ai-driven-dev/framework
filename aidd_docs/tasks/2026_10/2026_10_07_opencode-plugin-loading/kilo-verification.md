@@ -140,6 +140,25 @@ CLI delivery and spawned hooks execute normally.
   depends on every selected mutation job. Final remote status is available on
   [pull request 971](https://github.com/ai-driven-dev/framework/pull/971/checks).
 
+## CodeQL review follow-up
+The issue author confirmed the requested V1 and real-process acceptance criteria in
+[issue comment](https://github.com/ai-driven-dev/framework/issues/953#issuecomment-6041453916).
+GitHub Advanced Security also raised alerts 102, 103 and 104 on generated test probes:
+their JavaScript embedded temporary output paths through `JSON.stringify`. These paths
+were locally generated and the files were executed by Node/Kilo, not embedded in HTML;
+this review does not establish attacker-controlled injection. Nevertheless, the fixtures
+now contain static JavaScript: the CommonJS capture resolves from `__dirname`, the ESM
+capture uses the hook payload's `cwd`, and the observer uses the host's project directory.
+No path is interpolated into executable source and no alert was dismissed or suppressed.
+The [CodeQL rule](https://codeql.github.com/codeql-query-help/javascript/js-bad-code-sanitization/)
+documents why JSON encoding alone is insufficient for every JavaScript embedding context.
+
+After this change, the 13 bridge unit cases and the real Kilo 7.7.5 runtime case passed;
+the final three-record assertion, payload checks, observed real read and process shutdown
+checks remain intact. Targeted Biome, TypeScript and whitespace checks also passed.
+Remote CodeQL resolution is to be verified on the resulting candidate; prior green CI
+alone does not establish absence of security findings.
+
 ## Limits
 Kilo telemetry and journal/cost attribution remain unsupported. This proof covers one
 successful local turn, plus controlled unit event sequences and application delivery

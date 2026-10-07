@@ -353,7 +353,7 @@ describeKiloRuntime("E2E: real Kilo runtime", () => {
       );
       await writeFile(
         join(proofPlugin, "hooks", "capture.js"),
-        `import { appendFileSync } from "node:fs"; let input = ""; process.stdin.on("data", chunk => input += chunk); process.stdin.on("end", () => appendFileSync(${JSON.stringify(payloadPath)}, JSON.stringify({ pid: process.pid, payload: JSON.parse(input) }) + "\\n"));`
+        `import { appendFileSync } from "node:fs"; import { join } from "node:path"; let input = ""; process.stdin.on("data", chunk => input += chunk); process.stdin.on("end", () => { const payload = JSON.parse(input); appendFileSync(join(payload.cwd, "payloads.jsonl"), JSON.stringify({ pid: process.pid, payload }) + "\\n"); });`
       );
       await writeFile(
         join(proofPlugin, "hooks", "hooks.json"),
@@ -376,7 +376,7 @@ describeKiloRuntime("E2E: real Kilo runtime", () => {
       );
       await writeFile(
         join(generatedProject, ".kilo", "plugin", "observer.js"),
-        `import { appendFileSync } from "node:fs"; export default { id: "runtime-observer", server: async () => ({ event: async ({ event }) => appendFileSync(${JSON.stringify(eventPath)}, JSON.stringify(event) + "\\n") }) };`
+        `import { appendFileSync } from "node:fs"; import { join } from "node:path"; export default { id: "runtime-observer", server: async ({ directory }) => ({ event: async ({ event }) => appendFileSync(join(directory, "events.jsonl"), JSON.stringify(event) + "\\n") }) };`
       );
 
       const deliveredConfig = await readFile(configPath, "utf8");
