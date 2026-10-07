@@ -1,6 +1,6 @@
 # Review: OpenCode plugin loading (#953)
 - **Verdict**: approve
-- **Diff**: `origin/next...ffa9c44a` (code `ae500bfb`, evidence `ffa9c44a`)
+- **Diff**: original review `origin/next...ffa9c44a`; extension `b1a37fe0..3e762c31`
 - **Axes run**: code, functional, relevancy
 - **Date**: 2026_10_07
 - **Findings**: 0 critical, 0 warning, 0 minor
@@ -17,6 +17,16 @@
 - [x] Official research precedes code, as explicitly requested. — Parent transcript `rollout-2026-10-07T15-38-13-01a11696-08a4-78b1-b05c-c456b9fbceb3.jsonl`, entries 97/104 and 154/161: official requests/results at 13:45:59–13:47:39 UTC. First production patch follows at 13:51:56 UTC. Independently verified [official migration contract](https://opencode.ai/v2/docs/build/plugins/migrate-v1) and [plugin API](https://opencode.ai/v2/docs/build/plugins).
 - [x] Project test-first and guard-mutation requirements have observed evidence. — Executor transcript `rollout-2026-10-07T15-49-59-01a116a0-cda7-74c3-9bbe-51865ae26720.jsonl`, entries 78/83/94: tests added 13:51:21 UTC, named undefined id/setup failures 13:51:28, production patch 13:51:56. Initial mutation entries 343/346 copy plugin/test, verify deletion anchor, assert targeted failure and clean scratch. Canonical-helper mutation raw failure is retained in `mutation-shared.log` with duplicate task_declared. Parent transcript entries 1146/1162 retain existing-tool missing-helper failures followed by four passing migration/preservation tests.
 
+### Phase 2 — Accepted Kilo verification and mutation repair
+- [x] Repair the shared mutation initial-test failure without reducing floors. — `cli/vitest.mutation.config.ts:5`; independent mutation-config run: 23 passed, including the four runtime-file regressions. Raw OpenCode mutation score 96.4/floor 94 and Kilo score 67.7/floor 64 inspected.
+- [x] Run the released pinned host with the actual delivered memory script. — `cli/tests/e2e/kilo-runtime.e2e.test.ts:228`, `cli/tests/e2e/kilo-runtime.e2e.test.ts:310`; independent `pnpm --dir cli test:e2e:kilo`: one passed, 18.7 seconds; source bytes and AGENTS.md memory link asserted.
+- [x] Execute a complete model turn with real read output and released session identity. — `cli/tests/e2e/kilo-runtime.e2e.test.ts:383`; observer, model tool-result message and three exact payload shapes asserted. Inference alone uses the deterministic loopback endpoint.
+- [x] Prove each hook occurs exactly once in the final runtime trace. — `cli/tests/e2e/kilo-runtime.e2e.test.ts:426`, `cli/tests/e2e/kilo-runtime.e2e.test.ts:448`: stop the host process group before the final snapshot, assert exactly three records and check all three exact payloads. Corrected host case passes in 14.819 seconds; copied fourth-record counterproof fails at the intended assertion with length 3 but got 4. Initial review finding fixed in `3e762c31`.
+- [x] Support captured lifecycle events, suppress replay and release deleted session state. — `cli/src/contexts/tools/domain/profiles/kilo/kilo-hooks-bridge.ts:118`; independent 13 bridge cases passed; copied deletion mutant fails with actual 1 versus expected 2. Real pre-implementation turn fails with expected 1 to be 3 in `/tmp/kilo-hooks-runtime-red.log`.
+- [x] Preserve configuration through setup, installation and update. — `cli/tests/contexts/framework/application/plugin/kilo-plugin-delivery.integration.test.ts:78`; six cases passed for both configuration locations, exact JSONC bytes and regenerated bridge. These are application use cases with port doubles; actual CLI translation is separately exercised by the host test.
+- [x] Verify server, captured children and local model shutdown. — `cli/tests/e2e/kilo-runtime.e2e.test.ts:168`, `cli/tests/e2e/kilo-runtime.e2e.test.ts:457`; independent real-host case passed with process/PID assertions, process-group cleanup, closed host port and model server.
+- [x] Keep unsupported telemetry and evidence limits explicit. — `kilo-verification.md`; unchanged Kilo profile declares unsupported telemetry. Journal host detection does not claim the generated Kilo payloads. Other operating systems, paid providers, hot reload and exhaustive process-tree auditing remain unclaimed.
+
 ## Findings
 | Sev | Kind | Phase | Location | Issue | Fix |
 | --- | --- | --- | --- | --- | --- |
@@ -25,8 +35,8 @@
 ## Verification
 | Metric | Value |
 | --- | --- |
-| Verified | 100% (9/9 phase and stated-process criteria); plan criteria 7/7 |
-| Checker score | 100%: all nine criteria and four baseline checks fulfilled, 13/13. No severity adjustment. Caller owns its acceptance threshold. |
+| Original verified | 100% (9/9 phase and stated-process criteria); plan criteria 7/7 |
+| Original checker score | 100%: all nine original criteria and four baseline checks fulfilled, 13/13. No severity adjustment. Caller owns its acceptance threshold. |
 | Files checked | Every changed line in all 60 files in `origin/next...ffa9c44a`, including task artifacts, canonical JS text asset, bridge and telemetry wrappers, runtime-file metadata/build/install/restore/wiring, generalized distribution loader and all constructor migrations, tests/golden/configuration, filename guard and documentation. Root/CLI assertions and applicable architecture/convention rules also checked. |
 | No information duplication | Fulfilled: V2 protocol and lifecycle have one home, `cli/assets/configs/opencode/opencode-events.js.txt`; both wrappers reuse it. Source fetching/parsing likewise reuses the generalized existing loader. Plugin-specific payload adapters retain separate responsibilities. |
 | No incoherence or contradiction | Fulfilled: version-qualified docs match source and observed events; unsupported concurrency coverage removed; final counts and bundle size match logs. Existing-helper preservation and tool ownership are explicit. |
@@ -36,7 +46,16 @@
 | Runtime freshness and identity | Independently compared executed telemetry bytes with current repository source, helper bytes with canonical asset, and executed context bytes with final CLI-translated candidate across all four cases. All effects/session IDs/task arguments verified: translated V1 `ses_ee936b4a1ffeUtLo53jLIRbwGv`; translated V2 `ses_ee936cc1effeZlQEZZQWcz1C7z`; setup-installed V2 `ses_ee93675e4ffeXe9XxjPANgDAQH`; existing-tool backfilled V2 `ses_ee92fc668ffekZp0PjzqAcnJah`. |
 | Runtime evidence boundary | Released hosts V1 1.18.29 and V2 2.0.22; real discovery/loading, event stream, read tool, child hooks and journal; local deterministic inference. One successful project/session per case. Older V1 unsupported; other releases, paid inference, personal/global installation, other operating systems and live hot reload not demonstrated. Cleanup/failure/interruption/dedup exercised through regression tests, not claimed as live-host failure scenarios. |
 | Evidence provenance | Raw runtime/gate/mutation files inspected directly; prior research and initial red tests verified from timestamped tool calls/results in local Codex transcript files under `/Users/baptistelafourcade/.codex/sessions/2026/10/07/`, not inferred from verification prose. Runtime/gate directory: `/tmp/aidd-953-runtime-ryTstm`. |
-| Additional checks | Normal commit lint/typecheck/type-honesty/documentation gates pass; final clone budget unchanged at 596 duplicated lines (1.41%); built CLI 732.2 KB below 734 KB budget. Asset embedding/text loader and filename guard reviewed; helper stays outside scanned plugin directory. |
-| Scope preservation | Preexisting `.gitignore` modification and untracked `.hermes.md` excluded from diff and untouched. No implementation/validator edits by checker. No source changed after code candidate `ae500bfb`; `ffa9c44a` changes only task documentation. |
+| Original additional checks | Normal commit lint/typecheck/type-honesty/documentation gates pass; final clone budget unchanged at 596 duplicated lines (1.41%); built CLI 732.2 KB below 734 KB budget. Asset embedding/text loader and filename guard reviewed; helper stays outside scanned plugin directory. |
+| Original scope preservation | Preexisting `.gitignore` modification and untracked `.hermes.md` excluded from diff and untouched. No implementation/validator edits by checker. No source changed after original code candidate `ae500bfb` before original evidence candidate `ffa9c44a`, which changes only task documentation. |
 | Unchecked | none |
 | Unplanned | none; runtime delivery and loader relocation recorded in revised architecture projection |
+| Extension verified | 100% (8/8); original Phase 1 evidence above is retained as historical evidence, not a claim that remote CI for the extension is green. |
+| Extension checker score | 100% (12/12: all eight extension acceptance checks and four baseline checks fulfilled); no severity adjustment. Caller owns the acceptance threshold. |
+| Extension files checked | All changed lines in the nine extension files, generated bridge, runtime harness, six delivery cases, configuration loader, workflow and task evidence; root/CLI coding and testing assertions. |
+| Extension baseline | DRY, consistency within documented host/telemetry limits, minimum relevant scope and no dead/debug production code fulfilled. Observer and deterministic inference remain test-only. |
+| Extension commands run | Independent mutation-config focused tests: 23 passed; complete Kilo profile tests: 21 passed; real Kilo 7.7.5 host: one passed. Final corrected-host green, typecheck and targeted counterproof logs inspected directly after reviewing the correction. |
+| Extension fixed finding | The final snapshot now rejects delayed fourth records. Evidence: `/tmp/aidd-971-repair/kilo-quiescent-runtime-green.log` and `kilo-late-hook-counterproof.log`; temporary copied case removed. Reviewed committed test SHA256: 5f53e7f983654fc777b035840ab34a8fc5dbc5b2127d0b2983151eef5f964559. |
+| Extension configuration proof | Six application use cases preserve original JSONC bytes through setup/add/update. CLI translation intentionally normalizes JSON and adds schema, so the runtime test checks custom values during delivery and exact preservation of the delivered configuration after host execution. |
+| Extension pending evidence | Full current CLI suite and remote required gate not yet established by this checker. No claim that all red CI jobs are repaired remotely; parent must inspect the actual new run. |
+| Extension resource boundary | Built bytes 751,591 against unchanged 751,616 budget; 25 bytes remaining. Thresholds and budgets unchanged; user-owned .gitignore and .hermes.md excluded. |
