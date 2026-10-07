@@ -28,9 +28,9 @@ status: implemented
 ## Decisions
 | Decision | Why |
 | --- | --- |
-| The home is `## Open Questions`, a required section of the template | it mirrors `prd-template.md`, and the issue names it |
+| The home is the template's open questions section, required, and named in no other file | it mirrors `prd-template.md`, and the issue names it |
 | Each gap is listed there once, and nowhere else | a gap written in both its eventual section and the list is the same non-determinism with an extra copy |
-| Every section other than `## Open Questions` carries resolved content only | a hard constraint that is undecided contradicts the validator's own definition of that section, and a copy under an optional section is the second of the two placements the issue measured |
+| Every section other than the open questions one carries resolved content only | a hard constraint that is undecided contradicts the validator's own definition of that section, and a copy under an optional section is the second of the two placements the issue measured |
 | One noun, defined once: a gap is an unresolved decision a required section depends on | the template said `unresolved decision`, the reference said `gap` and the actions said `missing required field`. Three units in one skill, and the broadest of them now blocks validation |
 | What no required section depends on is not a gap, and neither is an implementation detail | it excludes over-asking without inventing a subjective category: `SKILL.md`'s `Hold intent, never implementation` and the validator's `contains_implementation_details` are boundaries a drafter already applies |
 | A residual question invalidates the spec through `hard_thresholds`, and the section is checked by a criterion carrying no weight | the required weights already total 90 against a `pass_threshold` of 90, so a weighted addition would need the threshold retuned; a zero weight checks the section's shape and leaves the arithmetic alone |

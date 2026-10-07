@@ -47,7 +47,7 @@ journey
 > `tbd-marker.md` carries the form, the home, and the one-entry rule.
 
 1. Keep the form `TBD: <precise question>`.
-2. Say the home is the spec's `## Open Questions` section.
+2. Say the home is the template's open questions section, without naming the heading.
 3. Define the unit: a gap is an unresolved decision a required section depends on.
 4. Say each gap is one entry there, and that no other section carries a marker.
 
@@ -68,9 +68,9 @@ journey
 ### `4)` route both actions to the home
 > Neither action places a marker by judgement any more.
 
-1. `01-build.md` step 3: list every gap under `## Open Questions` per `tbd-marker.md`, never inside the section it would fill.
+1. `01-build.md` step 3: list every gap per `tbd-marker.md`.
 2. `02-refine.md` step 4: the same, and remove an entry only once its decision is fully answered.
-3. Add one test row to each: a gap is listed once under `## Open Questions`, and no other section carries a marker.
+3. Add one test row to each: a gap is listed once, in the open questions section only.
 
 ### `5)` prove it
 > The change holds under the repository's own gates.
@@ -82,8 +82,8 @@ journey
 ## Test acceptance criteria
 | Task | Acceptance criteria |
 | --- | --- |
-| 1 | `tbd-marker.md` names `## Open Questions` as the home and allows one entry per gap |
-| 2 | `spec-template.md` carries `## Open Questions` with its guidance, and `None` is the empty form |
+| 1 | `tbd-marker.md` names the template's open questions section as the home, and allows one entry per gap |
+| 2 | `spec-template.md` carries the section with its guidance, and `None` is the empty form |
 | 3 | `spec-validator.yml` calls a spec with an unresolved question invalid, and no weight or threshold moved |
 | 4 | each action's gap step points at the home, and each `## Test` table has the row for it |
 | 5 | pre-commit is green and the work is committed |

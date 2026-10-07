@@ -23,7 +23,7 @@ criteria:
     weight: 25
 
   - id: open_questions
-    description: Every gap listed once in the open questions section, each a precise question, or None when there is none. Spec-wide, no TBD marker sits in any other section.
+    description: Every gap listed once in the open questions section, each a precise question, or None when there is none. A gap is an unresolved decision a required section depends on, per references/tbd-marker.md. Spec-wide, no `TBD:` marker sits in any other section.
     required: true
     weight: 0
 

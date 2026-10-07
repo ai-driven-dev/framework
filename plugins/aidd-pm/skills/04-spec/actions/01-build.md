@@ -27,7 +27,7 @@ The path to `spec.md` in the feature folder, drafted from the template, with its
    }
    ```
 
-   `backlog` is one field, a forge reference or a project-relative Markdown path, never both. `written_at` is now, ISO 8601 UTC.
+   `backlog` is one field, a forge reference or a project-relative Markdown path, never both. `written_at` is now, ISO 8601 UTC; `written_by` is this skill's name.
 
    Write nothing when the request names none: an undeclared folder is normal. Never overwrite the file, so a correction by hand survives.
 7. **Return.** Its path and its gaps.
