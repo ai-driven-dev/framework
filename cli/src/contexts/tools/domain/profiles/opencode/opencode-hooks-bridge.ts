@@ -2,7 +2,7 @@
  * Generates OpenCode's event bridge for one plugin's hooks.json. OpenCode's loader scans no
  * "hooks" family and this profile writes no hooks.json, so without this module a plugin's
  * declared hooks have no trigger on OpenCode at all. The generated file is a real OpenCode
- * plugin, one function-valued export, spawning the same scripts every other host's hooks.json
+ * plugin with V1/server and V2/setup entrypoints, spawning the scripts every host's hooks.json
  * already names over the stdin-JSON contract those scripts already read.
  *
  * Only three events map; anything else is dropped, OpenCode's plugin surface delivering no
@@ -12,7 +12,7 @@
  *   server/directory, not once per session, since `session.created` is published on OpenCode's
  *   bus but was never observed delivered to a plugin's `event` hook. Safe only for an
  *   idempotent hook, which every `SessionStart` hook this generator sees today is.
- * - `Stop` maps to `session.idle`, delivered once per turn.
+ * - `Stop` maps to V1's `session.idle` or V2's execution terminal, once per turn.
  * - `PostToolUse` maps to `message.part.updated` whose `part.state.status === "completed"`, the
  *   one shape measured live: `part.tool` names the tool, `part.state.input` its arguments.
  *   `tool.execute.after` reads cleaner in OpenCode's own docs but is a separate named hook
@@ -210,12 +210,13 @@ export const ${ident} = async (input) => {
   return {
     event: async ({ event }) => {
       try {
+        const directory = event?.properties?.directory ?? input.directory;
         const calls = [
-          ...stopCallsFor(event, input.directory),
-          ...postToolUseCallsFor(event, input.directory),
+          ...stopCallsFor(event, directory),
+          ...postToolUseCallsFor(event, directory),
         ];
         for (const call of calls) {
-          runHook(call.script, call.args, call.payload, input.directory);
+          runHook(call.script, call.args, call.payload, directory);
         }
       } catch {
         // Silent on purpose - see above.
@@ -226,5 +227,72 @@ export const ${ident} = async (input) => {
 
 ${ident}.stopCallsFor = stopCallsFor;
 ${ident}.postToolUseCallsFor = postToolUseCallsFor;
+
+// V2's tool lifecycle splits the name, arguments and completion across three events.
+// Keep only in-flight calls; consuming success once prevents duplicate PostToolUse calls.
+function eventsForV2(event, toolCalls) {
+  const data = event?.data;
+  if (typeof data?.sessionID !== "string") return [];
+  const properties = { sessionID: data.sessionID, directory: event.location?.directory };
+  if (event.type === "session.execution.succeeded" || event.type === "session.execution.failed" ||
+      event.type === "session.execution.interrupted") {
+    for (const [key, call] of toolCalls) {
+      if (call.sessionID === data.sessionID) toolCalls.delete(key);
+    }
+    if (event.type === "session.execution.interrupted" && data.reason === "shutdown") return [];
+    return [{ type: "session.idle", properties }];
+  }
+  if (typeof data.assistantMessageID !== "string" || typeof data.id !== "string") return [];
+  const key = JSON.stringify([data.sessionID, data.assistantMessageID, data.id]);
+  if (event.type === "session.tool.input.started" && typeof data.name === "string") {
+    toolCalls.set(key, { sessionID: data.sessionID, name: data.name, directory: properties.directory });
+  } else if (event.type === "session.tool.called") {
+    const call = toolCalls.get(key);
+    if (call) {
+      call.input = data.input;
+      call.directory = properties.directory ?? call.directory;
+    }
+  } else if (event.type === "session.tool.success") {
+    const call = toolCalls.get(key);
+    toolCalls.delete(key);
+    if (call?.input === undefined) return [];
+    return [{ type: "message.part.updated", properties: {
+      ...properties, directory: properties.directory ?? call.directory,
+      part: { type: "tool", tool: call.name, state: { status: "completed", input: call.input } },
+    } }];
+  } else if (event.type === "session.tool.failed") {
+    toolCalls.delete(key);
+  }
+  return [];
+}
+
+export default {
+  id: ${JSON.stringify(`${plugin}-hooks`)},
+  server: ${ident},
+  setup: async (ctx) => {
+    const controller = new AbortController();
+    const toolCalls = new Map();
+    const hooks = await ${ident}({ directory: ctx.location.directory });
+    // The subscription lives until cleanup. Awaiting it here would block plugin startup.
+    void (async () => {
+      try {
+        for await (const event of ctx.event.subscribe({ signal: controller.signal })) {
+          if (controller.signal.aborted) break;
+          for (const mapped of eventsForV2(event, toolCalls)) {
+            await hooks.event({ event: mapped });
+          }
+        }
+      } catch {
+        // Stream failures and cancellation must not reject into the host.
+        controller.abort();
+        toolCalls.clear();
+      }
+    })();
+    return () => {
+      controller.abort();
+      toolCalls.clear();
+    };
+  },
+};
 `;
 }

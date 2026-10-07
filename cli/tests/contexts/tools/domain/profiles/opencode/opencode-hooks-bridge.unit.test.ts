@@ -24,6 +24,15 @@ const THREE_EVENT_HOOKS_JSON = JSON.stringify({
 });
 
 describe("generateOpencodeHooksBridge", () => {
+  it("defines the V1 server and V2 setup entrypoints on the default plugin", () => {
+    const generated = generateOpencodeHooksBridge(THREE_EVENT_HOOKS_JSON, "aidd-sample");
+
+    expect(generated).toContain("export default {");
+    expect(generated).toContain('id: "aidd-sample-hooks"');
+    expect(generated).toContain("server: AiddSampleHooks");
+    expect(generated).toContain("setup:");
+  });
+
   it("generates a bridge module for a hooks.json naming all three mapped events", () => {
     const generated = generateOpencodeHooksBridge(THREE_EVENT_HOOKS_JSON, "aidd-sample");
 
@@ -119,12 +128,13 @@ describe("generateOpencodeHooksBridge", () => {
         return {
           event: async ({ event }) => {
             try {
+              const directory = event?.properties?.directory ?? input.directory;
               const calls = [
-                ...stopCallsFor(event, input.directory),
-                ...postToolUseCallsFor(event, input.directory),
+                ...stopCallsFor(event, directory),
+                ...postToolUseCallsFor(event, directory),
               ];
               for (const call of calls) {
-                runHook(call.script, call.args, call.payload, input.directory);
+                runHook(call.script, call.args, call.payload, directory);
               }
             } catch {
               // Silent on purpose - see above.
@@ -135,6 +145,73 @@ describe("generateOpencodeHooksBridge", () => {
 
       AiddSampleHooks.stopCallsFor = stopCallsFor;
       AiddSampleHooks.postToolUseCallsFor = postToolUseCallsFor;
+
+      // V2's tool lifecycle splits the name, arguments and completion across three events.
+      // Keep only in-flight calls; consuming success once prevents duplicate PostToolUse calls.
+      function eventsForV2(event, toolCalls) {
+        const data = event?.data;
+        if (typeof data?.sessionID !== "string") return [];
+        const properties = { sessionID: data.sessionID, directory: event.location?.directory };
+        if (event.type === "session.execution.succeeded" || event.type === "session.execution.failed" ||
+            event.type === "session.execution.interrupted") {
+          for (const [key, call] of toolCalls) {
+            if (call.sessionID === data.sessionID) toolCalls.delete(key);
+          }
+          if (event.type === "session.execution.interrupted" && data.reason === "shutdown") return [];
+          return [{ type: "session.idle", properties }];
+        }
+        if (typeof data.assistantMessageID !== "string" || typeof data.id !== "string") return [];
+        const key = JSON.stringify([data.sessionID, data.assistantMessageID, data.id]);
+        if (event.type === "session.tool.input.started" && typeof data.name === "string") {
+          toolCalls.set(key, { sessionID: data.sessionID, name: data.name, directory: properties.directory });
+        } else if (event.type === "session.tool.called") {
+          const call = toolCalls.get(key);
+          if (call) {
+            call.input = data.input;
+            call.directory = properties.directory ?? call.directory;
+          }
+        } else if (event.type === "session.tool.success") {
+          const call = toolCalls.get(key);
+          toolCalls.delete(key);
+          if (call?.input === undefined) return [];
+          return [{ type: "message.part.updated", properties: {
+            ...properties, directory: properties.directory ?? call.directory,
+            part: { type: "tool", tool: call.name, state: { status: "completed", input: call.input } },
+          } }];
+        } else if (event.type === "session.tool.failed") {
+          toolCalls.delete(key);
+        }
+        return [];
+      }
+
+      export default {
+        id: "aidd-sample-hooks",
+        server: AiddSampleHooks,
+        setup: async (ctx) => {
+          const controller = new AbortController();
+          const toolCalls = new Map();
+          const hooks = await AiddSampleHooks({ directory: ctx.location.directory });
+          // The subscription lives until cleanup. Awaiting it here would block plugin startup.
+          void (async () => {
+            try {
+              for await (const event of ctx.event.subscribe({ signal: controller.signal })) {
+                if (controller.signal.aborted) break;
+                for (const mapped of eventsForV2(event, toolCalls)) {
+                  await hooks.event({ event: mapped });
+                }
+              }
+            } catch {
+              // Stream failures and cancellation must not reject into the host.
+              controller.abort();
+              toolCalls.clear();
+            }
+          })();
+          return () => {
+            controller.abort();
+            toolCalls.clear();
+          };
+        },
+      };
       "
     `);
   });

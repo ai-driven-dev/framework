@@ -50,7 +50,14 @@ A hook is authored once, with `${CLAUDE_PLUGIN_ROOT}`, and the installer rewrite
 | Codex         | yes                | `${PLUGIN_ROOT}`            | Measured: it expands `${CLAUDE_PLUGIN_ROOT}` too, and will not run a hook it has not been asked to trust |
 | GitHub Copilot| yes                | `${PLUGIN_ROOT}`            | Declared, never observed against a running hook                                        |
 | Cursor        | declared            | `./`                        | Its own hook format: the converter rewrites the root to a path relative to the plugin before the declared token is ever substituted. Two headless probes fired no plugin hook at all, and what registers a plugin sitting in Cursor's own plugin directory was not identified |
-| OpenCode      | no, by a second route | —                        | A declarative `hooks.json` means nothing to it — its plugin runtime is JS modules, so every other plugin's `hooks.json` is translated into one at build time (`opencode-hooks-bridge.ts`, one generated `<plugin>-hooks.js` per plugin, `SessionStart`/`Stop`/`PostToolUse` only). `aidd-telemetry` ships its own hand-written entry instead (`plugins/aidd-telemetry/hooks/opencode-plugin.js`, no generated bridge for it) because its journal needs a stdin dialect the generated one does not speak: `session.created` maps to session-start, `session.idle` to turn-end, and (2026-08-31) a completed tool part on `message.part.updated` to tool-used. The column above is about the declarative axis alone; a tool answering `no` there is not a tool that cannot journal |
+| OpenCode | no, by a second route | — | Declarative hooks are translated by `opencode-hooks-bridge.ts` into `<plugin>-hooks.js` modules for `SessionStart`, `Stop`, and `PostToolUse`. Telemetry supplies its own adapter in `plugins/aidd-telemetry/hooks/opencode-plugin.js` because its journal uses a different stdin dialect. Both expose a default definition: `server` for V1 1.18.29 or later, `setup` for V2. The declarative hook support column does not describe this module route. |
+
+OpenCode V1 delivers `session.idle` and completed `message.part.updated` tool parts to an
+`event` hook. V2 adapters subscribe to `data`-based events with an abortable stream, correlate
+tool name and input with tool success, and translate execution terminals into turn-end.
+Shutdown interruptions leave the turn open because OpenCode resumes that execution.
+The generic bridge fires its idempotent `SessionStart` hooks when either host initializes
+the module; telemetry records sessions separately from actual session events.
 
 A tool that runs no hook says why, and an install that carries one tells whoever ran it what was skipped.
 

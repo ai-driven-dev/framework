@@ -179,17 +179,18 @@ test("the plugin README gives every partly-measurable tool its reason, not just 
     assert.ok(readme.includes(tool), `${tool} is named`);
     assert.ok(readme.includes(reason), `${tool}'s reason, not just its name`);
   }
-  // OpenCode's limit shrank rather than vanished: the plugin now opens a session OpenCode
-  // never announced, so a run is journalled and readable - but a session it never announced
-  // is journalled under the plugin's own directory, which is only right when the server
-  // serves one. Both halves are pinned: the fact, and what it still costs.
+  // V1 can omit an announcement; V2 supplies the session directory. Keep V1's fallback
+  // and its multi-project cost explicit instead of presenting both versions as equivalent.
+  const readmeText = readme.replace(/\s+/gu, " ");
   assert.ok(
-    readme.includes("OpenCode never announces a session"),
-    "OpenCode's unannounced session is named, not silently dropped once it could declare a task"
+    readmeText.includes("OpenCode V1 can omit the session announcement"),
+    "OpenCode's missing announcement is explicitly scoped to V1"
   );
   assert.ok(
-    readme.includes("journalled under the plugin's own init-time directory"),
-    "what an unannounced session still costs is named, not left as a solved problem"
+    readmeText.includes(
+      "Without a known session directory, it uses the plugin's startup directory, which can be wrong for a server serving several projects."
+    ),
+    "the startup-directory fallback and its multi-project cost remain explicit"
   );
 });
 
@@ -381,4 +382,3 @@ test("the cost skill writes an artefact to a file when a file is what was asked 
     "an artefact must name the period and axis it came from"
   );
 });
-

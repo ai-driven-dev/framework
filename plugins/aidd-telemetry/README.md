@@ -102,11 +102,12 @@ A limit a reader has to look up gets read as a zero, so each one is named here:
 
 - **Codex needs one interactive approval.** Its hook trust is per entry and a headless run
   never sees the prompt, so a Codex session journals nothing until someone approves once.
-- **OpenCode never announces a session, so the plugin opens it.** `session.created` is
-  published on its bus but never reaches the hook, so the first call a session produces
-  opens it, under the directory that call was going to use. What is lost: on a server
-  serving several directories, a session it never announced is
-  journalled under the plugin's own init-time directory.
+- **OpenCode V1 can omit the session announcement.** The first journalable event opens
+  an unannounced session. Without a known session directory, it uses the plugin's startup
+  directory, which can be wrong for a server serving several projects. V2 session events
+  provide their own directory; tool completion and execution completion reach the journal
+  through the V2 event subscription. The adapter targets V1 1.18.29 or later and V2;
+  older V1 releases do not support its default plugin definition.
 - **OpenCode never names a step.** Its plugin forwards task paths and nothing else, so no
   skill invocation reaches the journal and every OpenCode request is unattributed by step.
 - **These are raw counters, not your tool's usage screen.** A vendor's page weights a cached

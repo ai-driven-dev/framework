@@ -81,7 +81,7 @@ function declaredTaskCallFor(event, sessionDirectories, fallbackDirectory) {
   if (part?.type !== "tool" || part.state?.status !== "completed") return null;
   if (!mightDeclareATask(part.state.input)) return null;
   const sessionId = event.properties.sessionID;
-  const cwd = sessionDirectories.get(sessionId) ?? fallbackDirectory;
+  const cwd = event.properties.directory ?? sessionDirectories.get(sessionId) ?? fallbackDirectory;
   return {
     script: "tool-used",
     payload: { tool: "opencode", session_id: sessionId, cwd, tool_input: part.state.input },
@@ -103,7 +103,8 @@ function journalCallFor(event, sessionDirectories, fallbackDirectory) {
   }
   if (event.type === "session.idle") {
     const sessionId = event.properties.sessionID;
-    const cwd = sessionDirectories.get(sessionId) ?? fallbackDirectory;
+    const cwd =
+      event.properties.directory ?? sessionDirectories.get(sessionId) ?? fallbackDirectory;
     return { script: "turn-end", payload: { tool: "opencode", session_id: sessionId, cwd } };
   }
   if (event.type === "message.part.updated") {
@@ -161,3 +162,97 @@ export const AiddTelemetry = async (input) => ({
 // journalCallFor's own comment for why a second export is ruled out.
 AiddTelemetry.journalCallFor = journalCallFor;
 AiddTelemetry.journalCallsFor = journalCallsFor;
+
+// V2's tool lifecycle splits the name, arguments and completion across three events.
+// Keep only in-flight calls; consuming success once prevents duplicate PostToolUse calls.
+function eventsForV2(event, toolCalls, directory) {
+  const data = event?.data;
+  if (typeof data?.sessionID !== "string") return [];
+  if (event.type === "session.created") {
+    return [
+      {
+        type: "session.created",
+        properties: {
+          info: { id: data.sessionID, directory: data.location?.directory ?? directory },
+        },
+      },
+    ];
+  }
+  const properties = { sessionID: data.sessionID, directory: event.location?.directory };
+  if (
+    event.type === "session.execution.succeeded" ||
+    event.type === "session.execution.failed" ||
+    event.type === "session.execution.interrupted"
+  ) {
+    for (const [key, call] of toolCalls) {
+      if (call.sessionID === data.sessionID) toolCalls.delete(key);
+    }
+    if (event.type === "session.execution.interrupted" && data.reason === "shutdown") return [];
+    return [{ type: "session.idle", properties }];
+  }
+  if (typeof data.assistantMessageID !== "string" || typeof data.id !== "string") return [];
+  const key = JSON.stringify([data.sessionID, data.assistantMessageID, data.id]);
+  if (event.type === "session.tool.input.started" && typeof data.name === "string") {
+    toolCalls.set(key, {
+      sessionID: data.sessionID,
+      name: data.name,
+      directory: properties.directory,
+    });
+  } else if (event.type === "session.tool.called") {
+    const call = toolCalls.get(key);
+    if (call) {
+      call.input = data.input;
+      call.directory = properties.directory ?? call.directory;
+    }
+  } else if (event.type === "session.tool.success") {
+    const call = toolCalls.get(key);
+    toolCalls.delete(key);
+    if (call?.input === undefined) return [];
+    return [
+      {
+        type: "message.part.updated",
+        properties: {
+          ...properties,
+          directory: properties.directory ?? call.directory,
+          part: {
+            type: "tool",
+            tool: call.name,
+            state: { status: "completed", input: call.input },
+          },
+        },
+      },
+    ];
+  } else if (event.type === "session.tool.failed") {
+    toolCalls.delete(key);
+  }
+  return [];
+}
+
+export default {
+  id: "aidd-telemetry",
+  server: AiddTelemetry,
+  setup: async (ctx) => {
+    const controller = new AbortController();
+    const toolCalls = new Map();
+    const hooks = await AiddTelemetry({ directory: ctx.location.directory });
+    // The subscription lives until cleanup. Awaiting it here would block plugin startup.
+    void (async () => {
+      try {
+        for await (const event of ctx.event.subscribe({ signal: controller.signal })) {
+          if (controller.signal.aborted) break;
+          for (const mapped of eventsForV2(event, toolCalls, ctx.location.directory)) {
+            await hooks.event({ event: mapped });
+          }
+        }
+      } catch {
+        // Stream failures and cancellation must not reject into the host.
+        controller.abort();
+        toolCalls.clear();
+      }
+    })();
+    return () => {
+      controller.abort();
+      toolCalls.clear();
+    };
+  },
+};

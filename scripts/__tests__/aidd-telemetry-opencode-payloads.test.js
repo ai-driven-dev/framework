@@ -49,10 +49,13 @@ async function journalCallsFor() {
 // factory of its own, and a second such export returning `null` kills `opencode run` before
 // any session starts. A non-function export is ignored by that same loader, which is why the
 // spawn-free seam rides on the plugin function as a property.
-test("the plugin file exports one plugin factory, never a second one OpenCode would call", async () => {
+test("the default definition selects its one V1 factory and exposes V2 setup", async () => {
   const exported = await pluginModule();
   const factories = Object.keys(exported).filter((name) => typeof exported[name] === "function");
   assert.deepEqual(factories, ["AiddTelemetry"]);
+  assert.equal(exported.default.id, "aidd-telemetry");
+  assert.equal(exported.default.server, exported.AiddTelemetry);
+  assert.equal(typeof exported.default.setup, "function");
 });
 
 // `opencode run` is always a session OpenCode never announced: `session.created` is published
