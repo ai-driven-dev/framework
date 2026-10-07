@@ -18,6 +18,30 @@ const ROOT = path.resolve(__dirname, "../..");
  */
 const REQUIRED_FIELDS = ["backlog", "written_at", "written_by"];
 
+/** The example a teaching file carries, found by what it declares and not by where it sits: a
+ * json fence above the taught one would otherwise be parsed in its place, leaving the guard
+ * green over a broken example. */
+function taughtInMarkdown(file, markdown) {
+  const fences = [...markdown.matchAll(/```json\r?\n([\s\S]*?)\r?\n\s*```/g)].map((m) => m[1]);
+  for (const fence of fences) {
+    try {
+      const candidate = JSON.parse(fence);
+      if (REQUIRED_FIELDS[0] in candidate) return candidate;
+    } catch {}
+  }
+  assert.fail(
+    `${file} must teach an example in a json fence carrying "${REQUIRED_FIELDS[0]}", read ${fences.length} fence(s)`
+  );
+}
+
+function taughtAsJson(file, text) {
+  try {
+    return JSON.parse(text);
+  } catch (error) {
+    assert.fail(`${file} teaches an example that is not JSON: ${error.message}`);
+  }
+}
+
 function trackedBacklogLinks() {
   return cp
     .execSync("git ls-files '*backlog-link.json'", { cwd: ROOT, encoding: "utf8" })
@@ -71,15 +95,7 @@ describe("every backlog declaration in this repository is one the report can rea
 
     for (const file of TEACHING_FILES) {
       const text = fs.readFileSync(path.join(ROOT, file), "utf8");
-      const source = file.endsWith(".md") ? text.match(/```json\r?\n([\s\S]*?)\r?\n\s*```/)?.[1] : text;
-      assert.ok(source !== undefined, `${file} must teach the example in a json fence`);
-
-      let taught;
-      try {
-        taught = JSON.parse(source);
-      } catch (error) {
-        assert.fail(`${file} teaches an example that is not JSON: ${error.message}`);
-      }
+      const taught = file.endsWith(".md") ? taughtInMarkdown(file, text) : taughtAsJson(file, text);
       for (const field of REQUIRED_FIELDS) {
         assert.ok(
           typeof taught[field] === "string" && taught[field] !== "",
