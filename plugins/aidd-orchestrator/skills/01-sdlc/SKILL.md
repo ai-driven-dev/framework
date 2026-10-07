@@ -8,15 +8,7 @@ argument-hint: request | interactive request
 
 ## Behavior
 
-The mode is `auto` unless the caller asks for `interactive`, named as the request's first whole word and no part of the source. A request carrying nothing else is not one to run; say so and stop.
-
-In `auto`, operate autonomously from the request to a draft pull request: decide and act without confirmation, asking only before spending money, taking an irreversible action, or making a decision that requires user authority. An exception stops the action it guards, not the rest of the request. Say what was withheld and what would release it.
-
-In `interactive`, pause on the contract, on the plan, and on the outcome before the pull request opens. Present what was produced and wait. Dispatch in `interactive` only the steps that produce those three, clarifying and formalizing included, and the rest in `auto`. A spec is how Frame formalizes the contract, not a fourth artifact. Every wait a step takes is that artifact's pause; where it takes none, pause yourself. An artifact produced anew pauses again. An approval ships what was presented, with any correction it carries.
-
-A refusal at a pause is a finding against that artifact. Contract or spec to Frame, plan to Deliver, outcome to Deliver or to Frame when it changes what is being built. It routes by artifact, never by a finding's kind, and travels with the source. Say so and wait again when it names what the artifact already carries. Only the user bounds this loop.
-
-A zone that cannot proceed stops the run and says what it would take to resume. Read only the current zone reference. Verify that every named provider is installed before calling it.
+Decide the mode as `mode.md` says, then read only that reference and the current zone's. Verify that every named provider is installed before calling it. A zone that cannot proceed stops the run and says what it would take to resume.
 
 Spawn specialized agents for isolated work. Parallelize independent work when it is faster. Give each agent one focused task that a smaller model can execute. Repeat the responsible zone when delegated work returns an actionable gap.
 
@@ -71,6 +63,7 @@ it drove afterwards then reads as work that belonged to nothing.
 
 | #   | Reference                               |
 | --- | --------------------------------------- |
+| —   | [Mode](references/mode.md)              |
 | 01  | [Frame](references/01-frame.md)         |
 | 02  | [Deliver](references/02-deliver.md)     |
 | 03  | [Check](references/03-check.md)         |
