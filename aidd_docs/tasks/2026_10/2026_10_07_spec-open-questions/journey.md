@@ -110,3 +110,18 @@ reference added. Four sessions through the installed tree and six validator verd
 Entries stay high on a thin request, 8, 7 and 6, and 3 on a fully answered one. The cut
 neither fixed nor worsened that; nothing refuses a spec for it.
 
+## The two paths nothing had exercised - pass
+
+Through the tree, after the declaration moved to a reference and its shape to an asset.
+
+| Case | Result |
+| --- | --- |
+| the request names a ticket | `backlog-link.json` written, all three fields, `written_by` the skill |
+| it names none | no file |
+| the file is already there, for another item | left untouched, the hand-written one survives |
+| refine resolves one gap of two | the entry is gone, the other stays, 2/2 |
+| refine resolves the last | `None` |
+
+The declaration had only ever been checked against the text pasted in one prompt, before it
+moved. Refine had never been run through the tree at all.
+

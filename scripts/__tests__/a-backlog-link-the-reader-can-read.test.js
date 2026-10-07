@@ -63,7 +63,7 @@ describe("every backlog declaration in this repository is one the report can rea
    * without checking the lesson would have stayed green through it. */
   it("is the shape both skills that write it actually teach", () => {
     const TEACHING_FILES = [
-      "plugins/aidd-pm/skills/04-spec/references/backlog-link.md",
+      "plugins/aidd-pm/skills/04-spec/assets/backlog-link-template.json",
       "plugins/aidd-dev/skills/01-plan/actions/04-plan.md",
     ];
 
