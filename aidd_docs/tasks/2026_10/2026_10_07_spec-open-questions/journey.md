@@ -125,3 +125,14 @@ Through the tree, after the declaration moved to a reference and its shape to an
 The declaration had only ever been checked against the text pasted in one prompt, before it
 moved. Refine had never been run through the tree at all.
 
+## The PRD path, the optional headings, a second model - pass
+
+| Case | Runs | Result |
+| --- | --- | --- |
+| drafted from a PRD | 3 | every required section present, the PRD's own open question carried as the one gap, nothing outside |
+| `(optional)` reaching a drafted spec | 6 | 0, since the template now says it in the guidance and not in the heading |
+| a second model | 3 | every required section present, the section exists, nothing outside |
+
+The second model lists 6, 7 and 7 entries on the thin request where the first lists 6 to 8.
+So the over-asking is not one model's habit. Nothing refuses a spec for it.
+

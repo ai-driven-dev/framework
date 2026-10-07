@@ -30,12 +30,12 @@
 
 <One entry per gap, per `references/tbd-marker.md`. `None` when there is none. Resolve each before the spec is locked.>
 
-## Stakeholders (optional)
+## Stakeholders
+<Optional. Drop the section when it has nothing to say.>
 
 - Decider: <who settles a tradeoff>
 - Owner: <who owns it long-term>
 - Consumer: <who depends on it>
 
-## Context (optional)
-
-<Background, prior decisions, upstream constraints. Link out, never restate.>
+## Context
+<Optional. Background, prior decisions, upstream constraints. Link out, never restate.>
