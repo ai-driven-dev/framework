@@ -55,7 +55,38 @@ Fresh context, the yml and one spec. Stands in for the gate #625 brings.
 The fourth row failed while the yml carried no definition of a gap: an evaluator reading it
 alone supplied its own, and refused a spec whose content was complete.
 
+## The installed tree, read from disk - placement passes, zero does not
+
+Eight sessions in eight sandboxes, each built by `aidd translate . --to claude`, each reading
+`SKILL.md` and following it to the action and to whatever the action links. Real reads, real
+routing, the branch's own files.
+
+| Measure | Result |
+| --- | --- |
+| the section exists | 8/8 |
+| markers outside it | 0/8 |
+| entries, thin request | 7, 7, 5, 5, 6 |
+| entries, request fully answered | 3, 2, 2 |
+| `None` on a fully answered request | **0/3** |
+
+Placement holds where it counts. Zero does not: a request answering every required field
+still produces entries, and `open_questions_unresolved: invalid` then refuses the spec. Two
+questions recur, the column set 3/3 and when the seven days start 3/3, and the first is
+presentation detail no required section depends on.
+
+The pasted-text runs above measured 2, 3, 2, 2, 4 entries and `None` 3/3 on the same
+requests. They were optimistic. The router reads more files, and asks more.
+
+### Why the earlier installed-skill attempt measured nothing
+
+`aidd-pm:04-spec` resolves to the user-scope install, `~/.claude/plugins/cache/aidd-framework/aidd-pm/2.5.0`,
+whatever a project declares. Those runs drafted against the published skill and reproduced
+#626 exactly: no section, seven to ten markers inline. A project marketplace does not
+register in a headless session either, which `Unknown skill: spec-sandbox:04-spec` says
+outright. So the Skill tool's own registration is still unmeasured, and only it is.
+
 ## Not measured
 
-The installed skill, routed through `SKILL.md` by a real session. One model. And no judge
-classified the entries, so which gaps a draft raises rests on reading them.
+The Skill tool's registration, which no sandbox can exercise while a user-scope install
+shadows it. One model. And no judge classified the entries, so which gaps a draft raises
+rests on reading them.
