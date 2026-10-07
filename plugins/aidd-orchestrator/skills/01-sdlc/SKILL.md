@@ -8,7 +8,7 @@ argument-hint: request | interactive request
 
 ## Behavior
 
-Decide the mode as `mode.md` says, then read only that reference and the current zone's. Verify that every named provider is installed before calling it. A zone that cannot proceed stops the run and says what it would take to resume.
+Decide the mode as `mode.md` says, then read only it and the current zone's reference. Verify that every named provider is installed before calling it. A zone that cannot proceed stops the run and says what it would take to resume.
 
 Spawn specialized agents for isolated work. Parallelize independent work when it is faster. Give each agent one focused task that a smaller model can execute. Repeat the responsible zone when delegated work returns an actionable gap.
 
