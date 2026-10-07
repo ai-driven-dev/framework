@@ -87,6 +87,12 @@ record at that snapshot and failed with `length of 3 but got 4`; the original te
 SHA256 was unchanged and the temporary copy was removed. Configuration comparison was
 also scoped to delivered bytes, respecting translation's intentional JSON normalization.
 
+The complete normal pre-push suite then caught one stale golden baseline for the Kilo
+context bridge, with 6,832 tests passing and that single assertion failing. The official
+recapture changed only that generated file's stored hash; the other nine matrix cells
+and all file lists remained unchanged. All three golden tests subsequently passed in
+comparison mode, including deterministic output and the complete ten-cell matrix.
+
 ```sh
 pnpm --dir cli test:e2e:kilo
 pnpm --dir cli exec vitest run --config vitest.mutation.config.ts tests/contexts/framework/application/plugin/kilo-plugin-delivery.integration.test.ts
