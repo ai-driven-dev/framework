@@ -1,5 +1,5 @@
 ---
-status: in-progress
+status: implemented
 ---
 
 # Plan: Load AIDD plugins in OpenCode V1 and V2

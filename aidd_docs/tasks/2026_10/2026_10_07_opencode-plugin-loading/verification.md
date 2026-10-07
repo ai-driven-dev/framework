@@ -68,6 +68,7 @@ The installed personal OpenCode 1.14.20 and its profile were not upgraded or use
 
 ## Automated validation
 
+- Full repository scripts suite through the normal commit hook: 554 passed, zero failures; the hook also verified that tests left git hooks unchanged.
 - Full CLI suite: 6,807 passed, one opt-in Kilo runtime test skipped; 529 files passed.
 - Focused OpenCode and cost-documentation scripts: 48 passed, after observing the stale documentation assertion fail first.
 - All 140 architecture checks passed without increasing comment or empty-catch baselines.
