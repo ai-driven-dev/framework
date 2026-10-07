@@ -6,17 +6,18 @@ import { afterEach, describe, expect, it } from "vitest";
 import { TaskBacklogAdapter } from "../../../../src/contexts/telemetry/infrastructure/task-backlog-adapter.js";
 import { REPOSITORY_ROOT } from "../../../helpers/repository-root.js";
 
-/** Each skill's own fenced example is fed through the real adapter over a real temp folder,
- * never a stand-in parser, so a field renamed on either side fails here. */
+/** Each skill's own example is fed through the real adapter over a real temp folder, never a
+ * stand-in parser, so a field renamed on either side fails here. One skill ships the example
+ * as an asset and the other fences it inline, so the loader below accepts both. */
 const REPO_ROOT = REPOSITORY_ROOT;
-const SPEC_SKILL_MD = join(
+const SPEC_EXAMPLE_JSON = join(
   REPO_ROOT,
   "plugins",
   "aidd-pm",
   "skills",
   "04-spec",
-  "actions",
-  "01-build.md"
+  "assets",
+  "backlog-link-template.json"
 );
 const PLAN_SKILL_MD = join(
   REPO_ROOT,
@@ -28,10 +29,12 @@ const PLAN_SKILL_MD = join(
   "04-plan.md"
 );
 
-/** The first fenced json block: the literal example a skill tells an agent to write,
- * tolerant of a numbered-list item's own indentation. `null` when none is found. */
-function fencedJsonExample(markdown: string): string | null {
-  const match = /^[ \t]*```json\r?\n([\s\S]*?)\r?\n[ \t]*```/mu.exec(markdown);
+/** The literal example a skill tells an agent to write: the asset's own bytes, or the first
+ * fenced json block, tolerant of a numbered-list item's indentation. `null` when none. */
+function taughtExample(path: string): string | null {
+  const text = readFileSync(path, "utf8");
+  if (path.endsWith(".json")) return text.trim();
+  const match = /^[ \t]*```json\r?\n([\s\S]*?)\r?\n[ \t]*```/mu.exec(text);
   return match?.[1] ?? null;
 }
 
@@ -51,18 +54,16 @@ async function projectWithLink(json: string): Promise<{ root: string; taskFolder
 }
 
 describe.each([
-  ["aidd-pm:04-spec", SPEC_SKILL_MD],
+  ["aidd-pm:04-spec", SPEC_EXAMPLE_JSON],
   ["aidd-dev:01-plan", PLAN_SKILL_MD],
 ])("%s's own backlog-link.json example matches what the reader accepts", (_skill, path) => {
-  it("names a fenced JSON example at all (guards against a no-op extraction)", () => {
-    const markdown = readFileSync(path, "utf8");
-    expect(fencedJsonExample(markdown)).not.toBeNull();
+  it("names a JSON example at all (guards against a no-op extraction)", () => {
+    expect(taughtExample(path)).not.toBeNull();
   });
 
   it("parses through the real TaskBacklogAdapter as a declared item", async () => {
-    const markdown = readFileSync(path, "utf8");
-    const example = fencedJsonExample(markdown);
-    if (example === null) throw new Error("no fenced json example to test");
+    const example = taughtExample(path);
+    if (example === null) throw new Error("no json example to test");
 
     const { root, taskFolder } = await projectWithLink(`${example}\n`);
     const adapter = new TaskBacklogAdapter(root);
@@ -80,8 +81,8 @@ describe.each([
 
 describe("both skills agree with each other, not only with the reader", () => {
   it("write the identical field names, so neither can drift from the other unnoticed", () => {
-    const specExample = fencedJsonExample(readFileSync(SPEC_SKILL_MD, "utf8"));
-    const planExample = fencedJsonExample(readFileSync(PLAN_SKILL_MD, "utf8"));
+    const specExample = taughtExample(SPEC_EXAMPLE_JSON);
+    const planExample = taughtExample(PLAN_SKILL_MD);
     expect(specExample).not.toBeNull();
     expect(planExample).not.toBeNull();
 
