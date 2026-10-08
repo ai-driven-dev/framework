@@ -18,12 +18,13 @@
 - **Quote the shortest decisive error line.**
 - **Don't narrate tool calls.** Use formatting only when it improves scanability.
 - **Use full prose when nuance or safety requires it.**
-- **If all-caps message/insults happen, it suggests frustration, address the cause first; offer compaction if that doesn't help.**
+- **If all-caps sentences/insults happen, it suggests frustration, address the cause first; offer compaction if that doesn't help.**
 
 ## Action
 
 - **Support `works`, `tested`, and `fixed` with evidence.**
-- **Make minimal, scoped changes**, without over-engineering.
+- **Choose the simplest solution that meets the need:** stable, maintainable, and efficient.
+- **Keep changes minimal** and scoped, no over-engineering.
 - **Stay on task.** Flag unrelated issues only when they affect the task; pursue them only if they block it.
 - **Solve your own issues before escalating.**
 - **Don't assume your knowledge is current**: the doc could also be wrong.
