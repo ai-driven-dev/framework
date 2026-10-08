@@ -1,6 +1,50 @@
 # Architecture
 
-The framework packages AI-assisted work into plugins, each owning one concern. Skills guide work, agents isolate it, and hooks react to tool events.
+AIDD is a marketplace of plugins for AI-assisted work. Each plugin owns one concern; the AI tool loads its capabilities and executes the work.
+
+## Marketplace and installation
+
+The repository publishes a catalog in `.claude-plugin/marketplace.json`: it lists plugins and where to find them. Each `plugins/<name>/` package has its own manifest and version. The marketplace and plugins version independently.
+
+Registration, installation scopes and updates are covered in the [marketplace guide](MARKETPLACE.md).
+
+Plugins use Claude Code's native format. The CLI translates and installs them for supported AI tools; unavailable surfaces are reported, not silently ignored.
+
+```mermaid
+flowchart TB
+  Catalog["Marketplace catalog"] --> Plugins["Plugins: one concern each"]
+  Plugins -->|native install| Claude["Claude Code"]
+  Plugins --> CLI["CLI: translate and install"]
+  CLI --> Tools["Supported AI tools"]
+```
+
+`aidd-ui` is alpha and smoke-test only; `aidd-qa` requires validation outside this repository; `aidd-telemetry` is beta and opt-in. All remain outside curated installation.
+
+## 🧩 Anatomy of a plugin
+
+AIDD plugins contain a manifest and skills. Other capabilities are optional; they need not all be present in one plugin.
+
+| Component | Location | Role |
+| --- | --- | --- |
+| Manifest | `.claude-plugin/` | `plugin.json` identifies the plugin, its version and declared capabilities. |
+| Skill | `skills/<name>/SKILL.md` | Entry point that routes a request to actions or a protocol. |
+| Actions | `skills/<name>/actions/` | Workflow steps with inputs, outputs, instructions and checks. |
+| Assets | `skills/<name>/assets/` | Templates and static files used by the skill. |
+| References | `skills/<name>/references/` | Supporting documentation and protocols, including orchestration handoffs. |
+| Agents | `agents/` | Specialized roles that perform isolated work and return a result. |
+| Commands | `commands/` | Flat prompts invoked as slash commands. |
+| Hooks | `hooks/hooks.json` and scripts in `hooks/` | Programs triggered by tool lifecycle events. |
+| MCP configuration | `.mcp.json` | Connects the AI tool to external tools and data through Model Context Protocol servers. |
+| Documentation | `README.md` · `CATALOG.md` · `CHANGELOG.md` | Usage, capability inventory and release history. |
+
+Rules govern project behavior in the host's rules directory, such as `.claude/rules/`. `aidd-context` generates them as project context, outside native Claude plugin surfaces. Native component behavior is defined in the [Claude plugin reference](https://code.claude.com/docs/en/plugins-reference).
+
+<details>
+<summary>Package validation</summary>
+
+[Plugin](https://www.schemastore.org/claude-code-plugin-manifest.json) and [marketplace](https://www.schemastore.org/claude-code-marketplace.json) manifests are validated by `lefthook` and the `validate` workflow. Plugin tests belong in `scripts/__tests__/`, outside shipped trees: `hooks/` is copied recursively into user projects.
+
+</details>
 
 ## Responsibilities
 
@@ -32,7 +76,7 @@ Telemetry requires committed `.aidd/config.json` with `telemetry.enabled: true`;
 
 ### Skills and actions
 
-A skill's `SKILL.md` is loaded on invocation and selects its action or orchestration protocol.
+The host loads `SKILL.md` on invocation. The caller follows its selected action or orchestration protocol.
 
 ```mermaid
 flowchart LR
@@ -41,7 +85,7 @@ flowchart LR
   Action --> Result["Result or artifact"]
 ```
 
-Actions define inputs, outputs, steps and checks. Orchestrators may instead route through reference protocols defining handoffs and discovered providers.
+An orchestrator can follow a reference protocol instead of an action, with explicit handoffs to discovered providers.
 
 ### Agents and delegation
 
@@ -65,44 +109,9 @@ Hooks declare deterministic lifecycle work in `hooks/hooks.json`. Repeated event
 
 Queries and reports use one CLI implementation, preventing duplicated logic. CLI-backed skills must explicitly report a missing `aidd`; the [dependency guard](../scripts/__tests__/telemetry-cli-required.test.js) enforces this.
 
-## Distribution
+## Portability
 
-### Installation routes
-
-Plugins use Claude Code's native format. The CLI translates and installs them for supported AI tools; unavailable surfaces are reported, not silently ignored.
-
-```mermaid
-flowchart LR
-  Catalog["Marketplace catalog"] --> Plugins["Plugins: one concern each"]
-  Plugins -->|native install| Claude["Claude Code"]
-  Plugins --> CLI["CLI: translate and install"]
-  CLI --> Tools["Supported AI tools"]
-```
-
-`aidd-ui` is alpha and smoke-test only; `aidd-qa` requires validation outside this repository; `aidd-telemetry` is beta and opt-in. All remain outside curated installation.
-
-### 🧩 Anatomy of a plugin
-
-A plugin requires a manifest and skills. Agents, commands, hooks, rules and MCP servers are optional.
-
-<details>
-<summary>Package and validation reference</summary>
-
-```text
-plugins/<plugin>/
-├── .claude-plugin/plugin.json
-├── README.md · CATALOG.md · CHANGELOG.md
-├── skills/<NN>-<name>/
-│   ├── SKILL.md                  # manifest and router
-│   ├── actions/                  # self-contained steps
-│   ├── assets/                   # templates and static files
-│   └── references/               # local protocols
-└── agents/ · commands/ · hooks/ · rules/ · .mcp.json
-```
-
-[Plugin](https://www.schemastore.org/claude-code-plugin-manifest.json) and [marketplace](https://www.schemastore.org/claude-code-marketplace.json) manifests are validated by `lefthook` and the `validate` workflow. Plugin tests belong in `scripts/__tests__/`, outside shipped trees: `hooks/` is copied recursively into user projects.
-
-</details>
+The CLI translates capabilities supported by each target. `aidd translate` skips rules and commands with a warning; the [CLI reference](../cli/README.md#translate) owns the output layout matrix.
 
 ### Skill portability
 
@@ -110,22 +119,7 @@ Skills link only inside their own directory: flat distribution renames them `<pl
 
 ### Hook adapters
 
-OpenCode needs JS adapters. The CLI owns the shared host protocol; plugins own payload mapping. Its helper is delivered once outside plugin discovery, tracked as a tool file, and backfilled only when missing. Installation must neither rewrite user configuration nor claim existing untracked helpers. Generic `SessionStart` runs idempotently at host initialization; telemetry follows actual sessions.
-
-<details>
-<summary>Tool compatibility and adapter contracts</summary>
-
-Hooks are authored with `${CLAUDE_PLUGIN_ROOT}`; the installer translates the root for each tool.
-| Tool           | Runs bundled hooks    | Plugin root            | Notes |
-| -------------- | --------------------- | ---------------------- | ----- |
-| Claude Code    | yes                   | `${CLAUDE_PLUGIN_ROOT}` | Authoring spelling, nothing substituted |
-| Codex          | yes                   | `${PLUGIN_ROOT}`       | Also expands `${CLAUDE_PLUGIN_ROOT}`; runs a hook only once trusted |
-| GitHub Copilot | yes                   | `${PLUGIN_ROOT}`       | Declared, never observed running |
-| Cursor         | declared              | `./`                   | Own hook format: the converter rewrites the root to a plugin-relative path before token substitution. No plugin hook observed firing headless; what registers a plugin in Cursor's plugin directory is unknown |
-| OpenCode       | no, by a second route | —                      | See below |
-Runtime contracts: [hook bridge](../cli/src/contexts/tools/domain/profiles/opencode/opencode-hooks-bridge.ts), [shared V2 adapter](../cli/assets/configs/opencode/opencode-events.js.txt), [telemetry payload adapter](../plugins/aidd-telemetry/hooks/opencode-plugin.js). The shared helper is `.opencode/hooks/opencode-events.js`. [Telemetry coverage](../plugins/aidd-telemetry/README.md#coverage) states supported versions and limitations. Unsupported hooks and skipped installation surfaces must be reported.
-
-</details>
+The CLI owns OpenCode's shared host protocol; plugins own payload mapping. The [CLI architecture](../cli/ARCHITECTURE.md#hook-adaptation) defines adapter delivery and compatibility. [Telemetry coverage](../plugins/aidd-telemetry/README.md#coverage) states measurement limits.
 
 ## Capability discovery and addressing
 
@@ -137,7 +131,11 @@ Recipes discover cross-plugin providers by description rather than hardcoding si
 
 ## References
 
+- [Framework README](../README.md): discover capabilities, install and start.
+- [Marketplace guide](MARKETPLACE.md): registration, scopes and updates.
 - [Create a plugin](CREATE_PLUGIN.md): authoring and publication.
 - [Glossary](GLOSSARY.md): terminology.
-- [CLI architecture](../cli/ARCHITECTURE.md): translation and installation.
+- [CLI reference](../cli/README.md): commands and output layouts.
+- [CLI architecture](../cli/ARCHITECTURE.md): translation and installation internals.
 - [Contributing](../CONTRIBUTING.md): contribution flow.
+- [Maintainers guide](MAINTAINERS.md): repository operations and releases.
