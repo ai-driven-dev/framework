@@ -16,6 +16,9 @@ paths:
 - Preserve contracts, decisions, limits, and procedures.
 - Architecture explains components, boundaries, flows, invariants.
 - README explains purpose, usage, and limits.
+- Give each section a clear purpose and descriptive heading.
+- Put only relevant information under that heading; place each fact once per document.
+- Group related sections under a shared parent; avoid headings that add no structure.
 - State actions and verification commands.
 - Link canonical sources for supporting details.
 - Keep memory's operational safeguards self-contained.
@@ -26,6 +29,6 @@ paths:
 - Keep rationale; never invent performance requirements.
 - Retain required versions, constants, and examples.
 - Use examples and diagrams only to clarify.
-- Preserve headings, anchors, and generator markers.
-- Read back; check headings, contracts, and commands.
+- Preserve linked anchors and generator markers when restructuring.
+- Read back; check section scope, contracts, and commands.
 - Verify links before declaring completion.

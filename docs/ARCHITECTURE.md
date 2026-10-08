@@ -1,8 +1,73 @@
-# 🏛️ Architecture
+# Architecture
 
 The framework packages AI-assisted work into plugins, each owning one concern. Skills guide work, agents isolate it, and hooks react to tool events.
 
-## 🗺️ High-level
+## Responsibilities
+
+This table is the canonical placement map: put a capability in its owning concern and delegate to it.
+| Plugin              | Concern              | Layer        |
+| ------------------- | -------------------- | ------------ |
+| `aidd-context`      | Knowledge production | Knowledge    |
+| `aidd-pm`           | Product management   | Knowledge    |
+| `aidd-refine`       | Meta-cognition       | Knowledge    |
+| `aidd-dev`          | Code transformation  | Execution    |
+| `aidd-vcs`          | Version control      | External     |
+| `aidd-orchestrator` | Orchestration        | Coordination |
+| `aidd-ui` 🚧        | UI/UX design         | Execution    |
+| `aidd-telemetry` 🧪 | Measurement          | Observation  |
+| `aidd-qa` 🆕         | Acceptance QA        | Execution    |
+
+### Layer boundaries
+
+- **Knowledge** produces context and specifications, never writes or runs application source. Context bootstrap creates no `package.json`.
+- **Execution** changes or validates source. **External** owns version control.
+- **Coordination** sequences work through artifacts (for example `INSTALL.md`), keeping domain logic and artifact contracts with their owning plugins. Direct and orchestrated calls obey the same contracts; the backlog flow belongs to `aidd-orchestrator:02-backlog`.
+- **Observation** records work without changing the artifacts it describes. No productive flow depends on it.
+
+### Measurement boundary
+
+Telemetry requires committed `.aidd/config.json` with `telemetry.enabled: true`; a directory grants no permission. Session journals are git-ignored, append-only observations. Readers derive task identity and join provider measurements. See the [journal contract](../aidd_docs/runs/README.md).
+
+## Execution model
+
+### Skills and actions
+
+A skill's `SKILL.md` is loaded on invocation and selects its action or orchestration protocol.
+
+```mermaid
+flowchart LR
+  Caller["User or agent"] --> Router["Skill router"]
+  Router -->|select| Action["Self-contained action"]
+  Action --> Result["Result or artifact"]
+```
+
+Actions define inputs, outputs, steps and checks. Orchestrators may instead route through reference protocols defining handoffs and discovered providers.
+
+### Agents and delegation
+
+Choose by context: a **skill** runs in its caller's context; an **agent** isolates work and returns a result.
+
+- Orchestrators retain routing ownership and authorize isolated work or bounded fan-out. Recipes never invent spawning; isolated recipes never delegate flow work.
+- Agents invoke only their declared canonical recipe skills, never orchestrators, and never read skill files.
+- Read-only reconnaissance may be delegated only to helpers that neither mutate nor spawn. The write path stays two layers deep, without delegation cycles.
+
+The SDLC owns planning. Its [delivery](../plugins/aidd-orchestrator/skills/01-sdlc/references/02-deliver.md) and [check](../plugins/aidd-orchestrator/skills/01-sdlc/references/03-check.md) contracts govern direct execution, leaf executors, independent judgment and bounded repair.
+
+### 🪝 Bundled hooks
+
+Hooks declare deterministic lifecycle work in `hooks/hooks.json`. Repeated event work runs as dependency-free Node scripts and requires `node` on `PATH`.
+| Plugin           | Event                                   | Runs                     | Purpose                                                     |
+| ---------------- | --------------------------------------- | ------------------------ | ----------------------------------------------------------- |
+| `aidd-context`   | `SessionStart`                          | `hooks/update_memory.js` | Refresh the project memory block in the AI context files    |
+| `aidd-telemetry` | `SessionStart` · `Stop` · `PostToolUse` | `hooks/journal.cjs`      | Journal every session so a unit of work can be tied to its cost |
+
+### CLI queries
+
+Queries and reports use one CLI implementation, preventing duplicated logic. CLI-backed skills must explicitly report a missing `aidd`; the [dependency guard](../scripts/__tests__/telemetry-cli-required.test.js) enforces this.
+
+## Distribution
+
+### Installation routes
 
 Plugins use Claude Code's native format. The CLI translates and installs them for supported AI tools; unavailable surfaces are reported, not silently ignored.
 
@@ -14,7 +79,9 @@ flowchart LR
   CLI --> Tools["Supported AI tools"]
 ```
 
-## 🧩 Anatomy of a plugin
+`aidd-ui` is alpha and smoke-test only; `aidd-qa` requires validation outside this repository; `aidd-telemetry` is beta and opt-in. All remain outside curated installation.
+
+### 🧩 Anatomy of a plugin
 
 A plugin requires a manifest and skills. Agents, commands, hooks, rules and MCP servers are optional.
 
@@ -37,13 +104,12 @@ plugins/<plugin>/
 
 </details>
 
-## 🪝 Bundled hooks
+### Skill portability
 
-Hooks declare deterministic lifecycle work in `hooks/hooks.json` and require `node` on `PATH`.
-| Plugin           | Event                                   | Runs                     | Purpose                                                     |
-| ---------------- | --------------------------------------- | ------------------------ | ----------------------------------------------------------- |
-| `aidd-context`   | `SessionStart`                          | `hooks/update_memory.js` | Refresh the project memory block in the AI context files    |
-| `aidd-telemetry` | `SessionStart` · `Stop` · `PostToolUse` | `hooks/journal.cjs`      | Journal every session so a unit of work can be tied to its cost |
+Skills link only inside their own directory: flat distribution renames them `<plugin>-<skill>`, while marketplace installation preserves the tree. Bundled scripts are named plugin-relative in backticks, never linked; the [portability guard](../scripts/__tests__/a-skill-links-only-inside-itself.test.js) verifies this.
+
+### Hook adapters
+
 OpenCode needs JS adapters. The CLI owns the shared host protocol; plugins own payload mapping. Its helper is delivered once outside plugin discovery, tracked as a tool file, and backfilled only when missing. Installation must neither rewrite user configuration nor claim existing untracked helpers. Generic `SessionStart` runs idempotently at host initialization; telemetry follows actual sessions.
 
 <details>
@@ -61,59 +127,7 @@ Runtime contracts: [hook bridge](../cli/src/contexts/tools/domain/profiles/openc
 
 </details>
 
-## ⚖️ What runs on every event, and what runs when someone asks
-
-Repeated event work runs as dependency-free Node hooks. Queries and reports use one CLI implementation, preventing duplicated logic. CLI-backed skills must explicitly report a missing `aidd`; the [dependency guard](../scripts/__tests__/telemetry-cli-required.test.js) enforces this.
-
-## 🧠 Plugin concerns and layers
-
-This table is the canonical placement map: put a capability in its owning concern and delegate to it.
-| Plugin              | Concern              | Layer        |
-| ------------------- | -------------------- | ------------ |
-| `aidd-context`      | Knowledge production | Knowledge    |
-| `aidd-pm`           | Product management   | Knowledge    |
-| `aidd-refine`       | Meta-cognition       | Knowledge    |
-| `aidd-dev`          | Code transformation  | Execution    |
-| `aidd-vcs`          | Version control      | External     |
-| `aidd-orchestrator` | Orchestration        | Coordination |
-| `aidd-ui` 🚧        | UI/UX design         | Execution    |
-| `aidd-telemetry` 🧪 | Measurement          | Observation  |
-| `aidd-qa` 🆕         | Acceptance QA        | Execution    |
-- **Knowledge** produces context and specifications, never writes or runs application source. Context bootstrap creates no `package.json`.
-- **Execution** changes or validates source. **External** owns version control.
-- **Coordination** sequences work through artifacts (for example `INSTALL.md`), keeping domain logic and artifact contracts with their owning plugins. Direct and orchestrated calls obey the same contracts; the backlog flow belongs to `aidd-orchestrator:02-backlog`.
-- **Observation** records work without changing the artifacts it describes. No productive flow depends on it.
-
-`aidd-ui` is alpha and smoke-test only; `aidd-qa` requires validation outside this repository; `aidd-telemetry` is beta and opt-in. All remain outside curated installation.
-
-Telemetry requires committed `.aidd/config.json` with `telemetry.enabled: true`; a directory grants no permission. Session journals are git-ignored, append-only observations. Readers derive task identity and join provider measurements. See the [journal contract](../aidd_docs/runs/README.md).
-
-## 🔀 Skills are routers
-
-A skill's `SKILL.md` is loaded on invocation and selects its action or orchestration protocol.
-
-```mermaid
-flowchart LR
-  Caller["User or agent"] --> Router["Skill router"]
-  Router -->|select| Action["Self-contained action"]
-  Action --> Result["Result or artifact"]
-```
-
-Actions define inputs, outputs, steps and checks. Orchestrators may instead route through reference protocols defining handoffs and discovered providers.
-
-Skills link only inside their own directory: flat distribution renames them `<plugin>-<skill>`, while marketplace installation preserves the tree. Bundled scripts are named plugin-relative in backticks, never linked; the [portability guard](../scripts/__tests__/a-skill-links-only-inside-itself.test.js) verifies this.
-
-## 🤖 Skills and agents
-
-Choose by context: a **skill** runs in its caller's context; an **agent** isolates work and returns a result.
-
-- Orchestrators retain routing ownership and authorize isolated work or bounded fan-out. Recipes never invent spawning; isolated recipes never delegate flow work.
-- Agents invoke only their declared canonical recipe skills, never orchestrators, and never read skill files.
-- Read-only reconnaissance may be delegated only to helpers that neither mutate nor spawn. The write path stays two layers deep, without delegation cycles.
-
-The SDLC owns planning. Its [delivery](../plugins/aidd-orchestrator/skills/01-sdlc/references/02-deliver.md) and [check](../plugins/aidd-orchestrator/skills/01-sdlc/references/03-check.md) contracts govern direct execution, leaf executors, independent judgment and bounded repair.
-
-## 🔗 Capability addressing
+## Capability discovery and addressing
 
 Dispatch tables (`## Actions`) and agent permission lists (`# Skills you may invoke`) use canonical addresses. Elsewhere, name the responsibility.
 
@@ -121,7 +135,7 @@ Recipes discover cross-plugin providers by description rather than hardcoding si
 
 `isExemptFromOrthogonality` exempts orchestration responsibility maps (`plugins/aidd-orchestrator/**`) and onboarding menus (`plugins/aidd-context/skills/00-onboard/**`). The onboarding exemption ends when it discovers providers at runtime.
 
-## 🔎 See also
+## References
 
 - [Create a plugin](CREATE_PLUGIN.md): authoring and publication.
 - [Glossary](GLOSSARY.md): terminology.
