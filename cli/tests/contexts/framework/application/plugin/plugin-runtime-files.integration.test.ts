@@ -8,9 +8,10 @@ import { InstallationFile } from "../../../../../src/kernel/file.js";
 import { buildUnitDeps } from "../../../../helpers/ports/build-unit-deps.js";
 import { fakeEnsureBuiltMarketplace } from "../../../../helpers/ports/fake-ensure-built-marketplace.js";
 import { seedFromDirectory } from "../../../../helpers/ports/seed-from-directory.js";
+import { REPOSITORY_ROOT } from "../../../../helpers/repository-root.js";
 
 const ROOT = "/test-project";
-const FIXTURE = join(process.cwd(), "tests/fixtures/plugins/claude-format/sample-plugin");
+const FIXTURE = join(REPOSITORY_ROOT, "cli/tests/fixtures/plugins/claude-format/sample-plugin");
 const HELPER = ".opencode/hooks/opencode-events.js";
 const USER_CONFIG = '{"model":"user/model","permission":{"bash":"ask"}}';
 
@@ -82,6 +83,24 @@ describe("plugin runtime files on an existing tool", () => {
     await update.execute({ toolIds: ["opencode"], projectRoot: ROOT });
     expect(await deps.fs.readFile(join(ROOT, HELPER))).toContain("setupOpencodeEvents");
     expect(await deps.fs.readFile(join(ROOT, "opencode.json"))).toBe(USER_CONFIG);
+    expect(
+      deps.manifestRepo
+        .getCurrent()
+        ?.getToolFiles("opencode")
+        .filter((file) => file.relativePath === HELPER)
+    ).toHaveLength(1);
+  });
+
+  it("restores a missing helper when the plugin version is already current", async () => {
+    const { deps, addPlugin, update } = await legacyProject();
+    await addPlugin();
+    const plugin = deps.manifestRepo.getCurrent()?.getPlugins("opencode")[0];
+    await deps.fs.deleteFile(join(ROOT, HELPER));
+
+    expect(await update.execute({ toolIds: ["opencode"], projectRoot: ROOT })).toEqual([]);
+    expect(await deps.fs.readFile(join(ROOT, HELPER))).toContain("setupOpencodeEvents");
+    expect(await deps.fs.readFile(join(ROOT, "opencode.json"))).toBe(USER_CONFIG);
+    expect(deps.manifestRepo.getCurrent()?.getPlugins("opencode")[0]).toEqual(plugin);
     expect(
       deps.manifestRepo
         .getCurrent()

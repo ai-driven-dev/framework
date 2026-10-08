@@ -95,6 +95,7 @@ export class PluginUpdateUseCase {
     const dist = await this.distributionLoader.load(plugin.source, cacheDir, {
       forceRefresh: true,
     });
+    await this.pluginRuntime?.ensurePluginRuntimeFiles(toolId, projectRoot, manifest);
     if (compareSemver(dist.manifest.version, plugin.version) <= 0) return false;
     await this.replacePluginFiles(plugin, dist, toolId, projectRoot, manifest);
     return true;
@@ -108,7 +109,6 @@ export class PluginUpdateUseCase {
     manifest: Manifest
   ): Promise<void> {
     const baseDir = resolveBaseDirFromRecord(plugin.scope, toolId, projectRoot, nodeHomedir);
-    await this.pluginRuntime?.ensurePluginRuntimeFiles(toolId, projectRoot, manifest);
     await deleteOldFiles(plugin.files, baseDir, this.fs);
     const toolConfig = getToolConfig(toolId);
     const translator = this.resolveTranslator(toolConfig);
