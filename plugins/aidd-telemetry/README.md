@@ -2,14 +2,15 @@
 
 # aidd-telemetry
 
-Measure tokens by skill, step and task.
+See which skills and tasks consume tokens, then choose where to improve your workflow.
 
 > Beta. Proven end to end on Claude Code; other tools depend on their recorded data.
 > Excluded from curated installation pending validation on other users' machines.
 
 ## What it is
 
-Reports attribute usage to work, with explicit evidence:
+Usage reports group work by step, model, task, flow, tool or person. Each attribution states
+its evidence:
 
 - `stated by the tool`: exact attribution.
 - `from a journal interval`: inferred attribution.
@@ -19,38 +20,24 @@ Unknown values remain unknown, never zero. Reports count tokens; a separate serv
 
 ## Why it exists
 
-Providers meter accounts; AIDD identifies skills, steps, tasks and flows. Measurement is
-opt-in, local, and excludes prompts, diffs and code.
+Provider totals describe accounts. AIDD connects those counts to your units of work.
 
 ## How it works
 
 ```mermaid
 flowchart LR
-  Tool["Your AI tool<br/>(Claude Code, Codex, Copilot, OpenCode, Cursor)"]
-  Hooks["Plugin hooks<br/>node, no dependency"]
-  Journal["Run journal<br/>aidd_docs/runs/*.jsonl<br/>which skill ran, when, which task folder"]
-  Transcript["The tool's own transcript<br/>tokens and model, no AIDD knowledge"]
-  CLI["aidd telemetry report"]
-  Store["Figures<br/>~/.config/aidd/telemetry/"]
-  Answer["tokens per step, task, flow, model, person"]
-
-  Tool -->|"SessionStart, PostToolUse, Stop"| Hooks -->|append one line| Journal
-  Tool -->|writes itself| Transcript
-  Journal --> CLI
-  Transcript --> CLI
-  CLI -->|joins by session, keeps a record| Store --> Answer
+  Journal["Hook journal: work observed"] --> Report["aidd telemetry report: join by session"]
+  Transcript["Tool transcript: tokens and model"] --> Report
+  Report --> Results["Local usage by step, task, flow, model, tool or person"]
 ```
 
-- **Hooks** append one line per observation to git-ignored
-  `aidd_docs/runs/<run_id>__<vendor_id>.jsonl`. Journals are never rewritten and contain no
-  tokens, cost or model.
-- **Tools** write transcripts in their own locations and formats: tokens without AIDD skills.
-- **`aidd telemetry report`** joins both by session and stores results under
-  `~/.config/aidd/telemetry/`. Reporting cannot run live: hooks fire before turn tokens are
-  durably written.
+Hooks append one line per observation to git-ignored
+`aidd_docs/runs/<run_id>__<vendor_id>.jsonl`, never rewriting it or recording tokens, cost
+or model. Tools write their own transcripts without AIDD skill knowledge. Reports store
+joined results under `~/.config/aidd/telemetry/`.
 
-Recording requires only `node`, even without `aidd`. Enabling measurement and computing
-reports require the CLI.
+Recording requires only `node`; enabling and reporting require `aidd`. Report after the
+turn: hooks fire before its tokens are durably written.
 
 ## Getting started
 
@@ -59,12 +46,13 @@ npm install -g @ai-driven-dev/cli
 aidd plugin install aidd-telemetry
 ```
 
-Ask your AI tool for a skill. Each stops with an explanation if `aidd` cannot answer.
+Enable measurement, work in a session, then report and verify. Use these skills or their
+CLI commands; skills stop with an explanation if `aidd` cannot answer.
 
 | Ask your tool for | It runs | You get |
 | --- | --- | --- |
 | `00-init` | `aidd telemetry on`, then reads a run file back | project opt-in and recording proof |
-| `01-cost` | `aidd telemetry report` | period or task usage by step, model, task, flow, tool or person |
+| `01-cost` | `aidd telemetry report` | period or task usage |
 | `02-check` | `aidd telemetry check` | recording status and required repairs |
 
 ## Coverage
@@ -87,13 +75,13 @@ Ask your AI tool for a skill. Each stops with an explanation if `aidd` cannot an
   event subscription.
 - **OpenCode steps:** only task paths reach the journal, never skill calls. Every request
   remains unattributed by step.
-- **Counts:** raw transcript tokens differ from vendor usage screens, which weight cached
-  tokens by price. Neither count is wrong.
+- **Counts:** raw tokens differ from vendor usage screens, which weight cached tokens by
+  price. Neither count is wrong.
 - **Periods:** work time, not billing time. Activity before opt-in cannot be reconstructed.
 
 ## Privacy
 
-- **No export.** `aidd telemetry check` and `aidd telemetry off` detect legacy
+- **Local, opt-in recording; no export.** `aidd telemetry check` and `aidd telemetry off` detect legacy
   export endpoints and identify required manual removal.
 - **No prompts, code or diffs.** Stored fields follow
   [the record contract](../../aidd_docs/product/metrics-contract.md).

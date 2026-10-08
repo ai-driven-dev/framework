@@ -14,7 +14,8 @@ paths:
 - Revise existing documents individually.
 - Exclude historical, generated, and fixture content.
 - Preserve contracts, decisions, limits, and procedures.
-- Keep architecture to boundaries and invariants.
+- Architecture explains components, boundaries, flows, invariants.
+- README explains purpose, usage, and limits.
 - State actions and verification commands.
 - Link canonical sources for supporting details.
 - Keep memory's operational safeguards self-contained.
@@ -24,7 +25,7 @@ paths:
 - Drop measured timings, ratios, and comparisons.
 - Keep rationale; never invent performance requirements.
 - Retain required versions, constants, and examples.
-- Add examples only to clarify behavior.
+- Use examples and diagrams only to clarify.
 - Preserve headings, anchors, and generator markers.
 - Read back; check headings, contracts, and commands.
 - Verify links before declaring completion.
