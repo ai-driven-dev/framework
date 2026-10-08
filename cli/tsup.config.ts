@@ -60,6 +60,7 @@ export default defineConfig({
       ...options.loader,
       ".md": "text",
       ".toml": "text",
+      ".txt": "text",
     };
     options.minifySyntax = true;
     options.minifyWhitespace = true;

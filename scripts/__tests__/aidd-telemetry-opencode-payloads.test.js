@@ -25,12 +25,20 @@ function loadFixture(name) {
 // `export` syntax. OpenCode's own loader consults no such field, and the extension is the
 // only thing that differs from what ships.
 let pluginModulePromise;
+let pluginTempDir;
+test.after(() => {
+  if (pluginTempDir) fs.rmSync(pluginTempDir, { recursive: true, force: true });
+});
 async function pluginModule() {
   if (!pluginModulePromise) {
-    const twin = path.join(
-      fs.mkdtempSync(path.join(os.tmpdir(), "aidd-opencode-payloads-")),
-      "opencode-plugin.mjs"
+    pluginTempDir = fs.mkdtempSync(path.join(os.tmpdir(), "aidd-opencode-payloads-"));
+    fs.mkdirSync(path.join(pluginTempDir, "plugin"));
+    fs.mkdirSync(path.join(pluginTempDir, "hooks"));
+    fs.copyFileSync(
+      path.resolve(__dirname, "../../cli/assets/configs/opencode/opencode-events.js.txt"),
+      path.join(pluginTempDir, "hooks", "opencode-events.js")
     );
+    const twin = path.join(pluginTempDir, "plugin", "opencode-plugin.mjs");
     fs.copyFileSync(PLUGIN_SOURCE, twin);
     pluginModulePromise = import(pathToFileURL(twin).href);
   }
@@ -49,10 +57,13 @@ async function journalCallsFor() {
 // factory of its own, and a second such export returning `null` kills `opencode run` before
 // any session starts. A non-function export is ignored by that same loader, which is why the
 // spawn-free seam rides on the plugin function as a property.
-test("the plugin file exports one plugin factory, never a second one OpenCode would call", async () => {
+test("the default definition selects its one V1 factory and exposes V2 setup", async () => {
   const exported = await pluginModule();
   const factories = Object.keys(exported).filter((name) => typeof exported[name] === "function");
   assert.deepEqual(factories, ["AiddTelemetry"]);
+  assert.equal(exported.default.id, "aidd-telemetry");
+  assert.equal(exported.default.server, exported.AiddTelemetry);
+  assert.equal(typeof exported.default.setup, "function");
 });
 
 // `opencode run` is always a session OpenCode never announced: `session.created` is published
