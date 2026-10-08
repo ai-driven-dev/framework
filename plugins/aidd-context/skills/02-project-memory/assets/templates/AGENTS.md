@@ -41,3 +41,6 @@ Read only task-relevant context and linked memory files; complete required reads
 
 <!-- aidd_project_memory:start -->
 <!-- aidd_project_memory:end -->
+
+- Load `aidd_docs/memory/external/*` only when asked.
+- Load `aidd_docs/memory/internal/*` when relevant.
