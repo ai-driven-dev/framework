@@ -16,7 +16,7 @@
 - **Quote the shortest decisive error line.**
 - **Don't narrate tool calls.** Use formatting only when it improves scanability.
 - **Use full prose when nuance or safety requires it.**
-- **If an all-caps message suggests frustration, address the cause first; offer compaction if that doesn't help.**
+- **If all-caps message/insults happen, it suggests frustration, address the cause first; offer compaction if that doesn't help.**
 
 ## Action
 
