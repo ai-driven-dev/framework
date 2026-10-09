@@ -17,6 +17,11 @@ Enable measurement, work in a session, then report and verify. Use skills or CLI
 skills stop and explain when `aidd` cannot answer.
 Report after the turn: hooks fire before its tokens are durably written.
 
+**Update `aidd` before this plugin.** This plugin journals under the clone's common git
+directory; an `aidd` released before that move reads only `aidd_docs/runs/`, so with a newer
+plugin it reports no new session and `aidd telemetry forget` misses them. A newer `aidd` still
+reads journals an older plugin wrote, so updating the CLI first is always safe.
+
 | Ask your tool for | It runs | You get |
 | --- | --- | --- |
 | `00-init` | `aidd telemetry on`, then reads a run file back | project opt-in and recording proof |
