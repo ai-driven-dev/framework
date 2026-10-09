@@ -25,5 +25,6 @@ Read only the next action file.
 
 ## Transversal rules
 
-- Never commit, discard, reset, or check out changes.
+- Change only what the decided conflict resolutions require; preserve all other content and index entries.
+- Stop after staging and validation. Do not commit, continue, abort, or switch branches.
 - Stage only files resolved by this skill, never unrelated files.
