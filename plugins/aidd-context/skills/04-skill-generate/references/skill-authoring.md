@@ -4,34 +4,82 @@ The contract every generated skill satisfies. `skill-generate` obeys it too.
 
 ## The skill
 
-- **R1.** One skill, one domain. Named per `naming.md`.
-- **R2.** `name` is not the invocation token: a colon or prefix breaks loading. In prose call a skill `plugin:folder`.
-- **R3.** `description` is the only always-on text: verb-led, third person, about 240 chars, `Use when the user wants to <intents>` and an optional `Not for <X>`. No colon or dash, no other skill or `/command` named.
-- **R4.** `argument-hint` names what the user brings: the cases they can ask for (`setup | refresh | rewire`) or the artifact the skill consumes (`request | epic`). One or two words per case, never the action slugs. Present unless no action declares an `## Input`, which means the skill takes nothing.
+- **R1.** Keep one domain per skill.
+  - Follow `naming.md` for its name.
+- **R2.** Keep skill names loadable.
+  - Keep invocation prefixes and colons out of `name`.
+  - In prose, address a skill as `plugin:folder`.
+- **R3.** Make the description sufficient for invocation.
+  - Treat `description` as the only always-on text.
+  - Use a verb-led, third-person description of about 240 characters.
+  - State usage intents with `Use when the user wants to <intents>`.
+  - Optionally state exclusions with `Not for <X>`.
+  - Use neither colons nor dashes.
+  - Do not name other skills or `/commands`.
+- **R4.** Describe the user's input in `argument-hint`.
+  - Name the cases the user can request or the artifact the skill consumes.
+  - Use one or two words per case.
+  - Never use action slugs.
+  - Include the hint when any action declares an input.
 - **R5.** English only.
 
 ## The router
 
-- **R6.** The router holds the flow, the action table, and the transversal rules. Nothing else.
-- **R7.** The mermaid flow shows every path a run can take: the nominal chain, one entry node per case, a back-edge per loop, a terminal node per outcome. A branch stated in prose is a branch missing from the flow.
-- **R8.** The action table is `| Action | Does |`, one row per action file, in run order. `Action` is the bare slug, no backticks and no number. `Does` is a lowercase imperative half-line with no final period. Above the table, one sentence: what to read next, nothing more.
-- **R9.** `## Transversal rules` holds the rules no single action or reference owns. A rule stated there is stated nowhere else.
-- **R10.** The router is loaded on every call, an action only when its turn comes: the router carries nothing an action or a reference could carry.
+- **R6.** Keep only the flow, action table, and transversal rules in the router.
+- **R7.** Show every execution path in the Mermaid flow.
+  - Include the nominal chain.
+  - Give each entry case its own node.
+  - Give each loop a back-edge.
+  - Give each outcome a terminal node.
+  - Represent every branch stated in prose.
+- **R8.** Define the action table.
+  - Use `| Action | Does |`.
+  - List one row per action file in run order.
+  - Use bare, unnumbered action slugs without backticks in `Action`.
+  - Write `Does` as a lowercase imperative half-line without a final period.
+  - Introduce the table with one sentence saying only what to read next.
+- **R9.** Keep transversal rules in the router.
+  - Include only rules that no single action or reference owns.
+  - State each one only there.
+- **R10.** Place content where it is loaded.
+  - The router is loaded on every call.
+  - An action is loaded only when its turn comes.
+  - Keep content an action or reference could carry out of the router.
 
 ## An action
 
-- **R11.** Sections in this order: `## Input` when the action consumes something, then `## Output`, `## Process`, `## Test`. A section earns its content or is omitted, never invented or reordered.
-- **R12.** A `## Process` step opens with `**Label.**`, then one imperative sentence. A number is always a step run in order; a case, a branch, a loop back, or a constraint is a dash sub-item of the step it belongs to, never a number. A fenced block is content the action emits, not structure: leave it as its consumer needs it.
-- **R13.** `## Test` is a `| Case | Pass |` table, each row observable by real execution, never a mock.
+- **R11.** Keep action sections in contract order.
+  - Use `## Input`, `## Output`, `## Process`, then `## Test`.
+  - Include the input section only when the action consumes something.
+  - Omit sections that earn no content.
+  - Never invent or reorder sections.
+- **R12.** Structure ordered process steps.
+  - Open each step with `**Label.**` and one imperative sentence.
+  - Number only steps that run in order.
+  - Put cases, branches, loops, and constraints in dash sub-items under their owning step.
+  - Preserve emitted content in fenced blocks as its consumer requires.
+- **R13.** Validate observable behavior.
+  - Use a `| Case | Pass |` table for action tests.
+  - Make every row observable through real execution.
+  - Never use mocks.
 
 ## A reference
 
-- **R14.** References stay flat, nesting one directory deep only as a load boundary. Each stands alone, never pulling in another. It names a sibling in backticks and never links it.
-- **R15.** A reference carries one fact per row: a table, a mermaid, or a list. Prose is what is left when neither fits.
+- **R14.** Keep references self-contained.
+  - Keep their directory structure flat.
+    - Nest one directory deep only as a load boundary.
+  - Never make a reference pull in another.
+  - Name sibling references in backticks instead of links.
+- **R15.** Present reference facts in a table, Mermaid diagram, or list.
+  - Give each row one fact.
+  - Use prose only when none fits.
 
 ## An asset
 
-- **R16.** An asset states how it is filled and what is removed. Nothing of its scaffold survives in the artifact produced from it.
+- **R16.** Specify asset use.
+  - State how to fill them.
+  - State what to remove.
+  - Leave none of their scaffold in the produced artifact.
 
 ## Across all of them
 
@@ -39,9 +87,20 @@ The contract every generated skill satisfies. `skill-generate` obeys it too.
   - Before adding or changing an instruction, check the whole skill for overlap or conflict.
   - Resolve overlaps and conflicts by proposing a coherent revision of the owning rule.
   - Keep actions within router rules without restating them.
-  - Cite shared references without restating their instructions.
-- **R18.** The first citation of a file in each authoring file is a relative Markdown link, `[name](path)`, except for sibling references under R14. Repeat mentions within the same file use only the filename in backticks when unambiguous; retain the link when ambiguous. Never an `@` include: nothing resolves those. A citation sits in the sentence that uses it, a `## Process` step to read the file, an `## Output` or `## Test` line to conform to it. Never a block or a line of its own.
-- **R19.** One file, one artifact. Split two apart only when a path needs one without the other.
+  - Cite shared references without restating their content.
+- **R18.** Make citations resolvable.
+  - Link the first citation of a file in each authoring file using relative Markdown, `[name](path)`.
+    - Within references, follow the sibling-reference convention.
+  - Use only the filename in backticks for unambiguous repeat mentions within the same file.
+    - Retain the link when ambiguous.
+  - Keep each citation in the sentence that reads or applies the file.
+  - Never use standalone citation lines or blocks.
+  - Never use `@` includes.
+  - Identify content to read or edit by its purpose.
+    - Do not depend on line numbers, exact headings, or quoted anchors.
+    - Keep exact names when required by the artifact's format.
+- **R19.** Keep one artifact per file.
+  - Split artifacts only when a path needs one without the other.
 - **R20.** Write for scanning.
   - Keep sentences short, with one idea each.
   - Keep each list item focused on one idea.
