@@ -20,7 +20,7 @@ The contract every generated skill satisfies. `skill-generate` obeys it too.
   - Use one or two words per case.
   - Never use action slugs.
   - Include the hint when any action declares an input.
-- **R5.** English only.
+- **R5.** Prefer English unless the user specifies another language.
 
 ## The router
 
