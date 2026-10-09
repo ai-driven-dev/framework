@@ -1,3 +1,7 @@
+---
+status: superseded
+---
+
 # Fewer verbs
 
 ## The ask

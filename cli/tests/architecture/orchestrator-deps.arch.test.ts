@@ -40,7 +40,6 @@ const BASELINE: readonly { readonly path: string; readonly injected: number }[] 
     path: "src/contexts/framework/application/clean/clean-user-scope-use-case.ts",
     injected: 12,
   },
-  { path: "src/contexts/telemetry/application/diagnose-telemetry-use-case.ts", injected: 10 },
   {
     path: "src/contexts/framework/application/restore/restore-tool-files-use-case.ts",
     injected: 9,
@@ -55,8 +54,6 @@ const BASELINE: readonly { readonly path: string; readonly injected: number }[] 
     path: "src/contexts/framework/application/doctor/doctor-registration-use-case.ts",
     injected: 7,
   },
-  { path: "src/contexts/telemetry/application/read-local-cost-use-case.ts", injected: 7 },
-  { path: "src/contexts/telemetry/application/report-cost-use-case.ts", injected: 7 },
   { path: "src/contexts/framework/application/install/install-ide-tool-use-case.ts", injected: 6 },
   { path: "src/contexts/framework/application/plugin/plugin-install-use-case.ts", injected: 6 },
   { path: "src/contexts/framework/application/plugin/plugin-update-use-case.ts", injected: 6 },
@@ -89,7 +86,6 @@ const BASELINE: readonly { readonly path: string; readonly injected: number }[] 
     path: "src/contexts/framework/application/shared/ensure-built-marketplace-use-case.ts",
     injected: 5,
   },
-  { path: "src/contexts/telemetry/application/telemetry-on-use-case.ts", injected: 5 },
   {
     path: "src/contexts/translate/application/strategies/marketplace-build-strategy.ts",
     injected: 5,

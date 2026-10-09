@@ -47,7 +47,7 @@ describe("E2E: the sandbox a test spawns into", () => {
     try {
       const env = sandboxedEnv(fakeHome);
 
-      // `hooks/lib/repo.cjs` shells out to git, and every spawned command is node itself.
+      // A hook shells out to git, and every spawned command is node itself.
       // A sandbox that reached neither would make this guard pass by breaking everything.
       expect(await whichUnderSandbox("git", projectDir, env)).not.toBe("");
       expect(await whichUnderSandbox("node", projectDir, env)).not.toBe("");

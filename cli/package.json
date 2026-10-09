@@ -69,7 +69,6 @@
     "test:mutation:tools-cursor": "node scripts/run-mutation.mjs tools-cursor",
     "test:mutation:tools-kilo": "node scripts/run-mutation.mjs tools-kilo",
     "test:mutation:tools-opencode": "node scripts/run-mutation.mjs tools-opencode",
-    "test:mutation:telemetry": "node scripts/run-mutation.mjs telemetry",
     "test:mutation:translate": "node scripts/run-mutation.mjs translate",
     "test:mutation:distribution": "node scripts/run-mutation.mjs distribution",
     "test:mutation:framework": "node scripts/run-mutation.mjs framework",

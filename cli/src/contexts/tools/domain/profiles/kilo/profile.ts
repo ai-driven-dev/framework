@@ -41,11 +41,6 @@ export const kilo: AiTool<HasAgents & HasSkills & HasCommands & HasRules & HasMc
   directory: KILO_DIRECTORY,
   toolSuffix: TOOL_SUFFIX,
   displayName: "Kilo Code",
-  telemetryLocalRead: {
-    kind: "unsupported",
-    reason: "Kilo OpenTelemetry is experimental and not yet supported by AIDD.",
-  },
-  telemetryTaskAttributable: false,
   signalDir: ".kilo/commands",
   configOutputPaths: { "kilo.json": ".kilo/kilo.jsonc" },
   buildContracts: { flat: buildKiloFlatContract },

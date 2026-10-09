@@ -43,4 +43,3 @@ What this project is, the problem it solves, and its domain language. The non-de
 | Acceptance QA evidence | `aidd-qa:01-acceptance-qa` |
 | Refine input and output | `aidd-refine` — brainstorm, challenge, blind spots |
 | End-to-end orchestration | `aidd-orchestrator:01-sdlc` |
-| Measure what a session cost | `aidd-telemetry`, opt-in, plus `aidd telemetry` |

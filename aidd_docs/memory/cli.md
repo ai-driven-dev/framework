@@ -6,9 +6,8 @@ The `aidd` binary, built from `cli/` and published to npm as `@ai-driven-dev/cli
 
 ## Commands
 
-- Eleven groups: `setup`, `framework`, `translate`, `plugin`, `marketplace`, `auth`, `sync`, `update`, `doctor`, `clean`, `telemetry`.
+- Ten groups: `setup`, `framework`, `translate`, `plugin`, `marketplace`, `auth`, `sync`, `update`, `doctor`, `clean`.
 - No list here. The surface moves; `aidd --help` is the only reading that stays true.
-- `telemetry`'s sink, run journal, record shapes, report axes and per-tool declarations: [`cli/aidd_docs/memory/telemetry.md`](../../cli/aidd_docs/memory/telemetry.md).
 
 ## Interface
 

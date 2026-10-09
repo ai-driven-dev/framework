@@ -103,7 +103,6 @@ import type { CredentialStore } from "../auth/ports/credential-store.js";
 import { atomicWriteFile } from "../filesystem/atomic-write.js";
 import { FileAdapter } from "../filesystem/file-adapter.js";
 import { HasherAdapter } from "../filesystem/hasher-adapter.js";
-import { GitAdapter } from "../git/git-adapter.js";
 import { HttpClient } from "../http/http-client.js";
 import { PlatformAdapter } from "../platform/platform-adapter.js";
 import { InquirerPrompterAdapter, SilentPrompterAdapter } from "../prompter/prompter-adapter.js";
@@ -115,7 +114,6 @@ import { SelfUpdateUseCase } from "../self-update/self-update-use-case.js";
 import { SelfUpdaterAdapter } from "../self-update/self-updater-adapter.js";
 import { userConfigDir } from "../user-config-dir.js";
 import { wireDistribution } from "./distribution.js";
-import { type TelemetryDeps, wireTelemetry } from "./telemetry.js";
 import { wireTools } from "./tools.js";
 import { createFrameworkBuildUseCase } from "./translate.js";
 
@@ -124,7 +122,7 @@ interface GlobalOptions {
   token?: string;
 }
 
-interface Deps extends TelemetryDeps {
+interface Deps {
   fs: FileReader & FileWriter & FileMerger;
   manifestRepo: ManifestRepository;
   /** `--scope user`'s own manifest repository: `userConfigDir()/manifest.json`, never nested
@@ -355,7 +353,6 @@ export async function createDeps(
     nativeSources
   );
   const gitignoreUseCase = new GitignoreUseCase(fs);
-  const git = new GitAdapter(fs);
   const postInstallPipelineUseCase = new PostInstallPipelineUseCase(manifestRepo, gitignoreUseCase);
   const installRuntimeConfigUseCase = new InstallRuntimeConfigUseCase(
     fs,
@@ -586,17 +583,7 @@ export async function createDeps(
   const doctorAllUseCase = new DoctorAllUseCase(doctorUseCase);
   const listInstalledRulesUseCase = new ListInstalledRulesUseCase(fs);
   const checkUpdateUseCase = new CheckUpdateUseCase(cliUpdater, currentVersionProvider, logger, fs);
-  const telemetry = wireTelemetry({
-    fs,
-    logger,
-    git,
-    projectRoot,
-    gitignoreUseCase,
-    currentVersionProvider,
-    manifestRepo,
-  });
   const deps: Deps = {
-    ...telemetry,
     fs,
     manifestRepo,
     userManifestRepo,

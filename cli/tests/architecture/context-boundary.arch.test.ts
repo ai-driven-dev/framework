@@ -27,8 +27,7 @@ const PUBLIC_MODULES: Readonly<Record<string, readonly string[]>> = {
     "src/contexts/tools/domain/ports/native-marketplace-source-reader.ts",
     "src/contexts/tools/domain/ports/schema-validator.ts",
     "src/contexts/tools/domain/ports/host-plugin-registry-reader.ts",
-    // What a host's registry says about an installed plugin: telemetry's diagnostic and
-    // `doctor` both need the comparison.
+    // What a host's registry says about an installed plugin: `doctor` needs the comparison.
     "src/contexts/tools/domain/host-plugin-registration.ts",
     "src/contexts/tools/domain/ports/host-marketplace-registry-reader.ts",
     // Whether a name a host's registry holds points at a different source: the sync-time
@@ -48,37 +47,6 @@ const PUBLIC_MODULES: Readonly<Record<string, readonly string[]>> = {
     // The variable each tool expands to an installed plugin's directory: a tool declares it,
     // translate substitutes it, the diagnostic looks for it in what was installed.
     "src/contexts/tools/domain/formats/plugin-root-token.ts",
-  ],
-  // Every entry is reached by `presentation` or by the composition root, and none is an
-  // adapter: what telemetry needs elsewhere it declares as its own port instead, so
-  // measurement reaches into no context and no context reaches into it.
-  telemetry: [
-    // the six use cases the `telemetry` command drives
-    "src/contexts/telemetry/application/telemetry-on-use-case.ts",
-    "src/contexts/telemetry/application/telemetry-off-use-case.ts",
-    "src/contexts/telemetry/application/read-local-cost-use-case.ts",
-    "src/contexts/telemetry/application/report-cost-use-case.ts",
-    "src/contexts/telemetry/application/diagnose-telemetry-use-case.ts",
-    "src/contexts/telemetry/application/forget-telemetry-use-case.ts",
-    "src/contexts/telemetry/application/person-identity-use-case.ts",
-    // the shapes a rendered answer is made of
-    "src/contexts/telemetry/domain/cost-report.ts",
-    "src/contexts/telemetry/domain/cost-report-envelope.ts",
-    // how a person id was resolved, printed beside each row
-    "src/contexts/telemetry/domain/person-resolution.ts",
-    "src/contexts/telemetry/domain/report-period.ts",
-    "src/contexts/telemetry/domain/telemetry-removal.ts",
-    "src/contexts/telemetry/domain/telemetry-claim.ts",
-    "src/contexts/telemetry/domain/telemetry-setup.ts",
-    "src/contexts/telemetry/domain/telemetry-export-leftover.ts",
-    "src/contexts/telemetry/domain/flow-attribution.ts",
-    "src/contexts/telemetry/domain/step-attribution.ts",
-    "src/contexts/telemetry/domain/task-attribution.ts",
-    // the trailer a commit carries, written by the git adapter that installs the hook
-    "src/contexts/telemetry/domain/formats/commit-session-trailer.ts",
-    // ports a caller wires a concrete adapter into
-    "src/contexts/telemetry/domain/ports/telemetry-sink.ts",
-    "src/contexts/telemetry/domain/ports/version-control.ts",
   ],
   translate: [
     // the canonical shapes framework produces and translate consumes

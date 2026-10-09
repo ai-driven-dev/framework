@@ -25,18 +25,10 @@ import { AI_TOOL_IDS } from "../../../../src/kernel/tool.js";
  * An artefact is carried byte for byte: a path rewritten inside a program no longer parses.
  */
 function pluginFile(relativePath: string): string {
-  return readFileSync(join(REPOSITORY_ROOT, "plugins", "aidd-telemetry", relativePath), "utf8");
+  return readFileSync(join(REPOSITORY_ROOT, "plugins", "aidd-context", relativePath), "utf8");
 }
 
-const ARTEFACTS = [
-  "hooks/journal.cjs",
-  "hooks/journal.cjs",
-  "hooks/lib/record.cjs",
-  "hooks/lib/repo.cjs",
-  "hooks/lib/file-writes.cjs",
-  "hooks/lib/step-starts.cjs",
-  "hooks/lib/host.cjs",
-] as const;
+const ARTEFACTS = ["hooks/update_memory.js"] as const;
 
 describe("a plugin's executable files survive being installed", () => {
   for (const relativePath of ARTEFACTS) {
@@ -58,21 +50,24 @@ describe("a plugin's executable files survive being installed", () => {
 /** The decisive check: not "would a rewrite damage it", but "does installing the plugin
  * actually put it there, unchanged". The path is the fixture; the content is real bytes. */
 describe("installing the plugin carries a skill's own script, on every tool", () => {
-  const SCRIPT = "skills/02-check/scripts/example.cjs";
-  const SCRIPT_CONTENT = pluginFile("hooks/journal.cjs");
+  const SCRIPT = "skills/02-project-memory/scripts/example.cjs";
+  const SCRIPT_CONTENT = pluginFile("hooks/update_memory.js");
   const translator = new PluginContentTranslator({ hash: () => new FileHash("a".repeat(32)) });
 
   function distributionOf(): PluginDistribution {
     const skills = [
-      { relativePath: "skills/02-check/SKILL.md", content: pluginFile("skills/02-check/SKILL.md") },
+      {
+        relativePath: "skills/02-project-memory/SKILL.md",
+        content: pluginFile("skills/02-project-memory/SKILL.md"),
+      },
       { relativePath: SCRIPT, content: SCRIPT_CONTENT },
     ];
     const hooks = [
       { relativePath: "hooks/hooks.json", content: pluginFile("hooks/hooks.json") },
-      { relativePath: "hooks/journal.cjs", content: pluginFile("hooks/journal.cjs") },
+      { relativePath: "hooks/update_memory.js", content: pluginFile("hooks/update_memory.js") },
     ];
     return new PluginDistribution({
-      manifest: { name: "aidd-telemetry", version: "0.1.0" },
+      manifest: { name: "aidd-context", version: "0.1.0" },
       format: "claude",
       files: [...skills, ...hooks],
       components: { skills, commands: [], agents: [], rules: [], hooks, mcp: [] },
@@ -83,7 +78,7 @@ describe("installing the plugin carries a skill's own script, on every tool", ()
     it(`${tool.toolId} installs it byte for byte`, () => {
       const installed = translator
         .translate(distributionOf(), tool)
-        .find((file) => file.relativePath.endsWith("02-check/scripts/example.cjs"));
+        .find((file) => file.relativePath.endsWith("02-project-memory/scripts/example.cjs"));
 
       expect(installed, `${tool.toolId} drops the script entirely`).toBeDefined();
       expect(installed?.content).toBe(SCRIPT_CONTENT);
@@ -93,12 +88,12 @@ describe("installing the plugin carries a skill's own script, on every tool", ()
   it("still translates the prose beside it", () => {
     const installed = translator
       .translate(distributionOf(), claude)
-      .find((file) => file.relativePath.endsWith("02-check/SKILL.md"));
+      .find((file) => file.relativePath.endsWith("02-project-memory/SKILL.md"));
 
     // Carrying artefacts verbatim must not turn every skill into an artefact: this one
     // still goes through the frontmatter conversion, so it is not byte-identical.
-    expect(installed?.content).not.toBe(pluginFile("skills/02-check/SKILL.md"));
-    expect(installed?.content).toContain("States what is in place");
+    expect(installed?.content).not.toBe(pluginFile("skills/02-project-memory/SKILL.md"));
+    expect(installed?.content).toContain("memory of its architecture");
   });
 
   /** A script whose text that tool's own rewrite really does change. Each tool rewrites its
@@ -109,11 +104,14 @@ describe("installing the plugin carries a skill's own script, on every tool", ()
 
   function distributionWithScript(content: string): PluginDistribution {
     const skills = [
-      { relativePath: "skills/02-check/SKILL.md", content: pluginFile("skills/02-check/SKILL.md") },
+      {
+        relativePath: "skills/02-project-memory/SKILL.md",
+        content: pluginFile("skills/02-project-memory/SKILL.md"),
+      },
       { relativePath: SCRIPT, content },
     ];
     return new PluginDistribution({
-      manifest: { name: "aidd-telemetry", version: "0.1.0" },
+      manifest: { name: "aidd-context", version: "0.1.0" },
       format: "claude",
       files: skills,
       components: { skills, commands: [], agents: [], rules: [], hooks: [], mcp: [] },
@@ -128,7 +126,7 @@ describe("installing the plugin carries a skill's own script, on every tool", ()
 
       const installed = translator
         .translate(distributionWithScript(script), tool)
-        .find((file) => file.relativePath.endsWith("02-check/scripts/example.cjs"));
+        .find((file) => file.relativePath.endsWith("02-project-memory/scripts/example.cjs"));
 
       expect(installed?.content).toBe(script);
     });
@@ -139,7 +137,7 @@ describe("installing the plugin carries a skill's own script, on every tool", ()
     // on the way. The script survives there only because that rewrite leaves it alone.
     const installed = translator
       .translate(distributionOf(), opencode)
-      .find((file) => file.relativePath.endsWith("02-check/scripts/example.cjs"));
+      .find((file) => file.relativePath.endsWith("02-project-memory/scripts/example.cjs"));
 
     expect(installed, "opencode drops the script entirely").toBeDefined();
     expect(installed?.content).toBe(SCRIPT_CONTENT);

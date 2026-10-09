@@ -205,22 +205,6 @@ export async function copyFixtureTree(sourceDir: string, destDir: string): Promi
   await cp(sourceDir, destDir, { recursive: true });
 }
 
-// Derived here and never imported from the adapter: a test that asked the code where it
-// wrote the file could not catch it writing somewhere else.
-export function identityFileIn(fakeHome: string): string {
-  return process.platform === "win32"
-    ? join(fakeHome, "AppData", "Roaming", "aidd", "identity.json")
-    : join(fakeHome, ".config", "aidd", "identity.json");
-}
-
-/**
- * `sandboxedEnv` always sets `AIDD_USER_CONFIG_DIR`, which `TelemetrySinkAdapter` honours
- * ahead of its platform default — so the sink is under the fake home on every platform.
- */
-export function sinkDirIn(fakeHome: string): string {
-  return join(fakeHome, ".config", "aidd", "telemetry");
-}
-
 export function sandboxedEnv(
   fakeHome: string,
   extra?: Record<string, string>,
@@ -260,25 +244,12 @@ export function sandboxedEnv(
   };
 }
 
-// Under `realHome: true` neither `resolveAiddConfigDir` (identity) nor `resolveHomeDir`
-// (local cost readers) honors `AIDD_USER_CONFIG_DIR`, so `forget --yes` would delete what it
-// finds in the developer's real profile.
-function refuseRealHomeForget(args: readonly string[], options?: { realHome?: boolean }): void {
-  if (options?.realHome && args.includes("forget")) {
-    throw new Error(
-      "runCli refuses to run `forget` under realHome: true — identity resolution ignores " +
-        "AIDD_USER_CONFIG_DIR and would reach the real machine's ~/.config/aidd/identity.json."
-    );
-  }
-}
-
 export async function runCli(
   args: string[],
   cwd: string,
   fakeHome: string,
   options?: { realHome?: boolean; env?: Record<string, string> }
 ): Promise<{ stdout: string; stderr: string; exitCode: number }> {
-  refuseRealHomeForget(args, options);
   const env = sandboxedEnv(fakeHome, options?.env, options);
   try {
     const { stdout, stderr } = await execFileAsync(process.execPath, [cliPath(), ...args], {

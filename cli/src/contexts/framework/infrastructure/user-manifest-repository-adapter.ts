@@ -11,7 +11,7 @@ import { readManifestFile } from "./manifest-file-io.js";
  * rule, same file I/O. Only the path differs, and what a version-refusal message names to fix it.
  *
  * `delete()` removes only `manifest.json` itself, never its parent directory: `userConfigDir()`
- * also holds `auth.json`, `marketplaces.json`, `references.json` and `telemetry/`, none of which
+ * also holds `auth.json`, `marketplaces.json`, and `references.json`, none of which
  * this repository owns. Pruning it once empty, as the project adapter does with `.aidd/`, would be
  * a live bug here.
  */

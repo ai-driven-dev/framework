@@ -17,8 +17,7 @@ The path to `spec.md`, or no write.
 3. **Gaps.** List every gap per [tbd-marker.md](../references/tbd-marker.md).
 4. **Check.** No required section missing. Omit an optional one with nothing to say, never a placeholder.
 5. **Write.** Save it in `aidd_docs/tasks/<yyyy_mm>/<yyyy_mm_dd>_<slug>/`, reusing this feature's folder when one exists.
-6. **Declare.** Declare the request's backlog item per [backlog-link.md](../references/backlog-link.md).
-7. **Return.** Its path and its gaps.
+6. **Return.** Its path and its gaps.
 
 ## Test
 
@@ -28,4 +27,3 @@ The path to `spec.md`, or no write.
 | The spec is read back | it carries no library name, framework pattern, or source-file layout |
 | A gap exists | it is listed once, in the open questions section only |
 | Too vague | no write; one clarifying question returned |
-| A backlog item is named, or none is, or the file is already there | each handled per [backlog-link.md](../references/backlog-link.md) |

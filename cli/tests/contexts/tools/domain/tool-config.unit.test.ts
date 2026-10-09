@@ -18,8 +18,6 @@ const makeStubConfig = (toolId: AiToolId, toolSuffix: string): AiTool<unknown> =
   toolSuffix,
   signalDir: `.${toolId}/commands`,
   displayName: toolId,
-  telemetryLocalRead: { kind: "unsupported", reason: "a stub reads nothing" },
-  telemetryTaskAttributable: false,
   capabilities: {},
   rewriteContent: (content: string) => content,
 });

@@ -38,7 +38,6 @@ flowchart TD
 | Binary | `cli/src/cli.ts` → `dist/cli.js`, bin name `aidd` |
 | Workflow | `plugins/<plugin>/skills/<NN>-<name>/SKILL.md` |
 | Memory refresh | `plugins/aidd-context/hooks/update_memory.js`, on `SessionStart` |
-| Run journal | `plugins/aidd-telemetry/hooks/journal.cjs`, on `SessionStart`, `Stop`, `PostToolUse` |
 
 ## Packages
 

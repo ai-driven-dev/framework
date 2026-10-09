@@ -30,7 +30,6 @@ import {
   mergeCodexConfigToml,
   stripCodexSkillFrontmatter,
 } from "./build.js";
-import { CODEX_ROLLOUT_LOCATION } from "./codex-transcript-location.js";
 
 const DIRECTORY = ".codex/";
 const TOOL_SUFFIX = ".codex.md";
@@ -134,15 +133,6 @@ export const codex: AiTool<
   directory: DIRECTORY,
   toolSuffix: TOOL_SUFFIX,
   displayName: "Codex",
-  telemetryLocalRead: {
-    kind: "declared",
-    transcript: CODEX_ROLLOUT_LOCATION,
-    // Complete counters per turn, no currency anywhere in a rollout, and no field naming a
-    // running skill - so a step here can only ever come from a run journal interval.
-    supplies: { tokenCounters: true, amount: false, toolStatedStep: false, agentName: false },
-  },
-  telemetryTaskAttributable: true,
-  telemetryJournalHost: "codex",
   signalDir: `${DIRECTORY}commands`,
   configOutputPaths: { "config.toml": ".codex/config.toml" },
   buildContracts: { marketplace: buildCodexContract, flat: buildCodexFlatContract },

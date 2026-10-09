@@ -13,25 +13,14 @@ const MAX_FILES_PER_FOLDER = 10;
  * files are shuffled. The test asserts the count, so a reason nobody measured fails here.
  */
 const BASELINE: readonly { readonly path: string; readonly count: number }[] = [
-  // Twelve files carry the command surface, plus three helpers no other folder imports. That
+  // Eleven files carry the command surface, plus three helpers no other folder imports. That
   // is the flattest mapping from the CLI's surface to its source; moving the helpers out
-  // would leave twelve, still over the limit and clearer about nothing.
-  { path: "src/presentation/commands", count: 15 },
+  // would leave eleven, still over the limit and clearer about nothing.
+  { path: "src/presentation/commands", count: 14 },
   // One display module per command, mirroring `presentation/commands/`: that mirror is what
   // lets a command's rendering be asserted without running the binary. Fewer files would mean
   // one module rendering several commands, which is what put the printing in the actions.
-  { path: "src/presentation/display", count: 19 },
-  // Eleven separate vocabularies with no pair among them, the file helpers already grouped
-  // under `reading/`. Reaching ten means a folder holding one file: a grouping invented to
-  // satisfy a count is worse than the count.
-  { path: "src/kernel", count: 11 },
-  // Telemetry's own vocabulary — what a record is, how a report is shaped, whose a figure is
-  // — is one subject: splitting it by shape files `cost-report.ts` away from the envelope it
-  // fills.
-  { path: "src/contexts/telemetry/domain", count: 20 },
-  // Measurement reads that many things it does not own: a sink, a journal, an identity, a
-  // host registry, hook trust and the rest. One port per question; collapsing two answers two.
-  { path: "src/contexts/telemetry/domain/ports", count: 11 },
+  { path: "src/presentation/display", count: 14 },
   // `marketplace-source-conflict.ts` is read by both the sync-time guard and `doctor`, and no
   // grouping here fits it: the marketplace files beside it are each a tool-build concern it is
   // not, and moving one out to make room is the shuffle this rule refuses.

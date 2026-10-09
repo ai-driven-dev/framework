@@ -33,7 +33,7 @@ flowchart LR
 | Concern decides placement, not existence | a missing capability goes to the plugin whose concern owns it; the caller delegates |
 | A skill is a router | `SKILL.md` dispatches to actions or protocols; the only place a capability is addressed by name |
 | Recipe skills discover providers at runtime | by description matching. Only agent permission lists and orchestration references name a provider |
-| Observation is its own layer | `aidd-telemetry` journals what a session did; it never reads or writes application source |
+| Observation is its own layer | `aidd-telemetry` observes what a session did (being rebuilt); it never reads or writes application source |
 | A launcher runs an external binary, never embeds it | `kanban` broke that and was unwired. Detail in the CLI bank |
 
 The concern-to-plugin taxonomy is canonical in [`docs/ARCHITECTURE.md`](../../docs/ARCHITECTURE.md).

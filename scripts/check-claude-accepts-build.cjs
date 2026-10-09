@@ -6,7 +6,7 @@
  * `claude plugin validate` exits 0 whether validation passed or failed (measured on 2.1.x),
  * so the verdict is read from its text, never from its exit code.
  *
- * Exit codes, same contract as `probe-identifier-join.cjs`:
+ * Exit codes:
  *   0  the host accepts the build
  *   1  the host refuses it
  *   2  no verdict — the CLI is not built, the translation failed, or the host said neither

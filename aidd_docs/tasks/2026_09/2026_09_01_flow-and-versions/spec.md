@@ -1,3 +1,7 @@
+---
+status: superseded
+---
+
 # A period breaks down by the flow that ran, and every line says which version wrote it
 
 ## Target

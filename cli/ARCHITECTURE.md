@@ -108,7 +108,7 @@ Memory ownership (CLAUDE.md, AGENTS.md, copilot-instructions.md) is delegated to
 
 ## Hook adaptation
 
-OpenCode needs JS adapters. The CLI owns the shared host protocol; plugins own payload mapping. Its helper is delivered once outside plugin discovery, tracked as a tool file, and backfilled only when missing. Installation must neither rewrite user configuration nor claim existing untracked helpers. Generic `SessionStart` runs idempotently at host initialization; telemetry follows actual sessions.
+OpenCode needs JS adapters. The CLI owns the shared host protocol; plugins own payload mapping. Its helper is delivered once outside plugin discovery, tracked as a tool file, and backfilled only when missing. Installation must neither rewrite user configuration nor claim existing untracked helpers. Generic `SessionStart` runs idempotently at host initialization.
 
 <details>
 <summary>Tool compatibility and adapter contracts</summary>
@@ -121,7 +121,7 @@ Hooks are authored with `${CLAUDE_PLUGIN_ROOT}`; the installer translates the ro
 | GitHub Copilot | yes                   | `${PLUGIN_ROOT}`       | Declared, never observed running |
 | Cursor         | declared              | `./`                   | Own hook format: the converter rewrites the root to a plugin-relative path before token substitution. No plugin hook observed firing headless; what registers a plugin in Cursor's plugin directory is unknown |
 | OpenCode       | no, by a second route | —                      | See below |
-Runtime contracts: [hook bridge](src/contexts/tools/domain/profiles/opencode/opencode-hooks-bridge.ts), [shared V2 adapter](assets/configs/opencode/opencode-events.js.txt), [telemetry payload adapter](../plugins/aidd-telemetry/hooks/opencode-plugin.js). The shared helper is `.opencode/hooks/opencode-events.js`. [Telemetry coverage](../plugins/aidd-telemetry/README.md#coverage) states supported versions and limitations. Unsupported hooks and skipped installation surfaces must be reported.
+Runtime contracts: [hook bridge](src/contexts/tools/domain/profiles/opencode/opencode-hooks-bridge.ts), [shared V2 adapter](assets/configs/opencode/opencode-events.js.txt). The shared helper is `.opencode/hooks/opencode-events.js`. Unsupported hooks and skipped installation surfaces must be reported.
 
 </details>
 

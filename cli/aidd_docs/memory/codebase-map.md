@@ -33,14 +33,6 @@ src/
 │   │   │   ├── plugins/
 │   │   │   └── ports/
 │   │   └── infrastructure/
-│   ├── telemetry/    # what a session cost and who it was for
-│   │   ├── application/
-│   │   ├── domain/
-│   │   │   ├── formats/
-│   │   │   ├── ports/
-│   │   │   └── report/
-│   │   │       └── axes/
-│   │   └── infrastructure/
 │   ├── tools/    # what a project targets, and what each target declares
 │   │   ├── domain/
 │   │   │   ├── capabilities/
@@ -111,4 +103,3 @@ src/
 | a port used by one context | that context's `domain/ports/`, adapter in its `infrastructure/` |
 | a port used by two | `kernel/ports/`, adapter in `runtime/` |
 | a runtime service | `runtime/<service>/`, wired from `runtime/wiring/` |
-| a cost-report axis (its own key, sentinels, group shape, order) | `contexts/telemetry/domain/report/axes/`; the pass that fills it stays in `cost-report.ts`, which the axis reaches only through `import type` |

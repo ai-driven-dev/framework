@@ -72,28 +72,15 @@ const BASELINE: readonly { readonly path: string; readonly named: number }[] = [
   { path: "src/runtime/wiring/framework.ts", named: 7 },
   { path: "src/runtime/wiring/tools.ts", named: 7 },
   { path: "src/runtime/wiring/translate.ts", named: 7 },
-  // A profile cannot name the adapter reading its transcripts without putting infrastructure
-  // in the domain, so the tool-to-reader map lives at the composition root instead.
-  { path: "src/runtime/wiring/telemetry.ts", named: 4 },
   // Which file each host keeps its plugin registry in, called from the composition root
   // alone; the reader classes beside it name no tool.
   {
     path: "src/contexts/tools/infrastructure/host-plugin-registry-reader-adapter.ts",
     named: 3,
   },
-  // An adapter for exactly one tool, naming the binary it shells out to. A tool named in
-  // its own adapter is not a list a new tool joins — a new tool brings its own adapter.
-  { path: "src/contexts/telemetry/infrastructure/opencode-cost-reader-adapter.ts", named: 1 },
   // Cursor's project hooks file, named after the tool whose file it is: the directory it
   // writes into is Cursor's own, not a list a sixth tool joins.
   { path: "src/contexts/tools/domain/formats/cursor-hooks-project-merge.ts", named: 1 },
-  // An adapter for exactly one tool, naming its own session-state directory.
-  { path: "src/contexts/telemetry/infrastructure/copilot-cost-reader-adapter.ts", named: 1 },
-  // An adapter for exactly one tool, naming its own hook-trust config path.
-  { path: "src/contexts/telemetry/infrastructure/hook-trust-reader-adapter.ts", named: 1 },
-  // Real coupling, not excused: one shared file reaches into two tools' own directories to
-  // detect whether either was ever used, and a third tool would extend it.
-  { path: "src/contexts/telemetry/infrastructure/telemetry-evidence-adapter.ts", named: 2 },
 ];
 
 describe("a tool identifier stays inside its own profile", () => {

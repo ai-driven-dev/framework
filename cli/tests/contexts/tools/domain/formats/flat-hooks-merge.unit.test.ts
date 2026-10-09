@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
   flattenCopilotHooksShape,
-  hookCommandsForEvent,
   mergeClaudeSettingsHooks,
   mergeCodexFrameworkHooksJson,
   mergeCursorFlatHooks,
@@ -365,53 +364,6 @@ describe("mergeCodexFrameworkHooksJson", () => {
   });
 });
 
-describe("hookCommandsForEvent", () => {
-  it("reads a command out of Claude's nested matcher-group shape", () => {
-    const content = JSON.stringify({
-      hooks: { SessionStart: [{ hooks: [{ type: "command", command: "run.js" }] }] },
-    });
-    expect(hookCommandsForEvent(content, "SessionStart")).toEqual(["run.js"]);
-  });
-
-  it("reads a command out of Codex's nested shape without Cursor's event rename", () => {
-    const content = JSON.stringify({
-      hooks: { SessionStart: [{ matcher: "startup", hooks: [{ command: "codex-run.js" }] }] },
-    });
-    expect(hookCommandsForEvent(content, "SessionStart")).toEqual(["codex-run.js"]);
-  });
-
-  it("reads a command out of Copilot's flat shape, event name unchanged", () => {
-    const content = JSON.stringify({
-      version: 1,
-      hooks: { SessionStart: [{ type: "command", command: "copilot-run.js" }] },
-    });
-    expect(hookCommandsForEvent(content, "SessionStart")).toEqual(["copilot-run.js"]);
-  });
-
-  it("reads a command out of Cursor's flat shape via CURSOR_EVENT_MAP's renamed event", () => {
-    const content = JSON.stringify({
-      version: 1,
-      hooks: { sessionStart: [{ command: "cursor-run.js" }] },
-    });
-    expect(hookCommandsForEvent(content, "SessionStart")).toEqual(["cursor-run.js"]);
-  });
-
-  it("returns nothing for an event the file never registered", () => {
-    const content = JSON.stringify({
-      hooks: { PostToolUse: [{ hooks: [{ command: "run.js" }] }] },
-    });
-    expect(hookCommandsForEvent(content, "SessionStart")).toEqual([]);
-  });
-
-  it("returns nothing rather than throwing on content this module never wrote", () => {
-    expect(hookCommandsForEvent("not json", "SessionStart")).toEqual([]);
-    expect(hookCommandsForEvent(JSON.stringify({ enabledPlugins: {} }), "SessionStart")).toEqual(
-      []
-    );
-    expect(hookCommandsForEvent(JSON.stringify({ hooks: [] }), "SessionStart")).toEqual([]);
-  });
-});
-
 describe("renameCodexHookEvents", () => {
   it("returns a document without hooks byte for byte", () => {
     expect(renameCodexHookEvents('{"x":1}')).toBe('{"x":1}');
@@ -544,23 +496,6 @@ describe("mergeCodexFrameworkHooksJson, entry by entry", () => {
   });
 });
 
-describe("hookCommandsForEvent, on content that is not a hooks file", () => {
-  it("answers nothing for a document that is not an object", () => {
-    expect(hookCommandsForEvent("[]", "Stop")).toStrictEqual([]);
-    expect(hookCommandsForEvent("5", "Stop")).toStrictEqual([]);
-  });
-
-  it("skips an entry that is not an object, and a command that is not a string", () => {
-    const content = JSON.stringify({
-      hooks: {
-        Stop: [null, "x", { command: 5 }, { command: "c" }, { hooks: [{ command: "d" }, 3] }],
-      },
-    });
-
-    expect(hookCommandsForEvent(content, "Stop")).toStrictEqual(["c", "d"]);
-  });
-});
-
 describe("a matcher group that declares no hooks list", () => {
   const groupless = JSON.stringify({
     hooks: { Stop: [{ matcher: "x" }, { hooks: [{ command: "a" }] }] },
@@ -578,15 +513,5 @@ describe("a matcher group that declares no hooks list", () => {
       version: 1,
       hooks: { stop: [{ command: "a" }], sessionEnd: [{ command: "a" }] },
     });
-  });
-});
-
-describe("hookCommandsForEvent, for an event Cursor never renames", () => {
-  it("reads the event under its own name alone", () => {
-    const content = JSON.stringify({
-      hooks: { PreCompact: [{ command: "a" }], preCompact: [{ command: "b" }] },
-    });
-
-    expect(hookCommandsForEvent(content, "PreCompact")).toStrictEqual(["a"]);
   });
 });

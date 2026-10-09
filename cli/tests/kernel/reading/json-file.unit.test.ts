@@ -1,24 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { asPlainObjectOrEmpty, isErrnoException } from "../../../src/kernel/reading/json-file.js";
-
-describe("asPlainObjectOrEmpty", () => {
-  it("passes a plain object through unchanged", () => {
-    const value = { a: 1 };
-    expect(asPlainObjectOrEmpty(value)).toBe(value);
-  });
-
-  it("reads null as an empty object", () => {
-    expect(asPlainObjectOrEmpty(null)).toStrictEqual({});
-  });
-
-  it("reads an array as an empty object", () => {
-    expect(asPlainObjectOrEmpty([1])).toStrictEqual({});
-  });
-
-  it("reads a primitive as an empty object", () => {
-    expect(asPlainObjectOrEmpty("text")).toStrictEqual({});
-  });
-});
+import { isErrnoException } from "../../../src/kernel/reading/json-file.js";
 
 describe("isErrnoException", () => {
   it("recognises an Error carrying a code", () => {

@@ -4,8 +4,6 @@
  * events it supports to camelCase.
  */
 
-import { asPlainObject } from "../../../../kernel/reading/plain-object.js";
-
 type ClaudeHookItem = { type?: string; command?: string; [key: string]: unknown };
 type ClaudeMatcherGroup = { matcher?: string; hooks: ClaudeHookItem[] };
 type ClaudeHooksShape = { hooks?: Record<string, ClaudeMatcherGroup[]> };
@@ -221,42 +219,4 @@ function buildCodexHookItem(item: ClaudeHookItem): {
   if (typeof item.timeout === "number") entry.timeout = item.timeout;
   if (typeof item.statusMessage === "string") entry.statusMessage = item.statusMessage;
   return entry;
-}
-
-/**
- * Every `command` string registered for `claudeEvent` in a hooks file already written in any of
- * the four shapes this module writes, plus whatever alias `CURSOR_EVENT_MAP` maps that event to.
- * Malformed content, or a shape none of the four writers produce, answers `[]` rather than
- * throwing: an unrecognised shape is not evidence of anything. A reader asking whether a hooks
- * block called for a command calls this rather than restating the four shapes, so a fifth shape
- * recognised here is recognised there too.
- */
-export function hookCommandsForEvent(hooksFileContent: string, claudeEvent: string): string[] {
-  let parsed: unknown;
-  try {
-    parsed = JSON.parse(hooksFileContent);
-  } catch {
-    return [];
-  }
-  const hooks = asPlainObject(asPlainObject(parsed)?.hooks);
-  if (hooks === null) return [];
-  const commands: string[] = [];
-  for (const eventName of [claudeEvent, ...(CURSOR_EVENT_MAP[claudeEvent] ?? [])]) {
-    const entries = hooks[eventName];
-    if (Array.isArray(entries)) for (const entry of entries) collectCommands(entry, commands);
-  }
-  return commands;
-}
-
-// Both known entry depths in one walk: a nested group (`{ hooks: [...] }`, Claude/Codex)
-// recurses one level into its own `hooks` array; a flat entry (`{ command }`, Copilot/Cursor)
-// has none and contributes its own command directly.
-function collectCommands(entry: unknown, out: string[]): void {
-  const record = asPlainObject(entry);
-  if (record === null) return;
-  if (Array.isArray(record.hooks)) {
-    for (const nested of record.hooks) collectCommands(nested, out);
-    return;
-  }
-  if (typeof record.command === "string") out.push(record.command);
 }
