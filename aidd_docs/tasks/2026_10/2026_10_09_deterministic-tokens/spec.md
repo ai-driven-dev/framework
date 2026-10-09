@@ -41,8 +41,8 @@ coming only from what a person declared, with the previous telemetry removed ent
 - Work with no declared task is its own row, with the reason it has none, and is attributed
   retroactively once its branch is declared.
 - Every breakdown of a period sums to the same total.
-- A project or person that has not opted in is untouched: nothing read, nothing asked, nothing
-  blocked. Without the plugin, nothing changes at all.
+- A project or person that has not opted in is untouched: nothing stored, nothing asked,
+  nothing blocked. Without the plugin, nothing changes at all.
 - Data stays on the machine: release 1 sends nothing anywhere.
 - The person identity is a fresh, separate opt-in, located with the rest of the person's aidd
   configuration; the previous identity file is not carried over.
@@ -73,8 +73,8 @@ coming only from what a person declared, with the previous telemetry removed ent
   any one rule turns its own test red.
 - On real local history, the release's daily totals equal an independent reference count of
   the same transcripts, the known reference under-count of cache writes aside and explained.
-- A person present on an unbound working branch, in the terminal or an IDE, cannot get a model
-  answer until they declare a task or declare none, and the declaration itself costs no model
+- A person present on an unbound working branch, on every surface where presence is
+  detectable (the terminal at least), cannot get a model answer until they declare a task or declare none, and the declaration itself costs no model
   call; the default branch and a detached HEAD never ask.
 - A headless run on the same branch completes unblocked and its tokens land on the branch's
   task, or on the unattributed row until the branch is declared, then on the task.
