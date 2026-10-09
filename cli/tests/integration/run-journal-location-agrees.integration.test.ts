@@ -18,8 +18,7 @@ function switchOn(checkout: string): void {
   writeFileSync(join(checkout, ".aidd", "config.json"), '{"telemetry":{"enabled":true}}');
 }
 
-// `runs` may not exist yet; its grandparent, the common dir, does. The last two segments are
-// kept as each side spelled them, so a disagreement on them still shows.
+// Only the existing common dir is canonicalised; the last two segments stay as each side spelled them.
 function canon(runsDir: string): string {
   const parent = dirname(runsDir);
   return join(realpathSync.native(dirname(parent)), basename(parent), basename(runsDir));

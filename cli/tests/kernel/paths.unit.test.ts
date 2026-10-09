@@ -104,7 +104,8 @@ function git(cwd: string, args: readonly string[]): void {
 }
 
 function makeClone(): { r: string; w: string } {
-  const root = mkdtempSync(join(tmpdir(), "aidd-common-dir-"));
+  // Canonical, as git records it: a runner's tmpdir can be an 8.3 alias of the same directory.
+  const root = realpathSync.native(mkdtempSync(join(tmpdir(), "aidd-common-dir-")));
   tempRoots.push(root);
   const r = join(root, "r");
   const w = join(root, "w");
