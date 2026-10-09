@@ -1,5 +1,21 @@
 # 03 - Target edits
 
-Fill [the report template](../assets/report-template.html) with the conversation, measurements, and edits. Replace its fictional example, escape inserted text, and copy `report.css` and `report.js` alongside it. Localize the UI, not source excerpts.
+Render the evidence and recommended edits.
 
-Return the HTML path. Ask which small general intent change to try next run.
+## Input
+
+Transcript, measurements, and recommended edits.
+
+## Output
+
+HTML report with local CSS/JS, its path, and a next-intent question.
+
+## Process
+
+1. **Render.** Fill [the report template](../assets/report-template.html) with the input and copy `report.css` and `report.js` alongside it.
+2. **Return.** Share the HTML path and ask which small general intent change to try next run.
+
+## Rules
+
+- Replace the fictional example; escape inserted text.
+- Localize the UI, not source excerpts.

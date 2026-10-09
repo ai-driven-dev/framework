@@ -25,6 +25,6 @@ Run all three actions in order without confirmation. Read only the next file in 
 
 ## Transversal rules
 
-- Locate conversation data through [conversation sources](assets/conversation-sources.md); access only the selected conversation and its relevant sources.
+- Access only the selected conversation and its relevant sources.
 - Use recorded evidence only; mark unavailable measurements as such.
 - Keep project files read-only; write only a unique temporary report.
