@@ -230,7 +230,7 @@ function matchesOf(pattern, text) {
 
 /**
  * The three citation shapes. Only the `actions/<name>.md` path is read through a fence, because
- * `aidd-dev:10-todo` cites its one action that way; a backticked file name inside a fence is an
+ * `aidd-dev:10-batch` cites its one action that way; a backticked file name inside a fence is an
  * example. A word loose in prose is never a citation.
  */
 function citationsIn(blankedLines, rawLines) {

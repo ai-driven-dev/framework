@@ -226,9 +226,9 @@ test("every router in the tree cites every action it provides", () => {
 });
 
 test("removing a real router's citation is caught, for every action in the tree", () => {
-  // `aidd-dev:10-todo` names its one action as a fenced path rather than a table row, so there
+  // `aidd-dev:10-batch` names its one action as a fenced path rather than a table row, so there
   // is no row to remove and nothing to catch. It is the one documented exception.
-  const FENCED_PATH_SKILL = "plugins/aidd-dev/skills/10-todo/SKILL.md";
+  const FENCED_PATH_SKILL = "plugins/aidd-dev/skills/10-batch/SKILL.md";
   const missed = [];
   let checked = 0;
 

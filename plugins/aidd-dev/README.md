@@ -8,7 +8,7 @@ Code transformation plugin for the AI-Driven Development framework.
 
 First time? Install with `/plugin install aidd-dev@aidd-framework`, then run `aidd-dev:01-plan`.
 
-Covers code transformation: planning, implementation, assertions, audits, code review, testing, refactoring, debugging, for-sure, and parallel todo fan-out. Also hosts AI agents.
+Covers code transformation: planning, implementation, assertions, audits, code review, testing, refactoring, debugging, for-sure, and parallel batch execution. Also hosts AI agents.
 
 ## Skills
 
@@ -23,7 +23,7 @@ Covers code transformation: planning, implementation, assertions, audits, code r
 | [2.7] | [refactor](skills/07-refactor/SKILL.md) | Optimize code for performance and fix security vulnerabilities following OWASP guidelines. |
 | [2.8] | [debug](skills/08-debug/SKILL.md) | Reproduce and fix bugs systematically using test-driven workflow, root cause analysis, and hypothesis validation. |
 | [2.9] | [for-sure](skills/09-for-sure/SKILL.md) | Iterative agent loop that tracks attempts and retries until a success condition is met. |
-| [2.10] | [todo](skills/10-todo/SKILL.md) | Split the prompt into independent todos, run one executor agent per todo in parallel, then report a minimal table. |
+| [2.10] | [batch](skills/10-batch/SKILL.md) | Split a request into independent tasks, execute them in parallel, and summarize each agent's task, status, and result. |
 
 ## Agents
 
