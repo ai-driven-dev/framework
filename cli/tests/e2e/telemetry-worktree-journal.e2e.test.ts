@@ -159,7 +159,7 @@ describe("aidd telemetry report — sessions from every worktree of one clone, b
     expect(taskRowOfCost(envelope, 3)?.task).toBe(BETA_TASK);
   });
 
-  it("still counts the worktree's session once the worktree is removed", async () => {
+  it("keeps the common-dir session once the worktree is removed, and loses only the pre-move journal that lived in it", async () => {
     const { projectDir, worktreeDir, fakeHome } = await seed();
     git(projectDir, ["worktree", "remove", "--force", worktreeDir]);
 
