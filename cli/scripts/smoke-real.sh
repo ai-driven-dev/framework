@@ -638,11 +638,11 @@ if [[ -n "${PRESENT[opencode]:-}" ]]; then
   cat "$tel_out" >> "$LOGFILE"
   # The session opens on its first call, so only a turn that completed can prove an empty
   # journal: exit 0 with no line is #812 itself, a model that never answered proves nothing.
-  if grep -qsE '"type":"session_start".*"tool":"opencode"' "$PROJ_T"/aidd_docs/runs/*.jsonl; then
+  if grep -qsE '"type":"session_start".*"tool":"opencode"' "$PROJ_T"/.git/aidd/runs/*.jsonl; then
     ok "opencode: the run journal holds a session_start line from opencode"
   elif [[ "$tel_rc" -eq 0 ]]; then
     bad "opencode: the turn completed and the run journal holds no session_start line" \
-      "$(ls -la "$PROJ_T/aidd_docs/runs" 2>&1; cat "$tel_out")"
+      "$(ls -la "$PROJ_T/.git/aidd/runs" 2>&1; cat "$tel_out")"
   elif [[ "$tel_rc" -eq 142 ]]; then
     skip "opencode journal: the model never answered within 90s, so the journal proves nothing"
   elif grep -qiE "auth|api key|provider|not logged in|credential" "$tel_out"; then

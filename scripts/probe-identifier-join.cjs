@@ -119,7 +119,8 @@ fs.writeFileSync(path.join(process.argv[3],process.argv[2]+".json"),raw)}catch{}
 
 /** The name is half the join: the hook writes `<run id>__<the tool's own session id>.jsonl`. */
 function journalledSessionIds(project) {
-  const dir = path.join(project, "aidd_docs", "runs");
+  // The project is a git checkout, so the hook journals under its common git directory.
+  const dir = path.join(project, ".git", "aidd", "runs");
   if (!fs.existsSync(dir)) return [];
   return fs
     .readdirSync(dir)
