@@ -1,0 +1,26 @@
+{
+  "subscriptionType": "max",
+  "extraUsage": {
+    "is_enabled": false,
+    "used_credits": 0.0,
+    "utilization": 0.0
+  },
+  "usageWindows": {
+    "five_hour": {
+      "utilization": 25.0,
+      "resets_at": "2026-10-09T08:20:00.241151+00:00"
+    },
+    "seven_day": {
+      "utilization": 39.0,
+      "resets_at": "2026-10-13T21:00:00.241175+00:00"
+    },
+    "spend": {
+      "utilization": null,
+      "resets_at": null
+    },
+    "seven_day_breakdown": {
+      "utilization": null,
+      "resets_at": null
+    }
+  }
+}

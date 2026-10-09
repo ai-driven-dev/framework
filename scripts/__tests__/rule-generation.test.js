@@ -2,6 +2,7 @@ const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
+const { createHash } = require("node:crypto");
 const { spawnSync } = require("node:child_process");
 const { test } = require("node:test");
 
@@ -65,7 +66,8 @@ test("update and last deletion restore exact CRLF user and memory bytes", (t) =>
   f.put("AGENTS.md", original);
   assert.equal(f.run().status, 0);
   assert.equal(f.run({ ...rule, body: "- Updated full content.\n", paths: [] }).status, 0);
-  assert.ok(!f.read("AGENTS.md").includes("# Naming"));
+  assert.ok(!f.read("AGENTS.md").includes(rule.body));
+  assert.ok(f.read("AGENTS.md").includes("- Updated full content.\n"));
   assert.match(f.read(".cursor/rules/01-standards/1-naming.mdc"), /alwaysApply: true/);
   assert.equal(f.run(null, ALL, ["--delete", "01-standards/1-naming"]).status, 0);
   assert.equal(f.read("AGENTS.md"), original);
@@ -90,6 +92,73 @@ test("deterministic sources and shared deduplication across separately selected 
   assert.ok(agents.indexOf("- First.") < agents.indexOf("- Last."));
   assert.equal(f.run(null, "codex,opencode", ["--publish"]).status, 0);
   assert.equal(f.read("AGENTS.md"), agents);
+});
+
+for (const [label, body, ownTitle] of [
+  ["ATX", "# Readable title\n\n- Keep exact content.\n", true],
+  ["indented ATX with CRLF", "\r\n   ## Readable title\r\n\r\n- Keep exact content.\r\n", true],
+  ["Setext", "Readable title\n==============\n\n- Keep exact content.\n", true],
+  ["Setext with CRLF", "Readable title\r\n--------------\r\n\r\n- Keep exact content.\r\n", true],
+  ["Setext hash without space", "#NotATX\n=======\n\n- Keep exact content.\n", true],
+  ["Setext inline HTML", "<em>Readable title</em>\n=======\n\n- Keep exact content.\n", true],
+  ["Setext autolink", "<https://example.com>\n=======\n\n- Keep exact content.\n", true],
+  ["untitled", "- Keep exact content.\n", false],
+  ["fenced heading example", "```md\n# Example, not the rule title\n```\n\n- Keep exact content.\n", false],
+  ["indented code", "    # Example, not the rule title\n\n- Keep exact content.\n", false],
+  ["list before thematic break", "- Keep exact content.\n---\n", false],
+  ["hash without space", "#Not a Markdown title\n\n- Keep exact content.\n", false],
+  ["HTML block with inline text", "<div>Readable text</div>\n=======\n\n- Keep exact content.\n", false],
+  ["standalone HTML tag", "<em title=\"example\">\n=======\n\n- Keep exact content.\n", false],
+  ["HTML comment", "<!-- Ordinary comment -->\n=======\n\n- Keep exact content.\n", false],
+  ["ordered list before thematic break", "1. Keep exact content.\n---\n", false],
+]) test(`shared presentation preserves ${label} body without a technical or duplicate title`, (t) => {
+  const f = fixture(t);
+  assert.equal(f.run({ ...rule, description: "Metadata title", body }).status, 0);
+  const agents = f.read("AGENTS.md");
+  assert.ok(!/^## 01-standards\/1-naming:/m.test(agents));
+  assert.match(agents, /Applies to: `src\/\*\*\/\*\.ts`, `test\/\*\*\/\*\.ts`\./);
+  assert.equal(agents.includes("## Metadata title\n"), !ownTitle);
+  assert.equal(agents.split(body).length, 2, "complete body must occur once without rewriting");
+  for (const name of ["aidd_docs/rules/01-standards/1-naming.md", ".claude/rules/01-standards/1-naming.md", ".cursor/rules/01-standards/1-naming.mdc", ".github/instructions/01-naming.instructions.md"]) assert.ok(f.read(name).includes(body));
+  const before = f.snapshot();
+  assert.equal(f.run(null, ALL, ["--publish"]).status, 0);
+  assert.deepEqual(f.snapshot(), before);
+});
+
+test("global shared scope is explicit and backticks in globs remain literal", (t) => {
+  const f = fixture(t);
+  assert.equal(f.run({ ...rule, paths: [], body: "- Global.\n" }).status, 0);
+  assert.match(f.read("AGENTS.md"), /## Naming\n\nApplies to: all files\.\n\n- Global\./);
+  assert.equal(f.run({ ...rule, paths: ["src/`name`/**/*.ts", "`quoted`"], body: "- Scoped.\n" }).status, 0);
+  assert.ok(f.read("AGENTS.md").includes("Applies to: ``src/`name`/**/*.ts``, `` `quoted` ``."));
+});
+
+test("old signed presentation republishes without changing canonical or native bytes and deletes cleanly", (t) => {
+  const f = fixture(t);
+  const prefix = "User\r\n<!-- aidd_project_memory:start -->\r\nMemory\r\n<!-- aidd_project_memory:end -->\r\n";
+  const suffix = "User suffix\r\n";
+  f.put("AGENTS.md", prefix);
+  assert.equal(f.run().status, 0);
+  const payload = `## 01-standards/1-naming: Naming\n\nApply this rule when working on files matching: "src/**/*.ts", "test/**/*.ts".\n\n${rule.body}`;
+  const digest = createHash("sha256").update(`separator=0\n${payload}`).digest("hex");
+  const old = `${prefix}<!-- aidd_rules:start sha256=${digest} separator=0 -->\n${payload}<!-- aidd_rules:end -->\n${suffix}`;
+  f.put("AGENTS.md", old.replace("Keep names clear.", "Unowned edit."));
+  const edited = f.snapshot();
+  assert.notEqual(f.run(null, ALL, ["--publish"]).status, 0);
+  assert.deepEqual(f.snapshot(), edited, "edited old contribution must refuse before writes");
+  f.put("AGENTS.md", old);
+  const before = f.snapshot();
+  assert.equal(f.run(null, ALL, ["--publish"]).status, 0);
+  const updated = f.snapshot();
+  assert.notEqual(f.read("AGENTS.md"), old);
+  assert.ok(f.read("AGENTS.md").startsWith(prefix));
+  assert.ok(f.read("AGENTS.md").endsWith(suffix));
+  assert.ok(f.read("AGENTS.md").includes(rule.body));
+  for (const name of Object.keys(before).filter((name) => name !== "AGENTS.md")) assert.deepEqual(updated[name], before[name], name);
+  assert.equal(f.run(null, ALL, ["--publish"]).status, 0);
+  assert.deepEqual(f.snapshot(), updated);
+  assert.equal(f.run(null, ALL, ["--delete", "01-standards/1-naming"]).status, 0);
+  assert.equal(f.read("AGENTS.md"), prefix + suffix);
 });
 
 test("target changes remove stale native and shared text without activating unselected tools", (t) => {

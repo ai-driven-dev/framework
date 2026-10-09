@@ -1,0 +1,397 @@
+[
+  {
+    "file": "claude/REPORT.md",
+    "sha256": "a73fd4b419e413310873e0c59b0f31b19c2cec135296f707348476f8029a57bf",
+    "original": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/evidence-model-claude-cursor/claude-report.md"
+  },
+  {
+    "file": "claude/additional/claude-native-03/tests-retry-stdout.txt",
+    "sha256": "124e189af0fd68bc49a39cbdd0caca20117ded5d8e6cf38360c64de8fd327dad",
+    "original": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/evidence-model-claude-native-final/claude-native-03/tests-retry-stdout.txt"
+  },
+  {
+    "file": "claude/additional/claude-native-03/tests-retry.json",
+    "sha256": "fbc48ab1d14bcda3852d6b782ec699e7257961a62d91df9189fc9a02d5dfb8e6",
+    "original": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/evidence-model-claude-native-final/claude-native-03/tests-retry.json"
+  },
+  {
+    "file": "claude/additional/claude-native-03/tests-stdout.txt",
+    "sha256": "4075205da8eb87dd9cb4071453641152122e848699e5915adf9a905d9f872c03",
+    "original": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/evidence-model-claude-native-final/claude-native-03/tests-stdout.txt"
+  },
+  {
+    "file": "claude/additional/claude-native-additional-report.json",
+    "sha256": "17da785815442debecf549f9e9bdf199a912ecedf2407f20fc8103902cd13094",
+    "original": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/evidence-model-claude-native-final/claude-native-additional-report.json"
+  },
+  {
+    "file": "claude/additional/delete-proof.json",
+    "sha256": "55ade453c88a862ae72fcc45b86357f47da503f2a225d017bd6be6e241d19742",
+    "original": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/evidence-model-claude-native-final/delete-proof.json"
+  },
+  {
+    "file": "claude/additional/local-doc-refresh.json",
+    "sha256": "992821c01bae0dc1e9e2330603457cf8bc7ec0da05e0a4f2726db245d3886898",
+    "original": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/evidence-model-claude-native-final/local-doc-refresh.json"
+  },
+  {
+    "file": "claude/additional/old-consumer-proof.json",
+    "sha256": "4e0f5ee0aaaf1074221d8c380ecc5cb4590758f9ae02c8dc4ae79ca521a4595d",
+    "original": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/evidence-model-claude-native-final/old-consumer-proof.json"
+  },
+  {
+    "file": "claude/additional/old-rebuild.json",
+    "sha256": "03f3f35b2823792f4661801725faf6f3af80106b737de3980d1c383f8368fd82",
+    "original": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/evidence-model-claude-native-final/old-rebuild.json"
+  },
+  {
+    "file": "claude/additional/quota-after.json",
+    "sha256": "8ab380913e0985201343bd81f9653fdb5bbcbbc2e75c68bf4830dba11a7087af",
+    "original": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/evidence-model-claude-native-final/quota-after.json"
+  },
+  {
+    "file": "claude/additional/sanitization.json",
+    "sha256": "24585da69371713ec0bdbc06bbb16a6904177c6b7fd67e42fabdfe3053c4ec3a",
+    "original": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/evidence-model-claude-native-final/sanitization.json"
+  },
+  {
+    "file": "claude/journey-report.json",
+    "sha256": "5a2834e226926ab5154c11341827349454076b3e3798749b0619d7984fe37273",
+    "original": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/evidence-model-claude-cursor/claude-journey-report.json"
+  },
+  {
+    "file": "claude/summary.json",
+    "sha256": "2f77b3ec161f75b5c1e1dd457860e18ae650f3f08ca17fdff24c61ab63e4f9ce",
+    "original": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/evidence-model-claude-cursor/claude-evidence-summary.json"
+  },
+  {
+    "file": "codex/REPORT.md",
+    "sha256": "a19ca6a9b516fa501271abb9b15b9e2d63927b6be5be1bf1d434b14c9c9fa282",
+    "original": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/evidence-model-codex/REPORT.md"
+  },
+  {
+    "file": "codex/observations.json",
+    "sha256": "b07260f2c7c289a0e34403dee84256ac07a97ab764d69b1804af818560a7d7f1",
+    "original": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/evidence-model-codex/observations.json"
+  },
+  {
+    "file": "codex/preflight.json",
+    "sha256": "3a085ed08b8227c00806dc086e2a8ca52bfe04e267f683883f8e7b7d1171299a",
+    "original": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/evidence-model-codex/preflight.json"
+  },
+  {
+    "file": "codex/summary.json",
+    "sha256": "1a1226acb639bbd883b3bba8305cdbc7b7707a72ac8341417198a5c03b87d7f6",
+    "original": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/evidence-model-codex/summary.json"
+  },
+  {
+    "file": "copilot/journey-report.json",
+    "sha256": "277d20472e9672be36feea52982f7cd132430521865bcb0f9215cf6dd472944c",
+    "original": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/evidence/model-copilot/journey-report.json"
+  },
+  {
+    "file": "copilot/model-copilot-delete-retry/delete/summary.json",
+    "sha256": "38da69ed469ec52c303c847cb7d6b833208e0782d863c1a9336953d90bc20eef",
+    "original": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/evidence/model-copilot-delete-retry/delete/summary.json"
+  },
+  {
+    "file": "copilot/model-copilot-delete-retry/deleted-domain/independent-tests.log",
+    "sha256": "8b9146a3ac3e547fa8a50d123f56a3da4757be81f4c3abb6593a788349e60999",
+    "original": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/evidence/model-copilot-delete-retry/deleted-domain/independent-tests.log"
+  },
+  {
+    "file": "copilot/model-copilot-delete-retry/deleted-domain/summary.json",
+    "sha256": "0f8adee1bef164b1188936f129038733f3d08e76452ac15667c1f7386c9b8ba6",
+    "original": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/evidence/model-copilot-delete-retry/deleted-domain/summary.json"
+  },
+  {
+    "file": "copilot/model-copilot-delete-retry/preservation.json",
+    "sha256": "9a2c6d5a57c6426f662021035c1594e1ce9bfffc6c2e462f0f8659fe99c28254",
+    "original": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/evidence/model-copilot-delete-retry/preservation.json"
+  },
+  {
+    "file": "copilot/model-copilot-exact-retry/update/summary.json",
+    "sha256": "c5e2d4f207c95a978559bfcc718794d3c95c3cf6dd5fd9b4c23a2b32eb7c48fa",
+    "original": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/evidence/model-copilot-exact-retry/update/summary.json"
+  },
+  {
+    "file": "copilot/model-copilot-exact-retry/updated-domain/independent-tests.log",
+    "sha256": "780c7967923cc1a26212cca9d51a0c13abf2545d6e8e9f749b70ff1e09a04e70",
+    "original": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/evidence/model-copilot-exact-retry/updated-domain/independent-tests.log"
+  },
+  {
+    "file": "copilot/model-copilot-exact-retry/updated-domain/summary.json",
+    "sha256": "c227248890dbf917ab00852bd05312ad17cf7176daa4ceb308142bf0184d2f8c",
+    "original": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/evidence/model-copilot-exact-retry/updated-domain/summary.json"
+  },
+  {
+    "file": "cursor/cursor-evidence-summary.json",
+    "sha256": "a72a8a34aa18cce70123270c5dfc19972705799da5355d5b79a58b7ec528b655",
+    "original": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/evidence-model-claude-cursor/cursor-evidence-summary.json"
+  },
+  {
+    "file": "cursor/cursor-exact-author-revision.json",
+    "sha256": "36071f9c7762dd22459080a0001a5d7cb9152c0126047cd1db3b7975dcda8c37",
+    "original": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/evidence-model-claude-cursor/cursor-exact-author-revision.json"
+  },
+  {
+    "file": "cursor/cursor-exact-consumer-proof.json",
+    "sha256": "f96c134371a08d8de5b001cec0eff42d806eabb288ac3bde8696ebed94dd1fe9",
+    "original": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/evidence-model-claude-cursor/cursor-exact-consumer-proof.json"
+  },
+  {
+    "file": "cursor/cursor-exact-current-assets.json",
+    "sha256": "23f31b274cf4b506da49614df7d57b83e6e26218ff9af6ec733b411e0d1089be",
+    "original": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/evidence-model-claude-cursor/cursor-exact-current-assets.json"
+  },
+  {
+    "file": "cursor/cursor-exact-current-metadata-refresh.json",
+    "sha256": "17abfae426640badffe432d40ff743c8dece137ca30ce8cd3c9b917a98e13d39",
+    "original": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/evidence-model-claude-cursor/cursor-exact-current-metadata-refresh.json"
+  },
+  {
+    "file": "cursor/cursor-journey-report.json",
+    "sha256": "089af8d9673128d26c252f7a1f0ecd3e1a7feb39e5fc8784d6a6a2cdf399cbd4",
+    "original": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/evidence-model-claude-cursor/cursor-journey-report.json"
+  },
+  {
+    "file": "cursor/cursor-report.md",
+    "sha256": "ec9ed8df775442c88e89e88705c888da766a64ca21aac3dc7910824875bfe28e",
+    "original": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/evidence-model-claude-cursor/cursor-report.md"
+  },
+  {
+    "file": "cursor/examples/src/domain/discount.ts",
+    "sha256": "03dcb8af23107ec48913eedeacd2c9eacf7907b2bd5fa68193c0f5a702b8ec86",
+    "original": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/model-cursor-exact/src/domain/discount.ts"
+  },
+  {
+    "file": "cursor/examples/src/domain/fee.ts",
+    "sha256": "bf8371475e22aafe894b27ddf721cb9d4b79e5bead2a9746419aa4a546c8eb73",
+    "original": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/model-cursor-exact/src/domain/fee.ts"
+  },
+  {
+    "file": "cursor/examples/tests/discount.test.ts",
+    "sha256": "d219cb1d7c5e8dd5a841408154f0bdf12e8e44f65b7e1570bb37ec920e84456b",
+    "original": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/model-cursor-exact/tests/discount.test.ts"
+  },
+  {
+    "file": "cursor/examples/tests/fee.test.ts",
+    "sha256": "183d264b8aa321fc14151344005762a62ffbbc21094918bbf0e7646de7cd6bef",
+    "original": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/model-cursor-exact/tests/fee.test.ts"
+  },
+  {
+    "file": "cursor/private-auth-cleanup.json",
+    "sha256": "255ffac8c3adaedf6a890e7837fa333b5bc56878bb5bfe650322f645083a2cd9",
+    "original": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/evidence-model-claude-cursor/private-auth-cleanup.json"
+  },
+  {
+    "file": "final-reproduction/cleanup.json",
+    "sha256": "3ade801d74e09f583640c86d98ee1554a53d518591857164c5efbf8d0f47ba75",
+    "original": "/private/tmp/aidd-realistic-rule-repro-EGi6ZB/cleanup-results.json"
+  },
+  {
+    "file": "final-reproduction/results.json",
+    "sha256": "09582b9ae5d7d7194904a9b7b9f3c2ac97f201159e12b304c8325ddc6af75c08",
+    "original": "/private/tmp/aidd-realistic-rule-repro-EGi6ZB/reproduction-results.json"
+  },
+  {
+    "file": "openai-quota.json",
+    "sha256": "5f8dd448eefba41f25c5a48c78e3ef1e3015a452632dd0c72dbed5a74ea439fe",
+    "generatedSanitizedEvidence": true
+  },
+  {
+    "file": "opencode/01-author-coexistence/app-tests.log",
+    "sha256": "5967021396c8b5dd84a2ecaa7a1d8bf0a0cb7c8271f6672a21326ac33aefbf64",
+    "original": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/evidence-model-opencode/01-author-coexistence/app-tests.log"
+  },
+  {
+    "file": "opencode/01-author-coexistence/prompt.txt",
+    "sha256": "48519ddb11ee49142199a4a9bee159e1e99cfc5d2cb4ac3f0d31b337c6de6d9e",
+    "original": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/evidence-model-opencode/01-author-coexistence/prompt.txt"
+  },
+  {
+    "file": "opencode/01-author-coexistence/summary.json",
+    "sha256": "ca0836437ba525c33fd7a9e1f339c20ca01adff4446ec5b9e265184ebd70c568",
+    "original": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/evidence-model-opencode/01-author-coexistence/summary.json"
+  },
+  {
+    "file": "opencode/01-author-retry/app-tests.log",
+    "sha256": "fe5adc504e0d1e43c6cd804dc9ec73ae39448ff8bcce800a4dbaf4d4fe48916e",
+    "original": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/evidence-model-opencode/01-author-retry/app-tests.log"
+  },
+  {
+    "file": "opencode/01-author-retry/prompt.txt",
+    "sha256": "48519ddb11ee49142199a4a9bee159e1e99cfc5d2cb4ac3f0d31b337c6de6d9e",
+    "original": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/evidence-model-opencode/01-author-retry/prompt.txt"
+  },
+  {
+    "file": "opencode/01-author-retry/summary.json",
+    "sha256": "662f2cec0a4936ec42864908a749d5d8e396910754c2a1bc09b9291759459b36",
+    "original": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/evidence-model-opencode/01-author-retry/summary.json"
+  },
+  {
+    "file": "opencode/01-author/app-tests.log",
+    "sha256": "db2dddae3181db7e0282289ca190f09f383d2d0ed2182087c78fd601128a664f",
+    "original": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/evidence-model-opencode/01-author/app-tests.log"
+  },
+  {
+    "file": "opencode/01-author/prompt.txt",
+    "sha256": "24a984fb7b8cc2c2ee20c58289d994ffd71cf56261dd9028cecf3f4e5fa92598",
+    "original": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/evidence-model-opencode/01-author/prompt.txt"
+  },
+  {
+    "file": "opencode/01-author/summary.json",
+    "sha256": "41246def9de2fe549d453d136bfdb946c99559b9e6d7eccb9a0760725c72bf02",
+    "original": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/evidence-model-opencode/01-author/summary.json"
+  },
+  {
+    "file": "opencode/02-domain-retry/app-tests.log",
+    "sha256": "7c7041005f9f2d9b8019e3449b2e97b1d33f8aaec1f0d08d7140cd8787ccee74",
+    "original": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/evidence-model-opencode/02-domain-retry/app-tests.log"
+  },
+  {
+    "file": "opencode/02-domain-retry/prompt.txt",
+    "sha256": "efca01a61d73142a5c0333be0ecb016cb0ba26983ab0504b2e96cb92a06de494",
+    "original": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/evidence-model-opencode/02-domain-retry/prompt.txt"
+  },
+  {
+    "file": "opencode/02-domain-retry/summary.json",
+    "sha256": "06276ce63cedad5006e55a48023aaeb8a7588513ff5a90f2fe9bcb3554d6c0d8",
+    "original": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/evidence-model-opencode/02-domain-retry/summary.json"
+  },
+  {
+    "file": "opencode/02-domain/app-tests.log",
+    "sha256": "fc36415602c860428c586ed6461e42811ec4c1593d0aedda9c76a54813c998e1",
+    "original": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/evidence-model-opencode/02-domain/app-tests.log"
+  },
+  {
+    "file": "opencode/02-domain/prompt.txt",
+    "sha256": "d72fa5e8dd9b80a6b20060a711a4c1655f1debdea00ab80a35357c6448ec6c7a",
+    "original": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/evidence-model-opencode/02-domain/prompt.txt"
+  },
+  {
+    "file": "opencode/02-domain/summary.json",
+    "sha256": "a9c8ffcb4e7e7c47d855346ea4aad76c02ad0ffac41e379ee2030ee00a5370f3",
+    "original": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/evidence-model-opencode/02-domain/summary.json"
+  },
+  {
+    "file": "opencode/03-docs/app-tests.log",
+    "sha256": "588d0023e8393ad8bc90fb77f01caf53fb0a1a22dac333cdb6d71fca76844c87",
+    "original": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/evidence-model-opencode/03-docs/app-tests.log"
+  },
+  {
+    "file": "opencode/03-docs/prompt.txt",
+    "sha256": "40ab8e699bf681b93b018349913ea77fc94bc4e3fe8148aa5b7dd99deb83f5df",
+    "original": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/evidence-model-opencode/03-docs/prompt.txt"
+  },
+  {
+    "file": "opencode/03-docs/summary.json",
+    "sha256": "83b03c6bcb526488255b8aafd68ef192b5d55ee8f061905468335e3c5b6d23c6",
+    "original": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/evidence-model-opencode/03-docs/summary.json"
+  },
+  {
+    "file": "opencode/04-update/app-tests.log",
+    "sha256": "21841734cbab7ffafc2b03cb13d15eadd6fe8f9995aa6866a0b08ef5c543e8f5",
+    "original": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/evidence-model-opencode/04-update/app-tests.log"
+  },
+  {
+    "file": "opencode/04-update/prompt.txt",
+    "sha256": "349651b068c6f2d273ad74e6ff4aca3d65d839c086ab2a69661fa8b019ddd22b",
+    "original": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/evidence-model-opencode/04-update/prompt.txt"
+  },
+  {
+    "file": "opencode/04-update/summary.json",
+    "sha256": "3a8f63bfc83fc8832913515fbfd97a05a667572081af0dbbfe55022169194b5a",
+    "original": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/evidence-model-opencode/04-update/summary.json"
+  },
+  {
+    "file": "opencode/05-updated-domain/app-tests.log",
+    "sha256": "9682150804f313f2ce09f86da5ce4c2194fade38344777b16b8fc36c50f5ebff",
+    "original": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/evidence-model-opencode/05-updated-domain/app-tests.log"
+  },
+  {
+    "file": "opencode/05-updated-domain/prompt.txt",
+    "sha256": "df6cbc9d018f46055235d3005bc8640907d61b1f360913c1b0014d5b2c3f4e0b",
+    "original": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/evidence-model-opencode/05-updated-domain/prompt.txt"
+  },
+  {
+    "file": "opencode/05-updated-domain/summary.json",
+    "sha256": "d0d843a7474c29ff9ccc583d8c3391df4f439a285af5710878cd4c6dff5fac1f",
+    "original": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/evidence-model-opencode/05-updated-domain/summary.json"
+  },
+  {
+    "file": "opencode/06-delete-coexistence/app-tests.log",
+    "sha256": "b135d1ceb589e3340c05994e07331c5d0adc6bc9e387c0170a3ea906c62ff433",
+    "original": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/evidence-model-opencode/06-delete-coexistence/app-tests.log"
+  },
+  {
+    "file": "opencode/06-delete-coexistence/prompt.txt",
+    "sha256": "564aff0b2415f36ef2ad9cb359fbe3b242c13c2ef76bfdce38d668f414360ad2",
+    "original": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/evidence-model-opencode/06-delete-coexistence/prompt.txt"
+  },
+  {
+    "file": "opencode/06-delete-coexistence/summary.json",
+    "sha256": "179b81c372f70b03920ac614c46bcc980e1b7a28d748be835ed2b38aa12a4046",
+    "original": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/evidence-model-opencode/06-delete-coexistence/summary.json"
+  },
+  {
+    "file": "opencode/06-delete/app-tests.log",
+    "sha256": "d596977616978e39144dd58da7078dcf97b925c1a7a75a16f1f481eda4558f3d",
+    "original": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/evidence-model-opencode/06-delete/app-tests.log"
+  },
+  {
+    "file": "opencode/06-delete/prompt.txt",
+    "sha256": "564aff0b2415f36ef2ad9cb359fbe3b242c13c2ef76bfdce38d668f414360ad2",
+    "original": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/evidence-model-opencode/06-delete/prompt.txt"
+  },
+  {
+    "file": "opencode/06-delete/summary.json",
+    "sha256": "df979e5cb2caae82fb1244c0aaf99b9257c8edb9dff48edff8623c16110817b6",
+    "original": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/evidence-model-opencode/06-delete/summary.json"
+  },
+  {
+    "file": "opencode/07-deleted-domain/app-tests.log",
+    "sha256": "06e87d0e6ccd2f285efbf73a980735acd0e62566e04908b1a5c4e28599c6d285",
+    "original": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/evidence-model-opencode/07-deleted-domain/app-tests.log"
+  },
+  {
+    "file": "opencode/07-deleted-domain/prompt.txt",
+    "sha256": "83a52d6bd9a8cdcc5ff8bb327ab129071433688ed04ca5b2c2320d4cca8981d9",
+    "original": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/evidence-model-opencode/07-deleted-domain/prompt.txt"
+  },
+  {
+    "file": "opencode/07-deleted-domain/summary.json",
+    "sha256": "ffdaa26785a29ac6f7378dc275c6d1f2d8c59c9119a365b928b1cd31e043c885",
+    "original": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/evidence-model-opencode/07-deleted-domain/summary.json"
+  },
+  {
+    "file": "opencode/examples/aidd_docs/memory/architecture.md",
+    "sha256": "39e8c397df8d42f12d7e4be50e0201cd9e06b0580af4e618365464cff12198d5",
+    "original": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/evidence-model-opencode/03-docs/before/aidd_docs/memory/architecture.md"
+  },
+  {
+    "file": "opencode/examples/initial-consumer.ts",
+    "sha256": "039f57be9f3fadada8485a2f92394dfc04f66517d7fe0fff93e5ef467ceb95ff",
+    "original": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/evidence-model-opencode/03-docs/before/src/domain/discount-rounding.ts"
+  },
+  {
+    "file": "opencode/examples/post-delete-consumer.ts",
+    "sha256": "ea4b62c3c18eef40935616062ddacc608d6b9d97ee0163ec48a80bf51a6f8862",
+    "original": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/evidence-model-opencode/07-deleted-domain/after/src/domain/refunds.ts"
+  },
+  {
+    "file": "opencode/examples/published-AGENTS.md",
+    "sha256": "2e95d6609b55c44d88562c0566ebdd3bcd1bf9ebbfdf54cdb5b9442fff404f5e",
+    "original": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/evidence-model-opencode/03-docs/before/AGENTS.md"
+  },
+  {
+    "file": "opencode/examples/updated-consumer.ts",
+    "sha256": "aeff777f9c20cb155c875eb98ca59d39ae38a3917b9f9d03333ba81090a75d5f",
+    "original": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/evidence-model-opencode/05-updated-domain/after/src/domain/fees.ts"
+  },
+  {
+    "file": "opencode/observations.json",
+    "sha256": "56a76e552c336911847da06cc6d599dbde57343c66c78be6e7f5abbc0f80ebe9",
+    "original": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/evidence-model-opencode/observations.json"
+  }
+]

@@ -16,9 +16,11 @@ Use taxonomy and `#-slug` naming in [rule-authoring.md](rule-authoring.md). Copi
 
 Codex Markdown guidance is not a `.codex/rules` execution policy. OpenCode V2 ignores config `instructions`; file links and modular `.opencode/rules` sources alone do not publish their text. This contract excludes OpenCode V1. Native syntax tests prove rendering, not runtime consumption by every host. Codex/OpenCode selected together appear once in the shared file; other hosts may also discover AGENTS.md, so physical deduplication does not guarantee model-context deduplication across surfaces.
 
+The shared contribution shows `Applies to:` followed by literal globs in Markdown code spans, or `all files`. Category/slug identity stays in canonical metadata rather than added visible headings. A leading ATX or single-line Setext title is kept without an added title; scope precedes the unchanged body. Otherwise the description supplies a level-two heading before scope and body. This bounded title check ignores fenced examples and indented code; it does not parse all Markdown. Complete body bytes and native rendering remain unchanged.
+
 ## Installed script
 
-Resolve `plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs` relative to this installed skill, then invoke its absolute installed path with Node. Never assume a framework checkout, project-relative script path, or installed AIDD CLI. The CommonJS script uses Node built-ins only and works inside ES module projects.
+Resolve `scripts/write-rule.cjs` beside the loaded installed `SKILL.md` and invoke its absolute path with Node. This applies to native plugins and flat skills. Never reconstruct a plugin path, assume a framework checkout, project-relative script path, or installed AIDD CLI. The CommonJS script uses Node built-ins only and works inside ES module projects.
 
 Prepare a JSON request outside the project rule destinations:
 

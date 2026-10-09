@@ -1,0 +1,1 @@
+Crée uniquement docs/discounts.md avec une courte explication et un exemple utilisateur de calculateDiscountCents. Respecte les conventions applicables au document. Ne modifie aucun code. Pas de délégation.

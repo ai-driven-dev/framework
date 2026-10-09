@@ -1,12 +1,12 @@
 ---
 name: 05-rule-generate
-description: Generate a coding rule that governs editor and agent behavior across the host AI tools. Use when the user wants to write, add, or refactor a rule, convention, or coding standard. Not for other artifacts like skills, agents, or hooks.
+description: Create, update, publish or delete a coding rule across host AI tools. Use when adding, changing or removing a rule, convention or coding standard. Not for skills, agents or hooks.
 argument-hint: topic | auto
 ---
 
 # Rule Generate
 
-Write one canonical rule from intent and render it per confirmed host tool that supports rules, or once as a plugin source.
+Manage canonical rules and their active publications per confirmed host, or author a plugin source.
 
 ## Actions
 

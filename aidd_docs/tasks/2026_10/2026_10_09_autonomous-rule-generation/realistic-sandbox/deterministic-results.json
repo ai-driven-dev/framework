@@ -1,0 +1,2481 @@
+{
+  "historicalProvenance": {
+    "sandbox": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG",
+    "repository": "/Users/baptistelafourcade/orca/workspaces/framework/basketstar",
+    "node": "v24.20.0",
+    "scriptSha256": "9fa10479a267d899a6a024f68e75573f1d009080cd60851f23f06c8f2d190591",
+    "paths": "Recorded arguments preserve original physical paths; portable reproduction accepts --repo or AIDD_REPO_ROOT and allocates a new owned temporary root."
+  },
+  "historical": {
+    "application-baseline": {
+      "args": [
+        "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+        "--test",
+        "tests/invoice.test.ts",
+        "tests/http.test.ts"
+      ],
+      "cwd": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/baseline",
+      "node": "v24.20.0",
+      "exit": 0,
+      "stdout": "✔ real HTTP create, validation rejection, lookup, and not-found journey (62.224833ms)\n✔ exact cents totals and repository isolation (2.053208ms)\n✔ invalid invoice refuses null (0.443709ms)\n✔ invalid invoice refuses {\"customerId\":\"bad\",\"currency\":\"EUR\",\"lines\":[{\"sku\":\"CONSULTING\",\"quantity\":3,\"unitPriceCents\":1999},{\"sku\":\"FREIGHT\",\"quantity\":1,\"unitPriceCents\":450}]} (0.158959ms)\n✔ invalid invoice refuses {\"customerId\":\"cus_acme\",\"currency\":\"GBP\",\"lines\":[{\"sku\":\"CONSULTING\",\"quantity\":3,\"unitPriceCents\":1999},{\"sku\":\"FREIGHT\",\"quantity\":1,\"unitPriceCents\":450}]} (0.085875ms)\n✔ invalid invoice refuses {\"customerId\":\"cus_acme\",\"currency\":\"EUR\",\"lines\":[]} (0.103959ms)\n✔ invalid invoice refuses {\"customerId\":\"cus_acme\",\"currency\":\"EUR\",\"lines\":[{\"sku\":\"X\",\"quantity\":0,\"unitPriceCents\":1}]} (0.089917ms)\n✔ invalid invoice refuses {\"customerId\":\"cus_acme\",\"currency\":\"EUR\",\"lines\":[{\"sku\":\"X\",\"quantity\":1,\"unitPriceCents\":1.25}]} (0.096333ms)\n✔ invalid invoice refuses {\"customerId\":\"cus_acme\",\"currency\":\"EUR\",\"lines\":[{\"sku\":\"X\",\"quantity\":2,\"unitPriceCents\":9007199254740991}]} (0.084917ms)\nℹ tests 9\nℹ suites 0\nℹ pass 9\nℹ fail 0\nℹ cancelled 0\nℹ skipped 0\nℹ todo 0\nℹ duration_ms 223.750209\n",
+      "stderr": ""
+    },
+    "installations": [
+      {
+        "host": "claude",
+        "tool": "claude",
+        "project": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/claude",
+        "mode": "project-local-plugin-install",
+        "runtimeExit": 0,
+        "pluginInstallExit": 0,
+        "script": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/claude/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs"
+      },
+      {
+        "host": "cursor",
+        "tool": "cursor",
+        "project": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/cursor",
+        "mode": "project-local-flat-translation (native activation not exercised)",
+        "runtimeExit": 0,
+        "pluginInstallExit": 1,
+        "script": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/cursor/.cursor/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs"
+      },
+      {
+        "host": "copilot",
+        "tool": "copilot",
+        "project": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/copilot",
+        "mode": "project-local-flat-translation (native activation not exercised)",
+        "runtimeExit": 0,
+        "pluginInstallExit": 0,
+        "script": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/copilot/.github/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs"
+      },
+      {
+        "host": "codex",
+        "tool": "codex",
+        "project": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/codex",
+        "mode": "project-local-flat-translation (native activation not exercised)",
+        "runtimeExit": 0,
+        "pluginInstallExit": 0,
+        "script": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/codex/.agents/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs"
+      },
+      {
+        "host": "opencode",
+        "tool": "opencode",
+        "project": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/opencode",
+        "mode": "project-local-plugin-install",
+        "runtimeExit": 0,
+        "pluginInstallExit": 0,
+        "script": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/opencode/.opencode/skills/aidd-context/05-rule-generate/scripts/write-rule.cjs"
+      },
+      {
+        "host": "mixed",
+        "tool": "claude",
+        "project": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/mixed",
+        "mode": "project-local-plugin-install",
+        "runtimeExit": 0,
+        "pluginInstallExit": 0,
+        "script": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/mixed/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs"
+      },
+      {
+        "host": "mixed",
+        "tool": "cursor",
+        "project": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/mixed",
+        "mode": "project-local-flat-translation (native activation not exercised)",
+        "runtimeExit": 0,
+        "pluginInstallExit": 1,
+        "script": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/mixed/.cursor/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs"
+      },
+      {
+        "host": "mixed",
+        "tool": "copilot",
+        "project": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/mixed",
+        "mode": "project-local-flat-translation (native activation not exercised)",
+        "runtimeExit": 0,
+        "pluginInstallExit": 0,
+        "script": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/mixed/.github/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs"
+      },
+      {
+        "host": "mixed",
+        "tool": "codex",
+        "project": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/mixed",
+        "mode": "project-local-flat-translation (native activation not exercised)",
+        "runtimeExit": 0,
+        "pluginInstallExit": 0,
+        "script": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/mixed/.agents/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs"
+      },
+      {
+        "host": "mixed",
+        "tool": "opencode",
+        "project": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/mixed",
+        "mode": "project-local-plugin-install",
+        "runtimeExit": 0,
+        "pluginInstallExit": 0,
+        "script": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/mixed/.opencode/skills/aidd-context/05-rule-generate/scripts/write-rule.cjs"
+      }
+    ],
+    "installed-script-hashes": [
+      {
+        "host": "claude",
+        "tool": "claude",
+        "script": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/claude/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
+        "sha256": "9fa10479a267d899a6a024f68e75573f1d009080cd60851f23f06c8f2d190591"
+      },
+      {
+        "host": "cursor",
+        "tool": "cursor",
+        "script": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/cursor/.cursor/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
+        "sha256": "9fa10479a267d899a6a024f68e75573f1d009080cd60851f23f06c8f2d190591"
+      },
+      {
+        "host": "copilot",
+        "tool": "copilot",
+        "script": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/copilot/.github/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
+        "sha256": "9fa10479a267d899a6a024f68e75573f1d009080cd60851f23f06c8f2d190591"
+      },
+      {
+        "host": "codex",
+        "tool": "codex",
+        "script": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/codex/.agents/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
+        "sha256": "9fa10479a267d899a6a024f68e75573f1d009080cd60851f23f06c8f2d190591"
+      },
+      {
+        "host": "opencode",
+        "tool": "opencode",
+        "script": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/opencode/.opencode/skills/aidd-context/05-rule-generate/scripts/write-rule.cjs",
+        "sha256": "9fa10479a267d899a6a024f68e75573f1d009080cd60851f23f06c8f2d190591"
+      },
+      {
+        "host": "mixed",
+        "tool": "claude",
+        "script": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/mixed/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
+        "sha256": "9fa10479a267d899a6a024f68e75573f1d009080cd60851f23f06c8f2d190591"
+      },
+      {
+        "host": "mixed",
+        "tool": "cursor",
+        "script": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/mixed/.cursor/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
+        "sha256": "9fa10479a267d899a6a024f68e75573f1d009080cd60851f23f06c8f2d190591"
+      },
+      {
+        "host": "mixed",
+        "tool": "copilot",
+        "script": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/mixed/.github/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
+        "sha256": "9fa10479a267d899a6a024f68e75573f1d009080cd60851f23f06c8f2d190591"
+      },
+      {
+        "host": "mixed",
+        "tool": "codex",
+        "script": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/mixed/.agents/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
+        "sha256": "9fa10479a267d899a6a024f68e75573f1d009080cd60851f23f06c8f2d190591"
+      },
+      {
+        "host": "mixed",
+        "tool": "opencode",
+        "script": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/mixed/.opencode/skills/aidd-context/05-rule-generate/scripts/write-rule.cjs",
+        "sha256": "9fa10479a267d899a6a024f68e75573f1d009080cd60851f23f06c8f2d190591"
+      }
+    ],
+    "install-commands": [
+      {
+        "project": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/claude",
+        "args": [
+          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/cli/dist/cli.js",
+          "framework",
+          "install",
+          "--tool",
+          "claude",
+          "--no-plugins"
+        ],
+        "exit": 0,
+        "stdout": "Installed claude (1 files)\n",
+        "stderr": ""
+      },
+      {
+        "project": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/claude",
+        "args": [
+          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/cli/dist/cli.js",
+          "plugin",
+          "install",
+          "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/plugins/aidd-context",
+          "--tool",
+          "claude",
+          "--scope",
+          "project",
+          "--yes"
+        ],
+        "exit": 0,
+        "stdout": "Plugin added successfully.\n",
+        "stderr": ""
+      },
+      {
+        "project": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/cursor",
+        "args": [
+          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/cli/dist/cli.js",
+          "framework",
+          "install",
+          "--tool",
+          "cursor",
+          "--no-plugins"
+        ],
+        "exit": 0,
+        "stdout": "Installed cursor (1 files)\n",
+        "stderr": ""
+      },
+      {
+        "project": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/cursor",
+        "args": [
+          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/cli/dist/cli.js",
+          "plugin",
+          "install",
+          "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/plugins/aidd-context",
+          "--tool",
+          "cursor",
+          "--scope",
+          "project",
+          "--yes"
+        ],
+        "exit": 1,
+        "stdout": "",
+        "stderr": "Error: Tool 'cursor' does not support scope 'project'. Supported scope: 'user'. Re-run with --scope user or omit the flag.\n"
+      },
+      {
+        "project": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/cursor",
+        "args": [
+          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/cli/dist/cli.js",
+          "translate",
+          "/Users/baptistelafourcade/orca/workspaces/framework/basketstar",
+          "--to",
+          "cursor",
+          "--as",
+          "flat",
+          "--out",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/cursor"
+        ],
+        "exit": 0,
+        "stdout": "Flat-installed 9 plugins, 469 files written under /private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/cursor\n",
+        "stderr": ""
+      },
+      {
+        "project": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/copilot",
+        "args": [
+          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/cli/dist/cli.js",
+          "framework",
+          "install",
+          "--tool",
+          "copilot",
+          "--no-plugins"
+        ],
+        "exit": 0,
+        "stdout": "Installed copilot (0 files)\n",
+        "stderr": ""
+      },
+      {
+        "project": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/copilot",
+        "args": [
+          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/cli/dist/cli.js",
+          "plugin",
+          "install",
+          "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/plugins/aidd-context",
+          "--tool",
+          "copilot",
+          "--scope",
+          "project",
+          "--yes"
+        ],
+        "exit": 0,
+        "stdout": "Plugin added successfully.\n",
+        "stderr": ""
+      },
+      {
+        "project": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/copilot",
+        "args": [
+          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/cli/dist/cli.js",
+          "translate",
+          "/Users/baptistelafourcade/orca/workspaces/framework/basketstar",
+          "--to",
+          "copilot",
+          "--as",
+          "flat",
+          "--out",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/copilot"
+        ],
+        "exit": 0,
+        "stdout": "Flat-installed 9 plugins, 469 files written under /private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/copilot\n",
+        "stderr": ""
+      },
+      {
+        "project": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/codex",
+        "args": [
+          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/cli/dist/cli.js",
+          "framework",
+          "install",
+          "--tool",
+          "codex",
+          "--no-plugins"
+        ],
+        "exit": 0,
+        "stdout": "Installed codex (1 files)\n",
+        "stderr": ""
+      },
+      {
+        "project": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/codex",
+        "args": [
+          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/cli/dist/cli.js",
+          "plugin",
+          "install",
+          "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/plugins/aidd-context",
+          "--tool",
+          "codex",
+          "--scope",
+          "project",
+          "--yes"
+        ],
+        "exit": 0,
+        "stdout": "Plugin \"aidd-context\" (codex): Codex will not run this plugin's hooks until each one is trusted — approve the prompt once in an interactive session, or pass --dangerously-bypass-hook-trust to codex exec for a headless run. Until then, a session leaves no run journal and nothing says why.\nPlugin added successfully.\n",
+        "stderr": ""
+      },
+      {
+        "project": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/codex",
+        "args": [
+          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/cli/dist/cli.js",
+          "translate",
+          "/Users/baptistelafourcade/orca/workspaces/framework/basketstar",
+          "--to",
+          "codex",
+          "--as",
+          "flat",
+          "--out",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/codex"
+        ],
+        "exit": 0,
+        "stdout": "Flat-installed 9 plugins, 470 files written under /private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/codex\n",
+        "stderr": ""
+      },
+      {
+        "project": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/opencode",
+        "args": [
+          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/cli/dist/cli.js",
+          "framework",
+          "install",
+          "--tool",
+          "opencode",
+          "--no-plugins"
+        ],
+        "exit": 0,
+        "stdout": "Installed opencode (2 files)\n",
+        "stderr": ""
+      },
+      {
+        "project": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/opencode",
+        "args": [
+          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/cli/dist/cli.js",
+          "plugin",
+          "install",
+          "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/plugins/aidd-context",
+          "--tool",
+          "opencode",
+          "--scope",
+          "project",
+          "--yes"
+        ],
+        "exit": 0,
+        "stdout": "Plugin added successfully.\n",
+        "stderr": ""
+      },
+      {
+        "project": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/mixed",
+        "args": [
+          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/cli/dist/cli.js",
+          "framework",
+          "install",
+          "--tool",
+          "claude",
+          "--no-plugins"
+        ],
+        "exit": 0,
+        "stdout": "Installed claude (1 files)\n",
+        "stderr": ""
+      },
+      {
+        "project": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/mixed",
+        "args": [
+          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/cli/dist/cli.js",
+          "plugin",
+          "install",
+          "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/plugins/aidd-context",
+          "--tool",
+          "claude",
+          "--scope",
+          "project",
+          "--yes"
+        ],
+        "exit": 0,
+        "stdout": "Plugin added successfully.\n",
+        "stderr": ""
+      },
+      {
+        "project": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/mixed",
+        "args": [
+          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/cli/dist/cli.js",
+          "framework",
+          "install",
+          "--tool",
+          "cursor",
+          "--no-plugins"
+        ],
+        "exit": 0,
+        "stdout": "Installed cursor (1 files)\n",
+        "stderr": ""
+      },
+      {
+        "project": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/mixed",
+        "args": [
+          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/cli/dist/cli.js",
+          "plugin",
+          "install",
+          "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/plugins/aidd-context",
+          "--tool",
+          "cursor",
+          "--scope",
+          "project",
+          "--yes"
+        ],
+        "exit": 1,
+        "stdout": "",
+        "stderr": "Error: Tool 'cursor' does not support scope 'project'. Supported scope: 'user'. Re-run with --scope user or omit the flag.\n"
+      },
+      {
+        "project": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/mixed",
+        "args": [
+          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/cli/dist/cli.js",
+          "translate",
+          "/Users/baptistelafourcade/orca/workspaces/framework/basketstar",
+          "--to",
+          "cursor",
+          "--as",
+          "flat",
+          "--out",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/mixed"
+        ],
+        "exit": 0,
+        "stdout": "Flat-installed 9 plugins, 469 files written under /private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/mixed\n",
+        "stderr": ""
+      },
+      {
+        "project": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/mixed",
+        "args": [
+          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/cli/dist/cli.js",
+          "framework",
+          "install",
+          "--tool",
+          "copilot",
+          "--no-plugins"
+        ],
+        "exit": 0,
+        "stdout": "Installed copilot (0 files)\n",
+        "stderr": ""
+      },
+      {
+        "project": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/mixed",
+        "args": [
+          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/cli/dist/cli.js",
+          "plugin",
+          "install",
+          "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/plugins/aidd-context",
+          "--tool",
+          "copilot",
+          "--scope",
+          "project",
+          "--yes"
+        ],
+        "exit": 0,
+        "stdout": "Plugin added successfully.\n",
+        "stderr": ""
+      },
+      {
+        "project": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/mixed",
+        "args": [
+          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/cli/dist/cli.js",
+          "translate",
+          "/Users/baptistelafourcade/orca/workspaces/framework/basketstar",
+          "--to",
+          "copilot",
+          "--as",
+          "flat",
+          "--out",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/mixed"
+        ],
+        "exit": 0,
+        "stdout": "Flat-installed 9 plugins, 469 files written under /private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/mixed\n",
+        "stderr": ""
+      },
+      {
+        "project": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/mixed",
+        "args": [
+          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/cli/dist/cli.js",
+          "framework",
+          "install",
+          "--tool",
+          "codex",
+          "--no-plugins"
+        ],
+        "exit": 0,
+        "stdout": "Installed codex (1 files)\n",
+        "stderr": ""
+      },
+      {
+        "project": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/mixed",
+        "args": [
+          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/cli/dist/cli.js",
+          "plugin",
+          "install",
+          "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/plugins/aidd-context",
+          "--tool",
+          "codex",
+          "--scope",
+          "project",
+          "--yes"
+        ],
+        "exit": 0,
+        "stdout": "Plugin \"aidd-context\" (codex): Codex will not run this plugin's hooks until each one is trusted — approve the prompt once in an interactive session, or pass --dangerously-bypass-hook-trust to codex exec for a headless run. Until then, a session leaves no run journal and nothing says why.\nPlugin added successfully.\n",
+        "stderr": ""
+      },
+      {
+        "project": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/mixed",
+        "args": [
+          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/cli/dist/cli.js",
+          "translate",
+          "/Users/baptistelafourcade/orca/workspaces/framework/basketstar",
+          "--to",
+          "codex",
+          "--as",
+          "flat",
+          "--out",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/mixed"
+        ],
+        "exit": 0,
+        "stdout": "Flat-installed 9 plugins, 470 files written under /private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/mixed\n",
+        "stderr": ""
+      },
+      {
+        "project": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/mixed",
+        "args": [
+          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/cli/dist/cli.js",
+          "framework",
+          "install",
+          "--tool",
+          "opencode",
+          "--no-plugins"
+        ],
+        "exit": 0,
+        "stdout": "Installed opencode (2 files)\n",
+        "stderr": ""
+      },
+      {
+        "project": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/mixed",
+        "args": [
+          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/cli/dist/cli.js",
+          "plugin",
+          "install",
+          "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/plugins/aidd-context",
+          "--tool",
+          "opencode",
+          "--scope",
+          "project",
+          "--yes"
+        ],
+        "exit": 0,
+        "stdout": "Plugin added successfully.\n",
+        "stderr": ""
+      }
+    ],
+    "lifecycle-results": [
+      {
+        "host": "claude",
+        "steps": 13,
+        "tests": 9,
+        "originalAgentsSha256": "76752d4dcfb002c378b9621d7783c97f427e2864320c11195b50bfca4897e3a7",
+        "userNativePreserved": true,
+        "lastDeleteRestoredOriginalAgents": true
+      },
+      {
+        "host": "cursor",
+        "steps": 13,
+        "tests": 9,
+        "originalAgentsSha256": "76752d4dcfb002c378b9621d7783c97f427e2864320c11195b50bfca4897e3a7",
+        "userNativePreserved": true,
+        "lastDeleteRestoredOriginalAgents": true
+      },
+      {
+        "host": "copilot",
+        "steps": 13,
+        "tests": 9,
+        "originalAgentsSha256": "76752d4dcfb002c378b9621d7783c97f427e2864320c11195b50bfca4897e3a7",
+        "userNativePreserved": true,
+        "lastDeleteRestoredOriginalAgents": true
+      },
+      {
+        "host": "codex",
+        "steps": 13,
+        "tests": 9,
+        "originalAgentsSha256": "76752d4dcfb002c378b9621d7783c97f427e2864320c11195b50bfca4897e3a7",
+        "userNativePreserved": true,
+        "lastDeleteRestoredOriginalAgents": true
+      },
+      {
+        "host": "opencode",
+        "steps": 13,
+        "tests": 9,
+        "originalAgentsSha256": "76752d4dcfb002c378b9621d7783c97f427e2864320c11195b50bfca4897e3a7",
+        "userNativePreserved": true,
+        "lastDeleteRestoredOriginalAgents": true
+      },
+      {
+        "host": "mixed",
+        "steps": 13,
+        "tests": 9,
+        "originalAgentsSha256": "76752d4dcfb002c378b9621d7783c97f427e2864320c11195b50bfca4897e3a7",
+        "userNativePreserved": true,
+        "lastDeleteRestoredOriginalAgents": true
+      }
+    ],
+    "lifecycle-commands": [
+      {
+        "host": "claude",
+        "args": [
+          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/claude/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
+          "--project",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/claude",
+          "--tools",
+          "claude",
+          "--input",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/requests/claude-0.json"
+        ],
+        "exit": 0,
+        "stdout": "{\"files\":[\"aidd_docs/rules/07-quality/7-monetary-precision.md\",\".claude/rules/07-quality/7-monetary-precision.md\"]}\n",
+        "stderr": ""
+      },
+      {
+        "host": "claude",
+        "args": [
+          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/claude/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
+          "--project",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/claude",
+          "--tools",
+          "claude",
+          "--input",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/requests/claude-1.json"
+        ],
+        "exit": 0,
+        "stdout": "{\"files\":[\"aidd_docs/rules/02-programming-languages/2-domain-invariants.md\",\".claude/rules/07-quality/7-monetary-precision.md\",\".claude/rules/02-programming-languages/2-domain-invariants.md\"]}\n",
+        "stderr": ""
+      },
+      {
+        "host": "claude",
+        "args": [
+          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/claude/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
+          "--project",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/claude",
+          "--tools",
+          "claude",
+          "--input",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/requests/claude-2.json"
+        ],
+        "exit": 0,
+        "stdout": "{\"files\":[\"aidd_docs/rules/09-other/9-api-documentation.md\",\".claude/rules/02-programming-languages/2-domain-invariants.md\",\".claude/rules/07-quality/7-monetary-precision.md\",\".claude/rules/09-other/9-api-documentation.md\"]}\n",
+        "stderr": ""
+      },
+      {
+        "host": "claude",
+        "args": [
+          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/claude/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
+          "--project",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/claude",
+          "--tools",
+          "claude",
+          "--input",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/requests/claude-3.json"
+        ],
+        "exit": 0,
+        "stdout": "{\"files\":[\"aidd_docs/rules/07-quality/7-monetary-precision.md\",\".claude/rules/02-programming-languages/2-domain-invariants.md\",\".claude/rules/07-quality/7-monetary-precision.md\",\".claude/rules/09-other/9-api-documentation.md\"]}\n",
+        "stderr": ""
+      },
+      {
+        "host": "claude",
+        "args": [
+          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/claude/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
+          "--project",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/claude",
+          "--tools",
+          "claude",
+          "--input",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/requests/claude-4.json"
+        ],
+        "exit": 0,
+        "stdout": "{\"files\":[\"aidd_docs/rules/02-programming-languages/2-domain-invariants.md\",\".claude/rules/02-programming-languages/2-domain-invariants.md\",\".claude/rules/07-quality/7-monetary-precision.md\",\".claude/rules/09-other/9-api-documentation.md\"]}\n",
+        "stderr": ""
+      },
+      {
+        "host": "claude",
+        "args": [
+          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/claude/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
+          "--project",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/claude",
+          "--tools",
+          "claude",
+          "--input",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/requests/claude-5.json"
+        ],
+        "exit": 0,
+        "stdout": "{\"files\":[\"aidd_docs/rules/09-other/9-api-documentation.md\",\".claude/rules/02-programming-languages/2-domain-invariants.md\",\".claude/rules/07-quality/7-monetary-precision.md\",\".claude/rules/09-other/9-api-documentation.md\"]}\n",
+        "stderr": ""
+      },
+      {
+        "host": "claude",
+        "args": [
+          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/claude/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
+          "--project",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/claude",
+          "--tools",
+          "claude",
+          "--publish"
+        ],
+        "exit": 0,
+        "stdout": "{\"files\":[\".claude/rules/02-programming-languages/2-domain-invariants.md\",\".claude/rules/07-quality/7-monetary-precision.md\",\".claude/rules/09-other/9-api-documentation.md\"]}\n",
+        "stderr": ""
+      },
+      {
+        "host": "claude",
+        "args": [
+          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/claude/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
+          "--project",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/claude",
+          "--tools",
+          "claude",
+          "--publish"
+        ],
+        "exit": 0,
+        "stdout": "{\"files\":[\".claude/rules/02-programming-languages/2-domain-invariants.md\",\".claude/rules/07-quality/7-monetary-precision.md\",\".claude/rules/09-other/9-api-documentation.md\"]}\n",
+        "stderr": ""
+      },
+      {
+        "host": "claude",
+        "args": [
+          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/claude/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
+          "--project",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/claude",
+          "--tools",
+          "opencode",
+          "--input",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/requests/claude-8.json"
+        ],
+        "exit": 0,
+        "stdout": "{\"files\":[\"aidd_docs/rules/09-other/9-api-documentation.md\",\".claude/rules/02-programming-languages/2-domain-invariants.md\",\".claude/rules/07-quality/7-monetary-precision.md\",\".claude/rules/09-other/9-api-documentation.md\",\"AGENTS.md\"]}\n",
+        "stderr": ""
+      },
+      {
+        "host": "claude",
+        "args": [
+          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/claude/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
+          "--project",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/claude",
+          "--tools",
+          "claude",
+          "--input",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/requests/claude-9.json"
+        ],
+        "exit": 0,
+        "stdout": "{\"files\":[\"aidd_docs/rules/09-other/9-api-documentation.md\",\".claude/rules/02-programming-languages/2-domain-invariants.md\",\".claude/rules/07-quality/7-monetary-precision.md\",\".claude/rules/09-other/9-api-documentation.md\",\"AGENTS.md\"]}\n",
+        "stderr": ""
+      },
+      {
+        "host": "claude",
+        "args": [
+          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/claude/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
+          "--project",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/claude",
+          "--tools",
+          "claude",
+          "--delete",
+          "09-other/9-api-documentation"
+        ],
+        "exit": 0,
+        "stdout": "{\"files\":[\"aidd_docs/rules/09-other/9-api-documentation.md\",\".claude/rules/02-programming-languages/2-domain-invariants.md\",\".claude/rules/07-quality/7-monetary-precision.md\",\".claude/rules/09-other/9-api-documentation.md\"]}\n",
+        "stderr": ""
+      },
+      {
+        "host": "claude",
+        "args": [
+          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/claude/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
+          "--project",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/claude",
+          "--tools",
+          "claude",
+          "--delete",
+          "02-programming-languages/2-domain-invariants"
+        ],
+        "exit": 0,
+        "stdout": "{\"files\":[\"aidd_docs/rules/02-programming-languages/2-domain-invariants.md\",\".claude/rules/02-programming-languages/2-domain-invariants.md\",\".claude/rules/07-quality/7-monetary-precision.md\"]}\n",
+        "stderr": ""
+      },
+      {
+        "host": "claude",
+        "args": [
+          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/claude/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
+          "--project",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/claude",
+          "--tools",
+          "claude",
+          "--delete",
+          "07-quality/7-monetary-precision"
+        ],
+        "exit": 0,
+        "stdout": "{\"files\":[\"aidd_docs/rules/07-quality/7-monetary-precision.md\",\".claude/rules/07-quality/7-monetary-precision.md\"]}\n",
+        "stderr": ""
+      },
+      {
+        "host": "cursor",
+        "args": [
+          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/cursor/.cursor/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
+          "--project",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/cursor",
+          "--tools",
+          "cursor",
+          "--input",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/requests/cursor-13.json"
+        ],
+        "exit": 0,
+        "stdout": "{\"files\":[\"aidd_docs/rules/07-quality/7-monetary-precision.md\",\".cursor/rules/07-quality/7-monetary-precision.mdc\"]}\n",
+        "stderr": ""
+      },
+      {
+        "host": "cursor",
+        "args": [
+          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/cursor/.cursor/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
+          "--project",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/cursor",
+          "--tools",
+          "cursor",
+          "--input",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/requests/cursor-14.json"
+        ],
+        "exit": 0,
+        "stdout": "{\"files\":[\"aidd_docs/rules/02-programming-languages/2-domain-invariants.md\",\".cursor/rules/07-quality/7-monetary-precision.mdc\",\".cursor/rules/02-programming-languages/2-domain-invariants.mdc\"]}\n",
+        "stderr": ""
+      },
+      {
+        "host": "cursor",
+        "args": [
+          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/cursor/.cursor/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
+          "--project",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/cursor",
+          "--tools",
+          "cursor",
+          "--input",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/requests/cursor-15.json"
+        ],
+        "exit": 0,
+        "stdout": "{\"files\":[\"aidd_docs/rules/09-other/9-api-documentation.md\",\".cursor/rules/02-programming-languages/2-domain-invariants.mdc\",\".cursor/rules/07-quality/7-monetary-precision.mdc\",\".cursor/rules/09-other/9-api-documentation.mdc\"]}\n",
+        "stderr": ""
+      },
+      {
+        "host": "cursor",
+        "args": [
+          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/cursor/.cursor/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
+          "--project",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/cursor",
+          "--tools",
+          "cursor",
+          "--input",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/requests/cursor-16.json"
+        ],
+        "exit": 0,
+        "stdout": "{\"files\":[\"aidd_docs/rules/07-quality/7-monetary-precision.md\",\".cursor/rules/02-programming-languages/2-domain-invariants.mdc\",\".cursor/rules/07-quality/7-monetary-precision.mdc\",\".cursor/rules/09-other/9-api-documentation.mdc\"]}\n",
+        "stderr": ""
+      },
+      {
+        "host": "cursor",
+        "args": [
+          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/cursor/.cursor/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
+          "--project",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/cursor",
+          "--tools",
+          "cursor",
+          "--input",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/requests/cursor-17.json"
+        ],
+        "exit": 0,
+        "stdout": "{\"files\":[\"aidd_docs/rules/02-programming-languages/2-domain-invariants.md\",\".cursor/rules/02-programming-languages/2-domain-invariants.mdc\",\".cursor/rules/07-quality/7-monetary-precision.mdc\",\".cursor/rules/09-other/9-api-documentation.mdc\"]}\n",
+        "stderr": ""
+      },
+      {
+        "host": "cursor",
+        "args": [
+          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/cursor/.cursor/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
+          "--project",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/cursor",
+          "--tools",
+          "cursor",
+          "--input",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/requests/cursor-18.json"
+        ],
+        "exit": 0,
+        "stdout": "{\"files\":[\"aidd_docs/rules/09-other/9-api-documentation.md\",\".cursor/rules/02-programming-languages/2-domain-invariants.mdc\",\".cursor/rules/07-quality/7-monetary-precision.mdc\",\".cursor/rules/09-other/9-api-documentation.mdc\"]}\n",
+        "stderr": ""
+      },
+      {
+        "host": "cursor",
+        "args": [
+          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/cursor/.cursor/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
+          "--project",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/cursor",
+          "--tools",
+          "cursor",
+          "--publish"
+        ],
+        "exit": 0,
+        "stdout": "{\"files\":[\".cursor/rules/02-programming-languages/2-domain-invariants.mdc\",\".cursor/rules/07-quality/7-monetary-precision.mdc\",\".cursor/rules/09-other/9-api-documentation.mdc\"]}\n",
+        "stderr": ""
+      },
+      {
+        "host": "cursor",
+        "args": [
+          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/cursor/.cursor/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
+          "--project",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/cursor",
+          "--tools",
+          "cursor",
+          "--publish"
+        ],
+        "exit": 0,
+        "stdout": "{\"files\":[\".cursor/rules/02-programming-languages/2-domain-invariants.mdc\",\".cursor/rules/07-quality/7-monetary-precision.mdc\",\".cursor/rules/09-other/9-api-documentation.mdc\"]}\n",
+        "stderr": ""
+      },
+      {
+        "host": "cursor",
+        "args": [
+          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/cursor/.cursor/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
+          "--project",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/cursor",
+          "--tools",
+          "opencode",
+          "--input",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/requests/cursor-21.json"
+        ],
+        "exit": 0,
+        "stdout": "{\"files\":[\"aidd_docs/rules/09-other/9-api-documentation.md\",\".cursor/rules/02-programming-languages/2-domain-invariants.mdc\",\".cursor/rules/07-quality/7-monetary-precision.mdc\",\".cursor/rules/09-other/9-api-documentation.mdc\",\"AGENTS.md\"]}\n",
+        "stderr": ""
+      },
+      {
+        "host": "cursor",
+        "args": [
+          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/cursor/.cursor/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
+          "--project",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/cursor",
+          "--tools",
+          "cursor",
+          "--input",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/requests/cursor-22.json"
+        ],
+        "exit": 0,
+        "stdout": "{\"files\":[\"aidd_docs/rules/09-other/9-api-documentation.md\",\".cursor/rules/02-programming-languages/2-domain-invariants.mdc\",\".cursor/rules/07-quality/7-monetary-precision.mdc\",\".cursor/rules/09-other/9-api-documentation.mdc\",\"AGENTS.md\"]}\n",
+        "stderr": ""
+      },
+      {
+        "host": "cursor",
+        "args": [
+          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/cursor/.cursor/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
+          "--project",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/cursor",
+          "--tools",
+          "cursor",
+          "--delete",
+          "09-other/9-api-documentation"
+        ],
+        "exit": 0,
+        "stdout": "{\"files\":[\"aidd_docs/rules/09-other/9-api-documentation.md\",\".cursor/rules/02-programming-languages/2-domain-invariants.mdc\",\".cursor/rules/07-quality/7-monetary-precision.mdc\",\".cursor/rules/09-other/9-api-documentation.mdc\"]}\n",
+        "stderr": ""
+      },
+      {
+        "host": "cursor",
+        "args": [
+          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/cursor/.cursor/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
+          "--project",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/cursor",
+          "--tools",
+          "cursor",
+          "--delete",
+          "02-programming-languages/2-domain-invariants"
+        ],
+        "exit": 0,
+        "stdout": "{\"files\":[\"aidd_docs/rules/02-programming-languages/2-domain-invariants.md\",\".cursor/rules/02-programming-languages/2-domain-invariants.mdc\",\".cursor/rules/07-quality/7-monetary-precision.mdc\"]}\n",
+        "stderr": ""
+      },
+      {
+        "host": "cursor",
+        "args": [
+          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/cursor/.cursor/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
+          "--project",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/cursor",
+          "--tools",
+          "cursor",
+          "--delete",
+          "07-quality/7-monetary-precision"
+        ],
+        "exit": 0,
+        "stdout": "{\"files\":[\"aidd_docs/rules/07-quality/7-monetary-precision.md\",\".cursor/rules/07-quality/7-monetary-precision.mdc\"]}\n",
+        "stderr": ""
+      },
+      {
+        "host": "copilot",
+        "args": [
+          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/copilot/.github/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
+          "--project",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/copilot",
+          "--tools",
+          "copilot",
+          "--input",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/requests/copilot-26.json"
+        ],
+        "exit": 0,
+        "stdout": "{\"files\":[\"aidd_docs/rules/07-quality/7-monetary-precision.md\",\".github/instructions/07-monetary-precision.instructions.md\"]}\n",
+        "stderr": ""
+      },
+      {
+        "host": "copilot",
+        "args": [
+          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/copilot/.github/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
+          "--project",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/copilot",
+          "--tools",
+          "copilot",
+          "--input",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/requests/copilot-27.json"
+        ],
+        "exit": 0,
+        "stdout": "{\"files\":[\"aidd_docs/rules/02-programming-languages/2-domain-invariants.md\",\".github/instructions/07-monetary-precision.instructions.md\",\".github/instructions/02-domain-invariants.instructions.md\"]}\n",
+        "stderr": ""
+      },
+      {
+        "host": "copilot",
+        "args": [
+          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/copilot/.github/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
+          "--project",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/copilot",
+          "--tools",
+          "copilot",
+          "--input",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/requests/copilot-28.json"
+        ],
+        "exit": 0,
+        "stdout": "{\"files\":[\"aidd_docs/rules/09-other/9-api-documentation.md\",\".github/instructions/02-domain-invariants.instructions.md\",\".github/instructions/07-monetary-precision.instructions.md\",\".github/instructions/09-api-documentation.instructions.md\"]}\n",
+        "stderr": ""
+      },
+      {
+        "host": "copilot",
+        "args": [
+          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/copilot/.github/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
+          "--project",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/copilot",
+          "--tools",
+          "copilot",
+          "--input",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/requests/copilot-29.json"
+        ],
+        "exit": 0,
+        "stdout": "{\"files\":[\"aidd_docs/rules/07-quality/7-monetary-precision.md\",\".github/instructions/02-domain-invariants.instructions.md\",\".github/instructions/07-monetary-precision.instructions.md\",\".github/instructions/09-api-documentation.instructions.md\"]}\n",
+        "stderr": ""
+      },
+      {
+        "host": "copilot",
+        "args": [
+          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/copilot/.github/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
+          "--project",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/copilot",
+          "--tools",
+          "copilot",
+          "--input",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/requests/copilot-30.json"
+        ],
+        "exit": 0,
+        "stdout": "{\"files\":[\"aidd_docs/rules/02-programming-languages/2-domain-invariants.md\",\".github/instructions/02-domain-invariants.instructions.md\",\".github/instructions/07-monetary-precision.instructions.md\",\".github/instructions/09-api-documentation.instructions.md\"]}\n",
+        "stderr": ""
+      },
+      {
+        "host": "copilot",
+        "args": [
+          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/copilot/.github/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
+          "--project",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/copilot",
+          "--tools",
+          "copilot",
+          "--input",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/requests/copilot-31.json"
+        ],
+        "exit": 0,
+        "stdout": "{\"files\":[\"aidd_docs/rules/09-other/9-api-documentation.md\",\".github/instructions/02-domain-invariants.instructions.md\",\".github/instructions/07-monetary-precision.instructions.md\",\".github/instructions/09-api-documentation.instructions.md\"]}\n",
+        "stderr": ""
+      },
+      {
+        "host": "copilot",
+        "args": [
+          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/copilot/.github/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
+          "--project",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/copilot",
+          "--tools",
+          "copilot",
+          "--publish"
+        ],
+        "exit": 0,
+        "stdout": "{\"files\":[\".github/instructions/02-domain-invariants.instructions.md\",\".github/instructions/07-monetary-precision.instructions.md\",\".github/instructions/09-api-documentation.instructions.md\"]}\n",
+        "stderr": ""
+      },
+      {
+        "host": "copilot",
+        "args": [
+          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/copilot/.github/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
+          "--project",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/copilot",
+          "--tools",
+          "copilot",
+          "--publish"
+        ],
+        "exit": 0,
+        "stdout": "{\"files\":[\".github/instructions/02-domain-invariants.instructions.md\",\".github/instructions/07-monetary-precision.instructions.md\",\".github/instructions/09-api-documentation.instructions.md\"]}\n",
+        "stderr": ""
+      },
+      {
+        "host": "copilot",
+        "args": [
+          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/copilot/.github/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
+          "--project",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/copilot",
+          "--tools",
+          "opencode",
+          "--input",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/requests/copilot-34.json"
+        ],
+        "exit": 0,
+        "stdout": "{\"files\":[\"aidd_docs/rules/09-other/9-api-documentation.md\",\".github/instructions/02-domain-invariants.instructions.md\",\".github/instructions/07-monetary-precision.instructions.md\",\".github/instructions/09-api-documentation.instructions.md\",\"AGENTS.md\"]}\n",
+        "stderr": ""
+      },
+      {
+        "host": "copilot",
+        "args": [
+          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/copilot/.github/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
+          "--project",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/copilot",
+          "--tools",
+          "copilot",
+          "--input",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/requests/copilot-35.json"
+        ],
+        "exit": 0,
+        "stdout": "{\"files\":[\"aidd_docs/rules/09-other/9-api-documentation.md\",\".github/instructions/02-domain-invariants.instructions.md\",\".github/instructions/07-monetary-precision.instructions.md\",\".github/instructions/09-api-documentation.instructions.md\",\"AGENTS.md\"]}\n",
+        "stderr": ""
+      },
+      {
+        "host": "copilot",
+        "args": [
+          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/copilot/.github/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
+          "--project",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/copilot",
+          "--tools",
+          "copilot",
+          "--delete",
+          "09-other/9-api-documentation"
+        ],
+        "exit": 0,
+        "stdout": "{\"files\":[\"aidd_docs/rules/09-other/9-api-documentation.md\",\".github/instructions/02-domain-invariants.instructions.md\",\".github/instructions/07-monetary-precision.instructions.md\",\".github/instructions/09-api-documentation.instructions.md\"]}\n",
+        "stderr": ""
+      },
+      {
+        "host": "copilot",
+        "args": [
+          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/copilot/.github/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
+          "--project",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/copilot",
+          "--tools",
+          "copilot",
+          "--delete",
+          "02-programming-languages/2-domain-invariants"
+        ],
+        "exit": 0,
+        "stdout": "{\"files\":[\"aidd_docs/rules/02-programming-languages/2-domain-invariants.md\",\".github/instructions/02-domain-invariants.instructions.md\",\".github/instructions/07-monetary-precision.instructions.md\"]}\n",
+        "stderr": ""
+      },
+      {
+        "host": "copilot",
+        "args": [
+          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/copilot/.github/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
+          "--project",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/copilot",
+          "--tools",
+          "copilot",
+          "--delete",
+          "07-quality/7-monetary-precision"
+        ],
+        "exit": 0,
+        "stdout": "{\"files\":[\"aidd_docs/rules/07-quality/7-monetary-precision.md\",\".github/instructions/07-monetary-precision.instructions.md\"]}\n",
+        "stderr": ""
+      },
+      {
+        "host": "codex",
+        "args": [
+          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/codex/.agents/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
+          "--project",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/codex",
+          "--tools",
+          "codex",
+          "--input",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/requests/codex-39.json"
+        ],
+        "exit": 0,
+        "stdout": "{\"files\":[\"aidd_docs/rules/07-quality/7-monetary-precision.md\",\"AGENTS.md\"]}\n",
+        "stderr": ""
+      },
+      {
+        "host": "codex",
+        "args": [
+          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/codex/.agents/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
+          "--project",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/codex",
+          "--tools",
+          "codex",
+          "--input",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/requests/codex-40.json"
+        ],
+        "exit": 0,
+        "stdout": "{\"files\":[\"aidd_docs/rules/02-programming-languages/2-domain-invariants.md\",\"AGENTS.md\"]}\n",
+        "stderr": ""
+      },
+      {
+        "host": "codex",
+        "args": [
+          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/codex/.agents/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
+          "--project",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/codex",
+          "--tools",
+          "codex",
+          "--input",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/requests/codex-41.json"
+        ],
+        "exit": 0,
+        "stdout": "{\"files\":[\"aidd_docs/rules/09-other/9-api-documentation.md\",\"AGENTS.md\"]}\n",
+        "stderr": ""
+      },
+      {
+        "host": "codex",
+        "args": [
+          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/codex/.agents/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
+          "--project",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/codex",
+          "--tools",
+          "codex",
+          "--input",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/requests/codex-42.json"
+        ],
+        "exit": 0,
+        "stdout": "{\"files\":[\"aidd_docs/rules/07-quality/7-monetary-precision.md\",\"AGENTS.md\"]}\n",
+        "stderr": ""
+      },
+      {
+        "host": "codex",
+        "args": [
+          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/codex/.agents/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
+          "--project",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/codex",
+          "--tools",
+          "codex",
+          "--input",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/requests/codex-43.json"
+        ],
+        "exit": 0,
+        "stdout": "{\"files\":[\"aidd_docs/rules/02-programming-languages/2-domain-invariants.md\",\"AGENTS.md\"]}\n",
+        "stderr": ""
+      },
+      {
+        "host": "codex",
+        "args": [
+          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/codex/.agents/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
+          "--project",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/codex",
+          "--tools",
+          "codex",
+          "--input",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/requests/codex-44.json"
+        ],
+        "exit": 0,
+        "stdout": "{\"files\":[\"aidd_docs/rules/09-other/9-api-documentation.md\",\"AGENTS.md\"]}\n",
+        "stderr": ""
+      },
+      {
+        "host": "codex",
+        "args": [
+          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/codex/.agents/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
+          "--project",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/codex",
+          "--tools",
+          "codex",
+          "--publish"
+        ],
+        "exit": 0,
+        "stdout": "{\"files\":[\"AGENTS.md\"]}\n",
+        "stderr": ""
+      },
+      {
+        "host": "codex",
+        "args": [
+          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/codex/.agents/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
+          "--project",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/codex",
+          "--tools",
+          "codex",
+          "--publish"
+        ],
+        "exit": 0,
+        "stdout": "{\"files\":[\"AGENTS.md\"]}\n",
+        "stderr": ""
+      },
+      {
+        "host": "codex",
+        "args": [
+          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/codex/.agents/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
+          "--project",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/codex",
+          "--tools",
+          "opencode",
+          "--input",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/requests/codex-47.json"
+        ],
+        "exit": 0,
+        "stdout": "{\"files\":[\"aidd_docs/rules/09-other/9-api-documentation.md\",\"AGENTS.md\"]}\n",
+        "stderr": ""
+      },
+      {
+        "host": "codex",
+        "args": [
+          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/codex/.agents/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
+          "--project",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/codex",
+          "--tools",
+          "codex",
+          "--input",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/requests/codex-48.json"
+        ],
+        "exit": 0,
+        "stdout": "{\"files\":[\"aidd_docs/rules/09-other/9-api-documentation.md\",\"AGENTS.md\"]}\n",
+        "stderr": ""
+      },
+      {
+        "host": "codex",
+        "args": [
+          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/codex/.agents/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
+          "--project",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/codex",
+          "--tools",
+          "codex",
+          "--delete",
+          "09-other/9-api-documentation"
+        ],
+        "exit": 0,
+        "stdout": "{\"files\":[\"aidd_docs/rules/09-other/9-api-documentation.md\",\"AGENTS.md\"]}\n",
+        "stderr": ""
+      },
+      {
+        "host": "codex",
+        "args": [
+          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/codex/.agents/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
+          "--project",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/codex",
+          "--tools",
+          "codex",
+          "--delete",
+          "02-programming-languages/2-domain-invariants"
+        ],
+        "exit": 0,
+        "stdout": "{\"files\":[\"aidd_docs/rules/02-programming-languages/2-domain-invariants.md\",\"AGENTS.md\"]}\n",
+        "stderr": ""
+      },
+      {
+        "host": "codex",
+        "args": [
+          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/codex/.agents/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
+          "--project",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/codex",
+          "--tools",
+          "codex",
+          "--delete",
+          "07-quality/7-monetary-precision"
+        ],
+        "exit": 0,
+        "stdout": "{\"files\":[\"aidd_docs/rules/07-quality/7-monetary-precision.md\",\"AGENTS.md\"]}\n",
+        "stderr": ""
+      },
+      {
+        "host": "opencode",
+        "args": [
+          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/opencode/.opencode/skills/aidd-context/05-rule-generate/scripts/write-rule.cjs",
+          "--project",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/opencode",
+          "--tools",
+          "opencode",
+          "--input",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/requests/opencode-52.json"
+        ],
+        "exit": 0,
+        "stdout": "{\"files\":[\"aidd_docs/rules/07-quality/7-monetary-precision.md\",\"AGENTS.md\"]}\n",
+        "stderr": ""
+      },
+      {
+        "host": "opencode",
+        "args": [
+          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/opencode/.opencode/skills/aidd-context/05-rule-generate/scripts/write-rule.cjs",
+          "--project",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/opencode",
+          "--tools",
+          "opencode",
+          "--input",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/requests/opencode-53.json"
+        ],
+        "exit": 0,
+        "stdout": "{\"files\":[\"aidd_docs/rules/02-programming-languages/2-domain-invariants.md\",\"AGENTS.md\"]}\n",
+        "stderr": ""
+      },
+      {
+        "host": "opencode",
+        "args": [
+          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/opencode/.opencode/skills/aidd-context/05-rule-generate/scripts/write-rule.cjs",
+          "--project",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/opencode",
+          "--tools",
+          "opencode",
+          "--input",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/requests/opencode-54.json"
+        ],
+        "exit": 0,
+        "stdout": "{\"files\":[\"aidd_docs/rules/09-other/9-api-documentation.md\",\"AGENTS.md\"]}\n",
+        "stderr": ""
+      },
+      {
+        "host": "opencode",
+        "args": [
+          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/opencode/.opencode/skills/aidd-context/05-rule-generate/scripts/write-rule.cjs",
+          "--project",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/opencode",
+          "--tools",
+          "opencode",
+          "--input",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/requests/opencode-55.json"
+        ],
+        "exit": 0,
+        "stdout": "{\"files\":[\"aidd_docs/rules/07-quality/7-monetary-precision.md\",\"AGENTS.md\"]}\n",
+        "stderr": ""
+      },
+      {
+        "host": "opencode",
+        "args": [
+          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/opencode/.opencode/skills/aidd-context/05-rule-generate/scripts/write-rule.cjs",
+          "--project",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/opencode",
+          "--tools",
+          "opencode",
+          "--input",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/requests/opencode-56.json"
+        ],
+        "exit": 0,
+        "stdout": "{\"files\":[\"aidd_docs/rules/02-programming-languages/2-domain-invariants.md\",\"AGENTS.md\"]}\n",
+        "stderr": ""
+      },
+      {
+        "host": "opencode",
+        "args": [
+          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/opencode/.opencode/skills/aidd-context/05-rule-generate/scripts/write-rule.cjs",
+          "--project",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/opencode",
+          "--tools",
+          "opencode",
+          "--input",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/requests/opencode-57.json"
+        ],
+        "exit": 0,
+        "stdout": "{\"files\":[\"aidd_docs/rules/09-other/9-api-documentation.md\",\"AGENTS.md\"]}\n",
+        "stderr": ""
+      },
+      {
+        "host": "opencode",
+        "args": [
+          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/opencode/.opencode/skills/aidd-context/05-rule-generate/scripts/write-rule.cjs",
+          "--project",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/opencode",
+          "--tools",
+          "opencode",
+          "--publish"
+        ],
+        "exit": 0,
+        "stdout": "{\"files\":[\"AGENTS.md\"]}\n",
+        "stderr": ""
+      },
+      {
+        "host": "opencode",
+        "args": [
+          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/opencode/.opencode/skills/aidd-context/05-rule-generate/scripts/write-rule.cjs",
+          "--project",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/opencode",
+          "--tools",
+          "opencode",
+          "--publish"
+        ],
+        "exit": 0,
+        "stdout": "{\"files\":[\"AGENTS.md\"]}\n",
+        "stderr": ""
+      },
+      {
+        "host": "opencode",
+        "args": [
+          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/opencode/.opencode/skills/aidd-context/05-rule-generate/scripts/write-rule.cjs",
+          "--project",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/opencode",
+          "--tools",
+          "claude",
+          "--input",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/requests/opencode-60.json"
+        ],
+        "exit": 0,
+        "stdout": "{\"files\":[\"aidd_docs/rules/09-other/9-api-documentation.md\",\".claude/rules/09-other/9-api-documentation.md\",\"AGENTS.md\"]}\n",
+        "stderr": ""
+      },
+      {
+        "host": "opencode",
+        "args": [
+          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/opencode/.opencode/skills/aidd-context/05-rule-generate/scripts/write-rule.cjs",
+          "--project",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/opencode",
+          "--tools",
+          "opencode",
+          "--input",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/requests/opencode-61.json"
+        ],
+        "exit": 0,
+        "stdout": "{\"files\":[\"aidd_docs/rules/09-other/9-api-documentation.md\",\".claude/rules/09-other/9-api-documentation.md\",\"AGENTS.md\"]}\n",
+        "stderr": ""
+      },
+      {
+        "host": "opencode",
+        "args": [
+          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/opencode/.opencode/skills/aidd-context/05-rule-generate/scripts/write-rule.cjs",
+          "--project",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/opencode",
+          "--tools",
+          "opencode",
+          "--delete",
+          "09-other/9-api-documentation"
+        ],
+        "exit": 0,
+        "stdout": "{\"files\":[\"aidd_docs/rules/09-other/9-api-documentation.md\",\"AGENTS.md\"]}\n",
+        "stderr": ""
+      },
+      {
+        "host": "opencode",
+        "args": [
+          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/opencode/.opencode/skills/aidd-context/05-rule-generate/scripts/write-rule.cjs",
+          "--project",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/opencode",
+          "--tools",
+          "opencode",
+          "--delete",
+          "02-programming-languages/2-domain-invariants"
+        ],
+        "exit": 0,
+        "stdout": "{\"files\":[\"aidd_docs/rules/02-programming-languages/2-domain-invariants.md\",\"AGENTS.md\"]}\n",
+        "stderr": ""
+      },
+      {
+        "host": "opencode",
+        "args": [
+          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/opencode/.opencode/skills/aidd-context/05-rule-generate/scripts/write-rule.cjs",
+          "--project",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/opencode",
+          "--tools",
+          "opencode",
+          "--delete",
+          "07-quality/7-monetary-precision"
+        ],
+        "exit": 0,
+        "stdout": "{\"files\":[\"aidd_docs/rules/07-quality/7-monetary-precision.md\",\"AGENTS.md\"]}\n",
+        "stderr": ""
+      },
+      {
+        "host": "mixed",
+        "args": [
+          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/mixed/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
+          "--project",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/mixed",
+          "--tools",
+          "claude,cursor,copilot,codex,opencode",
+          "--input",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/requests/mixed-65.json"
+        ],
+        "exit": 0,
+        "stdout": "{\"files\":[\"aidd_docs/rules/07-quality/7-monetary-precision.md\",\".claude/rules/07-quality/7-monetary-precision.md\",\".github/instructions/07-monetary-precision.instructions.md\",\".cursor/rules/07-quality/7-monetary-precision.mdc\",\"AGENTS.md\"]}\n",
+        "stderr": ""
+      },
+      {
+        "host": "mixed",
+        "args": [
+          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/mixed/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
+          "--project",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/mixed",
+          "--tools",
+          "claude,cursor,copilot,codex,opencode",
+          "--input",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/requests/mixed-66.json"
+        ],
+        "exit": 0,
+        "stdout": "{\"files\":[\"aidd_docs/rules/02-programming-languages/2-domain-invariants.md\",\".claude/rules/07-quality/7-monetary-precision.md\",\".claude/rules/02-programming-languages/2-domain-invariants.md\",\".github/instructions/07-monetary-precision.instructions.md\",\".github/instructions/02-domain-invariants.instructions.md\",\".cursor/rules/07-quality/7-monetary-precision.mdc\",\".cursor/rules/02-programming-languages/2-domain-invariants.mdc\",\"AGENTS.md\"]}\n",
+        "stderr": ""
+      },
+      {
+        "host": "mixed",
+        "args": [
+          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/mixed/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
+          "--project",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/mixed",
+          "--tools",
+          "claude,cursor,copilot,codex,opencode",
+          "--input",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/requests/mixed-67.json"
+        ],
+        "exit": 0,
+        "stdout": "{\"files\":[\"aidd_docs/rules/09-other/9-api-documentation.md\",\".claude/rules/02-programming-languages/2-domain-invariants.md\",\".claude/rules/07-quality/7-monetary-precision.md\",\".claude/rules/09-other/9-api-documentation.md\",\".github/instructions/02-domain-invariants.instructions.md\",\".github/instructions/07-monetary-precision.instructions.md\",\".github/instructions/09-api-documentation.instructions.md\",\".cursor/rules/02-programming-languages/2-domain-invariants.mdc\",\".cursor/rules/07-quality/7-monetary-precision.mdc\",\".cursor/rules/09-other/9-api-documentation.mdc\",\"AGENTS.md\"]}\n",
+        "stderr": ""
+      },
+      {
+        "host": "mixed",
+        "args": [
+          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/mixed/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
+          "--project",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/mixed",
+          "--tools",
+          "claude,cursor,copilot,codex,opencode",
+          "--input",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/requests/mixed-68.json"
+        ],
+        "exit": 0,
+        "stdout": "{\"files\":[\"aidd_docs/rules/07-quality/7-monetary-precision.md\",\".claude/rules/02-programming-languages/2-domain-invariants.md\",\".claude/rules/07-quality/7-monetary-precision.md\",\".claude/rules/09-other/9-api-documentation.md\",\".github/instructions/02-domain-invariants.instructions.md\",\".github/instructions/07-monetary-precision.instructions.md\",\".github/instructions/09-api-documentation.instructions.md\",\".cursor/rules/02-programming-languages/2-domain-invariants.mdc\",\".cursor/rules/07-quality/7-monetary-precision.mdc\",\".cursor/rules/09-other/9-api-documentation.mdc\",\"AGENTS.md\"]}\n",
+        "stderr": ""
+      },
+      {
+        "host": "mixed",
+        "args": [
+          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/mixed/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
+          "--project",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/mixed",
+          "--tools",
+          "claude,cursor,copilot,codex,opencode",
+          "--input",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/requests/mixed-69.json"
+        ],
+        "exit": 0,
+        "stdout": "{\"files\":[\"aidd_docs/rules/02-programming-languages/2-domain-invariants.md\",\".claude/rules/02-programming-languages/2-domain-invariants.md\",\".claude/rules/07-quality/7-monetary-precision.md\",\".claude/rules/09-other/9-api-documentation.md\",\".github/instructions/02-domain-invariants.instructions.md\",\".github/instructions/07-monetary-precision.instructions.md\",\".github/instructions/09-api-documentation.instructions.md\",\".cursor/rules/02-programming-languages/2-domain-invariants.mdc\",\".cursor/rules/07-quality/7-monetary-precision.mdc\",\".cursor/rules/09-other/9-api-documentation.mdc\",\"AGENTS.md\"]}\n",
+        "stderr": ""
+      },
+      {
+        "host": "mixed",
+        "args": [
+          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/mixed/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
+          "--project",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/mixed",
+          "--tools",
+          "claude,cursor,copilot,codex,opencode",
+          "--input",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/requests/mixed-70.json"
+        ],
+        "exit": 0,
+        "stdout": "{\"files\":[\"aidd_docs/rules/09-other/9-api-documentation.md\",\".claude/rules/02-programming-languages/2-domain-invariants.md\",\".claude/rules/07-quality/7-monetary-precision.md\",\".claude/rules/09-other/9-api-documentation.md\",\".github/instructions/02-domain-invariants.instructions.md\",\".github/instructions/07-monetary-precision.instructions.md\",\".github/instructions/09-api-documentation.instructions.md\",\".cursor/rules/02-programming-languages/2-domain-invariants.mdc\",\".cursor/rules/07-quality/7-monetary-precision.mdc\",\".cursor/rules/09-other/9-api-documentation.mdc\",\"AGENTS.md\"]}\n",
+        "stderr": ""
+      },
+      {
+        "host": "mixed",
+        "args": [
+          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/mixed/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
+          "--project",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/mixed",
+          "--tools",
+          "claude,cursor,copilot,codex,opencode",
+          "--publish"
+        ],
+        "exit": 0,
+        "stdout": "{\"files\":[\".claude/rules/02-programming-languages/2-domain-invariants.md\",\".claude/rules/07-quality/7-monetary-precision.md\",\".claude/rules/09-other/9-api-documentation.md\",\".github/instructions/02-domain-invariants.instructions.md\",\".github/instructions/07-monetary-precision.instructions.md\",\".github/instructions/09-api-documentation.instructions.md\",\".cursor/rules/02-programming-languages/2-domain-invariants.mdc\",\".cursor/rules/07-quality/7-monetary-precision.mdc\",\".cursor/rules/09-other/9-api-documentation.mdc\",\"AGENTS.md\"]}\n",
+        "stderr": ""
+      },
+      {
+        "host": "mixed",
+        "args": [
+          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/mixed/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
+          "--project",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/mixed",
+          "--tools",
+          "claude,cursor,copilot,codex,opencode",
+          "--publish"
+        ],
+        "exit": 0,
+        "stdout": "{\"files\":[\".claude/rules/02-programming-languages/2-domain-invariants.md\",\".claude/rules/07-quality/7-monetary-precision.md\",\".claude/rules/09-other/9-api-documentation.md\",\".github/instructions/02-domain-invariants.instructions.md\",\".github/instructions/07-monetary-precision.instructions.md\",\".github/instructions/09-api-documentation.instructions.md\",\".cursor/rules/02-programming-languages/2-domain-invariants.mdc\",\".cursor/rules/07-quality/7-monetary-precision.mdc\",\".cursor/rules/09-other/9-api-documentation.mdc\",\"AGENTS.md\"]}\n",
+        "stderr": ""
+      },
+      {
+        "host": "mixed",
+        "args": [
+          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/mixed/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
+          "--project",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/mixed",
+          "--tools",
+          "codex",
+          "--input",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/requests/mixed-73.json"
+        ],
+        "exit": 0,
+        "stdout": "{\"files\":[\"aidd_docs/rules/09-other/9-api-documentation.md\",\".claude/rules/02-programming-languages/2-domain-invariants.md\",\".claude/rules/07-quality/7-monetary-precision.md\",\".claude/rules/09-other/9-api-documentation.md\",\".github/instructions/02-domain-invariants.instructions.md\",\".github/instructions/07-monetary-precision.instructions.md\",\".github/instructions/09-api-documentation.instructions.md\",\".cursor/rules/02-programming-languages/2-domain-invariants.mdc\",\".cursor/rules/07-quality/7-monetary-precision.mdc\",\".cursor/rules/09-other/9-api-documentation.mdc\",\"AGENTS.md\"]}\n",
+        "stderr": ""
+      },
+      {
+        "host": "mixed",
+        "args": [
+          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/mixed/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
+          "--project",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/mixed",
+          "--tools",
+          "claude,cursor,copilot,codex,opencode",
+          "--input",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/requests/mixed-74.json"
+        ],
+        "exit": 0,
+        "stdout": "{\"files\":[\"aidd_docs/rules/09-other/9-api-documentation.md\",\".claude/rules/02-programming-languages/2-domain-invariants.md\",\".claude/rules/07-quality/7-monetary-precision.md\",\".claude/rules/09-other/9-api-documentation.md\",\".github/instructions/02-domain-invariants.instructions.md\",\".github/instructions/07-monetary-precision.instructions.md\",\".github/instructions/09-api-documentation.instructions.md\",\".cursor/rules/02-programming-languages/2-domain-invariants.mdc\",\".cursor/rules/07-quality/7-monetary-precision.mdc\",\".cursor/rules/09-other/9-api-documentation.mdc\",\"AGENTS.md\"]}\n",
+        "stderr": ""
+      },
+      {
+        "host": "mixed",
+        "args": [
+          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/mixed/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
+          "--project",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/mixed",
+          "--tools",
+          "claude,cursor,copilot,codex,opencode",
+          "--delete",
+          "09-other/9-api-documentation"
+        ],
+        "exit": 0,
+        "stdout": "{\"files\":[\"aidd_docs/rules/09-other/9-api-documentation.md\",\".claude/rules/02-programming-languages/2-domain-invariants.md\",\".claude/rules/07-quality/7-monetary-precision.md\",\".claude/rules/09-other/9-api-documentation.md\",\".github/instructions/02-domain-invariants.instructions.md\",\".github/instructions/07-monetary-precision.instructions.md\",\".github/instructions/09-api-documentation.instructions.md\",\".cursor/rules/02-programming-languages/2-domain-invariants.mdc\",\".cursor/rules/07-quality/7-monetary-precision.mdc\",\".cursor/rules/09-other/9-api-documentation.mdc\",\"AGENTS.md\"]}\n",
+        "stderr": ""
+      },
+      {
+        "host": "mixed",
+        "args": [
+          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/mixed/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
+          "--project",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/mixed",
+          "--tools",
+          "claude,cursor,copilot,codex,opencode",
+          "--delete",
+          "02-programming-languages/2-domain-invariants"
+        ],
+        "exit": 0,
+        "stdout": "{\"files\":[\"aidd_docs/rules/02-programming-languages/2-domain-invariants.md\",\".claude/rules/02-programming-languages/2-domain-invariants.md\",\".claude/rules/07-quality/7-monetary-precision.md\",\".github/instructions/02-domain-invariants.instructions.md\",\".github/instructions/07-monetary-precision.instructions.md\",\".cursor/rules/02-programming-languages/2-domain-invariants.mdc\",\".cursor/rules/07-quality/7-monetary-precision.mdc\",\"AGENTS.md\"]}\n",
+        "stderr": ""
+      },
+      {
+        "host": "mixed",
+        "args": [
+          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/mixed/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
+          "--project",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/mixed",
+          "--tools",
+          "claude,cursor,copilot,codex,opencode",
+          "--delete",
+          "07-quality/7-monetary-precision"
+        ],
+        "exit": 0,
+        "stdout": "{\"files\":[\"aidd_docs/rules/07-quality/7-monetary-precision.md\",\".claude/rules/07-quality/7-monetary-precision.md\",\".github/instructions/07-monetary-precision.instructions.md\",\".cursor/rules/07-quality/7-monetary-precision.mdc\",\"AGENTS.md\"]}\n",
+        "stderr": ""
+      }
+    ],
+    "negative-results": [
+      {
+        "case": "edited native third source",
+        "exit": 1,
+        "error": "Edited or unowned native output: .cursor/rules/09-other/9-api-documentation.mdc. Restore the generated file; edit the canonical source instead.",
+        "unchangedProjectBytes": true,
+        "existingCanonicalSources": 3
+      },
+      {
+        "case": "duplicate shared block",
+        "exit": 1,
+        "error": "Duplicate, incomplete or legacy AIDD rule contribution; restore it explicitly. No automatic migration.",
+        "unchangedProjectBytes": true,
+        "existingCanonicalSources": 3
+      },
+      {
+        "case": "incomplete shared block",
+        "exit": 1,
+        "error": "Duplicate, incomplete or legacy AIDD rule contribution; restore it explicitly. No automatic migration.",
+        "unchangedProjectBytes": true,
+        "existingCanonicalSources": 3
+      },
+      {
+        "case": "symlink generated target",
+        "exit": 1,
+        "error": "Symlink target or ancestor: .github/instructions/09-api-documentation.instructions.md",
+        "unchangedProjectBytes": true,
+        "existingCanonicalSources": 3
+      },
+      {
+        "case": "symlink canonical source",
+        "exit": 1,
+        "error": "Symlink target or ancestor: aidd_docs/rules/09-other/9-api-documentation.md",
+        "unchangedProjectBytes": true,
+        "existingCanonicalSources": 3
+      },
+      {
+        "case": "Codex root override",
+        "exit": 1,
+        "error": "Root AGENTS.override.md masks Codex AGENTS.md; resolve the override explicitly.",
+        "unchangedProjectBytes": true,
+        "existingCanonicalSources": 3
+      },
+      {
+        "case": "Codex local limit",
+        "exit": 1,
+        "error": "Local AGENTS.md exceeds Codex's default 32 KiB combined instruction limit.",
+        "unchangedProjectBytes": true,
+        "existingCanonicalSources": 3
+      },
+      {
+        "case": "malformed staged JSON",
+        "exit": 1,
+        "error": "Expected property name or '}' in JSON at position 1 (line 1 column 2)",
+        "unchangedProjectBytes": true,
+        "existingCanonicalSources": 3
+      },
+      {
+        "case": "invalid UTF8 staged JSON",
+        "exit": 1,
+        "error": "Invalid UTF-8 in /private/tmp/aidd-realistic-rule-sandbox-UMAHYG/negative-input.json; refusing byte loss.",
+        "unchangedProjectBytes": true,
+        "existingCanonicalSources": 3
+      },
+      {
+        "case": "lone surrogate metadata",
+        "exit": 1,
+        "error": "Unpaired Unicode surrogate; UTF-8 text must roundtrip.",
+        "unchangedProjectBytes": true,
+        "existingCanonicalSources": 3
+      },
+      {
+        "case": "edited separator multi-source delete",
+        "exit": 1,
+        "error": "Edited AIDD rule contribution; restore it and edit canonical sources instead.",
+        "unchangedProjectBytes": true,
+        "existingCanonicalSources": 3
+      },
+      {
+        "case": "unsafe manual canonical publish",
+        "exit": 1,
+        "error": "Reserved AIDD rule marker outside a fenced example.",
+        "unchangedProjectBytes": true,
+        "existingCanonicalSources": 3
+      }
+    ],
+    "negative-commands": [
+      {
+        "args": [
+          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/negative-seed/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
+          "--project",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/negative-seed",
+          "--tools",
+          "claude,cursor,copilot,codex,opencode",
+          "--input",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/negative-input.json"
+        ],
+        "exit": 0,
+        "stdout": "{\"files\":[\"aidd_docs/rules/07-quality/7-monetary-precision.md\",\".claude/rules/07-quality/7-monetary-precision.md\",\".github/instructions/07-monetary-precision.instructions.md\",\".cursor/rules/07-quality/7-monetary-precision.mdc\",\"AGENTS.md\"]}\n",
+        "stderr": ""
+      },
+      {
+        "args": [
+          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/negative-seed/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
+          "--project",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/negative-seed",
+          "--tools",
+          "claude,cursor,copilot,codex,opencode",
+          "--input",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/negative-input.json"
+        ],
+        "exit": 0,
+        "stdout": "{\"files\":[\"aidd_docs/rules/02-programming-languages/2-domain-invariants.md\",\".claude/rules/07-quality/7-monetary-precision.md\",\".claude/rules/02-programming-languages/2-domain-invariants.md\",\".github/instructions/07-monetary-precision.instructions.md\",\".github/instructions/02-domain-invariants.instructions.md\",\".cursor/rules/07-quality/7-monetary-precision.mdc\",\".cursor/rules/02-programming-languages/2-domain-invariants.mdc\",\"AGENTS.md\"]}\n",
+        "stderr": ""
+      },
+      {
+        "args": [
+          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/negative-seed/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
+          "--project",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/negative-seed",
+          "--tools",
+          "claude,cursor,copilot,codex,opencode",
+          "--input",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/negative-input.json"
+        ],
+        "exit": 0,
+        "stdout": "{\"files\":[\"aidd_docs/rules/09-other/9-api-documentation.md\",\".claude/rules/02-programming-languages/2-domain-invariants.md\",\".claude/rules/07-quality/7-monetary-precision.md\",\".claude/rules/09-other/9-api-documentation.md\",\".github/instructions/02-domain-invariants.instructions.md\",\".github/instructions/07-monetary-precision.instructions.md\",\".github/instructions/09-api-documentation.instructions.md\",\".cursor/rules/02-programming-languages/2-domain-invariants.mdc\",\".cursor/rules/07-quality/7-monetary-precision.mdc\",\".cursor/rules/09-other/9-api-documentation.mdc\",\"AGENTS.md\"]}\n",
+        "stderr": ""
+      },
+      {
+        "args": [
+          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/negative-projects/edited-native-third-source/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
+          "--project",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/negative-projects/edited-native-third-source",
+          "--tools",
+          "claude,cursor,copilot,codex,opencode",
+          "--input",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/negative-input.json"
+        ],
+        "exit": 1,
+        "stdout": "",
+        "stderr": "Edited or unowned native output: .cursor/rules/09-other/9-api-documentation.mdc. Restore the generated file; edit the canonical source instead.\n"
+      },
+      {
+        "args": [
+          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/negative-projects/duplicate-shared-block/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
+          "--project",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/negative-projects/duplicate-shared-block",
+          "--tools",
+          "claude,cursor,copilot,codex,opencode",
+          "--input",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/negative-input.json"
+        ],
+        "exit": 1,
+        "stdout": "",
+        "stderr": "Duplicate, incomplete or legacy AIDD rule contribution; restore it explicitly. No automatic migration.\n"
+      },
+      {
+        "args": [
+          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/negative-projects/incomplete-shared-block/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
+          "--project",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/negative-projects/incomplete-shared-block",
+          "--tools",
+          "claude,cursor,copilot,codex,opencode",
+          "--input",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/negative-input.json"
+        ],
+        "exit": 1,
+        "stdout": "",
+        "stderr": "Duplicate, incomplete or legacy AIDD rule contribution; restore it explicitly. No automatic migration.\n"
+      },
+      {
+        "args": [
+          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/negative-projects/symlink-generated-target/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
+          "--project",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/negative-projects/symlink-generated-target",
+          "--tools",
+          "claude,cursor,copilot,codex,opencode",
+          "--input",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/negative-input.json"
+        ],
+        "exit": 1,
+        "stdout": "",
+        "stderr": "Symlink target or ancestor: .github/instructions/09-api-documentation.instructions.md\n"
+      },
+      {
+        "args": [
+          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/negative-projects/symlink-canonical-source/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
+          "--project",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/negative-projects/symlink-canonical-source",
+          "--tools",
+          "claude,cursor,copilot,codex,opencode",
+          "--input",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/negative-input.json"
+        ],
+        "exit": 1,
+        "stdout": "",
+        "stderr": "Symlink target or ancestor: aidd_docs/rules/09-other/9-api-documentation.md\n"
+      },
+      {
+        "args": [
+          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/negative-projects/Codex-root-override/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
+          "--project",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/negative-projects/Codex-root-override",
+          "--tools",
+          "claude,cursor,copilot,codex,opencode",
+          "--input",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/negative-input.json"
+        ],
+        "exit": 1,
+        "stdout": "",
+        "stderr": "Root AGENTS.override.md masks Codex AGENTS.md; resolve the override explicitly.\n"
+      },
+      {
+        "args": [
+          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/negative-projects/Codex-local-limit/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
+          "--project",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/negative-projects/Codex-local-limit",
+          "--tools",
+          "claude,cursor,copilot,codex,opencode",
+          "--input",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/negative-input.json"
+        ],
+        "exit": 1,
+        "stdout": "",
+        "stderr": "Local AGENTS.md exceeds Codex's default 32 KiB combined instruction limit.\n"
+      },
+      {
+        "args": [
+          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/negative-projects/malformed-staged-JSON/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
+          "--project",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/negative-projects/malformed-staged-JSON",
+          "--tools",
+          "claude,cursor,copilot,codex,opencode",
+          "--input",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/negative-input.json"
+        ],
+        "exit": 1,
+        "stdout": "",
+        "stderr": "Expected property name or '}' in JSON at position 1 (line 1 column 2)\n"
+      },
+      {
+        "args": [
+          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/negative-projects/invalid-UTF8-staged-JSON/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
+          "--project",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/negative-projects/invalid-UTF8-staged-JSON",
+          "--tools",
+          "claude,cursor,copilot,codex,opencode",
+          "--input",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/negative-input.json"
+        ],
+        "exit": 1,
+        "stdout": "",
+        "stderr": "Invalid UTF-8 in /private/tmp/aidd-realistic-rule-sandbox-UMAHYG/negative-input.json; refusing byte loss.\n"
+      },
+      {
+        "args": [
+          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/negative-projects/lone-surrogate-metadata/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
+          "--project",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/negative-projects/lone-surrogate-metadata",
+          "--tools",
+          "claude,cursor,copilot,codex,opencode",
+          "--input",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/negative-input.json"
+        ],
+        "exit": 1,
+        "stdout": "",
+        "stderr": "Unpaired Unicode surrogate; UTF-8 text must roundtrip.\n"
+      },
+      {
+        "args": [
+          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/negative-projects/edited-separator-multi-source-delete/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
+          "--project",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/negative-projects/edited-separator-multi-source-delete",
+          "--tools",
+          "claude,cursor,copilot,codex,opencode",
+          "--delete",
+          "09-other/9-api-documentation"
+        ],
+        "exit": 1,
+        "stdout": "",
+        "stderr": "Edited AIDD rule contribution; restore it and edit canonical sources instead.\n"
+      },
+      {
+        "args": [
+          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/negative-projects/unsafe-manual-canonical-publish/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
+          "--project",
+          "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/negative-projects/unsafe-manual-canonical-publish",
+          "--tools",
+          "claude,cursor,copilot,codex,opencode",
+          "--publish"
+        ],
+        "exit": 1,
+        "stdout": "",
+        "stderr": "Reserved AIDD rule marker outside a fenced example.\n"
+      }
+    ],
+    "cleanup-results": {
+      "generatedRulesUnownedAndPreserved": true,
+      "protectedFiles": [
+        "AGENTS.md",
+        "aidd_docs/rules/02-programming-languages/2-invoice-boundary.md",
+        "src/domain/invoice.ts",
+        "src/http/app.ts",
+        "docs/api.md",
+        ".claude/rules/00-architecture/0-user-boundaries.md",
+        ".cursor/rules/00-architecture/0-user-boundaries.mdc",
+        ".github/instructions/00-user-boundaries.instructions.md"
+      ],
+      "installedPluginScriptRemoved": true,
+      "commands": [
+        {
+          "args": [
+            "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+            "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/cli/dist/cli.js",
+            "doctor",
+            "--tool",
+            "opencode",
+            "--plugin",
+            "aidd-context"
+          ],
+          "exit": 0,
+          "stdout": "\nopencode tools:\n  opencode (v5.4.0): 2 files, 0 merge files\n\nDrift:\n  opencode (v5.4.0): in sync\nPlugins:\n  (all in sync)\n\nInstallation is healthy\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+            "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/cli/dist/cli.js",
+            "sync",
+            "--tool",
+            "opencode",
+            "--plugin",
+            "aidd-context",
+            "--force"
+          ],
+          "exit": 0,
+          "stdout": "Checking opencode for files to restore...\nNothing to restore — all files are unmodified.\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+            "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/cli/dist/cli.js",
+            "doctor",
+            "--tool",
+            "opencode",
+            "--plugin",
+            "aidd-context"
+          ],
+          "exit": 0,
+          "stdout": "\nopencode tools:\n  opencode (v5.4.0): 2 files, 0 merge files\n\nDrift:\n  opencode (v5.4.0): in sync\nPlugins:\n  (all in sync)\n\nInstallation is healthy\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+            "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/cli/dist/cli.js",
+            "plugin",
+            "remove",
+            "aidd-context",
+            "--tool",
+            "opencode",
+            "--scope",
+            "project"
+          ],
+          "exit": 0,
+          "stdout": "Plugin 'aidd-context' removed.\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+            "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/cli/dist/cli.js",
+            "doctor",
+            "--tool",
+            "opencode"
+          ],
+          "exit": 0,
+          "stdout": "\nopencode tools:\n  opencode (v5.4.0): 2 files, 0 merge files\n\nDrift:\n  opencode (v5.4.0): in sync\nPlugins:\n  (all in sync)\n\nInstallation is healthy\n",
+          "stderr": ""
+        }
+      ]
+    }
+  },
+  "portableSmoke": {
+    "root": "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-ZfRFu0",
+    "repo": "/Users/baptistelafourcade/orca/workspaces/framework/basketstar",
+    "hosts": [
+      "opencode"
+    ],
+    "tools": [
+      "claude",
+      "cursor",
+      "copilot",
+      "codex",
+      "opencode"
+    ],
+    "smoke": true,
+    "results": [
+      {
+        "name": "baseline API",
+        "args": [
+          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "--test",
+          "tests/invoice.test.ts",
+          "tests/http.test.ts"
+        ],
+        "cwd": "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-ZfRFu0/baseline",
+        "exit": 0,
+        "stdout": "✔ real HTTP create, validation rejection, lookup, and not-found journey (31.394ms)\n✔ exact cents totals and repository isolation (1.736583ms)\n✔ invalid invoice refuses null (0.204292ms)\n✔ invalid invoice refuses {\"customerId\":\"bad\",\"currency\":\"EUR\",\"lines\":[{\"sku\":\"CONSULTING\",\"quantity\":3,\"unitPriceCents\":1999},{\"sku\":\"FREIGHT\",\"quantity\":1,\"unitPriceCents\":450}]} (0.07325ms)\n✔ invalid invoice refuses {\"customerId\":\"cus_acme\",\"currency\":\"GBP\",\"lines\":[{\"sku\":\"CONSULTING\",\"quantity\":3,\"unitPriceCents\":1999},{\"sku\":\"FREIGHT\",\"quantity\":1,\"unitPriceCents\":450}]} (0.047541ms)\n✔ invalid invoice refuses {\"customerId\":\"cus_acme\",\"currency\":\"EUR\",\"lines\":[]} (0.050375ms)\n✔ invalid invoice refuses {\"customerId\":\"cus_acme\",\"currency\":\"EUR\",\"lines\":[{\"sku\":\"X\",\"quantity\":0,\"unitPriceCents\":1}]} (0.048708ms)\n✔ invalid invoice refuses {\"customerId\":\"cus_acme\",\"currency\":\"EUR\",\"lines\":[{\"sku\":\"X\",\"quantity\":1,\"unitPriceCents\":1.25}]} (0.045375ms)\n✔ invalid invoice refuses {\"customerId\":\"cus_acme\",\"currency\":\"EUR\",\"lines\":[{\"sku\":\"X\",\"quantity\":2,\"unitPriceCents\":9007199254740991}]} (0.040875ms)\nℹ tests 9\nℹ suites 0\nℹ pass 9\nℹ fail 0\nℹ cancelled 0\nℹ skipped 0\nℹ todo 0\nℹ duration_ms 143.778375\n",
+        "stderr": ""
+      },
+      {
+        "name": "install",
+        "args": [
+          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/aidd_docs/tasks/2026_10/2026_10_09_autonomous-rule-generation/realistic-sandbox/reproduction/install.cjs",
+          "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-ZfRFu0",
+          "/Users/baptistelafourcade/orca/workspaces/framework/basketstar"
+        ],
+        "cwd": "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-ZfRFu0",
+        "exit": 0,
+        "stdout": "{\"projects\":1,\"installedScripts\":1,\"evidence\":\"/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-ZfRFu0/installations.json\"}\n",
+        "stderr": ""
+      },
+      {
+        "name": "lifecycle",
+        "args": [
+          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/aidd_docs/tasks/2026_10/2026_10_09_autonomous-rule-generation/realistic-sandbox/reproduction/lifecycle.cjs",
+          "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-ZfRFu0",
+          "/Users/baptistelafourcade/orca/workspaces/framework/basketstar"
+        ],
+        "cwd": "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-ZfRFu0",
+        "exit": 0,
+        "stdout": "{\"projects\":1,\"installedInvocations\":13,\"allUserBytesPreserved\":true,\"applicationTests\":9,\"evidence\":\"/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-ZfRFu0/lifecycle-results.json\"}\n",
+        "stderr": ""
+      },
+      {
+        "name": "cleanup-ownership",
+        "args": [
+          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/aidd_docs/tasks/2026_10/2026_10_09_autonomous-rule-generation/realistic-sandbox/reproduction/cleanup-ownership.cjs",
+          "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-ZfRFu0",
+          "/Users/baptistelafourcade/orca/workspaces/framework/basketstar"
+        ],
+        "cwd": "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-ZfRFu0",
+        "exit": 0,
+        "stdout": "{\"generatedRulesPreserved\":true,\"scriptRemoved\":true,\"exits\":[0,0,0,0,0],\"evidence\":\"/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-ZfRFu0/cleanup-results.json\"}\n",
+        "stderr": ""
+      }
+    ],
+    "lifecycle": [
+      {
+        "host": "opencode",
+        "steps": 13,
+        "tests": 9,
+        "originalAgentsSha256": "76752d4dcfb002c378b9621d7783c97f427e2864320c11195b50bfca4897e3a7",
+        "userNativePreserved": true,
+        "lastDeleteRestoredOriginalAgents": true
+      }
+    ],
+    "cleanup": {
+      "generatedRulesUnownedAndPreserved": true,
+      "protectedFiles": [
+        "AGENTS.md",
+        "aidd_docs/rules/02-programming-languages/2-invoice-boundary.md",
+        "src/domain/invoice.ts",
+        "src/http/app.ts",
+        "docs/api.md",
+        ".claude/rules/00-architecture/0-user-boundaries.md",
+        ".cursor/rules/00-architecture/0-user-boundaries.mdc",
+        ".github/instructions/00-user-boundaries.instructions.md"
+      ],
+      "installedPluginScriptRemoved": true,
+      "commands": [
+        {
+          "args": [
+            "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+            "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/cli/dist/cli.js",
+            "doctor",
+            "--tool",
+            "opencode",
+            "--plugin",
+            "aidd-context"
+          ],
+          "exit": 0,
+          "stdout": "\nopencode tools:\n  opencode (v5.4.0): 2 files, 0 merge files\n\nDrift:\n  opencode (v5.4.0): in sync\nPlugins:\n  (all in sync)\n\nInstallation is healthy\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+            "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/cli/dist/cli.js",
+            "sync",
+            "--tool",
+            "opencode",
+            "--plugin",
+            "aidd-context",
+            "--force"
+          ],
+          "exit": 0,
+          "stdout": "Checking opencode for files to restore...\nNothing to restore — all files are unmodified.\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+            "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/cli/dist/cli.js",
+            "doctor",
+            "--tool",
+            "opencode",
+            "--plugin",
+            "aidd-context"
+          ],
+          "exit": 0,
+          "stdout": "\nopencode tools:\n  opencode (v5.4.0): 2 files, 0 merge files\n\nDrift:\n  opencode (v5.4.0): in sync\nPlugins:\n  (all in sync)\n\nInstallation is healthy\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+            "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/cli/dist/cli.js",
+            "plugin",
+            "remove",
+            "aidd-context",
+            "--tool",
+            "opencode",
+            "--scope",
+            "project"
+          ],
+          "exit": 0,
+          "stdout": "Plugin 'aidd-context' removed.\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+            "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/cli/dist/cli.js",
+            "doctor",
+            "--tool",
+            "opencode"
+          ],
+          "exit": 0,
+          "stdout": "\nopencode tools:\n  opencode (v5.4.0): 2 files, 0 merge files\n\nDrift:\n  opencode (v5.4.0): in sync\nPlugins:\n  (all in sync)\n\nInstallation is healthy\n",
+          "stderr": ""
+        }
+      ]
+    },
+    "unownedDirectoryRefusal": {
+      "args": [
+        "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+        "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/aidd_docs/tasks/2026_10/2026_10_09_autonomous-rule-generation/realistic-sandbox/reproduction/install.cjs",
+        "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-t6Kqo6",
+        "/Users/baptistelafourcade/orca/workspaces/framework/basketstar"
+      ],
+      "exit": 1,
+      "directoryBytesUnchanged": true
+    }
+  }
+}

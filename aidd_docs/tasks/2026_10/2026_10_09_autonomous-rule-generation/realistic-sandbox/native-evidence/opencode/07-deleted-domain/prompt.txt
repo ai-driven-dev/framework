@@ -1,0 +1,1 @@
+Ajoute dans src/domain/refunds.ts la fonction exportée calculateRefundCents(paidCents, refundedCents) qui valide deux entiers sûrs non négatifs avec refundedCents inférieur ou égal à paidCents et retourne paidCents moins refundedCents ; lève ValidationError sinon. Ajoute les tests et lance la suite. Pas de délégation.

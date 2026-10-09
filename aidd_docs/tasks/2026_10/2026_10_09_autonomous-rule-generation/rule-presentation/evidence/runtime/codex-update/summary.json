@@ -1,0 +1,18 @@
+[
+  {
+    "case": "generated",
+    "exit": 0,
+    "requests": 1,
+    "paths": [
+      "/v1/responses"
+    ],
+    "present": {
+      "PRESENTATION_NEW": true,
+      "Applies to: `src/domain/**/*.ts`.": true
+    },
+    "absent": {
+      "PRESENTATION_OLD": true,
+      "## 01-standards/1-domain-review:": true
+    }
+  }
+]

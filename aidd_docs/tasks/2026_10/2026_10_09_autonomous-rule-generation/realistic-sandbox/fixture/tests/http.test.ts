@@ -1,0 +1,21 @@
+import assert from 'node:assert/strict';
+import { test } from 'node:test';
+import { once } from 'node:events';
+import { createApp } from '../src/http/app.ts';
+import { InvoiceStore } from '../src/domain/invoice-store.ts';
+test('real HTTP create, validation rejection, lookup, and not-found journey', async (t) => {
+  const store = new InvoiceStore(); const server = createApp(store); server.listen(0,'127.0.0.1'); await once(server,'listening');
+  t.after(async()=>{server.closeAllConnections(); await new Promise<void>((resolve,reject)=>server.close(error=>error?reject(error):resolve()));});
+  const address = server.address(); assert.ok(address && typeof address !== 'string'); const root = 'http://127.0.0.1:'+address.port;
+  const post = (body: unknown) => fetch(root+'/invoices',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(body)});
+  const created = await post({customerId:'cus_acme',currency:'EUR',lines:[{sku:'RETAINER',quantity:2,unitPriceCents:12345}]});
+  assert.equal(created.status,201); const invoice = await created.json(); assert.equal(invoice.totalCents,24690);
+  assert.equal(created.headers.get('location'),'/invoices/'+invoice.id);
+  const found = await fetch(root+'/invoices/'+invoice.id); assert.equal(found.status,200); assert.deepEqual(await found.json(),invoice);
+  const rejected = await post({customerId:'cus_acme',currency:'EUR',lines:[{sku:'BAD',quantity:1,unitPriceCents:1.5}]});
+  assert.equal(rejected.status,422); assert.match((await rejected.json()).error,/integer cents/); assert.equal(store.size,1);
+  assert.equal((await fetch(root+'/invoices/inv_missing')).status,404);
+  assert.equal((await fetch(root+'/missing')).status,404);
+  const malformed = await fetch(root+'/invoices',{method:'POST',headers:{'content-type':'application/json'},body:'{'}); assert.equal(malformed.status,422); assert.equal(store.size,1);
+  assert.equal((await fetch(root+'/invoices',{method:'POST',body:'{}'})).status,415);
+});

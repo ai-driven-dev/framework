@@ -1,0 +1,1 @@
+Ajoute dans src/domain/fees.ts la fonction exportée calculateFeeCents(amountCents, fixedFeeCents) qui valide deux entiers sûrs non négatifs et renvoie leur somme sûre, en levant ValidationError sinon. Ajoute ses tests et lance toute la suite. Pas de délégation.

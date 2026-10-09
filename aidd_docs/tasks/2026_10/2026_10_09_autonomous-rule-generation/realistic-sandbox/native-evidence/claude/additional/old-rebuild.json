@@ -1,0 +1,18 @@
+{
+  "node": "/opt/homebrew/Cellar/node/26.8.2/bin/node",
+  "args": [
+    "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/model-claude-old-native-proof/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
+    "--project",
+    "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/model-claude-old-native-proof",
+    "--tools",
+    "claude",
+    "--input",
+    "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/evidence-model-claude-native-final/old-request.json"
+  ],
+  "result": {
+    "code": 0,
+    "stdout": "{\"files\":[\"aidd_docs/rules/01-standards/1-domain-review.md\",\".claude/rules/01-standards/1-domain-review.md\"]}\n",
+    "stderr": ""
+  },
+  "nativeSha256": "621d8b9d5ce926018c54490ba80c021e392dde12f62caeac4d39548835ac2397"
+}

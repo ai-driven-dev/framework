@@ -1,0 +1,37 @@
+✔ real HTTP create, validation rejection, lookup, and not-found journey (30.774333ms)
+✔ exact cents totals and repository isolation (1.991041ms)
+✔ invalid invoice refuses null (0.243ms)
+✔ invalid invoice refuses {"customerId":"bad","currency":"EUR","lines":[{"sku":"CONSULTING","quantity":3,"unitPriceCents":1999},{"sku":"FREIGHT","quantity":1,"unitPriceCents":450}]} (0.101125ms)
+✔ invalid invoice refuses {"customerId":"cus_acme","currency":"GBP","lines":[{"sku":"CONSULTING","quantity":3,"unitPriceCents":1999},{"sku":"FREIGHT","quantity":1,"unitPriceCents":450}]} (0.053875ms)
+✔ invalid invoice refuses {"customerId":"cus_acme","currency":"EUR","lines":[]} (0.068042ms)
+✔ invalid invoice refuses {"customerId":"cus_acme","currency":"EUR","lines":[{"sku":"X","quantity":0,"unitPriceCents":1}]} (0.047375ms)
+✔ invalid invoice refuses {"customerId":"cus_acme","currency":"EUR","lines":[{"sku":"X","quantity":1,"unitPriceCents":1.25}]} (0.054ms)
+✔ invalid invoice refuses {"customerId":"cus_acme","currency":"EUR","lines":[{"sku":"X","quantity":2,"unitPriceCents":9007199254740991}]} (0.042125ms)
+✔ discount is rounded down to whole cents (0.095333ms)
+✔ percentage discount rounding calculates whole cents rounded down (0.112667ms)
+✔ invalid percentage discount arguments (-1, 10) (0.076125ms)
+✔ invalid percentage discount arguments (1.5, 10) (0.056792ms)
+✔ invalid percentage discount arguments (9007199254740992, 10) (0.030041ms)
+✔ invalid percentage discount arguments (NaN, 10) (0.2465ms)
+✔ invalid percentage discount arguments (Infinity, 10) (0.195583ms)
+✔ invalid percentage discount arguments (100, -1) (0.07625ms)
+✔ invalid percentage discount arguments (100, 101) (0.075708ms)
+✔ invalid percentage discount arguments (100, NaN) (0.037667ms)
+✔ invalid percentage discount arguments (100, Infinity) (0.199625ms)
+✔ invalid discount arguments (-1, 10) (0.064ms)
+✔ invalid discount arguments (1.5, 10) (0.035ms)
+✔ invalid discount arguments (9007199254740992, 10) (0.028875ms)
+✔ invalid discount arguments (NaN, 10) (0.026583ms)
+✔ invalid discount arguments (Infinity, 10) (0.02775ms)
+✔ invalid discount arguments (100, -1) (0.024625ms)
+✔ invalid discount arguments (100, 101) (0.024666ms)
+✔ invalid discount arguments (100, NaN) (0.024125ms)
+✔ invalid discount arguments (100, Infinity) (0.024959ms)
+ℹ tests 29
+ℹ suites 0
+ℹ pass 29
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 137.518625

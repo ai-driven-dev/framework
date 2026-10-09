@@ -1,0 +1,27 @@
+✔ real HTTP create, validation rejection, lookup, and not-found journey (25.780583ms)
+✔ exact cents totals and repository isolation (1.421125ms)
+✔ invalid invoice refuses null (0.164166ms)
+✔ invalid invoice refuses {"customerId":"bad","currency":"EUR","lines":[{"sku":"CONSULTING","quantity":3,"unitPriceCents":1999},{"sku":"FREIGHT","quantity":1,"unitPriceCents":450}]} (0.05925ms)
+✔ invalid invoice refuses {"customerId":"cus_acme","currency":"GBP","lines":[{"sku":"CONSULTING","quantity":3,"unitPriceCents":1999},{"sku":"FREIGHT","quantity":1,"unitPriceCents":450}]} (0.042291ms)
+✔ invalid invoice refuses {"customerId":"cus_acme","currency":"EUR","lines":[]} (0.045292ms)
+✔ invalid invoice refuses {"customerId":"cus_acme","currency":"EUR","lines":[{"sku":"X","quantity":0,"unitPriceCents":1}]} (0.038166ms)
+✔ invalid invoice refuses {"customerId":"cus_acme","currency":"EUR","lines":[{"sku":"X","quantity":1,"unitPriceCents":1.25}]} (0.040375ms)
+✔ invalid invoice refuses {"customerId":"cus_acme","currency":"EUR","lines":[{"sku":"X","quantity":2,"unitPriceCents":9007199254740991}]} (0.035125ms)
+✔ discount is rounded down to whole cents (0.057667ms)
+✔ invalid discount arguments (-1, 10) (0.083625ms)
+✔ invalid discount arguments (1.5, 10) (0.04775ms)
+✔ invalid discount arguments (9007199254740992, 10) (0.038417ms)
+✔ invalid discount arguments (NaN, 10) (0.02525ms)
+✔ invalid discount arguments (Infinity, 10) (0.027333ms)
+✔ invalid discount arguments (100, -1) (0.322667ms)
+✔ invalid discount arguments (100, 101) (0.063916ms)
+✔ invalid discount arguments (100, NaN) (0.048208ms)
+✔ invalid discount arguments (100, Infinity) (0.043458ms)
+ℹ tests 19
+ℹ suites 0
+ℹ pass 19
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 107.362041

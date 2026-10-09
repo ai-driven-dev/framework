@@ -1,0 +1,14 @@
+{
+  "source": "Codex app-server account/rateLimits/read; no inference",
+  "includedWindowUsedPercent": 73,
+  "windowDurationMins": 10080,
+  "ordinaryUsageAllowed": true,
+  "credits": {
+    "hasCredits": false,
+    "balance": "0",
+    "unlimited": false
+  },
+  "accountIdentifiersOmitted": true,
+  "purchases": 0,
+  "APIKeyFallbacks": 0
+}

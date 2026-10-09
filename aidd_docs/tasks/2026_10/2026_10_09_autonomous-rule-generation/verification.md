@@ -1,5 +1,7 @@
 # Revised candidate verification
 
+This report records the earlier writer candidate `9fa10479…`. The current presentation correction and its fresh deterministic/runtime-input checks are recorded in [Readable shared rule verification](rule-presentation/verification.md). Historical subscription-model receipts retain their original writer hash.
+
 ## Candidate
 The autonomous script is 14,069 bytes, SHA-256 `9fa10479a267d899a6a024f68e75573f1d009080cd60851f23f06c8f2d190591`. The installed copy used in final runtime probes has exactly the same hash. CLI source/config/tests/docs match pinned base 12777d03: `git diff --exit-code 12777d03 -- cli/` exits 0. Personal .gitignore and .hermes.md remain outside this candidate.
 
@@ -28,3 +30,7 @@ An independent discovery probe also verifies Codex root guidance, root override 
 Claude/Cursor/Copilot have native-format and delivered-execution coverage, not real model-input captures. No Linux/Windows runtime claim. In-file scopes are model guidance for Codex/OpenCode. Local AGENTS size checks cannot guarantee Codex's combined global/project budget. Other hosts may discover both shared and native guidance. Legacy rules are not migrated; validation preflight and per-file atomic replacement do not promise multi-file I/O rollback or concurrent-writer safety.
 
 Independent [review](review.md) and [challenge](challenge.md) accepted the repaired candidate: seven of seven criteria fulfilled, no open finding, with the bounds above preserved.
+
+## Realistic sandbox supplement
+
+Subsequent subscription-model testing and local skill-instruction corrections are recorded in the [realistic sandbox report](realistic-sandbox/REPORT.md), with [machine-readable results](realistic-sandbox/native-results.json) and a [portable deterministic reproduction](realistic-sandbox/reproduction/README.md). This supplement retains failed native attempts, distinguishes instruction revisions and harness corrections, and explicitly records Cursor’s quota-limited final session and incomplete native exact-update control. The earlier bounds above describe the previously committed candidate, not this later native evidence. No additional commit or push was made for the supplement.

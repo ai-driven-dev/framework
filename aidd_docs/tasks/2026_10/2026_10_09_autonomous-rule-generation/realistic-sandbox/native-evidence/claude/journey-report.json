@@ -1,0 +1,522 @@
+{
+  "host": "claude",
+  "cliVersion": "2.1.295",
+  "model": "claude-sonnet-5-5",
+  "auth": "existing Max subscription OAuth firstParty",
+  "extraUsageEnabled": false,
+  "quotaEvidence": "claude-quota-probe.json",
+  "runs": [
+    {
+      "run": "claude-01",
+      "exit": 0,
+      "timeout": false,
+      "model": "claude-sonnet-5-5",
+      "listUsd": 0.1024224,
+      "usage": {
+        "input_tokens": 8,
+        "cache_creation_input_tokens": 20247,
+        "cache_read_input_tokens": 47842,
+        "output_tokens": 1185,
+        "output_tokens_details": {
+          "thinking_tokens": 0
+        },
+        "server_tool_use": {
+          "web_search_requests": 0,
+          "web_fetch_requests": 0
+        },
+        "service_tier": "standard",
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 20247,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "inference_geo": "global",
+        "iterations": [
+          {
+            "input_tokens": 2,
+            "output_tokens": 436,
+            "cache_read_input_tokens": 19444,
+            "cache_creation_input_tokens": 803,
+            "cache_creation": {
+              "ephemeral_5m_input_tokens": 0,
+              "ephemeral_1h_input_tokens": 803
+            },
+            "type": "message"
+          }
+        ],
+        "speed": "standard",
+        "fallback_credit": null
+      },
+      "tests": 9,
+      "testsExit": 0,
+      "session": "d5c0cc5f-9281-4e49-a41c-6b3cd875af8f"
+    },
+    {
+      "run": "claude-02",
+      "exit": 0,
+      "timeout": false,
+      "model": "claude-sonnet-5-5",
+      "listUsd": 0.0939512,
+      "usage": {
+        "input_tokens": 12,
+        "cache_creation_input_tokens": 13039,
+        "cache_read_input_tokens": 92156,
+        "output_tokens": 2334,
+        "output_tokens_details": {
+          "thinking_tokens": 85
+        },
+        "server_tool_use": {
+          "web_search_requests": 0,
+          "web_fetch_requests": 0
+        },
+        "service_tier": "standard",
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 13039,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "inference_geo": "global",
+        "iterations": [
+          {
+            "input_tokens": 2,
+            "output_tokens": 735,
+            "cache_read_input_tokens": 19306,
+            "cache_creation_input_tokens": 379,
+            "cache_creation": {
+              "ephemeral_5m_input_tokens": 0,
+              "ephemeral_1h_input_tokens": 379
+            },
+            "type": "message"
+          }
+        ],
+        "speed": "standard",
+        "fallback_credit": null
+      },
+      "tests": 24,
+      "testsExit": 0,
+      "session": "432f1dbe-40c9-4cef-8ea9-8bce1256e5e5"
+    },
+    {
+      "run": "claude-03",
+      "exit": 0,
+      "timeout": false,
+      "model": "claude-sonnet-5-5",
+      "listUsd": 0.063165,
+      "usage": {
+        "input_tokens": 6,
+        "cache_creation_input_tokens": 10671,
+        "cache_read_input_tokens": 36545,
+        "output_tokens": 1316,
+        "output_tokens_details": {
+          "thinking_tokens": 0
+        },
+        "server_tool_use": {
+          "web_search_requests": 0,
+          "web_fetch_requests": 0
+        },
+        "service_tier": "standard",
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 10671,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "inference_geo": "global",
+        "iterations": [
+          {
+            "input_tokens": 2,
+            "output_tokens": 316,
+            "cache_read_input_tokens": 16295,
+            "cache_creation_input_tokens": 1022,
+            "cache_creation": {
+              "ephemeral_5m_input_tokens": 0,
+              "ephemeral_1h_input_tokens": 1022
+            },
+            "type": "message"
+          }
+        ],
+        "speed": "standard",
+        "fallback_credit": null
+      },
+      "tests": 24,
+      "testsExit": 0,
+      "session": "864752e0-2ec8-49be-9c8c-4032ff5c8898"
+    },
+    {
+      "run": "claude-04",
+      "exit": 0,
+      "timeout": false,
+      "model": "claude-sonnet-5-5",
+      "listUsd": 0.0861866,
+      "usage": {
+        "input_tokens": 12,
+        "cache_creation_input_tokens": 13410,
+        "cache_read_input_tokens": 91363,
+        "output_tokens": 1425,
+        "output_tokens_details": {
+          "thinking_tokens": 0
+        },
+        "server_tool_use": {
+          "web_search_requests": 0,
+          "web_fetch_requests": 0
+        },
+        "service_tier": "standard",
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 13410,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "inference_geo": "global",
+        "iterations": [
+          {
+            "input_tokens": 2,
+            "output_tokens": 327,
+            "cache_read_input_tokens": 19267,
+            "cache_creation_input_tokens": 789,
+            "cache_creation": {
+              "ephemeral_5m_input_tokens": 0,
+              "ephemeral_1h_input_tokens": 789
+            },
+            "type": "message"
+          }
+        ],
+        "speed": "standard",
+        "fallback_credit": null
+      },
+      "tests": 24,
+      "testsExit": 0,
+      "session": "6b12bb01-d045-45f2-9d33-e4b97dfc7f68"
+    },
+    {
+      "run": "claude-05",
+      "exit": 0,
+      "timeout": false,
+      "model": "claude-sonnet-5-5",
+      "listUsd": 0.088724,
+      "usage": {
+        "input_tokens": 12,
+        "cache_creation_input_tokens": 12316,
+        "cache_read_input_tokens": 88680,
+        "output_tokens": 2170,
+        "output_tokens_details": {
+          "thinking_tokens": 62
+        },
+        "server_tool_use": {
+          "web_search_requests": 0,
+          "web_fetch_requests": 0
+        },
+        "service_tier": "standard",
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 12316,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "inference_geo": "global",
+        "iterations": [
+          {
+            "input_tokens": 2,
+            "output_tokens": 619,
+            "cache_read_input_tokens": 18635,
+            "cache_creation_input_tokens": 327,
+            "cache_creation": {
+              "ephemeral_5m_input_tokens": 0,
+              "ephemeral_1h_input_tokens": 327
+            },
+            "type": "message"
+          }
+        ],
+        "speed": "standard",
+        "fallback_credit": null
+      },
+      "tests": 39,
+      "testsExit": 0,
+      "session": "b209aa20-4080-4ee5-8734-4120cb526f46"
+    },
+    {
+      "run": "claude-06",
+      "exit": 0,
+      "timeout": false,
+      "model": "claude-sonnet-5-5",
+      "listUsd": 0.0745996,
+      "usage": {
+        "input_tokens": 10,
+        "cache_creation_input_tokens": 12010,
+        "cache_read_input_tokens": 70398,
+        "output_tokens": 1246,
+        "output_tokens_details": {
+          "thinking_tokens": 155
+        },
+        "server_tool_use": {
+          "web_search_requests": 0,
+          "web_fetch_requests": 0
+        },
+        "service_tier": "standard",
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 12010,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "inference_geo": "global",
+        "iterations": [
+          {
+            "input_tokens": 2,
+            "output_tokens": 265,
+            "cache_read_input_tokens": 18294,
+            "cache_creation_input_tokens": 362,
+            "cache_creation": {
+              "ephemeral_5m_input_tokens": 0,
+              "ephemeral_1h_input_tokens": 362
+            },
+            "type": "message"
+          }
+        ],
+        "speed": "standard",
+        "fallback_credit": null
+      },
+      "tests": 39,
+      "testsExit": 0,
+      "session": "b1f8df06-f3e4-4855-86c4-484024670251"
+    },
+    {
+      "run": "claude-07",
+      "exit": 0,
+      "timeout": false,
+      "model": "claude-sonnet-5-5",
+      "listUsd": 0.08899939999999999,
+      "usage": {
+        "input_tokens": 10,
+        "cache_creation_input_tokens": 13598,
+        "cache_read_input_tokens": 73137,
+        "output_tokens": 1996,
+        "output_tokens_details": {
+          "thinking_tokens": 0
+        },
+        "server_tool_use": {
+          "web_search_requests": 0,
+          "web_fetch_requests": 0
+        },
+        "service_tier": "standard",
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 13598,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "inference_geo": "global",
+        "iterations": [
+          {
+            "input_tokens": 2,
+            "output_tokens": 610,
+            "cache_read_input_tokens": 19947,
+            "cache_creation_input_tokens": 297,
+            "cache_creation": {
+              "ephemeral_5m_input_tokens": 0,
+              "ephemeral_1h_input_tokens": 297
+            },
+            "type": "message"
+          }
+        ],
+        "speed": "standard",
+        "fallback_credit": null
+      },
+      "tests": 54,
+      "testsExit": 0,
+      "session": "ce219f62-2b21-4800-b410-8c3f7389b84a"
+    },
+    {
+      "run": "claude-08",
+      "exit": 0,
+      "timeout": false,
+      "model": "claude-sonnet-5-5",
+      "listUsd": 0.082523,
+      "usage": {
+        "input_tokens": 10,
+        "cache_creation_input_tokens": 12472,
+        "cache_read_input_tokens": 72575,
+        "output_tokens": 1810,
+        "output_tokens_details": {
+          "thinking_tokens": 0
+        },
+        "server_tool_use": {
+          "web_search_requests": 0,
+          "web_fetch_requests": 0
+        },
+        "service_tier": "standard",
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 12472,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "inference_geo": "global",
+        "iterations": [
+          {
+            "input_tokens": 2,
+            "output_tokens": 506,
+            "cache_read_input_tokens": 18859,
+            "cache_creation_input_tokens": 259,
+            "cache_creation": {
+              "ephemeral_5m_input_tokens": 0,
+              "ephemeral_1h_input_tokens": 259
+            },
+            "type": "message"
+          }
+        ],
+        "speed": "standard",
+        "fallback_credit": null
+      },
+      "tests": 54,
+      "testsExit": 0,
+      "session": "0bfe007a-bfb1-4211-9b2b-df904de9d7a1"
+    },
+    {
+      "run": "claude-native-09",
+      "exit": 0,
+      "timeout": false,
+      "model": "claude-sonnet-5-5",
+      "listUsd": 0.12149800000000001,
+      "usage": {
+        "input_tokens": 12,
+        "cache_creation_input_tokens": 20734,
+        "cache_read_input_tokens": 90140,
+        "output_tokens": 2051,
+        "output_tokens_details": {
+          "thinking_tokens": 133
+        },
+        "server_tool_use": {
+          "web_search_requests": 0,
+          "web_fetch_requests": 0
+        },
+        "service_tier": "standard",
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 20734,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "inference_geo": "global",
+        "iterations": [
+          {
+            "input_tokens": 2,
+            "output_tokens": 559,
+            "cache_read_input_tokens": 20390,
+            "cache_creation_input_tokens": 344,
+            "cache_creation": {
+              "ephemeral_5m_input_tokens": 0,
+              "ephemeral_1h_input_tokens": 344
+            },
+            "type": "message"
+          }
+        ],
+        "speed": "standard",
+        "fallback_credit": null
+      },
+      "tests": 69,
+      "testsExit": 0,
+      "session": "e76c0dcc-c950-4548-8ed3-d3b216bf4570"
+    },
+    {
+      "run": "claude-native-10",
+      "exit": 0,
+      "timeout": false,
+      "model": "claude-sonnet-5-5",
+      "listUsd": 0.06255759999999999,
+      "usage": {
+        "input_tokens": 6,
+        "cache_creation_input_tokens": 11475,
+        "cache_read_input_tokens": 38378,
+        "output_tokens": 897,
+        "output_tokens_details": {
+          "thinking_tokens": 0
+        },
+        "server_tool_use": {
+          "web_search_requests": 0,
+          "web_fetch_requests": 0
+        },
+        "service_tier": "standard",
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 11475,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "inference_geo": "global",
+        "iterations": [
+          {
+            "input_tokens": 2,
+            "output_tokens": 206,
+            "cache_read_input_tokens": 17618,
+            "cache_creation_input_tokens": 502,
+            "cache_creation": {
+              "ephemeral_5m_input_tokens": 0,
+              "ephemeral_1h_input_tokens": 502
+            },
+            "type": "message"
+          }
+        ],
+        "speed": "standard",
+        "fallback_credit": null
+      },
+      "tests": 69,
+      "testsExit": 0,
+      "session": "2c081ecb-f127-4802-a682-55a9a8384996"
+    }
+  ],
+  "sources": [
+    {
+      "url": "https://code.claude.com/docs/en/memory#organize-rules-with-claude-rules",
+      "claim": "project rules skipped when project excluded from --setting-sources; Read/Write/Edit matching-file triggers scoped rules"
+    },
+    {
+      "url": "https://code.claude.com/docs/en/cli-reference",
+      "claim": "--restricted loads only managed and CLI settings"
+    }
+  ],
+  "publication": {
+    "create": "claude-01",
+    "update": "claude-04",
+    "delete": "claude-06",
+    "nativeScriptObserved": true,
+    "installedSkill": "aidd-context:05-rule-generate",
+    "rule": "01-standards/1-domain-review",
+    "scope": "src/domain/**/*.ts"
+  },
+  "runtime": {
+    "initialConsumer": "invalid harness false negative: --restricted excludes project rules",
+    "nativeConsumer": {
+      "run": "claude-native-09",
+      "status": "pass",
+      "function": "calculateRebateCents",
+      "exactPrecedingComment": "// Domain validation reviewed",
+      "ruleOrCanonicalRead": false,
+      "tests": 69,
+      "testsExit": 0
+    },
+    "nativeOutOfScope": {
+      "run": "claude-native-10",
+      "status": "pass",
+      "document": "docs/refunds.md",
+      "markersAbsent": true,
+      "matchingDomainFileRead": false,
+      "tests": 69,
+      "testsExit": 0
+    },
+    "postDelete": {
+      "run": "claude-07",
+      "function": "calculateFeeCents",
+      "markerAbsent": true,
+      "nativeRuleAbsent": true,
+      "limitation": "--restricted control, so not a causal native-loading control"
+    },
+    "attachmentTelemetry": "not emitted directly by CLI stream; behavior and tool trace observed"
+  },
+  "preservedGuidance": {
+    "AGENTS.md": {
+      "unchanged": true,
+      "sha256": "76752d4dcfb002c378b9621d7783c97f427e2864320c11195b50bfca4897e3a7"
+    },
+    ".claude/rules/00-architecture/0-user-boundaries.md": {
+      "unchanged": true,
+      "sha256": "c092c2b82229ef84b2aefe5cc820cc723fc2db68c3016681eef590ba876433b2"
+    },
+    "aidd_docs/memory/architecture.md": {
+      "unchanged": true,
+      "sha256": "39e8c397df8d42f12d7e4be50e0201cd9e06b0580af4e618365464cff12198d5"
+    }
+  },
+  "finalNativeControlFileHashes": {
+    "src/domain/invoice.ts": "c701ac10cb2603064d3717a58b1500f4f6e4f219666c274e7419f4c3b5626d07",
+    "tests/invoice.test.ts": "57f08ed32a0551b2fa4d25b1807c252f3fe03585a94e3a72b645a8e2d94ab5bd",
+    "docs/refunds.md": "beb1e67394942b42beb0f130eeddb4078af2d62fa6de3302bb20ad04d9231621"
+  },
+  "limitations": [
+    "Model sandbox denies localhost binding: HTTP test returns listen EPERM; independent external node --test confirms full app suite passes.",
+    "Native list USD estimates are not billing charges; extra usage disabled before every authorized run."
+  ],
+  "secretsIncluded": false
+}

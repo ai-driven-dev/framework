@@ -1,0 +1,13 @@
+{
+  "command": [
+    "/opt/homebrew/Cellar/node/26.8.2/bin/node",
+    "--test",
+    "--test-isolation=none",
+    "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/model-claude-delete-native-proof/tests/http.test.ts",
+    "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/model-claude-delete-native-proof/tests/invoice.test.ts",
+    "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/model-claude-delete-native-proof/tests/native-after-delete.test.ts"
+  ],
+  "cwd": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/model-claude-delete-native-proof",
+  "exit": 0,
+  "reason": "Original default worker tests hit EAGAIN; same complete test files with documented process isolation none"
+}

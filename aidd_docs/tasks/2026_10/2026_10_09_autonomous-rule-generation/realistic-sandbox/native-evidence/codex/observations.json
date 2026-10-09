@@ -1,0 +1,56 @@
+{
+  "conversations": 7,
+  "exits": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  "timeoutCount": 0,
+  "applicationTestExits": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  "uniqueThreadIds": 7,
+  "threadIds": [
+    "01a11f1c-5ac3-78f3-bb91-1eead52c3686",
+    "01a11f1d-2829-7ef0-9da8-d59400387d96",
+    "01a11f1d-8b3e-7f10-9d53-22057730744b",
+    "01a11f1e-013d-7573-85d4-04c0ca11b725",
+    "01a11f1e-ad8e-73a2-9a43-7b635cee84f4",
+    "01a11f1f-1309-73f1-89fa-5e291cefe354",
+    "01a11f1f-8d3f-7d70-b359-a59d1b572cc2"
+  ],
+  "initialRuleInAgents": true,
+  "firstFunctionHasRequiredComment": true,
+  "documentationHasEitherComment": false,
+  "updatedRuleInAgents": true,
+  "oldRuleAbsentAfterUpdate": true,
+  "updatedFunctionHasNewComment": true,
+  "deletedContributionAbsent": true,
+  "postDeleteFunctionHasEitherComment": false,
+  "finalAgentsExactlyOriginal": true,
+  "userNativeFilesAndMemoryHashEquality": {
+    ".claude/rules/00-architecture/0-user-boundaries.md": true,
+    ".cursor/rules/00-architecture/0-user-boundaries.mdc": true,
+    ".github/instructions/00-user-boundaries.instructions.md": true,
+    "aidd_docs/memory/architecture.md": true
+  },
+  "finalRuleSourceFiles": [],
+  "authCopyRemoved": true,
+  "totalReportedUsage": {
+    "input_tokens": 801065,
+    "cached_input_tokens": 700032,
+    "cache_write_input_tokens": 0,
+    "output_tokens": 7209,
+    "reasoning_output_tokens": 232
+  }
+}

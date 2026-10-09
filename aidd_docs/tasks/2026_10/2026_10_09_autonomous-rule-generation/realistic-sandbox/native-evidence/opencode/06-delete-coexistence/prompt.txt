@@ -1,0 +1,1 @@
+Utilise le skill installé 05-rule-generate pour supprimer la règle projet 01-standards/1-domain-review et sa publication pour OpenCode V2. Mode manuel et suppression confirmés ; conserve les consignes utilisateur, mémoire et code existants. Valide le résultat. Pas de délégation.

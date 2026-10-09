@@ -1,0 +1,93 @@
+✔ copied installed skill generates native adapters without CLI in an ESM project (897.322917ms)
+✔ update and last deletion restore exact CRLF user and memory bytes (12062.53375ms)
+✔ canonical body edits publish explicitly with target ownership intact (10238.219375ms)
+✔ deterministic sources and shared deduplication across separately selected hosts (24977.983708ms)
+✔ target changes remove stale native and shared text without activating unselected tools (2984.113292ms)
+✔ native-only generation leaves shared context and legacy sources untouched (701.252625ms)
+✔ empty publication creates no AGENTS and malformed canonical metadata refuses (2801.648334ms)
+✖ CRLF body and user suffix, including fenced markers, remain byte exact (1814.347084ms)
+✔ unsigned native prior canonical rendering proves ownership without replacing user files (141.170167ms)
+✖ a signed native output copied from another rule is not same-rule ownership (96.22525ms)
+✔ traversal refuses before any mutation (9900.520708ms)
+✔ unknown metadata refuses before any mutation (275.383417ms)
+✔ comma glob ambiguity refuses before any mutation (4690.350917ms)
+✔ scope marker injection refuses before any mutation (2390.02675ms)
+✔ reserved body marker refuses before any mutation (696.874ms)
+✔ frontmatter fence hides a marker refuses before any mutation (747.984375ms)
+✔ unclosed fence refuses before any mutation (568.70225ms)
+✔ edited shared contribution refuses before any mutation (8246.079ms)
+✔ duplicate shared contribution refuses before any mutation (1379.531417ms)
+✔ incomplete shared contribution refuses before any mutation (887.119ms)
+✔ legacy shared contribution refuses before any mutation (1313.678833ms)
+✔ differing existing native output and edited generated native output refuse (7132.78975ms)
+✔ symlink aidd_docs/rules refuses without escape (3619.781584ms)
+✔ symlink .claude/rules refuses without escape (2009.146792ms)
+✔ symlink AGENTS.md refuses without escape (920.593917ms)
+✔ Codex override and local 32 KiB limit refuse prospective writes (923.223708ms)
+✔ invalid UTF-8 user context refuses without replacing bytes (339.751125ms)
+✔ edited separator 0→1 refuses update without byte changes (3233.170208ms)
+✔ edited separator 0→1 refuses publish without byte changes (3635.816833ms)
+✔ edited separator 0→1 refuses delete without byte changes (6692.119916ms)
+✔ edited separator 1→0 refuses update without byte changes (14299.722125ms)
+✔ edited separator 1→0 refuses publish without byte changes (530.773833ms)
+✔ edited separator 1→0 refuses delete without byte changes (1514.107458ms)
+✔ invalid UTF-8 staged JSON refuses before changing any project bytes (7005.153083ms)
+✔ unpaired d800 in body refuses without byte changes (9372.435958ms)
+✔ unpaired d800 in description refuses without byte changes (14720.2425ms)
+✔ unpaired d800 in paths refuses without byte changes (1042.979917ms)
+✔ unpaired dfff in body refuses without byte changes (3448.578708ms)
+✔ unpaired dfff in description refuses without byte changes (2510.131ms)
+✔ unpaired dfff in paths refuses without byte changes (2559.8985ms)
+✔ valid Unicode pairs and CRLF body survive installed generation and publication (1588.60475ms)
+ℹ tests 41
+ℹ suites 0
+ℹ pass 39
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 174931.91675
+
+✖ failing tests:
+
+test at scripts/__tests__/rule-generation.test.js:133:1
+✖ CRLF body and user suffix, including fenced markers, remain byte exact (1814.347084ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  null !== 0
+  
+      at TestContext.<anonymous> (/Users/baptistelafourcade/orca/workspaces/framework/basketstar/scripts/__tests__/rule-generation.test.js:142:10)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: null,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/__tests__/rule-generation.test.js:155:1
+✖ a signed native output copied from another rule is not same-rule ownership (96.22525ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  null !== 0
+  
+      at TestContext.<anonymous> (/Users/baptistelafourcade/orca/workspaces/framework/basketstar/scripts/__tests__/rule-generation.test.js:158:10)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: null,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

@@ -1,0 +1,89 @@
+{
+  "label": "Local documentation refresh of CLI-installed plugin; no new CLI installation",
+  "clones": [
+    {
+      "project": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/model-claude-old-native-proof",
+      "docs": [
+        {
+          "file": "SKILL.md",
+          "before": "5bddd94c9f957411611dbff523f05f645899db57fe979a303b1fd06215338419",
+          "after": "6bace323ce2c893a6895aa84c3557086954a6daf10b8119d219322cba25f807f"
+        },
+        {
+          "file": "actions/01-capture-rule.md",
+          "before": "8040cb4dfce3d642e4a41b1f11f4acc102ca2ceff78a365f9c2662e5403ac2a8",
+          "after": "80bee7dac8f9efe7dfdbaaddc2a7a32f385440620e047bb5c2afde04ecae7abf"
+        },
+        {
+          "file": "actions/02-write-rule.md",
+          "before": "9e4084faa1d7e472f994014cfb802a2915ecf5e48e97878e6441d09f2fc53268",
+          "after": "97bd053d5f270d0412ed5b288c74ba23a5e54dc50b5bc5589c66971825ade359"
+        },
+        {
+          "file": "actions/03-validate.md",
+          "before": "c7ec60745d42e20af8ca12e8169b7549fee4d4783d80bfa28912bcffe2fb0a83",
+          "after": "9aea68e50aa1432b68e0ddf66754356fdd6f78ae1982d01bb3e201f724e70030"
+        },
+        {
+          "file": "references/rule-authoring.md",
+          "before": "b19eb65cf59d61ad0aa6cf7cdff0fb16a19da71b6797533ff599098d62fca798",
+          "after": "b19eb65cf59d61ad0aa6cf7cdff0fb16a19da71b6797533ff599098d62fca798"
+        },
+        {
+          "file": "references/tool-paths.md",
+          "before": "0db62a35cb317224b88deff0d5506ab0ffbe5e969d3ab83626e852eb7f395731",
+          "after": "0db62a35cb317224b88deff0d5506ab0ffbe5e969d3ab83626e852eb7f395731"
+        },
+        {
+          "file": "assets/rule-template.md",
+          "before": "bfccef5e957e8d2de7aefe818196e82bf7691c8631452f4cc5b6e5ea526cdb47",
+          "after": "bfccef5e957e8d2de7aefe818196e82bf7691c8631452f4cc5b6e5ea526cdb47"
+        }
+      ],
+      "writerBefore": "9fa10479a267d899a6a024f68e75573f1d009080cd60851f23f06c8f2d190591",
+      "writerAfter": "9fa10479a267d899a6a024f68e75573f1d009080cd60851f23f06c8f2d190591"
+    },
+    {
+      "project": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/model-claude-delete-native-proof",
+      "docs": [
+        {
+          "file": "SKILL.md",
+          "before": "5bddd94c9f957411611dbff523f05f645899db57fe979a303b1fd06215338419",
+          "after": "6bace323ce2c893a6895aa84c3557086954a6daf10b8119d219322cba25f807f"
+        },
+        {
+          "file": "actions/01-capture-rule.md",
+          "before": "8040cb4dfce3d642e4a41b1f11f4acc102ca2ceff78a365f9c2662e5403ac2a8",
+          "after": "80bee7dac8f9efe7dfdbaaddc2a7a32f385440620e047bb5c2afde04ecae7abf"
+        },
+        {
+          "file": "actions/02-write-rule.md",
+          "before": "9e4084faa1d7e472f994014cfb802a2915ecf5e48e97878e6441d09f2fc53268",
+          "after": "97bd053d5f270d0412ed5b288c74ba23a5e54dc50b5bc5589c66971825ade359"
+        },
+        {
+          "file": "actions/03-validate.md",
+          "before": "c7ec60745d42e20af8ca12e8169b7549fee4d4783d80bfa28912bcffe2fb0a83",
+          "after": "9aea68e50aa1432b68e0ddf66754356fdd6f78ae1982d01bb3e201f724e70030"
+        },
+        {
+          "file": "references/rule-authoring.md",
+          "before": "b19eb65cf59d61ad0aa6cf7cdff0fb16a19da71b6797533ff599098d62fca798",
+          "after": "b19eb65cf59d61ad0aa6cf7cdff0fb16a19da71b6797533ff599098d62fca798"
+        },
+        {
+          "file": "references/tool-paths.md",
+          "before": "0db62a35cb317224b88deff0d5506ab0ffbe5e969d3ab83626e852eb7f395731",
+          "after": "0db62a35cb317224b88deff0d5506ab0ffbe5e969d3ab83626e852eb7f395731"
+        },
+        {
+          "file": "assets/rule-template.md",
+          "before": "bfccef5e957e8d2de7aefe818196e82bf7691c8631452f4cc5b6e5ea526cdb47",
+          "after": "bfccef5e957e8d2de7aefe818196e82bf7691c8631452f4cc5b6e5ea526cdb47"
+        }
+      ],
+      "writerBefore": "9fa10479a267d899a6a024f68e75573f1d009080cd60851f23f06c8f2d190591",
+      "writerAfter": "9fa10479a267d899a6a024f68e75573f1d009080cd60851f23f06c8f2d190591"
+    }
+  ]
+}
