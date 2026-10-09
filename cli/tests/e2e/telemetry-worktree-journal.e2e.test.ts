@@ -1,8 +1,9 @@
 import { execFileSync } from "node:child_process";
-import { mkdir, writeFile } from "node:fs/promises";
+import { cp, mkdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import { environmentWithoutGitVariables } from "../../src/runtime/git/git-environment.js";
+import { REPOSITORY_ROOT } from "../helpers/repository-root.js";
 import { createTestEnv, gitInit, runCli } from "./helpers.js";
 
 const PROJECT_ID = "acme/worktrees";
@@ -166,5 +167,71 @@ describe("aidd telemetry report — sessions from every worktree of one clone, b
 
     expect(taskRowOfCost(envelope, 2)?.task).toBe(ALPHA_TASK);
     expect(taskRowOfCost(envelope, 3)?.task).not.toBe(BETA_TASK);
+  });
+});
+
+describe("aidd telemetry report — a worktree session caught up from the tool's own transcript", () => {
+  const CLAUDE_SESSION = "22222222-2222-4222-8222-222222222222";
+  const TASK = "2026_08/2026_08_21_probe-task";
+  const HOOK = join(REPOSITORY_ROOT, "plugins", "aidd-telemetry", "hooks", "journal.cjs");
+  const HOOK_FIXTURES = join(REPOSITORY_ROOT, "scripts", "__tests__", "fixtures");
+  let cleanup: (() => Promise<void>) | undefined;
+
+  afterEach(async () => {
+    await cleanup?.();
+    cleanup = undefined;
+  });
+
+  async function fixture(name: string): Promise<Record<string, unknown>> {
+    return JSON.parse(await readFile(join(HOOK_FIXTURES, `${name}.json`), "utf8"));
+  }
+
+  it("attributes the session to its task from the main checkout, with the sink empty and the worktree removed", async () => {
+    const env = await createTestEnv("telemetry-worktree-catch-up");
+    cleanup = env.cleanup;
+    await gitInit(env.projectDir);
+    git(env.projectDir, ["commit", "-q", "--allow-empty", "-m", "seed"]);
+    await writeFile(join(env.projectDir, ".git", "info", "exclude"), ".aidd/\naidd_docs/\n");
+    const worktreeDir = join(env.tempDir, WORKTREE_NAME);
+    git(env.projectDir, ["worktree", "add", "-q", "-b", WORKTREE_NAME, worktreeDir]);
+    for (const checkout of [env.projectDir, worktreeDir]) {
+      await mkdir(join(checkout, ".aidd"), { recursive: true });
+      await writeFile(
+        join(checkout, ".aidd", "config.json"),
+        JSON.stringify({ telemetry: { enabled: true } })
+      );
+    }
+    await cp(join(process.cwd(), "tests", "fixtures", "local-cost"), env.fakeHome, {
+      recursive: true,
+    });
+    const transcript = `${env.fakeHome}/.claude/projects/fake-project/${CLAUDE_SESSION}.jsonl`;
+    const session = { session_id: CLAUDE_SESSION, transcript_path: transcript, cwd: worktreeDir };
+    const replay = (payload: Record<string, unknown>, event: string): void => {
+      execFileSync("node", [HOOK, event], {
+        input: JSON.stringify({ ...payload, ...session }),
+        cwd: worktreeDir,
+        env: environmentWithoutGitVariables(process.env),
+      });
+    };
+    replay(await fixture("claude-code-session-start"), "session-start");
+    const notes = join(worktreeDir, "aidd_docs", "tasks", ...TASK.split("/"), "notes.md");
+    await mkdir(join(notes, ".."), { recursive: true });
+    await writeFile(notes, "probe\n");
+    replay(
+      { ...(await fixture("claude-code-post-tool-use-write")), tool_input: { file_path: notes } },
+      "tool-used"
+    );
+    git(env.projectDir, ["worktree", "remove", worktreeDir]);
+
+    const result = await runCli(
+      ["telemetry", "report", "--days", "3650", "--task", TASK],
+      env.projectDir,
+      env.fakeHome
+    );
+
+    expect(result.exitCode, result.stderr).toBe(0);
+    expect(result.stdout).toContain(`task ${TASK}`);
+    expect(result.stdout).toMatch(/sessions\s+1\s/u);
+    expect(result.stdout).toMatch(/inferred from a written file\s+100%/u);
   });
 });
