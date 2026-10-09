@@ -333,6 +333,15 @@ describe("RunJournalReaderAdapter", () => {
     expect(await new RunJournalReaderAdapter(projectRoot).listForeignSchemas()).toEqual([99]);
   });
 
+  it("judges a session's schema by its common-dir copy, not by a stale legacy one", async () => {
+    await mkdir(commonRuns(), { recursive: true });
+    const name = `${RUN_ID}__${SESSION_ID}.jsonl`;
+    await writeFile(join(commonRuns(), name), runFileLines(sessionStart(RUN_ID, SESSION_ID, 2)));
+    await writeFile(join(runsDir, name), runFileLines(sessionStart(RUN_ID, SESSION_ID, 99)));
+
+    expect(await new RunJournalReaderAdapter(projectRoot).listForeignSchemas()).toEqual([]);
+  });
+
   it("names a legacy directory's run files by name", async () => {
     await mkdir(join(projectRoot, ".git"), { recursive: true });
     await writeFile(join(runsDir, `${RUN_ID}__a.jsonl`), "x\n");

@@ -166,7 +166,9 @@ describe("aidd telemetry report — sessions from every worktree of one clone, b
     const envelope = await report(projectDir, fakeHome);
 
     expect(taskRowOfCost(envelope, 2)?.task).toBe(ALPHA_TASK);
-    expect(taskRowOfCost(envelope, 3)?.task).not.toBe(BETA_TASK);
+    const lost = taskRowOfCost(envelope, 3);
+    expect(lost).toBeDefined();
+    expect(lost?.task).toBeUndefined();
   });
 });
 
