@@ -19,7 +19,7 @@
     },
     "telemetry": {
       "mutate": "src/contexts/telemetry/**/*.ts",
-      "break": 94
+      "break": 96
     },
     "translate": {
       "mutate": "src/contexts/translate/**/*.ts",

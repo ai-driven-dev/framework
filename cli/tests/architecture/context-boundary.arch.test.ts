@@ -115,6 +115,12 @@ const PUBLIC_MODULES: Readonly<Record<string, readonly string[]>> = {
     "src/contexts/telemetry/domain/ports/transcript-source.ts",
     // the operation another layer asks for
     "src/contexts/telemetry/application/read-claude-usage-use-case.ts",
+    // the ingest a command drives, and the result it prints
+    "src/contexts/telemetry/application/ingest-usage-use-case.ts",
+    // why a call was not stored, which the result names and a display words
+    "src/contexts/telemetry/domain/repository-resolution.ts",
+    // the owner-only storage the runtime implements for the context
+    "src/contexts/telemetry/domain/ports/private-storage.ts",
   ],
 };
 

@@ -1,3 +1,4 @@
+import { compareText } from "./text-order.js";
 import { type UsageRecord, usageTotal } from "./usage-record.js";
 
 function instant(at: string): number {
@@ -8,12 +9,8 @@ function instant(at: string): number {
 function compareAt(a: string, b: string): number {
   const x = instant(a);
   const y = instant(b);
-  if (Number.isNaN(x) || Number.isNaN(y)) return a < b ? -1 : a > b ? 1 : 0;
+  if (Number.isNaN(x) || Number.isNaN(y)) return compareText(a, b);
   return x - y;
-}
-
-function compareText(a: string, b: string): number {
-  return a < b ? -1 : a > b ? 1 : 0;
 }
 
 /** Negative when `a` is the one to keep: the largest total, then the earliest time, then the
@@ -29,8 +26,8 @@ function compareWinner(a: UsageRecord, b: UsageRecord): number {
 
 /** One record per `(tool, key)` across everything given: a streamed call and a resumed copy
  * show the same call several times, and only one of them is the call. */
-export function foldUsage(records: Iterable<UsageRecord>): UsageRecord[] {
-  const winners = new Map<string, UsageRecord>();
+export function foldUsage<T extends UsageRecord>(records: Iterable<T>): T[] {
+  const winners = new Map<string, T>();
   for (const record of records) {
     const id = `${record.tool}\u0000${record.key}`;
     const held = winners.get(id);

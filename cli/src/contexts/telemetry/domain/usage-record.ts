@@ -1,6 +1,8 @@
-export type UsageTool = "claude-code" | "codex";
+export const USAGE_TOOLS = ["claude-code", "codex"] as const;
+export type UsageTool = (typeof USAGE_TOOLS)[number];
 
-export type UsageAgent = "main" | "subagent" | "advisor";
+export const USAGE_AGENTS = ["main", "subagent", "advisor"] as const;
+export type UsageAgent = (typeof USAGE_AGENTS)[number];
 
 /** One billed model call. Facts only, in the tool's own terms; an unknown value is `null`,
  * never `0`. `(tool, key)` is stable across re-reads, so storing it is idempotent. */

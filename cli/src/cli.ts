@@ -9,6 +9,7 @@ import { runMenuLoop } from "./presentation/commands/menu.js";
 import { registerPluginCommand } from "./presentation/commands/plugin.js";
 import { registerSetupCommand } from "./presentation/commands/setup.js";
 import { registerSyncCommand } from "./presentation/commands/sync.js";
+import { registerTelemetryCommand } from "./presentation/commands/telemetry.js";
 import { registerTranslateCommand } from "./presentation/commands/translate.js";
 import { registerUpdateCommand } from "./presentation/commands/update.js";
 import { CLIOutput } from "./presentation/output.js";
@@ -39,6 +40,7 @@ registerSyncCommand(program);
 registerUpdateCommand(program);
 registerDoctorCommand(program);
 registerCleanCommand(program);
+registerTelemetryCommand(program);
 
 // Commands already paying for network I/O, so the update-check refresh rides one of them.
 // `marketplace remove` is offline and `update` already resolves the latest version itself.
@@ -52,6 +54,8 @@ const ONLINE_COMMAND_PATHS = new Set([
 
 program.hook("preAction", async (_thisCommand, actionCommand) => {
   if (process.env.AIDD_SKIP_UPDATE_CHECK === "1") return;
+  // A hook runs `telemetry ingest --quiet`; an update notice would break its silence.
+  if (resolveCommandPath(actionCommand).startsWith("telemetry")) return;
   const opts = program.opts<{ verbose?: boolean }>();
   const output = new CLIOutput(opts.verbose ?? false);
   const deps = await createDeps(process.cwd(), { verbose: opts.verbose ?? false }, output).catch(

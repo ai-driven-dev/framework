@@ -114,6 +114,7 @@ import { SelfUpdateUseCase } from "../self-update/self-update-use-case.js";
 import { SelfUpdaterAdapter } from "../self-update/self-updater-adapter.js";
 import { userConfigDir } from "../user-config-dir.js";
 import { wireDistribution } from "./distribution.js";
+import { type TelemetryDeps, wireTelemetry } from "./telemetry.js";
 import { wireTools } from "./tools.js";
 import { createFrameworkBuildUseCase } from "./translate.js";
 
@@ -180,6 +181,7 @@ interface Deps {
   doctorAllUseCase: DoctorAllUseCase;
   listInstalledRulesUseCase: ListInstalledRulesUseCase;
   checkUpdateUseCase: CheckUpdateUseCase;
+  telemetry: TelemetryDeps;
 }
 
 const _cache = new Map<string, Deps>();
@@ -636,6 +638,7 @@ export async function createDeps(
     doctorAllUseCase,
     listInstalledRulesUseCase,
     checkUpdateUseCase,
+    telemetry: wireTelemetry(homedir),
   };
   _cache.set(cacheKey, deps);
   return deps;

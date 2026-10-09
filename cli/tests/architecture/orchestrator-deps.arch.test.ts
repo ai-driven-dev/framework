@@ -94,6 +94,11 @@ const BASELINE: readonly { readonly path: string; readonly injected: number }[] 
   // Carries `clean`'s shared-source guard and the separate current-source witness so a
   // targeted remove cannot disable another project's plugin or a repointed catalogue.
   { path: "src/contexts/framework/application/plugin/plugin-remove-use-case.ts", injected: 9 },
+  // Ingest is four stages, each owned by a collaborator: read what the transcripts gained,
+  // tie each call to a repository, store it, snapshot the branch declarations. The fifth is
+  // the environment's refusal. A stage folded into another would hide where the ledger is
+  // written.
+  { path: "src/contexts/telemetry/application/ingest-usage-use-case.ts", injected: 5 },
 ];
 
 /**
