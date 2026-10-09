@@ -7,6 +7,7 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 ## Table of Contents
 
 - [`.claude-plugin`](#claude-plugin)
+- [`hooks`](#hooks)
 
 ---
 
@@ -15,4 +16,10 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | File |
 |------|
 | [plugin.json](.claude-plugin/plugin.json) |
+
+### `hooks`
+
+| File |
+|------|
+| [hooks.json](hooks/hooks.json) |
 

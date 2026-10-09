@@ -115,6 +115,7 @@ Dependency-free Node scripts declared in `hooks/hooks.json`; `node` must be on `
 | Plugin           | Event                                   | Runs                     | Purpose                                                     |
 | ---------------- | --------------------------------------- | ------------------------ | ----------------------------------------------------------- |
 | `aidd-context`   | `SessionStart`                          | `hooks/update_memory.js` | Refresh the project memory block in the AI context files    |
+| `aidd-telemetry` | `SessionStart` · `UserPromptSubmit`     | `hooks/prompt-gate.cjs`  | Ask for a task once per branch, answer it without the model, keep it across `/clear`, catch the ledger up |
 
 ## Portability
 

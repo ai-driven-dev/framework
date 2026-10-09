@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import {
   flattenCopilotHooksShape,
@@ -6,6 +8,7 @@ import {
   mergeCursorFlatHooks,
   renameCodexHookEvents,
 } from "../../../../../src/contexts/tools/domain/formats/flat-hooks-merge.js";
+import { REPOSITORY_ROOT } from "../../../../helpers/repository-root.js";
 
 describe("mergeClaudeSettingsHooks", () => {
   it("merges plugin hooks into empty settings.json", () => {
@@ -64,6 +67,37 @@ describe("mergeClaudeSettingsHooks", () => {
     const plugin = JSON.stringify({ hooks: {} });
     const { warnings } = mergeClaudeSettingsHooks(null, plugin);
     expect(warnings).toEqual([]);
+  });
+
+  it("keeps async: true on an entry, so a catch-up never blocks the session start", () => {
+    const plugin = JSON.stringify({
+      hooks: {
+        SessionStart: [
+          { hooks: [{ type: "command", command: "catch-up.cjs", async: true, timeout: 120 }] },
+        ],
+      },
+    });
+    const { content } = mergeClaudeSettingsHooks(null, plugin);
+    const result = JSON.parse(content) as {
+      hooks: { SessionStart: { hooks: { async?: boolean; timeout?: number }[] }[] };
+    };
+    expect(result.hooks.SessionStart[0]?.hooks[0]).toMatchObject({ async: true, timeout: 120 });
+  });
+
+  it("keeps async: true on the telemetry plugin's own catch-up entry", () => {
+    const shipped = readFileSync(
+      join(REPOSITORY_ROOT, "plugins", "aidd-telemetry", "hooks", "hooks.json"),
+      "utf8"
+    );
+    const { content } = mergeClaudeSettingsHooks(null, shipped);
+    const result = JSON.parse(content) as {
+      hooks: { SessionStart: { hooks: { command: string; async?: boolean }[] }[] };
+    };
+    const entries = result.hooks.SessionStart.flatMap((group) => group.hooks);
+    expect(entries.find((entry) => entry.command.endsWith("catch-up.cjs"))?.async).toBe(true);
+    expect(entries.find((entry) => entry.command.endsWith("session-start.cjs"))?.async).not.toBe(
+      true
+    );
   });
 
   it("does not create hooks key when plugin has no hook events", () => {

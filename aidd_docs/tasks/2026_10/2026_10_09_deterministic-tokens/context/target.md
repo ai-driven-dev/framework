@@ -76,6 +76,13 @@ Root-scoped bindings and their adoption/`ambiguous` rule; cross-machine binding 
 
 - Hooks fire in interactive and `-p`; `ATTENDED` 1 vs 0; `!` carries the session id;
   `/clear` = new id, no link in the payload.
+- Phase 6 probes (Claude Code 2.1.295, interactive, sandbox config dir, dummy key; ids and paths redacted):
+  - A hook `{"decision":"block","reason":"R"}` shows `UserPromptSubmit operation blocked by hook:R` followed by `Original prompt: <text>`; with `hookSpecificOutput.suppressOriginalPrompt: true` the reason shows and the `Original prompt:` line is gone. The blocked text is put back in the input box, so the person can retype it.
+  - `/branch` fires `SessionStart` with `source: "fork"`. Payload keys: `session_id`, `transcript_path`, `cwd`, `prompt_id`, `hook_event_name`, `source`, `model`, `session_title` (`<first prompt> (Branch)`). No parent session id anywhere in payload or env. `CLAUDE_PID` and the hook's parent pid are unchanged from the original session, so the predecessor is the pid's previous session, as for `/clear`.
+  - On `/clear` and on `/branch`, `CLAUDE_CODE_SESSION_ID` in the hook equals the payload `session_id` (the Claude-only guard holds on both), and the next `UserPromptSubmit` carries the new id in both.
+  - `UserPromptSubmit` does not fire for `!` commands (measured earlier, re-checked).
+  - End to end with the shipped hooks: an unbound `feat/x` prompt is blocked with both forms named; `aidd telemetry task demo --ticket P-1` typed as a prompt reaches the CLI as `telemetry task demo --ticket P-1 --by hook-intercept` and the next prompt passes; `/clear` appends a carry from the same pid and shows `SessionStart:clear says: Task demo kept after /clear. Different work: aidd telemetry task <name> [--ticket <ref>]`; the async catch-up runs `telemetry ingest --quiet` once per session start.
+  - Pending (needs the maintainer, phase 6 task 5): `CLAUDE_CODE_SESSION_ATTENDED`, `CLAUDE_CODE_ENTRYPOINT` and whether a block reason displays, in the VS Code extension and the desktop app. Until observed those surfaces never block.
 - Codex `UserPromptSubmit` can block (docs: `decision: block` or exit 2). Its unattended
   signal is not yet known: Codex stays out of release 1.
 - `CLAUDE_CODE_SESSION_ATTENDED` is undocumented: a contract test pins its two values, and
