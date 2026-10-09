@@ -28,7 +28,7 @@ export interface UsageRecord {
   readonly reasoning: number | null;
   /** Raw, local only. */
   readonly cwd: string | null;
-  /** Raw, data only, never an attribution source. */
+  /** Raw, never parsed: it only looks up the declaration of the branch it names. */
   readonly git_branch: string | null;
 }
 
