@@ -946,6 +946,17 @@ describe("DiagnoseTelemetryUseCase — what each journal contributes to the clai
     });
   });
 
+  it("names every directory it read run files from, an earlier version's included", async () => {
+    const { useCase, journalReader } = buildUseCase({});
+    journalReader.legacyRunsDirs = ["/fake/wt/aidd_docs/runs"];
+
+    const result = claimsOf(await useCase.execute(runOptions()));
+
+    expect(result.claims[0]?.detail).toMatch(
+      /^no run file in \/fake\/project\/aidd_docs\/runs \(and \/fake\/wt\/aidd_docs\/runs\) — /u
+    );
+  });
+
   it("never asks Codex's hook trust for a session another tool anchors", async () => {
     const hookTrustReader = new StubHookTrustReader();
     const { useCase } = buildUseCase({ hookTrustReader });

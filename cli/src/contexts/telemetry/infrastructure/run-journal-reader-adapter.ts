@@ -229,8 +229,8 @@ export class RunJournalReaderAdapter implements RunJournalStore {
     return null;
   }
 
-  async list(): Promise<readonly RunJournal[]> {
-    const journals: RunJournal[] = [];
+  private async firstRunFilePerSession(): Promise<readonly string[]> {
+    const paths: string[] = [];
     const seen = new Set<string>();
     for (const dir of this.readDirs) {
       for (const entry of await this.listRunFilesIn(dir)) {
@@ -239,22 +239,27 @@ export class RunJournalReaderAdapter implements RunJournalStore {
           if (seen.has(segment)) continue;
           seen.add(segment);
         }
-        const journal = await this.readJournal(join(dir, entry));
-        if (journal) journals.push(journal);
+        paths.push(join(dir, entry));
       }
+    }
+    return paths;
+  }
+
+  async list(): Promise<readonly RunJournal[]> {
+    const journals: RunJournal[] = [];
+    for (const filePath of await this.firstRunFilePerSession()) {
+      const journal = await this.readJournal(filePath);
+      if (journal) journals.push(journal);
     }
     return journals;
   }
 
   async listForeignSchemas(): Promise<readonly number[]> {
     const stated: number[] = [];
-    for (const dir of this.readDirs) {
-      for (const fileName of await this.listRunFilesIn(dir)) {
-        const collector = await this.collect(join(dir, fileName));
-        const version = collector?.session?.schema_version;
-        if (version !== undefined && version !== READABLE_JOURNAL_SCHEMA_VERSION)
-          stated.push(version);
-      }
+    for (const filePath of await this.firstRunFilePerSession()) {
+      const version = (await this.collect(filePath))?.session?.schema_version;
+      if (version !== undefined && version !== READABLE_JOURNAL_SCHEMA_VERSION)
+        stated.push(version);
     }
     return stated;
   }

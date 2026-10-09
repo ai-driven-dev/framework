@@ -45,6 +45,11 @@ import {
   type TelemetrySetup,
 } from "../domain/telemetry-setup.js";
 
+function runsDirLabelOf(store: RunJournalStore): string {
+  const legacy = store.legacyRunsDirs;
+  return legacy.length === 0 ? store.runsDir : `${store.runsDir} (and ${legacy.join(", ")})`;
+}
+
 export interface DiagnoseTelemetryUncoveredTool {
   readonly tool: AiToolId;
   readonly reason: string;
@@ -237,7 +242,7 @@ export class DiagnoseTelemetryUseCase {
     return {
       journals: journals.map(toClaimJournal),
       toolReads,
-      runsDirLabel: this.runJournalReader.runsDir,
+      runsDirLabel: runsDirLabelOf(this.runJournalReader),
       currentSessionId,
       unrecognisedPayloadAt: unrecognisedPayload?.at,
       hookTrust,
