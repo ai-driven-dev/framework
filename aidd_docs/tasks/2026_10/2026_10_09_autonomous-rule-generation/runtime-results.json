@@ -1,0 +1,86 @@
+{
+  "platform": "macOS arm64",
+  "script_sha256": "9fa10479a267d899a6a024f68e75573f1d009080cd60851f23f06c8f2d190591",
+  "transport": "isolated loopback mock providers; no paid inference",
+  "journeys": [
+    {
+      "host": "opencode",
+      "version": "2.0.22",
+      "step": "created",
+      "request_count": 2,
+      "checks": {
+        "user_guidance": true,
+        "exact_rule_body": true,
+        "updated_absent": true
+      },
+      "capture": "/private/tmp/aidd-rule-revision-runtime-lucrc3s6/opencode-created-repaired/model-requests.json",
+      "sha256": "02857546f8b60f3c33b881cc641335a681d7c59dd42d44e48acb96ae3c93b794"
+    },
+    {
+      "host": "opencode",
+      "version": "2.0.22",
+      "step": "updated",
+      "request_count": 2,
+      "checks": {
+        "user_guidance": true,
+        "exact_rule_body": true,
+        "initial_absent": true
+      },
+      "capture": "/private/tmp/aidd-rule-revision-runtime-lucrc3s6/opencode-updated-repaired/model-requests.json",
+      "sha256": "4ab2fc67a5895b4a578ea9183bc6b471c0fec15d110e2a15f8acccb91575ebae"
+    },
+    {
+      "host": "opencode",
+      "version": "2.0.22",
+      "step": "deleted",
+      "request_count": 2,
+      "checks": {
+        "user_guidance": true,
+        "initial_absent": true,
+        "updated_absent": true
+      },
+      "capture": "/private/tmp/aidd-rule-revision-runtime-lucrc3s6/opencode-deleted-repaired/model-requests.json",
+      "sha256": "6a78e23c50123ec4a82f033b2d31306b5c91721ff5448693c57e6bde6fa96223"
+    },
+    {
+      "host": "codex",
+      "version": "0.160.1",
+      "step": "created",
+      "request_count": 1,
+      "checks": {
+        "user_guidance": true,
+        "exact_rule_body": true,
+        "updated_absent": true
+      },
+      "capture": "/private/tmp/aidd-913-codex-run-nsbehjta/generated/requests.json",
+      "sha256": "a374f3b494e1be9b705b79f2fef07d3ddeda9946c02e62ed7c1578d07bd6d89b"
+    },
+    {
+      "host": "codex",
+      "version": "0.160.1",
+      "step": "updated",
+      "request_count": 1,
+      "checks": {
+        "user_guidance": true,
+        "exact_rule_body": true,
+        "initial_absent": true
+      },
+      "capture": "/private/tmp/aidd-913-codex-run-elpvwbic/generated/requests.json",
+      "sha256": "a735db8d29ee8375299486d71140d16bd0b806073294a881e240232d9f4c0c68"
+    },
+    {
+      "host": "codex",
+      "version": "0.160.1",
+      "step": "deleted",
+      "request_count": 1,
+      "checks": {
+        "user_guidance": true,
+        "initial_absent": true,
+        "updated_absent": true
+      },
+      "capture": "/private/tmp/aidd-913-codex-run-64hn3zrn/generated/requests.json",
+      "sha256": "ff67e6266584d48d0bb00605e3863f56b2bd481aea90f88328a5cdf338c89a29"
+    }
+  ],
+  "all_passed": true
+}

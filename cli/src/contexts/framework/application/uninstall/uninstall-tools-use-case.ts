@@ -15,7 +15,6 @@ import type { ManifestRepository } from "../../domain/ports/manifest-repository.
 import { detachNativePluginRefs } from "../ownership/native-plugin-ownership.js";
 import { detachUserPlugin } from "../ownership/user-plugin-ownership.js";
 import { deletePluginFilesForTool } from "../plugin/plugin-helpers.js";
-import { prepareRuleFiles } from "../publish-rules-use-case.js";
 
 export interface UninstallToolsOptions {
   toolIds: ToolId[];
@@ -38,30 +37,10 @@ export class UninstallToolsUseCase {
 
   async execute(options: UninstallToolsOptions): Promise<UninstallToolsResult[]> {
     const { toolIds, manifest, projectRoot } = options;
-    const publications: Array<() => Promise<void>> = [];
-    for (const toolId of toolIds) {
-      if (!isAiToolId(toolId)) continue;
-      const paths = [
-        ...manifest.getToolFiles(toolId).map((f) => f.relativePath),
-        ...manifest
-          .getPlugins(toolId)
-          .filter((p) => p.scope !== "user")
-          .flatMap((p) => [...p.files.keys()]),
-      ];
-      publications.push(
-        await prepareRuleFiles(
-          this.fs,
-          toolId,
-          projectRoot,
-          paths.map((path) => [path, null])
-        )
-      );
-    }
     const results: UninstallToolsResult[] = [];
     for (const toolId of toolIds) {
       results.push(await this.removeOneTool(toolId, toolIds, manifest, projectRoot));
     }
-    for (const publish of publications) await publish();
     return results;
   }
 

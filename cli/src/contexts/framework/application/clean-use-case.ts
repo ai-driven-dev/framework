@@ -49,7 +49,6 @@ import {
 import { assertProjectMcpEntriesRemovable } from "./ownership/project-plugin-cleanup.js";
 import { detachUserPlugin } from "./ownership/user-plugin-ownership.js";
 import { deletePluginFilesForTool } from "./plugin/plugin-helpers.js";
-import { prepareRuleFiles } from "./publish-rules-use-case.js";
 import { bestEffortNativeCall } from "./shared/best-effort-native-call.js";
 import {
   purgeAllNativeCaches,
@@ -163,25 +162,6 @@ export class CleanUseCase {
     const preview = await this.buildPreview(manifest, home, options.projectRoot);
     const dryRunResult = await this.confirmOrDryRun(options, preview);
     if (dryRunResult !== null) return dryRunResult;
-    const publications: Array<() => Promise<void>> = [];
-    for (const toolId of manifest.getInstalledToolIds()) {
-      if (!isAiToolId(toolId)) continue;
-      const paths = [
-        ...manifest.getToolFiles(toolId).map((f) => f.relativePath),
-        ...manifest
-          .getPlugins(toolId)
-          .filter((p) => p.scope !== "user")
-          .flatMap((p) => [...p.files.keys()]),
-      ];
-      publications.push(
-        await prepareRuleFiles(
-          this.fs,
-          toolId,
-          options.projectRoot,
-          paths.map((path) => [path, null])
-        )
-      );
-    }
     await this.assertNativeSourcesUnchanged(manifest, options.projectRoot);
     for (const toolId of manifest.getInstalledToolIds()) {
       if (!isAiToolId(toolId)) continue;
@@ -217,7 +197,6 @@ export class CleanUseCase {
     await this.purgeNativeCaches(home, undone);
     let deleted = await this.deleteAllToolFiles(manifest, options.projectRoot);
     deleted += await this.deleteMachineLocalFiles(manifest, options.projectRoot);
-    for (const publish of publications) await publish();
     await this.removeAiddState(options.projectRoot);
     // Exactly what the pipeline added on install, never a subset of it.
     await this.gitignoreUseCase.remove(options.projectRoot, aiddGitignoreEntries(manifest));

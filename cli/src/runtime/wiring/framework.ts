@@ -49,7 +49,6 @@ import { PluginListUseCase } from "../../contexts/framework/application/plugin/p
 import { PluginRemoveUseCase } from "../../contexts/framework/application/plugin/plugin-remove-use-case.js";
 import { PluginSearchUseCase } from "../../contexts/framework/application/plugin/plugin-search-use-case.js";
 import { PluginUpdateUseCase } from "../../contexts/framework/application/plugin/plugin-update-use-case.js";
-import { PublishRulesUseCase } from "../../contexts/framework/application/publish-rules-use-case.js";
 import { RestoreUseCase } from "../../contexts/framework/application/restore/restore-use-case.js";
 import { ProjectContextDetectorUseCase } from "../../contexts/framework/application/setup/project-context-detector-use-case.js";
 import { SetupMachineScopeUseCase } from "../../contexts/framework/application/setup/setup-machine-scope-use-case.js";
@@ -182,7 +181,6 @@ interface Deps extends TelemetryDeps {
   cleanUserScopeUseCase: CleanUserScopeUseCase;
   doctorAllUseCase: DoctorAllUseCase;
   listInstalledRulesUseCase: ListInstalledRulesUseCase;
-  publishRulesUseCase: PublishRulesUseCase;
   checkUpdateUseCase: CheckUpdateUseCase;
 }
 
@@ -587,7 +585,6 @@ export async function createDeps(
   );
   const doctorAllUseCase = new DoctorAllUseCase(doctorUseCase);
   const listInstalledRulesUseCase = new ListInstalledRulesUseCase(fs);
-  const publishRulesUseCase = new PublishRulesUseCase(fs);
   const checkUpdateUseCase = new CheckUpdateUseCase(cliUpdater, currentVersionProvider, logger, fs);
   const telemetry = wireTelemetry({
     fs,
@@ -651,7 +648,6 @@ export async function createDeps(
     cleanUserScopeUseCase,
     doctorAllUseCase,
     listInstalledRulesUseCase,
-    publishRulesUseCase,
     checkUpdateUseCase,
   };
   _cache.set(cacheKey, deps);

@@ -204,22 +204,6 @@ Per tool, the settings file the CLI writes:
 | Kilo Code | `.kilo/kilo.jsonc` by default; an existing `kilo.json[c]` is reused |
 | VS Code | `.vscode/settings.json`, `.vscode/extensions.json`, `.vscode/keybindings.json` |
 
-## OpenCode V2 rules
-
-OpenCode V2 loads `AGENTS.md`; its `instructions` setting does not activate modular rules. AIDD keeps `.opencode/rules/**/*.md` as editable sources and copies their bodies into one signed contribution. Path predicates become guidance for the model, with no native glob filtering. V1 compatibility is not guaranteed. [Official instruction contract](https://opencode.ai/v2/docs/instructions#configuration)
-
-From the project root, with no installation manifest required:
-
-```sh
-aidd framework rules --tool opencode --publish
-aidd framework rules --tool opencode --write .opencode/rules/01-standards/1-naming.md --from /tmp/staged-rule.md
-aidd framework rules --tool opencode --delete .opencode/rules/01-standards/1-naming.md
-```
-
-Stage generated content before `--write`. Validation rejects unsafe source paths and edited or ambiguous contributions before either project file changes. Reruns synchronize additions, edits and deletions. Uninstall and clean remove contributions from deleted installed sources while keeping other rules and user guidance. Move desired block edits into source files and restore the intact signed contribution before retrying. Existing JSON/JSONC content stays untouched by direct publication. Flat archive rule delivery is still outside the build pipeline's supported sections.
-
-Plugin replacement also validates canonical rule inputs that a resolved flat build would skip. Unsafe inputs are rejected before deletion because an unavailable catalogue can switch installation to source materialization.
-
 ## More
 
 - [Architecture](../docs/ARCHITECTURE.md)

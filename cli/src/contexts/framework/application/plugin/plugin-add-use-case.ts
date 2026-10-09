@@ -30,7 +30,6 @@ import type { PluginTranslator } from "../framework/translator/plugin-translator
 import { resolvePluginTranslator } from "../framework/translator/resolve-plugin-translator.js";
 import type { InstallRuntimeConfigUseCase } from "../install/install-runtime-config-use-case.js";
 import { assertProjectMcpEntriesRemovable } from "../ownership/project-plugin-cleanup.js";
-import { prepareRuleFiles } from "../publish-rules-use-case.js";
 import type { EnsureBuiltMarketplace } from "../shared/ensure-built-marketplace-use-case.js";
 import { assertProjectHooksRemovable } from "../shared/remove-project-hooks.js";
 import type { PluginDistributionLoader } from "./plugin-distribution-loader.js";
@@ -282,15 +281,6 @@ export class PluginAddUseCase implements PluginAdd {
     const allSkipped: ReadonlySkipList[] = [];
     const allNotices: ReadonlyNoticeList[] = [];
     for (const toolId of toolIds) {
-      const files = new PluginContentTranslator(this.hasher).translate(dist, getToolConfig(toolId));
-      await prepareRuleFiles(
-        this.fs,
-        toolId,
-        projectRoot,
-        files.map((f) => [f.relativePath, f.content])
-      );
-    }
-    for (const toolId of toolIds) {
       await this.pluginRuntime?.ensurePluginRuntimeFiles(toolId, projectRoot, manifest);
       const foreignDir = await this.userScopeDirNotInstalledHere(
         dist.manifest.name,
@@ -484,7 +474,7 @@ export class PluginAddUseCase implements PluginAdd {
       );
       return { ...result, notices };
     }
-    await writePluginFiles(files, projectRoot, this.fs, toolId);
+    await writePluginFiles(files, projectRoot, this.fs);
     manifest.addPlugin(
       toolId,
       InstalledPlugin.fromDistribution(

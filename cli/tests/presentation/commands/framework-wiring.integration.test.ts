@@ -429,13 +429,6 @@ describe("aidd framework — the help surface", () => {
       ["--tool <tool>", "Limit update to a specific AI or IDE tool", false],
       ["-f, --force", "Overwrite modified files without prompting", false],
     ]);
-    expect(optionsOf("rules")).toEqual([
-      ["--json", "Print the inventory as JSON", false],
-      ["--tool <tool>", "Host for active publication (opencode V2)", false],
-      ["--publish", "Publish source rule text in the host's active instructions", false],
-      ["--write <rule-path>", "Write a project-relative rule after publication preflight", false],
-      ["--from <staged-file>", "Read prospective rule content from a staged file", false],
-      ["--delete <rule-path>", "Remove a rule after publication preflight", false],
-    ]);
+    expect(optionsOf("rules")).toEqual([["--json", "Print the inventory as JSON", false]]);
   });
 });

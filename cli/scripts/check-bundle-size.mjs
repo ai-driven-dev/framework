@@ -30,8 +30,6 @@ const pkg = JSON.parse(readFileSync(resolve(root, "package.json"), "utf8"));
 // guards for #829 (+10.4 KB over the preceding 703.8 KB); 1.1% measured headroom.
 // 734 KB: 725.8 KB, Kilo Code's profile, generated bridge, and runtime smoke support (+9.6 KB
 // over next's 716.2 KB); 1.1% measured headroom.
-// 750 KB: 744.10 KB, OpenCode V2 signed rule publication and lifecycle preflight (+10.12 KB
-// over HEAD's 733.98 KB); 0.79% measured headroom, no additional runtime dependency.
 const budgetKB = pkg.bundleBudgetKB ?? 500;
 const budgetBytes = budgetKB * 1024;
 

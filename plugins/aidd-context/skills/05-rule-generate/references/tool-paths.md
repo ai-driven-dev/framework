@@ -1,61 +1,60 @@
 # Tool paths (rules)
 
-The per-tool rules path and write targets. Rule slice only, nothing about skills, agents, commands, hooks, plugins, or marketplaces.
+This reference covers project rule generation only. Confirm hosts explicitly; a shared `AGENTS.md` does not identify installed tools.
 
-## Rules path per tool
+## Native targets
 
-| Tool           | Path                                               | Supported  |
-| -------------- | -------------------------------------------------- | ---------- |
-| Claude Code    | `.claude/rules/<category>/<slug>.md`               | yes        |
-| Cursor         | `.cursor/rules/<category>/<slug>.mdc`              | yes        |
-| GitHub Copilot | `.github/instructions/<NN>-<name>.instructions.md` | yes (flat) |
-| OpenCode V2 | `.opencode/rules/<category>/<slug>.md` (editable source), published text in `AGENTS.md` | yes, through safe CLI publication |
-| Codex CLI      | `.codex/rules/<category>/<slug>.md`                 | yes        |
+| Tool | Script ID | Active surface | Scope |
+| --- | --- | --- | --- |
+| Claude Code | `claude` | `.claude/rules/<category>/<slug>.md` | `paths` YAML array; omitted for all files |
+| Cursor | `cursor` | `.cursor/rules/<category>/<slug>.mdc` | `description`, comma-joined `globs`, `alwaysApply: false`; all files omit globs and use true |
+| GitHub Copilot | `copilot` | `.github/instructions/<NN>-<name>.instructions.md` | comma-joined `applyTo`; `**` for all files |
+| Codex | `codex` | root `AGENTS.md`, shared signed `aidd_rules` contribution | scopes are instructions to the model |
+| OpenCode V2 | `opencode` | the same contribution in root `AGENTS.md` | scopes are instructions to the model |
 
-`<slug>` is the file name `#-slug` from `rule-authoring.md` (e.g. `2-python-fstrings`). `<name>` is that slug with its leading category digit dropped (`python-fstrings`). `<category>` is the folder `<NN>-<name-of-category>`, the zero-padded category index plus the category name from the taxonomy, e.g. `01-standards`. `<NN>` is that same two-digit index.
+Use taxonomy and `#-slug` naming in [rule-authoring.md](rule-authoring.md). Copilot drops the slug's single-digit prefix and adds the category's two-digit prefix, e.g. `01-standards/1-naming` becomes `01-naming.instructions.md`.
 
-Copilot is flat: no category folder. Its file is `<NN>-<name>`, e.g. `2-python-fstrings` becomes `02-python-fstrings` (one category prefix, no folder).
+Codex Markdown guidance is not a `.codex/rules` execution policy. OpenCode V2 ignores config `instructions`; file links and modular `.opencode/rules` sources alone do not publish their text. This contract excludes OpenCode V1. Native syntax tests prove rendering, not runtime consumption by every host. Codex/OpenCode selected together appear once in the shared file; other hosts may also discover AGENTS.md, so physical deduplication does not guarantee model-context deduplication across surfaces.
 
-`aidd framework rules` inventories installed rule sources. An inventory entry alone does not prove that a host loads the content. Codex sources use Claude Code's `paths` array, omitted for all-files rules.
+## Installed script
 
-OpenCode V2 reads active guidance from `AGENTS.md`; it ignores `instructions` in JSON/JSONC configuration. Modular sources and links to them are insufficient. This generator supports V2 only; V1 discovery is not covered. See [V2 instructions](https://opencode.ai/v2/docs/instructions#configuration).
+Resolve `plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs` relative to this installed skill, then invoke its absolute installed path with Node. Never assume a framework checkout, project-relative script path, or installed AIDD CLI. The CommonJS script uses Node built-ins only and works inside ES module projects.
 
-## Scope frontmatter per tool
+Prepare a JSON request outside the project rule destinations:
 
-The file-scope field is named differently per tool. Set the right one.
+```json
+{
+  "category": "01-standards",
+  "slug": "1-naming",
+  "description": "Naming conventions",
+  "paths": ["src/**/*.ts", "test/**/*.ts"],
+  "body": "# Naming\n\n- Keep names clear.\n"
+}
+```
 
-| Tool           | Fields                                                                                              |
-| -------------- | --------------------------------------------------------------------------------------------------- |
-| Claude Code    | `paths` (array of globs). Omit `paths` for an all-files rule; no `paths` means it applies everywhere.  |
-| Cursor         | `description` (one line, what the rule governs), `globs` (comma-separated; omit for all-files), `alwaysApply` (false; true for all-files). |
-| GitHub Copilot | `applyTo` (single glob string; `**` for an all-files rule).                                          |
+Use an absolute real project directory and confirmed comma-separated script IDs:
 
-A multi-glob `paths` becomes a comma-joined string for Cursor and Copilot, or the most-encompassing glob.
+```sh
+node "$installed_rule_script" --project "$project_root" --tools claude,cursor,copilot,codex,opencode --input "$request_json"
+node "$installed_rule_script" --project "$project_root" --tools claude,cursor,copilot,codex,opencode --publish
+node "$installed_rule_script" --project "$project_root" --tools claude,cursor,copilot,codex,opencode --delete 01-standards/1-naming
+```
 
-OpenCode V2 sources retain `paths` or `globs` predicates. Publication expresses those predicates as instructions to the model; V2 provides no native per-rule glob filter.
+Create/update records confirmed targets in `aidd_docs/rules/<category>/<slug>.md`. Publish synchronizes the named native hosts and the complete shared contribution from canonical targets; delete also cleans the deleted rule's previous targets. Updating targets cleans removed targets. JSON accepts exactly category, slug, description, optional paths and body. Empty/omitted paths mean all files. Reject comma-containing globs (including brace alternations) rather than serialize ambiguous native lists; supply separate globs. Description is one line. Body is preserved completely and must not begin with YAML frontmatter. Scope belongs in JSON, never an arbitrary YAML parser.
 
-## Detect (which tools are installed)
+## Canonical and output ownership
 
-| Signal                            | Tool(s)        |
-| --------------------------------- | -------------- |
-| `.claude/` or `CLAUDE.md`         | Claude Code    |
-| `.cursor/`                        | Cursor         |
-| `.github/copilot-instructions.md` | GitHub Copilot |
+Canonical sources start with one strict script-owned JSON comment recording version, category, slug, description, paths and targets. Do not edit its syntax, key order or target order by hand. A body may be edited manually beneath intact metadata, then explicitly published. Generated native files carry a content signature; prior canonical rendering equality also proves ownership for an unsigned existing output. A differing unowned file, edited native file, or edited/duplicate/incomplete shared contribution refuses the entire request before writes. Restore the intact generated output and move edits into canonical sources. Hashes detect edits; they are not an authentication boundary against someone deliberately recomputing them.
 
-Also detect OpenCode from `.opencode/`, `opencode.json`, or `opencode.jsonc`; each identifies an OpenCode project with V2 as this generator's target contract.
+The script validates the complete prospective set before changing canonical sources or outputs. It rejects symlink targets/ancestors, traversal, reserved rule markers outside fenced examples and unclosed fences. Requests and existing files must be valid UTF-8; parsed text must roundtrip without unpaired Unicode surrogates. Valid Unicode pairs and complete bodies are preserved. The shared signature covers both payload and separator ownership; editing either refuses the request. It preserves every byte outside its shared contribution, including CRLF and `aidd_project_memory`. Repeated publication is byte-idempotent. Individual file replacement is atomic; this is not a multi-file transaction against disk failures or concurrent writers.
 
-## Write targets
+Root `AGENTS.override.md` blocks Codex generation because it masks AGENTS.md. The script refuses a local AGENTS.md exceeding 32 KiB when Codex is involved; global and ancestor guidance also consume Codex's default combined limit. A local pass cannot guarantee that combined budget, and the script does not change host configuration.
 
-- **Host project**: one file per supported confirmed tool, at the paths above.
-- **Plugin source**: one canonical `.md` rule under `plugins/<plugin>/rules/<category>/<slug>.md`. No per-tool fan-out. Carry a `paths` array for a scoped rule, or no frontmatter block for all-files. Per-tool frontmatter is reconciled at install.
+No migration: old `.opencode/rules` or `.codex/rules` files are neither imported nor deleted. An old `aidd_opencode_rules` block causes `Ambiguous or legacy AIDD rule contribution; no automatic migration.` or the corresponding incomplete-block error. Explicitly resolve historical guidance before retrying; do not silently erase or import it. Flat archive distribution of standalone rules remains out of scope.
 
-The mode is chosen in the capture action. Never pick one silently.
+## Write modes
 
-For an OpenCode V2 host target, first check `aidd framework rules --help` exposes `--write` and `--from`. Stage canonical content outside project rule paths, then invoke `aidd framework rules --tool opencode --write .opencode/rules/<category>/<slug>.md --from <staged-file>` from the workspace root. The CLI validates every prospective source and the existing signed `aidd_opencode_rules` contribution before writing either source or active instructions. A second invocation replaces the same contribution. Use `--publish` to synchronize existing sources, or `--delete <rule-path>` to remove a source and its active text safely. Never write `AGENTS.md` as a whole or register it as a CLI-owned file. Preserve user guidance and the separate `aidd_project_memory` block.
+- **Host project**: use the installed script above for explicitly confirmed hosts.
+- **Plugin source**: author one canonical Markdown file under `plugins/<plugin>/rules/<category>/<slug>.md`; retain a `paths` array for scoped rules or omit frontmatter for all files. No project canonical metadata, script publication or host fan-out in this mode.
 
-If the CLI is missing, lacks these options, or refuses an edited, duplicate or incomplete block, stop and report that exact obstacle. Do not write the OpenCode source first, add `instructions` entries, or fall back to manual block replacement. Ask the user to restore the intact contribution and move desired rule edits into its modular sources. Flat archive distribution remains outside this generator's publication contract.
-
-## Safety checks
-
-- **Asset-access precheck**: before writing, confirm this reference is readable. If not, stop: the plugin is not installed in this host.
-- **Write-target validation**: before mutation, verify relative paths remain inside the workspace at the chosen scope, including existing symlink ancestors. Recheck resulting paths after publication. Unsafe OpenCode targets must be rejected through the CLI preflight without writing either file.
+Before either mode, confirm this reference is readable; otherwise report the missing installed asset. Never choose a mode or host silently.

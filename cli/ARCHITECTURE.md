@@ -100,7 +100,7 @@ Phase 18 (`aidd_docs/tasks/2026_08/2026_08_20_refactor-contextes-cli/`) moved th
 
 Plugins are distributed via marketplace catalogs (Git repos with `marketplace.json` + `plugins/`). Each plugin provides capability files (agents, commands, hooks, mcp, rules, skills) per AI tool format. The CLI translates plugin distributions between tool formats using reverse + forward content rewriting (plugin sync pipeline).
 
-Project-memory production (CLAUDE.md, AGENTS.md, copilot-instructions.md) belongs to the `aidd-context` plugin. The CLI may publish existing rule sources into a host-declared, signed contribution in shared guidance: tools owns its pure formatter, framework validates ownership and materializes it through filesystem ports. Publication preserves the separate project-memory block and user bytes; shared guidance is never owned as a whole in the manifest.
+Memory ownership (CLAUDE.md, AGENTS.md, copilot-instructions.md) is delegated to the `aidd-context` plugin — not bundled in the CLI binary.
 
 ## Translate (author-side)
 

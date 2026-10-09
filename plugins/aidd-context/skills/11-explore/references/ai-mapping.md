@@ -12,9 +12,9 @@ A tool is present only when one of its own mapped surfaces below holds a file. A
 | -------------- | --------------------------- | --------------------------------------------- | ---------------------------------------- | ------------------------------------- | --------------------------------- |
 | Claude Code    | `.claude/agents/`           | `.claude/commands/`                           | `.claude/rules/`                         | `.claude/skills/`                     | `CLAUDE.md`                       |
 | Cursor         | `.cursor/agents/`           | `.cursor/commands/`                           | `.cursor/rules/`                         | `.cursor/skills/`                     | `AGENTS.md`                       |
-| OpenCode       | `.opencode/agents/`         | `.opencode/commands/`                         | `.opencode/rules/` (editable sources); active rule text in the `aidd_opencode_rules` contribution  | `.opencode/skills/`                   | `AGENTS.md`                       |
+| OpenCode       | `.opencode/agents/`         | `.opencode/commands/`                         | `aidd_docs/rules/` (canonical sources); shared `aidd_rules` contribution in root `AGENTS.md`  | `.opencode/skills/`                   | `AGENTS.md`                       |
 | GitHub Copilot | `.github/agents/*.agent.md` | `.github/prompts/*.prompt.md`                 | `.github/instructions/*.instructions.md` | `.github/skills/`                     | `.github/copilot-instructions.md` |
-| Codex CLI      | `.codex/agents/{name}.toml` | **Not supported**                             | Not supported                            | `.agents/skills/aidd-{name}/SKILL.md` | `AGENTS.md`                       |
+| Codex CLI      | `.codex/agents/{name}.toml` | **Not supported**                             | `aidd_docs/rules/` (canonical sources); shared `aidd_rules` contribution in root `AGENTS.md`, not execution policies | `.agents/skills/aidd-{name}/SKILL.md` | `AGENTS.md`                       |
 
 ## AI quick map - hooks, plugins
 
@@ -42,7 +42,7 @@ Rules and commands follow a two-layout scheme. Subdir-tools organize files under
 
 | Layout          | Surface   | Tools                                    | Example                                                        |
 | --------------- | --------- | ---------------------------------------- | -------------------------------------------------------------- |
-| Subdir          | Rules     | Claude Code, Cursor, OpenCode sources                      | `<rules root>/02-programming-languages/2-typescript-naming.md` |
+| Subdir          | Rules     | Claude Code, Cursor; canonical Codex/OpenCode sources                      | `<rules root>/02-programming-languages/2-typescript-naming.md` |
 | Subdir          | Commands  | Claude Code, Cursor, OpenCode            | `<commands root>/10_maintenance/fix-issue.md`                  |
 | Flat            | Both      | GitHub Copilot                           | `.github/instructions/02-typescript-naming.instructions.md`    |
 

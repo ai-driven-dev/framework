@@ -33,7 +33,6 @@ import {
   OPENCODE_HOOKS_DIR,
   OPENCODE_PLUGIN_ENTRY_BASENAME,
 } from "./opencode-paths.js";
-import { publishOpencodeRules } from "./opencode-rule-block.js";
 
 const DIRECTORY = OPENCODE_DIRECTORY;
 const TOOL_SUFFIX = ".opencode.md";
@@ -94,11 +93,15 @@ export const opencode: AiTool<
         convertCommandFrontmatterNoHint(fm, relativeFileName),
     }),
     rules: new RulesCapability({
-      publication: { target: "AGENTS.md", render: publishOpencodeRules },
       directory: DIRECTORY,
       toolSuffix: TOOL_SUFFIX,
       buildInstallPath: (fileName) => `${DIRECTORY}rules/${stripToolSuffix(TOOL_SUFFIX, fileName)}`,
-      convertFrontmatter: (fm) => fm,
+      convertFrontmatter: (fm) => {
+        if (fm.alwaysApply === false && fm.description !== undefined) {
+          return { description: fm.description };
+        }
+        return {};
+      },
     }),
     mcp: new McpCapability({
       outputPath: "opencode.json",

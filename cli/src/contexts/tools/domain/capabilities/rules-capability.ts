@@ -11,10 +11,6 @@ export class RulesCapability {
       inputSuffix?: string;
       buildInstallPath: (fileName: string) => string | null;
       convertFrontmatter: (fm: Record<string, unknown>) => Record<string, unknown>;
-      publication?: {
-        target: string;
-        render: (existing: string, sources: readonly { path: string; content: string }[]) => string;
-      };
     }
   ) {}
 

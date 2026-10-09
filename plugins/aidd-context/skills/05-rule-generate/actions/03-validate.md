@@ -15,7 +15,7 @@ A short pass or fail line per rule file.
 1. **Exists.** Confirm each file is on disk at its expected path.
 2. **Contract.** Validate the file against [rule-authoring.md](../references/rule-authoring.md).
 3. **Target.** Validate target path and frontmatter against [tool-paths.md](../references/tool-paths.md).
-   For OpenCode V2, also confirm the exact rule body is present in the signed contribution, user guidance is preserved, and rerunning publication leaves the file byte-identical. Report this as publication validation; only a real V2 model-input capture proves runtime consumption.
+   For Codex and OpenCode V2, confirm the complete body appears once in the shared signed contribution, user guidance and memory bytes survive, and rerunning the installed script with `--publish` is byte-identical. Native host files must retain complete body and scope syntax. Report file publication separately from model consumption; only real host evidence proves runtime use.
 4. **Report.** Emit one pass/fail line per file.
 
 ## Test

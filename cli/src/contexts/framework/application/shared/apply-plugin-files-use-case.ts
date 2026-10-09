@@ -19,7 +19,6 @@ import {
   materializeViaTranslator,
 } from "../plugin/plugin-helpers.js";
 import { resolveBaseDirFromRecord } from "../plugin/plugin-target-resolution.js";
-import { prepareRuleFiles } from "../publish-rules-use-case.js";
 import type { EnsureBuiltMarketplace } from "./ensure-built-marketplace-use-case.js";
 
 interface ApplyPluginFilesOptions {
@@ -90,7 +89,7 @@ export class ApplyPluginFilesUseCase {
         projectRoot,
         this.builtDeps.homedir
       );
-      await deleteOldFiles(plugin.files, baseDir, this.fs, toolId);
+      await deleteOldFiles(plugin.files, baseDir, this.fs);
     }
     return materializeViaTranslator(translator, dist, toolId, plugin, projectRoot, manifest);
   }
@@ -101,13 +100,6 @@ export class ApplyPluginFilesUseCase {
   ): Promise<number> {
     const { toolId, plugin, toolConfig, projectRoot, manifest, fileFilter } = options;
     const files = new PluginContentTranslator(this.hasher).translate(dist, toolConfig);
-    const selected = files.filter((f) => !fileFilter || fileFilter(f.relativePath));
-    const publish = await prepareRuleFiles(
-      this.fs,
-      toolId,
-      projectRoot,
-      selected.map((f) => [f.relativePath, f.content])
-    );
     let restored = 0;
     for (const f of files) {
       if (fileFilter !== null && fileFilter !== undefined && !fileFilter(f.relativePath)) continue;
@@ -117,7 +109,6 @@ export class ApplyPluginFilesUseCase {
         restored++;
       }
     }
-    await publish();
     manifest.updatePlugin(
       toolId,
       plugin.withFiles(new Map(files.map((f) => [f.relativePath, f.hash.value])))

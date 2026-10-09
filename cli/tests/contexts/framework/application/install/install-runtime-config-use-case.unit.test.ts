@@ -17,45 +17,6 @@ import { StubAssetProvider } from "../../../../helpers/ports/stub-asset-provider
 
 const PROJECT_ROOT = "/test-project";
 
-describe("OpenCode V2 rule delivery", () => {
-  it("publishes existing sources without claiming AGENTS.md", async () => {
-    const deps = await buildUnitDeps(PROJECT_ROOT);
-    const manifest = Manifest.create();
-    await deps.fs.writeFile(join(PROJECT_ROOT, ".opencode/rules/test.md"), "Installed rule text");
-    await deps.fs.writeFile(join(PROJECT_ROOT, "AGENTS.md"), "User instructions\r\n");
-    await buildUseCase(deps).execute({
-      toolId: "opencode",
-      projectRoot: PROJECT_ROOT,
-      manifest,
-      force: false,
-      version: "1.0.0",
-    });
-    expect(await deps.fs.readFile(join(PROJECT_ROOT, "AGENTS.md"))).toContain(
-      "Installed rule text"
-    );
-    expect(manifest.isFileTracked("AGENTS.md")).toBe(false);
-  });
-
-  it("refuses unsafe publication before writing runtime files", async () => {
-    const deps = await buildUnitDeps(PROJECT_ROOT);
-    const manifest = Manifest.create();
-    await deps.fs.writeFile(
-      join(PROJECT_ROOT, "AGENTS.md"),
-      "<!-- aidd_opencode_rules:start -->\n"
-    );
-    await expect(
-      buildUseCase(deps).execute({
-        toolId: "opencode",
-        projectRoot: PROJECT_ROOT,
-        manifest,
-        force: false,
-        version: "1.0.0",
-      })
-    ).rejects.toThrow(/AGENTS.md/);
-    expect(await deps.fs.fileExists(join(PROJECT_ROOT, "opencode.json"))).toBe(false);
-  });
-});
-
 function buildUseCase(
   deps: Awaited<ReturnType<typeof buildUnitDeps>>,
   assets: AssetProvider = deps.assetProvider

@@ -586,7 +586,7 @@ describe.concurrent("E2E: aidd translate", () => {
       ) as Record<string, unknown>;
       // Aligned with the install-path base asset (single source of truth).
       expect(opencode.$schema).toBe("https://opencode.ai/config.json");
-      expect(opencode).not.toHaveProperty("instructions");
+      expect(opencode.instructions).toEqual([".opencode/rules/**/*.md"]);
       expect(opencode.mcp).toBeDefined();
     } finally {
       await cleanup();

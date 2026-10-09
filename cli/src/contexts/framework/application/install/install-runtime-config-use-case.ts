@@ -13,7 +13,6 @@ import { buildOpencodeFlatConfig } from "../../../tools/domain/formats/opencode-
 import type { FileMerger } from "../../../tools/domain/ports/file-merger.js";
 import { getToolConfig, isAiTool } from "../../../tools/domain/registry.js";
 import type { Manifest } from "../../domain/manifest.js";
-import { prepareRuleFiles, prepareRulePublication } from "../publish-rules-use-case.js";
 import type { PostInstallPipelineUseCase } from "./post-install-pipeline-use-case.js";
 
 export interface InstallRuntimeConfigOptions {
@@ -50,14 +49,7 @@ export class InstallRuntimeConfigUseCase {
     }
     const regularFiles = await this.buildConfigFiles(options);
     const mergeFiles = this.buildStaticSettingsFiles(options);
-    const publish = await prepareRuleFiles(
-      this.fs,
-      toolId,
-      options.projectRoot,
-      regularFiles.map((f) => [f.relativePath, f.content])
-    );
     await this.applyAndTrack(regularFiles, mergeFiles, options);
-    await publish();
     const allFiles = [...regularFiles, ...mergeFiles];
     return { toolId, fileCount: allFiles.length, files: allFiles, skipped: false, warnings: [] };
   }
@@ -69,7 +61,6 @@ export class InstallRuntimeConfigUseCase {
   ): Promise<void> {
     const toolConfig = getToolConfig(toolId);
     if (!isAiTool(toolConfig)) return;
-    const publish = await prepareRulePublication(this.fs, { toolId, projectRoot });
     for (const [fileName, relativePath] of Object.entries(toolConfig.pluginRuntimeFiles ?? {})) {
       const path = join(projectRoot, relativePath);
       if (await this.fs.fileExists(path)) continue;
@@ -78,7 +69,6 @@ export class InstallRuntimeConfigUseCase {
       await this.fs.writeFile(path, content);
       manifest.updateTrackedFileHash(toolId, relativePath, this.hasher.hash(content));
     }
-    await publish();
   }
 
   private async applyAndTrack(

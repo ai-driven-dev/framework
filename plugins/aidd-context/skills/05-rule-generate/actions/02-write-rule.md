@@ -1,6 +1,6 @@
 # 02 - Write rule
 
-Build one canonical rule and write it for each supported tool.
+Build one canonical rule and publish it for each confirmed supported host.
 
 ## Input
 
@@ -8,19 +8,19 @@ From 01: the topic, category, slug, scope, and write mode.
 
 ## Output
 
-One rule file per supported confirmed tool, the list of files written, and any skipped tool with its reason.
+The canonical source, generated targets, and any unsupported tool with its reason.
 
 ## Process
 
 1. **Build.** Copy [rule-template.md](../assets/rule-template.md) into one canonical rule, concise. Strip the scaffold (comments + `<...>`).
-2. **Frontmatter.** Set the per-tool frontmatter from [tool-paths.md](../references/tool-paths.md). Drop a field a tool does not support.
+2. **Request.** For host mode, put category, slug, one-line description, optional paths and complete Markdown body into the JSON request in [tool-paths.md](../references/tool-paths.md). Keep YAML frontmatter out of the body.
 3. **Render.** Per the write mode ([tool-paths.md](../references/tool-paths.md)):
-   - **Host**: for each supported confirmed tool, write to its path and extension. For OpenCode V2, follow the staged publication procedure in [tool-paths.md](../references/tool-paths.md); its CLI preflight precedes both writes. Skip an unsupported tool, carrying its reason forward.
+   - **Host**: resolve the installed skill's `plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs` to an absolute installed path and invoke it with explicit project, tools and JSON input, following [tool-paths.md](../references/tool-paths.md). It preflights every output before any mutation. Report a refusal verbatim; do not write sources first or replace outputs manually. Skip unsupported tools with their reason.
    - **Plugin source**: write one canonical `.md` rule. No per-tool fan-out.
 4. **Split.** When examples warrant it, write several rule files rather than one crowded one.
-5. **Validate.** Run the write-target validation ([tool-paths.md](../references/tool-paths.md)).
+5. **Validate.** Check the script's reported targets against [tool-paths.md](../references/tool-paths.md). It must not require the AIDD CLI.
 
 ## Test
 
-- Each rule file exists at its tool's rules path under the chosen scope.
-- The scope frontmatter matches the rule's reach, per [tool-paths.md](../references/tool-paths.md).
+- The canonical source and native files or shared contribution exist at their expected paths.
+- Native scope metadata or shared scope instructions match the rule's reach, per [tool-paths.md](../references/tool-paths.md).
