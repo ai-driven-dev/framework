@@ -80,7 +80,7 @@ Usage groups: step, model, task, flow, tool and person. Attribution states its e
 ### Stored data
 
 Recording is local and opt-in, with no export, prompts, code or diffs. Hooks append one
-line per observation to git-ignored `aidd_docs/runs/<run_id>__<vendor_id>.jsonl`, never
+line per observation to `<git common dir>/aidd/runs/<run_id>__<vendor_id>.jsonl`, one directory per clone that every worktree shares and no commit can reach, never
 rewriting it or recording tokens, cost or model. Joined measurement records are stored under
 `~/.config/aidd/telemetry/` according to [the record contract](../../aidd_docs/product/metrics-contract.md).
 

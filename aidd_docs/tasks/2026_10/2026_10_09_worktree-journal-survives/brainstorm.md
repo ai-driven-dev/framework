@@ -1,22 +1,27 @@
-# Une session de worktree survit à la suppression du worktree
+# A worktree session outlives the worktree's removal
 
-Précise [#932](https://github.com/ai-driven-dev/framework/issues/932).
+Refines [#932](https://github.com/ai-driven-dev/framework/issues/932).
 
-Celui qui demande ce qu'une tâche a coûté doit obtenir la réponse même quand le travail a été fait par un agent dans un worktree lié, et même quand ce worktree a déjà été retiré. Aujourd'hui le journal est écrit dans l'arbre du worktree, le rapport ne lit que le journal du checkout courant, et `git worktree remove` efface un journal seulement ignoré sans `--force` (mesuré avec git 2.55.0.windows.5). La session n'entre alors jamais dans le sink, et la tâche se lit `no-journal` ou n'existe pas. #631 demande le lien vers la tâche et l'interdiction de perdre une session sans bruit. C'est ce défaut-là.
+Whoever asks what a task cost must get the answer even when the work was done by an agent in a linked worktree, and even when that worktree has already been removed. Today the journal is written inside the worktree's tree, the report reads only the current checkout's journal, and `git worktree remove` deletes a journal that is merely ignored without `--force` (measured with git 2.55.0.windows.5). The session then never reaches the sink, and the task reads `no-journal` or does not exist at all. #631 asks for the link to the task and forbids losing a session silently. This is that defect.
 
-La conclusion écrite dans le hook (« un journal par worktree, à la racine du worktree ») est amendée. Ses raisons, elles, restent : on n'écrit pas dans l'arbre d'une autre branche, et un clone nu n'a pas d'arbre principal. Le journal du clone vit donc à un seul endroit, sous le répertoire git commun du clone, hors de tout arbre de travail et hors du répertoire git propre à un worktree. `git worktree remove` ne le supprime pas. Il n'est pas un fichier de checkout, donc il n'est pas commité et il ne salit aucune branche. Tous les lecteurs (rapport, lecture, diagnostic, oubli) utilisent cet endroit, et `AIDD_RUNS_DIR` continue de le remplacer entièrement.
+The conclusion written in the hook ("one journal per worktree, at the worktree's root") is amended, along with its claim that `worktree_id` alone serves cross-worktree joining. Its reasons still hold: nothing writes into another branch's tree, and a bare clone has no main working tree. The clone's journal therefore lives in one place, under the clone's common git directory, outside every working tree and outside any worktree's own git directory. `git worktree remove` does not delete it. It is not a checkout file, so it is never committed and dirties no branch. Every reader (report, local read, diagnosis including its unrecognised-records evidence, forget) uses that place, and `AIDD_RUNS_DIR` still replaces it entirely.
 
-## Ce qui est tenu
+## What Is Clear
 
-- Le rapport lancé dans n'importe quel checkout du clone compte les sessions de tous ses worktrees, passés dans les totaux et dans la tâche ou le flux. Deux clones du même remote ne sont pas fusionnés.
-- L'écriture a lieu pendant la session. Un rapport lancé seulement après la suppression arrive trop tard.
-- `worktree_id` reste sur la ligne `session_start`, absent sur un checkout simple. Le rapport ne gagne aucun axe worktree : deux worktrees qui ont touché la même tâche additionnent leur coût. Les distinguer dans le rapport serait un axe de plus, et la décision du 2026-08-31 ne l'accorde pas. La phrase de l'issue « told apart by worktree_id » est tenue dans le journal, pas dans une section du rapport.
-- Une seule copie fait foi. Pas de second journal dans `aidd_docs/runs/` du worktree : les deux divergeraient.
-- Les journaux déjà écrits dans un worktree encore présent sont lus avec le nouvel endroit, sinon les sessions d'aujourd'hui restent invisibles. Les nouvelles lignes n'y vont plus.
-- Un worktree déjà supprimé avant ce changement, sans lecture antérieure, reste perdu. Les transcripts ne suffisent pas : sans journal, rien ne nomme la session.
-- Le switch du checkout qui travaille décide toujours d'écrire ou non. Le refus de la personne gagne toujours. Le nouveau dossier reçoit le même traitement de confidentialité que `aidd_docs/runs/` aujourd'hui.
-- Le sink reste celui de la machine. On n'y déplace pas le calcul de la tâche : il continue d'être dérivé du journal au moment du rapport.
+- A report run from any checkout of the clone counts the sessions of all its worktrees, past ones included, in the totals and in the task or flow. Journals from two clones of the same remote are not gathered together; the totals and the project axis already pool them through the machine's sink.
+- Writing happens during the session. A report run only after the removal comes too late.
+- `worktree_id` and `worktree_repo_id` stay on the `session_start` line, absent on a plain checkout. The report gains no worktree axis: two worktrees that touched the same task add up their cost. Only the cumulative figure matters: a worktree is a technical artefact an agent runner names, and the task, backlog, flow and agent axes already answer what a piece of work cost. #932 is amended accordingly; `worktree_id` serves only to explain an attribution from the journal.
+- One copy is authoritative. No second journal in the worktree's `aidd_docs/runs/`: the two would diverge.
+- Journals already written in a worktree that still exists are read alongside the new place, otherwise today's sessions stay invisible. New lines no longer go there.
+- A worktree removed before this change, with no earlier read, stays lost. Transcripts are not enough: without a journal, nothing names the session.
+- The working checkout's switch still decides whether to write. The person's refusal always wins. The new directory gets the same owner-only permissions `aidd_docs/runs/` gets today; the `.gitignore` entry has no purpose there.
+- The sink stays per machine. Task attribution does not move into it: it is still derived from the journal at report time.
+- Catch-up into the sink stays gated by the switch of the checkout running the report: measurement off stores nothing, by design (`report-cost-use-case.ts`). Checkouts of one clone share the committed switch in practice.
 
-## Prochaine étape
+## Still Open
 
-Écrire le plan d'implémentation à partir de cette idée.
+- The backlog axis resolves a task folder in the current checkout's tree, so a session whose task folder exists only on another worktree's branch reads `none`. Tracked as a defect on #975, outside this change.
+
+## Next Move
+
+Nothing left to decide here: the backlog-axis defect lives on #975. The worktree axis is settled: the report keeps the cumulative figures only, and #932 is amended to say so.
