@@ -28,6 +28,7 @@ The per-worktree default had two sound reasons: nothing should write into anothe
 - A worktree removed before this change, never read before, stays lost.
 - The hook ships in the plugin and the reader in the CLI, released apart. A newer CLI reads both locations; an older CLI with a newer plugin sees no new session and cannot forget it. The plugin README therefore asks for the CLI to be updated first.
 - A session the previous plugin opened keeps its old run file; lines the new plugin writes later in that same session find no file under the new location and are dropped until the next session starts.
+- A session resumed after the update starts a second run file under the new location; that copy wins over the old one, so the part of the session journalled before the update loses its attribution.
 - The two clones of one remote keep two journals; the sink and the project axis already pool them.
 - The backlog axis still resolves task folders in the checkout running the report, and catch-up still follows that checkout's switch. Both are outside this decision.
 - Hook and CLI spell the location separately (`repo.cjs`, `cli/src/kernel/paths.ts`); a parity test holds them together.
