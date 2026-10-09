@@ -127,6 +127,14 @@ const PUBLIC_MODULES: Readonly<Record<string, readonly string[]>> = {
     "src/contexts/telemetry/application/declare-task-use-case.ts",
     "src/contexts/telemetry/application/show-task-binding-use-case.ts",
     "src/contexts/telemetry/application/consented-repositories.ts",
+    // the report a command asks for, the days it is asked over, the axes it splits by, and
+    // the JSON envelope it prints; the display words the same result
+    "src/contexts/telemetry/application/report/report-usage-use-case.ts",
+    "src/contexts/telemetry/application/report/report-envelope.ts",
+    "src/contexts/telemetry/domain/report/period.ts",
+    "src/contexts/telemetry/domain/report/usage-report.ts",
+    // who, if anyone, the measurement names, and the result the command prints
+    "src/contexts/telemetry/application/identity/manage-identity-use-case.ts",
   ],
 };
 

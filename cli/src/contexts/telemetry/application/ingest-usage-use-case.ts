@@ -22,6 +22,9 @@ export interface IngestResult {
   readonly snapshots: number;
   /** Billed calls, by the reason they were not stored. */
   readonly notStored: Readonly<Record<NotStoredReason, number>>;
+  /** When the oldest transcript still on disk was last written: how far back history can be
+   * read. `null` when there is none, or nothing was read. */
+  readonly oldestTranscriptAt: string | null;
 }
 
 const NOT_STORED: Readonly<Record<NotStoredReason, number>> = {
@@ -70,6 +73,7 @@ export class IngestUsageUseCase {
         skippedLedgerLines: 0,
         snapshots: 0,
         notStored: NOT_STORED,
+        oldestTranscriptAt: null,
       };
     }
     return this.ledger.exclusively(() => this.ingest());
@@ -126,6 +130,7 @@ export class IngestUsageUseCase {
       skippedLedgerLines,
       snapshots,
       notStored,
+      oldestTranscriptAt: reading.oldestTranscriptAt,
     };
   }
 

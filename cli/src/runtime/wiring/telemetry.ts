@@ -4,8 +4,11 @@ import { BranchDeclarations } from "../../contexts/telemetry/application/branch-
 import { ConsentedRepositories } from "../../contexts/telemetry/application/consented-repositories.js";
 import { DeclareTaskUseCase } from "../../contexts/telemetry/application/declare-task-use-case.js";
 import { DirectoryResolver } from "../../contexts/telemetry/application/directory-resolver.js";
+import { ManageIdentityUseCase } from "../../contexts/telemetry/application/identity/manage-identity-use-case.js";
 import { IngestUsageUseCase } from "../../contexts/telemetry/application/ingest-usage-use-case.js";
 import { ReadClaudeUsageUseCase } from "../../contexts/telemetry/application/read-claude-usage-use-case.js";
+import { DeclaredBindings } from "../../contexts/telemetry/application/report/declared-bindings.js";
+import { ReportUsageUseCase } from "../../contexts/telemetry/application/report/report-usage-use-case.js";
 import { ShowTaskBindingUseCase } from "../../contexts/telemetry/application/show-task-binding-use-case.js";
 import { SnapshotBindingsUseCase } from "../../contexts/telemetry/application/snapshot-bindings-use-case.js";
 import { claudeProjectsRoot } from "../../contexts/telemetry/domain/claude-projects-root.js";
@@ -17,6 +20,7 @@ import { GitBranchBindingStoreAdapter } from "../../contexts/telemetry/infrastru
 import { SessionBindingStoreAdapter } from "../../contexts/telemetry/infrastructure/declaration/session-binding-store-adapter.js";
 import { GitBranchBindingSourceAdapter } from "../../contexts/telemetry/infrastructure/git-branch-binding-source-adapter.js";
 import { GitRepositoryLocatorAdapter } from "../../contexts/telemetry/infrastructure/git-repository-locator-adapter.js";
+import { PersonIdentityAdapter } from "../../contexts/telemetry/infrastructure/identity/person-identity-adapter.js";
 import { ResolutionStoreAdapter } from "../../contexts/telemetry/infrastructure/resolution-store-adapter.js";
 import { UsageLedgerAdapter } from "../../contexts/telemetry/infrastructure/usage-ledger-adapter.js";
 import { PrivateStorageAdapter } from "../filesystem/private-storage-adapter.js";
@@ -28,6 +32,8 @@ export interface TelemetryDeps {
   showTaskBindingUseCase: ShowTaskBindingUseCase;
   ingestUsageUseCase: IngestUsageUseCase;
   snapshotBindingsUseCase: SnapshotBindingsUseCase;
+  reportUsageUseCase: ReportUsageUseCase;
+  manageIdentityUseCase: ManageIdentityUseCase;
 }
 
 /** Where a person's measurement lives. `AIDD_TELEMETRY_DIR` moves it outright; otherwise it is
@@ -59,9 +65,10 @@ export function wireTelemetry(homedir: () => string): TelemetryDeps {
   const gitEnv = environmentWithoutGitVariables();
   const bindingsDir = join(root, "bindings");
   const branchSource = new GitBranchBindingSourceAdapter(gitEnv);
+  const snapshotStore = new BindingSnapshotStoreAdapter(bindingsDir, storage);
   const snapshotBindingsUseCase = new SnapshotBindingsUseCase(
     branchSource,
-    new BindingSnapshotStoreAdapter(bindingsDir, storage),
+    snapshotStore,
     () => new Date()
   );
   const ledger = new UsageLedgerAdapter(ledgerDir, storage);
@@ -107,10 +114,18 @@ export function wireTelemetry(homedir: () => string): TelemetryDeps {
     snapshotBindingsUseCase,
     { refusedByEnvironment }
   );
+  const identity = new PersonIdentityAdapter(root, storage);
   return {
     declareTaskUseCase,
     showTaskBindingUseCase,
     ingestUsageUseCase,
     snapshotBindingsUseCase,
+    reportUsageUseCase: new ReportUsageUseCase(
+      ingestUsageUseCase,
+      ledger,
+      new DeclaredBindings(sessions, snapshotStore),
+      identity
+    ),
+    manageIdentityUseCase: new ManageIdentityUseCase(identity),
   };
 }

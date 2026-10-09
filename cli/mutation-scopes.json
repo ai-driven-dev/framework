@@ -18,7 +18,7 @@
       "break": 94
     },
     "telemetry": {
-      "mutate": "src/contexts/telemetry/**/*.ts",
+      "mutate": ["src/contexts/telemetry/**/*.ts", "src/presentation/display/telemetry/**/*.ts"],
       "break": 96
     },
     "translate": {
@@ -34,7 +34,7 @@
       "break": 93
     },
     "presentation": {
-      "mutate": "src/presentation/**/*.ts",
+      "mutate": ["src/presentation/**/*.ts", "!src/presentation/display/telemetry/**/*.ts"],
       "break": 95
     },
     "runtime": {

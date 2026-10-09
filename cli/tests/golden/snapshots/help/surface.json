@@ -132,12 +132,22 @@
   {
     "invocation": "aidd telemetry",
     "exitCode": 0,
-    "help": "Usage: aidd telemetry [options] [command]\n\nMeasure what Claude Code sessions consume, locally\n\nOptions:\n  -h, --help             display help for command\n\nCommands:\n  ingest [options]       Read new transcripts into the local ledger, for\n                         projects that opted in\n  task [options] [name]  Declare the task the current work belongs to, or show\n                         what it is bound to\n  help [command]         display help for command"
+    "help": "Usage: aidd telemetry [options] [command]\n\nMeasure what Claude Code sessions consume, locally\n\nOptions:\n  -h, --help               display help for command\n\nCommands:\n  ingest [options]         Read new transcripts into the local ledger, for\n                           projects that opted in\n  task [options] [name]    Declare the task the current work belongs to, or show\n                           what it is bound to\n  report [options]         Show what the work consumed, split along one axis,\n                           after reading new transcripts\n  identity [options] [id]  Choose to be named on your own measurement, or show\n                           or remove that choice\n  help [command]           display help for command"
+  },
+  {
+    "invocation": "aidd telemetry identity",
+    "exitCode": 0,
+    "help": "Usage: aidd telemetry identity [options] [id]\n\nChoose to be named on your own measurement, or show or remove that choice\n\nOptions:\n  --off       Stop naming you and remove the identity (default: false)\n  -h, --help  display help for command"
   },
   {
     "invocation": "aidd telemetry ingest",
     "exitCode": 0,
     "help": "Usage: aidd telemetry ingest [options]\n\nRead new transcripts into the local ledger, for projects that opted in\n\nOptions:\n  --quiet     Print nothing on success (for hooks) (default: false)\n  -h, --help  display help for command"
+  },
+  {
+    "invocation": "aidd telemetry report",
+    "exitCode": 0,
+    "help": "Usage: aidd telemetry report [options]\n\nShow what the work consumed, split along one axis, after reading new transcripts\n\nOptions:\n  --from <date>  First day to include, as YYYY-MM-DD (UTC)\n  --to <date>    Last day to include, as YYYY-MM-DD (UTC)\n  --days <n>     The last n days, today included\n  --axis <axis>  What to split by (choices: \"total\", \"person\", \"session\",\n                 \"model\", \"day\", \"repository\", \"task\", \"ticket\", default:\n                 \"total\")\n  --json         Print a versioned JSON envelope instead of text (default:\n                 false)\n  -h, --help     display help for command"
   },
   {
     "invocation": "aidd telemetry task",

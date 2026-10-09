@@ -1,4 +1,4 @@
-import { appendFile, cp, mkdir, mkdtemp, rename, rm, writeFile } from "node:fs/promises";
+import { appendFile, cp, mkdir, mkdtemp, rename, rm, utimes, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, relative, resolve } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
@@ -151,5 +151,41 @@ describe("reading a transcript from a byte offset", () => {
   it("reads nothing from a file that vanished", async () => {
     const read = await adapter.read(join(projects, "gone.jsonl"), null);
     expect(read.lines).toEqual([]);
+  });
+
+  it("tells when the oldest of the given transcripts was last written, in any order", async () => {
+    const at = (name: string, iso: string) => ({ path: join(projects, name), time: new Date(iso) });
+    const files = [
+      at("mid.jsonl", "2026-09-25T08:00:00.000Z"),
+      at("old.jsonl", "2026-09-20T08:00:00.000Z"),
+      at("recent.jsonl", "2026-10-01T08:00:00.000Z"),
+    ];
+    for (const file of files) {
+      await writeFile(file.path, "{}\n");
+      await utimes(file.path, file.time, file.time);
+    }
+    const paths = files.map((file) => file.path);
+    expect(await adapter.oldestModified(paths)).toBe("2026-09-20T08:00:00.000Z");
+    expect(await adapter.oldestModified([...paths].reverse())).toBe("2026-09-20T08:00:00.000Z");
+    expect(await adapter.oldestModified([paths[1] as string, paths[0] as string])).toBe(
+      "2026-09-20T08:00:00.000Z"
+    );
+    expect(await adapter.oldestModified([paths[0] as string, paths[2] as string])).toBe(
+      "2026-09-25T08:00:00.000Z"
+    );
+  });
+
+  it("is not moved by a transcript that vanished", async () => {
+    const old = join(projects, "old.jsonl");
+    await writeFile(old, "{}\n");
+    await utimes(old, new Date("2026-09-20T08:00:00.000Z"), new Date("2026-09-20T08:00:00.000Z"));
+    const gone = join(projects, "gone.jsonl");
+    expect(await adapter.oldestModified([old, gone])).toBe("2026-09-20T08:00:00.000Z");
+    expect(await adapter.oldestModified([gone, old])).toBe("2026-09-20T08:00:00.000Z");
+  });
+
+  it("skips a transcript that vanished, and has no date for none", async () => {
+    expect(await adapter.oldestModified([join(projects, "gone.jsonl")])).toBeNull();
+    expect(await adapter.oldestModified([])).toBeNull();
   });
 });

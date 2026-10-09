@@ -50,12 +50,18 @@ src/
 │   │   └── infrastructure/
 │   ├── telemetry/    # what each billed model call consumed, read from a tool's own transcripts
 │   │   ├── application/
+│   │   │   ├── identity/    # who, if anyone, the measurement names
+│   │   │   └── report/    # what the stored calls consumed in a period, along one axis
 │   │   ├── domain/
 │   │   │   ├── declaration/    # the task a person declares, and whether work is bound to one
 │   │   │   ├── formats/
-│   │   │   └── ports/
+│   │   │   ├── identity/    # the identifier a person chose to be named by
+│   │   │   ├── ports/
+│   │   │   │   └── identity/
+│   │   │   └── report/    # attribution of a call, the days of a report, the axes it splits by
 │   │   └── infrastructure/
-│   │       └── declaration/    # where a declaration is kept: git config and the telemetry dir
+│   │       ├── declaration/    # where a declaration is kept: git config and the telemetry dir
+│   │       └── identity/    # the identity file in the telemetry dir
 │   └── translate/    # canonical source to target-native content
 │       ├── application/
 │       │   └── strategies/
@@ -69,6 +75,7 @@ src/
 ├── presentation/    # everything that talks to a human — depends on contexts, never the reverse
 │   ├── commands/    # one file per command, wiring only
 │   ├── display/    # rendering a result
+│   │   └── telemetry/    # the telemetry report, which outgrew one file beside the others
 │   └── prompts/    # asking the user; the decision stays in the context
 └── runtime/    # technical services that are not a context
     ├── assets/

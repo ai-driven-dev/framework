@@ -1,12 +1,23 @@
 import { type Command, Option } from "commander";
 import {
+  REFUSED_ENVELOPE,
+  reportEnvelopeOf,
+} from "../../contexts/telemetry/application/report/report-envelope.js";
+import {
   DECLARED_BY,
   type DeclaredBy,
   requestOf,
 } from "../../contexts/telemetry/domain/declaration/task-declaration.js";
+import { periodOf } from "../../contexts/telemetry/domain/report/period.js";
+import {
+  REPORT_AXES,
+  type ReportAxis,
+} from "../../contexts/telemetry/domain/report/usage-report.js";
 import { createDeps } from "../../runtime/wiring/framework.js";
+import { printUsageReport } from "../display/telemetry/telemetry-report-display.js";
 import {
   printDeclareResult,
+  printIdentityResult,
   printIngestResult,
   printTaskBinding,
 } from "../display/telemetry-display.js";
@@ -81,4 +92,73 @@ export function registerTelemetryCommand(program: Command): void {
         }
       }
     );
+
+  telemetry
+    .command("report")
+    .description("Show what the work consumed, split along one axis, after reading new transcripts")
+    .option("--from <date>", "First day to include, as YYYY-MM-DD (UTC)")
+    .option("--to <date>", "Last day to include, as YYYY-MM-DD (UTC)")
+    .option("--days <n>", "The last n days, today included")
+    .addOption(
+      new Option("--axis <axis>", "What to split by").choices(REPORT_AXES).default("total")
+    )
+    .option("--json", "Print a versioned JSON envelope instead of text", false)
+    .action(
+      async (cmdOptions: {
+        from?: string;
+        to?: string;
+        days?: string;
+        axis: ReportAxis;
+        json: boolean;
+      }) => {
+        const { verbose, output, projectRoot } = parseGlobalOptions(program);
+        const period = periodOf(cmdOptions, new Date());
+        if (!period.ok) {
+          output.error(period.message);
+          process.exit(1);
+        }
+        try {
+          const deps = await createDeps(projectRoot, { verbose }, output);
+          const result = await deps.telemetry.reportUsageUseCase.execute({
+            axis: cmdOptions.axis,
+            period: period.period,
+          });
+          if (!cmdOptions.json) return printUsageReport(output, result);
+          output.print(
+            JSON.stringify(
+              result.status === "refused" ? REFUSED_ENVELOPE : reportEnvelopeOf(result),
+              null,
+              2
+            )
+          );
+        } catch (error) {
+          new ErrorHandler(output).handle(error);
+        }
+      }
+    );
+
+  telemetry
+    .command("identity [id]")
+    .description("Choose to be named on your own measurement, or show or remove that choice")
+    .option("--off", "Stop naming you and remove the identity", false)
+    .action(async (id: string | undefined, cmdOptions: { off: boolean }) => {
+      const { verbose, output, projectRoot } = parseGlobalOptions(program);
+      if (cmdOptions.off && id !== undefined) {
+        output.error("--off removes the identity: give it no identifier.");
+        process.exit(1);
+      }
+      try {
+        const deps = await createDeps(projectRoot, { verbose }, output);
+        const use = deps.telemetry.manageIdentityUseCase;
+        const result = cmdOptions.off
+          ? await use.off()
+          : id === undefined
+            ? await use.show()
+            : await use.set(id);
+        printIdentityResult(output, result);
+        if (result.status === "refused") process.exit(1);
+      } catch (error) {
+        new ErrorHandler(output).handle(error);
+      }
+    });
 }

@@ -498,3 +498,19 @@ describe("what is remembered of a directory is refreshed when it changed", () =>
     expect(s.resolutions.saves).toBe(2);
   });
 });
+
+describe("how far back the transcripts on disk reach", () => {
+  it("tells when the oldest transcript still on disk was last written", async () => {
+    const s = setup();
+    s.transcripts.files.set("/t/1.jsonl", [line("A", 1)]);
+    s.transcripts.files.set("/t/2.jsonl", [line("B", 1)]);
+    s.transcripts.modified.set("/t/1.jsonl", "2026-09-20T08:00:00.000Z");
+    s.transcripts.modified.set("/t/2.jsonl", "2026-10-01T08:00:00.000Z");
+    expect((await s.ingest.execute()).oldestTranscriptAt).toBe("2026-09-20T08:00:00.000Z");
+  });
+
+  it("says no date when there is no transcript, and when nothing was read", async () => {
+    expect((await setup().ingest.execute()).oldestTranscriptAt).toBeNull();
+    expect((await setup({ refused: true }).ingest.execute()).oldestTranscriptAt).toBeNull();
+  });
+});

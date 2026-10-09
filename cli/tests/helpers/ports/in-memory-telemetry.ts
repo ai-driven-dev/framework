@@ -15,6 +15,7 @@ import type {
   BranchHeads,
 } from "../../../src/contexts/telemetry/domain/ports/branch-binding-store.js";
 import type { ConsentSource } from "../../../src/contexts/telemetry/domain/ports/consent-source.js";
+import type { PersonIdentityStore } from "../../../src/contexts/telemetry/domain/ports/identity/person-identity-store.js";
 import type {
   LocatedDirectory,
   RepositoryLocator,
@@ -39,9 +40,16 @@ export class InMemoryTranscripts implements TranscriptSource {
   readonly files = new Map<string, string[]>();
   /** What a file reports besides how many lines it holds. */
   readonly stats = new Map<string, { size?: number; identity?: string }>();
+  /** When each file was last written, if it matters to the test. */
+  readonly modified = new Map<string, string>();
 
   async list(): Promise<readonly string[]> {
     return [...this.files.keys()].sort();
+  }
+
+  async oldestModified(paths: readonly string[]): Promise<string | null> {
+    const times = paths.flatMap((path) => this.modified.get(path) ?? []).sort();
+    return times[0] ?? null;
   }
 
   async read(path: string, since: TranscriptPosition | null): Promise<TranscriptRead> {
@@ -198,5 +206,25 @@ export class InMemorySessions implements SessionBindingStore {
 
   async carries(): Promise<readonly SessionCarry[]> {
     return [...this.carried];
+  }
+}
+
+export class InMemoryIdentity implements PersonIdentityStore {
+  personId: string | null = null;
+  writes = 0;
+
+  async read(): Promise<string | null> {
+    return this.personId;
+  }
+
+  async write(personId: string): Promise<void> {
+    this.writes += 1;
+    this.personId = personId;
+  }
+
+  async remove(): Promise<boolean> {
+    const held = this.personId !== null;
+    this.personId = null;
+    return held;
   }
 }

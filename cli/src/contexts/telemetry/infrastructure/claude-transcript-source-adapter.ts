@@ -2,6 +2,7 @@ import { constants, type Stats } from "node:fs";
 import { open, readdir } from "node:fs/promises";
 import { join } from "node:path";
 import { isErrnoException } from "../../../kernel/reading/json-file.js";
+import { modifiedAtIfPresent } from "../../../kernel/reading/text-file.js";
 import type { TranscriptRead, TranscriptSource } from "../domain/ports/transcript-source.js";
 import { resumeOffset, type TranscriptPosition } from "../domain/transcript-position.js";
 
@@ -37,6 +38,15 @@ export class ClaudeTranscriptSourceAdapter implements TranscriptSource {
       if (entry.isDirectory()) await this.walk(path, found);
       else if (entry.isFile() && TRANSCRIPT_NAME.test(entry.name)) found.push(path);
     }
+  }
+
+  async oldestModified(paths: readonly string[]): Promise<string | null> {
+    let oldest: number | null = null;
+    for (const path of paths) {
+      const modified = await modifiedAtIfPresent(path);
+      if (modified !== null && (oldest === null || modified < oldest)) oldest = modified;
+    }
+    return oldest === null ? null : new Date(oldest).toISOString();
   }
 
   async read(path: string, since: TranscriptPosition | null): Promise<TranscriptRead> {

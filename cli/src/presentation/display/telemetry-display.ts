@@ -1,11 +1,13 @@
 import type { RefusalReason } from "../../contexts/telemetry/application/consented-repositories.js";
 import type { DeclareResult } from "../../contexts/telemetry/application/declare-task-use-case.js";
+import type { IdentityResult } from "../../contexts/telemetry/application/identity/manage-identity-use-case.js";
 import type { IngestResult } from "../../contexts/telemetry/application/ingest-usage-use-case.js";
 import type { ShowResult } from "../../contexts/telemetry/application/show-task-binding-use-case.js";
 import type { NotStoredReason } from "../../contexts/telemetry/domain/repository-resolution.js";
 import type { CLIOutput } from "../output.js";
 
-const REASONS: Readonly<Record<NotStoredReason, string>> = {
+/** Why a billed call was read and not stored, as the end of a sentence about N calls. */
+export const NOT_STORED_WORDS: Readonly<Record<NotStoredReason, string>> = {
   "outside-repo": "outside any repository",
   "never-seen-alive": "from a directory never seen while it existed",
   "no-consent": "from a project that has not opted in",
@@ -40,7 +42,9 @@ export function printIngestResult(output: CLIOutput, result: IngestResult): void
   }
   for (const [reason, count] of Object.entries(result.notStored) as [NotStoredReason, number][]) {
     if (count > 0)
-      output.info(`Not stored: ${count} call${count === 1 ? "" : "s"} ${REASONS[reason]}.`);
+      output.info(
+        `Not stored: ${count} call${count === 1 ? "" : "s"} ${NOT_STORED_WORDS[reason]}.`
+      );
   }
 }
 
@@ -115,5 +119,23 @@ export function printTaskBinding(output: CLIOutput, result: ShowResult): void {
     );
   } else {
     output.info(`Bound to ${what}, declared in session ${shortSession(sessionId ?? "")}${when}.`);
+  }
+}
+
+export function printIdentityResult(output: CLIOutput, result: IdentityResult): void {
+  switch (result.status) {
+    case "set":
+      output.success(`Measurement names you as "${result.personId}". Stop with \`--off\`.`);
+      return;
+    case "removed":
+      output.success('Identity removed: the person axis shows "not set".');
+      return;
+    case "unset":
+      output.info(
+        'No identity is set: the person axis shows "not set". Choose one with `aidd telemetry identity <id>`.'
+      );
+      return;
+    case "refused":
+      output.error("An identity is one line of at most 128 characters.");
   }
 }
