@@ -8,7 +8,7 @@ The contract every generated skill satisfies. `skill-generate` obeys it too.
 - **R2.** `name` is not the invocation token: a colon or prefix breaks loading. In prose call a skill `plugin:folder`.
 - **R3.** `description` is the only always-on text: verb-led, third person, about 240 chars, `Use when the user wants to <intents>` and an optional `Not for <X>`. No colon or dash, no other skill or `/command` named.
 - **R4.** `argument-hint` names what the user brings: the cases they can ask for (`setup | refresh | rewire`) or the artifact the skill consumes (`request | epic`). One or two words per case, never the action slugs. Present unless no action declares an `## Input`, which means the skill takes nothing.
-- **R5.** English only, one idea per sentence.
+- **R5.** English only.
 
 ## The router
 
@@ -38,3 +38,7 @@ The contract every generated skill satisfies. `skill-generate` obeys it too.
 - **R17.** One fact, one home. An action acts within a router rule and cites a shared reference, never restating either.
 - **R18.** The first citation of a file in each authoring file is a relative Markdown link, `[name](path)`, except for sibling references under R14. Repeat mentions within the same file use only the filename in backticks when unambiguous; retain the link when ambiguous. Never an `@` include: nothing resolves those. A citation sits in the sentence that uses it, a `## Process` step to read the file, an `## Output` or `## Test` line to conform to it. Never a block or a line of its own.
 - **R19.** One file, one artifact. Split two apart only when a path needs one without the other.
+- **R20.** Write for scanning.
+  - Keep sentences short, with one idea each.
+  - Give each list item one instruction.
+  - Put related conditions, exceptions, and constraints in sub-items.
