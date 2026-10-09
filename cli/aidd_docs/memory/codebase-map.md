@@ -69,7 +69,7 @@ src/
 │   │       ├── declaration/    # where a declaration is kept: git config and the telemetry dir
 │   │       ├── forget/    # erasing the telemetry dir, the previous version's files, git config keys
 │   │       ├── identity/    # the identity file in the telemetry dir
-│   │       └── switch/    # the project config, commit hook, run journal and Claude settings
+│   │       └── switch/    # the project config, what an earlier measurement left in a repository, and Claude settings
 │   └── translate/    # canonical source to target-native content
 │       ├── application/
 │       │   └── strategies/

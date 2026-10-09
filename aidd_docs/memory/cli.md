@@ -6,7 +6,8 @@ The `aidd` binary, built from `cli/` and published to npm as `@ai-driven-dev/cli
 
 ## Commands
 
-- Ten groups: `setup`, `framework`, `translate`, `plugin`, `marketplace`, `auth`, `sync`, `update`, `doctor`, `clean`.
+- Eleven groups: `setup`, `framework`, `translate`, `plugin`, `marketplace`, `auth`, `sync`, `update`, `doctor`, `clean`, `telemetry`.
+- `telemetry` counts the tokens of Claude Code sessions locally: [usage contract](../product/usage-contract.md).
 - No list here. The surface moves; `aidd --help` is the only reading that stays true.
 
 ## Interface

@@ -33,7 +33,7 @@ flowchart LR
 | Concern decides placement, not existence | a missing capability goes to the plugin whose concern owns it; the caller delegates |
 | A skill is a router | `SKILL.md` dispatches to actions or protocols; the only place a capability is addressed by name |
 | Recipe skills discover providers at runtime | by description matching. Only agent permission lists and orchestration references name a provider |
-| Observation is its own layer | `aidd-telemetry` observes what a session did (being rebuilt); it never reads or writes application source |
+| Observation is its own layer | `aidd-telemetry` counts what a session consumed, from the task a person declared; it never reads or writes application source |
 | A launcher runs an external binary, never embeds it | `kanban` broke that and was unwired. Detail in the CLI bank |
 
 The concern-to-plugin taxonomy is canonical in [`docs/ARCHITECTURE.md`](../../docs/ARCHITECTURE.md).
@@ -42,4 +42,4 @@ The concern-to-plugin taxonomy is canonical in [`docs/ARCHITECTURE.md`](../../do
 
 - 9 plugins ship, 3 off the curated install path: `aidd-ui` is alpha, `aidd-telemetry` beta and opt-in, `aidd-qa` new and unproven outside this repository.
 - A skill never links outside itself: the tree ships both flat and as a marketplace, so no relative path survives both.
-- Bundled hooks run Node. No `node` on `PATH`, no memory refresh and no run journal.
+- Bundled hooks run Node. No `node` on `PATH`, no memory refresh and no question about the task.

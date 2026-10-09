@@ -2,7 +2,7 @@
   "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
   "name": "aidd-telemetry",
   "version": "0.2.1",
-  "description": "Measurement, being rebuilt. The previous version is removed; this plugin ships no hook and no skill until the replacement lands.",
+  "description": "Measurement: counts the tokens of Claude Code sessions per task, ticket, model and day, locally. Opt in with the 00-init skill; ask with 01-usage.",
   "author": {
     "name": "AI-Driven Dev",
     "url": "https://github.com/ai-driven-dev"

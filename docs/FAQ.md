@@ -42,11 +42,11 @@ You can write your own Claude Code skills — nothing stops you. AIDD exists bec
 - **Authored for Claude Code.** Other tools install via their native mechanism from the release archives ([Other tools](../README.md#other-tools)); public-marketplace publishing is on the way, native parity is a roadmap item.
 - **Plugins assume their own context.** A skill that expects a git repo, a `package.json`, or a ticketing tool won't work without it — check the plugin's README.
 - **No hosted service.** AIDD is prompt content you install into your own tool; there is no AIDD server and no account.
-- **Measurement is being rebuilt.** The previous version is removed and nothing is recorded today → [Measurement](#-measurement).
+- **Measurement is opt-in and local.** Nothing is recorded in a project until you turn it on, and nothing leaves your machine → [Measurement](#-measurement).
 
 ## 📊 Measurement
 
-**Nothing is measured today.** The previous measurement is removed and is being rebuilt on a deterministic design, for Claude Code first. Nothing leaves your machine meanwhile: the `aidd-telemetry` plugin ships no hook and no skill, and the plugin's [README](../plugins/aidd-telemetry/README.md) says where the rebuild stands.
+**Nothing is measured until you opt in.** `aidd telemetry on` turns it on for one project, and `aidd telemetry forget --yes` removes everything it kept. It counts the tokens of Claude Code sessions and sends nothing anywhere. What it asks, what it keeps and what it needs are in the plugin's [README](../plugins/aidd-telemetry/README.md).
 
 ## 🆘 Still stuck?
 
