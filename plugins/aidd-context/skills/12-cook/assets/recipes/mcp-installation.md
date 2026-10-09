@@ -38,8 +38,9 @@ The agent-oriented Playwright CLI is a direct browser alternative to Playwright 
 ```bash
 npm install -g @playwright/cli@latest
 playwright-cli open https://example.com --headed
-npm uninstall -g @playwright/cli
 ```
+
+Optional rollback: `npm uninstall -g @playwright/cli`.
 
 Use `npx playwright test` for the test runner and `npx playwright codegen` for test generation; they are different command surfaces.
 
@@ -106,7 +107,7 @@ Authentication successful. Connected to figma
 
 Use Figma's read-only [`whoami`](https://developers.figma.com/docs/figma-mcp-server/tools-and-prompts/#whoami-remote-only) tool to confirm the authenticated email, plans, and seat type.
 
-### 6) 🧹 Remove local access
+### 6) 🧹 Optional rollback: remove local access
 
 Clearing authentication and local configuration stops the client from using the server.
 
@@ -127,7 +128,7 @@ codex mcp remove figma
 
 Removing configuration alone does not prove that the OAuth grant was revoked.
 
-### 7) 🚫 Revoke provider access
+### 7) 🚫 Optional teardown: revoke provider access
 
 Revoking the provider grant invalidates the remote OAuth authorization independently of local configuration.
 
@@ -143,4 +144,4 @@ Figma > Settings > Security > Connected apps > Revoke access
 - The server appears in the chosen client's server list with the expected transport and scope.
 - Authentication uses the intended account and workspace; for Figma, `whoami` returns that identity.
 - Only the required tools are enabled; mutating calls require confirmation or are disabled.
-- Authentication clearing, local removal, and provider revocation pass as three separate checks.
+- For optional rollback or teardown, check authentication clearing, local removal, and provider revocation separately.

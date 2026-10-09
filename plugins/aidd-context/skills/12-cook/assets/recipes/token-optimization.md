@@ -242,7 +242,7 @@ See [Claude Code commands](https://code.claude.com/docs/en/commands) and [Codex 
 
 #### 13) 📈 Export token telemetry
 
-Export structured metrics without prompt or tool content.
+The Claude Code example exports metrics; the Codex example exports logs. Codex logs may include tool-output snippets even with `log_user_prompt = false`; treat exported logs as sensitive.
 
 Claude Code:
 
@@ -282,6 +282,8 @@ keep-coding-instructions: true
 
 Answer directly. Preserve code, decisive errors, evidence, and security warnings; omit filler.
 ```
+
+Restart Claude Code if it was running when you created the file, then select **Concise coding** via `/output-style` or `/config`.
 
 Codex `config.toml`:
 
