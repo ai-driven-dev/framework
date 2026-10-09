@@ -78,6 +78,11 @@ const BASELINE: readonly { readonly path: string; readonly named: number }[] = [
     path: "src/contexts/tools/infrastructure/host-plugin-registry-reader-adapter.ts",
     named: 3,
   },
+  // The record's tool vocabulary is the contract's: `codex` is admitted so a second tool's
+  // reader needs no change to the record, and is not a list a new tool joins.
+  { path: "src/contexts/telemetry/domain/usage-record.ts", named: 1 },
+  // Where Claude Code keeps its transcripts, named for the one tool whose directory it is.
+  { path: "src/contexts/telemetry/domain/claude-projects-root.ts", named: 1 },
   // Cursor's project hooks file, named after the tool whose file it is: the directory it
   // writes into is Cursor's own, not a list a sixth tool joins.
   { path: "src/contexts/tools/domain/formats/cursor-hooks-project-merge.ts", named: 1 },

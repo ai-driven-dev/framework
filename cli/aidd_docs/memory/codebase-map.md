@@ -48,6 +48,12 @@ src/
 │   │   │       ├── opencode/
 │   │   │       └── vscode/
 │   │   └── infrastructure/
+│   ├── telemetry/    # what each billed model call consumed, read from a tool's own transcripts
+│   │   ├── application/
+│   │   ├── domain/
+│   │   │   ├── formats/
+│   │   │   └── ports/
+│   │   └── infrastructure/
 │   └── translate/    # canonical source to target-native content
 │       ├── application/
 │       │   └── strategies/

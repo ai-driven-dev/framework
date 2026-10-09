@@ -102,6 +102,20 @@ const PUBLIC_MODULES: Readonly<Record<string, readonly string[]>> = {
     // marketplace and this context forgets the plugins that came from it
     "src/contexts/framework/application/flows/marketplace-remove-use-case.ts",
   ],
+  // Measured with the composition root excluded: the adapter is wired from `runtime/wiring/`
+  // alone, so it stays internal.
+  telemetry: [
+    // the common record every tool's reader produces, and the fold that makes it countable once
+    "src/contexts/telemetry/domain/usage-record.ts",
+    "src/contexts/telemetry/domain/usage-fold.ts",
+    // where a transcript root is, and where a read of one stopped
+    "src/contexts/telemetry/domain/claude-projects-root.ts",
+    "src/contexts/telemetry/domain/transcript-position.ts",
+    // the port its callers hold, so they can be given an implementation
+    "src/contexts/telemetry/domain/ports/transcript-source.ts",
+    // the operation another layer asks for
+    "src/contexts/telemetry/application/read-claude-usage-use-case.ts",
+  ],
 };
 
 function contextsOnDisk(files: readonly string[]): string[] {

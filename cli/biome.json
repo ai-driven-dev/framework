@@ -123,6 +123,10 @@
                       "**/runtime/**"
                     ],
                     "message": "domain must not import application, infrastructure, presentation or runtime"
+                  },
+                  {
+                    "group": ["**/telemetry/**"],
+                    "message": "framework may import translate, tools and distribution, never telemetry \u2014 see context-graph.arch.test.ts"
                   }
                 ]
               }
@@ -143,6 +147,10 @@
                   {
                     "group": ["**/infrastructure/**"],
                     "message": "application must not import infrastructure \u2014 take a port and let the composition root supply the adapter"
+                  },
+                  {
+                    "group": ["**/telemetry/**"],
+                    "message": "framework may import translate, tools and distribution, never telemetry \u2014 see context-graph.arch.test.ts"
                   }
                 ]
               }
@@ -161,8 +169,8 @@
               "options": {
                 "patterns": [
                   {
-                    "group": ["**/presentation/**", "**/runtime/**"],
-                    "message": "framework/infrastructure may import translate, tools and distribution, never presentation or runtime \u2014 see context-graph.arch.test.ts"
+                    "group": ["**/telemetry/**", "**/presentation/**", "**/runtime/**"],
+                    "message": "framework/infrastructure may import translate, tools and distribution, never telemetry, presentation or runtime \u2014 see context-graph.arch.test.ts"
                   }
                 ]
               }
@@ -190,7 +198,7 @@
                     "message": "domain must not import application, infrastructure, presentation or runtime"
                   },
                   {
-                    "group": ["**/framework/**", "**/distribution/**"],
+                    "group": ["**/framework/**", "**/distribution/**", "**/telemetry/**"],
                     "message": "translate may import only the kernel and contexts/tools \u2014 see context-graph.arch.test.ts"
                   }
                 ]
@@ -217,6 +225,7 @@
                     "group": [
                       "**/framework/**",
                       "**/distribution/**",
+                      "**/telemetry/**",
                       "**/presentation/**",
                       "**/runtime/**"
                     ],
@@ -242,6 +251,7 @@
                     "group": [
                       "**/framework/**",
                       "**/distribution/**",
+                      "**/telemetry/**",
                       "**/presentation/**",
                       "**/runtime/**"
                     ],
@@ -273,7 +283,12 @@
                     "message": "domain must not import application, infrastructure, presentation or runtime"
                   },
                   {
-                    "group": ["**/framework/**", "**/translate/**", "**/distribution/**"],
+                    "group": [
+                      "**/framework/**",
+                      "**/translate/**",
+                      "**/distribution/**",
+                      "**/telemetry/**"
+                    ],
                     "message": "tools imports no other context \u2014 every context that needs it imports tools, not the reverse (context-graph.arch.test.ts)"
                   }
                 ]
@@ -301,6 +316,7 @@
                       "**/framework/**",
                       "**/translate/**",
                       "**/distribution/**",
+                      "**/telemetry/**",
                       "**/presentation/**",
                       "**/runtime/**"
                     ],
@@ -327,6 +343,7 @@
                       "**/framework/**",
                       "**/translate/**",
                       "**/distribution/**",
+                      "**/telemetry/**",
                       "**/presentation/**",
                       "**/runtime/**"
                     ],
@@ -362,6 +379,7 @@
                       "**/framework/**",
                       "**/translate/**",
                       "**/tools/**",
+                      "**/telemetry/**",
                       "**/manifest.js"
                     ],
                     "message": "distribution knows no tool, no translation and no installation record \u2014 it says where content comes from, not what is done with it (context-graph.arch.test.ts)"
@@ -390,6 +408,7 @@
                     "group": [
                       "**/translate/**",
                       "**/tools/**",
+                      "**/telemetry/**",
                       "**/presentation/**",
                       "**/runtime/**"
                     ],
@@ -420,9 +439,102 @@
                       "**/framework/**",
                       "**/translate/**",
                       "**/tools/**",
+                      "**/telemetry/**",
                       "**/presentation/**"
                     ],
                     "message": "distribution knows no tool, no translation and no installation record, and reaches no presentation (context-graph.arch.test.ts). Its runtime imports are the grandfathered exception recorded there as BASELINE, not extended here"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["src/contexts/telemetry/domain/**/*.ts"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": [
+                      "**/application/**",
+                      "**/infrastructure/**",
+                      "**/presentation/**",
+                      "**/runtime/**"
+                    ],
+                    "message": "domain must not import application, infrastructure, presentation or runtime"
+                  },
+                  {
+                    "group": [
+                      "**/framework/**",
+                      "**/translate/**",
+                      "**/distribution/**",
+                      "**/tools/**"
+                    ],
+                    "message": "telemetry imports only the kernel \u2014 see context-graph.arch.test.ts"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["src/contexts/telemetry/application/**/*.ts"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": ["**/infrastructure/**"],
+                    "message": "application must not import infrastructure \u2014 take a port and let the composition root supply the adapter"
+                  },
+                  {
+                    "group": [
+                      "**/framework/**",
+                      "**/translate/**",
+                      "**/distribution/**",
+                      "**/tools/**",
+                      "**/presentation/**",
+                      "**/runtime/**"
+                    ],
+                    "message": "telemetry imports only the kernel \u2014 see context-graph.arch.test.ts"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["src/contexts/telemetry/infrastructure/**/*.ts"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": [
+                      "**/framework/**",
+                      "**/translate/**",
+                      "**/distribution/**",
+                      "**/tools/**",
+                      "**/presentation/**",
+                      "**/runtime/**"
+                    ],
+                    "message": "telemetry imports only the kernel \u2014 see context-graph.arch.test.ts"
                   }
                 ]
               }
