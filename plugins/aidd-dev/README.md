@@ -8,7 +8,7 @@ Code transformation plugin for the AI-Driven Development framework.
 
 First time? Install with `/plugin install aidd-dev@aidd-framework`, then run `aidd-dev:01-plan`.
 
-Covers code transformation: planning, implementation, assertions, audits, code review, testing, refactoring, debugging, goalify, and bounded parallel execution through Batch. Standalone Browser QA records short web evidence. Also hosts AI agents.
+Covers code transformation: planning, implementation, assertions, audits, code review, testing, refactoring, debugging, goalify, and parallel todo fan-out. Standalone Browser QA records short web evidence. Also hosts AI agents.
 
 ## Skills
 
@@ -23,7 +23,7 @@ Covers code transformation: planning, implementation, assertions, audits, code r
 | [2.7] | [refactor](skills/07-refactor/SKILL.md) | Optimize code for performance and fix security vulnerabilities following OWASP guidelines. |
 | [2.8] | [debug](skills/08-debug/SKILL.md) | Reproduce and fix bugs systematically using test-driven workflow, root cause analysis, and hypothesis validation. |
 | [2.9] | [goalify](skills/09-goalify/SKILL.md) | Autonomous loop that replans and retries until a runnable success condition passes. |
-| [2.10] | [Batch](skills/10-batch/SKILL.md) | Run ready independent tasks through bounded parallel executor agents in the caller's context, then report their results. |
+| [2.10] | [todo](skills/10-todo/SKILL.md) | Split the prompt into independent todos, run one executor agent per todo in parallel, then report a minimal table. |
 | [2.11] | [browser-qa](skills/11-browser-qa/SKILL.md) | Record one short named video for a locked browser happy path and each sourced browser edge case. |
 
 ## Agents

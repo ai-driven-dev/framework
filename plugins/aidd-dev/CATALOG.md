@@ -18,7 +18,7 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
   - [`skills/07-refactor`](#skills07-refactor)
   - [`skills/08-debug`](#skills08-debug)
   - [`skills/09-goalify`](#skills09-goalify)
-  - [`skills/10-batch`](#skills10-batch)
+  - [`skills/10-todo`](#skills10-todo)
   - [`skills/11-browser-qa`](#skills11-browser-qa)
 
 ---
@@ -138,12 +138,12 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `references` | [autonomous-loop-log-format.md](skills/09-goalify/references/autonomous-loop-log-format.md) | - |
 | `-` | [SKILL.md](skills/09-goalify/SKILL.md) | `Turn a goal into an autonomous loop that replans and retries until a runnable success condition passes. Use when the user says "goalify", "keep trying until", or wants a goal verified by a command. Not for one-shot tasks or uncheckable goals.` |
 
-#### `skills/10-batch`
+#### `skills/10-todo`
 
 | Group | File | Description |
 |-------|------|---|
-| `actions` | [01-batch.md](skills/10-batch/actions/01-batch.md) | - |
-| `-` | [SKILL.md](skills/10-batch/SKILL.md) | `Run independent tasks through bounded parallel executor agents and return per-item evidence. Use when the user says "batch", asks for parallel implementation, or a caller delegates ready independent tasks. Not for dependent tasks, goal planning, verification, or retries.` |
+| `actions` | [01-todo.md](skills/10-todo/actions/01-todo.md) | - |
+| `-` | [SKILL.md](skills/10-todo/SKILL.md) | `Split the user prompt into independent todos and run one executor agent per todo in parallel, then report a minimal table. Use when the user says "todo" or asks to fan out a multi-part request into parallel implementations.` |
 
 #### `skills/11-browser-qa`
 

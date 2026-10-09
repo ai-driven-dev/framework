@@ -104,7 +104,7 @@ AIDD is delivered as a plugin marketplace. Pick what you need; do not install ev
 | ------------ | ------------------------------------------------------------------------------------------------------------------- |
 | aidd-context | 00-onboard, 01-bootstrap, 02-project-memory, 03-context-generate, 09-mermaid, 10-learn, 11-explore                    |
 | aidd-refine  | 01-brainstorm, 02-challenge, 03-shadow-areas, 04-fact-check                                                        |
-| aidd-dev     | 01-plan, 02-implement, 03-assert, 04-audit, 05-review, 06-test, 07-refactor, 08-debug, 09-goalify, 10-batch       |
+| aidd-dev     | 01-plan, 02-implement, 03-assert, 04-audit, 05-review, 06-test, 07-refactor, 08-debug, 09-goalify, 10-todo        |
 | aidd-orchestrator | 00-async-dev, 01-sdlc                                                                                         |
 | aidd-vcs     | 01-commit, 02-pull-request, 03-release-tag, 04-issue-create                                                         |
 | aidd-pm      | 01-ticket-info, 02-user-stories, 03-prd, 04-spec, 05-spike, 06-product-brief, 07-epic, 08-three-amigos, 09-defect, 10-task |
