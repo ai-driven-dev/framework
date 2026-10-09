@@ -14,6 +14,11 @@ import {
   type ReportAxis,
 } from "../../contexts/telemetry/domain/report/usage-report.js";
 import { createDeps } from "../../runtime/wiring/framework.js";
+import {
+  printForgetResult,
+  printOffResult,
+  printOnResult,
+} from "../display/telemetry/telemetry-lifecycle-display.js";
 import { printUsageReport } from "../display/telemetry/telemetry-report-display.js";
 import {
   printDeclareResult,
@@ -28,6 +33,68 @@ export function registerTelemetryCommand(program: Command): void {
   const telemetry = program
     .command("telemetry")
     .description("Measure what Claude Code sessions consume, locally");
+
+  telemetry
+    .command("on")
+    .description("Measure this repository, and remove what the previous version left in it")
+    .option("--yes", "Do not ask first", false)
+    .action(async (cmdOptions: { yes: boolean }) => {
+      const { verbose, output, projectRoot } = parseGlobalOptions(program);
+      if (!cmdOptions.yes && !process.stdout.isTTY) {
+        output.error("Nothing to ask in a non-interactive run: pass --yes to turn measurement on.");
+        process.exit(1);
+      }
+      try {
+        const deps = await createDeps(projectRoot, { verbose }, output);
+        const confirmed =
+          cmdOptions.yes ||
+          (await deps.prompter.confirm(
+            "Measure what this repository consumes, and remove what the previous version left in it?",
+            false
+          ));
+        if (!confirmed) {
+          output.info("Nothing changed.");
+          return;
+        }
+        const result = await deps.telemetry.telemetryOnUseCase.execute(projectRoot);
+        printOnResult(output, result);
+        if (result.status === "refused") process.exit(1);
+      } catch (error) {
+        new ErrorHandler(output).handle(error);
+      }
+    });
+
+  telemetry
+    .command("off")
+    .description("Stop measuring this repository; what was measured stays")
+    .action(async () => {
+      const { verbose, output, projectRoot } = parseGlobalOptions(program);
+      try {
+        const deps = await createDeps(projectRoot, { verbose }, output);
+        const result = await deps.telemetry.telemetryOffUseCase.execute(projectRoot);
+        printOffResult(output, result);
+        if (result.status === "refused") process.exit(1);
+      } catch (error) {
+        new ErrorHandler(output).handle(error);
+      }
+    });
+
+  telemetry
+    .command("forget")
+    .description("Show everything measurement keeps on this machine, or remove it with --yes")
+    .option("--yes", "Remove it, instead of only showing it", false)
+    .action(async (cmdOptions: { yes: boolean }) => {
+      const { verbose, output, projectRoot } = parseGlobalOptions(program);
+      try {
+        const deps = await createDeps(projectRoot, { verbose }, output);
+        printForgetResult(
+          output,
+          await deps.telemetry.forgetTelemetryUseCase.execute(cmdOptions.yes)
+        );
+      } catch (error) {
+        new ErrorHandler(output).handle(error);
+      }
+    });
 
   telemetry
     .command("ingest")

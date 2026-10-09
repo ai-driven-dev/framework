@@ -50,18 +50,26 @@ src/
 │   │   └── infrastructure/
 │   ├── telemetry/    # what each billed model call consumed, read from a tool's own transcripts
 │   │   ├── application/
+│   │   │   ├── forget/    # what measurement keeps on a machine, shown and erased
 │   │   │   ├── identity/    # who, if anyone, the measurement names
-│   │   │   └── report/    # what the stored calls consumed in a period, along one axis
+│   │   │   ├── report/    # what the stored calls consumed in a period, along one axis
+│   │   │   └── switch/    # opting a repository in or out, and leaving it clean of the previous version
 │   │   ├── domain/
 │   │   │   ├── declaration/    # the task a person declares, and whether work is bound to one
 │   │   │   ├── formats/
 │   │   │   ├── identity/    # the identifier a person chose to be named by
+│   │   │   ├── legacy/    # what the previous version wrote, by name and location
 │   │   │   ├── ports/
-│   │   │   │   └── identity/
-│   │   │   └── report/    # attribution of a call, the days of a report, the axes it splits by
+│   │   │   │   ├── forget/
+│   │   │   │   ├── identity/
+│   │   │   │   └── switch/
+│   │   │   ├── report/    # attribution of a call, the days of a report, the axes it splits by
+│   │   │   └── switch/    # the opt-in config, the remembered consent, Claude's retention
 │   │   └── infrastructure/
 │   │       ├── declaration/    # where a declaration is kept: git config and the telemetry dir
-│   │       └── identity/    # the identity file in the telemetry dir
+│   │       ├── forget/    # erasing the telemetry dir, the previous version's files, git config keys
+│   │       ├── identity/    # the identity file in the telemetry dir
+│   │       └── switch/    # the project config, commit hook, run journal and Claude settings
 │   └── translate/    # canonical source to target-native content
 │       ├── application/
 │       │   └── strategies/

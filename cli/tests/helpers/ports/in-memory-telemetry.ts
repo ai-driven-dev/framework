@@ -104,6 +104,11 @@ export class InMemoryLedger implements UsageLedger {
     this.events.push("positions");
     this.stored = new Map(positions);
   }
+
+  async resetPositions(): Promise<void> {
+    this.events.push("reset");
+    this.stored = new Map();
+  }
 }
 
 export class InMemoryResolutions implements ResolutionStore {

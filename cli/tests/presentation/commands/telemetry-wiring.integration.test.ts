@@ -6,10 +6,18 @@ const declare = vi.fn();
 const show = vi.fn();
 const report = vi.fn();
 const identity = { show: vi.fn(), set: vi.fn(), off: vi.fn() };
+const turnOn = vi.fn();
+const turnOff = vi.fn();
+const forget = vi.fn();
+const confirm = vi.fn();
 
 vi.mock("../../../src/runtime/wiring/framework.js", () => ({
   createDeps: vi.fn(async () => ({
+    prompter: { confirm },
     telemetry: {
+      telemetryOnUseCase: { execute: turnOn },
+      telemetryOffUseCase: { execute: turnOff },
+      forgetTelemetryUseCase: { execute: forget },
       ingestUsageUseCase: { execute: ingest },
       declareTaskUseCase: { execute: declare },
       showTaskBindingUseCase: { execute: show },
@@ -254,5 +262,96 @@ describe("aidd telemetry task", () => {
   it("exits 1 when the declaration is refused", async () => {
     declare.mockResolvedValue({ status: "refused", reason: "no-consent" });
     expect(await run("task", "x")).toBe(1);
+  });
+});
+
+const ON = {
+  status: "on",
+  configWritten: true,
+  hook: { lineRemoved: false, delegateRemoved: false, stillCalledBy: [] },
+  journal: { journalRemoved: false, trackedKept: false, ignoreEntryRemoved: false },
+  retention: { days: 3650, short: false },
+};
+
+describe("aidd telemetry on", () => {
+  it("turns measurement on in the directory it was run from, without asking, with --yes", async () => {
+    turnOn.mockResolvedValue(ON);
+    expect(await run("on", "--yes")).toBeNull();
+    expect(turnOn).toHaveBeenCalledWith(process.cwd());
+    expect(confirm).not.toHaveBeenCalled();
+    expect(stdout()).toContain("Measurement is on");
+  });
+
+  it("refuses to guess an answer where nobody can be asked", async () => {
+    const original = process.stdout.isTTY;
+    process.stdout.isTTY = false;
+    try {
+      expect(await run("on")).toBe(1);
+    } finally {
+      process.stdout.isTTY = original;
+    }
+    expect(turnOn).not.toHaveBeenCalled();
+    expect(confirm).not.toHaveBeenCalled();
+    expect(stderr()).toContain("pass --yes");
+  });
+
+  describe("where a person can be asked", () => {
+    const original = process.stdout.isTTY;
+    beforeEach(() => {
+      process.stdout.isTTY = true;
+    });
+    afterEach(() => {
+      process.stdout.isTTY = original;
+    });
+
+    it("turns on after a yes, defaulting the question to no", async () => {
+      confirm.mockResolvedValue(true);
+      turnOn.mockResolvedValue(ON);
+      expect(await run("on")).toBeNull();
+      expect(confirm.mock.calls[0]?.[1]).toBe(false);
+      expect(turnOn).toHaveBeenCalled();
+    });
+
+    it("changes nothing after a no", async () => {
+      confirm.mockResolvedValue(false);
+      expect(await run("on")).toBeNull();
+      expect(turnOn).not.toHaveBeenCalled();
+      expect(stdout()).toContain("Nothing changed.");
+    });
+  });
+
+  it("exits 1 when it is refused", async () => {
+    turnOn.mockResolvedValue({ status: "refused", reason: "outside-repository" });
+    expect(await run("on", "--yes")).toBe(1);
+  });
+});
+
+describe("aidd telemetry off", () => {
+  it("turns measurement off", async () => {
+    turnOff.mockResolvedValue({ status: "off", changed: true });
+    expect(await run("off")).toBeNull();
+    expect(turnOff).toHaveBeenCalledWith(process.cwd());
+    expect(stdout()).toContain("Measurement is off");
+  });
+
+  it("exits 1 when it is refused", async () => {
+    turnOff.mockResolvedValue({ status: "refused", reason: "unreadable-config" });
+    expect(await run("off")).toBe(1);
+  });
+});
+
+describe("aidd telemetry forget", () => {
+  const plan = { entries: [], repositories: [], missing: [], unlocated: 0 };
+
+  it("only previews without --yes", async () => {
+    forget.mockResolvedValue({ status: "preview", plan });
+    expect(await run("forget")).toBeNull();
+    expect(forget).toHaveBeenCalledWith(false);
+  });
+
+  it("removes with --yes", async () => {
+    forget.mockResolvedValue({ status: "forgotten", plan });
+    await run("forget", "--yes");
+    expect(forget).toHaveBeenCalledWith(true);
   });
 });

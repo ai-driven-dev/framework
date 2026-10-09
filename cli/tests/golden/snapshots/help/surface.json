@@ -132,7 +132,12 @@
   {
     "invocation": "aidd telemetry",
     "exitCode": 0,
-    "help": "Usage: aidd telemetry [options] [command]\n\nMeasure what Claude Code sessions consume, locally\n\nOptions:\n  -h, --help               display help for command\n\nCommands:\n  ingest [options]         Read new transcripts into the local ledger, for\n                           projects that opted in\n  task [options] [name]    Declare the task the current work belongs to, or show\n                           what it is bound to\n  report [options]         Show what the work consumed, split along one axis,\n                           after reading new transcripts\n  identity [options] [id]  Choose to be named on your own measurement, or show\n                           or remove that choice\n  help [command]           display help for command"
+    "help": "Usage: aidd telemetry [options] [command]\n\nMeasure what Claude Code sessions consume, locally\n\nOptions:\n  -h, --help               display help for command\n\nCommands:\n  on [options]             Measure this repository, and remove what the previous\n                           version left in it\n  off                      Stop measuring this repository; what was measured\n                           stays\n  forget [options]         Show everything measurement keeps on this machine, or\n                           remove it with --yes\n  ingest [options]         Read new transcripts into the local ledger, for\n                           projects that opted in\n  task [options] [name]    Declare the task the current work belongs to, or show\n                           what it is bound to\n  report [options]         Show what the work consumed, split along one axis,\n                           after reading new transcripts\n  identity [options] [id]  Choose to be named on your own measurement, or show\n                           or remove that choice\n  help [command]           display help for command"
+  },
+  {
+    "invocation": "aidd telemetry forget",
+    "exitCode": 0,
+    "help": "Usage: aidd telemetry forget [options]\n\nShow everything measurement keeps on this machine, or remove it with --yes\n\nOptions:\n  --yes       Remove it, instead of only showing it (default: false)\n  -h, --help  display help for command"
   },
   {
     "invocation": "aidd telemetry identity",
@@ -143,6 +148,16 @@
     "invocation": "aidd telemetry ingest",
     "exitCode": 0,
     "help": "Usage: aidd telemetry ingest [options]\n\nRead new transcripts into the local ledger, for projects that opted in\n\nOptions:\n  --quiet     Print nothing on success (for hooks) (default: false)\n  -h, --help  display help for command"
+  },
+  {
+    "invocation": "aidd telemetry off",
+    "exitCode": 0,
+    "help": "Usage: aidd telemetry off [options]\n\nStop measuring this repository; what was measured stays\n\nOptions:\n  -h, --help  display help for command"
+  },
+  {
+    "invocation": "aidd telemetry on",
+    "exitCode": 0,
+    "help": "Usage: aidd telemetry on [options]\n\nMeasure this repository, and remove what the previous version left in it\n\nOptions:\n  --yes       Do not ask first (default: false)\n  -h, --help  display help for command"
   },
   {
     "invocation": "aidd telemetry report",

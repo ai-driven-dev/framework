@@ -135,6 +135,13 @@ const PUBLIC_MODULES: Readonly<Record<string, readonly string[]>> = {
     "src/contexts/telemetry/domain/report/usage-report.ts",
     // who, if anyone, the measurement names, and the result the command prints
     "src/contexts/telemetry/application/identity/manage-identity-use-case.ts",
+    // opting in, out and forgetting: the use cases a command drives and the results it prints,
+    // the retention the display words, and what a forget lists
+    "src/contexts/telemetry/application/switch/telemetry-on-use-case.ts",
+    "src/contexts/telemetry/application/switch/telemetry-off-use-case.ts",
+    "src/contexts/telemetry/application/forget/forget-telemetry-use-case.ts",
+    "src/contexts/telemetry/domain/switch/claude-retention.ts",
+    "src/contexts/telemetry/domain/ports/forget/measurement-erasure.ts",
   ],
 };
 
