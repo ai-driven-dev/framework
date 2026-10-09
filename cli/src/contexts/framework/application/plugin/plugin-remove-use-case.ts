@@ -40,6 +40,7 @@ import {
 import { assertProjectPathWithinRoot } from "../ownership/project-path-boundary.js";
 import { assertProjectMcpEntriesRemovable } from "../ownership/project-plugin-cleanup.js";
 import { detachUserPlugin } from "../ownership/user-plugin-ownership.js";
+import { prepareRuleFiles } from "../publish-rules-use-case.js";
 import { resolveCacheCandidate } from "../shared/purge-declared-cache.js";
 import { assertProjectHooksRemovable, removeProjectHooks } from "../shared/remove-project-hooks.js";
 import { resolveUninstallScopeOrder } from "../shared/resolve-uninstall-scope.js";
@@ -110,6 +111,13 @@ export class PluginRemoveUseCase {
     for (const toolId of resolvedToolIds) {
       const plugin = manifest.getPlugins(toolId).find((p) => p.name === pluginName);
       if (plugin === undefined) continue;
+      if (plugin.scope !== "user")
+        await prepareRuleFiles(
+          this.fs,
+          toolId,
+          projectRoot,
+          [...plugin.files.keys()].map((path) => [path, null])
+        );
       await assertProjectMcpEntriesRemovable(this.fs, plugin, toolId, projectRoot);
       await assertProjectHooksRemovable(this.fs, plugin, toolId, projectRoot);
       await this.assertProjectNativeSource(

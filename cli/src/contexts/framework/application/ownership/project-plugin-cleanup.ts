@@ -9,6 +9,7 @@ import type { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";
 import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
 import { deletePluginFilesForTool } from "../plugin/plugin-helpers.js";
 import { isFrameworkPrimeFlatMcp } from "../plugin/plugin-target-resolution.js";
+import { prepareRuleFiles } from "../publish-rules-use-case.js";
 import { assertProjectHooksRemovable, removeProjectHooks } from "../shared/remove-project-hooks.js";
 import { detachNativePluginRefs } from "./native-plugin-ownership.js";
 import { assertProjectPathWithinRoot } from "./project-path-boundary.js";
@@ -58,6 +59,13 @@ export class ProjectPluginCleanup {
     plugin: InstalledPlugin,
     projectRoot: string
   ): Promise<void> {
+    if (plugin.scope !== "user")
+      await prepareRuleFiles(
+        this.fs,
+        toolId,
+        projectRoot,
+        [...plugin.files.keys()].map((path) => [path, null])
+      );
     await assertProjectMcpEntriesRemovable(this.fs, plugin, toolId, projectRoot);
     await assertProjectHooksRemovable(this.fs, plugin, toolId, projectRoot);
   }

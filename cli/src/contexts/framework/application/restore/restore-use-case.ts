@@ -6,7 +6,7 @@ import type { FileWriter } from "../../../../kernel/ports/file-writer.js";
 import type { Hasher } from "../../../../kernel/ports/hasher.js";
 import type { Logger } from "../../../../kernel/ports/logger.js";
 import type { Prompter } from "../../../../kernel/ports/prompter.js";
-import type { AiToolId, ToolId } from "../../../../kernel/tool.js";
+import { type AiToolId, isAiToolId, type ToolId } from "../../../../kernel/tool.js";
 import type { Platform } from "../../../../runtime/platform/platform.js";
 import type { PluginFetcher } from "../../../distribution/domain/ports/plugin-fetcher.js";
 import {
@@ -22,6 +22,7 @@ import { FRAMEWORK_CONFIG_PREFIX, FrameworkDescriptor } from "../../../translate
 import type { Manifest } from "../../domain/manifest.js";
 import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
 import type { PluginDistributionReader } from "../../domain/ports/plugin-distribution-reader.js";
+import { prepareRulePublication } from "../publish-rules-use-case.js";
 import type { BuiltMaterializationDeps } from "../shared/apply-plugin-files-use-case.js";
 import {
   type RestoreAllPluginsResult,
@@ -124,8 +125,16 @@ export class RestoreUseCase {
   }
 
   private async executeRestore(ctx: RestoreCtx): Promise<RestoreResult> {
+    for (const toolId of ctx.toolIds) {
+      if (isAiToolId(toolId))
+        await prepareRulePublication(this.fs, { toolId, projectRoot: ctx.projectRoot });
+    }
     const toolResults = await this.runToolRestores(ctx);
     const pluginResult = await this.runPluginRestore(ctx);
+    for (const toolId of ctx.toolIds) {
+      if (isAiToolId(toolId))
+        await (await prepareRulePublication(this.fs, { toolId, projectRoot: ctx.projectRoot }))();
+    }
     await this.saveIfChanged(toolResults, pluginResult.totalFiles, ctx.manifest);
     return this.buildTotals(toolResults, pluginResult);
   }

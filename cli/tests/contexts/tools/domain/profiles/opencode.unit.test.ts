@@ -71,18 +71,18 @@ describe("opencode", () => {
   });
 
   describe("capabilities.rules.convertFrontmatter()", () => {
-    it("returns empty frontmatter regardless of input (paths, always-apply)", () => {
+    it("retains path predicates for active instruction publication", () => {
       const result = opencode.capabilities.rules?.convertFrontmatter({
         paths: ["src/**/*.ts"],
       });
-      expect(result).toEqual({});
+      expect(result).toEqual({ paths: ["src/**/*.ts"] });
     });
 
-    it("returns empty frontmatter for always-apply rules", () => {
+    it("retains the rule description", () => {
       const result = opencode.capabilities.rules?.convertFrontmatter({
         description: "always",
       });
-      expect(result).toEqual({});
+      expect(result).toEqual({ description: "always" });
     });
 
     it("keeps description when alwaysApply is false and no paths are specified", () => {
@@ -90,12 +90,15 @@ describe("opencode", () => {
         description: "Apply when editing command files.",
         alwaysApply: false,
       });
-      expect(result).toEqual({ description: "Apply when editing command files." });
+      expect(result).toEqual({
+        description: "Apply when editing command files.",
+        alwaysApply: false,
+      });
     });
 
     it("writes no description key when alwaysApply is false and there is no description", () => {
       expect(opencode.capabilities.rules?.convertFrontmatter({ alwaysApply: false })).toStrictEqual(
-        {}
+        { alwaysApply: false }
       );
     });
   });

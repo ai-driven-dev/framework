@@ -15,7 +15,7 @@ One rule file per supported confirmed tool, the list of files written, and any s
 1. **Build.** Copy [rule-template.md](../assets/rule-template.md) into one canonical rule, concise. Strip the scaffold (comments + `<...>`).
 2. **Frontmatter.** Set the per-tool frontmatter from [tool-paths.md](../references/tool-paths.md). Drop a field a tool does not support.
 3. **Render.** Per the write mode ([tool-paths.md](../references/tool-paths.md)):
-   - **Host**: for each supported confirmed tool, write to its path and extension. Skip an unsupported tool, carrying its reason forward.
+   - **Host**: for each supported confirmed tool, write to its path and extension. For OpenCode V2, follow the staged publication procedure in [tool-paths.md](../references/tool-paths.md); its CLI preflight precedes both writes. Skip an unsupported tool, carrying its reason forward.
    - **Plugin source**: write one canonical `.md` rule. No per-tool fan-out.
 4. **Split.** When examples warrant it, write several rule files rather than one crowded one.
 5. **Validate.** Run the write-target validation ([tool-paths.md](../references/tool-paths.md)).

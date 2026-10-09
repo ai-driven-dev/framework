@@ -1,4 +1,5 @@
 import { join } from "node:path";
+import "../../../../../src/contexts/tools/domain/profiles/claude/profile.js";
 import { describe, expect, it } from "vitest";
 import {
   deletePluginFilesForTool,

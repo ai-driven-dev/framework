@@ -11,6 +11,7 @@ import type { Manifest } from "../../domain/manifest.js";
 import type { InstalledPlugin, PluginScope } from "../../domain/plugins/installed-plugin.js";
 import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
 import type { PluginTranslator } from "../framework/translator/plugin-translator.js";
+import { prepareRuleFiles } from "../publish-rules-use-case.js";
 import { resolveBaseDirFromRecord } from "./plugin-target-resolution.js";
 
 export async function loadPluginManifest(manifestRepo: ManifestRepository): Promise<Manifest> {
@@ -22,9 +23,19 @@ export async function loadPluginManifest(manifestRepo: ManifestRepository): Prom
 export async function writePluginFiles(
   files: InstallationFile[],
   baseDir: string,
-  fs: FileWriter
+  fs: FileReader & FileWriter,
+  toolId?: AiToolId
 ): Promise<void> {
+  const publish = toolId
+    ? await prepareRuleFiles(
+        fs,
+        toolId,
+        baseDir,
+        files.map((f) => [f.relativePath, f.content])
+      )
+    : undefined;
   await Promise.all(files.map((f) => fs.writeFile(join(baseDir, f.relativePath), f.content)));
+  await publish?.();
 }
 
 /** Deletes exactly the paths a plugin's own manifest entry lists, joined to its base dir.
@@ -32,11 +43,21 @@ export async function writePluginFiles(
 export async function deleteOldFiles(
   files: ReadonlyMap<string, string>,
   baseDir: string,
-  fs: FileWriter
+  fs: FileReader & FileWriter,
+  toolId?: AiToolId
 ): Promise<void> {
+  const publish = toolId
+    ? await prepareRuleFiles(
+        fs,
+        toolId,
+        baseDir,
+        [...files.keys()].map((path) => [path, null])
+      )
+    : undefined;
   for (const relativePath of files.keys()) {
     await fs.deleteFile(join(baseDir, relativePath));
   }
+  await publish?.();
 }
 
 /**
@@ -50,11 +71,20 @@ export async function deletePluginFilesForTool(
   scope: PluginScope,
   toolId: AiToolId,
   projectRoot: string,
-  fs: FileWriter,
+  fs: FileReader & FileWriter,
   ownerScope: "project" | "user" = "project"
 ): Promise<string[]> {
   if (scope === "user" && ownerScope !== "user") return [];
   const baseDir = resolveBaseDirFromRecord(scope, toolId, projectRoot, nodeHomedir);
+  const publish =
+    scope === "user"
+      ? undefined
+      : await prepareRuleFiles(
+          fs,
+          toolId,
+          baseDir,
+          [...files.keys()].map((path) => [path, null])
+        );
   const deleted: string[] = [];
   for (const relativePath of files.keys()) {
     const fullPath = join(baseDir, relativePath);
@@ -62,6 +92,7 @@ export async function deletePluginFilesForTool(
     await fs.deleteEmptyDirectories(dirname(fullPath));
     deleted.push(relativePath);
   }
+  await publish?.();
   return deleted;
 }
 

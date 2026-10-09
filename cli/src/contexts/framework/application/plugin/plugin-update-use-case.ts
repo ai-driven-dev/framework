@@ -16,6 +16,7 @@ import type { ManifestRepository } from "../../domain/ports/manifest-repository.
 import type { PluginTranslator } from "../framework/translator/plugin-translator.js";
 import { resolvePluginTranslator } from "../framework/translator/resolve-plugin-translator.js";
 import type { InstallRuntimeConfigUseCase } from "../install/install-runtime-config-use-case.js";
+import { prepareRuleFiles, prepareRulePublication } from "../publish-rules-use-case.js";
 import type { BuiltMaterializationDeps } from "../shared/apply-plugin-files-use-case.js";
 import type { PluginDistributionLoader } from "./plugin-distribution-loader.js";
 import {
@@ -50,6 +51,8 @@ export class PluginUpdateUseCase {
     const manifest = await loadPluginManifest(this.manifestRepo);
     const resolvedToolIds = resolvePluginToolIds(toolIds, manifest);
     const cacheDir = join(projectRoot, PLUGIN_CACHE_SUBDIR);
+    for (const toolId of resolvedToolIds)
+      await prepareRulePublication(this.fs, { toolId, projectRoot });
     const updated: string[] = [];
     for (const toolId of resolvedToolIds) {
       const names = await this.updatePluginsForTool(
@@ -95,9 +98,12 @@ export class PluginUpdateUseCase {
     const dist = await this.distributionLoader.load(plugin.source, cacheDir, {
       forceRefresh: true,
     });
-    await this.pluginRuntime?.ensurePluginRuntimeFiles(toolId, projectRoot, manifest);
-    if (compareSemver(dist.manifest.version, plugin.version) <= 0) return false;
+    if (compareSemver(dist.manifest.version, plugin.version) <= 0) {
+      await this.pluginRuntime?.ensurePluginRuntimeFiles(toolId, projectRoot, manifest);
+      return false;
+    }
     await this.replacePluginFiles(plugin, dist, toolId, projectRoot, manifest);
+    await this.pluginRuntime?.ensurePluginRuntimeFiles(toolId, projectRoot, manifest);
     return true;
   }
 
@@ -109,17 +115,26 @@ export class PluginUpdateUseCase {
     manifest: Manifest
   ): Promise<void> {
     const baseDir = resolveBaseDirFromRecord(plugin.scope, toolId, projectRoot, nodeHomedir);
-    await deleteOldFiles(plugin.files, baseDir, this.fs);
     const toolConfig = getToolConfig(toolId);
     const translator = this.resolveTranslator(toolConfig);
-    if (translator !== null && plugin.marketplace !== undefined) {
-      await materializeViaTranslator(translator, dist, toolId, plugin, projectRoot, manifest);
-      return;
-    }
     const { files: newFiles, componentPaths } = new PluginContentTranslator(
       this.hasher
     ).translateWithComponentPaths(dist, toolConfig);
+    const changes = new Map<string, string | null>(
+      [...plugin.files.keys()].map((path) => [path, null])
+    );
+    for (const file of newFiles) changes.set(file.relativePath, file.content);
+    const publish = await prepareRuleFiles(this.fs, toolId, projectRoot, changes);
+    if (translator !== null && plugin.marketplace !== undefined) {
+      await deleteOldFiles(plugin.files, baseDir, this.fs);
+      await materializeViaTranslator(translator, dist, toolId, plugin, projectRoot, manifest);
+      // A resolved build can skip canonical rules; publish only its actual materialization.
+      await (await prepareRulePublication(this.fs, { toolId, projectRoot }))();
+      return;
+    }
+    await deleteOldFiles(plugin.files, baseDir, this.fs);
     await writePluginFiles(newFiles, baseDir, this.fs);
+    await publish();
     manifest.updatePlugin(
       toolId,
       InstalledPlugin.fromDistribution(dist, plugin.source, newFiles, plugin.scope, componentPaths)

@@ -20,12 +20,13 @@ describe("BundledAssetProviderAdapter.loadConfigAsset", () => {
       expect(asset).toContain("export async function setupOpencodeEvents");
     });
 
-    it("returns parsed opencode.json with instructions array", () => {
+    it("retains the schema without an inert instructions glob", () => {
       const asset = provider.loadConfigAsset("opencode", "opencode.json") as Record<
         string,
         unknown
       >;
-      expect(asset).toHaveProperty("instructions");
+      expect(asset.$schema).toBe("https://opencode.ai/config.json");
+      expect(asset).not.toHaveProperty("instructions");
     });
   });
 

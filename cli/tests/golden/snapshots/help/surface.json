@@ -52,7 +52,7 @@
   {
     "invocation": "aidd framework rules",
     "exitCode": 0,
-    "help": "Usage: aidd framework rules [options]\n\nList the rules installed in this project, across every AI tool\n\nOptions:\n  --json      Print the inventory as JSON\n  -h, --help  display help for command"
+    "help": "Usage: aidd framework rules [options]\n\nList the rules installed in this project, across every AI tool\n\nOptions:\n  --json                Print the inventory as JSON\n  --tool <tool>         Host for active publication (opencode V2)\n  --publish             Publish source rule text in the host's active\n                        instructions\n  --write <rule-path>   Write a project-relative rule after publication\n                        preflight\n  --from <staged-file>  Read prospective rule content from a staged file\n  --delete <rule-path>  Remove a rule after publication preflight\n  -h, --help            display help for command"
   },
   {
     "invocation": "aidd framework update",

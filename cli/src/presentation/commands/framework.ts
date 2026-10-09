@@ -21,6 +21,28 @@ import { reportSyncActivation } from "./sync-native-activation.js";
 
 type Deps = Awaited<ReturnType<typeof createDeps>>;
 
+interface RuleOptions {
+  json?: boolean;
+  tool?: string;
+  publish?: boolean;
+  write?: string;
+  from?: string;
+  delete?: string;
+}
+
+async function publishRules(deps: Deps, projectRoot: string, options: RuleOptions): Promise<void> {
+  if (!options.tool || !isAiToolId(options.tool))
+    throw new Error("Active rule publication requires --tool <AI tool ID>.");
+  if (Boolean(options.write) !== Boolean(options.from) || (options.write && options.delete)) {
+    throw new Error("Use --write <rule-path> --from <staged-file>, or --delete <rule-path>.");
+  }
+  const changes = new Map<string, string | null>();
+  if (options.write && options.from)
+    changes.set(options.write, await deps.fs.readFile(options.from));
+  if (options.delete) changes.set(options.delete, null);
+  await deps.publishRulesUseCase.execute({ toolId: options.tool, projectRoot, changes });
+}
+
 export function assertKnownToolId(toolId: string): asserts toolId is ToolId {
   if (!isAiToolId(toolId) && !isIdeToolId(toolId)) {
     throw new Error(`Unknown tool: ${toolId}. Valid tools: ${VALID_TOOL_IDS.join(", ")}`);
@@ -229,11 +251,21 @@ export function registerFrameworkCommand(program: Command): void {
     .command("rules")
     .description("List the rules installed in this project, across every AI tool")
     .option("--json", "Print the inventory as JSON")
-    .action(async (cmdOptions: { json?: boolean }) => {
+    .option("--tool <tool>", "Host for active publication (opencode V2)")
+    .option("--publish", "Publish source rule text in the host's active instructions")
+    .option("--write <rule-path>", "Write a project-relative rule after publication preflight")
+    .option("--from <staged-file>", "Read prospective rule content from a staged file")
+    .option("--delete <rule-path>", "Remove a rule after publication preflight")
+    .action(async (cmdOptions: RuleOptions) => {
       const { verbose, output, projectRoot } = parseGlobalOptions(program);
       const errorHandler = new ErrorHandler(output);
       try {
         const deps = await createDeps(projectRoot, { verbose }, output);
+        if (cmdOptions.publish || cmdOptions.write || cmdOptions.from || cmdOptions.delete) {
+          await publishRules(deps, projectRoot, cmdOptions);
+          output.success("Active rule instructions synchronized.");
+          return;
+        }
         const { rules } = await deps.listInstalledRulesUseCase.execute({ projectRoot });
         if (cmdOptions.json) printInstalledRulesJson(output, rules);
         else printInstalledRules(output, rules);

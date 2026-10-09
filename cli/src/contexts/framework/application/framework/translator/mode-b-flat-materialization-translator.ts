@@ -21,6 +21,7 @@ import {
   resolveBaseDirFromRecord,
   resolveScopeForInstall,
 } from "../../plugin/plugin-target-resolution.js";
+import { prepareRuleFiles } from "../../publish-rules-use-case.js";
 import { materializeFlatMcp, refreshTrackedMcpConfigHash } from "./flat-mcp-materializer.js";
 import type { PluginTranslator } from "./plugin-translator.js";
 import { ProjectHooksMaterializer, withoutHooks } from "./project-hooks-materializer.js";
@@ -55,6 +56,12 @@ export class ModeBFlatMaterializationTranslator implements PluginTranslator {
   ): Promise<{ skipped: ReadonlySkipList }> {
     const ctx = this.resolveFlatToolContext(toolId, dist, projectRoot);
     if (ctx === null) return { skipped: [] };
+    await prepareRuleFiles(
+      this.fs,
+      toolId,
+      projectRoot,
+      ctx.files.map((f) => [f.relativePath, f.content])
+    );
     const mcp = await materializeFlatMcp(
       this.fs,
       this.hasher,
@@ -130,7 +137,8 @@ export class ModeBFlatMaterializationTranslator implements PluginTranslator {
     scope: PluginScope,
     manifest: Manifest
   ): Promise<void> {
-    if (files.length > 0) await writePluginFiles(files, baseDir, this.fs);
+    if (files.length > 0)
+      await writePluginFiles(files, baseDir, this.fs, scope === "user" ? undefined : toolId);
     const plugin = InstalledPlugin.fromDistributionWithMcp(
       dist,
       source,
