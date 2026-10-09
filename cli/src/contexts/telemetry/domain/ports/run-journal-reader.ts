@@ -112,7 +112,7 @@ export interface RunJournalReader {
    * what removing this journal would touch needs a name a damaged file still has. Never
    * throws, the same failure direction as `list()`. */
   listRunFiles(): Promise<readonly string[]>;
-  /** The schema stated by every journal this reader refused to read, one entry per file.
+  /** The schema stated by every journal this reader refused to read, one per session (primary wins).
    * `list()` drops such a journal outright, and a caller shown only that emptiness would
    * report a torn file about one whose header it parsed perfectly well. Empty is the ordinary
    * answer. Never throws, like everything else here. */

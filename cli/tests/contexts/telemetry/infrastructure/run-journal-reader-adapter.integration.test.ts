@@ -24,6 +24,7 @@ function runFileLines(...lines: readonly unknown[]): string {
 describe("RunJournalReaderAdapter", () => {
   let projectRoot: string;
   let runsDir: string;
+  const extraDirs: string[] = [];
 
   beforeEach(async () => {
     projectRoot = await mkdtemp(join(tmpdir(), "aidd-run-journal-"));
@@ -33,6 +34,7 @@ describe("RunJournalReaderAdapter", () => {
 
   afterEach(async () => {
     await rm(projectRoot, { recursive: true, force: true });
+    for (const dir of extraDirs.splice(0)) await rm(dir, { recursive: true, force: true });
     delete process.env.AIDD_RUNS_DIR;
   });
 
@@ -255,6 +257,7 @@ describe("RunJournalReaderAdapter", () => {
   it("lists a journal still sitting in another live worktree's aidd_docs/runs", async () => {
     await mkdir(join(projectRoot, ".git"), { recursive: true });
     const other = await mkdtemp(join(tmpdir(), "aidd-run-journal-other-"));
+    extraDirs.push(other);
     await registerWorktree(other);
     await mkdir(join(other, "aidd_docs", "runs"), { recursive: true });
     await writeFile(
@@ -267,7 +270,6 @@ describe("RunJournalReaderAdapter", () => {
 
     expect(journals.map((journal) => journal.session?.vendor_id)).toEqual([LEGACY_SESSION_ID]);
     expect(await adapter.read(LEGACY_SESSION_ID)).not.toBeNull();
-    await rm(other, { recursive: true, force: true });
   });
 
   it("prefers the common git directory's copy when one session has a file in both", async () => {
@@ -300,6 +302,7 @@ describe("RunJournalReaderAdapter", () => {
       runFileLines(sessionStart(RUN_ID, SESSION_ID))
     );
     const overrideDir = await mkdtemp(join(tmpdir(), "aidd-run-journal-override-"));
+    extraDirs.push(overrideDir);
     process.env.AIDD_RUNS_DIR = overrideDir;
     await writeFile(
       join(overrideDir, `${OTHER_RUN_ID}__${LEGACY_SESSION_ID}.jsonl`),
@@ -311,7 +314,6 @@ describe("RunJournalReaderAdapter", () => {
 
     expect(journals.map((journal) => journal.session?.vendor_id)).toEqual([LEGACY_SESSION_ID]);
     expect(adapter.legacyRunsDirs).toEqual([]);
-    await rm(overrideDir, { recursive: true, force: true });
   });
 
   it("reports a foreign schema found in a legacy directory", async () => {

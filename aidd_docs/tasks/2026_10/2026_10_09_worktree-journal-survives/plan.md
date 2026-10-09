@@ -89,3 +89,4 @@ Any other failure: stop and report.
 | Legacy `aidd_docs/runs/` of every live worktree is read, never written | Today's sessions stay visible; one authoritative copy for new lines. |
 | The CLI finds the common dir by reading files, not by spawning git | `repositoryRootAbove` already walks the filesystem; staying file-based keeps the reader free of a git dependency. A parity test pins it against the hook's `git rev-parse`. |
 | No worktree axis in the report | The 2026-08-31 decision requires an argument for any new axis; the issue gives none. `worktree_id` stays in the journal. |
+| `telemetry-on-use-case.ts` changed after all, despite rule 5 | Its message invited deleting the `.gitignore` line to commit the journal; new journals live under the git directory, which no commit reaches, so the text had to stop promising it. Only the message changed. |
