@@ -7,7 +7,8 @@ import {
   type NotStoredReason,
   type RepositoryResolution,
 } from "../domain/repository-resolution.js";
-import { type Consent, consentOf } from "../domain/telemetry-consent.js";
+import type { Consent } from "../domain/telemetry-consent.js";
+import { consentOfRoot } from "./repository-consent.js";
 
 export type DirectoryOutcome =
   | {
@@ -88,7 +89,7 @@ export class ResolutionRun {
     // A repository with no origin and no commit has nothing to be named by.
     const id = repositoryIdOf(located);
     if (id === null) return { skipped: "outside-repo" };
-    const consent = await this.consentOfRoot(located.root, located.mainRoot);
+    const consent = await this.consentFor(located.root, located.mainRoot);
     const resolution = { repository_id: id, root: located.root, consented: consent === "granted" };
     if (!sameResolution(this.remembered.get(key), resolution)) {
       this.remembered.set(key, resolution);
@@ -98,14 +99,10 @@ export class ResolutionRun {
     return { skipped: consent === "unreadable" ? "unreadable-consent" : "no-consent" };
   }
 
-  /** A linked worktree often carries no `.aidd/config.json` of its own, the file being
-   * untracked, so the main working tree's answers for it. */
-  private async consentOfRoot(root: string, mainRoot: string): Promise<Consent> {
+  private async consentFor(root: string, mainRoot: string): Promise<Consent> {
     const held = this.consents.get(root);
     if (held !== undefined) return held;
-    const own = await this.consentSource.read(root);
-    const text = own === null && mainRoot !== root ? await this.consentSource.read(mainRoot) : own;
-    const consent = consentOf(text);
+    const consent = await consentOfRoot(this.consentSource, root, mainRoot);
     this.consents.set(root, consent);
     return consent;
   }

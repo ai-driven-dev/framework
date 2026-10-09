@@ -99,6 +99,11 @@ const BASELINE: readonly { readonly path: string; readonly injected: number }[] 
   // the environment's refusal. A stage folded into another would hide where the ledger is
   // written.
   { path: "src/contexts/telemetry/application/ingest-usage-use-case.ts", injected: 5 },
+  // A declaration is checked against the project's consent, kept for the session, kept for the
+  // branch, and written under the ledger's lock, which the snapshot after it shares with
+  // ingest. The fifth is the environment's refusal. The lock cannot sit inside a store: it
+  // protects a write the stores do not know they share.
+  { path: "src/contexts/telemetry/application/declare-task-use-case.ts", injected: 5 },
 ];
 
 /**

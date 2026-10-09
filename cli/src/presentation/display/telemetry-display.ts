@@ -1,4 +1,7 @@
+import type { RefusalReason } from "../../contexts/telemetry/application/consented-repositories.js";
+import type { DeclareResult } from "../../contexts/telemetry/application/declare-task-use-case.js";
 import type { IngestResult } from "../../contexts/telemetry/application/ingest-usage-use-case.js";
+import type { ShowResult } from "../../contexts/telemetry/application/show-task-binding-use-case.js";
 import type { NotStoredReason } from "../../contexts/telemetry/domain/repository-resolution.js";
 import type { CLIOutput } from "../output.js";
 
@@ -38,5 +41,79 @@ export function printIngestResult(output: CLIOutput, result: IngestResult): void
   for (const [reason, count] of Object.entries(result.notStored) as [NotStoredReason, number][]) {
     if (count > 0)
       output.info(`Not stored: ${count} call${count === 1 ? "" : "s"} ${REASONS[reason]}.`);
+  }
+}
+
+const REFUSALS: Readonly<Record<RefusalReason, string>> = {
+  environment: "AIDD_TELEMETRY=0: nothing was declared.",
+  "outside-repository": "Not inside a git repository: there is no project to declare a task in.",
+  "unidentified-repository":
+    "This repository has no remote and no commit yet, so nothing can name it. Commit once, then declare again.",
+  "no-consent":
+    "This project has not opted in to measurement, so no task was declared. Run `aidd telemetry on` here first.",
+  "unreadable-consent":
+    "This project's .aidd/config.json cannot be parsed, so no task was declared. Fix the file, then declare again.",
+};
+
+/** The first characters of a session id: enough to tell sessions apart on one screen. */
+function shortSession(sessionId: string): string {
+  return sessionId.slice(0, 8);
+}
+
+function describeTask(task: string | null, ticket: string | null): string {
+  if (task === null) return "no task";
+  return ticket === null ? `task "${task}"` : `task "${task}" (ticket ${ticket})`;
+}
+
+export function printDeclareResult(output: CLIOutput, result: DeclareResult): void {
+  if (result.status === "refused") {
+    output.error(REFUSALS[result.reason]);
+    return;
+  }
+  const { declaration, sessionId, branch } = result;
+  output.success(`Declared ${describeTask(declaration.task, declaration.ticket)}.`);
+  if (sessionId === null) {
+    output.info("No Claude session here: nothing was bound to a session.");
+  } else {
+    output.info(`Session ${shortSession(sessionId)} is bound from now on.`);
+  }
+  if (branch.status === "bound") {
+    output.info(`Branch ${branch.branch} is bound.`);
+    return;
+  }
+  output.info(
+    branch.reason === "detached"
+      ? "Branch left untouched: HEAD is detached."
+      : `Branch left untouched: ${branch.branch} is the default branch.`
+  );
+  if (sessionId === null) output.warn("Nothing was bound: no session and no working branch.");
+}
+
+export function printTaskBinding(output: CLIOutput, result: ShowResult): void {
+  if (result.status === "refused") {
+    output.error(REFUSALS[result.reason]);
+    return;
+  }
+  const { binding, sessionId, branch, role } = result;
+  if (binding.state === "unbound") {
+    const where =
+      role === "working"
+        ? `branch ${branch} and ${sessionId === null ? "no session" : `session ${shortSession(sessionId)}`}`
+        : `${role === "detached" ? "a detached HEAD" : `the default branch ${branch}`}, which is never bound`;
+    output.info(`Nothing is bound: ${where}. Declare with \`aidd telemetry task <name>\`.`);
+    return;
+  }
+  const what = binding.none
+    ? "no task (declared none)"
+    : describeTask(binding.task, binding.ticket);
+  const when = binding.declaredAt === null ? "" : ` at ${binding.declaredAt}`;
+  if (binding.source === "branch") {
+    output.info(`Bound to ${what}, declared on branch ${branch}${when}.`);
+  } else if (binding.source === "session-carried") {
+    output.info(
+      `Bound to ${what}, carried into session ${shortSession(sessionId ?? "")} from session ${shortSession(binding.carriedFrom ?? "")}.`
+    );
+  } else {
+    output.info(`Bound to ${what}, declared in session ${shortSession(sessionId ?? "")}${when}.`);
   }
 }

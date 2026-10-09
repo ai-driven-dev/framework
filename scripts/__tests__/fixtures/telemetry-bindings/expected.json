@@ -1,0 +1,233 @@
+{
+  "binding": {
+    "session-declared-once": {
+      "state": "bound",
+      "source": "session-declared",
+      "task": "checkout-fix",
+      "ticket": "PROJ-12",
+      "none": false
+    },
+    "session-declared-wins-over-branch": {
+      "state": "bound",
+      "source": "session-declared",
+      "task": "checkout-fix",
+      "ticket": "PROJ-12",
+      "none": false
+    },
+    "session-before-its-declaration-falls-to-branch": {
+      "state": "bound",
+      "source": "branch",
+      "task": "branch-task",
+      "ticket": null,
+      "none": false
+    },
+    "redeclared-before-the-second-keeps-the-first": {
+      "state": "bound",
+      "source": "session-declared",
+      "task": "first-idea",
+      "ticket": null,
+      "none": false
+    },
+    "redeclared-after-the-second-takes-the-second": {
+      "state": "bound",
+      "source": "session-declared",
+      "task": "second-idea",
+      "ticket": "PROJ-30",
+      "none": false
+    },
+    "redeclared-at-the-second-exactly": {
+      "state": "bound",
+      "source": "session-declared",
+      "task": "second-idea",
+      "ticket": "PROJ-30",
+      "none": false
+    },
+    "two-declarations-at-one-instant-the-later-line-wins": {
+      "state": "bound",
+      "source": "session-declared",
+      "task": "later-line",
+      "ticket": null,
+      "none": false
+    },
+    "session-none-is-bound-to-nothing": {
+      "state": "bound",
+      "source": "session-declared",
+      "task": null,
+      "ticket": null,
+      "none": true
+    },
+    "carried-after-the-carry": {
+      "state": "bound",
+      "source": "session-carried",
+      "task": "checkout-fix",
+      "ticket": "PROJ-12",
+      "none": false
+    },
+    "carried-wins-over-branch": {
+      "state": "bound",
+      "source": "session-carried",
+      "task": "checkout-fix",
+      "ticket": "PROJ-12",
+      "none": false
+    },
+    "carried-before-the-carry-falls-to-branch": {
+      "state": "bound",
+      "source": "branch",
+      "task": "branch-task",
+      "ticket": null,
+      "none": false
+    },
+    "carried-then-declared-before-own-declaration": {
+      "state": "bound",
+      "source": "session-carried",
+      "task": "checkout-fix",
+      "ticket": "PROJ-12",
+      "none": false
+    },
+    "carried-then-declared-after-own-declaration": {
+      "state": "bound",
+      "source": "session-declared",
+      "task": "own-after-carry",
+      "ticket": null,
+      "none": false
+    },
+    "carried-twice-in-a-chain": {
+      "state": "bound",
+      "source": "session-carried",
+      "task": "checkout-fix",
+      "ticket": "PROJ-12",
+      "none": false
+    },
+    "carried-from-an-unbound-session-falls-to-branch": {
+      "state": "bound",
+      "source": "branch",
+      "task": "branch-task",
+      "ticket": null,
+      "none": false
+    },
+    "carries-in-a-cycle-bind-nothing": {
+      "state": "unbound"
+    },
+    "unknown-session-falls-to-branch": {
+      "state": "bound",
+      "source": "branch",
+      "task": "checkout-fix",
+      "ticket": "PROJ-12",
+      "none": false
+    },
+    "no-session-falls-to-branch": {
+      "state": "bound",
+      "source": "branch",
+      "task": "checkout-fix",
+      "ticket": "PROJ-12",
+      "none": false
+    },
+    "branch-none-is-bound-to-nothing": {
+      "state": "bound",
+      "source": "branch",
+      "task": null,
+      "ticket": null,
+      "none": true
+    },
+    "branch-empty-task-with-declared-at-is-none": {
+      "state": "bound",
+      "source": "branch",
+      "task": null,
+      "ticket": null,
+      "none": true
+    },
+    "branch-task-without-declared-at-is-bound": {
+      "state": "bound",
+      "source": "branch",
+      "task": "orphan",
+      "ticket": null,
+      "none": false
+    },
+    "branch-undeclared-is-unbound": {
+      "state": "unbound"
+    },
+    "branch-with-dots-in-its-name": {
+      "state": "bound",
+      "source": "branch",
+      "task": "dotted",
+      "ticket": null,
+      "none": false
+    },
+    "default-branch-never-reads-its-config": {
+      "state": "unbound"
+    },
+    "detached-head-never-reads-config": {
+      "state": "unbound"
+    },
+    "default-branch-still-has-its-session": {
+      "state": "bound",
+      "source": "session-declared",
+      "task": "checkout-fix",
+      "ticket": "PROJ-12",
+      "none": false
+    }
+  },
+  "branchRole": {
+    "working-branch-with-remote-head": "working",
+    "working-branch-without-remote-head": "working",
+    "remote-head-main": "default",
+    "remote-head-develop-is-default": "default",
+    "remote-head-develop-makes-main-a-working-branch": "working",
+    "no-remote-head-main": "default",
+    "no-remote-head-master": "default",
+    "no-remote-head-develop-is-working": "working",
+    "detached": "detached",
+    "detached-without-remote-head": "detached",
+    "slashed-default-branch": "default",
+    "branch-named-like-the-remote": "working"
+  },
+  "consent": {
+    "granted": "granted",
+    "previous-version-bare-enabled": "absent",
+    "previous-version-1": "absent",
+    "version-without-enabled": "absent",
+    "disabled": "absent",
+    "enabled-as-a-string": "absent",
+    "version-as-a-string": "absent",
+    "no-telemetry-key": "absent",
+    "no-file": "absent",
+    "unparseable": "unreadable",
+    "not-an-object": "unreadable",
+    "linked-worktree-without-config-takes-the-main-tree": "granted",
+    "linked-worktree-own-config-wins-over-the-main-tree": "absent",
+    "main-tree-config-is-not-read-for-the-main-tree": "absent"
+  },
+  "environmentRefusal": {
+    "zero-refuses": true,
+    "one-does-not": false,
+    "empty-does-not": false,
+    "false-does-not": false,
+    "unset-does-not": false
+  },
+  "telemetryDir": {
+    "explicit-dir": "/data/measure",
+    "user-config-dir": "/cfg/telemetry",
+    "xdg": "/xdg/aidd/telemetry",
+    "default": "/home/someone/.config/aidd/telemetry",
+    "empty-explicit-dir-is-unset": "/cfg/telemetry",
+    "empty-user-config-dir-is-unset": "/xdg/aidd/telemetry",
+    "empty-xdg-is-unset": "/home/someone/.config/aidd/telemetry",
+    "win32-explicit-dir": "D:\\measure",
+    "win32-user-config-dir": "D:\\cfg\\telemetry",
+    "win32-xdg": "D:\\xdg\\aidd\\telemetry",
+    "win32-default": "C:\\Users\\someone\\.config\\aidd\\telemetry"
+  },
+  "claudeOnly": {
+    "claude-posix-transcript": true,
+    "claude-windows-transcript-with-backslashes": true,
+    "claude-custom-config-dir": true,
+    "session-id-differs-from-the-environment": false,
+    "environment-has-no-session-id": false,
+    "environment-session-id-empty": false,
+    "payload-has-no-session-id": false,
+    "codex-rollout-path-with-the-inherited-claude-id": false,
+    "codex-windows-rollout-path": false,
+    "payload-has-no-transcript-path": false,
+    "projects-is-only-part-of-a-name": false
+  }
+}

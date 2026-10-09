@@ -19,3 +19,9 @@ export function consentOf(configText: string | null): Consent {
     ? "granted"
     : "absent";
 }
+
+/** `AIDD_TELEMETRY` set to exactly `0` refuses measurement, whatever a project granted. Reading
+ * the environment is the composition root's job; this is only what its value means. */
+export function refusedByEnvironment(value: string | undefined): boolean {
+  return value === "0";
+}

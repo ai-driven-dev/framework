@@ -1,0 +1,279 @@
+{
+  "gitConfig": {
+    "task-and-ticket": {
+      "branch": "feat/x",
+      "keys": { "aiddTask": "checkout-fix", "aiddTicket": "PROJ-12", "aiddDeclaredAt": "2026-10-09T09:00:00.000Z" }
+    },
+    "task-only": {
+      "branch": "feat/x",
+      "keys": { "aiddTask": "branch-task", "aiddDeclaredAt": "2026-10-09T09:00:00.000Z" }
+    },
+    "none": {
+      "branch": "feat/x",
+      "keys": { "aiddDeclaredAt": "2026-10-09T09:00:00.000Z" }
+    },
+    "none-empty-task": {
+      "branch": "feat/x",
+      "keys": { "aiddTask": "", "aiddDeclaredAt": "2026-10-09T09:00:00.000Z" }
+    },
+    "task-without-declared-at": {
+      "branch": "feat/x",
+      "keys": { "aiddTask": "orphan" }
+    },
+    "undeclared": {
+      "branch": "feat/x",
+      "keys": {}
+    },
+    "dotted-branch-name": {
+      "branch": "release/1.2.aidd",
+      "keys": { "aiddTask": "dotted", "aiddDeclaredAt": "2026-10-09T09:00:00.000Z" }
+    }
+  },
+  "binding": {
+    "session-declared-once": {
+      "session_id": "00000000-0000-4000-8000-00000000000a",
+      "at": "2026-10-09T11:00:00.000Z",
+      "gitConfig": null,
+      "head": "refs/heads/feat/x",
+      "originHead": null
+    },
+    "session-declared-wins-over-branch": {
+      "session_id": "00000000-0000-4000-8000-00000000000a",
+      "at": "2026-10-09T11:00:00.000Z",
+      "gitConfig": "task-only",
+      "head": "refs/heads/feat/x",
+      "originHead": null
+    },
+    "session-before-its-declaration-falls-to-branch": {
+      "session_id": "00000000-0000-4000-8000-00000000000a",
+      "at": "2026-10-09T09:30:00.000Z",
+      "gitConfig": "task-only",
+      "head": "refs/heads/feat/x",
+      "originHead": null
+    },
+    "redeclared-before-the-second-keeps-the-first": {
+      "session_id": "00000000-0000-4000-8000-00000000000b",
+      "at": "2026-10-09T11:00:00.000Z",
+      "gitConfig": null,
+      "head": "refs/heads/feat/x",
+      "originHead": null
+    },
+    "redeclared-after-the-second-takes-the-second": {
+      "session_id": "00000000-0000-4000-8000-00000000000b",
+      "at": "2026-10-09T13:00:00.000Z",
+      "gitConfig": null,
+      "head": "refs/heads/feat/x",
+      "originHead": null
+    },
+    "redeclared-at-the-second-exactly": {
+      "session_id": "00000000-0000-4000-8000-00000000000b",
+      "at": "2026-10-09T12:00:00.000Z",
+      "gitConfig": null,
+      "head": "refs/heads/feat/x",
+      "originHead": null
+    },
+    "two-declarations-at-one-instant-the-later-line-wins": {
+      "session_id": "00000000-0000-4000-8000-000000000014",
+      "at": "2026-10-09T10:00:00.000Z",
+      "gitConfig": null,
+      "head": "refs/heads/feat/x",
+      "originHead": null
+    },
+    "session-none-is-bound-to-nothing": {
+      "session_id": "00000000-0000-4000-8000-00000000000c",
+      "at": "2026-10-09T11:00:00.000Z",
+      "gitConfig": "task-only",
+      "head": "refs/heads/feat/x",
+      "originHead": null
+    },
+    "carried-after-the-carry": {
+      "session_id": "00000000-0000-4000-8000-00000000000d",
+      "at": "2026-10-09T14:05:00.000Z",
+      "gitConfig": null,
+      "head": "refs/heads/feat/x",
+      "originHead": null
+    },
+    "carried-wins-over-branch": {
+      "session_id": "00000000-0000-4000-8000-00000000000d",
+      "at": "2026-10-09T14:05:00.000Z",
+      "gitConfig": "task-only",
+      "head": "refs/heads/feat/x",
+      "originHead": null
+    },
+    "carried-before-the-carry-falls-to-branch": {
+      "session_id": "00000000-0000-4000-8000-00000000000d",
+      "at": "2026-10-09T13:59:00.000Z",
+      "gitConfig": "task-only",
+      "head": "refs/heads/feat/x",
+      "originHead": null
+    },
+    "carried-then-declared-before-own-declaration": {
+      "session_id": "00000000-0000-4000-8000-00000000000e",
+      "at": "2026-10-09T14:30:00.000Z",
+      "gitConfig": null,
+      "head": "refs/heads/feat/x",
+      "originHead": null
+    },
+    "carried-then-declared-after-own-declaration": {
+      "session_id": "00000000-0000-4000-8000-00000000000e",
+      "at": "2026-10-09T16:00:00.000Z",
+      "gitConfig": null,
+      "head": "refs/heads/feat/x",
+      "originHead": null
+    },
+    "carried-twice-in-a-chain": {
+      "session_id": "00000000-0000-4000-8000-00000000000f",
+      "at": "2026-10-09T15:00:00.000Z",
+      "gitConfig": null,
+      "head": "refs/heads/feat/x",
+      "originHead": null
+    },
+    "carried-from-an-unbound-session-falls-to-branch": {
+      "session_id": "00000000-0000-4000-8000-000000000010",
+      "at": "2026-10-09T15:00:00.000Z",
+      "gitConfig": "task-only",
+      "head": "refs/heads/feat/x",
+      "originHead": null
+    },
+    "carries-in-a-cycle-bind-nothing": {
+      "session_id": "00000000-0000-4000-8000-000000000012",
+      "at": "2026-10-09T15:00:00.000Z",
+      "gitConfig": null,
+      "head": "refs/heads/feat/x",
+      "originHead": null
+    },
+    "unknown-session-falls-to-branch": {
+      "session_id": "00000000-0000-4000-8000-0000000000ff",
+      "at": "2026-10-09T15:00:00.000Z",
+      "gitConfig": "task-and-ticket",
+      "head": "refs/heads/feat/x",
+      "originHead": null
+    },
+    "no-session-falls-to-branch": {
+      "session_id": null,
+      "at": "2026-10-09T15:00:00.000Z",
+      "gitConfig": "task-and-ticket",
+      "head": "refs/heads/feat/x",
+      "originHead": null
+    },
+    "branch-none-is-bound-to-nothing": {
+      "session_id": null,
+      "at": "2026-10-09T15:00:00.000Z",
+      "gitConfig": "none",
+      "head": "refs/heads/feat/x",
+      "originHead": null
+    },
+    "branch-empty-task-with-declared-at-is-none": {
+      "session_id": null,
+      "at": "2026-10-09T15:00:00.000Z",
+      "gitConfig": "none-empty-task",
+      "head": "refs/heads/feat/x",
+      "originHead": null
+    },
+    "branch-task-without-declared-at-is-bound": {
+      "session_id": null,
+      "at": "2026-10-09T15:00:00.000Z",
+      "gitConfig": "task-without-declared-at",
+      "head": "refs/heads/feat/x",
+      "originHead": null
+    },
+    "branch-undeclared-is-unbound": {
+      "session_id": null,
+      "at": "2026-10-09T15:00:00.000Z",
+      "gitConfig": "undeclared",
+      "head": "refs/heads/feat/x",
+      "originHead": null
+    },
+    "branch-with-dots-in-its-name": {
+      "session_id": null,
+      "at": "2026-10-09T15:00:00.000Z",
+      "gitConfig": "dotted-branch-name",
+      "head": "refs/heads/release/1.2.aidd",
+      "originHead": null
+    },
+    "default-branch-never-reads-its-config": {
+      "session_id": null,
+      "at": "2026-10-09T15:00:00.000Z",
+      "gitConfig": "task-and-ticket",
+      "head": "refs/heads/main",
+      "originHead": "refs/remotes/origin/main"
+    },
+    "detached-head-never-reads-config": {
+      "session_id": null,
+      "at": "2026-10-09T15:00:00.000Z",
+      "gitConfig": "task-and-ticket",
+      "head": null,
+      "originHead": null
+    },
+    "default-branch-still-has-its-session": {
+      "session_id": "00000000-0000-4000-8000-00000000000a",
+      "at": "2026-10-09T11:00:00.000Z",
+      "gitConfig": null,
+      "head": "refs/heads/main",
+      "originHead": null
+    }
+  },
+  "branchRole": {
+    "working-branch-with-remote-head": { "head": "refs/heads/feat/x", "originHead": "refs/remotes/origin/main" },
+    "working-branch-without-remote-head": { "head": "refs/heads/feat/x", "originHead": null },
+    "remote-head-main": { "head": "refs/heads/main", "originHead": "refs/remotes/origin/main" },
+    "remote-head-develop-is-default": { "head": "refs/heads/develop", "originHead": "refs/remotes/origin/develop" },
+    "remote-head-develop-makes-main-a-working-branch": { "head": "refs/heads/main", "originHead": "refs/remotes/origin/develop" },
+    "no-remote-head-main": { "head": "refs/heads/main", "originHead": null },
+    "no-remote-head-master": { "head": "refs/heads/master", "originHead": null },
+    "no-remote-head-develop-is-working": { "head": "refs/heads/develop", "originHead": null },
+    "detached": { "head": null, "originHead": "refs/remotes/origin/main" },
+    "detached-without-remote-head": { "head": null, "originHead": null },
+    "slashed-default-branch": { "head": "refs/heads/release/stable", "originHead": "refs/remotes/origin/release/stable" },
+    "branch-named-like-the-remote": { "head": "refs/heads/origin/main", "originHead": "refs/remotes/origin/main" }
+  },
+  "consent": {
+    "granted": { "config": "{\"telemetry\":{\"enabled\":true,\"version\":2}}", "mainConfig": null, "linkedWorktree": false },
+    "previous-version-bare-enabled": { "config": "{\"telemetry\":{\"enabled\":true}}", "mainConfig": null, "linkedWorktree": false },
+    "previous-version-1": { "config": "{\"telemetry\":{\"enabled\":true,\"version\":1}}", "mainConfig": null, "linkedWorktree": false },
+    "version-without-enabled": { "config": "{\"telemetry\":{\"version\":2}}", "mainConfig": null, "linkedWorktree": false },
+    "disabled": { "config": "{\"telemetry\":{\"enabled\":false,\"version\":2}}", "mainConfig": null, "linkedWorktree": false },
+    "enabled-as-a-string": { "config": "{\"telemetry\":{\"enabled\":\"true\",\"version\":2}}", "mainConfig": null, "linkedWorktree": false },
+    "version-as-a-string": { "config": "{\"telemetry\":{\"enabled\":true,\"version\":\"2\"}}", "mainConfig": null, "linkedWorktree": false },
+    "no-telemetry-key": { "config": "{\"other\":true}", "mainConfig": null, "linkedWorktree": false },
+    "no-file": { "config": null, "mainConfig": null, "linkedWorktree": false },
+    "unparseable": { "config": "{not json", "mainConfig": null, "linkedWorktree": false },
+    "not-an-object": { "config": "[1,2]", "mainConfig": null, "linkedWorktree": false },
+    "linked-worktree-without-config-takes-the-main-tree": { "config": null, "mainConfig": "{\"telemetry\":{\"enabled\":true,\"version\":2}}", "linkedWorktree": true },
+    "linked-worktree-own-config-wins-over-the-main-tree": { "config": "{\"telemetry\":{\"enabled\":false,\"version\":2}}", "mainConfig": "{\"telemetry\":{\"enabled\":true,\"version\":2}}", "linkedWorktree": true },
+    "main-tree-config-is-not-read-for-the-main-tree": { "config": null, "mainConfig": "{\"telemetry\":{\"enabled\":true,\"version\":2}}", "linkedWorktree": false }
+  },
+  "environmentRefusal": {
+    "zero-refuses": { "AIDD_TELEMETRY": "0" },
+    "one-does-not": { "AIDD_TELEMETRY": "1" },
+    "empty-does-not": { "AIDD_TELEMETRY": "" },
+    "false-does-not": { "AIDD_TELEMETRY": "false" },
+    "unset-does-not": {}
+  },
+  "telemetryDir": {
+    "explicit-dir": { "platform": "posix", "home": "/home/someone", "env": { "AIDD_TELEMETRY_DIR": "/data/measure", "AIDD_USER_CONFIG_DIR": "/cfg", "XDG_CONFIG_HOME": "/xdg" } },
+    "user-config-dir": { "platform": "posix", "home": "/home/someone", "env": { "AIDD_USER_CONFIG_DIR": "/cfg", "XDG_CONFIG_HOME": "/xdg" } },
+    "xdg": { "platform": "posix", "home": "/home/someone", "env": { "XDG_CONFIG_HOME": "/xdg" } },
+    "default": { "platform": "posix", "home": "/home/someone", "env": {} },
+    "empty-explicit-dir-is-unset": { "platform": "posix", "home": "/home/someone", "env": { "AIDD_TELEMETRY_DIR": "", "AIDD_USER_CONFIG_DIR": "/cfg" } },
+    "empty-user-config-dir-is-unset": { "platform": "posix", "home": "/home/someone", "env": { "AIDD_USER_CONFIG_DIR": "", "XDG_CONFIG_HOME": "/xdg" } },
+    "empty-xdg-is-unset": { "platform": "posix", "home": "/home/someone", "env": { "XDG_CONFIG_HOME": "" } },
+    "win32-explicit-dir": { "platform": "win32", "home": "C:\\Users\\someone", "env": { "AIDD_TELEMETRY_DIR": "D:\\measure" } },
+    "win32-user-config-dir": { "platform": "win32", "home": "C:\\Users\\someone", "env": { "AIDD_USER_CONFIG_DIR": "D:\\cfg" } },
+    "win32-xdg": { "platform": "win32", "home": "C:\\Users\\someone", "env": { "XDG_CONFIG_HOME": "D:\\xdg" } },
+    "win32-default": { "platform": "win32", "home": "C:\\Users\\someone", "env": {} }
+  },
+  "claudeOnly": {
+    "claude-posix-transcript": { "payload_session_id": "00000000-0000-4000-8000-00000000000a", "env_session_id": "00000000-0000-4000-8000-00000000000a", "transcript_path": "/home/someone/.claude/projects/-work-repo/00000000-0000-4000-8000-00000000000a.jsonl" },
+    "claude-windows-transcript-with-backslashes": { "payload_session_id": "00000000-0000-4000-8000-00000000000a", "env_session_id": "00000000-0000-4000-8000-00000000000a", "transcript_path": "C:\\Users\\someone\\.claude\\projects\\C--work-repo\\00000000-0000-4000-8000-00000000000a.jsonl" },
+    "claude-custom-config-dir": { "payload_session_id": "00000000-0000-4000-8000-00000000000a", "env_session_id": "00000000-0000-4000-8000-00000000000a", "transcript_path": "/data/claude-config/projects/-work-repo/00000000-0000-4000-8000-00000000000a.jsonl" },
+    "session-id-differs-from-the-environment": { "payload_session_id": "00000000-0000-4000-8000-00000000000a", "env_session_id": "00000000-0000-4000-8000-000000000014", "transcript_path": "/home/someone/.claude/projects/-work-repo/00000000-0000-4000-8000-00000000000a.jsonl" },
+    "environment-has-no-session-id": { "payload_session_id": "00000000-0000-4000-8000-00000000000a", "env_session_id": null, "transcript_path": "/home/someone/.claude/projects/-work-repo/00000000-0000-4000-8000-00000000000a.jsonl" },
+    "environment-session-id-empty": { "payload_session_id": "00000000-0000-4000-8000-00000000000a", "env_session_id": "", "transcript_path": "/home/someone/.claude/projects/-work-repo/00000000-0000-4000-8000-00000000000a.jsonl" },
+    "payload-has-no-session-id": { "payload_session_id": null, "env_session_id": "00000000-0000-4000-8000-00000000000a", "transcript_path": "/home/someone/.claude/projects/-work-repo/00000000-0000-4000-8000-00000000000a.jsonl" },
+    "codex-rollout-path-with-the-inherited-claude-id": { "payload_session_id": "00000000-0000-4000-8000-00000000000a", "env_session_id": "00000000-0000-4000-8000-00000000000a", "transcript_path": "/home/someone/.codex/sessions/2026/10/09/rollout-2026-10-09T10-00-00-00000000-0000-4000-8000-00000000000a.jsonl" },
+    "codex-windows-rollout-path": { "payload_session_id": "00000000-0000-4000-8000-00000000000a", "env_session_id": "00000000-0000-4000-8000-00000000000a", "transcript_path": "C:\\Users\\someone\\.codex\\sessions\\2026\\10\\09\\rollout-2026-10-09T10-00-00-00000000-0000-4000-8000-00000000000a.jsonl" },
+    "payload-has-no-transcript-path": { "payload_session_id": "00000000-0000-4000-8000-00000000000a", "env_session_id": "00000000-0000-4000-8000-00000000000a", "transcript_path": null },
+    "projects-is-only-part-of-a-name": { "payload_session_id": "00000000-0000-4000-8000-00000000000a", "env_session_id": "00000000-0000-4000-8000-00000000000a", "transcript_path": "/home/someone/.codex/old-projects/rollout.jsonl" }
+  }
+}

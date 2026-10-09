@@ -3,14 +3,24 @@ import {
   type BranchSnapshot,
   snapshotKey,
 } from "../../../src/contexts/telemetry/domain/branch-binding.js";
+import type {
+  SessionCarry,
+  SessionDeclaration,
+  TaskDeclaration,
+} from "../../../src/contexts/telemetry/domain/declaration/task-declaration.js";
 import type { BindingSnapshotStore } from "../../../src/contexts/telemetry/domain/ports/binding-snapshot-store.js";
 import type { BranchBindingSource } from "../../../src/contexts/telemetry/domain/ports/branch-binding-source.js";
+import type {
+  BranchBindingStore,
+  BranchHeads,
+} from "../../../src/contexts/telemetry/domain/ports/branch-binding-store.js";
 import type { ConsentSource } from "../../../src/contexts/telemetry/domain/ports/consent-source.js";
 import type {
   LocatedDirectory,
   RepositoryLocator,
 } from "../../../src/contexts/telemetry/domain/ports/repository-locator.js";
 import type { ResolutionStore } from "../../../src/contexts/telemetry/domain/ports/resolution-store.js";
+import type { SessionBindingStore } from "../../../src/contexts/telemetry/domain/ports/session-binding-store.js";
 import type {
   TranscriptRead,
   TranscriptSource,
@@ -52,7 +62,8 @@ export class InMemoryTranscripts implements TranscriptSource {
 export class InMemoryLedger implements UsageLedger {
   records: StoredUsage[] = [];
   stored = new Map<string, TranscriptPosition>();
-  readonly events: string[] = [];
+  /** Pass one array to several fakes to see the order they were used in. */
+  constructor(readonly events: string[] = []) {}
   failSave = false;
   exclusiveRuns = 0;
 
@@ -137,6 +148,7 @@ export class FakeBindings implements BranchBindingSource {
 }
 
 export class InMemorySnapshots implements BindingSnapshotStore {
+  constructor(readonly events: string[] = []) {}
   readonly appended: BranchSnapshot[] = [];
   latestReads = 0;
   appendCalls = 0;
@@ -148,6 +160,43 @@ export class InMemorySnapshots implements BindingSnapshotStore {
 
   async append(snapshots: readonly BranchSnapshot[]): Promise<void> {
     this.appendCalls += 1;
+    this.events.push("snapshot");
     this.appended.push(...snapshots);
+  }
+}
+
+export class FakeBranchStore implements BranchBindingStore {
+  heads_: BranchHeads = { head: "refs/heads/feat/x", originHead: null };
+  readonly declared: { root: string; branch: string; declaration: TaskDeclaration }[] = [];
+
+  constructor(readonly events: string[] = []) {}
+
+  async heads(): Promise<BranchHeads> {
+    return this.heads_;
+  }
+
+  async declare(root: string, branch: string, declaration: TaskDeclaration): Promise<void> {
+    this.events.push("declare");
+    this.declared.push({ root, branch, declaration });
+  }
+}
+
+export class InMemorySessions implements SessionBindingStore {
+  readonly lines: SessionDeclaration[] = [];
+  readonly carried: SessionCarry[] = [];
+
+  constructor(readonly events: string[] = []) {}
+
+  async append(sessionId: string, declaration: TaskDeclaration): Promise<void> {
+    this.events.push("append");
+    this.lines.push({ session_id: sessionId, ...declaration });
+  }
+
+  async declarations(): Promise<readonly SessionDeclaration[]> {
+    return [...this.lines];
+  }
+
+  async carries(): Promise<readonly SessionCarry[]> {
+    return [...this.carried];
   }
 }

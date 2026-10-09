@@ -51,9 +51,11 @@ src/
 │   ├── telemetry/    # what each billed model call consumed, read from a tool's own transcripts
 │   │   ├── application/
 │   │   ├── domain/
+│   │   │   ├── declaration/    # the task a person declares, and whether work is bound to one
 │   │   │   ├── formats/
 │   │   │   └── ports/
 │   │   └── infrastructure/
+│   │       └── declaration/    # where a declaration is kept: git config and the telemetry dir
 │   └── translate/    # canonical source to target-native content
 │       ├── application/
 │       │   └── strategies/
