@@ -198,6 +198,7 @@ describe("printTelemetryForgetResult", () => {
 
     printTelemetryForgetResult(output, {
       journal: { removed: 3, failed: [] },
+      journalPath: "/repo/aidd_docs/runs",
       legacyJournals: [],
       sink: { removed: 2, failed: [] },
       identity: { removed: 1, failed: [] },
@@ -221,6 +222,7 @@ describe("printTelemetryForgetResult", () => {
 
     printTelemetryForgetResult(output, {
       journal: { removed: 1, failed: [{ path: "b.jsonl", reason: "EACCES" }] },
+      journalPath: "/repo/aidd_docs/runs",
       legacyJournals: [],
       sink: { removed: 0, failed: [{ path: "2026-03-02.jsonl", reason: "EPERM" }] },
       identity: { removed: 0, failed: [{ path: "identity.json", reason: "EBUSY" }] },
@@ -231,7 +233,7 @@ describe("printTelemetryForgetResult", () => {
       "  This project's run journal: 1 removed, 1 could not be removed",
       "  This machine's stored records: 0 removed, 1 could not be removed",
       "  This machine's identity: 0 removed, 1 could not be removed",
-      "Could not remove journal run file b.jsonl — EACCES",
+      `Could not remove journal run file ${join("/repo/aidd_docs/runs", "b.jsonl")} — EACCES`,
       "Could not remove sink day file 2026-03-02.jsonl — EPERM",
       "Could not remove identity file identity.json — EBUSY",
     ]);
@@ -242,6 +244,7 @@ describe("printTelemetryForgetResult", () => {
 
     printTelemetryForgetResult(output, {
       journal: { removed: 1, failed: [] },
+      journalPath: "/repo/aidd_docs/runs",
       legacyJournals: [
         {
           path: "/wt/aidd_docs/runs",
@@ -268,6 +271,7 @@ describe("printTelemetryForgetResult", () => {
 
     printTelemetryForgetResult(output, {
       journal: { removed: 0, failed: [] },
+      journalPath: "/repo/aidd_docs/runs",
       legacyJournals: [],
       sink: { removed: 0, failed: [] },
       identity: { removed: 0, failed: [] },

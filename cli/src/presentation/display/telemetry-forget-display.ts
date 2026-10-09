@@ -116,6 +116,13 @@ function outcomeLine(label: string, outcome: TelemetryRemovalOutcome): string {
   return `  ${label}: ${outcome.removed} removed${failedNote}`;
 }
 
+function inDirectory(
+  dir: string,
+  failures: readonly TelemetryRemovalFailure[]
+): readonly TelemetryRemovalFailure[] {
+  return failures.map((failure) => ({ ...failure, path: join(dir, failure.path) }));
+}
+
 function earlierJournalLabel(path: string): string {
   return `An earlier run journal, from before it moved under the git directory (${path})`;
 }
@@ -133,13 +140,13 @@ export function printTelemetryForgetResult(
   }
   output.print(outcomeLine("This machine's stored records", result.sink));
   output.print(outcomeLine("This machine's identity", result.identity));
-  printFailures(output, "journal run file", result.journal.failed);
+  printFailures(output, "journal run file", inDirectory(result.journalPath, result.journal.failed));
   for (const legacy of result.legacyJournals) {
-    const failures = legacy.outcome.failed.map((failure) => ({
-      ...failure,
-      path: join(legacy.path, failure.path),
-    }));
-    printFailures(output, "earlier journal run file", failures);
+    printFailures(
+      output,
+      "earlier journal run file",
+      inDirectory(legacy.path, legacy.outcome.failed)
+    );
   }
   printFailures(output, "sink day file", result.sink.failed);
   printFailures(output, "identity file", result.identity.failed);

@@ -131,8 +131,9 @@ export interface RunJournalStore extends RunJournalReader {
   readonly runsDir: string;
   /** Each live checkout's pre-move `aidd_docs/runs`, read after `runsDir` and never written. */
   readonly legacyRunsDirs: readonly string[];
+  /** Run file names directly in `dir` (`runsDir` or a legacy one), sorted; never throws. */
   listRunFilesIn(dir: string): Promise<readonly string[]>;
-  /** Removes one run file, by the name `listRunFiles()` named it with, from `dir` — mirrors
+  /** Removes one run file, by the name `listRunFiles`/`listRunFilesIn` gave it, from `dir` — mirrors
    * `TelemetrySink.deleteDayFile`. `dir` is never resolved here: the caller passes the exact
    * directory a person was already shown, so a removal can never reach one the preview never
    * named. `fileName` must name exactly one entry directly inside `dir`; anything else,

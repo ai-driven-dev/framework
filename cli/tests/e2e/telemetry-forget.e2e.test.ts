@@ -218,7 +218,9 @@ describe("aidd telemetry forget — shows, confirms, removes, and names what his
       expect(result.stdout).toMatch(
         /This project's run journal: 0 removed, 1 could not be removed/u
       );
-      expect(result.stderr).toMatch(/Could not remove journal run file adir\.jsonl/u);
+      expect(result.stderr).toMatch(
+        /Could not remove journal run file \S*aidd[\\/]runs[\\/]adir\.jsonl/u
+      );
       expect(await entries(runsDir)).toEqual(["adir.jsonl"]);
       expect(result.stdout).toMatch(/This machine's stored records: 1 removed/u);
       expect(result.stdout).toMatch(/This machine's identity: 1 removed/u);

@@ -105,6 +105,7 @@ beforeEach(() => {
   forgetPreview.mockResolvedValue(NOTHING_TO_REMOVE);
   forgetRemove.mockResolvedValue({
     journal: { removed: 0, failed: [] },
+    journalPath: "/repo/aidd_docs/runs",
     legacyJournals: [],
     sink: { removed: 0, failed: [] },
     identity: { removed: 0, failed: [] },

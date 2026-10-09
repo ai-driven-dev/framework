@@ -33,6 +33,7 @@ export interface TelemetryLegacyJournalOutcome {
 
 export interface TelemetryRemovalResult {
   readonly journal: TelemetryRemovalOutcome;
+  readonly journalPath: string;
   readonly legacyJournals: readonly TelemetryLegacyJournalOutcome[];
   readonly sink: TelemetryRemovalOutcome;
   readonly identity: TelemetryRemovalOutcome;
@@ -114,6 +115,7 @@ export class ForgetTelemetryUseCase {
     ]);
     return {
       journal,
+      journalPath: preview.journal.path,
       legacyJournals: legacy,
       sink,
       identity,
