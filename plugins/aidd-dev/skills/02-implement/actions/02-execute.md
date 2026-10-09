@@ -7,7 +7,6 @@ The prepared plan.
 ## Output
 
 Validated phases marked `done`.
-Commits follow the commit policy.
 
 Or a `blocked` / `replan needed` report.
 
@@ -19,9 +18,10 @@ Or a `blocked` / `replan needed` report.
 2. **Code.** Build the next task or inseparable group against its acceptance criteria.
    - Follow the plan's task order.
 3. **Assert.** Apply the validation rules below to every acceptance criterion of the selected task or group.
-   - After the last task, validate the full phase workflow.
+   - After the last task:
+     - Validate the full phase workflow.
+     - Set the phase `status: done` on success.
 4. **Complete.** Commit according to the commit policy.
-   - Set the phase `status: done` before its last task commit, only after full phase validation.
    - Repeat steps 2–4 for the remaining tasks.
 
 ## Rules

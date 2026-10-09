@@ -36,9 +36,8 @@ Read each action file in `actions/` before executing it.
   - Treat `in-progress` as a runtime marker.
   - Never commit `in-progress` alone.
 - Follow user and project commit instructions.
-  - Otherwise, commit locally at the boundaries below.
   - Push only when requested.
-- Make one commit per validated task.
+- By default, make one local commit per validated task.
   - Include all its code, tests and docs together.
   - Group tasks only when they cannot be validated separately.
   - Never split a task by step or file.

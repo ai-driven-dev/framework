@@ -2,12 +2,11 @@
 
 ## Input
 
-A plan whose phases are all `done`.
+The coded plan.
 
 ## Output
 
 The validated plan marked `implemented`.
-Commits follow the commit policy.
 
 ## Process
 
