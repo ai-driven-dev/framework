@@ -105,6 +105,7 @@ beforeEach(() => {
   forgetPreview.mockResolvedValue(NOTHING_TO_REMOVE);
   forgetRemove.mockResolvedValue({
     journal: { removed: 0, failed: [] },
+    legacyJournals: [],
     sink: { removed: 0, failed: [] },
     identity: { removed: 0, failed: [] },
     history: { certainty: "none" },

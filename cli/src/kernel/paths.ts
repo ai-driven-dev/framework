@@ -1,4 +1,4 @@
-import { existsSync } from "node:fs";
+import { existsSync, realpathSync } from "node:fs";
 import { join, posix, resolve, win32 } from "node:path";
 import { gitCommonDirAbove, worktreeRootsOf } from "./reading/git-common-dir.js";
 import { repositoryRootAbove } from "./reading/repository-root.js";
@@ -35,6 +35,14 @@ export function resolvedRunsDir(projectRoot: string): string {
     : join(repositoryRootAbove(projectRoot), DOCS_DIR, RUNS_SUBDIR);
 }
 
+function realPath(dir: string): string {
+  try {
+    return realpathSync.native(dir);
+  } catch {
+    return resolve(dir);
+  }
+}
+
 /** Each live checkout's pre-move `aidd_docs/runs`, current one first: read, never written. */
 export function legacyRunsDirs(projectRoot: string): readonly string[] {
   if (process.env.AIDD_RUNS_DIR) return [];
@@ -43,7 +51,8 @@ export function legacyRunsDirs(projectRoot: string): readonly string[] {
   const dirs: string[] = [];
   for (const root of [repositoryRootAbove(projectRoot), ...worktreeRootsOf(commonDir)]) {
     const dir = join(root, DOCS_DIR, RUNS_SUBDIR);
-    if (!existsSync(dir) || dirs.some((known) => samePath(resolve(known), resolve(dir)))) continue;
+    if (!existsSync(dir) || dirs.some((known) => samePath(realPath(known), realPath(dir))))
+      continue;
     dirs.push(dir);
   }
   return dirs;

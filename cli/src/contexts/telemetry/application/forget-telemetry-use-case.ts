@@ -26,20 +26,19 @@ export interface TelemetryRemovalOutcome {
   readonly failed: readonly TelemetryRemovalFailure[];
 }
 
+export interface TelemetryLegacyJournalOutcome {
+  readonly path: string;
+  readonly outcome: TelemetryRemovalOutcome;
+}
+
 export interface TelemetryRemovalResult {
   readonly journal: TelemetryRemovalOutcome;
+  readonly legacyJournals: readonly TelemetryLegacyJournalOutcome[];
   readonly sink: TelemetryRemovalOutcome;
   readonly identity: TelemetryRemovalOutcome;
   /** Repeated from the preview: history does not become reachable by having removed the rest,
    * so this is the exact same reading, not a fresh one. */
   readonly history: TelemetryHistoryReading;
-}
-
-function mergeOutcomes(outcomes: readonly TelemetryRemovalOutcome[]): TelemetryRemovalOutcome {
-  return {
-    removed: outcomes.reduce((sum, outcome) => sum + outcome.removed, 0),
-    failed: outcomes.flatMap((outcome) => outcome.failed),
-  };
 }
 
 /**
@@ -104,12 +103,18 @@ export class ForgetTelemetryUseCase {
   async remove(preview: TelemetryRemovalPreview): Promise<TelemetryRemovalResult> {
     const [journal, legacy, sink, identity] = await Promise.all([
       this.removeJournal(preview.journal),
-      Promise.all(preview.legacyJournals.map((legacyJournal) => this.removeJournal(legacyJournal))),
+      Promise.all(
+        preview.legacyJournals.map(async (legacyJournal) => ({
+          path: legacyJournal.path,
+          outcome: await this.removeJournal(legacyJournal),
+        }))
+      ),
       this.removeSink(preview.sink),
       this.removeIdentity(preview.identity),
     ]);
     return {
-      journal: mergeOutcomes([journal, ...legacy]),
+      journal,
+      legacyJournals: legacy,
       sink,
       identity,
       history: preview.history,

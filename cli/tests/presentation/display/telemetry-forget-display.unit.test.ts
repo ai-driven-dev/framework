@@ -1,3 +1,4 @@
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import type { TelemetryRemovalPreview } from "../../../src/contexts/telemetry/domain/telemetry-removal.js";
 import {
@@ -197,6 +198,7 @@ describe("printTelemetryForgetResult", () => {
 
     printTelemetryForgetResult(output, {
       journal: { removed: 3, failed: [] },
+      legacyJournals: [],
       sink: { removed: 2, failed: [] },
       identity: { removed: 1, failed: [] },
       history: { certainty: "none" },
@@ -219,6 +221,7 @@ describe("printTelemetryForgetResult", () => {
 
     printTelemetryForgetResult(output, {
       journal: { removed: 1, failed: [{ path: "b.jsonl", reason: "EACCES" }] },
+      legacyJournals: [],
       sink: { removed: 0, failed: [{ path: "2026-03-02.jsonl", reason: "EPERM" }] },
       identity: { removed: 0, failed: [{ path: "identity.json", reason: "EBUSY" }] },
       history: { certainty: "none" },
@@ -234,11 +237,38 @@ describe("printTelemetryForgetResult", () => {
     ]);
   });
 
+  it("reports each earlier journal on its own line, and names the directory of a file it could not remove", () => {
+    const output = new CapturingOutput();
+
+    printTelemetryForgetResult(output, {
+      journal: { removed: 1, failed: [] },
+      legacyJournals: [
+        {
+          path: "/wt/aidd_docs/runs",
+          outcome: { removed: 1, failed: [{ path: "x.jsonl", reason: "EACCES" }] },
+        },
+      ],
+      sink: { removed: 0, failed: [] },
+      identity: { removed: 0, failed: [] },
+      history: { certainty: "none" },
+    });
+
+    expect(output.lines.slice(1, 6)).toEqual([
+      "  This project's run journal: 1 removed",
+      "  An earlier run journal, from before it moved under the git directory " +
+        "(/wt/aidd_docs/runs): 1 removed, 1 could not be removed",
+      "  This machine's stored records: 0 removed",
+      "  This machine's identity: 0 removed",
+      `Could not remove earlier journal run file ${join("/wt/aidd_docs/runs", "x.jsonl")} — EACCES`,
+    ]);
+  });
+
   it("says only what was removed when nothing failed", () => {
     const output = new CapturingOutput();
 
     printTelemetryForgetResult(output, {
       journal: { removed: 0, failed: [] },
+      legacyJournals: [],
       sink: { removed: 0, failed: [] },
       identity: { removed: 0, failed: [] },
       history: { certainty: "none" },

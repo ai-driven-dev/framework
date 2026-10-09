@@ -1,7 +1,7 @@
 import { execFileSync } from "node:child_process";
-import { mkdirSync, mkdtempSync, realpathSync, rmSync } from "node:fs";
+import { mkdirSync, mkdtempSync, realpathSync, rmSync, symlinkSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import {
   legacyRunsDirs,
@@ -167,6 +167,19 @@ describe("legacyRunsDirs()", () => {
     expect(fromWorktree).toHaveLength(2);
     expect(samePath(fromWorktree[0] ?? "", join(w, "aidd_docs", "runs"))).toBe(true);
     expect(samePath(fromWorktree[1] ?? "", join(r, "aidd_docs", "runs"))).toBe(true);
+  });
+
+  it("lists a worktree once when it is reached through a link to its real path", () => {
+    const { r, w } = makeClone();
+    mkdirSync(join(r, "aidd_docs", "runs"), { recursive: true });
+    mkdirSync(join(w, "aidd_docs", "runs"), { recursive: true });
+    const link = `${dirname(r)}-link`;
+    symlinkSync(dirname(r), link, "junction");
+    tempRoots.push(link);
+
+    const listed = legacyRunsDirs(join(link, "w"));
+
+    expect(listed).toHaveLength(2);
   });
 
   it("lists only the directories that exist", () => {

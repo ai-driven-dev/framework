@@ -195,14 +195,15 @@ describe("ForgetTelemetryUseCase.remove() — acts on the value preview() produc
     expect(await identity.read()).toBeNull();
   });
 
-  it("removes the previewed legacy files from their own directory and counts them with the project journal", async () => {
+  it("removes the previewed legacy files from their own directory and reports them per directory", async () => {
     const { runJournalReader, useCase } = buildUseCase();
     const legacy = "/fake/wt/aidd_docs/runs";
     runJournalReader.runFileNames = ["p.jsonl"];
     runJournalReader.legacyRunsDirs = [legacy];
     runJournalReader.legacyRunFileNames.set(legacy, ["x.jsonl", "y.jsonl"]);
     const result = await useCase.remove(await useCase.preview({ projectRoot: PROJECT_ROOT }));
-    expect(result.journal.removed).toBe(3);
+    expect(result.journal.removed).toBe(1);
+    expect(result.legacyJournals).toEqual([{ path: legacy, outcome: { removed: 2, failed: [] } }]);
     expect(runJournalReader.deletedFromDirs.filter((dir) => dir === legacy)).toHaveLength(2);
     expect(
       runJournalReader.deletedFromDirs.filter((dir) => dir === runJournalReader.runsDir)
@@ -217,8 +218,13 @@ describe("ForgetTelemetryUseCase.remove() — acts on the value preview() produc
     runJournalReader.legacyRunFileNames.set(legacy, ["x.jsonl", "y.jsonl"]);
     runJournalReader.undeletable.add("x.jsonl");
     const result = await useCase.remove(await useCase.preview({ projectRoot: PROJECT_ROOT }));
-    expect(result.journal.removed).toBe(1);
-    expect(result.journal.failed).toEqual([{ path: "x.jsonl", reason: "cannot delete x.jsonl" }]);
+    expect(result.journal).toEqual({ removed: 0, failed: [] });
+    expect(result.legacyJournals).toEqual([
+      {
+        path: legacy,
+        outcome: { removed: 1, failed: [{ path: "x.jsonl", reason: "cannot delete x.jsonl" }] },
+      },
+    ]);
   });
 
   it("a location that refuses removal is reported, and every other location is still emptied", async () => {
