@@ -9,6 +9,9 @@ const test = require("node:test");
 // where a "type": "module" package.json decides how it is parsed. Driving it as a
 // subprocess is the only way to test what actually ships.
 const HOOK = path.resolve(__dirname, "../../plugins/aidd-context/hooks/update_memory.js");
+// Run from inside a Claude Code session, an inherited CLAUDE_PROJECT_DIR would send the hook
+// into that real project and rewrite its CLAUDE.md and memory README.
+const HOOK_ENV = { ...process.env, CLAUDE_PROJECT_DIR: "" };
 
 const OPEN = "<!-- aidd_project_memory:start -->";
 const CLOSE = "<!-- aidd_project_memory:end -->";
@@ -49,7 +52,7 @@ function run({
       fs.copyFileSync(HOOK, hook);
     }
 
-    const invoke = () => spawnSync(process.execPath, [hook, ...(args ?? ["claude"])], { cwd: root });
+    const invoke = () => spawnSync(process.execPath, [hook, ...(args ?? ["claude"])], { cwd: root, env: HOOK_ENV });
     const read = () => fs.readFileSync(path.join(root, contextAt), "utf8");
 
     const first = invoke();
@@ -245,7 +248,7 @@ test("the memory README lists its files relative to itself, on every platform's 
     fs.writeFileSync(path.join(memory, "README.md"), "<!-- files:start -->\n<!-- files:end -->\n");
     fs.writeFileSync(path.join(root, "CLAUDE.md"), `${OPEN}\n${CLOSE}\n`);
 
-    const result = spawnSync(process.execPath, [HOOK, "claude"], { cwd: root });
+    const result = spawnSync(process.execPath, [HOOK, "claude"], { cwd: root, env: HOOK_ENV });
     assert.equal(result.status, 0, result.stderr.toString());
 
     const readme = fs.readFileSync(path.join(memory, "README.md"), "utf8");
