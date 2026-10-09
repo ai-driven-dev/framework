@@ -434,7 +434,8 @@ describe("printTelemetryOffReport", () => {
       )
     ).toEqual([
       "AIDD telemetry: off (/p/.aidd/config.json)",
-      "This stops new recording only — sessions already journalled stay in aidd_docs/runs/ " +
+      "This stops new recording only — sessions already journalled stay under the clone's git " +
+        "directory (or an earlier version's aidd_docs/runs/) " +
         "and whatever `aidd telemetry read` already stored, and `aidd telemetry report` still " +
         "reports them. Run `aidd telemetry forget` to remove what was already measured.",
     ]);

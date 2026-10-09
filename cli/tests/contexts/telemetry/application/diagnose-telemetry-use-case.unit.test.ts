@@ -941,7 +941,7 @@ describe("DiagnoseTelemetryUseCase — what each journal contributes to the clai
       verdict: "fail",
       reason: "recorder-declared-nowhere",
       detail:
-        "no run file in aidd_docs/runs — the hook has never been observed firing, and the " +
+        "no run file in /fake/project/aidd_docs/runs — the hook has never been observed firing, and the " +
         "recorder is declared nowhere this build checks",
     });
   });

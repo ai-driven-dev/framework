@@ -93,12 +93,12 @@ describe("the plugin measures on its own", () => {
       tool_input: { skill: "aidd-dev:02-implement" },
     });
 
-    const journals = readdirSync(join(projectDir, "aidd_docs", "runs")).filter((name) =>
+    const journals = readdirSync(join(projectDir, ".git", "aidd", "runs")).filter((name) =>
       name.endsWith(".jsonl")
     );
     expect(journals).toHaveLength(1);
 
-    const lines = readFileSync(join(projectDir, "aidd_docs", "runs", journals[0] ?? ""), "utf8")
+    const lines = readFileSync(join(projectDir, ".git", "aidd", "runs", journals[0] ?? ""), "utf8")
       .trim()
       .split("\n")
       .map((line) => JSON.parse(line) as { type: string });

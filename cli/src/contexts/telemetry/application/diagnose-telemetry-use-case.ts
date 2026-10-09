@@ -11,7 +11,7 @@ import {
 import type { HookTrustReader } from "../domain/ports/hook-trust-reader.js";
 import type { InstalledPluginsReader } from "../domain/ports/installed-plugins-reader.js";
 import type { PersonIdentityStore } from "../domain/ports/person-identity-store.js";
-import type { RunJournal, RunJournalReader } from "../domain/ports/run-journal-reader.js";
+import type { RunJournal, RunJournalStore } from "../domain/ports/run-journal-reader.js";
 import type { SessionCostReader } from "../domain/ports/session-cost-reader.js";
 import type { TelemetryEvidenceReader } from "../domain/ports/telemetry-evidence-reader.js";
 import type { TelemetrySink } from "../domain/ports/telemetry-sink.js";
@@ -44,8 +44,6 @@ import {
   type TelemetryRecorderDeclarationSetup,
   type TelemetrySetup,
 } from "../domain/telemetry-setup.js";
-
-const DEFAULT_RUNS_DIR_LABEL = "aidd_docs/runs";
 
 export interface DiagnoseTelemetryUncoveredTool {
   readonly tool: AiToolId;
@@ -131,7 +129,7 @@ export class DiagnoseTelemetryUseCase {
   constructor(
     private readonly evidence: TelemetryEvidenceReader,
     private readonly git: VersionControl,
-    private readonly runJournalReader: RunJournalReader,
+    private readonly runJournalReader: RunJournalStore,
     private readonly readers: ReadonlyMap<AiToolId, SessionCostReader>,
     private readonly hookTrustReader: HookTrustReader,
     private readonly personIdentityStore: PersonIdentityStore,
@@ -239,7 +237,7 @@ export class DiagnoseTelemetryUseCase {
     return {
       journals: journals.map(toClaimJournal),
       toolReads,
-      runsDirLabel: DEFAULT_RUNS_DIR_LABEL,
+      runsDirLabel: this.runJournalReader.runsDir,
       currentSessionId,
       unrecognisedPayloadAt: unrecognisedPayload?.at,
       hookTrust,

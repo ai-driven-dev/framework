@@ -10,6 +10,7 @@ import { CapturingOutput } from "../../helpers/ports/capturing-output.js";
 function preview(overrides: Partial<TelemetryRemovalPreview> = {}): TelemetryRemovalPreview {
   return {
     journal: { scope: "project", path: "/repo/aidd_docs/runs", runFileNames: [] },
+    legacyJournals: [],
     sink: { scope: "machine", path: "/home/.config/aidd/telemetry", dayFileNames: [] },
     identity: {
       scope: "machine",
@@ -65,6 +66,26 @@ describe("printTelemetryForgetPreview", () => {
       "  This project's run journal (/repo/aidd_docs/runs): 3 run file(s)",
       "  This machine's stored records — every project measured on this machine " +
         "(/home/.config/aidd/telemetry): 2 day file(s)",
+      "  This machine's identity (/home/.config/aidd/identity.json): nothing to remove",
+      NO_REPOSITORY,
+    ]);
+  });
+
+  it("lists each earlier journal between the project journal and the machine records", () => {
+    expect(
+      printedPreview({
+        journal: ONE_RUN_FILE,
+        legacyJournals: [
+          { scope: "project", path: "/wt/aidd_docs/runs", runFileNames: ["a.jsonl", "b.jsonl"] },
+        ],
+      })
+    ).toEqual([
+      "This would remove:",
+      "  This project's run journal (/repo/aidd_docs/runs): 1 run file(s)",
+      "  An earlier run journal, from before it moved under the git directory " +
+        "(/wt/aidd_docs/runs): 2 run file(s)",
+      "  This machine's stored records — every project measured on this machine " +
+        "(/home/.config/aidd/telemetry): 0 day file(s)",
       "  This machine's identity (/home/.config/aidd/identity.json): nothing to remove",
       NO_REPOSITORY,
     ]);

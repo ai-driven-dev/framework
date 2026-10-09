@@ -46,6 +46,16 @@ describe("ForgetTelemetryUseCase.preview() — every location, resolved once, an
     });
   });
 
+  it("previews every legacy journal that holds run files, and leaves out an empty one", async () => {
+    const { runJournalReader, useCase } = buildUseCase();
+    runJournalReader.legacyRunsDirs = ["/fake/wt/aidd_docs/runs", "/fake/empty/aidd_docs/runs"];
+    runJournalReader.legacyRunFileNames.set("/fake/wt/aidd_docs/runs", ["x.jsonl", "y.jsonl"]);
+    const preview = await useCase.preview({ projectRoot: PROJECT_ROOT });
+    expect(preview.legacyJournals).toEqual([
+      { scope: "project", path: "/fake/wt/aidd_docs/runs", runFileNames: ["x.jsonl", "y.jsonl"] },
+    ]);
+  });
+
   it("names the sink as this machine's own, spanning whatever it holds", async () => {
     const { sink, useCase } = buildUseCase();
     await sink.appendRecord(RECORD, new Date("2026-08-20T00:00:00.000Z"));
@@ -183,6 +193,32 @@ describe("ForgetTelemetryUseCase.remove() — acts on the value preview() produc
     expect(await sink.listDayFiles()).toEqual([]);
     expect(runJournalReader.runFileNames).toEqual([]);
     expect(await identity.read()).toBeNull();
+  });
+
+  it("removes the previewed legacy files from their own directory and counts them with the project journal", async () => {
+    const { runJournalReader, useCase } = buildUseCase();
+    const legacy = "/fake/wt/aidd_docs/runs";
+    runJournalReader.runFileNames = ["p.jsonl"];
+    runJournalReader.legacyRunsDirs = [legacy];
+    runJournalReader.legacyRunFileNames.set(legacy, ["x.jsonl", "y.jsonl"]);
+    const result = await useCase.remove(await useCase.preview({ projectRoot: PROJECT_ROOT }));
+    expect(result.journal.removed).toBe(3);
+    expect(runJournalReader.deletedFromDirs.filter((dir) => dir === legacy)).toHaveLength(2);
+    expect(
+      runJournalReader.deletedFromDirs.filter((dir) => dir === runJournalReader.runsDir)
+    ).toHaveLength(1);
+    expect(runJournalReader.legacyRunFileNames.get(legacy)).toEqual([]);
+  });
+
+  it("reports a legacy file that refuses removal by its name and still removes the rest", async () => {
+    const { runJournalReader, useCase } = buildUseCase();
+    const legacy = "/fake/wt/aidd_docs/runs";
+    runJournalReader.legacyRunsDirs = [legacy];
+    runJournalReader.legacyRunFileNames.set(legacy, ["x.jsonl", "y.jsonl"]);
+    runJournalReader.undeletable.add("x.jsonl");
+    const result = await useCase.remove(await useCase.preview({ projectRoot: PROJECT_ROOT }));
+    expect(result.journal.removed).toBe(1);
+    expect(result.journal.failed).toEqual([{ path: "x.jsonl", reason: "cannot delete x.jsonl" }]);
   });
 
   it("a location that refuses removal is reported, and every other location is still emptied", async () => {

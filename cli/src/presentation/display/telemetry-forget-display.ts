@@ -81,6 +81,12 @@ export function printTelemetryForgetPreview(
     `  This project's run journal (${preview.journal.path}): ` +
       `${preview.journal.runFileNames.length} run file(s)`
   );
+  for (const legacy of preview.legacyJournals) {
+    output.print(
+      `  An earlier run journal, from before it moved under the git directory (${legacy.path}): ` +
+        `${legacy.runFileNames.length} run file(s)`
+    );
+  }
   output.print(
     `  This machine's stored records — every project measured on this machine ` +
       `(${preview.sink.path}): ${preview.sink.dayFileNames.length} day file(s)`

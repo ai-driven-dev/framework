@@ -30,6 +30,8 @@ const pkg = JSON.parse(readFileSync(resolve(root, "package.json"), "utf8"));
 // guards for #829 (+10.4 KB over the preceding 703.8 KB); 1.1% measured headroom.
 // 734 KB: 725.8 KB, Kilo Code's profile, generated bridge, and runtime smoke support (+9.6 KB
 // over next's 716.2 KB); 1.1% measured headroom.
+// 745 KB: 737.25 KB, one run journal per clone: the common git directory resolver, legacy
+// journal reading and their forget preview (+3.3 KB over next's 733.98 KB); 1.1% measured headroom.
 const budgetKB = pkg.bundleBudgetKB ?? 500;
 const budgetBytes = budgetKB * 1024;
 

@@ -1,6 +1,6 @@
 import { readdir, readFile, rm } from "node:fs/promises";
-import { join } from "node:path";
-import { resolvedRunsDir } from "../../../kernel/paths.js";
+import { join, resolve } from "node:path";
+import { legacyRunsDirs, resolvedRunsDir, samePath } from "../../../kernel/paths.js";
 import { isBareFileName } from "../../../kernel/reading/confined-file-name.js";
 import type {
   RunJournal,
@@ -29,12 +29,16 @@ export function sanitizePathSegment(segment: string): string {
 
 // Mirrors record.cjs's parseRunFileName: split on the fixed ULID length, never on "__",
 // since a sanitized vendor id can itself contain that substring.
-function matchesVendorId(entry: string, wantedSegment: string): boolean {
-  if (!entry.endsWith(RUN_FILE_EXTENSION)) return false;
+function vendorSegmentOf(entry: string): string | null {
+  if (!entry.endsWith(RUN_FILE_EXTENSION)) return null;
   const minLength = ULID_LENGTH + "__".length + RUN_FILE_EXTENSION.length;
-  if (entry.length <= minLength) return false;
-  if (entry.slice(ULID_LENGTH, ULID_LENGTH + 2) !== "__") return false;
-  return entry.slice(ULID_LENGTH + 2, -RUN_FILE_EXTENSION.length) === wantedSegment;
+  if (entry.length <= minLength) return null;
+  if (entry.slice(ULID_LENGTH, ULID_LENGTH + 2) !== "__") return null;
+  return entry.slice(ULID_LENGTH + 2, -RUN_FILE_EXTENSION.length);
+}
+
+function matchesVendorId(entry: string, wantedSegment: string): boolean {
+  return vendorSegmentOf(entry) === wantedSegment;
 }
 
 function asString(value: unknown): string | undefined {
@@ -201,51 +205,69 @@ function classifyLine(collector: JournalCollector, parsed: RawJournalLine): void
 
 /** Never throws: a missing run file, an unreadable runs directory or a truncated final line
  * all answer `null` or an empty list, since a damaged journal costs attribution, not the read
- * itself. `AIDD_RUNS_DIR` overrides the directory, resolved once in the constructor so a
- * later relocation cannot change what this instance answers. */
+ * itself. `runsDir` is read first, then each legacy directory; a session already found is
+ * skipped. Both resolve once in the constructor (`AIDD_RUNS_DIR` overriding), so a later
+ * relocation cannot change what this instance answers. */
 export class RunJournalReaderAdapter implements RunJournalStore {
   readonly runsDir: string;
+  readonly legacyRunsDirs: readonly string[];
 
   constructor(projectRoot: string) {
     this.runsDir = resolvedRunsDir(projectRoot);
+    this.legacyRunsDirs = legacyRunsDirs(projectRoot).filter(
+      (dir) => !samePath(resolve(dir), resolve(this.runsDir))
+    );
+  }
+
+  private get readDirs(): readonly string[] {
+    return [this.runsDir, ...this.legacyRunsDirs];
   }
 
   async read(sessionId: string): Promise<RunJournal | null> {
-    const filePath = await this.findRunFile(this.runsDir, sessionId);
-    return filePath ? this.readJournal(filePath) : null;
+    for (const dir of this.readDirs) {
+      const filePath = await this.findRunFile(dir, sessionId);
+      if (filePath) return this.readJournal(filePath);
+    }
+    return null;
   }
 
   async list(): Promise<readonly RunJournal[]> {
-    const dir = this.runsDir;
-    let entries: string[];
-    try {
-      entries = await readdir(dir);
-    } catch {
-      return [];
-    }
     const journals: RunJournal[] = [];
-    for (const entry of entries.sort()) {
-      if (!entry.endsWith(RUN_FILE_EXTENSION)) continue;
-      const journal = await this.readJournal(join(dir, entry));
-      if (journal) journals.push(journal);
+    const seen = new Set<string>();
+    for (const dir of this.readDirs) {
+      for (const entry of await this.listRunFilesIn(dir)) {
+        const segment = vendorSegmentOf(entry);
+        if (segment !== null) {
+          if (seen.has(segment)) continue;
+          seen.add(segment);
+        }
+        const journal = await this.readJournal(join(dir, entry));
+        if (journal) journals.push(journal);
+      }
     }
     return journals;
   }
 
   async listForeignSchemas(): Promise<readonly number[]> {
     const stated: number[] = [];
-    for (const fileName of await this.listRunFiles()) {
-      const collector = await this.collect(join(this.runsDir, fileName));
-      const version = collector?.session?.schema_version;
-      if (version !== undefined && version !== READABLE_JOURNAL_SCHEMA_VERSION)
-        stated.push(version);
+    for (const dir of this.readDirs) {
+      for (const fileName of await this.listRunFilesIn(dir)) {
+        const collector = await this.collect(join(dir, fileName));
+        const version = collector?.session?.schema_version;
+        if (version !== undefined && version !== READABLE_JOURNAL_SCHEMA_VERSION)
+          stated.push(version);
+      }
     }
     return stated;
   }
 
   async listRunFiles(): Promise<readonly string[]> {
+    return this.listRunFilesIn(this.runsDir);
+  }
+
+  async listRunFilesIn(dir: string): Promise<readonly string[]> {
     try {
-      const entries = await readdir(this.runsDir);
+      const entries = await readdir(dir);
       return entries.filter((entry) => entry.endsWith(RUN_FILE_EXTENSION)).sort();
     } catch {
       return [];

@@ -5,7 +5,7 @@
 
 export interface TelemetryProjectJournalRemoval {
   readonly scope: "project";
-  /** The run journal's own directory, as `RunJournalReader.runsDir` resolved it. */
+  /** `RunJournalStore.runsDir`, or one of its `legacyRunsDirs`. */
   readonly path: string;
   /** By name, never derived from parsing: a run file too damaged to parse still has a name
    * `readdir` can see, so it is still listed and still removed. */
@@ -46,6 +46,7 @@ export type TelemetryHistoryReading =
  * caller cannot render one without the other. */
 export interface TelemetryRemovalPreview {
   readonly journal: TelemetryProjectJournalRemoval;
+  readonly legacyJournals: readonly TelemetryProjectJournalRemoval[];
   readonly sink: TelemetryMachineSinkRemoval;
   readonly identity: TelemetryMachineIdentityRemoval;
   readonly history: TelemetryHistoryReading;
@@ -55,6 +56,7 @@ export interface TelemetryRemovalPreview {
 export function telemetryRemovalIsEmpty(preview: TelemetryRemovalPreview): boolean {
   return (
     preview.journal.runFileNames.length === 0 &&
+    preview.legacyJournals.every((legacy) => legacy.runFileNames.length === 0) &&
     preview.sink.dayFileNames.length === 0 &&
     !preview.identity.present
   );

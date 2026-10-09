@@ -1,17 +1,20 @@
 import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { join, resolve } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
   READABLE_JOURNAL_SCHEMA_VERSION,
   RunJournalReaderAdapter,
   sanitizePathSegment,
 } from "../../../../src/contexts/telemetry/infrastructure/run-journal-reader-adapter.js";
+import { samePath } from "../../../../src/kernel/paths.js";
 import { journalRecord, journalRepo } from "../../../helpers/telemetry-journal-hook.js";
 
 // A real-shaped ULID (26 Crockford-base32 characters): the adapter splits a run file's name
 // on that fixed length, never on "__", so the id itself must be genuine.
 const RUN_ID = "01ARZ3NDEKTSV4RRFFQ69G5FAV";
+const OTHER_RUN_ID = "01ARZ3NDEKTSV4RRFFQ69G5FAW";
+const LEGACY_SESSION_ID = "33333333-3333-4333-8333-333333333333";
 const SESSION_ID = "22222222-2222-4222-8222-222222222222";
 
 function runFileLines(...lines: readonly unknown[]): string {
@@ -210,6 +213,131 @@ describe("RunJournalReaderAdapter", () => {
       { type: "step_start", at: "2026-08-20T10:00:00Z", skill: "from-override" },
     ]);
     await rm(overrideDir, { recursive: true, force: true });
+  });
+
+  // Registered the way git records a linked worktree: `.git/worktrees/wt/gitdir` names it.
+  async function registerWorktree(other: string): Promise<void> {
+    const entry = join(projectRoot, ".git", "worktrees", "wt");
+    await mkdir(entry, { recursive: true });
+    await mkdir(other, { recursive: true });
+    await writeFile(join(other, ".git"), `gitdir: ${entry}\n`);
+    await writeFile(join(entry, "gitdir"), `${join(other, ".git")}\n`);
+    await writeFile(join(entry, "commondir"), "../..\n");
+  }
+
+  const commonRuns = (): string => join(projectRoot, ".git", "aidd", "runs");
+
+  function sessionStart(runId: string, vendorId: string, schemaVersion = 2): unknown {
+    return {
+      type: "session_start",
+      at: "2026-08-20T09:00:00Z",
+      schema_version: schemaVersion,
+      run_id: runId,
+      tool: "claude-code",
+      vendor_id: vendorId,
+    };
+  }
+
+  it("reads a journal written under the common git directory", async () => {
+    await mkdir(commonRuns(), { recursive: true });
+    await writeFile(
+      join(commonRuns(), `${RUN_ID}__${SESSION_ID}.jsonl`),
+      runFileLines({ type: "step_start", at: "2026-08-20T10:00:00Z", skill: "from-common-dir" })
+    );
+
+    const journal = await new RunJournalReaderAdapter(projectRoot).read(SESSION_ID);
+
+    expect(journal?.boundaries).toEqual([
+      { type: "step_start", at: "2026-08-20T10:00:00Z", skill: "from-common-dir" },
+    ]);
+  });
+
+  it("lists a journal still sitting in another live worktree's aidd_docs/runs", async () => {
+    await mkdir(join(projectRoot, ".git"), { recursive: true });
+    const other = await mkdtemp(join(tmpdir(), "aidd-run-journal-other-"));
+    await registerWorktree(other);
+    await mkdir(join(other, "aidd_docs", "runs"), { recursive: true });
+    await writeFile(
+      join(other, "aidd_docs", "runs", `${OTHER_RUN_ID}__${LEGACY_SESSION_ID}.jsonl`),
+      runFileLines(sessionStart(OTHER_RUN_ID, LEGACY_SESSION_ID))
+    );
+    const adapter = new RunJournalReaderAdapter(projectRoot);
+
+    const journals = await adapter.list();
+
+    expect(journals.map((journal) => journal.session?.vendor_id)).toEqual([LEGACY_SESSION_ID]);
+    expect(await adapter.read(LEGACY_SESSION_ID)).not.toBeNull();
+    await rm(other, { recursive: true, force: true });
+  });
+
+  it("prefers the common git directory's copy when one session has a file in both", async () => {
+    await mkdir(commonRuns(), { recursive: true });
+    const name = `${RUN_ID}__${SESSION_ID}.jsonl`;
+    await writeFile(
+      join(commonRuns(), name),
+      runFileLines({ type: "step_start", at: "2026-08-20T10:00:00Z", skill: "primary" })
+    );
+    await writeFile(
+      join(runsDir, name),
+      runFileLines({ type: "step_start", at: "2026-08-20T10:00:00Z", skill: "legacy" })
+    );
+    const adapter = new RunJournalReaderAdapter(projectRoot);
+
+    const journals = await adapter.list();
+
+    expect((await adapter.read(SESSION_ID))?.boundaries).toEqual([
+      { type: "step_start", at: "2026-08-20T10:00:00Z", skill: "primary" },
+    ]);
+    expect(journals.map((journal) => journal.boundaries)).toEqual([
+      [{ type: "step_start", at: "2026-08-20T10:00:00Z", skill: "primary" }],
+    ]);
+  });
+
+  it("reads nothing but AIDD_RUNS_DIR when it is set, even with legacy journals present", async () => {
+    await mkdir(join(projectRoot, ".git"), { recursive: true });
+    await writeFile(
+      join(runsDir, `${RUN_ID}__${SESSION_ID}.jsonl`),
+      runFileLines(sessionStart(RUN_ID, SESSION_ID))
+    );
+    const overrideDir = await mkdtemp(join(tmpdir(), "aidd-run-journal-override-"));
+    process.env.AIDD_RUNS_DIR = overrideDir;
+    await writeFile(
+      join(overrideDir, `${OTHER_RUN_ID}__${LEGACY_SESSION_ID}.jsonl`),
+      runFileLines(sessionStart(OTHER_RUN_ID, LEGACY_SESSION_ID))
+    );
+    const adapter = new RunJournalReaderAdapter(projectRoot);
+
+    const journals = await adapter.list();
+
+    expect(journals.map((journal) => journal.session?.vendor_id)).toEqual([LEGACY_SESSION_ID]);
+    expect(adapter.legacyRunsDirs).toEqual([]);
+    await rm(overrideDir, { recursive: true, force: true });
+  });
+
+  it("reports a foreign schema found in a legacy directory", async () => {
+    await mkdir(join(projectRoot, ".git"), { recursive: true });
+    await writeFile(
+      join(runsDir, `${RUN_ID}__${SESSION_ID}.jsonl`),
+      runFileLines(sessionStart(RUN_ID, SESSION_ID, 99))
+    );
+
+    expect(await new RunJournalReaderAdapter(projectRoot).listForeignSchemas()).toEqual([99]);
+  });
+
+  it("names a legacy directory's run files by name", async () => {
+    await mkdir(join(projectRoot, ".git"), { recursive: true });
+    await writeFile(join(runsDir, `${RUN_ID}__a.jsonl`), "x\n");
+    await writeFile(join(runsDir, `${OTHER_RUN_ID}__b.jsonl`), "x\n");
+    await writeFile(join(runsDir, "notes.txt"), "x\n");
+    const adapter = new RunJournalReaderAdapter(projectRoot);
+
+    expect(adapter.legacyRunsDirs).toHaveLength(1);
+    const [legacy] = adapter.legacyRunsDirs;
+    expect(samePath(resolve(legacy ?? ""), resolve(runsDir))).toBe(true);
+    expect(await adapter.listRunFilesIn(legacy ?? "")).toEqual(
+      [`${RUN_ID}__a.jsonl`, `${OTHER_RUN_ID}__b.jsonl`].sort()
+    );
+    expect(await adapter.listRunFiles()).toEqual([]);
   });
 });
 

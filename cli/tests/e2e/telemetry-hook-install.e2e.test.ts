@@ -56,11 +56,11 @@ describe("E2E: the journal hook runs from where installation puts it", () => {
       const { stderr } = await hook;
       expect(stderr).toBe("");
 
-      const written = readdirSync(join(projectDir, "aidd_docs", "runs"));
+      const written = readdirSync(join(projectDir, ".git", "aidd", "runs"));
       expect(written).toHaveLength(1);
       expect(written[0]).toMatch(/\.jsonl$/);
       const lines = readFileSync(
-        join(projectDir, "aidd_docs", "runs", written[0] as string),
+        join(projectDir, ".git", "aidd", "runs", written[0] as string),
         "utf-8"
       )
         .split("\n")

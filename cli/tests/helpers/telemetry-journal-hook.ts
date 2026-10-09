@@ -17,6 +17,8 @@ interface JournalRepoModule {
   deriveProjectId(repoRoot: string): string;
   telemetryEnabled(repoRoot: string): boolean;
   personRefusesTelemetry(): boolean;
+  /** `null` when telemetry is off or the directory is outside a checkout. */
+  resolveRunsDir(cwd: string): { readonly dir: string; readonly repoRoot: string } | null;
 }
 
 export const journalRepo: JournalRepoModule = createRequire(import.meta.url)(hookLib("repo.cjs"));

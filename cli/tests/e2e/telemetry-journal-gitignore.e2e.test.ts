@@ -74,7 +74,7 @@ describe("aidd setup never offers the run journal to a commit", () => {
       transcript_path: `${fakeHome}/.claude/projects/fake/x.jsonl`,
     });
 
-    const written = await readdir(`${projectDir}/aidd_docs/runs`);
+    const written = await readdir(`${projectDir}/.git/aidd/runs`);
     expect(
       written.some((f) => f.endsWith(".jsonl")),
       "the hook did not actually journal"

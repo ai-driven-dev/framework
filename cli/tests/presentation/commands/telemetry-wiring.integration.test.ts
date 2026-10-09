@@ -72,6 +72,7 @@ function emptyReport() {
 
 const NOTHING_TO_REMOVE: TelemetryRemovalPreview = {
   journal: { scope: "project", path: "/repo/aidd_docs/runs", runFileNames: [] },
+  legacyJournals: [],
   sink: { scope: "machine", path: "/records", dayFileNames: [] },
   identity: { scope: "machine", path: "/h/identity.json", present: false, unreadable: false },
   history: { certainty: "none" },
