@@ -22,8 +22,8 @@ export type Attribution =
 export interface AttributionFacts {
   readonly declarations: readonly SessionDeclaration[];
   readonly carries: readonly SessionCarry[];
-  /** The latest snapshot of each branch, keyed by `snapshotKey`. */
-  readonly branches: ReadonlyMap<string, BranchSnapshot>;
+  /** Every snapshot of each branch, oldest first, keyed by `snapshotKey`. */
+  readonly branches: ReadonlyMap<string, readonly BranchSnapshot[]>;
 }
 
 export interface AttributableUsage {
@@ -66,6 +66,32 @@ function sessionVerdict(record: AttributableUsage, at: number, facts: Attributio
   return binding.state === "bound" ? verdict(binding.task, binding.ticket) : null;
 }
 
+/** The snapshot that speaks for a branch at an instant. A name used again after its branch was
+ * deleted has one generation per creation, told apart by `branch_created_at`: a call belongs to
+ * the youngest generation created strictly before it, and within that generation to the latest
+ * snapshot, so declaring late still moves the generation's earlier work. A snapshot with no
+ * creation time speaks only when no dated generation was created before the call. */
+function generationAt(
+  snapshots: readonly BranchSnapshot[],
+  at: number
+): BranchSnapshot | undefined {
+  let chosen: BranchSnapshot | undefined;
+  let chosenCreated = Number.NEGATIVE_INFINITY;
+  let undated: BranchSnapshot | undefined;
+  for (const snapshot of snapshots) {
+    if (snapshot.branch_created_at === null) {
+      undated = snapshot;
+      continue;
+    }
+    const created = Date.parse(snapshot.branch_created_at);
+    if (created < at && created >= chosenCreated) {
+      chosen = snapshot;
+      chosenCreated = created;
+    }
+  }
+  return chosen ?? undated;
+}
+
 /** A branch binds every call made on it after it was created, not only those after it was
  * declared: declaring late moves earlier work onto the task. */
 function branchVerdict(
@@ -74,11 +100,11 @@ function branchVerdict(
   facts: AttributionFacts
 ): Attribution | null {
   if (record.git_branch === null) return null;
-  const branch = facts.branches.get(snapshotKey(record.repository_id, record.git_branch));
+  const branch = generationAt(
+    facts.branches.get(snapshotKey(record.repository_id, record.git_branch)) ?? [],
+    at
+  );
   if (branch === undefined || (branch.task === null && !branch.none)) return null;
-  if (branch.branch_created_at !== null && !(at > Date.parse(branch.branch_created_at))) {
-    return null;
-  }
   return verdict(branch.task, branch.ticket);
 }
 

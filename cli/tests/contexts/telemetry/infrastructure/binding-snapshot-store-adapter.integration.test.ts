@@ -41,6 +41,18 @@ describe("the branch snapshots on disk", () => {
     expect((await store.latest()).size).toBe(0);
   });
 
+  it("keep every snapshot of a branch name in order, one generation after another", async () => {
+    await store.append([snapshot({ task: "a" })]);
+    await store.append([
+      snapshot({ task: "b", branch_created_at: "2026-10-15T00:00:00.000Z" }),
+      snapshot({ branch: "other" }),
+    ]);
+    const history = await store.history();
+    expect(history.get(snapshotKey("r", "feat/x"))?.map((entry) => entry.task)).toEqual(["a", "b"]);
+    expect(history.get(snapshotKey("r", "other"))).toHaveLength(1);
+    expect((await store.latest()).get(snapshotKey("r", "feat/x"))?.task).toBe("b");
+  });
+
   it("keep the latest snapshot of each branch of each repository", async () => {
     await store.append([snapshot({ task: "first" }), snapshot({ branch: "other" })]);
     await store.append([snapshot({ task: "second" }), snapshot({ repository_id: "r2" })]);

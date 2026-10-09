@@ -91,7 +91,9 @@ const facts = fc
   .map(
     (f): AttributionFacts => ({
       ...f,
-      branches: new Map(f.branches.map((b) => [snapshotKey(b.repository_id, b.branch), b])),
+      branches: new Map(
+        f.branches.map((b) => [snapshotKey(b.repository_id, b.branch), [b]] as const)
+      ),
     })
   );
 

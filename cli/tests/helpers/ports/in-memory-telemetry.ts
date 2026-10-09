@@ -166,6 +166,15 @@ export class InMemorySnapshots implements BindingSnapshotStore {
     return new Map(this.appended.map((s) => [snapshotKey(s.repository_id, s.branch), s]));
   }
 
+  async history(): Promise<ReadonlyMap<string, readonly BranchSnapshot[]>> {
+    const history = new Map<string, BranchSnapshot[]>();
+    for (const s of this.appended) {
+      const key = snapshotKey(s.repository_id, s.branch);
+      history.set(key, [...(history.get(key) ?? []), s]);
+    }
+    return history;
+  }
+
   async append(snapshots: readonly BranchSnapshot[]): Promise<void> {
     this.appendCalls += 1;
     this.events.push("snapshot");

@@ -191,16 +191,18 @@ describe("a usage report", () => {
       branches: new Map([
         [
           snapshotKey("repo-a", "feat/x"),
-          {
-            repository_id: "repo-a",
-            branch: "feat/x",
-            task: "from-branch",
-            ticket: null,
-            declared_at: "2026-10-05T00:00:00.000Z",
-            none: false,
-            branch_created_at: null,
-            snapshot_at: "2026-10-05T00:00:00.000Z",
-          },
+          [
+            {
+              repository_id: "repo-a",
+              branch: "feat/x",
+              task: "from-branch",
+              ticket: null,
+              declared_at: "2026-10-05T00:00:00.000Z",
+              none: false,
+              branch_created_at: null,
+              snapshot_at: "2026-10-05T00:00:00.000Z",
+            },
+          ],
         ],
       ]),
     };

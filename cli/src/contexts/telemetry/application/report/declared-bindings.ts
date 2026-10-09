@@ -15,7 +15,7 @@ export class DeclaredBindings {
     return {
       declarations: await this.sessions.declarations(),
       carries: await this.sessions.carries(),
-      branches: await this.snapshots.latest(),
+      branches: await this.snapshots.history(),
     };
   }
 }

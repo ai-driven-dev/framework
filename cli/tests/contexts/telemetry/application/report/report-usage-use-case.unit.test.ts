@@ -143,6 +143,39 @@ describe("reporting usage", () => {
     expect(await rows(s, "task")).toEqual([[{ kind: "value", value: "checkout" }, 17]]);
   });
 
+  it("keeps the work of a deleted branch on its task when the name is used again", async () => {
+    const s = setup();
+    s.transcripts.files.set("/t/1.jsonl", [line("A", 10, "2026-10-07T10:00:00.000Z")]);
+    s.bindings.bindingsByRoot.set("/work/a", [
+      {
+        branch: "feat/a",
+        task: "task-a",
+        ticket: null,
+        declared_at: "2026-10-07T09:00:00.000Z",
+        none: false,
+      },
+    ]);
+    s.bindings.creation.set("feat/a", "2026-10-07T08:00:00.000Z");
+    await rows(s, "task");
+    s.bindings.bindingsByRoot.set("/work/a", [
+      {
+        branch: "feat/a",
+        task: "task-b",
+        ticket: null,
+        declared_at: "2026-10-20T09:00:00.000Z",
+        none: false,
+      },
+    ]);
+    s.bindings.creation.set("feat/a", "2026-10-20T08:00:00.000Z");
+    s.transcripts.files.get("/t/1.jsonl")?.push(line("B", 5, "2026-10-21T10:00:00.000Z"));
+    expect(await rows(s, "task")).toEqual(
+      [
+        [{ kind: "value", value: "task-b" }, 6],
+        [{ kind: "value", value: "task-a" }, 11],
+      ].sort((x, y) => (y[1] as number) - (x[1] as number))
+    );
+  });
+
   it("follows a carry across a /clear", async () => {
     const s = setup();
     s.transcripts.files.set("/t/1.jsonl", [line("A", 10, "2026-10-07T12:30:00.000Z", "s-2")]);

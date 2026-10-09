@@ -46,6 +46,15 @@ const snapshot = (over: Partial<BranchSnapshot>): BranchSnapshot => ({
   snapshot_at: "2026-10-01T12:00:00.000Z",
   ...over,
 });
+/** Snapshots as the store keeps them: oldest first, by repository and branch name. */
+const grouped = (snapshots: BranchSnapshot[]): AttributionFacts["branches"] => {
+  const by = new Map<string, BranchSnapshot[]>();
+  for (const s of snapshots) {
+    const key = snapshotKey(s.repository_id, s.branch);
+    by.set(key, [...(by.get(key) ?? []), s]);
+  }
+  return by;
+};
 const facts = (
   parts: {
     declarations?: SessionDeclaration[];
@@ -55,7 +64,7 @@ const facts = (
 ): AttributionFacts => ({
   declarations: parts.declarations ?? [],
   carries: parts.carries ?? [],
-  branches: new Map((parts.branches ?? []).map((b) => [snapshotKey(b.repository_id, b.branch), b])),
+  branches: grouped(parts.branches ?? []),
 });
 const usage = (over: Partial<AttributableUsage> = {}): AttributableUsage => ({
   session_id: S1,
@@ -271,6 +280,49 @@ describe("attribution: the branch's declaration", () => {
   it("is no binding for a branch snapshot that declares nothing", () => {
     const f = facts({ branches: [snapshot({ task: null, none: false, declared_at: null })] });
     expect(attribute(onBranch(), f)).toEqual(unattributed("no-binding"));
+  });
+});
+
+describe("attribution: a branch name used again", () => {
+  const onBranch = (at: string) => usage({ git_branch: "feat/x", at });
+  const first = snapshot({ task: "task-a", branch_created_at: "2026-10-01T08:00:00.000Z" });
+  const second = snapshot({
+    task: "task-b",
+    declared_at: "2026-10-20T12:00:00.000Z",
+    branch_created_at: "2026-10-15T08:00:00.000Z",
+  });
+
+  it("keeps the work of an earlier branch of that name on its own task", () => {
+    const f = facts({ branches: [first, second] });
+    expect(attribute(onBranch("2026-10-10T10:00:00.000Z"), f)).toEqual(task("task-a"));
+    expect(attribute(onBranch("2026-10-16T10:00:00.000Z"), f)).toEqual(task("task-b"));
+  });
+
+  it("does not depend on the order the snapshots were taken in being the order of creation", () => {
+    const f = facts({ branches: [second, first] });
+    expect(attribute(onBranch("2026-10-10T10:00:00.000Z"), f)).toEqual(task("task-a"));
+  });
+
+  it("leaves work from before every branch of that name existed", () => {
+    const f = facts({ branches: [first, second] });
+    expect(attribute(onBranch("2026-09-30T10:00:00.000Z"), f)).toEqual(unattributed("no-binding"));
+  });
+
+  it("uses the latest snapshot within one generation, so declaring late still moves its work", () => {
+    const redeclared = snapshot({
+      task: "task-a2",
+      declared_at: "2026-10-05T00:00:00.000Z",
+      branch_created_at: "2026-10-01T08:00:00.000Z",
+    });
+    const f = facts({ branches: [first, redeclared, second] });
+    expect(attribute(onBranch("2026-10-10T10:00:00.000Z"), f)).toEqual(task("task-a2"));
+  });
+
+  it("applies a snapshot with no creation time only when no dated generation matches", () => {
+    const undated = snapshot({ task: "task-undated", branch_created_at: null });
+    const f = facts({ branches: [undated, second] });
+    expect(attribute(onBranch("2026-10-16T10:00:00.000Z"), f)).toEqual(task("task-b"));
+    expect(attribute(onBranch("2026-10-10T10:00:00.000Z"), f)).toEqual(task("task-undated"));
   });
 });
 

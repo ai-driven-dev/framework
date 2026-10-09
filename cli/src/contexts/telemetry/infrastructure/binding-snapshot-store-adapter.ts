@@ -17,6 +17,17 @@ export class BindingSnapshotStoreAdapter implements BindingSnapshotStore {
     this.path = join(dir, "branches.jsonl");
   }
 
+  async history(): Promise<ReadonlyMap<string, readonly BranchSnapshot[]>> {
+    const history = new Map<string, BranchSnapshot[]>();
+    for (const line of ((await readTextIfPresent(this.path)) ?? "").split("\n")) {
+      const snapshot = parseBranchSnapshot(line);
+      if (snapshot === null) continue;
+      const key = snapshotKey(snapshot.repository_id, snapshot.branch);
+      history.set(key, [...(history.get(key) ?? []), snapshot]);
+    }
+    return history;
+  }
+
   async latest(): Promise<ReadonlyMap<string, BranchSnapshot>> {
     const latest = new Map<string, BranchSnapshot>();
     for (const line of ((await readTextIfPresent(this.path)) ?? "").split("\n")) {

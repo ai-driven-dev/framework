@@ -61,7 +61,7 @@ function reportAnswer(input: Case) {
       : [
           [
             snapshotKey("r", binding.branch),
-            { ...binding, repository_id: "r", branch_created_at: null, snapshot_at: input.at },
+            [{ ...binding, repository_id: "r", branch_created_at: null, snapshot_at: input.at }],
           ],
         ]
   );
