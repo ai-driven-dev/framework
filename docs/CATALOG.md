@@ -35,7 +35,7 @@ Bootstrap, project init, context-artifact generation, diagrams, learning, and ex
 
 ## 💻 aidd-dev
 
-Code transformation: plan, implement, assert, audit, review, test, refactor, debug, goalify, todo. Standalone Browser QA records short web evidence.
+Code transformation: plan, implement, assert, audit, review, test, refactor, debug, goalify, batch. Standalone Browser QA records short web evidence.
 
 | Skill           | Role                                                                       | Actions                                                                         |
 | --------------- | -------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
@@ -48,7 +48,7 @@ Code transformation: plan, implement, assert, audit, review, test, refactor, deb
 | `07-refactor`   | Improve code without changing behavior across four axes                    | `01-performance`, `02-security`, `03-cleanup`, `04-architecture`                 |
 | `08-debug`      | Reproduce and fix bugs with a test-driven workflow                         | `01-reproduce`, `02-debug`, `03-reflect-issue`                                   |
 | `09-goalify`    | Autonomous loop that replans and retries until a runnable success condition passes | `01-init-tracking`, `02-auto-accept`, `03-autonomous-loop`                       |
-| `10-todo`       | Split the prompt into independent todos, run one implementer agent per todo in parallel | `01-todo`                                                            |
+| `10-batch`      | Run ready independent tasks through bounded parallel executor agents in the caller's context | `01-batch`                                                         |
 | `11-browser-qa` | Record short reviewer videos for browser-scoped happy and edge cases        | `00-prerequisites`, `01-load-scope`, `02-prepare-run`, `03-run-scenarios`     |
 
 ## 📋 aidd-pm

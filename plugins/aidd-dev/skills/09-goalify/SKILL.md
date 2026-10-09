@@ -14,9 +14,12 @@ flowchart TD
   Init -->|ready| Loop[autonomous-loop under auto-accept]
   Init -->|already implemented| Done[Complete]
   Init -->|unresolved prerequisite| Stop[Stop and report]
-  Loop --> Worker[Execute next step]
-  Worker -->|safety stop| Stop
-  Worker --> Verify[Verify evidence]
+  Loop --> Select{Ready independent steps?}
+  Select -->|parallel capability available| Batch[Delegate parallel execution]
+  Select -->|otherwise| Worker[Execute next step]
+  Batch --> Verify[Verify each result]
+  Worker --> Verify
+  Verify -->|safety stop| Stop
   Verify -->|failure| Replan[Analyze and replan]
   Replan -->|retry| Loop
   Verify -->|more steps| Loop
@@ -42,7 +45,7 @@ Before running an action, read its file in `actions/`, not only the table or ass
 - No repeated failures: never retry a failed approach without a meaningful change.
 - Honesty over escape: never set `status: implemented` until the success condition genuinely passes.
 - Auto-accept: follow the action's rules within the original task; stop on payment or destructive actions.
-- The loop spawns one worker agent per step and never does the work itself.
+- The loop dispatches one leaf worker per step, directly or through a discovered parallel-execution capability in its own context. It retains the plan, safety decisions, per-item verification, and retries; it never does the work itself or adds a controller agent.
 - Model policy: use a powerful available model for framing, planning, verification, and replanning, including every orchestrator launch or resume. At every worker launch or relaunch, use the smallest available model with its highest supported reasoning effort. Workers execute only their assigned step and return evidence.
 
 ## Assets

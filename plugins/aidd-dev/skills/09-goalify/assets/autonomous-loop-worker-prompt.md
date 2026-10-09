@@ -4,8 +4,10 @@ Execute this step. Auto-accept everything, act as the user, and make every
 decision yourself (approve prompts, generate keys, install tools, click
 buttons). Do not ask for permission. Just do it.
 
-Worker policy: execute only the assigned step and return concrete evidence. The
-orchestrator retains reflection, framing, and replanning.
+Worker policy: execute only the assigned step within its allowed write scope and
+return concrete evidence. Never spawn agents or edit the orchestrator's tracking
+file. Other workers may be active; preserve their changes. The orchestrator
+retains reflection, framing, and replanning.
 
 Signing in via an existing account (Google Sign-in, GitHub OAuth, SSO) is NOT
 account creation; it uses the user's active browser session. Do it.
@@ -15,7 +17,7 @@ payment, subscription, or paid upgrade) or is destructive (deletes data, drops a
 database, force-pushes, resets git history, removes files recursively, or
 overwrites uncommitted work). Stay inside the task; skip unrelated signups.
 
-STEP: <step description>
+STEP: <step identifier, description, acceptance criteria, and allowed write scope>
 CONTEXT: <from the tracking file>
 
 Report:
