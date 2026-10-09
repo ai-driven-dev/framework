@@ -10,7 +10,7 @@
 A checker's finding is routed by what it is about. A refusal the user gives at a pause is not one of these: `mode.md` routes that by artifact.
 
 - Product or contract findings are the next Frame source.
-- Independent implementation findings go through Todo; dependent repairs stay together in Deliver.
+- Independent implementation findings go through Batch; dependent repairs stay together in Deliver.
 - Re-enter Check after every new candidate.
 - Once the review has cleared, only a finding that contradicts the contract reopens a zone: carry any other onto the request as a note.
 - A finding already acted on is never routed twice. Repaired or not, it is a decision that requires user authority, and no request opens until that arrives.
@@ -43,7 +43,7 @@ flowchart TD
     direction TB
     Findings["$findings"]
     Frame["01 Frame"]
-    Todo["/aidd-dev:10-todo"]
+    Batch["/aidd-dev:10-batch"]
     Deliver["02 Deliver"]
   end
 
@@ -63,9 +63,9 @@ flowchart TD
   Challenge -- "Return actionable challenge findings." --> Findings
   Challenge -- "When the outcome is trustworthy, open the draft pull request." --> PullRequest
   Findings -- "Use product findings as the next Frame source." --> Frame
-  Findings -- "Repair independent implementation findings in parallel." --> Todo
+  Findings -- "Repair independent implementation findings in parallel." --> Batch
   Findings -- "Repair dependent implementation findings together." --> Deliver
-  Todo --> Deliver
+  Batch --> Deliver
   PullRequest --> PullRequestUrl
 
   classDef skill fill:#DBEAFE,stroke:#2563EB,color:#1E3A8A,stroke-width:2px
@@ -73,7 +73,7 @@ flowchart TD
   classDef artifact fill:#DCFCE7,stroke:#16A34A,color:#14532D,stroke-width:2px
   classDef zone fill:#F1F5F9,stroke:#64748B,color:#0F172A,stroke-width:2px
 
-  class Review,Challenge,Todo,PullRequest skill
+  class Review,Challenge,Batch,PullRequest skill
   class Checker agent
   class Contract,Plan,CommittedCandidate,ValidationReports,Findings,PullRequestUrl artifact
   class Frame,Deliver zone

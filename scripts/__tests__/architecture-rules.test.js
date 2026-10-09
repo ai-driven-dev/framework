@@ -424,7 +424,7 @@ test("a fenced example table inside the Actions section cites nothing", () => {
   assert.match(violations[0].message, /never names action file "02-second\.md"/);
 });
 
-test("a fenced actions/<name>.md path still cites, the way 10-todo does", () => {
+test("a fenced actions/<name>.md path still cites, the way 10-batch does", () => {
   const content = [
     "# Fenced path skill",
     "",
