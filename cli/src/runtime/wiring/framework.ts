@@ -49,6 +49,7 @@ import { PluginListUseCase } from "../../contexts/framework/application/plugin/p
 import { PluginRemoveUseCase } from "../../contexts/framework/application/plugin/plugin-remove-use-case.js";
 import { PluginSearchUseCase } from "../../contexts/framework/application/plugin/plugin-search-use-case.js";
 import { PluginUpdateUseCase } from "../../contexts/framework/application/plugin/plugin-update-use-case.js";
+import { ValidateRecipesUseCase } from "../../contexts/framework/application/recipes/validate-recipes-use-case.js";
 import { RestoreUseCase } from "../../contexts/framework/application/restore/restore-use-case.js";
 import { ProjectContextDetectorUseCase } from "../../contexts/framework/application/setup/project-context-detector-use-case.js";
 import { SetupMachineScopeUseCase } from "../../contexts/framework/application/setup/setup-machine-scope-use-case.js";
@@ -70,6 +71,7 @@ import type { UserSourceReferences } from "../../contexts/framework/domain/ports
 import { EnvironmentAdapter } from "../../contexts/framework/infrastructure/environment-adapter.js";
 import { ManifestRepositoryAdapter } from "../../contexts/framework/infrastructure/manifest-repository-adapter.js";
 import { PluginDistributionReaderAdapter } from "../../contexts/framework/infrastructure/plugin-distribution-reader-adapter.js";
+import { RecipeFilesAdapter } from "../../contexts/framework/infrastructure/recipe-files-adapter.js";
 import { UserManifestRepositoryAdapter } from "../../contexts/framework/infrastructure/user-manifest-repository-adapter.js";
 import { UserSourceReferencesAdapter } from "../../contexts/framework/infrastructure/user-source-references-adapter.js";
 import type { FileMerger } from "../../contexts/tools/domain/ports/file-merger.js";
@@ -181,6 +183,7 @@ interface Deps extends TelemetryDeps {
   cleanUserScopeUseCase: CleanUserScopeUseCase;
   doctorAllUseCase: DoctorAllUseCase;
   listInstalledRulesUseCase: ListInstalledRulesUseCase;
+  validateRecipesUseCase: ValidateRecipesUseCase;
   checkUpdateUseCase: CheckUpdateUseCase;
 }
 
@@ -596,6 +599,7 @@ export async function createDeps(
     manifestRepo,
   });
   const deps: Deps = {
+    validateRecipesUseCase: new ValidateRecipesUseCase(new RecipeFilesAdapter()),
     ...telemetry,
     fs,
     manifestRepo,

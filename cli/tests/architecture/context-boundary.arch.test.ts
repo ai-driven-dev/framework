@@ -114,6 +114,7 @@ const PUBLIC_MODULES: Readonly<Record<string, readonly string[]>> = {
   // The largest context: while it had no entry the mechanism below skipped every framework
   // file, so its interior was reached unchecked. Measured, composition root excluded.
   framework: [
+    "src/contexts/framework/domain/recipes/recipe-validation.ts",
     // the rule inventory `framework rules` prints, one row per installed rule
     "src/contexts/framework/domain/installed-rule.ts",
     // the installation record, which is what this context owns

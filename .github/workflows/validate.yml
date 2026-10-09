@@ -22,9 +22,7 @@ jobs:
       CI: "true"
       # cli-ci.yml owns these three unconditionally, so running them again buys no coverage.
       # cli-type-honesty is deliberately NOT excluded: no cli-ci.yml job runs it, making this
-      # its only CI coverage. The exclusion is also why no `cli/` install runs below — the
-      # three hooks needing cli/node_modules are the three dropped, and every hook that stays
-      # reads `cli/` as text from the repository root.
+      # its only CI coverage. Recipe validation builds the CLI and needs its separate install.
       LEFTHOOK_EXCLUDE: "cli-biome,cli-architecture,cli-typecheck"
     steps:
       - name: Checkout
@@ -42,11 +40,13 @@ jobs:
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/.local/share/pnpm/store
-          key: pnpm-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+          key: pnpm-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml', 'cli/pnpm-lock.yaml') }}
           restore-keys: pnpm-${{ runner.os }}-
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile --ignore-scripts
+        run: |
+          pnpm install --frozen-lockfile --ignore-scripts
+          pnpm --dir cli install --frozen-lockfile --ignore-scripts
 
       - name: Run pre-commit hooks against the full tree
         run: pnpm exec lefthook run pre-commit --all-files --force

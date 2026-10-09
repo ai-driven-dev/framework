@@ -42,7 +42,7 @@ describe("E2E: the sandbox a test spawns into", () => {
     }
   });
 
-  it("still reaches node and git, which the code under test genuinely needs", async () => {
+  it("still runs node and git, which the code under test genuinely needs", async () => {
     const { projectDir, fakeHome, cleanup } = await createTestEnv("sandbox-path-keeps-");
     try {
       const env = sandboxedEnv(fakeHome);
@@ -50,7 +50,12 @@ describe("E2E: the sandbox a test spawns into", () => {
       // `hooks/lib/repo.cjs` shells out to git, and every spawned command is node itself.
       // A sandbox that reached neither would make this guard pass by breaking everything.
       expect(await whichUnderSandbox("git", projectDir, env)).not.toBe("");
-      expect(await whichUnderSandbox("node", projectDir, env)).not.toBe("");
+      // The node directory can also hold Codex, so callers deliberately use its absolute path.
+      const { stdout } = await execFileAsync(process.execPath, ["--version"], {
+        cwd: projectDir,
+        env,
+      });
+      expect(stdout.trim()).toBe(process.version);
     } finally {
       await cleanup();
     }

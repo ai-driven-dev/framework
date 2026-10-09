@@ -44,7 +44,14 @@ describe("every tracked source file stays greppable", () => {
 
     const offenders = [];
     for (const rel of files) {
-      const bytes = fs.readFileSync(path.join(ROOT, rel));
+      let bytes;
+      try {
+        bytes = fs.readFileSync(path.join(ROOT, rel));
+      } catch (error) {
+        // An unstaged deletion remains in the index but has no working-tree bytes to check.
+        if (error.code === "ENOENT") continue;
+        throw error;
+      }
       if (bytes.includes(0)) {
         const line = bytes.subarray(0, bytes.indexOf(0)).toString("utf8").split("\n").length;
         offenders.push(`${rel}:${line}`);

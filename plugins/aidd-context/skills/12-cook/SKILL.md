@@ -26,6 +26,7 @@ flowchart LR
     upsert -->|new, before dedup| list
     upsert -->|written| validate
     validate -->|stale number| list
+    validate -->|CLI absent or unsupported| unavailable([validation unavailable])
     validate -->|standalone, pass| validated([validated])
     validate -->|standalone, findings| findings([findings])
     validate -->|upsert, pass| saved([saved])
