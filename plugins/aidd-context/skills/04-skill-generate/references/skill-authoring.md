@@ -4,8 +4,7 @@ The contract every generated skill satisfies. `skill-generate` obeys it too.
 
 ## The skill
 
-- **R1.** Keep one domain per skill.
-  - Follow `naming.md` for its name.
+- **R1.** Keep one domain per skill, named per `naming.md`.
 - **R2.** Keep skill names loadable.
   - Keep invocation prefixes and colons out of `name`.
   - In prose, address a skill as `plugin:folder`.
@@ -103,5 +102,5 @@ The contract every generated skill satisfies. `skill-generate` obeys it too.
   - Split artifacts only when a path needs one without the other.
 - **R20.** Write for scanning.
   - Keep sentences short, with one idea each.
-  - Keep each list item focused on one idea.
-  - Put related conditions, exceptions, and constraints in sub-items.
+  - Keep short, closely related instructions together.
+  - Use sub-items only when they improve readability.
