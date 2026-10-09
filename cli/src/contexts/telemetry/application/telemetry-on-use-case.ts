@@ -78,7 +78,8 @@ export class TelemetryOnUseCase {
       this.logger.info(
         `Added ${RUNS_ENTRY} to .gitignore — the journal names no person, only the ` +
           "repository, the task folders written into, the skills run, and their timings. " +
-          "Delete that line to commit it instead."
+          "It keeps journals an earlier version wrote there out of a commit; new ones land under " +
+          "the clone's git directory, which no commit reaches."
       );
     }
     const tracked = await this.git.listTrackedFiles(projectRoot, RUNS_ENTRY);

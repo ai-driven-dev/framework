@@ -1,6 +1,6 @@
 import { readdir, readFile, rm } from "node:fs/promises";
-import { join, resolve } from "node:path";
-import { legacyRunsDirs, resolvedRunsDir, samePath } from "../../../kernel/paths.js";
+import { join } from "node:path";
+import { legacyRunsDirs, resolvedRunsDir } from "../../../kernel/paths.js";
 import { isBareFileName } from "../../../kernel/reading/confined-file-name.js";
 import type {
   RunJournal,
@@ -214,9 +214,7 @@ export class RunJournalReaderAdapter implements RunJournalStore {
 
   constructor(projectRoot: string) {
     this.runsDir = resolvedRunsDir(projectRoot);
-    this.legacyRunsDirs = legacyRunsDirs(projectRoot).filter(
-      (dir) => !samePath(resolve(dir), resolve(this.runsDir))
-    );
+    this.legacyRunsDirs = legacyRunsDirs(projectRoot);
   }
 
   private get readDirs(): readonly string[] {
