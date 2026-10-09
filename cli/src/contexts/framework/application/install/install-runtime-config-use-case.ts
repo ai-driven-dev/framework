@@ -54,6 +54,23 @@ export class InstallRuntimeConfigUseCase {
     return { toolId, fileCount: allFiles.length, files: allFiles, skipped: false, warnings: [] };
   }
 
+  async ensurePluginRuntimeFiles(
+    toolId: AiToolId,
+    projectRoot: string,
+    manifest: Manifest
+  ): Promise<void> {
+    const toolConfig = getToolConfig(toolId);
+    if (!isAiTool(toolConfig)) return;
+    for (const [fileName, relativePath] of Object.entries(toolConfig.pluginRuntimeFiles ?? {})) {
+      const path = join(projectRoot, relativePath);
+      if (await this.fs.fileExists(path)) continue;
+      const asset = this.assets.loadConfigAsset(toolId, fileName);
+      const content = typeof asset === "string" ? asset : JSON.stringify(asset, null, 2);
+      await this.fs.writeFile(path, content);
+      manifest.updateTrackedFileHash(toolId, relativePath, this.hasher.hash(content));
+    }
+  }
+
   private async applyAndTrack(
     regularFiles: InstallationFile[],
     mergeFiles: InstallationFile[],
@@ -77,9 +94,10 @@ export class InstallRuntimeConfigUseCase {
     options: InstallRuntimeConfigOptions
   ): Promise<InstallationFile[]> {
     const toolConfig = getToolConfig(options.toolId);
-    if (!isAiTool(toolConfig) || !toolConfig.configOutputPaths) return [];
+    if (!isAiTool(toolConfig)) return [];
     const files: InstallationFile[] = [];
-    for (const [fileName, outputPath] of Object.entries(toolConfig.configOutputPaths)) {
+    const outputPaths = { ...toolConfig.configOutputPaths, ...toolConfig.pluginRuntimeFiles };
+    for (const [fileName, outputPath] of Object.entries(outputPaths)) {
       const resolvedPath = await this.resolveConfigPath(toolConfig, fileName, outputPath, options);
       const asset = this.assets.loadConfigAsset(options.toolId, fileName);
       let content = typeof asset === "string" ? asset : JSON.stringify(asset, null, 2);

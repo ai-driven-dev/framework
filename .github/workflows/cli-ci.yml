@@ -339,8 +339,8 @@ jobs:
           key: pnpm-${{ runner.os }}-${{ hashFiles('cli/pnpm-lock.yaml') }}
           restore-keys: pnpm-${{ runner.os }}-
       - run: cd cli && pnpm install --frozen-lockfile
-      # The test starts Kilo's local server and asks it to load the generated project plugin.
-      # No model or account is needed for this protocol-level smoke.
+      # Exercise generated hooks and memory with the released Kilo server and read tool.
+      # Inference uses a deterministic loopback endpoint; no provider account is needed.
       - name: Install Kilo Code CLI
         run: npm install -g @kilocode/cli@7.7.5
       - run: cd cli && pnpm test:e2e:kilo

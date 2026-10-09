@@ -7,17 +7,17 @@ import type { FileWriter } from "../../../../kernel/ports/file-writer.js";
 import type { Hasher } from "../../../../kernel/ports/hasher.js";
 import { compareSemver } from "../../../../kernel/semver.js";
 import type { AiToolId } from "../../../../kernel/tool.js";
-import type { PluginFetcher } from "../../../distribution/domain/ports/plugin-fetcher.js";
 import { getToolConfig, type ToolConfig } from "../../../tools/domain/registry.js";
 import { PluginContentTranslator } from "../../../translate/domain/content-translator.js";
 import type { PluginDistribution } from "../../../translate/domain/plugin-distribution.js";
 import type { Manifest } from "../../domain/manifest.js";
 import { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";
 import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
-import type { PluginDistributionReader } from "../../domain/ports/plugin-distribution-reader.js";
 import type { PluginTranslator } from "../framework/translator/plugin-translator.js";
 import { resolvePluginTranslator } from "../framework/translator/resolve-plugin-translator.js";
+import type { InstallRuntimeConfigUseCase } from "../install/install-runtime-config-use-case.js";
 import type { BuiltMaterializationDeps } from "../shared/apply-plugin-files-use-case.js";
+import type { PluginDistributionLoader } from "./plugin-distribution-loader.js";
 import {
   deleteOldFiles,
   loadPluginManifest,
@@ -37,10 +37,10 @@ export class PluginUpdateUseCase {
   constructor(
     private readonly fs: FileReader & FileWriter,
     private readonly manifestRepo: ManifestRepository,
-    private readonly pluginFetcher: PluginFetcher,
-    private readonly pluginDistributionReader: PluginDistributionReader,
+    private readonly distributionLoader: PluginDistributionLoader,
     private readonly hasher: Hasher,
-    private readonly builtDeps?: BuiltMaterializationDeps
+    private readonly builtDeps?: BuiltMaterializationDeps,
+    private readonly pluginRuntime?: Pick<InstallRuntimeConfigUseCase, "ensurePluginRuntimeFiles">
   ) {}
 
   async execute(options: PluginUpdateOptions): Promise<string[]> {
@@ -92,10 +92,10 @@ export class PluginUpdateUseCase {
     manifest: Manifest
   ): Promise<boolean> {
     if (plugin.scope === "user") throw new InvalidPluginScopeError(toolId, "project", "user");
-    const localPath = await this.pluginFetcher.fetch(plugin.source, cacheDir, {
+    const dist = await this.distributionLoader.load(plugin.source, cacheDir, {
       forceRefresh: true,
     });
-    const dist = await this.pluginDistributionReader.read(localPath);
+    await this.pluginRuntime?.ensurePluginRuntimeFiles(toolId, projectRoot, manifest);
     if (compareSemver(dist.manifest.version, plugin.version) <= 0) return false;
     await this.replacePluginFiles(plugin, dist, toolId, projectRoot, manifest);
     return true;

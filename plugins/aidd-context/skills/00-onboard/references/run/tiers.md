@@ -9,5 +9,5 @@ The tier is a default, overridable.
 | MANUAL | (you run this one yourself)       | show the command, run nothing, leave it for the user         |
 
 - A dual-mode skill runs the other way when the user asks and the skill supports it.
-- `aidd-orchestrator:01-sdlc` is autonomous by contract; do not downgrade it to `GUIDED`.
+- A skill that is autonomous by default runs `AUTO`, and `GUIDED` only when the user asks it to pause.
 - On the `OK` walk, state up front how many steps it covers and which need input.

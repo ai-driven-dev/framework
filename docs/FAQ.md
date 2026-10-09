@@ -38,7 +38,7 @@ You can write your own Claude Code skills — nothing stops you. AIDD exists bec
 
 ## 🚧 Limitations (what AIDD does not do)
 
-- **Not autonomous by default.** Skills run under human supervision; you drive each step.
+- **Execution depends on the workflow.** The SDLC flow is autonomous by default; `interactive` pauses for human review at its contract, plan and outcome checkpoints.
 - **Authored for Claude Code.** Other tools install via their native mechanism from the release archives ([Other tools](../README.md#other-tools)); public-marketplace publishing is on the way, native parity is a roadmap item.
 - **Plugins assume their own context.** A skill that expects a git repo, a `package.json`, or a ticketing tool won't work without it — check the plugin's README.
 - **No hosted service.** AIDD is prompt content you install into your own tool; there is no AIDD server and no account.

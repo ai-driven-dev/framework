@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import "../../../../../src/contexts/tools/domain/profiles/claude/profile.js";
 import "../../../../../src/contexts/tools/domain/profiles/codex/profile.js";
 import "../../../../../src/contexts/tools/domain/profiles/copilot/profile.js";
+import "../../../../../src/contexts/tools/domain/profiles/opencode/profile.js";
 import "../../../../../src/contexts/tools/domain/profiles/vscode/profile.js";
 import { GenerateToolDistributionUseCase } from "../../../../../src/contexts/framework/application/restore/generate-tool-distribution-use-case.js";
 import { CONFIG_VSCODE_SETTINGS } from "../../../../../src/contexts/tools/domain/capabilities/config-refs.js";
@@ -90,6 +91,13 @@ describe("GenerateToolDistributionUseCase — content sections", () => {
 });
 
 describe("GenerateToolDistributionUseCase — a tool's own config assets", () => {
+  it("regenerates the shared OpenCode plugin runtime alongside tool configuration", async () => {
+    const files = await generate(getToolConfig("opencode"), assets);
+    expect(
+      files.find((file) => file.relativePath === ".opencode/hooks/opencode-events.js")?.content
+    ).toBe(assets.loadConfigAsset("opencode", "opencode-events.js"));
+  });
+
   it("writes a JSON asset pretty-printed at the path the tool declares", async () => {
     const files = await generate(getToolConfig("claude"), assets);
     const content = JSON.stringify(assets.loadConfigAsset("claude", "settings.json"), null, 2);

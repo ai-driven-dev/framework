@@ -38,7 +38,11 @@ function makeAssetProvider(): AssetProvider {
 // Opencode's postBuild step reads a base opencode.json asset unconditionally — the other
 // tools' emitConfigArtifact never touches loadConfigAsset, so only this one needs it.
 function makeOpencodeAssetProvider(): AssetProvider {
-  return { ...makeAssetProvider(), loadConfigAsset: () => "{}" };
+  return {
+    ...makeAssetProvider(),
+    loadConfigAsset: (_tool, name) =>
+      name === "opencode-events.js" ? "export async function setupOpencodeEvents() {}" : "{}",
+  };
 }
 
 function makeIsDirectory(fs: InMemoryFileAdapter): (path: string) => Promise<boolean> {

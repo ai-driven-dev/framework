@@ -2,21 +2,17 @@
  * Generates OpenCode's event bridge for one plugin's hooks.json. OpenCode's loader scans no
  * "hooks" family and this profile writes no hooks.json, so without this module a plugin's
  * declared hooks have no trigger on OpenCode at all. The generated file is a real OpenCode
- * plugin, one function-valued export, spawning the same scripts every other host's hooks.json
+ * plugin with V1/server and V2/setup entrypoints, spawning the scripts every host's hooks.json
  * already names over the stdin-JSON contract those scripts already read.
  *
- * Only three events map; anything else is dropped, OpenCode's plugin surface delivering no
- * event those hooks could ride on:
+ * Only three hook events are replayed:
  *
- * - `SessionStart` runs when the generated plugin's own factory is called — once per
- *   server/directory, not once per session, since `session.created` is published on OpenCode's
- *   bus but was never observed delivered to a plugin's `event` hook. Safe only for an
- *   idempotent hook, which every `SessionStart` hook this generator sees today is.
- * - `Stop` maps to `session.idle`, delivered once per turn.
+ * - `SessionStart` runs once per server/directory at factory initialization and requires
+ *   idempotent commands. V1 did not deliver `session.created` to this event hook;
+ *   the V2 adapter delivers it for telemetry's session tracking.
+ * - `Stop` maps to V1's `session.idle` or V2's execution terminal, once per turn.
  * - `PostToolUse` maps to `message.part.updated` whose `part.state.status === "completed"`, the
- *   one shape measured live: `part.tool` names the tool, `part.state.input` its arguments.
- *   `tool.execute.after` reads cleaner in OpenCode's own docs but is a separate named hook
- *   `(input, output)`, never an `event({event})` payload, and nothing here has captured it.
+ *   shape measured live: `part.tool` names the tool, `part.state.input` its arguments.
  *
  * A `matcher` on a `PostToolUse` group filters by tool name, exact or pipe-separated
  * alternation; absent, every tool matches.
@@ -124,6 +120,7 @@ export function generateOpencodeHooksBridge(rawHooksJson: string, plugin: string
 // (build.ts's skipHooksJson, translated here rather than skipped) - this file is the only
 // trigger this plugin's declared hooks have on OpenCode. See opencode-hooks-bridge.ts for
 // the mapping this generator applies and the measurements behind it.
+import { setupOpencodeEvents } from "../hooks/opencode-events.js";
 import { spawn } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
@@ -210,12 +207,13 @@ export const ${ident} = async (input) => {
   return {
     event: async ({ event }) => {
       try {
+        const directory = event?.properties?.directory ?? input.directory;
         const calls = [
-          ...stopCallsFor(event, input.directory),
-          ...postToolUseCallsFor(event, input.directory),
+          ...stopCallsFor(event, directory),
+          ...postToolUseCallsFor(event, directory),
         ];
         for (const call of calls) {
-          runHook(call.script, call.args, call.payload, input.directory);
+          runHook(call.script, call.args, call.payload, directory);
         }
       } catch {
         // Silent on purpose - see above.
@@ -226,5 +224,11 @@ export const ${ident} = async (input) => {
 
 ${ident}.stopCallsFor = stopCallsFor;
 ${ident}.postToolUseCallsFor = postToolUseCallsFor;
+
+export default {
+  id: ${JSON.stringify(`${plugin}-hooks`)},
+  server: ${ident},
+  setup: (ctx) => setupOpencodeEvents(ctx, ${ident}),
+};
 `;
 }

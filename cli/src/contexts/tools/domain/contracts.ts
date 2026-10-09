@@ -68,6 +68,8 @@ export interface AiTool<C> {
   readonly signalDir: string | null;
   readonly capabilities: C;
   readonly configOutputPaths?: Readonly<Record<string, string>>;
+  /** Bundled runtime modules required by plugins, owned by the tool rather than one plugin. */
+  readonly pluginRuntimeFiles?: Readonly<Record<string, string>>;
   /** The tool's framework-build contracts, one per supported build mode, so the build registry
    * is derived from the registered tools instead of a hand-kept list of tool/mode pairs. */
   readonly buildContracts?: {

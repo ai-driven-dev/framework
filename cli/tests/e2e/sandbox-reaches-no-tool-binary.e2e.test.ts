@@ -1,8 +1,10 @@
 import { execFile } from "node:child_process";
-import { delimiter } from "node:path";
+import { mkdtemp, symlink, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { delimiter, join } from "node:path";
 import { promisify } from "node:util";
 import { describe, expect, it } from "vitest";
-import { createTestEnv, sandboxedEnv } from "./helpers.js";
+import { createTestEnv, pathWithoutAidd, sandboxedEnv } from "./helpers.js";
 
 const execFileAsync = promisify(execFile);
 
@@ -53,6 +55,25 @@ describe("E2E: the sandbox a test spawns into", () => {
       await cleanup();
     }
   });
+
+  it.skipIf(process.platform === "win32")(
+    "keeps node reachable when npm has installed a tool binary beside it",
+    async () => {
+      const { projectDir, cleanup } = await createTestEnv("sandbox-path-crowded-");
+      try {
+        const crowded = await mkdtemp(join(tmpdir(), "aidd-crowded-bin-"));
+        await symlink(process.execPath, join(crowded, "node"));
+        await writeFile(join(crowded, "codex"), "#!/bin/sh\nexit 0\n", { mode: 0o755 });
+
+        const env = { PATH: pathWithoutAidd({ nodeDir: crowded }) };
+
+        expect(await whichUnderSandbox("node", projectDir, env)).not.toBe("");
+        expect(await whichUnderSandbox("codex", projectDir, env)).toBe("");
+      } finally {
+        await cleanup();
+      }
+    }
+  );
 
   it("sets a PATH of its own rather than inheriting the runner's", async () => {
     const { fakeHome, cleanup } = await createTestEnv("sandbox-path-own-");

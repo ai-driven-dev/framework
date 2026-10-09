@@ -2,6 +2,7 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import type { PluginFetchOptions } from "../../../../../src/contexts/distribution/domain/ports/plugin-fetcher.js";
 import { PluginAddUseCase } from "../../../../../src/contexts/framework/application/plugin/plugin-add-use-case.js";
+import { PluginDistributionLoader } from "../../../../../src/contexts/framework/application/plugin/plugin-distribution-loader.js";
 import { PluginUpdateUseCase } from "../../../../../src/contexts/framework/application/plugin/plugin-update-use-case.js";
 import type { BuiltMaterializationDeps } from "../../../../../src/contexts/framework/application/shared/apply-plugin-files-use-case.js";
 import { PluginDistributionReaderAdapter } from "../../../../../src/contexts/framework/infrastructure/plugin-distribution-reader-adapter.js";
@@ -43,8 +44,7 @@ async function setup(
   const addUseCase = new PluginAddUseCase(
     deps.fs,
     deps.manifestRepo,
-    deps.pluginFetcher,
-    reader,
+    new PluginDistributionLoader(deps.pluginFetcher, reader),
     deps.hasher,
     deps.logger,
     deps.marketplaceRegistry,
@@ -54,8 +54,7 @@ async function setup(
   const updateUseCase = new PluginUpdateUseCase(
     deps.fs,
     deps.manifestRepo,
-    options.fetcher ?? deps.pluginFetcher,
-    reader,
+    new PluginDistributionLoader(options.fetcher ?? deps.pluginFetcher, reader),
     deps.hasher,
     options.builtDeps
   );

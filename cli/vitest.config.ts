@@ -3,7 +3,7 @@ import { defineConfig } from "vitest/config";
 import { textLoader } from "./tests/helpers/vitest-text-loader.js";
 
 export default defineConfig({
-  plugins: [textLoader([".md", ".toml"])],
+  plugins: [textLoader([".md", ".toml", ".txt"])],
   test: {
     globals: false,
     environment: "node",

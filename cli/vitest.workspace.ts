@@ -1,7 +1,7 @@
 import { defineWorkspace } from "vitest/config";
 import { textLoader } from "./tests/helpers/vitest-text-loader.js";
 
-const TEXT_EXTENSIONS = [".md", ".toml"] as const;
+const TEXT_EXTENSIONS = [".md", ".toml", ".txt"] as const;
 
 export default defineWorkspace([
   {

@@ -2,7 +2,7 @@ import { defineConfig } from "vitest/config";
 import { UnloadableFileAsFailedTest } from "./tests/helpers/unloadable-file-as-failed-test.js";
 import { textLoader } from "./tests/helpers/vitest-text-loader.js";
 
-const TEXT_EXTENSIONS = [".md", ".toml"] as const;
+const TEXT_EXTENSIONS = [".md", ".toml", ".txt"] as const;
 
 /**
  * The projects a mutation run may use: the two that measure behaviour.

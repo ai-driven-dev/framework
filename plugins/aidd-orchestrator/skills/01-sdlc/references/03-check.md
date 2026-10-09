@@ -2,9 +2,22 @@
 
 ## Behavior
 
-Use one fresh checker, independent from implementation, to review the candidate against the contract, plan, and validation evidence. After the review clears, the same checker challenges whether the real outcome is trustworthy and serves the user.
+- Use one fresh checker, independent from implementation, to review the candidate against the contract, plan, and validation evidence.
+- After the review clears, the same checker challenges whether the real outcome is trustworthy and serves the user.
 
-Use product or contract findings as the next Frame source. Dispatch independent implementation findings through Todo and keep dependent repairs together in Deliver. Re-enter Check after every new candidate. Open the draft pull request when the checker returns no actionable finding.
+## Findings
+
+A checker's finding is routed by what it is about. A refusal the user gives at a pause is not one of these: `mode.md` routes that by artifact.
+
+- Product or contract findings are the next Frame source.
+- Independent implementation findings go through Todo; dependent repairs stay together in Deliver.
+- Re-enter Check after every new candidate.
+- Once the review has cleared, only a finding that contradicts the contract reopens a zone: carry any other onto the request as a note.
+- A finding already acted on is never routed twice. Repaired or not, it is a decision that requires user authority, and no request opens until that arrives.
+
+## Handoff
+
+- Commit whatever this zone wrote, then open the draft pull request when the checker returns no actionable finding.
 
 ```mermaid
 ---
