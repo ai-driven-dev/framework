@@ -28,10 +28,10 @@ test("AIDD_RUNS_DIR overrides where runs are written", () => {
   const script = path.join(root, "plugins/aidd-telemetry/hooks/journal.cjs");
   const repo = fs.mkdtempSync(path.join(os.tmpdir(), "aidd-override-"));
   const runs = path.join(repo, "local-runs");
-  const defaultRunsDir = path.join(repo, "aidd_docs", "runs");
+  const legacyRunsDir = path.join(repo, "aidd_docs", "runs");
 
   spawnSync("git", ["init", "-q", repo], { encoding: "utf8", env: CLEAN_ENV });
-  fs.mkdirSync(defaultRunsDir, { recursive: true });
+  fs.mkdirSync(legacyRunsDir, { recursive: true });
   writeTelemetryConfig(repo);
 
   spawnSync(process.execPath, [script, "session-start"], {
@@ -48,8 +48,9 @@ test("AIDD_RUNS_DIR overrides where runs are written", () => {
   const written = fs.readdirSync(runs, { recursive: true }).filter((f) => String(f).endsWith(".jsonl"));
   assert.equal(written.length, 1, "the record did not land under AIDD_RUNS_DIR");
 
-  const defaultWritten = fs.readdirSync(defaultRunsDir).filter((f) => f.endsWith(".jsonl"));
+  const defaultWritten = fs.readdirSync(legacyRunsDir).filter((f) => f.endsWith(".jsonl"));
   assert.equal(defaultWritten.length, 0, "the default aidd_docs/runs/ location was used anyway");
+  assert.equal(fs.existsSync(path.join(repo, ".git", "aidd", "runs")), false, "the common git directory was used anyway");
 
   fs.rmSync(repo, { recursive: true, force: true });
 });

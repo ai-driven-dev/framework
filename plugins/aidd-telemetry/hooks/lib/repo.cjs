@@ -200,9 +200,16 @@ function deriveProjectId(repoRoot) {
   return projectIdFromRemote(repoRoot, getRemoteUrl(repoRoot));
 }
 
-// `AIDD_RUNS_DIR` overrides outright. The directory existing is not a second gate.
-function runsDir(repoRoot) {
-  return process.env.AIDD_RUNS_DIR || path.join(repoRoot, "aidd_docs", "runs");
+// `AIDD_RUNS_DIR` overrides outright. Otherwise the clone's common git directory: shared by
+// every worktree of one clone, outside every working tree, and never touched by
+// `git worktree remove`. Without a common dir, the checkout's own root, as before.
+// The directory existing is not a second gate.
+const RUNS_UNDER_GIT_DIR = ["aidd", "runs"];
+
+function runsDir(repoRoot, commonDir) {
+  if (process.env.AIDD_RUNS_DIR) return process.env.AIDD_RUNS_DIR;
+  if (typeof commonDir === "string" && commonDir) return path.join(commonDir, ...RUNS_UNDER_GIT_DIR);
+  return path.join(repoRoot, "aidd_docs", "runs");
 }
 
 // What this hook writes is who-worked-on-what-for-how-long, so it is not left world-readable.
@@ -250,17 +257,18 @@ function restrictToCurrentUser(target, { inheritable = false } = {}) {
   }
 }
 
-// A decision, not an inherited default: a worktree keeps its own journal, at the worktree's
-// own root and never at `--git-common-dir`'s shared repository.
-//
-// A bare clone plus worktrees has no main working tree to write into at all, and even where
-// one exists, writing into it from another worktree dirties a checkout on a different branch
-// whose `.gitignore` was never asked to carry the entry. Cross-worktree joining is served by
-// `worktreeFields` naming the worktree on `session_start` instead.
+// A decision, not an inherited default: one journal per clone, under the common git
+// directory, never at a worktree's root. A worktree's root is deleted by
+// `git worktree remove` with an ignored journal inside it, which lost every session an
+// agent ran there. The earlier reasons still hold and are what rules out the main working
+// tree: a bare clone has none, and writing into it from another worktree dirties a
+// checkout on a different branch. `worktreeFields` still names the worktree on
+// `session_start`, so the shared journal keeps sessions apart.
+// Recorded in aidd_docs/memory/internal/decisions/one-run-journal-per-clone.md.
 function resolveRunsDir(cwd) {
   const location = getRepoLocation(cwd);
   if (!location || !telemetryEnabled(location.repoRoot)) return null;
-  return { ...location, dir: runsDir(location.repoRoot) };
+  return { ...location, dir: runsDir(location.repoRoot, location.gitDir) };
 }
 
 // A token-authenticated clone leaves a live credential in the remote's userinfo, and the

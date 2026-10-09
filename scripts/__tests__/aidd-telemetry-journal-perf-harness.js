@@ -30,7 +30,7 @@ execFileSync("git", ["config", "user.email", "test@example.com"], { cwd: repo, e
 execFileSync("git", ["config", "user.name", "Test"], { cwd: repo, env: CLEAN_ENV });
 execFileSync("git", ["remote", "add", "origin", "git@github.com:acme/perf.git"], { cwd: repo, env: CLEAN_ENV });
 
-const dir = path.join(repo, "aidd_docs", "runs");
+const dir = path.join(repo, ".git", "aidd", "runs");
 fs.mkdirSync(dir, { recursive: true });
 
 fs.mkdirSync(path.join(repo, ".aidd"), { recursive: true });

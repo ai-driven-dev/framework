@@ -32,6 +32,7 @@ Read on demand:
 
 - [internal/decisions/a-price-table-is-the-destination-s.md](internal/decisions/a-price-table-is-the-destination-s.md)
 - [internal/decisions/measurement-may-reach-a-hosted-destination.md](internal/decisions/measurement-may-reach-a-hosted-destination.md)
+- [internal/decisions/one-run-journal-per-clone.md](internal/decisions/one-run-journal-per-clone.md)
 <!-- files:end -->
 
 ## Maintaining it
