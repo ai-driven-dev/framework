@@ -1,0 +1,7 @@
+{
+  "plugins/aidd-context/hooks/update_memory.js": "858e87f2927f25f1def3809a3a956becaab67376ca5699aab227b9b6a3724085",
+  "plugins/aidd-context/skills/02-project-memory/actions/04-sync.md": "7c5c2f1c9d7a8a0bd8eedfc9bddc6e655a22a9bc741caa254cff4fc23816c454",
+  "plugins/aidd-context/skills/02-project-memory/references/tools.md": "c4afad757ddde5d973d27e218bd794c8425531e2853ea626b39293689f1a8662",
+  "fixture_hook_sha256": "858e87f2927f25f1def3809a3a956becaab67376ca5699aab227b9b6a3724085",
+  "hook_matches_candidate": true
+}

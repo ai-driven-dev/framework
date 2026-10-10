@@ -1,0 +1,74 @@
+# Review: AIDD #914 phase 1
+
+- **Verdict**: changes-requested
+- **Score**: 65/100 (3/4 critères de phase 1 étayés, déduction pour risques de destinations et maintenance)
+- **Diff**: `41e91691b5837a8c27475d0115725131bb53bf41...working tree`
+- **Axes run**: code, functional, relevancy
+- **Date**: 2026_10_10
+- **Findings**: 0 critical, 3 warning, 2 minor
+
+## Phases
+
+### Phase 1 — Reconnaître Kilo et partager la mémoire
+
+- [x] Les six signaux proposent Kilo ; fichiers OpenCode seuls et AGENTS.md seul ne le proposent pas. — `scripts/__tests__/context-kilo-detection.test.js:47`, `evidence/phase-1/detection-green.txt` (24/24), `detection-mutation.txt`.
+- [x] Kilo + outils partageant AGENTS.md donnent un seul bloc ; contenu utilisateur et fichiers non sélectionnés identiques. — `plugins/aidd-context/hooks/update_memory.js:264`, `scripts/__tests__/update-memory.test.js:280`, `memory-green.txt` (36/36).
+- [x] Deux synchronisations identiques ne réécrivent rien ; un marqueur invalide dans la dernière cible nommée laisse toutes les cibles et README inchangés. — `scripts/__tests__/update-memory.test.js:280`, `scripts/__tests__/update-memory.test.js:293`, `memory-mutation.txt` (mutation écrit la première cible et le test nommé échoue).
+- [ ] CLAUDE.md conserve @imports, Copilot conserve ses liens relatifs ; Kilo charge AGENTS.md et lit une référence mémoire nécessaire à la tâche. — imports et liens couverts hors ligne ; preuve Codex puis Kilo encore en cours, `runtime-codex.jsonl` contient une tentative bloquée par le host. **fix**.
+
+### Phase 2 — Publier une règle Kilo sans perdre sa configuration
+
+- [ ] Règle canonique Kilo et chemin instructions exact existent ; Kilo charge le corps ; dossier seul ne suffit pas. — **not-applicable** : phase non autorisée, aucune implémentation examinée.
+- [ ] Aucun choix implicite en ambiguïté ; propriétaire unique réutilisé, annulation ne crée aucun fichier. — **not-applicable** : phase non autorisée, aucune implémentation examinée.
+- [ ] JSON/JSONC gardent doublons, ordre, commentaires, trailing commas et format hors insertion ; second passage byte-identique. — **not-applicable** : phase non autorisée, aucune implémentation examinée.
+- [ ] Configuration invalide ou cible dangereuse, y compris dernier fichier d’un fan-out, ne laisse aucun changement ; erreurs de publication testées ne laissent ni règle orpheline ni référence cassée. — **not-applicable** : phase non autorisée, aucune implémentation examinée.
+- [ ] Les publications Claude/Cursor/Copilot et partagées Codex/OpenCode du writer retenu gardent leurs contrats et les blocs de mémoire. — **not-applicable** : phase non autorisée, aucune implémentation examinée.
+
+### Phase 3 — Générer un skill natif ou portable choisi
+
+- [ ] Kilo-only produit uniquement .kilo/skills/name avec name/description valides. — **not-applicable** : phase non autorisée, aucune implémentation examinée.
+- [ ] Portable sans accord explicite ne produit jamais .agents/skills ; accord portable produit exactement une copie. — **not-applicable** : phase non autorisée, aucune implémentation examinée.
+- [ ] Mise à jour préserve user assets ; conflit/refus laisse tous les arbres inchangés ; rerun identique. — **not-applicable** : phase non autorisée, aucune implémentation examinée.
+- [ ] Les formats et champs des sorties Claude/Codex/OpenCode restent conformes ; Kilo découvre et utilise le skill livré. — **not-applicable** : phase non autorisée, aucune implémentation examinée.
+
+### Phase 4 — Générer agents et workflows natifs
+
+- [ ] Nom agent Kilo vient du fichier ; frontmatter ne reçoit pas name Claude ; mode subagent et options demandées corrects. — **not-applicable** : phase non autorisée, aucune implémentation examinée.
+- [ ] Workflow Kilo au chemin canonique ; uniquement champs officiellement supportés. — **not-applicable** : phase non autorisée, aucune implémentation examinée.
+- [ ] Formats Claude/Codex/OpenCode acceptés et bodies intacts, cibles unsupported sautées explicitement. — **not-applicable** : phase non autorisée, aucune implémentation examinée.
+- [ ] Invalides ou collisions refusés sans écrire une autre cible ; relance identique ; Kilo charge et utilise agent et workflow. — **not-applicable** : phase non autorisée, aucune implémentation examinée.
+
+### Phase 5 — Guider les hooks sans conversion inventée
+
+- [ ] Kilo-only renvoie guidance sourcée précise et aucune écriture. — **not-applicable** : phase non autorisée, aucune implémentation examinée.
+- [ ] Événement non prouvé déclaré unsupported, aucune correspondance inventée. — **not-applicable** : phase non autorisée, aucune implémentation examinée.
+- [ ] Fan-out mixte conserve les contrats des outils supportés et n’ajoute pas de config hooks Kilo. — **not-applicable** : phase non autorisée, aucune implémentation examinée.
+- [ ] Deux passages identiques ne dupliquent pas l’entrée AIDD ; hooks utilisateur intacts ; une entrée invalide bloque avant script/config. — **not-applicable** : phase non autorisée, aucune implémentation examinée.
+
+### Phase 6 — Consolider les preuves de génération et de runtime
+
+- [ ] Traces démontrent que les skills livrés ont généré les sorties testées et que le vrai Kilo les découvre/utilise. — **not-applicable** : phase non autorisée, aucune implémentation examinée.
+- [ ] Contrôles négatifs détectent artefact absent/non relié ; second passage et refus laissent les états attendus. — **not-applicable** : phase non autorisée, aucune implémentation examinée.
+- [ ] Tous tests offline Claude et régressions automatisées des cibles passent ; aucun runtime Claude authentifié prétendu. — **not-applicable** : phase non autorisée, aucune implémentation examinée.
+- [ ] Rapport décrit OS/versions, cas skipped/blocked et limites ; AC15 ne passe que sur la couverture runtime prévue réellement exécutée. — **not-applicable** : phase non autorisée, aucune implémentation examinée.
+
+## Findings
+
+| Sev | Kind | Phase | Location | Issue | Fix |
+| --- | ---- | ----- | -------- | ----- | --- |
+| 🟡 warning | code | 1 | `plugins/aidd-context/hooks/update_memory.js:187` et `:374` | Le préflight vérifie type, liens et lecture, mais aucune permission d'écriture. Un fichier régulier tardif non inscriptible peut laisser la première cible écrite avant EACCES. Échec détectable, distinct de crash/concurrence exclus par le contrat. | Vérifier l'accès d'écriture pertinent avant toute mutation et ajouter un test filesystem réel sur une dernière cible non inscriptible. |
+| 🟡 warning | rot | 1 | `plugins/aidd-context/hooks/update_memory.js:319` ; `references/tools.md:26` | README contrôlé sans condition, alors que le contrat réserve la destination README à son opt-in. Un README sans marqueurs porté par un lien provoque désormais un refus de toute synchronisation sélectionnée. | Appliquer validation/mutation du README à son opt-in réel, avec un test négatif de README non opt-in inchangé. |
+| 🟡 warning | functional | 1 | `phase-1.md:82` ; `evidence/phase-1/runtime-codex.jsonl` | Critère runtime partiel : aucune preuve achevée que le skill actualisé génère AGENTS puis que Kilo lit la référence nécessaire et applique son contenu. | Achever le parcours réel et conserver traces, artefact généré et réponse obtenue, ou conserver le statut incomplet sans commit de TASK 3. |
+| 🟢 minor | rot | 1 | `plugins/aidd-context/hooks/update_memory.js:163` | Le scanner de fences est dupliqué depuis findBlockLines ; correction future susceptible de diverger entre préflight et mutation. | Partager le scanner existant sans généralisation hors périmètre. |
+| 🟢 minor | code | 1 | `plugins/aidd-context/hooks/update_memory.js:382` | Condition inaccessible : unpaired n'est affecté que lorsque explicit est faux, tandis que tools.length > 0 rend explicit vrai. | Retirer cet état et cette branche morts, conserver le diagnostic automatique. |
+
+## Verification
+
+| Metric | Value |
+| --- | --- |
+| Verified | 75% (3/4 critères applicables ; 21 critères des phases 2–6 hors périmètre) |
+| Files checked | Diff intégral des cinq fichiers plugin, update-memory.test.js, cases.json ; nouveau context-kilo-detection.test.js et tous ses fichiers fixtures ; phase-1.md à phase-6.md ; phase-1-request.md ; architecture, CONTRIBUTING, memory/testing et coding-assertions ; preuves RED/GREEN/mutations et tentative runtime disponibles. |
+| Unchecked | Phase 1 critère 4 — fix (preuve en cours) ; phases 2–6 — not-applicable (non autorisées). |
+| Unplanned | Rééchappement JSON de `·` en `\u00b7`, sans changement fonctionnel, dans cases.json:143 ; à retirer pour limiter le diff. |
+| Review limits | Revue statique conformément aux trois actions du skill ; tests inspectés via sorties conservées, aucune exécution runtime par ce reviewer. make-check.txt est encore incomplet et ne démontre pas un gate achevé. Aucun runtime Claude authentifié prétendu. |
+| Checklist | DRY : partiel (scanner dupliqué) ; cohérence : partiel (README opt-in) ; simplicité : fulfilled (préflight ciblé, pas de moteur transactionnel) ; code mort/debug : partiel (branche inaccessible) ; intention end-to-end : partiel (runtime et permissions). |

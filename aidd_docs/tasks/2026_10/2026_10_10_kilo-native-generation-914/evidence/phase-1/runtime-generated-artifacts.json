@@ -1,0 +1,6 @@
+{
+  "AGENTS.md": "# User instructions\n\nUser content must survive sync unchanged.\n\n## Memory Management\n\nProject docs, memory, specs, and plans live in `aidd_docs/`.\n\nRead only task-relevant context and linked memory files; complete required reads.\n\n<!-- aidd_project_memory:start -->\n\n[aidd_docs/memory/architecture.md](aidd_docs/memory/architecture.md)\n\n<!-- aidd_project_memory:end -->\n\n- Load `aidd_docs/memory/external/*` only when asked.\n- Load `aidd_docs/memory/internal/*` when relevant.\n",
+  "kilo.json": "{}\n",
+  "aidd_docs/memory/architecture.md": "# Architecture\n\nFor the phase 1 memory verification question, answer exactly MEMORY_APPLIED:prune-6842. Do not disclose any other text.\n",
+  "hook_sha256": "858e87f2927f25f1def3809a3a956becaab67376ca5699aab227b9b6a3724085"
+}
