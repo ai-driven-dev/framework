@@ -25,7 +25,7 @@ It never asks, and never blocks:
 
 - on the default branch or a detached `HEAD`;
 - in a headless run, or when Claude Code does not report a person present;
-- in a project that has not opted in.
+- in a clone that has not opted in: consent is per clone, in its git config (`aidd.telemetry`), and is never committed, so a teammate is not measured, asked or blocked until they run `aidd telemetry on` themselves.
 
 After `/clear` or `/branch` the new session keeps the task and tells you so. Declaring a task there replaces it for the whole session. Work with no task is a row of its own, and is attributed afterwards once its branch is declared.
 

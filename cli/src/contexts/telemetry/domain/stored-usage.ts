@@ -35,6 +35,9 @@ export interface Upserted {
   readonly records: readonly StoredUsage[];
   readonly added: number;
   readonly updated: number;
+  /** The months whose partition no longer says what it did: where each added or replaced
+   * record is now, and where a replaced one was. The rest are as they were. */
+  readonly months: ReadonlySet<string>;
 }
 
 /** Folds incoming records into what is held, with the same fold that counts a call once. Held
@@ -46,34 +49,43 @@ export function upsertUsage(
 ): Upserted {
   const before = new Map(held.map((record) => [id(record), record]));
   const records = foldUsage([...held, ...incoming]);
+  const months = new Set<string>();
   let added = 0;
   let updated = 0;
   for (const record of records) {
     const was = before.get(id(record));
+    if (was !== undefined && was === record) continue;
     if (was === undefined) added += 1;
-    else if (was !== record) updated += 1;
+    else updated += 1;
+    for (const moved of [record, was]) {
+      const month = moved === undefined ? null : monthOf(moved.at);
+      if (month !== null) months.add(month);
+    }
   }
-  return { records, added, updated };
-}
-
-function compareStored(a: StoredUsage, b: StoredUsage): number {
-  const x = Date.parse(a.at);
-  const y = Date.parse(b.at);
-  if (x !== y) return x - y;
-  return compareText(id(a), id(b));
+  return { records, added, updated, months };
 }
 
 /** Records grouped by the month of their own time, each month in time order then key, so the
  * bytes of a partition depend on what it holds and never on the order it was found in. A
- * record whose time does not parse has no month and is left out. */
+ * record whose time does not parse has no month and is left out. Linear in the records, bar
+ * the sort: each time is parsed once, and each month's array only ever grows by `push`. */
 export function partitionByMonth(
   records: readonly StoredUsage[]
 ): ReadonlyMap<string, readonly StoredUsage[]> {
+  const dated: { readonly record: StoredUsage; readonly instant: number; readonly id: string }[] =
+    [];
+  for (const record of records) {
+    if (monthOf(record.at) !== null) {
+      dated.push({ record, instant: Date.parse(record.at), id: id(record) });
+    }
+  }
+  dated.sort((a, b) => a.instant - b.instant || compareText(a.id, b.id));
   const months = new Map<string, StoredUsage[]>();
-  for (const record of [...records].sort(compareStored)) {
-    const month = monthOf(record.at);
-    if (month === null) continue;
-    months.set(month, [...(months.get(month) ?? []), record]);
+  for (const { record } of dated) {
+    const month = monthOf(record.at) as string;
+    const held = months.get(month);
+    if (held === undefined) months.set(month, [record]);
+    else held.push(record);
   }
   return new Map([...months.entries()].sort(([a], [b]) => compareText(a, b)));
 }

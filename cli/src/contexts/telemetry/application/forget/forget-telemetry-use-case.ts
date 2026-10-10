@@ -1,9 +1,12 @@
-import type { BindingSnapshotStore } from "../../domain/ports/binding-snapshot-store.js";
+import type { BindingSnapshotStore } from "../../domain/ports/bindings/binding-snapshot-store.js";
 import type {
   ErasureEntry,
   MeasurementErasure,
 } from "../../domain/ports/forget/measurement-erasure.js";
-import type { RepositoryDeclarations } from "../../domain/ports/forget/repository-declarations.js";
+import type {
+  RepositoryDeclarations,
+  RepositoryKeys,
+} from "../../domain/ports/forget/repository-declarations.js";
 import type { RepositoryLocator } from "../../domain/ports/repository-locator.js";
 import type { ResolutionStore } from "../../domain/ports/resolution-store.js";
 import type { UsageLedger } from "../../domain/ports/usage-ledger.js";
@@ -11,8 +14,8 @@ import { repositoryIdOf } from "../../domain/repository-identity.js";
 
 export interface ForgetPlan {
   readonly entries: readonly ErasureEntry[];
-  /** Repositories still on disk, with the declaration keys their git config holds. */
-  readonly repositories: readonly { readonly root: string; readonly keys: number }[];
+  /** Repositories still on disk, with what their git config holds. */
+  readonly repositories: readonly ({ readonly root: string } & RepositoryKeys)[];
   /** Roots the declarations were made in that are gone, or no longer that repository. */
   readonly missing: readonly string[];
   /** Repositories that declared a task and whose location was never recorded. */
@@ -25,7 +28,8 @@ export type ForgetResult =
 
 function nothingToForget(plan: ForgetPlan): boolean {
   return (
-    plan.entries.length === 0 && plan.repositories.every((repository) => repository.keys === 0)
+    plan.entries.length === 0 &&
+    plan.repositories.every((repository) => repository.taskKeys === 0 && !repository.consent)
   );
 }
 
@@ -59,9 +63,9 @@ export class ForgetTelemetryUseCase {
   private async plan(): Promise<ForgetPlan> {
     const entries = await this.erasure.inventory();
     const found = await this.repositoriesDeclaredIn();
-    const repositories: { root: string; keys: number }[] = [];
+    const repositories: ({ root: string } & RepositoryKeys)[] = [];
     for (const root of found.live) {
-      repositories.push({ root, keys: await this.declarations.count(root) });
+      repositories.push({ root, ...(await this.declarations.count(root)) });
     }
     return {
       entries,
@@ -71,16 +75,21 @@ export class ForgetTelemetryUseCase {
     };
   }
 
-  /** The repositories a declaration was made in, from the snapshots, and where each lives from
-   * what ingest remembered. A snapshot carries no path of its own. */
+  /** The repositories something was kept in: a declaration was made there (the snapshots), or
+   * ingest read it with its consent granted. Where each lives comes from what ingest
+   * remembered; a snapshot carries no path of its own. */
   private async repositoriesDeclaredIn(): Promise<{
     live: string[];
     missing: string[];
     unlocated: number;
   }> {
     const ids = new Set([...(await this.snapshots.latest()).values()].map((s) => s.repository_id));
+    const remembered = [...(await this.resolutions.load()).values()];
+    for (const resolution of remembered) {
+      if (resolution.consented) ids.add(resolution.repository_id);
+    }
     const rootsOf = new Map<string, Set<string>>();
-    for (const resolution of (await this.resolutions.load()).values()) {
+    for (const resolution of remembered) {
       if (!ids.has(resolution.repository_id)) continue;
       const roots = rootsOf.get(resolution.repository_id) ?? new Set<string>();
       roots.add(resolution.root);

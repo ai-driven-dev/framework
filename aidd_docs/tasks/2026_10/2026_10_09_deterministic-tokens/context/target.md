@@ -40,7 +40,9 @@ tokens per task and ticket. Push to Gouvernail. Ship fast and clean.
      `SessionStart` records `(CLAUDE_PID, process start time) → session`; on
      `source: clear` it copies the predecessor's binding to the new id, tagged
      `carried: clear from <id>`. `resume` uses the resumed session's own binding; `fork`
-     and `startup` carry nothing. Start time guards PID reuse.
+     carries the predecessor's binding like `clear`; `startup` carries nothing. The machine's
+     boot time guards PID reuse (a pid reused within one boot is a residual limit, see
+     `usage-contract.md`).
    - A carried binding is provisional: it is announced (`systemMessage`, measured visible:
      "SessionStart:clear says: …") with the command to change it, and the first explicit
      `aidd task start` in that session replaces it for the whole session, retroactively.
@@ -60,7 +62,8 @@ tokens per task and ticket. Push to Gouvernail. Ship fast and clean.
    - Skills that know the ticket call the command first, so the block never shows.
    - No launcher, orchestrator, env var or branch convention is required or read.
 6. **Attribution** (one pure local function, decided: the command is the only source):
-   session binding →
+   session declaration, else the session's carry, else the branch declaration in force at the
+   call, else
    `unattributed` with reason `outside-repo | root-unresolved | no-binding | declared-none`.
 7. **Report axes**: person (v1 opt-in `person_id`), session, model, day, repository, task,
    ticket. Four counters always separate.

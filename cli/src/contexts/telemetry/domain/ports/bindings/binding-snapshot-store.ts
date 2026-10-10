@@ -1,4 +1,4 @@
-import type { BranchSnapshot } from "../branch-binding.js";
+import type { BranchSnapshot } from "../../branch-binding.js";
 
 export interface BindingSnapshotStore {
   /** The latest snapshot of each branch, keyed by `snapshotKey`. */

@@ -1,10 +1,9 @@
-import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { git, initRepository, sandboxGitEnv } from "../helpers/git-sandbox.js";
 import { createTestEnv, runCli } from "./helpers.js";
 
-const GRANTED = JSON.stringify({ telemetry: { enabled: true, version: 2 } });
 const SESSION = "00000000-0000-4000-8000-0000000000aa";
 
 let env: Awaited<ReturnType<typeof createTestEnv>>;
@@ -19,8 +18,7 @@ beforeEach(async () => {
   telemetry = join(env.tempDir, "telemetry-dir");
   initRepository(repo, gitEnv, { remote: "git@github.com:acme/widgets.git" });
   git(repo, gitEnv, "switch", "-q", "-c", "feat/x");
-  await mkdir(join(repo, ".aidd"));
-  await writeFile(join(repo, ".aidd", "config.json"), GRANTED);
+  git(repo, gitEnv, "config", "--local", "aidd.telemetry", "2");
 });
 afterEach(async () => {
   await env.cleanup();
@@ -61,6 +59,22 @@ describe("aidd telemetry task", () => {
       by: "command",
     });
   });
+
+  it("declares at once while an ingest holds the ledger lock", async () => {
+    await mkdir(join(telemetry, "ledger"), { recursive: true });
+    await writeFile(
+      join(telemetry, "ledger", ".lock"),
+      JSON.stringify({ pid: process.pid, created_at: new Date().toISOString() })
+    );
+    const blocked = Symbol("still waiting for the ledger lock");
+    const outcome = await Promise.race([
+      task(["checkout-fix"]),
+      new Promise<symbol>((resolve) => setTimeout(() => resolve(blocked), 5_000)),
+    ]);
+    expect(outcome).not.toBe(blocked);
+    expect((await sessionLines()).length).toBe(1);
+    expect(config("branch.feat/x.aiddTask")).toBe("checkout-fix");
+  }, 20_000);
 
   it("snapshots the branch declaration at once", async () => {
     await task(["checkout-fix"]);
@@ -148,7 +162,7 @@ describe("aidd telemetry task", () => {
   });
 
   it("refuses a project that has not opted in, naming the command that opts in", async () => {
-    await rm(join(repo, ".aidd", "config.json"));
+    git(repo, gitEnv, "config", "--local", "--unset", "aidd.telemetry");
     const run = await task(["t"]);
     expect(run.exitCode).toBe(1);
     expect(run.stderr + run.stdout).toContain("aidd telemetry on");
@@ -156,11 +170,18 @@ describe("aidd telemetry task", () => {
     expect(() => config("branch.feat/x.aiddTask")).toThrow();
   });
 
-  it("refuses a project whose consent is the previous version's bare enabled", async () => {
+  it("refuses a clone whose only consent is a committed .aidd/config.json", async () => {
+    git(repo, gitEnv, "config", "--local", "--unset", "aidd.telemetry");
+    await mkdir(join(repo, ".aidd"));
     await writeFile(
       join(repo, ".aidd", "config.json"),
-      JSON.stringify({ telemetry: { enabled: true } })
+      JSON.stringify({ telemetry: { enabled: true, version: 2 } })
     );
+    expect((await task(["t"])).exitCode).toBe(1);
+  });
+
+  it("refuses a clone that switched measurement off", async () => {
+    git(repo, gitEnv, "config", "--local", "aidd.telemetry", "off");
     expect((await task(["t"])).exitCode).toBe(1);
   });
 

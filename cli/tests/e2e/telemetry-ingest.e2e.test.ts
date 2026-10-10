@@ -6,7 +6,6 @@ import { git, initRepository, sandboxGitEnv } from "../helpers/git-sandbox.js";
 import { createTestEnv, runCli } from "./helpers.js";
 
 const FIXTURES = resolve(import.meta.dirname, "../fixtures/claude-usage/projects");
-const GRANTED = JSON.stringify({ telemetry: { enabled: true, version: 2 } });
 
 let env: Awaited<ReturnType<typeof createTestEnv>>;
 let repoA: string;
@@ -25,8 +24,7 @@ beforeEach(async () => {
   initRepository(repoA, gitEnv, { remote: "git@github.com:acme/widgets.git" });
   initRepository(repoB, gitEnv, { remote: "git@github.com:acme/other.git" });
   await mkdir(join(repoA, "src"));
-  await mkdir(join(repoA, ".aidd"));
-  await writeFile(join(repoA, ".aidd", "config.json"), GRANTED);
+  git(repoA, gitEnv, "config", "--local", "aidd.telemetry", "2");
 });
 
 afterEach(async () => {
@@ -182,7 +180,7 @@ describe("aidd telemetry ingest", () => {
 
   it("stores nothing for a project that never opted in", async () => {
     await writeTranscripts();
-    await rm(join(repoA, ".aidd"), { recursive: true });
+    git(repoA, gitEnv, "config", "--local", "--unset", "aidd.telemetry");
     const run = await ingest();
     expect(run.stdout).toContain("0 calls added");
     expect(run.stdout).toContain("5 calls from a project that has not opted in");

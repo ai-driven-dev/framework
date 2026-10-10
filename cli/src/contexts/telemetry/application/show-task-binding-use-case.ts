@@ -1,6 +1,6 @@
 import { type Binding, resolveBinding } from "../domain/declaration/binding-resolution.js";
 import type { BranchRole } from "../domain/declaration/branch-role.js";
-import type { SessionBindingStore } from "../domain/ports/session-binding-store.js";
+import type { SessionBindingStore } from "../domain/ports/bindings/session-binding-store.js";
 import type { BranchDeclarations } from "./branch-declarations.js";
 import type { ConsentedRepositories, RefusalReason } from "./consented-repositories.js";
 

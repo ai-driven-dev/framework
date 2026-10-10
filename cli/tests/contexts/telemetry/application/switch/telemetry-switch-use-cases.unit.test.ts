@@ -25,16 +25,36 @@ function setup(settings: (string | null)[] = []) {
   const consents = new FakeConsents();
   const ledger = new InMemoryLedger(events);
   const resolutions = new InMemoryResolutions();
-  const writes: { root: string; text: string }[] = [];
+  const writes: { root: string; value: string }[] = [];
+  const config = {
+    texts: new Map<string, string>(),
+    written: [] as { root: string; text: string }[],
+    removed: [] as string[],
+  };
   const hooksSeen: string[] = [];
   const journalSeen: string[] = [];
+  const writer = {
+    async set(root: string, value: string) {
+      events.push("consent");
+      writes.push({ root, value });
+      consents.values.set(root, value);
+    },
+  };
   const on = new TelemetryOnUseCase(
     locator,
     consents,
+    writer,
     {
+      async read(root) {
+        return config.texts.get(root) ?? null;
+      },
       async write(root, text) {
         events.push("config");
-        writes.push({ root, text });
+        config.written.push({ root, text });
+      },
+      async remove(root) {
+        events.push("config-removed");
+        config.removed.push(root);
       },
     },
     {
@@ -56,41 +76,93 @@ function setup(settings: (string | null)[] = []) {
     { texts: async () => settings },
     false
   );
-  const off = new TelemetryOffUseCase(locator, consents, {
-    async write(root, text) {
-      writes.push({ root, text });
-    },
-  });
+  const off = new TelemetryOffUseCase(locator, consents, writer);
   locator.directories.set("/w/repo", repository("/w/repo", "/w/main"));
-  return { on, off, consents, ledger, resolutions, writes, events, hooksSeen, journalSeen };
+  return {
+    on,
+    off,
+    consents,
+    ledger,
+    resolutions,
+    writes,
+    config,
+    events,
+    hooksSeen,
+    journalSeen,
+  };
 }
 
 describe("aidd telemetry on", () => {
   it("writes consent before it cleans, and cleans the repository it was run in", async () => {
     const s = setup();
     const result = await s.on.execute("/w/repo");
-    expect(s.events.slice(0, 3)).toEqual(["config", "hooks", "journal"]);
-    expect(s.writes).toHaveLength(1);
-    expect(s.writes[0]?.root).toBe("/w/repo");
-    expect(JSON.parse(s.writes[0]?.text ?? "")).toEqual({
-      telemetry: { enabled: true, version: 2 },
-    });
+    expect(s.events.slice(0, 3)).toEqual(["consent", "hooks", "journal"]);
+    expect(s.writes).toEqual([{ root: "/w/repo", value: "2" }]);
     expect(s.hooksSeen).toEqual(["/w/repo"]);
     expect(s.journalSeen).toEqual(["/w/repo"]);
     expect(result).toMatchObject({
       status: "on",
-      configWritten: true,
+      consentWritten: true,
+      legacyConfig: "none",
       hook: { lineRemoved: true },
     });
   });
 
-  it("still cleans, and writes nothing, when the project already granted this version", async () => {
+  it("still cleans, and writes no consent, when the clone already granted this version", async () => {
     const s = setup();
-    s.consents.texts.set("/w/repo", '{"telemetry":{"enabled":true,"version":2}}');
+    s.consents.values.set("/w/repo", "2");
     const result = await s.on.execute("/w/repo");
     expect(s.writes).toEqual([]);
     expect(s.hooksSeen).toEqual(["/w/repo"]);
-    expect(result).toMatchObject({ status: "on", configWritten: false });
+    expect(result).toMatchObject({ status: "on", consentWritten: false });
+  });
+
+  it("grants again over a withdrawn or a previous value", async () => {
+    for (const value of ["off", "1", "true"]) {
+      const s = setup();
+      s.consents.values.set("/w/repo", value);
+      await s.on.execute("/w/repo");
+      expect(s.writes).toEqual([{ root: "/w/repo", value: "2" }]);
+    }
+  });
+
+  it("removes the previous version's block from .aidd/config.json and keeps the rest", async () => {
+    const s = setup();
+    s.config.texts.set(
+      "/w/repo",
+      '{\n  "keep": 1,\n  "telemetry": { "enabled": true, "endpoint": "x" }\n}\n'
+    );
+    const result = await s.on.execute("/w/repo");
+    expect(result).toMatchObject({ legacyConfig: "block-removed" });
+    expect(s.config.written).toEqual([{ root: "/w/repo", text: '{\n  "keep": 1\n}\n' }]);
+    expect(s.config.removed).toEqual([]);
+  });
+
+  it("deletes .aidd/config.json when the block was all it held", async () => {
+    const s = setup();
+    s.config.texts.set("/w/repo", '{"telemetry":{"enabled":true,"endpoint":"x"}}');
+    expect(await s.on.execute("/w/repo")).toMatchObject({ legacyConfig: "file-deleted" });
+    expect(s.config.removed).toEqual(["/w/repo"]);
+    expect(s.config.written).toEqual([]);
+  });
+
+  it("leaves a config that does not parse alone, and still turns measurement on", async () => {
+    const s = setup();
+    s.config.texts.set("/w/repo", "{nope");
+    expect(await s.on.execute("/w/repo")).toMatchObject({
+      consentWritten: true,
+      legacyConfig: "unparseable",
+    });
+    expect(s.config.written).toEqual([]);
+    expect(s.config.removed).toEqual([]);
+  });
+
+  it("never reads .aidd/config.json as consent", async () => {
+    const s = setup();
+    s.config.texts.set("/w/repo", '{"telemetry":{"enabled":true,"version":2}}');
+    const result = await s.on.execute("/w/repo");
+    expect(result).toMatchObject({ consentWritten: true });
+    expect(s.writes).toEqual([{ root: "/w/repo", value: "2" }]);
   });
 
   it("refuses outside a repository without touching anything", async () => {
@@ -102,12 +174,12 @@ describe("aidd telemetry on", () => {
     expect(s.events).toEqual([]);
   });
 
-  it("refuses an unreadable config without touching anything", async () => {
+  it("refuses a git config it cannot read without touching anything", async () => {
     const s = setup();
-    s.consents.texts.set("/w/repo", "{nope");
+    s.consents.unreadable.add("/w/repo");
     expect(await s.on.execute("/w/repo")).toEqual({
       status: "refused",
-      reason: "unreadable-config",
+      reason: "unreadable-git-config",
     });
     expect(s.events).toEqual([]);
   });
@@ -139,6 +211,18 @@ describe("aidd telemetry on", () => {
     expect(s.resolutions.resolutions.get("/gone/o")?.consented).toBe(false);
   });
 
+  it("grants the remembered refusal of a linked worktree deleted before the opt-in", async () => {
+    const s = setup();
+    // The repository's id is its root commit here; the worktree is neither root `on` knows.
+    s.resolutions.resolutions.set("/gone/wt", {
+      repository_id: "c",
+      root: "/w/repo-wt-deleted",
+      consented: false,
+    });
+    await s.on.execute("/w/repo");
+    expect(s.resolutions.resolutions.get("/gone/wt")?.consented).toBe(true);
+  });
+
   it("does not rewrite the remembered roots when none needed granting", async () => {
     const s = setup();
     await s.on.execute("/w/repo");
@@ -156,31 +240,31 @@ describe("aidd telemetry on", () => {
 });
 
 describe("aidd telemetry off", () => {
-  it("writes enabled false and keeps the version", async () => {
+  it("writes off over a granted consent", async () => {
     const s = setup();
-    s.consents.texts.set("/w/repo", '{"telemetry":{"enabled":true,"version":2}}');
+    s.consents.values.set("/w/repo", "2");
     expect(await s.off.execute("/w/repo")).toEqual({ status: "off", changed: true });
-    expect(JSON.parse(s.writes[0]?.text ?? "")).toEqual({
-      telemetry: { enabled: false, version: 2 },
-    });
+    expect(s.writes).toEqual([{ root: "/w/repo", value: "off" }]);
   });
 
   it("writes nothing when there is nothing to switch off", async () => {
     const s = setup();
     expect(await s.off.execute("/w/repo")).toEqual({ status: "off", changed: false });
+    s.consents.values.set("/w/repo", "off");
+    expect(await s.off.execute("/w/repo")).toEqual({ status: "off", changed: false });
     expect(s.writes).toEqual([]);
   });
 
-  it("refuses outside a repository, and an unreadable config", async () => {
+  it("refuses outside a repository, and a git config it cannot read", async () => {
     const s = setup();
     expect(await s.off.execute("/elsewhere")).toEqual({
       status: "refused",
       reason: "outside-repository",
     });
-    s.consents.texts.set("/w/repo", "[");
+    s.consents.unreadable.add("/w/repo");
     expect(await s.off.execute("/w/repo")).toEqual({
       status: "refused",
-      reason: "unreadable-config",
+      reason: "unreadable-git-config",
     });
     expect(s.writes).toEqual([]);
   });

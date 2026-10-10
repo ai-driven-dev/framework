@@ -1,5 +1,5 @@
 // A typed `aidd telemetry task ...` is run by the hook, so it is parsed here by a grammar that
-// has no shell in it. Anything outside it is "not understood" and nothing is spawned.
+// has no shell in it. Anything outside it is not run, and the prompt goes on to the ordinary gate.
 const INTERCEPT = /^\s*!?\s*aidd[ \t]+telemetry[ \t]+task\b/u;
 const FORBIDDEN = /[;&|`$()<>\r\n\\]/u;
 const WORD = /^[\p{L}\p{N}._:/@#+,=-]+$/u;

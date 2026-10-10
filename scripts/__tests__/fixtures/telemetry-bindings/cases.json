@@ -2,23 +2,37 @@
   "gitConfig": {
     "task-and-ticket": {
       "branch": "feat/x",
-      "keys": { "aiddTask": "checkout-fix", "aiddTicket": "PROJ-12", "aiddDeclaredAt": "2026-10-09T09:00:00.000Z" }
+      "keys": {
+        "aiddTask": "checkout-fix",
+        "aiddTicket": "PROJ-12",
+        "aiddDeclaredAt": "2026-10-09T09:00:00.000Z"
+      }
     },
     "task-only": {
       "branch": "feat/x",
-      "keys": { "aiddTask": "branch-task", "aiddDeclaredAt": "2026-10-09T09:00:00.000Z" }
+      "keys": {
+        "aiddTask": "branch-task",
+        "aiddDeclaredAt": "2026-10-09T09:00:00.000Z"
+      }
     },
     "none": {
       "branch": "feat/x",
-      "keys": { "aiddDeclaredAt": "2026-10-09T09:00:00.000Z" }
+      "keys": {
+        "aiddDeclaredAt": "2026-10-09T09:00:00.000Z"
+      }
     },
     "none-empty-task": {
       "branch": "feat/x",
-      "keys": { "aiddTask": "", "aiddDeclaredAt": "2026-10-09T09:00:00.000Z" }
+      "keys": {
+        "aiddTask": "",
+        "aiddDeclaredAt": "2026-10-09T09:00:00.000Z"
+      }
     },
     "task-without-declared-at": {
       "branch": "feat/x",
-      "keys": { "aiddTask": "orphan" }
+      "keys": {
+        "aiddTask": "orphan"
+      }
     },
     "undeclared": {
       "branch": "feat/x",
@@ -26,7 +40,10 @@
     },
     "dotted-branch-name": {
       "branch": "release/1.2.aidd",
-      "keys": { "aiddTask": "dotted", "aiddDeclaredAt": "2026-10-09T09:00:00.000Z" }
+      "keys": {
+        "aiddTask": "dotted",
+        "aiddDeclaredAt": "2026-10-09T09:00:00.000Z"
+      }
     }
   },
   "binding": {
@@ -214,66 +231,231 @@
     }
   },
   "branchRole": {
-    "working-branch-with-remote-head": { "head": "refs/heads/feat/x", "originHead": "refs/remotes/origin/main" },
-    "working-branch-without-remote-head": { "head": "refs/heads/feat/x", "originHead": null },
-    "remote-head-main": { "head": "refs/heads/main", "originHead": "refs/remotes/origin/main" },
-    "remote-head-develop-is-default": { "head": "refs/heads/develop", "originHead": "refs/remotes/origin/develop" },
-    "remote-head-develop-makes-main-a-working-branch": { "head": "refs/heads/main", "originHead": "refs/remotes/origin/develop" },
-    "no-remote-head-main": { "head": "refs/heads/main", "originHead": null },
-    "no-remote-head-master": { "head": "refs/heads/master", "originHead": null },
-    "no-remote-head-develop-is-working": { "head": "refs/heads/develop", "originHead": null },
-    "detached": { "head": null, "originHead": "refs/remotes/origin/main" },
-    "detached-without-remote-head": { "head": null, "originHead": null },
-    "slashed-default-branch": { "head": "refs/heads/release/stable", "originHead": "refs/remotes/origin/release/stable" },
-    "branch-named-like-the-remote": { "head": "refs/heads/origin/main", "originHead": "refs/remotes/origin/main" }
+    "working-branch-with-remote-head": {
+      "head": "refs/heads/feat/x",
+      "originHead": "refs/remotes/origin/main"
+    },
+    "working-branch-without-remote-head": {
+      "head": "refs/heads/feat/x",
+      "originHead": null
+    },
+    "remote-head-main": {
+      "head": "refs/heads/main",
+      "originHead": "refs/remotes/origin/main"
+    },
+    "remote-head-develop-is-default": {
+      "head": "refs/heads/develop",
+      "originHead": "refs/remotes/origin/develop"
+    },
+    "remote-head-develop-makes-main-a-working-branch": {
+      "head": "refs/heads/main",
+      "originHead": "refs/remotes/origin/develop"
+    },
+    "no-remote-head-main": {
+      "head": "refs/heads/main",
+      "originHead": null
+    },
+    "no-remote-head-master": {
+      "head": "refs/heads/master",
+      "originHead": null
+    },
+    "no-remote-head-develop-is-working": {
+      "head": "refs/heads/develop",
+      "originHead": null
+    },
+    "detached": {
+      "head": null,
+      "originHead": "refs/remotes/origin/main"
+    },
+    "detached-without-remote-head": {
+      "head": null,
+      "originHead": null
+    },
+    "slashed-default-branch": {
+      "head": "refs/heads/release/stable",
+      "originHead": "refs/remotes/origin/release/stable"
+    },
+    "branch-named-like-the-remote": {
+      "head": "refs/heads/origin/main",
+      "originHead": "refs/remotes/origin/main"
+    }
   },
   "consent": {
-    "granted": { "config": "{\"telemetry\":{\"enabled\":true,\"version\":2}}", "mainConfig": null, "linkedWorktree": false },
-    "previous-version-bare-enabled": { "config": "{\"telemetry\":{\"enabled\":true}}", "mainConfig": null, "linkedWorktree": false },
-    "previous-version-1": { "config": "{\"telemetry\":{\"enabled\":true,\"version\":1}}", "mainConfig": null, "linkedWorktree": false },
-    "version-without-enabled": { "config": "{\"telemetry\":{\"version\":2}}", "mainConfig": null, "linkedWorktree": false },
-    "disabled": { "config": "{\"telemetry\":{\"enabled\":false,\"version\":2}}", "mainConfig": null, "linkedWorktree": false },
-    "enabled-as-a-string": { "config": "{\"telemetry\":{\"enabled\":\"true\",\"version\":2}}", "mainConfig": null, "linkedWorktree": false },
-    "version-as-a-string": { "config": "{\"telemetry\":{\"enabled\":true,\"version\":\"2\"}}", "mainConfig": null, "linkedWorktree": false },
-    "no-telemetry-key": { "config": "{\"other\":true}", "mainConfig": null, "linkedWorktree": false },
-    "no-file": { "config": null, "mainConfig": null, "linkedWorktree": false },
-    "unparseable": { "config": "{not json", "mainConfig": null, "linkedWorktree": false },
-    "not-an-object": { "config": "[1,2]", "mainConfig": null, "linkedWorktree": false },
-    "linked-worktree-without-config-takes-the-main-tree": { "config": null, "mainConfig": "{\"telemetry\":{\"enabled\":true,\"version\":2}}", "linkedWorktree": true },
-    "linked-worktree-own-config-wins-over-the-main-tree": { "config": "{\"telemetry\":{\"enabled\":false,\"version\":2}}", "mainConfig": "{\"telemetry\":{\"enabled\":true,\"version\":2}}", "linkedWorktree": true },
-    "main-tree-config-is-not-read-for-the-main-tree": { "config": null, "mainConfig": "{\"telemetry\":{\"enabled\":true,\"version\":2}}", "linkedWorktree": false }
+    "granted": {
+      "value": "2"
+    },
+    "off": {
+      "value": "off"
+    },
+    "previous-version-1": {
+      "value": "1"
+    },
+    "a-later-version": {
+      "value": "3"
+    },
+    "true": {
+      "value": "true"
+    },
+    "empty": {
+      "value": ""
+    },
+    "padded": {
+      "value": " 2"
+    },
+    "unset": {
+      "value": null
+    }
   },
   "environmentRefusal": {
-    "zero-refuses": { "AIDD_TELEMETRY": "0" },
-    "one-does-not": { "AIDD_TELEMETRY": "1" },
-    "empty-does-not": { "AIDD_TELEMETRY": "" },
-    "false-does-not": { "AIDD_TELEMETRY": "false" },
+    "zero-refuses": {
+      "AIDD_TELEMETRY": "0"
+    },
+    "one-does-not": {
+      "AIDD_TELEMETRY": "1"
+    },
+    "empty-does-not": {
+      "AIDD_TELEMETRY": ""
+    },
+    "false-does-not": {
+      "AIDD_TELEMETRY": "false"
+    },
     "unset-does-not": {}
   },
   "telemetryDir": {
-    "explicit-dir": { "platform": "posix", "home": "/home/someone", "env": { "AIDD_TELEMETRY_DIR": "/data/measure", "AIDD_USER_CONFIG_DIR": "/cfg", "XDG_CONFIG_HOME": "/xdg" } },
-    "user-config-dir": { "platform": "posix", "home": "/home/someone", "env": { "AIDD_USER_CONFIG_DIR": "/cfg", "XDG_CONFIG_HOME": "/xdg" } },
-    "xdg": { "platform": "posix", "home": "/home/someone", "env": { "XDG_CONFIG_HOME": "/xdg" } },
-    "default": { "platform": "posix", "home": "/home/someone", "env": {} },
-    "empty-explicit-dir-is-unset": { "platform": "posix", "home": "/home/someone", "env": { "AIDD_TELEMETRY_DIR": "", "AIDD_USER_CONFIG_DIR": "/cfg" } },
-    "empty-user-config-dir-is-unset": { "platform": "posix", "home": "/home/someone", "env": { "AIDD_USER_CONFIG_DIR": "", "XDG_CONFIG_HOME": "/xdg" } },
-    "empty-xdg-is-unset": { "platform": "posix", "home": "/home/someone", "env": { "XDG_CONFIG_HOME": "" } },
-    "win32-explicit-dir": { "platform": "win32", "home": "C:\\Users\\someone", "env": { "AIDD_TELEMETRY_DIR": "D:\\measure" } },
-    "win32-user-config-dir": { "platform": "win32", "home": "C:\\Users\\someone", "env": { "AIDD_USER_CONFIG_DIR": "D:\\cfg" } },
-    "win32-xdg": { "platform": "win32", "home": "C:\\Users\\someone", "env": { "XDG_CONFIG_HOME": "D:\\xdg" } },
-    "win32-default": { "platform": "win32", "home": "C:\\Users\\someone", "env": {} }
+    "explicit-dir": {
+      "platform": "posix",
+      "home": "/home/someone",
+      "env": {
+        "AIDD_TELEMETRY_DIR": "/data/measure",
+        "AIDD_USER_CONFIG_DIR": "/cfg",
+        "XDG_CONFIG_HOME": "/xdg"
+      }
+    },
+    "user-config-dir": {
+      "platform": "posix",
+      "home": "/home/someone",
+      "env": {
+        "AIDD_USER_CONFIG_DIR": "/cfg",
+        "XDG_CONFIG_HOME": "/xdg"
+      }
+    },
+    "xdg": {
+      "platform": "posix",
+      "home": "/home/someone",
+      "env": {
+        "XDG_CONFIG_HOME": "/xdg"
+      }
+    },
+    "default": {
+      "platform": "posix",
+      "home": "/home/someone",
+      "env": {}
+    },
+    "empty-explicit-dir-is-unset": {
+      "platform": "posix",
+      "home": "/home/someone",
+      "env": {
+        "AIDD_TELEMETRY_DIR": "",
+        "AIDD_USER_CONFIG_DIR": "/cfg"
+      }
+    },
+    "empty-user-config-dir-is-unset": {
+      "platform": "posix",
+      "home": "/home/someone",
+      "env": {
+        "AIDD_USER_CONFIG_DIR": "",
+        "XDG_CONFIG_HOME": "/xdg"
+      }
+    },
+    "empty-xdg-is-unset": {
+      "platform": "posix",
+      "home": "/home/someone",
+      "env": {
+        "XDG_CONFIG_HOME": ""
+      }
+    },
+    "win32-explicit-dir": {
+      "platform": "win32",
+      "home": "C:\\Users\\someone",
+      "env": {
+        "AIDD_TELEMETRY_DIR": "D:\\measure"
+      }
+    },
+    "win32-user-config-dir": {
+      "platform": "win32",
+      "home": "C:\\Users\\someone",
+      "env": {
+        "AIDD_USER_CONFIG_DIR": "D:\\cfg"
+      }
+    },
+    "win32-xdg": {
+      "platform": "win32",
+      "home": "C:\\Users\\someone",
+      "env": {
+        "XDG_CONFIG_HOME": "D:\\xdg"
+      }
+    },
+    "win32-default": {
+      "platform": "win32",
+      "home": "C:\\Users\\someone",
+      "env": {}
+    }
   },
   "claudeOnly": {
-    "claude-posix-transcript": { "payload_session_id": "00000000-0000-4000-8000-00000000000a", "env_session_id": "00000000-0000-4000-8000-00000000000a", "transcript_path": "/home/someone/.claude/projects/-work-repo/00000000-0000-4000-8000-00000000000a.jsonl" },
-    "claude-windows-transcript-with-backslashes": { "payload_session_id": "00000000-0000-4000-8000-00000000000a", "env_session_id": "00000000-0000-4000-8000-00000000000a", "transcript_path": "C:\\Users\\someone\\.claude\\projects\\C--work-repo\\00000000-0000-4000-8000-00000000000a.jsonl" },
-    "claude-custom-config-dir": { "payload_session_id": "00000000-0000-4000-8000-00000000000a", "env_session_id": "00000000-0000-4000-8000-00000000000a", "transcript_path": "/data/claude-config/projects/-work-repo/00000000-0000-4000-8000-00000000000a.jsonl" },
-    "session-id-differs-from-the-environment": { "payload_session_id": "00000000-0000-4000-8000-00000000000a", "env_session_id": "00000000-0000-4000-8000-000000000014", "transcript_path": "/home/someone/.claude/projects/-work-repo/00000000-0000-4000-8000-00000000000a.jsonl" },
-    "environment-has-no-session-id": { "payload_session_id": "00000000-0000-4000-8000-00000000000a", "env_session_id": null, "transcript_path": "/home/someone/.claude/projects/-work-repo/00000000-0000-4000-8000-00000000000a.jsonl" },
-    "environment-session-id-empty": { "payload_session_id": "00000000-0000-4000-8000-00000000000a", "env_session_id": "", "transcript_path": "/home/someone/.claude/projects/-work-repo/00000000-0000-4000-8000-00000000000a.jsonl" },
-    "payload-has-no-session-id": { "payload_session_id": null, "env_session_id": "00000000-0000-4000-8000-00000000000a", "transcript_path": "/home/someone/.claude/projects/-work-repo/00000000-0000-4000-8000-00000000000a.jsonl" },
-    "codex-rollout-path-with-the-inherited-claude-id": { "payload_session_id": "00000000-0000-4000-8000-00000000000a", "env_session_id": "00000000-0000-4000-8000-00000000000a", "transcript_path": "/home/someone/.codex/sessions/2026/10/09/rollout-2026-10-09T10-00-00-00000000-0000-4000-8000-00000000000a.jsonl" },
-    "codex-windows-rollout-path": { "payload_session_id": "00000000-0000-4000-8000-00000000000a", "env_session_id": "00000000-0000-4000-8000-00000000000a", "transcript_path": "C:\\Users\\someone\\.codex\\sessions\\2026\\10\\09\\rollout-2026-10-09T10-00-00-00000000-0000-4000-8000-00000000000a.jsonl" },
-    "payload-has-no-transcript-path": { "payload_session_id": "00000000-0000-4000-8000-00000000000a", "env_session_id": "00000000-0000-4000-8000-00000000000a", "transcript_path": null },
-    "projects-is-only-part-of-a-name": { "payload_session_id": "00000000-0000-4000-8000-00000000000a", "env_session_id": "00000000-0000-4000-8000-00000000000a", "transcript_path": "/home/someone/.codex/old-projects/rollout.jsonl" }
+    "claude-posix-transcript": {
+      "payload_session_id": "00000000-0000-4000-8000-00000000000a",
+      "env_session_id": "00000000-0000-4000-8000-00000000000a",
+      "transcript_path": "/home/someone/.claude/projects/-work-repo/00000000-0000-4000-8000-00000000000a.jsonl"
+    },
+    "claude-windows-transcript-with-backslashes": {
+      "payload_session_id": "00000000-0000-4000-8000-00000000000a",
+      "env_session_id": "00000000-0000-4000-8000-00000000000a",
+      "transcript_path": "C:\\Users\\someone\\.claude\\projects\\C--work-repo\\00000000-0000-4000-8000-00000000000a.jsonl"
+    },
+    "claude-custom-config-dir": {
+      "payload_session_id": "00000000-0000-4000-8000-00000000000a",
+      "env_session_id": "00000000-0000-4000-8000-00000000000a",
+      "transcript_path": "/data/claude-config/projects/-work-repo/00000000-0000-4000-8000-00000000000a.jsonl"
+    },
+    "session-id-differs-from-the-environment": {
+      "payload_session_id": "00000000-0000-4000-8000-00000000000a",
+      "env_session_id": "00000000-0000-4000-8000-000000000014",
+      "transcript_path": "/home/someone/.claude/projects/-work-repo/00000000-0000-4000-8000-00000000000a.jsonl"
+    },
+    "environment-has-no-session-id": {
+      "payload_session_id": "00000000-0000-4000-8000-00000000000a",
+      "env_session_id": null,
+      "transcript_path": "/home/someone/.claude/projects/-work-repo/00000000-0000-4000-8000-00000000000a.jsonl"
+    },
+    "environment-session-id-empty": {
+      "payload_session_id": "00000000-0000-4000-8000-00000000000a",
+      "env_session_id": "",
+      "transcript_path": "/home/someone/.claude/projects/-work-repo/00000000-0000-4000-8000-00000000000a.jsonl"
+    },
+    "payload-has-no-session-id": {
+      "payload_session_id": null,
+      "env_session_id": "00000000-0000-4000-8000-00000000000a",
+      "transcript_path": "/home/someone/.claude/projects/-work-repo/00000000-0000-4000-8000-00000000000a.jsonl"
+    },
+    "codex-rollout-path-with-the-inherited-claude-id": {
+      "payload_session_id": "00000000-0000-4000-8000-00000000000a",
+      "env_session_id": "00000000-0000-4000-8000-00000000000a",
+      "transcript_path": "/home/someone/.codex/sessions/2026/10/09/rollout-2026-10-09T10-00-00-00000000-0000-4000-8000-00000000000a.jsonl"
+    },
+    "codex-windows-rollout-path": {
+      "payload_session_id": "00000000-0000-4000-8000-00000000000a",
+      "env_session_id": "00000000-0000-4000-8000-00000000000a",
+      "transcript_path": "C:\\Users\\someone\\.codex\\sessions\\2026\\10\\09\\rollout-2026-10-09T10-00-00-00000000-0000-4000-8000-00000000000a.jsonl"
+    },
+    "payload-has-no-transcript-path": {
+      "payload_session_id": "00000000-0000-4000-8000-00000000000a",
+      "env_session_id": "00000000-0000-4000-8000-00000000000a",
+      "transcript_path": null
+    },
+    "projects-is-only-part-of-a-name": {
+      "payload_session_id": "00000000-0000-4000-8000-00000000000a",
+      "env_session_id": "00000000-0000-4000-8000-00000000000a",
+      "transcript_path": "/home/someone/.codex/old-projects/rollout.jsonl"
+    }
   }
 }

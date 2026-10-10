@@ -9,7 +9,7 @@
  *
  * - `SessionStart` runs once per server/directory at factory initialization and requires
  *   idempotent commands. V1 did not deliver `session.created` to this event hook;
- *   the V2 adapter delivers it for telemetry's session tracking.
+ *   the V2 adapter delivers it.
  * - `Stop` maps to V1's `session.idle` or V2's execution terminal, once per turn.
  * - `PostToolUse` maps to `message.part.updated` whose `part.state.status === "completed"`, the
  *   shape measured live: `part.tool` names the tool, `part.state.input` its arguments.

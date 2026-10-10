@@ -32,7 +32,7 @@ The ledger stores a `StoredUsage`: the record plus `repository_id`, resolved at 
 
 ### Null is not zero
 
-An unknown value is `null`, never `0`. A report leaves a call out of a counter's sum when the counter is `null`, and counts it in that counter's `unknown_records`. A line whose shape the reader does not recognise is counted in `coverage.unrecognised_shapes` and never turned into a record.
+An unknown value is `null`, never `0`. A report leaves a call out of a counter's sum when the counter is `null`, and counts it in that counter's `unknown_records`. A shape the reader does not recognise is counted in `coverage.unrecognised_shapes`. A usage line that lacks a counter is still a record, with that counter `null`; a line that is no usage line at all (not JSON, no `message.usage`, no `message.id`, `sessionId` or `timestamp`) is never turned into a record. The report words both together: "not recognised: a call missing a counter is kept with that counter unknown; a line that is no usage line is not counted".
 
 ### Key and fold rule
 
@@ -81,20 +81,21 @@ The telemetry directory is `AIDD_TELEMETRY_DIR`, else `AIDD_USER_CONFIG_DIR/tele
 
 | Store | Writer | Readers | Holds |
 | --- | --- | --- | --- |
-| `ledger/<YYYY-MM>.jsonl` | `ingest`, `report` | `report`, `forget` | one `StoredUsage` per line, by the month of its `at`; a changed month is rewritten whole by rename |
+| `ledger/<YYYY-MM>.jsonl` | `ingest`, `report` | `report`, `forget` | one `StoredUsage` per line, by the month of its `at`; only a month that changed is rewritten, whole, by rename; an ingest that finds no new bytes writes nothing |
 | `ledger/offsets.json` | `ingest`, `report` | `ingest`, `report` | per transcript: bytes consumed, size, file identity; a file that shrank or changed identity is read whole; `on` resets it |
-| `ledger/roots.json` | `ingest`, `on` | `ingest`, `forget` | per working directory: `repository_id`, `root`, whether the project had opted in |
+| `ledger/roots.json` | `ingest`, `on` | `ingest`, `forget` | per working directory: `repository_id`, `root`, whether the clone had opted in; `on` lifts a remembered refusal for every directory of the same `repository_id`, a linked worktree deleted before `on` included |
 | `ledger/.lock` | the CLI | the CLI | `{pid, created_at}`; a lock of a dead process, or older than ten minutes, is cleared |
+| `bindings/.lock` | the CLI | the CLI | the bindings lock, same format as the ledger's: a declaration appends its session line, and any snapshot reads the latest snapshots and appends, under it. `task` never takes the ledger lock, which an ingest holds while it reads transcripts |
 | `bindings/sessions.jsonl` | `task` | hooks, `report`, `task` | `{session_id, task, ticket, none, declared_at, by}`; `by` is `command` or `hook-intercept` |
 | `bindings/branches.jsonl` | `task`, `ingest`, `report` | `report`, `forget` | a branch declaration at one moment, with the branch's creation time from its reflog |
 | `bindings/carries.jsonl` | the `SessionStart` hook | hooks, `report` | `{session_id, from, at}` |
 | `bindings/processes.jsonl` | the `SessionStart` hook | the `SessionStart` hook | `{pid, session_id, source, at}`; no CLI reader |
 | `identity.json` | `identity` | `report` | `{"person_id": "<id>"}`, written owner-only |
 | `branch.<name>.aiddTask`, `aiddTicket`, `aiddDeclaredAt` in the repository's git config, `--local` | `task` | hooks, `task`, `report` via snapshots | a branch declaration; it follows a branch rename and goes with the branch |
-| `.aidd/config.json`, key `telemetry` | `on`, `off` | hooks, the CLI | the project's consent |
+| `aidd.telemetry` in the repository's git config, `--local` | `on`, `off`, `forget` | hooks, the CLI | the clone's consent: `2`, or `off` |
 
 - A line that is not exactly the format of its store is skipped, never guessed at. Every JSON Lines store is append-only except the ledger.
-- `forget` removes `ledger/`, `bindings/`, `identity.json`, the declaration keys in each repository's git config, and what an earlier measurement left. It never removes the telemetry directory itself, nor the project consent.
+- `forget` removes `ledger/`, `bindings/`, `identity.json`, the declaration keys in each repository's git config, the consent key, and what an earlier measurement left. It never removes the telemetry directory itself.
 
 ## Attribution
 
@@ -116,7 +117,7 @@ Sub-agent and advisor calls name their parent's session and follow it.
 `UserPromptSubmit` (`hooks/prompt-gate.cjs`) blocks a prompt, before the model is called, when all of these hold:
 
 - the payload is Claude's own: its `session_id` equals `CLAUDE_CODE_SESSION_ID` and its `transcript_path` runs under a `projects` directory;
-- the project opted in, and `AIDD_TELEMETRY` is not `0`;
+- this clone opted in (`aidd.telemetry` is `2` in its git config), and `AIDD_TELEMETRY` is not `0`;
 - a person is present: `CLAUDE_CODE_SESSION_ATTENDED` is `1` and `CLAUDE_CODE_ENTRYPOINT` is set and does not start with `sdk`. Both are undocumented, so either missing or different means nobody is asked, never that work is blocked;
 - the branch is a working branch, with no declaration for the session or the branch;
 - `aidd` is on `PATH` and knows `telemetry task`. Without it nothing is asked.
@@ -135,28 +136,31 @@ The block asks once per working branch, since the declaration it gets is remembe
 `/clear` and `/branch` start a new session in the same Claude process, and the payload names no predecessor. The `SessionStart` hook (`hooks/session-start.cjs`) records `(pid, session_id, source, at)` for every start, with the process id from `CLAUDE_PID`, else the hook's parent.
 
 - On `source` `clear` or `fork` (`/branch`), the predecessor is the process's previous session, if its fact is newer than the machine's boot (process ids are reused across boots).
+- Residual limit: the guard is the boot time only, not the process start time. A pid reused within one boot by a new Claude process whose own `startup` was never recorded (for example, it started before `on`) can take the dead process's last session as its predecessor, so a later `/clear` would carry that session's task. The carry is announced and replaced by the first declaration.
 - If that session is bound, a carry `{session_id, from, at}` is appended and the person is told: `Task <task> kept after /clear. Different work: aidd telemetry task <name> [--ticket <ref>]`.
 - `startup`, `resume` and `compact` carry nothing.
 - A carry is provisional. The first declaration made in the carried session replaces it for the whole session, retroactively, calls made before it included. A session that was not carried is bound from its declaration onward and no earlier.
 
 ## Consent, version 2
 
-A project opts in with `aidd telemetry on`, which writes `telemetry: {enabled: true, version: 2}` to `.aidd/config.json`, keeping every other key. Only that pair is consent:
+Consent is per clone, in the repository's own git config, and is never committed. `aidd telemetry on` runs `git config --local aidd.telemetry 2`. Only the value `2` is consent:
 
-- a bare `enabled: true` is not consent;
-- a file that does not parse is `unreadable`, grants nothing, and is never rewritten;
-- a linked worktree with no config of its own takes the main working tree's;
-- `AIDD_TELEMETRY=0` refuses measurement whatever a project granted;
-- `off` sets `enabled: false` and keeps the version;
-- a project that never opted in has nothing stored, nothing asked and nothing blocked.
+- `--local` writes the common config, so every linked worktree of the clone shares it, and no commit carries it: a teammate who pulls the repository is not measured, asked or blocked until they run `aidd telemetry on` in their own clone;
+- nothing in `.aidd/config.json` is consent, including a committed `telemetry: {enabled: true, version: 2}`; the previous version's bare `enabled: true` is not either. The CLI and the hooks do not read that file for consent;
+- a git config git cannot read is `unreadable`, grants nothing, and is never rewritten;
+- `AIDD_TELEMETRY=0` refuses measurement whatever a clone granted;
+- `off` sets `aidd.telemetry` to `off`;
+- a clone that never opted in has nothing stored, nothing asked and nothing blocked.
 
-`on` also removes what an earlier measurement left in the repository, and warns when Claude Code's transcript retention is short.
+`on` also removes the previous version's `telemetry` block from `.aidd/config.json` if it holds one, every other byte of the file as it was, and deletes the file only when that block was all it held (the change may need committing, and `on` says so). It removes what an earlier measurement left in the repository, resets the transcript offsets, lifts a remembered refusal by `repository_id`, and warns when Claude Code's transcript retention is short. It ends with the next step: declare a task, which the plugin's hooks ask for in Claude Code.
+
+`forget --yes` unsets `aidd.telemetry` in every repository it locates, with the branch task keys.
 
 ## What never leaves the machine
 
 Release 1 sends nothing anywhere: no code in the telemetry context or the hooks opens a network connection. Everything above lives on the machine, and `aidd telemetry forget --yes` removes it.
 
 - Local only, never to be sent: `cwd` and `git_branch` in the ledger, the roots in `roots.json`, the process facts, the transcripts themselves.
-- Printed text names no path, branch, working directory or whole session id.
+- The report, and its envelope, name no path, branch, working directory or whole session id (session and repository appear as short keys in the text). `task` and `forget` print what they act on, so they do name a branch (`Branch feat/x is bound.`) and paths (`forget` lists every entry and repository it would remove), and the lock error names the lock file.
 - The person's identity exists only if they chose one with `aidd telemetry identity <id>`; it labels the `person` axis and nothing else.
 - A currency amount is never computed here: the destination owns the price table.

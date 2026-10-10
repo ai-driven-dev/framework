@@ -8,8 +8,8 @@ import {
   type SessionDeclaration,
   type TaskDeclaration,
 } from "../../domain/declaration/task-declaration.js";
+import type { SessionBindingStore } from "../../domain/ports/bindings/session-binding-store.js";
 import type { PrivateStorage } from "../../domain/ports/private-storage.js";
-import type { SessionBindingStore } from "../../domain/ports/session-binding-store.js";
 
 /** `sessions.jsonl` and `carries.jsonl` under the bindings directory: append-only, one line
  * each. A line that is not exactly one of them is skipped, never guessed at. */

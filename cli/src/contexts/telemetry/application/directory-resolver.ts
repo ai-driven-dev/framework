@@ -89,7 +89,7 @@ export class ResolutionRun {
     // A repository with no origin and no commit has nothing to be named by.
     const id = repositoryIdOf(located);
     if (id === null) return { skipped: "outside-repo" };
-    const consent = await this.consentFor(located.root, located.mainRoot);
+    const consent = await this.consentFor(located.root);
     const resolution = { repository_id: id, root: located.root, consented: consent === "granted" };
     if (!sameResolution(this.remembered.get(key), resolution)) {
       this.remembered.set(key, resolution);
@@ -99,10 +99,10 @@ export class ResolutionRun {
     return { skipped: consent === "unreadable" ? "unreadable-consent" : "no-consent" };
   }
 
-  private async consentFor(root: string, mainRoot: string): Promise<Consent> {
+  private async consentFor(root: string): Promise<Consent> {
     const held = this.consents.get(root);
     if (held !== undefined) return held;
-    const consent = await consentOfRoot(this.consentSource, root, mainRoot);
+    const consent = await consentOfRoot(this.consentSource, root);
     this.consents.set(root, consent);
     return consent;
   }

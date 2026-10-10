@@ -41,9 +41,8 @@ interface BindingCase {
   originHead: string | null;
 }
 interface ConsentCase {
-  config: string | null;
-  mainConfig: string | null;
-  linkedWorktree: boolean;
+  /** The value of `aidd.telemetry` in the clone's git config, `null` when it is not set. */
+  value: string | null;
 }
 interface DirCase {
   platform: "posix" | "win32";
@@ -144,16 +143,9 @@ describe("the shared fixture of task bindings", () => {
 
   it.each(Object.entries(cases.consent))("reads consent %s", async (name, input) => {
     const consents = new FakeConsents();
-    if (input.config !== null) consents.texts.set("/work/tree", input.config);
-    if (input.mainConfig !== null) consents.texts.set("/work/main", input.mainConfig);
-    const root = "/work/tree";
-    const mainRoot = input.linkedWorktree ? "/work/main" : root;
-    expect(await consentOfRoot(consents, root, mainRoot)).toBe(expected.consent?.[name]);
-    // The main working tree answers for itself: it is not asked a second time.
-    expect(consents.reads).toEqual(
-      input.linkedWorktree && input.config === null ? [root, mainRoot] : [root]
-    );
-    if (!input.linkedWorktree) expect(consentOf(input.config)).toBe(expected.consent?.[name]);
+    if (input.value !== null) consents.values.set("/work/tree", input.value);
+    expect(await consentOfRoot(consents, "/work/tree")).toBe(expected.consent?.[name]);
+    expect(consentOf({ kind: "value", value: input.value })).toBe(expected.consent?.[name]);
   });
 
   it.each(Object.entries(cases.environmentRefusal))("refuses on %s", (name, env) => {

@@ -77,13 +77,15 @@ describe("aidd telemetry on", () => {
     const run = await cli(["on", "--yes"]);
 
     expect(run.exitCode).toBe(0);
-    expect(run.stdout).toContain("Measurement is on for this repository.");
+    expect(run.stdout).toContain("Measurement is on for this clone");
+    expect(run.stdout).toContain("never committed");
+    expect(run.stdout).toContain("Next: declare what you work on");
     expect(run.stdout).toContain("Removed the commit hook line");
     expect(run.stdout).toContain("Removed aidd_docs/runs/");
     expect(run.stderr).toContain('"cleanupPeriodDays": 3650');
-    expect(JSON.parse(readFileSync(join(repo, ".aidd", "config.json"), "utf8"))).toEqual({
-      telemetry: { enabled: true, version: 2 },
-    });
+    expect(git(repo, box.gitEnv, "config", "--local", "--get", "aidd.telemetry").trim()).toBe("2");
+    expect(existsSync(join(repo, ".aidd", "config.json"))).toBe(false);
+    expect(run.stdout).toContain("Deleted .aidd/config.json");
     expect(commit()).not.toContain("AIDD-Session-Id");
     expect(existsSync(join(repo, "aidd_docs", "runs"))).toBe(false);
   });
@@ -94,19 +96,20 @@ describe("aidd telemetry on", () => {
     expect(readFileSync(join(repo, ".aidd", "config.json"), "utf8")).toBe(
       '{"telemetry":{"enabled":true}}'
     );
+    expect(() => git(repo, box.gitEnv, "config", "--local", "--get", "aidd.telemetry")).toThrow();
     expect(existsSync(join(repo, ".git", "hooks", "aidd-session-trailer.sh"))).toBe(true);
   });
 });
 
 describe("aidd telemetry off", () => {
-  it("switches off and keeps the version", async () => {
+  it("switches off by setting the git config value to off", async () => {
     await cli(["on", "--yes"]);
     const run = await cli(["off"]);
     expect(run.exitCode).toBe(0);
     expect(run.stdout).toContain("Measurement is off");
-    expect(JSON.parse(readFileSync(join(repo, ".aidd", "config.json"), "utf8"))).toEqual({
-      telemetry: { enabled: false, version: 2 },
-    });
+    expect(git(repo, box.gitEnv, "config", "--local", "--get", "aidd.telemetry").trim()).toBe(
+      "off"
+    );
   });
 });
 

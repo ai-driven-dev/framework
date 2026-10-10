@@ -9,6 +9,7 @@ import {
   FakeBranchStore,
   FakeConsents,
   FakeLocator,
+  InMemoryBindingsLock,
   InMemorySessions,
   InMemorySnapshots,
 } from "../../../helpers/ports/in-memory-telemetry.js";
@@ -26,7 +27,7 @@ function setup(sessionId: string | null = "sess-1234567890", refusedByEnvironmen
   const locator = new FakeLocator();
   locator.directories.set(CWD, REPOSITORY);
   const consents = new FakeConsents();
-  consents.texts.set(CWD, JSON.stringify({ telemetry: { enabled: true, version: 2 } }));
+  consents.values.set(CWD, "2");
   const sessions = new InMemorySessions();
   const branches = new FakeBranchStore();
   const source = new FakeBindings();
@@ -36,7 +37,12 @@ function setup(sessionId: string | null = "sess-1234567890", refusedByEnvironmen
     new BranchDeclarations(
       branches,
       source,
-      new SnapshotBindingsUseCase(source, new InMemorySnapshots(), () => new Date())
+      new SnapshotBindingsUseCase(
+        source,
+        new InMemorySnapshots(),
+        new InMemoryBindingsLock(),
+        () => new Date()
+      )
     ),
     { refusedByEnvironment, sessionId, now: () => new Date("2026-10-09T12:00:00.000Z") }
   );
@@ -127,7 +133,7 @@ describe("showing what the work is bound to", () => {
 
   it("refuses like a declaration does", async () => {
     const optedOut = setup();
-    optedOut.consents.texts.set(CWD, "{}");
+    optedOut.consents.values.set(CWD, "{}");
     expect(await optedOut.useCase.execute(CWD)).toEqual({
       status: "refused",
       reason: "no-consent",

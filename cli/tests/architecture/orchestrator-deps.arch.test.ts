@@ -99,16 +99,17 @@ const BASELINE: readonly { readonly path: string; readonly injected: number }[] 
   // the environment's refusal. A stage folded into another would hide where the ledger is
   // written.
   { path: "src/contexts/telemetry/application/ingest-usage-use-case.ts", injected: 5 },
-  // A declaration is checked against the project's consent, kept for the session, kept for the
-  // branch, and written under the ledger's lock, which the snapshot after it shares with
-  // ingest. The fifth is the environment's refusal. The lock cannot sit inside a store: it
+  // A declaration is checked against the clone's consent, kept for the session under the
+  // bindings lock, and kept for the branch, whose snapshot takes that lock too and shares it
+  // with ingest. The fifth is the environment's refusal. The lock cannot sit inside a store: it
   // protects a write the stores do not know they share.
   { path: "src/contexts/telemetry/application/declare-task-use-case.ts", injected: 5 },
   // Opting in is one act with five effects, each in its own collaborator: the project's
   // config, the commit hook, the run journal, the ledger and the roots it remembers, and
   // Claude's retention, beside the repository it is run in. The count is mostly ports; the
-  // effects share an order (config first, the ledger's lock last) that no collaborator knows.
-  { path: "src/contexts/telemetry/application/switch/telemetry-on-use-case.ts", injected: 9 },
+  // effects share an order (consent first, the ledger's lock last) that no collaborator knows.
+  // The consent is written through its own port, apart from the project config it clears.
+  { path: "src/contexts/telemetry/application/switch/telemetry-on-use-case.ts", injected: 10 },
   // Forgetting reads what was declared where (snapshots, remembered roots, the repository),
   // clears it, and erases the files, all under the ledger's lock. The declarations go before
   // the files that lead to them, an order only this class holds.

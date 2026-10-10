@@ -318,6 +318,83 @@ describe("attribution: a branch name used again", () => {
     expect(attribute(onBranch("2026-10-10T10:00:00.000Z"), f)).toEqual(task("task-a2"));
   });
 
+  it("keeps the work done before a redeclaration on the declaration then in force", () => {
+    const alpha = snapshot({ task: "alpha", declared_at: "2026-10-03T00:00:00.000Z" });
+    const beta = snapshot({
+      task: "beta",
+      declared_at: "2026-10-06T00:00:00.000Z",
+      snapshot_at: "2026-10-06T00:00:01.000Z",
+    });
+    const f = facts({ branches: [alpha, beta] });
+    expect(attribute(onBranch("2026-10-05T23:59:59.000Z"), f)).toEqual(task("alpha"));
+    expect(attribute(onBranch("2026-10-06T00:00:00.000Z"), f)).toEqual(task("beta"));
+    expect(attribute(onBranch("2026-10-09T00:00:00.000Z"), f)).toEqual(task("beta"));
+  });
+
+  it("still moves work done before the first declaration onto it, a later one starting at its own time", () => {
+    const alpha = snapshot({ task: "alpha", declared_at: "2026-10-03T00:00:00.000Z" });
+    const beta = snapshot({ task: "beta", declared_at: "2026-10-06T00:00:00.000Z" });
+    const f = facts({ branches: [alpha, beta] });
+    expect(attribute(onBranch("2026-10-01T12:00:00.000Z"), f)).toEqual(task("alpha"));
+  });
+
+  it("keeps a redeclaration inside its own generation when the name was reused", () => {
+    const alpha = snapshot({ task: "alpha", declared_at: "2026-10-03T00:00:00.000Z" });
+    const beta = snapshot({ task: "beta", declared_at: "2026-10-06T00:00:00.000Z" });
+    const reused = snapshot({
+      task: "gamma",
+      declared_at: "2026-10-20T12:00:00.000Z",
+      branch_created_at: "2026-10-15T08:00:00.000Z",
+    });
+    const f = facts({ branches: [alpha, beta, reused] });
+    expect(attribute(onBranch("2026-10-05T00:00:00.000Z"), f)).toEqual(task("alpha"));
+    expect(attribute(onBranch("2026-10-10T00:00:00.000Z"), f)).toEqual(task("beta"));
+    expect(attribute(onBranch("2026-10-16T00:00:00.000Z"), f)).toEqual(task("gamma"));
+  });
+
+  it("speaks with the latest snapshot of one declaration, and whatever order they were taken in", () => {
+    const early = snapshot({ task: "alpha", declared_at: "2026-10-03T00:00:00.000Z" });
+    const again = snapshot({
+      task: "alpha",
+      ticket: "T-9",
+      declared_at: "2026-10-03T00:00:00.000Z",
+      snapshot_at: "2026-10-04T00:00:00.000Z",
+    });
+    const later = snapshot({ task: "beta", declared_at: "2026-10-06T00:00:00.000Z" });
+    const f = facts({ branches: [later, early, again] });
+    expect(attribute(onBranch("2026-10-02T00:00:00.000Z"), f)).toEqual(task("alpha", "T-9"));
+    expect(attribute(onBranch("2026-10-04T00:00:00.000Z"), f)).toEqual(task("alpha", "T-9"));
+    expect(attribute(onBranch("2026-10-07T00:00:00.000Z"), f)).toEqual(task("beta"));
+  });
+
+  it("lets a snapshot with no declaration time cover from the creation, before the dated ones", () => {
+    const orphan = snapshot({ task: "orphan", declared_at: null });
+    const dated = snapshot({ task: "dated", declared_at: "2026-10-06T00:00:00.000Z" });
+    const f = facts({ branches: [dated, orphan] });
+    expect(attribute(onBranch("2026-10-02T00:00:00.000Z"), f)).toEqual(task("orphan"));
+    expect(attribute(onBranch("2026-10-07T00:00:00.000Z"), f)).toEqual(task("dated"));
+  });
+
+  it("belongs to the youngest generation created strictly before the call, an exact tie included", () => {
+    const old = snapshot({ task: "old", branch_created_at: "2026-10-01T08:00:00.000Z" });
+    const young = snapshot({
+      task: "young",
+      declared_at: "2026-10-12T00:00:00.000Z",
+      branch_created_at: "2026-10-10T08:00:00.000Z",
+    });
+    const f = facts({ branches: [old, young] });
+    expect(attribute(onBranch("2026-10-10T08:00:00.000Z"), f)).toEqual(task("old"));
+    expect(attribute(onBranch("2026-10-10T08:00:00.001Z"), f)).toEqual(task("young"));
+    const twin = snapshot({
+      task: "twin",
+      declared_at: "2026-10-13T00:00:00.000Z",
+      branch_created_at: "2026-10-10T08:00:00.000Z",
+    });
+    expect(
+      attribute(onBranch("2026-10-14T00:00:00.000Z"), facts({ branches: [young, twin] }))
+    ).toEqual(task("twin"));
+  });
+
   it("applies a snapshot with no creation time only when no dated generation matches", () => {
     const undated = snapshot({ task: "task-undated", branch_created_at: null });
     const f = facts({ branches: [undated, second] });

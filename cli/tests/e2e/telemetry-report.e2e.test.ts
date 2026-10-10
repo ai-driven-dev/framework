@@ -4,7 +4,6 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { git, initRepository, sandboxGitEnv } from "../helpers/git-sandbox.js";
 import { createTestEnv, runCli } from "./helpers.js";
 
-const GRANTED = JSON.stringify({ telemetry: { enabled: true, version: 2 } });
 const AXES = ["total", "person", "session", "model", "day", "repository", "task", "ticket"];
 const COUNTERS = ["input", "output", "cache_read", "cache_write"] as const;
 
@@ -218,8 +217,7 @@ beforeEach(async () => {
     git(repo, early, "switch", "-q", "main");
   }
   git(repo, gitEnv, "switch", "-q", "feat/a");
-  await mkdir(join(repo, ".aidd"));
-  await writeFile(join(repo, ".aidd", "config.json"), GRANTED);
+  git(repo, gitEnv, "config", "--local", "aidd.telemetry", "2");
 
   const project = join(claude, "projects", "sandbox");
   await mkdir(join(project, "subagents"), { recursive: true });

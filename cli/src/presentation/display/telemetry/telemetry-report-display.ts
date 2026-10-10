@@ -13,7 +13,7 @@ import {
 } from "../../../contexts/telemetry/domain/report/usage-report.js";
 import type { NotStoredReason } from "../../../contexts/telemetry/domain/repository-resolution.js";
 import type { CLIOutput } from "../../output.js";
-import { NOT_STORED_WORDS } from "../telemetry-display.js";
+import { NOT_STORED_WORDS, UNRECOGNISED_WORDS } from "../telemetry-display.js";
 
 const SHORT = 8;
 const COLUMNS = ["Input", "Output", "Cache read", "Cache write", "Total"] as const;
@@ -32,8 +32,6 @@ const ABSENT: Readonly<Record<ReportAxis, string>> = {
 type Reason = Extract<AxisValue, { kind: "unattributed" }>["reason"];
 
 const UNATTRIBUTED: Readonly<Record<Reason, string>> = {
-  "outside-repo": "unattributed: outside any repository",
-  "root-unresolved": "unattributed: directory gone",
   "no-binding": "unattributed: no task declared",
   "declared-none": "unattributed: declared no task",
 };
@@ -113,9 +111,7 @@ function coverageLines(coverage: ReportCoverage): string[] {
     `Read ${count(coverage.filesRead, "transcript", "transcripts")} just now; ${count(coverage.records, "call", "calls")} in this period; oldest transcript on disk: ${coverage.oldestTranscriptAt?.slice(0, 10) ?? "none"}.`,
   ];
   if (coverage.unrecognised > 0) {
-    lines.push(
-      `${count(coverage.unrecognised, "shape", "shapes")} not recognised and not counted.`
-    );
+    lines.push(`${count(coverage.unrecognised, "shape", "shapes")} ${UNRECOGNISED_WORDS}`);
   }
   for (const [reason, n] of Object.entries(coverage.notStored) as [NotStoredReason, number][]) {
     if (n > 0) lines.push(`Not stored: ${count(n, "call", "calls")} ${NOT_STORED_WORDS[reason]}.`);

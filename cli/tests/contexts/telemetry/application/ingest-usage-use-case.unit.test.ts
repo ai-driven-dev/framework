@@ -9,6 +9,7 @@ import {
   FakeBindings,
   FakeConsents,
   FakeLocator,
+  InMemoryBindingsLock,
   InMemoryLedger,
   InMemoryResolutions,
   InMemorySnapshots,
@@ -16,7 +17,7 @@ import {
 } from "../../../helpers/ports/in-memory-telemetry.js";
 
 const sha = (text: string): string => createHash("sha256").update(text).digest("hex");
-const GRANTED = JSON.stringify({ telemetry: { enabled: true, version: 2 } });
+const GRANTED = "2";
 
 function line(
   id: string,
@@ -68,7 +69,12 @@ function setup(options: { refused?: boolean; caseInsensitive?: boolean } = {}) {
   const consents = new FakeConsents();
   const bindings = new FakeBindings();
   const snapshotStore = new InMemorySnapshots();
-  const snapshots = new SnapshotBindingsUseCase(bindings, snapshotStore, () => new Date());
+  const snapshots = new SnapshotBindingsUseCase(
+    bindings,
+    snapshotStore,
+    new InMemoryBindingsLock(),
+    () => new Date()
+  );
   const ingest = new IngestUsageUseCase(
     new ReadClaudeUsageUseCase(transcripts),
     ledger,
@@ -77,7 +83,7 @@ function setup(options: { refused?: boolean; caseInsensitive?: boolean } = {}) {
     { refusedByEnvironment: options.refused ?? false }
   );
   locator.directories.set("/work/a", repository("/work/a"));
-  consents.texts.set("/work/a", GRANTED);
+  consents.values.set("/work/a", GRANTED);
   return { transcripts, ledger, resolutions, locator, consents, bindings, snapshotStore, ingest };
 }
 
@@ -91,6 +97,18 @@ describe("ingesting usage into the ledger", () => {
       ["msg_A:req_A", sha("github.com/acme/widgets")],
       ["msg_B:req_B", sha("github.com/acme/widgets")],
     ]);
+  });
+
+  it("tells the ledger to rewrite only the month a new call falls in", async () => {
+    const s = setup();
+    s.transcripts.files.set("/t/1.jsonl", [line("A", 10, {}, "2026-09-07T10:00:00.000Z")]);
+    await s.ingest.execute();
+    s.transcripts.files.set("/t/1.jsonl", [
+      line("A", 10, {}, "2026-09-07T10:00:00.000Z"),
+      line("B", 20, {}, "2026-10-07T10:00:00.000Z"),
+    ]);
+    await s.ingest.execute();
+    expect([...(s.ledger.savedMonths ?? [])]).toEqual(["2026-10"]);
   });
 
   it("changes nothing when the same transcripts are ingested again", async () => {
@@ -180,18 +198,15 @@ describe("ingesting usage into the ledger", () => {
 describe("only projects that opted in are stored", () => {
   it.each([
     ["no config file", null, "no-consent"],
-    [
-      "the previous version's bare enabled true",
-      JSON.stringify({ telemetry: { enabled: true } }),
-      "no-consent",
-    ],
-    ["version 1", JSON.stringify({ telemetry: { enabled: true, version: 1 } }), "no-consent"],
-    ["enabled false", JSON.stringify({ telemetry: { enabled: false, version: 2 } }), "no-consent"],
-    ["a config that does not parse", "{broken", "unreadable-consent"],
+    ["the previous version's bare enabled true", "true", "no-consent"],
+    ["version 1", "1", "no-consent"],
+    ["enabled false", "off", "no-consent"],
+    ["a git config git cannot read", "unreadable", "unreadable-consent"],
   ] as const)("stores nothing for %s, and counts it", async (_name, text, reason) => {
     const s = setup();
-    if (text === null) s.consents.texts.delete("/work/a");
-    else s.consents.texts.set("/work/a", text);
+    s.consents.values.delete("/work/a");
+    if (text === "unreadable") s.consents.unreadable.add("/work/a");
+    else if (text !== null) s.consents.values.set("/work/a", text);
     s.transcripts.files.set("/t/1.jsonl", [line("A", 1), line("B", 2)]);
     const result = await s.ingest.execute();
     expect(s.ledger.records).toEqual([]);
@@ -214,7 +229,7 @@ describe("only projects that opted in are stored", () => {
     const s = setup();
     s.transcripts.files.set("/t/1.jsonl", [line("A", 1)]);
     await s.ingest.execute();
-    s.consents.texts.set("/work/a", JSON.stringify({ telemetry: { enabled: false, version: 2 } }));
+    s.consents.values.set("/work/a", "off");
     s.transcripts.files.get("/t/1.jsonl")?.push(line("B", 2));
     const result = await s.ingest.execute();
     expect(result.notStored["no-consent"]).toBe(1);
@@ -222,21 +237,13 @@ describe("only projects that opted in are stored", () => {
     expect([...s.resolutions.resolutions.values()][0]?.consented).toBe(false);
   });
 
-  it("asks the main working tree for consent when a linked worktree has no config of its own", async () => {
+  it("asks a linked worktree's own root, the repository's git config being shared", async () => {
     const s = setup();
     s.locator.directories.set("/work/wt", repository("/work/wt", { mainRoot: "/work/a" }));
+    s.consents.values.set("/work/wt", "2");
     s.transcripts.files.set("/t/1.jsonl", [line("A", 1, { cwd: "/work/wt" })]);
     expect((await s.ingest.execute()).added).toBe(1);
-  });
-
-  it("lets a linked worktree's own config answer before the main one", async () => {
-    const s = setup();
-    s.locator.directories.set("/work/wt", repository("/work/wt", { mainRoot: "/work/a" }));
-    s.consents.texts.set("/work/wt", JSON.stringify({ telemetry: { enabled: false, version: 2 } }));
-    s.transcripts.files.set("/t/1.jsonl", [line("A", 1, { cwd: "/work/wt" })]);
-    const result = await s.ingest.execute();
-    expect(result.added).toBe(0);
-    expect(result.notStored["no-consent"]).toBe(1);
+    expect(s.consents.reads).toEqual(["/work/wt"]);
   });
 
   it("gives a linked worktree and its main working tree one repository id", async () => {
@@ -296,7 +303,7 @@ describe("where a call was made", () => {
 
   it("does not store from a deleted directory remembered as not consenting", async () => {
     const s = setup();
-    s.consents.texts.delete("/work/a");
+    s.consents.values.delete("/work/a");
     s.transcripts.files.set("/t/1.jsonl", [line("A", 1)]);
     await s.ingest.execute();
     s.locator.directories.delete("/work/a");
@@ -309,7 +316,7 @@ describe("where a call was made", () => {
   it("remembers a directory under one key per spelling on a case-sensitive file system", async () => {
     const s = setup({ caseInsensitive: false });
     s.locator.directories.set("/Work/A", repository("/Work/A"));
-    s.consents.texts.set("/Work/A", GRANTED);
+    s.consents.values.set("/Work/A", GRANTED);
     s.transcripts.files.set("/t/1.jsonl", [line("A", 1, { cwd: "/Work/A" })]);
     await s.ingest.execute();
     s.locator.directories.delete("/Work/A");
@@ -320,7 +327,7 @@ describe("where a call was made", () => {
   it("answers two spellings of a directory with one remembered resolution on a case-insensitive one", async () => {
     const s = setup({ caseInsensitive: true });
     s.locator.directories.set("/Work/A", repository("/Work/A"));
-    s.consents.texts.set("/Work/A", GRANTED);
+    s.consents.values.set("/Work/A", GRANTED);
     s.transcripts.files.set("/t/1.jsonl", [line("A", 1, { cwd: "/Work/A" })]);
     await s.ingest.execute();
     s.locator.directories.delete("/Work/A");
@@ -415,7 +422,7 @@ describe("branch declarations are snapshotted for the repositories touched", () 
 
   it("does not snapshot a repository that has not opted in", async () => {
     const s = setup();
-    s.consents.texts.delete("/work/a");
+    s.consents.values.delete("/work/a");
     s.bindings.bindingsByRoot.set("/work/a", [declared]);
     s.transcripts.files.set("/t/1.jsonl", [line("A", 1)]);
     expect((await s.ingest.execute()).snapshots).toBe(0);
@@ -472,11 +479,8 @@ describe("consent is asked once per working tree", () => {
   it("lets a linked worktree's own opt-in stand without asking the main working tree", async () => {
     const s = setup();
     s.locator.directories.set("/work/wt", repository("/work/wt", { mainRoot: "/work/main" }));
-    s.consents.texts.set("/work/wt", GRANTED);
-    s.consents.texts.set(
-      "/work/main",
-      JSON.stringify({ telemetry: { enabled: false, version: 2 } })
-    );
+    s.consents.values.set("/work/wt", GRANTED);
+    s.consents.values.set("/work/main", "off");
     s.transcripts.files.set("/t/1.jsonl", [line("A", 1, { cwd: "/work/wt" })]);
     expect((await s.ingest.execute()).added).toBe(1);
     expect(s.consents.reads).toEqual(["/work/wt"]);
@@ -492,7 +496,7 @@ describe("what is remembered of a directory is refreshed when it changed", () =>
     s.transcripts.files.set("/t/1.jsonl", [line("A", 1)]);
     await s.ingest.execute();
     s.locator.directories.set("/work/a", repository("/work/a", change));
-    s.consents.texts.set("/work/moved", GRANTED);
+    s.consents.values.set("/work/moved", GRANTED);
     s.transcripts.files.get("/t/1.jsonl")?.push(line("B", 2));
     await s.ingest.execute();
     expect(s.resolutions.saves).toBe(2);

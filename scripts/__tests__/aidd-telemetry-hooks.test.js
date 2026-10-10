@@ -23,8 +23,17 @@ const { branchRoleOf, parseBranchConfig } = require(path.join(HOOKS, "lib/git.cj
 const { readCarries, readDeclarations } = require(path.join(HOOKS, "lib/binding.cjs"));
 const { lookup } = require(path.join(HOOKS, "lib/lookup.cjs"));
 const { parseDeclaration } = require(path.join(HOOKS, "lib/declaration.cjs"));
+const { cmdLine } = require(path.join(HOOKS, "lib/aidd.cjs"));
 
 const WINDOWS = process.platform === "win32";
+const SESSION_ONE_FOR_GATE = {
+  session_id: "00000000-0000-4000-8000-0000000000aa",
+  task: "t",
+  ticket: null,
+  none: false,
+  declared_at: "2026-01-01T00:00:00.000Z",
+  by: "command",
+};
 const SESSION = "00000000-0000-4000-8000-0000000000aa";
 const OTHER = "00000000-0000-4000-8000-0000000000bb";
 const THIRD = "00000000-0000-4000-8000-0000000000cc";
@@ -140,7 +149,13 @@ function sandbox({ aidd = true, branch = "feat/x", consent = true } = {}) {
   return box;
 }
 
-function writeConsent(repo, text = '{"telemetry":{"enabled":true,"version":2}}') {
+/** Consent is the clone's own git config, as `aidd telemetry on` writes it. */
+function writeConsent(repo, value = "2") {
+  git(repo, "config", "--local", "aidd.telemetry", value);
+}
+
+/** What a team could commit: the previous version's consent, which grants nothing now. */
+function writeCommittedConfig(repo, text) {
   fs.mkdirSync(path.join(repo, ".aidd"), { recursive: true });
   fs.writeFileSync(path.join(repo, ".aidd", "config.json"), text);
 }
@@ -192,10 +207,10 @@ test("the telemetry directory follows the fixture, on both platforms", () => {
   }
 });
 
-test("consent text follows the fixture", () => {
+test("consent value follows the fixture", () => {
   for (const [name, c] of Object.entries(cases.consent)) {
     if (c.linkedWorktree) continue;
-    assert.equal(consentOf(c.config), expected.consent[name], name);
+    assert.equal(consentOf(c.value), expected.consent[name], name);
   }
 });
 
@@ -361,18 +376,39 @@ test("presence: a typed declaration is not run for nobody", () => {
 test("consent: every fixture case grants or refuses as expected", () => {
   for (const [name, c] of Object.entries(cases.consent)) {
     withBox({ consent: false }, (box) => {
-      let target = box.repo;
-      if (c.linkedWorktree) {
-        git(box.repo, "commit", "--allow-empty", "-q", "-m", "x");
-        target = path.join(box.root, "linked");
-        git(box.repo, "worktree", "add", "-q", "-b", "feat/y", target);
-        if (c.mainConfig !== null) writeConsent(box.repo, c.mainConfig);
-      }
-      if (c.config !== null) writeConsent(target, c.config);
-      const result = gate(box, { payload: box.payload({ cwd: target }) });
-      assert.equal(asks(result), expected.consent[name] === "granted", name);
+      if (c.value !== null) writeConsent(box.repo, c.value);
+      assert.equal(asks(gate(box)), expected.consent[name] === "granted", name);
     });
   }
+});
+
+test("consent: a linked worktree sees the main clone's consent, and a clone without it asks nothing", () => {
+  withBox({ consent: false }, (box) => {
+    git(box.repo, "commit", "--allow-empty", "-q", "-m", "x");
+    const linked = path.join(box.root, "linked");
+    git(box.repo, "worktree", "add", "-q", "-b", "feat/y", linked);
+    assertPasses(gate(box, { payload: box.payload({ cwd: linked }) }));
+    writeConsent(box.repo);
+    assert.equal(asks(gate(box, { payload: box.payload({ cwd: linked }) })), true);
+  });
+});
+
+test("consent: a committed .aidd/config.json is not consent, so nothing is asked of a teammate", () => {
+  withBox({ consent: false }, (box) => {
+    writeCommittedConfig(box.repo, '{"telemetry":{"enabled":true,"version":2}}');
+    assertPasses(gate(box));
+    assertPasses(gate(box, { payload: box.payload({ prompt: "aidd telemetry task x" }) }));
+    assert.deepEqual(box.calls(), []);
+    writeConsent(box.repo);
+    assert.equal(asks(gate(box)), true);
+  });
+});
+
+test("consent: AIDD_TELEMETRY=0 refuses before git is asked", () => {
+  withBox({}, (box) => {
+    // no git on PATH at all: a refusal by the environment must not need it
+    assertPasses(gate(box, { env: { ...box.env({ AIDD_TELEMETRY: "0" }), PATH: "" } }));
+  });
 });
 
 test("consent: found from a subdirectory of the repository", () => {
@@ -390,15 +426,6 @@ test("consent: AIDD_TELEMETRY refuses on exactly 0", () => {
       assert.equal(asks(result), !expected.environmentRefusal[name], name);
     });
   }
-});
-
-test("consent: the previous version's bare enabled grants nothing", () => {
-  withBox({ consent: false }, (box) => {
-    writeConsent(box.repo, '{"telemetry":{"enabled":true}}');
-    assertPasses(gate(box));
-    writeConsent(box.repo, '{"telemetry":{"enabled":true,"version":2}}');
-    assert.equal(asks(gate(box)), true);
-  });
 });
 
 test("branch role: every fixture case asks only on a working branch", () => {
@@ -542,12 +569,45 @@ test("injection: shell syntax in a typed declaration runs no second command", ()
     "aidd telemetry task x%PATH%",
   ];
   for (const prompt of poisons) {
+    // Not a declaration the hook can run, so it falls through to the ordinary gate: on the
+    // default branch that is a silent pass, and nothing at all is spawned.
+    withBox({ branch: "main" }, (box) => {
+      assertPasses(gate(box, { payload: box.payload({ prompt }) }));
+      assert.ok(!fs.existsSync(path.join(box.repo, "PWNED")), prompt);
+      assert.deepEqual(box.calls(), [], `${JSON.stringify(prompt)} spawned something`);
+    });
+    // On an unbound working branch it is the usual ask, which probes `aidd` and nothing else.
     withBox({}, (box) => {
       const result = gate(box, { payload: box.payload({ prompt }) });
       assert.equal(result.json.decision, "block", prompt);
-      assert.match(result.json.reason, /Declaration not understood/u, prompt);
+      assert.match(result.json.reason, /No task is declared/u, prompt);
       assert.ok(!fs.existsSync(path.join(box.repo, "PWNED")), prompt);
-      assert.deepEqual(box.calls(), [], `${JSON.stringify(prompt)} spawned something`);
+      assert.deepEqual(box.calls().map((c) => c.argv), [["telemetry", "task", "--help"]], prompt);
+    });
+  }
+});
+
+test("a prompt that only starts like a declaration is an ordinary prompt, never refused as not understood", () => {
+  const talk = [
+    "aidd telemetry task is broken, can you debug why?",
+    "aidd telemetry task --help",
+    "aidd telemetry task x\nand a second line",
+  ];
+  for (const prompt of talk) {
+    withBox({ branch: "main" }, (box) => {
+      assertPasses(gate(box, { payload: box.payload({ prompt }) }));
+      assert.deepEqual(box.calls(), [], prompt);
+    });
+    withBox({}, (box) => {
+      box.write("sessions.jsonl", [{ ...SESSION_ONE_FOR_GATE }]);
+      assertPasses(gate(box, { payload: box.payload({ prompt }) }));
+    });
+    withBox({}, (box) => {
+      const result = gate(box, { payload: box.payload({ prompt }) });
+      assert.equal(result.json.decision, "block", prompt);
+      assert.match(result.json.reason, /No task is declared/u, prompt);
+      // the person's real words stay visible to retype: this prompt was not run
+      assert.equal(result.json.hookSpecificOutput, undefined, prompt);
     });
   }
 });
@@ -578,6 +638,27 @@ test("parseDeclaration accepts only words, quoted strings, --ticket and --none",
   assert.equal(parseDeclaration('aidd telemetry task "a"b'), null);
   assert.equal(parseDeclaration('aidd telemetry task "-a"'), null);
   assert.equal(parseDeclaration("do something else"), null);
+});
+
+test("the telemetry directory's home is the operating system's, as the CLI's, never the HOME variable", () => {
+  // The CLI asks os.homedir(), which Windows never takes from HOME (Git Bash and sandboxes set it).
+  for (const platform of ["linux", "win32"]) {
+    const flavour = platform === "win32" ? path.win32 : path.posix;
+    assert.equal(
+      telemetryDir({ env: { HOME: "/somewhere/else" }, platform }),
+      flavour.join(os.homedir(), ".config", "aidd", "telemetry"),
+      platform
+    );
+  }
+});
+
+test("cmd.exe /s command line: the whole line is wrapped in one more pair of quotes", () => {
+  // `/s` strips the first and last quote of the line, so the shim's own pair must survive it.
+  assert.equal(
+    cmdLine("C:\\Users\\First Last\\bin\\aidd.cmd", ["telemetry", "task", "fix", "--ticket", "P-1"]),
+    '""C:\\Users\\First Last\\bin\\aidd.cmd" telemetry task fix --ticket P-1"'
+  );
+  assert.equal(cmdLine("C:\\bin\\aidd.cmd", []), '""C:\\bin\\aidd.cmd" "');
 });
 
 // ---------------------------------------------------------------- session facts and the clear carry

@@ -60,16 +60,17 @@ src/
 │   │   │   ├── identity/    # the identifier a person chose to be named by
 │   │   │   ├── legacy/    # what the previous version wrote, by name and location
 │   │   │   ├── ports/
+│   │   │   │   ├── bindings/    # the declarations kept beside the ledger, and the lock their writers share
 │   │   │   │   ├── forget/
 │   │   │   │   ├── identity/
 │   │   │   │   └── switch/
 │   │   │   ├── report/    # attribution of a call, the days of a report, the axes it splits by
-│   │   │   └── switch/    # the opt-in config, the remembered consent, Claude's retention
+│   │   │   └── switch/    # the previous version's config block, the remembered consent, Claude's retention
 │   │   └── infrastructure/
 │   │       ├── declaration/    # where a declaration is kept: git config and the telemetry dir
 │   │       ├── forget/    # erasing the telemetry dir, the previous version's files, git config keys
 │   │       ├── identity/    # the identity file in the telemetry dir
-│   │       └── switch/    # the project config, what an earlier measurement left in a repository, and Claude settings
+│   │       └── switch/    # the clone's consent in git config, the project config, what an earlier measurement left in a repository, and Claude settings
 │   └── translate/    # canonical source to target-native content
 │       ├── application/
 │       │   └── strategies/

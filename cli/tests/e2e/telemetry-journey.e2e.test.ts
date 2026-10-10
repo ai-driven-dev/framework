@@ -207,7 +207,7 @@ async function optIn(): Promise<void> {
     env: { ...sandboxVariables(), CLAUDE_CODE_SESSION_ID: "" },
   });
   expect(run.exitCode, run.stderr).toBe(0);
-  expect(run.stdout).toContain("Measurement is on for this repository.");
+  expect(run.stdout).toContain("Measurement is on for this clone");
 }
 
 const lines = async (file: string) =>
@@ -282,8 +282,9 @@ async function report(axis: string, from: string, to: string): Promise<Envelope>
 describe("the telemetry journey, on the built binary", () => {
   it("opts in, asks once, keeps the task across /clear, and attributes every axis to it", async () => {
     await optIn();
-    const config = JSON.parse(await readFile(join(repo, ".aidd", "config.json"), "utf8"));
-    expect(config.telemetry).toEqual({ enabled: true, version: 2 });
+    expect(git(repo, gitEnv, "config", "--local", "--get", "aidd.telemetry").trim()).toBe("2");
+    // Consent is the clone's own, never a file a team could commit.
+    expect(existsSync(join(repo, ".aidd", "config.json"))).toBe(false);
 
     const main: Session = { id: S_MAIN };
     expect(sessionStart(main, "startup").stdout).toBe("");

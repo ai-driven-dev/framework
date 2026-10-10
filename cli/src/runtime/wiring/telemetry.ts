@@ -21,13 +21,14 @@ import {
 import { legacyLocations } from "../../contexts/telemetry/domain/legacy/legacy-locations.js";
 import { refusedByEnvironment as refusedByEnvironmentValue } from "../../contexts/telemetry/domain/telemetry-consent.js";
 import { BindingSnapshotStoreAdapter } from "../../contexts/telemetry/infrastructure/binding-snapshot-store-adapter.js";
+import { BindingsLockAdapter } from "../../contexts/telemetry/infrastructure/bindings-lock-adapter.js";
 import { ClaudeTranscriptSourceAdapter } from "../../contexts/telemetry/infrastructure/claude-transcript-source-adapter.js";
-import { ConsentSourceAdapter } from "../../contexts/telemetry/infrastructure/consent-source-adapter.js";
 import { GitBranchBindingStoreAdapter } from "../../contexts/telemetry/infrastructure/declaration/git-branch-binding-store-adapter.js";
 import { SessionBindingStoreAdapter } from "../../contexts/telemetry/infrastructure/declaration/session-binding-store-adapter.js";
 import { MeasurementErasureAdapter } from "../../contexts/telemetry/infrastructure/forget/measurement-erasure-adapter.js";
 import { RepositoryDeclarationsAdapter } from "../../contexts/telemetry/infrastructure/forget/repository-declarations-adapter.js";
 import { GitBranchBindingSourceAdapter } from "../../contexts/telemetry/infrastructure/git-branch-binding-source-adapter.js";
+import { GitConsentAdapter } from "../../contexts/telemetry/infrastructure/git-consent-adapter.js";
 import { GitRepositoryLocatorAdapter } from "../../contexts/telemetry/infrastructure/git-repository-locator-adapter.js";
 import { PersonIdentityAdapter } from "../../contexts/telemetry/infrastructure/identity/person-identity-adapter.js";
 import { ResolutionStoreAdapter } from "../../contexts/telemetry/infrastructure/resolution-store-adapter.js";
@@ -82,14 +83,16 @@ export function wireTelemetry(homedir: () => string): TelemetryDeps {
   const bindingsDir = join(root, "bindings");
   const branchSource = new GitBranchBindingSourceAdapter(gitEnv);
   const snapshotStore = new BindingSnapshotStoreAdapter(bindingsDir, storage);
+  const bindingsLock = new BindingsLockAdapter(bindingsDir, storage);
   const snapshotBindingsUseCase = new SnapshotBindingsUseCase(
     branchSource,
     snapshotStore,
+    bindingsLock,
     () => new Date()
   );
   const ledger = new UsageLedgerAdapter(ledgerDir, storage);
   const locator = new GitRepositoryLocatorAdapter(gitEnv);
-  const consents = new ConsentSourceAdapter();
+  const consents = new GitConsentAdapter(gitEnv);
   const resolutionStore = new ResolutionStoreAdapter(ledgerDir, storage);
   const sessions = new SessionBindingStoreAdapter(bindingsDir, storage);
   // An empty variable is no session: only a set, non-empty id is one a declaration can bind.
@@ -106,7 +109,7 @@ export function wireTelemetry(homedir: () => string): TelemetryDeps {
     repositories,
     sessions,
     branchDeclarations,
-    ledger,
+    bindingsLock,
     declaration
   );
   const showTaskBindingUseCase = new ShowTaskBindingUseCase(
@@ -143,6 +146,7 @@ export function wireTelemetry(homedir: () => string): TelemetryDeps {
     telemetryOnUseCase: new TelemetryOnUseCase(
       locator,
       consents,
+      consents,
       new ProjectConfigAdapter(),
       new LegacyHookAdapter(gitEnv),
       new RunJournalAdapter(gitEnv),
@@ -151,7 +155,7 @@ export function wireTelemetry(homedir: () => string): TelemetryDeps {
       new ClaudeSettingsAdapter(claudeDir),
       caseInsensitiveFileSystem()
     ),
-    telemetryOffUseCase: new TelemetryOffUseCase(locator, consents, new ProjectConfigAdapter()),
+    telemetryOffUseCase: new TelemetryOffUseCase(locator, consents, consents),
     forgetTelemetryUseCase: new ForgetTelemetryUseCase(
       new MeasurementErasureAdapter(
         root,

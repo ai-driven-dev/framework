@@ -27,7 +27,7 @@ export class ConsentedRepositories {
     if (located.status !== "repository") return { status: "refused", reason: "outside-repository" };
     const repositoryId = repositoryIdOf(located);
     if (repositoryId === null) return { status: "refused", reason: "unidentified-repository" };
-    const consent = await consentOfRoot(this.consents, located.root, located.mainRoot);
+    const consent = await consentOfRoot(this.consents, located.root);
     if (consent === "granted") return { status: "open", repositoryId, root: located.root };
     return {
       status: "refused",

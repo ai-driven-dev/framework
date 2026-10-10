@@ -1,15 +1,14 @@
 const fs = require("node:fs");
 const { isClaudePayload } = require("./claude-only.cjs");
-const { locateRoot, consentGranted } = require("./consent.cjs");
+const { consentGranted } = require("./consent.cjs");
 
 /** The guards every hook shares, cheapest first: Claude's own payload (environment only), then
- * one file read for consent. Null means the hook does nothing, silently. */
+ * one `git config` call for consent. Null means the hook does nothing, silently. */
 function guardedContext(payload, env = process.env) {
   if (!isClaudePayload(payload, env)) return null;
   const cwd = typeof payload.cwd === "string" && isDirectory(payload.cwd) ? payload.cwd : process.cwd();
-  const located = locateRoot(cwd);
-  if (!consentGranted(located, env)) return null;
-  return { cwd, located };
+  if (!consentGranted(cwd, env)) return null;
+  return { cwd };
 }
 
 function isDirectory(dir) {

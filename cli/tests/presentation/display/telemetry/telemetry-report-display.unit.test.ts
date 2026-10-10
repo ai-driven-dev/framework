@@ -63,6 +63,9 @@ const printed = (r: ReportResult): string[] => {
 const value = (text: string): AxisValue => ({ kind: "value", value: text });
 const one = tally(1, [1, 10, 1000, 100]);
 
+const UNRECOGNISED =
+  " not recognised: a call missing a counter is kept with that counter unknown; a line that is no usage line is not counted.";
+
 describe("printing a usage report", () => {
   it("lays out the four counters apart, a row total, a total row, and the coverage", () => {
     expect(
@@ -95,13 +98,12 @@ describe("printing a usage report", () => {
   });
 
   it("words each unattributed reason", () => {
-    const rows: [AxisValue, Tally][] = (
-      ["outside-repo", "root-unresolved", "no-binding", "declared-none"] as const
-    ).map((reason) => [{ kind: "unattributed", reason }, one]);
-    const lines = printed(result("task", rows, tally(4, [4, 40, 4000, 400])));
-    expect(lines.slice(3, 7).map((line) => line.slice(0, 36).trimEnd())).toEqual([
-      "unattributed: outside any repository",
-      "unattributed: directory gone",
+    const rows: [AxisValue, Tally][] = (["no-binding", "declared-none"] as const).map((reason) => [
+      { kind: "unattributed", reason },
+      one,
+    ]);
+    const lines = printed(result("task", rows, tally(2, [2, 20, 2000, 200])));
+    expect(lines.slice(3, 5).map((line) => line.slice(0, 36).trimEnd())).toEqual([
       "unattributed: no task declared",
       "unattributed: declared no task",
     ]);
@@ -218,12 +220,12 @@ describe("printing a usage report", () => {
     );
     expect(lines.slice(3)).toEqual([
       "Read 2 transcripts just now; 1 call in this period; oldest transcript on disk: 2026-09-20.",
-      "3 shapes not recognised and not counted.",
+      `3 shapes${UNRECOGNISED}`,
       "Not stored: 2 calls outside any repository.",
       "Not stored: 1 call from a directory never seen while it existed.",
     ]);
     const one_ = printed(result("total", [], tally(0, [0, 0, 0, 0]), { unrecognised: 1 }));
-    expect(one_).toContain("1 shape not recognised and not counted.");
+    expect(one_).toContain(`1 shape${UNRECOGNISED}`);
   });
 
   it("says when ledger lines were skipped", () => {

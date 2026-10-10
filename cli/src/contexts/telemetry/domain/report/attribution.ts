@@ -2,15 +2,10 @@ import { type BranchSnapshot, snapshotKey } from "../branch-binding.js";
 import { resolveBinding } from "../declaration/binding-resolution.js";
 import type { SessionCarry, SessionDeclaration } from "../declaration/task-declaration.js";
 
-/** Why a billed call has no task. `outside-repo` and `root-unresolved` are decided before the
- * ledger: a call from outside any repository, or from a directory never seen alive, is not
- * stored, so it reaches a report only as a count of what was not stored. */
-export const UNATTRIBUTED_REASONS = [
-  "outside-repo",
-  "root-unresolved",
-  "no-binding",
-  "declared-none",
-] as const;
+/** Why a billed call has no task. A call from outside any repository, or from a directory never
+ * seen alive, is never stored, so it reaches a report only as a count in `coverage.not_stored`
+ * and is not a reason here. */
+export const UNATTRIBUTED_REASONS = ["no-binding", "declared-none"] as const;
 export type UnattributedReason = (typeof UNATTRIBUTED_REASONS)[number];
 
 export type Attribution =
@@ -66,30 +61,67 @@ function sessionVerdict(record: AttributableUsage, at: number, facts: Attributio
   return binding.state === "bound" ? verdict(binding.task, binding.ticket) : null;
 }
 
+/** The instant a snapshot's declaration was made; one with no time speaks from the start. */
+function declaredAt(snapshot: BranchSnapshot): number {
+  return snapshot.declared_at === null
+    ? Number.NEGATIVE_INFINITY
+    : Date.parse(snapshot.declared_at);
+}
+
+/** The declaration in force at an instant within one generation. The generation's first
+ * declaration covers it from its creation, so declaring late still moves its earlier work;
+ * each later one applies from its own time, so work already attributed stays where it was.
+ * Equal declaration times are one declaration: the latest snapshot of it speaks. */
+function inForce(generation: readonly BranchSnapshot[], at: number): BranchSnapshot | undefined {
+  let first: BranchSnapshot | undefined;
+  let current: BranchSnapshot | undefined;
+  for (const snapshot of generation) {
+    if (first === undefined || declaredAt(snapshot) < declaredAt(first)) first = snapshot;
+    if (
+      declaredAt(snapshot) <= at &&
+      (current === undefined || declaredAt(snapshot) >= declaredAt(current))
+    ) {
+      current = snapshot;
+    }
+  }
+  if (first === undefined) return undefined;
+  return current ?? latestOfFirst(generation, first);
+}
+
+/** The latest snapshot of the earliest declaration. */
+function latestOfFirst(
+  generation: readonly BranchSnapshot[],
+  first: BranchSnapshot
+): BranchSnapshot {
+  return generation.filter((s) => declaredAt(s) === declaredAt(first)).at(-1) ?? first;
+}
+
 /** The snapshot that speaks for a branch at an instant. A name used again after its branch was
  * deleted has one generation per creation, told apart by `branch_created_at`: a call belongs to
- * the youngest generation created strictly before it, and within that generation to the latest
- * snapshot, so declaring late still moves the generation's earlier work. A snapshot with no
- * creation time speaks only when no dated generation was created before the call. */
+ * the youngest generation created strictly before it, and within that generation to the
+ * declaration in force at the call (see `inForce`). A snapshot with no creation time speaks
+ * only when no dated generation was created before the call. */
 function generationAt(
   snapshots: readonly BranchSnapshot[],
   at: number
 ): BranchSnapshot | undefined {
-  let chosen: BranchSnapshot | undefined;
   let chosenCreated = Number.NEGATIVE_INFINITY;
-  let undated: BranchSnapshot | undefined;
+  let found = false;
   for (const snapshot of snapshots) {
-    if (snapshot.branch_created_at === null) {
-      undated = snapshot;
-      continue;
-    }
+    if (snapshot.branch_created_at === null) continue;
     const created = Date.parse(snapshot.branch_created_at);
     if (created < at && created >= chosenCreated) {
-      chosen = snapshot;
       chosenCreated = created;
+      found = true;
     }
   }
-  return chosen ?? undated;
+  const generation = snapshots.filter((snapshot) =>
+    found
+      ? snapshot.branch_created_at !== null &&
+        Date.parse(snapshot.branch_created_at) === chosenCreated
+      : snapshot.branch_created_at === null
+  );
+  return inForce(generation, at);
 }
 
 /** A branch binds every call made on it after it was created, not only those after it was

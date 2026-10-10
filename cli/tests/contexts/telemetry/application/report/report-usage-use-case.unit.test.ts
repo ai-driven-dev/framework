@@ -15,6 +15,7 @@ import {
   FakeBindings,
   FakeConsents,
   FakeLocator,
+  InMemoryBindingsLock,
   InMemoryIdentity,
   InMemoryLedger,
   InMemoryResolutions,
@@ -23,7 +24,7 @@ import {
   InMemoryTranscripts,
 } from "../../../../helpers/ports/in-memory-telemetry.js";
 
-const GRANTED = JSON.stringify({ telemetry: { enabled: true, version: 2 } });
+const GRANTED = "2";
 const ANY: Period = { from: null, to: null };
 
 function line(id: string, output: number, at: string, session = "s-1", branch = "feat/a"): string {
@@ -65,6 +66,7 @@ function setup(options: { refused?: boolean } = {}) {
     new SnapshotBindingsUseCase(
       bindings,
       snapshotStore,
+      new InMemoryBindingsLock(),
       () => new Date("2026-10-09T00:00:00.000Z")
     ),
     { refusedByEnvironment: options.refused ?? false }
@@ -76,7 +78,7 @@ function setup(options: { refused?: boolean } = {}) {
     remote: "https://github.com/acme/widgets.git",
     rootCommit: "c0ffee",
   });
-  consents.texts.set("/work/a", GRANTED);
+  consents.values.set("/work/a", GRANTED);
   const report = new ReportUsageUseCase(
     ingest,
     ledger,

@@ -22,13 +22,7 @@ function block(reason, { keepPrompt = false } = {}) {
   return output;
 }
 
-function intercept(prompt, cwd) {
-  const argv = parseDeclaration(prompt);
-  if (argv === null) {
-    return block(
-      "Declaration not understood, nothing was run. Use: aidd telemetry task <name> [--ticket <ref>] or aidd telemetry task --none, on one line."
-    );
-  }
+function intercept(argv, cwd) {
   const aidd = resolveAidd();
   if (aidd === null) {
     return block("aidd is needed to record the declaration and was not found on PATH. Install @ai-driven-dev/cli, then declare again.");
@@ -66,7 +60,10 @@ runHook((payload) => {
   if (!personIsPresent()) return null;
   const context = guardedContext(payload);
   if (context === null) return null;
-  if (isIntercept(payload.prompt)) return intercept(payload.prompt, context.cwd);
+  // A prompt that only starts like a declaration, or holds anything a shell would read, is
+  // not run and not refused: it is an ordinary prompt and meets the ordinary gate below.
+  const declaration = isIntercept(payload.prompt) ? parseDeclaration(payload.prompt) : null;
+  if (declaration !== null) return intercept(declaration, context.cwd);
 
   const found = lookup({
     cwd: context.cwd,

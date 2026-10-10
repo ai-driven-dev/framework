@@ -4,14 +4,19 @@ import { isErrnoException } from "../../../kernel/reading/json-file.js";
 import { readTextIfPresent } from "../../../kernel/reading/text-file.js";
 import type { PrivateStorage } from "../domain/ports/private-storage.js";
 import type { LoadedLedger, UsageLedger } from "../domain/ports/usage-ledger.js";
-import { parseStoredUsage, partitionByMonth, type StoredUsage } from "../domain/stored-usage.js";
+import {
+  monthOf,
+  parseStoredUsage,
+  partitionByMonth,
+  type StoredUsage,
+} from "../domain/stored-usage.js";
 import {
   parsePositions,
   renderPositions,
   type TranscriptPosition,
 } from "../domain/transcript-position.js";
 import { foldUsage } from "../domain/usage-fold.js";
-import { LedgerLock, type LockOptions } from "./ledger-lock.js";
+import { DirectoryLock, type LockOptions } from "./ledger-lock.js";
 
 const PARTITION = /^\d{4}-\d{2}\.jsonl$/;
 const OFFSETS_FILE = "offsets.json";
@@ -22,7 +27,8 @@ const LOCK_FILE = ".lock";
  * `<month>.jsonl`, one record per line, by the month of the record's own time. A better
  * snapshot of a call replaces the one held, and its time can fall in another month, so the
  * ledger is never appended to: a changed partition is rewritten whole, by temporary file and
- * rename, and an unchanged one is not touched. Each call is therefore on disk once, no
+ * rename, and an unchanged one is not touched (a save told which months changed reads and
+ * writes only those). Each call is therefore on disk once, no
  * reader ever meets a torn line, and the bytes depend on what the ledger holds and not on how
  * it got there. A ledger holds a few hundred bytes a call, so a rewrite stays cheap.
  *
@@ -34,14 +40,8 @@ export class UsageLedgerAdapter implements UsageLedger {
     private readonly lockOptions: Partial<LockOptions> = {}
   ) {}
 
-  async exclusively<T>(work: () => Promise<T>): Promise<T> {
-    await this.storage.ensureDirectory(this.dir);
-    const release = await new LedgerLock(join(this.dir, LOCK_FILE), this.lockOptions).acquire();
-    try {
-      return await work();
-    } finally {
-      await release();
-    }
+  exclusively<T>(work: () => Promise<T>): Promise<T> {
+    return new DirectoryLock(this.dir, LOCK_FILE, this.storage, this.lockOptions).exclusively(work);
   }
 
   async load(): Promise<LoadedLedger> {
@@ -59,9 +59,13 @@ export class UsageLedgerAdapter implements UsageLedger {
     return { records: foldUsage(found), skippedLines };
   }
 
-  async save(records: readonly StoredUsage[]): Promise<void> {
+  async save(records: readonly StoredUsage[], only?: ReadonlySet<string>): Promise<void> {
     await this.storage.ensureDirectory(this.dir);
-    const months = partitionByMonth(records);
+    const months = partitionByMonth(
+      only === undefined
+        ? records
+        : records.filter((record) => only.has(monthOf(record.at) as string))
+    );
     for (const [month, inMonth] of months) {
       const path = join(this.dir, `${month}.jsonl`);
       const text = inMonth.map((record) => JSON.stringify(record)).join("\n");
@@ -70,7 +74,10 @@ export class UsageLedgerAdapter implements UsageLedger {
     }
     // A record whose better snapshot moved to another month can leave its old month empty.
     for (const name of await this.partitions()) {
-      if (!months.has(name.slice(0, -".jsonl".length))) await rm(join(this.dir, name));
+      const month = name.slice(0, -".jsonl".length);
+      if ((only === undefined || only.has(month)) && !months.has(month)) {
+        await rm(join(this.dir, name));
+      }
     }
   }
 

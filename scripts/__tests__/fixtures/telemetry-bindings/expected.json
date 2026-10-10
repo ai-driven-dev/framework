@@ -183,19 +183,13 @@
   },
   "consent": {
     "granted": "granted",
-    "previous-version-bare-enabled": "absent",
+    "off": "absent",
     "previous-version-1": "absent",
-    "version-without-enabled": "absent",
-    "disabled": "absent",
-    "enabled-as-a-string": "absent",
-    "version-as-a-string": "absent",
-    "no-telemetry-key": "absent",
-    "no-file": "absent",
-    "unparseable": "unreadable",
-    "not-an-object": "unreadable",
-    "linked-worktree-without-config-takes-the-main-tree": "granted",
-    "linked-worktree-own-config-wins-over-the-main-tree": "absent",
-    "main-tree-config-is-not-read-for-the-main-tree": "absent"
+    "a-later-version": "absent",
+    "true": "absent",
+    "empty": "absent",
+    "padded": "absent",
+    "unset": "absent"
   },
   "environmentRefusal": {
     "zero-refuses": true,

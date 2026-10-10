@@ -10,13 +10,13 @@ import {
   FakeBranchStore,
   FakeConsents,
   FakeLocator,
-  InMemoryLedger,
+  InMemoryBindingsLock,
   InMemorySessions,
   InMemorySnapshots,
 } from "../../../helpers/ports/in-memory-telemetry.js";
 
 const CWD = "/work/repo";
-const GRANTED = JSON.stringify({ telemetry: { enabled: true, version: 2 } });
+const GRANTED = "2";
 const REPOSITORY: LocatedDirectory = {
   status: "repository",
   root: CWD,
@@ -31,22 +31,23 @@ function setup(options: { refusedByEnvironment?: boolean; sessionId?: string | n
   const locator = new FakeLocator();
   locator.directories.set(CWD, REPOSITORY);
   const consents = new FakeConsents();
-  consents.texts.set(CWD, GRANTED);
+  consents.values.set(CWD, GRANTED);
   const sessions = new InMemorySessions(events);
   const branches = new FakeBranchStore(events);
-  const ledger = new InMemoryLedger(events);
+  const lock = new InMemoryBindingsLock(events);
   const source = new FakeBindings();
   const snapshotStore = new InMemorySnapshots(events);
   const snapshots = new SnapshotBindingsUseCase(
     source,
     snapshotStore,
+    lock,
     () => new Date("2026-10-09T10:00:01.000Z")
   );
   const useCase = new DeclareTaskUseCase(
     new ConsentedRepositories(locator, consents),
     sessions,
     new BranchDeclarations(branches, source, snapshots),
-    ledger,
+    lock,
     {
       refusedByEnvironment: options.refusedByEnvironment ?? false,
       sessionId: options.sessionId === undefined ? "sess-1234567890" : options.sessionId,
@@ -86,9 +87,17 @@ describe("declaring a task", () => {
     ]);
     expect(branches.declared).toHaveLength(1);
     expect(branches.declared[0]).toMatchObject({ root: CWD, branch: "feat/x" });
-    // The snapshot sees the declaration, so it follows the git config write, and every write is
-    // inside the ledger's lock.
-    expect(events).toEqual(["lock", "append", "declare", "snapshot", "unlock"]);
+    // The snapshot sees the declaration, so it follows the git config write. The session line
+    // and the snapshot each take the bindings lock, one after the other, and never the ledger's.
+    expect(events).toEqual([
+      "bindings-lock",
+      "append",
+      "bindings-unlock",
+      "declare",
+      "bindings-lock",
+      "snapshot",
+      "bindings-unlock",
+    ]);
     expect(snapshotStore.appended).toHaveLength(1);
   });
 
@@ -126,7 +135,7 @@ describe("declaring a task", () => {
     });
     expect(branches.declared).toEqual([]);
     expect(sessions.lines).toHaveLength(1);
-    expect(events).toEqual(["lock", "append", "unlock"]);
+    expect(events).toEqual(["bindings-lock", "append", "bindings-unlock"]);
   });
 
   it("binds the session only, and says so, on a detached head", async () => {
@@ -151,7 +160,7 @@ describe("declaring a task", () => {
 describe("refusing to declare", () => {
   it("refuses a project that has not opted in, and writes nothing", async () => {
     const { useCase, consents, sessions, branches, events } = setup();
-    consents.texts.set(CWD, JSON.stringify({ telemetry: { enabled: true } }));
+    consents.values.set(CWD, "true");
     expect(await useCase.execute({ cwd: CWD, request: TASK, by: "command" })).toEqual({
       status: "refused",
       reason: "no-consent",
@@ -161,28 +170,24 @@ describe("refusing to declare", () => {
     expect(events).toEqual([]);
   });
 
-  it("refuses a project with no config, and one whose config cannot be parsed, differently", async () => {
+  it("refuses a clone with no consent, and one whose git config cannot be read, differently", async () => {
     const none = setup();
-    none.consents.texts.delete(CWD);
+    none.consents.values.delete(CWD);
     expect(await none.useCase.execute({ cwd: CWD, request: TASK, by: "command" })).toMatchObject({
       reason: "no-consent",
     });
     const broken = setup();
-    broken.consents.texts.set(CWD, "{nope");
+    broken.consents.unreadable.add(CWD);
     expect(await broken.useCase.execute({ cwd: CWD, request: TASK, by: "command" })).toMatchObject({
       reason: "unreadable-consent",
     });
   });
 
-  it("asks the main working tree when a linked worktree has no config of its own", async () => {
-    const { useCase, locator, consents, sessions } = setup();
+  it("asks a linked worktree's own root, which shares the main clone's git config", async () => {
+    const { useCase, locator, consents } = setup();
     locator.directories.set(CWD, { ...REPOSITORY, root: CWD, mainRoot: "/work/main" });
-    consents.texts.delete(CWD);
-    consents.texts.set("/work/main", GRANTED);
-    expect(await useCase.execute({ cwd: CWD, request: TASK, by: "command" })).toMatchObject({
-      status: "declared",
-    });
-    expect(sessions.lines).toHaveLength(1);
+    await useCase.execute({ cwd: CWD, request: TASK, by: "command" });
+    expect(consents.reads).toEqual([CWD]);
   });
 
   it("refuses under AIDD_TELEMETRY=0 before reading anything", async () => {

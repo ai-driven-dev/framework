@@ -16,6 +16,9 @@ function shown(result: Parameters<typeof printIdentityResult>[1]): CapturingOutp
   return output;
 }
 
+const UNRECOGNISED =
+  " not recognised: a call missing a counter is kept with that counter unknown; a line that is no usage line is not counted.";
+
 describe("printIdentityResult", () => {
   it("says who the measurement names, and how to stop", () => {
     const output = shown({ status: "set", personId: "person-a" });
@@ -83,7 +86,7 @@ describe("printIngestResult", () => {
     );
     expect(lines).toEqual([
       "Read 1 transcript: 1 call added, 0 updated.",
-      "2 shapes not recognised and not counted.",
+      `2 shapes${UNRECOGNISED}`,
       "1 ledger line was not a record and dropped.",
       "2 branch declarations snapshotted.",
     ]);
@@ -93,7 +96,7 @@ describe("printIngestResult", () => {
       )
     ).toEqual([
       "Read 1 transcript: 1 call added, 0 updated.",
-      "1 shape not recognised and not counted.",
+      `1 shape${UNRECOGNISED}`,
       "2 ledger lines were not a record and dropped.",
       "1 branch declaration snapshotted.",
     ]);

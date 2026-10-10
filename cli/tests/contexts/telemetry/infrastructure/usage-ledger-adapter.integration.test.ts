@@ -95,6 +95,36 @@ describe("the ledger on disk", () => {
     expect((await stat(join(dir, "2026-11.jsonl"))).ino).not.toBe(novemberBefore.ino);
   });
 
+  it("rewrites only the months it is told changed, and reads no other partition", async () => {
+    await ledger.save([
+      stored({ key: "a", at: "2026-08-02T00:00:00Z" }),
+      stored({ key: "b", at: "2026-09-02T00:00:00Z" }),
+    ]);
+    const septemberBefore = await stat(join(dir, "2026-09.jsonl"));
+    await writeFile(join(dir, "2026-08.jsonl"), "{not a record}\n");
+    await ledger.save(
+      [
+        stored({ key: "a", at: "2026-08-02T00:00:00Z" }),
+        stored({ key: "b", at: "2026-09-02T00:00:00Z", output: 99 }),
+        stored({ key: "c", at: "2026-10-02T00:00:00Z" }),
+      ],
+      new Set(["2026-09", "2026-10"])
+    );
+    expect(await readFile(join(dir, "2026-08.jsonl"), "utf8")).toBe("{not a record}\n");
+    expect((await stat(join(dir, "2026-09.jsonl"))).ino).not.toBe(septemberBefore.ino);
+    expect(await readFile(join(dir, "2026-09.jsonl"), "utf8")).toContain('"output":99');
+    expect(await partitions()).toEqual(["2026-08.jsonl", "2026-09.jsonl", "2026-10.jsonl"]);
+  });
+
+  it("removes a told month that no longer holds anything", async () => {
+    await ledger.save([stored({ key: "a", at: "2026-08-02T00:00:00Z" })]);
+    await ledger.save(
+      [stored({ key: "a", at: "2026-09-02T00:00:00Z", output: 2 })],
+      new Set(["2026-08", "2026-09"])
+    );
+    expect(await partitions()).toEqual(["2026-09.jsonl"]);
+  });
+
   it("leaves one live record when a better snapshot moves a call to another month", async () => {
     await ledger.save([stored({ output: 10, at: "2026-10-31T23:59:59.000Z" })]);
     await ledger.save([stored({ output: 90, at: "2026-11-01T00:00:01.000Z" })]);

@@ -50,6 +50,21 @@ describe("a record belongs to the month of its own time, in UTC", () => {
 });
 
 describe("upserting records into what is held", () => {
+  it("names the months it changed: where a record is now, and where a replaced one was", () => {
+    const held = [
+      stored({ key: "a", at: "2026-08-02T00:00:00.000Z" }),
+      stored({ key: "b", at: "2026-09-30T23:59:59.000Z", output: 1 }),
+      stored({ key: "c", at: "2026-07-02T00:00:00.000Z" }),
+    ];
+    const result = upsertUsage(held, [
+      stored({ key: "a", at: "2026-08-02T00:00:00.000Z" }),
+      stored({ key: "b", at: "2026-10-01T00:00:01.000Z", output: 9 }),
+      stored({ key: "d", at: "2026-10-05T00:00:00.000Z" }),
+    ]);
+    expect([...result.months].sort()).toEqual(["2026-09", "2026-10"]);
+    expect(upsertUsage(held, [held[0] as StoredUsage]).months.size).toBe(0);
+  });
+
   it("adds a key not yet held", () => {
     const result = upsertUsage([], [stored()]);
     expect(result.records).toHaveLength(1);
@@ -131,6 +146,32 @@ describe("a partition is the month's records in a fixed order", () => {
   it("puts a record with no usable time in no partition, and says so", () => {
     const parts = partitionByMonth([stored({ at: "garbage" })]);
     expect(parts.size).toBe(0);
+  });
+
+  it("copies each record a bounded number of times, so a large ledger partitions in linear work", () => {
+    // Counts every element an array iteration hands out while partitioning: a copy of the
+    // month's array per record would hand out about n squared of them.
+    const iterate: unknown = Reflect.get(Array.prototype, Symbol.iterator);
+    const touched = (n: number): number => {
+      const records = Array.from({ length: n }, (_, i) =>
+        stored({ key: `k${i}`, at: new Date(Date.UTC(2026, 9, 1) + i * 1000).toISOString() })
+      );
+      let count = 0;
+      Reflect.set(Array.prototype, Symbol.iterator, function* counting(this: unknown[]) {
+        for (let i = 0; i < this.length; i += 1) {
+          count += 1;
+          yield this[i];
+        }
+      });
+      try {
+        partitionByMonth(records);
+      } finally {
+        Reflect.set(Array.prototype, Symbol.iterator, iterate);
+      }
+      return count;
+    };
+    expect(touched(2000)).toBeLessThan(2000 * 8);
+    expect(touched(4000)).toBeLessThan(4000 * 8);
   });
 });
 

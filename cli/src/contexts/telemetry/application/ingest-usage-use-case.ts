@@ -109,7 +109,7 @@ export class IngestUsageUseCase {
       const merged = upsertUsage(held.records, toStore);
       added = merged.added;
       updated = merged.updated;
-      if (added + updated > 0) await this.ledger.save(merged.records);
+      if (added + updated > 0) await this.ledger.save(merged.records, merged.months);
     }
     await resolver.close();
 

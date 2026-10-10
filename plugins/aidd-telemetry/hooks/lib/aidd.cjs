@@ -60,6 +60,13 @@ function resolveAidd({ env = process.env, platform = process.platform } = {}) {
   return null;
 }
 
+/** The line `cmd.exe /d /s /c` is given for a shim. `/s` strips the first and the last quote of
+ * the line, so the shim's own quoted path is wrapped in one more pair, as Node does for
+ * `shell: true`; without it a path holding a space loses its quotes and does not run. */
+function cmdLine(shim, argv) {
+  return `""${shim}" ${argv.join(" ")}"`;
+}
+
 /** Runs the resolved `aidd` with `argv`. Never inherits stdio: the hook's stdout is the
  * protocol. A refusal or a timeout is a result with `status` null. */
 function runAidd(resolved, argv, { cwd, env = process.env, timeout }) {
@@ -68,7 +75,7 @@ function runAidd(resolved, argv, { cwd, env = process.env, timeout }) {
     if (!argv.every((arg) => CMD_SAFE.test(arg))) {
       return { status: null, stdout: "", stderr: "", refused: true };
     }
-    run = spawnSync(env.ComSpec || "cmd.exe", ["/d", "/s", "/c", `"${resolved.shim}" ${argv.join(" ")}`], {
+    run = spawnSync(env.ComSpec || "cmd.exe", ["/d", "/s", "/c", cmdLine(resolved.shim, argv)], {
       cwd,
       env: cleanEnv(env),
       encoding: "utf8",
@@ -94,4 +101,4 @@ function runAidd(resolved, argv, { cwd, env = process.env, timeout }) {
   return { status: run.status, stdout: run.stdout, stderr: run.stderr };
 }
 
-module.exports = { resolveAidd, runAidd, CMD_SAFE };
+module.exports = { resolveAidd, runAidd, cmdLine, CMD_SAFE };

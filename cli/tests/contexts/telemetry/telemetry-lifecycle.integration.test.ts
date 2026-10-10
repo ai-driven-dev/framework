@@ -187,31 +187,72 @@ describe("opting in to a repository the previous version measured", () => {
     expect(existsSync(join(repo, "aidd_docs", "runs", "a.jsonl"))).toBe(true);
   });
 
-  it("writes version 2 and keeps every other key", async () => {
-    await configure(BARE);
+  const consentOf = () =>
+    git(repo, box.gitEnv, "config", "--local", "--get", "aidd.telemetry").trim();
+
+  it("sets the consent in the repository's git config, not in .aidd/config.json", async () => {
+    await configure(JSON.stringify({ keep: { me: 1 } }));
     await deps.telemetryOnUseCase.execute(repo);
-    const config = JSON.parse(read(join(repo, ".aidd", "config.json")));
-    expect(config).toEqual({ telemetry: { enabled: true, version: 2 }, keep: { me: 1 } });
+    expect(consentOf()).toBe("2");
+    expect(read(join(repo, ".aidd", "config.json"))).toBe('{"keep":{"me":1}}');
   });
 
-  it("turns off keeping the version and every other key", async () => {
-    await configure(JSON.stringify({ telemetry: { enabled: true, version: 2 }, keep: { me: 1 } }));
-    expect(await deps.telemetryOffUseCase.execute(repo)).toEqual({ status: "off", changed: true });
-    expect(JSON.parse(read(join(repo, ".aidd", "config.json")))).toEqual({
-      telemetry: { enabled: false, version: 2 },
-      keep: { me: 1 },
+  it("removes the previous version's block, every V1 key with it, and keeps every other byte", async () => {
+    await configure(
+      '{\n  "keep": { "me": 1 },\n  "telemetry": { "enabled": true, "endpoint": "x" }\n}\n'
+    );
+    const result = await deps.telemetryOnUseCase.execute(repo);
+    expect(result).toMatchObject({ legacyConfig: "block-removed" });
+    expect(read(join(repo, ".aidd", "config.json"))).toBe('{\n  "keep": { "me": 1 }\n}\n');
+  });
+
+  it("deletes .aidd/config.json when the block was all it held", async () => {
+    await configure('{"telemetry":{"enabled":true,"endpoint":"x"}}');
+    expect(await deps.telemetryOnUseCase.execute(repo)).toMatchObject({
+      legacyConfig: "file-deleted",
     });
+    expect(existsSync(join(repo, ".aidd", "config.json"))).toBe(false);
   });
 
-  it("refuses a config that does not parse, and changes nothing", async () => {
+  it("is not opted in by a committed .aidd/config.json that says version 2", async () => {
+    await configure('{"telemetry":{"enabled":true,"version":2}}');
+    git(repo, box.gitEnv, "add", ".aidd/config.json");
+    git(repo, box.gitEnv, "commit", "-q", "-m", "config");
+    writeTranscript(repo, ["a"]);
+    expect(await deps.ingestUsageUseCase.execute()).toMatchObject({
+      added: 0,
+      notStored: { "no-consent": 1 },
+    });
+    expect(() => consentOf()).toThrow();
+  });
+
+  it("turns off with the git config value off, and leaves .aidd/config.json alone", async () => {
+    git(repo, box.gitEnv, "config", "--local", "aidd.telemetry", "2");
+    await configure('{"keep":1}');
+    expect(await deps.telemetryOffUseCase.execute(repo)).toEqual({ status: "off", changed: true });
+    expect(consentOf()).toBe("off");
+    expect(read(join(repo, ".aidd", "config.json"))).toBe('{"keep":1}');
+  });
+
+  it("stores nothing from a linked worktree until the main clone opts in, then shares it", async () => {
+    const linked = join(box.root, "widgets-linked");
+    git(repo, box.gitEnv, "worktree", "add", "-q", "-b", "feat/y", linked);
+    writeTranscript(linked, ["a"]);
+    expect(await deps.ingestUsageUseCase.execute()).toMatchObject({ added: 0 });
+    await deps.telemetryOnUseCase.execute(repo);
+    expect(await deps.ingestUsageUseCase.execute()).toMatchObject({ added: 1 });
+  });
+
+  it("leaves a config that does not parse as it is, and still turns measurement on", async () => {
     await configure("{nope");
     install("#!/bin/sh\n<CALL>\n");
-    expect(await deps.telemetryOnUseCase.execute(repo)).toEqual({
-      status: "refused",
-      reason: "unreadable-config",
+    expect(await deps.telemetryOnUseCase.execute(repo)).toMatchObject({
+      status: "on",
+      legacyConfig: "unparseable",
     });
     expect(read(join(repo, ".aidd", "config.json"))).toBe("{nope");
-    expect(existsSync(join(hooksDir(), DELEGATE_FILE))).toBe(true);
+    expect(consentOf()).toBe("2");
+    expect(existsSync(join(hooksDir(), DELEGATE_FILE))).toBe(false);
   });
 
   it("refuses outside a repository", async () => {
@@ -364,7 +405,7 @@ function snapshot(): Record<string, string> {
 
 describe("forgetting", () => {
   async function measured(): Promise<void> {
-    await configure(JSON.stringify({ telemetry: { enabled: true, version: 2 } }));
+    git(repo, box.gitEnv, "config", "--local", "aidd.telemetry", "2");
     declare("main", "checkout");
     writeTranscript(repo, ["a"]);
     await deps.ingestUsageUseCase.execute();
@@ -395,7 +436,7 @@ describe("forgetting", () => {
       "previous-day-file",
       "previous-identity",
     ]);
-    expect(result.plan.repositories).toEqual([{ root: repo, keys: 2 }]);
+    expect(result.plan.repositories).toEqual([{ root: repo, taskKeys: 2, consent: true }]);
     expect(snapshot()).toEqual(before);
     expect(git(repo, box.gitEnv, "config", "--local", "--list")).toBe(config);
   });
@@ -428,11 +469,7 @@ describe("forgetting", () => {
     await measured();
     const other = box.repository("gadgets");
     git(other, box.gitEnv, "config", "--local", "branch.main.aiddTask", "x");
-    mkdirSync(join(other, ".aidd"));
-    writeFileSync(
-      join(other, ".aidd", "config.json"),
-      JSON.stringify({ telemetry: { enabled: true, version: 2 } })
-    );
+    git(other, box.gitEnv, "config", "--local", "aidd.telemetry", "2");
     writeTranscript(other, ["z"], "s-2");
     await deps.ingestUsageUseCase.execute();
     rmSync(other, { recursive: true });

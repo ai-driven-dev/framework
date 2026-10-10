@@ -19,7 +19,7 @@ Those are derived downstream, once, for every tool.
 | `cache_write_1h` | int \| null | of which 1-hour TTL; `null` when the tool does not say |
 | `reasoning` | int \| null | of which reasoning, a subset of `output`; `null` when the tool does not say |
 | `cwd` | string \| null | raw working directory of that line, joined to a worktree downstream; local only |
-| `git_branch` | string \| null | raw, data only, never an attribution source |
+| `git_branch` | string \| null | raw, as the line says it; the reader does not interpret it. Attribution uses it only to find the branch's declaration snapshot, together with `repository_id` |
 
 Rules: an unknown value is `null`, never `0`. A shape the reader does not recognise is reported, never guessed.
 

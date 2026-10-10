@@ -8,7 +8,9 @@ import type {
   SessionDeclaration,
   TaskDeclaration,
 } from "../../../src/contexts/telemetry/domain/declaration/task-declaration.js";
-import type { BindingSnapshotStore } from "../../../src/contexts/telemetry/domain/ports/binding-snapshot-store.js";
+import type { BindingSnapshotStore } from "../../../src/contexts/telemetry/domain/ports/bindings/binding-snapshot-store.js";
+import type { BindingsLock } from "../../../src/contexts/telemetry/domain/ports/bindings/bindings-lock.js";
+import type { SessionBindingStore } from "../../../src/contexts/telemetry/domain/ports/bindings/session-binding-store.js";
 import type { BranchBindingSource } from "../../../src/contexts/telemetry/domain/ports/branch-binding-source.js";
 import type {
   BranchBindingStore,
@@ -21,7 +23,6 @@ import type {
   RepositoryLocator,
 } from "../../../src/contexts/telemetry/domain/ports/repository-locator.js";
 import type { ResolutionStore } from "../../../src/contexts/telemetry/domain/ports/resolution-store.js";
-import type { SessionBindingStore } from "../../../src/contexts/telemetry/domain/ports/session-binding-store.js";
 import type {
   TranscriptRead,
   TranscriptSource,
@@ -32,6 +33,7 @@ import type {
 } from "../../../src/contexts/telemetry/domain/ports/usage-ledger.js";
 import type { RepositoryResolution } from "../../../src/contexts/telemetry/domain/repository-resolution.js";
 import type { StoredUsage } from "../../../src/contexts/telemetry/domain/stored-usage.js";
+import type { ConsentReading } from "../../../src/contexts/telemetry/domain/telemetry-consent.js";
 import type { TranscriptPosition } from "../../../src/contexts/telemetry/domain/transcript-position.js";
 import { foldUsage } from "../../../src/contexts/telemetry/domain/usage-fold.js";
 
@@ -90,8 +92,11 @@ export class InMemoryLedger implements UsageLedger {
     return { records: foldUsage(this.records), skippedLines: 0 };
   }
 
-  async save(records: readonly StoredUsage[]): Promise<void> {
+  savedMonths: ReadonlySet<string> | undefined;
+
+  async save(records: readonly StoredUsage[], months?: ReadonlySet<string>): Promise<void> {
     this.events.push("save");
+    this.savedMonths = months;
     if (this.failSave) throw new Error("disk full");
     this.records = [...records];
   }
@@ -108,6 +113,20 @@ export class InMemoryLedger implements UsageLedger {
   async resetPositions(): Promise<void> {
     this.events.push("reset");
     this.stored = new Map();
+  }
+}
+
+export class InMemoryBindingsLock implements BindingsLock {
+  /** Pass one array to several fakes to see the order they were used in. */
+  constructor(readonly events: string[] = []) {}
+
+  async exclusively<T>(work: () => Promise<T>): Promise<T> {
+    this.events.push("bindings-lock");
+    try {
+      return await work();
+    } finally {
+      this.events.push("bindings-unlock");
+    }
   }
 }
 
@@ -136,12 +155,16 @@ export class FakeLocator implements RepositoryLocator {
 }
 
 export class FakeConsents implements ConsentSource {
-  readonly texts = new Map<string, string>();
+  /** The value of `aidd.telemetry` by root; a root with none has it unset. */
+  readonly values = new Map<string, string>();
+  /** Roots whose git config cannot be read. */
+  readonly unreadable = new Set<string>();
   readonly reads: string[] = [];
 
-  async read(root: string): Promise<string | null> {
+  async read(root: string): Promise<ConsentReading> {
     this.reads.push(root);
-    return this.texts.get(root) ?? null;
+    if (this.unreadable.has(root)) return { kind: "unreadable" };
+    return { kind: "value", value: this.values.get(root) ?? null };
   }
 }
 

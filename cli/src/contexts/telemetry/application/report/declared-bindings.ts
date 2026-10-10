@@ -1,5 +1,5 @@
-import type { BindingSnapshotStore } from "../../domain/ports/binding-snapshot-store.js";
-import type { SessionBindingStore } from "../../domain/ports/session-binding-store.js";
+import type { BindingSnapshotStore } from "../../domain/ports/bindings/binding-snapshot-store.js";
+import type { SessionBindingStore } from "../../domain/ports/bindings/session-binding-store.js";
 import type { AttributionFacts } from "../../domain/report/attribution.js";
 
 /** Everything people declared about what their work belongs to, wherever each kind is kept:

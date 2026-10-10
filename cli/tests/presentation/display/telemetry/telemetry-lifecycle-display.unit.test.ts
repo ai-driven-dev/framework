@@ -10,7 +10,8 @@ import { CapturingOutput } from "../../../helpers/ports/capturing-output.js";
 
 const ON: Extract<OnResult, { status: "on" }> = {
   status: "on",
-  configWritten: true,
+  consentWritten: true,
+  legacyConfig: "none",
   hook: { lineRemoved: false, delegateRemoved: false, stillCalledBy: [] },
   journal: { journalRemoved: false, trackedKept: false, ignoreEntryRemoved: false },
   retention: { days: 3650, short: false },
@@ -23,15 +24,32 @@ function on(overrides: Partial<typeof ON>): CapturingOutput {
 }
 
 describe("printOnResult", () => {
-  it("says measurement is on, and nothing else when there was nothing to clean", () => {
+  it("says measurement is on for this clone, that it is never committed, and the next step", () => {
     const output = on({});
-    expect(output.lines).toEqual(["Measurement is on for this repository."]);
+    expect(output.at("success")).toEqual([
+      "Measurement is on for this clone: `git config aidd.telemetry` is 2 in this repository's own config.",
+    ]);
+    expect(output.lines).toHaveLength(3);
+    expect(output.lines[1]).toContain("never committed");
+    expect(output.lines[1]).toContain(
+      "a teammate is measured only after running `aidd telemetry on`"
+    );
+    expect(output.lines[2]).toMatch(/^Next: declare what you work on with /u);
+    expect(output.lines[2]).toContain("aidd telemetry task <name> [--ticket <ref>]");
+    expect(output.lines[2]).toContain("the aidd-telemetry plugin's hooks ask");
   });
 
   it("says it already was", () => {
-    expect(on({ configWritten: false }).lines[0]).toBe(
-      "Measurement was already on for this repository."
+    expect(on({ consentWritten: false }).at("success")[0]).toBe(
+      "Measurement was already on for this clone."
     );
+  });
+
+  it("says what became of .aidd/config.json, and that the change may need committing", () => {
+    expect(on({ legacyConfig: "block-removed" }).at("info")[1]).toContain("commit the change");
+    expect(on({ legacyConfig: "file-deleted" }).at("info")[1]).toContain("commit the deletion");
+    expect(on({ legacyConfig: "unparseable" }).at("warn")[0]).toContain("left as it is");
+    expect(on({ legacyConfig: "none" }).lines.join("\n")).not.toContain(".aidd/config.json");
   });
 
   it("names each leftover it removed", () => {
@@ -39,7 +57,7 @@ describe("printOnResult", () => {
       hook: { lineRemoved: true, delegateRemoved: true, stillCalledBy: [] },
       journal: { journalRemoved: true, trackedKept: false, ignoreEntryRemoved: true },
     });
-    expect(output.at("info")).toEqual([
+    expect(output.at("info").slice(1, 5)).toEqual([
       "Removed the commit hook line the previous version added.",
       "Removed the script that line called.",
       "Removed aidd_docs/runs/, the previous version's journal.",
@@ -82,9 +100,9 @@ describe("printOnResult", () => {
   it("explains each refusal", () => {
     const output = new CapturingOutput(false);
     printOnResult(output, { status: "refused", reason: "outside-repository" });
-    printOnResult(output, { status: "refused", reason: "unreadable-config" });
+    printOnResult(output, { status: "refused", reason: "unreadable-git-config" });
     expect(output.at("error")[0]).toContain("not inside a git repository");
-    expect(output.at("error")[1]).toContain("cannot be parsed");
+    expect(output.at("error")[1]).toContain("git config cannot be read");
   });
 });
 
@@ -114,8 +132,8 @@ const PLAN = {
     { kind: "previous-day-file", path: "/t/2026-10-05.jsonl", files: 1 },
   ],
   repositories: [
-    { root: "/w/a", keys: 2 },
-    { root: "/w/b", keys: 0 },
+    { root: "/w/a", taskKeys: 2, consent: true },
+    { root: "/w/b", taskKeys: 0, consent: false },
   ],
   missing: ["/w/gone"],
   unlocated: 1,
@@ -134,7 +152,8 @@ describe("printForgetResult", () => {
     expect(output.lines).toContain(
       "  - day files of the previous version: /t/2026-10-05.jsonl (1 file)"
     );
-    expect(output.lines).toContain("  - 2 task declarations in the git config of /w/a");
+    expect(output.lines).toContain("  - 2 branch task keys in the git config of /w/a");
+    expect(output.lines).toContain("  - the consent (aidd.telemetry) in the git config of /w/a");
     expect(output.lines.join("\n")).not.toContain("/w/b");
     expect(output.at("warn")).toEqual([
       "Skipped /w/gone: it is gone, or is no longer that repository.",
@@ -193,7 +212,7 @@ describe("printForgetResult", () => {
   it("is not empty when only declarations remain, or only files remain", () => {
     const keysOnly = {
       entries: [],
-      repositories: [{ root: "/w/a", keys: 1 }],
+      repositories: [{ root: "/w/a", taskKeys: 1, consent: false }],
       missing: [],
       unlocated: 0,
     };
@@ -206,7 +225,7 @@ describe("printForgetResult", () => {
     expect(forgotten({ status: "preview", plan: keysOnly }).lines[0]).toBe("This would remove:");
     expect(forgotten({ status: "preview", plan: filesOnly }).lines[0]).toBe("This would remove:");
     expect(forgotten({ status: "preview", plan: keysOnly }).lines[1]).toBe(
-      "  - 1 task declaration in the git config of /w/a"
+      "  - 1 branch task key in the git config of /w/a"
     );
   });
 });

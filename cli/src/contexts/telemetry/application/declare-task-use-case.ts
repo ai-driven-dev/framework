@@ -4,8 +4,8 @@ import {
   type DeclaredBy,
   declarationOf,
 } from "../domain/declaration/task-declaration.js";
-import type { SessionBindingStore } from "../domain/ports/session-binding-store.js";
-import type { UsageLedger } from "../domain/ports/usage-ledger.js";
+import type { BindingsLock } from "../domain/ports/bindings/bindings-lock.js";
+import type { SessionBindingStore } from "../domain/ports/bindings/session-binding-store.js";
 import type { BranchDeclarations, BranchOutcome } from "./branch-declarations.js";
 import type { ConsentedRepositories, RefusalReason } from "./consented-repositories.js";
 
@@ -34,14 +34,15 @@ export interface DeclareOptions {
 }
 
 /** Binds what a person works on to a task: the running session from now on, and the working
- * branch for good. Writes happen under the ledger's lock because the snapshot that follows a
- * branch declaration is a write ingest also makes, to the same file. */
+ * branch for good. The session line is appended under the bindings lock, and the snapshot that
+ * follows a branch declaration takes it for itself: never the ledger's lock, which an ingest
+ * holds for as long as it reads, and a person is waiting on this. */
 export class DeclareTaskUseCase {
   constructor(
     private readonly repositories: ConsentedRepositories,
     private readonly sessions: SessionBindingStore,
     private readonly branches: BranchDeclarations,
-    private readonly ledger: UsageLedger,
+    private readonly lock: BindingsLock,
     private readonly options: DeclareOptions
   ) {}
 
@@ -51,10 +52,14 @@ export class DeclareTaskUseCase {
     if (repository.status === "refused") return repository;
     const declaration = declarationOf(input.request, this.options.now(), input.by);
     const { sessionId } = this.options;
-    const branch = await this.ledger.exclusively(async () => {
-      if (sessionId !== null) await this.sessions.append(sessionId, declaration);
-      return this.branches.declare(repository.repositoryId, repository.root, declaration);
-    });
+    if (sessionId !== null) {
+      await this.lock.exclusively(() => this.sessions.append(sessionId, declaration));
+    }
+    const branch = await this.branches.declare(
+      repository.repositoryId,
+      repository.root,
+      declaration
+    );
     return { status: "declared", declaration, sessionId, branch };
   }
 }

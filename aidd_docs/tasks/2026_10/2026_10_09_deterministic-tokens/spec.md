@@ -41,8 +41,9 @@ coming only from what a person declared, with the previous telemetry removed ent
 - Work with no declared task is its own row, with the reason it has none, and is attributed
   retroactively once its branch is declared.
 - Every breakdown of a period sums to the same total.
-- A project or person that has not opted in is untouched: nothing stored, nothing asked,
-  nothing blocked. Without the plugin, nothing changes at all.
+- A clone or person that has not opted in is untouched: nothing stored, nothing asked,
+  nothing blocked. Consent is per clone, in its git config, never committed, so a teammate is
+  never measured without running `aidd telemetry on` themselves. Without the plugin, nothing changes at all.
 - Data stays on the machine: release 1 sends nothing anywhere.
 - The person identity is a fresh, separate opt-in, located with the rest of the person's aidd
   configuration; the previous identity file is not carried over.

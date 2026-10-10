@@ -1,7 +1,11 @@
 import { describe, expect, it } from "vitest";
 import { SnapshotBindingsUseCase } from "../../../../src/contexts/telemetry/application/snapshot-bindings-use-case.js";
 import type { BranchConfigBinding } from "../../../../src/contexts/telemetry/domain/branch-binding.js";
-import { FakeBindings, InMemorySnapshots } from "../../../helpers/ports/in-memory-telemetry.js";
+import {
+  FakeBindings,
+  InMemoryBindingsLock,
+  InMemorySnapshots,
+} from "../../../helpers/ports/in-memory-telemetry.js";
 
 const ROOT = "/repo";
 const binding = (overrides: Partial<BranchConfigBinding> = {}): BranchConfigBinding => ({
@@ -15,12 +19,15 @@ const binding = (overrides: Partial<BranchConfigBinding> = {}): BranchConfigBind
 
 function setup() {
   const source = new FakeBindings();
-  const store = new InMemorySnapshots();
+  const events: string[] = [];
+  const store = new InMemorySnapshots(events);
+  const lock = new InMemoryBindingsLock(events);
   let clock = "2026-10-09T09:00:00.000Z";
-  const useCase = new SnapshotBindingsUseCase(source, store, () => new Date(clock));
+  const useCase = new SnapshotBindingsUseCase(source, store, lock, () => new Date(clock));
   return {
     source,
     store,
+    events,
     useCase,
     at: (iso: string) => {
       clock = iso;
@@ -42,6 +49,19 @@ describe("snapshotting a repository's branch declarations", () => {
       snapshot_at: "2026-10-09T09:00:00.000Z",
     });
     expect(store.appended[1]?.branch_created_at).toBeNull();
+  });
+
+  it("reads the latest snapshots and appends the new ones inside the bindings lock", async () => {
+    const { source, events, useCase } = setup();
+    source.bindingsByRoot.set(ROOT, [binding()]);
+    await useCase.execute("repo-1", ROOT);
+    expect(events).toEqual(["bindings-lock", "snapshot", "bindings-unlock"]);
+  });
+
+  it("takes no lock when the repository declares nothing", async () => {
+    const { events, useCase } = setup();
+    await useCase.execute("repo-1", ROOT);
+    expect(events).toEqual([]);
   });
 
   it("adds nothing when every branch still reads as it did", async () => {

@@ -43,6 +43,7 @@ function setup(entries: ErasureEntry[] = [ENTRY]) {
   const ledger = new InMemoryLedger(events);
   const cleared: string[] = [];
   const keys = new Map<string, number>();
+  const consented = new Set<string>();
   const use = new ForgetTelemetryUseCase(
     {
       async inventory() {
@@ -55,12 +56,12 @@ function setup(entries: ErasureEntry[] = [ENTRY]) {
     },
     {
       async count(root) {
-        return keys.get(root) ?? 0;
+        return { taskKeys: keys.get(root) ?? 0, consent: consented.has(root) };
       },
       async clear(root) {
         events.push(`clear ${root}`);
         cleared.push(root);
-        return keys.get(root) ?? 0;
+        return { taskKeys: keys.get(root) ?? 0, consent: consented.has(root) };
       },
     },
     snapshots,
@@ -68,7 +69,7 @@ function setup(entries: ErasureEntry[] = [ENTRY]) {
     locator,
     ledger
   );
-  return { use, events, locator, snapshots, resolutions, ledger, cleared, keys };
+  return { use, events, locator, snapshots, resolutions, ledger, cleared, keys, consented };
 }
 
 function declaredAt(s: ReturnType<typeof setup>, cwd: string, root = cwd, keys = 3): void {
@@ -87,7 +88,7 @@ describe("forget without confirmation", () => {
       status: "preview",
       plan: {
         entries: [ENTRY],
-        repositories: [{ root: "/w/repo", keys: 3 }],
+        repositories: [{ root: "/w/repo", taskKeys: 3, consent: false }],
         missing: [],
         unlocated: 0,
       },
@@ -106,7 +107,21 @@ describe("forget with confirmation", () => {
     const locked = s.events.slice(s.events.indexOf("lock"));
     expect(locked).toEqual(["lock", "inventory", "clear /w/repo", "erase", "unlock"]);
     expect(result.status).toBe("forgotten");
-    expect(result.plan.repositories).toEqual([{ root: "/w/repo", keys: 3 }]);
+    expect(result.plan.repositories).toEqual([{ root: "/w/repo", taskKeys: 3, consent: false }]);
+  });
+
+  it("also finds and clears the consent of a repository that never declared a task", async () => {
+    const s = setup();
+    s.resolutions.resolutions.set("/w/repo", {
+      repository_id: ID,
+      root: "/w/repo",
+      consented: true,
+    });
+    s.locator.directories.set("/w/repo", located("/w/repo"));
+    s.consented.add("/w/repo");
+    const result = await s.use.execute(true);
+    expect(s.cleared).toEqual(["/w/repo"]);
+    expect(result.plan.repositories).toEqual([{ root: "/w/repo", taskKeys: 0, consent: true }]);
   });
 
   it("takes no lock when there is nothing to forget", async () => {
@@ -142,7 +157,7 @@ describe("forget with confirmation", () => {
     }
     s.keys.set("/w/main", 2);
     const result = await s.use.execute(false);
-    expect(result.plan.repositories).toEqual([{ root: "/w/main", keys: 2 }]);
+    expect(result.plan.repositories).toEqual([{ root: "/w/main", taskKeys: 2, consent: false }]);
   });
 
   it("skips and names a root that is gone, or is now another repository", async () => {
@@ -169,12 +184,12 @@ describe("forget with confirmation", () => {
     expect((await s.use.execute(false)).plan.unlocated).toBe(2);
   });
 
-  it("leaves alone a repository nobody declared a task in", async () => {
+  it("leaves alone a repository nobody declared a task in or opted in", async () => {
     const s = setup([]);
     s.resolutions.resolutions.set("/w/repo", {
       repository_id: ID,
       root: "/w/repo",
-      consented: true,
+      consented: false,
     });
     s.locator.directories.set("/w/repo", located("/w/repo"));
     s.keys.set("/w/repo", 4);

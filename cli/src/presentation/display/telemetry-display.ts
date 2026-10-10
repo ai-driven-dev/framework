@@ -6,6 +6,11 @@ import type { ShowResult } from "../../contexts/telemetry/application/show-task-
 import type { NotStoredReason } from "../../contexts/telemetry/domain/repository-resolution.js";
 import type { CLIOutput } from "../output.js";
 
+/** What a shape the reader did not recognise came to: it is kept when a call lacks a counter
+ * (stored unknown, never zero) and dropped when the line is no usage line at all. */
+export const UNRECOGNISED_WORDS =
+  "not recognised: a call missing a counter is kept with that counter unknown; a line that is no usage line is not counted.";
+
 /** Why a billed call was read and not stored, as the end of a sentence about N calls. */
 export const NOT_STORED_WORDS: Readonly<Record<NotStoredReason, string>> = {
   "outside-repo": "outside any repository",
@@ -27,7 +32,7 @@ export function printIngestResult(output: CLIOutput, result: IngestResult): void
   );
   if (result.unrecognised > 0) {
     output.warn(
-      `${result.unrecognised} shape${result.unrecognised === 1 ? "" : "s"} not recognised and not counted.`
+      `${result.unrecognised} shape${result.unrecognised === 1 ? "" : "s"} ${UNRECOGNISED_WORDS}`
     );
   }
   if (result.skippedLedgerLines > 0) {
