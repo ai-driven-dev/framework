@@ -36,7 +36,8 @@ export interface EnvelopeRow extends EnvelopeTally {
  * counter by counter. `unknown_records` is how many calls had at least one counter unknown.
  * `coverage` says what the figures rest on: `files_read` and `unrecognised_shapes` are of
  * this run alone, `records` of the period, `not_stored` counts calls this run read and left
- * out by reason, and `oldest_transcript_at` is when the oldest transcript still on disk was
+ * out by reason, `consent_log_damaged` is true while `ledger/consents.jsonl` cannot be trusted
+ * and nothing is stored, and `oldest_transcript_at` is when the oldest transcript still on disk was
  * last written (`null` when there is none). Nothing here is a path, a working directory or
  * a branch name.
  *
@@ -57,6 +58,7 @@ export interface ReportEnvelope {
     readonly records: number;
     readonly unrecognised_shapes: number;
     readonly not_stored: Readonly<Record<NotStoredReason, number>>;
+    readonly consent_log_damaged: boolean;
     readonly oldest_transcript_at: string | null;
     readonly skipped_ledger_lines: number;
   };
@@ -103,6 +105,7 @@ export function reportEnvelopeOf(
       records: coverage.records,
       unrecognised_shapes: coverage.unrecognised,
       not_stored: coverage.notStored,
+      consent_log_damaged: coverage.consentLogDamaged,
       oldest_transcript_at: coverage.oldestTranscriptAt,
       skipped_ledger_lines: coverage.skippedLedgerLines,
     },

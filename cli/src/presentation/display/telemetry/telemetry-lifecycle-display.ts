@@ -15,6 +15,8 @@ const REFUSALS = {
   "outside-repository": "This directory is not inside a git repository.",
   "unreadable-git-config":
     "This clone's git config cannot be read, so its consent was left as it is. Fix it, then run this again.",
+  "damaged-consent-log":
+    "ledger/consents.jsonl holds a line that is not a consent event, so the log cannot be trusted and nothing was changed. Run `aidd telemetry forget --yes`, then `aidd telemetry on` again: nothing from before is stored.",
   "unidentified-clone":
     "This file system gives the clone's git directory no identity, so nothing measured here could be told to be its own. Nothing was changed.",
 } as const;

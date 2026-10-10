@@ -209,9 +209,11 @@ export class FakeConsents implements ConsentSource {
   /** Roots whose git config cannot be read. */
   readonly unreadable = new Set<string>();
   readonly reads: string[] = [];
-  /** The value of `aidd.telemetry` by clone (`cloneKey`); a clone not listed is gone, one mapped
-   * to `null` has the key unset. */
+  /** The value of `aidd.telemetry` by clone (`cloneKey`); a clone not listed has nothing at its
+   * path, one mapped to `null` has the key unset. */
   readonly clones = new Map<string, string | null>();
+  /** Clones with another directory at their path now, by `cloneKey`. */
+  readonly replacedClones = new Set<string>();
   readonly cloneReads: string[] = [];
   /** Clones whose git config cannot be read, by `cloneKey`. */
   readonly unreadableClones = new Set<string>();
@@ -225,8 +227,9 @@ export class FakeConsents implements ConsentSource {
     this.cloneReads.push(clone.path);
     const key = cloneKey(clone);
     if (this.unreadableClones.has(key)) return { kind: "unreadable" };
+    if (this.replacedClones.has(key)) return { kind: "replaced" };
     const value = this.clones.get(key);
-    return value === undefined ? { kind: "gone" } : { kind: "value", value };
+    return value === undefined ? { kind: "absent" } : { kind: "value", value };
   }
 
   async read(root: string): Promise<ConsentReading> {

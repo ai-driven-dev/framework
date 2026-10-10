@@ -1,4 +1,4 @@
-import { mkdir, mkdtemp, realpath, rename, rm, writeFile } from "node:fs/promises";
+import { chmod, mkdir, mkdtemp, realpath, rename, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
@@ -52,7 +52,18 @@ describe("reading what a directory is", () => {
     expect(await readCloneIdentity(join(base, "file", "below"))).toBeNull();
   });
 
-  it("fails for a reason other than absence", async () => {
-    await expect(readCloneIdentity(`${base}/x\0y`)).rejects.toThrow();
+  it("is unidentified for any reason other than absence, never a failure", async () => {
+    expect(await readCloneIdentity(`${base}/x\0y`)).toBe("unidentified");
+  });
+
+  it("is unidentified where the directory cannot be looked at", async () => {
+    const shut = join(base, "shut");
+    await mkdir(join(shut, "d"), { recursive: true });
+    await chmod(shut, 0o000);
+    try {
+      expect(await readCloneIdentity(join(shut, "d"))).toBe("unidentified");
+    } finally {
+      await chmod(shut, 0o755);
+    }
   });
 });

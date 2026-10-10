@@ -445,6 +445,58 @@
     "a-damaged-log-and-a-key-gone": {
       "granted": false,
       "close": []
+    },
+    "another-directory-at-the-path-is-neither-granted-nor-closed": {
+      "granted": false,
+      "close": []
+    },
+    "another-device-at-the-path-is-neither-granted-nor-closed": {
+      "granted": false,
+      "close": []
+    },
+    "another-birth-at-the-path-is-neither-granted-nor-closed": {
+      "granted": false,
+      "close": []
+    },
+    "another-directory-at-the-path-and-a-key-gone-closes-nothing": {
+      "granted": false,
+      "close": []
+    },
+    "no-birth-recorded-and-none-now-is-the-clone": {
+      "granted": true,
+      "close": []
+    },
+    "a-directory-the-platform-cannot-identify-grants-and-closes-nothing": {
+      "granted": false,
+      "close": []
     }
+  },
+  "cloneIdentity": {
+    "macos-birth-differs-from-change-time": {
+      "dev": "16777231",
+      "ino": "100",
+      "birthtimeMs": 1760000000000
+    },
+    "linux-no-birth-is-zero": {
+      "dev": "2049",
+      "ino": "524301",
+      "birthtimeMs": 0
+    },
+    "linux-birth-equal-to-change-time-is-no-birth": {
+      "dev": "2049",
+      "ino": "524301",
+      "birthtimeMs": 0
+    },
+    "a-negative-birth-is-no-birth": {
+      "dev": "2049",
+      "ino": "524301",
+      "birthtimeMs": 0
+    },
+    "a-file-index-a-number-cannot-hold-is-kept-exactly": {
+      "dev": "3735928559",
+      "ino": "9007199254740993",
+      "birthtimeMs": 1760000000000
+    },
+    "no-inode-is-no-identity": null
   }
 }

@@ -18,7 +18,7 @@ const cases = JSON.parse(fs.readFileSync(path.join(FIXTURE, "cases.json"), "utf8
 const expected = JSON.parse(fs.readFileSync(path.join(FIXTURE, "expected.json"), "utf8"));
 
 const { telemetryDir } = require(path.join(HOOKS, "lib/telemetry-dir.cjs"));
-const { consentOf, decideConsent, parseConsentLog } = require(path.join(HOOKS, "lib/consent.cjs"));
+const { decideConsent, identityFromStat, parseConsentLog, tokenOfKey } = require(path.join(HOOKS, "lib/consent.cjs"));
 const { branchRoleOf, parseBranchConfig } = require(path.join(HOOKS, "lib/git.cjs"));
 const { readCarries, readDeclarations } = require(path.join(HOOKS, "lib/binding.cjs"));
 const { lookup } = require(path.join(HOOKS, "lib/lookup.cjs"));
@@ -161,7 +161,8 @@ function consentsFile(box) {
 }
 
 function openLine(token, repo, open = "2026-01-01T00:00:00.000Z") {
-  const clone = { path: commonDirOf(repo), dev: "1", ino: "2", birthtimeMs: 0 };
+  const where = commonDirOf(repo);
+  const clone = { path: where, ...identityFromStat(fs.statSync(where, { bigint: true })) };
   return `${JSON.stringify({ token, clone, open })}\n`;
 }
 
@@ -255,14 +256,25 @@ test("the consent log follows the fixture", () => {
 test("a clone consents, and what the hook closes, follow the fixture", () => {
   for (const [name, c] of Object.entries(cases.hookConsent)) {
     const log = parseConsentLog(logText(c.lines));
-    assert.deepEqual(decideConsent({ key: c.key, log, realpath: c.realpath }), expected.hookConsent[name], name);
+    assert.deepEqual(
+      decideConsent({ key: c.key, log, realpath: c.realpath, identity: c.identity }),
+      expected.hookConsent[name],
+      name
+    );
+  }
+});
+
+test("a directory's identity follows the fixture, the same as the CLI reads it", () => {
+  for (const [name, c] of Object.entries(cases.cloneIdentity)) {
+    const stats = { dev: BigInt(c.dev), ino: BigInt(c.ino), birthtimeMs: BigInt(c.birthtimeMs), ctimeMs: BigInt(c.ctimeMs) };
+    assert.deepEqual(identityFromStat(stats), expected.cloneIdentity[name], name);
   }
 });
 
 test("consent value follows the fixture", () => {
   for (const [name, c] of Object.entries(cases.consent)) {
     if (c.linkedWorktree) continue;
-    assert.equal(consentOf(c.value), expected.consent[name], name);
+    assert.equal(tokenOfKey(c.value) === null ? "absent" : "granted", expected.consent[name], name);
   }
 });
 
@@ -463,6 +475,29 @@ test("consent: a cp -R copy carries the key and not the clone, so it asks nothin
     assert.equal(asks(gate(box)), true);
     assertPasses(gate(box, { payload: box.payload({ cwd: copy }) }));
     assert.equal(consentLines(box).length, 1);
+  });
+});
+
+test("consent: a cp -R copy moved onto the deleted original's path asks nothing and closes nothing", () => {
+  withBox({}, (box) => {
+    git(box.repo, "commit", "--allow-empty", "-q", "-m", "x");
+    assert.equal(asks(gate(box)), true);
+    const copy = path.join(box.root, "copy");
+    fs.cpSync(box.repo, copy, { recursive: true });
+    fs.renameSync(box.repo, path.join(box.root, "original.removed"));
+    fs.renameSync(copy, box.repo);
+    assertPasses(gate(box));
+    assert.equal(consentLines(box).length, 1);
+  });
+});
+
+test("consent: a clone moved away and back is the same clone, still asked", () => {
+  withBox({}, (box) => {
+    git(box.repo, "commit", "--allow-empty", "-q", "-m", "x");
+    const away = path.join(box.root, "away");
+    fs.renameSync(box.repo, away);
+    fs.renameSync(away, box.repo);
+    assert.equal(asks(gate(box)), true);
   });
 });
 

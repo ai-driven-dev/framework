@@ -8,7 +8,10 @@ import { ConsentLog } from "../consent-log.js";
 import { readCloneConsent } from "./clone-consent.js";
 
 export type OffResult =
-  | { readonly status: "refused"; readonly reason: "outside-repository" | "unreadable-git-config" }
+  | {
+      readonly status: "refused";
+      readonly reason: "outside-repository" | "unreadable-git-config" | "damaged-consent-log";
+    }
   | { readonly status: "off"; readonly changed: boolean };
 
 /** Stops measuring this clone: its interval ends now, and the calls it made while on stay
@@ -29,10 +32,16 @@ export class TelemetryOffUseCase {
     const { located } = clone;
     const granted = tokenOfKey(clone.value) !== null;
     let closed = false;
+    let damaged = false;
     // The lock first: an ingest running now must see the key and the interval change together.
     await this.ledger.exclusively(async () => {
+      const log = await ConsentLog.load(this.history);
+      // A log that cannot be trusted is not added to, and the key is left as it is.
+      if (log.damaged) {
+        damaged = true;
+        return;
+      }
       if (located.clone !== null) {
-        const log = await ConsentLog.load(this.history);
         const at = this.now();
         for (const interval of log.openFor(located.clone)) {
           await log.close(interval.token, at);
@@ -41,6 +50,7 @@ export class TelemetryOffUseCase {
       }
       if (granted) await this.writer.set(located.root, CONSENT_WITHDRAWN);
     });
+    if (damaged) return { status: "refused", reason: "damaged-consent-log" };
     return { status: "off", changed: granted || closed };
   }
 }

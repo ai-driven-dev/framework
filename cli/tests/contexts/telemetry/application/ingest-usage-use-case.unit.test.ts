@@ -701,9 +701,10 @@ describe("a directory that is gone is judged by the clone it was seen in", () =>
     expect((await deletedWorktree(no)).notStored["no-consent"]).toBe(1);
   });
 
-  it("closes the consent of a clone it finds gone, at the moment it finds it", async () => {
+  it("closes the consent of a clone another directory has replaced, at the moment it finds it", async () => {
     const s = setup();
     s.consents.clones.clear();
+    s.consents.replacedClones.add(cloneKey(A));
     await deletedWorktree(s);
     expect(s.history.written.at(-1)).toEqual({
       kind: "close",
@@ -712,9 +713,19 @@ describe("a directory that is gone is judged by the clone it was seen in", () =>
     });
   });
 
-  it("stores a call a gone clone made before it was found gone, and refuses one dated after", async () => {
+  it("keeps open the consent of a clone with nothing at its path, which may only be out of reach", async () => {
     const s = setup();
     s.consents.clones.clear();
+    const result = await deletedWorktree(s);
+    expect(s.history.written.map((event) => event.kind)).toEqual(["open"]);
+    expect(result).toMatchObject({ added: 1 });
+    expect(result.notStored["no-consent"]).toBe(0);
+  });
+
+  it("stores a call a replaced clone made before it was found replaced, and refuses one dated after", async () => {
+    const s = setup();
+    s.consents.clones.clear();
+    s.consents.replacedClones.add(cloneKey(A));
     remember(s, "/work/wt");
     s.transcripts.files.set("/t/1.jsonl", [
       line("A", 1, { cwd: "/work/wt" }, "2026-10-08T23:59:59.999Z"),

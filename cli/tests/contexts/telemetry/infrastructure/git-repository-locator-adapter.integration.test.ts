@@ -1,4 +1,14 @@
-import { mkdir, mkdtemp, realpath, rename, rm, symlink, writeFile } from "node:fs/promises";
+import {
+  appendFile,
+  chmod,
+  mkdir,
+  mkdtemp,
+  realpath,
+  rename,
+  rm,
+  symlink,
+  writeFile,
+} from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
@@ -140,13 +150,36 @@ describe("locating a working directory", () => {
   });
 
   it.skipIf(process.platform === "win32")(
-    "fails for a directory it cannot resolve for a reason other than absence",
+    "is unreadable, never a failure, for a directory it cannot resolve for a reason other than absence",
     async () => {
       const loop = join(base, "loop");
       await symlink(loop, loop);
-      await expect(locator.locate(loop)).rejects.toThrow();
+      expect(await locator.locate(loop)).toEqual({ status: "unreadable" });
     }
   );
+
+  it.skipIf(process.platform === "win32" || process.getuid?.() === 0)(
+    "is unreadable for a directory inside a folder nobody may look into",
+    async () => {
+      const repo = join(base, "shut", "repo");
+      initRepository(repo, env);
+      await chmod(join(base, "shut"), 0o000);
+      try {
+        expect(await locator.locate(repo)).toEqual({ status: "unreadable" });
+      } finally {
+        await chmod(join(base, "shut"), 0o755);
+      }
+    }
+  );
+
+  it("is unreadable, not outside any repository, where the repository's config cannot be parsed", async () => {
+    const repo = join(base, "repo");
+    initRepository(repo, env);
+    await mkdir(join(repo, "src"));
+    await appendFile(join(repo, ".git", "config"), "[broken\n");
+    expect(await locator.locate(repo)).toEqual({ status: "unreadable" });
+    expect(await locator.locate(join(repo, "src"))).toEqual({ status: "unreadable" });
+  });
 
   it("is outside a directory that is no repository", async () => {
     const plain = join(base, "plain");

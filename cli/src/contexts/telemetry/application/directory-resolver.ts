@@ -85,13 +85,20 @@ export class ResolutionRun {
     private readonly environment: ResolutionEnvironment
   ) {}
 
+  /** A line of the consent log was not an event: nothing is stored for any clone. */
+  get consentLogDamaged(): boolean {
+    return this.consents.damaged;
+  }
+
   /** Keeps what this run learned. */
   async close(): Promise<void> {
     if (this.changed) await this.store.save(this.remembered);
   }
 
   /** Closes, at this moment, the earliest anyone knows, every open interval whose clone is
-   * gone, is another clone now, or no longer names the interval's token in its key. */
+   * another directory now, or no longer names the interval's token in its key. A clone with
+   * nothing at its path is left open: it may only be out of reach, and a directory made at its
+   * path since is seen as another one. */
   async observeOpenConsents(): Promise<void> {
     for (const interval of this.consents.openIntervals()) {
       const reading = await this.consentSource.readClone(interval.clone);
@@ -99,7 +106,7 @@ export class ResolutionRun {
         this.unreadable.add(cloneKey(interval.clone));
         continue;
       }
-      // A clone that is gone has no key, so it names no token either.
+      if (reading.kind === "absent") continue;
       const named = reading.kind === "value" && tokenOfKey(reading.value) === interval.token;
       if (!named) await this.consents.close(interval.token, this.environment.now());
     }
@@ -114,9 +121,20 @@ export class ResolutionRun {
     const instant = Date.parse(at);
     const owner = ownerAt(directory.owners, instant);
     if (this.unreadable.has(cloneKey(owner.clone))) return { skipped: "unreadable-consent" };
-    if (!this.consents.covers(owner.clone, instant)) return { skipped: "no-consent" };
     const live = directory.current !== null && sameClone(directory.current.clone, owner.clone);
+    if (!this.consents.covers(owner.clone, instant)) {
+      const closed = live && (await this.keyNamesClosedInterval(owner.clone));
+      return { skipped: closed ? "consent-closed" : "no-consent" };
+    }
     return { stored: owner, live };
+  }
+
+  /** Whether the clone's own key, as it stands, names an interval of it that was closed: it
+   * opted in once, so the person is told to run `on` again, not that it never did. */
+  private async keyNamesClosedInterval(clone: CloneIdentity): Promise<boolean> {
+    const reading = await this.consentSource.readClone(clone);
+    const token = reading.kind === "value" ? tokenOfKey(reading.value) : null;
+    return token !== null && this.consents.hasClosed(clone, token);
   }
 
   private async directoryOf(cwd: string): Promise<Directory> {
@@ -137,6 +155,9 @@ export class ResolutionRun {
         : { owners: [first, ...others], current: null };
     }
     if (located.status === "outside-repository") return { skipped: "outside-repo" };
+    // A directory git or the file system would not answer for may be a clone: not known to be
+    // outside any.
+    if (located.status === "unreadable") return { skipped: "unreadable-consent" };
     // A repository with no origin and no commit has nothing to be named by.
     const id = repositoryIdOf(located);
     if (id === null) return { skipped: "outside-repo" };

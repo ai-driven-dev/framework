@@ -43,6 +43,7 @@ const NOT_STORED = {
   "outside-repo": 0,
   "never-seen-alive": 0,
   "no-consent": 0,
+  "consent-closed": 0,
   "unreadable-consent": 0,
   "no-cwd": 0,
   undated: 0,
@@ -56,6 +57,7 @@ const INGESTED: IngestResult = {
   skippedLedgerLines: 0,
   snapshots: 0,
   notStored: NOT_STORED,
+  consentLogDamaged: false,
   oldestTranscriptAt: null,
 };
 const linesOf = (print: (output: CapturingOutput) => void): string[] => {
@@ -115,7 +117,30 @@ describe("printIngestResult", () => {
     ]);
   });
 
-  it("words an unreadable consent as the git config or the consent log, and says how to recover", () => {
+  it("says a closed consent was closed, and never that the clone has not opted in", () => {
+    const lines = linesOf((o) =>
+      printIngestResult(o, {
+        ...INGESTED,
+        notStored: { ...NOT_STORED, "consent-closed": 1 },
+      })
+    );
+    expect(lines.slice(1)).toEqual([
+      "Not stored: 1 call from a clone whose consent was closed; run `aidd telemetry on` in it to measure again.",
+    ]);
+    expect(lines.join("\n")).not.toContain("has not opted in");
+  });
+
+  it("warns on every run while the consent log is damaged, and names forget as the way out", () => {
+    const lines = linesOf((o) => printIngestResult(o, { ...INGESTED, consentLogDamaged: true }));
+    expect(lines.slice(1)).toHaveLength(1);
+    expect(lines[1]).toContain("ledger/consents.jsonl");
+    expect(lines[1]).toContain("`aidd telemetry forget --yes`, then `aidd telemetry on`");
+    expect(lines[1]).toContain("nothing from before is stored");
+    expect(lines[1]).not.toContain("remove that line");
+    expect(linesOf((o) => printIngestResult(o, INGESTED))).toHaveLength(1);
+  });
+
+  it("words an unreadable consent as the git config, the git directory or the consent log", () => {
     const lines = linesOf((o) =>
       printIngestResult(o, {
         ...INGESTED,
@@ -123,7 +148,7 @@ describe("printIngestResult", () => {
       })
     );
     expect(lines.slice(1)).toEqual([
-      "Not stored: 1 call from a clone whose consent cannot be read: its git config, or a damaged line of ledger/consents.jsonl (repair or remove that line, or run `aidd telemetry forget --yes` and `aidd telemetry on` again).",
+      "Not stored: 1 call from a clone whose consent cannot be read: its git config, its git directory, or a damaged ledger/consents.jsonl.",
     ]);
     expect(lines.join("\n")).not.toContain("config.json");
   });

@@ -17,6 +17,8 @@ export async function readCloneConsent(
   cwd: string
 ): Promise<CloneConsent> {
   const located = await locator.locate(cwd);
+  if (located.status === "unreadable")
+    return { status: "refused", reason: "unreadable-git-config" };
   if (located.status !== "repository") return { status: "refused", reason: "outside-repository" };
   const reading = await consents.read(located.root);
   if (reading.kind === "unreadable") return { status: "refused", reason: "unreadable-git-config" };

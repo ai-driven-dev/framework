@@ -100,28 +100,28 @@ describe("a clone's consent in its git config", () => {
       expect(await consent.readClone(clone)).toEqual({ kind: "value", value: "off" });
     });
 
-    it("is gone when the clone is", async () => {
+    it("is absent when nothing is at the clone's path, which is not the same as replaced", async () => {
       const clone = await identityOf(join(repo, ".git"));
       await rm(repo, { recursive: true });
-      expect(await consent.readClone(clone)).toEqual({ kind: "gone" });
+      expect(await consent.readClone(clone)).toEqual({ kind: "absent" });
     });
 
-    it("is gone when another clone is at the path now, and says nothing of it", async () => {
+    it("is replaced when another clone is at the path now, and says nothing of it", async () => {
       const clone = await identityOf(join(repo, ".git"));
       // Moved aside, not deleted: the file system may give a deleted directory's inode to the next.
       await rename(repo, `${repo}.old`);
       initRepository(repo, env);
       await consent.set(repo, "2");
-      expect(await consent.readClone(clone)).toEqual({ kind: "gone" });
+      expect(await consent.readClone(clone)).toEqual({ kind: "replaced" });
     });
 
     it.each([
       ["device", { dev: "0" }],
       ["inode", { ino: "1" }],
       ["birth time", { birthtimeMs: 1 }],
-    ])("is gone when the %s is not the clone's", async (_name, change) => {
+    ])("is replaced when the %s is not the clone's", async (_name, change) => {
       const clone = await identityOf(join(repo, ".git"));
-      expect(await consent.readClone({ ...clone, ...change })).toEqual({ kind: "gone" });
+      expect(await consent.readClone({ ...clone, ...change })).toEqual({ kind: "replaced" });
     });
 
     it("is unreadable, and not gone, when the file system can no longer identify the path", async () => {

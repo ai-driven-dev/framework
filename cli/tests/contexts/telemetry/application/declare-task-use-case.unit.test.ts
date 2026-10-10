@@ -241,6 +241,15 @@ describe("refusing to declare", () => {
     expect(sessions.lines).toEqual([]);
   });
 
+  it("refuses a directory git or the file system would not answer for as unreadable, not outside", async () => {
+    const s = setup();
+    s.locator.directories.set(CWD, { status: "unreadable" });
+    expect(await s.useCase.execute({ cwd: CWD, request: TASK, by: "command" })).toMatchObject({
+      reason: "unreadable-consent",
+    });
+    expect(s.sessions.lines).toEqual([]);
+  });
+
   it("refuses outside a repository, and in one nothing can name", async () => {
     const outside = setup();
     outside.locator.directories.set(CWD, { status: "outside-repository" });

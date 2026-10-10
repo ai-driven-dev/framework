@@ -31,8 +31,13 @@ export type OnResult =
   | {
       readonly status: "refused";
       /** `unidentified-clone`: the file system gives the clone's git dir no identity, so
-       * nothing measured could be told to be its own. */
-      readonly reason: "outside-repository" | "unreadable-git-config" | "unidentified-clone";
+       * nothing measured could be told to be its own. `damaged-consent-log`: what the log says
+       * cannot be trusted, so nothing is added to it; `forget --yes` is the way out. */
+      readonly reason:
+        | "outside-repository"
+        | "unreadable-git-config"
+        | "unidentified-clone"
+        | "damaged-consent-log";
     }
   | {
       readonly status: "on";
@@ -74,6 +79,7 @@ export class TelemetryOnUseCase {
     const identity = located.clone;
     if (identity === null) return { status: "refused", reason: "unidentified-clone" };
     const consentWritten = await this.ledger.exclusively(() => this.grant(located.root, identity));
+    if (consentWritten === "damaged") return { status: "refused", reason: "damaged-consent-log" };
     const legacyConfig = await this.clearLegacyConfig(located.root);
 
     // Pairing and removal live in one adapter call: the line and its script go together.
@@ -113,8 +119,11 @@ export class TelemetryOnUseCase {
    * fresh token: the key first, so that a crash between the two leaves a key with no interval,
    * which measures nothing, and not an interval its own key does not name, which a hook would
    * close. */
-  private async grant(root: string, identity: CloneIdentity): Promise<boolean> {
+  private async grant(root: string, identity: CloneIdentity): Promise<boolean | "damaged"> {
     const log = await ConsentLog.load(this.history);
+    // A log that cannot be trusted is not added to: an interval opened over it could span a
+    // window the lost lines closed.
+    if (log.damaged) return "damaged";
     // Read again under the lock: another `on` may have written it since the first look.
     const reading = await this.consents.read(root);
     const held = reading.kind === "value" ? tokenOfKey(reading.value) : null;

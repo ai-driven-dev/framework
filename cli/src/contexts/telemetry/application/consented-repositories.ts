@@ -28,6 +28,7 @@ export class ConsentedRepositories {
 
   async open(cwd: string): Promise<ConsentedRepository> {
     const located = await this.locator.locate(cwd);
+    if (located.status === "unreadable") return { status: "refused", reason: "unreadable-consent" };
     if (located.status !== "repository") return { status: "refused", reason: "outside-repository" };
     const repositoryId = repositoryIdOf(located);
     if (repositoryId === null) return { status: "refused", reason: "unidentified-repository" };

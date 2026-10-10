@@ -3,6 +3,9 @@ import type { CloneIdentity } from "../consent/clone-identity.js";
 export type LocatedDirectory =
   | { readonly status: "gone" }
   | { readonly status: "outside-repository" }
+  /** The directory could not be looked at, or it holds a `.git` that git cannot read (a config
+   * it cannot parse): it may be a clone, so it is not called outside any. */
+  | { readonly status: "unreadable" }
   | {
       readonly status: "repository";
       /** The working tree the directory is in: a linked worktree is its own root. */

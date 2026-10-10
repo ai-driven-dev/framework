@@ -41,7 +41,8 @@ What `aidd telemetry report --json` prints, and what each part means. Version `1
 | `files_read` | Session files read by this run |
 | `records` | Calls recorded in the period |
 | `unrecognised_shapes` | Lines of a shape the reader did not recognise, reported and never guessed |
-| `not_stored` | Calls read and left out, by reason: `outside-repo`, `never-seen-alive`, `no-consent`, `unreadable-consent`, `no-cwd`, `undated` |
+| `not_stored` | Calls read and left out, by reason: `outside-repo`, `never-seen-alive`, `no-consent`, `consent-closed`, `unreadable-consent`, `no-cwd`, `undated` |
+| `consent_log_damaged` | `true` while `ledger/consents.jsonl` cannot be trusted and nothing is stored |
 | `oldest_transcript_at` | When the oldest session file still on disk was last written, `null` when there is none |
 | `skipped_ledger_lines` | Stored lines that were not records |
 
@@ -50,5 +51,7 @@ What `aidd telemetry report --json` prints, and what each part means. Version `1
 | Sign | Likely reason |
 | --- | --- |
 | `records` of `0` and `not_stored.no-consent` above `0` | The clone has not opted in, or the calls were made before it did or while it was off: measurement starts at `aidd telemetry on` and reads nothing back |
-| `not_stored.unreadable-consent` above `0` | A clone's git config, or a line of the consent log `ledger/consents.jsonl`, cannot be read: nothing is stored until it is repaired |
+| `not_stored.consent-closed` above `0` | The clone opted in once and its consent was closed: `aidd telemetry on` in that clone measures again, from then on |
+| `not_stored.unreadable-consent` above `0` | A clone's git config or git directory cannot be read: nothing is stored for it until it can |
+| `consent_log_damaged` is `true` | A line of the consent log `ledger/consents.jsonl` is not an event, so nothing is stored for any clone. Recovery is `aidd telemetry forget --yes`, then `aidd telemetry on` in each clone: nothing from before is stored. Do not edit the log by hand |
 | `records` of `0` and `files_read` of `0` | No Claude Code session file is on disk for the period |

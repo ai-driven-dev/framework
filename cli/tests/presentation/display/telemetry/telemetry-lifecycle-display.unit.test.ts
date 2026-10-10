@@ -112,6 +112,18 @@ describe("printOnResult", () => {
     expect(output.at("error")[1]).toContain("git config cannot be read");
     expect(output.at("error")[1]).toContain("This clone's git config");
   });
+
+  it("sends a damaged consent log to forget, never to a hand edit", () => {
+    const output = new CapturingOutput(false);
+    printOnResult(output, { status: "refused", reason: "damaged-consent-log" });
+    printOffResult(output, { status: "refused", reason: "damaged-consent-log" });
+    for (const error of output.at("error")) {
+      expect(error).toContain("`aidd telemetry forget --yes`, then `aidd telemetry on`");
+      expect(error).toContain("nothing from before is stored");
+      expect(error).not.toContain("remove that line");
+    }
+    expect(output.at("error")).toHaveLength(2);
+  });
 });
 
 describe("printOffResult", () => {

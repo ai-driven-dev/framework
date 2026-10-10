@@ -754,7 +754,12 @@
           "open": "2026-10-09T09:00:00.000Z"
         }
       ],
-      "realpath": "/work/a/.git"
+      "realpath": "/work/a/.git",
+      "identity": {
+        "dev": "16777231",
+        "ino": "100",
+        "birthtimeMs": 1760000000000
+      }
     },
     "the-interval-is-closed": {
       "key": "2:t1",
@@ -774,7 +779,12 @@
           "close": "2026-10-09T10:00:00.000Z"
         }
       ],
-      "realpath": "/work/a/.git"
+      "realpath": "/work/a/.git",
+      "identity": {
+        "dev": "16777231",
+        "ino": "100",
+        "birthtimeMs": 1760000000000
+      }
     },
     "a-bare-2-set-by-hand": {
       "key": "2",
@@ -790,7 +800,12 @@
           "open": "2026-10-09T09:00:00.000Z"
         }
       ],
-      "realpath": "/work/a/.git"
+      "realpath": "/work/a/.git",
+      "identity": {
+        "dev": "16777231",
+        "ino": "100",
+        "birthtimeMs": 1760000000000
+      }
     },
     "a-forged-token-names-no-interval": {
       "key": "2:forged",
@@ -806,12 +821,22 @@
           "open": "2026-10-09T09:00:00.000Z"
         }
       ],
-      "realpath": "/work/a/.git"
+      "realpath": "/work/a/.git",
+      "identity": {
+        "dev": "16777231",
+        "ino": "100",
+        "birthtimeMs": 1760000000000
+      }
     },
     "a-forged-token-and-no-log": {
       "key": "2:forged",
       "lines": [],
-      "realpath": "/work/a/.git"
+      "realpath": "/work/a/.git",
+      "identity": {
+        "dev": "16777231",
+        "ino": "100",
+        "birthtimeMs": 1760000000000
+      }
     },
     "a-copy-carries-the-key-to-another-path": {
       "key": "2:t1",
@@ -827,7 +852,12 @@
           "open": "2026-10-09T09:00:00.000Z"
         }
       ],
-      "realpath": "/work/b/.git"
+      "realpath": "/work/b/.git",
+      "identity": {
+        "dev": "16777231",
+        "ino": "200",
+        "birthtimeMs": 1760000500000
+      }
     },
     "the-key-is-off": {
       "key": "off",
@@ -843,7 +873,12 @@
           "open": "2026-10-09T09:00:00.000Z"
         }
       ],
-      "realpath": "/work/a/.git"
+      "realpath": "/work/a/.git",
+      "identity": {
+        "dev": "16777231",
+        "ino": "100",
+        "birthtimeMs": 1760000000000
+      }
     },
     "the-key-is-unset": {
       "key": null,
@@ -859,7 +894,12 @@
           "open": "2026-10-09T09:00:00.000Z"
         }
       ],
-      "realpath": "/work/a/.git"
+      "realpath": "/work/a/.git",
+      "identity": {
+        "dev": "16777231",
+        "ino": "100",
+        "birthtimeMs": 1760000000000
+      }
     },
     "a-clone-made-again-at-the-path-has-no-key": {
       "key": null,
@@ -875,7 +915,12 @@
           "open": "2026-10-09T09:00:00.000Z"
         }
       ],
-      "realpath": "/work/a/.git"
+      "realpath": "/work/a/.git",
+      "identity": {
+        "dev": "16777231",
+        "ino": "100",
+        "birthtimeMs": 1760000000000
+      }
     },
     "the-key-names-the-second-of-two-open-intervals": {
       "key": "2:t2",
@@ -901,7 +946,12 @@
           "open": "2026-10-09T10:00:00.000Z"
         }
       ],
-      "realpath": "/work/a/.git"
+      "realpath": "/work/a/.git",
+      "identity": {
+        "dev": "16777231",
+        "ino": "100",
+        "birthtimeMs": 1760000000000
+      }
     },
     "another-clone-open-is-left-alone": {
       "key": "off",
@@ -927,7 +977,12 @@
           "open": "2026-10-09T10:00:00.000Z"
         }
       ],
-      "realpath": "/work/a/.git"
+      "realpath": "/work/a/.git",
+      "identity": {
+        "dev": "16777231",
+        "ino": "100",
+        "birthtimeMs": 1760000000000
+      }
     },
     "a-damaged-log-grants-nothing-and-closes-nothing": {
       "key": "2:t1",
@@ -944,7 +999,12 @@
         },
         "{not json"
       ],
-      "realpath": "/work/a/.git"
+      "realpath": "/work/a/.git",
+      "identity": {
+        "dev": "16777231",
+        "ino": "100",
+        "birthtimeMs": 1760000000000
+      }
     },
     "a-damaged-log-and-a-key-gone": {
       "key": "off",
@@ -961,7 +1021,172 @@
         },
         "{not json"
       ],
-      "realpath": "/work/a/.git"
+      "realpath": "/work/a/.git",
+      "identity": {
+        "dev": "16777231",
+        "ino": "100",
+        "birthtimeMs": 1760000000000
+      }
+    },
+    "another-directory-at-the-path-is-neither-granted-nor-closed": {
+      "key": "2:t1",
+      "lines": [
+        {
+          "token": "t1",
+          "clone": {
+            "path": "/work/a/.git",
+            "dev": "16777231",
+            "ino": "100",
+            "birthtimeMs": 1760000000000
+          },
+          "open": "2026-10-09T09:00:00.000Z"
+        }
+      ],
+      "realpath": "/work/a/.git",
+      "identity": {
+        "dev": "16777231",
+        "ino": "200",
+        "birthtimeMs": 1760000000000
+      }
+    },
+    "another-device-at-the-path-is-neither-granted-nor-closed": {
+      "key": "2:t1",
+      "lines": [
+        {
+          "token": "t1",
+          "clone": {
+            "path": "/work/a/.git",
+            "dev": "16777231",
+            "ino": "100",
+            "birthtimeMs": 1760000000000
+          },
+          "open": "2026-10-09T09:00:00.000Z"
+        }
+      ],
+      "realpath": "/work/a/.git",
+      "identity": {
+        "dev": "16777232",
+        "ino": "100",
+        "birthtimeMs": 1760000000000
+      }
+    },
+    "another-birth-at-the-path-is-neither-granted-nor-closed": {
+      "key": "2:t1",
+      "lines": [
+        {
+          "token": "t1",
+          "clone": {
+            "path": "/work/a/.git",
+            "dev": "16777231",
+            "ino": "100",
+            "birthtimeMs": 1760000000000
+          },
+          "open": "2026-10-09T09:00:00.000Z"
+        }
+      ],
+      "realpath": "/work/a/.git",
+      "identity": {
+        "dev": "16777231",
+        "ino": "100",
+        "birthtimeMs": 1760000500000
+      }
+    },
+    "another-directory-at-the-path-and-a-key-gone-closes-nothing": {
+      "key": "off",
+      "lines": [
+        {
+          "token": "t1",
+          "clone": {
+            "path": "/work/a/.git",
+            "dev": "16777231",
+            "ino": "100",
+            "birthtimeMs": 1760000000000
+          },
+          "open": "2026-10-09T09:00:00.000Z"
+        }
+      ],
+      "realpath": "/work/a/.git",
+      "identity": {
+        "dev": "16777231",
+        "ino": "200",
+        "birthtimeMs": 1760000000000
+      }
+    },
+    "no-birth-recorded-and-none-now-is-the-clone": {
+      "key": "2:t1",
+      "lines": [
+        {
+          "token": "t1",
+          "clone": {
+            "path": "/work/a/.git",
+            "dev": "16777231",
+            "ino": "100",
+            "birthtimeMs": 0
+          },
+          "open": "2026-10-09T09:00:00.000Z"
+        }
+      ],
+      "realpath": "/work/a/.git",
+      "identity": {
+        "dev": "16777231",
+        "ino": "100",
+        "birthtimeMs": 0
+      }
+    },
+    "a-directory-the-platform-cannot-identify-grants-and-closes-nothing": {
+      "key": "off",
+      "lines": [
+        {
+          "token": "t1",
+          "clone": {
+            "path": "/work/a/.git",
+            "dev": "16777231",
+            "ino": "100",
+            "birthtimeMs": 1760000000000
+          },
+          "open": "2026-10-09T09:00:00.000Z"
+        }
+      ],
+      "realpath": "/work/a/.git",
+      "identity": null
+    }
+  },
+  "cloneIdentity": {
+    "macos-birth-differs-from-change-time": {
+      "dev": "16777231",
+      "ino": "100",
+      "birthtimeMs": "1760000000000",
+      "ctimeMs": "1760000099999"
+    },
+    "linux-no-birth-is-zero": {
+      "dev": "2049",
+      "ino": "524301",
+      "birthtimeMs": "0",
+      "ctimeMs": "1760000099999"
+    },
+    "linux-birth-equal-to-change-time-is-no-birth": {
+      "dev": "2049",
+      "ino": "524301",
+      "birthtimeMs": "1760000099999",
+      "ctimeMs": "1760000099999"
+    },
+    "a-negative-birth-is-no-birth": {
+      "dev": "2049",
+      "ino": "524301",
+      "birthtimeMs": "-1",
+      "ctimeMs": "1760000099999"
+    },
+    "a-file-index-a-number-cannot-hold-is-kept-exactly": {
+      "dev": "3735928559",
+      "ino": "9007199254740993",
+      "birthtimeMs": "1760000000000",
+      "ctimeMs": "1760000099999"
+    },
+    "no-inode-is-no-identity": {
+      "dev": "16777231",
+      "ino": "0",
+      "birthtimeMs": "1760000000000",
+      "ctimeMs": "1760000099999"
     }
   }
 }

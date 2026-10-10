@@ -22,6 +22,9 @@ export interface IngestResult {
   readonly snapshots: number;
   /** Billed calls, by the reason they were not stored. */
   readonly notStored: Readonly<Record<NotStoredReason, number>>;
+  /** A line of `ledger/consents.jsonl` was not an event: nothing is stored, on any run, until
+   * it is recovered. */
+  readonly consentLogDamaged: boolean;
   /** When the oldest transcript still on disk was last written: how far back history can be
    * read. `null` when there is none, or nothing was read. */
   readonly oldestTranscriptAt: string | null;
@@ -31,6 +34,7 @@ const NOT_STORED: Readonly<Record<NotStoredReason, number>> = {
   "outside-repo": 0,
   "never-seen-alive": 0,
   "no-consent": 0,
+  "consent-closed": 0,
   "unreadable-consent": 0,
   "no-cwd": 0,
   undated: 0,
@@ -73,6 +77,7 @@ export class IngestUsageUseCase {
         skippedLedgerLines: 0,
         snapshots: 0,
         notStored: NOT_STORED,
+        consentLogDamaged: false,
         oldestTranscriptAt: null,
       };
     }
@@ -116,6 +121,7 @@ export class IngestUsageUseCase {
       }
     }
     await resolver.close();
+    const consentLogDamaged = resolver.consentLogDamaged;
 
     let snapshots = 0;
     for (const [repositoryId, root] of live) {
@@ -134,6 +140,7 @@ export class IngestUsageUseCase {
       skippedLedgerLines,
       snapshots,
       notStored,
+      consentLogDamaged,
       oldestTranscriptAt: reading.oldestTranscriptAt,
     };
   }

@@ -1,5 +1,5 @@
-import { realpath } from "node:fs";
-import { basename, dirname, resolve } from "node:path";
+import { existsSync, realpath } from "node:fs";
+import { basename, dirname, join, resolve } from "node:path";
 import { promisify } from "node:util";
 import { isErrnoException } from "../../../kernel/reading/json-file.js";
 import type { LocatedDirectory, RepositoryLocator } from "../domain/ports/repository-locator.js";
@@ -9,6 +9,14 @@ import { runGit } from "./run-git.js";
 // `native` so Windows hands back the long, correctly cased name, not an 8.3 one.
 const realPath = promisify(realpath.native);
 const GONE = new Set(["ENOENT", "ENOTDIR"]);
+
+/** Whether `dir` or a directory above it holds a `.git`. */
+function holdsGit(dir: string): boolean {
+  for (let at = dir; ; at = dirname(at)) {
+    if (existsSync(join(at, ".git"))) return true;
+    if (dirname(at) === at) return false;
+  }
+}
 
 /** Tells what a working directory is by asking git, from the directory's real path. */
 export class GitRepositoryLocatorAdapter implements RepositoryLocator {
@@ -24,15 +32,20 @@ export class GitRepositoryLocatorAdapter implements RepositoryLocator {
       real = await realPath(cwd);
     } catch (error) {
       if (isErrnoException(error) && GONE.has(error.code ?? "")) return { status: "gone" };
-      throw error;
+      return { status: "unreadable" };
     }
     const top = runGit(this.env, real, ["rev-parse", "--show-toplevel", "--git-common-dir"]);
     const [toplevel, commonDir] = top.stdout.split("\n");
-    if (top.status !== 0 || !toplevel || !commonDir) return { status: "outside-repository" };
+    if (top.status !== 0 || !toplevel || !commonDir) return this.refusedByGit(real);
     const root = resolve(toplevel);
     // `--git-common-dir` is relative to the directory git ran in.
     const common = resolve(real, commonDir);
-    const identity = await this.identify(await realPath(common));
+    let identity: Awaited<ReturnType<CloneIdentityReader>>;
+    try {
+      identity = await this.identify(await realPath(common));
+    } catch {
+      return { status: "unreadable" };
+    }
     return {
       status: "repository",
       root,
@@ -41,6 +54,15 @@ export class GitRepositoryLocatorAdapter implements RepositoryLocator {
       remote: this.remote(real),
       rootCommit: this.rootCommit(real),
     };
+  }
+
+  /** Git would not say where the top is. A git directory itself has no work tree, and git reads
+   * it fine; a directory that holds a `.git` git cannot read at all is a repository it cannot
+   * read, which is not the same as no repository. */
+  private refusedByGit(real: string): LocatedDirectory {
+    const gitDir = runGit(this.env, real, ["rev-parse", "--git-common-dir"]);
+    if (gitDir.status === 0) return { status: "outside-repository" };
+    return holdsGit(real) ? { status: "unreadable" } : { status: "outside-repository" };
   }
 
   private remote(cwd: string): string | null {

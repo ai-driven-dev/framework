@@ -16,11 +16,18 @@ export const NOT_STORED_WORDS: Readonly<Record<NotStoredReason, string>> = {
   "outside-repo": "outside any repository",
   "never-seen-alive": "from a directory never seen while it existed",
   "no-consent": "from a clone that has not opted in",
+  "consent-closed":
+    "from a clone whose consent was closed; run `aidd telemetry on` in it to measure again",
   "unreadable-consent":
-    "from a clone whose consent cannot be read: its git config, or a damaged line of ledger/consents.jsonl (repair or remove that line, or run `aidd telemetry forget --yes` and `aidd telemetry on` again)",
+    "from a clone whose consent cannot be read: its git config, its git directory, or a damaged ledger/consents.jsonl",
   "no-cwd": "with no working directory",
   undated: "with no usable time",
 };
+
+/** Said on every run while `ledger/consents.jsonl` cannot be trusted. Recovery is `forget`, not
+ * a hand edit: a line removed by hand can reopen a window that was closed. */
+export const DAMAGED_CONSENT_LOG_WORDS =
+  "ledger/consents.jsonl holds a line that is not a consent event, so the log cannot be trusted and nothing is stored for any clone. Run `aidd telemetry forget --yes`, then `aidd telemetry on` in each clone to measure again: nothing from before is stored.";
 
 export function printIngestResult(output: CLIOutput, result: IngestResult): void {
   if (result.refused) {
@@ -52,6 +59,7 @@ export function printIngestResult(output: CLIOutput, result: IngestResult): void
         `Not stored: ${count} call${count === 1 ? "" : "s"} ${NOT_STORED_WORDS[reason]}.`
       );
   }
+  if (result.consentLogDamaged) output.warn(DAMAGED_CONSENT_LOG_WORDS);
 }
 
 const REFUSALS: Readonly<Record<RefusalReason, string>> = {

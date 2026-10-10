@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import { join, win32 } from "node:path";
 import { describe, expect, it } from "vitest";
 import { parseBranchConfig } from "../../../src/contexts/telemetry/domain/branch-binding.js";
+import { identityFromStat } from "../../../src/contexts/telemetry/domain/consent/clone-identity.js";
 import {
   foldConsent,
   parseConsentRecords,
@@ -55,6 +56,15 @@ interface HookConsentCase {
   key: string | null;
   lines: LogLine[];
   realpath: string;
+  /** The directory at `realpath` now; `null` when the platform gives it none. */
+  identity: { dev: string; ino: string; birthtimeMs: number } | null;
+}
+/** What `fs.stat(path, { bigint: true })` said, as text so that no number rounds it. */
+interface StatCase {
+  dev: string;
+  ino: string;
+  birthtimeMs: string;
+  ctimeMs: string;
 }
 interface DirCase {
   platform: "posix" | "win32";
@@ -73,6 +83,7 @@ const cases = JSON.parse(text("cases.json")) as {
   consent: Record<string, ConsentCase>;
   consentLog: Record<string, ConsentLogCase>;
   hookConsent: Record<string, HookConsentCase>;
+  cloneIdentity: Record<string, StatCase>;
   environmentRefusal: Record<string, NodeJS.ProcessEnv>;
   telemetryDir: Record<string, DirCase>;
   claudeOnly: Record<string, ClaudeOnlyCase>;
@@ -180,6 +191,20 @@ describe("the shared fixture of task bindings", () => {
     }).toEqual(expected.consentLog?.[name]);
   });
 
+  it.each(Object.entries(cases.cloneIdentity))(
+    "reads the identity of a directory: %s",
+    (name, stat) => {
+      const found = identityFromStat("/p", {
+        dev: BigInt(stat.dev),
+        ino: BigInt(stat.ino),
+        birthtimeMs: BigInt(stat.birthtimeMs),
+        ctimeMs: BigInt(stat.ctimeMs),
+      });
+      const { path: _path, ...parts } = found ?? { path: "" };
+      expect(found === null ? null : parts).toEqual(expected.cloneIdentity?.[name]);
+    }
+  );
+
   it("states the hook's consent cases well formed, for the hook test to execute", () => {
     expect(Object.keys(cases.hookConsent).sort()).toEqual(
       Object.keys(expected.hookConsent ?? {}).sort()
@@ -187,6 +212,10 @@ describe("the shared fixture of task bindings", () => {
     for (const input of Object.values(cases.hookConsent)) {
       expect(typeof input.realpath).toBe("string");
       expect(Array.isArray(input.lines)).toBe(true);
+      expect("identity" in input).toBe(true);
+      if (input.identity !== null) {
+        expect(Object.keys(input.identity).sort()).toEqual(["birthtimeMs", "dev", "ino"]);
+      }
     }
   });
 

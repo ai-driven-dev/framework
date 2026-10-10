@@ -137,14 +137,21 @@ class World {
     );
   }
 
-  async on(dir: string, seconds: number): Promise<void> {
+  async on(dir: string, seconds: number) {
     this.at(seconds);
-    await deps.telemetryOnUseCase.execute(dir);
+    return deps.telemetryOnUseCase.execute(dir);
   }
 
-  async off(dir: string, seconds: number): Promise<void> {
+  async off(dir: string, seconds: number) {
     this.at(seconds);
-    await deps.telemetryOffUseCase.execute(dir);
+    return deps.telemetryOffUseCase.execute(dir);
+  }
+
+  /** The last line of the consent log cut short, as a crash in the middle of a write would. */
+  cutLastConsentLine(): void {
+    const lines = readFileSync(this.consentsFile(), "utf8").split("\n").filter(Boolean);
+    lines[lines.length - 1] = (lines[lines.length - 1] ?? "").slice(0, 40);
+    writeFileSync(this.consentsFile(), `${lines.join("\n")}\n`);
   }
 
   async ingest(seconds: number) {
@@ -589,6 +596,207 @@ const ROWS: readonly Row[] = [
       expect(w.blocks(forged)).toBe(false);
       expect(w.blocks(copy)).toBe(false);
       expect(w.blocks(original)).toBe(true);
+    },
+  },
+  {
+    n: "unstattable",
+    scenario:
+      "an opted-in clone whose git dir cannot be stat'ed: its own calls are counted unreadable, another clone is still stored, nothing aborts",
+    expected: ["b1"],
+    run: async (w) => {
+      const a = w.repository("locked/a", SHARED);
+      const b = w.repository("b", OTHER);
+      await w.on(a, HOUR);
+      await w.on(b, HOUR);
+      w.call(a, "a1", HOUR + 100);
+      w.call(b, "b1", HOUR + 100);
+      const locked = join(w.sandbox.root, "locked");
+      chmodSync(locked, 0o000);
+      try {
+        const result = await w.ingest(HOUR + 200);
+        expect(result.notStored["unreadable-consent"]).toBe(1);
+        expect(result.added).toBe(1);
+      } finally {
+        chmodSync(locked, 0o755);
+      }
+    },
+  },
+  {
+    n: "unmounted",
+    scenario:
+      "an opted-in clone out of reach during an ingest, back with the same identity: its calls are stored on, no new on needed",
+    expected: ["a1", "a2back", "b1"],
+    run: async (w) => {
+      const a = w.repository("a", SHARED);
+      const b = w.repository("b", OTHER);
+      await w.on(a, HOUR);
+      await w.on(b, HOUR);
+      w.call(a, "a1", HOUR + 100);
+      await w.ingest(HOUR + 200);
+      const away = join(w.sandbox.root, "a.away");
+      renameSync(a, away);
+      await w.ingest(HOUR + 300);
+      renameSync(away, a);
+      w.call(a, "a2back", HOUR + 400);
+      w.call(b, "b1", HOUR + 400);
+      await w.ingest(HOUR + 500);
+    },
+  },
+  {
+    n: "unmounted, made again",
+    scenario:
+      "the same, but another clone is made at the path while it is out of reach: the old one is closed, the new one is not opted in",
+    expected: ["a1", "b1"],
+    run: async (w) => {
+      const a = w.repository("a", SHARED);
+      const b = w.repository("b", OTHER);
+      await w.on(a, HOUR);
+      await w.on(b, HOUR);
+      w.call(a, "a1", HOUR + 100);
+      await w.ingest(HOUR + 200);
+      w.removeClone(a);
+      await w.ingest(HOUR + 300);
+      const again = w.repository("a", SHARED);
+      w.call(again, "a2new", HOUR + 400);
+      w.call(b, "b1", HOUR + 400);
+      const result = await w.ingest(HOUR + 500);
+      expect(result.notStored["no-consent"]).toBe(1);
+    },
+  },
+  {
+    n: "closed, key put back",
+    scenario:
+      "an interval closed by a manual off, then its own key put back by hand: the call is not stored, and the report says the consent was closed, not that the clone never opted in",
+    expected: ["a1"],
+    run: async (w) => {
+      const a = w.repository("a", SHARED);
+      await w.on(a, HOUR);
+      const key = git(a, w.sandbox.gitEnv, "config", "--local", "--get", "aidd.telemetry").trim();
+      w.call(a, "a1", HOUR + 100);
+      w.at(2 * HOUR);
+      w.key(a, "off");
+      await w.ingest(2 * HOUR + 100);
+      w.key(a, key);
+      w.call(a, "a2", 2 * HOUR + 200);
+      const result = await w.ingest(2 * HOUR + 300);
+      expect(result.notStored["consent-closed"]).toBe(1);
+      expect(result.notStored["no-consent"]).toBe(0);
+    },
+  },
+  {
+    n: "broken config",
+    scenario:
+      "an opted-in clone whose .git/config cannot be parsed: its calls are counted unreadable, not outside any repository",
+    expected: ["c2"],
+    run: async (w) => {
+      const a = w.repository("a", SHARED);
+      await w.on(a, HOUR);
+      const config = join(a, ".git", "config");
+      const sound = readFileSync(config, "utf8");
+      w.call(a, "c1", HOUR + 100);
+      appendFileSync(config, "[broken\n");
+      const result = await w.ingest(HOUR + 200);
+      expect(result.notStored["unreadable-consent"]).toBe(1);
+      expect(result.notStored["outside-repo"]).toBe(0);
+      writeFileSync(config, sound);
+      w.call(a, "c2", HOUR + 300);
+      await w.ingest(HOUR + 400);
+    },
+  },
+  {
+    n: "copy at the path",
+    scenario:
+      "cp -R of an opted-in clone moved onto the deleted original's path: nothing stored, the real prompt-gate neither blocks nor can be answered, and task does not push it to opt in",
+    expected: ["b1"],
+    run: async (w) => {
+      const a = w.repository("a", SHARED, "feat/z");
+      const b = w.repository("b", OTHER, "feat/z");
+      await w.on(a, HOUR);
+      await w.on(b, HOUR);
+      expect(w.blocks(a)).toBe(true);
+      const copy = join(w.sandbox.root, "copy");
+      cpSync(a, copy, { recursive: true });
+      w.removeClone(a);
+      renameSync(copy, a);
+      w.call(a, "a1", HOUR + 100);
+      w.call(b, "b1", HOUR + 100);
+      // Before any ingest has seen the swap: the hook alone has to know it is another clone.
+      expect(w.blocks(a)).toBe(false);
+      expect(w.blocks(b)).toBe(true);
+      await w.ingest(HOUR + 200);
+      expect(w.blocks(a)).toBe(false);
+      expect(
+        await deps.declareTaskUseCase.execute({
+          cwd: a,
+          request: { kind: "task", task: "t1", ticket: null },
+          by: "command",
+        })
+      ).toEqual({ status: "refused", reason: "no-consent" });
+    },
+  },
+  {
+    n: "damaged on",
+    scenario:
+      "on, c1, off, c2, the close line cut, then on: refused, and nothing after it is stored, on every ingest",
+    expected: ["c1"],
+    run: async (w) => {
+      const a = w.repository("a", SHARED);
+      await w.on(a, HOUR);
+      w.call(a, "c1", HOUR + 100);
+      await w.ingest(HOUR + 200);
+      await w.off(a, 2 * HOUR);
+      w.call(a, "c2", 2 * HOUR + 100);
+      w.cutLastConsentLine();
+      const key = git(a, w.sandbox.gitEnv, "config", "--local", "--get", "aidd.telemetry");
+      const refused = await w.on(a, 3 * HOUR);
+      expect(refused).toEqual({ status: "refused", reason: "damaged-consent-log" });
+      expect(git(a, w.sandbox.gitEnv, "config", "--local", "--get", "aidd.telemetry")).toBe(key);
+      w.call(a, "c3", 3 * HOUR + 100);
+      const first = await w.ingest(3 * HOUR + 200);
+      expect(first.consentLogDamaged).toBe(true);
+      const second = await w.ingest(3 * HOUR + 300);
+      expect(second.consentLogDamaged).toBe(true);
+    },
+  },
+  {
+    n: "damaged off",
+    scenario: "on, c1, the log damaged, then off: refused, the key and the log left as they are",
+    expected: ["c1"],
+    run: async (w) => {
+      const a = w.repository("a", SHARED);
+      await w.on(a, HOUR);
+      w.call(a, "c1", HOUR + 100);
+      await w.ingest(HOUR + 200);
+      appendFileSync(w.consentsFile(), '{"token": "cut\n');
+      const before = readFileSync(w.consentsFile(), "utf8");
+      const key = git(a, w.sandbox.gitEnv, "config", "--local", "--get", "aidd.telemetry");
+      expect(await w.off(a, 2 * HOUR)).toEqual({
+        status: "refused",
+        reason: "damaged-consent-log",
+      });
+      expect(readFileSync(w.consentsFile(), "utf8")).toBe(before);
+      expect(git(a, w.sandbox.gitEnv, "config", "--local", "--get", "aidd.telemetry")).toBe(key);
+    },
+  },
+  {
+    n: "damaged recovery",
+    scenario:
+      "the log damaged, on refused, then forget --yes and on: nothing from before is stored, what follows is",
+    expected: ["c4"],
+    run: async (w) => {
+      const a = w.repository("a", SHARED);
+      await w.on(a, HOUR);
+      w.call(a, "c1", HOUR + 100);
+      await w.off(a, 2 * HOUR);
+      w.call(a, "c2", 2 * HOUR + 100);
+      w.cutLastConsentLine();
+      expect(await w.on(a, 3 * HOUR)).toMatchObject({ status: "refused" });
+      w.call(a, "c3", 3 * HOUR + 100);
+      w.at(4 * HOUR);
+      await deps.forgetTelemetryUseCase.execute(true);
+      expect(await w.on(a, 5 * HOUR)).toMatchObject({ status: "on" });
+      w.call(a, "c4", 5 * HOUR + 100);
+      await w.ingest(6 * HOUR);
     },
   },
   {

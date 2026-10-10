@@ -13,7 +13,11 @@ import {
 } from "../../../contexts/telemetry/domain/report/usage-report.js";
 import type { NotStoredReason } from "../../../contexts/telemetry/domain/repository-resolution.js";
 import type { CLIOutput } from "../../output.js";
-import { NOT_STORED_WORDS, UNRECOGNISED_WORDS } from "../telemetry-display.js";
+import {
+  DAMAGED_CONSENT_LOG_WORDS,
+  NOT_STORED_WORDS,
+  UNRECOGNISED_WORDS,
+} from "../telemetry-display.js";
 
 const SHORT = 8;
 const COLUMNS = ["Input", "Output", "Cache read", "Cache write", "Total"] as const;
@@ -117,6 +121,7 @@ function coverageLines(coverage: ReportCoverage): string[] {
   for (const [reason, n] of Object.entries(coverage.notStored) as [NotStoredReason, number][]) {
     if (n > 0) lines.push(`Not stored: ${count(n, "call", "calls")} ${NOT_STORED_WORDS[reason]}.`);
   }
+  if (coverage.consentLogDamaged) lines.push(DAMAGED_CONSENT_LOG_WORDS);
   if (coverage.skippedLedgerLines > 0) {
     lines.push(
       `${count(coverage.skippedLedgerLines, "ledger line", "ledger lines")} not a record and skipped.`

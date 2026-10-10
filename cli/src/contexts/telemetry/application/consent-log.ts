@@ -44,6 +44,14 @@ export class ConsentLog {
     return this.openIntervals().filter((interval) => sameClone(interval.clone, clone));
   }
 
+  /** Whether the clone had an interval named `token` that has since been closed. */
+  hasClosed(clone: CloneIdentity, token: string): boolean {
+    return this.intervals.some(
+      (interval) =>
+        !isOpen(interval) && interval.token === token && sameClone(interval.clone, clone)
+    );
+  }
+
   /** Opens an interval for the clone at `at`, named by `token`. */
   async open(clone: CloneIdentity, token: string, at: Date): Promise<void> {
     await this.write({ kind: "open", token, clone, at: at.toISOString() });

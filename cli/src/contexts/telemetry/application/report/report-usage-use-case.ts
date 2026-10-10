@@ -25,6 +25,8 @@ export interface ReportCoverage {
   readonly unrecognised: number;
   /** Billed calls this run read and did not store, by the reason. */
   readonly notStored: Readonly<Record<NotStoredReason, number>>;
+  /** A line of `ledger/consents.jsonl` was not an event: nothing is stored until it is recovered. */
+  readonly consentLogDamaged: boolean;
   /** When the oldest transcript still on disk was last written: nothing older can be read. */
   readonly oldestTranscriptAt: string | null;
   /** Lines of the ledger that were not records. */
@@ -71,6 +73,7 @@ export class ReportUsageUseCase {
         records: records.length,
         unrecognised: ingested.unrecognised,
         notStored: ingested.notStored,
+        consentLogDamaged: ingested.consentLogDamaged,
         oldestTranscriptAt: ingested.oldestTranscriptAt,
         skippedLedgerLines: held.skippedLines,
       },

@@ -26,6 +26,7 @@ const NOT_STORED = {
   "outside-repo": 0,
   "never-seen-alive": 0,
   "no-consent": 0,
+  "consent-closed": 0,
   "unreadable-consent": 0,
   "no-cwd": 0,
   undated: 0,
@@ -36,6 +37,7 @@ const COVERAGE: Coverage = {
   records: 3,
   unrecognised: 0,
   notStored: NOT_STORED,
+  consentLogDamaged: false,
   oldestTranscriptAt: "2026-09-20T08:00:00.000Z",
   skippedLedgerLines: 0,
 };
@@ -247,6 +249,17 @@ describe("printing a usage report", () => {
       printed(result("total", [], tally(0, [0, 0, 0, 0]), { skippedLedgerLines: 1 })).at(-1)
     ).toBe("1 ledger line not a record and skipped.");
     expect(printed(result("total", [], tally(0, [0, 0, 0, 0]))).join("\n")).not.toContain("ledger");
+  });
+
+  it("warns on every report while the consent log is damaged, and not otherwise", () => {
+    const damaged = { consentLogDamaged: true };
+    for (let run = 0; run < 2; run += 1) {
+      const lines = printed(result("total", [], tally(0, [0, 0, 0, 0]), damaged));
+      expect(lines.at(-1)).toContain("`aidd telemetry forget --yes`, then `aidd telemetry on`");
+    }
+    expect(printed(result("total", [], tally(0, [0, 0, 0, 0]))).join("\n")).not.toContain(
+      "consents.jsonl"
+    );
   });
 
   it("says nothing was read under AIDD_TELEMETRY=0", () => {

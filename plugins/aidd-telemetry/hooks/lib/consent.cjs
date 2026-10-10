@@ -15,11 +15,6 @@ function tokenOfKey(value) {
   return match === null ? null : match[1];
 }
 
-/** granted | absent: what the key alone says. Whether an interval backs it is `decideConsent`. */
-function consentOf(value) {
-  return tokenOfKey(value) === null ? "absent" : "granted";
-}
-
 /** The environment refuses on exactly "0". */
 function refusedByEnvironment(env = process.env) {
   return env.AIDD_TELEMETRY === "0";
@@ -56,7 +51,22 @@ function parseClone(value) {
   const { path: clonePath, dev, ino, birthtimeMs } = value;
   if (!nonEmpty(clonePath) || !nonEmpty(dev) || !nonEmpty(ino) || ino === "0") return null;
   if (typeof birthtimeMs !== "number" || !Number.isFinite(birthtimeMs) || birthtimeMs < 0) return null;
-  return { path: clonePath };
+  return { path: clonePath, identity: { dev, ino, birthtimeMs } };
+}
+
+/** The identity of a directory from `fs.statSync(path, { bigint: true })`, normalised exactly as
+ * the CLI's `clone-identity.ts` does, and pinned by the shared fixture (`cloneIdentity` cases):
+ * the inode and device as text, so a Windows file index is not rounded; a birth time that is
+ * missing, or equal to the change time (what Linux gives when the file system keeps none), as
+ * `0`; null when there is no inode. */
+function identityFromStat(stat) {
+  if (stat.ino === 0n) return null;
+  const born = stat.birthtimeMs <= 0n || stat.birthtimeMs === stat.ctimeMs ? 0n : stat.birthtimeMs;
+  return { dev: String(stat.dev), ino: String(stat.ino), birthtimeMs: Number(born) };
+}
+
+function sameIdentity(a, b) {
+  return a.dev === b.dev && a.ino === b.ino && a.birthtimeMs === b.birthtimeMs;
 }
 
 /** One line of `consents.jsonl`: `{token, clone, open}` or `{token, close}`, exactly. Anything
@@ -72,7 +82,9 @@ function parseLine(line) {
   if (sameKeys(value, ["token", "clone", "open"])) {
     const clone = parseClone(value.clone);
     const at = instant(value.open);
-    return clone === null || at === null ? null : { kind: "open", token: value.token, path: clone.path, at };
+    return clone === null || at === null
+      ? null
+      : { kind: "open", token: value.token, path: clone.path, identity: clone.identity, at };
   }
   if (sameKeys(value, ["token", "close"])) {
     const at = instant(value.close);
@@ -103,6 +115,7 @@ function parseConsentLog(text) {
     intervals.set(event.token, {
       token: event.token,
       path: event.path,
+      identity: event.identity,
       from: event.at,
       to: closes.has(event.token) ? closes.get(event.token) : null,
     });
@@ -111,14 +124,24 @@ function parseConsentLog(text) {
 }
 
 /** What a clone's key and the consent log say together, for the clone whose git common dir has
- * the real path `realpath`. The clone consents only when its key names an interval that is open
- * and was opened for this very path: a key set by hand, one carried by a copy, or one left in a
- * clone that was moved names no interval open here. `close` lists the open intervals of this
- * path that the key no longer names, which the hook ends. */
-function decideConsent({ key, log, realpath }) {
+ * the real path `realpath` and the identity `identity` (null when the platform gives it none).
+ * The clone consents only when its key names an interval that is open and was opened for this
+ * very clone, path and identity both: a key set by hand, one carried by a copy, one left in a
+ * clone that was moved, or a copy swapped in at the path of a deleted original names no
+ * interval open here. `close` lists the open intervals of this clone that the key no longer
+ * names, which the hook ends. Another clone's interval at the same path is not this clone's to
+ * end: the CLI closes it when it sees the swap. */
+function decideConsent({ key, log, realpath, identity }) {
   if (log.damaged) return { granted: false, close: [] };
   const token = tokenOfKey(key);
-  const here = log.intervals.filter((interval) => interval.to === null && interval.path === realpath);
+  const here = log.intervals.filter(
+    (interval) =>
+      interval.to === null &&
+      interval.path === realpath &&
+      identity !== null &&
+      identity !== undefined &&
+      sameIdentity(interval.identity, identity)
+  );
   return {
     granted: here.some((interval) => interval.token === token),
     close: here.filter((interval) => interval.token !== token).map((interval) => interval.token),
@@ -148,6 +171,15 @@ function commonDirRealpath(cwd, env) {
   }
 }
 
+/** The identity of the directory at `realpath`, null when it cannot be looked at or has none. */
+function identityOf(realpath) {
+  try {
+    return identityFromStat(fs.statSync(realpath, { bigint: true }));
+  } catch {
+    return null;
+  }
+}
+
 /** Whether the clone at `cwd` is measured: its key names an open interval opened for it. The
  * environment is asked first, then the log, so a refusal and a machine where nobody ever opted
  * in spawn nothing. Along the way, an open interval of this clone that its key no longer names
@@ -161,15 +193,20 @@ function consentGranted(cwd, env = process.env, now = new Date()) {
   if (log.damaged || !log.intervals.some((interval) => interval.to === null)) return false;
   const realpath = commonDirRealpath(cwd, env);
   if (realpath === null) return false;
-  const decision = decideConsent({ key: readConsent(cwd, env), log, realpath });
+  const decision = decideConsent({
+    key: readConsent(cwd, env),
+    log,
+    realpath,
+    identity: identityOf(realpath),
+  });
   for (const token of decision.close) appendRecord(file, { token, close: now.toISOString() });
   return decision.granted;
 }
 
 module.exports = {
-  consentOf,
   consentGranted,
   decideConsent,
+  identityFromStat,
   parseConsentLog,
   readConsent,
   refusedByEnvironment,

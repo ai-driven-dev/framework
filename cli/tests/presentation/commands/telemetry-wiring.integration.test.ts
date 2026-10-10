@@ -81,6 +81,7 @@ const NOT_STORED = {
   "outside-repo": 0,
   "never-seen-alive": 0,
   "no-consent": 0,
+  "consent-closed": 0,
   "unreadable-consent": 0,
   "no-cwd": 0,
   undated: 0,

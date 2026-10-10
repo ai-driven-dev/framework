@@ -28,8 +28,13 @@ export type ConsentReading =
   | { readonly kind: "unreadable" };
 
 /** A clone's consent read from its own git config, by where the clone lives rather than by a
- * working tree of it: `gone` when the clone itself no longer exists. */
-export type CloneConsentReading = ConsentReading | { readonly kind: "gone" };
+ * working tree of it. `absent`: nothing is at the clone's path now, which says nothing of
+ * whether the clone is coming back (a share not mounted, a folder moved away and back).
+ * `replaced`: another directory is at the path, so the clone is not there and never will be. */
+export type CloneConsentReading =
+  | ConsentReading
+  | { readonly kind: "absent" }
+  | { readonly kind: "replaced" };
 
 /** What a clone's key says. Only `2:` and a token is a grant, and even that is only the key's
  * word: the interval it names, in the consent log, is what measures. Nothing committed to the

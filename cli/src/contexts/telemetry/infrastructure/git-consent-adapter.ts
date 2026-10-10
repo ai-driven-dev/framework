@@ -33,10 +33,11 @@ export class GitConsentAdapter implements ConsentSource, ConsentWriter {
 
   async readClone(clone: CloneIdentity): Promise<CloneConsentReading> {
     const now = await this.identify(clone.path);
-    // A directory the platform can no longer identify is not known to be this clone, nor known
-    // not to be: it grants nothing, and it is not called gone.
+    // A directory the platform can no longer identify, or cannot look at, is not known to be
+    // this clone, nor known not to be: it grants nothing, and it is not called gone.
     if (now === "unidentified") return { kind: "unreadable" };
-    if (now === null || !sameClone(clone, now)) return { kind: "gone" };
+    if (now === null) return { kind: "absent" };
+    if (!sameClone(clone, now)) return { kind: "replaced" };
     const file = join(clone.path, "config");
     return readingOf(
       runGit(this.env, clone.path, ["config", "--file", file, "--get", CONSENT_KEY])

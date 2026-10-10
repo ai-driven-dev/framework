@@ -232,6 +232,21 @@ describe("aidd telemetry on", () => {
     expect(s.events).toEqual([]);
   });
 
+  it("refuses a repository git cannot read, as an unreadable git config, without touching anything", async () => {
+    const s = setup();
+    s.locator.directories.set("/w/broken", { status: "unreadable" });
+    expect(await s.on.execute("/w/broken")).toEqual({
+      status: "refused",
+      reason: "unreadable-git-config",
+    });
+    expect(await s.off.execute("/w/broken")).toEqual({
+      status: "refused",
+      reason: "unreadable-git-config",
+    });
+    expect(s.events).toEqual([]);
+    expect(s.writes).toEqual([]);
+  });
+
   it("refuses a git config it cannot read without touching anything", async () => {
     const s = setup();
     s.consents.unreadable.add("/w/repo");
