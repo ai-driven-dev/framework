@@ -1,67 +1,66 @@
-# Review: #914 phase 4
+# Review: #914 phase 5
 
 - **Verdict**: approve
-- **Reviewed implementation diff**: `84fef0fd...b9084f1b`
-- **Prior amended phase 4 commit**: `19c81c4f` (superseded when the two later evidence commits were folded into the phase 4 delivery)
-- **Runtime evidence addendum**: `evidence/phase-4/attempt-04-outside-sandbox/` was recorded after this implementation review and is included in the amended delivery; it does not change the reviewed code diff or verdict.
+- **Diff**: `d83d3fc2...working-tree` (phase 5 assertion/evidence updates only)
 - **Axes run**: code, functional, relevancy
 - **Date**: 2026_10_10
 - **Findings**: 0 critical, 0 warning, 0 minor
 
 ## Phases
 
-### Phase 1
+### Phase 1 — Reconnaissance et mémoire partagée
 
-- [ ] Les six signaux proposent Kilo ; fichiers OpenCode seuls et AGENTS.md seul ne le proposent pas. => not-applicable : phase 1 hors diff autorisé, statut et preuves antérieurs conservés ou pending.
-- [ ] Kilo + outils partageant AGENTS.md donnent un seul bloc ; contenu utilisateur et fichiers non sélectionnés identiques. => not-applicable : phase 1 hors diff autorisé, statut et preuves antérieurs conservés ou pending.
-- [ ] Deux synchronisations identiques ne réécrivent rien ; un marqueur invalide dans la dernière cible nommée laisse toutes les cibles et README inchangés. => not-applicable : phase 1 hors diff autorisé, statut et preuves antérieurs conservés ou pending.
-- [ ] CLAUDE.md conserve @imports, Copilot conserve ses liens relatifs ; Kilo charge AGENTS.md et lit une référence mémoire nécessaire à la tâche. => not-applicable : phase 1 hors diff autorisé, statut et preuves antérieurs conservés ou pending.
+- [ ] Les six signaux proposent Kilo ; fichiers OpenCode seuls et AGENTS.md seul ne le proposent pas. => not-applicable: hors diff phase 5.
+- [ ] Kilo + outils partageant AGENTS.md donnent un seul bloc ; contenu utilisateur et fichiers non sélectionnés identiques. => not-applicable: hors diff phase 5.
+- [ ] Deux synchronisations identiques ne réécrivent rien ; un marqueur invalide dans la dernière cible nommée laisse toutes les cibles et README inchangés. => not-applicable: hors diff phase 5.
+- [ ] CLAUDE.md conserve @imports, Copilot conserve ses liens relatifs ; Kilo charge AGENTS.md et lit une référence mémoire nécessaire à la tâche. => not-applicable: hors diff phase 5.
 
-### Phase 2
+### Phase 2 — Publication des règles et configuration sans perte
 
-- [ ] Règle canonique Kilo et chemin instructions exact existent ; Kilo charge le corps ; dossier seul ne suffit pas. => not-applicable : phase 2 hors diff autorisé, statut et preuves antérieurs conservés ou pending.
-- [ ] Aucun choix implicite en ambiguïté ; propriétaire unique réutilisé, annulation ne crée aucun fichier. => not-applicable : phase 2 hors diff autorisé, statut et preuves antérieurs conservés ou pending.
-- [ ] JSON/JSONC gardent doublons, ordre, commentaires, trailing commas et format hors insertion ; second passage byte-identique. => not-applicable : phase 2 hors diff autorisé, statut et preuves antérieurs conservés ou pending.
-- [ ] Configuration invalide ou cible dangereuse, y compris dernier fichier d’un fan-out, ne laisse aucun changement ; erreurs de publication testées ne laissent ni règle orpheline ni référence cassée. => not-applicable : phase 2 hors diff autorisé, statut et preuves antérieurs conservés ou pending.
-- [ ] Les publications Claude/Cursor/Copilot et partagées Codex/OpenCode du writer retenu gardent leurs contrats et les blocs de mémoire. => not-applicable : phase 2 hors diff autorisé, statut et preuves antérieurs conservés ou pending.
+- [ ] Règle canonique Kilo et chemin instructions exact existent ; Kilo charge le corps ; dossier seul ne suffit pas. => not-applicable: phase 2 pending.
+- [ ] Aucun choix implicite en ambiguïté ; propriétaire unique réutilisé, annulation ne crée aucun fichier. => not-applicable: phase 2 pending.
+- [ ] JSON/JSONC gardent doublons, ordre, commentaires, trailing commas et format hors insertion ; second passage byte-identique. => not-applicable: phase 2 pending.
+- [ ] Configuration invalide ou cible dangereuse, y compris dernier fichier d’un fan-out, ne laisse aucun changement ; erreurs de publication testées ne laissent ni règle orpheline ni référence cassée. => not-applicable: phase 2 pending.
+- [ ] Les publications Claude/Cursor/Copilot et partagées Codex/OpenCode du writer retenu gardent leurs contrats et les blocs de mémoire. => not-applicable: phase 2 pending.
 
-### Phase 3
+### Phase 3 — Skills natifs ou portables choisis
 
-- [x] Kilo-only produit uniquement .kilo/skills/name avec name/description valides. => plugins/aidd-context/skills/04-skill-generate/references/tool-write.md:13; scripts/__tests__/fixtures/context-generation/skills/native
-- [x] Portable sans accord explicite ne produit jamais .agents/skills ; accord portable produit exactement une copie. => evidence/phase-3/caller-receipt.json:1; evidence/phase-3/caller-refusals.json:1; scripts/__tests__/fixtures/context-generation/skills/portable
-- [x] Mise à jour préserve user assets ; conflit/refus laisse tous les arbres inchangés ; rerun identique. => evidence/phase-3/caller-modify-rerun.json:1; evidence/phase-3/caller-refusals.json:1
-- [x] Les formats et champs des sorties Claude/Codex/OpenCode restent conformes ; Kilo découvre et utilise le skill livré. => scripts/__tests__/context-skill-artifacts.test.js:1; evidence/phase-3/kilo-native-exact.jsonl:2; evidence/phase-3/kilo-portable.jsonl:2
+- [ ] Kilo-only produit uniquement .kilo/skills/name avec name/description valides. => not-applicable: hors diff phase 5.
+- [ ] Portable sans accord explicite ne produit jamais .agents/skills ; accord portable produit exactement une copie. => not-applicable: hors diff phase 5.
+- [ ] Mise à jour préserve user assets ; conflit/refus laisse tous les arbres inchangés ; rerun identique. => not-applicable: hors diff phase 5.
+- [ ] Les formats et champs des sorties Claude/Codex/OpenCode restent conformes ; Kilo découvre et utilise le skill livré. => not-applicable: hors diff phase 5.
 
-### Phase 4
+### Phase 4 — Agents et workflows natifs
 
-- [x] Nom agent Kilo vient du fichier ; frontmatter ne reçoit pas name Claude ; mode subagent et options demandées corrects. => scripts/__tests__/context-agent-command-artifacts.test.js:12; phase-4-runtime.md:9
-- [x] Workflow Kilo au chemin canonique ; uniquement champs officiellement supportés. => scripts/__tests__/context-agent-command-artifacts.test.js:21; phase-4-runtime.md:10
-- [x] Formats Claude/Codex/OpenCode acceptés et bodies intacts, cibles unsupported sautées explicitement. => plugins/aidd-context/skills/06-agent-generate/references/tool-paths.md:9; plugins/aidd-context/skills/07-command-generate/references/tool-paths.md:9
-- [x] Invalides ou collisions refusés sans écrire une autre cible ; relance identique ; Kilo charge et utilise agent et workflow. => plugins/aidd-context/skills/06-agent-generate/actions/02-write-agent.md:15; plugins/aidd-context/skills/07-command-generate/actions/02-write-command.md:15; evidence/phase-4/attempt-04-outside-sandbox/workflow-run.redacted.jsonl: workflow and subagent completed, payload read and exact result (see phase-4-runtime.md).
+- [ ] Nom agent Kilo vient du fichier ; frontmatter ne reçoit pas name Claude ; mode subagent et options demandées corrects. => not-applicable: hors diff phase 5.
+- [ ] Workflow Kilo au chemin canonique ; uniquement champs officiellement supportés. => not-applicable: hors diff phase 5.
+- [ ] Formats Claude/Codex/OpenCode acceptés et bodies intacts, cibles unsupported sautées explicitement. => not-applicable: hors diff phase 5.
+- [ ] Invalides ou collisions refusés sans écrire une autre cible ; relance identique ; Kilo charge et utilise agent et workflow. => not-applicable: hors diff phase 5.
 
-### Phase 5
+### Phase 5 — Guidance hooks et relances sûres
 
-- [ ] Kilo-only renvoie guidance sourcée précise et aucune écriture. => not-applicable : phase 5 hors diff autorisé, statut et preuves antérieurs conservés ou pending.
-- [ ] Événement non prouvé déclaré unsupported, aucune correspondance inventée. => not-applicable : phase 5 hors diff autorisé, statut et preuves antérieurs conservés ou pending.
-- [ ] Fan-out mixte conserve les contrats des outils supportés et n’ajoute pas de config hooks Kilo. => not-applicable : phase 5 hors diff autorisé, statut et preuves antérieurs conservés ou pending.
-- [ ] Deux passages identiques ne dupliquent pas l’entrée AIDD ; hooks utilisateur intacts ; une entrée invalide bloque avant script/config. => not-applicable : phase 5 hors diff autorisé, statut et preuves antérieurs conservés ou pending.
+- [x] Kilo-only renvoie guidance sourcée précise et aucune écriture. => plugins/aidd-context/skills/08-hook-generate/actions/01-capture-hook.md:32; evidence/phase-5/caller-receipt.json.
+- [x] Événement non prouvé déclaré unsupported, aucune correspondance inventée. => plugins/aidd-context/skills/08-hook-generate/references/tool-paths.md:18; evidence/phase-5/caller-receipt.json.
+- [x] Fan-out mixte conserve les contrats des outils supportés et n’ajoute pas de config hooks Kilo. => plugins/aidd-context/skills/08-hook-generate/actions/02-write-hook.md:15; scripts/__tests__/context-hook-generation.test.js:36; evidence/phase-5/source-contract-mutations.log.
+- [x] Deux passages identiques ne dupliquent pas l’entrée AIDD ; hooks utilisateur intacts ; une entrée invalide bloque avant script/config. => evidence/phase-5/rerun-decision.txt; scripts/__tests__/context-hook-generation.test.js:29-35; evidence/phase-5/source-contract-mutations.log; evidence/phase-5/source-contract-final-sweep.log.
 
-### Phase 6
+### Phase 6 — Preuves de génération et runtime sur plateformes supportées
 
-- [ ] Traces démontrent que les skills livrés ont généré les sorties testées et que le vrai Kilo les découvre/utilise. => not-applicable : phase 6 hors diff autorisé, statut et preuves antérieurs conservés ou pending.
-- [ ] Contrôles négatifs détectent artefact absent/non relié ; second passage et refus laissent les états attendus. => not-applicable : phase 6 hors diff autorisé, statut et preuves antérieurs conservés ou pending.
-- [ ] Tous tests offline Claude et régressions automatisées des cibles passent ; aucun runtime Claude authentifié prétendu. => not-applicable : phase 6 hors diff autorisé, statut et preuves antérieurs conservés ou pending.
-- [ ] Rapport décrit OS/versions, cas skipped/blocked et limites ; AC15 ne passe que sur la couverture runtime prévue réellement exécutée. => not-applicable : phase 6 hors diff autorisé, statut et preuves antérieurs conservés ou pending.
+- [ ] Traces démontrent que les skills livrés ont généré les sorties testées et que le vrai Kilo les découvre/utilise. => not-applicable: phase 6 pending.
+- [ ] Contrôles négatifs détectent artefact absent/non relié ; second passage et refus laissent les états attendus. => not-applicable: phase 6 pending.
+- [ ] Tous tests offline Claude et régressions automatisées des cibles passent ; aucun runtime Claude authentifié prétendu. => not-applicable: phase 6 pending.
+- [ ] Rapport décrit OS/versions, cas skipped/blocked et limites ; AC15 ne passe que sur la couverture runtime prévue réellement exécutée. => not-applicable: phase 6 pending.
 
 ## Findings
 
-None.
+No open findings. The initial mutation probes showed that two broad assertions could survive a path or preflight regression. The test-only guards now target the Kilo recommendation sentence and the Preflight clause directly; the final 7/7 mutation run killed every targeted mutant and restored all mutated contracts byte-for-byte. See evidence/phase-5/source-contract-mutations-iteration-1.log and evidence/phase-5/source-contract-mutations.log.
 
 ## Verification
 
 | Metric | Value |
 | --- | --- |
-| Verified | 100% (4/4 critères phase 4 applicables) |
-| Files checked | Contrats agents/commandes, actions, README, fixture, corpus ciblé, runtime, plan et matrice |
-| Unchecked | Phases 1, 2, 3, 5, 6 : not-applicable au diff phase 4 |
+| Verified | 100% (4/4 critères d’acceptation phase 5; assertions source validées par mutations 7/7) |
+| Files checked | Contrats hooks, actions, assertions, fixtures, corpus skill-eval, preuves, stratégie de test, plan |
+| Unchecked | Phases 1, 2, 3, 4, 6: not-applicable au diff phase 5 |
 | Unplanned | none |
+| Runtime limits | Suite CLI complète non relancée après les deux tests Persona ciblés réussis; harness Claude authentifié non exécuté; aucun plugin Kilo généré ni runtime de plugin revendiqué. Consolidation des régressions CLI/runtime reste en phase 6 selon la stratégie. |

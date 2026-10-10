@@ -1,0 +1,9 @@
+{
+  "hooks": {
+    "SessionStart": [
+      { "hooks": [{ "type": "command", "command": "/project/hooks/user.sh" }] },
+      { "hooks": [{ "type": "command", "command": "/project/hooks/user.sh" }] },
+      { "hooks": [{ "type": "command", "command": "/project/hooks/aidd.sh" }] }
+    ]
+  }
+}

@@ -1,0 +1,45 @@
+{
+  "actor": "current Codex caller validation of authored contract fixtures",
+  "outputs": [
+    {
+      "file": ".claude/settings.json",
+      "event": "SessionStart",
+      "userEntries": 2,
+      "aiddEntries": 1,
+      "sha256": "86d19ec9fec1df39a7ff03ca894bb897e48a80614a9f88edd1006b745d1b04c0",
+      "mtimeMs": 1791646989588.2957
+    },
+    {
+      "file": ".codex/hooks.json",
+      "event": "SessionStart",
+      "userEntries": 2,
+      "aiddEntries": 1,
+      "sha256": "86d19ec9fec1df39a7ff03ca894bb897e48a80614a9f88edd1006b745d1b04c0",
+      "mtimeMs": 1791646989800.2925
+    },
+    {
+      "file": ".cursor/hooks.json",
+      "event": "sessionStart",
+      "userEntries": 2,
+      "aiddEntries": 1,
+      "sha256": "42d50e9d01a1fd24e460b351560475870c38af8736381cdf5560774d254c3843",
+      "mtimeMs": 1791646990016.2896
+    },
+    {
+      "file": ".github/hooks/aidd.json",
+      "event": "SessionStart",
+      "userEntries": 2,
+      "aiddEntries": 1,
+      "sha256": "972c789a11e4c5c3218d296bfa38a02db4608334f58159891e0e7e39d7ebfd93",
+      "mtimeMs": 1791646990212.2866
+    }
+  ],
+  "kiloConfigWritten": false,
+  "userBody": true,
+  "secondPassDecision": "skip exact existing AIDD entries; no write",
+  "invalidLastTarget": {
+    "valueType": "string",
+    "validEventList": false,
+    "earlierClaudeFileExists": false
+  }
+}

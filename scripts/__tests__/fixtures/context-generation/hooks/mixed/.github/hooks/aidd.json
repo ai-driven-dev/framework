@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "hooks": {
+    "SessionStart": [
+      { "type": "command", "command": "/project/hooks/user.sh" },
+      { "type": "command", "command": "/project/hooks/user.sh" },
+      { "type": "command", "command": "/project/hooks/aidd.sh" }
+    ]
+  }
+}

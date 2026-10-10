@@ -1,6 +1,6 @@
 # Hook authoring
 
-The contract every generated hook must satisfy. A hook is a handler wired to a lifecycle moment, a config entry that runs a script when that moment occurs.
+The contract every generated declarative hook must satisfy. Kilo uses plugin guidance from [tool-paths.md](tool-paths.md), not this script-and-entry model.
 
 ## Rules
 
@@ -14,7 +14,7 @@ The contract every generated hook must satisfy. A hook is a handler wired to a l
 
 ## Lifecycle moments
 
-The agnostic moments a hook can target. Each tool names these differently and supports a different subset. `references/tool-paths.md` maps the commonly supported moments to each tool's event name; a moment absent from that table has no dedicated cross-tool event, so fold it into the nearest supported moment.
+The agnostic moments a hook can target. Each tool names these differently and supports a different subset. `references/tool-paths.md` maps the commonly supported moments to each declarative tool's event name. For those tools only, consider a nearest documented supported moment when the exact moment is absent, with user agreement. Kilo has an explicit exception: never fold a missing event into another event or claim a translation without source evidence.
 
 | Moment              | Fires when                                          |
 | ------------------- | --------------------------------------------------- |

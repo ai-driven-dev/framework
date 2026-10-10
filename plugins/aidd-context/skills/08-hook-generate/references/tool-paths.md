@@ -1,6 +1,6 @@
 # Tool paths (hooks)
 
-Per-tool hook support, event names, file formats, and scopes. Hook slice only: nothing about skills, rules, agents, commands, plugins, or marketplaces.
+Per-tool hook support, event names, file formats, and scopes. This reference covers the Kilo plugin boundary only for hook guidance; it does not generate plugins.
 
 ## Per-tool support
 
@@ -11,8 +11,11 @@ Per-tool hook support, event names, file formats, and scopes. Hook slice only: n
 | Cursor         | yes       | JSON config + script.                                           |
 | GitHub Copilot | yes       | JSON config + script. Also reads Claude's `.claude/` config.    |
 | OpenCode       | no        | Hooks are JS/TS plugin modules, not config. Skip with the reason below. |
+| Kilo           | guidance  | JS/TS plugin module; no declarative config or generated script.       |
 
 **OpenCode skip reason.** OpenCode hooks are code, not a config entry plus a script. Point the user to write a plugin under `.opencode/plugins/` (project) or `~/.config/opencode/plugins/` (user), per `https://opencode.ai/docs/plugins`. This skill does not generate it.
+
+**Kilo guidance.** Kilo documents JavaScript or TypeScript modules under `.kilo/plugin/` in a project. Issue #914 also names `.kilo/plugins/`, but the current [official plugin documentation](https://kilo.ai/docs/automate/extending/plugins) does not establish that plural path; mention it only with this limit and recommend the documented singular path. The API exposes typed hooks and an `event` bus. For `session start`, `session.created` is documented; the existing AIDD bridge in `cli/src/contexts/tools/domain/profiles/kilo/kilo-hooks-bridge.ts` may be cited only for the events it actually maps. For any other requested moment, check the official plugin events and typed hooks and the bridge before naming an equivalent. If the equivalent is unproved, state `unsupported: no documented Kilo event for this requested moment; no fallback mapping`, and ask for a different moment or a separately scoped plugin implementation. Do not fold into another event. Do not create `.kilo/hooks.json`, Claude `hooks.json`, a shell script, or a generic plugin for Kilo. Source: [Kilo plugins](https://kilo.ai/docs/automate/extending/plugins). Issue contract verified on 2026-09-25; source rechecked on 2026-10-10.
 
 ## Lifecycle moment to event name
 
@@ -29,7 +32,7 @@ Each tool names the same moment differently and supports a different subset. Cor
 | turn stop          | `Stop`             | `Stop`          | `stop`               | `Stop`             |
 | session end        | `SessionEnd`       | `SessionEnd`    | `sessionEnd`         | `SessionEnd`       |
 
-Each tool exposes more moments than these. For the full list, read the tool's docs: Claude `https://code.claude.com/docs/en/hooks`, Codex `https://developers.openai.com/codex/hooks`, Cursor `https://cursor.com/docs/hooks`, Copilot `https://docs.github.com/en/copilot/reference/hooks-configuration`. Confirm a moment exists before wiring it. Copilot also accepts the camelCase names (`sessionStart`, `preToolUse`).
+Each tool exposes more moments than these. For the full list, read the tool's docs: Claude `https://code.claude.com/docs/en/hooks`, Codex `https://developers.openai.com/codex/hooks`, Cursor `https://cursor.com/docs/hooks`, Copilot `https://docs.github.com/en/copilot/reference/hooks-configuration`. Confirm a moment exists before wiring it. Copilot also accepts the camelCase names (`sessionStart`, `preToolUse`). The table does not define Kilo equivalents; Kilo guidance follows its own documented plugin API.
 
 ## File and format per tool
 
@@ -76,6 +79,7 @@ Written as `${VAR}` inside a command: `CLAUDE_PROJECT_DIR` (project root), `CLAU
 
 - **Host project.** Merge the entry into the resolved scope's file for each confirmed supported tool. The script goes in a `hooks/` dir beside the config by default, or another dir the user names, referenced by absolute path or an approved `${VAR}`.
 - **Plugin source.** Merge into `plugins/<plugin>/hooks/hooks.json` (the bare hooks object), with the script under `plugins/<plugin>/hooks/scripts/`.
+- **Kilo.** No write target. Return the guidance above for the requested moment, even in a mixed fan-out.
 
 ## Safety checks
 

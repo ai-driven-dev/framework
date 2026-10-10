@@ -1,0 +1,8 @@
+Initial mutation probe, before assertion tightening.
+
+Guarded command: node scripts/check-tests-leave-git-alone.js --watch .git/hooks -- node --test --test-isolation=none scripts/__tests__/context-hook-generation.test.js
+Wrapper note: automatic git hooks-path discovery is unavailable in this sandbox; --watch .git/hooks preserves the same read-only guard.
+
+Mutation: changed only the recommended path in the Kilo guidance sentence from `.kilo/plugin/` to `.kilo/plugin-mutant/`.
+Observed result: the focused test exited 0, so this mutant survived the original broad regex `/\\.kilo\\/plugin\\/.*\\.kilo\\/plugins\\//u`; another plural-path reference satisfied it.
+Correction: assertion now matches the documented Kilo recommendation sentence itself. The rerun is recorded in source-contract-mutations.log.

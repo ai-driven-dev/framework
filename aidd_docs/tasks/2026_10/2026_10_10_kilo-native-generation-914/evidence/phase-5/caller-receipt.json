@@ -1,0 +1,37 @@
+{
+  "date": "2026-10-10",
+  "actor": "current Codex caller",
+  "source": "plugins/aidd-context/skills/08-hook-generate/",
+  "input": "synthetic confirmed choices for validation; no claim of user answers",
+  "cases": [
+    {
+      "name": "kilo-only-session-start",
+      "signal": "kilo.json",
+      "moment": "session start",
+      "result": "Guidance: Kilo documents JS/TS modules in .kilo/plugin/ and session.created. Issue #914 also names .kilo/plugins/, but the current docs do not establish that plural path. No Kilo files written. Source: https://kilo.ai/docs/automate/extending/plugins; issue contract 2026-09-25, source rechecked 2026-10-10.",
+      "writes": []
+    },
+    {
+      "name": "kilo-only-unproved-moment",
+      "signal": "kilo.json",
+      "moment": "planning-to-editing transition",
+      "result": "unsupported: no documented Kilo event for this requested moment; no fallback mapping",
+      "writes": []
+    },
+    {
+      "name": "mixed-session-start",
+      "targets": ["Kilo", "Claude Code", "Codex CLI", "Cursor", "GitHub Copilot"],
+      "scope": "project shared",
+      "fixture": "scripts/__tests__/fixtures/context-generation/hooks/mixed/",
+      "result": "Kilo guidance separate; declarative outputs contain one exact AIDD entry and preserve two identical user entries each",
+      "kiloWrites": []
+    },
+    {
+      "name": "mixed-invalid-last-target",
+      "targets": ["Kilo", "Claude Code", "GitHub Copilot"],
+      "fixture": "scripts/__tests__/fixtures/context-generation/hooks/invalid/",
+      "result": "Copilot SessionStart must be an array; preflight refuses before Claude script or config creation",
+      "writes": []
+    }
+  ]
+}
