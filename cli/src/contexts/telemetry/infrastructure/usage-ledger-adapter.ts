@@ -47,16 +47,19 @@ export class UsageLedgerAdapter implements UsageLedger {
   async load(): Promise<LoadedLedger> {
     const found: StoredUsage[] = [];
     let skippedLines = 0;
+    const damagedMonths = new Set<string>();
     for (const name of await this.partitions()) {
       const text = (await readTextIfPresent(join(this.dir, name))) ?? "";
       for (const line of text.split("\n")) {
         if (line === "") continue;
         const record = parseStoredUsage(line);
-        if (record === null) skippedLines += 1;
-        else found.push(record);
+        if (record === null) {
+          skippedLines += 1;
+          damagedMonths.add(name.slice(0, -".jsonl".length));
+        } else found.push(record);
       }
     }
-    return { records: foldUsage(found), skippedLines };
+    return { records: foldUsage(found), skippedLines, damagedMonths };
   }
 
   async save(records: readonly StoredUsage[], only?: ReadonlySet<string>): Promise<void> {

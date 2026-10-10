@@ -92,9 +92,15 @@ export class InMemoryLedger implements UsageLedger {
 
   async load(): Promise<LoadedLedger> {
     this.events.push("load");
-    return { records: foldUsage(this.records), skippedLines: 0 };
+    return {
+      records: foldUsage(this.records),
+      skippedLines: this.damaged.size,
+      damagedMonths: new Set(this.damaged),
+    };
   }
 
+  /** Months whose partition holds a line that is not a record. */
+  damaged = new Set<string>();
   savedMonths: ReadonlySet<string> | undefined;
 
   async save(records: readonly StoredUsage[], months?: ReadonlySet<string>): Promise<void> {
@@ -188,8 +194,11 @@ export class FakeBindings implements BranchBindingSource {
   bindingsByRoot = new Map<string, BranchConfigBinding[]>();
   creation = new Map<string, string | null>();
   reflogReads = 0;
+  /** Pass one array to several fakes to see the order they were used in. */
+  constructor(readonly events: string[] = []) {}
 
   async bindings(root: string): Promise<readonly BranchConfigBinding[]> {
+    this.events.push("read-config");
     return this.bindingsByRoot.get(root) ?? [];
   }
 

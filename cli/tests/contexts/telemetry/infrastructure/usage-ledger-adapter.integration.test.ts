@@ -46,7 +46,11 @@ const partitions = async (): Promise<string[]> =>
 
 describe("the ledger on disk", () => {
   it("holds nothing before anything is saved", async () => {
-    expect(await ledger.load()).toEqual({ records: [], skippedLines: 0 });
+    expect(await ledger.load()).toEqual({
+      records: [],
+      skippedLines: 0,
+      damagedMonths: new Set(),
+    });
   });
 
   it("round-trips what is saved", async () => {
@@ -138,7 +142,11 @@ describe("the ledger on disk", () => {
     await writeFile(join(dir, "x2026-10.jsonl"), "garbage\n");
     await writeFile(join(dir, "2026-10.jsonl.bak"), "garbage\n");
     await writeFile(join(dir, "26-10.jsonl"), "garbage\n");
-    expect(await ledger.load()).toEqual({ records: [], skippedLines: 0 });
+    expect(await ledger.load()).toEqual({
+      records: [],
+      skippedLines: 0,
+      damagedMonths: new Set(),
+    });
     await ledger.save([stored()]);
     expect((await ledger.positions()).size).toBe(1);
     expect((await readdir(dir)).sort()).toEqual([
@@ -174,9 +182,19 @@ describe("the ledger on disk", () => {
     await writeFile(path, `${await readFile(path, "utf8")}{torn\n\n`);
     const loaded = await ledger.load();
     expect(loaded.skippedLines).toBe(1);
+    expect([...loaded.damagedMonths]).toEqual(["2026-10"]);
     expect(loaded.records).toHaveLength(1);
     await ledger.save([...loaded.records, stored({ key: "b" })]);
     expect(await readFile(path, "utf8")).not.toContain("torn");
+  });
+
+  it("names only the months that hold a line that is not a record", async () => {
+    await ledger.save([stored(), stored({ key: "n", at: "2026-11-02T00:00:00Z" })]);
+    await writeFile(join(dir, "2026-10.jsonl"), "{torn\n");
+    const loaded = await ledger.load();
+    expect([...loaded.damagedMonths]).toEqual(["2026-10"]);
+    await ledger.save(loaded.records, loaded.damagedMonths);
+    expect((await ledger.load()).skippedLines).toBe(0);
   });
 
   it.skipIf(process.platform === "win32")(

@@ -109,7 +109,11 @@ export class IngestUsageUseCase {
       const merged = upsertUsage(held.records, toStore);
       added = merged.added;
       updated = merged.updated;
-      if (added + updated > 0) await this.ledger.save(merged.records, merged.months);
+      // A month that holds a line that is not a record is rewritten with the rest, so the line
+      // is dropped once and the report stops warning of it.
+      if (added + updated > 0 || held.damagedMonths.size > 0) {
+        await this.ledger.save(merged.records, new Set([...merged.months, ...held.damagedMonths]));
+      }
     }
     await resolver.close();
 

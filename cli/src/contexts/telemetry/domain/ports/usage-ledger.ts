@@ -6,6 +6,8 @@ export interface LoadedLedger {
   readonly records: readonly StoredUsage[];
   /** Lines that were not records and are gone once the ledger is saved. */
   readonly skippedLines: number;
+  /** The months whose partition held one: saving them repairs them. */
+  readonly damagedMonths: ReadonlySet<string>;
 }
 
 /** The ledger of billed calls, and where each transcript was read up to. */

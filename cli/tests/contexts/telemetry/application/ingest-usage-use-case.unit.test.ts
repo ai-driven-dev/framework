@@ -112,6 +112,26 @@ describe("ingesting usage into the ledger", () => {
     expect([...(s.ledger.savedMonths ?? [])]).toEqual(["2026-10"]);
   });
 
+  it("also rewrites a month that holds a line that is not a record, whatever the call that came", async () => {
+    const s = setup();
+    s.ledger.damaged.add("2026-08");
+    s.transcripts.files.set("/t/1.jsonl", [line("A", 10)]);
+    await s.ingest.execute();
+    expect([...(s.ledger.savedMonths ?? [])].sort()).toEqual(["2026-08", "2026-10"]);
+  });
+
+  it("repairs a damaged month even when every call it read was already held", async () => {
+    const s = setup();
+    s.transcripts.files.set("/t/1.jsonl", [line("A", 10)]);
+    await s.ingest.execute();
+    s.ledger.damaged.add("2026-10");
+    s.ledger.events.length = 0;
+    s.ledger.stored = new Map();
+    const again = await s.ingest.execute();
+    expect(again).toMatchObject({ added: 0, updated: 0 });
+    expect(s.ledger.events).toContain("save");
+  });
+
   it("changes nothing when the same transcripts are ingested again", async () => {
     const s = setup();
     s.transcripts.files.set("/t/1.jsonl", [line("A", 10)]);
