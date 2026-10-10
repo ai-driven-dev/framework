@@ -56,14 +56,18 @@ describe("reading what a directory is", () => {
     expect(await readCloneIdentity(`${base}/x\0y`)).toBe("unidentified");
   });
 
-  it("is unidentified where the directory cannot be looked at", async () => {
-    const shut = join(base, "shut");
-    await mkdir(join(shut, "d"), { recursive: true });
-    await chmod(shut, 0o000);
-    try {
-      expect(await readCloneIdentity(join(shut, "d"))).toBe("unidentified");
-    } finally {
-      await chmod(shut, 0o755);
+  // `chmod` cannot shut a directory on Windows.
+  it.skipIf(process.platform === "win32")(
+    "is unidentified where the directory cannot be looked at",
+    async () => {
+      const shut = join(base, "shut");
+      await mkdir(join(shut, "d"), { recursive: true });
+      await chmod(shut, 0o000);
+      try {
+        expect(await readCloneIdentity(join(shut, "d"))).toBe("unidentified");
+      } finally {
+        await chmod(shut, 0o755);
+      }
     }
-  });
+  );
 });

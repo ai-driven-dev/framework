@@ -113,7 +113,8 @@ describe("opting in to a repository the previous version measured", () => {
 
     const hook = join(hooksDir(), "prepare-commit-msg");
     expect(read(hook)).toBe('#!/bin/sh\n# mine\r\n  echo "a"  \necho end');
-    expect(statSync(hook).mode & 0o111).not.toBe(0);
+    // Windows has no execute bit to keep.
+    if (process.platform !== "win32") expect(statSync(hook).mode & 0o111).not.toBe(0);
     expect(existsSync(join(hooksDir(), DELEGATE_FILE))).toBe(false);
     expect(commit("after")).not.toContain("AIDD-Session-Id");
   });

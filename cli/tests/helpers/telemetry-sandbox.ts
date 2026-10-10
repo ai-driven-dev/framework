@@ -19,7 +19,7 @@ export interface TelemetrySandbox {
 }
 
 export function assertUnderTemporaryDirectory(paths: readonly string[]): void {
-  const base = realpathSync(tmpdir());
+  const base = realpathSync.native(tmpdir());
   for (const path of paths) {
     const inside = relative(base, path);
     if (
@@ -34,7 +34,7 @@ export function assertUnderTemporaryDirectory(paths: readonly string[]): void {
 }
 
 export function createTelemetrySandbox(): TelemetrySandbox {
-  const root = realpathSync(mkdtempSync(join(tmpdir(), "aidd-telemetry-sandbox-")));
+  const root = realpathSync.native(mkdtempSync(join(tmpdir(), "aidd-telemetry-sandbox-")));
   const home = join(root, "home");
   const telemetry = join(root, "telemetry-dir");
   const claude = join(root, "claude-config");

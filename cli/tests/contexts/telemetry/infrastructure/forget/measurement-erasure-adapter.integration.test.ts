@@ -57,12 +57,12 @@ describe("what measurement keeps", () => {
     write(identity);
     const found = await erasure().inventory();
     expect(found.map((e) => [e.kind, e.path.replace(root, "")])).toEqual([
-      ["bindings", "/telemetry/bindings"],
-      ["identity", "/telemetry/identity.json"],
-      ["previous-day-file", "/previous-sink/2026-10-05.jsonl"],
-      ["previous-day-file", "/previous-sink/2026-10-06.jsonl"],
-      ["previous-identity", "/previous-identity.json"],
-      ["ledger", "/telemetry/ledger"],
+      ["bindings", join("/", "telemetry", "bindings")],
+      ["identity", join("/", "telemetry", "identity.json")],
+      ["previous-day-file", join("/", "previous-sink", "2026-10-05.jsonl")],
+      ["previous-day-file", join("/", "previous-sink", "2026-10-06.jsonl")],
+      ["previous-identity", join("/", "previous-identity.json")],
+      ["ledger", join("/", "telemetry", "ledger")],
     ]);
   });
 

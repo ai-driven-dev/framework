@@ -15,7 +15,8 @@ import { runGit } from "../run-git.js";
 
 const HOOK = "prepare-commit-msg";
 const LEFTHOOK_FILES = ["lefthook.yml", "lefthook.yaml", ".lefthook.yml", ".lefthook.yaml"];
-const HUSKY_HOOK = join(".husky", HOOK);
+/** Named as the repository names it, with `/` on every platform; `join` resolves it to a path. */
+const HUSKY_HOOK = `.husky/${HOOK}`;
 
 export class LegacyHookAdapter implements LegacyHookCleaner {
   /** `env` carries none of git's own variables, which would point it at another repository. */

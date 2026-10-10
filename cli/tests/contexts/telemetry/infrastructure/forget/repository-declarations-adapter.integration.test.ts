@@ -121,7 +121,8 @@ describe("the declarations in a repository's git config", () => {
   });
 });
 
-describe("a git that refuses to remove a key", () => {
+// The stand-in git is a shell script on a `:`-separated PATH.
+describe.skipIf(process.platform === "win32")("a git that refuses to remove a key", () => {
   /** A `git` on the path that answers a removal with the given status and anything else as git. */
   function gitAnswering(status: number): NodeJS.ProcessEnv {
     const real = execFileSync("which", ["git"], { encoding: "utf8" }).trim();

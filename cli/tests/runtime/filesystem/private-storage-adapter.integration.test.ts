@@ -1,6 +1,6 @@
 import { chmod, mkdir, mkdtemp, readdir, readFile, rm, stat, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { join, toNamespacedPath } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
   PrivateStorageAdapter,
@@ -64,7 +64,8 @@ describe("a private directory on Windows", () => {
     expect(calls).toEqual([
       {
         command: "icacls",
-        args: [join(dir, "a"), "/inheritance:r", "/grant:r", "someone:(OI)(CI)F"],
+        // On Windows, mkdir names what it created in the `\\?\` namespace.
+        args: [toNamespacedPath(join(dir, "a")), "/inheritance:r", "/grant:r", "someone:(OI)(CI)F"],
       },
     ]);
   });
@@ -83,7 +84,7 @@ describe("a private directory on Windows", () => {
     const { calls, storage: onWindows } = windows(env);
     const target = join(dir, "ledger");
     await expect(onWindows.ensureDirectory(target)).rejects.toThrow(
-      `Failed to restrict ${target} to its owner: USERNAME is not set, so no account can be granted access`
+      `Failed to restrict ${toNamespacedPath(target)} to its owner: USERNAME is not set, so no account can be granted access`
     );
     expect(calls).toEqual([]);
   });
@@ -92,7 +93,7 @@ describe("a private directory on Windows", () => {
     const { storage: onWindows } = windows({ USERNAME: "someone" }, new Error("access denied"));
     const target = join(dir, "ledger");
     await expect(onWindows.ensureDirectory(target)).rejects.toThrow(
-      `Failed to restrict ${target} to its owner: access denied`
+      `Failed to restrict ${toNamespacedPath(target)} to its owner: access denied`
     );
   });
 
@@ -106,7 +107,7 @@ describe("a private directory on Windows", () => {
     };
     const target = join(dir, "ledger");
     await expect(new PrivateStorageAdapter(host).ensureDirectory(target)).rejects.toThrow(
-      `Failed to restrict ${target} to its owner: exit 5`
+      `Failed to restrict ${toNamespacedPath(target)} to its owner: exit 5`
     );
   });
 

@@ -184,6 +184,8 @@ interface Row {
   readonly scenario: string;
   readonly expected: readonly string[];
   readonly run: (world: World) => Promise<void>;
+  /** Locks a directory with `chmod`, which Windows ignores. */
+  readonly posixOnly?: true;
 }
 
 const ROWS: readonly Row[] = [
@@ -603,6 +605,7 @@ const ROWS: readonly Row[] = [
     scenario:
       "an opted-in clone whose git dir cannot be stat'ed: its own calls are counted unreadable, another clone is still stored, nothing aborts",
     expected: ["b1"],
+    posixOnly: true,
     run: async (w) => {
       const a = w.repository("locked/a", SHARED);
       const b = w.repository("b", OTHER);
@@ -853,8 +856,13 @@ afterEach(() => {
 });
 
 describe("who is measured, row by row", () => {
-  it.each(ROWS)("row $n: $scenario", async (row) => {
+  const check = async (row: Row): Promise<void> => {
     await row.run(new World(box));
     expect(new World(box).stored()).toEqual([...row.expected]);
-  });
+  };
+  it.each(ROWS.filter((row) => row.posixOnly !== true))("row $n: $scenario", check);
+  it.skipIf(process.platform === "win32").each(ROWS.filter((row) => row.posixOnly === true))(
+    "row $n: $scenario",
+    check
+  );
 });

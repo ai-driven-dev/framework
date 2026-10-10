@@ -60,6 +60,8 @@ export class ClaudeTranscriptSourceAdapter implements TranscriptSource {
     }
     try {
       const stats = await handle.stat();
+      // Windows opens a directory and reports it empty: never read one as a transcript.
+      if (!stats.isFile()) throw new Error(`${path} is not a file`);
       const now = { size: stats.size, identity: identityOf(stats) };
       const { offset, restarted } = resumeOffset(since, now);
       const bytes = Buffer.alloc(Math.max(0, now.size - offset));
