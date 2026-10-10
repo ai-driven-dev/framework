@@ -1,6 +1,6 @@
 ---
 objective: "Every billed Claude Code call is counted once, stored locally, and broken down by person, session, model, period, repository, task and ticket, the task coming only from a declaration, with the previous telemetry gone."
-status: pending
+status: implemented
 ---
 
 <!-- Fill or omit these sections; never add, rename, or reorder one. -->
