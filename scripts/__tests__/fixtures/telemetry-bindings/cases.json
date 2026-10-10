@@ -1185,37 +1185,50 @@
       "dev": "16777231",
       "ino": "100",
       "birthtimeMs": "1760000000000",
-      "ctimeMs": "1760000099999"
+      "birthtimeNs": "1760000000000000000",
+      "ctimeNs": "1760000099999000000"
     },
     "linux-no-birth-is-zero": {
       "dev": "2049",
       "ino": "524301",
       "birthtimeMs": "0",
-      "ctimeMs": "1760000099999"
+      "birthtimeNs": "0",
+      "ctimeNs": "1760000099999000000"
     },
     "linux-birth-equal-to-change-time-is-no-birth": {
       "dev": "2049",
       "ino": "524301",
       "birthtimeMs": "1760000099999",
-      "ctimeMs": "1760000099999"
+      "birthtimeNs": "1760000099999000000",
+      "ctimeNs": "1760000099999000000"
+    },
+    "linux-birth-in-the-change-time-millisecond-is-a-birth": {
+      "dev": "2049",
+      "ino": "524301",
+      "birthtimeMs": "1760000099999",
+      "birthtimeNs": "1760000099999100000",
+      "ctimeNs": "1760000099999900000"
     },
     "a-negative-birth-is-no-birth": {
       "dev": "2049",
       "ino": "524301",
       "birthtimeMs": "-1",
-      "ctimeMs": "1760000099999"
+      "birthtimeNs": "-1000000",
+      "ctimeNs": "1760000099999000000"
     },
     "a-file-index-a-number-cannot-hold-is-kept-exactly": {
       "dev": "3735928559",
       "ino": "9007199254740993",
       "birthtimeMs": "1760000000000",
-      "ctimeMs": "1760000099999"
+      "birthtimeNs": "1760000000000000000",
+      "ctimeNs": "1760000099999000000"
     },
     "no-inode-is-no-identity": {
       "dev": "16777231",
       "ino": "0",
       "birthtimeMs": "1760000000000",
-      "ctimeMs": "1760000099999"
+      "birthtimeNs": "1760000000000000000",
+      "ctimeNs": "1760000099999000000"
     }
   }
 }

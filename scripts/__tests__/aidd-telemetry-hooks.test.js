@@ -266,7 +266,7 @@ test("a clone consents, and what the hook closes, follow the fixture", () => {
 
 test("a directory's identity follows the fixture, the same as the CLI reads it", () => {
   for (const [name, c] of Object.entries(cases.cloneIdentity)) {
-    const stats = { dev: BigInt(c.dev), ino: BigInt(c.ino), birthtimeMs: BigInt(c.birthtimeMs), ctimeMs: BigInt(c.ctimeMs) };
+    const stats = { dev: BigInt(c.dev), ino: BigInt(c.ino), birthtimeMs: BigInt(c.birthtimeMs), birthtimeNs: BigInt(c.birthtimeNs), ctimeNs: BigInt(c.ctimeNs) };
     assert.deepEqual(identityFromStat(stats), expected.cloneIdentity[name], name);
   }
 });

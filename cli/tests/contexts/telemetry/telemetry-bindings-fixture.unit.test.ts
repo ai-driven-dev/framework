@@ -66,7 +66,8 @@ interface StatCase {
   dev: string;
   ino: string;
   birthtimeMs: string;
-  ctimeMs: string;
+  birthtimeNs: string;
+  ctimeNs: string;
 }
 interface DirCase {
   platform: "posix" | "win32";
@@ -200,7 +201,8 @@ describe("the shared fixture of task bindings", () => {
         dev: BigInt(stat.dev),
         ino: BigInt(stat.ino),
         birthtimeMs: BigInt(stat.birthtimeMs),
-        ctimeMs: BigInt(stat.ctimeMs),
+        birthtimeNs: BigInt(stat.birthtimeNs),
+        ctimeNs: BigInt(stat.ctimeNs),
       });
       const { path: _path, ...parts } = found ?? { path: "" };
       expect(found === null ? null : parts).toEqual(expected.cloneIdentity?.[name]);

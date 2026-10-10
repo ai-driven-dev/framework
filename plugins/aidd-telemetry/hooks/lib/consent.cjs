@@ -57,11 +57,11 @@ function parseClone(value) {
 /** The identity of a directory from `fs.statSync(path, { bigint: true })`, normalised exactly as
  * the CLI's `clone-identity.ts` does, and pinned by the shared fixture (`cloneIdentity` cases):
  * the inode and device as text, so a Windows file index is not rounded; a birth time that is
- * missing, or equal to the change time (what Linux gives when the file system keeps none), as
- * `0`; null when there is no inode. */
+ * missing, or equal to the change time to the nanosecond (what Linux gives when the file system
+ * keeps none), as `0`; null when there is no inode. */
 function identityFromStat(stat) {
   if (stat.ino === 0n) return null;
-  const born = stat.birthtimeMs <= 0n || stat.birthtimeMs === stat.ctimeMs ? 0n : stat.birthtimeMs;
+  const born = stat.birthtimeMs <= 0n || stat.birthtimeNs === stat.ctimeNs ? 0n : stat.birthtimeMs;
   return { dev: String(stat.dev), ino: String(stat.ino), birthtimeMs: Number(born) };
 }
 

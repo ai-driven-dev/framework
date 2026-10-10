@@ -15,7 +15,10 @@ import { asPlainObject } from "../../../../kernel/reading/plain-object.js";
  *   falls back to `stat` and sets the birth time to the change time, which moves whenever an
  *   entry is added to the directory and so is not a birth at all. Node's documentation says as
  *   much: `birthtime` "may instead hold either the `ctime` or `1970-01-01T00:00Z`". A birth equal
- *   to the change time is therefore taken as no birth: `0`.
+ *   to the change time to the nanosecond is therefore taken as no birth: `0`. The comparison is
+ *   in nanoseconds because a real birth and the change time often fall in one millisecond: on
+ *   ext4, 1 git common dir in 80 freshly cloned or copied had both in the same millisecond, and
+ *   none had them equal to the nanosecond, so a millisecond comparison would drop a real birth.
  * - Windows (NTFS): `dev` is the volume serial number, `ino` the 64-bit file index
  *   (`IndexNumber`), which a JavaScript number cannot hold exactly, so the stat is asked in
  *   `bigint` and the index kept as text. `birthtimeMs` is the creation time.
@@ -37,13 +40,14 @@ export interface StatFacts {
   readonly dev: bigint;
   readonly ino: bigint;
   readonly birthtimeMs: bigint;
-  readonly ctimeMs: bigint;
+  readonly birthtimeNs: bigint;
+  readonly ctimeNs: bigint;
 }
 
 /** The identity of the directory at `path`, `null` when the platform gives it none. */
 export function identityFromStat(path: string, stat: StatFacts): CloneIdentity | null {
   if (stat.ino === 0n) return null;
-  const born = stat.birthtimeMs <= 0n || stat.birthtimeMs === stat.ctimeMs ? 0n : stat.birthtimeMs;
+  const born = stat.birthtimeMs <= 0n || stat.birthtimeNs === stat.ctimeNs ? 0n : stat.birthtimeMs;
   return { path, dev: String(stat.dev), ino: String(stat.ino), birthtimeMs: Number(born) };
 }
 

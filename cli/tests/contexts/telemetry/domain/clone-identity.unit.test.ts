@@ -12,7 +12,8 @@ const STAT: StatFacts = {
   dev: 16n,
   ino: 12345n,
   birthtimeMs: 1_700_000_000_000n,
-  ctimeMs: 1_700_000_500_000n,
+  birthtimeNs: 1_700_000_000_000_000_000n,
+  ctimeNs: 1_700_000_500_000_000_000n,
 };
 const CLONE: CloneIdentity = {
   path: "/a/.git",
@@ -38,15 +39,32 @@ describe("the identity of a clone from what stat reports", () => {
   it.each([
     ["no birth time at all", 0n],
     ["a birth time before the epoch", -5n],
-    [
-      "a birth time that is the change time, which moves with every entry added",
-      1_700_000_500_000n,
-    ],
   ])("has a birth time of 0 for %s, the inode and device being the identity", (_name, birth) => {
     expect(identityFromStat("/a/.git", { ...STAT, birthtimeMs: birth })).toEqual({
       ...CLONE,
       birthtimeMs: 0,
     });
+  });
+
+  it("has a birth time of 0 when it is the change time to the nanosecond, which moves with every entry added", () => {
+    expect(
+      identityFromStat("/a/.git", {
+        ...STAT,
+        birthtimeMs: 1_700_000_500_000n,
+        birthtimeNs: 1_700_000_500_000_000_000n,
+      })
+    ).toEqual({ ...CLONE, birthtimeMs: 0 });
+  });
+
+  it("keeps a birth in the change time's millisecond, a nanosecond apart from it", () => {
+    expect(
+      identityFromStat("/a/.git", {
+        ...STAT,
+        birthtimeMs: 1_700_000_500_000n,
+        birthtimeNs: 1_700_000_500_000_000_000n,
+        ctimeNs: 1_700_000_500_000_000_001n,
+      })
+    ).toEqual({ ...CLONE, birthtimeMs: 1_700_000_500_000 });
   });
 });
 
