@@ -65,12 +65,12 @@ src/
 │   │   │   │   ├── identity/
 │   │   │   │   └── switch/
 │   │   │   ├── report/    # attribution of a call, the days of a report, the axes it splits by
-│   │   │   └── switch/    # the previous version's config block, the remembered consent, Claude's retention
+│   │   │   └── switch/    # the previous version's config block, Claude's retention
 │   │   └── infrastructure/
 │   │       ├── declaration/    # where a declaration is kept: git config and the telemetry dir
 │   │       ├── forget/    # erasing the telemetry dir, the previous version's files, git config keys
 │   │       ├── identity/    # the identity file in the telemetry dir
-│   │       └── switch/    # the clone's consent in git config, the project config, what an earlier measurement left in a repository, and Claude settings
+│   │       └── switch/    # the project config, what an earlier measurement left in a repository, and Claude settings; the clone's consent in git config is `git-consent-adapter.ts`, beside this folder
 │   └── translate/    # canonical source to target-native content
 │       ├── application/
 │       │   └── strategies/

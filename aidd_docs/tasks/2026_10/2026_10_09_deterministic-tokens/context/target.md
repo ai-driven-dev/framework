@@ -18,7 +18,8 @@ tokens per task and ticket. Push to Gouvernail. Ship fast and clean.
    line (subagents run in their own worktrees).
 2. **Root and repository at ingest.** realpath + case-fold → `git rev-parse` → root;
    repository id = hash of `host/owner/repo` from `origin`, else the root commit SHA.
-   cwd gone (16 % of lines on backfill) → `root-unresolved`, not `outside-repo`.
+   cwd gone (16 % of lines on backfill) → judged by the clone it was last seen in, else
+   counted as `never-seen-alive`, not `outside-repo`.
    Project switch off or `AIDD_TELEMETRY=0` → not ingested at all.
 3. **Ledger** in its own subdirectory of the telemetry dir (the v1 sink prunes `*.jsonl`
    by count there), relocated by `AIDD_TELEMETRY_DIR`; monthly partitions; newline guard;
@@ -31,7 +32,7 @@ tokens per task and ticket. Push to Gouvernail. Ship fast and clean.
 5. **Binding: asked once per working branch, remembered, all inside the plugin.**
    - Store: `git config branch.<name>.aiddTask` (+ ticket, created-at from reflog). Follows
      renames, dies with the branch. The branch name is never parsed.
-   - Session override: `aidd task start` run inside a session (`CLAUDE_CODE_SESSION_ID`,
+   - Session override: `aidd telemetry task` run inside a session (`CLAUDE_CODE_SESSION_ID`,
      Codex `CODEX_THREAD_ID`) binds that session; it beats the branch. Measured: a `!`
      command sees `CLAUDE_CODE_SESSION_ID` and `ATTENDED=1`, and does not fire
      `UserPromptSubmit`, so answering the block is never itself blocked. `/clear` starts a
@@ -45,13 +46,13 @@ tokens per task and ticket. Push to Gouvernail. Ship fast and clean.
      `usage-contract.md`).
    - A carried binding is provisional: it is announced (`systemMessage`, measured visible:
      "SessionStart:clear says: …") with the command to change it, and the first explicit
-     `aidd task start` in that session replaces it for the whole session, retroactively.
+     `aidd telemetry task` in that session replaces it for the whole session, retroactively.
      An explicit binding in a session that already had one applies from its timestamp.
      The prompt is never read to guess the need.
    - When to ask (pure code, `UserPromptSubmit`, every prompt, cheap): telemetry on for the
      project AND `CLAUDE_CODE_SESSION_ATTENDED=1` AND branch is neither the default
      (`origin/HEAD`) nor detached AND neither branch nor session is bound → block, reason
-     shown to the human: `! aidd task start <task> [--ticket X]` or `--none`. Re-checked
+     shown to the human: `! aidd telemetry task <task> [--ticket X]` or `--none`. Re-checked
      each prompt, so switching to an unbound branch asks again. Blocking before the model
      call means no token is spent unattributed.
    - Unattended (`ATTENDED=0` with `ENTRYPOINT=sdk-cli` under `-p`, measured;
@@ -64,7 +65,7 @@ tokens per task and ticket. Push to Gouvernail. Ship fast and clean.
 6. **Attribution** (one pure local function, decided: the command is the only source):
    session declaration, else the session's carry, else the branch declaration in force at the
    call, else
-   `unattributed` with reason `outside-repo | root-unresolved | no-binding | declared-none`.
+   `unattributed` with reason `no-binding | declared-none`.
 7. **Report axes**: person (v1 opt-in `person_id`), session, model, day, repository, task,
    ticket. Four counters always separate.
 8. **Push**: opted-in records, attributed locally; no cwd, root, or branch names. Upsert by

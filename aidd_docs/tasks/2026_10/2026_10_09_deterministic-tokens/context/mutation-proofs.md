@@ -54,7 +54,7 @@ and the file was restored byte for byte.
 | --- | --- | --- | --- |
 | Claude-only guard | claude-only fixture cases, Codex and Copilot payloads, Codex rollout under `projects/` | session-id equality, `projects` check or rollout rejection removed | yes |
 | Presence | presence matrix | `ATTENDED=1` or `sdk*` rule dropped; absent entrypoint accepted | yes |
-| Consent | consent fixture, `AIDD_TELEMETRY` | version, env refusal or worktree fallback dropped | yes |
+| ~~Consent~~ | ~~consent fixture, `AIDD_TELEMETRY`~~ | ~~version, env refusal or worktree fallback dropped~~ | superseded: this row described the deleted file-based consent (`.aidd/config.json`, a version). Consent is the clone's git config now: see Fix round 1 phase 6 and phase 8 |
 | Default and detached pass | branch-role fixture | forced `working` | yes |
 | Answer-path check | aidd absent, no `telemetry task` | `canAnswer` always true | yes |
 | Strict intercept | 22-prompt injection test | forbidden-character, unknown-option or word-only check removed | yes |
@@ -85,8 +85,8 @@ and the file was restored byte for byte.
 | Foreign hook content byte for byte | "keeps a hook's other content byte for byte, and its mode" | lines trimmed on rejoin | yes |
 | Forget preview changes nothing | "previews and changes nothing on disk, not a byte nor an mtime" | `!confirmed` to `confirmed === undefined` | yes |
 | Offsets reset on `on` | "is stored once opting in, though ingest had read past it" | `resetPositions()` removed | yes |
-| `on` writes version 2; `off` keeps version | switch tests | `version` dropped; spread dropped | yes |
-| Remembered roots re-resolved | "is stored for a directory that is gone, whose refusal was remembered" | `resolutions.save` removed | yes |
+| ~~`on` writes version 2; `off` keeps version~~ | ~~switch tests~~ | ~~`version` dropped; spread dropped~~ | superseded: the file-based switch is deleted. `on` writes `aidd.telemetry=2` and `off` writes `off` in git config: see Fix round 1 phase 8 |
+| ~~Remembered roots re-resolved~~ | ~~"is stored for a directory that is gone, whose refusal was remembered"~~ | ~~`resolutions.save` removed~~ | superseded by fix round 2: `on` rewrites no remembered refusal, a deleted directory is judged by its clone |
 
 ## Phase 9, skills and journey (`2486849d`, `e6b04615`)
 
@@ -109,15 +109,15 @@ Phase 8 rows were later revised by the consent move (fix round 1): consent is gi
 | A snapshot reads and appends under the bindings lock | `snapshot-bindings-use-case.unit.test.ts`, `bindings-lock-adapter.integration.test.ts` "leaves one snapshot when ... at once", `declare-task-use-case.unit.test.ts` | `append` called without `lock.exclusively` | 3 red: the snapshot lock order, the concurrent-snapshot test (3 writers, more than 1 snapshot), the declare order |
 | A declaration's session line is appended under the bindings lock | `declare-task-use-case.unit.test.ts` (event order, default-branch order) | `sessions.append` outside the lock | 2 red, those tests |
 | A declaration never waits on the ledger lock | `telemetry-task.e2e.test.ts` "declares at once while an ingest holds the ledger lock" | not mutated: before the fix the test timed out at 5 s (declaration blocked, 60 s lock wait); the declare use case no longer receives the ledger | red on the pre-fix binary, green after |
-| `on` lifts a remembered refusal by repository, a deleted linked worktree included | `resolution-consent.unit.test.ts`, `telemetry-switch-use-cases.unit.test.ts` "linked worktree deleted before the opt-in" | `ofRepository = false` | 2 red |
-| `on` passes the repository id | same use-case test | `repositoryIdOf(located)` replaced by `null` | 1 red |
-| A declaration is read at the call's time within a branch generation, the first one covering from creation | `attribution.unit.test.ts` three new "redeclaration" tests | `generationAt` returns `generation.at(-1)` (latest snapshot) | 3 red |
+| ~~`on` lifts a remembered refusal by repository, a deleted linked worktree included~~ | ~~`resolution-consent.unit.test.ts`, `telemetry-switch-use-cases.unit.test.ts`~~ | ~~`ofRepository = false`~~ | superseded by fix round 2: the lifting by `repository_id` leaked consent across clones and is deleted |
+| ~~`on` passes the repository id~~ | ~~same use-case test~~ | ~~`repositoryIdOf(located)` replaced by `null`~~ | superseded by fix round 2, with the lifting |
+| A declaration is read at the call's time within a branch generation, the first one covering from creation | `attribution.unit.test.ts` three new "redeclaration" tests | `generationAt` returns `generation.at(-1)` (latest snapshot) | 5 red (recorded 3 before; re-run in fix round 2 over `tests/contexts/telemetry`: the three new redeclaration tests, "speaks with the latest snapshot of one declaration…" and "lets a snapshot with no declaration time cover from the creation…") |
 
 ## Fix round 1, phase 6 (hooks)
 
 | Rule | Test | Mutation | Result |
 | --- | --- | --- | --- |
-| A prompt that only starts like a declaration, or holds shell syntax, goes to the ordinary gate and spawns nothing | `aidd-telemetry-hooks.test.js` "injection" and "only starts like a declaration" | an intercepted prompt that does not parse blocks "not understood" again | 2 red |
+| A prompt that only starts like a declaration, or holds shell syntax, goes to the ordinary gate and spawns nothing | `aidd-telemetry-hooks.test.js` "injection" and "only starts like a declaration" | an intercepted prompt that does not parse blocks "not understood" again | 2 red (since narrowed by fix round 2: only a prompt that attempts a declaration is told so) |
 | The `cmd.exe /s` line has an outer pair of quotes | same file, "cmd.exe /s command line" | `cmdLine` returns `"shim" args` | 1 red |
 | The hook's home is the OS home, as the CLI's | same file, "the telemetry directory's home" | `home ?? set(env.HOME) ?? os.homedir()` | 1 red |
 | A committed `.aidd/config.json` is not consent | same file, "a committed .aidd/config.json is not consent" | the hook also accepts a committed `telemetry.version === 2` | 1 red |
@@ -136,6 +136,31 @@ Phase 8 rows were later revised by the consent move (fix round 1): consent is gi
 | `on` ends with the next step | `telemetry-lifecycle-display.unit.test.ts` | "Next:" line reworded | 1 red (after the test was tightened: the first version of the test survived this mutation) |
 | The unknown-counter message says what happens to the call | the two display tests | message back to "not recognised and not counted" | 2 red |
 
+Rows before fix round 1 record "yes" and no count: they were not counted then, and are not re-run here. Only the row corrected above was re-run.
+
 Not mutated: removing `outside-repo` and `root-unresolved` from the unattributed reasons (a
 type-level change: the exhaustive `Record<Reason, string>` makes a reinstated reason fail the
 typecheck), and the documentation corrections.
+
+## Fix round 2
+
+Each mutation was applied by script to the file named, the named tests run, and the file restored
+(`git diff` empty for it afterwards). Counts are from `npx vitest run` over the named scope, or
+`node --test` for the hook file.
+
+| Rule | Test | Mutation | Result |
+| --- | --- | --- | --- |
+| `on` lifts nothing: a clone's consent never reaches another clone sharing the remote or the root commit | `telemetry-switch-use-cases.unit.test.ts` "keeps refusing a deleted clone of the same remote that never opted in" (b), "keeps refusing a clone of the same remote that ran off, deleted or not" (c), "keeps refusing a deleted copy with no remote that shares the root commit" (e), and "resets the offsets … rewrites no refusal" | `on` marks every remembered resolution of its `repository_id` consented again (the lifting reintroduced) | 4 red, those four (before the fix (b), (c) and (e) were red for the same reason: the lifting) |
+| A deleted directory is judged by its clone's git config read live; the remembered flag only once the clone is gone | `ingest-usage-use-case.unit.test.ts` "a directory that is gone is judged by the clone it belonged to", `telemetry-switch-use-cases.unit.test.ts` "stores a deleted linked worktree of the clone that opted in", "stops storing the deleted worktrees of a clone that runs off" | `fromMemory` always takes the clone as gone (remembered flag only) | 6 red |
+| `forget --yes` clears the consent of a clone only `on` recorded | `forget-telemetry-use-case.unit.test.ts` "clears the consent of a clone `on` remembered, though no session ever ran there", "clears a withdrawn consent too…", "counts a clone once…", "names a clone that is gone…", "lists clones and gone clones in order" | a recorded clone is added only when a snapshot exists | 5 red; the e2e `telemetry-lifecycle.e2e.test.ts` "leaves no consent behind in a clone where `on` ran and no session ever did" covers the built binary (run in `pnpm test`) |
+| A mistyped declaration is blocked with the grammar and the quoting hint, and runs nothing | `aidd-telemetry-hooks.test.js` "a declaration mistyped is blocked with the grammar and the quoting hint, and runs nothing" | `attemptsDeclaration` never consulted (always fall through) | 1 red, that test; the injection test and the "only starts like a declaration" test stay green |
+| Ingest rewrites a month that holds a line that is not a record | `ingest-usage-use-case.unit.test.ts` "also rewrites a month that holds a line that is not a record…", "repairs a damaged month even when every call it read was already held" | `damagedMonths` left out of the months saved | 2 red |
+| The branch config is read inside the bindings lock | `snapshot-bindings-use-case.unit.test.ts` "reads the branch config, the latest snapshots and appends … inside the bindings lock" | the config read once, before the lock, and passed in | 1 red |
+| Each lock names itself in its timeout message | `bindings-lock-adapter.integration.test.ts` "names itself, and its own file, when it times out" | the bindings adapter stops passing its name | 1 red |
+| The `total` axis shows its row once | `telemetry-report-display.unit.test.ts` "shows the whole once on the total axis, and a Total row under every other axis" | the `Total` row always added | 1 red |
+| The Codex trust notice no longer speaks of a run journal | `codex.unit.test.ts`, `plugin-add-mcp.unit.test.ts` | the old sentence restored | 3 red |
+| An unreadable consent is worded as the clone's git config | `telemetry-display.unit.test.ts` "words an unreadable consent as the clone's git config…" | the old `.aidd/config.json` wording restored | 1 red |
+
+Not mutated: the help wording (`aidd telemetry on`, `off`, `ingest`) is pinned by the help golden
+(`help-surface.e2e.test.ts`), which was red against the old source until the golden changed;
+`target.md`, `codebase-map.md`, `usage-contract.md` and the comment rewording are documentation.

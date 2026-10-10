@@ -34,10 +34,9 @@ const CURSOR_EVENT_MAP: Record<string, readonly string[]> = {
 };
 
 // Codex keeps Claude's event names but has no `Stop`: probed live, a `codex exec` run with all
-// four subscribed fired SessionStart and SessionEnd and never Stop, so a turn was never closed
-// and every Codex session journalled a session_start with nothing after it. SessionEnd bounds
-// the session rather than each turn, which the journal tolerates — one turn_end bounding the
-// whole session is the honest answer rather than none at all.
+// four subscribed fired SessionStart and SessionEnd and never Stop, so a hook subscribed to Stop
+// never ran. SessionEnd bounds the session rather than each turn: a hook that closes the whole
+// session is the honest answer rather than none at all.
 const CODEX_EVENT_MAP: Record<string, readonly string[]> = {
   Stop: ["SessionEnd"],
 };
