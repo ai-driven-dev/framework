@@ -43,7 +43,7 @@ describe("FilesystemTaskDocumentRepository", () => {
         type: "plan",
         status: "pending",
         progressStatus: "todo",
-        filePath: join(aiddDocsPath, "plan.md"),
+        filePath: join(DOCS_DIRECTORY_NAME, "plan.md"),
       },
     ]);
   });
@@ -172,5 +172,23 @@ describe("FilesystemTaskDocumentRepository", () => {
     const taskDocuments = await repository.findAll(projectPath);
 
     expect(taskDocuments).toEqual([]);
+  });
+
+  it("reports projectExists true only when the docs directory is present", async () => {
+    const repository = new FilesystemTaskDocumentRepository(DOCS_DIRECTORY_NAME);
+
+    expect(await repository.projectExists(projectPath)).toBe(false);
+
+    await mkdir(join(projectPath, DOCS_DIRECTORY_NAME), { recursive: true });
+
+    expect(await repository.projectExists(projectPath)).toBe(true);
+  });
+
+  it("reports projectExists false when the docs name points at a plain file", async () => {
+    const repository = new FilesystemTaskDocumentRepository(DOCS_DIRECTORY_NAME);
+
+    await writeFile(join(projectPath, DOCS_DIRECTORY_NAME), "not a directory");
+
+    expect(await repository.projectExists(projectPath)).toBe(false);
   });
 });
