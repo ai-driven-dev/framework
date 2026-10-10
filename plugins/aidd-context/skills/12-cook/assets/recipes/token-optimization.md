@@ -205,11 +205,30 @@ Ctrl+O — transcript expanded
 
 See the [keyboard shortcuts](https://code.claude.com/docs/en/interactive-mode).
 
-#### 14) 🧫 Offload high-volume work to subagents
+#### 14) 🎯 Route by difficulty
+
+The top model on routine work is wasted spend, so pin the model per skill or agent — cheap for routine, top-tier for hard reasoning.
+
+1. Set `model` in a skill's or an agent's frontmatter (`haiku` / `sonnet` / `opus`, a full id, or `inherit`).
+2. Give routine scouts a small model; reserve `opus` for the hard reasoning.
+
+```yaml
+# .claude/agents/explore.md — routine scouting on a cheap model
+---
+name: explore
+description: Read-only codebase scout
+tools: Read, Grep, Glob
+model: haiku
+---
+```
+
+A skill's `SKILL.md` takes the same `model:` field (e.g. `model: opus` for a heavy step). See [sub-agents](https://code.claude.com/docs/en/sub-agents) and [skills](https://code.claude.com/docs/en/skills).
+
+#### 15) 🧫 Offload high-volume work to subagents
 
 Test runs, log parsing, and wide exploration flood the main window. A subagent does it in its own context and hands back only a summary, so the bloat never lands in your session.
 
-1. Define an agent in `.claude/agents/<name>.md` with only the tools it needs.
+1. Define an agent in `.claude/agents/<name>.md` with only the tools it needs and a small `model`.
 2. Let it run the noisy op and return a short result.
 
 ```yaml
@@ -218,12 +237,13 @@ Test runs, log parsing, and wide exploration flood the main window. A subagent d
 name: test-runner
 description: Run the suite and return only the failures
 tools: Bash, Read
+model: haiku
 ---
 ```
 
 See [sub-agents](https://code.claude.com/docs/en/sub-agents).
 
-#### 15) 🧊 Protect your cache hits
+#### 16) 🧊 Protect your cache hits
 
 Cached input bills far cheaper, and cache reads are most of your tokens (step 4) — so don't throw the cache away mid-task. A model switch, an MCP connect or disconnect, or an effort change rebuilds it from scratch.
 
@@ -237,7 +257,7 @@ same model to a boundary → cache reads stay cheap
 
 See [prompt caching](https://code.claude.com/docs/en/prompt-caching).
 
-#### 16) ✅ Cap extended thinking
+#### 17) ✅ Cap extended thinking
 
 Extended reasoning can silently add thousands of tokens on tasks that don't need it.
 
