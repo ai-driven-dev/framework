@@ -231,3 +231,236 @@ test("a nested context file prefixes its links with the climb back out", () => {
     /^\[aidd_docs\/memory\/architecture\.md\]\(\.\.\/aidd_docs\/memory\/architecture\.md\)$/mu,
   );
 });
+
+/** Real files and subprocesses; explicit sync must validate the whole selected set first. */
+function inProject(files, check) {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "memory-preflight-"));
+  try {
+    for (const [relative, content] of Object.entries({
+      "aidd_docs/memory/architecture.md": "# Architecture\n\n- Runtime memory\n",
+      ...files,
+    })) {
+      const file = path.join(root, relative);
+      fs.mkdirSync(path.dirname(file), { recursive: true });
+      fs.writeFileSync(file, content);
+    }
+    const env = Object.fromEntries(Object.entries(process.env).filter(([name]) =>
+      !name.startsWith("GIT_") && name !== "CLAUDE_PROJECT_DIR"));
+    const invoke = (...args) => spawnSync(process.execPath, [HOOK, ...args], {
+      cwd: root, env, encoding: "utf8",
+    });
+    const read = (name) => fs.readFileSync(path.join(root, name), "utf8");
+    check({ root, invoke, read });
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+}
+
+const EMPTY_BLOCK = `${OPEN}\n${CLOSE}\n`;
+
+test("Kilo selected alone fills root AGENTS.md without changing other tools or legacy paths", () => {
+  inProject({
+    "AGENTS.md": `USER PREFIX\n${EMPTY_BLOCK}USER SUFFIX\n`,
+    "CLAUDE.md": EMPTY_BLOCK,
+    ".github/copilot-instructions.md": EMPTY_BLOCK,
+    ".kilocode/keep.md": "legacy user content\n",
+  }, ({ root, invoke, read }) => {
+    const result = invoke("kilo");
+    assert.equal(result.status, 0, result.stderr);
+    assert.equal(read("AGENTS.md"), `USER PREFIX\n${OPEN}\n\n[aidd_docs/memory/architecture.md](aidd_docs/memory/architecture.md)\n\n${CLOSE}\nUSER SUFFIX\n`);
+    assert.equal(read("CLAUDE.md"), EMPTY_BLOCK);
+    assert.equal(read(".github/copilot-instructions.md"), EMPTY_BLOCK);
+    assert.equal(read(".kilocode/keep.md"), "legacy user content\n");
+    assert.deepEqual(fs.readdirSync(path.join(root, ".kilocode")), ["keep.md"]);
+  });
+});
+
+test("shared Kilo/Codex/OpenCode/Cursor selection is stable without rewriting on a rerun", () => {
+  inProject({ "AGENTS.md": EMPTY_BLOCK }, ({ root, invoke, read }) => {
+    const args = ["kilo", "codex", "opencode", "cursor", "kilo"];
+    const result = invoke(...args);
+    assert.equal(result.status, 0, result.stderr);
+    const once = read("AGENTS.md");
+    const mtime = fs.statSync(path.join(root, "AGENTS.md"), { bigint: true }).mtimeNs;
+    assert.equal(invoke(...args).status, 0);
+    assert.equal(read("AGENTS.md"), once);
+    assert.equal(fs.statSync(path.join(root, "AGENTS.md"), { bigint: true }).mtimeNs, mtime);
+    assert.equal(once.split(OPEN).length - 1, 1);
+    assert.equal(once.split("[aidd_docs/memory/architecture.md]").length - 1, 1);
+  });
+});
+
+test("explicit sync validates a last malformed destination before writing earlier targets or README", () => {
+  const files = {
+    "CLAUDE.md": EMPTY_BLOCK,
+    "AGENTS.md": EMPTY_BLOCK,
+    ".github/copilot-instructions.md": `${OPEN}\n`,
+    "aidd_docs/memory/README.md": "# Memory\n<!-- files:start -->\n<!-- files:end -->\n",
+  };
+  inProject(files, ({ invoke, read }) => {
+    const result = invoke("claude", "codex", "copilot");
+    assert.equal(result.status, 1);
+    assert.match(result.stderr, /unpaired project memory marker/);
+    for (const [name, content] of Object.entries(files)) assert.equal(read(name), content, name);
+  });
+});
+
+for (const [name, invalid] of Object.entries({
+  duplicate: EMPTY_BLOCK + EMPTY_BLOCK,
+  nested: `${OPEN}\n${OPEN}\n${CLOSE}\n`,
+  reversed: `${CLOSE}\n${OPEN}\n`,
+  mixed: `<aidd_project_memory>\n${CLOSE}\n`,
+  separateFamilies: EMPTY_BLOCK + "<aidd_project_memory>\n</aidd_project_memory>\n",
+  extraClose: EMPTY_BLOCK + `${CLOSE}\n`,
+})) {
+  test(`explicit sync refuses ${name} memory markers without changing any selected file`, () => {
+    inProject({ "CLAUDE.md": EMPTY_BLOCK, "AGENTS.md": invalid }, ({ invoke, read }) => {
+      const result = invoke("claude", "codex");
+      assert.equal(result.status, 1, result.stderr);
+      assert.match(result.stderr, /memory marker/);
+      assert.equal(read("CLAUDE.md"), EMPTY_BLOCK);
+      assert.equal(read("AGENTS.md"), invalid);
+    });
+  });
+}
+
+test("preflight accepts absent/blockless context files but performs no Upsert or Fill", () => {
+  inProject({ "AGENTS.md": "# User\nNo block yet.\n" }, ({ root, invoke, read }) => {
+    const result = invoke("--check", "claude", "codex", "copilot");
+    assert.equal(result.status, 0, result.stderr);
+    assert.equal(read("AGENTS.md"), "# User\nNo block yet.\n");
+    assert.equal(fs.existsSync(path.join(root, "CLAUDE.md")), false);
+    assert.equal(fs.existsSync(path.join(root, ".github")), false);
+  });
+});
+
+test("preflight refuses malformed existing context before any missing target is created", () => {
+  inProject({ "AGENTS.md": `${OPEN}\n` }, ({ root, invoke, read }) => {
+    const result = invoke("--check", "claude", "codex");
+    assert.equal(result.status, 1);
+    assert.equal(fs.existsSync(path.join(root, "CLAUDE.md")), false);
+    assert.equal(read("AGENTS.md"), `${OPEN}\n`);
+  });
+});
+
+test("a malformed opted-in README prevents all explicit context writes", () => {
+  inProject({ "CLAUDE.md": EMPTY_BLOCK, "aidd_docs/memory/README.md": "<!-- files:start -->\n" }, ({ invoke, read }) => {
+    const result = invoke("claude");
+    assert.equal(result.status, 1, result.stderr);
+    assert.equal(read("CLAUDE.md"), EMPTY_BLOCK);
+    assert.equal(read("aidd_docs/memory/README.md"), "<!-- files:start -->\n");
+  });
+});
+
+test("explicit sync ignores marker examples in prose and fences", () => {
+  const examples = `Quoted \`${OPEN}\` only.\n\n\`\`\`\`markdown\n\`\`\`\n${CLOSE}\n\`\`\`\n\`\`\`\`\n`;
+  inProject({ "AGENTS.md": examples }, ({ invoke, read }) => {
+    const result = invoke("codex");
+    assert.equal(result.status, 0, result.stderr);
+    assert.equal(read("AGENTS.md"), examples);
+  });
+});
+
+for (const [name, content] of Object.entries({
+  quoted: `Quoted \`${OPEN}\` only.\n`,
+  fenced: `\`\`\`markdown\n${CLOSE}\n\`\`\`\n`,
+})) {
+  test(`explicit sync ignores a lone ${name} marker example`, () => {
+    inProject({ "AGENTS.md": content }, ({ invoke, read }) => {
+      const result = invoke("codex");
+      assert.equal(result.status, 0, result.stderr);
+      assert.equal(read("AGENTS.md"), content);
+    });
+  });
+}
+
+test("explicit fill preserves BOM, CRLF, marker indentation and user bytes without a final newline", () => {
+  const prefix = "\ufeff# User é\r\nKeep\n  ";
+  const suffix = `  ${CLOSE}\r\nUSER END`;
+  inProject({ "AGENTS.md": `${prefix}${OPEN}\r\nold\r\n${suffix}` }, ({ invoke, read }) => {
+    const result = invoke("codex");
+    assert.equal(result.status, 0, result.stderr);
+    assert.equal(read("AGENTS.md"), `${prefix}${OPEN}\r\n\r\n[aidd_docs/memory/architecture.md](aidd_docs/memory/architecture.md)\r\n\r\n${suffix}`);
+  });
+});
+
+for (const kind of ["target", "ancestor", "directory"]) {
+  test(`explicit sync refuses a ${kind} unsafe destination before writing a valid sibling`, () => {
+    inProject({ "CLAUDE.md": EMPTY_BLOCK, "outside.md": EMPTY_BLOCK }, ({ root, invoke, read }) => {
+      if (kind === "target") fs.symlinkSync(path.join(root, "outside.md"), path.join(root, "AGENTS.md"));
+      if (kind === "ancestor") {
+        fs.mkdirSync(path.join(root, "elsewhere"));
+        fs.writeFileSync(path.join(root, "elsewhere/copilot-instructions.md"), EMPTY_BLOCK);
+        fs.symlinkSync(path.join(root, "elsewhere"), path.join(root, ".github"), "dir");
+      }
+      if (kind === "directory") fs.mkdirSync(path.join(root, "AGENTS.md"));
+      const result = invoke("claude", kind === "ancestor" ? "copilot" : "codex");
+      assert.equal(result.status, 1, result.stderr);
+      assert.equal(read("CLAUDE.md"), EMPTY_BLOCK);
+      assert.equal(read("outside.md"), EMPTY_BLOCK);
+    });
+  });
+}
+
+test("an invalid unselected context cannot prevent a selected tool from filling", () => {
+  inProject({ "AGENTS.md": `${OPEN}\n`, "CLAUDE.md": EMPTY_BLOCK }, ({ invoke, read }) => {
+    const result = invoke("claude");
+    assert.equal(result.status, 0, result.stderr);
+    assert.match(read("CLAUDE.md"), /@aidd_docs\/memory\/architecture.md/);
+    assert.equal(read("AGENTS.md"), `${OPEN}\n`);
+  });
+});
+
+test("the automatic hook remains best-effort when a later context has an unpaired marker", () => {
+  inProject({ "CLAUDE.md": EMPTY_BLOCK, "AGENTS.md": `${OPEN}\n` }, ({ invoke, read }) => {
+    const result = invoke();
+    assert.equal(result.status, 0, result.stderr);
+    assert.match(read("CLAUDE.md"), /@aidd_docs\/memory\/architecture.md/);
+    assert.equal(read("AGENTS.md"), `${OPEN}\n`);
+  });
+});
+
+test("a read-only last destination fails preflight before any earlier write", () => {
+  inProject({ "CLAUDE.md": EMPTY_BLOCK, "AGENTS.md": EMPTY_BLOCK }, ({ root, invoke, read }) => {
+    fs.chmodSync(path.join(root, "AGENTS.md"), 0o444);
+    const result = invoke("claude", "codex");
+    assert.equal(result.status, 1, result.stderr);
+    assert.equal(read("CLAUDE.md"), EMPTY_BLOCK);
+    assert.equal(read("AGENTS.md"), EMPTY_BLOCK);
+  });
+});
+
+test("a blockless README symlink is not an opted-in destination", () => {
+  inProject({ "CLAUDE.md": EMPTY_BLOCK, "notes.md": "# User notes\n" }, ({ root, invoke, read }) => {
+    fs.symlinkSync(path.join(root, "notes.md"), path.join(root, "aidd_docs/memory/README.md"));
+    const result = invoke("claude");
+    assert.equal(result.status, 0, result.stderr);
+    assert.match(read("CLAUDE.md"), /@aidd_docs\/memory\/architecture\.md/);
+    assert.equal(read("notes.md"), "# User notes\n");
+  });
+});
+
+test("preflight refuses an unwritable creation parent without creating any context", () => {
+  inProject({ "AGENTS.md": "# User\n" }, ({ root, invoke, read }) => {
+    const parent = path.join(root, ".github");
+    fs.mkdirSync(parent);
+    fs.chmodSync(parent, 0o555);
+    try {
+      const result = invoke("--check", "claude", "copilot");
+      assert.equal(result.status, 1, result.stderr);
+      assert.equal(fs.existsSync(path.join(root, "CLAUDE.md")), false);
+      assert.equal(fs.existsSync(path.join(parent, "copilot-instructions.md")), false);
+      assert.equal(read("AGENTS.md"), "# User\n");
+    } finally { fs.chmodSync(parent, 0o755); }
+  });
+});
+
+test("an unsafe opted-in README refuses sync before any context write", () => {
+  inProject({ "CLAUDE.md": EMPTY_BLOCK, "notes.md": "<!-- files:start -->\n<!-- files:end -->\n" }, ({ root, invoke, read }) => {
+    fs.symlinkSync(path.join(root, "notes.md"), path.join(root, "aidd_docs/memory/README.md"));
+    const result = invoke("claude");
+    assert.equal(result.status, 1, result.stderr);
+    assert.equal(read("CLAUDE.md"), EMPTY_BLOCK);
+    assert.equal(read("notes.md"), "<!-- files:start -->\n<!-- files:end -->\n");
+  });
+});

@@ -318,5 +318,65 @@
         ]
       }
     }
+  },
+  {
+    "plugin": "aidd-context",
+    "skill": "02-project-memory",
+    "evalName": "xeval-memory",
+    "name": "Kilo-only sync shares root memory and preserves user content",
+    "setup": {
+      "files": {
+        "kilo.json": "{}\n",
+        "aidd_docs/memory/architecture.md": "# Architecture\n\n- Node\n",
+        "AGENTS.md": "# User context\n\nKEEP_USER_CONTEXT\n"
+      }
+    },
+    "prompt": "Use the {{SKILL}} skill to sync the existing memory. Select only Kilo; approve adding its memory block and keeping the existing user text. Do not refresh or regenerate the bank. Do not wait for input.",
+    "expect": {
+      "filesExist": [
+        "AGENTS.md"
+      ],
+      "fileContains": {
+        "AGENTS.md": [
+          "KEEP_USER_CONTEXT",
+          "<!-- aidd_project_memory:start -->",
+          "[aidd_docs/memory/architecture.md](aidd_docs/memory/architecture.md)"
+        ]
+      },
+      "filesUnchanged": [
+        "kilo.json",
+        "aidd_docs/memory/architecture.md"
+      ],
+      "filesAbsent": [
+        "CLAUDE.md",
+        ".github/copilot-instructions.md",
+        ".kilocode/AGENTS.md"
+      ]
+    }
+  },
+  {
+    "plugin": "aidd-context",
+    "skill": "02-project-memory",
+    "evalName": "xeval-memory",
+    "name": "sync preflight refuses before creating an earlier context",
+    "setup": {
+      "files": {
+        "kilo.json": "{}\n",
+        "aidd_docs/memory/architecture.md": "# Architecture\n\n- Node\n",
+        "AGENTS.md": "# User context\n<!-- aidd_project_memory:start -->\n"
+      }
+    },
+    "prompt": "Use the {{SKILL}} skill to sync the existing memory into Claude and Kilo. Both selections are approved. Do not repair malformed markers; refuse unsafe synchronization. Do not wait for input.",
+    "expect": {
+      "filesAbsent": [
+        "CLAUDE.md"
+      ],
+      "filesUnchanged": [
+        "AGENTS.md",
+        "kilo.json",
+        "aidd_docs/memory/architecture.md"
+      ],
+      "judge": "The sync stops at preflight, reports the malformed AGENTS.md block, and creates or changes no context file."
+    }
   }
 ]
