@@ -1,3 +1,7 @@
+---
+status: superseded
+---
+
 # A task folder says which backlog item it delivers, and a period breaks down by it
 
 ## Target

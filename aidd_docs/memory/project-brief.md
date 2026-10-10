@@ -26,7 +26,7 @@ What this project is, the problem it solves, and its domain language. The non-de
 | Memory | the bank under `aidd_docs/memory/`, loaded every session |
 | Marketplace | `.claude-plugin/marketplace.json`, the plugin registry |
 | Concern | what a plugin owns; decides where a capability lives |
-| Run journal | what a session did, appended by a hook under `aidd_docs/runs/` |
+| Usage record | one billed model call, counted once, attributed to the task a person declared |
 | Promote | sending `next` to `main`, which opens the release |
 
 ## Key features
@@ -43,4 +43,4 @@ What this project is, the problem it solves, and its domain language. The non-de
 | Acceptance QA evidence | `aidd-qa:01-acceptance-qa` |
 | Refine input and output | `aidd-refine` — brainstorm, challenge, blind spots |
 | End-to-end orchestration | `aidd-orchestrator:01-sdlc` |
-| Measure what a session cost | `aidd-telemetry`, opt-in, plus `aidd telemetry` |
+| Count what the work cost in tokens | `aidd telemetry`, `aidd-telemetry:00-init`, `aidd-telemetry:01-usage` |

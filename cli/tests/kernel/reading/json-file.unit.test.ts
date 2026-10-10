@@ -1,24 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { asPlainObjectOrEmpty, isErrnoException } from "../../../src/kernel/reading/json-file.js";
-
-describe("asPlainObjectOrEmpty", () => {
-  it("passes a plain object through unchanged", () => {
-    const value = { a: 1 };
-    expect(asPlainObjectOrEmpty(value)).toBe(value);
-  });
-
-  it("reads null as an empty object", () => {
-    expect(asPlainObjectOrEmpty(null)).toStrictEqual({});
-  });
-
-  it("reads an array as an empty object", () => {
-    expect(asPlainObjectOrEmpty([1])).toStrictEqual({});
-  });
-
-  it("reads a primitive as an empty object", () => {
-    expect(asPlainObjectOrEmpty("text")).toStrictEqual({});
-  });
-});
+import { isErrnoException, tryParseJson } from "../../../src/kernel/reading/json-file.js";
 
 describe("isErrnoException", () => {
   it("recognises an Error carrying a code", () => {
@@ -31,5 +12,20 @@ describe("isErrnoException", () => {
 
   it("refuses a plain object carrying a code", () => {
     expect(isErrnoException({ code: "ENOENT" })).toBe(false);
+  });
+});
+
+describe("tryParseJson", () => {
+  it("returns the parsed value", () => {
+    expect(tryParseJson('{"a":1}')).toEqual({ ok: true, value: { a: 1 } });
+  });
+
+  it("returns a parsed null as a value, not as a failure", () => {
+    expect(tryParseJson("null")).toEqual({ ok: true, value: null });
+  });
+
+  it("says so when the text is not JSON", () => {
+    expect(tryParseJson("{nope")).toEqual({ ok: false });
+    expect(tryParseJson("")).toEqual({ ok: false });
   });
 });

@@ -27,8 +27,7 @@ const PUBLIC_MODULES: Readonly<Record<string, readonly string[]>> = {
     "src/contexts/tools/domain/ports/native-marketplace-source-reader.ts",
     "src/contexts/tools/domain/ports/schema-validator.ts",
     "src/contexts/tools/domain/ports/host-plugin-registry-reader.ts",
-    // What a host's registry says about an installed plugin: telemetry's diagnostic and
-    // `doctor` both need the comparison.
+    // What a host's registry says about an installed plugin: `doctor` needs the comparison.
     "src/contexts/tools/domain/host-plugin-registration.ts",
     "src/contexts/tools/domain/ports/host-marketplace-registry-reader.ts",
     // Whether a name a host's registry holds points at a different source: the sync-time
@@ -48,37 +47,6 @@ const PUBLIC_MODULES: Readonly<Record<string, readonly string[]>> = {
     // The variable each tool expands to an installed plugin's directory: a tool declares it,
     // translate substitutes it, the diagnostic looks for it in what was installed.
     "src/contexts/tools/domain/formats/plugin-root-token.ts",
-  ],
-  // Every entry is reached by `presentation` or by the composition root, and none is an
-  // adapter: what telemetry needs elsewhere it declares as its own port instead, so
-  // measurement reaches into no context and no context reaches into it.
-  telemetry: [
-    // the six use cases the `telemetry` command drives
-    "src/contexts/telemetry/application/telemetry-on-use-case.ts",
-    "src/contexts/telemetry/application/telemetry-off-use-case.ts",
-    "src/contexts/telemetry/application/read-local-cost-use-case.ts",
-    "src/contexts/telemetry/application/report-cost-use-case.ts",
-    "src/contexts/telemetry/application/diagnose-telemetry-use-case.ts",
-    "src/contexts/telemetry/application/forget-telemetry-use-case.ts",
-    "src/contexts/telemetry/application/person-identity-use-case.ts",
-    // the shapes a rendered answer is made of
-    "src/contexts/telemetry/domain/cost-report.ts",
-    "src/contexts/telemetry/domain/cost-report-envelope.ts",
-    // how a person id was resolved, printed beside each row
-    "src/contexts/telemetry/domain/person-resolution.ts",
-    "src/contexts/telemetry/domain/report-period.ts",
-    "src/contexts/telemetry/domain/telemetry-removal.ts",
-    "src/contexts/telemetry/domain/telemetry-claim.ts",
-    "src/contexts/telemetry/domain/telemetry-setup.ts",
-    "src/contexts/telemetry/domain/telemetry-export-leftover.ts",
-    "src/contexts/telemetry/domain/flow-attribution.ts",
-    "src/contexts/telemetry/domain/step-attribution.ts",
-    "src/contexts/telemetry/domain/task-attribution.ts",
-    // the trailer a commit carries, written by the git adapter that installs the hook
-    "src/contexts/telemetry/domain/formats/commit-session-trailer.ts",
-    // ports a caller wires a concrete adapter into
-    "src/contexts/telemetry/domain/ports/telemetry-sink.ts",
-    "src/contexts/telemetry/domain/ports/version-control.ts",
   ],
   translate: [
     // the canonical shapes framework produces and translate consumes
@@ -133,6 +101,47 @@ const PUBLIC_MODULES: Readonly<Record<string, readonly string[]>> = {
     // the one operation another context genuinely asks for: `distribution` removes a
     // marketplace and this context forgets the plugins that came from it
     "src/contexts/framework/application/flows/marketplace-remove-use-case.ts",
+  ],
+  // Measured with the composition root excluded: the adapter is wired from `runtime/wiring/`
+  // alone, so it stays internal.
+  telemetry: [
+    // the common record every tool's reader produces, and the fold that makes it countable once
+    "src/contexts/telemetry/domain/usage-record.ts",
+    "src/contexts/telemetry/domain/usage-fold.ts",
+    // where a transcript root is, and where a read of one stopped
+    "src/contexts/telemetry/domain/claude-projects-root.ts",
+    "src/contexts/telemetry/domain/transcript-position.ts",
+    // the port its callers hold, so they can be given an implementation
+    "src/contexts/telemetry/domain/ports/transcript-source.ts",
+    // the operation another layer asks for
+    "src/contexts/telemetry/application/read-claude-usage-use-case.ts",
+    // the ingest a command drives, and the result it prints
+    "src/contexts/telemetry/application/ingest-usage-use-case.ts",
+    // why a call was not stored, which the result names and a display words
+    "src/contexts/telemetry/domain/repository-resolution.ts",
+    // the owner-only storage the runtime implements for the context
+    "src/contexts/telemetry/domain/ports/private-storage.ts",
+    // the declaration a person makes: what `task` validates and sends, and the two results it
+    // prints, with the reasons a declaration is refused
+    "src/contexts/telemetry/domain/declaration/task-declaration.ts",
+    "src/contexts/telemetry/application/declare-task-use-case.ts",
+    "src/contexts/telemetry/application/show-task-binding-use-case.ts",
+    "src/contexts/telemetry/application/consented-repositories.ts",
+    // the report a command asks for, the days it is asked over, the axes it splits by, and
+    // the JSON envelope it prints; the display words the same result
+    "src/contexts/telemetry/application/report/report-usage-use-case.ts",
+    "src/contexts/telemetry/application/report/report-envelope.ts",
+    "src/contexts/telemetry/domain/report/period.ts",
+    "src/contexts/telemetry/domain/report/usage-report.ts",
+    // who, if anyone, the measurement names, and the result the command prints
+    "src/contexts/telemetry/application/identity/manage-identity-use-case.ts",
+    // opting in, out and forgetting: the use cases a command drives and the results it prints,
+    // the retention the display words, and what a forget lists
+    "src/contexts/telemetry/application/switch/telemetry-on-use-case.ts",
+    "src/contexts/telemetry/application/switch/telemetry-off-use-case.ts",
+    "src/contexts/telemetry/application/forget/forget-telemetry-use-case.ts",
+    "src/contexts/telemetry/domain/switch/claude-retention.ts",
+    "src/contexts/telemetry/domain/ports/forget/measurement-erasure.ts",
   ],
 };
 

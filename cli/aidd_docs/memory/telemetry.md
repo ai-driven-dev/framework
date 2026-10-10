@@ -1,39 +1,53 @@
 # Telemetry
 
-What a session cost, measured from files each AI tool already wrote, stored per machine. No process runs to produce it; nothing leaves the machine. Boundary for a hosted destination: [`measurement-may-reach-a-hosted-destination.md`](../../../aidd_docs/memory/internal/decisions/measurement-may-reach-a-hosted-destination.md).
+How the `telemetry` context turns Claude Code's own session files into per-task token counts. A map to the code: formats, rules and stores are in [`usage-contract.md`](../../../aidd_docs/product/usage-contract.md).
 
-## Sink
+## Data flow
 
-- `TelemetrySinkAdapter` (`src/contexts/telemetry/infrastructure/telemetry-sink-adapter.ts`) resolves its root: `AIDD_TELEMETRY_DIR`, else `AIDD_USER_CONFIG_DIR` (legacy, never the variable a team shares), else the default config dir (`.config/aidd` on POSIX and on Windows with pre-existing data, `%APPDATA%/aidd` otherwise).
-- One `.jsonl` day file per UTC day under `telemetry/`, append-only, `0600`/`icacls` unless the directory was user-named.
-- Two record kinds (`TelemetrySinkRecordKind`, `contexts/telemetry/domain/telemetry-sink-record.ts`): `request`, `session`. Provenance: `export` or `local-read`.
+```mermaid
+flowchart LR
+    Files[("Claude session files")] -->|read from the saved offset| Reader["read: one line to usage records"]
+    Reader --> Resolver["resolve: cwd to repository and consent"]
+    Resolver -->|upsert, one record per call| Ledger[("ledger/")]
+    Hooks["plugin hooks"] -->|write| Bindings[("bindings/ and git config")]
+    Task["telemetry task"] -->|write| Bindings
+    Ledger --> Report["report: attribute, then split by one axis"]
+    Bindings --> Report
+    Report --> Out["text or the version 1 envelope"]
+```
 
-## Run journal
+- A command that reports or ingests reads new lines first, under the ledger lock. `ingest` is the same step on its own, run quietly by the plugin at session start.
+- Reading is one pass: tool-specific only up to the usage record. Resolving, storing, attributing and reporting are written once for every tool.
+- The hooks and the CLI never call each other's code. They meet in the files, whose formats one fixture pins on both sides.
 
-- Written by the plugin hook, not the CLI: `plugins/aidd-telemetry/hooks/journal.cjs` reads stdin, detects the host, dispatches to `hooks/lib/`.
-- `record.cjs` mints a run id, appends `session_start`/`turn_end`; `step-starts.cjs`, `step-ends.cjs`, `task-declared.cjs`, `file-writes.cjs` append the rest; `repo.cjs` resolves paths and tightens permissions; `trailer-repair.cjs` backs the commit trailer; `opencode-plugin.js` is OpenCode's own entry.
-- Lives at the git root above the project: `kernel/paths.ts`'s `resolvedRunsDir` walks up via `repositoryRootAbove`. `AIDD_RUNS_DIR` overrides, read alike by `hooks/lib/repo.cjs` and the CLI.
+## Layers
 
-## Report
+| Layer | Path under `cli/src/` | Holds |
+| --- | --- | --- |
+| Presentation | `presentation/commands/telemetry.ts`, `presentation/display/telemetry*` | the command group: `on`, `off`, `forget`, `ingest`, `task`, `report`, `identity` |
+| Composition | `runtime/wiring/telemetry.ts` | the telemetry directory, the environment variables, every use case wired |
+| Application | `contexts/telemetry/application/` | one use case per command, the directory resolver, `report/` |
+| Domain | `contexts/telemetry/domain/` | the usage record and its fold, the declaration and attribution rules, consent, the report axes |
+| Infrastructure | `contexts/telemetry/infrastructure/` | the ledger, locks, git config and file stores, the transcript source |
 
-- `aidd telemetry report` renders the axes in `ARTEFACT_AXES` (`src/presentation/display/cost-report-artefact.ts`).
-- `--axis <axis>` prints one markdown table; `--json` the envelope. Filters: `--from`, `--to`, `--days`, `--task`, `--project`, `--step`, `--model`, `--tool`.
-- Envelope version `cost_report_version` (`COST_REPORT_ENVELOPE_VERSION`, `contexts/telemetry/domain/cost-report-envelope.ts`) bumps when a consumer must tell shapes apart, not per field.
+## Where to look
 
-## Attribution
+| Question | File |
+| --- | --- |
+| What a Claude Code line becomes | `domain/formats/claude-transcript-usage.ts` |
+| Why a call is counted once | `domain/usage-fold.ts` |
+| Where a call's repository comes from | `application/directory-resolver.ts`, `domain/repository-identity.ts` |
+| Which task a call belongs to | `domain/report/attribution.ts`, `domain/declaration/binding-resolution.ts` |
+| What counts as consent, and where it is read | `domain/telemetry-consent.ts`, `infrastructure/git-consent-adapter.ts`; the rule that stores a call is `application/directory-resolver.ts`, its clone's identity `domain/consent/clone-identity.ts`, and when a clone consented `domain/consent/consent-history.ts` |
+| What `on` and `forget` clean up from an earlier measurement | `domain/legacy/`, `application/switch/`, `application/forget/` |
+| The report axes and the envelope | `domain/report/usage-report.ts`, `application/report/report-envelope.ts` |
 
-- Person (`contexts/telemetry/domain/person-resolution.ts`): `mapped`, `unresolved`, `this-machine`. Identity is read and written from this machine's profile only; `aidd telemetry identity` never reads `AIDD_USER_CONFIG_DIR` or `.aidd/config.json`.
-- Task, step, flow (`task-attribution.ts`, `step-attribution.ts`, `flow-attribution.ts`): declared-vs-inferred over the journal's closed intervals (`journal-intervals.ts`).
-- Agent: `TelemetryRouteSupply.agentName` (`kernel/measurement.ts`); only Claude Code's reader sets it (`isSidechain`/`attributionAgent`, `contexts/telemetry/domain/formats/claude-code-transcript.ts`).
+## The plugin side
 
-## What a tool declares
+`plugins/aidd-telemetry/hooks/` is plain Node and imports nothing from here. It asks for a task, answers a typed declaration by running `aidd telemetry task`, and records which session a process is on. Its reading of the stores is pinned against `scripts/__tests__/fixtures/telemetry-bindings/`, read by `tests/contexts/telemetry/telemetry-bindings-fixture.unit.test.ts` and by the hook tests.
 
-- `kernel/measurement.ts`'s `TelemetryLocalRead`: `declared` carries `TelemetryRouteSupply` (`tokenCounters`, `amount`, `toolStatedStep`, `agentName`), an optional `TranscriptLocation`, an optional `limitation`; `unsupported` carries a `reason`.
-- `telemetry → tools` is the one allowed edge. Along it `telemetry` reuses seven `tools` public modules, listed here only: `registry.ts`, `marketplace-settings.ts`, `host-plugin-registration.ts`, `ports/host-plugin-registry-reader.ts`, and the `plugin-root-token`/`flat-hooks-merge`/`cursor-hooks-project-merge` format helpers. `domain/telemetry-setup.ts` crosses too.
-- Declared: `claude`, `codex`, `copilot`, `opencode`, each in `contexts/tools/domain/profiles/<name>/profile.ts`. `unsupported`: `cursor`. Silent: `vscode`.
+## Tests
 
-## Gotchas
-
-- `AIDD_RUNS_DIR` answers where the journal lives; `AIDD_TELEMETRY_DIR`/`AIDD_USER_CONFIG_DIR` where the figures do. `cli.md` lists what else the latter moves. Read `plugins/aidd-telemetry/README.md` ("Share `AIDD_TELEMETRY_DIR`, never `AIDD_USER_CONFIG_DIR`") before pointing anyone at either.
-- A relocated `HOME` does not relocate a real `codex` if `CODEX_HOME` is set (`testing.md`).
-- A generated `prepare-commit-msg` (lefthook, husky) never calls the delegate until the printed job is added by hand; `on` and `check` name it, neither edits those files.
+- Unit and integration tests mirror `src/` under `tests/contexts/telemetry/`.
+- The `telemetry` end-to-end tests under `tests/e2e/` run the built binary; `tests/e2e/telemetry-journey.e2e.test.ts` drives the plugin's real hooks through a shim to it and checks that every axis adds up to the total.
+- The skills' commands are checked against the help golden by `scripts/__tests__/telemetry-skills-name-real-commands.test.js`.

@@ -78,13 +78,7 @@ Place each capability in its owning concern and delegate to it.
 
 ### Measurement boundary
 
-| Concern | Contract |
-| --- | --- |
-| Consent | Committed `.aidd/config.json` with `telemetry.enabled: true`; a directory grants no permission. |
-| Writing | Git-ignored, append-only session observations. |
-| Reading | Derive task identity and join provider measurements. |
-
-See the [journal contract](../aidd_docs/runs/README.md).
+`aidd-telemetry` counts the tokens of Claude Code sessions deterministically and attributes them to the task a person declared. The CLI reads, stores, attributes and reports; the plugin's hooks only ask, answer and record session facts. The contract is [`aidd_docs/product/usage-contract.md`](../aidd_docs/product/usage-contract.md).
 
 ## Execution model
 
@@ -121,11 +115,7 @@ Dependency-free Node scripts declared in `hooks/hooks.json`; `node` must be on `
 | Plugin           | Event                                   | Runs                     | Purpose                                                     |
 | ---------------- | --------------------------------------- | ------------------------ | ----------------------------------------------------------- |
 | `aidd-context`   | `SessionStart`                          | `hooks/update_memory.js` | Refresh the project memory block in the AI context files    |
-| `aidd-telemetry` | `SessionStart` · `Stop` · `PostToolUse` | `hooks/journal.cjs`      | Journal every session so a unit of work can be tied to its cost |
-
-### CLI queries
-
-Queries and reports share one CLI implementation to avoid duplicated logic. CLI-backed skills must explain a missing `aidd`; the [dependency guard](../scripts/__tests__/telemetry-cli-required.test.js) enforces this.
+| `aidd-telemetry` | `SessionStart` · `UserPromptSubmit`     | `hooks/prompt-gate.cjs`  | Ask for a task once per branch, answer it without the model, keep it across `/clear`, catch the ledger up |
 
 ## Portability
 
@@ -134,7 +124,7 @@ Queries and reports share one CLI implementation to avoid duplicated logic. CLI-
 | CLI output | Supported target capabilities only; `aidd translate` warns and skips rules and commands. | [Output layouts](../cli/README.md#translate) |
 | Skills | Links stay inside the skill directory. Flat distribution renames skills `<plugin>-<skill>`; marketplace installation preserves the tree. | [Portability guard](../scripts/__tests__/a-skill-links-only-inside-itself.test.js) |
 | Bundled scripts | Named plugin-relative in backticks, never linked. | [Portability guard](../scripts/__tests__/a-skill-links-only-inside-itself.test.js) |
-| Hook adapters | CLI owns OpenCode's shared host protocol; plugins own payload mapping. | [Delivery and compatibility](../cli/ARCHITECTURE.md#hook-adaptation); [measurement coverage](../plugins/aidd-telemetry/README.md#coverage) |
+| Hook adapters | CLI owns OpenCode's shared host protocol; plugins own payload mapping. | [Delivery and compatibility](../cli/ARCHITECTURE.md#hook-adaptation) |
 
 ## Capability discovery and addressing
 

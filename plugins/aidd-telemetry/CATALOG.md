@@ -10,8 +10,7 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 - [`hooks`](#hooks)
 - [`skills`](#skills)
   - [`skills/00-init`](#skills00-init)
-  - [`skills/01-cost`](#skills01-cost)
-  - [`skills/02-check`](#skills02-check)
+  - [`skills/01-usage`](#skills01-usage)
 
 ---
 
@@ -26,7 +25,6 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | File |
 |------|
 | [hooks.json](hooks/hooks.json) |
-| [opencode-plugin.js](hooks/opencode-plugin.js) |
 
 ### `skills`
 
@@ -34,27 +32,18 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 
 | Group | File | Description |
 |-------|------|---|
-| `actions` | [01-check.md](skills/00-init/actions/01-check.md) | - |
-| `actions` | [02-enable.md](skills/00-init/actions/02-enable.md) | - |
-| `actions` | [03-verify.md](skills/00-init/actions/03-verify.md) | - |
-| `actions` | [04-identify.md](skills/00-init/actions/04-identify.md) | - |
-| `actions` | [05-forget.md](skills/00-init/actions/05-forget.md) | - |
-| `-` | [SKILL.md](skills/00-init/SKILL.md) | `Turns AIDD measurement on for a project, proves it is recording, lets a person opt into (or out of) naming themselves on their own records, and removes what was measured when asked. Use when the user wants to start measuring what their work costs, wants to stop, asks why nothing is being recorded, wants their own name to appear on (or disappear from) what gets measured, or wants their measured data deleted. Not for answering what a piece of work consumed.` |
+| `actions` | [forget.md](skills/00-init/actions/forget.md) | - |
+| `actions` | [identity.md](skills/00-init/actions/identity.md) | - |
+| `actions` | [start.md](skills/00-init/actions/start.md) | - |
+| `actions` | [stop.md](skills/00-init/actions/stop.md) | - |
+| `-` | [SKILL.md](skills/00-init/SKILL.md) | `Turn AIDD measurement on for a project after explicit consent, stop it, choose to be named on your own measurement, or delete what was measured. Use when the user wants to start or stop measuring what their work consumes, add or remove their name, or forget measured data. Not for answering what a period consumed.` |
 
-#### `skills/01-cost`
-
-| Group | File | Description |
-|-------|------|---|
-| `actions` | [01-locate.md](skills/01-cost/actions/01-locate.md) | - |
-| `actions` | [02-collect.md](skills/01-cost/actions/02-collect.md) | - |
-| `actions` | [03-report.md](skills/01-cost/actions/03-report.md) | - |
-| `-` | [SKILL.md](skills/01-cost/SKILL.md) | `Answers what a period or one task consumed - a total, a day-by-day series, or a breakdown by step, model, task, backlog item, orchestrated flow, tool, project or person - and hands back the artefact each question deserves. Use when the user asks what a piece of work cost, what changed, where the effort went, which task, which backlog item or ticket, which orchestrated run, for which project, or who spent it. Not for turning measurement on.` |
-
-#### `skills/02-check`
+#### `skills/01-usage`
 
 | Group | File | Description |
 |-------|------|---|
-| `actions` | [01-locate.md](skills/02-check/actions/01-locate.md) | - |
-| `actions` | [02-diagnose.md](skills/02-check/actions/02-diagnose.md) | - |
-| `-` | [SKILL.md](skills/02-check/SKILL.md) | `States what is in place — where measurement is allowed from, whether an identity is attached, where records land, whether the recorder is declared — then answers whether AIDD measurement is actually recording, one independently verifiable line per claim. Use when the user doubts a figure, sees no run file appear, wants proof the chain is working, or wants to know what is already configured. Not for turning measurement on or answering what a period cost.` |
+| `actions` | [answer.md](skills/01-usage/actions/answer.md) | - |
+| `actions` | [frame.md](skills/01-usage/actions/frame.md) | - |
+| `references` | [envelope.md](skills/01-usage/references/envelope.md) | - |
+| `-` | [SKILL.md](skills/01-usage/SKILL.md) | `Answer what a period or one piece of work consumed in tokens, per day, model, task, ticket, session, repository or person, from the local measurement. Use when the user asks how many tokens were spent, where the effort went, or what a task or ticket consumed. Not for turning measurement on or off.` |
 

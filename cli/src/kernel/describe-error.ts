@@ -7,13 +7,3 @@ export function describeError(error: unknown): string {
   }
   return error instanceof Error ? error.message : String(error);
 }
-
-/**
- * The message alone, for a failure whose `code` says nothing worth reading — a JSON parse
- * error being the case that matters here, where the `SyntaxError`'s message is the whole
- * answer and there is no `code` at all. Beside `describeError` because the two are one
- * decision with two answers.
- */
-export function errorMessage(error: unknown): string {
-  return error instanceof Error ? error.message : String(error);
-}

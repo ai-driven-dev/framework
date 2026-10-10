@@ -18,8 +18,8 @@
       "break": 94
     },
     "telemetry": {
-      "mutate": "src/contexts/telemetry/**/*.ts",
-      "break": 93
+      "mutate": ["src/contexts/telemetry/**/*.ts", "src/presentation/display/telemetry/**/*.ts"],
+      "break": 96
     },
     "translate": {
       "mutate": "src/contexts/translate/**/*.ts",
@@ -34,7 +34,7 @@
       "break": 93
     },
     "presentation": {
-      "mutate": "src/presentation/**/*.ts",
+      "mutate": ["src/presentation/**/*.ts", "!src/presentation/display/telemetry/**/*.ts"],
       "break": 95
     },
     "runtime": {

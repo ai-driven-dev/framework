@@ -1,4 +1,4 @@
-import { AIDD_DIR, RUNS_ENTRY } from "../../../kernel/paths.js";
+import { AIDD_DIR } from "../../../kernel/paths.js";
 import { machineLocalFilesOf } from "../../tools/domain/registry.js";
 import type { Manifest } from "./manifest.js";
 
@@ -10,5 +10,5 @@ export function aiddGitignoreEntries(manifest: Manifest): string[] {
   const machineLocal = manifest
     .getInstalledToolIds()
     .flatMap((toolId) => machineLocalFilesOf(toolId));
-  return [`${AIDD_DIR}/cache/`, RUNS_ENTRY, ...new Set(machineLocal)];
+  return [`${AIDD_DIR}/cache/`, ...new Set(machineLocal)];
 }

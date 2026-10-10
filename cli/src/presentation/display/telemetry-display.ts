@@ -1,201 +1,155 @@
-import type {
-  PersonIdentityLinkResult,
-  PersonIdentityOffResult,
-  PersonIdentityStatusResult,
-  PersonIdentityUnlinkResult,
-  PersonIdentityUseResult,
-} from "../../contexts/telemetry/application/person-identity-use-case.js";
-import type {
-  LocalCostToolStatus,
-  ReadLocalCostResult,
-} from "../../contexts/telemetry/application/read-local-cost-use-case.js";
-import type { TelemetryOffResult } from "../../contexts/telemetry/application/telemetry-off-use-case.js";
-import type { TelemetryOnResult } from "../../contexts/telemetry/application/telemetry-on-use-case.js";
-import type { TelemetrySink } from "../../contexts/telemetry/domain/ports/telemetry-sink.js";
-import { getAiToolConfig } from "../../contexts/tools/domain/registry.js";
+import type { RefusalReason } from "../../contexts/telemetry/application/consented-repositories.js";
+import type { DeclareResult } from "../../contexts/telemetry/application/declare-task-use-case.js";
+import type { IdentityResult } from "../../contexts/telemetry/application/identity/manage-identity-use-case.js";
+import type { IngestResult } from "../../contexts/telemetry/application/ingest-usage-use-case.js";
+import type { ShowResult } from "../../contexts/telemetry/application/show-task-binding-use-case.js";
+import type { NotStoredReason } from "../../contexts/telemetry/domain/repository-resolution.js";
 import type { CLIOutput } from "../output.js";
 
-const LOCAL_COST_STATUS_LABELS: Record<LocalCostToolStatus, string> = {
-  found: "read",
-  empty: "read, nothing found",
-  // Never "nothing found": this tool has no trace of the session, so it can say nothing
-  // about what it cost. Printing the two alike would let a session read as free.
-  "not-found": "no session found",
-  // Its reader failed, so nothing is known about this tool for this session and something
-  // is wrong. Distinct from "no session found", where nothing is known and nothing is wrong.
-  unreadable: "could not be read",
-  "not-covered": "not covered",
-  // Never "no session found": the journal named another tool, so this reader never ran.
-  // Worded for a whole sweep, where a session-shaped label would claim too much.
-  "not-asked": "no session read belongs to it",
+/** What a shape the reader did not recognise came to: it is kept when a call lacks a counter
+ * (stored unknown, never zero) and dropped when the line is no usage line at all. */
+export const UNRECOGNISED_WORDS =
+  "not recognised: a call missing a counter is kept with that counter unknown; a line that is no usage line is not counted.";
+
+/** Why a billed call was read and not stored, as the end of a sentence about N calls. */
+export const NOT_STORED_WORDS: Readonly<Record<NotStoredReason, string>> = {
+  "outside-repo": "outside any repository",
+  "never-seen-alive": "from a directory never seen while it existed",
+  "no-consent": "from a clone with no consent at that time",
+  "consent-closed":
+    "from a clone whose consent was closed; run `aidd telemetry on` in it to measure again",
+  "unreadable-consent":
+    "from a clone whose consent cannot be read: its git config, its git directory, or a damaged ledger/consents.jsonl",
+  "no-cwd": "with no working directory",
+  undated: "with no usable time",
 };
 
-export function printTelemetryOnReport(output: CLIOutput, result: TelemetryOnResult): void {
-  const switchLabel = result.switchChanged ? "on" : "already on";
-  output.success(`AIDD telemetry: ${switchLabel} (${result.switchPath})`);
-  output.info(`${result.switchPath} is git-tracked — this applies to everyone who clones.`);
-}
+/** Said on every run while `ledger/consents.jsonl` cannot be trusted. Recovery is `forget`, not
+ * a hand edit: a line removed by hand can reopen a window that was closed. */
+export const DAMAGED_CONSENT_LOG_WORDS =
+  "ledger/consents.jsonl holds a line that is not a consent event, so the log cannot be trusted and nothing is stored for any clone. Run `aidd telemetry forget --yes`, then `aidd telemetry on` in each clone to measure again: nothing from before is stored.";
 
-function printLocalCostToolLine(
-  output: CLIOutput,
-  report: ReadLocalCostResult["toolReports"][number]
-): void {
-  const name = getAiToolConfig(report.tool).displayName;
-  const label = LOCAL_COST_STATUS_LABELS[report.status];
-  const counts =
-    report.status === "found" ? ` (${report.recordsStored} new of ${report.recordsFound})` : "";
-  const reason = report.reason ? ` — ${report.reason}` : "";
-  // Never folded into the status: a tool that read most sessions and failed one reports
-  // as read, and a failure visible only in the status would vanish exactly there.
-  const failures =
-    report.sessionsFailed > 0
-      ? ` [${report.sessionsFailed} session${report.sessionsFailed === 1 ? "" : "s"} could not be read: ${report.failureReason}]`
-      : "";
-  output.print(`  ${name}: ${label}${counts}${reason}${failures}`);
-}
-
-export function printLocalCostReadReport(output: CLIOutput, result: ReadLocalCostResult): void {
-  // A refusal reads nothing and stores nothing — see ReadLocalCostUseCase's own doc — so
-  // it is told apart here from "no session journalled yet", which is a fact about the
-  // journal, not about whether the sweep was allowed to run at all.
-  if (result.refusedReason !== undefined) {
-    output.print(`  ${result.refusedReason}`);
-    return;
-  }
-  // One line per tool, never one per tool per session: twenty sessions across five tools is
-  // a hundred lines nobody reads. The session count leads, being the fact that changes.
-  const yielded = result.sessions.filter((session) =>
-    session.toolReports.some((report) => report.recordsFound > 0)
-  ).length;
-  if (result.sessions.length === 0) {
-    output.print("  No session journalled yet — nothing to read.");
-    return;
-  }
-  output.print(
-    `  ${result.sessions.length} session${result.sessions.length === 1 ? "" : "s"} read, ${yielded} with records`
-  );
-  for (const report of result.toolReports) printLocalCostToolLine(output, report);
-}
-
-export function printTelemetryOffReport(output: CLIOutput, result: TelemetryOffResult): void {
-  const switchLabel = result.switchChanged ? "off" : "already off";
-  output.success(`AIDD telemetry: ${switchLabel} (${result.switchPath})`);
-  output.info(
-    "This stops new recording only — sessions already journalled stay in aidd_docs/runs/ " +
-      "and whatever `aidd telemetry read` already stored, and `aidd telemetry report` still " +
-      "reports them. Run `aidd telemetry forget` to remove what was already measured."
-  );
-}
-
-const ORIGIN_LABELS: Record<"minted" | "adopted", string> = {
-  minted: "minted on this machine",
-  adopted: "taken from another machine",
-};
-
-const DECLARATION_DISCLAIMER =
-  "This is a declaration the tool cannot check - it never verifies who is running it.";
-
-function identityLabel(result: PersonIdentityStatusResult): string {
-  if (result.identity === null) return "off - records carry no person";
-  const name = result.identity.displayName ? `, display name "${result.identity.displayName}"` : "";
-  return `on, ${result.identity.personId} (${ORIGIN_LABELS[result.identity.origin]})${name} (${result.filePath})`;
-}
-
-export function printPersonIdentityStatus(
-  output: CLIOutput,
-  result: PersonIdentityStatusResult
-): void {
-  output.print(`AIDD identity: ${identityLabel(result)}`);
-  if (result.identity !== null && result.identity.alsoMe.length > 0) {
-    output.print(`  Identifiers added onto this person: ${result.identity.alsoMe.join(", ")}`);
-  }
-}
-
-/** One outcome word, three sentences: minted discloses what it attaches to, adopted says what
- * happened to what it replaced, and unchanged must not claim anything was written. */
-export function printPersonIdentityUse(output: CLIOutput, result: PersonIdentityUseResult): void {
-  const at = `(${result.filePath})`;
-  if (result.outcome === "unchanged") {
-    // "already in effect" is true of the identifier and false of the file when a name came
-    // with the call: something was written, and the first line must not say otherwise.
-    const alsoNamed = result.displayNameSet === undefined ? "" : ", display name set";
-    output.success(
-      `AIDD identity: ${result.identity.personId} already in effect${alsoNamed} ${at}`
-    );
-  } else if (result.outcome === "minted") {
-    output.success(`AIDD identity: on, ${result.identity.personId} ${at}`);
-    output.print("  Attaches to: records this machine reads locally, from now on.");
-    output.print(
-      "  Never attaches to: the run journal, a session already recorded, or a tool's own export."
-    );
-  } else {
-    const replaced =
-      result.replacedPersonId === undefined ? "" : ` (replacing ${result.replacedPersonId})`;
-    output.success(`AIDD identity: now ${result.identity.personId}${replaced} ${at}`);
-    if (result.replacedPersonId !== undefined) {
-      output.print("  Records already written keep the identifier they were written with.");
-    }
-    output.print(`  ${DECLARATION_DISCLAIMER}`);
-  }
-  if (result.displayNameSet !== undefined) {
-    output.print(`  Display name: ${result.displayNameSet}`);
-  }
-}
-
-export function printPersonIdentityOff(output: CLIOutput, result: PersonIdentityOffResult): void {
-  if (!result.removed) {
-    output.success("AIDD identity: already off - nothing to withdraw");
-    return;
-  }
-  output.success(`AIDD identity: off (${result.filePath} removed)`);
-  if (result.discardedDamaged) {
-    output.print(
-      "  The identity file could not be read, so it was discarded rather than left behind."
-    );
-  }
-  output.print("  New records carry no person, from now on.");
-  output.print(
-    "  Records already stored keep the identifier they were written with - none are changed."
-  );
-  output.print("  Opting in again later mints a fresh identifier, never this one back.");
-  output.print(
-    `  ${result.addedIdentifiersRemoved} added identifier${result.addedIdentifiersRemoved === 1 ? "" : "s"} removed with it.`
-  );
-}
-
-export function printPersonIdentityLink(output: CLIOutput, result: PersonIdentityLinkResult): void {
-  if (result.alreadyListed) {
-    output.success(
-      `AIDD identity: '${result.identity}' is already listed under ${result.personId} (${result.filePath})`
-    );
+export function printIngestResult(output: CLIOutput, result: IngestResult): void {
+  if (result.refused) {
+    output.info("AIDD_TELEMETRY=0: nothing was read and nothing was stored.");
     return;
   }
   output.success(
-    `AIDD identity: linked '${result.identity}' to ${result.personId} (${result.filePath})`
+    `Read ${result.filesRead} transcript${result.filesRead === 1 ? "" : "s"}: ` +
+      `${result.added} call${result.added === 1 ? "" : "s"} added, ${result.updated} updated.`
   );
-  output.print(`  ${DECLARATION_DISCLAIMER}`);
+  if (result.unrecognised > 0) {
+    output.warn(
+      `${result.unrecognised} shape${result.unrecognised === 1 ? "" : "s"} ${UNRECOGNISED_WORDS}`
+    );
+  }
+  if (result.skippedLedgerLines > 0) {
+    output.warn(
+      `${result.skippedLedgerLines} ledger line${result.skippedLedgerLines === 1 ? " was" : "s were"} not a record and dropped.`
+    );
+  }
+  if (result.snapshots > 0) {
+    output.info(
+      `${result.snapshots} branch declaration${result.snapshots === 1 ? "" : "s"} snapshotted.`
+    );
+  }
+  for (const [reason, count] of Object.entries(result.notStored) as [NotStoredReason, number][]) {
+    if (count > 0)
+      output.info(
+        `Not stored: ${count} call${count === 1 ? "" : "s"} ${NOT_STORED_WORDS[reason]}.`
+      );
+  }
+  if (result.consentLogDamaged) output.warn(DAMAGED_CONSENT_LOG_WORDS);
 }
 
-export function printPersonIdentityUnlink(
-  output: CLIOutput,
-  result: PersonIdentityUnlinkResult
-): void {
-  if (!result.removed) {
-    output.success(`AIDD identity: '${result.identity}' was not listed - nothing to remove`);
+const REFUSALS: Readonly<Record<RefusalReason, string>> = {
+  environment: "AIDD_TELEMETRY=0: nothing was declared.",
+  "outside-repository": "Not inside a git repository: there is no project to declare a task in.",
+  "unidentified-repository":
+    "This repository has no remote and no commit yet, so nothing can name it. Commit once, then declare again.",
+  "no-consent":
+    "This clone has not opted in to measurement, so no task was declared. Run `aidd telemetry on` here first.",
+  "unreadable-consent":
+    "This clone's git config cannot be read, so no task was declared. Fix it, then declare again.",
+};
+
+/** The first characters of a session id: enough to tell sessions apart on one screen. */
+function shortSession(sessionId: string): string {
+  return sessionId.slice(0, 8);
+}
+
+function describeTask(task: string | null, ticket: string | null): string {
+  if (task === null) return "no task";
+  return ticket === null ? `task "${task}"` : `task "${task}" (ticket ${ticket})`;
+}
+
+export function printDeclareResult(output: CLIOutput, result: DeclareResult): void {
+  if (result.status === "refused") {
+    output.error(REFUSALS[result.reason]);
     return;
   }
-  output.success(`AIDD identity: unlinked '${result.identity}' (${result.filePath})`);
+  const { declaration, sessionId, branch } = result;
+  output.success(`Declared ${describeTask(declaration.task, declaration.ticket)}.`);
+  if (sessionId === null) {
+    output.info("No Claude session here: nothing was bound to a session.");
+  } else {
+    output.info(`Session ${shortSession(sessionId)} is bound from now on.`);
+  }
+  if (branch.status === "bound") {
+    output.info(`Branch ${branch.branch} is bound.`);
+    return;
+  }
+  output.info(
+    branch.reason === "detached"
+      ? "Branch left untouched: HEAD is detached."
+      : `Branch left untouched: ${branch.branch} is the default branch.`
+  );
+  if (sessionId === null) output.warn("Nothing was bound: no session and no working branch.");
 }
 
-/** Says, once per command that touches the figures, that this machine locates them through a
- * variable which also moves its GitHub token — a second effect nothing else tells anyone
- * about. `warn` writes to stderr, so a `--json` caller's stdout stays one parseable object. */
-export function warnIfFiguresMoveTheTokenToo(output: CLIOutput, sink: TelemetrySink): void {
-  if (sink.locatedBy !== "user-config-dir") return;
-  output.warn(
-    `Figures are kept at ${sink.rootDir}, located through AIDD_USER_CONFIG_DIR — which also ` +
-      "moves auth.json, this machine's GitHub token. If that directory is shared, the token " +
-      "is in it. Set AIDD_TELEMETRY_DIR to the same path instead: it moves the figures and " +
-      "nothing else."
-  );
+export function printTaskBinding(output: CLIOutput, result: ShowResult): void {
+  if (result.status === "refused") {
+    output.error(REFUSALS[result.reason]);
+    return;
+  }
+  const { binding, sessionId, branch, role } = result;
+  if (binding.state === "unbound") {
+    const where =
+      role === "working"
+        ? `branch ${branch} and ${sessionId === null ? "no session" : `session ${shortSession(sessionId)}`}`
+        : `${role === "detached" ? "a detached HEAD" : `the default branch ${branch}`}, which is never bound`;
+    output.info(`Nothing is bound: ${where}. Declare with \`aidd telemetry task <name>\`.`);
+    return;
+  }
+  const what = binding.none
+    ? "no task (declared none)"
+    : describeTask(binding.task, binding.ticket);
+  const when = binding.declaredAt === null ? "" : ` at ${binding.declaredAt}`;
+  if (binding.source === "branch") {
+    output.info(`Bound to ${what}, declared on branch ${branch}${when}.`);
+  } else if (binding.source === "session-carried") {
+    output.info(
+      `Bound to ${what}, carried into session ${shortSession(sessionId ?? "")} from session ${shortSession(binding.carriedFrom ?? "")}.`
+    );
+  } else {
+    output.info(`Bound to ${what}, declared in session ${shortSession(sessionId ?? "")}${when}.`);
+  }
+}
+
+export function printIdentityResult(output: CLIOutput, result: IdentityResult): void {
+  switch (result.status) {
+    case "set":
+      output.success(`Measurement names you as "${result.personId}". Stop with \`--off\`.`);
+      return;
+    case "removed":
+      output.success('Identity removed: the person axis shows "not set".');
+      return;
+    case "unset":
+      output.info(
+        'No identity is set: the person axis shows "not set". Choose one with `aidd telemetry identity <id>`.'
+      );
+      return;
+    case "refused":
+      output.error("An identity is one line of at most 128 characters.");
+  }
 }

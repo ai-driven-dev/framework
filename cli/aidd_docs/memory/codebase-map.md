@@ -33,14 +33,6 @@ src/
 │   │   │   ├── plugins/
 │   │   │   └── ports/
 │   │   └── infrastructure/
-│   ├── telemetry/    # what a session cost and who it was for
-│   │   ├── application/
-│   │   ├── domain/
-│   │   │   ├── formats/
-│   │   │   ├── ports/
-│   │   │   └── report/
-│   │   │       └── axes/
-│   │   └── infrastructure/
 │   ├── tools/    # what a project targets, and what each target declares
 │   │   ├── domain/
 │   │   │   ├── capabilities/
@@ -56,6 +48,31 @@ src/
 │   │   │       ├── opencode/
 │   │   │       └── vscode/
 │   │   └── infrastructure/
+│   ├── telemetry/    # what each billed model call consumed, read from a tool's own transcripts
+│   │   ├── application/
+│   │   │   ├── forget/    # what measurement keeps on a machine, shown and erased
+│   │   │   ├── identity/    # who, if anyone, the measurement names
+│   │   │   ├── report/    # what the stored calls consumed in a period, along one axis
+│   │   │   └── switch/    # opting a repository in or out, and leaving it clean of the previous version
+│   │   ├── domain/
+│   │   │   ├── declaration/    # the task a person declares, and whether work is bound to one
+│   │   │   ├── formats/
+│   │   │   ├── consent/    # a clone's identity, and when it consented
+│   │   │   ├── identity/    # the identifier a person chose to be named by
+│   │   │   ├── legacy/    # what the previous version wrote, by name and location
+│   │   │   ├── ports/
+│   │   │   │   ├── bindings/    # the declarations kept beside the ledger, and the lock their writers share
+│   │   │   │   ├── forget/
+│   │   │   │   ├── identity/
+│   │   │   │   └── switch/
+│   │   │   ├── report/    # attribution of a call, the days of a report, the axes it splits by
+│   │   │   └── switch/    # the previous version's config block, Claude's retention
+│   │   └── infrastructure/
+│   │       ├── consent/    # reading a clone's identity from the file system, and the consent history file
+│   │       ├── declaration/    # where a declaration is kept: git config and the telemetry dir
+│   │       ├── forget/    # erasing the telemetry dir, the previous version's files, git config keys
+│   │       ├── identity/    # the identity file in the telemetry dir
+│   │       └── switch/    # the project config, what an earlier measurement left in a repository, and Claude settings; the clone's consent in git config is `git-consent-adapter.ts`, beside this folder
 │   └── translate/    # canonical source to target-native content
 │       ├── application/
 │       │   └── strategies/
@@ -69,6 +86,7 @@ src/
 ├── presentation/    # everything that talks to a human — depends on contexts, never the reverse
 │   ├── commands/    # one file per command, wiring only
 │   ├── display/    # rendering a result
+│   │   └── telemetry/    # the telemetry report, which outgrew one file beside the others
 │   └── prompts/    # asking the user; the decision stays in the context
 └── runtime/    # technical services that are not a context
     ├── assets/
@@ -111,4 +129,3 @@ src/
 | a port used by one context | that context's `domain/ports/`, adapter in its `infrastructure/` |
 | a port used by two | `kernel/ports/`, adapter in `runtime/` |
 | a runtime service | `runtime/<service>/`, wired from `runtime/wiring/` |
-| a cost-report axis (its own key, sentinels, group shape, order) | `contexts/telemetry/domain/report/axes/`; the pass that fills it stays in `cost-report.ts`, which the axis reaches only through `import type` |

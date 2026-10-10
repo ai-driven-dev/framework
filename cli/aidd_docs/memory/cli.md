@@ -4,14 +4,14 @@ The `aidd` command-line tool: its commands, inputs, and distribution.
 
 ## Commands
 
-Thirty-three leaf commands. Read them live: `aidd --help`, then each group's. `scripts/smoke-tools.sh` exercises every one and fails when its list drifts.
+Thirty leaf commands. Read them live: `aidd --help`, then each group's. `scripts/smoke-tools.sh` exercises every one and fails when its list drifts.
 
 - `setup`, `doctor`, `sync`, `clean`: bring a project to a correct state, keep it there.
 - `framework install | update | remove | rules`, chosen by `--tool <id>`.
 - `plugin install | list | remove | search | update`.
 - `marketplace add | list | remove | refresh | check`.
 - `auth login | logout | status`.
-- `telemetry on | off | read | report | check | forget | identity`; `identity` carries `use | off | link | unlink`.
+- `telemetry on | off | forget | ingest | task | report | identity`: local token measurement for Claude Code, mapped in `telemetry.md`.
 - `translate <source>`: author-side, converts a source into a target-native plugin tree.
 - `update`, aliased `upgrade`: the CLI itself.
 
@@ -53,4 +53,4 @@ Thirty-three leaf commands. Read them live: `aidd --help`, then each group's. `s
 
 - npm bin `aidd` → `dist/cli.js`, one ESM bundle plus five JSON schemas read from disk; `files` must ship them.
 - `npx @ai-driven-dev/cli@latest`, or global install. Build and publish: `deployment.md`.
-- `AIDD_USER_CONFIG_DIR` relocates `userConfigDir()`; the one list of what moves: `auth.json`; `marketplaces.json` and `cache/built/<version>/`; `references.json`; the `--scope user` `manifest.json`; `cache/update-check.json` and the older root `update-check.json` (`runtime/self-update/check-update-use-case.ts`); the telemetry sink root, only as a legacy fallback when `AIDD_TELEMETRY_DIR` is unset (`telemetry.md`). Never `identity.json`, which `resolveAiddConfigDir()` (`kernel/reading/home-dir.ts`) refuses this variable for.
+- `AIDD_USER_CONFIG_DIR` relocates `userConfigDir()`; the one list of what moves: `auth.json`; `marketplaces.json` and `cache/built/<version>/`; `references.json`; the `--scope user` `manifest.json`; `cache/update-check.json` and the older root `update-check.json` (`runtime/self-update/check-update-use-case.ts`).

@@ -1,5 +1,5 @@
 ---
-status: pending
+status: superseded
 ---
 
 # Instruction: the skills that open a folder write it

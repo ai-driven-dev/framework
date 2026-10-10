@@ -16,22 +16,18 @@ Every edge is a real import direction: the inter-context arrows are exactly `ALL
 flowchart LR
     Presentation["presentation"] --> Distribution["distribution"]
     Presentation --> Framework["framework"]
-    Presentation --> Telemetry["telemetry"]
     Presentation --> Tools["tools"]
     Presentation --> Translate["translate"]
     Runtime["runtime"] --> Distribution
     Runtime --> Framework
-    Runtime --> Telemetry
     Runtime --> Tools
     Runtime --> Translate
     Framework --> Translate
     Framework --> Distribution
     Framework --> Tools
     Translate --> Tools
-    Telemetry --> Tools
     Distribution --> Kernel["kernel"]
     Framework --> Kernel
-    Telemetry --> Kernel
     Tools --> Kernel
     Translate --> Kernel
 ```
@@ -39,8 +35,6 @@ flowchart LR
 ## Key decisions
 
 - Bounded contexts, never layers. Enforced by `tests/architecture/`, stated in `.claude/rules/00-architecture/0-contexts.md`.
-- A tool declares, a context reads: measurement vocabulary lives in `kernel/measurement.ts`, so the edge runs `telemetry → tools` only. `telemetry.md` names what it reuses along it.
-- Telemetry reaches no context but `tools`; what it needs elsewhere is its own port, satisfied at the composition root.
 - Some tools' project config is inert: Codex, Copilot and Claude load a plugin only once their own CLI registered it. A per-tool fact, verified against the real tool.
 - Claude's registration is driven at `--scope local`, so the hashed file keeps a single writer.
 - Two file regimes: what this CLI owns is regenerated; what it co-owns with a person is merged, conflicts reported.

@@ -73,7 +73,7 @@
     {
       "name": "aidd-telemetry",
       "source": "./plugins/aidd-telemetry",
-      "description": "Measurement: journals every session so a unit of work can be tied to what it cost. The hooks record on plain node; its three skills reach the `aidd` CLI to turn it on, answer and check.",
+      "description": "Measurement: counts the tokens of Claude Code sessions per task, ticket, model and day, locally. The hooks ask for a task on plain node; its two skills reach the `aidd` CLI to turn it on and answer.",
       "strict": true,
       "metadata": {
         "recommended": false

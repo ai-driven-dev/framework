@@ -13,10 +13,6 @@ const BASELINE: Readonly<Record<string, { readonly count: number; readonly reaso
     count: 2,
     reason: "deleting a manifest, then its empty directory, must not fail an uninstall midway",
   },
-  "src/contexts/telemetry/infrastructure/telemetry-sink-adapter.ts": {
-    count: 2,
-    reason: "icacls and chmod are best effort on someone else's directory or a modeless filesystem",
-  },
   "src/contexts/tools/domain/profiles/opencode/opencode-hooks-bridge.ts": {
     count: 2,
     reason:

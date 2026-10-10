@@ -9,7 +9,7 @@
 # cannot reach.
 #
 # `ALL_COMMANDS` below is compared against what `derived_leaves` reads live off the binary,
-# `telemetry identity`'s four verbs counted as leaves of their own.
+# nothing counted as a leaf of its own beyond a parent and its verb.
 
 set -uo pipefail
 
@@ -27,9 +27,8 @@ ALL_COMMANDS=(
   "plugin remove" "plugin list" "plugin install" "plugin search" "plugin update"
   "marketplace add" "marketplace list" "marketplace remove" "marketplace refresh" "marketplace check"
   "auth login" "auth logout" "auth status"
-  "telemetry on" "telemetry off" "telemetry read" "telemetry report" "telemetry check"
-  "telemetry forget"
-  "telemetry identity use" "telemetry identity off" "telemetry identity link" "telemetry identity unlink"
+  "telemetry on" "telemetry off" "telemetry forget" "telemetry ingest"
+  "telemetry task" "telemetry report" "telemetry identity"
 )
 
 PASS=0; FAIL=0; SKIP=0
@@ -66,7 +65,7 @@ project_tree_hash() {
 
 PARENTS=" plugin marketplace auth framework telemetry "
 # A parent one level deeper than PARENTS, so a covered key needs three words there, not two.
-GRANDPARENTS=" telemetry identity "
+GRANDPARENTS=" "
 derive_key() {
   local first="$1" second="${2:-}" third="${3:-}"
   if [[ "$GRANDPARENTS" == *" $first $second "* ]]; then
@@ -196,6 +195,29 @@ run "auth logout" 0 "" "$P_AUTH" -- auth logout
 # With no `gh` token reachable, `--gh` must refuse cleanly rather than hang or crash.
 run "auth login --gh (no credentials)" "0|1" "" "$P_AUTH" -- auth login --gh --level project
 
+
+# Everything lands under the sandboxed $HOME and $AIDD_USER_CONFIG_DIR set above, so the real
+# profile's telemetry directory is never read or written. A declaration needs a commit and a
+# working branch to bind.
+section "telemetry (sandboxed profile)"
+# Pinned to the sandbox, as `sandboxedEnv` does for the e2e suites: a variable exported in the
+# caller's shell must not point these runs at a real Claude profile or telemetry directory.
+export CLAUDE_CONFIG_DIR="$HOME/.claude" AIDD_TELEMETRY_DIR="$AIDD_USER_CONFIG_DIR/telemetry"
+unset AIDD_TELEMETRY CLAUDE_CODE_SESSION_ID
+P_TEL=$(new_project)
+(cd "$P_TEL" && git -c user.name=t -c user.email=t@t -c commit.gpgsign=false commit -q --allow-empty -m first \
+  && git switch -q -c feat/smoke)
+run "telemetry on" 0 "Measurement is on" "$P_TEL" -- telemetry on --yes
+run "telemetry task" 0 "Declared task" "$P_TEL" -- telemetry task smoke-task --ticket SMOKE-1
+run "telemetry ingest" 0 "" "$P_TEL" -- telemetry ingest
+run "telemetry report" 0 "" "$P_TEL" -- telemetry report --days 1
+run "telemetry identity" 0 "" "$P_TEL" -- telemetry identity smoke-person
+run "telemetry identity --off" 0 "" "$P_TEL" -- telemetry identity --off
+# `off` comes before `forget --yes`: forget unsets the key itself, so an `off` after it has nothing to switch.
+run "telemetry off" 0 "Measurement is off" "$P_TEL" -- telemetry off
+run "telemetry forget (preview)" 0 "Nothing was removed" "$P_TEL" -- telemetry forget
+run "telemetry forget --yes" 0 "Removed" "$P_TEL" -- telemetry forget --yes
+run "telemetry off (after forget)" 0 "Measurement was not on" "$P_TEL" -- telemetry off
 
 section "update --check"
 out=$(cd "$ROOT" && node "$CLI" update --check 2>&1); rc=$?
@@ -484,56 +506,6 @@ if true; then
   [[ ! -f "$P_CLEAN/.claude/settings.local.json" ]] \
     && ok ".claude/settings.local.json removed after clean" \
     || bad ".claude/settings.local.json survived clean"
-
-  # ── telemetry ────────────────────────────────────────────────
-  # HOME and AIDD_USER_CONFIG_DIR are both under TMPROOT, so `forget` deletes a sandbox and
-  # never a person's own profile.
-  section "telemetry"
-  P_TEL=$(new_project)
-  run "telemetry check (before anything)" "0|1" "" "$P_TEL" -- telemetry check
-  run "telemetry on --yes" 0 "" "$P_TEL" -- telemetry on --yes
-  [[ -f "$P_TEL/.aidd/config.json" ]] && ok "telemetry on writes the switch" || bad "no .aidd/config.json after telemetry on"
-  run "telemetry identity use" 0 "" "$P_TEL" -- telemetry identity use
-  run "telemetry identity off" 0 "" "$P_TEL" -- telemetry identity off
-  # link/unlink need a real identifier, so `--help` pins the leaf without mutating a profile.
-  run "telemetry identity link --help" 0 "" "$P_TEL" -- telemetry identity link --help
-  run "telemetry identity unlink --help" 0 "" "$P_TEL" -- telemetry identity unlink --help
-  run "telemetry read" 0 "" "$P_TEL" -- telemetry read
-  run "telemetry report" 0 "" "$P_TEL" -- telemetry report
-  run "telemetry off" 0 "" "$P_TEL" -- telemetry off
-  run "telemetry forget --yes" 0 "" "$P_TEL" -- telemetry forget --yes
-
-  # A lefthook-owned repository regenerates prepare-commit-msg on every install, wiping any
-  # line `telemetry on` appends, so it must print the job to add by hand instead of promising
-  # a trailer. Detection reads a root marker file, never a real lefthook binary.
-  P_TEL_LEFTHOOK=$(new_project)
-  cat > "$P_TEL_LEFTHOOK/lefthook.yml" <<'LEFTHOOK_YML'
-pre-commit:
-  commands:
-    example:
-      run: echo hi
-LEFTHOOK_YML
-  run "telemetry on --yes (lefthook-owned hook)" 0 "prepare-commit-msg:" "$P_TEL_LEFTHOOK" -- telemetry on --yes
-
-  # Once a manager owns prepare-commit-msg, `on` writes the delegate to the common git dir and
-  # ignores core.hooksPath, which husky routes under `.husky/`; `off` must resolve the same way
-  # or it finds nothing to delete under exactly this divergence.
-  P_TEL_HUSKY=$(new_project)
-  mkdir -p "$P_TEL_HUSKY/.husky"
-  cat > "$P_TEL_HUSKY/.husky/prepare-commit-msg" <<'HUSKY_HOOK'
-#!/bin/sh
-echo husky-owned
-HUSKY_HOOK
-  chmod +x "$P_TEL_HUSKY/.husky/prepare-commit-msg"
-  (cd "$P_TEL_HUSKY" && git config core.hooksPath .husky)
-  run "telemetry on --yes (husky core.hooksPath)" 0 "husky" "$P_TEL_HUSKY" -- telemetry on --yes
-  [[ -f "$P_TEL_HUSKY/.git/hooks/aidd-session-trailer.sh" ]] \
-    && ok "telemetry on writes the delegate to the common hooks dir under husky" \
-    || bad "delegate missing from .git/hooks under husky's core.hooksPath"
-  run "telemetry off (husky core.hooksPath)" 0 "" "$P_TEL_HUSKY" -- telemetry off
-  [[ ! -f "$P_TEL_HUSKY/.git/hooks/aidd-session-trailer.sh" ]] \
-    && ok "telemetry off removes the delegate even when core.hooksPath diverges" \
-    || bad "delegate survived telemetry off under husky's core.hooksPath"
 
 fi
 

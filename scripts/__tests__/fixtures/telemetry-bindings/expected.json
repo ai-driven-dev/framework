@@ -1,0 +1,523 @@
+{
+  "binding": {
+    "session-declared-once": {
+      "state": "bound",
+      "source": "session-declared",
+      "task": "checkout-fix",
+      "ticket": "PROJ-12",
+      "none": false
+    },
+    "session-declared-wins-over-branch": {
+      "state": "bound",
+      "source": "session-declared",
+      "task": "checkout-fix",
+      "ticket": "PROJ-12",
+      "none": false
+    },
+    "session-before-its-declaration-falls-to-branch": {
+      "state": "bound",
+      "source": "branch",
+      "task": "branch-task",
+      "ticket": null,
+      "none": false
+    },
+    "redeclared-before-the-second-keeps-the-first": {
+      "state": "bound",
+      "source": "session-declared",
+      "task": "first-idea",
+      "ticket": null,
+      "none": false
+    },
+    "redeclared-after-the-second-takes-the-second": {
+      "state": "bound",
+      "source": "session-declared",
+      "task": "second-idea",
+      "ticket": "PROJ-30",
+      "none": false
+    },
+    "redeclared-at-the-second-exactly": {
+      "state": "bound",
+      "source": "session-declared",
+      "task": "second-idea",
+      "ticket": "PROJ-30",
+      "none": false
+    },
+    "two-declarations-at-one-instant-the-later-line-wins": {
+      "state": "bound",
+      "source": "session-declared",
+      "task": "later-line",
+      "ticket": null,
+      "none": false
+    },
+    "session-none-is-bound-to-nothing": {
+      "state": "bound",
+      "source": "session-declared",
+      "task": null,
+      "ticket": null,
+      "none": true
+    },
+    "carried-after-the-carry": {
+      "state": "bound",
+      "source": "session-carried",
+      "task": "checkout-fix",
+      "ticket": "PROJ-12",
+      "none": false
+    },
+    "carried-wins-over-branch": {
+      "state": "bound",
+      "source": "session-carried",
+      "task": "checkout-fix",
+      "ticket": "PROJ-12",
+      "none": false
+    },
+    "carried-before-the-carry-falls-to-branch": {
+      "state": "bound",
+      "source": "branch",
+      "task": "branch-task",
+      "ticket": null,
+      "none": false
+    },
+    "carried-then-declared-before-own-declaration": {
+      "state": "bound",
+      "source": "session-carried",
+      "task": "checkout-fix",
+      "ticket": "PROJ-12",
+      "none": false
+    },
+    "carried-then-declared-after-own-declaration": {
+      "state": "bound",
+      "source": "session-declared",
+      "task": "own-after-carry",
+      "ticket": null,
+      "none": false
+    },
+    "carried-twice-in-a-chain": {
+      "state": "bound",
+      "source": "session-carried",
+      "task": "checkout-fix",
+      "ticket": "PROJ-12",
+      "none": false
+    },
+    "carried-from-an-unbound-session-falls-to-branch": {
+      "state": "bound",
+      "source": "branch",
+      "task": "branch-task",
+      "ticket": null,
+      "none": false
+    },
+    "carries-in-a-cycle-bind-nothing": {
+      "state": "unbound"
+    },
+    "unknown-session-falls-to-branch": {
+      "state": "bound",
+      "source": "branch",
+      "task": "checkout-fix",
+      "ticket": "PROJ-12",
+      "none": false
+    },
+    "no-session-falls-to-branch": {
+      "state": "bound",
+      "source": "branch",
+      "task": "checkout-fix",
+      "ticket": "PROJ-12",
+      "none": false
+    },
+    "branch-none-is-bound-to-nothing": {
+      "state": "bound",
+      "source": "branch",
+      "task": null,
+      "ticket": null,
+      "none": true
+    },
+    "branch-empty-task-with-declared-at-is-none": {
+      "state": "bound",
+      "source": "branch",
+      "task": null,
+      "ticket": null,
+      "none": true
+    },
+    "branch-task-without-declared-at-is-bound": {
+      "state": "bound",
+      "source": "branch",
+      "task": "orphan",
+      "ticket": null,
+      "none": false
+    },
+    "branch-undeclared-is-unbound": {
+      "state": "unbound"
+    },
+    "branch-with-dots-in-its-name": {
+      "state": "bound",
+      "source": "branch",
+      "task": "dotted",
+      "ticket": null,
+      "none": false
+    },
+    "default-branch-never-reads-its-config": {
+      "state": "unbound"
+    },
+    "detached-head-never-reads-config": {
+      "state": "unbound"
+    },
+    "default-branch-still-has-its-session": {
+      "state": "bound",
+      "source": "session-declared",
+      "task": "checkout-fix",
+      "ticket": "PROJ-12",
+      "none": false
+    }
+  },
+  "branchRole": {
+    "working-branch-with-remote-head": "working",
+    "working-branch-without-remote-head": "working",
+    "remote-head-main": "default",
+    "remote-head-develop-is-default": "default",
+    "remote-head-develop-makes-main-a-working-branch": "working",
+    "no-remote-head-main": "default",
+    "no-remote-head-master": "default",
+    "no-remote-head-develop-is-working": "working",
+    "detached": "detached",
+    "detached-without-remote-head": "detached",
+    "slashed-default-branch": "default",
+    "branch-named-like-the-remote": "working"
+  },
+  "consent": {
+    "granted": "granted",
+    "a-short-token": "granted",
+    "bare-two": "absent",
+    "two-and-colon": "absent",
+    "padded-token": "absent",
+    "trailing-space": "absent",
+    "off": "absent",
+    "previous-version-1": "absent",
+    "a-later-version": "absent",
+    "true": "absent",
+    "empty": "absent",
+    "padded": "absent",
+    "unset": "absent"
+  },
+  "environmentRefusal": {
+    "zero-refuses": true,
+    "one-does-not": false,
+    "empty-does-not": false,
+    "false-does-not": false,
+    "unset-does-not": false
+  },
+  "telemetryDir": {
+    "explicit-dir": "/data/measure",
+    "user-config-dir": "/cfg/telemetry",
+    "xdg": "/xdg/aidd/telemetry",
+    "default": "/home/someone/.config/aidd/telemetry",
+    "empty-explicit-dir-is-unset": "/cfg/telemetry",
+    "empty-user-config-dir-is-unset": "/xdg/aidd/telemetry",
+    "empty-xdg-is-unset": "/home/someone/.config/aidd/telemetry",
+    "win32-explicit-dir": "D:\\measure",
+    "win32-user-config-dir": "D:\\cfg\\telemetry",
+    "win32-xdg": "D:\\xdg\\aidd\\telemetry",
+    "win32-default": "C:\\Users\\someone\\.config\\aidd\\telemetry"
+  },
+  "claudeOnly": {
+    "claude-posix-transcript": true,
+    "claude-windows-transcript-with-backslashes": true,
+    "claude-custom-config-dir": true,
+    "session-id-differs-from-the-environment": false,
+    "environment-has-no-session-id": false,
+    "environment-session-id-empty": false,
+    "payload-has-no-session-id": false,
+    "codex-rollout-path-with-the-inherited-claude-id": false,
+    "codex-windows-rollout-path": false,
+    "payload-has-no-transcript-path": false,
+    "projects-is-only-part-of-a-name": false
+  },
+  "consentLog": {
+    "no-file": {
+      "damaged": false,
+      "intervals": []
+    },
+    "open-only": {
+      "damaged": false,
+      "intervals": [
+        {
+          "token": "t1",
+          "path": "/work/a/.git",
+          "from": "2026-10-09T09:00:00.000Z",
+          "to": null
+        }
+      ]
+    },
+    "open-then-close": {
+      "damaged": false,
+      "intervals": [
+        {
+          "token": "t1",
+          "path": "/work/a/.git",
+          "from": "2026-10-09T09:00:00.000Z",
+          "to": "2026-10-09T10:00:00.000Z"
+        }
+      ]
+    },
+    "close-written-before-the-open": {
+      "damaged": false,
+      "intervals": [
+        {
+          "token": "t1",
+          "path": "/work/a/.git",
+          "from": "2026-10-09T09:00:00.000Z",
+          "to": "2026-10-09T10:00:00.000Z"
+        }
+      ]
+    },
+    "double-close-ends-at-the-earliest": {
+      "damaged": false,
+      "intervals": [
+        {
+          "token": "t1",
+          "path": "/work/a/.git",
+          "from": "2026-10-09T09:00:00.000Z",
+          "to": "2026-10-09T10:00:00.000Z"
+        }
+      ]
+    },
+    "reopening-a-token-keeps-the-first": {
+      "damaged": false,
+      "intervals": [
+        {
+          "token": "t1",
+          "path": "/work/a/.git",
+          "from": "2026-10-09T09:00:00.000Z",
+          "to": null
+        }
+      ]
+    },
+    "closing-an-unknown-token-changes-nothing": {
+      "damaged": false,
+      "intervals": [
+        {
+          "token": "t1",
+          "path": "/work/a/.git",
+          "from": "2026-10-09T09:00:00.000Z",
+          "to": null
+        }
+      ]
+    },
+    "two-clones-two-tokens": {
+      "damaged": false,
+      "intervals": [
+        {
+          "token": "t1",
+          "path": "/work/a/.git",
+          "from": "2026-10-09T09:00:00.000Z",
+          "to": "2026-10-09T11:00:00.000Z"
+        },
+        {
+          "token": "t2",
+          "path": "/work/b/.git",
+          "from": "2026-10-09T10:00:00.000Z",
+          "to": null
+        }
+      ]
+    },
+    "blank-lines-are-not-damage": {
+      "damaged": false,
+      "intervals": [
+        {
+          "token": "t1",
+          "path": "/work/a/.git",
+          "from": "2026-10-09T09:00:00.000Z",
+          "to": null
+        }
+      ]
+    },
+    "garbage-line-damages": {
+      "damaged": true,
+      "intervals": [
+        {
+          "token": "t1",
+          "path": "/work/a/.git",
+          "from": "2026-10-09T09:00:00.000Z",
+          "to": null
+        }
+      ]
+    },
+    "torn-last-line-is-not-yet-written": {
+      "damaged": false,
+      "intervals": [
+        { "token": "t1", "path": "/work/a/.git", "from": "2026-10-09T09:00:00.000Z", "to": null }
+      ]
+    },
+    "whole-event-without-its-newline-is-not-yet-written": {
+      "damaged": false,
+      "intervals": [
+        { "token": "t1", "path": "/work/a/.git", "from": "2026-10-09T09:00:00.000Z", "to": null }
+      ]
+    },
+    "torn-line-with-a-line-after-it-damages": {
+      "damaged": true,
+      "intervals": []
+    },
+    "cut-line-damages": {
+      "damaged": true,
+      "intervals": []
+    },
+    "open-with-an-extra-field-damages": {
+      "damaged": true,
+      "intervals": []
+    },
+    "open-with-no-clone-damages": {
+      "damaged": true,
+      "intervals": []
+    },
+    "clone-with-no-inode-damages": {
+      "damaged": true,
+      "intervals": []
+    },
+    "close-with-an-unreadable-time-damages": {
+      "damaged": true,
+      "intervals": [
+        {
+          "token": "t1",
+          "path": "/work/a/.git",
+          "from": "2026-10-09T09:00:00.000Z",
+          "to": null
+        }
+      ]
+    },
+    "token-with-a-space-damages": {
+      "damaged": true,
+      "intervals": []
+    },
+    "line-with-open-and-close-damages": {
+      "damaged": true,
+      "intervals": []
+    },
+    "an-array-damages": {
+      "damaged": true,
+      "intervals": []
+    }
+  },
+  "hookConsent": {
+    "key-names-an-interval-open-for-this-path": {
+      "granted": true,
+      "close": []
+    },
+    "the-interval-is-closed": {
+      "granted": false,
+      "close": []
+    },
+    "a-bare-2-set-by-hand": {
+      "granted": false,
+      "close": [
+        "t1"
+      ]
+    },
+    "a-forged-token-names-no-interval": {
+      "granted": false,
+      "close": [
+        "t1"
+      ]
+    },
+    "a-forged-token-and-no-log": {
+      "granted": false,
+      "close": []
+    },
+    "a-copy-carries-the-key-to-another-path": {
+      "granted": false,
+      "close": []
+    },
+    "the-key-is-off": {
+      "granted": false,
+      "close": [
+        "t1"
+      ]
+    },
+    "the-key-is-unset": {
+      "granted": false,
+      "close": [
+        "t1"
+      ]
+    },
+    "a-clone-made-again-at-the-path-has-no-key": {
+      "granted": false,
+      "close": [
+        "t1"
+      ]
+    },
+    "the-key-names-the-second-of-two-open-intervals": {
+      "granted": true,
+      "close": [
+        "t1"
+      ]
+    },
+    "another-clone-open-is-left-alone": {
+      "granted": false,
+      "close": [
+        "t1"
+      ]
+    },
+    "a-damaged-log-grants-nothing-and-closes-nothing": {
+      "granted": false,
+      "close": []
+    },
+    "a-damaged-log-and-a-key-gone": {
+      "granted": false,
+      "close": []
+    },
+    "another-directory-at-the-path-is-neither-granted-nor-closed": {
+      "granted": false,
+      "close": []
+    },
+    "another-device-at-the-path-is-neither-granted-nor-closed": {
+      "granted": false,
+      "close": []
+    },
+    "another-birth-at-the-path-is-neither-granted-nor-closed": {
+      "granted": false,
+      "close": []
+    },
+    "another-directory-at-the-path-and-a-key-gone-closes-nothing": {
+      "granted": false,
+      "close": []
+    },
+    "no-birth-recorded-and-none-now-is-the-clone": {
+      "granted": true,
+      "close": []
+    },
+    "a-directory-the-platform-cannot-identify-grants-and-closes-nothing": {
+      "granted": false,
+      "close": []
+    }
+  },
+  "cloneIdentity": {
+    "macos-birth-differs-from-change-time": {
+      "dev": "16777231",
+      "ino": "100",
+      "birthtimeMs": 1760000000000
+    },
+    "linux-no-birth-is-zero": {
+      "dev": "2049",
+      "ino": "524301",
+      "birthtimeMs": 0
+    },
+    "linux-birth-equal-to-change-time-is-no-birth": {
+      "dev": "2049",
+      "ino": "524301",
+      "birthtimeMs": 0
+    },
+    "linux-birth-in-the-change-time-millisecond-is-a-birth": {
+      "dev": "2049",
+      "ino": "524301",
+      "birthtimeMs": 1760000099999
+    },
+    "a-negative-birth-is-no-birth": {
+      "dev": "2049",
+      "ino": "524301",
+      "birthtimeMs": 0
+    },
+    "a-file-index-a-number-cannot-hold-is-kept-exactly": {
+      "dev": "3735928559",
+      "ino": "9007199254740993",
+      "birthtimeMs": 1760000000000
+    },
+    "no-inode-is-no-identity": null
+  }
+}

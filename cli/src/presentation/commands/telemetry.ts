@@ -1,317 +1,231 @@
-import type { Command } from "commander";
-import { toCostReportEnvelope } from "../../contexts/telemetry/domain/cost-report-envelope.js";
+import { type Command, Option } from "commander";
 import {
-  DEFAULT_REPORT_DAYS,
-  resolveReportPeriod,
-} from "../../contexts/telemetry/domain/report-period.js";
-import { telemetryRemovalIsEmpty } from "../../contexts/telemetry/domain/telemetry-removal.js";
+  REFUSED_ENVELOPE,
+  reportEnvelopeOf,
+} from "../../contexts/telemetry/application/report/report-envelope.js";
+import {
+  DECLARED_BY,
+  type DeclaredBy,
+  requestOf,
+} from "../../contexts/telemetry/domain/declaration/task-declaration.js";
+import { periodOf } from "../../contexts/telemetry/domain/report/period.js";
+import {
+  REPORT_AXES,
+  type ReportAxis,
+} from "../../contexts/telemetry/domain/report/usage-report.js";
 import { createDeps } from "../../runtime/wiring/framework.js";
-import { ARTEFACT_AXES, buildCostReportArtefact } from "../display/cost-report-artefact.js";
-import { printCostReport } from "../display/cost-report-display.js";
-import { printTelemetryCheckReport } from "../display/telemetry-check-display.js";
 import {
-  printLocalCostReadReport,
-  printPersonIdentityLink,
-  printPersonIdentityOff,
-  printPersonIdentityStatus,
-  printPersonIdentityUnlink,
-  printPersonIdentityUse,
-  printTelemetryOffReport,
-  printTelemetryOnReport,
-  warnIfFiguresMoveTheTokenToo,
+  printForgetResult,
+  printOffResult,
+  printOnResult,
+} from "../display/telemetry/telemetry-lifecycle-display.js";
+import { printUsageReport } from "../display/telemetry/telemetry-report-display.js";
+import {
+  printDeclareResult,
+  printIdentityResult,
+  printIngestResult,
+  printTaskBinding,
 } from "../display/telemetry-display.js";
-import {
-  printTelemetryForgetPreview,
-  printTelemetryForgetRefused,
-  printTelemetryForgetResult,
-} from "../display/telemetry-forget-display.js";
 import { ErrorHandler } from "../error-handler.js";
 import { parseGlobalOptions } from "./global-options.js";
 
 export function registerTelemetryCommand(program: Command): void {
   const telemetry = program
     .command("telemetry")
-    .description("Control whether AIDD may measure this project");
+    .description("Measure what Claude Code sessions consume, locally");
 
   telemetry
     .command("on")
-    .description("Turn on the AIDD telemetry switch and git-ignore the run journal")
-    .option(
-      "--yes",
-      "Confirm writing the git-tracked switch — this turns measurement on for everyone who clones",
-      false
-    )
+    .description("Measure this clone, and remove what the previous version left in it")
+    .option("--yes", "Do not ask first", false)
     .action(async (cmdOptions: { yes: boolean }) => {
       const { verbose, output, projectRoot } = parseGlobalOptions(program);
-      const errorHandler = new ErrorHandler(output);
+      if (!cmdOptions.yes && !process.stdout.isTTY) {
+        output.error("Nothing to ask in a non-interactive run: pass --yes to turn measurement on.");
+        process.exit(1);
+      }
       try {
         const deps = await createDeps(projectRoot, { verbose }, output);
-        const result = await deps.telemetryOnUseCase.execute({
-          projectRoot,
-          confirmed: cmdOptions.yes,
-        });
-        printTelemetryOnReport(output, result);
-      } catch (error) {
-        errorHandler.handle(error);
-      }
-    });
-
-  telemetry
-    .command("read")
-    .description(
-      "Read what sessions cost from the files their tools already wrote, with no process running"
-    )
-    .option(
-      "--session <id>",
-      "One session to read. Omitted, every session the run journal knows is read"
-    )
-    .action(async (cmdOptions: { session?: string }) => {
-      const { verbose, output, projectRoot } = parseGlobalOptions(program);
-      const errorHandler = new ErrorHandler(output);
-      try {
-        const deps = await createDeps(projectRoot, { verbose }, output);
-        warnIfFiguresMoveTheTokenToo(output, deps.telemetrySink);
-        const result = await deps.readLocalCostUseCase.execute({
-          projectRoot,
-          env: process.env,
-          ...(cmdOptions.session === undefined ? {} : { sessionId: cmdOptions.session }),
-        });
-        printLocalCostReadReport(output, result);
-      } catch (error) {
-        errorHandler.handle(error);
-      }
-    });
-
-  registerTelemetryIdentityCommand(telemetry, program);
-  registerTelemetryCheckCommand(telemetry, program);
-
-  telemetry
-    .command("report")
-    .description(
-      "Report what a period, or one task inside it, cost — tokens, models and steps, with how strongly each was attributed"
-    )
-    .option("--from <day>", "First UTC day to report, as YYYY-MM-DD")
-    .option("--to <day>", "Last UTC day to report, as YYYY-MM-DD (default today)")
-    .option(
-      "--days <n>",
-      `How many days back to report, ending at --to (default ${DEFAULT_REPORT_DAYS})`
-    )
-    .option(
-      "--task <identity>",
-      "Restrict to the sessions that wrote into this task, as <yyyy_mm>/<name>"
-    )
-    .option("--project <id>", "Restrict to this project")
-    .option("--step <name>", "Restrict to this step")
-    .option("--model <name>", "Restrict to this model")
-    .option("--tool <id>", "Restrict to this tool")
-    .option(
-      "--axis <axis>",
-      `Print one axis as a table to paste elsewhere: ${ARTEFACT_AXES.join(" | ")}`
-    )
-    .option("--json", "Print one object a program can parse, instead of text for a person")
-    .action(
-      async (cmdOptions: {
-        from?: string;
-        to?: string;
-        days?: string;
-        task?: string;
-        project?: string;
-        step?: string;
-        model?: string;
-        tool?: string;
-        axis?: string;
-        json?: boolean;
-      }) => {
-        const { verbose, output, projectRoot } = parseGlobalOptions(program);
-        const errorHandler = new ErrorHandler(output);
-        try {
-          // The clock is read once, here, and never again: everything downstream works from
-          // the two absolute days this resolves to, so the same call answers the same twice.
-          const period = resolveReportPeriod(cmdOptions, new Date());
-          const deps = await createDeps(projectRoot, { verbose }, output);
-          warnIfFiguresMoveTheTokenToo(output, deps.telemetrySink);
-          const report = await deps.reportCostUseCase.execute({
-            period,
-            projectRoot,
-            env: process.env,
-            ...(cmdOptions.task === undefined ? {} : { task: cmdOptions.task }),
-            filters: {
-              ...(cmdOptions.project === undefined ? {} : { project: cmdOptions.project }),
-              ...(cmdOptions.step === undefined ? {} : { step: cmdOptions.step }),
-              ...(cmdOptions.model === undefined ? {} : { model: cmdOptions.model }),
-              ...(cmdOptions.tool === undefined ? {} : { tool: cmdOptions.tool }),
-            },
-          });
-          // One value, three renderings, none deriving a figure the others cannot see: both
-          // `--json` and `--axis` read the envelope the terminal rendering is built from.
-          if (cmdOptions.json) output.print(JSON.stringify(toCostReportEnvelope(report), null, 2));
-          else if (cmdOptions.axis !== undefined)
-            output.print(buildCostReportArtefact(toCostReportEnvelope(report), cmdOptions.axis));
-          else printCostReport(output, report);
-        } catch (error) {
-          errorHandler.handle(error);
+        const confirmed =
+          cmdOptions.yes ||
+          (await deps.prompter.confirm(
+            "Measure what this clone consumes, and remove what the previous version left in it?",
+            false
+          ));
+        if (!confirmed) {
+          output.info("Nothing changed.");
+          return;
         }
+        const result = await deps.telemetry.telemetryOnUseCase.execute(projectRoot);
+        printOnResult(output, result);
+        if (result.status === "refused") process.exit(1);
+      } catch (error) {
+        new ErrorHandler(output).handle(error);
       }
-    );
+    });
 
   telemetry
     .command("off")
-    .description(
-      "Turn off the AIDD telemetry switch, warning if a tool's own settings file still exports"
-    )
+    .description("Stop measuring this clone; what was measured stays")
     .action(async () => {
       const { verbose, output, projectRoot } = parseGlobalOptions(program);
-      const errorHandler = new ErrorHandler(output);
       try {
         const deps = await createDeps(projectRoot, { verbose }, output);
-        const result = await deps.telemetryOffUseCase.execute({ projectRoot });
-        printTelemetryOffReport(output, result);
+        const result = await deps.telemetry.telemetryOffUseCase.execute(projectRoot);
+        printOffResult(output, result);
+        if (result.status === "refused") process.exit(1);
       } catch (error) {
-        errorHandler.handle(error);
+        new ErrorHandler(output).handle(error);
       }
     });
 
   telemetry
     .command("forget")
-    .description(
-      "Irreversibly remove what this tool measured: this project's run journal, this " +
-        "machine's stored records, and this machine's identity file"
-    )
-    .option(
-      "--yes",
-      "Confirm removal after seeing what would go — without it, nothing is removed",
-      false
-    )
+    .description("Show everything measurement keeps on this machine, or remove it with --yes")
+    .option("--yes", "Remove it, instead of only showing it", false)
     .action(async (cmdOptions: { yes: boolean }) => {
       const { verbose, output, projectRoot } = parseGlobalOptions(program);
-      const errorHandler = new ErrorHandler(output);
       try {
         const deps = await createDeps(projectRoot, { verbose }, output);
-        const preview = await deps.forgetTelemetryUseCase.preview({ projectRoot });
-        printTelemetryForgetPreview(output, preview);
-        if (telemetryRemovalIsEmpty(preview)) return;
-        if (!cmdOptions.yes) {
-          printTelemetryForgetRefused(output);
-          return;
-        }
-        const result = await deps.forgetTelemetryUseCase.remove(preview);
-        printTelemetryForgetResult(output, result);
-      } catch (error) {
-        errorHandler.handle(error);
-      }
-    });
-}
-
-/** Whether the measurement chain is actually recording, not merely installed: a hook that
- * fired, a session that closed, a tool's own files that can be read, and the two joining. */
-function registerTelemetryCheckCommand(telemetry: Command, program: Command): void {
-  telemetry
-    .command("check")
-    .description("Check whether the measurement chain is actually recording for this project")
-    .action(async () => {
-      const { verbose, output, projectRoot } = parseGlobalOptions(program);
-      const errorHandler = new ErrorHandler(output);
-      try {
-        const deps = await createDeps(projectRoot, { verbose }, output);
-        const result = await deps.diagnoseTelemetryUseCase.execute({
-          projectRoot,
-          env: process.env,
-        });
-        printTelemetryCheckReport(output, result);
-        // A gated run judges nothing (measurement off, no repository), so it never fails
-        // the process; only a claim this run actually judged and found wanting does.
-        if (result.gate === undefined && result.claims.some((claim) => claim.verdict === "fail")) {
-          process.exitCode = 1;
-        }
-      } catch (error) {
-        errorHandler.handle(error);
-      }
-    });
-}
-
-/** Whether this person's own identifier is attached to what `aidd telemetry read` stores:
- * never a project's choice, and never the `telemetry on`/`off` switch beside it. */
-function registerTelemetryIdentityCommand(telemetry: Command, program: Command): void {
-  const identity = telemetry
-    .command("identity")
-    .description("Whether this person's own identifier is attached to records read locally");
-  // The bare noun is a question, so it answers with state rather than a help screen.
-  // `--help` still prints the help.
-  identity.action(async () => {
-    const { verbose, output, projectRoot } = parseGlobalOptions(program);
-    const errorHandler = new ErrorHandler(output);
-    try {
-      const deps = await createDeps(projectRoot, { verbose }, output);
-      printPersonIdentityStatus(output, await deps.personIdentityUseCase.status());
-    } catch (error) {
-      errorHandler.handle(error);
-    }
-  });
-
-  identity
-    .command("use [identifier]")
-    .description(
-      "Mint this person's identifier, or take one minted on another machine. --name attaches a display name"
-    )
-    .option("--name <value>", "A display name for whichever identifier this call settles on")
-    .action(async (identifier: string | undefined, cmdOptions: { name?: string }) => {
-      const { verbose, output, projectRoot } = parseGlobalOptions(program);
-      const errorHandler = new ErrorHandler(output);
-      try {
-        const deps = await createDeps(projectRoot, { verbose }, output);
-        printPersonIdentityUse(
+        printForgetResult(
           output,
-          await deps.personIdentityUseCase.use({
-            ...(identifier === undefined ? {} : { identifier }),
-            ...(cmdOptions.name === undefined ? {} : { displayName: cmdOptions.name }),
-          })
+          await deps.telemetry.forgetTelemetryUseCase.execute(cmdOptions.yes)
         );
       } catch (error) {
-        errorHandler.handle(error);
+        new ErrorHandler(output).handle(error);
       }
     });
 
-  identity
-    .command("off")
-    .description("Opt out: new records carry no person, from now on")
-    .action(async () => {
+  telemetry
+    .command("ingest")
+    .description("Read new transcripts into the local ledger, for clones that opted in")
+    .option("--quiet", "Print nothing on success (for hooks)", false)
+    .action(async (cmdOptions: { quiet: boolean }) => {
       const { verbose, output, projectRoot } = parseGlobalOptions(program);
-      const errorHandler = new ErrorHandler(output);
       try {
         const deps = await createDeps(projectRoot, { verbose }, output);
-        printPersonIdentityOff(output, await deps.personIdentityUseCase.off());
+        const result = await deps.telemetry.ingestUsageUseCase.execute();
+        if (!cmdOptions.quiet) printIngestResult(output, result);
       } catch (error) {
-        errorHandler.handle(error);
+        new ErrorHandler(output).handle(error);
       }
     });
 
-  identity
-    .command("link <identity>")
-    .description(
-      "Add an identifier this person cannot choose onto this same person - one row, not two, in a report"
+  telemetry
+    .command("task [name]")
+    .description("Declare the task the current work belongs to, or show what it is bound to")
+    .option("--ticket <ref>", "The ticket the task belongs to, kept as typed")
+    .option("--none", "Declare that this work has no task", false)
+    .addOption(
+      new Option("--by <by>", "Who declares (hooks only)")
+        .choices(DECLARED_BY)
+        .default("command")
+        .hideHelp()
     )
-    .action(async (rawIdentity: string) => {
-      const { verbose, output, projectRoot } = parseGlobalOptions(program);
-      const errorHandler = new ErrorHandler(output);
-      try {
-        const deps = await createDeps(projectRoot, { verbose }, output);
-        printPersonIdentityLink(output, await deps.personIdentityUseCase.link(rawIdentity));
-      } catch (error) {
-        errorHandler.handle(error);
+    .action(
+      async (
+        name: string | undefined,
+        cmdOptions: { ticket?: string; none: boolean; by: DeclaredBy }
+      ) => {
+        const { verbose, output, projectRoot } = parseGlobalOptions(program);
+        const request = cmdOptions.none
+          ? { kind: "none" as const }
+          : requestOf(name, cmdOptions.ticket);
+        if (cmdOptions.none && (name !== undefined || cmdOptions.ticket !== undefined)) {
+          output.error("--none declares no task: give it neither a name nor --ticket.");
+          process.exit(1);
+        }
+        if (request === null && (name !== undefined || cmdOptions.ticket !== undefined)) {
+          output.error("A task needs a name: aidd telemetry task <name> [--ticket <ref>].");
+          process.exit(1);
+        }
+        try {
+          const deps = await createDeps(projectRoot, { verbose }, output);
+          if (request === null) {
+            const shown = await deps.telemetry.showTaskBindingUseCase.execute(projectRoot);
+            printTaskBinding(output, shown);
+            if (shown.status === "refused") process.exit(1);
+            return;
+          }
+          const result = await deps.telemetry.declareTaskUseCase.execute({
+            cwd: projectRoot,
+            request,
+            by: cmdOptions.by,
+          });
+          printDeclareResult(output, result);
+          if (result.status === "refused") process.exit(1);
+        } catch (error) {
+          new ErrorHandler(output).handle(error);
+        }
       }
-    });
+    );
 
-  identity
-    .command("unlink <identity>")
-    .description("Withdraw an added identifier from this person")
-    .action(async (rawIdentity: string) => {
+  telemetry
+    .command("report")
+    .description("Show what the work consumed, split along one axis, after reading new transcripts")
+    .option("--from <date>", "First day to include, as YYYY-MM-DD (UTC)")
+    .option("--to <date>", "Last day to include, as YYYY-MM-DD (UTC)")
+    .option("--days <n>", "The last n days, today included")
+    .addOption(
+      new Option("--axis <axis>", "What to split by").choices(REPORT_AXES).default("total")
+    )
+    .option("--json", "Print a versioned JSON envelope instead of text", false)
+    .action(
+      async (cmdOptions: {
+        from?: string;
+        to?: string;
+        days?: string;
+        axis: ReportAxis;
+        json: boolean;
+      }) => {
+        const { verbose, output, projectRoot } = parseGlobalOptions(program);
+        const period = periodOf(cmdOptions, new Date());
+        if (!period.ok) {
+          output.error(period.message);
+          process.exit(1);
+        }
+        try {
+          const deps = await createDeps(projectRoot, { verbose }, output);
+          const result = await deps.telemetry.reportUsageUseCase.execute({
+            axis: cmdOptions.axis,
+            period: period.period,
+          });
+          if (!cmdOptions.json) return printUsageReport(output, result);
+          output.print(
+            JSON.stringify(
+              result.status === "refused" ? REFUSED_ENVELOPE : reportEnvelopeOf(result),
+              null,
+              2
+            )
+          );
+        } catch (error) {
+          new ErrorHandler(output).handle(error);
+        }
+      }
+    );
+
+  telemetry
+    .command("identity [id]")
+    .description("Choose to be named on your own measurement, or show or remove that choice")
+    .option("--off", "Stop naming you and remove the identity", false)
+    .action(async (id: string | undefined, cmdOptions: { off: boolean }) => {
       const { verbose, output, projectRoot } = parseGlobalOptions(program);
-      const errorHandler = new ErrorHandler(output);
+      if (cmdOptions.off && id !== undefined) {
+        output.error("--off removes the identity: give it no identifier.");
+        process.exit(1);
+      }
       try {
         const deps = await createDeps(projectRoot, { verbose }, output);
-        printPersonIdentityUnlink(output, await deps.personIdentityUseCase.unlink(rawIdentity));
+        const use = deps.telemetry.manageIdentityUseCase;
+        const result = cmdOptions.off
+          ? await use.off()
+          : id === undefined
+            ? await use.show()
+            : await use.set(id);
+        printIdentityResult(output, result);
+        if (result.status === "refused") process.exit(1);
       } catch (error) {
-        errorHandler.handle(error);
+        new ErrorHandler(output).handle(error);
       }
     });
 }

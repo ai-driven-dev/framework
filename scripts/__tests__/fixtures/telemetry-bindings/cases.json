@@ -1,0 +1,1234 @@
+{
+  "gitConfig": {
+    "task-and-ticket": {
+      "branch": "feat/x",
+      "keys": {
+        "aiddTask": "checkout-fix",
+        "aiddTicket": "PROJ-12",
+        "aiddDeclaredAt": "2026-10-09T09:00:00.000Z"
+      }
+    },
+    "task-only": {
+      "branch": "feat/x",
+      "keys": {
+        "aiddTask": "branch-task",
+        "aiddDeclaredAt": "2026-10-09T09:00:00.000Z"
+      }
+    },
+    "none": {
+      "branch": "feat/x",
+      "keys": {
+        "aiddDeclaredAt": "2026-10-09T09:00:00.000Z"
+      }
+    },
+    "none-empty-task": {
+      "branch": "feat/x",
+      "keys": {
+        "aiddTask": "",
+        "aiddDeclaredAt": "2026-10-09T09:00:00.000Z"
+      }
+    },
+    "task-without-declared-at": {
+      "branch": "feat/x",
+      "keys": {
+        "aiddTask": "orphan"
+      }
+    },
+    "undeclared": {
+      "branch": "feat/x",
+      "keys": {}
+    },
+    "dotted-branch-name": {
+      "branch": "release/1.2.aidd",
+      "keys": {
+        "aiddTask": "dotted",
+        "aiddDeclaredAt": "2026-10-09T09:00:00.000Z"
+      }
+    }
+  },
+  "binding": {
+    "session-declared-once": {
+      "session_id": "00000000-0000-4000-8000-00000000000a",
+      "at": "2026-10-09T11:00:00.000Z",
+      "gitConfig": null,
+      "head": "refs/heads/feat/x",
+      "originHead": null
+    },
+    "session-declared-wins-over-branch": {
+      "session_id": "00000000-0000-4000-8000-00000000000a",
+      "at": "2026-10-09T11:00:00.000Z",
+      "gitConfig": "task-only",
+      "head": "refs/heads/feat/x",
+      "originHead": null
+    },
+    "session-before-its-declaration-falls-to-branch": {
+      "session_id": "00000000-0000-4000-8000-00000000000a",
+      "at": "2026-10-09T09:30:00.000Z",
+      "gitConfig": "task-only",
+      "head": "refs/heads/feat/x",
+      "originHead": null
+    },
+    "redeclared-before-the-second-keeps-the-first": {
+      "session_id": "00000000-0000-4000-8000-00000000000b",
+      "at": "2026-10-09T11:00:00.000Z",
+      "gitConfig": null,
+      "head": "refs/heads/feat/x",
+      "originHead": null
+    },
+    "redeclared-after-the-second-takes-the-second": {
+      "session_id": "00000000-0000-4000-8000-00000000000b",
+      "at": "2026-10-09T13:00:00.000Z",
+      "gitConfig": null,
+      "head": "refs/heads/feat/x",
+      "originHead": null
+    },
+    "redeclared-at-the-second-exactly": {
+      "session_id": "00000000-0000-4000-8000-00000000000b",
+      "at": "2026-10-09T12:00:00.000Z",
+      "gitConfig": null,
+      "head": "refs/heads/feat/x",
+      "originHead": null
+    },
+    "two-declarations-at-one-instant-the-later-line-wins": {
+      "session_id": "00000000-0000-4000-8000-000000000014",
+      "at": "2026-10-09T10:00:00.000Z",
+      "gitConfig": null,
+      "head": "refs/heads/feat/x",
+      "originHead": null
+    },
+    "session-none-is-bound-to-nothing": {
+      "session_id": "00000000-0000-4000-8000-00000000000c",
+      "at": "2026-10-09T11:00:00.000Z",
+      "gitConfig": "task-only",
+      "head": "refs/heads/feat/x",
+      "originHead": null
+    },
+    "carried-after-the-carry": {
+      "session_id": "00000000-0000-4000-8000-00000000000d",
+      "at": "2026-10-09T14:05:00.000Z",
+      "gitConfig": null,
+      "head": "refs/heads/feat/x",
+      "originHead": null
+    },
+    "carried-wins-over-branch": {
+      "session_id": "00000000-0000-4000-8000-00000000000d",
+      "at": "2026-10-09T14:05:00.000Z",
+      "gitConfig": "task-only",
+      "head": "refs/heads/feat/x",
+      "originHead": null
+    },
+    "carried-before-the-carry-falls-to-branch": {
+      "session_id": "00000000-0000-4000-8000-00000000000d",
+      "at": "2026-10-09T13:59:00.000Z",
+      "gitConfig": "task-only",
+      "head": "refs/heads/feat/x",
+      "originHead": null
+    },
+    "carried-then-declared-before-own-declaration": {
+      "session_id": "00000000-0000-4000-8000-00000000000e",
+      "at": "2026-10-09T14:30:00.000Z",
+      "gitConfig": null,
+      "head": "refs/heads/feat/x",
+      "originHead": null
+    },
+    "carried-then-declared-after-own-declaration": {
+      "session_id": "00000000-0000-4000-8000-00000000000e",
+      "at": "2026-10-09T16:00:00.000Z",
+      "gitConfig": null,
+      "head": "refs/heads/feat/x",
+      "originHead": null
+    },
+    "carried-twice-in-a-chain": {
+      "session_id": "00000000-0000-4000-8000-00000000000f",
+      "at": "2026-10-09T15:00:00.000Z",
+      "gitConfig": null,
+      "head": "refs/heads/feat/x",
+      "originHead": null
+    },
+    "carried-from-an-unbound-session-falls-to-branch": {
+      "session_id": "00000000-0000-4000-8000-000000000010",
+      "at": "2026-10-09T15:00:00.000Z",
+      "gitConfig": "task-only",
+      "head": "refs/heads/feat/x",
+      "originHead": null
+    },
+    "carries-in-a-cycle-bind-nothing": {
+      "session_id": "00000000-0000-4000-8000-000000000012",
+      "at": "2026-10-09T15:00:00.000Z",
+      "gitConfig": null,
+      "head": "refs/heads/feat/x",
+      "originHead": null
+    },
+    "unknown-session-falls-to-branch": {
+      "session_id": "00000000-0000-4000-8000-0000000000ff",
+      "at": "2026-10-09T15:00:00.000Z",
+      "gitConfig": "task-and-ticket",
+      "head": "refs/heads/feat/x",
+      "originHead": null
+    },
+    "no-session-falls-to-branch": {
+      "session_id": null,
+      "at": "2026-10-09T15:00:00.000Z",
+      "gitConfig": "task-and-ticket",
+      "head": "refs/heads/feat/x",
+      "originHead": null
+    },
+    "branch-none-is-bound-to-nothing": {
+      "session_id": null,
+      "at": "2026-10-09T15:00:00.000Z",
+      "gitConfig": "none",
+      "head": "refs/heads/feat/x",
+      "originHead": null
+    },
+    "branch-empty-task-with-declared-at-is-none": {
+      "session_id": null,
+      "at": "2026-10-09T15:00:00.000Z",
+      "gitConfig": "none-empty-task",
+      "head": "refs/heads/feat/x",
+      "originHead": null
+    },
+    "branch-task-without-declared-at-is-bound": {
+      "session_id": null,
+      "at": "2026-10-09T15:00:00.000Z",
+      "gitConfig": "task-without-declared-at",
+      "head": "refs/heads/feat/x",
+      "originHead": null
+    },
+    "branch-undeclared-is-unbound": {
+      "session_id": null,
+      "at": "2026-10-09T15:00:00.000Z",
+      "gitConfig": "undeclared",
+      "head": "refs/heads/feat/x",
+      "originHead": null
+    },
+    "branch-with-dots-in-its-name": {
+      "session_id": null,
+      "at": "2026-10-09T15:00:00.000Z",
+      "gitConfig": "dotted-branch-name",
+      "head": "refs/heads/release/1.2.aidd",
+      "originHead": null
+    },
+    "default-branch-never-reads-its-config": {
+      "session_id": null,
+      "at": "2026-10-09T15:00:00.000Z",
+      "gitConfig": "task-and-ticket",
+      "head": "refs/heads/main",
+      "originHead": "refs/remotes/origin/main"
+    },
+    "detached-head-never-reads-config": {
+      "session_id": null,
+      "at": "2026-10-09T15:00:00.000Z",
+      "gitConfig": "task-and-ticket",
+      "head": null,
+      "originHead": null
+    },
+    "default-branch-still-has-its-session": {
+      "session_id": "00000000-0000-4000-8000-00000000000a",
+      "at": "2026-10-09T11:00:00.000Z",
+      "gitConfig": null,
+      "head": "refs/heads/main",
+      "originHead": null
+    }
+  },
+  "branchRole": {
+    "working-branch-with-remote-head": {
+      "head": "refs/heads/feat/x",
+      "originHead": "refs/remotes/origin/main"
+    },
+    "working-branch-without-remote-head": {
+      "head": "refs/heads/feat/x",
+      "originHead": null
+    },
+    "remote-head-main": {
+      "head": "refs/heads/main",
+      "originHead": "refs/remotes/origin/main"
+    },
+    "remote-head-develop-is-default": {
+      "head": "refs/heads/develop",
+      "originHead": "refs/remotes/origin/develop"
+    },
+    "remote-head-develop-makes-main-a-working-branch": {
+      "head": "refs/heads/main",
+      "originHead": "refs/remotes/origin/develop"
+    },
+    "no-remote-head-main": {
+      "head": "refs/heads/main",
+      "originHead": null
+    },
+    "no-remote-head-master": {
+      "head": "refs/heads/master",
+      "originHead": null
+    },
+    "no-remote-head-develop-is-working": {
+      "head": "refs/heads/develop",
+      "originHead": null
+    },
+    "detached": {
+      "head": null,
+      "originHead": "refs/remotes/origin/main"
+    },
+    "detached-without-remote-head": {
+      "head": null,
+      "originHead": null
+    },
+    "slashed-default-branch": {
+      "head": "refs/heads/release/stable",
+      "originHead": "refs/remotes/origin/release/stable"
+    },
+    "branch-named-like-the-remote": {
+      "head": "refs/heads/origin/main",
+      "originHead": "refs/remotes/origin/main"
+    }
+  },
+  "consent": {
+    "granted": {
+      "value": "2:3f2b9c1e-5a6d-4e7f-8a9b-0c1d2e3f4a5b"
+    },
+    "a-short-token": {
+      "value": "2:t"
+    },
+    "bare-two": {
+      "value": "2"
+    },
+    "two-and-colon": {
+      "value": "2:"
+    },
+    "padded-token": {
+      "value": "2: t"
+    },
+    "trailing-space": {
+      "value": "2:t "
+    },
+    "off": {
+      "value": "off"
+    },
+    "previous-version-1": {
+      "value": "1"
+    },
+    "a-later-version": {
+      "value": "3:t"
+    },
+    "true": {
+      "value": "true"
+    },
+    "empty": {
+      "value": ""
+    },
+    "padded": {
+      "value": " 2:t"
+    },
+    "unset": {
+      "value": null
+    }
+  },
+  "environmentRefusal": {
+    "zero-refuses": {
+      "AIDD_TELEMETRY": "0"
+    },
+    "one-does-not": {
+      "AIDD_TELEMETRY": "1"
+    },
+    "empty-does-not": {
+      "AIDD_TELEMETRY": ""
+    },
+    "false-does-not": {
+      "AIDD_TELEMETRY": "false"
+    },
+    "unset-does-not": {}
+  },
+  "telemetryDir": {
+    "explicit-dir": {
+      "platform": "posix",
+      "home": "/home/someone",
+      "env": {
+        "AIDD_TELEMETRY_DIR": "/data/measure",
+        "AIDD_USER_CONFIG_DIR": "/cfg",
+        "XDG_CONFIG_HOME": "/xdg"
+      }
+    },
+    "user-config-dir": {
+      "platform": "posix",
+      "home": "/home/someone",
+      "env": {
+        "AIDD_USER_CONFIG_DIR": "/cfg",
+        "XDG_CONFIG_HOME": "/xdg"
+      }
+    },
+    "xdg": {
+      "platform": "posix",
+      "home": "/home/someone",
+      "env": {
+        "XDG_CONFIG_HOME": "/xdg"
+      }
+    },
+    "default": {
+      "platform": "posix",
+      "home": "/home/someone",
+      "env": {}
+    },
+    "empty-explicit-dir-is-unset": {
+      "platform": "posix",
+      "home": "/home/someone",
+      "env": {
+        "AIDD_TELEMETRY_DIR": "",
+        "AIDD_USER_CONFIG_DIR": "/cfg"
+      }
+    },
+    "empty-user-config-dir-is-unset": {
+      "platform": "posix",
+      "home": "/home/someone",
+      "env": {
+        "AIDD_USER_CONFIG_DIR": "",
+        "XDG_CONFIG_HOME": "/xdg"
+      }
+    },
+    "empty-xdg-is-unset": {
+      "platform": "posix",
+      "home": "/home/someone",
+      "env": {
+        "XDG_CONFIG_HOME": ""
+      }
+    },
+    "win32-explicit-dir": {
+      "platform": "win32",
+      "home": "C:\\Users\\someone",
+      "env": {
+        "AIDD_TELEMETRY_DIR": "D:\\measure"
+      }
+    },
+    "win32-user-config-dir": {
+      "platform": "win32",
+      "home": "C:\\Users\\someone",
+      "env": {
+        "AIDD_USER_CONFIG_DIR": "D:\\cfg"
+      }
+    },
+    "win32-xdg": {
+      "platform": "win32",
+      "home": "C:\\Users\\someone",
+      "env": {
+        "XDG_CONFIG_HOME": "D:\\xdg"
+      }
+    },
+    "win32-default": {
+      "platform": "win32",
+      "home": "C:\\Users\\someone",
+      "env": {}
+    }
+  },
+  "claudeOnly": {
+    "claude-posix-transcript": {
+      "payload_session_id": "00000000-0000-4000-8000-00000000000a",
+      "env_session_id": "00000000-0000-4000-8000-00000000000a",
+      "transcript_path": "/home/someone/.claude/projects/-work-repo/00000000-0000-4000-8000-00000000000a.jsonl"
+    },
+    "claude-windows-transcript-with-backslashes": {
+      "payload_session_id": "00000000-0000-4000-8000-00000000000a",
+      "env_session_id": "00000000-0000-4000-8000-00000000000a",
+      "transcript_path": "C:\\Users\\someone\\.claude\\projects\\C--work-repo\\00000000-0000-4000-8000-00000000000a.jsonl"
+    },
+    "claude-custom-config-dir": {
+      "payload_session_id": "00000000-0000-4000-8000-00000000000a",
+      "env_session_id": "00000000-0000-4000-8000-00000000000a",
+      "transcript_path": "/data/claude-config/projects/-work-repo/00000000-0000-4000-8000-00000000000a.jsonl"
+    },
+    "session-id-differs-from-the-environment": {
+      "payload_session_id": "00000000-0000-4000-8000-00000000000a",
+      "env_session_id": "00000000-0000-4000-8000-000000000014",
+      "transcript_path": "/home/someone/.claude/projects/-work-repo/00000000-0000-4000-8000-00000000000a.jsonl"
+    },
+    "environment-has-no-session-id": {
+      "payload_session_id": "00000000-0000-4000-8000-00000000000a",
+      "env_session_id": null,
+      "transcript_path": "/home/someone/.claude/projects/-work-repo/00000000-0000-4000-8000-00000000000a.jsonl"
+    },
+    "environment-session-id-empty": {
+      "payload_session_id": "00000000-0000-4000-8000-00000000000a",
+      "env_session_id": "",
+      "transcript_path": "/home/someone/.claude/projects/-work-repo/00000000-0000-4000-8000-00000000000a.jsonl"
+    },
+    "payload-has-no-session-id": {
+      "payload_session_id": null,
+      "env_session_id": "00000000-0000-4000-8000-00000000000a",
+      "transcript_path": "/home/someone/.claude/projects/-work-repo/00000000-0000-4000-8000-00000000000a.jsonl"
+    },
+    "codex-rollout-path-with-the-inherited-claude-id": {
+      "payload_session_id": "00000000-0000-4000-8000-00000000000a",
+      "env_session_id": "00000000-0000-4000-8000-00000000000a",
+      "transcript_path": "/home/someone/.codex/sessions/2026/10/09/rollout-2026-10-09T10-00-00-00000000-0000-4000-8000-00000000000a.jsonl"
+    },
+    "codex-windows-rollout-path": {
+      "payload_session_id": "00000000-0000-4000-8000-00000000000a",
+      "env_session_id": "00000000-0000-4000-8000-00000000000a",
+      "transcript_path": "C:\\Users\\someone\\.codex\\sessions\\2026\\10\\09\\rollout-2026-10-09T10-00-00-00000000-0000-4000-8000-00000000000a.jsonl"
+    },
+    "payload-has-no-transcript-path": {
+      "payload_session_id": "00000000-0000-4000-8000-00000000000a",
+      "env_session_id": "00000000-0000-4000-8000-00000000000a",
+      "transcript_path": null
+    },
+    "projects-is-only-part-of-a-name": {
+      "payload_session_id": "00000000-0000-4000-8000-00000000000a",
+      "env_session_id": "00000000-0000-4000-8000-00000000000a",
+      "transcript_path": "/home/someone/.codex/old-projects/rollout.jsonl"
+    }
+  },
+  "consentLog": {
+    "no-file": {
+      "lines": []
+    },
+    "open-only": {
+      "lines": [
+        {
+          "token": "t1",
+          "clone": {
+            "path": "/work/a/.git",
+            "dev": "16777231",
+            "ino": "100",
+            "birthtimeMs": 1760000000000
+          },
+          "open": "2026-10-09T09:00:00.000Z"
+        }
+      ]
+    },
+    "open-then-close": {
+      "lines": [
+        {
+          "token": "t1",
+          "clone": {
+            "path": "/work/a/.git",
+            "dev": "16777231",
+            "ino": "100",
+            "birthtimeMs": 1760000000000
+          },
+          "open": "2026-10-09T09:00:00.000Z"
+        },
+        {
+          "token": "t1",
+          "close": "2026-10-09T10:00:00.000Z"
+        }
+      ]
+    },
+    "close-written-before-the-open": {
+      "lines": [
+        {
+          "token": "t1",
+          "close": "2026-10-09T10:00:00.000Z"
+        },
+        {
+          "token": "t1",
+          "clone": {
+            "path": "/work/a/.git",
+            "dev": "16777231",
+            "ino": "100",
+            "birthtimeMs": 1760000000000
+          },
+          "open": "2026-10-09T09:00:00.000Z"
+        }
+      ]
+    },
+    "double-close-ends-at-the-earliest": {
+      "lines": [
+        {
+          "token": "t1",
+          "clone": {
+            "path": "/work/a/.git",
+            "dev": "16777231",
+            "ino": "100",
+            "birthtimeMs": 1760000000000
+          },
+          "open": "2026-10-09T09:00:00.000Z"
+        },
+        {
+          "token": "t1",
+          "close": "2026-10-09T11:00:00.000Z"
+        },
+        {
+          "token": "t1",
+          "close": "2026-10-09T10:00:00.000Z"
+        }
+      ]
+    },
+    "reopening-a-token-keeps-the-first": {
+      "lines": [
+        {
+          "token": "t1",
+          "clone": {
+            "path": "/work/a/.git",
+            "dev": "16777231",
+            "ino": "100",
+            "birthtimeMs": 1760000000000
+          },
+          "open": "2026-10-09T09:00:00.000Z"
+        },
+        {
+          "token": "t1",
+          "clone": {
+            "path": "/work/b/.git",
+            "dev": "16777231",
+            "ino": "100",
+            "birthtimeMs": 1760000000000
+          },
+          "open": "2026-10-09T10:00:00.000Z"
+        }
+      ]
+    },
+    "closing-an-unknown-token-changes-nothing": {
+      "lines": [
+        {
+          "token": "t1",
+          "clone": {
+            "path": "/work/a/.git",
+            "dev": "16777231",
+            "ino": "100",
+            "birthtimeMs": 1760000000000
+          },
+          "open": "2026-10-09T09:00:00.000Z"
+        },
+        {
+          "token": "t2",
+          "close": "2026-10-09T10:00:00.000Z"
+        }
+      ]
+    },
+    "two-clones-two-tokens": {
+      "lines": [
+        {
+          "token": "t1",
+          "clone": {
+            "path": "/work/a/.git",
+            "dev": "16777231",
+            "ino": "100",
+            "birthtimeMs": 1760000000000
+          },
+          "open": "2026-10-09T09:00:00.000Z"
+        },
+        {
+          "token": "t2",
+          "clone": {
+            "path": "/work/b/.git",
+            "dev": "16777231",
+            "ino": "100",
+            "birthtimeMs": 1760000000000
+          },
+          "open": "2026-10-09T10:00:00.000Z"
+        },
+        {
+          "token": "t1",
+          "close": "2026-10-09T11:00:00.000Z"
+        }
+      ]
+    },
+    "blank-lines-are-not-damage": {
+      "lines": [
+        {
+          "token": "t1",
+          "clone": {
+            "path": "/work/a/.git",
+            "dev": "16777231",
+            "ino": "100",
+            "birthtimeMs": 1760000000000
+          },
+          "open": "2026-10-09T09:00:00.000Z"
+        },
+        "",
+        "   "
+      ]
+    },
+    "garbage-line-damages": {
+      "lines": [
+        {
+          "token": "t1",
+          "clone": {
+            "path": "/work/a/.git",
+            "dev": "16777231",
+            "ino": "100",
+            "birthtimeMs": 1760000000000
+          },
+          "open": "2026-10-09T09:00:00.000Z"
+        },
+        "{not json"
+      ]
+    },
+    "torn-last-line-is-not-yet-written": {
+      "lines": [
+        {
+          "token": "t1",
+          "clone": { "path": "/work/a/.git", "dev": "16777231", "ino": "100", "birthtimeMs": 1760000000000 },
+          "open": "2026-10-09T09:00:00.000Z"
+        }
+      ],
+      "tail": "{\"token\":\"t1\",\"clo"
+    },
+    "whole-event-without-its-newline-is-not-yet-written": {
+      "lines": [
+        {
+          "token": "t1",
+          "clone": { "path": "/work/a/.git", "dev": "16777231", "ino": "100", "birthtimeMs": 1760000000000 },
+          "open": "2026-10-09T09:00:00.000Z"
+        }
+      ],
+      "tail": "{\"token\":\"t1\",\"close\":\"2026-10-09T10:00:00.000Z\"}"
+    },
+    "torn-line-with-a-line-after-it-damages": {
+      "lines": [
+        "{\"token\":\"t1\",\"clo",
+        {
+          "token": "t1",
+          "close": "2026-10-09T10:00:00.000Z"
+        }
+      ]
+    },
+    "cut-line-damages": {
+      "lines": [
+        "{\"token\":\"t1\",\"clone\":{\"path\":\"/work/a/.git\",\"dev\":\"1"
+      ]
+    },
+    "open-with-an-extra-field-damages": {
+      "lines": [
+        {
+          "token": "t1",
+          "clone": {
+            "path": "/work/a/.git",
+            "dev": "16777231",
+            "ino": "100",
+            "birthtimeMs": 1760000000000
+          },
+          "open": "2026-10-09T09:00:00.000Z",
+          "extra": 1
+        }
+      ]
+    },
+    "open-with-no-clone-damages": {
+      "lines": [
+        {
+          "token": "t1",
+          "open": "2026-10-09T09:00:00.000Z"
+        }
+      ]
+    },
+    "clone-with-no-inode-damages": {
+      "lines": [
+        {
+          "token": "t1",
+          "clone": {
+            "path": "/work/a/.git",
+            "dev": "16777231",
+            "ino": "0",
+            "birthtimeMs": 1760000000000
+          },
+          "open": "2026-10-09T09:00:00.000Z"
+        }
+      ]
+    },
+    "close-with-an-unreadable-time-damages": {
+      "lines": [
+        {
+          "token": "t1",
+          "clone": {
+            "path": "/work/a/.git",
+            "dev": "16777231",
+            "ino": "100",
+            "birthtimeMs": 1760000000000
+          },
+          "open": "2026-10-09T09:00:00.000Z"
+        },
+        {
+          "token": "t1",
+          "close": "yesterday"
+        }
+      ]
+    },
+    "token-with-a-space-damages": {
+      "lines": [
+        {
+          "token": "t 1",
+          "clone": {
+            "path": "/work/a/.git",
+            "dev": "16777231",
+            "ino": "100",
+            "birthtimeMs": 1760000000000
+          },
+          "open": "2026-10-09T09:00:00.000Z"
+        }
+      ]
+    },
+    "line-with-open-and-close-damages": {
+      "lines": [
+        {
+          "token": "t1",
+          "open": "2026-10-09T09:00:00.000Z",
+          "close": "2026-10-09T10:00:00.000Z"
+        }
+      ]
+    },
+    "an-array-damages": {
+      "lines": [
+        "[]"
+      ]
+    }
+  },
+  "hookConsent": {
+    "key-names-an-interval-open-for-this-path": {
+      "key": "2:t1",
+      "lines": [
+        {
+          "token": "t1",
+          "clone": {
+            "path": "/work/a/.git",
+            "dev": "16777231",
+            "ino": "100",
+            "birthtimeMs": 1760000000000
+          },
+          "open": "2026-10-09T09:00:00.000Z"
+        }
+      ],
+      "realpath": "/work/a/.git",
+      "identity": {
+        "dev": "16777231",
+        "ino": "100",
+        "birthtimeMs": 1760000000000
+      }
+    },
+    "the-interval-is-closed": {
+      "key": "2:t1",
+      "lines": [
+        {
+          "token": "t1",
+          "clone": {
+            "path": "/work/a/.git",
+            "dev": "16777231",
+            "ino": "100",
+            "birthtimeMs": 1760000000000
+          },
+          "open": "2026-10-09T09:00:00.000Z"
+        },
+        {
+          "token": "t1",
+          "close": "2026-10-09T10:00:00.000Z"
+        }
+      ],
+      "realpath": "/work/a/.git",
+      "identity": {
+        "dev": "16777231",
+        "ino": "100",
+        "birthtimeMs": 1760000000000
+      }
+    },
+    "a-bare-2-set-by-hand": {
+      "key": "2",
+      "lines": [
+        {
+          "token": "t1",
+          "clone": {
+            "path": "/work/a/.git",
+            "dev": "16777231",
+            "ino": "100",
+            "birthtimeMs": 1760000000000
+          },
+          "open": "2026-10-09T09:00:00.000Z"
+        }
+      ],
+      "realpath": "/work/a/.git",
+      "identity": {
+        "dev": "16777231",
+        "ino": "100",
+        "birthtimeMs": 1760000000000
+      }
+    },
+    "a-forged-token-names-no-interval": {
+      "key": "2:forged",
+      "lines": [
+        {
+          "token": "t1",
+          "clone": {
+            "path": "/work/a/.git",
+            "dev": "16777231",
+            "ino": "100",
+            "birthtimeMs": 1760000000000
+          },
+          "open": "2026-10-09T09:00:00.000Z"
+        }
+      ],
+      "realpath": "/work/a/.git",
+      "identity": {
+        "dev": "16777231",
+        "ino": "100",
+        "birthtimeMs": 1760000000000
+      }
+    },
+    "a-forged-token-and-no-log": {
+      "key": "2:forged",
+      "lines": [],
+      "realpath": "/work/a/.git",
+      "identity": {
+        "dev": "16777231",
+        "ino": "100",
+        "birthtimeMs": 1760000000000
+      }
+    },
+    "a-copy-carries-the-key-to-another-path": {
+      "key": "2:t1",
+      "lines": [
+        {
+          "token": "t1",
+          "clone": {
+            "path": "/work/a/.git",
+            "dev": "16777231",
+            "ino": "100",
+            "birthtimeMs": 1760000000000
+          },
+          "open": "2026-10-09T09:00:00.000Z"
+        }
+      ],
+      "realpath": "/work/b/.git",
+      "identity": {
+        "dev": "16777231",
+        "ino": "200",
+        "birthtimeMs": 1760000500000
+      }
+    },
+    "the-key-is-off": {
+      "key": "off",
+      "lines": [
+        {
+          "token": "t1",
+          "clone": {
+            "path": "/work/a/.git",
+            "dev": "16777231",
+            "ino": "100",
+            "birthtimeMs": 1760000000000
+          },
+          "open": "2026-10-09T09:00:00.000Z"
+        }
+      ],
+      "realpath": "/work/a/.git",
+      "identity": {
+        "dev": "16777231",
+        "ino": "100",
+        "birthtimeMs": 1760000000000
+      }
+    },
+    "the-key-is-unset": {
+      "key": null,
+      "lines": [
+        {
+          "token": "t1",
+          "clone": {
+            "path": "/work/a/.git",
+            "dev": "16777231",
+            "ino": "100",
+            "birthtimeMs": 1760000000000
+          },
+          "open": "2026-10-09T09:00:00.000Z"
+        }
+      ],
+      "realpath": "/work/a/.git",
+      "identity": {
+        "dev": "16777231",
+        "ino": "100",
+        "birthtimeMs": 1760000000000
+      }
+    },
+    "a-clone-made-again-at-the-path-has-no-key": {
+      "key": null,
+      "lines": [
+        {
+          "token": "t1",
+          "clone": {
+            "path": "/work/a/.git",
+            "dev": "16777231",
+            "ino": "100",
+            "birthtimeMs": 1760000000000
+          },
+          "open": "2026-10-09T09:00:00.000Z"
+        }
+      ],
+      "realpath": "/work/a/.git",
+      "identity": {
+        "dev": "16777231",
+        "ino": "100",
+        "birthtimeMs": 1760000000000
+      }
+    },
+    "the-key-names-the-second-of-two-open-intervals": {
+      "key": "2:t2",
+      "lines": [
+        {
+          "token": "t1",
+          "clone": {
+            "path": "/work/a/.git",
+            "dev": "16777231",
+            "ino": "100",
+            "birthtimeMs": 1760000000000
+          },
+          "open": "2026-10-09T09:00:00.000Z"
+        },
+        {
+          "token": "t2",
+          "clone": {
+            "path": "/work/a/.git",
+            "dev": "16777231",
+            "ino": "100",
+            "birthtimeMs": 1760000000000
+          },
+          "open": "2026-10-09T10:00:00.000Z"
+        }
+      ],
+      "realpath": "/work/a/.git",
+      "identity": {
+        "dev": "16777231",
+        "ino": "100",
+        "birthtimeMs": 1760000000000
+      }
+    },
+    "another-clone-open-is-left-alone": {
+      "key": "off",
+      "lines": [
+        {
+          "token": "t1",
+          "clone": {
+            "path": "/work/a/.git",
+            "dev": "16777231",
+            "ino": "100",
+            "birthtimeMs": 1760000000000
+          },
+          "open": "2026-10-09T09:00:00.000Z"
+        },
+        {
+          "token": "t2",
+          "clone": {
+            "path": "/work/b/.git",
+            "dev": "16777231",
+            "ino": "100",
+            "birthtimeMs": 1760000000000
+          },
+          "open": "2026-10-09T10:00:00.000Z"
+        }
+      ],
+      "realpath": "/work/a/.git",
+      "identity": {
+        "dev": "16777231",
+        "ino": "100",
+        "birthtimeMs": 1760000000000
+      }
+    },
+    "a-damaged-log-grants-nothing-and-closes-nothing": {
+      "key": "2:t1",
+      "lines": [
+        {
+          "token": "t1",
+          "clone": {
+            "path": "/work/a/.git",
+            "dev": "16777231",
+            "ino": "100",
+            "birthtimeMs": 1760000000000
+          },
+          "open": "2026-10-09T09:00:00.000Z"
+        },
+        "{not json"
+      ],
+      "realpath": "/work/a/.git",
+      "identity": {
+        "dev": "16777231",
+        "ino": "100",
+        "birthtimeMs": 1760000000000
+      }
+    },
+    "a-damaged-log-and-a-key-gone": {
+      "key": "off",
+      "lines": [
+        {
+          "token": "t1",
+          "clone": {
+            "path": "/work/a/.git",
+            "dev": "16777231",
+            "ino": "100",
+            "birthtimeMs": 1760000000000
+          },
+          "open": "2026-10-09T09:00:00.000Z"
+        },
+        "{not json"
+      ],
+      "realpath": "/work/a/.git",
+      "identity": {
+        "dev": "16777231",
+        "ino": "100",
+        "birthtimeMs": 1760000000000
+      }
+    },
+    "another-directory-at-the-path-is-neither-granted-nor-closed": {
+      "key": "2:t1",
+      "lines": [
+        {
+          "token": "t1",
+          "clone": {
+            "path": "/work/a/.git",
+            "dev": "16777231",
+            "ino": "100",
+            "birthtimeMs": 1760000000000
+          },
+          "open": "2026-10-09T09:00:00.000Z"
+        }
+      ],
+      "realpath": "/work/a/.git",
+      "identity": {
+        "dev": "16777231",
+        "ino": "200",
+        "birthtimeMs": 1760000000000
+      }
+    },
+    "another-device-at-the-path-is-neither-granted-nor-closed": {
+      "key": "2:t1",
+      "lines": [
+        {
+          "token": "t1",
+          "clone": {
+            "path": "/work/a/.git",
+            "dev": "16777231",
+            "ino": "100",
+            "birthtimeMs": 1760000000000
+          },
+          "open": "2026-10-09T09:00:00.000Z"
+        }
+      ],
+      "realpath": "/work/a/.git",
+      "identity": {
+        "dev": "16777232",
+        "ino": "100",
+        "birthtimeMs": 1760000000000
+      }
+    },
+    "another-birth-at-the-path-is-neither-granted-nor-closed": {
+      "key": "2:t1",
+      "lines": [
+        {
+          "token": "t1",
+          "clone": {
+            "path": "/work/a/.git",
+            "dev": "16777231",
+            "ino": "100",
+            "birthtimeMs": 1760000000000
+          },
+          "open": "2026-10-09T09:00:00.000Z"
+        }
+      ],
+      "realpath": "/work/a/.git",
+      "identity": {
+        "dev": "16777231",
+        "ino": "100",
+        "birthtimeMs": 1760000500000
+      }
+    },
+    "another-directory-at-the-path-and-a-key-gone-closes-nothing": {
+      "key": "off",
+      "lines": [
+        {
+          "token": "t1",
+          "clone": {
+            "path": "/work/a/.git",
+            "dev": "16777231",
+            "ino": "100",
+            "birthtimeMs": 1760000000000
+          },
+          "open": "2026-10-09T09:00:00.000Z"
+        }
+      ],
+      "realpath": "/work/a/.git",
+      "identity": {
+        "dev": "16777231",
+        "ino": "200",
+        "birthtimeMs": 1760000000000
+      }
+    },
+    "no-birth-recorded-and-none-now-is-the-clone": {
+      "key": "2:t1",
+      "lines": [
+        {
+          "token": "t1",
+          "clone": {
+            "path": "/work/a/.git",
+            "dev": "16777231",
+            "ino": "100",
+            "birthtimeMs": 0
+          },
+          "open": "2026-10-09T09:00:00.000Z"
+        }
+      ],
+      "realpath": "/work/a/.git",
+      "identity": {
+        "dev": "16777231",
+        "ino": "100",
+        "birthtimeMs": 0
+      }
+    },
+    "a-directory-the-platform-cannot-identify-grants-and-closes-nothing": {
+      "key": "off",
+      "lines": [
+        {
+          "token": "t1",
+          "clone": {
+            "path": "/work/a/.git",
+            "dev": "16777231",
+            "ino": "100",
+            "birthtimeMs": 1760000000000
+          },
+          "open": "2026-10-09T09:00:00.000Z"
+        }
+      ],
+      "realpath": "/work/a/.git",
+      "identity": null
+    }
+  },
+  "cloneIdentity": {
+    "macos-birth-differs-from-change-time": {
+      "dev": "16777231",
+      "ino": "100",
+      "birthtimeMs": "1760000000000",
+      "birthtimeNs": "1760000000000000000",
+      "ctimeNs": "1760000099999000000"
+    },
+    "linux-no-birth-is-zero": {
+      "dev": "2049",
+      "ino": "524301",
+      "birthtimeMs": "0",
+      "birthtimeNs": "0",
+      "ctimeNs": "1760000099999000000"
+    },
+    "linux-birth-equal-to-change-time-is-no-birth": {
+      "dev": "2049",
+      "ino": "524301",
+      "birthtimeMs": "1760000099999",
+      "birthtimeNs": "1760000099999000000",
+      "ctimeNs": "1760000099999000000"
+    },
+    "linux-birth-in-the-change-time-millisecond-is-a-birth": {
+      "dev": "2049",
+      "ino": "524301",
+      "birthtimeMs": "1760000099999",
+      "birthtimeNs": "1760000099999100000",
+      "ctimeNs": "1760000099999900000"
+    },
+    "a-negative-birth-is-no-birth": {
+      "dev": "2049",
+      "ino": "524301",
+      "birthtimeMs": "-1",
+      "birthtimeNs": "-1000000",
+      "ctimeNs": "1760000099999000000"
+    },
+    "a-file-index-a-number-cannot-hold-is-kept-exactly": {
+      "dev": "3735928559",
+      "ino": "9007199254740993",
+      "birthtimeMs": "1760000000000",
+      "birthtimeNs": "1760000000000000000",
+      "ctimeNs": "1760000099999000000"
+    },
+    "no-inode-is-no-identity": {
+      "dev": "16777231",
+      "ino": "0",
+      "birthtimeMs": "1760000000000",
+      "birthtimeNs": "1760000000000000000",
+      "ctimeNs": "1760000099999000000"
+    }
+  }
+}

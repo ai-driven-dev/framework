@@ -138,17 +138,6 @@ pre-commit:
             >/dev/null
           git add "${plugin}CATALOG.md" 2>/dev/null || true
         done
-    summarize-telemetry-prompts-doc:
-      run: |
-        if ! command -v node >/dev/null 2>&1; then
-          echo "ℹ️  node not available; skipping summarize-telemetry-prompts-doc"
-          exit 0
-        fi
-        node scripts/summarize-markdown.js plugins/aidd-telemetry docs/prompts-documentation.md \
-          --depth=3 \
-          --fields=description \
-          >/dev/null
-        git add docs/prompts-documentation.md 2>/dev/null || true
     sync-readme-counts:
       run: |
         if ! command -v node >/dev/null 2>&1; then
@@ -192,12 +181,3 @@ commit-msg:
   commands:
     commitlint:
       run: pnpm exec commitlint --edit {1}
-
-# lefthook owns prepare-commit-msg here and regenerates it on install, so `aidd telemetry on`'s
-# delegate is called from a job instead. Absent delegate, nothing runs — opt-in per machine.
-prepare-commit-msg:
-  commands:
-    aidd-session-trailer:
-      run: |
-        delegate="$(git rev-parse --git-common-dir)/hooks/aidd-session-trailer.sh"
-        if [ -f "$delegate" ]; then sh "$delegate" {1} {2}; fi

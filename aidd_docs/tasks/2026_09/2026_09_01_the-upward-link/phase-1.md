@@ -1,5 +1,5 @@
 ---
-status: pending
+status: superseded
 ---
 
 # Instruction: a folder says what it delivers

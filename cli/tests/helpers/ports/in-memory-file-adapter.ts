@@ -147,10 +147,6 @@ export class InMemoryFileAdapter implements FileReader, FileWriter, FileMerger {
     this.files.set(normalizedPath, JSON.stringify(merged, null, 2));
   }
 
-  async chmodExecutable(_path: string): Promise<void> {
-    // No-op: no permission bits in memory
-  }
-
   async deleteDirectory(dirPath: string): Promise<void> {
     const normalizedDir = norm(dirPath);
     const prefix = normalizedDir.endsWith("/") ? normalizedDir : `${normalizedDir}/`;

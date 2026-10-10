@@ -53,11 +53,11 @@ describe("post-install pipeline", () => {
 
     expect(recordingGitignore.calls).toHaveLength(1);
     expect(recordingGitignore.calls[0]).toEqual(
-      expect.arrayContaining([".aidd/cache/", "aidd_docs/runs/", ".claude/settings.local.json"])
+      expect.arrayContaining([".aidd/cache/", ".claude/settings.local.json"])
     );
   });
 
-  it("ignores the run journal, and nothing wider", async () => {
+  it("ignores the cache, and nothing wider than aidd_docs", async () => {
     const deps = await buildUnitDeps(PROJECT_ROOT);
     await initAndInstall(deps, PROJECT_ROOT, "claude");
     const manifest = await deps.manifestRepo.load();
@@ -69,7 +69,7 @@ describe("post-install pipeline", () => {
     });
 
     const gitignoreContent = deps.fs.getFile(join(PROJECT_ROOT, ".gitignore")) ?? "";
-    expect(gitignoreContent).toContain("aidd_docs/runs/");
+    expect(gitignoreContent).toContain(".aidd/cache/");
     expect(gitignoreContent).not.toContain("aidd_docs/*");
     expect(gitignoreContent).not.toMatch(/^aidd_docs\/$/mu);
   });

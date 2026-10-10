@@ -25,7 +25,6 @@ const noopFs: FileReader & FileWriter = {
   createDirectory: async () => {},
   deleteEmptyDirectories: async () => {},
   deleteDirectory: async () => {},
-  chmodExecutable: async () => {},
 };
 
 const noopHasher: Hasher = {

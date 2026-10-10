@@ -54,6 +54,8 @@ const ONLINE_COMMAND_PATHS = new Set([
 
 program.hook("preAction", async (_thisCommand, actionCommand) => {
   if (process.env.AIDD_SKIP_UPDATE_CHECK === "1") return;
+  // A hook runs `telemetry ingest --quiet`; an update notice would break its silence.
+  if (resolveCommandPath(actionCommand).startsWith("telemetry")) return;
   const opts = program.opts<{ verbose?: boolean }>();
   const output = new CLIOutput(opts.verbose ?? false);
   const deps = await createDeps(process.cwd(), { verbose: opts.verbose ?? false }, output).catch(

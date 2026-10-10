@@ -1,4 +1,3 @@
-import type { TelemetryLocalRead } from "../../../kernel/measurement.js";
 import type { AiToolId, IdeToolId } from "../../../kernel/tool.js";
 import type { ToolBuildContract } from "./build-contract.js";
 import type { AgentsCapability } from "./capabilities/agents-capability.js";
@@ -48,21 +47,6 @@ export interface AiTool<C> {
   /** How the vendor writes it. `toolId` is a key, not a name: nothing user-facing
    * should print `copilot` where a person reads "GitHub Copilot". */
   readonly displayName: string;
-  /** Whether this tool's own file(s) can be read locally for a session's counters — see
-   * {@link TelemetryLocalRead}. */
-  readonly telemetryLocalRead: TelemetryLocalRead;
-  /** How the run journal's hook names this tool in its own `session_start` line — not the same
-   * string as `toolId`, since the hook detects a host from a payload's shape and spells Claude
-   * Code `claude-code`. Absent for a tool the journal hook does not run under. */
-  readonly telemetryJournalHost?: string;
-  /** Whether a session on this tool can be traced to the task it worked on: true wherever
-   * `journal.cjs`'s `tool-used` dispatch reaches the host at all, since a task can be *declared*
-   * — a tool call's own arguments named a file under a task folder — asking nothing of the
-   * host's payload shape. `false` would mean no tool-used event ever reaches that host, which a
-   * declaration cannot work around. A tool declaring `false` is still reportable by period and
-   * by step; it simply belongs to no task. The truth lives in the framework's own hook scripts,
-   * which this side cannot import, so it is declared here and pinned by a test. */
-  readonly telemetryTaskAttributable: boolean;
   readonly directory: string;
   readonly toolSuffix: string;
   readonly signalDir: string | null;

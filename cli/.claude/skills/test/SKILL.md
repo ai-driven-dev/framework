@@ -6,7 +6,7 @@ description: >
   user-reported bug. Do NOT use for tier conventions, the vitest projects, doubles, fixtures or
   how to run a suite — those live in `aidd_docs/memory/testing.md`. Do NOT use for writing
   production code — use the context skill that owns the concept (`tools`, `translate`,
-  `distribution`, `framework`, `telemetry`).
+  `distribution`, `framework`).
 ---
 
 # Test

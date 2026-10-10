@@ -69,17 +69,6 @@ describe("FileAdapter, at the edges", () => {
     });
   });
 
-  describe("chmodExecutable()", () => {
-    it("makes the file executable", async () => {
-      const path = join(tempDir, "run.sh");
-      await writeFile(path, "", { mode: 0o644 });
-
-      await fs.chmodExecutable(path);
-
-      expect(await fs.isExecutable(path)).toBe(true);
-    });
-  });
-
   describe("deleteEmptyDirectories()", () => {
     it("copes with a directory that is not there", async () => {
       await expect(fs.deleteEmptyDirectories(join(tempDir, "gone"))).resolves.toBeUndefined();

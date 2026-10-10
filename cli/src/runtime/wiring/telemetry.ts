@@ -1,137 +1,187 @@
-import type { GitignoreUseCase } from "../../contexts/framework/application/gitignore-use-case.js";
-import type { ManifestRepository } from "../../contexts/framework/domain/ports/manifest-repository.js";
-import { DiagnoseTelemetryUseCase } from "../../contexts/telemetry/application/diagnose-telemetry-use-case.js";
-import { ForgetTelemetryUseCase } from "../../contexts/telemetry/application/forget-telemetry-use-case.js";
-import { PersonIdentityUseCase } from "../../contexts/telemetry/application/person-identity-use-case.js";
-import { ReadLocalCostUseCase } from "../../contexts/telemetry/application/read-local-cost-use-case.js";
-import { ReportCostUseCase } from "../../contexts/telemetry/application/report-cost-use-case.js";
-import { TelemetryOffUseCase } from "../../contexts/telemetry/application/telemetry-off-use-case.js";
-import { TelemetryOnUseCase } from "../../contexts/telemetry/application/telemetry-on-use-case.js";
-import { createClaudeCodeTranscriptAccumulator } from "../../contexts/telemetry/domain/formats/claude-code-transcript.js";
-import { createCodexRolloutAccumulator } from "../../contexts/telemetry/domain/formats/codex-rollout.js";
-import type { SessionCostReader } from "../../contexts/telemetry/domain/ports/session-cost-reader.js";
-import type { TelemetrySink } from "../../contexts/telemetry/domain/ports/telemetry-sink.js";
-import type { VersionControl } from "../../contexts/telemetry/domain/ports/version-control.js";
-import { CopilotCostReaderAdapter } from "../../contexts/telemetry/infrastructure/copilot-cost-reader-adapter.js";
-import { HookTrustReaderAdapter } from "../../contexts/telemetry/infrastructure/hook-trust-reader-adapter.js";
-import { OpencodeCostReaderAdapter } from "../../contexts/telemetry/infrastructure/opencode-cost-reader-adapter.js";
-import { PersonIdentityAdapter } from "../../contexts/telemetry/infrastructure/person-identity-adapter.js";
-import { RunJournalReaderAdapter } from "../../contexts/telemetry/infrastructure/run-journal-reader-adapter.js";
-import { TaskBacklogAdapter } from "../../contexts/telemetry/infrastructure/task-backlog-adapter.js";
-import { TelemetryEvidenceAdapter } from "../../contexts/telemetry/infrastructure/telemetry-evidence-adapter.js";
-import { TelemetrySinkAdapter } from "../../contexts/telemetry/infrastructure/telemetry-sink-adapter.js";
-import { TranscriptCostReaderAdapter } from "../../contexts/telemetry/infrastructure/transcript-cost-reader-adapter.js";
-import { CLAUDE_CODE_TRANSCRIPT_LOCATION } from "../../contexts/tools/domain/profiles/claude/claude-transcript-location.js";
-import { CODEX_ROLLOUT_LOCATION } from "../../contexts/tools/domain/profiles/codex/codex-transcript-location.js";
-import { hostPluginRegistryReaders } from "../../contexts/tools/infrastructure/host-plugin-registry-reader-adapter.js";
-import type { FileReader } from "../../kernel/ports/file-reader.js";
-import type { FileWriter } from "../../kernel/ports/file-writer.js";
-import type { Logger } from "../../kernel/ports/logger.js";
-import type { VersionReader } from "../../kernel/ports/version-reader.js";
-import { resolveHomeDir } from "../../kernel/reading/home-dir.js";
-import type { AiToolId } from "../../kernel/tool.js";
-import { installedPluginsFromManifest } from "./installed-plugins-from-manifest.js";
-
-export interface TelemetryWiringShared {
-  fs: FileReader & FileWriter;
-  logger: Logger;
-  git: VersionControl;
-  projectRoot: string;
-  gitignoreUseCase: GitignoreUseCase;
-  currentVersionProvider: VersionReader;
-  manifestRepo: ManifestRepository;
-}
+import { randomUUID } from "node:crypto";
+import { homedir } from "node:os";
+import { join } from "node:path";
+import { BranchDeclarations } from "../../contexts/telemetry/application/branch-declarations.js";
+import { ConsentedRepositories } from "../../contexts/telemetry/application/consented-repositories.js";
+import { DeclareTaskUseCase } from "../../contexts/telemetry/application/declare-task-use-case.js";
+import { DirectoryResolver } from "../../contexts/telemetry/application/directory-resolver.js";
+import { ForgetTelemetryUseCase } from "../../contexts/telemetry/application/forget/forget-telemetry-use-case.js";
+import { ManageIdentityUseCase } from "../../contexts/telemetry/application/identity/manage-identity-use-case.js";
+import { IngestUsageUseCase } from "../../contexts/telemetry/application/ingest-usage-use-case.js";
+import { ReadClaudeUsageUseCase } from "../../contexts/telemetry/application/read-claude-usage-use-case.js";
+import { DeclaredBindings } from "../../contexts/telemetry/application/report/declared-bindings.js";
+import { ReportUsageUseCase } from "../../contexts/telemetry/application/report/report-usage-use-case.js";
+import { ShowTaskBindingUseCase } from "../../contexts/telemetry/application/show-task-binding-use-case.js";
+import { SnapshotBindingsUseCase } from "../../contexts/telemetry/application/snapshot-bindings-use-case.js";
+import { TelemetryOffUseCase } from "../../contexts/telemetry/application/switch/telemetry-off-use-case.js";
+import { TelemetryOnUseCase } from "../../contexts/telemetry/application/switch/telemetry-on-use-case.js";
+import {
+  claudeConfigDir,
+  claudeProjectsRoot,
+} from "../../contexts/telemetry/domain/claude-projects-root.js";
+import { legacyLocations } from "../../contexts/telemetry/domain/legacy/legacy-locations.js";
+import { refusedByEnvironment as refusedByEnvironmentValue } from "../../contexts/telemetry/domain/telemetry-consent.js";
+import { BindingSnapshotStoreAdapter } from "../../contexts/telemetry/infrastructure/binding-snapshot-store-adapter.js";
+import { BindingsLockAdapter } from "../../contexts/telemetry/infrastructure/bindings-lock-adapter.js";
+import { ClaudeTranscriptSourceAdapter } from "../../contexts/telemetry/infrastructure/claude-transcript-source-adapter.js";
+import { ConsentHistoryAdapter } from "../../contexts/telemetry/infrastructure/consent/consent-history-adapter.js";
+import { GitBranchBindingStoreAdapter } from "../../contexts/telemetry/infrastructure/declaration/git-branch-binding-store-adapter.js";
+import { SessionBindingStoreAdapter } from "../../contexts/telemetry/infrastructure/declaration/session-binding-store-adapter.js";
+import { MeasurementErasureAdapter } from "../../contexts/telemetry/infrastructure/forget/measurement-erasure-adapter.js";
+import { RepositoryDeclarationsAdapter } from "../../contexts/telemetry/infrastructure/forget/repository-declarations-adapter.js";
+import { GitBranchBindingSourceAdapter } from "../../contexts/telemetry/infrastructure/git-branch-binding-source-adapter.js";
+import { GitConsentAdapter } from "../../contexts/telemetry/infrastructure/git-consent-adapter.js";
+import { GitRepositoryLocatorAdapter } from "../../contexts/telemetry/infrastructure/git-repository-locator-adapter.js";
+import { PersonIdentityAdapter } from "../../contexts/telemetry/infrastructure/identity/person-identity-adapter.js";
+import { ResolutionStoreAdapter } from "../../contexts/telemetry/infrastructure/resolution-store-adapter.js";
+import { ClaudeSettingsAdapter } from "../../contexts/telemetry/infrastructure/switch/claude-settings-adapter.js";
+import { LegacyHookAdapter } from "../../contexts/telemetry/infrastructure/switch/legacy-hook-adapter.js";
+import { ProjectConfigAdapter } from "../../contexts/telemetry/infrastructure/switch/project-config-adapter.js";
+import { RunJournalAdapter } from "../../contexts/telemetry/infrastructure/switch/run-journal-adapter.js";
+import { UsageLedgerAdapter } from "../../contexts/telemetry/infrastructure/usage-ledger-adapter.js";
+import { PrivateStorageAdapter } from "../filesystem/private-storage-adapter.js";
+import { environmentWithoutGitVariables } from "../git/git-environment.js";
+import { userConfigDirOf } from "../user-config-dir.js";
 
 export interface TelemetryDeps {
-  telemetrySink: TelemetrySink;
+  declareTaskUseCase: DeclareTaskUseCase;
+  showTaskBindingUseCase: ShowTaskBindingUseCase;
+  ingestUsageUseCase: IngestUsageUseCase;
+  snapshotBindingsUseCase: SnapshotBindingsUseCase;
+  reportUsageUseCase: ReportUsageUseCase;
+  manageIdentityUseCase: ManageIdentityUseCase;
   telemetryOnUseCase: TelemetryOnUseCase;
   telemetryOffUseCase: TelemetryOffUseCase;
-  readLocalCostUseCase: ReadLocalCostUseCase;
-  personIdentityUseCase: PersonIdentityUseCase;
-  diagnoseTelemetryUseCase: DiagnoseTelemetryUseCase;
-  reportCostUseCase: ReportCostUseCase;
   forgetTelemetryUseCase: ForgetTelemetryUseCase;
 }
 
-/** Tool identifiers appear here because a profile cannot name the adapter that reads it
- * without putting infrastructure in the domain. `resolveHomeDir()` rather than a bare
- * `homedir()`: on Windows the bare call ignores a `HOME` a person or a test sandbox set. */
-export function wireTelemetry(shared: TelemetryWiringShared): TelemetryDeps {
-  const { fs, logger, git, projectRoot, gitignoreUseCase, currentVersionProvider, manifestRepo } =
-    shared;
-  const telemetryEvidence = new TelemetryEvidenceAdapter();
-  const telemetrySink = new TelemetrySinkAdapter();
-  const runJournalReader = new RunJournalReaderAdapter(projectRoot);
-  const personIdentity = new PersonIdentityAdapter();
+/** Where a person's measurement lives. `AIDD_TELEMETRY_DIR` moves it outright; otherwise it is
+ * a subdirectory of the user configuration, apart from the files that live at its root. */
+export function telemetryDirOf(
+  env: NodeJS.ProcessEnv,
+  home: string,
+  joinPath: (...parts: string[]) => string = join
+): string {
+  const chosen = env.AIDD_TELEMETRY_DIR;
+  return chosen !== undefined && chosen !== ""
+    ? chosen
+    : joinPath(userConfigDirOf(env, home, joinPath), "telemetry");
+}
 
-  // The one place allowed to map a tool that declares `telemetryLocalRead: { kind:
-  // "declared" }` to the adapter that reads it.
-  const localCostReaders: ReadonlyMap<AiToolId, SessionCostReader> = new Map<
-    AiToolId,
-    SessionCostReader
-  >([
-    ["opencode", new OpencodeCostReaderAdapter()],
-    [
-      "claude",
-      new TranscriptCostReaderAdapter(
-        resolveHomeDir(),
-        CLAUDE_CODE_TRANSCRIPT_LOCATION,
-        createClaudeCodeTranscriptAccumulator
-      ),
-    ],
-    [
-      "codex",
-      new TranscriptCostReaderAdapter(
-        resolveHomeDir(),
-        CODEX_ROLLOUT_LOCATION,
-        createCodexRolloutAccumulator
-      ),
-    ],
-    ["copilot", new CopilotCostReaderAdapter(resolveHomeDir())],
-  ]);
+export function telemetryDir(): string {
+  return telemetryDirOf(process.env, homedir());
+}
 
-  const readLocalCostUseCase = new ReadLocalCostUseCase(
-    telemetrySink,
-    localCostReaders,
-    runJournalReader,
-    personIdentity,
-    telemetryEvidence,
-    currentVersionProvider,
-    logger
+/** macOS and Windows file systems answer one directory to several spellings. */
+export function caseInsensitiveFileSystem(platform: NodeJS.Platform): boolean {
+  return platform === "darwin" || platform === "win32";
+}
+
+export function wireTelemetry(homedir: () => string): TelemetryDeps {
+  const root = telemetryDir();
+  const ledgerDir = join(root, "ledger");
+  const storage = new PrivateStorageAdapter();
+  const gitEnv = environmentWithoutGitVariables();
+  const bindingsDir = join(root, "bindings");
+  const branchSource = new GitBranchBindingSourceAdapter(gitEnv);
+  const snapshotStore = new BindingSnapshotStoreAdapter(bindingsDir, storage);
+  const bindingsLock = new BindingsLockAdapter(bindingsDir, storage);
+  const snapshotBindingsUseCase = new SnapshotBindingsUseCase(
+    branchSource,
+    snapshotStore,
+    bindingsLock,
+    () => new Date()
   );
-
-  return {
-    telemetrySink,
-    telemetryOnUseCase: new TelemetryOnUseCase(fs, logger, gitignoreUseCase, git, telemetrySink),
-    telemetryOffUseCase: new TelemetryOffUseCase(fs, logger, telemetryEvidence, git),
-    readLocalCostUseCase,
-    personIdentityUseCase: new PersonIdentityUseCase(personIdentity),
-    diagnoseTelemetryUseCase: new DiagnoseTelemetryUseCase(
-      telemetryEvidence,
-      git,
-      runJournalReader,
-      localCostReaders,
-      new HookTrustReaderAdapter(),
-      personIdentity,
-      telemetrySink,
-      currentVersionProvider,
-      installedPluginsFromManifest(manifestRepo),
-      hostPluginRegistryReaders()
+  const ledger = new UsageLedgerAdapter(ledgerDir, storage);
+  const locator = new GitRepositoryLocatorAdapter(gitEnv);
+  const consents = new GitConsentAdapter(gitEnv);
+  const resolutionStore = new ResolutionStoreAdapter(ledgerDir, storage);
+  const consentHistory = new ConsentHistoryAdapter(ledgerDir, storage);
+  const environment = {
+    caseInsensitiveFileSystem: caseInsensitiveFileSystem(process.platform),
+    now: () => new Date(),
+  };
+  const sessions = new SessionBindingStoreAdapter(bindingsDir, storage);
+  // An empty variable is no session: only a set, non-empty id is one a declaration can bind.
+  const sessionId = process.env.CLAUDE_CODE_SESSION_ID || null;
+  const refusedByEnvironment = refusedByEnvironmentValue(process.env.AIDD_TELEMETRY);
+  const repositories = new ConsentedRepositories(locator, consents, consentHistory);
+  const branchDeclarations = new BranchDeclarations(
+    new GitBranchBindingStoreAdapter(gitEnv),
+    branchSource,
+    snapshotBindingsUseCase
+  );
+  const declaration = { refusedByEnvironment, sessionId, now: () => new Date() };
+  const declareTaskUseCase = new DeclareTaskUseCase(
+    repositories,
+    sessions,
+    branchDeclarations,
+    bindingsLock,
+    declaration
+  );
+  const showTaskBindingUseCase = new ShowTaskBindingUseCase(
+    repositories,
+    sessions,
+    branchDeclarations,
+    declaration
+  );
+  const ingestUsageUseCase = new IngestUsageUseCase(
+    new ReadClaudeUsageUseCase(
+      new ClaudeTranscriptSourceAdapter(
+        claudeProjectsRoot(process.env.CLAUDE_CONFIG_DIR, homedir())
+      )
     ),
-    reportCostUseCase: new ReportCostUseCase(
-      telemetrySink,
-      runJournalReader,
-      personIdentity,
-      telemetryEvidence,
-      new TaskBacklogAdapter(projectRoot),
-      logger,
-      readLocalCostUseCase
+    ledger,
+    new DirectoryResolver(locator, consents, resolutionStore, consentHistory, environment),
+    snapshotBindingsUseCase,
+    { refusedByEnvironment }
+  );
+  const identity = new PersonIdentityAdapter(root, storage);
+  const claudeDir = claudeConfigDir(process.env.CLAUDE_CONFIG_DIR, homedir());
+  return {
+    declareTaskUseCase,
+    showTaskBindingUseCase,
+    ingestUsageUseCase,
+    snapshotBindingsUseCase,
+    reportUsageUseCase: new ReportUsageUseCase(
+      ingestUsageUseCase,
+      ledger,
+      new DeclaredBindings(sessions, snapshotStore),
+      identity
+    ),
+    manageIdentityUseCase: new ManageIdentityUseCase(identity),
+    telemetryOnUseCase: new TelemetryOnUseCase(
+      locator,
+      consents,
+      consents,
+      new ProjectConfigAdapter(),
+      new LegacyHookAdapter(gitEnv),
+      new RunJournalAdapter(gitEnv),
+      ledger,
+      resolutionStore,
+      consentHistory,
+      new ClaudeSettingsAdapter(claudeDir),
+      environment,
+      randomUUID
+    ),
+    telemetryOffUseCase: new TelemetryOffUseCase(
+      locator,
+      consents,
+      consents,
+      ledger,
+      consentHistory,
+      environment.now
     ),
     forgetTelemetryUseCase: new ForgetTelemetryUseCase(
-      telemetrySink,
-      runJournalReader,
-      personIdentity,
-      git
+      new MeasurementErasureAdapter(
+        root,
+        legacyLocations(process.env, homedir(), process.platform, root)
+      ),
+      new RepositoryDeclarationsAdapter(gitEnv),
+      snapshotStore,
+      resolutionStore,
+      consentHistory,
+      ledger
     ),
   };
 }

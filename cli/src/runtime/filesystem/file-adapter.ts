@@ -1,15 +1,5 @@
 import { constants } from "node:fs";
-import {
-  access,
-  chmod,
-  mkdir,
-  readdir,
-  readFile,
-  realpath,
-  rm,
-  rmdir,
-  stat,
-} from "node:fs/promises";
+import { access, mkdir, readdir, readFile, realpath, rm, rmdir, stat } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import type { FileMerger } from "../../contexts/tools/domain/ports/file-merger.js";
 import { JsonParseError } from "../../kernel/errors.js";
@@ -133,10 +123,6 @@ export class FileAdapter implements FileReader, FileWriter, FileMerger {
 
   async deleteDirectory(path: string): Promise<void> {
     await rm(path, { recursive: true, force: true });
-  }
-
-  async chmodExecutable(path: string): Promise<void> {
-    await chmod(path, 0o755);
   }
 
   async listFilesRecursive(dirPath: string): Promise<string[]> {

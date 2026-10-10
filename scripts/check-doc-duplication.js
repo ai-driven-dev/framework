@@ -25,9 +25,6 @@ const SCANNED_DIRECTORIES = ["docs", "aidd_docs/memory", "cli/aidd_docs/memory"]
 const SCANNED_FILES = ["README.md", "cli/README.md"];
 const SCANNED_GLOBS = ["plugins/*/README.md"];
 
-/** Generated on every commit by lefthook, so a duplicate here is the generator's, not a page's. */
-const GENERATED = new Set(["docs/prompts-documentation.md"]);
-
 const MINIMUM_WORDS = 12;
 
 const FRONTMATTER = /^---\r?\n[\s\S]*?\r?\n---\r?\n/u;
@@ -154,7 +151,7 @@ function scannedFiles(root) {
   ].map((file) => file.split(path.sep).join("/"));
 
   // CATALOG.md is regenerated from the tree it indexes, so its lines are an output.
-  return found.filter((file) => !GENERATED.has(file) && path.basename(file) !== "CATALOG.md");
+  return found.filter((file) => path.basename(file) !== "CATALOG.md");
 }
 
 function scanRepository(root = process.cwd()) {

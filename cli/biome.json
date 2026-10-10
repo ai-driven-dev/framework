@@ -470,8 +470,13 @@
                     "message": "domain must not import application, infrastructure, presentation or runtime"
                   },
                   {
-                    "group": ["**/framework/**", "**/translate/**", "**/distribution/**"],
-                    "message": "telemetry may import only the kernel and contexts/tools \u2014 see context-graph.arch.test.ts"
+                    "group": [
+                      "**/framework/**",
+                      "**/translate/**",
+                      "**/distribution/**",
+                      "**/tools/**"
+                    ],
+                    "message": "telemetry imports only the kernel \u2014 see context-graph.arch.test.ts"
                   }
                 ]
               }
@@ -498,10 +503,11 @@
                       "**/framework/**",
                       "**/translate/**",
                       "**/distribution/**",
+                      "**/tools/**",
                       "**/presentation/**",
                       "**/runtime/**"
                     ],
-                    "message": "telemetry may import only the kernel and contexts/tools \u2014 see context-graph.arch.test.ts"
+                    "message": "telemetry imports only the kernel \u2014 see context-graph.arch.test.ts"
                   }
                 ]
               }
@@ -524,10 +530,11 @@
                       "**/framework/**",
                       "**/translate/**",
                       "**/distribution/**",
+                      "**/tools/**",
                       "**/presentation/**",
                       "**/runtime/**"
                     ],
-                    "message": "telemetry may import only the kernel and contexts/tools \u2014 see context-graph.arch.test.ts"
+                    "message": "telemetry imports only the kernel \u2014 see context-graph.arch.test.ts"
                   }
                 ]
               }

@@ -133,9 +133,6 @@ export const ALLOWED = new Set([
   "framework->tools",
   "framework->distribution",
   "translate->tools",
-  // Measurement asks a tool what it declares; a tool declares nothing about measurement in
-  // return, since the vocabulary both speak sits in `kernel/measurement.ts`.
-  "telemetry->tools",
 ]);
 
 /**
