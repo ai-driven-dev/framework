@@ -18,7 +18,7 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
   - [`skills/07-refactor`](#skills07-refactor)
   - [`skills/08-debug`](#skills08-debug)
   - [`skills/09-for-sure`](#skills09-for-sure)
-  - [`skills/10-todo`](#skills10-todo)
+  - [`skills/10-batch`](#skills10-batch)
 
 ---
 
@@ -140,10 +140,10 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `references` | [autonomous-loop-log-format.md](skills/09-for-sure/references/autonomous-loop-log-format.md) | - |
 | `-` | [SKILL.md](skills/09-for-sure/SKILL.md) | `Run an iterative agent loop that retries until a runnable success condition passes. Use when the user says "for sure", "keep trying until", or wants guaranteed completion against a success command. Not for one-shot tasks or uncheckable goals.` |
 
-#### `skills/10-todo`
+#### `skills/10-batch`
 
 | Group | File | Description |
 |-------|------|---|
-| `actions` | [01-todo.md](skills/10-todo/actions/01-todo.md) | - |
-| `-` | [SKILL.md](skills/10-todo/SKILL.md) | `Split the user prompt into independent todos and run one executor agent per todo in parallel, then report a minimal table. Use when the user says "todo" or asks to fan out a multi-part request into parallel implementations.` |
+| `actions` | [01-batch.md](skills/10-batch/actions/01-batch.md) | - |
+| `-` | [SKILL.md](skills/10-batch/SKILL.md) | `Split a request into independent tasks, execute them in parallel, and summarize each agent's task, status, and result. Use when the user says "batch" or asks to execute a multi-part request in parallel.` |
 
