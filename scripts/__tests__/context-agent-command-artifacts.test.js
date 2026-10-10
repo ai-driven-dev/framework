@@ -35,14 +35,6 @@ test('agent and workflow writers preflight every target and explicitly skip unsu
   assert.match(command('references/tool-paths.md'), /Codex CLI.*Skip/u);
 });
 
-test('Kilo claims cite official sources and the issue date', () => {
-  for (const text of [agent('references/tool-paths.md'), command('references/tool-paths.md')]) {
-    assert.match(text, /https:\/\/kilo\.ai\/docs\//u);
-    assert.match(text, /2026-09-25/u);
-    assert.match(text, /2026-10-10/u);
-  }
-});
-
 test('caller-generated Kilo agent and workflow retain target-specific frontmatter and bodies', () => {
   const agentText = normalizeEol(fs.readFileSync(path.join(FIXTURES, 'native/.kilo/agents/verify-agent.md'), 'utf8'));
   const commandText = normalizeEol(fs.readFileSync(path.join(FIXTURES, 'native/.kilo/commands/verify-workflow.md'), 'utf8'));

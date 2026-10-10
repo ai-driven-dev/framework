@@ -16,7 +16,7 @@ The per-tool command path and write targets. Command slice only, nothing about s
 `<location>` is whatever the user chose: a flat folder, a namespace, or an opt-in `<NN>_<phase>/` from the taxonomy. Copilot is flat: no subfolder, so fold any location prefix into the filename.
 
 - **Codex CLI**: no custom slash commands, only built-ins. Skip it. Suggest a skill if a reusable workflow is needed.
-- **Kilo**: use the filename as the workflow name, with no nested location. Its canonical plural path and fields are sourced from https://kilo.ai/docs/customize/workflows (issue #914 contract verified 2026-09-25; source rechecked 2026-10-10).
+- **Kilo**: use the filename as the workflow name, with no nested location.
 
 ## Frontmatter per tool
 

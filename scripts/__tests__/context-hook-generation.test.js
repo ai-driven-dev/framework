@@ -7,16 +7,14 @@ const ROOT = path.resolve(__dirname, '../..');
 const hook = (file) => fs.readFileSync(path.join(ROOT, 'plugins/aidd-context/skills/08-hook-generate', file), 'utf8');
 const fixture = (file) => JSON.parse(fs.readFileSync(path.join(__dirname, 'fixtures/context-generation/hooks/mixed', file), 'utf8'));
 
-test('Kilo hooks end with sourced guidance and no generated artifacts', () => {
+test('Kilo hooks end with supported guidance and no generated artifacts', () => {
   const paths = hook('references/tool-paths.md');
   const capture = hook('actions/01-capture-hook.md');
   const write = hook('actions/02-write-hook.md');
-  assert.match(
-    paths,
-    /\*\*Kilo guidance\.\*\* Kilo documents JavaScript or TypeScript modules under `\.kilo\/plugin\/` in a project\./u,
-  );
+  assert.match(paths, /\*\*Kilo guidance\.\*\*[\s\S]*`\.kilo\/plugin\/` and `\.kilo\/plugins\/`/u);
+  assert.match(paths, /Kilo-supported paths, not AIDD output destinations/u);
+  assert.match(paths, /AIDD does not generate a Kilo plugin or hook/u);
   assert.match(paths, /https:\/\/kilo\.ai\/docs\/automate\/extending\/plugins/u);
-  assert.match(paths, /2026-09-25.*2026-10-10/u);
   assert.match(paths, /session\.created/u);
   assert.match(paths, /unsupported.*no.*fallback/iu);
   assert.match(capture, /Kilo.*terminal.*guidance/iu);
