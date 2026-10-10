@@ -84,7 +84,7 @@ and the file was restored byte for byte.
 | Hook line and delegate go together | lifecycle "keeps the script while a lefthook job still calls it…", husky variant | `callers.length === 0` to `>= 0` | 2 red |
 | Foreign hook content byte for byte | "keeps a hook's other content byte for byte, and its mode" | lines trimmed on rejoin | yes |
 | Forget preview changes nothing | "previews and changes nothing on disk, not a byte nor an mtime" | `!confirmed` to `confirmed === undefined` | yes |
-| Offsets reset on `on` | "is stored once opting in, though ingest had read past it" | `resetPositions()` removed | yes |
+| ~~Offsets reset on `on`~~ | ~~"is stored once opting in, though ingest had read past it"~~ | ~~`resetPositions()` removed~~ | superseded by fix round 4: `on` reads nothing back and resets no offsets; the test now asserts the opposite |
 | ~~`on` writes version 2; `off` keeps version~~ | ~~switch tests~~ | ~~`version` dropped; spread dropped~~ | superseded: the file-based switch is deleted. `on` writes `aidd.telemetry=2` and `off` writes `off` in git config: see Fix round 1 phase 8 |
 | ~~Remembered roots re-resolved~~ | ~~"is stored for a directory that is gone, whose refusal was remembered"~~ | ~~`resolutions.save` removed~~ | superseded by fix round 2: `on` rewrites no remembered refusal, a deleted directory is judged by its clone |
 
@@ -232,3 +232,86 @@ Survivors left in the files of this round, none believed to be a gap: `clone-ide
 Mutation score of the `telemetry` scope at the head of the round: 96.4 (3,343 detected, 126 undetected), floor 96.
 
 Not mutated: `usage-contract.md`, `target.md`, `codebase-map.md`, `telemetry.md` and the comments; the per-OS notes on the identity in `clone-identity.ts` (macOS observed; Linux and Windows read from Node's `fs.Stats` documentation and libuv's `src/unix/fs.c`, `src/unix/linux.c` and `src/win/fs.c`, v1.x, and not run).
+
+## Fix round 4
+
+The user decided: `on` no longer catches up history, and a call is stored only if its clone's consent was open at the call's time. The rule is in `usage-contract.md` § Consent, written first. Consent is now a key `2:<token>` together with an interval in `ledger/consents.jsonl` (`{token, clone, open}` and `{token, close}`), closed by `off`, by ingest and by the hooks.
+
+### The table, before and after
+
+`consent-scenarios.integration.test.ts` was extended before any code, using only `wireTelemetry`, each use case's `execute` and the real `prompt-gate.cjs`, so it ran at `d67ed04e` (`npx vitest run tests/contexts/telemetry/consent-scenarios.integration.test.ts --reporter=verbose`). Rows 1, 2, 4 and 9 had positive controls dated before their `on`; under the new rule those controls are no longer stored, so each control was moved after its `on` (row 4 was reshaped: the worktree is seen alive after `on`, then removed, and its next call is judged by the remembered clone). Row 10 flips, and 10b (the same, never ingested before `on`) was added. The hook rows run the real `prompt-gate.cjs` with a stand-in `aidd` that answers `telemetry task --help`, so a row that expects no block holds a control that does block.
+
+Before the fix, 13 rows failed and 13 passed. After it, all 26 pass.
+
+| Row | Scenario | Before | After |
+| --- | --- | --- | --- |
+| 1 | (b) deleted clone never opted in, then `on` in another clone of the remote (control after `on`) | pass | pass |
+| 2 | (c) clone that ran `off`, then `on` in another clone (control after `on`) | pass | pass |
+| 3 | (e) deleted copy, no remote, root commit shared, carrying the source's consent | pass | pass |
+| 4 | worktree of an opted-in clone seen alive, removed before the next ingest | pass | pass |
+| 5 | same repository cloned again at the path, then `on`: the old clone's deleted worktree | pass | pass |
+| 6 | unrelated repository cloned at the path, then `on`: the old clone's deleted worktree | pass | pass |
+| 7 | the old clone's own calls, cloned again at the path, `on` there | pass | pass |
+| 8 | `on`, calls, `off`, calls, `on`, calls, ingest after each batch | pass | pass |
+| 8b | the same, one ingest at the end | pass | pass |
+| 9 | `on`, a manual `off` an ingest observes, calls, clone deleted (control after `on`) | pass | pass |
+| 10 | history before the first `on` is **not** stored (changed) | **fail**: `a0` stored | pass |
+| 10b | the same, never ingested before `on` | **fail**: `a0` stored | pass |
+| 11 | `AIDD_TELEMETRY=0` refuses everything | pass | pass |
+| 12 | `forget --yes` after `on`, no session | pass | pass |
+| h1 | old clone never ingested while it lived, re-clone of the same repository at its path, `on` | **fail**: `p1` stored | pass |
+| h1b | the same, an unrelated repository at the path | **fail**: `p1` stored | pass |
+| h1d | outside any repository refused, `git init`, `on`: nothing comes back | **fail**: `d1` stored | pass |
+| h15 `off` | `on`, c1, manual `git config aidd.telemetry off`, a headless hook prompt, c2, `on`, c3, one ingest: c1 and c3 stored, c2 not | **fail**: c2 stored | pass |
+| h15 `--unset` | the same with `--unset` | **fail**: c2 stored | pass |
+| h15b | the same with no hook between: c2 stored, a documented residual limit | pass | pass |
+| h2 | `off`, the clone moved, `on`: calls made while off not stored | **fail** | pass |
+| reverse | `on`, c1, `off`, one ingest at the end: c1 stored | **fail**: nothing stored | pass |
+| reverse 2 | on/off/on/off, one ingest at the end: c1 and c3 stored | **fail** | pass |
+| forget-on | `forget` then `on`: earlier calls not stored | **fail** | pass |
+| hand key | key set by hand (`2` and `2:forged`) and a `cp -R` copy: nothing stored, the real gate does not block; the opted-in original stores and blocks | **fail**: the gate blocked the hand-set clones | pass |
+| damaged | a damaged line in `consents.jsonl`: nothing more stored, `unreadable-consent` counted | **fail**: `c2` stored | pass |
+
+Every "not stored" row holds a positive control (a call that must be stored), so none passes because ingest stored nothing. The "before" column of rows 10 and later is as observed; it was not re-derived from a diagnosis. Rows 1 to 9, 11 and 12 pass on both sides because they guard behaviour that was already right (their mutations below show they can go red).
+
+### Mutations
+
+Each applied by script with an exact-anchor count of 1 (`scratchpad/mut.py`), running `npx vitest run tests/contexts/telemetry tests/presentation` and `node --test scripts/__tests__/aidd-telemetry-hooks.test.js`, then the file restored and checked byte-equal. Counts are failing tests, vitest then node.
+
+| Rule | Mutation | Result |
+| --- | --- | --- |
+| The hook needs an interval, not the key alone | `decideConsent` grants on the key's token alone (intervals ignored; any key counts) | 1 + 2: row "hand key"; the fixture's `hookConsent` cases, "a cp -R copy carries the key…" |
+| A call is judged at its own time | the CLI `covers` ignores the time of an interval | 34 + 0 |
+| A call made while off is never stored | `off` closes nothing (off window included) | 9 + 0, including rows 2, 8, 8b, h2, reverse, reverse 2 |
+| The hook ends an interval its key no longer names | the hook's close not written | 2 + 2: rows h15 `off` and `--unset`; "a clone whose key was turned off by hand has its interval closed…", "the session start and the catch-up close it too" |
+| The hook knows its clone by real path | the real path check removed in `decideConsent` | 1 + 2: row "hand key" (the `cp -R` copy); the fixture; "a cp -R copy carries the key…" |
+| A damaged log refuses storage | the CLI's damaged check removed | 2 + 0: row "damaged"; "stores nothing for any clone while a line of the consent log is damaged" |
+| A damaged log grants the hook nothing | the damaged check removed in `decideConsent` | 0 + 1: the fixture's `hookConsent` cases only. The behaviour test stays green because `consentGranted` refuses a damaged log before `decideConsent` is reached: the two checks overlap, and only the pure function is pinned by the fixture |
+| Nothing before `on` is stored | an `on` interval opened at `-Infinity` (`new Date(-8.64e15)`) | 14 + 0, including rows 10b, h1, h1b, h15, reverse 2, h2, forget-on |
+| A token closed twice ends at the earliest close | the latest close | 2 + 0 |
+| The key goes before the interval | the interval appended before the key | 1 + 0: "writes the key before the interval…" |
+| Ingest ends an interval its key no longer names | the live key is not compared with the interval's token | 15 + 0, including row 9 |
+| An interval that is still named stays open | every observed interval closed | 8 + 0 |
+| The prompt gate observes the key before it asks if a person is present | presence asked first | 2 + 1: rows h15 `off` and `--unset`; "a clone whose key was turned off by hand has its interval closed, now, even with nobody present" |
+| The end of an interval is excluded | `at <= to` | 14 + 0 |
+| The start of an interval is included | `from < at` | 7 + 0 |
+| A clone is told from another at its path by its identity | identity ignored, `cloneKey` is the path | 20 + 0 |
+| An unreadable git config refuses | the check removed | 2 + 0 |
+| A clone found gone ends its interval | a gone clone counted as still naming the token | 2 + 0 |
+| `on` ends the stale intervals of its clone | the close removed | 1 + 0 |
+| `task` applies the same test as the hooks | the interval check removed in `ConsentedRepositories` | 1 + 0 |
+| `off` asks the log only for a clone it can identify | `if (located.clone !== null)` always true | 1 + 0 |
+| A clone that never asked, with a damaged log, is "no consent", not "unreadable" | the early `absent` refusal removed in `ConsentedRepositories` | 1 + 0 |
+
+### Residual limits recorded in the contract
+
+A manual change of the key between two observations (row h15b), the clock (a call is judged by its transcript timestamp), a worktree made and removed between two ingests, no birth time, a moved clone, a reused process id, and `AIDD_TELEMETRY=0` stopping the hooks too. See `usage-contract.md` § Consent, Residual limits.
+
+### Deviations and decisions of the round
+
+- `ownerAt` is kept, with its "else the first" fallback: with intervals it grants nothing on its own (the owner's interval must cover the call, and none opens before an `on`), but a clone with no birth time is known only from the day ingest first saw a directory in it, and a call from a subdirectory made before that day is still its call.
+- `rememberOwnRoot` is kept (renamed `remember-own-root.ts`): it records a root seen alive so `forget`'s `unlocated` count is right for a clone where `on` ran and no session did. It is not a consent flag.
+- `repository-consent.ts` (a one-line wrapper) is deleted; `resetPositions` is removed from the ledger port and adapter.
+- `aidd telemetry task` (and `show`) now require the same test as the hooks (key names an interval open for the clone); the brief named the hooks only.
+- The hook does nothing under `AIDD_TELEMETRY=0`, closes included: a residual limit.
+- A hook closes all open intervals of its clone's real path whose token the key does not name, including a stale one next to a named one.

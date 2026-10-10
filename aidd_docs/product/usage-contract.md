@@ -82,9 +82,9 @@ The telemetry directory is `AIDD_TELEMETRY_DIR`, else `AIDD_USER_CONFIG_DIR/tele
 | Store | Writer | Readers | Holds |
 | --- | --- | --- | --- |
 | `ledger/<YYYY-MM>.jsonl` | `ingest`, `report` | `report`, `forget` | one `StoredUsage` per line, by the month of its `at`; only a month that changed is rewritten, whole, by rename; an ingest that finds no new bytes writes nothing |
-| `ledger/offsets.json` | `ingest`, `report` | `ingest`, `report` | per transcript: bytes consumed, size, file identity; a file that shrank or changed identity is read whole; `on` resets it |
+| `ledger/offsets.json` | `ingest`, `report` | `ingest`, `report` | per transcript: bytes consumed, size, file identity; a file that shrank or changed identity is read whole |
 | `ledger/roots.json` | `ingest`, `on` | `ingest`, `forget` | format `{version: 2, directories}`: per working directory and per clone it was seen alive in, `repository_id`, `root`, `clone` (its identity), `seen_at`. A file of another format holds nothing: a directory seen alive is remembered again, one that is gone is counted `never-seen-alive`. `on` records its own root here so `forget` finds the repository it declared tasks in |
-| `ledger/consents.jsonl` | `on`, `off`, `ingest` | `on`, `off`, `ingest`, `forget` | append-only `{clone, state, at}`, `state` being `on` or `off`, `clone` the identity above: when each clone consented. It is the ledger's, so a clone's deletion does not delete it and `forget` removes it with the ledger |
+| `ledger/consents.jsonl` | `on`, `off`, `ingest`, and the hooks (close lines only) | `on`, `off`, `ingest`, `forget`, the hooks | append-only: `{token, clone, open}` when `on` opens an interval and `{token, close}` when `off`, an ingest or a hook ends it; when each clone consented. It is the ledger's, so a clone's deletion does not delete it and `forget` removes it with the ledger. The hooks read it with their own strict parser, pinned by the shared fixture |
 | `ledger/.lock` | the CLI | the CLI | `{pid, created_at}`; a lock of a dead process, or older than ten minutes, is cleared |
 | `bindings/.lock` | the CLI | the CLI | the bindings lock, same format as the ledger's: a declaration appends its session line, and any snapshot reads the latest snapshots and appends, under it. `task` never takes the ledger lock, which an ingest holds while it reads transcripts |
 | `bindings/sessions.jsonl` | `task` | hooks, `report`, `task` | `{session_id, task, ticket, none, declared_at, by}`; `by` is `command` or `hook-intercept` |
@@ -93,7 +93,7 @@ The telemetry directory is `AIDD_TELEMETRY_DIR`, else `AIDD_USER_CONFIG_DIR/tele
 | `bindings/processes.jsonl` | the `SessionStart` hook | the `SessionStart` hook | `{pid, session_id, source, at}`; no CLI reader |
 | `identity.json` | `identity` | `report` | `{"person_id": "<id>"}`, written owner-only |
 | `branch.<name>.aiddTask`, `aiddTicket`, `aiddDeclaredAt` in the repository's git config, `--local` | `task` | hooks, `task`, `report` via snapshots | a branch declaration; it follows a branch rename and goes with the branch |
-| `aidd.telemetry` in the repository's git config, `--local` | `on`, `off`, `forget` | hooks, the CLI | the clone's consent: `2`, or `off`. The hooks answer for this key alone; storing needs the interval as well |
+| `aidd.telemetry` in the repository's git config, `--local` | `on`, `off`, `forget` | hooks, the CLI | the clone's consent: `2:<token>` (the token of the open interval `on` made), or `off`. Consent needs the interval as well: the key alone grants nothing, to the hooks or to storing |
 
 - A line that is not exactly the format of its store is skipped, never guessed at. Every JSON Lines store is append-only except the ledger.
 - `forget` removes `ledger/`, `bindings/`, `identity.json`, the declaration keys in each recorded clone's git config, the consent key, and what an earlier measurement left. It never removes the telemetry directory itself.
@@ -118,7 +118,7 @@ Sub-agent and advisor calls name their parent's session and follow it.
 `UserPromptSubmit` (`hooks/prompt-gate.cjs`) blocks a prompt, before the model is called, when all of these hold:
 
 - the payload is Claude's own: its `session_id` equals `CLAUDE_CODE_SESSION_ID` and its `transcript_path` runs under a `projects` directory;
-- this clone opted in (`aidd.telemetry` is `2` in its git config), and `AIDD_TELEMETRY` is not `0`;
+- this clone is measured (its key `aidd.telemetry` names an interval open in the consent log for this clone, see Consent), and `AIDD_TELEMETRY` is not `0`;
 - a person is present: `CLAUDE_CODE_SESSION_ATTENDED` is `1` and `CLAUDE_CODE_ENTRYPOINT` is set and does not start with `sdk`. Both are undocumented, so either missing or different means nobody is asked, never that work is blocked;
 - the branch is a working branch, with no declaration for the session or the branch;
 - `aidd` is on `PATH` and knows `telemetry task`. Without it nothing is asked.
@@ -146,40 +146,51 @@ The block asks once per working branch, since the declaration it gets is remembe
 
 ### The rule
 
-> A call is stored only if:
+> A call is stored only when all three hold:
 > 1. its directory was seen alive belonging to clone X;
-> 2. X is the same clone answering now, or the remembered X when X is gone;
-> 3. X's consent covered the call's time.
->
-> `AIDD_TELEMETRY=0` refuses everything.
+> 2. X had an open consent interval at the call's time;
+> 3. `AIDD_TELEMETRY=0` is not set.
 
-Every clause is decided from facts ingest observed, never from what a path or a remote looks like:
+There is nothing else: no backfill and no special case for a first `on`, no interval that starts before its `on`, no consent flag remembered anywhere else, and no live-key condition on a live clone, because the intervals are the truth. **Measurement starts at `on`.** What a clone's sessions did before it is not counted, and `on` reads nothing back.
 
-- **Clone identity.** A clone is its git common dir: the `dev`, `ino` and `birthtimeMs` of `fs.stat` on its real path, plus that real path. Ingest records it in `ledger/roots.json` the first time it sees a directory alive. The identity is unavailable, and the call is not stored (counted `unreadable-consent`), when `ino` is `0` or missing. When the common dir now at a remembered path has another identity, the remembered clone is gone, and the clone now there never answers for calls the remembered one made. A directory that several clones have lived in keeps one entry per clone; a call goes to the latest clone born at or before it (its birth time, else the time ingest first saw it), and to the only one when there is only one.
-- **X is the same clone answering now.** The common dir at X's path still has X's identity. Then X's live git config must say `2` as well as its consent covering the call: a clone that turned itself off stores nothing more, whatever its past consent. When X is gone, its remembered consent alone judges.
-- **Consent intervals.** `ledger/consents.jsonl`, append-only, per clone identity, outliving the clone. `on` opens an interval at its time, `off` closes it, and `forget` removes the file with the ledger. Ingest closes an open interval, at the time it observed it, when a clone's live config is not `2`, or when the clone is gone. Opening and closing are idempotent. The first `on` of a clone covers the calls it made from before it, back to the start of its history; an `on` after an `off` covers only from its own time. A call made while off is never stored. An interval is half-open: `on` at T covers a call at T, `off` at T does not.
-- **Only `on` opens an interval.** A key set by hand, or carried by a copy of a clone (`cp -R`), is not consent to be measured: the hooks answer for the live key, but nothing is stored for a clone that has no interval.
+Every clause is decided from facts observed, never from what a path or a remote looks like:
+
+- **Clone identity.** A clone is its git common dir: the `dev`, `ino` and `birthtimeMs` of `fs.stat` on its real path, plus that real path. Ingest records it in `ledger/roots.json` the first time it sees a directory alive. The identity is unavailable, and the call is not stored (counted `unreadable-consent`), when `ino` is `0` or missing. When the common dir now at a remembered path has another identity, the remembered clone is gone, and the clone now there never answers for calls the remembered one made. A directory that several clones have lived in keeps one entry per clone; a call goes to the latest clone born at or before it (its birth time, else the time ingest first saw it), else to the first, and to the only one when there is only one. Going to a clone does not store it: the owner's interval must cover the call, and none opens before the clone's `on`.
+- **Consent intervals.** `ledger/consents.jsonl`, append-only, outliving the clone. A line is one of two shapes, pinned by the shared fixture (`consentLog` cases):
+  - open: `{"token": "<uuid>", "clone": {"path", "dev", "ino", "birthtimeMs"}, "open": "<ISO-8601 UTC>"}`, where `clone` is the identity above;
+  - close: `{"token": "<uuid>", "close": "<ISO-8601 UTC>"}`.
+
+  A token is opened once (a second opening is ignored). A token closed more than once ends at the earliest close, whatever order the lines were written in: ingest and the hooks both append, so the order of the lines says nothing about the order of events. A close of a token never opened changes nothing. An interval is half-open: `on` at T covers a call at T, `off` at T does not. A blank line is not damage.
+- **`on`** mints a fresh random token, writes `git config --local aidd.telemetry 2:<token>`, then appends the open line, under the ledger's lock. The key goes first: a key with no interval measures nothing, while an interval its key does not name would be closed by the first hook to see it. An `on` that finds the key naming an interval open for this very clone changes nothing. Any other `on` first closes this clone's stale open intervals, at its own time.
+- **`off`** appends a close for the clone's open token at its time, then sets the key to `off`, under the same lock. `forget --yes` removes the file with the ledger and unsets the key in every clone recorded.
+- **Ingest** closes an open interval, at the time it observes one of these: the clone is gone; the identity at its path changed; the live key is not `2:<that token>`. It looks at every open interval before it judges a call, whether or not a call of that clone was read. A clone whose git config cannot be read keeps its interval open and stores nothing.
+- **The hooks also close.** The `SessionStart` hooks and the prompt gate append close lines to `consents.jsonl`, in the format above. When a hook passes the Claude-only guard and runs in a clone whose key does not name an open interval recorded for that clone's real path, it appends a close for that interval at its own time. The guard comes first, then this observation, which applies even when nobody is present (headless). This is what ends a manual `git config aidd.telemetry off` (or `--unset`) before the next prompt's calls. `AIDD_TELEMETRY=0` makes a hook do nothing, this included.
+- **Fail closed.** A line of `consents.jsonl` that is not exactly one of the two shapes refuses storage for every clone. Ingest counts the calls `unreadable-consent`, and `report` names the file and how to recover (repair or remove the damaged line, or `forget --yes` and `on` again). Calls read while the file is damaged are not kept for later: the offsets move on.
 
 Residual limits, none of them observable by the CLI:
 
-- a manual `git config aidd.telemetry off`, followed by deleting the clone before any ingest, is unobservable: the interval stays open until the next ingest finds the clone gone, and every call dated before that ingest is covered, those made after the key was turned off included;
-- where there is no birth time, a clone that reuses a deleted clone's path and inode is taken for it (`dev` and `ino` alone are its identity), and of two clones that lived at one directory the later is told from the earlier only from the moment ingest first saw it there, so the calls it made before that are judged as the earlier one's;
-- a process id reused by Claude Code, per the carry rule above;
-- `forget` followed by `on` is the first `on` of the clone again, so it covers the calls made in between, which are on the machine only if the transcripts still hold them.
+- **A manual change of the key between two observations.** A manual `git config aidd.telemetry off`, with no hook prompt and no ingest before the next `on`, leaves the interval open until something observes the key. Every call dated before that observation is covered, those made after the key was turned off included. Any Claude Code session start or prompt in the clone, or any ingest, is such an observation.
+- **A clock.** A call is judged by its transcript timestamp, the machine's clock. A call stamped inside an interval is covered whenever it was written, and a future-dated call is covered by any interval still open. A call stamped outside its interval is refused or stored by its stamp alone.
+- **A worktree made and removed between two ingests.** A linked worktree of an opted-in clone that is created, used and removed before any ingest or session start saw it alive was never seen alive, and its calls are counted `never-seen-alive`. In practice the session start that opens the session inside it sees it alive.
+- **Where there is no birth time,** a clone that reuses a deleted clone's path and inode is taken for it (`dev` and `ino` alone are its identity), and of two clones that lived at one directory the later is told from the earlier only from the moment ingest first saw it there.
+- **A moved or renamed clone** is a new clone: its path is part of its identity. Its old interval is closed when something sees it gone, and nothing is stored for it, nor asked of it, until `aidd telemetry on` is run there.
+- **A process id reused by Claude Code,** per the carry rule above.
+- **`AIDD_TELEMETRY=0`** stops the hooks too: a key turned off by hand while it is set is observed at the next hook or ingest run without it.
 
 ### The clone's consent
 
-Consent is per clone, in the repository's own git config, and is never committed. `aidd telemetry on` runs `git config --local aidd.telemetry 2`. Only the value `2` is consent:
+Consent is per clone, in the repository's own git config, and is never committed. `aidd telemetry on` runs `git config --local aidd.telemetry 2:<token>`. Only `2:` and a token is consent, and the key is only half of it: the token must name an interval open in the consent log for this very clone.
 
 - `--local` writes the common config, so every linked worktree of the clone shares it, and no commit carries it: a teammate who pulls the repository is not measured, asked or blocked until they run `aidd telemetry on` in their own clone;
 - nothing in `.aidd/config.json` is consent, including a committed `telemetry: {enabled: true, version: 2}`; the previous version's bare `enabled: true` is not either. The CLI and the hooks do not read that file for consent;
 - a git config git cannot read is `unreadable`, grants nothing, and is never rewritten;
 - `AIDD_TELEMETRY=0` refuses measurement whatever a clone granted;
-- `off` sets `aidd.telemetry` to `off`, and closes the interval; `on` and `off` write the key and the interval together, under the ledger's lock, so an ingest never sees one without the other;
+- `off` sets `aidd.telemetry` to `off` and closes the interval; `on` and `off` write the key and the interval under the ledger's lock, so an ingest never sees one without the other;
 - `on` refuses a clone whose git dir the file system gives no identity, and changes nothing;
+- **the hooks treat a clone as consenting only when all three hold:** its key is `2:<token>`; `consents.jsonl` holds an open interval with that token; and that interval's recorded common-dir real path equals the current one. A key set by hand (`2`, or a made-up token), a `cp -R` copy (a different real path), a clone made again at the same path, or a moved clone is not consenting for the hooks either: nothing is asked and nothing is blocked there, and the person runs `aidd telemetry on`. `aidd telemetry task` applies the same test;
 - a clone that never opted in has nothing stored, nothing asked and nothing blocked.
 
-`on` also removes the previous version's `telemetry` block from `.aidd/config.json` if it holds one, every other byte of the file as it was, and deletes the file only when that block was all it held (the change may need committing, and `on` says so). It removes what an earlier measurement left in the repository, resets the transcript offsets, records its own clone so `forget` can find it, and warns when Claude Code's transcript retention is short. It ends with the next step: declare a task, which the plugin's hooks ask for in Claude Code.
+`on` also removes the previous version's `telemetry` block from `.aidd/config.json` if it holds one, every other byte of the file as it was, and deletes the file only when that block was all it held (the change may need committing, and `on` says so). It removes what an earlier measurement left in the repository, records its own clone so `forget` can find it, and warns when Claude Code's transcript retention is short. It does not read back what was said before it, and does not reset the transcript offsets. It ends with the next step: declare a task, which the plugin's hooks ask for in Claude Code.
 
 `forget --yes` unsets `aidd.telemetry`, with the branch task keys, in every clone recorded in `roots.json` or `consents.jsonl`, as long as the clone still exists. It names only the clones that are gone and had consented: one that never did left nothing to remove.
 

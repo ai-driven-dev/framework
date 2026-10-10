@@ -21,8 +21,10 @@ tokens per task and ticket. Push to Gouvernail. Ship fast and clean.
    cwd gone (16 % of lines on backfill) → judged by the clone it was last seen in (told from a
    clone made at the same path by its identity), else counted as `never-seen-alive`, not
    `outside-repo`.
-   A clone that did not opt in (its `aidd.telemetry` git config, and a consent interval written by
-   `on`) or `AIDD_TELEMETRY=0` → not ingested at all.
+   A call is stored only when its clone had an open consent interval at the call's time (the
+   `aidd.telemetry` key `2:<token>` and the interval `on` wrote in `ledger/consents.jsonl`, closed
+   by `off`, by ingest or by a hook that sees the key change); nothing before `on` is read
+   back. `AIDD_TELEMETRY=0` → not ingested at all.
 3. **Ledger** in its own subdirectory of the telemetry dir (the v1 sink prunes `*.jsonl`
    by count there), relocated by `AIDD_TELEMETRY_DIR`; monthly partitions; newline guard;
    lock with pid and age, stale lock cleared. `forget` covers it.

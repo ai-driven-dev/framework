@@ -43,7 +43,7 @@ coming only from what a person declared, with the previous telemetry removed ent
 - Every breakdown of a period sums to the same total.
 - A clone or person that has not opted in is untouched: nothing stored, nothing asked,
   nothing blocked. Consent is per clone, in its git config, never committed, so a teammate is
-  never measured without running `aidd telemetry on` themselves. Without the plugin, nothing changes at all.
+  never measured without running `aidd telemetry on` themselves. Measurement starts at `on`: a call is stored only if its clone's consent was open at the call's time, so what a clone's sessions did before `on`, or while it was off, is never counted. A key set by hand, a copied clone or a moved one is not consent. Without the plugin, nothing changes at all.
 - Data stays on the machine: release 1 sends nothing anywhere.
 - The person identity is a fresh, separate opt-in, located with the rest of the person's aidd
   configuration; the previous identity file is not carried over.
