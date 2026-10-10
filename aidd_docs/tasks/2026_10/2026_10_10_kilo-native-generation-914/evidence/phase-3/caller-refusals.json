@@ -1,0 +1,313 @@
+{
+  "scope": "native caller interpreted candidate actions; not separate model inference nor deterministic shipped writer",
+  "cases": [
+    {
+      "name": "portable-without-consent",
+      "decision": "No explicit portable agreement: do not hand portable target to plan; request placement choice.",
+      "before": {
+        "kilo.json": {
+          "mode": 420,
+          "mtimeNs": 1791631001168844767,
+          "type": "file",
+          "sha256": "ca3d163bab055381827226140568f3bef7eaac187cebd76878e0b63e9e442356"
+        }
+      },
+      "after": {
+        "kilo.json": {
+          "mode": 420,
+          "mtimeNs": 1791631001168844767,
+          "type": "file",
+          "sha256": "ca3d163bab055381827226140568f3bef7eaac187cebd76878e0b63e9e442356"
+        }
+      },
+      "unchanged": true
+    },
+    {
+      "name": "duplicate-copies",
+      "decision": "Native and portable user copies: request resolution before write, delete neither.",
+      "before": {
+        ".agents": {
+          "mode": 493,
+          "mtimeNs": 1791631001168844767,
+          "type": "dir"
+        },
+        ".agents/skills": {
+          "mode": 493,
+          "mtimeNs": 1791631001168844767,
+          "type": "dir"
+        },
+        ".agents/skills/verify-payload": {
+          "mode": 493,
+          "mtimeNs": 1791631001168844767,
+          "type": "dir"
+        },
+        ".agents/skills/verify-payload/SKILL.md": {
+          "mode": 420,
+          "mtimeNs": 1791631001168844767,
+          "type": "file",
+          "sha256": "5de0df3fedd0904fcdc58732e2784bfa339dabc95bed8dfe9db3964937b3d682"
+        },
+        ".kilo": {
+          "mode": 493,
+          "mtimeNs": 1791631001168844767,
+          "type": "dir"
+        },
+        ".kilo/skills": {
+          "mode": 493,
+          "mtimeNs": 1791631001168844767,
+          "type": "dir"
+        },
+        ".kilo/skills/verify-payload": {
+          "mode": 493,
+          "mtimeNs": 1791631001168844767,
+          "type": "dir"
+        },
+        ".kilo/skills/verify-payload/SKILL.md": {
+          "mode": 420,
+          "mtimeNs": 1791631001168844767,
+          "type": "file",
+          "sha256": "4a38f7b1a9e0a62662d91e43d448ee7ee5e89d5b7771924df509ba790a408790"
+        },
+        "kilo.json": {
+          "mode": 420,
+          "mtimeNs": 1791631001168844767,
+          "type": "file",
+          "sha256": "ca3d163bab055381827226140568f3bef7eaac187cebd76878e0b63e9e442356"
+        }
+      },
+      "after": {
+        ".agents": {
+          "mode": 493,
+          "mtimeNs": 1791631001168844767,
+          "type": "dir"
+        },
+        ".agents/skills": {
+          "mode": 493,
+          "mtimeNs": 1791631001168844767,
+          "type": "dir"
+        },
+        ".agents/skills/verify-payload": {
+          "mode": 493,
+          "mtimeNs": 1791631001168844767,
+          "type": "dir"
+        },
+        ".agents/skills/verify-payload/SKILL.md": {
+          "mode": 420,
+          "mtimeNs": 1791631001168844767,
+          "type": "file",
+          "sha256": "5de0df3fedd0904fcdc58732e2784bfa339dabc95bed8dfe9db3964937b3d682"
+        },
+        ".kilo": {
+          "mode": 493,
+          "mtimeNs": 1791631001168844767,
+          "type": "dir"
+        },
+        ".kilo/skills": {
+          "mode": 493,
+          "mtimeNs": 1791631001168844767,
+          "type": "dir"
+        },
+        ".kilo/skills/verify-payload": {
+          "mode": 493,
+          "mtimeNs": 1791631001168844767,
+          "type": "dir"
+        },
+        ".kilo/skills/verify-payload/SKILL.md": {
+          "mode": 420,
+          "mtimeNs": 1791631001168844767,
+          "type": "file",
+          "sha256": "4a38f7b1a9e0a62662d91e43d448ee7ee5e89d5b7771924df509ba790a408790"
+        },
+        "kilo.json": {
+          "mode": 420,
+          "mtimeNs": 1791631001168844767,
+          "type": "file",
+          "sha256": "ca3d163bab055381827226140568f3bef7eaac187cebd76878e0b63e9e442356"
+        }
+      },
+      "unchanged": true
+    },
+    {
+      "name": "late-nonregular",
+      "decision": "Claude first target valid, final Kilo skill root is regular user file: refuse entire publication.",
+      "before": {
+        ".kilo": {
+          "mode": 493,
+          "mtimeNs": 1791631001168844767,
+          "type": "dir"
+        },
+        ".kilo/skills": {
+          "mode": 493,
+          "mtimeNs": 1791631001168844767,
+          "type": "dir"
+        },
+        ".kilo/skills/verify-payload": {
+          "mode": 420,
+          "mtimeNs": 1791631001168844767,
+          "type": "file",
+          "sha256": "2a1f5c8977320559ff806b8d609dbc87fc4acdaf3f11bdefd3412ad160b836b1"
+        },
+        "kilo.json": {
+          "mode": 420,
+          "mtimeNs": 1791631001168844767,
+          "type": "file",
+          "sha256": "ca3d163bab055381827226140568f3bef7eaac187cebd76878e0b63e9e442356"
+        }
+      },
+      "after": {
+        ".kilo": {
+          "mode": 493,
+          "mtimeNs": 1791631001168844767,
+          "type": "dir"
+        },
+        ".kilo/skills": {
+          "mode": 493,
+          "mtimeNs": 1791631001168844767,
+          "type": "dir"
+        },
+        ".kilo/skills/verify-payload": {
+          "mode": 420,
+          "mtimeNs": 1791631001168844767,
+          "type": "file",
+          "sha256": "2a1f5c8977320559ff806b8d609dbc87fc4acdaf3f11bdefd3412ad160b836b1"
+        },
+        "kilo.json": {
+          "mode": 420,
+          "mtimeNs": 1791631001168844767,
+          "type": "file",
+          "sha256": "ca3d163bab055381827226140568f3bef7eaac187cebd76878e0b63e9e442356"
+        }
+      },
+      "unchanged": true
+    },
+    {
+      "name": "symlink",
+      "decision": "Existing .kilo ancestor is symlink: refuse entire publication.",
+      "before": {
+        ".kilo": {
+          "mode": 511,
+          "mtimeNs": 1791631001168844767,
+          "type": "symlink",
+          "target": "/tmp/aidd-914-p3-generation/native/.kilo"
+        },
+        "kilo.json": {
+          "mode": 420,
+          "mtimeNs": 1791631001168844767,
+          "type": "file",
+          "sha256": "ca3d163bab055381827226140568f3bef7eaac187cebd76878e0b63e9e442356"
+        }
+      },
+      "after": {
+        ".kilo": {
+          "mode": 511,
+          "mtimeNs": 1791631001168844767,
+          "type": "symlink",
+          "target": "/tmp/aidd-914-p3-generation/native/.kilo"
+        },
+        "kilo.json": {
+          "mode": 420,
+          "mtimeNs": 1791631001168844767,
+          "type": "file",
+          "sha256": "ca3d163bab055381827226140568f3bef7eaac187cebd76878e0b63e9e442356"
+        }
+      },
+      "unchanged": true
+    },
+    {
+      "name": "readonly",
+      "decision": "Existing selected SKILL.md has no write permission: refuse entire publication.",
+      "before": {
+        ".kilo": {
+          "mode": 493,
+          "mtimeNs": 1791631001168844767,
+          "type": "dir"
+        },
+        ".kilo/skills": {
+          "mode": 493,
+          "mtimeNs": 1791631001168844767,
+          "type": "dir"
+        },
+        ".kilo/skills/verify-payload": {
+          "mode": 493,
+          "mtimeNs": 1791631001168844767,
+          "type": "dir"
+        },
+        ".kilo/skills/verify-payload/SKILL.md": {
+          "mode": 292,
+          "mtimeNs": 1791631001168844767,
+          "type": "file",
+          "sha256": "7d2b379b7986df138ef0c082501c7fa35578289348101d7e0656456865047c9e"
+        },
+        "kilo.json": {
+          "mode": 420,
+          "mtimeNs": 1791631001168844767,
+          "type": "file",
+          "sha256": "ca3d163bab055381827226140568f3bef7eaac187cebd76878e0b63e9e442356"
+        }
+      },
+      "after": {
+        ".kilo": {
+          "mode": 493,
+          "mtimeNs": 1791631001168844767,
+          "type": "dir"
+        },
+        ".kilo/skills": {
+          "mode": 493,
+          "mtimeNs": 1791631001168844767,
+          "type": "dir"
+        },
+        ".kilo/skills/verify-payload": {
+          "mode": 493,
+          "mtimeNs": 1791631001168844767,
+          "type": "dir"
+        },
+        ".kilo/skills/verify-payload/SKILL.md": {
+          "mode": 292,
+          "mtimeNs": 1791631001168844767,
+          "type": "file",
+          "sha256": "7d2b379b7986df138ef0c082501c7fa35578289348101d7e0656456865047c9e"
+        },
+        "kilo.json": {
+          "mode": 420,
+          "mtimeNs": 1791631001168844767,
+          "type": "file",
+          "sha256": "ca3d163bab055381827226140568f3bef7eaac187cebd76878e0b63e9e442356"
+        }
+      },
+      "unchanged": true
+    },
+    {
+      "name": "escaping-reference",
+      "decision": "Planned action reference resolves outside skill tree: refuse entire publication.",
+      "before": {
+        "kilo.json": {
+          "mode": 420,
+          "mtimeNs": 1791631001168844767,
+          "type": "file",
+          "sha256": "ca3d163bab055381827226140568f3bef7eaac187cebd76878e0b63e9e442356"
+        },
+        "outside.txt": {
+          "mode": 420,
+          "mtimeNs": 1791631001168844767,
+          "type": "file",
+          "sha256": "f4043e5d3562e161eee18085b95beaac16fc13561808d1b642f84e4416053a08"
+        }
+      },
+      "after": {
+        "kilo.json": {
+          "mode": 420,
+          "mtimeNs": 1791631001168844767,
+          "type": "file",
+          "sha256": "ca3d163bab055381827226140568f3bef7eaac187cebd76878e0b63e9e442356"
+        },
+        "outside.txt": {
+          "mode": 420,
+          "mtimeNs": 1791631001168844767,
+          "type": "file",
+          "sha256": "f4043e5d3562e161eee18085b95beaac16fc13561808d1b642f84e4416053a08"
+        }
+      },
+      "unchanged": true
+    }
+  ]
+}

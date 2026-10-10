@@ -23,7 +23,7 @@ status: in-progress
 | 5 | Guidance hooks et relances sûres | [phase-5.md](./phase-5.md) |
 | 6 | Preuves de génération et runtime sur plateformes supportées | [phase-6.md](./phase-6.md) |
 
-Plan général validé avec les précisions de [la demande phase 1](./phase-1-request.md). Seule la phase 1 est autorisée maintenant, avec commits locaux par tâche validée. Les phases 2 à 6 restent pending et exigent une autorisation distincte. Avant phase 2 : revalider #979, réutiliser sa version effectivement intégrée ; si encore Draft, demander une décision explicite. Aucune date de fusion supposée, aucun writer concurrent.
+Plan général validé avec les précisions de [la demande phase 1](./phase-1-request.md). Phase 1 clôturée par l’utilisateur avec ses limites conservées. La demande du 10 octobre 2026 autorise uniquement la phase 3, indépendante du writer de phase 2, et ses commits locaux après validation. Les phases 2 et 4 à 6 restent pending et exigent une autorisation distincte. Avant phase 2 : revalider #979, réutiliser sa version effectivement intégrée ; si encore Draft, demander une décision explicite. Aucune date de fusion supposée, aucun writer concurrent.
 
 Chaque tâche suit la même progression : test pertinent rouge avant changement lorsque possible, implémentation minimale, documentation associée, validations automatisées et runtime pertinent, preuves conservées puis statut réel actualisé. Les régressions des cibles concernées se vérifient dès cette tâche. Preuve obligatoire manquante => tâche non entièrement validée. La phase 6 consolide, sans remplacer ces vérifications. Aucun push, PR ou changement de branche autorisé.
 

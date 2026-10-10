@@ -1,0 +1,87 @@
+[
+  {
+    "project": "native",
+    "target": ".kilo/skills",
+    "fields": [
+      "name",
+      "description",
+      "license",
+      "compatibility",
+      "metadata"
+    ],
+    "absent": [
+      ".agents/skills"
+    ]
+  },
+  {
+    "project": "portable",
+    "target": ".agents/skills",
+    "fields": [
+      "name",
+      "description"
+    ],
+    "absent": [
+      ".kilo/skills"
+    ]
+  },
+  {
+    "project": "legacy",
+    "target": ".kilo/skills",
+    "fields": [
+      "name",
+      "description"
+    ],
+    "absent": [
+      ".agents/skills",
+      ".kilocode/skills"
+    ]
+  },
+  {
+    "project": "claude",
+    "target": ".claude/skills",
+    "fields": [
+      "name",
+      "description",
+      "allowed-tools",
+      "disable-model-invocation"
+    ],
+    "absent": [
+      ".kilo/skills",
+      ".agents/skills"
+    ]
+  },
+  {
+    "project": "codex",
+    "target": ".agents/skills",
+    "fields": [
+      "name",
+      "description"
+    ],
+    "absent": [
+      ".kilo/skills"
+    ]
+  },
+  {
+    "project": "opencode",
+    "target": ".opencode/skills",
+    "fields": [
+      "description",
+      "permission"
+    ],
+    "absent": [
+      ".kilo/skills",
+      ".agents/skills"
+    ]
+  },
+  {
+    "project": "mixed",
+    "target": ".agents/skills",
+    "fields": [
+      "name",
+      "description"
+    ],
+    "absent": [
+      ".kilo/skills"
+    ]
+  }
+]
