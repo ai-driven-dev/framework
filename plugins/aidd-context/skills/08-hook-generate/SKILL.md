@@ -6,17 +6,17 @@ argument-hint: event | action
 
 # Hook Generate
 
-Builds one hook: an entry merged into the chosen scope for each supported tool, plus the backing script.
+Builds one hook for tools with a documented declarative contract. For Kilo, returns sourced plugin guidance without generating a hook.
 
 ## Actions
 
 | #   | Action         | Role                                              | Input             |
 | --- | -------------- | ------------------------------------------------- | ----------------- |
 | 01  | `capture-hook` | Clarify the moment, action, matcher, scope, tools | user request      |
-| 02  | `write-hook`   | Merge the entry per tool, write the script         | the captured spec |
-| 03  | `validate`     | Check the file, the merge, and the moment fit      | files written     |
+| 02  | `write-hook`   | Return Kilo guidance; preflight and write other targets | the captured spec |
+| 03  | `validate`     | Check guidance or written files and relaunch safety | action 02 result |
 
-Run the actions in order, `01 → 03`, and run each action's `## Test` before the next.
+Run the actions in order, `01 → 03`, and run each action's `## Test` before the next. Kilo-only stops after terminal guidance from action 01; a mixed request continues for the other targets without writing Kilo files.
 Before running an action, read its file in `actions/`, not only the table or assets.
 
 ## References

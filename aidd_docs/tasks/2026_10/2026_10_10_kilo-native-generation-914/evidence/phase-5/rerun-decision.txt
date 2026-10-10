@@ -1,0 +1,5 @@
+.claude/settings.json: exact AIDD entry present once; skip write
+.codex/hooks.json: exact AIDD entry present once; skip write
+.cursor/hooks.json: exact AIDD entry present once; skip write
+.github/hooks/aidd.json: exact AIDD entry present once; skip write
+Kilo: guidance only; skip write

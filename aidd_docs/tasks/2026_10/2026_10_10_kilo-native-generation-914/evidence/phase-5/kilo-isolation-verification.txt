@@ -1,0 +1,9 @@
+Isolated installation
+/tmp/aidd-914-kilo-7.7.5
+├── @kilocode/cli-linux-x64@7.7.5 extraneous
+└── @kilocode/cli@7.7.5 extraneous
+
+7.7.5
+Global installation
+/usr/local/share/nvm/versions/node/v24.21.0/bin/kilo
+7.8.8

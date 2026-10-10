@@ -1,0 +1,14 @@
+Temporary installation for the reference smoke
+
+Command:
+  npm install --prefix /tmp/aidd-914-kilo-7.7.5 --no-save @kilocode/cli@7.7.5
+
+Result:
+  npm reported: added 3 packages in 15s.
+  `npm ls --prefix /tmp/aidd-914-kilo-7.7.5 --depth=0 @kilocode/cli @kilocode/cli-linux-x64`
+  confirmed @kilocode/cli@7.7.5 and @kilocode/cli-linux-x64@7.7.5.
+  The isolated binary reported version 7.7.5.
+
+The smoke used `/tmp/aidd-914-kilo-7.7.5/node_modules/.bin` at the front of PATH.
+The global command remained `/usr/local/share/nvm/versions/node/v24.21.0/bin/kilo`
+and reported 7.8.8 with temporary XDG directories. No global Kilo replacement was made.

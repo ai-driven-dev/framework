@@ -1,0 +1,544 @@
+Guarded assertion command: node scripts/check-tests-leave-git-alone.js --watch .git/hooks -- node --test --test-isolation=none scripts/__tests__/context-hook-generation.test.js
+The wrapper's automatic hooks-path lookup is unavailable in this sandbox; explicit read-only --watch .git/hooks succeeds and is used for each run.
+
+=== MUTATION documented_kilo_path ===
+File: plugins/aidd-context/skills/08-hook-generate/references/tool-paths.md
+Expected red assertion: Kilo hooks end with sourced guidance and no generated artifacts
+Change: Kilo documents JavaScript or TypeScript modules under `.kilo/plugin/` in a project. => Kilo documents JavaScript or TypeScript modules under `.kilo/plugin-mutant/` in a project.
+✖ Kilo hooks end with sourced guidance and no generated artifacts (8.231481ms)
+✔ mixed targets preflight before any script or config and preserve user hooks (1.049228ms)
+✔ mixed hook contract fixtures retain user duplicates and one AIDD entry per target (1.855322ms)
+✔ invalid final mixed target is detectable before creating any earlier target (0.327982ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 3
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 31.798075
+
+✖ failing tests:
+
+test at scripts/__tests__/context-hook-generation.test.js:10:1
+✖ Kilo hooks end with sourced guidance and no generated artifacts (8.231481ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /\*\*Kilo guidance\.\*\* Kilo documents JavaScript or TypeScript modules under `\.kilo\/plugin\/` in a project\./u. Input:
+
+  '# Tool paths (hooks)\n' +
+    '\n' +
+    'Per-tool hook support, event names, file formats, and scopes. This reference covers the Kilo plugin boundary only for hook guidance; it does not generate plugins.\n' +
+    '\n' +
+    '## Per-tool support\n' +
+    '\n' +
+    '| Tool           | Supported | Note                                                            |\n' +
+    '| -------------- | --------- | --------------------------------------------------------------- |\n' +
+    '| Claude Code    | yes       | JSON config + script. Richest event set.                        |\n' +
+    '| Codex CLI      | yes       | JSON/TOML config + script. Hooks are stable, on by default.      |\n' +
+    '| Cursor         | yes       | JSON config + script.                                           |\n' +
+    "| GitHub Copilot | yes       | JSON config + script. Also reads Claude's `.claude/` config.    |\n" +
+    '| OpenCode       | no        | Hooks are JS/TS plugin modules, not config. Skip with the reason below. |\n' +
+    '| Kilo           | guidance  | JS/TS plugin module; no declarative config or generated script.       |\n' +
+    '\n' +
+    '**OpenCode skip reason.** OpenCode hooks are code, not a config entry plus a script. Point the user to write a plugin under `.opencode/plugins/` (project) or `~/.config/opencode/plugins/` (user), per `https://opencode.ai/docs/plugins`. This skill does not generate it.\n' +
+    '\n' +
+    '**Kilo guidance.** Kilo documents JavaScript or TypeScript modules under `.kilo/plugin-mutant/` in a project. Issue #914 also names `.kilo/plugins/`, but the current [official plugin documentation](https://kilo.ai/docs/automate/extending/plugins) does not establish that plural path; mention it only with this limit and recommend the documented singular path. The API exposes typed hooks and an `event` bus. For `session start`, `session.created` is documented; the existing AIDD bridge in `cli/src/contexts/tools/domain/profiles/kilo/kilo-hooks-bridge.ts` may be cited only for the events it actually maps. For any other requested moment, check the official plugin events and typed hooks and the bridge before naming an equivalent. If the equivalent is unproved, state `unsupported: no documented Kilo event for this requested moment; no fallback mapping`, and ask for a different moment or a separately scoped plugin implementation. Do not fold into another event. Do not create `.kilo/hooks.json`, Claude `hooks.json`, a shell script, or a generic plugin for Kilo. Source: [Kilo plugins](https://kilo.ai/docs/automate/extending/plugins). Issue contract verified on 2026-09-25; source rechecked on 2026-10-10.\n' +
+    '\n' +
+    '## Lifecycle moment to event name\n' +
+    '\n' +
+    'Each tool names the same moment differently and supports a different subset. Core moments, with the canonical event name per tool. A `-` means the tool does not expose that moment.\n' +
+    '\n' +
+    '| Moment             | Claude Code        | Codex CLI       | Cursor               | GitHub Copilot     |\n' +
+    '| ------------------ | ------------------ | --------------- | -------------------- | ------------------ |\n' +
+    '| session start      | `SessionStart`     | `SessionStart`  | `sessionStart`       | `SessionStart`     |\n' +
+    '| prompt submitted   | `UserPromptSubmit` | `UserPromptSubmit` | `beforeSubmitPrompt` | `UserPromptSubmit` |\n' +
+    '| before a tool runs | `PreToolUse`       | `PreToolUse`    | `preToolUse`         | `PreToolUse`       |\n' +
+    '| after a tool runs  | `PostToolUse`      | `PostToolUse`   | `postToolUse`        | `PostToolUse`      |\n' +
+    '| before compaction  | `PreCompact`       | `PreCompact`    | `preCompact`         | `PreCompact`       |\n' +
+    '| subagent stop      | `SubagentStop`     | `SubagentStop`  | `subagentStop`       | `SubagentStop`     |\n' +
+    '| turn stop          | `Stop`             | `Stop`          | `stop`               | `Stop`             |\n' +
+    '| session end        | `SessionEnd`       | `SessionEnd`    | `sessionEnd`         | `SessionEnd`       |\n' +
+    '\n' +
+    "Each tool exposes more moments than these. For the full list, read the tool's docs: Claude `https://code.claude.com/docs/en/hooks`, Codex `https://developers.openai.com/codex/hooks`, Cursor `https://cursor.com/docs/hooks`, Copilot `https://docs.github.com/en/copilot/reference/hooks-configuration`. Confirm a moment exists before wiring it. Copilot also accepts the camelCase names (`sessionStart`, `preToolUse`). The table does not define Kilo equivalents; Kilo guidance follows its own documented plugin API.\n" +
+    '\n' +
+    '## File and format per tool\n' +
+    '\n' +
+    '| Tool           | File                                                              | Shape                                            |\n' +
+    '| -------------- | ---------------------------------------------------------------- | ------------------------------------------------ |\n' +
+    '| Claude Code    | `settings.json`, plugin `hooks/hooks.json`, or component frontmatter | `{ "hooks": { "<Event>": [ { "matcher": "...", "hooks": [ { "type": "command", "command": "..." } ] } ] } }` |\n' +
+    '| Codex CLI      | `~/.codex/hooks.json` or `[hooks]` in `config.toml`              | same entry shape as Claude.                       |\n' +
+    '| Cursor         | `.cursor/hooks.json`                                              | `{ "version": 1, "hooks": { "<event>": [ { "command": "..." } ] } }` |\n' +
+    '| GitHub Copilot | `.github/hooks/*.json` or a `hooks` block in `.github/copilot/settings.json` | `{ "version": 1, "hooks": { "<Event>": [ { "type": "command", "command": "..." } ] } }` |\n' +
+    '\n' +
+    'A Claude `settings.json` and a plugin or standalone `hooks/hooks.json` both wrap the event map under a top-level `hooks` key, so the file is `{ "hooks": { "<Event>": [ ... ] } }`. A Codex `config.toml` uses a `[hooks]` table instead.\n' +
+    '\n' +
+    '## Scopes per tool\n' +
+    '\n' +
+    'Ask the user which scope, then write the matching file. A `-` means the tool has no such scope.\n' +
+    '\n' +
+    '| Scope            | Claude Code                    | Codex CLI                  | Cursor                       | GitHub Copilot           |\n' +
+    '| ---------------- | ------------------------------ | -------------------------- | ---------------------------- | ------------------------ |\n' +
+    '| user / global    | `~/.claude/settings.json`      | `~/.codex/` (`hooks.json` or `config.toml`) | `~/.cursor/hooks.json`       | `~/.copilot/hooks/`      |\n' +
+    '| project, shared  | `.claude/settings.json`        | `<repo>/.codex/` (trust-gated) | `.cursor/hooks.json`         | `.github/hooks/`         |\n' +
+    '| project, local   | `.claude/settings.local.json`  | -                          | -                            | -                        |\n' +
+    '| component / agent | skill or agent frontmatter     | -                          | -                            | `.agent.md` frontmatter  |\n' +
+    '| plugin           | plugin `hooks/hooks.json`      | plugin `hooks.json`        | -                            | -                        |\n' +
+    '| enterprise / team | managed policy settings        | managed policy             | team or enterprise path      | `policy.d/` or registry  |\n' +
+    '\n' +
+    'Never pick a scope silently. State the resolved file and confirm it.\n' +
+    '\n' +
+    'A component-scoped hook runs only while that component (the skill or agent) is active. A session-start or other always-on moment will not fire reliably from a component. Steer those to a project or user scope.\n' +
+    '\n' +
+    '## Handler contract\n' +
+    '\n' +
+    'The shared `command` handler: a script the tool runs at the moment. It reads the event JSON on stdin, then signals back.\n' +
+    '\n' +
+    '- **Claude / Codex / Copilot.** Exit `0` is success (stdout may carry a JSON object or, on some moments, context). Exit `2` blocks on a moment that honors it (stderr surfaces to the model). Any other code is a non-blocking error.\n' +
+    '- **Cursor.** Exit `0` success, exit `2` blocks (same as `permission: "deny"`), any other code fails open. Set `failClosed: true` on the entry to make a crash block instead. Gating moments return `{ "permission": "allow" | "deny" | "ask" }` on stdout.\n' +
+    '\n' +
+    "Per-tool stdout schemas and which moments can block live in each tool's docs (linked above). Codex also has a `notify` mechanism (user scope only, single turn-complete event, JSON on argv not stdin) for a simple turn-complete notification.\n" +
+    '\n' +
+    '## Path placeholders in handlers\n' +
+    '\n' +
+    'Written as `${VAR}` inside a command: `CLAUDE_PROJECT_DIR` (project root), `CLAUDE_PLUGIN_DATA` (plugin data dir), and the plugin install-directory variable (`CLAUDE_PLUGIN` + `_ROOT`). These are Claude tokens. For another tool, use an absolute path or the path the user names.\n' +
+    '\n' +
+    '## Write targets\n' +
+    '\n' +
+    "- **Host project.** Merge the entry into the resolved scope's file for each confirmed supported tool. The script goes in a `hooks/` dir beside the config by default, or another dir the user names, referenced by absolute path or an approved `${VAR}`.\n" +
+    '- **Plugin source.** Merge into `plugins/<plugin>/hooks/hooks.json` (the bare hooks object), with the script under `plugins/<plugin>/hooks/scripts/`.\n' +
+    '- **Kilo.** No write target. Return the guidance above for the requested moment, even in a mixed fan-out.\n' +
+    '\n' +
+    '## Safety checks\n' +
+    '\n' +
+    '- **Asset-access precheck.** Before writing, confirm this reference is readable. If not, stop: the plugin is not installed in this host.\n' +
+    "- **Merge check.** Before writing, read the target file and confirm the new entry is appended to the moment's list, never overwriting a sibling.\n" +
+    '- **Write-target validation.** After writing, confirm the file is valid and every handler path is an approved `${VAR}` or an absolute path under the workspace (a hook command runs from an arbitrary cwd, so an absolute path or `${VAR}` is expected, not a relative one). Otherwise stop and report.\n'
+
+      at TestContext.<anonymous> (/home/coder/project/scripts/__tests__/context-hook-generation.test.js:14:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: '# Tool paths (hooks)\n\nPer-tool hook support, event names, file formats, and scopes. This reference covers the Kilo plugin boundary only for hook guidance; it does not generate plugins.\n\n## Per-tool support\n\n| Tool           | Supported | Note                                                            |\n| -------------- | --------- | --------------------------------------------------------------- |\n| Claude Code    | yes       | JSON config + script. Richest event set.                        |\n| Codex CLI      | yes       | JSON/TOML config + script. Hooks are stable, on by default.      |\n...',
+    expected: /\*\*Kilo guidance\.\*\* Kilo documents JavaScript or TypeScript modules under `\.kilo\/plugin\/` in a project\./u,
+    operator: 'match',
+    diff: 'simple'
+  }
+KILLED: exit=1; expected test failed; 3 siblings passed.
+
+=== MUTATION unsupported_event_no_fallback ===
+File: plugins/aidd-context/skills/08-hook-generate/references/tool-paths.md
+Expected red assertion: Kilo hooks end with sourced guidance and no generated artifacts
+Change: unsupported: no documented Kilo event for this requested moment; no fallback mapping => unsupported: Kilo fallback mapping may be used for this requested moment
+✖ Kilo hooks end with sourced guidance and no generated artifacts (7.126479ms)
+✔ mixed targets preflight before any script or config and preserve user hooks (1.126924ms)
+✔ mixed hook contract fixtures retain user duplicates and one AIDD entry per target (1.814927ms)
+✔ invalid final mixed target is detectable before creating any earlier target (0.454177ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 3
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 29.658412
+
+✖ failing tests:
+
+test at scripts/__tests__/context-hook-generation.test.js:10:1
+✖ Kilo hooks end with sourced guidance and no generated artifacts (7.126479ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /unsupported.*no.*fallback/iu. Input:
+
+  '# Tool paths (hooks)\n' +
+    '\n' +
+    'Per-tool hook support, event names, file formats, and scopes. This reference covers the Kilo plugin boundary only for hook guidance; it does not generate plugins.\n' +
+    '\n' +
+    '## Per-tool support\n' +
+    '\n' +
+    '| Tool           | Supported | Note                                                            |\n' +
+    '| -------------- | --------- | --------------------------------------------------------------- |\n' +
+    '| Claude Code    | yes       | JSON config + script. Richest event set.                        |\n' +
+    '| Codex CLI      | yes       | JSON/TOML config + script. Hooks are stable, on by default.      |\n' +
+    '| Cursor         | yes       | JSON config + script.                                           |\n' +
+    "| GitHub Copilot | yes       | JSON config + script. Also reads Claude's `.claude/` config.    |\n" +
+    '| OpenCode       | no        | Hooks are JS/TS plugin modules, not config. Skip with the reason below. |\n' +
+    '| Kilo           | guidance  | JS/TS plugin module; no declarative config or generated script.       |\n' +
+    '\n' +
+    '**OpenCode skip reason.** OpenCode hooks are code, not a config entry plus a script. Point the user to write a plugin under `.opencode/plugins/` (project) or `~/.config/opencode/plugins/` (user), per `https://opencode.ai/docs/plugins`. This skill does not generate it.\n' +
+    '\n' +
+    '**Kilo guidance.** Kilo documents JavaScript or TypeScript modules under `.kilo/plugin/` in a project. Issue #914 also names `.kilo/plugins/`, but the current [official plugin documentation](https://kilo.ai/docs/automate/extending/plugins) does not establish that plural path; mention it only with this limit and recommend the documented singular path. The API exposes typed hooks and an `event` bus. For `session start`, `session.created` is documented; the existing AIDD bridge in `cli/src/contexts/tools/domain/profiles/kilo/kilo-hooks-bridge.ts` may be cited only for the events it actually maps. For any other requested moment, check the official plugin events and typed hooks and the bridge before naming an equivalent. If the equivalent is unproved, state `unsupported: Kilo fallback mapping may be used for this requested moment`, and ask for a different moment or a separately scoped plugin implementation. Do not fold into another event. Do not create `.kilo/hooks.json`, Claude `hooks.json`, a shell script, or a generic plugin for Kilo. Source: [Kilo plugins](https://kilo.ai/docs/automate/extending/plugins). Issue contract verified on 2026-09-25; source rechecked on 2026-10-10.\n' +
+    '\n' +
+    '## Lifecycle moment to event name\n' +
+    '\n' +
+    'Each tool names the same moment differently and supports a different subset. Core moments, with the canonical event name per tool. A `-` means the tool does not expose that moment.\n' +
+    '\n' +
+    '| Moment             | Claude Code        | Codex CLI       | Cursor               | GitHub Copilot     |\n' +
+    '| ------------------ | ------------------ | --------------- | -------------------- | ------------------ |\n' +
+    '| session start      | `SessionStart`     | `SessionStart`  | `sessionStart`       | `SessionStart`     |\n' +
+    '| prompt submitted   | `UserPromptSubmit` | `UserPromptSubmit` | `beforeSubmitPrompt` | `UserPromptSubmit` |\n' +
+    '| before a tool runs | `PreToolUse`       | `PreToolUse`    | `preToolUse`         | `PreToolUse`       |\n' +
+    '| after a tool runs  | `PostToolUse`      | `PostToolUse`   | `postToolUse`        | `PostToolUse`      |\n' +
+    '| before compaction  | `PreCompact`       | `PreCompact`    | `preCompact`         | `PreCompact`       |\n' +
+    '| subagent stop      | `SubagentStop`     | `SubagentStop`  | `subagentStop`       | `SubagentStop`     |\n' +
+    '| turn stop          | `Stop`             | `Stop`          | `stop`               | `Stop`             |\n' +
+    '| session end        | `SessionEnd`       | `SessionEnd`    | `sessionEnd`         | `SessionEnd`       |\n' +
+    '\n' +
+    "Each tool exposes more moments than these. For the full list, read the tool's docs: Claude `https://code.claude.com/docs/en/hooks`, Codex `https://developers.openai.com/codex/hooks`, Cursor `https://cursor.com/docs/hooks`, Copilot `https://docs.github.com/en/copilot/reference/hooks-configuration`. Confirm a moment exists before wiring it. Copilot also accepts the camelCase names (`sessionStart`, `preToolUse`). The table does not define Kilo equivalents; Kilo guidance follows its own documented plugin API.\n" +
+    '\n' +
+    '## File and format per tool\n' +
+    '\n' +
+    '| Tool           | File                                                              | Shape                                            |\n' +
+    '| -------------- | ---------------------------------------------------------------- | ------------------------------------------------ |\n' +
+    '| Claude Code    | `settings.json`, plugin `hooks/hooks.json`, or component frontmatter | `{ "hooks": { "<Event>": [ { "matcher": "...", "hooks": [ { "type": "command", "command": "..." } ] } ] } }` |\n' +
+    '| Codex CLI      | `~/.codex/hooks.json` or `[hooks]` in `config.toml`              | same entry shape as Claude.                       |\n' +
+    '| Cursor         | `.cursor/hooks.json`                                              | `{ "version": 1, "hooks": { "<event>": [ { "command": "..." } ] } }` |\n' +
+    '| GitHub Copilot | `.github/hooks/*.json` or a `hooks` block in `.github/copilot/settings.json` | `{ "version": 1, "hooks": { "<Event>": [ { "type": "command", "command": "..." } ] } }` |\n' +
+    '\n' +
+    'A Claude `settings.json` and a plugin or standalone `hooks/hooks.json` both wrap the event map under a top-level `hooks` key, so the file is `{ "hooks": { "<Event>": [ ... ] } }`. A Codex `config.toml` uses a `[hooks]` table instead.\n' +
+    '\n' +
+    '## Scopes per tool\n' +
+    '\n' +
+    'Ask the user which scope, then write the matching file. A `-` means the tool has no such scope.\n' +
+    '\n' +
+    '| Scope            | Claude Code                    | Codex CLI                  | Cursor                       | GitHub Copilot           |\n' +
+    '| ---------------- | ------------------------------ | -------------------------- | ---------------------------- | ------------------------ |\n' +
+    '| user / global    | `~/.claude/settings.json`      | `~/.codex/` (`hooks.json` or `config.toml`) | `~/.cursor/hooks.json`       | `~/.copilot/hooks/`      |\n' +
+    '| project, shared  | `.claude/settings.json`        | `<repo>/.codex/` (trust-gated) | `.cursor/hooks.json`         | `.github/hooks/`         |\n' +
+    '| project, local   | `.claude/settings.local.json`  | -                          | -                            | -                        |\n' +
+    '| component / agent | skill or agent frontmatter     | -                          | -                            | `.agent.md` frontmatter  |\n' +
+    '| plugin           | plugin `hooks/hooks.json`      | plugin `hooks.json`        | -                            | -                        |\n' +
+    '| enterprise / team | managed policy settings        | managed policy             | team or enterprise path      | `policy.d/` or registry  |\n' +
+    '\n' +
+    'Never pick a scope silently. State the resolved file and confirm it.\n' +
+    '\n' +
+    'A component-scoped hook runs only while that component (the skill or agent) is active. A session-start or other always-on moment will not fire reliably from a component. Steer those to a project or user scope.\n' +
+    '\n' +
+    '## Handler contract\n' +
+    '\n' +
+    'The shared `command` handler: a script the tool runs at the moment. It reads the event JSON on stdin, then signals back.\n' +
+    '\n' +
+    '- **Claude / Codex / Copilot.** Exit `0` is success (stdout may carry a JSON object or, on some moments, context). Exit `2` blocks on a moment that honors it (stderr surfaces to the model). Any other code is a non-blocking error.\n' +
+    '- **Cursor.** Exit `0` success, exit `2` blocks (same as `permission: "deny"`), any other code fails open. Set `failClosed: true` on the entry to make a crash block instead. Gating moments return `{ "permission": "allow" | "deny" | "ask" }` on stdout.\n' +
+    '\n' +
+    "Per-tool stdout schemas and which moments can block live in each tool's docs (linked above). Codex also has a `notify` mechanism (user scope only, single turn-complete event, JSON on argv not stdin) for a simple turn-complete notification.\n" +
+    '\n' +
+    '## Path placeholders in handlers\n' +
+    '\n' +
+    'Written as `${VAR}` inside a command: `CLAUDE_PROJECT_DIR` (project root), `CLAUDE_PLUGIN_DATA` (plugin data dir), and the plugin install-directory variable (`CLAUDE_PLUGIN` + `_ROOT`). These are Claude tokens. For another tool, use an absolute path or the path the user names.\n' +
+    '\n' +
+    '## Write targets\n' +
+    '\n' +
+    "- **Host project.** Merge the entry into the resolved scope's file for each confirmed supported tool. The script goes in a `hooks/` dir beside the config by default, or another dir the user names, referenced by absolute path or an approved `${VAR}`.\n" +
+    '- **Plugin source.** Merge into `plugins/<plugin>/hooks/hooks.json` (the bare hooks object), with the script under `plugins/<plugin>/hooks/scripts/`.\n' +
+    '- **Kilo.** No write target. Return the guidance above for the requested moment, even in a mixed fan-out.\n' +
+    '\n' +
+    '## Safety checks\n' +
+    '\n' +
+    '- **Asset-access precheck.** Before writing, confirm this reference is readable. If not, stop: the plugin is not installed in this host.\n' +
+    "- **Merge check.** Before writing, read the target file and confirm the new entry is appended to the moment's list, never overwriting a sibling.\n" +
+    '- **Write-target validation.** After writing, confirm the file is valid and every handler path is an approved `${VAR}` or an absolute path under the workspace (a hook command runs from an arbitrary cwd, so an absolute path or `${VAR}` is expected, not a relative one). Otherwise stop and report.\n'
+
+      at TestContext.<anonymous> (/home/coder/project/scripts/__tests__/context-hook-generation.test.js:21:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: '# Tool paths (hooks)\n\nPer-tool hook support, event names, file formats, and scopes. This reference covers the Kilo plugin boundary only for hook guidance; it does not generate plugins.\n\n## Per-tool support\n\n| Tool           | Supported | Note                                                            |\n| -------------- | --------- | --------------------------------------------------------------- |\n| Claude Code    | yes       | JSON config + script. Richest event set.                        |\n| Codex CLI      | yes       | JSON/TOML config + script. Hooks are stable, on by default.      |\n...',
+    expected: /unsupported.*no.*fallback/iu,
+    operator: 'match',
+    diff: 'simple'
+  }
+KILLED: exit=1; expected test failed; 3 siblings passed.
+
+=== MUTATION preflight_precedes_write ===
+File: plugins/aidd-context/skills/08-hook-generate/actions/02-write-hook.md
+Expected red assertion: mixed targets preflight before any script or config and preserve user hooks
+✔ Kilo hooks end with sourced guidance and no generated artifacts (2.296055ms)
+✖ mixed targets preflight before any script or config and preserve user hooks (8.026158ms)
+✔ mixed hook contract fixtures retain user duplicates and one AIDD entry per target (2.210345ms)
+✔ invalid final mixed target is detectable before creating any earlier target (0.368708ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 3
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 35.34342
+
+✖ failing tests:
+
+test at scripts/__tests__/context-hook-generation.test.js:26:1
+✖ mixed targets preflight before any script or config and preserve user hooks (8.026158ms)
+  AssertionError [ERR_ASSERTION]: The expression evaluated to a falsy value:
+
+    assert.ok(write.indexOf('**Preflight.**') < write.indexOf('**Script.**'))
+
+      at TestContext.<anonymous> (/home/coder/project/scripts/__tests__/context-hook-generation.test.js:29:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+KILLED: exit=1; expected test failed; 3 siblings passed.
+
+=== MUTATION exact_aidd_entry_deduplication ===
+File: plugins/aidd-context/skills/08-hook-generate/actions/02-write-hook.md
+Expected red assertion: mixed targets preflight before any script or config and preserve user hooks
+Change: append only when that exact AIDD entry is absent => append an AIDD entry for every request
+✔ Kilo hooks end with sourced guidance and no generated artifacts (2.21302ms)
+✖ mixed targets preflight before any script or config and preserve user hooks (1.84329ms)
+✔ mixed hook contract fixtures retain user duplicates and one AIDD entry per target (1.813525ms)
+✔ invalid final mixed target is detectable before creating any earlier target (0.366884ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 3
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 25.54083
+
+✖ failing tests:
+
+test at scripts/__tests__/context-hook-generation.test.js:26:1
+✖ mixed targets preflight before any script or config and preserve user hooks (1.84329ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /exact AIDD entry/u. Input:
+
+  '# 02 - Write hook\n' +
+    '\n' +
+    'Return Kilo guidance and write only confirmed declarative targets after preflighting the entire fan-out.\n' +
+    '\n' +
+    '## Input\n' +
+    '\n' +
+    'From 01: the moment, action, script need, matcher, scope, confirmed tools, and write mode.\n' +
+    '\n' +
+    '## Output\n' +
+    '\n' +
+    'The updated target file per tool, any script written, and the list of paths touched.\n' +
+    '\n' +
+    '## Process\n' +
+    '\n' +
+    '1. **Kilo.** Return its terminal guidance from action 01; Kilo has no write target. In a mixed fan-out, report it separately from written targets. No Kilo script, plugin or config is generated.\n' +
+    '2. **Preflight.** Before any script or config write, resolve every selected non-Kilo destination. Read and parse each existing config in its own format, validate the event list/entry shape and every existing handler needed for the merge, and reject an invalid entry, collision, symlink escape, unsafe script path or unwritable target. Stage the intended entry and handler bytes in memory. If any target is invalid, abort before any write; report the failing path and leave all targets unchanged. A Kilo-only request exits without reaching this step.\n' +
+    "3. **Script.** If the action needs a backing script ([hook-authoring.md](../references/hook-authoring.md)): copy [hook-script-template.sh](../assets/hook-script-template.sh), fill the logic, place it in the scope's script directory ([tool-paths.md](../references/tool-paths.md)), and make it executable. One script can back every declarative tool. Reuse an existing byte-identical AIDD script without rewriting it; do not overwrite user content.\n" +
+    "4. **Entry.** Per confirmed declarative tool, fill [hook-template.json](../assets/hook-template.json) from [tool-paths.md](../references/tool-paths.md), using that tool's shape and stripping the scaffold.\n" +
+    '   - Point the handler at the script by absolute path or an approved `${VAR}`.\n' +
+    '5. **Merge.** For each tool, append an AIDD entry for every request from the chosen event list. Compare the full entry, including matcher and handler command, not just the event name. Preserve existing order, every user hook and user duplicate, and pre-existing AIDD duplicates. Never normalize or remove prior entries. Skip byte-identical writes on a second pass.\n' +
+    '6. **Validate.** Run the merge check and write-target validation ([tool-paths.md](../references/tool-paths.md)).\n' +
+    '\n' +
+    '## Test\n' +
+    '\n' +
+    '- Each target file is valid after the merge.\n' +
+    '- The new entry is present in each, and every prior sibling survives.\n' +
+    "- A script-backed handler's script exists at its path and is executable.\n" +
+    '- A second identical pass leaves config/script bytes and mtimes unchanged; user hooks and duplicates survive.\n' +
+    '- An invalid last target aborts before any write to an earlier target.\n'
+
+      at TestContext.<anonymous> (/home/coder/project/scripts/__tests__/context-hook-generation.test.js:31:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: '# 02 - Write hook\n\nReturn Kilo guidance and write only confirmed declarative targets after preflighting the entire fan-out.\n\n## Input\n\nFrom 01: the moment, action, script need, matcher, scope, confirmed tools, and write mode.\n\n## Output\n\n...',
+    expected: /exact AIDD entry/u,
+    operator: 'match',
+    diff: 'simple'
+  }
+KILLED: exit=1; expected test failed; 3 siblings passed.
+
+=== MUTATION preserve_user_duplicates ===
+File: plugins/aidd-context/skills/08-hook-generate/actions/02-write-hook.md
+Expected red assertion: mixed targets preflight before any script or config and preserve user hooks
+Change: Preserve existing order, every user hook and user duplicate, and pre-existing AIDD duplicates. => Replace existing order and user hooks; remove duplicates.
+✔ Kilo hooks end with sourced guidance and no generated artifacts (2.365885ms)
+✖ mixed targets preflight before any script or config and preserve user hooks (1.704059ms)
+✔ mixed hook contract fixtures retain user duplicates and one AIDD entry per target (1.754935ms)
+✔ invalid final mixed target is detectable before creating any earlier target (0.414133ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 3
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 27.295605
+
+✖ failing tests:
+
+test at scripts/__tests__/context-hook-generation.test.js:26:1
+✖ mixed targets preflight before any script or config and preserve user hooks (1.704059ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /preserve.*user.*duplicate/iu. Input:
+
+  '# 02 - Write hook\n' +
+    '\n' +
+    'Return Kilo guidance and write only confirmed declarative targets after preflighting the entire fan-out.\n' +
+    '\n' +
+    '## Input\n' +
+    '\n' +
+    'From 01: the moment, action, script need, matcher, scope, confirmed tools, and write mode.\n' +
+    '\n' +
+    '## Output\n' +
+    '\n' +
+    'The updated target file per tool, any script written, and the list of paths touched.\n' +
+    '\n' +
+    '## Process\n' +
+    '\n' +
+    '1. **Kilo.** Return its terminal guidance from action 01; Kilo has no write target. In a mixed fan-out, report it separately from written targets. No Kilo script, plugin or config is generated.\n' +
+    '2. **Preflight.** Before any script or config write, resolve every selected non-Kilo destination. Read and parse each existing config in its own format, validate the event list/entry shape and every existing handler needed for the merge, and reject an invalid entry, collision, symlink escape, unsafe script path or unwritable target. Stage the intended entry and handler bytes in memory. If any target is invalid, abort before any write; report the failing path and leave all targets unchanged. A Kilo-only request exits without reaching this step.\n' +
+    "3. **Script.** If the action needs a backing script ([hook-authoring.md](../references/hook-authoring.md)): copy [hook-script-template.sh](../assets/hook-script-template.sh), fill the logic, place it in the scope's script directory ([tool-paths.md](../references/tool-paths.md)), and make it executable. One script can back every declarative tool. Reuse an existing byte-identical AIDD script without rewriting it; do not overwrite user content.\n" +
+    "4. **Entry.** Per confirmed declarative tool, fill [hook-template.json](../assets/hook-template.json) from [tool-paths.md](../references/tool-paths.md), using that tool's shape and stripping the scaffold.\n" +
+    '   - Point the handler at the script by absolute path or an approved `${VAR}`.\n' +
+    '5. **Merge.** For each tool, append only when that exact AIDD entry is absent from the chosen event list. Compare the full entry, including matcher and handler command, not just the event name. Replace existing order and user hooks; remove duplicates. Never normalize or remove prior entries. Skip byte-identical writes on a second pass.\n' +
+    '6. **Validate.** Run the merge check and write-target validation ([tool-paths.md](../references/tool-paths.md)).\n' +
+    '\n' +
+    '## Test\n' +
+    '\n' +
+    '- Each target file is valid after the merge.\n' +
+    '- The new entry is present in each, and every prior sibling survives.\n' +
+    "- A script-backed handler's script exists at its path and is executable.\n" +
+    '- A second identical pass leaves config/script bytes and mtimes unchanged; user hooks and duplicates survive.\n' +
+    '- An invalid last target aborts before any write to an earlier target.\n'
+
+      at TestContext.<anonymous> (/home/coder/project/scripts/__tests__/context-hook-generation.test.js:32:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: '# 02 - Write hook\n\nReturn Kilo guidance and write only confirmed declarative targets after preflighting the entire fan-out.\n\n## Input\n\nFrom 01: the moment, action, script need, matcher, scope, confirmed tools, and write mode.\n\n## Output\n\n...',
+    expected: /preserve.*user.*duplicate/iu,
+    operator: 'match',
+    diff: 'simple'
+  }
+KILLED: exit=1; expected test failed; 3 siblings passed.
+
+=== MUTATION invalid_late_target_aborts_before_write ===
+File: plugins/aidd-context/skills/08-hook-generate/actions/02-write-hook.md
+Expected red assertion: mixed targets preflight before any script or config and preserve user hooks
+Change: If any target is invalid, abort before any write; report the failing path and leave all targets unchanged. => If any target is invalid, report the failing path after writing and leave targets unchanged.
+✔ Kilo hooks end with sourced guidance and no generated artifacts (2.361697ms)
+✖ mixed targets preflight before any script or config and preserve user hooks (1.539182ms)
+✔ mixed hook contract fixtures retain user duplicates and one AIDD entry per target (1.944979ms)
+✔ invalid final mixed target is detectable before creating any earlier target (0.343663ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 3
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 28.926126
+
+✖ failing tests:
+
+test at scripts/__tests__/context-hook-generation.test.js:26:1
+✖ mixed targets preflight before any script or config and preserve user hooks (1.539182ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /If any target is invalid, abort before any write/u. Input:
+
+  ' Before any script or config write, resolve every selected non-Kilo destination. Read and parse each existing config in its own format, validate the event list/entry shape and every existing handler needed for the merge, and reject an invalid entry, collision, symlink escape, unsafe script path or unwritable target. Stage the intended entry and handler bytes in memory. If any target is invalid, report the failing path after writing and leave targets unchanged. A Kilo-only request exits without reaching this step.'
+
+      at TestContext.<anonymous> (/home/coder/project/scripts/__tests__/context-hook-generation.test.js:33:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: ' step....',
+    expected: /If any target is invalid, abort before any write/u,
+    operator: 'match',
+    diff: 'simple'
+  }
+KILLED: exit=1; expected test failed; 3 siblings passed.
+
+=== MUTATION second_pass_is_byte_identical ===
+File: plugins/aidd-context/skills/08-hook-generate/actions/03-validate.md
+Expected red assertion: mixed targets preflight before any script or config and preserve user hooks
+Change: second pass is byte-identical => second pass rewrites bytes
+✔ Kilo hooks end with sourced guidance and no generated artifacts (3.016019ms)
+✖ mixed targets preflight before any script or config and preserve user hooks (2.102203ms)
+✔ mixed hook contract fixtures retain user duplicates and one AIDD entry per target (2.012045ms)
+✔ invalid final mixed target is detectable before creating any earlier target (0.399145ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 3
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 29.585616
+
+✖ failing tests:
+
+test at scripts/__tests__/context-hook-generation.test.js:26:1
+✖ mixed targets preflight before any script or config and preserve user hooks (2.102203ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /second pass.*byte.identical/iu. Input:
+
+  '# 03 - Validate\n' +
+    '\n' +
+    'Check Kilo guidance and every written declarative hook against its own contract.\n' +
+    '\n' +
+    '## Input\n' +
+    '\n' +
+    'The list of paths touched (from 02).\n' +
+    '\n' +
+    '## Output\n' +
+    '\n' +
+    'A short pass or fail line per tool, plus the script.\n' +
+    '\n' +
+    '## Process\n' +
+    '\n' +
+    '1. **Kilo.** Confirm the guidance cites the official source and documented event or unsupported limit, and compare the full project tree before and after a Kilo-only request: no write. For mixed requests, confirm no Kilo hook/config/plugin was added.\n' +
+    '2. **Parse.** Confirm each non-Kilo target file still parses in its format and the entry sits at the right key for its scope.\n' +
+    "3. **Moment.** Confirm the event name is the right one for that tool's moment, and the matcher is well-formed ([tool-paths.md](../references/tool-paths.md)).\n" +
+    '4. **Blocking.** If the hook blocks, confirm the moment can block on that tool ([tool-paths.md](../references/tool-paths.md)).\n' +
+    '5. **Script.** For a script-backed handler, confirm the script exists, is executable, and reads stdin and signals per the contract.\n' +
+    '6. **Relance.** Execute a second pass with identical inputs: config and script bytes and mtimes must be identical; user entries, including duplicates, remain untouched. Test an invalid final target in mixed fan-out and confirm the full tree has no new files or changed bytes.\n' +
+    '\n' +
+    '## Test\n' +
+    '\n' +
+    '- Each target file parses with the entry under the correct key.\n' +
+    "- Each event name matches the tool's moment, and any blocking hook sits on a moment that can block.\n" +
+    '- The second pass rewrites bytes and leaves user hooks intact; invalid input fails before any write.\n'
+
+      at TestContext.<anonymous> (/home/coder/project/scripts/__tests__/context-hook-generation.test.js:34:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: '# 03 - Validate\n\nCheck Kilo guidance and every written declarative hook against its own contract.\n\n## Input\n\nThe list of paths touched (from 02).\n\n## Output\n\n...',
+    expected: /second pass.*byte.identical/iu,
+    operator: 'match',
+    diff: 'simple'
+  }
+KILLED: exit=1; expected test failed; 3 siblings passed.
+RESTORED sha256 6925543f28125e019f9eb876c5296375c9072903abfb15ef7973cd029e491d55  plugins/aidd-context/skills/08-hook-generate/references/tool-paths.md
+RESTORED sha256 03cd0d7917e6613e580868c43cb0d17b8cd1e25e74aa80f2bb77143588d00af8  plugins/aidd-context/skills/08-hook-generate/actions/02-write-hook.md
+RESTORED sha256 edbe76be0691c8708e68f2384a6e56173135e71849feab95ff86a9b2413c80a3  plugins/aidd-context/skills/08-hook-generate/actions/03-validate.md
+
+PASS: 7/7 targeted mutations killed; all three source files restored byte-for-byte.

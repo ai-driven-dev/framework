@@ -553,5 +553,98 @@
       ],
       "judge": "The generator requests shared portable consent or a revised target selection, and publishes neither tree."
     }
+  },
+  {
+    "plugin": "aidd-context",
+    "skill": "08-hook-generate",
+    "evalName": "xeval-kilo-hook",
+    "name": "Kilo-only session start gives guidance without files",
+    "setup": {
+      "files": {
+        "kilo.json": "{}\n",
+        "USER.txt": "KEEP\n"
+      }
+    },
+    "prompt": "Use the {{SKILL}} skill for Kilo only. The requested moment is session start; explain the documented Kilo hook route. Do not create a plugin or hook file.",
+    "expect": {
+      "filesAbsent": [
+        ".kilo/hooks.json",
+        ".kilo/plugin/aidd-hook.ts",
+        ".kilo/plugins/aidd-hook.ts"
+      ],
+      "filesUnchanged": [
+        "kilo.json",
+        "USER.txt"
+      ],
+      "judge": "The response recommends the documented .kilo/plugin/ JS/TS path, labels the issue's .kilo/plugins/ claim unconfirmed by current docs, cites session.created as documented, and creates no file."
+    }
+  },
+  {
+    "plugin": "aidd-context",
+    "skill": "08-hook-generate",
+    "evalName": "xeval-kilo-hook",
+    "name": "unproved Kilo moment has no invented mapping",
+    "setup": {
+      "files": {
+        "kilo.json": "{}\n"
+      }
+    },
+    "prompt": "Use the {{SKILL}} skill for Kilo only. I need a hook exactly when an agent switches from planning to editing; keep that exact lifecycle meaning. If Kilo has no documented event for it, say so. No file writes.",
+    "expect": {
+      "filesUnchanged": [
+        "kilo.json"
+      ],
+      "judge": "The exact event is reported unsupported without claiming another event is equivalent, and no hook config, script or plugin is generated."
+    }
+  },
+  {
+    "plugin": "aidd-context",
+    "skill": "08-hook-generate",
+    "evalName": "xeval-kilo-hook",
+    "name": "invalid final mixed target stops before prior writes",
+    "setup": {
+      "files": {
+        "kilo.json": "{}\n",
+        ".github/hooks/aidd.json": "{\"version\":1,\"hooks\":{\"SessionStart\":\"INVALID\"}}\n"
+      }
+    },
+    "prompt": "Use the {{SKILL}} skill for Kilo, Claude and Copilot. Session start, shared project scope, simple no-op action, no matcher, host project, and every target is confirmed. Preserve user files. Preflight all targets before writing, including Copilot last; if its config is invalid, stop the entire write.",
+    "expect": {
+      "filesAbsent": [
+        ".claude/settings.json",
+        ".claude/hooks/aidd.sh",
+        ".kilo/hooks.json"
+      ],
+      "filesUnchanged": [
+        "kilo.json",
+        ".github/hooks/aidd.json"
+      ],
+      "judge": "The invalid Copilot event list is reported before Claude script/config writes; Kilo guidance is separate and no Kilo file is produced."
+    }
+  },
+  {
+    "plugin": "aidd-context",
+    "skill": "08-hook-generate",
+    "evalName": "xeval-kilo-hook",
+    "name": "existing exact AIDD entry and user duplicates remain unchanged",
+    "setup": {
+      "files": {
+        "kilo.json": "{}\n",
+        ".claude/settings.json": "{\"hooks\":{\"SessionStart\":[{\"hooks\":[{\"type\":\"command\",\"command\":\"bash ${CLAUDE_PROJECT_DIR}/hooks/user.sh\"}]},{\"hooks\":[{\"type\":\"command\",\"command\":\"bash ${CLAUDE_PROJECT_DIR}/hooks/user.sh\"}]},{\"hooks\":[{\"type\":\"command\",\"command\":\"bash ${CLAUDE_PROJECT_DIR}/hooks/aidd.sh\"}]}]}}\n",
+        "hooks/aidd.sh": "#!/usr/bin/env bash\ncat >/dev/null\nexit 0\n"
+      }
+    },
+    "prompt": "Use the {{SKILL}} skill for Kilo and Claude. Repeat the existing SessionStart shared-project hook with exact command bash ${CLAUDE_PROJECT_DIR}/hooks/aidd.sh, no matcher. Both targets and scope are confirmed. The existing AIDD entry is exact; preserve its bytes and the two user duplicate entries. Give Kilo guidance separately.",
+    "expect": {
+      "filesUnchanged": [
+        "kilo.json",
+        ".claude/settings.json",
+        "hooks/aidd.sh"
+      ],
+      "filesAbsent": [
+        ".kilo/hooks.json"
+      ],
+      "judge": "The existing exact AIDD entry is not duplicated, both user entries remain and no file is rewritten; Kilo receives only guidance."
+    }
   }
 ]

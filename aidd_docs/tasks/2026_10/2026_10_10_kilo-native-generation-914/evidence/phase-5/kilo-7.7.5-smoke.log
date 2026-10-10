@@ -1,0 +1,13 @@
+$ PATH=/tmp/aidd-914-kilo-7.7.5/node_modules/.bin:$PATH pnpm --dir cli test:e2e:kilo
+$ KILO_RUNTIME_SMOKE=1 vitest run --project=e2e tests/e2e/kilo-runtime.e2e.test.ts
+ DEPRECATED  The workspace file is deprecated and will be removed in the next major. Please, use the `test.projects` field in /home/coder/project/cli/vitest.config.ts instead.
+
+ RUN  v3.2.6 /home/coder/project/cli
+
+ ✓ |e2e| tests/e2e/kilo-runtime.e2e.test.ts (1 test) 78533ms
+   ✓ E2E: real Kilo runtime > runs memory and declared hooks exactly once through a real local read-tool turn  78531ms
+
+ Test Files  1 passed (1)
+      Tests  1 passed (1)
+   Start at  16:13:18
+   Duration  83.87s (transform 2.77s, setup 0ms, collect 4.25s, tests 78.53s, environment 0ms, prepare 95ms)

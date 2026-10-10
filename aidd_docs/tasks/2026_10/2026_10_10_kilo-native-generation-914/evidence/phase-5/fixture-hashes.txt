@@ -1,0 +1,9 @@
+d7a3ed9e87c91de26d13e6999432091aafba1cd2e823da3daa55908f8f92aaeb  scripts/__tests__/fixtures/context-generation/hooks/invalid/.github/hooks/aidd.json
+ca3d163bab055381827226140568f3bef7eaac187cebd76878e0b63e9e442356  scripts/__tests__/fixtures/context-generation/hooks/invalid/kilo.json
+86d19ec9fec1df39a7ff03ca894bb897e48a80614a9f88edd1006b745d1b04c0  scripts/__tests__/fixtures/context-generation/hooks/mixed/.claude/settings.json
+86d19ec9fec1df39a7ff03ca894bb897e48a80614a9f88edd1006b745d1b04c0  scripts/__tests__/fixtures/context-generation/hooks/mixed/.codex/hooks.json
+42d50e9d01a1fd24e460b351560475870c38af8736381cdf5560774d254c3843  scripts/__tests__/fixtures/context-generation/hooks/mixed/.cursor/hooks.json
+972c789a11e4c5c3218d296bfa38a02db4608334f58159891e0e7e39d7ebfd93  scripts/__tests__/fixtures/context-generation/hooks/mixed/.github/hooks/aidd.json
+01a777c1ad982d757792c979e4c1460fbcae1b2375f47a6bd351a15137856abd  scripts/__tests__/fixtures/context-generation/hooks/mixed/hooks/aidd.sh
+e90173cda550d35c159316ba12cc26b7621c68a6376deaf7eb2da104ba6c2609  scripts/__tests__/fixtures/context-generation/hooks/mixed/hooks/user.sh
+ca3d163bab055381827226140568f3bef7eaac187cebd76878e0b63e9e442356  scripts/__tests__/fixtures/context-generation/hooks/mixed/kilo.json
