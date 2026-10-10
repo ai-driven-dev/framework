@@ -140,7 +140,7 @@
       "fileContains": {
         "aidd_docs/memory/ecosystem.md": [
           "flowchart",
-          "·",
+          "\u00b7",
           "ependabot"
         ],
         "aidd_docs/GUIDELINES.md": [
@@ -377,6 +377,181 @@
         "aidd_docs/memory/architecture.md"
       ],
       "judge": "The sync stops at preflight, reports the malformed AGENTS.md block, and creates or changes no context file."
+    }
+  },
+  {
+    "plugin": "aidd-context",
+    "skill": "04-skill-generate",
+    "evalName": "xeval-kilo-skill",
+    "name": "Kilo native skill uses one canonical tree",
+    "setup": {
+      "files": {
+        "kilo.json": "{}\n"
+      }
+    },
+    "prompt": "Use the {{SKILL}} skill. Create verify-payload with a single verify action that reads assets/payload.txt and replies with its content. Name, purpose, action and test are confirmed. Select Kilo native only; do not select portable. Do not wait for input.",
+    "expect": {
+      "filesExist": [
+        ".kilo/skills/verify-payload/SKILL.md",
+        ".kilo/skills/verify-payload/actions/01-verify.md"
+      ],
+      "filesAbsent": [
+        ".agents/skills/verify-payload/SKILL.md"
+      ],
+      "fileContains": {
+        ".kilo/skills/verify-payload/SKILL.md": [
+          "name: verify-payload",
+          "description:"
+        ]
+      },
+      "fileNotContains": {
+        ".kilo/skills/verify-payload/SKILL.md": [
+          "argument-hint:",
+          "allowed-tools:"
+        ]
+      }
+    }
+  },
+  {
+    "plugin": "aidd-context",
+    "skill": "04-skill-generate",
+    "evalName": "xeval-kilo-skill",
+    "name": "Kilo portable choice shares exactly one tree with Codex",
+    "setup": {
+      "files": {
+        "kilo.json": "{}\n",
+        ".codex/config.toml": "# fixture\n"
+      }
+    },
+    "prompt": "Use the {{SKILL}} skill. Create verify-payload with one verify action that replies VERIFIED. Select Kilo portable and Codex explicitly. Name, purpose, action and test confirmed. I explicitly approve .agents/skills placement. Complete the flow without waiting for input.",
+    "expect": {
+      "filesExist": [
+        ".agents/skills/verify-payload/SKILL.md"
+      ],
+      "filesAbsent": [
+        ".kilo/skills/verify-payload/SKILL.md"
+      ],
+      "fileContains": {
+        ".agents/skills/verify-payload/SKILL.md": [
+          "name: verify-payload",
+          "description:"
+        ]
+      }
+    }
+  },
+  {
+    "plugin": "aidd-context",
+    "skill": "04-skill-generate",
+    "evalName": "xeval-kilo-skill",
+    "name": "Kilo cannot choose portable without agreement",
+    "setup": {
+      "files": {
+        "kilo.json": "{}\n"
+      }
+    },
+    "prompt": "Use the {{SKILL}} skill. Create verify-payload for Kilo but do not write until I choose a placement. I have not approved native or portable placement. Do not infer consent or answer for me.",
+    "expect": {
+      "filesAbsent": [
+        ".agents/skills/verify-payload/SKILL.md",
+        ".kilo/skills/verify-payload/SKILL.md"
+      ],
+      "filesUnchanged": [
+        "kilo.json"
+      ],
+      "judge": "The response asks for an explicit placement choice and does not write the skill."
+    }
+  },
+  {
+    "plugin": "aidd-context",
+    "skill": "04-skill-generate",
+    "evalName": "xeval-kilo-skill",
+    "name": "existing Kilo copies require resolution before any write",
+    "setup": {
+      "files": {
+        "kilo.json": "{}\n",
+        ".kilo/skills/verify-payload/SKILL.md": "# NATIVE_USER_COPY\n",
+        ".agents/skills/verify-payload/SKILL.md": "# PORTABLE_USER_COPY\n"
+      }
+    },
+    "prompt": "Use the {{SKILL}} skill. Modify verify-payload for Kilo. Two user copies exist; I have not resolved the collision. Do not repair, delete or choose between copies without asking.",
+    "expect": {
+      "filesUnchanged": [
+        "kilo.json",
+        ".kilo/skills/verify-payload/SKILL.md",
+        ".agents/skills/verify-payload/SKILL.md"
+      ],
+      "judge": "The generator requests a resolution and changes no copy."
+    }
+  },
+  {
+    "plugin": "aidd-context",
+    "skill": "04-skill-generate",
+    "evalName": "xeval-kilo-skill",
+    "name": "unsafe late Kilo target leaves earlier Claude target absent",
+    "setup": {
+      "files": {
+        "kilo.json": "{}\n",
+        ".kilo/skills/verify-payload": "USER_FILE_NOT_DIRECTORY\n"
+      }
+    },
+    "prompt": "Use the {{SKILL}} skill. Create verify-payload for Claude first and Kilo native second. Name, purpose, one verify action returning VERIFIED and its test are confirmed. Both targets approved. Do not replace conflicting user files; refuse the whole publication if any target is unsafe.",
+    "expect": {
+      "filesAbsent": [
+        ".claude/skills/verify-payload/SKILL.md"
+      ],
+      "filesUnchanged": [
+        "kilo.json",
+        ".kilo/skills/verify-payload"
+      ],
+      "judge": "The preflight refuses the non-directory Kilo target before creating any Claude files."
+    }
+  },
+  {
+    "plugin": "aidd-context",
+    "skill": "04-skill-generate",
+    "evalName": "xeval-kilo-skill",
+    "name": "shared portable fields need resolution before writing",
+    "setup": {
+      "files": {
+        "kilo.json": "{}\n",
+        ".codex/config.toml": "# fixture\n"
+      }
+    },
+    "prompt": "Use the {{SKILL}} skill. Create verify-payload for Kilo portable and Codex on one shared destination, and emit license MIT in its frontmatter. Both targets and this requested field are explicit. If their field contracts conflict, ask me for a resolution; do not drop my requested field or answer for me.",
+    "expect": {
+      "filesAbsent": [
+        ".agents/skills/verify-payload/SKILL.md",
+        ".kilo/skills/verify-payload/SKILL.md"
+      ],
+      "filesUnchanged": [
+        "kilo.json",
+        ".codex/config.toml"
+      ],
+      "judge": "The generator requests a target or field resolution before writing because the shared Codex output strips optional Kilo fields."
+    }
+  },
+  {
+    "plugin": "aidd-context",
+    "skill": "04-skill-generate",
+    "evalName": "xeval-kilo-skill",
+    "name": "Kilo native plus Codex requires one placement resolution",
+    "setup": {
+      "files": {
+        "kilo.json": "{}\n",
+        ".codex/config.toml": "# fixture\n"
+      }
+    },
+    "prompt": "Use the {{SKILL}} skill. Create verify-payload for Kilo native and Codex. I have not approved portable placement or deselecting a target. If these targets would duplicate one skill across native and portable roots, ask me to resolve the placement before writing. Do not answer for me.",
+    "expect": {
+      "filesAbsent": [
+        ".agents/skills/verify-payload/SKILL.md",
+        ".kilo/skills/verify-payload/SKILL.md"
+      ],
+      "filesUnchanged": [
+        "kilo.json",
+        ".codex/config.toml"
+      ],
+      "judge": "The generator requests shared portable consent or a revised target selection, and publishes neither tree."
     }
   }
 ]

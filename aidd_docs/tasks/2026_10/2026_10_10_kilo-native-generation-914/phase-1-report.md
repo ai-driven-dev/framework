@@ -31,7 +31,7 @@ TASK 3 : sources/date et preuve de génération/consommation ; fichiers et comma
 | Architecture et JSON explicites | exit 0, 3 fichiers sans violation et 2 JSON valides |
 | Runtime Kilo mémoire | read réel, réponse exacte, exit 0, deux coûts 0 |
 
-Les [assertions AIDD](assertions-phase-1.md) et la [review](review.md) complètent ces preuves. Les deux skips sont des tests existants du formateur Biome, pas des validations Kilo converties en pass. Aucun fichier CLI modifié : lint/typecheck/knip CLI non requis ici.
+Les [assertions AIDD](assertions-phase-1.md) et la [review](review-phase-1.md) complètent ces preuves. Les deux skips sont des tests existants du formateur Biome, pas des validations Kilo converties en pass. Aucun fichier CLI modifié : lint/typecheck/knip CLI non requis ici.
 
 Claude : tests hors ligne des vrais artefacts, ESM, marqueurs, imports, migration et idempotence. Aucun runtime Claude avec modèle authentifié. CONTRIBUTING demande de tester dans Claude et un autre outil : sa partie Claude reste non accomplie, explicitement signalée pour la future contribution. Codex CLI a sélectionné le skill mais ses trois runs sont bloqués par `codex-code-mode-host` absent ; le code 0 n’est pas un succès. Génération effective = caller natif actuel. OpenCode absent ; contrats partagés vérifiés par sous-processus, aucun runtime OpenCode. Kilo Linux seulement ; il ajoute `$schema` au kilo.json de fixture au démarrage, sans changer AGENTS ni mémoire.
 

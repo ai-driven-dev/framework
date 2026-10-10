@@ -1,0 +1,14 @@
+✔ skill detection lists exactly the six Kilo signals and keeps OpenCode distinct (4.060334ms)
+✔ Kilo placement requires explicit portable consent and resolves duplicates before writing (0.779134ms)
+✔ Kilo fields are target-specific without weakening the Claude authoring template (0.619676ms)
+✔ full preflight precedes creation and covers unsafe paths and user resources (0.397431ms)
+✔ Kilo path claims carry official source and attributed historical date (0.45606ms)
+✔ caller-generated target trees have valid frontmatter, router links and preserved resources (7.44683ms)
+ℹ tests 6
+ℹ suites 0
+ℹ pass 6
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 143.632922
