@@ -1,0 +1,56 @@
+{
+  "kind": "new-replay",
+  "generated_at_utc": "2026-10-10T15:09:24.296Z",
+  "caller": "Codex principal applying aidd-context:06-agent-generate and aidd-context:07-command-generate",
+  "router_loaded": "installed aidd-context 2.8.1 SKILL.md; action routing only",
+  "contracts_applied": "phase-4 candidate actions and references at HEAD 19c81c4f",
+  "interactive_answers": false,
+  "fixture_inputs": {
+    "agent": {
+      "proposed_names": [
+        "verifier",
+        "inspector",
+        "verify-agent"
+      ],
+      "selected_name": "verify-agent",
+      "purpose": "Read one bundled fixture payload and return its exact content.",
+      "mode": "Kilo host project",
+      "requested_options": {
+        "temperature": 0,
+        "permission": {
+          "read": "allow"
+        }
+      },
+      "model": "not requested"
+    },
+    "workflow": {
+      "name": "verify-workflow",
+      "goal": "Invoke verify-agent as a subtask and return its exact fixture payload.",
+      "location": "flat .kilo/commands/",
+      "arguments": "none",
+      "mode": "Kilo host project",
+      "requested_options": {
+        "agent": "verify-agent",
+        "variant": "minimal",
+        "subtask": true
+      }
+    }
+  },
+  "fixture_note": "Names and choices are synthetic test inputs, not an interactive user response. Outputs were rendered by the current Codex caller by following the named capture, write, and validate actions.",
+  "generated_files": {
+    ".kilo/agents/verify-agent.md": {
+      "sha256": "83fe54db94a80c71930aedf756f17881b42ebda02ef481a0668bb7b1f9bde47e",
+      "bytes": 305
+    },
+    ".kilo/agents/assets/agent-payload.txt": {
+      "sha256": "55630dd7c27452fb05892541f2cf1c2f0748853417b1bbe00c5e4345243bad6e",
+      "bytes": 26
+    },
+    ".kilo/commands/verify-workflow.md": {
+      "sha256": "9daf5e2a3a5e211daf1dc42b3ffebff1518eff543ffab89375df3abc6707218f",
+      "bytes": 287
+    }
+  },
+  "source_contract_hashes": "source-contract-hashes.txt, produced by replay-kilo.sh from the candidate skill router, capture/write/validate actions, references, and templates",
+  "runtime_copy": "replay-kilo.sh copies generated-project into a fresh /tmp project and compares SHA-256 values before and after Kilo consumes it"
+}

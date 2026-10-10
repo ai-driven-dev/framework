@@ -42,6 +42,7 @@ const TOOL_FILES = {
   codex: "AGENTS.md",
   cursor: "AGENTS.md",
   opencode: "AGENTS.md",
+  kilo: "AGENTS.md",
   copilot: ".github/copilot-instructions.md",
 };
 
@@ -49,15 +50,111 @@ function memoryPath(path, ...parts) {
   return path.join(DOCS_DIR, MEMORY_SUBDIR, ...parts);
 }
 
-// Opening directly rather than checking existence first touches the file once, so no
-// time-of-check/time-of-use race. A real error still throws.
-function readTextOrNull(fs, filePath) {
+function sameIdentity(left, right) {
+  return left.dev === right.dev && left.ino === right.ino;
+}
+
+// Open only an existing regular, single-link file. Keep its descriptor for any later write;
+// path identity checks detect ordinary substitutions but cannot defeat a hostile process
+// that swaps a parent away and back between checks.
+function openProjectFile(fs, path, filePath) {
+  const root = fs.realpathSync(process.cwd());
+  const rootIdentity = fs.statSync(root);
+  const parts = filePath.split("/");
+  const inspect = () => {
+    const chain = [fs.statSync(root)];
+    let current = root;
+    for (let index = 0; index < parts.length; index++) {
+      current = path.join(current, parts[index]);
+      let stat;
+      try { stat = fs.lstatSync(current); }
+      catch (err) {
+        if (err.code === "ENOENT") return null;
+        throw err;
+      }
+      const final = index === parts.length - 1;
+      if (stat.isSymbolicLink() || (final ? !stat.isFile() : !stat.isDirectory())) {
+        const error = new Error(`${filePath} has an unsafe destination, not synced`);
+        error.code = "AIDD_UNSAFE_PATH";
+        throw error;
+      }
+      chain.push(stat);
+    }
+    return chain;
+  };
+  const before = inspect();
+  if (before === null) return null;
+  let fd;
   try {
-    return fs.readFileSync(filePath, "utf8");
+    const flags = fs.constants.O_RDWR |
+      (process.platform === "win32" ? 0 : (fs.constants.O_NOFOLLOW || 0) | (fs.constants.O_NONBLOCK || 0));
+    fd = fs.openSync(path.join(root, ...parts), flags);
+    const opened = fs.fstatSync(fd);
+    if (!opened.isFile() || opened.nlink > 1 || !sameIdentity(opened, before.at(-1))) {
+      const error = new Error(`${filePath} changed or has multiple hard links, not synced`);
+      error.code = "AIDD_UNSAFE_PATH";
+      throw error;
+    }
+    const after = inspect();
+    if (!after || before.length !== after.length || before.some((stat, index) => !sameIdentity(stat, after[index]))) {
+      const error = new Error(`${filePath} path changed while opening, not synced`);
+      error.code = "AIDD_UNSAFE_PATH";
+      throw error;
+    }
+    const openedAgain = fs.fstatSync(fd);
+    if (!sameIdentity(opened, openedAgain)) {
+      const error = new Error(`${filePath} changed while opening, not synced`);
+      error.code = "AIDD_UNSAFE_PATH";
+      throw error;
+    }
+    if (fs.realpathSync(root) !== root || !sameIdentity(rootIdentity, after[0])) {
+      const error = new Error(`${filePath} project root changed while opening, not synced`);
+      error.code = "AIDD_UNSAFE_PATH";
+      throw error;
+    }
+    return { fd, root, parts, chain: after, identity: opened, rootIdentity };
   } catch (err) {
+    if (fd !== undefined) fs.closeSync(fd);
     if (err.code === "ENOENT") return null;
     throw err;
   }
+}
+
+function readOpenedText(fs, opened) {
+  return fs.readFileSync(opened.fd, "utf8");
+}
+
+// README is opt-in by marker. This probe is read-only; any marked destination is reopened
+// through a verified descriptor before it can be written, while a blockless symlink is ignored.
+function readTextOrNull(fs, filePath) {
+  try { return fs.readFileSync(filePath, "utf8"); }
+  catch (err) {
+    if (err.code === "ENOENT") return null;
+    throw err;
+  }
+}
+
+function writeOpenedText(fs, path, filePath, opened, content) {
+  if (fs.realpathSync(opened.root) !== opened.root || !sameIdentity(fs.statSync(opened.root), opened.rootIdentity)) {
+    throw new Error(`${filePath} project root changed before write, not synced`);
+  }
+  let current = opened.root;
+  for (let index = 0; index < opened.parts.length; index++) {
+    current = path.join(current, opened.parts[index]);
+    const stat = fs.lstatSync(current);
+    const final = index === opened.parts.length - 1;
+    if (stat.isSymbolicLink() || (final ? !stat.isFile() : !stat.isDirectory()) || !sameIdentity(stat, opened.chain[index + 1])) {
+      throw new Error(`${filePath} path changed before write, not synced`);
+    }
+  }
+  const descriptorStat = fs.fstatSync(opened.fd);
+  if (!sameIdentity(descriptorStat, opened.identity)) throw new Error(`${filePath} descriptor changed before write, not synced`);
+
+  const bytes = Buffer.from(content, "utf8");
+  let offset = 0;
+  while (offset < bytes.length) offset += fs.writeSync(opened.fd, bytes, offset, bytes.length - offset, offset);
+  // Truncate only after the complete replacement bytes are written; metadata and inode stay.
+  fs.ftruncateSync(opened.fd, bytes.length);
 }
 
 // Single-touch, like readTextOrNull: no existence check before reading.
@@ -117,14 +214,12 @@ function buildBlockContent(rootFiles, onDemandFiles, syntax, prefix = "") {
 
 // Markers that each own their line, outside any code fence. Substring search would cut on
 // the quoted marker every upgrade note carries, mangling prose and missing the real block.
-function findBlockLines(lines, open, close) {
+function markerLines(lines, markers) {
   let fence = null;
-  let openLine = -1;
-
-  for (let i = 0; i < lines.length; i++) {
-    const trimmed = lines[i].trim();
+  const found = [];
+  for (let index = 0; index < lines.length; index++) {
+    const trimmed = lines[index].trim();
     const opener = /^(`{3,}|~{3,})/u.exec(trimmed);
-
     if (fence !== null) {
       // A fence closes only on the same character, repeated at least as often,
       // so a ``` inside a ```` example does not end it early.
@@ -135,10 +230,17 @@ function findBlockLines(lines, open, close) {
       fence = opener[1];
       continue;
     }
-    if (trimmed === open) openLine = i;
-    else if (trimmed === close && openLine !== -1) return { openLine, closeLine: i };
+    if (markers.includes(trimmed)) found.push({ index, marker: trimmed });
   }
+  return found;
+}
 
+function findBlockLines(lines, open, close) {
+  let openLine = -1;
+  for (const token of markerLines(lines, [open, close])) {
+    if (token.marker === open) openLine = token.index;
+    else if (openLine !== -1) return { openLine, closeLine: token.index };
+  }
   return null;
 }
 
@@ -147,11 +249,49 @@ function updateMarkers(content, open, close, innerContent) {
   const found = findBlockLines(lines, open, close);
   if (found === null) return null;
 
-  return (
-    lines.slice(0, found.openLine + 1).join("\n") +
-    innerContent +
-    lines.slice(found.closeLine).join("\n")
-  );
+  // Splice at line offsets, keeping both marker lines and every byte outside them.
+  // The opening line chooses the generated block's newline convention.
+  const start = lines.slice(0, found.openLine).reduce((size, line) => size + line.length + 1, 0);
+  const end = lines.slice(0, found.closeLine).reduce((size, line) => size + line.length + 1, 0);
+  const opening = lines[found.openLine];
+  const eol = opening.endsWith("\r") ? "\r\n" : "\n";
+  const openingEnd = start + opening.length - (opening.endsWith("\r") ? 1 : 0);
+  return content.slice(0, openingEnd) + innerContent.replace(/\n/gu, eol) + content.slice(end);
+}
+
+// Explicit sync is an operation on the entire selected set. Accept no ambiguous block:
+// exactly one matching modern or legacy pair, with examples outside the contract.
+function validateMarkers(filePath, content, pairs, label) {
+  if (content === null) return;
+  const tokens = markerLines(content.split("\n"), pairs.flat()).map((token) => token.marker);
+  if (tokens.length === 0) return;
+  if (tokens.length === 2 && pairs.some(([open, close]) => tokens[0] === open && tokens[1] === close)) return;
+  throw new Error(`${filePath} has an unpaired ${label} marker or ambiguous block, not synced`);
+}
+
+// Inspect each project-relative component without following symlinks. Missing files and
+// directories are permitted so the skill can preflight before its separate Upsert step.
+function validateDestination(fs, path, filePath) {
+  const parts = filePath.split("/");
+  let current = fs.realpathSync(process.cwd());
+  for (let index = 0; index < parts.length; index++) {
+    current = path.join(current, parts[index]);
+    let stat;
+    try {
+      stat = fs.lstatSync(current);
+    } catch (err) {
+      if (err.code === "ENOENT") {
+        fs.accessSync(path.dirname(current), fs.constants.W_OK | fs.constants.X_OK);
+        return;
+      }
+      throw err;
+    }
+    const final = index === parts.length - 1;
+    if (stat.isSymbolicLink() || (final ? !stat.isFile() : !stat.isDirectory())) {
+      throw new Error(`${filePath} has an unsafe destination, not synced`);
+    }
+    if (final) fs.accessSync(current, fs.constants.W_OK);
+  }
 }
 
 function migrateLegacyMarkers(content) {
@@ -208,8 +348,7 @@ function resolveTargets(tools) {
   const unknown = tools.filter((t) => !(t in TOOL_FILES));
   if (unknown.length > 0) {
     const known = Object.keys(TOOL_FILES).join(", ");
-    console.error(`update_memory: unknown tool ${unknown.join(", ")} (known: ${known})`);
-    process.exit(1);
+    throw new Error(`unknown tool ${unknown.join(", ")} (known: ${known})`);
   }
 
   const wanted = new Set(tools.map((t) => TOOL_FILES[t]));
@@ -239,18 +378,73 @@ function gitAdd(childProcess, files) {
   const root = process.env.CLAUDE_PROJECT_DIR;
   if (root && fs.existsSync(root)) process.chdir(root);
 
-  if (!fs.existsSync(DOCS_DIR)) process.exit(0);
+  const args = process.argv.slice(2).map((arg) => arg.toLowerCase());
+  const checkOnly = args.includes("--check");
+  const tools = args.filter((arg) => arg !== "--check");
+  let targets;
+  try {
+    targets = resolveTargets(tools);
+  } catch (err) {
+    console.error(`update_memory: ${err.message}`);
+    process.exitCode = 1;
+    return;
+  }
+  const explicit = checkOnly || tools.length > 0;
+  const readmePath = memoryPath(path, MEMORY_README);
+  const originals = new Map();
+  const openedFiles = new Map();
+  let readmeOriginal;
 
-  const tools = process.argv.slice(2).map((arg) => arg.toLowerCase());
-  const targets = resolveTargets(tools);
+  if (explicit) {
+    // Complete preflight before scanning the bank or writing the first target. This
+    // prevents known destination errors from leaving earlier selected files changed;
+    // it is not a transaction against concurrent edits or process interruption.
+    try {
+      for (const target of targets) {
+        validateDestination(fs, path, target.path);
+        const opened = openProjectFile(fs, path, target.path);
+        const original = opened === null ? null : readOpenedText(fs, opened);
+        if (opened) openedFiles.set(target.path, opened);
+        validateMarkers(target.path, original, [
+          [BLOCK_OPEN, BLOCK_CLOSE], [LEGACY_BLOCK_OPEN, LEGACY_BLOCK_CLOSE],
+        ], "project memory");
+        originals.set(target.path, original);
+      }
+      readmeOriginal = readTextOrNull(fs, readmePath);
+      if (readmeOriginal !== null && markerLines(readmeOriginal.split("\n"), [TOC_OPEN, TOC_CLOSE]).length > 0) {
+        validateDestination(fs, path, readmePath);
+        const readme = openProjectFile(fs, path, readmePath);
+        readmeOriginal = readOpenedText(fs, readme);
+        openedFiles.set(readmePath, readme);
+        validateMarkers(readmePath, readmeOriginal, [[TOC_OPEN, TOC_CLOSE]], "memory README");
+      }
+    } catch (err) {
+      console.error(`update_memory: ${err.message}`);
+      process.exitCode = 1;
+      return;
+    }
+    if (checkOnly) return;
+  }
+  if (!fs.existsSync(DOCS_DIR)) return;
 
   const rootFiles = scanRootFiles(fs, path);
   const onDemandFiles = ON_DEMAND_DIRS.flatMap((sub) => scanSubdir(fs, path, sub));
   const changed = [];
-  let unpaired = false;
+  const pending = [];
 
   for (const target of targets) {
-    const original = readTextOrNull(fs, target.path);
+    let opened = openedFiles.get(target.path);
+    let original = explicit ? originals.get(target.path) : undefined;
+    if (!explicit) {
+      try {
+        opened = openProjectFile(fs, path, target.path);
+        original = opened === null ? null : readOpenedText(fs, opened);
+        if (opened) openedFiles.set(target.path, opened);
+      } catch (err) {
+        console.error(`update_memory: ${err.message}`);
+        continue;
+      }
+    }
     if (original === null) continue;
 
     const innerContent = buildBlockContent(
@@ -264,32 +458,48 @@ function gitAdd(childProcess, files) {
     const updated = updateBlock(migrateLegacyMarkers(original), innerContent);
 
     if (updated === null) {
-      if (reportUnpairedMarkers(target.path, original)) unpaired = true;
+      if (!explicit) reportUnpairedMarkers(target.path, original);
       continue;
     }
     if (updated === original) continue;
 
-    fs.writeFileSync(target.path, updated, "utf8");
+    if (explicit) pending.push({ path: target.path, content: updated, opened });
+    else writeOpenedText(fs, path, target.path, opened, updated);
     changed.push(target.path);
   }
 
   // Only if the README opts in with its own markers.
-  const readmePath = memoryPath(path, MEMORY_README);
-  const readmeOriginal = readTextOrNull(fs, readmePath);
+  if (!explicit) {
+    readmeOriginal = readTextOrNull(fs, readmePath);
+    if (readmeOriginal !== null && markerLines(readmeOriginal.split("\n"), [TOC_OPEN, TOC_CLOSE]).length > 0) {
+      try {
+        const readme = openProjectFile(fs, path, readmePath);
+        readmeOriginal = readOpenedText(fs, readme);
+        openedFiles.set(readmePath, readme);
+      } catch (err) {
+        // Automatic mode is best-effort; an unsafe opted-in README is not written.
+        if (err.code !== "AIDD_UNSAFE_PATH") throw err;
+        readmeOriginal = null;
+      }
+    }
+  }
   if (readmeOriginal !== null) {
     const toc = buildToc(rootFiles, onDemandFiles, path);
     const updated = updateMarkers(readmeOriginal, TOC_OPEN, TOC_CLOSE, toc);
     if (updated !== null && updated !== readmeOriginal) {
-      fs.writeFileSync(readmePath, updated, "utf8");
+      const opened = openedFiles.get(readmePath);
+      if (explicit) pending.push({ path: readmePath, content: updated, opened });
+      else writeOpenedText(fs, path, readmePath, opened, updated);
       changed.push(readmePath);
     }
   }
+
+  for (const edit of pending) writeOpenedText(fs, path, edit.path, edit.opened, edit.content);
+
+  for (const opened of openedFiles.values()) fs.closeSync(opened.fd);
 
   // Only as the auto hook, which owns no other change: called by the skill, staging its own
   // two files would leave a partial index that reads like the whole change.
   if (changed.length > 0 && tools.length === 0) gitAdd(childProcess, changed);
 
-  // Only when tools were named, so the skill's sync action can stop: the auto hook must
-  // never fail a session start over a file the user has yet to repair.
-  if (unpaired && tools.length > 0) process.exit(1);
 })();

@@ -1,0 +1,77 @@
+{
+  "os": "Linux-6.12.107+deb13-amd64-x86_64-with-glibc2.39",
+  "kiloVersion": "7.8.8",
+  "model": "kilo/cohere/north-mini-code:free",
+  "runs": [
+    {
+      "project": "native",
+      "trace": "kilo-native-exact.jsonl",
+      "exitCodeObserved": 0,
+      "catalogLocation": "/tmp/aidd-914-p3-generation/native/.kilo/skills/verify-payload/SKILL.md",
+      "skillInvoked": true,
+      "actionAndPayloadRead": [
+        "/tmp/aidd-914-p3-generation/native/.kilo/skills/verify-payload/actions/01-verify.md",
+        "/tmp/aidd-914-p3-generation/native/.kilo/skills/verify-payload/assets/payload.txt"
+      ],
+      "exactReply": "PAYLOAD_APPLIED:cedar-7391",
+      "costs": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "project": "portable",
+      "trace": "kilo-portable.jsonl",
+      "exitCodeObserved": 0,
+      "catalogLocation": "/tmp/aidd-914-p3-generation/portable/.agents/skills/verify-payload/SKILL.md",
+      "skillInvoked": true,
+      "actionAndPayloadRead": [
+        "/tmp/aidd-914-p3-generation/portable/.agents/skills/verify-payload/actions/01-verify.md",
+        "/tmp/aidd-914-p3-generation/portable/.agents/skills/verify-payload/assets/payload.txt"
+      ],
+      "exactReply": "PAYLOAD_APPLIED:cedar-7391",
+      "costs": [
+        0,
+        0,
+        0,
+        0
+      ]
+    }
+  ],
+  "initialNativeAttempt": "kilo-native.jsonl loaded skill/action/payload, but inserted a space; not counted as exact-output pass",
+  "commands": [
+    "kilo debug skill --pure (cwd native and portable)",
+    "kilo run --pure --dir <fixture> --model kilo/cohere/north-mini-code:free --format json <prompt>"
+  ],
+  "runtimeDeltas": [
+    {
+      "file": "native/kilo.json",
+      "before": {
+        "mode": 420,
+        "mtimeNs": 1791630866450835153,
+        "type": "file",
+        "sha256": "ca3d163bab055381827226140568f3bef7eaac187cebd76878e0b63e9e442356"
+      },
+      "after": {
+        "sha256": "50de534d570283f9704e3205c086dbd2a7bb2392de26446f9bec1cd614711f1e",
+        "mtimeNs": 1791630929333906016
+      }
+    },
+    {
+      "file": "portable/kilo.json",
+      "before": {
+        "mode": 420,
+        "mtimeNs": 1791630866450835153,
+        "type": "file",
+        "sha256": "ca3d163bab055381827226140568f3bef7eaac187cebd76878e0b63e9e442356"
+      },
+      "after": {
+        "sha256": "50de534d570283f9704e3205c086dbd2a7bb2392de26446f9bec1cd614711f1e",
+        "mtimeNs": 1791630950493593396
+      }
+    }
+  ],
+  "generatedSkillBytesAndMtimePreserved": true
+}

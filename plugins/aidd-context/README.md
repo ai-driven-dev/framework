@@ -32,3 +32,19 @@ New to AIDD, or unsure what to run next? Invoke `aidd-context:00-onboard`. The s
 3. Loops back to reading the project after each step so the guidance always reflects the current state.
 
 Onboard adapts to whatever plugins are installed: it suggests by function and discovers the skills that fill each step, so a skill added later shows up on its own.
+
+## Shared project memory
+
+Kilo uses the root `AGENTS.md` memory block shared with Codex, OpenCode and Cursor. Recognition and paths follow [the tool contract](skills/02-project-memory/references/tools.md); `.kilocode/` is a legacy signal, never a new output destination. Explicit memory sync preflights every selected destination before changing files, preserves user content outside the block, and skips identical writes. Claude keeps its `@` imports and Copilot its relative links.
+
+## Generated Kilo skills
+
+The skill generator offers native Kilo placement or an explicitly agreed portable placement. It writes one copy per resolved destination, asks about existing copies, preflights all selected targets, preserves user resources during modify and skips identical writes. Host fields and output paths are defined in [the write contract](skills/04-skill-generate/references/tool-write.md); the canonical Claude template is unchanged.
+
+## Generated Kilo agents and workflows
+
+The agent generator recognizes the six Kilo signals and renders native subagents under `.kilo/agents/`: filename identity, `description`, `mode: subagent`, and only requested `model`, `temperature`, or `permission`. The command generator renders one-shot workflows under `.kilo/commands/` with only `description`, `agent`, `model`, `variant`, or `subtask` when requested; Codex custom commands remain an explicit skip. Both contracts preflight all selected targets and preserve unchanged bytes on rerun. Paths and target-specific constraints are in the [agent paths](skills/06-agent-generate/references/tool-paths.md) and [workflow paths](skills/07-command-generate/references/tool-paths.md).
+
+## Kilo hook guidance
+
+The hook generator gives Kilo-specific guidance and writes no Kilo plugin or hook. It names only documented events, reports unproved lifecycle mappings as unsupported, and preserves supported hooks for other selected tools. See [hook paths](skills/08-hook-generate/references/tool-paths.md).

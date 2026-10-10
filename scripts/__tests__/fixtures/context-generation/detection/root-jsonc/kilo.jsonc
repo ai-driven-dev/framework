@@ -1,0 +1,3 @@
+{
+  // Existing user config; detection must not rewrite it.
+}

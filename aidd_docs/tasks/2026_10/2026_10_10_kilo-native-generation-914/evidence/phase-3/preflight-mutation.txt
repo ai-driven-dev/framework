@@ -1,0 +1,27 @@
+✖ full preflight precedes creation and covers unsafe paths and user resources (2.522886ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 109.584853
+
+✖ failing tests:
+
+test at scripts/__tests__/context-skill-artifacts.test.js:42:1
+✖ full preflight precedes creation and covers unsafe paths and user resources (2.522886ms)
+  AssertionError [ERR_ASSERTION]: Preflight must exist before Tree
+      at TestContext.<anonymous> (/home/coder/project/scripts/__tests__/context-skill-artifacts.test.js:46:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }

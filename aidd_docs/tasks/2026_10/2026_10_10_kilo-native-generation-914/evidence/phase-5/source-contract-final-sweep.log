@@ -1,0 +1,12 @@
+✔ Kilo hooks end with sourced guidance and no generated artifacts (2.308718ms)
+✔ mixed targets preflight before any script or config and preserve user hooks (2.107542ms)
+✔ mixed hook contract fixtures retain user duplicates and one AIDD entry per target (3.701386ms)
+✔ invalid final mixed target is detectable before creating any earlier target (0.688033ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 4
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 35.064541

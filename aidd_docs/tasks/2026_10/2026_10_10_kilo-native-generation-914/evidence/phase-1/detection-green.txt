@@ -1,0 +1,32 @@
+✔ plugins/aidd-context/skills/00-onboard/references/state/detection.md: six distinct Kilo signals, one shared memory destination (3.384542ms)
+✔ plugins/aidd-context/skills/00-onboard/references/state/detection.md: canonical directory (0.730031ms)
+✔ plugins/aidd-context/skills/00-onboard/references/state/detection.md: legacy directory (0.816253ms)
+✔ plugins/aidd-context/skills/00-onboard/references/state/detection.md: root JSON (0.51482ms)
+✔ plugins/aidd-context/skills/00-onboard/references/state/detection.md: root JSONC (0.360121ms)
+✔ plugins/aidd-context/skills/00-onboard/references/state/detection.md: nested JSON (0.282387ms)
+✔ plugins/aidd-context/skills/00-onboard/references/state/detection.md: nested JSONC (0.299698ms)
+✔ plugins/aidd-context/skills/00-onboard/references/state/detection.md: shared AGENTS alone (0.22511ms)
+✔ plugins/aidd-context/skills/00-onboard/references/state/detection.md: OpenCode JSON alone (0.312823ms)
+✔ plugins/aidd-context/skills/00-onboard/references/state/detection.md: OpenCode JSONC alone (2.3648ms)
+✔ plugins/aidd-context/skills/00-onboard/references/state/detection.md: multiple tools share memory (1.197113ms)
+✔ plugins/aidd-context/skills/00-onboard/references/state/detection.md: legacy is detection only and path claims carry their provenance (0.746182ms)
+✔ plugins/aidd-context/skills/02-project-memory/references/tools.md: six distinct Kilo signals, one shared memory destination (0.388004ms)
+✔ plugins/aidd-context/skills/02-project-memory/references/tools.md: canonical directory (0.305179ms)
+✔ plugins/aidd-context/skills/02-project-memory/references/tools.md: legacy directory (0.393916ms)
+✔ plugins/aidd-context/skills/02-project-memory/references/tools.md: root JSON (0.309528ms)
+✔ plugins/aidd-context/skills/02-project-memory/references/tools.md: root JSONC (0.268621ms)
+✔ plugins/aidd-context/skills/02-project-memory/references/tools.md: nested JSON (0.203599ms)
+✔ plugins/aidd-context/skills/02-project-memory/references/tools.md: nested JSONC (0.174515ms)
+✔ plugins/aidd-context/skills/02-project-memory/references/tools.md: shared AGENTS alone (0.226583ms)
+✔ plugins/aidd-context/skills/02-project-memory/references/tools.md: OpenCode JSON alone (0.17701ms)
+✔ plugins/aidd-context/skills/02-project-memory/references/tools.md: OpenCode JSONC alone (0.194363ms)
+✔ plugins/aidd-context/skills/02-project-memory/references/tools.md: multiple tools share memory (0.355282ms)
+✔ plugins/aidd-context/skills/02-project-memory/references/tools.md: legacy is detection only and path claims carry their provenance (0.25773ms)
+ℹ tests 24
+ℹ suites 0
+ℹ pass 24
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 39.13715

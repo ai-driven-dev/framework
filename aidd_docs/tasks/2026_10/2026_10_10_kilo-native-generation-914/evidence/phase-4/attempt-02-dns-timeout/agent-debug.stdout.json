@@ -1,0 +1,361 @@
+{
+  "name": "verify-agent",
+  "mode": "subagent",
+  "permission": [
+    {
+      "permission": "*",
+      "action": "allow",
+      "pattern": "*"
+    },
+    {
+      "permission": "doom_loop",
+      "action": "ask",
+      "pattern": "*"
+    },
+    {
+      "permission": "external_directory",
+      "pattern": "*",
+      "action": "ask"
+    },
+    {
+      "permission": "external_directory",
+      "pattern": "$XDG_ROOT/data/kilo/tool-output/*",
+      "action": "allow"
+    },
+    {
+      "permission": "external_directory",
+      "pattern": "/tmp/kilo/*",
+      "action": "allow"
+    },
+    {
+      "permission": "external_directory",
+      "pattern": "$XDG_ROOT/config/kilo/*",
+      "action": "allow"
+    },
+    {
+      "permission": "external_directory",
+      "pattern": "$USER_HOME/.kilocode/*",
+      "action": "allow"
+    },
+    {
+      "permission": "external_directory",
+      "pattern": "$USER_HOME/.kilo/*",
+      "action": "allow"
+    },
+    {
+      "permission": "suggest",
+      "action": "deny",
+      "pattern": "*"
+    },
+    {
+      "permission": "question",
+      "action": "deny",
+      "pattern": "*"
+    },
+    {
+      "permission": "plan_enter",
+      "action": "deny",
+      "pattern": "*"
+    },
+    {
+      "permission": "plan_exit",
+      "action": "deny",
+      "pattern": "*"
+    },
+    {
+      "permission": "repo_clone",
+      "action": "deny",
+      "pattern": "*"
+    },
+    {
+      "permission": "repo_overview",
+      "action": "deny",
+      "pattern": "*"
+    },
+    {
+      "permission": "read",
+      "pattern": "*",
+      "action": "allow"
+    },
+    {
+      "permission": "read",
+      "pattern": "*.env",
+      "action": "ask"
+    },
+    {
+      "permission": "read",
+      "pattern": "*.env.*",
+      "action": "ask"
+    },
+    {
+      "permission": "read",
+      "pattern": "*.env.example",
+      "action": "allow"
+    },
+    {
+      "permission": "bash",
+      "pattern": "*",
+      "action": "ask"
+    },
+    {
+      "permission": "bash",
+      "pattern": "cat *",
+      "action": "allow"
+    },
+    {
+      "permission": "bash",
+      "pattern": "head *",
+      "action": "allow"
+    },
+    {
+      "permission": "bash",
+      "pattern": "tail *",
+      "action": "allow"
+    },
+    {
+      "permission": "bash",
+      "pattern": "less *",
+      "action": "allow"
+    },
+    {
+      "permission": "bash",
+      "pattern": "ls *",
+      "action": "allow"
+    },
+    {
+      "permission": "bash",
+      "pattern": "tree *",
+      "action": "allow"
+    },
+    {
+      "permission": "bash",
+      "pattern": "pwd *",
+      "action": "allow"
+    },
+    {
+      "permission": "bash",
+      "pattern": "echo *",
+      "action": "allow"
+    },
+    {
+      "permission": "bash",
+      "pattern": "wc *",
+      "action": "allow"
+    },
+    {
+      "permission": "bash",
+      "pattern": "which *",
+      "action": "allow"
+    },
+    {
+      "permission": "bash",
+      "pattern": "type *",
+      "action": "allow"
+    },
+    {
+      "permission": "bash",
+      "pattern": "file *",
+      "action": "allow"
+    },
+    {
+      "permission": "bash",
+      "pattern": "diff *",
+      "action": "allow"
+    },
+    {
+      "permission": "bash",
+      "pattern": "du *",
+      "action": "allow"
+    },
+    {
+      "permission": "bash",
+      "pattern": "df *",
+      "action": "allow"
+    },
+    {
+      "permission": "bash",
+      "pattern": "date *",
+      "action": "allow"
+    },
+    {
+      "permission": "bash",
+      "pattern": "uname *",
+      "action": "allow"
+    },
+    {
+      "permission": "bash",
+      "pattern": "whoami *",
+      "action": "allow"
+    },
+    {
+      "permission": "bash",
+      "pattern": "printenv *",
+      "action": "allow"
+    },
+    {
+      "permission": "bash",
+      "pattern": "man *",
+      "action": "allow"
+    },
+    {
+      "permission": "bash",
+      "pattern": "grep *",
+      "action": "allow"
+    },
+    {
+      "permission": "bash",
+      "pattern": "rg *",
+      "action": "allow"
+    },
+    {
+      "permission": "bash",
+      "pattern": "ag *",
+      "action": "allow"
+    },
+    {
+      "permission": "bash",
+      "pattern": "sort *",
+      "action": "allow"
+    },
+    {
+      "permission": "bash",
+      "pattern": "uniq *",
+      "action": "allow"
+    },
+    {
+      "permission": "bash",
+      "pattern": "cut *",
+      "action": "allow"
+    },
+    {
+      "permission": "bash",
+      "pattern": "tr *",
+      "action": "allow"
+    },
+    {
+      "permission": "bash",
+      "pattern": "jq *",
+      "action": "allow"
+    },
+    {
+      "permission": "bash",
+      "pattern": "touch *",
+      "action": "allow"
+    },
+    {
+      "permission": "bash",
+      "pattern": "mkdir *",
+      "action": "allow"
+    },
+    {
+      "permission": "bash",
+      "pattern": "cp *",
+      "action": "allow"
+    },
+    {
+      "permission": "bash",
+      "pattern": "mv *",
+      "action": "allow"
+    },
+    {
+      "permission": "bash",
+      "pattern": "tsc *",
+      "action": "allow"
+    },
+    {
+      "permission": "bash",
+      "pattern": "tsgo *",
+      "action": "allow"
+    },
+    {
+      "permission": "bash",
+      "pattern": "tar *",
+      "action": "allow"
+    },
+    {
+      "permission": "bash",
+      "pattern": "unzip *",
+      "action": "allow"
+    },
+    {
+      "permission": "bash",
+      "pattern": "gzip *",
+      "action": "allow"
+    },
+    {
+      "permission": "bash",
+      "pattern": "gunzip *",
+      "action": "allow"
+    },
+    {
+      "permission": "board_read",
+      "action": "allow",
+      "pattern": "*"
+    },
+    {
+      "permission": "board_post",
+      "action": "allow",
+      "pattern": "*"
+    },
+    {
+      "permission": "recall",
+      "action": "ask",
+      "pattern": "*"
+    },
+    {
+      "permission": "kilo_memory_recall",
+      "action": "ask",
+      "pattern": "*"
+    },
+    {
+      "permission": "kilo_memory_save",
+      "action": "ask",
+      "pattern": "*"
+    },
+    {
+      "permission": "read",
+      "action": "allow",
+      "pattern": "*"
+    },
+    {
+      "permission": "external_directory",
+      "pattern": "$XDG_ROOT/data/kilo/tool-output/*",
+      "action": "allow"
+    }
+  ],
+  "options": {},
+  "native": false,
+  "prompt": "# Role\n\nVerify the payload supplied by the phase four fixture.\n\n# Behavior\n\n1. Read `.kilo/agents/assets/agent-payload.txt`.\n2. Return only its exact content.",
+  "description": "Verify the phase four fixture payload and return its exact content.",
+  "temperature": 0,
+  "tools": {
+    "invalid": true,
+    "question": false,
+    "bash": true,
+    "read": true,
+    "glob": true,
+    "grep": true,
+    "edit": true,
+    "write": true,
+    "task": true,
+    "webfetch": true,
+    "todowrite": true,
+    "websearch": true,
+    "skill": true,
+    "plan_exit": false,
+    "suggest": false,
+    "goal_report": true,
+    "goal": true,
+    "board_read": true,
+    "board_post": true,
+    "kilo_local_recall": true,
+    "background_process": true,
+    "schedule_wakeup": true,
+    "cancel_wakeup": true,
+    "cron_create": true,
+    "cron_list": true,
+    "cron_delete": true,
+    "agent_manager_models": true,
+    "link_pr": true
+  }
+}

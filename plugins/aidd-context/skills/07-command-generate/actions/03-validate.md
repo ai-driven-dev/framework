@@ -13,7 +13,7 @@ A short pass or fail line per command file.
 ## Process
 
 1. **Exists.** Confirm each file is on disk at its expected path, at its chosen location.
-2. **Shape.** Confirm the frontmatter and body match the tool. If the command takes input, the body uses `$ARGUMENTS`.
+2. **Shape.** Confirm the frontmatter and body match the tool. Kilo workflows use only its documented fields and `.kilo/commands/<name>.md`. If the command takes input, the body uses `$ARGUMENTS` where the target supports it.
 3. **Concise.** Confirm a single objective and fewer than ten steps.
 
 ## Test

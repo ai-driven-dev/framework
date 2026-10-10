@@ -1,0 +1,66 @@
+kilo/cohere/north-mini-code:free
+{
+  "id": "cohere/north-mini-code:free",
+  "providerID": "kilo",
+  "name": "Cohere: North Mini Code (free)",
+  "api": {
+    "id": "cohere/north-mini-code:free",
+    "url": "https://api.kilo.ai/api/openrouter/",
+    "npm": "@kilocode/kilo-gateway"
+  },
+  "status": "active",
+  "headers": {},
+  "options": {
+    "description": "North Mini Code is Cohere's first agentic coding model and the debut of its North family. A sparse mixture-of-experts model with 30B total parameters and 3B active, it is optimized..."
+  },
+  "cost": {
+    "input": 0,
+    "output": 0,
+    "cache": {
+      "read": 0,
+      "write": 0
+    }
+  },
+  "limit": {
+    "context": 256000,
+    "output": 64000
+  },
+  "capabilities": {
+    "temperature": true,
+    "reasoning": true,
+    "attachment": false,
+    "toolcall": true,
+    "input": {
+      "text": true,
+      "audio": false,
+      "image": false,
+      "video": false,
+      "pdf": false
+    },
+    "output": {
+      "text": true,
+      "audio": false,
+      "image": false,
+      "video": false,
+      "pdf": false
+    },
+    "interleaved": false
+  },
+  "release_date": "2026-10-10",
+  "variants": {
+    "instant": {
+      "reasoning": {
+        "enabled": false,
+        "effort": "none"
+      }
+    },
+    "thinking": {
+      "reasoning": {
+        "enabled": true,
+        "effort": "high"
+      }
+    }
+  },
+  "isFree": true,
+  "mayTrainOnYourPrompts": true
+}

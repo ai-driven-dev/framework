@@ -1,0 +1,226 @@
+{
+  "info": {
+    "slug": "playful-moon",
+    "directory": "[redacted:session-directory:[redacted-session]]",
+    "path": "tmp/aidd-914-phase-4-runtime.ePA5bZ",
+    "title": "[redacted:session-title:[redacted-session]]",
+    "agent": "code",
+    "model": {
+      "variant": "default"
+    },
+    "version": "7.8.8",
+    "summary": {
+      "additions": 0,
+      "deletions": 0,
+      "files": 0
+    },
+    "cost": 0,
+    "tokens": {
+      "input": 14004,
+      "output": 31,
+      "reasoning": 190,
+      "cache": {
+        "read": 0,
+        "write": 0
+      }
+    },
+    "permission": [
+      {
+        "permission": "question",
+        "pattern": "*",
+        "action": "deny"
+      },
+      {
+        "permission": "suggest",
+        "pattern": "*",
+        "action": "deny"
+      },
+      {
+        "permission": "plan_enter",
+        "pattern": "*",
+        "action": "deny"
+      },
+      {
+        "permission": "plan_exit",
+        "pattern": "*",
+        "action": "deny"
+      }
+    ],
+    "time": {
+      "created": 1791644984885,
+      "updated": 1791645004798
+    }
+  },
+  "messages": [
+    {
+      "info": {
+        "role": "user",
+        "time": {
+          "created": 1791644990954
+        },
+        "agent": "code",
+        "model": {},
+        "summary": {
+          "diffs": []
+        }
+      },
+      "parts": [
+        {
+          "type": "subtask",
+          "agent": "verify-agent",
+          "description": "[redacted:subtask-description:prt_1265cfe19001ANVgoSGkUylHw6]",
+          "command": "[redacted:subtask-command:prt_1265cfe19001ANVgoSGkUylHw6]",
+          "model": {},
+          "prompt": "[redacted:subtask-prompt:prt_1265cfe19001ANVgoSGkUylHw6]"
+        },
+        {
+          "type": "text",
+          "text": "[redacted:text:prt_1265d286e001dUbweMG27hybua]",
+          "synthetic": true
+        }
+      ]
+    },
+    {
+      "info": {
+        "role": "assistant",
+        "mode": "verify-agent",
+        "agent": "verify-agent",
+        "path": {
+          "cwd": "[redacted:cwd:msg_1265cfe5f001SwRo0g2Iknd8XC]",
+          "root": "[redacted:root:msg_1265cfe5f001SwRo0g2Iknd8XC]"
+        },
+        "cost": 0,
+        "tokens": {
+          "input": 0,
+          "output": 0,
+          "reasoning": 0,
+          "cache": {
+            "read": 0,
+            "write": 0
+          }
+        },
+        "time": {
+          "created": 1791644991071,
+          "completed": 1791645001806
+        },
+        "finish": "tool-calls"
+      },
+      "parts": [
+        {
+          "type": "tool",
+          "tool": "task",
+          "state": {
+            "status": "completed",
+            "input": {
+              "redacted": "tool-input:prt_1265cfe63001R0geLZA1vlLEgq"
+            },
+            "title": "[redacted:tool-title:prt_1265cfe63001R0geLZA1vlLEgq]",
+            "metadata": {
+              "redacted": "tool-state-metadata:prt_1265cfe63001R0geLZA1vlLEgq"
+            },
+            "output": "[redacted:tool-output:prt_1265cfe63001R0geLZA1vlLEgq]",
+            "time": {
+              "start": 1791644991075,
+              "end": 1791645001812
+            }
+          }
+        }
+      ]
+    },
+    {
+      "info": {
+        "role": "user",
+        "time": {
+          "created": 1791645001817
+        },
+        "agent": "code",
+        "model": {}
+      },
+      "parts": [
+        {
+          "type": "text",
+          "text": "[redacted:text:prt_1265d285c001jba1jKKhdzG47G]",
+          "synthetic": true
+        }
+      ]
+    },
+    {
+      "info": {
+        "role": "assistant",
+        "mode": "code",
+        "agent": "code",
+        "path": {
+          "cwd": "[redacted:cwd:msg_1265d2870001H71ucYWgnum8K8]",
+          "root": "[redacted:root:msg_1265d2870001H71ucYWgnum8K8]"
+        },
+        "cost": 0,
+        "tokens": {
+          "total": 14225,
+          "input": 14004,
+          "output": 31,
+          "reasoning": 190,
+          "cache": {
+            "write": 0,
+            "read": 0
+          }
+        },
+        "time": {
+          "created": 1791645001840,
+          "completed": 1791645004711
+        },
+        "finish": "stop"
+      },
+      "parts": [
+        {
+          "type": "step-start",
+          "time": {
+            "start": 1791645002637
+          }
+        },
+        {
+          "type": "reasoning",
+          "text": "[redacted:reasoning:prt_1265d2b9c001SXOoc093OhLx4z]",
+          "time": {
+            "start": 1791645002652,
+            "end": 1791645004299
+          },
+          "metadata": {
+            "redacted": "reasoning-metadata:prt_1265d2b9c001SXOoc093OhLx4z"
+          }
+        },
+        {
+          "type": "text",
+          "text": "[redacted:text:prt_1265d3211001Bl9k4qzBWOkgQY]",
+          "time": {
+            "start": 1791645004305,
+            "end": 1791645004687
+          }
+        },
+        {
+          "reason": "stop",
+          "type": "step-finish",
+          "time": {
+            "start": 1791645002637,
+            "end": 1791645004699,
+            "elapsed": 2062
+          },
+          "metrics": {
+            "generation": 107.17749757516974,
+            "source": "computed"
+          },
+          "tokens": {
+            "total": 14225,
+            "input": 14004,
+            "output": 31,
+            "reasoning": 190,
+            "cache": {
+              "write": 0,
+              "read": 0
+            }
+          },
+          "cost": 0
+        }
+      ]
+    }
+  ]
+}

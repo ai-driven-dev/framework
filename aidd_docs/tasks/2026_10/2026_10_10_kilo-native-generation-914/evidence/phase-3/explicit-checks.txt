@@ -1,0 +1,4 @@
+✅ Architecture rules: 6 governed file(s) checked, no violation
+JSON validation passed for 12 file(s).
+JSON validation passed for 13 file(s).
+✅ Links: 0 broken in 883 files

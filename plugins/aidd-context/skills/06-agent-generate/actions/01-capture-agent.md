@@ -20,6 +20,7 @@ In-context: the role and its system prompt, the chosen name, an optional user-sp
 6. **Mode.** Ask where the agent goes:
    - **Host project**: detect the installed tools ([tool-paths.md](../references/tool-paths.md)), propose them, and confirm which to target.
    - **Plugin source**: confirm or create `plugins/<plugin>/agents/`.
+   - **Kilo**: when a Kilo signal is present, propose its canonical `.kilo/agents/<name>.md` target. Capture only requested `model`, `temperature`, and `permission`; record that Kilo uses filename-derived identity and `mode: subagent`.
 
 ## Test
 

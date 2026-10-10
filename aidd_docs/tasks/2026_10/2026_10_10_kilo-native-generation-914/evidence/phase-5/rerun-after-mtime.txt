@@ -1,0 +1,7 @@
+scripts/__tests__/fixtures/context-generation/hooks/mixed/.claude/settings.json 1791646989.5882955350
+scripts/__tests__/fixtures/context-generation/hooks/mixed/.codex/hooks.json 1791646989.8002925430
+scripts/__tests__/fixtures/context-generation/hooks/mixed/.cursor/hooks.json 1791646990.0162894940
+scripts/__tests__/fixtures/context-generation/hooks/mixed/.github/hooks/aidd.json 1791646990.2122867290
+scripts/__tests__/fixtures/context-generation/hooks/mixed/hooks/aidd.sh 1791647203.8812749710
+scripts/__tests__/fixtures/context-generation/hooks/mixed/hooks/user.sh 1791647203.7732764920
+scripts/__tests__/fixtures/context-generation/hooks/mixed/kilo.json 1791646989.3722985830

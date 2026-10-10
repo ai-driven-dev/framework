@@ -1,0 +1,63 @@
+✖ a read-only last destination fails preflight before any earlier write (70.528168ms)
+✖ a blockless README symlink is not an opted-in destination (69.706283ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 0
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 168.208848
+
+✖ failing tests:
+
+test at scripts/__tests__/update-memory.test.js:423:1
+✖ a read-only last destination fails preflight before any earlier write (70.528168ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + '<!-- aidd_project_memory:start -->\n' +
+  +   '\n' +
+  +   '@aidd_docs/memory/architecture.md\n' +
+  +   '\n' +
+  +   '<!-- aidd_project_memory:end -->\n'
+  - '<!-- aidd_project_memory:start -->\n<!-- aidd_project_memory:end -->\n'
+  
+      at /home/coder/project/scripts/__tests__/update-memory.test.js:428:12
+      at inProject (/home/coder/project/scripts/__tests__/update-memory.test.js:253:5)
+      at TestContext.<anonymous> (/home/coder/project/scripts/__tests__/update-memory.test.js:424:3)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: '<!-- aidd_project_memory:start -->\n\n@aidd_docs/memory/architecture.md\n\n<!-- aidd_project_memory:end -->\n',
+    expected: '<!-- aidd_project_memory:start -->\n<!-- aidd_project_memory:end -->\n',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/__tests__/update-memory.test.js:433:1
+✖ a blockless README symlink is not an opted-in destination (69.706283ms)
+  AssertionError [ERR_ASSERTION]: update_memory: aidd_docs/memory/README.md has an unsafe destination, not synced
+  
+  
+  1 !== 0
+  
+      at /home/coder/project/scripts/__tests__/update-memory.test.js:437:12
+      at inProject (/home/coder/project/scripts/__tests__/update-memory.test.js:253:5)
+      at TestContext.<anonymous> (/home/coder/project/scripts/__tests__/update-memory.test.js:434:3)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

@@ -1,0 +1,51 @@
+{
+  "runtime": "current native Codex session, not Codex CLI subprocess",
+  "capability": "aidd-context:02-project-memory",
+  "installed_router": "/home/coder/.codex/plugins/cache/aidd-framework/aidd-context/2.8.1/skills/02-project-memory/SKILL.md",
+  "action_binding": "candidate canonical plugins/aidd-context/skills/02-project-memory/actions/04-sync.md and references/tools.md, read before execution",
+  "selection": "kilo only explicitly authorized on synthetic fixture",
+  "signal": "root kilo.json, no .kilo or .kilocode",
+  "steps": [
+    {
+      "step": "require",
+      "result": "existing architecture.md"
+    },
+    {
+      "step": "detect",
+      "result": "kilo.json=>kilo; AGENTS alone not detection"
+    },
+    {
+      "step": "preflight",
+      "command": "node hooks/update_memory.js --check kilo",
+      "exit": 0
+    },
+    {
+      "step": "upsert",
+      "result": "Codex authored missing Memory Management section from source template via apply_patch, retained original user bytes"
+    },
+    {
+      "step": "fill",
+      "command": "node hooks/update_memory.js kilo",
+      "exit": 0
+    },
+    {
+      "step": "verify",
+      "result": "readback one exact architecture.md Markdown link; bank/config unchanged at generation verification before Kilo startup"
+    },
+    {
+      "step": "rerun shared targets",
+      "command": "node hooks/update_memory.js kilo codex opencode cursor",
+      "exit": 0,
+      "bytes_unchanged": true,
+      "mtime_unchanged": true
+    }
+  ],
+  "artifact": "# User instructions\n\nUser content must survive sync unchanged.\n\n## Memory Management\n\nProject docs, memory, specs, and plans live in `aidd_docs/`.\n\nRead only task-relevant context and linked memory files; complete required reads.\n\n<!-- aidd_project_memory:start -->\n\n[aidd_docs/memory/architecture.md](aidd_docs/memory/architecture.md)\n\n<!-- aidd_project_memory:end -->\n\n- Load `aidd_docs/memory/external/*` only when asked.\n- Load `aidd_docs/memory/internal/*` when relevant.\n",
+  "artifact_sha256": "a7be17ec727f2127a12bd8272c73a36a7105a258df08a1829ee0d0d432f85fbb",
+  "hook_matches_final_source": true,
+  "limitations": [
+    "caller trace is this session, receipt reconstructs its observed tool actions; no standalone Codex CLI success claimed",
+    "native installed router executed against candidate source references without reinstalling plugins",
+    "Kilo subsequently adds $schema to fixture kilo.json on startup; see runtime before/after archive"
+  ]
+}

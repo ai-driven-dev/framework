@@ -1,0 +1,525 @@
+✖ plugins/aidd-context/skills/00-onboard/references/state/detection.md: six distinct Kilo signals, one shared memory destination (3.751076ms)
+✖ plugins/aidd-context/skills/00-onboard/references/state/detection.md: canonical directory (0.567779ms)
+✖ plugins/aidd-context/skills/00-onboard/references/state/detection.md: legacy directory (0.295861ms)
+✖ plugins/aidd-context/skills/00-onboard/references/state/detection.md: root JSON (0.355082ms)
+✖ plugins/aidd-context/skills/00-onboard/references/state/detection.md: root JSONC (0.468364ms)
+✖ plugins/aidd-context/skills/00-onboard/references/state/detection.md: nested JSON (0.421906ms)
+✖ plugins/aidd-context/skills/00-onboard/references/state/detection.md: nested JSONC (0.308556ms)
+✖ plugins/aidd-context/skills/00-onboard/references/state/detection.md: shared AGENTS alone (0.223347ms)
+✖ plugins/aidd-context/skills/00-onboard/references/state/detection.md: OpenCode JSON alone (0.395047ms)
+✖ plugins/aidd-context/skills/00-onboard/references/state/detection.md: OpenCode JSONC alone (0.488421ms)
+✖ plugins/aidd-context/skills/00-onboard/references/state/detection.md: multiple tools share memory (0.258382ms)
+✖ plugins/aidd-context/skills/00-onboard/references/state/detection.md: legacy is detection only and path claims carry their provenance (1.127733ms)
+✖ plugins/aidd-context/skills/02-project-memory/references/tools.md: six distinct Kilo signals, one shared memory destination (0.209861ms)
+✖ plugins/aidd-context/skills/02-project-memory/references/tools.md: canonical directory (0.181468ms)
+✖ plugins/aidd-context/skills/02-project-memory/references/tools.md: legacy directory (0.195354ms)
+✖ plugins/aidd-context/skills/02-project-memory/references/tools.md: root JSON (0.256388ms)
+✖ plugins/aidd-context/skills/02-project-memory/references/tools.md: root JSONC (0.206485ms)
+✖ plugins/aidd-context/skills/02-project-memory/references/tools.md: nested JSON (0.227064ms)
+✖ plugins/aidd-context/skills/02-project-memory/references/tools.md: nested JSONC (0.222135ms)
+✖ plugins/aidd-context/skills/02-project-memory/references/tools.md: shared AGENTS alone (1.51225ms)
+✖ plugins/aidd-context/skills/02-project-memory/references/tools.md: OpenCode JSON alone (0.217966ms)
+✖ plugins/aidd-context/skills/02-project-memory/references/tools.md: OpenCode JSONC alone (0.172411ms)
+✖ plugins/aidd-context/skills/02-project-memory/references/tools.md: multiple tools share memory (0.209881ms)
+✖ plugins/aidd-context/skills/02-project-memory/references/tools.md: legacy is detection only and path claims carry their provenance (0.411768ms)
+ℹ tests 24
+ℹ suites 0
+ℹ pass 0
+ℹ fail 24
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 30.484672
+
+✖ failing tests:
+
+test at scripts/__tests__/context-kilo-detection.test.js:47:3
+✖ plugins/aidd-context/skills/00-onboard/references/state/detection.md: six distinct Kilo signals, one shared memory destination (3.751076ms)
+  AssertionError [ERR_ASSERTION]: Missing kilo detection row
+      at row (/home/coder/project/scripts/__tests__/context-kilo-detection.test.js:28:10)
+      at TestContext.<anonymous> (/home/coder/project/scripts/__tests__/context-kilo-detection.test.js:48:18)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at scripts/__tests__/context-kilo-detection.test.js:58:5
+✖ plugins/aidd-context/skills/00-onboard/references/state/detection.md: canonical directory (0.567779ms)
+  AssertionError [ERR_ASSERTION]: Missing kilo detection row
+      at row (/home/coder/project/scripts/__tests__/context-kilo-detection.test.js:28:10)
+      at TestContext.<anonymous> (/home/coder/project/scripts/__tests__/context-kilo-detection.test.js:60:20)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at scripts/__tests__/context-kilo-detection.test.js:58:5
+✖ plugins/aidd-context/skills/00-onboard/references/state/detection.md: legacy directory (0.295861ms)
+  AssertionError [ERR_ASSERTION]: Missing kilo detection row
+      at row (/home/coder/project/scripts/__tests__/context-kilo-detection.test.js:28:10)
+      at TestContext.<anonymous> (/home/coder/project/scripts/__tests__/context-kilo-detection.test.js:60:20)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at scripts/__tests__/context-kilo-detection.test.js:58:5
+✖ plugins/aidd-context/skills/00-onboard/references/state/detection.md: root JSON (0.355082ms)
+  AssertionError [ERR_ASSERTION]: Missing kilo detection row
+      at row (/home/coder/project/scripts/__tests__/context-kilo-detection.test.js:28:10)
+      at TestContext.<anonymous> (/home/coder/project/scripts/__tests__/context-kilo-detection.test.js:60:20)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at scripts/__tests__/context-kilo-detection.test.js:58:5
+✖ plugins/aidd-context/skills/00-onboard/references/state/detection.md: root JSONC (0.468364ms)
+  AssertionError [ERR_ASSERTION]: Missing kilo detection row
+      at row (/home/coder/project/scripts/__tests__/context-kilo-detection.test.js:28:10)
+      at TestContext.<anonymous> (/home/coder/project/scripts/__tests__/context-kilo-detection.test.js:60:20)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at scripts/__tests__/context-kilo-detection.test.js:58:5
+✖ plugins/aidd-context/skills/00-onboard/references/state/detection.md: nested JSON (0.421906ms)
+  AssertionError [ERR_ASSERTION]: Missing kilo detection row
+      at row (/home/coder/project/scripts/__tests__/context-kilo-detection.test.js:28:10)
+      at TestContext.<anonymous> (/home/coder/project/scripts/__tests__/context-kilo-detection.test.js:60:20)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at scripts/__tests__/context-kilo-detection.test.js:58:5
+✖ plugins/aidd-context/skills/00-onboard/references/state/detection.md: nested JSONC (0.308556ms)
+  AssertionError [ERR_ASSERTION]: Missing kilo detection row
+      at row (/home/coder/project/scripts/__tests__/context-kilo-detection.test.js:28:10)
+      at TestContext.<anonymous> (/home/coder/project/scripts/__tests__/context-kilo-detection.test.js:60:20)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at scripts/__tests__/context-kilo-detection.test.js:58:5
+✖ plugins/aidd-context/skills/00-onboard/references/state/detection.md: shared AGENTS alone (0.223347ms)
+  AssertionError [ERR_ASSERTION]: Missing kilo detection row
+      at row (/home/coder/project/scripts/__tests__/context-kilo-detection.test.js:28:10)
+      at TestContext.<anonymous> (/home/coder/project/scripts/__tests__/context-kilo-detection.test.js:60:20)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at scripts/__tests__/context-kilo-detection.test.js:58:5
+✖ plugins/aidd-context/skills/00-onboard/references/state/detection.md: OpenCode JSON alone (0.395047ms)
+  AssertionError [ERR_ASSERTION]: Missing kilo detection row
+      at row (/home/coder/project/scripts/__tests__/context-kilo-detection.test.js:28:10)
+      at TestContext.<anonymous> (/home/coder/project/scripts/__tests__/context-kilo-detection.test.js:60:20)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at scripts/__tests__/context-kilo-detection.test.js:58:5
+✖ plugins/aidd-context/skills/00-onboard/references/state/detection.md: OpenCode JSONC alone (0.488421ms)
+  AssertionError [ERR_ASSERTION]: Missing kilo detection row
+      at row (/home/coder/project/scripts/__tests__/context-kilo-detection.test.js:28:10)
+      at TestContext.<anonymous> (/home/coder/project/scripts/__tests__/context-kilo-detection.test.js:60:20)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at scripts/__tests__/context-kilo-detection.test.js:58:5
+✖ plugins/aidd-context/skills/00-onboard/references/state/detection.md: multiple tools share memory (0.258382ms)
+  AssertionError [ERR_ASSERTION]: Missing kilo detection row
+      at row (/home/coder/project/scripts/__tests__/context-kilo-detection.test.js:28:10)
+      at TestContext.<anonymous> (/home/coder/project/scripts/__tests__/context-kilo-detection.test.js:60:20)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at scripts/__tests__/context-kilo-detection.test.js:76:3
+✖ plugins/aidd-context/skills/00-onboard/references/state/detection.md: legacy is detection only and path claims carry their provenance (1.127733ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /\.kilocode\/[^\n]*(?:legacy|historical)[^\n]*detection/iu. Input:
+  
+  '# AI tool detection\n' +
+    '\n' +
+    "Which AI tools the project uses, and whether each has its memory wired. For the state block's AI-tools line.\n" +
+    '\n' +
+    'A tool is used when its own dir exists, or when a file only that tool reads exists. A file several tools read (`AGENTS.md`) is a wiring target, never a detection signal.\n' +
+    '\n' +
+    '| Tool     | Used when                                                                            | Wired when this file has the block |\n' +
+    '| -------- | ------------------------------------------------------------------------------------ | ---------------------------------- |\n' +
+    '| claude   | `.claude/` or `CLAUDE.md`                                                            | `CLAUDE.md`                        |\n' +
+    '| codex    | `.codex/`                                                                            | `AGENTS.md`                        |\n' +
+    '| cursor   | `.cursor/` or `.cursorrules`                                                         | `AGENTS.md`                        |\n' +
+    '| opencode | `.opencode/`                                                                         | `AGENTS.md`                        |\n' +
+    '| copilot  | `.github/copilot-instructions.md` or `.github/{instructions,agents,skills,prompts}/` | `.github/copilot-instructions.md`  |\n' +
+    '\n' +
+    '- Detected tools only. An unused optional tool is omitted, never crossed.\n' +
+    "- No tool detected at all: the row reads `none yet`, uncrossed. The memory row's `❌` already carries the gap.\n" +
+    '- A used tool whose file lacks the block is not wired, and needs wiring.\n' +
+    '- Missing memory is a foundation status, not a tool row (see `zones.md`).\n'
+  
+      at TestContext.<anonymous> (/home/coder/project/scripts/__tests__/context-kilo-detection.test.js:77:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: "# AI tool detection\n\nWhich AI tools the project uses, and whether each has its memory wired. For the state block's AI-tools line.\n\nA tool is used when its own dir exists, or when a file only that tool reads exists. A file several tools read (`AGENTS.md`) is a wiring target, never a detection signal.\n\n| Tool     | Used when                                                                            | Wired when this file has the block |\n| -------- | ------------------------------------------------------------------------------------ | ---------------------------------- |\n| claude   | `.claude/` or `CLAUDE.md`                                                            | `CLAUDE.md`                        |\n| codex    | `.codex/`                                                                            | `AGENTS.md`                        |\n...",
+    expected: /\.kilocode\/[^\n]*(?:legacy|historical)[^\n]*detection/iu,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at scripts/__tests__/context-kilo-detection.test.js:47:3
+✖ plugins/aidd-context/skills/02-project-memory/references/tools.md: six distinct Kilo signals, one shared memory destination (0.209861ms)
+  AssertionError [ERR_ASSERTION]: Missing kilo detection row
+      at row (/home/coder/project/scripts/__tests__/context-kilo-detection.test.js:28:10)
+      at TestContext.<anonymous> (/home/coder/project/scripts/__tests__/context-kilo-detection.test.js:48:18)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at scripts/__tests__/context-kilo-detection.test.js:58:5
+✖ plugins/aidd-context/skills/02-project-memory/references/tools.md: canonical directory (0.181468ms)
+  AssertionError [ERR_ASSERTION]: Missing kilo detection row
+      at row (/home/coder/project/scripts/__tests__/context-kilo-detection.test.js:28:10)
+      at TestContext.<anonymous> (/home/coder/project/scripts/__tests__/context-kilo-detection.test.js:60:20)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at scripts/__tests__/context-kilo-detection.test.js:58:5
+✖ plugins/aidd-context/skills/02-project-memory/references/tools.md: legacy directory (0.195354ms)
+  AssertionError [ERR_ASSERTION]: Missing kilo detection row
+      at row (/home/coder/project/scripts/__tests__/context-kilo-detection.test.js:28:10)
+      at TestContext.<anonymous> (/home/coder/project/scripts/__tests__/context-kilo-detection.test.js:60:20)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at scripts/__tests__/context-kilo-detection.test.js:58:5
+✖ plugins/aidd-context/skills/02-project-memory/references/tools.md: root JSON (0.256388ms)
+  AssertionError [ERR_ASSERTION]: Missing kilo detection row
+      at row (/home/coder/project/scripts/__tests__/context-kilo-detection.test.js:28:10)
+      at TestContext.<anonymous> (/home/coder/project/scripts/__tests__/context-kilo-detection.test.js:60:20)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at scripts/__tests__/context-kilo-detection.test.js:58:5
+✖ plugins/aidd-context/skills/02-project-memory/references/tools.md: root JSONC (0.206485ms)
+  AssertionError [ERR_ASSERTION]: Missing kilo detection row
+      at row (/home/coder/project/scripts/__tests__/context-kilo-detection.test.js:28:10)
+      at TestContext.<anonymous> (/home/coder/project/scripts/__tests__/context-kilo-detection.test.js:60:20)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at scripts/__tests__/context-kilo-detection.test.js:58:5
+✖ plugins/aidd-context/skills/02-project-memory/references/tools.md: nested JSON (0.227064ms)
+  AssertionError [ERR_ASSERTION]: Missing kilo detection row
+      at row (/home/coder/project/scripts/__tests__/context-kilo-detection.test.js:28:10)
+      at TestContext.<anonymous> (/home/coder/project/scripts/__tests__/context-kilo-detection.test.js:60:20)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at scripts/__tests__/context-kilo-detection.test.js:58:5
+✖ plugins/aidd-context/skills/02-project-memory/references/tools.md: nested JSONC (0.222135ms)
+  AssertionError [ERR_ASSERTION]: Missing kilo detection row
+      at row (/home/coder/project/scripts/__tests__/context-kilo-detection.test.js:28:10)
+      at TestContext.<anonymous> (/home/coder/project/scripts/__tests__/context-kilo-detection.test.js:60:20)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at scripts/__tests__/context-kilo-detection.test.js:58:5
+✖ plugins/aidd-context/skills/02-project-memory/references/tools.md: shared AGENTS alone (1.51225ms)
+  AssertionError [ERR_ASSERTION]: Missing kilo detection row
+      at row (/home/coder/project/scripts/__tests__/context-kilo-detection.test.js:28:10)
+      at TestContext.<anonymous> (/home/coder/project/scripts/__tests__/context-kilo-detection.test.js:60:20)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at scripts/__tests__/context-kilo-detection.test.js:58:5
+✖ plugins/aidd-context/skills/02-project-memory/references/tools.md: OpenCode JSON alone (0.217966ms)
+  AssertionError [ERR_ASSERTION]: Missing kilo detection row
+      at row (/home/coder/project/scripts/__tests__/context-kilo-detection.test.js:28:10)
+      at TestContext.<anonymous> (/home/coder/project/scripts/__tests__/context-kilo-detection.test.js:60:20)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at scripts/__tests__/context-kilo-detection.test.js:58:5
+✖ plugins/aidd-context/skills/02-project-memory/references/tools.md: OpenCode JSONC alone (0.172411ms)
+  AssertionError [ERR_ASSERTION]: Missing kilo detection row
+      at row (/home/coder/project/scripts/__tests__/context-kilo-detection.test.js:28:10)
+      at TestContext.<anonymous> (/home/coder/project/scripts/__tests__/context-kilo-detection.test.js:60:20)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at scripts/__tests__/context-kilo-detection.test.js:58:5
+✖ plugins/aidd-context/skills/02-project-memory/references/tools.md: multiple tools share memory (0.209881ms)
+  AssertionError [ERR_ASSERTION]: Missing kilo detection row
+      at row (/home/coder/project/scripts/__tests__/context-kilo-detection.test.js:28:10)
+      at TestContext.<anonymous> (/home/coder/project/scripts/__tests__/context-kilo-detection.test.js:60:20)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at scripts/__tests__/context-kilo-detection.test.js:76:3
+✖ plugins/aidd-context/skills/02-project-memory/references/tools.md: legacy is detection only and path claims carry their provenance (0.411768ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /\.kilocode\/[^\n]*(?:legacy|historical)[^\n]*detection/iu. Input:
+  
+  '# Tools\n' +
+    '\n' +
+    'The AI tools a project can use.\n' +
+    '\n' +
+    '| Tool     | Detected when                                                                        | Context file                      |\n' +
+    '| -------- | ------------------------------------------------------------------------------------ | --------------------------------- |\n' +
+    '| claude   | `.claude/` or `CLAUDE.md`                                                            | `CLAUDE.md`                       |\n' +
+    '| codex    | `.codex/`                                                                            | `AGENTS.md`                       |\n' +
+    '| cursor   | `.cursor/` or `.cursorrules`                                                         | `AGENTS.md`                       |\n' +
+    '| opencode | `.opencode/`                                                                         | `AGENTS.md`                       |\n' +
+    '| copilot  | `.github/copilot-instructions.md` or `.github/{instructions,agents,skills,prompts}/` | `.github/copilot-instructions.md` |\n' +
+    '\n' +
+    '- A shared `AGENTS.md` is a wiring target, never a detection signal.\n' +
+    '- Tools sharing a context file wire it once; the block serves them all.\n' +
+    '- A context file carries the block under a `## Memory Management` section, shaped like `assets/templates/AGENTS.md`.\n' +
+    '- An existing context file keeps everything else: add only what is missing.\n' +
+    '- Touch no context file a picked tool does not resolve to.\n'
+  
+      at TestContext.<anonymous> (/home/coder/project/scripts/__tests__/context-kilo-detection.test.js:77:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: '# Tools\n\nThe AI tools a project can use.\n\n| Tool     | Detected when                                                                        | Context file                      |\n| -------- | ------------------------------------------------------------------------------------ | --------------------------------- |\n| claude   | `.claude/` or `CLAUDE.md`                                                            | `CLAUDE.md`                       |\n| codex    | `.codex/`                                                                            | `AGENTS.md`                       |\n| cursor   | `.cursor/` or `.cursorrules`                                                         | `AGENTS.md`                       |\n| opencode | `.opencode/`                                                                         | `AGENTS.md`                       |\n...',
+    expected: /\.kilocode\/[^\n]*(?:legacy|historical)[^\n]*detection/iu,
+    operator: 'match',
+    diff: 'simple'
+  }
