@@ -18,7 +18,7 @@ Either the list of what was removed, or the list of what would be, with nothing 
 3. **Confirm.** Ask whether to remove all of it. Wait for an explicit yes naming the removal.
    - A no, or no answer, ends the action with nothing removed.
 4. **Remove.** Run `aidd telemetry forget --yes` only after that yes, and relay what it printed.
-   - It does not turn measurement off: say that `aidd telemetry off` does, and that a project still opted in is measured again from its next session.
+   - Say that it also ends measurement: nothing is measured again until the person runs `aidd telemetry on`.
 
 ## Test
 
