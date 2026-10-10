@@ -1,58 +1,90 @@
 ---
 name: 09-goalify
-description: Turn a goal into an autonomous loop that replans and retries until a runnable success condition passes. Use when the user says "goalify", "keep trying until", or wants a goal verified by a command. Not for one-shot tasks or uncheckable goals.
+description: Runs an autonomous goal loop that replans and retries until a runnable success condition passes. Use when the user wants to goalify a task, keep trying until success, or verify a goal by command. Not for one shot tasks or uncheckable goals.
 argument-hint: task | command
 ---
 
-# Skill: goalify
-
-Frame a checkable goal interactively, then run unattended until its success condition passes or a safety stop is reached.
+# Goalify
 
 ```mermaid
 flowchart TD
-  Start[Setup or resume] --> Init[init-tracking]
-  Init -->|ready| Loop[autonomous-loop under auto-accept]
+  Setup[New task] --> Init{init-tracking: existing task status?}
+  Resume[Resume task] --> Init
   Init -->|already implemented| Done[Complete]
-  Init -->|unresolved prerequisite| Stop[Stop and report]
-  Loop --> Select{Ready independent steps?}
-  Select -->|parallel capability available| Batch[Delegate parallel execution]
+  Init -->|pending or in-progress| Loop[run-loop under auto-accept]
+  Init -->|no file| Collect[Collect inputs and research]
+  Collect --> Goal{Unambiguous goal?}
+  Goal -->|no| Reformulate[Ask for reformulation]
+  Reformulate --> Goal
+  Goal -->|yes| Condition{Runnable success command?}
+  Condition -->|no| Define[Request a checkable command]
+  Define --> Condition
+  Condition -->|yes| Preflight[Check prerequisites and collect user-only inputs]
+  Preflight --> Ready{Unresolved hard prerequisite?}
+  Ready -->|yes| Blocked[Stop for unresolved prerequisite]
+  Ready -->|no| Map[Present ASCII journey]
+  Map --> Confirm{User confirms journey?}
+  Confirm -->|no| Map
+  Confirm -->|yes| Directory{Tracking directory exists?}
+  Directory -->|no| CreateDirectory[Create tracking directory]
+  Directory -->|yes| Create[Fill tracking template and convert journey to Mermaid]
+  CreateDirectory --> Create
+  Create --> Loop
+  Loop --> Remaining{Unchecked steps?}
+  Remaining -->|no| Success{success_condition passes?}
+  Remaining -->|yes| Select{Ready independent steps and compatible Batch?}
+  Select -->|yes| Batch[Delegate parallel execution]
   Select -->|otherwise| Worker[Execute next step]
-  Batch --> Verify[Verify each result]
-  Worker --> Verify
-  Verify -->|safety stop| Stop
-  Verify -->|failure| Replan[Analyze and replan]
+  Batch --> Autonomy{auto-accept: action safe and in scope?}
+  Worker --> Autonomy
+  Autonomy -->|outside task| Skip[Skip unrelated action]
+  Skip --> Autonomy
+  Autonomy -->|payment| Payment[Report payment stop]
+  Autonomy -->|destructive| Destructive[Report destructive stop]
+  Autonomy -->|yes| Act[Act autonomously]
+  Act --> ActionResult{Assigned work outcome?}
+  ActionResult -->|self-fixable failure| Fix[Choose an in-scope fix]
+  Fix --> Autonomy
+  ActionResult -->|more actions| Autonomy
+  ActionResult -->|finished or other failure| Verify[Verify each result]
+  Payment --> Verify
+  Destructive --> Verify
+  Verify --> Record[Record each attempt and preserve partial evidence]
+  Record --> Safety{Reported safety outcome?}
+  Safety -->|payment| StopPayment[Stopped payment]
+  Safety -->|destructive| StopDestructive[Stopped destructive action]
+  Safety -->|out-of-scope| StopScope[Stopped out-of-scope]
+  Safety -->|none| Failed{Failed or missing result?}
+  Failed -->|yes| Replan[Analyze failure and amend the plan]
   Replan -->|retry| Loop
-  Verify -->|more steps| Loop
-  Verify -->|all steps checked| Success{success_condition passes?}
+  Failed -->|no| Next{Unchecked steps remain?}
+  Next -->|yes| Loop
+  Next -->|no| Success
   Success -->|no| Replan
   Success -->|yes| Done
 ```
 
 ## Actions
 
+Read [tracking setup](actions/01-init-tracking.md) first.
+
 | Action | Does |
 | --- | --- |
-| [init-tracking](actions/01-init-tracking.md) | frame the goal, create or resume tracking, launch the loop |
-| [auto-accept](actions/02-auto-accept.md) | decide and act within the task's safety limits |
-| [autonomous-loop](actions/03-autonomous-loop.md) | dispatch workers, verify evidence, replan failures, check completion |
-
-Run `init-tracking` interactively; it launches or resumes `autonomous-loop` under `auto-accept`.
-Before running an action, read its file in `actions/`, not only the table or assets.
+| init-tracking | frame the goal, create or resume tracking, launch the loop |
+| auto-accept | decide and act within the task's safety limits |
+| run-loop | dispatch workers, verify evidence, replan failures, check completion |
 
 ## Transversal rules
 
-- Single source of truth: all task state lives in `aidd_docs/tasks/<task-name>.md` and nowhere else.
-- No repeated failures: never retry a failed approach without a meaningful change.
-- Honesty over escape: never set `status: implemented` until the success condition genuinely passes.
-- Auto-accept: follow the action's rules within the original task; stop on payment or destructive actions.
-- The loop dispatches one leaf worker per step, directly or through a discovered parallel-execution capability in its own context. It retains the plan, safety decisions, per-item verification, and retries; it never does the work itself or adds a controller agent.
-- Model policy: use a powerful available model for framing, planning, verification, and replanning, including every orchestrator launch or resume. At every worker launch or relaunch, use the smallest available model with its highest supported reasoning effort. Workers execute only their assigned step and return evidence.
-
-## Assets
-
-- `assets/plan-template.md`: the tracking file format (frontmatter, phases, acceptance criteria, Log).
-- `assets/autonomous-loop-worker-prompt.md`: the prompt the loop spawns each per-step worker with.
-
-## References
-
-- `references/autonomous-loop-log-format.md`: the Log entry format the loop appends per attempt.
+- Keep all task state in `aidd_docs/tasks/<task-name>.md` and nowhere else.
+- Never retry a failed approach without a meaningful change.
+- Apply the [autonomy rules](actions/02-auto-accept.md) throughout unattended execution.
+- Delegate execution to one leaf worker per step, directly or through a discovered parallel capability.
+  - Keep parallel dispatch in the orchestrator's context, without another controller agent.
+  - Retain planning, safety decisions, per-item verification, and retries.
+  - Never perform the workers' execution yourself.
+  - Workers execute only their assigned step and return evidence.
+- Select models by responsibility.
+  - Use a powerful available model for framing, planning, verification, and replanning.
+  - Apply that selection to every orchestrator launch or resume.
+  - At every worker launch or relaunch, use the smallest available model with its highest supported reasoning effort.

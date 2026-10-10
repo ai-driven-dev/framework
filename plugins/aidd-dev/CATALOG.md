@@ -132,11 +132,11 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 |-------|------|---|
 | `actions` | [01-init-tracking.md](skills/09-goalify/actions/01-init-tracking.md) | - |
 | `actions` | [02-auto-accept.md](skills/09-goalify/actions/02-auto-accept.md) | - |
-| `actions` | [03-autonomous-loop.md](skills/09-goalify/actions/03-autonomous-loop.md) | - |
+| `actions` | [03-run-loop.md](skills/09-goalify/actions/03-run-loop.md) | - |
 | `assets` | [autonomous-loop-worker-prompt.md](skills/09-goalify/assets/autonomous-loop-worker-prompt.md) | - |
 | `assets` | [plan-template.md](skills/09-goalify/assets/plan-template.md) | - |
 | `references` | [autonomous-loop-log-format.md](skills/09-goalify/references/autonomous-loop-log-format.md) | - |
-| `-` | [SKILL.md](skills/09-goalify/SKILL.md) | `Turn a goal into an autonomous loop that replans and retries until a runnable success condition passes. Use when the user says "goalify", "keep trying until", or wants a goal verified by a command. Not for one-shot tasks or uncheckable goals.` |
+| `-` | [SKILL.md](skills/09-goalify/SKILL.md) | `Runs an autonomous goal loop that replans and retries until a runnable success condition passes. Use when the user wants to goalify a task, keep trying until success, or verify a goal by command. Not for one shot tasks or uncheckable goals.` |
 
 #### `skills/10-todo`
 

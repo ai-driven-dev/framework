@@ -1,6 +1,8 @@
 # Autonomous loop: Log entry format
 
-The autonomous loop appends one entry to the tracking file's Log per step attempt, in this exact shape:
+- Append one entry to the tracking file's Log per step attempt.
+- Never rewrite history.
+- Use this exact shape:
 
 ```text
 ### #<N> - <timestamp>
@@ -10,6 +12,7 @@ The autonomous loop appends one entry to the tracking file's Log per step attemp
 ```
 
 - `### #<N>` numbers the attempt.
+- `<timestamp>` records the attempt's UTC time as `YYYY-MM-DDTHH:MM:SSZ`.
 - `>` records the worker's attempt.
 - `=` records the orchestrator's own verification (a command run or a file read), not the worker's claim.
 - `->` records the decision: the next step, or `RETRY` with the reason.

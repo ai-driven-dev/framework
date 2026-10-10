@@ -1,6 +1,6 @@
 # 02 - Auto-accept
 
-Operate autonomously: do not ask for confirmation, decide and act, and stop only on money or destructive actions.
+Handle confirmations autonomously within the task's safety limits.
 
 ## Input
 
@@ -8,21 +8,26 @@ The task to handle end-to-end, a free-form description.
 
 ## Output
 
-An exit status, completed or one of stopped-payment, stopped-destructive, or stopped-out-of-scope, with the actions taken and a one-sentence reason when stopped.
+- Exit status: `completed`, `stopped-payment`, `stopped-destructive`, or `stopped-out-of-scope`.
+- Actions taken, with a one-sentence reason for any stopped status.
 
 ## Process
 
-Apply these rules in order to every prompt, dialog, checkbox, Y/n, license screen, cookie banner, or confirmation met while handling the task.
-
-1. **Accept.** Accept everything by default, acknowledge, and move on.
-2. **Default.** When an installer offers options, pick the recommended or standard one.
-3. **Self-fix.** When something fails (missing dependency, wrong version, config error), fix it and retry. Do not ask.
-4. **Money.** Stop and report when an action involves payment, subscription, or an upgrade to a paid tier.
-5. **Destructive.** Stop and report when an action deletes data, drops a database, removes files recursively, force-pushes, resets git history, or overwrites uncommitted work.
-6. **Scope.** Skip anything leading outside the original task (unrelated tools, external signups, rabbit holes). Do only what the user asked.
+1. **Check.** Apply the task's gates before handling each action or confirmation.
+   - Stop and report payments, subscriptions, or upgrades to paid tiers.
+   - Stop and report destructive actions: deleting data, dropping databases, recursive removal, force-pushes, history resets, or overwriting uncommitted work.
+   - Skip unrelated tools, external signups, and rabbit holes outside the original task.
+2. **Act.** Handle in-scope confirmations without asking the user.
+   - Accept and acknowledge prompts, dialogs, checkboxes, Y/n choices, licenses, cookies, and confirmations by default.
+   - Choose recommended or standard installer options.
+   - Fix failures such as missing dependencies, wrong versions, or configuration errors, then retry.
+3. **Report.** Return the actual exit status and actions taken.
+   - Include a one-sentence reason when stopped.
 
 ## Test
 
-- The status matches the actual exit path.
-- `completed` appears only when the task ran end-to-end with no money or destructive gate hit.
-- Each stopped status carries a non-empty reason.
+| Case | Pass |
+| --- | --- |
+| Exit | The status matches the actual exit path. |
+| Completed task | `completed` appears only after end-to-end execution without a money or destructive gate. |
+| Stopped task | Every stopped status includes a non-empty reason. |

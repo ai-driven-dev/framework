@@ -8,15 +8,17 @@ status: pending
 <!--  AI INSTRUCTIONS ONLY -- Follow those rules, do not output them.
 
 - ENGLISH ONLY
-- Text is straight to the point, no emojis, no style, use bullet points.
-- Replace placeholders (`{variables}`) with actual user inputs.
-- Define flow of the feature, from start to end.
-- Interpret comments on this file to help you fill it.
+- Use concise bullet points without decorative styling.
+- Omit decorative emojis but retain required execution amendment markers.
+- Fill placeholders and examples from confirmed user inputs and verified project context.
+- Replace sample paths, example commands, and the journey's TODO node with task-specific content.
+- Repeat phases as needed and remove unused examples.
+- Use `none` for inapplicable fields or sections.
+- Start Amendments and Log empty for new tasks; preserve their history when resuming.
+- Remove all scaffold HTML comments, including this block and inline comments, from the produced file.
+- Leave no unfilled placeholder, sample path, example command, ellipsis, or TODO node.
 - Each phase MUST have acceptance criteria.
-- During implementation, the AI may amend this plan. Every AI change MUST be prefixed with 🤖 and include a brief rationale.
 - This file IS the live tracking file for Goalify. State lives in the `status` frontmatter field (`pending → in-progress → implemented`).
-- `success_condition` MUST be a runnable command. The loop sets `status: implemented` only when it passes.
-- Log is APPEND-ONLY. One entry per step attempt. Never rewrite history.
 -->
 
 # Instruction: {title}
@@ -89,15 +91,11 @@ flowchart TD
 
 ## Amendments
 
-<!-- AI-initiated changes during implementation. Each entry is prefixed with 🤖. -->
+<!-- Format execution amendments using the [loop instructions](../actions/03-run-loop.md). -->
 
 ## Log
 
-<!-- APPEND ONLY. One entry per step attempt. Never rewrite. -->
-<!-- ### #N - YYYY-MM-DDTHH:MM:SSZ -->
-<!-- > step - what worker tried -->
-<!-- = ✓|✗ verification result (orchestrator-checked, not worker-claimed) -->
-<!-- → next step or RETRY: why -->
+<!-- Read and apply the [Log format](../references/autonomous-loop-log-format.md) when appending each step attempt. -->
 
 ## Validation flow demonstration
 

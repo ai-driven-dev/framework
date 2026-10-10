@@ -1,30 +1,50 @@
 # 01 - Init tracking
 
-Validate prerequisites, build a journey map, create the tracking file, and hand off to the autonomous loop. The last interactive step before the loop runs unattended.
+Frame a checkable goal and launch its unattended loop.
 
 ## Input
 
-The task name (required), an optional free-form description, a runnable success condition that exits 0 on success (required), and optional rules.
+- Required: task name and a runnable success condition that exits 0 on success.
+- Optional: free-form description and rules.
 
 ## Output
 
-The tracking file at `aidd_docs/tasks/<task-name>.md`, marked created or resumed, with any pre-flight blocker halting before the spawn.
+Task tracking created or resumed at `aidd_docs/tasks/<task-name>.md`.
+Only ready tasks launch a loop.
+Completed tasks and unresolved pre-flight blockers launch nothing.
 
 ## Process
 
-1. **Resume.** Apply the router's model policy, then check `aidd_docs/tasks/` for a file matching the task name and read its frontmatter `status`.
-   - `pending` or `in-progress`: report the status (iteration, steps remaining), then skip to Spawn to resume.
+1. **Resume.** Inspect any matching task file under the router's model policy.
+   - Match the task name in `aidd_docs/tasks/` and read its frontmatter `status`.
+   - `pending` or `in-progress`: report iteration and remaining steps. Continue directly to loop launch without reframing.
    - `implemented`: report "Task already completed" and stop.
-   - No file: continue to Collect.
+   - No file: collect the new task's inputs.
 2. **Collect.** Gather the task name, description, success condition, and rules from the user.
-3. **Research.** Before planning steps, read the relevant documentation (README, official guides) and identify the recommended method. Do not default to what you already know.
-4. **Goal.** Ask "could I execute this with zero ambiguity?" When no, ask the user to reformulate. "Make the code better" is rejected ("what metric?"); "all tests pass after `npm test`" is accepted.
-5. **Condition.** It must be a runnable command. `npm test exits 0` is valid; "the code is clean" is invalid and is pushed back to `eslint . exits 0`.
-6. **Pre-flight.** For each step, list tools, secrets, API access, data, and permissions. Mark `[✓]` already satisfied, `[~]` soft (the agent self-serves), `[!]` hard (only the user can provide it). Collect every `[!]` now; when any stays unresolved, stop before the next step.
-7. **Map.** Project the whole path as an ASCII map of steps, dependencies, tools, and blockers. Ask the user to confirm and iterate until they do.
-8. **Scaffold.** Load [plan-template.md](../assets/plan-template.md), creating `aidd_docs/tasks/` when missing.
-9. **Create.** Write `aidd_docs/tasks/<task-name>.md` from the template. Fill the frontmatter (`objective`, `success_condition`, `iteration: 0`, `status: pending`), the phases with their tasks and acceptance criteria, and the journey map.
-10. **Spawn.** Apply the router's model policy to launch or resume the orchestrator with [03-autonomous-loop.md](./03-autonomous-loop.md) and `<task-name>` filled in.
+3. **Research.** Read relevant documentation before planning steps.
+   - Use the README and official guides to identify the recommended method.
+   - Do not default to prior knowledge.
+4. **Goal.** Check whether the goal can be executed without ambiguity.
+   - Otherwise, ask the user to reformulate.
+   - Reject "make the code better" until a metric is provided.
+   - Accept "all tests pass after `npm test`".
+5. **Condition.** Require a runnable success command.
+   - Accept `npm test exits 0`.
+   - Replace "the code is clean" with a check such as `eslint . exits 0`.
+6. **Pre-flight.** Check each step's tools, secrets, API access, data, and permissions.
+   - Mark satisfied prerequisites `[✓]`, self-service ones `[~]`, and user-only ones `[!]`.
+   - Collect every `[!]` now. Stop if any remains unresolved.
+7. **Map.** Present the whole journey as an ASCII map.
+   - Include steps, dependencies, tools, and blockers.
+   - Iterate until the user confirms it.
+8. **Scaffold.** Load the [tracking template](../assets/plan-template.md).
+   - Create `aidd_docs/tasks/` when missing.
+9. **Create.** Write the task file from `plan-template.md`.
+   - Fill `objective`, `success_condition`, `iteration: 0`, and `status: pending`.
+   - Add phases, tasks, acceptance criteria, and the journey map.
+   - Convert the confirmed ASCII map into the template's Mermaid journey, preserving steps and dependencies.
+10. **Spawn.** Launch or resume the orchestrator under the router's model policy.
+    - Use the [loop instructions](./03-run-loop.md) with the task name filled in.
 
 ## Test
 
@@ -33,5 +53,7 @@ The tracking file at `aidd_docs/tasks/<task-name>.md`, marked created or resumed
 | New task | The tracking file exists at `aidd_docs/tasks/<task-name>.md` with `status: pending`, a runnable `success_condition`, and a journey map. |
 | Pending or in-progress task | The existing file is retained and the orchestrator resumes from its recorded state. |
 | Implemented task | "Task already completed" is reported and no agent launches. |
+| Ambiguous goal or non-runnable condition | The user supplies a reformulated goal or runnable command before prerequisites and planning proceed. |
+| Unconfirmed journey | The map is revised until confirmed; the saved Mermaid journey preserves its steps and dependencies. |
 | Unresolved hard prerequisite | No orchestrator launches until every `[!]` is resolved. |
 | Setup or resume | Framing and orchestrator model selections follow the router's model policy. |
