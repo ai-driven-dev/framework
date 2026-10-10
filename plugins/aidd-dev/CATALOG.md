@@ -89,12 +89,15 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 
 | Group | File | Description |
 |-------|------|---|
-| `actions` | [01-review-code.md](skills/05-review/actions/01-review-code.md) | - |
-| `actions` | [02-review-functional.md](skills/05-review/actions/02-review-functional.md) | - |
-| `actions` | [03-review-relevancy.md](skills/05-review/actions/03-review-relevancy.md) | - |
+| `actions` | [01-prepare.md](skills/05-review/actions/01-prepare.md) | - |
+| `actions` | [02-review-code.md](skills/05-review/actions/02-review-code.md) | - |
+| `actions` | [03-review-functional.md](skills/05-review/actions/03-review-functional.md) | - |
+| `actions` | [04-review-relevancy.md](skills/05-review/actions/04-review-relevancy.md) | - |
+| `actions` | [05-finalize.md](skills/05-review/actions/05-finalize.md) | - |
 | `assets` | [review-template.md](skills/05-review/assets/review-template.md) | - |
+| `references` | [report-contract.md](skills/05-review/references/report-contract.md) | - |
 | `references` | [review-rubric.md](skills/05-review/references/review-rubric.md) | - |
-| `-` | [SKILL.md](skills/05-review/SKILL.md) | `Review a diff read-only on three axes, code, behavior versus the plan, and relevancy, into one verdict report. Use before shipping a change. Not for fixing findings or auditing a codebase.` |
+| `-` | [SKILL.md](skills/05-review/SKILL.md) | `Reviews a change or a diff and says whether it is ready to ship, naming every problem with its fix. Use when the user wants a change checked before it ships. Not for fixing what the review finds, and not for auditing a whole codebase.` |
 
 #### `skills/06-test`
 

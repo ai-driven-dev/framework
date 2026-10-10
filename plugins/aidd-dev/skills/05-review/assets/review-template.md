@@ -1,36 +1,26 @@
-<!-- Review report for a diff. Fill the placeholders, drop this comment. Tables and boxes, never prose. Sections are fixed by assets/review-validator.yml. -->
-
 # Review: {{feature}}
 
-- **Verdict**: {{approve | changes-requested | blocked}}
-- **Diff**: `{{base}}...{{head}}`
-- **Axes run**: {{the axes that ran, from code, functional, relevancy}}
-- **Date**: {{yyyy_mm_dd}}
-- **Findings**: {{n_critical}} critical, {{n_warning}} warning, {{n_minor}} minor
+- Rounds: {{the count of round sections}}
+- Started: {{round 1's date, never changed}}
 
-## Phases
+## Round {{the count of round headings, this one included}} · r-{{4 hex characters, drawn once}}
 
-<!-- One block per plan phase, [x]/[ ] per acceptance criterion. Mark "Not run" when no plan was given or the functional axis did not run. -->
+- Date: {{yyyy-mm-dd}}
+- By: {{git config user.name}}
+- Diff: `{{base}}...{{head}}`{{ plus the working tree, when it held changes}}
+- Axes: {{the axes that ran, from code, functional, relevancy}}
+- Verdict: {{verdict}}
+- Score: {{n_met}}/{{n_plan}} met, {{n_unmet}} unmet, {{n_out}} out of the diff, or not scored
 
-### Phase {{n}} — {{phase-name}}
+### Criteria
 
 - [x] {{criterion met}} — {{file:line}}
 - [ ] {{criterion unmet}} — {{gap}}
+- [x] {{criterion no diff could show}} — not-applicable, {{why}}
+- Out of the diff: {{phase-name}} ({{n}} criteria)
 
-## Findings
+### Findings
 
-<!-- One table for every axis. Kind is `code`, `fit`, `conform`, `rot`, or `functional`. An unmet acceptance criterion tagged `fix` appears here as a `functional` row so the header count matches the verdict. Phase ties the row to the plan, or `-` with no plan. Each axis appends its own rows. Write "None." when a run found nothing. -->
+- `{{file:line}}` : {{issue}} → {{fix}} — {{🔴 critical | 🟡 major | 🟢 minor}}, {{kind}}
 
-| Sev | Kind | Phase | Location | Issue | Fix |
-| --- | ---- | ----- | -------- | ----- | --- |
-
-## Verification
-
-<!-- Mark "Not run" when the functional axis did not run. -->
-
-| Metric        | Value                                             |
-| ------------- | ------------------------------------------------- |
-| Verified      | {{pct}}% ({{n_checked}}/{{n_total}})              |
-| Files checked | {{files, comma-separated}}                        |
-| Unchecked     | {{criterion — fix / not-applicable / fixed}}, or none |
-| Unplanned     | {{change tracing to no criterion}}, or none       |
+<!-- Every placeholder is replaced by observed data, and a list no axis of this round owns is left out. One left standing is a bug. -->

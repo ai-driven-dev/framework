@@ -1,5 +1,14 @@
-# review.md has exactly these sections. Any other is invalid: remove it, never add or rename.
-sections:
-  - Phases        # required: one block per plan phase, a box per criterion
-  - Findings      # required: one table, all axes, by Kind
-  - Verification  # required: the summary table
+# Each round is one `## Round <n> · r-<id>` section, appended, carrying exactly these fields and lists.
+header:          # above the rounds, once
+  - Rounds
+  - Started
+fields:          # a round's, in this order, one per line
+  - Date
+  - By
+  - Diff
+  - Axes
+  - Verdict
+  - Score
+lists:
+  - Criteria     # the plan's criteria. Absent when functional did not run, or ran with none
+  - Findings     # defects no criterion covers. Absent when none was found
