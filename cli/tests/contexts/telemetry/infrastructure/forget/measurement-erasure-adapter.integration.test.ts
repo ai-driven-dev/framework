@@ -20,7 +20,7 @@ let sink: string;
 let identity: string;
 
 beforeEach(() => {
-  root = realpathSync(mkdtempSync(join(tmpdir(), "aidd-erasure-")));
+  root = realpathSync.native(mkdtempSync(join(tmpdir(), "aidd-erasure-")));
   telemetry = join(root, "telemetry");
   sink = join(root, "previous-sink");
   identity = join(root, "previous-identity.json");
