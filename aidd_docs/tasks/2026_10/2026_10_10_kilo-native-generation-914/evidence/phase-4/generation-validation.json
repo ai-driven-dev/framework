@@ -1,0 +1,18 @@
+{
+  "verdict": "pass",
+  "validation": "YAML frontmatter, Kilo field allowlists, body shape, canonical paths, payload fixture",
+  "artifacts": {
+    ".kilo/agents/verify-agent.md": {
+      "sha256": "83fe54db94a80c71930aedf756f17881b42ebda02ef481a0668bb7b1f9bde47e",
+      "bytes": 305
+    },
+    ".kilo/agents/assets/agent-payload.txt": {
+      "sha256": "55630dd7c27452fb05892541f2cf1c2f0748853417b1bbe00c5e4345243bad6e",
+      "bytes": 26
+    },
+    ".kilo/commands/verify-workflow.md": {
+      "sha256": "9daf5e2a3a5e211daf1dc42b3ffebff1518eff543ffab89375df3abc6707218f",
+      "bytes": 287
+    }
+  }
+}
