@@ -1,13 +1,5 @@
 <!doctype html>
-<!--
-  Template contract: replace every sample run value, timing, finding and file row
-  with evidence from the current conversation. Duplicate or remove `.finding`
-  blocks as needed, keep their data-signal/data-target values aligned with the
-  visible tags, derive the compact question tag from the finding question, write
-  each accepted action in its data-prompt attribute, and ship report.css/report.js
-  beside this file. Remove this comment from the report.
--->
-<html lang="fr">
+<html lang="en">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -18,191 +10,119 @@
   </head>
   <body>
     <header class="site-header">
-      <a class="brand" href="#report" aria-label="AIDD Improve report">
-        <span class="brand-mark" aria-hidden="true">A</span>
-        <span>AIDD / improve</span>
-      </a>
-      <div class="header-actions">
-        <span class="run-id">run_2026-09-12_01</span>
-        <button class="button" id="print-report" type="button">Imprimer</button>
-      </div>
+      <a class="brand" href="#report" aria-label="AIDD Improve report"><span class="brand-mark" aria-hidden="true">A</span><span>AIDD / improve</span></a>
     </header>
 
-    <main id="report">
+    <main id="report" data-label-accepted-one="{count} recommendation accepted" data-label-accepted-other="{count} recommendations accepted" data-label-duration-unavailable="Unavailable">
       <section class="intro" aria-labelledby="report-title">
-        <p class="context">Conversation actuelle · couverture partielle</p>
-        <h1 id="report-title">Rapport d’amélioration</h1>
-        <p class="lede">
-          Les changements les plus courts qui rendront le prochain run plus rapide,
-          plus fiable et moins coûteux.
-        </p>
-        <div class="run-meta">
-          <p><span>Généré</span><strong>12 septembre 2026 · 10:42</strong></p>
-          <p><span>Source</span><strong>Conversation + fichiers cités</strong></p>
-          <p><span>Findings</span><strong>3 recommandations</strong></p>
+        <h1 id="report-title">Improve report</h1>
+        <p>Fictional example, including all timings.</p>
+      </section>
+
+      <section class="recap" aria-label="Conversation recap" data-start="2026-09-12T09:00:00Z" data-end="2026-09-12T10:03:40Z">
+        <div class="metrics">
+          <p><span>Elapsed</span><strong class="duration is-slow">1 h 3 min 40 s</strong></p>
+          <p><span>Tokens</span><strong>Unavailable</strong></p>
+          <p><span>Calls · includes 2 subcalls</span><strong>6</strong></p>
         </div>
       </section>
 
-      <section class="section" aria-labelledby="cost-title">
-        <div class="section-heading">
-          <div><p class="section-index">Mesure</p><h2 id="cost-title">Coût de la session</h2></div>
-          <span class="coverage">Données partielles</span>
-        </div>
-        <div class="metrics" role="list" aria-label="Mesures de la session">
-          <div class="metric" role="listitem"><span>Durée active</span><strong>24 min</strong><small>mesurée</small></div>
-          <div class="metric" role="listitem"><span>Tokens</span><strong>128,4 k</strong><small>entrée + sortie + cache</small></div>
-          <div class="metric" role="listitem"><span>Requêtes</span><strong>42</strong><small>tous outils</small></div>
-          <div class="metric metric-unknown" role="listitem"><span>Coût monétaire</span><strong>Inconnu</strong><small>non exposé par le fournisseur</small></div>
-        </div>
-        <p class="source-note">Source : <code>aidd telemetry report v8</code> · 2026-09-12T02:00Z → 2026-09-12T03:00Z</p>
-      </section>
+      <section class="section conversation-section" aria-labelledby="conversation-title">
+        <div class="section-heading"><h2 id="conversation-title">Conversation</h2></div>
 
-      <section class="section" aria-labelledby="timing-title">
-        <div class="section-heading">
-          <div><p class="section-index">Chronologie</p><h2 id="timing-title">Où le temps est parti</h2></div>
-          <span class="section-total">24 min au total</span>
-        </div>
-        <ol class="timing-list">
-          <li><span class="timing-rank">01</span><div><strong>Recherche et diagnostic</strong><span>12 min · 50 %</span></div><progress class="timing-bar" max="100" value="100">100 %</progress></li>
-          <li><span class="timing-rank">02</span><div><strong>Implémentation</strong><span>8 min · 33 %</span></div><progress class="timing-bar" max="100" value="66">66 %</progress></li>
-          <li><span class="timing-rank">03</span><div><strong>Validation</strong><span>4 min · 17 %</span></div><progress class="timing-bar" max="100" value="33">33 %</progress></li>
-        </ol>
+        <details class="conversation-turn" data-start="2026-09-12T09:00:00Z" data-end="2026-09-12T09:01:23Z">
+          <summary><span class="turn-summary"><span class="prompt-preview">Review the project guidance for repetition and unnecessary output. Suggest changes only.</span><span class="duration is-slow" title="Recorded response duration">1 min 23 s</span></span></summary>
+          <blockquote class="user-message" data-moment="2026-09-12T09:00:00Z" aria-labelledby="first-prompt-label">
+            <div class="message-meta"><span id="first-prompt-label">User prompt</span></div>
+            <p class="user-prompt">Review the project guidance for repetition and unnecessary output. Suggest changes only.</p>
+          </blockquote>
+
+          <div class="tool-calls" aria-label="Calls following the first prompt">
+            <article class="tool-call" data-call-id="E003" data-moment="2026-09-12T09:00:02Z">
+              <div class="tool-line"><span class="tool-name">read_file</span><code class="tool-target">AGENTS.md</code><span class="event-delta duration" data-seconds="2" data-prefix="+" aria-label="2 seconds since previous displayed item">+2 s</span></div>
+            </article>
+            <article class="tool-call" data-call-id="E006" data-moment="2026-09-12T09:00:04Z">
+              <div class="tool-line"><span class="tool-name">parallel</span><span class="tool-target">2 linked read_file subcalls</span><span class="event-delta duration" data-seconds="2" data-prefix="+" aria-label="2 seconds since previous displayed item">+2 s</span></div>
+              <div class="subcalls" aria-label="Linked parallel subcalls">
+                <article class="tool-call" data-call-id="E007" data-parent="E006" data-moment="2026-09-12T09:00:04.100Z">
+                  <div class="tool-line"><span class="tool-name">read_file</span><code class="tool-target">docs/example-review.md</code><span class="event-delta duration" data-seconds="0.1" data-prefix="+" aria-label="0.1 seconds since previous displayed item">+0.1 s</span></div>
+                </article>
+                <article class="tool-call" data-call-id="E008" data-parent="E006" data-moment="2026-09-12T09:00:04.200Z">
+                  <div class="tool-line"><span class="tool-name">read_file</span><code class="tool-target">docs/example-guidance.md</code><span class="event-delta duration" data-seconds="0.1" data-prefix="+" aria-label="0.1 seconds since previous displayed item">+0.1 s</span></div>
+                </article>
+              </div>
+            </article>
+            <article class="tool-call" data-call-id="E012" data-moment="2026-09-12T09:00:05Z">
+              <div class="tool-line"><span class="tool-name">read_file</span><span class="tool-target"><code>docs/example-review-notes.md</code> <span class="call-error">ENOENT</span></span><span class="event-delta duration" data-seconds="0.8" data-prefix="+" aria-label="0.8 seconds since previous displayed item">+0.8 s</span></div>
+            </article>
+            <article class="tool-call" data-call-id="E014" data-moment="2026-09-12T09:00:06Z">
+              <div class="tool-line"><span class="tool-name">shell</span><span class="tool-target"><code>rg --files docs -g '*review*'</code> <span class="call-status">retry</span></span><span class="event-delta duration" data-seconds="1" data-prefix="+" aria-label="1 second since previous displayed item">+1 s</span></div>
+            </article>
+          </div>
+        </details>
+
+        <details class="conversation-turn" data-start="2026-09-12T09:01:30Z" data-end="2026-09-12T09:01:42Z">
+          <summary><span class="turn-summary"><span class="prompt-preview">Show replacements and deletions side by side. Do not invent a new rule for the deleted duplicate.</span><span class="duration" title="Recorded response duration">12 s</span></span></summary>
+          <blockquote class="user-message" data-moment="2026-09-12T09:01:30Z" aria-labelledby="second-prompt-label">
+            <div class="message-meta"><span id="second-prompt-label">User prompt</span></div>
+            <p class="user-prompt">Show replacements and deletions side by side. Do not invent a new rule for the deleted duplicate.</p>
+          </blockquote>
+        </details>
+
+        <details class="conversation-turn" data-start="2026-09-12T09:02:00Z" data-end="2026-09-12T10:03:40Z">
+          <summary><span class="turn-summary"><span class="prompt-preview">Keep unknown durations unavailable rather than estimating them.</span><span class="duration is-slow" title="Recorded response duration">1 h 1 min 40 s</span></span></summary>
+          <blockquote class="user-message" data-moment="2026-09-12T09:02:00Z" aria-labelledby="third-prompt-label">
+            <div class="message-meta"><span id="third-prompt-label">User prompt</span></div>
+            <p class="user-prompt">Keep unknown durations unavailable rather than estimating them.</p>
+          </blockquote>
+        </details>
       </section>
 
       <section class="section findings-section" aria-labelledby="findings-title">
-        <div class="section-heading findings-heading">
-          <div><p class="section-index">Décisions</p><h2 id="findings-title">Changements recommandés</h2></div>
-          <p id="result-count" class="result-count" aria-live="polite">3 recommandations</p>
-        </div>
-
-        <div class="filters" aria-label="Filtrer les recommandations">
-          <div class="filter-group" role="group" aria-label="Diagnostic">
-            <span>Diagnostic</span>
-            <button type="button" data-filter="signal" data-value="all" aria-pressed="true">Tous</button>
-            <button type="button" data-filter="signal" data-value="obsolete" aria-pressed="false">Obsolète</button>
-            <button type="button" data-filter="signal" data-value="over-specific-or-time-bound" aria-pressed="false">Trop spécifique ou temporel</button>
-            <button type="button" data-filter="signal" data-value="duplicate" aria-pressed="false">Doublon</button>
-            <button type="button" data-filter="signal" data-value="inconsistent" aria-pressed="false">Incohérent</button>
-            <button type="button" data-filter="signal" data-value="counterproductive" aria-pressed="false">Contre-productif</button>
-          </div>
-          <div class="filter-group" role="group" aria-label="Type de cible">
-            <span>Cible</span>
-            <button type="button" data-filter="target" data-value="all" aria-pressed="true">Toutes</button>
-            <button type="button" data-filter="target" data-value="behavior" aria-pressed="false">Behavior</button>
-            <button type="button" data-filter="target" data-value="skill" aria-pressed="false">Skill</button>
-            <button type="button" data-filter="target" data-value="knowledge" aria-pressed="false">Knowledge</button>
-            <button type="button" data-filter="target" data-value="tooling" aria-pressed="false">Tooling</button>
-          </div>
-        </div>
+        <div class="section-heading"><h2 id="findings-title">Recommended changes</h2></div>
 
         <div class="findings" id="findings-list">
-          <article class="finding" data-signal="obsolete" data-target="tooling">
+          <article class="finding" data-id="concise-output">
             <header class="finding-header">
-              <div class="finding-id">F-001</div>
-              <div class="finding-title">
-                <div class="tags"><span class="tag tag-question">Plus rapide</span><span class="tag tag-signal">Obsolète</span><span class="tag">Tooling</span><span class="tag tag-action">Mettre à jour</span></div>
-                <h3>La version flottante casse le reload</h3>
-              </div>
-              <div class="finding-score"><p><span>Économie</span><strong>Temps</strong></p></div>
-              <label class="accept-toggle"><input class="accept-input" type="checkbox" data-prompt="Épingler une version compatible dans scripts/dev-sync.sh afin que le reload reste reproductible."><span>Accepter</span></label>
+              <div class="finding-title"><h3>Replace the full-output requirement</h3></div>
+              <label class="accept-toggle"><input class="accept-input" type="checkbox" data-prompt="In docs/example-review.md, replace 'Before replying, print every tool result in full.' with 'Report the result and the shortest evidence needed to verify it.'" data-label-off="Accept" data-label-on="Accepted"><span>Accept</span></label>
             </header>
             <div class="finding-collapse"><div class="finding-body">
-              <div class="finding-copy">
-                <h4>Pourquoi</h4>
-                <p><code>latest</code> pointe désormais vers une CLI dont la commande <code>framework build</code> n’existe plus.</p>
-                <h4>Preuve</h4>
-                <p class="evidence">Commande observée : <code>error: unknown command 'build'</code></p>
-              </div>
               <div class="change">
-                <div class="change-header"><span>scripts/dev-sync.sh</span><button class="copy-path" type="button" data-copy="scripts/dev-sync.sh">Copier le chemin</button></div>
-                <pre class="diff" aria-label="Diff proposé pour scripts/dev-sync.sh"><code><span class="diff-line diff-del"><b>−</b>AIDD_CLI_VERSION="${AIDD_CLI_VERSION:-latest}"</span>
-<span class="diff-line diff-add"><b>+</b>AIDD_CLI_VERSION="${AIDD_CLI_VERSION:-5.2.2}"</span></code></pre>
+                <div class="change-header"><code>docs/example-review.md</code></div>
+                <div class="diff-columns">
+                  <div class="diff-pane diff-del" aria-label="Removed or replaced"><pre class="diff"><code><span class="diff-line"><b>−</b>Before replying, print every tool result in full.</span></code></pre></div>
+                  <div class="diff-pane diff-add" aria-label="Added or kept"><pre class="diff"><code><span class="diff-line"><b>+</b>Report the result and the shortest evidence needed to verify it.</span></code></pre></div>
+                </div>
               </div>
             </div></div>
           </article>
-
-          <article class="finding" data-signal="duplicate" data-target="skill">
+          <article class="finding" data-id="duplicate-publishing-rule">
             <header class="finding-header">
-              <div class="finding-id">F-002</div>
-              <div class="finding-title">
-                <div class="tags"><span class="tag tag-question">Économiser des tokens</span><span class="tag tag-signal">Doublon</span><span class="tag">Skill</span><span class="tag tag-action">Fusionner</span></div>
-                <h3>Deux règles décrivent le même contrôle</h3>
-              </div>
-              <div class="finding-score"><p><span>Économie</span><strong>Tokens</strong></p></div>
-              <label class="accept-toggle"><input class="accept-input" type="checkbox" data-prompt="Supprimer la règle dupliquée de skills/05-improve/SKILL.md et conserver l’action recommend comme source unique."><span>Accepter</span></label>
+              <div class="finding-title"><h3>Remove the second publishing rule</h3></div>
+              <label class="accept-toggle"><input class="accept-input" type="checkbox" data-prompt="In docs/example-guidance.md, remove the second duplicate 'Validate before publishing.' rule." data-label-off="Accept" data-label-on="Accepted"><span>Accept</span></label>
             </header>
             <div class="finding-collapse"><div class="finding-body">
-              <div class="finding-copy">
-                <h4>Pourquoi</h4>
-                <p>Le routeur et l’action répètent le même invariant. Une seule source suffit.</p>
-                <h4>Preuve</h4>
-                <p class="evidence">Même exigence relevée dans <code>SKILL.md:24</code> et <code>actions/02-recommend.md:31</code>.</p>
-              </div>
               <div class="change">
-                <div class="change-header"><span>skills/05-improve/SKILL.md</span><button class="copy-path" type="button" data-copy="skills/05-improve/SKILL.md">Copier le chemin</button></div>
-                <pre class="diff" aria-label="Diff proposé pour SKILL.md"><code><span class="diff-line diff-del"><b>−</b>Verify every recommendation against evidence.</span>
-<span class="diff-line diff-context"><b> </b>The recommend action owns evidence verification.</span></code></pre>
+                <div class="change-header"><code>docs/example-guidance.md</code></div>
+                <div class="diff-columns">
+                  <div class="diff-pane diff-del" aria-label="Removed or replaced"><pre class="diff"><code><span class="diff-line"><b>−</b>Validate before publishing.</span></code></pre></div>
+                  <div class="diff-pane diff-add" aria-label="Added or kept"><p class="diff-empty" aria-label="No addition">—</p></div>
+                </div>
               </div>
             </div></div>
           </article>
-
-          <article class="finding" data-signal="inconsistent" data-target="knowledge">
-            <header class="finding-header">
-              <div class="finding-id">F-003</div>
-              <div class="finding-title">
-                <div class="tags"><span class="tag tag-question">Supprimer ou clarifier</span><span class="tag tag-signal">Incohérent</span><span class="tag">Knowledge</span><span class="tag tag-action">Clarifier</span></div>
-                <h3>La documentation promet un coût indisponible</h3>
-              </div>
-              <div class="finding-score"><p><span>Économie</span><strong>Temps</strong></p></div>
-              <label class="accept-toggle"><input class="accept-input" type="checkbox" data-prompt="Clarifier dans aidd_docs/memory/telemetry.md que le coût est affiché seulement lorsqu’il est mesuré, sinon indiquer Inconnu."><span>Accepter</span></label>
-            </header>
-            <div class="finding-collapse"><div class="finding-body">
-              <div class="finding-copy">
-                <h4>Pourquoi</h4>
-                <p>Le montant exact n’est pas exposé. Le rapport doit distinguer valeur inconnue et zéro.</p>
-                <h4>Preuve</h4>
-                <p class="evidence"><code>cost_micro_usd</code> absent des observations de cette session.</p>
-              </div>
-              <div class="change">
-                <div class="change-header"><span>aidd_docs/memory/telemetry.md</span><button class="copy-path" type="button" data-copy="aidd_docs/memory/telemetry.md">Copier le chemin</button></div>
-                <pre class="diff" aria-label="Diff proposé pour telemetry.md"><code><span class="diff-line diff-del"><b>−</b>Le coût de chaque session est affiché.</span>
-<span class="diff-line diff-add"><b>+</b>Le coût est affiché lorsqu’il est mesuré ; sinon : Inconnu.</span></code></pre>
-              </div>
-            </div></div>
-          </article>
-        </div>
-        <p class="empty-state" id="empty-state" hidden>Aucun finding ne correspond à ces filtres.</p>
-      </section>
-
-      <section class="section target-section" aria-labelledby="target-title">
-        <div class="section-heading"><div><p class="section-index">Synthèse</p><h2 id="target-title">Fichiers ciblés</h2></div><span class="section-total">3 fichiers</span></div>
-        <div class="table-wrap">
-          <table>
-            <thead><tr><th>Fichier</th><th>+ Ajout</th><th>− Retrait ou clarification</th></tr></thead>
-            <tbody>
-              <tr><td><code>scripts/dev-sync.sh</code></td><td>Épingler une version compatible</td><td>Retirer <code>latest</code></td></tr>
-              <tr><td><code>skills/05-improve/SKILL.md</code></td><td>Conserver un propriétaire</td><td>Retirer la règle dupliquée</td></tr>
-              <tr><td><code>aidd_docs/memory/telemetry.md</code></td><td>Expliciter l’absence de mesure</td><td>Remplacer la promesse absolue</td></tr>
-            </tbody>
-          </table>
         </div>
       </section>
 
       <footer class="prompt-builder" aria-labelledby="prompt-title">
-        <div class="prompt-heading">
-          <div><p>Passage à l’action</p><h2 id="prompt-title">Prompt d’exécution</h2></div>
-          <span id="accepted-count" aria-live="polite">0 recommandation acceptée</span>
-        </div>
-        <p class="prompt-help">Acceptez les changements à appliquer, ajustez le texte si nécessaire, puis copiez-le dans votre conversation avec l’IA.</p>
-        <textarea id="execution-prompt" rows="10" spellcheck="true">Applique uniquement les changements acceptés ci-dessous. Vérifie chaque cible avant modification, préserve les changements existants, puis valide le résultat.
+        <div class="prompt-heading"><h2 id="prompt-title">Execution prompt</h2><span id="accepted-count" aria-live="polite">0 recommendations accepted</span></div>
+        <textarea id="execution-prompt" aria-labelledby="prompt-title" rows="10" spellcheck="true">Apply only the accepted changes. Verify each source, preserve existing changes, then validate.
 
-Changements acceptés :
+Accepted changes:
 
-Une fois le travail validé, pose-moi cette question : « Quel changement d’intention général, même minime, appliquons-nous au prochain run pour rendre notre amélioration cumulative et mesurable ? »</textarea>
-        <div class="prompt-actions">
-          <span>Le texte reste éditable.</span>
-          <button class="button" id="copy-prompt" type="button">Copier le prompt</button>
-        </div>
+---</textarea>
+        <div class="prompt-actions"><button class="button" id="copy-prompt" type="button" data-label-success="Prompt copied" data-label-error="Text selected">Copy prompt</button></div>
       </footer>
     </main>
   </body>
