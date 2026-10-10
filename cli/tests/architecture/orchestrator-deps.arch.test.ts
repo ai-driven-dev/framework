@@ -110,6 +110,10 @@ const BASELINE: readonly { readonly path: string; readonly injected: number }[] 
   // effects share an order (consent first, the ledger's lock last) that no collaborator knows.
   // The consent is written through its own port, apart from the project config it clears.
   { path: "src/contexts/telemetry/application/switch/telemetry-on-use-case.ts", injected: 10 },
+  // Opting out is the consent's write, then the withdrawal of what the clone's other directories
+  // were remembered as, under the ledger's lock so an ingest does not save the yes it read
+  // before. The order is only this class's to hold.
+  { path: "src/contexts/telemetry/application/switch/telemetry-off-use-case.ts", injected: 5 },
   // Forgetting reads what was declared where (snapshots, remembered roots, the repository),
   // clears it, and erases the files, all under the ledger's lock. The declarations go before
   // the files that lead to them, an order only this class holds.

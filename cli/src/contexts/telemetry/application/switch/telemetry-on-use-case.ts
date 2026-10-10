@@ -13,16 +13,11 @@ import type {
   RunJournalCleaner,
 } from "../../domain/ports/switch/run-journal-cleaner.js";
 import type { UsageLedger } from "../../domain/ports/usage-ledger.js";
-import { repositoryIdOf } from "../../domain/repository-identity.js";
-import {
-  cwdKey,
-  type RepositoryResolution,
-  sameResolution,
-} from "../../domain/repository-resolution.js";
 import { effectiveRetentionDays, retentionShort } from "../../domain/switch/claude-retention.js";
 import { withoutPreviousTelemetry } from "../../domain/switch/legacy-config.js";
 import { CONSENT_GRANTED } from "../../domain/telemetry-consent.js";
 import { readCloneConsent } from "./clone-consent.js";
+import { rememberOwnRoot } from "./remembered-consent.js";
 
 export type LegacyConfigOutcome = "none" | "block-removed" | "file-deleted" | "unparseable";
 
@@ -102,26 +97,13 @@ export class TelemetryOnUseCase {
    * reset. Ingest advanced them past lines it did not store for want of consent, and the same
    * lines belong in the ledger now: calls are kept once, so reading them again costs nothing.
    * The clone's directories that are gone are not rewritten: their consent is read from the
-   * clone, live. This root is remembered, seen alive, so `forget` finds the clone even if no
-   * session ever ran here. */
+   * clone, live. */
   private async catchUp(
     located: Extract<LocatedDirectory, { status: "repository" }>
   ): Promise<void> {
-    const id = repositoryIdOf(located);
     await this.ledger.exclusively(async () => {
       await this.ledger.resetPositions();
-      if (id === null) return;
-      const held = await this.resolutions.load();
-      const key = cwdKey(located.root, this.caseInsensitiveFileSystem);
-      const own: RepositoryResolution = {
-        repository_id: id,
-        root: located.root,
-        consented: true,
-        clone: located.clone,
-      };
-      if (sameResolution(held.get(key), own)) return;
-      held.set(key, own);
-      await this.resolutions.save(held);
+      await rememberOwnRoot(this.resolutions, located, this.caseInsensitiveFileSystem);
     });
   }
 }

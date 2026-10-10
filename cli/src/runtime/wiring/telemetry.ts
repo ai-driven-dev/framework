@@ -155,7 +155,13 @@ export function wireTelemetry(homedir: () => string): TelemetryDeps {
       new ClaudeSettingsAdapter(claudeDir),
       caseInsensitiveFileSystem()
     ),
-    telemetryOffUseCase: new TelemetryOffUseCase(locator, consents, consents),
+    telemetryOffUseCase: new TelemetryOffUseCase(
+      locator,
+      consents,
+      consents,
+      ledger,
+      resolutionStore
+    ),
     forgetTelemetryUseCase: new ForgetTelemetryUseCase(
       new MeasurementErasureAdapter(
         root,

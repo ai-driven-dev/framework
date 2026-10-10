@@ -217,7 +217,7 @@ describe("forget with confirmation", () => {
     ]);
   });
 
-  it("leaves alone a directory remembered as refusing before clones were recorded, with no snapshot", async () => {
+  it("finds the clone of a directory remembered as refusing before clones were recorded, whose key says off", async () => {
     const s = setup([]);
     s.resolutions.resolutions.set("/w/repo", {
       repository_id: ID,
@@ -225,11 +225,11 @@ describe("forget with confirmation", () => {
       consented: false,
     });
     s.locator.directories.set("/w/repo", located("/w/repo"));
-    s.keys.set(CLONE, 1);
-    const plan = (await s.use.execute(false)).plan;
-    expect(plan.repositories).toEqual([]);
-    expect(plan.missing).toEqual([]);
-    expect(s.locator.asked).toEqual([]);
+    s.keys.set(CLONE, 0);
+    s.consented.add(CLONE);
+    const result = await s.use.execute(true);
+    expect(s.cleared).toEqual([CLONE]);
+    expect(result.plan.repositories).toEqual([{ clone: CLONE, taskKeys: 0, consent: true }]);
   });
 
   it("lists every missing name in one order: roots remembered before clones were recorded, and gone clones", async () => {

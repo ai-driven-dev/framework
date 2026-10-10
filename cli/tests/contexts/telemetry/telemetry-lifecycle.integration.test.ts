@@ -456,6 +456,23 @@ describe("forgetting", () => {
     expect(git(repo, box.gitEnv, "config", "--local", "--list")).not.toMatch(/aidd/i);
   });
 
+  it("unsets the consent of a clone where `on` ran and no session ever did, and of one that ran off", async () => {
+    await deps.telemetryOnUseCase.execute(repo);
+    const other = box.repository("gadgets");
+    await deps.telemetryOnUseCase.execute(other);
+    await deps.telemetryOffUseCase.execute(other);
+    expect(git(other, box.gitEnv, "config", "--local", "--get", "aidd.telemetry").trim()).toBe(
+      "off"
+    );
+
+    const result = await deps.forgetTelemetryUseCase.execute(true);
+
+    expect(result.plan.repositories.map((r) => r.consent)).toEqual([true, true]);
+    for (const clone of [repo, other]) {
+      expect(git(clone, box.gitEnv, "config", "--local", "--list")).not.toMatch(/aidd/i);
+    }
+  });
+
   it("keeps what is not measurement, in the telemetry directory and beside the identity", async () => {
     await measured();
     writeFileSync(join(box.telemetry, "notes.txt"), "mine");

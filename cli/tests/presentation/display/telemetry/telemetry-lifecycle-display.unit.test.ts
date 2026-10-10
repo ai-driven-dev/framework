@@ -27,10 +27,12 @@ describe("printOnResult", () => {
   it("says measurement is on for this clone, that it is never committed, and the next step", () => {
     const output = on({});
     expect(output.at("success")).toEqual([
-      "Measurement is on for this clone: `git config aidd.telemetry` is 2 in this repository's own config.",
+      "Measurement is on for this clone: `git config aidd.telemetry` is 2 in this clone's own config.",
     ]);
     expect(output.lines).toHaveLength(3);
     expect(output.lines[1]).toContain("never committed");
+    expect(output.lines[1]).toContain("this clone's linked worktrees");
+    expect(output.lines.join("\n")).not.toContain("repository");
     expect(output.lines[1]).toContain(
       "a teammate is measured only after running `aidd telemetry on`"
     );
@@ -103,6 +105,7 @@ describe("printOnResult", () => {
     printOnResult(output, { status: "refused", reason: "unreadable-git-config" });
     expect(output.at("error")[0]).toContain("not inside a git repository");
     expect(output.at("error")[1]).toContain("git config cannot be read");
+    expect(output.at("error")[1]).toContain("This clone's git config");
   });
 });
 

@@ -81,8 +81,8 @@ export class ForgetTelemetryUseCase {
 
   /** The clones something was kept in. Every directory ingest or `on` remembered names its
    * clone, whatever consent it found there: a clone that ran `off` still holds its key. A
-   * directory remembered before clones were recorded is located again, by the repository it was
-   * declared or consented in. A snapshot carries no path of its own. */
+   * directory remembered before clones were recorded is located again, whatever it found. A
+   * snapshot carries no path of its own. */
   private async clonesRemembered(): Promise<{
     clones: string[];
     missing: string[];
@@ -91,18 +91,13 @@ export class ForgetTelemetryUseCase {
     const remembered = [...(await this.resolutions.load()).values()];
     const clones = new Set<string>();
     const idsWithClone = new Set<string>();
-    for (const resolution of remembered) {
-      if (resolution.clone === undefined) continue;
-      clones.add(resolution.clone);
-      idsWithClone.add(resolution.repository_id);
-    }
-    const ids = new Set([...(await this.snapshots.latest()).values()].map((s) => s.repository_id));
-    for (const resolution of remembered) {
-      if (resolution.consented) ids.add(resolution.repository_id);
-    }
     const legacy = new Map<string, Set<string>>();
     for (const resolution of remembered) {
-      if (resolution.clone !== undefined || !ids.has(resolution.repository_id)) continue;
+      if (resolution.clone !== undefined) {
+        clones.add(resolution.clone);
+        idsWithClone.add(resolution.repository_id);
+        continue;
+      }
       const roots = legacy.get(resolution.repository_id) ?? new Set<string>();
       roots.add(resolution.root);
       legacy.set(resolution.repository_id, roots);
@@ -119,6 +114,7 @@ export class ForgetTelemetryUseCase {
       }
       if (!found && !idsWithClone.has(id)) missing.push(...roots);
     }
+    const ids = new Set([...(await this.snapshots.latest()).values()].map((s) => s.repository_id));
     const located = new Set([...idsWithClone, ...legacy.keys()]);
     return {
       clones: [...clones].sort(),

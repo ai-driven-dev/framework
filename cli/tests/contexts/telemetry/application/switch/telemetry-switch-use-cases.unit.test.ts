@@ -94,7 +94,7 @@ function setup(settings: (string | null)[] = []) {
     { texts: async () => settings },
     false
   );
-  const off = new TelemetryOffUseCase(locator, consents, writer);
+  const off = new TelemetryOffUseCase(locator, consents, writer, ledger, resolutions);
   locator.directories.set("/w/repo", repository("/w/repo", "/w/main"));
   return {
     on,
@@ -300,6 +300,53 @@ describe("aidd telemetry on", () => {
   ])("reports retention from %j", async (settings, days, short) => {
     const s = setup(settings as (string | null)[]);
     expect(await s.on.execute("/w/repo")).toMatchObject({ retention: { days, short } });
+  });
+});
+
+describe("aidd telemetry off, remembered for the clone's deleted directories", () => {
+  async function resolvedWhenGone(s: ReturnType<typeof setup>, cwd: string) {
+    const run = await new DirectoryResolver(s.locator, s.consents, s.resolutions, false).open();
+    return run.resolve(cwd);
+  }
+
+  it("keeps refusing what a clone made while off, though it ran on first and was then deleted", async () => {
+    const s = setup();
+    s.locator.directories.set("/w/b2", repository("/w/b2"));
+    await s.on.execute("/w/b2");
+    await s.off.execute("/w/b2");
+    // The working tree and the clone are gone; no ingest ran in between.
+    s.locator.directories.delete("/w/b2");
+    s.consents.clones.delete("/w/b2/.git");
+    await s.on.execute("/w/repo");
+    expect(await resolvedWhenGone(s, "/w/b2")).toEqual({ skipped: "no-consent" });
+  });
+
+  it("withdraws what was remembered of the clone's other directories, and of no other clone", async () => {
+    const s = setup();
+    s.locator.directories.set("/w/b2", repository("/w/b2"));
+    await s.on.execute("/w/b2");
+    const mine = { ...DELETED, consented: true, clone: "/w/b2/.git" };
+    s.resolutions.resolutions.set("/gone/mine", mine);
+    s.resolutions.resolutions.set("/gone/other", { ...mine, clone: "/w/other/.git" });
+    await s.off.execute("/w/b2");
+    expect(s.resolutions.resolutions.get("/gone/mine")?.consented).toBe(false);
+    expect(s.resolutions.resolutions.get("/w/b2")?.consented).toBe(false);
+    expect(s.resolutions.resolutions.get("/gone/other")?.consented).toBe(true);
+  });
+
+  it("writes under the ledger's lock, so no ingest saves what it read before", async () => {
+    const s = setup();
+    s.locator.directories.set("/w/b2", repository("/w/b2"));
+    await s.on.execute("/w/b2");
+    s.events.length = 0;
+    await s.off.execute("/w/b2");
+    expect(s.events).toEqual(["consent", "lock", "unlock"]);
+  });
+
+  it("rewrites nothing when nothing remembered says yes", async () => {
+    const s = setup();
+    await s.off.execute("/w/repo");
+    expect(s.resolutions.saves).toBe(0);
   });
 });
 

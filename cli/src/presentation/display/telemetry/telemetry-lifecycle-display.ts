@@ -14,7 +14,7 @@ import type { CLIOutput } from "../../output.js";
 const REFUSALS = {
   "outside-repository": "This directory is not inside a git repository.",
   "unreadable-git-config":
-    "This repository's git config cannot be read, so its consent was left as it is. Fix it, then run this again.",
+    "This clone's git config cannot be read, so its consent was left as it is. Fix it, then run this again.",
 } as const;
 
 function plural(count: number, noun: string): string {
@@ -28,11 +28,11 @@ export function printOnResult(output: CLIOutput, result: OnResult): void {
   }
   output.success(
     result.consentWritten
-      ? "Measurement is on for this clone: `git config aidd.telemetry` is 2 in this repository's own config."
+      ? "Measurement is on for this clone: `git config aidd.telemetry` is 2 in this clone's own config."
       : "Measurement was already on for this clone."
   );
   output.info(
-    "That setting is shared by this repository's linked worktrees and is never committed: a teammate is measured only after running `aidd telemetry on` in their own clone."
+    "That setting is shared by this clone's linked worktrees and is never committed: a teammate is measured only after running `aidd telemetry on` in their own clone."
   );
   if (result.legacyConfig === "block-removed") {
     output.info(
