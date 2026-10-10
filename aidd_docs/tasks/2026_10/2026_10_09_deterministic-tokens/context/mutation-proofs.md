@@ -144,23 +144,37 @@ typecheck), and the documentation corrections.
 
 ## Fix round 2
 
-Each mutation was applied by script to the file named, the named tests run, and the file restored
-(`git diff` empty for it afterwards). Counts are from `npx vitest run` over the named scope, or
-`node --test` for the hook file.
+Every row below was re-run at the final HEAD of the round: the mutation applied by script to the
+file named, the scope run (`npx vitest run tests/contexts/telemetry tests/presentation` plus
+`tests/contexts/tools` and `tests/contexts/framework/application/plugin` for the Codex row, and
+`node --test scripts/__tests__/aidd-telemetry-hooks.test.js` for the hook row), and the file
+restored (checked equal to the original by the script). Counts are failing tests.
 
 | Rule | Test | Mutation | Result |
 | --- | --- | --- | --- |
-| `on` lifts nothing: a clone's consent never reaches another clone sharing the remote or the root commit | `telemetry-switch-use-cases.unit.test.ts` "keeps refusing a deleted clone of the same remote that never opted in" (b), "keeps refusing a clone of the same remote that ran off, deleted or not" (c), "keeps refusing a deleted copy with no remote that shares the root commit" (e), and "resets the offsets … rewrites no refusal" | `on` marks every remembered resolution of its `repository_id` consented again (the lifting reintroduced) | 4 red, those four (before the fix (b), (c) and (e) were red for the same reason: the lifting) |
-| A deleted directory is judged by its clone's git config read live; the remembered flag only once the clone is gone | `ingest-usage-use-case.unit.test.ts` "a directory that is gone is judged by the clone it belonged to", `telemetry-switch-use-cases.unit.test.ts` "stores a deleted linked worktree of the clone that opted in", "stops storing the deleted worktrees of a clone that runs off" | `fromMemory` always takes the clone as gone (remembered flag only) | 6 red |
-| `forget --yes` clears the consent of a clone only `on` recorded | `forget-telemetry-use-case.unit.test.ts` "clears the consent of a clone `on` remembered, though no session ever ran there", "clears a withdrawn consent too…", "counts a clone once…", "names a clone that is gone…", "lists clones and gone clones in order" | a recorded clone is added only when a snapshot exists | 5 red; the e2e `telemetry-lifecycle.e2e.test.ts` "leaves no consent behind in a clone where `on` ran and no session ever did" covers the built binary (run in `pnpm test`) |
-| A mistyped declaration is blocked with the grammar and the quoting hint, and runs nothing | `aidd-telemetry-hooks.test.js` "a declaration mistyped is blocked with the grammar and the quoting hint, and runs nothing" | `attemptsDeclaration` never consulted (always fall through) | 1 red, that test; the injection test and the "only starts like a declaration" test stay green |
+| `on` lifts nothing: a clone's consent never reaches another clone sharing the remote or the root commit | `telemetry-switch-use-cases.unit.test.ts`: (b) "keeps refusing a deleted clone of the same remote that never opted in", (c) "keeps refusing a clone of the same remote that ran off, deleted or not" and "keeps refusing what a clone made while off, though it ran on first and was then deleted", (e) "keeps refusing a deleted copy with no remote that shares the root commit", and "resets the offsets … rewrites no refusal" | `rememberOwnRoot` also marks every remembered resolution of its `repository_id` consenting (the lifting reintroduced) | 5 red, those five. Before the fix (b), (c) and (e) were red for the same reason |
+| A deleted directory is judged by its clone's git config read live; the remembered flag only once the clone is gone | `ingest-usage-use-case.unit.test.ts` "a directory that is gone is judged by the clone it belonged to"; `telemetry-switch-use-cases.unit.test.ts` "stores a deleted linked worktree of the clone that opted in"; `telemetry-lifecycle.integration.test.ts` "is stored for a directory that is gone, whose refusal was remembered" | `fromMemory` always takes the clone as gone (remembered flag only) | 6 red |
+| `off` withdraws what was remembered of its own clone, so a deleted clone is not judged by a stale yes (my reading of "the remembered consent is used only when the clone is gone": the memory has to be right for that case) | `telemetry-switch-use-cases.unit.test.ts` "keeps refusing what a clone made while off, though it ran on first and was then deleted", "withdraws what was remembered of the clone's other directories, and of no other clone", "writes under the ledger's lock …" | the `forgetConsentOfClone` call removed from `off` | 3 red |
+| `off` lowers the clone's own entries only | same file, "withdraws what was remembered of the clone's other directories, and of no other clone" | the clone check removed in `forgetConsentOfClone` | 1 red |
+| `on` remembers its own root, so `forget` finds the clone though no session ever ran there | `telemetry-switch-use-cases.unit.test.ts` "remembers its own root, seen alive, so forget can find the clone later"; `telemetry-lifecycle.integration.test.ts` "unsets the consent of a clone where `on` ran and no session ever did, and of one that ran off" (the in-process twin of the e2e "leaves no consent behind in a clone where `on` ran and no session ever did") | `rememberOwnRoot` records nothing | 5 red, the integration twin among them. The e2e on the built binary was not run against this mutation |
+| `forget --yes` clears the consent of every clone recorded, those `on` recorded included | `forget-telemetry-use-case.unit.test.ts` "clears the consent of a clone `on` remembered, though no session ever ran there" and the rest of the clone-keyed suite | forget skips the clones recorded as consenting | 12 red (the whole clone-keyed suite builds its clones that way) |
+| `forget` locates a directory remembered before clones were recorded whatever consent it found | `forget-telemetry-use-case.unit.test.ts` "finds the clone of a directory remembered as refusing before clones were recorded, whose key says off" | a legacy entry is skipped unless it consented | 1 red |
+| A mistyped declaration is blocked with the grammar and the quoting hint, and runs nothing | `aidd-telemetry-hooks.test.js` "a declaration mistyped is blocked with the grammar and the quoting hint, and runs nothing" | `attemptsDeclaration` never consulted (always fall through) | 1 red, that test; the injection test and "only starts like a declaration" stay green |
 | Ingest rewrites a month that holds a line that is not a record | `ingest-usage-use-case.unit.test.ts` "also rewrites a month that holds a line that is not a record…", "repairs a damaged month even when every call it read was already held" | `damagedMonths` left out of the months saved | 2 red |
 | The branch config is read inside the bindings lock | `snapshot-bindings-use-case.unit.test.ts` "reads the branch config, the latest snapshots and appends … inside the bindings lock" | the config read once, before the lock, and passed in | 1 red |
 | Each lock names itself in its timeout message | `bindings-lock-adapter.integration.test.ts` "names itself, and its own file, when it times out" | the bindings adapter stops passing its name | 1 red |
 | The `total` axis shows its row once | `telemetry-report-display.unit.test.ts` "shows the whole once on the total axis, and a Total row under every other axis" | the `Total` row always added | 1 red |
 | The Codex trust notice no longer speaks of a run journal | `codex.unit.test.ts`, `plugin-add-mcp.unit.test.ts` | the old sentence restored | 3 red |
 | An unreadable consent is worded as the clone's git config | `telemetry-display.unit.test.ts` "words an unreadable consent as the clone's git config…" | the old `.aidd/config.json` wording restored | 1 red |
+| `on` and `off` speak of the clone | `telemetry-lifecycle-display.unit.test.ts` "says measurement is on for this clone, …" | "this repository's linked worktrees" restored | 1 red |
+| (re-run) a reused branch name keeps the declaration in force at the call | `attribution.unit.test.ts` "a branch name used again" | `generationAt` returns `generation.at(-1)` | 5 red (the figure the review observed; the 3 recorded before was wrong) |
 
 Not mutated: the help wording (`aidd telemetry on`, `off`, `ingest`) is pinned by the help golden
-(`help-surface.e2e.test.ts`), which was red against the old source until the golden changed;
-`target.md`, `codebase-map.md`, `usage-contract.md` and the comment rewording are documentation.
+(`help-surface.e2e.test.ts`); `target.md`, `codebase-map.md`, `telemetry.md`, `usage-contract.md`
+and the comment rewording are documentation.
+
+Not seen red before the fix, proved by mutation afterwards: the forget tests, the snapshot-in-lock
+test, the unreadable-consent wording test and the Codex notice (the test and the wording were
+changed together). Seen red first: the `on`/`off` wording test, the resolver and `on` tests ((b),
+(c), (e), the worktree), the `off` tests, the legacy forget test, the hook test, the torn-line
+tests, the lock-name test and the duplicate-row test.
