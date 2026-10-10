@@ -91,6 +91,18 @@ describe("printing a usage report", () => {
     ]);
   });
 
+  it("shows the whole once on the total axis, and a Total row under every other axis", () => {
+    const whole = tally(1, [4, 40, 4000, 400]);
+    const onTotal = printed(result("total", [[value("total"), whole]], whole));
+    expect(onTotal.filter((line) => /^total\s/iu.test(line))).toHaveLength(1);
+    expect(onTotal.slice(2, 4)).toHaveLength(2);
+    expect(onTotal[4]).toBe("");
+    for (const axis of REPORT_AXES.filter((a) => a !== "total")) {
+      const lines = printed(result(axis, [[value("x"), whole]], whole));
+      expect(lines.filter((line) => line.startsWith("Total"))).toHaveLength(1);
+    }
+  });
+
   it("groups thousands and leaves small numbers alone", () => {
     const big = tally(1, [999, 1000, 1234567, 12]);
     const lines = printed(result("total", [[value("total"), big]], big));

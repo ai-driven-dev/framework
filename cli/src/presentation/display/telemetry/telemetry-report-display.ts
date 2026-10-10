@@ -79,7 +79,8 @@ function table(axis: ReportAxis, rows: readonly ReportRow[], totals: Tally): str
   const body = [
     [titleOf(axis), ...COLUMNS],
     ...rows.map((row) => [labelOf(axis, row.value), ...cellsOf(row)]),
-    ["Total", ...cellsOf(totals)],
+    // The total axis is one row that already is the total.
+    ...(axis === "total" ? [] : [["Total", ...cellsOf(totals)]]),
   ];
   const widths =
     body[0]?.map((_, column) => Math.max(...body.map((line) => (line[column] ?? "").length))) ?? [];
