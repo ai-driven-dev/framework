@@ -1,0 +1,770 @@
+$ node scripts/test-changed.mjs
+
+$ node --test scripts/__tests__/a-skill-links-only-inside-itself.test.js
+▶ a skill links only inside itself
+  ✔ has no markdown link reaching out of the skill that ships it (28.508185ms)
+  ✔ sees an escaping link when one is put in front of it (16.58684ms)
+✔ a skill links only inside itself (46.716591ms)
+ℹ tests 2
+ℹ suites 1
+ℹ pass 2
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 140.802593
+
+$ node --test scripts/__tests__/aidd-telemetry-journal.test.js
+Preparing worktree (new branch 'feature')
+Preparing worktree (new branch 'feature')
+journal file-written-reject latency: p95=0.068ms mean=0.042ms max=1.524ms
+journal file-written-accept latency: p95=8.450ms mean=7.184ms max=9.793ms
+journal turn-end latency: p95=16.005ms mean=13.915ms max=16.902ms (100 invocations, 300 run files already on disk)
+✔ detectHost recognises the Claude Code fixture (5.663047ms)
+✔ detectHost names each recognised host distinctly, not just null-vs-Claude-Code, since a supported-but-unwritten tool and a detection bug must stay distinguishable (0.612714ms)
+✔ detectHost recognises Copilot's compat shape - session_id and hook_event_name spelled Claude Code's way, told apart by timestamp - on every event that shape sends (0.516584ms)
+✔ detectHost recognises the two compat shapes captured last, so all five of Copilot's events are pinned rather than three (0.349652ms)
+✔ a compat skill call names the tool in lowercase, unlike the PascalCase every built-in tool gets (1.295117ms)
+✔ detectHost recognises both of Copilot's shapes as the same host, not one at the other's expense (0.29452ms)
+✔ detectHost yields no host for an empty payload (0.173184ms)
+✔ detectHost yields no host when transcript_path matches neither shape (0.246018ms)
+✔ detectHost's compat rule does not claim Codex or Claude Code payloads - neither ever carries timestamp, only Copilot's compat shape does (3.725441ms)
+✔ detectHost does not misattribute Codex to Claude Code when a path matches both shapes (narrower rule wins) (0.476799ms)
+✔ detectHost recognises a Claude Code transcript_path using backslash separators (0.196056ms)
+✔ detectHost recognises a Codex transcript_path using backslash separators (0.13952ms)
+✔ detectHost applies the Codex-before-Claude-Code ordering rule to a backslash path too (0.772683ms)
+✔ replaying the Claude Code fixture exits 0 and prints nothing (74.587769ms)
+✔ replaying the codex-session-start.json fixture exits 0 and prints nothing (74.366696ms)
+✔ replaying the copilot-session-start.json fixture exits 0 and prints nothing (80.578146ms)
+✔ replaying the cursor-session-start.json fixture exits 0 and prints nothing (71.486211ms)
+✔ replaying the copilot-compat-session-start.json fixture exits 0 and prints nothing (65.553381ms)
+✔ replaying the copilot-compat-post-tool-use.json fixture exits 0 and prints nothing (70.466809ms)
+✔ replaying the copilot-compat-turn-end.json fixture exits 0 and prints nothing (79.885014ms)
+✔ replaying the claude-code-post-tool-use-write.json fixture exits 0 and prints nothing (74.922523ms)
+✔ replaying the claude-code-post-tool-use-edit.json fixture exits 0 and prints nothing (63.697667ms)
+✔ replaying the claude-code-post-tool-use-notebook-edit.json fixture exits 0 and prints nothing (73.474131ms)
+✔ replaying the claude-code-post-tool-use-bash.json fixture exits 0 and prints nothing (64.837856ms)
+✔ replaying an empty payload exits 0 (70.642477ms)
+✔ replaying a truncated payload exits 0 (54.690861ms)
+✔ replaying a payload whose transcript_path matches neither shape exits 0 (75.227002ms)
+✔ replaying with no stdin at all exits 0 (61.786562ms)
+✔ resolveEventName trusts a recognised argv word outright, even against a disagreeing hook_event_name (0.606433ms)
+✔ resolveEventName falls back to hook_event_name, mapped per its own spelling, only when argv is absent or unrecognised (0.283209ms)
+✔ resolveEventName yields null when neither argv nor hook_event_name resolves to anything known (0.27291ms)
+✔ replaying claude-code-session-start.json with hook_event_name stripped from the payload still exits 0 - argv alone drives dispatch (63.197824ms)
+✔ replaying codex-session-start.json with hook_event_name stripped from the payload still exits 0 - argv alone drives dispatch (78.424768ms)
+✔ replaying copilot-session-start.json with hook_event_name stripped from the payload still exits 0 - argv alone drives dispatch (83.532239ms)
+✔ replaying cursor-session-start.json with hook_event_name stripped from the payload still exits 0 - argv alone drives dispatch (62.093385ms)
+✔ replaying claude-code-post-tool-use-write.json with hook_event_name stripped from the payload still exits 0 - argv alone drives dispatch (64.528759ms)
+✔ replaying claude-code-post-tool-use-edit.json with hook_event_name stripped from the payload still exits 0 - argv alone drives dispatch (69.327514ms)
+✔ replaying claude-code-post-tool-use-notebook-edit.json with hook_event_name stripped from the payload still exits 0 - argv alone drives dispatch (68.321165ms)
+✔ replaying claude-code-post-tool-use-bash.json with hook_event_name stripped from the payload still exits 0 - argv alone drives dispatch (64.276497ms)
+✔ Codex's own SessionEnd payload closes the turn, since Codex never sends a Stop (190.593693ms)
+✔ Codex's SessionEnd resolves to the same session its SessionStart did (1.547737ms)
+✔ a session-start replay with hook_event_name stripped still mints a record - argv alone drives dispatch (119.249125ms)
+✔ a turn-end replay with hook_event_name stripped still appends a turn_end line - argv alone drives dispatch (1318.534448ms)
+✔ a file-written replay with hook_event_name stripped still appends a file_written line - argv alone drives dispatch (210.412052ms)
+✔ the Cursor fixture's user_email is the redaction placeholder (0.347018ms)
+✔ the Cursor post-tool-use fixture's user_email is the redaction placeholder too - the field the earlier check never reached (0.217586ms)
+✔ parseOwnerRepoFromRemote reads owner/repo out of an SSH remote (0.399194ms)
+✔ parseOwnerRepoFromRemote reads owner/repo out of an HTTPS remote (0.271747ms)
+✔ parseOwnerRepoFromRemote handles a remote with no .git suffix (0.136725ms)
+✔ parseOwnerRepoFromRemote collapses a subgroup path to its last two segments (0.122468ms)
+✔ parseOwnerRepoFromRemote yields null for a remote it cannot parse (0.125966ms)
+✔ sanitizeProjectId keeps a clean owner/repo untouched (0.400227ms)
+✔ sanitizeProjectId neutralises unsafe characters per segment (0.162383ms)
+✔ generateUlid produces a 26-character Crockford base32 string (0.841651ms)
+✔ generateUlid mints a different id on each call (0.294279ms)
+✔ runsDir defaults to <repoRoot>/aidd_docs/runs when AIDD_RUNS_DIR is unset (0.389387ms)
+✔ AIDD_RUNS_DIR overrides the in-repo default outright (0.19839ms)
+✔ getRepoRoot resolves a worktree to itself, never to the repository it shares (72.311591ms)
+✔ resolveRunsDir writes a worktree's journal under the worktree, not the main checkout (74.314709ms)
+✔ a session writes nothing and exits 0 when .aidd/config.json is absent, even with aidd_docs/runs/ present (93.601718ms)
+✔ aidd_docs/runs/ is no longer a permission: a switched-on session creates it on demand when it does not exist yet (111.72209ms)
+✔ an unparseable .aidd/config.json means off, and the hook exits 0 (115.300198ms)
+✔ a config.json that cannot be read at all (a directory in its place) means off, and the hook exits 0 (116.050207ms)
+✔ telemetry.enabled: false means off - nothing written (111.579464ms)
+✔ AIDD off but the provider exporting: the journal still writes nothing - the case the switch exists for (99.833767ms)
+✔ turning telemetry off mid-session stops the very next write, with no restart - the switch is read at the point of use, never cached (1305.997014ms)
+✔ telemetryEnabled requires enabled strictly === true, not merely truthy (3.434229ms)
+✔ telemetryEnabled is off for a repo root with no .aidd/config.json at all (1.072842ms)
+✔ AIDD_TELEMETRY=0 refuses unconditionally, even when the project's own switch is on (1.4735ms)
+✔ AIDD_TELEMETRY unset, empty, or any other value is not a choice — never a refusal (1.288624ms)
+✔ a session writes exactly one file directly under aidd_docs/runs/ when opted in, its session_start line carrying exactly the documented keys (133.527088ms)
+✔ a person's AIDD_TELEMETRY=0 refuses recording end to end, in a repo whose tracked switch turns it on, writing no file and leaving the tree clean (109.708413ms)
+✔ removing the refusal records again, in the same repo whose switch never changed (169.026038ms)
+✔ SessionStart creates the run directory 0700 and the record file 0600 on POSIX (106.939446ms)
+✔ the whitelist: an eleventh key on either line type would fail this assertion (191.586835ms)
+✔ turn_end carries prompt_id when the Stop payload provides one (190.659516ms)
+✔ turn_end omits prompt_id, rather than writing null, when the payload carries none - the case every host observed today falls into (228.983206ms)
+✔ no written line contains ended_at, tasks, parent_run_id or task_id - the fields the event log leaves out (282.245152ms)
+✔ no written value is a token count, a cost, a model name, or a duration (195.840562ms)
+✔ ten turns in one session produce one file, not ten, and its lines record real time passing (1999.256806ms)
+✔ a second SessionStart for the same session does not mint a second file, or a second session_start line (171.1229ms)
+✔ a session exits 0 and writes nothing when git is unavailable (97.615368ms)
+✔ a session exits 0 when the run directory cannot be created (119.459128ms)
+✔ a SessionStart with no session_id exits 0 and writes nothing, rather than a nine-key record (146.188654ms)
+✔ a Stop with no session_id exits 0 and writes nothing (211.132356ms)
+✔ a Stop exits 0 and writes nothing when no file was ever minted for the session (115.794058ms)
+✔ a Stop still appends its line even when the run file's existing content is not valid JSON - turn-end never parses the file it appends to (204.357725ms)
+✔ a session that never produces a git commit still yields a complete session_start line (202.903272ms)
+✔ vendor_field names the export-side attribute, and vendor_id is the same session.id value a live export would carry (113.112825ms)
+✔ two repositories with different remotes each write into their own aidd_docs/runs/, keyed on the repository root rather than project_id (256.90742ms)
+✔ a repository with no remote still produces one record, project_id keyed on its basename and project_remote null - the path itself no longer depends on either (103.289535ms)
+✔ findRunFileByVendorId locates the file by filename alone, ignoring file contents entirely (1.614212ms)
+✔ findRunFileByVendorId does not mistake a vendor_id containing the filename separator for a different session's file (0.887827ms)
+✔ findRunFileByVendorId ignores leftover pre-event-log .json files (both the bare <run_id>.json and the old <run_id>__<vendor_id>.json shapes), matching only .jsonl (1.553278ms)
+✔ a Stop shells out to git no more times with several hundred run files on disk than with one (110.290198ms)
+✔ file-written shells out to git zero times for a tool it does not track - the common case, since this fires on every tool call (57.35323ms)
+✔ an unrecognised payload shells out to git zero times on tool-used, unlike session-start or turn-end - tool-used fires on every tool call and has no cheap pre-filter of its own (37.266779ms)
+✔ turn-end's and file-written's in-process work stay under 200ms at p95 over 100 invocations each, against a directory holding several hundred run files (2288.554337ms)
+✔ looksLikeTaskPath is true for either task shape, false otherwise (0.553583ms)
+✔ looksLikeTaskPath recognises a Windows-shaped backslash path (0.590231ms)
+✔ taskFolderRelativePath returns the path relative to repoRoot when it resolves inside repoRoot's task folder (0.575654ms)
+✔ taskFolderRelativePath returns null when the path is outside repoRoot entirely (0.612082ms)
+✔ taskFolderRelativePath returns null for a sibling directory that merely shares repoRoot as a string prefix (0.656185ms)
+✔ taskFolderRelativePath returns null when the path is inside the repo but names no task (0.604489ms)
+✔ taskFolderRelativePath reads a task written as a single .md file (0.309146ms)
+✔ taskFolderRelativePath recognises a Windows-shaped backslash path, and returns a '/'-separated result (0.28944ms)
+✔ taskFolderRelativePath returns null for non-string or empty input (0.194133ms)
+✔ a session with no file-written at all produces only the session_start line, never a file_written line (110.739407ms)
+✔ a session whose only write lands outside any task folder appends no file_written line (184.19916ms)
+✔ a session appends a file_written line naming the path its first write lands in (179.270925ms)
+✔ a second write into the same task folder appends a second file_written line, not a merged interval (1382.281288ms)
+✔ a session whose writes move from task A to task B produces two file_written lines, one path each, in order (1372.343974ms)
+✔ turn-end never appends a file_written line - a write and a turn are always separate observations (282.831204ms)
+✔ file-written's accept path appends a line with its own fresh `at` - the de-facto turn signal on a host with no turn-end event (1325.767916ms)
+✔ file-written's reject path appends nothing at all - only the accept path is already paying for a write (1288.302948ms)
+✔ a NotebookEdit into a task folder appends a file_written line, reading tool_input.notebook_path rather than file_path (209.109031ms)
+✔ an Edit into a task folder appends a file_written line, same as Write (178.886858ms)
+✔ a Bash call into what looks like a task path (via tool_input.command, not a write-target field) never appends a line (192.222322ms)
+✔ a Bash call whose tool_input happens to carry a file_path key still never appends a line - the gate reads tool_name, not field presence (190.366358ms)
+✔ replaying the recorded Bash PostToolUse fixture against a real opted-in repo never appends a line, only the whitelisted tools do (176.183624ms)
+✔ every file_written line carries exactly type, at, path, source - no fifth key (268.225252ms)
+✔ appending a later line never rewrites the bytes already on disk - each prior byte is byte-identical after every subsequent append (296.302042ms)
+✔ a truncated final line leaves every earlier line readable (278.147135ms)
+✔ no source file in hooks/lib/ reads a run file's contents back - record.cjs and file-writes.cjs never read a file at all (0.505663ms)
+✔ two concurrent sessions in the same checkout each record only their own writes, never the other's (258.539587ms)
+✔ the repository's own .gitignore excludes .aidd/ state but tracks .aidd/config.json, the committed telemetry switch (0.737756ms)
+✔ the repository's own .gitignore carries the documented three-line aidd_docs/runs/ block (0.535058ms)
+✔ in a real temporary git repo: the marker files are tracked, a record file is not, and `git add -A` sweeps nothing in (156.091592ms)
+✔ a repository whose .gitignore excludes .aidd/* (config.json excepted) and aidd_docs/runs/* stays clean after a session writes into an already-tracked task file (292.440357ms)
+✔ a credential in the remote never reaches the journal (110.402748ms)
+✔ remoteWithoutCredentials strips userinfo from a scheme URL and leaves scp-style whole (0.579891ms)
+✔ a leaked GIT_DIR never redirects a session into another repository (137.507676ms)
+✔ a Codex session-start writes a session_start line naming codex, vendor_field conversation.id - measured on codex.sse_event (115.208957ms)
+✔ a Codex turn-end (Stop) appends a turn_end line to the same file - one host table, no dispatcher change (1303.23429ms)
+✔ a Cursor session-start payload carrying no cwd still produces a run file - readCwd resolves workspace_roots (task 4), closing the gap phase 1 first shipped with (129.673026ms)
+✔ a Cursor workspace whose first root is not a git repository resolves to the root that is, not index zero (135.651431ms)
+✔ readCwd: every host but Cursor reads payload.cwd directly; Cursor reads the first workspace_roots entry that is a git repository (64.298711ms)
+✔ Cursor's per-host declaration is correct on its own terms: readSessionId reads session_id, and vendor_field is null because the export itself is unmeasured, not because Cursor went undetected (0.479554ms)
+✔ Copilot's readSessionId reads whichever shape the payload carries: sessionId for the canonical builder, session_id for _vsCodeCompat (0.293979ms)
+✔ Cursor's real headless end-of-session shape (sessionEnd, captured under out-cursor-skill) resolves to no canonical event at all - stated as a fact about resolveEventName directly (0.218158ms)
+✔ a Copilot canonical session-start writes nothing when no event resolves - that shape never carries hook_event_name, so with no argv there is nothing to fall back to (95.523233ms)
+✔ a Copilot session-start, given a resolvable event, writes a session_start line carrying sessionId as vendor_id - proves the camelCase reader on its own, independent of the argv gap (115.55883ms)
+✔ a Copilot session-start with an empty sessionId writes nothing, even given a resolvable event - the guard reads behind Copilot's own spelling too (103.584326ms)
+✔ a Copilot compat session-start writes a session_start line carrying session_id as vendor_id - the other reader required, independent of the canonical sessionId spelling (110.241127ms)
+✔ a Copilot compat turn-end appends a turn_end line to the file its own session-start opened - one host table, both its shapes (190.338707ms)
+✔ a Copilot compat session-start writes a run file; an unrecognised payload of the same event writes the unrecognised marker instead, never a run file of its own (196.045046ms)
+✔ an unrecognised payload leaves a trace that no payload at all does not - the two stop being the same observable state (186.598108ms)
+✔ a payload matching no declared host's shape writes no run file, only the unrecognised marker, and exits 0, in a real switched-on repo (108.834261ms)
+✔ a second unrecognised payload in the same repo writes no second line - the marker is bounded to one, not one per tool call (250.725828ms)
+✔ an unrecognised payload refreshes the marker's `at` rather than freezing on the first occurrence - a diagnosis that never moved forward would be stale-forever, one file over (111.067369ms)
+✔ an unrecognised payload naming no directory of any kind - no cwd, no workspace_roots, nothing - still leaves the marker, falling back to the hook process's own cwd (105.288425ms)
+✔ replaying codex-post-tool-use.json and cursor-post-tool-use.json exits 0 and writes only what was already there - captured ahead of the phase 2 extractors that will read them (145.533101ms)
+✔ every fixture in the directory is free of a real email address, a real home path, or a token - not just the four checked before phase 1 (2.374701ms)
+✔ a skill declaring its own end leaves a step_end naming it (212.073994ms)
+✔ a step end never costs the turn a write it should have observed (291.164945ms)
+✔ a skill opened on claude-code leaves a step_start naming it, from a payload that host actually sent (181.415546ms)
+✔ a skill opened on copilot leaves a step_start naming it, from a payload that host actually sent (185.799618ms)
+✔ a skill opened on codex leaves a step_start naming it, from a payload that host actually sent (216.035256ms)
+✔ a skill opened on cursor leaves a step_start naming it, from a payload that host actually sent (213.002306ms)
+✔ a skill opened on Copilot's compat payload shape leaves a step_start naming it - the second of Copilot's two shapes, captured separately from the canonical one (188.126679ms)
+✔ a Bash call on Copilot's compat shape opens no step - only a skill call does, on either of Copilot's two shapes (194.833454ms)
+✔ two skills interleaved leave three ordered lines and two distinct names - the sticky attribution this whole ticket exists to replace (328.269581ms)
+✔ where the host delivers a turn identifier the step carries it, so the join to cost is exact rather than ordinal (180.998519ms)
+✔ a host that carries no turn identifier omits the key rather than writing it null (200.881359ms)
+✔ a step line carries no end, no duration and no parent - none of the three is anything a tool said (0.583258ms)
+✔ a skill name carrying separators or traversal cannot escape its own field (0.183181ms)
+✔ an ordinary tool call opens no step (198.311012ms)
+✔ a skill call opens a step even though it has no task-folder path - the two readings of the event share nothing but the event (194.817214ms)
+✔ a file whose name ends in SKILL.md but sits outside a skills tree opens nothing (0.778773ms)
+✔ reading a SKILL.md on an argument-family host opens no step - the table names one family, it is not a fallback chain (182.053676ms)
+✔ a skill argument still opens its step when the same payload also carries an unrelated SKILL.md path (192.348236ms)
+✔ a step for a session that was never journaled writes nothing and exits 0 (109.144771ms)
+✔ a step still open at session end reads differently from one closed by a turn boundary (357.396122ms)
+✔ adding a fifth host is a table entry, not an edit to the handler (0.465949ms)
+✔ every argv word hooks.json ships is one journal.cjs recognises (1.059196ms)
+✔ a file written through a shell command still reaches its task, observed at turn end (272.569507ms)
+✔ a path the host stated is recorded as stated, and never twice (274.010827ms)
+✔ a turn that wrote nothing into a task folder records nothing (195.847998ms)
+✔ TASK_PATH_PATTERN matches a folder task and a single-file task, and stops at a quote or space (0.304037ms)
+✔ reading a task file on claude-code leaves a task_declared line naming its path - the tool's own arguments, never a field the host has to cooperate on (214.470085ms)
+✔ reading a task file on cursor leaves a task_declared line naming its path - the tool's own arguments, never a field the host has to cooperate on (207.937266ms)
+✔ reading a task file on codex leaves a task_declared line naming its path - the tool's own arguments, never a field the host has to cooperate on (174.269883ms)
+✔ reading a task file on copilot leaves a task_declared line naming its path - the tool's own arguments, never a field the host has to cooperate on (196.215614ms)
+✔ a Skill call that names no task path declares nothing - opening a step is not declaring a task (175.650479ms)
+✔ an ordinary write outside any task folder declares nothing (188.339335ms)
+✔ reading two different task files across two calls leaves two lines - the writer never dedupes, a reader collapsing them is its own job (271.085938ms)
+✔ a declaration for a session that was never journaled writes nothing and exits 0 (101.500217ms)
+✔ a task_declared line carries a path and nothing else task-shaped - no end, no source, no task_id (0.675339ms)
+✔ declaredTaskPath reads tool_input first and Copilot's toolArgs string only when tool_input is absent (0.414733ms)
+✔ a session in a linked worktree names the worktree it ran in and the repository those worktrees share (79.56687ms)
+✔ two sessions from two worktrees of one repository are distinguishable in the journal, and still say they belong together (134.399326ms)
+✔ a session in a plain checkout carries no worktree field at all - not null, not an empty string, absent (49.636481ms)
+✔ naming the worktree costs a plain checkout no extra git call - the two words are read off the rev-parse it already paid for (90.766307ms)
+✔ a plain checkout that happens to live in a directory named 'worktrees' is still a plain checkout (26.742251ms)
+✔ an OpenCode session journals through the same hook, from the payload its own plugin builds (126.96339ms)
+✔ an OpenCode turn_end appends to the file its session_start opened, never a second one (183.826605ms)
+✔ an OpenCode tool call opens no step, because that host names no skill (182.53712ms)
+ℹ tests 197
+ℹ suites 0
+ℹ pass 197
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 32731.927799
+
+$ node --test scripts/__tests__/aidd-telemetry-trailer-repair.test.js
+✔ a hook another tool regenerated calls the delegate again after the next session (105.931466ms)
+✔ a hook that never existed is created with the call site (96.396644ms)
+✔ nothing is written when no delegate is installed (94.591245ms)
+✔ a hook that already calls the delegate is left byte for byte alone (98.809064ms)
+✔ tool-used never repairs, whatever is missing (79.719444ms)
+✔ nothing is written when measurement is off for the project (93.568135ms)
+✔ an unwritable hook file is left alone, and costs the session nothing (104.608476ms)
+✔ a repair does not narrow a hook's group permissions (92.940475ms)
+✔ a repair replaces the hook rather than truncating it, so no reader sees it half-written (109.33739ms)
+✔ a hooks directory that is a symlink into the working tree is never written to (112.148336ms)
+✔ a repair keeps the hook's own permissions rather than widening them (91.771513ms)
+✔ a read-only hooks directory holding a writable hook is still repaired (93.15252ms)
+✔ a session started in a subdirectory repairs its own repository, and nothing above it (106.17519ms)
+✔ a hooks directory inside the working tree is never written to (116.374812ms)
+✔ a prepare-commit-msg that is a symlink is left alone, target and all (99.099286ms)
+✔ a git that rejects --git-path still journals the session (122.304637ms)
+✔ nothing is written where lefthook owns the hook (106.337553ms)
+✔ nothing is written where husky owns the hook (105.304055ms)
+✔ the manager markers are the ones the CLI decides by (4.315272ms)
+ℹ tests 19
+ℹ suites 0
+ℹ pass 19
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1958.987178
+
+$ node --test scripts/__tests__/architecture-doc-matches-the-tree.test.js
+✔ the bundled hooks table names every plugin that declares hooks, and no other (6.057322ms)
+✔ the bundled hooks table names the events each plugin actually declares (0.925457ms)
+✔ the bundled hooks table names a script that exists (1.333268ms)
+✔ the plugin concerns table has one row per plugin in the tree (1.365557ms)
+✔ the 00-onboard exemption still protects something (3.959858ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 5
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 117.108391
+
+$ node --test scripts/__tests__/architecture-rules.test.js
+✔ a clean skill with no sibling address and a fully-named action yields no violations (9.756135ms)
+✔ a skill addressing a sibling plugin yields a violation naming file, line and owning plugin (0.961745ms)
+✔ an agent's Skills you may invoke list addressing siblings yields no violations (0.851889ms)
+✔ an orchestrator plugin is exempt from orthogonality alone (0.535819ms)
+✔ router coherence still applies to an orchestrator plugin (0.708462ms)
+✔ a file under assets/ yields no violations regardless of content (0.315358ms)
+✔ an action file nested a level deeper than usual is still governed (0.399004ms)
+✔ a SKILL.md nested a level deeper than usual is still governed (0.358839ms)
+✔ a reference file nested two levels under references/ is still governed (0.479716ms)
+✔ a SKILL.md nested under assets/ is ungoverned for that reason alone (0.505203ms)
+✔ an action file the Actions section never names yields one violation (0.725715ms)
+✔ 00-onboard's own reference menus are exempt from orthogonality (0.43396ms)
+✔ a bare plugin:skill address is caught, but not one embedded in a longer identifier (2.455793ms)
+✔ a stem that is a substring of a sibling action's stem is not mistaken for a mention (0.645363ms)
+✔ a deleted table row is still caught when unrelated prose loosely contains its word (0.911741ms)
+✔ a skill whose Actions section and action files agree yields no violations (0.414954ms)
+✔ sweeping the repository's own plugins/ tree yields zero violations (35.791076ms)
+✔ a table that declares no action column cites nothing, whatever its cells read (0.352768ms)
+✔ a name in a column other than the action column does not cite that action (0.18805ms)
+✔ a skill holding action files with no Actions section at all is refused (0.188391ms)
+✔ a glossary table before the router does not blind the router's own column (0.200303ms)
+✔ a blank line splitting the router table does not unname the rows below it (0.202919ms)
+✔ a two-dash separator row still marks the header it follows (0.187751ms)
+✔ a plural Actions header declares the action column too (0.205222ms)
+✔ two action files sharing a stem are not both covered by one citation (0.242672ms)
+✔ a fenced example table inside the Actions section cites nothing (0.245228ms)
+✔ a fenced actions/<name>.md path still cites, the way 10-todo does (0.172913ms)
+✔ a fenced ## heading inside the Actions section does not end it early (0.252201ms)
+✔ a backticked file name inside a fenced example does not cite (0.291334ms)
+✔ a fence nobody closed is not read as a fence at all (0.209431ms)
+ℹ tests 30
+ℹ suites 0
+ℹ pass 30
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 201.240449
+
+$ node --test scripts/__tests__/check-claude-accepts-build.test.js
+▶ the verdict is read from the host's text, never its exit code
+  ✔ reads a refusal (1.218985ms)
+  ✔ reads an acceptance, warnings included (0.290392ms)
+  ✔ says unknown when the host said neither (0.235689ms)
+✔ the verdict is read from the host's text, never its exit code (3.696458ms)
+▶ the exit code follows the verdict
+  ✔ exits 0 when the host accepts the build (123.119819ms)
+  ✔ exits 1 when the host refuses it (96.353443ms)
+  ✔ exits 2 when the host says neither, and says so (92.119653ms)
+  ✔ exits 2 when the CLI is not built, without asking the host (1.402287ms)
+✔ the exit code follows the verdict (314.197064ms)
+ℹ tests 7
+ℹ suites 2
+ℹ pass 7
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 437.227776
+
+$ node --test scripts/__tests__/check-context-imports.test.js
+✅ context imports load: none sit inside an HTML block
+✔ an import inside a bare tag block never loads (1.891519ms)
+✔ a blank line after the opening marker takes the imports out of the block (0.933191ms)
+✔ an import glued to a comment marker is still hidden (0.232513ms)
+✔ the broken shape quoted in documentation is not a finding (0.201325ms)
+✔ an import on a bare line loads (0.226653ms)
+✔ a longer fence is not closed by a shorter one inside it (1.474492ms)
+✔ an explicit path that cannot be read fails instead of passing (0.657787ms)
+✔ a directory given as an explicit path fails instead of crashing (0.268111ms)
+✔ the repository's own context files load their imports (1.475863ms)
+ℹ tests 9
+ℹ suites 0
+ℹ pass 9
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 111.642663
+
+$ node --test scripts/__tests__/check-context-reference-form.test.js
+✔ the declared form of each context file is read from the hook itself (2.913697ms)
+✔ a hook whose table cannot be read is an error, never an empty pass (0.742505ms)
+✔ a block written in the form its file declares raises nothing (0.643401ms)
+✔ an @ import where a markdown link is declared is reported with its line (0.434ms)
+✔ a markdown link where an @ import is declared is reported too (0.426035ms)
+✔ every reference in the block is checked, not only the first (0.236091ms)
+✔ a context file with no memory block is not a problem (0.226833ms)
+✔ prose and html comments inside the block are not references (0.258642ms)
+✔ an unclosed block is left to the hook to report (0.327902ms)
+✔ a file the hook declares but the repository does not have is skipped (0.590532ms)
+✔ each problem names the file it was found in (0.420274ms)
+ℹ tests 11
+ℹ suites 0
+ℹ pass 11
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 122.827562
+
+$ node --test scripts/__tests__/check-markdown-links.test.js
+✔ formatIssue includes correction details (1.824405ms)
+✔ reportProblems writes a markdown source issue table (1.475022ms)
+✔ reportProblems writes a success summary when there are no problems (1.646992ms)
+✔ --help documents supported links, exclusions, fixes, and examples (71.070175ms)
+✔ CLI checks one markdown file covering supported, ignored, and broken forms (62.887607ms)
+✔ CLI without paths scans the repository and prints a summary (250.996524ms)
+✔ CLI fails when an explicit input path does not exist (45.542802ms)
+✔ repository scan ignores interrupted test temp directories (267.749244ms)
+✔ repository scan ignores a mutation sandbox and an e2e build, which copy the tree (259.523924ms)
+✔ problemForTarget reports a fragment no heading in the target file answers (7.174708ms)
+✔ formatIssue explains a dead fragment (0.600039ms)
+ℹ tests 11
+ℹ suites 0
+ℹ pass 11
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1080.408454
+
+$ node --test scripts/__tests__/check-referenced-paths.test.js
+✔ referencedPaths reads a backticked path anchored on a real top-level entry (2.885213ms)
+✔ referencedPaths ignores what only looks like a path (0.510942ms)
+✔ referencedPaths skips a path the reader creates, never this repository's own content (0.372635ms)
+✔ deadReferences names the file, the line and the path (1.368924ms)
+✔ the repository's own prose names no path that does not exist (16.096595ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 5
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 117.68114
+
+$ node --test scripts/__tests__/check-written-file-hook.test.js
+✔ hands a broken Biome rule back to the agent, naming it (2071.681162ms)
+✔ formats a file in place and stays silent on what would not block a commit (1231.864166ms)
+✔ leaves a file outside cli/ alone (47.60554ms)
+✔ answers an unreadable payload with silence, never a failure (40.179995ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 4
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3491.030391
+
+$ node --test scripts/__tests__/cli-ci-gate-covers-every-job.test.js
+✔ cli-ci.yml's gate job needs every other job in the workflow (20.549636ms)
+✔ gate reports even when a needed job fails or is skipped (if: always()) (3.800842ms)
+✔ both branch rulesets require the cli/gate check by its exact job name (5.915458ms)
+✔ the changes filter names the workflow file itself as relevant (6.393811ms)
+✔ only a proven next snapshot tree skips the promotion or main mutation matrix (5.362116ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 5
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 205.647112
+
+$ node --test scripts/__tests__/cli-opens-no-server.test.js
+▶ nothing in cli/src opens a network listener
+  ✔ no source file constructs or binds a server (34.942762ms)
+✔ nothing in cli/src opens a network listener (36.402457ms)
+ℹ tests 1
+ℹ suites 1
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 130.217071
+
+$ node --test scripts/__tests__/cli-rules-frontmatter.test.js
+✔ every CLI rule opens with frontmatter whose `paths` names at least one glob (11.647333ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 127.565263
+
+$ node --test scripts/__tests__/cli-type-honesty.test.js
+✔ a tree whose only cast is the one CASTS_ALLOWED excuses passes (70.929262ms)
+✔ a value widened through unknown in src is named and fails (66.95219ms)
+✔ a compiler directive in src is named, and the same directive in tests is not (108.424919ms)
+✔ an allowance nobody spends is named, so a fixed cast drops its entry (54.248847ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 4
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 416.755465
+
+$ node --test scripts/__tests__/comments-name-files-that-exist.test.js
+▶ a comment about the hooks names .cjs where the file is .cjs
+  ✔ names no <name>.js that the hooks do not actually ship (40.333471ms)
+✔ a comment about the hooks names .cjs where the file is .cjs (41.813543ms)
+▶ a comment that names a source file names one that exists
+  ✔ names no file the repository does not hold, outside the mentions listed as history (121.471873ms)
+  ✔ lists no allowance for a file that does exist, so the list cannot outlive its reason (16.568736ms)
+  ✔ lists no allowance for a file that stopped naming it (2.920119ms)
+✔ a comment that names a source file names one that exists (141.857121ms)
+ℹ tests 4
+ℹ suites 2
+ℹ pass 4
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 281.377513
+
+$ node --test scripts/__tests__/context-agent-command-artifacts.test.js
+✔ Kilo detection and agent contract use canonical subagent Markdown without Claude name (1.76803ms)
+✔ Kilo workflow contract uses the canonical command path and only supported fields (0.671503ms)
+✔ agent and workflow writers preflight every target and explicitly skip unsupported Codex commands (0.610951ms)
+✔ Kilo claims cite official sources and the issue date (0.397642ms)
+✔ caller-generated Kilo agent and workflow retain target-specific frontmatter and bodies (0.625588ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 5
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 121.802059
+
+$ node --test scripts/__tests__/context-hook-generation.test.js
+✔ Kilo hooks end with sourced guidance and no generated artifacts (2.441546ms)
+✔ mixed targets preflight before any script or config and preserve user hooks (1.036394ms)
+✔ mixed hook contract fixtures retain user duplicates and one AIDD entry per target (2.065514ms)
+✔ invalid final mixed target is detectable before creating any earlier target (0.54682ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 4
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 99.659162
+
+$ node --test scripts/__tests__/context-kilo-detection.test.js
+✔ plugins/aidd-context/skills/00-onboard/references/state/detection.md: six distinct Kilo signals, one shared memory destination (7.728801ms)
+✔ plugins/aidd-context/skills/00-onboard/references/state/detection.md: canonical directory (0.595863ms)
+✔ plugins/aidd-context/skills/00-onboard/references/state/detection.md: legacy directory (0.40746ms)
+✔ plugins/aidd-context/skills/00-onboard/references/state/detection.md: root JSON (0.293788ms)
+✔ plugins/aidd-context/skills/00-onboard/references/state/detection.md: root JSONC (0.345425ms)
+✔ plugins/aidd-context/skills/00-onboard/references/state/detection.md: nested JSON (0.351796ms)
+✔ plugins/aidd-context/skills/00-onboard/references/state/detection.md: nested JSONC (0.313705ms)
+✔ plugins/aidd-context/skills/00-onboard/references/state/detection.md: shared AGENTS alone (0.383846ms)
+✔ plugins/aidd-context/skills/00-onboard/references/state/detection.md: OpenCode JSON alone (0.293117ms)
+✔ plugins/aidd-context/skills/00-onboard/references/state/detection.md: OpenCode JSONC alone (0.498601ms)
+✔ plugins/aidd-context/skills/00-onboard/references/state/detection.md: multiple tools share memory (0.767072ms)
+✔ plugins/aidd-context/skills/00-onboard/references/state/detection.md: legacy is detection only and path claims carry their provenance (2.658902ms)
+✔ plugins/aidd-context/skills/02-project-memory/references/tools.md: six distinct Kilo signals, one shared memory destination (0.946135ms)
+✔ plugins/aidd-context/skills/02-project-memory/references/tools.md: canonical directory (0.63815ms)
+✔ plugins/aidd-context/skills/02-project-memory/references/tools.md: legacy directory (0.625446ms)
+✔ plugins/aidd-context/skills/02-project-memory/references/tools.md: root JSON (0.642459ms)
+✔ plugins/aidd-context/skills/02-project-memory/references/tools.md: root JSONC (0.460971ms)
+✔ plugins/aidd-context/skills/02-project-memory/references/tools.md: nested JSON (0.511755ms)
+✔ plugins/aidd-context/skills/02-project-memory/references/tools.md: nested JSONC (0.505944ms)
+✔ plugins/aidd-context/skills/02-project-memory/references/tools.md: shared AGENTS alone (0.404274ms)
+✔ plugins/aidd-context/skills/02-project-memory/references/tools.md: OpenCode JSON alone (0.366022ms)
+✔ plugins/aidd-context/skills/02-project-memory/references/tools.md: OpenCode JSONC alone (0.378476ms)
+✔ plugins/aidd-context/skills/02-project-memory/references/tools.md: multiple tools share memory (0.995938ms)
+✔ plugins/aidd-context/skills/02-project-memory/references/tools.md: legacy is detection only and path claims carry their provenance (0.610199ms)
+ℹ tests 24
+ℹ suites 0
+ℹ pass 24
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 143.565398
+
+$ node --test scripts/__tests__/context-skill-artifacts.test.js
+✔ skill detection lists exactly the six Kilo signals and keeps OpenCode distinct (3.766578ms)
+✔ Kilo placement requires explicit portable consent and resolves duplicates before writing (0.832543ms)
+✔ Kilo fields are target-specific without weakening the Claude authoring template (0.758194ms)
+✔ full preflight precedes creation and covers unsafe paths and user resources (0.747515ms)
+✔ Kilo path claims carry official source and attributed historical date (0.865505ms)
+✔ caller-generated target trees have valid frontmatter, router links and preserved resources (11.846776ms)
+✔ caller modify preserves user files and identical rerun preserves whole tree bytes and mtime (1.829814ms)
+✔ six native caller refusals leave full project trees unchanged (0.879951ms)
+✔ skill contract detection oracle: canonical directory (0.987113ms)
+✔ skill contract detection oracle: legacy directory (0.784053ms)
+✔ skill contract detection oracle: root JSON (0.716407ms)
+✔ skill contract detection oracle: root JSONC (0.479304ms)
+✔ skill contract detection oracle: nested JSON (0.333522ms)
+✔ skill contract detection oracle: nested JSONC (0.440572ms)
+✔ skill contract detection oracle: shared AGENTS alone (0.423991ms)
+✔ skill contract detection oracle: OpenCode JSON alone (0.42308ms)
+✔ skill contract detection oracle: OpenCode JSONC alone (0.430874ms)
+✔ skill contract detection oracle: multiple tools share memory (0.289109ms)
+✔ golden trees match caller output hashes and every local Markdown link stays inside its skill (10.625247ms)
+✔ shared portable fields require resolution when a requested Kilo field conflicts with Codex (0.49813ms)
+✔ real Kilo native: catalog, invocation, action and payload reads, exact answer and zero costs (1.165014ms)
+✔ real Kilo portable: catalog, invocation, action and payload reads, exact answer and zero costs (0.788001ms)
+✔ native caller refuses an unresolved shared-field request without creating a skill (0.536099ms)
+✔ native Kilo plus a selected portable host must resolve placement before any write (0.522305ms)
+ℹ tests 24
+ℹ suites 0
+ℹ pass 24
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 183.53432
+
+$ node --test scripts/__tests__/gate-witness.test.js
+✔ skips a gate on a tree that already passed it, and says so (298.851129ms)
+✔ runs again after a tracked file changes, staged or not (544.654931ms)
+✔ runs again after a file is added, left untracked, or removed (693.576947ms)
+✔ stamps nothing when the tree changed while the gate ran, even once it changes back (356.959818ms)
+✔ passes a failure through and stamps nothing (352.713164ms)
+✔ keeps one stamp per gate, so another gate still runs (361.640942ms)
+✔ runs what follows -- as one shell command line, on every platform (239.328331ms)
+ℹ tests 7
+ℹ suites 0
+ℹ pass 7
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2976.67619
+
+$ node --test scripts/__tests__/main-merges-by-merge-commit.test.js
+✔ T1: main.json's pull_request rule allows only the merge method (3.653197ms)
+✔ T2: ci.yml merges the release PR into main with --merge (18.416034ms)
+✔ T3: no step that merges a pull request into main uses --squash or --rebase (7.706168ms)
+✔ .github/rulesets/main.json stays valid JSON (0.838815ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 4
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 138.605424
+
+$ node --test scripts/__tests__/model-selection.test.js
+✔ bundled skills and agents leave model selection to the host (27.494374ms)
+✔ skill eval does not override the host model (136.053592ms)
+✔ skill eval honors an explicit model (113.008952ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 386.347344
+
+$ node --test scripts/__tests__/release-merges-empty-body.test.js
+✔ ci.yml: the Release PR auto-merge command carries --body "" (17.215633ms)
+✔ promote.yml: the promote PR merge command carries --body "", isolated from gh pr create's own --body (3.066401ms)
+✔ promote.yml: the commitHeadline recorded-subject check is still present, untouched by the --body change (1.000707ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 126.971996
+
+$ node --test scripts/__tests__/script-tests-name-cli-files-that-exist.test.js
+✔ every cli/src or cli/tests path a script test names by literal resolves on disk (7.456384ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 116.221386
+
+$ node --test scripts/__tests__/source-stays-text.test.js
+▶ every tracked source file stays greppable
+  ✔ carries no raw NUL byte, so no search over it can fail in silence (94.480328ms)
+✔ every tracked source file stays greppable (96.242186ms)
+ℹ tests 1
+ℹ suites 1
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 216.422809
+
+$ node --test scripts/__tests__/tests-leave-git-alone.test.js
+✔ a directory that does not exist snapshots as absent, never as empty (2.749341ms)
+✔ a snapshot carries every file's size and mode, not only its name (3.310267ms)
+✔ an untouched directory reports no change (1.860192ms)
+✔ a file whose content changed is reported, even at the same size (1.825065ms)
+✔ a hook replaced by a stub is reported as changed (1.62924ms)
+✔ a file that appeared is reported as added (1.388521ms)
+✔ a file that disappeared is reported as removed, never ignored (2.955003ms)
+✔ a mode change alone is reported (0.529268ms)
+✔ a directory that was absent and now exists is a change, not a fresh baseline (1.700694ms)
+✔ a command that leaves the watched directory alone passes the guard through (101.668681ms)
+✔ a command that writes into the watched directory fails the guard, naming the file (112.452262ms)
+✔ a failing command keeps its own exit code when nothing was touched (96.578543ms)
+✔ the guard refuses to run with no command, rather than passing vacuously (51.159904ms)
+ℹ tests 13
+ℹ suites 0
+ℹ pass 13
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 510.494801
+
+$ node --test scripts/__tests__/update-memory.test.js
+✔ the hook runs in a project declaring itself an ES module (65.08183ms)
+✔ a legacy block is migrated to the comment markers and filled (50.815941ms)
+✔ a legacy pair quoted in prose is left alone and the real block still migrates (51.732992ms)
+✔ a legacy pair inside a code fence is not the block that gets rewritten (55.590029ms)
+✔ the imports keep a blank line on each side, so nothing hides them (54.195407ms)
+✔ filling is idempotent (116.218241ms)
+✔ the on-demand tier is listed without an import prefix (52.441013ms)
+✔ a file holding one marker without its pair reports instead of skipping silently (58.126714ms)
+✔ a context file with no block at all is skipped quietly (60.402689ms)
+✔ an unknown tool name is rejected (66.090764ms)
+✔ a new-marker pair quoted in prose above the block does not hijack the splice (48.16782ms)
+✔ a nested fence does not close the example that documents the old shape (55.917891ms)
+✔ an unpaired marker fails the run when the skill named the tools (49.380053ms)
+✔ AGENTS.md gets markdown links, resolvable from the repository root (53.847237ms)
+✔ a nested context file prefixes its links with the climb back out (58.873387ms)
+✔ Kilo selected alone fills root AGENTS.md without changing other tools or legacy paths (57.52955ms)
+✔ shared Kilo/Codex/OpenCode/Cursor selection is stable without rewriting on a rerun (103.86041ms)
+✔ explicit sync validates a last malformed destination before writing earlier targets or README (53.553741ms)
+✔ explicit sync refuses duplicate memory markers without changing any selected file (61.261873ms)
+✔ explicit sync refuses nested memory markers without changing any selected file (60.383774ms)
+✔ explicit sync refuses reversed memory markers without changing any selected file (67.454989ms)
+✔ explicit sync refuses mixed memory markers without changing any selected file (57.371865ms)
+✔ explicit sync refuses separateFamilies memory markers without changing any selected file (47.864785ms)
+✔ explicit sync refuses extraClose memory markers without changing any selected file (51.872122ms)
+✔ preflight accepts absent/blockless context files but performs no Upsert or Fill (54.020321ms)
+✔ preflight refuses malformed existing context before any missing target is created (55.682512ms)
+✔ a malformed opted-in README prevents all explicit context writes (52.850287ms)
+✔ explicit sync ignores marker examples in prose and fences (45.701047ms)
+✔ explicit sync ignores a lone quoted marker example (48.810379ms)
+✔ explicit sync ignores a lone fenced marker example (59.555089ms)
+✔ explicit fill preserves BOM, CRLF, marker indentation and user bytes without a final newline (52.745662ms)
+✔ explicit sync refuses a target unsafe destination before writing a valid sibling (60.600488ms)
+✔ explicit sync refuses a ancestor unsafe destination before writing a valid sibling (61.41037ms)
+✔ explicit sync refuses a directory unsafe destination before writing a valid sibling (56.805227ms)
+✔ an invalid unselected context cannot prevent a selected tool from filling (48.496443ms)
+✔ the automatic hook remains best-effort when a later context has an unpaired marker (62.515181ms)
+✔ a read-only last destination fails preflight before any earlier write (57.917292ms)
+✔ a blockless README symlink is not an opted-in destination (53.032898ms)
+✔ preflight refuses an unwritable creation parent without creating any context (53.315415ms)
+✔ an unsafe opted-in README refuses sync before any context write (60.57415ms)
+ℹ tests 40
+ℹ suites 0
+ℹ pass 40
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2464.04315
+
+$ node --test scripts/__tests__/validate-yaml.test.js
+▶ validate-yaml
+  ✔ fails on a file YAML cannot load, naming it, and passes a valid multi-document one (134.514731ms)
+✔ validate-yaml (137.23106ms)
+ℹ tests 1
+ℹ suites 1
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 244.782908
+
+$ node --test scripts/__tests__/workflows-pin-global-installs.test.js
+✔ no workflow installs a global npm package unpinned (bare or @latest) (36.60787ms)
+✔ every allowlist entry still matches something (a stale entry hides a real regression) (5.038983ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 2
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 148.653533

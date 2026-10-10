@@ -1,0 +1,14 @@
+$ pnpm --dir cli exec vitest run --project=e2e tests/e2e/persona.e2e.test.ts --testNamePattern="Persona 1|Persona 5"
+expect version 5.45.4
+ DEPRECATED  The workspace file is deprecated and will be removed in the next major. Please, use the `test.projects` field in /home/coder/project/cli/vitest.config.ts instead.
+
+ RUN  v3.2.6 /home/coder/project/cli
+
+ ✓ |e2e| tests/e2e/persona.e2e.test.ts (5 tests | 3 skipped) 426ms
+   ✓ E2E: persona journeys > Persona 1 — fresh user: aidd alone shows banner and setup prompt  418ms
+   ✓ E2E: persona journeys > Persona 5 — returning user: aidd alone with manifest shows full menu  423ms
+
+ Test Files  1 passed (1)
+      Tests  2 passed | 3 skipped (5)
+   Start at  16:09:54
+   Duration  5.75s (transform 2.73s, setup 0ms, collect 4.24s, tests 426ms, environment 0ms, prepare 121ms)
