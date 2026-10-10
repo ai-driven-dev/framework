@@ -10,9 +10,14 @@ A tool is used when its own dir exists, or when a file only that tool reads exis
 | codex    | `.codex/`                                                                            | `AGENTS.md`                        |
 | cursor   | `.cursor/` or `.cursorrules`                                                         | `AGENTS.md`                        |
 | opencode | `.opencode/`                                                                         | `AGENTS.md`                        |
+| kilo     | `.kilo/` or `kilo.json` or `kilo.jsonc` or `.kilo/kilo.json` or `.kilo/kilo.jsonc` or `.kilocode/` | `AGENTS.md`              |
 | copilot  | `.github/copilot-instructions.md` or `.github/{instructions,agents,skills,prompts}/` | `.github/copilot-instructions.md`  |
 
 - Detected tools only. An unused optional tool is omitted, never crossed.
 - No tool detected at all: the row reads `none yet`, uncrossed. The memory row's `❌` already carries the gap.
 - A used tool whose file lacks the block is not wired, and needs wiring.
 - Missing memory is a foundation status, not a tool row (see `zones.md`).
+
+Kilo: `.kilocode/` is a legacy detection signal only. New Kilo-specific artifacts use `.kilo/`, never `.kilocode/`. Neither `opencode.json` nor `opencode.jsonc` identifies Kilo; OpenCode detection remains the row above.
+
+Kilo path sources: [configuration](https://kilo.ai/docs/getting-started/settings), [shared memory](https://kilo.ai/docs/customize/agents-md), and [legacy fallback](https://github.com/Kilo-Org/kilocode/blob/main/packages/opencode/src/kilocode/skills/kilo-config.md). Verified on 2026-09-25 according to issue #914; reverified on 2026-10-10.
