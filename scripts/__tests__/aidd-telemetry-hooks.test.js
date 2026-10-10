@@ -554,18 +554,8 @@ test("injection: shell syntax in a typed declaration runs no second command", ()
     "aidd telemetry task x\r\ntouch PWNED",
     "aidd telemetry task x > PWNED",
     "aidd telemetry task x < PWNED",
-    'aidd telemetry task "x; touch PWNED"',
-    "aidd telemetry task 'x$(touch PWNED)'",
     "aidd telemetry task x & touch PWNED",
     "aidd telemetry task x\\ y",
-    "aidd telemetry task x --by command",
-    "aidd telemetry task x --help",
-    "aidd telemetry task --ticket=PROJ-1 x",
-    "aidd telemetry task x y",
-    "aidd telemetry task x --ticket",
-    "aidd telemetry task --none x",
-    "aidd telemetry task -x",
-    "aidd telemetry task-x",
     "aidd telemetry task x%PATH%",
   ];
   for (const prompt of poisons) {
@@ -587,10 +577,51 @@ test("injection: shell syntax in a typed declaration runs no second command", ()
   }
 });
 
+test("a declaration mistyped is blocked with the grammar and the quoting hint, and runs nothing", () => {
+  const attempts = [
+    "aidd telemetry task fix cart",
+    "! aidd telemetry task fix cart",
+    "aidd telemetry task x --by command",
+    "aidd telemetry task x --help",
+    "aidd telemetry task --help",
+    "aidd telemetry task --ticket=PROJ-1 x",
+    "aidd telemetry task x --ticket",
+    "aidd telemetry task --none x",
+    "aidd telemetry task -x",
+    "aidd telemetry task-x",
+    'aidd telemetry task "x; touch PWNED"',
+    "aidd telemetry task 'x$(touch PWNED)'",
+  ];
+  for (const prompt of attempts) {
+    for (const branch of ["main", "feat/x"]) {
+      withBox({ branch }, (box) => {
+        const result = gate(box, { payload: box.payload({ prompt }) });
+        assert.equal(result.json.decision, "block", prompt);
+        assert.match(result.json.reason, /not understood/iu, prompt);
+        assert.match(result.json.reason, /aidd telemetry task <name> \[--ticket <ref>\]/u, prompt);
+        assert.match(result.json.reason, /aidd telemetry task "fix cart"/u, prompt);
+        assert.match(result.json.reason, /fix-cart/u, prompt);
+        // not run, so the person's words stay visible to retype
+        assert.equal(result.json.hookSpecificOutput, undefined, prompt);
+        assert.ok(!fs.existsSync(path.join(box.repo, "PWNED")), prompt);
+        assert.deepEqual(box.calls(), [], `${JSON.stringify(prompt)} spawned something`);
+      });
+    }
+  }
+  withBox({}, (box) => {
+    box.write("sessions.jsonl", [{ ...SESSION_ONE_FOR_GATE }]);
+    const result = gate(box, { payload: box.payload({ prompt: "aidd telemetry task fix cart" }) });
+    assert.equal(result.json.decision, "block");
+    assert.deepEqual(box.calls(), []);
+  });
+});
+
 test("a prompt that only starts like a declaration is an ordinary prompt, never refused as not understood", () => {
   const talk = [
     "aidd telemetry task is broken, can you debug why?",
-    "aidd telemetry task --help",
+    "aidd telemetry task why is it broken?",
+    "aidd telemetry task fix it!",
+    "aidd telemetry task fix the cart.",
     "aidd telemetry task x\nand a second line",
   ];
   for (const prompt of talk) {

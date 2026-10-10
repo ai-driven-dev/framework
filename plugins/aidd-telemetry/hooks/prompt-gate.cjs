@@ -3,7 +3,7 @@
 // project, and whenever nobody is there to answer.
 const { resolveAidd, runAidd } = require("./lib/aidd.cjs");
 const { guardedContext } = require("./lib/context.cjs");
-const { isIntercept, parseDeclaration } = require("./lib/declaration.cjs");
+const { attemptsDeclaration, isIntercept, parseDeclaration } = require("./lib/declaration.cjs");
 const { lookup } = require("./lib/lookup.cjs");
 const { runHook } = require("./lib/hook-io.cjs");
 const { personIsPresent } = require("./lib/presence.cjs");
@@ -56,14 +56,30 @@ function ask(branch) {
   );
 }
 
+/** A declaration the person typed and the hook could not read: said so, with the grammar, and
+ * never run or forwarded. The prompt stays visible to retype. */
+function notUnderstood() {
+  return block(
+    [
+      "Not understood as a task declaration. Nothing was recorded and nothing was sent to the model.",
+      "  aidd telemetry task <name> [--ticket <ref>]",
+      "  aidd telemetry task --none",
+      'A name of several words needs quotes: aidd telemetry task "fix cart" (or join them: fix-cart).',
+    ].join("\n"),
+    { keepPrompt: true }
+  );
+}
+
 runHook((payload) => {
   if (!personIsPresent()) return null;
   const context = guardedContext(payload);
   if (context === null) return null;
   // A prompt that only starts like a declaration, or holds anything a shell would read, is
-  // not run and not refused: it is an ordinary prompt and meets the ordinary gate below.
+  // never run. One that reads like a mistyped declaration is told so; any other is an
+  // ordinary prompt and meets the ordinary gate below.
   const declaration = isIntercept(payload.prompt) ? parseDeclaration(payload.prompt) : null;
   if (declaration !== null) return intercept(declaration, context.cwd);
+  if (attemptsDeclaration(payload.prompt)) return notUnderstood();
 
   const found = lookup({
     cwd: context.cwd,

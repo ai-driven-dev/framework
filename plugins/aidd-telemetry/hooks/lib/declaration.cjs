@@ -72,4 +72,16 @@ function parseDeclaration(prompt) {
   return argv;
 }
 
-module.exports = { isIntercept, parseDeclaration };
+/** Whether a prompt is a declaration the person tried to type: one line that starts like one,
+ * reads like a command rather than a sentence (no `?`, no `!` after the optional leading one,
+ * no comma, no final full stop), and holds only words and quoted strings. Such a prompt that
+ * does not parse is a mistake worth saying so; anything else that merely starts with the same
+ * words is an ordinary prompt. */
+function attemptsDeclaration(prompt) {
+  if (!isIntercept(prompt) || /[\r\n]/u.test(prompt)) return false;
+  const text = prompt.trim();
+  if (/[?,]/u.test(text) || text.replace(/^!/u, "").includes("!") || text.endsWith(".")) return false;
+  return tokens(prompt.replace(INTERCEPT, "")) !== null;
+}
+
+module.exports = { attemptsDeclaration, isIntercept, parseDeclaration };

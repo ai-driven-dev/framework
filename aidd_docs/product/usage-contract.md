@@ -127,7 +127,7 @@ Anything else passes. The hook never fails a prompt: a crash exits 0.
 Answering is never blocked and never reaches the model:
 
 - `! aidd telemetry task ...` in the terminal fires no `UserPromptSubmit`;
-- `aidd telemetry task ...` typed as a prompt is run by the hook through the CLI with `--by hook-intercept`, and its result is the block reason. The grammar accepts a name, `--ticket <ref>` and `--none` and nothing else; a prompt outside it runs nothing.
+- `aidd telemetry task ...` typed as a prompt is run by the hook through the CLI with `--by hook-intercept`, and its result is the block reason. The grammar accepts a name, `--ticket <ref>` and `--none` and nothing else; a prompt outside it runs nothing. A one-line prompt that starts like a declaration, holds only words and quoted strings, and has no `?`, no `!`, no comma and no final full stop (`aidd telemetry task fix cart`) was meant as one: it is blocked with the grammar and the quoting hint, and kept visible. Any other prompt that merely starts with those words is an ordinary prompt.
 
 The block asks once per working branch, since the declaration it gets is remembered. Switching to an unbound branch asks again.
 
