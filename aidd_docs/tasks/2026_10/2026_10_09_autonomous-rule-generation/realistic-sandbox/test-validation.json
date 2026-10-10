@@ -1,0 +1,40 @@
+{
+  "priorCleanCandidate": {
+    "focusedPassed": 41,
+    "repositoryPassed": 595,
+    "writerUnchanged": true
+  },
+  "currentNode": "26.8.2",
+  "fullRerun": {
+    "exit": 1,
+    "passed": 39,
+    "failed": 2,
+    "log": "focused-node26-final-tests.log",
+    "failureType": "Two child processes returned status null; exact original cause not captured, no writer exit1 observed in those assertions"
+  },
+  "targetedRerun": {
+    "exit": 0,
+    "passed": 2,
+    "failed": 0,
+    "log": "focused-two-retry.log",
+    "arguments": [
+      "--require",
+      "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/spawn-diagnostic.cjs",
+      "--test",
+      "--test-isolation=none",
+      "--test-name-pattern=CRLF body and user suffix|a signed native output copied",
+      "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/scripts/__tests__/rule-generation.test.js"
+    ],
+    "diagnosticPreloader": {
+      "sha256": "bc71670c2a3b0dfeefb03f7bc7346041a9c5908730c4fa96a2cf94b4022b61cf",
+      "effect": "Logs error/signal only if child status null; forwards original result unchanged"
+    },
+    "flagsSource": "https://nodejs.org/api/cli.html"
+  },
+  "additionalAttempts": {
+    "node24TestRunner": "Own stalled attempt terminated without usable result",
+    "node24Direct": "Own stalled attempt terminated without usable result"
+  },
+  "allFocusedCasesObservedPassingAcrossCurrentRerunAndTargetedRetry": true,
+  "singleCleanCurrent41Run": false
+}

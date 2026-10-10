@@ -1,0 +1,1 @@
+- User rule: domain must not depend on HTTP.

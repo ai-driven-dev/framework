@@ -1,0 +1,373 @@
+{
+  "host": "cursor",
+  "cliVersion": "2026.09.08-6caf4ff",
+  "model": "Auto",
+  "backendModel": "not exposed by native CLI JSON",
+  "auth": "existing Free subscription OAuth, native supported private file store, same identity checked without logging identity",
+  "budget": {
+    "usageBasedPremiumRequests": false,
+    "proof": "cursor-quota-before-exact.json",
+    "includedQuotaReachedLastStage": true,
+    "noUpgradeOrPurchase": true,
+    "noApiKeyOrPaidFallback": true,
+    "monetaryCost": "not emitted by native CLI; usage counters retained as reported, not a billing ledger"
+  },
+  "runs": [
+    {
+      "run": "cursor-01",
+      "exit": 0,
+      "timeout": false,
+      "durationSeconds": 103.31,
+      "tools": 42,
+      "tests": 9,
+      "testsExit": 0,
+      "usage": {
+        "inputTokens": 26685,
+        "outputTokens": 4366,
+        "cacheReadTokens": 208192,
+        "cacheWriteTokens": 0
+      },
+      "nativeFinalResult": true,
+      "model": "Auto",
+      "backendModel": "not exposed by native CLI JSON",
+      "session": "7116dbbb-0e5e-4a15-b79c-61b06cda7320"
+    },
+    {
+      "run": "cursor-02",
+      "exit": 0,
+      "timeout": false,
+      "durationSeconds": 93.88,
+      "tools": 26,
+      "tests": 20,
+      "testsExit": 0,
+      "usage": {
+        "inputTokens": 23496,
+        "outputTokens": 3071,
+        "cacheReadTokens": 96128,
+        "cacheWriteTokens": 0
+      },
+      "nativeFinalResult": true,
+      "model": "Auto",
+      "backendModel": "not exposed by native CLI JSON",
+      "session": "1f914936-0834-440f-894e-336aa9f1ff19"
+    },
+    {
+      "run": "cursor-03",
+      "exit": 0,
+      "timeout": false,
+      "durationSeconds": 23.59,
+      "tools": 12,
+      "tests": 20,
+      "testsExit": 0,
+      "usage": {
+        "inputTokens": 18688,
+        "outputTokens": 664,
+        "cacheReadTokens": 51840,
+        "cacheWriteTokens": 0
+      },
+      "nativeFinalResult": true,
+      "model": "Auto",
+      "backendModel": "not exposed by native CLI JSON",
+      "session": "d001b55e-83e7-4dbc-bc6f-ae5ff4896ebb"
+    },
+    {
+      "run": "cursor-04",
+      "exit": 143,
+      "timeout": true,
+      "durationSeconds": 182.09,
+      "tools": 37,
+      "tests": 20,
+      "testsExit": 0,
+      "usage": null,
+      "nativeFinalResult": false,
+      "model": "Auto",
+      "backendModel": "not exposed by native CLI JSON",
+      "session": "97e9448e-40eb-48c3-9ae1-22dd7354fd1b"
+    },
+    {
+      "run": "cursor-05",
+      "exit": 143,
+      "timeout": true,
+      "durationSeconds": 182.3,
+      "tools": 12,
+      "tests": 20,
+      "testsExit": 0,
+      "usage": null,
+      "nativeFinalResult": false,
+      "model": "Auto",
+      "backendModel": "not exposed by native CLI JSON",
+      "session": "98880902-c210-4461-81cc-36fc71b668ab"
+    },
+    {
+      "run": "cursor-06",
+      "exit": 143,
+      "timeout": true,
+      "durationSeconds": 186.14,
+      "tools": 3,
+      "tests": 20,
+      "testsExit": 0,
+      "usage": null,
+      "nativeFinalResult": false,
+      "model": "Auto",
+      "backendModel": "not exposed by native CLI JSON",
+      "session": "08d6c2c2-2176-40c4-a78e-bb3d7fb8021b"
+    },
+    {
+      "run": "cursor-retry-05",
+      "exit": 0,
+      "timeout": false,
+      "durationSeconds": 124.34,
+      "tools": 22,
+      "tests": 31,
+      "testsExit": 0,
+      "usage": {
+        "inputTokens": 903,
+        "outputTokens": 225,
+        "cacheReadTokens": 18944,
+        "cacheWriteTokens": 0
+      },
+      "nativeFinalResult": true,
+      "model": "Auto",
+      "backendModel": "not exposed by native CLI JSON",
+      "session": "3a9d3ef4-6de1-4faf-94ed-59cc0170f99c"
+    },
+    {
+      "run": "cursor-retry-06",
+      "exit": 0,
+      "timeout": false,
+      "durationSeconds": 137.25,
+      "tools": 32,
+      "tests": 31,
+      "testsExit": 0,
+      "usage": {
+        "inputTokens": 33383,
+        "outputTokens": 3028,
+        "cacheReadTokens": 137056,
+        "cacheWriteTokens": 0
+      },
+      "nativeFinalResult": true,
+      "model": "Auto",
+      "backendModel": "not exposed by native CLI JSON",
+      "session": "faaa64cd-46bb-4ff3-983f-55c465931ec6"
+    },
+    {
+      "run": "cursor-retry-07",
+      "exit": 0,
+      "timeout": false,
+      "durationSeconds": 106.99,
+      "tools": 29,
+      "tests": 42,
+      "testsExit": 0,
+      "usage": {
+        "inputTokens": 35371,
+        "outputTokens": 2306,
+        "cacheReadTokens": 108448,
+        "cacheWriteTokens": 0
+      },
+      "nativeFinalResult": true,
+      "model": "Auto",
+      "backendModel": "not exposed by native CLI JSON",
+      "session": "f67ce053-24ff-4f53-ade5-b5f01cb85568"
+    },
+    {
+      "run": "cursor-exact-01",
+      "exit": 0,
+      "timeout": false,
+      "durationSeconds": 90.19,
+      "tools": 28,
+      "tests": 9,
+      "testsExit": 0,
+      "usage": {
+        "inputTokens": 109439,
+        "outputTokens": 2351,
+        "cacheReadTokens": 21760,
+        "cacheWriteTokens": 0
+      },
+      "nativeFinalResult": true,
+      "model": "Auto",
+      "backendModel": "not exposed by native CLI JSON",
+      "session": "bcafc3b0-553b-46b1-b776-af2b85eb7efb"
+    },
+    {
+      "run": "cursor-exact-02",
+      "exit": 0,
+      "timeout": false,
+      "durationSeconds": 110.66,
+      "tools": 43,
+      "tests": 12,
+      "testsExit": 0,
+      "usage": {
+        "inputTokens": 14466,
+        "outputTokens": 3093,
+        "cacheReadTokens": 235392,
+        "cacheWriteTokens": 0
+      },
+      "nativeFinalResult": true,
+      "model": "Auto",
+      "backendModel": "not exposed by native CLI JSON",
+      "session": "c62f06d4-b873-4a60-a313-1246ba214d6d"
+    },
+    {
+      "run": "cursor-exact-03",
+      "exit": 0,
+      "timeout": false,
+      "durationSeconds": 139.37,
+      "tools": 30,
+      "tests": 12,
+      "testsExit": 0,
+      "usage": {
+        "inputTokens": 80127,
+        "outputTokens": 2230,
+        "cacheReadTokens": 68256,
+        "cacheWriteTokens": 0
+      },
+      "nativeFinalResult": true,
+      "model": "Auto",
+      "backendModel": "not exposed by native CLI JSON",
+      "session": "75249d29-ca17-4cf3-a748-89bae71bf01e"
+    },
+    {
+      "run": "cursor-exact-04",
+      "exit": 1,
+      "timeout": false,
+      "durationSeconds": 70.34,
+      "tools": 19,
+      "tests": 15,
+      "testsExit": 0,
+      "usage": null,
+      "nativeFinalResult": false,
+      "model": "Auto",
+      "backendModel": "not exposed by native CLI JSON",
+      "session": "4efedae4-bda3-43df-842b-854950654dcc"
+    }
+  ],
+  "mainJourney": {
+    "project": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/model-cursor",
+    "initialAuthor": {
+      "run": "cursor-01",
+      "status": "fail exact literal: model added period",
+      "actualComment": "// Team reviewed domain change."
+    },
+    "initialConsumer": {
+      "run": "cursor-02",
+      "status": "follows published rule, fails requested exact literal"
+    },
+    "outOfScope": {
+      "run": "cursor-03",
+      "status": "pass document without marker"
+    },
+    "update": {
+      "run": "cursor-04",
+      "status": "writer updated content; session timeout during final inspection",
+      "actualComment": "// Domain validation reviewed."
+    },
+    "updatedConsumer": {
+      "run": "cursor-retry-05",
+      "status": "native behavior follows published text, exact literal still fails",
+      "explicitRuleOrCanonicalRead": false
+    },
+    "delete": {
+      "run": "cursor-retry-06",
+      "status": "pass installed skill invokes actual script --delete, canonical/native absent"
+    },
+    "postDelete": {
+      "run": "cursor-retry-07",
+      "status": "pass fresh fee export lacks old markers"
+    }
+  },
+  "exactControl": {
+    "project": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/model-cursor-exact",
+    "creation": {
+      "run": "cursor-exact-01",
+      "status": "pass exact quoted initial marker",
+      "actualComment": "// Team reviewed domain change",
+      "scriptObserved": true,
+      "sourceRevision": "5 current refs/assets + initial actual CLI-installed SKILL/capture before descriptor refresh"
+    },
+    "consumer": {
+      "run": "cursor-exact-02",
+      "status": "pass",
+      "file": "src/domain/discount.ts",
+      "line": 4,
+      "exactPrecedingComment": "// Team reviewed domain change",
+      "promptMentionsMarker": false
+    },
+    "delete": {
+      "run": "cursor-exact-03",
+      "status": "pass natural installed skill deletion through actual writer, canonical/native absent"
+    },
+    "postDelete": {
+      "run": "cursor-exact-04",
+      "status": "observable behavior passes, CLI session incomplete",
+      "file": "src/domain/fee.ts",
+      "line": 3,
+      "reviewMarkersAbsent": true,
+      "externalTestsExit": 0,
+      "cliExit": 1,
+      "error": "ActionRequiredError: You've hit your usage limit Get Cursor Pro for more Agent usage, unlimited Tab, and more.",
+      "nativeFinalResultMissing": true
+    },
+    "exactUpdatedMarkerConsumer": "not exercised in latest model round; prior model update added a period; deterministic five-host update coverage belongs to root report"
+  },
+  "assetRevisionBoundary": {
+    "author": "cursor-exact-author-revision.json",
+    "actualCliRefresh": "cursor-exact-current-metadata-refresh.json",
+    "currentAssetsHash": "cursor-exact-current-assets.json",
+    "writerMatchesCurrentSource": true
+  },
+  "guidancePreserved": {
+    "AGENTS.md": {
+      "unchanged": true,
+      "sha256": "76752d4dcfb002c378b9621d7783c97f427e2864320c11195b50bfca4897e3a7"
+    },
+    ".cursor/rules/00-architecture/0-user-boundaries.mdc": {
+      "unchanged": true,
+      "sha256": "391f41603b26c715e79f94e82c8970c3a0271b216759638569ec34c925bf8cbd"
+    },
+    "aidd_docs/memory/architecture.md": {
+      "unchanged": true,
+      "sha256": "39e8c397df8d42f12d7e4be50e0201cd9e06b0580af4e618365464cff12198d5"
+    }
+  },
+  "sourceFiles": {
+    "src/domain/discount.ts": {
+      "absolutePath": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/model-cursor-exact/src/domain/discount.ts",
+      "sha256": "03dcb8af23107ec48913eedeacd2c9eacf7907b2bd5fa68193c0f5a702b8ec86"
+    },
+    "src/domain/fee.ts": {
+      "absolutePath": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/model-cursor-exact/src/domain/fee.ts",
+      "sha256": "bf8371475e22aafe894b27ddf721cb9d4b79e5bead2a9746419aa4a546c8eb73"
+    },
+    "tests/discount.test.ts": {
+      "absolutePath": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/model-cursor-exact/tests/discount.test.ts",
+      "sha256": "d219cb1d7c5e8dd5a841408154f0bdf12e8e44f65b7e1570bb37ec920e84456b"
+    },
+    "tests/fee.test.ts": {
+      "absolutePath": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/model-cursor-exact/tests/fee.test.ts",
+      "sha256": "183d264b8aa321fc14151344005762a62ffbbc21094918bbf0e7646de7cd6bef"
+    }
+  },
+  "attachmentTelemetry": "observer records empty attachments for matching and nonmatching reads alike; attachment telemetry inconclusive, tool traces and code controls provide evidence",
+  "sources": [
+    {
+      "url": "https://cursor.com/docs/rules",
+      "claim": "MDC globs and alwaysApply false express native matching-file scope"
+    },
+    {
+      "url": "https://cursor.com/docs/cli/reference/output-format",
+      "claim": "native stream emits tool-call events and final results when session completes"
+    }
+  ],
+  "limits": {
+    "initialRunsSeconds": 180,
+    "authorizedHarnessRetriesSeconds": 360,
+    "extraExactControlsSeconds": 180
+  },
+  "privateAuthProfileRemoved": true,
+  "secretsIncluded": false,
+  "cleanup": {
+    "removedOwnedPrivateProfile": true,
+    "tempCliIdentityCacheRemoved": true,
+    "originalAccountKeychainConfigUntouched": true
+  }
+}

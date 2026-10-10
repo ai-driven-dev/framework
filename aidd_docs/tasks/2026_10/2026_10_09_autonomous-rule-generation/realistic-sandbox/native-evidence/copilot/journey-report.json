@@ -1,0 +1,247 @@
+{
+  "cli": "Copilot 1.0.83",
+  "model_mode": "auto",
+  "stages": [
+    {
+      "evidence": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/evidence/model-copilot/author",
+      "exit": 0,
+      "models": [
+        "gpt-6-luna"
+      ],
+      "model_calls": 9,
+      "native_rule_viewed": null,
+      "exact_comment_match": null,
+      "skill_invoked": true,
+      "script_invoked": true,
+      "usage": {
+        "totalUserRequests": 1,
+        "totalPremiumRequestCost": 1,
+        "totalNanoAiu": 652862000,
+        "currentModel": "gpt-6-luna"
+      }
+    },
+    {
+      "evidence": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/evidence/model-copilot/domain",
+      "exit": 0,
+      "models": [
+        "gpt-6-luna"
+      ],
+      "model_calls": 6,
+      "native_rule_viewed": true,
+      "exact_comment_match": true,
+      "skill_invoked": true,
+      "script_invoked": false,
+      "usage": {
+        "totalUserRequests": 1,
+        "totalPremiumRequestCost": 1,
+        "totalNanoAiu": 568212000,
+        "currentModel": "gpt-6-luna"
+      }
+    },
+    {
+      "evidence": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/evidence/model-copilot/markdown",
+      "exit": 0,
+      "models": [
+        "gpt-6-luna"
+      ],
+      "model_calls": 5,
+      "native_rule_viewed": false,
+      "exact_comment_match": null,
+      "skill_invoked": false,
+      "script_invoked": false,
+      "usage": {
+        "totalUserRequests": 1,
+        "totalPremiumRequestCost": 1,
+        "totalNanoAiu": 307119500,
+        "currentModel": "gpt-6-luna"
+      }
+    },
+    {
+      "evidence": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/evidence/model-copilot/update",
+      "exit": 0,
+      "models": [
+        "gpt-6-luna"
+      ],
+      "model_calls": 9,
+      "native_rule_viewed": true,
+      "exact_comment_match": null,
+      "skill_invoked": true,
+      "script_invoked": true,
+      "usage": {
+        "totalUserRequests": 1,
+        "totalPremiumRequestCost": 1,
+        "totalNanoAiu": 604145000,
+        "currentModel": "gpt-6-luna"
+      }
+    },
+    {
+      "evidence": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/evidence/model-copilot/updated-domain",
+      "exit": 0,
+      "models": [
+        "gpt-6-luna"
+      ],
+      "model_calls": 5,
+      "native_rule_viewed": true,
+      "exact_comment_match": false,
+      "skill_invoked": false,
+      "script_invoked": false,
+      "usage": {
+        "totalUserRequests": 1,
+        "totalPremiumRequestCost": 1,
+        "totalNanoAiu": 402940000,
+        "currentModel": "gpt-6-luna"
+      }
+    },
+    {
+      "evidence": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/evidence/model-copilot/delete",
+      "exit": 0,
+      "models": [
+        "gpt-6-luna"
+      ],
+      "model_calls": 6,
+      "native_rule_viewed": true,
+      "exact_comment_match": null,
+      "skill_invoked": true,
+      "script_invoked": false,
+      "usage": {
+        "totalUserRequests": 1,
+        "totalPremiumRequestCost": 1,
+        "totalNanoAiu": 408179000,
+        "currentModel": "gpt-6-luna"
+      }
+    },
+    {
+      "evidence": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/evidence/model-copilot/deleted-domain",
+      "exit": 0,
+      "models": [
+        "gpt-6-luna"
+      ],
+      "model_calls": 6,
+      "native_rule_viewed": false,
+      "exact_comment_match": null,
+      "skill_invoked": true,
+      "script_invoked": false,
+      "usage": {
+        "totalUserRequests": 1,
+        "totalPremiumRequestCost": 1,
+        "totalNanoAiu": 448519500,
+        "currentModel": "gpt-6-luna"
+      }
+    },
+    {
+      "evidence": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/evidence/model-copilot-exact-retry/update",
+      "exit": 0,
+      "models": [
+        "gpt-6-luna"
+      ],
+      "model_calls": 8,
+      "native_rule_viewed": true,
+      "exact_comment_match": null,
+      "skill_invoked": true,
+      "script_invoked": true,
+      "usage": {
+        "totalUserRequests": 1,
+        "totalPremiumRequestCost": 1,
+        "totalNanoAiu": 567876500,
+        "currentModel": "gpt-6-luna"
+      }
+    },
+    {
+      "evidence": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/evidence/model-copilot-exact-retry/updated-domain",
+      "exit": 0,
+      "models": [
+        "gpt-6-luna"
+      ],
+      "model_calls": 6,
+      "native_rule_viewed": true,
+      "exact_comment_match": true,
+      "skill_invoked": false,
+      "script_invoked": false,
+      "usage": {
+        "totalUserRequests": 1,
+        "totalPremiumRequestCost": 1,
+        "totalNanoAiu": 518608000,
+        "currentModel": "gpt-6-luna"
+      }
+    },
+    {
+      "evidence": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/evidence/model-copilot-exact-retry/delete",
+      "exit": 0,
+      "models": [
+        "gpt-6-luna"
+      ],
+      "model_calls": 5,
+      "native_rule_viewed": true,
+      "exact_comment_match": null,
+      "skill_invoked": false,
+      "script_invoked": false,
+      "usage": {
+        "totalUserRequests": 1,
+        "totalPremiumRequestCost": 1,
+        "totalNanoAiu": 352143500,
+        "currentModel": "gpt-6-luna"
+      }
+    }
+  ],
+  "original_flow_passed": [
+    "author_script",
+    "domain_exact_comment",
+    "markdown_selective_body",
+    "update_consumed",
+    "delete_artifacts",
+    "post_delete_no_stale_marker"
+  ],
+  "original_flow_limits": [
+    "update bare literal punctuation ambiguous: observed period",
+    "delete selected skill but bypassed script"
+  ],
+  "retry_passed": [
+    "quoted_update_exact",
+    "consumer_exact",
+    "38_tests"
+  ],
+  "retry_remaining_gap": "Resolved by source discovery metadata + action01 and genuine CLI flat translation; natural delete selected skill and script",
+  "preserved_user_files": [
+    "AGENTS.md",
+    ".github/instructions/00-user-boundaries.instructions.md"
+  ],
+  "no_extra_billing_evidence": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/evidence/model-copilot-exact-retry/quota-after.json",
+  "first_bug_evidence": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/evidence/model-copilot/author-attempt1",
+  "cancelled_stale_retry": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/evidence/model-copilot/author-attempt2-cancelled",
+  "final_verified_stages": [
+    {
+      "evidence": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/evidence/model-copilot-delete-retry/delete",
+      "exit": 0,
+      "models": [
+        "gpt-6-luna"
+      ],
+      "model_calls": 8,
+      "skill_invoked": true,
+      "script_invoked": true,
+      "native_rule_viewed": true,
+      "post_delete_stale_marker": null,
+      "tests": null
+    },
+    {
+      "evidence": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/evidence/model-copilot-delete-retry/deleted-domain",
+      "exit": 0,
+      "models": [
+        "gpt-6-luna"
+      ],
+      "model_calls": 7,
+      "skill_invoked": true,
+      "script_invoked": false,
+      "native_rule_viewed": false,
+      "post_delete_stale_marker": false,
+      "tests": [
+        "\u2139 tests 39",
+        "\u2139 pass 39",
+        "\u2139 fail 0"
+      ]
+    }
+  ],
+  "final_quota_evidence": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/evidence/model-copilot-delete-retry/quota-after.json",
+  "final_preservation_evidence": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/evidence/model-copilot-delete-retry/preservation.json",
+  "scope": "Cumulative real-model proof across three isolated clones and production instruction revisions; original failures preserved",
+  "latest_direct_auth_token_artifact_matches": 0
+}

@@ -1,0 +1,4 @@
+# Keep the deliberate CRLF fixture and archived receipts byte-exact.
+fixture/AGENTS.md -text whitespace=cr-at-eol
+native-evidence/** -text -whitespace
+*.log -text -whitespace

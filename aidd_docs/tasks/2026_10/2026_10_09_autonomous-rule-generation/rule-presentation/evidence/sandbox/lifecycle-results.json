@@ -1,0 +1,50 @@
+[
+  {
+    "host": "claude",
+    "steps": 13,
+    "tests": 9,
+    "originalAgentsSha256": "76752d4dcfb002c378b9621d7783c97f427e2864320c11195b50bfca4897e3a7",
+    "userNativePreserved": true,
+    "lastDeleteRestoredOriginalAgents": true
+  },
+  {
+    "host": "cursor",
+    "steps": 13,
+    "tests": 9,
+    "originalAgentsSha256": "76752d4dcfb002c378b9621d7783c97f427e2864320c11195b50bfca4897e3a7",
+    "userNativePreserved": true,
+    "lastDeleteRestoredOriginalAgents": true
+  },
+  {
+    "host": "copilot",
+    "steps": 13,
+    "tests": 9,
+    "originalAgentsSha256": "76752d4dcfb002c378b9621d7783c97f427e2864320c11195b50bfca4897e3a7",
+    "userNativePreserved": true,
+    "lastDeleteRestoredOriginalAgents": true
+  },
+  {
+    "host": "codex",
+    "steps": 13,
+    "tests": 9,
+    "originalAgentsSha256": "76752d4dcfb002c378b9621d7783c97f427e2864320c11195b50bfca4897e3a7",
+    "userNativePreserved": true,
+    "lastDeleteRestoredOriginalAgents": true
+  },
+  {
+    "host": "opencode",
+    "steps": 13,
+    "tests": 9,
+    "originalAgentsSha256": "76752d4dcfb002c378b9621d7783c97f427e2864320c11195b50bfca4897e3a7",
+    "userNativePreserved": true,
+    "lastDeleteRestoredOriginalAgents": true
+  },
+  {
+    "host": "mixed",
+    "steps": 13,
+    "tests": 9,
+    "originalAgentsSha256": "76752d4dcfb002c378b9621d7783c97f427e2864320c11195b50bfca4897e3a7",
+    "userNativePreserved": true,
+    "lastDeleteRestoredOriginalAgents": true
+  }
+]

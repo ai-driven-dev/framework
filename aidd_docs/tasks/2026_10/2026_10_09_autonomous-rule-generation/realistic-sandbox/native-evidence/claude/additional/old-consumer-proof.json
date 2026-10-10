@@ -1,0 +1,18 @@
+{
+  "exactComment": true,
+  "sourceBefore": "import ValidationError only; no preexisting function or marker",
+  "firstRead": {
+    "name": "Read",
+    "input": {
+      "file_path": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/model-claude-old-native-proof/src/domain/native-old-proof.ts"
+    }
+  },
+  "nativeHashMatchesOriginal": true,
+  "testsExit": 0,
+  "testSummary": [
+    "ℹ tests 82",
+    "ℹ pass 82",
+    "ℹ fail 0"
+  ],
+  "causalBound": "Stream does not expose injected native context body. First Read matched native path; marker absent from prompt and initial target; native file hash matches original authored artifact; real code uses exact marker."
+}

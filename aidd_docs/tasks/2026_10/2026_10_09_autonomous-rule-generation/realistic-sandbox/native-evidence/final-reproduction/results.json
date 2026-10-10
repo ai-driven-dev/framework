@@ -1,0 +1,69 @@
+{
+  "root": "/private/tmp/aidd-realistic-rule-repro-EGi6ZB",
+  "repo": "/Users/baptistelafourcade/orca/workspaces/framework/basketstar",
+  "hosts": [
+    "opencode"
+  ],
+  "tools": [
+    "claude",
+    "cursor",
+    "copilot",
+    "codex",
+    "opencode"
+  ],
+  "smoke": true,
+  "results": [
+    {
+      "name": "baseline API",
+      "args": [
+        "/opt/homebrew/Cellar/node/26.8.2/bin/node",
+        "--test",
+        "tests/invoice.test.ts",
+        "tests/http.test.ts"
+      ],
+      "cwd": "/private/tmp/aidd-realistic-rule-repro-EGi6ZB/baseline",
+      "exit": 0,
+      "stdout": "✔ real HTTP create, validation rejection, lookup, and not-found journey (344.364458ms)\n✔ exact cents totals and repository isolation (40.185375ms)\n✔ invalid invoice refuses null (0.182459ms)\n✔ invalid invoice refuses {\"customerId\":\"bad\",\"currency\":\"EUR\",\"lines\":[{\"sku\":\"CONSULTING\",\"quantity\":3,\"unitPriceCents\":1999},{\"sku\":\"FREIGHT\",\"quantity\":1,\"unitPriceCents\":450}]} (0.065208ms)\n✔ invalid invoice refuses {\"customerId\":\"cus_acme\",\"currency\":\"GBP\",\"lines\":[{\"sku\":\"CONSULTING\",\"quantity\":3,\"unitPriceCents\":1999},{\"sku\":\"FREIGHT\",\"quantity\":1,\"unitPriceCents\":450}]} (0.037292ms)\n✔ invalid invoice refuses {\"customerId\":\"cus_acme\",\"currency\":\"EUR\",\"lines\":[]} (0.041083ms)\n✔ invalid invoice refuses {\"customerId\":\"cus_acme\",\"currency\":\"EUR\",\"lines\":[{\"sku\":\"X\",\"quantity\":0,\"unitPriceCents\":1}]} (0.041125ms)\n✔ invalid invoice refuses {\"customerId\":\"cus_acme\",\"currency\":\"EUR\",\"lines\":[{\"sku\":\"X\",\"quantity\":1,\"unitPriceCents\":1.25}]} (0.033875ms)\n✔ invalid invoice refuses {\"customerId\":\"cus_acme\",\"currency\":\"EUR\",\"lines\":[{\"sku\":\"X\",\"quantity\":2,\"unitPriceCents\":9007199254740991}]} (0.031667ms)\nℹ tests 9\nℹ suites 0\nℹ pass 9\nℹ fail 0\nℹ cancelled 0\nℹ skipped 0\nℹ todo 0\nℹ duration_ms 1772.27075\n",
+      "stderr": ""
+    },
+    {
+      "name": "install",
+      "args": [
+        "/opt/homebrew/Cellar/node/26.8.2/bin/node",
+        "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/aidd_docs/tasks/2026_10/2026_10_09_autonomous-rule-generation/realistic-sandbox/reproduction/install.cjs",
+        "/private/tmp/aidd-realistic-rule-repro-EGi6ZB",
+        "/Users/baptistelafourcade/orca/workspaces/framework/basketstar"
+      ],
+      "cwd": "/private/tmp/aidd-realistic-rule-repro-EGi6ZB",
+      "exit": 0,
+      "stdout": "{\"projects\":1,\"installedScripts\":1,\"evidence\":\"/private/tmp/aidd-realistic-rule-repro-EGi6ZB/installations.json\"}\n",
+      "stderr": ""
+    },
+    {
+      "name": "lifecycle",
+      "args": [
+        "/opt/homebrew/Cellar/node/26.8.2/bin/node",
+        "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/aidd_docs/tasks/2026_10/2026_10_09_autonomous-rule-generation/realistic-sandbox/reproduction/lifecycle.cjs",
+        "/private/tmp/aidd-realistic-rule-repro-EGi6ZB",
+        "/Users/baptistelafourcade/orca/workspaces/framework/basketstar"
+      ],
+      "cwd": "/private/tmp/aidd-realistic-rule-repro-EGi6ZB",
+      "exit": 0,
+      "stdout": "{\"projects\":1,\"installedInvocations\":13,\"allUserBytesPreserved\":true,\"applicationTests\":9,\"evidence\":\"/private/tmp/aidd-realistic-rule-repro-EGi6ZB/lifecycle-results.json\"}\n",
+      "stderr": ""
+    },
+    {
+      "name": "cleanup-ownership",
+      "args": [
+        "/opt/homebrew/Cellar/node/26.8.2/bin/node",
+        "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/aidd_docs/tasks/2026_10/2026_10_09_autonomous-rule-generation/realistic-sandbox/reproduction/cleanup-ownership.cjs",
+        "/private/tmp/aidd-realistic-rule-repro-EGi6ZB",
+        "/Users/baptistelafourcade/orca/workspaces/framework/basketstar"
+      ],
+      "cwd": "/private/tmp/aidd-realistic-rule-repro-EGi6ZB",
+      "exit": 0,
+      "stdout": "{\"generatedRulesPreserved\":true,\"scriptRemoved\":true,\"exits\":[0,0,0,0,0],\"evidence\":\"/private/tmp/aidd-realistic-rule-repro-EGi6ZB/cleanup-results.json\"}\n",
+      "stderr": ""
+    }
+  ]
+}

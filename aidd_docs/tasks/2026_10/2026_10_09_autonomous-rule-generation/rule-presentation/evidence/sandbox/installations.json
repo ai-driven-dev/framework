@@ -1,0 +1,92 @@
+[
+  {
+    "host": "claude",
+    "tool": "claude",
+    "project": "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/claude",
+    "mode": "project-local-plugin-install",
+    "runtimeExit": 0,
+    "pluginInstallExit": 0,
+    "script": "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/claude/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs"
+  },
+  {
+    "host": "cursor",
+    "tool": "cursor",
+    "project": "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/cursor",
+    "mode": "project-local-flat-translation (native activation not exercised)",
+    "runtimeExit": 0,
+    "pluginInstallExit": 1,
+    "script": "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/cursor/.cursor/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs"
+  },
+  {
+    "host": "copilot",
+    "tool": "copilot",
+    "project": "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/copilot",
+    "mode": "project-local-flat-translation (native activation not exercised)",
+    "runtimeExit": 0,
+    "pluginInstallExit": 0,
+    "script": "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/copilot/.github/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs"
+  },
+  {
+    "host": "codex",
+    "tool": "codex",
+    "project": "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/codex",
+    "mode": "project-local-flat-translation (native activation not exercised)",
+    "runtimeExit": 0,
+    "pluginInstallExit": 0,
+    "script": "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/codex/.agents/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs"
+  },
+  {
+    "host": "opencode",
+    "tool": "opencode",
+    "project": "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/opencode",
+    "mode": "project-local-plugin-install",
+    "runtimeExit": 0,
+    "pluginInstallExit": 0,
+    "script": "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/opencode/.opencode/skills/aidd-context/05-rule-generate/scripts/write-rule.cjs"
+  },
+  {
+    "host": "mixed",
+    "tool": "claude",
+    "project": "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/mixed",
+    "mode": "project-local-plugin-install",
+    "runtimeExit": 0,
+    "pluginInstallExit": 0,
+    "script": "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/mixed/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs"
+  },
+  {
+    "host": "mixed",
+    "tool": "cursor",
+    "project": "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/mixed",
+    "mode": "project-local-flat-translation (native activation not exercised)",
+    "runtimeExit": 0,
+    "pluginInstallExit": 1,
+    "script": "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/mixed/.cursor/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs"
+  },
+  {
+    "host": "mixed",
+    "tool": "copilot",
+    "project": "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/mixed",
+    "mode": "project-local-flat-translation (native activation not exercised)",
+    "runtimeExit": 0,
+    "pluginInstallExit": 0,
+    "script": "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/mixed/.github/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs"
+  },
+  {
+    "host": "mixed",
+    "tool": "codex",
+    "project": "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/mixed",
+    "mode": "project-local-flat-translation (native activation not exercised)",
+    "runtimeExit": 0,
+    "pluginInstallExit": 0,
+    "script": "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/mixed/.agents/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs"
+  },
+  {
+    "host": "mixed",
+    "tool": "opencode",
+    "project": "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/mixed",
+    "mode": "project-local-plugin-install",
+    "runtimeExit": 0,
+    "pluginInstallExit": 0,
+    "script": "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/mixed/.opencode/skills/aidd-context/05-rule-generate/scripts/write-rule.cjs"
+  }
+]

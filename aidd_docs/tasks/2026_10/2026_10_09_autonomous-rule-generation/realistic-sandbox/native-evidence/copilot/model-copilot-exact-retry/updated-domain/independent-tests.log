@@ -1,0 +1,50 @@
+
+> test
+> node --test tests/*.test.ts
+
+✔ real HTTP create, validation rejection, lookup, and not-found journey (222.451042ms)
+✔ exact cents totals and repository isolation (3.973875ms)
+✔ discount uses nearest-cent rounding and accepts boundary values (0.269958ms)
+✔ applying a discount returns the amount after the nearest-cent discount (0.13725ms)
+✔ formatting discount percentages preserves the numeric representation (0.109084ms)
+✔ validating discount totals returns nonnegative safe integer cents unchanged (0.190416ms)
+✔ validating discount total rejects -1 (0.485625ms)
+✔ validating discount total rejects 1.5 (0.10325ms)
+✔ validating discount total rejects 9007199254740992 (0.071041ms)
+✔ validating discount total rejects NaN (0.132083ms)
+✔ validating discount total rejects Infinity (0.174917ms)
+✔ validating discount total rejects -Infinity (0.07675ms)
+✔ validating discount total rejects 1 (0.072708ms)
+✔ validating discount total rejects null (0.09275ms)
+✔ validating discount total rejects undefined (0.077417ms)
+✔ validating discount total rejects true (0.065792ms)
+✔ formatting rejects invalid discount percent -1 (0.100833ms)
+✔ formatting rejects invalid discount percent 101 (0.067ms)
+✔ formatting rejects invalid discount percent NaN (0.063375ms)
+✔ formatting rejects invalid discount percent Infinity (0.053333ms)
+✔ formatting rejects invalid discount percent -Infinity (0.056834ms)
+✔ discount rejects total -1 and percent 10 (0.116ms)
+✔ discount rejects total 1.5 and percent 10 (0.065875ms)
+✔ discount rejects total 9007199254740992 and percent 10 (0.106417ms)
+✔ discount rejects total NaN and percent 10 (0.12825ms)
+✔ discount rejects total Infinity and percent 10 (0.066333ms)
+✔ discount rejects total 100 and percent -1 (0.065708ms)
+✔ discount rejects total 100 and percent 101 (0.061209ms)
+✔ discount rejects total 100 and percent NaN (0.060167ms)
+✔ discount rejects total 100 and percent Infinity (0.063625ms)
+✔ discount rejects total 100 and percent -Infinity (0.074333ms)
+✔ invalid invoice refuses null (0.094416ms)
+✔ invalid invoice refuses {"customerId":"bad","currency":"EUR","lines":[{"sku":"CONSULTING","quantity":3,"unitPriceCents":1999},{"sku":"FREIGHT","quantity":1,"unitPriceCents":450}]} (0.160042ms)
+✔ invalid invoice refuses {"customerId":"cus_acme","currency":"GBP","lines":[{"sku":"CONSULTING","quantity":3,"unitPriceCents":1999},{"sku":"FREIGHT","quantity":1,"unitPriceCents":450}]} (0.068667ms)
+✔ invalid invoice refuses {"customerId":"cus_acme","currency":"EUR","lines":[]} (0.064042ms)
+✔ invalid invoice refuses {"customerId":"cus_acme","currency":"EUR","lines":[{"sku":"X","quantity":0,"unitPriceCents":1}]} (0.073833ms)
+✔ invalid invoice refuses {"customerId":"cus_acme","currency":"EUR","lines":[{"sku":"X","quantity":1,"unitPriceCents":1.25}]} (0.052209ms)
+✔ invalid invoice refuses {"customerId":"cus_acme","currency":"EUR","lines":[{"sku":"X","quantity":2,"unitPriceCents":9007199254740991}]} (0.05975ms)
+ℹ tests 38
+ℹ suites 0
+ℹ pass 38
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 475.775

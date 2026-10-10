@@ -13,6 +13,7 @@ In-context: the topic, its category and slug, the file scope, a one-line descrip
 ## Process
 
 1. **Gate.** Run the asset-access precheck ([tool-paths.md](../references/tool-paths.md)).
+   For an explicitly confirmed host publish/delete, identify the existing rule or rule set and hosts, then continue to Render in action 02; no new topic or body is needed.
 2. **Auto or manual.** Ask whether to run auto or manual mode:
    - **Auto**: scan the codebase, propose a rules architecture, wait for approval.
    - **Manual**: ask the topic (blocking). Confirm any candidate first.
@@ -24,5 +25,5 @@ In-context: the topic, its category and slug, the file scope, a one-line descrip
 
 ## Test
 
-- The topic, category, and slug are stated and confirmed in writing.
+- The topic, category and slug, or existing publish/delete selection, are confirmed in writing.
 - Unsupported tools are named with what to do instead.

@@ -1,0 +1,9 @@
+{
+  "stage": "03-docs",
+  "exit": 0,
+  "elapsedSeconds": 8.48,
+  "appTestsExit": 0,
+  "model": "openai/gpt-6-luna#low",
+  "backend": "ChatGPT subscription OAuth",
+  "apiKeyEnvironmentInherited": false
+}

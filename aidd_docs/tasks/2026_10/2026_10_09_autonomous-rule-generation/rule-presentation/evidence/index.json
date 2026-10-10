@@ -1,0 +1,254 @@
+[
+  {
+    "path": "sandbox/reproduction-results.json",
+    "sha256": "2027ecc3a394148e8115688bc06836cda3af9faba7c75f76f0da748f5aaf2a63",
+    "bytes": 5632,
+    "source": "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/reproduction-results.json"
+  },
+  {
+    "path": "sandbox/install-commands.json",
+    "sha256": "ae18ce12b7104fe68583e1fee3c7f68ddfa28e6b5bf7fed4ba2929ba2e9577e2",
+    "bytes": 16363,
+    "source": "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/install-commands.json"
+  },
+  {
+    "path": "sandbox/installations.json",
+    "sha256": "31305f68a0c70ad9e644df92633d605570062133a421407c8b1bb8dad1e8d865",
+    "bytes": 4843,
+    "source": "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/installations.json"
+  },
+  {
+    "path": "sandbox/lifecycle-commands.json",
+    "sha256": "8c3f16f40940c698082934c33e67641f68db6b66cdcac6c71856b0491f2568d8",
+    "bytes": 66848,
+    "source": "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/lifecycle-commands.json"
+  },
+  {
+    "path": "sandbox/lifecycle-results.json",
+    "sha256": "95d99cca97808e988c93960d09ec980bcd91df00e881645cc30b4cbd1979169c",
+    "bytes": 1431,
+    "source": "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/lifecycle-results.json"
+  },
+  {
+    "path": "sandbox/negative-commands.json",
+    "sha256": "9ae68a283371464045eb59ed7ffeb30e3aa9d3b6329909c4472fdce0c0ae6b90",
+    "bytes": 12977,
+    "source": "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/negative-commands.json"
+  },
+  {
+    "path": "sandbox/negative-results.json",
+    "sha256": "22109f822e7129367056599922550622500e39aa84349af5cb8daf2867f127f9",
+    "bytes": 2862,
+    "source": "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/negative-results.json"
+  },
+  {
+    "path": "sandbox/cleanup-results.json",
+    "sha256": "941b4002ba9ba8eb56b96b50d01d375dfdb7faa1056d979a6e6474720bda5d10",
+    "bytes": 2864,
+    "source": "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/cleanup-results.json"
+  },
+  {
+    "path": "root-tests.log",
+    "sha256": "343062766ae072f2a4e81ae72940dffb72fcd42cfe7ab6f0ed6afa01e134a7b9",
+    "bytes": 62378,
+    "source": "/tmp/aidd-rule-presentation-root-final.log"
+  },
+  {
+    "path": "write-rule.cjs",
+    "sha256": "70783e579b75b9e22760239cbfd4309641bdd73840b17e7dfd606a252679a420",
+    "bytes": 15650,
+    "source": "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs"
+  },
+  {
+    "path": "runtime/codex-create/summary.json",
+    "sha256": "7aa34be9becb8a3c59a353cdf341351b4a918841240bfe71667466c2b2dc8e92",
+    "bytes": 319,
+    "source": "/private/tmp/aidd-913-codex-run-soh2mbwq/summary.json"
+  },
+  {
+    "path": "runtime/codex-create/requests.json",
+    "sha256": "173ab582af14c8872532d95944a28c57b5014acf0824e1a63840cfa7c4c6614e",
+    "bytes": 48899,
+    "source": "/private/tmp/aidd-913-codex-run-soh2mbwq/generated/requests.json"
+  },
+  {
+    "path": "runtime/codex-create/stdout.log",
+    "sha256": "00c72ca71e299c742164f52c3e862c819891406767c2d8caf0cbb176456f8f34",
+    "bytes": 545,
+    "source": "/private/tmp/aidd-913-codex-run-soh2mbwq/generated/stdout.log"
+  },
+  {
+    "path": "runtime/codex-create/stderr.log",
+    "sha256": "a8b70c8511d68ea11e0f74ccf2610de91a0d977d7ad6fcde893575b08c463507",
+    "bytes": 309,
+    "source": "/private/tmp/aidd-913-codex-run-soh2mbwq/generated/stderr.log"
+  },
+  {
+    "path": "runtime/codex-update/summary.json",
+    "sha256": "d89c3f14dd04869177afca8064d26c2a5ed4a6ef942d083d04bd0455a5d2297f",
+    "bytes": 319,
+    "source": "/private/tmp/aidd-913-codex-run-t4zy0gty/summary.json"
+  },
+  {
+    "path": "runtime/codex-update/requests.json",
+    "sha256": "c7cd41c699d32242363230fd4612ec9e7f853be4c0774bcac845de774cc02b69",
+    "bytes": 48899,
+    "source": "/private/tmp/aidd-913-codex-run-t4zy0gty/generated/requests.json"
+  },
+  {
+    "path": "runtime/codex-update/stdout.log",
+    "sha256": "12fd72e822a7bc68396de65ed993873b7fcebe0b2e54c6b96b1b73d14672dc41",
+    "bytes": 545,
+    "source": "/private/tmp/aidd-913-codex-run-t4zy0gty/generated/stdout.log"
+  },
+  {
+    "path": "runtime/codex-update/stderr.log",
+    "sha256": "b547c131ac3a98e4bfaa6012db5d04217267664070fa881604d484acb488030b",
+    "bytes": 309,
+    "source": "/private/tmp/aidd-913-codex-run-t4zy0gty/generated/stderr.log"
+  },
+  {
+    "path": "runtime/codex-delete/summary.json",
+    "sha256": "5729b5348d7f0723b94111afab2c7a4606ec76e7bf18b685f34dd4bde07ae7d6",
+    "bytes": 315,
+    "source": "/private/tmp/aidd-913-codex-run-e0r5cdgk/summary.json"
+  },
+  {
+    "path": "runtime/codex-delete/requests.json",
+    "sha256": "2d4609c059266e33b7c377de802707474140a21d26ffd84228b2a77507f8edf1",
+    "bytes": 48675,
+    "source": "/private/tmp/aidd-913-codex-run-e0r5cdgk/generated/requests.json"
+  },
+  {
+    "path": "runtime/codex-delete/stdout.log",
+    "sha256": "101938b31f3d35e96e9515b1628eb4e6bb90e27ad5a4d285e1e997398e638b1d",
+    "bytes": 545,
+    "source": "/private/tmp/aidd-913-codex-run-e0r5cdgk/generated/stdout.log"
+  },
+  {
+    "path": "runtime/codex-delete/stderr.log",
+    "sha256": "b504d490bb0f2c4afd066f0f4662c070d3d9e9731c6cdde190a4af8dd820ad62",
+    "bytes": 309,
+    "source": "/private/tmp/aidd-913-codex-run-e0r5cdgk/generated/stderr.log"
+  },
+  {
+    "path": "runtime/opencode-create/summary.json",
+    "sha256": "e95fa01a5cedda4a6e48f709cac4c713d62d40628b2c408d16b1614f5c0cc9ae",
+    "bytes": 534,
+    "source": "/private/tmp/aidd-readable-rules-runtime-lObLX6/captures/final-opencode-create/summary.json"
+  },
+  {
+    "path": "runtime/opencode-create/model-requests.json",
+    "sha256": "5fd0bff82788781a2464b0ba7535e27ac3a8c1df2567a43180f76b787de9c3cf",
+    "bytes": 30707,
+    "source": "/private/tmp/aidd-readable-rules-runtime-lObLX6/captures/final-opencode-create/model-requests.json"
+  },
+  {
+    "path": "runtime/opencode-create/stdout.log",
+    "sha256": "c82c1a96f5c9f59597ec8784975fff63fa3f4666b31470ae87e96e839e6f711a",
+    "bytes": 308,
+    "source": "/private/tmp/aidd-readable-rules-runtime-lObLX6/captures/final-opencode-create/stdout.log"
+  },
+  {
+    "path": "runtime/opencode-create/stderr.log",
+    "sha256": "6bc6c81d8b3a59e4a96ad1929a8252b1b9e1618f66b2fc147fac26d749fefc21",
+    "bytes": 9366,
+    "source": "/private/tmp/aidd-readable-rules-runtime-lObLX6/captures/final-opencode-create/stderr.log"
+  },
+  {
+    "path": "runtime/opencode-update/summary.json",
+    "sha256": "bbf426d5ab48817cae6ff8f767b2fd87293c7726fcc9037461e72e70cacaec5f",
+    "bytes": 534,
+    "source": "/private/tmp/aidd-readable-rules-runtime-lObLX6/captures/final-opencode-update/summary.json"
+  },
+  {
+    "path": "runtime/opencode-update/model-requests.json",
+    "sha256": "957494aa530d6eac1e451072c3208a5808e06e224a4b76afaede7f2811f15e34",
+    "bytes": 30707,
+    "source": "/private/tmp/aidd-readable-rules-runtime-lObLX6/captures/final-opencode-update/model-requests.json"
+  },
+  {
+    "path": "runtime/opencode-update/stdout.log",
+    "sha256": "1686d4d6bd800be9f45e67af5d752dfe3ff64711feb36250b4b07bbb7ebcbbc9",
+    "bytes": 308,
+    "source": "/private/tmp/aidd-readable-rules-runtime-lObLX6/captures/final-opencode-update/stdout.log"
+  },
+  {
+    "path": "runtime/opencode-update/stderr.log",
+    "sha256": "c83361681c0aaf8dae614b9011323feeecbd29fca9be54837f7533cf89de4304",
+    "bytes": 9366,
+    "source": "/private/tmp/aidd-readable-rules-runtime-lObLX6/captures/final-opencode-update/stderr.log"
+  },
+  {
+    "path": "runtime/opencode-delete/summary.json",
+    "sha256": "d41e3672341f00e6fcd641c839b8fc777c6905562260d1600da1c5671f737776",
+    "bytes": 532,
+    "source": "/private/tmp/aidd-readable-rules-runtime-lObLX6/captures/final-opencode-delete/summary.json"
+  },
+  {
+    "path": "runtime/opencode-delete/model-requests.json",
+    "sha256": "d7b036df1980a58408a417028c5681045b0af030a727c5ed13b587dc63a540f1",
+    "bytes": 30483,
+    "source": "/private/tmp/aidd-readable-rules-runtime-lObLX6/captures/final-opencode-delete/model-requests.json"
+  },
+  {
+    "path": "runtime/opencode-delete/stdout.log",
+    "sha256": "93a3058c937f67f4b25a39de02f368fc9ebda8fc12dbd041c6cac12a60268eb8",
+    "bytes": 308,
+    "source": "/private/tmp/aidd-readable-rules-runtime-lObLX6/captures/final-opencode-delete/stdout.log"
+  },
+  {
+    "path": "runtime/opencode-delete/stderr.log",
+    "sha256": "3fa78480ebc9a49279ee4ecaca38efa88ffd6ac6fcce3f0ff9924d7259921c9d",
+    "bytes": 9989,
+    "source": "/private/tmp/aidd-readable-rules-runtime-lObLX6/captures/final-opencode-delete/stderr.log"
+  },
+  {
+    "path": "runtime-checks.json",
+    "sha256": "bccc5ad8313b08dba511e5deb54214d2b7be8e4cf0918fba460670d806ec55a4",
+    "bytes": 812,
+    "source": "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/aidd_docs/tasks/2026_10/2026_10_09_autonomous-rule-generation/rule-presentation/evidence/runtime-checks.json"
+  },
+  {
+    "path": "rendered/create/AGENTS.txt",
+    "sha256": "9125e8ac075fae9e54be843610e46958c8e7d2e59e2479807d55056950af5c31",
+    "bytes": 595,
+    "source": "/private/tmp/aidd-readable-rules-runtime-lObLX6/create/AGENTS.md"
+  },
+  {
+    "path": "rendered/update/AGENTS.txt",
+    "sha256": "e2a4b4cf5a22b872015a745ee6136092bbb68aa46f8b884599e4b4ecd55ac685",
+    "bytes": 595,
+    "source": "/private/tmp/aidd-readable-rules-runtime-lObLX6/update/AGENTS.md"
+  },
+  {
+    "path": "rendered/delete/AGENTS.txt",
+    "sha256": "76752d4dcfb002c378b9621d7783c97f427e2864320c11195b50bfca4897e3a7",
+    "bytes": 378,
+    "source": "/private/tmp/aidd-readable-rules-runtime-lObLX6/delete/AGENTS.md"
+  },
+  {
+    "path": "probes/opencode.py",
+    "sha256": "fff13c8cea194880e503bfb3bca1d86688d7356d3aabb2fdebc05449b29345f8",
+    "bytes": 4495,
+    "source": "/tmp/aidd-913-runtime-NAuUNo/runtime_probe.py"
+  },
+  {
+    "path": "probes/codex.py",
+    "sha256": "6cd4d19ca108026a03266393387809f3ae038ec9f21e343ec1994ffafc70a051",
+    "bytes": 5162,
+    "source": "/tmp/aidd-913-codex-probe-sEcW3B/probe.py"
+  },
+  {
+    "path": "installed-writers.json",
+    "sha256": "805144fb45560213a2ddc3b2319f7c032cf2e8e79de3ce10a883681d700ab9a5",
+    "bytes": 1343,
+    "source": "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/aidd_docs/tasks/2026_10/2026_10_09_autonomous-rule-generation/rule-presentation/evidence/installed-writers.json"
+  },
+  {
+    "path": "repository-gates.json",
+    "sha256": "df24c1e2a1f343c87e1d837e1ba2fcbdb5916d8cf3fbe28bfdc39803d6ed3a80",
+    "bytes": 2867,
+    "source": "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/aidd_docs/tasks/2026_10/2026_10_09_autonomous-rule-generation/rule-presentation/evidence/repository-gates.json"
+  }
+]

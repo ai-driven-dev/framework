@@ -1,0 +1,1238 @@
+[
+  {
+    "host": "claude",
+    "args": [
+      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/claude/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
+      "--project",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/claude",
+      "--tools",
+      "claude",
+      "--input",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/requests/claude-0.json"
+    ],
+    "exit": 0,
+    "stdout": "{\"files\":[\"aidd_docs/rules/07-quality/7-monetary-precision.md\",\".claude/rules/07-quality/7-monetary-precision.md\"]}\n",
+    "stderr": ""
+  },
+  {
+    "host": "claude",
+    "args": [
+      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/claude/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
+      "--project",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/claude",
+      "--tools",
+      "claude",
+      "--input",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/requests/claude-1.json"
+    ],
+    "exit": 0,
+    "stdout": "{\"files\":[\"aidd_docs/rules/02-programming-languages/2-domain-invariants.md\",\".claude/rules/07-quality/7-monetary-precision.md\",\".claude/rules/02-programming-languages/2-domain-invariants.md\"]}\n",
+    "stderr": ""
+  },
+  {
+    "host": "claude",
+    "args": [
+      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/claude/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
+      "--project",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/claude",
+      "--tools",
+      "claude",
+      "--input",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/requests/claude-2.json"
+    ],
+    "exit": 0,
+    "stdout": "{\"files\":[\"aidd_docs/rules/09-other/9-api-documentation.md\",\".claude/rules/02-programming-languages/2-domain-invariants.md\",\".claude/rules/07-quality/7-monetary-precision.md\",\".claude/rules/09-other/9-api-documentation.md\"]}\n",
+    "stderr": ""
+  },
+  {
+    "host": "claude",
+    "args": [
+      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/claude/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
+      "--project",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/claude",
+      "--tools",
+      "claude",
+      "--input",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/requests/claude-3.json"
+    ],
+    "exit": 0,
+    "stdout": "{\"files\":[\"aidd_docs/rules/07-quality/7-monetary-precision.md\",\".claude/rules/02-programming-languages/2-domain-invariants.md\",\".claude/rules/07-quality/7-monetary-precision.md\",\".claude/rules/09-other/9-api-documentation.md\"]}\n",
+    "stderr": ""
+  },
+  {
+    "host": "claude",
+    "args": [
+      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/claude/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
+      "--project",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/claude",
+      "--tools",
+      "claude",
+      "--input",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/requests/claude-4.json"
+    ],
+    "exit": 0,
+    "stdout": "{\"files\":[\"aidd_docs/rules/02-programming-languages/2-domain-invariants.md\",\".claude/rules/02-programming-languages/2-domain-invariants.md\",\".claude/rules/07-quality/7-monetary-precision.md\",\".claude/rules/09-other/9-api-documentation.md\"]}\n",
+    "stderr": ""
+  },
+  {
+    "host": "claude",
+    "args": [
+      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/claude/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
+      "--project",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/claude",
+      "--tools",
+      "claude",
+      "--input",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/requests/claude-5.json"
+    ],
+    "exit": 0,
+    "stdout": "{\"files\":[\"aidd_docs/rules/09-other/9-api-documentation.md\",\".claude/rules/02-programming-languages/2-domain-invariants.md\",\".claude/rules/07-quality/7-monetary-precision.md\",\".claude/rules/09-other/9-api-documentation.md\"]}\n",
+    "stderr": ""
+  },
+  {
+    "host": "claude",
+    "args": [
+      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/claude/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
+      "--project",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/claude",
+      "--tools",
+      "claude",
+      "--publish"
+    ],
+    "exit": 0,
+    "stdout": "{\"files\":[\".claude/rules/02-programming-languages/2-domain-invariants.md\",\".claude/rules/07-quality/7-monetary-precision.md\",\".claude/rules/09-other/9-api-documentation.md\"]}\n",
+    "stderr": ""
+  },
+  {
+    "host": "claude",
+    "args": [
+      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/claude/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
+      "--project",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/claude",
+      "--tools",
+      "claude",
+      "--publish"
+    ],
+    "exit": 0,
+    "stdout": "{\"files\":[\".claude/rules/02-programming-languages/2-domain-invariants.md\",\".claude/rules/07-quality/7-monetary-precision.md\",\".claude/rules/09-other/9-api-documentation.md\"]}\n",
+    "stderr": ""
+  },
+  {
+    "host": "claude",
+    "args": [
+      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/claude/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
+      "--project",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/claude",
+      "--tools",
+      "opencode",
+      "--input",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/requests/claude-8.json"
+    ],
+    "exit": 0,
+    "stdout": "{\"files\":[\"aidd_docs/rules/09-other/9-api-documentation.md\",\".claude/rules/02-programming-languages/2-domain-invariants.md\",\".claude/rules/07-quality/7-monetary-precision.md\",\".claude/rules/09-other/9-api-documentation.md\",\"AGENTS.md\"]}\n",
+    "stderr": ""
+  },
+  {
+    "host": "claude",
+    "args": [
+      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/claude/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
+      "--project",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/claude",
+      "--tools",
+      "claude",
+      "--input",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/requests/claude-9.json"
+    ],
+    "exit": 0,
+    "stdout": "{\"files\":[\"aidd_docs/rules/09-other/9-api-documentation.md\",\".claude/rules/02-programming-languages/2-domain-invariants.md\",\".claude/rules/07-quality/7-monetary-precision.md\",\".claude/rules/09-other/9-api-documentation.md\",\"AGENTS.md\"]}\n",
+    "stderr": ""
+  },
+  {
+    "host": "claude",
+    "args": [
+      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/claude/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
+      "--project",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/claude",
+      "--tools",
+      "claude",
+      "--delete",
+      "09-other/9-api-documentation"
+    ],
+    "exit": 0,
+    "stdout": "{\"files\":[\"aidd_docs/rules/09-other/9-api-documentation.md\",\".claude/rules/02-programming-languages/2-domain-invariants.md\",\".claude/rules/07-quality/7-monetary-precision.md\",\".claude/rules/09-other/9-api-documentation.md\"]}\n",
+    "stderr": ""
+  },
+  {
+    "host": "claude",
+    "args": [
+      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/claude/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
+      "--project",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/claude",
+      "--tools",
+      "claude",
+      "--delete",
+      "02-programming-languages/2-domain-invariants"
+    ],
+    "exit": 0,
+    "stdout": "{\"files\":[\"aidd_docs/rules/02-programming-languages/2-domain-invariants.md\",\".claude/rules/02-programming-languages/2-domain-invariants.md\",\".claude/rules/07-quality/7-monetary-precision.md\"]}\n",
+    "stderr": ""
+  },
+  {
+    "host": "claude",
+    "args": [
+      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/claude/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
+      "--project",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/claude",
+      "--tools",
+      "claude",
+      "--delete",
+      "07-quality/7-monetary-precision"
+    ],
+    "exit": 0,
+    "stdout": "{\"files\":[\"aidd_docs/rules/07-quality/7-monetary-precision.md\",\".claude/rules/07-quality/7-monetary-precision.md\"]}\n",
+    "stderr": ""
+  },
+  {
+    "host": "cursor",
+    "args": [
+      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/cursor/.cursor/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
+      "--project",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/cursor",
+      "--tools",
+      "cursor",
+      "--input",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/requests/cursor-13.json"
+    ],
+    "exit": 0,
+    "stdout": "{\"files\":[\"aidd_docs/rules/07-quality/7-monetary-precision.md\",\".cursor/rules/07-quality/7-monetary-precision.mdc\"]}\n",
+    "stderr": ""
+  },
+  {
+    "host": "cursor",
+    "args": [
+      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/cursor/.cursor/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
+      "--project",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/cursor",
+      "--tools",
+      "cursor",
+      "--input",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/requests/cursor-14.json"
+    ],
+    "exit": 0,
+    "stdout": "{\"files\":[\"aidd_docs/rules/02-programming-languages/2-domain-invariants.md\",\".cursor/rules/07-quality/7-monetary-precision.mdc\",\".cursor/rules/02-programming-languages/2-domain-invariants.mdc\"]}\n",
+    "stderr": ""
+  },
+  {
+    "host": "cursor",
+    "args": [
+      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/cursor/.cursor/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
+      "--project",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/cursor",
+      "--tools",
+      "cursor",
+      "--input",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/requests/cursor-15.json"
+    ],
+    "exit": 0,
+    "stdout": "{\"files\":[\"aidd_docs/rules/09-other/9-api-documentation.md\",\".cursor/rules/02-programming-languages/2-domain-invariants.mdc\",\".cursor/rules/07-quality/7-monetary-precision.mdc\",\".cursor/rules/09-other/9-api-documentation.mdc\"]}\n",
+    "stderr": ""
+  },
+  {
+    "host": "cursor",
+    "args": [
+      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/cursor/.cursor/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
+      "--project",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/cursor",
+      "--tools",
+      "cursor",
+      "--input",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/requests/cursor-16.json"
+    ],
+    "exit": 0,
+    "stdout": "{\"files\":[\"aidd_docs/rules/07-quality/7-monetary-precision.md\",\".cursor/rules/02-programming-languages/2-domain-invariants.mdc\",\".cursor/rules/07-quality/7-monetary-precision.mdc\",\".cursor/rules/09-other/9-api-documentation.mdc\"]}\n",
+    "stderr": ""
+  },
+  {
+    "host": "cursor",
+    "args": [
+      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/cursor/.cursor/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
+      "--project",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/cursor",
+      "--tools",
+      "cursor",
+      "--input",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/requests/cursor-17.json"
+    ],
+    "exit": 0,
+    "stdout": "{\"files\":[\"aidd_docs/rules/02-programming-languages/2-domain-invariants.md\",\".cursor/rules/02-programming-languages/2-domain-invariants.mdc\",\".cursor/rules/07-quality/7-monetary-precision.mdc\",\".cursor/rules/09-other/9-api-documentation.mdc\"]}\n",
+    "stderr": ""
+  },
+  {
+    "host": "cursor",
+    "args": [
+      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/cursor/.cursor/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
+      "--project",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/cursor",
+      "--tools",
+      "cursor",
+      "--input",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/requests/cursor-18.json"
+    ],
+    "exit": 0,
+    "stdout": "{\"files\":[\"aidd_docs/rules/09-other/9-api-documentation.md\",\".cursor/rules/02-programming-languages/2-domain-invariants.mdc\",\".cursor/rules/07-quality/7-monetary-precision.mdc\",\".cursor/rules/09-other/9-api-documentation.mdc\"]}\n",
+    "stderr": ""
+  },
+  {
+    "host": "cursor",
+    "args": [
+      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/cursor/.cursor/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
+      "--project",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/cursor",
+      "--tools",
+      "cursor",
+      "--publish"
+    ],
+    "exit": 0,
+    "stdout": "{\"files\":[\".cursor/rules/02-programming-languages/2-domain-invariants.mdc\",\".cursor/rules/07-quality/7-monetary-precision.mdc\",\".cursor/rules/09-other/9-api-documentation.mdc\"]}\n",
+    "stderr": ""
+  },
+  {
+    "host": "cursor",
+    "args": [
+      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/cursor/.cursor/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
+      "--project",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/cursor",
+      "--tools",
+      "cursor",
+      "--publish"
+    ],
+    "exit": 0,
+    "stdout": "{\"files\":[\".cursor/rules/02-programming-languages/2-domain-invariants.mdc\",\".cursor/rules/07-quality/7-monetary-precision.mdc\",\".cursor/rules/09-other/9-api-documentation.mdc\"]}\n",
+    "stderr": ""
+  },
+  {
+    "host": "cursor",
+    "args": [
+      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/cursor/.cursor/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
+      "--project",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/cursor",
+      "--tools",
+      "opencode",
+      "--input",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/requests/cursor-21.json"
+    ],
+    "exit": 0,
+    "stdout": "{\"files\":[\"aidd_docs/rules/09-other/9-api-documentation.md\",\".cursor/rules/02-programming-languages/2-domain-invariants.mdc\",\".cursor/rules/07-quality/7-monetary-precision.mdc\",\".cursor/rules/09-other/9-api-documentation.mdc\",\"AGENTS.md\"]}\n",
+    "stderr": ""
+  },
+  {
+    "host": "cursor",
+    "args": [
+      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/cursor/.cursor/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
+      "--project",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/cursor",
+      "--tools",
+      "cursor",
+      "--input",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/requests/cursor-22.json"
+    ],
+    "exit": 0,
+    "stdout": "{\"files\":[\"aidd_docs/rules/09-other/9-api-documentation.md\",\".cursor/rules/02-programming-languages/2-domain-invariants.mdc\",\".cursor/rules/07-quality/7-monetary-precision.mdc\",\".cursor/rules/09-other/9-api-documentation.mdc\",\"AGENTS.md\"]}\n",
+    "stderr": ""
+  },
+  {
+    "host": "cursor",
+    "args": [
+      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/cursor/.cursor/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
+      "--project",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/cursor",
+      "--tools",
+      "cursor",
+      "--delete",
+      "09-other/9-api-documentation"
+    ],
+    "exit": 0,
+    "stdout": "{\"files\":[\"aidd_docs/rules/09-other/9-api-documentation.md\",\".cursor/rules/02-programming-languages/2-domain-invariants.mdc\",\".cursor/rules/07-quality/7-monetary-precision.mdc\",\".cursor/rules/09-other/9-api-documentation.mdc\"]}\n",
+    "stderr": ""
+  },
+  {
+    "host": "cursor",
+    "args": [
+      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/cursor/.cursor/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
+      "--project",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/cursor",
+      "--tools",
+      "cursor",
+      "--delete",
+      "02-programming-languages/2-domain-invariants"
+    ],
+    "exit": 0,
+    "stdout": "{\"files\":[\"aidd_docs/rules/02-programming-languages/2-domain-invariants.md\",\".cursor/rules/02-programming-languages/2-domain-invariants.mdc\",\".cursor/rules/07-quality/7-monetary-precision.mdc\"]}\n",
+    "stderr": ""
+  },
+  {
+    "host": "cursor",
+    "args": [
+      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/cursor/.cursor/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
+      "--project",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/cursor",
+      "--tools",
+      "cursor",
+      "--delete",
+      "07-quality/7-monetary-precision"
+    ],
+    "exit": 0,
+    "stdout": "{\"files\":[\"aidd_docs/rules/07-quality/7-monetary-precision.md\",\".cursor/rules/07-quality/7-monetary-precision.mdc\"]}\n",
+    "stderr": ""
+  },
+  {
+    "host": "copilot",
+    "args": [
+      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/copilot/.github/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
+      "--project",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/copilot",
+      "--tools",
+      "copilot",
+      "--input",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/requests/copilot-26.json"
+    ],
+    "exit": 0,
+    "stdout": "{\"files\":[\"aidd_docs/rules/07-quality/7-monetary-precision.md\",\".github/instructions/07-monetary-precision.instructions.md\"]}\n",
+    "stderr": ""
+  },
+  {
+    "host": "copilot",
+    "args": [
+      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/copilot/.github/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
+      "--project",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/copilot",
+      "--tools",
+      "copilot",
+      "--input",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/requests/copilot-27.json"
+    ],
+    "exit": 0,
+    "stdout": "{\"files\":[\"aidd_docs/rules/02-programming-languages/2-domain-invariants.md\",\".github/instructions/07-monetary-precision.instructions.md\",\".github/instructions/02-domain-invariants.instructions.md\"]}\n",
+    "stderr": ""
+  },
+  {
+    "host": "copilot",
+    "args": [
+      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/copilot/.github/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
+      "--project",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/copilot",
+      "--tools",
+      "copilot",
+      "--input",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/requests/copilot-28.json"
+    ],
+    "exit": 0,
+    "stdout": "{\"files\":[\"aidd_docs/rules/09-other/9-api-documentation.md\",\".github/instructions/02-domain-invariants.instructions.md\",\".github/instructions/07-monetary-precision.instructions.md\",\".github/instructions/09-api-documentation.instructions.md\"]}\n",
+    "stderr": ""
+  },
+  {
+    "host": "copilot",
+    "args": [
+      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/copilot/.github/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
+      "--project",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/copilot",
+      "--tools",
+      "copilot",
+      "--input",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/requests/copilot-29.json"
+    ],
+    "exit": 0,
+    "stdout": "{\"files\":[\"aidd_docs/rules/07-quality/7-monetary-precision.md\",\".github/instructions/02-domain-invariants.instructions.md\",\".github/instructions/07-monetary-precision.instructions.md\",\".github/instructions/09-api-documentation.instructions.md\"]}\n",
+    "stderr": ""
+  },
+  {
+    "host": "copilot",
+    "args": [
+      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/copilot/.github/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
+      "--project",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/copilot",
+      "--tools",
+      "copilot",
+      "--input",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/requests/copilot-30.json"
+    ],
+    "exit": 0,
+    "stdout": "{\"files\":[\"aidd_docs/rules/02-programming-languages/2-domain-invariants.md\",\".github/instructions/02-domain-invariants.instructions.md\",\".github/instructions/07-monetary-precision.instructions.md\",\".github/instructions/09-api-documentation.instructions.md\"]}\n",
+    "stderr": ""
+  },
+  {
+    "host": "copilot",
+    "args": [
+      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/copilot/.github/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
+      "--project",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/copilot",
+      "--tools",
+      "copilot",
+      "--input",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/requests/copilot-31.json"
+    ],
+    "exit": 0,
+    "stdout": "{\"files\":[\"aidd_docs/rules/09-other/9-api-documentation.md\",\".github/instructions/02-domain-invariants.instructions.md\",\".github/instructions/07-monetary-precision.instructions.md\",\".github/instructions/09-api-documentation.instructions.md\"]}\n",
+    "stderr": ""
+  },
+  {
+    "host": "copilot",
+    "args": [
+      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/copilot/.github/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
+      "--project",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/copilot",
+      "--tools",
+      "copilot",
+      "--publish"
+    ],
+    "exit": 0,
+    "stdout": "{\"files\":[\".github/instructions/02-domain-invariants.instructions.md\",\".github/instructions/07-monetary-precision.instructions.md\",\".github/instructions/09-api-documentation.instructions.md\"]}\n",
+    "stderr": ""
+  },
+  {
+    "host": "copilot",
+    "args": [
+      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/copilot/.github/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
+      "--project",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/copilot",
+      "--tools",
+      "copilot",
+      "--publish"
+    ],
+    "exit": 0,
+    "stdout": "{\"files\":[\".github/instructions/02-domain-invariants.instructions.md\",\".github/instructions/07-monetary-precision.instructions.md\",\".github/instructions/09-api-documentation.instructions.md\"]}\n",
+    "stderr": ""
+  },
+  {
+    "host": "copilot",
+    "args": [
+      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/copilot/.github/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
+      "--project",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/copilot",
+      "--tools",
+      "opencode",
+      "--input",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/requests/copilot-34.json"
+    ],
+    "exit": 0,
+    "stdout": "{\"files\":[\"aidd_docs/rules/09-other/9-api-documentation.md\",\".github/instructions/02-domain-invariants.instructions.md\",\".github/instructions/07-monetary-precision.instructions.md\",\".github/instructions/09-api-documentation.instructions.md\",\"AGENTS.md\"]}\n",
+    "stderr": ""
+  },
+  {
+    "host": "copilot",
+    "args": [
+      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/copilot/.github/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
+      "--project",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/copilot",
+      "--tools",
+      "copilot",
+      "--input",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/requests/copilot-35.json"
+    ],
+    "exit": 0,
+    "stdout": "{\"files\":[\"aidd_docs/rules/09-other/9-api-documentation.md\",\".github/instructions/02-domain-invariants.instructions.md\",\".github/instructions/07-monetary-precision.instructions.md\",\".github/instructions/09-api-documentation.instructions.md\",\"AGENTS.md\"]}\n",
+    "stderr": ""
+  },
+  {
+    "host": "copilot",
+    "args": [
+      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/copilot/.github/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
+      "--project",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/copilot",
+      "--tools",
+      "copilot",
+      "--delete",
+      "09-other/9-api-documentation"
+    ],
+    "exit": 0,
+    "stdout": "{\"files\":[\"aidd_docs/rules/09-other/9-api-documentation.md\",\".github/instructions/02-domain-invariants.instructions.md\",\".github/instructions/07-monetary-precision.instructions.md\",\".github/instructions/09-api-documentation.instructions.md\"]}\n",
+    "stderr": ""
+  },
+  {
+    "host": "copilot",
+    "args": [
+      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/copilot/.github/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
+      "--project",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/copilot",
+      "--tools",
+      "copilot",
+      "--delete",
+      "02-programming-languages/2-domain-invariants"
+    ],
+    "exit": 0,
+    "stdout": "{\"files\":[\"aidd_docs/rules/02-programming-languages/2-domain-invariants.md\",\".github/instructions/02-domain-invariants.instructions.md\",\".github/instructions/07-monetary-precision.instructions.md\"]}\n",
+    "stderr": ""
+  },
+  {
+    "host": "copilot",
+    "args": [
+      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/copilot/.github/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
+      "--project",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/copilot",
+      "--tools",
+      "copilot",
+      "--delete",
+      "07-quality/7-monetary-precision"
+    ],
+    "exit": 0,
+    "stdout": "{\"files\":[\"aidd_docs/rules/07-quality/7-monetary-precision.md\",\".github/instructions/07-monetary-precision.instructions.md\"]}\n",
+    "stderr": ""
+  },
+  {
+    "host": "codex",
+    "args": [
+      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/codex/.agents/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
+      "--project",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/codex",
+      "--tools",
+      "codex",
+      "--input",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/requests/codex-39.json"
+    ],
+    "exit": 0,
+    "stdout": "{\"files\":[\"aidd_docs/rules/07-quality/7-monetary-precision.md\",\"AGENTS.md\"]}\n",
+    "stderr": ""
+  },
+  {
+    "host": "codex",
+    "args": [
+      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/codex/.agents/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
+      "--project",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/codex",
+      "--tools",
+      "codex",
+      "--input",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/requests/codex-40.json"
+    ],
+    "exit": 0,
+    "stdout": "{\"files\":[\"aidd_docs/rules/02-programming-languages/2-domain-invariants.md\",\"AGENTS.md\"]}\n",
+    "stderr": ""
+  },
+  {
+    "host": "codex",
+    "args": [
+      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/codex/.agents/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
+      "--project",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/codex",
+      "--tools",
+      "codex",
+      "--input",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/requests/codex-41.json"
+    ],
+    "exit": 0,
+    "stdout": "{\"files\":[\"aidd_docs/rules/09-other/9-api-documentation.md\",\"AGENTS.md\"]}\n",
+    "stderr": ""
+  },
+  {
+    "host": "codex",
+    "args": [
+      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/codex/.agents/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
+      "--project",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/codex",
+      "--tools",
+      "codex",
+      "--input",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/requests/codex-42.json"
+    ],
+    "exit": 0,
+    "stdout": "{\"files\":[\"aidd_docs/rules/07-quality/7-monetary-precision.md\",\"AGENTS.md\"]}\n",
+    "stderr": ""
+  },
+  {
+    "host": "codex",
+    "args": [
+      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/codex/.agents/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
+      "--project",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/codex",
+      "--tools",
+      "codex",
+      "--input",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/requests/codex-43.json"
+    ],
+    "exit": 0,
+    "stdout": "{\"files\":[\"aidd_docs/rules/02-programming-languages/2-domain-invariants.md\",\"AGENTS.md\"]}\n",
+    "stderr": ""
+  },
+  {
+    "host": "codex",
+    "args": [
+      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/codex/.agents/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
+      "--project",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/codex",
+      "--tools",
+      "codex",
+      "--input",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/requests/codex-44.json"
+    ],
+    "exit": 0,
+    "stdout": "{\"files\":[\"aidd_docs/rules/09-other/9-api-documentation.md\",\"AGENTS.md\"]}\n",
+    "stderr": ""
+  },
+  {
+    "host": "codex",
+    "args": [
+      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/codex/.agents/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
+      "--project",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/codex",
+      "--tools",
+      "codex",
+      "--publish"
+    ],
+    "exit": 0,
+    "stdout": "{\"files\":[\"AGENTS.md\"]}\n",
+    "stderr": ""
+  },
+  {
+    "host": "codex",
+    "args": [
+      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/codex/.agents/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
+      "--project",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/codex",
+      "--tools",
+      "codex",
+      "--publish"
+    ],
+    "exit": 0,
+    "stdout": "{\"files\":[\"AGENTS.md\"]}\n",
+    "stderr": ""
+  },
+  {
+    "host": "codex",
+    "args": [
+      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/codex/.agents/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
+      "--project",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/codex",
+      "--tools",
+      "opencode",
+      "--input",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/requests/codex-47.json"
+    ],
+    "exit": 0,
+    "stdout": "{\"files\":[\"aidd_docs/rules/09-other/9-api-documentation.md\",\"AGENTS.md\"]}\n",
+    "stderr": ""
+  },
+  {
+    "host": "codex",
+    "args": [
+      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/codex/.agents/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
+      "--project",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/codex",
+      "--tools",
+      "codex",
+      "--input",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/requests/codex-48.json"
+    ],
+    "exit": 0,
+    "stdout": "{\"files\":[\"aidd_docs/rules/09-other/9-api-documentation.md\",\"AGENTS.md\"]}\n",
+    "stderr": ""
+  },
+  {
+    "host": "codex",
+    "args": [
+      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/codex/.agents/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
+      "--project",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/codex",
+      "--tools",
+      "codex",
+      "--delete",
+      "09-other/9-api-documentation"
+    ],
+    "exit": 0,
+    "stdout": "{\"files\":[\"aidd_docs/rules/09-other/9-api-documentation.md\",\"AGENTS.md\"]}\n",
+    "stderr": ""
+  },
+  {
+    "host": "codex",
+    "args": [
+      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/codex/.agents/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
+      "--project",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/codex",
+      "--tools",
+      "codex",
+      "--delete",
+      "02-programming-languages/2-domain-invariants"
+    ],
+    "exit": 0,
+    "stdout": "{\"files\":[\"aidd_docs/rules/02-programming-languages/2-domain-invariants.md\",\"AGENTS.md\"]}\n",
+    "stderr": ""
+  },
+  {
+    "host": "codex",
+    "args": [
+      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/codex/.agents/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
+      "--project",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/codex",
+      "--tools",
+      "codex",
+      "--delete",
+      "07-quality/7-monetary-precision"
+    ],
+    "exit": 0,
+    "stdout": "{\"files\":[\"aidd_docs/rules/07-quality/7-monetary-precision.md\",\"AGENTS.md\"]}\n",
+    "stderr": ""
+  },
+  {
+    "host": "opencode",
+    "args": [
+      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/opencode/.opencode/skills/aidd-context/05-rule-generate/scripts/write-rule.cjs",
+      "--project",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/opencode",
+      "--tools",
+      "opencode",
+      "--input",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/requests/opencode-52.json"
+    ],
+    "exit": 0,
+    "stdout": "{\"files\":[\"aidd_docs/rules/07-quality/7-monetary-precision.md\",\"AGENTS.md\"]}\n",
+    "stderr": ""
+  },
+  {
+    "host": "opencode",
+    "args": [
+      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/opencode/.opencode/skills/aidd-context/05-rule-generate/scripts/write-rule.cjs",
+      "--project",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/opencode",
+      "--tools",
+      "opencode",
+      "--input",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/requests/opencode-53.json"
+    ],
+    "exit": 0,
+    "stdout": "{\"files\":[\"aidd_docs/rules/02-programming-languages/2-domain-invariants.md\",\"AGENTS.md\"]}\n",
+    "stderr": ""
+  },
+  {
+    "host": "opencode",
+    "args": [
+      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/opencode/.opencode/skills/aidd-context/05-rule-generate/scripts/write-rule.cjs",
+      "--project",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/opencode",
+      "--tools",
+      "opencode",
+      "--input",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/requests/opencode-54.json"
+    ],
+    "exit": 0,
+    "stdout": "{\"files\":[\"aidd_docs/rules/09-other/9-api-documentation.md\",\"AGENTS.md\"]}\n",
+    "stderr": ""
+  },
+  {
+    "host": "opencode",
+    "args": [
+      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/opencode/.opencode/skills/aidd-context/05-rule-generate/scripts/write-rule.cjs",
+      "--project",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/opencode",
+      "--tools",
+      "opencode",
+      "--input",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/requests/opencode-55.json"
+    ],
+    "exit": 0,
+    "stdout": "{\"files\":[\"aidd_docs/rules/07-quality/7-monetary-precision.md\",\"AGENTS.md\"]}\n",
+    "stderr": ""
+  },
+  {
+    "host": "opencode",
+    "args": [
+      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/opencode/.opencode/skills/aidd-context/05-rule-generate/scripts/write-rule.cjs",
+      "--project",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/opencode",
+      "--tools",
+      "opencode",
+      "--input",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/requests/opencode-56.json"
+    ],
+    "exit": 0,
+    "stdout": "{\"files\":[\"aidd_docs/rules/02-programming-languages/2-domain-invariants.md\",\"AGENTS.md\"]}\n",
+    "stderr": ""
+  },
+  {
+    "host": "opencode",
+    "args": [
+      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/opencode/.opencode/skills/aidd-context/05-rule-generate/scripts/write-rule.cjs",
+      "--project",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/opencode",
+      "--tools",
+      "opencode",
+      "--input",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/requests/opencode-57.json"
+    ],
+    "exit": 0,
+    "stdout": "{\"files\":[\"aidd_docs/rules/09-other/9-api-documentation.md\",\"AGENTS.md\"]}\n",
+    "stderr": ""
+  },
+  {
+    "host": "opencode",
+    "args": [
+      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/opencode/.opencode/skills/aidd-context/05-rule-generate/scripts/write-rule.cjs",
+      "--project",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/opencode",
+      "--tools",
+      "opencode",
+      "--publish"
+    ],
+    "exit": 0,
+    "stdout": "{\"files\":[\"AGENTS.md\"]}\n",
+    "stderr": ""
+  },
+  {
+    "host": "opencode",
+    "args": [
+      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/opencode/.opencode/skills/aidd-context/05-rule-generate/scripts/write-rule.cjs",
+      "--project",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/opencode",
+      "--tools",
+      "opencode",
+      "--publish"
+    ],
+    "exit": 0,
+    "stdout": "{\"files\":[\"AGENTS.md\"]}\n",
+    "stderr": ""
+  },
+  {
+    "host": "opencode",
+    "args": [
+      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/opencode/.opencode/skills/aidd-context/05-rule-generate/scripts/write-rule.cjs",
+      "--project",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/opencode",
+      "--tools",
+      "claude",
+      "--input",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/requests/opencode-60.json"
+    ],
+    "exit": 0,
+    "stdout": "{\"files\":[\"aidd_docs/rules/09-other/9-api-documentation.md\",\".claude/rules/09-other/9-api-documentation.md\",\"AGENTS.md\"]}\n",
+    "stderr": ""
+  },
+  {
+    "host": "opencode",
+    "args": [
+      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/opencode/.opencode/skills/aidd-context/05-rule-generate/scripts/write-rule.cjs",
+      "--project",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/opencode",
+      "--tools",
+      "opencode",
+      "--input",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/requests/opencode-61.json"
+    ],
+    "exit": 0,
+    "stdout": "{\"files\":[\"aidd_docs/rules/09-other/9-api-documentation.md\",\".claude/rules/09-other/9-api-documentation.md\",\"AGENTS.md\"]}\n",
+    "stderr": ""
+  },
+  {
+    "host": "opencode",
+    "args": [
+      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/opencode/.opencode/skills/aidd-context/05-rule-generate/scripts/write-rule.cjs",
+      "--project",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/opencode",
+      "--tools",
+      "opencode",
+      "--delete",
+      "09-other/9-api-documentation"
+    ],
+    "exit": 0,
+    "stdout": "{\"files\":[\"aidd_docs/rules/09-other/9-api-documentation.md\",\"AGENTS.md\"]}\n",
+    "stderr": ""
+  },
+  {
+    "host": "opencode",
+    "args": [
+      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/opencode/.opencode/skills/aidd-context/05-rule-generate/scripts/write-rule.cjs",
+      "--project",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/opencode",
+      "--tools",
+      "opencode",
+      "--delete",
+      "02-programming-languages/2-domain-invariants"
+    ],
+    "exit": 0,
+    "stdout": "{\"files\":[\"aidd_docs/rules/02-programming-languages/2-domain-invariants.md\",\"AGENTS.md\"]}\n",
+    "stderr": ""
+  },
+  {
+    "host": "opencode",
+    "args": [
+      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/opencode/.opencode/skills/aidd-context/05-rule-generate/scripts/write-rule.cjs",
+      "--project",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/opencode",
+      "--tools",
+      "opencode",
+      "--delete",
+      "07-quality/7-monetary-precision"
+    ],
+    "exit": 0,
+    "stdout": "{\"files\":[\"aidd_docs/rules/07-quality/7-monetary-precision.md\",\"AGENTS.md\"]}\n",
+    "stderr": ""
+  },
+  {
+    "host": "mixed",
+    "args": [
+      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/mixed/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
+      "--project",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/mixed",
+      "--tools",
+      "claude,cursor,copilot,codex,opencode",
+      "--input",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/requests/mixed-65.json"
+    ],
+    "exit": 0,
+    "stdout": "{\"files\":[\"aidd_docs/rules/07-quality/7-monetary-precision.md\",\".claude/rules/07-quality/7-monetary-precision.md\",\".github/instructions/07-monetary-precision.instructions.md\",\".cursor/rules/07-quality/7-monetary-precision.mdc\",\"AGENTS.md\"]}\n",
+    "stderr": ""
+  },
+  {
+    "host": "mixed",
+    "args": [
+      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/mixed/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
+      "--project",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/mixed",
+      "--tools",
+      "claude,cursor,copilot,codex,opencode",
+      "--input",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/requests/mixed-66.json"
+    ],
+    "exit": 0,
+    "stdout": "{\"files\":[\"aidd_docs/rules/02-programming-languages/2-domain-invariants.md\",\".claude/rules/07-quality/7-monetary-precision.md\",\".claude/rules/02-programming-languages/2-domain-invariants.md\",\".github/instructions/07-monetary-precision.instructions.md\",\".github/instructions/02-domain-invariants.instructions.md\",\".cursor/rules/07-quality/7-monetary-precision.mdc\",\".cursor/rules/02-programming-languages/2-domain-invariants.mdc\",\"AGENTS.md\"]}\n",
+    "stderr": ""
+  },
+  {
+    "host": "mixed",
+    "args": [
+      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/mixed/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
+      "--project",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/mixed",
+      "--tools",
+      "claude,cursor,copilot,codex,opencode",
+      "--input",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/requests/mixed-67.json"
+    ],
+    "exit": 0,
+    "stdout": "{\"files\":[\"aidd_docs/rules/09-other/9-api-documentation.md\",\".claude/rules/02-programming-languages/2-domain-invariants.md\",\".claude/rules/07-quality/7-monetary-precision.md\",\".claude/rules/09-other/9-api-documentation.md\",\".github/instructions/02-domain-invariants.instructions.md\",\".github/instructions/07-monetary-precision.instructions.md\",\".github/instructions/09-api-documentation.instructions.md\",\".cursor/rules/02-programming-languages/2-domain-invariants.mdc\",\".cursor/rules/07-quality/7-monetary-precision.mdc\",\".cursor/rules/09-other/9-api-documentation.mdc\",\"AGENTS.md\"]}\n",
+    "stderr": ""
+  },
+  {
+    "host": "mixed",
+    "args": [
+      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/mixed/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
+      "--project",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/mixed",
+      "--tools",
+      "claude,cursor,copilot,codex,opencode",
+      "--input",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/requests/mixed-68.json"
+    ],
+    "exit": 0,
+    "stdout": "{\"files\":[\"aidd_docs/rules/07-quality/7-monetary-precision.md\",\".claude/rules/02-programming-languages/2-domain-invariants.md\",\".claude/rules/07-quality/7-monetary-precision.md\",\".claude/rules/09-other/9-api-documentation.md\",\".github/instructions/02-domain-invariants.instructions.md\",\".github/instructions/07-monetary-precision.instructions.md\",\".github/instructions/09-api-documentation.instructions.md\",\".cursor/rules/02-programming-languages/2-domain-invariants.mdc\",\".cursor/rules/07-quality/7-monetary-precision.mdc\",\".cursor/rules/09-other/9-api-documentation.mdc\",\"AGENTS.md\"]}\n",
+    "stderr": ""
+  },
+  {
+    "host": "mixed",
+    "args": [
+      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/mixed/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
+      "--project",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/mixed",
+      "--tools",
+      "claude,cursor,copilot,codex,opencode",
+      "--input",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/requests/mixed-69.json"
+    ],
+    "exit": 0,
+    "stdout": "{\"files\":[\"aidd_docs/rules/02-programming-languages/2-domain-invariants.md\",\".claude/rules/02-programming-languages/2-domain-invariants.md\",\".claude/rules/07-quality/7-monetary-precision.md\",\".claude/rules/09-other/9-api-documentation.md\",\".github/instructions/02-domain-invariants.instructions.md\",\".github/instructions/07-monetary-precision.instructions.md\",\".github/instructions/09-api-documentation.instructions.md\",\".cursor/rules/02-programming-languages/2-domain-invariants.mdc\",\".cursor/rules/07-quality/7-monetary-precision.mdc\",\".cursor/rules/09-other/9-api-documentation.mdc\",\"AGENTS.md\"]}\n",
+    "stderr": ""
+  },
+  {
+    "host": "mixed",
+    "args": [
+      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/mixed/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
+      "--project",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/mixed",
+      "--tools",
+      "claude,cursor,copilot,codex,opencode",
+      "--input",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/requests/mixed-70.json"
+    ],
+    "exit": 0,
+    "stdout": "{\"files\":[\"aidd_docs/rules/09-other/9-api-documentation.md\",\".claude/rules/02-programming-languages/2-domain-invariants.md\",\".claude/rules/07-quality/7-monetary-precision.md\",\".claude/rules/09-other/9-api-documentation.md\",\".github/instructions/02-domain-invariants.instructions.md\",\".github/instructions/07-monetary-precision.instructions.md\",\".github/instructions/09-api-documentation.instructions.md\",\".cursor/rules/02-programming-languages/2-domain-invariants.mdc\",\".cursor/rules/07-quality/7-monetary-precision.mdc\",\".cursor/rules/09-other/9-api-documentation.mdc\",\"AGENTS.md\"]}\n",
+    "stderr": ""
+  },
+  {
+    "host": "mixed",
+    "args": [
+      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/mixed/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
+      "--project",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/mixed",
+      "--tools",
+      "claude,cursor,copilot,codex,opencode",
+      "--publish"
+    ],
+    "exit": 0,
+    "stdout": "{\"files\":[\".claude/rules/02-programming-languages/2-domain-invariants.md\",\".claude/rules/07-quality/7-monetary-precision.md\",\".claude/rules/09-other/9-api-documentation.md\",\".github/instructions/02-domain-invariants.instructions.md\",\".github/instructions/07-monetary-precision.instructions.md\",\".github/instructions/09-api-documentation.instructions.md\",\".cursor/rules/02-programming-languages/2-domain-invariants.mdc\",\".cursor/rules/07-quality/7-monetary-precision.mdc\",\".cursor/rules/09-other/9-api-documentation.mdc\",\"AGENTS.md\"]}\n",
+    "stderr": ""
+  },
+  {
+    "host": "mixed",
+    "args": [
+      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/mixed/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
+      "--project",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/mixed",
+      "--tools",
+      "claude,cursor,copilot,codex,opencode",
+      "--publish"
+    ],
+    "exit": 0,
+    "stdout": "{\"files\":[\".claude/rules/02-programming-languages/2-domain-invariants.md\",\".claude/rules/07-quality/7-monetary-precision.md\",\".claude/rules/09-other/9-api-documentation.md\",\".github/instructions/02-domain-invariants.instructions.md\",\".github/instructions/07-monetary-precision.instructions.md\",\".github/instructions/09-api-documentation.instructions.md\",\".cursor/rules/02-programming-languages/2-domain-invariants.mdc\",\".cursor/rules/07-quality/7-monetary-precision.mdc\",\".cursor/rules/09-other/9-api-documentation.mdc\",\"AGENTS.md\"]}\n",
+    "stderr": ""
+  },
+  {
+    "host": "mixed",
+    "args": [
+      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/mixed/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
+      "--project",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/mixed",
+      "--tools",
+      "codex",
+      "--input",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/requests/mixed-73.json"
+    ],
+    "exit": 0,
+    "stdout": "{\"files\":[\"aidd_docs/rules/09-other/9-api-documentation.md\",\".claude/rules/02-programming-languages/2-domain-invariants.md\",\".claude/rules/07-quality/7-monetary-precision.md\",\".claude/rules/09-other/9-api-documentation.md\",\".github/instructions/02-domain-invariants.instructions.md\",\".github/instructions/07-monetary-precision.instructions.md\",\".github/instructions/09-api-documentation.instructions.md\",\".cursor/rules/02-programming-languages/2-domain-invariants.mdc\",\".cursor/rules/07-quality/7-monetary-precision.mdc\",\".cursor/rules/09-other/9-api-documentation.mdc\",\"AGENTS.md\"]}\n",
+    "stderr": ""
+  },
+  {
+    "host": "mixed",
+    "args": [
+      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/mixed/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
+      "--project",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/mixed",
+      "--tools",
+      "claude,cursor,copilot,codex,opencode",
+      "--input",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/requests/mixed-74.json"
+    ],
+    "exit": 0,
+    "stdout": "{\"files\":[\"aidd_docs/rules/09-other/9-api-documentation.md\",\".claude/rules/02-programming-languages/2-domain-invariants.md\",\".claude/rules/07-quality/7-monetary-precision.md\",\".claude/rules/09-other/9-api-documentation.md\",\".github/instructions/02-domain-invariants.instructions.md\",\".github/instructions/07-monetary-precision.instructions.md\",\".github/instructions/09-api-documentation.instructions.md\",\".cursor/rules/02-programming-languages/2-domain-invariants.mdc\",\".cursor/rules/07-quality/7-monetary-precision.mdc\",\".cursor/rules/09-other/9-api-documentation.mdc\",\"AGENTS.md\"]}\n",
+    "stderr": ""
+  },
+  {
+    "host": "mixed",
+    "args": [
+      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/mixed/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
+      "--project",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/mixed",
+      "--tools",
+      "claude,cursor,copilot,codex,opencode",
+      "--delete",
+      "09-other/9-api-documentation"
+    ],
+    "exit": 0,
+    "stdout": "{\"files\":[\"aidd_docs/rules/09-other/9-api-documentation.md\",\".claude/rules/02-programming-languages/2-domain-invariants.md\",\".claude/rules/07-quality/7-monetary-precision.md\",\".claude/rules/09-other/9-api-documentation.md\",\".github/instructions/02-domain-invariants.instructions.md\",\".github/instructions/07-monetary-precision.instructions.md\",\".github/instructions/09-api-documentation.instructions.md\",\".cursor/rules/02-programming-languages/2-domain-invariants.mdc\",\".cursor/rules/07-quality/7-monetary-precision.mdc\",\".cursor/rules/09-other/9-api-documentation.mdc\",\"AGENTS.md\"]}\n",
+    "stderr": ""
+  },
+  {
+    "host": "mixed",
+    "args": [
+      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/mixed/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
+      "--project",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/mixed",
+      "--tools",
+      "claude,cursor,copilot,codex,opencode",
+      "--delete",
+      "02-programming-languages/2-domain-invariants"
+    ],
+    "exit": 0,
+    "stdout": "{\"files\":[\"aidd_docs/rules/02-programming-languages/2-domain-invariants.md\",\".claude/rules/02-programming-languages/2-domain-invariants.md\",\".claude/rules/07-quality/7-monetary-precision.md\",\".github/instructions/02-domain-invariants.instructions.md\",\".github/instructions/07-monetary-precision.instructions.md\",\".cursor/rules/02-programming-languages/2-domain-invariants.mdc\",\".cursor/rules/07-quality/7-monetary-precision.mdc\",\"AGENTS.md\"]}\n",
+    "stderr": ""
+  },
+  {
+    "host": "mixed",
+    "args": [
+      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/mixed/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
+      "--project",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/mixed",
+      "--tools",
+      "claude,cursor,copilot,codex,opencode",
+      "--delete",
+      "07-quality/7-monetary-precision"
+    ],
+    "exit": 0,
+    "stdout": "{\"files\":[\"aidd_docs/rules/07-quality/7-monetary-precision.md\",\".claude/rules/07-quality/7-monetary-precision.md\",\".github/instructions/07-monetary-precision.instructions.md\",\".cursor/rules/07-quality/7-monetary-precision.mdc\",\"AGENTS.md\"]}\n",
+    "stderr": ""
+  }
+]

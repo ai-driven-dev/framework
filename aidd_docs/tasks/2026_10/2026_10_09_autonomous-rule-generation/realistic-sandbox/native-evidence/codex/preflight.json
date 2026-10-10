@@ -1,0 +1,17 @@
+{
+  "version": "codex-cli 0.160.1",
+  "authMode": "chatgpt",
+  "apiKeyPresent": false,
+  "privateAuthMode": "0600",
+  "authCopiedFromExistingSubscription": true,
+  "userConfigIgnored": true,
+  "provider": "openai (native default explicitly selected)",
+  "secretEnvironmentInherited": false,
+  "loginStatus": "Logged in using ChatGPT\n",
+  "project": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/model-codex",
+  "installedScriptSha256": "9fa10479a267d899a6a024f68e75573f1d009080cd60851f23f06c8f2d190591",
+  "refreshedDocs": [
+    "actions/02-write-rule.md",
+    "references/tool-paths.md"
+  ]
+}

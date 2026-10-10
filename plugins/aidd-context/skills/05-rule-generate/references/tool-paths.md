@@ -1,53 +1,62 @@
 # Tool paths (rules)
 
-The per-tool rules path and write targets. Rule slice only, nothing about skills, agents, commands, hooks, plugins, or marketplaces.
+This reference covers project rule generation only. Confirm hosts explicitly; a shared `AGENTS.md` does not identify installed tools.
 
-## Rules path per tool
+## Native targets
 
-| Tool           | Path                                               | Supported  |
-| -------------- | -------------------------------------------------- | ---------- |
-| Claude Code    | `.claude/rules/<category>/<slug>.md`               | yes        |
-| Cursor         | `.cursor/rules/<category>/<slug>.mdc`              | yes        |
-| GitHub Copilot | `.github/instructions/<NN>-<name>.instructions.md` | yes (flat) |
-| OpenCode       | `.opencode/rules/<category>/<slug>.md`              | yes        |
-| Codex CLI      | `.codex/rules/<category>/<slug>.md`                 | yes        |
+| Tool | Script ID | Active surface | Scope |
+| --- | --- | --- | --- |
+| Claude Code | `claude` | `.claude/rules/<category>/<slug>.md` | `paths` YAML array; omitted for all files |
+| Cursor | `cursor` | `.cursor/rules/<category>/<slug>.mdc` | `description`, comma-joined `globs`, `alwaysApply: false`; all files omit globs and use true |
+| GitHub Copilot | `copilot` | `.github/instructions/<NN>-<name>.instructions.md` | comma-joined `applyTo`; `**` for all files |
+| Codex | `codex` | root `AGENTS.md`, shared signed `aidd_rules` contribution | scopes are instructions to the model |
+| OpenCode V2 | `opencode` | the same contribution in root `AGENTS.md` | scopes are instructions to the model |
 
-`<slug>` is the file name `#-slug` from `rule-authoring.md` (e.g. `2-python-fstrings`). `<name>` is that slug with its leading category digit dropped (`python-fstrings`). `<category>` is the folder `<NN>-<name-of-category>`, the zero-padded category index plus the category name from the taxonomy, e.g. `01-standards`. `<NN>` is that same two-digit index.
+Use taxonomy and `#-slug` naming in [rule-authoring.md](rule-authoring.md). Copilot drops the slug's single-digit prefix and adds the category's two-digit prefix, e.g. `01-standards/1-naming` becomes `01-naming.instructions.md`.
 
-Copilot is flat: no category folder. Its file is `<NN>-<name>`, e.g. `2-python-fstrings` becomes `02-python-fstrings` (one category prefix, no folder).
+Codex Markdown guidance is not a `.codex/rules` execution policy. OpenCode V2 ignores config `instructions`; file links and modular `.opencode/rules` sources alone do not publish their text. This contract excludes OpenCode V1. Native syntax tests prove rendering, not runtime consumption by every host. Codex/OpenCode selected together appear once in the shared file; other hosts may also discover AGENTS.md, so physical deduplication does not guarantee model-context deduplication across surfaces.
 
-Every tool above installs rules. This table used to say OpenCode and Codex do not, and to tell a generator to put the convention in AGENTS.md instead; both were false. `plugin-content-translator.ts` routes a plugin's `rules/` into every tool whose capability accepts them, and all five accept them — `aidd ai rules` prints where each one lands, asked of the installer itself rather than of a list.
+The shared contribution shows `Applies to:` followed by literal globs in Markdown code spans, or `all files`. Category/slug identity stays in canonical metadata rather than added visible headings. A leading ATX or single-line Setext title is kept without an added title; scope precedes the unchanged body. Otherwise the description supplies a level-two heading before scope and body. This bounded title check ignores fenced examples and indented code; it does not parse all Markdown. Complete body bytes and native rendering remain unchanged.
 
-Both use the same frontmatter as Claude Code: `paths` (array of globs), omitted for an all-files rule.
+## Installed script
 
-## Scope frontmatter per tool
+Resolve `scripts/write-rule.cjs` beside the loaded installed `SKILL.md` and invoke its absolute path with Node. This applies to native plugins and flat skills. Never reconstruct a plugin path, assume a framework checkout, project-relative script path, or installed AIDD CLI. The CommonJS script uses Node built-ins only and works inside ES module projects.
 
-The file-scope field is named differently per tool. Set the right one.
+Prepare a JSON request outside the project rule destinations:
 
-| Tool           | Fields                                                                                              |
-| -------------- | --------------------------------------------------------------------------------------------------- |
-| Claude Code    | `paths` (array of globs). Omit `paths` for an all-files rule; no `paths` means it applies everywhere.  |
-| Cursor         | `description` (one line, what the rule governs), `globs` (comma-separated; omit for all-files), `alwaysApply` (false; true for all-files). |
-| GitHub Copilot | `applyTo` (single glob string; `**` for an all-files rule).                                          |
+```json
+{
+  "category": "01-standards",
+  "slug": "1-naming",
+  "description": "Naming conventions",
+  "paths": ["src/**/*.ts", "test/**/*.ts"],
+  "body": "# Naming\n\n- Keep names clear.\n"
+}
+```
 
-A multi-glob `paths` becomes a comma-joined string for Cursor and Copilot, or the most-encompassing glob.
+Use an absolute real project directory and confirmed comma-separated script IDs:
 
-## Detect (which tools are installed)
+```sh
+node "$installed_rule_script" --project "$project_root" --tools claude,cursor,copilot,codex,opencode --input "$request_json"
+node "$installed_rule_script" --project "$project_root" --tools claude,cursor,copilot,codex,opencode --publish
+node "$installed_rule_script" --project "$project_root" --tools claude,cursor,copilot,codex,opencode --delete 01-standards/1-naming
+```
 
-| Signal                            | Tool(s)        |
-| --------------------------------- | -------------- |
-| `.claude/` or `CLAUDE.md`         | Claude Code    |
-| `.cursor/`                        | Cursor         |
-| `.github/copilot-instructions.md` | GitHub Copilot |
+Create/update records confirmed targets in `aidd_docs/rules/<category>/<slug>.md`. Publish synchronizes the named native hosts and the complete shared contribution from canonical targets; delete also cleans the deleted rule's previous targets. Updating targets cleans removed targets. JSON accepts exactly category, slug, description, optional paths and body. Empty/omitted paths mean all files. Reject comma-containing globs (including brace alternations) rather than serialize ambiguous native lists; supply separate globs. Description is one line. Body is preserved completely and must not begin with YAML frontmatter. Scope belongs in JSON, never an arbitrary YAML parser.
 
-## Write targets
+## Canonical and output ownership
 
-- **Host project**: one file per supported confirmed tool, at the paths above.
-- **Plugin source**: one canonical `.md` rule under `plugins/<plugin>/rules/<category>/<slug>.md`. No per-tool fan-out. Carry a `paths` array for a scoped rule, or no frontmatter block for all-files. Per-tool frontmatter is reconciled at install.
+Canonical sources start with one strict script-owned JSON comment recording version, category, slug, description, paths and targets. Do not edit its syntax, key order or target order by hand. A body may be edited manually beneath intact metadata, then explicitly published. Generated native files carry a content signature; prior canonical rendering equality also proves ownership for an unsigned existing output. A differing unowned file, edited native file, or edited/duplicate/incomplete shared contribution refuses the entire request before writes. Restore the intact generated output and move edits into canonical sources. Hashes detect edits; they are not an authentication boundary against someone deliberately recomputing them.
 
-The mode is chosen in the capture action. Never pick one silently.
+The script validates the complete prospective set before changing canonical sources or outputs. It rejects symlink targets/ancestors, traversal, reserved rule markers outside fenced examples and unclosed fences. Requests and existing files must be valid UTF-8; parsed text must roundtrip without unpaired Unicode surrogates. Valid Unicode pairs and complete bodies are preserved. The shared signature covers both payload and separator ownership; editing either refuses the request. It preserves every byte outside its shared contribution, including CRLF and `aidd_project_memory`. Repeated publication is byte-idempotent. Individual file replacement is atomic; this is not a multi-file transaction against disk failures or concurrent writers.
 
-## Safety checks
+Root `AGENTS.override.md` blocks Codex generation because it masks AGENTS.md. The script refuses a local AGENTS.md exceeding 32 KiB when Codex is involved; global and ancestor guidance also consume Codex's default combined limit. A local pass cannot guarantee that combined budget, and the script does not change host configuration.
 
-- **Asset-access precheck**: before writing, confirm this reference is readable. If not, stop: the plugin is not installed in this host.
-- **Write-target validation**: after writing, confirm every path is relative, under the workspace, and at the chosen scope. Otherwise stop and report the bad path.
+No migration: old `.opencode/rules` or `.codex/rules` files are neither imported nor deleted. An old `aidd_opencode_rules` block causes `Ambiguous or legacy AIDD rule contribution; no automatic migration.` or the corresponding incomplete-block error. Explicitly resolve historical guidance before retrying; do not silently erase or import it. Flat archive distribution of standalone rules remains out of scope.
+
+## Write modes
+
+- **Host project**: use the installed script above for explicitly confirmed hosts.
+- **Plugin source**: author one canonical Markdown file under `plugins/<plugin>/rules/<category>/<slug>.md`; retain a `paths` array for scoped rules or omit frontmatter for all files. No project canonical metadata, script publication or host fan-out in this mode.
+
+Before either mode, confirm this reference is readable; otherwise report the missing installed asset. Never choose a mode or host silently.

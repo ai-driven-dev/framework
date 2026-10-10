@@ -1,0 +1,337 @@
+{
+  "version": "2.0.22",
+  "platform": "Darwin arm64",
+  "paid_inference": false,
+  "runtime": {
+    "baseline": {
+      "command": [
+        "/tmp/aidd-953-runtime-ryTstm/v2/node_modules/.bin/opencode2",
+        "run",
+        "--standalone",
+        "--model",
+        "local/fake",
+        "--format",
+        "json",
+        "--print-logs",
+        "Reply OK."
+      ],
+      "binary": "/tmp/aidd-953-runtime-ryTstm/v2/node_modules/.bin/opencode2",
+      "exit": 0,
+      "model_requests": 2,
+      "present": {
+        "AIDD913_USER_CONTEXT": true
+      },
+      "absent": {
+        "AIDD913_RULE_ONE": true,
+        "AIDD913_INERT_CONFIG_ONLY": true
+      },
+      "pass": true
+    },
+    "published": {
+      "command": [
+        "/tmp/aidd-953-runtime-ryTstm/v2/node_modules/.bin/opencode2",
+        "run",
+        "--standalone",
+        "--model",
+        "local/fake",
+        "--format",
+        "json",
+        "--print-logs",
+        "Reply OK."
+      ],
+      "binary": "/tmp/aidd-953-runtime-ryTstm/v2/node_modules/.bin/opencode2",
+      "exit": 0,
+      "model_requests": 2,
+      "present": {
+        "AIDD913_USER_CONTEXT": true,
+        "AIDD913_RULE_ONE": true
+      },
+      "absent": {
+        "AIDD913_INERT_CONFIG_ONLY": true
+      },
+      "pass": true
+    },
+    "direct-generation": {
+      "command": [
+        "/tmp/aidd-953-runtime-ryTstm/v2/node_modules/.bin/opencode2",
+        "run",
+        "--standalone",
+        "--model",
+        "local/fake",
+        "--format",
+        "json",
+        "--print-logs",
+        "Reply OK."
+      ],
+      "binary": "/tmp/aidd-953-runtime-ryTstm/v2/node_modules/.bin/opencode2",
+      "exit": 0,
+      "model_requests": 2,
+      "present": {
+        "AIDD913_USER_CONTEXT": true,
+        "AIDD913_RULE_ONE": true,
+        "AIDD913_RULE_STAGED": true
+      },
+      "absent": {
+        "AIDD913_INERT_CONFIG_ONLY": true
+      },
+      "pass": true
+    },
+    "updated": {
+      "command": [
+        "/tmp/aidd-953-runtime-ryTstm/v2/node_modules/.bin/opencode2",
+        "run",
+        "--standalone",
+        "--model",
+        "local/fake",
+        "--format",
+        "json",
+        "--print-logs",
+        "Reply OK."
+      ],
+      "binary": "/tmp/aidd-953-runtime-ryTstm/v2/node_modules/.bin/opencode2",
+      "exit": 0,
+      "model_requests": 2,
+      "present": {
+        "AIDD913_USER_CONTEXT": true,
+        "AIDD913_RULE_UPDATED": true,
+        "AIDD913_RULE_STAGED": true
+      },
+      "absent": {
+        "AIDD913_RULE_ONE": true,
+        "AIDD913_INERT_CONFIG_ONLY": true
+      },
+      "pass": true
+    },
+    "deleted": {
+      "command": [
+        "/tmp/aidd-953-runtime-ryTstm/v2/node_modules/.bin/opencode2",
+        "run",
+        "--standalone",
+        "--model",
+        "local/fake",
+        "--format",
+        "json",
+        "--print-logs",
+        "Reply OK."
+      ],
+      "binary": "/tmp/aidd-953-runtime-ryTstm/v2/node_modules/.bin/opencode2",
+      "exit": 0,
+      "model_requests": 2,
+      "present": {
+        "AIDD913_USER_CONTEXT": true
+      },
+      "absent": {
+        "AIDD913_RULE_UPDATED": true,
+        "AIDD913_RULE_STAGED": true,
+        "AIDD913_INERT_CONFIG_ONLY": true
+      },
+      "pass": true
+    },
+    "final-repaired": {
+      "command": [
+        "/tmp/aidd-953-runtime-ryTstm/v2/node_modules/.bin/opencode2",
+        "run",
+        "--standalone",
+        "--model",
+        "local/fake",
+        "--format",
+        "json",
+        "--print-logs",
+        "Reply OK."
+      ],
+      "binary": "/tmp/aidd-953-runtime-ryTstm/v2/node_modules/.bin/opencode2",
+      "exit": 0,
+      "model_requests": 2,
+      "present": {
+        "AIDD913_USER_CONTEXT": true,
+        "AIDD913_FINAL_RULE": true
+      },
+      "absent": {
+        "AIDD913_INERT_CONFIG_ONLY": true
+      },
+      "pass": true
+    }
+  },
+  "cli": {
+    "rerun": {
+      "action": "rerun",
+      "pass": true,
+      "commands": [
+        {
+          "command": [
+            "node",
+            "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/cli/dist/cli.js",
+            "framework",
+            "rules",
+            "--tool",
+            "opencode",
+            "--publish"
+          ],
+          "exit": 0,
+          "stdout": "Active rule instructions synchronized.",
+          "stderr": ""
+        }
+      ],
+      "configuration_unchanged": true,
+      "agents_sha256": "a27af7701175a1ebea8e8b9a294f0f84e959ed199d3ec18ff85af479ea72ada8"
+    },
+    "write": {
+      "action": "write",
+      "pass": true,
+      "commands": [
+        {
+          "command": [
+            "node",
+            "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/cli/dist/cli.js",
+            "framework",
+            "rules",
+            "--tool",
+            "opencode",
+            "--publish",
+            "--write",
+            ".opencode/rules/01-standards/2-staged.md",
+            "--from",
+            "/tmp/aidd-913-runtime-NAuUNo/write-staged.md"
+          ],
+          "exit": 0,
+          "stdout": "Active rule instructions synchronized.",
+          "stderr": ""
+        }
+      ],
+      "configuration_unchanged": true,
+      "agents_sha256": "f5843ee12b169bde501712228eb32c4afdeaba5df1c71e96de18ba7f9ea104ab"
+    },
+    "update": {
+      "action": "update",
+      "pass": true,
+      "commands": [
+        {
+          "command": [
+            "node",
+            "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/cli/dist/cli.js",
+            "framework",
+            "rules",
+            "--tool",
+            "opencode",
+            "--publish",
+            "--write",
+            ".opencode/rules/01-standards/1-probe.md",
+            "--from",
+            "/tmp/aidd-913-runtime-NAuUNo/update-staged.md"
+          ],
+          "exit": 0,
+          "stdout": "Active rule instructions synchronized.",
+          "stderr": ""
+        }
+      ],
+      "configuration_unchanged": true,
+      "agents_sha256": "ba0ee93e4eb3cb1356ed51d820968ab4c6921169d2693706082670dc04abe906"
+    },
+    "unsafe": {
+      "action": "unsafe",
+      "pass": true,
+      "commands": [
+        {
+          "command": [
+            "node",
+            "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/cli/dist/cli.js",
+            "framework",
+            "rules",
+            "--tool",
+            "opencode",
+            "--publish",
+            "--write",
+            ".opencode/rules/01-standards/2-staged.md",
+            "--from",
+            "/tmp/aidd-913-runtime-NAuUNo/unsafe-staged.md"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "Error: AGENTS.md AIDD OpenCode rule block was edited. Move edits to .opencode/rules and restore the intact block before retrying."
+        }
+      ],
+      "configuration_unchanged": true,
+      "agents_sha256": "ba0ee93e4eb3cb1356ed51d820968ab4c6921169d2693706082670dc04abe906"
+    },
+    "delete": {
+      "action": "delete",
+      "pass": true,
+      "commands": [
+        {
+          "command": [
+            "node",
+            "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/cli/dist/cli.js",
+            "framework",
+            "rules",
+            "--tool",
+            "opencode",
+            "--publish",
+            "--delete",
+            ".opencode/rules/01-standards/1-probe.md"
+          ],
+          "exit": 0,
+          "stdout": "Active rule instructions synchronized.",
+          "stderr": ""
+        },
+        {
+          "command": [
+            "node",
+            "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/cli/dist/cli.js",
+            "framework",
+            "rules",
+            "--tool",
+            "opencode",
+            "--publish",
+            "--delete",
+            ".opencode/rules/01-standards/2-staged.md"
+          ],
+          "exit": 0,
+          "stdout": "Active rule instructions synchronized.",
+          "stderr": ""
+        }
+      ],
+      "configuration_unchanged": true,
+      "agents_sha256": "3c4dc3e0d60da78c90be4780e6a49ccbacb4fe12eb7f6623e19969b5a7f51ac2"
+    },
+    "final-repaired": {
+      "frontmatter-fixed": {
+        "command": [
+          "node",
+          "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/cli/dist/cli.js",
+          "framework",
+          "rules",
+          "--tool",
+          "opencode",
+          "--write",
+          ".opencode/rules/01-standards/1-final.md",
+          "--from",
+          "/tmp/aidd-913-runtime-NAuUNo/frontmatter-fixed-staged.md"
+        ],
+        "exit": 1,
+        "stderr": "Error: Unclosed Markdown fence; close it before publishing OpenCode rules.",
+        "all_project_bytes_unchanged": true,
+        "pass": true,
+        "binary_sha256": "9807ee1ffead10ac2ac6a5f0c184eb3bfd4d14956f10aae43c3dad4572b93a80"
+      },
+      "final-project": {
+        "command": [
+          "node",
+          "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/cli/dist/cli.js",
+          "framework",
+          "rules",
+          "--tool",
+          "opencode",
+          "--write",
+          ".opencode/rules/01-standards/1-final.md",
+          "--from",
+          "/tmp/aidd-913-runtime-NAuUNo/final-project-staged.md"
+        ],
+        "exit": 0,
+        "stderr": "",
+        "all_project_bytes_unchanged": false,
+        "pass": true,
+        "binary_sha256": "9807ee1ffead10ac2ac6a5f0c184eb3bfd4d14956f10aae43c3dad4572b93a80"
+      }
+    }
+  }
+}

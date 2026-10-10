@@ -1,0 +1,87 @@
+{
+  "root": "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF",
+  "repo": "/Users/baptistelafourcade/orca/workspaces/framework/basketstar",
+  "hosts": [
+    "claude",
+    "cursor",
+    "copilot",
+    "codex",
+    "opencode",
+    "mixed"
+  ],
+  "tools": [
+    "claude",
+    "cursor",
+    "copilot",
+    "codex",
+    "opencode"
+  ],
+  "smoke": false,
+  "results": [
+    {
+      "name": "baseline API",
+      "args": [
+        "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+        "--test",
+        "tests/invoice.test.ts",
+        "tests/http.test.ts"
+      ],
+      "cwd": "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/baseline",
+      "exit": 0,
+      "stdout": "✔ real HTTP create, validation rejection, lookup, and not-found journey (30.863584ms)\n✔ exact cents totals and repository isolation (3.289375ms)\n✔ invalid invoice refuses null (0.22975ms)\n✔ invalid invoice refuses {\"customerId\":\"bad\",\"currency\":\"EUR\",\"lines\":[{\"sku\":\"CONSULTING\",\"quantity\":3,\"unitPriceCents\":1999},{\"sku\":\"FREIGHT\",\"quantity\":1,\"unitPriceCents\":450}]} (0.073625ms)\n✔ invalid invoice refuses {\"customerId\":\"cus_acme\",\"currency\":\"GBP\",\"lines\":[{\"sku\":\"CONSULTING\",\"quantity\":3,\"unitPriceCents\":1999},{\"sku\":\"FREIGHT\",\"quantity\":1,\"unitPriceCents\":450}]} (0.038167ms)\n✔ invalid invoice refuses {\"customerId\":\"cus_acme\",\"currency\":\"EUR\",\"lines\":[]} (0.298542ms)\n✔ invalid invoice refuses {\"customerId\":\"cus_acme\",\"currency\":\"EUR\",\"lines\":[{\"sku\":\"X\",\"quantity\":0,\"unitPriceCents\":1}]} (0.066125ms)\n✔ invalid invoice refuses {\"customerId\":\"cus_acme\",\"currency\":\"EUR\",\"lines\":[{\"sku\":\"X\",\"quantity\":1,\"unitPriceCents\":1.25}]} (0.051167ms)\n✔ invalid invoice refuses {\"customerId\":\"cus_acme\",\"currency\":\"EUR\",\"lines\":[{\"sku\":\"X\",\"quantity\":2,\"unitPriceCents\":9007199254740991}]} (0.037792ms)\nℹ tests 9\nℹ suites 0\nℹ pass 9\nℹ fail 0\nℹ cancelled 0\nℹ skipped 0\nℹ todo 0\nℹ duration_ms 148.848541\n",
+      "stderr": ""
+    },
+    {
+      "name": "install",
+      "args": [
+        "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+        "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/aidd_docs/tasks/2026_10/2026_10_09_autonomous-rule-generation/realistic-sandbox/reproduction/install.cjs",
+        "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF",
+        "/Users/baptistelafourcade/orca/workspaces/framework/basketstar"
+      ],
+      "cwd": "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF",
+      "exit": 0,
+      "stdout": "{\"projects\":6,\"installedScripts\":10,\"evidence\":\"/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/installations.json\"}\n",
+      "stderr": ""
+    },
+    {
+      "name": "lifecycle",
+      "args": [
+        "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+        "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/aidd_docs/tasks/2026_10/2026_10_09_autonomous-rule-generation/realistic-sandbox/reproduction/lifecycle.cjs",
+        "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF",
+        "/Users/baptistelafourcade/orca/workspaces/framework/basketstar"
+      ],
+      "cwd": "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF",
+      "exit": 0,
+      "stdout": "{\"projects\":6,\"installedInvocations\":78,\"allUserBytesPreserved\":true,\"applicationTests\":54,\"evidence\":\"/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/lifecycle-results.json\"}\n",
+      "stderr": ""
+    },
+    {
+      "name": "negative-pipeline",
+      "args": [
+        "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+        "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/aidd_docs/tasks/2026_10/2026_10_09_autonomous-rule-generation/realistic-sandbox/reproduction/negative-pipeline.cjs",
+        "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF",
+        "/Users/baptistelafourcade/orca/workspaces/framework/basketstar"
+      ],
+      "cwd": "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF",
+      "exit": 0,
+      "stdout": "{\"negativeCases\":12,\"allExistingMultiSourceProjectsUnchanged\":true,\"evidence\":\"/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/negative-results.json\"}\n",
+      "stderr": ""
+    },
+    {
+      "name": "cleanup-ownership",
+      "args": [
+        "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+        "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/aidd_docs/tasks/2026_10/2026_10_09_autonomous-rule-generation/realistic-sandbox/reproduction/cleanup-ownership.cjs",
+        "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF",
+        "/Users/baptistelafourcade/orca/workspaces/framework/basketstar"
+      ],
+      "cwd": "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF",
+      "exit": 0,
+      "stdout": "{\"generatedRulesPreserved\":true,\"scriptRemoved\":true,\"exits\":[0,0,0,0,0],\"evidence\":\"/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/cleanup-results.json\"}\n",
+      "stderr": ""
+    }
+  ]
+}
