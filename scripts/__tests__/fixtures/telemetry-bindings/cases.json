@@ -650,6 +650,35 @@
         "{not json"
       ]
     },
+    "torn-last-line-is-not-yet-written": {
+      "lines": [
+        {
+          "token": "t1",
+          "clone": { "path": "/work/a/.git", "dev": "16777231", "ino": "100", "birthtimeMs": 1760000000000 },
+          "open": "2026-10-09T09:00:00.000Z"
+        }
+      ],
+      "tail": "{\"token\":\"t1\",\"clo"
+    },
+    "whole-event-without-its-newline-is-not-yet-written": {
+      "lines": [
+        {
+          "token": "t1",
+          "clone": { "path": "/work/a/.git", "dev": "16777231", "ino": "100", "birthtimeMs": 1760000000000 },
+          "open": "2026-10-09T09:00:00.000Z"
+        }
+      ],
+      "tail": "{\"token\":\"t1\",\"close\":\"2026-10-09T10:00:00.000Z\"}"
+    },
+    "torn-line-with-a-line-after-it-damages": {
+      "lines": [
+        "{\"token\":\"t1\",\"clo",
+        {
+          "token": "t1",
+          "close": "2026-10-09T10:00:00.000Z"
+        }
+      ]
+    },
     "cut-line-damages": {
       "lines": [
         "{\"token\":\"t1\",\"clone\":{\"path\":\"/work/a/.git\",\"dev\":\"1"

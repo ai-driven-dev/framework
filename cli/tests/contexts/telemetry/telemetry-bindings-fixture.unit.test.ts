@@ -51,6 +51,8 @@ interface ConsentCase {
 type LogLine = Record<string, unknown> | string;
 interface ConsentLogCase {
   lines: LogLine[];
+  /** Text after the last line, with no newline: what a crash mid-append leaves. */
+  tail?: string;
 }
 interface HookConsentCase {
   key: string | null;
@@ -90,10 +92,10 @@ const cases = JSON.parse(text("cases.json")) as {
 };
 const expected = JSON.parse(text("expected.json")) as Record<string, Record<string, unknown>>;
 
-function logText(logLines: readonly LogLine[]): string {
-  return logLines
+function logText(logLines: readonly LogLine[], tail = ""): string {
+  return `${logLines
     .map((line) => `${typeof line === "string" ? line : JSON.stringify(line)}\n`)
-    .join("");
+    .join("")}${tail}`;
 }
 
 const declarations = lines("sessions.jsonl").map((line) => parseSessionDeclaration(line));
@@ -177,7 +179,7 @@ describe("the shared fixture of task bindings", () => {
   });
 
   it.each(Object.entries(cases.consentLog))("reads the consent log %s", (name, input) => {
-    const records = parseConsentRecords(logText(input.lines));
+    const records = parseConsentRecords(logText(input.lines, input.tail));
     const iso = (ms: number | null): string | null =>
       ms === null ? null : new Date(ms).toISOString();
     expect({

@@ -1,4 +1,4 @@
-import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { appendFile, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
@@ -75,6 +75,25 @@ describe("the consent history", () => {
     const lines = (await readFile(join(root, "ledger", "consents.jsonl"), "utf8")).split("\n");
     expect(lines).toHaveLength(3);
     expect(lines[2]).toBe("");
+  });
+
+  it("drops a last line a crash left unterminated before the next event, so it is never terminated into damage", async () => {
+    const file = join(root, "ledger", "consents.jsonl");
+    await history().append({
+      kind: "open",
+      token: "t1",
+      clone: CLONE,
+      at: "2026-10-01T00:00:00.000Z",
+    });
+    await appendFile(file, '{"token":"t1","clo');
+    expect(await history().read()).toMatchObject({ damaged: false });
+    await history().append({ kind: "close", token: "t1", at: "2026-10-02T00:00:00.000Z" });
+    const records = await history().read();
+    expect(records.damaged).toBe(false);
+    expect(records.events.map((event) => event.kind)).toEqual(["open", "close"]);
+    const lines = (await readFile(file, "utf8")).split("\n").filter(Boolean);
+    expect(lines).toHaveLength(2);
+    for (const line of lines) expect(() => JSON.parse(line)).not.toThrow();
   });
 
   it("says a line that is not exactly an event damaged the file, and still reads the rest", async () => {

@@ -28,6 +28,16 @@ export class ConsentHistoryAdapter implements ConsentHistory {
 
   async append(event: ConsentEvent): Promise<void> {
     await this.storage.ensureDirectory(this.ledgerDir);
+    await this.dropUnterminatedTail();
     await this.storage.append(this.path, `${renderConsentEvent(event)}\n`);
+  }
+
+  /** A last line a crash left unterminated is not written yet, and the reader ignores it. The
+   * generic append would end it with a newline, which turns it into a line that is not an
+   * event: damage. Cut off, it leaves nothing to refuse. */
+  private async dropUnterminatedTail(): Promise<void> {
+    const text = await readTextIfPresent(this.path);
+    if (text === null || text === "" || text.endsWith("\n")) return;
+    await this.storage.replace(this.path, text.slice(0, text.lastIndexOf("\n") + 1));
   }
 }

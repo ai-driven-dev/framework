@@ -28,23 +28,44 @@ function readRecords(file, fields) {
   return records;
 }
 
-/** Appends one line, first closing a last line a crash left unterminated. */
-function appendRecord(file, record) {
+/** Appends one line, first closing a last line a crash left unterminated. With `dropTornTail`
+ * the unterminated text is cut off instead of closed: for a log whose reader ignores such a
+ * tail but refuses a terminated line that is not a record, closing it would turn a write not
+ * yet made into damage. */
+function appendRecord(file, record, { dropTornTail = false } = {}) {
   fs.mkdirSync(path.dirname(file), { recursive: true });
   let prefix = "";
   try {
     const size = fs.statSync(file).size;
     if (size > 0) {
-      const fd = fs.openSync(file, "r");
-      const last = Buffer.alloc(1);
-      fs.readSync(fd, last, 0, 1, size - 1);
-      fs.closeSync(fd);
-      if (last[0] !== 0x0a) prefix = "\n";
+      const fd = fs.openSync(file, "r+");
+      try {
+        const last = Buffer.alloc(1);
+        fs.readSync(fd, last, 0, 1, size - 1);
+        if (last[0] !== 0x0a) {
+          if (dropTornTail) fs.ftruncateSync(fd, lengthThroughLastNewline(fd, size));
+          else prefix = "\n";
+        }
+      } finally {
+        fs.closeSync(fd);
+      }
     }
   } catch {
     // no file yet
   }
   fs.appendFileSync(file, `${prefix}${JSON.stringify(record)}\n`);
+}
+
+/** The length of the file up to and including its last newline; 0 when it has none. */
+function lengthThroughLastNewline(fd, size) {
+  const chunk = Buffer.alloc(4096);
+  for (let end = size; end > 0; end -= chunk.length) {
+    const start = Math.max(0, end - chunk.length);
+    const read = fs.readSync(fd, chunk, 0, end - start, start);
+    const at = chunk.subarray(0, read).lastIndexOf(0x0a);
+    if (at !== -1) return start + at + 1;
+  }
+  return 0;
 }
 
 module.exports = { readRecords, appendRecord };

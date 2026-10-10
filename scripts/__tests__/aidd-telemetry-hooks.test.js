@@ -237,13 +237,13 @@ test("the telemetry directory follows the fixture, on both platforms", () => {
   }
 });
 
-function logText(lines) {
-  return lines.map((line) => `${typeof line === "string" ? line : JSON.stringify(line)}\n`).join("");
+function logText(lines, tail = "") {
+  return lines.map((line) => `${typeof line === "string" ? line : JSON.stringify(line)}\n`).join("") + tail;
 }
 
 test("the consent log follows the fixture", () => {
   for (const [name, c] of Object.entries(cases.consentLog)) {
-    const log = parseConsentLog(logText(c.lines));
+    const log = parseConsentLog(logText(c.lines, c.tail));
     const iso = (ms) => (ms === null ? null : new Date(ms).toISOString());
     assert.deepEqual(
       { damaged: log.damaged, intervals: log.intervals.map((i) => ({ token: i.token, path: i.path, from: iso(i.from), to: iso(i.to) })) },
@@ -518,6 +518,19 @@ test("consent: a clone whose key was turned off by hand has its interval closed,
       assert.equal(consentLines(box).length, 2);
     });
   }
+});
+
+test("consent: a torn last line leaves the clone measured, and a hook's close drops it instead of terminating it into damage", () => {
+  withBox({}, (box) => {
+    fs.appendFileSync(consentsFile(box), '{"token":"abc","clo');
+    assert.equal(asks(gate(box)), true);
+    git(box.repo, "config", "--local", "aidd.telemetry", "off");
+    assertPasses(gate(box, { env: box.env({ CLAUDE_CODE_SESSION_ATTENDED: "0" }) }));
+    const text = fs.readFileSync(consentsFile(box), "utf8");
+    assert.ok(text.endsWith("\n"));
+    assert.deepEqual(consentLines(box).map((line) => Object.keys(line).pop()), ["open", "close"]);
+    assert.equal(parseConsentLog(text).damaged, false);
+  });
 });
 
 test("consent: the session start and the catch-up close it too", () => {

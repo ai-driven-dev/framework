@@ -95,11 +95,16 @@ function parseLine(line) {
 
 /** The intervals the file says, and whether a line of it was not an event. Same rules as the
  * CLI, pinned by the shared fixture: a blank line is not damage, a token opened twice is its
- * first opening, and a token closed twice ends at the earliest close. */
+ * first opening, a token closed twice ends at the earliest close, and an unterminated last
+ * line is not written yet. */
 function parseConsentLog(text) {
   const events = [];
   let damaged = false;
-  for (const line of (text ?? "").split("\n")) {
+  // The text after the last newline is a write a crash cut short, or one still in flight: not
+  // written yet, so ignored whole, even when it would parse.
+  const terminated = (text ?? "").split("\n");
+  terminated.pop();
+  for (const line of terminated) {
     if (line.trim() === "") continue;
     const event = parseLine(line);
     if (event === null) damaged = true;
@@ -199,7 +204,7 @@ function consentGranted(cwd, env = process.env, now = new Date()) {
     realpath,
     identity: identityOf(realpath),
   });
-  for (const token of decision.close) appendRecord(file, { token, close: now.toISOString() });
+  for (const token of decision.close) appendRecord(file, { token, close: now.toISOString() }, { dropTornTail: true });
   return decision.granted;
 }
 

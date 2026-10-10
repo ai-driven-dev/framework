@@ -800,6 +800,27 @@ const ROWS: readonly Row[] = [
     },
   },
   {
+    n: "torn tail",
+    scenario:
+      "on, c1, a write cut short at the end of the log, c2, then off, c3, on, c4: the torn line is not damage, measurement and the next off and on work, c3 is not stored",
+    expected: ["c1", "c2", "c4"],
+    run: async (w) => {
+      const a = w.repository("a", SHARED);
+      await w.on(a, HOUR);
+      w.call(a, "c1", HOUR + 100);
+      appendFileSync(w.consentsFile(), '{"token":"cut","clo');
+      w.call(a, "c2", HOUR + 200);
+      const first = await w.ingest(HOUR + 300);
+      expect(first.consentLogDamaged).toBe(false);
+      expect(await w.off(a, 2 * HOUR)).toMatchObject({ status: "off" });
+      w.call(a, "c3", 2 * HOUR + 100);
+      expect(await w.on(a, 3 * HOUR)).toMatchObject({ status: "on" });
+      w.call(a, "c4", 3 * HOUR + 100);
+      const last = await w.ingest(3 * HOUR + 200);
+      expect(last.consentLogDamaged).toBe(false);
+    },
+  },
+  {
     n: "damaged",
     scenario: "a damaged line in consents.jsonl: nothing more is stored, and coverage says why",
     expected: ["c1"],

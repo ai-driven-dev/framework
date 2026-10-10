@@ -339,6 +339,22 @@
         }
       ]
     },
+    "torn-last-line-is-not-yet-written": {
+      "damaged": false,
+      "intervals": [
+        { "token": "t1", "path": "/work/a/.git", "from": "2026-10-09T09:00:00.000Z", "to": null }
+      ]
+    },
+    "whole-event-without-its-newline-is-not-yet-written": {
+      "damaged": false,
+      "intervals": [
+        { "token": "t1", "path": "/work/a/.git", "from": "2026-10-09T09:00:00.000Z", "to": null }
+      ]
+    },
+    "torn-line-with-a-line-after-it-damages": {
+      "damaged": true,
+      "intervals": []
+    },
     "cut-line-damages": {
       "damaged": true,
       "intervals": []

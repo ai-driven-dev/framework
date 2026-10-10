@@ -63,12 +63,16 @@ export function parseConsentEvent(line: string): ConsentEvent | null {
   return null;
 }
 
-/** The events of the file, in the order written. A blank line is not damage; any other line
- * that is not an event is. */
+/** The events of the file, in the order written. A blank line is not damage; any other
+ * terminated line that is not an event is. An unterminated last line is a write a crash cut
+ * short, or one still in flight: it is not written yet, so it is ignored whole, even when it
+ * would parse. */
 export function parseConsentRecords(text: string | null): ConsentRecords {
   const events: ConsentEvent[] = [];
   let damaged = false;
-  for (const line of (text ?? "").split("\n")) {
+  const terminated = (text ?? "").split("\n");
+  terminated.pop();
+  for (const line of terminated) {
     if (line.trim() === "") continue;
     const event = parseConsentEvent(line);
     if (event === null) damaged = true;
