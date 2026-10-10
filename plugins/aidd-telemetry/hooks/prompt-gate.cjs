@@ -72,9 +72,10 @@ function notUnderstood() {
 }
 
 runHook((payload) => {
-  if (!personIsPresent()) return null;
+  // The guard first: it also ends the interval of a clone whose key was turned off by hand, and
+  // that holds whether or not anyone is there to answer.
   const context = guardedContext(payload);
-  if (context === null) return null;
+  if (context === null || !personIsPresent()) return null;
   // A prompt that only starts like a declaration, or holds anything a shell would read, is
   // never run. One that reads like a mistyped declaration is told so; any other is an
   // ordinary prompt and meets the ordinary gate below.

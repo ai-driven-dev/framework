@@ -49,5 +49,6 @@ What `aidd telemetry report --json` prints, and what each part means. Version `1
 
 | Sign | Likely reason |
 | --- | --- |
-| `records` of `0` and `not_stored.no-consent` above `0` | The clone has not opted in |
+| `records` of `0` and `not_stored.no-consent` above `0` | The clone has not opted in, or the calls were made before it did or while it was off: measurement starts at `aidd telemetry on` and reads nothing back |
+| `not_stored.unreadable-consent` above `0` | A clone's git config, or a line of the consent log `ledger/consents.jsonl`, cannot be read: nothing is stored until it is repaired |
 | `records` of `0` and `files_read` of `0` | No Claude Code session file is on disk for the period |

@@ -18,7 +18,7 @@ const cases = JSON.parse(fs.readFileSync(path.join(FIXTURE, "cases.json"), "utf8
 const expected = JSON.parse(fs.readFileSync(path.join(FIXTURE, "expected.json"), "utf8"));
 
 const { telemetryDir } = require(path.join(HOOKS, "lib/telemetry-dir.cjs"));
-const { consentOf } = require(path.join(HOOKS, "lib/consent.cjs"));
+const { consentOf, decideConsent, parseConsentLog } = require(path.join(HOOKS, "lib/consent.cjs"));
 const { branchRoleOf, parseBranchConfig } = require(path.join(HOOKS, "lib/git.cjs"));
 const { readCarries, readDeclarations } = require(path.join(HOOKS, "lib/binding.cjs"));
 const { lookup } = require(path.join(HOOKS, "lib/lookup.cjs"));
@@ -95,7 +95,7 @@ function sandbox({ aidd = true, branch = "feat/x", consent = true } = {}) {
   for (const dir of [box.home, box.bin, box.repo]) fs.mkdirSync(dir, { recursive: true });
   git(box.repo, "init", "-q");
   git(box.repo, "symbolic-ref", "HEAD", `refs/heads/${branch}`);
-  if (consent) writeConsent(box.repo);
+  if (consent) writeConsent(box);
   if (aidd) {
     const script = path.join(box.bin, "fake-aidd.js");
     fs.writeFileSync(script, FAKE_AIDD);
@@ -149,9 +149,38 @@ function sandbox({ aidd = true, branch = "feat/x", consent = true } = {}) {
   return box;
 }
 
-/** Consent is the clone's own git config, as `aidd telemetry on` writes it. */
-function writeConsent(repo, value = "2") {
-  git(repo, "config", "--local", "aidd.telemetry", value);
+const TOKEN = "11111111-2222-4333-8444-555555555555";
+
+/** The real path of the clone's git common dir, as the CLI records it in an interval. */
+function commonDirOf(repo) {
+  return fs.realpathSync.native(path.resolve(repo, git(repo, "rev-parse", "--git-common-dir").trim()));
+}
+
+function consentsFile(box) {
+  return path.join(box.tel, "ledger", "consents.jsonl");
+}
+
+function openLine(token, repo, open = "2026-01-01T00:00:00.000Z") {
+  const clone = { path: commonDirOf(repo), dev: "1", ino: "2", birthtimeMs: 0 };
+  return `${JSON.stringify({ token, clone, open })}\n`;
+}
+
+/** Consent as `aidd telemetry on` writes it: the key in the clone's own git config, and an
+ * open interval in the consent log naming the same token for this clone. `key` is what the key
+ * is set to (null: not set); `interval` is the token of the interval opened (null: none). */
+function writeConsent(box, { key = `2:${TOKEN}`, interval = TOKEN } = {}) {
+  if (key !== null) git(box.repo, "config", "--local", "aidd.telemetry", key);
+  if (interval !== null) {
+    fs.mkdirSync(path.dirname(consentsFile(box)), { recursive: true });
+    fs.appendFileSync(consentsFile(box), openLine(interval, box.repo));
+  }
+}
+
+/** The lines of the consent log, parsed. */
+function consentLines(box) {
+  return fs.existsSync(consentsFile(box))
+    ? fs.readFileSync(consentsFile(box), "utf8").split("\n").filter(Boolean).map((l) => JSON.parse(l))
+    : [];
 }
 
 /** What a team could commit: the previous version's consent, which grants nothing now. */
@@ -204,6 +233,29 @@ test("the telemetry directory follows the fixture, on both platforms", () => {
   for (const [name, c] of Object.entries(cases.telemetryDir)) {
     const platform = c.platform === "win32" ? "win32" : "linux";
     assert.equal(telemetryDir({ env: c.env, platform, home: c.home }), expected.telemetryDir[name], name);
+  }
+});
+
+function logText(lines) {
+  return lines.map((line) => `${typeof line === "string" ? line : JSON.stringify(line)}\n`).join("");
+}
+
+test("the consent log follows the fixture", () => {
+  for (const [name, c] of Object.entries(cases.consentLog)) {
+    const log = parseConsentLog(logText(c.lines));
+    const iso = (ms) => (ms === null ? null : new Date(ms).toISOString());
+    assert.deepEqual(
+      { damaged: log.damaged, intervals: log.intervals.map((i) => ({ token: i.token, path: i.path, from: iso(i.from), to: iso(i.to) })) },
+      expected.consentLog[name],
+      name
+    );
+  }
+});
+
+test("a clone consents, and what the hook closes, follow the fixture", () => {
+  for (const [name, c] of Object.entries(cases.hookConsent)) {
+    const log = parseConsentLog(logText(c.lines));
+    assert.deepEqual(decideConsent({ key: c.key, log, realpath: c.realpath }), expected.hookConsent[name], name);
   }
 });
 
@@ -336,7 +388,7 @@ test("claude-only: a Codex or Copilot shaped payload passes and writes nothing",
     assertPasses(run(START, box, { payload: { ...codex, hook_event_name: "SessionStart", source: "startup" } }));
     const copilot = { sessionId: SESSION, timestamp: 1, prompt: "x", cwd: box.repo };
     assertPasses(gate(box, { payload: copilot }));
-    assert.equal(fs.existsSync(box.tel), false);
+    assert.equal(fs.existsSync(path.join(box.tel, "bindings")), false);
     assert.deepEqual(box.calls(), []);
   });
 });
@@ -373,13 +425,111 @@ test("presence: a typed declaration is not run for nobody", () => {
   });
 });
 
-test("consent: every fixture case grants or refuses as expected", () => {
+test("consent: every fixture key grants or refuses as expected, an interval open for the clone behind it", () => {
   for (const [name, c] of Object.entries(cases.consent)) {
     withBox({ consent: false }, (box) => {
-      if (c.value !== null) writeConsent(box.repo, c.value);
+      const named = c.value === null ? null : (/^2:(\S+)$/u.exec(c.value)?.[1] ?? null);
+      writeConsent(box, { key: c.value, interval: named ?? "another-token" });
       assert.equal(asks(gate(box)), expected.consent[name] === "granted", name);
     });
   }
+});
+
+test("consent: a key with no interval open for the clone grants nothing, asks nothing and blocks nothing", () => {
+  const kept = [
+    ["a key set by hand", { key: "2", interval: null }],
+    ["a forged token", { key: "2:forged", interval: null }],
+    ["a token of an interval already closed", { key: `2:${TOKEN}`, interval: null, closed: true }],
+  ];
+  for (const [name, options] of kept) {
+    withBox({ consent: false }, (box) => {
+      writeConsent(box, options);
+      if (options.closed) {
+        fs.mkdirSync(path.dirname(consentsFile(box)), { recursive: true });
+        fs.appendFileSync(consentsFile(box), openLine(TOKEN, box.repo) + `${JSON.stringify({ token: TOKEN, close: "2026-01-02T00:00:00.000Z" })}\n`);
+      }
+      assertPasses(gate(box));
+      assertPasses(gate(box, { payload: box.payload({ prompt: "aidd telemetry task x" }) }));
+      assert.deepEqual(box.calls(), [], name);
+    });
+  }
+});
+
+test("consent: a cp -R copy carries the key and not the clone, so it asks nothing and closes nothing", () => {
+  withBox({}, (box) => {
+    git(box.repo, "commit", "--allow-empty", "-q", "-m", "x");
+    const copy = path.join(box.root, "copy");
+    fs.cpSync(box.repo, copy, { recursive: true });
+    assert.equal(asks(gate(box)), true);
+    assertPasses(gate(box, { payload: box.payload({ cwd: copy }) }));
+    assert.equal(consentLines(box).length, 1);
+  });
+});
+
+test("consent: a clone whose key was turned off by hand has its interval closed, now, even with nobody present", () => {
+  for (const turnOff of [(box) => git(box.repo, "config", "--local", "aidd.telemetry", "off"), (box) => git(box.repo, "config", "--local", "--unset", "aidd.telemetry")]) {
+    withBox({}, (box) => {
+      turnOff(box);
+      const before = Date.now();
+      const headless = box.env({ CLAUDE_CODE_SESSION_ATTENDED: "0" });
+      assertPasses(gate(box, { env: headless }));
+      const lines = consentLines(box);
+      assert.equal(lines.length, 2);
+      assert.deepEqual(Object.keys(lines[1]), ["token", "close"]);
+      assert.equal(lines[1].token, TOKEN);
+      assert.ok(Date.parse(lines[1].close) >= before - 1000);
+      // already closed: another prompt, or another hook, writes nothing more
+      assertPasses(gate(box, { env: headless }));
+      assert.equal(consentLines(box).length, 2);
+    });
+  }
+});
+
+test("consent: the session start and the catch-up close it too", () => {
+  withBox({}, (box) => {
+    git(box.repo, "config", "--local", "aidd.telemetry", "off");
+    assertPasses(start(box, SESSION, "startup"));
+    assert.equal(consentLines(box).length, 2);
+  });
+  withBox({}, (box) => {
+    git(box.repo, "config", "--local", "aidd.telemetry", "off");
+    assertPasses(catchUp(box));
+    assert.equal(consentLines(box).length, 2);
+  });
+});
+
+test("consent: outside Claude, or refused by the environment, nothing is closed", () => {
+  withBox({}, (box) => {
+    git(box.repo, "config", "--local", "aidd.telemetry", "off");
+    assertPasses(gate(box, { payload: box.payload({ session_id: OTHER }) }));
+    assertPasses(gate(box, { env: box.env({ AIDD_TELEMETRY: "0" }) }));
+    assert.equal(consentLines(box).length, 1);
+  });
+});
+
+test("consent: a damaged log grants nothing and is left as it is", () => {
+  withBox({}, (box) => {
+    fs.appendFileSync(consentsFile(box), "{not json\n");
+    const before = fs.readFileSync(consentsFile(box), "utf8");
+    assertPasses(gate(box));
+    git(box.repo, "config", "--local", "aidd.telemetry", "off");
+    assertPasses(gate(box));
+    assert.equal(fs.readFileSync(consentsFile(box), "utf8"), before);
+  });
+});
+
+test("consent: with no open interval anywhere, git is not even asked", () => {
+  withBox({ consent: false }, (box) => {
+    assertPasses(gate(box, { env: { ...box.env(), PATH: "" } }));
+  });
+});
+
+test("consent: the clone is told by the real path git records, whatever case the cwd is spelled in", () => {
+  withBox({}, (box) => {
+    const upper = box.repo.toUpperCase();
+    if (!fs.existsSync(upper)) return; // a case-sensitive file system: nothing to spell differently
+    assert.equal(asks(gate(box, { payload: box.payload({ cwd: upper }) })), true);
+  });
 });
 
 test("consent: a linked worktree sees the main clone's consent, and a clone without it asks nothing", () => {
@@ -388,7 +538,7 @@ test("consent: a linked worktree sees the main clone's consent, and a clone with
     const linked = path.join(box.root, "linked");
     git(box.repo, "worktree", "add", "-q", "-b", "feat/y", linked);
     assertPasses(gate(box, { payload: box.payload({ cwd: linked }) }));
-    writeConsent(box.repo);
+    writeConsent(box);
     assert.equal(asks(gate(box, { payload: box.payload({ cwd: linked }) })), true);
   });
 });
@@ -399,7 +549,7 @@ test("consent: a committed .aidd/config.json is not consent, so nothing is asked
     assertPasses(gate(box));
     assertPasses(gate(box, { payload: box.payload({ prompt: "aidd telemetry task x" }) }));
     assert.deepEqual(box.calls(), []);
-    writeConsent(box.repo);
+    writeConsent(box);
     assert.equal(asks(gate(box)), true);
   });
 });
@@ -828,11 +978,11 @@ test("startup, resume and compact carry nothing, but a branch (fork) does", () =
 test("session start does nothing outside an opted-in project or when refused", () => {
   withBox({ consent: false }, (box) => {
     assertPasses(start(box, SESSION, "startup"));
-    assert.equal(fs.existsSync(box.tel), false);
+    assert.equal(fs.existsSync(path.join(box.tel, "bindings")), false);
   });
   withBox({}, (box) => {
     assertPasses(start(box, SESSION, "startup", { AIDD_TELEMETRY: "0" }));
-    assert.equal(fs.existsSync(box.tel), false);
+    assert.equal(fs.existsSync(path.join(box.tel, "bindings")), false);
   });
 });
 

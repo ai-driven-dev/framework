@@ -183,6 +183,11 @@
   },
   "consent": {
     "granted": "granted",
+    "a-short-token": "granted",
+    "bare-two": "absent",
+    "two-and-colon": "absent",
+    "padded-token": "absent",
+    "trailing-space": "absent",
     "off": "absent",
     "previous-version-1": "absent",
     "a-later-version": "absent",
@@ -223,5 +228,223 @@
     "codex-windows-rollout-path": false,
     "payload-has-no-transcript-path": false,
     "projects-is-only-part-of-a-name": false
+  },
+  "consentLog": {
+    "no-file": {
+      "damaged": false,
+      "intervals": []
+    },
+    "open-only": {
+      "damaged": false,
+      "intervals": [
+        {
+          "token": "t1",
+          "path": "/work/a/.git",
+          "from": "2026-10-09T09:00:00.000Z",
+          "to": null
+        }
+      ]
+    },
+    "open-then-close": {
+      "damaged": false,
+      "intervals": [
+        {
+          "token": "t1",
+          "path": "/work/a/.git",
+          "from": "2026-10-09T09:00:00.000Z",
+          "to": "2026-10-09T10:00:00.000Z"
+        }
+      ]
+    },
+    "close-written-before-the-open": {
+      "damaged": false,
+      "intervals": [
+        {
+          "token": "t1",
+          "path": "/work/a/.git",
+          "from": "2026-10-09T09:00:00.000Z",
+          "to": "2026-10-09T10:00:00.000Z"
+        }
+      ]
+    },
+    "double-close-ends-at-the-earliest": {
+      "damaged": false,
+      "intervals": [
+        {
+          "token": "t1",
+          "path": "/work/a/.git",
+          "from": "2026-10-09T09:00:00.000Z",
+          "to": "2026-10-09T10:00:00.000Z"
+        }
+      ]
+    },
+    "reopening-a-token-keeps-the-first": {
+      "damaged": false,
+      "intervals": [
+        {
+          "token": "t1",
+          "path": "/work/a/.git",
+          "from": "2026-10-09T09:00:00.000Z",
+          "to": null
+        }
+      ]
+    },
+    "closing-an-unknown-token-changes-nothing": {
+      "damaged": false,
+      "intervals": [
+        {
+          "token": "t1",
+          "path": "/work/a/.git",
+          "from": "2026-10-09T09:00:00.000Z",
+          "to": null
+        }
+      ]
+    },
+    "two-clones-two-tokens": {
+      "damaged": false,
+      "intervals": [
+        {
+          "token": "t1",
+          "path": "/work/a/.git",
+          "from": "2026-10-09T09:00:00.000Z",
+          "to": "2026-10-09T11:00:00.000Z"
+        },
+        {
+          "token": "t2",
+          "path": "/work/b/.git",
+          "from": "2026-10-09T10:00:00.000Z",
+          "to": null
+        }
+      ]
+    },
+    "blank-lines-are-not-damage": {
+      "damaged": false,
+      "intervals": [
+        {
+          "token": "t1",
+          "path": "/work/a/.git",
+          "from": "2026-10-09T09:00:00.000Z",
+          "to": null
+        }
+      ]
+    },
+    "garbage-line-damages": {
+      "damaged": true,
+      "intervals": [
+        {
+          "token": "t1",
+          "path": "/work/a/.git",
+          "from": "2026-10-09T09:00:00.000Z",
+          "to": null
+        }
+      ]
+    },
+    "cut-line-damages": {
+      "damaged": true,
+      "intervals": []
+    },
+    "open-with-an-extra-field-damages": {
+      "damaged": true,
+      "intervals": []
+    },
+    "open-with-no-clone-damages": {
+      "damaged": true,
+      "intervals": []
+    },
+    "clone-with-no-inode-damages": {
+      "damaged": true,
+      "intervals": []
+    },
+    "close-with-an-unreadable-time-damages": {
+      "damaged": true,
+      "intervals": [
+        {
+          "token": "t1",
+          "path": "/work/a/.git",
+          "from": "2026-10-09T09:00:00.000Z",
+          "to": null
+        }
+      ]
+    },
+    "token-with-a-space-damages": {
+      "damaged": true,
+      "intervals": []
+    },
+    "line-with-open-and-close-damages": {
+      "damaged": true,
+      "intervals": []
+    },
+    "an-array-damages": {
+      "damaged": true,
+      "intervals": []
+    }
+  },
+  "hookConsent": {
+    "key-names-an-interval-open-for-this-path": {
+      "granted": true,
+      "close": []
+    },
+    "the-interval-is-closed": {
+      "granted": false,
+      "close": []
+    },
+    "a-bare-2-set-by-hand": {
+      "granted": false,
+      "close": [
+        "t1"
+      ]
+    },
+    "a-forged-token-names-no-interval": {
+      "granted": false,
+      "close": [
+        "t1"
+      ]
+    },
+    "a-forged-token-and-no-log": {
+      "granted": false,
+      "close": []
+    },
+    "a-copy-carries-the-key-to-another-path": {
+      "granted": false,
+      "close": []
+    },
+    "the-key-is-off": {
+      "granted": false,
+      "close": [
+        "t1"
+      ]
+    },
+    "the-key-is-unset": {
+      "granted": false,
+      "close": [
+        "t1"
+      ]
+    },
+    "a-clone-made-again-at-the-path-has-no-key": {
+      "granted": false,
+      "close": [
+        "t1"
+      ]
+    },
+    "the-key-names-the-second-of-two-open-intervals": {
+      "granted": true,
+      "close": [
+        "t1"
+      ]
+    },
+    "another-clone-open-is-left-alone": {
+      "granted": false,
+      "close": [
+        "t1"
+      ]
+    },
+    "a-damaged-log-grants-nothing-and-closes-nothing": {
+      "granted": false,
+      "close": []
+    },
+    "a-damaged-log-and-a-key-gone": {
+      "granted": false,
+      "close": []
+    }
   }
 }

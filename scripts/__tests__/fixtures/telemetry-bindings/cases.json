@@ -282,7 +282,22 @@
   },
   "consent": {
     "granted": {
+      "value": "2:3f2b9c1e-5a6d-4e7f-8a9b-0c1d2e3f4a5b"
+    },
+    "a-short-token": {
+      "value": "2:t"
+    },
+    "bare-two": {
       "value": "2"
+    },
+    "two-and-colon": {
+      "value": "2:"
+    },
+    "padded-token": {
+      "value": "2: t"
+    },
+    "trailing-space": {
+      "value": "2:t "
     },
     "off": {
       "value": "off"
@@ -291,7 +306,7 @@
       "value": "1"
     },
     "a-later-version": {
-      "value": "3"
+      "value": "3:t"
     },
     "true": {
       "value": "true"
@@ -300,7 +315,7 @@
       "value": ""
     },
     "padded": {
-      "value": " 2"
+      "value": " 2:t"
     },
     "unset": {
       "value": null
@@ -456,6 +471,497 @@
       "payload_session_id": "00000000-0000-4000-8000-00000000000a",
       "env_session_id": "00000000-0000-4000-8000-00000000000a",
       "transcript_path": "/home/someone/.codex/old-projects/rollout.jsonl"
+    }
+  },
+  "consentLog": {
+    "no-file": {
+      "lines": []
+    },
+    "open-only": {
+      "lines": [
+        {
+          "token": "t1",
+          "clone": {
+            "path": "/work/a/.git",
+            "dev": "16777231",
+            "ino": "100",
+            "birthtimeMs": 1760000000000
+          },
+          "open": "2026-10-09T09:00:00.000Z"
+        }
+      ]
+    },
+    "open-then-close": {
+      "lines": [
+        {
+          "token": "t1",
+          "clone": {
+            "path": "/work/a/.git",
+            "dev": "16777231",
+            "ino": "100",
+            "birthtimeMs": 1760000000000
+          },
+          "open": "2026-10-09T09:00:00.000Z"
+        },
+        {
+          "token": "t1",
+          "close": "2026-10-09T10:00:00.000Z"
+        }
+      ]
+    },
+    "close-written-before-the-open": {
+      "lines": [
+        {
+          "token": "t1",
+          "close": "2026-10-09T10:00:00.000Z"
+        },
+        {
+          "token": "t1",
+          "clone": {
+            "path": "/work/a/.git",
+            "dev": "16777231",
+            "ino": "100",
+            "birthtimeMs": 1760000000000
+          },
+          "open": "2026-10-09T09:00:00.000Z"
+        }
+      ]
+    },
+    "double-close-ends-at-the-earliest": {
+      "lines": [
+        {
+          "token": "t1",
+          "clone": {
+            "path": "/work/a/.git",
+            "dev": "16777231",
+            "ino": "100",
+            "birthtimeMs": 1760000000000
+          },
+          "open": "2026-10-09T09:00:00.000Z"
+        },
+        {
+          "token": "t1",
+          "close": "2026-10-09T11:00:00.000Z"
+        },
+        {
+          "token": "t1",
+          "close": "2026-10-09T10:00:00.000Z"
+        }
+      ]
+    },
+    "reopening-a-token-keeps-the-first": {
+      "lines": [
+        {
+          "token": "t1",
+          "clone": {
+            "path": "/work/a/.git",
+            "dev": "16777231",
+            "ino": "100",
+            "birthtimeMs": 1760000000000
+          },
+          "open": "2026-10-09T09:00:00.000Z"
+        },
+        {
+          "token": "t1",
+          "clone": {
+            "path": "/work/b/.git",
+            "dev": "16777231",
+            "ino": "100",
+            "birthtimeMs": 1760000000000
+          },
+          "open": "2026-10-09T10:00:00.000Z"
+        }
+      ]
+    },
+    "closing-an-unknown-token-changes-nothing": {
+      "lines": [
+        {
+          "token": "t1",
+          "clone": {
+            "path": "/work/a/.git",
+            "dev": "16777231",
+            "ino": "100",
+            "birthtimeMs": 1760000000000
+          },
+          "open": "2026-10-09T09:00:00.000Z"
+        },
+        {
+          "token": "t2",
+          "close": "2026-10-09T10:00:00.000Z"
+        }
+      ]
+    },
+    "two-clones-two-tokens": {
+      "lines": [
+        {
+          "token": "t1",
+          "clone": {
+            "path": "/work/a/.git",
+            "dev": "16777231",
+            "ino": "100",
+            "birthtimeMs": 1760000000000
+          },
+          "open": "2026-10-09T09:00:00.000Z"
+        },
+        {
+          "token": "t2",
+          "clone": {
+            "path": "/work/b/.git",
+            "dev": "16777231",
+            "ino": "100",
+            "birthtimeMs": 1760000000000
+          },
+          "open": "2026-10-09T10:00:00.000Z"
+        },
+        {
+          "token": "t1",
+          "close": "2026-10-09T11:00:00.000Z"
+        }
+      ]
+    },
+    "blank-lines-are-not-damage": {
+      "lines": [
+        {
+          "token": "t1",
+          "clone": {
+            "path": "/work/a/.git",
+            "dev": "16777231",
+            "ino": "100",
+            "birthtimeMs": 1760000000000
+          },
+          "open": "2026-10-09T09:00:00.000Z"
+        },
+        "",
+        "   "
+      ]
+    },
+    "garbage-line-damages": {
+      "lines": [
+        {
+          "token": "t1",
+          "clone": {
+            "path": "/work/a/.git",
+            "dev": "16777231",
+            "ino": "100",
+            "birthtimeMs": 1760000000000
+          },
+          "open": "2026-10-09T09:00:00.000Z"
+        },
+        "{not json"
+      ]
+    },
+    "cut-line-damages": {
+      "lines": [
+        "{\"token\":\"t1\",\"clone\":{\"path\":\"/work/a/.git\",\"dev\":\"1"
+      ]
+    },
+    "open-with-an-extra-field-damages": {
+      "lines": [
+        {
+          "token": "t1",
+          "clone": {
+            "path": "/work/a/.git",
+            "dev": "16777231",
+            "ino": "100",
+            "birthtimeMs": 1760000000000
+          },
+          "open": "2026-10-09T09:00:00.000Z",
+          "extra": 1
+        }
+      ]
+    },
+    "open-with-no-clone-damages": {
+      "lines": [
+        {
+          "token": "t1",
+          "open": "2026-10-09T09:00:00.000Z"
+        }
+      ]
+    },
+    "clone-with-no-inode-damages": {
+      "lines": [
+        {
+          "token": "t1",
+          "clone": {
+            "path": "/work/a/.git",
+            "dev": "16777231",
+            "ino": "0",
+            "birthtimeMs": 1760000000000
+          },
+          "open": "2026-10-09T09:00:00.000Z"
+        }
+      ]
+    },
+    "close-with-an-unreadable-time-damages": {
+      "lines": [
+        {
+          "token": "t1",
+          "clone": {
+            "path": "/work/a/.git",
+            "dev": "16777231",
+            "ino": "100",
+            "birthtimeMs": 1760000000000
+          },
+          "open": "2026-10-09T09:00:00.000Z"
+        },
+        {
+          "token": "t1",
+          "close": "yesterday"
+        }
+      ]
+    },
+    "token-with-a-space-damages": {
+      "lines": [
+        {
+          "token": "t 1",
+          "clone": {
+            "path": "/work/a/.git",
+            "dev": "16777231",
+            "ino": "100",
+            "birthtimeMs": 1760000000000
+          },
+          "open": "2026-10-09T09:00:00.000Z"
+        }
+      ]
+    },
+    "line-with-open-and-close-damages": {
+      "lines": [
+        {
+          "token": "t1",
+          "open": "2026-10-09T09:00:00.000Z",
+          "close": "2026-10-09T10:00:00.000Z"
+        }
+      ]
+    },
+    "an-array-damages": {
+      "lines": [
+        "[]"
+      ]
+    }
+  },
+  "hookConsent": {
+    "key-names-an-interval-open-for-this-path": {
+      "key": "2:t1",
+      "lines": [
+        {
+          "token": "t1",
+          "clone": {
+            "path": "/work/a/.git",
+            "dev": "16777231",
+            "ino": "100",
+            "birthtimeMs": 1760000000000
+          },
+          "open": "2026-10-09T09:00:00.000Z"
+        }
+      ],
+      "realpath": "/work/a/.git"
+    },
+    "the-interval-is-closed": {
+      "key": "2:t1",
+      "lines": [
+        {
+          "token": "t1",
+          "clone": {
+            "path": "/work/a/.git",
+            "dev": "16777231",
+            "ino": "100",
+            "birthtimeMs": 1760000000000
+          },
+          "open": "2026-10-09T09:00:00.000Z"
+        },
+        {
+          "token": "t1",
+          "close": "2026-10-09T10:00:00.000Z"
+        }
+      ],
+      "realpath": "/work/a/.git"
+    },
+    "a-bare-2-set-by-hand": {
+      "key": "2",
+      "lines": [
+        {
+          "token": "t1",
+          "clone": {
+            "path": "/work/a/.git",
+            "dev": "16777231",
+            "ino": "100",
+            "birthtimeMs": 1760000000000
+          },
+          "open": "2026-10-09T09:00:00.000Z"
+        }
+      ],
+      "realpath": "/work/a/.git"
+    },
+    "a-forged-token-names-no-interval": {
+      "key": "2:forged",
+      "lines": [
+        {
+          "token": "t1",
+          "clone": {
+            "path": "/work/a/.git",
+            "dev": "16777231",
+            "ino": "100",
+            "birthtimeMs": 1760000000000
+          },
+          "open": "2026-10-09T09:00:00.000Z"
+        }
+      ],
+      "realpath": "/work/a/.git"
+    },
+    "a-forged-token-and-no-log": {
+      "key": "2:forged",
+      "lines": [],
+      "realpath": "/work/a/.git"
+    },
+    "a-copy-carries-the-key-to-another-path": {
+      "key": "2:t1",
+      "lines": [
+        {
+          "token": "t1",
+          "clone": {
+            "path": "/work/a/.git",
+            "dev": "16777231",
+            "ino": "100",
+            "birthtimeMs": 1760000000000
+          },
+          "open": "2026-10-09T09:00:00.000Z"
+        }
+      ],
+      "realpath": "/work/b/.git"
+    },
+    "the-key-is-off": {
+      "key": "off",
+      "lines": [
+        {
+          "token": "t1",
+          "clone": {
+            "path": "/work/a/.git",
+            "dev": "16777231",
+            "ino": "100",
+            "birthtimeMs": 1760000000000
+          },
+          "open": "2026-10-09T09:00:00.000Z"
+        }
+      ],
+      "realpath": "/work/a/.git"
+    },
+    "the-key-is-unset": {
+      "key": null,
+      "lines": [
+        {
+          "token": "t1",
+          "clone": {
+            "path": "/work/a/.git",
+            "dev": "16777231",
+            "ino": "100",
+            "birthtimeMs": 1760000000000
+          },
+          "open": "2026-10-09T09:00:00.000Z"
+        }
+      ],
+      "realpath": "/work/a/.git"
+    },
+    "a-clone-made-again-at-the-path-has-no-key": {
+      "key": null,
+      "lines": [
+        {
+          "token": "t1",
+          "clone": {
+            "path": "/work/a/.git",
+            "dev": "16777231",
+            "ino": "100",
+            "birthtimeMs": 1760000000000
+          },
+          "open": "2026-10-09T09:00:00.000Z"
+        }
+      ],
+      "realpath": "/work/a/.git"
+    },
+    "the-key-names-the-second-of-two-open-intervals": {
+      "key": "2:t2",
+      "lines": [
+        {
+          "token": "t1",
+          "clone": {
+            "path": "/work/a/.git",
+            "dev": "16777231",
+            "ino": "100",
+            "birthtimeMs": 1760000000000
+          },
+          "open": "2026-10-09T09:00:00.000Z"
+        },
+        {
+          "token": "t2",
+          "clone": {
+            "path": "/work/a/.git",
+            "dev": "16777231",
+            "ino": "100",
+            "birthtimeMs": 1760000000000
+          },
+          "open": "2026-10-09T10:00:00.000Z"
+        }
+      ],
+      "realpath": "/work/a/.git"
+    },
+    "another-clone-open-is-left-alone": {
+      "key": "off",
+      "lines": [
+        {
+          "token": "t1",
+          "clone": {
+            "path": "/work/a/.git",
+            "dev": "16777231",
+            "ino": "100",
+            "birthtimeMs": 1760000000000
+          },
+          "open": "2026-10-09T09:00:00.000Z"
+        },
+        {
+          "token": "t2",
+          "clone": {
+            "path": "/work/b/.git",
+            "dev": "16777231",
+            "ino": "100",
+            "birthtimeMs": 1760000000000
+          },
+          "open": "2026-10-09T10:00:00.000Z"
+        }
+      ],
+      "realpath": "/work/a/.git"
+    },
+    "a-damaged-log-grants-nothing-and-closes-nothing": {
+      "key": "2:t1",
+      "lines": [
+        {
+          "token": "t1",
+          "clone": {
+            "path": "/work/a/.git",
+            "dev": "16777231",
+            "ino": "100",
+            "birthtimeMs": 1760000000000
+          },
+          "open": "2026-10-09T09:00:00.000Z"
+        },
+        "{not json"
+      ],
+      "realpath": "/work/a/.git"
+    },
+    "a-damaged-log-and-a-key-gone": {
+      "key": "off",
+      "lines": [
+        {
+          "token": "t1",
+          "clone": {
+            "path": "/work/a/.git",
+            "dev": "16777231",
+            "ino": "100",
+            "birthtimeMs": 1760000000000
+          },
+          "open": "2026-10-09T09:00:00.000Z"
+        },
+        "{not json"
+      ],
+      "realpath": "/work/a/.git"
     }
   }
 }

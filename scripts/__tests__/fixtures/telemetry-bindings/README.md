@@ -45,10 +45,22 @@ answer, or an answer with no case, is an error.
 - `branchRole`: `working`, `default` or `detached`. The default branch is the target of
   `refs/remotes/origin/HEAD`; when the repository has none, `main` and `master`. Only a working
   branch is ever bound.
-- `consent`: what `.aidd/config.json` grants. Only `telemetry.enabled: true` together with
-  `telemetry.version: 2` is consent. A bare `enabled: true` is not. A text that does not parse
-  is `unreadable`, which grants nothing. In a linked worktree with no config of its own, the main
-  working tree's config answers.
+- `consent`: what a clone's key says alone. Only `2:` followed by a token with no whitespace is a
+  grant; a bare `2`, `2:`, `off`, another number or nothing is not. The key is half of consent:
+  the token must name an open interval in the consent log, as `hookConsent` pins.
+- `consentLog`: `lines` are the lines of `<telemetry dir>/ledger/consents.jsonl`, an object
+  (written as JSON) or a string (kept as it is). The answer is `damaged` and the intervals, in the
+  order they were opened, as `{token, path, from, to}` with ISO instants (`to` is `null` while
+  open). An open line is exactly `{token, clone: {path, dev, ino, birthtimeMs}, open}` and a close
+  line exactly `{token, close}`; any other non-blank line is damage. A token opened twice is its
+  first opening, a token closed twice ends at the earliest close wherever the lines stand, and a
+  close of an unknown token changes nothing. Both sides parse it, and the hooks append close
+  lines in this format.
+- `hookConsent`: the hook's decision for a `key`, the `lines` of the consent log and the `realpath`
+  of the clone's git common dir. `granted` only when the key names an interval that is open and was
+  recorded for that same path. `close` lists the open intervals of that path that the key does not
+  name, which the hook ends; a damaged log grants and closes nothing. Only the hook test executes
+  these cases; the CLI test checks that they are well formed.
 - `environmentRefusal`: `AIDD_TELEMETRY` set to exactly `0` refuses; nothing else does.
 - `telemetryDir`: `AIDD_TELEMETRY_DIR`, else `AIDD_USER_CONFIG_DIR/telemetry`, else
   `XDG_CONFIG_HOME/aidd/telemetry`, else `<home>/.config/aidd/telemetry`. An empty variable is
