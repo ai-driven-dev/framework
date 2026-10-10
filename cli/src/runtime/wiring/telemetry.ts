@@ -73,8 +73,8 @@ export function telemetryDir(): string {
 }
 
 /** macOS and Windows file systems answer one directory to several spellings. */
-function caseInsensitiveFileSystem(): boolean {
-  return process.platform === "darwin" || process.platform === "win32";
+export function caseInsensitiveFileSystem(platform: NodeJS.Platform): boolean {
+  return platform === "darwin" || platform === "win32";
 }
 
 export function wireTelemetry(homedir: () => string): TelemetryDeps {
@@ -98,7 +98,7 @@ export function wireTelemetry(homedir: () => string): TelemetryDeps {
   const resolutionStore = new ResolutionStoreAdapter(ledgerDir, storage);
   const consentHistory = new ConsentHistoryAdapter(ledgerDir, storage);
   const environment = {
-    caseInsensitiveFileSystem: caseInsensitiveFileSystem(),
+    caseInsensitiveFileSystem: caseInsensitiveFileSystem(process.platform),
     now: () => new Date(),
   };
   const sessions = new SessionBindingStoreAdapter(bindingsDir, storage);

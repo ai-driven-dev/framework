@@ -1,5 +1,5 @@
 import { mkdir, readdir, readFile, stat, writeFile } from "node:fs/promises";
-import { join } from "node:path";
+import { join, relative } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { git, initRepository, sandboxGitEnv } from "../helpers/git-sandbox.js";
 import { backdateConsent, createTestEnv, runCli } from "./helpers.js";
@@ -238,9 +238,10 @@ afterEach(async () => {
 /** Every file under the telemetry directory with its bytes: what a run changed shows. */
 async function held(): Promise<Record<string, string>> {
   const found: Record<string, string> = {};
-  for (const name of await readdir(telemetry, { recursive: true })) {
-    const path = join(telemetry, name);
-    if ((await stat(path)).isFile()) found[name] = await readFile(path, "utf8");
+  for (const entry of await readdir(telemetry, { recursive: true, withFileTypes: true })) {
+    if (!entry.isFile()) continue;
+    const path = join(entry.parentPath, entry.name);
+    found[relative(telemetry, path)] = await readFile(path, "utf8");
   }
   return found;
 }

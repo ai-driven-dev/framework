@@ -1,8 +1,11 @@
 import { execFileSync } from "node:child_process";
 import {
   chmodSync,
+  closeSync,
   existsSync,
+  fstatSync,
   mkdirSync,
+  openSync,
   readdirSync,
   readFileSync,
   realpathSync,
@@ -436,11 +439,17 @@ function snapshot(): Record<string, string> {
     for (const entry of readdirSync(dir, { withFileTypes: true })) {
       const path = join(dir, entry.name);
       if (path.includes(`${join(".git")}`)) continue;
-      const mtime = statSync(path).mtimeMs;
       if (entry.isDirectory()) {
-        found[path] = `dir ${mtime}`;
+        found[path] = `dir ${statSync(path).mtimeMs}`;
         walk(path);
-      } else found[path] = `${mtime} ${readFileSync(path).toString("base64")}`;
+        continue;
+      }
+      const fd = openSync(path, "r");
+      try {
+        found[path] = `${fstatSync(fd).mtimeMs} ${readFileSync(fd).toString("base64")}`;
+      } finally {
+        closeSync(fd);
+      }
     }
   };
   walk(box.root);

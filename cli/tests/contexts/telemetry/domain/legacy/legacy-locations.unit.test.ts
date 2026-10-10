@@ -17,10 +17,10 @@ describe("where the previous version wrote", () => {
       { AIDD_TELEMETRY_DIR: "/named", AIDD_USER_CONFIG_DIR: "/user" },
       "/h",
       "linux",
-      "/user/telemetry"
+      join("/user", "telemetry")
     );
     expect(found.sinkDirs).toEqual([
-      "/user/telemetry",
+      join("/user", "telemetry"),
       "/named",
       join("/h", ".config", "aidd", "telemetry"),
     ]);

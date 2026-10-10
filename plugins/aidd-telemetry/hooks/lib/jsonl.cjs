@@ -35,23 +35,26 @@ function readRecords(file, fields) {
 function appendRecord(file, record, { dropTornTail = false } = {}) {
   fs.mkdirSync(path.dirname(file), { recursive: true });
   let prefix = "";
+  let fd;
   try {
-    const size = fs.statSync(file).size;
-    if (size > 0) {
-      const fd = fs.openSync(file, "r+");
-      try {
+    fd = fs.openSync(file, "r+");
+  } catch {
+    // no file yet
+  }
+  if (fd !== undefined) {
+    try {
+      const size = fs.fstatSync(fd).size;
+      if (size > 0) {
         const last = Buffer.alloc(1);
         fs.readSync(fd, last, 0, 1, size - 1);
         if (last[0] !== 0x0a) {
           if (dropTornTail) fs.ftruncateSync(fd, lengthThroughLastNewline(fd, size));
           else prefix = "\n";
         }
-      } finally {
-        fs.closeSync(fd);
       }
+    } finally {
+      fs.closeSync(fd);
     }
-  } catch {
-    // no file yet
   }
   fs.appendFileSync(file, `${prefix}${JSON.stringify(record)}\n`);
 }

@@ -1,5 +1,5 @@
 import { readFileSync } from "node:fs";
-import { join, win32 } from "node:path";
+import { join, posix, win32 } from "node:path";
 import { describe, expect, it } from "vitest";
 import { parseBranchConfig } from "../../../src/contexts/telemetry/domain/branch-binding.js";
 import { identityFromStat } from "../../../src/contexts/telemetry/domain/consent/clone-identity.js";
@@ -226,7 +226,7 @@ describe("the shared fixture of task bindings", () => {
   });
 
   it.each(Object.entries(cases.telemetryDir))("finds the telemetry dir for %s", (name, input) => {
-    const joinPath = input.platform === "win32" ? win32.join : join;
+    const joinPath = input.platform === "win32" ? win32.join : posix.join;
     expect(telemetryDirOf(input.env, input.home, joinPath)).toBe(expected.telemetryDir?.[name]);
   });
 
