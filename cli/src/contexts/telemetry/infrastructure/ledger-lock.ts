@@ -15,6 +15,8 @@ export interface LockOptions {
   /** How long to wait on a lock that is held. */
   readonly waitMs: number;
   readonly pollMs: number;
+  /** What the lock guards, as an error names it. */
+  readonly name: string;
 }
 
 /** `kill(pid, 0)` sends nothing: it only asks whether the process exists. A process of another
@@ -36,6 +38,7 @@ const DEFAULTS: LockOptions = {
   staleAfterMs: 10 * 60_000,
   waitMs: 60_000,
   pollMs: 50,
+  name: "telemetry ledger",
 };
 
 interface Holder {
@@ -100,8 +103,8 @@ export class LedgerLock {
       }
       if (this.options.now() >= deadline) {
         throw new Error(
-          `The telemetry ledger is locked by process ${holder.pid ?? "unknown"}, which is still running. ` +
-            `Wait for it to finish, or remove ${this.path} if that process is not an aidd ingest.`
+          `The ${this.options.name} is locked by process ${holder.pid ?? "unknown"}, which is still running. ` +
+            `Wait for it to finish, or remove ${this.path} if that process is not an aidd command.`
         );
       }
       await this.options.sleep(this.options.pollMs);

@@ -162,7 +162,7 @@ describe("the ledger lock's waiting", () => {
     );
     const lock = new LedgerLock(path, { ...time.options, isAlive: () => true, waitMs: 0 });
     await expect(lock.acquire()).rejects.toThrow(
-      /locked by process 4242, which is still running\. Wait for it to finish, or remove .*\.lock if that process is not an aidd ingest/
+      /The telemetry ledger is locked by process 4242, which is still running\. Wait for it to finish, or remove .*\.lock if that process is not an aidd command/
     );
   });
 

@@ -1,4 +1,4 @@
-import { mkdtemp, readFile, rm } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
@@ -28,6 +28,25 @@ describe("the bindings lock", () => {
     });
     const reached = await ledger.exclusively(() => bindings.exclusively(async () => "reached"));
     expect(reached).toBe("reached");
+  });
+
+  it("names itself, and its own file, when it times out", async () => {
+    const dir = join(root, "bindings");
+    await mkdir(dir, { recursive: true });
+    await writeFile(
+      join(dir, ".lock"),
+      JSON.stringify({ pid: 4242, created_at: new Date().toISOString() })
+    );
+    const bindings = new BindingsLockAdapter(dir, storage, {
+      isAlive: () => true,
+      waitMs: 0,
+    });
+    const failure = await bindings.exclusively(async () => "unreachable").catch((e: Error) => e);
+    expect(failure).toBeInstanceOf(Error);
+    const message = (failure as Error).message;
+    expect(message).toContain("The telemetry bindings store is locked by process 4242");
+    expect(message).toContain(join(dir, ".lock"));
+    expect(message).not.toContain("ledger");
   });
 
   it("makes two writers take turns: a second waits for the first to finish", async () => {

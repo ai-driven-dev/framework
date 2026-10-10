@@ -7,7 +7,10 @@ export class BindingsLockAdapter implements BindingsLock {
   private readonly lock: DirectoryLock;
 
   constructor(dir: string, storage: PrivateStorage, options: Partial<LockOptions> = {}) {
-    this.lock = new DirectoryLock(dir, ".lock", storage, options);
+    this.lock = new DirectoryLock(dir, ".lock", storage, {
+      ...options,
+      name: "telemetry bindings store",
+    });
   }
 
   exclusively<T>(work: () => Promise<T>): Promise<T> {
