@@ -1,0 +1,4 @@
+2026-10-10T10:51:39.096844Z  WARN codex_rollout::list: state db discrepancy during find_thread_path_by_id_str_in_subdir: falling_back
+2026-10-10T10:51:39.098053Z  WARN codex_rollout::list: state db discrepancy during find_thread_path_by_id_str_in_subdir: falling_back
+2026-10-10T10:51:45.096166Z ERROR codex_core::tools::router: error=code-mode host is disabled
+2026-10-10T10:51:49.350524Z ERROR codex_core::tools::router: error=code-mode host is disabled
