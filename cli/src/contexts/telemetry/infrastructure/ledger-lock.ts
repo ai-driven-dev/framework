@@ -65,9 +65,12 @@ export class DirectoryLock {
     private readonly options: Partial<LockOptions>
   ) {}
 
-  async exclusively<T>(work: () => Promise<T>): Promise<T> {
+  async exclusively<T>(work: () => Promise<T>, waitMs?: number): Promise<T> {
     await this.storage.ensureDirectory(this.dir);
-    const release = await new LedgerLock(join(this.dir, this.file), this.options).acquire();
+    const release = await new LedgerLock(join(this.dir, this.file), {
+      ...this.options,
+      ...(waitMs === undefined ? {} : { waitMs }),
+    }).acquire();
     try {
       return await work();
     } finally {

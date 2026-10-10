@@ -1,4 +1,4 @@
-import type { BindingsLock } from "../domain/ports/bindings/bindings-lock.js";
+import type { BindingsLock, LockWait } from "../domain/ports/bindings/bindings-lock.js";
 import type { PrivateStorage } from "../domain/ports/private-storage.js";
 import { DirectoryLock, type LockOptions } from "./ledger-lock.js";
 
@@ -13,7 +13,7 @@ export class BindingsLockAdapter implements BindingsLock {
     });
   }
 
-  exclusively<T>(work: () => Promise<T>): Promise<T> {
-    return this.lock.exclusively(work);
+  exclusively<T>(work: () => Promise<T>, wait?: LockWait): Promise<T> {
+    return this.lock.exclusively(work, wait?.waitMs);
   }
 }

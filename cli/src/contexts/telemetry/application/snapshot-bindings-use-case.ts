@@ -5,7 +5,7 @@ import {
   snapshotKey,
 } from "../domain/branch-binding.js";
 import type { BindingSnapshotStore } from "../domain/ports/bindings/binding-snapshot-store.js";
-import type { BindingsLock } from "../domain/ports/bindings/bindings-lock.js";
+import type { BindingsLock, LockWait } from "../domain/ports/bindings/bindings-lock.js";
 import type { BranchBindingSource } from "../domain/ports/branch-binding-source.js";
 
 /** Records what a repository's branches are declared as, right now. Attribution reads only
@@ -23,10 +23,11 @@ export class SnapshotBindingsUseCase {
    * bindings lock, because a declaration and an ingest both take snapshots and a config read
    * before the lock could be older than a snapshot taken while waiting for it. A repository
    * declaring nothing is told so without taking the lock. */
-  async execute(repositoryId: string, root: string): Promise<number> {
+  async execute(repositoryId: string, root: string, wait?: LockWait): Promise<number> {
     if ((await this.source.bindings(root)).length === 0) return 0;
-    return this.lock.exclusively(async () =>
-      this.append(repositoryId, root, await this.source.bindings(root))
+    return this.lock.exclusively(
+      async () => this.append(repositoryId, root, await this.source.bindings(root)),
+      wait
     );
   }
 

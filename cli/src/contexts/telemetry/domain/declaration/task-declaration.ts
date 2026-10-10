@@ -1,8 +1,19 @@
 import { tryParseJson } from "../../../../kernel/reading/json-file.js";
 import { asPlainObject } from "../../../../kernel/reading/plain-object.js";
+import type { LockWait } from "../ports/bindings/bindings-lock.js";
 
 export const DECLARED_BY = ["command", "hook-intercept"] as const;
 export type DeclaredBy = (typeof DECLARED_BY)[number];
+
+/** How long a declaration made by the hook waits on the bindings lock, each of the two times it
+ * takes it. The hook gives `aidd` 20 s to answer; a wait that ends before that lets `aidd` say
+ * who holds the lock, where a longer one would be cut off with no reason. */
+export const HOOK_LOCK_WAIT_MS = 8_000;
+
+/** The lock wait a declaration can afford: the lock's own for a person at a terminal. */
+export function lockWaitFor(by: DeclaredBy): LockWait | undefined {
+  return by === "hook-intercept" ? { waitMs: HOOK_LOCK_WAIT_MS } : undefined;
+}
 
 /** What a person declared a piece of work to be: a task, a ticket kept as typed, or that it
  * has no task. */

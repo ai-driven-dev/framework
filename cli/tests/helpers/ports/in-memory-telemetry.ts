@@ -17,7 +17,10 @@ import type {
   TaskDeclaration,
 } from "../../../src/contexts/telemetry/domain/declaration/task-declaration.js";
 import type { BindingSnapshotStore } from "../../../src/contexts/telemetry/domain/ports/bindings/binding-snapshot-store.js";
-import type { BindingsLock } from "../../../src/contexts/telemetry/domain/ports/bindings/bindings-lock.js";
+import type {
+  BindingsLock,
+  LockWait,
+} from "../../../src/contexts/telemetry/domain/ports/bindings/bindings-lock.js";
 import type { SessionBindingStore } from "../../../src/contexts/telemetry/domain/ports/bindings/session-binding-store.js";
 import type { BranchBindingSource } from "../../../src/contexts/telemetry/domain/ports/branch-binding-source.js";
 import type {
@@ -134,7 +137,11 @@ export class InMemoryBindingsLock implements BindingsLock {
   /** Pass one array to several fakes to see the order they were used in. */
   constructor(readonly events: string[] = []) {}
 
-  async exclusively<T>(work: () => Promise<T>): Promise<T> {
+  /** The wait each use asked for: `undefined` is the lock's own. */
+  readonly waits: (number | undefined)[] = [];
+
+  async exclusively<T>(work: () => Promise<T>, wait?: LockWait): Promise<T> {
+    this.waits.push(wait?.waitMs);
     this.events.push("bindings-lock");
     try {
       return await work();

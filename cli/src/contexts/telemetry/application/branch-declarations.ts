@@ -4,7 +4,7 @@ import {
   branchRoleOf,
   currentBranchOf,
 } from "../domain/declaration/branch-role.js";
-import type { TaskDeclaration } from "../domain/declaration/task-declaration.js";
+import { lockWaitFor, type TaskDeclaration } from "../domain/declaration/task-declaration.js";
 import type { BranchBindingSource } from "../domain/ports/branch-binding-source.js";
 import type { BranchBindingStore } from "../domain/ports/branch-binding-store.js";
 import type { SnapshotBindingsUseCase } from "./snapshot-bindings-use-case.js";
@@ -62,7 +62,7 @@ export class BranchDeclarations {
       };
     }
     await this.store.declare(root, branch, declaration);
-    await this.snapshots.execute(repositoryId, root);
+    await this.snapshots.execute(repositoryId, root, lockWaitFor(declaration.by));
     return { status: "bound", branch };
   }
 }

@@ -3,6 +3,7 @@ import {
   type DeclarationRequest,
   type DeclaredBy,
   declarationOf,
+  lockWaitFor,
 } from "../domain/declaration/task-declaration.js";
 import type { BindingsLock } from "../domain/ports/bindings/bindings-lock.js";
 import type { SessionBindingStore } from "../domain/ports/bindings/session-binding-store.js";
@@ -53,7 +54,10 @@ export class DeclareTaskUseCase {
     const declaration = declarationOf(input.request, this.options.now(), input.by);
     const { sessionId } = this.options;
     if (sessionId !== null) {
-      await this.lock.exclusively(() => this.sessions.append(sessionId, declaration));
+      await this.lock.exclusively(
+        () => this.sessions.append(sessionId, declaration),
+        lockWaitFor(declaration.by)
+      );
     }
     const branch = await this.branches.declare(
       repository.repositoryId,

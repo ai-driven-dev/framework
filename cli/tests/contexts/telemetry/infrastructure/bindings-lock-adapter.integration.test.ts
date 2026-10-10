@@ -49,6 +49,24 @@ describe("the bindings lock", () => {
     expect(message).not.toContain("ledger");
   });
 
+  it("gives up after the wait a caller asks for, not the adapter's own", async () => {
+    const dir = join(root, "bindings");
+    await mkdir(dir, { recursive: true });
+    await writeFile(
+      join(dir, ".lock"),
+      JSON.stringify({ pid: 4242, created_at: new Date().toISOString() })
+    );
+    const bindings = new BindingsLockAdapter(dir, storage, {
+      isAlive: () => true,
+      waitMs: 60_000,
+      sleep: () => Promise.reject(new Error("waited the adapter's own minute")),
+    });
+    const failure = await bindings
+      .exclusively(async () => "unreachable", { waitMs: 0 })
+      .catch((e: Error) => e);
+    expect((failure as Error).message).toContain("is locked by process 4242");
+  });
+
   it("makes two writers take turns: a second waits for the first to finish", async () => {
     const bindings = new BindingsLockAdapter(join(root, "bindings"), storage);
     const order: string[] = [];

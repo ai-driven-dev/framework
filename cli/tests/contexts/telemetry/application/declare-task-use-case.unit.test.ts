@@ -3,7 +3,10 @@ import { BranchDeclarations } from "../../../../src/contexts/telemetry/applicati
 import { ConsentedRepositories } from "../../../../src/contexts/telemetry/application/consented-repositories.js";
 import { DeclareTaskUseCase } from "../../../../src/contexts/telemetry/application/declare-task-use-case.js";
 import { SnapshotBindingsUseCase } from "../../../../src/contexts/telemetry/application/snapshot-bindings-use-case.js";
-import type { DeclarationRequest } from "../../../../src/contexts/telemetry/domain/declaration/task-declaration.js";
+import {
+  type DeclarationRequest,
+  HOOK_LOCK_WAIT_MS,
+} from "../../../../src/contexts/telemetry/domain/declaration/task-declaration.js";
 import type { LocatedDirectory } from "../../../../src/contexts/telemetry/domain/ports/repository-locator.js";
 import {
   cloneOf,
@@ -59,7 +62,18 @@ function setup(options: { refusedByEnvironment?: boolean; sessionId?: string | n
       now: () => new Date("2026-10-09T10:00:00.000Z"),
     }
   );
-  return { useCase, locator, consents, history, sessions, branches, source, snapshotStore, events };
+  return {
+    useCase,
+    locator,
+    consents,
+    history,
+    sessions,
+    branches,
+    source,
+    snapshotStore,
+    events,
+    lock,
+  };
 }
 
 describe("declaring a task", () => {
@@ -104,6 +118,38 @@ describe("declaring a task", () => {
       "bindings-unlock",
     ]);
     expect(snapshotStore.appended).toHaveLength(1);
+  });
+
+  it("waits for the bindings lock less than the hook does for its answer, when the hook declares", async () => {
+    const { useCase, lock, source } = setup();
+    source.bindingsByRoot.set(CWD, [
+      {
+        branch: "feat/x",
+        task: "checkout-fix",
+        ticket: "PROJ-12",
+        declared_at: "2026-10-09T10:00:00.000Z",
+        none: false,
+      },
+    ]);
+    await useCase.execute({ cwd: CWD, request: TASK, by: "hook-intercept" });
+    // twice: the session line, then the branch snapshot
+    expect(lock.waits).toEqual([HOOK_LOCK_WAIT_MS, HOOK_LOCK_WAIT_MS]);
+    expect(HOOK_LOCK_WAIT_MS * 2).toBeLessThan(20_000);
+  });
+
+  it("keeps the lock's own wait for a declaration made by hand", async () => {
+    const { useCase, lock, source } = setup();
+    source.bindingsByRoot.set(CWD, [
+      {
+        branch: "feat/x",
+        task: "checkout-fix",
+        ticket: "PROJ-12",
+        declared_at: "2026-10-09T10:00:00.000Z",
+        none: false,
+      },
+    ]);
+    await useCase.execute({ cwd: CWD, request: TASK, by: "command" });
+    expect(lock.waits).toEqual([undefined, undefined]);
   });
 
   it("carries the declarer into the stored line", async () => {
