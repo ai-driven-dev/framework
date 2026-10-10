@@ -1,0 +1,40 @@
+{
+  "version": "7.8.8",
+  "positiveProjectionChanged": true,
+  "fourConfigOrder": {
+    "instructions": [
+      "root-json.md",
+      "root-jsonc.md",
+      "dot-jsonc.md",
+      "dot-json.md"
+    ],
+    "changedPaths": [
+      ".kilo/.gitignore",
+      ".kilo/kilo.json",
+      ".kilo/kilo.jsonc",
+      "kilo.json",
+      "kilo.jsonc"
+    ],
+    "ruleUnchanged": true
+  },
+  "positive": {
+    "instructions": [
+      "docs/old.md",
+      "docs/old.md",
+      ".kilo/rules/01-standards/1-naming.md"
+    ],
+    "changedPaths": [
+      ".kilo/.gitignore",
+      ".kilo/kilo.jsonc"
+    ],
+    "ruleUnchanged": true
+  },
+  "negative": {
+    "instructions": [],
+    "changedPaths": [
+      ".kilo/.gitignore",
+      ".kilo/kilo.jsonc"
+    ],
+    "ruleUnchanged": true
+  }
+}
