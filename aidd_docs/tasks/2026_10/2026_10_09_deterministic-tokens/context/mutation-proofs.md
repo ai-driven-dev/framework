@@ -199,7 +199,7 @@ Before the fix, per row (`npx vitest run … --reporter=verbose` at `309f7393`):
 | 9 | `on`, a manual `off` an ingest observes, calls, clone deleted | **fail**: the call after the observation stored | pass |
 | 10 | first `on`, history from before it | pass | pass |
 | 11 | `AIDD_TELEMETRY=0` | pass | pass |
-| 12 | `forget --yes` after `on`, no session | **fail**, on its precondition: `on` wrote no `ledger/consents.jsonl` (the rest of the row, key gone and file gone, passed vacuously) | pass |
+| 12 | `forget --yes` after `on`, no session | **fail**, on its precondition: `on` wrote no `ledger/consents.jsonl`. The `forget` and the two assertions after it were not reached at the old code; the file assertion could only have passed vacuously there, the file never existing | pass |
 
 Rows 1, 2, 4, 10 and 11 guard behaviour that was already right: they stay green, and the mutations below show they can go red. Every "not stored" row holds a positive control, a call that must be stored, so none passes because ingest stored nothing. A clone "deleted" in a row is moved aside: a deleted directory's inode may be given to the next one on some file systems, and a row about a clone told apart from its successor must not depend on that.
 
@@ -218,17 +218,17 @@ Every row below: the mutation applied by script with an exact-anchor check, `npx
 | Ingest looks at every clone whose consent is open | `observeOpenConsents` not called | 3 red, including row 9 |
 | A clone found gone ends its consent | the close on `gone` removed | 2 red |
 | A clone whose key is not `2` ends its consent | the close on `absent` removed | 4 red, including row 9 |
-| A clone with the key at 2 and no consent stores nothing | `state === "absent"` no longer refuses: live key not required | 8 red |
+| A live clone whose key is not `2` stores nothing, whatever its intervals | `state === "absent"` no longer refuses: live key not required | 8 red |
 | The latest clone born by the call answers for a directory | always the latest | 6 red, including row 7 |
 | The first clone answers for a call older than every clone | always the first | 4 red, including row 7 |
 | `off` ends the interval | the close removed | 6 red, including rows 2, 8, 8b |
 | `on` opens the interval | the open removed | 23 red, all thirteen rows |
 | `forget` names a gone clone only if it consented | any gone clone named | 2 red |
-| Ingest saves the damaged month (round 2's weak test, now asserting which months were saved) | `damagedMonths` dropped from the saved set | 2 red: "repairs a damaged month even when every call it read was already held" and "also rewrites a month that holds a line that is not a record". Before the assertion on the saved months was added, the first of the two stayed green, which is why the review saw 1 |
+| Ingest saves the damaged month (round 2's weak test, now asserting which months were saved) | `damagedMonths` dropped from the saved set | 2 red: "repairs a damaged month even when every call it read was already held" and "also rewrites a month that holds a line that is not a record". Observed with the new assertion on the saved months taken out of the test and the same mutation: 1 red, the second test only, which is the review's own line "M5: `damagedMonths` dropped from the saved set only gives 1 red (recorded 2; see 🟢 test gap)" |
 | A mistyped declaration says how to send it as an ordinary prompt | the message line removed | 1 red: "a declaration mistyped is blocked…". A second test, "a question mark makes it an ordinary prompt", checks that the way out the message gives works; it is not mutation-proved, because dropping `?` from the `attemptsDeclaration` regex leaves it green (the tokeniser already refuses a `?`) |
 
 Survivors left in the files of this round, none believed to be a gap: `clone-identity-reader.ts` `{ bigint: true }` (an inode above 2^53 cannot be made on the machine this ran on), `clone-identity.ts` `<= 0n` against `< 0n` (equivalent: 0 maps to 0), `birthtimeMs` type check against the finite check (equivalent), `directory-resolver.ts` filter of the current owner (the owner list is the same set), `""` fallbacks on a missing file.
 
 Mutation score of the `telemetry` scope at the head of the round: 96.4 (3,343 detected, 126 undetected), floor 96.
 
-Not mutated: `usage-contract.md`, `target.md`, `codebase-map.md`, `telemetry.md` and the comments; the per-OS notes on the identity (macOS observed, Linux and Windows read from Node's and libuv's documentation, not observed).
+Not mutated: `usage-contract.md`, `target.md`, `codebase-map.md`, `telemetry.md` and the comments; the per-OS notes on the identity in `clone-identity.ts` (macOS observed; Linux and Windows read from Node's `fs.Stats` documentation and libuv's `src/unix/fs.c`, `src/unix/linux.c` and `src/win/fs.c`, v1.x, and not run).

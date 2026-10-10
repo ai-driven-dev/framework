@@ -5,16 +5,20 @@ import { asPlainObject } from "../../../../kernel/reading/plain-object.js";
  * the same path, and neither is the platform's inode alone, which a file system may hand to the
  * next directory it creates.
  *
- * What `fs.stat` reports for a directory, per platform (Node's own documentation of `Stats`,
- * and libuv's `uv_fs_stat`; only macOS was observed here):
+ * What `fs.stat` reports for a directory, per platform. macOS was observed. Linux and Windows
+ * are read from Node's `fs.Stats` documentation (`birthtime`) and from libuv's `src/unix/fs.c`,
+ * `src/unix/linux.c` and `src/win/fs.c` (v1.x), and were not run:
  * - macOS (APFS, HFS+): `dev` is the volume, `ino` the inode, `birthtimeMs` the creation time.
- * - Linux: `ino` is the inode. `birthtimeMs` comes from `statx` where the kernel and the file
- *   system keep it (ext4, btrfs, xfs), else it is `0`, or, through libuv's `stat` fallback, the
- *   inode's change time, which moves whenever an entry is added to the directory and so is not a
- *   birth at all. A birth equal to the change time is therefore taken as no birth: `0`.
- * - Windows (NTFS): `ino` is the 64-bit file index, which a JavaScript number cannot hold
- *   exactly, so the stat is asked in `bigint` and the index kept as text. `birthtimeMs` is the
- *   creation time. A file system with no file index (FAT, some network shares) reports `0`.
+ * - Linux: `ino` is the inode. libuv asks `statx` and copies `stx_btime` as the birth time
+ *   without looking at `stx_mask`, so a file system that keeps none leaves it as the kernel
+ *   gives it, `0` in practice. When `statx` is refused (a seccomp filter, an old kernel) libuv
+ *   falls back to `stat` and sets the birth time to the change time, which moves whenever an
+ *   entry is added to the directory and so is not a birth at all. Node's documentation says as
+ *   much: `birthtime` "may instead hold either the `ctime` or `1970-01-01T00:00Z`". A birth equal
+ *   to the change time is therefore taken as no birth: `0`.
+ * - Windows (NTFS): `dev` is the volume serial number, `ino` the 64-bit file index
+ *   (`IndexNumber`), which a JavaScript number cannot hold exactly, so the stat is asked in
+ *   `bigint` and the index kept as text. `birthtimeMs` is the creation time.
  *
  * Where `birthtimeMs` is `0`, `dev`, `ino` and the path are the identity, and a clone that takes
  * the inode and the path of a deleted one is taken for it: a residual limit, in the usage
