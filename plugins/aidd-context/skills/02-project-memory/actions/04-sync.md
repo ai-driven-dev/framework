@@ -23,14 +23,14 @@ Each picked tool's context file, carrying the filled block.
 7. **Verify.** Read each picked tool's block and the opted-in README `files` block back and compare them to the bank.
    - A file in one and not the other: the fill did not land, report it and stop.
 
-This manual workflow does not establish the hook's protection against path substitution or multiple hard links. If a hardlink, a changing path, or any other condition requires a guarantee the manual checks cannot demonstrate, stop the sync and explain that the manual workflow cannot provide hook-level path safety. The automatic hook keeps its existing best-effort behavior; this explicit sync must refuse detected problems before writing.
+This manual workflow does not establish the hook's protection against path substitution or multiple hard links. If a hardlink, a changing path, or any other condition requires a guarantee the manual checks cannot demonstrate, stop the sync and explain that safe hook resolution remains an AIDD-P11 evolution. The automatic hook keeps its existing best-effort behavior; this explicit sync must refuse detected problems before writing.
 
 ## Test
 
 | Case | Pass |
 | --- | --- |
 | Empty bank | no context file created, the run stops |
-| Unsafe or unverifiable path | no file changes; explain the hook-level path-safety limit when required |
+| Unsafe or unverifiable path | no file changes; explain the AIDD-P11 limit when hook-level protection is required |
 | Picked tool | its block lists every root `.md` except `README.md`, nothing else |
 | Bank grew | the block gains that file and keeps the rest |
 | Unpicked tool | its context file is unchanged |

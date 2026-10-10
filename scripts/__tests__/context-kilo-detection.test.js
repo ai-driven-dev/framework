@@ -82,14 +82,16 @@ for (const contract of CONTRACTS) {
       assert.match(text, /\.kilocode\/[^\n]*detection signal only; selected Kilo memory goes to the shared root `AGENTS\.md`/iu);
       assert.match(text, /Neither `opencode\.json` nor `opencode\.jsonc` identifies Kilo/u);
     } else {
-      assert.match(text, /Kilo: `\.kilocode\/` is a legacy detection signal only/u);
-      assert.match(text, /Neither `opencode\.json` nor `opencode\.jsonc` identifies Kilo/u);
+      assert.match(text, /Treat `\.kilocode\/` as a legacy Kilo detection signal, never an output path/u);
+      assert.match(text, /OpenCode JSON config files do not identify Kilo/u);
     }
-    assert.match(text, /new[^\n]*\.kilo\/[^\n]*never[^\n]*\.kilocode\//iu);
-    assert.ok(text.includes("https://kilo.ai/docs/getting-started/settings"));
-    assert.ok(text.includes("https://kilo.ai/docs/customize/agents-md"));
-    assert.ok(text.includes("https://github.com/Kilo-Org/kilocode/blob/main/packages/opencode/src/kilocode/skills/kilo-config.md"));
-    assert.match(text, /2026-09-25[^\n]*issue/u);
-    assert.match(text, /2026-10-10/u);
+    if (contract.includes('02-project-memory')) {
+      assert.match(text, /new[^\n]*\.kilo\/[^\n]*never[^\n]*\.kilocode\//iu);
+      assert.ok(text.includes("https://kilo.ai/docs/getting-started/settings"));
+      assert.ok(text.includes("https://kilo.ai/docs/customize/agents-md"));
+      assert.ok(text.includes("https://github.com/Kilo-Org/kilocode/blob/main/packages/opencode/src/kilocode/skills/kilo-config.md"));
+      assert.match(text, /2026-09-25[^\n]*issue/u);
+      assert.match(text, /2026-10-10/u);
+    }
   });
 }

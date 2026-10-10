@@ -15,7 +15,7 @@ test('project-memory sync uses the manual contract without a project-relative ho
   assert.match(sync, /internal\/.*external\//iu);
   assert.match(sync, /README.*`files` block/iu);
   assert.match(sync, /hardlink|multiple hard links/iu);
-  assert.match(sync, /manual workflow cannot provide hook-level path safety/u);
+  assert.match(sync, /AIDD-P11/u);
   assert.match(sync, /Do not stage|Do not add.*Git/iu);
 });
 
