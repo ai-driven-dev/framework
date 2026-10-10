@@ -12,7 +12,7 @@ Write one canonical agent from intent and render it per confirmed host tool, or 
 
 | #   | Action          | Role                                           | Input        |
 | --- | --------------- | ---------------------------------------------- | ------------ |
-| 01  | `capture-agent` | Gather the role, propose names, pick the model | user request |
+| 01  | `capture-agent` | Gather the role and propose names              | user request |
 | 02  | `write-agent`   | Render the agent per tool and write            | the role     |
 | 03  | `validate`      | Check each agent file                          | the files    |
 
