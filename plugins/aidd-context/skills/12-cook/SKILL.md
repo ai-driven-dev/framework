@@ -1,31 +1,52 @@
 ---
 name: 12-cook
-description: Manage project recipes/how-to sheets by listing, creating, updating, researching, or applying a recipe. Use for recipe, cook, /cook, list, new, update, research, apply.
+description: Manages project recipes and practical guides. Use when the user wants to find a recipe, document a technique, research improvements, follow an existing guide, or check that its steps are usable.
 argument-hint: recipe
 ---
 
 # Cook
 
-Maintains recipe how-to sheets. Project recipes live in `aidd_docs/recipes/`; bundled recipes ship inside this skill under `assets/recipes/`.
+```mermaid
+flowchart LR
+    unnamed([unnamed recipe]) --> list
+    named-new([new recipe]) --> research
+    named-update([update recipe]) --> research
+    named-research([research topic]) --> research
+    named-apply([apply recipe]) --> apply
+    named-validate([validate recipe or all]) --> validate
+    list -->|list only| listed([listed])
+    list -->|create, update, or reselect for research| research
+    list -->|select or reselect to apply| apply
+    list -->|resume dedup| upsert
+    list -->|reselect to validate| validate
+    research -->|unnamed or stale number| list
+    research -->|standalone research| researched([researched])
+    research -->|create, update, or selected insights| upsert
+    upsert -->|new or substantial, missing verified results| research
+    upsert -->|new, before dedup| list
+    upsert -->|written| validate
+    validate -->|stale number| list
+    validate -->|CLI absent or unsupported| unavailable([validation unavailable])
+    validate -->|standalone, pass| validated([validated])
+    validate -->|standalone, findings| findings([findings])
+    validate -->|upsert, pass| saved([saved])
+    validate -->|upsert, findings: repair at Scaffold| upsert
+    apply -->|unnamed or stale number| list
+    apply -->|report only or chosen steps complete| reported([reported])
+```
 
 ## Actions
 
-| #   | Action     | Role                                                         | Input                 |
-| --- | ---------- | ----------------------------------------------------------- | --------------------- |
-| 01  | `list`     | List every recipe as a table                                | none                  |
-| 02  | `upsert`   | Create or update one recipe from the template               | recipe topic + fields |
-| 03  | `research` | Survey modern alternatives, gaps, and counter-intuitive wins | recipe or topic      |
-| 04  | `apply`    | Execute a recipe on the project as a confirmed todo list    | recipe                |
+Run the flow above. Read only the next action file.
 
-Run `list` to survey project and bundled recipes, `research` to gather insights, `upsert` to author one, `apply` to run an existing one against the project. Always run `research` before authoring or substantially updating a recipe — never draft from memory alone. Run `list` first when the user names no recipe.
-Before running an action, read its file in `actions/`, not only the table or assets.
+| Action | Does |
+| --- | --- |
+| list | list project and bundled recipes |
+| research | research one recipe or topic |
+| upsert | create or update one recipe |
+| apply | apply one existing recipe |
+| validate | validate one or all recipes |
 
-## References
+## Transversal rules
 
-- `references/recipe-locations.md`: where project and bundled recipes live, how resolution works, and when writes target each home.
-- `references/recipe-contract.md`: the rules every recipe file follows; `upsert` writes to it.
-
-## Assets
-
-- `assets/recipe-template.md`: the canonical recipe scaffold `upsert` renders from, and the shape `list` parses.
-- `assets/recipes/`: bundled recipes shipped with this skill.
+- Never maintain a separate recipe index.

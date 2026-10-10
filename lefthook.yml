@@ -53,6 +53,15 @@ pre-commit:
             exit 1
           fi
         done
+    recipe-validity:
+      run: |
+        if ! command -v node >/dev/null 2>&1; then
+          echo "❌ node not available; cannot validate recipes"
+          exit 1
+        fi
+        pnpm --dir cli build
+        AIDD_SKIP_UPDATE_CHECK=1 node cli/dist/cli.js framework validate-recipes --all \
+          --bundled plugins/aidd-context/skills/12-cook/assets/recipes
     check-skill-argument-hints:
       glob: "plugins/*/skills/**"
       run: |

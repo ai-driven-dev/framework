@@ -37,7 +37,7 @@
   {
     "invocation": "aidd framework",
     "exitCode": 0,
-    "help": "Usage: aidd framework [options] [command]\n\nManage the framework's lifecycle on installed tools\n\nOptions:\n  -h, --help         display help for command\n\nCommands:\n  install [options]  Install a tool's runtime configuration from bundled assets\n                     — acts on the framework alone (see `setup`, which\n                     bootstraps the whole project)\n  remove [options]   Remove a tool's generated configuration files — removes the\n                     framework only (see `clean`, which removes all of AIDD)\n  update [options]   Re-install tool configs from bundled CLI assets, moving to\n                     a new version (all installed tools if --tool is omitted;\n                     see `marketplace refresh`, which re-fetches catalogs\n                     instead)\n  rules [options]    List the rules installed in this project, across every AI\n                     tool\n  help [command]     display help for command"
+    "help": "Usage: aidd framework [options] [command]\n\nManage the framework's lifecycle on installed tools\n\nOptions:\n  -h, --help                             display help for command\n\nCommands:\n  install [options]                      Install a tool's runtime configuration from bundled assets — acts on the framework alone (see `setup`, which bootstraps the whole project)\n  remove [options]                       Remove a tool's generated configuration files — removes the framework only (see `clean`, which removes all of AIDD)\n  update [options]                       Re-install tool configs from bundled CLI assets, moving to a new version (all installed tools if --tool is omitted; see `marketplace refresh`, which re-fetches catalogs instead)\n  rules [options]                        List the rules installed in this project, across every AI tool\n  validate-recipes [options] [paths...]  Validate recipe structure, examples, and local links without changing files\n  help [command]                         display help for command"
   },
   {
     "invocation": "aidd framework install",
@@ -58,6 +58,11 @@
     "invocation": "aidd framework update",
     "exitCode": 0,
     "help": "Usage: aidd framework update [options]\n\nRe-install tool configs from bundled CLI assets, moving to a new version (all\ninstalled tools if --tool is omitted; see `marketplace refresh`, which\nre-fetches catalogs instead)\n\nOptions:\n  --tool <tool>  Limit update to a specific AI or IDE tool\n  -f, --force    Overwrite modified files without prompting (default: false)\n  -h, --help     display help for command"
+  },
+  {
+    "invocation": "aidd framework validate-recipes",
+    "exitCode": 0,
+    "help": "Usage: aidd framework validate-recipes [options] [paths...]\n\nValidate recipe structure, examples, and local links without changing files\n\nOptions:\n  --all                  Include project recipes under aidd_docs/recipes\n                         (default: false)\n  --bundled <directory>  Include recipes from this skill asset directory\n  -h, --help             display help for command"
   },
   {
     "invocation": "aidd marketplace",

@@ -207,11 +207,13 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `actions` | [02-upsert.md](skills/12-cook/actions/02-upsert.md) | - |
 | `actions` | [03-research.md](skills/12-cook/actions/03-research.md) | - |
 | `actions` | [04-apply.md](skills/12-cook/actions/04-apply.md) | - |
+| `actions` | [05-validate.md](skills/12-cook/actions/05-validate.md) | - |
 | `assets` | [recipe-template.md](skills/12-cook/assets/recipe-template.md) | - |
 | `assets` | [research-checklist.md](skills/12-cook/assets/research-checklist.md) | - |
 | `assets` | [research-goal-checklist.md](skills/12-cook/assets/research-goal-checklist.md) | - |
+| `assets` | [validation-report-template.md](skills/12-cook/assets/validation-report-template.md) | - |
 | `references` | [recipe-contract.md](skills/12-cook/references/recipe-contract.md) | - |
 | `references` | [recipe-locations.md](skills/12-cook/references/recipe-locations.md) | - |
 | `references` | [research-playbook.md](skills/12-cook/references/research-playbook.md) | - |
-| `-` | [SKILL.md](skills/12-cook/SKILL.md) | `Manage project recipes/how-to sheets by listing, creating, updating, researching, or applying a recipe. Use for recipe, cook, /cook, list, new, update, research, apply.` |
+| `-` | [SKILL.md](skills/12-cook/SKILL.md) | `Manages project recipes and practical guides. Use when the user wants to find a recipe, document a technique, research improvements, follow an existing guide, or check that its steps are usable.` |
 
