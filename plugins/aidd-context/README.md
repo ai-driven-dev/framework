@@ -40,3 +40,7 @@ Kilo uses the root `AGENTS.md` memory block shared with Codex, OpenCode and Curs
 ## Generated Kilo skills
 
 The skill generator offers native Kilo placement or an explicitly agreed portable placement. It writes one copy per resolved destination, asks about existing copies, preflights all selected targets, preserves user resources during modify and skips identical writes. Host fields and sourced locations are defined in [the write contract](skills/04-skill-generate/references/tool-write.md); the canonical Claude template is unchanged.
+
+## Generated Kilo agents and workflows
+
+The agent generator recognizes the six Kilo signals and renders native subagents under `.kilo/agents/`: filename identity, `description`, `mode: subagent`, and only requested `model`, `temperature`, or `permission`. The command generator renders one-shot workflows under `.kilo/commands/` with only `description`, `agent`, `model`, `variant`, or `subtask` when requested; Codex custom commands remain an explicit skip. Both contracts preflight all selected targets and preserve unchanged bytes on rerun. Sources and target-specific constraints are in the [agent paths](skills/06-agent-generate/references/tool-paths.md) and [workflow paths](skills/07-command-generate/references/tool-paths.md).

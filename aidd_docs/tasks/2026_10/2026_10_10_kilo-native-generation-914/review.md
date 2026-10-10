@@ -1,7 +1,9 @@
-# Review: #914 phase 3
+# Review: #914 phase 4
 
 - **Verdict**: approve
-- **Diff**: `a86090fc...candidate phase 3`
+- **Reviewed implementation diff**: `84fef0fd...b9084f1b`
+- **Prior amended phase 4 commit**: `19c81c4f` (superseded when the two later evidence commits were folded into the phase 4 delivery)
+- **Runtime evidence addendum**: `evidence/phase-4/attempt-04-outside-sandbox/` was recorded after this implementation review and is included in the amended delivery; it does not change the reviewed code diff or verdict.
 - **Axes run**: code, functional, relevancy
 - **Date**: 2026_10_10
 - **Findings**: 0 critical, 0 warning, 0 minor
@@ -32,10 +34,10 @@
 
 ### Phase 4
 
-- [ ] Nom agent Kilo vient du fichier ; frontmatter ne reçoit pas name Claude ; mode subagent et options demandées corrects. => not-applicable : phase 4 hors diff autorisé, statut et preuves antérieurs conservés ou pending.
-- [ ] Workflow Kilo au chemin canonique ; uniquement champs officiellement supportés. => not-applicable : phase 4 hors diff autorisé, statut et preuves antérieurs conservés ou pending.
-- [ ] Formats Claude/Codex/OpenCode acceptés et bodies intacts, cibles unsupported sautées explicitement. => not-applicable : phase 4 hors diff autorisé, statut et preuves antérieurs conservés ou pending.
-- [ ] Invalides ou collisions refusés sans écrire une autre cible ; relance identique ; Kilo charge et utilise agent et workflow. => not-applicable : phase 4 hors diff autorisé, statut et preuves antérieurs conservés ou pending.
+- [x] Nom agent Kilo vient du fichier ; frontmatter ne reçoit pas name Claude ; mode subagent et options demandées corrects. => scripts/__tests__/context-agent-command-artifacts.test.js:12; phase-4-runtime.md:9
+- [x] Workflow Kilo au chemin canonique ; uniquement champs officiellement supportés. => scripts/__tests__/context-agent-command-artifacts.test.js:21; phase-4-runtime.md:10
+- [x] Formats Claude/Codex/OpenCode acceptés et bodies intacts, cibles unsupported sautées explicitement. => plugins/aidd-context/skills/06-agent-generate/references/tool-paths.md:9; plugins/aidd-context/skills/07-command-generate/references/tool-paths.md:9
+- [x] Invalides ou collisions refusés sans écrire une autre cible ; relance identique ; Kilo charge et utilise agent et workflow. => plugins/aidd-context/skills/06-agent-generate/actions/02-write-agent.md:15; plugins/aidd-context/skills/07-command-generate/actions/02-write-command.md:15; evidence/phase-4/attempt-04-outside-sandbox/workflow-run.redacted.jsonl: workflow and subagent completed, payload read and exact result (see phase-4-runtime.md).
 
 ### Phase 5
 
@@ -59,7 +61,7 @@ None.
 
 | Metric | Value |
 | --- | --- |
-| Verified | 100% (4/4 critères phase 3 applicable) |
-| Files checked | Six contrats modifiés, README plugin, tests/corpus/fixtures, plan/statut, reçus caller, catalogues et traces Kilo |
-| Unchecked | Phases 1, 2, 4, 5, 6 : not-applicable au diff phase 3 |
-| Unplanned | none ; suivi, historique review phase 1 et preuves dans le dossier task |
+| Verified | 100% (4/4 critères phase 4 applicables) |
+| Files checked | Contrats agents/commandes, actions, README, fixture, corpus ciblé, runtime, plan et matrice |
+| Unchecked | Phases 1, 2, 3, 5, 6 : not-applicable au diff phase 4 |
+| Unplanned | none |

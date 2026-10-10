@@ -11,8 +11,9 @@ The per-tool agent path and the gate every run executes before writing. Agent sl
 | OpenCode       | `.opencode/agents/<name>.md`     | markdown + frontmatter |
 | GitHub Copilot | `.github/agents/<name>.agent.md` | markdown + frontmatter |
 | Codex CLI      | `.codex/agents/<name>.toml`      | TOML (converted)       |
+| Kilo           | `.kilo/agents/<name>.md`         | markdown + frontmatter |
 
-Agents are supported on all five tools.
+Agents are supported on all six tools. Kilo's canonical plural path is sourced from https://kilo.ai/docs/customize/custom-subagents (issue #914 contract verified 2026-09-25; source rechecked 2026-10-10).
 
 ## Frontmatter per tool
 
@@ -25,6 +26,9 @@ The canonical agent carries `name` and `description`. Emit those a row accepts, 
 | OpenCode       | `name`, `description`, optional `model`, `temperature`, `permission` |
 | GitHub Copilot | `name`, `description`, optional `model`, `tools`            |
 | Codex CLI      | `name`, `description` (drops `model`)                       |
+| Kilo           | `description`, `mode: subagent`, requested `model`, `temperature`, `permission` |
+
+For Kilo, the name is the filename. Do not emit the Claude `name` field. Its supported permission field is singular and maps requested tools or patterns to `allow`, `ask`, or `deny`. Emit `mode: subagent` and an optional field only when requested; never invent a default.
 
 ## Codex TOML conversion
 
@@ -44,6 +48,9 @@ Codex agents are TOML, not markdown. Convert:
 | `.codex/`                         | Codex CLI                             |
 | `.github/copilot-instructions.md` | GitHub Copilot                        |
 | `AGENTS.md`                       | Cursor, OpenCode, or Codex (list all) |
+| `.kilo/`, `kilo.json`, `kilo.jsonc`, `.kilo/kilo.json`, `.kilo/kilo.jsonc`, or `.kilocode/` | Kilo |
+
+The six Kilo signals are shared with the Kilo skill contract. `AGENTS.md` and `opencode.json[c]` alone are not Kilo signals. `.kilocode/` detects legacy Kilo but new output remains under `.kilo/`.
 
 ## Write targets
 
@@ -56,3 +63,4 @@ The mode is chosen in the capture action. Never pick one silently.
 
 - **Asset-access precheck.** Before writing, confirm this reference is readable. If not, stop: the plugin is not installed in this host.
 - **Write-target validation.** After writing, confirm every path is relative, under the workspace, and at the chosen scope. Otherwise stop and report the bad path.
+- **Publication preflight.** Before creating a directory or file, resolve every selected target and its references. Refuse a path outside the workspace, a symlink or non-regular collision, a non-writable target, an existing user agent that was not explicitly selected for modify, unknown Kilo fields, or a target whose state changed after preflight. A refusal leaves every selected target unchanged. Skip byte-identical writes, so a confirmed rerun preserves bytes and mtime.

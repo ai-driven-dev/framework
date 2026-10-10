@@ -1,0 +1,37 @@
+timestamp=2026-10-10T15:10:20.714Z level=INFO run=5f70b7a5 message=loading path=$XDG_ROOT/config/kilo/config.json
+timestamp=2026-10-10T15:10:20.725Z level=INFO run=5f70b7a5 message=loading path=$XDG_ROOT/config/kilo/kilo.json
+timestamp=2026-10-10T15:10:20.726Z level=INFO run=5f70b7a5 message=loading path=$XDG_ROOT/config/kilo/kilo.jsonc
+timestamp=2026-10-10T15:10:20.737Z level=INFO run=5f70b7a5 message=loading path=$XDG_ROOT/config/kilo/opencode.json
+timestamp=2026-10-10T15:10:20.737Z level=INFO run=5f70b7a5 message=loading path=$XDG_ROOT/config/kilo/opencode.jsonc
+INFO  2026-10-10T15:10:20 +1127ms service=default version=7.8.8 command=debug process_role=main run_id=[redacted] opencode
+timestamp=2026-10-10T15:10:20.748Z level=INFO run=5f70b7a5 message="creating instance" directory=$RUNTIME_PROJECT
+timestamp=2026-10-10T15:10:20.750Z level=INFO run=5f70b7a5 message=fromDirectory directory=$RUNTIME_PROJECT
+timestamp=2026-10-10T15:10:20.854Z level=INFO run=5f70b7a5 message=loading path=$RUNTIME_PROJECT/.kilo/kilo.jsonc
+timestamp=2026-10-10T15:10:20.856Z level=INFO run=5f70b7a5 message=loading path=$RUNTIME_PROJECT/.kilo/kilo.json
+timestamp=2026-10-10T15:10:20.858Z level=INFO run=5f70b7a5 message=loading path=$RUNTIME_PROJECT/.kilo/opencode.jsonc
+timestamp=2026-10-10T15:10:20.859Z level=INFO run=5f70b7a5 message=loading path=$RUNTIME_PROJECT/.kilo/opencode.json
+INFO  2026-10-10T15:10:21 +342ms service=bus type=session.turn.open subscribing
+INFO  2026-10-10T15:10:21 +1ms service=bus type=session.turn.close subscribing
+INFO  2026-10-10T15:10:21 +0ms service=bus type=memory.status subscribing
+INFO  2026-10-10T15:10:21 +0ms service=bus type=memory.updated subscribing
+timestamp=2026-10-10T15:10:21.107Z level=INFO run=5f70b7a5 message="all LSPs are disabled"
+timestamp=2026-10-10T15:10:21.108Z level=INFO run=5f70b7a5 message="all formatters are disabled"
+timestamp=2026-10-10T15:10:21.108Z level=INFO run=5f70b7a5 message=init
+INFO  2026-10-10T15:10:21 +42ms service=kilocode-indexing workspacePath=$RUNTIME_PROJECT initializing project indexing
+INFO  2026-10-10T15:10:21 +6ms service=bus type=indexing.status publishing
+INFO  2026-10-10T15:10:21 +1ms service=bus type=indexing.status publishing
+INFO  2026-10-10T15:10:21 +479ms service=model-cache providerID=kilo fetching models
+timestamp=2026-10-10T15:10:21.621Z level=ERROR run=5f70b7a5 message="Failed to fetch models.dev" cause="Cause([Fail(HttpClientError: Transport error (GET https://models.dev/api.json) (cause: TypeError: getaddrinfo ETIMEOUT models.dev))])"
+WARN  2026-10-10T15:10:21 +4ms service=model-cache providerID=kilo error={"kind":"network"} model fetch error
+INFO  2026-10-10T15:10:21 +0ms service=model-cache providerID=kilo count=0 models fetched and cached
+INFO  2026-10-10T15:10:21 +4ms service=model-cache providerID=apertis fetching models
+INFO  2026-10-10T15:10:21 +1ms service=model-cache providerID=apertis count=0 models fetched and cached
+INFO  2026-10-10T15:10:22 +1077ms service=model-cache providerID=kilo refreshing models
+WARN  2026-10-10T15:10:22 +27ms service=model-cache providerID=kilo error={"kind":"network"} model fetch error
+INFO  2026-10-10T15:10:22 +0ms service=model-cache providerID=kilo count=0 models fetched and cached
+INFO  2026-10-10T15:10:22 +1ms service=model-cache providerID=apertis refreshing models
+INFO  2026-10-10T15:10:22 +0ms service=model-cache providerID=apertis count=0 models fetched and cached
+timestamp=2026-10-10T15:10:22.802Z level=INFO run=5f70b7a5 message="shell tool using shell" shell=/bin/bash
+timestamp=2026-10-10T15:10:22.840Z level=INFO run=5f70b7a5 message="disposing instance" directory=$RUNTIME_PROJECT
+WARN  2026-10-10T15:10:24 +2121ms service=kilocode.cli err=Timeout while shutting down PostHog. Some events may not have been sent. telemetry shutdown failed
+timestamp=2026-10-10T15:10:24.857Z level=INFO run=5f70b7a5 message="disposing all instances"
