@@ -1,5 +1,5 @@
 ---
-status: pending
+status: done
 ---
 
 # Instruction: Générer un skill natif ou portable choisi
@@ -54,19 +54,19 @@ journey
 
 ### `1)` Choisir la surface
 
-> Choisir la surface.
+> Statut : done. Preuves : [rapport phase 3](phase-3-report.md).
 
 1. Ajouter mêmes signaux Kilo ; capter cible native .kilo/skills/name ou portable .agents/skills/name seulement sur choix explicite. Dédupliquer destinations partagées et collisions de noms ; ne jamais écrire les deux arbres pour le même skill. En cas de copies déjà présentes, demander une résolution avant écriture, sans supprimer une copie utilisateur.
 
 ### `2)` Rendre et préserver
 
-> Rendre et préserver.
+> Statut : done. Preuves : [rapport phase 3](phase-3-report.md).
 
 1. Garder skill-template.md Claude inchangé. Rendu Kilo Agent Skills avec name égal au dossier, description et champs supportés seulement ; retirer argument-hint propre à Claude des sorties Kilo selon contrat. Préflight de toutes cibles et références avant écriture ; préserver actions/assets utilisateur lors d’une mise à jour. Réexécution conserve contenu identique, pas régénération aléatoire.
 
 ### `3)` Vérifier les parcours
 
-> Vérifier les parcours.
+> Statut : done. Preuves : [rapport phase 3](phase-3-report.md).
 
 1. Fixtures sorties Claude/Codex/OpenCode et Kilo, générées réellement via skill Codex ; vérification YAML/arbre/liens et collisions sans mutation. Catalogue réel kilo debug skill puis invocation gratuite du skill et lecture d’une action avec résultat observable. Tests et sources/date au même changement ; aucun lien vers un skill frère.
 

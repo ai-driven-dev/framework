@@ -1,0 +1,24 @@
+pnpm exec lefthook run pre-commit
+╭───────────────────────────────────────╮
+│ lefthook  v2.1.14   hook:  [1mpre-commit[m │
+╰───────────────────────────────────────╯
+│  architecture-rules (skip) no files for inspection
+│  check-skill-argument-hints (skip) no matching staged files
+│  cli-architecture (skip) no matching staged files
+│  cli-biome (skip) no matching staged files
+│  cli-type-honesty (skip) no matching staged files
+│  cli-typecheck (skip) no matching staged files
+│  context-imports (skip) no matching staged files
+│  context-reference-form (skip) no matching staged files
+│  doc-duplication (skip) no matching staged files
+│  json-validity (skip) no files for inspection
+│  markdown-links (skip) no matching staged files
+│  referenced-paths (skip) no matching staged files
+│  scripts-tests (skip) no matching staged files
+│  skill-frontmatter (skip) no files for inspection
+│  summarize-plugin-catalogs (skip) no matching staged files
+│  summarize-telemetry-prompts-doc (skip) no matching staged files
+│  sync-readme-counts (skip) no matching staged files
+│  yaml-validity (skip) no files for inspection
+[38;2;56;56;56m  ────────────────────────────────────[m
+summary: (done in 0.04 seconds)

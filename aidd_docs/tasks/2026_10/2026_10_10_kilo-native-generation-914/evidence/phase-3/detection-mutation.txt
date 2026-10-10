@@ -1,0 +1,38 @@
+✖ skill detection lists exactly the six Kilo signals and keeps OpenCode distinct (5.026957ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 138.322226
+
+✖ failing tests:
+
+test at scripts/__tests__/context-skill-artifacts.test.js:13:1
+✖ skill detection lists exactly the six Kilo signals and keeps OpenCode distinct (5.026957ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+    [
+      '.kilo/',
+      'kilo.json',
+      'kilo.jsonc',
+      '.kilo/kilo.json',
+  -   '.kilo/kilo.jsonc',
+      '.kilocode/'
+    ]
+  
+      at TestContext.<anonymous> (/home/coder/project/scripts/__tests__/context-skill-artifacts.test.js:17:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: [ '.kilo/', 'kilo.json', 'kilo.jsonc', '.kilo/kilo.json', '.kilocode/' ],
+    expected: [ '.kilo/', 'kilo.json', 'kilo.jsonc', '.kilo/kilo.json', '.kilo/kilo.jsonc', '.kilocode/' ],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }

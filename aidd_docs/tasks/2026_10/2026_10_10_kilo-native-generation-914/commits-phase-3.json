@@ -1,0 +1,30 @@
+{
+  "branch": "feat/kilo-native-generation-914",
+  "base": "a86090fc",
+  "local_only": true,
+  "commits": [
+    {
+      "phase": 3,
+      "tasks": [
+        1,
+        2,
+        3
+      ],
+      "subject": "feat(aidd-context): generate native or chosen portable Kilo skills",
+      "sha_resolution": "git log -1 --format=%H after delivery; self-referential SHA cannot be embedded in its own commit",
+      "scope": "phase 3 implementation, validation, runtime evidence and tracking",
+      "validation": [
+        "24 targeted tests pass",
+        "630 full tests: 628 pass, 2 existing skips, 0 fail",
+        "native and portable Kilo runtime, exact outputs, zero costs",
+        "review approve 4/4 phase criteria"
+      ]
+    }
+  ],
+  "prohibited": [
+    "push",
+    "remote PR mutation",
+    "branch change",
+    "implementation phases 2 or 4-6"
+  ]
+}

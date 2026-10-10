@@ -1,6 +1,6 @@
 # Matrice de traçabilité #914
 
-Les critères ci-dessous sont repris **verbatim et dans leur ordre officiel**. État de planification conservé dans `plan-before-phase-1.json`. La phase 1 est implémentée ; seuls ses résultats ci-dessous sont acquis. Les autres chemins restent des projections dans les phase-n.md. La sonde de connectivité ne valide pas AC15 ; la nouvelle preuve runtime concerne uniquement la mémoire sur Linux.
+Les critères ci-dessous sont repris **verbatim et dans leur ordre officiel**. État de planification conservé dans `plan-before-phase-1.json`. Les phases 1 et 3 sont implémentées ; seuls leurs résultats ci-dessous sont acquis. Les autres chemins restent des projections dans les phase-n.md. La sonde de connectivité ne valide pas AC15 ; les preuves runtime concernent mémoire et skills natifs/portables sur Linux.
 
 | AC | Critère officiel | Phases | Fichiers / responsabilité | Tests nécessaires | Preuves attendues | Risques / environnement |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -27,19 +27,21 @@ Aucun AC officiellement impossible à cause du seul manque de compte Anthropic :
 
 La stratégie complète précise fixtures/oracles, limites et commandes dans [test-strategy.md](./test-strategy.md). La projection pour chaque ligne est répartie dans [plan.md](./plan.md) et ses six phases. Rapport final d’implémentation : une preuve nommée par AC et par surface ; ne jamais remplacer un skip par pass.
 
-## Résultat limité à la phase 1
+## Résultat acquis après phases 1 et 3
 
 | AC | Statut réel | Preuve et reste à faire |
 | --- | --- | --- |
-| 1 | Partiel | Contrats onboard/mémoire couverts ; sync réellement exécuté dans Codex sur Kilo-only. Onboarding autonome et générateurs 04–08 restent à prouver. |
-| 2 | Partiel | Six signaux dans les deux références, 24 tests de contrats/fixtures. Détection des autres générateurs non implémentée. |
-| 3 | Partiel | Mémoire racine AGENTS, legacy inchangé dans le test Kilo-only ; sorties des autres générateurs futures. |
-| 4 | Partiel | Deux fixtures OpenCode seules négatives dans les deux contrats ; autres générateurs futurs. |
-| 5 | Validé | 40 tests mémoire réels, préfixe Codex préservé, bloc unique, relance partagée sans changement bytes/mtime. |
-| 6–12 | Non implémentés | Phases 2–5 non autorisées. |
-| 13 | Partiel | Mémoire idempotente ; relances des autres générateurs futures. |
-| 14 | Partiel | Préflight mémoire : marqueurs tardifs, permissions, symlinks, README opt-in, refus avant Upsert. Autres configurations/publications futures ; pas de garantie crash. |
-| 15 | Partiel | Kilo 7.8.8 Linux lit la mémoire liée et applique son instruction, coût 0. Aucun autre artefact ou OS validé. |
-| 16 | Partiel | Deux références modifiées portent sources et date contractuelle attribuée à #914, revalidation distincte ; autres références futures. |
+| 1 | Partiel | Onboard/mémoire et skill détectent Kilo ; sync et génération skill réellement exécutés par Codex natif. Onboarding autonome et générateurs 05–08 futurs. |
+| 2 | Partiel | Six signaux dans trois contrats, tests phase 1 + oracle fixtures phase 3 ; autres générateurs futurs. |
+| 3 | Partiel | Mémoire racine AGENTS et fixture skill legacy générée sous .kilo ; autres artefacts futurs. |
+| 4 | Partiel | Configs OpenCode seules et AGENTS seul négatifs dans ces trois contrats ; autres générateurs futurs. |
+| 5 | Validé | Preuves phase 1 inchangées : 40 tests mémoire, contenu utilisateur et bloc unique, rerun bytes/mtime stable. |
+| 6–8 | Non implémentés | Phase 2 attend coordination #979. |
+| 9 | Validé | Contrat de choix explicite, caller natif/portable/shared et refus sans accord ou copies/conflits non résolus ; une copie, runtime Kilo natif et portable réussi. |
+| 10–12 | Non implémentés | Phases 4–5 non autorisées. |
+| 13 | Partiel | Mémoire et skills idempotents ; snapshots caller skills bytes/mtime identiques. Autres générateurs futurs. |
+| 14 | Partiel | Préflight mémoire phase 1 et huit refus caller skills phase 3 sans mutation. Pas de writer déterministe skill ni transaction crash/concurrence ; règles/config et autres artefacts futurs. |
+| 15 | Partiel | Kilo 7.8.8 Linux : mémoire + skills natif/portable, catalogue et usage avec lectures action/payload, résultats exacts, coûts 0. Autres artefacts/OS futurs. |
+| 16 | Partiel | Quatre références modifiées portent sources/date contractuelle attribuée à #914 et revalidation distincte ; autres références futures. |
 
-Preuves, commandes et limites : [rapport phase 1](phase-1-report.md), [runtime](phase-1-runtime.md) et [review](review.md). Aucun critère transversal n’est déclaré entièrement satisfait.
+Preuves et limites : [rapport phase 1](phase-1-report.md), [runtime mémoire](phase-1-runtime.md), [review phase 1 conservée](review-phase-1.md), [rapport phase 3](phase-3-report.md), [runtime skills](phase-3-runtime.md), [review courante](review.md). Aucun critère transversal déclaré entièrement satisfait.

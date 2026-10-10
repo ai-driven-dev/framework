@@ -1,0 +1,25 @@
+{
+  "request": "Kilo portable + Codex, license MIT requested",
+  "decision": "Request target or field resolution before publication, no skill directories created.",
+  "before": {
+    "kilo.json": {
+      "mtimeNs": 1791631210885747319,
+      "sha256": "ca3d163bab055381827226140568f3bef7eaac187cebd76878e0b63e9e442356"
+    },
+    ".codex/config.toml": {
+      "mtimeNs": 1791631210885747319,
+      "sha256": "faa5b4816800b8cbe1595e5533fe36c53f396c0c26a3a876dd3e4085232348a1"
+    }
+  },
+  "after": {
+    "kilo.json": {
+      "mtimeNs": 1791631210885747319,
+      "sha256": "ca3d163bab055381827226140568f3bef7eaac187cebd76878e0b63e9e442356"
+    },
+    ".codex/config.toml": {
+      "mtimeNs": 1791631210885747319,
+      "sha256": "faa5b4816800b8cbe1595e5533fe36c53f396c0c26a3a876dd3e4085232348a1"
+    }
+  },
+  "unchanged": true
+}

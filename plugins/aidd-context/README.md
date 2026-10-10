@@ -36,3 +36,7 @@ Onboard adapts to whatever plugins are installed: it suggests by function and di
 ## Shared project memory
 
 Kilo uses the root `AGENTS.md` memory block shared with Codex, OpenCode and Cursor. Recognition and paths follow [the tool contract](skills/02-project-memory/references/tools.md); `.kilocode/` is a legacy signal, never a new output destination. Explicit memory sync preflights every selected destination before changing files, preserves user content outside the block, and skips identical writes. Claude keeps its `@` imports and Copilot its relative links.
+
+## Generated Kilo skills
+
+The skill generator offers native Kilo placement or an explicitly agreed portable placement. It writes one copy per resolved destination, asks about existing copies, preflights all selected targets, preserves user resources during modify and skips identical writes. Host fields and sourced locations are defined in [the write contract](skills/04-skill-generate/references/tool-write.md); the canonical Claude template is unchanged.

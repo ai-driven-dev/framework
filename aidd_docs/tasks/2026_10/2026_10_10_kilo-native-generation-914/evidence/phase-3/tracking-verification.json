@@ -1,0 +1,16 @@
+{
+  "officialACVerbatim": true,
+  "planStatus": "in-progress",
+  "phaseStatuses": [
+    "done",
+    "pending",
+    "done",
+    "pending",
+    "pending",
+    "pending"
+  ],
+  "reviewSectionsValid": true,
+  "claudeTemplateUnchanged": true,
+  "temporaryFixtureAndXdgCleanup": true,
+  "branch": "feat/kilo-native-generation-914"
+}

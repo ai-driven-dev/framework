@@ -1,0 +1,32 @@
+✔ skill detection lists exactly the six Kilo signals and keeps OpenCode distinct (3.789088ms)
+✔ Kilo placement requires explicit portable consent and resolves duplicates before writing (0.781908ms)
+✔ Kilo fields are target-specific without weakening the Claude authoring template (0.621299ms)
+✔ full preflight precedes creation and covers unsafe paths and user resources (0.623573ms)
+✔ Kilo path claims carry official source and attributed historical date (0.766749ms)
+✔ caller-generated target trees have valid frontmatter, router links and preserved resources (11.824996ms)
+✔ caller modify preserves user files and identical rerun preserves whole tree bytes and mtime (1.599022ms)
+✔ six native caller refusals leave full project trees unchanged (0.792878ms)
+✔ skill contract detection oracle: canonical directory (0.824907ms)
+✔ skill contract detection oracle: legacy directory (0.732316ms)
+✔ skill contract detection oracle: root JSON (0.346467ms)
+✔ skill contract detection oracle: root JSONC (0.356435ms)
+✔ skill contract detection oracle: nested JSON (0.258642ms)
+✔ skill contract detection oracle: nested JSONC (0.216793ms)
+✔ skill contract detection oracle: shared AGENTS alone (0.325807ms)
+✔ skill contract detection oracle: OpenCode JSON alone (0.221334ms)
+✔ skill contract detection oracle: OpenCode JSONC alone (0.185637ms)
+✔ skill contract detection oracle: multiple tools share memory (0.38589ms)
+✔ golden trees match caller output hashes and every local Markdown link stays inside its skill (15.460689ms)
+✔ shared portable fields require resolution when a requested Kilo field conflicts with Codex (0.551208ms)
+✔ real Kilo native: catalog, invocation, action and payload reads, exact answer and zero costs (1.22219ms)
+✔ real Kilo portable: catalog, invocation, action and payload reads, exact answer and zero costs (0.711998ms)
+✔ native caller refuses an unresolved shared-field request without creating a skill (0.416696ms)
+✔ native Kilo plus a selected portable host must resolve placement before any write (0.456471ms)
+ℹ tests 24
+ℹ suites 0
+ℹ pass 24
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 178.326777
