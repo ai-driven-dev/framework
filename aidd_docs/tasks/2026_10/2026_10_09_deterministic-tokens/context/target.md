@@ -18,9 +18,11 @@ tokens per task and ticket. Push to Gouvernail. Ship fast and clean.
    line (subagents run in their own worktrees).
 2. **Root and repository at ingest.** realpath + case-fold → `git rev-parse` → root;
    repository id = hash of `host/owner/repo` from `origin`, else the root commit SHA.
-   cwd gone (16 % of lines on backfill) → judged by the clone it was last seen in, else
-   counted as `never-seen-alive`, not `outside-repo`.
-   Project switch off or `AIDD_TELEMETRY=0` → not ingested at all.
+   cwd gone (16 % of lines on backfill) → judged by the clone it was last seen in (told from a
+   clone made at the same path by its identity), else counted as `never-seen-alive`, not
+   `outside-repo`.
+   A clone that did not opt in (its `aidd.telemetry` git config, and a consent interval written by
+   `on`) or `AIDD_TELEMETRY=0` → not ingested at all.
 3. **Ledger** in its own subdirectory of the telemetry dir (the v1 sink prunes `*.jsonl`
    by count there), relocated by `AIDD_TELEMETRY_DIR`; monthly partitions; newline guard;
    lock with pid and age, stale lock cleared. `forget` covers it.

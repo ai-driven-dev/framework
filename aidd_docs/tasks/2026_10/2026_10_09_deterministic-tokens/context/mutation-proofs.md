@@ -178,3 +178,57 @@ test, the unreadable-consent wording test and the Codex notice (the test and the
 changed together). Seen red first: the `on`/`off` wording test, the resolver and `on` tests ((b),
 (c), (e), the worktree), the `off` tests, the legacy forget test, the hook test, the torn-line
 tests, the lock-name test and the duplicate-row test.
+
+## Fix round 3
+
+One predicate, one table. `cli/tests/contexts/telemetry/consent-scenarios.integration.test.ts` runs real git repositories in temporary directories, the real adapters and a real ingest, and states the calls the ledger ends up holding. It was written first, against the code of `309f7393` and nothing newer (only `wireTelemetry` and each use case's `execute`).
+
+Before the fix, per row (`npx vitest run … --reporter=verbose` at `309f7393`):
+
+| Row | Scenario | Before the fix | After |
+| --- | --- | --- | --- |
+| 1 | (b) deleted clone that never opted in, then `on` in another clone of the remote | pass (fixed in round 2) | pass |
+| 2 | (c) clone that ran `off`, then `on` in another clone | pass (fixed in round 2) | pass |
+| 3 | (e) deleted copy, no remote, root commit shared, carrying the source's consent | **fail**: `c1` stored while the copy was alive | pass |
+| 4 | deleted linked worktree seen alive before `on`, then `on` in its clone | pass | pass |
+| 5 | same repository cloned again at the path, then `on`: the old clone's deleted worktree | **fail**: `pw` stored | pass |
+| 6 | unrelated repository cloned at the path, then `on`: the old clone's deleted worktree | **fail**: `pw` stored | pass |
+| 7 | the old clone's own calls, cloned again at the path, `on` there | **fail**: `po` stored | pass |
+| 8 | `on`, calls, `off`, calls, `on`, calls, ingest after each batch | **fail**: the middle call stored | pass |
+| 8b | the same, one ingest at the end (added: the result must not depend on ingest timing) | **fail**: the middle call stored | pass |
+| 9 | `on`, a manual `off` an ingest observes, calls, clone deleted | **fail**: the call after the observation stored | pass |
+| 10 | first `on`, history from before it | pass | pass |
+| 11 | `AIDD_TELEMETRY=0` | pass | pass |
+| 12 | `forget --yes` after `on`, no session | **fail**, on its precondition: `on` wrote no `ledger/consents.jsonl` (the rest of the row, key gone and file gone, passed vacuously) | pass |
+
+Rows 1, 2, 4, 10 and 11 guard behaviour that was already right: they stay green, and the mutations below show they can go red. Every "not stored" row holds a positive control, a call that must be stored, so none passes because ingest stored nothing. A clone "deleted" in a row is moved aside: a deleted directory's inode may be given to the next one on some file systems, and a row about a clone told apart from its successor must not depend on that.
+
+Only the table was written before the code. The unit and integration tests under it were written with the code and are proved by the mutations below, run afterwards.
+
+Every row below: the mutation applied by script with an exact-anchor check, `npx vitest run tests/contexts/telemetry tests/presentation` (the Node suite for the hook row), the file restored and checked byte-equal. Counts are failing tests.
+
+| Rule | Mutation | Result |
+| --- | --- | --- |
+| A clone is told from another at its path by its identity | identity ignored, read by path only (`sameClone` and `cloneKey` compare the path alone) | 22 red, including rows 5, 6, 7 |
+| A call is judged at its own time | the intervals ignored: any `on` of the clone covers every call | 13 red, including rows 2, 8, 8b, 9 |
+| A call made while off is never stored | the off window included: an `off` closes nothing | 19 red, including rows 2, 8, 8b, 9 |
+| The end of an interval is excluded | `at <= to` | 4 red |
+| The start of an interval is included | `from < at` | 3 red |
+| Fail closed when the platform gives no inode | the `ino === 0n` check removed in `identityFromStat` | 1 red: `clone-identity.unit.test.ts` "is none where the platform reports no inode". No table row reaches it: a real macOS stat never returns an inode of 0, so the check is pinned at the seam, and the locator and the consent adapter take an identity reader that the tests make blind |
+| Ingest looks at every clone whose consent is open | `observeOpenConsents` not called | 3 red, including row 9 |
+| A clone found gone ends its consent | the close on `gone` removed | 2 red |
+| A clone whose key is not `2` ends its consent | the close on `absent` removed | 4 red, including row 9 |
+| A clone with the key at 2 and no consent stores nothing | `state === "absent"` no longer refuses: live key not required | 8 red |
+| The latest clone born by the call answers for a directory | always the latest | 6 red, including row 7 |
+| The first clone answers for a call older than every clone | always the first | 4 red, including row 7 |
+| `off` ends the interval | the close removed | 6 red, including rows 2, 8, 8b |
+| `on` opens the interval | the open removed | 23 red, all thirteen rows |
+| `forget` names a gone clone only if it consented | any gone clone named | 2 red |
+| Ingest saves the damaged month (round 2's weak test, now asserting which months were saved) | `damagedMonths` dropped from the saved set | 2 red: "repairs a damaged month even when every call it read was already held" and "also rewrites a month that holds a line that is not a record". Before the assertion on the saved months was added, the first of the two stayed green, which is why the review saw 1 |
+| A mistyped declaration says how to send it as an ordinary prompt | the message line removed | 1 red: "a declaration mistyped is blocked…". A second test, "a question mark makes it an ordinary prompt", checks that the way out the message gives works; it is not mutation-proved, because dropping `?` from the `attemptsDeclaration` regex leaves it green (the tokeniser already refuses a `?`) |
+
+Survivors left in the files of this round, none believed to be a gap: `clone-identity-reader.ts` `{ bigint: true }` (an inode above 2^53 cannot be made on the machine this ran on), `clone-identity.ts` `<= 0n` against `< 0n` (equivalent: 0 maps to 0), `birthtimeMs` type check against the finite check (equivalent), `directory-resolver.ts` filter of the current owner (the owner list is the same set), `""` fallbacks on a missing file.
+
+Mutation score of the `telemetry` scope at the head of the round: 96.4 (3,343 detected, 126 undetected), floor 96.
+
+Not mutated: `usage-contract.md`, `target.md`, `codebase-map.md`, `telemetry.md` and the comments; the per-OS notes on the identity (macOS observed, Linux and Windows read from Node's and libuv's documentation, not observed).
