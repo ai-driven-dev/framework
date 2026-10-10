@@ -14,7 +14,6 @@ A `## Recommendations` table with `ID | Question | Type | Diagnostic | Evidence 
 
 1. **Scope.** Select `behavior`, plus `skill` and `knowledge` only when the scope index names relevant artifacts.
 2. **Dispatch.** Analyze locally when one scope exists; otherwise dispatch one read-only analyst per scope in parallel.
-   - Prefer a lightweight available model and low reasoning effort when the host supports per-agent overrides; otherwise inherit the run defaults.
    - Give the behavior analyst the complete frozen transcript; give artifact analysts the same boundary, indexed turns, and exact artifact paths.
    - Request isolated or minimal context for artifact analysts when supported; otherwise analyze every scope locally instead of duplicating the transcript.
    - Do not dispatch an analyst with no relevant evidence.

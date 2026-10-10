@@ -4,7 +4,7 @@ Render the canonical agent per confirmed tool and write it.
 
 ## Input
 
-From 01: the role, the chosen name, the model, and the write mode.
+From 01: the role, the chosen name, an optional user-specified model, and the write mode.
 
 ## Output
 
