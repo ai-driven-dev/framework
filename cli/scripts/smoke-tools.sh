@@ -213,9 +213,11 @@ run "telemetry ingest" 0 "" "$P_TEL" -- telemetry ingest
 run "telemetry report" 0 "" "$P_TEL" -- telemetry report --days 1
 run "telemetry identity" 0 "" "$P_TEL" -- telemetry identity smoke-person
 run "telemetry identity --off" 0 "" "$P_TEL" -- telemetry identity --off
+# `off` comes before `forget --yes`: forget unsets the key itself, so an `off` after it has nothing to switch.
+run "telemetry off" 0 "Measurement is off" "$P_TEL" -- telemetry off
 run "telemetry forget (preview)" 0 "Nothing was removed" "$P_TEL" -- telemetry forget
 run "telemetry forget --yes" 0 "Removed" "$P_TEL" -- telemetry forget --yes
-run "telemetry off" 0 "Measurement is off" "$P_TEL" -- telemetry off
+run "telemetry off (after forget)" 0 "Measurement was not on" "$P_TEL" -- telemetry off
 
 section "update --check"
 out=$(cd "$ROOT" && node "$CLI" update --check 2>&1); rc=$?
