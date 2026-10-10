@@ -1,23 +1,19 @@
 # 01 - Prepare
 
-Resolve the plan, put the workspace on a feature branch, and mark the plan in-progress.
-
 ## Input
 
-A plan, passed as arguments as a path or inline content.
+A plan path or inline content.
 
 ## Output
 
-The resolved plan on a feature branch with its frontmatter `status: in-progress`, ready for the phase loop. Or a fail-fast stop when no plan resolves.
+The resolved plan on a feature branch with `status: in-progress`, or a missing-plan report.
 
 ## Process
 
-1. **Resolve.** Resolve the plan from the arguments. A path must exist and be readable. With neither a readable file nor inline content, stop with `plan not found at <path>`. Never fabricate a plan.
-2. **Branch.** On the default branch, create a feature branch and announce it. On a non-default branch, keep it.
-3. **Mark.** Set the plan frontmatter `status: in-progress` as a runtime marker. No separate commit: it rides into the first phase commit, or into the `implemented` commit if there is no phase to code.
+1. **Resolve.** Read the supplied plan.
+2. **Branch.** Create and announce a feature branch on the default branch; otherwise keep the current branch.
+3. **Mark.** Set the plan frontmatter `status: in-progress`.
 
-## Test
+## Rules
 
-- A missing or unreadable plan with no inline content stops with `plan not found at <path>`, and no plan is fabricated.
-- The current branch is not the default branch.
-- The plan frontmatter reads `status: in-progress`.
+- Without a readable plan or inline content, stop with `plan not found at <path>`; never fabricate a plan.

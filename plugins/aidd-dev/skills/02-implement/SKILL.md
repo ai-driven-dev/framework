@@ -6,24 +6,43 @@ argument-hint: plan
 
 # Skill: implement
 
-Run an existing plan to write its code, one phase at a time, until every acceptance criterion holds.
+```mermaid
+flowchart LR
+  prepare --> execute --> finalize --> implemented
+  prepare -->|missing plan| stop
+  execute -->|fix, next task or phase| execute
+  execute --> blocked
+  execute --> replan
+  finalize -->|validation fails| finalize
+  finalize --> blocked
+  finalize --> replan
+```
 
 ## Actions
 
-| #   | Action     | Role                                            | Input         |
-| --- | ---------- | ----------------------------------------------- | ------------- |
-| 01  | `prepare`  | Resolve the plan, branch, mark it in-progress   | a plan path   |
-| 02  | `execute`  | Loop the phases, code and assert each           | prepared plan |
-| 03  | `finalize` | Verify and mark the plan implemented            | coded phases  |
+Run actions in order.
+Read each action file in `actions/` before executing it.
 
-Run them in order, `01 → 03`.
-Before running an action, read its file in `actions/`, not only the table or assets.
+| Action   | Does                                  |
+| -------- | ------------------------------------- |
+| prepare  | resolve the plan and branch            |
+| execute  | implement and validate each task       |
+| finalize | validate and mark the plan implemented |
 
 ## Transversal rules
 
-- Status: drive the plan through `pending → in-progress → implemented` (or `blocked`), and each phase through `pending → in-progress → done`. The `in-progress` values are runtime markers; only `done` and `implemented` need to land in a commit.
-- Commits: one commit per phase, its code together with the phase reaching `done`, plus a final commit for the plan reaching `implemented`. Never leave the tree dirty at a phase boundary. Do not scatter separate `in-progress` status commits: one context now owns both code and status, so there is nothing to guard against.
-
-## References
-
-- `references/blocked.md`: the conditions that make a plan `blocked` and need a human.
+- Track the plan through `pending → in-progress → implemented` (or `blocked`).
+  - Track phases through `pending → in-progress → done`.
+  - Treat `in-progress` as a runtime marker.
+  - Never commit `in-progress` alone.
+- Follow user and project commit instructions.
+  - Push only when requested.
+- By default, make one local commit per validated task.
+  - Include all its code, tests and docs together.
+  - Group tasks only when they cannot be validated separately.
+  - Never split a task by step or file.
+  - Exclude unrelated changes.
+- Include `done` in the phase's last task commit.
+- Make a final commit for `implemented`.
+- Use project formatters or hooks.
+  - Never format code manually.
