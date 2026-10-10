@@ -5,6 +5,7 @@ const test = require('node:test');
 
 const ROOT = path.resolve(__dirname, '../..');
 const read = (file) => fs.readFileSync(path.join(ROOT, file), 'utf8');
+const normalizeEol = (text) => text.replace(/\r\n/gu, '\n');
 const agent = (file) => read(`plugins/aidd-context/skills/06-agent-generate/${file}`);
 const command = (file) => read(`plugins/aidd-context/skills/07-command-generate/${file}`);
 const FIXTURES = path.join(__dirname, 'fixtures/context-generation/agents-commands');
@@ -43,8 +44,8 @@ test('Kilo claims cite official sources and the issue date', () => {
 });
 
 test('caller-generated Kilo agent and workflow retain target-specific frontmatter and bodies', () => {
-  const agentText = fs.readFileSync(path.join(FIXTURES, 'native/.kilo/agents/verify-agent.md'), 'utf8');
-  const commandText = fs.readFileSync(path.join(FIXTURES, 'native/.kilo/commands/verify-workflow.md'), 'utf8');
+  const agentText = normalizeEol(fs.readFileSync(path.join(FIXTURES, 'native/.kilo/agents/verify-agent.md'), 'utf8'));
+  const commandText = normalizeEol(fs.readFileSync(path.join(FIXTURES, 'native/.kilo/commands/verify-workflow.md'), 'utf8'));
   assert.match(agentText, /^---\ndescription: Verify the phase four agent payload\.\nmode: subagent\ntemperature: 0\npermission:\n  read: allow\n---/u);
   assert.doesNotMatch(agentText, /^---[\s\S]*?\nname:/u);
   assert.match(agentText, /\.kilo\/agents\/assets\/agent-payload\.txt/u);

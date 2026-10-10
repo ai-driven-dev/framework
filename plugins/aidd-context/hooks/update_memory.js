@@ -50,15 +50,111 @@ function memoryPath(path, ...parts) {
   return path.join(DOCS_DIR, MEMORY_SUBDIR, ...parts);
 }
 
-// Opening directly rather than checking existence first touches the file once, so no
-// time-of-check/time-of-use race. A real error still throws.
-function readTextOrNull(fs, filePath) {
+function sameIdentity(left, right) {
+  return left.dev === right.dev && left.ino === right.ino;
+}
+
+// Open only an existing regular, single-link file. Keep its descriptor for any later write;
+// path identity checks detect ordinary substitutions but cannot defeat a hostile process
+// that swaps a parent away and back between checks.
+function openProjectFile(fs, path, filePath) {
+  const root = fs.realpathSync(process.cwd());
+  const rootIdentity = fs.statSync(root);
+  const parts = filePath.split("/");
+  const inspect = () => {
+    const chain = [fs.statSync(root)];
+    let current = root;
+    for (let index = 0; index < parts.length; index++) {
+      current = path.join(current, parts[index]);
+      let stat;
+      try { stat = fs.lstatSync(current); }
+      catch (err) {
+        if (err.code === "ENOENT") return null;
+        throw err;
+      }
+      const final = index === parts.length - 1;
+      if (stat.isSymbolicLink() || (final ? !stat.isFile() : !stat.isDirectory())) {
+        const error = new Error(`${filePath} has an unsafe destination, not synced`);
+        error.code = "AIDD_UNSAFE_PATH";
+        throw error;
+      }
+      chain.push(stat);
+    }
+    return chain;
+  };
+  const before = inspect();
+  if (before === null) return null;
+  let fd;
   try {
-    return fs.readFileSync(filePath, "utf8");
+    const flags = fs.constants.O_RDWR |
+      (process.platform === "win32" ? 0 : (fs.constants.O_NOFOLLOW || 0) | (fs.constants.O_NONBLOCK || 0));
+    fd = fs.openSync(path.join(root, ...parts), flags);
+    const opened = fs.fstatSync(fd);
+    if (!opened.isFile() || opened.nlink > 1 || !sameIdentity(opened, before.at(-1))) {
+      const error = new Error(`${filePath} changed or has multiple hard links, not synced`);
+      error.code = "AIDD_UNSAFE_PATH";
+      throw error;
+    }
+    const after = inspect();
+    if (!after || before.length !== after.length || before.some((stat, index) => !sameIdentity(stat, after[index]))) {
+      const error = new Error(`${filePath} path changed while opening, not synced`);
+      error.code = "AIDD_UNSAFE_PATH";
+      throw error;
+    }
+    const openedAgain = fs.fstatSync(fd);
+    if (!sameIdentity(opened, openedAgain)) {
+      const error = new Error(`${filePath} changed while opening, not synced`);
+      error.code = "AIDD_UNSAFE_PATH";
+      throw error;
+    }
+    if (fs.realpathSync(root) !== root || !sameIdentity(rootIdentity, after[0])) {
+      const error = new Error(`${filePath} project root changed while opening, not synced`);
+      error.code = "AIDD_UNSAFE_PATH";
+      throw error;
+    }
+    return { fd, root, parts, chain: after, identity: opened, rootIdentity };
   } catch (err) {
+    if (fd !== undefined) fs.closeSync(fd);
     if (err.code === "ENOENT") return null;
     throw err;
   }
+}
+
+function readOpenedText(fs, opened) {
+  return fs.readFileSync(opened.fd, "utf8");
+}
+
+// README is opt-in by marker. This probe is read-only; any marked destination is reopened
+// through a verified descriptor before it can be written, while a blockless symlink is ignored.
+function readTextOrNull(fs, filePath) {
+  try { return fs.readFileSync(filePath, "utf8"); }
+  catch (err) {
+    if (err.code === "ENOENT") return null;
+    throw err;
+  }
+}
+
+function writeOpenedText(fs, path, filePath, opened, content) {
+  if (fs.realpathSync(opened.root) !== opened.root || !sameIdentity(fs.statSync(opened.root), opened.rootIdentity)) {
+    throw new Error(`${filePath} project root changed before write, not synced`);
+  }
+  let current = opened.root;
+  for (let index = 0; index < opened.parts.length; index++) {
+    current = path.join(current, opened.parts[index]);
+    const stat = fs.lstatSync(current);
+    const final = index === opened.parts.length - 1;
+    if (stat.isSymbolicLink() || (final ? !stat.isFile() : !stat.isDirectory()) || !sameIdentity(stat, opened.chain[index + 1])) {
+      throw new Error(`${filePath} path changed before write, not synced`);
+    }
+  }
+  const descriptorStat = fs.fstatSync(opened.fd);
+  if (!sameIdentity(descriptorStat, opened.identity)) throw new Error(`${filePath} descriptor changed before write, not synced`);
+
+  const bytes = Buffer.from(content, "utf8");
+  let offset = 0;
+  while (offset < bytes.length) offset += fs.writeSync(opened.fd, bytes, offset, bytes.length - offset, offset);
+  // Truncate only after the complete replacement bytes are written; metadata and inode stay.
+  fs.ftruncateSync(opened.fd, bytes.length);
 }
 
 // Single-touch, like readTextOrNull: no existence check before reading.
@@ -296,6 +392,7 @@ function gitAdd(childProcess, files) {
   const explicit = checkOnly || tools.length > 0;
   const readmePath = memoryPath(path, MEMORY_README);
   const originals = new Map();
+  const openedFiles = new Map();
   let readmeOriginal;
 
   if (explicit) {
@@ -305,7 +402,9 @@ function gitAdd(childProcess, files) {
     try {
       for (const target of targets) {
         validateDestination(fs, path, target.path);
-        const original = readTextOrNull(fs, target.path);
+        const opened = openProjectFile(fs, path, target.path);
+        const original = opened === null ? null : readOpenedText(fs, opened);
+        if (opened) openedFiles.set(target.path, opened);
         validateMarkers(target.path, original, [
           [BLOCK_OPEN, BLOCK_CLOSE], [LEGACY_BLOCK_OPEN, LEGACY_BLOCK_CLOSE],
         ], "project memory");
@@ -314,6 +413,9 @@ function gitAdd(childProcess, files) {
       readmeOriginal = readTextOrNull(fs, readmePath);
       if (readmeOriginal !== null && markerLines(readmeOriginal.split("\n"), [TOC_OPEN, TOC_CLOSE]).length > 0) {
         validateDestination(fs, path, readmePath);
+        const readme = openProjectFile(fs, path, readmePath);
+        readmeOriginal = readOpenedText(fs, readme);
+        openedFiles.set(readmePath, readme);
         validateMarkers(readmePath, readmeOriginal, [[TOC_OPEN, TOC_CLOSE]], "memory README");
       }
     } catch (err) {
@@ -331,7 +433,18 @@ function gitAdd(childProcess, files) {
   const pending = [];
 
   for (const target of targets) {
-    const original = explicit ? originals.get(target.path) : readTextOrNull(fs, target.path);
+    let opened = openedFiles.get(target.path);
+    let original = explicit ? originals.get(target.path) : undefined;
+    if (!explicit) {
+      try {
+        opened = openProjectFile(fs, path, target.path);
+        original = opened === null ? null : readOpenedText(fs, opened);
+        if (opened) openedFiles.set(target.path, opened);
+      } catch (err) {
+        console.error(`update_memory: ${err.message}`);
+        continue;
+      }
+    }
     if (original === null) continue;
 
     const innerContent = buildBlockContent(
@@ -350,24 +463,40 @@ function gitAdd(childProcess, files) {
     }
     if (updated === original) continue;
 
-    if (explicit) pending.push({ path: target.path, content: updated });
-    else fs.writeFileSync(target.path, updated, "utf8");
+    if (explicit) pending.push({ path: target.path, content: updated, opened });
+    else writeOpenedText(fs, path, target.path, opened, updated);
     changed.push(target.path);
   }
 
   // Only if the README opts in with its own markers.
-  if (!explicit) readmeOriginal = readTextOrNull(fs, readmePath);
+  if (!explicit) {
+    readmeOriginal = readTextOrNull(fs, readmePath);
+    if (readmeOriginal !== null && markerLines(readmeOriginal.split("\n"), [TOC_OPEN, TOC_CLOSE]).length > 0) {
+      try {
+        const readme = openProjectFile(fs, path, readmePath);
+        readmeOriginal = readOpenedText(fs, readme);
+        openedFiles.set(readmePath, readme);
+      } catch (err) {
+        // Automatic mode is best-effort; an unsafe opted-in README is not written.
+        if (err.code !== "AIDD_UNSAFE_PATH") throw err;
+        readmeOriginal = null;
+      }
+    }
+  }
   if (readmeOriginal !== null) {
     const toc = buildToc(rootFiles, onDemandFiles, path);
     const updated = updateMarkers(readmeOriginal, TOC_OPEN, TOC_CLOSE, toc);
     if (updated !== null && updated !== readmeOriginal) {
-      if (explicit) pending.push({ path: readmePath, content: updated });
-      else fs.writeFileSync(readmePath, updated, "utf8");
+      const opened = openedFiles.get(readmePath);
+      if (explicit) pending.push({ path: readmePath, content: updated, opened });
+      else writeOpenedText(fs, path, readmePath, opened, updated);
       changed.push(readmePath);
     }
   }
 
-  for (const edit of pending) fs.writeFileSync(edit.path, edit.content, "utf8");
+  for (const edit of pending) writeOpenedText(fs, path, edit.path, edit.opened, edit.content);
+
+  for (const opened of openedFiles.values()) fs.closeSync(opened.fd);
 
   // Only as the auto hook, which owns no other change: called by the skill, staging its own
   // two files would leave a partial index that reads like the whole change.

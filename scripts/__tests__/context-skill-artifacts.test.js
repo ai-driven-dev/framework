@@ -7,6 +7,8 @@ const yaml = require('js-yaml');
 const ROOT = path.resolve(__dirname, '../..');
 const SKILL = 'plugins/aidd-context/skills/04-skill-generate';
 const read = (file) => fs.readFileSync(path.join(ROOT, SKILL, file), 'utf8');
+const normalizeEol = (text) => text.replace(/\r\n/gu, '\n');
+const markdownDestinations = (text) => [...text.matchAll(/\[[^\]]+\]\((https:\/\/[^)\s]+)\)/gu)].map((match) => match[1]);
 
 // Markdown is the shipped implementation. These guards do not simulate an LLM
 // writer. Behavioral receipts and real generated trees are checked separately.
@@ -54,10 +56,27 @@ test('full preflight precedes creation and covers unsafe paths and user resource
 test('Kilo path claims carry official source and attributed historical date', () => {
   for (const file of ['references/tool-detect.md', 'references/tool-write.md']) {
     const source = read(file);
-    assert.ok(source.includes('https://kilo.ai/docs/'));
+    assert.ok(markdownDestinations(source).some((destination) => {
+      try {
+        const url = new URL(destination);
+        return url.protocol === 'https:' && url.hostname === 'kilo.ai' && url.pathname.startsWith('/docs/');
+      } catch { return false; }
+    }));
     assert.match(source, /2026-09-25[^\n]*issue/u);
     assert.match(source, /2026-10-10/u);
   }
+});
+
+test('Kilo source validation rejects URL text and lookalike or non-doc destinations', () => {
+  const destinations = markdownDestinations([
+    'https://kilo.ai/docs/',
+    '[Lookalike](https://kilo.ai.example/docs/thing)',
+    '[Not docs](https://kilo.ai/other)',
+  ].join('\n'));
+  assert.equal(destinations.some((destination) => {
+    const url = new URL(destination);
+    return url.protocol === 'https:' && url.hostname === 'kilo.ai' && url.pathname.startsWith('/docs/');
+  }), false);
 });
 
 const FIXTURES = path.join(__dirname, 'fixtures/context-generation/skills');
@@ -67,7 +86,7 @@ test('caller-generated target trees have valid frontmatter, router links and pre
   const cases = JSON.parse(fs.readFileSync(path.join(FIXTURES, 'cases.json'), 'utf8'));
   for (const fixture of cases) {
     const dir = path.join(FIXTURES, fixture.project, fixture.target, 'verify-payload');
-    const text = fs.readFileSync(path.join(dir, 'SKILL.md'), 'utf8');
+    const text = normalizeEol(fs.readFileSync(path.join(dir, 'SKILL.md'), 'utf8'));
     const match = text.match(/^---\n([\s\S]*?)\n---\n/u);
     assert.ok(match, fixture.project);
     const fields = yaml.load(match[1]);
@@ -82,7 +101,7 @@ test('caller-generated target trees have valid frontmatter, router links and pre
       assert.ok(fs.existsSync(resolved), link[1]);
     }
     assert.ok(fs.readFileSync(path.join(dir, 'actions/01-verify.md'), 'utf8').includes('assets/payload.txt'));
-    assert.equal(fs.readFileSync(path.join(dir, 'assets/user.txt'), 'utf8'), 'USER_RESOURCE_DO_NOT_REPLACE\n');
+    assert.equal(normalizeEol(fs.readFileSync(path.join(dir, 'assets/user.txt'), 'utf8')), 'USER_RESOURCE_DO_NOT_REPLACE\n');
     for (const absent of fixture.absent) assert.ok(!fs.existsSync(path.join(FIXTURES, fixture.project, absent)), absent);
   }
 });
@@ -129,10 +148,13 @@ test('golden trees match caller output hashes and every local Markdown link stay
     if (entry.type !== 'file' || !file.includes('/verify-payload/')) continue;
     const p = path.join(FIXTURES, file);
     const bytes = fs.readFileSync(p);
-    assert.equal(crypto.createHash('sha256').update(bytes).digest('hex'), entry.sha256, file);
+    // Git may check text fixtures out as CRLF on Windows; evidence hashes represent the
+    // canonical LF bytes captured by the caller, so normalize only that checkout transform.
+    const canonicalBytes = Buffer.from(bytes.toString('utf8').replace(/\r\n/gu, '\n'));
+    assert.equal(crypto.createHash('sha256').update(canonicalBytes).digest('hex'), entry.sha256, file);
     if (!file.endsWith('.md')) continue;
     const root = p.slice(0, p.indexOf(`${path.sep}verify-payload${path.sep}`)) + `${path.sep}verify-payload`;
-    for (const link of bytes.toString().matchAll(/\]\(([^)]+)\)/gu)) {
+    for (const link of canonicalBytes.toString().matchAll(/\]\(([^)]+)\)/gu)) {
       const resolved = path.resolve(path.dirname(p), link[1]);
       assert.ok(resolved.startsWith(`${root}${path.sep}`), file);
       assert.ok(fs.statSync(resolved).isFile(), file);
