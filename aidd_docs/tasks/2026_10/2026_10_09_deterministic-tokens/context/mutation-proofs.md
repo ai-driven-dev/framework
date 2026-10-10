@@ -317,3 +317,27 @@ A manual change of the key between two observations (row h15b), the clock (a cal
 - `aidd telemetry task` (and `show`) now require the same test as the hooks (key names an interval open for the clone); the brief named the hooks only.
 - The hook does nothing under `AIDD_TELEMETRY=0`, closes included: a residual limit.
 - A hook closes all open intervals of its clone's real path whose token the key does not name, including a stale one next to a named one.
+
+## Fix round 5
+
+Each mutation was applied by script (exact anchor, count 1) and run against `npx vitest run tests/contexts/telemetry tests/presentation` (CLI, 1623 tests) and `node --test scripts/__tests__/aidd-telemetry-hooks.test.js` (hooks, 61 tests). The file was restored from a copy after each. Counts are `CLI failed + hook failed`.
+
+| Fix | Mutation | Red |
+| --- | --- | --- |
+| 1 `on` refuses a damaged log | the guard `if (log.damaged) return "damaged"` made dead (`&& false`) | 2 + 0: rows "damaged on" and "damaged recovery" |
+| 1 `off` refuses a damaged log | the same guard in the `off` use case | 1 + 0: row "damaged off" |
+| 2 the hook compares the full identity | `sameIdentity(...) \|\| true` in `decideConsent` | 1 + 2: row "copy at the path", and the fixture cases for another inode, device and birth time |
+| 3 an unstattable clone never aborts | `readCloneIdentity` rethrows instead of `unidentified` | 3 + 0: the reader test, the locator test, row "unstattable" |
+| 4 a clone out of reach stays open | a clone with nothing at its path is closed again | 2 + 0: row "unmounted" and the ingest unit test |
+| 5 a broken `.git/config` is unreadable | the locator answers `outside-repository` again | 2 + 0: the locator test and row "broken config" |
+| 8 the journey no longer backdates consent | `on` opens its interval one hour late, built and run on `tests/e2e/telemetry-journey.e2e.test.ts` | 1 failed of 3: "total: expected 1 to be 5" |
+
+Fixes 6 (a comment) and 7 (a removed export) change no behaviour, so no test can go red for them. For 7, `git grep -n consentOf -- plugins scripts` finds nothing, and the hook test now uses `tokenOfKey`.
+
+Mutation score of the `telemetry` scope after the round: 96.2 (floor 96).
+
+### Deviations and decisions of the round
+
+- Recovery from a damaged log is `forget --yes` then `on`, by `on` and `off` refusing and by the advice; a hand edit that removes the damaged line is outside the contract and, as the review's script A2 does it (and then re-reads the transcripts), still stores the off window. The tool no longer suggests it. A latch that outlives a hand edit would be a design change and was not made.
+- A new `consent-closed` reason joins `coverage.not_stored`, and `coverage.consent_log_damaged` is added to the version 1 envelope.
+- The locator answers a new `unreadable` status for a directory it cannot look at and for a `.git` git cannot read; `outside-repo` is left for what is not a repository.
