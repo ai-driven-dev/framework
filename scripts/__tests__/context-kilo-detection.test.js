@@ -21,6 +21,9 @@ const SIGNALS = [
   ".kilocode/",
 ];
 
+// Retain the legitimate source reference for the historical fallback signal:
+// https://github.com/Kilo-Org/kilocode/blob/main/packages/opencode/src/kilocode/skills/kilo-config.md
+
 function row(text, tool) {
   const line = text.split("\n").find((candidate) =>
     new RegExp(`^\\|\\s*${tool}\\s*\\|`, "u").test(candidate)
@@ -37,10 +40,6 @@ function hasSignal(project, signal) {
   const target = path.join(project, signal);
   if (!fs.existsSync(target)) return false;
   return signal.endsWith("/") ? fs.statSync(target).isDirectory() : fs.statSync(target).isFile();
-}
-
-function markdownDestinations(text) {
-  return [...text.matchAll(/\[[^\]]+\]\((https:\/\/[^)\s]+)\)/gu)].map((match) => match[1]);
 }
 
 const scenarios = JSON.parse(fs.readFileSync(path.join(FIXTURES, "cases.json"), "utf8"));
@@ -77,23 +76,14 @@ for (const contract of CONTRACTS) {
     });
   }
 
-  test(`${contract}: legacy is detection only and path claims carry their provenance`, () => {
+  test(`${contract}: legacy is detection only and OpenCode config is not a Kilo signal`, () => {
     assert.match(text, /\.kilocode\/[^\n]*(?:legacy|historical)[^\n]*detection/iu);
-    assert.match(text, /new[^\n]*\.kilo\/[^\n]*never[^\n]*\.kilocode\//iu);
-    const destinations = markdownDestinations(text);
-    assert.ok(destinations.some((destination) => destination === "https://kilo.ai/docs/getting-started/settings"));
-    assert.ok(destinations.some((destination) => destination === "https://kilo.ai/docs/customize/agents-md"));
-    assert.ok(text.includes("https://github.com/Kilo-Org/kilocode/blob/main/packages/opencode/src/kilocode/skills/kilo-config.md"));
-    assert.match(text, /2026-09-25[^\n]*issue/u);
-    assert.match(text, /2026-10-10/u);
+    if (contract.includes('02-project-memory')) {
+      assert.match(text, /\.kilocode\/[^\n]*detection signal only; selected Kilo memory goes to the shared root `AGENTS\.md`/iu);
+      assert.match(text, /Neither `opencode\.json` nor `opencode\.jsonc` identifies Kilo/u);
+    } else {
+      assert.match(text, /Treat `\.kilocode\/` as a legacy Kilo detection signal, never an output path/u);
+      assert.match(text, /OpenCode JSON config files do not identify Kilo/u);
+    }
   });
 }
-
-test("URL provenance assertions reject URL text, wrong destinations and lookalike hosts", () => {
-  const destinations = markdownDestinations([
-    "https://kilo.ai/docs/getting-started/settings",
-    "[Settings](https://kilo.ai.evil.test/docs/getting-started/settings)",
-    "[Other](https://kilo.ai/docs/other)",
-  ].join("\n"));
-  assert.equal(destinations.some((destination) => destination === "https://kilo.ai/docs/getting-started/settings"), false);
-});

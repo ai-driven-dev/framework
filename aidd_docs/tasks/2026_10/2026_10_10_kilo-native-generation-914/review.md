@@ -1,7 +1,7 @@
-# Review: #914 correction sécurité CodeQL de la Draft PR #992
+# Review: Draft PR #992, final local diff
 
-- **Verdict**: approve (correction locale seulement; CI distante et CodeQL en attente)
-- **Diff**: `d5f1309a...working-tree`
+- **Verdict**: approve (local diff; authenticated skill evaluation unavailable)
+- **Diff**: `HEAD...working-tree`, including untracked files
 - **Axes run**: code, functional, relevancy
 - **Date**: 2026_10_10
 - **Findings**: 0 critical, 0 warning, 0 minor
@@ -10,46 +10,45 @@
 
 ### Phase 1 — Reconnaissance et mémoire partagée
 
-- [ ] Les six signaux Kilo sont proposés, les signaux ambigus exclus — not-applicable: détection inchangée.
-- [x] Le refus hardlink et les substitutions préservent le contenu, l'identité et les métadonnées des témoins — `scripts/__tests__/update-memory.test.js:542`, `:600`.
-- [x] L'idempotence et les refus avant mutation restent vérifiés — `scripts/__tests__/update-memory.test.js:131`, `:338`, `:357`; suite complète réussie.
-- [ ] Imports Claude, liens Copilot et mémoire Kilo réellement lue — not-applicable: aucun comportement runtime modifié.
+- [x] Les six signaux Kilo restent distincts ; `.kilocode/` reste historique, les configurations OpenCode seules ne détectent pas Kilo — `scripts/__tests__/context-kilo-detection.test.js:76`; tests complets réussis.
+- [x] Le parcours manuel inspecte toutes les cibles avant mutation, réinspecte avant remplissage, préserve les octets hors blocs, déduplique `AGENTS.md` et laisse les fichiers non sélectionnés intacts — `plugins/aidd-context/skills/02-project-memory/actions/04-sync.md:18`, `:22`; cas et tests locaux.
+- [ ] L'exécution du parcours par un agent authentifié confirme la lecture mémoire Kilo — not-applicable à cette validation locale : `claude auth status` indique `loggedIn: false`; le cas `external project sync shares one AGENTS block across selected tools` est défini dans `scripts/skill-eval/cases.json:361` mais non exécuté.
 
 ### Phase 2 — Publication des règles et configuration sans perte
 
-- [ ] Règle canonique, référence exacte et corps chargés — not-applicable: phase 2 toujours `in-progress`, intégration du writer en attente de #979.
-- [ ] Choix explicite, propriétaire unique et annulation sans création — not-applicable: aucune publication dans ce correctif.
-- [ ] JSON/JSONC préservé, second passage identique — not-applicable: aucune édition de configuration dans ce correctif.
-- [ ] Erreurs de fan-out sans état partiel — not-applicable: writer non intégré.
-- [ ] Non-régression de publication des cinq autres cibles — not-applicable: writer non intégré.
+- [ ] Règle canonique et corps chargés — not-applicable : cette correction ne publie pas de règle ; phase 2 reste `in-progress` et dépend de #979.
+- [ ] Choix explicite, propriétaire unique et annulation — not-applicable : aucun writer de règle modifié.
+- [ ] Conservation JSON/JSONC et rerun identique — not-applicable : aucune édition de configuration modifiée.
+- [ ] Erreur de publication sans état partiel — not-applicable : aucun writer de publication modifié.
+- [ ] Non-régression du writer pour les autres cibles — not-applicable : intégration #979 toujours hors de ce diff.
 
 ### Phase 3 — Skills natifs ou portables choisis
 
-- [ ] Génération Kilo-only dans le bon emplacement — not-applicable: génération inchangée.
-- [ ] Consentement explicite pour portable et copie unique — not-applicable: choix inchangé.
-- [x] Les arbres oracle, ressources utilisateur et hashes canoniques restent vérifiés malgré CRLF au checkout — `scripts/__tests__/context-skill-artifacts.test.js:89`, `:104`, `:144`.
-- [ ] Runtime Kilo et conformité de toutes les autres sorties — not-applicable: aucun artefact de génération modifié.
+- [ ] Sortie Kilo native valide — not-applicable : aucun générateur modifié.
+- [ ] Consentement portable et copie unique — not-applicable : aucun placement modifié.
+- [ ] Préservation des assets, refus sans perte et rerun stable — not-applicable : aucun comportement de génération modifié.
+- [ ] Formats des autres outils et usage Kilo — not-applicable : générateurs inchangés.
 
 ### Phase 4 — Agents et workflows natifs
 
-- [x] Les assertions d'agent normalisent CRLF avant de vérifier le frontmatter et le corps — `scripts/__tests__/context-agent-command-artifacts.test.js:47`, `:49`.
-- [x] Les assertions de workflow normalisent CRLF et conservent les champs et le corps attendus — `scripts/__tests__/context-agent-command-artifacts.test.js:48`, `:52`.
-- [ ] Contrats des autres formats et cibles unsupported — not-applicable: production inchangée.
-- [ ] Invalides, collisions, idempotence et usage Kilo réel — not-applicable: production inchangée.
+- [ ] Frontmatter agent Kilo — not-applicable : aucun générateur modifié.
+- [ ] Chemin canonique et champs workflow — not-applicable : seuls les liens de provenance des références ont été retirés.
+- [ ] Formats des autres outils et skips explicites — not-applicable : générateurs inchangés.
+- [ ] Refus, reruns et usage Kilo — not-applicable : aucun comportement de génération modifié.
 
 ### Phase 5 — Guidance hooks et relances sûres
 
-- [ ] Guidance Kilo sourcée sans écriture — not-applicable: phase inchangée.
-- [ ] Événement non prouvé déclaré unsupported — not-applicable: phase inchangée.
-- [ ] Fan-out mixte conforme — not-applicable: phase inchangée.
-- [ ] Relance sans doublon et refus avant mutation — not-applicable: phase inchangée.
+- [x] Les chemins `.kilo/plugin/` et `.kilo/plugins/` sont décrits comme chemins Kilo, sans les présenter comme sorties AIDD — `plugins/aidd-context/skills/08-hook-generate/references/tool-paths.md:18`; tests complets réussis.
+- [x] Les événements non prouvés restent `unsupported` et aucun hook/plugin Kilo n'est généré — `plugins/aidd-context/skills/08-hook-generate/references/tool-paths.md:18`; `scripts/__tests__/context-hook-generation.test.js` réussi.
+- [ ] Fan-out mixte et préflight inchangés — not-applicable : aucune logique de génération de hook modifiée; les tests existants passent.
+- [ ] Relance idempotente et hooks utilisateur intacts — not-applicable : aucune logique de génération de hook modifiée; les tests existants passent.
 
 ### Phase 6 — Preuves de génération et runtime sur plateformes supportées
 
-- [ ] Traces de génération réelle et usage Kilo — not-applicable: phase 6 inachevée et hors de cette correction.
-- [ ] Contrôles négatifs et refus — not-applicable: phase 6 hors périmètre.
-- [ ] Tests Claude offline et runtime authentifié — not-applicable: phase 6 hors périmètre.
-- [ ] Rapport OS/versions/skips et AC15 — not-applicable: phase 6 hors périmètre.
+- [ ] Génération réelle et découverte par Kilo — not-applicable : phase 6 reste `pending`, aucun runtime exécuté.
+- [ ] Contrôles négatifs, refus et reruns — not-applicable : phase 6 non exécutée.
+- [ ] Tests offline Claude et régressions des cibles — not-applicable : phase 6 non exécutée.
+- [ ] Rapport plateformes, versions, skips et limites — not-applicable : phase 6 non exécutée.
 
 ## Findings
 
@@ -61,7 +60,7 @@
 
 | Metric | Value |
 | --- | --- |
-| Verified | 100% des critères concernés par le correctif local (5/5); 20 critères du plan `not-applicable` à ce diff. |
-| Files checked | Trois suites de tests modifiées, plan #914 et phases 1–6, documentation sécurité et suivi CI, règles AIDD. |
-| Unchecked | Windows/macOS et nouvelles alertes #125–#128: `not-applicable` localement, à confirmer dans GitHub Actions/CodeQL après publication autorisée. Statut Code Scanning #116–#119 non confirmé (API 403). |
+| Verified | 4/4 critères statiques et documentaires applicables; runtime agent non vérifié. |
+| Files checked | Diff local complet (16 chemins, dont le présent rapport), plan et critères des phases 1–6, règles AIDD. |
+| Unchecked | Exécution authentifiée du cas `skill-eval`: not-applicable localement; Claude n'est pas authentifié. Phase 2 reste `in-progress`, dépend de #979; phase 6 reste `pending`. |
 | Unplanned | none |

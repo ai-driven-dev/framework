@@ -13,7 +13,7 @@ The per-tool agent path and the gate every run executes before writing. Agent sl
 | Codex CLI      | `.codex/agents/<name>.toml`      | TOML (converted)       |
 | Kilo           | `.kilo/agents/<name>.md`         | markdown + frontmatter |
 
-Agents are supported on all six tools. Kilo's canonical plural path is sourced from https://kilo.ai/docs/customize/custom-subagents (issue #914 contract verified 2026-09-25; source rechecked 2026-10-10).
+Agents are supported on all six tools.
 
 ## Frontmatter per tool
 

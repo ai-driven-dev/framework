@@ -358,6 +358,34 @@
     "plugin": "aidd-context",
     "skill": "02-project-memory",
     "evalName": "xeval-memory",
+    "name": "external project sync shares one AGENTS block across selected tools",
+    "setup": {
+      "files": {
+        "aidd_docs/memory/architecture.md": "# Architecture\n\n- Node\n",
+        "CLAUDE.md": "# Claude context\n\nKEEP_CLAUDE_CONTEXT\n",
+        "AGENTS.md": "# Shared context\n\nKEEP_SHARED_CONTEXT\n",
+        ".codex/config.toml": "",
+        ".opencode/opencode.json": "{}\n",
+        "kilo.json": "{}\n"
+      }
+    },
+    "prompt": "Use the {{SKILL}} skill to sync the existing memory from this external project into Claude, Codex, OpenCode and Kilo. All four selections and adding their memory blocks are approved. Keep user text, do not refresh the bank, and do not wait for input.",
+    "expect": {
+      "fileContains": {
+        "CLAUDE.md": ["KEEP_CLAUDE_CONTEXT", "@aidd_docs/memory/architecture.md"],
+        "AGENTS.md": ["KEEP_SHARED_CONTEXT", "[aidd_docs/memory/architecture.md](aidd_docs/memory/architecture.md)"]
+      },
+      "fileMatches": {
+        "AGENTS.md": "^(?:(?!<!-- aidd_project_memory:start -->)[\\s\\S])*<!-- aidd_project_memory:start -->(?:(?!<!-- aidd_project_memory:start -->)[\\s\\S])*<!-- aidd_project_memory:end -->(?:(?!<!-- aidd_project_memory:start -->)[\\s\\S])*$"
+      },
+      "filesUnchanged": ["aidd_docs/memory/architecture.md", ".codex/config.toml", ".opencode/opencode.json", "kilo.json"],
+      "filesAbsent": [".github/copilot-instructions.md", ".kilocode/AGENTS.md"]
+    }
+  },
+  {
+    "plugin": "aidd-context",
+    "skill": "02-project-memory",
+    "evalName": "xeval-memory",
     "name": "sync preflight refuses before creating an earlier context",
     "setup": {
       "files": {

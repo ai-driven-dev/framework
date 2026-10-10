@@ -18,6 +18,4 @@ A tool is used when its own dir exists, or when a file only that tool reads exis
 - A used tool whose file lacks the block is not wired, and needs wiring.
 - Missing memory is a foundation status, not a tool row (see `zones.md`).
 
-Kilo: `.kilocode/` is a legacy detection signal only. New Kilo-specific artifacts use `.kilo/`, never `.kilocode/`. Neither `opencode.json` nor `opencode.jsonc` identifies Kilo; OpenCode detection remains the row above.
-
-Kilo path sources: [configuration](https://kilo.ai/docs/getting-started/settings), [shared memory](https://kilo.ai/docs/customize/agents-md), and [legacy fallback](https://github.com/Kilo-Org/kilocode/blob/main/packages/opencode/src/kilocode/skills/kilo-config.md). Verified on 2026-09-25 according to issue #914; reverified on 2026-10-10.
+Treat `.kilocode/` as a legacy Kilo detection signal, never an output path. OpenCode JSON config files do not identify Kilo.

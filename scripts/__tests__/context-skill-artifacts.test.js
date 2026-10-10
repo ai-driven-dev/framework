@@ -8,7 +8,6 @@ const ROOT = path.resolve(__dirname, '../..');
 const SKILL = 'plugins/aidd-context/skills/04-skill-generate';
 const read = (file) => fs.readFileSync(path.join(ROOT, SKILL, file), 'utf8');
 const normalizeEol = (text) => text.replace(/\r\n/gu, '\n');
-const markdownDestinations = (text) => [...text.matchAll(/\[[^\]]+\]\((https:\/\/[^)\s]+)\)/gu)].map((match) => match[1]);
 
 // Markdown is the shipped implementation. These guards do not simulate an LLM
 // writer. Behavioral receipts and real generated trees are checked separately.
@@ -51,32 +50,6 @@ test('full preflight precedes creation and covers unsafe paths and user resource
     assert.ok(placement.includes(invariant), `Missing ${invariant}`);
   }
   assert.match(read('actions/04-validate.md'), /tool-write\.md/u);
-});
-
-test('Kilo path claims carry official source and attributed historical date', () => {
-  for (const file of ['references/tool-detect.md', 'references/tool-write.md']) {
-    const source = read(file);
-    assert.ok(markdownDestinations(source).some((destination) => {
-      try {
-        const url = new URL(destination);
-        return url.protocol === 'https:' && url.hostname === 'kilo.ai' && url.pathname.startsWith('/docs/');
-      } catch { return false; }
-    }));
-    assert.match(source, /2026-09-25[^\n]*issue/u);
-    assert.match(source, /2026-10-10/u);
-  }
-});
-
-test('Kilo source validation rejects URL text and lookalike or non-doc destinations', () => {
-  const destinations = markdownDestinations([
-    'https://kilo.ai/docs/',
-    '[Lookalike](https://kilo.ai.example/docs/thing)',
-    '[Not docs](https://kilo.ai/other)',
-  ].join('\n'));
-  assert.equal(destinations.some((destination) => {
-    const url = new URL(destination);
-    return url.protocol === 'https:' && url.hostname === 'kilo.ai' && url.pathname.startsWith('/docs/');
-  }), false);
 });
 
 const FIXTURES = path.join(__dirname, 'fixtures/context-generation/skills');

@@ -17,9 +17,7 @@ The AI tools a project can use.
 - An existing context file keeps everything else: add only what is missing.
 - Touch no context file a picked tool does not resolve to.
 
-Kilo: `.kilocode/` is a legacy detection signal only. New Kilo-specific artifacts use `.kilo/`, never `.kilocode/`. Neither `opencode.json` nor `opencode.jsonc` identifies Kilo; OpenCode detection remains the row above.
-
-Kilo path sources: [configuration](https://kilo.ai/docs/getting-started/settings), [shared memory](https://kilo.ai/docs/customize/agents-md), and [legacy fallback](https://github.com/Kilo-Org/kilocode/blob/main/packages/opencode/src/kilocode/skills/kilo-config.md). Verified on 2026-09-25 according to issue #914; reverified on 2026-10-10.
+Kilo: `.kilocode/` is a legacy detection signal only; selected Kilo memory goes to the shared root `AGENTS.md`. Neither `opencode.json` nor `opencode.jsonc` identifies Kilo; OpenCode detection remains the row above.
 
 ## Explicit sync safety
 
