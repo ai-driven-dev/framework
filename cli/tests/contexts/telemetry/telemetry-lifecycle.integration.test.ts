@@ -318,14 +318,14 @@ describe("the history from before opting in", () => {
     expect(stored()).toBe(2);
   });
 
-  it("is stored for a directory that is gone, whose refusal was remembered", async () => {
+  it("is stored for a directory that is gone, seen alive before the clone opted in", async () => {
     await configure(BARE);
     const sub = join(repo, "sub");
     mkdirSync(sub);
     writeTranscript(sub, ["a"]);
     await deps.ingestUsageUseCase.execute();
-    const remembered = Object.values(JSON.parse(read(join(box.telemetry, "ledger", "roots.json"))));
-    expect(remembered).toEqual([expect.objectContaining({ consented: false })]);
+    const remembered = JSON.parse(read(join(box.telemetry, "ledger", "roots.json")));
+    expect(remembered.directories).toEqual([expect.objectContaining({ dir: expect.any(String) })]);
     rmSync(sub, { recursive: true });
 
     await deps.telemetryOnUseCase.execute(repo);
@@ -488,7 +488,7 @@ describe("forgetting", () => {
     await measured();
     const other = box.repository("gadgets");
     git(other, box.gitEnv, "config", "--local", "branch.main.aiddTask", "x");
-    git(other, box.gitEnv, "config", "--local", "aidd.telemetry", "2");
+    await deps.telemetryOnUseCase.execute(other);
     writeTranscript(other, ["z"], "s-2");
     await deps.ingestUsageUseCase.execute();
     rmSync(other, { recursive: true });
@@ -497,6 +497,18 @@ describe("forgetting", () => {
 
     expect(result.plan.missing).toEqual([join(other, ".git")]);
     expect(git(repo, box.gitEnv, "config", "--local", "--list")).not.toMatch(/aidd/i);
+  });
+
+  it("does not name a gone clone that never opted in", async () => {
+    await measured();
+    const other = box.repository("gadgets");
+    writeTranscript(other, ["z"], "s-2");
+    await deps.ingestUsageUseCase.execute();
+    rmSync(other, { recursive: true });
+
+    const result = await deps.forgetTelemetryUseCase.execute(true);
+
+    expect(result.plan.missing).toEqual([]);
   });
 
   it("creates nothing where nothing was measured", async () => {

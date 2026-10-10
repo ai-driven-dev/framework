@@ -57,6 +57,7 @@ src/
 │   │   ├── domain/
 │   │   │   ├── declaration/    # the task a person declares, and whether work is bound to one
 │   │   │   ├── formats/
+│   │   │   ├── consent/    # a clone's identity, and when it consented
 │   │   │   ├── identity/    # the identifier a person chose to be named by
 │   │   │   ├── legacy/    # what the previous version wrote, by name and location
 │   │   │   ├── ports/
@@ -67,6 +68,7 @@ src/
 │   │   │   ├── report/    # attribution of a call, the days of a report, the axes it splits by
 │   │   │   └── switch/    # the previous version's config block, Claude's retention
 │   │   └── infrastructure/
+│   │       ├── consent/    # reading a clone's identity from the file system, and the consent history file
 │   │       ├── declaration/    # where a declaration is kept: git config and the telemetry dir
 │   │       ├── forget/    # erasing the telemetry dir, the previous version's files, git config keys
 │   │       ├── identity/    # the identity file in the telemetry dir

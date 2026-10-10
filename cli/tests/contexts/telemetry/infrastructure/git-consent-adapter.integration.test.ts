@@ -1,7 +1,9 @@
-import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, rename, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import type { CloneIdentity } from "../../../../src/contexts/telemetry/domain/consent/clone-identity.js";
+import { readCloneIdentity } from "../../../../src/contexts/telemetry/infrastructure/consent/clone-identity-reader.js";
 import { GitConsentAdapter } from "../../../../src/contexts/telemetry/infrastructure/git-consent-adapter.js";
 import { git, initRepository, sandboxGitEnv } from "../../../helpers/git-sandbox.js";
 
@@ -80,8 +82,14 @@ describe("a clone's consent in its git config", () => {
   });
 
   describe("read from the clone itself", () => {
+    const identityOf = async (path: string): Promise<CloneIdentity> => {
+      const found = await readCloneIdentity(path);
+      if (typeof found === "string" || found === null) throw new Error(`no identity for ${path}`);
+      return found;
+    };
+
     it("is the key of the common git dir, whether or not a working tree of it exists", async () => {
-      const clone = join(repo, ".git");
+      const clone = await identityOf(join(repo, ".git"));
       expect(await consent.readClone(clone)).toEqual({ kind: "value", value: null });
       await consent.set(repo, "2");
       const linked = join(root, "linked");
@@ -93,19 +101,47 @@ describe("a clone's consent in its git config", () => {
     });
 
     it("is gone when the clone is", async () => {
-      expect(await consent.readClone(join(root, "nowhere", ".git"))).toEqual({ kind: "gone" });
+      const clone = await identityOf(join(repo, ".git"));
+      await rm(repo, { recursive: true });
+      expect(await consent.readClone(clone)).toEqual({ kind: "gone" });
+    });
+
+    it("is gone when another clone is at the path now, and says nothing of it", async () => {
+      const clone = await identityOf(join(repo, ".git"));
+      // Moved aside, not deleted: the file system may give a deleted directory's inode to the next.
+      await rename(repo, `${repo}.old`);
+      initRepository(repo, env);
+      await consent.set(repo, "2");
+      expect(await consent.readClone(clone)).toEqual({ kind: "gone" });
+    });
+
+    it.each([
+      ["device", { dev: "0" }],
+      ["inode", { ino: "1" }],
+      ["birth time", { birthtimeMs: 1 }],
+    ])("is gone when the %s is not the clone's", async (_name, change) => {
+      const clone = await identityOf(join(repo, ".git"));
+      expect(await consent.readClone({ ...clone, ...change })).toEqual({ kind: "gone" });
+    });
+
+    it("is unreadable, and not gone, when the file system can no longer identify the path", async () => {
+      const clone = await identityOf(join(repo, ".git"));
+      const blind = new GitConsentAdapter(env, async () => "unidentified");
+      expect(await blind.readClone(clone)).toEqual({ kind: "unreadable" });
     });
 
     it("is unreadable when git cannot read the clone's config", async () => {
+      const clone = await identityOf(join(repo, ".git"));
       await writeFile(join(repo, ".git", "config"), "[core\n  broken");
-      expect(await consent.readClone(join(repo, ".git"))).toEqual({ kind: "unreadable" });
+      expect(await consent.readClone(clone)).toEqual({ kind: "unreadable" });
     });
 
     it("is not read from the user's global git config", async () => {
+      const clone = await identityOf(join(repo, ".git"));
       const globalConfig = join(root, "global-gitconfig");
       await writeFile(globalConfig, "[aidd]\n\ttelemetry = 2\n");
       const withGlobal = { ...env, GIT_CONFIG_GLOBAL: globalConfig };
-      expect(await new GitConsentAdapter(withGlobal).readClone(join(repo, ".git"))).toEqual({
+      expect(await new GitConsentAdapter(withGlobal).readClone(clone)).toEqual({
         kind: "value",
         value: null,
       });

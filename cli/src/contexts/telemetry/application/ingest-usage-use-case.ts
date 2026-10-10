@@ -143,6 +143,6 @@ export class IngestUsageUseCase {
   private async outcomeOf(record: UsageRecord, resolver: ResolutionRun): Promise<DirectoryOutcome> {
     if (monthOf(record.at) === null) return { skipped: "undated" };
     if (record.cwd === null) return { skipped: "no-cwd" };
-    return resolver.resolve(record.cwd);
+    return resolver.resolve(record.cwd, record.at);
   }
 }

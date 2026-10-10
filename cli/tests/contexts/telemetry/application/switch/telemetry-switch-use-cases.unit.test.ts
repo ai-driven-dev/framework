@@ -1,12 +1,19 @@
 import { describe, expect, it } from "vitest";
 import { DirectoryResolver } from "../../../../../src/contexts/telemetry/application/directory-resolver.js";
+import { rememberOwnRoot } from "../../../../../src/contexts/telemetry/application/switch/remembered-consent.js";
 import { TelemetryOffUseCase } from "../../../../../src/contexts/telemetry/application/switch/telemetry-off-use-case.js";
 import { TelemetryOnUseCase } from "../../../../../src/contexts/telemetry/application/switch/telemetry-on-use-case.js";
+import { cloneKey } from "../../../../../src/contexts/telemetry/domain/consent/clone-identity.js";
 import type { LocatedDirectory } from "../../../../../src/contexts/telemetry/domain/ports/repository-locator.js";
-import type { RepositoryResolution } from "../../../../../src/contexts/telemetry/domain/repository-resolution.js";
 import {
+  type RepositoryResolution,
+  resolutionKey,
+} from "../../../../../src/contexts/telemetry/domain/repository-resolution.js";
+import {
+  cloneOf,
   FakeConsents,
   FakeLocator,
+  InMemoryConsentHistory,
   InMemoryLedger,
   InMemoryResolutions,
 } from "../../../../helpers/ports/in-memory-telemetry.js";
@@ -21,19 +28,22 @@ const repository = (
   status: "repository",
   root,
   mainRoot,
-  clone: `${mainRoot}/.git`,
+  clone: cloneOf(`${mainRoot}/.git`),
   remote: "r",
   rootCommit: "c",
   ...extra,
 });
 
 const ID = "c";
-/** A directory remembered as refused, whose working tree is gone. */
-const DELETED: RepositoryResolution = {
-  repository_id: ID,
-  root: "/w/repo-wt-deleted",
-  consented: false,
-};
+const MAIN = cloneOf("/w/main/.git");
+const T1 = "2026-10-01T00:00:00.000Z";
+const T2 = "2026-10-02T00:00:00.000Z";
+const T3 = "2026-10-03T00:00:00.000Z";
+
+/** A working tree that is gone, as ingest remembered it in `clone`. */
+function deleted(clone = MAIN, dir = "/gone/x"): RepositoryResolution {
+  return { dir, repository_id: ID, root: dir, clone, seen_at: "2026-09-01T00:00:00.000Z" };
+}
 
 function setup(settings: (string | null)[] = []) {
   const events: string[] = [];
@@ -41,6 +51,8 @@ function setup(settings: (string | null)[] = []) {
   const consents = new FakeConsents();
   const ledger = new InMemoryLedger(events);
   const resolutions = new InMemoryResolutions();
+  const history = new InMemoryConsentHistory();
+  const clock = { now: new Date(T1) };
   const writes: { root: string; value: string }[] = [];
   const config = {
     texts: new Map<string, string>(),
@@ -55,7 +67,9 @@ function setup(settings: (string | null)[] = []) {
       writes.push({ root, value });
       consents.values.set(root, value);
       const located = await locator.locate(root);
-      if (located.status === "repository") consents.clones.set(located.clone, value);
+      if (located.status === "repository" && located.clone !== null) {
+        consents.cloneSays(located.clone, value);
+      }
     },
   };
   const on = new TelemetryOnUseCase(
@@ -91,10 +105,11 @@ function setup(settings: (string | null)[] = []) {
     },
     ledger,
     resolutions,
+    history,
     { texts: async () => settings },
-    false
+    { caseInsensitiveFileSystem: false, now: () => clock.now }
   );
-  const off = new TelemetryOffUseCase(locator, consents, writer, ledger, resolutions);
+  const off = new TelemetryOffUseCase(locator, consents, writer, ledger, history, () => clock.now);
   locator.directories.set("/w/repo", repository("/w/repo", "/w/main"));
   return {
     on,
@@ -103,6 +118,8 @@ function setup(settings: (string | null)[] = []) {
     consents,
     ledger,
     resolutions,
+    history,
+    clock,
     writes,
     config,
     events,
@@ -115,7 +132,7 @@ describe("aidd telemetry on", () => {
   it("writes consent before it cleans, and cleans the repository it was run in", async () => {
     const s = setup();
     const result = await s.on.execute("/w/repo");
-    expect(s.events.slice(0, 3)).toEqual(["consent", "hooks", "journal"]);
+    expect(s.events.slice(0, 5)).toEqual(["lock", "consent", "unlock", "hooks", "journal"]);
     expect(s.writes).toEqual([{ root: "/w/repo", value: "2" }]);
     expect(s.hooksSeen).toEqual(["/w/repo"]);
     expect(s.journalSeen).toEqual(["/w/repo"]);
@@ -203,25 +220,69 @@ describe("aidd telemetry on", () => {
     expect(s.events).toEqual([]);
   });
 
-  it("resets the offsets under the ledger's lock, after cleaning, and rewrites no refusal", async () => {
+  it("resets the offsets under the ledger's lock, after cleaning", async () => {
     const s = setup();
     s.ledger.stored.set("/t", { offset: 9, size: 9, identity: "i" });
-    s.resolutions.resolutions.set("/gone/a", { ...DELETED, root: "/w/repo-wt" });
     await s.on.execute("/w/repo");
-    expect(s.events.slice(3)).toEqual(["lock", "reset", "unlock"]);
+    expect(s.events.slice(5)).toEqual(["lock", "reset", "unlock"]);
     expect(s.ledger.stored.size).toBe(0);
-    expect(s.resolutions.resolutions.get("/gone/a")?.consented).toBe(false);
   });
 
   it("remembers its own root, seen alive, so forget can find the clone later", async () => {
     const s = setup();
     await s.on.execute("/w/repo");
-    expect(s.resolutions.resolutions.get("/w/repo")).toEqual({
+    expect(s.resolutions.resolutions.get(resolutionKey("/w/repo", MAIN))).toEqual({
+      dir: "/w/repo",
       repository_id: ID,
       root: "/w/repo",
-      consented: true,
-      clone: "/w/main/.git",
+      clone: MAIN,
+      seen_at: T1,
     });
+  });
+
+  it("remembers nothing of a clone the file system gives no identity", async () => {
+    // `on` refuses such a clone before it remembers anything: the resolution is guarded too.
+    const s = setup();
+    await rememberOwnRoot(
+      s.resolutions,
+      { ...repository("/w/repo", "/w/main"), clone: null },
+      false,
+      new Date(T1)
+    );
+    expect(s.resolutions.saves).toBe(0);
+  });
+
+  it("opens the clone's consent at its own time, once", async () => {
+    const s = setup();
+    await s.on.execute("/w/repo");
+    s.clock.now = new Date(T2);
+    await s.on.execute("/w/repo");
+    expect(s.history.written).toEqual([{ clone: MAIN, state: "on", at: T1 }]);
+  });
+
+  it("opens the consent again when the key was set by hand, with no interval open", async () => {
+    const s = setup();
+    s.consents.values.set("/w/repo", "2");
+    await s.on.execute("/w/repo");
+    expect(s.history.written).toEqual([{ clone: MAIN, state: "on", at: T1 }]);
+    expect(s.writes).toEqual([]);
+  });
+
+  it("opens the consent under the ledger's lock, with the key", async () => {
+    const s = setup();
+    await s.on.execute("/w/repo");
+    expect(s.events.slice(0, 3)).toEqual(["lock", "consent", "unlock"]);
+  });
+
+  it("refuses a clone the file system gives no identity, and changes nothing", async () => {
+    const s = setup();
+    s.locator.directories.set("/w/repo", { ...repository("/w/repo", "/w/main"), clone: null });
+    expect(await s.on.execute("/w/repo")).toEqual({
+      status: "refused",
+      reason: "unidentified-clone",
+    });
+    expect(s.events).toEqual([]);
+    expect(s.history.written).toEqual([]);
   });
 
   it("remembers nothing of a repository with neither a remote nor a commit", async () => {
@@ -235,24 +296,28 @@ describe("aidd telemetry on", () => {
   });
 
   describe("what a deleted directory is, after `on` in a clone", () => {
-    async function resolvedAfterOn(s: ReturnType<typeof setup>, entry: RepositoryResolution) {
-      s.resolutions.resolutions.set("/gone/x", entry);
+    async function resolvedAfterOn(
+      s: ReturnType<typeof setup>,
+      entry: RepositoryResolution,
+      at = T3
+    ) {
+      s.resolutions.resolutions.set(resolutionKey(entry.dir, entry.clone), entry);
       await s.on.execute("/w/repo");
-      const run = await new DirectoryResolver(s.locator, s.consents, s.resolutions, false).open();
-      return run.resolve("/gone/x");
+      const run = await new DirectoryResolver(s.locator, s.consents, s.resolutions, s.history, {
+        caseInsensitiveFileSystem: false,
+        now: () => s.clock.now,
+      }).open();
+      return run.resolve(entry.dir, at);
     }
 
     it("stores a deleted linked worktree of the clone that opted in", async () => {
       const s = setup();
-      s.consents.clones.set("/w/main/.git", null);
-      expect(await resolvedAfterOn(s, { ...DELETED, clone: "/w/main/.git" })).toMatchObject({
-        stored: {},
-      });
+      expect(await resolvedAfterOn(s, deleted(MAIN), T1)).toMatchObject({ stored: {} });
     });
 
     it("keeps refusing a deleted clone of the same remote that never opted in", async () => {
       const s = setup();
-      expect(await resolvedAfterOn(s, { ...DELETED, clone: "/w/b2/.git" })).toEqual({
+      expect(await resolvedAfterOn(s, deleted(cloneOf("/w/b2/.git")))).toEqual({
         skipped: "no-consent",
       });
     });
@@ -260,29 +325,32 @@ describe("aidd telemetry on", () => {
     it("keeps refusing a clone of the same remote that ran off, deleted or not", async () => {
       for (const alive of [false, true]) {
         const s = setup();
-        if (alive) s.consents.clones.set("/w/b2/.git", "off");
-        expect(await resolvedAfterOn(s, { ...DELETED, clone: "/w/b2/.git" })).toEqual({
-          skipped: "no-consent",
-        });
+        const b2 = cloneOf("/w/b2/.git");
+        s.history.written.push(
+          { clone: b2, state: "on", at: "2026-09-01T00:00:00.000Z" },
+          { clone: b2, state: "off", at: "2026-09-02T00:00:00.000Z" }
+        );
+        if (alive) s.consents.cloneSays(b2, "off");
+        expect(await resolvedAfterOn(s, deleted(b2))).toEqual({ skipped: "no-consent" });
       }
     });
 
     it("keeps refusing a deleted copy with no remote that shares the root commit", async () => {
       const s = setup();
       s.locator.directories.set("/w/repo", repository("/w/repo", "/w/main", { remote: null }));
-      const copy = { ...DELETED, repository_id: "c", clone: "/w/copy/.git" };
-      expect(await resolvedAfterOn(s, copy)).toEqual({ skipped: "no-consent" });
+      expect(await resolvedAfterOn(s, deleted(cloneOf("/w/copy/.git")))).toEqual({
+        skipped: "no-consent",
+      });
     });
 
-    it("stops storing the deleted worktrees of a clone that runs off", async () => {
+    it("keeps refusing a clone made at the path of the one that was seen", async () => {
       const s = setup();
-      s.consents.clones.set("/w/main/.git", "2");
-      s.consents.values.set("/w/repo", "2");
-      const entry = { ...DELETED, consented: true, clone: "/w/main/.git" };
-      s.resolutions.resolutions.set("/gone/x", entry);
-      await s.off.execute("/w/repo");
-      const run = await new DirectoryResolver(s.locator, s.consents, s.resolutions, false).open();
-      expect(await run.resolve("/gone/x")).toEqual({ skipped: "no-consent" });
+      const successor = cloneOf(MAIN.path, { ino: "99" });
+      s.locator.directories.set("/w/repo", {
+        ...repository("/w/repo", "/w/main"),
+        clone: successor,
+      });
+      expect(await resolvedAfterOn(s, deleted(MAIN))).toEqual({ skipped: "no-consent" });
     });
   });
 
@@ -303,50 +371,69 @@ describe("aidd telemetry on", () => {
   });
 });
 
-describe("aidd telemetry off, remembered for the clone's deleted directories", () => {
-  async function resolvedWhenGone(s: ReturnType<typeof setup>, cwd: string) {
-    const run = await new DirectoryResolver(s.locator, s.consents, s.resolutions, false).open();
-    return run.resolve(cwd);
+describe("aidd telemetry off, kept as the end of an interval", () => {
+  async function resolvedWhenGone(s: ReturnType<typeof setup>, cwd: string, at: string) {
+    const run = await new DirectoryResolver(s.locator, s.consents, s.resolutions, s.history, {
+      caseInsensitiveFileSystem: false,
+      now: () => s.clock.now,
+    }).open();
+    return run.resolve(cwd, at);
   }
 
-  it("keeps refusing what a clone made while off, though it ran on first and was then deleted", async () => {
+  it("closes the consent at its own time, and the clone's calls after it are refused", async () => {
     const s = setup();
-    s.locator.directories.set("/w/b2", repository("/w/b2"));
-    await s.on.execute("/w/b2");
-    await s.off.execute("/w/b2");
-    // The working tree and the clone are gone; no ingest ran in between.
-    s.locator.directories.delete("/w/b2");
-    s.consents.clones.delete("/w/b2/.git");
     await s.on.execute("/w/repo");
-    expect(await resolvedWhenGone(s, "/w/b2")).toEqual({ skipped: "no-consent" });
+    s.clock.now = new Date(T2);
+    await s.off.execute("/w/repo");
+    expect(s.history.written).toEqual([
+      { clone: MAIN, state: "on", at: T1 },
+      { clone: MAIN, state: "off", at: T2 },
+    ]);
+    // The working tree and the clone are gone; no ingest ran in between.
+    s.consents.clones.delete(cloneKey(MAIN));
+    s.resolutions.resolutions.set(resolutionKey("/gone/x", MAIN), deleted(MAIN));
+    expect(await resolvedWhenGone(s, "/gone/x", T3)).toEqual({ skipped: "no-consent" });
+    expect(await resolvedWhenGone(s, "/gone/x", T1)).toMatchObject({ stored: {} });
   });
 
-  it("withdraws what was remembered of the clone's other directories, and of no other clone", async () => {
+  it("closes a consent whose key was already changed by hand", async () => {
     const s = setup();
-    s.locator.directories.set("/w/b2", repository("/w/b2"));
-    await s.on.execute("/w/b2");
-    const mine = { ...DELETED, consented: true, clone: "/w/b2/.git" };
-    s.resolutions.resolutions.set("/gone/mine", mine);
-    s.resolutions.resolutions.set("/gone/other", { ...mine, clone: "/w/other/.git" });
-    await s.off.execute("/w/b2");
-    expect(s.resolutions.resolutions.get("/gone/mine")?.consented).toBe(false);
-    expect(s.resolutions.resolutions.get("/w/b2")?.consented).toBe(false);
-    expect(s.resolutions.resolutions.get("/gone/other")?.consented).toBe(true);
+    await s.on.execute("/w/repo");
+    s.consents.values.set("/w/repo", "off");
+    s.clock.now = new Date(T2);
+    expect(await s.off.execute("/w/repo")).toEqual({ status: "off", changed: false });
+    expect(s.history.written.at(-1)).toEqual({ clone: MAIN, state: "off", at: T2 });
   });
 
-  it("writes under the ledger's lock, so no ingest saves what it read before", async () => {
+  it("writes under the ledger's lock, the interval with the key", async () => {
     const s = setup();
-    s.locator.directories.set("/w/b2", repository("/w/b2"));
-    await s.on.execute("/w/b2");
+    await s.on.execute("/w/repo");
     s.events.length = 0;
-    await s.off.execute("/w/b2");
-    expect(s.events).toEqual(["consent", "lock", "unlock"]);
+    await s.off.execute("/w/repo");
+    expect(s.events).toEqual(["lock", "consent", "unlock"]);
   });
 
-  it("rewrites nothing when nothing remembered says yes", async () => {
+  it("writes nothing when there is no consent to close", async () => {
     const s = setup();
     await s.off.execute("/w/repo");
-    expect(s.resolutions.saves).toBe(0);
+    expect(s.history.written).toEqual([]);
+  });
+
+  it("closes a consent once", async () => {
+    const s = setup();
+    await s.on.execute("/w/repo");
+    await s.off.execute("/w/repo");
+    await s.off.execute("/w/repo");
+    expect(s.history.written.map((event) => event.state)).toEqual(["on", "off"]);
+  });
+
+  it("still switches the key off for a clone the file system gives no identity", async () => {
+    const s = setup();
+    s.consents.values.set("/w/repo", "2");
+    s.locator.directories.set("/w/repo", { ...repository("/w/repo", "/w/main"), clone: null });
+    expect(await s.off.execute("/w/repo")).toEqual({ status: "off", changed: true });
+    expect(s.writes).toEqual([{ root: "/w/repo", value: "off" }]);
+    expect(s.history.written).toEqual([]);
   });
 });
 

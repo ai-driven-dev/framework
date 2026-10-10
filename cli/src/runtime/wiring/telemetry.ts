@@ -23,6 +23,7 @@ import { refusedByEnvironment as refusedByEnvironmentValue } from "../../context
 import { BindingSnapshotStoreAdapter } from "../../contexts/telemetry/infrastructure/binding-snapshot-store-adapter.js";
 import { BindingsLockAdapter } from "../../contexts/telemetry/infrastructure/bindings-lock-adapter.js";
 import { ClaudeTranscriptSourceAdapter } from "../../contexts/telemetry/infrastructure/claude-transcript-source-adapter.js";
+import { ConsentHistoryAdapter } from "../../contexts/telemetry/infrastructure/consent/consent-history-adapter.js";
 import { GitBranchBindingStoreAdapter } from "../../contexts/telemetry/infrastructure/declaration/git-branch-binding-store-adapter.js";
 import { SessionBindingStoreAdapter } from "../../contexts/telemetry/infrastructure/declaration/session-binding-store-adapter.js";
 import { MeasurementErasureAdapter } from "../../contexts/telemetry/infrastructure/forget/measurement-erasure-adapter.js";
@@ -94,6 +95,11 @@ export function wireTelemetry(homedir: () => string): TelemetryDeps {
   const locator = new GitRepositoryLocatorAdapter(gitEnv);
   const consents = new GitConsentAdapter(gitEnv);
   const resolutionStore = new ResolutionStoreAdapter(ledgerDir, storage);
+  const consentHistory = new ConsentHistoryAdapter(ledgerDir, storage);
+  const environment = {
+    caseInsensitiveFileSystem: caseInsensitiveFileSystem(),
+    now: () => new Date(),
+  };
   const sessions = new SessionBindingStoreAdapter(bindingsDir, storage);
   // An empty variable is no session: only a set, non-empty id is one a declaration can bind.
   const sessionId = process.env.CLAUDE_CODE_SESSION_ID || null;
@@ -125,7 +131,7 @@ export function wireTelemetry(homedir: () => string): TelemetryDeps {
       )
     ),
     ledger,
-    new DirectoryResolver(locator, consents, resolutionStore, caseInsensitiveFileSystem()),
+    new DirectoryResolver(locator, consents, resolutionStore, consentHistory, environment),
     snapshotBindingsUseCase,
     { refusedByEnvironment }
   );
@@ -152,15 +158,17 @@ export function wireTelemetry(homedir: () => string): TelemetryDeps {
       new RunJournalAdapter(gitEnv),
       ledger,
       resolutionStore,
+      consentHistory,
       new ClaudeSettingsAdapter(claudeDir),
-      caseInsensitiveFileSystem()
+      environment
     ),
     telemetryOffUseCase: new TelemetryOffUseCase(
       locator,
       consents,
       consents,
       ledger,
-      resolutionStore
+      consentHistory,
+      environment.now
     ),
     forgetTelemetryUseCase: new ForgetTelemetryUseCase(
       new MeasurementErasureAdapter(
@@ -170,7 +178,7 @@ export function wireTelemetry(homedir: () => string): TelemetryDeps {
       new RepositoryDeclarationsAdapter(gitEnv),
       snapshotStore,
       resolutionStore,
-      locator,
+      consentHistory,
       ledger
     ),
   };

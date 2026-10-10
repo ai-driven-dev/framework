@@ -1,7 +1,11 @@
-import { mkdir, mkdtemp, realpath, rm, symlink, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, realpath, rename, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import {
+  type CloneIdentity,
+  sameClone,
+} from "../../../../src/contexts/telemetry/domain/consent/clone-identity.js";
 import { GitRepositoryLocatorAdapter } from "../../../../src/contexts/telemetry/infrastructure/git-repository-locator-adapter.js";
 import { git, initRepository, sandboxGitEnv } from "../../../helpers/git-sandbox.js";
 
@@ -82,8 +86,43 @@ describe("locating a working directory", () => {
     const linked = join(base, "linked");
     git(repo, env, "worktree", "add", "-q", "-b", "wt", linked);
     const clone = join(repo, ".git");
-    expect(await locator.locate(repo)).toMatchObject({ clone });
-    expect(await locator.locate(linked)).toMatchObject({ clone });
+    expect(await locator.locate(repo)).toMatchObject({ clone: { path: clone } });
+    expect(await locator.locate(linked)).toMatchObject({ clone: { path: clone } });
+  });
+
+  it("identifies the clone by the directory it really is, the same from every working tree", async () => {
+    const repo = join(base, "repo");
+    initRepository(repo, env);
+    const linked = join(base, "linked");
+    git(repo, env, "worktree", "add", "-q", "-b", "wt", linked);
+    const main = await locator.locate(repo);
+    const other = await locator.locate(linked);
+    if (main.status !== "repository" || other.status !== "repository") throw new Error("lost");
+    expect(main.clone).toEqual(other.clone);
+    expect(main.clone).toMatchObject({
+      dev: expect.stringMatching(/^\d+$/u),
+      ino: expect.stringMatching(/^[1-9]\d*$/u),
+    });
+  });
+
+  it("tells a clone made at the same path from the one that was there", async () => {
+    const repo = join(base, "repo");
+    initRepository(repo, env);
+    const before = await locator.locate(repo);
+    // Moved aside, not deleted: the file system may give a deleted directory's inode to the next.
+    await rename(repo, `${repo}.old`);
+    initRepository(repo, env);
+    const after = await locator.locate(repo);
+    if (before.status !== "repository" || after.status !== "repository") throw new Error("lost");
+    expect(after.clone?.path).toBe(before.clone?.path);
+    expect(sameClone(before.clone as CloneIdentity, after.clone as CloneIdentity)).toBe(false);
+  });
+
+  it("has no clone, rather than a guess, when the file system gives the git dir no identity", async () => {
+    const repo = join(base, "repo");
+    initRepository(repo, env);
+    const blind = new GitRepositoryLocatorAdapter(env, async () => "unidentified");
+    expect(await blind.locate(repo)).toMatchObject({ status: "repository", clone: null });
   });
 
   it("keeps a worktree of a bare repository as its own main working tree", async () => {

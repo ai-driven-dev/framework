@@ -5,6 +5,7 @@ import { ShowTaskBindingUseCase } from "../../../../src/contexts/telemetry/appli
 import { SnapshotBindingsUseCase } from "../../../../src/contexts/telemetry/application/snapshot-bindings-use-case.js";
 import type { LocatedDirectory } from "../../../../src/contexts/telemetry/domain/ports/repository-locator.js";
 import {
+  cloneOf,
   FakeBindings,
   FakeBranchStore,
   FakeConsents,
@@ -19,7 +20,7 @@ const REPOSITORY: LocatedDirectory = {
   status: "repository",
   root: CWD,
   mainRoot: CWD,
-  clone: `${CWD}/.git`,
+  clone: cloneOf(`${CWD}/.git`),
   remote: "git@github.com:acme/widgets.git",
   rootCommit: "abc",
 };

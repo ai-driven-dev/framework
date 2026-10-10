@@ -1,4 +1,5 @@
 import type { BindingSnapshotStore } from "../../domain/ports/bindings/binding-snapshot-store.js";
+import type { ConsentHistory } from "../../domain/ports/consent-history.js";
 import type {
   ErasureEntry,
   MeasurementErasure,
@@ -7,17 +8,15 @@ import type {
   RepositoryDeclarations,
   RepositoryKeys,
 } from "../../domain/ports/forget/repository-declarations.js";
-import type { RepositoryLocator } from "../../domain/ports/repository-locator.js";
 import type { ResolutionStore } from "../../domain/ports/resolution-store.js";
 import type { UsageLedger } from "../../domain/ports/usage-ledger.js";
-import { repositoryIdOf } from "../../domain/repository-identity.js";
 
 export interface ForgetPlan {
   readonly entries: readonly ErasureEntry[];
   /** Clones still on disk, named by their common git dir, with what their git config holds. */
   readonly repositories: readonly ({ readonly clone: string } & RepositoryKeys)[];
-  /** Clones that are gone, and roots remembered before clones were recorded that are gone or
-   * no longer that repository. */
+  /** Clones that are gone and had consented: they may have left a key nobody can reach. A gone
+   * clone that never consented left nothing, and is not named. */
   readonly missing: readonly string[];
   /** Repositories that declared a task and whose location was never recorded. */
   readonly unlocated: number;
@@ -41,7 +40,7 @@ export class ForgetTelemetryUseCase {
     private readonly declarations: RepositoryDeclarations,
     private readonly snapshots: BindingSnapshotStore,
     private readonly resolutions: ResolutionStore,
-    private readonly locator: RepositoryLocator,
+    private readonly history: ConsentHistory,
     private readonly ledger: UsageLedger
   ) {}
 
@@ -65,60 +64,37 @@ export class ForgetTelemetryUseCase {
     const entries = await this.erasure.inventory();
     const found = await this.clonesRemembered();
     const repositories: ({ clone: string } & RepositoryKeys)[] = [];
-    const missing = [...found.missing];
+    const missing: string[] = [];
     for (const clone of found.clones) {
       const keys = await this.declarations.count(clone);
-      if (keys === null) missing.push(clone);
-      else repositories.push({ clone, ...keys });
+      if (keys !== null) repositories.push({ clone, ...keys });
+      else if (found.consenting.has(clone)) missing.push(clone);
     }
     return {
       entries,
       repositories,
-      missing: missing.sort(),
+      missing,
       unlocated: found.unlocated,
     };
   }
 
-  /** The clones something was kept in. Every directory ingest or `on` remembered names its
-   * clone, whatever consent it found there: a clone that ran `off` still holds its key. A
-   * directory remembered before clones were recorded is located again, whatever it found. A
-   * snapshot carries no path of its own. */
+  /** The clones something was kept in: every one a directory was seen alive in, whatever
+   * consent it found there (a clone that ran `off` still holds its key), and every one that
+   * consented, whether or not any session ever ran there. A snapshot carries no path of its
+   * own. */
   private async clonesRemembered(): Promise<{
     clones: string[];
-    missing: string[];
+    consenting: Set<string>;
     unlocated: number;
   }> {
     const remembered = [...(await this.resolutions.load()).values()];
-    const clones = new Set<string>();
-    const idsWithClone = new Set<string>();
-    const legacy = new Map<string, Set<string>>();
-    for (const resolution of remembered) {
-      if (resolution.clone !== undefined) {
-        clones.add(resolution.clone);
-        idsWithClone.add(resolution.repository_id);
-        continue;
-      }
-      const roots = legacy.get(resolution.repository_id) ?? new Set<string>();
-      roots.add(resolution.root);
-      legacy.set(resolution.repository_id, roots);
-    }
-    const missing: string[] = [];
-    for (const [id, roots] of legacy) {
-      let found = false;
-      for (const root of roots) {
-        const located = await this.locator.locate(root);
-        if (located.status === "repository" && repositoryIdOf(located) === id) {
-          clones.add(located.clone);
-          found = true;
-        }
-      }
-      if (!found && !idsWithClone.has(id)) missing.push(...roots);
-    }
+    const consenting = new Set((await this.history.events()).map((event) => event.clone.path));
+    const clones = new Set([...remembered.map((r) => r.clone.path), ...consenting]);
+    const located = new Set(remembered.map((resolution) => resolution.repository_id));
     const ids = new Set([...(await this.snapshots.latest()).values()].map((s) => s.repository_id));
-    const located = new Set([...idsWithClone, ...legacy.keys()]);
     return {
       clones: [...clones].sort(),
-      missing,
+      consenting,
       unlocated: [...ids].filter((id) => !located.has(id)).length,
     };
   }

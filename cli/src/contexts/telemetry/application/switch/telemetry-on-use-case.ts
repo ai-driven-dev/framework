@@ -1,3 +1,4 @@
+import type { ConsentHistory } from "../../domain/ports/consent-history.js";
 import type { ConsentSource } from "../../domain/ports/consent-source.js";
 import type { LocatedDirectory, RepositoryLocator } from "../../domain/ports/repository-locator.js";
 import type { ResolutionStore } from "../../domain/ports/resolution-store.js";
@@ -16,13 +17,20 @@ import type { UsageLedger } from "../../domain/ports/usage-ledger.js";
 import { effectiveRetentionDays, retentionShort } from "../../domain/switch/claude-retention.js";
 import { withoutPreviousTelemetry } from "../../domain/switch/legacy-config.js";
 import { CONSENT_GRANTED } from "../../domain/telemetry-consent.js";
+import { ConsentLog } from "../consent-log.js";
+import type { ResolutionEnvironment } from "../directory-resolver.js";
 import { readCloneConsent } from "./clone-consent.js";
 import { rememberOwnRoot } from "./remembered-consent.js";
 
 export type LegacyConfigOutcome = "none" | "block-removed" | "file-deleted" | "unparseable";
 
 export type OnResult =
-  | { readonly status: "refused"; readonly reason: "outside-repository" | "unreadable-git-config" }
+  | {
+      readonly status: "refused";
+      /** `unidentified-clone`: the file system gives the clone's git dir no identity, so
+       * nothing measured could be told to be its own. */
+      readonly reason: "outside-repository" | "unreadable-git-config" | "unidentified-clone";
+    }
   | {
       readonly status: "on";
       /** `false` when the clone already granted this version. */
@@ -49,16 +57,23 @@ export class TelemetryOnUseCase {
     private readonly journal: RunJournalCleaner,
     private readonly ledger: UsageLedger,
     private readonly resolutions: ResolutionStore,
+    private readonly history: ConsentHistory,
     private readonly claudeSettings: ClaudeSettingsSource,
-    private readonly caseInsensitiveFileSystem: boolean
+    private readonly environment: ResolutionEnvironment
   ) {}
 
   async execute(cwd: string): Promise<OnResult> {
     const clone = await readCloneConsent(this.locator, this.consents, cwd);
     if (clone.status === "refused") return clone;
     const { located } = clone;
+    const identity = located.clone;
+    if (identity === null) return { status: "refused", reason: "unidentified-clone" };
     const consentWritten = clone.value !== CONSENT_GRANTED;
-    if (consentWritten) await this.writer.set(located.root, CONSENT_GRANTED);
+    // Under the ledger's lock, so an ingest sees the key and the interval together.
+    await this.ledger.exclusively(async () => {
+      if (consentWritten) await this.writer.set(located.root, CONSENT_GRANTED);
+      await (await ConsentLog.load(this.history)).open(identity, this.environment.now());
+    });
     const legacyConfig = await this.clearLegacyConfig(located.root);
 
     // Pairing and removal live in one adapter call: the line and its script go together.
@@ -95,15 +110,18 @@ export class TelemetryOnUseCase {
 
   /** Under the ledger's lock, or an ingest already running would save the offsets this run
    * reset. Ingest advanced them past lines it did not store for want of consent, and the same
-   * lines belong in the ledger now: calls are kept once, so reading them again costs nothing.
-   * The clone's directories that are gone are not rewritten: their consent is read from the
-   * clone, live. */
+   * lines belong in the ledger now: calls are kept once, so reading them again costs nothing. */
   private async catchUp(
     located: Extract<LocatedDirectory, { status: "repository" }>
   ): Promise<void> {
     await this.ledger.exclusively(async () => {
       await this.ledger.resetPositions();
-      await rememberOwnRoot(this.resolutions, located, this.caseInsensitiveFileSystem);
+      await rememberOwnRoot(
+        this.resolutions,
+        located,
+        this.environment.caseInsensitiveFileSystem,
+        this.environment.now()
+      );
     });
   }
 }

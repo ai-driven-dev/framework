@@ -12,10 +12,12 @@ import {
 import type { Period } from "../../../../../src/contexts/telemetry/domain/report/period.js";
 import type { ReportAxis } from "../../../../../src/contexts/telemetry/domain/report/usage-report.js";
 import {
+  cloneOf,
   FakeBindings,
   FakeConsents,
   FakeLocator,
   InMemoryBindingsLock,
+  InMemoryConsentHistory,
   InMemoryIdentity,
   InMemoryLedger,
   InMemoryResolutions,
@@ -55,6 +57,7 @@ function setup(options: { refused?: boolean } = {}) {
   const ledger = new InMemoryLedger(events);
   const locator = new FakeLocator();
   const consents = new FakeConsents();
+  const history = new InMemoryConsentHistory();
   const bindings = new FakeBindings();
   const snapshotStore = new InMemorySnapshots(events);
   const sessions = new InMemorySessions(events);
@@ -62,7 +65,10 @@ function setup(options: { refused?: boolean } = {}) {
   const ingest = new IngestUsageUseCase(
     new ReadClaudeUsageUseCase(transcripts),
     ledger,
-    new DirectoryResolver(locator, consents, new InMemoryResolutions(), false),
+    new DirectoryResolver(locator, consents, new InMemoryResolutions(), history, {
+      caseInsensitiveFileSystem: false,
+      now: () => new Date("2026-10-09T00:00:00.000Z"),
+    }),
     new SnapshotBindingsUseCase(
       bindings,
       snapshotStore,
@@ -75,11 +81,12 @@ function setup(options: { refused?: boolean } = {}) {
     status: "repository",
     root: "/work/a",
     mainRoot: "/work/a",
-    clone: "/work/a/.git",
+    clone: cloneOf("/work/a/.git"),
     remote: "https://github.com/acme/widgets.git",
     rootCommit: "c0ffee",
   });
-  consents.values.set("/work/a", GRANTED);
+  consents.cloneSays(cloneOf("/work/a/.git"), GRANTED);
+  history.consented(cloneOf("/work/a/.git"));
   const report = new ReportUsageUseCase(
     ingest,
     ledger,

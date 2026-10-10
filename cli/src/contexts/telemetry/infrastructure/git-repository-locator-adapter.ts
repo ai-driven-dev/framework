@@ -3,6 +3,7 @@ import { basename, dirname, resolve } from "node:path";
 import { promisify } from "node:util";
 import { isErrnoException } from "../../../kernel/reading/json-file.js";
 import type { LocatedDirectory, RepositoryLocator } from "../domain/ports/repository-locator.js";
+import { type CloneIdentityReader, readCloneIdentity } from "./consent/clone-identity-reader.js";
 import { runGit } from "./run-git.js";
 
 // `native` so Windows hands back the long, correctly cased name, not an 8.3 one.
@@ -12,7 +13,10 @@ const GONE = new Set(["ENOENT", "ENOTDIR"]);
 /** Tells what a working directory is by asking git, from the directory's real path. */
 export class GitRepositoryLocatorAdapter implements RepositoryLocator {
   /** `env` carries none of git's own variables, which would point it at another repository. */
-  constructor(private readonly env: NodeJS.ProcessEnv) {}
+  constructor(
+    private readonly env: NodeJS.ProcessEnv,
+    private readonly identify: CloneIdentityReader = readCloneIdentity
+  ) {}
 
   async locate(cwd: string): Promise<LocatedDirectory> {
     let real: string;
@@ -28,11 +32,12 @@ export class GitRepositoryLocatorAdapter implements RepositoryLocator {
     const root = resolve(toplevel);
     // `--git-common-dir` is relative to the directory git ran in.
     const common = resolve(real, commonDir);
+    const identity = await this.identify(await realPath(common));
     return {
       status: "repository",
       root,
       mainRoot: basename(common) === ".git" ? dirname(common) : root,
-      clone: await realPath(common),
+      clone: typeof identity === "string" ? null : identity,
       remote: this.remote(real),
       rootCommit: this.rootCommit(real),
     };

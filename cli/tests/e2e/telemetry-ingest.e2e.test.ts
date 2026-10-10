@@ -24,7 +24,11 @@ beforeEach(async () => {
   initRepository(repoA, gitEnv, { remote: "git@github.com:acme/widgets.git" });
   initRepository(repoB, gitEnv, { remote: "git@github.com:acme/other.git" });
   await mkdir(join(repoA, "src"));
-  git(repoA, gitEnv, "config", "--local", "aidd.telemetry", "2");
+  // Opting in is `on`: a key set by hand opens no consent interval, and nothing is stored.
+  const on = await runCli(["telemetry", "on", "--yes"], repoA, env.fakeHome, {
+    env: { AIDD_TELEMETRY_DIR: telemetry, CLAUDE_CONFIG_DIR: claude, AIDD_TELEMETRY: "" },
+  });
+  expect(on.exitCode, on.stderr + on.stdout).toBe(0);
 });
 
 afterEach(async () => {
@@ -59,6 +63,16 @@ function ingest(...args: string[]) {
   return runCli(["telemetry", "ingest", ...args], repoA, env.fakeHome, {
     env: { AIDD_TELEMETRY_DIR: telemetry, CLAUDE_CONFIG_DIR: claude, AIDD_TELEMETRY: "" },
   });
+}
+
+/** Every file under the telemetry directory with its bytes: what a run changed shows. */
+async function held(): Promise<Record<string, string>> {
+  const found: Record<string, string> = {};
+  for (const name of await readdir(telemetry, { recursive: true })) {
+    const path = join(telemetry, name);
+    if ((await stat(path)).isFile()) found[name] = await readFile(path, "utf8");
+  }
+  return found;
 }
 
 async function ledgerLines(): Promise<string[]> {
@@ -116,6 +130,7 @@ describe("aidd telemetry ingest", () => {
     ]);
     expect((await readdir(join(telemetry, "ledger"))).sort()).toEqual([
       "2026-10.jsonl",
+      "consents.jsonl",
       "offsets.json",
       "roots.json",
     ]);
@@ -168,14 +183,15 @@ describe("aidd telemetry ingest", () => {
     expect((await ledgerLines()).map((line) => JSON.parse(line).key)).toContain("msg_C:req_C");
   });
 
-  it("stores nothing and creates nothing under AIDD_TELEMETRY=0", async () => {
+  it("stores nothing and changes nothing under AIDD_TELEMETRY=0", async () => {
     await writeTranscripts();
+    const before = await held();
     const run = await runCli(["telemetry", "ingest"], repoA, env.fakeHome, {
       env: { AIDD_TELEMETRY_DIR: telemetry, CLAUDE_CONFIG_DIR: claude, AIDD_TELEMETRY: "0" },
     });
     expect(run.exitCode).toBe(0);
     expect(run.stdout).toContain("AIDD_TELEMETRY=0");
-    await expect(stat(telemetry)).rejects.toThrow();
+    expect(await held()).toEqual(before);
   });
 
   it("stores nothing for a project that never opted in", async () => {
@@ -185,6 +201,16 @@ describe("aidd telemetry ingest", () => {
     expect(run.stdout).toContain("0 calls added");
     expect(run.stdout).toContain("5 calls from a clone that has not opted in");
     expect(await readdir(join(telemetry, "ledger"))).not.toContain("2026-10.jsonl");
+  });
+
+  it("stores nothing for a clone whose key was set by hand, though it says 2", async () => {
+    await writeTranscripts();
+    await rm(telemetry, { recursive: true, force: true });
+    git(repoA, gitEnv, "config", "--local", "--unset", "aidd.telemetry");
+    git(repoA, gitEnv, "config", "--local", "aidd.telemetry", "2");
+    const run = await ingest();
+    expect(run.stdout).toContain("0 calls added");
+    expect(run.stdout).toContain("5 calls from a clone that has not opted in");
   });
 
   it("snapshots the branch declarations of a project that opted in", async () => {

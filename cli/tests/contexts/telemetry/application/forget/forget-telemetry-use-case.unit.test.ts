@@ -4,8 +4,10 @@ import type { BranchSnapshot } from "../../../../../src/contexts/telemetry/domai
 import type { ErasureEntry } from "../../../../../src/contexts/telemetry/domain/ports/forget/measurement-erasure.js";
 import type { LocatedDirectory } from "../../../../../src/contexts/telemetry/domain/ports/repository-locator.js";
 import { repositoryIdOf } from "../../../../../src/contexts/telemetry/domain/repository-identity.js";
+import { resolutionKey } from "../../../../../src/contexts/telemetry/domain/repository-resolution.js";
 import {
-  FakeLocator,
+  cloneOf,
+  InMemoryConsentHistory,
   InMemoryLedger,
   InMemoryResolutions,
   InMemorySnapshots,
@@ -19,7 +21,7 @@ const located = (
   status: "repository",
   root,
   mainRoot,
-  clone: `${mainRoot}/.git`,
+  clone: cloneOf(`${mainRoot}/.git`),
   remote,
   rootCommit: "c",
 });
@@ -38,7 +40,7 @@ const ENTRY: ErasureEntry = { kind: "ledger", path: "/t/ledger", files: 2 };
 
 function setup(entries: ErasureEntry[] = [ENTRY]) {
   const events: string[] = [];
-  const locator = new FakeLocator();
+  const history = new InMemoryConsentHistory();
   const snapshots = new InMemorySnapshots(events);
   const resolutions = new InMemoryResolutions();
   const ledger = new InMemoryLedger(events);
@@ -69,27 +71,31 @@ function setup(entries: ErasureEntry[] = [ENTRY]) {
     },
     snapshots,
     resolutions,
-    locator,
+    history,
     ledger
   );
-  return { use, events, locator, snapshots, resolutions, ledger, cleared, keys, consented };
+  return { use, events, history, snapshots, resolutions, ledger, cleared, keys, consented };
 }
 
 const CLONE = "/w/repo/.git";
 
-/** A directory remembered with its clone, which exists and holds `taskKeys` task keys. */
+/** A directory remembered with its clone, which exists and holds `taskKeys` task keys. Whether
+ * the clone ever consented is told apart: `consenting` gives it an interval. */
 function remember(
   s: ReturnType<typeof setup>,
   cwd: string,
   clone = CLONE,
-  extra: { consented?: boolean; taskKeys?: number } = {}
+  extra: { consenting?: boolean; taskKeys?: number } = {}
 ): void {
-  s.resolutions.resolutions.set(cwd, {
+  const identity = cloneOf(clone);
+  s.resolutions.resolutions.set(resolutionKey(cwd, identity), {
+    dir: cwd,
     repository_id: ID,
     root: cwd,
-    consented: extra.consented ?? true,
-    clone,
+    clone: identity,
+    seen_at: "2026-10-01T00:00:00.000Z",
   });
+  if (extra.consenting) s.history.consented(identity);
   s.keys.set(clone, extra.taskKeys ?? 0);
 }
 
@@ -131,16 +137,16 @@ describe("forget with confirmation", () => {
 
   it("clears the consent of a clone `on` remembered, though no session ever ran there", async () => {
     const s = setup();
-    remember(s, "/w/repo");
+    remember(s, "/w/repo", CLONE, { consenting: true });
     s.consented.add(CLONE);
     const result = await s.use.execute(true);
     expect(s.cleared).toEqual([CLONE]);
     expect(result.plan.repositories).toEqual([{ clone: CLONE, taskKeys: 0, consent: true }]);
   });
 
-  it("clears a withdrawn consent too, whatever the clone was remembered as", async () => {
+  it("clears a withdrawn consent too, whatever the clone consented to", async () => {
     const s = setup();
-    remember(s, "/w/repo", CLONE, { consented: false });
+    remember(s, "/w/repo", CLONE, { consenting: false });
     s.consented.add(CLONE);
     await s.use.execute(true);
     expect(s.cleared).toEqual([CLONE]);
@@ -173,13 +179,11 @@ describe("forget with confirmation", () => {
     remember(s, "/w/wt", CLONE, { taskKeys: 2 });
     const result = await s.use.execute(false);
     expect(result.plan.repositories).toEqual([{ clone: CLONE, taskKeys: 2, consent: false }]);
-    // The clone is named by what was remembered; no directory is asked about.
-    expect(s.locator.asked).toEqual([]);
   });
 
-  it("names a clone that is gone, once, and does not read its keys", async () => {
+  it("names a clone that is gone and consented, once, and does not read its keys", async () => {
     const s = setup([]);
-    remember(s, "/w/a", "/gone/.git");
+    remember(s, "/w/a", "/gone/.git", { consenting: true });
     remember(s, "/w/b", "/gone/.git");
     s.keys.delete("/gone/.git");
     const result = await s.use.execute(true);
@@ -188,85 +192,49 @@ describe("forget with confirmation", () => {
     expect(s.cleared).toEqual([]);
   });
 
-  it("finds the clone of a directory remembered before clones were recorded", async () => {
+  it("does not name a gone clone that never consented, remembered as it was", async () => {
     const s = setup([]);
-    s.snapshots.appended.push(snapshot(ID));
-    s.resolutions.resolutions.set("/w/repo", {
-      repository_id: ID,
-      root: "/w/repo",
-      consented: true,
-    });
-    s.locator.directories.set("/w/repo", located("/w/repo"));
-    s.keys.set(CLONE, 2);
-    const result = await s.use.execute(false);
-    expect(result.plan.repositories).toEqual([{ clone: CLONE, taskKeys: 2, consent: false }]);
-    expect(result.plan.missing).toEqual([]);
+    remember(s, "/w/a", "/gone/.git");
+    s.keys.delete("/gone/.git");
+    expect((await s.use.execute(false)).plan.missing).toEqual([]);
   });
 
-  it("finds the clone of a directory remembered as consenting before clones were recorded, with no snapshot", async () => {
+  it("names a gone clone that consented though no directory of it was ever remembered", async () => {
     const s = setup([]);
-    s.resolutions.resolutions.set("/w/repo", {
-      repository_id: ID,
-      root: "/w/repo",
-      consented: true,
-    });
-    s.locator.directories.set("/w/repo", located("/w/repo"));
+    s.history.consented(cloneOf("/gone/.git"));
+    expect((await s.use.execute(false)).plan.missing).toEqual(["/gone/.git"]);
+  });
+
+  it("finds the clone of a consent no directory was remembered with", async () => {
+    const s = setup([]);
+    s.history.consented(cloneOf(CLONE));
     s.keys.set(CLONE, 1);
+    s.consented.add(CLONE);
     expect((await s.use.execute(false)).plan.repositories).toEqual([
-      { clone: CLONE, taskKeys: 1, consent: false },
+      { clone: CLONE, taskKeys: 1, consent: true },
     ]);
   });
 
-  it("finds the clone of a directory remembered as refusing before clones were recorded, whose key says off", async () => {
+  it("reports a clone once however many of its identities were remembered", async () => {
     const s = setup([]);
-    s.resolutions.resolutions.set("/w/repo", {
-      repository_id: ID,
-      root: "/w/repo",
-      consented: false,
-    });
-    s.locator.directories.set("/w/repo", located("/w/repo"));
-    s.keys.set(CLONE, 0);
-    s.consented.add(CLONE);
-    const result = await s.use.execute(true);
-    expect(s.cleared).toEqual([CLONE]);
-    expect(result.plan.repositories).toEqual([{ clone: CLONE, taskKeys: 0, consent: true }]);
-  });
-
-  it("lists every missing name in one order: roots remembered before clones were recorded, and gone clones", async () => {
-    const s = setup([]);
-    // Another repository from the clone's, so the legacy root is reported on its own account.
-    remember(s, "/a/wt", "/a/gone/.git");
-    s.keys.delete("/a/gone/.git");
-    s.resolutions.resolutions.set("/z/legacy", {
-      repository_id: "other",
-      root: "/z/legacy",
-      consented: true,
-    });
-    expect((await s.use.execute(false)).plan.missing).toEqual(["/a/gone/.git", "/z/legacy"]);
-  });
-
-  it("skips and names a root, remembered before clones were recorded, that is gone or moved", async () => {
-    const s = setup([]);
-    s.snapshots.appended.push(snapshot(ID));
-    s.resolutions.resolutions.set("/gone", { repository_id: ID, root: "/gone", consented: true });
-    s.resolutions.resolutions.set("/moved", { repository_id: ID, root: "/moved", consented: true });
-    s.locator.directories.set("/moved", located("/moved", "https://github.com/acme/other.git"));
-    const result = await s.use.execute(false);
-    expect(result.plan.missing).toEqual(["/gone", "/moved"]);
-    expect(result.plan.repositories).toEqual([]);
-  });
-
-  it("does not report a stale root of a repository whose clone is found", async () => {
-    const s = setup([]);
-    declaredAt(s);
-    s.resolutions.resolutions.set("/gone", { repository_id: ID, root: "/gone", consented: true });
-    expect((await s.use.execute(false)).plan.missing).toEqual([]);
+    remember(s, "/w/main", CLONE, { taskKeys: 2 });
+    s.history.consented(cloneOf(CLONE, { ino: "99" }));
+    expect((await s.use.execute(false)).plan.repositories).toEqual([
+      { clone: CLONE, taskKeys: 2, consent: false },
+    ]);
   });
 
   it("counts the repositories that declared a task and were never located", async () => {
     const s = setup([]);
     s.snapshots.appended.push(snapshot(ID), snapshot("other-id"));
     expect((await s.use.execute(false)).plan.unlocated).toBe(2);
+  });
+
+  it("does not count a repository whose directory was remembered", async () => {
+    const s = setup([]);
+    declaredAt(s);
+    s.snapshots.appended.push(snapshot("other-id"));
+    expect((await s.use.execute(false)).plan.unlocated).toBe(1);
   });
 
   it("leaves alone the keys of a clone nothing was remembered of", async () => {
@@ -286,8 +254,8 @@ describe("forget with confirmation", () => {
     const s = setup([]);
     remember(s, "/w/b", "/w/b/.git", { taskKeys: 1 });
     remember(s, "/w/a", "/w/a/.git", { taskKeys: 1 });
-    remember(s, "/g/b", "/g/b/.git");
-    remember(s, "/g/a", "/g/a/.git");
+    remember(s, "/g/b", "/g/b/.git", { consenting: true });
+    remember(s, "/g/a", "/g/a/.git", { consenting: true });
     s.keys.delete("/g/b/.git");
     s.keys.delete("/g/a/.git");
     const plan = (await s.use.execute(false)).plan;

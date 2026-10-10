@@ -4,12 +4,16 @@ import { DirectoryResolver } from "../../../../src/contexts/telemetry/applicatio
 import { IngestUsageUseCase } from "../../../../src/contexts/telemetry/application/ingest-usage-use-case.js";
 import { ReadClaudeUsageUseCase } from "../../../../src/contexts/telemetry/application/read-claude-usage-use-case.js";
 import { SnapshotBindingsUseCase } from "../../../../src/contexts/telemetry/application/snapshot-bindings-use-case.js";
+import { cloneKey } from "../../../../src/contexts/telemetry/domain/consent/clone-identity.js";
 import type { LocatedDirectory } from "../../../../src/contexts/telemetry/domain/ports/repository-locator.js";
+import { resolutionKey } from "../../../../src/contexts/telemetry/domain/repository-resolution.js";
 import {
+  cloneOf,
   FakeBindings,
   FakeConsents,
   FakeLocator,
   InMemoryBindingsLock,
+  InMemoryConsentHistory,
   InMemoryLedger,
   InMemoryResolutions,
   InMemorySnapshots,
@@ -18,6 +22,9 @@ import {
 
 const sha = (text: string): string => createHash("sha256").update(text).digest("hex");
 const GRANTED = "2";
+const NOW = new Date("2026-10-09T00:00:00.000Z");
+/** The clone the default directory belongs to. */
+const A = cloneOf("/work/a/.git");
 
 function line(
   id: string,
@@ -55,7 +62,7 @@ function repository(
     status: "repository",
     root,
     mainRoot: root,
-    clone: `${extra.mainRoot ?? root}/.git`,
+    clone: cloneOf(`${extra.mainRoot ?? root}/.git`),
     remote: "https://github.com/acme/widgets.git",
     rootCommit: "c0ffee",
     ...extra,
@@ -68,6 +75,7 @@ function setup(options: { refused?: boolean; caseInsensitive?: boolean } = {}) {
   const resolutions = new InMemoryResolutions();
   const locator = new FakeLocator();
   const consents = new FakeConsents();
+  const history = new InMemoryConsentHistory();
   const bindings = new FakeBindings();
   const snapshotStore = new InMemorySnapshots();
   const snapshots = new SnapshotBindingsUseCase(
@@ -79,13 +87,32 @@ function setup(options: { refused?: boolean; caseInsensitive?: boolean } = {}) {
   const ingest = new IngestUsageUseCase(
     new ReadClaudeUsageUseCase(transcripts),
     ledger,
-    new DirectoryResolver(locator, consents, resolutions, options.caseInsensitive ?? false),
+    new DirectoryResolver(locator, consents, resolutions, history, {
+      caseInsensitiveFileSystem: options.caseInsensitive ?? false,
+      now: () => NOW,
+    }),
     snapshots,
     { refusedByEnvironment: options.refused ?? false }
   );
   locator.directories.set("/work/a", repository("/work/a"));
-  consents.values.set("/work/a", GRANTED);
-  return { transcripts, ledger, resolutions, locator, consents, bindings, snapshotStore, ingest };
+  /** The clone at `path` consents: it says so now, and it opted in once. */
+  const optIn = (path: string) => {
+    consents.cloneSays(cloneOf(path), GRANTED);
+    history.consented(cloneOf(path));
+  };
+  optIn(A.path);
+  return {
+    transcripts,
+    ledger,
+    resolutions,
+    locator,
+    consents,
+    history,
+    bindings,
+    snapshotStore,
+    ingest,
+    optIn,
+  };
 }
 
 describe("ingesting usage into the ledger", () => {
@@ -127,9 +154,12 @@ describe("ingesting usage into the ledger", () => {
     s.ledger.damaged.add("2026-10");
     s.ledger.events.length = 0;
     s.ledger.stored = new Map();
+    s.ledger.savedMonths = undefined;
     const again = await s.ingest.execute();
     expect(again).toMatchObject({ added: 0, updated: 0 });
     expect(s.ledger.events).toContain("save");
+    // The month that was damaged is the one saved, and no other.
+    expect([...(s.ledger.savedMonths ?? [])]).toEqual(["2026-10"]);
   });
 
   it("changes nothing when the same transcripts are ingested again", async () => {
@@ -218,16 +248,15 @@ describe("ingesting usage into the ledger", () => {
 
 describe("only projects that opted in are stored", () => {
   it.each([
-    ["no config file", null, "no-consent"],
+    ["a key that is not set", null, "no-consent"],
     ["the previous version's bare enabled true", "true", "no-consent"],
     ["version 1", "1", "no-consent"],
-    ["enabled false", "off", "no-consent"],
+    ["off", "off", "no-consent"],
     ["a git config git cannot read", "unreadable", "unreadable-consent"],
   ] as const)("stores nothing for %s, and counts it", async (_name, text, reason) => {
     const s = setup();
-    s.consents.values.delete("/work/a");
-    if (text === "unreadable") s.consents.unreadable.add("/work/a");
-    else if (text !== null) s.consents.values.set("/work/a", text);
+    if (text === "unreadable") s.consents.unreadableClones.add(cloneKey(A));
+    else s.consents.cloneSays(A, text);
     s.transcripts.files.set("/t/1.jsonl", [line("A", 1), line("B", 2)]);
     const result = await s.ingest.execute();
     expect(s.ledger.records).toEqual([]);
@@ -250,21 +279,20 @@ describe("only projects that opted in are stored", () => {
     const s = setup();
     s.transcripts.files.set("/t/1.jsonl", [line("A", 1)]);
     await s.ingest.execute();
-    s.consents.values.set("/work/a", "off");
+    s.consents.cloneSays(A, "off");
     s.transcripts.files.get("/t/1.jsonl")?.push(line("B", 2));
     const result = await s.ingest.execute();
     expect(result.notStored["no-consent"]).toBe(1);
     expect(s.ledger.records.map((r) => r.key)).toEqual(["msg_A:req_A"]);
-    expect([...s.resolutions.resolutions.values()][0]?.consented).toBe(false);
+    expect(s.history.written.at(-1)).toEqual({ clone: A, state: "off", at: NOW.toISOString() });
   });
 
-  it("asks a linked worktree's own root, the repository's git config being shared", async () => {
+  it("asks a linked worktree's clone, the repository's git config being shared", async () => {
     const s = setup();
     s.locator.directories.set("/work/wt", repository("/work/wt", { mainRoot: "/work/a" }));
-    s.consents.values.set("/work/wt", "2");
     s.transcripts.files.set("/t/1.jsonl", [line("A", 1, { cwd: "/work/wt" })]);
     expect((await s.ingest.execute()).added).toBe(1);
-    expect(s.consents.reads).toEqual(["/work/wt"]);
+    expect(s.consents.cloneReads).toEqual([A.path]);
   });
 
   it("gives a linked worktree and its main working tree one repository id", async () => {
@@ -301,6 +329,16 @@ describe("where a call was made", () => {
     expect((await s.ingest.execute()).notStored["outside-repo"]).toBe(1);
   });
 
+  it("stores nothing for a clone whose key says 2 but that never ran on", async () => {
+    const s = setup();
+    s.history.written.length = 0;
+    s.transcripts.files.set("/t/1.jsonl", [line("A", 1)]);
+    const result = await s.ingest.execute();
+    expect(result).toMatchObject({ added: 0 });
+    expect(result.notStored["no-consent"]).toBe(1);
+    expect(s.history.written).toEqual([]);
+  });
+
   it("does not store a call from a directory that is gone and was never seen alive", async () => {
     const s = setup();
     s.locator.directories.delete("/work/a");
@@ -322,9 +360,9 @@ describe("where a call was made", () => {
     expect(s.ledger.records).toHaveLength(2);
   });
 
-  it("does not store from a deleted directory remembered as not consenting", async () => {
+  it("does not store from a deleted directory whose clone does not consent", async () => {
     const s = setup();
-    s.consents.values.delete("/work/a");
+    s.consents.cloneSays(A, null);
     s.transcripts.files.set("/t/1.jsonl", [line("A", 1)]);
     await s.ingest.execute();
     s.locator.directories.delete("/work/a");
@@ -337,7 +375,7 @@ describe("where a call was made", () => {
   it("remembers a directory under one key per spelling on a case-sensitive file system", async () => {
     const s = setup({ caseInsensitive: false });
     s.locator.directories.set("/Work/A", repository("/Work/A"));
-    s.consents.values.set("/Work/A", GRANTED);
+    s.optIn("/Work/A/.git");
     s.transcripts.files.set("/t/1.jsonl", [line("A", 1, { cwd: "/Work/A" })]);
     await s.ingest.execute();
     s.locator.directories.delete("/Work/A");
@@ -348,7 +386,7 @@ describe("where a call was made", () => {
   it("answers two spellings of a directory with one remembered resolution on a case-insensitive one", async () => {
     const s = setup({ caseInsensitive: true });
     s.locator.directories.set("/Work/A", repository("/Work/A"));
-    s.consents.values.set("/Work/A", GRANTED);
+    s.optIn("/Work/A/.git");
     s.transcripts.files.set("/t/1.jsonl", [line("A", 1, { cwd: "/Work/A" })]);
     await s.ingest.execute();
     s.locator.directories.delete("/Work/A");
@@ -377,7 +415,7 @@ describe("where a call was made", () => {
     expect(s.resolutions.saves).toBe(1);
     expect([...s.resolutions.resolutions.values()][0]).toMatchObject({
       root: "/work/a",
-      consented: true,
+      clone: A,
     });
   });
 });
@@ -443,7 +481,7 @@ describe("branch declarations are snapshotted for the repositories touched", () 
 
   it("does not snapshot a repository that has not opted in", async () => {
     const s = setup();
-    s.consents.values.delete("/work/a");
+    s.consents.cloneSays(A, null);
     s.bindings.bindingsByRoot.set("/work/a", [declared]);
     s.transcripts.files.set("/t/1.jsonl", [line("A", 1)]);
     expect((await s.ingest.execute()).snapshots).toBe(0);
@@ -494,17 +532,17 @@ describe("consent is asked once per working tree", () => {
     s.locator.directories.set("/work/a/src", repository("/work/a"));
     s.transcripts.files.set("/t/1.jsonl", [line("A", 1), line("B", 2, { cwd: "/work/a/src" })]);
     await s.ingest.execute();
-    expect(s.consents.reads).toEqual(["/work/a"]);
+    expect(s.consents.cloneReads).toEqual([A.path]);
   });
 
-  it("lets a linked worktree's own opt-in stand without asking the main working tree", async () => {
+  it("answers for a linked worktree with the clone it belongs to, not its working tree's neighbours", async () => {
     const s = setup();
     s.locator.directories.set("/work/wt", repository("/work/wt", { mainRoot: "/work/main" }));
-    s.consents.values.set("/work/wt", GRANTED);
-    s.consents.values.set("/work/main", "off");
+    s.optIn("/work/main/.git");
+    s.consents.cloneSays(A, "off");
     s.transcripts.files.set("/t/1.jsonl", [line("A", 1, { cwd: "/work/wt" })]);
     expect((await s.ingest.execute()).added).toBe(1);
-    expect(s.consents.reads).toEqual(["/work/wt"]);
+    expect(s.consents.cloneReads).toContain("/work/main/.git");
   });
 });
 
@@ -513,13 +551,12 @@ describe("what is remembered of a directory is refreshed when it changed", () =>
     ["the repository was renamed", { remote: "https://github.com/acme/renamed.git" }],
     ["the working tree moved", { root: "/work/moved", mainRoot: "/work/moved" }],
     ["only the root moved", { root: "/work/moved", mainRoot: "/work/a" }],
-    ["only the clone moved", { clone: "/elsewhere/.git" }],
+    ["only the clone moved", { clone: cloneOf("/elsewhere/.git") }],
   ])("keeps the new resolution when %s", async (_name, change) => {
     const s = setup();
     s.transcripts.files.set("/t/1.jsonl", [line("A", 1)]);
     await s.ingest.execute();
     s.locator.directories.set("/work/a", repository("/work/a", change));
-    s.consents.values.set("/work/moved", GRANTED);
     s.transcripts.files.get("/t/1.jsonl")?.push(line("B", 2));
     await s.ingest.execute();
     expect(s.resolutions.saves).toBe(2);
@@ -542,95 +579,139 @@ describe("how far back the transcripts on disk reach", () => {
   });
 });
 
-describe("a directory that is gone is judged by the clone it belonged to", () => {
-  const CLONE = "/work/a/.git";
+const WIDGETS = sha("github.com/acme/widgets");
 
-  async function deletedWorktree(s: ReturnType<typeof setup>, consentedWhenSeen: boolean) {
-    s.resolutions.resolutions.set("/work/wt", {
-      repository_id: sha("github.com/acme/widgets"),
-      root: "/work/wt",
-      consented: consentedWhenSeen,
-      clone: CLONE,
-    });
+function sighting(dir: string, clone = A, seenAt = "2026-10-01T00:00:00.000Z") {
+  return { dir, repository_id: WIDGETS, root: dir, clone, seen_at: seenAt };
+}
+
+describe("a directory that is gone is judged by the clone it was seen in", () => {
+  function remember(s: ReturnType<typeof setup>, dir: string, clone = A): void {
+    s.resolutions.resolutions.set(resolutionKey(dir, clone), sighting(dir, clone));
+  }
+
+  async function deletedWorktree(s: ReturnType<typeof setup>) {
+    remember(s, "/work/wt");
     s.transcripts.files.set("/t/1.jsonl", [line("A", 1, { cwd: "/work/wt" })]);
     return s.ingest.execute();
   }
 
-  it("remembers the clone of every directory it sees alive", async () => {
+  it("remembers the clone of every directory it sees alive, once", async () => {
     const s = setup();
     s.transcripts.files.set("/t/1.jsonl", [line("A", 1)]);
     await s.ingest.execute();
-    expect(s.resolutions.resolutions.get("/work/a")).toMatchObject({ clone: CLONE });
+    expect([...s.resolutions.resolutions.values()]).toEqual([
+      sighting("/work/a", A, NOW.toISOString()),
+    ]);
   });
 
-  it("stores a deleted worktree because its clone says yes now, whatever was remembered", async () => {
-    const s = setup();
-    s.consents.clones.set(CLONE, GRANTED);
-    expect(await deletedWorktree(s, false)).toMatchObject({ added: 1 });
+  it("stores a deleted worktree because its clone consented and says yes now", async () => {
+    expect(await deletedWorktree(setup())).toMatchObject({ added: 1 });
   });
 
-  it("refuses a deleted worktree because its clone says no now, whatever was remembered", async () => {
+  it("refuses a deleted worktree because its clone says no now, whatever it consented to", async () => {
     for (const now of ["off", null]) {
       const s = setup();
-      s.consents.clones.set(CLONE, now);
-      const result = await deletedWorktree(s, true);
+      s.consents.cloneSays(A, now);
+      const result = await deletedWorktree(s);
       expect(result).toMatchObject({ added: 0 });
       expect(result.notStored["no-consent"]).toBe(1);
     }
   });
 
-  it("counts a clone whose git config cannot be read as unreadable", async () => {
+  it("refuses a deleted worktree of a clone that says 2 but never ran on", async () => {
     const s = setup();
-    s.consents.unreadableClones.add(CLONE);
-    expect((await deletedWorktree(s, true)).notStored["unreadable-consent"]).toBe(1);
+    s.history.written.length = 0;
+    const result = await deletedWorktree(s);
+    expect(result).toMatchObject({ added: 0 });
+    expect(result.notStored["no-consent"]).toBe(1);
   });
 
-  it("falls back on what was remembered once the clone itself is gone", async () => {
+  it("counts a clone whose git config cannot be read as unreadable", async () => {
+    const s = setup();
+    s.consents.unreadableClones.add(cloneKey(A));
+    expect((await deletedWorktree(s)).notStored["unreadable-consent"]).toBe(1);
+  });
+
+  it("does not close the consent of a clone whose git config cannot be read", async () => {
+    const s = setup();
+    s.consents.unreadableClones.add(cloneKey(A));
+    await deletedWorktree(s);
+    expect(s.history.written.map((event) => event.state)).toEqual(["on"]);
+  });
+
+  it("judges a clone that is gone by what it consented to, and no clone by a key it never held", async () => {
     const yes = setup();
-    expect(await deletedWorktree(yes, true)).toMatchObject({ added: 1 });
+    yes.consents.clones.clear();
+    expect(await deletedWorktree(yes)).toMatchObject({ added: 1 });
     const no = setup();
-    expect((await deletedWorktree(no, false)).notStored["no-consent"]).toBe(1);
+    no.consents.clones.clear();
+    no.history.written.length = 0;
+    expect((await deletedWorktree(no)).notStored["no-consent"]).toBe(1);
+  });
+
+  it("closes the consent of a clone it finds gone, at the moment it finds it", async () => {
+    const s = setup();
+    s.consents.clones.clear();
+    await deletedWorktree(s);
+    expect(s.history.written.at(-1)).toEqual({ clone: A, state: "off", at: NOW.toISOString() });
+  });
+
+  it("stores a call a gone clone made before it was found gone, and refuses one dated after", async () => {
+    const s = setup();
+    s.consents.clones.clear();
+    remember(s, "/work/wt");
+    s.transcripts.files.set("/t/1.jsonl", [
+      line("A", 1, { cwd: "/work/wt" }, "2026-10-08T23:59:59.999Z"),
+      line("B", 2, { cwd: "/work/wt" }, "2026-10-09T00:00:00.000Z"),
+    ]);
+    const result = await s.ingest.execute();
+    expect(s.ledger.records.map((r) => r.key)).toEqual(["msg_A:req_A"]);
+    expect(result.notStored["no-consent"]).toBe(1);
+  });
+
+  it("looks at every clone whose consent is open, though no call of it was read", async () => {
+    const s = setup();
+    s.consents.cloneSays(A, "off");
+    const result = await s.ingest.execute();
+    expect(result.added).toBe(0);
+    expect(s.history.written.at(-1)).toEqual({ clone: A, state: "off", at: NOW.toISOString() });
+  });
+
+  it("does not write the same close twice", async () => {
+    const s = setup();
+    s.consents.cloneSays(A, "off");
+    await s.ingest.execute();
+    await s.ingest.execute();
+    expect(s.history.written.filter((event) => event.state === "off")).toHaveLength(1);
+  });
+
+  it("does not take a clone made at the same path since for the clone that was there", async () => {
+    const s = setup();
+    s.history.written.length = 0;
+    const successor = cloneOf(A.path, { ino: "99", birthtimeMs: 5_000 });
+    s.consents.cloneSays(successor, GRANTED);
+    s.history.consented(successor);
+    s.consents.clones.delete(cloneKey(A));
+    const result = await deletedWorktree(s);
+    expect(result).toMatchObject({ added: 0 });
+    expect(result.notStored["no-consent"]).toBe(1);
   });
 
   it("asks a clone once however many deleted directories it covers", async () => {
     const s = setup();
-    s.consents.clones.set(CLONE, GRANTED);
-    s.resolutions.resolutions.set("/work/wt2", {
-      repository_id: sha("github.com/acme/widgets"),
-      root: "/work/wt2",
-      consented: false,
-      clone: CLONE,
-    });
+    remember(s, "/work/wt2");
+    remember(s, "/work/wt2/src");
     s.transcripts.files.set("/t/1.jsonl", [
       line("A", 1, { cwd: "/work/wt2" }),
       line("B", 2, { cwd: "/work/wt2/src" }),
     ]);
-    s.resolutions.resolutions.set("/work/wt2/src", {
-      repository_id: sha("github.com/acme/widgets"),
-      root: "/work/wt2",
-      consented: false,
-      clone: CLONE,
-    });
     await s.ingest.execute();
-    expect(s.consents.cloneReads).toEqual([CLONE]);
-  });
-
-  it("trusts what was remembered of a directory from before clones were recorded", async () => {
-    const s = setup();
-    s.resolutions.resolutions.set("/work/old", {
-      repository_id: sha("github.com/acme/widgets"),
-      root: "/work/old",
-      consented: true,
-    });
-    s.transcripts.files.set("/t/1.jsonl", [line("A", 1, { cwd: "/work/old" })]);
-    expect(await s.ingest.execute()).toMatchObject({ added: 1 });
-    expect(s.resolutions.resolutions.get("/work/old")).not.toHaveProperty("clone");
-    expect(s.consents.cloneReads).toEqual([]);
+    expect(s.consents.cloneReads).toEqual([A.path]);
   });
 
   it("does not snapshot the declarations of a deleted worktree, though its clone says yes", async () => {
     const s = setup();
-    s.consents.clones.set(CLONE, GRANTED);
     s.bindings.bindingsByRoot.set("/work/wt", [
       {
         branch: "feat/x",
@@ -640,20 +721,89 @@ describe("a directory that is gone is judged by the clone it belonged to", () =>
         none: false,
       },
     ]);
-    await deletedWorktree(s, false);
+    await deletedWorktree(s);
     expect(s.snapshotStore.appended).toEqual([]);
   });
 
-  it("records the clone of a directory remembered without one once it is seen alive", async () => {
+  it("forgets what an earlier format held: a directory it names is seen again, or counted", async () => {
     const s = setup();
-    s.resolutions.resolutions.set("/work/a", {
-      repository_id: sha("github.com/acme/widgets"),
-      root: "/work/a",
-      consented: true,
-    });
+    s.locator.directories.delete("/work/a");
     s.transcripts.files.set("/t/1.jsonl", [line("A", 1)]);
-    await s.ingest.execute();
-    expect(s.resolutions.resolutions.get("/work/a")).toMatchObject({ clone: CLONE });
-    expect(s.resolutions.saves).toBe(1);
+    expect((await s.ingest.execute()).notStored["never-seen-alive"]).toBe(1);
+  });
+});
+
+describe("a call is judged at its own time", () => {
+  const B = cloneOf("/work/a/.git", { ino: "99", birthtimeMs: 5_000 });
+
+  it("gives a clone two owners of one directory, each its own calls", async () => {
+    const s = setup();
+    s.history.written.length = 0;
+    s.resolutions.resolutions.set(resolutionKey("/work/a", A), sighting("/work/a", A));
+    s.locator.directories.set("/work/a", repository("/work/a", { clone: B }));
+    s.consents.clones.delete(cloneKey(A));
+    s.consents.cloneSays(B, GRANTED);
+    s.history.consented(B);
+    s.transcripts.files.set("/t/1.jsonl", [
+      line("old", 1, {}, new Date(1_000).toISOString()),
+      line("new", 2, {}, new Date(6_000).toISOString()),
+    ]);
+    const result = await s.ingest.execute();
+    expect(s.ledger.records.map((r) => r.key)).toEqual(["msg_new:req_new"]);
+    expect(result.notStored["no-consent"]).toBe(1);
+  });
+
+  it("stores what the earlier clone made while it consented, and snapshots nothing of the directory the later one holds", async () => {
+    const s = setup();
+    s.resolutions.resolutions.set(resolutionKey("/work/a", A), sighting("/work/a", A));
+    s.locator.directories.set("/work/a", repository("/work/a", { clone: B }));
+    s.consents.clones.delete(cloneKey(A));
+    s.consents.cloneSays(B, GRANTED);
+    s.history.consented(B);
+    s.bindings.bindingsByRoot.set("/work/a", [
+      {
+        branch: "feat/a",
+        task: "t",
+        ticket: null,
+        declared_at: "2026-10-07T10:00:00.000Z",
+        none: false,
+      },
+    ]);
+    s.transcripts.files.set("/t/1.jsonl", [line("old", 1, {}, new Date(1_000).toISOString())]);
+    const result = await s.ingest.execute();
+    expect(s.ledger.records.map((r) => r.key)).toEqual(["msg_old:req_old"]);
+    expect(result.snapshots).toBe(0);
+  });
+
+  it("stores a call made while the clone consented, and not one made while it did not", async () => {
+    const s = setup();
+    s.history.written.length = 0;
+    s.history.written.push(
+      { clone: A, state: "on", at: "2026-10-01T00:00:00.000Z" },
+      { clone: A, state: "off", at: "2026-10-05T00:00:00.000Z" },
+      { clone: A, state: "on", at: "2026-10-07T10:00:00.000Z" }
+    );
+    s.transcripts.files.set("/t/1.jsonl", [
+      line("before", 1, {}, "2026-10-02T00:00:00.000Z"),
+      line("off", 2, {}, "2026-10-06T00:00:00.000Z"),
+      line("again", 3, {}, "2026-10-07T10:00:00.000Z"),
+      line("last", 4, {}, "2026-10-08T00:00:00.000Z"),
+    ]);
+    const result = await s.ingest.execute();
+    expect(s.ledger.records.map((r) => r.key)).toEqual([
+      "msg_again:req_again",
+      "msg_before:req_before",
+      "msg_last:req_last",
+    ]);
+    expect(result.notStored["no-consent"]).toBe(1);
+  });
+
+  it("refuses a clone the platform cannot identify, and remembers nothing of it", async () => {
+    const s = setup();
+    s.locator.directories.set("/work/a", repository("/work/a", { clone: null }));
+    s.transcripts.files.set("/t/1.jsonl", [line("A", 1)]);
+    const result = await s.ingest.execute();
+    expect(result.notStored["unreadable-consent"]).toBe(1);
+    expect(s.resolutions.resolutions.size).toBe(0);
   });
 });

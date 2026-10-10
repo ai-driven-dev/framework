@@ -1,4 +1,4 @@
-import { mkdir, readFile, stat, writeFile } from "node:fs/promises";
+import { mkdir, readdir, readFile, stat, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { git, initRepository, sandboxGitEnv } from "../helpers/git-sandbox.js";
@@ -217,7 +217,6 @@ beforeEach(async () => {
     git(repo, early, "switch", "-q", "main");
   }
   git(repo, gitEnv, "switch", "-q", "feat/a");
-  git(repo, gitEnv, "config", "--local", "aidd.telemetry", "2");
 
   const project = join(claude, "projects", "sandbox");
   await mkdir(join(project, "subagents"), { recursive: true });
@@ -228,10 +227,22 @@ beforeEach(async () => {
   await mkdir(join(telemetry, "bindings"), { recursive: true });
   await writeFile(join(telemetry, "bindings", "sessions.jsonl"), `${SESSIONS.join("\n")}\n`);
   await writeFile(join(telemetry, "bindings", "carries.jsonl"), `${CARRIES.join("\n")}\n`);
+  // Opting in is `on`: a key set by hand opens no consent interval, and nothing is stored.
+  expect((await aidd(["on", "--yes"])).exitCode).toBe(0);
 });
 afterEach(async () => {
   await env.cleanup();
 });
+
+/** Every file under the telemetry directory with its bytes: what a run changed shows. */
+async function held(): Promise<Record<string, string>> {
+  const found: Record<string, string> = {};
+  for (const name of await readdir(telemetry, { recursive: true })) {
+    const path = join(telemetry, name);
+    if ((await stat(path)).isFile()) found[name] = await readFile(path, "utf8");
+  }
+  return found;
+}
 
 function aidd(args: string[], extra: Record<string, string> = {}) {
   return runCli(["telemetry", ...args], repo, env.fakeHome, {
@@ -428,12 +439,13 @@ describe("aidd telemetry report", () => {
   });
 
   it("refuses --days together with --from, and a bad day, without reading anything", async () => {
+    const before = await held();
     const both = await aidd(["report", "--days", "3", "--from", "2026-10-01"]);
     expect(both.exitCode).toBe(1);
     expect(both.stderr).toContain("--days cannot be combined");
     const bad = await aidd(["report", "--from", "yesterday"]);
     expect(bad.exitCode).toBe(1);
-    await expect(stat(join(telemetry, "ledger"))).rejects.toThrow();
+    expect(await held()).toEqual(before);
   });
 
   it("answers --days against the clock, today included", async () => {
@@ -443,12 +455,13 @@ describe("aidd telemetry report", () => {
   });
 
   it("reads nothing under AIDD_TELEMETRY=0", async () => {
+    const before = await held();
     const text = await aidd(["report"], { AIDD_TELEMETRY: "0" });
     expect(text.exitCode).toBe(0);
     expect(text.stdout).toContain("AIDD_TELEMETRY=0");
     const asJson = await aidd(["report", "--json"], { AIDD_TELEMETRY: "0" });
     expect(JSON.parse(asJson.stdout)).toEqual({ version: 1, refused: "AIDD_TELEMETRY=0" });
-    await expect(stat(join(telemetry, "ledger"))).rejects.toThrow();
+    expect(await held()).toEqual(before);
   });
 });
 

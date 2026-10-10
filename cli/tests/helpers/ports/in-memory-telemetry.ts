@@ -3,6 +3,11 @@ import {
   type BranchSnapshot,
   snapshotKey,
 } from "../../../src/contexts/telemetry/domain/branch-binding.js";
+import {
+  type CloneIdentity,
+  cloneKey,
+} from "../../../src/contexts/telemetry/domain/consent/clone-identity.js";
+import type { ConsentEvent } from "../../../src/contexts/telemetry/domain/consent/consent-history.js";
 import type {
   SessionCarry,
   SessionDeclaration,
@@ -16,6 +21,7 @@ import type {
   BranchBindingStore,
   BranchHeads,
 } from "../../../src/contexts/telemetry/domain/ports/branch-binding-store.js";
+import type { ConsentHistory } from "../../../src/contexts/telemetry/domain/ports/consent-history.js";
 import type { ConsentSource } from "../../../src/contexts/telemetry/domain/ports/consent-source.js";
 import type { PersonIdentityStore } from "../../../src/contexts/telemetry/domain/ports/identity/person-identity-store.js";
 import type {
@@ -139,6 +145,28 @@ export class InMemoryBindingsLock implements BindingsLock {
   }
 }
 
+/** A clone as the fakes know it: told from another at the same path by any of `overrides`. */
+export function cloneOf(path: string, overrides: Partial<CloneIdentity> = {}): CloneIdentity {
+  return { path, dev: "1", ino: "7", birthtimeMs: 1_000, ...overrides };
+}
+
+export class InMemoryConsentHistory implements ConsentHistory {
+  readonly written: ConsentEvent[] = [];
+
+  async events(): Promise<readonly ConsentEvent[]> {
+    return [...this.written];
+  }
+
+  async append(event: ConsentEvent): Promise<void> {
+    this.written.push(event);
+  }
+
+  /** `clone` consented, since before any call there is. */
+  consented(clone: CloneIdentity, at = "2026-01-01T00:00:00.000Z"): void {
+    this.written.push({ clone, state: "on", at });
+  }
+}
+
 export class InMemoryResolutions implements ResolutionStore {
   resolutions = new Map<string, RepositoryResolution>();
   saves = 0;
@@ -169,17 +197,23 @@ export class FakeConsents implements ConsentSource {
   /** Roots whose git config cannot be read. */
   readonly unreadable = new Set<string>();
   readonly reads: string[] = [];
-  /** The value of `aidd.telemetry` by clone (common git dir); a clone not listed is gone, one
-   * mapped to `null` has the key unset. */
+  /** The value of `aidd.telemetry` by clone (`cloneKey`); a clone not listed is gone, one mapped
+   * to `null` has the key unset. */
   readonly clones = new Map<string, string | null>();
   readonly cloneReads: string[] = [];
-  /** Clones whose git config cannot be read. */
+  /** Clones whose git config cannot be read, by `cloneKey`. */
   readonly unreadableClones = new Set<string>();
 
-  async readClone(clone: string): Promise<CloneConsentReading> {
-    this.cloneReads.push(clone);
-    if (this.unreadableClones.has(clone)) return { kind: "unreadable" };
-    const value = this.clones.get(clone);
+  /** Says what `clone` holds now. */
+  cloneSays(clone: CloneIdentity, value: string | null): void {
+    this.clones.set(cloneKey(clone), value);
+  }
+
+  async readClone(clone: CloneIdentity): Promise<CloneConsentReading> {
+    this.cloneReads.push(clone.path);
+    const key = cloneKey(clone);
+    if (this.unreadableClones.has(key)) return { kind: "unreadable" };
+    const value = this.clones.get(key);
     return value === undefined ? { kind: "gone" } : { kind: "value", value };
   }
 
