@@ -303,6 +303,8 @@ Each applied by script with an exact-anchor count of 1 (`scratchpad/mut.py`), ru
 | `off` asks the log only for a clone it can identify | `if (located.clone !== null)` always true | 1 + 0 |
 | A clone that never asked, with a damaged log, is "no consent", not "unreadable" | the early `absent` refusal removed in `ConsentedRepositories` | 1 + 0 |
 
+Mutation score of the `telemetry` scope at the head of the round: 96.2 (floor 96). Stryker survivors in the files of this round, none believed to be a gap: `consent-history.ts` `sameKeys` with `some` for `every` (the parse that follows rejects the line either way), `directory-resolver.ts` filter of the current owner (the owner list is the same set), `telemetry-on-use-case.ts` `held !== null` and the `value` check of the re-read key (a null token names no interval; the unreadable case was refused before), `consented-repositories.ts` `status: "open"` text and the `value` check (nothing reads them but the declare use cases, which only test for a refusal).
+
 ### Residual limits recorded in the contract
 
 A manual change of the key between two observations (row h15b), the clock (a call is judged by its transcript timestamp), a worktree made and removed between two ingests, no birth time, a moved clone, a reused process id, and `AIDD_TELEMETRY=0` stopping the hooks too. See `usage-contract.md` § Consent, Residual limits.
