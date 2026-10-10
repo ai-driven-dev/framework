@@ -18,6 +18,15 @@ path or token volume of the person whose history it was.
    (Python, written before the CLI) read the same files. Its records were grouped by the UTC day
    of `at`, and each day's four counters and record count were compared with the CLI's row.
 
+> **Note, 2026-10-10.** Step 1 describes the opt-in of the day the run was recorded (`b2b732eb`,
+> 2026-10-09): `telemetry: {enabled: true, version: 2}` in `.aidd/config.json`. It does
+> not count at HEAD, and the backfill is gone: consent is `aidd telemetry on` in the clone, and
+> a call is stored only if its transcript time falls inside the interval that `on` opened. The counting code is unchanged since the recording: `git diff --stat b2b732eb HEAD`
+> over `domain/formats`, `usage-fold.ts`, `usage-record.ts` and the transcript source adapter is
+> empty. To repeat the method at HEAD, run `aidd telemetry on --yes` in the sandbox repository
+> before the transcripts are produced, and date them after it. The comparison then checks
+> counting only, as before. The result below is not rewritten.
+
 The rewrite of `cwd` means this run checks counting, not attribution. Attribution is covered by
 the e2e journey on synthetic transcripts.
 

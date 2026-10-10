@@ -341,3 +341,29 @@ Mutation score of the `telemetry` scope after the round: 96.2 (floor 96).
 - Recovery from a damaged log is `forget --yes` then `on`, by `on` and `off` refusing and by the advice; a hand edit that removes the damaged line is outside the contract and, as the review's script A2 does it (and then re-reads the transcripts), still stores the off window. The tool no longer suggests it. A latch that outlives a hand edit would be a design change and was not made.
 - A new `consent-closed` reason joins `coverage.not_stored`, and `coverage.consent_log_damaged` is added to the version 1 envelope.
 - The locator answers a new `unreadable` status for a directory it cannot look at and for a `.git` git cannot read; `outside-repo` is left for what is not a repository.
+
+## Fix round 6
+
+Each mutation was applied by script (exact anchor, count 1), run against the named test file, and the file restored from its bytes and compared equal. Counts are the failures observed.
+
+| Fix | Mutation | Red |
+| --- | --- | --- |
+| 1 smoke order | not mutated: the run before the fix is the proof. `telemetry off` after `forget --yes` printed "Measurement was not on for this clone." and the step failed ("PASS: 128 FAIL: 1" in the review). After the reorder, "PASS: 130 FAIL: 0" | n/a |
+| 2 the CLI parser ignores an unterminated last line | `terminated.pop();` removed in `parseConsentRecords` | 2 in the fixture test (`torn-last-line-is-not-yet-written`, `whole-event-without-its-newline-is-not-yet-written`), 1 in the row "torn tail" |
+| 2 the hook parser ignores it | `terminated.pop();` removed in `parseConsentLog` | 1 in the hook test "the consent log follows the fixture" (it loops the cases) |
+| 2 the CLI writer cuts the torn tail before appending | `await this.dropUnterminatedTail();` removed | 1 in the adapter test, 1 in the row "torn tail" |
+| 2 the hook writer cuts it | `{ dropTornTail: true }` turned `false` | 1 in the hook test "a torn last line leaves the clone measured…" |
+| 3 only a hook declaration waits less | `lockWaitFor` never answers a wait | 1 in "waits for the bindings lock less than the hook does…" |
+| 3 the snapshot waits less too | `lockWaitFor(declaration.by)` dropped in `BranchDeclarations.declare` | 1, same test (waits `[8000, undefined]`) |
+| 3 the session line waits less | the wait dropped in `DeclareTaskUseCase.execute` | 1, same test |
+| 3 the lock honours a wait | the `waitMs` override dropped in `DirectoryLock.exclusively` | 1 in "gives up after the wait a caller asks for…" |
+| 3 the adapter passes it on | `wait?.waitMs` replaced by nothing in `BindingsLockAdapter` | 1, same test |
+| 5 `no-consent` wording | the display text put back to "has not opted in" | 1 in "lists the calls it did not store, by reason" |
+
+Fixes 4 and 6 are documents; no test can go red for them.
+
+### Deviations and decisions of the round
+
+- The writers' newline guard (`appendRecord`, `PrivateStorage.append`) was not enough for fix 2: it ends a torn tail with a newline, which turns it into a terminated line that is not an event, so the next `on`, `off` or hook close would have damaged the log. The test failed that way before the change (hook: `Unterminated string in JSON` reading the log back). The two consent writers now cut the unterminated tail before appending (`ftruncate` in the hook, a `replace` in the CLI). Every other file still gets the guard. The cut is not atomic with a concurrent append: a line another process appends between the read and the cut can be lost, a window of a few milliseconds that only opens on a log already torn.
+- A last line that would parse but has no newline is ignored too: a write is one line and its newline, so one without the other is not finished.
+- The hook-intercept wait is 8 s, not 10 s, because a declaration takes the bindings lock twice (the session line, then the branch snapshot): at most 16 s of waiting under the hook's 20 s.
