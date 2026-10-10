@@ -15,8 +15,8 @@ export const UNRECOGNISED_WORDS =
 export const NOT_STORED_WORDS: Readonly<Record<NotStoredReason, string>> = {
   "outside-repo": "outside any repository",
   "never-seen-alive": "from a directory never seen while it existed",
-  "no-consent": "from a project that has not opted in",
-  "unreadable-consent": "from a project whose .aidd/config.json cannot be parsed",
+  "no-consent": "from a clone that has not opted in",
+  "unreadable-consent": "from a clone whose git config cannot be read",
   "no-cwd": "with no working directory",
   undated: "with no usable time",
 };
@@ -59,9 +59,9 @@ const REFUSALS: Readonly<Record<RefusalReason, string>> = {
   "unidentified-repository":
     "This repository has no remote and no commit yet, so nothing can name it. Commit once, then declare again.",
   "no-consent":
-    "This project has not opted in to measurement, so no task was declared. Run `aidd telemetry on` here first.",
+    "This clone has not opted in to measurement, so no task was declared. Run `aidd telemetry on` here first.",
   "unreadable-consent":
-    "This project's .aidd/config.json cannot be parsed, so no task was declared. Fix the file, then declare again.",
+    "This clone's git config cannot be read, so no task was declared. Fix it, then declare again.",
 };
 
 /** The first characters of a session id: enough to tell sessions apart on one screen. */

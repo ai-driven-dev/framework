@@ -110,9 +110,22 @@ describe("printIngestResult", () => {
       })
     );
     expect(lines.slice(1)).toEqual([
-      "Not stored: 1 call from a project that has not opted in.",
+      "Not stored: 1 call from a clone that has not opted in.",
       "Not stored: 2 calls with no usable time.",
     ]);
+  });
+
+  it("words an unreadable consent as the clone's git config, which is where consent lives", () => {
+    const lines = linesOf((o) =>
+      printIngestResult(o, {
+        ...INGESTED,
+        notStored: { ...NOT_STORED, "unreadable-consent": 1 },
+      })
+    );
+    expect(lines.slice(1)).toEqual([
+      "Not stored: 1 call from a clone whose git config cannot be read.",
+    ]);
+    expect(lines.join("\n")).not.toContain("config.json");
   });
 });
 
@@ -175,7 +188,7 @@ describe("printDeclareResult", () => {
     expect(refusal("environment")).toBe("AIDD_TELEMETRY=0: nothing was declared.");
     expect(refusal("no-consent")).toContain("has not opted in");
     expect(refusal("outside-repository")).toContain("Not inside a git repository");
-    expect(refusal("unreadable-consent")).toContain("cannot be parsed");
+    expect(refusal("unreadable-consent")).toContain("cannot be read");
     expect(refusal("unidentified-repository")).toContain("no remote and no commit");
   });
 });

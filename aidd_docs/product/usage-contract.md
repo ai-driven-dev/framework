@@ -46,7 +46,7 @@ An unknown value is `null`, never `0`. A report leaves a call out of a counter's
 
 ### Repository
 
-A call's repository is its working directory resolved at ingest: the directory's git root, named by the hash of the `origin` address (`host/owner/repo`), else the root commit. The address itself is never kept. A call is stored only when its project opted in. A call read and left out is counted in `coverage.not_stored` under one reason: `outside-repo`, `never-seen-alive`, `no-consent`, `unreadable-consent`, `no-cwd` or `undated`.
+A call's repository is its working directory resolved at ingest: the directory's git root, named by the hash of the `origin` address (`host/owner/repo`), else the root commit. The address itself is never kept. A call is stored only when its clone opted in. A call read and left out is counted in `coverage.not_stored` under one reason: `outside-repo`, `never-seen-alive`, `no-consent`, `unreadable-consent`, `no-cwd` or `undated`.
 
 ## The report envelope
 

@@ -36,7 +36,7 @@ export function registerTelemetryCommand(program: Command): void {
 
   telemetry
     .command("on")
-    .description("Measure this repository, and remove what the previous version left in it")
+    .description("Measure this clone, and remove what the previous version left in it")
     .option("--yes", "Do not ask first", false)
     .action(async (cmdOptions: { yes: boolean }) => {
       const { verbose, output, projectRoot } = parseGlobalOptions(program);
@@ -49,7 +49,7 @@ export function registerTelemetryCommand(program: Command): void {
         const confirmed =
           cmdOptions.yes ||
           (await deps.prompter.confirm(
-            "Measure what this repository consumes, and remove what the previous version left in it?",
+            "Measure what this clone consumes, and remove what the previous version left in it?",
             false
           ));
         if (!confirmed) {
@@ -66,7 +66,7 @@ export function registerTelemetryCommand(program: Command): void {
 
   telemetry
     .command("off")
-    .description("Stop measuring this repository; what was measured stays")
+    .description("Stop measuring this clone; what was measured stays")
     .action(async () => {
       const { verbose, output, projectRoot } = parseGlobalOptions(program);
       try {
@@ -98,7 +98,7 @@ export function registerTelemetryCommand(program: Command): void {
 
   telemetry
     .command("ingest")
-    .description("Read new transcripts into the local ledger, for projects that opted in")
+    .description("Read new transcripts into the local ledger, for clones that opted in")
     .option("--quiet", "Print nothing on success (for hooks)", false)
     .action(async (cmdOptions: { quiet: boolean }) => {
       const { verbose, output, projectRoot } = parseGlobalOptions(program);

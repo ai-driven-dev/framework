@@ -49,5 +49,5 @@ What `aidd telemetry report --json` prints, and what each part means. Version `1
 
 | Sign | Likely reason |
 | --- | --- |
-| `records` of `0` and `not_stored.no-consent` above `0` | The project has not opted in |
+| `records` of `0` and `not_stored.no-consent` above `0` | The clone has not opted in |
 | `records` of `0` and `files_read` of `0` | No Claude Code session file is on disk for the period |
