@@ -1,5 +1,5 @@
 ---
-status: pending
+status: done
 ---
 
 # Instruction: Générer agents et workflows natifs
@@ -58,19 +58,19 @@ journey
 
 ### `1)` Agent par contrat cible
 
-> Agent par contrat cible.
+> Statut : done. Contrat Kilo canonique, fixture et debug runtime validés.
 
 1. Détection Kilo commune ; fichier .kilo/agents/name.md donne le nom, description et mode subagent, options demandées model/temperature/permission sans defaults inventés. Scoper la validation name YAML actuelle au format canonique Claude ; template canonique inchangé. Capturer et vérifier types/options avant writes ; pas de droits nouveaux implicites.
 
 ### `2)` Workflow par contrat cible
 
-> Workflow par contrat cible.
+> Statut : done. Contrat Kilo canonique, fixture et commande runtime validés.
 
 1. Détection Kilo ; .kilo/commands/name.md et liste description/agent/model/variant/subtask uniquement selon demande. Ne pas imposer la convention nested location Claude à Kilo ni copier les injections Claude. Commande reste one-shot ; router 03 existant peut déjà déléguer le type commande, aucune modification nécessaire au routeur pour un alias non requis par AC.
 
 ### `3)` Préservation et preuves associées
 
-> Préservation et preuves associées.
+> Statut : done. Préflight documenté, corpus et non-régressions automatisés; limites runtime conservées.
 
 1. Préflight multi-cibles, collision user file, champs inconnus, échappements YAML/TOML, idempotence. Tester agents Claude, TOML Codex, OpenCode et commandes unsupported Codex explicitement. Kilo catalogue/debug, invocation sous-agent réelle et slash-command réelle avec modèle gratuit ; sources/date dans refs, docs même phase.
 

@@ -1,0 +1,31 @@
+timestamp=2026-10-10T15:30:17.308Z level=INFO run=988e3563 message=loading path=$XDG_ROOT/config/kilo/config.json
+timestamp=2026-10-10T15:30:17.323Z level=INFO run=988e3563 message=loading path=$XDG_ROOT/config/kilo/kilo.json
+timestamp=2026-10-10T15:30:17.324Z level=INFO run=988e3563 message=loading path=$XDG_ROOT/config/kilo/kilo.jsonc
+timestamp=2026-10-10T15:30:17.335Z level=INFO run=988e3563 message=loading path=$XDG_ROOT/config/kilo/opencode.json
+timestamp=2026-10-10T15:30:17.336Z level=INFO run=988e3563 message=loading path=$XDG_ROOT/config/kilo/opencode.jsonc
+INFO  2026-10-10T15:30:17 +1086ms service=default version=7.8.8 command=debug process_role=main run_id=[redacted] opencode
+timestamp=2026-10-10T15:30:17.349Z level=INFO run=988e3563 message="creating instance" directory=$RUNTIME_PROJECT
+timestamp=2026-10-10T15:30:17.351Z level=INFO run=988e3563 message=fromDirectory directory=$RUNTIME_PROJECT
+timestamp=2026-10-10T15:30:17.442Z level=INFO run=988e3563 message=loading path=$RUNTIME_PROJECT/.kilo/kilo.jsonc
+timestamp=2026-10-10T15:30:17.443Z level=INFO run=988e3563 message=loading path=$RUNTIME_PROJECT/.kilo/kilo.json
+timestamp=2026-10-10T15:30:17.444Z level=INFO run=988e3563 message=loading path=$RUNTIME_PROJECT/.kilo/opencode.jsonc
+timestamp=2026-10-10T15:30:17.444Z level=INFO run=988e3563 message=loading path=$RUNTIME_PROJECT/.kilo/opencode.json
+INFO  2026-10-10T15:30:17 +333ms service=bus type=session.turn.open subscribing
+INFO  2026-10-10T15:30:17 +1ms service=bus type=session.turn.close subscribing
+INFO  2026-10-10T15:30:17 +0ms service=bus type=memory.status subscribing
+INFO  2026-10-10T15:30:17 +1ms service=bus type=memory.updated subscribing
+timestamp=2026-10-10T15:30:17.698Z level=INFO run=988e3563 message="all LSPs are disabled"
+timestamp=2026-10-10T15:30:17.698Z level=INFO run=988e3563 message="all formatters are disabled"
+timestamp=2026-10-10T15:30:17.698Z level=INFO run=988e3563 message=init
+INFO  2026-10-10T15:30:17 +35ms service=kilocode-indexing workspacePath=$RUNTIME_PROJECT initializing project indexing
+INFO  2026-10-10T15:30:17 +6ms service=bus type=indexing.status publishing
+INFO  2026-10-10T15:30:17 +1ms service=bus type=indexing.status publishing
+INFO  2026-10-10T15:30:17 +78ms service=model-cache providerID=kilo fetching models
+INFO  2026-10-10T15:30:18 +203ms service=model-cache providerID=kilo count=326 models fetched and cached
+INFO  2026-10-10T15:30:18 +4ms service=model-cache providerID=apertis fetching models
+INFO  2026-10-10T15:30:18 +1ms service=model-cache providerID=apertis count=0 models fetched and cached
+INFO  2026-10-10T15:30:18 +815ms service=model-cache providerID=apertis refreshing models
+INFO  2026-10-10T15:30:18 +0ms service=model-cache providerID=apertis count=0 models fetched and cached
+timestamp=2026-10-10T15:30:18.883Z level=INFO run=988e3563 message="shell tool using shell" shell=/bin/bash
+timestamp=2026-10-10T15:30:18.903Z level=INFO run=988e3563 message="disposing instance" directory=$RUNTIME_PROJECT
+timestamp=2026-10-10T15:30:19.040Z level=INFO run=988e3563 message="disposing all instances"

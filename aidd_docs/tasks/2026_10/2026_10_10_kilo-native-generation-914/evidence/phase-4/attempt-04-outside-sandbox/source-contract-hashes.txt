@@ -1,0 +1,14 @@
+7a0d74a9fb363653afa5873f2df953686e675401acf7cb37d236418b7dc8b6b7  plugins/aidd-context/skills/06-agent-generate/SKILL.md
+6cc02558c7c85bdee5cf7dec94d7e547a0fa9b6085d78386f2c84e2e737b5581  plugins/aidd-context/skills/06-agent-generate/actions/01-capture-agent.md
+0a48a6c52480e8cbf704511625850284773207b61da99920c524a19275d8917b  plugins/aidd-context/skills/06-agent-generate/actions/02-write-agent.md
+e940e6eb61c4c48dfe52fc242833782d9bd4f0ed31315925cb0b7b96f2e01c10  plugins/aidd-context/skills/06-agent-generate/actions/03-validate.md
+33b659accbd8db9291a61cffaf930962955a3591c019b3149688f19935ff3d84  plugins/aidd-context/skills/06-agent-generate/references/tool-paths.md
+88eb8361a05e42ad3c6d2202dd50f13d8ba34297504ed5b20901685827e77942  plugins/aidd-context/skills/06-agent-generate/references/agent-authoring.md
+c7091084a39eb2ad5e4b18e4119dec7a0b114fe10af4a8b9f6be407f8244c929  plugins/aidd-context/skills/06-agent-generate/assets/agent-template.md
+aff0ba35ace65fd217db0821d81b8fd6f34d71614684e64459965b9125e58cec  plugins/aidd-context/skills/07-command-generate/SKILL.md
+57ec6be06ab03db0e350654edcf829cbc8d9f68ffadf20b26a67365be8b71496  plugins/aidd-context/skills/07-command-generate/actions/01-capture-command.md
+8c2fec96fa66e9330e58418bd6b8bdff1b16e203ffe30d62569aaee455dfc05e  plugins/aidd-context/skills/07-command-generate/actions/02-write-command.md
+5eae9d42226d9808b130c8aeeb232077ee3621e873032c6a76bf68ec618b5d57  plugins/aidd-context/skills/07-command-generate/actions/03-validate.md
+f9ca928d3f469e080bb478e88f0ed19e448ef2f80399ba7c3f2a141009d6231f  plugins/aidd-context/skills/07-command-generate/references/tool-paths.md
+c577e76a21d79f38668a7af9529f164fd1c5dca71abfbcd76ebbfdfc89b70f1b  plugins/aidd-context/skills/07-command-generate/references/command-authoring.md
+c14b2c3dfd4ec7a64788d58020cce55e43a68e55fc6c9af907ded13c66ab58e7  plugins/aidd-context/skills/07-command-generate/assets/command-template.md

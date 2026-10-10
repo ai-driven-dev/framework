@@ -1,0 +1,61 @@
+kilo/cohere/north-mini-code:free
+{
+  "id": "cohere/north-mini-code:free",
+  "providerID": "kilo",
+  "name": "Cohere: North Mini Code (free)",
+  "family": "north",
+  "api": {
+    "id": "cohere/north-mini-code:free",
+    "url": "https://api.kilo.ai/api/openrouter/",
+    "npm": "@kilocode/kilo-gateway"
+  },
+  "status": "active",
+  "headers": {},
+  "options": {},
+  "cost": {
+    "input": 0,
+    "output": 0,
+    "cache": {
+      "read": 0,
+      "write": 0
+    }
+  },
+  "limit": {
+    "context": 256000,
+    "output": 64000
+  },
+  "capabilities": {
+    "temperature": true,
+    "reasoning": true,
+    "attachment": false,
+    "toolcall": true,
+    "input": {
+      "text": true,
+      "audio": false,
+      "image": false,
+      "video": false,
+      "pdf": false
+    },
+    "output": {
+      "text": true,
+      "audio": false,
+      "image": false,
+      "video": false,
+      "pdf": false
+    },
+    "interleaved": false
+  },
+  "release_date": "2026-06-17",
+  "variants": {
+    "none": {
+      "reasoning": {
+        "effort": "none"
+      }
+    },
+    "high": {
+      "reasoning": {
+        "effort": "high"
+      }
+    }
+  }
+}
