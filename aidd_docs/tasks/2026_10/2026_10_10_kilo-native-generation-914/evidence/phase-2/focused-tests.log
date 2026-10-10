@@ -1,0 +1,21 @@
+✔ no config proposes .kilo/kilo.jsonc without creating it (7.998354ms)
+✔ each sole project config is selected, regardless of format or location (5.670318ms)
+✔ one exact owner wins across four configs; nested, glob and comment witnesses do not (3.176264ms)
+✔ multiple configs without an owner require choice; cancellation and explicit choice never write (2.893419ms)
+✔ two exact owners remain ambiguous until explicit selection (5.400747ms)
+✔ JSONC insertion preserves every original byte, duplicate and order (2.507399ms)
+✔ escaped instructions key is reused, and absent key is inserted without serializing unrelated text (0.7623ms)
+✔ existing exact entry is byte-identical even when duplicated (0.332549ms)
+✔ JSONC handles empty arrays, scalar comments and CRLF without changing unrelated bytes (0.817392ms)
+✔ copied CommonJS module runs in an ESM project without the CLI or checkout (55.231254ms)
+✔ malformed, duplicate and non-string instructions refuse before any project write (8.522509ms)
+✔ all existing configs are validated, even when another uniquely owns the entry (2.480569ms)
+✔ unsafe candidates, invalid UTF-8 and vanished choices refuse without changing bytes (3.080266ms)
+ℹ tests 13
+ℹ suites 0
+ℹ pass 13
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 219.519139
