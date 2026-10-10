@@ -152,28 +152,30 @@ function inspectProject(projectRoot, instructionPath, chosenPath) {
   checkInstructionPath(instructionPath);
   const root = path.resolve(projectRoot);
   if (!fs.statSync(root).isDirectory() || fs.realpathSync(root) !== root) fail("Project must be a real directory.");
+  const rootIdentity = fs.statSync(root);
   const decoder = new TextDecoder("utf-8", { fatal: true });
   const candidates = [];
   for (const relative of CONFIG_PATHS) {
     const parts = relative.split("/");
-    let current = root;
-    let missing = false;
-    for (const part of parts) {
-      current = path.join(current, part);
-      try {
-        const stat = fs.lstatSync(current);
-        if (stat.isSymbolicLink()) fail(`Symlink config or ancestor: ${relative}`);
-      } catch (error) {
-        if (error.code !== "ENOENT") throw error;
-        missing = true;
-        break;
-      }
-    }
-    if (missing) continue;
-    if (!fs.statSync(current).isFile()) fail(`Config is not a file: ${relative}`);
+    const current = path.join(root, ...parts);
+    const before = inspectPath(root, parts, relative);
+    if (before === null) continue;
+    let fd;
     let content;
-    try { content = decoder.decode(fs.readFileSync(current)); }
-    catch { fail(`Invalid UTF-8 config: ${relative}`); }
+    try {
+      const flags = fs.constants.O_RDONLY | (process.platform === "win32" ? 0 : (fs.constants.O_NOFOLLOW || 0) | (fs.constants.O_NONBLOCK || 0));
+      fd = fs.openSync(current, flags);
+      const opened = fs.fstatSync(fd);
+      if (!opened.isFile() || !sameIdentity(opened, before.at(-1))) fail(`Config changed while opening: ${relative}`);
+      const after = inspectPath(root, parts, relative);
+      if (!after || fs.realpathSync(root) !== root || !sameIdentity(rootIdentity, fs.statSync(root)) || !samePath(before, after)) fail(`Config path changed while opening: ${relative}`);
+      content = decoder.decode(fs.readFileSync(fd));
+    } catch (error) {
+      if (error.message?.startsWith("Config ")) throw error;
+      fail(`Cannot safely read config: ${relative}`);
+    } finally {
+      if (fd !== undefined) fs.closeSync(fd);
+    }
     const { instructions } = parseJsonc(content);
     candidates.push({ path: relative, ownsInstruction: !!instructions?.items.some((item) => item.value === instructionPath) });
   }
@@ -185,6 +187,34 @@ function inspectProject(projectRoot, instructionPath, chosenPath) {
   const owners = candidates.filter((item) => item.ownsInstruction);
   if (owners.length === 1) return { candidates, selectedPath: owners[0].path, needsChoice: false };
   return { candidates, selectedPath: chosenPath || null, needsChoice: !chosenPath };
+}
+
+function sameIdentity(left, right) {
+  return left.dev === right.dev && left.ino === right.ino;
+}
+
+function samePath(left, right) {
+  return left.length === right.length && left.every((stat, index) => sameIdentity(stat, right[index]));
+}
+
+function inspectPath(root, parts, relative) {
+  const stats = [fs.statSync(root)];
+  let current = root;
+  for (let index = 0; index < parts.length; index++) {
+    current = path.join(current, parts[index]);
+    let stat;
+    try { stat = fs.lstatSync(current); }
+    catch (error) {
+      if (error.code === "ENOENT") return null;
+      throw error;
+    }
+    const final = index === parts.length - 1;
+    if (stat.isSymbolicLink() || (final ? !stat.isFile() : !stat.isDirectory())) {
+      fail(`Symlink or invalid config path: ${relative}`);
+    }
+    stats.push(stat);
+  }
+  return stats;
 }
 
 module.exports = { inspectProject, prepareInstructionEdit };

@@ -182,3 +182,36 @@ test("unsafe candidates, invalid UTF-8 and vanished choices refuse without chang
   assert.throws(() => api().inspectProject(p.root, instruction));
   assert.deepEqual(p.snapshot(), before);
 });
+
+for (const replacement of ["file", "parent"]) {
+  test(`config read refuses a ${replacement} substitution after open without reading the outside witness`, (t) => {
+    const p = project(t);
+    p.put(".kilo/kilo.jsonc", '{"instructions":[]}\n');
+    const outside = path.join(path.dirname(p.root), `aidd-kilo-outside-${process.pid}.jsonc`);
+    fs.writeFileSync(outside, '{"instructions":["outside"]}\n');
+    t.after(() => fs.rmSync(outside, { force: true }));
+    const target = path.join(p.root, ".kilo/kilo.jsonc");
+    const parent = path.dirname(target);
+    const held = `${target}.held`;
+    const outsideDir = path.join(path.dirname(p.root), `aidd-kilo-outside-dir-${process.pid}`);
+    fs.mkdirSync(outsideDir, { recursive: true });
+    fs.writeFileSync(path.join(outsideDir, "kilo.jsonc"), '{"instructions":["outside-parent"]}\n');
+    t.after(() => fs.rmSync(outsideDir, { recursive: true, force: true }));
+    const originalOpen = fs.openSync;
+    try {
+      fs.openSync = function (candidate, ...args) {
+        const fd = originalOpen.call(this, candidate, ...args);
+        if (candidate === target) {
+          fs.renameSync(replacement === "file" ? target : parent, replacement === "file" ? held : `${parent}.held`);
+          fs.symlinkSync(replacement === "file" ? outside : outsideDir, replacement === "file" ? target : parent, replacement === "parent" ? "dir" : undefined);
+        }
+        return fd;
+      };
+      assert.throws(() => api().inspectProject(p.root, instruction), /safely read|changed|Symlink/u);
+    } finally {
+      fs.openSync = originalOpen;
+    }
+    assert.equal(fs.readFileSync(outside, "utf8"), '{"instructions":["outside"]}\n');
+    assert.equal(fs.readFileSync(path.join(outsideDir, "kilo.jsonc"), "utf8"), '{"instructions":["outside-parent"]}\n');
+  });
+}
