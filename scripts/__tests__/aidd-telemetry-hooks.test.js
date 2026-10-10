@@ -601,6 +601,11 @@ test("a declaration mistyped is blocked with the grammar and the quoting hint, a
         assert.match(result.json.reason, /aidd telemetry task <name> \[--ticket <ref>\]/u, prompt);
         assert.match(result.json.reason, /aidd telemetry task "fix cart"/u, prompt);
         assert.match(result.json.reason, /fix-cart/u, prompt);
+        assert.match(
+          result.json.reason,
+          /To send it to Claude as an ordinary prompt instead, rephrase it or end it with a question mark\./u,
+          prompt
+        );
         // not run, so the person's words stay visible to retype
         assert.equal(result.json.hookSpecificOutput, undefined, prompt);
         assert.ok(!fs.existsSync(path.join(box.repo, "PWNED")), prompt);
@@ -613,6 +618,14 @@ test("a declaration mistyped is blocked with the grammar and the quoting hint, a
     const result = gate(box, { payload: box.payload({ prompt: "aidd telemetry task fix cart" }) });
     assert.equal(result.json.decision, "block");
     assert.deepEqual(box.calls(), []);
+  });
+});
+
+test("the way out the not understood message gives is the way out: a question mark makes it an ordinary prompt", () => {
+  withBox({ branch: "feat/x" }, (box) => {
+    const result = gate(box, { payload: box.payload({ prompt: "aidd telemetry task fix cart?" }) });
+    assert.doesNotMatch(result.json?.reason ?? "", /not understood/iu);
+    assert.deepEqual(box.calls().filter((c) => c.argv.includes("--by")), []);
   });
 });
 

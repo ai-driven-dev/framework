@@ -65,6 +65,7 @@ function notUnderstood() {
       "  aidd telemetry task <name> [--ticket <ref>]",
       "  aidd telemetry task --none",
       'A name of several words needs quotes: aidd telemetry task "fix cart" (or join them: fix-cart).',
+      "To send it to Claude as an ordinary prompt instead, rephrase it or end it with a question mark.",
     ].join("\n"),
     { keepPrompt: true }
   );
