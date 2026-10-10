@@ -59,7 +59,7 @@ journey
 
 ### `2)` Une seule surface de mémoire
 
-> Statut : validated, publication locale pending. 40 sous-processus réussis, préflight et conservation vérifiés.
+> Statut : done. 40 sous-processus réussis, préflight et conservation vérifiés ; runtime Kilo et review approve.
 
 1. Ajouter kilo à TOOL_FILES sans ajouter TARGET_FILES ; conserver Set pour Kilo/Codex/OpenCode/Cursor. Dans sync, confirmer les outils, dédupliquer les destinations et modifier seulement le bloc AIDD. Préflight des cibles explicitement sélectionnées et du README opt-in avant Upsert comme avant Fill, donc avant toute création de contexte ou mutation pour refuser des marqueurs incomplets/ambigus. Conserver le mode best-effort du hook automatique sans élargir le scope. Étendre les sous-processus existants et les six scénarios mémoire, préserver imports Claude et liens Copilot.
 
