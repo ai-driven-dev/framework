@@ -1,5 +1,5 @@
 ---
-status: in-progress
+status: done
 ---
 
 # Instruction: Reconnaître Kilo et partager la mémoire
@@ -65,7 +65,7 @@ journey
 
 ### `3)` Contrat lisible et preuve
 
-> Statut : validated, publication locale pending. Codex natif et Kilo mémoire observés ; review approve.
+> Statut : done. Codex natif et Kilo mémoire observés ; review approve ; preuves et reprise archivées.
 
 1. Ajouter les sources/date au contrat mémoire et documenter Kilo dans le README sans répéter toutes les tables. Exécuter un parcours Codex sur une fixture Kilo-only, puis valider lecture mémoire dans Kilo lors du test runtime de cette phase ; preuve authentifiée Claude non requise pour ces artefacts.
 

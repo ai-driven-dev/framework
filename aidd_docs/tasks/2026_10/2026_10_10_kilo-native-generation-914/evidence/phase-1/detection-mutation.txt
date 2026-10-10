@@ -1,0 +1,61 @@
+✖ plugins/aidd-context/skills/00-onboard/references/state/detection.md: six distinct Kilo signals, one shared memory destination (7.159132ms)
+✔ plugins/aidd-context/skills/00-onboard/references/state/detection.md: canonical directory (0.980328ms)
+✔ plugins/aidd-context/skills/00-onboard/references/state/detection.md: legacy directory (0.602223ms)
+✔ plugins/aidd-context/skills/00-onboard/references/state/detection.md: root JSON (0.639412ms)
+✔ plugins/aidd-context/skills/00-onboard/references/state/detection.md: root JSONC (0.742034ms)
+✔ plugins/aidd-context/skills/00-onboard/references/state/detection.md: nested JSON (0.608335ms)
+✔ plugins/aidd-context/skills/00-onboard/references/state/detection.md: nested JSONC (0.430373ms)
+✔ plugins/aidd-context/skills/00-onboard/references/state/detection.md: shared AGENTS alone (0.38662ms)
+✔ plugins/aidd-context/skills/00-onboard/references/state/detection.md: OpenCode JSON alone (0.520982ms)
+✔ plugins/aidd-context/skills/00-onboard/references/state/detection.md: OpenCode JSONC alone (0.612903ms)
+✔ plugins/aidd-context/skills/00-onboard/references/state/detection.md: multiple tools share memory (1.222199ms)
+✔ plugins/aidd-context/skills/00-onboard/references/state/detection.md: legacy is detection only and path claims carry their provenance (2.692011ms)
+✔ plugins/aidd-context/skills/02-project-memory/references/tools.md: six distinct Kilo signals, one shared memory destination (1.051411ms)
+✔ plugins/aidd-context/skills/02-project-memory/references/tools.md: canonical directory (0.476368ms)
+✔ plugins/aidd-context/skills/02-project-memory/references/tools.md: legacy directory (0.41839ms)
+✔ plugins/aidd-context/skills/02-project-memory/references/tools.md: root JSON (0.255306ms)
+✔ plugins/aidd-context/skills/02-project-memory/references/tools.md: root JSONC (0.280763ms)
+✔ plugins/aidd-context/skills/02-project-memory/references/tools.md: nested JSON (0.220782ms)
+✔ plugins/aidd-context/skills/02-project-memory/references/tools.md: nested JSONC (0.357667ms)
+✔ plugins/aidd-context/skills/02-project-memory/references/tools.md: shared AGENTS alone (0.27333ms)
+✔ plugins/aidd-context/skills/02-project-memory/references/tools.md: OpenCode JSON alone (0.173494ms)
+✔ plugins/aidd-context/skills/02-project-memory/references/tools.md: OpenCode JSONC alone (0.185587ms)
+✔ plugins/aidd-context/skills/02-project-memory/references/tools.md: multiple tools share memory (0.65944ms)
+✔ plugins/aidd-context/skills/02-project-memory/references/tools.md: legacy is detection only and path claims carry their provenance (0.522875ms)
+ℹ tests 24
+ℹ suites 0
+ℹ pass 23
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 37.586368
+
+✖ failing tests:
+
+test at scripts/__tests__/context-kilo-detection.test.js:47:3
+✖ plugins/aidd-context/skills/00-onboard/references/state/detection.md: six distinct Kilo signals, one shared memory destination (7.159132ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+    [
+      '.kilo/',
+      '.kilo/kilo.json',
+  -   '.kilo/kilo.jsonc',
+      '.kilocode/',
+      'kilo.json',
+      'kilo.jsonc'
+    ]
+  
+      at TestContext.<anonymous> (/home/coder/project/scripts/__tests__/context-kilo-detection.test.js:49:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: [Array],
+    expected: [Array],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }

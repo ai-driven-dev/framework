@@ -1,0 +1,24 @@
+{
+  "date": "2026-10-10",
+  "fixture": "/tmp/aidd-914-runtime-codex-project",
+  "generator": "Current Codex session, installed native aidd-context:02-project-memory router with explicitly bound candidate sync/tools and hook",
+  "cli_codex_status": "Three attempts blocked; missing codex-code-mode-host; exit 0 is not success",
+  "kilo_exit_code": 0,
+  "model": "kilo/cohere/north-mini-code:free",
+  "prompt": "What is the answer to the phase 1 memory verification question? Read the project instructions and relevant project memory, and apply its answer convention. Do not modify files.",
+  "answer": "MEMORY_APPLIED:prune-6842",
+  "step_costs": [
+    0,
+    0
+  ],
+  "linked_memory_read": true,
+  "AGENTS_and_bank_unchanged_after_runtime": true,
+  "kilo_config_before": "{}\n",
+  "kilo_config_after": "{\n  \"$schema\": \"https://app.kilo.ai/config.json\"\n}\n",
+  "auth_credentials": 0,
+  "preliminary_hook_only_attempt_exit": 124,
+  "extra_reads_errors": [
+    "/tmp/aidd-914-runtime-codex-project/.kilo/command/*.md",
+    "/tmp/aidd-914-runtime-codex-project/.kilo/agent/*.md"
+  ]
+}

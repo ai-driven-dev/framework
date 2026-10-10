@@ -1,0 +1,469 @@
+✔ the hook runs in a project declaring itself an ES module (80.828213ms)
+✔ a legacy block is migrated to the comment markers and filled (54.121427ms)
+✔ a legacy pair quoted in prose is left alone and the real block still migrates (55.760253ms)
+✔ a legacy pair inside a code fence is not the block that gets rewritten (49.781432ms)
+✔ the imports keep a blank line on each side, so nothing hides them (50.056735ms)
+✔ filling is idempotent (107.659796ms)
+✔ the on-demand tier is listed without an import prefix (49.835553ms)
+✖ a file holding one marker without its pair reports instead of skipping silently (66.625046ms)
+✔ a context file with no block at all is skipped quietly (63.132892ms)
+✖ an unknown tool name is rejected (49.616214ms)
+✔ a new-marker pair quoted in prose above the block does not hijack the splice (59.643826ms)
+✔ a nested fence does not close the example that documents the old shape (63.034088ms)
+✖ an unpaired marker fails the run when the skill named the tools (50.607302ms)
+✔ AGENTS.md gets markdown links, resolvable from the repository root (46.944382ms)
+✔ a nested context file prefixes its links with the climb back out (49.079873ms)
+✖ Kilo selected alone fills root AGENTS.md without changing other tools or legacy paths (52.587386ms)
+✖ shared Kilo/Codex/OpenCode/Cursor selection is stable without rewriting on a rerun (57.814824ms)
+✖ explicit sync validates a last malformed destination before writing earlier targets or README (53.01387ms)
+✖ explicit sync refuses duplicate memory markers without changing any selected file (60.658118ms)
+✖ explicit sync refuses nested memory markers without changing any selected file (48.780605ms)
+✖ explicit sync refuses reversed memory markers without changing any selected file (51.784148ms)
+✖ explicit sync refuses mixed memory markers without changing any selected file (49.932735ms)
+✖ explicit sync refuses separateFamilies memory markers without changing any selected file (51.17433ms)
+✖ explicit sync refuses extraClose memory markers without changing any selected file (51.213292ms)
+✖ preflight accepts absent/blockless context files but performs no Upsert or Fill (50.417078ms)
+✔ preflight refuses malformed existing context before any missing target is created (51.069253ms)
+✖ a malformed opted-in README prevents all explicit context writes (53.045941ms)
+✔ explicit sync ignores marker examples in prose and fences (50.649952ms)
+✖ explicit fill preserves BOM, CRLF, marker indentation and user bytes without a final newline (59.032645ms)
+✖ explicit sync refuses a target unsafe destination before writing a valid sibling (48.80988ms)
+✖ explicit sync refuses a ancestor unsafe destination before writing a valid sibling (70.001473ms)
+✖ explicit sync refuses a directory unsafe destination before writing a valid sibling (58.097232ms)
+✔ an invalid unselected context cannot prevent a selected tool from filling (56.838292ms)
+✔ the automatic hook remains best-effort when a later context has an unpaired marker (72.638099ms)
+ℹ tests 34
+ℹ suites 0
+ℹ pass 16
+ℹ fail 18
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1968.62632
+
+✖ failing tests:
+
+test at scripts/__tests__/update-memory.test.js:147:1
+✖ a file holding one marker without its pair reports instead of skipping silently (66.625046ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /unpaired project memory marker/u. Input:
+  
+  ''
+  
+      at TestContext.<anonymous> (/home/coder/project/scripts/__tests__/update-memory.test.js:150:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: '',
+    expected: /unpaired project memory marker/u,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at scripts/__tests__/update-memory.test.js:160:1
+✖ an unknown tool name is rejected (49.616214ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /unknown tool emacs/u. Input:
+  
+  ''
+  
+      at TestContext.<anonymous> (/home/coder/project/scripts/__tests__/update-memory.test.js:164:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: '',
+    expected: /unknown tool emacs/u,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at scripts/__tests__/update-memory.test.js:200:1
+✖ an unpaired marker fails the run when the skill named the tools (50.607302ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /unpaired project memory marker/u. Input:
+  
+  ''
+  
+      at TestContext.<anonymous> (/home/coder/project/scripts/__tests__/update-memory.test.js:204:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: '',
+    expected: /unpaired project memory marker/u,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at scripts/__tests__/update-memory.test.js:261:1
+✖ Kilo selected alone fills root AGENTS.md without changing other tools or legacy paths (52.587386ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  1 !== 0
+  
+      at /home/coder/project/scripts/__tests__/update-memory.test.js:269:12
+      at inProject (/home/coder/project/scripts/__tests__/update-memory.test.js:253:5)
+      at TestContext.<anonymous> (/home/coder/project/scripts/__tests__/update-memory.test.js:262:3)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/__tests__/update-memory.test.js:278:1
+✖ shared Kilo/Codex/OpenCode/Cursor selection is stable without rewriting on a rerun (57.814824ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  1 !== 0
+  
+      at /home/coder/project/scripts/__tests__/update-memory.test.js:282:12
+      at inProject (/home/coder/project/scripts/__tests__/update-memory.test.js:253:5)
+      at TestContext.<anonymous> (/home/coder/project/scripts/__tests__/update-memory.test.js:279:3)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/__tests__/update-memory.test.js:293:1
+✖ explicit sync validates a last malformed destination before writing earlier targets or README (53.01387ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /unpaired project memory marker/. Input:
+  
+  ''
+  
+      at /home/coder/project/scripts/__tests__/update-memory.test.js:303:12
+      at inProject (/home/coder/project/scripts/__tests__/update-memory.test.js:253:5)
+      at TestContext.<anonymous> (/home/coder/project/scripts/__tests__/update-memory.test.js:300:3)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: '',
+    expected: /unpaired project memory marker/,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at scripts/__tests__/update-memory.test.js:316:3
+✖ explicit sync refuses duplicate memory markers without changing any selected file (60.658118ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  0 !== 1
+  
+      at /home/coder/project/scripts/__tests__/update-memory.test.js:319:14
+      at inProject (/home/coder/project/scripts/__tests__/update-memory.test.js:253:5)
+      at TestContext.<anonymous> (/home/coder/project/scripts/__tests__/update-memory.test.js:317:5)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 0,
+    expected: 1,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/__tests__/update-memory.test.js:316:3
+✖ explicit sync refuses nested memory markers without changing any selected file (48.780605ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  0 !== 1
+  
+      at /home/coder/project/scripts/__tests__/update-memory.test.js:319:14
+      at inProject (/home/coder/project/scripts/__tests__/update-memory.test.js:253:5)
+      at TestContext.<anonymous> (/home/coder/project/scripts/__tests__/update-memory.test.js:317:5)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 0,
+    expected: 1,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/__tests__/update-memory.test.js:316:3
+✖ explicit sync refuses reversed memory markers without changing any selected file (51.784148ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  0 !== 1
+  
+      at /home/coder/project/scripts/__tests__/update-memory.test.js:319:14
+      at inProject (/home/coder/project/scripts/__tests__/update-memory.test.js:253:5)
+      at TestContext.<anonymous> (/home/coder/project/scripts/__tests__/update-memory.test.js:317:5)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 0,
+    expected: 1,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/__tests__/update-memory.test.js:316:3
+✖ explicit sync refuses mixed memory markers without changing any selected file (49.932735ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /memory marker/. Input:
+  
+  ''
+  
+      at /home/coder/project/scripts/__tests__/update-memory.test.js:320:14
+      at inProject (/home/coder/project/scripts/__tests__/update-memory.test.js:253:5)
+      at TestContext.<anonymous> (/home/coder/project/scripts/__tests__/update-memory.test.js:317:5)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: '',
+    expected: /memory marker/,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at scripts/__tests__/update-memory.test.js:316:3
+✖ explicit sync refuses separateFamilies memory markers without changing any selected file (51.17433ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  0 !== 1
+  
+      at /home/coder/project/scripts/__tests__/update-memory.test.js:319:14
+      at inProject (/home/coder/project/scripts/__tests__/update-memory.test.js:253:5)
+      at TestContext.<anonymous> (/home/coder/project/scripts/__tests__/update-memory.test.js:317:5)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 0,
+    expected: 1,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/__tests__/update-memory.test.js:316:3
+✖ explicit sync refuses extraClose memory markers without changing any selected file (51.213292ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  0 !== 1
+  
+      at /home/coder/project/scripts/__tests__/update-memory.test.js:319:14
+      at inProject (/home/coder/project/scripts/__tests__/update-memory.test.js:253:5)
+      at TestContext.<anonymous> (/home/coder/project/scripts/__tests__/update-memory.test.js:317:5)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 0,
+    expected: 1,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/__tests__/update-memory.test.js:327:1
+✖ preflight accepts absent/blockless context files but performs no Upsert or Fill (50.417078ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  1 !== 0
+  
+      at /home/coder/project/scripts/__tests__/update-memory.test.js:330:12
+      at inProject (/home/coder/project/scripts/__tests__/update-memory.test.js:253:5)
+      at TestContext.<anonymous> (/home/coder/project/scripts/__tests__/update-memory.test.js:328:3)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/__tests__/update-memory.test.js:346:1
+✖ a malformed opted-in README prevents all explicit context writes (53.045941ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  0 !== 1
+  
+      at /home/coder/project/scripts/__tests__/update-memory.test.js:349:12
+      at inProject (/home/coder/project/scripts/__tests__/update-memory.test.js:253:5)
+      at TestContext.<anonymous> (/home/coder/project/scripts/__tests__/update-memory.test.js:347:3)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 0,
+    expected: 1,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/__tests__/update-memory.test.js:364:1
+✖ explicit fill preserves BOM, CRLF, marker indentation and user bytes without a final newline (59.032645ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+    '﻿# User é\r\n' +
+      'Keep\n' +
+      '  <!-- aidd_project_memory:start -->\r\n' +
+  +   '\n' +
+  +   '[aidd_docs/memory/architecture.md](aidd_docs/memory/architecture.md)\n' +
+  +   '\n' +
+  -   '\r\n' +
+  -   '[aidd_docs/memory/architecture.md](aidd_docs/memory/architecture.md)\r\n' +
+  -   '\r\n' +
+      '  <!-- aidd_project_memory:end -->\r\n' +
+      'USER END'
+  
+      at /home/coder/project/scripts/__tests__/update-memory.test.js:370:12
+      at inProject (/home/coder/project/scripts/__tests__/update-memory.test.js:253:5)
+      at TestContext.<anonymous> (/home/coder/project/scripts/__tests__/update-memory.test.js:367:3)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: '﻿# User é\r\nKeep\n  <!-- aidd_project_memory:start -->\r\n\n[aidd_docs/memory/architecture.md](aidd_docs/memory/architecture.md)\n\n  <!-- aidd_project_memory:end -->\r\nUSER END',
+    expected: '﻿# User é\r\nKeep\n  <!-- aidd_project_memory:start -->\r\n\r\n[aidd_docs/memory/architecture.md](aidd_docs/memory/architecture.md)\r\n\r\n  <!-- aidd_project_memory:end -->\r\nUSER END',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/__tests__/update-memory.test.js:375:3
+✖ explicit sync refuses a target unsafe destination before writing a valid sibling (48.80988ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  0 !== 1
+  
+      at /home/coder/project/scripts/__tests__/update-memory.test.js:385:14
+      at inProject (/home/coder/project/scripts/__tests__/update-memory.test.js:253:5)
+      at TestContext.<anonymous> (/home/coder/project/scripts/__tests__/update-memory.test.js:376:5)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 0,
+    expected: 1,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/__tests__/update-memory.test.js:375:3
+✖ explicit sync refuses a ancestor unsafe destination before writing a valid sibling (70.001473ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  0 !== 1
+  
+      at /home/coder/project/scripts/__tests__/update-memory.test.js:385:14
+      at inProject (/home/coder/project/scripts/__tests__/update-memory.test.js:253:5)
+      at TestContext.<anonymous> (/home/coder/project/scripts/__tests__/update-memory.test.js:376:5)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 0,
+    expected: 1,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/__tests__/update-memory.test.js:375:3
+✖ explicit sync refuses a directory unsafe destination before writing a valid sibling (58.097232ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + '<!-- aidd_project_memory:start -->\n' +
+  +   '\n' +
+  +   '@aidd_docs/memory/architecture.md\n' +
+  +   '\n' +
+  +   '<!-- aidd_project_memory:end -->\n'
+  - '<!-- aidd_project_memory:start -->\n<!-- aidd_project_memory:end -->\n'
+  
+      at /home/coder/project/scripts/__tests__/update-memory.test.js:386:14
+      at inProject (/home/coder/project/scripts/__tests__/update-memory.test.js:253:5)
+      at TestContext.<anonymous> (/home/coder/project/scripts/__tests__/update-memory.test.js:376:5)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: '<!-- aidd_project_memory:start -->\n\n@aidd_docs/memory/architecture.md\n\n<!-- aidd_project_memory:end -->\n',
+    expected: '<!-- aidd_project_memory:start -->\n<!-- aidd_project_memory:end -->\n',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

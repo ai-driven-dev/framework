@@ -1,0 +1,46 @@
+{
+  "branch": "feat/kilo-native-generation-914",
+  "base": "41e91691b5837a8c27475d0115725131bb53bf41",
+  "local_only": true,
+  "commits": [
+    {
+      "task": 1,
+      "sha": "4eed91c366620ff2473ae751826c5e03802f75ac",
+      "subject": "feat(aidd-context): recognize Kilo project signals",
+      "commit_exit": 0,
+      "pre_commit_and_commitlint": "passed",
+      "targeted_tests": 24,
+      "full_scripts_tests": "604 pass, 2 skips, 0 fail",
+      "evidence": "aidd_docs/tasks/2026_10/2026_10_10_kilo-native-generation-914/evidence/phase-1/make-check-final.txt"
+    },
+    {
+      "task": 2,
+      "sha": "9179e60d7489c5b82780f83a0285e976d3ddf6c8",
+      "subject": "feat(aidd-context): safely sync shared Kilo memory",
+      "commit_exit": 0,
+      "pre_commit_and_commitlint": "passed",
+      "targeted_tests": 40,
+      "full_scripts_tests": "604 pass, 2 skips, 0 fail",
+      "evidence": "aidd_docs/tasks/2026_10/2026_10_10_kilo-native-generation-914/evidence/phase-1/make-check-final.txt"
+    },
+    {
+      "task": 3,
+      "subject": "docs(aidd-context): record validated Kilo memory phase",
+      "sha_resolution": "git log -1 --format=%H after this record is committed; self-referential SHA cannot be stored in its own commit",
+      "validation": [
+        "native Codex memory generation",
+        "Kilo real read and exact answer at cost 0",
+        "review approve, 4/4 phase criteria",
+        "26 task Markdown files: links checked",
+        "16 official AC unchanged and phases 2-6 pending"
+      ],
+      "scope": "phase-1 proof, approved plan/history and resumption documents only"
+    }
+  ],
+  "prohibited": [
+    "push",
+    "remote PR mutation",
+    "branch change",
+    "phase 2-6 implementation"
+  ]
+}

@@ -1,0 +1,38 @@
+✖ explicit sync validates a last malformed destination before writing earlier targets or README (63.769468ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 96.843025
+
+✖ failing tests:
+
+test at ../../../tmp/memory-preflight-mutation-vhxiilmx/test.cjs:293:1
+✖ explicit sync validates a last malformed destination before writing earlier targets or README (63.769468ms)
+  AssertionError [ERR_ASSERTION]: CLAUDE.md
+  + actual - expected
+  
+  + '<!-- aidd_project_memory:start -->\n' +
+  +   '\n' +
+  +   '@aidd_docs/memory/architecture.md\n' +
+  +   '\n' +
+  +   '<!-- aidd_project_memory:end -->\n'
+  - '<!-- aidd_project_memory:start -->\n<!-- aidd_project_memory:end -->\n'
+  
+      at /tmp/memory-preflight-mutation-vhxiilmx/test.cjs:304:65
+      at inProject (/tmp/memory-preflight-mutation-vhxiilmx/test.cjs:253:5)
+      at TestContext.<anonymous> (/tmp/memory-preflight-mutation-vhxiilmx/test.cjs:300:3)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: '<!-- aidd_project_memory:start -->\n\n@aidd_docs/memory/architecture.md\n\n<!-- aidd_project_memory:end -->\n',
+    expected: '<!-- aidd_project_memory:start -->\n<!-- aidd_project_memory:end -->\n',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
