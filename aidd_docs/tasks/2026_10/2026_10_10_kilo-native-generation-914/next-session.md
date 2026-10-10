@@ -1,11 +1,9 @@
-# Reprise après phase 3 #914
+# Reprise après les phases 4–5 de #914
 
-Phases 1 et 3 done ; phase 1 clôturée explicitement avec ses limites. Phase 3 review approve, commit local unique, plan global in-progress. Branche feat/kilo-native-generation-914 conservée. Aucun push ni PR distante. Phases 2 et 4–6 pending et non autorisées : attendre accord utilisateur.
+État au 10 octobre 2026 : branche `feat/kilo-native-generation-914`, sept commits locaux non publiés. Phases 1 et 3–5 terminées, avec limites documentées. Phase 2 `in-progress` : module de configuration isolé seulement ; publication des règles en attente de coordination avec la PR #979. Phase 6 en attente d’une autorisation distincte.
 
-Lire [rapport phase 3](phase-3-report.md), [runtime](phase-3-runtime.md), [assertions](assertions-phase-3.md), [review courante](review.md), [matrice](coverage-matrix.md) et [registre commit](commits-phase-3.json). Historique phase 1 intact : [rapport](phase-1-report.md) et [review archivée](review-phase-1.md). Vérifier git status et log sans changer de branche ni réinstaller les plugins.
+Avant reprise, lire [plan](plan.md), [matrice de couverture](coverage-matrix.md), [rapport partiel phase 2](phase-2-partial-report.md), [rapports des phases 4](phase-4-report.md) et [5](phase-5-report.md), [plan phase 6](phase-6.md), [review courante](review.md) et le [resume historique](resume.md). Vérifier `git status` et l’historique ; ne pas déduire que le plan global est achevé.
 
-Phase 3 : six signaux dans skill generation, Kilo natif ou portable explicitement choisi, une destination, conflits de copies/targets/champs à résoudre avant écriture, rendu host spécifique, préflight intégral, ressources utilisateur préservées, relance sans write. 24 tests ciblés ; sweep 630 tests, 628 pass, 2 skips existants, 0 fail. Kilo Linux natif/portable catalogues et invocations réels, action/payload lus, résultat exact et coûts 0. Les preuves caller distinguent choix synthétiques, génération effective et refus interprétés ; sept cas du runner authentifié non exécutés.
+Ne pas modifier les captures runtime ni les preuves archivées. Sur le diff complet, `git diff --check` reste en échec à cause des espaces de fin conservés dans 136 lignes de sorties brutes des phases 1 et 3 ; la commande par défaut signale aussi les 467 fins CRLF de `user-request.md`. Ne pas normaliser ces captures pour masquer les diagnostics.
 
-AC5 et AC9 validés. AC1–4/13–16 partiels, AC6–8/10–12 non implémentés. Aucun runtime Claude authentifié ni OpenCode ; macOS/Windows Kilo non exécutés ; aucune transaction crash/concurrence skill. Première tentative native avec espace exclue de l’oracle exact. Blocage Codex CLI phase 1 conservé, pas réévalué.
-
-Avant phase 2, revalider #979 et sa base fusionnée ; si Draft, décision explicite requise. Aucun writer concurrent anticipé. #971 intégré, #744/#868 inchangées. Aucun finalize ou step-end du plan global. Cleanup de /tmp limité aux fixtures/XDG phase 3 ; les preuves utiles sont archivées dans le dossier task.
+Revalider l’état et le head de #979 avant toute reprise de publication. Aucun push ou PR distante n’est autorisé par ce document.

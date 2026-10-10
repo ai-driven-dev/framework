@@ -1,8 +1,14 @@
 ---
-status: pending
+status: in-progress
 ---
 
 # Instruction: Publier une règle Kilo sans perdre sa configuration
+
+## Tranche indépendante autorisée le 10 octobre 2026
+
+La présente autorisation couvre uniquement les fixtures et tests Kilo dans de nouveaux fichiers distincts de #979, le module local `scripts/kilo-config.cjs` et les validations Kilo réalisables sans publication. Le module sélectionne une configuration et prépare une édition JSONC en mémoire ; il ne crée ni règle ni configuration, ne modifie aucun fichier projet et n’appelle aucun writer. Tester en premier les contrats de sélection, préservation et refus avec filesystem réel ; archiver les preuves, assertions et review de cette tranche. Les commits locaux sont autorisés.
+
+La tâche 1, l’intégration des tâches 2–4 au writer, la publication cohérente source + règle + configuration, les erreurs de publication et les non-régressions du writer #979 restent bloquées pendant que #979 est Draft. Ne modifier aucun fichier de #979, dont `scripts/__tests__/rule-generation.test.js`. Laisser la phase `in-progress` et ses critères de publication ouverts ; aucune fusion, push ou PR. Revalider le head #979 et décider explicitement de l’intégration avant de lever ce verrou.
 
 ## Architecture projection
 
@@ -57,7 +63,7 @@ journey
 
 > Aligner le propriétaire des règles.
 
-1. Précondition bloquante de cette phase : base de publication #979 disponible/intégrée et head revalidé, ou plan amendé explicitement. Lire tous les nouveaux contrats/tests pertinents et conserver les sorties non Kilo de cette base. Si #979 reste Draft, demander une décision explicite avant toute implémentation dépendante, sans attendre pour la phase 1. Ne pas construire un second writer. Ajouter Kilo au writer autonome, module local au skill sans import du CLI ni dependency implicite du checkout ; résoudre depuis SKILL.md livré.
+1. Précondition bloquante de l’intégration : base de publication #979 disponible/intégrée et head revalidé, ou nouvelle décision explicite avec plan amendé. Lire tous les nouveaux contrats/tests pertinents et conserver les sorties non Kilo de cette base. Si #979 reste Draft, ne pas implémenter la publication dépendante. Ne pas construire un second writer. Ajouter Kilo au writer autonome après levée du verrou ; le module local au skill reste sans import du CLI ni dépendance implicite du checkout et sera résolu depuis SKILL.md livré lors de l’intégration.
 
 ### `2)` Sélection de configuration observable
 
