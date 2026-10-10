@@ -176,7 +176,7 @@ function makeTempRepo() {
   execFileSync("git", ["init", "-q"], { cwd: dir, env: CLEAN_ENV });
   execFileSync("git", ["config", "user.email", "test@example.com"], { cwd: dir, env: CLEAN_ENV });
   execFileSync("git", ["config", "user.name", "Test"], { cwd: dir, env: CLEAN_ENV });
-  fs.mkdirSync(path.join(dir, "aidd_docs", "runs"), { recursive: true });
+  fs.mkdirSync(path.join(dir, ".git", "aidd", "runs"), { recursive: true });
   fs.mkdirSync(path.join(dir, ".aidd"), { recursive: true });
   fs.writeFileSync(
     path.join(dir, ".aidd", "config.json"),
@@ -196,7 +196,7 @@ function sessionStartPayload(cwd, sessionId) {
 }
 
 function readRunFileLines(repo) {
-  const runsDir = path.join(repo, "aidd_docs", "runs");
+  const runsDir = path.join(repo, ".git", "aidd", "runs");
   const [fileName] = fs.readdirSync(runsDir).filter((entry) => entry.endsWith(".jsonl"));
   assert.ok(fileName, "a session_start run file must be written regardless of the manifest");
   return fs

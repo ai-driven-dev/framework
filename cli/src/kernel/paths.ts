@@ -1,4 +1,6 @@
-import { join, posix, win32 } from "node:path";
+import { existsSync, realpathSync } from "node:fs";
+import { join, posix, resolve, win32 } from "node:path";
+import { gitCommonDirAbove, worktreeRootsOf } from "./reading/git-common-dir.js";
 import { repositoryRootAbove } from "./reading/repository-root.js";
 
 export const AIDD_DIR = ".aidd";
@@ -21,14 +23,39 @@ export const BUILT_CACHE_SUBDIR = join(AIDD_DIR, "cache", "built");
 // `VersionControl.listTrackedFiles` about exactly this path.
 export const RUNS_ENTRY = `${DOCS_DIR}/${RUNS_SUBDIR}/`;
 
-/**
- * Where the run journal lives — at the repository root above `projectRoot`, never
- * `projectRoot` itself, because the hook that writes it anchors there (`repositoryRootAbove`
- * carries why). The one resolver, so two readers cannot disagree from a subdirectory.
- * `AIDD_RUNS_DIR` overrides it outright, matching the hook.
- */
+const RUNS_UNDER_GIT_DIR = ["aidd", "runs"] as const;
+
+/** Under the clone's common git directory, shared by its worktrees and kept by `git worktree
+ * remove`; the hook's `repo.cjs` spells the same place. `AIDD_RUNS_DIR` overrides it. */
 export function resolvedRunsDir(projectRoot: string): string {
-  return process.env.AIDD_RUNS_DIR || join(repositoryRootAbove(projectRoot), DOCS_DIR, RUNS_SUBDIR);
+  if (process.env.AIDD_RUNS_DIR) return process.env.AIDD_RUNS_DIR;
+  const commonDir = gitCommonDirAbove(projectRoot);
+  return commonDir
+    ? join(commonDir, ...RUNS_UNDER_GIT_DIR)
+    : join(repositoryRootAbove(projectRoot), DOCS_DIR, RUNS_SUBDIR);
+}
+
+function realPath(dir: string): string {
+  try {
+    return realpathSync.native(dir);
+  } catch {
+    return resolve(dir);
+  }
+}
+
+/** Each live checkout's pre-move `aidd_docs/runs`, current one first: read, never written. */
+export function legacyRunsDirs(projectRoot: string): readonly string[] {
+  if (process.env.AIDD_RUNS_DIR) return [];
+  const commonDir = gitCommonDirAbove(projectRoot);
+  if (commonDir === null) return [];
+  const dirs: string[] = [];
+  for (const root of [repositoryRootAbove(projectRoot), ...worktreeRootsOf(commonDir)]) {
+    const dir = join(root, DOCS_DIR, RUNS_SUBDIR);
+    if (!existsSync(dir) || dirs.some((known) => samePath(realPath(known), realPath(dir))))
+      continue;
+    dirs.push(dir);
+  }
+  return dirs;
 }
 
 export function marketplaceCacheDir(projectRoot: string, marketplaceName: string): string {

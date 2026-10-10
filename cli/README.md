@@ -180,7 +180,7 @@ In the project:
 | `.aidd/auth.json` | The project-level credential |
 | `.aidd/marketplaces.json` | Marketplaces registered at project scope |
 | `.aidd/cache/`, `.aidd/plugin-cache/` | Fetched catalogs, built trees, plugin sources |
-| `aidd_docs/runs/` | The run journal, at the repository root above the project |
+| `<git common dir>/aidd/runs/` | The run journal, shared by every worktree of the clone; older journals in a checkout's `aidd_docs/runs/` are still read |
 
 On the machine, under `$AIDD_USER_CONFIG_DIR`, else `$XDG_CONFIG_HOME/aidd`, else `~/.config/aidd`:
 

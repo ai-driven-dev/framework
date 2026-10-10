@@ -26,8 +26,15 @@ export interface TelemetryRemovalOutcome {
   readonly failed: readonly TelemetryRemovalFailure[];
 }
 
+export interface TelemetryLegacyJournalOutcome {
+  readonly path: string;
+  readonly outcome: TelemetryRemovalOutcome;
+}
+
 export interface TelemetryRemovalResult {
   readonly journal: TelemetryRemovalOutcome;
+  readonly journalPath: string;
+  readonly legacyJournals: readonly TelemetryLegacyJournalOutcome[];
   readonly sink: TelemetryRemovalOutcome;
   readonly identity: TelemetryRemovalOutcome;
   /** Repeated from the preview: history does not become reachable by having removed the rest,
@@ -63,10 +70,21 @@ export class ForgetTelemetryUseCase {
       ]);
     return {
       journal: { scope: "project", path: this.runJournalReader.runsDir, runFileNames },
+      legacyJournals: await this.legacyJournals(),
       sink: { scope: "machine", path: this.sink.rootDir, dayFileNames },
       identity: { scope: "machine", path: this.identity.filePath, ...identityState },
       history: this.historyReading(isRepo, tracked, hasHistory),
     };
+  }
+
+  // An empty pre-move directory is nothing to remove, so nothing to confirm.
+  private async legacyJournals(): Promise<readonly TelemetryProjectJournalRemoval[]> {
+    const found: TelemetryProjectJournalRemoval[] = [];
+    for (const path of this.runJournalReader.legacyRunsDirs) {
+      const runFileNames = await this.runJournalReader.listRunFilesIn(path);
+      if (runFileNames.length > 0) found.push({ scope: "project", path, runFileNames });
+    }
+    return found;
   }
 
   private historyReading(
@@ -84,12 +102,25 @@ export class ForgetTelemetryUseCase {
   /** Removes exactly what `preview` resolved, never a location of its own. Every location is
    * attempted whatever the others did: one failure never spares or stops the rest. */
   async remove(preview: TelemetryRemovalPreview): Promise<TelemetryRemovalResult> {
-    const [journal, sink, identity] = await Promise.all([
+    const [journal, legacy, sink, identity] = await Promise.all([
       this.removeJournal(preview.journal),
+      Promise.all(
+        preview.legacyJournals.map(async (legacyJournal) => ({
+          path: legacyJournal.path,
+          outcome: await this.removeJournal(legacyJournal),
+        }))
+      ),
       this.removeSink(preview.sink),
       this.removeIdentity(preview.identity),
     ]);
-    return { journal, sink, identity, history: preview.history };
+    return {
+      journal,
+      journalPath: preview.journal.path,
+      legacyJournals: legacy,
+      sink,
+      identity,
+      history: preview.history,
+    };
   }
 
   // `readStrict()` throwing is the file existing but being unreadable - exactly the file a

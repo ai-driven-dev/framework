@@ -101,7 +101,7 @@ test("tells the run file what it skipped, rather than reading as complete covera
   const { buildSessionStartLine, appendLine, runFileName, generateUlid } = require(RECORD);
   const { handleTaskFilesObserved, MAX_SCAN_ENTRIES } = require(FILE_WRITES);
 
-  const runsDir = path.join(repo, "aidd_docs", "runs");
+  const runsDir = path.join(repo, ".git", "aidd", "runs");
   fs.mkdirSync(runsDir, { recursive: true });
   const runId = generateUlid();
   const vendorId = "wide-tree-session";
@@ -192,7 +192,7 @@ test("records the write a host stated when that host names its workspace rather 
 
   const vendorId = "workspace-host-session";
   const runFile = withWorkspaceHost(({ fileWrites, record }) => {
-    const runsDir = path.join(repo, "aidd_docs", "runs");
+    const runsDir = path.join(repo, ".git", "aidd", "runs");
     fs.mkdirSync(runsDir, { recursive: true });
     const runId = record.generateUlid();
     const filePath = path.join(runsDir, record.runFileName(runId, vendorId));

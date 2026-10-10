@@ -103,7 +103,7 @@ export interface RunJournal {
  */
 export interface RunJournalReader {
   read(sessionId: string): Promise<RunJournal | null>;
-  /** Every session the journal holds, for a caller with no identifier to ask about. Filtering
+  /** Every session the journal holds, the primary copy winning over a legacy one. Filtering
    * to a period is the caller's, from each journal's own `session.at`: the run file's name
    * carries no date. Never throws; an unreadable runs directory answers an empty list. */
   list(): Promise<readonly RunJournal[]>;
@@ -112,7 +112,7 @@ export interface RunJournalReader {
    * what removing this journal would touch needs a name a damaged file still has. Never
    * throws, the same failure direction as `list()`. */
   listRunFiles(): Promise<readonly string[]>;
-  /** The schema stated by every journal this reader refused to read, one entry per file.
+  /** The schema stated by every journal this reader refused to read, one per session (primary wins).
    * `list()` drops such a journal outright, and a caller shown only that emptiness would
    * report a torn file about one whose header it parsed perfectly well. Empty is the ordinary
    * answer. Never throws, like everything else here. */
@@ -129,7 +129,11 @@ export interface RunJournalStore extends RunJournalReader {
    * `AIDD_RUNS_DIR`-aware resolution itself. `deleteRunFile` below is handed back this value
    * rather than deriving its own. */
   readonly runsDir: string;
-  /** Removes one run file, by the name `listRunFiles()` named it with, from `dir` — mirrors
+  /** Each live checkout's pre-move `aidd_docs/runs`, read after `runsDir` and never written. */
+  readonly legacyRunsDirs: readonly string[];
+  /** Run file names directly in `dir` (`runsDir` or a legacy one), sorted; never throws. */
+  listRunFilesIn(dir: string): Promise<readonly string[]>;
+  /** Removes one run file, by the name `listRunFiles`/`listRunFilesIn` gave it, from `dir` — mirrors
    * `TelemetrySink.deleteDayFile`. `dir` is never resolved here: the caller passes the exact
    * directory a person was already shown, so a removal can never reach one the preview never
    * named. `fileName` must name exactly one entry directly inside `dir`; anything else,

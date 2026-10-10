@@ -572,15 +572,17 @@ function withRunsDirEnv({ set = {}, unset = [] }, fn) {
   }
 }
 
-test("runsDir defaults to <repoRoot>/aidd_docs/runs when AIDD_RUNS_DIR is unset", () => {
+test("runsDir defaults to <commonDir>/aidd/runs, and to <repoRoot>/aidd_docs/runs only without a common dir, when AIDD_RUNS_DIR is unset", () => {
   withRunsDirEnv({ unset: ["AIDD_RUNS_DIR"] }, () => {
+    assert.equal(runsDir("/repo", "/repo/.git"), path.join("/repo/.git", "aidd", "runs"));
+    assert.equal(runsDir("/repo", ""), path.join("/repo", "aidd_docs", "runs"));
     assert.equal(runsDir("/repo"), path.join("/repo", "aidd_docs", "runs"));
   });
 });
 
 test("AIDD_RUNS_DIR overrides the in-repo default outright", () => {
   withRunsDirEnv({ set: { AIDD_RUNS_DIR: "/custom/runs" } }, () => {
-    assert.equal(runsDir("/repo"), "/custom/runs");
+    assert.equal(runsDir("/repo", "/repo/.git"), "/custom/runs");
   });
 });
 
@@ -615,19 +617,23 @@ test("getRepoRoot resolves a worktree to itself, never to the repository it shar
   assert.notEqual(canonicalPath(worktreeRoot), canonicalPath(getRepoRoot(main)));
 });
 
-test("resolveRunsDir writes a worktree's journal under the worktree, not the main checkout", () => {
+test("resolveRunsDir writes a worktree's journal under the clone's common git directory, shared with the main checkout", () => {
   const main = makeTempRepo();
   const worktree = path.join(makeTempDir("aidd-telemetry-worktree-"), "wt");
   addWorktree(main, worktree);
   writeTelemetryConfig(worktree, { enabled: true });
-  fs.mkdirSync(runsDirOf(worktree), { recursive: true });
+  fs.mkdirSync(legacyRunsDirOf(worktree), { recursive: true });
 
   const target = resolveRunsDir(worktree);
 
   assert.ok(target, "resolveRunsDir must resolve inside a worktree");
   assert.equal(canonicalPath(target.repoRoot), canonicalPath(worktree));
-  assert.equal(canonicalPath(target.dir), canonicalPath(runsDirOf(worktree)));
-  assert.notEqual(canonicalPath(target.dir), canonicalPath(runsDirOf(main)));
+  assert.equal(path.basename(target.dir), "runs");
+  assert.equal(path.basename(path.dirname(target.dir)), "aidd");
+  assert.equal(
+    canonicalPath(path.dirname(path.dirname(target.dir))),
+    canonicalPath(path.join(main, ".git")),
+  );
 });
 
 function makeTempDir(prefix) {
@@ -645,7 +651,7 @@ function makeTempRepo({ remote, withRunsDir = true, withConfig = true } = {}) {
     execFileSync("git", ["remote", "add", "origin", remote], { cwd: dir, env: CLEAN_ENV });
   }
   if (withRunsDir) {
-    fs.mkdirSync(path.join(dir, "aidd_docs", "runs"), { recursive: true });
+    fs.mkdirSync(legacyRunsDirOf(dir), { recursive: true });
   }
   if (withConfig) {
     writeTelemetryConfig(dir, { enabled: true });
@@ -660,7 +666,20 @@ function writeTelemetryConfig(repo, { enabled = true, endpoint = "http://127.0.0
   fs.writeFileSync(path.join(dir, "config.json"), content);
 }
 
+// Where the hook writes: under the clone's common git directory, which every worktree of
+// one clone shares. Asked of git rather than joined by hand, so a linked worktree resolves
+// to its main repository's directory exactly as the hook does.
 function runsDirOf(repo) {
+  const commonDir = execFileSync("git", ["rev-parse", "--git-common-dir"], {
+    cwd: repo,
+    encoding: "utf8",
+    env: CLEAN_ENV,
+  }).trim();
+  return path.join(path.resolve(repo, commonDir), "aidd", "runs");
+}
+
+// The pre-move location. Still created by some fixtures to prove it is ignored, never written.
+function legacyRunsDirOf(repo) {
   return path.join(repo, "aidd_docs", "runs");
 }
 
@@ -781,12 +800,13 @@ test("a session writes nothing and exits 0 when .aidd/config.json is absent, eve
     );
     assert.equal(result.status, 0);
     assert.equal(readRunFiles(runsDirOf(repo)).length, 0);
+    assert.equal(fs.existsSync(runsDirOf(repo)), false);
   } finally {
     cleanup(repo);
   }
 });
 
-test("aidd_docs/runs/ is no longer a permission: a switched-on session creates it on demand when it does not exist yet", () => {
+test("the run journal directory is no permission: a switched-on session creates it on demand when it does not exist yet", () => {
   const repo = makeTempRepo({ remote: "git@github.com:acme/dir-on-demand.git", withRunsDir: false });
   try {
     assert.equal(fs.existsSync(runsDirOf(repo)), false);
@@ -965,7 +985,7 @@ test("AIDD_TELEMETRY unset, empty, or any other value is not a choice — never 
   }
 });
 
-test("a session writes exactly one file directly under aidd_docs/runs/ when opted in, its session_start line carrying exactly the documented keys", () => {
+test("a session writes exactly one file directly under the common git directory's aidd/runs/ when opted in, its session_start line carrying exactly the documented keys", () => {
   const repo = makeTempRepo({ remote: "git@github.com:acme/opted-in.git" });
   try {
     const sessionId = "00000000-0000-4000-8000-000000000002";
@@ -1426,7 +1446,7 @@ test("vendor_field names the export-side attribute, and vendor_id is the same se
   }
 });
 
-test("two repositories with different remotes each write into their own aidd_docs/runs/, keyed on the repository root rather than project_id", () => {
+test("two repositories with different remotes each write into their own common git directory, keyed on the repository root rather than project_id", () => {
   const repoA = makeTempRepo({ remote: "git@github.com:acme/repo-a.git" });
   const repoB = makeTempRepo({ remote: "git@github.com:acme/repo-b.git" });
   try {
@@ -2285,10 +2305,10 @@ test("in a real temporary git repo: the marker files are tracked, a record file 
     const rules = readRunsGitignoreBlock();
     fs.writeFileSync(path.join(repo, ".gitignore"), `${rules.join("\n")}\n`);
 
-    const runsPath = runsDirOf(repo);
-    fs.mkdirSync(runsPath, { recursive: true });
-    fs.writeFileSync(path.join(runsPath, ".gitkeep"), "");
-    fs.writeFileSync(path.join(runsPath, "README.md"), "marker\n");
+    const markersPath = legacyRunsDirOf(repo);
+    fs.mkdirSync(markersPath, { recursive: true });
+    fs.writeFileSync(path.join(markersPath, ".gitkeep"), "");
+    fs.writeFileSync(path.join(markersPath, "README.md"), "marker\n");
 
     execFileSync("git", ["add", "-A"], { cwd: repo, env: CLEAN_ENV });
     execFileSync("git", ["commit", "-q", "-m", "opt into the run journal"], { cwd: repo, env: CLEAN_ENV });
@@ -2303,13 +2323,12 @@ test("in a real temporary git repo: the marker files are tracked, a record file 
     const result = replayIn(makePayload({ cwd: repo, sessionId, event: "SessionStart" }));
     assert.equal(result.status, 0);
 
-    const recordFiles = fs.readdirSync(runsPath).filter((f) => f.endsWith(".jsonl"));
-    assert.equal(recordFiles.length, 1, "the record did not land in aidd_docs/runs/");
-    const recordPath = path.join(runsPath, recordFiles[0]);
+    const recordFiles = readRunFiles(runsDirOf(repo));
+    assert.equal(recordFiles.length, 1, "the record did not land under the common git directory");
+    const recordPath = recordFiles[0];
     assert.ok(fs.existsSync(recordPath), "the record must be present on disk");
 
-    const checkIgnore = spawnSync("git", ["check-ignore", "-q", recordPath], { cwd: repo, env: CLEAN_ENV });
-    assert.equal(checkIgnore.status, 0, "the record file must be recognised as git-ignored");
+    assert.equal(fs.readdirSync(markersPath).filter((f) => f.endsWith(".jsonl")).length, 0, "no record may land in aidd_docs/runs/ any more");
 
     execFileSync("git", ["add", "-A"], { cwd: repo, env: CLEAN_ENV });
     const status = execFileSync("git", ["status", "--porcelain"], { cwd: repo, encoding: "utf8", env: CLEAN_ENV });
@@ -3500,14 +3519,14 @@ function makeWorktree(repo, name) {
     cwd: repo,
     env: CLEAN_ENV,
   });
-  fs.mkdirSync(runsDirOf(worktree), { recursive: true });
+  fs.mkdirSync(legacyRunsDirOf(worktree), { recursive: true });
   writeTelemetryConfig(worktree, { enabled: true });
   return worktree;
 }
 
-function sessionStartLineIn(dir) {
-  const [file] = readRunFiles(runsDirOf(dir));
-  assert.ok(file, `no run file was written under ${runsDirOf(dir)}`);
+function sessionStartLineIn(dir, sessionId) {
+  const file = readRunFiles(runsDirOf(dir)).find((f) => path.basename(f).endsWith(`__${sessionId}.jsonl`));
+  assert.ok(file, `no run file for ${sessionId} under ${runsDirOf(dir)}`);
   return readLines(file)[0];
 }
 
@@ -3521,7 +3540,7 @@ test("a session in a linked worktree names the worktree it ran in and the reposi
       );
     });
 
-    const line = sessionStartLineIn(worktree);
+    const line = sessionStartLineIn(worktree, "wt-named-session");
     assert.equal(line.worktree_id, path.basename(worktree));
     assert.equal(line.worktree_repo_id, path.basename(repo));
   } finally {
@@ -3539,8 +3558,8 @@ test("two sessions from two worktrees of one repository are distinguishable in t
       processPayload(makePayload({ cwd: second, sessionId: "wt-beta", event: "SessionStart" }));
     });
 
-    const alpha = sessionStartLineIn(first);
-    const beta = sessionStartLineIn(second);
+    const alpha = sessionStartLineIn(first, "wt-alpha");
+    const beta = sessionStartLineIn(second, "wt-beta");
     assert.notEqual(alpha.worktree_id, beta.worktree_id);
     // Both worktrees carry the same repository. Without this field they would not: with no
     // remote, project_id falls back to each worktree's own directory name.
@@ -3559,12 +3578,65 @@ test("a session in a plain checkout carries no worktree field at all - not null,
       );
     });
 
-    const line = sessionStartLineIn(repo);
+    const line = sessionStartLineIn(repo, "plain-checkout-session");
     // An empty string would gather every plain checkout into one group as though they were
     // the same worktree; the exact key set is what proves neither key is there at all.
     assert.deepEqual(Object.keys(line).sort(), SESSION_START_KEYS);
     assert.equal("worktree_id" in line, false);
     assert.equal("worktree_repo_id" in line, false);
+  } finally {
+    cleanup(repo);
+  }
+});
+
+test("a session in a linked worktree writes into the main repository's .git/aidd/runs, never into the worktree", () => {
+  const repo = makeTempRepo({ remote: "git@github.com:acme/worktree-shared.git" });
+  const worktree = makeWorktree(repo, "shared");
+  try {
+    withEnv({ AIDD_RUNS_DIR: "" }, () => {
+      processPayload(makePayload({ cwd: worktree, sessionId: "wt-shared", event: "SessionStart" }));
+    });
+    const shared = readRunFiles(path.join(repo, ".git", "aidd", "runs"));
+    assert.equal(shared.filter((f) => path.basename(f).endsWith("__wt-shared.jsonl")).length, 1);
+    assert.equal(readRunFiles(legacyRunsDirOf(worktree)).length, 0, "nothing may land in the worktree's own aidd_docs/runs/");
+  } finally {
+    cleanup(repo, worktree);
+  }
+});
+
+test("the main checkout and a linked worktree write into one directory", () => {
+  const repo = makeTempRepo({ remote: "git@github.com:acme/worktree-one-dir.git" });
+  const worktree = makeWorktree(repo, "onedir");
+  try {
+    withEnv({ AIDD_RUNS_DIR: "" }, () => {
+      processPayload(makePayload({ cwd: repo, sessionId: "main-session", event: "SessionStart" }));
+      processPayload(makePayload({ cwd: worktree, sessionId: "wt-session", event: "SessionStart" }));
+    });
+    assert.equal(canonicalPath(runsDirOf(repo)), canonicalPath(runsDirOf(worktree)));
+    const names = readRunFiles(runsDirOf(repo)).map((f) => path.basename(f));
+    assert.ok(names.some((n) => n.endsWith("__main-session.jsonl")));
+    assert.ok(names.some((n) => n.endsWith("__wt-session.jsonl")));
+  } finally {
+    cleanup(repo, worktree);
+  }
+});
+
+test("git worktree remove, without --force, leaves the worktree's journal in place", () => {
+  const repo = makeTempRepo({ remote: "git@github.com:acme/worktree-removed.git" });
+  const worktree = makeWorktree(repo, "removed");
+  try {
+    // makeWorktree leaves an untracked .aidd/config.json, which would make
+    // `git worktree remove` refuse. Ignore it the way a real project's .gitignore would;
+    // info/exclude lives in the common dir, so it applies to every worktree.
+    fs.mkdirSync(path.join(repo, ".git", "info"), { recursive: true });
+    fs.appendFileSync(path.join(repo, ".git", "info", "exclude"), "\n.aidd/\naidd_docs/\n");
+    withEnv({ AIDD_RUNS_DIR: "" }, () => {
+      processPayload(makePayload({ cwd: worktree, sessionId: "wt-removed", event: "SessionStart" }));
+    });
+    execFileSync("git", ["worktree", "remove", worktree], { cwd: repo, env: CLEAN_ENV });
+    assert.equal(fs.existsSync(worktree), false, "the worktree itself must be gone");
+    const names = readRunFiles(path.join(repo, ".git", "aidd", "runs")).map((f) => path.basename(f));
+    assert.ok(names.some((n) => n.endsWith("__wt-removed.jsonl")), "the journal must outlive the worktree");
   } finally {
     cleanup(repo);
   }
@@ -3612,7 +3684,7 @@ test("a plain checkout that happens to live in a directory named 'worktrees' is 
       );
     });
 
-    assert.deepEqual(Object.keys(sessionStartLineIn(repo)).sort(), SESSION_START_KEYS);
+    assert.deepEqual(Object.keys(sessionStartLineIn(repo, "worktrees-named-repo")).sort(), SESSION_START_KEYS);
   } finally {
     cleanup(parent);
   }

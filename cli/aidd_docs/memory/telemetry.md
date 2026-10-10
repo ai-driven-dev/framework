@@ -12,7 +12,7 @@ What a session cost, measured from files each AI tool already wrote, stored per 
 
 - Written by the plugin hook, not the CLI: `plugins/aidd-telemetry/hooks/journal.cjs` reads stdin, detects the host, dispatches to `hooks/lib/`.
 - `record.cjs` mints a run id, appends `session_start`/`turn_end`; `step-starts.cjs`, `step-ends.cjs`, `task-declared.cjs`, `file-writes.cjs` append the rest; `repo.cjs` resolves paths and tightens permissions; `trailer-repair.cjs` backs the commit trailer; `opencode-plugin.js` is OpenCode's own entry.
-- Lives at the git root above the project: `kernel/paths.ts`'s `resolvedRunsDir` walks up via `repositoryRootAbove`. `AIDD_RUNS_DIR` overrides, read alike by `hooks/lib/repo.cjs` and the CLI.
+- Lives under the clone's common git directory: `kernel/paths.ts`'s `resolvedRunsDir` finds it from files via `kernel/reading/git-common-dir.ts`, and `legacyRunsDirs` adds each live checkout's pre-move `aidd_docs/runs` for reading only. `AIDD_RUNS_DIR` overrides both, read alike by `hooks/lib/repo.cjs` and the CLI.
 
 ## Report
 

@@ -941,9 +941,20 @@ describe("DiagnoseTelemetryUseCase — what each journal contributes to the clai
       verdict: "fail",
       reason: "recorder-declared-nowhere",
       detail:
-        "no run file in aidd_docs/runs — the hook has never been observed firing, and the " +
+        "no run file in /fake/project/aidd_docs/runs — the hook has never been observed firing, and the " +
         "recorder is declared nowhere this build checks",
     });
+  });
+
+  it("names every directory it read run files from, an earlier version's included", async () => {
+    const { useCase, journalReader } = buildUseCase({});
+    journalReader.legacyRunsDirs = ["/fake/wt/aidd_docs/runs"];
+
+    const result = claimsOf(await useCase.execute(runOptions()));
+
+    expect(result.claims[0]?.detail).toMatch(
+      /^no run file in \/fake\/project\/aidd_docs\/runs \(and \/fake\/wt\/aidd_docs\/runs\) — /u
+    );
   });
 
   it("never asks Codex's hook trust for a session another tool anchors", async () => {

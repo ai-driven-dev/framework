@@ -57,7 +57,7 @@ async function seedTornRunFile(projectDir: string): Promise<void> {
 }
 
 async function seedUnrecognisedPayload(projectDir: string, at: string): Promise<void> {
-  const runsDir = join(projectDir, "aidd_docs", "runs");
+  const runsDir = join(projectDir, ".git", "aidd", "runs");
   await mkdir(runsDir, { recursive: true });
   await writeFile(
     join(runsDir, "_unrecognised.jsonl"),

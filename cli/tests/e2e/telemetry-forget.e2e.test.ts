@@ -207,7 +207,7 @@ describe("aidd telemetry forget — shows, confirms, removes, and names what his
     const { projectDir, fakeHome, cleanup } = await createTestEnv("forget-refused-real");
     try {
       await gitInit(projectDir);
-      const runsDir = join(projectDir, "aidd_docs", "runs");
+      const runsDir = join(projectDir, ".git", "aidd", "runs");
       await mkdir(join(runsDir, "adir.jsonl"), { recursive: true });
       await seedSinkDayFile(fakeHome, "2026-08-20.jsonl", sinkRecordLine("s-1"));
       await seedIdentity(fakeHome, "11111111-1111-1111-1111-111111111111");
@@ -218,7 +218,9 @@ describe("aidd telemetry forget — shows, confirms, removes, and names what his
       expect(result.stdout).toMatch(
         /This project's run journal: 0 removed, 1 could not be removed/u
       );
-      expect(result.stderr).toMatch(/Could not remove journal run file adir\.jsonl/u);
+      expect(result.stderr).toMatch(
+        /Could not remove journal run file \S*aidd[\\/]runs[\\/]adir\.jsonl/u
+      );
       expect(await entries(runsDir)).toEqual(["adir.jsonl"]);
       expect(result.stdout).toMatch(/This machine's stored records: 1 removed/u);
       expect(result.stdout).toMatch(/This machine's identity: 1 removed/u);
@@ -266,7 +268,10 @@ describe("aidd telemetry forget — shows, confirms, removes, and names what his
       const result = await runCli(["telemetry", "forget", "--yes"], projectDir, fakeHome);
 
       expect(result.exitCode, result.stderr).toBe(0);
-      expect(result.stdout).toMatch(/This project's run journal: 1 removed/u);
+      expect(result.stdout).toMatch(/This project's run journal: 0 removed/u);
+      expect(result.stdout).toMatch(
+        /An earlier run journal, from before it moved under the git directory \(.+\): 1 removed/u
+      );
       expect(result.stdout).toMatch(/This machine's stored records: 2 removed/u);
       expect(result.stdout).toMatch(/This machine's identity: 1 removed/u);
       expect(await entries(join(projectDir, "aidd_docs", "runs"))).toEqual([]);

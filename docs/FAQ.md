@@ -59,7 +59,7 @@ installed.
 
 | Where | What |
 | --- | --- |
-| `aidd_docs/runs/` in your repository, git-ignored | which session served which task, which skill was running when, and which files inside a task folder changed |
+| `.git/aidd/runs/` in your clone, outside every working tree | which session served which task, which skill was running when, and which files inside a task folder changed |
 | `~/.config/aidd/telemetry/` | token counts and model names, read out of the transcript your AI tool already wrote |
 
 **No prompt, no code, no diff** — the stored shape is an allowlist, field by field, in

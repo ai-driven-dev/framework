@@ -7,6 +7,7 @@ import {
 function preview(overrides: Partial<TelemetryRemovalPreview> = {}): TelemetryRemovalPreview {
   return {
     journal: { scope: "project", path: "/repo/aidd_docs/runs", runFileNames: [] },
+    legacyJournals: [],
     sink: { scope: "machine", path: "/home/.config/aidd/telemetry", dayFileNames: [] },
     identity: {
       scope: "machine",
@@ -51,6 +52,18 @@ describe("telemetryRemovalIsEmpty()", () => {
       telemetryRemovalIsEmpty(
         preview({
           journal: { scope: "project", path: "/repo/aidd_docs/runs", runFileNames: ["a.jsonl"] },
+        })
+      )
+    ).toBe(false);
+  });
+
+  it("is not empty when only a legacy journal holds run files", () => {
+    expect(
+      telemetryRemovalIsEmpty(
+        preview({
+          legacyJournals: [
+            { scope: "project", path: "/wt/aidd_docs/runs", runFileNames: ["a.jsonl"] },
+          ],
         })
       )
     ).toBe(false);

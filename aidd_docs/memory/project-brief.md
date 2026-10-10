@@ -26,7 +26,7 @@ What this project is, the problem it solves, and its domain language. The non-de
 | Memory | the bank under `aidd_docs/memory/`, loaded every session |
 | Marketplace | `.claude-plugin/marketplace.json`, the plugin registry |
 | Concern | what a plugin owns; decides where a capability lives |
-| Run journal | what a session did, appended by a hook under `aidd_docs/runs/` |
+| Run journal | what a session did, appended by a hook under the clone's common git directory (`<git common dir>/aidd/runs/`) |
 | Promote | sending `next` to `main`, which opens the release |
 
 ## Key features

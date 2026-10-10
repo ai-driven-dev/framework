@@ -1,3 +1,4 @@
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import type { TelemetryRemovalPreview } from "../../../src/contexts/telemetry/domain/telemetry-removal.js";
 import {
@@ -10,6 +11,7 @@ import { CapturingOutput } from "../../helpers/ports/capturing-output.js";
 function preview(overrides: Partial<TelemetryRemovalPreview> = {}): TelemetryRemovalPreview {
   return {
     journal: { scope: "project", path: "/repo/aidd_docs/runs", runFileNames: [] },
+    legacyJournals: [],
     sink: { scope: "machine", path: "/home/.config/aidd/telemetry", dayFileNames: [] },
     identity: {
       scope: "machine",
@@ -65,6 +67,26 @@ describe("printTelemetryForgetPreview", () => {
       "  This project's run journal (/repo/aidd_docs/runs): 3 run file(s)",
       "  This machine's stored records — every project measured on this machine " +
         "(/home/.config/aidd/telemetry): 2 day file(s)",
+      "  This machine's identity (/home/.config/aidd/identity.json): nothing to remove",
+      NO_REPOSITORY,
+    ]);
+  });
+
+  it("lists each earlier journal between the project journal and the machine records", () => {
+    expect(
+      printedPreview({
+        journal: ONE_RUN_FILE,
+        legacyJournals: [
+          { scope: "project", path: "/wt/aidd_docs/runs", runFileNames: ["a.jsonl", "b.jsonl"] },
+        ],
+      })
+    ).toEqual([
+      "This would remove:",
+      "  This project's run journal (/repo/aidd_docs/runs): 1 run file(s)",
+      "  An earlier run journal, from before it moved under the git directory " +
+        "(/wt/aidd_docs/runs): 2 run file(s)",
+      "  This machine's stored records — every project measured on this machine " +
+        "(/home/.config/aidd/telemetry): 0 day file(s)",
       "  This machine's identity (/home/.config/aidd/identity.json): nothing to remove",
       NO_REPOSITORY,
     ]);
@@ -176,6 +198,8 @@ describe("printTelemetryForgetResult", () => {
 
     printTelemetryForgetResult(output, {
       journal: { removed: 3, failed: [] },
+      journalPath: "/repo/aidd_docs/runs",
+      legacyJournals: [],
       sink: { removed: 2, failed: [] },
       identity: { removed: 1, failed: [] },
       history: { certainty: "none" },
@@ -198,6 +222,8 @@ describe("printTelemetryForgetResult", () => {
 
     printTelemetryForgetResult(output, {
       journal: { removed: 1, failed: [{ path: "b.jsonl", reason: "EACCES" }] },
+      journalPath: "/repo/aidd_docs/runs",
+      legacyJournals: [],
       sink: { removed: 0, failed: [{ path: "2026-03-02.jsonl", reason: "EPERM" }] },
       identity: { removed: 0, failed: [{ path: "identity.json", reason: "EBUSY" }] },
       history: { certainty: "none" },
@@ -207,9 +233,36 @@ describe("printTelemetryForgetResult", () => {
       "  This project's run journal: 1 removed, 1 could not be removed",
       "  This machine's stored records: 0 removed, 1 could not be removed",
       "  This machine's identity: 0 removed, 1 could not be removed",
-      "Could not remove journal run file b.jsonl — EACCES",
+      `Could not remove journal run file ${join("/repo/aidd_docs/runs", "b.jsonl")} — EACCES`,
       "Could not remove sink day file 2026-03-02.jsonl — EPERM",
       "Could not remove identity file identity.json — EBUSY",
+    ]);
+  });
+
+  it("reports each earlier journal on its own line, and names the directory of a file it could not remove", () => {
+    const output = new CapturingOutput();
+
+    printTelemetryForgetResult(output, {
+      journal: { removed: 1, failed: [] },
+      journalPath: "/repo/aidd_docs/runs",
+      legacyJournals: [
+        {
+          path: "/wt/aidd_docs/runs",
+          outcome: { removed: 1, failed: [{ path: "x.jsonl", reason: "EACCES" }] },
+        },
+      ],
+      sink: { removed: 0, failed: [] },
+      identity: { removed: 0, failed: [] },
+      history: { certainty: "none" },
+    });
+
+    expect(output.lines.slice(1, 6)).toEqual([
+      "  This project's run journal: 1 removed",
+      "  An earlier run journal, from before it moved under the git directory " +
+        "(/wt/aidd_docs/runs): 1 removed, 1 could not be removed",
+      "  This machine's stored records: 0 removed",
+      "  This machine's identity: 0 removed",
+      `Could not remove earlier journal run file ${join("/wt/aidd_docs/runs", "x.jsonl")} — EACCES`,
     ]);
   });
 
@@ -218,6 +271,8 @@ describe("printTelemetryForgetResult", () => {
 
     printTelemetryForgetResult(output, {
       journal: { removed: 0, failed: [] },
+      journalPath: "/repo/aidd_docs/runs",
+      legacyJournals: [],
       sink: { removed: 0, failed: [] },
       identity: { removed: 0, failed: [] },
       history: { certainty: "none" },

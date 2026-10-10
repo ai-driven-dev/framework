@@ -24,7 +24,7 @@ describe("task_declared, from the hook that writes it to the reader that reads i
     execFileSync("git", ["init", "-q", projectRoot], {
       env: environmentWithoutGitVariables(process.env),
     });
-    runsDir = join(projectRoot, "aidd_docs", "runs");
+    runsDir = join(projectRoot, ".git", "aidd", "runs");
     await mkdir(runsDir, { recursive: true });
     await mkdir(join(projectRoot, ".aidd"), { recursive: true });
     await writeFile(

@@ -36,7 +36,7 @@ describe("a person's own refusal, without touching a tracked file", () => {
 
   async function runFileCount(projectDir: string): Promise<number> {
     try {
-      const files = await readdir(`${projectDir}/aidd_docs/runs`);
+      const files = await readdir(`${projectDir}/.git/aidd/runs`);
       return files.filter((f) => f.endsWith(".jsonl")).length;
     } catch {
       return 0;

@@ -72,6 +72,7 @@ function emptyReport() {
 
 const NOTHING_TO_REMOVE: TelemetryRemovalPreview = {
   journal: { scope: "project", path: "/repo/aidd_docs/runs", runFileNames: [] },
+  legacyJournals: [],
   sink: { scope: "machine", path: "/records", dayFileNames: [] },
   identity: { scope: "machine", path: "/h/identity.json", present: false, unreadable: false },
   history: { certainty: "none" },
@@ -104,6 +105,8 @@ beforeEach(() => {
   forgetPreview.mockResolvedValue(NOTHING_TO_REMOVE);
   forgetRemove.mockResolvedValue({
     journal: { removed: 0, failed: [] },
+    journalPath: "/repo/aidd_docs/runs",
+    legacyJournals: [],
     sink: { removed: 0, failed: [] },
     identity: { removed: 0, failed: [] },
     history: { certainty: "none" },

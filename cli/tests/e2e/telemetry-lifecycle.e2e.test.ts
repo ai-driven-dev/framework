@@ -130,14 +130,14 @@ describe("measurement, from nothing to off and back", () => {
   }
 
   async function runFiles(): Promise<readonly string[]> {
-    const dir = join(projectDir, "aidd_docs", "runs");
+    const dir = join(projectDir, ".git", "aidd", "runs");
     return existsSync(dir) ? await readdir(dir) : [];
   }
 
   /** Counting files would miss a session that carries on: a run file is named for its
    * session, so a second turn appends to the file the first turn opened. */
   async function journalLines(): Promise<number> {
-    const dir = join(projectDir, "aidd_docs", "runs");
+    const dir = join(projectDir, ".git", "aidd", "runs");
     let total = 0;
     for (const name of await runFiles()) {
       total += (await readFile(join(dir, name), "utf8")).trim().split("\n").filter(Boolean).length;

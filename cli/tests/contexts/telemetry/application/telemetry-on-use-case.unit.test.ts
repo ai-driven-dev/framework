@@ -259,7 +259,8 @@ describe("TelemetryOnUseCase — what it says, word for word", () => {
   const IGNORED_LINE =
     "Added aidd_docs/runs/ to .gitignore — the journal names no person, only the " +
     "repository, the task folders written into, the skills run, and their timings. " +
-    "Delete that line to commit it instead.";
+    "It keeps journals an earlier version wrote there out of a commit; new ones land under " +
+    "the clone's git directory, which no commit reaches.";
 
   it("names the command in the refusal it throws without --yes", async () => {
     const { useCase } = buildUseCase();

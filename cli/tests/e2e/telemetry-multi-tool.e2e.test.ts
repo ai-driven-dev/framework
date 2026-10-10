@@ -270,9 +270,12 @@ describe("aidd telemetry, across every tool that can be read", () => {
     await journalCodexSessionBackdated();
     await readEveryTool();
 
-    const runFiles = await readdir(join(projectDir, "aidd_docs", "runs"));
+    const runFiles = await readdir(join(projectDir, ".git", "aidd", "runs"));
     const claudeRun = runFiles.find((name) => name.endsWith(`__${CLAUDE_SESSION}.jsonl`));
-    const journal = await readFile(join(projectDir, "aidd_docs", "runs", claudeRun ?? ""), "utf8");
+    const journal = await readFile(
+      join(projectDir, ".git", "aidd", "runs", claudeRun ?? ""),
+      "utf8"
+    );
     expect(journal).toContain('"file_written"');
 
     const result = await cli([

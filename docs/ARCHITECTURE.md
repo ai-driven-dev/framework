@@ -81,7 +81,7 @@ Place each capability in its owning concern and delegate to it.
 | Concern | Contract |
 | --- | --- |
 | Consent | Committed `.aidd/config.json` with `telemetry.enabled: true`; a directory grants no permission. |
-| Writing | Git-ignored, append-only session observations. |
+| Writing | Append-only session observations, one directory per clone under its common git directory, outside every working tree. |
 | Reading | Derive task identity and join provider measurements. |
 
 See the [journal contract](../aidd_docs/runs/README.md).

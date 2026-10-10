@@ -16,7 +16,13 @@ export class InMemoryRunJournalReader implements RunJournalStore {
   readonly deletedFromDirs: string[] = [];
   readonly undeletable = new Set<string>();
   listCalls = 0;
+  legacyRunsDirs: readonly string[] = [];
+  readonly legacyRunFileNames = new Map<string, string[]>();
   private readonly journals = new Map<string, RunJournal>();
+
+  async listRunFilesIn(dir: string): Promise<readonly string[]> {
+    return dir === this.runsDir ? this.runFileNames : (this.legacyRunFileNames.get(dir) ?? []);
+  }
 
   set(sessionId: string, journal: RunJournal): void {
     this.journals.set(sessionId, journal);
@@ -42,7 +48,14 @@ export class InMemoryRunJournalReader implements RunJournalStore {
   async deleteRunFile(dir: string, fileName: string): Promise<void> {
     if (this.undeletable.has(fileName)) throw new Error(`cannot delete ${fileName}`);
     this.deletedFromDirs.push(dir);
-    this.runFileNames = this.runFileNames.filter((name) => name !== fileName);
+    if (dir === this.runsDir) {
+      this.runFileNames = this.runFileNames.filter((name) => name !== fileName);
+    } else {
+      const remaining = (this.legacyRunFileNames.get(dir) ?? []).filter(
+        (name) => name !== fileName
+      );
+      this.legacyRunFileNames.set(dir, remaining);
+    }
     this.deletedFiles.push(fileName);
   }
 }
@@ -51,6 +64,8 @@ export class InMemoryRunJournalReader implements RunJournalStore {
  * a session with telemetry enabled but no journal beside it would read. */
 export const NULL_RUN_JOURNAL_READER: RunJournalStore = {
   runsDir: "/fake/project/aidd_docs/runs",
+  legacyRunsDirs: [],
+  listRunFilesIn: async () => [],
   read: async () => null,
   list: async () => [],
   listRunFiles: async () => [],

@@ -499,13 +499,13 @@ describe("a payload that matched no known host", () => {
     });
   });
 
-  // The hook writing this file anchors at the repository root, never at the directory a
+  // The hook writes this file under the common git directory, never beside the directory a
   // session started from, so a reader must walk up rather than join onto `projectRoot`.
   it("finds the file from a subdirectory of the repository, not only from its root", async () => {
     const root = project();
     mkdirSync(join(root, ".git"), { recursive: true });
     write(
-      join(root, "aidd_docs", "runs", "_unrecognised.jsonl"),
+      join(root, ".git", "aidd", "runs", "_unrecognised.jsonl"),
       `${JSON.stringify({ type: "unrecognised_payload", at: "2026-03-02T08:00:00Z" })}\n`
     );
     const subdirectory = join(root, "packages", "app");

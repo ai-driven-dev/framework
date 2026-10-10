@@ -17,6 +17,11 @@ Enable measurement, work in a session, then report and verify. Use skills or CLI
 skills stop and explain when `aidd` cannot answer.
 Report after the turn: hooks fire before its tokens are durably written.
 
+**Update `aidd` before this plugin.** This plugin journals under the clone's common git
+directory; an `aidd` released before that move reads only `aidd_docs/runs/`, so with a newer
+plugin it reports no new session and `aidd telemetry forget` misses them. A newer `aidd` still
+reads journals an older plugin wrote, so updating the CLI first is always safe.
+
 | Ask your tool for | It runs | You get |
 | --- | --- | --- |
 | `00-init` | `aidd telemetry on`, then reads a run file back | project opt-in and recording proof |
@@ -80,8 +85,9 @@ Usage groups: step, model, task, flow, tool and person. Attribution states its e
 ### Stored data
 
 Recording is local and opt-in, with no export, prompts, code or diffs. Hooks append one
-line per observation to git-ignored `aidd_docs/runs/<run_id>__<vendor_id>.jsonl`, never
-rewriting it or recording tokens, cost or model. Joined measurement records are stored under
+line per observation to `<git common dir>/aidd/runs/<run_id>__<vendor_id>.jsonl`, one
+directory per clone that every worktree shares and no commit can reach, never rewriting it
+or recording tokens, cost or model. Joined measurement records are stored under
 `~/.config/aidd/telemetry/` according to [the record contract](../../aidd_docs/product/metrics-contract.md).
 
 ### Privacy controls

@@ -25,7 +25,7 @@ describe("file_written, from the hook that writes it to the reader that reads it
     execFileSync("git", ["init", "-q", projectRoot], {
       env: environmentWithoutGitVariables(process.env),
     });
-    runsDir = join(projectRoot, "aidd_docs", "runs");
+    runsDir = join(projectRoot, ".git", "aidd", "runs");
     await mkdir(runsDir, { recursive: true });
     await mkdir(join(projectRoot, "aidd_docs", "tasks", "2026_08", "2026_08_21_cost-reporter"), {
       recursive: true,

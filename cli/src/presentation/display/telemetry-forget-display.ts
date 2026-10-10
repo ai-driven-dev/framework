@@ -1,3 +1,4 @@
+import { join } from "node:path";
 import type {
   TelemetryRemovalFailure,
   TelemetryRemovalOutcome,
@@ -81,6 +82,11 @@ export function printTelemetryForgetPreview(
     `  This project's run journal (${preview.journal.path}): ` +
       `${preview.journal.runFileNames.length} run file(s)`
   );
+  for (const legacy of preview.legacyJournals) {
+    output.print(
+      `  ${earlierJournalLabel(legacy.path)}: ` + `${legacy.runFileNames.length} run file(s)`
+    );
+  }
   output.print(
     `  This machine's stored records — every project measured on this machine ` +
       `(${preview.sink.path}): ${preview.sink.dayFileNames.length} day file(s)`
@@ -110,6 +116,17 @@ function outcomeLine(label: string, outcome: TelemetryRemovalOutcome): string {
   return `  ${label}: ${outcome.removed} removed${failedNote}`;
 }
 
+function inDirectory(
+  dir: string,
+  failures: readonly TelemetryRemovalFailure[]
+): readonly TelemetryRemovalFailure[] {
+  return failures.map((failure) => ({ ...failure, path: join(dir, failure.path) }));
+}
+
+function earlierJournalLabel(path: string): string {
+  return `An earlier run journal, from before it moved under the git directory (${path})`;
+}
+
 /** What went, and what did not — in counts a person can check against
  * `printTelemetryForgetPreview`'s own counts. */
 export function printTelemetryForgetResult(
@@ -118,9 +135,19 @@ export function printTelemetryForgetResult(
 ): void {
   output.success("AIDD telemetry: removed");
   output.print(outcomeLine("This project's run journal", result.journal));
+  for (const legacy of result.legacyJournals) {
+    output.print(outcomeLine(earlierJournalLabel(legacy.path), legacy.outcome));
+  }
   output.print(outcomeLine("This machine's stored records", result.sink));
   output.print(outcomeLine("This machine's identity", result.identity));
-  printFailures(output, "journal run file", result.journal.failed);
+  printFailures(output, "journal run file", inDirectory(result.journalPath, result.journal.failed));
+  for (const legacy of result.legacyJournals) {
+    printFailures(
+      output,
+      "earlier journal run file",
+      inDirectory(legacy.path, legacy.outcome.failed)
+    );
+  }
   printFailures(output, "sink day file", result.sink.failed);
   printFailures(output, "identity file", result.identity.failed);
   printHistory(output, result.history);

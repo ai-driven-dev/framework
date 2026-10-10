@@ -37,7 +37,7 @@ function makeInstalledRepo() {
   execFileSync("git", ["init", "-q"], { cwd: repo, env: CLEAN_ENV });
   execFileSync("git", ["config", "user.email", "test@example.com"], { cwd: repo, env: CLEAN_ENV });
   execFileSync("git", ["config", "user.name", "Test"], { cwd: repo, env: CLEAN_ENV });
-  fs.mkdirSync(path.join(repo, "aidd_docs", "runs"), { recursive: true });
+  fs.mkdirSync(path.join(repo, ".git", "aidd", "runs"), { recursive: true });
   fs.mkdirSync(path.join(repo, ".aidd"), { recursive: true });
   fs.writeFileSync(
     path.join(repo, ".aidd", "config.json"),
@@ -75,7 +75,7 @@ function makeInstalledRepo() {
 }
 
 function runsDirOf(repo) {
-  return path.join(repo, "aidd_docs", "runs");
+  return path.join(repo, ".git", "aidd", "runs");
 }
 
 function readRunLines(repo) {
