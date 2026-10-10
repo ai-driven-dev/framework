@@ -15,7 +15,7 @@ export const UNRECOGNISED_WORDS =
 export const NOT_STORED_WORDS: Readonly<Record<NotStoredReason, string>> = {
   "outside-repo": "outside any repository",
   "never-seen-alive": "from a directory never seen while it existed",
-  "no-consent": "from a clone that has not opted in",
+  "no-consent": "from a clone with no consent at that time",
   "consent-closed":
     "from a clone whose consent was closed; run `aidd telemetry on` in it to measure again",
   "unreadable-consent":

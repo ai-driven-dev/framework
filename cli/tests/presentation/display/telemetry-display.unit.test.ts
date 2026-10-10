@@ -112,7 +112,7 @@ describe("printIngestResult", () => {
       })
     );
     expect(lines.slice(1)).toEqual([
-      "Not stored: 1 call from a clone that has not opted in.",
+      "Not stored: 1 call from a clone with no consent at that time.",
       "Not stored: 2 calls with no usable time.",
     ]);
   });

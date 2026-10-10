@@ -46,7 +46,7 @@ An unknown value is `null`, never `0`. A report leaves a call out of a counter's
 
 ### Repository
 
-A call's repository is its working directory resolved at ingest: the directory's git root, named by the hash of the `origin` address (`host/owner/repo`), else the root commit. The address itself is never kept. A call is stored only by the rule in [Consent, version 2](#consent-version-2). A call read and left out is counted in `coverage.not_stored` under one reason: `outside-repo`, `never-seen-alive`, `no-consent` (a clone that never opted in), `consent-closed` (its live key names an interval that was closed: the person is told to run `aidd telemetry on`), `unreadable-consent` (a git config or a `.git` git cannot read, a directory or git dir the file system will not let ingest look at, a clone it gives no identity, or a damaged consent log), `no-cwd` or `undated`.
+A call's repository is its working directory resolved at ingest: the directory's git root, named by the hash of the `origin` address (`host/owner/repo`), else the root commit. The address itself is never kept. A call is stored only by the rule in [Consent, version 2](#consent-version-2). A call read and left out is counted in `coverage.not_stored` under one reason: `outside-repo`, `never-seen-alive`, `no-consent` (a clone with no consent at the time of the call: it had not opted in yet, or had turned measurement off), `consent-closed` (its live key names an interval that was closed: the person is told to run `aidd telemetry on`), `unreadable-consent` (a git config or a `.git` git cannot read, a directory or git dir the file system will not let ingest look at, a clone it gives no identity, or a damaged consent log), `no-cwd` or `undated`.
 
 ## The report envelope
 
@@ -201,6 +201,6 @@ Consent is per clone, in the repository's own git config, and is never committed
 Release 1 sends nothing anywhere: no code in the telemetry context or the hooks opens a network connection. Everything above lives on the machine, and `aidd telemetry forget --yes` removes it.
 
 - Local only, never to be sent: `cwd` and `git_branch` in the ledger, the roots in `roots.json`, the process facts, the transcripts themselves.
-- The report, and its envelope, name no path, branch, working directory or whole session id (session and repository appear as short keys in the text). `task` and `forget` print what they act on, so they do name a branch (`Branch feat/x is bound.`) and paths (`forget` lists every entry and repository it would remove), and the lock error names the lock file.
+- The text report names no path, branch, working directory or whole session id (session and repository appear as short keys). The envelope names no path, branch or working directory either, but its `session` keys are whole session ids, as above. `task` and `forget` print what they act on, so they do name a branch (`Branch feat/x is bound.`) and paths (`forget` lists every entry and repository it would remove), and the lock error names the lock file.
 - The person's identity exists only if they chose one with `aidd telemetry identity <id>`; it labels the `person` axis and nothing else.
 - A currency amount is never computed here: the destination owns the price table.

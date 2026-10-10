@@ -87,7 +87,7 @@ describe("aidd telemetry ingest", () => {
     const first = await ingest();
     expect(first.exitCode).toBe(0);
     expect(first.stdout).toContain("4 calls added");
-    expect(first.stdout).toContain("1 call from a clone that has not opted in");
+    expect(first.stdout).toContain("1 call from a clone with no consent at that time");
     const before = await readFile(join(telemetry, "ledger", "2026-10.jsonl"), "utf8");
     const keys = (await ledgerLines()).map((line) => JSON.parse(line).key).sort();
     expect(keys).toEqual(["msg_A:req_A", "msg_B:req_B", "msg_B:req_B#advisor0", "msg_C:req_C"]);
@@ -201,7 +201,7 @@ describe("aidd telemetry ingest", () => {
     git(repoA, gitEnv, "config", "--local", "--unset", "aidd.telemetry");
     const run = await ingest();
     expect(run.stdout).toContain("0 calls added");
-    expect(run.stdout).toContain("5 calls from a clone that has not opted in");
+    expect(run.stdout).toContain("5 calls from a clone with no consent at that time");
     expect(await readdir(join(telemetry, "ledger"))).not.toContain("2026-10.jsonl");
   });
 
@@ -212,7 +212,7 @@ describe("aidd telemetry ingest", () => {
     git(repoA, gitEnv, "config", "--local", "aidd.telemetry", "2");
     const run = await ingest();
     expect(run.stdout).toContain("0 calls added");
-    expect(run.stdout).toContain("5 calls from a clone that has not opted in");
+    expect(run.stdout).toContain("5 calls from a clone with no consent at that time");
   });
 
   it("snapshots the branch declarations of a project that opted in", async () => {
