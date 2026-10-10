@@ -2,7 +2,7 @@ import { mkdir, readdir, readFile, stat, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { git, initRepository, sandboxGitEnv } from "../helpers/git-sandbox.js";
-import { createTestEnv, runCli } from "./helpers.js";
+import { backdateConsent, createTestEnv, runCli } from "./helpers.js";
 
 const AXES = ["total", "person", "session", "model", "day", "repository", "task", "ticket"];
 const COUNTERS = ["input", "output", "cache_read", "cache_write"] as const;
@@ -229,6 +229,7 @@ beforeEach(async () => {
   await writeFile(join(telemetry, "bindings", "carries.jsonl"), `${CARRIES.join("\n")}\n`);
   // Opting in is `on`: a key set by hand opens no consent interval, and nothing is stored.
   expect((await aidd(["on", "--yes"])).exitCode).toBe(0);
+  await backdateConsent(telemetry);
 });
 afterEach(async () => {
   await env.cleanup();

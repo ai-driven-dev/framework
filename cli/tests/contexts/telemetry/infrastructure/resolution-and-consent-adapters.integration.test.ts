@@ -61,30 +61,53 @@ describe("the consent history", () => {
     new ConsentHistoryAdapter(join(root, "ledger"), new PrivateStorageAdapter());
 
   it("is empty before anything is written, and creates nothing", async () => {
-    expect(await history().events()).toEqual([]);
+    expect(await history().read()).toEqual({ events: [], damaged: false });
     await expect(readFile(join(root, "ledger", "consents.jsonl"), "utf8")).rejects.toThrow();
   });
 
   it("is appended to, one event a line, and read back in order", async () => {
     const events = [
-      { clone: CLONE, state: "on", at: "2026-10-01T00:00:00.000Z" },
-      { clone: CLONE, state: "off", at: "2026-10-02T00:00:00.000Z" },
+      { kind: "open", token: "t1", clone: CLONE, at: "2026-10-01T00:00:00.000Z" },
+      { kind: "close", token: "t1", at: "2026-10-02T00:00:00.000Z" },
     ] as const;
     for (const event of events) await history().append(event);
-    expect(await history().events()).toEqual(events);
+    expect(await history().read()).toEqual({ events, damaged: false });
     const lines = (await readFile(join(root, "ledger", "consents.jsonl"), "utf8")).split("\n");
     expect(lines).toHaveLength(3);
     expect(lines[2]).toBe("");
   });
 
-  it("skips a line that is not exactly an event, and keeps the rest", async () => {
-    await history().append({ clone: CLONE, state: "on", at: "2026-10-01T00:00:00.000Z" });
+  it("says a line that is not exactly an event damaged the file, and still reads the rest", async () => {
+    await history().append({
+      kind: "open",
+      token: "t1",
+      clone: CLONE,
+      at: "2026-10-01T00:00:00.000Z",
+    });
+    const file = join(root, "ledger", "consents.jsonl");
+    await writeFile(file, `${await readFile(file, "utf8")}{broken\n`);
+    await history().append({ kind: "close", token: "t1", at: "2026-10-03T00:00:00.000Z" });
+    const records = await history().read();
+    expect(records.damaged).toBe(true);
+    expect(records.events.map((event) => event.kind)).toEqual(["open", "close"]);
+  });
+
+  it("reads a line another process appended, the hooks among them, in the format they write", async () => {
+    await history().append({
+      kind: "open",
+      token: "t1",
+      clone: CLONE,
+      at: "2026-10-01T00:00:00.000Z",
+    });
     const file = join(root, "ledger", "consents.jsonl");
     await writeFile(
       file,
-      `${await readFile(file, "utf8")}{broken\n${JSON.stringify({ clone: CLONE, state: "maybe", at: "2026-10-02T00:00:00.000Z" })}\n`
+      `${await readFile(file, "utf8")}{"token":"t1","close":"2026-10-02T00:00:00.000Z"}\n`
     );
-    await history().append({ clone: CLONE, state: "off", at: "2026-10-03T00:00:00.000Z" });
-    expect((await history().events()).map((event) => event.state)).toEqual(["on", "off"]);
+    expect((await history().read()).events.at(-1)).toEqual({
+      kind: "close",
+      token: "t1",
+      at: "2026-10-02T00:00:00.000Z",
+    });
   });
 });

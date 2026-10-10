@@ -10,7 +10,9 @@ import {
   FakeBranchStore,
   FakeConsents,
   FakeLocator,
+  grantedBy,
   InMemoryBindingsLock,
+  InMemoryConsentHistory,
   InMemorySessions,
   InMemorySnapshots,
 } from "../../../helpers/ports/in-memory-telemetry.js";
@@ -29,12 +31,14 @@ function setup(sessionId: string | null = "sess-1234567890", refusedByEnvironmen
   const locator = new FakeLocator();
   locator.directories.set(CWD, REPOSITORY);
   const consents = new FakeConsents();
-  consents.values.set(CWD, "2");
+  consents.values.set(CWD, grantedBy(cloneOf(`${CWD}/.git`)));
+  const history = new InMemoryConsentHistory();
+  history.consented(cloneOf(`${CWD}/.git`));
   const sessions = new InMemorySessions();
   const branches = new FakeBranchStore();
   const source = new FakeBindings();
   const useCase = new ShowTaskBindingUseCase(
-    new ConsentedRepositories(locator, consents),
+    new ConsentedRepositories(locator, consents, history),
     sessions,
     new BranchDeclarations(
       branches,

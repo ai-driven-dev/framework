@@ -1,6 +1,6 @@
 import { execFile } from "node:child_process";
 import { accessSync, constants, existsSync, mkdtempSync, symlinkSync } from "node:fs";
-import { copyFile, cp, mkdir, mkdtemp, realpath, rm, writeFile } from "node:fs/promises";
+import { copyFile, cp, mkdir, mkdtemp, readFile, realpath, rm, writeFile } from "node:fs/promises";
 import { homedir, tmpdir } from "node:os";
 import { delimiter, dirname, join, resolve } from "node:path";
 import { promisify } from "node:util";
@@ -317,4 +317,20 @@ export async function writeFakeToolBinary(
   await writeFile(join(binDir, name), `#!/bin/sh\necho "$@" >> "${logFile}"\nexit 0\n`, {
     mode: 0o755,
   });
+}
+
+/** The person opted in long ago. A child process cannot be given another clock, so after `on`
+ * every interval it opened is moved back to `since`, and transcripts dated before today fall
+ * inside it. */
+export async function backdateConsent(
+  telemetryDir: string,
+  since = "2026-09-01T00:00:00.000Z"
+): Promise<void> {
+  const file = join(telemetryDir, "ledger", "consents.jsonl");
+  const lines = (await readFile(file, "utf8")).split("\n").filter((line) => line !== "");
+  const moved = lines.map((line) => {
+    const event = JSON.parse(line) as Record<string, unknown>;
+    return JSON.stringify("open" in event ? { ...event, open: since } : event);
+  });
+  await writeFile(file, `${moved.join("\n")}\n`);
 }

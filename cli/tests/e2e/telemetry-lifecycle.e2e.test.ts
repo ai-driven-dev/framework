@@ -83,7 +83,9 @@ describe("aidd telemetry on", () => {
     expect(run.stdout).toContain("Removed the commit hook line");
     expect(run.stdout).toContain("Removed aidd_docs/runs/");
     expect(run.stderr).toContain('"cleanupPeriodDays": 3650');
-    expect(git(repo, box.gitEnv, "config", "--local", "--get", "aidd.telemetry").trim()).toBe("2");
+    expect(git(repo, box.gitEnv, "config", "--local", "--get", "aidd.telemetry").trim()).toMatch(
+      /^2:[0-9a-f-]{36}$/u
+    );
     expect(existsSync(join(repo, ".aidd", "config.json"))).toBe(false);
     expect(run.stdout).toContain("Deleted .aidd/config.json");
     expect(commit()).not.toContain("AIDD-Session-Id");
@@ -135,7 +137,9 @@ describe("aidd telemetry forget", () => {
 
   it("leaves no consent behind in a clone where `on` ran and no session ever did", async () => {
     await cli(["on", "--yes"]);
-    expect(git(repo, box.gitEnv, "config", "--local", "--get", "aidd.telemetry").trim()).toBe("2");
+    expect(git(repo, box.gitEnv, "config", "--local", "--get", "aidd.telemetry").trim()).toMatch(
+      /^2:[0-9a-f-]{36}$/u
+    );
     const removed = await cli(["forget", "--yes"]);
     expect(removed.exitCode).toBe(0);
     expect(removed.stdout).toContain("the consent (aidd.telemetry)");

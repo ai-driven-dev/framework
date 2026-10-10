@@ -47,14 +47,14 @@ export function identityFromStat(path: string, stat: StatFacts): CloneIdentity |
   return { path, dev: String(stat.dev), ino: String(stat.ino), birthtimeMs: Number(born) };
 }
 
-/** Whether two looks found the same clone: every part of the identity is the same. */
-export function sameClone(a: CloneIdentity, b: CloneIdentity): boolean {
-  return a.path === b.path && a.dev === b.dev && a.ino === b.ino && a.birthtimeMs === b.birthtimeMs;
-}
-
 /** A clone as a map key: two identities have one key exactly when they are the same clone. */
 export function cloneKey(clone: CloneIdentity): string {
   return `${clone.dev}:${clone.ino}:${clone.birthtimeMs}:${clone.path}`;
+}
+
+/** Whether two looks found the same clone: every part of the identity is the same. */
+export function sameClone(a: CloneIdentity, b: CloneIdentity): boolean {
+  return cloneKey(a) === cloneKey(b);
 }
 
 export function parseCloneIdentity(value: unknown): CloneIdentity | null {

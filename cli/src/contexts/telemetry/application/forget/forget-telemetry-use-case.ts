@@ -88,7 +88,11 @@ export class ForgetTelemetryUseCase {
     unlocated: number;
   }> {
     const remembered = [...(await this.resolutions.load()).values()];
-    const consenting = new Set((await this.history.events()).map((event) => event.clone.path));
+    const consenting = new Set(
+      (await this.history.read()).events.flatMap((event) =>
+        event.kind === "open" ? [event.clone.path] : []
+      )
+    );
     const clones = new Set([...remembered.map((r) => r.clone.path), ...consenting]);
     const located = new Set(remembered.map((resolution) => resolution.repository_id));
     const ids = new Set([...(await this.snapshots.latest()).values()].map((s) => s.repository_id));

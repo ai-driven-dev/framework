@@ -16,6 +16,7 @@ import {
   FakeBindings,
   FakeConsents,
   FakeLocator,
+  grantedBy,
   InMemoryBindingsLock,
   InMemoryConsentHistory,
   InMemoryIdentity,
@@ -26,7 +27,6 @@ import {
   InMemoryTranscripts,
 } from "../../../../helpers/ports/in-memory-telemetry.js";
 
-const GRANTED = "2";
 const ANY: Period = { from: null, to: null };
 
 function line(id: string, output: number, at: string, session = "s-1", branch = "feat/a"): string {
@@ -85,7 +85,7 @@ function setup(options: { refused?: boolean } = {}) {
     remote: "https://github.com/acme/widgets.git",
     rootCommit: "c0ffee",
   });
-  consents.cloneSays(cloneOf("/work/a/.git"), GRANTED);
+  consents.cloneSays(cloneOf("/work/a/.git"), grantedBy(cloneOf("/work/a/.git")));
   history.consented(cloneOf("/work/a/.git"));
   const report = new ReportUsageUseCase(
     ingest,

@@ -5,7 +5,7 @@ import { delimiter, dirname, join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { git, initRepository, sandboxGitEnv } from "../helpers/git-sandbox.js";
 import { REPOSITORY_ROOT } from "../helpers/repository-root.js";
-import { cliPath, createTestEnv, runCli, sandboxedEnv } from "./helpers.js";
+import { backdateConsent, cliPath, createTestEnv, runCli, sandboxedEnv } from "./helpers.js";
 
 /**
  * The whole journey on the built binary, driven by the plugin's real hooks: a person opts in,
@@ -208,6 +208,7 @@ async function optIn(): Promise<void> {
   });
   expect(run.exitCode, run.stderr).toBe(0);
   expect(run.stdout).toContain("Measurement is on for this clone");
+  await backdateConsent(telemetry);
 }
 
 const lines = async (file: string) =>
@@ -282,7 +283,9 @@ async function report(axis: string, from: string, to: string): Promise<Envelope>
 describe("the telemetry journey, on the built binary", () => {
   it("opts in, asks once, keeps the task across /clear, and attributes every axis to it", async () => {
     await optIn();
-    expect(git(repo, gitEnv, "config", "--local", "--get", "aidd.telemetry").trim()).toBe("2");
+    expect(git(repo, gitEnv, "config", "--local", "--get", "aidd.telemetry").trim()).toMatch(
+      /^2:[0-9a-f-]{36}$/u
+    );
     // Consent is the clone's own, never a file a team could commit.
     expect(existsSync(join(repo, ".aidd", "config.json"))).toBe(false);
 

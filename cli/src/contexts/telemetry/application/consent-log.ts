@@ -1,7 +1,8 @@
-import { type CloneIdentity, cloneKey } from "../domain/consent/clone-identity.js";
+import type { CloneIdentity } from "../domain/consent/clone-identity.js";
+import { sameClone } from "../domain/consent/clone-identity.js";
 import {
-  type CloneConsentHistory,
   type ConsentEvent,
+  type ConsentInterval,
   covers,
   foldConsent,
   isOpen,
@@ -9,46 +10,54 @@ import {
 import type { ConsentHistory } from "../domain/ports/consent-history.js";
 
 /** When each clone consented, read once and kept current as it is written. Callers hold the
- * ledger's lock, so what was read is what is there. */
+ * ledger's lock, so what was read is what is there, except for a hook that closed an interval
+ * meanwhile: closing is idempotent, so that costs nothing. */
 export class ConsentLog {
-  private histories: ReadonlyMap<string, CloneConsentHistory>;
+  private intervals: readonly ConsentInterval[];
 
   private constructor(
     private readonly history: ConsentHistory,
-    private events: readonly ConsentEvent[]
+    private events: readonly ConsentEvent[],
+    /** A line of the file was not an event: nothing is stored for any clone. */
+    readonly damaged: boolean
   ) {
-    this.histories = foldConsent(events);
+    this.intervals = foldConsent(events);
   }
 
   static async load(history: ConsentHistory): Promise<ConsentLog> {
-    return new ConsentLog(history, await history.events());
+    const { events, damaged } = await history.read();
+    return new ConsentLog(history, events, damaged);
   }
 
-  /** Whether the clone's consent covered `at`, in milliseconds since the epoch. */
+  /** Whether one of the clone's intervals covered `at`, in milliseconds since the epoch. */
   covers(clone: CloneIdentity, at: number): boolean {
-    return covers(this.histories.get(cloneKey(clone)), at);
+    return covers(this.intervals, clone, at);
   }
 
-  /** The clones whose consent has no end yet. */
-  openClones(): CloneIdentity[] {
-    return [...this.histories.values()].filter(isOpen).map((held) => held.clone);
+  /** The intervals with no end yet. */
+  openIntervals(): ConsentInterval[] {
+    return this.intervals.filter(isOpen);
   }
 
-  /** Opens the clone's consent at `at`, unless it is open. */
-  async open(clone: CloneIdentity, at: Date): Promise<void> {
-    if (isOpen(this.histories.get(cloneKey(clone)))) return;
-    await this.write({ clone, state: "on", at: at.toISOString() });
+  /** The clone's intervals with no end yet. */
+  openFor(clone: CloneIdentity): ConsentInterval[] {
+    return this.openIntervals().filter((interval) => sameClone(interval.clone, clone));
   }
 
-  /** Closes the clone's consent at `at`, unless it is not open. */
-  async close(clone: CloneIdentity, at: Date): Promise<void> {
-    if (!isOpen(this.histories.get(cloneKey(clone)))) return;
-    await this.write({ clone, state: "off", at: at.toISOString() });
+  /** Opens an interval for the clone at `at`, named by `token`. */
+  async open(clone: CloneIdentity, token: string, at: Date): Promise<void> {
+    await this.write({ kind: "open", token, clone, at: at.toISOString() });
+  }
+
+  /** Closes the interval named by `token` at `at`, unless it is not open. */
+  async close(token: string, at: Date): Promise<void> {
+    if (!this.openIntervals().some((interval) => interval.token === token)) return;
+    await this.write({ kind: "close", token, at: at.toISOString() });
   }
 
   private async write(event: ConsentEvent): Promise<void> {
     await this.history.append(event);
     this.events = [...this.events, event];
-    this.histories = foldConsent(this.events);
+    this.intervals = foldConsent(this.events);
   }
 }

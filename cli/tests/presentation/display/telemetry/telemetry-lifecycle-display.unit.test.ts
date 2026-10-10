@@ -27,7 +27,7 @@ describe("printOnResult", () => {
   it("says measurement is on for this clone, that it is never committed, and the next step", () => {
     const output = on({});
     expect(output.at("success")).toEqual([
-      "Measurement is on for this clone: `git config aidd.telemetry` is 2 in this clone's own config.",
+      "Measurement is on for this clone, from now: calls made before this moment are not counted. `git config aidd.telemetry` holds this clone's own token, in this clone's own config.",
     ]);
     expect(output.lines).toHaveLength(3);
     expect(output.lines[1]).toContain("never committed");
@@ -92,11 +92,16 @@ describe("printOnResult", () => {
     const warning = on({ retention: { days: 30, short: true } }).at("warn")[0] ?? "";
     expect(warning).toContain("30 days (its default)");
     expect(warning).toContain('"cleanupPeriodDays": 3650');
+    expect(warning).not.toContain("older history");
   });
 
   it("does not call a chosen retention the default, and keeps singular", () => {
-    expect(on({ retention: { days: 7, short: true } }).at("warn")[0]).toContain("for 7 days, and");
-    expect(on({ retention: { days: 1, short: true } }).at("warn")[0]).toContain("for 1 day, and");
+    expect(on({ retention: { days: 7, short: true } }).at("warn")[0]).toContain(
+      "for 7 days. A call"
+    );
+    expect(on({ retention: { days: 1, short: true } }).at("warn")[0]).toContain(
+      "for 1 day. A call"
+    );
   });
 
   it("explains each refusal", () => {

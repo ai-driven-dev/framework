@@ -32,6 +32,9 @@ const pkg = JSON.parse(readFileSync(resolve(root, "package.json"), "utf8"));
 // over next's 716.2 KB); 1.1% measured headroom.
 // 653 KB: 639.8 KB, the deterministic token measurement replacing the previous telemetry
 // (-86.0 KB under the preceding 725.8 KB); 2.1% measured headroom.
+// 667 KB: 653.3 KB, consent as intervals keyed by a clone and a token, closed by ingest and the
+// hooks, and measurement starting at `on` (+13.5 KB over the 639.8 KB above, reached across the
+// consent rounds; 651.5 KB at the last one); 2.1% measured headroom.
 const budgetKB = pkg.bundleBudgetKB ?? 500;
 const budgetBytes = budgetKB * 1024;
 

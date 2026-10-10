@@ -2,14 +2,16 @@ import { join } from "node:path";
 import { readTextIfPresent } from "../../../../kernel/reading/text-file.js";
 import {
   type ConsentEvent,
-  parseConsentEvent,
+  type ConsentRecords,
+  parseConsentRecords,
   renderConsentEvent,
 } from "../../domain/consent/consent-history.js";
 import type { ConsentHistory } from "../../domain/ports/consent-history.js";
 import type { PrivateStorage } from "../../domain/ports/private-storage.js";
 
-/** `consents.jsonl`, in the ledger directory: append-only, one event a line. It is not kept in
- * the clone, so it outlives the clone, and it goes with the ledger on `forget`. */
+/** `consents.jsonl`, in the ledger directory: append-only, one event a line, written by the CLI
+ * and, to close an interval, by the plugin's hooks. It is not kept in the clone, so it outlives
+ * the clone, and it goes with the ledger on `forget`. */
 export class ConsentHistoryAdapter implements ConsentHistory {
   private readonly path: string;
 
@@ -20,12 +22,8 @@ export class ConsentHistoryAdapter implements ConsentHistory {
     this.path = join(ledgerDir, "consents.jsonl");
   }
 
-  async events(): Promise<readonly ConsentEvent[]> {
-    const text = (await readTextIfPresent(this.path)) ?? "";
-    return text
-      .split("\n")
-      .map(parseConsentEvent)
-      .filter((event): event is ConsentEvent => event !== null);
+  async read(): Promise<ConsentRecords> {
+    return parseConsentRecords(await readTextIfPresent(this.path));
   }
 
   async append(event: ConsentEvent): Promise<void> {

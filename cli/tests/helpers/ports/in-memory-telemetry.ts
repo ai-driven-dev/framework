@@ -7,7 +7,10 @@ import {
   type CloneIdentity,
   cloneKey,
 } from "../../../src/contexts/telemetry/domain/consent/clone-identity.js";
-import type { ConsentEvent } from "../../../src/contexts/telemetry/domain/consent/consent-history.js";
+import type {
+  ConsentEvent,
+  ConsentRecords,
+} from "../../../src/contexts/telemetry/domain/consent/consent-history.js";
 import type {
   SessionCarry,
   SessionDeclaration,
@@ -39,9 +42,10 @@ import type {
 } from "../../../src/contexts/telemetry/domain/ports/usage-ledger.js";
 import type { RepositoryResolution } from "../../../src/contexts/telemetry/domain/repository-resolution.js";
 import type { StoredUsage } from "../../../src/contexts/telemetry/domain/stored-usage.js";
-import type {
-  CloneConsentReading,
-  ConsentReading,
+import {
+  type CloneConsentReading,
+  type ConsentReading,
+  consentValue,
 } from "../../../src/contexts/telemetry/domain/telemetry-consent.js";
 import type { TranscriptPosition } from "../../../src/contexts/telemetry/domain/transcript-position.js";
 import { foldUsage } from "../../../src/contexts/telemetry/domain/usage-fold.js";
@@ -124,11 +128,6 @@ export class InMemoryLedger implements UsageLedger {
     this.events.push("positions");
     this.stored = new Map(positions);
   }
-
-  async resetPositions(): Promise<void> {
-    this.events.push("reset");
-    this.stored = new Map();
-  }
 }
 
 export class InMemoryBindingsLock implements BindingsLock {
@@ -150,11 +149,24 @@ export function cloneOf(path: string, overrides: Partial<CloneIdentity> = {}): C
   return { path, dev: "1", ino: "7", birthtimeMs: 1_000, ...overrides };
 }
 
+/** The token of the interval a test opens for `clone`: one per clone, since a token names one
+ * interval. */
+export function tokenOf(clone: CloneIdentity): string {
+  return `token-${cloneKey(clone)}`;
+}
+
+/** What the clone's key holds once `on` has opened `clone`'s interval. */
+export function grantedBy(clone: CloneIdentity): string {
+  return consentValue(tokenOf(clone));
+}
+
 export class InMemoryConsentHistory implements ConsentHistory {
   readonly written: ConsentEvent[] = [];
+  /** A line of the file was not an event. */
+  damaged = false;
 
-  async events(): Promise<readonly ConsentEvent[]> {
-    return [...this.written];
+  async read(): Promise<ConsentRecords> {
+    return { events: [...this.written], damaged: this.damaged };
   }
 
   async append(event: ConsentEvent): Promise<void> {
@@ -163,7 +175,7 @@ export class InMemoryConsentHistory implements ConsentHistory {
 
   /** `clone` consented, since before any call there is. */
   consented(clone: CloneIdentity, at = "2026-01-01T00:00:00.000Z"): void {
-    this.written.push({ clone, state: "on", at });
+    this.written.push({ kind: "open", token: tokenOf(clone), clone, at });
   }
 }
 

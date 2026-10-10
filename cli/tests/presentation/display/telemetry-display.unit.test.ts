@@ -115,7 +115,7 @@ describe("printIngestResult", () => {
     ]);
   });
 
-  it("words an unreadable consent as the clone's git config, which is where consent lives", () => {
+  it("words an unreadable consent as the git config or the consent log, and says how to recover", () => {
     const lines = linesOf((o) =>
       printIngestResult(o, {
         ...INGESTED,
@@ -123,7 +123,7 @@ describe("printIngestResult", () => {
       })
     );
     expect(lines.slice(1)).toEqual([
-      "Not stored: 1 call from a clone whose git config cannot be read.",
+      "Not stored: 1 call from a clone whose consent cannot be read: its git config, or a damaged line of ledger/consents.jsonl (repair or remove that line, or run `aidd telemetry forget --yes` and `aidd telemetry on` again).",
     ]);
     expect(lines.join("\n")).not.toContain("config.json");
   });

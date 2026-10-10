@@ -5,6 +5,7 @@ import {
   mkdirSync,
   readdirSync,
   readFileSync,
+  realpathSync,
   rmSync,
   statSync,
   writeFileSync,
@@ -189,12 +190,36 @@ describe("opting in to a repository the previous version measured", () => {
 
   const consentOf = () =>
     git(repo, box.gitEnv, "config", "--local", "--get", "aidd.telemetry").trim();
+  const TOKEN_KEY = /^2:[0-9a-f-]{36}$/u;
+  const intervalLines = () =>
+    read(join(box.telemetry, "ledger", "consents.jsonl"))
+      .split("\n")
+      .filter(Boolean)
+      .map((line) => JSON.parse(line));
 
   it("sets the consent in the repository's git config, not in .aidd/config.json", async () => {
     await configure(JSON.stringify({ keep: { me: 1 } }));
     await deps.telemetryOnUseCase.execute(repo);
-    expect(consentOf()).toBe("2");
+    expect(consentOf()).toMatch(TOKEN_KEY);
     expect(read(join(repo, ".aidd", "config.json"))).toBe('{"keep":{"me":1}}');
+    const [opened, ...rest] = intervalLines();
+    expect(rest).toEqual([]);
+    expect(`2:${opened.token}`).toBe(consentOf());
+    expect(opened.clone.path).toBe(realpathSync(join(repo, ".git")));
+  });
+
+  it("mints a fresh token for each interval and ends the last one at off", async () => {
+    await deps.telemetryOnUseCase.execute(repo);
+    const first = consentOf();
+    await deps.telemetryOffUseCase.execute(repo);
+    await deps.telemetryOnUseCase.execute(repo);
+    expect(consentOf()).toMatch(TOKEN_KEY);
+    expect(consentOf()).not.toBe(first);
+    expect(intervalLines().map((line) => Object.keys(line).join(","))).toEqual([
+      "token,clone,open",
+      "token,close",
+      "token,clone,open",
+    ]);
   });
 
   it("removes the previous version's block, every V1 key with it, and keeps every other byte", async () => {
@@ -227,8 +252,8 @@ describe("opting in to a repository the previous version measured", () => {
   });
 
   it("turns off with the git config value off, and leaves .aidd/config.json alone", async () => {
-    git(repo, box.gitEnv, "config", "--local", "aidd.telemetry", "2");
     await configure('{"keep":1}');
+    await deps.telemetryOnUseCase.execute(repo);
     expect(await deps.telemetryOffUseCase.execute(repo)).toEqual({ status: "off", changed: true });
     expect(consentOf()).toBe("off");
     expect(read(join(repo, ".aidd", "config.json"))).toBe('{"keep":1}');
@@ -237,9 +262,10 @@ describe("opting in to a repository the previous version measured", () => {
   it("stores nothing from a linked worktree until the main clone opts in, then shares it", async () => {
     const linked = join(box.root, "widgets-linked");
     git(repo, box.gitEnv, "worktree", "add", "-q", "-b", "feat/y", linked);
-    writeTranscript(linked, ["a"]);
+    writeTranscript(linked, ["a"], "s-1", soon());
     expect(await deps.ingestUsageUseCase.execute()).toMatchObject({ added: 0 });
     await deps.telemetryOnUseCase.execute(repo);
+    writeTranscript(linked, ["b"], "s-2", soon());
     expect(await deps.ingestUsageUseCase.execute()).toMatchObject({ added: 1 });
   });
 
@@ -251,7 +277,7 @@ describe("opting in to a repository the previous version measured", () => {
       legacyConfig: "unparseable",
     });
     expect(read(join(repo, ".aidd", "config.json"))).toBe("{nope");
-    expect(consentOf()).toBe("2");
+    expect(consentOf()).toMatch(TOKEN_KEY);
     expect(existsSync(join(hooksDir(), DELEGATE_FILE))).toBe(false);
   });
 
@@ -265,14 +291,17 @@ describe("opting in to a repository the previous version measured", () => {
   });
 });
 
-function transcript(cwd: string, ids: readonly string[]): string {
+/** A moment just after the test's own `on`, which opens its interval at the real clock. */
+const soon = (): string => new Date(Date.now() + 60_000).toISOString();
+
+function transcript(cwd: string, ids: readonly string[], at?: string): string {
   return `${ids
     .map((id, index) =>
       JSON.stringify({
         type: "assistant",
         sessionId: "s-1",
         requestId: `req_${id}`,
-        timestamp: `2026-10-07T10:0${index}:00.000Z`,
+        timestamp: at ?? `2026-10-07T10:0${index}:00.000Z`,
         version: "2.1.0",
         cwd,
         gitBranch: "main",
@@ -291,10 +320,10 @@ function transcript(cwd: string, ids: readonly string[]): string {
     .join("\n")}\n`;
 }
 
-function writeTranscript(cwd: string, ids: readonly string[], name = "s-1"): void {
+function writeTranscript(cwd: string, ids: readonly string[], name = "s-1", at?: string): void {
   const file = join(box.claude, "projects", "-p", `${name}.jsonl`);
   mkdirSync(dirname(file), { recursive: true });
-  writeFileSync(file, transcript(cwd, ids));
+  writeFileSync(file, transcript(cwd, ids, at));
 }
 
 const stored = () => {
@@ -302,23 +331,36 @@ const stored = () => {
   return existsSync(file) ? read(file).split("\n").filter(Boolean).length : 0;
 };
 
-describe("the history from before opting in", () => {
-  it("is stored once opting in, though ingest had read past it", async () => {
+describe("measurement starts at on", () => {
+  it("does not read back what was said before opting in, though ingest had not read past it", async () => {
     await configure(BARE);
     writeTranscript(repo, ["a", "b"]);
-    const before = await deps.ingestUsageUseCase.execute();
-    expect(before).toMatchObject({ added: 0, notStored: { "no-consent": 2 } });
-    expect(stored()).toBe(0);
-
     await deps.telemetryOnUseCase.execute(repo);
 
-    expect(await deps.ingestUsageUseCase.execute()).toMatchObject({ added: 2 });
-    expect(stored()).toBe(2);
-    expect(await deps.ingestUsageUseCase.execute()).toMatchObject({ added: 0, updated: 0 });
-    expect(stored()).toBe(2);
+    expect(await deps.ingestUsageUseCase.execute()).toMatchObject({
+      added: 0,
+      notStored: { "no-consent": 2 },
+    });
+    expect(stored()).toBe(0);
   });
 
-  it("is stored for a directory that is gone, seen alive before the clone opted in", async () => {
+  it("does not store the history again once opting in, though ingest had read past it", async () => {
+    await configure(BARE);
+    writeTranscript(repo, ["a", "b"]);
+    expect(await deps.ingestUsageUseCase.execute()).toMatchObject({ added: 0 });
+
+    await deps.telemetryOnUseCase.execute(repo);
+    writeTranscript(repo, ["c"], "s-2", soon());
+
+    expect(await deps.ingestUsageUseCase.execute()).toMatchObject({
+      added: 1,
+      notStored: { "no-consent": 0 },
+    });
+    expect(stored()).toBe(1);
+    expect(await deps.ingestUsageUseCase.execute()).toMatchObject({ added: 0, updated: 0 });
+  });
+
+  it("does not store a directory that is gone, seen alive before the clone opted in", async () => {
     await configure(BARE);
     const sub = join(repo, "sub");
     mkdirSync(sub);
@@ -329,8 +371,10 @@ describe("the history from before opting in", () => {
     rmSync(sub, { recursive: true });
 
     await deps.telemetryOnUseCase.execute(repo);
+    writeTranscript(sub, ["b"], "s-2", soon());
 
     expect(await deps.ingestUsageUseCase.execute()).toMatchObject({ added: 1 });
+    expect(stored()).toBe(1);
   });
 });
 

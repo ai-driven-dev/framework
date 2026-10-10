@@ -11,13 +11,14 @@ import {
   FakeBranchStore,
   FakeConsents,
   FakeLocator,
+  grantedBy,
   InMemoryBindingsLock,
+  InMemoryConsentHistory,
   InMemorySessions,
   InMemorySnapshots,
 } from "../../../helpers/ports/in-memory-telemetry.js";
 
 const CWD = "/work/repo";
-const GRANTED = "2";
 const REPOSITORY: LocatedDirectory = {
   status: "repository",
   root: CWD,
@@ -33,7 +34,9 @@ function setup(options: { refusedByEnvironment?: boolean; sessionId?: string | n
   const locator = new FakeLocator();
   locator.directories.set(CWD, REPOSITORY);
   const consents = new FakeConsents();
-  consents.values.set(CWD, GRANTED);
+  consents.values.set(CWD, grantedBy(cloneOf(`${CWD}/.git`)));
+  const history = new InMemoryConsentHistory();
+  history.consented(cloneOf(`${CWD}/.git`));
   const sessions = new InMemorySessions(events);
   const branches = new FakeBranchStore(events);
   const lock = new InMemoryBindingsLock(events);
@@ -46,7 +49,7 @@ function setup(options: { refusedByEnvironment?: boolean; sessionId?: string | n
     () => new Date("2026-10-09T10:00:01.000Z")
   );
   const useCase = new DeclareTaskUseCase(
-    new ConsentedRepositories(locator, consents),
+    new ConsentedRepositories(locator, consents, history),
     sessions,
     new BranchDeclarations(branches, source, snapshots),
     lock,
@@ -56,7 +59,7 @@ function setup(options: { refusedByEnvironment?: boolean; sessionId?: string | n
       now: () => new Date("2026-10-09T10:00:00.000Z"),
     }
   );
-  return { useCase, locator, consents, sessions, branches, source, snapshotStore, events };
+  return { useCase, locator, consents, history, sessions, branches, source, snapshotStore, events };
 }
 
 describe("declaring a task", () => {
@@ -183,6 +186,42 @@ describe("refusing to declare", () => {
     expect(await broken.useCase.execute({ cwd: CWD, request: TASK, by: "command" })).toMatchObject({
       reason: "unreadable-consent",
     });
+  });
+
+  it("refuses a key that names no interval open for the clone, and a damaged log", async () => {
+    const forged = setup();
+    forged.consents.values.set(CWD, "2:forged");
+    expect(await forged.useCase.execute({ cwd: CWD, request: TASK, by: "command" })).toMatchObject({
+      reason: "no-consent",
+    });
+    const hand = setup();
+    hand.consents.values.set(CWD, "2");
+    expect(await hand.useCase.execute({ cwd: CWD, request: TASK, by: "command" })).toMatchObject({
+      reason: "no-consent",
+    });
+    const damaged = setup();
+    damaged.history.damaged = true;
+    expect(await damaged.useCase.execute({ cwd: CWD, request: TASK, by: "command" })).toMatchObject(
+      {
+        reason: "unreadable-consent",
+      }
+    );
+    const neverAsked = setup();
+    neverAsked.consents.values.delete(CWD);
+    neverAsked.history.damaged = true;
+    expect(
+      await neverAsked.useCase.execute({ cwd: CWD, request: TASK, by: "command" })
+    ).toMatchObject({ reason: "no-consent" });
+    const copied = setup();
+    copied.locator.directories.set(CWD, { ...REPOSITORY, clone: cloneOf("/elsewhere/.git") });
+    expect(await copied.useCase.execute({ cwd: CWD, request: TASK, by: "command" })).toMatchObject({
+      reason: "no-consent",
+    });
+    const unidentified = setup();
+    unidentified.locator.directories.set(CWD, { ...REPOSITORY, clone: null });
+    expect(
+      await unidentified.useCase.execute({ cwd: CWD, request: TASK, by: "command" })
+    ).toMatchObject({ reason: "unreadable-consent" });
   });
 
   it("asks a linked worktree's own root, which shares the main clone's git config", async () => {

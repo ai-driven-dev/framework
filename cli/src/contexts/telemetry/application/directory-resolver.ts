@@ -1,4 +1,4 @@
-import { type CloneIdentity, cloneKey } from "../domain/consent/clone-identity.js";
+import { type CloneIdentity, cloneKey, sameClone } from "../domain/consent/clone-identity.js";
 import type { ConsentHistory } from "../domain/ports/consent-history.js";
 import type { ConsentSource } from "../domain/ports/consent-source.js";
 import type { RepositoryLocator } from "../domain/ports/repository-locator.js";
@@ -12,7 +12,7 @@ import {
   resolutionKey,
   sameResolution,
 } from "../domain/repository-resolution.js";
-import { consentOf } from "../domain/telemetry-consent.js";
+import { tokenOfKey } from "../domain/telemetry-consent.js";
 import { ConsentLog } from "./consent-log.js";
 
 export type DirectoryOutcome =
@@ -30,9 +30,6 @@ export interface ResolutionEnvironment {
   readonly now: () => Date;
 }
 
-/** What is known of a clone's consent now. */
-type CloneState = "granted" | "absent" | "unreadable" | "gone";
-
 type Directory =
   | { readonly skipped: NotStoredReason }
   | {
@@ -43,10 +40,11 @@ type Directory =
     };
 
 /** Decides, for a billed call, whether it is stored: the rule is in the usage contract. The
- * directory it was made in must have been seen alive, in a clone; that clone is the one
- * answering now, or, when it is gone, the one remembered; and its consent must have covered the
- * call's time. A clone is told from another made at the same path by its identity, never by its
- * path or its remote. */
+ * directory it was made in must have been seen alive, in a clone, and that clone must have had
+ * an open consent interval at the call's time. A clone is told from another made at the same
+ * path by its identity, never by its path or its remote. The clone's own key is not asked at
+ * the call: the intervals are the truth, and an interval is closed as soon as anything sees the
+ * key stop naming it. */
 export class DirectoryResolver {
   constructor(
     private readonly locator: RepositoryLocator,
@@ -56,9 +54,8 @@ export class DirectoryResolver {
     private readonly environment: ResolutionEnvironment
   ) {}
 
-  /** One run, under the ledger's lock. Every clone whose consent is open is looked at first, so
-   * that a clone that stopped consenting, or went, is closed whether or not a call of it is
-   * read. */
+  /** One run, under the ledger's lock. Every open interval is looked at first, so that a clone
+   * that stopped consenting, or went, is closed whether or not a call of it is read. */
   async open(): Promise<ResolutionRun> {
     const run = new ResolutionRun(
       this.locator,
@@ -76,7 +73,8 @@ export class DirectoryResolver {
 export class ResolutionRun {
   private changed = false;
   private readonly directories = new Map<string, Directory>();
-  private readonly states = new Map<string, CloneState>();
+  /** Clones whose git config could not be read: their intervals are neither kept nor closed. */
+  private readonly unreadable = new Set<string>();
 
   constructor(
     private readonly locator: RepositoryLocator,
@@ -92,23 +90,32 @@ export class ResolutionRun {
     if (this.changed) await this.store.save(this.remembered);
   }
 
+  /** Closes, at this moment, the earliest anyone knows, every open interval whose clone is
+   * gone, is another clone now, or no longer names the interval's token in its key. */
   async observeOpenConsents(): Promise<void> {
-    for (const clone of this.consents.openClones()) await this.stateOf(clone);
+    for (const interval of this.consents.openIntervals()) {
+      const reading = await this.consentSource.readClone(interval.clone);
+      if (reading.kind === "unreadable") {
+        this.unreadable.add(cloneKey(interval.clone));
+        continue;
+      }
+      // A clone that is gone has no key, so it names no token either.
+      const named = reading.kind === "value" && tokenOfKey(reading.value) === interval.token;
+      if (!named) await this.consents.close(interval.token, this.environment.now());
+    }
   }
 
   /** The verdict on a call made in `cwd` at `at`. */
   async resolve(cwd: string, at: string): Promise<DirectoryOutcome> {
+    // A consent log that cannot be read says nothing for any clone.
+    if (this.consents.damaged) return { skipped: "unreadable-consent" };
     const directory = await this.directoryOf(cwd);
     if ("skipped" in directory) return directory;
     const instant = Date.parse(at);
     const owner = ownerAt(directory.owners, instant);
-    const state = await this.stateOf(owner.clone);
-    if (state === "unreadable") return { skipped: "unreadable-consent" };
-    if (state === "absent" || !this.consents.covers(owner.clone, instant)) {
-      return { skipped: "no-consent" };
-    }
-    // Alive in the clone that answers, which says yes: so what was read now is what is there.
-    const live = directory.current !== null && sameOwner(directory.current, owner);
+    if (this.unreadable.has(cloneKey(owner.clone))) return { skipped: "unreadable-consent" };
+    if (!this.consents.covers(owner.clone, instant)) return { skipped: "no-consent" };
+    const live = directory.current !== null && sameClone(directory.current.clone, owner.clone);
     return { stored: owner, live };
   }
 
@@ -136,7 +143,7 @@ export class ResolutionRun {
     // A clone the platform cannot identify cannot be told from another: fail closed.
     if (located.clone === null) return { skipped: "unreadable-consent" };
     const current = this.remember(dir, id, located.root, located.clone);
-    const others = this.ownersOf(dir).filter((owner) => !sameOwner(owner, current));
+    const others = this.ownersOf(dir).filter((owner) => !sameClone(owner.clone, current.clone));
     return { owners: [current, ...others], current };
   }
 
@@ -165,22 +172,4 @@ export class ResolutionRun {
   private ownersOf(dir: string): RepositoryResolution[] {
     return [...this.remembered.values()].filter((resolution) => resolution.dir === dir);
   }
-
-  /** What a clone says now. A clone that is gone, or no longer consents, has its consent closed
-   * at this moment: the earliest anyone knows. */
-  private async stateOf(clone: CloneIdentity): Promise<CloneState> {
-    const key = cloneKey(clone);
-    const held = this.states.get(key);
-    if (held !== undefined) return held;
-    const reading = await this.consentSource.readClone(clone);
-    const state: CloneState = reading.kind === "gone" ? "gone" : consentOf(reading);
-    if (state === "gone" || state === "absent")
-      await this.consents.close(clone, this.environment.now());
-    this.states.set(key, state);
-    return state;
-  }
-}
-
-function sameOwner(a: RepositoryResolution, b: RepositoryResolution): boolean {
-  return cloneKey(a.clone) === cloneKey(b.clone);
 }

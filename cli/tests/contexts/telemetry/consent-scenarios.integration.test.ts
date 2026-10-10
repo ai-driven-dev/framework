@@ -1,5 +1,7 @@
-import { execFileSync } from "node:child_process";
+import { execFileSync, spawnSync } from "node:child_process";
 import {
+  appendFileSync,
+  chmodSync,
   cpSync,
   existsSync,
   mkdirSync,
@@ -9,15 +11,16 @@ import {
   rmSync,
   writeFileSync,
 } from "node:fs";
-import { join } from "node:path";
+import { delimiter, join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { type TelemetryDeps, wireTelemetry } from "../../../src/runtime/wiring/telemetry.js";
 import { git, initRepository } from "../../helpers/git-sandbox.js";
+import { REPOSITORY_ROOT } from "../../helpers/repository-root.js";
 import { createTelemetrySandbox, type TelemetrySandbox } from "../../helpers/telemetry-sandbox.js";
 
 /** One predicate, one table: a call is stored only if its directory was seen alive belonging to
- * clone X, X is the clone answering now (or the remembered X when it is gone), and X's consent
- * covered the call's time. Every row runs real git repositories in a temporary directory, the
+ * clone X, X had an open consent interval at the call's time, and `AIDD_TELEMETRY=0` is not set.
+ * Measurement starts at `on`: nothing before it is ever stored. Every row runs real git repositories in a temporary directory, the
  * real adapters and a real ingest, and states which calls end up in the ledger. A row that
  * expects a call not to be stored always holds a control that must be: a row cannot pass because
  * ingest stored nothing at all.
@@ -30,6 +33,9 @@ const SHARED = "git@github.com:acme/shared.git";
 const OTHER = "git@github.com:acme/other.git";
 const BEFORE = -50_000;
 const HOUR = 3_600;
+const SESSION = "00000000-0000-4000-8000-000000000001";
+const GATE = join(REPOSITORY_ROOT, "plugins", "aidd-telemetry", "hooks", "prompt-gate.cjs");
+const FAKE_AIDD = "process.exit(0);\n";
 
 let box: TelemetrySandbox;
 let deps: TelemetryDeps;
@@ -43,11 +49,63 @@ class World {
     vi.setSystemTime(base + seconds * 1000);
   }
 
-  /** A repository on `main` with a first commit; `remote` is its `origin`, none when null. */
-  repository(name: string, remote: string | null): string {
+  /** A repository with a first commit, on `main` or on `branch`; `remote` is its `origin`, none
+   * when null. */
+  repository(name: string, remote: string | null, branch = "main"): string {
     const dir = join(this.sandbox.root, name);
     initRepository(dir, this.sandbox.gitEnv, remote === null ? {} : { remote });
+    if (branch !== "main") git(dir, this.sandbox.gitEnv, "checkout", "-q", "-b", branch);
     return dir;
+  }
+
+  /** The real `prompt-gate.cjs`, as Claude Code would run it in `dir`, with a stand-in `aidd`
+   * that can answer `telemetry task`. `attended: false` is a headless session. Returns whether
+   * the prompt was blocked. It reads the clock of the machine, not the faked one. */
+  blocks(dir: string, attended = true): boolean {
+    const bin = join(this.sandbox.root, "bin");
+    mkdirSync(bin, { recursive: true });
+    writeFileSync(join(bin, "aidd"), `#!${process.execPath}\n${FAKE_AIDD}`);
+    chmodSync(join(bin, "aidd"), 0o755);
+    const env: NodeJS.ProcessEnv = {
+      PATH: `${bin}${delimiter}${process.env.PATH ?? ""}`,
+      HOME: this.sandbox.home,
+      USERPROFILE: this.sandbox.home,
+      AIDD_TELEMETRY_DIR: this.sandbox.telemetry,
+      CLAUDE_CODE_SESSION_ID: SESSION,
+      CLAUDE_CODE_ENTRYPOINT: "cli",
+    };
+    if (attended) env.CLAUDE_CODE_SESSION_ATTENDED = "1";
+    const run = spawnSync(process.execPath, [GATE], {
+      cwd: dir,
+      env,
+      encoding: "utf8",
+      input: JSON.stringify({
+        session_id: SESSION,
+        transcript_path: join(this.sandbox.claude, "projects", "-p", "x.jsonl"),
+        cwd: dir,
+        prompt: "fix the cart",
+        hook_event_name: "UserPromptSubmit",
+      }),
+    });
+    return run.stdout.includes('"decision":"block"');
+  }
+
+  /** The consent key set by hand, as a person with git would. */
+  key(dir: string, value: string | null): void {
+    const args = value === null ? ["--unset"] : [];
+    git(
+      dir,
+      this.sandbox.gitEnv,
+      "config",
+      "--local",
+      ...args,
+      "aidd.telemetry",
+      ...(value === null ? [] : [value])
+    );
+  }
+
+  consentsFile(): string {
+    return join(this.sandbox.telemetry, "ledger", "consents.jsonl");
   }
 
   /** One call, in a session file of its own: no batch ever overwrites an earlier one. */
@@ -89,9 +147,9 @@ class World {
     await deps.telemetryOffUseCase.execute(dir);
   }
 
-  async ingest(seconds: number): Promise<void> {
+  async ingest(seconds: number) {
     this.at(seconds);
-    await deps.ingestUsageUseCase.execute();
+    return deps.ingestUsageUseCase.execute();
   }
 
   /** The ids of the calls the ledger holds. */
@@ -131,10 +189,10 @@ const ROWS: readonly Row[] = [
       const b1 = w.repository("b1", SHARED);
       const b2 = w.repository("b2", SHARED);
       w.call(b2, "b2", BEFORE);
-      w.call(b1, "b1", BEFORE);
       await w.ingest(0);
       w.removeClone(b2);
       await w.on(b1, HOUR);
+      w.call(b1, "b1", HOUR + 100);
       await w.ingest(2 * HOUR);
     },
   },
@@ -152,9 +210,9 @@ const ROWS: readonly Row[] = [
       w.call(b2, "b2-off", 2 * HOUR + 100);
       await w.ingest(2 * HOUR + 200);
       w.removeClone(b2);
-      w.call(b1, "b1", 3 * HOUR - 100);
       await w.on(b1, 3 * HOUR);
-      await w.ingest(3 * HOUR + 100);
+      w.call(b1, "b1", 3 * HOUR + 100);
+      await w.ingest(3 * HOUR + 200);
     },
   },
   {
@@ -177,18 +235,19 @@ const ROWS: readonly Row[] = [
   },
   {
     n: "4",
-    scenario: "a deleted linked worktree of a clone, seen alive before on, then on in that clone",
-    expected: ["a1", "w1"],
+    scenario: "a linked worktree of an opted-in clone, seen alive, deleted before the next ingest",
+    expected: ["a1", "w0", "w1"],
     run: async (w) => {
       const a = w.repository("a", SHARED);
       const worktree = join(w.sandbox.root, "a-worktree");
       git(a, w.sandbox.gitEnv, "worktree", "add", "-q", "-b", "feat/y", worktree);
-      w.call(worktree, "w1", BEFORE);
-      w.call(a, "a1", BEFORE);
-      await w.ingest(0);
-      rmSync(worktree, { recursive: true, force: true });
       await w.on(a, HOUR);
-      await w.ingest(2 * HOUR);
+      w.call(worktree, "w0", HOUR + 100);
+      w.call(a, "a1", HOUR + 100);
+      await w.ingest(HOUR + 200);
+      rmSync(worktree, { recursive: true, force: true });
+      w.call(worktree, "w1", HOUR + 300);
+      await w.ingest(HOUR + 400);
     },
   },
   {
@@ -288,24 +347,36 @@ const ROWS: readonly Row[] = [
       w.call(a, "a1", HOUR + 100);
       await w.ingest(HOUR + 200);
       w.at(2 * HOUR);
-      git(a, w.sandbox.gitEnv, "config", "--local", "aidd.telemetry", "off");
+      w.key(a, "off");
       await w.ingest(2 * HOUR + 100);
       w.call(a, "a2", 2 * HOUR + 200);
       w.removeClone(a);
-      w.call(b, "b1", 2 * HOUR + 300);
       await w.on(b, 3 * HOUR);
-      await w.ingest(3 * HOUR + 100);
+      w.call(b, "b1", 3 * HOUR + 100);
+      await w.ingest(3 * HOUR + 200);
     },
   },
   {
     n: "10",
-    scenario: "the first on, with history from before it",
-    expected: ["a0", "a1"],
+    scenario: "history before the first on is not stored: measurement starts at on",
+    expected: ["a1"],
     run: async (w) => {
       const a = w.repository("a", SHARED);
       w.call(a, "a0", BEFORE);
       await w.ingest(0);
       expect(w.stored()).toEqual([]);
+      await w.on(a, HOUR);
+      w.call(a, "a1", HOUR + 100);
+      await w.ingest(HOUR + 200);
+    },
+  },
+  {
+    n: "10b",
+    scenario: "history before the first on, never ingested until after it",
+    expected: ["a1"],
+    run: async (w) => {
+      const a = w.repository("a", SHARED);
+      w.call(a, "a0", BEFORE);
       await w.on(a, HOUR);
       w.call(a, "a1", HOUR + 100);
       await w.ingest(HOUR + 200);
@@ -336,7 +407,7 @@ const ROWS: readonly Row[] = [
     run: async (w) => {
       const a = w.repository("a", SHARED);
       await w.on(a, HOUR);
-      expect(existsSync(join(w.sandbox.telemetry, "ledger", "consents.jsonl"))).toBe(true);
+      expect(existsSync(w.consentsFile())).toBe(true);
       await w.ingest(HOUR + 100);
       w.at(2 * HOUR);
       await deps.forgetTelemetryUseCase.execute(true);
@@ -347,7 +418,192 @@ const ROWS: readonly Row[] = [
           stdio: "ignore",
         })
       ).toThrow();
-      expect(existsSync(join(w.sandbox.telemetry, "ledger", "consents.jsonl"))).toBe(false);
+      expect(existsSync(w.consentsFile())).toBe(false);
+    },
+  },
+  {
+    n: "h1",
+    scenario:
+      "an old clone never ingested while it lived, the same repository cloned again at its path, on, ingest",
+    expected: ["q1"],
+    run: async (w) => {
+      const old = w.repository("p", SHARED);
+      w.call(old, "p1", BEFORE);
+      w.removeClone(old);
+      const again = w.repository("p", SHARED);
+      await w.on(again, HOUR);
+      w.call(again, "q1", HOUR + 100);
+      await w.ingest(HOUR + 200);
+    },
+  },
+  {
+    n: "h1b",
+    scenario: "the same, an unrelated repository cloned at the path",
+    expected: ["q1"],
+    run: async (w) => {
+      const old = w.repository("p", SHARED);
+      w.call(old, "p1", BEFORE);
+      w.removeClone(old);
+      const unrelated = w.repository("p", OTHER);
+      await w.on(unrelated, HOUR);
+      w.call(unrelated, "q1", HOUR + 100);
+      await w.ingest(HOUR + 200);
+    },
+  },
+  {
+    n: "h1d",
+    scenario: "a directory outside any repository refused, then git init, on: nothing comes back",
+    expected: ["d2"],
+    run: async (w) => {
+      const dir = join(w.sandbox.root, "d");
+      mkdirSync(dir);
+      w.call(dir, "d1", BEFORE);
+      const refused = await w.ingest(0);
+      expect(refused.notStored["outside-repo"]).toBe(1);
+      initRepository(dir, w.sandbox.gitEnv, { remote: SHARED });
+      await w.on(dir, HOUR);
+      w.call(dir, "d2", HOUR + 100);
+      await w.ingest(HOUR + 200);
+    },
+  },
+  ...(["off", null] as const).map(
+    (value): Row => ({
+      n: `h15 ${value === null ? "--unset" : "off"}`,
+      scenario:
+        "on, c1, a manual git config change, a headless hook prompt, c2, on, c3, one ingest",
+      expected: ["c1", "c3"],
+      run: async (w) => {
+        const a = w.repository("a", SHARED, "feat/x");
+        await w.on(a, -2 * HOUR);
+        w.call(a, "c1", -2 * HOUR + 100);
+        w.key(a, value);
+        expect(w.blocks(a, false)).toBe(false);
+        w.call(a, "c2", HOUR);
+        await w.on(a, 2 * HOUR);
+        w.call(a, "c3", 2 * HOUR + 100);
+        await w.ingest(3 * HOUR);
+      },
+    })
+  ),
+  {
+    n: "h15b",
+    scenario:
+      "the same with no hook between: c2 is stored, a documented residual limit (nothing saw the key change)",
+    expected: ["c1", "c2", "c3"],
+    run: async (w) => {
+      const a = w.repository("a", SHARED, "feat/x");
+      await w.on(a, -2 * HOUR);
+      w.call(a, "c1", -2 * HOUR + 100);
+      w.key(a, "off");
+      w.call(a, "c2", HOUR);
+      await w.on(a, 2 * HOUR);
+      w.call(a, "c3", 2 * HOUR + 100);
+      await w.ingest(3 * HOUR);
+    },
+  },
+  {
+    n: "h2",
+    scenario: "on, off, the clone moved, on: the calls made while off are not stored",
+    expected: ["a1", "a3"],
+    run: async (w) => {
+      const a = w.repository("a", SHARED);
+      await w.on(a, HOUR);
+      w.call(a, "a1", HOUR + 100);
+      await w.off(a, 2 * HOUR);
+      w.call(a, "a2", 2 * HOUR + 100);
+      const moved = join(w.sandbox.root, "a-moved");
+      renameSync(a, moved);
+      w.call(moved, "a2m", 2 * HOUR + 200);
+      await w.on(moved, 3 * HOUR);
+      w.call(moved, "a3", 3 * HOUR + 100);
+      await w.ingest(3 * HOUR + 200);
+    },
+  },
+  {
+    n: "reverse",
+    scenario: "on, c1, off, one ingest at the end",
+    expected: ["c1"],
+    run: async (w) => {
+      const a = w.repository("a", SHARED);
+      await w.on(a, HOUR);
+      w.call(a, "c1", HOUR + 100);
+      await w.off(a, 2 * HOUR);
+      w.call(a, "c2", 2 * HOUR + 100);
+      await w.ingest(3 * HOUR);
+    },
+  },
+  {
+    n: "reverse 2",
+    scenario: "on, c1, off, c2, on, c3, off, c4, one ingest at the end",
+    expected: ["c1", "c3"],
+    run: async (w) => {
+      const a = w.repository("a", SHARED);
+      await w.on(a, HOUR);
+      w.call(a, "c1", HOUR + 100);
+      await w.off(a, 2 * HOUR);
+      w.call(a, "c2", 2 * HOUR + 100);
+      await w.on(a, 3 * HOUR);
+      w.call(a, "c3", 3 * HOUR + 100);
+      await w.off(a, 4 * HOUR);
+      w.call(a, "c4", 4 * HOUR + 100);
+      await w.ingest(5 * HOUR);
+    },
+  },
+  {
+    n: "forget-on",
+    scenario: "on, c1, off, c2, forget, on, c3: the earlier calls are not stored",
+    expected: ["c3"],
+    run: async (w) => {
+      const a = w.repository("a", SHARED);
+      await w.on(a, HOUR);
+      w.call(a, "c1", HOUR + 100);
+      await w.off(a, 2 * HOUR);
+      w.call(a, "c2", 2 * HOUR + 100);
+      w.at(3 * HOUR);
+      await deps.forgetTelemetryUseCase.execute(true);
+      await w.on(a, 4 * HOUR);
+      w.call(a, "c3", 4 * HOUR + 100);
+      await w.ingest(5 * HOUR);
+    },
+  },
+  {
+    n: "hand key",
+    scenario:
+      "a key set by hand (2, or 2:token with no interval), and a cp -R copy of an opted-in clone: nothing stored, the real prompt-gate does not block; the opted-in original stores and blocks",
+    expected: ["o1"],
+    run: async (w) => {
+      const hand = w.repository("hand", OTHER, "feat/y");
+      w.key(hand, "2");
+      const forged = w.repository("forged", "git@github.com:acme/forged.git", "feat/y");
+      w.key(forged, "2:forged-token");
+      const original = w.repository("original", SHARED, "feat/z");
+      await w.on(original, HOUR);
+      const copy = join(w.sandbox.root, "copy");
+      cpSync(original, copy, { recursive: true });
+      w.call(hand, "m1", HOUR + 100);
+      w.call(forged, "f1", HOUR + 100);
+      w.call(copy, "cp1", HOUR + 100);
+      w.call(original, "o1", HOUR + 100);
+      await w.ingest(HOUR + 200);
+      expect(w.blocks(hand)).toBe(false);
+      expect(w.blocks(forged)).toBe(false);
+      expect(w.blocks(copy)).toBe(false);
+      expect(w.blocks(original)).toBe(true);
+    },
+  },
+  {
+    n: "damaged",
+    scenario: "a damaged line in consents.jsonl: nothing more is stored, and coverage says why",
+    expected: ["c1"],
+    run: async (w) => {
+      const a = w.repository("a", SHARED);
+      await w.on(a, HOUR);
+      w.call(a, "c1", HOUR + 100);
+      await w.ingest(HOUR + 200);
+      appendFileSync(w.consentsFile(), '{"token": "cut\n');
+      w.call(a, "c2", HOUR + 300);
+      const result = await w.ingest(HOUR + 400);
+      expect(result.notStored["unreadable-consent"]).toBe(1);
     },
   },
 ];

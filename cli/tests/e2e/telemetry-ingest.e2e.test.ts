@@ -3,7 +3,7 @@ import { cp, mkdir, readdir, readFile, rm, stat, writeFile } from "node:fs/promi
 import { join, resolve } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { git, initRepository, sandboxGitEnv } from "../helpers/git-sandbox.js";
-import { createTestEnv, runCli } from "./helpers.js";
+import { backdateConsent, createTestEnv, runCli } from "./helpers.js";
 
 const FIXTURES = resolve(import.meta.dirname, "../fixtures/claude-usage/projects");
 
@@ -29,6 +29,7 @@ beforeEach(async () => {
     env: { AIDD_TELEMETRY_DIR: telemetry, CLAUDE_CONFIG_DIR: claude, AIDD_TELEMETRY: "" },
   });
   expect(on.exitCode, on.stderr + on.stdout).toBe(0);
+  await backdateConsent(telemetry);
 });
 
 afterEach(async () => {
@@ -196,6 +197,7 @@ describe("aidd telemetry ingest", () => {
 
   it("stores nothing for a project that never opted in", async () => {
     await writeTranscripts();
+    await rm(telemetry, { recursive: true, force: true });
     git(repoA, gitEnv, "config", "--local", "--unset", "aidd.telemetry");
     const run = await ingest();
     expect(run.stdout).toContain("0 calls added");

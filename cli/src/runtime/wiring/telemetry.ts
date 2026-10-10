@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { BranchDeclarations } from "../../contexts/telemetry/application/branch-declarations.js";
@@ -104,7 +105,7 @@ export function wireTelemetry(homedir: () => string): TelemetryDeps {
   // An empty variable is no session: only a set, non-empty id is one a declaration can bind.
   const sessionId = process.env.CLAUDE_CODE_SESSION_ID || null;
   const refusedByEnvironment = refusedByEnvironmentValue(process.env.AIDD_TELEMETRY);
-  const repositories = new ConsentedRepositories(locator, consents);
+  const repositories = new ConsentedRepositories(locator, consents, consentHistory);
   const branchDeclarations = new BranchDeclarations(
     new GitBranchBindingStoreAdapter(gitEnv),
     branchSource,
@@ -160,7 +161,8 @@ export function wireTelemetry(homedir: () => string): TelemetryDeps {
       resolutionStore,
       consentHistory,
       new ClaudeSettingsAdapter(claudeDir),
-      environment
+      environment,
+      randomUUID
     ),
     telemetryOffUseCase: new TelemetryOffUseCase(
       locator,

@@ -1,8 +1,11 @@
 import { readFileSync } from "node:fs";
 import { join, win32 } from "node:path";
 import { describe, expect, it } from "vitest";
-import { consentOfRoot } from "../../../src/contexts/telemetry/application/repository-consent.js";
 import { parseBranchConfig } from "../../../src/contexts/telemetry/domain/branch-binding.js";
+import {
+  foldConsent,
+  parseConsentRecords,
+} from "../../../src/contexts/telemetry/domain/consent/consent-history.js";
 import { resolveBinding } from "../../../src/contexts/telemetry/domain/declaration/binding-resolution.js";
 import { branchRoleOf } from "../../../src/contexts/telemetry/domain/declaration/branch-role.js";
 import {
@@ -18,7 +21,6 @@ import {
   refusedByEnvironment,
 } from "../../../src/contexts/telemetry/domain/telemetry-consent.js";
 import { telemetryDirOf } from "../../../src/runtime/wiring/telemetry.js";
-import { FakeConsents } from "../../helpers/ports/in-memory-telemetry.js";
 import { REPOSITORY_ROOT } from "../../helpers/repository-root.js";
 
 /** The contract between the CLI and the plugin hooks: the hook tests read these same files. */
@@ -44,6 +46,16 @@ interface ConsentCase {
   /** The value of `aidd.telemetry` in the clone's git config, `null` when it is not set. */
   value: string | null;
 }
+/** A line of `consents.jsonl`: an object, or text kept as it is. */
+type LogLine = Record<string, unknown> | string;
+interface ConsentLogCase {
+  lines: LogLine[];
+}
+interface HookConsentCase {
+  key: string | null;
+  lines: LogLine[];
+  realpath: string;
+}
 interface DirCase {
   platform: "posix" | "win32";
   home: string;
@@ -59,11 +71,19 @@ const cases = JSON.parse(text("cases.json")) as {
   binding: Record<string, BindingCase>;
   branchRole: Record<string, { head: string | null; originHead: string | null }>;
   consent: Record<string, ConsentCase>;
+  consentLog: Record<string, ConsentLogCase>;
+  hookConsent: Record<string, HookConsentCase>;
   environmentRefusal: Record<string, NodeJS.ProcessEnv>;
   telemetryDir: Record<string, DirCase>;
   claudeOnly: Record<string, ClaudeOnlyCase>;
 };
 const expected = JSON.parse(text("expected.json")) as Record<string, Record<string, unknown>>;
+
+function logText(logLines: readonly LogLine[]): string {
+  return logLines
+    .map((line) => `${typeof line === "string" ? line : JSON.stringify(line)}\n`)
+    .join("");
+}
 
 const declarations = lines("sessions.jsonl").map((line) => parseSessionDeclaration(line));
 const carries = lines("carries.jsonl").map((line) => parseSessionCarry(line));
@@ -141,11 +161,33 @@ describe("the shared fixture of task bindings", () => {
     expect(branchRoleOf(input.head, input.originHead)).toBe(expected.branchRole?.[name]);
   });
 
-  it.each(Object.entries(cases.consent))("reads consent %s", async (name, input) => {
-    const consents = new FakeConsents();
-    if (input.value !== null) consents.values.set("/work/tree", input.value);
-    expect(await consentOfRoot(consents, "/work/tree")).toBe(expected.consent?.[name]);
+  it.each(Object.entries(cases.consent))("reads consent %s", (name, input) => {
     expect(consentOf({ kind: "value", value: input.value })).toBe(expected.consent?.[name]);
+  });
+
+  it.each(Object.entries(cases.consentLog))("reads the consent log %s", (name, input) => {
+    const records = parseConsentRecords(logText(input.lines));
+    const iso = (ms: number | null): string | null =>
+      ms === null ? null : new Date(ms).toISOString();
+    expect({
+      damaged: records.damaged,
+      intervals: foldConsent(records.events).map((interval) => ({
+        token: interval.token,
+        path: interval.clone.path,
+        from: iso(interval.from),
+        to: iso(interval.to),
+      })),
+    }).toEqual(expected.consentLog?.[name]);
+  });
+
+  it("states the hook's consent cases well formed, for the hook test to execute", () => {
+    expect(Object.keys(cases.hookConsent).sort()).toEqual(
+      Object.keys(expected.hookConsent ?? {}).sort()
+    );
+    for (const input of Object.values(cases.hookConsent)) {
+      expect(typeof input.realpath).toBe("string");
+      expect(Array.isArray(input.lines)).toBe(true);
+    }
   });
 
   it.each(Object.entries(cases.environmentRefusal))("refuses on %s", (name, env) => {

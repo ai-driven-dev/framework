@@ -46,8 +46,10 @@ function answeringFrom(resolution: RepositoryResolution): number {
 }
 
 /** The clone that answers for a call made at `at` in a directory several clones have lived in:
- * the latest to have started by then, else the first, since a call older than every clone
- * cannot belong to a later one. */
+ * the latest to have started by then. A call older than all of them goes to the first, because
+ * a clone with no birth time is known only from the day ingest first saw a directory in it, and
+ * a call made before that day in a directory of its own is still its call. That is no consent
+ * on its own: the owner's interval must cover the call, and none opens before the clone's `on`. */
 export function ownerAt(
   owners: readonly [RepositoryResolution, ...RepositoryResolution[]],
   at: number

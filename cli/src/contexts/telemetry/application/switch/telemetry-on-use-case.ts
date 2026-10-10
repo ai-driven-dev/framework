@@ -1,3 +1,4 @@
+import type { CloneIdentity } from "../../domain/consent/clone-identity.js";
 import type { ConsentHistory } from "../../domain/ports/consent-history.js";
 import type { ConsentSource } from "../../domain/ports/consent-source.js";
 import type { LocatedDirectory, RepositoryLocator } from "../../domain/ports/repository-locator.js";
@@ -16,11 +17,13 @@ import type {
 import type { UsageLedger } from "../../domain/ports/usage-ledger.js";
 import { effectiveRetentionDays, retentionShort } from "../../domain/switch/claude-retention.js";
 import { withoutPreviousTelemetry } from "../../domain/switch/legacy-config.js";
-import { CONSENT_GRANTED } from "../../domain/telemetry-consent.js";
+import { consentValue, tokenOfKey } from "../../domain/telemetry-consent.js";
 import { ConsentLog } from "../consent-log.js";
 import type { ResolutionEnvironment } from "../directory-resolver.js";
 import { readCloneConsent } from "./clone-consent.js";
-import { rememberOwnRoot } from "./remembered-consent.js";
+import { rememberOwnRoot } from "./remember-own-root.js";
+
+type Located = Extract<LocatedDirectory, { status: "repository" }>;
 
 export type LegacyConfigOutcome = "none" | "block-removed" | "file-deleted" | "unparseable";
 
@@ -46,7 +49,7 @@ export type OnResult =
     };
 
 /** Opts a clone in, in its own git config, and leaves it as if the previous measurement had
- * never run. */
+ * never run. Measurement starts here: nothing made before is read back. */
 export class TelemetryOnUseCase {
   constructor(
     private readonly locator: RepositoryLocator,
@@ -59,7 +62,9 @@ export class TelemetryOnUseCase {
     private readonly resolutions: ResolutionStore,
     private readonly history: ConsentHistory,
     private readonly claudeSettings: ClaudeSettingsSource,
-    private readonly environment: ResolutionEnvironment
+    private readonly environment: ResolutionEnvironment,
+    /** A fresh random token for each interval. */
+    private readonly newToken: () => string
   ) {}
 
   async execute(cwd: string): Promise<OnResult> {
@@ -68,18 +73,13 @@ export class TelemetryOnUseCase {
     const { located } = clone;
     const identity = located.clone;
     if (identity === null) return { status: "refused", reason: "unidentified-clone" };
-    const consentWritten = clone.value !== CONSENT_GRANTED;
-    // Under the ledger's lock, so an ingest sees the key and the interval together.
-    await this.ledger.exclusively(async () => {
-      if (consentWritten) await this.writer.set(located.root, CONSENT_GRANTED);
-      await (await ConsentLog.load(this.history)).open(identity, this.environment.now());
-    });
+    const consentWritten = await this.ledger.exclusively(() => this.grant(located.root, identity));
     const legacyConfig = await this.clearLegacyConfig(located.root);
 
     // Pairing and removal live in one adapter call: the line and its script go together.
     const hook = await this.hooks.clean(located.root);
     const journal = await this.journal.clean(located.root);
-    await this.catchUp(located);
+    await this.rememberRoot(located);
 
     const days = effectiveRetentionDays(await this.claudeSettings.texts(located.root));
     return {
@@ -108,20 +108,35 @@ export class TelemetryOnUseCase {
     return cleaning.status;
   }
 
-  /** Under the ledger's lock, or an ingest already running would save the offsets this run
-   * reset. Ingest advanced them past lines it did not store for want of consent, and the same
-   * lines belong in the ledger now: calls are kept once, so reading them again costs nothing. */
-  private async catchUp(
-    located: Extract<LocatedDirectory, { status: "repository" }>
-  ): Promise<void> {
-    await this.ledger.exclusively(async () => {
-      await this.ledger.resetPositions();
-      await rememberOwnRoot(
+  /** Under the ledger's lock, so an ingest sees the key and the interval together. A key that
+   * names an interval open for this very clone is already consent. Any other is replaced by a
+   * fresh token: the key first, so that a crash between the two leaves a key with no interval,
+   * which measures nothing, and not an interval its own key does not name, which a hook would
+   * close. */
+  private async grant(root: string, identity: CloneIdentity): Promise<boolean> {
+    const log = await ConsentLog.load(this.history);
+    // Read again under the lock: another `on` may have written it since the first look.
+    const reading = await this.consents.read(root);
+    const held = reading.kind === "value" ? tokenOfKey(reading.value) : null;
+    const open = log.openFor(identity);
+    if (held !== null && open.some((interval) => interval.token === held)) return false;
+    const at = this.environment.now();
+    for (const stale of open) await log.close(stale.token, at);
+    const token = this.newToken();
+    await this.writer.set(root, consentValue(token));
+    await log.open(identity, token, at);
+    return true;
+  }
+
+  /** Under the ledger's lock, which every writer of `roots.json` holds. */
+  private async rememberRoot(located: Located): Promise<void> {
+    await this.ledger.exclusively(() =>
+      rememberOwnRoot(
         this.resolutions,
         located,
         this.environment.caseInsensitiveFileSystem,
         this.environment.now()
-      );
-    });
+      )
+    );
   }
 }

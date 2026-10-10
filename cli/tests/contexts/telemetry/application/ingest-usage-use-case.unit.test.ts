@@ -12,16 +12,17 @@ import {
   FakeBindings,
   FakeConsents,
   FakeLocator,
+  grantedBy,
   InMemoryBindingsLock,
   InMemoryConsentHistory,
   InMemoryLedger,
   InMemoryResolutions,
   InMemorySnapshots,
   InMemoryTranscripts,
+  tokenOf,
 } from "../../../helpers/ports/in-memory-telemetry.js";
 
 const sha = (text: string): string => createHash("sha256").update(text).digest("hex");
-const GRANTED = "2";
 const NOW = new Date("2026-10-09T00:00:00.000Z");
 /** The clone the default directory belongs to. */
 const A = cloneOf("/work/a/.git");
@@ -97,7 +98,7 @@ function setup(options: { refused?: boolean; caseInsensitive?: boolean } = {}) {
   locator.directories.set("/work/a", repository("/work/a"));
   /** The clone at `path` consents: it says so now, and it opted in once. */
   const optIn = (path: string) => {
-    consents.cloneSays(cloneOf(path), GRANTED);
+    consents.cloneSays(cloneOf(path), grantedBy(cloneOf(path)));
     history.consented(cloneOf(path));
   };
   optIn(A.path);
@@ -248,20 +249,49 @@ describe("ingesting usage into the ledger", () => {
 
 describe("only projects that opted in are stored", () => {
   it.each([
-    ["a key that is not set", null, "no-consent"],
-    ["the previous version's bare enabled true", "true", "no-consent"],
-    ["version 1", "1", "no-consent"],
-    ["off", "off", "no-consent"],
-    ["a git config git cannot read", "unreadable", "unreadable-consent"],
-  ] as const)("stores nothing for %s, and counts it", async (_name, text, reason) => {
+    ["a key that is not set", null],
+    ["the previous version's bare enabled true", "true"],
+    ["version 1", "1"],
+    ["a bare 2", "2"],
+    ["a token that names no interval of the clone", "2:forged"],
+    ["off", "off"],
+  ] as const)(
+    "ends the interval where it sees %s, and stores nothing from then on",
+    async (_name, key) => {
+      const s = setup();
+      s.consents.cloneSays(A, key);
+      s.transcripts.files.set("/t/1.jsonl", [
+        line("before", 1, {}, "2026-10-08T23:59:59.999Z"),
+        line("after", 2, {}, NOW.toISOString()),
+      ]);
+      const result = await s.ingest.execute();
+      expect(s.ledger.records.map((r) => r.key)).toEqual(["msg_before:req_before"]);
+      expect(result.notStored["no-consent"]).toBe(1);
+      expect(s.history.written.at(-1)).toEqual({
+        kind: "close",
+        token: tokenOf(A),
+        at: NOW.toISOString(),
+      });
+    }
+  );
+
+  it("stores nothing for a git config git cannot read, and counts it", async () => {
     const s = setup();
-    if (text === "unreadable") s.consents.unreadableClones.add(cloneKey(A));
-    else s.consents.cloneSays(A, text);
+    s.consents.unreadableClones.add(cloneKey(A));
     s.transcripts.files.set("/t/1.jsonl", [line("A", 1), line("B", 2)]);
     const result = await s.ingest.execute();
     expect(s.ledger.records).toEqual([]);
-    expect(result.added).toBe(0);
-    expect(result.notStored[reason]).toBe(2);
+    expect(result.notStored["unreadable-consent"]).toBe(2);
+  });
+
+  it("stores nothing for any clone while a line of the consent log is damaged, and counts it", async () => {
+    const s = setup();
+    s.history.damaged = true;
+    s.transcripts.files.set("/t/1.jsonl", [line("A", 1), line("B", 2)]);
+    const result = await s.ingest.execute();
+    expect(s.ledger.records).toEqual([]);
+    expect(result.notStored["unreadable-consent"]).toBe(2);
+    expect(result.notStored["no-consent"]).toBe(0);
   });
 
   it("stores nothing, reads nothing and writes nothing under AIDD_TELEMETRY=0", async () => {
@@ -275,16 +305,32 @@ describe("only projects that opted in are stored", () => {
     expect(s.ledger.records).toEqual([]);
   });
 
+  it("keeps open the interval of a clone whose key still names it: a call dated after this ingest is stored", async () => {
+    const s = setup();
+    s.transcripts.files.set("/t/1.jsonl", [
+      line("now", 1, {}, NOW.toISOString()),
+      line("later", 2, {}, "2026-10-20T00:00:00.000Z"),
+    ]);
+    const result = await s.ingest.execute();
+    expect(s.ledger.records.map((r) => r.key)).toEqual(["msg_later:req_later", "msg_now:req_now"]);
+    expect(result.notStored["no-consent"]).toBe(0);
+    expect(s.history.written.map((event) => event.kind)).toEqual(["open"]);
+  });
+
   it("stops storing a project that opts out while its directory still exists", async () => {
     const s = setup();
     s.transcripts.files.set("/t/1.jsonl", [line("A", 1)]);
     await s.ingest.execute();
     s.consents.cloneSays(A, "off");
-    s.transcripts.files.get("/t/1.jsonl")?.push(line("B", 2));
+    s.transcripts.files.get("/t/1.jsonl")?.push(line("B", 2, {}, NOW.toISOString()));
     const result = await s.ingest.execute();
     expect(result.notStored["no-consent"]).toBe(1);
     expect(s.ledger.records.map((r) => r.key)).toEqual(["msg_A:req_A"]);
-    expect(s.history.written.at(-1)).toEqual({ clone: A, state: "off", at: NOW.toISOString() });
+    expect(s.history.written.at(-1)).toEqual({
+      kind: "close",
+      token: tokenOf(A),
+      at: NOW.toISOString(),
+    });
   });
 
   it("asks a linked worktree's clone, the repository's git config being shared", async () => {
@@ -329,7 +375,7 @@ describe("where a call was made", () => {
     expect((await s.ingest.execute()).notStored["outside-repo"]).toBe(1);
   });
 
-  it("stores nothing for a clone whose key says 2 but that never ran on", async () => {
+  it("stores nothing for a clone whose key names a token but that never ran on", async () => {
     const s = setup();
     s.history.written.length = 0;
     s.transcripts.files.set("/t/1.jsonl", [line("A", 1)]);
@@ -363,10 +409,10 @@ describe("where a call was made", () => {
   it("does not store from a deleted directory whose clone does not consent", async () => {
     const s = setup();
     s.consents.cloneSays(A, null);
-    s.transcripts.files.set("/t/1.jsonl", [line("A", 1)]);
+    s.transcripts.files.set("/t/1.jsonl", [line("A", 1, {}, NOW.toISOString())]);
     await s.ingest.execute();
     s.locator.directories.delete("/work/a");
-    s.transcripts.files.get("/t/1.jsonl")?.push(line("B", 2));
+    s.transcripts.files.get("/t/1.jsonl")?.push(line("B", 2, {}, NOW.toISOString()));
     const result = await s.ingest.execute();
     expect(result.notStored["no-consent"]).toBe(1);
     expect(s.ledger.records).toEqual([]);
@@ -483,7 +529,7 @@ describe("branch declarations are snapshotted for the repositories touched", () 
     const s = setup();
     s.consents.cloneSays(A, null);
     s.bindings.bindingsByRoot.set("/work/a", [declared]);
-    s.transcripts.files.set("/t/1.jsonl", [line("A", 1)]);
+    s.transcripts.files.set("/t/1.jsonl", [line("A", 1, {}, NOW.toISOString())]);
     expect((await s.ingest.execute()).snapshots).toBe(0);
   });
 
@@ -609,17 +655,22 @@ describe("a directory that is gone is judged by the clone it was seen in", () =>
     expect(await deletedWorktree(setup())).toMatchObject({ added: 1 });
   });
 
-  it("refuses a deleted worktree because its clone says no now, whatever it consented to", async () => {
+  it("refuses a deleted worktree's call made after its clone said no, and keeps the one before", async () => {
     for (const now of ["off", null]) {
       const s = setup();
       s.consents.cloneSays(A, now);
-      const result = await deletedWorktree(s);
-      expect(result).toMatchObject({ added: 0 });
+      remember(s, "/work/wt");
+      s.transcripts.files.set("/t/1.jsonl", [
+        line("before", 1, { cwd: "/work/wt" }, "2026-10-08T23:59:59.999Z"),
+        line("after", 2, { cwd: "/work/wt" }, NOW.toISOString()),
+      ]);
+      const result = await s.ingest.execute();
+      expect(s.ledger.records.map((r) => r.key)).toEqual(["msg_before:req_before"]);
       expect(result.notStored["no-consent"]).toBe(1);
     }
   });
 
-  it("refuses a deleted worktree of a clone that says 2 but never ran on", async () => {
+  it("refuses a deleted worktree of a clone that names a token but never ran on", async () => {
     const s = setup();
     s.history.written.length = 0;
     const result = await deletedWorktree(s);
@@ -637,7 +688,7 @@ describe("a directory that is gone is judged by the clone it was seen in", () =>
     const s = setup();
     s.consents.unreadableClones.add(cloneKey(A));
     await deletedWorktree(s);
-    expect(s.history.written.map((event) => event.state)).toEqual(["on"]);
+    expect(s.history.written.map((event) => event.kind)).toEqual(["open"]);
   });
 
   it("judges a clone that is gone by what it consented to, and no clone by a key it never held", async () => {
@@ -654,7 +705,11 @@ describe("a directory that is gone is judged by the clone it was seen in", () =>
     const s = setup();
     s.consents.clones.clear();
     await deletedWorktree(s);
-    expect(s.history.written.at(-1)).toEqual({ clone: A, state: "off", at: NOW.toISOString() });
+    expect(s.history.written.at(-1)).toEqual({
+      kind: "close",
+      token: tokenOf(A),
+      at: NOW.toISOString(),
+    });
   });
 
   it("stores a call a gone clone made before it was found gone, and refuses one dated after", async () => {
@@ -675,7 +730,11 @@ describe("a directory that is gone is judged by the clone it was seen in", () =>
     s.consents.cloneSays(A, "off");
     const result = await s.ingest.execute();
     expect(result.added).toBe(0);
-    expect(s.history.written.at(-1)).toEqual({ clone: A, state: "off", at: NOW.toISOString() });
+    expect(s.history.written.at(-1)).toEqual({
+      kind: "close",
+      token: tokenOf(A),
+      at: NOW.toISOString(),
+    });
   });
 
   it("does not write the same close twice", async () => {
@@ -683,14 +742,14 @@ describe("a directory that is gone is judged by the clone it was seen in", () =>
     s.consents.cloneSays(A, "off");
     await s.ingest.execute();
     await s.ingest.execute();
-    expect(s.history.written.filter((event) => event.state === "off")).toHaveLength(1);
+    expect(s.history.written.filter((event) => event.kind === "close")).toHaveLength(1);
   });
 
   it("does not take a clone made at the same path since for the clone that was there", async () => {
     const s = setup();
     s.history.written.length = 0;
     const successor = cloneOf(A.path, { ino: "99", birthtimeMs: 5_000 });
-    s.consents.cloneSays(successor, GRANTED);
+    s.consents.cloneSays(successor, grantedBy(successor));
     s.history.consented(successor);
     s.consents.clones.delete(cloneKey(A));
     const result = await deletedWorktree(s);
@@ -734,6 +793,7 @@ describe("a directory that is gone is judged by the clone it was seen in", () =>
 });
 
 describe("a call is judged at its own time", () => {
+  const EPOCH = "1970-01-01T00:00:00.000Z";
   const B = cloneOf("/work/a/.git", { ino: "99", birthtimeMs: 5_000 });
 
   it("gives a clone two owners of one directory, each its own calls", async () => {
@@ -742,8 +802,8 @@ describe("a call is judged at its own time", () => {
     s.resolutions.resolutions.set(resolutionKey("/work/a", A), sighting("/work/a", A));
     s.locator.directories.set("/work/a", repository("/work/a", { clone: B }));
     s.consents.clones.delete(cloneKey(A));
-    s.consents.cloneSays(B, GRANTED);
-    s.history.consented(B);
+    s.consents.cloneSays(B, grantedBy(B));
+    s.history.consented(B, EPOCH);
     s.transcripts.files.set("/t/1.jsonl", [
       line("old", 1, {}, new Date(1_000).toISOString()),
       line("new", 2, {}, new Date(6_000).toISOString()),
@@ -755,11 +815,13 @@ describe("a call is judged at its own time", () => {
 
   it("stores what the earlier clone made while it consented, and snapshots nothing of the directory the later one holds", async () => {
     const s = setup();
+    s.history.written.length = 0;
+    s.history.consented(A, EPOCH);
     s.resolutions.resolutions.set(resolutionKey("/work/a", A), sighting("/work/a", A));
     s.locator.directories.set("/work/a", repository("/work/a", { clone: B }));
     s.consents.clones.delete(cloneKey(A));
-    s.consents.cloneSays(B, GRANTED);
-    s.history.consented(B);
+    s.consents.cloneSays(B, grantedBy(B));
+    s.history.consented(B, EPOCH);
     s.bindings.bindingsByRoot.set("/work/a", [
       {
         branch: "feat/a",
@@ -779,9 +841,9 @@ describe("a call is judged at its own time", () => {
     const s = setup();
     s.history.written.length = 0;
     s.history.written.push(
-      { clone: A, state: "on", at: "2026-10-01T00:00:00.000Z" },
-      { clone: A, state: "off", at: "2026-10-05T00:00:00.000Z" },
-      { clone: A, state: "on", at: "2026-10-07T10:00:00.000Z" }
+      { kind: "open", token: "first", clone: A, at: "2026-10-01T00:00:00.000Z" },
+      { kind: "close", token: "first", at: "2026-10-05T00:00:00.000Z" },
+      { kind: "open", token: tokenOf(A), clone: A, at: "2026-10-07T10:00:00.000Z" }
     );
     s.transcripts.files.set("/t/1.jsonl", [
       line("before", 1, {}, "2026-10-02T00:00:00.000Z"),

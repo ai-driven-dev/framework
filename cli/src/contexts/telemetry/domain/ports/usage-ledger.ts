@@ -21,6 +21,4 @@ export interface UsageLedger {
   save(records: readonly StoredUsage[], months?: ReadonlySet<string>): Promise<void>;
   positions(): Promise<ReadonlyMap<string, TranscriptPosition>>;
   savePositions(positions: ReadonlyMap<string, TranscriptPosition>): Promise<void>;
-  /** Forgets where every transcript was read up to, so the next ingest reads them whole. */
-  resetPositions(): Promise<void>;
 }

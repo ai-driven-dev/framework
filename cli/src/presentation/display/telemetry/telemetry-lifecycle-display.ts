@@ -30,7 +30,7 @@ export function printOnResult(output: CLIOutput, result: OnResult): void {
   }
   output.success(
     result.consentWritten
-      ? "Measurement is on for this clone: `git config aidd.telemetry` is 2 in this clone's own config."
+      ? "Measurement is on for this clone, from now: calls made before this moment are not counted. `git config aidd.telemetry` holds this clone's own token, in this clone's own config."
       : "Measurement was already on for this clone."
   );
   output.info(
@@ -70,8 +70,8 @@ export function printOnResult(output: CLIOutput, result: OnResult): void {
     const days = result.retention.days;
     output.warn(
       `Claude Code keeps transcripts for ${days} day${days === 1 ? "" : "s"}` +
-        `${days === RETENTION_DEFAULT_DAYS ? " (its default)" : ""}, and older history is lost. ` +
-        `To keep it, add \`"cleanupPeriodDays": ${RETENTION_WANTED_DAYS}\` to your Claude settings.json.`
+        `${days === RETENTION_DEFAULT_DAYS ? " (its default)" : ""}. A call is measured only if it is read before then. ` +
+        `To keep them longer, add \`"cleanupPeriodDays": ${RETENTION_WANTED_DAYS}\` to your Claude settings.json.`
     );
   }
   output.info(

@@ -16,7 +16,8 @@ export const NOT_STORED_WORDS: Readonly<Record<NotStoredReason, string>> = {
   "outside-repo": "outside any repository",
   "never-seen-alive": "from a directory never seen while it existed",
   "no-consent": "from a clone that has not opted in",
-  "unreadable-consent": "from a clone whose git config cannot be read",
+  "unreadable-consent":
+    "from a clone whose consent cannot be read: its git config, or a damaged line of ledger/consents.jsonl (repair or remove that line, or run `aidd telemetry forget --yes` and `aidd telemetry on` again)",
   "no-cwd": "with no working directory",
   undated: "with no usable time",
 };

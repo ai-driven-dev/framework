@@ -93,10 +93,6 @@ export class UsageLedgerAdapter implements UsageLedger {
     await this.storage.replace(join(this.dir, OFFSETS_FILE), renderPositions(positions));
   }
 
-  async resetPositions(): Promise<void> {
-    await rm(join(this.dir, OFFSETS_FILE), { force: true });
-  }
-
   private async partitions(): Promise<string[]> {
     try {
       return (await readdir(this.dir)).filter((name) => PARTITION.test(name));
