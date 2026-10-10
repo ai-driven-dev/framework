@@ -18,8 +18,8 @@ const binding = (overrides: Partial<BranchConfigBinding> = {}): BranchConfigBind
 });
 
 function setup() {
-  const source = new FakeBindings();
   const events: string[] = [];
+  const source = new FakeBindings(events);
   const store = new InMemorySnapshots(events);
   const lock = new InMemoryBindingsLock(events);
   let clock = "2026-10-09T09:00:00.000Z";
@@ -51,17 +51,23 @@ describe("snapshotting a repository's branch declarations", () => {
     expect(store.appended[1]?.branch_created_at).toBeNull();
   });
 
-  it("reads the latest snapshots and appends the new ones inside the bindings lock", async () => {
+  it("reads the branch config, the latest snapshots and appends the new ones inside the bindings lock", async () => {
     const { source, events, useCase } = setup();
     source.bindingsByRoot.set(ROOT, [binding()]);
     await useCase.execute("repo-1", ROOT);
-    expect(events).toEqual(["bindings-lock", "snapshot", "bindings-unlock"]);
+    // The branch config is read again under the lock: what an earlier read saw may be stale.
+    expect(events.slice(events.indexOf("bindings-lock"))).toEqual([
+      "bindings-lock",
+      "read-config",
+      "snapshot",
+      "bindings-unlock",
+    ]);
   });
 
   it("takes no lock when the repository declares nothing", async () => {
     const { events, useCase } = setup();
     await useCase.execute("repo-1", ROOT);
-    expect(events).toEqual([]);
+    expect(events).toEqual(["read-config"]);
   });
 
   it("adds nothing when every branch still reads as it did", async () => {

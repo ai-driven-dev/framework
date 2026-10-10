@@ -19,12 +19,15 @@ export class SnapshotBindingsUseCase {
   ) {}
 
   /** How many snapshots were added: none when every branch still reads as it did. Reading
-   * the latest snapshots and appending to them is one step under the bindings lock, because
-   * a declaration and an ingest both take snapshots and each must see the other's. */
+   * the branch config and the latest snapshots, and appending to them, is one step under the
+   * bindings lock, because a declaration and an ingest both take snapshots and a config read
+   * before the lock could be older than a snapshot taken while waiting for it. A repository
+   * declaring nothing is told so without taking the lock. */
   async execute(repositoryId: string, root: string): Promise<number> {
-    const observed = await this.source.bindings(root);
-    if (observed.length === 0) return 0;
-    return this.lock.exclusively(() => this.append(repositoryId, root, observed));
+    if ((await this.source.bindings(root)).length === 0) return 0;
+    return this.lock.exclusively(async () =>
+      this.append(repositoryId, root, await this.source.bindings(root))
+    );
   }
 
   private async append(
