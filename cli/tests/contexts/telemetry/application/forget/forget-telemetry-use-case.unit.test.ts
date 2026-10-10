@@ -173,6 +173,8 @@ describe("forget with confirmation", () => {
     remember(s, "/w/wt", CLONE, { taskKeys: 2 });
     const result = await s.use.execute(false);
     expect(result.plan.repositories).toEqual([{ clone: CLONE, taskKeys: 2, consent: false }]);
+    // The clone is named by what was remembered; no directory is asked about.
+    expect(s.locator.asked).toEqual([]);
   });
 
   it("names a clone that is gone, once, and does not read its keys", async () => {
@@ -198,6 +200,49 @@ describe("forget with confirmation", () => {
     s.keys.set(CLONE, 2);
     const result = await s.use.execute(false);
     expect(result.plan.repositories).toEqual([{ clone: CLONE, taskKeys: 2, consent: false }]);
+    expect(result.plan.missing).toEqual([]);
+  });
+
+  it("finds the clone of a directory remembered as consenting before clones were recorded, with no snapshot", async () => {
+    const s = setup([]);
+    s.resolutions.resolutions.set("/w/repo", {
+      repository_id: ID,
+      root: "/w/repo",
+      consented: true,
+    });
+    s.locator.directories.set("/w/repo", located("/w/repo"));
+    s.keys.set(CLONE, 1);
+    expect((await s.use.execute(false)).plan.repositories).toEqual([
+      { clone: CLONE, taskKeys: 1, consent: false },
+    ]);
+  });
+
+  it("leaves alone a directory remembered as refusing before clones were recorded, with no snapshot", async () => {
+    const s = setup([]);
+    s.resolutions.resolutions.set("/w/repo", {
+      repository_id: ID,
+      root: "/w/repo",
+      consented: false,
+    });
+    s.locator.directories.set("/w/repo", located("/w/repo"));
+    s.keys.set(CLONE, 1);
+    const plan = (await s.use.execute(false)).plan;
+    expect(plan.repositories).toEqual([]);
+    expect(plan.missing).toEqual([]);
+    expect(s.locator.asked).toEqual([]);
+  });
+
+  it("lists every missing name in one order: roots remembered before clones were recorded, and gone clones", async () => {
+    const s = setup([]);
+    // Another repository from the clone's, so the legacy root is reported on its own account.
+    remember(s, "/a/wt", "/a/gone/.git");
+    s.keys.delete("/a/gone/.git");
+    s.resolutions.resolutions.set("/z/legacy", {
+      repository_id: "other",
+      root: "/z/legacy",
+      consented: true,
+    });
+    expect((await s.use.execute(false)).plan.missing).toEqual(["/a/gone/.git", "/z/legacy"]);
   });
 
   it("skips and names a root, remembered before clones were recorded, that is gone or moved", async () => {

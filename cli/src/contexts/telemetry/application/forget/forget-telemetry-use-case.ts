@@ -109,15 +109,15 @@ export class ForgetTelemetryUseCase {
     }
     const missing: string[] = [];
     for (const [id, roots] of legacy) {
-      let alive = 0;
+      let found = false;
       for (const root of roots) {
         const located = await this.locator.locate(root);
         if (located.status === "repository" && repositoryIdOf(located) === id) {
           clones.add(located.clone);
-          alive += 1;
+          found = true;
         }
       }
-      if (alive === 0 && !idsWithClone.has(id)) missing.push(...roots);
+      if (!found && !idsWithClone.has(id)) missing.push(...roots);
     }
     const located = new Set([...idsWithClone, ...legacy.keys()]);
     return {

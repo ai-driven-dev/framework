@@ -7,10 +7,15 @@ import {
   CONSENT_KEY,
   type ConsentReading,
 } from "../domain/telemetry-consent.js";
-import { runGit } from "./run-git.js";
+import { type GitRun, runGit } from "./run-git.js";
 
 /** `git config` finds nothing: the key is simply not set. */
 const NOT_SET = 1;
+
+function readingOf(run: GitRun): ConsentReading {
+  if (run.status === 0) return { kind: "value", value: run.stdout.replace(/\r?\n$/u, "") };
+  return run.status === NOT_SET ? { kind: "value", value: null } : { kind: "unreadable" };
+}
 
 /** Consent as `git config --local aidd.telemetry`. `--local` is the repository's own config,
  * the one file a repository and all its linked worktrees share, and no commit carries it. */
@@ -19,17 +24,13 @@ export class GitConsentAdapter implements ConsentSource, ConsentWriter {
   constructor(private readonly env: NodeJS.ProcessEnv) {}
 
   async read(root: string): Promise<ConsentReading> {
-    const run = runGit(this.env, root, ["config", "--local", "--get", CONSENT_KEY]);
-    if (run.status === 0) return { kind: "value", value: run.stdout.replace(/\r?\n$/u, "") };
-    return run.status === NOT_SET ? { kind: "value", value: null } : { kind: "unreadable" };
+    return readingOf(runGit(this.env, root, ["config", "--local", "--get", CONSENT_KEY]));
   }
 
   async readClone(clone: string): Promise<CloneConsentReading> {
     const file = join(clone, "config");
     if (!existsSync(file)) return { kind: "gone" };
-    const run = runGit(this.env, clone, ["config", "--file", file, "--get", CONSENT_KEY]);
-    if (run.status === 0) return { kind: "value", value: run.stdout.replace(/\r?\n$/u, "") };
-    return run.status === NOT_SET ? { kind: "value", value: null } : { kind: "unreadable" };
+    return readingOf(runGit(this.env, clone, ["config", "--file", file, "--get", CONSENT_KEY]));
   }
 
   async set(root: string, value: string): Promise<void> {

@@ -55,4 +55,24 @@ describe("the remembered resolutions", () => {
     });
     expect([...parseResolutions(text).keys()]).toEqual(["/ok"]);
   });
+
+  it("keep the clone an entry names, and an entry from before clones were recorded", () => {
+    const text = JSON.stringify({
+      "/with": { ...resolution, clone: "/r/.git" },
+      "/without": resolution,
+    });
+    const parsed = parseResolutions(text);
+    expect(parsed.get("/with")?.clone).toBe("/r/.git");
+    expect(parsed.get("/without")).not.toHaveProperty("clone");
+  });
+
+  it("drop an entry whose clone is not a path", () => {
+    const text = JSON.stringify({
+      "/ok": { ...resolution, clone: "/r/.git" },
+      "/numeric": { ...resolution, clone: 4 },
+      "/empty": { ...resolution, clone: "" },
+      "/null": { ...resolution, clone: null },
+    });
+    expect([...parseResolutions(text).keys()]).toEqual(["/ok"]);
+  });
 });

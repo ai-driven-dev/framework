@@ -512,6 +512,8 @@ describe("what is remembered of a directory is refreshed when it changed", () =>
   it.each([
     ["the repository was renamed", { remote: "https://github.com/acme/renamed.git" }],
     ["the working tree moved", { root: "/work/moved", mainRoot: "/work/moved" }],
+    ["only the root moved", { root: "/work/moved", mainRoot: "/work/a" }],
+    ["only the clone moved", { clone: "/elsewhere/.git" }],
   ])("keeps the new resolution when %s", async (_name, change) => {
     const s = setup();
     s.transcripts.files.set("/t/1.jsonl", [line("A", 1)]);
@@ -623,6 +625,23 @@ describe("a directory that is gone is judged by the clone it belonged to", () =>
     s.transcripts.files.set("/t/1.jsonl", [line("A", 1, { cwd: "/work/old" })]);
     expect(await s.ingest.execute()).toMatchObject({ added: 1 });
     expect(s.resolutions.resolutions.get("/work/old")).not.toHaveProperty("clone");
+    expect(s.consents.cloneReads).toEqual([]);
+  });
+
+  it("does not snapshot the declarations of a deleted worktree, though its clone says yes", async () => {
+    const s = setup();
+    s.consents.clones.set(CLONE, GRANTED);
+    s.bindings.bindingsByRoot.set("/work/wt", [
+      {
+        branch: "feat/x",
+        task: "t",
+        ticket: null,
+        declared_at: "2026-10-07T10:00:00.000Z",
+        none: false,
+      },
+    ]);
+    await deletedWorktree(s, false);
+    expect(s.snapshotStore.appended).toEqual([]);
   });
 
   it("records the clone of a directory remembered without one once it is seen alive", async () => {
