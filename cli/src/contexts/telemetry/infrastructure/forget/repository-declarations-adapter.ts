@@ -1,3 +1,5 @@
+import { existsSync } from "node:fs";
+import { join } from "node:path";
 import type {
   RepositoryDeclarations,
   RepositoryKeys,
@@ -17,40 +19,49 @@ export class RepositoryDeclarationsAdapter implements RepositoryDeclarations {
   /** `env` carries none of git's own variables, which would point it at another repository. */
   constructor(private readonly env: NodeJS.ProcessEnv) {}
 
-  async count(root: string): Promise<RepositoryKeys> {
-    const { taskKeys, consent } = this.held(root);
+  async count(clone: string): Promise<RepositoryKeys | null> {
+    if (!existsSync(join(clone, "config"))) return null;
+    const { taskKeys, consent } = this.held(clone);
     return { taskKeys, consent };
   }
 
-  async clear(root: string): Promise<RepositoryKeys> {
-    const held = this.held(root);
+  async clear(clone: string): Promise<RepositoryKeys> {
+    const held = this.held(clone);
     for (const key of [...held.taskNames, ...(held.consent ? [CONSENT_KEY] : [])]) {
       // After `--`, so a branch name that starts with a dash is never read as an option.
-      const run = runGit(this.env, root, ["config", "--local", "--unset-all", "--", key]);
+      const run = runGit(this.env, clone, [
+        "config",
+        "--file",
+        join(clone, "config"),
+        "--unset-all",
+        "--",
+        key,
+      ]);
       if (run.status !== 0 && run.status !== KEY_ABSENT) {
-        throw new Error(`git config ${key} could not be removed in ${root}`);
+        throw new Error(`git config ${key} could not be removed in ${clone}`);
       }
     }
     return { taskKeys: held.taskKeys, consent: held.consent };
   }
 
-  private held(root: string): RepositoryKeys & { taskNames: string[] } {
-    const taskNames = this.names(root, TASK_KEYS);
-    const consent = this.names(root, `^${CONSENT_KEY.replace(".", "\\.")}$`).length > 0;
+  private held(clone: string): RepositoryKeys & { taskNames: string[] } {
+    const taskNames = this.names(clone, TASK_KEYS);
+    const consent = this.names(clone, `^${CONSENT_KEY.replace(".", "\\.")}$`).length > 0;
     return { taskNames, taskKeys: taskNames.length, consent };
   }
 
-  private names(root: string, pattern: string): string[] {
-    const run = runGit(this.env, root, [
+  private names(clone: string, pattern: string): string[] {
+    const run = runGit(this.env, clone, [
       "config",
-      "--local",
+      "--file",
+      join(clone, "config"),
       "-z",
       "--name-only",
       "--get-regexp",
       pattern,
     ]);
     if (run.status === NO_MATCH) return [];
-    if (run.status !== 0) throw new Error(`git config could not be read in ${root}`);
+    if (run.status !== 0) throw new Error(`git config could not be read in ${clone}`);
     return run.stdout.split("\0").filter((key) => key !== "");
   }
 }

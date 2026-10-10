@@ -7,14 +7,32 @@ export interface RepositoryResolution {
   readonly repository_id: string;
   /** The repository's working-tree root. */
   readonly root: string;
-  /** Whether the project had opted in then. */
+  /** Whether the clone had opted in then. Used only once the clone itself is gone: while it
+   * exists its git config is read live. */
   readonly consented: boolean;
+  /** The clone it belongs to: the real path of its git common dir. Absent from what an earlier
+   * run remembered, until the directory is seen alive again. */
+  readonly clone?: string;
 }
 
 /** The key a directory is remembered under. File systems that ignore case (macOS, Windows)
  * answer the same directory to two spellings, so the key folds them into one. */
 export function cwdKey(cwd: string, caseInsensitive: boolean): string {
   return caseInsensitive ? cwd.toLowerCase() : cwd;
+}
+
+/** Whether two looks at a directory found the same thing. */
+export function sameResolution(
+  a: RepositoryResolution | undefined,
+  b: RepositoryResolution
+): boolean {
+  return (
+    a !== undefined &&
+    a.repository_id === b.repository_id &&
+    a.root === b.root &&
+    a.consented === b.consented &&
+    a.clone === b.clone
+  );
 }
 
 function isResolution(value: unknown): value is RepositoryResolution {
@@ -24,7 +42,8 @@ function isResolution(value: unknown): value is RepositoryResolution {
     typeof object.repository_id === "string" &&
     object.repository_id !== "" &&
     typeof object.root === "string" &&
-    typeof object.consented === "boolean"
+    typeof object.consented === "boolean" &&
+    (object.clone === undefined || (typeof object.clone === "string" && object.clone !== ""))
   );
 }
 

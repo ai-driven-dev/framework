@@ -33,7 +33,10 @@ import type {
 } from "../../../src/contexts/telemetry/domain/ports/usage-ledger.js";
 import type { RepositoryResolution } from "../../../src/contexts/telemetry/domain/repository-resolution.js";
 import type { StoredUsage } from "../../../src/contexts/telemetry/domain/stored-usage.js";
-import type { ConsentReading } from "../../../src/contexts/telemetry/domain/telemetry-consent.js";
+import type {
+  CloneConsentReading,
+  ConsentReading,
+} from "../../../src/contexts/telemetry/domain/telemetry-consent.js";
 import type { TranscriptPosition } from "../../../src/contexts/telemetry/domain/transcript-position.js";
 import { foldUsage } from "../../../src/contexts/telemetry/domain/usage-fold.js";
 
@@ -160,6 +163,19 @@ export class FakeConsents implements ConsentSource {
   /** Roots whose git config cannot be read. */
   readonly unreadable = new Set<string>();
   readonly reads: string[] = [];
+  /** The value of `aidd.telemetry` by clone (common git dir); a clone not listed is gone, one
+   * mapped to `null` has the key unset. */
+  readonly clones = new Map<string, string | null>();
+  readonly cloneReads: string[] = [];
+  /** Clones whose git config cannot be read. */
+  readonly unreadableClones = new Set<string>();
+
+  async readClone(clone: string): Promise<CloneConsentReading> {
+    this.cloneReads.push(clone);
+    if (this.unreadableClones.has(clone)) return { kind: "unreadable" };
+    const value = this.clones.get(clone);
+    return value === undefined ? { kind: "gone" } : { kind: "value", value };
+  }
 
   async read(root: string): Promise<ConsentReading> {
     this.reads.push(root);

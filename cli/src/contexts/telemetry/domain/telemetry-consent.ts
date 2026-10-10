@@ -14,6 +14,10 @@ export type ConsentReading =
   | { readonly kind: "value"; readonly value: string | null }
   | { readonly kind: "unreadable" };
 
+/** A clone's consent read from its own git config, by where the clone lives rather than by a
+ * working tree of it: `gone` when the clone itself no longer exists. */
+export type CloneConsentReading = ConsentReading | { readonly kind: "gone" };
+
 /** What a clone's consent means. Only the exact value `2` grants; `off`, another number or
  * nothing at all grant nothing. Nothing committed to the work tree is consulted: a file a
  * teammate pulled cannot opt them in. */

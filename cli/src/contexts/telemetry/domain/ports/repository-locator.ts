@@ -7,6 +7,8 @@ export type LocatedDirectory =
       readonly root: string;
       /** The main working tree, which a linked worktree shares its repository with. */
       readonly mainRoot: string;
+      /** The clone: the real path of the git common dir every linked worktree shares. */
+      readonly clone: string;
       /** `origin`'s url as git prints it; the caller reduces it and never keeps it. */
       readonly remote: string | null;
       /** The lowest root commit sha. */

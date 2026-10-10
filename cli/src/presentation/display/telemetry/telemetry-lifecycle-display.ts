@@ -105,18 +105,18 @@ function listKept(output: CLIOutput, plan: ForgetPlan): void {
   for (const repository of plan.repositories) {
     if (repository.taskKeys > 0) {
       output.info(
-        `  - ${plural(repository.taskKeys, "branch task key")} in the git config of ${repository.root}`
+        `  - ${plural(repository.taskKeys, "branch task key")} in the git config of ${repository.clone}`
       );
     }
     if (repository.consent) {
-      output.info(`  - the consent (aidd.telemetry) in the git config of ${repository.root}`);
+      output.info(`  - the consent (aidd.telemetry) in the git config of ${repository.clone}`);
     }
   }
 }
 
 function warnSkipped(output: CLIOutput, plan: ForgetPlan): void {
   for (const root of plan.missing) {
-    output.warn(`Skipped ${root}: it is gone, or is no longer that repository.`);
+    output.warn(`Skipped ${root}: it is gone, or is no longer that clone.`);
   }
   if (plan.unlocated > 0) {
     output.warn(

@@ -21,6 +21,7 @@ const REPOSITORY: LocatedDirectory = {
   status: "repository",
   root: CWD,
   mainRoot: CWD,
+  clone: `${CWD}/.git`,
   remote: "git@github.com:acme/widgets.git",
   rootCommit: "abc",
 };

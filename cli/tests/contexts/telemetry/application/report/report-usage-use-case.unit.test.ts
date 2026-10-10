@@ -75,6 +75,7 @@ function setup(options: { refused?: boolean } = {}) {
     status: "repository",
     root: "/work/a",
     mainRoot: "/work/a",
+    clone: "/work/a/.git",
     remote: "https://github.com/acme/widgets.git",
     rootCommit: "c0ffee",
   });

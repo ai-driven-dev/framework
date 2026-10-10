@@ -83,7 +83,7 @@ The telemetry directory is `AIDD_TELEMETRY_DIR`, else `AIDD_USER_CONFIG_DIR/tele
 | --- | --- | --- | --- |
 | `ledger/<YYYY-MM>.jsonl` | `ingest`, `report` | `report`, `forget` | one `StoredUsage` per line, by the month of its `at`; only a month that changed is rewritten, whole, by rename; an ingest that finds no new bytes writes nothing |
 | `ledger/offsets.json` | `ingest`, `report` | `ingest`, `report` | per transcript: bytes consumed, size, file identity; a file that shrank or changed identity is read whole; `on` resets it |
-| `ledger/roots.json` | `ingest`, `on` | `ingest`, `forget` | per working directory: `repository_id`, `root`, whether the clone had opted in; `on` lifts a remembered refusal for every directory of the same `repository_id`, a linked worktree deleted before `on` included |
+| `ledger/roots.json` | `ingest`, `on` | `ingest`, `forget` | per working directory: `repository_id`, `root`, `clone` (the real path of its git common dir), whether the clone had opted in then. A directory that is gone is judged by its clone's git config, read live while the clone exists; the remembered flag counts only once the clone is gone. `on` records its own root here and lifts nothing: a clone's consent never reaches another clone, whatever remote or root commit they share |
 | `ledger/.lock` | the CLI | the CLI | `{pid, created_at}`; a lock of a dead process, or older than ten minutes, is cleared |
 | `bindings/.lock` | the CLI | the CLI | the bindings lock, same format as the ledger's: a declaration appends its session line, and any snapshot reads the latest snapshots and appends, under it. `task` never takes the ledger lock, which an ingest holds while it reads transcripts |
 | `bindings/sessions.jsonl` | `task` | hooks, `report`, `task` | `{session_id, task, ticket, none, declared_at, by}`; `by` is `command` or `hook-intercept` |
@@ -95,7 +95,7 @@ The telemetry directory is `AIDD_TELEMETRY_DIR`, else `AIDD_USER_CONFIG_DIR/tele
 | `aidd.telemetry` in the repository's git config, `--local` | `on`, `off`, `forget` | hooks, the CLI | the clone's consent: `2`, or `off` |
 
 - A line that is not exactly the format of its store is skipped, never guessed at. Every JSON Lines store is append-only except the ledger.
-- `forget` removes `ledger/`, `bindings/`, `identity.json`, the declaration keys in each repository's git config, the consent key, and what an earlier measurement left. It never removes the telemetry directory itself.
+- `forget` removes `ledger/`, `bindings/`, `identity.json`, the declaration keys in each recorded clone's git config, the consent key, and what an earlier measurement left. It never removes the telemetry directory itself.
 
 ## Attribution
 
@@ -152,9 +152,9 @@ Consent is per clone, in the repository's own git config, and is never committed
 - `off` sets `aidd.telemetry` to `off`;
 - a clone that never opted in has nothing stored, nothing asked and nothing blocked.
 
-`on` also removes the previous version's `telemetry` block from `.aidd/config.json` if it holds one, every other byte of the file as it was, and deletes the file only when that block was all it held (the change may need committing, and `on` says so). It removes what an earlier measurement left in the repository, resets the transcript offsets, lifts a remembered refusal by `repository_id`, and warns when Claude Code's transcript retention is short. It ends with the next step: declare a task, which the plugin's hooks ask for in Claude Code.
+`on` also removes the previous version's `telemetry` block from `.aidd/config.json` if it holds one, every other byte of the file as it was, and deletes the file only when that block was all it held (the change may need committing, and `on` says so). It removes what an earlier measurement left in the repository, resets the transcript offsets, records its own clone so `forget` can find it, and warns when Claude Code's transcript retention is short. It ends with the next step: declare a task, which the plugin's hooks ask for in Claude Code.
 
-`forget --yes` unsets `aidd.telemetry` in every repository it locates, with the branch task keys.
+`forget --yes` unsets `aidd.telemetry`, with the branch task keys, in every clone recorded in `roots.json`, including those only `on` recorded, as long as the clone still exists. It reports the clones that are gone.
 
 ## What never leaves the machine
 

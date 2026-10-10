@@ -14,9 +14,10 @@ import { repositoryIdOf } from "../../domain/repository-identity.js";
 
 export interface ForgetPlan {
   readonly entries: readonly ErasureEntry[];
-  /** Repositories still on disk, with what their git config holds. */
-  readonly repositories: readonly ({ readonly root: string } & RepositoryKeys)[];
-  /** Roots the declarations were made in that are gone, or no longer that repository. */
+  /** Clones still on disk, named by their common git dir, with what their git config holds. */
+  readonly repositories: readonly ({ readonly clone: string } & RepositoryKeys)[];
+  /** Clones that are gone, and roots remembered before clones were recorded that are gone or
+   * no longer that repository. */
   readonly missing: readonly string[];
   /** Repositories that declared a task and whose location was never recorded. */
   readonly unlocated: number;
@@ -54,7 +55,7 @@ export class ForgetTelemetryUseCase {
       const held = await this.plan();
       // The declarations first: they are found through the files that follow, so a crash
       // between the two leaves the way back to them.
-      for (const repository of held.repositories) await this.declarations.clear(repository.root);
+      for (const repository of held.repositories) await this.declarations.clear(repository.clone);
       await this.erasure.erase();
       return { status: "forgotten" as const, plan: held };
     });
@@ -62,57 +63,67 @@ export class ForgetTelemetryUseCase {
 
   private async plan(): Promise<ForgetPlan> {
     const entries = await this.erasure.inventory();
-    const found = await this.repositoriesDeclaredIn();
-    const repositories: ({ root: string } & RepositoryKeys)[] = [];
-    for (const root of found.live) {
-      repositories.push({ root, ...(await this.declarations.count(root)) });
+    const found = await this.clonesRemembered();
+    const repositories: ({ clone: string } & RepositoryKeys)[] = [];
+    const missing = [...found.missing];
+    for (const clone of found.clones) {
+      const keys = await this.declarations.count(clone);
+      if (keys === null) missing.push(clone);
+      else repositories.push({ clone, ...keys });
     }
     return {
       entries,
       repositories,
-      missing: found.missing,
+      missing: missing.sort(),
       unlocated: found.unlocated,
     };
   }
 
-  /** The repositories something was kept in: a declaration was made there (the snapshots), or
-   * ingest read it with its consent granted. Where each lives comes from what ingest
-   * remembered; a snapshot carries no path of its own. */
-  private async repositoriesDeclaredIn(): Promise<{
-    live: string[];
+  /** The clones something was kept in. Every directory ingest or `on` remembered names its
+   * clone, whatever consent it found there: a clone that ran `off` still holds its key. A
+   * directory remembered before clones were recorded is located again, by the repository it was
+   * declared or consented in. A snapshot carries no path of its own. */
+  private async clonesRemembered(): Promise<{
+    clones: string[];
     missing: string[];
     unlocated: number;
   }> {
-    const ids = new Set([...(await this.snapshots.latest()).values()].map((s) => s.repository_id));
     const remembered = [...(await this.resolutions.load()).values()];
+    const clones = new Set<string>();
+    const idsWithClone = new Set<string>();
+    for (const resolution of remembered) {
+      if (resolution.clone === undefined) continue;
+      clones.add(resolution.clone);
+      idsWithClone.add(resolution.repository_id);
+    }
+    const ids = new Set([...(await this.snapshots.latest()).values()].map((s) => s.repository_id));
     for (const resolution of remembered) {
       if (resolution.consented) ids.add(resolution.repository_id);
     }
-    const rootsOf = new Map<string, Set<string>>();
+    const legacy = new Map<string, Set<string>>();
     for (const resolution of remembered) {
-      if (!ids.has(resolution.repository_id)) continue;
-      const roots = rootsOf.get(resolution.repository_id) ?? new Set<string>();
+      if (resolution.clone !== undefined || !ids.has(resolution.repository_id)) continue;
+      const roots = legacy.get(resolution.repository_id) ?? new Set<string>();
       roots.add(resolution.root);
-      rootsOf.set(resolution.repository_id, roots);
+      legacy.set(resolution.repository_id, roots);
     }
-    // A linked worktree and its main one share a git config: one entry each repository.
-    const live = new Set<string>();
     const missing: string[] = [];
-    for (const [id, roots] of rootsOf) {
-      const alive = new Set<string>();
+    for (const [id, roots] of legacy) {
+      let alive = 0;
       for (const root of roots) {
         const located = await this.locator.locate(root);
         if (located.status === "repository" && repositoryIdOf(located) === id) {
-          alive.add(located.mainRoot);
+          clones.add(located.clone);
+          alive += 1;
         }
       }
-      if (alive.size === 0) missing.push(...roots);
-      for (const root of alive) live.add(root);
+      if (alive === 0 && !idsWithClone.has(id)) missing.push(...roots);
     }
+    const located = new Set([...idsWithClone, ...legacy.keys()]);
     return {
-      live: [...live].sort(),
-      missing: missing.sort(),
-      unlocated: [...ids].filter((id) => !rootsOf.has(id)).length,
+      clones: [...clones].sort(),
+      missing,
+      unlocated: [...ids].filter((id) => !located.has(id)).length,
     };
   }
 }

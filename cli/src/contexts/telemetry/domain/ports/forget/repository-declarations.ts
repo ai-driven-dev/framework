@@ -1,4 +1,4 @@
-/** What measurement keeps in a repository's own git config. */
+/** What measurement keeps in a clone's own git config. */
 export interface RepositoryKeys {
   /** The branch task keys: a branch's declared task, ticket and the time it was declared. */
   readonly taskKeys: number;
@@ -6,9 +6,10 @@ export interface RepositoryKeys {
   readonly consent: boolean;
 }
 
+/** A clone is named by its common git dir, the one config its linked worktrees share. */
 export interface RepositoryDeclarations {
-  /** The keys it holds. */
-  count(root: string): Promise<RepositoryKeys>;
+  /** The keys it holds; `null` when the clone no longer exists. */
+  count(clone: string): Promise<RepositoryKeys | null>;
   /** Removes them, and answers what there was. */
-  clear(root: string): Promise<RepositoryKeys>;
+  clear(clone: string): Promise<RepositoryKeys>;
 }

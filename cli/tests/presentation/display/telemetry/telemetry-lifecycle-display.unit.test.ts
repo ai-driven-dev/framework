@@ -132,8 +132,8 @@ const PLAN = {
     { kind: "previous-day-file", path: "/t/2026-10-05.jsonl", files: 1 },
   ],
   repositories: [
-    { root: "/w/a", taskKeys: 2, consent: true },
-    { root: "/w/b", taskKeys: 0, consent: false },
+    { clone: "/w/a/.git", taskKeys: 2, consent: true },
+    { clone: "/w/b/.git", taskKeys: 0, consent: false },
   ],
   missing: ["/w/gone"],
   unlocated: 1,
@@ -152,11 +152,13 @@ describe("printForgetResult", () => {
     expect(output.lines).toContain(
       "  - day files of the previous version: /t/2026-10-05.jsonl (1 file)"
     );
-    expect(output.lines).toContain("  - 2 branch task keys in the git config of /w/a");
-    expect(output.lines).toContain("  - the consent (aidd.telemetry) in the git config of /w/a");
+    expect(output.lines).toContain("  - 2 branch task keys in the git config of /w/a/.git");
+    expect(output.lines).toContain(
+      "  - the consent (aidd.telemetry) in the git config of /w/a/.git"
+    );
     expect(output.lines.join("\n")).not.toContain("/w/b");
     expect(output.at("warn")).toEqual([
-      "Skipped /w/gone: it is gone, or is no longer that repository.",
+      "Skipped /w/gone: it is gone, or is no longer that clone.",
       "1 repository declared a task and could not be located.",
     ]);
     expect(output.lines.at(-1)).toContain("Nothing was removed. Run `aidd telemetry forget --yes`");
@@ -212,7 +214,7 @@ describe("printForgetResult", () => {
   it("is not empty when only declarations remain, or only files remain", () => {
     const keysOnly = {
       entries: [],
-      repositories: [{ root: "/w/a", taskKeys: 1, consent: false }],
+      repositories: [{ clone: "/w/a/.git", taskKeys: 1, consent: false }],
       missing: [],
       unlocated: 0,
     };
@@ -225,7 +227,7 @@ describe("printForgetResult", () => {
     expect(forgotten({ status: "preview", plan: keysOnly }).lines[0]).toBe("This would remove:");
     expect(forgotten({ status: "preview", plan: filesOnly }).lines[0]).toBe("This would remove:");
     expect(forgotten({ status: "preview", plan: keysOnly }).lines[1]).toBe(
-      "  - 1 branch task key in the git config of /w/a"
+      "  - 1 branch task key in the git config of /w/a/.git"
     );
   });
 });

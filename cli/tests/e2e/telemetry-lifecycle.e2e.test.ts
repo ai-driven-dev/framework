@@ -132,4 +132,13 @@ describe("aidd telemetry forget", () => {
     expect(removed.stdout).toContain("Removed:");
     expect(readdirSync(box.telemetry)).toEqual([]);
   });
+
+  it("leaves no consent behind in a clone where `on` ran and no session ever did", async () => {
+    await cli(["on", "--yes"]);
+    expect(git(repo, box.gitEnv, "config", "--local", "--get", "aidd.telemetry").trim()).toBe("2");
+    const removed = await cli(["forget", "--yes"]);
+    expect(removed.exitCode).toBe(0);
+    expect(removed.stdout).toContain("the consent (aidd.telemetry)");
+    expect(() => git(repo, box.gitEnv, "config", "--local", "--get", "aidd.telemetry")).toThrow();
+  });
 });

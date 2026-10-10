@@ -8,6 +8,7 @@ import { git, initRepository, sandboxGitEnv } from "../../../../helpers/git-sand
 
 let root: string;
 let repo: string;
+let clone: string;
 let env: NodeJS.ProcessEnv;
 
 beforeEach(() => {
@@ -15,6 +16,7 @@ beforeEach(() => {
   env = sandboxGitEnv(root);
   repo = join(root, "repo");
   initRepository(repo, env);
+  clone = join(repo, ".git");
 });
 afterEach(() => {
   rmSync(root, { recursive: true, force: true });
@@ -27,7 +29,7 @@ const listed = () => git(repo, env, "config", "--local", "--list");
 
 describe("the declarations in a repository's git config", () => {
   it("counts none where there are none", async () => {
-    expect(await new RepositoryDeclarationsAdapter(env).count(repo)).toEqual({
+    expect(await new RepositoryDeclarationsAdapter(env).count(clone)).toEqual({
       taskKeys: 0,
       consent: false,
     });
@@ -43,7 +45,7 @@ describe("the declarations in a repository's git config", () => {
       "aidd.task",
       "other.aiddTask"
     );
-    expect(await new RepositoryDeclarationsAdapter(env).count(repo)).toEqual({
+    expect(await new RepositoryDeclarationsAdapter(env).count(clone)).toEqual({
       taskKeys: 3,
       consent: false,
     });
@@ -57,7 +59,7 @@ describe("the declarations in a repository's git config", () => {
       "branch.main.remote",
       "branch.main.aiddOther"
     );
-    expect(await new RepositoryDeclarationsAdapter(env).clear(repo)).toEqual({
+    expect(await new RepositoryDeclarationsAdapter(env).clear(clone)).toEqual({
       taskKeys: 3,
       consent: false,
     });
@@ -70,17 +72,17 @@ describe("the declarations in a repository's git config", () => {
   it("counts and removes the consent beside the task keys, and nothing like it", async () => {
     config("aidd.telemetry", "branch.main.aiddTask", "aidd.telemetryx", "aidd.other");
     const adapter = new RepositoryDeclarationsAdapter(env);
-    expect(await adapter.count(repo)).toEqual({ taskKeys: 1, consent: true });
-    expect(await adapter.clear(repo)).toEqual({ taskKeys: 1, consent: true });
+    expect(await adapter.count(clone)).toEqual({ taskKeys: 1, consent: true });
+    expect(await adapter.clear(clone)).toEqual({ taskKeys: 1, consent: true });
     const left = listed();
     expect(left).not.toMatch(/aidd\.telemetry=|aiddtask/);
     expect(left).toContain("aidd.telemetryx=v");
     expect(left).toContain("aidd.other=v");
-    expect(await adapter.count(repo)).toEqual({ taskKeys: 0, consent: false });
+    expect(await adapter.count(clone)).toEqual({ taskKeys: 0, consent: false });
   });
 
   it("clears nothing where there is nothing", async () => {
-    expect(await new RepositoryDeclarationsAdapter(env).clear(repo)).toEqual({
+    expect(await new RepositoryDeclarationsAdapter(env).clear(clone)).toEqual({
       taskKeys: 0,
       consent: false,
     });
@@ -88,15 +90,32 @@ describe("the declarations in a repository's git config", () => {
 
   it("does not read a key as an option", async () => {
     config("branch.-x.aiddTask");
-    expect(await new RepositoryDeclarationsAdapter(env).clear(repo)).toMatchObject({
+    expect(await new RepositoryDeclarationsAdapter(env).clear(clone)).toMatchObject({
       taskKeys: 1,
     });
   });
 
+  it("answers null for a clone that no longer exists", async () => {
+    expect(
+      await new RepositoryDeclarationsAdapter(env).count(join(root, "gone", ".git"))
+    ).toBeNull();
+  });
+
+  it("clears the keys of a clone from a deleted worktree's point of view: by the clone alone", async () => {
+    config("aidd.telemetry", "branch.main.aiddTask");
+    const linked = join(root, "linked");
+    git(repo, env, "worktree", "add", "-q", "-b", "feat/y", linked);
+    rmSync(linked, { recursive: true });
+    expect(await new RepositoryDeclarationsAdapter(env).clear(clone)).toEqual({
+      taskKeys: 1,
+      consent: true,
+    });
+    expect(listed()).not.toMatch(/aidd\.telemetry=|aiddtask/);
+  });
+
   it("fails where git cannot read the config", async () => {
-    const outside = join(root, "not-a-repo");
-    mkdirSync(outside);
-    await expect(new RepositoryDeclarationsAdapter(env).count(outside)).rejects.toThrow(
+    writeFileSync(join(clone, "config"), "[core\n  broken");
+    await expect(new RepositoryDeclarationsAdapter(env).count(clone)).rejects.toThrow(
       /could not be read/
     );
   });
@@ -119,14 +138,14 @@ describe("a git that refuses to remove a key", () => {
 
   it("fails when removing is refused", async () => {
     config("branch.main.aiddTask");
-    await expect(new RepositoryDeclarationsAdapter(gitAnswering(3)).clear(repo)).rejects.toThrow(
+    await expect(new RepositoryDeclarationsAdapter(gitAnswering(3)).clear(clone)).rejects.toThrow(
       /branch.main.aiddtask could not be removed/
     );
   });
 
   it("takes a key that is already gone for removed", async () => {
     config("branch.main.aiddTask");
-    await expect(new RepositoryDeclarationsAdapter(gitAnswering(5)).clear(repo)).resolves.toEqual({
+    await expect(new RepositoryDeclarationsAdapter(gitAnswering(5)).clear(clone)).resolves.toEqual({
       taskKeys: 1,
       consent: false,
     });

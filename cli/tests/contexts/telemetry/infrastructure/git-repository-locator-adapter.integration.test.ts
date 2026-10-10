@@ -76,6 +76,16 @@ describe("locating a working directory", () => {
     });
   });
 
+  it("names the clone by the common git dir, from the main tree or a linked one", async () => {
+    const repo = join(base, "repo");
+    initRepository(repo, env);
+    const linked = join(base, "linked");
+    git(repo, env, "worktree", "add", "-q", "-b", "wt", linked);
+    const clone = join(repo, ".git");
+    expect(await locator.locate(repo)).toMatchObject({ clone });
+    expect(await locator.locate(linked)).toMatchObject({ clone });
+  });
+
   it("keeps a worktree of a bare repository as its own main working tree", async () => {
     const repo = join(base, "repo");
     initRepository(repo, env);

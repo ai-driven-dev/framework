@@ -1,6 +1,12 @@
+import { existsSync } from "node:fs";
+import { join } from "node:path";
 import type { ConsentSource } from "../domain/ports/consent-source.js";
 import type { ConsentWriter } from "../domain/ports/switch/consent-writer.js";
-import { CONSENT_KEY, type ConsentReading } from "../domain/telemetry-consent.js";
+import {
+  type CloneConsentReading,
+  CONSENT_KEY,
+  type ConsentReading,
+} from "../domain/telemetry-consent.js";
 import { runGit } from "./run-git.js";
 
 /** `git config` finds nothing: the key is simply not set. */
@@ -14,6 +20,14 @@ export class GitConsentAdapter implements ConsentSource, ConsentWriter {
 
   async read(root: string): Promise<ConsentReading> {
     const run = runGit(this.env, root, ["config", "--local", "--get", CONSENT_KEY]);
+    if (run.status === 0) return { kind: "value", value: run.stdout.replace(/\r?\n$/u, "") };
+    return run.status === NOT_SET ? { kind: "value", value: null } : { kind: "unreadable" };
+  }
+
+  async readClone(clone: string): Promise<CloneConsentReading> {
+    const file = join(clone, "config");
+    if (!existsSync(file)) return { kind: "gone" };
+    const run = runGit(this.env, clone, ["config", "--file", file, "--get", CONSENT_KEY]);
     if (run.status === 0) return { kind: "value", value: run.stdout.replace(/\r?\n$/u, "") };
     return run.status === NOT_SET ? { kind: "value", value: null } : { kind: "unreadable" };
   }

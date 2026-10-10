@@ -32,6 +32,7 @@ export class GitRepositoryLocatorAdapter implements RepositoryLocator {
       status: "repository",
       root,
       mainRoot: basename(common) === ".git" ? dirname(common) : root,
+      clone: await realPath(common),
       remote: this.remote(real),
       rootCommit: this.rootCommit(real),
     };

@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
+import { DirectoryResolver } from "../../../../../src/contexts/telemetry/application/directory-resolver.js";
 import { TelemetryOffUseCase } from "../../../../../src/contexts/telemetry/application/switch/telemetry-off-use-case.js";
 import { TelemetryOnUseCase } from "../../../../../src/contexts/telemetry/application/switch/telemetry-on-use-case.js";
 import type { LocatedDirectory } from "../../../../../src/contexts/telemetry/domain/ports/repository-locator.js";
+import type { RepositoryResolution } from "../../../../../src/contexts/telemetry/domain/repository-resolution.js";
 import {
   FakeConsents,
   FakeLocator,
@@ -11,13 +13,27 @@ import {
 
 const NO_HOOK = { lineRemoved: false, delegateRemoved: false, stillCalledBy: [] };
 const NO_JOURNAL = { journalRemoved: false, trackedKept: false, ignoreEntryRemoved: false };
-const repository = (root: string, mainRoot = root): LocatedDirectory => ({
+const repository = (
+  root: string,
+  mainRoot = root,
+  extra: { remote?: string | null; rootCommit?: string | null } = {}
+): Extract<LocatedDirectory, { status: "repository" }> => ({
   status: "repository",
   root,
   mainRoot,
+  clone: `${mainRoot}/.git`,
   remote: "r",
   rootCommit: "c",
+  ...extra,
 });
+
+const ID = "c";
+/** A directory remembered as refused, whose working tree is gone. */
+const DELETED: RepositoryResolution = {
+  repository_id: ID,
+  root: "/w/repo-wt-deleted",
+  consented: false,
+};
 
 function setup(settings: (string | null)[] = []) {
   const events: string[] = [];
@@ -38,6 +54,8 @@ function setup(settings: (string | null)[] = []) {
       events.push("consent");
       writes.push({ root, value });
       consents.values.set(root, value);
+      const located = await locator.locate(root);
+      if (located.status === "repository") consents.clones.set(located.clone, value);
     },
   };
   const on = new TelemetryOnUseCase(
@@ -81,6 +99,7 @@ function setup(settings: (string | null)[] = []) {
   return {
     on,
     off,
+    locator,
     consents,
     ledger,
     resolutions,
@@ -184,49 +203,94 @@ describe("aidd telemetry on", () => {
     expect(s.events).toEqual([]);
   });
 
-  it("resets the offsets and grants the remembered roots under the ledger's lock, after cleaning", async () => {
+  it("resets the offsets under the ledger's lock, after cleaning, and rewrites no refusal", async () => {
     const s = setup();
     s.ledger.stored.set("/t", { offset: 9, size: 9, identity: "i" });
-    s.resolutions.resolutions.set("/gone/a", {
-      repository_id: "r",
-      root: "/w/repo",
-      consented: false,
-    });
-    s.resolutions.resolutions.set("/gone/m", {
-      repository_id: "r",
-      root: "/w/main",
-      consented: false,
-    });
-    s.resolutions.resolutions.set("/gone/o", {
-      repository_id: "o",
-      root: "/w/other",
-      consented: false,
-    });
+    s.resolutions.resolutions.set("/gone/a", { ...DELETED, root: "/w/repo-wt" });
     await s.on.execute("/w/repo");
     expect(s.events.slice(3)).toEqual(["lock", "reset", "unlock"]);
     expect(s.ledger.stored.size).toBe(0);
-    expect(s.resolutions.saves).toBe(1);
-    expect(s.resolutions.resolutions.get("/gone/a")?.consented).toBe(true);
-    expect(s.resolutions.resolutions.get("/gone/m")?.consented).toBe(true);
-    expect(s.resolutions.resolutions.get("/gone/o")?.consented).toBe(false);
+    expect(s.resolutions.resolutions.get("/gone/a")?.consented).toBe(false);
   });
 
-  it("grants the remembered refusal of a linked worktree deleted before the opt-in", async () => {
+  it("remembers its own root, seen alive, so forget can find the clone later", async () => {
     const s = setup();
-    // The repository's id is its root commit here; the worktree is neither root `on` knows.
-    s.resolutions.resolutions.set("/gone/wt", {
-      repository_id: "c",
-      root: "/w/repo-wt-deleted",
-      consented: false,
-    });
     await s.on.execute("/w/repo");
-    expect(s.resolutions.resolutions.get("/gone/wt")?.consented).toBe(true);
+    expect(s.resolutions.resolutions.get("/w/repo")).toEqual({
+      repository_id: ID,
+      root: "/w/repo",
+      consented: true,
+      clone: "/w/main/.git",
+    });
   });
 
-  it("does not rewrite the remembered roots when none needed granting", async () => {
+  it("remembers nothing of a repository with neither a remote nor a commit", async () => {
     const s = setup();
+    s.locator.directories.set(
+      "/w/repo",
+      repository("/w/repo", "/w/main", { remote: null, rootCommit: null })
+    );
     await s.on.execute("/w/repo");
     expect(s.resolutions.saves).toBe(0);
+  });
+
+  describe("what a deleted directory is, after `on` in a clone", () => {
+    async function resolvedAfterOn(s: ReturnType<typeof setup>, entry: RepositoryResolution) {
+      s.resolutions.resolutions.set("/gone/x", entry);
+      await s.on.execute("/w/repo");
+      const run = await new DirectoryResolver(s.locator, s.consents, s.resolutions, false).open();
+      return run.resolve("/gone/x");
+    }
+
+    it("stores a deleted linked worktree of the clone that opted in", async () => {
+      const s = setup();
+      s.consents.clones.set("/w/main/.git", null);
+      expect(await resolvedAfterOn(s, { ...DELETED, clone: "/w/main/.git" })).toMatchObject({
+        stored: {},
+      });
+    });
+
+    it("keeps refusing a deleted clone of the same remote that never opted in", async () => {
+      const s = setup();
+      expect(await resolvedAfterOn(s, { ...DELETED, clone: "/w/b2/.git" })).toEqual({
+        skipped: "no-consent",
+      });
+    });
+
+    it("keeps refusing a clone of the same remote that ran off, deleted or not", async () => {
+      for (const alive of [false, true]) {
+        const s = setup();
+        if (alive) s.consents.clones.set("/w/b2/.git", "off");
+        expect(await resolvedAfterOn(s, { ...DELETED, clone: "/w/b2/.git" })).toEqual({
+          skipped: "no-consent",
+        });
+      }
+    });
+
+    it("keeps refusing a deleted copy with no remote that shares the root commit", async () => {
+      const s = setup();
+      s.locator.directories.set("/w/repo", repository("/w/repo", "/w/main", { remote: null }));
+      const copy = { ...DELETED, repository_id: "c", clone: "/w/copy/.git" };
+      expect(await resolvedAfterOn(s, copy)).toEqual({ skipped: "no-consent" });
+    });
+
+    it("stops storing the deleted worktrees of a clone that runs off", async () => {
+      const s = setup();
+      s.consents.clones.set("/w/main/.git", "2");
+      s.consents.values.set("/w/repo", "2");
+      const entry = { ...DELETED, consented: true, clone: "/w/main/.git" };
+      s.resolutions.resolutions.set("/gone/x", entry);
+      await s.off.execute("/w/repo");
+      const run = await new DirectoryResolver(s.locator, s.consents, s.resolutions, false).open();
+      expect(await run.resolve("/gone/x")).toEqual({ skipped: "no-consent" });
+    });
+  });
+
+  it("does not rewrite what it already remembered of its own root", async () => {
+    const s = setup();
+    await s.on.execute("/w/repo");
+    await s.on.execute("/w/repo");
+    expect(s.resolutions.saves).toBe(1);
   });
 
   it.each([

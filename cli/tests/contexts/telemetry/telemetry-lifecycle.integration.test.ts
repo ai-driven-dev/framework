@@ -436,7 +436,9 @@ describe("forgetting", () => {
       "previous-day-file",
       "previous-identity",
     ]);
-    expect(result.plan.repositories).toEqual([{ root: repo, taskKeys: 2, consent: true }]);
+    expect(result.plan.repositories).toEqual([
+      { clone: join(repo, ".git"), taskKeys: 2, consent: true },
+    ]);
     expect(snapshot()).toEqual(before);
     expect(git(repo, box.gitEnv, "config", "--local", "--list")).toBe(config);
   });
@@ -476,7 +478,7 @@ describe("forgetting", () => {
 
     const result = await deps.forgetTelemetryUseCase.execute(true);
 
-    expect(result.plan.missing).toEqual([other]);
+    expect(result.plan.missing).toEqual([join(other, ".git")]);
     expect(git(repo, box.gitEnv, "config", "--local", "--list")).not.toMatch(/aidd/i);
   });
 

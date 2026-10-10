@@ -78,4 +78,37 @@ describe("a clone's consent in its git config", () => {
     await writeFile(join(repo, ".git", "config"), "[core\n  broken");
     expect(await consent.read(repo)).toEqual({ kind: "unreadable" });
   });
+
+  describe("read from the clone itself", () => {
+    it("is the key of the common git dir, whether or not a working tree of it exists", async () => {
+      const clone = join(repo, ".git");
+      expect(await consent.readClone(clone)).toEqual({ kind: "value", value: null });
+      await consent.set(repo, "2");
+      const linked = join(root, "linked");
+      git(repo, env, "worktree", "add", "-q", "-b", "feat/y", linked);
+      await rm(linked, { recursive: true });
+      expect(await consent.readClone(clone)).toEqual({ kind: "value", value: "2" });
+      await consent.set(repo, "off");
+      expect(await consent.readClone(clone)).toEqual({ kind: "value", value: "off" });
+    });
+
+    it("is gone when the clone is", async () => {
+      expect(await consent.readClone(join(root, "nowhere", ".git"))).toEqual({ kind: "gone" });
+    });
+
+    it("is unreadable when git cannot read the clone's config", async () => {
+      await writeFile(join(repo, ".git", "config"), "[core\n  broken");
+      expect(await consent.readClone(join(repo, ".git"))).toEqual({ kind: "unreadable" });
+    });
+
+    it("is not read from the user's global git config", async () => {
+      const globalConfig = join(root, "global-gitconfig");
+      await writeFile(globalConfig, "[aidd]\n\ttelemetry = 2\n");
+      const withGlobal = { ...env, GIT_CONFIG_GLOBAL: globalConfig };
+      expect(await new GitConsentAdapter(withGlobal).readClone(join(repo, ".git"))).toEqual({
+        kind: "value",
+        value: null,
+      });
+    });
+  });
 });

@@ -55,6 +55,7 @@ function repository(
     status: "repository",
     root,
     mainRoot: root,
+    clone: `${extra.mainRoot ?? root}/.git`,
     remote: "https://github.com/acme/widgets.git",
     rootCommit: "c0ffee",
     ...extra,
@@ -516,5 +517,104 @@ describe("how far back the transcripts on disk reach", () => {
   it("says no date when there is no transcript, and when nothing was read", async () => {
     expect((await setup().ingest.execute()).oldestTranscriptAt).toBeNull();
     expect((await setup({ refused: true }).ingest.execute()).oldestTranscriptAt).toBeNull();
+  });
+});
+
+describe("a directory that is gone is judged by the clone it belonged to", () => {
+  const CLONE = "/work/a/.git";
+
+  async function deletedWorktree(s: ReturnType<typeof setup>, consentedWhenSeen: boolean) {
+    s.resolutions.resolutions.set("/work/wt", {
+      repository_id: sha("github.com/acme/widgets"),
+      root: "/work/wt",
+      consented: consentedWhenSeen,
+      clone: CLONE,
+    });
+    s.transcripts.files.set("/t/1.jsonl", [line("A", 1, { cwd: "/work/wt" })]);
+    return s.ingest.execute();
+  }
+
+  it("remembers the clone of every directory it sees alive", async () => {
+    const s = setup();
+    s.transcripts.files.set("/t/1.jsonl", [line("A", 1)]);
+    await s.ingest.execute();
+    expect(s.resolutions.resolutions.get("/work/a")).toMatchObject({ clone: CLONE });
+  });
+
+  it("stores a deleted worktree because its clone says yes now, whatever was remembered", async () => {
+    const s = setup();
+    s.consents.clones.set(CLONE, GRANTED);
+    expect(await deletedWorktree(s, false)).toMatchObject({ added: 1 });
+  });
+
+  it("refuses a deleted worktree because its clone says no now, whatever was remembered", async () => {
+    for (const now of ["off", null]) {
+      const s = setup();
+      s.consents.clones.set(CLONE, now);
+      const result = await deletedWorktree(s, true);
+      expect(result).toMatchObject({ added: 0 });
+      expect(result.notStored["no-consent"]).toBe(1);
+    }
+  });
+
+  it("counts a clone whose git config cannot be read as unreadable", async () => {
+    const s = setup();
+    s.consents.unreadableClones.add(CLONE);
+    expect((await deletedWorktree(s, true)).notStored["unreadable-consent"]).toBe(1);
+  });
+
+  it("falls back on what was remembered once the clone itself is gone", async () => {
+    const yes = setup();
+    expect(await deletedWorktree(yes, true)).toMatchObject({ added: 1 });
+    const no = setup();
+    expect((await deletedWorktree(no, false)).notStored["no-consent"]).toBe(1);
+  });
+
+  it("asks a clone once however many deleted directories it covers", async () => {
+    const s = setup();
+    s.consents.clones.set(CLONE, GRANTED);
+    s.resolutions.resolutions.set("/work/wt2", {
+      repository_id: sha("github.com/acme/widgets"),
+      root: "/work/wt2",
+      consented: false,
+      clone: CLONE,
+    });
+    s.transcripts.files.set("/t/1.jsonl", [
+      line("A", 1, { cwd: "/work/wt2" }),
+      line("B", 2, { cwd: "/work/wt2/src" }),
+    ]);
+    s.resolutions.resolutions.set("/work/wt2/src", {
+      repository_id: sha("github.com/acme/widgets"),
+      root: "/work/wt2",
+      consented: false,
+      clone: CLONE,
+    });
+    await s.ingest.execute();
+    expect(s.consents.cloneReads).toEqual([CLONE]);
+  });
+
+  it("trusts what was remembered of a directory from before clones were recorded", async () => {
+    const s = setup();
+    s.resolutions.resolutions.set("/work/old", {
+      repository_id: sha("github.com/acme/widgets"),
+      root: "/work/old",
+      consented: true,
+    });
+    s.transcripts.files.set("/t/1.jsonl", [line("A", 1, { cwd: "/work/old" })]);
+    expect(await s.ingest.execute()).toMatchObject({ added: 1 });
+    expect(s.resolutions.resolutions.get("/work/old")).not.toHaveProperty("clone");
+  });
+
+  it("records the clone of a directory remembered without one once it is seen alive", async () => {
+    const s = setup();
+    s.resolutions.resolutions.set("/work/a", {
+      repository_id: sha("github.com/acme/widgets"),
+      root: "/work/a",
+      consented: true,
+    });
+    s.transcripts.files.set("/t/1.jsonl", [line("A", 1)]);
+    await s.ingest.execute();
+    expect(s.resolutions.resolutions.get("/work/a")).toMatchObject({ clone: CLONE });
+    expect(s.resolutions.saves).toBe(1);
   });
 });

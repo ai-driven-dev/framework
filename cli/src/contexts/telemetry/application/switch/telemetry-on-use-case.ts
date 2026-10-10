@@ -1,5 +1,5 @@
 import type { ConsentSource } from "../../domain/ports/consent-source.js";
-import type { RepositoryLocator } from "../../domain/ports/repository-locator.js";
+import type { LocatedDirectory, RepositoryLocator } from "../../domain/ports/repository-locator.js";
 import type { ResolutionStore } from "../../domain/ports/resolution-store.js";
 import type { ClaudeSettingsSource } from "../../domain/ports/switch/claude-settings-source.js";
 import type { ConsentWriter } from "../../domain/ports/switch/consent-writer.js";
@@ -14,9 +14,13 @@ import type {
 } from "../../domain/ports/switch/run-journal-cleaner.js";
 import type { UsageLedger } from "../../domain/ports/usage-ledger.js";
 import { repositoryIdOf } from "../../domain/repository-identity.js";
+import {
+  cwdKey,
+  type RepositoryResolution,
+  sameResolution,
+} from "../../domain/repository-resolution.js";
 import { effectiveRetentionDays, retentionShort } from "../../domain/switch/claude-retention.js";
 import { withoutPreviousTelemetry } from "../../domain/switch/legacy-config.js";
-import { withConsentGranted } from "../../domain/switch/resolution-consent.js";
 import { CONSENT_GRANTED } from "../../domain/telemetry-consent.js";
 import { readCloneConsent } from "./clone-consent.js";
 
@@ -65,7 +69,7 @@ export class TelemetryOnUseCase {
     // Pairing and removal live in one adapter call: the line and its script go together.
     const hook = await this.hooks.clean(located.root);
     const journal = await this.journal.clean(located.root);
-    await this.catchUp([located.root, located.mainRoot], repositoryIdOf(located));
+    await this.catchUp(located);
 
     const days = effectiveRetentionDays(await this.claudeSettings.texts(located.root));
     return {
@@ -96,13 +100,28 @@ export class TelemetryOnUseCase {
 
   /** Under the ledger's lock, or an ingest already running would save the offsets this run
    * reset. Ingest advanced them past lines it did not store for want of consent, and the same
-   * lines belong in the ledger now: calls are kept once, so reading them again costs nothing. */
-  private async catchUp(roots: readonly string[], repositoryId: string | null): Promise<void> {
+   * lines belong in the ledger now: calls are kept once, so reading them again costs nothing.
+   * The clone's directories that are gone are not rewritten: their consent is read from the
+   * clone, live. This root is remembered, seen alive, so `forget` finds the clone even if no
+   * session ever ran here. */
+  private async catchUp(
+    located: Extract<LocatedDirectory, { status: "repository" }>
+  ): Promise<void> {
+    const id = repositoryIdOf(located);
     await this.ledger.exclusively(async () => {
       await this.ledger.resetPositions();
+      if (id === null) return;
       const held = await this.resolutions.load();
-      const granted = withConsentGranted(held, roots, repositoryId, this.caseInsensitiveFileSystem);
-      if (granted.changed) await this.resolutions.save(granted.resolutions);
+      const key = cwdKey(located.root, this.caseInsensitiveFileSystem);
+      const own: RepositoryResolution = {
+        repository_id: id,
+        root: located.root,
+        consented: true,
+        clone: located.clone,
+      };
+      if (sameResolution(held.get(key), own)) return;
+      held.set(key, own);
+      await this.resolutions.save(held);
     });
   }
 }
