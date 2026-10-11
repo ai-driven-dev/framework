@@ -2,7 +2,7 @@
 
 Reads a project's `aidd_docs/` frontmatter and shows its task documents as status columns, either as a full-screen interactive view or as a scriptable export.
 
-This folder is not a published package. It is source mounted by the AIDD CLI, which owns the binary, the dependencies and the release.
+This folder is not a published package and the AIDD CLI no longer mounts it. It runs standalone through `pnpm board` (below); a host can still mount the commands through `registerKanban` in `src/index.ts`.
 
 ## Origin
 
@@ -11,9 +11,10 @@ Written by Francois Duval as the standalone `ai-driven-dev/cli-kanban` project, 
 ## Use
 
 ```bash
-aidd kanban [path]              # interactive view, defaults to the current directory
-aidd kanban list [path]         # scriptable table
-aidd kanban list [path] --json  # the task groups as JSON
+pnpm board [path]              # interactive view, defaults to the current directory
+pnpm board list [path]         # scriptable table
+pnpm board list [path] --json  # the board as JSON (BoardDto)
+pnpm board web [path]          # browser board with live refresh, on 127.0.0.1
 ```
 
 Filters apply to both views and combine freely:
@@ -26,7 +27,7 @@ Each directory under `aidd_docs/` becomes one task group: a parent document (`pl
 
 ## Develop
 
-The AIDD CLI type-checks and bundles this folder as part of its own build. Its tests, lint and type-check run here:
+Tests, lint and type-check run here:
 
 ```bash
 pnpm install
@@ -34,7 +35,5 @@ pnpm typecheck
 pnpm lint
 pnpm test
 ```
-
-From the CLI folder, `pnpm test:kanban` runs the same suite.
 
 Nothing here may import from `../cli`. Everything the commands need from their host arrives through `KanbanCommandDeps` at registration time.
