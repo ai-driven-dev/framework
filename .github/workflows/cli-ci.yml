@@ -407,6 +407,10 @@ jobs:
       # Its `plugin validate` exits 0 either way, so the script reads the verdict from its text.
       - name: Claude Code accepts the translated marketplace
         run: node scripts/check-claude-accepts-build.cjs
+      # One session id in the hook's payload, its environment and the transcript: what the
+      # telemetry joins on. Against a dead API, so it spends nothing.
+      - name: Claude Code keeps the session id join
+        run: node scripts/probe-identifier-join.cjs
 
   cli-jscpd:
     name: cli / JSCPD (duplication)
