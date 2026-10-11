@@ -24,6 +24,16 @@ describe("reading what a directory is", () => {
     expect(sameClone(first, (await readCloneIdentity(dir)) as typeof first)).toBe(true);
   });
 
+  it("keeps its identity once an entry is added, its change time moving past its birth", async () => {
+    const dir = join(base, "d");
+    await mkdir(dir);
+    const first = await readCloneIdentity(dir);
+    // Past a tick of the file clock, which is coarse on Linux: the two times now differ.
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    await writeFile(join(dir, "entry"), "x");
+    expect(await readCloneIdentity(dir)).toEqual(first);
+  });
+
   it("is another directory's identity once another is at the path", async () => {
     const dir = join(base, "d");
     await mkdir(dir);

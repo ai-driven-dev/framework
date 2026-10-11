@@ -145,7 +145,7 @@ describe("reading a transcript from a byte offset", () => {
   });
 
   it("fails on a transcript it cannot read, instead of reading it as empty", async () => {
-    await expect(adapter.read(projects, null)).rejects.toThrow();
+    await expect(adapter.read(projects, null)).rejects.toThrow(/is not a file/);
   });
 
   it("reads nothing from a file that vanished", async () => {

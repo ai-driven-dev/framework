@@ -367,3 +367,43 @@ Fixes 4 and 6 are documents; no test can go red for them.
 - The writers' newline guard (`appendRecord`, `PrivateStorage.append`) was not enough for fix 2: it ends a torn tail with a newline, which turns it into a terminated line that is not an event, so the next `on`, `off` or hook close would have damaged the log. The test failed that way before the change (hook: `Unterminated string in JSON` reading the log back). The two consent writers now cut the unterminated tail before appending (`ftruncate` in the hook, a `replace` in the CLI). Every other file still gets the guard. The cut is not atomic with a concurrent append: a line another process appends between the read and the cut can be lost, a window of a few milliseconds that only opens on a log already torn.
 - A last line that would parse but has no newline is ignored too: a write is one line and its newline, so one without the other is not finished.
 - The hook-intercept wait is 8 s, not 10 s, because a declaration takes the bindings lock twice (the session line, then the branch snapshot): at most 16 s of waiting under the hook's 20 s.
+
+## After the first CI runs
+
+### A birth equal to the change time is a birth
+
+The first rule took a birth equal to the change time as no birth, in milliseconds, then in nanoseconds. Both were wrong, and the row "copy at the path" kept failing on Linux now and then, with `expected [ 'a1', 'b1' ] to deeply equal [ 'b1' ]`. Measured in Docker (`node:22-bookworm`, aarch64, kernel 7.0, OrbStack, overlay on btrfs):
+
+- **Cause, observed.** Two failing runs, instrumented after the ingest: the copy at `a/.git` was stored in `roots.json` with `birthtimeMs: 0`, and its stat had `birthtimeNs` equal to `ctimeNs` (`1791709014192859969` both). With no birth, the copy answers only from ingest's first sighting, so the call made before it went to the original clone, whose consent was open.
+- **Rate.** `cpSync` of a fresh git dir, 2000 times: birth `0` never, birth equal to the change time to the nanosecond 1529 times, in the same millisecond but not the same nanosecond 460 times. `statx` works there, and the file clock is coarse: a directory made and filled within one tick has both times equal.
+- **The nanosecond rule did not fix it.** The row failed 3 times in 150 under the millisecond rule, 5 times in 300 and 8 times in 300 under the nanosecond rule.
+
+A positive birth time is now kept as it is, by the CLI and the hook alike, and the change time is not read.
+
+| Rule | Mutation | Red |
+| --- | --- | --- |
+| a birth equal to the change time is kept, CLI | `\|\| stat.birthtimeNs === stat.ctimeNs` put back in `identityFromStat` | 2 in the unit test (the equal case, and the identity of a stat carrying no ns fields), 1 in the fixture test (`linux-birth-equal-to-change-time-is-a-birth`) |
+| the same, hook | the same in `consent.cjs` | 1 in the hook test "a directory's identity follows the fixture" |
+| an identity does not move when an entry is added | the same, CLI, run on Linux | "keeps its identity once an entry is added", 5 runs out of 5. It cannot fail on macOS, where APFS never had the two times equal over 500 directories |
+| the row "copy at the path", overlay on btrfs, root | the same, both sides | 8 runs failed out of 300. With the rule removed: 0 out of 400 |
+| the same, on an ext4 loop device, as the unprivileged `node` user | the same, both sides | 81 runs failed out of 200. With the rule removed: 0 out of 400 |
+
+On that ext4 device, as `node`, the whole consent table and the reader test passed 50 runs out of 50 with the rule removed. A fresh directory there had its birth equal to its change time; after an entry was added 50 ms later, the change time had moved and the birth had not.
+
+### Where Linux refuses `statx`
+
+Simulated on the same ext4 device: `strace -f -e inject=statx:error=ENOSYS` makes every `statx` fail as on a kernel before 4.11, and libuv falls back to `stat`. A fresh directory then had its birth equal to its change time, and after an entry was added both had moved together. The consent table, its assertions made soft so that each row reports what it finally stored, 36 rows, run as root:
+
+| Rule | Rows as expected | Stored less | Stored more |
+| --- | --- | --- | --- |
+| a birth equal to the change time is kept (this change), 3 runs | 1 | 34 | 1, every run: "on, off, the clone moved, on" stored `a2`, made after `off`, and not `a3` |
+| a birth equal to the change time is no birth (the rule before), 2 runs | 33 | 0 | 3, every run: "unmounted, made again" and "copy at the path", the residual where there is no birth time, and "unstattable", which `chmod` cannot shut to root |
+
+With the birth taken from the change time, the identity moves at each entry added to the git dir. Most rows then store less than they should. The one that stores more does so because `off` closes the interval of the identity it reads, which is no longer the one `on` opened. A residual limit of the usage contract, worded from these runs.
+
+### The other guards of these commits
+
+| Guard | Mutation | Red |
+| --- | --- | --- |
+| a directory is not read as a transcript | `if (!stats.isFile()) throw` removed | 1, "fails on a transcript it cannot read". The test now asks for `/is not a file/`: before, it passed on POSIX without the guard, because reading a directory throws `EISDIR` there anyway |
+| the husky hook is named with `/` | not mutated: the path is the same on POSIX. CI run 38088839814, before the fix, failed 2 tests on Windows with `".husky\\prepare-commit-msg"` | Windows only |

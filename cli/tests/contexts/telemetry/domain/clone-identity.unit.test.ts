@@ -12,8 +12,6 @@ const STAT: StatFacts = {
   dev: 16n,
   ino: 12345n,
   birthtimeMs: 1_700_000_000_000n,
-  birthtimeNs: 1_700_000_000_000_000_000n,
-  ctimeNs: 1_700_000_500_000_000_000n,
 };
 const CLONE: CloneIdentity = {
   path: "/a/.git",
@@ -46,25 +44,14 @@ describe("the identity of a clone from what stat reports", () => {
     });
   });
 
-  it("has a birth time of 0 when it is the change time to the nanosecond, which moves with every entry added", () => {
-    expect(
-      identityFromStat("/a/.git", {
-        ...STAT,
-        birthtimeMs: 1_700_000_500_000n,
-        birthtimeNs: 1_700_000_500_000_000_000n,
-      })
-    ).toEqual({ ...CLONE, birthtimeMs: 0 });
-  });
-
-  it("keeps a birth in the change time's millisecond, a nanosecond apart from it", () => {
-    expect(
-      identityFromStat("/a/.git", {
-        ...STAT,
-        birthtimeMs: 1_700_000_500_000n,
-        birthtimeNs: 1_700_000_500_000_000_000n,
-        ctimeNs: 1_700_000_500_000_000_001n,
-      })
-    ).toEqual({ ...CLONE, birthtimeMs: 1_700_000_500_000 });
+  it("keeps a birth equal to the change time: a directory made and filled within one tick of the file clock has both", () => {
+    // The whole stat, as `fs.stat` gives it: its times beside the birth must not count.
+    const stat = {
+      ...STAT,
+      birthtimeNs: 1_700_000_000_000_000_000n,
+      ctimeNs: 1_700_000_000_000_000_000n,
+    };
+    expect(identityFromStat("/a/.git", stat)).toEqual(CLONE);
   });
 });
 

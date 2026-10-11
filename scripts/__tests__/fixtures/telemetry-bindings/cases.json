@@ -1195,19 +1195,12 @@
       "birthtimeNs": "0",
       "ctimeNs": "1760000099999000000"
     },
-    "linux-birth-equal-to-change-time-is-no-birth": {
+    "linux-birth-equal-to-change-time-is-a-birth": {
       "dev": "2049",
       "ino": "524301",
       "birthtimeMs": "1760000099999",
       "birthtimeNs": "1760000099999000000",
       "ctimeNs": "1760000099999000000"
-    },
-    "linux-birth-in-the-change-time-millisecond-is-a-birth": {
-      "dev": "2049",
-      "ino": "524301",
-      "birthtimeMs": "1760000099999",
-      "birthtimeNs": "1760000099999100000",
-      "ctimeNs": "1760000099999900000"
     },
     "a-negative-birth-is-no-birth": {
       "dev": "2049",

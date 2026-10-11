@@ -197,13 +197,15 @@ describe("the shared fixture of task bindings", () => {
   it.each(Object.entries(cases.cloneIdentity))(
     "reads the identity of a directory: %s",
     (name, stat) => {
-      const found = identityFromStat("/p", {
+      // The whole stat, as `fs.stat` gives it: its times beside the birth must not count.
+      const facts = {
         dev: BigInt(stat.dev),
         ino: BigInt(stat.ino),
         birthtimeMs: BigInt(stat.birthtimeMs),
         birthtimeNs: BigInt(stat.birthtimeNs),
         ctimeNs: BigInt(stat.ctimeNs),
-      });
+      };
+      const found = identityFromStat("/p", facts);
       const { path: _path, ...parts } = found ?? { path: "" };
       expect(found === null ? null : parts).toEqual(expected.cloneIdentity?.[name]);
     }

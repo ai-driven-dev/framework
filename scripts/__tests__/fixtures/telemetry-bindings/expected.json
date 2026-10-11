@@ -498,12 +498,7 @@
       "ino": "524301",
       "birthtimeMs": 0
     },
-    "linux-birth-equal-to-change-time-is-no-birth": {
-      "dev": "2049",
-      "ino": "524301",
-      "birthtimeMs": 0
-    },
-    "linux-birth-in-the-change-time-millisecond-is-a-birth": {
+    "linux-birth-equal-to-change-time-is-a-birth": {
       "dev": "2049",
       "ino": "524301",
       "birthtimeMs": 1760000099999
