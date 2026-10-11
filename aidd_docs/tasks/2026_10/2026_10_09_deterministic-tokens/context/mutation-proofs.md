@@ -399,7 +399,21 @@ Simulated on the same ext4 device: `strace -f -e inject=statx:error=ENOSYS` make
 | a birth equal to the change time is kept (this change), 3 runs | 1 | 34 | 1, every run: "on, off, the clone moved, on" stored `a2`, made after `off`, and not `a3` |
 | a birth equal to the change time is no birth (the rule before), 2 runs | 33 | 0 | 3, every run: "unmounted, made again" and "copy at the path", the residual where there is no birth time, and "unstattable", which `chmod` cannot shut to root |
 
-With the birth taken from the change time, the identity moves at each entry added to the git dir. Most rows then store less than they should. The one that stores more does so because `off` closes the interval of the identity it reads, which is no longer the one `on` opened. A residual limit of the usage contract, worded from these runs.
+With the birth taken from the change time, the identity moves at each entry added to the git dir. Most rows then store less than they should. The one that stores more does so because `off` closed only the interval of the identity it read, which was no longer the one `on` opened.
+
+`off` now also closes the open interval its key names when that interval was opened at the same path. A copy elsewhere carries the token but not the path, and is left alone. The same simulation, as the unprivileged `node` user:
+
+| Rule | Rows as expected | Stored less | Stored more |
+| --- | --- | --- | --- |
+| `off` closes by identity, and by the key's token at its path, 3 runs | 1 | 35 | 0 |
+| the same, `statx` allowed, 2 runs | 36 | 0 | 0 |
+
+| Rule | Mutation | Red |
+| --- | --- | --- |
+| `off` closes the interval its key names at its path | the token clause removed | 1, "closes the interval its key names at its path, though the identity read there moved since `on`" |
+| only at its path | the path condition removed | 1, "leaves the interval of the clone a copy was made from, its key naming it at another path" |
+
+A residual limit of the usage contract: the clone stops being measured, and it fails closed.
 
 ### The other guards of these commits
 
@@ -407,3 +421,18 @@ With the birth taken from the change time, the identity moves at each entry adde
 | --- | --- | --- |
 | a directory is not read as a transcript | `if (!stats.isFile()) throw` removed | 1, "fails on a transcript it cannot read". The test now asks for `/is not a file/`: before, it passed on POSIX without the guard, because reading a directory throws `EISDIR` there anyway |
 | the husky hook is named with `/` | not mutated: the path is the same on POSIX. CI run 38088839814, before the fix, failed 2 tests on Windows with `".husky\\prepare-commit-msg"` | Windows only |
+
+### The session id join, probed against the real tool
+
+`scripts/probe-identifier-join.cjs` runs the installed `claude -p` against a dead API, with a fake key and an empty home, and judges what one `SessionStart` hook and the transcript left, through the shipped `isClaudePayload` and `personIsPresent`. On 2.1.295 it exits 0 after its 90 s bound: `the join holds`. The CI job `cli / Identifier join (Claude Code)` runs it again.
+
+| Check | Mutation | Red |
+| --- | --- | --- |
+| a hook fired before the API call | the check made `false` | 2, "is a change of the tool when no hook fired before the API call" and "exits 1 when the tool fires no hook" |
+| the Claude-only guard accepts Claude's payload | the same | 1, "is a change when the hook's session variable is not its payload's id" |
+| the transcript is under the config dir's `projects` | the same | 1, "is a change when the transcript is not under the config dir's projects" |
+| a transcript was written | the same | 1, "is a change when no transcript was written" |
+| every transcript line names the hook's session | the same | 2, "names another session" and "no transcript line names a session" |
+| at least one line names it | `ids.length === 0` removed | 1, "is a change when no transcript line names a session" |
+| `CLAUDE_PID` is the hook's parent | the same | 1, "is a change when the hook is not spawned by the process CLAUDE_PID names" |
+| a headless run is not a person present | the same | 1, "is a change when a headless run reads as a person at the keyboard" |

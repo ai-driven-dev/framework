@@ -22,8 +22,9 @@ path or token volume of the person whose history it was.
 > 2026-10-09): `telemetry: {enabled: true, version: 2}` in `.aidd/config.json`. It does
 > not count at HEAD, and the backfill is gone: consent is `aidd telemetry on` in the clone, and
 > a call is stored only if its transcript time falls inside the interval that `on` opened. The counting code is unchanged since the recording: `git diff --stat b2b732eb HEAD`
-> over `domain/formats`, `usage-fold.ts`, `usage-record.ts` and the transcript source adapter is
-> empty. To repeat the method at HEAD, run `aidd telemetry on --yes` in the sandbox repository
+> over `domain/formats`, `usage-fold.ts`, `usage-record.ts` and the transcript source adapter
+> shows only a guard that refuses a directory as a transcript (`c4927e5c`), which a file never
+> meets. To repeat the method at HEAD, run `aidd telemetry on --yes` in the sandbox repository
 > before the transcripts are produced, and date them after it. The comparison then checks
 > counting only, as before. The result below is not rewritten.
 

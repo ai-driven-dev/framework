@@ -1,6 +1,6 @@
 ---
 objective: "A person removes what this tool measured about them, after being shown what will go, what will stay, and what history keeps whatever they do."
-status: pending
+status: superseded
 ---
 
 # Plan: the deletion path
