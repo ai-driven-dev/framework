@@ -18,6 +18,10 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
   - [`skills/08-three-amigos`](#skills08-three-amigos)
   - [`skills/09-defect`](#skills09-defect)
   - [`skills/10-task`](#skills10-task)
+  - [`skills/11-interview`](#skills11-interview)
+  - [`skills/12-release-notes`](#skills12-release-notes)
+  - [`skills/13-data-driven-decision`](#skills13-data-driven-decision)
+  - [`skills/14-roadmap`](#skills14-roadmap)
 
 ---
 
@@ -173,4 +177,80 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `references` | [readiness.md](skills/10-task/references/readiness.md) | - |
 | `references` | [relations.md](skills/10-task/references/relations.md) | - |
 | `-` | [SKILL.md](skills/10-task/SKILL.md) | `Produces or refines a backlog Task for bounded delivery work without independent user value. Use when the user wants to create, link, order, estimate, transition, or complete one. Not for User Stories, Spikes, Defects, or implementation.` |
+
+#### `skills/11-interview`
+
+| Group | File | Description |
+|-------|------|---|
+| `actions` | [01-frame.md](skills/11-interview/actions/01-frame.md) | - |
+| `actions` | [02-prepare.md](skills/11-interview/actions/02-prepare.md) | - |
+| `actions` | [03-synthesize.md](skills/11-interview/actions/03-synthesize.md) | - |
+| `actions` | [04-finalize.md](skills/11-interview/actions/04-finalize.md) | - |
+| `assets` | [interview-guide.md](skills/11-interview/assets/interview-guide.md) | - |
+| `assets` | [interview-synthesis.md](skills/11-interview/assets/interview-synthesis.md) | - |
+| `references` | [handoffs.md](skills/11-interview/references/handoffs.md) | - |
+| `references` | [insights.md](skills/11-interview/references/insights.md) | - |
+| `references` | [persistence.md](skills/11-interview/references/persistence.md) | - |
+| `references` | [questions.md](skills/11-interview/references/questions.md) | - |
+| `references` | [verbatims.md](skills/11-interview/references/verbatims.md) | - |
+| `-` | [SKILL.md](skills/11-interview/SKILL.md) | `Prepares a user interview guide before a meeting, then restructures its raw transcript into a question by question synthesis with exact verbatims. Use when the user wants to prepare or synthesize an interview or client meeting. Not for product decisions.` |
+
+#### `skills/12-release-notes`
+
+| Group | File | Description |
+|-------|------|---|
+| `actions` | [01-collect.md](skills/12-release-notes/actions/01-collect.md) | - |
+| `actions` | [02-draft.md](skills/12-release-notes/actions/02-draft.md) | - |
+| `actions` | [03-review.md](skills/12-release-notes/actions/03-review.md) | - |
+| `actions` | [04-finalize.md](skills/12-release-notes/actions/04-finalize.md) | - |
+| `assets` | [fact-sheet.md](skills/12-release-notes/assets/fact-sheet.md) | - |
+| `assets` | [release-notes-template.md](skills/12-release-notes/assets/release-notes-template.md) | - |
+| `references` | [audiences.md](skills/12-release-notes/references/audiences.md) | - |
+| `references` | [handoffs.md](skills/12-release-notes/references/handoffs.md) | - |
+| `references` | [persistence.md](skills/12-release-notes/references/persistence.md) | - |
+| `references` | [sources.md](skills/12-release-notes/references/sources.md) | - |
+| `references` | [tbd-marker.md](skills/12-release-notes/references/tbd-marker.md) | - |
+| `-` | [SKILL.md](skills/12-release-notes/SKILL.md) | `Produces traceable release notes from the tickets and merged changes of a release, with internal and customer variants. Use when the user wants to announce, summarize, or communicate a release. Not for cutting a version tag or writing a changelog entry.` |
+
+#### `skills/13-data-driven-decision`
+
+| Group | File | Description |
+|-------|------|---|
+| `actions` | [01-interview.md](skills/13-data-driven-decision/actions/01-interview.md) | - |
+| `actions` | [02-plan.md](skills/13-data-driven-decision/actions/02-plan.md) | - |
+| `actions` | [03-collect.md](skills/13-data-driven-decision/actions/03-collect.md) | - |
+| `actions` | [04-dashboard.md](skills/13-data-driven-decision/actions/04-dashboard.md) | - |
+| `actions` | [05-memo.md](skills/13-data-driven-decision/actions/05-memo.md) | - |
+| `assets` | [dashboard.md](skills/13-data-driven-decision/assets/dashboard.md) | - |
+| `assets` | [decision-memo.md](skills/13-data-driven-decision/assets/decision-memo.md) | - |
+| `assets` | [evidence-ledger.md](skills/13-data-driven-decision/assets/evidence-ledger.md) | - |
+| `assets` | [tracking-plan.md](skills/13-data-driven-decision/assets/tracking-plan.md) | - |
+| `references` | [confidence.md](skills/13-data-driven-decision/references/confidence.md) | - |
+| `references` | [counting.md](skills/13-data-driven-decision/references/counting.md) | - |
+| `references` | [handoffs.md](skills/13-data-driven-decision/references/handoffs.md) | - |
+| `references` | [interview.md](skills/13-data-driven-decision/references/interview.md) | - |
+| `references` | [persistence.md](skills/13-data-driven-decision/references/persistence.md) | - |
+| `references` | [sources.md](skills/13-data-driven-decision/references/sources.md) | - |
+| `-` | [SKILL.md](skills/13-data-driven-decision/SKILL.md) | `Produces a reproducible evidence dashboard and decision memo from customer signals for a pending product decision. Use when the user wants to decide, prioritize, or settle a debate with data rather than intuition. Not for analytics setup.` |
+
+#### `skills/14-roadmap`
+
+| Group | File | Description |
+|-------|------|---|
+| `actions` | [01-frame.md](skills/14-roadmap/actions/01-frame.md) | - |
+| `actions` | [02-collect.md](skills/14-roadmap/actions/02-collect.md) | - |
+| `actions` | [03-track.md](skills/14-roadmap/actions/03-track.md) | - |
+| `actions` | [04-arrange.md](skills/14-roadmap/actions/04-arrange.md) | - |
+| `actions` | [05-render.md](skills/14-roadmap/actions/05-render.md) | - |
+| `actions` | [06-finalize.md](skills/14-roadmap/actions/06-finalize.md) | - |
+| `assets` | [roadmap-template.md](skills/14-roadmap/assets/roadmap-template.md) | - |
+| `assets` | [stakeholder-template.md](skills/14-roadmap/assets/stakeholder-template.md) | - |
+| `references` | [audiences.md](skills/14-roadmap/references/audiences.md) | - |
+| `references` | [handoffs.md](skills/14-roadmap/references/handoffs.md) | - |
+| `references` | [persistence.md](skills/14-roadmap/references/persistence.md) | - |
+| `references` | [placement.md](skills/14-roadmap/references/placement.md) | - |
+| `references` | [progress.md](skills/14-roadmap/references/progress.md) | - |
+| `references` | [sources.md](skills/14-roadmap/references/sources.md) | - |
+| `references` | [views.md](skills/14-roadmap/references/views.md) | - |
+| `-` | [SKILL.md](skills/14-roadmap/SKILL.md) | `Builds or updates a quarterly product roadmap from Epics, Product Briefs, tickets, and decisions, with team and stakeholder views. Use when the user wants to plan a quarter, present its roadmap, or check it against progress. Not for sprint planning.` |
 

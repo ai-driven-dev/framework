@@ -2,7 +2,7 @@
   "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
   "name": "aidd-pm",
   "version": "2.5.0",
-  "description": "Product backlog artifacts, refinement, Product Briefs, Epics, User Stories, Tasks, Spikes, Defects, requirements, and specs.",
+  "description": "Product backlog artifacts, refinement, Product Briefs, Epics, User Stories, Tasks, Spikes, Defects, requirements, specs, user interviews, release notes, data-driven decisions, and roadmaps.",
   "author": {
     "name": "AI-Driven Dev",
     "url": "https://github.com/ai-driven-dev"
@@ -17,7 +17,11 @@
     "./skills/07-epic",
     "./skills/08-three-amigos",
     "./skills/09-defect",
-    "./skills/10-task"
+    "./skills/10-task",
+    "./skills/11-interview",
+    "./skills/12-release-notes",
+    "./skills/13-data-driven-decision",
+    "./skills/14-roadmap"
   ],
   "keywords": [
     "backlog",
@@ -31,7 +35,12 @@
     "specification",
     "spikes",
     "defects",
-    "tickets"
+    "tickets",
+    "user-interviews",
+    "discovery",
+    "release-notes",
+    "data-driven-decisions",
+    "roadmap"
   ],
   "repository": "https://github.com/ai-driven-dev/framework",
   "homepage": "https://ai-driven.dev",

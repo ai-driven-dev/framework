@@ -8,7 +8,7 @@ Product management plugin for the AI-Driven Development framework.
 
 First time? Install with `/plugin install aidd-pm@aidd-framework`, then invoke the artifact skill you need.
 
-Covers backlog artifacts, refinement, lifecycle, Product Briefs, Epics, User Stories, Tasks, Spikes, Defects, requirements, and specs.
+Covers backlog artifacts, refinement, lifecycle, Product Briefs, Epics, User Stories, Tasks, Spikes, Defects, requirements, specs, user interviews, release notes, data-driven decisions, and quarterly roadmaps.
 
 ## Skills
 
@@ -24,3 +24,7 @@ Covers backlog artifacts, refinement, lifecycle, Product Briefs, Epics, User Sto
 | [4.8] | [three-amigos](skills/08-three-amigos/SKILL.md) | Assess Epic or Story refinement through product, delivery, and quality lenses. |
 | [4.9] | [defect](skills/09-defect/SKILL.md) | Record, assess, and verify an observed product mismatch. |
 | [4.10] | [task](skills/10-task/SKILL.md) | Record and manage bounded functional or technical delivery work. |
+| [4.11] | [interview](skills/11-interview/SKILL.md) | Prepare a user interview guide, then restructure the transcript into exact verbatims per question. |
+| [4.12] | [release-notes](skills/12-release-notes/SKILL.md) | Produce traceable release notes from a release's tickets and merged changes, internal and customer variants. |
+| [4.13] | [data-driven-decision](skills/13-data-driven-decision/SKILL.md) | Build a reproducible evidence dashboard and decision memo from customer signals. |
+| [4.14] | [roadmap](skills/14-roadmap/SKILL.md) | Build or update a quarterly roadmap with team and stakeholder views. |
