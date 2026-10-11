@@ -424,7 +424,7 @@ A residual limit of the usage contract: the clone stops being measured, and it f
 
 ### The session id join, probed against the real tool
 
-`scripts/probe-identifier-join.cjs` runs the installed `claude -p` against a dead API, with a fake key and an empty home, and judges what one `SessionStart` hook and the transcript left, through the shipped `isClaudePayload` and `personIsPresent`. On 2.1.295 it exits 0 after its 90 s bound: `the join holds`. The CI job `cli / Identifier join (Claude Code)` runs it again.
+`scripts/probe-identifier-join.cjs` runs the installed `claude -p` against a dead API, with a fake key and an empty home, and judges what one `SessionStart` hook and the transcript left, through the shipped `isClaudePayload` and `personIsPresent`. On 2.1.295 it exits 0 after its 90 s bound: `the join holds`. The CI job `cli / Identifier join (Claude Code)` runs it again. Its first CI run, on Ubuntu with 2.1.296, failed a first version that required `CLAUDE_PID` to be the hook's parent: `CLAUDE_PID 2565 is not the hook's parent 2588`. A shell stands between Claude and its hooks there, so the probe now requires `CLAUDE_PID` to be set, the variable the hook reads first, and the hook's comment no longer claims its parent is Claude.
 
 | Check | Mutation | Red |
 | --- | --- | --- |

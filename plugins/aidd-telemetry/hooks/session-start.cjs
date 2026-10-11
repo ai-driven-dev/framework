@@ -12,7 +12,10 @@ const CARRYING_SOURCES = new Set(["clear", "fork"]);
 const PROCESS_FIELDS = ["pid", "session_id", "source", "at"];
 const NEW_WORK = "aidd telemetry task <name> [--ticket <ref>]";
 
-/** CLAUDE_PID is undocumented; the hook's parent pid is the same process, as measured. */
+/** CLAUDE_PID is undocumented. The parent pid stands in only when it is unset: it is Claude's on
+ * macOS, but on Linux a shell stands between (CI, 2.1.296: CLAUDE_PID 2565, parent 2588), so a
+ * /clear carry would then rest on a short-lived shell's pid. The identifier-join probe fails if it
+ * is ever unset. */
 function processId(env) {
   const claude = Number.parseInt(env.CLAUDE_PID ?? "", 10);
   return Number.isInteger(claude) && claude > 0 ? claude : process.ppid;
