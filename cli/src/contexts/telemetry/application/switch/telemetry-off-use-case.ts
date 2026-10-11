@@ -1,3 +1,4 @@
+import { sameClone } from "../../domain/consent/clone-identity.js";
 import type { ConsentHistory } from "../../domain/ports/consent-history.js";
 import type { ConsentSource } from "../../domain/ports/consent-source.js";
 import type { RepositoryLocator } from "../../domain/ports/repository-locator.js";
@@ -30,7 +31,8 @@ export class TelemetryOffUseCase {
     const clone = await readCloneConsent(this.locator, this.consents, cwd);
     if (clone.status === "refused") return clone;
     const { located } = clone;
-    const granted = tokenOfKey(clone.value) !== null;
+    const token = tokenOfKey(clone.value);
+    const granted = token !== null;
     let closed = false;
     let damaged = false;
     // The lock first: an ingest running now must see the key and the interval change together.
@@ -41,9 +43,20 @@ export class TelemetryOffUseCase {
         damaged = true;
         return;
       }
-      if (located.clone !== null) {
+      const here = located.clone;
+      if (here !== null) {
         const at = this.now();
-        for (const interval of log.openFor(located.clone)) {
+        // The interval the key names at this path is this clone's too, whatever identity is read
+        // now: where Linux refuses `statx`, the identity moves with each entry added to the git
+        // dir, `on`'s own write included. A copy elsewhere carries the token, not the path.
+        const ours = log
+          .openIntervals()
+          .filter(
+            (interval) =>
+              sameClone(interval.clone, here) ||
+              (interval.token === token && interval.clone.path === here.path)
+          );
+        for (const interval of ours) {
           await log.close(interval.token, at);
           closed = true;
         }

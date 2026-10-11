@@ -16,9 +16,8 @@ import { asPlainObject } from "../../../../kernel/reading/plain-object.js";
  *   coarse, and a directory made and filled within one of its ticks has both to the
  *   nanosecond. When `statx` is refused (a seccomp filter, a kernel before 4.11) libuv falls
  *   back to `stat` and sets the birth time to the change time, which moves whenever an entry is
- *   added, and the identity moves with it. Most often the clone then stops being measured, but
- *   an `off` can miss the interval its `on` opened, and the calls after it be stored. A residual
- *   limit, in the usage contract.
+ *   added, and the identity moves with it: the clone stops being measured, and `off` still
+ *   finds the interval its key names at its path. A residual limit, in the usage contract.
  * - Windows (NTFS): `dev` is the volume serial number, `ino` the 64-bit file index
  *   (`IndexNumber`), which a JavaScript number cannot hold exactly, so the stat is asked in
  *   `bigint` and the index kept as text. `birthtimeMs` is the creation time.

@@ -465,6 +465,28 @@ describe("aidd telemetry off, kept as the end of an interval", () => {
     expect(s.history.written.at(-1)).toEqual({ kind: "close", token: "tok-1", at: T2 });
   });
 
+  it("closes the interval its key names at its path, though the identity read there moved since `on`", async () => {
+    const s = setup();
+    await s.on.execute("/w/repo");
+    // Where Linux refuses `statx`, the birth time is the change time, and `on` itself moved it.
+    s.locator.directories.set("/w/repo", {
+      ...repository("/w/repo", "/w/main"),
+      clone: cloneOf("/w/main/.git", { birthtimeMs: 2_000 }),
+    });
+    s.clock.now = new Date(T2);
+    await s.off.execute("/w/repo");
+    expect(s.history.written.at(-1)).toEqual({ kind: "close", token: "tok-1", at: T2 });
+  });
+
+  it("leaves the interval of the clone a copy was made from, its key naming it at another path", async () => {
+    const s = setup();
+    await s.on.execute("/w/repo");
+    s.locator.directories.set("/w/copy", repository("/w/copy"));
+    s.consents.values.set("/w/copy", s.writes[0]?.value ?? "");
+    await s.off.execute("/w/copy");
+    expect(s.history.written.map((event) => event.kind)).toEqual(["open"]);
+  });
+
   it("writes under the ledger's lock, the interval with the key", async () => {
     const s = setup();
     await s.on.execute("/w/repo");
