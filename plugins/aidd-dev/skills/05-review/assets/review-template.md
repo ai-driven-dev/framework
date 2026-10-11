@@ -10,13 +10,13 @@
 - Diff: `{{base}}...{{head}}`{{ plus the working tree, when it held changes}}
 - Axes: {{the axes that ran, from code, functional, relevancy}}
 - Verdict: {{verdict}}
-- Score: {{n_met}}/{{n_plan}} met, {{n_unmet}} unmet, {{n_out}} out of the diff, or not scored
+- Score: {{n_met}}/{{n_plan}} met, {{n_unmet}} unmet, {{n_unverified}} unverified at runtime, {{n_out}} out of the diff, or not scored
 
 ### Criteria
 
-- [x] {{criterion met}} — {{file:line}}
+- [x] {{criterion met}} — {{file:line, or the run record}}
 - [ ] {{criterion unmet}} — {{gap}}
-- [x] {{criterion no diff could show}} — not-applicable, {{why}}
+- Unverified at runtime: {{criterion}} — {{what a run would show}}
 - Out of the diff: {{phase-name}} ({{n}} criteria)
 
 ### Findings

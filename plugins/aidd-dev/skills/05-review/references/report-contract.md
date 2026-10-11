@@ -23,5 +23,5 @@ Where a review lands, what it reviews, and how a round joins it.
 
 | Rule | Why |
 | --- | --- |
-| Append a round, derived from the plan and the current diff alone | a round states what this diff shows, and nothing it inherited |
+| Append a round, derived from the plan, the current diff and a run recorded on its head alone | a round states what this candidate shows, and nothing it inherited |
 | Count the `## Round` headings, never read their bodies | an earlier round's boxes describe a diff that no longer exists, and copying one is the defect |

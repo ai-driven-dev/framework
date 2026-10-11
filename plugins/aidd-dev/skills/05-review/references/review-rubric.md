@@ -21,4 +21,5 @@ One overall verdict, the strictest across the axes run.
 | Case | Counts as |
 | --- | --- |
 | A criterion out of the diff | neither unchecked nor blocking |
+| A criterion unverified at runtime | in scope, neither unchecked nor blocking |
 | A round without functional | a verdict from its findings alone |

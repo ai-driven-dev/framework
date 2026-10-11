@@ -49,7 +49,7 @@ function inSkill(file) {
 describe("a review appends a round and scores the whole plan", () => {
   it("a round is appended, and an earlier one is never read back", () => {
     const reference = read("references/report-contract.md");
-    assert.match(reference, /Append a round, derived from the plan and the current diff alone/u);
+    assert.match(reference, /Append a round, derived from the plan, the current diff and a run recorded on its head alone/u);
     assert.match(
       reference,
       /Count the `## Round` headings, never read their bodies/u,
@@ -205,10 +205,21 @@ describe("a review appends a round and scores the whole plan", () => {
     );
   });
 
-  it("a criterion no diff could show is not-applicable, not a gap", () => {
+  it("a criterion only a run could show is unverified, never met on the code alone", () => {
+    const trace = step("actions/03-review-functional.md", "Trace");
+    assert.match(trace, /its outcome one only a run could show[^\n]*: unverified, never checked from the code/u);
+    assert.match(trace, /only a run could show, what a screen displays, a timing, an outside system's answer:/u, "a display is a run's to show, even beside a timing");
+    assert.match(trace, /A run recorded beside the plan on the reviewed head shows it passing: checked, citing the record; failing: unchecked; recorded on another head: unverified/u);
+    const strays = everyMarkdown(SKILL, [])
+      .filter((file) => /not-applicable/u.test(fs.readFileSync(file, "utf8")))
+      .map(inSkill);
+    assert.deepEqual(strays, [], "one state for a criterion the code cannot prove");
+  });
+
+  it("an unverified criterion neither blocks nor asks for changes", () => {
     assert.match(
-      step("actions/03-review-functional.md", "Trace"),
-      /Its subject there, its property one no diff could ever show: checked, not-applicable/u,
+      read("references/review-rubric.md"),
+      /^\| A criterion unverified at runtime \| in scope, neither unchecked nor blocking \|$/mu,
     );
   });
 
@@ -265,14 +276,13 @@ describe("a review appends a round and scores the whole plan", () => {
   it("the template renders every form a round can hold", () => {
     const template = read("assets/review-template.md");
     assert.match(template, /or not scored/u);
-    assert.match(template, /not-applicable, \{\{why\}\}/u);
+    assert.match(template, /^- Unverified at runtime: \{\{criterion\}\} — \{\{what a run would show\}\}$/mu);
   });
 
   it("the score counts over the whole plan, and the template holds its form", () => {
     const score = step("actions/03-review-functional.md", "Score");
     assert.match(score, /whole criteria total/u, "the count is over the plan, not over what is in scope");
-    assert.match(score, /met \+ unmet \+ out of the diff = the plan's whole criteria total/u, "and the three numbers are checkable against it");
-    assert.match(score, /counts as met/u, "and a not-applicable criterion is counted");
+    assert.match(score, /met \+ unmet \+ unverified \+ out of the diff = the plan's whole criteria total/u, "and the four numbers are checkable against it");
     assert.doesNotMatch(score, /\{\{/u, "a rule names no template placeholder");
     assert.match(
       step("actions/03-review-functional.md", "Read"),
@@ -281,7 +291,7 @@ describe("a review appends a round and scores the whole plan", () => {
     );
     assert.match(
       read("assets/review-template.md"),
-      /\{\{n_met\}\}\/\{\{n_plan\}\} met, \{\{n_unmet\}\} unmet, \{\{n_out\}\} out of the diff/u,
+      /\{\{n_met\}\}\/\{\{n_plan\}\} met, \{\{n_unmet\}\} unmet, \{\{n_unverified\}\} unverified at runtime, \{\{n_out\}\} out of the diff/u,
       "the form is rendered by the template, not spelled out in a rule",
     );
   });
