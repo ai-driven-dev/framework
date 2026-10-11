@@ -72,9 +72,9 @@ describe("the join the telemetry rests on, judged from one headless run", () => 
     assert.match(judge(held({ transcript: null })).message, /no transcript/);
   });
 
-  it("is a change when the hook is not spawned by the process CLAUDE_PID names", () => {
+  it("is a change when CLAUDE_PID is gone, leaving the hook's parent pid to name Claude", () => {
     const observation = withCaptured((c) => {
-      c.ppid = 1;
+      delete c.env.CLAUDE_PID;
     });
     assert.match(judge(observation).message, /CLAUDE_PID/);
   });
@@ -91,8 +91,9 @@ describe("the join the telemetry rests on, judged from one headless run", () => 
 /** A `claude` stand-in, a node script: it reads the probe's SessionStart hook from the project,
  * runs it with a payload, and writes a transcript under `CLAUDE_CONFIG_DIR`. With `silent`, it
  * does neither, as a tool that stopped firing the hook before the API would. */
-function fakeClaude(mode) {
+function fakeClaude(t, mode) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "probe-join-fake-"));
+  t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
   const script = path.join(dir, "claude.js");
   fs.writeFileSync(
     script,
@@ -120,12 +121,12 @@ spawnSync(bin, args, {
 describe("the exit code says who changed", () => {
   const quiet = () => {};
 
-  it("exits 0 when the tool keeps the join", () => {
-    assert.equal(probe({ host: fakeClaude("ok"), log: quiet }), 0);
+  it("exits 0 when the tool keeps the join", (t) => {
+    assert.equal(probe({ host: fakeClaude(t, "ok"), log: quiet }), 0);
   });
 
-  it("exits 1 when the tool fires no hook", () => {
-    assert.equal(probe({ host: fakeClaude("silent"), log: quiet }), 1);
+  it("exits 1 when the tool fires no hook", (t) => {
+    assert.equal(probe({ host: fakeClaude(t, "silent"), log: quiet }), 1);
   });
 
   it("exits 2 when there is no tool to ask, and says so", () => {

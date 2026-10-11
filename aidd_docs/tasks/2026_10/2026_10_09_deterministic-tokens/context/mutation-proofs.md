@@ -432,7 +432,7 @@ A residual limit of the usage contract: the clone stops being measured, and it f
 | the Claude-only guard accepts Claude's payload | the same | 1, "is a change when the hook's session variable is not its payload's id" |
 | the transcript is under the config dir's `projects` | the same | 1, "is a change when the transcript is not under the config dir's projects" |
 | a transcript was written | the same | 1, "is a change when no transcript was written" |
-| every transcript line names the hook's session | the same | 2, "names another session" and "no transcript line names a session" |
+| every transcript line names the hook's session | the same | 2, "is a change when a transcript line names another session" and "is a change when no transcript line names a session" |
 | at least one line names it | `ids.length === 0` removed | 1, "is a change when no transcript line names a session" |
-| `CLAUDE_PID` is the hook's parent | the same | 1, "is a change when the hook is not spawned by the process CLAUDE_PID names" |
+| `CLAUDE_PID` is set, so the hook does not fall back to its parent pid | the same | 1, "is a change when CLAUDE_PID is gone, leaving the hook's parent pid to name Claude" |
 | a headless run is not a person present | the same | 1, "is a change when a headless run reads as a person at the keyboard" |

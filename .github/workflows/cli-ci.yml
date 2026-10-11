@@ -69,6 +69,10 @@ jobs:
               cli/*|kanban/*|scripts/__tests__/*|README.md)
                 relevant=true
                 ;;
+              # The identifier-join probe, and the hook predicates it judges the real tool by.
+              scripts/probe-identifier-join.cjs|plugins/aidd-telemetry/hooks/*)
+                relevant=true
+                ;;
               # This file: a change to how the suite runs matches nothing else here, so the
               # workflow deciding whether the suite passes would land unverified.
               .github/workflows/cli-ci.yml)

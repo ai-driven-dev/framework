@@ -66,8 +66,11 @@ function judge({ configDir, captured, transcript }) {
   if (ids.length === 0 || ids.some((id) => id !== payload.session_id)) {
     return changed(`the transcript's sessionId values (${[...new Set(ids)].join(", ") || "none"}) are not ${payload.session_id}`);
   }
-  if (env.CLAUDE_PID !== String(ppid)) {
-    return changed(`CLAUDE_PID ${env.CLAUDE_PID} is not the hook's parent ${ppid}, which a /clear carry relies on`);
+  // The hook names Claude's process by CLAUDE_PID, and by its parent pid only when it is gone.
+  if (!/^[1-9]\d*$/u.test(env.CLAUDE_PID ?? "")) {
+    return changed(
+      `CLAUDE_PID is ${env.CLAUDE_PID ?? "unset"}: a /clear carry now rests on the hook's parent pid, ${ppid}, being Claude's`
+    );
   }
   if (personIsPresent(env)) {
     return changed(
@@ -101,6 +104,14 @@ function readLines(file) {
 /** Runs `host` (an argv) headless in a fresh project and home, and judges what it left. */
 function probe({ host, log }) {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "aidd-join-probe-"));
+  try {
+    return probeIn(root, host, log);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+}
+
+function probeIn(root, host, log) {
   const home = path.join(root, "home");
   const configDir = path.join(home, ".claude");
   const project = path.join(root, "project");
@@ -115,7 +126,9 @@ function probe({ host, log }) {
     path.join(project, ".claude", "settings.local.json"),
     `${JSON.stringify({ hooks: { SessionStart: [{ hooks: [{ type: "command", command }] }] } })}\n`
   );
-  spawnSync("git", ["init", "-q", project]);
+  // A `GIT_DIR` inherited from a git hook would point `init` at the repository running it.
+  const env = Object.fromEntries(Object.entries(process.env).filter(([name]) => !name.startsWith("GIT_")));
+  spawnSync("git", ["init", "-q", project], { env });
 
   const [bin, ...leading] = host;
   const run = spawnSync(bin, [...leading, "-p", "say OK"], {
@@ -124,7 +137,7 @@ function probe({ host, log }) {
     timeout: RUN_TIMEOUT_MS,
     killSignal: "SIGKILL",
     env: {
-      ...process.env,
+      ...env,
       HOME: home,
       CLAUDE_CONFIG_DIR: configDir,
       ANTHROPIC_BASE_URL: "http://127.0.0.1:9",
