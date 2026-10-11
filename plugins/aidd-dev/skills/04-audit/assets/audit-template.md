@@ -11,7 +11,7 @@ argument-hint: N/A
 - **Date**: {{yyyy_mm_dd}}
 - **Scope**: {{scope}}
 - **Health**: {{good | fair | poor}}
-- **Findings**: {{n_critical}} critical, {{n_warning}} warning, {{n_minor}} minor
+- **Findings**: {{n_critical}} critical, {{n_major}} major, {{n_minor}} minor
 
 Health: `good` = no critical findings; `fair` = critical findings exist but are isolated and addressable; `poor` = systemic or widespread critical findings.
 
@@ -21,7 +21,7 @@ One row per issue. Every row MUST cite a concrete `file:line`. Sort by severity 
 
 Severity (shared rubric across every audit pillar, so a full audit ranks consistently):
 - 🔴 critical - exploitable security hole, data loss, or broken correctness. Fix now.
-- 🟡 warning - real debt or risk that will bite later. Fix soon.
+- 🟡 major - real debt or risk that will bite later. Fix soon.
 - 🟢 minor - nit or cleanup. Fix when convenient.
 
 Effort: `S` (under 1h), `M` (under 1d), `L` (over 1d).
