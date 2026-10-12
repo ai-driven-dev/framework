@@ -23,8 +23,8 @@ A checker's finding is routed by what it is about. A refusal the user gives at a
 
 ## Handoff
 
-- After QA and Challenge clear, only `qa.md` and its demo artifacts may be new in the worktree; any product or validator change re-enters Review.
-- Commit them, never a failed or blocked run, then open the draft pull request passing `qa.md` and the artifact paths.
+- After QA and Challenge clear, a product or validator change re-enters Review.
+- Commit everything this zone wrote, never a failed or blocked QA run, then open the draft pull request passing `qa.md` and the artifact paths.
 
 ```mermaid
 ---

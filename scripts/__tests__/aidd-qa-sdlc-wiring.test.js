@@ -24,8 +24,9 @@ test("check shows only passing scenarios through the demo", () => {
   assert.match(prose(), /`pass`[^\n]*`\/aidd-qa:02-demo`[^\n]*passing scenarios/);
 });
 
-test("check lets only QA-owned artifacts through, anything else re-enters Review", () => {
-  assert.match(prose(), /only `qa\.md` and its demo artifacts[^\n]*new[^\n]*any product or validator change re-enters Review/i);
+test("check commits its own reports, and a product or validator change re-enters Review", () => {
+  assert.match(prose(), /After QA and Challenge clear, a product or validator change re-enters Review/);
+  assert.match(prose(), /Commit everything this zone wrote, never a failed or blocked QA run/);
 });
 
 test("check passes qa.md and the artifact paths to the pull request", () => {
@@ -38,10 +39,10 @@ test("check diagram draws QA and the demo", () => {
   assert.match(diagram, /\/aidd-qa:02-demo/);
 });
 
-test("the checker may invoke both QA skills and writes only QA paths", () => {
+test("the checker may invoke both QA skills and writes only its skills' reports", () => {
   const checker = read("plugins/aidd-dev/agents/checker.md");
   assert.match(checker, /- `\/aidd-qa:01-acceptance-qa`\n- `\/aidd-qa:02-demo`/);
-  assert.match(checker, /Write only QA-owned paths[^\n]*never product, contract, plan or validator/);
+  assert.match(checker, /Write only the reports your skills own, never product, contract, plan or validator/);
 });
 
 test("the pull request links evidence files the caller passes", () => {
