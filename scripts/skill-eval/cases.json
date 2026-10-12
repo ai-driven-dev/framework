@@ -596,7 +596,7 @@
         "USER.txt": "KEEP\n"
       }
     },
-    "prompt": "Use the {{SKILL}} skill for Kilo only. The requested moment is session start; explain the documented Kilo hook route. Do not create a plugin or hook file.",
+    "prompt": "Use the {{SKILL}} skill for Kilo only. The requested moment is session start; recommend the explicitly documented .kilo/plugin/ project path and cite session.created. Explicitly state that the docs do not confirm .kilo/plugins/ as a project path. Do not create a plugin or hook file.",
     "expect": {
       "filesAbsent": [
         ".kilo/hooks.json",
@@ -607,7 +607,8 @@
         "kilo.json",
         "USER.txt"
       ],
-      "judge": "The response recommends the documented .kilo/plugin/ JS/TS path, labels the issue's .kilo/plugins/ claim unconfirmed by current docs, cites session.created as documented, and creates no file."
+      "stdoutMatches": ["\\.kilo/plugin/", "session\\.created"],
+      "judge": "The response recommends the documented .kilo/plugin/ JS/TS project path, explicitly states that .kilo/plugins/ is not a confirmed project path, cites session.created as documented, and creates no file."
     }
   },
   {
