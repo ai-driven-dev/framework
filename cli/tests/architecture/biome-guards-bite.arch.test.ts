@@ -6,7 +6,7 @@
 import { spawnSync } from "node:child_process";
 import { cpSync, mkdirSync, mkdtempSync, realpathSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join, relative, sep } from "node:path";
+import { join, relative, resolve, sep } from "node:path";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { CLI_ROOT, read } from "./helpers.js";
 
@@ -25,7 +25,10 @@ function biomeFindings(projectDir: string, launcher = BIOME): string[] {
     .map((line) => /^\s*::(?:error|warning) title=(\S+),file=(\S+?),/.exec(line))
     .filter((match): match is RegExpExecArray => match !== null)
     .map(
-      (match) => `${relative(realpathSync(projectDir), match[2]).split(sep).join("/")}:${match[1]}`
+      (match) =>
+        `${relative(realpathSync(projectDir), realpathSync(resolve(projectDir, match[2] as string)))
+          .split(sep)
+          .join("/")}:${match[1]}`
     )
     .sort();
   // biome exits 0 when clean and 1 with diagnostics; anything else never linted.
@@ -116,17 +119,17 @@ describe("the guard itself", () => {
 
   it("flags process.exit under kernel/, contexts/ and runtime/, and leaves the command edge alone", () => {
     const findings = biomeFindings(planted);
-    expect(findings).toContain("src/kernel/exit.ts:plugin");
+    expect(findings, findings.join(", ")).toContain("src/kernel/exit.ts:plugin");
     expect(findings.filter((f) => f.startsWith("src/presentation/"))).toEqual([]);
   });
 
   it("flags the process global in a context's domain and application, and not in its infrastructure", () => {
     const findings = biomeFindings(planted);
 
-    expect(findings).toContain(
+    expect(findings, findings.join(", ")).toContain(
       "src/contexts/framework/domain/env.ts:lint/style/noRestrictedGlobals"
     );
-    expect(findings).toContain(
+    expect(findings, findings.join(", ")).toContain(
       "src/contexts/framework/application/env.ts:lint/style/noRestrictedGlobals"
     );
     expect(findings.filter((f) => f.startsWith("src/contexts/framework/infrastructure/"))).toEqual(
@@ -142,8 +145,12 @@ describe("the guard itself", () => {
 
   it("flags a default export under src/ and tests/ alike, and a clean module not at all", () => {
     const findings = biomeFindings(planted);
-    expect(findings).toContain("src/kernel/default.ts:lint/style/noDefaultExport");
-    expect(findings).toContain("tests/kernel/default.ts:lint/style/noDefaultExport");
+    expect(findings, findings.join(", ")).toContain(
+      "src/kernel/default.ts:lint/style/noDefaultExport"
+    );
+    expect(findings, findings.join(", ")).toContain(
+      "tests/kernel/default.ts:lint/style/noDefaultExport"
+    );
     expect(findings.filter((f) => f.startsWith("src/kernel/clean.ts"))).toEqual([]);
   });
 });
