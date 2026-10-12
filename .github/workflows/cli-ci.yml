@@ -560,8 +560,7 @@ jobs:
           grep -E "tool files readable +ok" telemetry-check.out
       - run: cd cli && pnpm test:unit
       - run: cd cli && pnpm test:integration
-      - name: Biome guards run on Windows
-        run: cd cli && pnpm exec vitest run --project=architecture tests/architecture/biome-guards-bite.arch.test.ts
+      - run: cd cli && pnpm test:arch
       # Every e2e but the two named below. `telemetry-commit-trailer.e2e.test.ts` is why the
       # step matters most: it is the only thing proving the `prepare-commit-msg` hook is
       # reachable by the shell Git for Windows ships, which a backslash path is not.
