@@ -23,7 +23,7 @@ status: in-progress
 | 5 | Guidance hooks et relances sûres | [phase-5.md](./phase-5.md) |
 | 6 | Preuves de génération et runtime sur plateformes supportées | [phase-6.md](./phase-6.md) |
 
-Plan général validé avec les précisions de [la demande phase 1](./phase-1-request.md). Phase 1 clôturée par l’utilisateur avec ses limites conservées. Les demandes du 10 octobre 2026 autorisent séparément les phases 4 et 5 et leurs commits locaux après validation. La phase 2 est autorisée uniquement pour la tranche indépendante décrite dans [phase-2.md](./phase-2.md) : fixtures, tests, module isolé de configuration et validations Kilo sans publication. Elle reste `in-progress` après cette tranche. L’intégration au writer et la publication règle + configuration restent bloquées tant que #979 est Draft, sauf nouvelle décision explicite après revalidation de son head et amendement du plan. La phase 6 exige une autorisation distincte. Aucune date de fusion supposée, aucun writer concurrent.
+Plan général validé avec les précisions de [la demande phase 1](./phase-1-request.md). Phase 1 clôturée par l’utilisateur avec ses limites conservées. Les demandes du 10 octobre 2026 autorisent séparément les phases 4 et 5. Le 12 octobre, l’utilisateur a autorisé la reprise de la seule phase 2 après fusion de #979 dans `next`, y compris l’extension du writer et la publication règle + configuration. Les critères techniques de phase 2 sont vérifiés ; son statut reste `in-progress` car le test Claude demandé par `CONTRIBUTING.md` n’est pas documenté et aucune exception du mainteneur n’est disponible. Le statut global reste `in-progress`. Aucun writer concurrent.
 
 Chaque tâche suit la même progression : test pertinent rouge avant changement lorsque possible, implémentation minimale, documentation associée, validations automatisées et runtime pertinent, preuves conservées puis statut réel actualisé. Les régressions des cibles concernées se vérifient dès cette tâche. Preuve obligatoire manquante => tâche non entièrement validée. La phase 6 consolide, sans remplacer ces vérifications. Commits locaux autorisés pour la tranche indépendante ; aucun push, PR ou changement de branche autorisé.
 
@@ -35,7 +35,7 @@ Chaque tâche suit la même progression : test pertinent rouge avant changement 
 | --- | --- |
 | https://github.com/ai-driven-dev/framework/issues/914 | Corps courant et seize critères, date contractuelle 2026-09-25. |
 | https://github.com/ai-driven-dev/framework/pull/971 | Fusionnée dans next et présente dans HEAD ; bridge déjà étendu. |
-| https://github.com/ai-driven-dev/framework/pull/979 | Draft ouverte, base next, writer autonome excluant Kilo ; revalidation avant phase 2. |
+| https://github.com/ai-driven-dev/framework/pull/979 | Fusionnée dans `next` en `c827990f` ; writer autonome étendu en phase 2 pour Kilo. |
 | https://kilo.ai/docs/customize/agents-md | Surface mémoire et approbation de modification. |
 | https://kilo.ai/docs/customize/custom-rules | Règles config-backed. |
 | https://kilo.ai/docs/customize/skills | Agent Skills et chemins compatibles. |

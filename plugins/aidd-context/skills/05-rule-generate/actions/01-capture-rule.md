@@ -22,6 +22,7 @@ In-context: the topic, its category and slug, the file scope, a one-line descrip
 5. **Write mode.** Ask where the rule goes:
    - **Host project**: detect the installed tools ([tool-paths.md](../references/tool-paths.md)), propose the supported ones, and confirm which to target. Never pick one silently.
    - **Plugin source**: confirm or create `plugins/<plugin>/rules/`.
+   For Kilo, inspect all four project configurations before writing. With multiple candidates and no unique owner of the exact rule path, confirm one listed configuration; no answer means no publication.
 
 ## Test
 

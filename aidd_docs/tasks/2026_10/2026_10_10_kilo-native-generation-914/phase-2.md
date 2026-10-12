@@ -4,11 +4,13 @@ status: in-progress
 
 # Instruction: Publier une règle Kilo sans perdre sa configuration
 
-## Tranche indépendante autorisée le 10 octobre 2026
+## Reprise du 12 octobre 2026
 
-La présente autorisation couvre uniquement les fixtures et tests Kilo dans de nouveaux fichiers distincts de #979, le module local `scripts/kilo-config.cjs` et les validations Kilo réalisables sans publication. Le module sélectionne une configuration et prépare une édition JSONC en mémoire ; il ne crée ni règle ni configuration, ne modifie aucun fichier projet et n’appelle aucun writer. Tester en premier les contrats de sélection, préservation et refus avec filesystem réel ; archiver les preuves, assertions et review de cette tranche. Les commits locaux sont autorisés.
+`upstream/next` contient le merge de #979 (`c827990f`). Le writer partagé de #979 a été étendu pour Kilo ; les tâches 1–4 ci-dessous sont implémentées et leurs critères techniques sont vérifiés par tests et par une observation runtime Kilo 7.8.8/Linux. La phase 6 reste hors périmètre. Le statut de phase reste `in-progress` jusqu’à la validation dans Claude demandée par `CONTRIBUTING.md`, ou une exception explicite du mainteneur ; aucune preuve d’une telle validation ou exception n’est disponible.
 
-La tâche 1, l’intégration des tâches 2–4 au writer, la publication cohérente source + règle + configuration, les erreurs de publication et les non-régressions du writer #979 restent bloquées pendant que #979 est Draft. Ne modifier aucun fichier de #979, dont `scripts/__tests__/rule-generation.test.js`. Laisser la phase `in-progress` et ses critères de publication ouverts ; aucune fusion, push ou PR. Revalider le head #979 et décider explicitement de l’intégration avant de lever ce verrou.
+## Décision historique du 10 octobre 2026
+
+Cette tranche limitait initialement le travail tant que #979 était Draft. Elle est obsolète depuis la fusion de #979 dans `next` et la décision ultérieure d’étendre son writer. Elle ne décrit plus le périmètre courant.
 
 ## Architecture projection
 
@@ -57,31 +59,31 @@ journey
     Nettoyer projet et processus => baseline restauree: 5: system
 ```
 
-## Tasks to do
+## Tâches et résultats
 
 ### `1)` Aligner le propriétaire des règles
 
 > Aligner le propriétaire des règles.
 
-1. Précondition bloquante de l’intégration : base de publication #979 disponible/intégrée et head revalidé, ou nouvelle décision explicite avec plan amendé. Lire tous les nouveaux contrats/tests pertinents et conserver les sorties non Kilo de cette base. Si #979 reste Draft, ne pas implémenter la publication dépendante. Ne pas construire un second writer. Ajouter Kilo au writer autonome après levée du verrou ; le module local au skill reste sans import du CLI ni dépendance implicite du checkout et sera résolu depuis SKILL.md livré lors de l’intégration.
+1. **Done.** Réutiliser le writer partagé de #979, conserver ses contrats existants et y intégrer Kilo ; aucun deuxième writer n’est créé.
 
 ### `2)` Sélection de configuration observable
 
 > Sélection de configuration observable.
 
-1. Avant toute écriture, inventorier les quatre fichiers projet ; zéro => .kilo/kilo.jsonc, unique => ce fichier, plusieurs => propriétaire unique de l’entrée exacte, sinon choix explicite. Plusieurs propriétaires sont ambigus. Afficher .kilo avant racine ; vérifier ordre à priorité égale sur 7.8.8 avant de documenter un ordre total. Annulation ne crée rien. Lire et valider toutes les configurations pertinentes à la sécurité de publication, sans hériter du refus dual-config CLI.
+1. **Done.** Avant publication, inspecter les quatre configurations candidates ; utiliser le défaut documenté si aucune n’existe, la candidate unique si une seule existe, et le propriétaire unique de l’entrée exacte ou un choix explicite si plusieurs existent. Les cas ambigus refusent avant mutation. Les tests et la sonde Kilo 7.8.8 couvrent la sélection et la fusion observée ; aucun ordre total au-delà des configurations sondées n’est revendiqué.
 
 ### `3)` Publication sans perte
 
 > Publication sans perte.
 
-1. Ajouter .kilo/rules/category/slug.md et son chemin exact relatif à instructions. Éditer les tokens JSONC sans sérialisation globale ; conserver commentaires, trailing commas, doublons, ordre et octets non concernés. Si entrée déjà présente, ne pas ajouter de doublon AIDD supplémentaire. Préflight source/config/règle et toutes cibles choisies, stage tous résultats avant publication, détecter conflit entre lecture et mutation. Restaurer sur erreur d’écriture couverte et prouver l’absence d’état partiel ; ne pas appeler une série de rename une transaction globale. Limiter la solution aux publications concernées, sans moteur transactionnel générique ; documenter les interruptions brutales et pannes machine hors garantie.
+1. **Done.** Publier la règle sous `.kilo/rules/<category>/<slug>.md` et ajouter son chemin exact à `instructions`. Préserver les octets JSON/JSONC hors insertion et refuser les états ambigus/dangereux avant écriture. Les tests vérifient le préflight, l’idempotence et la restauration pour les erreurs couvertes. Les courses entre contrôle et appel système, l’arrêt brutal et la panne machine ne sont pas garantis.
 
 ### `4)` Tests et documentation de publication
 
 > Tests et documentation de publication.
 
-1. Tests rouges avec filesystem réel et skill copié hors checkout/ESM/sans aidd, réutiliser tests writer de #979. Oracles hashes de tout projet avant/après erreur, comparaison byte ranges et mtime seconde exécution ; mutations doublon/order et validation tardive. Tester règle chargée par vrai Kilo avec contrôle négatif sans instructions. Documentation sources/date, fichier choisi, config-backed et limites exactes.
+1. **Done.** Les tests du writer partagé et les tests Kilo couvrent génération/publication, idempotence, préservation, refus sans mutation et rollback des erreurs simulées. Une observation Kilo 7.8.8/Linux avec contrôle positif et négatif vérifie le chargement de cette règle. Les limites et la provenance sont consignées dans [le rapport de phase](phase-2-report.md) et [les preuves runtime expurgées](evidence/phase-2/runtime-report.md).
 
 ## Test acceptance criteria
 
@@ -92,3 +94,11 @@ journey
 | 3 | JSON/JSONC gardent doublons, ordre, commentaires, trailing commas et format hors insertion ; second passage byte-identique. |
 | 3 | Configuration invalide ou cible dangereuse, y compris dernier fichier d’un fan-out, ne laisse aucun changement ; erreurs de publication testées ne laissent ni règle orpheline ni référence cassée. |
 | 4 | Les publications Claude/Cursor/Copilot et partagées Codex/OpenCode du writer retenu gardent leurs contrats et les blocs de mémoire. |
+
+## Validations de clôture
+
+- Tests ciblés : **90/90 passés** ([sortie](evidence/phase-2/focused-corrections.txt)).
+- Suite scripts : **795/795 passés** ([sortie](evidence/phase-2/scripts-full-corrections.txt)).
+- Kilo 7.8.8/Linux : observation positive et négative ; voir [rapport runtime](evidence/phase-2/runtime-report.md). Cela démontre le chargement de cette fixture dans cet environnement, pas une couverture générale de modèles ou plateformes.
+- Claude authentifié : non exécuté. Windows : non exécuté. `CONTRIBUTING.md` demande `make reload`, redémarrage des sessions et test dans Claude et un autre outil. Le contrôle Claude reste donc ouvert ; une clôture sans ce test nécessite une exception explicite du mainteneur, non obtenue à ce jour.
+- Limites : pas de garantie face aux courses entre contrôle et appel système, à une mutation externe durant la restauration, à l’arrêt brutal ou à une panne machine.

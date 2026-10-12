@@ -3,6 +3,7 @@
 // Pure JSONC edit and read-only project selection. Publication belongs to the rule writer.
 const fs = require("node:fs");
 const path = require("node:path");
+const { createHash } = require("node:crypto");
 const { TextDecoder } = require("node:util");
 
 const CONFIG_PATHS = [".kilo/kilo.json", ".kilo/kilo.jsonc", "kilo.json", "kilo.jsonc"];
@@ -55,6 +56,7 @@ function parseJsonc(text) {
     if (text[pos] === "[") {
       pos++;
       const items = [];
+      const commas = [];
       let trailingComma = false;
       let lastCommaEnd = null;
       skip();
@@ -63,6 +65,7 @@ function parseJsonc(text) {
         items.push(value());
         skip();
         if (text[pos] === ",") {
+          commas.push(pos);
           pos++;
           trailingComma = true;
           lastCommaEnd = pos;
@@ -71,7 +74,7 @@ function parseJsonc(text) {
         else fail("Expected comma in JSONC array.");
       }
       const close = pos++;
-      return { type: "array", start, end: pos, close, items, trailingComma, lastCommaEnd };
+      return { type: "array", start, end: pos, close, items, commas, trailingComma, lastCommaEnd };
     }
     if (text[pos] === "{") {
       pos++;
@@ -148,6 +151,30 @@ function prepareInstructionEdit(content, instructionPath) {
   return { content: updated, changed: true };
 }
 
+function prepareInstructionRemoval(content, instructionPath) {
+  checkInstructionPath(instructionPath);
+  const { instructions } = parseJsonc(content);
+  if (!instructions) return { content, changed: false };
+  const indexes = instructions.items.flatMap((item, index) => item.value === instructionPath ? [index] : []);
+  if (!indexes.length) return { content, changed: false };
+  if (indexes.length > 1) fail("Duplicate exact instruction entries need manual resolution before deletion.");
+  // Remove only a token and its adjacent comma. Comments in that span have no
+  // unambiguous owner, so require a manual edit instead of discarding them.
+  let updated = content;
+  for (const index of indexes.reverse()) {
+    const item = instructions.items[index];
+    const following = instructions.commas[index];
+    const preceding = instructions.commas[index - 1];
+    const start = following !== undefined ? item.start : preceding !== undefined ? preceding : item.start;
+    const end = following !== undefined ? following + 1 : item.end;
+    const removed = content.slice(start, end);
+    if (/\/\*|\/\//.test(removed)) fail("Cannot safely remove a commented instruction entry.");
+    updated = updated.slice(0, start) + updated.slice(end);
+  }
+  parseJsonc(updated);
+  return { content: updated, changed: true };
+}
+
 function inspectProject(projectRoot, instructionPath, chosenPath) {
   checkInstructionPath(instructionPath);
   const root = path.resolve(projectRoot);
@@ -177,7 +204,11 @@ function inspectProject(projectRoot, instructionPath, chosenPath) {
       if (fd !== undefined) fs.closeSync(fd);
     }
     const { instructions } = parseJsonc(content);
-    candidates.push({ path: relative, ownsInstruction: !!instructions?.items.some((item) => item.value === instructionPath) });
+    candidates.push({
+      path: relative,
+      ownsInstruction: !!instructions?.items.some((item) => item.value === instructionPath),
+      snapshot: { dev: before.at(-1).dev, ino: before.at(-1).ino, mode: before.at(-1).mode & 0o7777, hash: createHash("sha256").update(content).digest("hex") },
+    });
   }
   if (chosenPath !== undefined && chosenPath !== null && !candidates.some((item) => item.path === chosenPath)) {
     fail(`Chosen Kilo config is absent: ${chosenPath}`);
@@ -186,7 +217,7 @@ function inspectProject(projectRoot, instructionPath, chosenPath) {
   if (candidates.length === 1) return { candidates, selectedPath: candidates[0].path, needsChoice: false };
   const owners = candidates.filter((item) => item.ownsInstruction);
   if (owners.length === 1) return { candidates, selectedPath: owners[0].path, needsChoice: false };
-  return { candidates, selectedPath: chosenPath || null, needsChoice: !chosenPath };
+  return { candidates, selectedPath: chosenPath || null, needsChoice: !chosenPath, multipleOwners: owners.length > 1 };
 }
 
 function sameIdentity(left, right) {
@@ -217,4 +248,4 @@ function inspectPath(root, parts, relative) {
   return stats;
 }
 
-module.exports = { inspectProject, prepareInstructionEdit };
+module.exports = { inspectProject, prepareInstructionEdit, prepareInstructionRemoval };

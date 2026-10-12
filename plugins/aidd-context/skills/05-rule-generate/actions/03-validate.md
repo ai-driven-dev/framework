@@ -16,6 +16,7 @@ A short pass or fail line per rule file.
 2. **Contract.** For remaining files, validate against [rule-authoring.md](../references/rule-authoring.md) and confirmed intent, including exact literals.
 3. **Target.** Validate target path and frontmatter against [tool-paths.md](../references/tool-paths.md).
    For Codex and OpenCode V2, each remaining body must appear once in the shared signed contribution; deleting the last shared rule removes that contribution. User guidance and memory bytes must survive, and rerunning the installed script with `--publish` must be byte-identical. Remaining native files retain complete bodies and scope syntax. Report publication separately from consumption; only real host evidence proves runtime use.
+   For Kilo, check the exact `.kilo/rules/<category>/<slug>.md` path in the selected `kilo.json[c]` `instructions` array. A file or successful config parse alone does not prove that a Kilo session consumed its body.
 4. **Report.** Emit one pass/fail line per file.
 
 ## Test

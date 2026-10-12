@@ -1,6 +1,6 @@
 # Matrice de traçabilité #914
 
-Les critères ci-dessous sont repris **verbatim et dans leur ordre officiel**. État de planification conservé dans `plan-before-phase-1.json`. Les phases 1, 3, 4 et 5 sont implémentées ; seuls leurs résultats ci-dessous sont acquis. Les autres chemins restent des projections dans les phase-n.md. La sonde de connectivité ne valide pas AC15 ; les preuves runtime concernent mémoire, skills, agent, workflow et guidance hooks sur Linux.
+Les critères ci-dessous sont repris **verbatim et dans leur ordre officiel**. État de planification conservé dans `plan-before-phase-1.json`. Les phases 1–5 sont implémentées ; la phase 2 reste `in-progress` jusqu’au test Claude demandé par `CONTRIBUTING.md` ou à une exception explicite du mainteneur. Les autres chemins restent des projections dans les phase-n.md. La sonde de connectivité ne valide pas AC15 ; les preuves runtime concernent mémoire, règle, skills, agent, workflow et guidance hooks sur Linux. Les sorties Kilo de phase 2 publiées sont expurgées des identifiants externes.
 
 | AC | Critère officiel | Phases | Fichiers / responsabilité | Tests nécessaires | Preuves attendues | Risques / environnement |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -27,7 +27,7 @@ Aucun AC officiellement impossible à cause du seul manque de compte Anthropic :
 
 La stratégie complète précise fixtures/oracles, limites et commandes dans [test-strategy.md](./test-strategy.md). La projection pour chaque ligne est répartie dans [plan.md](./plan.md) et ses six phases. Rapport final d’implémentation : une preuve nommée par AC et par surface ; ne jamais remplacer un skip par pass.
 
-## Résultat acquis après phases 1 et 3
+## Résultat acquis au 12 octobre 2026
 
 | AC | Statut réel | Preuve et reste à faire |
 | --- | --- | --- |
@@ -36,13 +36,15 @@ La stratégie complète précise fixtures/oracles, limites et commandes dans [te
 | 3 | Partiel | Mémoire racine AGENTS et fixture skill legacy générée sous .kilo ; autres artefacts futurs. |
 | 4 | Partiel | Configs OpenCode seules et AGENTS seul négatifs dans ces trois contrats ; autres générateurs futurs. |
 | 5 | Validé | Preuves phase 1 inchangées : 40 tests mémoire, contenu utilisateur et bloc unique, rerun bytes/mtime stable. |
-| 6–8 | Non implémentés | Phase 2 attend coordination #979. |
+| 6 | Validé pour la fixture Linux | Writer #979 étendu : règle `.kilo/rules` et chemin exact publiés, tests d'intégration du writer réussis ; Kilo 7.8.8 a répondu avec le marqueur du corps, puis sans celui-ci après retrait de `instructions` ([rapport runtime et sorties expurgées](evidence/phase-2/runtime-report.md)). Autres plateformes non vérifiées. |
+| 7 | Partiel | Quatre configurations inspectées ; choix de propriétaire unique ou choix explicite en ambiguïté, refus de suppression à plusieurs propriétaires testé. La sonde Kilo 7.8.8 mesure un ordre de fusion pour sa fixture à quatre configurations ; cela ne valide pas tous les cas de priorité/sélection. |
+| 8 | Validé par tests de fichier | Insertions JSONC et publication préservent octets non concernés, commentaires, ordre, doublons et virgules finales ; relance identique. Cela ne prouve pas la fusion ni le chargement runtime Kilo. |
 | 9 | Validé | Contrat de choix explicite, caller natif/portable/shared et refus sans accord ou copies/conflits non résolus ; une copie, runtime Kilo natif et portable réussi. |
 | 10–11 | Validé | Preuves phase 4 inchangées : agent/workflow Kilo exécutés sur Linux ; autres OS restent ouverts. |
 | 12 | Validé pour la phase 5 | Caller hook, fixtures mixed/invalid, et 7/7 mutations ciblées tuées par les assertions ([rapport phase 5](phase-5-report.md), [log mutations](evidence/phase-5/source-contract-mutations.log), [balayage final](evidence/phase-5/source-contract-final-sweep.log)). |
-| 13 | Partiel | Mémoire, skills et hooks idempotents dans leurs preuves de phase ; hooks : snapshot caller bytes/mtime stable et mutation du contrat second-pass détectée. Autres générateurs futurs. |
-| 14 | Partiel | Préflight mémoire phase 1, huit refus caller skills phase 3, et refus hook mixed avec mutation de l’assertion préflight tuée ; règles/config et cas writer/transaction futurs. |
-| 15 | Partiel | Kilo 7.8.8 Linux : mémoire + skills natif/portable, catalogue et usage avec lectures action/payload, résultats exacts, coûts 0. Autres artefacts/OS futurs. |
+| 13 | Partiel | Mémoire, skills, règles et hooks idempotents dans leurs preuves de phase ; règles : octets et `mtime` stables pour source, sortie native et configuration. Autres générateurs futurs. |
+| 14 | Partiel | Préflight mémoire phase 1, refus caller skills phase 3, refus hook mixed ; writer règles : ambiguïté, doublons, disparition/modification de config, écriture temporaire partielle et rollback testés avec snapshots incluant répertoires. Courses non détectables entre contrôle et appel système, arrêt brutal et échec de restauration restent hors garantie. |
+| 15 | Partiel | Kilo 7.8.8 Linux : mémoire, règle corrigée, skills, agent et workflow avec preuves runtime. Règle : sessions positive/négative et sorties expurgées ; aucune validation Claude authentifiée ou Windows ; autres artefacts/OS hors de cette preuve. |
 | 16 | Partiel | Quatre références modifiées portent sources/date contractuelle attribuée à #914 et revalidation distincte ; autres références futures. |
 
 Preuves et limites : [rapport phase 1](phase-1-report.md), [runtime mémoire](phase-1-runtime.md), [review phase 1 conservée](review-phase-1.md), [rapport phase 3](phase-3-report.md), [runtime skills](phase-3-runtime.md), [review courante](review.md). Aucun critère transversal déclaré entièrement satisfait.
