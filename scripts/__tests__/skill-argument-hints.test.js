@@ -65,7 +65,6 @@ test("a skill whose actions take no input needs no argument-hint", () => {
   assert.equal(clean.status, 0, clean.output);
 });
 
-// A Windows checkout turns every line ending into CRLF, and the guard must read the same skill.
 test("a skill checked out with CRLF line endings still reads its argument-hint", () => {
   const clean = runOn({
     [SKILL]: frontmatter(["argument-hint: a file path or a ticket"]).replaceAll("\n", "\r\n"),

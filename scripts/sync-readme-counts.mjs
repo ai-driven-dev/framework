@@ -6,7 +6,6 @@
 import { readFileSync, writeFileSync, readdirSync, existsSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
-// fileURLToPath, not URL.pathname: on Windows the pathname keeps a leading slash before the drive.
 const ROOT = fileURLToPath(new URL("..", import.meta.url));
 const README = ROOT + "README.md";
 const PLUGINS = ROOT + "plugins";

@@ -520,11 +520,7 @@ jobs:
       - name: Plugin suite
         run: node scripts/check-tests-leave-git-alone.js -- node --test 'scripts/__tests__/**/*.test.js'
 
-      # What a Windows contributor's commit runs: the pre-commit, every job but the three that
-      # need cli/'s dependencies (Biome there is #881), then the trailer job. Lefthook hands
-      # each job to `sh -c` through a command line it builds by hand, with nothing escaped, so
-      # a double quote in a `run` truncates the script (#948); a check that only fails here is
-      # a Windows bug of its own, and both fail the step.
+      # A Windows commit's hooks (#948), less the three cli jobs that need cli/'s dependencies.
       - name: Hooks - a commit's hooks pass on Windows
         run: |
           echo "# lefthook subject" > "$RUNNER_TEMP/msg"

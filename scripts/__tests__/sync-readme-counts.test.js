@@ -5,8 +5,6 @@ const test = require("node:test");
 
 const SCRIPT = path.resolve(__dirname, "..", "sync-readme-counts.mjs");
 
-// Run where the pre-commit runs it, Windows included: a root built from a URL's pathname
-// reads `D:\D:\…\README.md` there, and the hook swallows the failure.
 test("the README counts check finds the README and agrees with the tree", () => {
   const result = spawnSync(process.execPath, [SCRIPT, "--check"], { encoding: "utf8" });
 

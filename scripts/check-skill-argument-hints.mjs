@@ -75,7 +75,6 @@ async function takesInput(actionFiles) {
 const breaches = [];
 for (const dir of await skillDirs()) {
   const skillPath = path.join(dir, "SKILL.md");
-  // A Windows checkout ends every line with CRLF, which the frontmatter parse would miss.
   const content = (await readFile(skillPath, "utf8").catch(() => null))?.replaceAll("\r\n", "\n");
   if (content == null) continue;
 

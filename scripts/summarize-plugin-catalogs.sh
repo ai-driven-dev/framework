@@ -1,5 +1,4 @@
 #!/bin/sh
-# A file, not a lefthook run: its quotes would break Windows' hand-built sh -c line (#948).
 [ -d plugins ] || exit 0
 if ! command -v node >/dev/null 2>&1; then
   echo "ℹ️  node not available; skipping summarize-plugin-catalogs"
