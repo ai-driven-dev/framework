@@ -24,7 +24,7 @@ La branche actuellement ouverte est `main`.
 
 Les remotes Git sont déjà configurés :
 
-- `origin` : `git@github.com:waewoo/framework.git`
+- `origin` : `[private fork remote redacted]`
 - `upstream` : `git@github.com:ai-driven-dev/framework.git`
 
 Ne recrée pas ces remotes et ne reclone pas le dépôt.
@@ -416,7 +416,7 @@ Séquence recommandée :
 1. Plan validé.
 2. Première tranche fonctionnelle implémentée et testée.
 3. Proposition de commits cohérents.
-4. Après mon autorisation explicite : commit et push vers mon fork `waewoo/framework`.
+4. Après mon autorisation explicite : commit et push vers mon fork `[private fork]`.
 5. Après mon autorisation explicite : création d'une Draft PR ciblant `ai-driven-dev/framework:next`.
 6. Poursuite des développements avec retours et tests.
 7. Review AIDD complète et validation des critères d'acceptation.

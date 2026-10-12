@@ -1,6 +1,6 @@
 # Matrice de traçabilité #914
 
-Les critères ci-dessous sont repris **verbatim et dans leur ordre officiel**. État de planification conservé dans `plan-before-phase-1.json`. Les phases 1–5 sont implémentées ; la phase 2 reste `in-progress` jusqu’au test Claude demandé par `CONTRIBUTING.md` ou à une exception explicite du mainteneur. Les autres chemins restent des projections dans les phase-n.md. La sonde de connectivité ne valide pas AC15 ; les preuves runtime concernent mémoire, règle, skills, agent, workflow et guidance hooks sur Linux. Les sorties Kilo de phase 2 publiées sont expurgées des identifiants externes.
+Les critères ci-dessous sont repris **verbatim et dans leur ordre officiel**. État de planification conservé dans `plan.md` et les rapports de phase ; le snapshot machine-readable antérieur, redondant et porteur de chemins locaux, a été retiré au nettoyage. Les phases 1–5 sont implémentées ; la phase 2 reste `in-progress` jusqu’au test Claude demandé par `CONTRIBUTING.md` ou à une exception explicite du mainteneur. Les autres chemins restent des projections dans les phase-n.md. La sonde de connectivité ne valide pas AC15 ; les preuves runtime concernent mémoire, règle, skills, agent, workflow et guidance hooks sur Linux. Les sorties Kilo de phase 2 publiées sont expurgées des identifiants externes.
 
 | AC | Critère officiel | Phases | Fichiers / responsabilité | Tests nécessaires | Preuves attendues | Risques / environnement |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -47,4 +47,4 @@ La stratégie complète précise fixtures/oracles, limites et commandes dans [te
 | 15 | Partiel | Linux/Kilo 7.8.8 : mémoire, règle corrigée, skills, agent et workflow ont des preuves runtime ; la phase 6 vérifie aussi le skill généré par Codex jusqu’à la lecture du payload, avec contrôles positif/négatif et provider local déterministe. macOS/Windows ne sont pas testés ; AC15 reste partiel. Aucune validation Claude authentifiée n’est revendiquée. |
 | 16 | Partiel | Quatre références modifiées portent sources/date contractuelle attribuée à #914 et revalidation distincte ; autres références futures. |
 
-Preuves et limites : [rapport phase 1](phase-1-report.md), [runtime mémoire](phase-1-runtime.md), [review phase 1 conservée](review-phase-1.md), [rapport phase 3](phase-3-report.md), [runtime skills](phase-3-runtime.md), [review courante](review.md). Aucun critère transversal déclaré entièrement satisfait.
+Preuves et limites : [rapport phase 1](phase-1-report.md), [runtime mémoire](phase-1-runtime.md), [rapport phase 3](phase-3-report.md), [runtime skills](phase-3-runtime.md). Les revues détaillées des phases 1 et 3 ont été retirées après synthèse dans les rapports. Aucun critère transversal déclaré entièrement satisfait.

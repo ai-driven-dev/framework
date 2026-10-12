@@ -113,7 +113,7 @@ test at scripts/__tests__/context-hook-generation.test.js:10:1
     "- **Merge check.** Before writing, read the target file and confirm the new entry is appended to the moment's list, never overwriting a sibling.\n" +
     '- **Write-target validation.** After writing, confirm the file is valid and every handler path is an approved `${VAR}` or an absolute path under the workspace (a hook command runs from an arbitrary cwd, so an absolute path or `${VAR}` is expected, not a relative one). Otherwise stop and report.\n'
 
-      at TestContext.<anonymous> (/home/coder/project/scripts/__tests__/context-hook-generation.test.js:14:10)
+      at TestContext.<anonymous> ($HOME/project/scripts/__tests__/context-hook-generation.test.js:14:10)
       at Test.runInAsyncScope (node:async_hooks:227:14)
       at Test.run (node:internal/test_runner/test:1402:25)
       at Test.start (node:internal/test_runner/test:1262:17)
@@ -239,7 +239,7 @@ test at scripts/__tests__/context-hook-generation.test.js:10:1
     "- **Merge check.** Before writing, read the target file and confirm the new entry is appended to the moment's list, never overwriting a sibling.\n" +
     '- **Write-target validation.** After writing, confirm the file is valid and every handler path is an approved `${VAR}` or an absolute path under the workspace (a hook command runs from an arbitrary cwd, so an absolute path or `${VAR}` is expected, not a relative one). Otherwise stop and report.\n'
 
-      at TestContext.<anonymous> (/home/coder/project/scripts/__tests__/context-hook-generation.test.js:21:10)
+      at TestContext.<anonymous> ($HOME/project/scripts/__tests__/context-hook-generation.test.js:21:10)
       at Test.runInAsyncScope (node:async_hooks:227:14)
       at Test.run (node:internal/test_runner/test:1402:25)
       at Test.start (node:internal/test_runner/test:1262:17)
@@ -277,7 +277,7 @@ test at scripts/__tests__/context-hook-generation.test.js:26:1
 
     assert.ok(write.indexOf('**Preflight.**') < write.indexOf('**Script.**'))
 
-      at TestContext.<anonymous> (/home/coder/project/scripts/__tests__/context-hook-generation.test.js:29:10)
+      at TestContext.<anonymous> ($HOME/project/scripts/__tests__/context-hook-generation.test.js:29:10)
       at Test.runInAsyncScope (node:async_hooks:227:14)
       at Test.run (node:internal/test_runner/test:1402:25)
       at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
@@ -346,7 +346,7 @@ test at scripts/__tests__/context-hook-generation.test.js:26:1
     '- A second identical pass leaves config/script bytes and mtimes unchanged; user hooks and duplicates survive.\n' +
     '- An invalid last target aborts before any write to an earlier target.\n'
 
-      at TestContext.<anonymous> (/home/coder/project/scripts/__tests__/context-hook-generation.test.js:31:10)
+      at TestContext.<anonymous> ($HOME/project/scripts/__tests__/context-hook-generation.test.js:31:10)
       at Test.runInAsyncScope (node:async_hooks:227:14)
       at Test.run (node:internal/test_runner/test:1402:25)
       at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
@@ -415,7 +415,7 @@ test at scripts/__tests__/context-hook-generation.test.js:26:1
     '- A second identical pass leaves config/script bytes and mtimes unchanged; user hooks and duplicates survive.\n' +
     '- An invalid last target aborts before any write to an earlier target.\n'
 
-      at TestContext.<anonymous> (/home/coder/project/scripts/__tests__/context-hook-generation.test.js:32:10)
+      at TestContext.<anonymous> ($HOME/project/scripts/__tests__/context-hook-generation.test.js:32:10)
       at Test.runInAsyncScope (node:async_hooks:227:14)
       at Test.run (node:internal/test_runner/test:1402:25)
       at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
@@ -456,7 +456,7 @@ test at scripts/__tests__/context-hook-generation.test.js:26:1
 
   ' Before any script or config write, resolve every selected non-Kilo destination. Read and parse each existing config in its own format, validate the event list/entry shape and every existing handler needed for the merge, and reject an invalid entry, collision, symlink escape, unsafe script path or unwritable target. Stage the intended entry and handler bytes in memory. If any target is invalid, report the failing path after writing and leave targets unchanged. A Kilo-only request exits without reaching this step.'
 
-      at TestContext.<anonymous> (/home/coder/project/scripts/__tests__/context-hook-generation.test.js:33:10)
+      at TestContext.<anonymous> ($HOME/project/scripts/__tests__/context-hook-generation.test.js:33:10)
       at Test.runInAsyncScope (node:async_hooks:227:14)
       at Test.run (node:internal/test_runner/test:1402:25)
       at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
@@ -522,7 +522,7 @@ test at scripts/__tests__/context-hook-generation.test.js:26:1
     "- Each event name matches the tool's moment, and any blocking hook sits on a moment that can block.\n" +
     '- The second pass rewrites bytes and leaves user hooks intact; invalid input fails before any write.\n'
 
-      at TestContext.<anonymous> (/home/coder/project/scripts/__tests__/context-hook-generation.test.js:34:10)
+      at TestContext.<anonymous> ($HOME/project/scripts/__tests__/context-hook-generation.test.js:34:10)
       at Test.runInAsyncScope (node:async_hooks:227:14)
       at Test.run (node:internal/test_runner/test:1402:25)
       at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
