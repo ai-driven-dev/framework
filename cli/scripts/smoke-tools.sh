@@ -28,7 +28,7 @@ ALL_COMMANDS=(
   "marketplace add" "marketplace list" "marketplace remove" "marketplace refresh" "marketplace check"
   "auth login" "auth logout" "auth status"
   "telemetry on" "telemetry off" "telemetry forget" "telemetry ingest"
-  "telemetry task" "telemetry report" "telemetry identity"
+  "telemetry task" "telemetry status" "telemetry report" "telemetry identity"
 )
 
 PASS=0; FAIL=0; SKIP=0
@@ -209,6 +209,7 @@ P_TEL=$(new_project)
   && git switch -q -c feat/smoke)
 run "telemetry on" 0 "Measurement is on" "$P_TEL" -- telemetry on --yes
 run "telemetry task" 0 "Declared task" "$P_TEL" -- telemetry task smoke-task --ticket SMOKE-1
+run "telemetry status" 0 "measured since" "$P_TEL" -- telemetry status
 run "telemetry ingest" 0 "" "$P_TEL" -- telemetry ingest
 run "telemetry report" 0 "" "$P_TEL" -- telemetry report --days 1
 run "telemetry identity" 0 "" "$P_TEL" -- telemetry identity smoke-person
