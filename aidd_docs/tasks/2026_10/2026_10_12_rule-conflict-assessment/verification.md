@@ -24,4 +24,4 @@ The only post-replay runtime edit removes a nonnormative verification-date prefi
 
 Semantic comparison remains model judgment. Approval is a skill instruction, not a script lock. Native replay uses Codex; publication to five hosts does not prove their native runtime consumption. Official discovery sources are linked in `plan.md` and the skill’s tool-path reference. Historical receipts retain their earlier source/runtime hashes and are not evidence for the shortened version.
 
-Independent verdict: [review](review.md), [challenge](challenge.md). Disposable fixtures remain available until that check finishes; teardown is recorded separately.
+Independent verdict: [review](review.md), [challenge](challenge.md). Independent review approves all seven criteria; outcome confidence 95%, no deal breaker. The 17 replay fixtures were archived locally and removed: [teardown](receipts/concise-teardown.json).

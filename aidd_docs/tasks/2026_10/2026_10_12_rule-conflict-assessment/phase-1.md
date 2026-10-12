@@ -1,5 +1,5 @@
 ---
-status: implemented
+status: reviewed
 ---
 
 # Instruction: Assess and resolve a candidate before publication

@@ -1,24 +1,28 @@
-# Review: Assess existing rules before writing
+# Review: Rule assessment and concision
 
 - **Verdict**: approve
-- **Diff**: `3e67f6f594b7b7f6cc7bceb0581ad6d515519080...09af93daec18e5aced10b815958f29e3ce36aad0`
+- **Diff**: `ce80635221266dd7529d0bdc4fa98d15b9ddeb6c...57ab25319943c0ef8018dabd77fe55c555a6964d`
 - **Axes run**: code, functional, relevancy
 - **Date**: 2026_10_12
 - **Findings**: 0 critical, 0 warning, 0 minor
-- **Score**: 100/100; six plan criteria, four baseline checklist items and the actual-need discovery check fulfilled.
+- **Score**: 100% of scoped criteria fulfilled
 
 ## Phases
 
-### Phase 1 — Assess, resolve, then preserve publication
+### Phase 1 — Assess, resolve, preserve publication
 
-- [x] No create/update write without assessment and explicit decision on the complete candidate. — `plugins/aidd-context/skills/05-rule-generate/actions/02-assess-existing-rules.md:15`; `actions/03-write-rule.md:15`; baseline RED and thirteen unchanged assessment snapshots in `receipts/baseline.json` and `receipts/native-assessment.json`.
-- [x] Covered, overlap, conflict and needs-review findings cite sources; scope and canonical rendering exclusions are justified. — `actions/02-assess-existing-rules.md:16`; `references/tool-paths.md:44`; actual covered, overlap, edited-rendering, disjoint, uncertain and scope-uncertain answers and raw events in `receipts/native-assessment.json`.
-- [x] Changed resolution is assessed again; keep and cancel leave project bytes unchanged. — `actions/02-assess-existing-rules.md:26`; revise/keep/cancel snapshots in `receipts/native-lifecycle.json`; merge reassessment and exact approved update in `receipts/native-merge.json`.
-- [x] Publish/delete and five-host writer preserve existing behavior. — `SKILL.md:21`; `actions/01-capture-rule.md:16`; lifecycle publish/delete events and snapshots; `git diff BASE HEAD --exit-code -- plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs cli` exits 0.
-- [x] Native receipts prove classifications and pre-decision no-write behavior, with honest limits. — `verification.md:7`; all thirteen complete answers, fixture maps, raw-event SHA-256 values, on-disk snapshots and current fixture bytes checked; nine lifecycle and three merge answers match native JSONL events and prompts; `verification.md:45` discloses reference revisions, Codex-only skill execution and untested native Claude consumption.
-- [x] Required gates pass; independent review has no unresolved blocking finding. — `/private/tmp/aidd-791-repair-commit.log:4296` records 677 passed, 0 failed, 0 skipped; `/private/tmp/aidd-791-push.log:129` records 7002 passed, 1 skipped; repair push skips unchanged CLI gates and succeeds; fresh architecture check reports seven governed files, no violation.
+- [x] Complete candidate assessed and explicitly approved before create/update writes: `actions/02-assess-existing-rules.md:13`, `actions/03-write-rule.md:13`.
+- [x] Five classifications cite sources and justify scope/rendering exclusions: `actions/02-assess-existing-rules.md:17`, `references/tool-paths.md:24`.
+- [x] Changed resolutions require reassessment/approval; keep/cancel preserves bytes: `actions/02-assess-existing-rules.md:32`, `receipts/concise-native.json:614`, `:681`, `:731`, `:838`.
+- [x] Publish/delete bypass preserved; five-host writer and CLI unchanged versus base: `SKILL.md:13`, `actions/01-capture-rule.md:14`, `references/tool-paths.md:46`; empty writer/CLI diff.
+- [x] Native evidence covers required cases and uncertainty: `receipts/concise-native.json:29`. Read all 27 answers; verified event hashes, installed assets and 15 unchanged project snapshots against disk.
+- [x] Required gates green; no unresolved blocker: final commit log `# pass 681`, `# fail 0`; pre-push Knip green, 7,025 CLI tests passed, one skipped.
+- [x] User's concision revision preserves contracts and newer host support: seven runtime files total 1,766 words; assessment 236. Router owns flow, references own shared constraints; OpenCode V1/V2 discovery retained.
 
 ## Findings
+
+| Sev | Kind | Phase | Location | Issue | Fix |
+| --- | ---- | ----- | -------- | ----- | --- |
 
 None.
 
@@ -26,16 +30,12 @@ None.
 
 | Metric | Value |
 | --- | --- |
-| Verified | 100% (6/6 plan acceptance criteria); actual-need discovery gap repaired. |
-| Files checked | All 20 changed files; root `AGENTS.md`, `docs/ARCHITECTURE.md`, project coding assertions/testing memory; review actions/template/rubric/validator; unchanged writer seam; six JSON receipts; all 25 native answers and prompts with raw JSONL; original and repair commit/push logs; official documentation linked in tool-paths; final Codex flat and Claude marketplace distributions. |
-| Contract | [Issue #791 and comments](https://github.com/ai-driven-dev/framework/issues/791): four-action flow, semantic comparison, classifications, explicit resolution, source approval, disjoint-scope proof, verified rendering deduplication, unchanged publication. All checked against the final candidate; no remaining need-gap found. |
-| DRY | Fulfilled: host paths remain in tool-paths; assessment consumes that reference; catalogs are generated inventory. |
-| Coherence | Fulfilled: router, renamed actions, R5 and catalogs agree; exact-body handoff and publish/delete bypass align; reference hash variants are disclosed. |
-| Simplicity | Fulfilled: one assessment action, no CLI/writer changes or new abstraction; bounded project assessment excludes corpus audit #792. |
-| Dead code / debug leftovers | Fulfilled: no unused shipped action, old action filename, debug output or silent TODO introduced. |
-| Evidence integrity | Thirteen fixture-content hashes equal recorded before maps; before/after maps equal native snapshots and current bytes; all thirteen raw-event hashes match; final source hashes match source. Claude-local receipt's installed skill equals final source. Raw commands confirm read-only rendering verification and exact approved writer bodies; lifecycle deletion retains the documented empty AGENTS.md. |
-| Discovery repair | Fulfilled: `references/tool-paths.md:34` includes local Claude guidance and conditional AGENTS sources; unknown relevant activation remains needs review at line 40. [Official local-file loading](https://code.claude.com/docs/en/memory#how-claudemd-files-load) and [conditional AGENTS discovery](https://code.claude.com/docs/en/memory#when-claude-code-reads-agentsmd) checked again. Claude-only receipt reports pytest/unittest conflict from CLAUDE.local.md without writes. |
-| Validation | `git diff --check BASE HEAD` clean; unchanged writer/CLI diff exits 0; four actions/router/writer unchanged by repair; architecture guard checks seven files with no violation. Actual repair wrapped root suite passes 677 tests. Original pre-push output inspected; repair push succeeds with unchanged CLI gates skipped. Final distributions' four actions, two references, template and writer match source bytes; old action filenames absent. Full suite not redundantly rerun. |
-| Limits | Model judgment is not a deterministic approval lock. Codex native skill runtime and five-host publication verified; native consumption by other hosts remains unproven and explicitly disclosed. Generic documented-import instruction already covers Claude imports; no additional finding. |
+| Verified | 100% (7/7 acceptance criteria) |
+| Files checked | Seven runtime Markdown files under `plugins/aidd-context/skills/05-rule-generate/`; unchanged template; both catalogs; plan, phase, verification and receipt evidence; writer/CLI diff |
+| Checklist | DRY, coherence, minimality, no dead/debug content: fulfilled; architecture and applicable authoring rules checked |
+| Gates | `/private/tmp/aidd-791-short-cleanup-commit.log`, `/private/tmp/aidd-791-short-push.log`; no duplicate test/model runs |
+| Distribution | Final Codex flat and Claude marketplace actions, references, template and writer byte-identical; flat router changes only frontmatter serialization/name |
+| Replay boundary | Tested hashes retained separately from final hashes. Only post-replay runtime difference removes the verification-date prefix; all final hashes checked |
+| Limits | Semantic judgment and approval remain instructions, not writer locks. Native execution: Codex only; other hosts' native consumption unproven |
 | Unchecked | none |
 | Unplanned | none |

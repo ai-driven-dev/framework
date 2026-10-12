@@ -1,0 +1,24 @@
+{
+  "archive": "/private/tmp/aidd-791-concise-native-fixtures.tar.gz",
+  "sha256": "e6fbb48c23eae557d0c679820108515df23a4d1743159ad085572896b697a01f",
+  "roots": [
+    "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-x77f_xve",
+    "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-t2mk22qs",
+    "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-2p0h3ldp",
+    "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-5qhld3dc",
+    "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-3hcgdbdf",
+    "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-0oqnbaf8",
+    "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-y0jh35oc",
+    "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-k3ov3cw3",
+    "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-p4nc5tel",
+    "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-cpisqs8a",
+    "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-9q4boz6g",
+    "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-ht1ibk1j",
+    "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-1qr4_na3",
+    "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-ix2qi3kg",
+    "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-lmi51ec7",
+    "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-vga1bx6l",
+    "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-x38wqtp1"
+  ],
+  "removed": true
+}

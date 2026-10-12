@@ -1,16 +1,11 @@
 My confidence level of correctness now: 95%
 
 # Correctness (100%)
-- Candidate `09af93daec18e5aced10b815958f29e3ce36aad0` satisfies the agreed outcome in [issue #791 and comments](https://github.com/ai-driven-dev/framework/issues/791), [plan.md](plan.md) and [phase-1.md](phase-1.md): a complete candidate is compared before writing, and the user resolves the evidence before publication. All three trust answers are yes: the delivery is sound, its consequential choices are justified, and the observed journey serves the user's need.
-- Placement is minimal: semantic comparison belongs to the context skill; supported-source discovery stays in its canonical tool-path reference. One action provides the guard without a new skill, CLI behavior, writer abstraction, corpus audit or universal precedence system. See [architecture](../../../../docs/ARCHITECTURE.md) and [cleared review](review.md).
-- The decision concerns the complete body, metadata, scope, destinations and affected existing sources. Changed bodies and merge resolutions return to assessment and require a new decision. [Lifecycle](receipts/native-lifecycle.json) and [merge](receipts/native-merge.json) show actual approved-body preservation, no premature writes, and unchanged bytes after keep/cancel.
-- Comparison serves policy consistency: it distinguishes semantic coverage, partial redundancy, conflict and missing evidence; excludes only justified disjoint scopes even without matching files; verifies rendered ownership/body/scope before deduplication; retains conflicting native edits. The complete answers, fixtures and byte snapshots in [assessment receipts](receipts/native-assessment.json) support these outcomes rather than merely matching classification phrases.
-- The earlier Claude-source omission is repaired in the canonical reference. The Claude-only local-policy case detects pytest versus unittest in `CLAUDE.local.md` without writes. Conditional AGENTS activation remains conditional, with relevant unknown activation requiring review; it is not presented as native Claude runtime proof.
-- Publication and refusal responsibilities remain with the unchanged writer. Explicit publish/delete keeps its original route, including explicit publication of manual canonical edits. Root/CLI regression output, repaired commit gates, source hashes and distribution byte checks are recorded in [verification.md](verification.md) and [review.md](review.md).
-- Claims stay within evidence: native Codex sessions exercised the skill and five-host publication. No deterministic approval lock, universal host precedence, complete global discovery or native instruction consumption by other hosts is claimed. The documented limits do not contradict #791's agreed contract.
+- Final candidate `57ab25319943c0ef8018dabd77fe55c555a6964d`: [review](review.md) verifies every scoped criterion. Concision preserves the approval seam and deterministic publication; no contract gap.
+- All consequential choices supported. Native evidence proves Codex behavior; other hosts' consumption remains explicitly unclaimed. Final reference differs from replay only by the removed date prefix.
 
 # Deal breakers
-- None. No contract contradiction or unresolved outcome failure; clearance for a draft PR.
+- None.
 
 # Suggestions (enhancements only)
-- Future native Claude coverage: repeat the local-policy fixture and a conditionally active AGENTS fixture in a fresh supported Claude session, recording version, activation mode, actual answer and byte snapshots. This would extend the already disclosed runtime evidence beyond Codex; it is optional follow-up, not a prerequisite for this PR.
+- Optional: replace the router's read sentence with `Read numbered action files in actions/ before executing them.` Same word count; preserves bare action rows. All 15 assessment traces first tried an unnumbered filename, recovered via discovery, then completed correctly. No runtime change required for this verdict.
