@@ -1,0 +1,880 @@
+{
+  "codex-flat-conflict": {
+    "receipt": {
+      "case": "conflict",
+      "root": "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-njf20lfx",
+      "exit": 0,
+      "unchanged": true,
+      "changed": []
+    },
+    "before": {
+      ".claude/rules/05-testing/5-existing.md": "e7503bd2e08ec2a94e0e4cac90c64901aa2c742ff3520c59e7d73801e98bad72",
+      ".cursor/rules/05-testing/5-existing.mdc": "85a56abf468ef2578ac65fe9b702ec34c7fc90a35fb95d8dd7b9e46c711dde02",
+      ".github/instructions/05-existing.instructions.md": "c562d21203ca82b0a5cccf763ab19c0790d584eae1176206aa8e3c853bde1e52",
+      "AGENTS.md": "6faf9ca19dac27f2accb7ebe8c53fe4f8485f4662fa0d5896de76b6b2528a320",
+      "aidd_docs/rules/05-testing/5-existing.md": "ab3b5271d9bdd20d5fc32566d7a1e4cc8e8e7df534c09aea542248e8f966019f",
+      "package.json": "1239d4d885dcad42201a27ed9324f8f0f760b78700d8db9ced39a511cffe7eae"
+    },
+    "after": {
+      ".claude/rules/05-testing/5-existing.md": "e7503bd2e08ec2a94e0e4cac90c64901aa2c742ff3520c59e7d73801e98bad72",
+      ".cursor/rules/05-testing/5-existing.mdc": "85a56abf468ef2578ac65fe9b702ec34c7fc90a35fb95d8dd7b9e46c711dde02",
+      ".github/instructions/05-existing.instructions.md": "c562d21203ca82b0a5cccf763ab19c0790d584eae1176206aa8e3c853bde1e52",
+      "AGENTS.md": "6faf9ca19dac27f2accb7ebe8c53fe4f8485f4662fa0d5896de76b6b2528a320",
+      "aidd_docs/rules/05-testing/5-existing.md": "ab3b5271d9bdd20d5fc32566d7a1e4cc8e8e7df534c09aea542248e8f966019f",
+      "package.json": "1239d4d885dcad42201a27ed9324f8f0f760b78700d8db9ced39a511cffe7eae"
+    },
+    "skill-hashes": {
+      "SKILL.md": "ee9890ed4c365b9c4c3f7a85eba140a1d1f606d89cf39a9ca46fcc7c1e3c685d",
+      "actions/01-capture-rule.md": "2978eb702cf523cacbad78f858ff4e24c198fc0c410240e3a6b2ac0fbd142d06",
+      "actions/02-assess-existing-rules.md": "f02e015b9848ab9526a829936beb105a5e945259f78e5e045e80076322332c81",
+      "actions/03-write-rule.md": "14ab835edc8f036e05053609e4caa422998d831ba045c2f58d0897152a3180cc",
+      "actions/04-validate.md": "98dcfaa62dce513756c0a11bfa8620df5341057c25e20c2a7b85dcfef1f8231e",
+      "assets/rule-template.md": "bfccef5e957e8d2de7aefe818196e82bf7691c8631452f4cc5b6e5ea526cdb47",
+      "references/rule-authoring.md": "965cfb21d94cd928ecae6436d85f4c489207dc1a88ef35a16ae5af04dc69e982",
+      "references/tool-paths.md": "ce7a9da327f0f7c3d8a540191de7a223f216a77c6d438e0178dae91ca760d245",
+      "scripts/write-rule.cjs": "70783e579b75b9e22760239cbfd4309641bdd73840b17e7dfd606a252679a420"
+    },
+    "prompt": "Use the installed rule-generation skill at /private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-njf20lfx/installed/SKILL.md. Follow its workflow for creating a rule. All capture choices are confirmed: manual mode, real project root /private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-njf20lfx/project, host project, tools Claude Code, Cursor, GitHub Copilot, Codex and OpenCode V2. The complete requested candidate metadata and body are exactly this JSON: {\"category\": \"05-testing\", \"slug\": \"5-candidate\", \"description\": \"Test conventions\", \"paths\": [\"tests/**/*.py\"], \"body\": \"# Test conventions\\n\\n- Use unittest for all unit tests.\\n\"}. Create this rule. Do not change application source, install packages, use network tools, or commit. This invocation supplies no later user message. If the workflow requires a further user decision, stop and present it.",
+    "answer": "No files changed. The candidate conflicts with an existing rule.\n\nExact candidate, targeting all five confirmed tools:\n\n```json\n{\"category\":\"05-testing\",\"slug\":\"5-candidate\",\"description\":\"Test conventions\",\"paths\":[\"tests/**/*.py\"],\"body\":\"# Test conventions\\n\\n- Use unittest for all unit tests.\\n\"}\n```\n\nExisting `aidd_docs/rules/05-testing/5-existing.md` requires \u201cUse pytest for all unit tests.\u201d It has the identical `tests/**/*.py` scope. Verified matching publications in:\n\n- `.claude/rules/05-testing/5-existing.md`\n- `.cursor/rules/05-testing/5-existing.mdc`\n- `.github/instructions/05-existing.instructions.md`\n- `AGENTS.md` (Codex and OpenCode V2)\n\nProposed resolution: replace that existing rule and its publications with the exact candidate. Confirm this replacement, keep the existing policy, revise the candidate, or cancel.\n\nThe [skill\u2019s assessment action](/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-njf20lfx/installed/actions/02-assess-existing-rules.md) requires: \u201cAn unresolved conflict or needs-review finding requires an explicit resolution of that finding before proceeding.\u201d Your confirmed capture choices do not resolve this conflict, so the workflow stops here.",
+    "fixtureFiles": {
+      ".claude/rules/05-testing/5-existing.md": "---\npaths:\n  - \"tests/**/*.py\"\n---\n# Python unit tests\n\n- Use pytest for all unit tests.\n\n<!-- aidd_rule_output:path=.claude/rules/05-testing/5-existing.md sha256=25b1d68ddaafb6a3aed53f16f37e2369e812e53327a39a867984001880546668 -->\n",
+      ".cursor/rules/05-testing/5-existing.mdc": "---\ndescription: \"Python unit tests\"\nglobs: \"tests/**/*.py\"\nalwaysApply: false\n---\n# Python unit tests\n\n- Use pytest for all unit tests.\n\n<!-- aidd_rule_output:path=.cursor/rules/05-testing/5-existing.mdc sha256=478d87dcf33bbbf94918503ac9f3a0343e04857d7b6c1a698afdfe922e32890e -->\n",
+      ".github/instructions/05-existing.instructions.md": "---\napplyTo: \"tests/**/*.py\"\n---\n# Python unit tests\n\n- Use pytest for all unit tests.\n\n<!-- aidd_rule_output:path=.github/instructions/05-existing.instructions.md sha256=e2fac21a53c6fa288e67e7ee16f137920e1a430a6c0196def8c1d01f5ca6e921 -->\n",
+      "AGENTS.md": "<!-- aidd_rules:start sha256=613c85b7b34d8c3c93f64de50e46941ea97c44f27b4f2db6f6836f904668c92d separator=0 -->\nApplies to: `tests/**/*.py`.\n\n# Python unit tests\n\n- Use pytest for all unit tests.\n<!-- aidd_rules:end -->\n",
+      "aidd_docs/rules/05-testing/5-existing.md": "<!-- aidd_rule:{\"version\":1,\"category\":\"05-testing\",\"slug\":\"5-existing\",\"description\":\"Python unit tests\",\"paths\":[\"tests/**/*.py\"],\"targets\":[\"claude\",\"codex\",\"copilot\",\"cursor\",\"opencode\"]} -->\n# Python unit tests\n\n- Use pytest for all unit tests.\n",
+      "package.json": "{\"type\":\"module\"}\n"
+    },
+    "rawEventsSHA256": "0becc17d4003e31351dd00fed8ef3c7aa85833ce443b4a0e8fab1b5baa2409d7"
+  },
+  "conflict": {
+    "receipt": {
+      "case": "conflict",
+      "root": "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-f08cf2dd",
+      "exit": 0,
+      "unchanged": true,
+      "changed": []
+    },
+    "before": {
+      ".claude/rules/05-testing/5-existing.md": "e7503bd2e08ec2a94e0e4cac90c64901aa2c742ff3520c59e7d73801e98bad72",
+      ".cursor/rules/05-testing/5-existing.mdc": "85a56abf468ef2578ac65fe9b702ec34c7fc90a35fb95d8dd7b9e46c711dde02",
+      ".github/instructions/05-existing.instructions.md": "c562d21203ca82b0a5cccf763ab19c0790d584eae1176206aa8e3c853bde1e52",
+      "AGENTS.md": "6faf9ca19dac27f2accb7ebe8c53fe4f8485f4662fa0d5896de76b6b2528a320",
+      "aidd_docs/rules/05-testing/5-existing.md": "ab3b5271d9bdd20d5fc32566d7a1e4cc8e8e7df534c09aea542248e8f966019f",
+      "package.json": "1239d4d885dcad42201a27ed9324f8f0f760b78700d8db9ced39a511cffe7eae"
+    },
+    "after": {
+      ".claude/rules/05-testing/5-existing.md": "e7503bd2e08ec2a94e0e4cac90c64901aa2c742ff3520c59e7d73801e98bad72",
+      ".cursor/rules/05-testing/5-existing.mdc": "85a56abf468ef2578ac65fe9b702ec34c7fc90a35fb95d8dd7b9e46c711dde02",
+      ".github/instructions/05-existing.instructions.md": "c562d21203ca82b0a5cccf763ab19c0790d584eae1176206aa8e3c853bde1e52",
+      "AGENTS.md": "6faf9ca19dac27f2accb7ebe8c53fe4f8485f4662fa0d5896de76b6b2528a320",
+      "aidd_docs/rules/05-testing/5-existing.md": "ab3b5271d9bdd20d5fc32566d7a1e4cc8e8e7df534c09aea542248e8f966019f",
+      "package.json": "1239d4d885dcad42201a27ed9324f8f0f760b78700d8db9ced39a511cffe7eae"
+    },
+    "skill-hashes": {
+      "SKILL.md": "e4fe536c192b0eb7c39e20d497efc9f70702bc0e07a20eafed82e409fe3125d4",
+      "actions/01-capture-rule.md": "2978eb702cf523cacbad78f858ff4e24c198fc0c410240e3a6b2ac0fbd142d06",
+      "actions/02-assess-existing-rules.md": "f02e015b9848ab9526a829936beb105a5e945259f78e5e045e80076322332c81",
+      "actions/03-write-rule.md": "14ab835edc8f036e05053609e4caa422998d831ba045c2f58d0897152a3180cc",
+      "actions/04-validate.md": "98dcfaa62dce513756c0a11bfa8620df5341057c25e20c2a7b85dcfef1f8231e",
+      "assets/rule-template.md": "bfccef5e957e8d2de7aefe818196e82bf7691c8631452f4cc5b6e5ea526cdb47",
+      "references/rule-authoring.md": "965cfb21d94cd928ecae6436d85f4c489207dc1a88ef35a16ae5af04dc69e982",
+      "references/tool-paths.md": "8f6c12f0c5593ebad9865f7d71be8b9d076168246ba2fb07fa7680713fae57dd",
+      "scripts/write-rule.cjs": "70783e579b75b9e22760239cbfd4309641bdd73840b17e7dfd606a252679a420"
+    },
+    "commands": [
+      {
+        "command": "/bin/zsh -lc 'cat /private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-f08cf2dd/installed/SKILL.md'",
+        "exit": 0,
+        "outputBytes": 1600,
+        "outputSHA256": "e4fe536c192b0eb7c39e20d497efc9f70702bc0e07a20eafed82e409fe3125d4"
+      },
+      {
+        "command": "/bin/zsh -lc 'cat /private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-f08cf2dd/installed/actions/01-capture-rule.md'",
+        "exit": 0,
+        "outputBytes": 1707,
+        "outputSHA256": "2978eb702cf523cacbad78f858ff4e24c198fc0c410240e3a6b2ac0fbd142d06"
+      },
+      {
+        "command": "/bin/zsh -lc 'cat /private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-f08cf2dd/installed/references/tool-paths.md /private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-f08cf2dd/installed/references/rule-authoring.md /private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-f08cf2dd/installed/actions/02-assess-existing-rules.md'",
+        "exit": 0,
+        "outputBytes": 17908,
+        "outputSHA256": "15a442337727680f6300d1b092aabc3d8985784935a507db1e4bb66b3c2ecc2e"
+      },
+      {
+        "command": "/bin/zsh -lc \"pwd -P\nrg --files --hidden -g '\"'! .git'\"' -g '\"'!node_modules'\"' -g 'AGENTS.md' -g 'AGENTS.override.md' -g 'CLAUDE.md' -g '*.mdc' -g '*instructions.md' -g 'aidd_docs/rules/**' -g '.claude/rules/**' -g '*config*' -g '\"'! .git/**'\"'\ncat /private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-f08cf2dd/installed/assets/rule-template.md\"",
+        "exit": 0,
+        "outputBytes": 537,
+        "outputSHA256": "0cb8e891413d853c555b3c1ce53f36859022640bc796596276b23363b8b6655f"
+      },
+      {
+        "command": "/bin/zsh -lc \"cat AGENTS.md aidd_docs/rules/05-testing/5-existing.md .github/instructions/05-existing.instructions.md .claude/rules/05-testing/5-existing.md .cursor/rules/05-testing/5-existing.mdc\nrg --files --hidden -g '\"'!.git/**'\"'\n\"",
+        "exit": 0,
+        "outputBytes": 1413,
+        "outputSHA256": "7828bb700e650eb35143227141bef937afb42bf1d38543d14fbff976519c55fc"
+      },
+      {
+        "command": "/bin/zsh -lc \"rg --files --hidden --no-ignore -g '\"'!.git/**'\"'\ncat package.json\"",
+        "exit": 0,
+        "outputBytes": 210,
+        "outputSHA256": "ba6cce46787072aace2702dc2d11c4c81a9c223ce4f468e46fe4953509134924"
+      }
+    ],
+    "prompt": "Use the installed rule-generation skill at /private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-f08cf2dd/installed/SKILL.md. Follow its workflow for creating a rule. All capture choices are confirmed: manual mode, real project root /private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-f08cf2dd/project, host project, tools Claude Code, Cursor, GitHub Copilot, Codex and OpenCode V2. The complete requested candidate metadata and body are exactly this JSON: {\"category\": \"05-testing\", \"slug\": \"5-candidate\", \"description\": \"Test conventions\", \"paths\": [\"tests/**/*.py\"], \"body\": \"# Test conventions\\n\\n- Use unittest for all unit tests.\\n\"}. Create this rule. Do not change application source, install packages, use network tools, or commit. This invocation supplies no later user message. If the workflow requires a further user decision, stop and present it.",
+    "answer": "Creation paused; no files changed.\n\nComplete candidate for Claude Code, Cursor, GitHub Copilot, Codex and OpenCode V2:\n\n```json\n{\"category\":\"05-testing\",\"slug\":\"5-candidate\",\"description\":\"Test conventions\",\"paths\":[\"tests/**/*.py\"],\"body\":\"# Test conventions\\n\\n- Use unittest for all unit tests.\\n\"}\n```\n\n**Conflict:** `aidd_docs/rules/05-testing/5-existing.md` requires \u201cUse pytest for all unit tests.\u201d Its scope is also `tests/**/*.py`. The same requirement appears in `AGENTS.md`, `.claude/rules/05-testing/5-existing.md`, `.cursor/rules/05-testing/5-existing.mdc`, and `.github/instructions/05-existing.instructions.md`.\n\nChoose: keep pytest, revise the candidate, or explicitly replace `05-testing/5-existing` and its listed publications with the unittest candidate.\n\nThe installed skill\u2019s [assessment step](../installed/actions/02-assess-existing-rules.md) requires: \u201cAn unresolved conflict or needs-review finding requires an explicit resolution of that finding before proceeding.\u201d Capture confirmation does not resolve this conflict.",
+    "fixtureFiles": {
+      ".claude/rules/05-testing/5-existing.md": "---\npaths:\n  - \"tests/**/*.py\"\n---\n# Python unit tests\n\n- Use pytest for all unit tests.\n\n<!-- aidd_rule_output:path=.claude/rules/05-testing/5-existing.md sha256=25b1d68ddaafb6a3aed53f16f37e2369e812e53327a39a867984001880546668 -->\n",
+      ".cursor/rules/05-testing/5-existing.mdc": "---\ndescription: \"Python unit tests\"\nglobs: \"tests/**/*.py\"\nalwaysApply: false\n---\n# Python unit tests\n\n- Use pytest for all unit tests.\n\n<!-- aidd_rule_output:path=.cursor/rules/05-testing/5-existing.mdc sha256=478d87dcf33bbbf94918503ac9f3a0343e04857d7b6c1a698afdfe922e32890e -->\n",
+      ".github/instructions/05-existing.instructions.md": "---\napplyTo: \"tests/**/*.py\"\n---\n# Python unit tests\n\n- Use pytest for all unit tests.\n\n<!-- aidd_rule_output:path=.github/instructions/05-existing.instructions.md sha256=e2fac21a53c6fa288e67e7ee16f137920e1a430a6c0196def8c1d01f5ca6e921 -->\n",
+      "AGENTS.md": "<!-- aidd_rules:start sha256=613c85b7b34d8c3c93f64de50e46941ea97c44f27b4f2db6f6836f904668c92d separator=0 -->\nApplies to: `tests/**/*.py`.\n\n# Python unit tests\n\n- Use pytest for all unit tests.\n<!-- aidd_rules:end -->\n",
+      "aidd_docs/rules/05-testing/5-existing.md": "<!-- aidd_rule:{\"version\":1,\"category\":\"05-testing\",\"slug\":\"5-existing\",\"description\":\"Python unit tests\",\"paths\":[\"tests/**/*.py\"],\"targets\":[\"claude\",\"codex\",\"copilot\",\"cursor\",\"opencode\"]} -->\n# Python unit tests\n\n- Use pytest for all unit tests.\n",
+      "package.json": "{\"type\":\"module\"}\n"
+    },
+    "rawEventsSHA256": "1b60175ddbb1d9979aef279d06748827db167c406d7a54bf29020d1b87ea1a6f"
+  },
+  "copilot-guidance": {
+    "receipt": {
+      "case": "copilot-guidance",
+      "root": "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-pa64pbd1",
+      "exit": 0,
+      "unchanged": true,
+      "changed": []
+    },
+    "before": {
+      "GEMINI.md": "84d50ee6955150792d301179bdcf6a4e3c92922a6ebfba6204236df3d6e6dfc1",
+      "package.json": "1239d4d885dcad42201a27ed9324f8f0f760b78700d8db9ced39a511cffe7eae"
+    },
+    "after": {
+      "GEMINI.md": "84d50ee6955150792d301179bdcf6a4e3c92922a6ebfba6204236df3d6e6dfc1",
+      "package.json": "1239d4d885dcad42201a27ed9324f8f0f760b78700d8db9ced39a511cffe7eae"
+    },
+    "skill-hashes": {
+      "SKILL.md": "e4fe536c192b0eb7c39e20d497efc9f70702bc0e07a20eafed82e409fe3125d4",
+      "actions/01-capture-rule.md": "2978eb702cf523cacbad78f858ff4e24c198fc0c410240e3a6b2ac0fbd142d06",
+      "actions/02-assess-existing-rules.md": "f02e015b9848ab9526a829936beb105a5e945259f78e5e045e80076322332c81",
+      "actions/03-write-rule.md": "14ab835edc8f036e05053609e4caa422998d831ba045c2f58d0897152a3180cc",
+      "actions/04-validate.md": "98dcfaa62dce513756c0a11bfa8620df5341057c25e20c2a7b85dcfef1f8231e",
+      "assets/rule-template.md": "bfccef5e957e8d2de7aefe818196e82bf7691c8631452f4cc5b6e5ea526cdb47",
+      "references/rule-authoring.md": "965cfb21d94cd928ecae6436d85f4c489207dc1a88ef35a16ae5af04dc69e982",
+      "references/tool-paths.md": "40bef1b4fc7bdcf2fb6312ef217751bcea67b99899b9423c056c9407e45324a2",
+      "scripts/write-rule.cjs": "70783e579b75b9e22760239cbfd4309641bdd73840b17e7dfd606a252679a420"
+    },
+    "commands": [
+      {
+        "command": "/bin/zsh -lc 'cat /private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-pa64pbd1/installed/SKILL.md'",
+        "exit": 0,
+        "outputBytes": 1600,
+        "outputSHA256": "e4fe536c192b0eb7c39e20d497efc9f70702bc0e07a20eafed82e409fe3125d4"
+      },
+      {
+        "command": "/bin/zsh -lc 'cat /private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-pa64pbd1/installed/actions/01-capture-rule.md'",
+        "exit": 0,
+        "outputBytes": 1707,
+        "outputSHA256": "2978eb702cf523cacbad78f858ff4e24c198fc0c410240e3a6b2ac0fbd142d06"
+      },
+      {
+        "command": "/bin/zsh -lc 'cat /private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-pa64pbd1/installed/references/tool-paths.md /private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-pa64pbd1/installed/references/rule-authoring.md /private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-pa64pbd1/installed/actions/02-assess-existing-rules.md'",
+        "exit": 0,
+        "outputBytes": 18955,
+        "outputSHA256": "77f280b1b6aef14ec4e5f30918488b27e061a032433063123d10ff1583193f8d"
+      },
+      {
+        "command": "/bin/zsh -lc \"pwd -P; rg --files --hidden -g '\"'!.git'\"' -g '\"'!node_modules'\"' -g '\"'!vendor'\"'; cat /private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-pa64pbd1/installed/assets/rule-template.md\"",
+        "exit": 0,
+        "outputBytes": 381,
+        "outputSHA256": "70e67cb6759c13a64cb99fc02604a92c8a2e34f08714e2baedeafddce919af9b"
+      },
+      {
+        "command": "/bin/zsh -lc 'cat GEMINI.md package.json; ls -la'",
+        "exit": 0,
+        "outputBytes": 334,
+        "outputSHA256": "32bfa683e3b2350c1f61e26f9485469779b5b68fcbab49d8adc80fddd691b9e2"
+      }
+    ],
+    "prompt": "Use the installed rule-generation skill at /private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-pa64pbd1/installed/SKILL.md. Follow its workflow for creating a rule. All capture choices are confirmed: manual mode, real project root /private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-pa64pbd1/project, host project, tools Claude Code, Cursor, GitHub Copilot, Codex and OpenCode V2. The complete requested candidate metadata and body are exactly this JSON: {\"category\": \"05-testing\", \"slug\": \"5-candidate\", \"description\": \"Test conventions\", \"paths\": [\"tests/**/*.py\"], \"body\": \"# Test conventions\\n\\n- Use unittest for all unit tests.\\n\"}. Create this rule. Do not change application source, install packages, use network tools, or commit. This invocation supplies no later user message. If the workflow requires a further user decision, stop and present it.",
+    "answer": "Creation paused: [GEMINI.md](GEMINI.md:3) says \u201cUse pytest for all unit tests.\u201d This conflicts with the candidate under Copilot\u2019s discovery rules.\n\nExact candidate, targeting Claude Code, Cursor, GitHub Copilot, Codex and OpenCode V2:\n\n```json\n{\"category\":\"05-testing\",\"slug\":\"5-candidate\",\"description\":\"Test conventions\",\"paths\":[\"tests/**/*.py\"],\"body\":\"# Test conventions\\n\\n- Use unittest for all unit tests.\\n\"}\n```\n\nProposed resolution: replace the pytest requirement in `GEMINI.md` with the unittest requirement, then create the candidate. Alternatively, keep pytest and cancel, or revise the candidate.\n\nThe installed skill\u2019s [action 02](../installed/actions/02-assess-existing-rules.md) requires \u201can explicit user decision\u201d and explicit resolution of conflicts before writing. Please choose a resolution. No files changed.",
+    "fixtureFiles": {
+      "GEMINI.md": "# Unit tests\n\n- Use pytest for all unit tests.\n",
+      "package.json": "{\"type\":\"module\"}\n"
+    },
+    "rawEventsSHA256": "06228605fe0af7a7f31ab311858f9a57668a01319e9334efbb6c12200569f2d4"
+  },
+  "copilot-import": {
+    "receipt": {
+      "case": "copilot-import",
+      "root": "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-t4gu559a",
+      "exit": 0,
+      "unchanged": true,
+      "changed": []
+    },
+    "before": {
+      ".github/copilot-instructions.md": "f499439acb6f5b3504d0435aed5e9b60be5dc5634b90708863370d739e574b14",
+      "docs/unit-policy.md": "0e5cd2aa19aa90b11d9fd678e85cc137315971a75d68bd2004bf0f48ea63be3d",
+      "package.json": "1239d4d885dcad42201a27ed9324f8f0f760b78700d8db9ced39a511cffe7eae"
+    },
+    "after": {
+      ".github/copilot-instructions.md": "f499439acb6f5b3504d0435aed5e9b60be5dc5634b90708863370d739e574b14",
+      "docs/unit-policy.md": "0e5cd2aa19aa90b11d9fd678e85cc137315971a75d68bd2004bf0f48ea63be3d",
+      "package.json": "1239d4d885dcad42201a27ed9324f8f0f760b78700d8db9ced39a511cffe7eae"
+    },
+    "skill-hashes": {
+      "SKILL.md": "e4fe536c192b0eb7c39e20d497efc9f70702bc0e07a20eafed82e409fe3125d4",
+      "actions/01-capture-rule.md": "2978eb702cf523cacbad78f858ff4e24c198fc0c410240e3a6b2ac0fbd142d06",
+      "actions/02-assess-existing-rules.md": "f02e015b9848ab9526a829936beb105a5e945259f78e5e045e80076322332c81",
+      "actions/03-write-rule.md": "14ab835edc8f036e05053609e4caa422998d831ba045c2f58d0897152a3180cc",
+      "actions/04-validate.md": "98dcfaa62dce513756c0a11bfa8620df5341057c25e20c2a7b85dcfef1f8231e",
+      "assets/rule-template.md": "bfccef5e957e8d2de7aefe818196e82bf7691c8631452f4cc5b6e5ea526cdb47",
+      "references/rule-authoring.md": "965cfb21d94cd928ecae6436d85f4c489207dc1a88ef35a16ae5af04dc69e982",
+      "references/tool-paths.md": "40bef1b4fc7bdcf2fb6312ef217751bcea67b99899b9423c056c9407e45324a2",
+      "scripts/write-rule.cjs": "70783e579b75b9e22760239cbfd4309641bdd73840b17e7dfd606a252679a420"
+    },
+    "commands": [
+      {
+        "command": "/bin/zsh -lc 'cat /private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-t4gu559a/installed/SKILL.md'",
+        "exit": 0,
+        "outputBytes": 1600,
+        "outputSHA256": "e4fe536c192b0eb7c39e20d497efc9f70702bc0e07a20eafed82e409fe3125d4"
+      },
+      {
+        "command": "/bin/zsh -lc 'cat /private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-t4gu559a/installed/actions/01-capture-rule.md /private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-t4gu559a/installed/references/rule-authoring.md /private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-t4gu559a/installed/references/tool-paths.md'",
+        "exit": 0,
+        "outputBytes": 16346,
+        "outputSHA256": "183ebd7c0e118a7bf3546751290a17590a2ce7ceee6a334a4f694cc3efb89b17"
+      },
+      {
+        "command": "/bin/zsh -lc \"cat /private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-t4gu559a/installed/actions/02-assess-existing-rules.md\nrg --files --hidden -g '\"'!'\"\\\\.git/**' -g '\"'!node_modules/**'\"' -g '\"'!vendor/**'\"' .\"",
+        "exit": 0,
+        "outputBytes": 4387,
+        "outputSHA256": "64011bdafc21e0a0e75164bd5320ef80e5fc33fc4a6fb62ee4bf9548625b17db"
+      },
+      {
+        "command": "/bin/zsh -lc 'cat .github/copilot-instructions.md docs/unit-policy.md /private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-t4gu559a/installed/assets/rule-template.md\nls -la'",
+        "exit": 0,
+        "outputBytes": 692,
+        "outputSHA256": "7440301c90f35f2adeb7ca3750dd798be1f61e028e6dd4368c73034dccf72f62"
+      }
+    ],
+    "prompt": "Use the installed rule-generation skill at /private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-t4gu559a/installed/SKILL.md. Follow its workflow for creating a rule. All capture choices are confirmed: manual mode, real project root /private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-t4gu559a/project, host project, tools Claude Code, Cursor, GitHub Copilot, Codex and OpenCode V2. The complete requested candidate metadata and body are exactly this JSON: {\"category\": \"05-testing\", \"slug\": \"5-candidate\", \"description\": \"Test conventions\", \"paths\": [\"tests/**/*.py\"], \"body\": \"# Test conventions\\n\\n- Use unittest for all unit tests.\\n\"}. Create this rule. Do not change application source, install packages, use network tools, or commit. This invocation supplies no later user message. If the workflow requires a further user decision, stop and present it.",
+    "answer": "Creation paused: conflicting policy found. No files changed.\n\n[.github/copilot-instructions.md](.github/copilot-instructions.md) imports [docs/unit-policy.md](docs/unit-policy.md), which requires \u201cUse pytest for all unit tests.\u201d That applies to the candidate\u2019s `tests/**/*.py` scope.\n\nComplete candidate for Claude Code, Cursor, GitHub Copilot, Codex and OpenCode V2:\n\n```json\n{\"category\":\"05-testing\",\"slug\":\"5-candidate\",\"description\":\"Test conventions\",\"paths\":[\"tests/**/*.py\"],\"body\":\"# Test conventions\\n\\n- Use unittest for all unit tests.\\n\"}\n```\n\nProposed resolution: explicitly amend `docs/unit-policy.md` to allow unittest under `tests/**/*.py`, then create the candidate. Alternatively, keep pytest, revise the candidate, or cancel. Which resolution do you approve?\n\nThe skill\u2019s [action 02](../installed/actions/02-assess-existing-rules.md) requires \u201can explicit resolution of that finding before proceeding.\u201d Your capture confirmation does not resolve this discovered conflict.",
+    "fixtureFiles": {
+      ".github/copilot-instructions.md": "# Unit tests\n\nFollow @../docs/unit-policy.md.\n",
+      "docs/unit-policy.md": "# Unit policy\n\n- Use pytest for all unit tests.\n",
+      "package.json": "{\"type\":\"module\"}\n"
+    },
+    "rawEventsSHA256": "0d7198372928070fe64986b1222554565c8d0884ba2423aa4b43754b400926e1"
+  },
+  "covered": {
+    "receipt": {
+      "case": "covered",
+      "root": "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-avswso51",
+      "exit": 0,
+      "unchanged": true,
+      "changed": []
+    },
+    "before": {
+      ".claude/rules/05-testing/5-existing.md": "e7503bd2e08ec2a94e0e4cac90c64901aa2c742ff3520c59e7d73801e98bad72",
+      ".cursor/rules/05-testing/5-existing.mdc": "85a56abf468ef2578ac65fe9b702ec34c7fc90a35fb95d8dd7b9e46c711dde02",
+      ".github/instructions/05-existing.instructions.md": "c562d21203ca82b0a5cccf763ab19c0790d584eae1176206aa8e3c853bde1e52",
+      "AGENTS.md": "6faf9ca19dac27f2accb7ebe8c53fe4f8485f4662fa0d5896de76b6b2528a320",
+      "aidd_docs/rules/05-testing/5-existing.md": "ab3b5271d9bdd20d5fc32566d7a1e4cc8e8e7df534c09aea542248e8f966019f",
+      "package.json": "1239d4d885dcad42201a27ed9324f8f0f760b78700d8db9ced39a511cffe7eae"
+    },
+    "after": {
+      ".claude/rules/05-testing/5-existing.md": "e7503bd2e08ec2a94e0e4cac90c64901aa2c742ff3520c59e7d73801e98bad72",
+      ".cursor/rules/05-testing/5-existing.mdc": "85a56abf468ef2578ac65fe9b702ec34c7fc90a35fb95d8dd7b9e46c711dde02",
+      ".github/instructions/05-existing.instructions.md": "c562d21203ca82b0a5cccf763ab19c0790d584eae1176206aa8e3c853bde1e52",
+      "AGENTS.md": "6faf9ca19dac27f2accb7ebe8c53fe4f8485f4662fa0d5896de76b6b2528a320",
+      "aidd_docs/rules/05-testing/5-existing.md": "ab3b5271d9bdd20d5fc32566d7a1e4cc8e8e7df534c09aea542248e8f966019f",
+      "package.json": "1239d4d885dcad42201a27ed9324f8f0f760b78700d8db9ced39a511cffe7eae"
+    },
+    "skill-hashes": {
+      "SKILL.md": "e4fe536c192b0eb7c39e20d497efc9f70702bc0e07a20eafed82e409fe3125d4",
+      "actions/01-capture-rule.md": "2978eb702cf523cacbad78f858ff4e24c198fc0c410240e3a6b2ac0fbd142d06",
+      "actions/02-assess-existing-rules.md": "f02e015b9848ab9526a829936beb105a5e945259f78e5e045e80076322332c81",
+      "actions/03-write-rule.md": "14ab835edc8f036e05053609e4caa422998d831ba045c2f58d0897152a3180cc",
+      "actions/04-validate.md": "98dcfaa62dce513756c0a11bfa8620df5341057c25e20c2a7b85dcfef1f8231e",
+      "assets/rule-template.md": "bfccef5e957e8d2de7aefe818196e82bf7691c8631452f4cc5b6e5ea526cdb47",
+      "references/rule-authoring.md": "965cfb21d94cd928ecae6436d85f4c489207dc1a88ef35a16ae5af04dc69e982",
+      "references/tool-paths.md": "8f6c12f0c5593ebad9865f7d71be8b9d076168246ba2fb07fa7680713fae57dd",
+      "scripts/write-rule.cjs": "70783e579b75b9e22760239cbfd4309641bdd73840b17e7dfd606a252679a420"
+    },
+    "commands": [
+      {
+        "command": "/bin/zsh -lc 'cat /private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-avswso51/installed/SKILL.md'",
+        "exit": 0,
+        "outputBytes": 1600,
+        "outputSHA256": "e4fe536c192b0eb7c39e20d497efc9f70702bc0e07a20eafed82e409fe3125d4"
+      },
+      {
+        "command": "/bin/zsh -lc 'cat /private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-avswso51/installed/actions/01-capture-rule.md'",
+        "exit": 0,
+        "outputBytes": 1707,
+        "outputSHA256": "2978eb702cf523cacbad78f858ff4e24c198fc0c410240e3a6b2ac0fbd142d06"
+      },
+      {
+        "command": "/bin/zsh -lc 'cat /private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-avswso51/installed/references/tool-paths.md /private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-avswso51/installed/references/rule-authoring.md /private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-avswso51/installed/actions/02-assess-existing-rules.md'",
+        "exit": 0,
+        "outputBytes": 17908,
+        "outputSHA256": "15a442337727680f6300d1b092aabc3d8985784935a507db1e4bb66b3c2ecc2e"
+      },
+      {
+        "command": "/bin/zsh -lc \"rg --files --hidden -g '\"'!'\"\\\\.git/**' -g 'AGENTS*' -g 'CLAUDE.md' -g '*.mdc' -g '*.instructions.md' -g 'copilot-instructions.md' -g 'aidd_docs/rules/**' -g '.claude/**' -g '*config*' -g '*settings*' -g 'opencode*' -g '.github/**' -g '.cursor/**'\"",
+        "exit": 0,
+        "outputBytes": 179,
+        "outputSHA256": "27eb06f4a0dc6ed49a846e0aef8d6043a4c7a1ffde4c0b617403d2923cab27fb"
+      },
+      {
+        "command": "/bin/zsh -lc 'cat /private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-avswso51/installed/assets/rule-template.md'",
+        "exit": 0,
+        "outputBytes": 269,
+        "outputSHA256": "bfccef5e957e8d2de7aefe818196e82bf7691c8631452f4cc5b6e5ea526cdb47"
+      },
+      {
+        "command": "/bin/zsh -lc 'cat AGENTS.md aidd_docs/rules/05-testing/5-existing.md .github/instructions/05-existing.instructions.md .claude/rules/05-testing/5-existing.md .cursor/rules/05-testing/5-existing.mdc'",
+        "exit": 0,
+        "outputBytes": 1221,
+        "outputSHA256": "0bef1a1a68bb766c66ab9017300b314d55dea9099ef1bf154b64af6add1c583e"
+      },
+      {
+        "command": "/bin/zsh -lc 'cat /private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-avswso51/installed/scripts/write-rule.cjs'",
+        "exit": 0,
+        "outputBytes": 15650,
+        "outputSHA256": "70783e579b75b9e22760239cbfd4309641bdd73840b17e7dfd606a252679a420"
+      },
+      {
+        "command": "/bin/zsh -lc \"rg --files --hidden --no-ignore -g '\"'!.git/**'\"'\"",
+        "exit": 0,
+        "outputBytes": 192,
+        "outputSHA256": "3955dca5630e1adfc0386818651b1a17be9203fab6b9460cc61a519fc4d326b2"
+      },
+      {
+        "command": "/bin/zsh -lc \"node <<'NODE'\nconst fs = require('node:fs');\nconst vm = require('node:vm');\nconst script = '/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-avswso51/installed/scripts/write-rule.cjs';\nconst src = fs.readFileSync(script, 'utf8').split('try { main(); }')[0];\nvm.runInNewContext(src + \"'`\nconst name = '\"'aidd_docs/rules/05-testing/5-existing.md';\nconst rule = parseCanonical(readUtf8(name), name);\nfor (const tool of ['claude','cursor','copilot']) {\n const p = nativePath(rule, tool), text = readUtf8(p);\n ownedNative(text, rule, tool, p);\n if (text \"'!== renderNative(rule, tool)) throw new Error('\"'Rendering differs: ' + p);\n}\nconst shared = readUtf8('AGENTS.md');\ncontribution(shared);\nif (shared \"'!== renderShared('\"'', [rule])) throw new Error('Shared rendering differs');\nprocess.stdout.write('Verified canonical scope, targets, native renderings and signatures, shared rendering and signature.\\\\\\\\n');\n\"'`, {require, process, Buffer});\nNODE'",
+        "exit": 0,
+        "outputBytes": 101,
+        "outputSHA256": "8993da388c2cf8e1469c447e3a79e346a206c428a002ecca7c5870edeeb23a6f"
+      }
+    ],
+    "prompt": "Use the installed rule-generation skill at /private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-avswso51/installed/SKILL.md. Follow its workflow for creating a rule. All capture choices are confirmed: manual mode, real project root /private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-avswso51/project, host project, tools Claude Code, Cursor, GitHub Copilot, Codex and OpenCode V2. The complete requested candidate metadata and body are exactly this JSON: {\"category\": \"05-testing\", \"slug\": \"5-candidate\", \"description\": \"Test conventions\", \"paths\": [\"tests/**/*.py\"], \"body\": \"# Test conventions\\n\\n- Write every unit test with pytest.\\n\"}. Create this rule. Do not change application source, install packages, use network tools, or commit. This invocation supplies no later user message. If the workflow requires a further user decision, stop and present it.",
+    "answer": "Assessment: **covered**. Existing `aidd_docs/rules/05-testing/5-existing.md` requires \u201cUse pytest for all unit tests\u201d under identical scope, `tests/**/*.py`. Verified matching publications in `.claude/rules/05-testing/5-existing.md`, `.cursor/rules/05-testing/5-existing.mdc`, `.github/instructions/05-existing.instructions.md`, and `AGENTS.md`, covering all five confirmed tools.\n\nComplete candidate:\n\n```json\n{\"category\":\"05-testing\",\"slug\":\"5-candidate\",\"description\":\"Test conventions\",\"paths\":[\"tests/**/*.py\"],\"body\":\"# Test conventions\\n\\n- Write every unit test with pytest.\\n\"}\n```\n\nRecommend keeping the existing rule. Choose: keep existing, approve this exact duplicate, revise candidate, or cancel. No files changed.\n\nThe installed skill\u2019s [assessment action](/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-avswso51/installed/actions/02-assess-existing-rules.md) requires: \u201cShow the complete candidate, findings and proposed resolution, then wait for an explicit user decision.\u201d This further decision is required after assessment, so I stopped as instructed.",
+    "fixtureFiles": {
+      ".claude/rules/05-testing/5-existing.md": "---\npaths:\n  - \"tests/**/*.py\"\n---\n# Python unit tests\n\n- Use pytest for all unit tests.\n\n<!-- aidd_rule_output:path=.claude/rules/05-testing/5-existing.md sha256=25b1d68ddaafb6a3aed53f16f37e2369e812e53327a39a867984001880546668 -->\n",
+      ".cursor/rules/05-testing/5-existing.mdc": "---\ndescription: \"Python unit tests\"\nglobs: \"tests/**/*.py\"\nalwaysApply: false\n---\n# Python unit tests\n\n- Use pytest for all unit tests.\n\n<!-- aidd_rule_output:path=.cursor/rules/05-testing/5-existing.mdc sha256=478d87dcf33bbbf94918503ac9f3a0343e04857d7b6c1a698afdfe922e32890e -->\n",
+      ".github/instructions/05-existing.instructions.md": "---\napplyTo: \"tests/**/*.py\"\n---\n# Python unit tests\n\n- Use pytest for all unit tests.\n\n<!-- aidd_rule_output:path=.github/instructions/05-existing.instructions.md sha256=e2fac21a53c6fa288e67e7ee16f137920e1a430a6c0196def8c1d01f5ca6e921 -->\n",
+      "AGENTS.md": "<!-- aidd_rules:start sha256=613c85b7b34d8c3c93f64de50e46941ea97c44f27b4f2db6f6836f904668c92d separator=0 -->\nApplies to: `tests/**/*.py`.\n\n# Python unit tests\n\n- Use pytest for all unit tests.\n<!-- aidd_rules:end -->\n",
+      "aidd_docs/rules/05-testing/5-existing.md": "<!-- aidd_rule:{\"version\":1,\"category\":\"05-testing\",\"slug\":\"5-existing\",\"description\":\"Python unit tests\",\"paths\":[\"tests/**/*.py\"],\"targets\":[\"claude\",\"codex\",\"copilot\",\"cursor\",\"opencode\"]} -->\n# Python unit tests\n\n- Use pytest for all unit tests.\n",
+      "package.json": "{\"type\":\"module\"}\n"
+    },
+    "rawEventsSHA256": "5698383e980dbeb0bc2727cf803db05b24abfc2b83c33a1b1e9c441564364d3d"
+  },
+  "disjoint": {
+    "receipt": {
+      "case": "disjoint",
+      "root": "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-jzb3gnq2",
+      "exit": 0,
+      "unchanged": true,
+      "changed": []
+    },
+    "before": {
+      ".claude/rules/05-testing/5-existing.md": "3ccc5ee40f2a5caea1382ff9da1bb546e2f94a4d3b6eb591603bb5622bb18269",
+      ".cursor/rules/05-testing/5-existing.mdc": "df4c9a6cd7512ff24b79d4bfa946a44b0d368c055d680e67883293defde4887d",
+      ".github/instructions/05-existing.instructions.md": "30f0f402e53af81be9950700dcaf05d0a2411bd8f2f1fdbfec2a5b915b39c506",
+      "AGENTS.md": "209e23b4325e862c45ad5347517553e296662d47a4f794b266ee34336ea50c35",
+      "aidd_docs/rules/05-testing/5-existing.md": "ceb7c77e195f68130a3302542deac1871a00d963b3ed97dc74b1d3b1473e2d0a",
+      "package.json": "1239d4d885dcad42201a27ed9324f8f0f760b78700d8db9ced39a511cffe7eae"
+    },
+    "after": {
+      ".claude/rules/05-testing/5-existing.md": "3ccc5ee40f2a5caea1382ff9da1bb546e2f94a4d3b6eb591603bb5622bb18269",
+      ".cursor/rules/05-testing/5-existing.mdc": "df4c9a6cd7512ff24b79d4bfa946a44b0d368c055d680e67883293defde4887d",
+      ".github/instructions/05-existing.instructions.md": "30f0f402e53af81be9950700dcaf05d0a2411bd8f2f1fdbfec2a5b915b39c506",
+      "AGENTS.md": "209e23b4325e862c45ad5347517553e296662d47a4f794b266ee34336ea50c35",
+      "aidd_docs/rules/05-testing/5-existing.md": "ceb7c77e195f68130a3302542deac1871a00d963b3ed97dc74b1d3b1473e2d0a",
+      "package.json": "1239d4d885dcad42201a27ed9324f8f0f760b78700d8db9ced39a511cffe7eae"
+    },
+    "skill-hashes": {
+      "SKILL.md": "e4fe536c192b0eb7c39e20d497efc9f70702bc0e07a20eafed82e409fe3125d4",
+      "actions/01-capture-rule.md": "2978eb702cf523cacbad78f858ff4e24c198fc0c410240e3a6b2ac0fbd142d06",
+      "actions/02-assess-existing-rules.md": "f02e015b9848ab9526a829936beb105a5e945259f78e5e045e80076322332c81",
+      "actions/03-write-rule.md": "14ab835edc8f036e05053609e4caa422998d831ba045c2f58d0897152a3180cc",
+      "actions/04-validate.md": "98dcfaa62dce513756c0a11bfa8620df5341057c25e20c2a7b85dcfef1f8231e",
+      "assets/rule-template.md": "bfccef5e957e8d2de7aefe818196e82bf7691c8631452f4cc5b6e5ea526cdb47",
+      "references/rule-authoring.md": "965cfb21d94cd928ecae6436d85f4c489207dc1a88ef35a16ae5af04dc69e982",
+      "references/tool-paths.md": "8f6c12f0c5593ebad9865f7d71be8b9d076168246ba2fb07fa7680713fae57dd",
+      "scripts/write-rule.cjs": "70783e579b75b9e22760239cbfd4309641bdd73840b17e7dfd606a252679a420"
+    },
+    "commands": [
+      {
+        "command": "/bin/zsh -lc 'cat /private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-jzb3gnq2/installed/SKILL.md'",
+        "exit": 0,
+        "outputBytes": 1600,
+        "outputSHA256": "e4fe536c192b0eb7c39e20d497efc9f70702bc0e07a20eafed82e409fe3125d4"
+      },
+      {
+        "command": "/bin/zsh -lc 'cat /private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-jzb3gnq2/installed/actions/01-capture-rule.md'",
+        "exit": 0,
+        "outputBytes": 1707,
+        "outputSHA256": "2978eb702cf523cacbad78f858ff4e24c198fc0c410240e3a6b2ac0fbd142d06"
+      },
+      {
+        "command": "/bin/zsh -lc 'cat /private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-jzb3gnq2/installed/references/tool-paths.md /private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-jzb3gnq2/installed/references/rule-authoring.md /private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-jzb3gnq2/installed/actions/02-assess-existing-rules.md'",
+        "exit": 0,
+        "outputBytes": 17908,
+        "outputSHA256": "15a442337727680f6300d1b092aabc3d8985784935a507db1e4bb66b3c2ecc2e"
+      },
+      {
+        "command": "/bin/zsh -lc \"pwd -P\nrg --files --hidden -g '\"'!node_modules'\"' -g '\"'!.git'\"' -g 'AGENTS*' -g 'CLAUDE.md' -g '*.mdc' -g '*instructions.md' -g '**/rules/**' -g '**/.claude/**' -g '**/.cursor/**' -g '**/.github/**' -g '**/.opencode/**' -g '**/.codex/**'\ncat /private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-jzb3gnq2/installed/assets/rule-template.md\"",
+        "exit": 0,
+        "outputBytes": 537,
+        "outputSHA256": "1604c20e73ad7df31fa0bf5b80d3835317ee17ada7c2629e23c1a2f006541951"
+      },
+      {
+        "command": "/bin/zsh -lc \"cat AGENTS.md aidd_docs/rules/05-testing/5-existing.md .github/instructions/05-existing.instructions.md .claude/rules/05-testing/5-existing.md .cursor/rules/05-testing/5-existing.mdc\nrg --files --hidden --no-ignore -g '\"'!.git'\"' -g '\"'!node_modules'\"'\n\"",
+        "exit": 0,
+        "outputBytes": 1453,
+        "outputSHA256": "0803a9ff16382840f9029f2e92bff6c88e28ff831c4f78bc2fc0f677df40f876"
+      },
+      {
+        "command": "/bin/zsh -lc \"rg -n 'sha256|separator|createHash|aidd_rule_output' /private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-jzb3gnq2/installed/scripts/write-rule.cjs\ncat package.json\nfor dir in / /private /private/var /private/var/folders /private/var/folders/xr /private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn /private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T /private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-jzb3gnq2; do for name in AGENTS.md AGENTS.override.md CLAUDE.md .claude/CLAUDE.md; do if [ -f \\\"\"'$dir/$name\" ]; then printf '\"'\\\\n%s\\\\n' \\\"\"'$dir/$name\"; cat \"$dir/$name\"; fi; done; done'",
+        "exit": 0,
+        "outputBytes": 953,
+        "outputSHA256": "813daface96cb8f035d0fb5d86ac1b65780aca9165b9b0963df8886f55f2a27c"
+      },
+      {
+        "command": "/bin/zsh -lc \"sed -n '92,150p' /private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-jzb3gnq2/installed/scripts/write-rule.cjs\"",
+        "exit": 0,
+        "outputBytes": 3962,
+        "outputSHA256": "e16010c12c2eed8d5f0587f2525e6cade925cffddd60a550e9d5c705f00fea51"
+      },
+      {
+        "command": "/bin/zsh -lc \"tokenade exec --lang python --script 'import pathlib,re,hashlib\nh=lambda s:hashlib.sha256(s.encode()).hexdigest()\nfor p in [pathlib.Path(\\\".claude/rules/05-testing/5-existing.md\\\"),pathlib.Path(\\\".cursor/rules/05-testing/5-existing.mdc\\\"),pathlib.Path(\\\".github/instructions/05-existing.instructions.md\\\")]:\n s=p.read_text(); m=re.search(r\\\"\\\\n<\"'!-- aidd_rule_output:path=('\"\\\\S+) sha256=([a-f0-9]{64}) -->\\\\n\"'$\",s); assert m and m[1]==str(p) and h(s[:m.start()])==m[2]\ns=pathlib.Path(\"AGENTS.md\").read_text(); m=re.fullmatch(r\"<!-- aidd_rules:start sha256=([a-f0-9]{64}) separator=0 -->'\"\\\\n(.*?)<\"'!-- aidd_rules:end -->'\"\\\\n\\\",s,re.S); assert m and h(\\\"separator=0\\\\n\\\"+m[2])==m[1]\nprint(\\\"All four publication signatures verified; bodies and scopes match the inspected canonical policy.\\\")'\"",
+        "exit": 127,
+        "outputBytes": 35,
+        "outputSHA256": "f6152a2a42ddb7426bc7ac2a615b109c7f0db6a54665375a8e652e1b8f2f89ad"
+      },
+      {
+        "command": "/bin/zsh -lc \"python3 - <<'PY'\nimport pathlib,re,hashlib\nh=lambda s:hashlib.sha256(s.encode()).hexdigest()\nfor p in [pathlib.Path('.claude/rules/05-testing/5-existing.md'),pathlib.Path('.cursor/rules/05-testing/5-existing.mdc'),pathlib.Path('.github/instructions/05-existing.instructions.md')]:\n s=p.read_text(); m=re.search(r'\\\\n<\"'!-- aidd_rule_output:path=('\"\\\\S+) sha256=([a-f0-9]{64}) -->\\\\n\"'$'\"',s); assert m and m[1]==str(p) and h(s[:m.start()])==m[2]\ns=pathlib.Path('AGENTS.md').read_text(); m=re.fullmatch(r'<\"'!-- aidd_rules:start sha256=([a-f0-9]{64}) separator=0 -->'\"\\\\n(.*?)<\"'!-- aidd_rules:end -->'\"\\\\n',s,re.S); assert m and h('separator=0\\\\n'+m[2])==m[1]\nprint('All four publication signatures verified; inspected bodies and scopes match canonical policy.')\nPY\"",
+        "exit": 0,
+        "outputBytes": 94,
+        "outputSHA256": "710995a0d4d079edb08b8a770cd04e4f332b8675462e6b5cafe061b78efc2958"
+      }
+    ],
+    "prompt": "Use the installed rule-generation skill at /private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-jzb3gnq2/installed/SKILL.md. Follow its workflow for creating a rule. All capture choices are confirmed: manual mode, real project root /private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-jzb3gnq2/project, host project, tools Claude Code, Cursor, GitHub Copilot, Codex and OpenCode V2. The complete requested candidate metadata and body are exactly this JSON: {\"category\": \"05-testing\", \"slug\": \"5-candidate\", \"description\": \"Test conventions\", \"paths\": [\"frontend/tests/**/*.py\"], \"body\": \"# Test conventions\\n\\n- Use unittest for all unit tests.\\n\"}. Create this rule. Do not change application source, install packages, use network tools, or commit. This invocation supplies no later user message. If the workflow requires a further user decision, stop and present it.",
+    "answer": "Assessment: **new**. Existing `5-existing` canonical rule and verified Claude, Cursor, Copilot and `AGENTS.md` publications require \u201cUse pytest for all unit tests.\u201d only under `backend/tests/**/*.py`. That scope is disjoint from `frontend/tests/**/*.py`; no conflict or overlap was found.\n\nComplete candidate for Claude Code, Cursor, GitHub Copilot, Codex and OpenCode V2:\n\n```json\n{\"category\":\"05-testing\",\"slug\":\"5-candidate\",\"description\":\"Test conventions\",\"paths\":[\"frontend/tests/**/*.py\"],\"body\":\"# Test conventions\\n\\n- Use unittest for all unit tests.\\n\"}\n```\n\nProposed resolution: create this exact candidate, preserving existing rules. Approve, revise, or cancel?\n\nThe installed [assessment action](/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-jzb3gnq2/installed/actions/02-assess-existing-rules.md) requires: \u201cwait for an explicit user decision, including for **new**.\u201d Your capture confirmation precedes this assessment, so I\u2019ve stopped without writing any files.",
+    "fixtureFiles": {
+      ".claude/rules/05-testing/5-existing.md": "---\npaths:\n  - \"backend/tests/**/*.py\"\n---\n# Python unit tests\n\n- Use pytest for all unit tests.\n\n<!-- aidd_rule_output:path=.claude/rules/05-testing/5-existing.md sha256=77cc0d160bb76d7047fa74a21811d09b054bd3ced85896b74d36e71116494f2b -->\n",
+      ".cursor/rules/05-testing/5-existing.mdc": "---\ndescription: \"Python unit tests\"\nglobs: \"backend/tests/**/*.py\"\nalwaysApply: false\n---\n# Python unit tests\n\n- Use pytest for all unit tests.\n\n<!-- aidd_rule_output:path=.cursor/rules/05-testing/5-existing.mdc sha256=57c8c58f92db93f0a9d88f53ffd5419207b6244ce6966e60684d694057922c73 -->\n",
+      ".github/instructions/05-existing.instructions.md": "---\napplyTo: \"backend/tests/**/*.py\"\n---\n# Python unit tests\n\n- Use pytest for all unit tests.\n\n<!-- aidd_rule_output:path=.github/instructions/05-existing.instructions.md sha256=db97f29879b86c680e1d6acad94ccdb22a6febf1749ff55d636da9253b7e1c5b -->\n",
+      "AGENTS.md": "<!-- aidd_rules:start sha256=c72949c5d8c6b15fda193a682dda89463fa802895f96b641d0fb2edcf3a46067 separator=0 -->\nApplies to: `backend/tests/**/*.py`.\n\n# Python unit tests\n\n- Use pytest for all unit tests.\n<!-- aidd_rules:end -->\n",
+      "aidd_docs/rules/05-testing/5-existing.md": "<!-- aidd_rule:{\"version\":1,\"category\":\"05-testing\",\"slug\":\"5-existing\",\"description\":\"Python unit tests\",\"paths\":[\"backend/tests/**/*.py\"],\"targets\":[\"claude\",\"codex\",\"copilot\",\"cursor\",\"opencode\"]} -->\n# Python unit tests\n\n- Use pytest for all unit tests.\n",
+      "package.json": "{\"type\":\"module\"}\n"
+    },
+    "rawEventsSHA256": "890caf005638401b3835507821a53d42611d3810be0cdad8a21270ce315939e6"
+  },
+  "edited-rendering": {
+    "receipt": {
+      "case": "edited-rendering",
+      "root": "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-d40ne3yt",
+      "exit": 0,
+      "unchanged": true,
+      "changed": []
+    },
+    "before": {
+      ".claude/rules/05-testing/5-existing.md": "9e8fd9e68a4cc2ec4219a150f7aab51e7562780547d7438f5fdf5aadd44baf32",
+      ".cursor/rules/05-testing/5-existing.mdc": "85a56abf468ef2578ac65fe9b702ec34c7fc90a35fb95d8dd7b9e46c711dde02",
+      ".github/instructions/05-existing.instructions.md": "c562d21203ca82b0a5cccf763ab19c0790d584eae1176206aa8e3c853bde1e52",
+      "AGENTS.md": "6faf9ca19dac27f2accb7ebe8c53fe4f8485f4662fa0d5896de76b6b2528a320",
+      "aidd_docs/rules/05-testing/5-existing.md": "ab3b5271d9bdd20d5fc32566d7a1e4cc8e8e7df534c09aea542248e8f966019f",
+      "package.json": "1239d4d885dcad42201a27ed9324f8f0f760b78700d8db9ced39a511cffe7eae"
+    },
+    "after": {
+      ".claude/rules/05-testing/5-existing.md": "9e8fd9e68a4cc2ec4219a150f7aab51e7562780547d7438f5fdf5aadd44baf32",
+      ".cursor/rules/05-testing/5-existing.mdc": "85a56abf468ef2578ac65fe9b702ec34c7fc90a35fb95d8dd7b9e46c711dde02",
+      ".github/instructions/05-existing.instructions.md": "c562d21203ca82b0a5cccf763ab19c0790d584eae1176206aa8e3c853bde1e52",
+      "AGENTS.md": "6faf9ca19dac27f2accb7ebe8c53fe4f8485f4662fa0d5896de76b6b2528a320",
+      "aidd_docs/rules/05-testing/5-existing.md": "ab3b5271d9bdd20d5fc32566d7a1e4cc8e8e7df534c09aea542248e8f966019f",
+      "package.json": "1239d4d885dcad42201a27ed9324f8f0f760b78700d8db9ced39a511cffe7eae"
+    },
+    "skill-hashes": {
+      "SKILL.md": "e4fe536c192b0eb7c39e20d497efc9f70702bc0e07a20eafed82e409fe3125d4",
+      "actions/01-capture-rule.md": "2978eb702cf523cacbad78f858ff4e24c198fc0c410240e3a6b2ac0fbd142d06",
+      "actions/02-assess-existing-rules.md": "f02e015b9848ab9526a829936beb105a5e945259f78e5e045e80076322332c81",
+      "actions/03-write-rule.md": "14ab835edc8f036e05053609e4caa422998d831ba045c2f58d0897152a3180cc",
+      "actions/04-validate.md": "98dcfaa62dce513756c0a11bfa8620df5341057c25e20c2a7b85dcfef1f8231e",
+      "assets/rule-template.md": "bfccef5e957e8d2de7aefe818196e82bf7691c8631452f4cc5b6e5ea526cdb47",
+      "references/rule-authoring.md": "965cfb21d94cd928ecae6436d85f4c489207dc1a88ef35a16ae5af04dc69e982",
+      "references/tool-paths.md": "2f1e5f4bb3d388b58d3502b6e71a857cd7d98c89ed63795c88b6664699f8106c",
+      "scripts/write-rule.cjs": "70783e579b75b9e22760239cbfd4309641bdd73840b17e7dfd606a252679a420"
+    },
+    "commands": [
+      {
+        "command": "/bin/zsh -lc 'cat /private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-d40ne3yt/installed/SKILL.md'",
+        "exit": 0,
+        "outputBytes": 1600,
+        "outputSHA256": "e4fe536c192b0eb7c39e20d497efc9f70702bc0e07a20eafed82e409fe3125d4"
+      },
+      {
+        "command": "/bin/zsh -lc 'cat /private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-d40ne3yt/installed/actions/01-capture-rule.md /private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-d40ne3yt/installed/references/rule-authoring.md /private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-d40ne3yt/installed/references/tool-paths.md'",
+        "exit": 0,
+        "outputBytes": 16330,
+        "outputSHA256": "bb6928c48b7ae4e321381cdbd118e639a8549e8988e3a1580c88e812e0cca786"
+      },
+      {
+        "command": "/bin/zsh -lc 'cat /private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-d40ne3yt/installed/actions/02-assess-existing-rules.md'",
+        "exit": 0,
+        "outputBytes": 4316,
+        "outputSHA256": "f02e015b9848ab9526a829936beb105a5e945259f78e5e045e80076322332c81"
+      },
+      {
+        "command": "/bin/zsh -lc \"rg --files --hidden -g '\"'!.git'\"' -g '\"'!node_modules'\"' -g '\"'!vendor'\"'\"",
+        "exit": 0,
+        "outputBytes": 192,
+        "outputSHA256": "c77979eb47f2fa550a98d1a62d675dbb5698da4cfb88aa7035cbbd580053eecc"
+      },
+      {
+        "command": "/bin/zsh -lc 'cat AGENTS.md aidd_docs/rules/05-testing/5-existing.md .github/instructions/05-existing.instructions.md .claude/rules/05-testing/5-existing.md .cursor/rules/05-testing/5-existing.mdc /private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-d40ne3yt/installed/assets/rule-template.md /private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-d40ne3yt/installed/scripts/write-rule.cjs'",
+        "exit": 0,
+        "outputBytes": 17142,
+        "outputSHA256": "1fc2e5e3842da8709c96c6db661d8643fe93750076e485bc45e6c35794d66598"
+      },
+      {
+        "command": "/bin/zsh -lc \"node <<'NODE'\nconst fs = require('fs'), crypto = require('crypto');\nconst hash = s => crypto.createHash('sha256').update(s).digest('hex');\nconst canonical = fs.readFileSync('aidd_docs/rules/05-testing/5-existing.md','utf8');\nconst body = canonical.slice(canonical.indexOf('\\\\n')+1);\nfor (const p of ['.claude/rules/05-testing/5-existing.md','.cursor/rules/05-testing/5-existing.mdc','.github/instructions/05-existing.instructions.md']) {\n const s = fs.readFileSync(p,'utf8');\n const m = /\\\\n<\"'!-- aidd_rule_output:path=('\"\\\\S+) sha256=([a-f0-9]+) -->\\\\n\"'$/.exec(s);\n const payload = s.slice(0,m.index);\n console.log(p, JSON.stringify({signatureValid:m[1]===p && hash(payload)===m[2],bodyMatches:payload.slice(payload.indexOf('\"'---\\\\n',4)+4)===body}));\n}\nconst s=fs.readFileSync('AGENTS.md','utf8');\nconst m=/\"'^<!-- aidd_rules:start sha256=('\"\\\\w+) separator=(\\\\d) -->\\\\n([\\\\s\\\\S]*)<\"'!-- aidd_rules:end -->'\"\\\\n\"'$/.exec(s);\nconsole.log('\"'AGENTS.md',JSON.stringify({signatureValid:hash('separator='+m[2]+'\\\\n'+m[3])===m[1],payloadMatches:m[3]==='Applies to: \"'`tests/**/*.py`.'\"\\\\n\\\\n'+body}));\nNODE\"",
+        "exit": 0,
+        "outputBytes": 315,
+        "outputSHA256": "01aa61c3e73bfbff90f770f01304829ac5419681ef0479933f8faf97a6b29404"
+      }
+    ],
+    "prompt": "Use the installed rule-generation skill at /private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-d40ne3yt/installed/SKILL.md. Follow its workflow for creating a rule. All capture choices are confirmed: manual mode, real project root /private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-d40ne3yt/project, host project, tools Claude Code, Cursor, GitHub Copilot, Codex and OpenCode V2. The complete requested candidate metadata and body are exactly this JSON: {\"category\": \"05-testing\", \"slug\": \"5-candidate\", \"description\": \"Test conventions\", \"paths\": [\"tests/**/*.py\"], \"body\": \"# Test conventions\\n\\n- Write every unit test with pytest.\\n\"}. Create this rule. Do not change application source, install packages, use network tools, or commit. This invocation supplies no later user message. If the workflow requires a further user decision, stop and present it.",
+    "answer": "No files changed. Assessment found:\n\n- **Covered:** `aidd_docs/rules/05-testing/5-existing.md` already requires \u201cUse pytest for all unit tests.\u201d Its Cursor, Copilot and shared `AGENTS.md` publications match.\n- **Conflict:** `.claude/rules/05-testing/5-existing.md` instead requires \u201cUse unittest for all unit tests.\u201d Its signature is invalid, indicating an edited publication. Both rules cover `tests/**/*.py`.\n\nComplete candidate, targeting all five confirmed tools:\n\n```json\n{\"category\":\"05-testing\",\"slug\":\"5-candidate\",\"description\":\"Test conventions\",\"paths\":[\"tests/**/*.py\"],\"body\":\"# Test conventions\\n\\n- Write every unit test with pytest.\\n\"}\n```\n\nRecommended decision: keep the existing pytest rule and explicitly authorize restoring its Claude publication. Alternatively, specify a revision or cancel.\n\nFurther decision is required by [action 02](/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-d40ne3yt/installed/actions/02-assess-existing-rules.md): \u201cShow the complete candidate, findings and proposed resolution, then wait for an explicit user decision.\u201d The conflict and edited publication require explicit resolution before writing.",
+    "fixtureFiles": {
+      ".claude/rules/05-testing/5-existing.md": "---\npaths:\n  - \"tests/**/*.py\"\n---\n# Python unit tests\n\n- Use unittest for all unit tests.\n\n<!-- aidd_rule_output:path=.claude/rules/05-testing/5-existing.md sha256=25b1d68ddaafb6a3aed53f16f37e2369e812e53327a39a867984001880546668 -->\n",
+      ".cursor/rules/05-testing/5-existing.mdc": "---\ndescription: \"Python unit tests\"\nglobs: \"tests/**/*.py\"\nalwaysApply: false\n---\n# Python unit tests\n\n- Use pytest for all unit tests.\n\n<!-- aidd_rule_output:path=.cursor/rules/05-testing/5-existing.mdc sha256=478d87dcf33bbbf94918503ac9f3a0343e04857d7b6c1a698afdfe922e32890e -->\n",
+      ".github/instructions/05-existing.instructions.md": "---\napplyTo: \"tests/**/*.py\"\n---\n# Python unit tests\n\n- Use pytest for all unit tests.\n\n<!-- aidd_rule_output:path=.github/instructions/05-existing.instructions.md sha256=e2fac21a53c6fa288e67e7ee16f137920e1a430a6c0196def8c1d01f5ca6e921 -->\n",
+      "AGENTS.md": "<!-- aidd_rules:start sha256=613c85b7b34d8c3c93f64de50e46941ea97c44f27b4f2db6f6836f904668c92d separator=0 -->\nApplies to: `tests/**/*.py`.\n\n# Python unit tests\n\n- Use pytest for all unit tests.\n<!-- aidd_rules:end -->\n",
+      "aidd_docs/rules/05-testing/5-existing.md": "<!-- aidd_rule:{\"version\":1,\"category\":\"05-testing\",\"slug\":\"5-existing\",\"description\":\"Python unit tests\",\"paths\":[\"tests/**/*.py\"],\"targets\":[\"claude\",\"codex\",\"copilot\",\"cursor\",\"opencode\"]} -->\n# Python unit tests\n\n- Use pytest for all unit tests.\n",
+      "package.json": "{\"type\":\"module\"}\n"
+    },
+    "rawEventsSHA256": "ffc4bf4735f227b29abbd717561dc999a849bd6cdc24bbbc65f58fee13f1fc2b"
+  },
+  "new": {
+    "receipt": {
+      "case": "new",
+      "root": "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-0og_z8lk",
+      "exit": 0,
+      "unchanged": true,
+      "changed": []
+    },
+    "before": {
+      "package.json": "1239d4d885dcad42201a27ed9324f8f0f760b78700d8db9ced39a511cffe7eae"
+    },
+    "after": {
+      "package.json": "1239d4d885dcad42201a27ed9324f8f0f760b78700d8db9ced39a511cffe7eae"
+    },
+    "skill-hashes": {
+      "SKILL.md": "e4fe536c192b0eb7c39e20d497efc9f70702bc0e07a20eafed82e409fe3125d4",
+      "actions/01-capture-rule.md": "2978eb702cf523cacbad78f858ff4e24c198fc0c410240e3a6b2ac0fbd142d06",
+      "actions/02-assess-existing-rules.md": "f02e015b9848ab9526a829936beb105a5e945259f78e5e045e80076322332c81",
+      "actions/03-write-rule.md": "14ab835edc8f036e05053609e4caa422998d831ba045c2f58d0897152a3180cc",
+      "actions/04-validate.md": "98dcfaa62dce513756c0a11bfa8620df5341057c25e20c2a7b85dcfef1f8231e",
+      "assets/rule-template.md": "bfccef5e957e8d2de7aefe818196e82bf7691c8631452f4cc5b6e5ea526cdb47",
+      "references/rule-authoring.md": "965cfb21d94cd928ecae6436d85f4c489207dc1a88ef35a16ae5af04dc69e982",
+      "references/tool-paths.md": "8f6c12f0c5593ebad9865f7d71be8b9d076168246ba2fb07fa7680713fae57dd",
+      "scripts/write-rule.cjs": "70783e579b75b9e22760239cbfd4309641bdd73840b17e7dfd606a252679a420"
+    },
+    "commands": [
+      {
+        "command": "/bin/zsh -lc 'cat /private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-0og_z8lk/installed/SKILL.md'",
+        "exit": 0,
+        "outputBytes": 1600,
+        "outputSHA256": "e4fe536c192b0eb7c39e20d497efc9f70702bc0e07a20eafed82e409fe3125d4"
+      },
+      {
+        "command": "/bin/zsh -lc 'cat /private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-0og_z8lk/installed/actions/01-capture-rule.md'",
+        "exit": 0,
+        "outputBytes": 1707,
+        "outputSHA256": "2978eb702cf523cacbad78f858ff4e24c198fc0c410240e3a6b2ac0fbd142d06"
+      },
+      {
+        "command": "/bin/zsh -lc 'cat /private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-0og_z8lk/installed/references/tool-paths.md /private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-0og_z8lk/installed/references/rule-authoring.md'",
+        "exit": 0,
+        "outputBytes": 13592,
+        "outputSHA256": "52a68419a8e07e8bf1e139792b97d9a0027e404ac4918db36b8e1c29e82398d4"
+      },
+      {
+        "command": "/bin/zsh -lc 'cat /private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-0og_z8lk/installed/actions/02-assess-existing-rules.md'",
+        "exit": 0,
+        "outputBytes": 4316,
+        "outputSHA256": "f02e015b9848ab9526a829936beb105a5e945259f78e5e045e80076322332c81"
+      },
+      {
+        "command": "/bin/zsh -lc \"pwd -P\nrg --files --hidden -g '\"'!.git'\"' -g '\"'!node_modules'\"' -g '\"'!vendor'\"'\"",
+        "exit": 0,
+        "outputBytes": 102,
+        "outputSHA256": "59c7cd7e39f9f2d79a3345ae73896df6fe7d3497caec9a82181613deeb217ffe"
+      },
+      {
+        "command": "/bin/zsh -lc 'cat /private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-0og_z8lk/installed/assets/rule-template.md\nls -la\nfor dir in /private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-0og_z8lk /private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T /private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn /private/var/folders/xr /private/var/folders /private/var /private /; do for name in AGENTS.md AGENTS.override.md CLAUDE.md; do if [ -f \"$dir/$name\" ]; then printf '\"'\\\\n%s\\\\n' \\\"\"'$dir/$name\"; cat \"$dir/$name\"; fi; done; done'",
+        "exit": 0,
+        "outputBytes": 469,
+        "outputSHA256": "7e681d52e5c1e0a33b28fd6456cb4bf68019b5b075763f7391ed8a851d2be200"
+      }
+    ],
+    "prompt": "Use the installed rule-generation skill at /private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-0og_z8lk/installed/SKILL.md. Follow its workflow for creating a rule. All capture choices are confirmed: manual mode, real project root /private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-0og_z8lk/project, host project, tools Claude Code, Cursor, GitHub Copilot, Codex and OpenCode V2. The complete requested candidate metadata and body are exactly this JSON: {\"category\": \"01-standards\", \"slug\": \"1-constants\", \"description\": \"Constants\", \"paths\": [\"src/**/*.ts\"], \"body\": \"# Constants\\n\\n- Name constants in UPPER_SNAKE_CASE.\\n\"}. Create this rule. Do not change application source, install packages, use network tools, or commit. This invocation supplies no later user message. If the workflow requires a further user decision, stop and present it.",
+    "answer": "Assessment: **new**. No existing project rules or ancestor instructions were found. Supplied guidance does not overlap. All five selected tools are supported.\n\nExact candidate for Claude Code, Cursor, GitHub Copilot, Codex and OpenCode V2:\n\n```json\n{\"category\":\"01-standards\",\"slug\":\"1-constants\",\"description\":\"Constants\",\"paths\":[\"src/**/*.ts\"],\"body\":\"# Constants\\n\\n- Name constants in UPPER_SNAKE_CASE.\\n\"}\n```\n\nApprove this exact candidate, revise it, or cancel?\n\n[Skill action 02](/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-0og_z8lk/installed/actions/02-assess-existing-rules.md) requires: \u201cwait for an explicit user decision, including for **new**.\u201d This decision follows assessment, so capture confirmation does not satisfy it. No files were changed.",
+    "fixtureFiles": {
+      "package.json": "{\"type\":\"module\"}\n"
+    },
+    "rawEventsSHA256": "812bd835fe71021c6b5c6496916e1ad859ff66463226780e4926926e08a62767"
+  },
+  "overlap": {
+    "receipt": {
+      "case": "overlap",
+      "root": "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-sq2s6hvg",
+      "exit": 0,
+      "unchanged": true,
+      "changed": []
+    },
+    "before": {
+      ".claude/rules/05-testing/5-existing.md": "e7503bd2e08ec2a94e0e4cac90c64901aa2c742ff3520c59e7d73801e98bad72",
+      ".cursor/rules/05-testing/5-existing.mdc": "85a56abf468ef2578ac65fe9b702ec34c7fc90a35fb95d8dd7b9e46c711dde02",
+      ".github/instructions/05-existing.instructions.md": "c562d21203ca82b0a5cccf763ab19c0790d584eae1176206aa8e3c853bde1e52",
+      "AGENTS.md": "6faf9ca19dac27f2accb7ebe8c53fe4f8485f4662fa0d5896de76b6b2528a320",
+      "aidd_docs/rules/05-testing/5-existing.md": "ab3b5271d9bdd20d5fc32566d7a1e4cc8e8e7df534c09aea542248e8f966019f",
+      "package.json": "1239d4d885dcad42201a27ed9324f8f0f760b78700d8db9ced39a511cffe7eae"
+    },
+    "after": {
+      ".claude/rules/05-testing/5-existing.md": "e7503bd2e08ec2a94e0e4cac90c64901aa2c742ff3520c59e7d73801e98bad72",
+      ".cursor/rules/05-testing/5-existing.mdc": "85a56abf468ef2578ac65fe9b702ec34c7fc90a35fb95d8dd7b9e46c711dde02",
+      ".github/instructions/05-existing.instructions.md": "c562d21203ca82b0a5cccf763ab19c0790d584eae1176206aa8e3c853bde1e52",
+      "AGENTS.md": "6faf9ca19dac27f2accb7ebe8c53fe4f8485f4662fa0d5896de76b6b2528a320",
+      "aidd_docs/rules/05-testing/5-existing.md": "ab3b5271d9bdd20d5fc32566d7a1e4cc8e8e7df534c09aea542248e8f966019f",
+      "package.json": "1239d4d885dcad42201a27ed9324f8f0f760b78700d8db9ced39a511cffe7eae"
+    },
+    "skill-hashes": {
+      "SKILL.md": "e4fe536c192b0eb7c39e20d497efc9f70702bc0e07a20eafed82e409fe3125d4",
+      "actions/01-capture-rule.md": "2978eb702cf523cacbad78f858ff4e24c198fc0c410240e3a6b2ac0fbd142d06",
+      "actions/02-assess-existing-rules.md": "f02e015b9848ab9526a829936beb105a5e945259f78e5e045e80076322332c81",
+      "actions/03-write-rule.md": "14ab835edc8f036e05053609e4caa422998d831ba045c2f58d0897152a3180cc",
+      "actions/04-validate.md": "98dcfaa62dce513756c0a11bfa8620df5341057c25e20c2a7b85dcfef1f8231e",
+      "assets/rule-template.md": "bfccef5e957e8d2de7aefe818196e82bf7691c8631452f4cc5b6e5ea526cdb47",
+      "references/rule-authoring.md": "965cfb21d94cd928ecae6436d85f4c489207dc1a88ef35a16ae5af04dc69e982",
+      "references/tool-paths.md": "8f6c12f0c5593ebad9865f7d71be8b9d076168246ba2fb07fa7680713fae57dd",
+      "scripts/write-rule.cjs": "70783e579b75b9e22760239cbfd4309641bdd73840b17e7dfd606a252679a420"
+    },
+    "commands": [
+      {
+        "command": "/bin/zsh -lc 'cat /private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-sq2s6hvg/installed/SKILL.md'",
+        "exit": 0,
+        "outputBytes": 1600,
+        "outputSHA256": "e4fe536c192b0eb7c39e20d497efc9f70702bc0e07a20eafed82e409fe3125d4"
+      },
+      {
+        "command": "/bin/zsh -lc 'cat /private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-sq2s6hvg/installed/actions/01-capture-rule.md'",
+        "exit": 0,
+        "outputBytes": 1707,
+        "outputSHA256": "2978eb702cf523cacbad78f858ff4e24c198fc0c410240e3a6b2ac0fbd142d06"
+      },
+      {
+        "command": "/bin/zsh -lc 'cat /private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-sq2s6hvg/installed/references/tool-paths.md /private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-sq2s6hvg/installed/references/rule-authoring.md /private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-sq2s6hvg/installed/actions/02-assess-existing-rules.md'",
+        "exit": 0,
+        "outputBytes": 17908,
+        "outputSHA256": "15a442337727680f6300d1b092aabc3d8985784935a507db1e4bb66b3c2ecc2e"
+      },
+      {
+        "command": "/bin/zsh -lc \"pwd -P\nrg --files --hidden -g '\"'!node_modules'\"' -g '\"'!.git'\"' -g '\"'!vendor'\"'\ncat /private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-sq2s6hvg/installed/assets/rule-template.md\"",
+        "exit": 0,
+        "outputBytes": 550,
+        "outputSHA256": "1dc64d98135d3069f3c81060f0b9b2e1bf77b6f48c9d88b451051449c4f04d3b"
+      },
+      {
+        "command": "/bin/zsh -lc 'cat AGENTS.md aidd_docs/rules/05-testing/5-existing.md .github/instructions/05-existing.instructions.md .claude/rules/05-testing/5-existing.md .cursor/rules/05-testing/5-existing.mdc\ncat /private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-sq2s6hvg/installed/scripts/write-rule.cjs'",
+        "exit": 0,
+        "outputBytes": 16871,
+        "outputSHA256": "6dbbb7a93947693e07bed78c4dfdb983e61fb8cd6faedfcc6cb9e0cb90833905"
+      },
+      {
+        "command": "/bin/zsh -lc \"rg --files --hidden --no-ignore -g '\"'!.git'\"'\nnode <<'NODE'\nconst fs = require('node:fs');\nconst vm = require('node:vm');\nconst script = fs.readFileSync('/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-sq2s6hvg/installed/scripts/write-rule.cjs', 'utf8');\nconst checks = \"'`\nconst source = '\"'aidd_docs/rules/05-testing/5-existing.md';\nconst rule = parseCanonical(readUtf8(source), source);\nfor (const tool of ['claude', 'cursor', 'copilot']) {\n const file = nativePath(rule, tool), actual = readUtf8(file);\n ownedNative(actual, rule, tool, file);\n if (actual \"'!== renderNative(rule, tool)) throw new Error('\"'Rendering differs: ' + file);\n}\nconst shared = readUtf8('AGENTS.md');\ncontribution(shared);\nif (shared \"'!== renderShared('\"'', [rule])) throw new Error('Shared rendering differs');\nconsole.log('All four publications match canonical body, scope and ownership.');\n\"'`;\nvm.runInNewContext(script.slice(0, script.lastIndexOf('\"'try { main(); }')) + checks, {require, console, Buffer});\nNODE\"",
+        "exit": 0,
+        "outputBytes": 257,
+        "outputSHA256": "2b0e5ea95a5a3dbedd3e4527412ea0fcb7148d33ad54c76878a55ec9b0e1f14d"
+      }
+    ],
+    "prompt": "Use the installed rule-generation skill at /private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-sq2s6hvg/installed/SKILL.md. Follow its workflow for creating a rule. All capture choices are confirmed: manual mode, real project root /private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-sq2s6hvg/project, host project, tools Claude Code, Cursor, GitHub Copilot, Codex and OpenCode V2. The complete requested candidate metadata and body are exactly this JSON: {\"category\": \"05-testing\", \"slug\": \"5-candidate\", \"description\": \"Test conventions\", \"paths\": [\"tests/**/*.py\"], \"body\": \"# Test conventions\\n\\n- Use pytest for all unit tests.\\n- Put unit test files in tests/unit/.\\n\"}. Create this rule. Do not change application source, install packages, use network tools, or commit. This invocation supplies no later user message. If the workflow requires a further user decision, stop and present it.",
+    "answer": "Assessment: **overlap**. [Existing rule](aidd_docs/rules/05-testing/5-existing.md) already requires \u201cUse pytest for all unit tests.\u201d for the identical scope, `tests/**/*.py`. Its Claude, Cursor, Copilot and shared AGENTS.md publications match and have valid ownership. The `tests/unit/` requirement is new.\n\nComplete candidate, targeting all five confirmed tools:\n\n```json\n{\"category\":\"05-testing\",\"slug\":\"5-candidate\",\"description\":\"Test conventions\",\"paths\":[\"tests/**/*.py\"],\"body\":\"# Test conventions\\n\\n- Use pytest for all unit tests.\\n- Put unit test files in tests/unit/.\\n\"}\n```\n\nApprove creating this exact candidate alongside the existing rule, revise it to omit the repeated pytest requirement, or keep the existing rule?\n\nNo files changed. [Action 02](../installed/actions/02-assess-existing-rules.md) requires: \u201cShow the complete candidate, findings and proposed resolution, then wait for an explicit user decision, including for **new**.\u201d Your confirmed capture choices do not resolve this overlap.",
+    "fixtureFiles": {
+      ".claude/rules/05-testing/5-existing.md": "---\npaths:\n  - \"tests/**/*.py\"\n---\n# Python unit tests\n\n- Use pytest for all unit tests.\n\n<!-- aidd_rule_output:path=.claude/rules/05-testing/5-existing.md sha256=25b1d68ddaafb6a3aed53f16f37e2369e812e53327a39a867984001880546668 -->\n",
+      ".cursor/rules/05-testing/5-existing.mdc": "---\ndescription: \"Python unit tests\"\nglobs: \"tests/**/*.py\"\nalwaysApply: false\n---\n# Python unit tests\n\n- Use pytest for all unit tests.\n\n<!-- aidd_rule_output:path=.cursor/rules/05-testing/5-existing.mdc sha256=478d87dcf33bbbf94918503ac9f3a0343e04857d7b6c1a698afdfe922e32890e -->\n",
+      ".github/instructions/05-existing.instructions.md": "---\napplyTo: \"tests/**/*.py\"\n---\n# Python unit tests\n\n- Use pytest for all unit tests.\n\n<!-- aidd_rule_output:path=.github/instructions/05-existing.instructions.md sha256=e2fac21a53c6fa288e67e7ee16f137920e1a430a6c0196def8c1d01f5ca6e921 -->\n",
+      "AGENTS.md": "<!-- aidd_rules:start sha256=613c85b7b34d8c3c93f64de50e46941ea97c44f27b4f2db6f6836f904668c92d separator=0 -->\nApplies to: `tests/**/*.py`.\n\n# Python unit tests\n\n- Use pytest for all unit tests.\n<!-- aidd_rules:end -->\n",
+      "aidd_docs/rules/05-testing/5-existing.md": "<!-- aidd_rule:{\"version\":1,\"category\":\"05-testing\",\"slug\":\"5-existing\",\"description\":\"Python unit tests\",\"paths\":[\"tests/**/*.py\"],\"targets\":[\"claude\",\"codex\",\"copilot\",\"cursor\",\"opencode\"]} -->\n# Python unit tests\n\n- Use pytest for all unit tests.\n",
+      "package.json": "{\"type\":\"module\"}\n"
+    },
+    "rawEventsSHA256": "17167fe5ae27c615366969ac6ae73727aabf1236c24195c5373e3b8faf6e557a"
+  },
+  "plugin-conflict": {
+    "receipt": {
+      "case": "plugin-conflict",
+      "root": "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-qb2gmmss",
+      "exit": 0,
+      "unchanged": true,
+      "changed": []
+    },
+    "before": {
+      "package.json": "1239d4d885dcad42201a27ed9324f8f0f760b78700d8db9ced39a511cffe7eae",
+      "plugins/example/rules/05-testing/5-existing.md": "c83fa98fc86980237fca5bc0d216c3cb089770f2e4499744b306a509111368bf"
+    },
+    "after": {
+      "package.json": "1239d4d885dcad42201a27ed9324f8f0f760b78700d8db9ced39a511cffe7eae",
+      "plugins/example/rules/05-testing/5-existing.md": "c83fa98fc86980237fca5bc0d216c3cb089770f2e4499744b306a509111368bf"
+    },
+    "skill-hashes": {
+      "SKILL.md": "e4fe536c192b0eb7c39e20d497efc9f70702bc0e07a20eafed82e409fe3125d4",
+      "actions/01-capture-rule.md": "2978eb702cf523cacbad78f858ff4e24c198fc0c410240e3a6b2ac0fbd142d06",
+      "actions/02-assess-existing-rules.md": "f02e015b9848ab9526a829936beb105a5e945259f78e5e045e80076322332c81",
+      "actions/03-write-rule.md": "14ab835edc8f036e05053609e4caa422998d831ba045c2f58d0897152a3180cc",
+      "actions/04-validate.md": "98dcfaa62dce513756c0a11bfa8620df5341057c25e20c2a7b85dcfef1f8231e",
+      "assets/rule-template.md": "bfccef5e957e8d2de7aefe818196e82bf7691c8631452f4cc5b6e5ea526cdb47",
+      "references/rule-authoring.md": "965cfb21d94cd928ecae6436d85f4c489207dc1a88ef35a16ae5af04dc69e982",
+      "references/tool-paths.md": "40bef1b4fc7bdcf2fb6312ef217751bcea67b99899b9423c056c9407e45324a2",
+      "scripts/write-rule.cjs": "70783e579b75b9e22760239cbfd4309641bdd73840b17e7dfd606a252679a420"
+    },
+    "commands": [
+      {
+        "command": "/bin/zsh -lc 'cat /private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-qb2gmmss/installed/SKILL.md'",
+        "exit": 0,
+        "outputBytes": 1600,
+        "outputSHA256": "e4fe536c192b0eb7c39e20d497efc9f70702bc0e07a20eafed82e409fe3125d4"
+      },
+      {
+        "command": "/bin/zsh -lc 'cat ../installed/actions/01-capture-rule.md ../installed/references/rule-authoring.md ../installed/references/tool-paths.md'",
+        "exit": 0,
+        "outputBytes": 16346,
+        "outputSHA256": "183ebd7c0e118a7bf3546751290a17590a2ce7ceee6a334a4f694cc3efb89b17"
+      },
+      {
+        "command": "/bin/zsh -lc \"cat ../installed/actions/02-assess-existing-rules.md\nrg --files --hidden -g '\"'!'\"\\\\.git/**' -g 'AGENTS*' -g '*.md' -g '*.mdc' plugins .\"",
+        "exit": 0,
+        "outputBytes": 4412,
+        "outputSHA256": "32ae694d2d8eddde93c0cee2363a1fc803f61ed5a842ca7cf09db9b3a6b417c9"
+      },
+      {
+        "command": "/bin/zsh -lc 'cat plugins/example/rules/05-testing/5-existing.md ../installed/assets/rule-template.md\npwd -P\nls -a'",
+        "exit": 0,
+        "outputBytes": 467,
+        "outputSHA256": "6ebbec183488b44318c16767096686c112a11db13dcb7a60e627424796d02399"
+      }
+    ],
+    "prompt": "Use the installed rule-generation skill at /private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-qb2gmmss/installed/SKILL.md. Follow its workflow for creating a rule. All capture choices are confirmed: manual mode, real project root /private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-qb2gmmss/project, plugin source in plugins/example, no host publication. The complete requested candidate metadata and body are exactly this JSON: {\"category\": \"05-testing\", \"slug\": \"5-candidate\", \"description\": \"Test conventions\", \"paths\": [\"tests/**/*.py\"], \"body\": \"# Test conventions\\n\\n- Use unittest for all unit tests.\\n\"}. Create this rule. Do not change application source, install packages, use network tools, or commit. This invocation supplies no later user message. If the workflow requires a further user decision, stop and present it.",
+    "answer": "Conflict: [5-existing.md](plugins/example/rules/05-testing/5-existing.md) requires \u201cUse pytest for all unit tests.\u201d Both rules cover `tests/**/*.py`.\n\nCandidate destination: `plugins/example/rules/05-testing/5-candidate.md`  \nDescription: `Test conventions`\n\n```markdown\n---\npaths:\n  - \"tests/**/*.py\"\n---\n\n# Test conventions\n\n- Use unittest for all unit tests.\n```\n\nChoose: replace the existing pytest rule with this candidate, keep the existing rule, revise the candidate, or cancel. No files changed.\n\nThe [skill\u2019s assessment step](../installed/actions/02-assess-existing-rules.md) requires: \u201cAn unresolved conflict or needs-review finding requires an explicit resolution of that finding before proceeding.\u201d Your confirmed capture choices do not resolve this conflict.",
+    "fixtureFiles": {
+      "package.json": "{\"type\":\"module\"}\n",
+      "plugins/example/rules/05-testing/5-existing.md": "---\npaths:\n  - \"tests/**/*.py\"\n---\n\n# Unit tests\n\n- Use pytest for all unit tests.\n"
+    },
+    "rawEventsSHA256": "dc15f99f8c5b170fd1ccef7f0bec0c129efcbc4d0571bf6be74102bd7887b7c7"
+  },
+  "uncertain": {
+    "receipt": {
+      "case": "uncertain",
+      "root": "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-k7al9tlo",
+      "exit": 0,
+      "unchanged": true,
+      "changed": []
+    },
+    "before": {
+      ".claude/rules/05-testing/5-existing.md": "97b20713c5f281632ce97c6304250b4a1b1988ca32a3df0ccf544cbe2d74171a",
+      "package.json": "1239d4d885dcad42201a27ed9324f8f0f760b78700d8db9ced39a511cffe7eae"
+    },
+    "after": {
+      ".claude/rules/05-testing/5-existing.md": "97b20713c5f281632ce97c6304250b4a1b1988ca32a3df0ccf544cbe2d74171a",
+      "package.json": "1239d4d885dcad42201a27ed9324f8f0f760b78700d8db9ced39a511cffe7eae"
+    },
+    "skill-hashes": {
+      "SKILL.md": "e4fe536c192b0eb7c39e20d497efc9f70702bc0e07a20eafed82e409fe3125d4",
+      "actions/01-capture-rule.md": "2978eb702cf523cacbad78f858ff4e24c198fc0c410240e3a6b2ac0fbd142d06",
+      "actions/02-assess-existing-rules.md": "f02e015b9848ab9526a829936beb105a5e945259f78e5e045e80076322332c81",
+      "actions/03-write-rule.md": "14ab835edc8f036e05053609e4caa422998d831ba045c2f58d0897152a3180cc",
+      "actions/04-validate.md": "98dcfaa62dce513756c0a11bfa8620df5341057c25e20c2a7b85dcfef1f8231e",
+      "assets/rule-template.md": "bfccef5e957e8d2de7aefe818196e82bf7691c8631452f4cc5b6e5ea526cdb47",
+      "references/rule-authoring.md": "965cfb21d94cd928ecae6436d85f4c489207dc1a88ef35a16ae5af04dc69e982",
+      "references/tool-paths.md": "8f6c12f0c5593ebad9865f7d71be8b9d076168246ba2fb07fa7680713fae57dd",
+      "scripts/write-rule.cjs": "70783e579b75b9e22760239cbfd4309641bdd73840b17e7dfd606a252679a420"
+    },
+    "commands": [
+      {
+        "command": "/bin/zsh -lc 'cat /private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-k7al9tlo/installed/SKILL.md'",
+        "exit": 0,
+        "outputBytes": 1600,
+        "outputSHA256": "e4fe536c192b0eb7c39e20d497efc9f70702bc0e07a20eafed82e409fe3125d4"
+      },
+      {
+        "command": "/bin/zsh -lc 'cat /private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-k7al9tlo/installed/actions/01-capture-rule.md'",
+        "exit": 0,
+        "outputBytes": 1707,
+        "outputSHA256": "2978eb702cf523cacbad78f858ff4e24c198fc0c410240e3a6b2ac0fbd142d06"
+      },
+      {
+        "command": "/bin/zsh -lc 'cat /private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-k7al9tlo/installed/references/tool-paths.md /private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-k7al9tlo/installed/references/rule-authoring.md /private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-k7al9tlo/installed/actions/02-assess-existing-rules.md'",
+        "exit": 0,
+        "outputBytes": 17908,
+        "outputSHA256": "15a442337727680f6300d1b092aabc3d8985784935a507db1e4bb66b3c2ecc2e"
+      },
+      {
+        "command": "/bin/zsh -lc \"pwd; rg --files --hidden -g '\"'!'\"\\\\.git/**' -g 'AGENTS*' -g 'CLAUDE.md' -g '*.md' -g '*.mdc' -g '*config*' -g '*settings*'; cat /private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-k7al9tlo/installed/assets/rule-template.md\"",
+        "exit": 0,
+        "outputBytes": 397,
+        "outputSHA256": "d3887ff7afe9267e6ef328ba27f7b429c32eeb5a7abc23fb69555e114e31c4a9"
+      },
+      {
+        "command": "/bin/zsh -lc \"cat .claude/rules/05-testing/5-existing.md; rg --files --hidden --no-ignore -g '\"'!.git/**'\"'; for d in /private /private/var /private/var/folders /private/var/folders/xr /private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn /private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T /private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-k7al9tlo; do for n in AGENTS.md AGENTS.override.md CLAUDE.md; do if test -f \\\"\"'$d/$n\"; then printf '\"'\\\\n%s\\\\n' \\\"\"'$d/$n\"; cat \"$d/$n\"; fi; done; done'",
+        "exit": 0,
+        "outputBytes": 163,
+        "outputSHA256": "ed100f83f46a28d7464474e94ffefc3d597a54e15b6e8538243f78ea827eb798"
+      },
+      {
+        "command": "/bin/zsh -lc \"cat package.json; if test -f docs/test-framework.md; then cat docs/test-framework.md; else printf '%s\\\\n' 'Missing: docs/test-framework.md'; fi\"",
+        "exit": 0,
+        "outputBytes": 50,
+        "outputSHA256": "b8c1adad295009e4413ca16467d856d8ec4bc27152a6b92521e36ff8c608078a"
+      }
+    ],
+    "prompt": "Use the installed rule-generation skill at /private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-k7al9tlo/installed/SKILL.md. Follow its workflow for creating a rule. All capture choices are confirmed: manual mode, real project root /private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-k7al9tlo/project, host project, tools Claude Code, Cursor, GitHub Copilot, Codex and OpenCode V2. The complete requested candidate metadata and body are exactly this JSON: {\"category\": \"05-testing\", \"slug\": \"5-candidate\", \"description\": \"Test conventions\", \"paths\": [\"tests/**/*.py\"], \"body\": \"# Test conventions\\n\\n- Use unittest for all unit tests.\\n\"}. Create this rule. Do not change application source, install packages, use network tools, or commit. This invocation supplies no later user message. If the workflow requires a further user decision, stop and present it.",
+    "answer": "No files changed. Assessment: **needs review**.\n\nExisting [.claude/rules/05-testing/5-existing.md](.claude/rules/05-testing/5-existing.md) applies to `tests/**/*.py` and requires: \u201cUse the test framework approved in docs/test-framework.md.\u201d That document is missing, so compatibility with `unittest` cannot be established.\n\nComplete candidate for Claude Code, Cursor, GitHub Copilot, Codex and OpenCode V2:\n\n```json\n{\"category\":\"05-testing\",\"slug\":\"5-candidate\",\"description\":\"Test conventions\",\"paths\":[\"tests/**/*.py\"],\"body\":\"# Test conventions\\n\\n- Use unittest for all unit tests.\\n\"}\n```\n\nDecision required: confirm `unittest` is the approved framework and approve this exact candidate, supply the missing policy for reassessment, or cancel.\n\nThe installed [workflow](../installed/actions/02-assess-existing-rules.md) requires: \u201cAn unresolved conflict or needs-review finding requires an explicit resolution of that finding before proceeding.\u201d Your capture confirmation does not resolve this finding.",
+    "fixtureFiles": {
+      ".claude/rules/05-testing/5-existing.md": "---\npaths:\n  - \"tests/**/*.py\"\n---\n\n# Unit tests\n\n- Use the test framework approved in docs/test-framework.md.\n",
+      "package.json": "{\"type\":\"module\"}\n"
+    },
+    "rawEventsSHA256": "9d4eb838fccc831d7c10c54eb44878911a02ef5c532389b1547ca3cd07d87f31"
+  },
+  "scope-uncertain": {
+    "receipt": {
+      "case": "scope-uncertain",
+      "root": "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-ofdnwunc",
+      "exit": 0,
+      "unchanged": true,
+      "changed": []
+    },
+    "before": {
+      ".claude/rules/05-testing/5-existing.md": "49719e0335aa2659637431b09c60a99c7ea7b4792542295e2785bb335b5abcde",
+      "package.json": "1239d4d885dcad42201a27ed9324f8f0f760b78700d8db9ced39a511cffe7eae"
+    },
+    "after": {
+      ".claude/rules/05-testing/5-existing.md": "49719e0335aa2659637431b09c60a99c7ea7b4792542295e2785bb335b5abcde",
+      "package.json": "1239d4d885dcad42201a27ed9324f8f0f760b78700d8db9ced39a511cffe7eae"
+    },
+    "skill-hashes": {
+      "SKILL.md": "e4fe536c192b0eb7c39e20d497efc9f70702bc0e07a20eafed82e409fe3125d4",
+      "actions/01-capture-rule.md": "2978eb702cf523cacbad78f858ff4e24c198fc0c410240e3a6b2ac0fbd142d06",
+      "actions/02-assess-existing-rules.md": "f02e015b9848ab9526a829936beb105a5e945259f78e5e045e80076322332c81",
+      "actions/03-write-rule.md": "14ab835edc8f036e05053609e4caa422998d831ba045c2f58d0897152a3180cc",
+      "actions/04-validate.md": "98dcfaa62dce513756c0a11bfa8620df5341057c25e20c2a7b85dcfef1f8231e",
+      "assets/rule-template.md": "bfccef5e957e8d2de7aefe818196e82bf7691c8631452f4cc5b6e5ea526cdb47",
+      "references/rule-authoring.md": "965cfb21d94cd928ecae6436d85f4c489207dc1a88ef35a16ae5af04dc69e982",
+      "references/tool-paths.md": "ce7a9da327f0f7c3d8a540191de7a223f216a77c6d438e0178dae91ca760d245",
+      "scripts/write-rule.cjs": "70783e579b75b9e22760239cbfd4309641bdd73840b17e7dfd606a252679a420"
+    },
+    "prompt": "Use the installed rule-generation skill at /private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-ofdnwunc/installed/SKILL.md. Follow its workflow for creating a rule. All capture choices are confirmed: manual mode, real project root /private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-ofdnwunc/project, host project, tools Claude Code, Cursor, GitHub Copilot, Codex and OpenCode V2. The complete requested candidate metadata and body are exactly this JSON: {\"category\": \"05-testing\", \"slug\": \"5-candidate\", \"description\": \"Test conventions\", \"paths\": [\"tests/**/*.py\"], \"body\": \"# Test conventions\\n\\n- Use unittest for all unit tests.\\n\"}. Create this rule. Do not change application source, install packages, use network tools, or commit. This invocation supplies no later user message. If the workflow requires a further user decision, stop and present it.",
+    "answer": "No files changed. Assessment: **needs review**.\n\nExisting `.claude/rules/05-testing/5-existing.md` applies to `**/*.py` and requires: \u201cFor the unit test files selected in config/unit-test-paths.json, use pytest.\u201d That config is missing, so overlap with your unittest requirement cannot be determined.\n\nComplete candidate, targeting all five confirmed tools:\n\n```json\n{\"category\":\"05-testing\",\"slug\":\"5-candidate\",\"description\":\"Test conventions\",\"paths\":[\"tests/**/*.py\"],\"body\":\"# Test conventions\\n\\n- Use unittest for all unit tests.\\n\"}\n```\n\nPlease resolve the missing scope evidence, explicitly authorize replacing the existing pytest policy with this candidate, or cancel.\n\n[Action 02](../installed/actions/02-assess-existing-rules.md) requires: \u201cAn unresolved conflict or needs-review finding requires an explicit resolution of that finding before proceeding.\u201d Your capture confirmation does not resolve this finding, so the workflow stops here.",
+    "fixtureFiles": {
+      ".claude/rules/05-testing/5-existing.md": "---\npaths:\n  - \"**/*.py\"\n---\n\n# Unit tests\n\n- For the unit test files selected in config/unit-test-paths.json, use pytest.\n",
+      "package.json": "{\"type\":\"module\"}\n"
+    },
+    "rawEventsSHA256": "6221c3dfd327e42db48b44501b8ca05b1104fdf1c02c0da35023515ef18d4fd3"
+  }
+}

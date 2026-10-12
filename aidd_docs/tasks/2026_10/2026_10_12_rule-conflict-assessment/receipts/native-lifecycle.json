@@ -1,0 +1,220 @@
+{
+  "root": "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-ojh5c01q",
+  "results": [
+    {
+      "case": "new",
+      "root": "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-ojh5c01q",
+      "exit": 0,
+      "unchanged": true,
+      "changed": []
+    },
+    {
+      "turn": "revise",
+      "exit": 0,
+      "unchanged": true,
+      "changed": [],
+      "before": {
+        "package.json": "1239d4d885dcad42201a27ed9324f8f0f760b78700d8db9ced39a511cffe7eae"
+      },
+      "after": {
+        "package.json": "1239d4d885dcad42201a27ed9324f8f0f760b78700d8db9ced39a511cffe7eae"
+      }
+    },
+    {
+      "turn": "approve",
+      "exit": 0,
+      "unchanged": false,
+      "changed": [
+        ".claude/rules/01-standards/1-constants.md",
+        ".cursor/rules/01-standards/1-constants.mdc",
+        ".github/instructions/01-constants.instructions.md",
+        "AGENTS.md",
+        "aidd_docs/rules/01-standards/1-constants.md"
+      ],
+      "before": {
+        "package.json": "1239d4d885dcad42201a27ed9324f8f0f760b78700d8db9ced39a511cffe7eae"
+      },
+      "after": {
+        ".claude/rules/01-standards/1-constants.md": "008fb111bfead91b1f90fdb6d218174767fd720beca647362b627579ba965a92",
+        ".cursor/rules/01-standards/1-constants.mdc": "59cf252d499beaecc5031ca6a425403a54617c070f64091e343ae265a0ee4db3",
+        ".github/instructions/01-constants.instructions.md": "8be35973070cc661c1bb078fc1a9f2e773a072564b115f3c1ac8a72876f23085",
+        "AGENTS.md": "65761db1d62d159a0fab4a0aabe282c88cf04550fd2f1ecbe561ca3e3fa62812",
+        "aidd_docs/rules/01-standards/1-constants.md": "050dc7f373b52cacbe5761e7c4ddf2426b4c32cd7f1544605b1937deddd1fcfa",
+        "package.json": "1239d4d885dcad42201a27ed9324f8f0f760b78700d8db9ced39a511cffe7eae"
+      },
+      "exactBody": true
+    },
+    {
+      "turn": "covered",
+      "exit": 0,
+      "unchanged": true,
+      "changed": [],
+      "before": {
+        ".claude/rules/01-standards/1-constants.md": "008fb111bfead91b1f90fdb6d218174767fd720beca647362b627579ba965a92",
+        ".cursor/rules/01-standards/1-constants.mdc": "59cf252d499beaecc5031ca6a425403a54617c070f64091e343ae265a0ee4db3",
+        ".github/instructions/01-constants.instructions.md": "8be35973070cc661c1bb078fc1a9f2e773a072564b115f3c1ac8a72876f23085",
+        "AGENTS.md": "65761db1d62d159a0fab4a0aabe282c88cf04550fd2f1ecbe561ca3e3fa62812",
+        "aidd_docs/rules/01-standards/1-constants.md": "050dc7f373b52cacbe5761e7c4ddf2426b4c32cd7f1544605b1937deddd1fcfa",
+        "package.json": "1239d4d885dcad42201a27ed9324f8f0f760b78700d8db9ced39a511cffe7eae"
+      },
+      "after": {
+        ".claude/rules/01-standards/1-constants.md": "008fb111bfead91b1f90fdb6d218174767fd720beca647362b627579ba965a92",
+        ".cursor/rules/01-standards/1-constants.mdc": "59cf252d499beaecc5031ca6a425403a54617c070f64091e343ae265a0ee4db3",
+        ".github/instructions/01-constants.instructions.md": "8be35973070cc661c1bb078fc1a9f2e773a072564b115f3c1ac8a72876f23085",
+        "AGENTS.md": "65761db1d62d159a0fab4a0aabe282c88cf04550fd2f1ecbe561ca3e3fa62812",
+        "aidd_docs/rules/01-standards/1-constants.md": "050dc7f373b52cacbe5761e7c4ddf2426b4c32cd7f1544605b1937deddd1fcfa",
+        "package.json": "1239d4d885dcad42201a27ed9324f8f0f760b78700d8db9ced39a511cffe7eae"
+      }
+    },
+    {
+      "turn": "keep",
+      "exit": 0,
+      "unchanged": true,
+      "changed": [],
+      "before": {
+        ".claude/rules/01-standards/1-constants.md": "008fb111bfead91b1f90fdb6d218174767fd720beca647362b627579ba965a92",
+        ".cursor/rules/01-standards/1-constants.mdc": "59cf252d499beaecc5031ca6a425403a54617c070f64091e343ae265a0ee4db3",
+        ".github/instructions/01-constants.instructions.md": "8be35973070cc661c1bb078fc1a9f2e773a072564b115f3c1ac8a72876f23085",
+        "AGENTS.md": "65761db1d62d159a0fab4a0aabe282c88cf04550fd2f1ecbe561ca3e3fa62812",
+        "aidd_docs/rules/01-standards/1-constants.md": "050dc7f373b52cacbe5761e7c4ddf2426b4c32cd7f1544605b1937deddd1fcfa",
+        "package.json": "1239d4d885dcad42201a27ed9324f8f0f760b78700d8db9ced39a511cffe7eae"
+      },
+      "after": {
+        ".claude/rules/01-standards/1-constants.md": "008fb111bfead91b1f90fdb6d218174767fd720beca647362b627579ba965a92",
+        ".cursor/rules/01-standards/1-constants.mdc": "59cf252d499beaecc5031ca6a425403a54617c070f64091e343ae265a0ee4db3",
+        ".github/instructions/01-constants.instructions.md": "8be35973070cc661c1bb078fc1a9f2e773a072564b115f3c1ac8a72876f23085",
+        "AGENTS.md": "65761db1d62d159a0fab4a0aabe282c88cf04550fd2f1ecbe561ca3e3fa62812",
+        "aidd_docs/rules/01-standards/1-constants.md": "050dc7f373b52cacbe5761e7c4ddf2426b4c32cd7f1544605b1937deddd1fcfa",
+        "package.json": "1239d4d885dcad42201a27ed9324f8f0f760b78700d8db9ced39a511cffe7eae"
+      }
+    },
+    {
+      "turn": "conflict",
+      "exit": 0,
+      "unchanged": true,
+      "changed": [],
+      "before": {
+        ".claude/rules/01-standards/1-constants.md": "008fb111bfead91b1f90fdb6d218174767fd720beca647362b627579ba965a92",
+        ".cursor/rules/01-standards/1-constants.mdc": "59cf252d499beaecc5031ca6a425403a54617c070f64091e343ae265a0ee4db3",
+        ".github/instructions/01-constants.instructions.md": "8be35973070cc661c1bb078fc1a9f2e773a072564b115f3c1ac8a72876f23085",
+        "AGENTS.md": "65761db1d62d159a0fab4a0aabe282c88cf04550fd2f1ecbe561ca3e3fa62812",
+        "aidd_docs/rules/01-standards/1-constants.md": "050dc7f373b52cacbe5761e7c4ddf2426b4c32cd7f1544605b1937deddd1fcfa",
+        "package.json": "1239d4d885dcad42201a27ed9324f8f0f760b78700d8db9ced39a511cffe7eae"
+      },
+      "after": {
+        ".claude/rules/01-standards/1-constants.md": "008fb111bfead91b1f90fdb6d218174767fd720beca647362b627579ba965a92",
+        ".cursor/rules/01-standards/1-constants.mdc": "59cf252d499beaecc5031ca6a425403a54617c070f64091e343ae265a0ee4db3",
+        ".github/instructions/01-constants.instructions.md": "8be35973070cc661c1bb078fc1a9f2e773a072564b115f3c1ac8a72876f23085",
+        "AGENTS.md": "65761db1d62d159a0fab4a0aabe282c88cf04550fd2f1ecbe561ca3e3fa62812",
+        "aidd_docs/rules/01-standards/1-constants.md": "050dc7f373b52cacbe5761e7c4ddf2426b4c32cd7f1544605b1937deddd1fcfa",
+        "package.json": "1239d4d885dcad42201a27ed9324f8f0f760b78700d8db9ced39a511cffe7eae"
+      }
+    },
+    {
+      "turn": "cancel",
+      "exit": 0,
+      "unchanged": true,
+      "changed": [],
+      "before": {
+        ".claude/rules/01-standards/1-constants.md": "008fb111bfead91b1f90fdb6d218174767fd720beca647362b627579ba965a92",
+        ".cursor/rules/01-standards/1-constants.mdc": "59cf252d499beaecc5031ca6a425403a54617c070f64091e343ae265a0ee4db3",
+        ".github/instructions/01-constants.instructions.md": "8be35973070cc661c1bb078fc1a9f2e773a072564b115f3c1ac8a72876f23085",
+        "AGENTS.md": "65761db1d62d159a0fab4a0aabe282c88cf04550fd2f1ecbe561ca3e3fa62812",
+        "aidd_docs/rules/01-standards/1-constants.md": "050dc7f373b52cacbe5761e7c4ddf2426b4c32cd7f1544605b1937deddd1fcfa",
+        "package.json": "1239d4d885dcad42201a27ed9324f8f0f760b78700d8db9ced39a511cffe7eae"
+      },
+      "after": {
+        ".claude/rules/01-standards/1-constants.md": "008fb111bfead91b1f90fdb6d218174767fd720beca647362b627579ba965a92",
+        ".cursor/rules/01-standards/1-constants.mdc": "59cf252d499beaecc5031ca6a425403a54617c070f64091e343ae265a0ee4db3",
+        ".github/instructions/01-constants.instructions.md": "8be35973070cc661c1bb078fc1a9f2e773a072564b115f3c1ac8a72876f23085",
+        "AGENTS.md": "65761db1d62d159a0fab4a0aabe282c88cf04550fd2f1ecbe561ca3e3fa62812",
+        "aidd_docs/rules/01-standards/1-constants.md": "050dc7f373b52cacbe5761e7c4ddf2426b4c32cd7f1544605b1937deddd1fcfa",
+        "package.json": "1239d4d885dcad42201a27ed9324f8f0f760b78700d8db9ced39a511cffe7eae"
+      }
+    },
+    {
+      "turn": "publish",
+      "exit": 0,
+      "unchanged": true,
+      "changed": [],
+      "before": {
+        ".claude/rules/01-standards/1-constants.md": "008fb111bfead91b1f90fdb6d218174767fd720beca647362b627579ba965a92",
+        ".cursor/rules/01-standards/1-constants.mdc": "59cf252d499beaecc5031ca6a425403a54617c070f64091e343ae265a0ee4db3",
+        ".github/instructions/01-constants.instructions.md": "8be35973070cc661c1bb078fc1a9f2e773a072564b115f3c1ac8a72876f23085",
+        "AGENTS.md": "65761db1d62d159a0fab4a0aabe282c88cf04550fd2f1ecbe561ca3e3fa62812",
+        "aidd_docs/rules/01-standards/1-constants.md": "050dc7f373b52cacbe5761e7c4ddf2426b4c32cd7f1544605b1937deddd1fcfa",
+        "package.json": "1239d4d885dcad42201a27ed9324f8f0f760b78700d8db9ced39a511cffe7eae"
+      },
+      "after": {
+        ".claude/rules/01-standards/1-constants.md": "008fb111bfead91b1f90fdb6d218174767fd720beca647362b627579ba965a92",
+        ".cursor/rules/01-standards/1-constants.mdc": "59cf252d499beaecc5031ca6a425403a54617c070f64091e343ae265a0ee4db3",
+        ".github/instructions/01-constants.instructions.md": "8be35973070cc661c1bb078fc1a9f2e773a072564b115f3c1ac8a72876f23085",
+        "AGENTS.md": "65761db1d62d159a0fab4a0aabe282c88cf04550fd2f1ecbe561ca3e3fa62812",
+        "aidd_docs/rules/01-standards/1-constants.md": "050dc7f373b52cacbe5761e7c4ddf2426b4c32cd7f1544605b1937deddd1fcfa",
+        "package.json": "1239d4d885dcad42201a27ed9324f8f0f760b78700d8db9ced39a511cffe7eae"
+      }
+    },
+    {
+      "turn": "delete",
+      "exit": 0,
+      "unchanged": false,
+      "changed": [
+        ".claude/rules/01-standards/1-constants.md",
+        ".cursor/rules/01-standards/1-constants.mdc",
+        ".github/instructions/01-constants.instructions.md",
+        "AGENTS.md",
+        "aidd_docs/rules/01-standards/1-constants.md"
+      ],
+      "before": {
+        ".claude/rules/01-standards/1-constants.md": "008fb111bfead91b1f90fdb6d218174767fd720beca647362b627579ba965a92",
+        ".cursor/rules/01-standards/1-constants.mdc": "59cf252d499beaecc5031ca6a425403a54617c070f64091e343ae265a0ee4db3",
+        ".github/instructions/01-constants.instructions.md": "8be35973070cc661c1bb078fc1a9f2e773a072564b115f3c1ac8a72876f23085",
+        "AGENTS.md": "65761db1d62d159a0fab4a0aabe282c88cf04550fd2f1ecbe561ca3e3fa62812",
+        "aidd_docs/rules/01-standards/1-constants.md": "050dc7f373b52cacbe5761e7c4ddf2426b4c32cd7f1544605b1937deddd1fcfa",
+        "package.json": "1239d4d885dcad42201a27ed9324f8f0f760b78700d8db9ced39a511cffe7eae"
+      },
+      "after": {
+        "AGENTS.md": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "package.json": "1239d4d885dcad42201a27ed9324f8f0f760b78700d8db9ced39a511cffe7eae"
+      }
+    }
+  ],
+  "turns": {
+    "initial": {
+      "prompt": "Use the installed rule-generation skill at /private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-ojh5c01q/installed/SKILL.md. Follow its workflow for creating a rule. All capture choices are confirmed: manual mode, real project root /private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-ojh5c01q/project, host project, tools Claude Code, Cursor, GitHub Copilot, Codex and OpenCode V2. The complete requested candidate metadata and body are exactly this JSON: {\"category\": \"01-standards\", \"slug\": \"1-constants\", \"description\": \"Constants\", \"paths\": [\"src/**/*.ts\"], \"body\": \"# Constants\\n\\n- Name constants in UPPER_SNAKE_CASE.\\n\"}. Create this rule. Do not change application source, install packages, use network tools, or commit. This invocation supplies no later user message. If the workflow requires a further user decision, stop and present it.",
+      "answer": "Assessment: **new**. Project contains only `package.json`; no existing rule sources or ancestor guidance were found. Supplied AGENTS.md instructions contain no competing constants policy. All five selected tools are supported.\n\nExact candidate:\n\n```json\n{\"category\":\"01-standards\",\"slug\":\"1-constants\",\"description\":\"Constants\",\"paths\":[\"src/**/*.ts\"],\"body\":\"# Constants\\n\\n- Name constants in UPPER_SNAKE_CASE.\\n\"}\n```\n\nProposed resolution: create this candidate for Claude Code, Cursor, GitHub Copilot, Codex and OpenCode V2.\n\n**Approve this exact candidate, revise it, or cancel?** No files changed.\n\n[Skill action 02](/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-ojh5c01q/installed/actions/02-assess-existing-rules.md) requires: \u201cwait for an explicit user decision, including for **new**.\u201d Your confirmed capture choices do not satisfy this separate assessment decision."
+    },
+    "revise": {
+      "prompt": "Change the candidate body to exactly \"# Constants\\n\\n- Name constants in UPPER_SNAKE_CASE.\\n- Export constants using named exports.\\n\" and create it. All earlier capture choices remain confirmed.",
+      "answer": "Reassessment: **new**. Original project still contains only `package.json`; no applicable existing rule covers or contradicts either bullet. No files changed.\n\nRevised candidate, targeting Claude Code, Cursor, GitHub Copilot, Codex and OpenCode V2:\n\n```json\n{\"category\":\"01-standards\",\"slug\":\"1-constants\",\"description\":\"Constants\",\"paths\":[\"src/**/*.ts\"],\"body\":\"# Constants\\n\\n- Name constants in UPPER_SNAKE_CASE.\\n- Export constants using named exports.\\n\"}\n```\n\nApprove this reassessed candidate for creation?\n\nThe installed skill\u2019s [action 02, step 6](/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-ojh5c01q/installed/actions/02-assess-existing-rules.md) requires: \u201cAny change to body, metadata, scope, destinations or replacement/merge resolution returns to Draft and comparison, then requires a new decision.\u201d Creation awaits that decision."
+    },
+    "approve": {
+      "prompt": "I approve the exact revised candidate you just assessed, with both bullets, the same metadata, src/**/*.ts scope and all five hosts. Publish it now.",
+      "answer": "Published exact approved rule in the original project for all five hosts.\n\n- PASS canonical `aidd_docs/rules/01-standards/1-constants.md`\n- PASS Claude Code publication\n- PASS Cursor publication\n- PASS GitHub Copilot publication\n- PASS shared `AGENTS.md` for Codex/OpenCode V2\n\nExact body and scope verified; repeat publication byte-identical. Runtime consumption not tested. No application changes, installs, network calls or commits. Nothing pending."
+    },
+    "covered": {
+      "prompt": "Create another rule: manual host project, all five hosts confirmed, category 01-standards, slug 1-public-values, description Public values, paths [\"src/**/*.ts\"], exact body \"# Public values\\n\\n- Write names of constants in UPPER_SNAKE_CASE.\\n\". Follow the installed skill from capture.",
+      "answer": "Assessment: **covered**. Existing [1-constants.md](/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-ojh5c01q/project/aidd_docs/rules/01-standards/1-constants.md) already requires \u201cName constants in UPPER_SNAKE_CASE.\u201d for the identical `src/**/*.ts` scope and all five hosts. Its Claude, Cursor, Copilot and shared `AGENTS.md` publications match canonical content and scope; signatures are intact.\n\nComplete candidate:\n\n```json\n{\"category\":\"01-standards\",\"slug\":\"1-public-values\",\"description\":\"Public values\",\"paths\":[\"src/**/*.ts\"],\"body\":\"# Public values\\n\\n- Write names of constants in UPPER_SNAKE_CASE.\\n\"}\n```\n\nProposed resolution: keep the existing rule, including its named-export requirement, without adding a duplicate. No files changed.\n\n**Confirm keeping the existing rule?**\n\nThe installed skill\u2019s [action 02](/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-ojh5c01q/installed/actions/02-assess-existing-rules.md) requires \u201can explicit user decision\u201d after assessment. Awaiting that resolution."
+    },
+    "keep": {
+      "prompt": "Keep the existing policy. Do not create the candidate or modify existing files.",
+      "answer": "Existing policy retained. Candidate not created; no files changed. Nothing pending."
+    },
+    "conflict": {
+      "prompt": "Create another rule: manual host project, all five hosts confirmed, category 01-standards, slug 1-lowercase-values, description Lowercase values, paths [\"src/**/*.ts\"], exact body \"# Lowercase values\\n\\n- Name every constant in lowerCamelCase.\\n\". Follow the installed skill from capture.",
+      "answer": "Assessment: **conflict**. Existing [1-constants.md](/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-ojh5c01q/project/aidd_docs/rules/01-standards/1-constants.md) requires \u201cName constants in UPPER_SNAKE_CASE.\u201d Its verified publications cover the same `src/**/*.ts` scope across all five hosts. Requiring `lowerCamelCase` contradicts that obligation.\n\nComplete candidate:\n\n```json\n{\"category\":\"01-standards\",\"slug\":\"1-lowercase-values\",\"description\":\"Lowercase values\",\"paths\":[\"src/**/*.ts\"],\"body\":\"# Lowercase values\\n\\n- Name every constant in lowerCamelCase.\\n\"}\n```\n\nProposed resolution: keep the existing policy. No files changed.\n\n**Keep the existing policy, or replace its naming requirement across all five hosts while preserving its named-export requirement?**\n\nThe installed skill\u2019s [action 02](/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-ojh5c01q/installed/actions/02-assess-existing-rules.md) states: \u201cAn unresolved conflict or needs-review finding requires an explicit resolution of that finding before proceeding.\u201d Awaiting your resolution."
+    },
+    "cancel": {
+      "prompt": "Cancel this candidate. Keep every existing rule and publication unchanged.",
+      "answer": "Candidate cancelled. Every existing rule and publication remains unchanged. Nothing pending."
+    },
+    "publish": {
+      "prompt": "Explicitly publish the existing canonical rule set to claude,cursor,copilot,codex,opencode using the installed skill. Do not change its body or targets.",
+      "answer": "Published existing canonical rule set to all five hosts.\n\n- PASS canonical `1-constants.md`\n- PASS Claude publication\n- PASS Cursor publication\n- PASS Copilot publication\n- PASS shared Codex/OpenCode `AGENTS.md`\n\nBody and targets unchanged. Repeat publication byte-identical; runtime consumption not tested. Nothing pending."
+    },
+    "delete": {
+      "prompt": "Explicitly delete existing canonical rule 01-standards/1-constants and its publications on all five confirmed hosts using the installed skill.",
+      "answer": "Deleted `01-standards/1-constants` using the installed skill.\n\n- PASS canonical source removed\n- PASS Claude publication removed\n- PASS Cursor publication removed\n- PASS Copilot publication removed\n- PASS Codex/OpenCode shared contribution removed\n\n`package.json` unchanged. Repeat publication preserved deletion. Nothing pending."
+    }
+  }
+}

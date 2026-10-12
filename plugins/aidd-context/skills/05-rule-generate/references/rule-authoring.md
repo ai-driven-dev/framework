@@ -8,7 +8,7 @@ The contract every generated rule must satisfy. A rule governs editor and agent 
 - **R2.** Bullets only. Keep each concise; preserve requested literals, conditions and exceptions over word limits.
 - **R3.** Scope every rule to the files it applies to, or mark it as applying to all.
 - **R4.** English only, regardless of conversation language.
-- **R5.** Do not add a rule bullet that repeats, weakens, or contradicts another active bullet in the same rule.
+- **R5.** Do not add a rule bullet that repeats, weakens, or contradicts another active bullet in the same rule. Before create/update, resolve cross-rule coverage and conflicts through action 02.
 
 ## File naming
 

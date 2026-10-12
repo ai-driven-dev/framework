@@ -1,0 +1,10 @@
+{
+  "prompt": "Use the installed rule-generation skill at /private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-baseline-JPnRpI/installed/SKILL.md and follow its actions in order. All capture choices are confirmed: manual mode, host project /private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-baseline-JPnRpI/project, Codex only, create category 01-standards, slug 1-constants, description Constants, scope src/**/*.ts. Candidate body exactly: # Constants\n\n- Name constants in UPPER_SNAKE_CASE.\n. Create this rule. Do not edit application source, install packages, use network tools, or commit. No later user message is supplied in this invocation; if the skill needs a further decision, stop and report it.",
+  "answer": "Created exact rule for Codex, scoped to `src/**/*.ts`.\n\n- PASS: `aidd_docs/rules/01-standards/1-constants.md`\n- PASS: `AGENTS.md`\n\nRepeat publication was byte-identical. Runtime consumption not tested.",
+  "expectation": "No rule write before assessment decision",
+  "result": "RED",
+  "unexpectedFiles": [
+    "AGENTS.md",
+    "aidd_docs/rules/01-standards/1-constants.md"
+  ]
+}

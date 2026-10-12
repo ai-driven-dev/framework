@@ -13,7 +13,7 @@ In-context: the topic, its category and slug, the file scope, a one-line descrip
 ## Process
 
 1. **Gate.** Run the asset-access precheck ([tool-paths.md](../references/tool-paths.md)).
-   For an explicitly confirmed host publish/delete, identify the existing rule or rule set and hosts, then continue to Render in action 02; no new topic or body is needed.
+   For an explicitly confirmed host publish/delete, identify the existing rule or rule set and hosts, then continue to Render in action 03; no new topic or body is needed. This includes publishing manual canonical body edits beneath intact metadata.
 2. **Auto or manual.** Ask whether to run auto or manual mode:
    - **Auto**: scan the codebase, propose a rules architecture, wait for approval.
    - **Manual**: ask the topic (blocking). Confirm any candidate first.

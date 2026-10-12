@@ -1,0 +1,11 @@
+{
+  "SKILL.md": "e4fe536c192b0eb7c39e20d497efc9f70702bc0e07a20eafed82e409fe3125d4",
+  "actions/01-capture-rule.md": "2978eb702cf523cacbad78f858ff4e24c198fc0c410240e3a6b2ac0fbd142d06",
+  "actions/02-assess-existing-rules.md": "f02e015b9848ab9526a829936beb105a5e945259f78e5e045e80076322332c81",
+  "actions/03-write-rule.md": "14ab835edc8f036e05053609e4caa422998d831ba045c2f58d0897152a3180cc",
+  "actions/04-validate.md": "98dcfaa62dce513756c0a11bfa8620df5341057c25e20c2a7b85dcfef1f8231e",
+  "assets/rule-template.md": "bfccef5e957e8d2de7aefe818196e82bf7691c8631452f4cc5b6e5ea526cdb47",
+  "references/rule-authoring.md": "965cfb21d94cd928ecae6436d85f4c489207dc1a88ef35a16ae5af04dc69e982",
+  "references/tool-paths.md": "ce7a9da327f0f7c3d8a540191de7a223f216a77c6d438e0178dae91ca760d245",
+  "scripts/write-rule.cjs": "70783e579b75b9e22760239cbfd4309641bdd73840b17e7dfd606a252679a420"
+}

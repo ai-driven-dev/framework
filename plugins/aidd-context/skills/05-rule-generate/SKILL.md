@@ -10,13 +10,14 @@ Manage canonical rules and their active publications per confirmed host, or auth
 
 ## Actions
 
-| #   | Action         | Role                                      | Input        |
-| --- | -------------- | ----------------------------------------- | ------------ |
-| 01  | `capture-rule` | Capture the topic, pick category and slug | user request |
-| 02  | `write-rule`   | Write the rule file per supported tool    | the topic    |
-| 03  | `validate`     | Check each rule file                      | the files    |
+| #   | Action                  | Role                                        | Input               |
+| --- | ----------------------- | ------------------------------------------- | ------------------- |
+| 01  | `capture-rule`          | Confirm intent, scope and destinations       | user request        |
+| 02  | `assess-existing-rules` | Compare the complete candidate and resolve   | confirmed intent    |
+| 03  | `write-rule`            | Publish the approved candidate or selection  | approved resolution |
+| 04  | `validate`              | Check the resolved result                    | affected files      |
 
-Run the actions in order, `01 → 03`, and run each action's `## Test` before the next.
+For create/update, run `01 → 04`, and run each action's `## Test` before the next. Explicitly confirmed publish/delete runs `01 → 03 → 04`; it does not draft or assess a new candidate. Keeping existing rules or cancelling in 02 ends without writing.
 Before running an action, read its file in `actions/`, not only the table or assets.
 
 ## References
