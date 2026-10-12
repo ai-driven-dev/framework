@@ -90,6 +90,17 @@ async function evaluate(expect, ctx) {
     const before = ctx.setup[name];
     checks.push({ ok: before != null && fileText(name) === before, label: `file unchanged: ${name}` });
   }
+  for (const name of expect.jsonValid || []) {
+    const text = fileText(name);
+    let ok = false;
+    try {
+      if (text != null) JSON.parse(text);
+      ok = text != null;
+    } catch {
+      ok = false;
+    }
+    checks.push({ ok, label: `valid JSON: ${name}` });
+  }
   for (const [name, subs] of Object.entries(expect.fileContains || {})) {
     const text = fileText(name);
     for (const s of subs) checks.push({ ok: text != null && has(text, s), label: `${name} contains "${s}"` });
@@ -124,7 +135,11 @@ async function evaluate(expect, ctx) {
         ctx.tmp,
         HOST,
       );
-      checks.push({ ok: /^\s*pass\b/i.test(verdict), label: `judge: ${expect.judge}`, note: verdict.split("\n")[0].trim() });
+      checks.push({
+        ok: /^\s*pass\b/i.test(verdict),
+        label: `judge: ${expect.judge}`,
+        note: verdict.trim().split("\n").map((line) => line.trim()).join(" | "),
+      });
     }
   }
   return checks;
@@ -177,8 +192,10 @@ async function runCase(c) {
   let tmp = null;
   let checks;
   let stdout = "";
+  let beforeTree = null;
   try {
     tmp = setupCase(c);
+    if (c.expect.projectTreeUnchanged) beforeTree = treeSnapshot(tmp);
     const prompt = c.prompt.replaceAll("{{SKILL}}", c.evalName);
     stdout = await runHost(prompt, tmp);
     checks = await evaluate(c.expect, { tmp, stdout, setup: c.setup?.files || {} });
@@ -197,6 +214,16 @@ async function runCase(c) {
     }
   } catch (err) {
     checks = [{ ok: false, label: `run error: ${err.message}` }];
+  }
+  if (beforeTree && tmp) {
+    const afterTree = treeSnapshot(tmp);
+    const changed = [...new Set([...beforeTree.keys(), ...afterTree.keys()])].filter(
+      (name) => beforeTree.get(name) !== afterTree.get(name),
+    );
+    checks.push({
+      ok: changed.length === 0,
+      label: `project tree ${changed.length ? `changed: ${changed.join(", ")}` : "unchanged"}`,
+    });
   }
   // A case that fails because the run itself failed looks identical to a case
   // that fails on the skill's behavior. Keep the tail so the two are separable.

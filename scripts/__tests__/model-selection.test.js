@@ -180,10 +180,85 @@ test("skill eval runs a Codex judge with Codex rather than Claude", (t) => {
   ], { encoding: "utf8", env: { ...process.env, SKILL_EVAL_CALLS: calls } });
   assert.equal(result.status, 0, result.stderr + result.stdout);
   assert.match(result.stdout, /PASS  08-hook-generate/u);
+  assert.match(result.stdout, /\(PASS \| valid guidance\)/u);
   const invocations = fs.readFileSync(calls, "utf8").trim().split("\n").map(JSON.parse);
   assert.equal(invocations.length, 2);
   assert.ok(invocations.every(([host]) => host === "codex"));
   assert.ok(invocations[1].at(-1).includes("You grade a test"));
+});
+
+test("skill eval checks documented event names and native hook JSON shapes", (t) => {
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "skill-eval-hook-json-"));
+  t.after(() => fs.rmSync(tmp, { recursive: true, force: true }));
+  const stub = path.join(tmp, "codex.cjs");
+  fs.writeFileSync(stub, [
+    'const fs = require("node:fs");',
+    'const path = require("node:path");',
+    'const args = process.argv.slice(2);',
+    'if (!args.at(-1).includes("You grade a test")) {',
+    '  const files = {',
+    '    ".claude/settings.json": { hooks: { SessionStart: [{ hooks: [{ type: "command", command: "/hook.sh" }] }] } },',
+    '    ".cursor/hooks.json": { version: 1, hooks: { sessionStart: [{ command: "/hook.sh" }] } },',
+    '    ".github/hooks/aidd.json": { version: 1, hooks: { SessionStart: [{ type: "command", command: "/hook.sh" }] } },',
+    '  };',
+    '  for (const [file, value] of Object.entries(files)) {',
+    '    fs.mkdirSync(path.dirname(file), { recursive: true });',
+    '    fs.writeFileSync(file, JSON.stringify(value));',
+    '  }',
+    '}',
+    'fs.writeFileSync(args[args.indexOf("-o") + 1], args.at(-1).includes("You grade a test") ? "PASS\\nnative hook entries are valid" : "Published Claude, Cursor and Copilot session-start hooks.");',
+  ].join("\n"));
+  const preload = path.join(tmp, "preload.cjs");
+  fs.writeFileSync(preload, [
+    'const childProcess = require("node:child_process");',
+    'const spawn = childProcess.spawn;',
+    `childProcess.spawn = (command, args, options) => command === "codex"`,
+    `  ? spawn(process.execPath, [${JSON.stringify(stub)}, ...args], options)`,
+    '  : spawn(command, args, options);',
+    'require("node:module").syncBuiltinESMExports();',
+  ].join("\n"));
+  const result = spawnSync(process.execPath, [
+    "--require", preload,
+    path.join(ROOT, "scripts/skill-eval.mjs"),
+    "--host=codex",
+    "--judge",
+    "--case=declarative session start publishes supported non-Codex targets",
+  ], { encoding: "utf8" });
+  assert.equal(result.status, 0, result.stdout + result.stderr);
+  assert.match(result.stdout, /valid JSON: \.claude\/settings\.json/u);
+  assert.match(result.stdout, /\.cursor\/hooks\.json matches/u);
+  assert.match(result.stdout, /\.github\/hooks\/aidd\.json matches/u);
+  assert.match(result.stdout, /judge: .*\(PASS \| native hook entries are valid\)/u);
+});
+
+test("skill eval detects unlisted writes in a guidance-only project tree", (t) => {
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "skill-eval-guidance-write-"));
+  t.after(() => fs.rmSync(tmp, { recursive: true, force: true }));
+  const stub = path.join(tmp, "codex.cjs");
+  fs.writeFileSync(stub, [
+    'const fs = require("node:fs");',
+    'const args = process.argv.slice(2);',
+    'fs.mkdirSync(".kilo/plugin", { recursive: true });',
+    'fs.writeFileSync(".kilo/plugin/unrequested.js", "export {};\\n");',
+    'fs.writeFileSync(args[args.indexOf("-o") + 1], "Use `.kilo/plugin/`; `session.created` is documented.");',
+  ].join("\n"));
+  const preload = path.join(tmp, "preload.cjs");
+  fs.writeFileSync(preload, [
+    'const childProcess = require("node:child_process");',
+    'const spawn = childProcess.spawn;',
+    `childProcess.spawn = (command, args, options) => command === "codex"`,
+    `  ? spawn(process.execPath, [${JSON.stringify(stub)}, ...args], options)`,
+    '  : spawn(command, args, options);',
+    'require("node:module").syncBuiltinESMExports();',
+  ].join("\n"));
+  const result = spawnSync(process.execPath, [
+    "--require", preload,
+    path.join(ROOT, "scripts/skill-eval.mjs"),
+    "--host=codex",
+    "--case=Kilo-only session start gives guidance without files",
+  ], { encoding: "utf8" });
+  assert.equal(result.status, 1, result.stdout + result.stderr);
+  assert.match(result.stdout, /project tree changed:.*\.kilo\//u);
 });
 
 test("skill eval reports an executed idempotent rerun separately from its initial generation", (t) => {

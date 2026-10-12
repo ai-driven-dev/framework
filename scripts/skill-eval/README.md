@@ -45,8 +45,11 @@ host exit fails the case. `--keep` retains the temp project for inspection.
   "prompt": "Use the {{SKILL}} skill on ./prd.md ...",
   "expect": {
     "filesExist": ["prd-shadow-report.md"],
+    "jsonValid": [".claude/settings.json"],
+    "fileMatches": { ".claude/settings.json": "SessionStart" },
     "fileContains": { "prd-shadow-report.md": ["## Gaps by Category"] },
     "fileNotContains": { "report.md": ["..."] },
+    "projectTreeUnchanged": true,
     "stdoutContains": ["..."],
     "stdoutNotContains": ["tier 1"],
     "stdoutMatches": ["\\d+%"],
@@ -56,9 +59,12 @@ host exit fails the case. `--keep` retains the temp project for inspection.
 }
 ```
 
-`{{SKILL}}` is replaced with the case `evalName`. Deterministic checks run
+`{{SKILL}}` is replaced with the case `evalName`. `jsonValid` checks files parse
+as JSON, `fileMatches` checks their text against regular expressions, and
+`projectTreeUnchanged` checks that the run added, removed, or changed no project
+files (the Codex final-response file is excluded). Deterministic checks run
 always; `judge` criteria run only with `--judge` and use a second invocation of
-the selected host, for outcomes that cannot be matched literally.
+the selected host. Its verdict and one-line reason are shown in the case output.
 
 ## Coverage and limits
 

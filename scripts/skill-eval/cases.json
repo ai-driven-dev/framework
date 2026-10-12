@@ -607,6 +607,7 @@
         "kilo.json",
         "USER.txt"
       ],
+      "projectTreeUnchanged": true,
       "stdoutMatches": ["\\.kilo/plugin/", "session\\.created"],
       "judge": "The response recommends the documented .kilo/plugin/ JS/TS project path, explicitly states that .kilo/plugins/ is not a confirmed project path, cites session.created as documented, and creates no file."
     }
@@ -678,6 +679,117 @@
         ".kilo/hooks.json"
       ],
       "judge": "The existing exact AIDD entry is not duplicated, both user entries remain and no file is rewritten; Kilo receives only guidance."
+    }
+  },
+  {
+    "plugin": "aidd-context",
+    "skill": "08-hook-generate",
+    "evalName": "xeval-multi-tool-hook",
+    "name": "OpenCode-only session start gives plugin guidance without files",
+    "setup": {
+      "files": {
+        "opencode.json": "{}\n",
+        "USER.txt": "KEEP\n"
+      }
+    },
+    "prompt": "Use the {{SKILL}} skill for OpenCode only. I want a project plugin reacting to session start. Give sourced guidance for a documented event and path; do not generate a plugin, hook, config entry or script. No declarative scope or file choice is needed.",
+    "expect": {
+      "filesAbsent": [".opencode/plugins/aidd-hook.ts", ".opencode/hooks.json", "hooks/aidd.sh"],
+      "filesUnchanged": ["opencode.json", "USER.txt"],
+      "projectTreeUnchanged": true,
+      "stdoutMatches": ["\\.opencode/plugins/", "session\\.created"],
+      "judge": "OpenCode receives sourced JS/TS plugin guidance with the documented session.created event. The full project tree stays unchanged and no declarative hook file or script is requested."
+    }
+  },
+  {
+    "plugin": "aidd-context",
+    "skill": "08-hook-generate",
+    "evalName": "xeval-multi-tool-hook",
+    "name": "declarative session start keeps documented event names",
+    "setup": { "files": { "USER.txt": "KEEP\n" } },
+    "prompt": "Use the {{SKILL}} skill for Claude, Codex, Cursor and Copilot. The requested moment is exactly session start, with a simple no-op handler, no matcher, shared project scope, host project mode; all four targets and this scope are confirmed. Use each documented declarative event and format. Write Copilot's entry to .github/hooks/aidd.json. Preserve USER.txt.",
+    "expect": {
+      "filesExist": [".claude/settings.json", ".codex/hooks.json", ".cursor/hooks.json", ".github/hooks/aidd.json"],
+      "jsonValid": [".claude/settings.json", ".codex/hooks.json", ".cursor/hooks.json", ".github/hooks/aidd.json"],
+      "fileMatches": {
+        ".claude/settings.json": "\\\"SessionStart\\\"[\\s\\S]*\\\"type\\\"\\s*:\\s*\\\"command\\\"",
+        ".codex/hooks.json": "\\\"SessionStart\\\"[\\s\\S]*\\\"type\\\"\\s*:\\s*\\\"command\\\"",
+        ".cursor/hooks.json": "\\\"version\\\"\\s*:\\s*1[\\s\\S]*\\\"sessionStart\\\"[\\s\\S]*\\\"command\\\"\\s*:",
+        ".github/hooks/aidd.json": "\\\"version\\\"\\s*:\\s*1[\\s\\S]*\\\"SessionStart\\\"[\\s\\S]*\\\"type\\\"\\s*:\\s*\\\"command\\\""
+      },
+      "fileNotContains": {
+        ".claude/settings.json": ["\"matcher\""],
+        ".codex/hooks.json": ["\"matcher\""],
+        ".cursor/hooks.json": ["\"matcher\""],
+        ".github/hooks/aidd.json": ["\"matcher\""]
+      },
+      "filesUnchanged": ["USER.txt"],
+      "judge": "Each selected declarative tool receives its documented session-start event and native entry shape; a single generated handler may serve multiple tools. User bytes survive."
+    }
+  },
+  {
+    "plugin": "aidd-context",
+    "skill": "08-hook-generate",
+    "evalName": "xeval-multi-tool-hook",
+    "name": "declarative session start publishes supported non-Codex targets",
+    "setup": { "files": { "USER.txt": "KEEP\n" } },
+    "prompt": "Use the {{SKILL}} skill for Claude, Cursor and Copilot. The requested moment is exactly session start, with a simple no-op handler, no matcher, shared project scope, host project mode; all three targets and this scope are confirmed. Use each documented declarative event and format. Write Copilot's entry to .github/hooks/aidd.json. Preserve USER.txt.",
+    "expect": {
+      "filesExist": [".claude/settings.json", ".cursor/hooks.json", ".github/hooks/aidd.json"],
+      "jsonValid": [".claude/settings.json", ".cursor/hooks.json", ".github/hooks/aidd.json"],
+      "fileMatches": {
+        ".claude/settings.json": "\\\"SessionStart\\\"[\\s\\S]*\\\"type\\\"\\s*:\\s*\\\"command\\\"",
+        ".cursor/hooks.json": "\\\"version\\\"\\s*:\\s*1[\\s\\S]*\\\"sessionStart\\\"[\\s\\S]*\\\"command\\\"\\s*:",
+        ".github/hooks/aidd.json": "\\\"version\\\"\\s*:\\s*1[\\s\\S]*\\\"SessionStart\\\"[\\s\\S]*\\\"type\\\"\\s*:\\s*\\\"command\\\""
+      },
+      "fileNotContains": {
+        ".claude/settings.json": ["\"matcher\""],
+        ".cursor/hooks.json": ["\"matcher\""],
+        ".github/hooks/aidd.json": ["\"matcher\""]
+      },
+      "filesAbsent": [".codex/hooks.json"],
+      "filesUnchanged": ["USER.txt"],
+      "judge": "Claude, Cursor and Copilot receive their documented session-start events in valid native entries. No Codex target is written and user bytes survive."
+    }
+  },
+  {
+    "plugin": "aidd-context",
+    "skill": "08-hook-generate",
+    "evalName": "xeval-multi-tool-hook",
+    "name": "unsupported exact moment skips every declarative target",
+    "setup": { "files": { "USER.txt": "KEEP\n" } },
+    "prompt": "Use the {{SKILL}} skill for Claude, Codex, Cursor and Copilot. I require a hook exactly when an agent switches from planning to editing, not merely after a response or before a tool. Keep that exact meaning. If the documentation does not establish an equivalent event and its timing, do not publish for that target. No alternative moment is approved.",
+    "expect": {
+      "filesAbsent": [".claude/settings.json", ".codex/hooks.json", ".cursor/hooks.json", ".github/hooks/aidd.json", "hooks/aidd.sh"],
+      "filesUnchanged": ["USER.txt"],
+      "judge": "For each target without a documented equivalent of the exact planning-to-editing transition, the response explains the missing guarantee and publishes nothing. A nearby event is not silently substituted."
+    }
+  },
+  {
+    "plugin": "aidd-context",
+    "skill": "08-hook-generate",
+    "evalName": "xeval-multi-tool-hook",
+    "name": "tool failure does not become Codex PostToolUse",
+    "setup": { "files": { "USER.txt": "KEEP\n" } },
+    "prompt": "Use the {{SKILL}} skill for Codex only. I need a hook that fires after tool failures and never after successful tool calls. A nearby event that also fires on success is unacceptable. No different moment has been approved. Explain any documented limitation and do not publish an approximate hook.",
+    "expect": {
+      "filesAbsent": [".codex/hooks.json", "hooks/aidd.sh"],
+      "filesUnchanged": ["USER.txt"],
+      "judge": "Codex PostToolUse is rejected as an automatic equivalent because it observes success as well as failure. No Codex hook or handler is published; any broader alternative is described as different and requires confirmation."
+    }
+  },
+  {
+    "plugin": "aidd-context",
+    "skill": "08-hook-generate",
+    "evalName": "xeval-multi-tool-hook",
+    "name": "plugin-only guidance and declarative hook stay separate",
+    "setup": { "files": { "kilo.json": "{}\n", "opencode.json": "{}\n", "USER.txt": "KEEP\n" } },
+    "prompt": "Use the {{SKILL}} skill for OpenCode, Kilo and Claude. Session start is the exact requested moment. For Claude, the shared project scope, no matcher, simple no-op handler and host project mode are confirmed. Give sourced plugin guidance for OpenCode and Kilo, and publish only the documented Claude declarative hook. Do not write plugin-only files.",
+    "expect": {
+      "filesExist": [".claude/settings.json"],
+      "filesAbsent": [".kilo/hooks.json", ".kilo/plugin/aidd-hook.ts", ".opencode/plugins/aidd-hook.ts", ".opencode/hooks.json"],
+      "filesUnchanged": ["kilo.json", "opencode.json", "USER.txt"],
+      "judge": "Claude receives a valid SessionStart publication while OpenCode and Kilo receive separately sourced plugin guidance. No plugin-only file, config, or script is generated for either guidance target."
     }
   },
   {

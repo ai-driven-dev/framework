@@ -6,17 +6,17 @@ argument-hint: event | action
 
 # Hook Generate
 
-Builds one hook for tools with a documented declarative contract. For Kilo, returns sourced plugin guidance without generating a hook.
+Builds one hook for tools with a documented declarative contract. For plugin-only tools, returns sourced guidance without generating a hook.
 
 ## Actions
 
 | #   | Action         | Role                                              | Input             |
 | --- | -------------- | ------------------------------------------------- | ----------------- |
 | 01  | `capture-hook` | Clarify the moment, action, matcher, scope, tools | user request      |
-| 02  | `write-hook`   | Return Kilo guidance; preflight and write other targets | the captured spec |
+| 02  | `write-hook`   | Return plugin guidance; preflight and write declarative targets | the captured spec |
 | 03  | `validate`     | Check guidance or written files and relaunch safety | action 02 result |
 
-For Kilo only, run action 01 and its test, return the terminal guidance, then stop. For a mixed request, run actions `01 → 02 → 03` and each action's `## Test` in order; action 02 writes only the confirmed non-Kilo targets.
+Run actions `01 → 02 → 03` and each action's `## Test` in order for guidance-only, declarative-only, and mixed requests. Action 02 writes only confirmed declarative targets; for guidance-only requests it writes nothing, and action 03 checks the guidance and unchanged project tree.
 Before running an action, read its file in `actions/`, not only the table or assets.
 
 ## References
