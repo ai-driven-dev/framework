@@ -6,6 +6,6 @@
   "actions/04-validate.md": "98dcfaa62dce513756c0a11bfa8620df5341057c25e20c2a7b85dcfef1f8231e",
   "assets/rule-template.md": "bfccef5e957e8d2de7aefe818196e82bf7691c8631452f4cc5b6e5ea526cdb47",
   "references/rule-authoring.md": "965cfb21d94cd928ecae6436d85f4c489207dc1a88ef35a16ae5af04dc69e982",
-  "references/tool-paths.md": "ce7a9da327f0f7c3d8a540191de7a223f216a77c6d438e0178dae91ca760d245",
+  "references/tool-paths.md": "8b985e2a360c5fa44d13742e8f79c92afb8ddf2c8e2a6b0083fffbd84bf0f13e",
   "scripts/write-rule.cjs": "70783e579b75b9e22760239cbfd4309641bdd73840b17e7dfd606a252679a420"
 }

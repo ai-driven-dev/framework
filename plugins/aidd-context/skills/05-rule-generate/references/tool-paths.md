@@ -31,7 +31,7 @@ For action 02, this reference owns discovery paths. Discovery is read-only: neve
 
 | Confirmed host | Project sources to inspect |
 | --- | --- |
-| Claude Code | `.claude/rules/**/*.md`, root and relevant nested `CLAUDE.md` and `.claude/CLAUDE.md` |
+| Claude Code | `.claude/rules/**/*.md`; working-directory, project-ancestor and relevant descendant `CLAUDE.md`, `.claude/CLAUDE.md` and `CLAUDE.local.md`. Conditional working-directory/project-ancestor `AGENTS.md` and `.claude/AGENTS.md`, plus relevant nested `AGENTS.md`: confirm installed-version support, enabled built-in plugin, Project instructions mode and competing Claude instruction files before treating them as active. |
 | Cursor | root and relevant nested `.cursor/rules/**/*.mdc` and `AGENTS.md`; Cursor CLI also reads root `CLAUDE.md` |
 | GitHub Copilot | Repository root, current directory, intermediate directories and relevant file-path nested directories: `.github/copilot-instructions.md`, `AGENTS.md`, `CLAUDE.md`, `.claude/CLAUDE.md`, `GEMINI.md`. Also `.github/instructions/**/*.instructions.md` in those locations except intermediate directories; apply only matching `applyTo` scopes. |
 | Codex | Root and relevant nested directories: first nonempty file among `AGENTS.override.md`, `AGENTS.md`, then configured fallback names, in that order; unknown fallback configuration requires review when it could affect the candidate. |

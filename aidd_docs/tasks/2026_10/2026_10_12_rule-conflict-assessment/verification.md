@@ -4,7 +4,7 @@ Verified on 2026-10-12 against [issue #791](https://github.com/ai-driven-dev/fra
 
 ## Behavior evidence
 
-The old skill wrote the canonical rule and shared AGENTS contribution without the new assessment decision: [baseline receipt](receipts/baseline.json). The revised skill stopped before writing in all twelve fresh assessment runs. Every run exited successfully and its complete project-file SHA-256 map was unchanged. Classification was checked against the actual answer, not a phrase-presence test.
+The old skill wrote the canonical rule and shared AGENTS contribution without the new assessment decision: [baseline receipt](receipts/baseline.json). The revised skill stopped before writing in all thirteen fresh assessment runs. Every run exited successfully and its complete project-file SHA-256 map was unchanged. Classification was checked against the actual answer, not a phrase-presence test.
 
 [Assessment receipts](receipts/native-assessment.json) include prompts, answers, original fixture contents, before/after hashes, installed-skill hashes and raw-event hashes.
 
@@ -21,6 +21,7 @@ The old skill wrote the canonical rule and shared AGENTS contribution without th
 | Plugin-source pytest rule | Conflict detected without host publication. |
 | Copilot GEMINI guidance | Conflict detected from the project instruction source. |
 | Copilot repository instruction import | Imported policy read and conflict identified. |
+| Claude-only local project policy | Conflict in CLAUDE.local.md detected before writes. |
 | Actual CLI flat Codex distribution | Conflict detected before writing through the installed skill. |
 
 The [nine-turn lifecycle](receipts/native-lifecycle.json) proves reassessment after a body change, no write before the subsequent approval, exact approved-body preservation, five-host publication, covered/keep and conflict/cancel without changes, byte-identical publication, and deletion. Deletion leaves an empty AGENTS.md, the existing writer behavior; it does not restore the original file inventory.
@@ -31,6 +32,7 @@ The [three-turn merge](receipts/native-merge.json) proves an existing rule can b
 
 - Existing writer suite: 61 passed. Focused architecture, portability, links and writer checks: 117 passed, no failures or skips.
 - Full pre-commit gates: wrapped root suite `node scripts/check-tests-leave-git-alone.js -- node --test 'scripts/__tests__/**/*.test.js'`: 677 passed, no failures or skips. Recipe build and all three bundled recipe validations passed; catalog, link, duplication and referenced-path checks passed.
+- Actual pre-push gates: Knip passed; CLI suite passed 7,002 tests across 539 test files, with one test/file skipped and no failures. The remote branch SHA matched the committed candidate.
 - `git diff 3e67f6f594b7b7f6cc7bceb0581ad6d515519080 --exit-code -- plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs cli`: no changes. Publication, ownership and CLI behavior remain the existing implementation.
 - `AIDD_SKIP_UPDATE_CHECK=1 node cli/dist/cli.js translate . --to codex --as flat --out <existing-output-directory>` and the Claude `--as marketplace` translation succeeded. Both distributions contain the four actions and unchanged writer; their four actions, two references and writer match source bytes. Old action filenames are absent. One native session used the actual flat distribution.
 
@@ -40,6 +42,6 @@ The [three-turn merge](receipts/native-merge.json) proves an existing rule can b
 
 To repeat an assessment, materialize the recorded `fixtureFiles` in a disposable project, copy or translate the skill into a separate installed directory, substitute those two paths in the recorded prompt, snapshot every project file, then run the command above with that prompt on stdin. Compare complete before/after maps and inspect the answer against the fixture's policy obligations. To repeat the journeys, start a persistent session and supply the recorded follow-up prompts in order, retaining per-turn snapshots.
 
-These receipts cover 24 successful native CLI invocations in 14 sessions: twelve fresh assessments and two persistent journeys. Exploratory runs, the old-skill baseline and the initial read-only harness failure are excluded from this count. Earlier eight-case runs preceded the bounded discovery-reference expansion; the four workflow actions and writer are byte-identical to the final version. Later Copilot, flat-distribution, scope and merge cases cover the expanded reference. Per-session hashes preserve this distinction; [final source hashes](receipts/final-source-hashes.json) identify the final assets.
+These receipts cover 25 successful native CLI invocations in 15 sessions: thirteen fresh assessments and two persistent journeys. Exploratory runs, the old-skill baseline and the initial read-only harness failure are excluded from this count. Earlier eight-case runs preceded the bounded discovery-reference expansion; the four workflow actions and writer are byte-identical to the final version. Later Copilot, flat-distribution, scope, merge and Claude-local cases exercise the added discovery paths. Conditional Claude AGENTS activation was checked against documentation; it was not exercised in a native Claude session. Per-session hashes preserve this distinction; [final source hashes](receipts/final-source-hashes.json) identify the final assets.
 
 Semantic comparison is model judgment, not a deterministic conflict detector or a script-enforced approval lock. These runs exercise the skill through Codex and its five-host writer. They do not prove runtime instruction consumption by native Claude, Cursor, Copilot or OpenCode sessions. Relevant discovery contracts were checked against the official sources linked in the plan and tool-path reference. No claim of universal host precedence, full account/global discovery or coverage of every glob is made.

@@ -876,5 +876,40 @@
       "package.json": "{\"type\":\"module\"}\n"
     },
     "rawEventsSHA256": "6221c3dfd327e42db48b44501b8ca05b1104fdf1c02c0da35023515ef18d4fd3"
+  },
+  "claude-local": {
+    "receipt": {
+      "case": "claude-local",
+      "root": "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-mdm66onm",
+      "exit": 0,
+      "unchanged": true,
+      "changed": []
+    },
+    "before": {
+      "CLAUDE.local.md": "f6f6bdd0fbb28b7e582991c063f0f4ec4868959cca6aa45e9dc2c8c374d17b2c",
+      "package.json": "1239d4d885dcad42201a27ed9324f8f0f760b78700d8db9ced39a511cffe7eae"
+    },
+    "after": {
+      "CLAUDE.local.md": "f6f6bdd0fbb28b7e582991c063f0f4ec4868959cca6aa45e9dc2c8c374d17b2c",
+      "package.json": "1239d4d885dcad42201a27ed9324f8f0f760b78700d8db9ced39a511cffe7eae"
+    },
+    "skill-hashes": {
+      "SKILL.md": "e4fe536c192b0eb7c39e20d497efc9f70702bc0e07a20eafed82e409fe3125d4",
+      "actions/01-capture-rule.md": "2978eb702cf523cacbad78f858ff4e24c198fc0c410240e3a6b2ac0fbd142d06",
+      "actions/02-assess-existing-rules.md": "f02e015b9848ab9526a829936beb105a5e945259f78e5e045e80076322332c81",
+      "actions/03-write-rule.md": "14ab835edc8f036e05053609e4caa422998d831ba045c2f58d0897152a3180cc",
+      "actions/04-validate.md": "98dcfaa62dce513756c0a11bfa8620df5341057c25e20c2a7b85dcfef1f8231e",
+      "assets/rule-template.md": "bfccef5e957e8d2de7aefe818196e82bf7691c8631452f4cc5b6e5ea526cdb47",
+      "references/rule-authoring.md": "965cfb21d94cd928ecae6436d85f4c489207dc1a88ef35a16ae5af04dc69e982",
+      "references/tool-paths.md": "8b985e2a360c5fa44d13742e8f79c92afb8ddf2c8e2a6b0083fffbd84bf0f13e",
+      "scripts/write-rule.cjs": "70783e579b75b9e22760239cbfd4309641bdd73840b17e7dfd606a252679a420"
+    },
+    "prompt": "Use the installed rule-generation skill at /private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-mdm66onm/installed/SKILL.md. Follow its workflow for creating a rule. All capture choices are confirmed: manual mode, real project root /private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-mdm66onm/project, host project, tool Claude Code only. The complete requested candidate metadata and body are exactly this JSON: {\"category\": \"05-testing\", \"slug\": \"5-candidate\", \"description\": \"Test conventions\", \"paths\": [\"tests/**/*.py\"], \"body\": \"# Test conventions\\n\\n- Use unittest for all unit tests.\\n\"}. Create this rule. Do not change application source, install packages, use network tools, or commit. This invocation supplies no later user message. If the workflow requires a further user decision, stop and present it.",
+    "answer": "Creation paused; no files changed.\n\nConflict: [CLAUDE.local.md](CLAUDE.local.md) requires \u201cUse pytest for all unit tests.\u201d Its project-wide scope includes `tests/**/*.py`, where the candidate requires unittest.\n\nExact candidate: `05-testing/5-candidate`, description `Test conventions`, scope `tests/**/*.py`, Claude Code only.\n\n```markdown\n# Test conventions\n\n- Use unittest for all unit tests.\n```\n\nChoose: keep pytest, revise the candidate, or explicitly authorize changing `CLAUDE.local.md` to resolve the conflict.\n\nThe installed skill\u2019s [action 02](../installed/actions/02-assess-existing-rules.md) requires: \u201cAn unresolved conflict or needs-review finding requires an explicit resolution of that finding before proceeding.\u201d",
+    "rawEventsSHA256": "6091cb2da7042580de5b85d590c946958d01910d45e4e55a9f702e8e987cbfd3",
+    "fixtureFiles": {
+      "CLAUDE.local.md": "# Local unit test policy\n\n- Use pytest for all unit tests.\n",
+      "package.json": "{\"type\":\"module\"}\n"
+    }
   }
 }
