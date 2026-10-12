@@ -56,7 +56,7 @@ pre-commit:
     recipe-validity:
       run: |
         if ! command -v node >/dev/null 2>&1; then
-          echo "❌ node not available; cannot validate recipes"
+          echo '❌ node not available; cannot validate recipes'
           exit 1
         fi
         pnpm --dir cli build
