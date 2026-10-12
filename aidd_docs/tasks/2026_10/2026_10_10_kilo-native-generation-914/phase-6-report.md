@@ -1,5 +1,7 @@
 # Phase 6: current verification
 
+The commands and outcomes below are the historical phase 6 report. Their detailed test/runtime logs were removed during archive cleanup, except for the explicitly retained phase 4 and phase 5 evidence. They were not rerun during cleanup and are not directly reproducible from this report alone.
+
 Status: **in-progress**. Verification performed on Linux on 12 October 2026. This report records only commands actually run during this phase 6 continuation. Existing phase 1–5 runtime reports retain their original scope and dates. No session export or provider transcript was added.
 
 ## Three evidence levels

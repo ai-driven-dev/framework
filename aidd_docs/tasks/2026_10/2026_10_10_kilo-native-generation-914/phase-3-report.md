@@ -6,7 +6,7 @@ Phase 3 implémentée et revue `approve`, quatre critères de phase couverts. Ph
 
 La phase 3 dépend de la reconnaissance acquise en phase 1, sans dépendance au writer de règles #979. Le plan validé et les seize AC restent les références ; seule sa phrase d’autorisation a été actualisée. Workflow natif `aidd-dev:02-implement` : prepare sur branche existante propre, execute limité à phase 3 selon autorisation, assertion passing avant done. Aucun finalize global ni step-end global, les autres phases restant ouvertes.
 
-Les trois tâches sont done : sélection de surface, rendu/préservation, vérification des parcours. Commit local unique de phase conformément au contrat implement, code + tests + docs + statut. Registre : [commits-phase-3.json](commits-phase-3.json), SHA résolu depuis HEAD après livraison.
+Les trois tâches sont done : sélection de surface, rendu/préservation, vérification des parcours. Commit local unique de phase conformément au contrat implement, code + tests + docs + statut. Le registre de commits détaillé a été retiré ; les commits restent consultables dans l’historique Git.
 
 ## Comportement livré
 
@@ -21,9 +21,11 @@ Rendu Kilo Agent Skills name égal au dossier, description valide, optionnels do
 - Préservation : sept arbres générés via le caller natif, modify limité à sept actions, ressources utilisateur inchangées, rerun arbre/hashes/mtime identique, huit refus avec snapshots inchangés.
 - Régression et usage : sorties Claude/Codex/OpenCode contrôlées hors ligne ; catalogues Kilo natif/portable et deux invocations réelles avec lectures action/payload et réponse exacte.
 
-AC9 validé. AC5 demeure validé par phase 1. AC1–4 et AC13–16 progressent mais restent partiels ; AC6–8 et AC10–12 non implémentés. Aucun critère transversal clos sur la seule présence d’un fichier. [Matrice](coverage-matrix.md), [runtime](phase-3-runtime.md), [assertions](assertions-phase-3.md) et [review](review.md).
+AC9 validé. AC5 demeure validé par phase 1. AC1–4 et AC13–16 progressent mais restent partiels ; AC6–8 et AC10–12 non implémentés. Aucun critère transversal clos sur la seule présence d’un fichier. [Matrice](coverage-matrix.md), [runtime](phase-3-runtime.md) ; les dossiers détaillés de review/assertions ont été retirés.
 
 Tests : 24 ciblés réussis ; `make check` final exit 0, 630 tests / 628 pass / 2 skips existants / 0 fail. Mutations détection et préflight rouges, architecture et JSON explicites réussis. Kilo 7.8.8 Linux : natif et portable découverts au chemin exact, skill invoqué, action et payload lus, résultat exact, quatre étapes coût 0 chacun, bytes/mtime du skill préservés. Première réponse native avec espace exclue, puis rejeu exact réussi sans modifier les artefacts.
+
+Ces résultats sont historiques. Leurs journaux, traces Kilo et sorties de tests détaillées ont été retirés pendant le nettoyage ; ils ne sont pas directement rejouables depuis l’archive conservée.
 
 ## Limites et reprise
 

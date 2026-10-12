@@ -97,8 +97,8 @@ journey
 
 ## Validations de clôture
 
-- Tests ciblés : **90/90 passés** ([sortie](evidence/phase-2/focused-corrections.txt)).
-- Suite scripts : **795/795 passés** ([sortie](evidence/phase-2/scripts-full-corrections.txt)).
+- Tests ciblés : **90/90 historiquement rapportés** ; la sortie détaillée a été retirée et ce résultat n’est pas directement rejouable depuis l’archive conservée.
+- Suite scripts : **795/795 historiquement rapportés** ; la sortie détaillée a été retirée et ce résultat n’est pas directement rejouable depuis l’archive conservée.
 - Kilo 7.8.8/Linux : observation positive et négative ; voir [rapport runtime](evidence/phase-2/runtime-report.md). Cela démontre le chargement de cette fixture dans cet environnement, pas une couverture générale de modèles ou plateformes.
 - Claude authentifié : non exécuté. Windows : non exécuté. `CONTRIBUTING.md` demande `make reload`, redémarrage des sessions et test dans Claude et un autre outil. Le contrôle Claude reste donc ouvert ; une clôture sans ce test nécessite une exception explicite du mainteneur, non obtenue à ce jour.
 - Limites : pas de garantie face aux courses entre contrôle et appel système, à une mutation externe durant la restauration, à l’arrêt brutal ou à une panne machine.

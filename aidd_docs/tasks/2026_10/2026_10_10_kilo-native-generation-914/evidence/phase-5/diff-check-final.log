@@ -1,2 +1,0 @@
-git diff --check: exit 0
-git diff --cached --check: exit 0
