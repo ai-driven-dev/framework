@@ -16,7 +16,7 @@ Builds one hook for tools with a documented declarative contract. For Kilo, retu
 | 02  | `write-hook`   | Return Kilo guidance; preflight and write other targets | the captured spec |
 | 03  | `validate`     | Check guidance or written files and relaunch safety | action 02 result |
 
-Run the actions in order, `01 → 03`, and run each action's `## Test` before the next. Kilo-only stops after terminal guidance from action 01; a mixed request continues for the other targets without writing Kilo files.
+For Kilo only, run action 01 and its test, return the terminal guidance, then stop. For a mixed request, run actions `01 → 02 → 03` and each action's `## Test` in order; action 02 writes only the confirmed non-Kilo targets.
 Before running an action, read its file in `actions/`, not only the table or assets.
 
 ## References
