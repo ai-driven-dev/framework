@@ -33,6 +33,8 @@ New to AIDD, or unsure what to run next? Invoke `aidd-context:00-onboard`. The s
 
 Onboard adapts to whatever plugins are installed: it suggests by function and discovers the skills that fill each step, so a skill added later shows up on its own.
 
+Kilo path contracts across this plugin refer to the [central register of official sources and verification dates](../../aidd_docs/tasks/2026_10/2026_10_10_kilo-native-generation-914/official-sources.md).
+
 ## Shared project memory
 
 Kilo uses the root `AGENTS.md` memory block shared with Codex, OpenCode and Cursor. Recognition and paths follow [the tool contract](skills/02-project-memory/references/tools.md); `.kilocode/` is a legacy signal, never a new output destination. Explicit memory sync preflights every selected destination before changing files, preserves user content outside the block, and skips identical writes. Claude keeps its `@` imports and Copilot its relative links.
