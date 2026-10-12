@@ -16,6 +16,8 @@ node scripts/skill-eval.mjs --keep          # keep temp dirs to inspect
 Local and opt-in. Needs an authenticated `claude` CLI and spends tokens, so it
 is not a CI gate.
 
+No model override is passed unless you supply `--model=<model-id>`.
+
 ## How it works
 
 Each case runs in a throwaway temp project. The skill under test is copied into

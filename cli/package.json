@@ -83,7 +83,7 @@
     "ajv": "^8.20.0",
     "ajv-formats": "^3.0.1",
     "commander": "^15.0.0",
-    "simple-git": "^3.36.0",
+    "simple-git": "^4.0.2",
     "smol-toml": "^1.6.1"
   },
   "devDependencies": {

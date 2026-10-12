@@ -1,0 +1,9 @@
+● Disabled tools: apply_patch, bash, fetch_copilot_cli_documentation, glob, list_agents, list_bash,
+  read_agent, read_bash, rg, session_store_sql, skill, sql, stop_bash, task, write_agent
+
+● Read api.md
+  │ docs/api.md
+  └ 5 lines read
+
+LOCAL_CAPTURE_DONE
+

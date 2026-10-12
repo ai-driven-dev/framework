@@ -486,6 +486,21 @@ jobs:
       - name: Plugin suite
         run: node scripts/check-tests-leave-git-alone.js -- node --test 'scripts/__tests__/**/*.test.js'
 
+      # A Windows commit's hooks (#948), less the three cli jobs that need cli/'s dependencies.
+      - name: Hooks - a commit's hooks pass on Windows
+        run: |
+          echo "# lefthook subject" > "$RUNNER_TEMP/msg"
+          status=0
+          LEFTHOOK_EXCLUDE=cli-biome,cli-architecture,cli-typecheck \
+            pnpm exec lefthook run pre-commit --all-files --no-auto-install --no-tty > "$RUNNER_TEMP/hooks.log" 2>&1 || status=1
+          pnpm exec lefthook run prepare-commit-msg "$RUNNER_TEMP/msg" message --no-auto-install --no-tty >> "$RUNNER_TEMP/hooks.log" 2>&1 || status=1
+          cat "$RUNNER_TEMP/hooks.log"
+          if grep -n "syntax error" "$RUNNER_TEMP/hooks.log"; then
+            echo "::error::lefthook handed sh a broken command line (#948)"
+            exit 1
+          fi
+          exit $status
+
       - run: cd cli && pnpm install --frozen-lockfile
       # A real global install, not `node dist/cli.js` by path: nothing else proves `aidd`
       # resolves on this platform's PATH. Built here, ahead of the suites below, so this is

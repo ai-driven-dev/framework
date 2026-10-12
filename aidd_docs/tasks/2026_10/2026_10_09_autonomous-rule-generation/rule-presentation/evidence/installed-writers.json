@@ -1,0 +1,52 @@
+[
+  {
+    "host": "claude",
+    "tool": "claude",
+    "sha256": "70783e579b75b9e22760239cbfd4309641bdd73840b17e7dfd606a252679a420"
+  },
+  {
+    "host": "cursor",
+    "tool": "cursor",
+    "sha256": "70783e579b75b9e22760239cbfd4309641bdd73840b17e7dfd606a252679a420"
+  },
+  {
+    "host": "copilot",
+    "tool": "copilot",
+    "sha256": "70783e579b75b9e22760239cbfd4309641bdd73840b17e7dfd606a252679a420"
+  },
+  {
+    "host": "codex",
+    "tool": "codex",
+    "sha256": "70783e579b75b9e22760239cbfd4309641bdd73840b17e7dfd606a252679a420"
+  },
+  {
+    "host": "opencode",
+    "tool": "opencode",
+    "sha256": "70783e579b75b9e22760239cbfd4309641bdd73840b17e7dfd606a252679a420"
+  },
+  {
+    "host": "mixed",
+    "tool": "claude",
+    "sha256": "70783e579b75b9e22760239cbfd4309641bdd73840b17e7dfd606a252679a420"
+  },
+  {
+    "host": "mixed",
+    "tool": "cursor",
+    "sha256": "70783e579b75b9e22760239cbfd4309641bdd73840b17e7dfd606a252679a420"
+  },
+  {
+    "host": "mixed",
+    "tool": "copilot",
+    "sha256": "70783e579b75b9e22760239cbfd4309641bdd73840b17e7dfd606a252679a420"
+  },
+  {
+    "host": "mixed",
+    "tool": "codex",
+    "sha256": "70783e579b75b9e22760239cbfd4309641bdd73840b17e7dfd606a252679a420"
+  },
+  {
+    "host": "mixed",
+    "tool": "opencode",
+    "sha256": "70783e579b75b9e22760239cbfd4309641bdd73840b17e7dfd606a252679a420"
+  }
+]

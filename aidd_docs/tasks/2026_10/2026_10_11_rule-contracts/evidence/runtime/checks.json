@@ -1,0 +1,401 @@
+[
+  {
+    "case": "claude-create-src_domain_invoice.ts-project",
+    "exit": 0,
+    "counts": [
+      {
+        "AIDD_GLOBAL_CREATE_11": 1,
+        "AIDD_DOMAIN_CREATE_11": 0,
+        "AIDD_DOCS_CREATE_11": 0,
+        "AIDD_GLOBAL_UPDATE_11": 0,
+        "AIDD_DOMAIN_UPDATE_11": 0,
+        "AIDD_DOCS_UPDATE_11": 0
+      },
+      {
+        "AIDD_GLOBAL_CREATE_11": 1,
+        "AIDD_DOMAIN_CREATE_11": 1,
+        "AIDD_DOCS_CREATE_11": 0,
+        "AIDD_GLOBAL_UPDATE_11": 0,
+        "AIDD_DOMAIN_UPDATE_11": 0,
+        "AIDD_DOCS_UPDATE_11": 0
+      }
+    ],
+    "complete_bodies_checked": [
+      "global",
+      "domain"
+    ],
+    "request_paths": [
+      "/v1/messages?beta=true",
+      "/v1/messages?beta=true"
+    ],
+    "pass": true
+  },
+  {
+    "case": "claude-create-src_domain_nested_item.ts-project",
+    "exit": 0,
+    "counts": [
+      {
+        "AIDD_GLOBAL_CREATE_11": 1,
+        "AIDD_DOMAIN_CREATE_11": 0,
+        "AIDD_DOCS_CREATE_11": 0,
+        "AIDD_GLOBAL_UPDATE_11": 0,
+        "AIDD_DOMAIN_UPDATE_11": 0,
+        "AIDD_DOCS_UPDATE_11": 0
+      },
+      {
+        "AIDD_GLOBAL_CREATE_11": 1,
+        "AIDD_DOMAIN_CREATE_11": 1,
+        "AIDD_DOCS_CREATE_11": 0,
+        "AIDD_GLOBAL_UPDATE_11": 0,
+        "AIDD_DOMAIN_UPDATE_11": 0,
+        "AIDD_DOCS_UPDATE_11": 0
+      }
+    ],
+    "complete_bodies_checked": [
+      "global",
+      "domain"
+    ],
+    "request_paths": [
+      "/v1/messages?beta=true",
+      "/v1/messages?beta=true"
+    ],
+    "pass": true
+  },
+  {
+    "case": "claude-create-docs_overview.md-project",
+    "exit": 0,
+    "counts": [
+      {
+        "AIDD_GLOBAL_CREATE_11": 1,
+        "AIDD_DOMAIN_CREATE_11": 0,
+        "AIDD_DOCS_CREATE_11": 0,
+        "AIDD_GLOBAL_UPDATE_11": 0,
+        "AIDD_DOMAIN_UPDATE_11": 0,
+        "AIDD_DOCS_UPDATE_11": 0
+      },
+      {
+        "AIDD_GLOBAL_CREATE_11": 1,
+        "AIDD_DOMAIN_CREATE_11": 0,
+        "AIDD_DOCS_CREATE_11": 1,
+        "AIDD_GLOBAL_UPDATE_11": 0,
+        "AIDD_DOMAIN_UPDATE_11": 0,
+        "AIDD_DOCS_UPDATE_11": 0
+      }
+    ],
+    "complete_bodies_checked": [
+      "global",
+      "docs"
+    ],
+    "request_paths": [
+      "/v1/messages?beta=true",
+      "/v1/messages?beta=true"
+    ],
+    "pass": true
+  },
+  {
+    "case": "claude-create-src_domain_invoice.ts-user",
+    "exit": 0,
+    "counts": [
+      {
+        "AIDD_GLOBAL_CREATE_11": 0,
+        "AIDD_DOMAIN_CREATE_11": 0,
+        "AIDD_DOCS_CREATE_11": 0,
+        "AIDD_GLOBAL_UPDATE_11": 0,
+        "AIDD_DOMAIN_UPDATE_11": 0,
+        "AIDD_DOCS_UPDATE_11": 0
+      },
+      {
+        "AIDD_GLOBAL_CREATE_11": 0,
+        "AIDD_DOMAIN_CREATE_11": 0,
+        "AIDD_DOCS_CREATE_11": 0,
+        "AIDD_GLOBAL_UPDATE_11": 0,
+        "AIDD_DOMAIN_UPDATE_11": 0,
+        "AIDD_DOCS_UPDATE_11": 0
+      }
+    ],
+    "complete_bodies_checked": [],
+    "request_paths": [
+      "/v1/messages?beta=true",
+      "/v1/messages?beta=true"
+    ],
+    "pass": true
+  },
+  {
+    "case": "claude-update-src_domain_invoice.ts-project",
+    "exit": 0,
+    "counts": [
+      {
+        "AIDD_GLOBAL_CREATE_11": 0,
+        "AIDD_DOMAIN_CREATE_11": 0,
+        "AIDD_DOCS_CREATE_11": 0,
+        "AIDD_GLOBAL_UPDATE_11": 1,
+        "AIDD_DOMAIN_UPDATE_11": 0,
+        "AIDD_DOCS_UPDATE_11": 0
+      },
+      {
+        "AIDD_GLOBAL_CREATE_11": 0,
+        "AIDD_DOMAIN_CREATE_11": 0,
+        "AIDD_DOCS_CREATE_11": 0,
+        "AIDD_GLOBAL_UPDATE_11": 1,
+        "AIDD_DOMAIN_UPDATE_11": 1,
+        "AIDD_DOCS_UPDATE_11": 0
+      }
+    ],
+    "complete_bodies_checked": [
+      "global",
+      "domain"
+    ],
+    "request_paths": [
+      "/v1/messages?beta=true",
+      "/v1/messages?beta=true"
+    ],
+    "pass": true
+  },
+  {
+    "case": "claude-update-src_domain_nested_item.ts-project",
+    "exit": 0,
+    "counts": [
+      {
+        "AIDD_GLOBAL_CREATE_11": 0,
+        "AIDD_DOMAIN_CREATE_11": 0,
+        "AIDD_DOCS_CREATE_11": 0,
+        "AIDD_GLOBAL_UPDATE_11": 1,
+        "AIDD_DOMAIN_UPDATE_11": 0,
+        "AIDD_DOCS_UPDATE_11": 0
+      },
+      {
+        "AIDD_GLOBAL_CREATE_11": 0,
+        "AIDD_DOMAIN_CREATE_11": 0,
+        "AIDD_DOCS_CREATE_11": 0,
+        "AIDD_GLOBAL_UPDATE_11": 1,
+        "AIDD_DOMAIN_UPDATE_11": 1,
+        "AIDD_DOCS_UPDATE_11": 0
+      }
+    ],
+    "complete_bodies_checked": [
+      "global",
+      "domain"
+    ],
+    "request_paths": [
+      "/v1/messages?beta=true",
+      "/v1/messages?beta=true"
+    ],
+    "pass": true
+  },
+  {
+    "case": "claude-update-docs_overview.md-project",
+    "exit": 0,
+    "counts": [
+      {
+        "AIDD_GLOBAL_CREATE_11": 0,
+        "AIDD_DOMAIN_CREATE_11": 0,
+        "AIDD_DOCS_CREATE_11": 0,
+        "AIDD_GLOBAL_UPDATE_11": 1,
+        "AIDD_DOMAIN_UPDATE_11": 0,
+        "AIDD_DOCS_UPDATE_11": 0
+      },
+      {
+        "AIDD_GLOBAL_CREATE_11": 0,
+        "AIDD_DOMAIN_CREATE_11": 0,
+        "AIDD_DOCS_CREATE_11": 0,
+        "AIDD_GLOBAL_UPDATE_11": 1,
+        "AIDD_DOMAIN_UPDATE_11": 0,
+        "AIDD_DOCS_UPDATE_11": 1
+      }
+    ],
+    "complete_bodies_checked": [
+      "global",
+      "docs"
+    ],
+    "request_paths": [
+      "/v1/messages?beta=true",
+      "/v1/messages?beta=true"
+    ],
+    "pass": true
+  },
+  {
+    "case": "claude-delete-src_domain_invoice.ts-project",
+    "exit": 0,
+    "counts": [
+      {
+        "AIDD_GLOBAL_CREATE_11": 0,
+        "AIDD_DOMAIN_CREATE_11": 0,
+        "AIDD_DOCS_CREATE_11": 0,
+        "AIDD_GLOBAL_UPDATE_11": 0,
+        "AIDD_DOMAIN_UPDATE_11": 0,
+        "AIDD_DOCS_UPDATE_11": 0
+      },
+      {
+        "AIDD_GLOBAL_CREATE_11": 0,
+        "AIDD_DOMAIN_CREATE_11": 0,
+        "AIDD_DOCS_CREATE_11": 0,
+        "AIDD_GLOBAL_UPDATE_11": 0,
+        "AIDD_DOMAIN_UPDATE_11": 0,
+        "AIDD_DOCS_UPDATE_11": 0
+      }
+    ],
+    "complete_bodies_checked": [],
+    "request_paths": [
+      "/v1/messages?beta=true",
+      "/v1/messages?beta=true"
+    ],
+    "pass": true
+  },
+  {
+    "case": "codex-create-src_domain_invoice.ts-project",
+    "exit": 0,
+    "counts": [
+      {
+        "AIDD_GLOBAL_CREATE_11": 1,
+        "AIDD_DOMAIN_CREATE_11": 1,
+        "AIDD_DOCS_CREATE_11": 1,
+        "AIDD_GLOBAL_UPDATE_11": 0,
+        "AIDD_DOMAIN_UPDATE_11": 0,
+        "AIDD_DOCS_UPDATE_11": 0
+      }
+    ],
+    "complete_bodies_checked": [
+      "global",
+      "domain",
+      "docs"
+    ],
+    "request_paths": [
+      "/v1/responses"
+    ],
+    "pass": true
+  },
+  {
+    "case": "codex-update-src_domain_invoice.ts-project",
+    "exit": 0,
+    "counts": [
+      {
+        "AIDD_GLOBAL_CREATE_11": 0,
+        "AIDD_DOMAIN_CREATE_11": 0,
+        "AIDD_DOCS_CREATE_11": 0,
+        "AIDD_GLOBAL_UPDATE_11": 1,
+        "AIDD_DOMAIN_UPDATE_11": 1,
+        "AIDD_DOCS_UPDATE_11": 1
+      }
+    ],
+    "complete_bodies_checked": [
+      "global",
+      "domain",
+      "docs"
+    ],
+    "request_paths": [
+      "/v1/responses"
+    ],
+    "pass": true
+  },
+  {
+    "case": "codex-delete-src_domain_invoice.ts-project",
+    "exit": 0,
+    "counts": [
+      {
+        "AIDD_GLOBAL_CREATE_11": 0,
+        "AIDD_DOMAIN_CREATE_11": 0,
+        "AIDD_DOCS_CREATE_11": 0,
+        "AIDD_GLOBAL_UPDATE_11": 0,
+        "AIDD_DOMAIN_UPDATE_11": 0,
+        "AIDD_DOCS_UPDATE_11": 0
+      }
+    ],
+    "complete_bodies_checked": [],
+    "request_paths": [
+      "/v1/responses"
+    ],
+    "pass": true
+  },
+  {
+    "case": "opencode-create-src_domain_invoice.ts-project",
+    "exit": 0,
+    "counts": [
+      {
+        "AIDD_GLOBAL_CREATE_11": 0,
+        "AIDD_DOMAIN_CREATE_11": 0,
+        "AIDD_DOCS_CREATE_11": 0,
+        "AIDD_GLOBAL_UPDATE_11": 0,
+        "AIDD_DOMAIN_UPDATE_11": 0,
+        "AIDD_DOCS_UPDATE_11": 0
+      },
+      {
+        "AIDD_GLOBAL_CREATE_11": 1,
+        "AIDD_DOMAIN_CREATE_11": 1,
+        "AIDD_DOCS_CREATE_11": 1,
+        "AIDD_GLOBAL_UPDATE_11": 0,
+        "AIDD_DOMAIN_UPDATE_11": 0,
+        "AIDD_DOCS_UPDATE_11": 0
+      }
+    ],
+    "complete_bodies_checked": [
+      "global",
+      "domain",
+      "docs"
+    ],
+    "request_paths": [
+      "/v1/chat/completions",
+      "/v1/chat/completions"
+    ],
+    "pass": true
+  },
+  {
+    "case": "opencode-update-src_domain_invoice.ts-project",
+    "exit": 0,
+    "counts": [
+      {
+        "AIDD_GLOBAL_CREATE_11": 0,
+        "AIDD_DOMAIN_CREATE_11": 0,
+        "AIDD_DOCS_CREATE_11": 0,
+        "AIDD_GLOBAL_UPDATE_11": 0,
+        "AIDD_DOMAIN_UPDATE_11": 0,
+        "AIDD_DOCS_UPDATE_11": 0
+      },
+      {
+        "AIDD_GLOBAL_CREATE_11": 0,
+        "AIDD_DOMAIN_CREATE_11": 0,
+        "AIDD_DOCS_CREATE_11": 0,
+        "AIDD_GLOBAL_UPDATE_11": 1,
+        "AIDD_DOMAIN_UPDATE_11": 1,
+        "AIDD_DOCS_UPDATE_11": 1
+      }
+    ],
+    "complete_bodies_checked": [
+      "global",
+      "domain",
+      "docs"
+    ],
+    "request_paths": [
+      "/v1/chat/completions",
+      "/v1/chat/completions"
+    ],
+    "pass": true
+  },
+  {
+    "case": "opencode-delete-src_domain_invoice.ts-project",
+    "exit": 0,
+    "counts": [
+      {
+        "AIDD_GLOBAL_CREATE_11": 0,
+        "AIDD_DOMAIN_CREATE_11": 0,
+        "AIDD_DOCS_CREATE_11": 0,
+        "AIDD_GLOBAL_UPDATE_11": 0,
+        "AIDD_DOMAIN_UPDATE_11": 0,
+        "AIDD_DOCS_UPDATE_11": 0
+      },
+      {
+        "AIDD_GLOBAL_CREATE_11": 0,
+        "AIDD_DOMAIN_CREATE_11": 0,
+        "AIDD_DOCS_CREATE_11": 0,
+        "AIDD_GLOBAL_UPDATE_11": 0,
+        "AIDD_DOMAIN_UPDATE_11": 0,
+        "AIDD_DOCS_UPDATE_11": 0
+      }
+    ],
+    "complete_bodies_checked": [],
+    "request_paths": [
+      "/v1/chat/completions",
+      "/v1/chat/completions"
+    ],
+    "pass": true
+  }
+]

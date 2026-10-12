@@ -1,0 +1,53 @@
+[
+  {
+    "host": "codex",
+    "phase": "create",
+    "requests": 1,
+    "completeBodyOccurrencesPerRequest": [
+      1
+    ]
+  },
+  {
+    "host": "codex",
+    "phase": "update",
+    "requests": 1,
+    "completeBodyOccurrencesPerRequest": [
+      1
+    ]
+  },
+  {
+    "host": "codex",
+    "phase": "delete",
+    "requests": 1,
+    "completeBodyOccurrencesPerRequest": [
+      0
+    ]
+  },
+  {
+    "host": "opencode",
+    "phase": "create",
+    "requests": 2,
+    "completeBodyOccurrencesPerRequest": [
+      0,
+      1
+    ]
+  },
+  {
+    "host": "opencode",
+    "phase": "update",
+    "requests": 2,
+    "completeBodyOccurrencesPerRequest": [
+      0,
+      1
+    ]
+  },
+  {
+    "host": "opencode",
+    "phase": "delete",
+    "requests": 2,
+    "completeBodyOccurrencesPerRequest": [
+      0,
+      0
+    ]
+  }
+]

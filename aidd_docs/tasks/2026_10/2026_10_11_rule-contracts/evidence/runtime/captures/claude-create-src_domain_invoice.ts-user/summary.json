@@ -1,0 +1,30 @@
+{
+  "host": "claude",
+  "command": [
+    "/Users/baptistelafourcade/.local/share/claude/versions/2.1.295",
+    "-p",
+    "Read src/domain/invoice.ts once, then reply LOCAL_OK.",
+    "--model",
+    "claude-sonnet-4-6",
+    "--setting-sources",
+    "user",
+    "--no-session-persistence",
+    "--disable-slash-commands",
+    "--tools",
+    "Read",
+    "--allowedTools",
+    "Read",
+    "--strict-mcp-config",
+    "--mcp-config",
+    "{\"mcpServers\":{}}",
+    "--output-format",
+    "stream-json",
+    "--verbose"
+  ],
+  "exit": 0,
+  "requests": 2,
+  "paths": [
+    "/v1/messages?beta=true",
+    "/v1/messages?beta=true"
+  ]
+}

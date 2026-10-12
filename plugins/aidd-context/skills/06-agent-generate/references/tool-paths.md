@@ -16,14 +16,14 @@ Agents are supported on all five tools.
 
 ## Frontmatter per tool
 
-The canonical agent carries `name`, `description`, `model`. Emit those a row accepts, drop the rest. Optional fields (also listed) only if the user asked. Never invent a value.
+The canonical agent carries `name` and `description`. Emit those a row accepts, drop the rest. Optional fields, including `model`, only if the user asked. Never invent a value.
 
 | Tool           | Accepts                                                      |
 | -------------- | ----------------------------------------------------------- |
-| Claude Code    | `name`, `description`, `model`, optional `color`, `tools`   |
-| Cursor         | `name`, `description`, `model`, optional `readonly`, `is_background` |
-| OpenCode       | `name`, `description`, `model`, optional `temperature`, `permission` |
-| GitHub Copilot | `name`, `description`, `model`, optional `tools`            |
+| Claude Code    | `name`, `description`, optional `model`, `color`, `tools`   |
+| Cursor         | `name`, `description`, optional `model`, `readonly`, `is_background` |
+| OpenCode       | `name`, `description`, optional `model`, `temperature`, `permission` |
+| GitHub Copilot | `name`, `description`, optional `model`, `tools`            |
 | Codex CLI      | `name`, `description` (drops `model`)                       |
 
 ## Codex TOML conversion

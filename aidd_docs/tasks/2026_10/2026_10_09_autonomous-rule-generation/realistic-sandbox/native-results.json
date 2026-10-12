@@ -1,0 +1,220 @@
+{
+  "date": "2026-10-09",
+  "platform": "macOS arm64",
+  "writer": {
+    "bytes": 14069,
+    "sha256": "9fa10479a267d899a6a024f68e75573f1d009080cd60851f23f06c8f2d190591",
+    "changedDuringNativeValidation": false
+  },
+  "deterministic": {
+    "hosts": [
+      "claude",
+      "cursor",
+      "copilot",
+      "codex",
+      "opencode",
+      "mixed"
+    ],
+    "installedScriptSelections": 10,
+    "lifecycleInvocations": 78,
+    "negativeCases": 12,
+    "baselineApplicationPasses": 54,
+    "cleanupCliExits": [
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "status": "pass",
+    "evidence": "deterministic-results.json"
+  },
+  "native": {
+    "codex": {
+      "version": "0.160.1",
+      "status": "pass",
+      "distinctThreads": 7,
+      "stageExits": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "applicationPasses": [
+        9,
+        13,
+        13,
+        13,
+        16,
+        16,
+        19
+      ],
+      "evidence": "native-evidence/codex/summary.json",
+      "scope": "AGENTS prose/model guidance"
+    },
+    "opencode": {
+      "version": "2.0.22",
+      "model": "openai/gpt-6-luna#low",
+      "status": "pass-after-instruction-repair",
+      "sessions": 11,
+      "initialLiteralFailureRetained": true,
+      "fullInitialAGENTSUnchanged": false,
+      "outsideMemoryBlockUnchanged": true,
+      "hookConvergedAGENTSBytes": 304,
+      "additionalAuthorDeleteAGENTSByteEqual": true,
+      "evidence": "native-evidence/opencode/observations.json",
+      "scope": "AGENTS prose/model guidance"
+    },
+    "copilot": {
+      "version": "1.0.83",
+      "model": "auto -> gpt-6-luna",
+      "status": "pass-cumulative-three-clones",
+      "exactUpdateApplicationPasses": 38,
+      "postDeleteApplicationPasses": 39,
+      "nativeDeletionViaInstalledWriter": true,
+      "initialFailuresRetained": true,
+      "evidence": "native-evidence/copilot/journey-report.json"
+    },
+    "claude": {
+      "version": "2.1.295",
+      "model": "claude-sonnet-5-5",
+      "status": "pass-observed-cumulative-with-normal-settings-controls",
+      "additionalNativeSessions": 3,
+      "additionalStageExits": [
+        0,
+        0,
+        0
+      ],
+      "applicationPasses": [
+        82,
+        69,
+        83
+      ],
+      "nativeDeletionViaInstalledWriter": true,
+      "onlyCanonicalAndNativeDeleted": true,
+      "oldRuleRebuiltFromRealAuthorRequestAndByteIdentical": true,
+      "currentInstalledDocsLocallyRefreshed": 7,
+      "originalRestrictedHarnessFailuresRetained": true,
+      "postDeleteApplicationRetry": "same test files, --test-isolation=none after worker EAGAIN; no source edits or additional model",
+      "nativeInjectedContextBodiesCaptured": false,
+      "privateOAuthHomeRemoved": true,
+      "evidence": "native-evidence/claude/additional/claude-native-additional-report.json"
+    },
+    "cursor": {
+      "version": "2026.09.08-6caf4ff",
+      "model": "auto; underlying model not established by selected receipts",
+      "status": "partial-native-proof-final-session-stopped-by-included-quota",
+      "initialNamedModelRejectedBeforeInference": true,
+      "initialUnquotedLiteralAmbiguityRetained": true,
+      "initialUpdatedBodyContainedTrailingPeriod": true,
+      "currentExactOldLiteralAuthorAndConsumer": true,
+      "nativeDeletionViaInstalledWriter": true,
+      "postDeleteNewFunctionMarkerAbsent": true,
+      "postDeleteApplicationExit": 0,
+      "finalConversationExit": 1,
+      "finalConversationFailure": "ActionRequiredError: usage limit",
+      "exactUpdatedLiteralFinalNativeControlEstablished": false,
+      "additionalInferenceAfterQuotaLimit": 0,
+      "purchases": 0,
+      "fullNativeJourneyCompleted": false,
+      "evidence": "native-evidence/cursor/cursor-journey-report.json",
+      "privateOAuthProfileRemoved": true,
+      "finalApplicationPasses": 15,
+      "currentExactControlStageExits": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "currentExactControlApplicationPasses": [
+        9,
+        12,
+        12,
+        15
+      ]
+    }
+  },
+  "budget": {
+    "authorization": "existing subscription quotas only; no purchases or paid overages",
+    "purchases": 0,
+    "upgrades": 0,
+    "apiKeyFallbacks": 0,
+    "openAI": {
+      "includedAllowed": true,
+      "weeklyUsedPercentAtProbe": 73,
+      "purchasedCredits": false,
+      "balance": "0"
+    },
+    "claude": {
+      "extraUsageEnabled": false
+    },
+    "copilot": {
+      "overagePermitted": false,
+      "overageCount": 0,
+      "includedFinal": "192/200"
+    },
+    "cursor": {
+      "usageBasedPremiumRequests": false
+    }
+  },
+  "localCorrections": [
+    "installed skill script resolution",
+    "preserve exact requested literals over word limit",
+    "delete skill discovery, routing and operation-aware validation"
+  ],
+  "bounds": [
+    "native proofs cumulative across documented revisions and retries",
+    "no Linux/Windows runtime evidence",
+    "shared scopes are model guidance",
+    "OpenCode session memory hook owns memory-block normalization",
+    "no multi-file I/O rollback or concurrent-writer guarantee",
+    "Cursor native journey not complete"
+  ],
+  "newCommitOrPush": false,
+  "finalPortableSmoke": {
+    "node": "26.8.2",
+    "stageExits": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "cleanupCliExits": [
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "evidence": "native-evidence/final-reproduction/results.json"
+  },
+  "currentFocusedChecks": {
+    "fullRerun": {
+      "pass": 39,
+      "fail": 2,
+      "exit": 1,
+      "failedChildStatuses": [
+        null,
+        null
+      ]
+    },
+    "targetedRetry": {
+      "pass": 2,
+      "fail": 0,
+      "exit": 0
+    },
+    "evidence": "test-validation.json"
+  },
+  "overallNativeStatus": "Four complete observed journeys; Cursor partial under included quota",
+  "allNativeJourneysCompleted": false,
+  "independentReview": {
+    "openFindings": 0,
+    "documentationAndEvidenceCriteria": "7/7",
+    "completeObservedNativeHosts": 4,
+    "totalHosts": 5,
+    "evidence": "final-checks.json"
+  }
+}

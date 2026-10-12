@@ -1,21 +1,26 @@
 # 03 - Finalize
 
-Run the validation and mark the plan implemented once every phase is done.
-
 ## Input
 
-A plan whose phases are all `status: done`, from `02-execute`.
+The coded plan.
 
 ## Output
 
-The feature validated green with the plan frontmatter `status: implemented`.
+The validated plan marked `implemented`.
 
 ## Process
 
-1. **Verify.** Run the plan's validation commands and tests. Never format code, never run dev mode.
-2. **Mark.** Every phase done and validation green, set the plan `status: implemented` and commit it.
+1. **Verify.** Run the plan's validation commands and tests.
+   - Start the required runtime if needed.
+2. **Mark.** Set the plan `status: implemented`.
+   - Commit according to the commit policy.
 
-## Test
+## Rules
 
-- The validation commands exit zero.
-- The plan reads `status: implemented`, committed (`git status --short` shows it clean).
+- Gate `implemented` on successful validation.
+  - Require every phase `done`.
+  - Require all validation commands and tests to pass.
+- Repair validation failures before `implemented`.
+  - Rerun the affected workflow after a repair.
+  - Rerun the validation commands and tests.
+  - Follow Execute's validation, blocker and drift rules.

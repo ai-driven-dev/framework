@@ -1,0 +1,17 @@
+{
+  "changedFiles": [
+    "tests/discount.test.ts",
+    "src/domain/discount.ts"
+  ],
+  "markerProof": [
+    {
+      "file": "src/domain/discount.ts",
+      "line": 4,
+      "declaration": "export function calculateDiscountCents(totalCents: number, percent: number): number {",
+      "precedingComment": "// Team reviewed domain change",
+      "exact": true
+    }
+  ],
+  "nativeConversation": "cursor-exact-02",
+  "testsExit": 0
+}

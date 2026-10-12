@@ -1,0 +1,26 @@
+[
+  {
+    "id": "call_1",
+    "type": "function",
+    "function": {
+      "name": "view",
+      "arguments": "{\"path\": \"/private/tmp/aidd-oct11-copilot-probe-3svb9u/indexed-evidence/create-domain/project/src/domain/invoice.ts\"}"
+    }
+  },
+  {
+    "id": "call_1",
+    "type": "function",
+    "function": {
+      "name": "view",
+      "arguments": "{\"path\": \"/private/tmp/aidd-oct11-copilot-probe-3svb9u/indexed-evidence/create-domain/project/src/domain/invoice.ts\"}"
+    }
+  },
+  {
+    "id": "call_2",
+    "type": "function",
+    "function": {
+      "name": "view",
+      "arguments": "{\"path\": \"/private/tmp/aidd-oct11-copilot-probe-3svb9u/indexed-evidence/create-domain/project/.github/instructions/08-domain-probe.instructions.md\"}"
+    }
+  }
+]

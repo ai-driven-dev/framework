@@ -4,8 +4,9 @@
 // `N skill(s)` code-span after that plugin's heading. `--check` reports instead of writing.
 
 import { readFileSync, writeFileSync, readdirSync, existsSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 
-const ROOT = new URL("..", import.meta.url).pathname;
+const ROOT = fileURLToPath(new URL("..", import.meta.url));
 const README = ROOT + "README.md";
 const PLUGINS = ROOT + "plugins";
 

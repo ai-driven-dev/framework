@@ -1,0 +1,205 @@
+{
+  "date": "2026-10-11",
+  "sessionCount": 18,
+  "allExitZero": true,
+  "requestCount": 40,
+  "allProviderPaths": [
+    [
+      "/v1/chat/completions"
+    ]
+  ],
+  "allAgentsByteExact": true,
+  "originalAgentsBytes": 378,
+  "writerSha256": "70783e579b75b9e22760239cbfd4309641bdd73840b17e7dfd606a252679a420",
+  "baselineExpectedBodyChecksFailed": [
+    "create-domain",
+    "create-docs",
+    "update-domain",
+    "update-docs"
+  ],
+  "explicitIndexReadAllChecks": true,
+  "finalNativeAndCanonicalDeleted": true,
+  "secretPatternMatches": [],
+  "checks": [
+    {
+      "mode": "evidence",
+      "case": "create-domain",
+      "requests": 2,
+      "paths": [
+        "/v1/chat/completions"
+      ],
+      "exit": 0,
+      "agentsExact": true
+    },
+    {
+      "mode": "evidence",
+      "case": "create-docs",
+      "requests": 2,
+      "paths": [
+        "/v1/chat/completions"
+      ],
+      "exit": 0,
+      "agentsExact": true
+    },
+    {
+      "mode": "evidence",
+      "case": "create-outside",
+      "requests": 2,
+      "paths": [
+        "/v1/chat/completions"
+      ],
+      "exit": 0,
+      "agentsExact": true
+    },
+    {
+      "mode": "evidence",
+      "case": "update-domain",
+      "requests": 2,
+      "paths": [
+        "/v1/chat/completions"
+      ],
+      "exit": 0,
+      "agentsExact": true
+    },
+    {
+      "mode": "evidence",
+      "case": "update-docs",
+      "requests": 2,
+      "paths": [
+        "/v1/chat/completions"
+      ],
+      "exit": 0,
+      "agentsExact": true
+    },
+    {
+      "mode": "evidence",
+      "case": "update-outside",
+      "requests": 2,
+      "paths": [
+        "/v1/chat/completions"
+      ],
+      "exit": 0,
+      "agentsExact": true
+    },
+    {
+      "mode": "evidence",
+      "case": "delete-domain",
+      "requests": 2,
+      "paths": [
+        "/v1/chat/completions"
+      ],
+      "exit": 0,
+      "agentsExact": true
+    },
+    {
+      "mode": "evidence",
+      "case": "delete-docs",
+      "requests": 2,
+      "paths": [
+        "/v1/chat/completions"
+      ],
+      "exit": 0,
+      "agentsExact": true
+    },
+    {
+      "mode": "evidence",
+      "case": "delete-outside",
+      "requests": 2,
+      "paths": [
+        "/v1/chat/completions"
+      ],
+      "exit": 0,
+      "agentsExact": true
+    },
+    {
+      "mode": "indexed-evidence",
+      "case": "create-domain",
+      "requests": 3,
+      "paths": [
+        "/v1/chat/completions"
+      ],
+      "exit": 0,
+      "agentsExact": true
+    },
+    {
+      "mode": "indexed-evidence",
+      "case": "create-docs",
+      "requests": 3,
+      "paths": [
+        "/v1/chat/completions"
+      ],
+      "exit": 0,
+      "agentsExact": true
+    },
+    {
+      "mode": "indexed-evidence",
+      "case": "create-outside",
+      "requests": 2,
+      "paths": [
+        "/v1/chat/completions"
+      ],
+      "exit": 0,
+      "agentsExact": true
+    },
+    {
+      "mode": "indexed-evidence",
+      "case": "update-domain",
+      "requests": 3,
+      "paths": [
+        "/v1/chat/completions"
+      ],
+      "exit": 0,
+      "agentsExact": true
+    },
+    {
+      "mode": "indexed-evidence",
+      "case": "update-docs",
+      "requests": 3,
+      "paths": [
+        "/v1/chat/completions"
+      ],
+      "exit": 0,
+      "agentsExact": true
+    },
+    {
+      "mode": "indexed-evidence",
+      "case": "update-outside",
+      "requests": 2,
+      "paths": [
+        "/v1/chat/completions"
+      ],
+      "exit": 0,
+      "agentsExact": true
+    },
+    {
+      "mode": "indexed-evidence",
+      "case": "delete-domain",
+      "requests": 2,
+      "paths": [
+        "/v1/chat/completions"
+      ],
+      "exit": 0,
+      "agentsExact": true
+    },
+    {
+      "mode": "indexed-evidence",
+      "case": "delete-docs",
+      "requests": 2,
+      "paths": [
+        "/v1/chat/completions"
+      ],
+      "exit": 0,
+      "agentsExact": true
+    },
+    {
+      "mode": "indexed-evidence",
+      "case": "delete-outside",
+      "requests": 2,
+      "paths": [
+        "/v1/chat/completions"
+      ],
+      "exit": 0,
+      "agentsExact": true
+    }
+  ]
+}
