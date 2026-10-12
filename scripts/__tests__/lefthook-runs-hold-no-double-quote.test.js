@@ -12,12 +12,16 @@ const root = path.resolve(__dirname, "../..");
 test("no run in lefthook.yml holds a double quote", () => {
   const config = yaml.load(fs.readFileSync(path.join(root, "lefthook.yml"), "utf8"));
   const offenders = [];
+  let scanned = 0;
 
   for (const [hook, def] of Object.entries(config)) {
     for (const [name, command] of Object.entries(def?.commands ?? {})) {
+      scanned++;
       if (String(command.run ?? "").includes('"')) offenders.push(`${hook}/${name}`);
     }
   }
 
+  // Zero means the hooks moved to a form this guard does not read, such as `jobs:`.
+  assert.ok(scanned > 0, "no `commands:` run found in lefthook.yml");
   assert.deepEqual(offenders, []);
 });

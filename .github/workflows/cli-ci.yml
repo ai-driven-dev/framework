@@ -520,23 +520,24 @@ jobs:
       - name: Plugin suite
         run: node scripts/check-tests-leave-git-alone.js -- node --test 'scripts/__tests__/**/*.test.js'
 
-      # Lefthook on Windows hands each job to `sh -c` through a command line it builds by hand,
-      # with nothing escaped (#948): a double quote in a `run` truncates the script.
-      # The repository's own pre-commit, every job but the three that need cli/'s dependencies,
-      # then the prepare-commit-msg trailer job. Only lefthook's own breakage
-      # fails this step: a check that runs and finds a problem on Windows is that check's bug,
-      # not this one's.
-      - name: Hooks - the pre-commit runs on Windows without a shell syntax error
+      # What a Windows contributor's commit runs: the pre-commit, every job but the three that
+      # need cli/'s dependencies (Biome there is #881), then the trailer job. Lefthook hands
+      # each job to `sh -c` through a command line it builds by hand, with nothing escaped, so
+      # a double quote in a `run` truncates the script (#948); a check that only fails here is
+      # a Windows bug of its own, and both fail the step.
+      - name: Hooks - a commit's hooks pass on Windows
         run: |
-          LEFTHOOK_EXCLUDE=cli-biome,cli-architecture,cli-typecheck \
-            pnpm exec lefthook run pre-commit --all-files --no-auto-install --no-tty > "$RUNNER_TEMP/pre-commit.log" 2>&1 || true
           echo "# lefthook subject" > "$RUNNER_TEMP/msg"
-          pnpm exec lefthook run prepare-commit-msg "$RUNNER_TEMP/msg" message --no-auto-install --no-tty >> "$RUNNER_TEMP/pre-commit.log" 2>&1 || true
-          cat "$RUNNER_TEMP/pre-commit.log"
-          if grep -n "syntax error" "$RUNNER_TEMP/pre-commit.log"; then
+          status=0
+          LEFTHOOK_EXCLUDE=cli-biome,cli-architecture,cli-typecheck \
+            pnpm exec lefthook run pre-commit --all-files --no-auto-install --no-tty > "$RUNNER_TEMP/hooks.log" 2>&1 || status=1
+          pnpm exec lefthook run prepare-commit-msg "$RUNNER_TEMP/msg" message --no-auto-install --no-tty >> "$RUNNER_TEMP/hooks.log" 2>&1 || status=1
+          cat "$RUNNER_TEMP/hooks.log"
+          if grep -n "syntax error" "$RUNNER_TEMP/hooks.log"; then
             echo "::error::lefthook handed sh a broken command line (#948)"
             exit 1
           fi
+          exit $status
 
       - run: cd cli && pnpm install --frozen-lockfile
       # A real global install, not `node dist/cli.js` by path: nothing else proves `aidd`

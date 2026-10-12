@@ -180,6 +180,7 @@ commit-msg:
 
 # lefthook owns prepare-commit-msg here and regenerates it on install, so `aidd telemetry on`'s
 # delegate is called from a job instead. Absent delegate, nothing runs — opt-in per machine.
+# The run line names `aidd-session-trailer.sh` itself: that name is how `aidd telemetry` finds this job.
 prepare-commit-msg:
   commands:
     aidd-session-trailer:
