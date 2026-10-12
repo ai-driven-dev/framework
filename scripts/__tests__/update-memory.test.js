@@ -663,7 +663,13 @@ for (const mode of ["automatic", "explicit"]) {
               "fs.openSync = function (candidate, ...args) { const fd = originalOpen.call(this, candidate, ...args); if (candidate === target) opened = true; return fd; };",
               "fs.lstatSync = function (candidate, ...args) {",
               "  const stat = originalLstat.call(this, candidate, ...args);",
-              "  if (opened && !injected && candidate === changedPath) { injected = true; process.stderr.write('TEST_IDENTITY_CHANGE_INJECTED\\n'); return { dev: stat.dev, ino: typeof stat.ino === 'bigint' ? stat.ino + 1n : stat.ino + 1, isSymbolicLink: () => stat.isSymbolicLink(), isFile: () => stat.isFile(), isDirectory: () => stat.isDirectory() }; }",
+              "  if (opened && !injected && candidate === changedPath) {",
+              "    if (typeof stat.ino !== 'bigint') throw new Error('identity stat did not request BigInt');",
+              "    const changedIno = stat.ino + 1n;",
+              "    if (changedIno === stat.ino) throw new Error('injected identity did not change');",
+              "    injected = true; process.stderr.write('TEST_IDENTITY_CHANGE_INJECTED\\n');",
+              "    return { dev: stat.dev, ino: changedIno, isSymbolicLink: () => stat.isSymbolicLink(), isFile: () => stat.isFile(), isDirectory: () => stat.isDirectory() };",
+              "  }",
               "  return stat;",
               "}; syncBuiltinESMExports();",
             ].join("\n");
@@ -704,3 +710,59 @@ for (const mode of ["automatic", "explicit"]) {
     });
   }
 }
+
+test("explicit sync distinguishes BigInt parent identities beyond Number precision", () => {
+  const contextPath = ".github/copilot-instructions.md";
+  const privateRoot = fs.mkdtempSync(path.join(os.tmpdir(), "update-memory-bigint-identity-"));
+  const outside = path.join(privateRoot, "outside.md");
+  const initialIno = BigInt(Number.MAX_SAFE_INTEGER) + 1n;
+  const changedIno = initialIno + 1n;
+  fs.writeFileSync(outside, EMPTY_BLOCK);
+  let outsideWitness;
+  let projectWitness;
+  try {
+    outsideWitness = openWitness(outside);
+    inProject({ [contextPath]: EMPTY_BLOCK }, ({ root, invoke }) => {
+      const target = path.join(root, contextPath);
+      const parent = path.dirname(target);
+      projectWitness = openWitness(target);
+      const preload = [
+        "const fs = require('node:fs');",
+        "const { syncBuiltinESMExports } = require('node:module');",
+        "const originalOpen = fs.openSync; const originalLstat = fs.lstatSync; let opened = false; let injected = false;",
+        `const target = ${JSON.stringify(target)};`,
+        `const parent = ${JSON.stringify(parent)};`,
+        `const initialIno = ${initialIno}n; const changedIno = ${changedIno}n;`,
+        "fs.openSync = function (candidate, ...args) { const fd = originalOpen.call(this, candidate, ...args); if (candidate === target) opened = true; return fd; };",
+        "fs.lstatSync = function (candidate, ...args) {",
+        "  const stat = originalLstat.call(this, candidate, ...args);",
+        "  if (candidate !== parent) return stat;",
+        "  const bigint = Boolean(args[0] && args[0].bigint);",
+        "  const initial = bigint ? initialIno : Number(initialIno);",
+        "  if (opened && !injected) {",
+        "    injected = true;",
+        "    const changed = bigint ? changedIno : Number(changedIno);",
+        "    process.stderr.write('TEST_BIGINT_PARENT_IDENTITY_INJECTED\\n');",
+        "    if (changed === initial) throw new Error('TEST_IDENTITY_CHANGE_NOT_DISTINCT');",
+        "    return { dev: stat.dev, ino: changed, isSymbolicLink: () => stat.isSymbolicLink(), isFile: () => stat.isFile(), isDirectory: () => stat.isDirectory() };",
+        "  }",
+        "  return { dev: stat.dev, ino: initial, isSymbolicLink: () => stat.isSymbolicLink(), isFile: () => stat.isFile(), isDirectory: () => stat.isDirectory() };",
+        "}; syncBuiltinESMExports();",
+      ].join("\n");
+      const result = invoke.withRace(preload, ["copilot"]);
+      assert.equal(Number(initialIno), Number(changedIno));
+      assert.notEqual(initialIno, changedIno);
+      assert.equal(result.status, 1, result.stderr);
+      assert.match(result.stderr, /path changed while opening/u);
+      assert.match(result.stderr, /TEST_BIGINT_PARENT_IDENTITY_INJECTED/u);
+      assertWitnessUnchanged(projectWitness);
+      assertWitnessUnchanged(outsideWitness);
+      closeWitness(projectWitness);
+      projectWitness = undefined;
+    });
+  } finally {
+    closeWitness(projectWitness);
+    closeWitness(outsideWitness);
+    fs.rmSync(privateRoot, { recursive: true, force: true });
+  }
+});
