@@ -15,18 +15,20 @@ The task and the ticket come only from what you declare. Nothing guesses them fr
 
 ## What it asks, and when
 
-Once per working branch, before any token of the work is spent, it asks for a task name and an optional ticket. You answer either way:
+Once per working branch, before the work starts: a task name, an optional ticket.
 
-- `! aidd telemetry task <name> [--ticket <ref>]` in the terminal;
-- `aidd telemetry task <name> [--ticket <ref>]` typed as a prompt, which never reaches the model, where it asks;
-- `aidd telemetry task --none` when the work has no task.
+| Where | Asked | Declare with |
+| --- | --- | --- |
+| Terminal, desktop app | yes | `aidd telemetry task <name> [--ticket <ref>]` as a prompt (never reaches the model); terminal: also `! aidd …` |
+| IDE extension (seen: VS Code) | no, it shows no hook message | the same command in a terminal: binds the branch |
+| Headless run | no | - |
 
-It never asks, and never blocks:
+No task: `aidd telemetry task --none`.
 
-- on the default branch or a detached `HEAD`;
-- in a headless run, or when Claude Code does not report a person present;
-- in the VS Code extension, which shows no hook message, so it could not ask you. Declare from a terminal in the repository instead, `aidd telemetry task <name> [--ticket <ref>]`, which binds the working branch;
-- in a clone that is not measured: consent is per clone, a key in its git config (`aidd.telemetry`, never committed) together with an open interval that `aidd telemetry on` recorded for that very clone. A teammate who pulls the repository, a copy made with `cp -R`, a clone made again or moved, or a key set by hand is not measured, asked or blocked until `aidd telemetry on` is run there.
+Never asked:
+
+- default branch or detached `HEAD`;
+- clone not measured: run `aidd telemetry on` in it first. A pulled repository, a copy, a moved clone or a hand-set key is not measured.
 
 After `/clear` or `/branch` the new session keeps the task and tells you so. Declaring a task there replaces it for the whole session. Work with no task is a row of its own, and is attributed afterwards once its branch is declared.
 

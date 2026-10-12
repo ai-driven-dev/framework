@@ -119,7 +119,7 @@ Sub-agent and advisor calls name their parent's session and follow it.
 
 - the payload is Claude's own: its `session_id` equals `CLAUDE_CODE_SESSION_ID` and its `transcript_path` runs under a `projects` directory;
 - this clone is measured (its key `aidd.telemetry` names an interval open in the consent log for this clone, see Consent), and `AIDD_TELEMETRY` is not `0`;
-- a person is present: `CLAUDE_CODE_SESSION_ATTENDED` is `1` and `CLAUDE_CODE_ENTRYPOINT` is `cli` (the terminal) or `claude-desktop` (the desktop app), the two surfaces seen to show a block's reason. Both are undocumented, so either missing or different means nobody is asked, never that work is blocked. The VS Code extension sets no `ATTENDED` and shows no hook message, so nobody is asked there: its work is attributed by a branch declared elsewhere, else unattributed;
+- a person is present: `CLAUDE_CODE_SESSION_ATTENDED` is `1` and `CLAUDE_CODE_ENTRYPOINT` is `cli` or `claude-desktop`, the surfaces seen to show a hook's message. Anything else is not asked, an IDE extension included (seen: VS Code shows none);
 - the branch is a working branch, with no declaration for the session or the branch;
 - `aidd` is on `PATH` and knows `telemetry task`. Without it nothing is asked.
 

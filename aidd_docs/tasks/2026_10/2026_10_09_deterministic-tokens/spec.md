@@ -36,11 +36,9 @@ coming only from what a person declared, with the previous telemetry removed ent
   (terminal, IDE extension, desktop app), including those without a shell mode. Answering is
   never itself blocked and never reaches the model. A session with nobody present, or whose
   presence is unknown, is never blocked.
-  > **Deviation, 2026-10-12, maintainer decision.** The VS Code extension is not asked. Observed
-  > there: no `CLAUDE_CODE_SESSION_ATTENDED`, and no hook message is shown, neither a block's
-  > reason nor a `systemMessage`, so a block would eat the prompt silently. Its work is
-  > attributed by a branch declared from a terminal, else unattributed with its reason. Evidence
-  > in [target.md](context/target.md).
+  > **Deviation, 2026-10-12, maintainer decision.** IDE extensions are not asked: VS Code shows
+  > no hook message, so a block would eat the prompt. Declare in a terminal; it binds the branch.
+  > Evidence: [target.md](context/target.md).
 - A session started by `/clear` keeps the task of the session it replaced, says so to the
   person, and a later declaration in it re-attributes the whole session.
 - Work with no declared task is its own row, with the reason it has none, and is attributed
