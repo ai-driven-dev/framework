@@ -1,0 +1,229 @@
+[
+  {
+    "run": "cursor-01",
+    "exit": 0,
+    "timeout": false,
+    "durationSeconds": 103.31,
+    "tools": 42,
+    "tests": 9,
+    "testsExit": 0,
+    "usage": {
+      "inputTokens": 26685,
+      "outputTokens": 4366,
+      "cacheReadTokens": 208192,
+      "cacheWriteTokens": 0
+    },
+    "nativeFinalResult": true,
+    "model": "Auto",
+    "backendModel": "not exposed by native CLI JSON",
+    "session": "7116dbbb-0e5e-4a15-b79c-61b06cda7320"
+  },
+  {
+    "run": "cursor-02",
+    "exit": 0,
+    "timeout": false,
+    "durationSeconds": 93.88,
+    "tools": 26,
+    "tests": 20,
+    "testsExit": 0,
+    "usage": {
+      "inputTokens": 23496,
+      "outputTokens": 3071,
+      "cacheReadTokens": 96128,
+      "cacheWriteTokens": 0
+    },
+    "nativeFinalResult": true,
+    "model": "Auto",
+    "backendModel": "not exposed by native CLI JSON",
+    "session": "1f914936-0834-440f-894e-336aa9f1ff19"
+  },
+  {
+    "run": "cursor-03",
+    "exit": 0,
+    "timeout": false,
+    "durationSeconds": 23.59,
+    "tools": 12,
+    "tests": 20,
+    "testsExit": 0,
+    "usage": {
+      "inputTokens": 18688,
+      "outputTokens": 664,
+      "cacheReadTokens": 51840,
+      "cacheWriteTokens": 0
+    },
+    "nativeFinalResult": true,
+    "model": "Auto",
+    "backendModel": "not exposed by native CLI JSON",
+    "session": "d001b55e-83e7-4dbc-bc6f-ae5ff4896ebb"
+  },
+  {
+    "run": "cursor-04",
+    "exit": 143,
+    "timeout": true,
+    "durationSeconds": 182.09,
+    "tools": 37,
+    "tests": 20,
+    "testsExit": 0,
+    "usage": null,
+    "nativeFinalResult": false,
+    "model": "Auto",
+    "backendModel": "not exposed by native CLI JSON",
+    "session": "97e9448e-40eb-48c3-9ae1-22dd7354fd1b"
+  },
+  {
+    "run": "cursor-05",
+    "exit": 143,
+    "timeout": true,
+    "durationSeconds": 182.3,
+    "tools": 12,
+    "tests": 20,
+    "testsExit": 0,
+    "usage": null,
+    "nativeFinalResult": false,
+    "model": "Auto",
+    "backendModel": "not exposed by native CLI JSON",
+    "session": "98880902-c210-4461-81cc-36fc71b668ab"
+  },
+  {
+    "run": "cursor-06",
+    "exit": 143,
+    "timeout": true,
+    "durationSeconds": 186.14,
+    "tools": 3,
+    "tests": 20,
+    "testsExit": 0,
+    "usage": null,
+    "nativeFinalResult": false,
+    "model": "Auto",
+    "backendModel": "not exposed by native CLI JSON",
+    "session": "08d6c2c2-2176-40c4-a78e-bb3d7fb8021b"
+  },
+  {
+    "run": "cursor-retry-05",
+    "exit": 0,
+    "timeout": false,
+    "durationSeconds": 124.34,
+    "tools": 22,
+    "tests": 31,
+    "testsExit": 0,
+    "usage": {
+      "inputTokens": 903,
+      "outputTokens": 225,
+      "cacheReadTokens": 18944,
+      "cacheWriteTokens": 0
+    },
+    "nativeFinalResult": true,
+    "model": "Auto",
+    "backendModel": "not exposed by native CLI JSON",
+    "session": "3a9d3ef4-6de1-4faf-94ed-59cc0170f99c"
+  },
+  {
+    "run": "cursor-retry-06",
+    "exit": 0,
+    "timeout": false,
+    "durationSeconds": 137.25,
+    "tools": 32,
+    "tests": 31,
+    "testsExit": 0,
+    "usage": {
+      "inputTokens": 33383,
+      "outputTokens": 3028,
+      "cacheReadTokens": 137056,
+      "cacheWriteTokens": 0
+    },
+    "nativeFinalResult": true,
+    "model": "Auto",
+    "backendModel": "not exposed by native CLI JSON",
+    "session": "faaa64cd-46bb-4ff3-983f-55c465931ec6"
+  },
+  {
+    "run": "cursor-retry-07",
+    "exit": 0,
+    "timeout": false,
+    "durationSeconds": 106.99,
+    "tools": 29,
+    "tests": 42,
+    "testsExit": 0,
+    "usage": {
+      "inputTokens": 35371,
+      "outputTokens": 2306,
+      "cacheReadTokens": 108448,
+      "cacheWriteTokens": 0
+    },
+    "nativeFinalResult": true,
+    "model": "Auto",
+    "backendModel": "not exposed by native CLI JSON",
+    "session": "f67ce053-24ff-4f53-ade5-b5f01cb85568"
+  },
+  {
+    "run": "cursor-exact-01",
+    "exit": 0,
+    "timeout": false,
+    "durationSeconds": 90.19,
+    "tools": 28,
+    "tests": 9,
+    "testsExit": 0,
+    "usage": {
+      "inputTokens": 109439,
+      "outputTokens": 2351,
+      "cacheReadTokens": 21760,
+      "cacheWriteTokens": 0
+    },
+    "nativeFinalResult": true,
+    "model": "Auto",
+    "backendModel": "not exposed by native CLI JSON",
+    "session": "bcafc3b0-553b-46b1-b776-af2b85eb7efb"
+  },
+  {
+    "run": "cursor-exact-02",
+    "exit": 0,
+    "timeout": false,
+    "durationSeconds": 110.66,
+    "tools": 43,
+    "tests": 12,
+    "testsExit": 0,
+    "usage": {
+      "inputTokens": 14466,
+      "outputTokens": 3093,
+      "cacheReadTokens": 235392,
+      "cacheWriteTokens": 0
+    },
+    "nativeFinalResult": true,
+    "model": "Auto",
+    "backendModel": "not exposed by native CLI JSON",
+    "session": "c62f06d4-b873-4a60-a313-1246ba214d6d"
+  },
+  {
+    "run": "cursor-exact-03",
+    "exit": 0,
+    "timeout": false,
+    "durationSeconds": 139.37,
+    "tools": 30,
+    "tests": 12,
+    "testsExit": 0,
+    "usage": {
+      "inputTokens": 80127,
+      "outputTokens": 2230,
+      "cacheReadTokens": 68256,
+      "cacheWriteTokens": 0
+    },
+    "nativeFinalResult": true,
+    "model": "Auto",
+    "backendModel": "not exposed by native CLI JSON",
+    "session": "75249d29-ca17-4cf3-a748-89bae71bf01e"
+  },
+  {
+    "run": "cursor-exact-04",
+    "exit": 1,
+    "timeout": false,
+    "durationSeconds": 70.34,
+    "tools": 19,
+    "tests": 15,
+    "testsExit": 0,
+    "usage": null,
+    "nativeFinalResult": false,
+    "model": "Auto",
+    "backendModel": "not exposed by native CLI JSON",
+    "session": "4efedae4-bda3-43df-842b-854950654dcc"
+  }
+]

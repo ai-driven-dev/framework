@@ -1,0 +1,50 @@
+✔ ownership rejects symlink and nonregular markers (2.827542ms)
+✔ regular reads reject symlinks without reading their targets (0.944625ms)
+✔ ownership reads the validated marker even if its pathname is replaced (1.204125ms)
+✔ read stays bound to the validated descriptor when its pathname is replaced (1.09575ms)
+✔ descriptor closes after successful read (0.941208ms)
+✔ descriptor closes after nonregular (0.658167ms)
+✔ descriptor closes after fstatSync (0.789917ms)
+✔ descriptor closes after readFileSync (0.674125ms)
+✖ missing or invalid POSIX protections refuse before any filesystem I/O (1.177916ms)
+ℹ tests 9
+ℹ suites 0
+ℹ pass 8
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 51.076042
+
+✖ failing tests:
+
+test at scripts/__tests__/rule-reproduction-files.test.js:114:1
+✖ missing or invalid POSIX protections refuse before any filesystem I/O (1.177916ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /requires POSIX O_NOFOLLOW and O_NONBLOCK/. Input:
+  
+  'Error: Unexpected filesystem I/O'
+  
+      at TestContext.<anonymous> (/Users/baptistelafourcade/orca/workspaces/framework/basketstar/scripts/__tests__/rule-reproduction-files.test.js:128:14)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1397:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:969:18)
+      at Test.postRun (node:internal/test_runner/test:1537:19)
+      at Test.run (node:internal/test_runner/test:1462:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:969:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: Error: Unexpected filesystem I/O
+        at Proxy.<anonymous> (/Users/baptistelafourcade/orca/workspaces/framework/basketstar/scripts/__tests__/rule-reproduction-files.test.js:123:38)
+        at Object.readRegular (/Users/baptistelafourcade/orca/workspaces/framework/basketstar/aidd_docs/tasks/2026_10/2026_10_09_autonomous-rule-generation/realistic-sandbox/reproduction/common.cjs:14:13)
+        at /Users/baptistelafourcade/orca/workspaces/framework/basketstar/scripts/__tests__/rule-reproduction-files.test.js:128:42
+        at getActual (node:assert:611:5)
+        at strict.throws (node:assert:759:24)
+        at TestContext.<anonymous> (/Users/baptistelafourcade/orca/workspaces/framework/basketstar/scripts/__tests__/rule-reproduction-files.test.js:128:14)
+        at Test.runInAsyncScope (node:async_hooks:227:14)
+        at Test.run (node:internal/test_runner/test:1397:25)
+        at Test.processPendingSubtests (node:internal/test_runner/test:969:18)
+        at Test.postRun (node:internal/test_runner/test:1537:19),
+    expected: /requires POSIX O_NOFOLLOW and O_NONBLOCK/,
+    operator: 'throws',
+    diff: 'simple'
+  }

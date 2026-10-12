@@ -1,0 +1,47 @@
+{
+  "firstMarker": true,
+  "updatedMarker": true,
+  "postDeleteMarkerAbsent": true,
+  "docsMarkerAbsent": true,
+  "canonicalDeleted": true,
+  "finalUserHashesEqual": {
+    "AGENTS.md": false,
+    ".claude/rules/00-architecture/0-user-boundaries.md": true,
+    ".cursor/rules/00-architecture/0-user-boundaries.mdc": true,
+    ".github/instructions/00-user-boundaries.instructions.md": true,
+    "aidd_docs/memory/architecture.md": true
+  },
+  "01-author-retry": {
+    "skillInvoked": true,
+    "writerCommands": [
+      "node \"/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/model-opencode/.opencode/skills/aidd-context/05-rule-generate/scripts/write-rule.cjs\" --project \"/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/model-opencode\" --tools opencode --input \"/private/tmp/opencode/domain-review-rule-request.json\"",
+      "node \"/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/model-opencode/.opencode/skills/aidd-context/05-rule-generate/scripts/write-rule.cjs\" --project \"/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/model-opencode\" --tools opencode --publish",
+      "node \"/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/model-opencode/.opencode/skills/aidd-context/05-rule-generate/scripts/write-rule.cjs\" --project \"/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/model-opencode\" --tools opencode --publish"
+    ]
+  },
+  "04-update": {
+    "skillInvoked": true,
+    "writerCommands": [
+      "node \"/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/model-opencode/.opencode/skills/aidd-context/05-rule-generate/scripts/write-rule.cjs\" --project \"/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/model-opencode\" --tools opencode --publish",
+      "node \"/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/model-opencode/.opencode/skills/aidd-context/05-rule-generate/scripts/write-rule.cjs\" --project \"/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/model-opencode\" --tools opencode --publish",
+      "node \"/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/model-opencode/.opencode/skills/aidd-context/05-rule-generate/scripts/write-rule.cjs\" --project \"/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/model-opencode\" --tools opencode --publish",
+      "node \"/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/model-opencode/.opencode/skills/aidd-context/05-rule-generate/scripts/write-rule.cjs\" --project \"/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/model-opencode\" --tools opencode --publish && node -e 'const fs=require(\"fs\"),crypto=require(\"crypto\"); const p=\"AGENTS.md\",s=fs.readFileSync(p,\"utf8\"),m=s.match(/<!-- aidd_rules:start sha256=([a-f0-9]{64}) separator=([01]) -->\\n([\\s\\S]*?)<!-- aidd_rules:end -->\\n/); if(!m) throw Error(\"missing contribution\"); const h=crypto.createHash(\"sha256\").update(`separator=${m[2]}\\n${m[3]}`).digest(\"hex\"); if(h!==m[1]) throw Error(\"signature mismatch\"); if((m[3].match(/Domain validation reviewed/g)||[]).length!==1 || m[3].includes(\"Team reviewed domain change\") || !m[3].includes(\"src/domain/**/*.ts\")) throw Error(\"contract mismatch\"); console.log(\"PASS AGENTS.md contribution and exact marker/scope\");'"
+    ]
+  },
+  "06-delete": {
+    "skillInvoked": true,
+    "writerCommands": [
+      "node --version && node .opencode/skills/aidd-context/05-rule-generate/scripts/write-rule.cjs --project \"$PWD\" --tools opencode --delete 01-standards/1-domain-review",
+      "node .opencode/skills/aidd-context/05-rule-generate/scripts/write-rule.cjs --project \"$PWD\" --tools opencode --publish",
+      "test ! -e aidd_docs/rules/01-standards/1-domain-review.md && echo 'canonical absent'; grep -n 'aidd_rules\\|1-domain-review\\|Domain validation reviewed' AGENTS.md || true; node .opencode/skills/aidd-context/05-rule-generate/scripts/write-rule.cjs --project \"$PWD\" --tools opencode --publish"
+    ]
+  },
+  "coexistence": {
+    "beforeBytes": 304,
+    "afterBytes": 304,
+    "AGENTSExactlyPreserved": true,
+    "memoryHook": "aidd-context-hooks: active, SESSION_START update_memory.js",
+    "initialMemoryConvergedByHook": true,
+    "initialOutsideMemoryBytesPreserved": true
+  }
+}

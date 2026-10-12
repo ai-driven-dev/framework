@@ -7,7 +7,7 @@ pre-commit:
         - "cli/tests/fixtures/**"
       run: |
         if ! command -v node >/dev/null 2>&1; then
-          echo "❌ node not available; cannot validate JSON"
+          echo '❌ node not available; cannot validate JSON'
           exit 1
         fi
         node scripts/validate-json.mjs {files}
@@ -17,7 +17,7 @@ pre-commit:
         - "plugins/*/skills/*/assets/**"
       run: |
         if ! command -v node >/dev/null 2>&1; then
-          echo "❌ node not available; cannot validate YAML"
+          echo '❌ node not available; cannot validate YAML'
           exit 1
         fi
         node scripts/validate-yaml.mjs {files}
@@ -25,14 +25,14 @@ pre-commit:
       glob: "{scripts,plugins,cli/src}/**"
       run: |
         if ! command -v node >/dev/null 2>&1; then
-          echo "ℹ️  node not available; skipping scripts-tests"
+          echo 'ℹ️  node not available; skipping scripts-tests'
           exit 0
         fi
         # `node --test <dir>` fails on a directory, so a glob is required — and a glob
         # matching nothing exits 0 in silence, so a renamed folder must be caught by a count.
         found=$(ls scripts/__tests__/*.test.js 2>/dev/null | wc -l | tr -d ' ')
-        if [ "$found" -eq 0 ]; then
-          echo "❌ no test files under scripts/__tests__/; the runner is not wired"
+        if [ $found -eq 0 ]; then
+          echo '❌ no test files under scripts/__tests__/; the runner is not wired'
           exit 1
         fi
         # Wrapped: a suite writing into this repository's own .git/hooks passes every
@@ -43,13 +43,13 @@ pre-commit:
       glob: "plugins/*/skills/*/SKILL.md"
       run: |
         for f in {files}; do
-          [ -f "$f" ] || continue
-          if ! head -10 "$f" | grep -q "^name:"; then
-            echo "❌ missing 'name:' frontmatter: $f"
+          [ -f $f ] || continue
+          if ! head -10 $f | grep -q '^name:'; then
+            echo '❌ missing name: frontmatter:' $f
             exit 1
           fi
-          if ! head -10 "$f" | grep -q "^description:"; then
-            echo "❌ missing 'description:' frontmatter: $f"
+          if ! head -10 $f | grep -q '^description:'; then
+            echo '❌ missing description: frontmatter:' $f
             exit 1
           fi
         done
@@ -57,7 +57,7 @@ pre-commit:
       glob: "plugins/*/skills/**"
       run: |
         if ! command -v node >/dev/null 2>&1; then
-          echo "ℹ️  node not available; skipping check-skill-argument-hints"
+          echo 'ℹ️  node not available; skipping check-skill-argument-hints'
           exit 0
         fi
         node scripts/check-skill-argument-hints.mjs
@@ -65,7 +65,7 @@ pre-commit:
       glob: "plugins/*/{skills,agents}/**/*.md"
       run: |
         if ! command -v node >/dev/null 2>&1; then
-          echo "ℹ️  node not available; skipping architecture-rules"
+          echo 'ℹ️  node not available; skipping architecture-rules'
           exit 0
         fi
         node scripts/check-architecture-rules.js {files}
@@ -76,7 +76,7 @@ pre-commit:
         - "**/{CLAUDE,AGENTS,copilot-instructions}.md"
       run: |
         if ! command -v node >/dev/null 2>&1; then
-          echo "ℹ️  node not available; skipping context-imports"
+          echo 'ℹ️  node not available; skipping context-imports'
           exit 0
         fi
         node scripts/check-context-imports.js
@@ -89,7 +89,7 @@ pre-commit:
         - "plugins/aidd-context/hooks/update_memory.js"
       run: |
         if ! command -v node >/dev/null 2>&1; then
-          echo "ℹ️  node not available; skipping context-reference-form"
+          echo 'ℹ️  node not available; skipping context-reference-form'
           exit 0
         fi
         node scripts/check-context-reference-form.js
@@ -97,7 +97,7 @@ pre-commit:
       glob: "{*.md,docs/**,aidd_docs/memory/**}"
       run: |
         if ! command -v node >/dev/null 2>&1; then
-          echo "ℹ️  node not available; skipping referenced-paths"
+          echo 'ℹ️  node not available; skipping referenced-paths'
           exit 0
         fi
         node scripts/check-referenced-paths.js
@@ -106,7 +106,7 @@ pre-commit:
       glob: "**/*.md"
       run: |
         if ! command -v node >/dev/null 2>&1; then
-          echo "ℹ️  node not available; skipping doc-duplication"
+          echo 'ℹ️  node not available; skipping doc-duplication'
           exit 0
         fi
         node scripts/check-doc-duplication.js
@@ -115,33 +115,18 @@ pre-commit:
       glob: "**/*.md"
       run: |
         if ! command -v node >/dev/null 2>&1; then
-          echo "ℹ️  node not available; skipping markdown-links"
+          echo 'ℹ️  node not available; skipping markdown-links'
           exit 0
         fi
         # Both ignored trees hold deliberately unresolvable targets — fixture paths and
         # `@src/foo.ts` agent mentions — not links a reader is meant to follow.
         node scripts/check-markdown-links.js --ignore cli/tests/fixtures --ignore cli/aidd_docs/tasks
     summarize-plugin-catalogs:
-      run: |
-        [ -d plugins ] || exit 0
-        if ! command -v node >/dev/null 2>&1; then
-          echo "ℹ️  node not available; skipping summarize-plugin-catalogs"
-          exit 0
-        fi
-        for plugin in plugins/*/; do
-          name=$(basename "$plugin")
-          node scripts/summarize-markdown.js "$plugin" "${plugin}CATALOG.md" \
-            --depth=4 \
-            --fields=description \
-            --title="$name catalog" \
-            --tagline="Auto-generated index of skills, agents, references and assets shipped by the \`$name\` plugin." \
-            >/dev/null
-          git add "${plugin}CATALOG.md" 2>/dev/null || true
-        done
+      run: sh scripts/summarize-plugin-catalogs.sh
     summarize-telemetry-prompts-doc:
       run: |
         if ! command -v node >/dev/null 2>&1; then
-          echo "ℹ️  node not available; skipping summarize-telemetry-prompts-doc"
+          echo 'ℹ️  node not available; skipping summarize-telemetry-prompts-doc'
           exit 0
         fi
         node scripts/summarize-markdown.js plugins/aidd-telemetry docs/prompts-documentation.md \
@@ -152,7 +137,7 @@ pre-commit:
     sync-readme-counts:
       run: |
         if ! command -v node >/dev/null 2>&1; then
-          echo "ℹ️  node not available; skipping sync-readme-counts"
+          echo 'ℹ️  node not available; skipping sync-readme-counts'
           exit 0
         fi
         node scripts/sync-readme-counts.mjs >/dev/null
@@ -174,7 +159,7 @@ pre-commit:
       glob: "{cli/src/**,cli/tests/**}"
       run: |
         if ! command -v node >/dev/null 2>&1; then
-          echo "ℹ️  node not available; skipping cli-type-honesty"
+          echo 'ℹ️  node not available; skipping cli-type-honesty'
           exit 0
         fi
         node scripts/check-cli-type-honesty.mjs
@@ -195,9 +180,8 @@ commit-msg:
 
 # lefthook owns prepare-commit-msg here and regenerates it on install, so `aidd telemetry on`'s
 # delegate is called from a job instead. Absent delegate, nothing runs — opt-in per machine.
+# `aidd telemetry` finds this job by the delegate name in its run line.
 prepare-commit-msg:
   commands:
     aidd-session-trailer:
-      run: |
-        delegate="$(git rev-parse --git-common-dir)/hooks/aidd-session-trailer.sh"
-        if [ -f "$delegate" ]; then sh "$delegate" {1} {2}; fi
+      run: sh scripts/session-trailer-delegate.sh aidd-session-trailer.sh {1} {2}

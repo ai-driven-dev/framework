@@ -1,0 +1,153 @@
+✖ ownership rejects symlink and nonregular markers (3.189667ms)
+✔ regular reads reject symlinks without reading their targets (1.410958ms)
+✖ ownership reads the validated marker even if its pathname is replaced (1.359375ms)
+✖ read stays bound to the validated descriptor when its pathname is replaced (0.557375ms)
+✖ descriptor closes after successful read (1.258791ms)
+✖ descriptor closes after fstatSync (0.883167ms)
+✖ descriptor closes after readFileSync (0.507708ms)
+ℹ tests 7
+ℹ suites 0
+ℹ pass 1
+ℹ fail 6
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 62.231125
+
+✖ failing tests:
+
+test at scripts/__tests__/rule-reproduction-files.test.js:14:1
+✖ ownership rejects symlink and nonregular markers (3.189667ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /regular file/. Input:
+  
+  'Error: EISDIR: illegal operation on a directory, read'
+  
+      at TestContext.<anonymous> (/Users/baptistelafourcade/orca/workspaces/framework/basketstar/scripts/__tests__/rule-reproduction-files.test.js:26:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1397:25)
+      at Test.start (node:internal/test_runner/test:1257:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: Error: EISDIR: illegal operation on a directory, read
+        at Object.readFileSync (node:fs:484:20)
+        at open (/Users/baptistelafourcade/orca/workspaces/framework/basketstar/aidd_docs/tasks/2026_10/2026_10_09_autonomous-rule-generation/realistic-sandbox/reproduction/common.cjs:31:34)
+        at /Users/baptistelafourcade/orca/workspaces/framework/basketstar/scripts/__tests__/rule-reproduction-files.test.js:26:23
+        at getActual (node:assert:611:5)
+        at strict.throws (node:assert:759:24)
+        at TestContext.<anonymous> (/Users/baptistelafourcade/orca/workspaces/framework/basketstar/scripts/__tests__/rule-reproduction-files.test.js:26:10)
+        at Test.runInAsyncScope (node:async_hooks:227:14)
+        at Test.run (node:internal/test_runner/test:1397:25)
+        at Test.start (node:internal/test_runner/test:1257:17)
+        at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17),
+    expected: /regular file/,
+    operator: 'throws',
+    diff: 'simple'
+  }
+
+test at scripts/__tests__/rule-reproduction-files.test.js:38:1
+✖ ownership reads the validated marker even if its pathname is replaced (1.359375ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + 'replacement'
+  - 'original'
+  
+      at TestContext.<anonymous> (/Users/baptistelafourcade/orca/workspaces/framework/basketstar/scripts/__tests__/rule-reproduction-files.test.js:58:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1397:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:969:18)
+      at Test.postRun (node:internal/test_runner/test:1537:19)
+      at Test.run (node:internal/test_runner/test:1462:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:969:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'replacement',
+    expected: 'original',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/__tests__/rule-reproduction-files.test.js:66:1
+✖ read stays bound to the validated descriptor when its pathname is replaced (0.557375ms)
+  TypeError: readRegular is not a function
+      at TestContext.<anonymous> (/Users/baptistelafourcade/orca/workspaces/framework/basketstar/scripts/__tests__/rule-reproduction-files.test.js:80:18)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1397:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:969:18)
+      at Test.postRun (node:internal/test_runner/test:1537:19)
+      at Test.run (node:internal/test_runner/test:1462:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:969:7)
+
+test at scripts/__tests__/rule-reproduction-files.test.js:87:3
+✖ descriptor closes after successful read (1.258791ms)
+  TypeError: readRegular is not a function
+      at TestContext.<anonymous> (/Users/baptistelafourcade/orca/workspaces/framework/basketstar/scripts/__tests__/rule-reproduction-files.test.js:98:25)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1397:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:969:18)
+      at Test.postRun (node:internal/test_runner/test:1537:19)
+      at Test.run (node:internal/test_runner/test:1462:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:969:7)
+
+test at scripts/__tests__/rule-reproduction-files.test.js:87:3
+✖ descriptor closes after fstatSync (0.883167ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /injected failure/. Input:
+  
+  'TypeError: readRegular is not a function'
+  
+      at TestContext.<anonymous> (/Users/baptistelafourcade/orca/workspaces/framework/basketstar/scripts/__tests__/rule-reproduction-files.test.js:97:27)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1397:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:969:18)
+      at Test.postRun (node:internal/test_runner/test:1537:19)
+      at Test.run (node:internal/test_runner/test:1462:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:969:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: TypeError: readRegular is not a function
+        at /Users/baptistelafourcade/orca/workspaces/framework/basketstar/scripts/__tests__/rule-reproduction-files.test.js:97:40
+        at getActual (node:assert:611:5)
+        at strict.throws (node:assert:759:24)
+        at TestContext.<anonymous> (/Users/baptistelafourcade/orca/workspaces/framework/basketstar/scripts/__tests__/rule-reproduction-files.test.js:97:27)
+        at Test.runInAsyncScope (node:async_hooks:227:14)
+        at Test.run (node:internal/test_runner/test:1397:25)
+        at Test.processPendingSubtests (node:internal/test_runner/test:969:18)
+        at Test.postRun (node:internal/test_runner/test:1537:19)
+        at Test.run (node:internal/test_runner/test:1462:12)
+        at async Test.processPendingSubtests (node:internal/test_runner/test:969:7),
+    expected: /injected failure/,
+    operator: 'throws',
+    diff: 'simple'
+  }
+
+test at scripts/__tests__/rule-reproduction-files.test.js:87:3
+✖ descriptor closes after readFileSync (0.507708ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /injected failure/. Input:
+  
+  'TypeError: readRegular is not a function'
+  
+      at TestContext.<anonymous> (/Users/baptistelafourcade/orca/workspaces/framework/basketstar/scripts/__tests__/rule-reproduction-files.test.js:97:27)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1397:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:969:18)
+      at Test.postRun (node:internal/test_runner/test:1537:19)
+      at Test.run (node:internal/test_runner/test:1462:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:969:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: TypeError: readRegular is not a function
+        at /Users/baptistelafourcade/orca/workspaces/framework/basketstar/scripts/__tests__/rule-reproduction-files.test.js:97:40
+        at getActual (node:assert:611:5)
+        at strict.throws (node:assert:759:24)
+        at TestContext.<anonymous> (/Users/baptistelafourcade/orca/workspaces/framework/basketstar/scripts/__tests__/rule-reproduction-files.test.js:97:27)
+        at Test.runInAsyncScope (node:async_hooks:227:14)
+        at Test.run (node:internal/test_runner/test:1397:25)
+        at Test.processPendingSubtests (node:internal/test_runner/test:969:18)
+        at Test.postRun (node:internal/test_runner/test:1537:19)
+        at Test.run (node:internal/test_runner/test:1462:12)
+        at async Test.processPendingSubtests (node:internal/test_runner/test:969:7),
+    expected: /injected failure/,
+    operator: 'throws',
+    diff: 'simple'
+  }

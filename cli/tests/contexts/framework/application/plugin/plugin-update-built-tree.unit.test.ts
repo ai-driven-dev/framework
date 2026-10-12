@@ -3,10 +3,10 @@ import { describe, expect, it, vi } from "vitest";
 import "../../../../../src/contexts/tools/domain/profiles/copilot/profile.js";
 import { Marketplace } from "../../../../../src/contexts/distribution/domain/marketplace.js";
 import { NativeHostRegistrationGate } from "../../../../../src/contexts/framework/application/ownership/native-host-registration-gate.js";
-import { UserPluginDistributionLoader } from "../../../../../src/contexts/framework/application/ownership/user-plugin-distribution-loader.js";
 import { UserPluginFileUpdater } from "../../../../../src/contexts/framework/application/ownership/user-plugin-file-updater.js";
 import { UserPluginUpdateUseCase } from "../../../../../src/contexts/framework/application/ownership/user-plugin-update-use-case.js";
 import { PluginAddUseCase } from "../../../../../src/contexts/framework/application/plugin/plugin-add-use-case.js";
+import { PluginDistributionLoader } from "../../../../../src/contexts/framework/application/plugin/plugin-distribution-loader.js";
 import type { EnsureBuiltMarketplace } from "../../../../../src/contexts/framework/application/shared/ensure-built-marketplace-use-case.js";
 import { Manifest } from "../../../../../src/contexts/framework/domain/manifest.js";
 import { InstalledPlugin } from "../../../../../src/contexts/framework/domain/plugins/installed-plugin.js";
@@ -58,7 +58,7 @@ function makeUpdateUseCase(
     deps.userManifestRepo,
     new UserPluginFileUpdater(
       deps.fs,
-      new UserPluginDistributionLoader(
+      new PluginDistributionLoader(
         deps.pluginFetcher,
         new PluginDistributionReaderAdapter(deps.fs)
       ),
@@ -86,8 +86,7 @@ async function installStalePlugin(
   await new PluginAddUseCase(
     deps.fs,
     deps.manifestRepo,
-    deps.pluginFetcher,
-    new PluginDistributionReaderAdapter(deps.fs),
+    new PluginDistributionLoader(deps.pluginFetcher, new PluginDistributionReaderAdapter(deps.fs)),
     deps.hasher,
     deps.logger,
     registry,
@@ -644,7 +643,7 @@ describe("PluginUpdateUseCase — built-tree materialization", () => {
     );
     const updater = new UserPluginFileUpdater(
       deps.fs,
-      new UserPluginDistributionLoader(
+      new PluginDistributionLoader(
         deps.pluginFetcher,
         new PluginDistributionReaderAdapter(deps.fs)
       ),

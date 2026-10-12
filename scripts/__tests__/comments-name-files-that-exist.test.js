@@ -83,6 +83,16 @@ function trackedFiles() {
   return cp.execSync("git ls-files", { cwd: ROOT, encoding: "utf8" }).trim().split("\n");
 }
 
+function repositoryBasenames(tracked) {
+  return new Set([...tracked].flatMap((file) => {
+    const basename = path.basename(file);
+    // Config assets embed executable modules as text; the delivered filename drops .txt.
+    return file.startsWith("cli/assets/configs/") && file.endsWith(".js.txt")
+      ? [basename, basename.slice(0, -4)]
+      : [basename];
+  }));
+}
+
 function findFiles(command) {
   return cp
     .execSync(command, { cwd: ROOT, encoding: "utf8" })
@@ -159,7 +169,7 @@ describe("a comment about the hooks names .cjs where the file is .cjs", () => {
   it("names no <name>.js that the hooks do not actually ship", () => {
     const tracked = new Set(trackedFiles());
     const shipped = hookJsFiles(tracked);
-    const basenames = new Set([...tracked].map((file) => path.basename(file)));
+    const basenames = repositoryBasenames(tracked);
     const scanned = [...tracked].filter(
       (file) =>
         file.startsWith("plugins/aidd-telemetry/hooks/") ||
@@ -205,7 +215,7 @@ const SELF = "scripts/__tests__/comments-name-files-that-exist.test.js";
 describe("a comment that names a source file names one that exists", () => {
   it("names no file the repository does not hold, outside the mentions listed as history", () => {
     const tracked = new Set(trackedFiles());
-    const basenames = new Set([...tracked].map((file) => path.basename(file)));
+    const basenames = repositoryBasenames(tracked);
     const dangling = [];
 
     for (const file of scannedFiles().filter((candidate) => candidate !== SELF)) {
@@ -236,7 +246,7 @@ describe("a comment that names a source file names one that exists", () => {
 
   it("lists no allowance for a file that does exist, so the list cannot outlive its reason", () => {
     const tracked = new Set(trackedFiles());
-    const basenames = new Set([...tracked].map((file) => path.basename(file)));
+    const basenames = repositoryBasenames(tracked);
     const stale = [];
 
     for (const [file, tokens] of Object.entries(NAMED_AS_HISTORY)) {

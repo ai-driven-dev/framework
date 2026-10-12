@@ -104,7 +104,26 @@ Memory ownership (CLAUDE.md, AGENTS.md, copilot-instructions.md) is delegated to
 
 ## Translate (author-side)
 
-`aidd translate` (renamed from `framework build` in phase 18) converts a Claude-format framework source into a target-native distribution. Five targets (`claude`, `cursor`, `copilot`, `codex`, `opencode`) × two modes (`marketplace`, `--as flat`); `opencode` is flat-only, so 9 build cells. The orchestrators (`MarketplaceBuildStrategy`, `FlatBuildStrategy`) read a per-tool `ToolBuildContract` — no per-tool branching. **Scope:** skills, agents, mcp, and hooks are emitted; `rules` and `commands` are currently out of scope (warn + skip per plugin). See `README.md` → `aidd translate` for the per-tool layout matrix.
+`aidd translate` converts a Claude-format framework source into a target-native distribution. The orchestrators (`MarketplaceBuildStrategy`, `FlatBuildStrategy`) read a per-tool `ToolBuildContract` without per-tool branching. **Scope:** skills, agents, mcp, and hooks are emitted; `rules` and `commands` are out of scope (warn + skip per plugin). The [CLI reference](README.md#translate) owns the supported targets and output layout matrix.
+
+## Hook adaptation
+
+OpenCode needs JS adapters. The CLI owns the shared host protocol; plugins own payload mapping. Its helper is delivered once outside plugin discovery, tracked as a tool file, and backfilled only when missing. Installation must neither rewrite user configuration nor claim existing untracked helpers. Generic `SessionStart` runs idempotently at host initialization; telemetry follows actual sessions.
+
+<details>
+<summary>Tool compatibility and adapter contracts</summary>
+
+Hooks are authored with `${CLAUDE_PLUGIN_ROOT}`; the installer translates the root for each tool.
+| Tool           | Runs bundled hooks    | Plugin root            | Notes |
+| -------------- | --------------------- | ---------------------- | ----- |
+| Claude Code    | yes                   | `${CLAUDE_PLUGIN_ROOT}` | Authoring spelling, nothing substituted |
+| Codex          | yes                   | `${PLUGIN_ROOT}`       | Also expands `${CLAUDE_PLUGIN_ROOT}`; runs a hook only once trusted |
+| GitHub Copilot | yes                   | `${PLUGIN_ROOT}`       | Declared, never observed running |
+| Cursor         | declared              | `./`                   | Own hook format: the converter rewrites the root to a plugin-relative path before token substitution. No plugin hook observed firing headless; what registers a plugin in Cursor's plugin directory is unknown |
+| OpenCode       | no, by a second route | —                      | See below |
+Runtime contracts: [hook bridge](src/contexts/tools/domain/profiles/opencode/opencode-hooks-bridge.ts), [shared V2 adapter](assets/configs/opencode/opencode-events.js.txt), [telemetry payload adapter](../plugins/aidd-telemetry/hooks/opencode-plugin.js). The shared helper is `.opencode/hooks/opencode-events.js`. [Telemetry coverage](../plugins/aidd-telemetry/README.md#coverage) states supported versions and limitations. Unsupported hooks and skipped installation surfaces must be reported.
+
+</details>
 
 ## Dependency Wiring
 

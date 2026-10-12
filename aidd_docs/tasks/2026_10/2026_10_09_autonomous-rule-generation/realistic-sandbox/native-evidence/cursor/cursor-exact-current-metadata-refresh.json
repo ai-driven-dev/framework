@@ -1,0 +1,31 @@
+{
+  "method": "Actual CLI flat translation into staging, then copy two current translated documents after author session exits",
+  "translationExit": 0,
+  "translationArguments": [
+    "translate",
+    "/Users/baptistelafourcade/orca/workspaces/framework/basketstar",
+    "--to",
+    "cursor",
+    "--as",
+    "flat",
+    "--out",
+    "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/cursor-current-translation",
+    "--force"
+  ],
+  "documents": [
+    {
+      "file": "SKILL.md",
+      "before": "4f864b2b6425fc81fd39a446ac118fec65fc6b3fc51ded76d760974ebe215379",
+      "after": "d95be3e4501160d8ae2c38e52e57f5e9a5373ea2f389832223631333b9df0367",
+      "translatedSource": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/cursor-current-translation/.cursor/skills/aidd-context-05-rule-generate/SKILL.md"
+    },
+    {
+      "file": "actions/01-capture-rule.md",
+      "before": "8040cb4dfce3d642e4a41b1f11f4acc102ca2ceff78a365f9c2662e5403ac2a8",
+      "after": "80bee7dac8f9efe7dfdbaaddc2a7a32f385440620e047bb5c2afde04ecae7abf",
+      "translatedSource": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/cursor-current-translation/.cursor/skills/aidd-context-05-rule-generate/actions/01-capture-rule.md"
+    }
+  ],
+  "writerSHA256": "9fa10479a267d899a6a024f68e75573f1d009080cd60851f23f06c8f2d190591",
+  "writerUnchanged": true
+}

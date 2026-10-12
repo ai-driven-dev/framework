@@ -1,0 +1,111 @@
+{
+  "models": [
+    "gpt-6-luna"
+  ],
+  "model_calls": 8,
+  "input_tokens": 171645,
+  "output_tokens": 2179,
+  "first_system_native_descriptor": "ot already read the file, use the `view` tool to acquire it.\\nMake sure to acquire the instructions before making any changes to the code.\\n| Pattern | File Path | Description |\\n| ------- | --------- | ----------- |\\n| src/domain/**/*.ts | '.github/instructions/01-domain-review.instructions.md' |  |\\n\\n<system_notifications>\\nYou may receive messages wrapped in <system_notification> tags. These a",
+  "native_rule_viewed": true,
+  "tool_calls": [
+    {
+      "name": "skill",
+      "path": null,
+      "command": null,
+      "skill": "aidd-context-05-rule-generate"
+    },
+    {
+      "name": "view",
+      "path": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/model-copilot-delete-retry/.github/skills/aidd-context-05-rule-generate/actions/01-capture-rule.md",
+      "command": null,
+      "skill": null
+    },
+    {
+      "name": "view",
+      "path": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/model-copilot-delete-retry/.github/skills/aidd-context-05-rule-generate/references/tool-paths.md",
+      "command": null,
+      "skill": null
+    },
+    {
+      "name": "view",
+      "path": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/model-copilot-delete-retry/.github/skills/aidd-context-05-rule-generate/references/rule-authoring.md",
+      "command": null,
+      "skill": null
+    },
+    {
+      "name": "view",
+      "path": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/model-copilot-delete-retry/.github/skills/aidd-context-05-rule-generate/actions/03-validate.md",
+      "command": null,
+      "skill": null
+    },
+    {
+      "name": "view",
+      "path": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/model-copilot-delete-retry/.github/skills/aidd-context-05-rule-generate/actions/02-write-rule.md",
+      "command": null,
+      "skill": null
+    },
+    {
+      "name": "view",
+      "path": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/model-copilot-delete-retry/.github/instructions/01-domain-review.instructions.md",
+      "command": null,
+      "skill": null
+    },
+    {
+      "name": "view",
+      "path": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/model-copilot-delete-retry/.github/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
+      "command": null,
+      "skill": null
+    },
+    {
+      "name": "glob",
+      "path": null,
+      "command": null,
+      "skill": null
+    },
+    {
+      "name": "view",
+      "path": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/model-copilot-delete-retry/aidd_docs/rules/01-standards/1-domain-review.md",
+      "command": null,
+      "skill": null
+    },
+    {
+      "name": "bash",
+      "path": null,
+      "command": "node /private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/model-copilot-delete-retry/.github/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs --project /private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/model-copilot-delete-retry --tools copilot --delete 01-standards/1-domain-review",
+      "skill": null
+    },
+    {
+      "name": "bash",
+      "path": null,
+      "command": "test ! -e .github/instructions/01-domain-review.instructions.md && test ! -e aidd_docs/rules/01-standards/1-domain-review.md && printf 'Target Copilot publication and canonical rule are absent.\\n' && find .github/instructions aidd_docs/rules -type f -print | sort",
+      "skill": null
+    },
+    {
+      "name": "glob",
+      "path": null,
+      "command": null,
+      "skill": null
+    },
+    {
+      "name": "glob",
+      "path": null,
+      "command": null,
+      "skill": null
+    },
+    {
+      "name": "glob",
+      "path": null,
+      "command": null,
+      "skill": null
+    }
+  ],
+  "file_hashes": {
+    "AGENTS.md": "76752d4dcfb002c378b9621d7783c97f427e2864320c11195b50bfca4897e3a7",
+    ".github/instructions/00-user-boundaries.instructions.md": "0011b14fc22180bc2ab9c212407009c5e433c2df9c00ce17a0cb39c587be1148",
+    ".github/instructions/01-domain-review.instructions.md": null,
+    "aidd_docs/rules/01-standards/1-domain-review.md": null,
+    "src/domain/invoice.ts": "570dfb17f772d0649b15ae5477837277f94c772a194d3e75fc6af442f5e98a44",
+    "tests/invoice.test.ts": "f7ce73ac8025662274a9d78add78dbb052775853517a485b73e8ca1899cf7b13",
+    "docs/discounts.md": "a437ee5008be25fc76874cb545cc898552a0548eb0208d614f7db6bad275aeba"
+  }
+}

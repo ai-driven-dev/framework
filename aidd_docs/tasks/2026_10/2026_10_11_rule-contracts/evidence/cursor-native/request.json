@@ -1,0 +1,9 @@
+{
+  "category": "01-standards",
+  "slug": "1-domain-review",
+  "description": "Domain review marker",
+  "paths": [
+    "src/domain/**/*.ts"
+  ],
+  "body": "# Domain review\n\n- Place the exact comment `// Team reviewed domain change` immediately above every newly declared exported function.\n- Do not change existing functions.\n"
+}

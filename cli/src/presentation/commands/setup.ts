@@ -3,7 +3,11 @@ import type { Command } from "commander";
 import { MarketplaceSourceMode } from "../../contexts/distribution/domain/marketplace-source-mode.js";
 import { SetupUseCase } from "../../contexts/framework/application/setup-use-case.js";
 import { SetupFlow } from "../../contexts/framework/domain/setup-flow.js";
-import { assertToolIdsMatchCategory } from "../../contexts/tools/domain/registry.js";
+import {
+  assertToolIdsMatchCategory,
+  getAllRegisteredTools,
+  supportsUserScopeActivation,
+} from "../../contexts/tools/domain/registry.js";
 import type { ToolId } from "../../kernel/tool.js";
 import { AI_TOOL_IDS, IDE_TOOL_IDS } from "../../kernel/tool.js";
 import { createDeps } from "../../runtime/wiring/framework.js";
@@ -113,7 +117,16 @@ export function registerSetupCommand(program: Command): void {
     .option(
       "--scope <scope>",
       "project (default) installs into this project alone; user registers the shared " +
-        "framework source and native activation machine-wide, writing nothing under this project"
+        "framework source and supported tools machine-wide, writing nothing under this project; " +
+        "see user-scope requirements below"
+    )
+    .addHelpText(
+      "after",
+      () =>
+        "\nUser scope:\n" +
+        `  Pass --ai ${[...getAllRegisteredTools().keys()].filter(supportsUserScopeActivation).sort().join(",")} (choose one or more), --plugins none, and no --ide.\n` +
+        "  Native activation requires the corresponding host CLI on PATH.\n" +
+        "  Tools without native activation are registered only; setup installs no plugins or tool configuration files."
     )
     .action(async (cmdOptions: SetupCmdOptions) => {
       const { verbose, output, projectRoot } = parseGlobalOptions(program);
@@ -140,22 +153,22 @@ export function registerSetupCommand(program: Command): void {
       );
 
       const registerDefaultMarketplace = cmdOptions.defaultMarketplace !== false;
-      const flow = new SetupFlow({
-        projectRoot,
-        source,
-        aiTools: toolIds.aiTools,
-        ideTools: toolIds.ideTools,
-        pluginMode,
-        pluginNames,
-        interactive,
-        force: false,
-        registerDefaultMarketplace,
-        scope,
-      });
-
-      if (interactive) printWelcomeBanner(output);
-
       try {
+        const flow = new SetupFlow({
+          projectRoot,
+          source,
+          aiTools: toolIds.aiTools,
+          ideTools: toolIds.ideTools,
+          pluginMode,
+          pluginNames,
+          interactive,
+          force: false,
+          registerDefaultMarketplace,
+          scope,
+        });
+
+        if (interactive) printWelcomeBanner(output);
+
         const deps = await createDeps(projectRoot, { verbose }, output);
 
         const result = await new SetupUseCase(

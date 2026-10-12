@@ -1,6 +1,6 @@
 # Marketplace, scopes & versioning
 
-Reference for how the `aidd-framework` marketplace is registered, scoped, and versioned, plus the LLM tier mapping used by skills.
+Reference for how the `aidd-framework` marketplace is registered, scoped, and versioned.
 
 ## 🛒 How marketplaces work
 
@@ -38,13 +38,3 @@ Set scope at install time via the `/plugin` UI, or edit `enabledPlugins` directl
 - Each plugin and the root marketplace version independently via `release-please` (tags `<plugin>-vX.Y.Z`, root `vX.Y.Z`). Tooling → [`deployment.md`](../aidd_docs/memory/deployment.md).
 - Pull updates inside Claude Code: `/plugin marketplace update aidd-framework`.
 - Full history → [`CHANGELOG.md`](../CHANGELOG.md).
-
-## 🧠 LLM tier reference
-
-Some skills target a model **tier** for a needed capability. The framework is authored against Claude; on another AI tool, map each tier to its nearest model.
-
-| Tier | Best for | Claude | Other tools (examples) |
-| ---- | -------- | ------ | ---------------------- |
-| **T1 Fast** | Mechanical, deterministic tasks, templates, git ops | Haiku 4.5 | GPT-5.5 mini, Gemini Flash, Grok fast |
-| **T2 Balanced** | Implementation, validation, code generation | Sonnet 4.6 | GPT-5.5, Gemini Pro |
-| **T3 Thinking** | Deep reasoning, synthesis, planning, onboarding | Opus 4.8 | GPT-5.5 (thinking), Gemini Pro thinking |

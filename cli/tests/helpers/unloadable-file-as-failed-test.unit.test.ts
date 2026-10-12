@@ -12,6 +12,7 @@ function testFile(state: "pass" | "fail", tasks: RunnerTestFile["tasks"] = []): 
   const file: RunnerTestFile = {
     id: "cursor",
     name: "cursor.unit.test.ts",
+    fullName: "cursor.unit.test.ts",
     mode: "run",
     meta: {},
     type: "suite",
@@ -29,7 +30,7 @@ function testFile(state: "pass" | "fail", tasks: RunnerTestFile["tasks"] = []): 
 describe("a test file that fails to load, in a mutation run", () => {
   it("counts as one failed test carrying the load error", () => {
     const unloaded = testFile("fail");
-    new UnloadableFileAsFailedTest().onFinished([unloaded]);
+    new UnloadableFileAsFailedTest().recordLoadFailures([unloaded]);
     expect(unloaded.tasks).toHaveLength(1);
     expect(unloaded.tasks[0]).toMatchObject({
       type: "test",
@@ -43,7 +44,7 @@ describe("a test file that fails to load, in a mutation run", () => {
   it("leaves a file that loaded as it is, whether its tests passed or failed", () => {
     const passed = testFile("pass");
     const failed = testFile("fail", [{ ...testFile("fail"), id: "inner" }]);
-    new UnloadableFileAsFailedTest().onFinished([passed, failed]);
+    new UnloadableFileAsFailedTest().recordLoadFailures([passed, failed]);
     expect(passed.tasks).toHaveLength(0);
     expect(failed.tasks.map((task) => task.id)).toStrictEqual(["inner"]);
   });

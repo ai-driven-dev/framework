@@ -52,12 +52,12 @@ Review checks the diff before it ships.
 
 #### 5) 📦 Commit
 
-Commit records one atomic conventional change.
+Commit records one atomic conventional change, and pushes it so the next step has a branch to open a request against.
 
-1. Run `/aidd-vcs:01-commit`.
+1. Run `/aidd-vcs:01-commit push`.
 
 ```text
-/aidd-vcs:01-commit
+/aidd-vcs:01-commit push
 ```
 
 #### 6) ✅ Pull request

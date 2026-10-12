@@ -122,7 +122,7 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `assets` | [rule-template.md](skills/05-rule-generate/assets/rule-template.md) | - |
 | `references` | [rule-authoring.md](skills/05-rule-generate/references/rule-authoring.md) | - |
 | `references` | [tool-paths.md](skills/05-rule-generate/references/tool-paths.md) | - |
-| `-` | [SKILL.md](skills/05-rule-generate/SKILL.md) | `Generate a coding rule that governs editor and agent behavior across the host AI tools. Use when the user wants to write, add, or refactor a rule, convention, or coding standard. Not for other artifacts like skills, agents, or hooks.` |
+| `-` | [SKILL.md](skills/05-rule-generate/SKILL.md) | `Create, update, publish or delete a coding rule across host AI tools. Use when adding, changing or removing a rule, convention or coding standard. Not for skills, agents or hooks.` |
 
 #### `skills/06-agent-generate`
 

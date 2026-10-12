@@ -4,7 +4,7 @@ Definitions for the terms the framework uses without re-explaining each time. On
 
 ## 📦 Plugin
 
-A `plugins/<name>/` directory installable from this marketplace into Claude Code. Each plugin owns one domain (context, dev, vcs, pm, orchestrator, refine, ui), ships its own README, CATALOG, and skills, and may add any Claude Code surface: agents, commands, hooks, rules, and MCP servers (`.mcp.json`). Plugins version independently via `release-please`.
+A package under `plugins/<name>/` that owns one concern and groups skills with optional agents, commands, hooks and MCP configuration. AI tools load it natively or through CLI translation. Its README explains usage and CATALOG lists capabilities. Plugins version independently via `release-please`; see [Architecture](ARCHITECTURE.md#-anatomy-of-a-plugin) for their composition.
 
 ## 🏪 Marketplace
 
@@ -36,7 +36,7 @@ A coding standard the AI loads automatically on relevant files. Rules live under
 
 ## 🪝 Hook
 
-A program declared in `plugins/<plugin>/hooks/hooks.json` that Claude Code runs at lifecycle events (pre-commit, post-tool, etc.). Hooks are how a plugin triggers deterministic side effects rather than asking the model to remember.
+A program declared in `plugins/<plugin>/hooks/hooks.json` that Claude Code runs at lifecycle events such as `SessionStart` or `PostToolUse`. Hooks trigger deterministic side effects rather than asking the model to remember.
 
 ## 🔖 Bracket ID
 

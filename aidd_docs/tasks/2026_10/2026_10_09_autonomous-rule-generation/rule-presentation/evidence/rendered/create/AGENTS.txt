@@ -1,0 +1,16 @@
+# Harbor contributor guidance
+
+Use integer cents for every monetary amount. Preserve public API response contracts and keep HTTP concerns outside the domain.
+
+<!-- aidd_project_memory:start -->
+[aidd_docs/memory/architecture.md](aidd_docs/memory/architecture.md)
+[API contract](docs/api.md)
+[Contributor workflow](docs/contributing.md)
+<!-- aidd_project_memory:end -->
+<!-- aidd_rules:start sha256=4739b9e88b34a76178e11f49f1591da3d7f2280277a1f09dbdeef7ae0ec17f41 separator=0 -->
+Applies to: `src/domain/**/*.ts`.
+
+## Domain review
+
+- Include `PRESENTATION_OLD`.
+<!-- aidd_rules:end -->

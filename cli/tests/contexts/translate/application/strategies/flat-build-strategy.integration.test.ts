@@ -59,6 +59,9 @@ function makeValidator(fail = false): JsonSchemaValidator {
 function makeAssetProvider(): AssetProvider {
   return {
     loadConfigAsset: (_toolId, fileName) => {
+      if (fileName === "opencode-events.js") {
+        return "export async function setupOpencodeEvents() {}";
+      }
       if (fileName === "opencode.json") {
         return {
           $schema: "https://opencode.ai/config.json",

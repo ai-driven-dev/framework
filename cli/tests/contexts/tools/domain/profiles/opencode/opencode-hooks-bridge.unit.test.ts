@@ -24,6 +24,15 @@ const THREE_EVENT_HOOKS_JSON = JSON.stringify({
 });
 
 describe("generateOpencodeHooksBridge", () => {
+  it("defines the V1 server and V2 setup entrypoints on the default plugin", () => {
+    const generated = generateOpencodeHooksBridge(THREE_EVENT_HOOKS_JSON, "aidd-sample");
+
+    expect(generated).toContain("export default {");
+    expect(generated).toContain('id: "aidd-sample-hooks"');
+    expect(generated).toContain("server: AiddSampleHooks");
+    expect(generated).toContain("setup:");
+  });
+
   it("generates a bridge module for a hooks.json naming all three mapped events", () => {
     const generated = generateOpencodeHooksBridge(THREE_EVENT_HOOKS_JSON, "aidd-sample");
 
@@ -33,6 +42,7 @@ describe("generateOpencodeHooksBridge", () => {
       // (build.ts's skipHooksJson, translated here rather than skipped) - this file is the only
       // trigger this plugin's declared hooks have on OpenCode. See opencode-hooks-bridge.ts for
       // the mapping this generator applies and the measurements behind it.
+      import { setupOpencodeEvents } from "../hooks/opencode-events.js";
       import { spawn } from "node:child_process";
       import { fileURLToPath } from "node:url";
 
@@ -119,12 +129,13 @@ describe("generateOpencodeHooksBridge", () => {
         return {
           event: async ({ event }) => {
             try {
+              const directory = event?.properties?.directory ?? input.directory;
               const calls = [
-                ...stopCallsFor(event, input.directory),
-                ...postToolUseCallsFor(event, input.directory),
+                ...stopCallsFor(event, directory),
+                ...postToolUseCallsFor(event, directory),
               ];
               for (const call of calls) {
-                runHook(call.script, call.args, call.payload, input.directory);
+                runHook(call.script, call.args, call.payload, directory);
               }
             } catch {
               // Silent on purpose - see above.
@@ -135,6 +146,12 @@ describe("generateOpencodeHooksBridge", () => {
 
       AiddSampleHooks.stopCallsFor = stopCallsFor;
       AiddSampleHooks.postToolUseCallsFor = postToolUseCallsFor;
+
+      export default {
+        id: "aidd-sample-hooks",
+        server: AiddSampleHooks,
+        setup: (ctx) => setupOpencodeEvents(ctx, AiddSampleHooks),
+      };
       "
     `);
   });

@@ -1,0 +1,38 @@
+[
+  {
+    "mutation": "pathname-read",
+    "exit": 1,
+    "command": [
+      "node",
+      "--test",
+      "--test-name-pattern=descriptor when its pathname",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-security-mutations-3uqlla2j/pathname-read/scripts/__tests__/rule-reproduction-files.test.js"
+    ],
+    "expectedFailure": true,
+    "output": "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-security-mutations-3uqlla2j/pathname-read/stdout.log"
+  },
+  {
+    "mutation": "missing-close",
+    "exit": 1,
+    "command": [
+      "node",
+      "--test",
+      "--test-name-pattern=descriptor closes",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-security-mutations-3uqlla2j/missing-close/scripts/__tests__/rule-reproduction-files.test.js"
+    ],
+    "expectedFailure": true,
+    "output": "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-security-mutations-3uqlla2j/missing-close/stdout.log"
+  },
+  {
+    "mutation": "follow-symlink",
+    "exit": 1,
+    "command": [
+      "node",
+      "--test",
+      "--test-name-pattern=regular reads reject symlinks",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-security-mutations-3uqlla2j/follow-symlink/scripts/__tests__/rule-reproduction-files.test.js"
+    ],
+    "expectedFailure": true,
+    "output": "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-security-mutations-3uqlla2j/follow-symlink/stdout.log"
+  }
+]

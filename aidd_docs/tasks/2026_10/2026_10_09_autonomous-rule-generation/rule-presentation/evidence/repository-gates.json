@@ -1,0 +1,80 @@
+[
+  {
+    "command": "node scripts/check-context-imports.js",
+    "chunk_id": "2beddf",
+    "wall_time_seconds": 0.000006292,
+    "exit_code": 0,
+    "original_token_count": 14,
+    "output": "✅ context imports load: none sit inside an HTML block\n"
+  },
+  {
+    "command": "node scripts/check-context-reference-form.js",
+    "chunk_id": "4ebe63",
+    "wall_time_seconds": 0.000004958,
+    "exit_code": 0,
+    "original_token_count": 15,
+    "output": "✅ context references carry the form their tool resolves\n"
+  },
+  {
+    "command": "node scripts/check-referenced-paths.js",
+    "chunk_id": "1ab3ad",
+    "wall_time_seconds": 0.000003708,
+    "exit_code": 0,
+    "original_token_count": 11,
+    "output": "✅ Referenced paths: 0 dead in 33 files\n"
+  },
+  {
+    "command": "node scripts/check-markdown-links.js --ignore cli/tests/fixtures --ignore cli/aidd_docs/tasks",
+    "chunk_id": "7658d7",
+    "wall_time_seconds": 0.072064875,
+    "exit_code": 0,
+    "original_token_count": 9,
+    "output": "✅ Links: 0 broken in 865 files\n"
+  },
+  {
+    "command": "node scripts/check-skill-argument-hints.mjs",
+    "chunk_id": "07dbdc",
+    "wall_time_seconds": 0.000011416,
+    "exit_code": 0,
+    "original_token_count": 10,
+    "output": "Every skill names what the user brings.\n"
+  },
+  {
+    "command": "node scripts/check-doc-duplication.js",
+    "chunk_id": "fb1218",
+    "wall_time_seconds": 0.000011708,
+    "exit_code": 0,
+    "original_token_count": 15,
+    "output": "✅ Doc duplication: 0 duplicated sentence(s) in 48 files\n"
+  },
+  {
+    "command": "node scripts/check-architecture-rules.js plugins/aidd-context/skills/05-rule-generate/SKILL.md plugins/aidd-context/skills/05-rule-generate/actions/01-capture-rule.md plugins/aidd-context/skills/05-rule-generate/actions/02-write-rule.md plugins/aidd-context/skills/05-rule-generate/actions/03-validate.md plugins/aidd-context/skills/05-rule-generate/references/rule-authoring.md plugins/aidd-context/skills/05-rule-generate/references/tool-paths.md plugins/aidd-context/skills/05-rule-generate/assets/rule-template.md",
+    "chunk_id": "9a70ac",
+    "wall_time_seconds": 0.000006584,
+    "exit_code": 0,
+    "original_token_count": 17,
+    "output": "✅ Architecture rules: 7 governed file(s) checked, no violation\n"
+  },
+  {
+    "command": "git diff --check",
+    "chunk_id": "6c333c",
+    "wall_time_seconds": 0.000005417,
+    "exit_code": 0,
+    "original_token_count": 0,
+    "output": ""
+  },
+  {
+    "command": "git diff --exit-code 12777d03 -- cli",
+    "chunk_id": "02ce3d",
+    "wall_time_seconds": 0.000005792,
+    "exit_code": 0,
+    "original_token_count": 0,
+    "output": ""
+  },
+  {
+    "command": "node scripts/validate-json.mjs <indexed repo-relative JSON evidence and index>",
+    "files": 24,
+    "exit_code": 0,
+    "output": "JSON validation passed for 24 file(s).\n"
+  }
+]

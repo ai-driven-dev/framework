@@ -1,0 +1,2 @@
+# Preserve archived request payloads and diagnostic receipts byte-for-byte.
+* -text -whitespace

@@ -1,0 +1,10 @@
+[
+  {
+    "id": "call_fixture",
+    "type": "function",
+    "function": {
+      "name": "view",
+      "arguments": "{\"path\": \"/private/tmp/aidd-oct11-copilot-probe-3svb9u/evidence/update-outside/project/src/http/app.ts\"}"
+    }
+  }
+]

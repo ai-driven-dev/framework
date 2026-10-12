@@ -1,0 +1,15 @@
+# Current Cursor native control, 11 October 2026
+
+Cursor Agent 2026.10.01-e373342 refused the first fresh Auto consumer with native exit 1 after 6.83 seconds. The exact error was: `ActionRequiredError: You've hit your usage limit Get Cursor Pro for more Agent usage, unlimited Tab, and more.` No accepted inference or assistant tool call is visible in the stream, and the requested domain file was not created. This is not a passing native consumption test. Updating, documentation control and deletion consumers were not attempted after this refusal. Authentication and quota service requests occurred; this report does not claim zero provider requests.
+
+The fixture was copied to a fresh physical temporary project. The real framework CLI translated the plugin into Cursor flat skills. Its installed writer matched SHA256 `70783e579b75b9e22760239cbfd4309641bdd73840b17e7dfd606a252679a420`, generated the canonical source and native `.mdc` rule, and returned exit 0. The consumer prompt requested a small new exported domain function without mentioning the rule, writer or expected comment. Both scope and exact comment are retained in the attached generated files.
+
+Five current read-only DashboardService responses confirmed the Free plan, disabled premium on-demand usage and `noUsageBasedAllowed: true` with a zero hard limit. The current-period usage counter was disabled, so its zero fields did not independently establish exhaustion. The fresh native refusal establishes the current availability gap. No purchase, upgrade, paid API key, quota-reset action or retry followed it.
+
+Nine independent API fixture tests passed. Only AGENTS.md changed in the project during the native attempt: the installed sessionStart memory hook regenerated its owned `aidd_project_memory` block, reducing the file from 378 to 304 bytes. Every byte outside that block was preserved. The installed hook SHA256 matched the repository source. Whole-file AGENTS.md preservation is false and is not asserted.
+
+The child received the existing OAuth access token in memory through CURSOR_AUTH_TOKEN, with a memory credential store and isolated HOME/XDG directories. CURSOR_API_KEY was absent. The native stream's generic `apiKeySource: env` label does not establish use of an API key. Original credentials/settings were not modified. A child-only macOS sandbox allowed writes only inside the owned temporary root and device sinks. The private profile was removed after the attempt. This bundle excludes credentials, profile state, account identifiers and email addresses; the session identifier was redacted.
+
+The separate dummy loopback probe confirmed the current CLI endpoint override by receiving POST /auth/exchange_user_api_key, application/json, body {}. A controlled 501 stopped the CLI before any instruction markers were transmitted. Its child network policy allowed localhost only. This receipt proves endpoint routing, not rule loading, and made no accepted inference.
+
+Historical successful natural authoring and post-delete behavior from 9 October remain separate evidence. They do not replace a current complete-cycle native pass, which remains unavailable.

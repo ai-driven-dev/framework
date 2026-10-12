@@ -1,0 +1,211 @@
+{
+  "stages": [
+    {
+      "step": 1,
+      "evidence": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/evidence-model-claude-native-final/claude-native-01",
+      "exit": 0,
+      "timedOut": false,
+      "durationSeconds": 134.63,
+      "claudeCodeVersion": "2.1.295",
+      "models": [
+        "claude-sonnet-5-5"
+      ],
+      "defaultTestsExit": 0,
+      "usage": {
+        "input_tokens": 12,
+        "cache_creation_input_tokens": 13382,
+        "cache_read_input_tokens": 92554,
+        "output_tokens": 1758,
+        "output_tokens_details": {
+          "thinking_tokens": 0
+        },
+        "server_tool_use": {
+          "web_search_requests": 0,
+          "web_fetch_requests": 0
+        },
+        "service_tier": "standard",
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 13382,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "inference_geo": "global",
+        "iterations": [
+          {
+            "input_tokens": 2,
+            "output_tokens": 557,
+            "cache_read_input_tokens": 18668,
+            "cache_creation_input_tokens": 391,
+            "cache_creation": {
+              "ephemeral_5m_input_tokens": 0,
+              "ephemeral_1h_input_tokens": 391
+            },
+            "type": "message"
+          }
+        ],
+        "speed": "standard",
+        "fallback_credit": null
+      },
+      "settings": "--setting-sources project; no --restricted; private HOME/CLAUDE_CONFIG_DIR; sandboxed native tools; local plugin dir; hooks/auto-memory disabled; empty MCP"
+    },
+    {
+      "step": 2,
+      "evidence": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/evidence-model-claude-native-final/claude-native-02",
+      "exit": 0,
+      "timedOut": false,
+      "durationSeconds": 104.22,
+      "claudeCodeVersion": "2.1.295",
+      "models": [
+        "claude-sonnet-5-5"
+      ],
+      "defaultTestsExit": 0,
+      "usage": {
+        "input_tokens": 10,
+        "cache_creation_input_tokens": 13239,
+        "cache_read_input_tokens": 76361,
+        "output_tokens": 932,
+        "output_tokens_details": {
+          "thinking_tokens": 44
+        },
+        "server_tool_use": {
+          "web_search_requests": 0,
+          "web_fetch_requests": 0
+        },
+        "service_tier": "standard",
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 13239,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "inference_geo": "global",
+        "iterations": [
+          {
+            "input_tokens": 2,
+            "output_tokens": 212,
+            "cache_read_input_tokens": 19422,
+            "cache_creation_input_tokens": 381,
+            "cache_creation": {
+              "ephemeral_5m_input_tokens": 0,
+              "ephemeral_1h_input_tokens": 381
+            },
+            "type": "message"
+          }
+        ],
+        "speed": "standard",
+        "fallback_credit": null
+      },
+      "settings": "--setting-sources project; no --restricted; private HOME/CLAUDE_CONFIG_DIR; sandboxed native tools; local plugin dir; hooks/auto-memory disabled; empty MCP"
+    },
+    {
+      "step": 3,
+      "evidence": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/evidence-model-claude-native-final/claude-native-03",
+      "exit": 0,
+      "timedOut": false,
+      "durationSeconds": 54.54,
+      "claudeCodeVersion": "2.1.295",
+      "models": [
+        "claude-sonnet-5-5"
+      ],
+      "defaultTestsExit": 1,
+      "usage": {
+        "input_tokens": 12,
+        "cache_creation_input_tokens": 16164,
+        "cache_read_input_tokens": 98205,
+        "output_tokens": 2038,
+        "output_tokens_details": {
+          "thinking_tokens": 0
+        },
+        "server_tool_use": {
+          "web_search_requests": 0,
+          "web_fetch_requests": 0
+        },
+        "service_tier": "standard",
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 16164,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "inference_geo": "global",
+        "iterations": [
+          {
+            "input_tokens": 2,
+            "output_tokens": 529,
+            "cache_read_input_tokens": 22517,
+            "cache_creation_input_tokens": 211,
+            "cache_creation": {
+              "ephemeral_5m_input_tokens": 0,
+              "ephemeral_1h_input_tokens": 211
+            },
+            "type": "message"
+          }
+        ],
+        "speed": "standard",
+        "fallback_credit": null
+      },
+      "settings": "--setting-sources project; no --restricted; private HOME/CLAUDE_CONFIG_DIR; sandboxed native tools; local plugin dir; hooks/auto-memory disabled; empty MCP"
+    }
+  ],
+  "oldConsumer": {
+    "exactComment": true,
+    "sourceBefore": "import ValidationError only; no preexisting function or marker",
+    "firstRead": {
+      "name": "Read",
+      "input": {
+        "file_path": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/model-claude-old-native-proof/src/domain/native-old-proof.ts"
+      }
+    },
+    "nativeHashMatchesOriginal": true,
+    "testsExit": 0,
+    "testSummary": [
+      "ℹ tests 82",
+      "ℹ pass 82",
+      "ℹ fail 0"
+    ],
+    "causalBound": "Stream does not expose injected native context body. First Read matched native path; marker absent from prompt and initial target; native file hash matches original authored artifact; real code uses exact marker."
+  },
+  "delete": {
+    "skillInvoked": true,
+    "writerDeleteInvoked": true,
+    "deletedFiles": [
+      ".claude/rules/01-standards/1-domain-review.md",
+      "aidd_docs/rules/01-standards/1-domain-review.md"
+    ],
+    "changedFiles": [],
+    "nativeUpdatedHashMatches09": true,
+    "testsExit": 0
+  },
+  "postDelete": {
+    "newFile": "src/domain/native-after-delete.ts",
+    "initialContent": "// Monetary checks only; no functions or review markers",
+    "newFunction": "isNativeSafeTotalCents",
+    "markersAbsent": true,
+    "defaultTestInfrastructureFailure": "Two worker spawn EAGAIN errors; receipt preserved",
+    "sameScopeRetry": {
+      "command": [
+        "/opt/homebrew/Cellar/node/26.8.2/bin/node",
+        "--test",
+        "--test-isolation=none",
+        "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/model-claude-delete-native-proof/tests/http.test.ts",
+        "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/model-claude-delete-native-proof/tests/invoice.test.ts",
+        "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/model-claude-delete-native-proof/tests/native-after-delete.test.ts"
+      ],
+      "cwd": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/model-claude-delete-native-proof",
+      "exit": 0,
+      "reason": "Original default worker tests hit EAGAIN; same complete test files with documented process isolation none"
+    },
+    "retrySummary": [
+      "ℹ tests 83",
+      "ℹ pass 83",
+      "ℹ fail 0"
+    ]
+  },
+  "installationBound": "Existing actual CLI-installed local plugin cloned, seven source Markdown docs byte-refreshed. No fresh CLI install. Original writer unchanged, old native regenerated via captured real-author JSON and matches original artifact hash; updated native matches09.",
+  "authAndBudget": {
+    "mode": "Existing Max OAuth keychain read-only; token private env only; no API key or extra usage; no original config or credentials writes",
+    "quotaEvidence": "quota-after.json",
+    "sanitization": "sanitization.json"
+  },
+  "causalBound": "Real native model behavior and tool traces. CLI stream does not expose native injected context body; no claim of captured full model input. Original restricted/native09-10 bounds remain in original evidence; this additional proof uses normal project settings and new target files.",
+  "officialSources": {
+    "oauthEnv": "https://code.claude.com/docs/en/env-vars",
+    "testRetry": "https://nodejs.org/api/cli.html#--test-isolationmode"
+  },
+  "repoEdits": false
+}

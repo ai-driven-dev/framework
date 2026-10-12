@@ -1,0 +1,5 @@
+---
+description: User architecture boundaries
+alwaysApply: true
+---
+- User rule: keep HTTP outside domain.

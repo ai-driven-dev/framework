@@ -1,90 +1,58 @@
-# 🏛️ Architecture
+# Architecture
 
-How the AI-Driven Dev Framework composes inside Claude Code.
+AIDD packages AI-assisted work into plugins, each owning one concern.
 
-## 🗺️ High-level
+## Marketplace and installation
 
 ```mermaid
-flowchart LR
-  Editor["Claude Code session"] -->|"marketplace add"| Manifest[".claude-plugin/marketplace.json"]
-  Manifest -->|lists| Plugins["plugins/*"]
-  Editor -->|"plugin install"| Plugins
-  Plugins -->|ships| Surfaces["skills · agents · commands · hooks · rules · .mcp.json"]
-  Editor -->|invokes| Surfaces
+flowchart TB
+  Catalog["Marketplace catalog"] -->|lists sources| Plugins["Plugin packages"]
+  Plugins -->|native install| Claude["Claude Code"]
+  Plugins --> CLI["CLI: translate and install"]
+  CLI --> Tools["Supported AI tools"]
 ```
+
+| Element | Responsibility |
+| --- | --- |
+| `.claude-plugin/marketplace.json` | Lists plugins and their sources. |
+| `plugins/<name>/` | Holds a plugin's manifest and capabilities. |
+| AI tool | Loads capabilities and executes work. |
+| CLI | Translates supported capabilities; reports unavailable surfaces. |
+
+Marketplace and plugins version independently. See the [marketplace guide](MARKETPLACE.md) for registration, scopes and updates.
 
 ## 🧩 Anatomy of a plugin
 
-```txt
-plugins/<plugin>/
-├── .claude-plugin/plugin.json   # manifest (name, version, description, skills[], $schema)
-├── README.md · CATALOG.md · CHANGELOG.md
-├── skills/<NN>-<name>/
-│   ├── SKILL.md                 # router: frontmatter, flow, actions table, transversal rules
-│   ├── actions/                 # the atomic steps the router dispatches to
-│   ├── assets/                  # templates and static files
-│   └── references/              # one responsibility per file, linked from this skill only
-├── agents/ · commands/ · hooks/hooks.json · rules/ · .mcp.json   (all optional)
-```
+Manifest and skills are required in AIDD; other capabilities are optional. Locations are relative to the plugin directory.
 
-Only `skills/` and the manifest are universal; a plugin ships any subset of the rest.
+| Component | Location | Role |
+| --- | --- | --- |
+| Manifest | `.claude-plugin/` | `plugin.json`: identity, version and declared capabilities. |
+| Skill | `skills/<name>/SKILL.md` | Routes requests to actions or a protocol. |
+| Actions | `skills/<name>/actions/` | Inputs, outputs, procedure and checks. |
+| Assets | `skills/<name>/assets/` | Reusable templates and static files. |
+| References | `skills/<name>/references/` | Supporting documentation and handoff protocols. |
+| Agents | `agents/` | Isolated specialist roles. |
+| Commands | `commands/` | Flat prompts invoked as slash commands. |
+| Hooks | `hooks/hooks.json` and `hooks/` scripts | Deterministic programs triggered by lifecycle events. |
+| MCP configuration | `.mcp.json` | External tools and data via Model Context Protocol servers. |
+| Documentation | `README.md` · `CATALOG.md` · `CHANGELOG.md` | Usage, capability inventory and release history. |
 
-A plugin never contains its own tests: the build copies `hooks/` recursively into every user project, so a test folder there would ship to them. Tests for a bundled script live in `scripts/__tests__/`.
+Project rules belong in the host's rules directory, such as `.claude/rules/`. `aidd-context` generates them as project context, outside native Claude plugin surfaces.
 
-`plugin.json` and `marketplace.json` are validated against their [plugin](https://www.schemastore.org/claude-code-plugin-manifest.json) and [marketplace](https://www.schemastore.org/claude-code-marketplace.json) schemas, in the `lefthook` pre-commit hook and again in the `validate` workflow.
+<details>
+<summary>Package validation</summary>
 
-## 🪝 Bundled hooks
+| Check | Contract |
+| --- | --- |
+| Manifests | [Plugin](https://www.schemastore.org/claude-code-plugin-manifest.json) and [marketplace](https://www.schemastore.org/claude-code-marketplace.json) schemas; validated by `lefthook` and the `validate` workflow. |
+| Tests | Keep in `scripts/__tests__/`, outside shipped trees: `hooks/` is copied recursively into user projects. |
 
-Declared in `plugins/<plugin>/hooks/hooks.json`. They run Node, so users need `node` on their `PATH`:
+</details>
 
-| Plugin           | Event                                    | Runs                      | Purpose                                                              |
-| ---------------- | ----------------------------------------- | ------------------------- | --------------------------------------------------------------------- |
-| `aidd-context`   | `SessionStart`                            | `hooks/update_memory.js`  | Refresh the project memory block in the AI context files              |
-| `aidd-telemetry` | `SessionStart` · `Stop` · `PostToolUse`   | `hooks/journal.cjs`        | Journal every session so a unit of work can be tied to what it cost   |
+## Responsibilities
 
-A hook is authored once, with `${CLAUDE_PLUGIN_ROOT}`, and the installer rewrites it to whatever the target tool expands. Which tools run a bundled hook at all, and what each resolves:
-
-| Tool          | Runs bundled hooks | Resolves the plugin root as | Notes                                                                                  |
-| ------------- | ------------------ | --------------------------- | ---------------------------------------------------------------------------------------- |
-| Claude Code   | yes                | `${CLAUDE_PLUGIN_ROOT}`     | The spelling every plugin is authored in, so nothing is substituted                    |
-| Codex         | yes                | `${PLUGIN_ROOT}`            | Measured: it expands `${CLAUDE_PLUGIN_ROOT}` too, and will not run a hook it has not been asked to trust |
-| GitHub Copilot| yes                | `${PLUGIN_ROOT}`            | Declared, never observed against a running hook                                        |
-| Cursor        | declared            | `./`                        | Its own hook format: the converter rewrites the root to a path relative to the plugin before the declared token is ever substituted. Two headless probes fired no plugin hook at all, and what registers a plugin sitting in Cursor's own plugin directory was not identified |
-| OpenCode      | no, by a second route | —                        | A declarative `hooks.json` means nothing to it — its plugin runtime is JS modules, so every other plugin's `hooks.json` is translated into one at build time (`opencode-hooks-bridge.ts`, one generated `<plugin>-hooks.js` per plugin, `SessionStart`/`Stop`/`PostToolUse` only). `aidd-telemetry` ships its own hand-written entry instead (`plugins/aidd-telemetry/hooks/opencode-plugin.js`, no generated bridge for it) because its journal needs a stdin dialect the generated one does not speak: `session.created` maps to session-start, `session.idle` to turn-end, and (2026-08-31) a completed tool part on `message.part.updated` to tool-used. The column above is about the declarative axis alone; a tool answering `no` there is not a tool that cannot journal |
-
-A tool that runs no hook says why, and an install that carries one tells whoever ran it what was skipped.
-
-## ⚖️ What runs on every event, and what runs when someone asks
-
-Measured on one machine, 12 runs each, median: the bundled hook starts in **27 ms**, the CLI
-in **180 ms** — 6.7× — and `PostToolUse` fires on every tool call a session makes. A
-thousand tool calls is 153 seconds of added latency, so the difference is not a preference.
-
-The line is therefore **not** "plugin or CLI". It is what the code is answering to:
-
-| | Triggered by | Latency | Runs as |
-| --- | --- | --- | --- |
-| Observing | a tool event, thousands of times a session | must not be felt | plain Node in `hooks/`, no install, no dependency |
-| Answering | a person or a skill, once | irrelevant | the `aidd` CLI |
-
-Two consequences, both already paid for:
-
-- A capability that answers belongs in the CLI even when a plugin is what asks for it. The
-  telemetry pivot deleted 25 files and 4,355 lines of skill-owned scripts on that argument:
-  one implementation cannot drift from a copy of itself, and the copies had drifted.
-- A skill that needs the CLI must say so out loud when it is absent, never quietly do
-  nothing. The wording is pinned identically across every such skill by
-  `scripts/__tests__/telemetry-cli-required.test.js`, so a fourth skill cannot invent a
-  fourth phrasing.
-
-The cost of the pivot is real and is stated rather than argued away: a plugin that once
-promised "no npm install, no CLI, no account" now needs `node` to measure and `aidd` to
-answer. Writing that a hook can move to the CLI, or that a skill may keep its own script
-because it is small, re-opens a question that was settled with numbers.
-
-## 🧠 Plugin concerns and layers
-
-Every capability lives in exactly one plugin, chosen by **concern**. This taxonomy decides placement; it is only implicit in each `plugin.json`, so it is canonical here.
+Place each capability in its owning concern and delegate to it.
 
 | Plugin              | Concern              | Layer        |
 | ------------------- | -------------------- | ------------ |
@@ -94,79 +62,99 @@ Every capability lives in exactly one plugin, chosen by **concern**. This taxono
 | `aidd-dev`          | Code transformation  | Execution    |
 | `aidd-vcs`          | Version control      | External     |
 | `aidd-orchestrator` | Orchestration        | Coordination |
-| `aidd-ui` 🚧        | UI/UX design         | Execution    |
-| `aidd-telemetry` 🧪 | Measurement          | Observation  |
-| `aidd-qa` 🆕         | Acceptance QA        | Execution    |
+| `aidd-ui`        | UI/UX design         | Execution    |
+| `aidd-telemetry` | Measurement          | Observation  |
+| `aidd-qa`         | Acceptance QA        | Execution    |
 
-`aidd-ui` is alpha: smoke-test only, off the curated install path.
+### Layer boundaries
 
-`aidd-qa` is new, off the curated install path until it is proven outside this repository. It validates observable behavior against acceptance criteria and drives a browser to record evidence, so it sits in the Execution layer alongside `aidd-dev`.
+| Layer | Boundary |
+| --- | --- |
+| Knowledge | Produces context and specifications; never writes or runs application source. Context bootstrap creates no `package.json`. |
+| Execution | Changes or validates application source. |
+| External | Owns version control. |
+| Coordination | Sequences artifacts (for example `INSTALL.md`). Domain logic and artifact contracts stay with their owners; direct and orchestrated calls obey the same contracts. |
+| Observation | Records work without changing observed artifacts. Productive flows never depend on it. |
 
-`aidd-telemetry` is beta, off the curated install path: opt-in only — a repository must commit `.aidd/config.json` with `telemetry.enabled: true`. Each session appends observations, one JSON object per line, to its own `aidd_docs/runs/<run_id>__<vendor_id>.jsonl`, created on demand and git-ignored; that directory's presence is a location, not a permission. A line is never rewritten, only appended — `session_start`, `turn_end`, `file_written`, `step_start`, `step_end`, `task_declared` and `unrecognised_payload` (a path is repository-relative, never a task_id: task identity is a derivation, and belongs to whatever reads the log). Never a measurement; tokens and cost are joined afterwards from the provider's telemetry.
+### Measurement boundary
 
-**Observation** writes only *about* the other layers, never the artifact it describes, and nothing may depend on it.
+| Concern | Contract |
+| --- | --- |
+| Consent | Committed `.aidd/config.json` with `telemetry.enabled: true`; a directory grants no permission. |
+| Writing | Git-ignored, append-only session observations. |
+| Reading | Derive task identity and join provider measurements. |
 
-- **Knowledge vs execution is a firewall.** Knowledge plugins produce artifacts you *read* and never write or run application source. `aidd-context`'s bootstrap deliberately creates no `package.json`. Real code belongs to `aidd-dev` or an orchestrator's own setup actions.
-- **Concern decides placement, not existence.** A missing capability goes in the plugin whose concern owns it, then the caller delegates. Never reimplement it in the calling plugin because the right home lacks it today.
-- **Orchestration = sequencing across concerns** with little domain logic. Delegating a sub-step once does not make a skill an orchestrator. The orchestrator owns only glue and hands off through a seam artifact, for example an `INSTALL.md` one plugin produces and another consumes.
-- `aidd-orchestrator:02-backlog` owns the cross-artifact flow. Each artifact's contract stays in its `aidd-pm` skill, so a direct PM call follows the same rules as an orchestrated one.
+See the [journal contract](../aidd_docs/runs/README.md).
 
-## 🔀 Skills are routers
+## Execution model
 
-A skill's `SKILL.md` is a manifest plus a router. Claude Code loads the SKILL.md when the skill is invoked; the body decides which local action or orchestration protocol to run.
+### Skills and actions
 
 ```mermaid
----
-title: skill router pattern
----
-flowchart LR
-  User["User: '/skill-name'"]
-  Skill["/skill-name"]
-  Action1["actions/01-step.md"]
-  Action2["actions/02-step.md"]
-  ActionN["actions/NN-step.md"]
-  Out["Outputs: files, labels, PRs, audit logs"]
-
-  User --> Skill
-  Skill -->|"choose 1..N"| Action1
-  Skill -->|"choose 1..N"| Action2
-  Skill -->|"choose 1..N"| ActionN
-  Action1 --> Out
-  Action2 --> Out
-  ActionN --> Out
+flowchart TB
+  User["User"] --> Router["Orchestrator SKILL.md"]
+  Router --> Protocol["Orchestration protocol"]
+  User -->|direct invocation| Recipe["Recipe SKILL.md"]
+  Protocol -->|discover and invoke provider| Recipe
+  Protocol -->|authorized isolation| Agent["Agent"]
+  Agent -->|declared recipes only| Recipe
+  Recipe --> Action["Self-contained action"]
+  Action --> Result["Result or artifact"]
 ```
 
-Recipe skills route to self-contained actions with inputs, outputs, process steps, and tests. An orchestrator with no domain logic may instead route through numbered reference protocols that define handoffs and delegate the work to capabilities discovered at runtime.
+### Agents and delegation
 
-A skill never links outside itself (`scripts/__tests__/a-skill-links-only-inside-itself.test.js`). The same tree ships flat, where the skill folder is renamed `<plugin>-<skill>`, or as a marketplace, so no relative path survives both. A bundled script is named plugin-relative in backticks, never linked.
+| Role | Contract |
+| --- | --- |
+| Skill | Host loads `SKILL.md` on invocation; work runs in the caller's context. |
+| Orchestrator | Owns routing; authorizes isolation or bounded fan-out. |
+| Agent | Isolates work and returns a result. Invokes only declared canonical recipe skills; never invokes orchestrators or reads skill files. |
+| Recipe | Never invents spawning; an isolated recipe never delegates flow work. |
+| Reconnaissance helper | Read-only; neither mutates nor spawns. |
+| Write path | At most two delegation layers; no cycles. |
+| SDLC | Owns planning; [delivery](../plugins/aidd-orchestrator/skills/01-sdlc/references/02-deliver.md) and [check](../plugins/aidd-orchestrator/skills/01-sdlc/references/03-check.md) govern execution, leaf executors, independent judgment and bounded repair. |
 
-## 🤖 Skills and agents
+### 🪝 Bundled hooks
 
-- A **skill** is a caller-agnostic recipe; it runs in the context of whoever invokes it.
-- An **agent** is an isolated executor; it runs in its own context and returns only a result.
+Dependency-free Node scripts declared in `hooks/hooks.json`; `node` must be on `PATH`.
 
-Choose by context, not complexity: keep the work visible to the caller → skill; isolate it and take only the result → agent.
+| Plugin           | Event                                   | Runs                     | Purpose                                                     |
+| ---------------- | --------------------------------------- | ------------------------ | ----------------------------------------------------------- |
+| `aidd-context`   | `SessionStart`                          | `hooks/update_memory.js` | Refresh the project memory block in the AI context files    |
+| `aidd-telemetry` | `SessionStart` · `Stop` · `PostToolUse` | `hooks/journal.cjs`      | Journal every session so a unit of work can be tied to its cost |
 
-- **Spawning is authorized by the high-level orchestrator, never invented by a recipe skill.** A recipe skill normally runs in the caller's context. A bounded fan-out capability may mechanically spawn leaf agents only when the orchestrator explicitly delegates that responsibility and retains routing ownership.
-- An orchestrator spawns each isolated step as a leaf agent that runs a recipe, or runs the recipe itself when isolation is unnecessary. The SDLC owns planning, delegates delivery to `executor`, and delegates independent judgments to a fresh `checker`. For independent repair findings, it may explicitly delegate bounded fan-out to `10-todo`; Todo's leaf executors return their results to the SDLC. A recipe invoked inside an agent never spawns again.
-- An agent invokes only the recipe skills it declares under `# Skills you may invoke`, never an orchestrator skill, and never reads a skill's files. It names every skill by its canonical `/plugin:folder` address so its permissions are explicit and auditable.
-- An agent never delegates flow work to another agent and never invokes an orchestrator skill. It may spawn a read-only recon helper (for example `Explore`) that mutates nothing and spawns nothing. So the write path stays two layers deep and delegation can never cycle.
+### CLI queries
 
-## 🔗 Capability addressing
+Queries and reports share one CLI implementation to avoid duplicated logic. CLI-backed skills must explain a missing `aidd`; the [dependency guard](../scripts/__tests__/telemetry-cli-required.test.js) enforces this.
 
-Address a capability only where the dispatch is declared: a router's `## Actions` table, an agent's `# Skills you may invoke` list. Everywhere else, name the concept the capability owns, never the skill that owns it.
+## Portability
 
-Recipe skills never hardcode a sibling provider. They discover cross-plugin capabilities at runtime through description matching. Agent permission lists and orchestration references are responsibility maps, so they name the current provider with its canonical `/plugin:folder` or `@plugin:agent` address. The orchestrator must verify that provider is installed before calling it.
+| Surface | Contract | Reference |
+| --- | --- | --- |
+| CLI output | Supported target capabilities only; `aidd translate` warns and skips rules and commands. | [Output layouts](../cli/README.md#translate) |
+| Skills | Links stay inside the skill directory. Flat distribution renames skills `<plugin>-<skill>`; marketplace installation preserves the tree. | [Portability guard](../scripts/__tests__/a-skill-links-only-inside-itself.test.js) |
+| Bundled scripts | Named plugin-relative in backticks, never linked. | [Portability guard](../scripts/__tests__/a-skill-links-only-inside-itself.test.js) |
+| Hook adapters | CLI owns OpenCode's shared host protocol; plugins own payload mapping. | [Delivery and compatibility](../cli/ARCHITECTURE.md#hook-adaptation); [measurement coverage](../plugins/aidd-telemetry/README.md#coverage) |
 
-Two paths are exempt, both in `isExemptFromOrthogonality`:
+## Capability discovery and addressing
 
-- `plugins/aidd-orchestrator/**`, whose references are responsibility maps.
-- `plugins/aidd-context/skills/00-onboard/**`, whose menus name addresses a person types. Temporary: it ends when that skill resolves its providers at runtime.
+| Context | Rule |
+| --- | --- |
+| Dispatch tables (`## Actions`), orchestration references and agent permissions (`# Skills you may invoke`) | Canonical `/plugin:folder` or `@plugin:agent` addresses. Elsewhere, name the responsibility. |
+| Cross-plugin providers | Recipes discover by description rather than hardcoding siblings; orchestrators verify installation before dispatch. |
+| Backlog flow | Owned by `aidd-orchestrator:02-backlog`. |
+| Orthogonality exceptions | `isExemptFromOrthogonality` permits responsibility maps in `plugins/aidd-orchestrator/**` and onboarding menus in `plugins/aidd-context/skills/00-onboard/**`. The onboarding exemption ends with runtime provider discovery. |
 
-This distinction keeps recipe plugins swappable while making orchestration handoffs explicit and auditable.
+## References
 
-## 🔎 See also
-
-- [`CREATE_PLUGIN.md`](CREATE_PLUGIN.md) - build and publish your own plugin.
-- [`GLOSSARY.md`](GLOSSARY.md) - terminology used across the framework.
-- [`../CONTRIBUTING.md`](../CONTRIBUTING.md) - contribution flow.
+| Document | Question answered |
+| --- | --- |
+| [Framework README](../README.md) | What can I use, and how do I start? |
+| [Marketplace guide](MARKETPLACE.md) | How do registration, scopes and updates work? |
+| [Create a plugin](CREATE_PLUGIN.md) | How do I author and publish a plugin? |
+| [Glossary](GLOSSARY.md) | What do the terms mean? |
+| [CLI reference](../cli/README.md) | Which commands and output layouts are supported? |
+| [CLI architecture](../cli/ARCHITECTURE.md) | How are translation and installation implemented? |
+| [Contributing](../CONTRIBUTING.md) | How do I contribute to this repository? |
+| [Maintainers guide](MAINTAINERS.md) | How are repository operations and releases managed? |
+| [Claude plugin reference](https://code.claude.com/docs/en/plugins-reference) | How do native plugin components behave? |

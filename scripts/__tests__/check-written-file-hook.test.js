@@ -14,7 +14,8 @@ function runHook(payload) {
 }
 
 function probe(name, content) {
-  const file = path.join(root, "cli/src", `.hook-probe-${process.pid}-${name}.ts`);
+  // Keep transient probes outside directories scanned by repository-wide tests.
+  const file = path.join(root, "cli", `.hook-probe-${process.pid}-${name}.ts`);
   fs.writeFileSync(file, content);
   return file;
 }

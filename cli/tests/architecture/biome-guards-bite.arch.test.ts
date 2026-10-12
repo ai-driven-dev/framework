@@ -4,9 +4,9 @@
  * domain and application. A rule biome silently stops applying is invisible, so each is planted.
  */
 import { spawnSync } from "node:child_process";
-import { cpSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { cpSync, mkdirSync, mkdtempSync, realpathSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { join, relative, sep } from "node:path";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { CLI_ROOT, read } from "./helpers.js";
 
@@ -23,7 +23,9 @@ function biomeFindings(projectDir: string): string[] {
   return lines
     .map((line) => /^\s*::(?:error|warning) title=(\S+),file=(\S+?),/.exec(line))
     .filter((match): match is RegExpExecArray => match !== null)
-    .map((match) => `${match[2]}:${match[1]}`)
+    .map(
+      (match) => `${relative(realpathSync(projectDir), match[2]).split(sep).join("/")}:${match[1]}`
+    )
     .sort();
 }
 

@@ -1,0 +1,12 @@
+ M .gitignore
+ M aidd_docs/tasks/2026_10/2026_10_09_autonomous-rule-generation/verification.md
+ M plugins/aidd-context/CATALOG.md
+ M plugins/aidd-context/skills/05-rule-generate/SKILL.md
+ M plugins/aidd-context/skills/05-rule-generate/actions/01-capture-rule.md
+ M plugins/aidd-context/skills/05-rule-generate/actions/02-write-rule.md
+ M plugins/aidd-context/skills/05-rule-generate/actions/03-validate.md
+ M plugins/aidd-context/skills/05-rule-generate/assets/rule-template.md
+ M plugins/aidd-context/skills/05-rule-generate/references/rule-authoring.md
+ M plugins/aidd-context/skills/05-rule-generate/references/tool-paths.md
+?? .hermes.md
+?? aidd_docs/tasks/2026_10/2026_10_09_autonomous-rule-generation/realistic-sandbox/

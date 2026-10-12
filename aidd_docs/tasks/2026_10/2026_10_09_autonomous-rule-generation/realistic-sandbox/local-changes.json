@@ -1,0 +1,53 @@
+{
+  "baseCommit": "12777d03",
+  "featureCommit": "5e1f0a210de4b594d588536bc755bc76ca38d381",
+  "draftPullRequest": "https://github.com/ai-driven-dev/framework/pull/979",
+  "additionalCommitOrPush": false,
+  "productionFiles": [
+    "plugins/aidd-context/CATALOG.md",
+    "plugins/aidd-context/skills/05-rule-generate/SKILL.md",
+    "plugins/aidd-context/skills/05-rule-generate/actions/01-capture-rule.md",
+    "plugins/aidd-context/skills/05-rule-generate/actions/02-write-rule.md",
+    "plugins/aidd-context/skills/05-rule-generate/actions/03-validate.md",
+    "plugins/aidd-context/skills/05-rule-generate/assets/rule-template.md",
+    "plugins/aidd-context/skills/05-rule-generate/references/rule-authoring.md",
+    "plugins/aidd-context/skills/05-rule-generate/references/tool-paths.md"
+  ],
+  "writerSHA256": "9fa10479a267d899a6a024f68e75573f1d009080cd60851f23f06c8f2d190591",
+  "writerChanged": false,
+  "cliDiffFromBase": "Independent git diff --exit-code 12777d03 -- cli/ returned 0 with empty diff",
+  "files": [
+    {
+      "file": "plugins/aidd-context/CATALOG.md",
+      "sha256": "7da9c9431f68e4dd9a5bbe6765f51f6140d9b4bed1e07ffb6acc396f0376fdda"
+    },
+    {
+      "file": "plugins/aidd-context/skills/05-rule-generate/SKILL.md",
+      "sha256": "6bace323ce2c893a6895aa84c3557086954a6daf10b8119d219322cba25f807f"
+    },
+    {
+      "file": "plugins/aidd-context/skills/05-rule-generate/actions/01-capture-rule.md",
+      "sha256": "80bee7dac8f9efe7dfdbaaddc2a7a32f385440620e047bb5c2afde04ecae7abf"
+    },
+    {
+      "file": "plugins/aidd-context/skills/05-rule-generate/actions/02-write-rule.md",
+      "sha256": "97bd053d5f270d0412ed5b288c74ba23a5e54dc50b5bc5589c66971825ade359"
+    },
+    {
+      "file": "plugins/aidd-context/skills/05-rule-generate/actions/03-validate.md",
+      "sha256": "9aea68e50aa1432b68e0ddf66754356fdd6f78ae1982d01bb3e201f724e70030"
+    },
+    {
+      "file": "plugins/aidd-context/skills/05-rule-generate/assets/rule-template.md",
+      "sha256": "bfccef5e957e8d2de7aefe818196e82bf7691c8631452f4cc5b6e5ea526cdb47"
+    },
+    {
+      "file": "plugins/aidd-context/skills/05-rule-generate/references/rule-authoring.md",
+      "sha256": "b19eb65cf59d61ad0aa6cf7cdff0fb16a19da71b6797533ff599098d62fca798"
+    },
+    {
+      "file": "plugins/aidd-context/skills/05-rule-generate/references/tool-paths.md",
+      "sha256": "0db62a35cb317224b88deff0d5506ab0ffbe5e969d3ab83626e852eb7f395731"
+    }
+  ]
+}

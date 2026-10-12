@@ -67,7 +67,7 @@ function argumentHint(content) {
 async function takesInput(actionFiles) {
   for (const file of actionFiles) {
     const body = await readFile(file, "utf8");
-    if (/^## Input$/m.test(body)) return true;
+    if (/^## Input\r?$/m.test(body)) return true;
   }
   return actionFiles.length === 0;
 }
@@ -75,8 +75,8 @@ async function takesInput(actionFiles) {
 const breaches = [];
 for (const dir of await skillDirs()) {
   const skillPath = path.join(dir, "SKILL.md");
-  const content = await readFile(skillPath, "utf8").catch(() => null);
-  if (content === null) continue;
+  const content = (await readFile(skillPath, "utf8").catch(() => null))?.replaceAll("\r\n", "\n");
+  if (content == null) continue;
 
   // Named the way the contract and every other guard name a path, whatever the host separator.
   const relative = path.relative(ROOT, skillPath).split(path.sep).join("/");

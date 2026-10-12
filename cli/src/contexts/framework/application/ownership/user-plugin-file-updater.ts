@@ -20,6 +20,7 @@ import {
   withoutHooksPrefix,
 } from "../framework/translator/built-tree-materialization-translator.js";
 import { withoutHooks } from "../framework/translator/project-hooks-materializer.js";
+import type { PluginDistributionLoader } from "../plugin/plugin-distribution-loader.js";
 import { deleteOldFiles, writePluginFiles } from "../plugin/plugin-helpers.js";
 import { resolveBaseDirFromRecord } from "../plugin/plugin-target-resolution.js";
 import type { BuiltMaterializationDeps } from "../shared/apply-plugin-files-use-case.js";
@@ -27,7 +28,6 @@ import {
   assertUserScopeWriteBoundary,
   userScopeFilesSafeToDelete,
 } from "../shared/user-scope-plugin-files.js";
-import type { UserPluginDistributionLoader } from "./user-plugin-distribution-loader.js";
 
 export interface PlannedUserPluginFileUpdate {
   readonly plugin: InstalledPlugin;
@@ -42,7 +42,7 @@ export interface PlannedUserPluginFileUpdate {
 export class UserPluginFileUpdater {
   constructor(
     private readonly fs: FileReader & FileWriter,
-    private readonly loader: UserPluginDistributionLoader,
+    private readonly loader: PluginDistributionLoader,
     private readonly hasher: Hasher,
     private readonly builtDeps?: BuiltMaterializationDeps
   ) {}

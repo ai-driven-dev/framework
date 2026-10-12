@@ -258,6 +258,55 @@ describe("aidd setup — every flag that makes a run a scripted one", () => {
 });
 
 describe("aidd setup — what it refuses and what it reports", () => {
+  it.each(["all", "recommended", "aidd-dev"])(
+    "refuses user-scope plugin mode %s before building dependencies",
+    async (plugins) => {
+      const exit = vi.spyOn(process, "exit").mockImplementation(() => {
+        throw new Error("exited");
+      });
+
+      await expect(run("--scope", "user", "--ai", "claude", "--plugins", plugins)).rejects.toThrow(
+        "exited"
+      );
+
+      expect(errors.join("")).toBe(
+        "Error: --scope user has no manifest entry a plugin can be recorded against yet, so " +
+          "--plugins has nothing to enable. Drop --plugins, or run `aidd plugin install` " +
+          "separately at project scope.\n"
+      );
+      expect(exit).toHaveBeenCalledWith(1);
+      expect(vi.mocked(createDeps)).not.toHaveBeenCalled();
+      expect(written).toEqual([]);
+    }
+  );
+
+  it.each([
+    { args: [], cause: "with no --ai", remedy: "Pass `--ai <ids>`" },
+    {
+      args: ["--ai", "claude", "--ide", "vscode"],
+      cause: "an IDE tool (vscode)",
+      remedy: "Drop --ide",
+    },
+    {
+      args: ["--ai", "opencode"],
+      cause: "opencode declares no user-scope settings",
+      remedy: "Drop it from --ai",
+    },
+  ])("renders user-scope validation for $cause before building dependencies", async (test) => {
+    const exit = vi.spyOn(process, "exit").mockImplementation(() => {
+      throw new Error("exited");
+    });
+
+    await expect(run("--scope", "user", ...test.args)).rejects.toThrow("exited");
+
+    expect(errors.join("")).toContain(test.cause);
+    expect(errors.join("")).toContain(test.remedy);
+    expect(errors.join("")).not.toMatch(/UserScope\w+Error|\n\s+at /);
+    expect(exit).toHaveBeenCalledWith(1);
+    expect(vi.mocked(createDeps)).not.toHaveBeenCalled();
+    expect(written).toEqual([]);
+  });
+
   it("refuses a local source with nowhere to read it from", async () => {
     vi.spyOn(process, "exit").mockImplementation(() => {
       throw new Error("exited");
@@ -362,7 +411,8 @@ describe("aidd setup — the help surface", () => {
       [
         "--scope <scope>",
         "project (default) installs into this project alone; user registers the shared " +
-          "framework source and native activation machine-wide, writing nothing under this project",
+          "framework source and supported tools machine-wide, writing nothing under this project; " +
+          "see user-scope requirements below",
       ],
     ]);
   });

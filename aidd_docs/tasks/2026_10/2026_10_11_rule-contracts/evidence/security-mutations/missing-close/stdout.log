@@ -1,0 +1,84 @@
+✖ descriptor closes after successful read (1.956542ms)
+✖ descriptor closes after nonregular (1.255792ms)
+✖ descriptor closes after fstatSync (0.518292ms)
+✖ descriptor closes after readFileSync (0.463291ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 0
+ℹ fail 4
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 51.816208
+
+✖ failing tests:
+
+test at ../../../../../../private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-security-mutations-3uqlla2j/missing-close/scripts/__tests__/rule-reproduction-files.test.js:87:3
+✖ descriptor closes after successful read (1.956542ms)
+  AssertionError [ERR_ASSERTION]: Missing expected exception.
+      at TestContext.<anonymous> (/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-security-mutations-3uqlla2j/missing-close/scripts/__tests__/rule-reproduction-files.test.js:106:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1397:25)
+      at Test.start (node:internal/test_runner/test:1257:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: { code: 'EBADF' },
+    operator: 'throws',
+    diff: 'simple'
+  }
+
+test at ../../../../../../private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-security-mutations-3uqlla2j/missing-close/scripts/__tests__/rule-reproduction-files.test.js:87:3
+✖ descriptor closes after nonregular (1.255792ms)
+  AssertionError [ERR_ASSERTION]: Missing expected exception.
+      at TestContext.<anonymous> (/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-security-mutations-3uqlla2j/missing-close/scripts/__tests__/rule-reproduction-files.test.js:106:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1397:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:969:18)
+      at Test.postRun (node:internal/test_runner/test:1537:19)
+      at Test.run (node:internal/test_runner/test:1462:12)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: { code: 'EBADF' },
+    operator: 'throws',
+    diff: 'simple'
+  }
+
+test at ../../../../../../private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-security-mutations-3uqlla2j/missing-close/scripts/__tests__/rule-reproduction-files.test.js:87:3
+✖ descriptor closes after fstatSync (0.518292ms)
+  AssertionError [ERR_ASSERTION]: Missing expected exception.
+      at TestContext.<anonymous> (/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-security-mutations-3uqlla2j/missing-close/scripts/__tests__/rule-reproduction-files.test.js:106:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1397:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:969:18)
+      at Test.postRun (node:internal/test_runner/test:1537:19)
+      at Test.run (node:internal/test_runner/test:1462:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:969:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: { code: 'EBADF' },
+    operator: 'throws',
+    diff: 'simple'
+  }
+
+test at ../../../../../../private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-security-mutations-3uqlla2j/missing-close/scripts/__tests__/rule-reproduction-files.test.js:87:3
+✖ descriptor closes after readFileSync (0.463291ms)
+  AssertionError [ERR_ASSERTION]: Missing expected exception.
+      at TestContext.<anonymous> (/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-security-mutations-3uqlla2j/missing-close/scripts/__tests__/rule-reproduction-files.test.js:106:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1397:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:969:18)
+      at Test.postRun (node:internal/test_runner/test:1537:19)
+      at Test.run (node:internal/test_runner/test:1462:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:969:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: { code: 'EBADF' },
+    operator: 'throws',
+    diff: 'simple'
+  }

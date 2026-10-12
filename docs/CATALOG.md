@@ -90,6 +90,7 @@ Version-control workflows: repo init, commit, pull/merge request, release tag, i
 | `02-pull-request` | Create a draft pull or merge request                                           | `01-pull-request`                       |
 | `03-release-tag`  | Cut a semver release with annotated tag and notes                              | `01-release-tag`                        |
 | `04-issue-create` | Create an issue in the configured ticketing tool                               | `01-issue-create`                       |
+| `05-resolve-conflict` | Resolve deterministic conflicts or approved choices | `01-resolve` |
 
 ## 🎼 aidd-orchestrator
 
@@ -98,7 +99,7 @@ Runs synchronous feature delivery, optional async issue automation, and the prod
 | Skill            | Role                                                    | Protocols                   |
 | ---------------- | ------------------------------------------------------- | --------------------------- |
 | `00-async-dev`   | Single entry point for the async-dev pipeline           | `setup`, `run`, `review`    |
-| `01-sdlc`        | Autonomously drive the full development flow end to end | `frame`, `deliver`, `check` |
+| `01-sdlc`        | Drive the full development flow end to end, autonomous or supervised | `frame`, `deliver`, `check` |
 | `02-backlog`     | Route backlog intake, refinement, lifecycle, and repair | `01-inspect` to `08-verify` |
 
 ## 🎨 aidd-ui

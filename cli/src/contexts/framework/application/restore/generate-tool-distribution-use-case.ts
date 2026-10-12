@@ -87,8 +87,7 @@ export class GenerateToolDistributionUseCase {
 
   private buildConfigOutputPathFiles(config: AiTool<unknown>): InstallationFile[] {
     if (this.assetProvider === undefined) return [];
-    const outputPaths = config.configOutputPaths;
-    if (outputPaths === undefined) return [];
+    const outputPaths = { ...config.configOutputPaths, ...config.pluginRuntimeFiles };
     const files: InstallationFile[] = [];
     for (const [fileName, outputPath] of Object.entries(outputPaths)) {
       const asset = this.assetProvider.loadConfigAsset(config.toolId as AiToolId, fileName);

@@ -39,10 +39,10 @@ import { ListInstalledRulesUseCase } from "../../contexts/framework/application/
 import { NativeHostRegistrationGate } from "../../contexts/framework/application/ownership/native-host-registration-gate.js";
 import { ProjectPluginCleanup } from "../../contexts/framework/application/ownership/project-plugin-cleanup.js";
 import { UserMarketplaceRemoveUseCase } from "../../contexts/framework/application/ownership/user-marketplace-remove-use-case.js";
-import { UserPluginDistributionLoader } from "../../contexts/framework/application/ownership/user-plugin-distribution-loader.js";
 import { UserPluginFileUpdater } from "../../contexts/framework/application/ownership/user-plugin-file-updater.js";
 import { UserPluginUpdateUseCase } from "../../contexts/framework/application/ownership/user-plugin-update-use-case.js";
 import { PluginAddUseCase } from "../../contexts/framework/application/plugin/plugin-add-use-case.js";
+import { PluginDistributionLoader } from "../../contexts/framework/application/plugin/plugin-distribution-loader.js";
 import { PluginInstallFromMarketplaceUseCase } from "../../contexts/framework/application/plugin/plugin-install-from-marketplace-use-case.js";
 import { PluginInstallUseCase } from "../../contexts/framework/application/plugin/plugin-install-use-case.js";
 import { PluginListUseCase } from "../../contexts/framework/application/plugin/plugin-list-use-case.js";
@@ -354,17 +354,6 @@ export async function createDeps(
     userManifestRepo,
     nativeSources
   );
-  const pluginAddUseCase = new PluginAddUseCase(
-    fs,
-    manifestRepo,
-    pluginFetcher,
-    pluginDistributionReader,
-    hasher,
-    logger,
-    marketplaceRegistry,
-    ensureBuiltMarketplaceUseCase,
-    userManifestRepo
-  );
   const gitignoreUseCase = new GitignoreUseCase(fs);
   const git = new GitAdapter(fs);
   const postInstallPipelineUseCase = new PostInstallPipelineUseCase(manifestRepo, gitignoreUseCase);
@@ -374,6 +363,17 @@ export async function createDeps(
     logger,
     assetProvider,
     postInstallPipelineUseCase
+  );
+  const pluginAddUseCase = new PluginAddUseCase(
+    fs,
+    manifestRepo,
+    new PluginDistributionLoader(pluginFetcher, pluginDistributionReader),
+    hasher,
+    logger,
+    marketplaceRegistry,
+    ensureBuiltMarketplaceUseCase,
+    userManifestRepo,
+    installRuntimeConfigUseCase
   );
   const installIdeConfigUseCase = new InstallIdeConfigUseCase(
     fs,
@@ -500,16 +500,16 @@ export async function createDeps(
   const pluginUpdateUseCase = new PluginUpdateUseCase(
     fs,
     manifestRepo,
-    pluginFetcher,
-    pluginDistributionReader,
+    new PluginDistributionLoader(pluginFetcher, pluginDistributionReader),
     hasher,
-    builtMaterializationDeps
+    builtMaterializationDeps,
+    installRuntimeConfigUseCase
   );
   const userPluginUpdateUseCase = new UserPluginUpdateUseCase(
     userManifestRepo,
     new UserPluginFileUpdater(
       fs,
-      new UserPluginDistributionLoader(pluginFetcher, pluginDistributionReader),
+      new PluginDistributionLoader(pluginFetcher, pluginDistributionReader),
       hasher,
       builtMaterializationDeps
     ),

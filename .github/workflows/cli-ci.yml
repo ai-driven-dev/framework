@@ -339,8 +339,8 @@ jobs:
           key: pnpm-${{ runner.os }}-${{ hashFiles('cli/pnpm-lock.yaml') }}
           restore-keys: pnpm-${{ runner.os }}-
       - run: cd cli && pnpm install --frozen-lockfile
-      # The test starts Kilo's local server and asks it to load the generated project plugin.
-      # No model or account is needed for this protocol-level smoke.
+      # Exercise generated hooks and memory with the released Kilo server and read tool.
+      # Inference uses a deterministic loopback endpoint; no provider account is needed.
       - name: Install Kilo Code CLI
         run: npm install -g @kilocode/cli@7.7.5
       - run: cd cli && pnpm test:e2e:kilo
@@ -519,6 +519,21 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - name: Plugin suite
         run: node scripts/check-tests-leave-git-alone.js -- node --test 'scripts/__tests__/**/*.test.js'
+
+      # A Windows commit's hooks (#948), less the three cli jobs that need cli/'s dependencies.
+      - name: Hooks - a commit's hooks pass on Windows
+        run: |
+          echo "# lefthook subject" > "$RUNNER_TEMP/msg"
+          status=0
+          LEFTHOOK_EXCLUDE=cli-biome,cli-architecture,cli-typecheck \
+            pnpm exec lefthook run pre-commit --all-files --no-auto-install --no-tty > "$RUNNER_TEMP/hooks.log" 2>&1 || status=1
+          pnpm exec lefthook run prepare-commit-msg "$RUNNER_TEMP/msg" message --no-auto-install --no-tty >> "$RUNNER_TEMP/hooks.log" 2>&1 || status=1
+          cat "$RUNNER_TEMP/hooks.log"
+          if grep -n "syntax error" "$RUNNER_TEMP/hooks.log"; then
+            echo "::error::lefthook handed sh a broken command line (#948)"
+            exit 1
+          fi
+          exit $status
 
       - run: cd cli && pnpm install --frozen-lockfile
       # A real global install, not `node dist/cli.js` by path: nothing else proves `aidd`
