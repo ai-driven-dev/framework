@@ -9,6 +9,7 @@ const uninstallIdeTool = vi.fn();
 const updateAiTools = vi.fn();
 const updateIdeTools = vi.fn();
 const listInstalledRules = vi.fn();
+const validateRecipes = vi.fn();
 const loadManifest = vi.fn();
 const currentVersion = vi.fn(() => "5.2.2");
 
@@ -21,6 +22,7 @@ vi.mock("../../../src/runtime/wiring/framework.js", () => ({
     updateAiToolsUseCase: { execute: updateAiTools },
     updateIdeToolsUseCase: { execute: updateIdeTools },
     listInstalledRulesUseCase: { execute: listInstalledRules },
+    validateRecipesUseCase: { execute: validateRecipes },
     manifestRepo: { load: loadManifest },
     currentVersionProvider: { get: currentVersion },
   })),
@@ -71,6 +73,7 @@ beforeEach(() => {
   updateAiTools.mockResolvedValue({ updatedTools: [], errors: [] });
   updateIdeTools.mockResolvedValue({ updatedTools: [], errors: [] });
   listInstalledRules.mockResolvedValue({ rules: [] });
+  validateRecipes.mockReturnValue({ findings: [], fileCount: 1 });
   loadManifest.mockResolvedValue(null);
 });
 
@@ -354,18 +357,21 @@ describe("aidd framework rules", () => {
 });
 
 describe("aidd framework — how every subcommand builds its graph and reports a failure", () => {
-  it.each([["install", "--tool", "claude"], ["remove", "--tool", "claude"], ["update"], ["rules"]])(
-    "hands %j this run's verbosity, never an empty option set",
-    async (...args) => {
-      await run(...args);
+  it.each([
+    ["install", "--tool", "claude"],
+    ["remove", "--tool", "claude"],
+    ["update"],
+    ["rules"],
+    ["validate-recipes", "recipe.md"],
+  ])("hands %j this run's verbosity, never an empty option set", async (...args) => {
+    await run(...args);
 
-      expect(vi.mocked(createDeps)).toHaveBeenCalledWith(
-        PROJECT_ROOT,
-        { verbose: false },
-        expect.anything()
-      );
-    }
-  );
+    expect(vi.mocked(createDeps)).toHaveBeenCalledWith(
+      PROJECT_ROOT,
+      { verbose: false },
+      expect.anything()
+    );
+  });
 
   it("names a failed rules read on stderr and fails the process", async () => {
     listInstalledRules.mockRejectedValue(new Error("manifest unreadable"));
@@ -415,6 +421,10 @@ describe("aidd framework — the help surface", () => {
         "Re-install tool configs from bundled CLI assets, moving to a new version (all installed tools if --tool is omitted; see `marketplace refresh`, which re-fetches catalogs instead)",
       ],
       ["rules", "List the rules installed in this project, across every AI tool"],
+      [
+        "validate-recipes",
+        "Validate recipe structure, examples, and local links without changing files",
+      ],
     ]);
   });
 

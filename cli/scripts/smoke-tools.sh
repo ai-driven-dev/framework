@@ -24,6 +24,7 @@ IDE_TOOLS=(vscode)
 ALL_COMMANDS=(
   "setup" "doctor" "sync" "translate" "update" "clean"
   "framework install" "framework update" "framework remove" "framework rules"
+  "framework validate-recipes"
   "plugin remove" "plugin list" "plugin install" "plugin search" "plugin update"
   "marketplace add" "marketplace list" "marketplace remove" "marketplace refresh" "marketplace check"
   "auth login" "auth logout" "auth status"
@@ -174,6 +175,10 @@ section "help / version / unknown"
 run "--version" 0 "aidd/" "$ROOT" -- --version
 run "unknown command exits non-zero" 1 "" "$ROOT" -- definitely-not-a-command
 # (version/help are not counted leaves)
+
+section "recipe validation (bundled)"
+run "framework validate-recipes (bundled)" 0 "PASS: 3 recipe(s) validated." "$ROOT" -- \
+  framework validate-recipes --bundled "$ROOT/../plugins/aidd-context/skills/12-cook/assets/recipes"
 
 section "translate (local fixture)"
 FW_OUT="$TMPROOT/fw-out"

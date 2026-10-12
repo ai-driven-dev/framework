@@ -303,7 +303,7 @@ test("a glossary table before the router does not blind the router's own column"
   assert.deepEqual(violations, []);
 });
 
-test("a blank line splitting the router table does not unname the rows below it", () => {
+test("a blank line splitting the router table is refused once, at the rows it cut off", () => {
   const content = [
     "# Split table skill",
     "",
@@ -324,7 +324,61 @@ test("a blank line splitting the router table does not unname the rows below it"
     content,
     ["01-first.md", "02-second.md"]
   );
-  assert.deepEqual(violations, []);
+  assert.equal(violations.length, 1);
+  assert.match(violations[0].message, /:9 .*no separator/);
+});
+
+test("a glossary with no separator under the router cites nothing", () => {
+  const content = [
+    "# Glossary skill",
+    "",
+    "## Actions",
+    "",
+    "| Action | When |",
+    "| --- | --- |",
+    "| 01-keep | a |",
+    "",
+    "| role | the caller |",
+    "| scope | the ask |",
+    "",
+    "## Transversal rules",
+    "",
+    "- Nothing.",
+  ].join("\n");
+  const violations = checkArchitecture(
+    "plugins/aidd-fixture-a/skills/01-glossary/SKILL.md",
+    content,
+    ["01-keep.md", "02-role.md"]
+  );
+  assert.equal(violations.length, 1);
+  assert.match(violations[0].message, /:9 .*no separator/);
+});
+
+test("a glossary under the router with its own separator leaves a deleted row unnamed", () => {
+  const content = [
+    "# Glossary skill",
+    "",
+    "## Actions",
+    "",
+    "| Action | When |",
+    "| --- | --- |",
+    "| 01-keep | a |",
+    "",
+    "| Term | Meaning |",
+    "| --- | --- |",
+    "| role | the caller |",
+    "",
+    "## Transversal rules",
+    "",
+    "- Nothing.",
+  ].join("\n");
+  const violations = checkArchitecture(
+    "plugins/aidd-fixture-a/skills/01-glossary-table/SKILL.md",
+    content,
+    ["01-keep.md", "02-role.md"]
+  );
+  assert.equal(violations.length, 1);
+  assert.match(violations[0].message, /never names action file "02-role\.md"/);
 });
 
 test("a two-dash separator row still marks the header it follows", () => {
@@ -393,6 +447,42 @@ test("two action files sharing a stem are not both covered by one citation", () 
   assert.equal(violations.length, 2);
   assert.match(violations[0].message, /never names action file "01-plan\.md"/);
   assert.match(violations[1].message, /never names action file "04-plan\.md"/);
+});
+
+test("two action files sharing a stem are each cited by their numbered name", () => {
+  const content = [
+    "# Shared stem skill",
+    "",
+    "## Actions",
+    "",
+    "| Action | Does |",
+    "| --- | --- |",
+    "| 01-plan | draft it |",
+    "| 04-plan | revise it |",
+    "",
+    "## Transversal rules",
+    "",
+    "- Nothing.",
+  ].join("\n");
+  const violations = checkArchitecture(
+    "plugins/aidd-fixture-a/skills/01-shared-stem-numbered/SKILL.md",
+    content,
+    ["01-plan.md", "04-plan.md"]
+  );
+  assert.deepEqual(violations, []);
+});
+
+test("a sibling address inside a fence is still refused, unlike a fenced router table", () => {
+  const content = [
+    "# Fenced address",
+    "",
+    "```shell",
+    "/aidd-fixture-b:01-thing",
+    "```",
+  ].join("\n");
+  const violations = checkArchitecture("plugins/aidd-fixture-a/skills/01-x/references/teach.md", content, []);
+  assert.equal(violations.length, 1);
+  assert.match(violations[0].message, /:4 addresses sibling plugin "aidd-fixture-b"/);
 });
 
 test("a fenced example table inside the Actions section cites nothing", () => {

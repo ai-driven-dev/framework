@@ -112,6 +112,25 @@ export function breakVerdict(score, declared) {
   return null;
 }
 
+/** A passing score alone cannot prove the name filter avoided a neighbouring test. Each
+ * dynamic canary mutant has one covering test; its run must execute and be killed by it. */
+export function canarySelectionVerdict(report) {
+  for (const file of Object.values(report.files ?? {})) {
+    for (const mutant of file.mutants) {
+      if (mutant.static) continue;
+      if (
+        mutant.coveredBy?.length !== 1 ||
+        mutant.testsCompleted !== 1 ||
+        mutant.killedBy?.length !== 1 ||
+        mutant.killedBy[0] !== mutant.coveredBy[0]
+      ) {
+        return `canary mutant ${mutant.id} did not run exactly its covering test`;
+      }
+    }
+  }
+  return null;
+}
+
 /** Reads first rather than checking first: a file that vanishes in between is simply absent. */
 function pruneIncrementalFile(path) {
   let raw;
@@ -198,7 +217,9 @@ function main() {
 
   const report = JSON.parse(readFileSync(join(scopeDir, "mutation.json"), "utf8"));
   const score = scoreOf(report);
-  const verdict = breakVerdict(score, scopes[scope]);
+  const verdict =
+    breakVerdict(score, scopes[scope]) ??
+    (scope === "canary" ? canarySelectionVerdict(report) : null);
   console.log(
     `\nReport: reports/mutation/${scope}/ (score ${score.toFixed(1)}, floor ${scopes[scope].break})`
   );

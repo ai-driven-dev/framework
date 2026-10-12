@@ -9,6 +9,7 @@ export default defineConfig({
   test: {
     projects: [
       {
+        extends: false,
         plugins: [textLoader(TEXT_EXTENSIONS)],
         test: {
           name: "unit",
@@ -22,6 +23,7 @@ export default defineConfig({
         },
       },
       {
+        extends: false,
         plugins: [textLoader(TEXT_EXTENSIONS)],
         test: {
           name: "architecture",
@@ -31,6 +33,7 @@ export default defineConfig({
         },
       },
       {
+        extends: false,
         plugins: [textLoader(TEXT_EXTENSIONS)],
         test: {
           name: "integration",
@@ -45,6 +48,7 @@ export default defineConfig({
         },
       },
       {
+        extends: false,
         plugins: [textLoader(TEXT_EXTENSIONS)],
         test: {
           name: "e2e",

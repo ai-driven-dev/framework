@@ -6,7 +6,7 @@ const yaml = require("js-yaml");
 
 const root = path.resolve(__dirname, "../..");
 
-// Lefthook on Windows passes a run to `sh -c` unescaped, so a `"` truncates it (#948).
+// Lefthook on Windows passes a run to `sh -c` unescaped, so a `"` truncates it.
 test("no run in lefthook.yml holds a double quote", () => {
   const config = yaml.load(fs.readFileSync(path.join(root, "lefthook.yml"), "utf8"));
   const offenders = [];

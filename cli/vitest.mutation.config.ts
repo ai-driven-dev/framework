@@ -29,6 +29,7 @@ export default defineConfig({
     reporters: ["default", new UnloadableFileAsFailedTest()],
     projects: [
       {
+        extends: false,
         plugins: [textLoader(TEXT_EXTENSIONS)],
         test: {
           name: "unit",
@@ -39,6 +40,7 @@ export default defineConfig({
         },
       },
       {
+        extends: false,
         plugins: [textLoader(TEXT_EXTENSIONS)],
         test: {
           name: "integration",

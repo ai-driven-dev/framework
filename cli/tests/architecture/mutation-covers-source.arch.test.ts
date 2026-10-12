@@ -9,6 +9,7 @@ import { describe, expect, it } from "vitest";
 import { HARNESS, scopesToRun } from "../../scripts/mutation-scopes-to-run.mjs";
 import {
   breakVerdict,
+  canarySelectionVerdict,
   changedArgs,
   changedRanges,
   pruneIncremental,
@@ -116,6 +117,24 @@ describe("mutation covers every source file", () => {
 });
 
 describe("the guard itself", () => {
+  it("rejects a canary run that skipped its covering test or ran a neighbour", () => {
+    const mutant = {
+      id: "1",
+      status: "Killed",
+      coveredBy: ["test-1"],
+      killedBy: ["test-1"],
+      testsCompleted: 1,
+    };
+    const report = (override = {}) => ({
+      files: { canary: { mutants: [{ ...mutant, ...override }] } },
+    });
+    expect(canarySelectionVerdict(report())).toBeNull();
+    expect(canarySelectionVerdict(report({ testsCompleted: 0 }))).toMatch(/covering test/);
+    expect(canarySelectionVerdict(report({ testsCompleted: 2 }))).toMatch(/covering test/);
+    expect(canarySelectionVerdict(report({ killedBy: ["test-2"] }))).toMatch(/covering test/);
+    expect(canarySelectionVerdict(report({ static: true, coveredBy: [] }))).toBeNull();
+  });
+
   const scopes = {
     kernel: { mutate: "src/kernel/**/*.ts", break: 70 },
     tools: { mutate: "src/contexts/tools/**/*.ts", break: 60 },

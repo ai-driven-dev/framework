@@ -12,6 +12,7 @@ How this package is tested: the layers, the tools, the conventions.
 
 - `vitest`, `fast-check` for properties, `ink-testing-library` for terminal views.
 - `stryker` for mutation, per scope, a gate in CI on the scopes a change touches.
+- Vitest 5 uses canonical `fullTestName` values for filtered runs. The pnpm patch for `@stryker-mutator/vitest-runner@10.0.0` uses that same name in runner IDs and worker coverage IDs. It is specific to Vitest 5; remove or reassess it when upgrading the runner. The canary checks nested hierarchy collisions, literal spaces and regex characters, and that each dynamic mutant runs exactly its covering test.
 - `knip`, `jscpd`, `biome`.
 
 ## Conventions

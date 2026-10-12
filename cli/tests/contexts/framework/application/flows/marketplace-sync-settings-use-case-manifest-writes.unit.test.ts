@@ -10,6 +10,7 @@ import { Manifest } from "../../../../../src/contexts/framework/domain/manifest.
 import { InstalledPlugin } from "../../../../../src/contexts/framework/domain/plugins/installed-plugin.js";
 import { InstallationFile } from "../../../../../src/kernel/file.js";
 import { builtMarketplaceDir } from "../../../../../src/kernel/paths.js";
+import type { MarketplaceScope } from "../../../../../src/kernel/scope.js";
 import type { ToolId } from "../../../../../src/kernel/tool.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
@@ -38,6 +39,7 @@ class SaveCountingManifestRepository extends InMemoryManifestRepository {
 interface Setup {
   readonly toolIds?: readonly ToolId[];
   readonly marketplaceNames?: readonly string[];
+  readonly marketplaceScope?: MarketplaceScope;
   readonly failingBuilds?: readonly string[];
   readonly activator?: FakeNativePluginActivator;
   readonly withPlugin?: boolean;
@@ -122,7 +124,7 @@ async function build(setup: Setup = {}) {
       Marketplace.create({
         name,
         source: { kind: "github", repo: `ai-driven-dev/${name}` },
-        scope: "project",
+        scope: setup.marketplaceScope ?? "project",
         addedAt: "2026-09-02T00:00:00Z",
       })
     );
@@ -135,6 +137,8 @@ async function build(setup: Setup = {}) {
     machine.addTool("claude", "test", []);
     machine.setNativeRegistrations("claude", machineRegistrations);
   }
+  const machineRepo =
+    machine === undefined ? undefined : new SaveCountingManifestRepository(machine);
   const useCase = new MarketplaceSyncSettingsUseCase(
     fs,
     manifestRepo,
@@ -169,7 +173,7 @@ async function build(setup: Setup = {}) {
         }),
       ],
     ]),
-    machine === undefined ? undefined : new InMemoryManifestRepository(machine),
+    machineRepo,
     new Map([
       [
         "claude",
@@ -184,11 +188,11 @@ async function build(setup: Setup = {}) {
       ],
     ])
   );
-  return { useCase, manifestRepo, manifest, fs, hasher };
+  return { useCase, manifestRepo, manifest, fs, hasher, activator, machineRepo };
 }
 
-function recorded(manifest: Manifest): NativeRegistrations | undefined {
-  return manifest.getNativeRegistrations("claude");
+function recorded(manifest: Manifest | null | undefined): NativeRegistrations | undefined {
+  return manifest?.getNativeRegistrations("claude");
 }
 
 function trackedSettingsHash(manifest: Manifest): string | undefined {
@@ -516,5 +520,155 @@ describe("a marketplace the host refused is not this project's to remove", () =>
     await useCase.execute({ projectRoot: PROJECT_ROOT });
 
     expect(recorded(manifest)?.marketplaces).toStrictEqual(FRAMEWORK_ONLY.marketplaces);
+  });
+});
+
+describe("registration changes isolated from the catalogue provenance", () => {
+  it.each([
+    ["binary", { ...FRAMEWORK_ONLY, binary: "old-cli" }],
+    [
+      "alias",
+      {
+        ...FRAMEWORK_ONLY,
+        marketplaces: [{ ...FRAMEWORK_ONLY.marketplaces[0], alias: "old-alias" }],
+      },
+    ],
+    [
+      "host name",
+      {
+        ...FRAMEWORK_ONLY,
+        marketplaces: [{ ...FRAMEWORK_ONLY.marketplaces[0], hostName: "old-host" }],
+      },
+    ],
+    [
+      "source",
+      {
+        ...FRAMEWORK_ONLY,
+        marketplaces: [
+          {
+            alias: MARKETPLACE,
+            hostName: MARKETPLACE,
+            provenance: { kind: "registry", source: "/built/old/claude" },
+          },
+        ],
+      },
+    ],
+    ["removed ref", { ...FRAMEWORK_ONLY, pluginRefs: [`retired@${MARKETPLACE}`] }],
+  ] satisfies [string, NativeRegistrations][])(
+    "persists a changed %s even when every other recorded field agrees",
+    async (_field, existingRegistrations) => {
+      const { useCase, manifest, manifestRepo } = await build({ existingRegistrations });
+
+      await useCase.execute({ projectRoot: PROJECT_ROOT });
+
+      expect(recorded(manifest)).toStrictEqual(FRAMEWORK_ONLY);
+      expect(manifestRepo.saves).toBe(1);
+      expect(recorded(await manifestRepo.load())).toStrictEqual(FRAMEWORK_ONLY);
+    }
+  );
+
+  it("preserves clean dependents when replacing a registration", async () => {
+    const pluginClaims = [{ ref: `${PLUGIN}@${MARKETPLACE}`, dependents: ["/another-project"] }];
+    const { useCase, manifest, manifestRepo } = await build({
+      existingRegistrations: { ...FRAMEWORK_ONLY, binary: "old-cli", pluginClaims },
+    });
+
+    await useCase.execute({ projectRoot: PROJECT_ROOT });
+
+    expect(recorded(manifest)).toStrictEqual({ ...FRAMEWORK_ONLY, pluginClaims });
+    expect(manifestRepo.saves).toBe(1);
+  });
+
+  it("keeps failed-build plugin refs without claiming an unrelated suffix", async () => {
+    const failed = { alias: "broken", hostName: "broken-catalog" };
+    const { useCase, manifest, activator } = await build({
+      marketplaceNames: [MARKETPLACE, "broken"],
+      failingBuilds: ["broken"],
+      existingRegistrations: {
+        ...FRAMEWORK_ONLY,
+        marketplaces: [failed],
+        pluginRefs: ["kept@broken-catalog", "retired@not-broken-catalog"],
+      },
+    });
+
+    const result = await useCase.execute({ projectRoot: PROJECT_ROOT });
+
+    expect(result.errors).toStrictEqual([]);
+    expect(recorded(manifest)).toStrictEqual({
+      ...FRAMEWORK_ONLY,
+      marketplaces: [...FRAMEWORK_ONLY.marketplaces, failed],
+      pluginRefs: ["kept@broken-catalog"],
+    });
+    expect(activator.removedMarketplaces).toStrictEqual([]);
+    expect(activator.uninstalledPlugins).toStrictEqual([]);
+  });
+});
+
+describe("machine ownership recorded by a user-scope sync", () => {
+  const ref = `${PLUGIN}@${MARKETPLACE}`;
+  const unrelated = ownedMachineEntry("other", "other-catalog", "/other/source").marketplaces[0];
+
+  it("adds the claimed catalogue while preserving unrelated machine entries and refs", async () => {
+    const previous: NativeRegistrations = {
+      binary: "existing-cli",
+      marketplaces: [unrelated],
+      pluginRefs: ["kept@other-catalog"],
+      pluginClaims: [{ ref: "kept@other-catalog", dependents: ["/other-project"] }],
+    };
+    const { useCase, machineRepo, activator, fs } = await build({
+      withPlugin: true,
+      activator: new FakeNativePluginActivator({ available: true }),
+      existingMachineRegistrations: previous,
+      marketplaceScope: "user",
+    });
+
+    const result = await useCase.execute({ projectRoot: PROJECT_ROOT, scope: "user" });
+
+    expect(result).toStrictEqual({
+      activated: ["claude"],
+      binaryMissing: [],
+      warnings: [],
+      errors: [],
+    });
+    expect(machineRepo?.saves).toBe(1);
+    expect(recorded(await machineRepo?.load())).toStrictEqual({
+      ...previous,
+      marketplaces: [unrelated, ...FRAMEWORK_ONLY.marketplaces],
+      pluginClaims: [...(previous.pluginClaims ?? []), { ref, dependents: [] }],
+    });
+    expect(activator.enabledPlugins).toStrictEqual([ref]);
+    expect(activator.enabledPluginScopes).toStrictEqual(["user"]);
+    expect(fs.listUnder(PROJECT_ROOT)).toStrictEqual([]);
+  });
+
+  it("refreshes proven provenance while preserving an existing plugin claim and dependents", async () => {
+    const previous: NativeRegistrations = {
+      binary: "existing-cli",
+      marketplaces: [{ alias: MARKETPLACE, hostName: MARKETPLACE }, unrelated],
+      pluginRefs: ["kept@other-catalog"],
+      pluginClaims: [{ ref, dependents: ["/other-project"] }],
+    };
+    const { useCase, machineRepo } = await build({
+      withPlugin: true,
+      activator: new FakeNativePluginActivator({ available: true }),
+      existingMachineRegistrations: previous,
+      marketplaceScope: "user",
+    });
+
+    await useCase.execute({ projectRoot: PROJECT_ROOT, scope: "user" });
+
+    expect(machineRepo?.saves).toBe(1);
+    expect(recorded(await machineRepo?.load())).toStrictEqual({
+      ...previous,
+      marketplaces: [...FRAMEWORK_ONLY.marketplaces, unrelated],
+    });
+
+    await useCase.execute({ projectRoot: PROJECT_ROOT, scope: "user" });
+
+    expect(machineRepo?.saves).toBe(1);
+    expect(recorded(await machineRepo?.load())).toStrictEqual({
+      ...previous,
+      marketplaces: [...FRAMEWORK_ONLY.marketplaces, unrelated],
+    });
   });
 });
