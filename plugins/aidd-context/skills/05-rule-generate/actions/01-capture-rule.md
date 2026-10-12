@@ -14,6 +14,7 @@ Approved candidates with planned paths, or confirmed sources, operation and dest
 
 1. Confirm the operation and [destination](../references/rule-publication.md).
    - Hosts: reuse the existing rule's hosts, else ask. Missing hosts: detect, propose installation, await selection before drafting.
+   - For Kilo, inspect all four project configurations before writing. If several are candidates and no unique configuration owns the exact rule path, present the candidates and require an explicit choice; do not publish without it.
 2. Frame the topic.
    - Manual: ask for it.
    - Auto: scan, propose topics, await selection.
@@ -24,3 +25,4 @@ Approved candidates with planned paths, or confirmed sources, operation and dest
 6. Present each candidate in full (body, description, scope, hosts), the planned paths and every finding (new rules too), then end the turn.
    - Needs review: ask for evidence, reassess before offering source changes.
    - Resolved: replan, present the revised candidate, end the turn again.
+For an ambiguous Kilo configuration, pass only the user's confirmed `--kilo-config` path to the writer.
