@@ -3,7 +3,7 @@
 // in an isolated temp project with a uniquely named worktree skill. Local and opt-in:
 // the host needs authentication and each live case spends tokens.
 
-import { mkdtempSync, mkdirSync, writeFileSync, cpSync, rmSync, readFileSync, existsSync } from "node:fs";
+import { mkdtempSync, mkdirSync, writeFileSync, cpSync, rmSync, readFileSync, existsSync, readdirSync, statSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, dirname, resolve } from "node:path";
 import { spawn } from "node:child_process";
@@ -115,14 +115,14 @@ async function evaluate(expect, ctx) {
 
   if (expect.judge) {
     if (!JUDGE) {
-      checks.push({ ok: true, skipped: true, label: `judge (skipped, pass --judge): ${expect.judge}` });
+      checks.push({ ok: null, skipped: true, label: `judge (skipped, pass --judge): ${expect.judge}` });
     } else {
       const evidence = [ctx.stdout, ...(expect.judgeFiles || []).map((n) => fileText(n) || "")].join("\n\n");
       const verdict = await runHost(
         `You grade a test. Criterion: "${expect.judge}". Output under test follows between <<< and >>>.\n` +
           `Reply with exactly PASS or FAIL on the first line, then one line of reason.\n<<<\n${evidence}\n>>>`,
         ctx.tmp,
-        "claude",
+        HOST,
       );
       checks.push({ ok: /^\s*pass\b/i.test(verdict), label: `judge: ${expect.judge}`, note: verdict.split("\n")[0].trim() });
     }
@@ -150,6 +150,27 @@ function setupCase(c) {
   return tmp;
 }
 
+function treeSnapshot(root) {
+  const snapshot = new Map();
+  const walk = (dir, prefix = "") => {
+    for (const entry of readdirSync(dir, { withFileTypes: true })) {
+      const relative = prefix ? `${prefix}/${entry.name}` : entry.name;
+      if (relative === ".skill-eval-last-message.txt") continue;
+      const file = join(dir, entry.name);
+      if (entry.isDirectory()) {
+        snapshot.set(`${relative}/`, `directory:${statSync(file).mtimeMs}`);
+        walk(file, relative);
+      } else if (entry.isFile()) {
+        snapshot.set(relative, `${statSync(file, { bigint: true }).mtimeNs}:${readFileSync(file).toString("base64")}`);
+      } else {
+        snapshot.set(relative, `other:${entry.isSymbolicLink()}`);
+      }
+    }
+  };
+  walk(root);
+  return snapshot;
+}
+
 async function runCase(c) {
   // setupCase can throw on a case whose skill folder is gone. Keep it inside the
   // guard: one broken case must not abort a suite that takes minutes to run.
@@ -161,12 +182,25 @@ async function runCase(c) {
     const prompt = c.prompt.replaceAll("{{SKILL}}", c.evalName);
     stdout = await runHost(prompt, tmp);
     checks = await evaluate(c.expect, { tmp, stdout, setup: c.setup?.files || {} });
+    if (c.expect.repeat) {
+      const before = treeSnapshot(tmp);
+      const repeatOutput = await runHost(prompt, tmp);
+      const after = treeSnapshot(tmp);
+      const changed = [...new Set([...before.keys(), ...after.keys()])].filter(
+        (name) => before.get(name) !== after.get(name),
+      );
+      checks.push({
+        ok: changed.length === 0,
+        label: `idempotent rerun${changed.length ? ` changed: ${changed.join(", ")}` : " left project bytes and mtimes unchanged"}`,
+      });
+      if (!repeatOutput.trim()) checks.push({ ok: false, label: "idempotent rerun returned an empty response" });
+    }
   } catch (err) {
     checks = [{ ok: false, label: `run error: ${err.message}` }];
   }
   // A case that fails because the run itself failed looks identical to a case
   // that fails on the skill's behavior. Keep the tail so the two are separable.
-  const broke = checks.some((k) => !k.ok);
+  const broke = checks.some((k) => k.ok === false);
   if (broke) {
     const tail = stdout.trim().slice(-400).replace(/\s+/g, " ");
     checks.push({ ok: true, skipped: true, label: `run said: ${tail || "(nothing)"}` });
@@ -174,7 +208,9 @@ async function runCase(c) {
   if (!KEEP && tmp) rmSync(tmp, { recursive: true, force: true });
   // Report as each case lands, in one write so parallel cases never interleave.
   // A long suite that is interrupted still leaves every finished case behind.
-  const lines = [`${broke ? "FAIL" : "PASS"}  ${c.skill}  ::  ${c.name}`];
+  const judgeSkipped = checks.some((k) => k.skipped && k.label.startsWith("judge (skipped"));
+  const status = broke ? "FAIL" : judgeSkipped ? "INCOMPLETE (judge skipped)" : "PASS";
+  const lines = [`${status}  ${c.skill}  ::  ${c.name}`];
   for (const k of checks) {
     lines.push(`   ${k.skipped ? "~" : k.ok ? "✓" : "✗"} ${k.label}${k.note ? `  (${k.note})` : ""}`);
   }
@@ -197,7 +233,14 @@ async function runAll(list, jobs) {
 
 console.log(`Running ${cases.length} case(s) with ${HOST} on ${MODEL || "the host default model"}, ${JOBS} at a time${JUDGE ? ", with --judge" : ""}.\n`);
 const results = await runAll(cases, JOBS);
-const failed = results.filter(({ checks }) => checks.some((k) => !k.ok)).length;
-
-console.log(`${cases.length - failed}/${cases.length} cases passed.`);
+const failed = results.filter(({ checks }) => checks.some((k) => k.ok === false)).length;
+const judgesSkipped = results.reduce((count, { checks }) => count + checks.filter((check) =>
+  check.skipped && check.label.startsWith("judge (skipped")
+).length, 0);
+const incomplete = results.filter(({ checks }) =>
+  checks.some((check) => check.skipped && check.label.startsWith("judge (skipped")) &&
+  !checks.some((check) => check.ok === false),
+).length;
+const passed = cases.length - failed - incomplete;
+console.log(`${passed}/${cases.length} cases fully passed; ${incomplete} incomplete (judge skipped); ${failed} failed; ${judgesSkipped} judge evaluation(s) skipped${JUDGE ? "" : " (pass --judge to run them)"}.`);
 process.exit(failed ? 1 : 0);
