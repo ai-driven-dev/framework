@@ -54,4 +54,4 @@ What `aidd telemetry report --json` prints, and what each part means. Version `1
 | `not_stored.consent-closed` above `0` | The clone opted in once and its consent was closed: `aidd telemetry on` in that clone measures again, from then on |
 | `not_stored.unreadable-consent` above `0` | A clone's git config or git directory cannot be read: nothing is stored for it until it can |
 | `consent_log_damaged` is `true` | A line of the consent log `ledger/consents.jsonl` is not an event, so nothing is stored for any clone. Recovery is `aidd telemetry forget --yes`, then `aidd telemetry on` in each clone: nothing from before is stored. Do not edit the log by hand |
-| `records` of `0` and `files_read` of `0` | No Claude Code session file is on disk for the period |
+| `records` of `0` and `files_read` of `0` | No clone on this machine has opted in, so no session file is read (`aidd telemetry status` says so in the clone); or no Claude Code session file was written since the first `aidd telemetry on` |

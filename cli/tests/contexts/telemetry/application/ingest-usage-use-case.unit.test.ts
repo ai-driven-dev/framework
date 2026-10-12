@@ -239,6 +239,26 @@ describe("not reading what no consent can cover", () => {
     });
   });
 
+  it("reads, once a clone opts in, only what a transcript gained since nothing was read", async () => {
+    const s = setup();
+    s.history.written.length = 0;
+    s.transcripts.files.set("/t/1.jsonl", [line("A", 10, {}, "2026-10-01T00:00:00.000Z")]);
+    s.transcripts.modified.set("/t/1.jsonl", "2026-10-01T00:00:00.000Z");
+    expect(await s.ingest.execute()).toMatchObject({ filesRead: 0 });
+    s.history.consented(A, "2026-10-05T00:00:00.000Z");
+    s.transcripts.files.set("/t/1.jsonl", [
+      line("A", 10, {}, "2026-10-01T00:00:00.000Z"),
+      line("B", 20, {}, "2026-10-07T10:00:00.000Z"),
+    ]);
+    s.transcripts.modified.set("/t/1.jsonl", "2026-10-07T10:00:00.000Z");
+    expect(await s.ingest.execute()).toMatchObject({
+      filesRead: 1,
+      added: 1,
+      notStored: NOT_STORED,
+    });
+    expect(s.ledger.records.map((r) => r.key)).toEqual(["msg_B:req_B"]);
+  });
+
   it("reads nothing while no clone has ever opted in, and keeps every end", async () => {
     const s = setup();
     s.history.written.length = 0;

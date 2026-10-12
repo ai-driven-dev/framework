@@ -29,7 +29,7 @@ function intercept(argv, cwd) {
   }
   const run = runAidd(aidd, argv, { cwd, timeout: DECLARE_TIMEOUT_MS });
   if (run.refused) {
-    return block("This declaration holds characters that cannot be passed safely here (spaces or quotes). Use letters, digits and - . _ : / @ # + , = only.");
+    return block("This declaration holds characters that cannot be passed safely here. Use only ASCII letters, digits and - . _ : / @ # + , =.");
   }
   if (run.status === 0) return block(`${declared(argv)} Send your prompt again.`);
   const said = (run.stdout.trim() || run.stderr.trim()).slice(0, 2000);
