@@ -517,10 +517,10 @@ jobs:
       # devDependencies, so the install has to precede it — and the chain steps above stay
       # ahead of any install on purpose.
       - run: pnpm install --frozen-lockfile
+      - run: cd cli && pnpm install --frozen-lockfile
       - name: Plugin suite
         run: node scripts/check-tests-leave-git-alone.js -- node --test 'scripts/__tests__/**/*.test.js'
 
-      - run: cd cli && pnpm install --frozen-lockfile
       # A real global install, not `node dist/cli.js` by path: nothing else proves `aidd`
       # resolves on this platform's PATH. Built here, ahead of the suites below, so this is
       # the only build the job needs.
