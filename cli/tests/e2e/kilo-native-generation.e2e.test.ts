@@ -12,29 +12,8 @@ import {
 import { createTestEnv, execFileAsync } from "./helpers.js";
 
 const describeNative = process.env.KILO_NATIVE_GENERATION === "1" ? describe : describe.skip;
-const task = join(
-  REPOSITORY_ROOT,
-  "aidd_docs",
-  "tasks",
-  "2026_10",
-  "2026_10_10_kilo-native-generation-914"
-);
-const phase2 = join(task, "evidence", "phase-2");
-const phase1 = join(task, "evidence", "phase-1");
-const phase3 = join(task, "evidence", "phase-3");
-const phase4 = join(task, "evidence", "phase-4");
-const skill = join(
-  REPOSITORY_ROOT,
-  "scripts",
-  "__tests__",
-  "fixtures",
-  "context-generation",
-  "skills",
-  "native",
-  ".kilo",
-  "skills",
-  "verify-payload"
-);
+const fixtures = join(REPOSITORY_ROOT, "cli", "tests", "e2e", "fixtures", "kilo-native-generation");
+const skill = join(fixtures, ".kilo", "skills", "verify-payload");
 const codeFence = "```";
 const phase6GeneratedSkill = {
   "SKILL.md": `---
@@ -433,7 +412,7 @@ describeNative("E2E: saved native generation in Kilo 7.8.8", () => {
     }
   }, 120000);
 
-  it("catalogs saved skill, rule, agent and workflow metadata without changing memory", async () => {
+  it("loads checked-in skill, rule, agent and workflow fixtures without changing memory", async () => {
     const { tempDir, projectDir, fakeHome, cleanup } =
       await createTestEnv("kilo-native-generation");
     try {
@@ -460,50 +439,35 @@ describeNative("E2E: saved native generation in Kilo 7.8.8", () => {
       };
       expect((await kilo("--version")).trim()).toBe("7.8.8");
 
-      const savedAgent = join(phase4, "generated-project", ".kilo", "agents");
-      const savedCommand = join(phase4, "generated-project", ".kilo", "commands");
-      const savedRule = join(phase2, "runtime-corrections-rule.md");
-      const rule = join(projectDir, ".kilo", "rules", "01-standards", "1-naming.md");
-      const memory = JSON.parse(
-        await readFile(join(phase1, "runtime-generated-artifacts.json"), "utf8")
+      const fixtureManifest = JSON.parse(
+        await readFile(join(fixtures, "manifest.json"), "utf8")
       ) as Record<string, string>;
-      await writeFile(join(projectDir, "AGENTS.md"), memory["AGENTS.md"]);
+      for (const [relative, expectedHash] of Object.entries(fixtureManifest)) {
+        const source = await readFile(join(fixtures, relative));
+        expect(createHash("sha256").update(source).digest("hex")).toBe(expectedHash);
+      }
+
+      const savedAgent = join(fixtures, ".kilo", "agents");
+      const savedCommand = join(fixtures, ".kilo", "commands");
+      const savedRule = join(fixtures, ".kilo", "rules", "01-standards", "1-naming.md");
+      const rule = join(projectDir, ".kilo", "rules", "01-standards", "1-naming.md");
+      await cp(join(fixtures, "AGENTS.md"), join(projectDir, "AGENTS.md"));
       await mkdir(join(projectDir, "aidd_docs", "memory"), { recursive: true });
-      await writeFile(
-        join(projectDir, "aidd_docs", "memory", "architecture.md"),
-        memory["aidd_docs/memory/architecture.md"]
+      await cp(
+        join(fixtures, "aidd_docs", "memory", "architecture.md"),
+        join(projectDir, "aidd_docs", "memory", "architecture.md")
       );
       await cp(skill, join(projectDir, ".kilo", "skills", "verify-payload"), { recursive: true });
       await cp(savedAgent, join(projectDir, ".kilo", "agents"), { recursive: true });
       await cp(savedCommand, join(projectDir, ".kilo", "commands"), { recursive: true });
       await mkdir(join(projectDir, ".kilo", "rules", "01-standards"), { recursive: true });
       await cp(savedRule, rule);
-      await cp(
-        join(phase2, "runtime-corrections-positive-config.jsonc"),
-        join(projectDir, ".kilo", "kilo.jsonc")
-      );
+      await cp(join(fixtures, ".kilo", "kilo.jsonc"), join(projectDir, ".kilo", "kilo.jsonc"));
 
-      const receipt = JSON.parse(await readFile(join(phase4, "caller-receipt.json"), "utf8")) as {
-        generated_files: Record<string, { sha256: string }>;
-      };
-      for (const [relative, recorded] of Object.entries(receipt.generated_files)) {
-        const source = await readFile(join(phase4, "generated-project", relative));
-        const copied = await readFile(join(projectDir, relative));
-        expect(createHash("sha256").update(source).digest("hex")).toBe(recorded.sha256);
-        expect(copied).toEqual(source);
-      }
-      const skillReceipt = JSON.parse(
-        await readFile(join(phase3, "caller-modify-rerun.json"), "utf8")
-      ) as {
-        afterRerun: Record<string, { type: string; sha256: string }>;
-      };
-      for (const [relative, recorded] of Object.entries(skillReceipt.afterRerun)) {
-        if (!relative.startsWith("native/.kilo/skills/verify-payload/") || recorded.type !== "file")
-          continue;
-        const name = relative.slice("native/".length);
-        const saved = await readFile(join(projectDir, name), "utf8");
-        expect(createHash("sha256").update(saved.replace(/\r\n/g, "\n")).digest("hex")).toBe(
-          recorded.sha256
+      for (const relative of Object.keys(fixtureManifest)) {
+        if (relative === "negative-config.jsonc") continue;
+        expect(await readFile(join(projectDir, relative))).toEqual(
+          await readFile(join(fixtures, relative))
         );
       }
       expect(await readFile(rule)).toEqual(await readFile(savedRule));
@@ -575,10 +539,7 @@ describeNative("E2E: saved native generation in Kilo 7.8.8", () => {
         );
 
         const beforeNegative = model.requests.length;
-        await cp(
-          join(phase2, "runtime-corrections-negative-config.jsonc"),
-          join(projectDir, ".kilo", "kilo.jsonc")
-        );
+        await cp(join(fixtures, "negative-config.jsonc"), join(projectDir, ".kilo", "kilo.jsonc"));
         await rm(join(projectDir, ".kilo", "skills", "verify-payload"), { recursive: true });
         await rm(join(projectDir, ".kilo", "agents"), { recursive: true });
         await rm(join(projectDir, ".kilo", "commands"), { recursive: true });
@@ -617,10 +578,12 @@ describeNative("E2E: saved native generation in Kilo 7.8.8", () => {
       }>;
       expect(negativeCatalog.some((entry) => entry.name === "verify-payload")).toBe(false);
       expect(await readFile(rule)).toEqual(await readFile(savedRule));
-      expect(await readFile(join(projectDir, "AGENTS.md"), "utf8")).toBe(memory["AGENTS.md"]);
-      expect(
-        await readFile(join(projectDir, "aidd_docs", "memory", "architecture.md"), "utf8")
-      ).toBe(memory["aidd_docs/memory/architecture.md"]);
+      expect(await readFile(join(projectDir, "AGENTS.md"))).toEqual(
+        await readFile(join(fixtures, "AGENTS.md"))
+      );
+      expect(await readFile(join(projectDir, "aidd_docs", "memory", "architecture.md"))).toEqual(
+        await readFile(join(fixtures, "aidd_docs", "memory", "architecture.md"))
+      );
     } finally {
       await cleanup();
     }
