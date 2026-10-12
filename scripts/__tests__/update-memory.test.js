@@ -377,8 +377,8 @@ test("automatic sync closes context and README descriptors when the README write
   }, ({ invoke, read }) => {
     const preload = [
       DESCRIPTOR_TRACKER,
-      "{ const fs = require('node:fs'); const open = fs.openSync; const write = fs.writeSync; const readmeFds = new Set();",
-      "fs.openSync = function (file, ...args) { const fd = open.call(this, file, ...args); if (typeof file === 'string' && file.endsWith('aidd_docs/memory/README.md')) readmeFds.add(fd); return fd; };",
+      "{ const fs = require('node:fs'); const path = require('node:path'); const open = fs.openSync; const write = fs.writeSync; const readmeFds = new Set();",
+      "fs.openSync = function (file, ...args) { const fd = open.call(this, file, ...args); if (typeof file === 'string' && file.endsWith(path.join('aidd_docs', 'memory', 'README.md'))) readmeFds.add(fd); return fd; };",
       "fs.writeSync = function (fd, ...args) { if (readmeFds.has(fd)) { const error = new Error('injected README write failure'); error.code = 'EIO'; throw error; } return write.call(this, fd, ...args); };",
       "const { syncBuiltinESMExports } = require('node:module'); syncBuiltinESMExports(); }",
     ].join("\n");
