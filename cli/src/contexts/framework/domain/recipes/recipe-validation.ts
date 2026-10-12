@@ -330,10 +330,19 @@ function hasTable(lines: string[]): boolean {
   return false;
 }
 
-function findAnglePlaceholders(content: string): RegExpExecArray[] {
+function findAnglePlaceholders(content: string, fencedLines: Set<number>): RegExpExecArray[] {
   const matches: RegExpExecArray[] = [];
+  // Angle-wrapped link destinations are Markdown syntax. Their targets are checked
+  // by the use case; prose and fenced examples still receive placeholder checks.
+  const destinations = [...content.matchAll(LINK_PATTERN)].flatMap((link) => {
+    const angle = link[2].match(/^\s*<[^<>\n]*>/u);
+    if (!angle || fencedLines.has(lineNumberAt(content, link.index) - 1)) return [];
+    const start = link.index + link[0].indexOf("](") + 2;
+    return [{ start, end: start + angle[0].length }];
+  });
 
   for (const match of content.matchAll(/<([a-z][^<>\n]*)>/giu)) {
+    if (destinations.some(({ start, end }) => match.index >= start && match.index < end)) continue;
     const value = match[1];
     const tag = value.split(/[\s/]/u)[0].toLowerCase();
     if (
@@ -613,7 +622,7 @@ export function inspectRecipe(file: string, content: string): RecipeInspection {
 
   const placeholderContent = masked;
   const anglePlaceholderContent = maskAngleSyntaxBlocks(placeholderContent, blocks);
-  for (const match of findAnglePlaceholders(anglePlaceholderContent)) {
+  for (const match of findAnglePlaceholders(anglePlaceholderContent, fencedLines)) {
     addFinding(
       findings,
       file,

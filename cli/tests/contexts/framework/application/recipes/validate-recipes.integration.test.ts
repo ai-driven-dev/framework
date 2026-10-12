@@ -727,3 +727,257 @@ test("reports unreadable referenced Markdown and closes its descriptor", () => {
     fs.rmSync(item.directory, { recursive: true, force: true });
   }
 });
+
+test("accepts uppercase Markdown extensions but rejects readable non-Markdown recipes", () => {
+  const item = fixture(validDirect());
+  try {
+    for (const extension of [".MD", ".txt"]) {
+      const target = path.join(item.directory, `recipe${extension}`);
+      fs.copyFileSync(item.file, target);
+      const findings = validateRecipe(target);
+      assert.deepEqual(
+        findings,
+        extension === ".MD"
+          ? []
+          : [
+              {
+                file: target,
+                line: 1,
+                rule: "file-type",
+                fix: "Pass a Markdown recipe file ending in .md.",
+              },
+            ]
+      );
+    }
+  } finally {
+    fs.rmSync(item.directory, { recursive: true, force: true });
+  }
+});
+
+test("reports malformed paths, missing images and anchors on non-Markdown files precisely", () => {
+  const lines = validDirect();
+  lines.push(
+    "",
+    "[Malformed](bad%ZZ.md)",
+    "![Screenshot](missing.png)",
+    "[Data](data.txt#details)"
+  );
+  const item = fixture(lines);
+  fs.writeFileSync(path.join(item.directory, "data.txt"), "data", "utf8");
+  try {
+    assert.deepEqual(validateRecipe(item.file), [
+      {
+        file: item.file,
+        line: 19,
+        rule: "link-encoding",
+        fix: "Encode the link target correctly: bad%ZZ.md",
+      },
+      {
+        file: item.file,
+        line: 20,
+        rule: "image-target",
+        fix: "Point the local target to a readable file: missing.png (ENOENT).",
+      },
+      {
+        file: item.file,
+        line: 21,
+        rule: "link-anchor",
+        fix: "Remove the anchor or target a Markdown heading: #details",
+      },
+    ]);
+  } finally {
+    fs.rmSync(item.directory, { recursive: true, force: true });
+  }
+});
+
+test("resolves titled, angle-wrapped and encoded local links with duplicate heading anchors", () => {
+  const lines = validDirect();
+  lines.push(
+    "",
+    '[First](reference%20notes.MD#d%C3%A9tails "Details")',
+    "[Second](<reference notes.MD#détails-1> 'Repeated heading')",
+    "[Same recipe](#1--run-the-check)",
+    "![Screenshot](image.png)",
+    "[Data](data.txt)"
+  );
+  const item = fixture(lines);
+  fs.writeFileSync(
+    path.join(item.directory, "reference notes.MD"),
+    "# Détails\n## Détails\n",
+    "utf8"
+  );
+  fs.writeFileSync(path.join(item.directory, "image.png"), Buffer.from([0xff, 0x00]));
+  fs.writeFileSync(path.join(item.directory, "data.txt"), "data", "utf8");
+  try {
+    assert.deepEqual(validateRecipe(item.file), []);
+  } finally {
+    fs.rmSync(item.directory, { recursive: true, force: true });
+  }
+});
+
+test("reports a missing local heading at the link line with actionable correction", () => {
+  const lines = validDirect();
+  lines.push("", "[Absent](reference.md#missing)");
+  const item = fixture(lines);
+  fs.writeFileSync(path.join(item.directory, "reference.md"), "# Present\n", "utf8");
+  try {
+    assert.deepEqual(validateRecipe(item.file), [
+      {
+        file: item.file,
+        line: 19,
+        rule: "link-anchor",
+        fix: "Point the link to an existing heading: #missing",
+      },
+    ]);
+  } finally {
+    fs.rmSync(item.directory, { recursive: true, force: true });
+  }
+});
+
+test("ignores external and empty link targets and local links inside code fences", () => {
+  const lines = validDirect();
+  lines[11] = "[Example](missing.md)";
+  lines.push(
+    "",
+    ...[
+      "https://example.com",
+      "HTTP://example.com",
+      "mailto:a@example.com",
+      "tel:123",
+      "codex:open",
+      " ",
+    ].map((target) => `[Link](${target})`)
+  );
+  const item = fixture(lines);
+  try {
+    assert.deepEqual(validateRecipe(item.file), []);
+  } finally {
+    fs.rmSync(item.directory, { recursive: true, force: true });
+  }
+});
+
+test("still rejects angle-wrapped links to missing targets and placeholders inside code examples", () => {
+  const lines = validDirect();
+  lines[11] = "[Example](<placeholder>)";
+  lines.push("", "[Missing](<missing notes.md>)");
+  const item = fixture(lines);
+  try {
+    assert.deepEqual(validateRecipe(item.file), [
+      {
+        file: item.file,
+        line: 12,
+        rule: "placeholder",
+        fix: "Replace or remove this angle-bracket placeholder.",
+      },
+      {
+        file: item.file,
+        line: 19,
+        rule: "link-target",
+        fix: "Point the local target to a readable file: missing notes.md (ENOENT).",
+      },
+    ]);
+  } finally {
+    fs.rmSync(item.directory, { recursive: true, force: true });
+  }
+});
+
+test("only exempts a link destination, preserving placeholders before, after, in labels and titles", () => {
+  for (const [link, extra, expectedLine] of [
+    ["[Notes](<reference notes.md>)", "<placeholder>", 20],
+    ["[<placeholder>](<reference notes.md>)", "", 19],
+    ['[Notes](<reference notes.md> "<placeholder>")', "", 19],
+  ] as const) {
+    const lines = validDirect();
+    lines[8] = "Keep <before-placeholder> visible.";
+    lines.push("", link, extra);
+    const item = fixture(lines);
+    fs.writeFileSync(path.join(item.directory, "reference notes.md"), "# Notes\n", "utf8");
+    try {
+      assert.deepEqual(
+        validateRecipe(item.file),
+        [9, expectedLine].map((line) => ({
+          file: item.file,
+          line,
+          rule: "placeholder",
+          fix: "Replace or remove this angle-bracket placeholder.",
+        }))
+      );
+    } finally {
+      fs.rmSync(item.directory, { recursive: true, force: true });
+    }
+  }
+});
+
+test("deduplicates explicit and discovered recipes and orders findings by file, line and rule", () => {
+  const item = fixture(validDirect());
+  const earlier = path.join(item.directory, "a.md");
+  const later = path.join(item.directory, "z.md");
+  const lines = validDirect();
+  lines[6] = "### 2) plain Run the check";
+  lines.push("", "[Absent](#missing)");
+  fs.writeFileSync(earlier, `${lines.join("\n")}\n`, "utf8");
+  fs.writeFileSync(later, "", "utf8");
+  fs.writeFileSync(path.join(item.directory, "README.md"), "Not a recipe", "utf8");
+  fs.writeFileSync(path.join(item.directory, "notes.txt"), "Not a recipe", "utf8");
+  fs.mkdirSync(path.join(item.directory, "directory.md"));
+  try {
+    const result = new ValidateRecipesUseCase(new RecipeFilesAdapter()).execute({
+      files: [later, earlier, later],
+      directories: [{ path: item.directory, optional: false }],
+    });
+    assert.equal(result.fileCount, 3);
+    assert.deepEqual(
+      result.findings.map(({ file, line, rule }) => ({ file, line, rule })),
+      [
+        { file: earlier, line: 7, rule: "step-emoji" },
+        { file: earlier, line: 7, rule: "step-number" },
+        { file: earlier, line: 19, rule: "link-anchor" },
+        { file: later, line: 1, rule: "steps-section" },
+        { file: later, line: 1, rule: "title" },
+      ]
+    );
+  } finally {
+    fs.rmSync(item.directory, { recursive: true, force: true });
+  }
+});
+
+test("only tolerates missing optional recipe directories", () => {
+  const item = fixture(validDirect());
+  const files = new RecipeFilesAdapter();
+  const missing = path.join(item.directory, "absent");
+  try {
+    assert.deepEqual(files.list({ path: missing, optional: true }), []);
+    assert.throws(() => files.list({ path: missing, optional: false }), { code: "ENOENT" });
+    assert.throws(() => files.list({ path: item.file, optional: true }), { code: "ENOTDIR" });
+  } finally {
+    fs.rmSync(item.directory, { recursive: true, force: true });
+  }
+});
+
+test("checks binary link targets without reading their contents", () => {
+  const lines = validDirect();
+  lines.push("", "![Screenshot](image.png)");
+  const item = fixture(lines);
+  const image = path.join(item.directory, "image.png");
+  fs.writeFileSync(image, Buffer.from([0xff, 0x00]));
+  const open = fs.openSync;
+  const read = fs.readFileSync;
+  const descriptors = new Set<number>();
+  try {
+    vi.spyOn(fs, "openSync").mockImplementation((target, ...args) => {
+      const descriptor = open(target, ...args);
+      if (target === image) descriptors.add(descriptor);
+      return descriptor;
+    });
+    vi.spyOn(fs, "readFileSync").mockImplementation((target, ...args) => {
+      if (target === image || (typeof target === "number" && descriptors.has(target)))
+        throw new Error("Binary contents must not be decoded as Markdown");
+      return read(target, ...args);
+    });
+    assert.deepEqual(validateRecipe(item.file), []);
+    assert.equal(descriptors.size, 1);
+  } finally {
+    vi.restoreAllMocks();
+    fs.rmSync(item.directory, { recursive: true, force: true });
+  }
+});
