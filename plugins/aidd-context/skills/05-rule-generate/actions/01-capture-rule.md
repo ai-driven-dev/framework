@@ -1,29 +1,20 @@
 # 01 - Capture rule
 
-Settle the rule's topic and place before writing.
-
 ## Input
 
-A rule topic (e.g. "TypeScript naming"), or `auto` to scan the codebase and propose rules. Empty means manual.
+A topic, `auto`, or an existing publish/delete selection. Empty means manual.
 
 ## Output
 
-In-context: the topic, its category and slug, the file scope, a one-line description, and the write mode (host with supported tools, or plugin source).
+Confirmed operation, topic, category, slug, description, scope and destinations.
 
 ## Process
 
-1. **Gate.** Run the asset-access precheck ([tool-paths.md](../references/tool-paths.md)).
-   For an explicitly confirmed host publish/delete, identify the existing rule or rule set and hosts, then continue to Render in action 03; no new topic or body is needed. This includes publishing manual canonical body edits beneath intact metadata.
-2. **Auto or manual.** Ask whether to run auto or manual mode:
-   - **Auto**: scan the codebase, propose a rules architecture, wait for approval.
-   - **Manual**: ask the topic (blocking). Confirm any candidate first.
-3. **Place.** Pick the category and slug from [rule-authoring.md](../references/rule-authoring.md). The category index drives the slug prefix.
-4. **Scope.** State the glob the rule applies to, or note it applies to all files. Note a one-line description of what the rule governs, for tools whose scope frontmatter needs it.
-5. **Write mode.** Ask where the rule goes:
-   - **Host project**: detect the installed tools ([tool-paths.md](../references/tool-paths.md)), propose the supported ones, and confirm which to target. Never pick one silently.
-   - **Plugin source**: confirm or create `plugins/<plugin>/rules/`.
-
-## Test
-
-- The topic, category and slug, or existing publish/delete selection, are confirmed in writing.
-- Unsupported tools are named with what to do instead.
+1. **Gate.** Read [tool-paths.md](../references/tool-paths.md).
+   - For publish/delete, confirm existing sources and hosts; continue to action 03.
+   - Publishing manual canonical body edits uses this bypass.
+2. **Topic.** Confirm the topic, or scan and propose rules in auto mode.
+3. **Place.** Choose category and slug through [rule-authoring.md](../references/rule-authoring.md).
+4. **Scope.** State literal globs or all files, with a one-line description.
+5. **Destinations.** Confirm detected supported hosts or the plugin source directory.
+   - Report unsupported hosts and alternatives.

@@ -113,9 +113,12 @@ test("only a proven next snapshot tree skips the promotion or main mutation matr
   assert.match(promotion.run, /HEAD_SHA="\$snapshot_sha"/);
 
   assert.match(mutation.run, /steps\.promotion\.outputs\.trusted.*== "true"/);
-  assert.match(mutation.run, /scopes='\[\]'/);
+  assert.match(mutation.run, /legs='\[\]'/);
+  assert.match(mutation.run, /sharded='\[\]'/);
   assert.match(mutation.run, /else[\s\S]*mutation-scopes-to-run\.mjs/);
-  assert.equal(workflow.jobs["cli-mutation"].if, "needs.changes.outputs.mutation_scopes != '[]'");
+  assert.equal(workflow.jobs["cli-mutation"].if, "needs.changes.outputs.mutation_legs != '[]'");
+  // The scoring job runs whatever its shards did, so a crashed shard fails it, never skips it.
+  assert.match(workflow.jobs["cli-mutation-score"].if, /^always\(\) && needs\.changes\.outputs\.mutation_sharded != '\[\]'/);
 
   // These checks validate the current PR merge ref or main commit; reuse never turns them off.
   for (const name of [

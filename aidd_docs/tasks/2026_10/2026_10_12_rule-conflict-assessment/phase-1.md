@@ -1,5 +1,5 @@
 ---
-status: reviewed
+status: implemented
 ---
 
 # Instruction: Assess and resolve a candidate before publication
@@ -87,6 +87,8 @@ journey
 4. Obtain independent review and final outcome challenge; repair actionable findings.
 
 ## Test acceptance criteria
+
+User revision: shorten the loaded router, actions and references. Remove repetition without weakening these criteria; retain newer host support from `next`. Measure words and rerun native journeys before review.
 
 | Task | Acceptance criteria |
 | --- | --- |

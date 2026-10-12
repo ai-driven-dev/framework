@@ -3,7 +3,8 @@
   "scopes": {
     "kernel": {
       "mutate": "src/kernel/**/*.ts",
-      "break": 95
+      "break": 95,
+      "shards": 4
     },
     "tools": {
       "mutate": [
@@ -15,15 +16,18 @@
         "!src/contexts/tools/domain/profiles/kilo/**/*.ts",
         "!src/contexts/tools/domain/profiles/opencode/**/*.ts"
       ],
-      "break": 94
+      "break": 94,
+      "shards": 4
     },
     "telemetry": {
       "mutate": "src/contexts/telemetry/**/*.ts",
-      "break": 93
+      "break": 93,
+      "shards": 3
     },
     "translate": {
       "mutate": "src/contexts/translate/**/*.ts",
-      "break": 85
+      "break": 85,
+      "shards": 2
     },
     "distribution": {
       "mutate": "src/contexts/distribution/**/*.ts",
@@ -31,7 +35,8 @@
     },
     "framework": {
       "mutate": "src/contexts/framework/**/*.ts",
-      "break": 93
+      "break": 93,
+      "shards": 4
     },
     "presentation": {
       "mutate": "src/presentation/**/*.ts",
@@ -47,7 +52,8 @@
     },
     "tools-codex": {
       "mutate": "src/contexts/tools/domain/profiles/codex/**/*.ts",
-      "break": 94
+      "break": 94,
+      "shards": 2
     },
     "tools-copilot": {
       "mutate": "src/contexts/tools/domain/profiles/copilot/**/*.ts",

@@ -1,0 +1,918 @@
+{
+  "runtime": {
+    "codex": "codex-cli 0.162.1",
+    "auth": "ChatGPT login",
+    "apiKeys": "unset",
+    "calls": 27,
+    "sessions": 17
+  },
+  "sourceHashes": {
+    "SKILL.md": "c3fc303ad0a1bf983c32905e264e65db410df09ad6f413924b2daee28edbc425",
+    "actions/01-capture-rule.md": "af76ed5a85bcbad4a8a5434a065ec8bacc49e75f2048c0c7ec44ba06065faeba",
+    "actions/02-assess-existing-rules.md": "559462a4b12c10cfba8c847e1cb23b02ab4d756fe22003c8adf47d672095bf0c",
+    "actions/03-write-rule.md": "3e63276d6fd1c03894406658a99631e0791c491913faaa188db51aaa36901c2b",
+    "actions/04-validate.md": "084560d6e6cbd6c3cbe89ba1a7bb2b9abf5427cabae802334a54a88a5e08017b",
+    "assets/rule-template.md": "bfccef5e957e8d2de7aefe818196e82bf7691c8631452f4cc5b6e5ea526cdb47",
+    "references/rule-authoring.md": "ce299dcd2a80e2debacc312a68af93bc3cccd2fc2d442e0c85daca9d9e7c5fd9",
+    "references/tool-paths.md": "70d7e97bc814d69fb030186ce2f30350001e9c3621b2d40efccabc63105bd70e",
+    "scripts/write-rule.cjs": "70783e579b75b9e22760239cbfd4309641bdd73840b17e7dfd606a252679a420"
+  },
+  "words": {
+    "before": 3480,
+    "after": 1768,
+    "assessmentBefore": 597,
+    "assessmentAfter": 236,
+    "method": "whitespace; seven runtime Markdown files, unchanged template excluded"
+  },
+  "assessments": [
+    {
+      "case": "new",
+      "root": "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-x77f_xve",
+      "exit": 0,
+      "unchanged": true,
+      "changed": [],
+      "prompt": "Use the installed rule-generation skill at /private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-x77f_xve/installed/SKILL.md. Follow its workflow for creating a rule. All capture choices are confirmed: manual mode, real project root /private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-x77f_xve/project, host project, tools Claude Code, Cursor, GitHub Copilot, Codex and OpenCode V2. The complete requested candidate metadata and body are exactly this JSON: {\"category\": \"01-standards\", \"slug\": \"1-constants\", \"description\": \"Constants\", \"paths\": [\"src/**/*.ts\"], \"body\": \"# Constants\\n\\n- Name constants in UPPER_SNAKE_CASE.\\n\"}. Create this rule. Do not change application source, install packages, use network tools, or commit. This invocation supplies no later user message. If the workflow requires a further user decision, stop and present it.",
+      "answer": "Candidate:\n\n```json\n{\"category\":\"01-standards\",\"slug\":\"1-constants\",\"description\":\"Constants\",\"paths\":[\"src/**/*.ts\"],\"body\":\"# Constants\\n\\n- Name constants in UPPER_SNAKE_CASE.\\n\"}\n```\n\nFinding: **new**. No existing rule files or ancestor guidance found. Supplied guidance contains no constants naming policy. Scope covers future `src/**/*.ts` files.\n\nTargets: Claude Code, Cursor, GitHub Copilot, Codex and OpenCode V2; the latter two share root `AGENTS.md`.\n\nNo files changed. Choose **approve**, **keep**, **revise**, **merge/replace**, or **cancel**.\n\n[Skill action 02]( /private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-x77f_xve/installed/actions/02-assess-existing-rules.md) requires: \u201cShow complete candidates and findings; await explicit resolution, even for **new**.\u201d Your confirmed capture choices do not satisfy this later decision.",
+      "before": {
+        "package.json": "1239d4d885dcad42201a27ed9324f8f0f760b78700d8db9ced39a511cffe7eae"
+      },
+      "after": {
+        "package.json": "1239d4d885dcad42201a27ed9324f8f0f760b78700d8db9ced39a511cffe7eae"
+      },
+      "fixtureFiles": {
+        "package.json": "{\"type\":\"module\"}\n"
+      },
+      "installedHashes": {
+        "SKILL.md": "c3fc303ad0a1bf983c32905e264e65db410df09ad6f413924b2daee28edbc425",
+        "actions/01-capture-rule.md": "af76ed5a85bcbad4a8a5434a065ec8bacc49e75f2048c0c7ec44ba06065faeba",
+        "actions/02-assess-existing-rules.md": "559462a4b12c10cfba8c847e1cb23b02ab4d756fe22003c8adf47d672095bf0c",
+        "actions/03-write-rule.md": "3e63276d6fd1c03894406658a99631e0791c491913faaa188db51aaa36901c2b",
+        "actions/04-validate.md": "084560d6e6cbd6c3cbe89ba1a7bb2b9abf5427cabae802334a54a88a5e08017b",
+        "assets/rule-template.md": "bfccef5e957e8d2de7aefe818196e82bf7691c8631452f4cc5b6e5ea526cdb47",
+        "references/rule-authoring.md": "ce299dcd2a80e2debacc312a68af93bc3cccd2fc2d442e0c85daca9d9e7c5fd9",
+        "references/tool-paths.md": "70d7e97bc814d69fb030186ce2f30350001e9c3621b2d40efccabc63105bd70e",
+        "scripts/write-rule.cjs": "70783e579b75b9e22760239cbfd4309641bdd73840b17e7dfd606a252679a420"
+      },
+      "eventsSHA256": "b673c96ce296bfccd56154c8c0e21af9f0b1cddf241b4e77c70cf35795da90b9"
+    },
+    {
+      "case": "covered",
+      "root": "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-t2mk22qs",
+      "exit": 0,
+      "unchanged": true,
+      "changed": [],
+      "prompt": "Use the installed rule-generation skill at /private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-t2mk22qs/installed/SKILL.md. Follow its workflow for creating a rule. All capture choices are confirmed: manual mode, real project root /private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-t2mk22qs/project, host project, tools Claude Code, Cursor, GitHub Copilot, Codex and OpenCode V2. The complete requested candidate metadata and body are exactly this JSON: {\"category\": \"05-testing\", \"slug\": \"5-candidate\", \"description\": \"Test conventions\", \"paths\": [\"tests/**/*.py\"], \"body\": \"# Test conventions\\n\\n- Write every unit test with pytest.\\n\"}. Create this rule. Do not change application source, install packages, use network tools, or commit. This invocation supplies no later user message. If the workflow requires a further user decision, stop and present it.",
+      "answer": "Candidate is **covered**: the existing rule says \u201cUse pytest for all unit tests\u201d with the same `tests/**/*.py` scope.\n\nSources: [canonical rule](aidd_docs/rules/05-testing/5-existing.md), [Claude](.claude/rules/05-testing/5-existing.md), [Cursor](.cursor/rules/05-testing/5-existing.mdc), [Copilot](.github/instructions/05-existing.instructions.md), and [Codex/OpenCode](AGENTS.md). No scope exclusions or conflicts found.\n\nComplete candidate:\n\n```json\n{\"category\":\"05-testing\",\"slug\":\"5-candidate\",\"description\":\"Test conventions\",\"paths\":[\"tests/**/*.py\"],\"body\":\"# Test conventions\\n\\n- Write every unit test with pytest.\\n\"}\n```\n\nTargets: Claude Code, Cursor, GitHub Copilot, Codex, OpenCode V2.\n\nChoose **approve** to create the duplicate rule, **keep** the existing rule, **revise**, **merge/replace**, or **cancel**. No files changed.\n\nThe [skill\u2019s assessment action](/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-t2mk22qs/installed/actions/02-assess-existing-rules.md) requires: \u201cShow complete candidates and findings; await explicit resolution, even for **new**.\u201d Confirmed capture choices do not satisfy this later decision, so creation is paused.",
+      "before": {
+        ".claude/rules/05-testing/5-existing.md": "e7503bd2e08ec2a94e0e4cac90c64901aa2c742ff3520c59e7d73801e98bad72",
+        ".cursor/rules/05-testing/5-existing.mdc": "85a56abf468ef2578ac65fe9b702ec34c7fc90a35fb95d8dd7b9e46c711dde02",
+        ".github/instructions/05-existing.instructions.md": "c562d21203ca82b0a5cccf763ab19c0790d584eae1176206aa8e3c853bde1e52",
+        "AGENTS.md": "6faf9ca19dac27f2accb7ebe8c53fe4f8485f4662fa0d5896de76b6b2528a320",
+        "aidd_docs/rules/05-testing/5-existing.md": "ab3b5271d9bdd20d5fc32566d7a1e4cc8e8e7df534c09aea542248e8f966019f",
+        "package.json": "1239d4d885dcad42201a27ed9324f8f0f760b78700d8db9ced39a511cffe7eae"
+      },
+      "after": {
+        ".claude/rules/05-testing/5-existing.md": "e7503bd2e08ec2a94e0e4cac90c64901aa2c742ff3520c59e7d73801e98bad72",
+        ".cursor/rules/05-testing/5-existing.mdc": "85a56abf468ef2578ac65fe9b702ec34c7fc90a35fb95d8dd7b9e46c711dde02",
+        ".github/instructions/05-existing.instructions.md": "c562d21203ca82b0a5cccf763ab19c0790d584eae1176206aa8e3c853bde1e52",
+        "AGENTS.md": "6faf9ca19dac27f2accb7ebe8c53fe4f8485f4662fa0d5896de76b6b2528a320",
+        "aidd_docs/rules/05-testing/5-existing.md": "ab3b5271d9bdd20d5fc32566d7a1e4cc8e8e7df534c09aea542248e8f966019f",
+        "package.json": "1239d4d885dcad42201a27ed9324f8f0f760b78700d8db9ced39a511cffe7eae"
+      },
+      "fixtureFiles": {
+        "package.json": "{\"type\":\"module\"}\n",
+        "AGENTS.md": "<!-- aidd_rules:start sha256=613c85b7b34d8c3c93f64de50e46941ea97c44f27b4f2db6f6836f904668c92d separator=0 -->\nApplies to: `tests/**/*.py`.\n\n# Python unit tests\n\n- Use pytest for all unit tests.\n<!-- aidd_rules:end -->\n",
+        "aidd_docs/rules/05-testing/5-existing.md": "<!-- aidd_rule:{\"version\":1,\"category\":\"05-testing\",\"slug\":\"5-existing\",\"description\":\"Python unit tests\",\"paths\":[\"tests/**/*.py\"],\"targets\":[\"claude\",\"codex\",\"copilot\",\"cursor\",\"opencode\"]} -->\n# Python unit tests\n\n- Use pytest for all unit tests.\n",
+        ".github/instructions/05-existing.instructions.md": "---\napplyTo: \"tests/**/*.py\"\n---\n# Python unit tests\n\n- Use pytest for all unit tests.\n\n<!-- aidd_rule_output:path=.github/instructions/05-existing.instructions.md sha256=e2fac21a53c6fa288e67e7ee16f137920e1a430a6c0196def8c1d01f5ca6e921 -->\n",
+        ".claude/rules/05-testing/5-existing.md": "---\npaths:\n  - \"tests/**/*.py\"\n---\n# Python unit tests\n\n- Use pytest for all unit tests.\n\n<!-- aidd_rule_output:path=.claude/rules/05-testing/5-existing.md sha256=25b1d68ddaafb6a3aed53f16f37e2369e812e53327a39a867984001880546668 -->\n",
+        ".cursor/rules/05-testing/5-existing.mdc": "---\ndescription: \"Python unit tests\"\nglobs: \"tests/**/*.py\"\nalwaysApply: false\n---\n# Python unit tests\n\n- Use pytest for all unit tests.\n\n<!-- aidd_rule_output:path=.cursor/rules/05-testing/5-existing.mdc sha256=478d87dcf33bbbf94918503ac9f3a0343e04857d7b6c1a698afdfe922e32890e -->\n"
+      },
+      "installedHashes": {
+        "SKILL.md": "c3fc303ad0a1bf983c32905e264e65db410df09ad6f413924b2daee28edbc425",
+        "actions/01-capture-rule.md": "af76ed5a85bcbad4a8a5434a065ec8bacc49e75f2048c0c7ec44ba06065faeba",
+        "actions/02-assess-existing-rules.md": "559462a4b12c10cfba8c847e1cb23b02ab4d756fe22003c8adf47d672095bf0c",
+        "actions/03-write-rule.md": "3e63276d6fd1c03894406658a99631e0791c491913faaa188db51aaa36901c2b",
+        "actions/04-validate.md": "084560d6e6cbd6c3cbe89ba1a7bb2b9abf5427cabae802334a54a88a5e08017b",
+        "assets/rule-template.md": "bfccef5e957e8d2de7aefe818196e82bf7691c8631452f4cc5b6e5ea526cdb47",
+        "references/rule-authoring.md": "ce299dcd2a80e2debacc312a68af93bc3cccd2fc2d442e0c85daca9d9e7c5fd9",
+        "references/tool-paths.md": "70d7e97bc814d69fb030186ce2f30350001e9c3621b2d40efccabc63105bd70e",
+        "scripts/write-rule.cjs": "70783e579b75b9e22760239cbfd4309641bdd73840b17e7dfd606a252679a420"
+      },
+      "eventsSHA256": "5633a868ec1d3266b2c48ba600f96dd260f106d89832b9a340d71d4bb10c3e16"
+    },
+    {
+      "case": "overlap",
+      "root": "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-2p0h3ldp",
+      "exit": 0,
+      "unchanged": true,
+      "changed": [],
+      "prompt": "Use the installed rule-generation skill at /private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-2p0h3ldp/installed/SKILL.md. Follow its workflow for creating a rule. All capture choices are confirmed: manual mode, real project root /private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-2p0h3ldp/project, host project, tools Claude Code, Cursor, GitHub Copilot, Codex and OpenCode V2. The complete requested candidate metadata and body are exactly this JSON: {\"category\": \"05-testing\", \"slug\": \"5-candidate\", \"description\": \"Test conventions\", \"paths\": [\"tests/**/*.py\"], \"body\": \"# Test conventions\\n\\n- Use pytest for all unit tests.\\n- Put unit test files in tests/unit/.\\n\"}. Create this rule. Do not change application source, install packages, use network tools, or commit. This invocation supplies no later user message. If the workflow requires a further user decision, stop and present it.",
+      "answer": "Creation paused; no files changed.\n\nCandidate: `05-testing/5-candidate`, description `Test conventions`, scope `tests/**/*.py`, targeting Claude Code, Cursor, GitHub Copilot, Codex and OpenCode V2.\n\n```markdown\n# Test conventions\n\n- Use pytest for all unit tests.\n- Put unit test files in tests/unit/.\n```\n\nFinding: **overlap**. [Existing rule](aidd_docs/rules/05-testing/5-existing.md) already requires \u201cUse pytest for all unit tests\u201d across the identical scope, published in all five hosts. The `tests/unit/` requirement is new and compatible.\n\nChoose: **approve** as a separate overlapping rule, **merge/replace** `5-existing`, **revise**, **keep existing**, or **cancel**.\n\n[Skill action 02](../installed/actions/02-assess-existing-rules.md) requires: \u201cShow complete candidates and findings; await explicit resolution, even for **new**.\u201d Your confirmed capture choices do not supply this post-assessment decision.",
+      "before": {
+        ".claude/rules/05-testing/5-existing.md": "e7503bd2e08ec2a94e0e4cac90c64901aa2c742ff3520c59e7d73801e98bad72",
+        ".cursor/rules/05-testing/5-existing.mdc": "85a56abf468ef2578ac65fe9b702ec34c7fc90a35fb95d8dd7b9e46c711dde02",
+        ".github/instructions/05-existing.instructions.md": "c562d21203ca82b0a5cccf763ab19c0790d584eae1176206aa8e3c853bde1e52",
+        "AGENTS.md": "6faf9ca19dac27f2accb7ebe8c53fe4f8485f4662fa0d5896de76b6b2528a320",
+        "aidd_docs/rules/05-testing/5-existing.md": "ab3b5271d9bdd20d5fc32566d7a1e4cc8e8e7df534c09aea542248e8f966019f",
+        "package.json": "1239d4d885dcad42201a27ed9324f8f0f760b78700d8db9ced39a511cffe7eae"
+      },
+      "after": {
+        ".claude/rules/05-testing/5-existing.md": "e7503bd2e08ec2a94e0e4cac90c64901aa2c742ff3520c59e7d73801e98bad72",
+        ".cursor/rules/05-testing/5-existing.mdc": "85a56abf468ef2578ac65fe9b702ec34c7fc90a35fb95d8dd7b9e46c711dde02",
+        ".github/instructions/05-existing.instructions.md": "c562d21203ca82b0a5cccf763ab19c0790d584eae1176206aa8e3c853bde1e52",
+        "AGENTS.md": "6faf9ca19dac27f2accb7ebe8c53fe4f8485f4662fa0d5896de76b6b2528a320",
+        "aidd_docs/rules/05-testing/5-existing.md": "ab3b5271d9bdd20d5fc32566d7a1e4cc8e8e7df534c09aea542248e8f966019f",
+        "package.json": "1239d4d885dcad42201a27ed9324f8f0f760b78700d8db9ced39a511cffe7eae"
+      },
+      "fixtureFiles": {
+        "package.json": "{\"type\":\"module\"}\n",
+        "AGENTS.md": "<!-- aidd_rules:start sha256=613c85b7b34d8c3c93f64de50e46941ea97c44f27b4f2db6f6836f904668c92d separator=0 -->\nApplies to: `tests/**/*.py`.\n\n# Python unit tests\n\n- Use pytest for all unit tests.\n<!-- aidd_rules:end -->\n",
+        "aidd_docs/rules/05-testing/5-existing.md": "<!-- aidd_rule:{\"version\":1,\"category\":\"05-testing\",\"slug\":\"5-existing\",\"description\":\"Python unit tests\",\"paths\":[\"tests/**/*.py\"],\"targets\":[\"claude\",\"codex\",\"copilot\",\"cursor\",\"opencode\"]} -->\n# Python unit tests\n\n- Use pytest for all unit tests.\n",
+        ".github/instructions/05-existing.instructions.md": "---\napplyTo: \"tests/**/*.py\"\n---\n# Python unit tests\n\n- Use pytest for all unit tests.\n\n<!-- aidd_rule_output:path=.github/instructions/05-existing.instructions.md sha256=e2fac21a53c6fa288e67e7ee16f137920e1a430a6c0196def8c1d01f5ca6e921 -->\n",
+        ".claude/rules/05-testing/5-existing.md": "---\npaths:\n  - \"tests/**/*.py\"\n---\n# Python unit tests\n\n- Use pytest for all unit tests.\n\n<!-- aidd_rule_output:path=.claude/rules/05-testing/5-existing.md sha256=25b1d68ddaafb6a3aed53f16f37e2369e812e53327a39a867984001880546668 -->\n",
+        ".cursor/rules/05-testing/5-existing.mdc": "---\ndescription: \"Python unit tests\"\nglobs: \"tests/**/*.py\"\nalwaysApply: false\n---\n# Python unit tests\n\n- Use pytest for all unit tests.\n\n<!-- aidd_rule_output:path=.cursor/rules/05-testing/5-existing.mdc sha256=478d87dcf33bbbf94918503ac9f3a0343e04857d7b6c1a698afdfe922e32890e -->\n"
+      },
+      "installedHashes": {
+        "SKILL.md": "c3fc303ad0a1bf983c32905e264e65db410df09ad6f413924b2daee28edbc425",
+        "actions/01-capture-rule.md": "af76ed5a85bcbad4a8a5434a065ec8bacc49e75f2048c0c7ec44ba06065faeba",
+        "actions/02-assess-existing-rules.md": "559462a4b12c10cfba8c847e1cb23b02ab4d756fe22003c8adf47d672095bf0c",
+        "actions/03-write-rule.md": "3e63276d6fd1c03894406658a99631e0791c491913faaa188db51aaa36901c2b",
+        "actions/04-validate.md": "084560d6e6cbd6c3cbe89ba1a7bb2b9abf5427cabae802334a54a88a5e08017b",
+        "assets/rule-template.md": "bfccef5e957e8d2de7aefe818196e82bf7691c8631452f4cc5b6e5ea526cdb47",
+        "references/rule-authoring.md": "ce299dcd2a80e2debacc312a68af93bc3cccd2fc2d442e0c85daca9d9e7c5fd9",
+        "references/tool-paths.md": "70d7e97bc814d69fb030186ce2f30350001e9c3621b2d40efccabc63105bd70e",
+        "scripts/write-rule.cjs": "70783e579b75b9e22760239cbfd4309641bdd73840b17e7dfd606a252679a420"
+      },
+      "eventsSHA256": "403d3927c776561ac942c08ceb415b8bb599bd9806df72b6d3f95fc81b7f1aa4"
+    },
+    {
+      "case": "conflict",
+      "root": "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-5qhld3dc",
+      "exit": 0,
+      "unchanged": true,
+      "changed": [],
+      "prompt": "Use the installed rule-generation skill at /private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-5qhld3dc/installed/SKILL.md. Follow its workflow for creating a rule. All capture choices are confirmed: manual mode, real project root /private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-5qhld3dc/project, host project, tools Claude Code, Cursor, GitHub Copilot, Codex and OpenCode V2. The complete requested candidate metadata and body are exactly this JSON: {\"category\": \"05-testing\", \"slug\": \"5-candidate\", \"description\": \"Test conventions\", \"paths\": [\"tests/**/*.py\"], \"body\": \"# Test conventions\\n\\n- Use unittest for all unit tests.\\n\"}. Create this rule. Do not change application source, install packages, use network tools, or commit. This invocation supplies no later user message. If the workflow requires a further user decision, stop and present it.",
+      "answer": "Creation paused; no files changed.\n\nCandidate for Claude Code, Cursor, GitHub Copilot, Codex and OpenCode V2:\n\n```json\n{\"category\":\"05-testing\",\"slug\":\"5-candidate\",\"description\":\"Test conventions\",\"paths\":[\"tests/**/*.py\"],\"body\":\"# Test conventions\\n\\n- Use unittest for all unit tests.\\n\"}\n```\n\n**Conflict:** [existing rule](aidd_docs/rules/05-testing/5-existing.md) requires \u201cUse pytest for all unit tests.\u201d Both rules cover exactly `tests/**/*.py`, including future files. That requirement also appears in `AGENTS.md` and the Claude, Cursor and Copilot publications.\n\nDecision required: keep the existing rule, revise the candidate, replace `05-testing/5-existing` and its publications, or cancel.\n\n[Skill action 02](../installed/actions/02-assess-existing-rules.md) requires \u201cawait explicit resolution\u201d and \u201cResolve every conflict/uncertainty before proceeding.\u201d Confirmed capture choices do not resolve this conflict.",
+      "before": {
+        ".claude/rules/05-testing/5-existing.md": "e7503bd2e08ec2a94e0e4cac90c64901aa2c742ff3520c59e7d73801e98bad72",
+        ".cursor/rules/05-testing/5-existing.mdc": "85a56abf468ef2578ac65fe9b702ec34c7fc90a35fb95d8dd7b9e46c711dde02",
+        ".github/instructions/05-existing.instructions.md": "c562d21203ca82b0a5cccf763ab19c0790d584eae1176206aa8e3c853bde1e52",
+        "AGENTS.md": "6faf9ca19dac27f2accb7ebe8c53fe4f8485f4662fa0d5896de76b6b2528a320",
+        "aidd_docs/rules/05-testing/5-existing.md": "ab3b5271d9bdd20d5fc32566d7a1e4cc8e8e7df534c09aea542248e8f966019f",
+        "package.json": "1239d4d885dcad42201a27ed9324f8f0f760b78700d8db9ced39a511cffe7eae"
+      },
+      "after": {
+        ".claude/rules/05-testing/5-existing.md": "e7503bd2e08ec2a94e0e4cac90c64901aa2c742ff3520c59e7d73801e98bad72",
+        ".cursor/rules/05-testing/5-existing.mdc": "85a56abf468ef2578ac65fe9b702ec34c7fc90a35fb95d8dd7b9e46c711dde02",
+        ".github/instructions/05-existing.instructions.md": "c562d21203ca82b0a5cccf763ab19c0790d584eae1176206aa8e3c853bde1e52",
+        "AGENTS.md": "6faf9ca19dac27f2accb7ebe8c53fe4f8485f4662fa0d5896de76b6b2528a320",
+        "aidd_docs/rules/05-testing/5-existing.md": "ab3b5271d9bdd20d5fc32566d7a1e4cc8e8e7df534c09aea542248e8f966019f",
+        "package.json": "1239d4d885dcad42201a27ed9324f8f0f760b78700d8db9ced39a511cffe7eae"
+      },
+      "fixtureFiles": {
+        "package.json": "{\"type\":\"module\"}\n",
+        "AGENTS.md": "<!-- aidd_rules:start sha256=613c85b7b34d8c3c93f64de50e46941ea97c44f27b4f2db6f6836f904668c92d separator=0 -->\nApplies to: `tests/**/*.py`.\n\n# Python unit tests\n\n- Use pytest for all unit tests.\n<!-- aidd_rules:end -->\n",
+        "aidd_docs/rules/05-testing/5-existing.md": "<!-- aidd_rule:{\"version\":1,\"category\":\"05-testing\",\"slug\":\"5-existing\",\"description\":\"Python unit tests\",\"paths\":[\"tests/**/*.py\"],\"targets\":[\"claude\",\"codex\",\"copilot\",\"cursor\",\"opencode\"]} -->\n# Python unit tests\n\n- Use pytest for all unit tests.\n",
+        ".github/instructions/05-existing.instructions.md": "---\napplyTo: \"tests/**/*.py\"\n---\n# Python unit tests\n\n- Use pytest for all unit tests.\n\n<!-- aidd_rule_output:path=.github/instructions/05-existing.instructions.md sha256=e2fac21a53c6fa288e67e7ee16f137920e1a430a6c0196def8c1d01f5ca6e921 -->\n",
+        ".claude/rules/05-testing/5-existing.md": "---\npaths:\n  - \"tests/**/*.py\"\n---\n# Python unit tests\n\n- Use pytest for all unit tests.\n\n<!-- aidd_rule_output:path=.claude/rules/05-testing/5-existing.md sha256=25b1d68ddaafb6a3aed53f16f37e2369e812e53327a39a867984001880546668 -->\n",
+        ".cursor/rules/05-testing/5-existing.mdc": "---\ndescription: \"Python unit tests\"\nglobs: \"tests/**/*.py\"\nalwaysApply: false\n---\n# Python unit tests\n\n- Use pytest for all unit tests.\n\n<!-- aidd_rule_output:path=.cursor/rules/05-testing/5-existing.mdc sha256=478d87dcf33bbbf94918503ac9f3a0343e04857d7b6c1a698afdfe922e32890e -->\n"
+      },
+      "installedHashes": {
+        "SKILL.md": "c3fc303ad0a1bf983c32905e264e65db410df09ad6f413924b2daee28edbc425",
+        "actions/01-capture-rule.md": "af76ed5a85bcbad4a8a5434a065ec8bacc49e75f2048c0c7ec44ba06065faeba",
+        "actions/02-assess-existing-rules.md": "559462a4b12c10cfba8c847e1cb23b02ab4d756fe22003c8adf47d672095bf0c",
+        "actions/03-write-rule.md": "3e63276d6fd1c03894406658a99631e0791c491913faaa188db51aaa36901c2b",
+        "actions/04-validate.md": "084560d6e6cbd6c3cbe89ba1a7bb2b9abf5427cabae802334a54a88a5e08017b",
+        "assets/rule-template.md": "bfccef5e957e8d2de7aefe818196e82bf7691c8631452f4cc5b6e5ea526cdb47",
+        "references/rule-authoring.md": "ce299dcd2a80e2debacc312a68af93bc3cccd2fc2d442e0c85daca9d9e7c5fd9",
+        "references/tool-paths.md": "70d7e97bc814d69fb030186ce2f30350001e9c3621b2d40efccabc63105bd70e",
+        "scripts/write-rule.cjs": "70783e579b75b9e22760239cbfd4309641bdd73840b17e7dfd606a252679a420"
+      },
+      "eventsSHA256": "4be34da0fd9f1cb07047a20ac4527aae03bb9c9f71bf6e81bb29afba7a8c2b39"
+    },
+    {
+      "case": "disjoint",
+      "root": "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-3hcgdbdf",
+      "exit": 0,
+      "unchanged": true,
+      "changed": [],
+      "prompt": "Use the installed rule-generation skill at /private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-3hcgdbdf/installed/SKILL.md. Follow its workflow for creating a rule. All capture choices are confirmed: manual mode, real project root /private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-3hcgdbdf/project, host project, tools Claude Code, Cursor, GitHub Copilot, Codex and OpenCode V2. The complete requested candidate metadata and body are exactly this JSON: {\"category\": \"05-testing\", \"slug\": \"5-candidate\", \"description\": \"Test conventions\", \"paths\": [\"frontend/tests/**/*.py\"], \"body\": \"# Test conventions\\n\\n- Use unittest for all unit tests.\\n\"}. Create this rule. Do not change application source, install packages, use network tools, or commit. This invocation supplies no later user message. If the workflow requires a further user decision, stop and present it.",
+      "answer": "Candidate:\n\n```json\n{\"category\":\"05-testing\",\"slug\":\"5-candidate\",\"description\":\"Test conventions\",\"paths\":[\"frontend/tests/**/*.py\"],\"body\":\"# Test conventions\\n\\n- Use unittest for all unit tests.\\n\"}\n```\n\nFinding: **new**. Existing pytest policy covers `backend/tests/**/*.py`; candidate covers `frontend/tests/**/*.py`. These scopes are disjoint, including future files.\n\nExisting policy appears in [canonical source](aidd_docs/rules/05-testing/5-existing.md), [Claude](.claude/rules/05-testing/5-existing.md), [Cursor](.cursor/rules/05-testing/5-existing.mdc), [Copilot](.github/instructions/05-existing.instructions.md), and [AGENTS.md](AGENTS.md).\n\nApprove this candidate for all five confirmed hosts, keep existing rules, revise, or cancel?\n\nNo files changed. [Installed skill](../installed/SKILL.md), through [assessment action](../installed/actions/02-assess-existing-rules.md), requires: \u201cawait explicit resolution, even for **new**.\u201d Confirmed capture choices do not satisfy this separate assessment decision.",
+      "before": {
+        ".claude/rules/05-testing/5-existing.md": "3ccc5ee40f2a5caea1382ff9da1bb546e2f94a4d3b6eb591603bb5622bb18269",
+        ".cursor/rules/05-testing/5-existing.mdc": "df4c9a6cd7512ff24b79d4bfa946a44b0d368c055d680e67883293defde4887d",
+        ".github/instructions/05-existing.instructions.md": "30f0f402e53af81be9950700dcaf05d0a2411bd8f2f1fdbfec2a5b915b39c506",
+        "AGENTS.md": "209e23b4325e862c45ad5347517553e296662d47a4f794b266ee34336ea50c35",
+        "aidd_docs/rules/05-testing/5-existing.md": "ceb7c77e195f68130a3302542deac1871a00d963b3ed97dc74b1d3b1473e2d0a",
+        "package.json": "1239d4d885dcad42201a27ed9324f8f0f760b78700d8db9ced39a511cffe7eae"
+      },
+      "after": {
+        ".claude/rules/05-testing/5-existing.md": "3ccc5ee40f2a5caea1382ff9da1bb546e2f94a4d3b6eb591603bb5622bb18269",
+        ".cursor/rules/05-testing/5-existing.mdc": "df4c9a6cd7512ff24b79d4bfa946a44b0d368c055d680e67883293defde4887d",
+        ".github/instructions/05-existing.instructions.md": "30f0f402e53af81be9950700dcaf05d0a2411bd8f2f1fdbfec2a5b915b39c506",
+        "AGENTS.md": "209e23b4325e862c45ad5347517553e296662d47a4f794b266ee34336ea50c35",
+        "aidd_docs/rules/05-testing/5-existing.md": "ceb7c77e195f68130a3302542deac1871a00d963b3ed97dc74b1d3b1473e2d0a",
+        "package.json": "1239d4d885dcad42201a27ed9324f8f0f760b78700d8db9ced39a511cffe7eae"
+      },
+      "fixtureFiles": {
+        "package.json": "{\"type\":\"module\"}\n",
+        "AGENTS.md": "<!-- aidd_rules:start sha256=c72949c5d8c6b15fda193a682dda89463fa802895f96b641d0fb2edcf3a46067 separator=0 -->\nApplies to: `backend/tests/**/*.py`.\n\n# Python unit tests\n\n- Use pytest for all unit tests.\n<!-- aidd_rules:end -->\n",
+        "aidd_docs/rules/05-testing/5-existing.md": "<!-- aidd_rule:{\"version\":1,\"category\":\"05-testing\",\"slug\":\"5-existing\",\"description\":\"Python unit tests\",\"paths\":[\"backend/tests/**/*.py\"],\"targets\":[\"claude\",\"codex\",\"copilot\",\"cursor\",\"opencode\"]} -->\n# Python unit tests\n\n- Use pytest for all unit tests.\n",
+        ".github/instructions/05-existing.instructions.md": "---\napplyTo: \"backend/tests/**/*.py\"\n---\n# Python unit tests\n\n- Use pytest for all unit tests.\n\n<!-- aidd_rule_output:path=.github/instructions/05-existing.instructions.md sha256=db97f29879b86c680e1d6acad94ccdb22a6febf1749ff55d636da9253b7e1c5b -->\n",
+        ".claude/rules/05-testing/5-existing.md": "---\npaths:\n  - \"backend/tests/**/*.py\"\n---\n# Python unit tests\n\n- Use pytest for all unit tests.\n\n<!-- aidd_rule_output:path=.claude/rules/05-testing/5-existing.md sha256=77cc0d160bb76d7047fa74a21811d09b054bd3ced85896b74d36e71116494f2b -->\n",
+        ".cursor/rules/05-testing/5-existing.mdc": "---\ndescription: \"Python unit tests\"\nglobs: \"backend/tests/**/*.py\"\nalwaysApply: false\n---\n# Python unit tests\n\n- Use pytest for all unit tests.\n\n<!-- aidd_rule_output:path=.cursor/rules/05-testing/5-existing.mdc sha256=57c8c58f92db93f0a9d88f53ffd5419207b6244ce6966e60684d694057922c73 -->\n"
+      },
+      "installedHashes": {
+        "SKILL.md": "c3fc303ad0a1bf983c32905e264e65db410df09ad6f413924b2daee28edbc425",
+        "actions/01-capture-rule.md": "af76ed5a85bcbad4a8a5434a065ec8bacc49e75f2048c0c7ec44ba06065faeba",
+        "actions/02-assess-existing-rules.md": "559462a4b12c10cfba8c847e1cb23b02ab4d756fe22003c8adf47d672095bf0c",
+        "actions/03-write-rule.md": "3e63276d6fd1c03894406658a99631e0791c491913faaa188db51aaa36901c2b",
+        "actions/04-validate.md": "084560d6e6cbd6c3cbe89ba1a7bb2b9abf5427cabae802334a54a88a5e08017b",
+        "assets/rule-template.md": "bfccef5e957e8d2de7aefe818196e82bf7691c8631452f4cc5b6e5ea526cdb47",
+        "references/rule-authoring.md": "ce299dcd2a80e2debacc312a68af93bc3cccd2fc2d442e0c85daca9d9e7c5fd9",
+        "references/tool-paths.md": "70d7e97bc814d69fb030186ce2f30350001e9c3621b2d40efccabc63105bd70e",
+        "scripts/write-rule.cjs": "70783e579b75b9e22760239cbfd4309641bdd73840b17e7dfd606a252679a420"
+      },
+      "eventsSHA256": "ac88ddbd101eba4ec73c3648f657cd25e1a654ff79f042833808810d90482d94"
+    },
+    {
+      "case": "uncertain",
+      "root": "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-0oqnbaf8",
+      "exit": 0,
+      "unchanged": true,
+      "changed": [],
+      "prompt": "Use the installed rule-generation skill at /private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-0oqnbaf8/installed/SKILL.md. Follow its workflow for creating a rule. All capture choices are confirmed: manual mode, real project root /private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-0oqnbaf8/project, host project, tools Claude Code, Cursor, GitHub Copilot, Codex and OpenCode V2. The complete requested candidate metadata and body are exactly this JSON: {\"category\": \"05-testing\", \"slug\": \"5-candidate\", \"description\": \"Test conventions\", \"paths\": [\"tests/**/*.py\"], \"body\": \"# Test conventions\\n\\n- Use unittest for all unit tests.\\n\"}. Create this rule. Do not change application source, install packages, use network tools, or commit. This invocation supplies no later user message. If the workflow requires a further user decision, stop and present it.",
+      "answer": "Creation paused; no files changed.\n\nCandidate metadata: category `05-testing`, slug `5-candidate`, description `Test conventions`, paths `[\"tests/**/*.py\"]`. Destinations: Claude Code, Cursor, GitHub Copilot, Codex, OpenCode V2.\n\n```markdown\n# Test conventions\n\n- Use unittest for all unit tests.\n```\n\n**Needs review:** [.claude/rules/05-testing/5-existing.md](.claude/rules/05-testing/5-existing.md) applies to the same scope and requires: \u201cUse the test framework approved in docs/test-framework.md.\u201d That document is missing, so compatibility with `unittest` cannot be established.\n\nThe installed [assessment action](/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-0oqnbaf8/installed/actions/02-assess-existing-rules.md) requires: \u201cShow complete candidates and findings; await explicit resolution\u201d and \u201cResolve every conflict/uncertainty before proceeding.\u201d\n\nFurther decision required: identify the approved framework and resolve the finding, revise the candidate, authorize replacing the identified existing rule, or keep/cancel.",
+      "before": {
+        ".claude/rules/05-testing/5-existing.md": "97b20713c5f281632ce97c6304250b4a1b1988ca32a3df0ccf544cbe2d74171a",
+        "package.json": "1239d4d885dcad42201a27ed9324f8f0f760b78700d8db9ced39a511cffe7eae"
+      },
+      "after": {
+        ".claude/rules/05-testing/5-existing.md": "97b20713c5f281632ce97c6304250b4a1b1988ca32a3df0ccf544cbe2d74171a",
+        "package.json": "1239d4d885dcad42201a27ed9324f8f0f760b78700d8db9ced39a511cffe7eae"
+      },
+      "fixtureFiles": {
+        "package.json": "{\"type\":\"module\"}\n",
+        ".claude/rules/05-testing/5-existing.md": "---\npaths:\n  - \"tests/**/*.py\"\n---\n\n# Unit tests\n\n- Use the test framework approved in docs/test-framework.md.\n"
+      },
+      "installedHashes": {
+        "SKILL.md": "c3fc303ad0a1bf983c32905e264e65db410df09ad6f413924b2daee28edbc425",
+        "actions/01-capture-rule.md": "af76ed5a85bcbad4a8a5434a065ec8bacc49e75f2048c0c7ec44ba06065faeba",
+        "actions/02-assess-existing-rules.md": "559462a4b12c10cfba8c847e1cb23b02ab4d756fe22003c8adf47d672095bf0c",
+        "actions/03-write-rule.md": "3e63276d6fd1c03894406658a99631e0791c491913faaa188db51aaa36901c2b",
+        "actions/04-validate.md": "084560d6e6cbd6c3cbe89ba1a7bb2b9abf5427cabae802334a54a88a5e08017b",
+        "assets/rule-template.md": "bfccef5e957e8d2de7aefe818196e82bf7691c8631452f4cc5b6e5ea526cdb47",
+        "references/rule-authoring.md": "ce299dcd2a80e2debacc312a68af93bc3cccd2fc2d442e0c85daca9d9e7c5fd9",
+        "references/tool-paths.md": "70d7e97bc814d69fb030186ce2f30350001e9c3621b2d40efccabc63105bd70e",
+        "scripts/write-rule.cjs": "70783e579b75b9e22760239cbfd4309641bdd73840b17e7dfd606a252679a420"
+      },
+      "eventsSHA256": "6c0998be130d5ac7934cbb466323eabf5f3c20abed7deb6997e6f48d8f6a6338"
+    },
+    {
+      "case": "edited-rendering",
+      "root": "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-y0jh35oc",
+      "exit": 0,
+      "unchanged": true,
+      "changed": [],
+      "prompt": "Use the installed rule-generation skill at /private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-y0jh35oc/installed/SKILL.md. Follow its workflow for creating a rule. All capture choices are confirmed: manual mode, real project root /private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-y0jh35oc/project, host project, tools Claude Code, Cursor, GitHub Copilot, Codex and OpenCode V2. The complete requested candidate metadata and body are exactly this JSON: {\"category\": \"05-testing\", \"slug\": \"5-candidate\", \"description\": \"Test conventions\", \"paths\": [\"tests/**/*.py\"], \"body\": \"# Test conventions\\n\\n- Write every unit test with pytest.\\n\"}. Create this rule. Do not change application source, install packages, use network tools, or commit. This invocation supplies no later user message. If the workflow requires a further user decision, stop and present it.",
+      "answer": "Creation paused; no files changed.\n\nCandidate:\n\n```json\n{\"category\":\"05-testing\",\"slug\":\"5-candidate\",\"description\":\"Test conventions\",\"paths\":[\"tests/**/*.py\"],\"body\":\"# Test conventions\\n\\n- Write every unit test with pytest.\\n\"}\n```\n\nFindings for the identical scope `tests/**/*.py`:\n\n- **Covered:** `aidd_docs/rules/05-testing/5-existing.md`, `AGENTS.md`, Cursor and Copilot publications already require \u201cUse pytest for all unit tests.\u201d\n- **Conflict:** `.claude/rules/05-testing/5-existing.md` instead requires \u201cUse unittest for all unit tests.\u201d This differing native edit must remain separate evidence.\n\nThe [skill\u2019s assessment step](/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-y0jh35oc/installed/actions/02-assess-existing-rules.md) requires: \u201cawait explicit resolution\u201d and \u201cResolve every conflict/uncertainty before proceeding.\u201d\n\nChoose **keep/cancel**, **revise**, or explicitly authorize resolving the Claude edit and approve the resulting candidate. Capture confirmation does not satisfy this assessment decision.",
+      "before": {
+        ".claude/rules/05-testing/5-existing.md": "9e8fd9e68a4cc2ec4219a150f7aab51e7562780547d7438f5fdf5aadd44baf32",
+        ".cursor/rules/05-testing/5-existing.mdc": "85a56abf468ef2578ac65fe9b702ec34c7fc90a35fb95d8dd7b9e46c711dde02",
+        ".github/instructions/05-existing.instructions.md": "c562d21203ca82b0a5cccf763ab19c0790d584eae1176206aa8e3c853bde1e52",
+        "AGENTS.md": "6faf9ca19dac27f2accb7ebe8c53fe4f8485f4662fa0d5896de76b6b2528a320",
+        "aidd_docs/rules/05-testing/5-existing.md": "ab3b5271d9bdd20d5fc32566d7a1e4cc8e8e7df534c09aea542248e8f966019f",
+        "package.json": "1239d4d885dcad42201a27ed9324f8f0f760b78700d8db9ced39a511cffe7eae"
+      },
+      "after": {
+        ".claude/rules/05-testing/5-existing.md": "9e8fd9e68a4cc2ec4219a150f7aab51e7562780547d7438f5fdf5aadd44baf32",
+        ".cursor/rules/05-testing/5-existing.mdc": "85a56abf468ef2578ac65fe9b702ec34c7fc90a35fb95d8dd7b9e46c711dde02",
+        ".github/instructions/05-existing.instructions.md": "c562d21203ca82b0a5cccf763ab19c0790d584eae1176206aa8e3c853bde1e52",
+        "AGENTS.md": "6faf9ca19dac27f2accb7ebe8c53fe4f8485f4662fa0d5896de76b6b2528a320",
+        "aidd_docs/rules/05-testing/5-existing.md": "ab3b5271d9bdd20d5fc32566d7a1e4cc8e8e7df534c09aea542248e8f966019f",
+        "package.json": "1239d4d885dcad42201a27ed9324f8f0f760b78700d8db9ced39a511cffe7eae"
+      },
+      "fixtureFiles": {
+        "package.json": "{\"type\":\"module\"}\n",
+        "AGENTS.md": "<!-- aidd_rules:start sha256=613c85b7b34d8c3c93f64de50e46941ea97c44f27b4f2db6f6836f904668c92d separator=0 -->\nApplies to: `tests/**/*.py`.\n\n# Python unit tests\n\n- Use pytest for all unit tests.\n<!-- aidd_rules:end -->\n",
+        "aidd_docs/rules/05-testing/5-existing.md": "<!-- aidd_rule:{\"version\":1,\"category\":\"05-testing\",\"slug\":\"5-existing\",\"description\":\"Python unit tests\",\"paths\":[\"tests/**/*.py\"],\"targets\":[\"claude\",\"codex\",\"copilot\",\"cursor\",\"opencode\"]} -->\n# Python unit tests\n\n- Use pytest for all unit tests.\n",
+        ".github/instructions/05-existing.instructions.md": "---\napplyTo: \"tests/**/*.py\"\n---\n# Python unit tests\n\n- Use pytest for all unit tests.\n\n<!-- aidd_rule_output:path=.github/instructions/05-existing.instructions.md sha256=e2fac21a53c6fa288e67e7ee16f137920e1a430a6c0196def8c1d01f5ca6e921 -->\n",
+        ".claude/rules/05-testing/5-existing.md": "---\npaths:\n  - \"tests/**/*.py\"\n---\n# Python unit tests\n\n- Use unittest for all unit tests.\n\n<!-- aidd_rule_output:path=.claude/rules/05-testing/5-existing.md sha256=25b1d68ddaafb6a3aed53f16f37e2369e812e53327a39a867984001880546668 -->\n",
+        ".cursor/rules/05-testing/5-existing.mdc": "---\ndescription: \"Python unit tests\"\nglobs: \"tests/**/*.py\"\nalwaysApply: false\n---\n# Python unit tests\n\n- Use pytest for all unit tests.\n\n<!-- aidd_rule_output:path=.cursor/rules/05-testing/5-existing.mdc sha256=478d87dcf33bbbf94918503ac9f3a0343e04857d7b6c1a698afdfe922e32890e -->\n"
+      },
+      "installedHashes": {
+        "SKILL.md": "c3fc303ad0a1bf983c32905e264e65db410df09ad6f413924b2daee28edbc425",
+        "actions/01-capture-rule.md": "af76ed5a85bcbad4a8a5434a065ec8bacc49e75f2048c0c7ec44ba06065faeba",
+        "actions/02-assess-existing-rules.md": "559462a4b12c10cfba8c847e1cb23b02ab4d756fe22003c8adf47d672095bf0c",
+        "actions/03-write-rule.md": "3e63276d6fd1c03894406658a99631e0791c491913faaa188db51aaa36901c2b",
+        "actions/04-validate.md": "084560d6e6cbd6c3cbe89ba1a7bb2b9abf5427cabae802334a54a88a5e08017b",
+        "assets/rule-template.md": "bfccef5e957e8d2de7aefe818196e82bf7691c8631452f4cc5b6e5ea526cdb47",
+        "references/rule-authoring.md": "ce299dcd2a80e2debacc312a68af93bc3cccd2fc2d442e0c85daca9d9e7c5fd9",
+        "references/tool-paths.md": "70d7e97bc814d69fb030186ce2f30350001e9c3621b2d40efccabc63105bd70e",
+        "scripts/write-rule.cjs": "70783e579b75b9e22760239cbfd4309641bdd73840b17e7dfd606a252679a420"
+      },
+      "eventsSHA256": "825b78333b946dae142cf6ac670801a16c0c12638792234f464d2bd5891da8ba"
+    },
+    {
+      "case": "plugin-conflict",
+      "root": "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-k3ov3cw3",
+      "exit": 0,
+      "unchanged": true,
+      "changed": [],
+      "prompt": "Use the installed rule-generation skill at /private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-k3ov3cw3/installed/SKILL.md. Follow its workflow for creating a rule. All capture choices are confirmed: manual mode, real project root /private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-k3ov3cw3/project, plugin source in plugins/example, no host publication. The complete requested candidate metadata and body are exactly this JSON: {\"category\": \"05-testing\", \"slug\": \"5-candidate\", \"description\": \"Test conventions\", \"paths\": [\"tests/**/*.py\"], \"body\": \"# Test conventions\\n\\n- Use unittest for all unit tests.\\n\"}. Create this rule. Do not change application source, install packages, use network tools, or commit. This invocation supplies no later user message. If the workflow requires a further user decision, stop and present it.",
+      "answer": "Creation paused: **conflict** in [5-existing.md](plugins/example/rules/05-testing/5-existing.md). It requires \u201cUse pytest for all unit tests.\u201d Both rules cover `tests/**/*.py`.\n\nComplete candidate for `plugins/example/rules/05-testing/5-candidate.md`:\n\n```yaml\n---\npaths:\n  - \"tests/**/*.py\"\n---\n# Test conventions\n\n- Use unittest for all unit tests.\n```\n\nMetadata: category `05-testing`, slug `5-candidate`, description `Test conventions`.\n\nChoose: keep existing rule, revise candidate, authorize replacing the existing pytest requirement with unittest, or cancel. No files changed.\n\nThe [assessment workflow](../installed/actions/02-assess-existing-rules.md) requires: \u201cResolve every conflict/uncertainty before proceeding\u201d and \u201cawait explicit resolution.\u201d Your confirmed capture choices do not resolve this conflict.",
+      "before": {
+        "package.json": "1239d4d885dcad42201a27ed9324f8f0f760b78700d8db9ced39a511cffe7eae",
+        "plugins/example/rules/05-testing/5-existing.md": "c83fa98fc86980237fca5bc0d216c3cb089770f2e4499744b306a509111368bf"
+      },
+      "after": {
+        "package.json": "1239d4d885dcad42201a27ed9324f8f0f760b78700d8db9ced39a511cffe7eae",
+        "plugins/example/rules/05-testing/5-existing.md": "c83fa98fc86980237fca5bc0d216c3cb089770f2e4499744b306a509111368bf"
+      },
+      "fixtureFiles": {
+        "package.json": "{\"type\":\"module\"}\n",
+        "plugins/example/rules/05-testing/5-existing.md": "---\npaths:\n  - \"tests/**/*.py\"\n---\n\n# Unit tests\n\n- Use pytest for all unit tests.\n"
+      },
+      "installedHashes": {
+        "SKILL.md": "c3fc303ad0a1bf983c32905e264e65db410df09ad6f413924b2daee28edbc425",
+        "actions/01-capture-rule.md": "af76ed5a85bcbad4a8a5434a065ec8bacc49e75f2048c0c7ec44ba06065faeba",
+        "actions/02-assess-existing-rules.md": "559462a4b12c10cfba8c847e1cb23b02ab4d756fe22003c8adf47d672095bf0c",
+        "actions/03-write-rule.md": "3e63276d6fd1c03894406658a99631e0791c491913faaa188db51aaa36901c2b",
+        "actions/04-validate.md": "084560d6e6cbd6c3cbe89ba1a7bb2b9abf5427cabae802334a54a88a5e08017b",
+        "assets/rule-template.md": "bfccef5e957e8d2de7aefe818196e82bf7691c8631452f4cc5b6e5ea526cdb47",
+        "references/rule-authoring.md": "ce299dcd2a80e2debacc312a68af93bc3cccd2fc2d442e0c85daca9d9e7c5fd9",
+        "references/tool-paths.md": "70d7e97bc814d69fb030186ce2f30350001e9c3621b2d40efccabc63105bd70e",
+        "scripts/write-rule.cjs": "70783e579b75b9e22760239cbfd4309641bdd73840b17e7dfd606a252679a420"
+      },
+      "eventsSHA256": "adbc94fdb4c84facb5c735a55eb8b580bce11652d7a986c5c670e4822d95f4f8"
+    },
+    {
+      "case": "copilot-guidance",
+      "root": "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-p4nc5tel",
+      "exit": 0,
+      "unchanged": true,
+      "changed": [],
+      "prompt": "Use the installed rule-generation skill at /private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-p4nc5tel/installed/SKILL.md. Follow its workflow for creating a rule. All capture choices are confirmed: manual mode, real project root /private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-p4nc5tel/project, host project, tools Claude Code, Cursor, GitHub Copilot, Codex and OpenCode V2. The complete requested candidate metadata and body are exactly this JSON: {\"category\": \"05-testing\", \"slug\": \"5-candidate\", \"description\": \"Test conventions\", \"paths\": [\"tests/**/*.py\"], \"body\": \"# Test conventions\\n\\n- Use unittest for all unit tests.\\n\"}. Create this rule. Do not change application source, install packages, use network tools, or commit. This invocation supplies no later user message. If the workflow requires a further user decision, stop and present it.",
+      "answer": "No files changed. Assessment found a **conflict**: [GEMINI.md](GEMINI.md:3), a Copilot project source, says \u201cUse pytest for all unit tests.\u201d This conflicts with the candidate within `tests/**/*.py`.\n\nComplete candidate for Claude Code, Cursor, GitHub Copilot, Codex and OpenCode V2:\n\n```json\n{\"category\":\"05-testing\",\"slug\":\"5-candidate\",\"description\":\"Test conventions\",\"paths\":[\"tests/**/*.py\"],\"body\":\"# Test conventions\\n\\n- Use unittest for all unit tests.\\n\"}\n```\n\nChoose: keep existing policy, revise the candidate, authorize replacing the conflicting policy, or cancel.\n\nThe installed skill\u2019s [assessment action](/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-p4nc5tel/installed/actions/02-assess-existing-rules.md) requires \u201cawait explicit resolution\u201d and \u201cResolve every conflict/uncertainty before proceeding.\u201d Capture confirmation does not resolve this conflict.",
+      "before": {
+        "GEMINI.md": "84d50ee6955150792d301179bdcf6a4e3c92922a6ebfba6204236df3d6e6dfc1",
+        "package.json": "1239d4d885dcad42201a27ed9324f8f0f760b78700d8db9ced39a511cffe7eae"
+      },
+      "after": {
+        "GEMINI.md": "84d50ee6955150792d301179bdcf6a4e3c92922a6ebfba6204236df3d6e6dfc1",
+        "package.json": "1239d4d885dcad42201a27ed9324f8f0f760b78700d8db9ced39a511cffe7eae"
+      },
+      "fixtureFiles": {
+        "package.json": "{\"type\":\"module\"}\n",
+        "GEMINI.md": "# Unit tests\n\n- Use pytest for all unit tests.\n"
+      },
+      "installedHashes": {
+        "SKILL.md": "c3fc303ad0a1bf983c32905e264e65db410df09ad6f413924b2daee28edbc425",
+        "actions/01-capture-rule.md": "af76ed5a85bcbad4a8a5434a065ec8bacc49e75f2048c0c7ec44ba06065faeba",
+        "actions/02-assess-existing-rules.md": "559462a4b12c10cfba8c847e1cb23b02ab4d756fe22003c8adf47d672095bf0c",
+        "actions/03-write-rule.md": "3e63276d6fd1c03894406658a99631e0791c491913faaa188db51aaa36901c2b",
+        "actions/04-validate.md": "084560d6e6cbd6c3cbe89ba1a7bb2b9abf5427cabae802334a54a88a5e08017b",
+        "assets/rule-template.md": "bfccef5e957e8d2de7aefe818196e82bf7691c8631452f4cc5b6e5ea526cdb47",
+        "references/rule-authoring.md": "ce299dcd2a80e2debacc312a68af93bc3cccd2fc2d442e0c85daca9d9e7c5fd9",
+        "references/tool-paths.md": "70d7e97bc814d69fb030186ce2f30350001e9c3621b2d40efccabc63105bd70e",
+        "scripts/write-rule.cjs": "70783e579b75b9e22760239cbfd4309641bdd73840b17e7dfd606a252679a420"
+      },
+      "eventsSHA256": "a740b69ded2d919fff1ecbded26b32332b2779eab1abbd9be958bf246da6388e"
+    },
+    {
+      "case": "copilot-import",
+      "root": "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-cpisqs8a",
+      "exit": 0,
+      "unchanged": true,
+      "changed": [],
+      "prompt": "Use the installed rule-generation skill at /private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-cpisqs8a/installed/SKILL.md. Follow its workflow for creating a rule. All capture choices are confirmed: manual mode, real project root /private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-cpisqs8a/project, host project, tools Claude Code, Cursor, GitHub Copilot, Codex and OpenCode V2. The complete requested candidate metadata and body are exactly this JSON: {\"category\": \"05-testing\", \"slug\": \"5-candidate\", \"description\": \"Test conventions\", \"paths\": [\"tests/**/*.py\"], \"body\": \"# Test conventions\\n\\n- Use unittest for all unit tests.\\n\"}. Create this rule. Do not change application source, install packages, use network tools, or commit. This invocation supplies no later user message. If the workflow requires a further user decision, stop and present it.",
+      "answer": "Creation paused: existing Copilot guidance conflicts with the candidate.\n\n[.github/copilot-instructions.md](.github/copilot-instructions.md) imports [docs/unit-policy.md](docs/unit-policy.md), which requires \u201cUse pytest for all unit tests.\u201d This overlaps `tests/**/*.py` and conflicts with `unittest`.\n\nCandidate metadata: category `05-testing`, slug `5-candidate`, description `Test conventions`, paths `[\"tests/**/*.py\"]`. Targets: Claude Code, Cursor, GitHub Copilot, Codex, OpenCode V2.\n\n```markdown\n# Test conventions\n\n- Use unittest for all unit tests.\n```\n\nChoose: keep existing policy, revise candidate, authorize replacing the pytest policy, or cancel.\n\nThe installed skill\u2019s [assessment step](/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-cpisqs8a/installed/actions/02-assess-existing-rules.md) requires \u201cawait explicit resolution\u201d and \u201cResolve every conflict/uncertainty before proceeding.\u201d Capture confirmation does not resolve this conflict. No files changed.",
+      "before": {
+        ".github/copilot-instructions.md": "f499439acb6f5b3504d0435aed5e9b60be5dc5634b90708863370d739e574b14",
+        "docs/unit-policy.md": "0e5cd2aa19aa90b11d9fd678e85cc137315971a75d68bd2004bf0f48ea63be3d",
+        "package.json": "1239d4d885dcad42201a27ed9324f8f0f760b78700d8db9ced39a511cffe7eae"
+      },
+      "after": {
+        ".github/copilot-instructions.md": "f499439acb6f5b3504d0435aed5e9b60be5dc5634b90708863370d739e574b14",
+        "docs/unit-policy.md": "0e5cd2aa19aa90b11d9fd678e85cc137315971a75d68bd2004bf0f48ea63be3d",
+        "package.json": "1239d4d885dcad42201a27ed9324f8f0f760b78700d8db9ced39a511cffe7eae"
+      },
+      "fixtureFiles": {
+        "package.json": "{\"type\":\"module\"}\n",
+        "docs/unit-policy.md": "# Unit policy\n\n- Use pytest for all unit tests.\n",
+        ".github/copilot-instructions.md": "# Unit tests\n\nFollow @../docs/unit-policy.md.\n"
+      },
+      "installedHashes": {
+        "SKILL.md": "c3fc303ad0a1bf983c32905e264e65db410df09ad6f413924b2daee28edbc425",
+        "actions/01-capture-rule.md": "af76ed5a85bcbad4a8a5434a065ec8bacc49e75f2048c0c7ec44ba06065faeba",
+        "actions/02-assess-existing-rules.md": "559462a4b12c10cfba8c847e1cb23b02ab4d756fe22003c8adf47d672095bf0c",
+        "actions/03-write-rule.md": "3e63276d6fd1c03894406658a99631e0791c491913faaa188db51aaa36901c2b",
+        "actions/04-validate.md": "084560d6e6cbd6c3cbe89ba1a7bb2b9abf5427cabae802334a54a88a5e08017b",
+        "assets/rule-template.md": "bfccef5e957e8d2de7aefe818196e82bf7691c8631452f4cc5b6e5ea526cdb47",
+        "references/rule-authoring.md": "ce299dcd2a80e2debacc312a68af93bc3cccd2fc2d442e0c85daca9d9e7c5fd9",
+        "references/tool-paths.md": "70d7e97bc814d69fb030186ce2f30350001e9c3621b2d40efccabc63105bd70e",
+        "scripts/write-rule.cjs": "70783e579b75b9e22760239cbfd4309641bdd73840b17e7dfd606a252679a420"
+      },
+      "eventsSHA256": "4b134ee91d40835944296c2d28e4413fd5b91b2302dc7e38560403a493966dd5"
+    },
+    {
+      "case": "scope-uncertain",
+      "root": "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-9q4boz6g",
+      "exit": 0,
+      "unchanged": true,
+      "changed": [],
+      "prompt": "Use the installed rule-generation skill at /private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-9q4boz6g/installed/SKILL.md. Follow its workflow for creating a rule. All capture choices are confirmed: manual mode, real project root /private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-9q4boz6g/project, host project, tools Claude Code, Cursor, GitHub Copilot, Codex and OpenCode V2. The complete requested candidate metadata and body are exactly this JSON: {\"category\": \"05-testing\", \"slug\": \"5-candidate\", \"description\": \"Test conventions\", \"paths\": [\"tests/**/*.py\"], \"body\": \"# Test conventions\\n\\n- Use unittest for all unit tests.\\n\"}. Create this rule. Do not change application source, install packages, use network tools, or commit. This invocation supplies no later user message. If the workflow requires a further user decision, stop and present it.",
+      "answer": "No files changed. Assessment: **needs review**.\n\n[Existing rule](.claude/rules/05-testing/5-existing.md) applies to `**/*.py` and requires pytest for files selected by `config/unit-test-paths.json`. That config is missing, so overlap with `tests/**/*.py` cannot be resolved; overlapping unit tests would receive conflicting requirements.\n\nRequested candidate:\n```json\n{\"category\":\"05-testing\",\"slug\":\"5-candidate\",\"description\":\"Test conventions\",\"paths\":[\"tests/**/*.py\"],\"body\":\"# Test conventions\\n\\n- Use unittest for all unit tests.\\n\"}\n```\n\nProvide the missing scope evidence or explicitly resolve the existing pytest requirement, then approve the assessed candidate; alternatively revise or cancel.\n\nThe [skill](../installed/SKILL.md), through [action 02](../installed/actions/02-assess-existing-rules.md), requires: \u201cResolve every conflict/uncertainty before proceeding\u201d and \u201cawait explicit resolution, even for **new**.\u201d Your confirmed capture choices do not resolve this finding.",
+      "before": {
+        ".claude/rules/05-testing/5-existing.md": "49719e0335aa2659637431b09c60a99c7ea7b4792542295e2785bb335b5abcde",
+        "package.json": "1239d4d885dcad42201a27ed9324f8f0f760b78700d8db9ced39a511cffe7eae"
+      },
+      "after": {
+        ".claude/rules/05-testing/5-existing.md": "49719e0335aa2659637431b09c60a99c7ea7b4792542295e2785bb335b5abcde",
+        "package.json": "1239d4d885dcad42201a27ed9324f8f0f760b78700d8db9ced39a511cffe7eae"
+      },
+      "fixtureFiles": {
+        "package.json": "{\"type\":\"module\"}\n",
+        ".claude/rules/05-testing/5-existing.md": "---\npaths:\n  - \"**/*.py\"\n---\n\n# Unit tests\n\n- For the unit test files selected in config/unit-test-paths.json, use pytest.\n"
+      },
+      "installedHashes": {
+        "SKILL.md": "c3fc303ad0a1bf983c32905e264e65db410df09ad6f413924b2daee28edbc425",
+        "actions/01-capture-rule.md": "af76ed5a85bcbad4a8a5434a065ec8bacc49e75f2048c0c7ec44ba06065faeba",
+        "actions/02-assess-existing-rules.md": "559462a4b12c10cfba8c847e1cb23b02ab4d756fe22003c8adf47d672095bf0c",
+        "actions/03-write-rule.md": "3e63276d6fd1c03894406658a99631e0791c491913faaa188db51aaa36901c2b",
+        "actions/04-validate.md": "084560d6e6cbd6c3cbe89ba1a7bb2b9abf5427cabae802334a54a88a5e08017b",
+        "assets/rule-template.md": "bfccef5e957e8d2de7aefe818196e82bf7691c8631452f4cc5b6e5ea526cdb47",
+        "references/rule-authoring.md": "ce299dcd2a80e2debacc312a68af93bc3cccd2fc2d442e0c85daca9d9e7c5fd9",
+        "references/tool-paths.md": "70d7e97bc814d69fb030186ce2f30350001e9c3621b2d40efccabc63105bd70e",
+        "scripts/write-rule.cjs": "70783e579b75b9e22760239cbfd4309641bdd73840b17e7dfd606a252679a420"
+      },
+      "eventsSHA256": "2b8aa8dd76c6f63fdff70708f1a20ace490a1fdc98e6ee1aea694cb08135bc5b"
+    },
+    {
+      "case": "claude-local",
+      "root": "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-ht1ibk1j",
+      "exit": 0,
+      "unchanged": true,
+      "changed": [],
+      "prompt": "Use the installed rule-generation skill at /private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-ht1ibk1j/installed/SKILL.md. Follow its workflow for creating a rule. All capture choices are confirmed: manual mode, real project root /private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-ht1ibk1j/project, host project, tool Claude Code only. The complete requested candidate metadata and body are exactly this JSON: {\"category\": \"05-testing\", \"slug\": \"5-candidate\", \"description\": \"Test conventions\", \"paths\": [\"tests/**/*.py\"], \"body\": \"# Test conventions\\n\\n- Use unittest for all unit tests.\\n\"}. Create this rule. Do not change application source, install packages, use network tools, or commit. This invocation supplies no later user message. If the workflow requires a further user decision, stop and present it.",
+      "answer": "Rule creation paused; no files changed.\n\n**Conflict:** [CLAUDE.local.md](CLAUDE.local.md) requires \u201cUse pytest for all unit tests.\u201d This overlaps `tests/**/*.py` and contradicts the candidate:\n\n```json\n{\"category\":\"05-testing\",\"slug\":\"5-candidate\",\"description\":\"Test conventions\",\"paths\":[\"tests/**/*.py\"],\"body\":\"# Test conventions\\n\\n- Use unittest for all unit tests.\\n\"}\n```\n\nChoose **keep existing policy**, **revise candidate**, **replace existing policy with unittest**, or **cancel**. Replacement requires explicit authorization to change `CLAUDE.local.md`.\n\nThe installed [assessment workflow](../installed/actions/02-assess-existing-rules.md) requires: \u201cResolve every conflict/uncertainty before proceeding.\u201d Your capture confirmations do not resolve this conflict.",
+      "before": {
+        "CLAUDE.local.md": "f6f6bdd0fbb28b7e582991c063f0f4ec4868959cca6aa45e9dc2c8c374d17b2c",
+        "package.json": "1239d4d885dcad42201a27ed9324f8f0f760b78700d8db9ced39a511cffe7eae"
+      },
+      "after": {
+        "CLAUDE.local.md": "f6f6bdd0fbb28b7e582991c063f0f4ec4868959cca6aa45e9dc2c8c374d17b2c",
+        "package.json": "1239d4d885dcad42201a27ed9324f8f0f760b78700d8db9ced39a511cffe7eae"
+      },
+      "fixtureFiles": {
+        "CLAUDE.local.md": "# Local unit test policy\n\n- Use pytest for all unit tests.\n",
+        "package.json": "{\"type\":\"module\"}\n"
+      },
+      "installedHashes": {
+        "SKILL.md": "c3fc303ad0a1bf983c32905e264e65db410df09ad6f413924b2daee28edbc425",
+        "actions/01-capture-rule.md": "af76ed5a85bcbad4a8a5434a065ec8bacc49e75f2048c0c7ec44ba06065faeba",
+        "actions/02-assess-existing-rules.md": "559462a4b12c10cfba8c847e1cb23b02ab4d756fe22003c8adf47d672095bf0c",
+        "actions/03-write-rule.md": "3e63276d6fd1c03894406658a99631e0791c491913faaa188db51aaa36901c2b",
+        "actions/04-validate.md": "084560d6e6cbd6c3cbe89ba1a7bb2b9abf5427cabae802334a54a88a5e08017b",
+        "assets/rule-template.md": "bfccef5e957e8d2de7aefe818196e82bf7691c8631452f4cc5b6e5ea526cdb47",
+        "references/rule-authoring.md": "ce299dcd2a80e2debacc312a68af93bc3cccd2fc2d442e0c85daca9d9e7c5fd9",
+        "references/tool-paths.md": "70d7e97bc814d69fb030186ce2f30350001e9c3621b2d40efccabc63105bd70e",
+        "scripts/write-rule.cjs": "70783e579b75b9e22760239cbfd4309641bdd73840b17e7dfd606a252679a420"
+      },
+      "eventsSHA256": "a0fce1f0aab273f91a6d40f614bc3dca68697f58a53a1f8f6bc31520389c762c"
+    },
+    {
+      "case": "opencode-v1-config",
+      "root": "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-1qr4_na3",
+      "exit": 0,
+      "unchanged": true,
+      "changed": [],
+      "prompt": "Use the installed rule-generation skill at /private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-1qr4_na3/installed/SKILL.md. Follow its workflow for creating a rule. All capture choices are confirmed: manual mode, real project root /private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-1qr4_na3/project, host project, tool OpenCode V1 only, Claude compatibility enabled. The complete requested candidate metadata and body are exactly this JSON: {\"category\": \"05-testing\", \"slug\": \"5-candidate\", \"description\": \"Test conventions\", \"paths\": [\"tests/**/*.py\"], \"body\": \"# Test conventions\\n\\n- Use unittest for all unit tests.\\n\"}. Create this rule. Do not change application source, install packages, use network tools, or commit. This invocation supplies no later user message. If the workflow requires a further user decision, stop and present it.",
+      "answer": "Rule not created. OpenCode V1 explicitly loads `.opencode/rules/unit-policy.md` through `opencode.json`. Its \u201cUse pytest for all unit tests.\u201d conflicts with the candidate within `tests/**/*.py`.\n\nComplete candidate:\n\n```json\n{\"category\":\"05-testing\",\"slug\":\"5-candidate\",\"description\":\"Test conventions\",\"paths\":[\"tests/**/*.py\"],\"body\":\"# Test conventions\\n\\n- Use unittest for all unit tests.\\n\"}\n```\n\nThe installed skill\u2019s [assessment workflow](../installed/actions/02-assess-existing-rules.md) requires: \u201cResolve every conflict/uncertainty before proceeding.\u201d\n\nChoose: keep existing policy, revise the candidate, explicitly authorize replacing the identified pytest policy, or cancel. Project bytes unchanged.",
+      "before": {
+        ".opencode/rules/unit-policy.md": "3bb1e368a3761a67f5d570949701a7971ba43a931230bde9fa04e99e31a1412f",
+        "opencode.json": "e398d91b37458ae747392d4fdd490571d2e8994374af773a400c3c6883278299",
+        "package.json": "1239d4d885dcad42201a27ed9324f8f0f760b78700d8db9ced39a511cffe7eae"
+      },
+      "after": {
+        ".opencode/rules/unit-policy.md": "3bb1e368a3761a67f5d570949701a7971ba43a931230bde9fa04e99e31a1412f",
+        "opencode.json": "e398d91b37458ae747392d4fdd490571d2e8994374af773a400c3c6883278299",
+        "package.json": "1239d4d885dcad42201a27ed9324f8f0f760b78700d8db9ced39a511cffe7eae"
+      },
+      "fixtureFiles": {
+        "package.json": "{\"type\":\"module\"}\n",
+        "opencode.json": "{\"instructions\":[\".opencode/rules/unit-policy.md\"]}\n",
+        ".opencode/rules/unit-policy.md": "# Unit test policy\n\n- Use pytest for all unit tests.\n"
+      },
+      "installedHashes": {
+        "SKILL.md": "c3fc303ad0a1bf983c32905e264e65db410df09ad6f413924b2daee28edbc425",
+        "actions/01-capture-rule.md": "af76ed5a85bcbad4a8a5434a065ec8bacc49e75f2048c0c7ec44ba06065faeba",
+        "actions/02-assess-existing-rules.md": "559462a4b12c10cfba8c847e1cb23b02ab4d756fe22003c8adf47d672095bf0c",
+        "actions/03-write-rule.md": "3e63276d6fd1c03894406658a99631e0791c491913faaa188db51aaa36901c2b",
+        "actions/04-validate.md": "084560d6e6cbd6c3cbe89ba1a7bb2b9abf5427cabae802334a54a88a5e08017b",
+        "assets/rule-template.md": "bfccef5e957e8d2de7aefe818196e82bf7691c8631452f4cc5b6e5ea526cdb47",
+        "references/rule-authoring.md": "ce299dcd2a80e2debacc312a68af93bc3cccd2fc2d442e0c85daca9d9e7c5fd9",
+        "references/tool-paths.md": "70d7e97bc814d69fb030186ce2f30350001e9c3621b2d40efccabc63105bd70e",
+        "scripts/write-rule.cjs": "70783e579b75b9e22760239cbfd4309641bdd73840b17e7dfd606a252679a420"
+      },
+      "eventsSHA256": "5c293b096771062aa298282cc047c63b3eee1d5a0a32fb72a644c724a0f49788"
+    },
+    {
+      "case": "opencode-v1-fallback",
+      "root": "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-ix2qi3kg",
+      "exit": 0,
+      "unchanged": true,
+      "changed": [],
+      "prompt": "Use the installed rule-generation skill at /private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-ix2qi3kg/installed/SKILL.md. Follow its workflow for creating a rule. All capture choices are confirmed: manual mode, real project root /private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-ix2qi3kg/project, host project, tool OpenCode V1 only, Claude compatibility enabled. The complete requested candidate metadata and body are exactly this JSON: {\"category\": \"05-testing\", \"slug\": \"5-candidate\", \"description\": \"Test conventions\", \"paths\": [\"tests/**/*.py\"], \"body\": \"# Test conventions\\n\\n- Use unittest for all unit tests.\\n\"}. Create this rule. Do not change application source, install packages, use network tools, or commit. This invocation supplies no later user message. If the workflow requires a further user decision, stop and present it.",
+      "answer": "Candidate:\n\n```json\n{\"category\":\"05-testing\",\"slug\":\"5-candidate\",\"description\":\"Test conventions\",\"paths\":[\"tests/**/*.py\"],\"body\":\"# Test conventions\\n\\n- Use unittest for all unit tests.\\n\"}\n```\n\n**Conflict:** [CLAUDE.md](CLAUDE.md) says \u201cUse pytest for all unit tests.\u201d OpenCode V1 currently loads this fallback because no upward `AGENTS.md` exists and Claude compatibility is enabled. Both requirements apply to unit tests under `tests/**/*.py`.\n\nNo files changed. [Assessment step 5](../installed/actions/02-assess-existing-rules.md) requires \u201cawait explicit resolution\u201d and resolving every conflict before writing.\n\nChoose **keep**, **revise**, **merge/replace** (identify authorized source changes), or **cancel**.",
+      "before": {
+        "CLAUDE.md": "3bb1e368a3761a67f5d570949701a7971ba43a931230bde9fa04e99e31a1412f",
+        "package.json": "1239d4d885dcad42201a27ed9324f8f0f760b78700d8db9ced39a511cffe7eae"
+      },
+      "after": {
+        "CLAUDE.md": "3bb1e368a3761a67f5d570949701a7971ba43a931230bde9fa04e99e31a1412f",
+        "package.json": "1239d4d885dcad42201a27ed9324f8f0f760b78700d8db9ced39a511cffe7eae"
+      },
+      "fixtureFiles": {
+        "package.json": "{\"type\":\"module\"}\n",
+        "CLAUDE.md": "# Unit test policy\n\n- Use pytest for all unit tests.\n"
+      },
+      "installedHashes": {
+        "SKILL.md": "c3fc303ad0a1bf983c32905e264e65db410df09ad6f413924b2daee28edbc425",
+        "actions/01-capture-rule.md": "af76ed5a85bcbad4a8a5434a065ec8bacc49e75f2048c0c7ec44ba06065faeba",
+        "actions/02-assess-existing-rules.md": "559462a4b12c10cfba8c847e1cb23b02ab4d756fe22003c8adf47d672095bf0c",
+        "actions/03-write-rule.md": "3e63276d6fd1c03894406658a99631e0791c491913faaa188db51aaa36901c2b",
+        "actions/04-validate.md": "084560d6e6cbd6c3cbe89ba1a7bb2b9abf5427cabae802334a54a88a5e08017b",
+        "assets/rule-template.md": "bfccef5e957e8d2de7aefe818196e82bf7691c8631452f4cc5b6e5ea526cdb47",
+        "references/rule-authoring.md": "ce299dcd2a80e2debacc312a68af93bc3cccd2fc2d442e0c85daca9d9e7c5fd9",
+        "references/tool-paths.md": "70d7e97bc814d69fb030186ce2f30350001e9c3621b2d40efccabc63105bd70e",
+        "scripts/write-rule.cjs": "70783e579b75b9e22760239cbfd4309641bdd73840b17e7dfd606a252679a420"
+      },
+      "eventsSHA256": "64d9abdeaa5416237f7b5f792bfc7cd3a2216b843f69f5d6d947b9bc0e98360c"
+    },
+    {
+      "case": "flat-codex-conflict",
+      "root": "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-lmi51ec7",
+      "exit": 0,
+      "unchanged": true,
+      "changed": [],
+      "prompt": "Use the installed rule-generation skill at /private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-lmi51ec7/installed/SKILL.md. Follow its workflow for creating a rule. All capture choices are confirmed: manual mode, real project root /private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-lmi51ec7/project, host project, tools Claude Code, Cursor, GitHub Copilot, Codex and OpenCode V2. The complete requested candidate metadata and body are exactly this JSON: {\"category\": \"05-testing\", \"slug\": \"5-candidate\", \"description\": \"Test conventions\", \"paths\": [\"tests/**/*.py\"], \"body\": \"# Test conventions\\n\\n- Use unittest for all unit tests.\\n\"}. Create this rule. Do not change application source, install packages, use network tools, or commit. This invocation supplies no later user message. If the workflow requires a further user decision, stop and present it.",
+      "answer": "Creation paused: candidate conflicts with existing policy over the identical `tests/**/*.py` scope.\n\nComplete candidate:\n```json\n{\"category\":\"05-testing\",\"slug\":\"5-candidate\",\"description\":\"Test conventions\",\"paths\":[\"tests/**/*.py\"],\"body\":\"# Test conventions\\n\\n- Use unittest for all unit tests.\\n\"}\n```\n\nExisting [canonical rule](aidd_docs/rules/05-testing/5-existing.md) requires \u201cUse pytest for all unit tests.\u201d Its publications appear in [AGENTS.md](AGENTS.md), [.claude](.claude/rules/05-testing/5-existing.md), [.cursor](.cursor/rules/05-testing/5-existing.mdc), and [.github](.github/instructions/05-existing.instructions.md). Both requirements cover all Python unit tests within the same scope; no exclusions resolve the conflict.\n\nChoose: replace the identified existing rule and its publications, revise the candidate, or keep existing policy/cancel.\n\n[Skill workflow](../installed/actions/02-assess-existing-rules.md) requires \u201cawait explicit resolution\u201d and \u201cResolve every conflict/uncertainty before proceeding.\u201d Confirmed capture choices do not resolve this conflict. No files changed.",
+      "before": {
+        ".claude/rules/05-testing/5-existing.md": "e7503bd2e08ec2a94e0e4cac90c64901aa2c742ff3520c59e7d73801e98bad72",
+        ".cursor/rules/05-testing/5-existing.mdc": "85a56abf468ef2578ac65fe9b702ec34c7fc90a35fb95d8dd7b9e46c711dde02",
+        ".github/instructions/05-existing.instructions.md": "c562d21203ca82b0a5cccf763ab19c0790d584eae1176206aa8e3c853bde1e52",
+        "AGENTS.md": "6faf9ca19dac27f2accb7ebe8c53fe4f8485f4662fa0d5896de76b6b2528a320",
+        "aidd_docs/rules/05-testing/5-existing.md": "ab3b5271d9bdd20d5fc32566d7a1e4cc8e8e7df534c09aea542248e8f966019f",
+        "package.json": "1239d4d885dcad42201a27ed9324f8f0f760b78700d8db9ced39a511cffe7eae"
+      },
+      "after": {
+        ".claude/rules/05-testing/5-existing.md": "e7503bd2e08ec2a94e0e4cac90c64901aa2c742ff3520c59e7d73801e98bad72",
+        ".cursor/rules/05-testing/5-existing.mdc": "85a56abf468ef2578ac65fe9b702ec34c7fc90a35fb95d8dd7b9e46c711dde02",
+        ".github/instructions/05-existing.instructions.md": "c562d21203ca82b0a5cccf763ab19c0790d584eae1176206aa8e3c853bde1e52",
+        "AGENTS.md": "6faf9ca19dac27f2accb7ebe8c53fe4f8485f4662fa0d5896de76b6b2528a320",
+        "aidd_docs/rules/05-testing/5-existing.md": "ab3b5271d9bdd20d5fc32566d7a1e4cc8e8e7df534c09aea542248e8f966019f",
+        "package.json": "1239d4d885dcad42201a27ed9324f8f0f760b78700d8db9ced39a511cffe7eae"
+      },
+      "fixtureFiles": {
+        "package.json": "{\"type\":\"module\"}\n",
+        "AGENTS.md": "<!-- aidd_rules:start sha256=613c85b7b34d8c3c93f64de50e46941ea97c44f27b4f2db6f6836f904668c92d separator=0 -->\nApplies to: `tests/**/*.py`.\n\n# Python unit tests\n\n- Use pytest for all unit tests.\n<!-- aidd_rules:end -->\n",
+        "aidd_docs/rules/05-testing/5-existing.md": "<!-- aidd_rule:{\"version\":1,\"category\":\"05-testing\",\"slug\":\"5-existing\",\"description\":\"Python unit tests\",\"paths\":[\"tests/**/*.py\"],\"targets\":[\"claude\",\"codex\",\"copilot\",\"cursor\",\"opencode\"]} -->\n# Python unit tests\n\n- Use pytest for all unit tests.\n",
+        ".github/instructions/05-existing.instructions.md": "---\napplyTo: \"tests/**/*.py\"\n---\n# Python unit tests\n\n- Use pytest for all unit tests.\n\n<!-- aidd_rule_output:path=.github/instructions/05-existing.instructions.md sha256=e2fac21a53c6fa288e67e7ee16f137920e1a430a6c0196def8c1d01f5ca6e921 -->\n",
+        ".claude/rules/05-testing/5-existing.md": "---\npaths:\n  - \"tests/**/*.py\"\n---\n# Python unit tests\n\n- Use pytest for all unit tests.\n\n<!-- aidd_rule_output:path=.claude/rules/05-testing/5-existing.md sha256=25b1d68ddaafb6a3aed53f16f37e2369e812e53327a39a867984001880546668 -->\n",
+        ".cursor/rules/05-testing/5-existing.mdc": "---\ndescription: \"Python unit tests\"\nglobs: \"tests/**/*.py\"\nalwaysApply: false\n---\n# Python unit tests\n\n- Use pytest for all unit tests.\n\n<!-- aidd_rule_output:path=.cursor/rules/05-testing/5-existing.mdc sha256=478d87dcf33bbbf94918503ac9f3a0343e04857d7b6c1a698afdfe922e32890e -->\n"
+      },
+      "installedHashes": {
+        "SKILL.md": "5e5f4508792c39999467622e1e034bfaa43b4b8325f189726e22d4dcb20d9086",
+        "actions/01-capture-rule.md": "af76ed5a85bcbad4a8a5434a065ec8bacc49e75f2048c0c7ec44ba06065faeba",
+        "actions/02-assess-existing-rules.md": "559462a4b12c10cfba8c847e1cb23b02ab4d756fe22003c8adf47d672095bf0c",
+        "actions/03-write-rule.md": "3e63276d6fd1c03894406658a99631e0791c491913faaa188db51aaa36901c2b",
+        "actions/04-validate.md": "084560d6e6cbd6c3cbe89ba1a7bb2b9abf5427cabae802334a54a88a5e08017b",
+        "assets/rule-template.md": "bfccef5e957e8d2de7aefe818196e82bf7691c8631452f4cc5b6e5ea526cdb47",
+        "references/rule-authoring.md": "ce299dcd2a80e2debacc312a68af93bc3cccd2fc2d442e0c85daca9d9e7c5fd9",
+        "references/tool-paths.md": "70d7e97bc814d69fb030186ce2f30350001e9c3621b2d40efccabc63105bd70e",
+        "scripts/write-rule.cjs": "70783e579b75b9e22760239cbfd4309641bdd73840b17e7dfd606a252679a420"
+      },
+      "eventsSHA256": "61dfcd19de003a13b4e5ba5e1e7349793c6de7cbf47ca4e9da600a017a956f98"
+    }
+  ],
+  "journeys": [
+    {
+      "root": "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-vga1bx6l",
+      "results": [
+        {
+          "case": "new",
+          "root": "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-vga1bx6l",
+          "exit": 0,
+          "unchanged": true,
+          "changed": [],
+          "prompt": "Use the installed rule-generation skill at /private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-vga1bx6l/installed/SKILL.md. Follow its workflow for creating a rule. All capture choices are confirmed: manual mode, real project root /private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-vga1bx6l/project, host project, tools Claude Code, Cursor, GitHub Copilot, Codex and OpenCode V2. The complete requested candidate metadata and body are exactly this JSON: {\"category\": \"01-standards\", \"slug\": \"1-constants\", \"description\": \"Constants\", \"paths\": [\"src/**/*.ts\"], \"body\": \"# Constants\\n\\n- Name constants in UPPER_SNAKE_CASE.\\n\"}. Create this rule. Do not change application source, install packages, use network tools, or commit. This invocation supplies no later user message. If the workflow requires a further user decision, stop and present it.",
+          "answer": "Candidate: `01-standards/1-constants`, description `Constants`, scope `src/**/*.ts`, targeting Claude Code, Cursor, GitHub Copilot, Codex and OpenCode V2.\n\n```markdown\n# Constants\n\n- Name constants in UPPER_SNAKE_CASE.\n```\n\nFinding: **new**. No existing rule or policy files were found in the project or checked ancestors.\n\nNo files changed. [Assessment workflow](../installed/actions/02-assess-existing-rules.md) requires: \u201cawait explicit resolution, even for **new**.\u201d\n\nChoose **approve**, **keep**, **revise**, **merge/replace**, or **cancel**. Creation is paused pending that decision.",
+          "eventsSHA256": "201c7c12b070a900f9aa60aa8fa5af83ee96a5ca827047e4845d52c841c16e56"
+        },
+        {
+          "turn": "revise",
+          "exit": 0,
+          "unchanged": true,
+          "changed": [],
+          "before": {
+            "package.json": "1239d4d885dcad42201a27ed9324f8f0f760b78700d8db9ced39a511cffe7eae"
+          },
+          "after": {
+            "package.json": "1239d4d885dcad42201a27ed9324f8f0f760b78700d8db9ced39a511cffe7eae"
+          },
+          "prompt": "Change the candidate body to exactly \"# Constants\\n\\n- Name constants in UPPER_SNAKE_CASE.\\n- Export constants using named exports.\\n\" and create it. All earlier capture choices remain confirmed.",
+          "answer": "Revised candidate: `01-standards/1-constants`, description `Constants`, scope `src/**/*.ts`; targets Claude Code, Cursor, GitHub Copilot, Codex and OpenCode V2 in the original confirmed project.\n\n```markdown\n# Constants\n\n- Name constants in UPPER_SNAKE_CASE.\n- Export constants using named exports.\n```\n\nFinding: **new**. No existing project policies cover or conflict with either obligation. No files changed.\n\n[Skill workflow](</private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-vga1bx6l/installed/actions/02-assess-existing-rules.md>) states: \u201cChanged body, metadata, scope, targets, resolution or source evidence returns to assessment and approval.\u201d\n\nApprove this revised candidate, or choose keep, revise, merge/replace, or cancel. Awaiting explicit resolution before writing.",
+          "eventsSHA256": "c6e9a93bd0c0c3e4c7787fd2aa991971c67c32fd871a57d5922d9ba9a7ab07ed"
+        },
+        {
+          "turn": "approve",
+          "exit": 0,
+          "unchanged": false,
+          "changed": [
+            ".claude/rules/01-standards/1-constants.md",
+            ".cursor/rules/01-standards/1-constants.mdc",
+            ".github/instructions/01-constants.instructions.md",
+            "AGENTS.md",
+            "aidd_docs/rules/01-standards/1-constants.md"
+          ],
+          "before": {
+            "package.json": "1239d4d885dcad42201a27ed9324f8f0f760b78700d8db9ced39a511cffe7eae"
+          },
+          "after": {
+            ".claude/rules/01-standards/1-constants.md": "008fb111bfead91b1f90fdb6d218174767fd720beca647362b627579ba965a92",
+            ".cursor/rules/01-standards/1-constants.mdc": "59cf252d499beaecc5031ca6a425403a54617c070f64091e343ae265a0ee4db3",
+            ".github/instructions/01-constants.instructions.md": "8be35973070cc661c1bb078fc1a9f2e773a072564b115f3c1ac8a72876f23085",
+            "AGENTS.md": "65761db1d62d159a0fab4a0aabe282c88cf04550fd2f1ecbe561ca3e3fa62812",
+            "aidd_docs/rules/01-standards/1-constants.md": "050dc7f373b52cacbe5761e7c4ddf2426b4c32cd7f1544605b1937deddd1fcfa",
+            "package.json": "1239d4d885dcad42201a27ed9324f8f0f760b78700d8db9ced39a511cffe7eae"
+          },
+          "exactBody": true,
+          "prompt": "I approve the exact revised candidate you just assessed, with both bullets, the same metadata, src/**/*.ts scope and all five hosts. Publish it now.",
+          "answer": "Published `01-standards/1-constants` in the original confirmed project for all five hosts.\n\nValidation passed: exact two-bullet body, `src/**/*.ts` scope, one shared Codex/OpenCode contribution, and byte-identical republishing. Host runtime consumption remains unverified.\n\nNo application source changed, packages installed, network tools used, or commits created.",
+          "eventsSHA256": "af5b4001d27c01b7451a89c25cf039f8af5281d93b400e890087e58123e5299b"
+        },
+        {
+          "turn": "covered",
+          "exit": 0,
+          "unchanged": true,
+          "changed": [],
+          "before": {
+            ".claude/rules/01-standards/1-constants.md": "008fb111bfead91b1f90fdb6d218174767fd720beca647362b627579ba965a92",
+            ".cursor/rules/01-standards/1-constants.mdc": "59cf252d499beaecc5031ca6a425403a54617c070f64091e343ae265a0ee4db3",
+            ".github/instructions/01-constants.instructions.md": "8be35973070cc661c1bb078fc1a9f2e773a072564b115f3c1ac8a72876f23085",
+            "AGENTS.md": "65761db1d62d159a0fab4a0aabe282c88cf04550fd2f1ecbe561ca3e3fa62812",
+            "aidd_docs/rules/01-standards/1-constants.md": "050dc7f373b52cacbe5761e7c4ddf2426b4c32cd7f1544605b1937deddd1fcfa",
+            "package.json": "1239d4d885dcad42201a27ed9324f8f0f760b78700d8db9ced39a511cffe7eae"
+          },
+          "after": {
+            ".claude/rules/01-standards/1-constants.md": "008fb111bfead91b1f90fdb6d218174767fd720beca647362b627579ba965a92",
+            ".cursor/rules/01-standards/1-constants.mdc": "59cf252d499beaecc5031ca6a425403a54617c070f64091e343ae265a0ee4db3",
+            ".github/instructions/01-constants.instructions.md": "8be35973070cc661c1bb078fc1a9f2e773a072564b115f3c1ac8a72876f23085",
+            "AGENTS.md": "65761db1d62d159a0fab4a0aabe282c88cf04550fd2f1ecbe561ca3e3fa62812",
+            "aidd_docs/rules/01-standards/1-constants.md": "050dc7f373b52cacbe5761e7c4ddf2426b4c32cd7f1544605b1937deddd1fcfa",
+            "package.json": "1239d4d885dcad42201a27ed9324f8f0f760b78700d8db9ced39a511cffe7eae"
+          },
+          "prompt": "Create another rule: manual host project, all five hosts confirmed, category 01-standards, slug 1-public-values, description Public values, paths [\"src/**/*.ts\"], exact body \"# Public values\\n\\n- Write names of constants in UPPER_SNAKE_CASE.\\n\". Follow the installed skill from capture.",
+          "answer": "Candidate: `01-standards/1-public-values`, description `Public values`, scope `src/**/*.ts`, all five confirmed hosts in the original project.\n\n```markdown\n# Public values\n\n- Write names of constants in UPPER_SNAKE_CASE.\n```\n\nFinding: **covered**. [Existing Constants rule](</private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-vga1bx6l/project/aidd_docs/rules/01-standards/1-constants.md>) already requires \u201cName constants in UPPER_SNAKE_CASE.\u201d It has identical scope and publications for every requested host. The candidate adds no obligation.\n\nRecommended resolution: **keep** the existing rule. Alternatively approve the duplicate, revise, merge/replace, or cancel.\n\nNo files changed. [Assessment workflow](</private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-vga1bx6l/installed/actions/02-assess-existing-rules.md>) requires explicit resolution after presenting findings. Awaiting that decision.",
+          "eventsSHA256": "27f03875464afae310f4ccf7c45208ea16449eaf23ee5996150970c3e259c5d7"
+        },
+        {
+          "turn": "keep",
+          "exit": 0,
+          "unchanged": true,
+          "changed": [],
+          "before": {
+            ".claude/rules/01-standards/1-constants.md": "008fb111bfead91b1f90fdb6d218174767fd720beca647362b627579ba965a92",
+            ".cursor/rules/01-standards/1-constants.mdc": "59cf252d499beaecc5031ca6a425403a54617c070f64091e343ae265a0ee4db3",
+            ".github/instructions/01-constants.instructions.md": "8be35973070cc661c1bb078fc1a9f2e773a072564b115f3c1ac8a72876f23085",
+            "AGENTS.md": "65761db1d62d159a0fab4a0aabe282c88cf04550fd2f1ecbe561ca3e3fa62812",
+            "aidd_docs/rules/01-standards/1-constants.md": "050dc7f373b52cacbe5761e7c4ddf2426b4c32cd7f1544605b1937deddd1fcfa",
+            "package.json": "1239d4d885dcad42201a27ed9324f8f0f760b78700d8db9ced39a511cffe7eae"
+          },
+          "after": {
+            ".claude/rules/01-standards/1-constants.md": "008fb111bfead91b1f90fdb6d218174767fd720beca647362b627579ba965a92",
+            ".cursor/rules/01-standards/1-constants.mdc": "59cf252d499beaecc5031ca6a425403a54617c070f64091e343ae265a0ee4db3",
+            ".github/instructions/01-constants.instructions.md": "8be35973070cc661c1bb078fc1a9f2e773a072564b115f3c1ac8a72876f23085",
+            "AGENTS.md": "65761db1d62d159a0fab4a0aabe282c88cf04550fd2f1ecbe561ca3e3fa62812",
+            "aidd_docs/rules/01-standards/1-constants.md": "050dc7f373b52cacbe5761e7c4ddf2426b4c32cd7f1544605b1937deddd1fcfa",
+            "package.json": "1239d4d885dcad42201a27ed9324f8f0f760b78700d8db9ced39a511cffe7eae"
+          },
+          "prompt": "Keep the existing policy. Do not create the candidate or modify existing files.",
+          "answer": "Kept existing Constants policy. Candidate not created; no files changed. Nothing pending.",
+          "eventsSHA256": "4fc9744bc8420431c5f53636631420dd349faf917900a5186d93150051b7d3f0"
+        },
+        {
+          "turn": "conflict",
+          "exit": 0,
+          "unchanged": true,
+          "changed": [],
+          "before": {
+            ".claude/rules/01-standards/1-constants.md": "008fb111bfead91b1f90fdb6d218174767fd720beca647362b627579ba965a92",
+            ".cursor/rules/01-standards/1-constants.mdc": "59cf252d499beaecc5031ca6a425403a54617c070f64091e343ae265a0ee4db3",
+            ".github/instructions/01-constants.instructions.md": "8be35973070cc661c1bb078fc1a9f2e773a072564b115f3c1ac8a72876f23085",
+            "AGENTS.md": "65761db1d62d159a0fab4a0aabe282c88cf04550fd2f1ecbe561ca3e3fa62812",
+            "aidd_docs/rules/01-standards/1-constants.md": "050dc7f373b52cacbe5761e7c4ddf2426b4c32cd7f1544605b1937deddd1fcfa",
+            "package.json": "1239d4d885dcad42201a27ed9324f8f0f760b78700d8db9ced39a511cffe7eae"
+          },
+          "after": {
+            ".claude/rules/01-standards/1-constants.md": "008fb111bfead91b1f90fdb6d218174767fd720beca647362b627579ba965a92",
+            ".cursor/rules/01-standards/1-constants.mdc": "59cf252d499beaecc5031ca6a425403a54617c070f64091e343ae265a0ee4db3",
+            ".github/instructions/01-constants.instructions.md": "8be35973070cc661c1bb078fc1a9f2e773a072564b115f3c1ac8a72876f23085",
+            "AGENTS.md": "65761db1d62d159a0fab4a0aabe282c88cf04550fd2f1ecbe561ca3e3fa62812",
+            "aidd_docs/rules/01-standards/1-constants.md": "050dc7f373b52cacbe5761e7c4ddf2426b4c32cd7f1544605b1937deddd1fcfa",
+            "package.json": "1239d4d885dcad42201a27ed9324f8f0f760b78700d8db9ced39a511cffe7eae"
+          },
+          "prompt": "Create another rule: manual host project, all five hosts confirmed, category 01-standards, slug 1-lowercase-values, description Lowercase values, paths [\"src/**/*.ts\"], exact body \"# Lowercase values\\n\\n- Name every constant in lowerCamelCase.\\n\". Follow the installed skill from capture.",
+          "answer": "Candidate: `01-standards/1-lowercase-values`, description `Lowercase values`, scope `src/**/*.ts`, all five confirmed hosts in the original project.\n\n```markdown\n# Lowercase values\n\n- Name every constant in lowerCamelCase.\n```\n\nFinding: **conflict**. [Existing Constants rule](</private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-vga1bx6l/project/aidd_docs/rules/01-standards/1-constants.md>) requires \u201cName constants in UPPER_SNAKE_CASE.\u201d Both apply to every constant in the identical scope, including future files, across all five hosts. Neither defines an exception or priority.\n\nChoose **keep**, **revise**, **merge/replace**, or **cancel**. Approval requires an explicit resolution of the conflicting naming requirements.\n\nNo files changed. [Assessment workflow](</private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-vga1bx6l/installed/actions/02-assess-existing-rules.md>) requires: \u201cResolve every conflict/uncertainty before proceeding.\u201d Awaiting your resolution.",
+          "eventsSHA256": "5fb6ec97d4dfe71214e4cfa3cfafc11fad96fb738e40e14f90bb76efa08d35b2"
+        },
+        {
+          "turn": "cancel",
+          "exit": 0,
+          "unchanged": true,
+          "changed": [],
+          "before": {
+            ".claude/rules/01-standards/1-constants.md": "008fb111bfead91b1f90fdb6d218174767fd720beca647362b627579ba965a92",
+            ".cursor/rules/01-standards/1-constants.mdc": "59cf252d499beaecc5031ca6a425403a54617c070f64091e343ae265a0ee4db3",
+            ".github/instructions/01-constants.instructions.md": "8be35973070cc661c1bb078fc1a9f2e773a072564b115f3c1ac8a72876f23085",
+            "AGENTS.md": "65761db1d62d159a0fab4a0aabe282c88cf04550fd2f1ecbe561ca3e3fa62812",
+            "aidd_docs/rules/01-standards/1-constants.md": "050dc7f373b52cacbe5761e7c4ddf2426b4c32cd7f1544605b1937deddd1fcfa",
+            "package.json": "1239d4d885dcad42201a27ed9324f8f0f760b78700d8db9ced39a511cffe7eae"
+          },
+          "after": {
+            ".claude/rules/01-standards/1-constants.md": "008fb111bfead91b1f90fdb6d218174767fd720beca647362b627579ba965a92",
+            ".cursor/rules/01-standards/1-constants.mdc": "59cf252d499beaecc5031ca6a425403a54617c070f64091e343ae265a0ee4db3",
+            ".github/instructions/01-constants.instructions.md": "8be35973070cc661c1bb078fc1a9f2e773a072564b115f3c1ac8a72876f23085",
+            "AGENTS.md": "65761db1d62d159a0fab4a0aabe282c88cf04550fd2f1ecbe561ca3e3fa62812",
+            "aidd_docs/rules/01-standards/1-constants.md": "050dc7f373b52cacbe5761e7c4ddf2426b4c32cd7f1544605b1937deddd1fcfa",
+            "package.json": "1239d4d885dcad42201a27ed9324f8f0f760b78700d8db9ced39a511cffe7eae"
+          },
+          "prompt": "Cancel this candidate. Keep every existing rule and publication unchanged.",
+          "answer": "Candidate canceled. Every existing rule and publication remains unchanged. Nothing pending.",
+          "eventsSHA256": "616d6a444880530699b2dc473e981cc46b3bbf7f0cc3987aa3c92da5e741e5f0"
+        },
+        {
+          "turn": "publish",
+          "exit": 0,
+          "unchanged": true,
+          "changed": [],
+          "before": {
+            ".claude/rules/01-standards/1-constants.md": "008fb111bfead91b1f90fdb6d218174767fd720beca647362b627579ba965a92",
+            ".cursor/rules/01-standards/1-constants.mdc": "59cf252d499beaecc5031ca6a425403a54617c070f64091e343ae265a0ee4db3",
+            ".github/instructions/01-constants.instructions.md": "8be35973070cc661c1bb078fc1a9f2e773a072564b115f3c1ac8a72876f23085",
+            "AGENTS.md": "65761db1d62d159a0fab4a0aabe282c88cf04550fd2f1ecbe561ca3e3fa62812",
+            "aidd_docs/rules/01-standards/1-constants.md": "050dc7f373b52cacbe5761e7c4ddf2426b4c32cd7f1544605b1937deddd1fcfa",
+            "package.json": "1239d4d885dcad42201a27ed9324f8f0f760b78700d8db9ced39a511cffe7eae"
+          },
+          "after": {
+            ".claude/rules/01-standards/1-constants.md": "008fb111bfead91b1f90fdb6d218174767fd720beca647362b627579ba965a92",
+            ".cursor/rules/01-standards/1-constants.mdc": "59cf252d499beaecc5031ca6a425403a54617c070f64091e343ae265a0ee4db3",
+            ".github/instructions/01-constants.instructions.md": "8be35973070cc661c1bb078fc1a9f2e773a072564b115f3c1ac8a72876f23085",
+            "AGENTS.md": "65761db1d62d159a0fab4a0aabe282c88cf04550fd2f1ecbe561ca3e3fa62812",
+            "aidd_docs/rules/01-standards/1-constants.md": "050dc7f373b52cacbe5761e7c4ddf2426b4c32cd7f1544605b1937deddd1fcfa",
+            "package.json": "1239d4d885dcad42201a27ed9324f8f0f760b78700d8db9ced39a511cffe7eae"
+          },
+          "prompt": "Explicitly publish the existing canonical rule set to claude,cursor,copilot,codex,opencode using the installed skill. Do not change its body or targets.",
+          "answer": "Published existing canonical rules to all five hosts. Validation passed: bodies, targets and all project bytes unchanged.\n\nRuntime consumption unverified. Nothing pending.",
+          "eventsSHA256": "43d2dcbac963206e699f134c493fa857cc6396d16e1aaad014dbbdddabcd2d82"
+        },
+        {
+          "turn": "delete",
+          "exit": 0,
+          "unchanged": false,
+          "changed": [
+            ".claude/rules/01-standards/1-constants.md",
+            ".cursor/rules/01-standards/1-constants.mdc",
+            ".github/instructions/01-constants.instructions.md",
+            "AGENTS.md",
+            "aidd_docs/rules/01-standards/1-constants.md"
+          ],
+          "before": {
+            ".claude/rules/01-standards/1-constants.md": "008fb111bfead91b1f90fdb6d218174767fd720beca647362b627579ba965a92",
+            ".cursor/rules/01-standards/1-constants.mdc": "59cf252d499beaecc5031ca6a425403a54617c070f64091e343ae265a0ee4db3",
+            ".github/instructions/01-constants.instructions.md": "8be35973070cc661c1bb078fc1a9f2e773a072564b115f3c1ac8a72876f23085",
+            "AGENTS.md": "65761db1d62d159a0fab4a0aabe282c88cf04550fd2f1ecbe561ca3e3fa62812",
+            "aidd_docs/rules/01-standards/1-constants.md": "050dc7f373b52cacbe5761e7c4ddf2426b4c32cd7f1544605b1937deddd1fcfa",
+            "package.json": "1239d4d885dcad42201a27ed9324f8f0f760b78700d8db9ced39a511cffe7eae"
+          },
+          "after": {
+            "AGENTS.md": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "package.json": "1239d4d885dcad42201a27ed9324f8f0f760b78700d8db9ced39a511cffe7eae"
+          },
+          "prompt": "Explicitly delete existing canonical rule 01-standards/1-constants and its publications on all five confirmed hosts using the installed skill.",
+          "answer": "Deleted `01-standards/1-constants` and its publications on all five hosts.\n\nValidation passed: canonical and native files absent, shared Codex/OpenCode contribution removed, unrelated files unchanged. Nothing pending.",
+          "eventsSHA256": "baeaa675ba38b810755e852ee3b8dee0a8646b6c0cb0b9c01b4f63a5b02989fb"
+        }
+      ],
+      "installedHashes": {
+        "SKILL.md": "c3fc303ad0a1bf983c32905e264e65db410df09ad6f413924b2daee28edbc425",
+        "actions/01-capture-rule.md": "af76ed5a85bcbad4a8a5434a065ec8bacc49e75f2048c0c7ec44ba06065faeba",
+        "actions/02-assess-existing-rules.md": "559462a4b12c10cfba8c847e1cb23b02ab4d756fe22003c8adf47d672095bf0c",
+        "actions/03-write-rule.md": "3e63276d6fd1c03894406658a99631e0791c491913faaa188db51aaa36901c2b",
+        "actions/04-validate.md": "084560d6e6cbd6c3cbe89ba1a7bb2b9abf5427cabae802334a54a88a5e08017b",
+        "assets/rule-template.md": "bfccef5e957e8d2de7aefe818196e82bf7691c8631452f4cc5b6e5ea526cdb47",
+        "references/rule-authoring.md": "ce299dcd2a80e2debacc312a68af93bc3cccd2fc2d442e0c85daca9d9e7c5fd9",
+        "references/tool-paths.md": "70d7e97bc814d69fb030186ce2f30350001e9c3621b2d40efccabc63105bd70e",
+        "scripts/write-rule.cjs": "70783e579b75b9e22760239cbfd4309641bdd73840b17e7dfd606a252679a420"
+      },
+      "initialRequest": null,
+      "initialBefore": {
+        "package.json": "1239d4d885dcad42201a27ed9324f8f0f760b78700d8db9ced39a511cffe7eae"
+      }
+    },
+    {
+      "root": "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-x38wqtp1",
+      "results": [
+        {
+          "case": "overlap",
+          "root": "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-x38wqtp1",
+          "exit": 0,
+          "unchanged": true,
+          "changed": [],
+          "prompt": "Use the installed rule-generation skill at /private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-x38wqtp1/installed/SKILL.md. Follow its workflow for creating a rule. All capture choices are confirmed: manual mode, real project root /private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-x38wqtp1/project, host project, tools Claude Code, Cursor, GitHub Copilot, Codex and OpenCode V2. The complete requested candidate metadata and body are exactly this JSON: {\"category\": \"05-testing\", \"slug\": \"5-candidate\", \"description\": \"Test conventions\", \"paths\": [\"tests/**/*.py\"], \"body\": \"# Test conventions\\n\\n- Use pytest for all unit tests.\\n- Put unit test files in tests/unit/.\\n\"}. Create this rule. Do not change application source, install packages, use network tools, or commit. This invocation supplies no later user message. If the workflow requires a further user decision, stop and present it.",
+          "answer": "Creation paused; no files changed.\n\n**Finding: overlap.** [Existing rule](aidd_docs/rules/05-testing/5-existing.md) already requires \u201cUse pytest for all unit tests.\u201d for the identical scope, `tests/**/*.py`. Its publications in `.claude/rules`, `.cursor/rules`, `.github/instructions` and root `AGENTS.md` repeat that requirement. The candidate adds the compatible requirement to place unit tests in `tests/unit/`.\n\nComplete candidate:\n\n```json\n{\"category\":\"05-testing\",\"slug\":\"5-candidate\",\"description\":\"Test conventions\",\"paths\":[\"tests/**/*.py\"],\"body\":\"# Test conventions\\n\\n- Use pytest for all unit tests.\\n- Put unit test files in tests/unit/.\\n\"}\n```\n\nTargets: Claude Code, Cursor, GitHub Copilot, Codex, OpenCode V2.\n\nChoose **approve** to create this exact candidate, **keep** existing rules, **revise**, **merge/replace** the existing rule, or **cancel**.\n\n[Skill action 02](/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-x38wqtp1/installed/actions/02-assess-existing-rules.md) requires: \u201cShow complete candidates and findings; await explicit resolution, even for **new**.\u201d Confirmed capture choices do not satisfy this assessment decision.",
+          "eventsSHA256": "937ab187e5cc16b69e5f03c179cda432d402c4cd2ac446cdc5b080bc98103d52"
+        },
+        {
+          "turn": "merge",
+          "exit": 0,
+          "unchanged": true,
+          "before": {
+            ".claude/rules/05-testing/5-existing.md": "e7503bd2e08ec2a94e0e4cac90c64901aa2c742ff3520c59e7d73801e98bad72",
+            ".cursor/rules/05-testing/5-existing.mdc": "85a56abf468ef2578ac65fe9b702ec34c7fc90a35fb95d8dd7b9e46c711dde02",
+            ".github/instructions/05-existing.instructions.md": "c562d21203ca82b0a5cccf763ab19c0790d584eae1176206aa8e3c853bde1e52",
+            "AGENTS.md": "6faf9ca19dac27f2accb7ebe8c53fe4f8485f4662fa0d5896de76b6b2528a320",
+            "aidd_docs/rules/05-testing/5-existing.md": "ab3b5271d9bdd20d5fc32566d7a1e4cc8e8e7df534c09aea542248e8f966019f",
+            "package.json": "1239d4d885dcad42201a27ed9324f8f0f760b78700d8db9ced39a511cffe7eae"
+          },
+          "after": {
+            ".claude/rules/05-testing/5-existing.md": "e7503bd2e08ec2a94e0e4cac90c64901aa2c742ff3520c59e7d73801e98bad72",
+            ".cursor/rules/05-testing/5-existing.mdc": "85a56abf468ef2578ac65fe9b702ec34c7fc90a35fb95d8dd7b9e46c711dde02",
+            ".github/instructions/05-existing.instructions.md": "c562d21203ca82b0a5cccf763ab19c0790d584eae1176206aa8e3c853bde1e52",
+            "AGENTS.md": "6faf9ca19dac27f2accb7ebe8c53fe4f8485f4662fa0d5896de76b6b2528a320",
+            "aidd_docs/rules/05-testing/5-existing.md": "ab3b5271d9bdd20d5fc32566d7a1e4cc8e8e7df534c09aea542248e8f966019f",
+            "package.json": "1239d4d885dcad42201a27ed9324f8f0f760b78700d8db9ced39a511cffe7eae"
+          },
+          "prompt": "Merge this candidate into existing canonical 05-testing/5-existing and update its five confirmed publications. Keep its existing description, category, slug, scope and targets. The proposed complete merged body is exactly \"# Python unit tests\\n\\n- Use pytest for all unit tests.\\n- Put unit test files in tests/unit/.\\n\". Do not create 5-candidate.",
+          "answer": "Reassessment: compatible extension of [5-existing](aidd_docs/rules/05-testing/5-existing.md). The merged body preserves pytest and adds `tests/unit/`; no conflict found with its publications.\n\nComplete merged body:\n\n```markdown\n# Python unit tests\n\n- Use pytest for all unit tests.\n- Put unit test files in tests/unit/.\n```\n\nMetadata retained: category `05-testing`, slug `5-existing`, description `Python unit tests`, scope `tests/**/*.py`, and all five existing targets. Codex and OpenCode share root `AGENTS.md`.\n\nApprove this assessed merge and publication update?\n\n[Skill action 02](/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-x38wqtp1/installed/actions/02-assess-existing-rules.md) requires \u201cChanged body, metadata, scope, targets, resolution or source evidence returns to assessment and approval.\u201d This changed body therefore needs approval after reassessment. No files changed; `5-candidate` was not created.",
+          "eventsSHA256": "4b22c9bcb34aa29aa28e0935ea1d2392d30c60e8bc6d54e4a68cc5d7ef87d794"
+        },
+        {
+          "turn": "approve-merge",
+          "exit": 0,
+          "unchanged": false,
+          "before": {
+            ".claude/rules/05-testing/5-existing.md": "e7503bd2e08ec2a94e0e4cac90c64901aa2c742ff3520c59e7d73801e98bad72",
+            ".cursor/rules/05-testing/5-existing.mdc": "85a56abf468ef2578ac65fe9b702ec34c7fc90a35fb95d8dd7b9e46c711dde02",
+            ".github/instructions/05-existing.instructions.md": "c562d21203ca82b0a5cccf763ab19c0790d584eae1176206aa8e3c853bde1e52",
+            "AGENTS.md": "6faf9ca19dac27f2accb7ebe8c53fe4f8485f4662fa0d5896de76b6b2528a320",
+            "aidd_docs/rules/05-testing/5-existing.md": "ab3b5271d9bdd20d5fc32566d7a1e4cc8e8e7df534c09aea542248e8f966019f",
+            "package.json": "1239d4d885dcad42201a27ed9324f8f0f760b78700d8db9ced39a511cffe7eae"
+          },
+          "after": {
+            ".claude/rules/05-testing/5-existing.md": "ea7a6e761e39734447ac1826007f2e6c8121a4aed107a1baa484a92dd7d2e0eb",
+            ".cursor/rules/05-testing/5-existing.mdc": "bfea5e988bee2a398325da998ee8c9843d45aed8988ccef9dd6ae88bc07fdca3",
+            ".github/instructions/05-existing.instructions.md": "aa7831807e3e3d618c3e63d75f2e551f84dba6710d2baf91f897a05bea3ab207",
+            "AGENTS.md": "874a63eb836e5329d50e8b595174bb7a0f6e57ca5a66bf425992f7a8014ce48a",
+            "aidd_docs/rules/05-testing/5-existing.md": "5056a2efb84f9cc80e5843b8868390b3d7d662bd42fcdb3c12aa5d09392e51ca",
+            "package.json": "1239d4d885dcad42201a27ed9324f8f0f760b78700d8db9ced39a511cffe7eae"
+          },
+          "prompt": "I approve the exact merged candidate you just reassessed, explicitly updating aidd_docs/rules/05-testing/5-existing.md and its Claude, Cursor, Copilot, Codex and OpenCode V2 publications. Write and validate this resolution now.",
+          "answer": "Updated [5-existing](aidd_docs/rules/05-testing/5-existing.md) with the exact approved body and all five publications. Metadata preserved; no `5-candidate` created.\n\nValidation passed, including byte-idempotent republishing. Runtime host consumption remains unverified.",
+          "eventsSHA256": "513510834cb9008abe46974148c6829a79b6e4844f9fc05a368a0fc2b2e3fbae"
+        }
+      ],
+      "exactBody": true,
+      "noDuplicate": true,
+      "installedHashes": {
+        "SKILL.md": "c3fc303ad0a1bf983c32905e264e65db410df09ad6f413924b2daee28edbc425",
+        "actions/01-capture-rule.md": "af76ed5a85bcbad4a8a5434a065ec8bacc49e75f2048c0c7ec44ba06065faeba",
+        "actions/02-assess-existing-rules.md": "559462a4b12c10cfba8c847e1cb23b02ab4d756fe22003c8adf47d672095bf0c",
+        "actions/03-write-rule.md": "3e63276d6fd1c03894406658a99631e0791c491913faaa188db51aaa36901c2b",
+        "actions/04-validate.md": "084560d6e6cbd6c3cbe89ba1a7bb2b9abf5427cabae802334a54a88a5e08017b",
+        "assets/rule-template.md": "bfccef5e957e8d2de7aefe818196e82bf7691c8631452f4cc5b6e5ea526cdb47",
+        "references/rule-authoring.md": "ce299dcd2a80e2debacc312a68af93bc3cccd2fc2d442e0c85daca9d9e7c5fd9",
+        "references/tool-paths.md": "70d7e97bc814d69fb030186ce2f30350001e9c3621b2d40efccabc63105bd70e",
+        "scripts/write-rule.cjs": "70783e579b75b9e22760239cbfd4309641bdd73840b17e7dfd606a252679a420"
+      },
+      "initialRequest": {
+        "category": "05-testing",
+        "slug": "5-existing",
+        "description": "Python unit tests",
+        "paths": [
+          "tests/**/*.py"
+        ],
+        "body": "# Python unit tests\n\n- Use pytest for all unit tests.\n"
+      },
+      "initialBefore": {
+        ".claude/rules/05-testing/5-existing.md": "e7503bd2e08ec2a94e0e4cac90c64901aa2c742ff3520c59e7d73801e98bad72",
+        ".cursor/rules/05-testing/5-existing.mdc": "85a56abf468ef2578ac65fe9b702ec34c7fc90a35fb95d8dd7b9e46c711dde02",
+        ".github/instructions/05-existing.instructions.md": "c562d21203ca82b0a5cccf763ab19c0790d584eae1176206aa8e3c853bde1e52",
+        "AGENTS.md": "6faf9ca19dac27f2accb7ebe8c53fe4f8485f4662fa0d5896de76b6b2528a320",
+        "aidd_docs/rules/05-testing/5-existing.md": "ab3b5271d9bdd20d5fc32566d7a1e4cc8e8e7df534c09aea542248e8f966019f",
+        "package.json": "1239d4d885dcad42201a27ed9324f8f0f760b78700d8db9ced39a511cffe7eae"
+      }
+    }
+  ]
+}

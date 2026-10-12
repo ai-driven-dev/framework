@@ -35,7 +35,8 @@ jobs:
     outputs:
       relevant: ${{ steps.filter.outputs.relevant }}
       trusted_promotion: ${{ steps.promotion.outputs.trusted }}
-      mutation_scopes: ${{ steps.mutation.outputs.scopes }}
+      mutation_legs: ${{ steps.mutation.outputs.legs }}
+      mutation_sharded: ${{ steps.mutation.outputs.sharded }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -183,7 +184,8 @@ jobs:
         run: |
           set -euo pipefail
           if [[ "${{ steps.promotion.outputs.trusted }}" == "true" ]]; then
-            scopes='[]'
+            legs='[]'
+            sharded='[]'
           else
             if [[ "${{ github.event_name }}" == "pull_request" ]]; then
               BASE="${{ github.event.pull_request.base.sha }}"
@@ -199,10 +201,13 @@ jobs:
               changed="$(git diff --name-only "$BASE" "$HEAD")"
               all=false
             fi
-            scopes="$(ALL="$all" CHANGED="$changed" node cli/scripts/mutation-scopes-to-run.mjs)"
+            legs="$(ALL="$all" CHANGED="$changed" node cli/scripts/mutation-scopes-to-run.mjs)"
+            sharded="$(ALL="$all" CHANGED="$changed" OUTPUT=sharded node cli/scripts/mutation-scopes-to-run.mjs)"
           fi
-          echo "mutation scopes: $scopes"
-          echo "scopes=$scopes" >> "$GITHUB_OUTPUT"
+          echo "mutation legs: $legs"
+          echo "sharded scopes: $sharded"
+          echo "legs=$legs" >> "$GITHUB_OUTPUT"
+          echo "sharded=$sharded" >> "$GITHUB_OUTPUT"
 
   cli-typecheck:
     name: cli / Typecheck
@@ -583,15 +588,21 @@ jobs:
   # nothing relevant. The one check the branch rulesets require — without it a pull request
   # merges with the real jobs red, because nothing names them.
   cli-mutation:
-    name: cli / Mutation (${{ matrix.scope }})
+    # A heavy scope runs as several legs in parallel, each mutating its share of the files; the
+    # job below scores it once over every leg. Any other scope is one leg and gates itself.
+    name: cli / Mutation (${{ matrix.scope }}${{ matrix.of > 1 && format(' {0}/{1}', matrix.shard, matrix.of) || '' }})
     needs: [changes]
-    if: needs.changes.outputs.mutation_scopes != '[]'
+    if: needs.changes.outputs.mutation_legs != '[]'
     runs-on: ubuntu-latest
     timeout-minutes: 90
     strategy:
       fail-fast: false
       matrix:
-        scope: ${{ fromJSON(needs.changes.outputs.mutation_scopes) }}
+        include: ${{ fromJSON(needs.changes.outputs.mutation_legs) }}
+    env:
+      # `--` closes the name: `tools` must never restore `tools-codex`'s file.
+      LEG: ${{ matrix.of > 1 && format('{0}-shard-{1}-of-{2}', matrix.scope, matrix.shard, matrix.of) || matrix.scope }}
+      LEG_DIR: cli/reports/mutation/${{ matrix.of > 1 && format('{0}/shard-{1}-of-{2}', matrix.scope, matrix.shard, matrix.of) || matrix.scope }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Install pnpm
@@ -608,19 +619,51 @@ jobs:
       - run: cd cli && pnpm install --frozen-lockfile
       # The incremental file is what keeps a run to the mutants a change can move; the newest
       # one this branch or its base saved is restored, and this run's is saved whatever the score.
-      - name: Restore this scope's incremental file
+      - name: Restore this leg's incremental file
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
-          path: cli/reports/mutation/${{ matrix.scope }}/incremental.json
-          key: mutation-${{ matrix.scope }}-${{ github.run_id }}
-          restore-keys: mutation-${{ matrix.scope }}-
-      - run: cd cli && node scripts/run-mutation.mjs "${{ matrix.scope }}" ${{ github.event_name == 'schedule' && '--force' || '' }}
-      - name: Save this scope's incremental file
+          path: ${{ env.LEG_DIR }}/incremental.json
+          key: mutation--${{ env.LEG }}--${{ github.run_id }}
+          restore-keys: mutation--${{ env.LEG }}--
+      - run: cd cli && node scripts/run-mutation.mjs "${{ matrix.scope }}" ${{ matrix.of > 1 && format('--shard {0}/{1}', matrix.shard, matrix.of) || '' }} ${{ github.event_name == 'schedule' && '--force' || '' }}
+      - name: Save this leg's incremental file
         if: always()
         uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
-          path: cli/reports/mutation/${{ matrix.scope }}/incremental.json
-          key: mutation-${{ matrix.scope }}-${{ github.run_id }}
+          path: ${{ env.LEG_DIR }}/incremental.json
+          key: mutation--${{ env.LEG }}--${{ github.run_id }}
+      - name: Hand this shard's report to the scoring job
+        if: matrix.of > 1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: mutation-${{ matrix.scope }}-shard-${{ matrix.shard }}-of-${{ matrix.of }}
+          path: |
+            ${{ env.LEG_DIR }}/manifest.json
+            ${{ env.LEG_DIR }}/mutation.json
+          if-no-files-found: error
+          retention-days: 1
+
+  cli-mutation-score:
+    name: cli / Mutation (${{ matrix.scope }})
+    needs: [changes, cli-mutation]
+    # Always, so a crashed or cancelled shard is scored as missing instead of skipped.
+    if: always() && needs.changes.outputs.mutation_sharded != '[]' && needs.changes.outputs.mutation_sharded != ''
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        scope: ${{ fromJSON(needs.changes.outputs.mutation_sharded) }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: "22"
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          pattern: mutation-${{ matrix.scope }}-shard-*
+          path: shards
+      - name: Score the scope over every shard, against its floor
+        run: node cli/scripts/run-mutation.mjs "${{ matrix.scope }}" --aggregate "$GITHUB_WORKSPACE/shards"
 
   gate:
     name: cli / gate
@@ -639,6 +682,7 @@ jobs:
       - identifier-join
       - cli-jscpd
       - cli-mutation
+      - cli-mutation-score
       - kanban-checks
       - windows
     steps:
@@ -660,6 +704,7 @@ jobs:
             "${{ needs.identifier-join.result }}" \
             "${{ needs.cli-jscpd.result }}" \
             "${{ needs.cli-mutation.result }}" \
+            "${{ needs.cli-mutation-score.result }}" \
             "${{ needs.kanban-checks.result }}" \
             "${{ needs.windows.result }}"; do
             if [[ "$result" == "failure" || "$result" == "cancelled" ]]; then

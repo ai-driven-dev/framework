@@ -1,53 +1,23 @@
 # Verification: pre-write rule assessment
 
-Verified on 2026-10-12 against [issue #791](https://github.com/ai-driven-dev/framework/issues/791). Base: `3e67f6f594b7b7f6cc7bceb0581ad6d515519080`.
+Issue [#791](https://github.com/ai-driven-dev/framework/issues/791); current base `ce80635221266dd7529d0bdc4fa98d15b9ddeb6c`.
 
-## Behavior evidence
+## Concision
 
-The old skill wrote the canonical rule and shared AGENTS contribution without the new assessment decision: [baseline receipt](receipts/baseline.json). The revised skill stopped before writing in all thirteen fresh assessment runs. Every run exited successfully and its complete project-file SHA-256 map was unchanged. Classification was checked against the actual answer, not a phrase-presence test.
+Following Alex’s [#981](https://github.com/ai-driven-dev/framework/pull/981) and [#950](https://github.com/ai-driven-dev/framework/pull/950): seven runtime Markdown files, 3,480 → 1,768 whitespace-delimited words (−49%). Assessment: 597 → 236. The unchanged 43-word template is excluded from both totals. Flow belongs to the router; each action or reference owns its constraints.
 
-[Assessment receipts](receipts/native-assessment.json) include prompts, answers, original fixture contents, before/after hashes, installed-skill hashes and raw-event hashes.
+## Evidence
 
-| Fixture | Observed result |
-| --- | --- |
-| New constants policy | New; requires approval of the complete candidate. |
-| Same pytest policy, different title and wording | Covered; five verified publications represent one policy. |
-| Pytest plus an additional unit-test directory requirement | Overlap; repeated and added obligations identified. |
-| Pytest versus unittest in the same scope | Conflict; existing source cited. |
-| Backend versus frontend test paths, with no matching files yet | New; disjoint prefixes justify excluding the existing policy. |
-| Missing referenced test-framework decision | Needs review; no guessed framework. |
-| Missing file-selection configuration | Needs review; no guessed scope intersection. |
-| Edited Claude rendering | Canonical coverage and the conflicting native edit both remain visible. |
-| Plugin-source pytest rule | Conflict detected without host publication. |
-| Copilot GEMINI guidance | Conflict detected from the project instruction source. |
-| Copilot repository instruction import | Imported policy read and conflict identified. |
-| Claude-only local project policy | Conflict in CLAUDE.local.md detected before writes. |
-| Actual CLI flat Codex distribution | Conflict detected before writing through the installed skill. |
+[Concise replay](receipts/concise-native.json) records final-source hashes, prompts, answers, fixture data and project snapshots. Codex 0.162.1 used ChatGPT login with API keys unset: 27 successful calls across 17 sessions.
 
-The [nine-turn lifecycle](receipts/native-lifecycle.json) proves reassessment after a body change, no write before the subsequent approval, exact approved-body preservation, five-host publication, covered/keep and conflict/cancel without changes, byte-identical publication, and deletion. Deletion leaves an empty AGENTS.md, the existing writer behavior; it does not restore the original file inventory.
+- Fifteen fresh assessments stop without changing project bytes: new, covered, overlap, conflict, disjoint, uncertain meaning/scope, edited rendering, plugin source, Copilot guidance/import, Claude local guidance, OpenCode V1 configured instructions/fallback, and actual CLI flat Codex distribution.
+- Nine-turn lifecycle: reassess changed body, require subsequent approval, publish exact body to five hosts, covered/keep, conflict/cancel, byte-identical republish, delete. Existing deletion behavior retains empty AGENTS.md.
+- Three-turn merge: reassess the changed resolution, require subsequent approval, update the selected source with the exact merged body; no duplicate source.
 
-The [three-turn merge](receipts/native-merge.json) proves an existing rule can be selected for a merge, the changed complete body is reassessed without writes, and explicit approval updates that source and its publications with the exact merged body. No second canonical rule is created.
+Root regression command: `node scripts/check-tests-leave-git-alone.js -- node --test 'scripts/__tests__/**/*.test.js'`: 681 passed, zero failures/skips. Focused checks: 107 passed, including 61 writer tests. CLI flat Codex and Claude marketplace translations preserve action, reference, template and writer bytes. Writer and CLI have no diff against the current base.
 
-## Regression and distribution checks
+## Limits
 
-- Existing writer suite: 61 passed. Focused architecture, portability, links and writer checks: 117 passed, no failures or skips.
-- Full pre-commit gates: wrapped root suite `node scripts/check-tests-leave-git-alone.js -- node --test 'scripts/__tests__/**/*.test.js'`: 677 passed, no failures or skips. Recipe build and all three bundled recipe validations passed; catalog, link, duplication and referenced-path checks passed.
-- Actual pre-push gates: Knip passed; CLI suite passed 7,002 tests across 539 test files, with one test/file skipped and no failures. The remote branch SHA matched the committed candidate.
-- `git diff 3e67f6f594b7b7f6cc7bceb0581ad6d515519080 --exit-code -- plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs cli`: no changes. Publication, ownership and CLI behavior remain the existing implementation.
-- `AIDD_SKIP_UPDATE_CHECK=1 node cli/dist/cli.js translate . --to codex --as flat --out <existing-output-directory>` and the Claude `--as marketplace` translation succeeded. Both distributions contain the four actions and unchanged writer; their four actions, two references and writer match source bytes. Old action filenames are absent. One native session used the actual flat distribution.
+Semantic comparison remains model judgment. Approval is a skill instruction, not a script lock. Native replay uses Codex; publication to five hosts does not prove their native runtime consumption. Official discovery sources are linked in `plan.md` and the skill’s tool-path reference. Historical receipts retain their earlier source/runtime hashes and are not evidence for the shortened version.
 
-## Reproduction and limits
-
-[Runtime](receipts/runtime.json): native Codex 0.154.0, ChatGPT login, disposable projects, no application edits or package installation in fixtures. API-key environment variables were unset. Initial calls used `codex -a never exec --ignore-user-config --skip-git-repo-check --sandbox workspace-write --cd <project> --json --output-last-message <answer> -`; fresh assessment calls additionally used `--ephemeral`. Persistent follow-ups used `codex -a never exec resume --ignore-user-config -c 'sandbox_mode="workspace-write"' --skip-git-repo-check --json --output-last-message <answer> <thread> -` from the fixture directory. The per-call sandbox override was necessary because resume otherwise defaulted to read-only; no user configuration was changed.
-
-To repeat an assessment, materialize the recorded `fixtureFiles` in a disposable project, copy or translate the skill into a separate installed directory, substitute those two paths in the recorded prompt, snapshot every project file, then run the command above with that prompt on stdin. Compare complete before/after maps and inspect the answer against the fixture's policy obligations. To repeat the journeys, start a persistent session and supply the recorded follow-up prompts in order, retaining per-turn snapshots.
-
-These receipts cover 25 successful native CLI invocations in 15 sessions: thirteen fresh assessments and two persistent journeys. Exploratory runs, the old-skill baseline and the initial read-only harness failure are excluded from this count. Earlier eight-case runs preceded the bounded discovery-reference expansion; the four workflow actions and writer are byte-identical to the final version. Later Copilot, flat-distribution, scope, merge and Claude-local cases exercise the added discovery paths. Conditional Claude AGENTS activation was checked against documentation; it was not exercised in a native Claude session. Per-session hashes preserve this distinction; [final source hashes](receipts/final-source-hashes.json) identify the final assets.
-
-Semantic comparison is model judgment, not a deterministic conflict detector or a script-enforced approval lock. These runs exercise the skill through Codex and its five-host writer. They do not prove runtime instruction consumption by native Claude, Cursor, Copilot or OpenCode sessions. Relevant discovery contracts were checked against the official sources linked in the plan and tool-path reference. No claim of universal host precedence, full account/global discovery or coverage of every glob is made.
-
-## Independent judgment and teardown
-
-The [three-axis review](review.md) approves the repaired candidate with no remaining finding. The [independent outcome challenge](challenge.md) records 95% confidence and no deal breaker. Its optional follow-up is a native Claude journey covering local guidance and conditional AGENTS loading; this is carried onto the PR as a coverage limit, not claimed as completed.
-
-The fifteen reviewed native sessions and old-skill baseline were archived locally, then their disposable fixture directories removed. [Teardown receipt](receipts/teardown.json) records archive hash and removed roots. Historical root paths in receipts identify the tested sessions; the committed fixture contents, prompts, answers and hashes remain available for reproduction. The original workspace retains its personal .gitignore change and untracked .hermes.md; neither was edited.
+Independent verdict: [review](review.md), [challenge](challenge.md). Disposable fixtures remain available until that check finishes; teardown is recorded separately.

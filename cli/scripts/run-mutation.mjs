@@ -1,8 +1,17 @@
 #!/usr/bin/env node
 import { spawnSync } from "node:child_process";
-import { existsSync, mkdirSync, readFileSync, renameSync, rmSync, writeFileSync } from "node:fs";
+import {
+  existsSync,
+  mkdirSync,
+  readdirSync,
+  readFileSync,
+  renameSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { aggregateVerdict, mergeReports, shardFiles, sourceFiles } from "./mutation-shards.mjs";
 
 const CLI_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const REPORT_ROOT = join(CLI_ROOT, "reports", "mutation");
@@ -31,6 +40,33 @@ export function strykerArgs(scope, scopes, { force = false } = {}) {
   ];
   if (force) args.push("--force");
   return args;
+}
+
+/** The config one shard runs under: the whole `stryker.conf.json`, with only what it mutates,
+ * where it keeps its incremental file, its sandbox and its reports made its own, so two shards
+ * never share a file and each measures exactly what one run would have measured of its files. */
+export function shardConfig(base, { files, dir, tempDirName }) {
+  return {
+    ...base,
+    mutate: files,
+    incremental: true,
+    incrementalFile: `${dir}/incremental.json`,
+    tempDirName,
+    htmlReporter: { ...base.htmlReporter, fileName: `${dir}/report.html` },
+    jsonReporter: { ...base.jsonReporter, fileName: `${dir}/mutation.json` },
+  };
+}
+
+/** `i/n`, with `n` the shards the scope declares: a leg cut otherwise measures another split. */
+export function parseShard(text, declared) {
+  const match = /^(\d+)\/(\d+)$/.exec(text ?? "");
+  const of = declared.shards ?? 1;
+  if (match === null) throw new Error(`--shard takes i/n, got "${text}"`);
+  const [shard, n] = [Number(match[1]), Number(match[2])];
+  if (n !== of || shard < 1 || shard > of) {
+    throw new Error(`--shard ${text} does not fit the ${of} shard(s) the scope declares`);
+  }
+  return { shard, of };
 }
 
 /** Stryker's own score: detected (killed, timed out) over detected plus undetected (survived,
@@ -145,7 +181,7 @@ function pruneIncrementalFile(path) {
 
 function usage(problem, scopes) {
   console.error(
-    `${problem}\n\nUsage: node scripts/run-mutation.mjs <scope> [--force]\n       node scripts/run-mutation.mjs --changed [<base>]`
+    `${problem}\n\nUsage: node scripts/run-mutation.mjs <scope> [--force]\n       node scripts/run-mutation.mjs <scope> --shard <i>/<n> [--force]   (CI)\n       node scripts/run-mutation.mjs <scope> --aggregate <dir>          (CI)\n       node scripts/run-mutation.mjs --changed [<base>]`
   );
   console.error(`Scopes: ${Object.keys(scopes).join(", ")}`);
   process.exit(1);
@@ -190,6 +226,69 @@ function mainChanged(base = "origin/next") {
   for (const survivor of survivorsOf(report)) console.log(`  survived: ${survivor}`);
 }
 
+/** One shard of a scope: its files only, no floor. The aggregate scores the scope. */
+function mainShard(scope, scopes, text, force) {
+  const { shard, of } = parseShard(text, scopes[scope]);
+  const dir = `reports/mutation/${scope}/shard-${shard}-of-${of}`;
+  mkdirSync(join(CLI_ROOT, dir), { recursive: true });
+  pruneIncrementalFile(join(CLI_ROOT, dir, "incremental.json"));
+  const files = shardFiles(scopes[scope].mutate, sourceFiles(), shard, of);
+  writeFileSync(join(CLI_ROOT, dir, "manifest.json"), JSON.stringify({ scope, shard, of, files }));
+  const tempDirName = `.stryker-tmp-${scope}-${shard}`;
+  const base = JSON.parse(readFileSync(join(CLI_ROOT, "stryker.conf.json"), "utf8"));
+  const config = join(CLI_ROOT, dir, "stryker.conf.json");
+  writeFileSync(config, JSON.stringify(shardConfig(base, { files, dir, tempDirName })));
+  const args = ["run", config, ...(force ? ["--force"] : [])];
+  const result = spawnSync(join(CLI_ROOT, "node_modules", ".bin", "stryker"), args, {
+    cwd: CLI_ROOT,
+    stdio: "inherit",
+  });
+  rmSync(join(CLI_ROOT, tempDirName), { recursive: true, force: true });
+  if (result.status !== 0) process.exit(result.status ?? 1);
+  const report = JSON.parse(readFileSync(join(CLI_ROOT, dir, "mutation.json"), "utf8"));
+  console.log(
+    `\nShard ${shard}/${of} of ${scope}: ${files.length} file(s), score ${scoreOf(report).toFixed(1)} (not gated)`
+  );
+}
+
+/** Scores a sharded scope once, over every shard's report in `from`, against its floor. */
+function mainAggregate(scope, scopes, from) {
+  const declared = scopes[scope];
+  if (from === undefined || !existsSync(from)) {
+    console.error(`${scope}: no shard report was found${from === undefined ? "" : ` in ${from}`}`);
+    process.exit(1);
+  }
+  const shards = readdirSync(from)
+    .map((name) => join(from, name))
+    .filter((dir) => existsSync(join(dir, "manifest.json")))
+    .map((dir) => ({
+      manifest: JSON.parse(readFileSync(join(dir, "manifest.json"), "utf8")),
+      report: JSON.parse(readFileSync(join(dir, "mutation.json"), "utf8")),
+    }))
+    .filter((shard) => shard.manifest.scope === scope);
+  const problem = aggregateVerdict({
+    mutate: declared.mutate,
+    files: sourceFiles(),
+    of: declared.shards ?? 1,
+    shards,
+  });
+  if (problem !== null) {
+    console.error(`${scope}: ${problem}`);
+    process.exit(1);
+  }
+  const merged = mergeReports(shards.map((shard) => shard.report));
+  const score = scoreOf(merged);
+  console.log(
+    `\nReport: ${scope} over ${shards.length} shards (score ${score.toFixed(1)}, floor ${declared.break})`
+  );
+  for (const survivor of survivorsOf(merged)) console.log(`  survived: ${survivor}`);
+  const verdict = breakVerdict(score, declared);
+  if (verdict !== null) {
+    console.error(verdict);
+    process.exit(1);
+  }
+}
+
 function main() {
   const scopes = loadScopes();
   const [scope, ...flags] = process.argv.slice(2);
@@ -197,6 +296,10 @@ function main() {
   if (scope === undefined) usage("No scope given.", scopes);
   if (!Object.hasOwn(scopes, scope)) usage(`Unknown scope "${scope}".`, scopes);
   const force = flags.includes("--force");
+  const shardAt = flags.indexOf("--shard");
+  if (shardAt !== -1) return mainShard(scope, scopes, flags[shardAt + 1], force);
+  const aggregateAt = flags.indexOf("--aggregate");
+  if (aggregateAt !== -1) return mainAggregate(scope, scopes, flags[aggregateAt + 1]);
 
   const scopeDir = join(REPORT_ROOT, scope);
   mkdirSync(scopeDir, { recursive: true });
