@@ -4,17 +4,21 @@ Issue [#791](https://github.com/ai-driven-dev/framework/issues/791); current bas
 
 ## Concision
 
-Following Alex’s [#981](https://github.com/ai-driven-dev/framework/pull/981) and [#950](https://github.com/ai-driven-dev/framework/pull/950): seven runtime Markdown files, 3,480 → 1,768 whitespace-delimited words (−49%). Assessment: 597 → 236. The unchanged 43-word template is excluded from both totals. Flow belongs to the router; each action or reference owns its constraints.
+Following Alex’s [#981](https://github.com/ai-driven-dev/framework/pull/981) and [#950](https://github.com/ai-driven-dev/framework/pull/950): seven runtime Markdown files, 3,480 → 1,766 whitespace-delimited words (−49%). Assessment: 597 → 236. The unchanged 43-word template is excluded from both totals. Flow belongs to the router; each action or reference owns its constraints.
 
 ## Evidence
 
-[Concise replay](receipts/concise-native.json) records final-source hashes, prompts, answers, fixture data and project snapshots. Codex 0.162.1 used ChatGPT login with API keys unset: 27 successful calls across 17 sessions.
+[Concise replay](receipts/concise-native.json) records tested/final-source hashes, prompts, answers, fixture data and project snapshots. Codex 0.162.1 used ChatGPT login with API keys unset: 27 successful calls across 17 sessions.
 
 - Fifteen fresh assessments stop without changing project bytes: new, covered, overlap, conflict, disjoint, uncertain meaning/scope, edited rendering, plugin source, Copilot guidance/import, Claude local guidance, OpenCode V1 configured instructions/fallback, and actual CLI flat Codex distribution.
 - Nine-turn lifecycle: reassess changed body, require subsequent approval, publish exact body to five hosts, covered/keep, conflict/cancel, byte-identical republish, delete. Existing deletion behavior retains empty AGENTS.md.
 - Three-turn merge: reassess the changed resolution, require subsequent approval, update the selected source with the exact merged body; no duplicate source.
 
 Root regression command: `node scripts/check-tests-leave-git-alone.js -- node --test 'scripts/__tests__/**/*.test.js'`: 681 passed, zero failures/skips. Focused checks: 107 passed, including 61 writer tests. CLI flat Codex and Claude marketplace translations preserve action, reference, template and writer bytes. Writer and CLI have no diff against the current base.
+
+Pre-push gates: Knip passed; CLI suite passed 7,025 tests across 540 files, with one test/file skipped.
+
+The only post-replay runtime edit removes a nonnormative verification-date prefix. Policy instructions and official links remain byte-identical; receipts distinguish both hashes.
 
 ## Limits
 

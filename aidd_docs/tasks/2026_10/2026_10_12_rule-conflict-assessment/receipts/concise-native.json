@@ -914,5 +914,18 @@
         "package.json": "1239d4d885dcad42201a27ed9324f8f0f760b78700d8db9ced39a511cffe7eae"
       }
     }
-  ]
+  ],
+  "finalSourceHashes": {
+    "SKILL.md": "c3fc303ad0a1bf983c32905e264e65db410df09ad6f413924b2daee28edbc425",
+    "actions/01-capture-rule.md": "af76ed5a85bcbad4a8a5434a065ec8bacc49e75f2048c0c7ec44ba06065faeba",
+    "actions/02-assess-existing-rules.md": "559462a4b12c10cfba8c847e1cb23b02ab4d756fe22003c8adf47d672095bf0c",
+    "actions/03-write-rule.md": "3e63276d6fd1c03894406658a99631e0791c491913faaa188db51aaa36901c2b",
+    "actions/04-validate.md": "084560d6e6cbd6c3cbe89ba1a7bb2b9abf5427cabae802334a54a88a5e08017b",
+    "assets/rule-template.md": "bfccef5e957e8d2de7aefe818196e82bf7691c8631452f4cc5b6e5ea526cdb47",
+    "references/rule-authoring.md": "ce299dcd2a80e2debacc312a68af93bc3cccd2fc2d442e0c85daca9d9e7c5fd9",
+    "references/tool-paths.md": "2232eeb18c56dce6486526b801a1b3945d2fb8e8aa0fb860dc9340fc9a2fe47a",
+    "scripts/write-rule.cjs": "70783e579b75b9e22760239cbfd4309641bdd73840b17e7dfd606a252679a420"
+  },
+  "finalWords": 1766,
+  "postReplayChange": "Removed only the nonnormative Checked 2026-10-12: prefix from Official contracts; all policy instructions and links unchanged."
 }
