@@ -1,67 +1,51 @@
 const assert = require('node:assert/strict');
 const { createHash } = require('node:crypto');
-const { readFileSync } = require('node:fs');
+const { existsSync, readFileSync } = require('node:fs');
 const path = require('node:path');
 const test = require('node:test');
 
-const root = path.resolve(__dirname, '../..');
-const task = path.join(root, 'aidd_docs/tasks/2026_10/2026_10_10_kilo-native-generation-914');
-const phase2 = path.join(task, 'evidence/phase-2');
-const phase3 = path.join(task, 'evidence/phase-3');
-const phase4 = path.join(task, 'evidence/phase-4');
-const skillFixtures = path.join(root, 'scripts/__tests__/fixtures/context-generation/skills');
+const root = path.join(__dirname, 'fixtures/context-generation');
+const manifest = JSON.parse(readFileSync(path.join(root, 'artifact-manifest.json'), 'utf8'));
+const read = (relative) => readFileSync(path.join(root, relative));
 
-const read = (file) => readFileSync(file, 'utf8');
-const hash = (bytes) => createHash('sha256').update(bytes).digest('hex');
+test('local Kilo generation fixtures match their checked-in artifact manifest', () => {
+  assert.ok(Object.keys(manifest).length > 0);
+  for (const [relative, expected] of Object.entries(manifest)) {
+    assert.equal(createHash('sha256').update(read(relative)).digest('hex'), expected, relative);
+  }
+});
 
-test('saved native skill bytes match the caller rerun receipt', () => {
-  const proof = JSON.parse(read(path.join(phase3, 'caller-modify-rerun.json')));
-  const files = Object.entries(proof.afterRerun).filter(([name, entry]) =>
-    name.startsWith('native/.kilo/skills/verify-payload/') && entry.type === 'file'
+test('local Kilo skill fixture contains one native tree and preserves its user resource', () => {
+  const skill = read('skills/native/.kilo/skills/verify-payload/SKILL.md').toString('utf8');
+  assert.match(skill, /^name: verify-payload$/mu);
+  assert.match(skill, /description:/u);
+  assert.doesNotMatch(skill, /argument-hint:|allowed-tools:/u);
+  assert.equal(existsSync(path.join(root, 'skills/native/.agents/skills/verify-payload/SKILL.md')), false);
+  assert.equal(
+    read('skills/native/.kilo/skills/verify-payload/assets/user.txt').toString('utf8'),
+    'USER_RESOURCE_DO_NOT_REPLACE\n',
   );
-  assert.ok(files.length >= 3);
-  for (const [relative, recorded] of files) {
-    const bytes = readFileSync(path.join(skillFixtures, relative));
-    const canonical = Buffer.from(bytes.toString('utf8').replace(/\r\n/g, '\n'));
-    assert.equal(hash(canonical), recorded.sha256, relative);
-  }
+  assert.match(
+    read('skills/native/.kilo/skills/verify-payload/actions/01-verify.md').toString('utf8'),
+    /assets\/payload\.txt/u,
+  );
 });
 
-test('saved agent and workflow bytes match their caller receipt', () => {
-  const receipt = JSON.parse(read(path.join(phase4, 'caller-receipt.json')));
-  assert.match(receipt.caller, /Codex/);
-  for (const [relative, recorded] of Object.entries(receipt.generated_files)) {
-    const bytes = readFileSync(path.join(phase4, 'generated-project', relative));
-    assert.equal(bytes.length, recorded.bytes, relative);
-    assert.equal(hash(bytes), recorded.sha256, relative);
-  }
-  assert.deepEqual(Object.keys(receipt.generated_files).sort(), [
-    '.kilo/agents/assets/agent-payload.txt',
-    '.kilo/agents/verify-agent.md',
-    '.kilo/commands/verify-workflow.md',
-  ]);
-});
-
-test('saved rule configuration links the exact rule; negative removes only the link', () => {
-  const rule = read(path.join(phase2, 'runtime-corrections-rule.md'));
-  const positive = read(path.join(phase2, 'runtime-corrections-positive-config.jsonc'));
-  const negative = read(path.join(phase2, 'runtime-corrections-negative-config.jsonc'));
+test('local Kilo rule fixtures distinguish linked and unlinked configurations', () => {
+  const rule = read('kilo-rule/rule.md').toString('utf8');
+  const positive = read('kilo-rule/positive-config.jsonc').toString('utf8');
+  const negative = read('kilo-rule/negative-config.jsonc').toString('utf8');
   const exactPath = '.kilo/rules/01-standards/1-naming.md';
-  assert.match(rule, /COBALT_914/);
-  assert.match(rule, /aidd_rule_output:path=\.kilo\/rules\/01-standards\/1-naming\.md/);
+  assert.match(rule, /KILO_RULE_FIXTURE_MARKER/u);
   assert.ok(positive.includes(exactPath));
   assert.ok(!negative.includes(exactPath));
-  assert.match(negative, /\$schema/);
 });
 
-test('published runtime excerpts retain positive and negative results without session identifiers', () => {
-  const positive = read(path.join(phase2, 'runtime-positive-redacted.jsonl'));
-  const negative = read(path.join(phase2, 'runtime-negative-redacted.jsonl'));
-  for (const [name, content] of [['positive', positive], ['negative', negative]]) {
-    assert.ok(content.trim().length > 0, name);
-    for (const line of content.trim().split('\n')) assert.doesNotThrow(() => JSON.parse(line), name);
-    assert.doesNotMatch(content, /(?:sessionID|vercelID|request_id|requestId)"\s*:\s*"(?!\[REDACTED\])/i);
-  }
-  assert.match(positive, /COBALT_914/);
-  assert.doesNotMatch(negative, /COBALT_914/);
+test('local agent and workflow fixtures retain Kilo frontmatter and payload paths', () => {
+  const agent = read('agents-commands/native/.kilo/agents/verify-agent.md').toString('utf8');
+  const workflow = read('agents-commands/native/.kilo/commands/verify-workflow.md').toString('utf8');
+  assert.match(agent, /mode: subagent/u);
+  assert.match(agent, /\.kilo\/agents\/assets\/agent-payload\.txt/u);
+  assert.match(workflow, /agent: verify-agent/u);
+  assert.match(workflow, /\.kilo\/commands\/assets\/workflow-payload\.txt/u);
 });

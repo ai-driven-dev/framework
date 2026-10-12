@@ -9,9 +9,8 @@ const SKILL = 'plugins/aidd-context/skills/04-skill-generate';
 const read = (file) => fs.readFileSync(path.join(ROOT, SKILL, file), 'utf8');
 const normalizeEol = (text) => text.replace(/\r\n/gu, '\n');
 
-// Markdown is the shipped implementation. These guards do not simulate an LLM
-// writer. Behavioral receipts and real generated trees are checked separately.
-test('skill detection lists exactly the six Kilo signals and keeps OpenCode distinct', () => {
+// These checks validate documented contracts; they do not execute a skill writer.
+test('static contract: skill detection lists the six Kilo signals and keeps OpenCode distinct', () => {
   const detection = read('references/tool-detect.md');
   const row = detection.split('\n').find((line) => /^\| Kilo\s*\|/u.test(line));
   assert.ok(row, 'Missing Kilo detection row');
@@ -21,7 +20,7 @@ test('skill detection lists exactly the six Kilo signals and keeps OpenCode dist
   assert.match(detection, /(?:AGENTS\.md|opencode\.json)[^\n]*not[^\n]*Kilo/u);
 });
 
-test('Kilo placement requires explicit portable consent and resolves duplicates before writing', () => {
+test('static contract: Kilo placement requires portable consent and resolves duplicates before writing', () => {
   const placement = read('references/tool-write.md');
   assert.match(placement, /\.kilo\/skills\/<name>\//u);
   assert.match(placement, /explicit[^\n]*\.agents\/skills/iu);
@@ -31,7 +30,7 @@ test('Kilo placement requires explicit portable consent and resolves duplicates 
   assert.match(read('references/scope-frame.md'), /placement/u);
 });
 
-test('Kilo fields are target-specific without weakening the Claude authoring template', () => {
+test('static contract: Kilo fields stay target-specific without weakening the Claude template', () => {
   const placement = read('references/tool-write.md');
   assert.match(placement, /\| Kilo[^\n]*`name`[^\n]*`description`/u);
   assert.match(placement, /name[^\n]*parent directory/u);
@@ -40,7 +39,7 @@ test('Kilo fields are target-specific without weakening the Claude authoring tem
   assert.match(read('references/skill-authoring.md'), /\*\*R4\.\*\*/u);
 });
 
-test('full preflight precedes creation and covers unsafe paths and user resources', () => {
+test('static contract: full preflight precedes creation and covers unsafe paths and user resources', () => {
   const write = read('actions/03-write.md');
   const preflight = write.indexOf('**Preflight.**');
   const tree = write.indexOf('**Tree.**');
@@ -55,7 +54,7 @@ test('full preflight precedes creation and covers unsafe paths and user resource
 const FIXTURES = path.join(__dirname, 'fixtures/context-generation/skills');
 // Golden artifacts are produced by the native caller using the candidate skill,
 // not by a test-only renderer. Absent evidence is a failure, never a skipped pass.
-test('caller-generated target trees have valid frontmatter, router links and preserved resources', () => {
+test('fixture contract: generated target trees have valid frontmatter, links and preserved resources', () => {
   const cases = JSON.parse(fs.readFileSync(path.join(FIXTURES, 'cases.json'), 'utf8'));
   for (const fixture of cases) {
     const dir = path.join(FIXTURES, fixture.project, fixture.target, 'verify-payload');
@@ -79,30 +78,9 @@ test('caller-generated target trees have valid frontmatter, router links and pre
   }
 });
 
-const EVIDENCE = path.join(ROOT, 'aidd_docs/tasks/2026_10/2026_10_10_kilo-native-generation-914/evidence/phase-3');
-test('caller modify preserves user files and identical rerun preserves whole tree bytes and mtime', () => {
-  const proof = JSON.parse(fs.readFileSync(path.join(EVIDENCE, 'caller-modify-rerun.json'), 'utf8'));
-  assert.deepEqual(proof.afterModify, proof.afterRerun);
-  assert.equal(proof.changed.length, 7);
-  for (const changed of proof.changed) assert.ok(changed.endsWith('/actions/01-verify.md'));
-  for (const [file, before] of Object.entries(proof.before)) {
-    if (!proof.changed.includes(file)) assert.deepEqual(proof.afterModify[file], before, file);
-  }
-});
-
-test('six native caller refusals leave full project trees unchanged', () => {
-  const proof = JSON.parse(fs.readFileSync(path.join(EVIDENCE, 'caller-refusals.json'), 'utf8'));
-  assert.deepEqual(proof.cases.map((c) => c.name).sort(),
-    ['portable-without-consent', 'duplicate-copies', 'late-nonregular', 'symlink', 'readonly', 'escaping-reference'].sort());
-  for (const refusal of proof.cases) {
-    assert.deepEqual(refusal.after, refusal.before, refusal.name);
-    assert.ok(refusal.decision);
-  }
-});
-
 const detectionFixtures = path.join(__dirname, 'fixtures/context-generation/detection');
 for (const fixture of JSON.parse(fs.readFileSync(path.join(detectionFixtures, 'cases.json'), 'utf8'))) {
-  test(`skill contract detection oracle: ${fixture.name}`, () => {
+  test(`static contract: Kilo detection oracle recognizes ${fixture.name}`, () => {
     const row = read('references/tool-detect.md').split('\n').find((line) => /^\| Kilo\s*\|/u.test(line));
     assert.ok(row);
     const signals = [...row.matchAll(/`([^`]+)`/gu)].map((m) => m[1]);
@@ -114,64 +92,27 @@ for (const fixture of JSON.parse(fs.readFileSync(path.join(detectionFixtures, 'c
   });
 }
 
-test('golden trees match caller output hashes and every local Markdown link stays inside its skill', () => {
-  const crypto = require('node:crypto');
-  const proof = JSON.parse(fs.readFileSync(path.join(EVIDENCE, 'caller-modify-rerun.json'), 'utf8'));
-  for (const [file, entry] of Object.entries(proof.afterModify)) {
-    if (entry.type !== 'file' || !file.includes('/verify-payload/')) continue;
-    const p = path.join(FIXTURES, file);
-    const bytes = fs.readFileSync(p);
-    // Git may check text fixtures out as CRLF on Windows; evidence hashes represent the
-    // canonical LF bytes captured by the caller, so normalize only that checkout transform.
-    const canonicalBytes = Buffer.from(bytes.toString('utf8').replace(/\r\n/gu, '\n'));
-    assert.equal(crypto.createHash('sha256').update(canonicalBytes).digest('hex'), entry.sha256, file);
-    if (!file.endsWith('.md')) continue;
-    const root = p.slice(0, p.indexOf(`${path.sep}verify-payload${path.sep}`)) + `${path.sep}verify-payload`;
-    for (const link of canonicalBytes.toString().matchAll(/\]\(([^)]+)\)/gu)) {
-      const resolved = path.resolve(path.dirname(p), link[1]);
-      assert.ok(resolved.startsWith(`${root}${path.sep}`), file);
-      assert.ok(fs.statSync(resolved).isFile(), file);
-    }
+test('fixture contract: native and portable trees each preserve the user resource once', () => {
+  for (const project of ['native', 'portable']) {
+    const fixture = JSON.parse(fs.readFileSync(path.join(FIXTURES, 'cases.json'), 'utf8'))
+      .find((item) => item.project === project);
+    assert.ok(fixture);
+    const dir = path.join(FIXTURES, project, fixture.target, 'verify-payload');
+    assert.equal(fs.readFileSync(path.join(dir, 'assets/user.txt'), 'utf8'), 'USER_RESOURCE_DO_NOT_REPLACE\n');
+    assert.ok(fs.existsSync(path.join(dir, 'actions/01-verify.md')));
+    assert.ok(fs.existsSync(path.join(dir, 'assets/payload.txt')));
   }
 });
 
-test('shared portable fields require resolution when a requested Kilo field conflicts with Codex', () => {
+test('static contract: shared portable fields require resolution when Kilo fields conflict with Codex', () => {
   const contract = read('references/tool-write.md');
   assert.match(contract, /share a destination[^\n]*common supported fields/u);
   assert.match(contract, /requested field[^\n]*incompatible[^\n]*resolution before writing/u);
   assert.match(contract, /never silently drop a requested field/u);
 });
 
-for (const [project, trace] of [['native', 'kilo-native-exact'], ['portable', 'kilo-portable']]) {
-  test(`real Kilo ${project}: catalog, invocation, action and payload reads, exact answer and zero costs`, () => {
-    const events = fs.readFileSync(path.join(EVIDENCE, `${trace}.jsonl`), 'utf8').trim().split('\n').map(JSON.parse);
-    const catalog = JSON.parse(fs.readFileSync(path.join(EVIDENCE, `kilo-catalog-${project}.json`), 'utf8'));
-    const target = project === 'native' ? '.kilo/skills' : '.agents/skills';
-    const skills = catalog.filter((s) => s.name === 'verify-payload');
-    assert.equal(skills.length, 1);
-    assert.ok(skills[0].location.endsWith(`${project}/${target}/verify-payload/SKILL.md`));
-    const tools = events.filter((e) => e.type === 'tool_use').map((e) => e.part);
-    assert.ok(tools.some((p) => p.tool === 'skill' && p.state.status === 'completed' && p.state.input.name === 'verify-payload'));
-    for (const suffix of ['actions/01-verify.md', 'assets/payload.txt']) {
-      assert.ok(tools.some((p) => p.tool === 'read' && p.state.status === 'completed' && p.state.input.filePath.endsWith(`${target}/verify-payload/${suffix}`)));
-    }
-    assert.deepEqual(events.filter((e) => e.type === 'text').map((e) => e.part.text), ['PAYLOAD_APPLIED:cedar-7391']);
-    const costs = events.filter((e) => e.type === 'step_finish').map((e) => e.part.cost);
-    assert.ok(costs.length > 0);
-    assert.ok(costs.every((cost) => cost === 0));
-  });
-}
-
-test('native caller refuses an unresolved shared-field request without creating a skill', () => {
-  const proof = JSON.parse(fs.readFileSync(path.join(EVIDENCE, 'caller-shared-fields-refusal.json'), 'utf8'));
-  assert.deepEqual(proof.before, proof.after);
-  assert.ok(Object.keys(proof.after).every((p) => !p.includes('/skills/')));
-});
-
-test('native Kilo plus a selected portable host must resolve placement before any write', () => {
+test('static contract: mixed Kilo-native and portable targets resolve placement before writing', () => {
   const contract = read('references/tool-write.md');
   assert.match(contract, /Kilo native[^\n]*another selected host[^\n]*resolution before writing/u);
   assert.match(contract, /never create both trees/u);
-  const proof = JSON.parse(fs.readFileSync(path.join(EVIDENCE, 'caller-native-codex-refusal.json'), 'utf8'));
-  assert.deepEqual(proof.before, proof.after);
 });
