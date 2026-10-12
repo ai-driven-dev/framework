@@ -1,5 +1,5 @@
 ---
-status: pending
+status: in-progress
 ---
 
 # Instruction: Consolider les preuves de génération et de runtime
@@ -85,3 +85,5 @@ journey
 | 2 | Contrôles négatifs détectent artefact absent/non relié ; second passage et refus laissent les états attendus. |
 | 3 | Tous tests offline Claude et régressions automatisées des cibles passent ; aucun runtime Claude authentifié prétendu. |
 | 4 | Rapport décrit OS/versions, cas skipped/blocked et limites ; AC15 ne passe que sur la couverture runtime prévue réellement exécutée. |
+
+Résultats de la reprise : [rapport de phase 6](phase-6-report.md). Le statut reste `in-progress` tant que les validations obligatoires manquent.

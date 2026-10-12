@@ -61,3 +61,42 @@ for (const model of [undefined, "user-selected-model"]) {
     }
   });
 }
+
+test("skill eval stages a worktree skill for Codex and checks its final output", (t) => {
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "codex-skill-eval-"));
+  t.after(() => fs.rmSync(tmp, { recursive: true, force: true }));
+  const stub = path.join(tmp, "codex.cjs");
+  fs.writeFileSync(stub, [
+    'const fs = require("node:fs");',
+    'const path = require("node:path");',
+    'const args = process.argv.slice(2);',
+    'const cwd = process.cwd();',
+    'if (!fs.existsSync(path.join(cwd, ".agents/skills/xeval-shadow/SKILL.md"))) process.exit(3);',
+    'if (fs.existsSync(path.join(cwd, ".claude/skills/xeval-shadow/SKILL.md"))) process.exit(4);',
+    'fs.writeFileSync("Makefile-shadow-report.md", "stub report");',
+    'if (!process.env.MISSING_CODEX_OUTPUT) fs.writeFileSync(args[args.indexOf("-o") + 1], "completed");',
+  ].join("\n"));
+  const preload = path.join(tmp, "preload.cjs");
+  fs.writeFileSync(preload, [
+    'const childProcess = require("node:child_process");',
+    'const spawn = childProcess.spawn;',
+    `childProcess.spawn = (command, args, options) => command === "codex"`,
+    `  ? spawn(process.execPath, [${JSON.stringify(stub)}, ...args], options)`,
+    '  : spawn(command, args, options);',
+    'require("node:module").syncBuiltinESMExports();',
+  ].join("\n"));
+  const result = spawnSync(process.execPath, [
+    "--require", preload,
+    path.join(ROOT, "scripts/skill-eval.mjs"),
+    "--host=codex",
+    "--case=filename rule keeps a dotless name",
+  ], { encoding: "utf8" });
+  assert.equal(result.status, 0, result.stderr + result.stdout);
+  const missingOutput = spawnSync(process.execPath, [
+    "--require", preload,
+    path.join(ROOT, "scripts/skill-eval.mjs"),
+    "--host=codex",
+    "--case=filename rule keeps a dotless name",
+  ], { encoding: "utf8", env: { ...process.env, MISSING_CODEX_OUTPUT: "1" } });
+  assert.equal(missingOutput.status, 1, missingOutput.stdout + missingOutput.stderr);
+});
