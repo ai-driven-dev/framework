@@ -14,7 +14,7 @@ This reference covers project rule generation only. Confirm hosts explicitly; a 
 
 Use taxonomy and `#-slug` naming in [rule-authoring.md](rule-authoring.md). Copilot drops the slug's single-digit prefix and adds the category's two-digit prefix, e.g. `01-standards/1-naming` becomes `01-naming.instructions.md`.
 
-Codex Markdown guidance is not a `.codex/rules` execution policy. OpenCode publishes through root `AGENTS.md` alone: config `instructions`, file links and modular `.opencode/rules` sources are not used. Native syntax tests prove rendering, not runtime consumption by every host. Codex/OpenCode selected together appear once in the shared file; other hosts may also discover AGENTS.md, so physical deduplication does not guarantee model-context deduplication across surfaces.
+Codex Markdown guidance is not a `.codex/rules` execution policy. OpenCode: write the root `AGENTS.md` only, never `.opencode/rules`. Native syntax tests prove rendering, not runtime consumption by every host. Codex/OpenCode selected together appear once in the shared file; other hosts may also discover AGENTS.md, so physical deduplication does not guarantee model-context deduplication across surfaces.
 
 Official contracts: [Claude Code rules](https://code.claude.com/docs/en/memory#organize-rules-with-clauderules), [Cursor rules](https://cursor.com/docs/rules) and [CLI loading](https://cursor.com/docs/cli/using#rules), [Copilot CLI instructions](https://docs.github.com/en/copilot/how-tos/copilot-cli/customize-copilot/add-custom-instructions), [Codex AGENTS.md](https://learn.chatgpt.com/docs/agent-configuration/agents-md), [OpenCode rules](https://opencode.ai/docs/rules/) and [instructions](https://opencode.ai/v2/docs/instructions/).
 
