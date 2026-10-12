@@ -1,0 +1,407 @@
+[
+  {
+    "command": [
+      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-rule-contract-runtime-wbbvbyva/installed/scripts/write-rule.cjs",
+      "--project",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-rule-contract-runtime-wbbvbyva/projects/claude",
+      "--tools",
+      "claude",
+      "--input",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-rule-contract-runtime-wbbvbyva/request.json"
+    ],
+    "exit": 0,
+    "stdout": "{\"files\":[\"aidd_docs/rules/01-standards/1-global.md\",\".claude/rules/01-standards/1-global.md\"]}\n",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-rule-contract-runtime-wbbvbyva/installed/scripts/write-rule.cjs",
+      "--project",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-rule-contract-runtime-wbbvbyva/projects/claude",
+      "--tools",
+      "claude",
+      "--input",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-rule-contract-runtime-wbbvbyva/request.json"
+    ],
+    "exit": 0,
+    "stdout": "{\"files\":[\"aidd_docs/rules/01-standards/1-domain.md\",\".claude/rules/01-standards/1-global.md\",\".claude/rules/01-standards/1-domain.md\"]}\n",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-rule-contract-runtime-wbbvbyva/installed/scripts/write-rule.cjs",
+      "--project",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-rule-contract-runtime-wbbvbyva/projects/claude",
+      "--tools",
+      "claude",
+      "--input",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-rule-contract-runtime-wbbvbyva/request.json"
+    ],
+    "exit": 0,
+    "stdout": "{\"files\":[\"aidd_docs/rules/01-standards/1-docs.md\",\".claude/rules/01-standards/1-domain.md\",\".claude/rules/01-standards/1-global.md\",\".claude/rules/01-standards/1-docs.md\"]}\n",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-rule-contract-runtime-wbbvbyva/installed/scripts/write-rule.cjs",
+      "--project",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-rule-contract-runtime-wbbvbyva/projects/claude",
+      "--tools",
+      "claude",
+      "--input",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-rule-contract-runtime-wbbvbyva/request.json"
+    ],
+    "exit": 0,
+    "stdout": "{\"files\":[\"aidd_docs/rules/01-standards/1-global.md\",\".claude/rules/01-standards/1-docs.md\",\".claude/rules/01-standards/1-domain.md\",\".claude/rules/01-standards/1-global.md\"]}\n",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-rule-contract-runtime-wbbvbyva/installed/scripts/write-rule.cjs",
+      "--project",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-rule-contract-runtime-wbbvbyva/projects/claude",
+      "--tools",
+      "claude",
+      "--input",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-rule-contract-runtime-wbbvbyva/request.json"
+    ],
+    "exit": 0,
+    "stdout": "{\"files\":[\"aidd_docs/rules/01-standards/1-domain.md\",\".claude/rules/01-standards/1-docs.md\",\".claude/rules/01-standards/1-domain.md\",\".claude/rules/01-standards/1-global.md\"]}\n",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-rule-contract-runtime-wbbvbyva/installed/scripts/write-rule.cjs",
+      "--project",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-rule-contract-runtime-wbbvbyva/projects/claude",
+      "--tools",
+      "claude",
+      "--input",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-rule-contract-runtime-wbbvbyva/request.json"
+    ],
+    "exit": 0,
+    "stdout": "{\"files\":[\"aidd_docs/rules/01-standards/1-docs.md\",\".claude/rules/01-standards/1-docs.md\",\".claude/rules/01-standards/1-domain.md\",\".claude/rules/01-standards/1-global.md\"]}\n",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-rule-contract-runtime-wbbvbyva/installed/scripts/write-rule.cjs",
+      "--project",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-rule-contract-runtime-wbbvbyva/projects/claude",
+      "--tools",
+      "claude",
+      "--delete",
+      "01-standards/1-global"
+    ],
+    "exit": 0,
+    "stdout": "{\"files\":[\"aidd_docs/rules/01-standards/1-global.md\",\".claude/rules/01-standards/1-docs.md\",\".claude/rules/01-standards/1-domain.md\",\".claude/rules/01-standards/1-global.md\"]}\n",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-rule-contract-runtime-wbbvbyva/installed/scripts/write-rule.cjs",
+      "--project",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-rule-contract-runtime-wbbvbyva/projects/claude",
+      "--tools",
+      "claude",
+      "--delete",
+      "01-standards/1-domain"
+    ],
+    "exit": 0,
+    "stdout": "{\"files\":[\"aidd_docs/rules/01-standards/1-domain.md\",\".claude/rules/01-standards/1-docs.md\",\".claude/rules/01-standards/1-domain.md\"]}\n",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-rule-contract-runtime-wbbvbyva/installed/scripts/write-rule.cjs",
+      "--project",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-rule-contract-runtime-wbbvbyva/projects/claude",
+      "--tools",
+      "claude",
+      "--delete",
+      "01-standards/1-docs"
+    ],
+    "exit": 0,
+    "stdout": "{\"files\":[\"aidd_docs/rules/01-standards/1-docs.md\",\".claude/rules/01-standards/1-docs.md\"]}\n",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-rule-contract-runtime-wbbvbyva/installed/scripts/write-rule.cjs",
+      "--project",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-rule-contract-runtime-wbbvbyva/projects/codex",
+      "--tools",
+      "codex",
+      "--input",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-rule-contract-runtime-wbbvbyva/request.json"
+    ],
+    "exit": 0,
+    "stdout": "{\"files\":[\"aidd_docs/rules/01-standards/1-global.md\",\"AGENTS.md\"]}\n",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-rule-contract-runtime-wbbvbyva/installed/scripts/write-rule.cjs",
+      "--project",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-rule-contract-runtime-wbbvbyva/projects/codex",
+      "--tools",
+      "codex",
+      "--input",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-rule-contract-runtime-wbbvbyva/request.json"
+    ],
+    "exit": 0,
+    "stdout": "{\"files\":[\"aidd_docs/rules/01-standards/1-domain.md\",\"AGENTS.md\"]}\n",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-rule-contract-runtime-wbbvbyva/installed/scripts/write-rule.cjs",
+      "--project",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-rule-contract-runtime-wbbvbyva/projects/codex",
+      "--tools",
+      "codex",
+      "--input",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-rule-contract-runtime-wbbvbyva/request.json"
+    ],
+    "exit": 0,
+    "stdout": "{\"files\":[\"aidd_docs/rules/01-standards/1-docs.md\",\"AGENTS.md\"]}\n",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-rule-contract-runtime-wbbvbyva/installed/scripts/write-rule.cjs",
+      "--project",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-rule-contract-runtime-wbbvbyva/projects/codex",
+      "--tools",
+      "codex",
+      "--input",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-rule-contract-runtime-wbbvbyva/request.json"
+    ],
+    "exit": 0,
+    "stdout": "{\"files\":[\"aidd_docs/rules/01-standards/1-global.md\",\"AGENTS.md\"]}\n",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-rule-contract-runtime-wbbvbyva/installed/scripts/write-rule.cjs",
+      "--project",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-rule-contract-runtime-wbbvbyva/projects/codex",
+      "--tools",
+      "codex",
+      "--input",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-rule-contract-runtime-wbbvbyva/request.json"
+    ],
+    "exit": 0,
+    "stdout": "{\"files\":[\"aidd_docs/rules/01-standards/1-domain.md\",\"AGENTS.md\"]}\n",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-rule-contract-runtime-wbbvbyva/installed/scripts/write-rule.cjs",
+      "--project",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-rule-contract-runtime-wbbvbyva/projects/codex",
+      "--tools",
+      "codex",
+      "--input",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-rule-contract-runtime-wbbvbyva/request.json"
+    ],
+    "exit": 0,
+    "stdout": "{\"files\":[\"aidd_docs/rules/01-standards/1-docs.md\",\"AGENTS.md\"]}\n",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-rule-contract-runtime-wbbvbyva/installed/scripts/write-rule.cjs",
+      "--project",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-rule-contract-runtime-wbbvbyva/projects/codex",
+      "--tools",
+      "codex",
+      "--delete",
+      "01-standards/1-global"
+    ],
+    "exit": 0,
+    "stdout": "{\"files\":[\"aidd_docs/rules/01-standards/1-global.md\",\"AGENTS.md\"]}\n",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-rule-contract-runtime-wbbvbyva/installed/scripts/write-rule.cjs",
+      "--project",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-rule-contract-runtime-wbbvbyva/projects/codex",
+      "--tools",
+      "codex",
+      "--delete",
+      "01-standards/1-domain"
+    ],
+    "exit": 0,
+    "stdout": "{\"files\":[\"aidd_docs/rules/01-standards/1-domain.md\",\"AGENTS.md\"]}\n",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-rule-contract-runtime-wbbvbyva/installed/scripts/write-rule.cjs",
+      "--project",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-rule-contract-runtime-wbbvbyva/projects/codex",
+      "--tools",
+      "codex",
+      "--delete",
+      "01-standards/1-docs"
+    ],
+    "exit": 0,
+    "stdout": "{\"files\":[\"aidd_docs/rules/01-standards/1-docs.md\",\"AGENTS.md\"]}\n",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-rule-contract-runtime-wbbvbyva/installed/scripts/write-rule.cjs",
+      "--project",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-rule-contract-runtime-wbbvbyva/projects/opencode",
+      "--tools",
+      "opencode",
+      "--input",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-rule-contract-runtime-wbbvbyva/request.json"
+    ],
+    "exit": 0,
+    "stdout": "{\"files\":[\"aidd_docs/rules/01-standards/1-global.md\",\"AGENTS.md\"]}\n",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-rule-contract-runtime-wbbvbyva/installed/scripts/write-rule.cjs",
+      "--project",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-rule-contract-runtime-wbbvbyva/projects/opencode",
+      "--tools",
+      "opencode",
+      "--input",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-rule-contract-runtime-wbbvbyva/request.json"
+    ],
+    "exit": 0,
+    "stdout": "{\"files\":[\"aidd_docs/rules/01-standards/1-domain.md\",\"AGENTS.md\"]}\n",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-rule-contract-runtime-wbbvbyva/installed/scripts/write-rule.cjs",
+      "--project",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-rule-contract-runtime-wbbvbyva/projects/opencode",
+      "--tools",
+      "opencode",
+      "--input",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-rule-contract-runtime-wbbvbyva/request.json"
+    ],
+    "exit": 0,
+    "stdout": "{\"files\":[\"aidd_docs/rules/01-standards/1-docs.md\",\"AGENTS.md\"]}\n",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-rule-contract-runtime-wbbvbyva/installed/scripts/write-rule.cjs",
+      "--project",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-rule-contract-runtime-wbbvbyva/projects/opencode",
+      "--tools",
+      "opencode",
+      "--input",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-rule-contract-runtime-wbbvbyva/request.json"
+    ],
+    "exit": 0,
+    "stdout": "{\"files\":[\"aidd_docs/rules/01-standards/1-global.md\",\"AGENTS.md\"]}\n",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-rule-contract-runtime-wbbvbyva/installed/scripts/write-rule.cjs",
+      "--project",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-rule-contract-runtime-wbbvbyva/projects/opencode",
+      "--tools",
+      "opencode",
+      "--input",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-rule-contract-runtime-wbbvbyva/request.json"
+    ],
+    "exit": 0,
+    "stdout": "{\"files\":[\"aidd_docs/rules/01-standards/1-domain.md\",\"AGENTS.md\"]}\n",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-rule-contract-runtime-wbbvbyva/installed/scripts/write-rule.cjs",
+      "--project",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-rule-contract-runtime-wbbvbyva/projects/opencode",
+      "--tools",
+      "opencode",
+      "--input",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-rule-contract-runtime-wbbvbyva/request.json"
+    ],
+    "exit": 0,
+    "stdout": "{\"files\":[\"aidd_docs/rules/01-standards/1-docs.md\",\"AGENTS.md\"]}\n",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-rule-contract-runtime-wbbvbyva/installed/scripts/write-rule.cjs",
+      "--project",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-rule-contract-runtime-wbbvbyva/projects/opencode",
+      "--tools",
+      "opencode",
+      "--delete",
+      "01-standards/1-global"
+    ],
+    "exit": 0,
+    "stdout": "{\"files\":[\"aidd_docs/rules/01-standards/1-global.md\",\"AGENTS.md\"]}\n",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-rule-contract-runtime-wbbvbyva/installed/scripts/write-rule.cjs",
+      "--project",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-rule-contract-runtime-wbbvbyva/projects/opencode",
+      "--tools",
+      "opencode",
+      "--delete",
+      "01-standards/1-domain"
+    ],
+    "exit": 0,
+    "stdout": "{\"files\":[\"aidd_docs/rules/01-standards/1-domain.md\",\"AGENTS.md\"]}\n",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-rule-contract-runtime-wbbvbyva/installed/scripts/write-rule.cjs",
+      "--project",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-rule-contract-runtime-wbbvbyva/projects/opencode",
+      "--tools",
+      "opencode",
+      "--delete",
+      "01-standards/1-docs"
+    ],
+    "exit": 0,
+    "stdout": "{\"files\":[\"aidd_docs/rules/01-standards/1-docs.md\",\"AGENTS.md\"]}\n",
+    "stderr": ""
+  }
+]

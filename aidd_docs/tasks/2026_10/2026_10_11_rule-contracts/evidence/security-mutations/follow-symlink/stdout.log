@@ -1,0 +1,27 @@
+✖ regular reads reject symlinks without reading their targets (1.551958ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 45.494
+
+✖ failing tests:
+
+test at ../../../../../../private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-security-mutations-3uqlla2j/follow-symlink/scripts/__tests__/rule-reproduction-files.test.js:29:1
+✖ regular reads reject symlinks without reading their targets (1.551958ms)
+  AssertionError [ERR_ASSERTION]: Missing expected exception.
+      at TestContext.<anonymous> (/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-security-mutations-3uqlla2j/follow-symlink/scripts/__tests__/rule-reproduction-files.test.js:35:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1397:25)
+      at Test.start (node:internal/test_runner/test:1257:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: { code: 'ELOOP' },
+    operator: 'throws',
+    diff: 'simple'
+  }

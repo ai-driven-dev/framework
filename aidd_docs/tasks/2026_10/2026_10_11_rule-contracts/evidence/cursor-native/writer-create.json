@@ -1,0 +1,15 @@
+{
+  "command": [
+    "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+    "/private/tmp/aidd-oct11-cursor-native-FEFX3q/project/.cursor/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
+    "--project",
+    "/private/tmp/aidd-oct11-cursor-native-FEFX3q/project",
+    "--tools",
+    "cursor",
+    "--input",
+    "/private/tmp/aidd-oct11-cursor-native-FEFX3q/request.json"
+  ],
+  "exit": 0,
+  "stdout": "{\"files\":[\"aidd_docs/rules/01-standards/1-domain-review.md\",\".cursor/rules/01-standards/1-domain-review.mdc\"]}\n",
+  "stderr": ""
+}

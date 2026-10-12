@@ -5,6 +5,7 @@ const path = require("node:path");
 const { createHash } = require("node:crypto");
 const { spawnSync } = require("node:child_process");
 const { test } = require("node:test");
+const yaml = require("js-yaml");
 
 const skill = path.resolve(__dirname, "../../plugins/aidd-context/skills/05-rule-generate");
 const ALL = "claude,cursor,copilot,codex,opencode";
@@ -58,6 +59,26 @@ test("copied installed skill generates native adapters without CLI in an ESM pro
   const before = f.snapshot();
   assert.equal(f.run().status, 0);
   assert.deepEqual(f.snapshot(), before);
+});
+
+for (const paths of [[], ["src/domain/**/*.ts", 'tests/quoted"name/**/*.ts']]) test(`native YAML parses into the documented ${paths.length ? "scoped" : "global"} host contract`, (t) => {
+  const f = fixture(t);
+  const description = 'Review "domain": naïve \\ conventions #1';
+  const body = "# Review\r\n\r\n- Preserve exact text: café ⚙.\r\n";
+  assert.equal(f.run({ ...rule, description, paths, body }, "claude,cursor,copilot").status, 0);
+  const documents = [
+    [".claude/rules/01-standards/1-naming.md", paths.length ? { paths } : null],
+    [".cursor/rules/01-standards/1-naming.mdc", { description, ...(paths.length ? { globs: paths.join(",") } : {}), alwaysApply: !paths.length }],
+    [".github/instructions/01-naming.instructions.md", { applyTo: paths.length ? paths.join(",") : "**" }],
+  ];
+  for (const [name, expected] of documents) {
+    const text = f.read(name);
+    const frontmatter = /^---\n([\s\S]*?)\n---\n/.exec(text);
+    assert.deepEqual(frontmatter ? yaml.load(frontmatter[1]) : null, expected, name);
+    const content = frontmatter ? text.slice(frontmatter[0].length) : text;
+    assert.ok(content.startsWith(body), `${name} must preserve the complete body after metadata`);
+  }
+  assert.ok(!fs.existsSync(path.join(f.project, "AGENTS.md")), "native publication must not activate shared guidance");
 });
 
 test("update and last deletion restore exact CRLF user and memory bytes", (t) => {

@@ -1,0 +1,11 @@
+{
+  "command": [
+    "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+    "--test",
+    "tests/invoice.test.ts",
+    "tests/http.test.ts"
+  ],
+  "exit": 0,
+  "stdout": "\u2714 real HTTP create, validation rejection, lookup, and not-found journey (28.491667ms)\n\u2714 exact cents totals and repository isolation (1.565084ms)\n\u2714 invalid invoice refuses null (0.213042ms)\n\u2714 invalid invoice refuses {\"customerId\":\"bad\",\"currency\":\"EUR\",\"lines\":[{\"sku\":\"CONSULTING\",\"quantity\":3,\"unitPriceCents\":1999},{\"sku\":\"FREIGHT\",\"quantity\":1,\"unitPriceCents\":450}]} (0.077958ms)\n\u2714 invalid invoice refuses {\"customerId\":\"cus_acme\",\"currency\":\"GBP\",\"lines\":[{\"sku\":\"CONSULTING\",\"quantity\":3,\"unitPriceCents\":1999},{\"sku\":\"FREIGHT\",\"quantity\":1,\"unitPriceCents\":450}]} (0.041292ms)\n\u2714 invalid invoice refuses {\"customerId\":\"cus_acme\",\"currency\":\"EUR\",\"lines\":[]} (0.042709ms)\n\u2714 invalid invoice refuses {\"customerId\":\"cus_acme\",\"currency\":\"EUR\",\"lines\":[{\"sku\":\"X\",\"quantity\":0,\"unitPriceCents\":1}]} (0.080167ms)\n\u2714 invalid invoice refuses {\"customerId\":\"cus_acme\",\"currency\":\"EUR\",\"lines\":[{\"sku\":\"X\",\"quantity\":1,\"unitPriceCents\":1.25}]} (0.10475ms)\n\u2714 invalid invoice refuses {\"customerId\":\"cus_acme\",\"currency\":\"EUR\",\"lines\":[{\"sku\":\"X\",\"quantity\":2,\"unitPriceCents\":9007199254740991}]} (0.077708ms)\n\u2139 tests 9\n\u2139 suites 0\n\u2139 pass 9\n\u2139 fail 0\n\u2139 cancelled 0\n\u2139 skipped 0\n\u2139 todo 0\n\u2139 duration_ms 120.337875\n",
+  "stderr": ""
+}

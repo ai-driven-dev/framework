@@ -1,0 +1,53 @@
+{
+  "checkedAt": "2026-10-11T19:19:01.844433+00:00",
+  "version": "2026.10.01-e373342",
+  "source": "Read-only native DashboardService methods confirmed in current CLI source",
+  "modelInferenceRequested": false,
+  "globalAuthModified": false,
+  "calls": [
+    {
+      "method": "GetUsageBasedPremiumRequests",
+      "httpStatus": 200,
+      "usageBasedPremiumRequests": false
+    },
+    {
+      "method": "GetPlanInfo",
+      "httpStatus": 200,
+      "plan": {
+        "planName": "Free"
+      }
+    },
+    {
+      "method": "GetUsageLimitPolicyStatus",
+      "httpStatus": 200,
+      "limitStatus": {},
+      "hasErrorTitle": false
+    },
+    {
+      "method": "GetCurrentPeriodUsage",
+      "httpStatus": 200,
+      "enabled": false,
+      "includedUsage": {
+        "totalSpend": 0,
+        "includedSpend": 0,
+        "bonusSpend": 0,
+        "remaining": 0,
+        "limit": 0,
+        "autoPercentUsed": 0,
+        "apiPercentUsed": 0,
+        "totalPercentUsed": 0
+      },
+      "hasDisplayMessage": true
+    },
+    {
+      "method": "GetHardLimit",
+      "httpStatus": 200,
+      "onDemandPolicy": {
+        "hardLimit": 0,
+        "noUsageBasedAllowed": true,
+        "perUserMonthlyLimitDollars": 0
+      }
+    }
+  ],
+  "includedUsageRemaining": "interpret GetCurrentPeriodUsage only when enabled; absent protobuf numeric fields default to zero"
+}

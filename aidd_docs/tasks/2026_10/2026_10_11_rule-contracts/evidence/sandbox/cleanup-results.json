@@ -1,0 +1,87 @@
+{
+  "generatedRulesUnownedAndPreserved": true,
+  "protectedFiles": [
+    "AGENTS.md",
+    "aidd_docs/rules/02-programming-languages/2-invoice-boundary.md",
+    "src/domain/invoice.ts",
+    "src/http/app.ts",
+    "docs/api.md",
+    ".claude/rules/00-architecture/0-user-boundaries.md",
+    ".cursor/rules/00-architecture/0-user-boundaries.mdc",
+    ".github/instructions/00-user-boundaries.instructions.md"
+  ],
+  "installedPluginScriptRemoved": true,
+  "commands": [
+    {
+      "args": [
+        "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+        "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/cli/dist/cli.js",
+        "doctor",
+        "--tool",
+        "opencode",
+        "--plugin",
+        "aidd-context"
+      ],
+      "exit": 0,
+      "stdout": "\nopencode tools:\n  opencode (v5.4.0): 2 files, 0 merge files\n\nDrift:\n  opencode (v5.4.0): in sync\nPlugins:\n  (all in sync)\n\nInstallation is healthy\n",
+      "stderr": ""
+    },
+    {
+      "args": [
+        "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+        "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/cli/dist/cli.js",
+        "sync",
+        "--tool",
+        "opencode",
+        "--plugin",
+        "aidd-context",
+        "--force"
+      ],
+      "exit": 0,
+      "stdout": "Checking opencode for files to restore...\nNothing to restore — all files are unmodified.\n",
+      "stderr": ""
+    },
+    {
+      "args": [
+        "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+        "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/cli/dist/cli.js",
+        "doctor",
+        "--tool",
+        "opencode",
+        "--plugin",
+        "aidd-context"
+      ],
+      "exit": 0,
+      "stdout": "\nopencode tools:\n  opencode (v5.4.0): 2 files, 0 merge files\n\nDrift:\n  opencode (v5.4.0): in sync\nPlugins:\n  (all in sync)\n\nInstallation is healthy\n",
+      "stderr": ""
+    },
+    {
+      "args": [
+        "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+        "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/cli/dist/cli.js",
+        "plugin",
+        "remove",
+        "aidd-context",
+        "--tool",
+        "opencode",
+        "--scope",
+        "project"
+      ],
+      "exit": 0,
+      "stdout": "Plugin 'aidd-context' removed.\n",
+      "stderr": ""
+    },
+    {
+      "args": [
+        "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+        "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/cli/dist/cli.js",
+        "doctor",
+        "--tool",
+        "opencode"
+      ],
+      "exit": 0,
+      "stdout": "\nopencode tools:\n  opencode (v5.4.0): 2 files, 0 merge files\n\nDrift:\n  opencode (v5.4.0): in sync\nPlugins:\n  (all in sync)\n\nInstallation is healthy\n",
+      "stderr": ""
+    }
+  ]
+}

@@ -1,0 +1,137 @@
+[
+  {
+    "argv": [
+      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+      "/private/tmp/aidd-oct11-copilot-probe-3svb9u/evidence/project/.github/skills/aidd-rule-generate/scripts/write-rule.cjs",
+      "--project",
+      "/private/tmp/aidd-oct11-copilot-probe-3svb9u/evidence/project",
+      "--tools",
+      "copilot",
+      "--input",
+      "/private/tmp/aidd-oct11-copilot-probe-3svb9u/evidence/request-0.json"
+    ],
+    "exit": 0,
+    "stdout": "{\"files\":[\"aidd_docs/rules/07-quality/7-global-probe.md\",\".github/instructions/07-global-probe.instructions.md\"]}\n",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+      "/private/tmp/aidd-oct11-copilot-probe-3svb9u/evidence/project/.github/skills/aidd-rule-generate/scripts/write-rule.cjs",
+      "--project",
+      "/private/tmp/aidd-oct11-copilot-probe-3svb9u/evidence/project",
+      "--tools",
+      "copilot",
+      "--input",
+      "/private/tmp/aidd-oct11-copilot-probe-3svb9u/evidence/request-1.json"
+    ],
+    "exit": 0,
+    "stdout": "{\"files\":[\"aidd_docs/rules/08-domain/8-domain-probe.md\",\".github/instructions/07-global-probe.instructions.md\",\".github/instructions/08-domain-probe.instructions.md\"]}\n",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+      "/private/tmp/aidd-oct11-copilot-probe-3svb9u/evidence/project/.github/skills/aidd-rule-generate/scripts/write-rule.cjs",
+      "--project",
+      "/private/tmp/aidd-oct11-copilot-probe-3svb9u/evidence/project",
+      "--tools",
+      "copilot",
+      "--input",
+      "/private/tmp/aidd-oct11-copilot-probe-3svb9u/evidence/request-2.json"
+    ],
+    "exit": 0,
+    "stdout": "{\"files\":[\"aidd_docs/rules/09-other/9-docs-probe.md\",\".github/instructions/07-global-probe.instructions.md\",\".github/instructions/08-domain-probe.instructions.md\",\".github/instructions/09-docs-probe.instructions.md\"]}\n",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+      "/private/tmp/aidd-oct11-copilot-probe-3svb9u/evidence/project/.github/skills/aidd-rule-generate/scripts/write-rule.cjs",
+      "--project",
+      "/private/tmp/aidd-oct11-copilot-probe-3svb9u/evidence/project",
+      "--tools",
+      "copilot",
+      "--input",
+      "/private/tmp/aidd-oct11-copilot-probe-3svb9u/evidence/request-3.json"
+    ],
+    "exit": 0,
+    "stdout": "{\"files\":[\"aidd_docs/rules/07-quality/7-global-probe.md\",\".github/instructions/07-global-probe.instructions.md\",\".github/instructions/08-domain-probe.instructions.md\",\".github/instructions/09-docs-probe.instructions.md\"]}\n",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+      "/private/tmp/aidd-oct11-copilot-probe-3svb9u/evidence/project/.github/skills/aidd-rule-generate/scripts/write-rule.cjs",
+      "--project",
+      "/private/tmp/aidd-oct11-copilot-probe-3svb9u/evidence/project",
+      "--tools",
+      "copilot",
+      "--input",
+      "/private/tmp/aidd-oct11-copilot-probe-3svb9u/evidence/request-4.json"
+    ],
+    "exit": 0,
+    "stdout": "{\"files\":[\"aidd_docs/rules/08-domain/8-domain-probe.md\",\".github/instructions/07-global-probe.instructions.md\",\".github/instructions/08-domain-probe.instructions.md\",\".github/instructions/09-docs-probe.instructions.md\"]}\n",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+      "/private/tmp/aidd-oct11-copilot-probe-3svb9u/evidence/project/.github/skills/aidd-rule-generate/scripts/write-rule.cjs",
+      "--project",
+      "/private/tmp/aidd-oct11-copilot-probe-3svb9u/evidence/project",
+      "--tools",
+      "copilot",
+      "--input",
+      "/private/tmp/aidd-oct11-copilot-probe-3svb9u/evidence/request-5.json"
+    ],
+    "exit": 0,
+    "stdout": "{\"files\":[\"aidd_docs/rules/09-other/9-docs-probe.md\",\".github/instructions/07-global-probe.instructions.md\",\".github/instructions/08-domain-probe.instructions.md\",\".github/instructions/09-docs-probe.instructions.md\"]}\n",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+      "/private/tmp/aidd-oct11-copilot-probe-3svb9u/evidence/project/.github/skills/aidd-rule-generate/scripts/write-rule.cjs",
+      "--project",
+      "/private/tmp/aidd-oct11-copilot-probe-3svb9u/evidence/project",
+      "--tools",
+      "copilot",
+      "--delete",
+      "07-quality/7-global-probe"
+    ],
+    "exit": 0,
+    "stdout": "{\"files\":[\"aidd_docs/rules/07-quality/7-global-probe.md\",\".github/instructions/07-global-probe.instructions.md\",\".github/instructions/08-domain-probe.instructions.md\",\".github/instructions/09-docs-probe.instructions.md\"]}\n",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+      "/private/tmp/aidd-oct11-copilot-probe-3svb9u/evidence/project/.github/skills/aidd-rule-generate/scripts/write-rule.cjs",
+      "--project",
+      "/private/tmp/aidd-oct11-copilot-probe-3svb9u/evidence/project",
+      "--tools",
+      "copilot",
+      "--delete",
+      "08-domain/8-domain-probe"
+    ],
+    "exit": 0,
+    "stdout": "{\"files\":[\"aidd_docs/rules/08-domain/8-domain-probe.md\",\".github/instructions/08-domain-probe.instructions.md\",\".github/instructions/09-docs-probe.instructions.md\"]}\n",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+      "/private/tmp/aidd-oct11-copilot-probe-3svb9u/evidence/project/.github/skills/aidd-rule-generate/scripts/write-rule.cjs",
+      "--project",
+      "/private/tmp/aidd-oct11-copilot-probe-3svb9u/evidence/project",
+      "--tools",
+      "copilot",
+      "--delete",
+      "09-other/9-docs-probe"
+    ],
+    "exit": 0,
+    "stdout": "{\"files\":[\"aidd_docs/rules/09-other/9-docs-probe.md\",\".github/instructions/09-docs-probe.instructions.md\"]}\n",
+    "stderr": ""
+  }
+]

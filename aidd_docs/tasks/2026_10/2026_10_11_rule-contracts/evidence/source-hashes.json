@@ -1,0 +1,62 @@
+[
+  {
+    "file": "plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
+    "bytes": 15650,
+    "sha256": "70783e579b75b9e22760239cbfd4309641bdd73840b17e7dfd606a252679a420"
+  },
+  {
+    "file": "plugins/aidd-context/skills/05-rule-generate/references/tool-paths.md",
+    "bytes": 8258,
+    "sha256": "9bf60598173611a520a556f6edf5cae828ea75371a64cbbd6fa4b41412f71150"
+  },
+  {
+    "file": "scripts/__tests__/rule-generation.test.js",
+    "bytes": 21411,
+    "sha256": "84ee04e43d3542ba2300a0a5eb1f94ce5680fa038a73e54fda9804ba93c7b421"
+  },
+  {
+    "file": "scripts/__tests__/rule-reproduction-files.test.js",
+    "bytes": 4502,
+    "sha256": "61f4a082ffcba9ebfff6e400fdd6106befca4bdac91facfefd3e4ee6a3c26d4c"
+  },
+  {
+    "file": "aidd_docs/tasks/2026_10/2026_10_11_rule-contracts/capture-host.py",
+    "bytes": 9541,
+    "sha256": "80479926b7c6d9774ab04728a6a3f8e5a4128a12a449859a7c7b012b93ea234a"
+  },
+  {
+    "file": "aidd_docs/tasks/2026_10/2026_10_11_rule-contracts/run-runtime.py",
+    "bytes": 6829,
+    "sha256": "6cdd440c3618fa263efb5e5807e71481446c442ed557bbfba0cae8af2fbbc941"
+  },
+  {
+    "file": "aidd_docs/tasks/2026_10/2026_10_09_autonomous-rule-generation/realistic-sandbox/reproduction/lifecycle.cjs",
+    "bytes": 5008,
+    "sha256": "fd4005fe3a4c9210be678776c6482d479e6fd9dadd6b2c26bb986df5778b498b"
+  },
+  {
+    "file": "aidd_docs/tasks/2026_10/2026_10_09_autonomous-rule-generation/realistic-sandbox/reproduction/run.cjs",
+    "bytes": 1646,
+    "sha256": "ca38720dd4ac35f3f3f1f7559c8852c76f0f98bb7af82c6e0dd56cd92910a863"
+  },
+  {
+    "file": "aidd_docs/tasks/2026_10/2026_10_09_autonomous-rule-generation/realistic-sandbox/reproduction/negative-pipeline.cjs",
+    "bytes": 5473,
+    "sha256": "42920557150e79f6deb6e32f152c2996a043cd27d6932619ad4b5e05badabb76"
+  },
+  {
+    "file": "aidd_docs/tasks/2026_10/2026_10_09_autonomous-rule-generation/realistic-sandbox/reproduction/common.cjs",
+    "bytes": 2726,
+    "sha256": "76f6e85cc3abd1af9cc83e8da9f65ce5da434e5a80a0cb6325c62d608df89e9c"
+  },
+  {
+    "file": "aidd_docs/tasks/2026_10/2026_10_09_autonomous-rule-generation/realistic-sandbox/reproduction/cleanup-ownership.cjs",
+    "bytes": 3196,
+    "sha256": "8bd69b707a2241b4cd213408f7660e4342b4a460311f45f9ebd64ed16e351dcc"
+  },
+  {
+    "file": "aidd_docs/tasks/2026_10/2026_10_09_autonomous-rule-generation/realistic-sandbox/reproduction/install.cjs",
+    "bytes": 3351,
+    "sha256": "0d57bbe64da9fa12602b7211c87518014023adbd6db95e843e3169eae75d6b3f"
+  }
+]

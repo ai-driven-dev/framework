@@ -1,0 +1,71 @@
+{
+  "node": "v24.20.0",
+  "files": [
+    {
+      "file": "aidd_docs/tasks/2026_10/2026_10_09_autonomous-rule-generation/realistic-sandbox/reproduction/common.cjs",
+      "sha256": "76f6e85cc3abd1af9cc83e8da9f65ce5da434e5a80a0cb6325c62d608df89e9c"
+    },
+    {
+      "file": "aidd_docs/tasks/2026_10/2026_10_09_autonomous-rule-generation/realistic-sandbox/reproduction/lifecycle.cjs",
+      "sha256": "fd4005fe3a4c9210be678776c6482d479e6fd9dadd6b2c26bb986df5778b498b"
+    },
+    {
+      "file": "aidd_docs/tasks/2026_10/2026_10_09_autonomous-rule-generation/realistic-sandbox/reproduction/negative-pipeline.cjs",
+      "sha256": "42920557150e79f6deb6e32f152c2996a043cd27d6932619ad4b5e05badabb76"
+    },
+    {
+      "file": "aidd_docs/tasks/2026_10/2026_10_09_autonomous-rule-generation/realistic-sandbox/reproduction/cleanup-ownership.cjs",
+      "sha256": "8bd69b707a2241b4cd213408f7660e4342b4a460311f45f9ebd64ed16e351dcc"
+    },
+    {
+      "file": "scripts/__tests__/rule-reproduction-files.test.js",
+      "sha256": "61f4a082ffcba9ebfff6e400fdd6106befca4bdac91facfefd3e4ee6a3c26d4c"
+    }
+  ],
+  "red": {
+    "exit": 1,
+    "tests": 7,
+    "failures": 6,
+    "realWitness": "ownership read replacement instead of original",
+    "path": "/tmp/aidd-rule-reproduction-files-red.tap"
+  },
+  "green": {
+    "exit": 0,
+    "tests": 8,
+    "path": "/tmp/aidd-rule-reproduction-files-green.tap",
+    "command": "node scripts/check-tests-leave-git-alone.js -- node --test scripts/__tests__/rule-reproduction-files.test.js"
+  },
+  "reproduction": {
+    "exit": 0,
+    "root": "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT",
+    "checks": [
+      {
+        "name": "baseline API",
+        "exit": 0
+      },
+      {
+        "name": "install",
+        "exit": 0
+      },
+      {
+        "name": "lifecycle",
+        "exit": 0
+      },
+      {
+        "name": "negative-pipeline",
+        "exit": 0
+      },
+      {
+        "name": "cleanup-ownership",
+        "exit": 0
+      }
+    ],
+    "invocations": 78,
+    "negativeCases": 12,
+    "path": "/tmp/aidd-rule-reproduction-files-full.log",
+    "command": "node scripts/check-tests-leave-git-alone.js -- node aidd_docs/tasks/2026_10/2026_10_09_autonomous-rule-generation/realistic-sandbox/reproduction/run.cjs --repo /Users/baptistelafourcade/orca/workspaces/framework/basketstar"
+  },
+  "gitDiffCheck": 0,
+  "hooksUnchanged": true,
+  "remoteCodeQLRerun": false
+}

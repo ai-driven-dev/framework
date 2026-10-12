@@ -1,0 +1,11 @@
+---
+description: "Domain review marker"
+globs: "src/domain/**/*.ts"
+alwaysApply: false
+---
+# Domain review
+
+- Place the exact comment `// Team reviewed domain change` immediately above every newly declared exported function.
+- Do not change existing functions.
+
+<!-- aidd_rule_output:path=.cursor/rules/01-standards/1-domain-review.mdc sha256=291fd162e4a873d82c275c40a69dc5825657ab4841071743dbaa5bc9e331b9e5 -->
