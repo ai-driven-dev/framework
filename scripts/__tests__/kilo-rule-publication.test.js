@@ -195,7 +195,11 @@ for (const change of ["modified", "disappeared"]) {
     const p = publisher(t);
     p.put(".kilo/kilo.jsonc", "{}\n");
     const config = path.join(p.root, ".kilo/kilo.jsonc");
-    const env = injected(t, p.root, `const fs=require('node:fs');const read=fs.readFileSync;let changed=false;fs.readFileSync=function(file,...args){const data=read.call(this,file,...args);if(!changed&&typeof file==='number'){changed=true;${change === "modified" ? `fs.writeFileSync(${JSON.stringify(config)},'{"other":true}\\n')` : `fs.rmSync(${JSON.stringify(config)})`}}return data};`);
+    const env = {
+      ...injected(t, p.root, "const fs=require('node:fs');const read=fs.readFileSync;let changed=false;fs.readFileSync=function(file,...args){const data=read.call(this,file,...args);if(!changed&&typeof file==='number'){changed=true;if(process.env.AIDD_TEST_CONFIG_CHANGE==='modified')fs.writeFileSync(process.env.AIDD_TEST_CONFIG,'{\"other\":true}\\n');else fs.rmSync(process.env.AIDD_TEST_CONFIG)}return data};"),
+      AIDD_TEST_CONFIG: config,
+      AIDD_TEST_CONFIG_CHANGE: change,
+    };
     const result = p.run(rule, "claude,kilo", [], env);
     assert.notEqual(result.status, 0);
     assert.match(result.stderr, /changed after inspection/);
@@ -211,7 +215,10 @@ test("writer detects config mutation during staging and removes staged outputs",
   const p = publisher(t);
   p.put(".kilo/kilo.jsonc", "{}\n");
   const config = path.join(p.root, ".kilo/kilo.jsonc");
-  const env = injected(t, p.root, `const fs=require('node:fs');const open=fs.openSync;let changed=false;fs.openSync=function(file,...args){const fd=open.call(this,file,...args);if(!changed&&typeof file==='string'&&file.endsWith('.tmp')){changed=true;fs.writeFileSync(${JSON.stringify(config)},'{"external":true}\\n')}return fd};`);
+  const env = {
+    ...injected(t, p.root, "const fs=require('node:fs');const open=fs.openSync;let changed=false;fs.openSync=function(file,...args){const fd=open.call(this,file,...args);if(!changed&&typeof file==='string'&&file.endsWith('.tmp')){changed=true;fs.writeFileSync(process.env.AIDD_TEST_CONFIG,'{\"external\":true}\\n')}return fd};"),
+    AIDD_TEST_CONFIG: config,
+  };
   const result = p.run(rule, "claude,kilo", [], env);
   assert.notEqual(result.status, 0);
   assert.match(result.stderr, /Kilo config changed during publication/);
