@@ -342,6 +342,81 @@ function closeWitness(witness) {
   }
 }
 
+const DESCRIPTOR_TRACKER = [
+  "{",
+  "const fs = require('node:fs');",
+  "const { syncBuiltinESMExports } = require('node:module');",
+  "const open = fs.openSync; const close = fs.closeSync; const tracked = new Set();",
+  "fs.openSync = function (file, ...args) { const fd = open.call(this, file, ...args); if (typeof file === 'string' && /(?:CLAUDE|AGENTS|README)\\.md$/.test(file)) { tracked.add(fd); process.stderr.write('OPEN:' + fd + '\\n'); } return fd; };",
+  "fs.closeSync = function (fd) { if (tracked.has(fd)) { tracked.delete(fd); process.stderr.write('CLOSE:' + fd + '\\n'); } return close.call(this, fd); };",
+  "syncBuiltinESMExports();",
+  "}",
+].join("\n");
+
+function assertTrackedDescriptorsClosed(stderr) {
+  const opened = [...stderr.matchAll(/OPEN:(\d+)/gu)].map((match) => match[1]);
+  const closed = [...stderr.matchAll(/CLOSE:(\d+)/gu)].map((match) => match[1]);
+  assert.ok(opened.length > 0, `the hook should open at least one tracked destination; stderr: ${stderr}`);
+  assert.deepEqual(closed, opened, "every opened destination descriptor should be explicitly closed");
+}
+
+test("preflight closes descriptors after --check and after a later marker error", () => {
+  for (const malformed of [false, true]) {
+    inProject({
+      "CLAUDE.md": EMPTY_BLOCK,
+      "AGENTS.md": malformed ? `${OPEN}\n` : EMPTY_BLOCK,
+    }, ({ invoke }) => {
+      const result = invoke.withRace(DESCRIPTOR_TRACKER, ["--check", "claude", "codex"]);
+      assert.equal(result.status, malformed ? 1 : 0, result.stderr);
+      assertTrackedDescriptorsClosed(result.stderr);
+    });
+  }
+});
+
+test("preflight closes descriptors when the memory bank is absent", () => {
+  inProject({ "CLAUDE.md": EMPTY_BLOCK }, ({ root, invoke }) => {
+    fs.rmSync(path.join(root, "aidd_docs"), { recursive: true, force: true });
+    const result = invoke.withRace(DESCRIPTOR_TRACKER, ["claude"]);
+    assert.equal(result.status, 0, result.stderr);
+    assertTrackedDescriptorsClosed(result.stderr);
+  });
+});
+
+test("preflight closes a descriptor when reading an opened destination fails", () => {
+  inProject({ "CLAUDE.md": EMPTY_BLOCK }, ({ invoke }) => {
+    const preload = [
+      DESCRIPTOR_TRACKER,
+      "{ const fs = require('node:fs'); const read = fs.readFileSync;",
+      "fs.readFileSync = function (file, ...args) { if (typeof file === 'number') { const error = new Error('injected read failure'); error.code = 'EIO'; throw error; } return read.call(this, file, ...args); };",
+      "const { syncBuiltinESMExports } = require('node:module'); syncBuiltinESMExports(); }",
+    ].join("\n");
+    const result = invoke.withRace(preload, ["claude"]);
+    assert.equal(result.status, 1);
+    assert.match(result.stderr, /injected read failure/u);
+    assertTrackedDescriptorsClosed(result.stderr);
+  });
+});
+
+test("automatic sync closes context and README descriptors when the README write fails", () => {
+  inProject({
+    "CLAUDE.md": EMPTY_BLOCK,
+    "aidd_docs/memory/README.md": "# Memory\n<!-- files:start -->\n<!-- files:end -->\n",
+  }, ({ invoke, read }) => {
+    const preload = [
+      DESCRIPTOR_TRACKER,
+      "{ const fs = require('node:fs'); const open = fs.openSync; const write = fs.writeSync; const readmeFds = new Set();",
+      "fs.openSync = function (file, ...args) { const fd = open.call(this, file, ...args); if (typeof file === 'string' && file.endsWith('aidd_docs/memory/README.md')) readmeFds.add(fd); return fd; };",
+      "fs.writeSync = function (fd, ...args) { if (readmeFds.has(fd)) { const error = new Error('injected README write failure'); error.code = 'EIO'; throw error; } return write.call(this, fd, ...args); };",
+      "const { syncBuiltinESMExports } = require('node:module'); syncBuiltinESMExports(); }",
+    ].join("\n");
+    const result = invoke.withRace(preload, []);
+    assert.equal(result.status, 1);
+    assert.match(result.stderr, /injected README write failure/u);
+    assertTrackedDescriptorsClosed(result.stderr);
+    assert.match(read("CLAUDE.md"), /@aidd_docs\/memory\/architecture\.md/u);
+  });
+});
+
 test("Kilo selected alone fills root AGENTS.md without changing other tools or legacy paths", () => {
   inProject({
     "AGENTS.md": `USER PREFIX\n${EMPTY_BLOCK}USER SUFFIX\n`,
@@ -615,6 +690,7 @@ for (const mode of ["automatic", "explicit"]) {
       const outside = path.join(root, "outside.md");
       fs.writeFileSync(outside, "OUTSIDE_SENTINEL\n");
       const preload = [
+        DESCRIPTOR_TRACKER,
         "const fs = require('node:fs');",
         "const { syncBuiltinESMExports } = require('node:module');",
         "fs.writeSync = function () { const error = new Error('injected write failure'); error.code = 'EIO'; throw error; };",
@@ -622,6 +698,7 @@ for (const mode of ["automatic", "explicit"]) {
       ].join("\n");
       const result = invoke.withRace(preload, mode === "explicit" ? ["codex"] : []);
       assert.equal(result.status, 1);
+      assertTrackedDescriptorsClosed(result.stderr);
       assert.equal(read("AGENTS.md"), original);
       assert.equal(fs.readFileSync(outside, "utf8"), "OUTSIDE_SENTINEL\n");
     });

@@ -399,111 +399,113 @@ function gitAdd(childProcess, files) {
   const openedFiles = new Map();
   let readmeOriginal;
 
-  if (explicit) {
-    // Complete preflight before scanning the bank or writing the first target. This
-    // prevents known destination errors from leaving earlier selected files changed;
-    // it is not a transaction against concurrent edits or process interruption.
-    try {
-      for (const target of targets) {
-        validateDestination(fs, path, target.path);
-        const opened = openProjectFile(fs, path, target.path);
-        const original = opened === null ? null : readOpenedText(fs, opened);
-        if (opened) openedFiles.set(target.path, opened);
-        validateMarkers(target.path, original, [
-          [BLOCK_OPEN, BLOCK_CLOSE], [LEGACY_BLOCK_OPEN, LEGACY_BLOCK_CLOSE],
-        ], "project memory");
-        originals.set(target.path, original);
-      }
-      readmeOriginal = readTextOrNull(fs, readmePath);
-      if (readmeOriginal !== null && markerLines(readmeOriginal.split("\n"), [TOC_OPEN, TOC_CLOSE]).length > 0) {
-        validateDestination(fs, path, readmePath);
-        const readme = openProjectFile(fs, path, readmePath);
-        readmeOriginal = readOpenedText(fs, readme);
-        openedFiles.set(readmePath, readme);
-        validateMarkers(readmePath, readmeOriginal, [[TOC_OPEN, TOC_CLOSE]], "memory README");
-      }
-    } catch (err) {
-      console.error(`update_memory: ${err.message}`);
-      process.exitCode = 1;
-      return;
-    }
-    if (checkOnly) return;
-  }
-  if (!fs.existsSync(DOCS_DIR)) return;
-
-  const rootFiles = scanRootFiles(fs, path);
-  const onDemandFiles = ON_DEMAND_DIRS.flatMap((sub) => scanSubdir(fs, path, sub));
-  const changed = [];
-  const pending = [];
-
-  for (const target of targets) {
-    let opened = openedFiles.get(target.path);
-    let original = explicit ? originals.get(target.path) : undefined;
-    if (!explicit) {
+  try {
+    if (explicit) {
+      // Complete preflight before scanning the bank or writing the first target. This
+      // prevents known destination errors from leaving earlier selected files changed;
+      // it is not a transaction against concurrent edits or process interruption.
       try {
-        opened = openProjectFile(fs, path, target.path);
-        original = opened === null ? null : readOpenedText(fs, opened);
-        if (opened) openedFiles.set(target.path, opened);
+        for (const target of targets) {
+          validateDestination(fs, path, target.path);
+          const opened = openProjectFile(fs, path, target.path);
+          if (opened) openedFiles.set(target.path, opened);
+          const original = opened === null ? null : readOpenedText(fs, opened);
+          validateMarkers(target.path, original, [
+            [BLOCK_OPEN, BLOCK_CLOSE], [LEGACY_BLOCK_OPEN, LEGACY_BLOCK_CLOSE],
+          ], "project memory");
+          originals.set(target.path, original);
+        }
+        readmeOriginal = readTextOrNull(fs, readmePath);
+        if (readmeOriginal !== null && markerLines(readmeOriginal.split("\n"), [TOC_OPEN, TOC_CLOSE]).length > 0) {
+          validateDestination(fs, path, readmePath);
+          const readme = openProjectFile(fs, path, readmePath);
+          openedFiles.set(readmePath, readme);
+          readmeOriginal = readOpenedText(fs, readme);
+          validateMarkers(readmePath, readmeOriginal, [[TOC_OPEN, TOC_CLOSE]], "memory README");
+        }
       } catch (err) {
         console.error(`update_memory: ${err.message}`);
+        process.exitCode = 1;
+        return;
+      }
+      if (checkOnly) return;
+    }
+    if (!fs.existsSync(DOCS_DIR)) return;
+
+    const rootFiles = scanRootFiles(fs, path);
+    const onDemandFiles = ON_DEMAND_DIRS.flatMap((sub) => scanSubdir(fs, path, sub));
+    const changed = [];
+    const pending = [];
+
+    for (const target of targets) {
+      let opened = openedFiles.get(target.path);
+      let original = explicit ? originals.get(target.path) : undefined;
+      if (!explicit) {
+        try {
+          opened = openProjectFile(fs, path, target.path);
+          if (opened) openedFiles.set(target.path, opened);
+          original = opened === null ? null : readOpenedText(fs, opened);
+        } catch (err) {
+          console.error(`update_memory: ${err.message}`);
+          continue;
+        }
+      }
+      if (original === null) continue;
+
+      const innerContent = buildBlockContent(
+        rootFiles,
+        onDemandFiles,
+        target.syntax,
+        relativePrefix(target.path),
+      );
+      // Compared against what is on disk, not against the migrated text: an unchanged memory
+      // list would otherwise skip the write and leave the old markers in place forever.
+      const updated = updateBlock(migrateLegacyMarkers(original), innerContent);
+
+      if (updated === null) {
+        if (!explicit) reportUnpairedMarkers(target.path, original);
         continue;
       }
+      if (updated === original) continue;
+
+      if (explicit) pending.push({ path: target.path, content: updated, opened });
+      else writeOpenedText(fs, path, target.path, opened, updated);
+      changed.push(target.path);
     }
-    if (original === null) continue;
 
-    const innerContent = buildBlockContent(
-      rootFiles,
-      onDemandFiles,
-      target.syntax,
-      relativePrefix(target.path),
-    );
-    // Compared against what is on disk, not against the migrated text: an unchanged memory
-    // list would otherwise skip the write and leave the old markers in place forever.
-    const updated = updateBlock(migrateLegacyMarkers(original), innerContent);
-
-    if (updated === null) {
-      if (!explicit) reportUnpairedMarkers(target.path, original);
-      continue;
-    }
-    if (updated === original) continue;
-
-    if (explicit) pending.push({ path: target.path, content: updated, opened });
-    else writeOpenedText(fs, path, target.path, opened, updated);
-    changed.push(target.path);
-  }
-
-  // Only if the README opts in with its own markers.
-  if (!explicit) {
-    readmeOriginal = readTextOrNull(fs, readmePath);
-    if (readmeOriginal !== null && markerLines(readmeOriginal.split("\n"), [TOC_OPEN, TOC_CLOSE]).length > 0) {
-      try {
-        const readme = openProjectFile(fs, path, readmePath);
-        readmeOriginal = readOpenedText(fs, readme);
-        openedFiles.set(readmePath, readme);
-      } catch (err) {
-        // Automatic mode is best-effort; an unsafe opted-in README is not written.
-        if (err.code !== "AIDD_UNSAFE_PATH") throw err;
-        readmeOriginal = null;
+    // Only if the README opts in with its own markers.
+    if (!explicit) {
+      readmeOriginal = readTextOrNull(fs, readmePath);
+      if (readmeOriginal !== null && markerLines(readmeOriginal.split("\n"), [TOC_OPEN, TOC_CLOSE]).length > 0) {
+        try {
+          const readme = openProjectFile(fs, path, readmePath);
+          openedFiles.set(readmePath, readme);
+          readmeOriginal = readOpenedText(fs, readme);
+        } catch (err) {
+          // Automatic mode is best-effort; an unsafe opted-in README is not written.
+          if (err.code !== "AIDD_UNSAFE_PATH") throw err;
+          readmeOriginal = null;
+        }
       }
     }
-  }
-  if (readmeOriginal !== null) {
-    const toc = buildToc(rootFiles, onDemandFiles, path);
-    const updated = updateMarkers(readmeOriginal, TOC_OPEN, TOC_CLOSE, toc);
-    if (updated !== null && updated !== readmeOriginal) {
-      const opened = openedFiles.get(readmePath);
-      if (explicit) pending.push({ path: readmePath, content: updated, opened });
-      else writeOpenedText(fs, path, readmePath, opened, updated);
-      changed.push(readmePath);
+    if (readmeOriginal !== null) {
+      const toc = buildToc(rootFiles, onDemandFiles, path);
+      const updated = updateMarkers(readmeOriginal, TOC_OPEN, TOC_CLOSE, toc);
+      if (updated !== null && updated !== readmeOriginal) {
+        const opened = openedFiles.get(readmePath);
+        if (explicit) pending.push({ path: readmePath, content: updated, opened });
+        else writeOpenedText(fs, path, readmePath, opened, updated);
+        changed.push(readmePath);
+      }
     }
+
+    for (const edit of pending) writeOpenedText(fs, path, edit.path, edit.opened, edit.content);
+
+    // Only as the auto hook, which owns no other change: called by the skill, staging its own
+    // two files would leave a partial index that reads like the whole change.
+    if (changed.length > 0 && tools.length === 0) gitAdd(childProcess, changed);
+  } finally {
+    for (const opened of openedFiles.values()) fs.closeSync(opened.fd);
   }
-
-  for (const edit of pending) writeOpenedText(fs, path, edit.path, edit.opened, edit.content);
-
-  for (const opened of openedFiles.values()) fs.closeSync(opened.fd);
-
-  // Only as the auto hook, which owns no other change: called by the skill, staging its own
-  // two files would leave a partial index that reads like the whole change.
-  if (changed.length > 0 && tools.length === 0) gitAdd(childProcess, changed);
 
 })();
