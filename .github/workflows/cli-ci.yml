@@ -521,35 +521,17 @@ jobs:
         run: node scripts/check-tests-leave-git-alone.js -- node --test 'scripts/__tests__/**/*.test.js'
 
       # Lefthook on Windows hands each job to `sh -c` through a command line it builds by hand,
-      # with nothing escaped (#948). Three probes isolate what breaks that: a line break, a
-      # double quote, a single quote. They report, they never fail the job.
-      - name: Hooks - probe what lefthook's sh -c survives on Windows
-        run: |
-          cat > "$RUNNER_TEMP/probe.yml" <<'YML'
-          probe:
-            commands:
-              multiline-no-quotes:
-                run: |
-                  if true; then
-                    echo multiline-ok
-                  fi
-              oneline-double-quote:
-                run: echo "double-quote-ok"
-              oneline-single-quote:
-                run: echo 'single-quote-ok'
-          YML
-          for c in multiline-no-quotes oneline-double-quote oneline-single-quote; do
-            out=$(LEFTHOOK_CONFIG="$RUNNER_TEMP/probe.yml" LEFTHOOK_VERBOSE=1 pnpm exec lefthook run probe --command "$c" --no-auto-install --no-tty 2>&1) && code=0 || code=$?
-            echo "::group::$c exit $code"; echo "$out"; echo "::endgroup::"
-            echo "probe $c: exit $code"
-          done
-      # The repository's own pre-commit, every job but the three that need cli/'s dependencies.
-      # Only lefthook's own breakage fails this step: a check that runs and finds a problem
-      # on Windows is that check's bug, not this one's.
+      # with nothing escaped (#948): a double quote in a `run` truncates the script.
+      # The repository's own pre-commit, every job but the three that need cli/'s dependencies,
+      # then the prepare-commit-msg trailer job. Only lefthook's own breakage
+      # fails this step: a check that runs and finds a problem on Windows is that check's bug,
+      # not this one's.
       - name: Hooks - the pre-commit runs on Windows without a shell syntax error
         run: |
           LEFTHOOK_EXCLUDE=cli-biome,cli-architecture,cli-typecheck \
             pnpm exec lefthook run pre-commit --all-files --no-auto-install --no-tty > "$RUNNER_TEMP/pre-commit.log" 2>&1 || true
+          echo "# lefthook subject" > "$RUNNER_TEMP/msg"
+          pnpm exec lefthook run prepare-commit-msg "$RUNNER_TEMP/msg" message --no-auto-install --no-tty >> "$RUNNER_TEMP/pre-commit.log" 2>&1 || true
           cat "$RUNNER_TEMP/pre-commit.log"
           if grep -n "syntax error" "$RUNNER_TEMP/pre-commit.log"; then
             echo "::error::lefthook handed sh a broken command line (#948)"
