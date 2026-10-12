@@ -1,7 +1,6 @@
 ---
 name: <agent-name>                         # required
 description: <what it does + when to use>  # required, third person
-model: <e.g. opus>                         # optional, per tool-paths.md
 ---
 
 # Role

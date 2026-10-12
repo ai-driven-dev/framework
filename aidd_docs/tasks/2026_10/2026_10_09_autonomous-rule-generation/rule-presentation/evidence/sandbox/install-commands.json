@@ -1,0 +1,440 @@
+[
+  {
+    "project": "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/claude",
+    "args": [
+      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+      "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/cli/dist/cli.js",
+      "framework",
+      "install",
+      "--tool",
+      "claude",
+      "--no-plugins"
+    ],
+    "exit": 0,
+    "stdout": "Installed claude (1 files)\n",
+    "stderr": ""
+  },
+  {
+    "project": "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/claude",
+    "args": [
+      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+      "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/cli/dist/cli.js",
+      "plugin",
+      "install",
+      "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/plugins/aidd-context",
+      "--tool",
+      "claude",
+      "--scope",
+      "project",
+      "--yes"
+    ],
+    "exit": 0,
+    "stdout": "Plugin added successfully.\n",
+    "stderr": ""
+  },
+  {
+    "project": "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/cursor",
+    "args": [
+      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+      "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/cli/dist/cli.js",
+      "framework",
+      "install",
+      "--tool",
+      "cursor",
+      "--no-plugins"
+    ],
+    "exit": 0,
+    "stdout": "Installed cursor (1 files)\n",
+    "stderr": ""
+  },
+  {
+    "project": "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/cursor",
+    "args": [
+      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+      "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/cli/dist/cli.js",
+      "plugin",
+      "install",
+      "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/plugins/aidd-context",
+      "--tool",
+      "cursor",
+      "--scope",
+      "project",
+      "--yes"
+    ],
+    "exit": 1,
+    "stdout": "",
+    "stderr": "Error: Tool 'cursor' does not support scope 'project'. Supported scope: 'user'. Re-run with --scope user or omit the flag.\n"
+  },
+  {
+    "project": "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/cursor",
+    "args": [
+      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+      "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/cli/dist/cli.js",
+      "translate",
+      "/Users/baptistelafourcade/orca/workspaces/framework/basketstar",
+      "--to",
+      "cursor",
+      "--as",
+      "flat",
+      "--out",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/cursor"
+    ],
+    "exit": 0,
+    "stdout": "Flat-installed 9 plugins, 469 files written under /private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/cursor\n",
+    "stderr": ""
+  },
+  {
+    "project": "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/copilot",
+    "args": [
+      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+      "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/cli/dist/cli.js",
+      "framework",
+      "install",
+      "--tool",
+      "copilot",
+      "--no-plugins"
+    ],
+    "exit": 0,
+    "stdout": "Installed copilot (0 files)\n",
+    "stderr": ""
+  },
+  {
+    "project": "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/copilot",
+    "args": [
+      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+      "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/cli/dist/cli.js",
+      "plugin",
+      "install",
+      "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/plugins/aidd-context",
+      "--tool",
+      "copilot",
+      "--scope",
+      "project",
+      "--yes"
+    ],
+    "exit": 0,
+    "stdout": "Plugin added successfully.\n",
+    "stderr": ""
+  },
+  {
+    "project": "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/copilot",
+    "args": [
+      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+      "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/cli/dist/cli.js",
+      "translate",
+      "/Users/baptistelafourcade/orca/workspaces/framework/basketstar",
+      "--to",
+      "copilot",
+      "--as",
+      "flat",
+      "--out",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/copilot"
+    ],
+    "exit": 0,
+    "stdout": "Flat-installed 9 plugins, 469 files written under /private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/copilot\n",
+    "stderr": ""
+  },
+  {
+    "project": "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/codex",
+    "args": [
+      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+      "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/cli/dist/cli.js",
+      "framework",
+      "install",
+      "--tool",
+      "codex",
+      "--no-plugins"
+    ],
+    "exit": 0,
+    "stdout": "Installed codex (1 files)\n",
+    "stderr": ""
+  },
+  {
+    "project": "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/codex",
+    "args": [
+      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+      "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/cli/dist/cli.js",
+      "plugin",
+      "install",
+      "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/plugins/aidd-context",
+      "--tool",
+      "codex",
+      "--scope",
+      "project",
+      "--yes"
+    ],
+    "exit": 0,
+    "stdout": "Plugin \"aidd-context\" (codex): Codex will not run this plugin's hooks until each one is trusted — approve the prompt once in an interactive session, or pass --dangerously-bypass-hook-trust to codex exec for a headless run. Until then, a session leaves no run journal and nothing says why.\nPlugin added successfully.\n",
+    "stderr": ""
+  },
+  {
+    "project": "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/codex",
+    "args": [
+      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+      "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/cli/dist/cli.js",
+      "translate",
+      "/Users/baptistelafourcade/orca/workspaces/framework/basketstar",
+      "--to",
+      "codex",
+      "--as",
+      "flat",
+      "--out",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/codex"
+    ],
+    "exit": 0,
+    "stdout": "Flat-installed 9 plugins, 470 files written under /private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/codex\n",
+    "stderr": ""
+  },
+  {
+    "project": "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/opencode",
+    "args": [
+      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+      "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/cli/dist/cli.js",
+      "framework",
+      "install",
+      "--tool",
+      "opencode",
+      "--no-plugins"
+    ],
+    "exit": 0,
+    "stdout": "Installed opencode (2 files)\n",
+    "stderr": ""
+  },
+  {
+    "project": "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/opencode",
+    "args": [
+      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+      "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/cli/dist/cli.js",
+      "plugin",
+      "install",
+      "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/plugins/aidd-context",
+      "--tool",
+      "opencode",
+      "--scope",
+      "project",
+      "--yes"
+    ],
+    "exit": 0,
+    "stdout": "Plugin added successfully.\n",
+    "stderr": ""
+  },
+  {
+    "project": "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/mixed",
+    "args": [
+      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+      "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/cli/dist/cli.js",
+      "framework",
+      "install",
+      "--tool",
+      "claude",
+      "--no-plugins"
+    ],
+    "exit": 0,
+    "stdout": "Installed claude (1 files)\n",
+    "stderr": ""
+  },
+  {
+    "project": "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/mixed",
+    "args": [
+      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+      "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/cli/dist/cli.js",
+      "plugin",
+      "install",
+      "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/plugins/aidd-context",
+      "--tool",
+      "claude",
+      "--scope",
+      "project",
+      "--yes"
+    ],
+    "exit": 0,
+    "stdout": "Plugin added successfully.\n",
+    "stderr": ""
+  },
+  {
+    "project": "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/mixed",
+    "args": [
+      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+      "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/cli/dist/cli.js",
+      "framework",
+      "install",
+      "--tool",
+      "cursor",
+      "--no-plugins"
+    ],
+    "exit": 0,
+    "stdout": "Installed cursor (1 files)\n",
+    "stderr": ""
+  },
+  {
+    "project": "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/mixed",
+    "args": [
+      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+      "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/cli/dist/cli.js",
+      "plugin",
+      "install",
+      "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/plugins/aidd-context",
+      "--tool",
+      "cursor",
+      "--scope",
+      "project",
+      "--yes"
+    ],
+    "exit": 1,
+    "stdout": "",
+    "stderr": "Error: Tool 'cursor' does not support scope 'project'. Supported scope: 'user'. Re-run with --scope user or omit the flag.\n"
+  },
+  {
+    "project": "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/mixed",
+    "args": [
+      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+      "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/cli/dist/cli.js",
+      "translate",
+      "/Users/baptistelafourcade/orca/workspaces/framework/basketstar",
+      "--to",
+      "cursor",
+      "--as",
+      "flat",
+      "--out",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/mixed"
+    ],
+    "exit": 0,
+    "stdout": "Flat-installed 9 plugins, 469 files written under /private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/mixed\n",
+    "stderr": ""
+  },
+  {
+    "project": "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/mixed",
+    "args": [
+      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+      "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/cli/dist/cli.js",
+      "framework",
+      "install",
+      "--tool",
+      "copilot",
+      "--no-plugins"
+    ],
+    "exit": 0,
+    "stdout": "Installed copilot (0 files)\n",
+    "stderr": ""
+  },
+  {
+    "project": "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/mixed",
+    "args": [
+      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+      "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/cli/dist/cli.js",
+      "plugin",
+      "install",
+      "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/plugins/aidd-context",
+      "--tool",
+      "copilot",
+      "--scope",
+      "project",
+      "--yes"
+    ],
+    "exit": 0,
+    "stdout": "Plugin added successfully.\n",
+    "stderr": ""
+  },
+  {
+    "project": "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/mixed",
+    "args": [
+      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+      "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/cli/dist/cli.js",
+      "translate",
+      "/Users/baptistelafourcade/orca/workspaces/framework/basketstar",
+      "--to",
+      "copilot",
+      "--as",
+      "flat",
+      "--out",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/mixed"
+    ],
+    "exit": 0,
+    "stdout": "Flat-installed 9 plugins, 469 files written under /private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/mixed\n",
+    "stderr": ""
+  },
+  {
+    "project": "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/mixed",
+    "args": [
+      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+      "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/cli/dist/cli.js",
+      "framework",
+      "install",
+      "--tool",
+      "codex",
+      "--no-plugins"
+    ],
+    "exit": 0,
+    "stdout": "Installed codex (1 files)\n",
+    "stderr": ""
+  },
+  {
+    "project": "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/mixed",
+    "args": [
+      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+      "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/cli/dist/cli.js",
+      "plugin",
+      "install",
+      "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/plugins/aidd-context",
+      "--tool",
+      "codex",
+      "--scope",
+      "project",
+      "--yes"
+    ],
+    "exit": 0,
+    "stdout": "Plugin \"aidd-context\" (codex): Codex will not run this plugin's hooks until each one is trusted — approve the prompt once in an interactive session, or pass --dangerously-bypass-hook-trust to codex exec for a headless run. Until then, a session leaves no run journal and nothing says why.\nPlugin added successfully.\n",
+    "stderr": ""
+  },
+  {
+    "project": "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/mixed",
+    "args": [
+      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+      "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/cli/dist/cli.js",
+      "translate",
+      "/Users/baptistelafourcade/orca/workspaces/framework/basketstar",
+      "--to",
+      "codex",
+      "--as",
+      "flat",
+      "--out",
+      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/mixed"
+    ],
+    "exit": 0,
+    "stdout": "Flat-installed 9 plugins, 470 files written under /private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/mixed\n",
+    "stderr": ""
+  },
+  {
+    "project": "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/mixed",
+    "args": [
+      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+      "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/cli/dist/cli.js",
+      "framework",
+      "install",
+      "--tool",
+      "opencode",
+      "--no-plugins"
+    ],
+    "exit": 0,
+    "stdout": "Installed opencode (2 files)\n",
+    "stderr": ""
+  },
+  {
+    "project": "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/projects/mixed",
+    "args": [
+      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+      "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/cli/dist/cli.js",
+      "plugin",
+      "install",
+      "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/plugins/aidd-context",
+      "--tool",
+      "opencode",
+      "--scope",
+      "project",
+      "--yes"
+    ],
+    "exit": 0,
+    "stdout": "Plugin added successfully.\n",
+    "stderr": ""
+  }
+]

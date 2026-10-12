@@ -1,0 +1,42 @@
+[
+  {
+    "name": "codex-0.162.1-agents_md.rs",
+    "url": "https://raw.githubusercontent.com/openai/codex/092d3acd6bec3e3a14bdc7e7a2810ab628ab759d/codex-rs/core/src/agents_md.rs",
+    "status": 200,
+    "finalUrl": "https://raw.githubusercontent.com/openai/codex/092d3acd6bec3e3a14bdc7e7a2810ab628ab759d/codex-rs/core/src/agents_md.rs",
+    "contentType": "text/plain; charset=utf-8",
+    "bytes": 20104,
+    "sha256": "97427a870741b904a3f3c143f5990eaaa65b5bfa99ddac1808b2980052b5fc78",
+    "path": "/private/tmp/aidd-20261011-contract-sKKlRv/codex-0.162.1-agents_md.rs"
+  },
+  {
+    "name": "codex-0.160.1-agents_md.rs",
+    "url": "https://raw.githubusercontent.com/openai/codex/d27764b82f7118f674371e6d6e76271d9d606edb/codex-rs/core/src/agents_md.rs",
+    "status": 200,
+    "finalUrl": "https://raw.githubusercontent.com/openai/codex/d27764b82f7118f674371e6d6e76271d9d606edb/codex-rs/core/src/agents_md.rs",
+    "contentType": "text/plain; charset=utf-8",
+    "bytes": 20104,
+    "sha256": "97427a870741b904a3f3c143f5990eaaa65b5bfa99ddac1808b2980052b5fc78",
+    "path": "/private/tmp/aidd-20261011-contract-sKKlRv/codex-0.160.1-agents_md.rs"
+  },
+  {
+    "name": "codex-agents-md-official.md",
+    "url": "https://learn.chatgpt.com/docs/agent-configuration/agents-md.md",
+    "status": 200,
+    "finalUrl": "https://learn.chatgpt.com/docs/agent-configuration/agents-md.md",
+    "contentType": "text/markdown; charset=utf-8",
+    "bytes": 9149,
+    "sha256": "9d1f87a2d1cb55b4782b95abe710692b35b9659789c2db31a22c7074a3383e8e",
+    "path": "/private/tmp/aidd-20261011-contract-sKKlRv/codex-agents-md-official.md"
+  },
+  {
+    "name": "opencode-v2-instructions.html",
+    "url": "https://opencode.ai/v2/docs/instructions/",
+    "status": 200,
+    "finalUrl": "https://opencode.ai/v2/docs/instructions/",
+    "contentType": "text/html",
+    "bytes": 19248,
+    "sha256": "49280d8584287acd13abaed536a2c552ece1c06132c9b7e09ed8163785f00a25",
+    "path": "/private/tmp/aidd-20261011-contract-sKKlRv/opencode-v2-instructions.html"
+  }
+]

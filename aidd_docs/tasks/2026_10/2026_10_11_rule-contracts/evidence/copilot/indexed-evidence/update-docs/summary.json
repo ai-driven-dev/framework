@@ -1,0 +1,61 @@
+{
+  "stage": "update",
+  "target": "docs",
+  "explicitIndexRead": true,
+  "exit": 0,
+  "requests": 3,
+  "mockErrors": [],
+  "bodyCounts": {
+    "GLOBAL_OLD": [
+      0,
+      0,
+      0
+    ],
+    "GLOBAL_NEW": [
+      1,
+      1,
+      1
+    ],
+    "DOMAIN_OLD": [
+      0,
+      0,
+      0
+    ],
+    "DOMAIN_NEW": [
+      0,
+      0,
+      0
+    ],
+    "DOCS_OLD": [
+      0,
+      0,
+      0
+    ],
+    "DOCS_NEW": [
+      0,
+      0,
+      1
+    ]
+  },
+  "scopedIndexPresent": {
+    "DOMAIN": [
+      true,
+      true,
+      true
+    ],
+    "DOCS": [
+      true,
+      true,
+      true
+    ]
+  },
+  "expectedBodies": [
+    "GLOBAL_NEW",
+    "DOCS_NEW"
+  ],
+  "expectedCompleteBodiesPresent": true,
+  "unexpectedBodiesAbsent": true,
+  "agentsExactlyPreserved": true,
+  "readerResultConfirmed": true,
+  "scopeBodyPass": true
+}

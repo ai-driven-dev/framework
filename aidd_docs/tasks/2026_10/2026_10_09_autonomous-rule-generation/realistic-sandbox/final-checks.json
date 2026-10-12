@@ -1,0 +1,224 @@
+{
+  "date": "2026-10-09",
+  "reviewer": "independent checker",
+  "verdict": "approve bounded documentation and evidence supplement",
+  "openFindings": [],
+  "score": {
+    "documentationAndEvidenceCriteriaFulfilled": 7,
+    "total": 7,
+    "percent": 100,
+    "completeObservedNativeHostCoverage": 4,
+    "totalHosts": 5,
+    "percentNativeCoverage": 80,
+    "note": "Coverage measures completed observed workflows, not deterministic guarantees or one clean final revision run."
+  },
+  "scope": {
+    "modifiedPluginMarkdownFiles": [
+      "plugins/aidd-context/CATALOG.md",
+      "plugins/aidd-context/skills/05-rule-generate/SKILL.md",
+      "plugins/aidd-context/skills/05-rule-generate/actions/01-capture-rule.md",
+      "plugins/aidd-context/skills/05-rule-generate/actions/02-write-rule.md",
+      "plugins/aidd-context/skills/05-rule-generate/actions/03-validate.md",
+      "plugins/aidd-context/skills/05-rule-generate/assets/rule-template.md",
+      "plugins/aidd-context/skills/05-rule-generate/references/rule-authoring.md",
+      "plugins/aidd-context/skills/05-rule-generate/references/tool-paths.md"
+    ],
+    "productionWriterChanged": false,
+    "CLIComparedTo": "12777d03",
+    "personalFilesExcluded": [
+      ".gitignore",
+      ".hermes.md"
+    ],
+    "noModelCalls": true,
+    "noCodeEdits": true
+  },
+  "guards": {
+    "execution": "Existing guards executed in worker_threads with official CLI entry behavior; no validator edits",
+    "results": [
+      {
+        "name": "check-context-imports.js",
+        "exit": 0,
+        "stdout": "✅ context imports load: none sit inside an HTML block\n",
+        "stderr": ""
+      },
+      {
+        "name": "check-context-reference-form.js",
+        "exit": 0,
+        "stdout": "✅ context references carry the form their tool resolves\n",
+        "stderr": ""
+      },
+      {
+        "name": "check-referenced-paths.js",
+        "exit": 0,
+        "stdout": "✅ Referenced paths: 0 dead in 33 files\n",
+        "stderr": ""
+      },
+      {
+        "name": "check-markdown-links.js",
+        "exit": 0,
+        "stdout": "✅ Links: 0 broken in 862 files\n",
+        "stderr": ""
+      },
+      {
+        "name": "check-skill-argument-hints.mjs",
+        "exit": 0,
+        "stdout": "Every skill names what the user brings.\n",
+        "stderr": ""
+      },
+      {
+        "name": "check-doc-duplication.js",
+        "exit": 0,
+        "stdout": "✅ Doc duplication: 0 duplicated sentence(s) in 48 files\n",
+        "stderr": ""
+      },
+      {
+        "name": "check-architecture-rules.js",
+        "exit": 0,
+        "stdout": "✅ Architecture rules: 352 governed file(s) checked, no violation\n",
+        "stderr": ""
+      }
+    ]
+  },
+  "git": [
+    {
+      "command": "git diff --check",
+      "exit": 0,
+      "stdout": "",
+      "receipt": "checker exec_command + write_stdin session 43558"
+    },
+    {
+      "command": "git diff 12777d03 --stat -- cli",
+      "exit": 0,
+      "stdout": "",
+      "receipt": "checker exec_command + write_stdin session 66755"
+    }
+  ],
+  "integrity": {
+    "indexCount": 79,
+    "mismatch": [],
+    "duplicates": [],
+    "artifactCount": 113,
+    "secretPatternFindings": [],
+    "writerBytes": 14069,
+    "writerSha256": "9fa10479a267d899a6a024f68e75573f1d009080cd60851f23f06c8f2d190591"
+  },
+  "focusedTests": {
+    "priorClean": 41,
+    "currentFull": {
+      "passed": 39,
+      "failed": 2,
+      "childStatus": null
+    },
+    "targetedOriginalTests": {
+      "passed": 2,
+      "failed": 0,
+      "diagnosticPreloaderReviewed": true,
+      "preloaderBehaviorChanged": false
+    },
+    "singleCleanCurrent41Run": false,
+    "evidence": "test-validation.json"
+  },
+  "smoke": {
+    "execution": "parent executed; checker independently inspected exact receipts",
+    "stages": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "cleanupCommands": [
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "evidence": "native-evidence/final-reproduction/results.json"
+  },
+  "fixedReviewFindings": [
+    {
+      "finding": "Delete validators demanded deleted outputs exist",
+      "resolution": "Operation-aware source/publication absence and remaining guidance checks in actions01/02/03; independently re-read."
+    },
+    {
+      "finding": "Portable cleanup stage could succeed despite failed CLI commands or retained plugin script",
+      "resolution": "Existing assertions added; two in-memory VM red witnesses independently reject failed doctor and missing removal.",
+      "redWitnesses": [
+        {
+          "mode": "failed doctor",
+          "refused": true,
+          "error": "doctor --tool opencode --plugin aidd-context failed\n\n1 !== 0\n",
+          "childCalls": 2
+        },
+        {
+          "mode": "script not removed",
+          "refused": true,
+          "error": "Plugin removal left the installed script\n\ntrue !== false\n",
+          "childCalls": 6
+        }
+      ]
+    }
+  ],
+  "native": {
+    "codex": "Observed seven fresh threads with exact initial/update comments, out-of-scope control, installed writer deletion, byte-identical final AGENTS.",
+    "opencode": "Observed exact consumer/update/delete and active memory-hook coexistence. Initial378→304 is exact owned-block convergence; external bytes and converged304 preserved.",
+    "copilot": "Cumulative three clones/revisions; installed writer exact update/delete; external38/39 tests pass. Prior literal/discovery failures retained.",
+    "claude": "Cumulative author/update/delete plus normal project-settings controls; new-file old consumer82, deletion69, fresh postdelete83 tests. Native injected body not captured; updated control can also reflect existing code style.",
+    "cursor": "Partial. Exact old author/consumer and installed writer deletion verified. Postdelete code marker-free and15 tests pass, but CLI exit1 usage limit; no final exact-new update control. No additional inference authorized."
+  },
+  "build": {
+    "required": false,
+    "executed": false,
+    "reason": "cli/tsup.config.ts bundles src/cli.ts; source text imports are cli/assets/configs/codex/config.toml and opencode/opencode-events.js.txt. None of the eight changed plugin Markdown files is imported; CLI tree diff from12777d03 is empty.",
+    "filesReviewed": [
+      "cli/package.json",
+      "cli/tsup.config.ts",
+      "cli/src/runtime/assets/asset-loader.ts"
+    ]
+  },
+  "bounds": [
+    "macOS arm64 only",
+    "native proof cumulative across documented revisions/clones and retries",
+    "Cursor full native journey remains incomplete under authorized subscription quota",
+    "shared AGENTS scopes are model guidance",
+    "pattern/key scan is supported by sanitized selected artifacts, not a claim of exhaustive credential detection",
+    "individual writes atomic; no all-file rollback or concurrent-writer guarantee"
+  ],
+  "criteria": [
+    {
+      "criterion": "Operation-aware create/update/publish/delete instructions",
+      "status": "fulfilled",
+      "evidence": "Eight candidate Markdown files read; deleted outputs checked absent, remaining rules/user bytes preserved."
+    },
+    {
+      "criterion": "Installed portability and five native publication contracts",
+      "status": "fulfilled",
+      "evidence": "Actual installed writer commands and deterministic78 invocations; tool-paths canonical scope table."
+    },
+    {
+      "criterion": "Exact requirements and ownership preservation",
+      "status": "fulfilled",
+      "evidence": "Literal priority instructions, actual old/new snapshots and signed AGENTS coexistence; unchanged reviewed writer."
+    },
+    {
+      "criterion": "No duplication, contradictions or unnecessary abstraction",
+      "status": "fulfilled",
+      "evidence": "Canonical references reused; doc duplication guard0/48; CLI not extended."
+    },
+    {
+      "criterion": "No dead or debug production code",
+      "status": "fulfilled",
+      "evidence": "Only8 production Markdown edits; diagnostic preloader temporary and unchanged writer."
+    },
+    {
+      "criterion": "Evidence identity, safe artifacts and honest bounds",
+      "status": "fulfilled",
+      "evidence": "79 SHA matches,0 duplicates, pattern/key scan113 artifacts, Cursor quota partial and test rerun bounds explicit."
+    },
+    {
+      "criterion": "Reproduction assertions and applicable gates",
+      "status": "fulfilled",
+      "evidence": "Cleanup two red witnesses reject failures; repaired4stage smoke;7 guards;git diff checks exit0."
+    }
+  ]
+}

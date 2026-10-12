@@ -1,5 +1,6 @@
 const assert = require("node:assert/strict");
 const fs = require("node:fs");
+const os = require("node:os");
 const path = require("node:path");
 const { describe, it } = require("node:test");
 
@@ -38,10 +39,10 @@ function skillRootOf(relativePath) {
   return SKILL_ROOT.test(root) ? root : null;
 }
 
-function linksLeavingTheirSkill() {
+function linksLeavingTheirSkill(repository = ROOT) {
   const escaping = [];
-  for (const file of everyMarkdownUnderPlugins(path.join(ROOT, "plugins"), [])) {
-    const relative = path.relative(ROOT, file).split(path.sep).join("/");
+  for (const file of everyMarkdownUnderPlugins(path.join(repository, "plugins"), [])) {
+    const relative = path.relative(repository, file).split(path.sep).join("/");
     const root = skillRootOf(relative);
     if (root === null) continue;
     const text = fs.readFileSync(file, "utf8");
@@ -70,17 +71,20 @@ describe("a skill links only inside itself", () => {
   // The guard has to be able to see one. A checker that resolves every path against this
   // repository, the way `check-markdown-links.js` does, reports nothing here at all.
   it("sees an escaping link when one is put in front of it", () => {
-    const root = path.join(ROOT, "plugins", "aidd-dev", "skills", "01-plan");
-    const probe = path.join(root, "escaping-link-probe.md");
-    fs.writeFileSync(probe, "[out](../../../../README.md)\n", "utf8");
+    // Other test files scan the repository concurrently; synthetic links belong outside it.
+    const repository = fs.mkdtempSync(path.join(os.tmpdir(), "aidd-skill-links-"));
     try {
-      const found = linksLeavingTheirSkill();
+      const root = path.join(repository, "plugins", "aidd-dev", "skills", "01-plan");
+      fs.mkdirSync(root, { recursive: true });
+      fs.writeFileSync(path.join(repository, "README.md"), "# Repository\n", "utf8");
+      fs.writeFileSync(path.join(root, "escaping-link-probe.md"), "[out](../../../../README.md)\n", "utf8");
+      const found = linksLeavingTheirSkill(repository);
       assert.ok(
         found.some((entry) => entry.includes("escaping-link-probe.md")),
         `the probe was not detected; found: ${JSON.stringify(found)}`,
       );
     } finally {
-      fs.rmSync(probe);
+      fs.rmSync(repository, { recursive: true, force: true });
     }
   });
 });

@@ -1,0 +1,11 @@
+{
+  "skillInvoked": true,
+  "writerDeleteInvoked": true,
+  "deletedFiles": [
+    ".claude/rules/01-standards/1-domain-review.md",
+    "aidd_docs/rules/01-standards/1-domain-review.md"
+  ],
+  "changedFiles": [],
+  "nativeUpdatedHashMatches09": true,
+  "testsExit": 0
+}

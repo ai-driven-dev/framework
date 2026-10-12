@@ -132,7 +132,7 @@ export class PluginFetcherAdapter implements PluginFetcher {
   }
 
   private gitWithNoPrompt(baseDir?: string): ReturnType<typeof simpleGit> {
-    const git = baseDir ? simpleGit(baseDir) : simpleGit();
+    const git = simpleGit({ baseDir, allowEnvironment: ["GIT_TERMINAL_PROMPT"] });
     return git.env("GIT_TERMINAL_PROMPT", "0");
   }
 

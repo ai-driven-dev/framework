@@ -2,7 +2,6 @@
 name: 03-assert
 description: Assert the work behaves by iterating the project's coding assertions until they pass, plus optional architecture and frontend facets. Use to validate an implementation. Not for reviewing or writing tests.
 argument-hint: work | scope
-model: sonnet
 ---
 
 # Skill: assert

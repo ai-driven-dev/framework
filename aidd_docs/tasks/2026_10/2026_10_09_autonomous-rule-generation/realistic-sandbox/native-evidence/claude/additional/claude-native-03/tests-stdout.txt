@@ -1,0 +1,52 @@
+✖ tests/http.test.ts (13.86175ms)
+✖ tests/invoice.test.ts (3.390208ms)
+✔ accepts nonnegative safe integers (1.0185ms)
+✔ refuses -1 (0.074541ms)
+✔ refuses -0.5 (0.040416ms)
+✔ refuses 1.5 (0.034583ms)
+✔ refuses NaN (0.037ms)
+✔ refuses Infinity (0.032584ms)
+✔ refuses -Infinity (0.035208ms)
+✔ refuses 9007199254740992 (0.038541ms)
+✔ refuses 100 (0.038833ms)
+✔ refuses null (0.068583ms)
+✔ refuses undefined (1.076458ms)
+✔ refuses [object Object] (0.047459ms)
+✔ refuses  (0.036583ms)
+✔ refuses 10 (0.021916ms)
+ℹ tests 16
+ℹ suites 0
+ℹ pass 14
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1060.268208
+
+✖ failing tests:
+
+test at tests/http.test.ts:1:1
+✖ tests/http.test.ts (13.86175ms)
+  Error: spawn /opt/homebrew/Cellar/node/26.8.2/bin/node EAGAIN
+      at ChildProcess._handle.onexit (node:internal/child_process:286:19)
+      at onErrorNT (node:internal/child_process:524:16)
+      at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+    errno: -35,
+    code: 'EAGAIN',
+    syscall: 'spawn /opt/homebrew/Cellar/node/26.8.2/bin/node',
+    path: '/opt/homebrew/Cellar/node/26.8.2/bin/node',
+    spawnargs: [ '--test-concurrency=0', '--heap-prof-interval=524288', '--stack-trace-limit=10', '--report-signal=SIGUSR2', '--max-http-header-size=16384', '--watch-kill-signal=SIGTERM', '--heapsnapshot-near-heap-limit=0', '--inspect-publish-uid=stderr,http', '--test-isolation=process', '--test-coverage-lines=0', '--cpu-prof-interval=1000', '--test-coverage-functions=0', '--test-timeout=0', '--inspect-port=127.0.0.1:9229', '--test-coverage-branches=0', '--use-largepages=off', '--experimental-addon-modules', '--network-family-autoselection-attempt-timeout=500', '--secure-heap-min=2', '--v8-pool-size=4', '--secure-heap=0', '--tls-cipher-list=TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256:TLS_AES_128_GCM_SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-AES256-GCM-SHA384:DHE-RSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-SHA256:DHE-RSA-AES128-SHA256:ECDHE-RSA-AES256-SHA384:DHE-RSA-AES256-SHA384:ECDHE-RSA-AES256-SHA256:DHE-RSA-AES256-SHA256:HIGH:!aNULL:!eNULL:!EXPORT:!DES:!RC4:!MD5:!PSK:!SRP:!CAMELLIA', '--node-snapshot', '--trace-event-file-pattern=node_trace.${rotation}.log', 'tests/http.test.ts' ]
+  }
+
+test at tests/invoice.test.ts:1:1
+✖ tests/invoice.test.ts (3.390208ms)
+  Error: spawn /opt/homebrew/Cellar/node/26.8.2/bin/node EAGAIN
+      at ChildProcess._handle.onexit (node:internal/child_process:286:19)
+      at onErrorNT (node:internal/child_process:524:16)
+      at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+    errno: -35,
+    code: 'EAGAIN',
+    syscall: 'spawn /opt/homebrew/Cellar/node/26.8.2/bin/node',
+    path: '/opt/homebrew/Cellar/node/26.8.2/bin/node',
+    spawnargs: [ '--test-concurrency=0', '--heap-prof-interval=524288', '--stack-trace-limit=10', '--report-signal=SIGUSR2', '--max-http-header-size=16384', '--watch-kill-signal=SIGTERM', '--heapsnapshot-near-heap-limit=0', '--inspect-publish-uid=stderr,http', '--test-isolation=process', '--test-coverage-lines=0', '--cpu-prof-interval=1000', '--test-coverage-functions=0', '--test-timeout=0', '--inspect-port=127.0.0.1:9229', '--test-coverage-branches=0', '--use-largepages=off', '--experimental-addon-modules', '--network-family-autoselection-attempt-timeout=500', '--secure-heap-min=2', '--v8-pool-size=4', '--secure-heap=0', '--tls-cipher-list=TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256:TLS_AES_128_GCM_SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-AES256-GCM-SHA384:DHE-RSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-SHA256:DHE-RSA-AES128-SHA256:ECDHE-RSA-AES256-SHA384:DHE-RSA-AES256-SHA384:ECDHE-RSA-AES256-SHA256:DHE-RSA-AES256-SHA256:HIGH:!aNULL:!eNULL:!EXPORT:!DES:!RC4:!MD5:!PSK:!SRP:!CAMELLIA', '--node-snapshot', '--trace-event-file-pattern=node_trace.${rotation}.log', 'tests/invoice.test.ts' ]
+  }

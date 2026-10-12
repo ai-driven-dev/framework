@@ -1,0 +1,87 @@
+[
+  {
+    "command": "node scripts/check-context-imports.js",
+    "chunk_id": "a95f21",
+    "wall_time_seconds": 0.023835875,
+    "exit_code": 0,
+    "original_token_count": 14,
+    "output": "✅ context imports load: none sit inside an HTML block\n"
+  },
+  {
+    "command": "node scripts/check-context-reference-form.js",
+    "chunk_id": "cf7308",
+    "wall_time_seconds": 0.000005917,
+    "exit_code": 0,
+    "original_token_count": 15,
+    "output": "✅ context references carry the form their tool resolves\n"
+  },
+  {
+    "command": "node scripts/check-referenced-paths.js",
+    "chunk_id": "f4eb18",
+    "wall_time_seconds": 0.0123905,
+    "exit_code": 0,
+    "original_token_count": 11,
+    "output": "✅ Referenced paths: 0 dead in 33 files\n"
+  },
+  {
+    "command": "node scripts/check-skill-argument-hints.mjs",
+    "chunk_id": "5f267c",
+    "wall_time_seconds": 0.3053985,
+    "exit_code": 0,
+    "original_token_count": 10,
+    "output": "Every skill names what the user brings.\n"
+  },
+  {
+    "command": "node scripts/check-doc-duplication.js",
+    "chunk_id": "273052",
+    "wall_time_seconds": 0.000027291,
+    "exit_code": 0,
+    "original_token_count": 15,
+    "output": "✅ Doc duplication: 0 duplicated sentence(s) in 48 files\n"
+  },
+  {
+    "command": "node scripts/check-architecture-rules.js plugins/aidd-context/skills/05-rule-generate/references/tool-paths.md",
+    "chunk_id": "84f79a",
+    "wall_time_seconds": 0.0000095,
+    "exit_code": 0,
+    "original_token_count": 17,
+    "output": "✅ Architecture rules: 1 governed file(s) checked, no violation\n"
+  },
+  {
+    "command": "git diff --check",
+    "chunk_id": "5671c2",
+    "wall_time_seconds": 0.000007667,
+    "exit_code": 0,
+    "original_token_count": 0,
+    "output": ""
+  },
+  {
+    "command": "git diff --exit-code 12777d03 -- cli",
+    "chunk_id": "46704f",
+    "wall_time_seconds": 0.000004958,
+    "exit_code": 0,
+    "original_token_count": 0,
+    "output": ""
+  },
+  {
+    "command": "node --test scripts/__tests__/source-stays-text.test.js",
+    "chunk_id": "e793d7",
+    "wall_time_seconds": 0.631022042,
+    "exit_code": 0,
+    "original_token_count": 77,
+    "output": "▶ every tracked source file stays greppable\n  ✔ carries no raw NUL byte, so no search over it can fail in silence (631.528583ms)\n✔ every tracked source file stays greppable (632.161792ms)\nℹ tests 1\nℹ suites 1\nℹ pass 1\nℹ fail 0\nℹ cancelled 0\nℹ skipped 0\nℹ todo 0\nℹ duration_ms 709.43625\n"
+  },
+  {
+    "command": "node scripts/check-markdown-links.js --ignore cli/tests/fixtures --ignore cli/aidd_docs/tasks",
+    "chunk_id": "200299",
+    "wall_time_seconds": 0.19922675,
+    "exit_code": 0,
+    "original_token_count": 9,
+    "output": "✅ Links: 0 broken in 873 files\n"
+  },
+  {
+    "command": "node scripts/validate-json.mjs <144 current task JSON files>",
+    "exit_code": 0,
+    "output": "JSON validation passed for 144 file(s).\n"
+  }
+]

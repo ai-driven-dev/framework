@@ -1,0 +1,9 @@
+{
+  "stage": "01-author-coexistence",
+  "exit": 0,
+  "elapsedSeconds": 37.8,
+  "appTestsExit": 0,
+  "model": "openai/gpt-6-luna#low",
+  "backend": "ChatGPT subscription OAuth",
+  "apiKeyEnvironmentInherited": false
+}

@@ -521,6 +521,21 @@ jobs:
       - name: Plugin suite
         run: node scripts/check-tests-leave-git-alone.js -- node --test 'scripts/__tests__/**/*.test.js'
 
+      # The same commit hooks on Windows; dedicated jobs cover the three CLI checks.
+      - name: Hooks - a commit's hooks pass on Windows
+        run: |
+          echo "# lefthook subject" > "$RUNNER_TEMP/msg"
+          status=0
+          LEFTHOOK_EXCLUDE=cli-biome,cli-architecture,cli-typecheck \
+            pnpm exec lefthook run pre-commit --all-files --no-auto-install --no-tty > "$RUNNER_TEMP/hooks.log" 2>&1 || status=1
+          pnpm exec lefthook run prepare-commit-msg "$RUNNER_TEMP/msg" message --no-auto-install --no-tty >> "$RUNNER_TEMP/hooks.log" 2>&1 || status=1
+          cat "$RUNNER_TEMP/hooks.log"
+          if grep -n "syntax error" "$RUNNER_TEMP/hooks.log"; then
+            echo "::error::lefthook handed sh a broken command line"
+            exit 1
+          fi
+          exit $status
+
       # A real global install, not `node dist/cli.js` by path: nothing else proves `aidd`
       # resolves on this platform's PATH. Built here, ahead of the suites below, so this is
       # the only build the job needs.
@@ -545,6 +560,7 @@ jobs:
           grep -E "tool files readable +ok" telemetry-check.out
       - run: cd cli && pnpm test:unit
       - run: cd cli && pnpm test:integration
+      - run: cd cli && pnpm test:arch
       # Every e2e but the two named below. `telemetry-commit-trailer.e2e.test.ts` is why the
       # step matters most: it is the only thing proving the `prepare-commit-msg` hook is
       # reachable by the shell Git for Windows ships, which a backslash path is not.

@@ -1,0 +1,25 @@
+{
+  "command": [
+    "/tmp/aidd-953-runtime-ryTstm/v2/node_modules/.bin/opencode2",
+    "run",
+    "--standalone",
+    "--model",
+    "local/fake",
+    "--format",
+    "json",
+    "--print-logs",
+    "Reply OK."
+  ],
+  "binary": "/tmp/aidd-953-runtime-ryTstm/v2/node_modules/.bin/opencode2",
+  "exit": 0,
+  "model_requests": 2,
+  "present": {
+    "PRESENTATION_OLD": true,
+    "Applies to: `src/domain/**/*.ts`.": true
+  },
+  "absent": {
+    "PRESENTATION_NEW": true,
+    "## 01-standards/1-domain-review:": true
+  },
+  "pass": true
+}

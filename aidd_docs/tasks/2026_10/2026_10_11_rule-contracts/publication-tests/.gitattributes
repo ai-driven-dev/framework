@@ -1,0 +1,2 @@
+# Preserve diagnostic receipts byte-for-byte.
+*.tap -text -whitespace

@@ -1,7 +1,7 @@
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, type Mock, vi } from "vitest";
 import { GitHubRawFetcherAdapter } from "../../../../src/contexts/distribution/infrastructure/github-raw-fetcher-adapter.js";
 import {
   AuthenticationError,
@@ -14,7 +14,7 @@ import {
 const CATALOG_PATH = ".claude-plugin/marketplace.json";
 const SAMPLE_CATALOG = JSON.stringify({ plugins: [] });
 
-function makeHttp(override: Partial<{ get: ReturnType<typeof vi.fn> }> = {}) {
+function makeHttp(override: Partial<{ get: Mock }> = {}) {
   return {
     get:
       override.get ??

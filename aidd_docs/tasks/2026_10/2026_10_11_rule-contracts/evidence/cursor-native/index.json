@@ -1,0 +1,132 @@
+{
+  "root": "/private/tmp/aidd-oct11-cursor-native-FEFX3q/bundle",
+  "files": [
+    {
+      "file": "AGENTS-after.txt",
+      "sha256": "f1b68e04adb41dbe1075828cfa33ac3a117395ef269308e31325ac027eec8e8d",
+      "bytes": 304
+    },
+    {
+      "file": "AGENTS-before.txt",
+      "sha256": "76752d4dcfb002c378b9621d7783c97f427e2864320c11195b50bfca4897e3a7",
+      "bytes": 378
+    },
+    {
+      "file": "REPORT.md",
+      "sha256": "2be2b8517a6fb75bd516bf5b3aba9692b0a9ac4321ce7732197dcdbfc208967c",
+      "bytes": 3154
+    },
+    {
+      "file": "after-hashes.json",
+      "sha256": "70e8cda2bc66f3442dac2b7aad1331702a215c8cca7f15c8ac6d416ff87d91b7",
+      "bytes": 65639
+    },
+    {
+      "file": "before-hashes.json",
+      "sha256": "5634e1144b8806c07bfd976ca85053fa18bdcfb543e3b0584286628585e5f854",
+      "bytes": 65639
+    },
+    {
+      "file": "installation.json",
+      "sha256": "27e6726623f8dacb3b655f599e1db98c7142691512e64fc39ff64cfe9ed68587",
+      "bytes": 536
+    },
+    {
+      "file": "installed-writer.json",
+      "sha256": "e20eef9f3288ae5985b15ac536382dee46dce5273fa888d905296b40b26cdbf7",
+      "bytes": 255
+    },
+    {
+      "file": "local-endpoint-network.sb",
+      "sha256": "efd31e018b3ffb151efa0b96cc1c9d08ff888cac085bde8e07ce668757364f8a",
+      "bytes": 94
+    },
+    {
+      "file": "local-endpoint-probe.py",
+      "sha256": "ca12ad81ad5a6a16cb9309d6ffb7f1197f35f8f53b661e283db953547d76cf12",
+      "bytes": 3993
+    },
+    {
+      "file": "local-endpoint-requests.json",
+      "sha256": "05373bc456142e146626793c72e996f2e6cca580e2f00f79f1dcc9004218e8f6",
+      "bytes": 416
+    },
+    {
+      "file": "local-endpoint-summary.json",
+      "sha256": "23eb37660da7d54ea5a1d7bba62b0a89f44637f77b2ea2d49ff18939f447229f",
+      "bytes": 995
+    },
+    {
+      "file": "local-endpoint.stderr.log",
+      "sha256": "8d904bc11db4fe9a5fb238346b0bb6bdb55deb60aa938521046a42b9597f81b0",
+      "bytes": 124
+    },
+    {
+      "file": "native-command.json",
+      "sha256": "5f4a3d854d658c5a19d0d0eb3ecbafb60a58dd8faaefb41f893511fa5f4701a4",
+      "bytes": 858
+    },
+    {
+      "file": "native-summary.json",
+      "sha256": "dce3cfa9cd26e5a6b4eadbe8a0ad0bb6e4f52b5982b88a61ed538680c206c068",
+      "bytes": 359
+    },
+    {
+      "file": "native.stderr.log",
+      "sha256": "74d098898d884670554e075c2c6c80641dfb0f923c12dcecc1706d99ab3164a3",
+      "bytes": 111
+    },
+    {
+      "file": "native.stream.jsonl",
+      "sha256": "fd744c18c86395dd249a1b2276f86b41b4ea5beab886bfb4aa75f56f3671b189",
+      "bytes": 591
+    },
+    {
+      "file": "native.tests.json",
+      "sha256": "2b433fa2a203ab57bd843097e32223243751174689a6d5cd1a3d5033389aba9b",
+      "bytes": 1624
+    },
+    {
+      "file": "preservation.json",
+      "sha256": "4779b38f5b3d17aed08991530926183860f4cc9b81e68fa8175a1a78e71b878b",
+      "bytes": 414
+    },
+    {
+      "file": "profile-cleanup.json",
+      "sha256": "32fe7efa52f266ab0b265d0dcc74f7372021641987a0b6dfacf3198e2262a05e",
+      "bytes": 352
+    },
+    {
+      "file": "quota-current.json",
+      "sha256": "062d538d32695ae4fa5fbaa04d32e3f84083a8fe9b2e8291044d65f4090fc53b",
+      "bytes": 1359
+    },
+    {
+      "file": "request.json",
+      "sha256": "b56b6753cad892ceb6784a8fab8fc1cbd3fc5259fc9778dd67bc1a66e3e0791a",
+      "bytes": 333
+    },
+    {
+      "file": "rule.canonical.md",
+      "sha256": "5b605f2d9b0fb0230e3ed64cbef52768deacb95bb4a80810972b8a06da643c9b",
+      "bytes": 343
+    },
+    {
+      "file": "rule.generated.mdc",
+      "sha256": "18f841c010cd7a9835393dc33f21b117bc773093e28fd383342bfb55df2dab97",
+      "bytes": 412
+    },
+    {
+      "file": "version.json",
+      "sha256": "0db51d037be71d81e4ee6dd48efc7644859a5fd580d8425550b97038c568c89e",
+      "bytes": 215
+    },
+    {
+      "file": "writer-create.json",
+      "sha256": "b86a45ff7a9bd7b039fea76e006547fba9562d8b74bac487db7d2bba082451b9",
+      "bytes": 568
+    }
+  ],
+  "count": 25,
+  "credentialPatternScanMatches": 0
+}

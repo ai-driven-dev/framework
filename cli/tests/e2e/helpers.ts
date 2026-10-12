@@ -1,10 +1,18 @@
 import { execFile } from "node:child_process";
-import { accessSync, constants, existsSync, mkdtempSync, symlinkSync } from "node:fs";
+import {
+  accessSync,
+  constants,
+  copyFileSync,
+  existsSync,
+  mkdtempSync,
+  rmSync,
+  symlinkSync,
+} from "node:fs";
 import { copyFile, cp, mkdir, mkdtemp, realpath, rm, writeFile } from "node:fs/promises";
 import { homedir, tmpdir } from "node:os";
 import { delimiter, dirname, join, resolve } from "node:path";
 import { promisify } from "node:util";
-import { inject } from "vitest";
+import { afterAll, inject } from "vitest";
 import { InitUseCase } from "../../src/contexts/framework/application/init-use-case.js";
 import { CLIOutput } from "../../src/presentation/output.js";
 import { environmentWithoutGitVariables as withoutGitEnv } from "../../src/runtime/git/git-environment.js";
@@ -84,7 +92,24 @@ export async function createTestEnv(prefix: string): Promise<{
  * A sandboxed run must reach none of these: the CLI registers marketplaces through a tool's
  * own command when its binary is there, making recorded output depend on the machine.
  */
-const DRIVABLE_TOOL_BINARIES = ["claude", "codex", "copilot", "cursor-agent"];
+const DRIVABLE_TOOL_BINARIES = ["opencode", "claude", "codex", "copilot", "cursor-agent"];
+
+let isolatedNodeDir: string | undefined;
+afterAll(() => {
+  if (isolatedNodeDir) rmSync(isolatedNodeDir, { recursive: true, force: true });
+  isolatedNodeDir = undefined;
+});
+
+function sandboxNodeDir(nodeDir: string): string {
+  if (withoutDrivableToolBinary(nodeDir) && !hasExecutable(nodeDir, "aidd")) return nodeDir;
+  if (!isolatedNodeDir) {
+    isolatedNodeDir = mkdtempSync(join(tmpdir(), "aidd-e2e-node-"));
+    const target = join(isolatedNodeDir, process.platform === "win32" ? "node.exe" : "node");
+    if (process.platform === "win32") copyFileSync(process.execPath, target);
+    else symlinkSync(process.execPath, target);
+  }
+  return isolatedNodeDir;
+}
 
 /**
  * Judged by what a directory holds, never by a keep-list: `node` and `copilot` share
@@ -190,7 +215,7 @@ export function pathWithoutAidd(
 
   const kept = pathDirsWithoutAidd({
     platform: process.platform,
-    nodeDir,
+    nodeDir: process.platform === "win32" ? sandboxNodeDir(nodeDir) : nodeDir,
     gitDir,
     systemRoot: process.env.SystemRoot ?? process.env.windir ?? "C:\\Windows",
     pathDirs,

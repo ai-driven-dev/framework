@@ -1,0 +1,16 @@
+{
+  "afterAuthor": "cursor-exact-01",
+  "beforeConsumer": "cursor-exact-02",
+  "actualCliTranslation": true,
+  "docs": {
+    "SKILL.md": "d95be3e4501160d8ae2c38e52e57f5e9a5373ea2f389832223631333b9df0367",
+    "actions/01-capture-rule.md": "80bee7dac8f9efe7dfdbaaddc2a7a32f385440620e047bb5c2afde04ecae7abf",
+    "actions/02-write-rule.md": "97bd053d5f270d0412ed5b288c74ba23a5e54dc50b5bc5589c66971825ade359",
+    "actions/03-validate.md": "9aea68e50aa1432b68e0ddf66754356fdd6f78ae1982d01bb3e201f724e70030",
+    "references/rule-authoring.md": "b19eb65cf59d61ad0aa6cf7cdff0fb16a19da71b6797533ff599098d62fca798",
+    "references/tool-paths.md": "0db62a35cb317224b88deff0d5506ab0ffbe5e969d3ab83626e852eb7f395731",
+    "assets/rule-template.md": "bfccef5e957e8d2de7aefe818196e82bf7691c8631452f4cc5b6e5ea526cdb47"
+  },
+  "writerHash": "9fa10479a267d899a6a024f68e75573f1d009080cd60851f23f06c8f2d190591",
+  "writerMatchesSource": true
+}

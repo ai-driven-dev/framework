@@ -1,0 +1,17 @@
+{
+  "stage": "01-domain",
+  "nativeExit": 1,
+  "timeout": false,
+  "durationSeconds": 6.83,
+  "quotaRefusal": true,
+  "checks": {
+    "fileCreated": false,
+    "requestedFunctionPresent": false,
+    "markerApplied": false,
+    "unexpectedMarkersAbsent": true,
+    "AGENTSPreserved": false
+  },
+  "applicationTestsExit": 0,
+  "pass": false,
+  "model": "auto"
+}

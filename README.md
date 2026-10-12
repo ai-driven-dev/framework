@@ -11,7 +11,7 @@ Unify **engineering teams** around **standardized workflows** and **shared best 
 🧱 **IDE agnostic** · 🏗️ **Legacy systems** · 🌱 **Token-optimized** · 🇫🇷 **Made in France**
 
 <p>
-  <!--counts:start--><kbd>9 plugins</kbd> · <kbd>51 skills</kbd> · <kbd>2 agents</kbd><!--counts:end-->
+  <!--counts:start--><kbd>9 plugins</kbd> · <kbd>52 skills</kbd> · <kbd>2 agents</kbd><!--counts:end-->
 </p>
 
 [![Open Source](https://img.shields.io/badge/Open_Source-Yes-yellow?logo=open-source-initiative&logoColor=white)](https://opensource.org/)
@@ -266,7 +266,7 @@ Code transformation: plan, implement, assert, audit, review, test, refactor, deb
 
 ### 🌿 [aidd-vcs](plugins/aidd-vcs/README.md)
 
-`5 skills` · stable
+`6 skills` · stable
 
 Repo init, commits, pull / merge requests, release tags, issues.
 
@@ -341,7 +341,7 @@ Full catalog → [`CATALOG.md`](docs/CATALOG.md).
 | 🍳 **Recipes** | Bundled how-to sheets: [MCP installations](plugins/aidd-context/skills/12-cook/assets/recipes/mcp-installation.md), [token optimization](plugins/aidd-context/skills/12-cook/assets/recipes/token-optimization.md), [install AIDDy](plugins/aidd-context/skills/12-cook/assets/recipes/install-aiddy-in-codex.md). Project recipes created by cook live in `aidd_docs/recipes/`. |
 | 🏛️ **[Architecture](docs/ARCHITECTURE.md)** | How the framework composes: plugins, skills, hooks, agents. |
 | 🧩 **[Create a plugin](docs/CREATE_PLUGIN.md)** | Build and publish your own. |
-| 🛒 **[Marketplace](docs/MARKETPLACE.md)** | Install scopes, versioning, LLM tiers. |
+| 🛒 **[Marketplace](docs/MARKETPLACE.md)** | Install scopes and versioning. |
 | ❓ **[FAQ & Troubleshooting](docs/FAQ.md)** · **[Glossary](docs/GLOSSARY.md)** | Common questions, fixes, and terms. |
 
 ## 🔒 Trust and safety

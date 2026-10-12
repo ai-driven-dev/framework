@@ -1,0 +1,19 @@
+{
+  "host": "opencode",
+  "command": [
+    "/private/tmp/aidd-953-runtime-ryTstm/v2/node_modules/@opencode/cli/bin/opencode.exe",
+    "run",
+    "--standalone",
+    "--model",
+    "local/fake",
+    "--format",
+    "json",
+    "Reply LOCAL_OK."
+  ],
+  "exit": 0,
+  "requests": 2,
+  "paths": [
+    "/v1/chat/completions",
+    "/v1/chat/completions"
+  ]
+}

@@ -1,0 +1,10 @@
+✔ CRLF body and user suffix, including fenced markers, remain byte exact (2673.322167ms)
+✔ a signed native output copied from another rule is not same-rule ownership (1144.120083ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 2
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3838.415041

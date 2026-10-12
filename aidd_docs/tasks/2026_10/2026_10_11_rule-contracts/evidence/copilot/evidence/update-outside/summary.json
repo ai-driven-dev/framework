@@ -1,0 +1,41 @@
+{
+  "stage": "update",
+  "target": "outside",
+  "exit": 0,
+  "requests": 2,
+  "mockErrors": [],
+  "bodyCounts": {
+    "GLOBAL_OLD": [
+      0,
+      0
+    ],
+    "GLOBAL_NEW": [
+      1,
+      1
+    ],
+    "DOMAIN_OLD": [
+      0,
+      0
+    ],
+    "DOMAIN_NEW": [
+      0,
+      0
+    ],
+    "DOCS_OLD": [
+      0,
+      0
+    ],
+    "DOCS_NEW": [
+      0,
+      0
+    ]
+  },
+  "expectedBodies": [
+    "GLOBAL_NEW"
+  ],
+  "expectedCompleteBodiesPresent": true,
+  "unexpectedBodiesAbsent": true,
+  "agentsExactlyPreserved": true,
+  "readerResultConfirmed": true,
+  "scopeBodyPass": true
+}

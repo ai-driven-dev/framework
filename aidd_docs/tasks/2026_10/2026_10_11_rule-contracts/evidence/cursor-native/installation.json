@@ -1,0 +1,17 @@
+{
+  "command": [
+    "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+    "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/cli/dist/cli.js",
+    "translate",
+    "/Users/baptistelafourcade/orca/workspaces/framework/basketstar",
+    "--to",
+    "cursor",
+    "--as",
+    "flat",
+    "--out",
+    "/private/tmp/aidd-oct11-cursor-native-FEFX3q/project"
+  ],
+  "exit": 0,
+  "stdout": "Flat-installed 9 plugins, 469 files written under /private/tmp/aidd-oct11-cursor-native-FEFX3q/project\n",
+  "stderr": ""
+}

@@ -1,0 +1,9 @@
+{
+  "stage": "07-deleted-domain",
+  "exit": 0,
+  "elapsedSeconds": 41.44,
+  "appTestsExit": 0,
+  "model": "openai/gpt-6-luna#low",
+  "backend": "ChatGPT subscription OAuth",
+  "apiKeyEnvironmentInherited": false
+}
