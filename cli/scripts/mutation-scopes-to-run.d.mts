@@ -6,3 +6,7 @@ export function scopesToRun(
   scopes: Readonly<Record<string, MutationScope>>,
   options?: { readonly all?: boolean }
 ): string[];
+export function legsOf(
+  names: readonly string[],
+  scopes: Readonly<Record<string, MutationScope>>
+): { scope: string; shard: number; of: number }[];

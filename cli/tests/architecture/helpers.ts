@@ -4,6 +4,7 @@
  */
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { join, posix, relative, resolve } from "node:path";
+import { matchesGlob as scopeGlob } from "../../scripts/mutation-shards.mjs";
 
 export const CLI_ROOT = resolve(import.meta.dirname, "..", "..");
 export const SRC = join(CLI_ROOT, "src");
@@ -104,15 +105,7 @@ export function expectRatchet(
  * or a scope silently covers only its subdirectories — and `*` within one segment.
  */
 export function matchesGlob(glob: string, path: string): boolean {
-  const pattern = glob
-    .split("/**/")
-    .map((segment) => segment.split("*").map(escapeGlobLiteral).join("[^/]*"))
-    .join("/(?:.*/)?");
-  return new RegExp(`^${pattern}$`).test(path);
-}
-
-function escapeGlobLiteral(literal: string): string {
-  return literal.replace(/[.+?^${}()|[\]\\]/g, "\\$&");
+  return scopeGlob(glob, path);
 }
 
 // The context graph: single source of truth for which context may import which. It lives here
