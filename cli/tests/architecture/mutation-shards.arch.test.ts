@@ -29,6 +29,8 @@ describe("splitting a scope into shards", () => {
       "kernel",
       "telemetry",
       "tools",
+      "tools-codex",
+      "translate",
     ]);
     expect(scopes.canary?.shards).toBeUndefined();
   });
@@ -61,14 +63,17 @@ describe("splitting a scope into shards", () => {
   });
 
   it.each(sharded)(
-    "keeps the heaviest shard of %s within a quarter of its fair share",
+    "keeps the heaviest shard of %s within a quarter of its fair share, or its heaviest file",
     (name, scope) => {
       const of = scope.shards ?? 1;
       const parts = partition(scope.mutate, sourceFiles(), of);
       const weight = (files: string[]) =>
         files.reduce((sum, file) => sum + read(file).split("\n").length, 0);
       const fair = weight(parts.flat()) / of;
-      expect(Math.max(...parts.map(weight)) / fair, name).toBeLessThan(1.25);
+      const heaviestFile = Math.max(...parts.flat().map((file) => weight([file])));
+      expect(Math.max(...parts.map(weight)), name).toBeLessThanOrEqual(
+        Math.max(1.25 * fair, heaviestFile)
+      );
     }
   );
 

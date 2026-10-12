@@ -4,7 +4,7 @@
     "kernel": {
       "mutate": "src/kernel/**/*.ts",
       "break": 95,
-      "shards": 3
+      "shards": 4
     },
     "tools": {
       "mutate": [
@@ -26,7 +26,8 @@
     },
     "translate": {
       "mutate": "src/contexts/translate/**/*.ts",
-      "break": 85
+      "break": 85,
+      "shards": 2
     },
     "distribution": {
       "mutate": "src/contexts/distribution/**/*.ts",
@@ -51,7 +52,8 @@
     },
     "tools-codex": {
       "mutate": "src/contexts/tools/domain/profiles/codex/**/*.ts",
-      "break": 94
+      "break": 94,
+      "shards": 2
     },
     "tools-copilot": {
       "mutate": "src/contexts/tools/domain/profiles/copilot/**/*.ts",
