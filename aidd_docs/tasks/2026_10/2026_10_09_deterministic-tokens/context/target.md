@@ -90,11 +90,15 @@ Root-scoped bindings and their adoption/`ambiguous` rule; cross-machine binding 
   - On `/clear` and on `/branch`, `CLAUDE_CODE_SESSION_ID` in the hook equals the payload `session_id` (the Claude-only guard holds on both), and the next `UserPromptSubmit` carries the new id in both.
   - `UserPromptSubmit` does not fire for `!` commands (measured earlier, re-checked).
   - End to end with the shipped hooks: an unbound `feat/x` prompt is blocked with both forms named; `aidd telemetry task demo --ticket P-1` typed as a prompt reaches the CLI as `telemetry task demo --ticket P-1 --by hook-intercept` and the next prompt passes; `/clear` appends a carry from the same pid and shows `SessionStart:clear says: Task demo kept after /clear. Different work: aidd telemetry task <name> [--ticket <ref>]`; the async catch-up runs `telemetry ingest --quiet` once per session start.
-  - Pending (needs the maintainer, phase 6 task 5): `CLAUDE_CODE_SESSION_ATTENDED`, `CLAUDE_CODE_ENTRYPOINT` and whether a block reason displays, in the VS Code extension and the desktop app. Until observed those surfaces never block.
+  - Observed with the maintainer, 2026-10-12 (phase 6 task 5), from a probe project whose hooks recorded the variables and blocked one prompt per session:
+    - Terminal: `ATTENDED=1`, `ENTRYPOINT=cli`. The block reason shows.
+    - Desktop app: `ATTENDED=1`, `ENTRYPOINT=claude-desktop`. The block reason shows ("Un hook a bloqué votre invite" and the reason).
+    - VS Code extension: `ATTENDED` unset, `ENTRYPOINT=claude-vscode`. A blocked prompt vanishes: the reason reaches the transcript only, a `systemMessage` sent with a block is not even recorded, and one sent without a block is recorded but not shown. No hook can tell the person anything there.
+    - On all three, the payload's `session_id` equals `CLAUDE_CODE_SESSION_ID`, and `CLAUDE_PID` is set.
 - Codex `UserPromptSubmit` can block (docs: `decision: block` or exit 2). Its unattended
   signal is not yet known: Codex stays out of release 1.
 - `CLAUDE_CODE_SESSION_ATTENDED` is undocumented: a contract test pins its two values, and
-  the block also requires `CLAUDE_CODE_ENTRYPOINT=cli` (two independent signals must agree).
+  the block also requires `CLAUDE_CODE_ENTRYPOINT` to be `cli` or `claude-desktop`, the surfaces seen to show a block's reason (two independent signals must agree).
 
 ## Oracles
 

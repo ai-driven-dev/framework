@@ -436,3 +436,13 @@ A residual limit of the usage contract: the clone stops being measured, and it f
 | at least one line names it | `ids.length === 0` removed | 1, "is a change when no transcript line names a session" |
 | `CLAUDE_PID` is set, so the hook does not fall back to its parent pid | the same | 1, "is a change when CLAUDE_PID is gone, leaving the hook's parent pid to name Claude" |
 | a headless run is not a person present | the same | 1, "is a change when a headless run reads as a person at the keyboard" |
+
+### Presence, observed on each surface
+
+Observed with the maintainer on 2026-10-12, recorded in [target.md](target.md): the terminal (`cli`) and the desktop app (`claude-desktop`) set `ATTENDED=1` and show a block's reason; the VS Code extension (`claude-vscode`) sets no `ATTENDED` and shows neither a reason nor a `systemMessage`. The rule was "any entrypoint not starting with `sdk`", which would have blocked a surface never seen; it is now the two surfaces seen to show the reason.
+
+| Rule | Mutation | Red |
+| --- | --- | --- |
+| the desktop app asks | `claude-desktop` removed from the set | row "the desktop app" of "presence: only ATTENDED=1 from a surface seen to show a block asks" |
+| a surface never seen does not | the set replaced by the previous "not `sdk`" rule | row "attended, from a surface never seen" |
+| `ATTENDED=1` is required | the `ATTENDED` condition removed | row "unattended" |

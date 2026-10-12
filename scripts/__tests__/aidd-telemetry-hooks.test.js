@@ -405,11 +405,23 @@ test("claude-only: a Codex or Copilot shaped payload passes and writes nothing",
   });
 });
 
-test("presence: only ATTENDED=1 with a non-sdk entrypoint asks", () => {
+// The values each surface was seen to hand a hook (2026-10-12), and whether it shows a block's
+// reason: the terminal and the desktop app do; the VS Code extension sets no ATTENDED and shows
+// neither a reason nor a systemMessage, so a block there would eat the prompt silently.
+test("presence: only ATTENDED=1 from a surface seen to show a block asks", () => {
   const absent = (name) => (env) => delete env[name];
   const rows = [
     ["attended and cli", (env) => env, true],
-    ["attended and a desktop entrypoint", (env) => Object.assign(env, { CLAUDE_CODE_ENTRYPOINT: "claude-desktop" }), true],
+    ["the desktop app", (env) => Object.assign(env, { CLAUDE_CODE_ENTRYPOINT: "claude-desktop" }), true],
+    [
+      "the VS Code extension",
+      (env) => {
+        delete env.CLAUDE_CODE_SESSION_ATTENDED;
+        env.CLAUDE_CODE_ENTRYPOINT = "claude-vscode";
+      },
+      false,
+    ],
+    ["attended, from a surface never seen", (env) => Object.assign(env, { CLAUDE_CODE_ENTRYPOINT: "claude-jetbrains" }), false],
     ["unattended", (env) => Object.assign(env, { CLAUDE_CODE_SESSION_ATTENDED: "0" }), false],
     ["sdk-cli", (env) => Object.assign(env, { CLAUDE_CODE_ENTRYPOINT: "sdk-cli" }), false],
     ["sdk-ts", (env) => Object.assign(env, { CLAUDE_CODE_ENTRYPOINT: "sdk-ts" }), false],
