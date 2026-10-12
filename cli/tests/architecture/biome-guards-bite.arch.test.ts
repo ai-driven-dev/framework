@@ -14,18 +14,23 @@ import { CLI_ROOT, read } from "./helpers.js";
 const BIOME = join(CLI_ROOT, "node_modules", "@biomejs", "biome", "bin", "biome");
 const PLUGIN = "biome-plugins/no-process-exit.grit";
 
-/** The diagnostics biome prints for one planted tree, as `<file>:<rule>` lines. */
+/** Biome's GitHub-reporter lines as `<file>:<rule>`, the file with forward slashes. */
+function findingsIn(output: string): string[] {
+  return output
+    .split("\n")
+    .map((line) => /^\s*::(?:error|warning) title=(\S+),file=(\S+?),/.exec(line))
+    .filter((match): match is RegExpExecArray => match !== null)
+    .map((match) => `${(match[2] as string).replaceAll("\\", "/")}:${match[1]}`)
+    .sort();
+}
+
+/** The diagnostics biome prints for one planted tree. */
 function biomeFindings(projectDir: string, launcher = BIOME): string[] {
   const result = spawnSync(process.execPath, [launcher, "lint", "--reporter=github", "."], {
     cwd: projectDir,
     encoding: "utf8",
   });
-  const findings = `${result.stdout}\n${result.stderr}`
-    .split("\n")
-    .map((line) => /^\s*::(?:error|warning) title=(\S+),file=(\S+?),/.exec(line))
-    .filter((match): match is RegExpExecArray => match !== null)
-    .map((match) => `${match[2]}:${match[1]}`)
-    .sort();
+  const findings = findingsIn(`${result.stdout}\n${result.stderr}`);
   // biome exits 0 when clean and 1 with diagnostics; anything else never linted.
   if (result.status !== 0 && !(result.status === 1 && findings.length > 0)) {
     throw new Error(`biome did not run: ${result.error?.message ?? result.stderr}`);
@@ -130,6 +135,14 @@ describe("the guard itself", () => {
     expect(findings.filter((f) => f.startsWith("src/contexts/framework/infrastructure/"))).toEqual(
       []
     );
+  });
+
+  it("reads a Windows path the way it reads a POSIX one", () => {
+    expect(
+      findingsIn(
+        "::error title=lint/style/noDefaultExport,file=src\\kernel\\default.ts,line=2,endLine=2,col=8,endColumn=15::Avoid default exports."
+      )
+    ).toEqual(["src/kernel/default.ts:lint/style/noDefaultExport"]);
   });
 
   it("fails when biome does not run, rather than reading as no findings", () => {
