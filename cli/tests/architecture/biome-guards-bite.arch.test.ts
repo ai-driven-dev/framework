@@ -10,21 +10,27 @@ import { join } from "node:path";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { CLI_ROOT, read } from "./helpers.js";
 
-const BIOME = join(CLI_ROOT, "node_modules", ".bin", "biome");
+// The package's own node launcher: `.bin/biome` is a shell shim, a `.cmd` on Windows.
+const BIOME = join(CLI_ROOT, "node_modules", "@biomejs", "biome", "bin", "biome");
 const PLUGIN = "biome-plugins/no-process-exit.grit";
 
 /** The diagnostics biome prints for one planted tree, as `<file>:<rule>` lines. */
-function biomeFindings(projectDir: string): string[] {
-  const result = spawnSync(BIOME, ["lint", "--reporter=github", "."], {
+function biomeFindings(projectDir: string, launcher = BIOME): string[] {
+  const result = spawnSync(process.execPath, [launcher, "lint", "--reporter=github", "."], {
     cwd: projectDir,
     encoding: "utf8",
   });
-  const lines = `${result.stdout}\n${result.stderr}`.split("\n");
-  return lines
+  const findings = `${result.stdout}\n${result.stderr}`
+    .split("\n")
     .map((line) => /^\s*::(?:error|warning) title=(\S+),file=(\S+?),/.exec(line))
     .filter((match): match is RegExpExecArray => match !== null)
     .map((match) => `${match[2]}:${match[1]}`)
     .sort();
+  // biome exits 0 when clean and 1 with diagnostics; anything else never linted.
+  if (result.status !== 0 && !(result.status === 1 && findings.length > 0)) {
+    throw new Error(`biome did not run: ${result.error?.message ?? result.stderr}`);
+  }
+  return findings;
 }
 
 describe("biome carries the exit and default-export rules", () => {
@@ -123,6 +129,12 @@ describe("the guard itself", () => {
     );
     expect(findings.filter((f) => f.startsWith("src/contexts/framework/infrastructure/"))).toEqual(
       []
+    );
+  });
+
+  it("fails when biome does not run, rather than reading as no findings", () => {
+    expect(() => biomeFindings(planted, join(planted, "missing-biome"))).toThrow(
+      /biome did not run/
     );
   });
 
