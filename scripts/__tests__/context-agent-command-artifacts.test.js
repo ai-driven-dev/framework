@@ -10,7 +10,7 @@ const agent = (file) => read(`plugins/aidd-context/skills/06-agent-generate/${fi
 const command = (file) => read(`plugins/aidd-context/skills/07-command-generate/${file}`);
 const FIXTURES = path.join(__dirname, 'fixtures/context-generation/agents-commands');
 
-test('Kilo detection and agent contract use canonical subagent Markdown without Claude name', () => {
+test('static contract: Kilo agents use canonical subagent Markdown without Claude name', () => {
   const paths = agent('references/tool-paths.md');
   assert.match(paths, /\| Kilo\s*\| `\.kilo\/agents\/<name>\.md`/u);
   assert.match(paths, /description.*subagent/u);
@@ -19,7 +19,7 @@ test('Kilo detection and agent contract use canonical subagent Markdown without 
   assert.match(paths, /six Kilo signals/u);
 });
 
-test('Kilo workflow contract uses the canonical command path and only supported fields', () => {
+test('static contract: Kilo workflows use the canonical command path and supported fields', () => {
   const paths = command('references/tool-paths.md');
   assert.match(paths, /\| Kilo\s*\| `\.kilo\/commands\/<name>\.md`/u);
   assert.match(paths, /`description`, `agent`, `model`, `variant`, `subtask`/u);
@@ -27,7 +27,7 @@ test('Kilo workflow contract uses the canonical command path and only supported 
   assert.match(paths, /six Kilo signals/u);
 });
 
-test('agent and workflow writers preflight every target and explicitly skip unsupported Codex commands', () => {
+test('static contract: agent and workflow writers preflight targets and skip unsupported Codex commands', () => {
   for (const text of [agent('actions/02-write-agent.md'), command('actions/02-write-command.md')]) {
     assert.ok(text.indexOf('**Preflight.**') >= 0);
     assert.match(text, /collision|symlink|unchanged|idempotent/u);
@@ -35,7 +35,7 @@ test('agent and workflow writers preflight every target and explicitly skip unsu
   assert.match(command('references/tool-paths.md'), /Codex CLI.*Skip/u);
 });
 
-test('caller-generated Kilo agent and workflow retain target-specific frontmatter and bodies', () => {
+test('fixture contract: Kilo agent and workflow have target-specific frontmatter and bodies', () => {
   const agentText = normalizeEol(fs.readFileSync(path.join(FIXTURES, 'native/.kilo/agents/verify-agent.md'), 'utf8'));
   const commandText = normalizeEol(fs.readFileSync(path.join(FIXTURES, 'native/.kilo/commands/verify-workflow.md'), 'utf8'));
   assert.match(agentText, /^---\ndescription: Verify the phase four agent payload\.\nmode: subagent\ntemperature: 0\npermission:\n  read: allow\n---/u);

@@ -417,7 +417,7 @@
         "kilo.json": "{}\n"
       }
     },
-    "prompt": "Use the {{SKILL}} skill. Create verify-payload with a single verify action that reads assets/payload.txt and replies with its content. Name, purpose, action and test are confirmed. Select Kilo native only; do not select portable. Do not wait for input.",
+    "prompt": "Use the {{SKILL}} skill. Create verify-payload with a single verify action that reads assets/payload.txt and replies with its content. Name, purpose, action and test are confirmed. Select Kilo native only; do not select portable. After validating it, repeat the same request once and verify nothing changed. Do not wait for input.",
     "expect": {
       "filesExist": [
         ".kilo/skills/verify-payload/SKILL.md",
@@ -437,7 +437,8 @@
           "argument-hint:",
           "allowed-tools:"
         ]
-      }
+      },
+      "repeat": true
     }
   },
   {
@@ -486,6 +487,7 @@
       "filesUnchanged": [
         "kilo.json"
       ],
+      "stdoutMatches": ["placement|choose|native|portable"],
       "judge": "The response asks for an explicit placement choice and does not write the skill."
     }
   },
@@ -531,6 +533,7 @@
         "kilo.json",
         ".kilo/skills/verify-payload"
       ],
+      "stdoutMatches": ["refus|unsafe|conflict|target"],
       "judge": "The preflight refuses the non-directory Kilo target before creating any Claude files."
     }
   },
@@ -647,6 +650,7 @@
         "kilo.json",
         ".github/hooks/aidd.json"
       ],
+      "stdoutMatches": ["invalid|refus|preflight|target"],
       "judge": "The invalid Copilot event list is reported before Claude script/config writes; Kilo guidance is separate and no Kilo file is produced."
     }
   },

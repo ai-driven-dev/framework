@@ -16,8 +16,10 @@ node scripts/skill-eval.mjs aidd-context --host=codex --case="Kilo native skill"
 
 Local and opt-in. The default `--host=claude` needs an authenticated Claude CLI.
 `--host=codex` uses an authenticated Codex CLI and the same case contracts. Both
-spend tokens, so neither is a CI gate. `--judge` still uses Claude as a separate
-grader and is optional on either host.
+spend tokens, so neither is a CI gate. `--judge` runs each natural-language
+criterion with the selected host. Without `--judge`, deterministic checks can
+pass while the case is marked `INCOMPLETE (judge skipped)`; that is not a
+successful judge evaluation.
 
 No model override is passed unless you supply `--model=<model-id>`.
 
@@ -55,8 +57,8 @@ host exit fails the case. `--keep` retains the temp project for inspection.
 ```
 
 `{{SKILL}}` is replaced with the case `evalName`. Deterministic checks run
-always; `judge` criteria run only with `--judge` and use a second `claude -p`
-as grader, for outcomes that cannot be matched literally.
+always; `judge` criteria run only with `--judge` and use a second invocation of
+the selected host, for outcomes that cannot be matched literally.
 
 ## Coverage and limits
 
