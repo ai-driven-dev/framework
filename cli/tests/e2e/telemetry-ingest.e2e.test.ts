@@ -202,7 +202,8 @@ describe("aidd telemetry ingest", () => {
     git(repoA, gitEnv, "config", "--local", "--unset", "aidd.telemetry");
     const run = await ingest();
     expect(run.stdout).toContain("0 calls added");
-    expect(run.stdout).toContain("5 calls from a clone with no consent at that time");
+    // No clone ever opted in: no transcript is read, so no call is even counted.
+    expect(run.stdout).toContain("Read 0 transcripts");
     expect(await readdir(join(telemetry, "ledger"))).not.toContain("2026-10.jsonl");
   });
 
@@ -213,7 +214,8 @@ describe("aidd telemetry ingest", () => {
     git(repoA, gitEnv, "config", "--local", "aidd.telemetry", "2");
     const run = await ingest();
     expect(run.stdout).toContain("0 calls added");
-    expect(run.stdout).toContain("5 calls from a clone with no consent at that time");
+    // No clone ever opted in: no transcript is read, so no call is even counted.
+    expect(run.stdout).toContain("Read 0 transcripts");
   });
 
   it("snapshots the branch declarations of a project that opted in", async () => {
