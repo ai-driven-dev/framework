@@ -430,15 +430,18 @@ test("presence: only ATTENDED=1 from a surface seen to show a block asks", () =>
     ["entrypoint empty", (env) => Object.assign(env, { CLAUDE_CODE_ENTRYPOINT: "" }), false],
     ["attended is true, not 1", (env) => Object.assign(env, { CLAUDE_CODE_SESSION_ATTENDED: "true" }), false],
   ];
+  // Every row is judged before failing, so a mutation names all the rows it turns red.
+  const wrong = [];
   for (const [name, change, want] of rows) {
     withBox({}, (box) => {
       const env = box.env();
       change(env);
       const result = gate(box, { env });
-      assert.equal(asks(result), want, name);
-      if (!want) assertPasses(result);
+      if (asks(result) !== want) wrong.push(name);
+      else if (!want) assertPasses(result);
     });
   }
+  assert.deepEqual(wrong, []);
 });
 
 test("presence: a typed declaration is not run for nobody", () => {

@@ -53,7 +53,7 @@ and the file was restored byte for byte.
 | Rule | Test | Mutation | Red |
 | --- | --- | --- | --- |
 | Claude-only guard | claude-only fixture cases, Codex and Copilot payloads, Codex rollout under `projects/` | session-id equality, `projects` check or rollout rejection removed | yes |
-| Presence | presence matrix | `ATTENDED=1` or `sdk*` rule dropped; absent entrypoint accepted | yes |
+| Presence | presence matrix | `ATTENDED=1` or `sdk*` rule dropped; absent entrypoint accepted | yes, for the rule of the time. The `sdk*` rule is replaced by the surfaces seen: see "Presence, observed on each surface" |
 | ~~Consent~~ | ~~consent fixture, `AIDD_TELEMETRY`~~ | ~~version, env refusal or worktree fallback dropped~~ | superseded: this row described the deleted file-based consent (`.aidd/config.json`, a version). Consent is the clone's git config now: see Fix round 1 phase 6 and phase 8 |
 | Default and detached pass | branch-role fixture | forced `working` | yes |
 | Answer-path check | aidd absent, no `telemetry task` | `canAnswer` always true | yes |
@@ -444,5 +444,8 @@ Observed with the maintainer on 2026-10-12, recorded in [target.md](target.md): 
 | Rule | Mutation | Red |
 | --- | --- | --- |
 | the desktop app asks | `claude-desktop` removed from the set | row "the desktop app" of "presence: only ATTENDED=1 from a surface seen to show a block asks" |
-| a surface never seen does not | the set replaced by the previous "not `sdk`" rule | row "attended, from a surface never seen" |
-| `ATTENDED=1` is required | the `ATTENDED` condition removed | row "unattended" |
+| a surface never seen does not | the set replaced by the previous "not `sdk`" rule | rows "attended, from a surface never seen" and "entrypoint empty" |
+| `ATTENDED=1` is required | the `ATTENDED` condition removed | rows "unattended", "attended variable absent" and "attended is true, not 1", and the test "presence: a typed declaration is not run for nobody" |
+| the VS Code extension is not asked | `claude-vscode` added to the set and the `ATTENDED` condition removed | row "the VS Code extension", with the three rows above. It holds by two independent conditions, so no single mutation reaches it: adding `claude-vscode` alone leaves it green, since the extension sets no `ATTENDED` |
+
+The matrix judges every row before it fails, so a mutation names all the rows it turns red.

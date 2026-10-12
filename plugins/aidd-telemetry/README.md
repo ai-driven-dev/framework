@@ -18,13 +18,14 @@ The task and the ticket come only from what you declare. Nothing guesses them fr
 Once per working branch, before any token of the work is spent, it asks for a task name and an optional ticket. You answer either way:
 
 - `! aidd telemetry task <name> [--ticket <ref>]` in the terminal;
-- `aidd telemetry task <name> [--ticket <ref>]` typed as a prompt, which never reaches the model;
+- `aidd telemetry task <name> [--ticket <ref>]` typed as a prompt, which never reaches the model, where it asks;
 - `aidd telemetry task --none` when the work has no task.
 
 It never asks, and never blocks:
 
 - on the default branch or a detached `HEAD`;
 - in a headless run, or when Claude Code does not report a person present;
+- in the VS Code extension, which shows no hook message, so it could not ask you. Declare from a terminal in the repository instead, `aidd telemetry task <name> [--ticket <ref>]`, which binds the working branch;
 - in a clone that is not measured: consent is per clone, a key in its git config (`aidd.telemetry`, never committed) together with an open interval that `aidd telemetry on` recorded for that very clone. A teammate who pulls the repository, a copy made with `cp -R`, a clone made again or moved, or a key set by hand is not measured, asked or blocked until `aidd telemetry on` is run there.
 
 After `/clear` or `/branch` the new session keeps the task and tells you so. Declaring a task there replaces it for the whole session. Work with no task is a row of its own, and is attributed afterwards once its branch is declared.

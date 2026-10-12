@@ -18,7 +18,7 @@ plugins/aidd-telemetry/hooks/
 ├── prompt-gate.cjs            ✅ intercept a typed declaration, else ask when the rule says so
 └── lib/
     ├── claude-only.cjs        ✅ payload session_id === CLAUDE_CODE_SESSION_ID, Claude-shaped transcript path
-    ├── presence.cjs           ✅ ATTENDED=1 and ENTRYPOINT not sdk*, else absent
+    ├── presence.cjs           ✅ ATTENDED=1 and ENTRYPOINT cli or claude-desktop, else absent
     ├── binding.cjs            ✅ reads git config + sessions.jsonl + carries.jsonl, answers "bound to what"
     └── telemetry-dir.cjs      ✅ AIDD_TELEMETRY_DIR, else AIDD_USER_CONFIG_DIR/telemetry, XDG, ~/.config/aidd/telemetry
 scripts/__tests__/aidd-telemetry-hooks.test.js   ✅ spawns each hook with payloads and a sandbox env
