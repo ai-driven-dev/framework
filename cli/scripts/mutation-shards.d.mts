@@ -3,6 +3,7 @@ import type { MutationReport } from "./run-mutation.mjs";
 type Mutate = string | readonly string[];
 type WeightOf = (path: string) => number;
 
+export function sourceFiles(): string[];
 export function linesOf(path: string): number;
 export function matchesGlob(glob: string, path: string): boolean;
 export function inScope(mutate: Mutate, path: string): boolean;

@@ -1,9 +1,23 @@
 #!/usr/bin/env node
-import { readFileSync } from "node:fs";
-import { dirname, join, resolve } from "node:path";
+import { readdirSync, readFileSync, statSync } from "node:fs";
+import { dirname, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const CLI_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
+
+/** Every `.ts` file under `src/`, relative to `cli/` with `/`, sorted: what a scope is cut from. */
+export function sourceFiles() {
+  const out = [];
+  const walk = (dir) => {
+    for (const entry of readdirSync(dir)) {
+      const full = join(dir, entry);
+      if (statSync(full).isDirectory()) walk(full);
+      else if (entry.endsWith(".ts")) out.push(relative(CLI_ROOT, full).replaceAll("\\", "/"));
+    }
+  };
+  walk(join(CLI_ROOT, "src"));
+  return out.sort();
+}
 
 /** A file's weight in a shard: its line count, which the number of its mutants follows. */
 export function linesOf(path) {

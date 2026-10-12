@@ -7,12 +7,11 @@ import {
   readFileSync,
   renameSync,
   rmSync,
-  statSync,
   writeFileSync,
 } from "node:fs";
-import { dirname, join, relative, resolve } from "node:path";
+import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { aggregateVerdict, mergeReports, shardFiles } from "./mutation-shards.mjs";
+import { aggregateVerdict, mergeReports, shardFiles, sourceFiles } from "./mutation-shards.mjs";
 
 const CLI_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const REPORT_ROOT = join(CLI_ROOT, "reports", "mutation");
@@ -227,26 +226,13 @@ function mainChanged(base = "origin/next") {
   for (const survivor of survivorsOf(report)) console.log(`  survived: ${survivor}`);
 }
 
-function sources() {
-  const out = [];
-  const walk = (dir) => {
-    for (const entry of readdirSync(dir)) {
-      const full = join(dir, entry);
-      if (statSync(full).isDirectory()) walk(full);
-      else if (entry.endsWith(".ts")) out.push(relative(CLI_ROOT, full).replaceAll("\\", "/"));
-    }
-  };
-  walk(join(CLI_ROOT, "src"));
-  return out.sort();
-}
-
 /** One shard of a scope: its files only, no floor. The aggregate scores the scope. */
 function mainShard(scope, scopes, text, force) {
   const { shard, of } = parseShard(text, scopes[scope]);
   const dir = `reports/mutation/${scope}/shard-${shard}-of-${of}`;
   mkdirSync(join(CLI_ROOT, dir), { recursive: true });
   pruneIncrementalFile(join(CLI_ROOT, dir, "incremental.json"));
-  const files = shardFiles(scopes[scope].mutate, sources(), shard, of);
+  const files = shardFiles(scopes[scope].mutate, sourceFiles(), shard, of);
   writeFileSync(join(CLI_ROOT, dir, "manifest.json"), JSON.stringify({ scope, shard, of, files }));
   const tempDirName = `.stryker-tmp-${scope}-${shard}`;
   const base = JSON.parse(readFileSync(join(CLI_ROOT, "stryker.conf.json"), "utf8"));
@@ -282,7 +268,7 @@ function mainAggregate(scope, scopes, from) {
     .filter((shard) => shard.manifest.scope === scope);
   const problem = aggregateVerdict({
     mutate: declared.mutate,
-    files: sources(),
+    files: sourceFiles(),
     of: declared.shards ?? 1,
     shards,
   });
