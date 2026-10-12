@@ -133,7 +133,178 @@ function outputStrings(output: string): string[] {
     });
 }
 
-describeNative("E2E: saved native generation in Kilo 7.7.5", () => {
+describeNative("E2E: saved native generation in Kilo", () => {
+  it("merges coexisting project instructions and deduplicates identical references", async () => {
+    const { tempDir, projectDir, fakeHome, cleanup } = await createTestEnv(
+      "kilo-config-instruction-merge"
+    );
+    const rootMarker = "KILO_ROOT_CONFIG_RULE_914";
+    const nestedMarker = "KILO_NESTED_CONFIG_RULE_914";
+    const duplicateMarker = "KILO_DUPLICATE_CONFIG_RULE_914";
+    const scenarios = [
+      {
+        name: "both-configs",
+        root: [".kilo/rules/01-standards/1-root.md"],
+        nested: [".kilo/rules/01-standards/2-nested.md"],
+        expected: { root: 1, nested: 1, duplicate: 0 },
+      },
+      {
+        name: "root-empty",
+        root: [],
+        nested: [".kilo/rules/01-standards/2-nested.md"],
+        expected: { root: 0, nested: 1, duplicate: 0 },
+      },
+      {
+        name: "nested-empty",
+        root: [".kilo/rules/01-standards/1-root.md"],
+        nested: [],
+        expected: { root: 1, nested: 0, duplicate: 0 },
+      },
+      {
+        name: "duplicate-reference",
+        root: [".kilo/rules/01-standards/3-duplicate.md"],
+        nested: [".kilo/rules/01-standards/3-duplicate.md"],
+        expected: { root: 0, nested: 0, duplicate: 1 },
+      },
+    ] as const;
+    let currentScenario = "";
+    const observations: Array<{
+      scenario: string;
+      root: number;
+      nested: number;
+      duplicate: number;
+    }> = [];
+    let model: Awaited<ReturnType<typeof localModel>> | undefined;
+    try {
+      const xdg = join(tempDir, "xdg");
+      const env = {
+        ...process.env,
+        HOME: fakeHome,
+        XDG_CONFIG_HOME: join(xdg, "config"),
+        XDG_DATA_HOME: join(xdg, "data"),
+        XDG_STATE_HOME: join(xdg, "state"),
+        XDG_CACHE_HOME: join(xdg, "cache"),
+        KILO_PURE: "1",
+        KILO_DISABLE_EXTERNAL_SKILLS: "true",
+      };
+      for (const name of ["config", "data", "state", "cache"]) {
+        await mkdir(join(xdg, name), { recursive: true });
+      }
+      const localModelProvider = await localModel({
+        respond(request) {
+          const systemMessages = request.messages
+            .filter((message) => message.role === "system")
+            .map((message) => JSON.stringify(message.content))
+            .join("\n");
+          const count = (marker: string) => systemMessages.split(marker).length - 1;
+          const observed = {
+            scenario: currentScenario,
+            root: count(rootMarker),
+            nested: count(nestedMarker),
+            duplicate: count(duplicateMarker),
+          };
+          observations.push(observed);
+          return {
+            content: `KILO_CONFIG_${observed.scenario}:root=${observed.root};nested=${observed.nested};duplicate=${observed.duplicate}`,
+          };
+        },
+      });
+      model = localModelProvider;
+
+      const kilo = async (directory: string, ...args: string[]) => {
+        const result = await execFileAsync("kilo", args, {
+          cwd: directory,
+          env,
+          timeout: 30000,
+          maxBuffer: 8 * 1024 * 1024,
+        });
+        return result.stdout;
+      };
+      expect((await kilo(projectDir, "--version")).trim()).toBe("7.7.5");
+
+      for (const scenario of scenarios) {
+        currentScenario = scenario.name;
+        const directory = join(projectDir, scenario.name);
+        const rules = join(directory, ".kilo", "rules", "01-standards");
+        const scenarioXdg = join(xdg, scenario.name);
+        await mkdir(rules, { recursive: true });
+        for (const name of ["config", "data", "state", "cache"]) {
+          await mkdir(join(scenarioXdg, name), { recursive: true });
+        }
+        await writeFile(join(rules, "1-root.md"), `# Root rule\n${rootMarker}\n`);
+        await writeFile(join(rules, "2-nested.md"), `# Nested rule\n${nestedMarker}\n`);
+        await writeFile(join(rules, "3-duplicate.md"), `# Shared rule\n${duplicateMarker}\n`);
+        await writeFile(
+          join(directory, "kilo.jsonc"),
+          JSON.stringify({ instructions: scenario.root })
+        );
+        await writeFile(
+          join(directory, ".kilo", "kilo.jsonc"),
+          JSON.stringify({
+            instructions: scenario.nested,
+            model: "openai-compatible/fake",
+            provider: {
+              "openai-compatible": {
+                options: { baseURL: localModelProvider.url },
+                models: {
+                  fake: {
+                    name: "Local deterministic config merge test",
+                    tool_call: true,
+                    limit: { context: 8192, output: 256 },
+                  },
+                },
+              },
+            },
+          })
+        );
+
+        const scenarioEnv = {
+          ...env,
+          XDG_CONFIG_HOME: join(scenarioXdg, "config"),
+          XDG_DATA_HOME: join(scenarioXdg, "data"),
+          XDG_STATE_HOME: join(scenarioXdg, "state"),
+          XDG_CACHE_HOME: join(scenarioXdg, "cache"),
+        };
+        const result = await execFileAsync(
+          "kilo",
+          [
+            "run",
+            "--pure",
+            "--dir",
+            directory,
+            "--format",
+            "json",
+            "--auto",
+            "--model",
+            "openai-compatible/fake",
+            "Return the observed instruction counts.",
+          ],
+          {
+            cwd: directory,
+            env: scenarioEnv,
+            timeout: 30000,
+            maxBuffer: 8 * 1024 * 1024,
+          }
+        );
+        const expected = scenario.expected;
+        const answer = `KILO_CONFIG_${scenario.name}:root=${expected.root};nested=${expected.nested};duplicate=${expected.duplicate}`;
+        expect(outputStrings(result.stdout)).toContain(answer);
+        expect(observations.filter((item) => item.scenario === scenario.name)).toEqual([
+          { scenario: scenario.name, ...expected },
+        ]);
+      }
+    } finally {
+      const server = model?.server;
+      if (server) {
+        server.closeAllConnections();
+        await new Promise<void>((resolve, reject) =>
+          server.close((error) => (error ? reject(error) : resolve()))
+        );
+      }
+      await cleanup();
+    }
+  }, 180000);
+
   it("loads the native skill, follows its action, and answers from the read payload", async () => {
     const { tempDir, projectDir, fakeHome, cleanup } = await createTestEnv(
       "kilo-native-skill-consumption"
