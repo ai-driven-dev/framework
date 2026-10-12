@@ -2,8 +2,12 @@
  * These tests read source as text and never import the code under test, so they stay fast
  * enough for a pre-commit hook and cannot be broken by runtime wiring.
  */
-import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
-import { join, posix, relative, resolve } from "node:path";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
+import { join, posix, resolve } from "node:path";
+import {
+  matchesGlob as scopeGlob,
+  sourceFiles as srcFiles,
+} from "../../scripts/mutation-shards.mjs";
 
 export const CLI_ROOT = resolve(import.meta.dirname, "..", "..");
 export const SRC = join(CLI_ROOT, "src");
@@ -15,16 +19,7 @@ export function canonicalPath(path: string): string {
 }
 
 export function sourceFiles(): string[] {
-  const out: string[] = [];
-  const walk = (dir: string): void => {
-    for (const entry of readdirSync(dir)) {
-      const full = join(dir, entry);
-      if (statSync(full).isDirectory()) walk(full);
-      else if (entry.endsWith(".ts")) out.push(canonicalPath(relative(CLI_ROOT, full)));
-    }
-  };
-  walk(SRC);
-  return out.sort();
+  return srcFiles();
 }
 
 export function read(relativePath: string): string {
@@ -104,15 +99,7 @@ export function expectRatchet(
  * or a scope silently covers only its subdirectories — and `*` within one segment.
  */
 export function matchesGlob(glob: string, path: string): boolean {
-  const pattern = glob
-    .split("/**/")
-    .map((segment) => segment.split("*").map(escapeGlobLiteral).join("[^/]*"))
-    .join("/(?:.*/)?");
-  return new RegExp(`^${pattern}$`).test(path);
-}
-
-function escapeGlobLiteral(literal: string): string {
-  return literal.replace(/[.+?^${}()|[\]\\]/g, "\\$&");
+  return scopeGlob(glob, path);
 }
 
 // The context graph: single source of truth for which context may import which. It lives here
