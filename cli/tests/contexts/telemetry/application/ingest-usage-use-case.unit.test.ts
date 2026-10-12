@@ -25,6 +25,15 @@ import {
 
 const sha = (text: string): string => createHash("sha256").update(text).digest("hex");
 const NOW = new Date("2026-10-09T00:00:00.000Z");
+const NOT_STORED = {
+  "outside-repo": 0,
+  "never-seen-alive": 0,
+  "no-consent": 0,
+  "consent-closed": 0,
+  "unreadable-consent": 0,
+  "no-cwd": 0,
+  undated: 0,
+};
 /** The clone the default directory belongs to. */
 const A = cloneOf("/work/a/.git");
 
@@ -112,7 +121,23 @@ function setup(options: { refused?: boolean; caseInsensitive?: boolean } = {}) {
     history.consented(cloneOf(path));
   };
   optIn(A.path);
+  /** The same ingest, with readers that read every transcript whatever its age. */
+  const ingestReadingAll = () =>
+    new IngestUsageUseCase(
+      [transcripts, other].map((source) => {
+        const reader = new ReadUsageUseCase(source, readClaudeUsageLine);
+        return { execute: (since) => reader.execute(since) } as ReadUsageUseCase;
+      }),
+      ledger,
+      new DirectoryResolver(locator, consents, resolutions, history, {
+        caseInsensitiveFileSystem: options.caseInsensitive ?? false,
+        now: () => NOW,
+      }),
+      snapshots,
+      { refusedByEnvironment: false }
+    );
   return {
+    ingestReadingAll,
     transcripts,
     other,
     ledger,
@@ -126,6 +151,82 @@ function setup(options: { refused?: boolean; caseInsensitive?: boolean } = {}) {
     optIn,
   };
 }
+
+describe("not reading what no consent can cover", () => {
+  // The default clone opted in at 2026-01-01T00:00:00.000Z: no interval starts earlier.
+  const OPTED_IN = "2026-01-01T00:00:00.000Z";
+
+  it("does not read a transcript last written a day before any interval, and keeps its end", async () => {
+    const s = setup();
+    s.transcripts.files.set("/t/old.jsonl", [line("A", 10, {}, "2025-12-30T00:00:00.000Z"), "[]"]);
+    s.transcripts.modified.set("/t/old.jsonl", "2025-12-30T23:59:59.999Z");
+    const result = await s.ingest.execute();
+    expect(result).toMatchObject({
+      filesRead: 0,
+      added: 0,
+      unrecognised: 0,
+      notStored: NOT_STORED,
+    });
+    expect((await s.ledger.positions()).get("/t/old.jsonl")?.offset).toBe(2);
+  });
+
+  it("reads what such a transcript gains afterwards", async () => {
+    const s = setup();
+    s.transcripts.files.set("/t/old.jsonl", [line("A", 10, {}, "2025-12-30T00:00:00.000Z")]);
+    s.transcripts.modified.set("/t/old.jsonl", "2025-12-29T00:00:00.000Z");
+    await s.ingest.execute();
+    s.transcripts.files.set("/t/old.jsonl", [
+      line("A", 10, {}, "2025-12-30T00:00:00.000Z"),
+      line("B", 20),
+    ]);
+    s.transcripts.modified.set("/t/old.jsonl", "2026-10-07T10:00:00.000Z");
+    expect(await s.ingest.execute()).toMatchObject({ filesRead: 1, added: 1 });
+    expect(s.ledger.records.map((r) => r.key)).toEqual(["msg_B:req_B"]);
+  });
+
+  it("reads a transcript whose file clock lags the call clock, within a day", async () => {
+    const s = setup();
+    // A coarse or remote file clock can stamp a write just after `on` with an earlier time.
+    s.transcripts.files.set("/t/1.jsonl", [line("A", 10, {}, OPTED_IN)]);
+    s.transcripts.modified.set("/t/1.jsonl", "2025-12-31T00:00:00.001Z");
+    expect(await s.ingest.execute()).toMatchObject({ filesRead: 1, added: 1 });
+  });
+
+  it("stores exactly what reading every transcript stores", async () => {
+    // Each file last written at its last call, as Claude writes them: long before, just
+    // before, at and after the interval opened.
+    const files: [string, string[]][] = [
+      ["/t/old.jsonl", ["2025-11-01T00:00:00.000Z", "2025-11-02T00:00:00.000Z"]],
+      ["/t/eve.jsonl", ["2025-12-31T22:00:00.000Z", OPTED_IN]],
+      ["/t/new.jsonl", ["2026-03-01T00:00:00.000Z", "2026-10-07T10:00:00.000Z"]],
+    ];
+    const stored = async (skipping: boolean) => {
+      const s = setup();
+      for (const [path, times] of files) {
+        s.transcripts.files.set(
+          path,
+          times.map((at, i) => line(`${path}-${i}`, 10, {}, at))
+        );
+        s.transcripts.modified.set(path, times.at(-1) ?? "");
+      }
+      const ingest = skipping ? s.ingest : s.ingestReadingAll();
+      await ingest.execute();
+      return s.ledger.records.map((r) => r.key).sort();
+    };
+    const all = await stored(false);
+    expect(all.length).toBeGreaterThan(0);
+    expect(await stored(true)).toEqual(all);
+  });
+
+  it("reads nothing while no clone has ever opted in, and keeps every end", async () => {
+    const s = setup();
+    s.history.written.length = 0;
+    s.transcripts.files.set("/t/1.jsonl", [line("A", 10)]);
+    s.transcripts.modified.set("/t/1.jsonl", "2026-10-07T10:00:00.000Z");
+    expect(await s.ingest.execute()).toMatchObject({ filesRead: 0, notStored: NOT_STORED });
+    expect((await s.ledger.positions()).get("/t/1.jsonl")?.offset).toBe(1);
+  });
+});
 
 describe("ingesting usage into the ledger", () => {
   it("reads every tool's transcripts in one ingest, and keeps where each stands", async () => {

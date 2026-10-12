@@ -34,6 +34,11 @@ export class ConsentLog {
     return covers(this.intervals, clone, at);
   }
 
+  /** When the earliest interval opened, `null` when no clone ever opted in. */
+  firstOpened(): number | null {
+    return this.intervals.length === 0 ? null : Math.min(...this.intervals.map((i) => i.from));
+  }
+
   /** The intervals with no end yet. */
   openIntervals(): ConsentInterval[] {
     return this.intervals.filter(isOpen);

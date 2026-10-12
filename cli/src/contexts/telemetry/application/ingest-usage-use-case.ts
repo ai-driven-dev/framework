@@ -40,6 +40,11 @@ const NOT_STORED: Readonly<Record<NotStoredReason, number>> = {
   undated: 0,
 };
 
+/** How far a file's modification time may lag the clock that stamps calls: coarse kernel
+ * ticks, 2 s on FAT, a network file system's own clock. A transcript last written longer than
+ * this before the first interval opened holds nothing that could be stored. */
+const FILE_CLOCK_MARGIN_MS = 24 * 60 * 60 * 1000;
+
 export interface IngestOptions {
   /** `AIDD_TELEMETRY=0`, read by the composition root. */
   readonly refusedByEnvironment: boolean;
@@ -87,12 +92,14 @@ export class IngestUsageUseCase {
 
   private async ingest(): Promise<IngestResult> {
     const before = await this.ledger.positions();
-    const reading = await this.readAll(before);
-    const filesRead = [...reading.positions].filter(([path, now]) =>
-      moved(before.get(path), now)
-    ).length;
-
+    // The consent log first: a transcript last written before any interval opened is not read.
     const resolver = await this.directories.open();
+    const reading = await this.readAll(before, resolver.coveredFrom - FILE_CLOCK_MARGIN_MS);
+    const movedPaths = [...reading.positions]
+      .filter(([path, now]) => moved(before.get(path), now))
+      .map(([path]) => path);
+    const filesRead = movedPaths.filter((path) => !reading.skipped.has(path)).length;
+
     const notStored = { ...NOT_STORED };
     const toStore: StoredUsage[] = [];
     const live = new Map<string, string>();
@@ -130,7 +137,7 @@ export class IngestUsageUseCase {
     }
 
     // Last, so a crash before it only means the same lines are read again.
-    if (filesRead > 0) await this.ledger.savePositions(reading.positions);
+    if (movedPaths.length > 0) await this.ledger.savePositions(reading.positions);
 
     return {
       refused: false,
@@ -148,14 +155,20 @@ export class IngestUsageUseCase {
 
   /** Every tool's reading as one. Each tool hands back its own files' positions only, laid over
    * the ones held, so a file no longer listed keeps its place and no tool undoes another's. */
-  private async readAll(before: ReadonlyMap<string, TranscriptPosition>): Promise<UsageReading> {
-    const readings = await Promise.all(this.readers.map((reader) => reader.execute(before)));
+  private async readAll(
+    before: ReadonlyMap<string, TranscriptPosition>,
+    coveredFrom: number
+  ): Promise<UsageReading> {
+    const readings = await Promise.all(
+      this.readers.map((reader) => reader.execute(before, coveredFrom))
+    );
     const oldest = readings.flatMap((reading) => reading.oldestTranscriptAt ?? []).sort();
     return {
       records: readings.flatMap((reading) => reading.records),
       positions: new Map([...before, ...readings.flatMap((reading) => [...reading.positions])]),
       unrecognised: readings.flatMap((reading) => reading.unrecognised),
       oldestTranscriptAt: oldest[0] ?? null,
+      skipped: new Set(readings.flatMap((reading) => [...reading.skipped])),
     };
   }
 

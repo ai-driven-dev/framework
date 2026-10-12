@@ -9,6 +9,7 @@ import {
   readFileSync,
   renameSync,
   rmSync,
+  utimesSync,
   writeFileSync,
 } from "node:fs";
 import { delimiter, join } from "node:path";
@@ -135,6 +136,9 @@ class World {
         },
       })}\n`
     );
+    // Written when the call was made, as Claude writes its transcripts.
+    const written = new Date(base + seconds * 1000);
+    utimesSync(file, written, written);
   }
 
   async on(dir: string, seconds: number) {
@@ -467,8 +471,8 @@ const ROWS: readonly Row[] = [
       const dir = join(w.sandbox.root, "d");
       mkdirSync(dir);
       w.call(dir, "d1", BEFORE);
-      const refused = await w.ingest(0);
-      expect(refused.notStored["outside-repo"]).toBe(1);
+      // No clone has opted in yet: the transcript is not even read.
+      expect((await w.ingest(0)).filesRead).toBe(0);
       initRepository(dir, w.sandbox.gitEnv, { remote: SHARED });
       await w.on(dir, HOUR);
       w.call(dir, "d2", HOUR + 100);

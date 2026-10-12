@@ -6,6 +6,8 @@ export interface TranscriptRead {
   readonly position: TranscriptPosition;
   /** The file was not the one the position described, so `lines` start at its beginning. */
   readonly restarted: boolean;
+  /** Last written before `writtenFrom`: not read, and its position is its end. */
+  readonly skipped: boolean;
 }
 
 export interface TranscriptSource {
@@ -15,5 +17,10 @@ export interface TranscriptSource {
    * told. The tool deletes a transcript by its last write, so this is how far back it can
    * still be read. */
   oldestModified(paths: readonly string[]): Promise<string | null>;
-  read(path: string, since: TranscriptPosition | null): Promise<TranscriptRead>;
+  /** `writtenFrom`: a file last written before this instant, in milliseconds, is not read. */
+  read(
+    path: string,
+    since: TranscriptPosition | null,
+    writtenFrom: number
+  ): Promise<TranscriptRead>;
 }

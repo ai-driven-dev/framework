@@ -85,6 +85,14 @@ export class ResolutionRun {
     private readonly environment: ResolutionEnvironment
   ) {}
 
+  /** The earliest instant a call can be covered at, in milliseconds: a transcript last written
+   * before it holds nothing to store. Everything when the log cannot be trusted, so that each
+   * call is still counted under its reason; nothing when no clone ever opted in. */
+  get coveredFrom(): number {
+    if (this.consents.damaged) return Number.NEGATIVE_INFINITY;
+    return this.consents.firstOpened() ?? Number.POSITIVE_INFINITY;
+  }
+
   /** A line of the consent log was not an event: nothing is stored for any clone. */
   get consentLogDamaged(): boolean {
     return this.consents.damaged;

@@ -11,6 +11,7 @@ import {
   realpathSync,
   rmSync,
   statSync,
+  utimesSync,
   writeFileSync,
 } from "node:fs";
 import { dirname, join } from "node:path";
@@ -248,10 +249,8 @@ describe("opting in to a repository the previous version measured", () => {
     git(repo, box.gitEnv, "add", ".aidd/config.json");
     git(repo, box.gitEnv, "commit", "-q", "-m", "config");
     writeTranscript(repo, ["a"]);
-    expect(await deps.ingestUsageUseCase.execute()).toMatchObject({
-      added: 0,
-      notStored: { "no-consent": 1 },
-    });
+    // No clone has opted in, so no transcript is even read.
+    expect(await deps.ingestUsageUseCase.execute()).toMatchObject({ added: 0, filesRead: 0 });
     expect(() => consentOf()).toThrow();
   });
 
@@ -328,6 +327,9 @@ function writeTranscript(cwd: string, ids: readonly string[], name = "s-1", at?:
   const file = join(box.claude, "projects", "-p", `${name}.jsonl`);
   mkdirSync(dirname(file), { recursive: true });
   writeFileSync(file, transcript(cwd, ids, at));
+  // Written when its last call was made, as Claude writes its transcripts.
+  const written = new Date(at ?? `2026-10-07T10:0${ids.length - 1}:00.000Z`);
+  utimesSync(file, written, written);
 }
 
 const stored = () => {
@@ -341,10 +343,8 @@ describe("measurement starts at on", () => {
     writeTranscript(repo, ["a", "b"]);
     await deps.telemetryOnUseCase.execute(repo);
 
-    expect(await deps.ingestUsageUseCase.execute()).toMatchObject({
-      added: 0,
-      notStored: { "no-consent": 2 },
-    });
+    // Written days before `on`: not even read.
+    expect(await deps.ingestUsageUseCase.execute()).toMatchObject({ added: 0, filesRead: 0 });
     expect(stored()).toBe(0);
   });
 
@@ -366,12 +366,14 @@ describe("measurement starts at on", () => {
 
   it("does not store a directory that is gone, seen alive before the clone opted in", async () => {
     await configure(BARE);
+    // Another clone measured, so this one's transcripts are read before it opts in.
+    await deps.telemetryOnUseCase.execute(box.repository("gadgets"));
     const sub = join(repo, "sub");
     mkdirSync(sub);
-    writeTranscript(sub, ["a"]);
+    writeTranscript(sub, ["a"], "s-1", soon());
     await deps.ingestUsageUseCase.execute();
     const remembered = JSON.parse(read(join(box.telemetry, "ledger", "roots.json")));
-    expect(remembered.directories).toEqual([expect.objectContaining({ dir: expect.any(String) })]);
+    expect(remembered.directories.some((d: { dir: string }) => d.dir.endsWith("sub"))).toBe(true);
     rmSync(sub, { recursive: true });
 
     await deps.telemetryOnUseCase.execute(repo);
@@ -459,9 +461,9 @@ function snapshot(): Record<string, string> {
 
 describe("forgetting", () => {
   async function measured(): Promise<void> {
-    git(repo, box.gitEnv, "config", "--local", "aidd.telemetry", "2");
+    await deps.telemetryOnUseCase.execute(repo);
     declare("main", "checkout");
-    writeTranscript(repo, ["a"]);
+    writeTranscript(repo, ["a"], "s-1", soon());
     await deps.ingestUsageUseCase.execute();
     writeFileSync(join(box.telemetry, "identity.json"), '{"person_id":"p-1"}\n');
     mkdirSync(join(box.telemetry, "bindings"), { recursive: true });

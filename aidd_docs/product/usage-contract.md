@@ -151,7 +151,7 @@ The block asks once per working branch, since the declaration it gets is remembe
 > 2. X had an open consent interval at the call's time;
 > 3. `AIDD_TELEMETRY=0` is not set.
 
-There is nothing else: no backfill and no special case for a first `on`, no interval that starts before its `on`, no consent flag remembered anywhere else, and no live-key condition on a live clone, because the intervals are the truth. **Measurement starts at `on`.** What a clone's sessions did before it is not counted, and `on` reads nothing back.
+There is nothing else: no backfill and no special case for a first `on`, no interval that starts before its `on`, no consent flag remembered anywhere else, and no live-key condition on a live clone, because the intervals are the truth. **Measurement starts at `on`.** What a clone's sessions did before it is not counted, and `on` reads nothing back. A transcript last written more than a day before the first interval opened is not read at all, nor counted under any reason: nothing in it could be covered. The day absorbs a file clock that lags the call clock.
 
 Every clause is decided from facts observed, never from what a path or a remote looks like:
 
@@ -170,7 +170,7 @@ Every clause is decided from facts observed, never from what a path or a remote 
 Residual limits, none of them observable by the CLI:
 
 - **A manual change of the key between two observations.** A manual `git config aidd.telemetry off`, with no hook prompt and no ingest before the next `on`, leaves the interval open until something observes the key. Every call dated before that observation is covered, those made after the key was turned off included. Any Claude Code session start or prompt in the clone, or any ingest, is such an observation.
-- **A clock.** A call is judged by its transcript timestamp, the machine's clock. A call stamped inside an interval is covered whenever it was written, and a future-dated call is covered by any interval still open. A call stamped outside its interval is refused or stored by its stamp alone.
+- **A clock.** A call is judged by its transcript timestamp, the machine's clock. A call stamped inside an interval is covered whenever it was written, and a future-dated call is covered by any interval still open, unless its transcript was last written more than a day before the first `on`: that file is not read. A call stamped outside its interval is refused or stored by its stamp alone. A transcript whose modification time was set back by more than a day is not read either.
 - **A worktree made and removed between two ingests.** A linked worktree of an opted-in clone that is created, used and removed before any ingest or session start saw it alive was never seen alive, and its calls are counted `never-seen-alive`. In practice the session start that opens the session inside it sees it alive.
 - **Where there is no birth time,** a clone that reuses a deleted clone's path and inode is taken for it (`dev` and `ino` alone are its identity), and of two clones that lived at one directory the later is told from the earlier only from the moment ingest first saw it there.
 - **Where Linux refuses `statx`** (a seccomp filter, a kernel before 4.11), Node reports the change time as the birth time. The identity then moves whenever an entry is added to the git dir, `aidd telemetry on` included, since writing the key to the git config replaces a file there. The clone then stops being measured, and asked, from the next such change. It fails closed: `aidd telemetry off` also closes the interval its key names at its path, whatever identity it reads there, so nothing is stored that its consent did not cover.
@@ -195,7 +195,7 @@ Consent is per clone, in the repository's own git config, and is never committed
 
 `on` also removes the previous version's `telemetry` block from `.aidd/config.json` if it holds one, every other byte of the file as it was, and deletes the file only when that block was all it held (the change may need committing, and `on` says so). It removes what an earlier measurement left in the repository, records its own clone so `forget` can find it, and warns when Claude Code's transcript retention is short. It does not read back what was said before it, and does not reset the transcript offsets. It ends with the next step: declare a task, which the plugin's hooks ask for in Claude Code.
 
-`forget --yes` unsets `aidd.telemetry`, with the branch task keys, in every clone recorded in `roots.json` or `consents.jsonl`, as long as the clone still exists. It names only the clones that are gone and had consented: one that never did left nothing to remove.
+`forget --yes` unsets `aidd.telemetry`, with the branch task keys, in every clone recorded in `roots.json` or `consents.jsonl`, as long as the clone still exists. It names only the clones that are gone and had consented: one that never did left nothing to remove. A clone that never ran `on` is recorded only if a call from it was read after some clone opted in, so a key set there by hand may be left.
 
 ## What never leaves the machine
 

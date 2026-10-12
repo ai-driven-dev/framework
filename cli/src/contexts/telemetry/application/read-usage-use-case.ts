@@ -19,6 +19,8 @@ export interface UsageReading {
   readonly unrecognised: readonly string[];
   /** When the oldest transcript on disk was last written, `null` when there is none. */
   readonly oldestTranscriptAt: string | null;
+  /** The files not read because they were last written before `writtenFrom`. */
+  readonly skipped: ReadonlySet<string>;
 }
 
 /** Reads one tool's usage: its transcripts, from `source`, line by line in its format. */
@@ -28,14 +30,20 @@ export class ReadUsageUseCase {
     private readonly readLine: ReadUsageLine
   ) {}
 
-  async execute(since: ReadonlyMap<string, TranscriptPosition>): Promise<UsageReading> {
+  /** `writtenFrom`: files last written before it are not read; none, by default. */
+  async execute(
+    since: ReadonlyMap<string, TranscriptPosition>,
+    writtenFrom = Number.NEGATIVE_INFINITY
+  ): Promise<UsageReading> {
     const candidates: UsageRecord[] = [];
+    const skipped = new Set<string>();
     const unrecognised: string[] = [];
     const positions = new Map<string, TranscriptPosition>();
     const paths = await this.source.list();
     for (const path of paths) {
-      const read = await this.source.read(path, since.get(path) ?? null);
+      const read = await this.source.read(path, since.get(path) ?? null, writtenFrom);
       positions.set(path, read.position);
+      if (read.skipped) skipped.add(path);
       for (const line of read.lines) {
         const outcome = this.readLine(line);
         candidates.push(...outcome.records);
@@ -47,6 +55,7 @@ export class ReadUsageUseCase {
       positions,
       unrecognised,
       oldestTranscriptAt: await this.source.oldestModified(paths),
+      skipped,
     };
   }
 }

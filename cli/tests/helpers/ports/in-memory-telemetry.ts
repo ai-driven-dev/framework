@@ -70,8 +70,17 @@ export class InMemoryTranscripts implements TranscriptSource {
     return times[0] ?? null;
   }
 
-  async read(path: string, since: TranscriptPosition | null): Promise<TranscriptRead> {
+  async read(
+    path: string,
+    since: TranscriptPosition | null,
+    writtenFrom: number
+  ): Promise<TranscriptRead> {
     const all = this.files.get(path) ?? [];
+    const modified = this.modified.get(path);
+    if (modified !== undefined && Date.parse(modified) < writtenFrom) {
+      const position = { offset: all.length, size: all.length, identity: "inode" };
+      return { lines: [], position, restarted: false, skipped: true };
+    }
     const from = since?.offset ?? 0;
     return {
       lines: all.slice(from),
@@ -81,6 +90,7 @@ export class InMemoryTranscripts implements TranscriptSource {
         identity: this.stats.get(path)?.identity ?? "inode",
       },
       restarted: false,
+      skipped: false,
     };
   }
 }

@@ -4,6 +4,8 @@ import { join, relative, resolve } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { ClaudeTranscriptSourceAdapter } from "../../../../src/contexts/telemetry/infrastructure/claude-transcript-source-adapter.js";
 
+/** Read every file, whatever its age. */
+const EVERYTHING = Number.NEGATIVE_INFINITY;
 const FIXTURES = resolve(import.meta.dirname, "../../../fixtures/claude-usage/projects");
 
 let root: string;
@@ -71,7 +73,7 @@ describe("reading a transcript from a byte offset", () => {
   it("reads every complete line of a file read for the first time", async () => {
     const path = join(projects, "t.jsonl");
     await writeFile(path, "one\ntwo\n");
-    const read = await adapter.read(path, null);
+    const read = await adapter.read(path, null, EVERYTHING);
     expect(read.lines).toEqual(["one", "two"]);
     expect(read.position.offset).toBe(8);
     expect(read.position.size).toBe(8);
@@ -81,9 +83,9 @@ describe("reading a transcript from a byte offset", () => {
   it("reads only what was appended since the position", async () => {
     const path = join(projects, "t.jsonl");
     await writeFile(path, "one\n");
-    const first = await adapter.read(path, null);
+    const first = await adapter.read(path, null, EVERYTHING);
     await appendFile(path, "two\nthree\n");
-    const second = await adapter.read(path, first.position);
+    const second = await adapter.read(path, first.position, EVERYTHING);
     expect(second.lines).toEqual(["two", "three"]);
     expect(second.position.offset).toBe(14);
   });
@@ -91,36 +93,36 @@ describe("reading a transcript from a byte offset", () => {
   it("does not consume an unterminated last line, and delivers it once finished", async () => {
     const path = join(projects, "t.jsonl");
     await writeFile(path, "one\ntw");
-    const first = await adapter.read(path, null);
+    const first = await adapter.read(path, null, EVERYTHING);
     expect(first.lines).toEqual(["one"]);
     expect(first.position.offset).toBe(4);
     expect(first.position.size).toBe(6);
     await appendFile(path, "o\n");
-    const second = await adapter.read(path, first.position);
+    const second = await adapter.read(path, first.position, EVERYTHING);
     expect(second.lines).toEqual(["two"]);
   });
 
   it("counts offsets in bytes, not characters", async () => {
     const path = join(projects, "t.jsonl");
     await writeFile(path, "é\nb\n");
-    const first = await adapter.read(path, null);
+    const first = await adapter.read(path, null, EVERYTHING);
     expect(first.position.offset).toBe(5);
     await appendFile(path, "c\n");
-    expect((await adapter.read(path, first.position)).lines).toEqual(["c"]);
+    expect((await adapter.read(path, first.position, EVERYTHING)).lines).toEqual(["c"]);
   });
 
   it("strips the carriage return of a CRLF line", async () => {
     const path = join(projects, "t.jsonl");
     await writeFile(path, "one\r\ntwo\r\n");
-    expect((await adapter.read(path, null)).lines).toEqual(["one", "two"]);
+    expect((await adapter.read(path, null, EVERYTHING)).lines).toEqual(["one", "two"]);
   });
 
   it("reads a truncated file whole", async () => {
     const path = join(projects, "t.jsonl");
     await writeFile(path, "one\ntwo\nthree\n");
-    const first = await adapter.read(path, null);
+    const first = await adapter.read(path, null, EVERYTHING);
     await writeFile(path, "a\n");
-    const second = await adapter.read(path, first.position);
+    const second = await adapter.read(path, first.position, EVERYTHING);
     expect(second.lines).toEqual(["a"]);
     expect(second.restarted).toBe(true);
   });
@@ -128,11 +130,11 @@ describe("reading a transcript from a byte offset", () => {
   it("reads a replaced file whole even when it is larger", async () => {
     const path = join(projects, "t.jsonl");
     await writeFile(path, "one\n");
-    const first = await adapter.read(path, null);
+    const first = await adapter.read(path, null, EVERYTHING);
     await writeFile(join(projects, "other.jsonl"), "x\ny\nz\nw\n");
     await rm(path);
     await rename(join(projects, "other.jsonl"), path);
-    const second = await adapter.read(path, first.position);
+    const second = await adapter.read(path, first.position, EVERYTHING);
     expect(second.lines).toEqual(["x", "y", "z", "w"]);
     expect(second.restarted).toBe(true);
   });
@@ -140,16 +142,20 @@ describe("reading a transcript from a byte offset", () => {
   it("hands a vanished file's position back unchanged", async () => {
     const path = join(projects, "gone.jsonl");
     const since = { offset: 4, size: 4, identity: "1:2" };
-    expect((await adapter.read(path, since)).position).toEqual(since);
-    expect((await adapter.read(path, null)).position).toEqual({ offset: 0, size: 0, identity: "" });
+    expect((await adapter.read(path, since, EVERYTHING)).position).toEqual(since);
+    expect((await adapter.read(path, null, EVERYTHING)).position).toEqual({
+      offset: 0,
+      size: 0,
+      identity: "",
+    });
   });
 
   it("fails on a transcript it cannot read, instead of reading it as empty", async () => {
-    await expect(adapter.read(projects, null)).rejects.toThrow(/is not a file/);
+    await expect(adapter.read(projects, null, EVERYTHING)).rejects.toThrow(/is not a file/);
   });
 
   it("reads nothing from a file that vanished", async () => {
-    const read = await adapter.read(join(projects, "gone.jsonl"), null);
+    const read = await adapter.read(join(projects, "gone.jsonl"), null, EVERYTHING);
     expect(read.lines).toEqual([]);
   });
 
@@ -187,5 +193,38 @@ describe("reading a transcript from a byte offset", () => {
   it("skips a transcript that vanished, and has no date for none", async () => {
     expect(await adapter.oldestModified([join(projects, "gone.jsonl")])).toBeNull();
     expect(await adapter.oldestModified([])).toBeNull();
+  });
+});
+
+describe("not reading a transcript last written before a given instant", () => {
+  const OLD = new Date("2026-01-01T00:00:00.000Z");
+  const FROM = Date.parse("2026-06-01T00:00:00.000Z");
+
+  it("reads none of it, and stands after its last complete line", async () => {
+    const path = join(projects, "old.jsonl");
+    await writeFile(path, "one\ntwo\npartial");
+    await utimes(path, OLD, OLD);
+    const read = await adapter.read(path, null, FROM);
+    expect(read).toMatchObject({ lines: [], skipped: true, position: { offset: 8, size: 15 } });
+    await appendFile(path, " line\nthree\n");
+    expect((await adapter.read(path, read.position, EVERYTHING)).lines).toEqual([
+      "partial line",
+      "three",
+    ]);
+  });
+
+  it("finds the last complete line however long the line after it", async () => {
+    const path = join(projects, "long.jsonl");
+    await writeFile(path, `one\n${"x".repeat(200_000)}`);
+    await utimes(path, OLD, OLD);
+    expect((await adapter.read(path, null, FROM)).position.offset).toBe(4);
+  });
+
+  it("reads a file last written at or after the instant", async () => {
+    const path = join(projects, "new.jsonl");
+    await writeFile(path, "one\n");
+    const at = new Date(FROM);
+    await utimes(path, at, at);
+    expect(await adapter.read(path, null, FROM)).toMatchObject({ lines: ["one"], skipped: false });
   });
 });

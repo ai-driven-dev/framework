@@ -26,7 +26,7 @@ function reversed(source: TranscriptSource): TranscriptSource {
   return {
     list: async () => [...(await source.list())].reverse(),
     oldestModified: (paths) => source.oldestModified(paths),
-    read: (path, since) => source.read(path, since),
+    read: (path, since, writtenFrom) => source.read(path, since, writtenFrom),
   };
 }
 
