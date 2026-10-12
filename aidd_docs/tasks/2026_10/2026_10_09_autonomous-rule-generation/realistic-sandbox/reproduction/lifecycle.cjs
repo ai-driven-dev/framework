@@ -1,5 +1,5 @@
 const fs=require('node:fs'); const path=require('node:path'); const assert=require('node:assert/strict'); const {spawnSync}=require('node:child_process'); const {createHash}=require('node:crypto');
-const {root,repo,hosts,tools:chosenTools}=require('./common.cjs').open(); const installations=JSON.parse(fs.readFileSync(path.join(root,'installations.json'),'utf8'));
+const {open,readRegular}=require('./common.cjs'); const {root,hosts}=open(); const installations=JSON.parse(fs.readFileSync(path.join(root,'installations.json'),'utf8'));
 const tools=['claude','cursor','copilot','codex','opencode'];
 const nativeUser=['.claude/rules/00-architecture/0-user-boundaries.md','.cursor/rules/00-architecture/0-user-boundaries.mdc','.github/instructions/00-user-boundaries.instructions.md'];
 const rules=[
@@ -8,7 +8,7 @@ const rules=[
  {category:'09-other',slug:'9-api-documentation',description:'Invoice API documentation',paths:['docs/**/*.md'],body:'# API documentation\n\n- Describe errors using HTTP status codes.\n- Document process-local persistence limits.\n'}
 ];
 const records=[]; const results=[]; fs.mkdirSync(path.join(root,'requests'),{recursive:true});
-function snapshot(project) {const result={}; for(const name of fs.readdirSync(project,{recursive:true})) {const file=path.join(project,name); const stat=fs.lstatSync(file); if(stat.isFile()) result[name]=fs.readFileSync(file).toString('base64'); else if(stat.isSymbolicLink()) result[name]='symlink:'+fs.readlinkSync(file);} return result;}
+function snapshot(project) {const result={}; for(const name of fs.readdirSync(project,{recursive:true})) {const file=path.join(project,name); const stat=fs.lstatSync(file); if(stat.isFile()) result[name]=readRegular(file).toString('base64'); else if(stat.isSymbolicLink()) result[name]='symlink:'+fs.readlinkSync(file);} return result;}
 function run(entry, selected, request, args=[]) {
  const input=path.join(root,'requests',entry.host+'-'+records.length+'.json'); fs.writeFileSync(input,JSON.stringify(request));
  const argv=[entry.script,'--project',entry.project,'--tools',selected.join(','),...(args.length?args:['--input',input])];

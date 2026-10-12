@@ -1,5 +1,5 @@
 const fs=require('node:fs'); const path=require('node:path'); const assert=require('node:assert/strict'); const {spawnSync}=require('node:child_process');
-const {root,repo,hosts,tools:chosenTools}=require('./common.cjs').open();
+const {root,repo}=require('./common.cjs').open();
 const installed=JSON.parse(fs.readFileSync(path.join(root,'installations.json'),'utf8')).find(entry=>entry.host==='opencode');
 const project=path.join(root,'cleanup-project'); fs.rmSync(project,{recursive:true,force:true}); fs.cpSync(installed.project,project,{recursive:true});
 const script=installed.script.replace(installed.project,project); const home=path.join(root,'homes','cleanup'); fs.mkdirSync(home,{recursive:true});

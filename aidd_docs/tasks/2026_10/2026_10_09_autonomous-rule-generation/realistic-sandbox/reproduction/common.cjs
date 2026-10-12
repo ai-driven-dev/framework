@@ -7,6 +7,18 @@ const owner = "aidd-realistic-rule-reproduction-v1";
 const prefix = "aidd-realistic-rule-repro-";
 const tools = ["claude", "cursor", "copilot", "codex", "opencode"];
 
+function readRegular(file) {
+  let fd;
+  try {
+    // Do not follow links; nonblocking open also lets fstat reject FIFOs promptly.
+    fd = fs.openSync(file, fs.constants.O_RDONLY | fs.constants.O_NOFOLLOW | fs.constants.O_NONBLOCK);
+    assert.ok(fs.fstatSync(fd).isFile(), "Refuse a nonregular file.");
+    return fs.readFileSync(fd);
+  } finally {
+    if (fd !== undefined) fs.closeSync(fd);
+  }
+}
+
 function create(repoArgument, smoke) {
   assert.ok(Number(process.versions.node.split(".")[0]) >= 24, "Fixture requires Node 24 native TypeScript support.");
   const repo = fs.realpathSync(repoArgument || process.env.AIDD_REPO_ROOT || assert.fail("Pass --repo or AIDD_REPO_ROOT."));
@@ -27,8 +39,7 @@ function open() {
   assert.equal(path.dirname(root), fs.realpathSync(os.tmpdir()), "Refuse sandbox outside this process's temporary directory.");
   assert.ok(path.basename(root).startsWith(prefix), "Refuse an unrelated directory.");
   const marker = path.join(root, ".sandbox-owner.json");
-  assert.ok(!fs.lstatSync(marker).isSymbolicLink(), "Refuse a symlink ownership marker.");
-  const metadata = JSON.parse(fs.readFileSync(marker, "utf8"));
+  const metadata = JSON.parse(readRegular(marker).toString("utf8"));
   assert.equal(metadata.owner, owner, "Refuse a directory not owned by this reproduction.");
   assert.equal(metadata.root, root, "Ownership marker must identify this exact root.");
   const repo = fs.realpathSync(process.argv[3] || process.env.AIDD_REPO_ROOT || metadata.repo);
@@ -36,4 +47,4 @@ function open() {
   return { ...metadata, root, repo };
 }
 
-module.exports = { create, open };
+module.exports = { create, open, readRegular };

@@ -1,5 +1,5 @@
 const fs=require('node:fs'); const path=require('node:path'); const assert=require('node:assert/strict'); const {spawnSync}=require('node:child_process'); const {createHash}=require('node:crypto');
-const {root,repo,hosts,tools:chosenTools}=require('./common.cjs').open(); const installation=JSON.parse(fs.readFileSync(path.join(root,'installations.json'),'utf8')).find(entry=>entry.host==='mixed');
+const {open,readRegular}=require('./common.cjs'); const {root}=open(); const installation=JSON.parse(fs.readFileSync(path.join(root,'installations.json'),'utf8')).find(entry=>entry.host==='mixed');
 const seed=path.join(root,'negative-seed'); fs.rmSync(seed,{recursive:true,force:true}); fs.cpSync(installation.project,seed,{recursive:true});
 const relativeScript=path.relative(installation.project,installation.script); const selected='claude,cursor,copilot,codex,opencode';
 const rules=[{category:'07-quality',slug:'7-monetary-precision',description:'Invoice precision',paths:[],body:'- Reject unsafe integer cents.\n'},{category:'02-programming-languages',slug:'2-domain-invariants',description:'Invoice domain',paths:['src/domain/**/*.ts'],body:'- Return detached repository snapshots.\n'},{category:'09-other',slug:'9-api-documentation',description:'Invoice API documentation',paths:['docs/**/*.md'],body:'- Document process-local persistence limits.\n'}];
@@ -10,7 +10,7 @@ function invoke(project,input,args=[]) {
  const result=spawnSync(process.execPath,argv,{cwd:root,env:{PATH:''},encoding:'utf8'}); log.push({args:[process.execPath,...argv],exit:result.status,stdout:result.stdout,stderr:result.stderr}); return result;
 }
 for(const rule of rules) assert.equal(invoke(seed,rule).status,0);
-function snapshot(project) {const output={}; for(const name of fs.readdirSync(project,{recursive:true})) {const file=path.join(project,name); const stat=fs.lstatSync(file); if(stat.isFile()) output[name]=createHash('sha256').update(fs.readFileSync(file)).digest('hex'); else if(stat.isSymbolicLink()) output[name]='symlink:'+fs.readlinkSync(file);} return output;}
+function snapshot(project) {const output={}; for(const name of fs.readdirSync(project,{recursive:true})) {const file=path.join(project,name); const stat=fs.lstatSync(file); if(stat.isFile()) output[name]=createHash('sha256').update(readRegular(file)).digest('hex'); else if(stat.isSymbolicLink()) output[name]='symlink:'+fs.readlinkSync(file);} return output;}
 const cases=[
  ['edited native third source', project=>{const file=path.join(project,'.cursor/rules/09-other/9-api-documentation.mdc'); fs.appendFileSync(file,'User edit\n');}],
  ['duplicate shared block',project=>{const file=path.join(project,'AGENTS.md'); fs.appendFileSync(file,fs.readFileSync(file));}],
