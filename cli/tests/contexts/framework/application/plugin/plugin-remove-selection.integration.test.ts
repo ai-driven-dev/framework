@@ -1,6 +1,7 @@
 import "../../../../../src/contexts/tools/domain/profiles/claude/profile.js";
 import "../../../../../src/contexts/tools/domain/profiles/codex/profile.js";
 import "../../../../../src/contexts/tools/domain/profiles/cursor/profile.js";
+import { createHash } from "node:crypto";
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
@@ -46,7 +47,7 @@ describe("plugin removal selects the recorded owner, name and tool", () => {
     const machine = manifest();
     for (const toolId of ["cursor", "claude"] as const) {
       for (const name of ["other-plugin", NAME]) {
-        project.addPlugin(toolId, plugin({ name }));
+        project.addPlugin(toolId, plugin({ name, files: { [`${name}/keep.md`]: "digest" } }));
         machine.addPlugin(toolId, plugin({ name, dependents: [ROOT, OTHER] }));
       }
     }
@@ -187,6 +188,147 @@ describe("plugin removal selects the recorded owner, name and tool", () => {
       remove.execute({ pluginName: NAME, toolIds: ["cursor"], projectRoot: ROOT, scope: "user" })
     ).rejects.toThrow("User manifest repository is required for user-scope plugin removal.");
     expect(projectRepo.saveCount).toBe(0);
+  });
+
+  it("explicit user removal deletes the proven machine file without touching the project copy", async () => {
+    const relative = `${NAME}/commands/owned.md`;
+    const content = "installed machine bytes";
+    const machine = manifest();
+    machine.addPlugin(
+      "cursor",
+      plugin({ files: { [relative]: createHash("md5").update(content).digest("hex") } })
+    );
+    const fs = new InMemoryFileAdapter();
+    const userPath = join(homedir(), ".cursor", "plugins", "local", relative);
+    const projectPath = join(ROOT, relative);
+    fs.setFile(userPath, content);
+    fs.setFile(projectPath, "project bytes");
+    const userRepo = new InMemoryManifestRepository(machine);
+    const remove = new PluginRemoveUseCase(
+      fs,
+      new InMemoryManifestRepository(manifest(), ROOT),
+      new CapturingLogger(),
+      new Map(),
+      new Map(),
+      undefined,
+      undefined,
+      userRepo
+    );
+
+    await remove.execute({
+      pluginName: NAME,
+      toolIds: ["cursor"],
+      projectRoot: ROOT,
+      scope: "user",
+    });
+
+    expect(await fs.fileExists(userPath)).toBe(false);
+    expect(fs.getFile(projectPath)).toBe("project bytes");
+    expect(machine.getPlugins("cursor")).toEqual([]);
+    expect(userRepo.saveCount).toBe(1);
+  });
+
+  it("refuses a partial user removal before deleting safe files when another tracked path escapes", async () => {
+    const content = "installed bytes";
+    const hash = createHash("md5").update(content).digest("hex");
+    const relative = `${NAME}/owned.md`;
+    const machine = manifest();
+    machine.addPlugin("cursor", plugin({ files: { [relative]: hash, "../outside.md": hash } }));
+    const before = machine.toJSON();
+    const base = join(homedir(), ".cursor", "plugins", "local");
+    const fs = new InMemoryFileAdapter({
+      [join(base, relative)]: content,
+      [join(base, "../outside.md")]: content,
+    });
+    const userRepo = new InMemoryManifestRepository(machine);
+    const remove = new PluginRemoveUseCase(
+      fs,
+      new InMemoryManifestRepository(manifest(), ROOT),
+      new CapturingLogger(),
+      new Map(),
+      new Map(),
+      undefined,
+      undefined,
+      userRepo
+    );
+
+    await expect(
+      remove.execute({ pluginName: NAME, toolIds: ["cursor"], projectRoot: ROOT, scope: "user" })
+    ).rejects.toThrow(
+      `Refusing partial removal of user-scope plugin '${NAME}': a tracked file escaped its boundary.`
+    );
+
+    expect(fs.getFile(join(base, relative))).toBe(content);
+    expect(fs.getFile(join(base, "../outside.md"))).toBe(content);
+    expect(machine.toJSON()).toEqual(before);
+    expect(userRepo.saveCount).toBe(0);
+  });
+
+  it("refuses unproven project hooks before deleting any tracked plugin file", async () => {
+    const project = manifest();
+    project.addPlugin("cursor", plugin({ scope: "project", files: { "owned.md": "digest" } }));
+    const before = project.toJSON();
+    const script = join(ROOT, ".cursor", "hooks", NAME, "edited.sh");
+    const file = join(ROOT, "owned.md");
+    const fs = new InMemoryFileAdapter({
+      [script]: "unproven hook bytes",
+      [file]: "installed plugin bytes",
+    });
+    const repo = new InMemoryManifestRepository(project, ROOT);
+    const remove = new PluginRemoveUseCase(fs, repo, new CapturingLogger(), new Map());
+
+    await expect(
+      remove.execute({ pluginName: NAME, toolIds: ["cursor"], projectRoot: ROOT })
+    ).rejects.toThrow(/unproven legacy install digest/);
+
+    expect(fs.getFile(file)).toBe("installed plugin bytes");
+    expect(fs.getFile(script)).toBe("unproven hook bytes");
+    expect(project.toJSON()).toEqual(before);
+    expect(repo.saveCount).toBe(0);
+  });
+
+  it("preserves a scope-aware host ref when no activator confirmed its removal", async () => {
+    const project = manifest();
+    project.addPlugin("claude", plugin({ scope: "project", marketplace: "local-alias" }));
+    const ref = `${NAME}@host-catalogue`;
+    const registrations = {
+      binary: "claude",
+      marketplaces: [{ alias: "local-alias", hostName: "host-catalogue" }],
+      pluginRefs: [ref, "other-plugin@host-catalogue"],
+      pluginClaims: [{ ref, dependents: [ROOT, OTHER] }],
+    };
+    project.setNativeRegistrations("claude", registrations);
+    const machine = manifest();
+    machine.setNativeRegistrations("claude", registrations);
+    const repo = new InMemoryManifestRepository(project, ROOT);
+    const userRepo = new InMemoryManifestRepository(machine);
+    const remove = new PluginRemoveUseCase(
+      new InMemoryFileAdapter(),
+      repo,
+      new CapturingLogger(),
+      new Map(),
+      new Map(),
+      undefined,
+      undefined,
+      userRepo
+    );
+
+    await remove.execute({ pluginName: NAME, toolIds: ["claude"], projectRoot: ROOT });
+
+    expect(project.getNativeRegistrations("claude")?.pluginRefs).toEqual([
+      ref,
+      "other-plugin@host-catalogue",
+    ]);
+    expect(machine.getNativeRegistrations("claude")?.pluginRefs).toEqual([
+      ref,
+      "other-plugin@host-catalogue",
+    ]);
+    expect(machine.getNativeRegistrations("claude")?.pluginClaims).toEqual([
+      { ref, dependents: [OTHER] },
+    ]);
+    expect(project.getPlugins("claude")).toEqual([]);
+    expect(userRepo.saveCount).toBe(1);
+    expect(repo.saveCount).toBe(1);
   });
 });
 
