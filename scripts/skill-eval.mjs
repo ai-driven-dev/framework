@@ -1,8 +1,7 @@
 #!/usr/bin/env node
-// Behavioral eval harness for the framework skills. Each case runs the skill for real
-// through a headless `claude -p`, in an isolated temp project where the skill is installed
-// under a unique name, so the worktree copy runs and never a globally-installed plugin of
-// the same name. Local and opt-in: it needs an authenticated `claude` and spends tokens.
+// Behavioral eval harness for framework skills. Each case runs the selected host CLI
+// in an isolated temp project with a uniquely named worktree skill. Local and opt-in:
+// the host needs authentication and each live case spends tokens.
 
 import { mkdtempSync, mkdirSync, writeFileSync, cpSync, rmSync, readFileSync, existsSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -19,6 +18,11 @@ const args = process.argv.slice(2);
 const JUDGE = args.includes("--judge");
 const KEEP = args.includes("--keep");
 const MODEL = args.find((a) => a.startsWith("--model="))?.slice("--model=".length);
+const HOST = args.find((a) => a.startsWith("--host="))?.slice("--host=".length) || "claude";
+if (!new Set(["claude", "codex"]).has(HOST)) {
+  console.error(`Unsupported host: ${HOST}. Use --host=claude or --host=codex.`);
+  process.exit(2);
+}
 const JOBS = Number((args.find((a) => a.startsWith("--jobs=")) || "--jobs=4").split("=")[1]);
 const filter = args.find((a) => !a.startsWith("--"));
 const REPEAT = Number((args.find((a) => a.startsWith("--repeat=")) || "--repeat=1").split("=")[1]);
@@ -34,20 +38,34 @@ if (cases.length === 0) {
   process.exit(2);
 }
 
-function runClaude(prompt, cwd) {
+function runHost(prompt, cwd, host = HOST) {
   return new Promise((ok, ko) => {
-    // --setting-sources project,local isolates the run from the user's global
-    // settings (hooks, output modes) so results are reproducible across machines.
+    const codexOutput = join(cwd, ".skill-eval-last-message.txt");
+    const command = host === "codex" ? "codex" : "claude";
+    // Codex uses the same project skill bytes in .agents/skills. Both hosts
+    // receive the isolated fixture as their working directory.
+    const commandArgs = host === "codex"
+      ? ["exec", "-C", cwd, "-s", "workspace-write", "--ephemeral", "--skip-git-repo-check", "-o", codexOutput, ...(MODEL ? ["-m", MODEL] : []), prompt]
+      : ["-p", prompt, ...(MODEL ? ["--model", MODEL] : []), "--setting-sources", "project,local", "--add-dir", cwd, "--dangerously-skip-permissions"];
     const child = spawn(
-      "claude",
-      ["-p", prompt, ...(MODEL ? ["--model", MODEL] : []), "--setting-sources", "project,local", "--add-dir", cwd, "--dangerously-skip-permissions"],
+      command,
+      commandArgs,
       { cwd, timeout: 600000 },
     );
     let out = "";
     child.stdout.on("data", (d) => (out += d));
     child.stderr.on("data", (d) => (out += d));
     child.on("error", ko);
-    child.on("close", () => ok(out));
+    child.on("close", (code, signal) => {
+      if (code !== 0) return ko(new Error(`${command} exited ${code ?? signal}: ${out.trim().slice(-400)}`));
+      if (host === "codex") {
+        if (!existsSync(codexOutput)) return ko(new Error("codex did not write its final response"));
+        const finalResponse = readFileSync(codexOutput, "utf8");
+        if (!finalResponse.trim()) return ko(new Error("codex wrote an empty final response"));
+        return ok(finalResponse);
+      }
+      ok(out);
+    });
     child.stdin.end();
   });
 }
@@ -100,10 +118,11 @@ async function evaluate(expect, ctx) {
       checks.push({ ok: true, skipped: true, label: `judge (skipped, pass --judge): ${expect.judge}` });
     } else {
       const evidence = [ctx.stdout, ...(expect.judgeFiles || []).map((n) => fileText(n) || "")].join("\n\n");
-      const verdict = await runClaude(
+      const verdict = await runHost(
         `You grade a test. Criterion: "${expect.judge}". Output under test follows between <<< and >>>.\n` +
           `Reply with exactly PASS or FAIL on the first line, then one line of reason.\n<<<\n${evidence}\n>>>`,
         ctx.tmp,
+        "claude",
       );
       checks.push({ ok: /^\s*pass\b/i.test(verdict), label: `judge: ${expect.judge}`, note: verdict.split("\n")[0].trim() });
     }
@@ -113,7 +132,7 @@ async function evaluate(expect, ctx) {
 
 function setupCase(c) {
   const tmp = mkdtempSync(join(tmpdir(), "skilleval-"));
-  const skillDst = join(tmp, ".claude", "skills", c.evalName);
+  const skillDst = join(tmp, HOST === "codex" ? ".agents" : ".claude", "skills", c.evalName);
   mkdirSync(skillDst, { recursive: true });
   cpSync(join(skillsDir(c), c.skill), skillDst, { recursive: true });
   // A skill may run a script its plugin bundles. Stage it next to the skill so
@@ -140,7 +159,7 @@ async function runCase(c) {
   try {
     tmp = setupCase(c);
     const prompt = c.prompt.replaceAll("{{SKILL}}", c.evalName);
-    stdout = await runClaude(prompt, tmp);
+    stdout = await runHost(prompt, tmp);
     checks = await evaluate(c.expect, { tmp, stdout, setup: c.setup?.files || {} });
   } catch (err) {
     checks = [{ ok: false, label: `run error: ${err.message}` }];
@@ -176,7 +195,7 @@ async function runAll(list, jobs) {
   return out;
 }
 
-console.log(`Running ${cases.length} case(s) on ${MODEL || "the host default model"}, ${JOBS} at a time${JUDGE ? ", with --judge" : ""}.\n`);
+console.log(`Running ${cases.length} case(s) with ${HOST} on ${MODEL || "the host default model"}, ${JOBS} at a time${JUDGE ? ", with --judge" : ""}.\n`);
 const results = await runAll(cases, JOBS);
 const failed = results.filter(({ checks }) => checks.some((k) => !k.ok)).length;
 

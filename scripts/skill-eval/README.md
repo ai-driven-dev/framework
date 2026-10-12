@@ -1,8 +1,8 @@
 # skill-eval
 
-Behavioral eval harness for the `aidd-refine` skills. Runs each skill for real
-through a headless `claude -p` and asserts the outcomes its action `## Test`
-blocks describe.
+Behavioral eval harness for framework skills. Runs each skill through the
+selected host CLI and checks the outcomes described by its action `## Test`
+blocks. These cases are live agent evaluations, not offline unit tests.
 
 ## Run
 
@@ -11,21 +11,24 @@ node scripts/skill-eval.mjs                 # every case, deterministic checks
 node scripts/skill-eval.mjs 03-shadow-areas # one skill
 node scripts/skill-eval.mjs --judge         # also run LLM-judge criteria (metered)
 node scripts/skill-eval.mjs --keep          # keep temp dirs to inspect
+node scripts/skill-eval.mjs aidd-context --host=codex --case="Kilo native skill"
 ```
 
-Local and opt-in. Needs an authenticated `claude` CLI and spends tokens, so it
-is not a CI gate.
+Local and opt-in. The default `--host=claude` needs an authenticated Claude CLI.
+`--host=codex` uses an authenticated Codex CLI and the same case contracts. Both
+spend tokens, so neither is a CI gate. `--judge` still uses Claude as a separate
+grader and is optional on either host.
 
 No model override is passed unless you supply `--model=<model-id>`.
 
 ## How it works
 
 Each case runs in a throwaway temp project. The skill under test is copied into
-`.claude/skills/<evalName>/` and its frontmatter `name` is rewritten to a unique
-`xeval-*` value. The unique name guarantees the worktree copy runs, never a
-globally-installed plugin of the same name. The harness writes the case setup
-files, runs `claude -p` in that project, then checks the written files and the
-output.
+`.claude/skills/<evalName>/` for Claude or `.agents/skills/<evalName>/` for
+Codex. Its frontmatter `name` is rewritten to a unique `xeval-*` value, so the
+worktree copy is selected. The harness writes case setup files, runs the host
+in that project, then checks the written files and final response. A nonzero
+host exit fails the case. `--keep` retains the temp project for inspection.
 
 ## Cases
 
