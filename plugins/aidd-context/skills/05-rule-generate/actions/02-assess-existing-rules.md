@@ -2,37 +2,27 @@
 
 ## Input
 
-Confirmed intent and destinations.
-
-## Output
-
-Approved candidate and resolution, or no write.
+Confirmed intent and targets.
 
 ## Process
 
-1. **Draft.** Prepare complete bodies and metadata in context using [rule-template.md](../assets/rule-template.md) and [rule-authoring.md](../references/rule-authoring.md).
-   - Strip scaffolding; settle splits before assessment.
-   - Write no rules, requests or publications yet.
-2. **Discover.** Read applicable sources through [tool-paths.md](../references/tool-paths.md).
-3. **Compare.** Compare obligations, prohibitions, scope, conditions, exceptions and priority, regardless of names.
-   - Include an update's prior source and intended changes.
-   - Prove disjointness independently of current file matches.
-   - Uncertain applicability, meaning or precedence means **needs review**.
-4. **Report.** Cite paths, decisive text, exclusions and scope reasoning for each finding.
-   - Never hide conflict/uncertainty behind new/covered.
+1. **Draft.** Prepare complete bodies, metadata, scope and targets in context through [rule-template.md](../assets/rule-template.md) and [rule-authoring.md](../references/rule-authoring.md).
+   - Remove scaffolding; settle splits. Write no rules, requests or publications.
+2. **Discover.** Read sources through [tool-paths.md](../references/tool-paths.md).
+3. **Compare.** Compare obligations, prohibitions, scope, conditions, exceptions and priority, including prior sources for updates.
+   - Exclude only proven disjoint scopes, independently of current files.
+4. **Report.** Cite source paths, decisive text, exclusions and reasoning for every finding.
 
    | Finding | Meaning |
    | --- | --- |
-   | new | no applicable coverage, overlap or conflict |
-   | covered | all obligations already supplied throughout candidate scope |
-   | overlap | compatible partial repetition or extension |
+   | new | no coverage, overlap or conflict |
+   | covered | obligations already supplied throughout scope |
+   | overlap | compatible partial repetition/extension |
    | conflict | incompatible obligations or unjustified weakening |
-   | needs review | missing evidence or decision |
+   | needs review | uncertain applicability/meaning/precedence or missing evidence |
 
-5. **Decide.** Show complete candidates and findings; await explicit resolution, even for **new**.
-   - Offer approve, keep, revise, merge/replace or cancel.
-   - Topic approval is insufficient.
-   - Keep/cancel leaves project bytes unchanged.
-   - Existing-source changes require identified sources and publication permissions.
-   - Resolve every conflict/uncertainty before proceeding.
-   - Changed body, metadata, scope, targets, resolution or source evidence returns to assessment and approval.
+5. **Resolve.** Show full candidates; await explicit approve, keep, revise, merge/replace or cancel, including for new.
+   - Topic approval is insufficient; never hide conflict/uncertainty or proceed unresolved.
+   - Existing-source changes require explicit identified-source/publication permissions.
+   - Changes to body, metadata, scope, targets, resolution or source evidence require reassessment and reapproval.
+   - Keep/cancel changes no project bytes.

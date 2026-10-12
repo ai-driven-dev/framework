@@ -21,7 +21,7 @@ flowchart LR
 
 ## Actions
 
-Read each action file in `actions/` before executing it.
+Read each numbered action file in `actions/` before executing it.
 
 | Action | Does |
 | --- | --- |

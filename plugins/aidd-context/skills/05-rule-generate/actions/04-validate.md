@@ -2,16 +2,10 @@
 
 ## Input
 
-Affected files and approved resolution.
-
-## Output
-
-One pass/fail result per affected rule.
+Affected files and resolution.
 
 ## Process
 
-1. **Operation.** Confirm expected sources/publications exist, or selected deletions are absent.
-   - Remaining rules and user bytes must survive.
-2. **Content.** Check [rule-authoring.md](../references/rule-authoring.md), exact approved body, scope, destinations and resolution.
-3. **Publication.** Check [tool-paths.md](../references/tool-paths.md), including native syntax, shared-body uniqueness, last-rule cleanup, memory preservation and byte-idempotent republishing.
-4. **Report.** Separate publication from runtime consumption; only actual host evidence proves consumption.
+1. **Check.** Verify [rule-authoring.md](../references/rule-authoring.md), approved body/scope/targets and [tool-paths.md](../references/tool-paths.md).
+   - Check existence/deletion, shared uniqueness/cleanup, surviving user/memory bytes and byte-idempotent republishing.
+2. **Report.** Give pass/fail per affected rule; publication does not prove runtime consumption.
