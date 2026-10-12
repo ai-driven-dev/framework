@@ -1,6 +1,6 @@
 # Hook authoring
 
-The contract every generated declarative hook must satisfy. Kilo uses plugin guidance from [tool-paths.md](tool-paths.md), not this script-and-entry model.
+The event-mapping contract applies to every target. The script-and-entry rules below apply to generated declarative hooks; plugin-only tools use guidance from [tool-paths.md](tool-paths.md).
 
 ## Rules
 
@@ -14,7 +14,7 @@ The contract every generated declarative hook must satisfy. Kilo uses plugin gui
 
 ## Lifecycle moments
 
-The agnostic moments a hook can target. Each tool names these differently and supports a different subset. `references/tool-paths.md` maps the commonly supported moments to each declarative tool's event name. For those tools only, consider a nearest documented supported moment when the exact moment is absent, with user agreement. Kilo has an explicit exception: never fold a missing event into another event or claim a translation without source evidence.
+The agnostic moments a hook can target. Each tool names these differently and supports a different subset. [tool-paths.md](tool-paths.md) maps commonly supported moments for declarative tools and records plugin-only guidance. For every target, use an event automatically only when its semantic equivalence to the requested moment and relevant timing, matcher, payload, and blocking behavior are documented. A nearby event is not equivalent by proximity. If equivalence is unproved, do not publish for that target; explain the missing guarantee. You may propose a different moment only by describing its behavioral differences and obtaining explicit confirmation for that different request. Never invent an event, matcher, or blocking capability.
 
 | Moment              | Fires when                                          |
 | ------------------- | --------------------------------------------------- |
@@ -30,7 +30,7 @@ The agnostic moments a hook can target. Each tool names these differently and su
 | turn stop           | the agent finishes its turn                         |
 | session end         | a session ends                                      |
 
-Confirm the chosen moment exists for the target tool before wiring. If it does not, skip that tool with the reason.
+Confirm the chosen moment and its required properties for each target before wiring. If they are absent or unverified, skip that target with the reason; an unsupported target must not receive a hook or backing script.
 
 ## Handler contract
 
