@@ -91,7 +91,11 @@ function setup(options: { refused?: boolean; caseInsensitive?: boolean } = {}) {
   const ingest = new IngestUsageUseCase(
     [
       new ReadUsageUseCase(transcripts, readClaudeUsageLine),
-      new ReadUsageUseCase(other, readClaudeUsageLine),
+      // Another tool's format: the same lines, its own name on every record.
+      new ReadUsageUseCase(other, (text) => {
+        const read = readClaudeUsageLine(text);
+        return { ...read, records: read.records.map((r) => ({ ...r, tool: "codex" as const })) };
+      }),
     ],
     ledger,
     new DirectoryResolver(locator, consents, resolutions, history, {
@@ -133,7 +137,10 @@ describe("ingesting usage into the ledger", () => {
     const result = await s.ingest.execute();
     expect(result).toMatchObject({ filesRead: 2, added: 2, unrecognised: 2 });
     expect(result.oldestTranscriptAt).toBe("2026-09-20T00:00:00.000Z");
-    expect(s.ledger.records.map((r) => r.key)).toEqual(["msg_A:req_A", "msg_B:req_B"]);
+    expect(s.ledger.records.map((r) => [r.tool, r.key])).toEqual([
+      ["claude-code", "msg_A:req_A"],
+      ["codex", "msg_B:req_B"],
+    ]);
     expect([...(await s.ledger.positions()).keys()].sort()).toEqual(["/o/1.jsonl", "/t/1.jsonl"]);
   });
 

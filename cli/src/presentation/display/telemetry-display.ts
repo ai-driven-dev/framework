@@ -75,9 +75,9 @@ const REFUSALS: Readonly<Record<RefusalReason, string>> = {
 
 const NOT_MEASURED: Readonly<Record<RefusalReason, string>> = {
   environment: "Not measured: AIDD_TELEMETRY=0.",
-  "outside-repository": "Not inside a git repository.",
+  "outside-repository": "Not measured: not inside a git repository.",
   "unidentified-repository": "Not measured: this repository has no remote and no commit yet.",
-  "no-consent": "This clone is not measured. Run `aidd telemetry on` here.",
+  "no-consent": "Not measured: this clone has not run `aidd telemetry on`.",
   "unreadable-consent": "Not measured: this clone's git config or the consent log cannot be read.",
 };
 

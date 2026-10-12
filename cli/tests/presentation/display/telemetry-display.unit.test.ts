@@ -283,6 +283,6 @@ describe("printTelemetryStatus", () => {
   it("explains a refusal", () => {
     expect(
       linesOf((o) => printTelemetryStatus(o, { status: "refused", reason: "no-consent" }))
-    ).toEqual(["This clone is not measured. Run `aidd telemetry on` here."]);
+    ).toEqual(["Not measured: this clone has not run `aidd telemetry on`."]);
   });
 });

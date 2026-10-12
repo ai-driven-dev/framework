@@ -2,11 +2,22 @@
 
 How the `telemetry` context turns Claude Code's own session files into per-task token counts. A map to the code: formats, rules and stores are in [`usage-contract.md`](../../../aidd_docs/product/usage-contract.md).
 
+## Adding a tool
+
+| Edit | Where |
+| --- | --- |
+| its line format | `contexts/telemetry/domain/formats/` |
+| its transcript source | `contexts/telemetry/infrastructure/` |
+| one reader in the ingest list | `runtime/wiring/telemetry.ts` |
+| its name | `USAGE_TOOLS` in `domain/usage-record.ts` |
+
+Storage, attribution and the report need nothing. Session declarations come from Claude's hooks only (release 1): another tool's calls are attributed by branch.
+
 ## Data flow
 
 ```mermaid
 flowchart LR
-    Files[("Claude session files")] -->|read from the saved offset| Reader["read: one line to usage records"]
+    Files[("each tool's session files")] -->|read from the saved offset| Reader["read: one reader per tool"]
     Reader --> Resolver["resolve: cwd to repository and consent"]
     Resolver -->|upsert, one record per call| Ledger[("ledger/")]
     Hooks["plugin hooks"] -->|write| Bindings[("bindings/ and git config")]
@@ -24,7 +35,7 @@ flowchart LR
 
 | Layer | Path under `cli/src/` | Holds |
 | --- | --- | --- |
-| Presentation | `presentation/commands/telemetry.ts`, `presentation/display/telemetry*` | the command group: `on`, `off`, `forget`, `ingest`, `task`, `report`, `identity` |
+| Presentation | `presentation/commands/telemetry.ts`, `presentation/display/telemetry*` | the command group: `on`, `off`, `forget`, `ingest`, `task`, `status`, `report`, `identity` |
 | Composition | `runtime/wiring/telemetry.ts` | the telemetry directory, the environment variables, every use case wired |
 | Application | `contexts/telemetry/application/` | one use case per command, the directory resolver, `report/` |
 | Domain | `contexts/telemetry/domain/` | the usage record and its fold, the declaration and attribution rules, consent, the report axes |

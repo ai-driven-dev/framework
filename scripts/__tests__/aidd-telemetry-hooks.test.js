@@ -738,7 +738,7 @@ test("a typed declaration reaches no model: the CLI stores it, the hook blocks w
   });
 });
 
-test("an intercepted declaration runs --none, a bare name, a quoted name and a ! prefix", () => {
+test("an intercepted declaration runs --none, a bare name, a quoted name and a ! prefix, and nothing without a name", () => {
   const rows = [
     ["aidd telemetry task --none", ["telemetry", "task", "--none", "--by", "hook-intercept"]],
     ["! aidd telemetry task fix", ["telemetry", "task", "fix", "--by", "hook-intercept"]],

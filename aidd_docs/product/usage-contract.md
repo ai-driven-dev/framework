@@ -202,6 +202,6 @@ Consent is per clone, in the repository's own git config, and is never committed
 Release 1 sends nothing anywhere: no code in the telemetry context or the hooks opens a network connection. Everything above lives on the machine, and `aidd telemetry forget --yes` removes it.
 
 - Local only, never to be sent: `cwd` and `git_branch` in the ledger, the roots in `roots.json`, the process facts, the transcripts themselves.
-- The text report names no path, branch, working directory or whole session id (session and repository appear as short keys). The envelope names no path, branch or working directory either, but its `session` keys are whole session ids, as above. `task` and `forget` print what they act on, so they do name a branch (`Branch feat/x is bound.`) and paths (`forget` lists every entry and repository it would remove), and the lock error names the lock file.
+- The text report names no path, branch, working directory or whole session id (session and repository appear as short keys). The envelope names no path, branch or working directory either, but its `session` keys are whole session ids, as above. `task`, `status` and `forget` print what they act on, so they do name a branch (`Branch feat/x is bound.`) and paths (`forget` lists every entry and repository it would remove), and the lock error names the lock file.
 - The person's identity exists only if they chose one with `aidd telemetry identity <id>`; it labels the `person` axis and nothing else.
 - A currency amount is never computed here: the destination owns the price table.
