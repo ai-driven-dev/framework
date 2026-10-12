@@ -29,7 +29,13 @@ afterEach(async () => {
 /** `CLAUDE_CODE_SESSION_ID` is set explicitly in every run: it is in the environment of the
  * session that runs this suite, and a leaked one would bind the wrong session. */
 function task(args: string[], extra: Record<string, string> = {}) {
-  return runCli(["telemetry", "task", ...args], repo, env.fakeHome, {
+  return telemetryCommand(["task", ...args], extra);
+}
+function status(extra: Record<string, string> = {}) {
+  return telemetryCommand(["status"], extra);
+}
+function telemetryCommand(args: string[], extra: Record<string, string>) {
+  return runCli(["telemetry", ...args], repo, env.fakeHome, {
     env: {
       AIDD_TELEMETRY_DIR: telemetry,
       AIDD_TELEMETRY: "",
@@ -91,17 +97,23 @@ describe("aidd telemetry task", () => {
 
   it("shows the binding and where it comes from", async () => {
     await task(["checkout-fix", "--ticket", "PROJ-12"]);
-    const shown = await task([]);
+    const shown = await status();
     expect(shown.exitCode).toBe(0);
     expect(shown.stdout).toContain(
       'Bound to task "checkout-fix" (ticket PROJ-12), declared in session 00000000'
     );
-    const outside = await task([], { CLAUDE_CODE_SESSION_ID: "" });
+    const outside = await status({ CLAUDE_CODE_SESSION_ID: "" });
     expect(outside.stdout).toContain("declared on branch feat/x");
   });
 
+  it("refuses a task with no name, and points at status", async () => {
+    const run = await task([]);
+    expect(run.exitCode).toBe(1);
+    expect(run.stderr).toContain("aidd telemetry status");
+  });
+
   it("says nothing is bound before a declaration", async () => {
-    expect((await task([])).stdout).toContain(
+    expect((await status()).stdout).toContain(
       "Nothing is bound: branch feat/x and session 00000000"
     );
   });
@@ -112,7 +124,7 @@ describe("aidd telemetry task", () => {
     expect(run.stdout).toContain("Declared no task.");
     expect(config("branch.feat/x.aiddDeclaredAt")).not.toBe("");
     expect(() => config("branch.feat/x.aiddTask")).toThrow();
-    expect((await task([], { CLAUDE_CODE_SESSION_ID: "" })).stdout).toContain(
+    expect((await status({ CLAUDE_CODE_SESSION_ID: "" })).stdout).toContain(
       "no task (declared none)"
     );
   });
@@ -124,7 +136,7 @@ describe("aidd telemetry task", () => {
       "first",
       "second",
     ]);
-    expect((await task([])).stdout).toContain('task "second"');
+    expect((await status()).stdout).toContain('task "second"');
   });
 
   it("marks a declaration made by a hook", async () => {

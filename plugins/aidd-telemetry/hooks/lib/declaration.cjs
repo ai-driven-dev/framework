@@ -63,7 +63,7 @@ function parseDeclaration(prompt) {
     }
   }
   if (none && (name !== null || ticket !== null)) return null;
-  if (ticket !== null && name === null) return null;
+  if (name === null && !none) return null;
   const argv = ["telemetry", "task"];
   if (name !== null) argv.push(name);
   if (ticket !== null) argv.push("--ticket", ticket);

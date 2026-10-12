@@ -744,7 +744,8 @@ test("an intercepted declaration runs --none, a bare name, a quoted name and a !
     ["! aidd telemetry task fix", ["telemetry", "task", "fix", "--by", "hook-intercept"]],
     ["  !aidd   telemetry task   fix  ", ["telemetry", "task", "fix", "--by", "hook-intercept"]],
     ['aidd telemetry task "cart fix" --ticket \'PROJ 1\'', WINDOWS ? "refused" : ["telemetry", "task", "cart fix", "--ticket", "PROJ 1", "--by", "hook-intercept"]],
-    ["aidd telemetry task", ["telemetry", "task", "--by", "hook-intercept"]],
+    // No name and no --none declares nothing: the usage is shown, the CLI is not run.
+    ["aidd telemetry task", "refused"],
   ];
   for (const [prompt, argv] of rows) {
     withBox({}, (box) => {
