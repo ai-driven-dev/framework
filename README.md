@@ -11,7 +11,7 @@ Unify **engineering teams** around **standardized workflows** and **shared best 
 🧱 **IDE agnostic** · 🏗️ **Legacy systems** · 🌱 **Token-optimized** · 🇫🇷 **Made in France**
 
 <p>
-  <!--counts:start--><kbd>9 plugins</kbd> · <kbd>52 skills</kbd> · <kbd>2 agents</kbd><!--counts:end-->
+  <!--counts:start--><kbd>9 plugins</kbd> · <kbd>53 skills</kbd> · <kbd>2 agents</kbd><!--counts:end-->
 </p>
 
 [![Open Source](https://img.shields.io/badge/Open_Source-Yes-yellow?logo=open-source-initiative&logoColor=white)](https://opensource.org/)
@@ -324,7 +324,7 @@ Answers what a piece of work cost — tokens, models, and which skill spent them
 
 ### 🎬 [aidd-qa](plugins/aidd-qa/README.md) 🆕
 
-`1 skill` · **new**
+`2 skills` · **new**
 
 Acceptance QA — locks browser scenarios from acceptance criteria and records reviewer evidence.
 

@@ -9,6 +9,7 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 - [`.claude-plugin`](#claude-plugin)
 - [`skills`](#skills)
   - [`skills/01-acceptance-qa`](#skills01-acceptance-qa)
+  - [`skills/02-demo`](#skills02-demo)
 
 ---
 
@@ -30,5 +31,13 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `actions` | [04-run-scenarios.md](skills/01-acceptance-qa/actions/04-run-scenarios.md) | - |
 | `assets` | [qa-report-template.md](skills/01-acceptance-qa/assets/qa-report-template.md) | - |
 | `references` | [interface-browser-playwright-cli.md](skills/01-acceptance-qa/references/interface-browser-playwright-cli.md) | - |
-| `-` | [SKILL.md](skills/01-acceptance-qa/SKILL.md) | `Validate a reviewed candidate's observable behavior against its acceptance criteria and record short named videos as reviewer evidence. Use when acceptance criteria exist and a browser-observable journey needs proof it holds. Do NOT use for diff review, unit or integration tests, or application fixes.` |
+| `-` | [SKILL.md](skills/01-acceptance-qa/SKILL.md) | `Validate a reviewed candidate's observable behavior against its acceptance criteria into a verdict report. Use when acceptance criteria exist and a browser-observable journey needs proof it holds. Do NOT use for diff review, unit or integration tests, or application fixes.` |
+
+#### `skills/02-demo`
+
+| Group | File | Description |
+|-------|------|---|
+| `actions` | [01-record.md](skills/02-demo/actions/01-record.md) | - |
+| `references` | [interface-browser-playwright-cli.md](skills/02-demo/references/interface-browser-playwright-cli.md) | - |
+| `-` | [SKILL.md](skills/02-demo/SKILL.md) | `Show a journey in a browser as one short named video labelled with the observed outcome. Use when a journey, such as a qa.md scenario, needs a demonstration a reviewer can watch. Do NOT use to verify acceptance criteria, review a diff, or fix the application.` |
 

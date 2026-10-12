@@ -11,8 +11,8 @@
 
 ## Scenarios
 
-| Scenario | Criteria | Expected | Actual | Verdict | Duration | Evidence |
-| -------- | --------- | -------- | ------ | ------- | -------- | -------- |
+| Scenario | Criteria | Expected | Actual | Verdict |
+| -------- | -------- | -------- | ------ | ------- |
 
 ## Rejected
 
