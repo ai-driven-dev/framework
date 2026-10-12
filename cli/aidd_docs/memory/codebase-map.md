@@ -23,6 +23,7 @@ src/
 │   │   │   │   └── content/
 │   │   │   ├── ownership/    # machine plugin claims and safe project detach
 │   │   │   ├── plugin/
+│   │   │   ├── recipes/
 │   │   │   ├── restore/
 │   │   │   ├── setup/
 │   │   │   ├── shared/
@@ -31,7 +32,8 @@ src/
 │   │   │   ├── formats/
 │   │   │   ├── manifest/
 │   │   │   ├── plugins/
-│   │   │   └── ports/
+│   │   │   ├── ports/
+│   │   │   └── recipes/
 │   │   └── infrastructure/
 │   ├── tools/    # what a project targets, and what each target declares
 │   │   ├── domain/

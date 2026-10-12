@@ -2,6 +2,8 @@
 
 <One sentence describing what this recipe gets the reader.>
 
+> Fill every placeholder and remove these instructions. Omit Why, Verify, and difficulty categories when they add no value; without categories, use direct `### N) <emoji> Title` steps.
+
 ## Why
 
 <Short and benefit-first, one idea per line. Lead with the keywords a reader would search, **bold** the key terms.>

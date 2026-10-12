@@ -483,10 +483,11 @@ jobs:
       # and destroys an install nothing can restore. The suite reads YAML through the root
       # devDependencies, so the install has to precede it.
       - run: pnpm install --frozen-lockfile
+      - run: cd cli && pnpm install --frozen-lockfile
       - name: Plugin suite
         run: node scripts/check-tests-leave-git-alone.js -- node --test 'scripts/__tests__/**/*.test.js'
 
-      # A Windows commit's hooks (#948), less the three cli jobs that need cli/'s dependencies.
+      # The same commit hooks on Windows; dedicated jobs cover the three CLI checks.
       - name: Hooks - a commit's hooks pass on Windows
         run: |
           echo "# lefthook subject" > "$RUNNER_TEMP/msg"
@@ -496,15 +497,14 @@ jobs:
           pnpm exec lefthook run prepare-commit-msg "$RUNNER_TEMP/msg" message --no-auto-install --no-tty >> "$RUNNER_TEMP/hooks.log" 2>&1 || status=1
           cat "$RUNNER_TEMP/hooks.log"
           if grep -n "syntax error" "$RUNNER_TEMP/hooks.log"; then
-            echo "::error::lefthook handed sh a broken command line (#948)"
+            echo "::error::lefthook handed sh a broken command line"
             exit 1
           fi
           exit $status
 
-      - run: cd cli && pnpm install --frozen-lockfile
       # A real global install, not `node dist/cli.js` by path: nothing else proves `aidd`
-      # resolves on this platform's PATH. Built here, ahead of the suites below, so this is
-      # the only build the job needs.
+      # resolves on this platform's PATH. The recipe hook builds it first; this step
+      # rebuilds and packages it for the global install.
       #
       # Inlined rather than `pnpm run install:local`: a package.json script runs through
       # pnpm's configured shell, `cmd.exe` on Windows, where that script's `$(node -p ...)`
@@ -520,6 +520,7 @@ jobs:
         run: aidd --version
       - run: cd cli && pnpm test:unit
       - run: cd cli && pnpm test:integration
+      - run: cd cli && pnpm test:arch
       # Every e2e but the one named below.
       - name: cli e2e
         # `--max-workers=2`, and only here. Vitest transforms modules on its own main thread

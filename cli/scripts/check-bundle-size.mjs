@@ -35,6 +35,10 @@ const pkg = JSON.parse(readFileSync(resolve(root, "package.json"), "utf8"));
 // 667 KB: 653.3 KB, consent as intervals keyed by a clone and a token, closed by ingest and the
 // hooks, and measurement starting at `on` (+13.5 KB over the 639.8 KB above, reached across the
 // consent rounds; 651.5 KB at the last one); 2.1% measured headroom.
+// 751 KB: 750.2 KB, recipe validation moved from Cook's script to the framework CLI after merging next;
+// 0.1% measured headroom, with no added runtime dependency.
+// 689 KB: 675.2 KB, that recipe validation merged into the deterministic token measurement
+// (+21.9 KB over the 653.3 KB above); 2.0% measured headroom.
 const budgetKB = pkg.bundleBudgetKB ?? 500;
 const budgetBytes = budgetKB * 1024;
 

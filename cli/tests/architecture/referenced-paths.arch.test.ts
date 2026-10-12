@@ -40,7 +40,6 @@ const INSTRUCTING_SOURCES: readonly string[] = [
   "ARCHITECTURE.md",
   "README.md",
   "vitest.config.ts",
-  "vitest.workspace.ts",
   "knip.json",
   "tsup.config.ts",
   "stryker.conf.json",
