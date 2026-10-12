@@ -1,0 +1,246 @@
+diff --git a/dist/src/stryker-setup.js b/dist/src/stryker-setup.js
+index aecfacbe47b285c272c47e54b3d66a716adfdc41..91ce99f47f4435333acc4fc8681894b53dbf7abe 100644
+--- a/dist/src/stryker-setup.js
++++ b/dist/src/stryker-setup.js
+@@ -56,14 +56,8 @@ else {
+     }
+ }
+ // Stryker disable all: this file is copied to the sandbox dir
+-function collectTestName({ name, suite, }) {
+-    const nameParts = [name];
+-    let currentSuite = suite;
+-    while (currentSuite) {
+-        nameParts.unshift(currentSuite.name);
+-        currentSuite = currentSuite.suite;
+-    }
+-    return nameParts.join(' ').trim();
++function collectTestName({ fullTestName }) {
++    return fullTestName;
+ }
+ function toRawTestId(test) {
+     return `${test.file?.filepath ?? 'unknown.js'}#${collectTestName(test)}`;
+diff --git a/dist/src/test-helpers.d.ts b/dist/src/test-helpers.d.ts
+index c832dcc6dc2d5c40ca70dfe46fe0af2bbbccbb6a..13ccc605fcaedc3b7cf8837a468e759ea2d9402a 100644
+--- a/dist/src/test-helpers.d.ts
++++ b/dist/src/test-helpers.d.ts
+@@ -1,7 +1,6 @@
+-import type { RunnerTestCase, RunnerTestSuite } from 'vitest';
+-export declare function collectTestName({ name, suite, }: {
+-    name: string;
+-    suite?: RunnerTestSuite;
++import type { RunnerTestCase } from 'vitest';
++export declare function collectTestName({ fullTestName }: {
++    fullTestName: string;
+ }): string;
+ export declare function toRawTestId(test: RunnerTestCase): string;
+ //# sourceMappingURL=test-helpers.d.ts.map
+diff --git a/dist/src/test-helpers.js b/dist/src/test-helpers.js
+index 56cc786f30c524ae18ce87eef1a67fdf26b703c5..d6c03f9f32cc30eed342cee7211a4f9b9adb571e 100644
+--- a/dist/src/test-helpers.js
++++ b/dist/src/test-helpers.js
+@@ -1,14 +1,8 @@
+ // Don't merge this file into 'vitest-helpers.ts'!
+ // This file is used from the testing environment (via stryker-setup.js) and thus could be loaded into the browser (when using vitest with browser mode).
+ // Thus we should avoid unnecessary dependencies in this file.
+-export function collectTestName({ name, suite, }) {
+-    const nameParts = [name];
+-    let currentSuite = suite;
+-    while (currentSuite) {
+-        nameParts.unshift(currentSuite.name);
+-        currentSuite = currentSuite.suite;
+-    }
+-    return nameParts.join(' ').trim();
++export function collectTestName({ fullTestName }) {
++    return fullTestName;
+ }
+ export function toRawTestId(test) {
+     return `${test.file?.filepath ?? 'unknown.js'}#${collectTestName(test)}`;
+diff --git a/dist/src/vitest-test-runner.js b/dist/src/vitest-test-runner.js
+index 84f1ca026503b8e92b7adc952ec6c6a401943656..438032a5c295cbd74e5d09577fb5cbf7a35e91d7 100644
+--- a/dist/src/vitest-test-runner.js
++++ b/dist/src/vitest-test-runner.js
+@@ -91,6 +91,7 @@ export class VitestTestRunner {
+             ];
+             project.config.browser.screenshotFailures = false;
+         });
++        await this.ctx.standalone();
+         if (this.log.isDebugEnabled()) {
+             this.log.debug(`vitest final config: ${JSON.stringify(this.ctx.config, null, 2)}`);
+         }
+@@ -141,24 +142,33 @@ export class VitestTestRunner {
+                 ? relatedFiles.map(normalizeFileName)
+                 : undefined;
+         let testFilesToRun = explicitTestFiles;
+-        if (testIds.length > 0) {
+-            const parsedTests = testIds.map(fromTestId);
+-            const regexTestNameFilter = parsedTests
+-                .map(({ test: name }) => escapeRegExp(name))
+-                .join('|');
+-            const regex = new RegExp(regexTestNameFilter);
+-            testFilesToRun = parsedTests.map(({ file }) => file);
+-            this.ctx.projects.forEach((project) => {
+-                project.config.testNamePattern = regex;
+-            });
+-        }
+-        else {
+-            this.ctx.projects.forEach((project) => {
+-                project.config.testNamePattern = undefined;
+-            });
++        const namesByFile = new Map();
++        for (const { file, test } of testIds.map(fromTestId)) {
++            const resolved = normalizeFileName(path.resolve(file));
++            const names = namesByFile.get(resolved) ?? [];
++            names.push(escapeRegExp(test));
++            namesByFile.set(resolved, names);
+         }
++        this.ctx.projects.forEach((project) => {
++            project.config.testNamePattern = undefined;
++        });
+         try {
+-            await this.ctx.start(testFilesToRun);
++            if (namesByFile.size > 0) {
++                testFilesToRun = [...namesByFile.keys()];
++                const specifications = await this.ctx.getRelevantTestSpecifications(testFilesToRun);
++                const selected = specifications.flatMap((specification) => {
++                    const names = namesByFile.get(normalizeFileName(path.resolve(specification.moduleId)));
++                    return names === undefined ? [] : [specification.project.createSpecification(
++                        specification.moduleId,
++                        { testNamePattern: new RegExp(`^(?:${names.join('|')})$`) },
++                        specification.pool,
++                    )];
++                });
++                await this.ctx.runTestSpecifications(selected);
++            }
++            else {
++                await this.ctx.runTestFiles(testFilesToRun ?? []);
++            }
+         }
+         catch (error) {
+             if (
+diff --git a/src/stryker-setup.ts b/src/stryker-setup.ts
+index ff31bed1ea6cdd23d3b9e195d53303dde43526e4..6d5445997e87e399599b2555dc7ba137bc67a792 100644
+--- a/src/stryker-setup.ts
++++ b/src/stryker-setup.ts
+@@ -6,7 +6,6 @@ import {
+   beforeAll,
+   afterEach,
+   inject,
+-  RunnerTestSuite,
+   RunnerTestCase,
+ } from 'vitest';
+ 
+@@ -73,19 +72,11 @@ if (mode === 'mutant') {
+ 
+ // Stryker disable all: this file is copied to the sandbox dir
+ function collectTestName({
+-  name,
+-  suite,
++  fullTestName,
+ }: {
+-  name: string;
+-  suite?: RunnerTestSuite;
++  fullTestName: string;
+ }): string {
+-  const nameParts = [name];
+-  let currentSuite = suite;
+-  while (currentSuite) {
+-    nameParts.unshift(currentSuite.name);
+-    currentSuite = currentSuite.suite;
+-  }
+-  return nameParts.join(' ').trim();
++  return fullTestName;
+ }
+ 
+ function toRawTestId(test: RunnerTestCase): string {
+diff --git a/src/test-helpers.ts b/src/test-helpers.ts
+index 1cf9538c2dd926d608282b40e848833585e1ea39..03f564a2780650c8474997622e5cc3003da17909 100644
+--- a/src/test-helpers.ts
++++ b/src/test-helpers.ts
+@@ -1,23 +1,15 @@
+-import type { RunnerTestCase, RunnerTestSuite } from 'vitest';
++import type { RunnerTestCase } from 'vitest';
+ 
+ // Don't merge this file into 'vitest-helpers.ts'!
+ // This file is used from the testing environment (via stryker-setup.js) and thus could be loaded into the browser (when using vitest with browser mode).
+ // Thus we should avoid unnecessary dependencies in this file.
+ 
+ export function collectTestName({
+-  name,
+-  suite,
++  fullTestName,
+ }: {
+-  name: string;
+-  suite?: RunnerTestSuite;
++  fullTestName: string;
+ }): string {
+-  const nameParts = [name];
+-  let currentSuite = suite;
+-  while (currentSuite) {
+-    nameParts.unshift(currentSuite.name);
+-    currentSuite = currentSuite.suite;
+-  }
+-  return nameParts.join(' ').trim();
++  return fullTestName;
+ }
+ 
+ export function toRawTestId(test: RunnerTestCase): string {
+diff --git a/src/vitest-test-runner.ts b/src/vitest-test-runner.ts
+index b54e16ae236118113d78931dab44a2252825cde4..f7e7a0568de3f8307ad953b3a33902bc37bc77b0 100644
+--- a/src/vitest-test-runner.ts
++++ b/src/vitest-test-runner.ts
+@@ -163,6 +163,7 @@ export class VitestTestRunner implements TestRunner {
+       ];
+       project.config.browser.screenshotFailures = false;
+     });
++    await this.ctx.standalone();
+     if (this.log.isDebugEnabled()) {
+       this.log.debug(
+         `vitest final config: ${JSON.stringify(this.ctx.config, null, 2)}`,
+@@ -227,23 +228,32 @@ export class VitestTestRunner implements TestRunner {
+         ? relatedFiles.map(normalizeFileName)
+         : undefined;
+     let testFilesToRun: string[] | undefined = explicitTestFiles;
+-    if (testIds.length > 0) {
+-      const parsedTests = testIds.map(fromTestId);
+-      const regexTestNameFilter = parsedTests
+-        .map(({ test: name }) => escapeRegExp(name))
+-        .join('|');
+-      const regex = new RegExp(regexTestNameFilter);
+-      testFilesToRun = parsedTests.map(({ file }) => file);
+-      this.ctx!.projects.forEach((project) => {
+-        project.config.testNamePattern = regex;
+-      });
+-    } else {
+-      this.ctx!.projects.forEach((project) => {
+-        project.config.testNamePattern = undefined;
+-      });
++    const namesByFile = new Map<string, string[]>();
++    for (const { file, test } of testIds.map(fromTestId)) {
++      const resolved = normalizeFileName(path.resolve(file));
++      const names = namesByFile.get(resolved) ?? [];
++      names.push(escapeRegExp(test));
++      namesByFile.set(resolved, names);
+     }
++    this.ctx!.projects.forEach((project) => {
++      project.config.testNamePattern = undefined;
++    });
+     try {
+-      await this.ctx!.start(testFilesToRun);
++      if (namesByFile.size > 0) {
++        testFilesToRun = [...namesByFile.keys()];
++        const specifications = await this.ctx!.getRelevantTestSpecifications(testFilesToRun);
++        const selected = specifications.flatMap((specification) => {
++          const names = namesByFile.get(normalizeFileName(path.resolve(specification.moduleId)));
++          return names === undefined ? [] : [specification.project.createSpecification(
++            specification.moduleId,
++            { testNamePattern: new RegExp(`^(?:${names.join('|')})$`) },
++            specification.pool,
++          )];
++        });
++        await this.ctx!.runTestSpecifications(selected);
++      } else {
++        await this.ctx!.runTestFiles(testFilesToRun ?? []);
++      }
+     } catch (error) {
+       if (
+         // No tests found, this isn't a problem, we can continue
