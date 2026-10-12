@@ -59,16 +59,17 @@ function sameIdentity(left, right) {
 // that swaps a parent away and back between checks.
 function openProjectFile(fs, path, filePath) {
   const root = fs.realpathSync(process.cwd());
-  const rootIdentity = fs.statSync(root);
+  const rootIdentity = fs.statSync(root, { bigint: true });
   const parts = filePath.split("/");
   const inspect = () => {
-    const chain = [fs.statSync(root)];
+    const chain = [fs.statSync(root, { bigint: true })];
     let current = root;
     for (let index = 0; index < parts.length; index++) {
       current = path.join(current, parts[index]);
       let stat;
-      try { stat = fs.lstatSync(current); }
-      catch (err) {
+      try {
+        stat = fs.lstatSync(current, { bigint: true });
+      } catch (err) {
         if (err.code === "ENOENT") return null;
         throw err;
       }
@@ -89,8 +90,8 @@ function openProjectFile(fs, path, filePath) {
     const flags = fs.constants.O_RDWR |
       (process.platform === "win32" ? 0 : (fs.constants.O_NOFOLLOW || 0) | (fs.constants.O_NONBLOCK || 0));
     fd = fs.openSync(path.join(root, ...parts), flags);
-    const opened = fs.fstatSync(fd);
-    if (!opened.isFile() || opened.nlink > 1 || !sameIdentity(opened, before.at(-1))) {
+    const opened = fs.fstatSync(fd, { bigint: true });
+    if (!opened.isFile() || opened.nlink > 1n || !sameIdentity(opened, before.at(-1))) {
       const error = new Error(`${filePath} changed or has multiple hard links, not synced`);
       error.code = "AIDD_UNSAFE_PATH";
       throw error;
@@ -101,7 +102,7 @@ function openProjectFile(fs, path, filePath) {
       error.code = "AIDD_UNSAFE_PATH";
       throw error;
     }
-    const openedAgain = fs.fstatSync(fd);
+    const openedAgain = fs.fstatSync(fd, { bigint: true });
     if (!sameIdentity(opened, openedAgain)) {
       const error = new Error(`${filePath} changed while opening, not synced`);
       error.code = "AIDD_UNSAFE_PATH";
@@ -135,19 +136,22 @@ function readTextOrNull(fs, filePath) {
 }
 
 function writeOpenedText(fs, path, filePath, opened, content) {
-  if (fs.realpathSync(opened.root) !== opened.root || !sameIdentity(fs.statSync(opened.root), opened.rootIdentity)) {
+  if (
+    fs.realpathSync(opened.root) !== opened.root ||
+    !sameIdentity(fs.statSync(opened.root, { bigint: true }), opened.rootIdentity)
+  ) {
     throw new Error(`${filePath} project root changed before write, not synced`);
   }
   let current = opened.root;
   for (let index = 0; index < opened.parts.length; index++) {
     current = path.join(current, opened.parts[index]);
-    const stat = fs.lstatSync(current);
+    const stat = fs.lstatSync(current, { bigint: true });
     const final = index === opened.parts.length - 1;
     if (stat.isSymbolicLink() || (final ? !stat.isFile() : !stat.isDirectory()) || !sameIdentity(stat, opened.chain[index + 1])) {
       throw new Error(`${filePath} path changed before write, not synced`);
     }
   }
-  const descriptorStat = fs.fstatSync(opened.fd);
+  const descriptorStat = fs.fstatSync(opened.fd, { bigint: true });
   if (!sameIdentity(descriptorStat, opened.identity)) throw new Error(`${filePath} descriptor changed before write, not synced`);
 
   const bytes = Buffer.from(content, "utf8");
