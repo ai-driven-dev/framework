@@ -126,7 +126,7 @@ const PUBLIC_MODULES: Readonly<Record<string, readonly string[]>> = {
     // prints, with the reasons a declaration is refused
     "src/contexts/telemetry/domain/declaration/task-declaration.ts",
     "src/contexts/telemetry/application/declare-task-use-case.ts",
-    "src/contexts/telemetry/application/show-task-binding-use-case.ts",
+    "src/contexts/telemetry/application/telemetry-status-use-case.ts",
     "src/contexts/telemetry/application/consented-repositories.ts",
     // the report a command asks for, the days it is asked over, the axes it splits by, and
     // the JSON envelope it prints; the display words the same result

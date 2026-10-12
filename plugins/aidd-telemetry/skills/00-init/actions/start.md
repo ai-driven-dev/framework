@@ -26,7 +26,7 @@ Measurement is on for the project, or nothing changed and the reason is stated. 
    - When it warned that Claude Code keeps session files only briefly, say that a call is measured only if it is read before the files are removed, and give the setting it named.
 5. **Prove.** Run `aidd telemetry report --days 1`, and state what it shows.
    - No calls yet is a normal answer for a project that has just opted in: say so, and that the next Claude Code session in this project will be counted.
-6. **Tell the rest.** Say that the plugin is what asks about the task and that it needs `node`, and that a task can always be declared by hand with `aidd telemetry task <name> [--ticket <ref>]` or `aidd telemetry task --none`.
+6. **Tell the rest.** Say that the plugin is what asks about the task and that it needs `node`, and that a task can always be declared by hand with `aidd telemetry task <name> [--ticket <ref>]` or `aidd telemetry task --none`, and that `aidd telemetry status` shows whether a clone is measured and its task.
 
 ## Test
 

@@ -2,7 +2,7 @@ import type { RefusalReason } from "../../contexts/telemetry/application/consent
 import type { DeclareResult } from "../../contexts/telemetry/application/declare-task-use-case.js";
 import type { IdentityResult } from "../../contexts/telemetry/application/identity/manage-identity-use-case.js";
 import type { IngestResult } from "../../contexts/telemetry/application/ingest-usage-use-case.js";
-import type { ShowResult } from "../../contexts/telemetry/application/show-task-binding-use-case.js";
+import type { StatusResult } from "../../contexts/telemetry/application/telemetry-status-use-case.js";
 import type { NotStoredReason } from "../../contexts/telemetry/domain/repository-resolution.js";
 import type { CLIOutput } from "../output.js";
 
@@ -73,6 +73,14 @@ const REFUSALS: Readonly<Record<RefusalReason, string>> = {
     "This clone's git config cannot be read, so no task was declared. Fix it, then declare again.",
 };
 
+const NOT_MEASURED: Readonly<Record<RefusalReason, string>> = {
+  environment: "Not measured: AIDD_TELEMETRY=0.",
+  "outside-repository": "Not inside a git repository.",
+  "unidentified-repository": "Not measured: this repository has no remote and no commit yet.",
+  "no-consent": "This clone is not measured. Run `aidd telemetry on` here.",
+  "unreadable-consent": "Not measured: this clone's git config or the consent log cannot be read.",
+};
+
 /** The first characters of a session id: enough to tell sessions apart on one screen. */
 function shortSession(sessionId: string): string {
   return sessionId.slice(0, 8);
@@ -107,11 +115,12 @@ export function printDeclareResult(output: CLIOutput, result: DeclareResult): vo
   if (sessionId === null) output.warn("Nothing was bound: no session and no working branch.");
 }
 
-export function printTaskBinding(output: CLIOutput, result: ShowResult): void {
+export function printTelemetryStatus(output: CLIOutput, result: StatusResult): void {
   if (result.status === "refused") {
-    output.error(REFUSALS[result.reason]);
+    output.info(NOT_MEASURED[result.reason]);
     return;
   }
+  output.info(`This clone is measured since ${result.since.slice(0, 10)}.`);
   const { binding, sessionId, branch, role } = result;
   if (binding.state === "unbound") {
     const where =

@@ -11,10 +11,10 @@ import { IngestUsageUseCase } from "../../contexts/telemetry/application/ingest-
 import { ReadUsageUseCase } from "../../contexts/telemetry/application/read-usage-use-case.js";
 import { DeclaredBindings } from "../../contexts/telemetry/application/report/declared-bindings.js";
 import { ReportUsageUseCase } from "../../contexts/telemetry/application/report/report-usage-use-case.js";
-import { ShowTaskBindingUseCase } from "../../contexts/telemetry/application/show-task-binding-use-case.js";
 import { SnapshotBindingsUseCase } from "../../contexts/telemetry/application/snapshot-bindings-use-case.js";
 import { TelemetryOffUseCase } from "../../contexts/telemetry/application/switch/telemetry-off-use-case.js";
 import { TelemetryOnUseCase } from "../../contexts/telemetry/application/switch/telemetry-on-use-case.js";
+import { TelemetryStatusUseCase } from "../../contexts/telemetry/application/telemetry-status-use-case.js";
 import {
   claudeConfigDir,
   claudeProjectsRoot,
@@ -46,7 +46,7 @@ import { userConfigDirOf } from "../user-config-dir.js";
 
 export interface TelemetryDeps {
   declareTaskUseCase: DeclareTaskUseCase;
-  showTaskBindingUseCase: ShowTaskBindingUseCase;
+  telemetryStatusUseCase: TelemetryStatusUseCase;
   ingestUsageUseCase: IngestUsageUseCase;
   snapshotBindingsUseCase: SnapshotBindingsUseCase;
   reportUsageUseCase: ReportUsageUseCase;
@@ -120,7 +120,7 @@ export function wireTelemetry(homedir: () => string): TelemetryDeps {
     bindingsLock,
     declaration
   );
-  const showTaskBindingUseCase = new ShowTaskBindingUseCase(
+  const telemetryStatusUseCase = new TelemetryStatusUseCase(
     repositories,
     sessions,
     branchDeclarations,
@@ -144,7 +144,7 @@ export function wireTelemetry(homedir: () => string): TelemetryDeps {
   const claudeDir = claudeConfigDir(process.env.CLAUDE_CONFIG_DIR, homedir());
   return {
     declareTaskUseCase,
-    showTaskBindingUseCase,
+    telemetryStatusUseCase,
     ingestUsageUseCase,
     snapshotBindingsUseCase,
     reportUsageUseCase: new ReportUsageUseCase(

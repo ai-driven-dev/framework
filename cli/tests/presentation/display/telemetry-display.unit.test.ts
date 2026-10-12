@@ -1,12 +1,12 @@
 import { describe, expect, it } from "vitest";
 import type { DeclareResult } from "../../../src/contexts/telemetry/application/declare-task-use-case.js";
 import type { IngestResult } from "../../../src/contexts/telemetry/application/ingest-usage-use-case.js";
-import type { ShowResult } from "../../../src/contexts/telemetry/application/show-task-binding-use-case.js";
+import type { StatusResult } from "../../../src/contexts/telemetry/application/telemetry-status-use-case.js";
 import {
   printDeclareResult,
   printIdentityResult,
   printIngestResult,
-  printTaskBinding,
+  printTelemetryStatus,
 } from "../../../src/presentation/display/telemetry-display.js";
 import { CapturingOutput } from "../../helpers/ports/capturing-output.js";
 
@@ -218,9 +218,10 @@ describe("printDeclareResult", () => {
   });
 });
 
-describe("printTaskBinding", () => {
-  const shown = (over: Partial<Extract<ShowResult, { status: "shown" }>>): ShowResult => ({
+describe("printTelemetryStatus", () => {
+  const shown = (over: Partial<Extract<StatusResult, { status: "shown" }>>): StatusResult => ({
     status: "shown",
+    since: "2026-10-01T08:30:00.000Z",
     sessionId: "0123456789",
     branch: "feat/x",
     role: "working",
@@ -230,7 +231,7 @@ describe("printTaskBinding", () => {
   const bound = (
     source: "branch" | "session-declared" | "session-carried",
     over: { none?: boolean; task?: string | null } = {}
-  ): ShowResult =>
+  ): StatusResult =>
     shown({
       binding: {
         state: "bound",
@@ -243,39 +244,45 @@ describe("printTaskBinding", () => {
       },
     });
 
+  it("says first since when the clone is measured", () => {
+    expect(linesOf((o) => printTelemetryStatus(o, shown({})))[0]).toBe(
+      "This clone is measured since 2026-10-01."
+    );
+  });
+
   it("says nothing is bound, and where", () => {
-    expect(linesOf((o) => printTaskBinding(o, shown({})))[0]).toBe(
+    expect(linesOf((o) => printTelemetryStatus(o, shown({})))[1]).toBe(
       "Nothing is bound: branch feat/x and session 01234567. Declare with `aidd telemetry task <name>`."
     );
-    expect(linesOf((o) => printTaskBinding(o, shown({ sessionId: null })))[0]).toContain(
+    expect(linesOf((o) => printTelemetryStatus(o, shown({ sessionId: null })))[1]).toContain(
       "no session"
     );
     expect(
-      linesOf((o) => printTaskBinding(o, shown({ role: "default", branch: "main" })))[0]
+      linesOf((o) => printTelemetryStatus(o, shown({ role: "default", branch: "main" })))[1]
     ).toContain("the default branch main, which is never bound");
     expect(
-      linesOf((o) => printTaskBinding(o, shown({ role: "detached", branch: null })))[0]
+      linesOf((o) => printTelemetryStatus(o, shown({ role: "detached", branch: null })))[1]
     ).toContain("a detached HEAD, which is never bound");
   });
 
   it("says what it is bound to and where that comes from", () => {
-    expect(linesOf((o) => printTaskBinding(o, bound("branch")))[0]).toBe(
+    expect(linesOf((o) => printTelemetryStatus(o, bound("branch")))[1]).toBe(
       'Bound to task "checkout", declared on branch feat/x at 2026-10-09T10:00:00.000Z.'
     );
-    expect(linesOf((o) => printTaskBinding(o, bound("session-declared")))[0]).toBe(
+    expect(linesOf((o) => printTelemetryStatus(o, bound("session-declared")))[1]).toBe(
       'Bound to task "checkout", declared in session 01234567 at 2026-10-09T10:00:00.000Z.'
     );
-    expect(linesOf((o) => printTaskBinding(o, bound("session-carried")))[0]).toBe(
+    expect(linesOf((o) => printTelemetryStatus(o, bound("session-carried")))[1]).toBe(
       'Bound to task "checkout", carried into session 01234567 from session 98765432.'
     );
     expect(
-      linesOf((o) => printTaskBinding(o, bound("branch", { none: true, task: null })))[0]
+      linesOf((o) => printTelemetryStatus(o, bound("branch", { none: true, task: null })))[1]
     ).toContain("Bound to no task (declared none)");
   });
 
   it("explains a refusal", () => {
     expect(
-      linesOf((o) => printTaskBinding(o, { status: "refused", reason: "environment" }))[0]
-    ).toBe("AIDD_TELEMETRY=0: nothing was declared.");
+      linesOf((o) => printTelemetryStatus(o, { status: "refused", reason: "no-consent" }))
+    ).toEqual(["This clone is not measured. Run `aidd telemetry on` here."]);
   });
 });

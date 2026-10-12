@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { BranchDeclarations } from "../../../../src/contexts/telemetry/application/branch-declarations.js";
 import { ConsentedRepositories } from "../../../../src/contexts/telemetry/application/consented-repositories.js";
-import { ShowTaskBindingUseCase } from "../../../../src/contexts/telemetry/application/show-task-binding-use-case.js";
 import { SnapshotBindingsUseCase } from "../../../../src/contexts/telemetry/application/snapshot-bindings-use-case.js";
+import { TelemetryStatusUseCase } from "../../../../src/contexts/telemetry/application/telemetry-status-use-case.js";
 import type { LocatedDirectory } from "../../../../src/contexts/telemetry/domain/ports/repository-locator.js";
 import {
   cloneOf,
@@ -37,7 +37,7 @@ function setup(sessionId: string | null = "sess-1234567890", refusedByEnvironmen
   const sessions = new InMemorySessions();
   const branches = new FakeBranchStore();
   const source = new FakeBindings();
-  const useCase = new ShowTaskBindingUseCase(
+  const useCase = new TelemetryStatusUseCase(
     new ConsentedRepositories(locator, consents, history),
     sessions,
     new BranchDeclarations(
@@ -64,6 +64,14 @@ const branchBinding = {
 };
 
 describe("showing what the work is bound to", () => {
+  it("says since when the clone is measured: the start of the interval its key names", async () => {
+    const { useCase } = setup();
+    expect(await useCase.execute(CWD)).toMatchObject({
+      status: "shown",
+      since: "2026-01-01T00:00:00.000Z",
+    });
+  });
+
   it("is the session's declaration before the branch's", async () => {
     const { useCase, sessions, source } = setup();
     source.bindingsByRoot.set(CWD, [branchBinding]);

@@ -24,7 +24,7 @@ import {
   printDeclareResult,
   printIdentityResult,
   printIngestResult,
-  printTaskBinding,
+  printTelemetryStatus,
 } from "../display/telemetry-display.js";
 import { ErrorHandler } from "../error-handler.js";
 import { parseGlobalOptions } from "./global-options.js";
@@ -113,7 +113,7 @@ export function registerTelemetryCommand(program: Command): void {
 
   telemetry
     .command("task [name]")
-    .description("Declare the task the current work belongs to, or show what it is bound to")
+    .description("Declare the task the current work belongs to")
     .option("--ticket <ref>", "The ticket the task belongs to, kept as typed")
     .option("--none", "Declare that this work has no task", false)
     .addOption(
@@ -135,18 +135,14 @@ export function registerTelemetryCommand(program: Command): void {
           output.error("--none declares no task: give it neither a name nor --ticket.");
           process.exit(1);
         }
-        if (request === null && (name !== undefined || cmdOptions.ticket !== undefined)) {
-          output.error("A task needs a name: aidd telemetry task <name> [--ticket <ref>].");
+        if (request === null) {
+          output.error(
+            "A task needs a name: aidd telemetry task <name> [--ticket <ref>], or --none. See what the work is bound to with aidd telemetry status."
+          );
           process.exit(1);
         }
         try {
           const deps = await createDeps(projectRoot, { verbose }, output);
-          if (request === null) {
-            const shown = await deps.telemetry.showTaskBindingUseCase.execute(projectRoot);
-            printTaskBinding(output, shown);
-            if (shown.status === "refused") process.exit(1);
-            return;
-          }
           const result = await deps.telemetry.declareTaskUseCase.execute({
             cwd: projectRoot,
             request,
@@ -159,6 +155,22 @@ export function registerTelemetryCommand(program: Command): void {
         }
       }
     );
+
+  telemetry
+    .command("status")
+    .description("Show if this clone is measured, since when, and its task")
+    .action(async () => {
+      const { verbose, output, projectRoot } = parseGlobalOptions(program);
+      try {
+        const deps = await createDeps(projectRoot, { verbose }, output);
+        printTelemetryStatus(
+          output,
+          await deps.telemetry.telemetryStatusUseCase.execute(projectRoot)
+        );
+      } catch (error) {
+        new ErrorHandler(output).handle(error);
+      }
+    });
 
   telemetry
     .command("report")

@@ -13,7 +13,13 @@ export type RefusalReason =
   | "unreadable-consent";
 
 export type ConsentedRepository =
-  | { readonly status: "open"; readonly repositoryId: string; readonly root: string }
+  | {
+      readonly status: "open";
+      readonly repositoryId: string;
+      readonly root: string;
+      /** When the interval the key names opened. */
+      readonly since: string;
+    }
   | { readonly status: "refused"; readonly reason: RefusalReason };
 
 /** The repository a directory is in, when its clone is measured: its key names an interval
@@ -42,8 +48,13 @@ export class ConsentedRepositories {
       return { status: "refused", reason: "unreadable-consent" };
     }
     const token = tokenOfKey(reading.kind === "value" ? reading.value : null);
-    const named = log.openFor(located.clone).some((interval) => interval.token === token);
-    if (!named) return { status: "refused", reason: "no-consent" };
-    return { status: "open", repositoryId, root: located.root };
+    const named = log.openFor(located.clone).find((interval) => interval.token === token);
+    if (named === undefined) return { status: "refused", reason: "no-consent" };
+    return {
+      status: "open",
+      repositoryId,
+      root: located.root,
+      since: new Date(named.from).toISOString(),
+    };
   }
 }

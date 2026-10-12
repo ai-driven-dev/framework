@@ -25,6 +25,8 @@ Once per working branch, before the work starts: a task name, an optional ticket
 
 No task: `aidd telemetry task --none`.
 
+State of a clone (measured, since when, task): `aidd telemetry status`.
+
 Never asked:
 
 - default branch or detached `HEAD`;

@@ -20,7 +20,7 @@ vi.mock("../../../src/runtime/wiring/framework.js", () => ({
       forgetTelemetryUseCase: { execute: forget },
       ingestUsageUseCase: { execute: ingest },
       declareTaskUseCase: { execute: declare },
-      showTaskBindingUseCase: { execute: show },
+      telemetryStatusUseCase: { execute: show },
       reportUsageUseCase: { execute: report },
       manageIdentityUseCase: identity,
     },
@@ -218,6 +218,15 @@ describe("aidd telemetry ingest", () => {
   });
 });
 
+describe("aidd telemetry status", () => {
+  it("shows whether this clone is measured and what its work is bound to", async () => {
+    show.mockResolvedValue({ status: "refused", reason: "no-consent" });
+    // Not measured is an answer, not a failure: no exit code is set.
+    expect(await run("status")).toBeNull();
+    expect(show).toHaveBeenCalledWith(process.cwd());
+  });
+});
+
 describe("aidd telemetry task", () => {
   const declared = {
     status: "declared",
@@ -246,10 +255,10 @@ describe("aidd telemetry task", () => {
     });
   });
 
-  it("shows the binding when given nothing", async () => {
-    show.mockResolvedValue({ status: "refused", reason: "environment" });
+  it("refuses to declare nothing, and points at status", async () => {
     expect(await run("task")).toBe(1);
-    expect(show).toHaveBeenCalled();
+    expect(stderr()).toContain("aidd telemetry status");
+    expect(show).not.toHaveBeenCalled();
     expect(declare).not.toHaveBeenCalled();
   });
 
