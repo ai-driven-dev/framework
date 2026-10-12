@@ -224,7 +224,8 @@ test("late config rename failure restores canonical and native outputs", (t) => 
   p.put(".kilo/kilo.jsonc", "{}\n");
   const before = p.snapshot();
   const preload = path.join(path.dirname(p.root), `aidd-kilo-fail-${process.pid}-${Math.random().toString(36).slice(2)}.cjs`);
-  fs.writeFileSync(preload, `const fs=require('node:fs');const original=fs.renameSync;fs.renameSync=function(from,to){if(to.endsWith('/.kilo/kilo.jsonc'))throw new Error('injected config rename failure');return original.apply(this,arguments)};`);
+  const expectedConfig = path.resolve(p.root, ".kilo/kilo.jsonc");
+  fs.writeFileSync(preload, `const fs=require('node:fs');const path=require('node:path');const expected=${JSON.stringify(expectedConfig)};const original=fs.renameSync;fs.renameSync=function(from,to){if(path.resolve(to)===expected)throw new Error('injected config rename failure');return original.apply(this,arguments)};`);
   t.after(() => fs.rmSync(preload, { force: true }));
   const result = p.run(rule, "claude,kilo", [], { NODE_OPTIONS: `--require=${preload}` });
   assert.notEqual(result.status, 0);
