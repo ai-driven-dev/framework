@@ -449,3 +449,12 @@ Observed with the maintainer on 2026-10-12, recorded in [target.md](target.md): 
 | the VS Code extension is not asked | `claude-vscode` added to the set and the `ATTENDED` condition removed | row "the VS Code extension", with the three rows above. It holds by two independent conditions, so no single mutation reaches it: adding `claude-vscode` alone leaves it green, since the extension sets no `ATTENDED` |
 
 The matrix judges every row before it fails, so a mutation names all the rows it turns red.
+
+### Transcripts no consent can cover are not read
+
+A first ingest on a real 6.2 GB Claude history never finished in 22 minutes. With transcripts last written more than a day before the first interval left unread: 246 s, then 1.1 s. On a real session in a sandboxed telemetry directory, the stored calls match an independent count of the same transcripts: 5 calls, 217,337 tokens, per session alike. The Docker consent table is unchanged: 36 of 36 with `statx`, 2 runs; with it refused, 0 rows storing more, 3 runs.
+
+| Rule | Mutation | Red |
+| --- | --- | --- |
+| a day of margin for the file clock | the margin removed | "reads a transcript whose file clock lags the call clock, within a day" |
+| skipping stores what reading everything stores | the margin added instead of taken | the above, and "stores exactly what reading every transcript stores" |
