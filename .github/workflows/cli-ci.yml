@@ -520,7 +520,7 @@ jobs:
       - name: Plugin suite
         run: node scripts/check-tests-leave-git-alone.js -- node --test 'scripts/__tests__/**/*.test.js'
 
-      # A Windows commit's hooks (#948), less the three cli jobs that need cli/'s dependencies.
+      # A Windows commit's hooks, less the three cli jobs that need cli/'s dependencies.
       - name: Hooks - a commit's hooks pass on Windows
         run: |
           echo "# lefthook subject" > "$RUNNER_TEMP/msg"
@@ -530,7 +530,7 @@ jobs:
           pnpm exec lefthook run prepare-commit-msg "$RUNNER_TEMP/msg" message --no-auto-install --no-tty >> "$RUNNER_TEMP/hooks.log" 2>&1 || status=1
           cat "$RUNNER_TEMP/hooks.log"
           if grep -n "syntax error" "$RUNNER_TEMP/hooks.log"; then
-            echo "::error::lefthook handed sh a broken command line (#948)"
+            echo "::error::lefthook handed sh a broken command line"
             exit 1
           fi
           exit $status
@@ -560,7 +560,7 @@ jobs:
           grep -E "tool files readable +ok" telemetry-check.out
       - run: cd cli && pnpm test:unit
       - run: cd cli && pnpm test:integration
-      - name: Biome guards launch Biome on Windows (#881)
+      - name: Biome guards run on Windows
         run: cd cli && pnpm exec vitest run --project=architecture tests/architecture/biome-guards-bite.arch.test.ts
       # Every e2e but the two named below. `telemetry-commit-trailer.e2e.test.ts` is why the
       # step matters most: it is the only thing proving the `prepare-commit-msg` hook is
