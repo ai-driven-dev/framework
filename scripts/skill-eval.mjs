@@ -3,11 +3,12 @@
 // in an isolated temp project with a uniquely named worktree skill. Local and opt-in:
 // the host needs authentication and each live case spends tokens.
 
-import { mkdtempSync, mkdirSync, writeFileSync, cpSync, rmSync, readFileSync, existsSync, readdirSync, statSync } from "node:fs";
+import { mkdtempSync, mkdirSync, writeFileSync, cpSync, rmSync, readFileSync, existsSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, dirname, resolve } from "node:path";
 import { spawn } from "node:child_process";
 import { fileURLToPath } from "node:url";
+import { treeSnapshot } from "./skill-eval-snapshot.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(HERE, "..");
@@ -163,27 +164,6 @@ function setupCase(c) {
     writeFileSync(dst, content);
   }
   return tmp;
-}
-
-function treeSnapshot(root) {
-  const snapshot = new Map();
-  const walk = (dir, prefix = "") => {
-    for (const entry of readdirSync(dir, { withFileTypes: true })) {
-      const relative = prefix ? `${prefix}/${entry.name}` : entry.name;
-      if (relative === ".skill-eval-last-message.txt") continue;
-      const file = join(dir, entry.name);
-      if (entry.isDirectory()) {
-        snapshot.set(`${relative}/`, `directory:${statSync(file).mtimeMs}`);
-        walk(file, relative);
-      } else if (entry.isFile()) {
-        snapshot.set(relative, `${statSync(file, { bigint: true }).mtimeNs}:${readFileSync(file).toString("base64")}`);
-      } else {
-        snapshot.set(relative, `other:${entry.isSymbolicLink()}`);
-      }
-    }
-  };
-  walk(root);
-  return snapshot;
 }
 
 async function runCase(c) {
