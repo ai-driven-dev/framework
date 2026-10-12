@@ -15,9 +15,9 @@ The prepared run and its rejections; from load-scope, the source label, candidat
 1. **Group.** Steps 1-5 cover executable scenarios only. At most two read-only ones concurrently, in isolated sessions; state-changing ones sequentially.
 2. **Run.** Apply setup, then follow [interface-browser-playwright-cli.md](../references/interface-browser-playwright-cli.md).
 3. **Verdict.** From each step's `expected`, `actual`, `ok`: any `ok: false` => `fail`, else `pass`.
-4. **Recover.** A setup failure, throw, or non-zero exit is operational: reset, retry once; a second one => `blocked`.
+4. **Recover.** A setup failure, throw, or unexpected non-zero exit is operational: reset, retry once; a second one => `blocked`.
 5. **Reset.** After each state-changing scenario, run its verified teardown, verify the baseline, then close the session.
-6. **Report.** Fill [qa-report-template.md](../assets/qa-report-template.md), even when every scenario was rejected: one row per scenario, Out of interface and Rejected (`none` when empty), Findings only for `fail` or `blocked`. Run verdict, in order: any `fail` => `fail`; any `blocked` or rejected => `blocked`; else `pass`. `skipped` belongs to load-scope only.
+6. **Report.** Fill [qa-report-template.md](../assets/qa-report-template.md), even when every scenario was rejected: one row per scenario, Out of interface and Rejected (`none` when empty), Findings only for `fail` or `blocked`. Run verdict, in order: any `fail` => `fail`; any `blocked` or rejected => `blocked`; else `pass`; a limitation that weakens the proof => `blocked`, any other stays listed under `Limitations`. `skipped` belongs to load-scope only.
 7. **Return.** Output the verdict and the `qa.md` path.
 
 ## Test
