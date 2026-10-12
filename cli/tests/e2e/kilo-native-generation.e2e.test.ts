@@ -133,7 +133,7 @@ function outputStrings(output: string): string[] {
     });
 }
 
-describeNative("E2E: saved native generation in Kilo 7.8.8", () => {
+describeNative("E2E: saved native generation in Kilo 7.7.5", () => {
   it("loads the native skill, follows its action, and answers from the read payload", async () => {
     const { tempDir, projectDir, fakeHome, cleanup } = await createTestEnv(
       "kilo-native-skill-consumption"
@@ -204,7 +204,7 @@ describeNative("E2E: saved native generation in Kilo 7.8.8", () => {
             },
           })
         );
-      expect((await kilo("--version")).trim()).toBe("7.8.8");
+      expect((await kilo("--version")).trim()).toBe("7.7.5");
 
       const skillDir = join(projectDir, ".kilo", "skills", "verify-payload");
       const actionPath = ".kilo/skills/verify-payload/actions/01-verify.md";
@@ -437,7 +437,7 @@ describeNative("E2E: saved native generation in Kilo 7.8.8", () => {
         });
         return result.stdout;
       };
-      expect((await kilo("--version")).trim()).toBe("7.8.8");
+      expect((await kilo("--version")).trim()).toBe("7.7.5");
 
       const fixtureManifest = JSON.parse(
         await readFile(join(fixtures, "manifest.json"), "utf8")
