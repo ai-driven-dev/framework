@@ -3,7 +3,11 @@ const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
-const { readRegular, open } = require("../../aidd_docs/tasks/2026_10/2026_10_09_autonomous-rule-generation/realistic-sandbox/reproduction/common.cjs");
+const vm = require("node:vm");
+const commonPath = require.resolve("../../aidd_docs/tasks/2026_10/2026_10_09_autonomous-rule-generation/realistic-sandbox/reproduction/common.cjs");
+const { readRegular, open } = require(commonPath);
+const hasProtections = ["O_NOFOLLOW", "O_NONBLOCK"].every(flag => Number.isInteger(fs.constants[flag]) && fs.constants[flag] !== 0);
+const posixOnly = { skip: hasProtections ? false : "POSIX fixture requires nonzero O_NOFOLLOW and O_NONBLOCK protections." };
 
 function sandbox(t) {
   const root = fs.mkdtempSync(path.join(fs.realpathSync(os.tmpdir()), "aidd-realistic-rule-repro-"));
@@ -11,7 +15,7 @@ function sandbox(t) {
   return root;
 }
 
-test("ownership rejects symlink and nonregular markers", (t) => {
+test("ownership rejects symlink and nonregular markers", posixOnly, (t) => {
   const root = sandbox(t);
   const marker = path.join(root, ".sandbox-owner.json");
   const target = path.join(root, "outside.json");
@@ -26,7 +30,7 @@ test("ownership rejects symlink and nonregular markers", (t) => {
   assert.throws(() => open(), /regular file/);
 });
 
-test("regular reads reject symlinks without reading their targets", (t) => {
+test("regular reads reject symlinks without reading their targets", posixOnly, (t) => {
   const root = sandbox(t);
   const target = path.join(root, "target");
   const link = path.join(root, "link");
@@ -35,7 +39,7 @@ test("regular reads reject symlinks without reading their targets", (t) => {
   assert.throws(() => readRegular(link), { code: "ELOOP" });
 });
 
-test("ownership reads the validated marker even if its pathname is replaced", (t) => {
+test("ownership reads the validated marker even if its pathname is replaced", posixOnly, (t) => {
   const root = sandbox(t);
   const marker = path.join(root, ".sandbox-owner.json");
   const replacement = path.join(root, "replacement.json");
@@ -63,7 +67,7 @@ test("ownership reads the validated marker even if its pathname is replaced", (t
   }
 });
 
-test("read stays bound to the validated descriptor when its pathname is replaced", (t) => {
+test("read stays bound to the validated descriptor when its pathname is replaced", posixOnly, (t) => {
   const root = sandbox(t);
   const file = path.join(root, "file");
   const outside = path.join(root, "outside");
@@ -84,7 +88,7 @@ test("read stays bound to the validated descriptor when its pathname is replaced
 });
 
 for (const failure of [null, "nonregular", "fstatSync", "readFileSync"]) {
-  test(`descriptor closes after ${failure || "successful read"}`, (t) => {
+  test(`descriptor closes after ${failure || "successful read"}`, posixOnly, (t) => {
     const root = sandbox(t);
     const file = path.join(root, "file");
     if (failure === "nonregular") fs.mkdirSync(file);
@@ -106,3 +110,34 @@ for (const failure of [null, "nonregular", "fstatSync", "readFileSync"]) {
     assert.throws(() => fs.fstatSync(descriptor), { code: "EBADF" });
   });
 }
+
+test("missing or invalid POSIX protections refuse before any filesystem I/O", () => {
+  const source = fs.readFileSync(commonPath, "utf8");
+  for (const flag of ["O_NOFOLLOW", "O_NONBLOCK"]) {
+    for (const value of [undefined, 0, 1.5]) {
+      let io = 0;
+      const constants = { O_RDONLY: 0, O_NOFOLLOW: 1, O_NONBLOCK: 2, [flag]: value };
+      const mockedFs = new Proxy({ constants }, {
+        get(target, key) {
+          if (key === "constants") return target.constants;
+          return () => { io++; throw new Error("Unexpected filesystem I/O"); };
+        },
+      });
+      const module = { exports: {} };
+      vm.runInNewContext(source, { module, require: name => name === "node:fs" ? mockedFs : require(name) }, { filename: commonPath });
+      assert.throws(() => module.exports.readRegular("unreadable-fixture"), /requires POSIX O_NOFOLLOW and O_NONBLOCK/);
+      assert.equal(io, 0, `${flag}=${value} must refuse before any filesystem I/O`);
+    }
+  }
+  if (!hasProtections) {
+    const originalOpen = fs.openSync;
+    let opens = 0;
+    fs.openSync = () => { opens++; throw new Error("Unexpected open"); };
+    try {
+      assert.throws(() => readRegular("unreadable-fixture"), /requires POSIX O_NOFOLLOW and O_NONBLOCK/);
+      assert.equal(opens, 0, "Actual unsupported platform must refuse before opening");
+    } finally {
+      fs.openSync = originalOpen;
+    }
+  }
+});

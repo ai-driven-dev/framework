@@ -8,6 +8,10 @@ const prefix = "aidd-realistic-rule-repro-";
 const tools = ["claude", "cursor", "copilot", "codex", "opencode"];
 
 function readRegular(file) {
+  assert.ok(
+    ["O_NOFOLLOW", "O_NONBLOCK"].every(flag => Number.isInteger(fs.constants[flag]) && fs.constants[flag] !== 0),
+    "Fixture requires POSIX O_NOFOLLOW and O_NONBLOCK file protections.",
+  );
   let fd;
   try {
     // Do not follow links; nonblocking open also lets fstat reject FIFOs promptly.
