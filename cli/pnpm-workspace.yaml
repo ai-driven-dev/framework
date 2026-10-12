@@ -7,14 +7,19 @@
 packages: []
 
 # Moved here from `package.json`'s own `pnpm` field, which pnpm 12 stopped reading:
-# "The 'pnpm' field in package.json is no longer read by pnpm". Left there, these four
+# "The 'pnpm' field in package.json is no longer read by pnpm". Left there, these
 # security floors were silently ignored while the lockfile still recorded them, which is
 # the ERR_PNPM_LOCKFILE_CONFIG_MISMATCH every `cli` install answered with.
 overrides:
+  brace-expansion: '~5.0.12'
+  browserslist: '~4.28.7'
   fast-uri: '>=3.1.6 <4'
+  js-yaml: '~4.3.2'
+  nanoid: '~3.3.18'
   picomatch: '>=4.0.4'
-  postcss: '>=8.5.10'
+  postcss: '~8.5.28'
   qs: '>=6.15.2'
+  source-map-js: '~1.2.2'
 
 # pnpm refuses a dependency's install scripts unless it is named here, and pnpm 12 makes
 # that refusal a hard error rather than a warning: `ERR_PNPM_IGNORED_BUILDS`. Measured by
