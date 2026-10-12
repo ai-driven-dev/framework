@@ -16,12 +16,12 @@ flowchart LR
 
 Read only the next action's file before running it.
 
-| #   | Action          | Does                                                       |
-| --- | --------------- | ---------------------------------------------------------- |
-| 01  | `load-scope`    | Lock one happy path per journey and the edge cases its acceptance criteria name |
-| 02  | `prerequisites` | Verify the browser runner            |
-| 03  | `prepare-run`   | Resolve the shortest deterministic path to executable runs |
-| 04  | `run-scenarios` | Run, verdict, reset, and report every scenario |
+| Action | Does |
+| --- | --- |
+| load-scope | lock one happy path per journey and the edge cases its criteria name |
+| prerequisites | verify the browser runner |
+| prepare-run | resolve the shortest deterministic path to executable runs |
+| run-scenarios | run, verdict, reset and report every scenario |
 
 ## Transversal rules
 

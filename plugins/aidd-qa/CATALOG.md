@@ -39,5 +39,5 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 |-------|------|---|
 | `actions` | [01-record.md](skills/02-demo/actions/01-record.md) | - |
 | `references` | [interface-browser-playwright-cli.md](skills/02-demo/references/interface-browser-playwright-cli.md) | - |
-| `-` | [SKILL.md](skills/02-demo/SKILL.md) | `Show a journey in a browser as one short named video labelled with the observed outcome. Use when a journey, such as a qa.md scenario, needs a demonstration a reviewer can watch. Do NOT use to verify acceptance criteria, review a diff, or fix the application.` |
+| `-` | [SKILL.md](skills/02-demo/SKILL.md) | `Show a journey as one short named video (browser) or text transcript (CLI), labelled with the observed outcome. Use when a journey, such as a qa.md scenario, needs a demonstration a reviewer can watch or read. Do NOT use to verify acceptance criteria, review a diff, or fix the application.` |
 

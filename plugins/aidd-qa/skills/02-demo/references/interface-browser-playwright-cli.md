@@ -43,7 +43,7 @@ npx --yes @playwright/cli@0.1.17 -s=demo-<run-id>-<scenario-slug> video-stop
 npx --yes @playwright/cli@0.1.17 -s=demo-<run-id>-<scenario-slug> close
 ```
 
-`video-stop` writes the raw file to the current directory. Name raw files `raw-happy-path.webm` or `raw-edge-case-<scenario-slug>.webm`.
+`video-stop` writes the raw file to the current directory. Name raw files `raw-<journey-slug>.webm`.
 
 ## Duration
 
