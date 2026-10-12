@@ -113,8 +113,9 @@ const PUBLIC_MODULES: Readonly<Record<string, readonly string[]>> = {
     "src/contexts/telemetry/domain/transcript-position.ts",
     // the port its callers hold, so they can be given an implementation
     "src/contexts/telemetry/domain/ports/transcript-source.ts",
-    // the operation another layer asks for
-    "src/contexts/telemetry/application/read-claude-usage-use-case.ts",
+    // the operation another layer asks for, one per tool, and Claude's format it is given
+    "src/contexts/telemetry/application/read-usage-use-case.ts",
+    "src/contexts/telemetry/domain/formats/claude-transcript-usage.ts",
     // the ingest a command drives, and the result it prints
     "src/contexts/telemetry/application/ingest-usage-use-case.ts",
     // why a call was not stored, which the result names and a display words

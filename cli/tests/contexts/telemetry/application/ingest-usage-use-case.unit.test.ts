@@ -2,9 +2,10 @@ import { createHash } from "node:crypto";
 import { describe, expect, it } from "vitest";
 import { DirectoryResolver } from "../../../../src/contexts/telemetry/application/directory-resolver.js";
 import { IngestUsageUseCase } from "../../../../src/contexts/telemetry/application/ingest-usage-use-case.js";
-import { ReadClaudeUsageUseCase } from "../../../../src/contexts/telemetry/application/read-claude-usage-use-case.js";
+import { ReadUsageUseCase } from "../../../../src/contexts/telemetry/application/read-usage-use-case.js";
 import { SnapshotBindingsUseCase } from "../../../../src/contexts/telemetry/application/snapshot-bindings-use-case.js";
 import { cloneKey } from "../../../../src/contexts/telemetry/domain/consent/clone-identity.js";
+import { readClaudeUsageLine } from "../../../../src/contexts/telemetry/domain/formats/claude-transcript-usage.js";
 import type { LocatedDirectory } from "../../../../src/contexts/telemetry/domain/ports/repository-locator.js";
 import { resolutionKey } from "../../../../src/contexts/telemetry/domain/repository-resolution.js";
 import {
@@ -72,6 +73,8 @@ function repository(
 
 function setup(options: { refused?: boolean; caseInsensitive?: boolean } = {}) {
   const transcripts = new InMemoryTranscripts();
+  /** A second tool's transcripts, read in the same ingest. */
+  const other = new InMemoryTranscripts();
   const ledger = new InMemoryLedger();
   const resolutions = new InMemoryResolutions();
   const locator = new FakeLocator();
@@ -86,7 +89,10 @@ function setup(options: { refused?: boolean; caseInsensitive?: boolean } = {}) {
     () => new Date()
   );
   const ingest = new IngestUsageUseCase(
-    new ReadClaudeUsageUseCase(transcripts),
+    [
+      new ReadUsageUseCase(transcripts, readClaudeUsageLine),
+      new ReadUsageUseCase(other, readClaudeUsageLine),
+    ],
     ledger,
     new DirectoryResolver(locator, consents, resolutions, history, {
       caseInsensitiveFileSystem: options.caseInsensitive ?? false,
@@ -104,6 +110,7 @@ function setup(options: { refused?: boolean; caseInsensitive?: boolean } = {}) {
   optIn(A.path);
   return {
     transcripts,
+    other,
     ledger,
     resolutions,
     locator,
@@ -117,6 +124,39 @@ function setup(options: { refused?: boolean; caseInsensitive?: boolean } = {}) {
 }
 
 describe("ingesting usage into the ledger", () => {
+  it("reads every tool's transcripts in one ingest, and keeps where each stands", async () => {
+    const s = setup();
+    s.transcripts.files.set("/t/1.jsonl", [line("A", 10), "[]"]);
+    s.transcripts.modified.set("/t/1.jsonl", "2026-09-21T00:00:00.000Z");
+    s.other.files.set("/o/1.jsonl", [line("B", 20), "[]"]);
+    s.other.modified.set("/o/1.jsonl", "2026-09-20T00:00:00.000Z");
+    const result = await s.ingest.execute();
+    expect(result).toMatchObject({ filesRead: 2, added: 2, unrecognised: 2 });
+    expect(result.oldestTranscriptAt).toBe("2026-09-20T00:00:00.000Z");
+    expect(s.ledger.records.map((r) => r.key)).toEqual(["msg_A:req_A", "msg_B:req_B"]);
+    expect([...(await s.ledger.positions()).keys()].sort()).toEqual(["/o/1.jsonl", "/t/1.jsonl"]);
+  });
+
+  it("keeps where a transcript stood once its tool no longer lists it", async () => {
+    const s = setup();
+    s.transcripts.files.set("/t/1.jsonl", [line("A", 10)]);
+    await s.ingest.execute();
+    s.transcripts.files.delete("/t/1.jsonl");
+    s.transcripts.files.set("/t/2.jsonl", [line("B", 20)]);
+    await s.ingest.execute();
+    expect([...(await s.ledger.positions()).keys()].sort()).toEqual(["/t/1.jsonl", "/t/2.jsonl"]);
+  });
+
+  it("keeps one tool's new position when another tool's files did not move", async () => {
+    const s = setup();
+    s.transcripts.files.set("/t/1.jsonl", [line("A", 10)]);
+    s.other.files.set("/o/1.jsonl", [line("B", 20)]);
+    await s.ingest.execute();
+    s.transcripts.files.set("/t/1.jsonl", [line("A", 10), line("C", 30)]);
+    expect(await s.ingest.execute()).toMatchObject({ filesRead: 1, added: 1 });
+    expect(await s.ingest.execute()).toMatchObject({ filesRead: 0, added: 0 });
+  });
+
   it("stores each billed call of a project that opted in, tied to its repository", async () => {
     const s = setup();
     s.transcripts.files.set("/t/1.jsonl", [line("A", 10), line("B", 20)]);

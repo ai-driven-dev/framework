@@ -4,7 +4,7 @@ import { monthOf, type StoredUsage, upsertUsage } from "../domain/stored-usage.j
 import type { TranscriptPosition } from "../domain/transcript-position.js";
 import type { UsageRecord } from "../domain/usage-record.js";
 import type { DirectoryOutcome, DirectoryResolver, ResolutionRun } from "./directory-resolver.js";
-import type { ReadClaudeUsageUseCase } from "./read-claude-usage-use-case.js";
+import type { ReadUsageUseCase, UsageReading } from "./read-usage-use-case.js";
 import type { SnapshotBindingsUseCase } from "./snapshot-bindings-use-case.js";
 
 export interface IngestResult {
@@ -59,7 +59,8 @@ function moved(before: TranscriptPosition | undefined, now: TranscriptPosition):
  * number of processes. */
 export class IngestUsageUseCase {
   constructor(
-    private readonly reader: ReadClaudeUsageUseCase,
+    /** One per tool measured: adding a tool is its format and its transcripts, here. */
+    private readonly readers: readonly ReadUsageUseCase[],
     private readonly ledger: UsageLedger,
     private readonly directories: DirectoryResolver,
     private readonly snapshots: SnapshotBindingsUseCase,
@@ -86,7 +87,7 @@ export class IngestUsageUseCase {
 
   private async ingest(): Promise<IngestResult> {
     const before = await this.ledger.positions();
-    const reading = await this.reader.execute(before);
+    const reading = await this.readAll(before);
     const filesRead = [...reading.positions].filter(([path, now]) =>
       moved(before.get(path), now)
     ).length;
@@ -142,6 +143,19 @@ export class IngestUsageUseCase {
       notStored,
       consentLogDamaged,
       oldestTranscriptAt: reading.oldestTranscriptAt,
+    };
+  }
+
+  /** Every tool's reading as one. Each tool hands back its own files' positions only, laid over
+   * the ones held, so a file no longer listed keeps its place and no tool undoes another's. */
+  private async readAll(before: ReadonlyMap<string, TranscriptPosition>): Promise<UsageReading> {
+    const readings = await Promise.all(this.readers.map((reader) => reader.execute(before)));
+    const oldest = readings.flatMap((reading) => reading.oldestTranscriptAt ?? []).sort();
+    return {
+      records: readings.flatMap((reading) => reading.records),
+      positions: new Map([...before, ...readings.flatMap((reading) => [...reading.positions])]),
+      unrecognised: readings.flatMap((reading) => reading.unrecognised),
+      oldestTranscriptAt: oldest[0] ?? null,
     };
   }
 

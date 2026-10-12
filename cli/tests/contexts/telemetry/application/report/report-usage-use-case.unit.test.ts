@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { DirectoryResolver } from "../../../../../src/contexts/telemetry/application/directory-resolver.js";
 import { IngestUsageUseCase } from "../../../../../src/contexts/telemetry/application/ingest-usage-use-case.js";
-import { ReadClaudeUsageUseCase } from "../../../../../src/contexts/telemetry/application/read-claude-usage-use-case.js";
+import { ReadUsageUseCase } from "../../../../../src/contexts/telemetry/application/read-usage-use-case.js";
 import { DeclaredBindings } from "../../../../../src/contexts/telemetry/application/report/declared-bindings.js";
 import { ReportUsageUseCase } from "../../../../../src/contexts/telemetry/application/report/report-usage-use-case.js";
 import { SnapshotBindingsUseCase } from "../../../../../src/contexts/telemetry/application/snapshot-bindings-use-case.js";
@@ -9,6 +9,7 @@ import {
   declarationOf,
   type SessionCarry,
 } from "../../../../../src/contexts/telemetry/domain/declaration/task-declaration.js";
+import { readClaudeUsageLine } from "../../../../../src/contexts/telemetry/domain/formats/claude-transcript-usage.js";
 import type { Period } from "../../../../../src/contexts/telemetry/domain/report/period.js";
 import type { ReportAxis } from "../../../../../src/contexts/telemetry/domain/report/usage-report.js";
 import {
@@ -63,7 +64,7 @@ function setup(options: { refused?: boolean } = {}) {
   const sessions = new InMemorySessions(events);
   const identity = new InMemoryIdentity();
   const ingest = new IngestUsageUseCase(
-    new ReadClaudeUsageUseCase(transcripts),
+    [new ReadUsageUseCase(transcripts, readClaudeUsageLine)],
     ledger,
     new DirectoryResolver(locator, consents, new InMemoryResolutions(), history, {
       caseInsensitiveFileSystem: false,

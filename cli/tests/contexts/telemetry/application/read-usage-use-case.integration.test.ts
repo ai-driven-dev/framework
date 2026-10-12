@@ -2,7 +2,8 @@ import { appendFile, cp, mkdir, mkdtemp, rm, writeFile } from "node:fs/promises"
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { ReadClaudeUsageUseCase } from "../../../../src/contexts/telemetry/application/read-claude-usage-use-case.js";
+import { ReadUsageUseCase } from "../../../../src/contexts/telemetry/application/read-usage-use-case.js";
+import { readClaudeUsageLine } from "../../../../src/contexts/telemetry/domain/formats/claude-transcript-usage.js";
 import type { TranscriptSource } from "../../../../src/contexts/telemetry/domain/ports/transcript-source.js";
 import { ClaudeTranscriptSourceAdapter } from "../../../../src/contexts/telemetry/infrastructure/claude-transcript-source-adapter.js";
 
@@ -31,8 +32,9 @@ function reversed(source: TranscriptSource): TranscriptSource {
 
 describe("reading Claude usage from the fixture transcripts", () => {
   it("yields exactly the expected records, field for field", async () => {
-    const reading = await new ReadClaudeUsageUseCase(
-      new ClaudeTranscriptSourceAdapter(projects)
+    const reading = await new ReadUsageUseCase(
+      new ClaudeTranscriptSourceAdapter(projects),
+      readClaudeUsageLine
     ).execute(new Map());
 
     const summary = reading.records.map((r) => ({
@@ -84,14 +86,17 @@ describe("reading Claude usage from the fixture transcripts", () => {
 
   it("gives identical records when the files are read in the opposite order", async () => {
     const source = new ClaudeTranscriptSourceAdapter(projects);
-    const forward = await new ReadClaudeUsageUseCase(source).execute(new Map());
-    const backward = await new ReadClaudeUsageUseCase(reversed(source)).execute(new Map());
+    const forward = await new ReadUsageUseCase(source, readClaudeUsageLine).execute(new Map());
+    const backward = await new ReadUsageUseCase(reversed(source), readClaudeUsageLine).execute(
+      new Map()
+    );
     expect(backward.records).toEqual(forward.records);
   });
 
   it("folds a key across files: the resumed copy never beats the larger original", async () => {
-    const reading = await new ReadClaudeUsageUseCase(
-      new ClaudeTranscriptSourceAdapter(projects)
+    const reading = await new ReadUsageUseCase(
+      new ClaudeTranscriptSourceAdapter(projects),
+      readClaudeUsageLine
     ).execute(new Map());
     const a = reading.records.find((r) => r.key === "msg_A:req_A");
     expect([a?.session_id, a?.output]).toEqual(["s-1", 250]);
@@ -103,8 +108,9 @@ describe("reading Claude usage from the fixture transcripts", () => {
       join(projects, "proj-a", "s-2.jsonl"),
       `${JSON.stringify({ type: "assistant", message: { usage: {} } })}\n`
     );
-    const reading = await new ReadClaudeUsageUseCase(
-      new ClaudeTranscriptSourceAdapter(projects)
+    const reading = await new ReadUsageUseCase(
+      new ClaudeTranscriptSourceAdapter(projects),
+      readClaudeUsageLine
     ).execute(new Map());
     expect(reading.unrecognised).toHaveLength(1);
     expect(reading.records).toHaveLength(5);
@@ -113,15 +119,16 @@ describe("reading Claude usage from the fixture transcripts", () => {
   it("prefixes each unrecognised shape with its file", async () => {
     const file = join(projects, "proj-a", "s-2.jsonl");
     await appendFile(file, "{broken\n");
-    const reading = await new ReadClaudeUsageUseCase(
-      new ClaudeTranscriptSourceAdapter(projects)
+    const reading = await new ReadUsageUseCase(
+      new ClaudeTranscriptSourceAdapter(projects),
+      readClaudeUsageLine
     ).execute(new Map());
     expect(reading.unrecognised).toEqual([`${file}: a complete line is not JSON`]);
   });
 
   it("continues from the positions it returned and reads only what was appended", async () => {
     const source = new ClaudeTranscriptSourceAdapter(projects);
-    const useCase = new ReadClaudeUsageUseCase(source);
+    const useCase = new ReadUsageUseCase(source, readClaudeUsageLine);
     const first = await useCase.execute(new Map());
     await mkdir(join(projects, "proj-b"), { recursive: true });
     await writeFile(

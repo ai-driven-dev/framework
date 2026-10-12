@@ -8,7 +8,7 @@ import { DirectoryResolver } from "../../contexts/telemetry/application/director
 import { ForgetTelemetryUseCase } from "../../contexts/telemetry/application/forget/forget-telemetry-use-case.js";
 import { ManageIdentityUseCase } from "../../contexts/telemetry/application/identity/manage-identity-use-case.js";
 import { IngestUsageUseCase } from "../../contexts/telemetry/application/ingest-usage-use-case.js";
-import { ReadClaudeUsageUseCase } from "../../contexts/telemetry/application/read-claude-usage-use-case.js";
+import { ReadUsageUseCase } from "../../contexts/telemetry/application/read-usage-use-case.js";
 import { DeclaredBindings } from "../../contexts/telemetry/application/report/declared-bindings.js";
 import { ReportUsageUseCase } from "../../contexts/telemetry/application/report/report-usage-use-case.js";
 import { ShowTaskBindingUseCase } from "../../contexts/telemetry/application/show-task-binding-use-case.js";
@@ -19,6 +19,7 @@ import {
   claudeConfigDir,
   claudeProjectsRoot,
 } from "../../contexts/telemetry/domain/claude-projects-root.js";
+import { readClaudeUsageLine } from "../../contexts/telemetry/domain/formats/claude-transcript-usage.js";
 import { legacyLocations } from "../../contexts/telemetry/domain/legacy/legacy-locations.js";
 import { refusedByEnvironment as refusedByEnvironmentValue } from "../../contexts/telemetry/domain/telemetry-consent.js";
 import { BindingSnapshotStoreAdapter } from "../../contexts/telemetry/infrastructure/binding-snapshot-store-adapter.js";
@@ -126,11 +127,14 @@ export function wireTelemetry(homedir: () => string): TelemetryDeps {
     declaration
   );
   const ingestUsageUseCase = new IngestUsageUseCase(
-    new ReadClaudeUsageUseCase(
-      new ClaudeTranscriptSourceAdapter(
-        claudeProjectsRoot(process.env.CLAUDE_CONFIG_DIR, homedir())
-      )
-    ),
+    [
+      new ReadUsageUseCase(
+        new ClaudeTranscriptSourceAdapter(
+          claudeProjectsRoot(process.env.CLAUDE_CONFIG_DIR, homedir())
+        ),
+        readClaudeUsageLine
+      ),
+    ],
     ledger,
     new DirectoryResolver(locator, consents, resolutionStore, consentHistory, environment),
     snapshotBindingsUseCase,

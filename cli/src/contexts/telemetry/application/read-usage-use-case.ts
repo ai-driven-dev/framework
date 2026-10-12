@@ -1,13 +1,19 @@
-import { readClaudeUsageLine } from "../domain/formats/claude-transcript-usage.js";
 import type { TranscriptSource } from "../domain/ports/transcript-source.js";
 import type { TranscriptPosition } from "../domain/transcript-position.js";
 import { foldUsage } from "../domain/usage-fold.js";
 import type { UsageRecord } from "../domain/usage-record.js";
 
-export interface ClaudeUsageReading {
+/** One tool's format: the billed calls one transcript line holds, and the shapes it did not
+ * recognise. */
+export type ReadUsageLine = (line: string) => {
+  readonly records: readonly UsageRecord[];
+  readonly unrecognised: readonly string[];
+};
+
+export interface UsageReading {
   /** One record per billed call, folded across every file read. */
   readonly records: readonly UsageRecord[];
-  /** Where each file read now stands, to hand back next time. */
+  /** Where each of this tool's files now stands, to hand back next time. */
   readonly positions: ReadonlyMap<string, TranscriptPosition>;
   /** Shapes seen and not recognised, each prefixed with its file. */
   readonly unrecognised: readonly string[];
@@ -15,19 +21,23 @@ export interface ClaudeUsageReading {
   readonly oldestTranscriptAt: string | null;
 }
 
-export class ReadClaudeUsageUseCase {
-  constructor(private readonly source: TranscriptSource) {}
+/** Reads one tool's usage: its transcripts, from `source`, line by line in its format. */
+export class ReadUsageUseCase {
+  constructor(
+    private readonly source: TranscriptSource,
+    private readonly readLine: ReadUsageLine
+  ) {}
 
-  async execute(since: ReadonlyMap<string, TranscriptPosition>): Promise<ClaudeUsageReading> {
+  async execute(since: ReadonlyMap<string, TranscriptPosition>): Promise<UsageReading> {
     const candidates: UsageRecord[] = [];
     const unrecognised: string[] = [];
-    const positions = new Map(since);
+    const positions = new Map<string, TranscriptPosition>();
     const paths = await this.source.list();
     for (const path of paths) {
       const read = await this.source.read(path, since.get(path) ?? null);
       positions.set(path, read.position);
       for (const line of read.lines) {
-        const outcome = readClaudeUsageLine(line);
+        const outcome = this.readLine(line);
         candidates.push(...outcome.records);
         unrecognised.push(...outcome.unrecognised.map((reason) => `${path}: ${reason}`));
       }
