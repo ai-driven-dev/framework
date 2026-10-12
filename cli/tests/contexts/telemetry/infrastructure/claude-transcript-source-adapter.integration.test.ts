@@ -78,6 +78,7 @@ describe("reading a transcript from a byte offset", () => {
     expect(read.position.offset).toBe(8);
     expect(read.position.size).toBe(8);
     expect(read.restarted).toBe(false);
+    expect(read.skipped).toBe(false);
   });
 
   it("reads only what was appended since the position", async () => {
@@ -157,6 +158,7 @@ describe("reading a transcript from a byte offset", () => {
   it("reads nothing from a file that vanished", async () => {
     const read = await adapter.read(join(projects, "gone.jsonl"), null, EVERYTHING);
     expect(read.lines).toEqual([]);
+    expect(read.skipped).toBe(false);
   });
 
   it("tells when the oldest of the given transcripts was last written, in any order", async () => {

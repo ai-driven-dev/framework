@@ -218,6 +218,27 @@ describe("not reading what no consent can cover", () => {
     expect(await stored(true)).toEqual(all);
   });
 
+  it("reads from the earliest interval of any clone", async () => {
+    const s = setup();
+    s.history.written.length = 0;
+    s.history.consented(cloneOf("/work/b/.git"), "2026-06-01T00:00:00.000Z");
+    s.history.consented(A, "2026-03-01T00:00:00.000Z");
+    s.transcripts.files.set("/t/1.jsonl", [line("A", 10, {}, "2026-04-01T00:00:00.000Z")]);
+    s.transcripts.modified.set("/t/1.jsonl", "2026-04-01T00:00:00.000Z");
+    expect(await s.ingest.execute()).toMatchObject({ filesRead: 1, added: 1 });
+  });
+
+  it("reads everything while the consent log cannot be trusted, so each call keeps its reason", async () => {
+    const s = setup();
+    s.history.damaged = true;
+    s.transcripts.files.set("/t/old.jsonl", [line("A", 10, {}, "2025-01-01T00:00:00.000Z")]);
+    s.transcripts.modified.set("/t/old.jsonl", "2025-01-01T00:00:00.000Z");
+    expect(await s.ingest.execute()).toMatchObject({
+      filesRead: 1,
+      notStored: { ...NOT_STORED, "unreadable-consent": 1 },
+    });
+  });
+
   it("reads nothing while no clone has ever opted in, and keeps every end", async () => {
     const s = setup();
     s.history.written.length = 0;

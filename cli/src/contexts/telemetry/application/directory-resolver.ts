@@ -90,7 +90,7 @@ export class ResolutionRun {
    * call is still counted under its reason; nothing when no clone ever opted in. */
   get coveredFrom(): number {
     if (this.consents.damaged) return Number.NEGATIVE_INFINITY;
-    return this.consents.firstOpened() ?? Number.POSITIVE_INFINITY;
+    return this.consents.firstOpened();
   }
 
   /** A line of the consent log was not an event: nothing is stored for any clone. */
