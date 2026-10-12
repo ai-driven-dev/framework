@@ -3,7 +3,13 @@
 ## Behavior
 
 - Use one fresh checker, independent from implementation, to review the candidate against the contract, plan, and validation evidence.
-- After the review clears, the same checker challenges whether the real outcome is trustworthy and serves the user.
+- After the review clears, the same checker runs `/aidd-qa:01-acceptance-qa` on the same contract and committed candidate, then routes its verdict:
+  - `pass` or `skipped`: Challenge.
+  - `fail`: Deliver.
+  - `blocked` by ambiguous or incomplete criteria: Frame.
+  - `blocked` by environment, permissions, dependencies or tooling: stop with the exact blocker and the user action.
+- On `pass`, run `/aidd-qa:02-demo` on the passing scenarios.
+- After QA, the same checker challenges whether the real outcome is trustworthy and serves the user.
 
 ## Findings
 
@@ -17,7 +23,8 @@ A checker's finding is routed by what it is about. A refusal the user gives at a
 
 ## Handoff
 
-- Commit whatever this zone wrote, then open the draft pull request when the checker returns no actionable finding.
+- After QA and Challenge clear, only `qa.md` and its demo artifacts may be new in the worktree; any product or validator change re-enters Review.
+- Commit them, never a failed or blocked run, then open the draft pull request passing `qa.md` and the artifact paths.
 
 ```mermaid
 ---
@@ -32,6 +39,8 @@ flowchart TD
     ValidationReports["$validation_reports"]
     Checker(["@aidd-dev:checker"])
     Review["/aidd-dev:05-review"]
+    QA["/aidd-qa:01-acceptance-qa"]
+    Demo["/aidd-qa:02-demo"]
   end
 
   subgraph ChallengeStage["Challenge the outcome"]
@@ -59,7 +68,11 @@ flowchart TD
   ValidationReports --> Checker
   Checker --> Review
   Review -- "Return actionable review findings." --> Findings
-  Review -- "When the review clears, challenge the outcome." --> Challenge
+  Review -- "When the review clears, verify acceptance." --> QA
+  QA -- "Return a failed or blocked verdict." --> Findings
+  QA -- "On pass, show the passing scenarios." --> Demo
+  QA -- "On skipped, challenge the outcome." --> Challenge
+  Demo --> Challenge
   Challenge -- "Return actionable challenge findings." --> Findings
   Challenge -- "When the outcome is trustworthy, open the draft pull request." --> PullRequest
   Findings -- "Use product findings as the next Frame source." --> Frame
@@ -73,7 +86,7 @@ flowchart TD
   classDef artifact fill:#DCFCE7,stroke:#16A34A,color:#14532D,stroke-width:2px
   classDef zone fill:#F1F5F9,stroke:#64748B,color:#0F172A,stroke-width:2px
 
-  class Review,Challenge,Todo,PullRequest skill
+  class Review,QA,Demo,Challenge,Todo,PullRequest skill
   class Checker agent
   class Contract,Plan,CommittedCandidate,ValidationReports,Findings,PullRequestUrl artifact
   class Frame,Deliver zone

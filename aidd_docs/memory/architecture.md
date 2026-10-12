@@ -40,6 +40,6 @@ The concern-to-plugin taxonomy is canonical in [`docs/ARCHITECTURE.md`](../../do
 
 ## Gotchas
 
-- 9 plugins ship, 3 off the curated install path: `aidd-ui` is alpha, `aidd-telemetry` beta and opt-in, `aidd-qa` new and unproven outside this repository.
+- 9 plugins ship, 2 off the curated install path: `aidd-ui` is alpha, `aidd-telemetry` beta and opt-in.
 - A skill never links outside itself: the tree ships both flat and as a marketplace, so no relative path survives both.
 - Bundled hooks run Node. No `node` on `PATH`, no memory refresh and no run journal.

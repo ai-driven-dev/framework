@@ -58,7 +58,7 @@ Why not just write your own commands? → [FAQ](docs/FAQ.md#-why-aidd-instead-of
 
 ### Claude Code
 
-Installs the 6 stable plugins (`aidd-ui` is 🚧 alpha, `aidd-telemetry` 🧪 beta, and `aidd-qa` 🆕 new, install those separately — see [Plugins](#-plugins)).
+Installs the 7 recommended plugins (`aidd-ui` is 🚧 alpha and `aidd-telemetry` 🧪 beta, install those separately — see [Plugins](#-plugins)).
 
 **In the session** (slash commands)
 
@@ -70,6 +70,7 @@ Installs the 6 stable plugins (`aidd-ui` is 🚧 alpha, `aidd-telemetry` 🧪 be
 /plugin install aidd-vcs@aidd-framework
 /plugin install aidd-pm@aidd-framework
 /plugin install aidd-orchestrator@aidd-framework
+/plugin install aidd-qa@aidd-framework
 ```
 
 
@@ -84,6 +85,7 @@ claude plugin install aidd-dev@aidd-framework
 claude plugin install aidd-vcs@aidd-framework
 claude plugin install aidd-pm@aidd-framework
 claude plugin install aidd-orchestrator@aidd-framework
+claude plugin install aidd-qa@aidd-framework
 ```
 </details
 
@@ -240,7 +242,7 @@ learning only when it is durable enough to improve the next feature.
 
 ## 🧩 Plugins
 
-Nine plugins covering the whole SDLC — **install the six stable ones**; they work together. (`aidd-ui` is 🚧 **alpha**, `aidd-telemetry` 🧪 **beta**, and `aidd-qa` 🆕 **new** — all three off the curated path.)
+Nine plugins covering the whole SDLC — **install the seven recommended ones**; they work together. (`aidd-ui` is 🚧 **alpha** and `aidd-telemetry` 🧪 **beta** — both off the curated path.)
 
 <table>
 <tr>
