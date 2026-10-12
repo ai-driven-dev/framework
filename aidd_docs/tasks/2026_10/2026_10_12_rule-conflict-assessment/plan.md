@@ -1,6 +1,6 @@
 ---
 objective: "Assess a candidate rule against applicable existing policies before any rule write, with an explicit resolution and unchanged publication behavior."
-status: implemented
+status: reviewed
 ---
 
 # Plan: Assess existing rules before writing

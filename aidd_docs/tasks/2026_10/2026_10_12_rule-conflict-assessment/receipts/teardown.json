@@ -1,0 +1,23 @@
+{
+  "localArchive": "/private/tmp/aidd-791-reviewed-native-fixtures.tar.gz",
+  "archiveSHA256": "22aafc552fcca61833cdc6e37535ba1278923585dff72c5596b1c7125e2e6dfe",
+  "removedReviewedFixtures": [
+    "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-baseline-JPnRpI",
+    "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-0og_z8lk",
+    "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-avswso51",
+    "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-d40ne3yt",
+    "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-f08cf2dd",
+    "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-jzb3gnq2",
+    "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-k7al9tlo",
+    "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-kyf8vbhs",
+    "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-mdm66onm",
+    "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-njf20lfx",
+    "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-ofdnwunc",
+    "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-ojh5c01q",
+    "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-pa64pbd1",
+    "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-qb2gmmss",
+    "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-sq2s6hvg",
+    "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-791-probe-t4gu559a"
+  ],
+  "projectBaseline": "Original workspace personal changes preserved; all native project fixtures were disposable."
+}
