@@ -79,3 +79,7 @@ test("README installs aidd-qa and counts seven recommended plugins", () => {
 test("the developer journey never claims the acceptance gate", () => {
   assert.match(read("plugins/aidd-dev/skills/06-test/SKILL.md"), /Do NOT use for independent acceptance QA/);
 });
+
+test("check stops for a missing QA provider instead of improvising", () => {
+  assert.match(prose(), /without it, stop with the instruction to install `aidd-qa`, never run QA by other means/);
+});

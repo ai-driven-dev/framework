@@ -1,6 +1,6 @@
 ---
 objective: "Acceptance QA verifies browser and CLI criteria without video, a demo skill shows any journey, and the SDLC runs both before the draft pull request."
-status: in-progress
+status: implemented
 ---
 
 # Plan: QA verifies, demo shows

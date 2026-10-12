@@ -3,7 +3,7 @@
 ## Behavior
 
 - Use one fresh checker, independent from implementation, to review the candidate against the contract, plan, and validation evidence.
-- After the review clears, the same checker runs `/aidd-qa:01-acceptance-qa` on the same contract and committed candidate, then routes its verdict:
+- After the review clears, the same checker runs `/aidd-qa:01-acceptance-qa` on the same contract and committed candidate; without it, stop with the instruction to install `aidd-qa`, never run QA by other means. Then route its verdict:
   - `pass` or `skipped`: Challenge.
   - `fail`: Deliver.
   - `blocked` by ambiguous or incomplete criteria: Frame.
