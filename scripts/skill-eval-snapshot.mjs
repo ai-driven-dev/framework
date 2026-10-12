@@ -19,16 +19,13 @@ function sameFileState(left, right) {
 }
 
 function readStableFile(file) {
-  const pathState = lstatSync(file, { bigint: true });
-  if (!pathState.isFile()) throw new Error(`File changed while snapshotting: ${file}`);
-
-  // O_NOFOLLOW is available on POSIX. On Windows, the identity checks below
+  // O_NOFOLLOW is available on POSIX. On Windows, the post-open identity checks
   // provide the fallback; the descriptor still pins the opened file for reads.
-  const flags = constants.O_RDONLY | (constants.O_NOFOLLOW ?? 0);
+  const flags = constants.O_RDONLY | (constants.O_NOFOLLOW ?? 0) | (constants.O_NONBLOCK ?? 0);
   const fd = openSync(file, flags);
   try {
     const openedState = fstatSync(fd, { bigint: true });
-    if (!openedState.isFile() || !sameFileState(pathState, openedState)) {
+    if (!openedState.isFile()) {
       throw new Error(`File changed while snapshotting: ${file}`);
     }
 
