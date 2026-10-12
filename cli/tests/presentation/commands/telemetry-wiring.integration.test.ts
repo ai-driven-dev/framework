@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { Command } from "commander";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -364,5 +366,36 @@ describe("aidd telemetry forget", () => {
     forget.mockResolvedValue({ status: "forgotten", plan });
     await run("forget", "--yes");
     expect(forget).toHaveBeenCalledWith(true);
+  });
+});
+
+describe("the telemetry command surface", () => {
+  /** What the built binary prints, captured by the help golden: the one place it is pinned. */
+  const golden = JSON.parse(
+    readFileSync(join(import.meta.dirname, "../../golden/snapshots/help/surface.json"), "utf8")
+  ) as { invocation: string; help: string }[];
+
+  it("prints each subcommand's help as the golden pins it", () => {
+    const program = new Command().name("aidd");
+    registerTelemetryCommand(program);
+    const telemetry = program.commands.find((command) => command.name() === "telemetry");
+    const helps = [telemetry, ...(telemetry?.commands ?? [])].map((command) => ({
+      invocation: command === telemetry ? "aidd telemetry" : `aidd telemetry ${command?.name()}`,
+      help: command?.helpInformation().trimEnd(),
+    }));
+    for (const { invocation, help } of helps) {
+      expect(help, invocation).toBe(golden.find((entry) => entry.invocation === invocation)?.help);
+    }
+  });
+
+  it.each([
+    ["status", () => show],
+    ["ingest", () => ingest],
+    ["forget", () => forget],
+    ["report", () => report],
+  ])("says what failed and exits 1 when %s throws", async (name, useCase) => {
+    useCase().mockRejectedValue(new Error("disk full"));
+    expect(await run(name)).toBe(1);
+    expect(stderr()).toContain("disk full");
   });
 });
