@@ -128,9 +128,9 @@ index ff31bed1ea6cdd23d3b9e195d53303dde43526e4..6d5445997e87e399599b2555dc7ba137
 -  RunnerTestSuite,
    RunnerTestCase,
  } from 'vitest';
-
+ 
 @@ -73,19 +72,11 @@ if (mode === 'mutant') {
-
+ 
  // Stryker disable all: this file is copied to the sandbox dir
  function collectTestName({
 -  name,
@@ -150,7 +150,7 @@ index ff31bed1ea6cdd23d3b9e195d53303dde43526e4..6d5445997e87e399599b2555dc7ba137
 -  return nameParts.join(' ').trim();
 +  return fullTestName;
  }
-
+ 
  function toRawTestId(test: RunnerTestCase): string {
 diff --git a/src/test-helpers.ts b/src/test-helpers.ts
 index 1cf9538c2dd926d608282b40e848833585e1ea39..03f564a2780650c8474997622e5cc3003da17909 100644
@@ -159,11 +159,11 @@ index 1cf9538c2dd926d608282b40e848833585e1ea39..03f564a2780650c8474997622e5cc300
 @@ -1,23 +1,15 @@
 -import type { RunnerTestCase, RunnerTestSuite } from 'vitest';
 +import type { RunnerTestCase } from 'vitest';
-
+ 
  // Don't merge this file into 'vitest-helpers.ts'!
  // This file is used from the testing environment (via stryker-setup.js) and thus could be loaded into the browser (when using vitest with browser mode).
  // Thus we should avoid unnecessary dependencies in this file.
-
+ 
  export function collectTestName({
 -  name,
 -  suite,
@@ -182,7 +182,7 @@ index 1cf9538c2dd926d608282b40e848833585e1ea39..03f564a2780650c8474997622e5cc300
 -  return nameParts.join(' ').trim();
 +  return fullTestName;
  }
-
+ 
  export function toRawTestId(test: RunnerTestCase): string {
 diff --git a/src/vitest-test-runner.ts b/src/vitest-test-runner.ts
 index b54e16ae236118113d78931dab44a2252825cde4..f7e7a0568de3f8307ad953b3a33902bc37bc77b0 100644

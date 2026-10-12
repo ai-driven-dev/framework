@@ -1,5 +1,4 @@
-// Plants scoped `process.exit` (GritQL), default-export and context-process violations; silent
-// Biome rule dropouts are otherwise invisible.
+// Planted violations guard Biome rules outside here: GritQL process.exit, default exports, and context `process`.
 import { spawnSync } from "node:child_process";
 import { cpSync, mkdirSync, mkdtempSync, realpathSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -11,6 +10,7 @@ import { CLI_ROOT, read } from "./helpers.js";
 const BIOME = join(CLI_ROOT, "node_modules", "@biomejs", "biome", "bin", "biome");
 const PLUGIN = "biome-plugins/no-process-exit.grit";
 
+// The reporter escapes C: as C%3A on Windows; only clean (0) or findings (1) means Biome ran.
 function reportedFile(raw: string): string {
   return raw.replace(/%3A/gi, ":").replace(/%2C/gi, ",").replace(/%25/g, "%");
 }

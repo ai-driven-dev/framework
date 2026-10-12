@@ -21,6 +21,14 @@ criterion with the selected host. Without `--judge`, deterministic checks can
 pass while the case is marked `INCOMPLETE (judge skipped)`; that is not a
 successful judge evaluation.
 
+`PASS` means all deterministic checks and configured judges passed. `FAIL`
+means at least one check failed. `INCOMPLETE (judge skipped)` means the
+deterministic checks passed, but one or more configured judges did not run. The
+process exits `1` if any case fails and `0` otherwise, including when cases are
+incomplete. A zero exit code therefore does not prove every configured LLM
+judgment ran. For a fully judged run, pass `--judge` and require every case to
+fully pass, with zero incomplete and zero failed.
+
 No model override is passed unless you supply `--model=<model-id>`.
 
 ## How it works
@@ -71,6 +79,7 @@ the selected host. Its verdict and one-line reason are shown in the case output.
 - Deterministic where possible (file written, filename rule, required sections,
   hedged unverified claim, forbidden mechanics absent). Fuzzy outcomes
   (claim-extraction quality, terseness) go to `--judge` and can flake.
+  Deterministic checks do not replace behavioral LLM judgments.
 - `01-brainstorm` is interactive (multi-turn Q&A) and is not covered here; a
   single headless turn cannot exercise its loop.
 
