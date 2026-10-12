@@ -18,6 +18,8 @@ function testFile(state: "pass" | "fail", tasks: RunnerTestFile["tasks"] = []): 
     type: "suite",
     filepath: "/repo/cli/tests/contexts/tools/domain/profiles/cursor.unit.test.ts",
     projectName: "unit",
+    concurrencyId: 0,
+    workerId: 0,
     tasks,
     result: { state, errors: state === "fail" ? [LOAD_ERROR] : [] },
     get file() {

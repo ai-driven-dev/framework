@@ -22,6 +22,7 @@ export class UnloadableFileAsFailedTest implements Reporter {
         fullName: "the file loads",
         fullTestName: "the file loads",
         artifacts: [],
+        benchmarks: [],
         mode: "run",
         meta: {},
         file,

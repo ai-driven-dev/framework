@@ -10,6 +10,10 @@ export interface MutationReport {
       {
         readonly mutants: readonly {
           readonly status: string;
+          readonly id?: string;
+          readonly coveredBy?: readonly string[];
+          readonly killedBy?: readonly string[];
+          readonly testsCompleted?: number;
           readonly static?: boolean;
           readonly mutatorName?: string;
           readonly location?: { readonly start: { readonly line: number } };
@@ -28,6 +32,7 @@ export function strykerArgs(
 ): string[];
 export function scoreOf(report: MutationReport): number;
 export function breakVerdict(score: number, declared: MutationScope): string | null;
+export function canarySelectionVerdict(report: MutationReport): string | null;
 export function changedRanges(diff: string): string[];
 export function changedArgs(ranges: readonly string[]): string[];
 export function survivorsOf(report: MutationReport): string[];
