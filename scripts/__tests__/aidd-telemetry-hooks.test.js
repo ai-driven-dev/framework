@@ -363,9 +363,11 @@ test("the gate asks on an unbound working branch with a person present", () => {
     assert.equal(result.status, 0);
     assert.equal(result.json.decision, "block");
     const reason = result.json.reason;
-    assert.ok(reason.includes("! aidd telemetry task <name> [--ticket <ref>]"), reason);
-    assert.ok(reason.includes("typed as a prompt"), reason);
-    assert.ok(reason.includes("--none"), reason);
+    // One line, one way: the prompt, since a terminal's `aidd` may not be the one the hook found.
+    assert.equal(
+      reason,
+      'Telemetry: no task on feat/x yet. Send "aidd telemetry task <name> [--ticket <ref>]", or "--none", as your next prompt.'
+    );
     assert.equal(result.json.hookSpecificOutput, undefined, "the person's real prompt stays visible");
   });
 });
@@ -725,7 +727,7 @@ test("a typed declaration reaches no model: the CLI stores it, the hook blocks w
   withBox({}, (box) => {
     const result = gate(box, { payload: box.payload({ prompt: "aidd telemetry task fix-cart --ticket PROJ-1" }) });
     assert.equal(result.json.decision, "block");
-    assert.equal(result.json.reason, "Declared fix-cart");
+    assert.equal(result.json.reason, "Task fix-cart (ticket PROJ-1) declared. Send your prompt again.");
     assert.equal(result.json.hookSpecificOutput.suppressOriginalPrompt, true);
     assert.equal(result.json.hookSpecificOutput.hookEventName, "UserPromptSubmit");
     const calls = box.calls();
@@ -736,6 +738,23 @@ test("a typed declaration reaches no model: the CLI stores it, the hook blocks w
     // the next prompt passes
     assertPasses(gate(box));
   });
+});
+
+test("a declaration is confirmed in one line, and the person resends the prompt", () => {
+  const rows = [
+    ["aidd telemetry task fix --ticket P-1", "Task fix (ticket P-1) declared. Send your prompt again."],
+    ["aidd telemetry task fix", "Task fix declared. Send your prompt again."],
+    ["aidd telemetry task --none", "No task declared for this work. Send your prompt again."],
+    [
+      "aidd telemetry task fix --ticket",
+      'Not a declaration, nothing sent. Send "aidd telemetry task <name> [--ticket <ref>]" (quote a name with spaces), or "--none". To ask Claude instead, end with "?".',
+    ],
+  ];
+  for (const [prompt, reason] of rows) {
+    withBox({}, (box) => {
+      assert.equal(gate(box, { payload: box.payload({ prompt }) }).json.reason, reason, prompt);
+    });
+  }
 });
 
 test("an intercepted declaration runs --none, a bare name, a quoted name and a ! prefix, and nothing without a name", () => {
@@ -784,7 +803,7 @@ test("injection: shell syntax in a typed declaration runs no second command", ()
     withBox({}, (box) => {
       const result = gate(box, { payload: box.payload({ prompt }) });
       assert.equal(result.json.decision, "block", prompt);
-      assert.match(result.json.reason, /No task is declared/u, prompt);
+      assert.match(result.json.reason, /Telemetry: no task on /u, prompt);
       assert.ok(!fs.existsSync(path.join(box.repo, "PWNED")), prompt);
       assert.deepEqual(box.calls().map((c) => c.argv), [["telemetry", "task", "--help"]], prompt);
     });
@@ -811,15 +830,10 @@ test("a declaration mistyped is blocked with the grammar and the quoting hint, a
       withBox({ branch }, (box) => {
         const result = gate(box, { payload: box.payload({ prompt }) });
         assert.equal(result.json.decision, "block", prompt);
-        assert.match(result.json.reason, /not understood/iu, prompt);
+        assert.match(result.json.reason, /^Not a declaration, nothing sent\./u, prompt);
         assert.match(result.json.reason, /aidd telemetry task <name> \[--ticket <ref>\]/u, prompt);
-        assert.match(result.json.reason, /aidd telemetry task "fix cart"/u, prompt);
-        assert.match(result.json.reason, /fix-cart/u, prompt);
-        assert.match(
-          result.json.reason,
-          /To send it to Claude as an ordinary prompt instead, rephrase it or end it with a question mark\./u,
-          prompt
-        );
+        assert.match(result.json.reason, /quote a name with spaces/u, prompt);
+        assert.match(result.json.reason, /To ask Claude instead, end with "\?"\./u, prompt);
         // not run, so the person's words stay visible to retype
         assert.equal(result.json.hookSpecificOutput, undefined, prompt);
         assert.ok(!fs.existsSync(path.join(box.repo, "PWNED")), prompt);
@@ -863,7 +877,7 @@ test("a prompt that only starts like a declaration is an ordinary prompt, never 
     withBox({}, (box) => {
       const result = gate(box, { payload: box.payload({ prompt }) });
       assert.equal(result.json.decision, "block", prompt);
-      assert.match(result.json.reason, /No task is declared/u, prompt);
+      assert.match(result.json.reason, /Telemetry: no task on /u, prompt);
       // the person's real words stay visible to retype: this prompt was not run
       assert.equal(result.json.hookSpecificOutput, undefined, prompt);
     });

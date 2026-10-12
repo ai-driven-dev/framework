@@ -29,11 +29,18 @@ function intercept(argv, cwd) {
   }
   const run = runAidd(aidd, argv, { cwd, timeout: DECLARE_TIMEOUT_MS });
   if (run.refused) {
-    return block("This declaration holds characters that cannot be passed safely on this system. Run it in a terminal: ! aidd telemetry task <name> [--ticket <ref>]");
+    return block("This declaration holds characters that cannot be passed safely here (spaces or quotes). Use letters, digits and - . _ : / @ # + , = only.");
   }
+  if (run.status === 0) return block(`${declared(argv)} Send your prompt again.`);
   const said = (run.stdout.trim() || run.stderr.trim()).slice(0, 2000);
-  if (run.status === 0) return block(said || "Task declared.");
   return block(`Declaration failed${run.status === null ? " (aidd did not answer)" : ""}. ${said}`.trim());
+}
+
+/** What a declaration that went through recorded, in the words the person typed. */
+function declared(argv) {
+  if (argv.includes("--none")) return "No task declared for this work.";
+  const ticket = argv.indexOf("--ticket");
+  return `Task ${argv[2]}${ticket === -1 ? "" : ` (ticket ${argv[ticket + 1]})`} declared.`;
 }
 
 /** Whether a person could answer a block: `aidd` resolves and knows `telemetry task`. */
@@ -44,14 +51,9 @@ function canAnswer(cwd) {
 }
 
 function ask(branch) {
+  // One way only: a terminal's `aidd` may not be the one this hook found.
   return block(
-    [
-      `No task is declared for the work on ${branch}, and measurement needs one before any token is spent.`,
-      "Declare it, either way:",
-      "  ! aidd telemetry task <name> [--ticket <ref>]      (in the terminal)",
-      "  aidd telemetry task <name> [--ticket <ref>]        (typed as a prompt)",
-      "No task for this work: the same with --none instead of a name.",
-    ].join("\n"),
+    `Telemetry: no task on ${branch} yet. Send "aidd telemetry task <name> [--ticket <ref>]", or "--none", as your next prompt.`,
     { keepPrompt: true }
   );
 }
@@ -60,13 +62,7 @@ function ask(branch) {
  * never run or forwarded. The prompt stays visible to retype. */
 function notUnderstood() {
   return block(
-    [
-      "Not understood as a task declaration. Nothing was recorded and nothing was sent to the model.",
-      "  aidd telemetry task <name> [--ticket <ref>]",
-      "  aidd telemetry task --none",
-      'A name of several words needs quotes: aidd telemetry task "fix cart" (or join them: fix-cart).',
-      "To send it to Claude as an ordinary prompt instead, rephrase it or end it with a question mark.",
-    ].join("\n"),
+    'Not a declaration, nothing sent. Send "aidd telemetry task <name> [--ticket <ref>]" (quote a name with spaces), or "--none". To ask Claude instead, end with "?".',
     { keepPrompt: true }
   );
 }

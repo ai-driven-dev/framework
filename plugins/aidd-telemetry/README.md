@@ -19,7 +19,7 @@ Once per working branch, before the work starts: a task name, an optional ticket
 
 | Where | Asked | Declare with |
 | --- | --- | --- |
-| Terminal, desktop app | yes | `aidd telemetry task <name> [--ticket <ref>]` as a prompt (never reaches the model); terminal: also `! aidd …` |
+| Terminal, desktop app | yes | `aidd telemetry task <name> [--ticket <ref>]` as your next prompt (never reaches the model) |
 | IDE extension (seen: VS Code) | no, it shows no hook message | the same command in a terminal: binds the branch |
 | Headless run | no | - |
 

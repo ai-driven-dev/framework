@@ -294,14 +294,14 @@ describe("the telemetry journey, on the built binary", () => {
     // Asked, once, before any model call: the person is present on an unbound working branch.
     const asked = prompt(main, "build the checkout");
     expect(asked.json?.decision).toBe("block");
-    expect(String(asked.json?.reason)).toContain("No task is declared for the work on feat/x");
+    expect(String(asked.json?.reason)).toContain("Telemetry: no task on feat/x yet.");
     expect(existsSync(join(telemetry, "bindings", "sessions.jsonl"))).toBe(false);
 
     // Answered by typing the declaration, which the model never sees.
     const declared = prompt(main, "aidd telemetry task checkout-fix --ticket PROJ-12");
     expect(declared.json?.decision).toBe("block");
-    expect(String(declared.json?.reason)).toContain(
-      'Declared task "checkout-fix" (ticket PROJ-12).'
+    expect(declared.json?.reason).toBe(
+      "Task checkout-fix (ticket PROJ-12) declared. Send your prompt again."
     );
     expect(declared.json?.hookSpecificOutput).toMatchObject({ suppressOriginalPrompt: true });
     const stored = await lines(join(telemetry, "bindings", "sessions.jsonl"));
@@ -407,7 +407,9 @@ describe("the telemetry journey, on the built binary", () => {
     expect(prompt({ id: S_HEADLESS, attended: false }, "start").stdout).toBe("");
     // Declared none, once: the branch is answered and the same person is no longer asked.
     const none = prompt({ id: S_OTHER }, "aidd telemetry task --none");
-    expect(String(none.json?.reason)).toContain("Declared no task.");
+    expect(String(none.json?.reason)).toBe(
+      "No task declared for this work. Send your prompt again."
+    );
     expect(prompt({ id: S_OTHER }, "start").stdout).toBe("");
   });
 
