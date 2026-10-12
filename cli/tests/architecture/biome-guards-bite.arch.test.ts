@@ -14,6 +14,11 @@ import { CLI_ROOT, read } from "./helpers.js";
 const BIOME = join(CLI_ROOT, "node_modules", "@biomejs", "biome", "bin", "biome");
 const PLUGIN = "biome-plugins/no-process-exit.grit";
 
+/** A file property as the GitHub reporter escapes it, `C:` written `C%3A` on Windows. */
+function reportedFile(raw: string): string {
+  return raw.replace(/%3A/gi, ":").replace(/%2C/gi, ",").replace(/%25/g, "%");
+}
+
 /** The diagnostics biome prints for one planted tree, as `<file>:<rule>` lines. */
 function biomeFindings(projectDir: string, launcher = BIOME): string[] {
   const result = spawnSync(process.execPath, [launcher, "lint", "--reporter=github", "."], {
@@ -26,7 +31,10 @@ function biomeFindings(projectDir: string, launcher = BIOME): string[] {
     .filter((match): match is RegExpExecArray => match !== null)
     .map(
       (match) =>
-        `${relative(realpathSync(projectDir), realpathSync(resolve(projectDir, match[2] as string)))
+        `${relative(
+          realpathSync(projectDir),
+          realpathSync(resolve(projectDir, reportedFile(match[2] as string)))
+        )
           .split(sep)
           .join("/")}:${match[1]}`
     )
@@ -135,6 +143,10 @@ describe("the guard itself", () => {
     expect(findings.filter((f) => f.startsWith("src/contexts/framework/infrastructure/"))).toEqual(
       []
     );
+  });
+
+  it("reads a file the GitHub reporter escaped, as on Windows", () => {
+    expect(reportedFile("C%3A\\tmp\\a%2Cb%25.ts")).toBe("C:\\tmp\\a,b%.ts");
   });
 
   it("fails when biome does not run, rather than reading as no findings", () => {
