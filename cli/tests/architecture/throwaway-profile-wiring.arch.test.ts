@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
+import config from "../../vitest.config.js";
 import mutation from "../../vitest.mutation.config.js";
-import workspace from "../../vitest.workspace.js";
 
 const SETUP = "./tests/helpers/throwaway-profile.ts";
 const RUNS_SOURCE = ["unit", "integration"];
@@ -18,7 +18,7 @@ function projectsRunningSource(
 
 describe("every project that runs the source sees a throwaway profile", () => {
   it.each([
-    ["the suite", projectsRunningSource(workspace)],
+    ["the suite", projectsRunningSource(config.test?.projects ?? [])],
     ["a mutation run", projectsRunningSource(mutation.test?.projects ?? [])],
   ])(
     "%s declares the throwaway-profile setup on its unit and integration projects",

@@ -4,7 +4,7 @@ How this package is tested: the layers, the tools, the conventions.
 
 ## Strategy
 
-- Four vitest projects (`vitest.workspace.ts`): `unit`, `integration`, `e2e` select by extension anywhere under `tests/`; `architecture` selects `tests/architecture/**/*.arch.test.ts` only, so a stray `*.arch.test.ts` runs nowhere.
+- Four vitest projects (`vitest.config.ts` → `test.projects`): `unit`, `integration`, `e2e` select by extension anywhere under `tests/`; `architecture` selects `tests/architecture/**/*.arch.test.ts` only, so a stray `*.arch.test.ts` runs nowhere.
 - Unit: pure logic. Integration: a use case or adapter, ports substituted. E2E: the real built binary. Architecture: ratchets over source text.
 - A pyramid; read the split live.
 
