@@ -28,11 +28,41 @@ test('static contract: Kilo workflows use the canonical command path and support
 });
 
 test('static contract: agent and workflow writers preflight targets and skip unsupported Codex commands', () => {
-  for (const text of [agent('actions/02-write-agent.md'), command('actions/02-write-command.md')]) {
-    assert.ok(text.indexOf('**Preflight.**') >= 0);
-    assert.match(text, /collision|symlink|unchanged|idempotent/u);
+  for (const [action, paths] of [
+    [agent('actions/02-write-agent.md'), agent('references/tool-paths.md')],
+    [command('actions/02-write-command.md'), command('references/tool-paths.md')],
+  ]) {
+    const preflight = action.indexOf('**Preflight.**');
+    const publish = action.indexOf('**Publish.**');
+    assert.ok(preflight > action.indexOf('**Build.**'));
+    assert.ok(publish > preflight);
+    assert.match(action.slice(preflight, publish), /every selected target and reference before creating anything/u);
+    assert.match(action.slice(preflight, publish), /last target too/u);
+    assert.match(action.slice(preflight, publish), /refusal found here leaves all selected targets unchanged/u);
+    assert.match(action.slice(publish), /Before each write, compare that target's current state with its preflight state/u);
+    assert.match(paths, /existing user (?:agent|workflow).*target-specific requested field unsupported by that tool/u);
+    assert.match(paths, /Any refusal known at this gate leaves every selected target unchanged/u);
+    assert.match(paths, /Ordinary canonical fields omitted.*still dropped/u);
+    assert.match(paths, /compare each target's state with its preflight state immediately before writing it/iu);
+    assert.match(paths, /A change after that comparison can still race with the write/u);
+    assert.match(paths, /does not provide atomic publication or complete rollback across targets/u);
+    assert.match(action, /Skip unchanged bytes; a repeated confirmed request is idempotent and preserves mtime/u);
   }
   assert.match(command('references/tool-paths.md'), /Codex CLI.*Skip/u);
+});
+
+test('eval cases cover a last-target refusal for both interpreted generators', () => {
+  const cases = JSON.parse(read('scripts/skill-eval/cases.json'));
+  for (const [skill, name, absent, preserved] of [
+    ['06-agent-generate', 'last Kilo agent collision refuses before Claude write', '.claude/agents/verify-agent.md', '.kilo/agents/verify-agent.md'],
+    ['07-command-generate', 'last Kilo workflow collision refuses before Claude write', '.claude/commands/verify-workflow.md', '.kilo/commands/verify-workflow.md'],
+  ]) {
+    const scenario = cases.find((item) => item.skill === skill && item.name === name);
+    assert.ok(scenario, name);
+    assert.match(scenario.prompt, /Claude first and Kilo last/u);
+    assert.ok(scenario.expect.filesAbsent.includes(absent));
+    assert.ok(scenario.expect.filesUnchanged.includes(preserved));
+  }
 });
 
 test('fixture contract: Kilo agent and workflow have target-specific frontmatter and bodies', () => {

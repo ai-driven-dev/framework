@@ -679,5 +679,41 @@
       ],
       "judge": "The existing exact AIDD entry is not duplicated, both user entries remain and no file is rewritten; Kilo receives only guidance."
     }
+  },
+  {
+    "plugin": "aidd-context",
+    "skill": "06-agent-generate",
+    "evalName": "xeval-kilo-agent",
+    "name": "last Kilo agent collision refuses before Claude write",
+    "setup": {
+      "files": {
+        ".kilo/agents/verify-agent.md": "USER AGENT\n",
+        "USER.txt": "KEEP\n"
+      }
+    },
+    "prompt": "Use the {{SKILL}} skill to create a verify-agent subagent with a clear one-purpose role and no optional fields. The name verify-agent, a quality score of 9, host-project mode and targets Claude first and Kilo last are confirmed. This is create, not modify: the existing Kilo agent is user-owned and must not be overwritten. Preflight every selected target before any write. If the last target collides, refuse the complete publication without creating the earlier Claude agent.",
+    "expect": {
+      "filesAbsent": [".claude/agents/verify-agent.md"],
+      "filesUnchanged": [".kilo/agents/verify-agent.md", "USER.txt"],
+      "judge": "The existing user-owned Kilo agent is reported as a preflight collision. No selected target is written, including the earlier Claude agent; the user file remains unchanged."
+    }
+  },
+  {
+    "plugin": "aidd-context",
+    "skill": "07-command-generate",
+    "evalName": "xeval-kilo-command",
+    "name": "last Kilo workflow collision refuses before Claude write",
+    "setup": {
+      "files": {
+        ".kilo/commands/verify-workflow.md": "USER WORKFLOW\n",
+        "USER.txt": "KEEP\n"
+      }
+    },
+    "prompt": "Use the {{SKILL}} skill to create a one-shot verify-workflow command with one objective, no arguments and no optional frontmatter. The name verify-workflow, root command location, host-project mode and targets Claude first and Kilo last are confirmed. This is create, not modify: the existing Kilo workflow is user-owned and must not be overwritten. Preflight every selected target before any write. If the last target collides, refuse the complete publication without creating the earlier Claude command.",
+    "expect": {
+      "filesAbsent": [".claude/commands/verify-workflow.md"],
+      "filesUnchanged": [".kilo/commands/verify-workflow.md", "USER.txt"],
+      "judge": "The existing user-owned Kilo workflow is reported as a preflight collision. No selected target is written, including the earlier Claude command; the user file remains unchanged."
+    }
   }
 ]
