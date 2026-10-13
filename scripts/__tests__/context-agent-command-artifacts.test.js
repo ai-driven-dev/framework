@@ -25,6 +25,8 @@ test('static contract: Kilo workflows use the canonical command path and support
   assert.match(paths, /`description`, `agent`, `model`, `variant`, `subtask`/u);
   assert.match(paths, /no nested location/u);
   assert.match(paths, /six Kilo signals/u);
+  assert.match(command('actions/02-write-command.md'), /Render only the fields and location supported by the selected host/u);
+  assert.match(command('actions/03-validate.md'), /selected host's path, frontmatter, and body requirements/u);
 });
 
 test('static contract: agent and workflow writers preflight targets and skip unsupported Codex commands', () => {

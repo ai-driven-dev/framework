@@ -25,7 +25,9 @@ test('static contract: Kilo placement requires portable consent and resolves dup
   assert.match(placement, /\.kilo\/skills\/<name>\//u);
   assert.match(placement, /explicit[^\n]*\.agents\/skills/iu);
   assert.match(placement, /never[^\n]*both/iu);
-  assert.match(placement, /copies[^\n]*resolution[^\n]*before[^\n]*writ/iu);
+  assert.match(placement, /same-name skills[^\n]*resolution before writing/u);
+  assert.match(placement, /deduplicate identical physical destinations/u);
+  assert.match(placement, /Kilo native[^\n]*another selected host[^\n]*resolve placement before writing/u);
   assert.match(read('actions/01-scope.md'), /tool-write\.md/u);
   assert.match(read('references/scope-frame.md'), /placement/u);
 });
@@ -35,8 +37,11 @@ test('static contract: Kilo fields stay target-specific without weakening the Cl
   assert.match(placement, /\| Kilo[^\n]*`name`[^\n]*`description`/u);
   assert.match(placement, /name[^\n]*parent directory/u);
   assert.match(placement, /argument-hint[^\n]*Kilo/u);
+  assert.match(placement, /\*\*Canonical-to-host rendering:\*\* Author the canonical skill according to AIDD conventions, including R4/u);
+  assert.match(placement, /Omit unsupported canonical-only fields; explicitly resolve unsupported user-requested fields before writing/u);
   assert.match(read('assets/skill-template.md'), /argument-hint:/u);
   assert.match(read('references/skill-authoring.md'), /\*\*R4\.\*\*/u);
+  assert.doesNotMatch(read('references/skill-authoring.md'), /generated host-specific artifact|Canonical-to-host rendering/u);
 });
 
 test('static contract: full preflight precedes creation and covers unsafe paths and user resources', () => {
@@ -45,7 +50,7 @@ test('static contract: full preflight precedes creation and covers unsafe paths 
   const tree = write.indexOf('**Tree.**');
   assert.ok(preflight >= 0 && tree > preflight, 'Preflight must exist before Tree');
   const placement = read('references/tool-write.md');
-  for (const invariant of ['symlink', 'writable', 'references', 'collision', 'unchanged', 'mtime']) {
+  for (const invariant of ['symlink', 'writable', 'reference', 'collision', 'unchanged', 'mtime']) {
     assert.ok(placement.includes(invariant), `Missing ${invariant}`);
   }
   assert.match(read('actions/04-validate.md'), /tool-write\.md/u);
@@ -106,13 +111,13 @@ test('fixture contract: native and portable trees each preserve the user resourc
 
 test('static contract: shared portable fields require resolution when Kilo fields conflict with Codex', () => {
   const contract = read('references/tool-write.md');
-  assert.match(contract, /share a destination[^\n]*common supported fields/u);
-  assert.match(contract, /requested field[^\n]*incompatible[^\n]*resolution before writing/u);
-  assert.match(contract, /never silently drop a requested field/u);
+  assert.match(contract, /hosts share a destination[^\n]*fields supported by all/u);
+  assert.match(contract, /user-requested field is unsupported[^\n]*explicit target or field resolution/u);
+  assert.match(contract, /never[^\n]*silently discard a requested field/u);
 });
 
 test('static contract: mixed Kilo-native and portable targets resolve placement before writing', () => {
   const contract = read('references/tool-write.md');
-  assert.match(contract, /Kilo native[^\n]*another selected host[^\n]*resolution before writing/u);
+  assert.match(contract, /Kilo native[^\n]*another selected host[^\n]*resolve placement before writing/u);
   assert.match(contract, /never create both trees/u);
 });
