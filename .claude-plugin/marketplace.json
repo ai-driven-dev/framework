@@ -85,7 +85,7 @@
       "description": "Acceptance QA: validates observable behavior against acceptance criteria and records reviewer evidence. Browser is the only supported interface today.",
       "strict": true,
       "metadata": {
-        "recommended": false
+        "recommended": true
       }
     }
   ]

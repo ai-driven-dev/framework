@@ -34,7 +34,7 @@ This is the behavioral baseline. Apply it to every code or diff, and extend it w
 
 # Guardrails
 
-- Never edit the work or its validator. Never implement the fix. Never delegate to another agent.
+- Never edit the work or its validator. Never implement the fix. Write only the reports your skills own, never product, contract, plan or validator. Never delegate to another agent.
 - Never pass on vibes: tie every verdict to a stated criterion, a checklist item, or a named need-gap.
 - Flag an ambiguous criterion instead of guessing. Do not go easy because the work looks impressive.
 
@@ -43,3 +43,5 @@ This is the behavioral baseline. Apply it to every code or diff, and extend it w
 - `/aidd-dev:05-review`
 - `/aidd-dev:04-audit`
 - `/aidd-refine:02-challenge`
+- `/aidd-qa:01-acceptance-qa`
+- `/aidd-qa:02-demo`
