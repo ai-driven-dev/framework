@@ -1,4 +1,6 @@
 const fs = require("node:fs");
+// Verified authenticated GitHub account: alexsoyes. Numeric identity survives a rename.
+const ownerId = 8973343;
 
 // This runs from the workflow's trusted default-branch checkout, without Claude secrets.
 async function authorize({ event, eventName, repository, actor, triggeringActor, request }) {
@@ -10,15 +12,17 @@ async function authorize({ event, eventName, repository, actor, triggeringActor,
     return deny("Repository mismatch");
   }
   if (event.sender?.type !== "User" || actor !== event.sender.login) return deny("Human sender required");
-  if (![actor, triggeringActor].every((login) => /^[A-Za-z0-9-]+$/.test(login))) {
+  if (![actor, triggeringActor].every((login) => typeof login === "string" && /^[A-Za-z0-9-]+$/.test(login))) {
     return deny("Invalid actor");
   }
+  if (event.sender.id !== ownerId || triggeringActor !== actor) return deny("Only the subscription owner can invoke or rerun Claude");
   const body = event.comment?.body ?? event.review?.body ?? "";
   if (eventName !== "workflow_dispatch" && !/(?:^|\s)@claude(?=$|\s|[,:;.!?])/i.test(body)) {
     return deny("No Claude mention");
   }
   for (const login of new Set([actor, triggeringActor])) {
     const access = await request(`/repos/${repository}/collaborators/${login}/permission`);
+    if (access.user?.id !== ownerId) return deny("GitHub account identity mismatch");
     if (!["admin", "write", "maintain"].includes(access.permission)) return deny("Repository write access required");
   }
   if (eventName === "workflow_dispatch") return { allowed: true, reason: "Authorized smoke test" };
