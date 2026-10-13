@@ -1,53 +1,27 @@
-# Playwright CLI recorder
-
-Playwright Agent CLI produces WebM takes without becoming an application dependency.
+# Browser recorder
 
 ## Invocation
 
-Execute the pin `@playwright/cli@0.1.17`, from a temporary directory outside the application repository; never `latest`.
+Run outside the application repository in a temporary directory; never `latest` or an application dependency:
 
 ```bash
-npx --yes @playwright/cli@0.1.17 -s=demo-<run-id> <command>
+npx --yes @playwright/cli@0.1.17 -s=demo-<run-id>-<journey-slug> <command>
 ```
 
-Pass `run-code` one function, `async page => { ... }`. A product mismatch never throws: bound each expected outcome with a `waitFor` and return `{ step, expected, actual, ok }` per step. A throw, `SyntaxError`, or non-zero exit invalidates the take. Leave stdout, stderr, and exit status visible; no redirects, pipes, command substitutions, or `|| true`.
+Keep stdout, stderr and exit status visible: no redirects, pipes, command substitutions or `|| true`.
 
 ## Recording
 
-- One named session and raw WebM per journey; viewport and frame `1280×720`.
-- Reach the initial state before `video-start`; put every recorded interaction in one `run-code`.
-- Never record separate click, fill, or scroll commands.
-- Hold the initial and verified final states for `1000 ms`.
-- Wait `300 ms` between actions and after each scroll.
-- Run `video-stop` only after `run-code` succeeds.
+One named session and raw WebM per journey; viewport/frame `1280×720`. Final: `<journey-slug>.webm` (`<evidence-name>` below).
 
-```bash
-npx --yes @playwright/cli@0.1.17 -s=demo-<run-id>-<scenario-slug> resize 1280 720
-npx --yes @playwright/cli@0.1.17 -s=demo-<run-id>-<scenario-slug> video-start raw-<evidence-name>.webm --size=1280x720
-# Replace the locators; omit the scroll block when irrelevant.
-npx --yes @playwright/cli@0.1.17 -s=demo-<run-id>-<scenario-slug> run-code 'async page => {
-  const pause = milliseconds => page.waitForTimeout(milliseconds);
-  await pause(1000);
-  await page.getByRole("button", { name: "first action" }).click();
-  await pause(300);
-  await page.mouse.wheel(0, 600);
-  await pause(300);
-  await page.getByRole("button", { name: "final action" }).click();
-  const expected = "observable expected outcome";
-  const ok = await page.getByText(expected).waitFor({ state: "visible", timeout: 5000 }).then(() => true, () => false);
-  await pause(1000);
-  return [{ step: "final action", expected, actual: ok ? expected : "not visible", ok }];
-}'
-npx --yes @playwright/cli@0.1.17 -s=demo-<run-id>-<scenario-slug> video-stop
-# Run the teardown and verify the baseline before closing.
-npx --yes @playwright/cli@0.1.17 -s=demo-<run-id>-<scenario-slug> close
-```
-
-`video-stop` writes the raw file to the current directory. Name raw files `raw-<journey-slug>.webm`.
+1. `resize 1280 720`; reach initial state before `video-start raw-<journey-slug>.webm --size=1280x720`.
+2. One `run-code 'async page => { ... }'` contains every interaction; never separate click/fill/scroll commands. Hold initial and verified final states `1000 ms`; pause `300 ms` between actions and after scrolls.
+3. Bound each expectation with `waitFor`; return `{ step, expected, actual, ok }` per step. Mismatches never throw. Throw, `SyntaxError`, or non-zero exit invalidates take.
+4. `video-stop` only after `run-code` succeeds; raw file lands in current directory. Teardown before `close`.
 
 ## Duration
 
-Probe each raw take once. Maximum 12 seconds, never a target; do not pad or extend.
+Probe raw once and final after encoding:
 
 ```bash
 ffprobe -v error -select_streams v:0 \
@@ -55,9 +29,11 @@ ffprobe -v error -select_streams v:0 \
   -of json <input.webm>
 ```
 
-Without `ffmpeg`, only an already-short raw take passes; otherwise report `blocked: media-postprocess-unavailable`.
+Maximum 12 seconds, never a target: no padding/extension/acceleration. Above cap, remove non-journey actions and re-record; required journey cannot fit => `blocked`.
 
-Never trim the head or infer the first action from scene changes. Inspect both sides of a tail cut; reject one that removes the result or final one-second hold.
+Without `ffmpeg`, only already-short raw passes; otherwise `blocked: media-postprocess-unavailable`.
+
+Never trim head or infer first action from scene changes. Inspect both sides of tail cuts; preserve result and final one-second hold:
 
 ```bash
 qa_cut_frames=$(mktemp -d)
@@ -69,7 +45,7 @@ ffmpeg -v error -ss <cut-plus-0.25-seconds> -i raw-<evidence-name>.webm \
 
 ## Normalization
 
-Re-encode without audio. Use only a visually verified tail cut; omit `-to` when unused.
+Encode without audio; only visually verified tail cut; omit unused `-to`:
 
 ```bash
 ffmpeg -y -to <verified-end-seconds> -i raw-<evidence-name>.webm \
@@ -77,11 +53,9 @@ ffmpeg -y -to <verified-end-seconds> -i raw-<evidence-name>.webm \
   -c:v libvpx-vp9 -crf 36 -b:v 0 <evidence-name>.webm
 ```
 
-Above 12 seconds, remove non-scenario actions and record again. Never accelerate. Block when the required journey cannot fit.
-
 ## Validation
 
-Probe the final file, then inspect four frames per second chronologically.
+After probing, inspect final frames chronologically, four/second:
 
 ```bash
 qa_final_frames=$(mktemp -d)
@@ -89,10 +63,6 @@ ffmpeg -v error -i <evidence-name>.webm -vf "fps=4" \
   "$qa_final_frames/frame-%03d.png"
 ```
 
-Require:
+Require `vp9`, width `1280`, duration ≤12 seconds; visible initial state, every action/transition, final result; each hold ≥four sampled frames. `ffprobe` alone is insufficient.
 
-- codec `vp9`, width `1280`, duration at most 12 seconds;
-- initial state, every action and transition, and final result visible;
-- initial and final holds spanning at least four sampled frames.
-
-`ffprobe` alone is insufficient. Delete raw takes, cut-point frames, and validation frames only after every final WebM passes both checks.
+Only after every final passes probe and inspection, delete raw takes, cut-point and validation frames.
