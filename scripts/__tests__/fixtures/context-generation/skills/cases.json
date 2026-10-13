@@ -51,17 +51,6 @@
     ]
   },
   {
-    "project": "codex",
-    "target": ".agents/skills",
-    "fields": [
-      "name",
-      "description"
-    ],
-    "absent": [
-      ".kilo/skills"
-    ]
-  },
-  {
     "project": "opencode",
     "target": ".opencode/skills",
     "fields": [
@@ -71,17 +60,6 @@
     "absent": [
       ".kilo/skills",
       ".agents/skills"
-    ]
-  },
-  {
-    "project": "mixed",
-    "target": ".agents/skills",
-    "fields": [
-      "name",
-      "description"
-    ],
-    "absent": [
-      ".kilo/skills"
     ]
   }
 ]
