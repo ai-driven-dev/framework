@@ -2,6 +2,12 @@
 
 Per-tool hook support, event names, file formats, and scopes. OpenCode and Kilo plugin APIs are guidance surfaces here; this skill does not generate plugins.
 
+## Host detection
+
+Detect Kilo when the project has `.kilo/` (including `.kilo/kilo.json` or `.kilo/kilo.jsonc`), root `kilo.json` or `kilo.jsonc`, or legacy `.kilocode/`. The legacy directory is a detection signal only; new Kilo plugins belong under `.kilo/`. Root `AGENTS.md`, `opencode.json`, or `opencode.jsonc` alone do not identify Kilo. This follows the onboarding detection contract without requiring another installed skill; this generator provides Kilo plugin guidance without writing files.
+
+Kilo detection sources: [project configuration](https://kilo.ai/docs/getting-started/settings) and [legacy directory fallback](https://github.com/Kilo-Org/kilocode/blob/main/packages/opencode/src/kilocode/skills/kilo-config.md).
+
 ## Per-tool support
 
 | Tool           | Output | Note                                                            |

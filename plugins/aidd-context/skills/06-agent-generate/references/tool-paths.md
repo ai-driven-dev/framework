@@ -52,6 +52,8 @@ Codex agents are TOML, not markdown. Convert:
 
 The six Kilo signals are shared with the Kilo skill contract. `AGENTS.md` and `opencode.json[c]` alone are not Kilo signals. `.kilocode/` detects legacy Kilo but new output remains under `.kilo/`.
 
+Kilo sources: [project configuration](https://kilo.ai/docs/getting-started/settings), [legacy directory fallback](https://github.com/Kilo-Org/kilocode/blob/main/packages/opencode/src/kilocode/skills/kilo-config.md), and [custom subagents](https://kilo.ai/docs/customize/custom-subagents) for `.kilo/agents/` and frontmatter.
+
 ## Write targets
 
 - **Host project**: one file per confirmed tool, at the paths above.

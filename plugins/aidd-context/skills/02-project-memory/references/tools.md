@@ -19,6 +19,8 @@ The AI tools a project can use.
 
 Kilo: `.kilocode/` is a legacy detection signal only; selected Kilo memory goes to the shared root `AGENTS.md`. Neither `opencode.json` nor `opencode.jsonc` identifies Kilo; OpenCode detection remains the row above.
 
+Kilo sources: [project configuration](https://kilo.ai/docs/getting-started/settings), [legacy directory fallback](https://github.com/Kilo-Org/kilocode/blob/main/packages/opencode/src/kilocode/skills/kilo-config.md), and [root `AGENTS.md`](https://kilo.ai/docs/customize/agents-md).
+
 ## Explicit sync safety
 
 Before Upsert and Fill, inspect all selected destinations and the memory README if it carries standalone `files` markers. An absent or blockless regular file is valid for Upsert. Refuse symlink destinations or ancestors, non-regular or non-writable destinations (and non-writable creation parents), and ambiguous blocks before any write: duplicate, nested, reversed, unmatched, or mixed legacy/current marker pairs. Count only standalone marker lines outside fenced code; quoted examples are user content. Preserve bytes outside the owned block, including line endings, and leave unselected files unchanged.

@@ -49,3 +49,5 @@ Emit `description` always, `name` only where listed, drop the rest.
 For Kilo, `name` must equal the parent directory name, use lowercase letters, digits and single hyphens, and contain at most 64 characters. Require a nonempty description of at most 1024 characters. Emit optional fields only when requested; omit `argument-hint` and Claude-specific fields from Kilo outputs.
 
 Native and portable locations are loader-compatible; compatibility does not authorize copying.
+
+Kilo source: [Skills](https://kilo.ai/docs/customize/skills) documents native `.kilo/skills/` and portable `.agents/skills/` discovery.

@@ -12,6 +12,10 @@ const CONTRACTS = [
   "plugins/aidd-context/skills/00-onboard/references/state/detection.md",
   "plugins/aidd-context/skills/02-project-memory/references/tools.md",
 ];
+const GENERATORS = [
+  "plugins/aidd-context/skills/05-rule-generate",
+  "plugins/aidd-context/skills/08-hook-generate",
+];
 const SIGNALS = [
   ".kilo/",
   "kilo.json",
@@ -94,4 +98,37 @@ for (const contract of CONTRACTS) {
       assert.match(text, /2026-10-10/u);
     }
   });
+}
+
+for (const generator of GENERATORS) {
+  const action = path.join(ROOT, generator, "actions/01-capture-" + (generator.includes("rule") ? "rule" : "hook") + ".md");
+  const reference = path.join(ROOT, generator, "references/tool-paths.md");
+
+  test(`${generator}: capture action loads its own standalone detection reference`, () => {
+    const actionText = fs.readFileSync(action, "utf8");
+    const links = [...actionText.matchAll(/\[tool-paths\.md\]\(([^)]+)\)/gu)];
+    assert.ok(links.length > 0, "capture action must link the detection reference");
+    assert.ok(links.some(([, relative]) => path.resolve(path.dirname(action), relative) === reference));
+    const text = fs.readFileSync(reference, "utf8");
+    assert.match(text, /## Host detection\n\n([^\n]+)\n/u);
+    assert.doesNotMatch(text.match(/## Host detection\n\n([^\n]+)\n/u)[1], /\]\([^)]*\.\.\/[^)]*\)/u);
+  });
+
+  const text = fs.readFileSync(reference, "utf8");
+  const guidance = text.match(/## Host detection\n\n([^\n]+)\n/u)?.[1];
+  test(`${generator}: local guidance covers Kilo signals and exclusions`, () => {
+    assert.ok(guidance, "missing standalone host detection guidance");
+    for (const signal of SIGNALS) assert.ok(guidance.includes(`\`${signal}\``), signal);
+    assert.match(guidance, /`AGENTS\.md`, `opencode\.json`, or `opencode\.jsonc` alone do not identify Kilo/u);
+    assert.match(guidance, /legacy `\.kilocode\/`.*detection signal only/u);
+    assert.match(guidance, /new Kilo [^.]*under `\.kilo\/`/u);
+  });
+
+  for (const scenario of scenarios) {
+    test(`${generator}: ${scenario.name}`, () => {
+      const project = path.join(FIXTURES, scenario.project);
+      const detected = SIGNALS.some((signal) => guidance.includes(`\`${signal}\``) && hasSignal(project, signal));
+      assert.equal(detected, scenario.kilo);
+    });
+  }
 }

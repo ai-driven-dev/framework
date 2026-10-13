@@ -796,6 +796,45 @@
     "plugin": "aidd-context",
     "skill": "06-agent-generate",
     "evalName": "xeval-kilo-agent",
+    "name": "Kilo agent rerun preserves its destination and user files",
+    "setup": {
+      "files": {
+        "kilo.json": "{}\n",
+        "USER.txt": "KEEP\n"
+      }
+    },
+    "prompt": "Use the {{SKILL}} skill to create a verify-agent subagent with one clear purpose for Kilo only. The name, quality score of 9, host-project mode and Kilo target are confirmed. When this same request is repeated, reuse the existing approved artifact without changing its destination or rewriting unchanged content. Do not wait for input.",
+    "expect": {
+      "filesExist": [".kilo/agents/verify-agent.md"],
+      "filesAbsent": [".kilocode/agents/verify-agent.md", ".claude/agents/verify-agent.md"],
+      "filesUnchanged": ["kilo.json", "USER.txt"],
+      "fileContains": { ".kilo/agents/verify-agent.md": ["description:", "mode: subagent"] },
+      "repeat": true
+    }
+  },
+  {
+    "plugin": "aidd-context",
+    "skill": "07-command-generate",
+    "evalName": "xeval-kilo-command",
+    "name": "Kilo workflow rerun preserves its destination and user files",
+    "setup": {
+      "files": {
+        "kilo.json": "{}\n",
+        "USER.txt": "KEEP\n"
+      }
+    },
+    "prompt": "Use the {{SKILL}} skill to create a one-shot verify-workflow command for Kilo only. The name, root command location, host-project mode and Kilo target are confirmed. Give it one objective, no arguments and no optional frontmatter. When this same request is repeated, reuse the existing approved artifact without changing its destination or rewriting unchanged content. Do not wait for input.",
+    "expect": {
+      "filesExist": [".kilo/commands/verify-workflow.md"],
+      "filesAbsent": [".kilocode/commands/verify-workflow.md", ".claude/commands/verify-workflow.md"],
+      "filesUnchanged": ["kilo.json", "USER.txt"],
+      "repeat": true
+    }
+  },
+  {
+    "plugin": "aidd-context",
+    "skill": "06-agent-generate",
+    "evalName": "xeval-kilo-agent",
     "name": "last Kilo agent collision refuses before Claude write",
     "setup": {
       "files": {
@@ -825,7 +864,9 @@
     "expect": {
       "filesAbsent": [".claude/commands/verify-workflow.md"],
       "filesUnchanged": [".kilo/commands/verify-workflow.md", "USER.txt"],
-      "judge": "The existing user-owned Kilo workflow is reported as a preflight collision. No selected target is written, including the earlier Claude command; the user file remains unchanged."
+      "projectTreeUnchanged": true,
+      "stdoutMatches": ["refus|unsafe|conflict|collision|preflight"],
+      "judge": "The existing user-owned Kilo workflow is reported as a preflight collision, and the earlier Claude command is not created."
     }
   }
 ]

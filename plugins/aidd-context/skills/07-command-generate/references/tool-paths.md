@@ -44,6 +44,8 @@ Kilo accepts only these documented fields. Do not inject Claude `argument-hint`,
 
 The six Kilo signals are shared with the Kilo agent contract. `AGENTS.md` and `opencode.json[c]` alone are not Kilo signals. `.kilocode/` detects legacy Kilo but new workflows are emitted only under `.kilo/commands/`.
 
+Kilo sources: [project configuration](https://kilo.ai/docs/getting-started/settings), [legacy directory fallback](https://github.com/Kilo-Org/kilocode/blob/main/packages/opencode/src/kilocode/skills/kilo-config.md), and [workflows](https://kilo.ai/docs/customize/workflows) for `.kilo/commands/` and frontmatter.
+
 ## Write targets
 
 - **Host project**: one file per supported confirmed tool, at the paths above.
