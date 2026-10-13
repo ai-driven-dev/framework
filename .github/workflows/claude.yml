@@ -11,32 +11,52 @@ on:
 
 permissions: {}
 
-concurrency:
-  group: claude-${{ github.event.issue.number || github.event.pull_request.number || github.run_id }}
-  cancel-in-progress: false
-
 jobs:
-  claude:
+  authorize:
     if: |
-      github.event_name == 'workflow_dispatch' ||
-      (github.event.sender.type != 'Bot' && (
-        (contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.comment.author_association) && contains(github.event.comment.body, '@claude')) ||
-        (contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.review.author_association) && contains(github.event.review.body, '@claude'))
-      ))
+      github.event.sender.type == 'User' && (
+        github.event_name == 'workflow_dispatch' ||
+        contains(github.event.comment.body, '@claude') ||
+        contains(github.event.review.body, '@claude')
+      ) && (github.event_name != 'workflow_dispatch' || github.ref == format('refs/heads/{0}', github.event.repository.default_branch))
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    permissions:
+      contents: read
+    outputs:
+      allowed: ${{ steps.authorize.outputs.allowed }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          persist-credentials: false
+      - name: Authorize actor and source repository
+        id: authorize
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: node scripts/authorize-claude.cjs
+
+  claude:
+    needs: authorize
+    if: needs.authorize.outputs.allowed == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    # One subscription-backed run at a time; queue approved requests instead of replacing them.
+    concurrency:
+      group: claude-framework
+      queue: max
+      cancel-in-progress: false
     permissions:
-      contents: write
-      pull-requests: write
-      issues: write
+      contents: read
       id-token: write
       actions: read
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          ref: ${{ github.event.repository.default_branch }}
           persist-credentials: false
-
       - name: Setup Node
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
@@ -50,10 +70,22 @@ jobs:
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           base_branch: next
+          use_commit_signing: true
+          use_sticky_comment: true
+          include_comments_by_actor: ${{ github.actor }}
+          allowed_bots: ""
+          allowed_non_write_users: ""
+          show_full_output: false
+          settings: '{"disableAllHooks":true}'
+          # The App token is separate from GITHUB_TOKEN; explicitly limit its effective grant.
           additional_permissions: |
+            contents: ${{ github.event_name == 'workflow_dispatch' && 'read' || 'write' }}
+            pull_requests: ${{ github.event_name == 'workflow_dispatch' && 'read' || 'write' }}
+            issues: ${{ github.event_name == 'workflow_dispatch' && 'read' || 'write' }}
             actions: read
           claude_args: |
-            --max-turns 30
-            --allowedTools "Bash(git:*),Bash(gh:*),Bash(node:*),Bash(pnpm:*)"
+            --max-turns 20
+            --allowedTools "${{ github.event_name == 'workflow_dispatch' && 'Bash(gh repo view:*)' || 'Bash(git status:*),Bash(git diff:*),Bash(git log:*),Bash(git show:*),Bash(gh repo view:*),Bash(gh issue view:*),Bash(gh pr view:*),Bash(gh pr diff:*),Bash(gh run view:*),Bash(pnpm install --frozen-lockfile --ignore-scripts),Bash(pnpm exec lefthook run pre-commit),Bash(pnpm exec vitest run:*)' }}"
+            --disallowedTools "${{ github.event_name == 'workflow_dispatch' && 'Edit,Write,Bash(pnpm:*),Bash(git:*),Bash(gh api:*),Bash(gh pr merge:*),Bash(gh pr review:*),Bash(node:*),Bash(curl:*),Bash(wget:*)' || 'Bash(gh api:*),Bash(gh pr merge:*),Bash(gh pr review:*),Bash(git push:*),Bash(git reset:*),Bash(git rebase:*),Bash(node:*),Bash(curl:*),Bash(wget:*)' }}"
           # Manual dispatch validates authentication and GitHub access without changing files.
-          prompt: ${{ github.event_name == 'workflow_dispatch' && 'Read the repository name and default branch using gh api repos/ai-driven-dev/framework. Do not change files, commits, branches, issues, or comments. Report CLAUDE_GITHUB_OK with the repository name and default branch.' || '' }}
+          prompt: ${{ github.event_name == 'workflow_dispatch' && 'Read the repository name and default branch using gh repo view ai-driven-dev/framework --json nameWithOwner,defaultBranchRef. Do not change files, commits, branches, issues, or comments. Report CLAUDE_GITHUB_OK with the repository name and default branch.' || '' }}

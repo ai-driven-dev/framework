@@ -17,6 +17,7 @@ Where the project runs and how it ships: CI/CD, environments, and release.
 | `dependabot-auto-merge.yml` | merges dependency PRs that pass |
 | `close-finished-milestones.yml` | closes a milestone once its issues are |
 | `star-history.yml` | refreshes the README star chart |
+| `claude.yml` | trusted `@claude` comments and a manual read-only smoke test; authorization, subscription ownership, limits and operations in [Maintainers](../../docs/MAINTAINERS.md#claude-on-github) |
 
 ```mermaid
 flowchart LR
@@ -27,7 +28,7 @@ flowchart LR
     Release --> Back["back-merge.yml"]
 ```
 
-Automatic on a push to `main`. Three workflows also accept a manual run: `promote.yml`, `close-finished-milestones.yml`, `star-history.yml`.
+Automatic on a push to `main`. Four workflows also accept a manual run: `promote.yml`, `close-finished-milestones.yml`, `star-history.yml`, `claude.yml`.
 
 ## Environments
 

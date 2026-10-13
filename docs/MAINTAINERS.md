@@ -22,6 +22,34 @@ How to operate this repository day to day. This file is the **Maintainer** playb
 - **Roadmap.** Priority = the community vote (mechanism in `GOVERNANCE.md`). Accepted items live on board #8 — keep `ROADMAP.md` a pointer, don't maintain a second list.
 - **Review PRs.** Approve as CODEOWNERS, then squash-merge (merge policy → [`GOVERNANCE.md`](../GOVERNANCE.md#-code-decisions)).
 
+## Claude on GitHub
+
+Mention `@claude` in an issue comment, PR conversation, inline review comment, or submitted review. Include a bounded task and its expected verification, for example: `@claude fix the parser error described above and run the parser tests`. Review the raw issue/PR content before invoking the agent; community-authored text and imported code can contain prompt injection.
+
+The workflow checks current repository write access for both the original sender and any rerunner before the Claude job can access its secret. Membership or `author_association` alone grants nothing. Bots and contributors without write access cannot invoke it; they can ask a maintainer to relay a reviewed request. Rejected requests appear in the **Authorize actor and source repository** job log, without consuming Claude inference quota.
+
+The write-capable agent accepts issues and open PRs whose source is a feature branch in this repository. It refuses fork PRs, deleted sources, closed PRs, and PRs sourced from `main` or `next`. For an external contribution, review it first and, if appropriate, import the reviewed changes into a repository feature branch before asking Claude to edit them. Fork review with a secret-backed write-capable agent is deliberately unsupported.
+
+Authentication uses the installed official Claude GitHub App and the `CLAUDE_CODE_OAUTH_TOKEN` repository secret. The sponsor's personal Claude subscription pays for inference; this is not community API billing. Every authorized invocation consumes that subscription's quota. One Claude job runs at a time, with at most 20 turns and a 30-minute timeout. GitHub queues up to 100 approved jobs; beyond that, runs are cancelled. These controls limit bursts and individual runs, not total daily usage.
+
+The workflow checks out the trusted default branch before authorization; the official action subsequently selects the eligible PR head and restores its protected Claude configuration from the PR base. Repo-defined automatic Claude hooks are disabled. Approved shell commands cover read-only Git/GitHub inspection and specific pnpm installation/check commands; general `gh api`, arbitrary Node execution, merges, approvals, force pushes and history rewriting are not approved. Package-manager checks still execute repository code: inspect changes to scripts, plugins, dependencies and tool configuration before invoking Claude. Tool permissions and prompt sanitization cannot guarantee protection from every injection.
+
+The workflow token is read-only apart from the OIDC permission. Claude receives a separate short-lived, repository-scoped App token with `contents`, `pull_requests` and `issues` write access, plus `actions` read access. No workflow, administration or ruleset-bypass access is requested. Verified commits use GitHub API signing. Agent-generated changes still follow the maintainer review and CI requirements in [Governance](../GOVERNANCE.md#-code-decisions); do not grant Claude a branch-protection bypass. A new push requires reviewers to inspect the updated diff, even when an older approval remains visible.
+
+All direct actions are pinned to full commit SHAs. The selected Claude action also pins its Claude CLI version internally; Dependabot tracks action updates on `next`. Review the upstream action's security changes when updating its pin.
+
+### Verify and operate
+
+1. Integrate `.github/workflows/claude.yml` on the default branch (`main`); GitHub comment events and the App's workflow validation require it there. Maintainer approval remains required.
+2. Run `gh workflow run claude.yml --repo ai-driven-dev/framework`. The smoke test requests a **read-only App token**, forbids local edits, and must report `CLAUDE_GITHUB_OK` with the repository and default branch in its run output. A successful local OAuth test alone does not validate GitHub Actions.
+3. On a disposable repository feature PR, invoke a bounded change and verify the progress comment, verified commit, changed files and CI. Check that a fork request and an actor without write access stop in the authorization job.
+4. To stop new requests, disable **Claude Code** in Actions or run `gh workflow disable claude.yml --repo ai-driven-dev/framework`; also cancel active and queued runs when necessary. Re-enable with `gh workflow enable claude.yml --repo ai-driven-dev/framework`.
+5. The subscription token created on 2026-10-13 is valid for one year. Before expiry or when sponsorship changes, generate a replacement with `claude setup-token`, update the GitHub secret through `gh secret set CLAUDE_CODE_OAUTH_TOKEN --repo ai-driven-dev/framework` using its stdin prompt, and rerun the smoke test. Keep any backup outside this repository and revoke obsolete credentials in the sponsor's Claude account. Never paste a token into a comment, workflow, PR body or command argument.
+
+The official action refuses rebases and force pushes; amending an already-published commit must be performed outside this action.
+
+Primary references: [Claude GitHub Actions setup](https://code.claude.com/docs/en/github-actions), [action security and trust model](https://github.com/anthropics/claude-code-action/blob/1d6de8cb0c237e7c15e9e1bdf973826ebae490cc/docs/security.md), [action limitations](https://github.com/anthropics/claude-code-action/blob/1d6de8cb0c237e7c15e9e1bdf973826ebae490cc/docs/faq.md#why-wont-claude-rebase-my-branch), [GitHub secure workflows](https://docs.github.com/en/actions/reference/security/secure-use), [GitHub concurrency](https://docs.github.com/en/actions/how-tos/write-workflows/choose-when-workflows-run/control-workflow-concurrency).
+
 ## 📋 Four axes, one board
 
 Each axis answers one question, and only `Status` lives on the board. Routing (`next`/`main`) is not an axis — it derives from the branch prefix ([routing table](../aidd_docs/memory/vcs.md#branches)).
