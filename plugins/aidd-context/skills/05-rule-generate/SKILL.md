@@ -27,9 +27,9 @@ Read only the next action in `actions/` and its cited reference sections.
 
 | Action | Does |
 | --- | --- |
-| capture-rule | frame, compare and decide |
-| write-rule | publish the approved result |
-| validate | check affected files |
+| `01-capture-rule.md` | frame, compare and decide |
+| `02-write-rule.md` | publish the approved result |
+| `03-validate.md` | check affected files |
 
 ## Transversal rules
 
