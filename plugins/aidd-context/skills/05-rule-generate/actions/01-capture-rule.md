@@ -10,4 +10,8 @@ Topic, `auto`, or publish/delete selection. Empty means manual.
    - Publish/delete: confirm sources and hosts, then action 03.
 2. **Capture.** Confirm topic, category/slug, description and scope through [rule-authoring.md](../references/rule-authoring.md).
    - Auto: scan and propose rules first.
-3. **Target.** Confirm supported hosts or plugin directory; report unsupported hosts and alternatives.
+3. **Target.** Confirm supported hosts or plugin directory.
+
+## Rules
+
+- Report unsupported hosts and alternatives.

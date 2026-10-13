@@ -6,23 +6,17 @@ Confirmed intent and targets.
 
 ## Process
 
-1. **Draft.** Prepare complete bodies, metadata, scope and targets in context through [rule-template.md](../assets/rule-template.md) and [rule-authoring.md](../references/rule-authoring.md).
-   - Remove scaffolding; settle splits. Write no rules, requests or publications.
-2. **Discover.** Read sources through [tool-paths.md](../references/tool-paths.md).
-3. **Compare.** Compare obligations, prohibitions, scope, conditions, exceptions and priority, including prior sources for updates.
-   - Exclude only proven disjoint scopes, independently of current files.
-4. **Report.** Cite source paths, decisive text, exclusions and reasoning for every finding.
+1. **Draft.** Prepare complete bodies, metadata, scope and targets in context from [rule-template.md](../assets/rule-template.md) and [rule-authoring.md](../references/rule-authoring.md).
+2. **Compare.** Read sources through [tool-paths.md](../references/tool-paths.md); compare obligations, prohibitions, scope, conditions, exceptions and priority, including prior sources for updates.
+3. **Report.** Classify new, covered, overlap, conflict or needs review; cite paths, decisive text and scope reasoning.
+4. **Resolve.** Show full candidates; await explicit approval or keep/revise/merge/replace/cancel.
 
-   | Finding | Meaning |
-   | --- | --- |
-   | new | no coverage, overlap or conflict |
-   | covered | obligations already supplied throughout scope |
-   | overlap | compatible partial repetition/extension |
-   | conflict | incompatible obligations or unjustified weakening |
-   | needs review | uncertain applicability/meaning/precedence or missing evidence |
+## Rules
 
-5. **Resolve.** Show full candidates; await explicit approve, keep, revise, merge/replace or cancel, including for new.
-   - Topic approval is insufficient; never hide conflict/uncertainty or proceed unresolved.
-   - Existing-source changes require explicit identified-source/publication permissions.
-   - Changes to body, metadata, scope, targets, resolution or source evidence require reassessment and reapproval.
-   - Keep/cancel changes no project bytes.
+- No rule/request/publication writes before explicit resolution, including new.
+- Topic approval is insufficient.
+- Exclude only proven disjoint scopes, independently of current files.
+- Never proceed with unresolved conflicts/uncertainty.
+- Existing changes require explicit identified-source/publication permissions.
+- After candidate, resolution or source-evidence changes, reassess and await fresh user approval before writing.
+- Keep/cancel leaves project bytes unchanged.
