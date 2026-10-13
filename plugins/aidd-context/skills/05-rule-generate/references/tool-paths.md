@@ -2,6 +2,12 @@
 
 This reference covers project rule generation only. Confirm hosts explicitly; a shared `AGENTS.md` does not identify installed tools.
 
+## Host detection
+
+Detect Kilo when the project has `.kilo/` (including `.kilo/kilo.json` or `.kilo/kilo.jsonc`), root `kilo.json` or `kilo.jsonc`, or legacy `.kilocode/`. The legacy directory is a detection signal only; write new Kilo artifacts under `.kilo/`. Root `AGENTS.md`, `opencode.json`, or `opencode.jsonc` alone do not identify Kilo. This follows the onboarding detection contract without requiring another installed skill.
+
+Kilo detection sources: [project configuration](https://kilo.ai/docs/getting-started/settings) and [legacy directory fallback](https://github.com/Kilo-Org/kilocode/blob/main/packages/opencode/src/kilocode/skills/kilo-config.md).
+
 ## Native targets
 
 | Tool | Script ID | Active surface | Scope |

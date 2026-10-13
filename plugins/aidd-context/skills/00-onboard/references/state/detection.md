@@ -19,3 +19,5 @@ A tool is used when its own dir exists, or when a file only that tool reads exis
 - Missing memory is a foundation status, not a tool row (see `zones.md`).
 
 Treat `.kilocode/` as a legacy Kilo detection signal, never an output path. OpenCode JSON config files do not identify Kilo.
+
+Kilo sources: [project configuration](https://kilo.ai/docs/getting-started/settings), [legacy directory fallback](https://github.com/Kilo-Org/kilocode/blob/main/packages/opencode/src/kilocode/skills/kilo-config.md), and [root `AGENTS.md`](https://kilo.ai/docs/customize/agents-md).
