@@ -273,7 +273,8 @@ test("anchor normalization handles encoded Unicode, emoji modifiers, and malform
   assert.equal(normalizedAnchor("#BAD%ZZ\u200d\ufe0e\ufe0f"), "bad%zz");
 });
 
-// CommonMark 0.31.2 §6.6 permits publishable raw HTML with attributes, uppercase names and self-closing tags.
+// Raw HTML is publishable Markdown, not unfinished scaffold. CommonMark 0.31.2
+// §6.6 permits attributes, uppercase names, and self-closing tags:
 test.each([
   [
     "document navigation and content",

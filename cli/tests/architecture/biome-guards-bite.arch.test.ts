@@ -1,4 +1,8 @@
-// Planted violations guard Biome rules outside here: GritQL process.exit, default exports, and context `process`.
+/**
+ * Three rules live in biome rather than here: `process.exit` below the command edge through the
+ * GritQL plugin, `export default` under src/ and tests/, and the `process` global in a context's
+ * domain and application. A rule biome silently stops applying is invisible, so each is planted.
+ */
 import { spawnSync } from "node:child_process";
 import { cpSync, mkdirSync, mkdtempSync, realpathSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -10,7 +14,7 @@ import { CLI_ROOT, read } from "./helpers.js";
 const BIOME = join(CLI_ROOT, "node_modules", "@biomejs", "biome", "bin", "biome");
 const PLUGIN = "biome-plugins/no-process-exit.grit";
 
-// The reporter escapes C: as C%3A on Windows; only clean (0) or findings (1) means Biome ran.
+/** A file property as the GitHub reporter escapes it, `C:` written `C%3A` on Windows. */
 function reportedFile(raw: string): string {
   return raw.replace(/%3A/gi, ":").replace(/%2C/gi, ",").replace(/%25/g, "%");
 }
@@ -35,6 +39,7 @@ function biomeFindings(projectDir: string, launcher = BIOME): string[] {
           .join("/")}:${match[1]}`
     )
     .sort();
+  // biome exits 0 when clean and 1 with diagnostics; anything else never linted.
   if (result.status !== 0 && !(result.status === 1 && findings.length > 0)) {
     throw new Error(`biome did not run: ${result.error?.message ?? result.stderr}`);
   }
