@@ -2,12 +2,16 @@
 
 ## Input
 
-Approved candidates/resolution, or confirmed publish/delete.
+Approved capture.
+
+## Output
+
+Changed files and per-rule results, or refusal.
 
 ## Process
 
-1. **Write.** Apply [tool-paths.md](../references/tool-paths.md).
-2. **Report.** Report refusals verbatim.
+1. **Write.** Apply [Write](../references/tool-paths.md#write).
+2. **Report.** Report refusals verbatim and stop.
 
 ## Rules
 

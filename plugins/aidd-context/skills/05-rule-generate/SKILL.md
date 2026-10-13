@@ -7,11 +7,15 @@ argument-hint: topic | auto
 # Rule Generate
 
 ```mermaid
-flowchart LR
-  manual & auto & publish & delete --> capture-rule
-  capture-rule -->|approve/publish/delete| write-rule
-  capture-rule -->|revise| capture-rule
-  capture-rule -->|keep/cancel| stop
+flowchart TD
+  manual[Manual: topic] --> capture-rule
+  auto[Auto: propose then select] --> capture-rule
+  publish & delete --> capture-rule
+  capture-rule -->|create/update| decision[Assessed candidate]
+  decision -->|revise/clarify| capture-rule
+  decision -->|keep/cancel| stop
+  decision -->|approved| write-rule
+  capture-rule -->|publish/delete confirmed| write-rule
   write-rule -->|written| validate
   write-rule -->|refused| stop
   validate --> result
@@ -19,16 +23,17 @@ flowchart LR
 
 ## Actions
 
-Read each numbered action file in `actions/` before executing it.
+Read only the next action in `actions/` and its cited reference sections.
 
 | Action | Does |
 | --- | --- |
-| capture-rule | prepare, compare and resolve |
+| capture-rule | frame, compare and decide |
 | write-rule | publish the approved result |
 | validate | check affected files |
 
 ## Transversal rules
 
+- Missing/unreadable installed reference: stop.
 - Create/update: capture confirmation is not approval. Present the full assessed candidate, including new; await subsequent user approval before any rule/request/publication write. Repeat after candidate/resolution/evidence changes.
 - Existing changes require explicit identified-source/publication permissions.
 - Keep/cancel leaves project bytes unchanged.

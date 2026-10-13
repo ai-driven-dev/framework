@@ -2,13 +2,15 @@
 
 ## Input
 
-Affected files and resolution.
+Approved capture and write results.
+
+## Output
+
+Pass/fail per affected rule, with failures explained.
 
 ## Process
 
-1. **Check.** Verify [rule-authoring.md](../references/rule-authoring.md), approved body/scope/targets and [tool-paths.md](../references/tool-paths.md).
-   - Check existence/deletion, shared uniqueness/cleanup, surviving user/memory bytes and byte-idempotent republishing.
-2. **Report.** Give pass/fail per affected rule.
+1. **Check.** Apply [Validation](../references/tool-paths.md#validation).
 
 ## Rules
 

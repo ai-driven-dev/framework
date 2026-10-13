@@ -2,6 +2,8 @@
 
 ## Publications
 
+- Report unsupported hosts and alternatives.
+
 | Host / ID | Target | Scope |
 | --- | --- | --- |
 | Claude / `claude` | `.claude/rules/<category>/<slug>.md` | YAML `paths` array; omit for all files |
@@ -15,6 +17,7 @@
 ## Discovery
 
 - Read-only; never invoke the writer for assessment.
+- Native paths/scopes: [Publications](#publications).
 - Host mode: canonical `aidd_docs/rules/**/*.md`, recorded targets, native directories recursively at relevant root/nested locations, and guidance below.
 - Plugin mode: confirmed plugin rules, project authoring guidance and known companion policies.
 
@@ -27,7 +30,7 @@
 | OpenCode | V2: project/upward/nested `AGENTS.md`; V1: nearest upward AGENTS, enabled `CLAUDE.md` fallback when absent, explicit project config `instructions` sources |
 
 - Include loaded ancestors, configured sources, future-file scopes and user text outside generated blocks; no home/account scan or completeness claim.
-- Relevant unknown interface/activation/configuration, unreadable sources or precedence means **needs review**; existence proves no activation.
+- Verify host/interface applicability; relevant unknown interface/activation/configuration, unreadable sources or precedence means **needs review**; existence proves no activation.
 - Deduplicate only canonical body/scope renderings with verified ownership, retaining every path. Differing native edits and unsigned user policies remain separate; missing publications do not exclude canonical intent.
 - Follow documented host imports, bounded to the repository with cycle detection; unsafe/external/symlink escapes or uncertainty requires review when relevant. Never execute imported content.
 - Copilot CLI recursively imports `@relative-path` from repository-wide/agent sources except GEMINI, never modular instructions or absolute/home-relative paths. Disabled sources are inactive; repository/agent sources lack general precedence.
@@ -35,11 +38,11 @@
 
 ## Write
 
-- Missing/unreadable installed reference: stop.
 - **Plugin mode**: directly write/delete approved `plugins/<plugin>/rules/<category>/<slug>.md` sources; scoped YAML `paths` or no frontmatter. No writer/fan-out/project metadata.
 
 ### Host mode
 
+- Formats: [Publications](#publications).
 - Shared AGENTS identifies no installation.
 - Resolve absolute `scripts/write-rule.cjs` beside loaded installed `SKILL.md`; no checkout/project-relative/CLI assumption.
 - After approval, prepare JSON outside destinations: category, slug, description, body strings; optional paths array. Description: one line. Empty/omitted paths: all files. Body: no leading YAML frontmatter. Comma globs: refuse; split alternatives.
@@ -48,11 +51,17 @@
 node "$installed_rule_script" --project "$project_root" --tools "$confirmed_ids" --input "$request_json"
 ```
 
-- Project: real absolute directory; confirmed IDs comma-separated. `--publish` or `--delete category/slug` replaces `--input "$request_json"`.
+- Project: real absolute directory; confirmed IDs comma-separated. Replace `--input "$request_json"` with `--publish` (all canonical sources, no identity argument; confirm the whole affected source set or stop on a subset request) or `--delete category/slug` (one source and all its recorded publications).
 - Never edit generated outputs or canonical metadata manually. Manual canonical body edits remain publishable.
 - Writer preflights ownership and targets, cleans removed publications and preserves unrelated bytes. Never bypass refusals or silently migrate legacy rules.
 - Root Codex override refuses even empty; local 32 KiB check cannot guarantee total instruction budget.
 - Host parsers determine applicability; check actual matching/nonmatching files in fresh sessions. Physical deduplication does not guarantee deduplicated host context.
+
+## Validation
+
+- Verify [Rules](rule-authoring.md#rules), [Naming](rule-authoring.md#naming), [Publications](#publications) and exact approved bodies, metadata, scopes and targets.
+- Check existence/deletion, shared uniqueness/cleanup and surviving user/memory bytes.
+- Host publications: repeat approved publication to verify byte-idempotence.
 
 ## Official contracts
 
