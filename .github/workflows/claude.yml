@@ -85,6 +85,7 @@ jobs:
             actions: read
           claude_args: |
             --max-turns 20
+            --permission-mode ${{ github.event_name == 'workflow_dispatch' && 'dontAsk' || 'acceptEdits' }}
             --allowedTools "${{ github.event_name == 'workflow_dispatch' && 'Bash(gh repo view:*)' || 'Bash(git status:*),Bash(git diff:*),Bash(git log:*),Bash(git show:*),Bash(gh repo view:*),Bash(gh issue view:*),Bash(gh pr view:*),Bash(gh pr diff:*),Bash(gh run view:*),Bash(pnpm install --frozen-lockfile --ignore-scripts),Bash(pnpm exec lefthook run pre-commit),Bash(pnpm exec vitest run:*)' }}"
             --disallowedTools "${{ github.event_name == 'workflow_dispatch' && 'Edit,Write,Bash(pnpm:*),Bash(git:*),Bash(gh api:*),Bash(gh pr merge:*),Bash(gh pr review:*),Bash(node:*),Bash(curl:*),Bash(wget:*)' || 'Bash(gh api:*),Bash(gh pr merge:*),Bash(gh pr review:*),Bash(git push:*),Bash(git reset:*),Bash(git rebase:*),Bash(node:*),Bash(curl:*),Bash(wget:*)' }}"
           # Manual dispatch validates authentication and GitHub access without changing files.
