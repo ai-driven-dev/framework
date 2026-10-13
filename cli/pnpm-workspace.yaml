@@ -13,12 +13,13 @@ packages: []
 overrides:
   brace-expansion: '~5.0.12'
   browserslist: '~4.28.7'
-  fast-uri: '>=3.1.6 <4'
+  esbuild: '~0.28.2'
+  fast-uri: '~3.1.8'
   js-yaml: '~4.3.2'
   nanoid: '~3.3.18'
   picomatch: '>=4.0.4'
   postcss: '~8.5.28'
-  qs: '>=6.15.2'
+  qs: '~6.16.0'
   source-map-js: '~1.2.2'
 
 # pnpm refuses a dependency's install scripts unless it is named here, and pnpm 12 makes
