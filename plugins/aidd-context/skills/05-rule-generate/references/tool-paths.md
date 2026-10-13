@@ -3,6 +3,7 @@
 ## Publications
 
 - Report unsupported hosts and alternatives.
+- Shared AGENTS identifies no installation.
 
 | Host / ID | Target | Scope |
 | --- | --- | --- |
@@ -43,7 +44,6 @@
 ### Host mode
 
 - Formats: [Publications](#publications).
-- Shared AGENTS identifies no installation.
 - Resolve absolute `scripts/write-rule.cjs` beside loaded installed `SKILL.md`; no checkout/project-relative/CLI assumption.
 - After approval, prepare JSON outside destinations: category, slug, description, body strings; optional paths array. Description: one line. Empty/omitted paths: all files. Body: no leading YAML frontmatter. Comma globs: refuse; split alternatives.
 

@@ -3,7 +3,7 @@
 ## Framing
 
 - Manual is default; ask for a missing topic. `auto`: scan/propose, then await selection before drafting.
-- Confirm operation and destinations: [host IDs](tool-paths.md#publications) or plugin. Publish/delete: confirm existing sources through [Write](tool-paths.md#write); skip drafting/assessment.
+- Confirm operation and destinations: [host IDs](tool-paths.md#publications) or plugin. Unspecified hosts: detect/propose supported installed tools before confirmation. Publish/delete: confirm existing sources through [Write](tool-paths.md#write); skip drafting/assessment.
 - Create/update: confirm topic, category/slug, description and scope; draft complete bodies and metadata in context using [Rules](#rules), [Naming](#naming) and [rule-template.md](../assets/rule-template.md).
 
 ## Rules
