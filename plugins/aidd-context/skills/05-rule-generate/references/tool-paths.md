@@ -22,15 +22,15 @@
 | --- | --- |
 | Claude | cwd/project ancestors/relevant descendants: `CLAUDE.md`, `.claude/CLAUDE.md`, `CLAUDE.local.md`; conditional cwd/ancestors `AGENTS.md`, `.claude/AGENTS.md`, nested `AGENTS.md`: verify version, built-in plugin, Project instructions mode and competing Claude files |
 | Cursor | root/nested `AGENTS.md`, nested `.cursor/rules`; CLI also root `CLAUDE.md` |
-| Copilot | root/cwd/intermediate/relevant file-path descendants: `.github/copilot-instructions.md`, `AGENTS.md`, `CLAUDE.md`, `.claude/CLAUDE.md`, `GEMINI.md`; modular instructions exclude intermediate directories, require matching `applyTo` |
+| Copilot CLI | root/cwd/intermediate/relevant file-path descendants: `.github/copilot-instructions.md`, `AGENTS.md`, `CLAUDE.md`, `.claude/CLAUDE.md`, `GEMINI.md`; modular instructions exclude intermediate directories, require matching `applyTo` |
 | Codex | root/nested: first nonempty `AGENTS.override.md`, `AGENTS.md`, configured fallbacks, in order |
 | OpenCode | V2: project/upward/nested `AGENTS.md`; V1: nearest upward AGENTS, enabled `CLAUDE.md` fallback when absent, explicit project config `instructions` sources |
 
 - Include loaded ancestors, configured sources, future-file scopes and user text outside generated blocks; no home/account scan or completeness claim.
-- Relevant unknown activation/configuration, unreadable sources or precedence means **needs review**; existence proves no activation.
+- Relevant unknown interface/activation/configuration, unreadable sources or precedence means **needs review**; existence proves no activation.
 - Deduplicate only canonical body/scope renderings with verified ownership, retaining every path. Differing native edits and unsigned user policies remain separate; missing publications do not exclude canonical intent.
 - Follow documented host imports, bounded to the repository with cycle detection; unsafe/external/symlink escapes or uncertainty requires review when relevant. Never execute imported content.
-- Copilot recursively imports `@relative-path` from repository-wide/agent sources except GEMINI, never modular instructions or absolute/home-relative paths. Disabled sources are inactive; repository/agent sources lack general precedence.
+- Copilot CLI recursively imports `@relative-path` from repository-wide/agent sources except GEMINI, never modular instructions or absolute/home-relative paths. Disabled sources are inactive; repository/agent sources lack general precedence.
 - V1 plain references are not automatically expanded.
 
 ## Write
@@ -56,4 +56,4 @@ node "$installed_rule_script" --project "$project_root" --tools "$confirmed_ids"
 
 ## Official contracts
 
-[Claude](https://code.claude.com/docs/en/memory), [Cursor](https://cursor.com/docs/rules), [Cursor CLI](https://cursor.com/docs/cli/using#rules), [Copilot CLI](https://docs.github.com/en/copilot/how-tos/copilot-cli/customize-copilot/add-custom-instructions), [Codex](https://learn.chatgpt.com/docs/agent-configuration/agents-md), [OpenCode V1](https://opencode.ai/docs/rules/), [OpenCode V2](https://opencode.ai/v2/docs/instructions/).
+[Claude](https://code.claude.com/docs/en/memory), [Cursor](https://cursor.com/docs/rules), [Cursor CLI](https://cursor.com/docs/cli/using#rules), [Copilot CLI](https://docs.github.com/en/copilot/how-tos/copilot-cli/customize-copilot/add-custom-instructions), [Copilot support](https://docs.github.com/en/copilot/reference/custom-instructions-support), [Codex](https://learn.chatgpt.com/docs/agent-configuration/agents-md), [OpenCode V1](https://opencode.ai/docs/rules/), [OpenCode V2](https://opencode.ai/v2/docs/instructions/).

@@ -1,4 +1,4 @@
-Replace placeholders; remove this instruction and unused lines.
+<!-- Replace placeholders; delete this comment and unused lines. -->
 
 # <Title>
 

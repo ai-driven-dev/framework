@@ -8,7 +8,7 @@ argument-hint: topic | auto
 
 ```mermaid
 flowchart LR
-  request --> capture-rule
+  manual & auto & publish & delete --> capture-rule
   capture-rule -->|approve/publish/delete| write-rule
   capture-rule -->|revise| capture-rule
   capture-rule -->|keep/cancel| stop
@@ -29,6 +29,6 @@ Read each numbered action file in `actions/` before executing it.
 
 ## Transversal rules
 
-- Create/update: present the full assessed candidate, including new; await subsequent user approval before any rule/request/publication write. Repeat after candidate/resolution/evidence changes.
+- Create/update: capture confirmation is not approval. Present the full assessed candidate, including new; await subsequent user approval before any rule/request/publication write. Repeat after candidate/resolution/evidence changes.
 - Existing changes require explicit identified-source/publication permissions.
 - Keep/cancel leaves project bytes unchanged.
