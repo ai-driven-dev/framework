@@ -2,66 +2,59 @@
 
 ## Publications
 
-- Report unsupported hosts and alternatives.
-- Shared AGENTS identifies no installation.
+- Report unsupported hosts and alternatives; AGENTS alone identifies no installed host.
 
 | Host / ID | Target | Scope |
 | --- | --- | --- |
 | Claude / `claude` | `.claude/rules/<category>/<slug>.md` | YAML `paths` array; omit for all files |
-| Cursor / `cursor` | `.cursor/rules/<category>/<slug>.mdc` | `description`, comma-joined `globs`, `alwaysApply: false`; all-files omits globs, uses true |
+| Cursor / `cursor` | `.cursor/rules/<category>/<slug>.mdc` | `description`, comma-joined `globs`, `alwaysApply: false`; all-files: no globs, true |
 | Copilot / `copilot` | `.github/instructions/<NN>-<name>.instructions.md` | comma-joined `applyTo`; all-files `**` |
 | Codex / `codex` | root `AGENTS.md` | shared signed `aidd_rules`, textual scope |
-| OpenCode / `opencode` | same root `AGENTS.md` | same contribution, V1/V2 |
-
-- Copilot renames `01-standards/1-naming` → `01-naming.instructions.md`.
+| OpenCode / `opencode` | root `AGENTS.md` | same contribution |
 
 ## Discovery
 
-- Read-only; never invoke the writer for assessment.
-- Native paths/scopes: [Publications](#publications).
-- Host mode: canonical `aidd_docs/rules/**/*.md`, recorded targets, native directories recursively at relevant root/nested locations, and guidance below.
-- Plugin mode: confirmed plugin rules, project authoring guidance and known companion policies.
+- Read-only; no writer. [Native paths/scopes](#publications).
+- Hosts: canonical `aidd_docs/rules/**/*.md`, recorded targets, recursive native directories at relevant root/nested locations and guidance below.
+- Plugin: confirmed rules, project authoring guidance, known companion policies.
 
 | Host | Additional project guidance |
 | --- | --- |
-| Claude | cwd/project ancestors/relevant descendants: `CLAUDE.md`, `.claude/CLAUDE.md`, `CLAUDE.local.md`; conditional cwd/ancestors `AGENTS.md`, `.claude/AGENTS.md`, nested `AGENTS.md`: verify version, built-in plugin, Project instructions mode and competing Claude files |
+| Claude | cwd/project ancestors/relevant descendants: `CLAUDE.md`, `.claude/CLAUDE.md`, `CLAUDE.local.md`; conditional cwd/ancestor `AGENTS.md`, `.claude/AGENTS.md`, nested `AGENTS.md`: verify version, built-in plugin, Project instructions mode, competing Claude files |
 | Cursor | root/nested `AGENTS.md`, nested `.cursor/rules`; CLI also root `CLAUDE.md` |
-| Copilot CLI | root/cwd/intermediate/relevant file-path descendants: `.github/copilot-instructions.md`, `AGENTS.md`, `CLAUDE.md`, `.claude/CLAUDE.md`, `GEMINI.md`; modular instructions exclude intermediate directories, require matching `applyTo` |
+| Copilot CLI | root/cwd/intermediate/relevant file-path descendants: `.github/copilot-instructions.md`, `AGENTS.md`, `CLAUDE.md`, `.claude/CLAUDE.md`, `GEMINI.md`; modular: no intermediate directories, matching `applyTo` required |
 | Codex | root/nested: first nonempty `AGENTS.override.md`, `AGENTS.md`, configured fallbacks, in order |
-| OpenCode | V2: project/upward/nested `AGENTS.md`; V1: nearest upward AGENTS, enabled `CLAUDE.md` fallback when absent, explicit project config `instructions` sources |
+| OpenCode | V2: project/upward/nested `AGENTS.md`; V1: nearest upward AGENTS, enabled `CLAUDE.md` fallback if absent, explicit project config `instructions` sources |
 
-- Include loaded ancestors, configured sources, future-file scopes and user text outside generated blocks; no home/account scan or completeness claim.
-- For potentially applicable existing policies, verify host/interface applicability; existence proves no activation. Carry unresolved status into [Assessment](rule-authoring.md#assessment).
-- Deduplicate only canonical body/scope renderings with verified ownership, retaining every path. Differing native edits and unsigned user policies remain separate; missing publications do not exclude canonical intent.
-- Follow documented host imports, bounded to the repository with cycle detection; unsafe/external/symlink escapes or uncertainty requires review when relevant. Never execute imported content.
-- Copilot CLI recursively imports `@relative-path` from repository-wide/agent sources except GEMINI, never modular instructions or absolute/home-relative paths. Disabled sources are inactive; repository/agent sources lack general precedence.
+- Include loaded ancestors, configured sources, future-file scopes, user text outside generated blocks; no home/account scan or completeness claim.
+- Potentially applicable existing policies: verify host/interface applicability; existence proves no activation. Unresolved: [Assessment](rule-authoring.md#assessment).
+- Deduplicate canonical body/scope renderings only with verified ownership; retain every path. Keep differing native edits and unsigned policies separate; missing publications never exclude canonical intent.
+- Follow documented imports within repository, detecting cycles. Relevant unsafe/external/symlink escapes or uncertainty need review. Never execute imports.
+- Copilot CLI recursively imports `@relative-path` from repository-wide/agent sources except GEMINI; never modular or absolute/home-relative. Disabled sources are inactive; repository/agent sources lack general precedence.
 - V1 plain references are not automatically expanded.
 
 ## Write
 
-- **Plugin mode**: directly write/delete approved `plugins/<plugin>/rules/<category>/<slug>.md` sources; scoped YAML `paths` or no frontmatter. No writer/fan-out/project metadata.
+- **Plugin**: directly write/delete approved `plugins/<plugin>/rules/<category>/<slug>.md`; scoped YAML `paths` or no frontmatter. No writer/fan-out/project metadata.
 
 ### Host mode
 
-- Formats: [Publications](#publications).
 - Resolve absolute `scripts/write-rule.cjs` beside loaded installed `SKILL.md`; no checkout/project-relative/CLI assumption.
-- After approval, prepare JSON outside destinations: category, slug, description, body strings; optional paths array. Description: one line. Empty/omitted paths: all files. Body: no leading YAML frontmatter. Comma globs: refuse; split alternatives.
+- After approval, JSON outside destinations: category, slug, description, body strings; optional paths array. One-line description; empty/omitted paths: all files; no leading body frontmatter. Refuse comma globs; split alternatives.
 
 ```sh
 node "$installed_rule_script" --project "$project_root" --tools "$confirmed_ids" --input "$request_json"
 ```
 
-- Project: real absolute directory; confirmed IDs comma-separated. Replace `--input "$request_json"` with `--publish` (all canonical sources, no identity argument; confirm the whole affected source set or stop on a subset request) or `--delete category/slug` (one source and all its recorded publications).
-- Never edit generated outputs or canonical metadata manually. Manual canonical body edits remain publishable.
-- Writer preflights ownership and targets, cleans removed publications and preserves unrelated bytes. Never bypass refusals or silently migrate legacy rules.
-- Root Codex override refuses even empty; local 32 KiB check cannot guarantee total instruction budget.
-- Host parsers determine applicability; check actual matching/nonmatching files in fresh sessions. Physical deduplication does not guarantee deduplicated host context.
+- Project: real absolute directory; comma-separated confirmed IDs. Replace `--input "$request_json"` with `--publish` (all canonical sources, no identity argument; confirm whole affected set or stop subset requests) or `--delete category/slug` (one source, all recorded publications).
+- Never manually edit generated outputs or canonical metadata, bypass refusals or silently migrate legacy rules. Canonical body edits remain publishable.
+- Physical deduplication does not ensure unique host context; local 32 KiB passes do not ensure total instruction budget.
 
 ## Validation
 
-- Verify [Rules](rule-authoring.md#rules), [Naming](rule-authoring.md#naming), [Publications](#publications) and exact approved bodies, metadata, scopes and targets.
-- Check existence/deletion, shared uniqueness/cleanup and surviving user/memory bytes.
-- Host publications: repeat approved publication to verify byte-idempotence.
+- Verify [Rules](rule-authoring.md#rules), [Naming](rule-authoring.md#naming), [Publications](#publications), exact approved bodies, metadata, scopes and targets.
+- Check existence/deletion, shared uniqueness/cleanup, surviving user/memory bytes.
+- Hosts: repeat approved publication for byte-idempotence; check actual matching/nonmatching files in fresh sessions.
 
 ## Official contracts
 
