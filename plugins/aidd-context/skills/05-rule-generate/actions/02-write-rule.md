@@ -1,4 +1,4 @@
-# 03 - Write rule
+# 02 - Write rule
 
 ## Input
 
@@ -12,4 +12,3 @@ Approved candidates/resolution, or confirmed publish/delete.
 ## Rules
 
 - Preserve exact approved bodies, metadata, scope and targets; never regenerate.
-- Execute only approved source changes, including merge/replacement deletions.

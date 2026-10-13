@@ -9,11 +9,9 @@ argument-hint: topic | auto
 ```mermaid
 flowchart LR
   request --> capture-rule
-  capture-rule -->|create/update| assess-existing-rules
-  capture-rule -->|publish/delete| write-rule
-  assess-existing-rules -->|revise| assess-existing-rules
-  assess-existing-rules -->|approve| write-rule
-  assess-existing-rules -->|keep/cancel| stop
+  capture-rule -->|approve/publish/delete| write-rule
+  capture-rule -->|revise| capture-rule
+  capture-rule -->|keep/cancel| stop
   write-rule -->|written| validate
   write-rule -->|refused| stop
   validate --> result
@@ -25,7 +23,12 @@ Read each numbered action file in `actions/` before executing it.
 
 | Action | Does |
 | --- | --- |
-| capture-rule | confirm intent and destinations |
-| assess-existing-rules | compare policies and resolve findings |
+| capture-rule | prepare, compare and resolve |
 | write-rule | publish the approved result |
 | validate | check affected files |
+
+## Transversal rules
+
+- Create/update: present the full assessed candidate, including new; await subsequent user approval before any rule/request/publication write. Repeat after candidate/resolution/evidence changes.
+- Existing changes require explicit identified-source/publication permissions.
+- Keep/cancel leaves project bytes unchanged.

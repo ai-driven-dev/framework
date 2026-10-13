@@ -117,9 +117,8 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | Group | File | Description |
 |-------|------|---|
 | `actions` | [01-capture-rule.md](skills/05-rule-generate/actions/01-capture-rule.md) | - |
-| `actions` | [02-assess-existing-rules.md](skills/05-rule-generate/actions/02-assess-existing-rules.md) | - |
-| `actions` | [03-write-rule.md](skills/05-rule-generate/actions/03-write-rule.md) | - |
-| `actions` | [04-validate.md](skills/05-rule-generate/actions/04-validate.md) | - |
+| `actions` | [02-write-rule.md](skills/05-rule-generate/actions/02-write-rule.md) | - |
+| `actions` | [03-validate.md](skills/05-rule-generate/actions/03-validate.md) | - |
 | `assets` | [rule-template.md](skills/05-rule-generate/assets/rule-template.md) | - |
 | `references` | [rule-authoring.md](skills/05-rule-generate/references/rule-authoring.md) | - |
 | `references` | [tool-paths.md](skills/05-rule-generate/references/tool-paths.md) | - |
