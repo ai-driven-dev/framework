@@ -33,24 +33,14 @@ New to AIDD, or unsure what to run next? Invoke `aidd-context:00-onboard`. The s
 
 Onboard adapts to whatever plugins are installed: it suggests by function and discovers the skills that fill each step, so a skill added later shows up on its own.
 
-Kilo path contracts across this plugin refer to the [central register of official sources and verification dates](../../aidd_docs/tasks/2026_10/2026_10_10_kilo-native-generation-914/official-sources.md).
+## Multi-tool capabilities
 
-## Shared project memory
+The plugin supports Claude Code, Codex CLI, OpenCode, Cursor, GitHub Copilot, and Kilo. Onboarding detects installed AIDD plugins and their skills; each generator confirms the available host tools before preparing outputs.
 
-Kilo uses the root `AGENTS.md` memory block shared with Codex, OpenCode and Cursor. Recognition and paths follow [the tool contract](skills/02-project-memory/references/tools.md); `.kilocode/` is a legacy signal, never a new output destination. Explicit memory sync preflights every selected destination before changing files, preserves user content outside the block, and skips identical writes. Claude keeps its `@` imports and Copilot its relative links.
+- **Project memory:** initialize and sync shared project context while preserving tool-specific links and imports.
+- **Rules:** generate project guidance in each confirmed tool's supported format.
+- **Skills:** create router-based skills and resolve native or portable placement where supported.
+- **Agents and workflows:** generate tool-specific agents and one-shot commands where supported.
+- **Hooks:** generate declarative hooks where supported and provide sourced plugin guidance otherwise; OpenCode and Kilo receive guidance only, and the generator writes no Kilo plugin or hook. See [hook paths](skills/08-hook-generate/references/tool-paths.md) and [hook authoring](skills/08-hook-generate/references/hook-authoring.md).
 
-## Generated Kilo rules
-
-The shared rule writer publishes `.kilo/rules/<category>/<slug>.md` and adds its exact path to `instructions` in a selected project `kilo.json[c]`. It preserves unrelated JSONC text and refuses ambiguous or unsafe configuration choices before writing. See the [rule paths and publication contract](skills/05-rule-generate/references/tool-paths.md). A config check verifies the reference; only a real Kilo session can verify that the body was consumed.
-
-## Generated Kilo skills
-
-The skill generator offers native Kilo placement or an explicitly agreed portable placement. It writes one copy per resolved destination, asks about existing copies, preflights all selected targets, preserves user resources during modify and skips identical writes. Host fields and output paths are defined in [the write contract](skills/04-skill-generate/references/tool-write.md); the canonical Claude template is unchanged.
-
-## Generated Kilo agents and workflows
-
-The agent generator recognizes the six Kilo signals and renders native subagents under `.kilo/agents/`: filename identity, `description`, `mode: subagent`, and only requested `model`, `temperature`, or `permission`. The command generator renders one-shot workflows under `.kilo/commands/` with only `description`, `agent`, `model`, `variant`, or `subtask` when requested; Codex custom commands remain an explicit skip. Both contracts preflight all selected targets before writing, so a known refusal leaves them unchanged, and preserve unchanged bytes on rerun. A concurrent change during publication can leave earlier outputs in place; these interpreted workflows do not promise rollback. Paths and target-specific constraints are in the [agent paths](skills/06-agent-generate/references/tool-paths.md) and [workflow paths](skills/07-command-generate/references/tool-paths.md).
-
-## Hook event mapping and plugin guidance
-
-The hook generator now requires documented semantic equivalence, including relevant timing, matcher, payload and blocking behavior, for every target. It no longer maps an absent event to a merely nearby one, including for Claude, Codex, Cursor and Copilot. When equivalence is unproved, it publishes nothing for that target and explains the limit; a different moment requires explicit confirmation. OpenCode and Kilo receive sourced JS/TS plugin guidance without generated files; it writes no Kilo plugin or hook. Confirmed declarative targets still use their own formats. See [hook paths](skills/08-hook-generate/references/tool-paths.md) and [hook authoring](skills/08-hook-generate/references/hook-authoring.md).
+Paths, formats, supported fields, and limits belong to each generator's tool references.

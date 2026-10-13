@@ -19,6 +19,6 @@ Sonde exécutée dans /tmp/aidd-914-kilo-probe vide, hors sandbox après éléva
 timeout 40s kilo run --pure --dir /tmp/aidd-914-kilo-probe --model kilo/cohere/north-mini-code:free --format json 'Reply exactly KILO_FREE_ACCESS_OK. Do not call tools or read any files.'
 ```
 
-Code 0. Sortie text : `KILO_FREE_ACCESS_OK`. step_finish : reason stop, cost 0. Session `ses_edab22fc7ffewo5vLrHhvOdPPU`, vercelID `cdg1:cdg1:cdg1::fra1::lgqlk-1791627225221-63b5f9e6ec8a`. Pas d'événement tool dans la sortie reçue. Accès gratuit effectif confirmé ; authentification de compte non établie. Gratuité/quotas à revérifier à chaque campagne ; aucune substitution vers un modèle payant, même si le gratuit est indisponible.
+Code 0. Sortie text : `KILO_FREE_ACCESS_OK`. step_finish : reason stop, cost 0. Identifiants de session et d'exécution non conservés. Pas d'événement tool dans la sortie reçue. Accès gratuit effectif confirmé ; authentification de compte non établie. Gratuité/quotas à revérifier à chaque campagne ; aucune substitution vers un modèle payant, même si le gratuit est indisponible.
 
 Le sandbox initial donne EROFS sur ~/.local/state/kilo et ~/.local/share/kilo/state. Ce n'est pas un échec d'authentification. Le binaire produit son état/cache hors du projet lors du diagnostic ; aucune modification intentionnelle de configuration globale ou credential. Aucun achat ni abonnement.
