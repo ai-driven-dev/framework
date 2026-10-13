@@ -31,7 +31,7 @@
 | OpenCode | V2: project/upward/nested `AGENTS.md`; V1: nearest upward AGENTS, enabled `CLAUDE.md` fallback when absent, explicit project config `instructions` sources |
 
 - Include loaded ancestors, configured sources, future-file scopes and user text outside generated blocks; no home/account scan or completeness claim.
-- Verify host/interface applicability; relevant unknown interface/activation/configuration, unreadable sources or precedence means **needs review**; existence proves no activation.
+- For potentially applicable existing policies, verify host/interface applicability; existence proves no activation. Carry unresolved status into [Assessment](rule-authoring.md#assessment).
 - Deduplicate only canonical body/scope renderings with verified ownership, retaining every path. Differing native edits and unsigned user policies remain separate; missing publications do not exclude canonical intent.
 - Follow documented host imports, bounded to the repository with cycle detection; unsafe/external/symlink escapes or uncertainty requires review when relevant. Never execute imported content.
 - Copilot CLI recursively imports `@relative-path` from repository-wide/agent sources except GEMINI, never modular instructions or absolute/home-relative paths. Disabled sources are inactive; repository/agent sources lack general precedence.

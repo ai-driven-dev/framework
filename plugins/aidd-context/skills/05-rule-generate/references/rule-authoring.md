@@ -3,7 +3,7 @@
 ## Framing
 
 - Manual is default; ask for a missing topic. `auto`: scan/propose, then await selection before drafting.
-- Confirm operation and destinations: [host IDs](tool-paths.md#publications) or plugin. Unspecified hosts: detect/propose supported installed tools before confirmation. Publish/delete: confirm existing sources through [Write](tool-paths.md#write); skip drafting/assessment.
+- Confirm operation and destinations: [host IDs](tool-paths.md#publications) or plugin. Unspecified hosts: detect/propose supported installed tools, then await confirmation before drafting/assessment. Publish/delete: confirm existing sources through [Write](tool-paths.md#write); skip drafting/assessment.
 - Create/update: confirm topic, category/slug, description and scope; draft complete bodies and metadata in context using [Rules](#rules), [Naming](#naming) and [rule-template.md](../assets/rule-template.md).
 
 ## Rules
@@ -37,6 +37,7 @@ Prefer framework `03`, syntax `02`, style `01`, architecture `00`, then `04`–`
 
 ## Assessment
 
+- **needs review**: uncertainty that could change comparison with existing policies (applicability/interface/activation/configuration/meaning/precedence/evidence or unreadable sources). Takes priority over other labels; resolve before classifying conflict or proposing changes to that source.
 - Compare obligations, prohibitions, scope, conditions, exceptions and priority, including prior sources for updates.
 - Exclude only proven disjoint scopes, independently of current files.
 - Classify and show all findings and full candidates with paths, decisive text and scope reasoning; propose relevant create/keep/update/merge/scope/priority/cancel resolutions.
@@ -45,4 +46,3 @@ Prefer framework `03`, syntax `02`, style `01`, architecture `00`, then `04`–`
 - **covered**: all obligations supplied throughout scope.
 - **overlap**: compatible partial repetition/extension.
 - **conflict**: incompatible obligations or unjustified weakening.
-- **needs review**: unresolved applicability/meaning/precedence/evidence.
