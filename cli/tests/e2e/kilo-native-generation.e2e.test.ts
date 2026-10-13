@@ -368,8 +368,6 @@ describeNative("E2E: saved native generation in Kilo", () => {
             permission: {
               "*": "deny",
               external_directory: "deny",
-              // The isolated workspace contains only this skill, its payload and config.
-              // External paths, commands and all non-skill tools remain denied.
               read: "allow",
               skill: { "*": "deny", "verify-payload": "allow" },
             },
@@ -661,8 +659,7 @@ describeNative("E2E: saved native generation in Kilo", () => {
         catalog.find((entry) => entry.name === "verify-payload")?.location?.replaceAll("\\", "/")
       ).toContain(".kilo/skills/verify-payload/SKILL.md");
 
-      // The local backend captures what real Kilo sends and completes a read
-      // turn. It proves loading and tool use, not reasoning by an external model.
+      // String paths keep direct reads; isolated Kilo proves request/tool flow, not external reasoning.
       const model = await localModel("aidd_docs/memory/architecture.md");
       try {
         await writeFile(

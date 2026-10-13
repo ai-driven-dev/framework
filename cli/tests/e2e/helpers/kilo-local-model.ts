@@ -28,7 +28,6 @@ type ScriptedLocalModel = {
   respond: (request: KiloChatRequest, requestIndex: number) => LocalModelReply;
 };
 
-/** Local deterministic provider; string arguments preserve the original direct-read behavior. */
 export async function localModel(
   readPathOrScript: string | ScriptedLocalModel = "probe.txt",
   finalAnswer = "KILO_LOCAL_READ_CONFIRMED"
