@@ -7,7 +7,7 @@
 
 Two earlier sandbox runs were historically reported as DNS timeouts. Their detailed logs were removed; they are not replay evidence. Historical sanitized session exports were also removed because their redaction markers retained technical session/message/part identifiers. No separate external copy of original export bytes or their SHA-256 hashes was found during the audit. The local B1 backup is described in the phase 1 report as pre-cleanup modified working state, not a distinct set of raw original exports; the B1 backup itself was not independently available for verification in this repository. No successful trace was reconstructed from the historical exports; the original successful attempt 04 JSONL remains separately archived.
 
-The replay script masks the current `$HOME`, runtime project and XDG paths in captured output using literal path replacement, so shell-special characters in those paths are safe. Temporary directories use `$TMPDIR` when set and `/tmp` otherwise. This only removes a fixed `/home/coder` assumption; it does not establish macOS or Windows compatibility. The updated script has not been rerun. The historical attempt 04 output predates that script edit.
+The replay script masks the current `$HOME`, runtime project and XDG paths in captured output using literal path replacement, so shell-special characters in those paths are safe. Temporary directories use `$TMPDIR` when set and `/tmp` otherwise. This removes a fixed home-directory assumption; it does not establish macOS or Windows compatibility. The updated script has not been rerun. The historical attempt 04 output predates that script edit.
 
 For a future replay, use a fresh attempt name, for example:
 
