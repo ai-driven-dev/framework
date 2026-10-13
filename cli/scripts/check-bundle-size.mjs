@@ -32,6 +32,8 @@ const pkg = JSON.parse(readFileSync(resolve(root, "package.json"), "utf8"));
 // over next's 716.2 KB); 1.1% measured headroom.
 // 751 KB: 750.2 KB, recipe validation moved from Cook's script to the framework CLI after merging next;
 // 0.1% measured headroom, with no added runtime dependency.
+// 756 KB: 755.6 KB, patched esbuild 0.28.2 emits TypeScript parameter-property fields
+// correctly (+5,008 bytes over 0.27.3); unchanged application and minification settings.
 const budgetKB = pkg.bundleBudgetKB ?? 500;
 const budgetBytes = budgetKB * 1024;
 
