@@ -2,6 +2,8 @@
 
 Choose a CLI, MCP server or native tool so your AI assistant can work with your team's services.
 
+Each category points to the project memory that records how your team uses those services. This gives the assistant the right repository, workspace and conventions for its work.
+
 <!-- Linked provider docs checked: 2026-10-14. Recommendations are this recipe's choices. -->
 
 ## Steps to connect your services
@@ -28,6 +30,7 @@ Memory links open the AIDD templates for the corresponding files in your project
 
 | Service | CLI | MCP or native tool |
 | --- | --- | --- |
+| GitHub Issues | [`gh issue`](https://cli.github.com/manual/gh_issue) | [GitHub MCP](https://github.com/github/github-mcp-server) |
 | Jira Cloud | [`acli`](https://developer.atlassian.com/cloud/acli/reference/commands/jira/) | [Atlassian Rovo MCP](https://developer.atlassian.com/cloud/rovo-mcp/guides/getting-started/) |
 | Linear | — | [Linear MCP](https://linear.app/docs/mcp) |
 
@@ -39,7 +42,7 @@ Memory links open the AIDD templates for the corresponding files in your project
 | --- | --- | --- |
 | Confluence | — | [Atlassian Rovo MCP](https://developer.atlassian.com/cloud/rovo-mcp/guides/getting-started/) |
 | Notion | [`ntn`](https://developers.notion.com/cli/get-started/overview) for API scripts | [Notion MCP](https://developers.notion.com/guides/mcp/get-started-with-mcp) |
-| Google Workspace | [`gws`](https://github.com/googleworkspace/cli), not officially supported by Google | — |
+| Google Workspace | [`gws`](https://github.com/googleworkspace/cli) ⚠️ Not officially supported by Google | — |
 
 **Browser**
 
@@ -111,21 +114,10 @@ Use a read-only mode when you only need to read. Require confirmation for writes
 
 ### 3) ✅ Check the connection
 
-Run this prompt in your assistant:
+Ask your assistant to verify the connections declared in project memory:
 
 ```text
-Check this project's connections against the tables above and aidd_docs/memory/.
-For each needed service, use one available tool, confirm the account and target,
-then perform one read. For the browser, open the application and read its content.
-Change nothing and expose no secrets. Include missing required connections.
-Mark missing evidence as unverified.
-Fill this table, one row per service:
-
-| Service | Tool | Account / target | Read evidence | Status | Next step |
-| --- | --- | --- | --- | --- | --- |
-| | | | | | |
-
-✅ Read passed · ❌ Failed · ⚠️ Unverified · ⏭️ Not needed
+Verify this project's service connections against aidd_docs/memory/.
 ```
 
 To disconnect later, remove the integration from your client and revoke its access in the service's account settings.
