@@ -56,6 +56,27 @@ Config: `release-please-config.json`, eleven packages. Manifest: `.release-pleas
 
 - `build-per-tool` builds the CLI from this run's own checkout (`cd cli && pnpm install && pnpm build`, then `node cli/dist/cli.js translate`) rather than pinning a published version — no version to bump, and nothing can go stale the way the old `@ai-driven-dev/cli@5.1.1 framework build` pin did once `framework build` was replaced by `translate`.
 
+## Local reload
+
+`make reload` refreshes every plugin. `scripts/dev-sync.sh` copies built OpenCode skills and
+namespaced agents into the global directories, replacing only selected plugin namespaces.
+Missing expected build files fail before changing installed OpenCode content. A managed
+OpenCode host keeps its fixed-purpose `aidd-opencode-reload` helper.
+
+OpenCode V2 documents global agents at `~/.config/opencode/agents/`, filename-based agent
+names, and `mode: subagent`. Native restrictions use a `permissions` list with `action`,
+`resource`, and `effect`; `edit` covers write, edit and patch, `shell` gates commands, and
+`subagent` gates delegation. Source: <https://opencode.ai/v2/docs/agents>, read 2026-10-14.
+V2.0.28 also migrates legacy Markdown fields during discovery:
+<https://github.com/anomalyco/opencode/blob/v2.0.28/packages/core/src/config/plugin/agent.ts>,
+read 2026-10-14. After reload, `opencode debug agents` lists installed names; file presence
+alone does not establish discovery, invocation, or permission enforcement.
+
+For an OpenCode V2.0.28 subprocess probe, set both its working directory and `PWD` to the
+fixture: `run` prefers `process.env.PWD` over `process.cwd()` and changes directory to it.
+Source: <https://github.com/anomalyco/opencode/blob/v2.0.28/packages/cli/src/run/run.ts>,
+read 2026-10-14.
+
 ## Monitoring
 
 None. Failures surface as a red run; `back-merge.yml` opens a tracking issue when it cannot push, so drift is never silent.

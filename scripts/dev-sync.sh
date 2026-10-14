@@ -21,6 +21,7 @@ CODEX_CACHE="${CODEX_CACHE:-$HOME/.codex/plugins/cache}"
 CLAUDE_CACHE="${CLAUDE_CACHE:-$HOME/.claude/plugins/cache}"
 CODEX_AGENTS="${CODEX_AGENTS:-$HOME/.codex/agents}"
 OPENCODE_SKILLS="${OPENCODE_SKILLS:-$HOME/.config/opencode/skills}"
+OPENCODE_AGENTS="${OPENCODE_AGENTS:-$HOME/.config/opencode/agents}"
 
 HAVE_CODEX=0;  command -v codex  >/dev/null 2>&1 && HAVE_CODEX=1
 HAVE_CLAUDE=0; command -v claude >/dev/null 2>&1 && HAVE_CLAUDE=1
@@ -36,6 +37,26 @@ build_tool() {
     --to "$tool" --out "$BUILD/$tool" --as "$mode" --force >/dev/null 2>&1
 }
 
+validate_opencode_content() {
+  local name agent skill skill_name
+  for name in "$@"; do
+    for skill in "$FW/plugins/$name/skills/"*/SKILL.md; do
+      skill_name="$(basename "$(dirname "$skill")")"
+      if [ ! -s "$BUILD/opencode/.opencode/skills/$name/$skill_name/SKILL.md" ] &&
+         [ ! -s "$BUILD/opencode/.opencode/skills/$name-$skill_name/SKILL.md" ]; then
+        echo "no built OpenCode skill for $name-$skill_name (missing or empty SKILL.md)" >&2
+        return 1
+      fi
+    done
+    for agent in "$FW/plugins/$name/agents/"*.md; do
+      if [ ! -s "$BUILD/opencode/.opencode/agents/$name-$(basename "$agent")" ]; then
+        echo "no built OpenCode agent for $name-$(basename "$agent" .md)" >&2
+        return 1
+      fi
+    done
+  done
+}
+
 sync_opencode_skills() {
   local name source skill destination
   local -a skills
@@ -43,10 +64,6 @@ sync_opencode_skills() {
   source="$BUILD/opencode/.opencode/skills"
   for name in "$@"; do
     skills=("$source/$name/"*/ "$source/$name-"*/)
-    if [ "${#skills[@]}" -eq 0 ]; then
-      echo "no built OpenCode skills for $name" >&2
-      return 1
-    fi
     rm -rf -- "$OPENCODE_SKILLS/$name"
     find "$OPENCODE_SKILLS" -mindepth 1 -maxdepth 1 -type d -name "$name-*" -exec rm -rf -- {} +
     for skill in "${skills[@]}"; do
@@ -56,6 +73,18 @@ sync_opencode_skills() {
       esac
       mkdir -p "$(dirname "$destination")"
       cp -R "$skill" "$destination"
+    done
+  done
+}
+
+sync_opencode_agents() {
+  local name agent
+  mkdir -p "$OPENCODE_AGENTS"
+  for name in "$@"; do
+    # Only the selected plugin namespace is managed; personal and other plugins' agents stay.
+    for agent in "$OPENCODE_AGENTS/$name-"*.md; do rm -f -- "$agent"; done
+    for agent in "$BUILD/opencode/.opencode/agents/$name-"*.md; do
+      cp -f "$agent" "$OPENCODE_AGENTS/"
     done
   done
 }
@@ -93,6 +122,8 @@ sync_one() {
       [ "$n" -gt 0 ] && printf '(+%d agents)' "$n"
     else
       printf ' codex:FAIL'
+      echo "Codex plugin install failed for $name; rerun codex plugin add $name@$MKT for details." >&2
+      return 1
     fi
   fi
   if [ "$HAVE_CLAUDE" = 1 ]; then
@@ -114,10 +145,14 @@ sync_one() {
           [ "$fixed" -gt 0 ] && printf '(+%d agents, repaired %d)' "$n" "$fixed" || printf '(+%d agents)' "$n"
         else
           printf '(agents:NO-INSTALLPATH)'
+          echo "Claude plugin install path missing for $name; rerun claude plugin install $name@$MKT --scope user for details." >&2
+          return 1
         fi
       fi
     else
       printf ' claude:FAIL'
+      echo "Claude plugin install failed for $name; rerun claude plugin install $name@$MKT --scope user for details." >&2
+      return 1
     fi
   fi
   echo
@@ -138,26 +173,30 @@ fi
 # repo (already native), so it only needs the marketplace registered - no build.
 if [ "$HAVE_CODEX" = 1 ]; then
   printf '%-22s' "build codex"
-  build_tool codex && { register_marketplace codex; echo "ok"; } || { echo "FAIL"; HAVE_CODEX=0; }
+  build_tool codex || { echo "FAIL"; echo "codex build failed; rerun the translate command in scripts/dev-sync.sh without output redirection for details." >&2; exit 1; }
+  register_marketplace codex || { echo "FAIL"; echo "Codex marketplace registration failed for $BUILD/codex." >&2; exit 1; }
+  echo "ok"
 fi
 if [ "$HAVE_CLAUDE" = 1 ]; then
   register_marketplace claude
 fi
 if [ "$HAVE_OPENCODE" = 1 ] && [ "$HAVE_MANAGED_OPENCODE" = 0 ]; then
   printf '%-22s' "build opencode"
-  build_tool opencode && echo "ok" || { echo "FAIL"; HAVE_OPENCODE=0; }
+  build_tool opencode && echo "ok" || { echo "FAIL"; echo "opencode build failed; rerun the translate command in scripts/dev-sync.sh without output redirection for details." >&2; exit 1; }
 fi
 
 for t in "${targets[@]}"; do sync_one "$t"; done
 
 if [ "$HAVE_OPENCODE" = 1 ] && [ "$HAVE_MANAGED_OPENCODE" = 0 ]; then
   printf '%-22s' "install opencode"
+  validate_opencode_content "${targets[@]}"
   sync_opencode_skills "${targets[@]}"
-  echo "skills:ok"
+  sync_opencode_agents "${targets[@]}"
+  echo "skills:ok agents:ok"
 fi
 if [ "$HAVE_MANAGED_OPENCODE" = 1 ]; then
   printf '%-22s' "reload opencode"
   aidd-opencode-reload
 fi
 
-echo "Done. Restart Claude/Codex; OpenCode discovers the refreshed skills without a restart."
+echo "Done. Restart Claude/Codex; reload OpenCode configuration for refreshed agents and skills."
