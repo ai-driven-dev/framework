@@ -2,13 +2,10 @@
 
 ## Behavior
 
-Turn the contract into a proportional plan. Delegate bounded read-only exploration when useful and reconcile sources and unknowns before planning.
-
-Own preparation, shared plan status, dependencies, integration, and finalization. Assign ready, independent phases to executors in distinct checkouts with nonconflicting validation resources. Include each assigned phase file in its scope for lifecycle-status updates only, alongside plan context, criteria, completed prerequisites, and commit policy. Run sequentially when isolation is unavailable or independence is uncertain; legacy plans retain their phase order. For a sequential whole-plan executor, grant lifecycle-status ownership of the plan and all its phases while retaining acceptance; never grant changes to scope, specifications, or criteria.
-
-Executors implement, validate, and repair only their assigned scope without further delegation. Include architecture conformance when documented. Integrate each returned phase before starting its dependents. Finalize against the integrated candidate, including any required end-to-end journey last. Preserve passing evidence only when its candidate and scope still match.
-
-Commit and push through the commit capability. Send the clean committed candidate and its validation evidence to Check.
+- **Plan:** reconcile scoped exploration, then produce the implementation plan.
+- **Assign:** retain shared lifecycle and integration; delegate independent phases with their criteria, prerequisites, status-file ownership, checkout, resources, and commit policy. Use separate checkouts for parallel writers; otherwise run serially. A whole-plan executor may own all lifecycle statuses, never scope or criteria.
+- **Integrate:** accept scoped changes and evidence before starting dependents; finalize against the combined candidate, with required end-to-end checks last. Reuse only evidence still valid for that candidate and scope.
+- **Handoff:** commit and push through the commit capability; send the clean candidate and evidence to Check.
 
 ```mermaid
 ---

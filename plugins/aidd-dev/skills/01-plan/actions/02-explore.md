@@ -1,28 +1,23 @@
-# 02 - Explore
-
-Read the codebase to ground the plan: what it touches, which rules apply, what is feasible. Read only.
+# Explore
 
 ## Input
 
-The gathered source from `01-gather`.
+The gathered source.
 
 ## Output
 
-The architecture projection (files to modify, create, delete, each with a one-line reason), the project rules that apply (each justified in one line, or none), the feasibility checks (each source consulted, a doc URL or an in-repo file, and what it settled), and the risks.
+- **Projection.** Files to modify, create, or delete, each with a reason.
+- **Rules.** Applicable project rules and why, or none.
+- **Evidence.** Sources consulted and what each settled.
+- **Risks.** Blockers, conflicts, and unresolved questions.
 
 ## Process
 
-1. **Read.** Explore the code the source touches and build the projection with its infrastructure assumptions.
-   - The primary caller may delegate independent, bounded read-only questions to available explorers when useful. Each returns references and unresolved questions.
-   - Reconcile their findings against the source before planning. Resolve conflicting claims or retain the uncertainty. An isolated agent never delegates again.
-2. **Check.** Verify against the official docs or the in-repo code. Keep each source and what it settled. Flag blockers and risks.
-3. **Select.** Keep the project rules that apply to the projection.
+1. **Scope.** Identify the code and contracts the request touches.
+   - **Delegate.** The primary caller may assign independent questions by relevant codebase domain, such as frontend, backend, or a bounded context, to available explorers; give each a scope and requested evidence.
+2. **Verify.** Check feasibility against in-repo code or official documentation.
+3. **Reconcile.** Combine findings into the projection and applicable rules; resolve conflicting claims with evidence or retain the uncertainty.
 
-## Test
+## Rules
 
-| Case | Pass |
-| --- | --- |
-| The exploration completes | The projection names files to modify, create, and delete with reasons; applicable rules are justified or none apply. |
-| A feasibility claim is made | Its source and what it settled are recorded. |
-| Exploration is delegated | Returned references and unresolved questions are reconciled into the projection and risks. |
-| Sources disagree | The conflict is resolved with evidence or remains explicit as uncertainty. |
+- **Boundaries.** Explore only relevant domains; delegation is optional and isolated agents never delegate again.

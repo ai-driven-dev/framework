@@ -1,28 +1,19 @@
-# 03 - Finalize
-
-Run the validation and mark the plan implemented once every phase is done.
+# Finalize
 
 ## Input
 
-A plan whose phases are all `status: done`, from `02-execute`.
+A plan with all phases done and integrated.
 
 ## Output
 
-The feature validated green with the plan frontmatter `status: implemented`.
+Plan `status: implemented`, with integrated acceptance and validation evidence.
 
 ## Process
 
-1. **Verify.** Verify every plan-level acceptance criterion and required validation against the integrated candidate.
-   - Phase checks alone do not establish that the combined workflow works.
-   - Reuse a passing result only when it covers the same candidate and required scope; rerun checks invalidated by later changes or integration. Never format code or run dev mode.
-   - On failure, return the affected scope to execution and verify the repaired candidate before marking completion.
-2. **Mark.** Set the plan `status: implemented` only when every phase is done and integrated validation is green, then deliver under the caller's commit policy.
+1. **Verify.** Check every plan-level acceptance criterion and required validation on the integrated candidate; return failures to execution and revalidate repairs.
+2. **Mark.** Set the plan `status: implemented` only when all required checks pass.
 
-## Test
+## Rules
 
-| Case | Pass |
-| --- | --- |
-| Finalization succeeds | Every phase is done and the required validation covers the integrated candidate with passing results. |
-| A previous result is reused | Its candidate and required scope match; changed candidates invalidate affected checks. |
-| Validation fails | The plan is not marked implemented; affected work returns for repair. |
-| The plan reaches implemented | Its status is delivered under the caller's commit policy. |
+- **Evidence.** Reuse passing results only for the same candidate and required scope; phase checks alone do not establish integrated acceptance.
+- **Validation scope.** Never format code or run dev mode during finalization.

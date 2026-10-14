@@ -2,11 +2,10 @@
 
 ## Behavior
 
-Use a fresh validator independent from implementation to verify the identified committed candidate against the contract, plan criteria, and mandatory checks. Require PASS, FAIL, or BLOCKED per criterion with evidence. The validator does not repair.
-
-Only after validation passes, use a fresh checker to review quality, risks, and fitness against the contract, plan, and validation evidence. Repeat targeted checks only when evidence is missing, inconsistent, or stale. After review clears, the same checker challenges the outcome. Any repaired candidate returns to independent validation; neither judgment carries forward automatically.
-
-Use product or contract findings as the next Frame source. Dispatch independent implementation findings through Todo and keep dependent repairs together in Deliver. Re-enter Check after every new candidate. Open the draft pull request when the checker returns no actionable finding.
+- **Validate:** dispatch a fresh validator on the committed candidate, contract, criteria, and mandatory checks.
+- **Challenge:** after validation passes, dispatch a fresh checker for review and outcome challenge using that evidence.
+- **Route:** send product findings to Frame, independent repairs to Todo, dependent repairs to Deliver; revalidate each repaired candidate.
+- **Ship:** open the draft pull request when no actionable finding remains.
 
 ```mermaid
 ---

@@ -4,41 +4,34 @@ description: Implements an existing plan or an assigned phase until its acceptan
 argument-hint: plan | phase
 ---
 
-# Skill: implement
+# Implement
 
 ```mermaid
 flowchart TD
   Whole([whole plan]) --> prepare
   Assigned([assigned phase]) --> execute
   prepare --> execute
-  execute -- check failed, repair --> execute
-  execute -- more ready phases --> execute
-  execute -- assigned phase complete --> Returned([return phase and evidence])
-  execute -- whole plan complete --> finalize
-  finalize -- validation failed, repair affected scope --> execute
-  finalize --> Implemented([implemented])
   prepare -- plan missing --> Missing([stop])
-  execute -- blocked or drift --> Stopped([report blocker or replan needed])
+  execute -- repair or more ready phases --> execute
+  execute -- assigned phase done --> Returned([return evidence])
+  execute -- whole plan done --> finalize
+  execute -- blocked or drift --> Stopped([report blocker or replan])
+  finalize -- repair --> execute
+  finalize --> Implemented([implemented])
 ```
 
 ## Actions
 
-Read only the next matching numbered action file in `actions/`.
+Read only the next numbered action file in `actions/`.
 
 | Action | Does |
 | --- | --- |
-| prepare | resolve the whole plan and prepare its branch |
-| execute | implement and validate the selected scope |
-| finalize | verify the integrated plan and mark it implemented |
+| prepare | resolve the plan and prepare its branch |
+| execute | implement and check assigned scope |
+| finalize | validate the integrated plan |
 
 ## Transversal rules
 
-- Supplying a whole plan assigns lifecycle-status ownership of that plan and its phases to the whole-plan runner. Supplying an assigned phase grants only that phase's lifecycle-status ownership. Neither grant permits changes to scope, specifications, or criteria.
-- A whole-plan run owns integration and completion verification. An assigned-phase run enters execute directly and returns without prepare or finalize. The primary caller retains final acceptance.
-- Phase status follows `pending → in-progress → done`. The whole-plan owner drives `pending → in-progress → implemented` or `blocked`. Runtime markers need no separate commit.
-- Follow the caller's commit policy. When commits are authorized, commit each phase's code with its own `done` status and the final plan status separately. Keep unrelated changes out of these commits.
-- Isolated agents never spawn agents. Only the primary caller may delegate bounded work using available host capabilities.
-
-## References
-
-- `references/blocked.md`: conditions requiring a human.
+- **Ownership.** Whole-plan runners own integration and plan/phase lifecycle statuses; assigned-phase runners own only their phase status and skip prepare/finalize. Never change requirements or criteria; the caller retains final acceptance.
+- **Commits.** Follow caller policy; when authorized, commit each phase's code with its `done` status and the final plan status separately, excluding unrelated changes. Runtime markers need no separate commit.
+- **Delegation.** Only the primary caller may delegate; isolated agents never spawn agents.

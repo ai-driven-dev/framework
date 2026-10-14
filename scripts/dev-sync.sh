@@ -9,6 +9,19 @@
 #
 # Codex caveat: the .codex-plugin manifest does not declare codex-agents/*.toml, and Codex
 # loads agents only from ~/.codex/agents/, so the built TOML is copied there after install.
+# Global rules: replace only the managed AIDD block; exclude project memory and adapt agent
+# names. First OpenCode sync keeps its Claude personal-rule fallback unless disabled.
+# Instruction paths honor CODEX_HOME, CLAUDE_CONFIG_DIR and XDG_CONFIG_HOME; tests use
+# *_INSTRUCTIONS overrides. Sources checked 2026-10-14:
+# https://developers.openai.com/codex/guides/agents-md
+# https://code.claude.com/docs/en/memory
+# https://opencode.ai/docs/rules/
+# OpenCode V2 discovery: global agents are filename-named subagents; inspect with
+# `opencode debug agents`. File presence alone does not prove invocation or permissions.
+# https://opencode.ai/v2/docs/agents (read 2026-10-14)
+# https://github.com/anomalyco/opencode/blob/v2.0.28/packages/core/src/config/plugin/agent.ts
+# V2.0.28 probe cwd must match PWD because run prefers PWD (read 2026-10-14):
+# https://github.com/anomalyco/opencode/blob/v2.0.28/packages/cli/src/run/run.ts
 set -euo pipefail
 shopt -s nullglob
 
@@ -41,6 +54,7 @@ build_tool() {
 }
 
 validate_opencode_content() {
+  # Check every expected nonempty skill and agent before replacing selected namespaces.
   local name agent skill skill_name
   for name in "$@"; do
     for skill in "$FW/plugins/$name/skills/"*/SKILL.md; do
@@ -61,6 +75,7 @@ validate_opencode_content() {
 }
 
 sync_opencode_skills() {
+  # Accept nested and legacy flat builds; preserve personal and unselected plugin content.
   local name source skill destination
   local -a skills
   mkdir -p "$OPENCODE_SKILLS"

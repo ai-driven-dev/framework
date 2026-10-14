@@ -136,7 +136,7 @@ flowchart LR
   ActionN --> Out
 ```
 
-Recipe skills route to self-contained actions with inputs, outputs, process steps, and tests. An orchestrator with no domain logic may instead route through numbered reference protocols that define handoffs and delegate the work to capabilities discovered at runtime.
+Recipe skills route to self-contained actions with inputs, outputs, process steps, and rules. An orchestrator with no domain logic may instead route through numbered reference protocols that define handoffs and delegate the work to capabilities discovered at runtime.
 
 A skill never links outside itself (`scripts/__tests__/a-skill-links-only-inside-itself.test.js`). The same tree ships flat, where the skill folder is renamed `<plugin>-<skill>`, or as a marketplace, so no relative path survives both. A bundled script is named plugin-relative in backticks, never linked.
 
@@ -147,16 +147,14 @@ A skill never links outside itself (`scripts/__tests__/a-skill-links-only-inside
 
 Choose by context, not complexity: keep the work visible to the caller → skill; isolate it and take only the result → agent.
 
-- **The primary caller owns delegation.** A user-invoked recipe may offer bounded delegation through available host capabilities. An orchestrator owns delegation when it invokes the recipe. Neither requires a fixed provider or model.
-- A primary caller may delegate independent read-only questions to explorers and independent implementation phases to executors. It owns scope, dependencies, shared state, integration, and acceptance. Concurrent writers need distinct checkouts and nonconflicting validation resources; otherwise execution stays serial.
-- An isolated agent is a leaf. It never spawns another agent or invokes an orchestrator. It invokes only recipe skills listed under `# Skills you may invoke`, using their canonical `/plugin:folder` addresses without reading their files.
-- Independent validation uses a validator on an identified candidate. A checker reviews quality and outcome using that evidence. Neither modifies the candidate; gaps return to the primary caller for repair and renewed verification.
+- **Caller:** own delegation, integration, and acceptance; use available agents when useful.
+- **Agent:** stay within assigned scope, never delegate or invoke an orchestrator, and invoke only declared recipe skills without reading their files.
 
 ## 🔗 Capability addressing
 
 Address a capability only where the dispatch is declared: a router's `## Actions` table, an agent's `# Skills you may invoke` list. Everywhere else, name the concept the capability owns, never the skill that owns it.
 
-Recipe skills never hardcode a sibling provider. They discover cross-plugin capabilities at runtime through description matching. Agent permission lists name allowed skills with canonical `/plugin:folder` addresses. Orchestration references map responsibilities to providers discovered from installed descriptions; canonical addresses in diagrams illustrate current providers. Verify availability and the role contract before dispatch.
+Recipe skills discover providers by description. Agent allowlists use canonical `/plugin:folder` addresses; orchestration diagrams illustrate providers. Verify availability and role before dispatch.
 
 Two paths are exempt, both in `isExemptFromOrthogonality`:
 
