@@ -16,10 +16,12 @@ status: pending
 
 ## Phases
 
-| #   | Phase        | File                         |
-| --- | ------------ | ---------------------------- |
-| 1   | {phase-name} | [`phase-1.md`](./phase-1.md) |
-| 2   | {phase-name} | [`phase-2.md`](./phase-2.md) |
+<!-- Depends on lists earlier phase numbers, or none when no prerequisite exists. -->
+
+| #   | Phase        | File                         | Depends on |
+| --- | ------------ | ---------------------------- | ---------- |
+| 1   | {phase-name} | [`phase-1.md`](./phase-1.md) | {none} |
+| 2   | {phase-name} | [`phase-2.md`](./phase-2.md) | {phase numbers or none} |
 
 ## Resources
 
