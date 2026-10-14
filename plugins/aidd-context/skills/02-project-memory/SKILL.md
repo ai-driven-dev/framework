@@ -12,8 +12,7 @@ flowchart LR
   update([refresh]) --> scan --> check --> write
   rewire([rewire]) --> sync
   verify([verify]) --> verify-connection
-  verify-connection -->|report| reported([connection report])
-  verify-connection -->|memory missing| missing([memory missing])
+  verify-connection --> reported([connection report])
   scan -.-> empty([nothing to remember])
 ```
 
@@ -31,7 +30,7 @@ Run the flow above, reading only the next action file.
 
 ## Transversal rules
 
-- If a referenced file cannot be read, stop and say so. Never invent its content.
+- Never invent unreadable content; setup, refresh and rewire stop when a referenced file cannot be read.
 - Ask before anything ambiguous. Never default silently.
 - A bank that already exists changes only through what the user approved, file by file and line by line.
 - End with a short report of what changed.
