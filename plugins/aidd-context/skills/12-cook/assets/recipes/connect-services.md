@@ -6,35 +6,13 @@ Each category points to the project memory that records how your team uses those
 
 ## CLI, MCP or API?
 
-Reuse an existing connection that covers your task. Otherwise:
+Reuse an existing connection that covers your task. Choose by the operation you need:
 
-```mermaid
----
-title: Choose service access
----
-flowchart LR
-  task["Required task"]
-  cli{"Usable CLI?"}
-  command["CLI"]
-  mcp{"Usable MCP or native tool?"}
-  tools["MCP or native tool"]
-  api{"Usable documented API?"}
-  direct["Direct API or SDK"]
-  missing["No supported access"]
-  task --> cli
-  cli -- yes --> command
-  cli -- no --> mcp
-  mcp -- yes --> tools
-  mcp -- no --> api
-  api -- yes --> direct
-  api -- no --> missing
-```
-
-| Option | Advantages | Limits |
-| --- | --- | --- |
-| CLI | Repeatable commands; filter output before sending it to the assistant | Requires shell access; commands may not cover your task |
-| MCP | Tools callable directly by the assistant | Requires a compatible client; tool coverage and context cost vary |
-| API / SDK | Direct access when CLI and MCP do not cover the operation | Requires network/runtime access; you handle authentication, pagination and errors |
+| Option | When to use it | Advantages | Limits |
+| --- | --- | --- | --- |
+| CLI | Repeatable commands: inspect CI runs, manage pull requests or run migrations | Scriptable; filter output before sending it to the assistant | Requires shell access; commands may not cover your task |
+| MCP | Interactive assistant work: explore a workspace, read design context or query tickets through available tools | Tools callable directly by the assistant | Requires a compatible client; tool coverage and context cost vary |
+| API / SDK | A specific operation is missing from CLI and MCP, or you need custom queries and batch processing | Control requests and returned data | Requires network/runtime access; you handle authentication, pagination and errors |
 
 Prefer CLI when it covers the task: [Playwright documents lower context use](https://playwright.dev/agent-cli/introduction#playwright-cli-vs-mcp). This is not universal: [Claude Code can load MCP tools on demand](https://code.claude.com/docs/en/mcp#scale-with-mcp-tool-search).
 
@@ -127,6 +105,8 @@ Add any other services your team uses to the relevant table. `—` means no opti
 1. Check existing access; in [Claude Code](https://code.claude.com/docs/en/mcp#managing-your-servers), `/mcp` shows MCP server status.
 2. Follow the linked guide for your chosen CLI, MCP or API and client; install only what is missing.
 3. Review the account, workspace and requested permissions, then authenticate; use read-only access when you only need reads.
+
+These are setup examples, not required installations. Follow the guide for your service and client.
 
 - **CLI / GitHub**: Install `gh` from its [guide](https://github.com/cli/cli#installation), then sign in and inspect the account:
 
