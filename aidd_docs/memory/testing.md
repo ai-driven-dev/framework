@@ -13,7 +13,7 @@ How the project is tested: the layers, the tools, and the conventions. Where tes
 | `cli/` | vitest, four projects — see the CLI bank |
 | `kanban/` | its own vitest suite. It shares no code with `cli/` |
 | Per-tool distributions | golden snapshots in `cli/tests/golden/`, mirrored by the `build-per-tool` CI matrix; Claude Code's own `plugin validate` over a fresh claude build, in `cli-ci.yml` |
-| Browser journeys | `aidd-qa:01-acceptance-qa`, see below |
+| Browser journeys | none in this repository |
 
 ## Tools
 
@@ -41,9 +41,3 @@ How the project is tested: the layers, the tools, and the conventions. Where tes
 | `pnpm exec lefthook run pre-push` | the local gate before pushing |
 
 CI runs more: `validate.yml` re-runs the whole pre-commit over the whole tree on every push and pull request, and `cli-ci.yml` adds jobs no local hook has. Both are in `deployment.md`.
-
-## Browser QA
-
-- Acceptance QA: `aidd-qa:01-acceptance-qa` verifies browser or CLI criteria into `qa.md`.
-- Demo: `aidd-qa:02-demo` produces browser WebM (`ffmpeg` and `ffprobe` required) or a CLI transcript.
-- This repository ships these capabilities; it has no browser journey of its own.

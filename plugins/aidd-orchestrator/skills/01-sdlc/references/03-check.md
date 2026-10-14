@@ -2,7 +2,7 @@
 
 ## Behavior
 
-Drive the diagram with one fresh, independent `@aidd-dev:checker`, one skill per call. Supply the contract, committed candidate, plan and validation evidence.
+Use one fresh, independent `@aidd-dev:checker` throughout the diagram, one skill per call.
 
 ## Findings
 
