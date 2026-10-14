@@ -1,5 +1,5 @@
 ---
-status: pending
+status: done
 ---
 
 <!-- Fill or omit these sections; never add, rename, or reorder one. -->
@@ -16,8 +16,9 @@ cli/
 │   └── portable-agent.ts            ✅ rebuild frontmatter: name, description, model: inherit, tools as YAML list; drop everything else
 ├── src/contexts/tools/domain/profiles/antigravity/
 │   ├── antigravity-paths.ts         ✏️ agents dir
-│   ├── profile.ts                   ✏️ AgentsCapability, nested `<name>/agent.md`
-│   └── build.ts                     ✏️ agents artifact, link rewriting relative to the nested path
+│   └── build.ts                     ✏️ agents artifact, nested `<name>/agent.md`, link rewriting relative to the nested path
+├── src/kernel/errors.ts             ✏️ `InvalidAgentFrontmatterError`
+├── package.json, scripts/check-bundle-size.mjs   ✏️ budget 742 KB, measured 734.5 KB
 ├── tests/contexts/tools/domain/formats/
 │   └── portable-agent.unit.test.ts  ✅ model mapping, tools string → list, Claude-only keys dropped, empty description rejected
 ├── tests/contexts/tools/domain/profiles/antigravity/build.unit.test.ts   ✏️ agent path and body
@@ -66,7 +67,7 @@ journey
 
 ### `2)` Antigravity agents in setup and translate
 
-1. `AgentsCapability` and flat `agents` artifact writing `.agents/agents/<plugin>-<agent>/agent.md`, body links rewritten from that nested path.
+1. Flat `agents` artifact writing `.agents/agents/<plugin>-<agent>/agent.md`, body links rewritten from that nested path. No `AgentsCapability`: a flat tool declaring one also gets the raw fallback route (`content-translator.ts`'s `flatSectionFile`), which copies Claude frontmatter to `.agents/agents/<plugin>/<file>.md`, where `agy` 1.2.17 drops it in silence (measured: `model: opus` and comma `tools` both missing from `/agents`). `setup` takes the built-tree route, which reads the artifact.
 2. Unit test the path and body; regenerate golden, only `antigravity:flat` moves.
 
 ### `3)` Live check

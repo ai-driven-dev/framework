@@ -36,6 +36,8 @@ const pkg = JSON.parse(readFileSync(resolve(root, "package.json"), "utf8"));
 // correctly (+5,008 bytes over 0.27.3); unchanged application and minification settings.
 // 766 KB: 757.9 KB, Antigravity's flat profile (+2.3 KB over next's 755.6 KB); 1.1% measured
 // headroom.
+// 771 KB: 764.2 KB, Antigravity's portable agents (+1.8 KB over its hooks merge's 762.4 KB, which
+// grew +4.5 KB over the flat profile's 757.9 KB within 766 KB); 0.9% measured headroom.
 const budgetKB = pkg.bundleBudgetKB ?? 500;
 const budgetBytes = budgetKB * 1024;
 

@@ -47,7 +47,43 @@ describe("buildAntigravityFlatContract", () => {
     });
   });
 
-  it.each(["agents", "mcp", "rules", "commands"] as const)("declares %s unsupported", (kind) => {
+  it("writes an agent only in the nested layout, named after its plugin", () => {
+    const agents = supported(buildAntigravityFlatContract().artifacts.agents);
+
+    expect(agents.path("aidd-dev", "agents/executor.md")).toBe(
+      ".agents/agents/aidd-dev-executor/agent.md"
+    );
+    expect(agents.path("aidd-dev", "agents/executor.agent.md")).toBe(
+      ".agents/agents/aidd-dev-executor/agent.md"
+    );
+  });
+
+  it("rebuilds the agent's frontmatter and links its body from the nested directory", () => {
+    const agents = supported(buildAntigravityFlatContract().artifacts.agents);
+    const source = [
+      "---",
+      "name: executor",
+      "description: Turns a task into code.",
+      "model: opus",
+      "color: red",
+      "---",
+      // biome-ignore lint/suspicious/noTemplateCurlyInString: the Claude placeholder the rewrite resolves
+      "Follow @${CLAUDE_PLUGIN_ROOT}/skills/01-plan/SKILL.md",
+    ].join("\n");
+
+    expect(agents.transform?.(source, "aidd-dev", "executor.md")).toBe(
+      [
+        "---",
+        "name: 'aidd-dev-executor'",
+        "description: 'Turns a task into code.'",
+        "model: 'inherit'",
+        "---",
+        "Follow [SKILL.md](../../skills/aidd-dev-01-plan/SKILL.md)",
+      ].join("\n")
+    );
+  });
+
+  it.each(["mcp", "rules", "commands"] as const)("declares %s unsupported", (kind) => {
     expect(buildAntigravityFlatContract().artifacts[kind].supported).toBe(false);
   });
 
