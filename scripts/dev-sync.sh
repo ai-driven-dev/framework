@@ -22,6 +22,9 @@ CLAUDE_CACHE="${CLAUDE_CACHE:-$HOME/.claude/plugins/cache}"
 CODEX_AGENTS="${CODEX_AGENTS:-$HOME/.codex/agents}"
 OPENCODE_SKILLS="${OPENCODE_SKILLS:-$HOME/.config/opencode/skills}"
 OPENCODE_AGENTS="${OPENCODE_AGENTS:-$HOME/.config/opencode/agents}"
+CODEX_INSTRUCTIONS="${CODEX_INSTRUCTIONS:-${CODEX_HOME:-$HOME/.codex}/AGENTS.md}"
+CLAUDE_INSTRUCTIONS="${CLAUDE_INSTRUCTIONS:-${CLAUDE_CONFIG_DIR:-$HOME/.claude}/CLAUDE.md}"
+OPENCODE_INSTRUCTIONS="${OPENCODE_INSTRUCTIONS:-${XDG_CONFIG_HOME:-$HOME/.config}/opencode/AGENTS.md}"
 
 HAVE_CODEX=0;  command -v codex  >/dev/null 2>&1 && HAVE_CODEX=1
 HAVE_CLAUDE=0; command -v claude >/dev/null 2>&1 && HAVE_CLAUDE=1
@@ -199,4 +202,17 @@ if [ "$HAVE_MANAGED_OPENCODE" = 1 ]; then
   aidd-opencode-reload
 fi
 
-echo "Done. Restart Claude/Codex; reload OpenCode configuration for refreshed agents and skills."
+instructions=()
+[ "$HAVE_CODEX" = 0 ] || instructions+=(codex "$CODEX_INSTRUCTIONS")
+[ "$HAVE_CLAUDE" = 0 ] || instructions+=(claude "$CLAUDE_INSTRUCTIONS")
+if [ "$HAVE_OPENCODE" = 1 ] || [ "$HAVE_MANAGED_OPENCODE" = 1 ]; then
+  instructions+=(opencode "$OPENCODE_INSTRUCTIONS")
+fi
+printf '%-22s' "global instructions"
+instruction_fallback="$CLAUDE_INSTRUCTIONS"
+case "${OPENCODE_DISABLE_CLAUDE_CODE:-}" in 1|true) instruction_fallback="" ;; esac
+case "${OPENCODE_DISABLE_CLAUDE_CODE_PROMPT:-}" in 1|true) instruction_fallback="" ;; esac
+node "$SCRIPT_DIR/sync-global-instructions.cjs" "$FW/AGENTS.md" "$instruction_fallback" "${instructions[@]}"
+echo "ok (project memory excluded)"
+
+echo "Done. Restart Claude/Codex; reload OpenCode configuration for refreshed agents, skills, and instructions."

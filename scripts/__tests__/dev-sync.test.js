@@ -2,12 +2,93 @@ const assert = require("node:assert/strict");
 const { spawnSync } = require("node:child_process");
 const { chmodSync, existsSync, mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } = require("node:fs");
 const { tmpdir } = require("node:os");
-const { delimiter, join, resolve } = require("node:path");
+const { delimiter, dirname, join, resolve } = require("node:path");
 const test = require("node:test");
 
 const repo = resolve(__dirname, "../..");
+const { render, sync } = require("../sync-global-instructions.cjs");
 const devAgents = ["checker.md", "executor.md"];
 const buildDevAgents = devAgents.map((name) => `printf '%s\\n' 'updated agent' > "$out/.opencode/agents/aidd-dev-${name}"`).join("\n");
+
+const instructionSource = "# AGENTS.md\n\n## Action\n- Keep scope.\n- Follow `docs/ARCHITECTURE.md`.\n\n## Agents\n| name | role |\n| --- | --- |\n| @executor (Codex), @aidd-dev-executor (OpenCode) | Implement scope. |\n\n## Memory Management\nProject docs live in aidd_docs/.\n<!-- aidd_project_memory:start -->\n@aidd_docs/memory/private.md\n<!-- aidd_project_memory:end -->\nLoad more memory.\n";
+
+test("global instructions exclude project context and use each host's native agent names", () => {
+  for (const [host, name] of [["codex", "@executor"], ["claude", "@aidd-dev:executor"], ["opencode", "@aidd-dev-executor"]]) {
+    const content = render(instructionSource, host);
+    assert.ok(content.includes(`| ${name} | Implement scope. |`));
+    assert.doesNotMatch(content, /Memory|memory|aidd_docs|ARCHITECTURE/);
+    assert.match(content, /Keep scope/);
+  }
+});
+
+test("global sync preserves personal rules, updates its block, and is idempotent", () => {
+  const root = mkdtempSync(join(tmpdir(), "aidd-global-rules-"));
+  try {
+    const source = join(root, "source.md");
+    const destination = join(root, "codex/AGENTS.md");
+    mkdirSync(dirname(destination), { recursive: true });
+    writeFileSync(source, instructionSource);
+    const personal = "Personal rules with no trailing newline";
+    writeFileSync(destination, personal);
+    sync(source, [["codex", destination]]);
+    const first = readFileSync(destination, "utf8");
+    sync(source, [["codex", destination]]);
+    assert.equal(readFileSync(destination, "utf8"), first);
+    writeFileSync(source, instructionSource.replace("Keep scope.", "Check scope."));
+    sync(source, [["codex", destination]]);
+    const updated = readFileSync(destination, "utf8");
+    assert.ok(updated.startsWith(personal));
+    assert.match(updated, /Check scope/);
+    assert.doesNotMatch(updated, /Keep scope/);
+    assert.equal(updated.split("aidd_global_instructions:start").length, 2);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("first OpenCode sync retains effective Claude personal rules without its managed block", () => {
+  const root = mkdtempSync(join(tmpdir(), "aidd-global-fallback-"));
+  try {
+    const source = join(root, "source.md");
+    const claude = join(root, "CLAUDE.md");
+    const opencode = join(root, "opencode/AGENTS.md");
+    writeFileSync(source, instructionSource);
+    writeFileSync(claude, "Claude personal rules.\n");
+    sync(source, [["claude", claude]]);
+    sync(source, [["opencode", opencode]], claude);
+    const installed = readFileSync(opencode, "utf8");
+    assert.match(installed, /Claude personal rules/);
+    assert.match(installed, /@aidd-dev-executor/);
+    assert.doesNotMatch(installed, /@aidd-dev:executor/);
+    writeFileSync(claude, "Changed fallback.\n");
+    sync(source, [["opencode", opencode]], claude);
+    assert.equal(readFileSync(opencode, "utf8"), installed);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("malformed managed blocks and missing memory boundaries leave all global files untouched", () => {
+  const root = mkdtempSync(join(tmpdir(), "aidd-global-invalid-"));
+  try {
+    const source = join(root, "source.md");
+    const codex = join(root, "AGENTS.md");
+    const claude = join(root, "CLAUDE.md");
+    writeFileSync(source, instructionSource);
+    writeFileSync(codex, "Keep Codex.\n");
+    for (const malformed of ["<!-- aidd_global_instructions:start -->", "<!-- aidd_global_instructions:end --><!-- aidd_global_instructions:start -->", "<!-- aidd_global_instructions:start --><!-- aidd_global_instructions:end -->".repeat(2)]) {
+      writeFileSync(claude, malformed);
+      assert.throws(() => sync(source, [["codex", codex], ["claude", claude]]), /Malformed/);
+      assert.equal(readFileSync(codex, "utf8"), "Keep Codex.\n");
+      assert.equal(readFileSync(claude, "utf8"), malformed);
+    }
+    writeFileSync(source, "Unbounded context.\n");
+    assert.throws(() => sync(source, [["codex", codex]]), /Memory Management boundary/);
+    assert.equal(readFileSync(codex, "utf8"), "Keep Codex.\n");
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
 
 function executable(path, body) {
   writeFileSync(path, `#!/bin/sh\nset -eu\n${body}\n`);
@@ -28,6 +109,7 @@ function fixture(home) {
         writeFileSync(join(pluginDir, "agents", name), "source agent\n");
       }
     }
+    writeFileSync(join(source, "AGENTS.md"), "# AGENTS.md\n\n## Behavior\nKeep scope.\n\n## Memory Management\nProject-only memory.\n");
   }
   return source;
 }
@@ -39,7 +121,8 @@ function fixture(home) {
 const BASE_PATH =
   process.platform === "win32" ? (process.env.PATH ?? "") : ["/usr/bin", "/bin"].join(delimiter);
 
-function runSync(fakeBin, home, args = ["all"]) {
+function runSync(fakeBin, home, args = ["all"], overrides = {}) {
+  executable(join(fakeBin, "node"), `exec '${process.execPath}' "$@"`);
   // `bash`, resolved on PATH, never the literal `/bin/bash`: that path does not exist on
   // Windows, where bash is the one Git for Windows ships. `spawnSync` resolves a bare name
   // through the platform's own rules on both.
@@ -56,6 +139,12 @@ function runSync(fakeBin, home, args = ["all"]) {
       CODEX_AGENTS: join(home, ".codex/agents"),
       OPENCODE_SKILLS: join(home, ".config/opencode/skills"),
       OPENCODE_AGENTS: join(home, ".config/opencode/agents"),
+      CODEX_INSTRUCTIONS: join(home, ".codex/AGENTS.md"),
+      CLAUDE_INSTRUCTIONS: join(home, ".claude/CLAUDE.md"),
+      OPENCODE_INSTRUCTIONS: join(home, ".config/opencode/AGENTS.md"),
+      OPENCODE_DISABLE_CLAUDE_CODE: "",
+      OPENCODE_DISABLE_CLAUDE_CODE_PROMPT: "",
+      ...overrides,
     },
     encoding: "utf8",
   });
@@ -74,6 +163,68 @@ test("managed OpenCode reload uses the fixed-purpose helper without a local buil
     assert.equal(result.status, 0, result.stderr);
     assert.match(result.stdout, /reload opencode\s+managed:ok/);
     assert.equal(existsSync(join(home, "build")), false);
+    assert.match(readFileSync(join(home, ".config/opencode/AGENTS.md"), "utf8"), /Keep scope/);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+for (const flag of ["OPENCODE_DISABLE_CLAUDE_CODE", "OPENCODE_DISABLE_CLAUDE_CODE_PROMPT"]) {
+  test(`OpenCode first reload respects disabled Claude fallback via ${flag}`, () => {
+    const root = mkdtempSync(join(tmpdir(), "aidd-dev-sync-no-fallback-"));
+    try {
+      const fakeBin = join(root, "bin");
+      const home = join(root, "home");
+      mkdirSync(fakeBin);
+      mkdirSync(join(home, ".claude"), { recursive: true });
+      writeFileSync(join(home, ".claude/CLAUDE.md"), "Excluded Claude personal rules.\n");
+      executable(join(fakeBin, "aidd-opencode-reload"), "exit 0");
+      const result = runSync(fakeBin, home, [], { [flag]: "1" });
+      assert.equal(result.status, 0, result.stderr);
+      const installed = readFileSync(join(home, ".config/opencode/AGENTS.md"), "utf8");
+      assert.doesNotMatch(installed, /Excluded Claude/);
+      assert.match(installed, /Keep scope/);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+}
+
+test("reload delivers global instructions to all three hosts while preserving personal rules", () => {
+  const root = mkdtempSync(join(tmpdir(), "aidd-dev-sync-rules-"));
+  try {
+    const fakeBin = join(root, "bin");
+    const home = join(root, "home");
+    mkdirSync(fakeBin);
+    mkdirSync(home);
+    const source = fixture(home);
+    writeFileSync(join(source, "AGENTS.md"), instructionSource);
+    const destinations = [[".codex/AGENTS.md", "@executor"], [".claude/CLAUDE.md", "@aidd-dev:executor"], [".config/opencode/AGENTS.md", "@aidd-dev-executor"]];
+    for (const [path] of destinations) {
+      mkdirSync(dirname(join(home, path)), { recursive: true });
+      writeFileSync(join(home, path), "Personal rules.\n");
+    }
+    for (const host of ["codex", "claude", "opencode"]) executable(join(fakeBin, host), "exit 0");
+    executable(join(fakeBin, "npx"), String.raw`out=""
+while [ "$#" -gt 0 ]; do
+  if [ "$1" = "--out" ]; then shift; out=$1; fi
+  shift
+done
+mkdir -p "$out/.opencode/skills/aidd-pm-03-prd"
+printf '%s\n' 'skill' > "$out/.opencode/skills/aidd-pm-03-prd/SKILL.md"`);
+    const first = runSync(fakeBin, home, ["aidd-pm"]);
+    assert.equal(first.status, 0, first.stderr);
+    assert.match(first.stdout, /global instructions\s+ok/);
+    const contents = destinations.map(([path, name]) => {
+      const content = readFileSync(join(home, path), "utf8");
+      assert.ok(content.startsWith("Personal rules.\n"));
+      assert.ok(content.includes(`| ${name} | Implement scope. |`));
+      assert.doesNotMatch(content, /Memory|aidd_docs|ARCHITECTURE/);
+      return content;
+    });
+    const second = runSync(fakeBin, home, ["aidd-pm"]);
+    assert.equal(second.status, 0, second.stderr);
+    destinations.forEach(([path], index) => assert.equal(readFileSync(join(home, path), "utf8"), contents[index]));
   } finally {
     rmSync(root, { recursive: true, force: true });
   }

@@ -63,6 +63,19 @@ namespaced agents into the global directories, replacing only selected plugin na
 Missing expected build files fail before changing installed OpenCode content. A managed
 OpenCode host keeps its fixed-purpose `aidd-opencode-reload` helper.
 
+Reload also updates a managed AIDD block in each installed host's global instructions:
+Codex `~/.codex/AGENTS.md`, Claude `~/.claude/CLAUDE.md`, OpenCode
+`~/.config/opencode/AGENTS.md`. Personal text remains outside the block. The framework's
+entire Memory Management section and its local architecture-file obligation are excluded;
+agent names match the host. First OpenCode sync preserves its previous Claude personal-rule
+fallback. `CODEX_HOME`, `CLAUDE_CONFIG_DIR`, and `XDG_CONFIG_HOME` relocate instruction
+destinations; explicit `*_INSTRUCTIONS` overrides are available to isolate tests.
+
+Global instruction locations and OpenCode fallback precedence checked 2026-10-14:
+[Codex](https://developers.openai.com/codex/guides/agents-md),
+[Claude](https://code.claude.com/docs/en/memory),
+[OpenCode](https://opencode.ai/docs/rules/).
+
 OpenCode V2 documents global agents at `~/.config/opencode/agents/`, filename-based agent
 names, and `mode: subagent`. Native restrictions use a `permissions` list with `action`,
 `resource`, and `effect`; `edit` covers write, edit and patch, `shell` gates commands, and
