@@ -52,7 +52,7 @@ Memory links open the AIDD templates for the corresponding files in your project
 | --- | --- | --- |
 | Playwright | [`playwright-cli`](https://playwright.dev/agent-cli/installation); [`npx playwright test`](https://playwright.dev/docs/test-cli) for tests | [Playwright MCP](https://playwright.dev/docs/getting-started-mcp) |
 | Claude in Chrome | — | [Chrome extension](https://support.claude.com/en/articles/12012173-get-started-with-claude-in-chrome) |
-| Cursor Browser | — | [Built-in browser](https://prod.cursor.com/docs/agent/tools/browser) |
+| Cursor Browser | — | [Built-in browser](https://cursor.com/docs/agent/tools/browser) |
 
 **Design**
 
@@ -68,7 +68,7 @@ Memory links open the AIDD templates for the corresponding files in your project
 
 | Service | CLI | MCP or native tool |
 | --- | --- | --- |
-| Sentry | [`sentry`](https://cli.sentry.dev/) | [Sentry MCP](https://github.com/getsentry/toolkit) |
+| Sentry | [`sentry`](https://cli.sentry.dev/) | [Sentry MCP](https://mcp.sentry.dev/) |
 
 **Deployment**
 
