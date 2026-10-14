@@ -14,58 +14,74 @@ Memory links open the AIDD templates for the corresponding files in your project
 
 **Version control**
 
-| Service | Usage | CLI | MCP or native tool | Memory |
-| --- | --- | --- | --- | --- |
-| GitHub | Issues, PRs, releases, CI runs | [`gh`](https://cli.github.com/manual/) | [GitHub MCP](https://github.com/github/github-mcp-server) | [vcs.md](https://github.com/ai-driven-dev/framework/blob/next/plugins/aidd-context/skills/02-project-memory/assets/templates/memory/core/vcs.md) |
-| GitLab | Issues, merge requests, pipelines | [`glab`](https://docs.gitlab.com/cli/) | [GitLab MCP](https://docs.gitlab.com/user/model_context_protocol/mcp_server/) | [vcs.md](https://github.com/ai-driven-dev/framework/blob/next/plugins/aidd-context/skills/02-project-memory/assets/templates/memory/core/vcs.md) |
-| Bitbucket | Search and read repository context | — | [Atlassian Rovo MCP](https://developer.atlassian.com/cloud/rovo-mcp/guides/getting-started/) | [vcs.md](https://github.com/ai-driven-dev/framework/blob/next/plugins/aidd-context/skills/02-project-memory/assets/templates/memory/core/vcs.md) |
+> Repositories and code reviews; conventions in [vcs.md](https://github.com/ai-driven-dev/framework/blob/next/plugins/aidd-context/skills/02-project-memory/assets/templates/memory/core/vcs.md).
+
+| Service | Usage | CLI | MCP or native tool |
+| --- | --- | --- | --- |
+| GitHub | Issues, PRs, releases, CI runs | [`gh`](https://cli.github.com/manual/) | [GitHub MCP](https://github.com/github/github-mcp-server) |
+| GitLab | Issues, merge requests, pipelines | [`glab`](https://docs.gitlab.com/cli/) | [GitLab MCP](https://docs.gitlab.com/user/model_context_protocol/mcp_server/) |
+| Bitbucket | Search and read repository context | — | [Atlassian Rovo MCP](https://developer.atlassian.com/cloud/rovo-mcp/guides/getting-started/) |
 
 **Ticketing**
 
-| Service | Usage | CLI | MCP or native tool | Memory |
-| --- | --- | --- | --- | --- |
-| Jira Cloud | Search, create, update tickets | [`acli`](https://developer.atlassian.com/cloud/acli/reference/commands/jira/) | [Atlassian Rovo MCP](https://developer.atlassian.com/cloud/rovo-mcp/guides/getting-started/) | [backlog.md](https://github.com/ai-driven-dev/framework/blob/next/plugins/aidd-context/skills/02-project-memory/assets/templates/memory/backlog/backlog.md) |
-| Linear | Search, create, update tickets | — | [Linear MCP](https://linear.app/docs/mcp) | [backlog.md](https://github.com/ai-driven-dev/framework/blob/next/plugins/aidd-context/skills/02-project-memory/assets/templates/memory/backlog/backlog.md) |
+> Work items and planning; workflow in [backlog.md](https://github.com/ai-driven-dev/framework/blob/next/plugins/aidd-context/skills/02-project-memory/assets/templates/memory/backlog/backlog.md).
+
+| Service | Usage | CLI | MCP or native tool |
+| --- | --- | --- | --- |
+| Jira Cloud | Search, create, update tickets | [`acli`](https://developer.atlassian.com/cloud/acli/reference/commands/jira/) | [Atlassian Rovo MCP](https://developer.atlassian.com/cloud/rovo-mcp/guides/getting-started/) |
+| Linear | Search, create, update tickets | — | [Linear MCP](https://linear.app/docs/mcp) |
 
 **Documentation and workspace**
 
-| Service | Usage | CLI | MCP or native tool | Memory |
-| --- | --- | --- | --- | --- |
-| Confluence | Search and edit team documentation | — | [Atlassian Rovo MCP](https://developer.atlassian.com/cloud/rovo-mcp/guides/getting-started/) | [ecosystem.md](https://github.com/ai-driven-dev/framework/blob/next/plugins/aidd-context/skills/02-project-memory/assets/templates/memory/ecosystem/ecosystem.md) |
-| Notion | Search and edit workspace pages | [`ntn`](https://developers.notion.com/cli/get-started/overview) for API scripts | [Notion MCP](https://developers.notion.com/guides/mcp/get-started-with-mcp) | [ecosystem.md](https://github.com/ai-driven-dev/framework/blob/next/plugins/aidd-context/skills/02-project-memory/assets/templates/memory/ecosystem/ecosystem.md) |
-| Google Workspace | Drive, Docs, Sheets, Gmail, Calendar | [`gws`](https://github.com/googleworkspace/cli), not officially supported by Google | — | [ecosystem.md](https://github.com/ai-driven-dev/framework/blob/next/plugins/aidd-context/skills/02-project-memory/assets/templates/memory/ecosystem/ecosystem.md) |
+> Team knowledge and workspace tools; access map in [ecosystem.md](https://github.com/ai-driven-dev/framework/blob/next/plugins/aidd-context/skills/02-project-memory/assets/templates/memory/ecosystem/ecosystem.md).
+
+| Service | Usage | CLI | MCP or native tool |
+| --- | --- | --- | --- |
+| Confluence | Search and edit team documentation | — | [Atlassian Rovo MCP](https://developer.atlassian.com/cloud/rovo-mcp/guides/getting-started/) |
+| Notion | Search and edit workspace pages | [`ntn`](https://developers.notion.com/cli/get-started/overview) for API scripts | [Notion MCP](https://developers.notion.com/guides/mcp/get-started-with-mcp) |
+| Google Workspace | Drive, Docs, Sheets, Gmail, Calendar | [`gws`](https://github.com/googleworkspace/cli), not officially supported by Google | — |
 
 **Browser**
 
-| Service | Usage | CLI | MCP or native tool | Memory |
-| --- | --- | --- | --- | --- |
-| Playwright | Browse and inspect a website | [`playwright-cli`](https://playwright.dev/agent-cli/installation); [`npx playwright test`](https://playwright.dev/docs/test-cli) for tests | [Playwright MCP](https://playwright.dev/docs/getting-started-mcp) | [testing.md](https://github.com/ai-driven-dev/framework/blob/next/plugins/aidd-context/skills/02-project-memory/assets/templates/memory/core/testing.md) |
-| Claude in Chrome | Inspect and validate the web application | — | [Chrome extension](https://support.claude.com/en/articles/12012173-get-started-with-claude-in-chrome) | [testing.md](https://github.com/ai-driven-dev/framework/blob/next/plugins/aidd-context/skills/02-project-memory/assets/templates/memory/core/testing.md) |
-| Cursor Browser | Inspect and validate the web application | — | [Built-in browser](https://prod.cursor.com/docs/agent/tools/browser) | [testing.md](https://github.com/ai-driven-dev/framework/blob/next/plugins/aidd-context/skills/02-project-memory/assets/templates/memory/core/testing.md) |
+> Web navigation and validation; test setup in [testing.md](https://github.com/ai-driven-dev/framework/blob/next/plugins/aidd-context/skills/02-project-memory/assets/templates/memory/core/testing.md).
+
+| Service | Usage | CLI | MCP or native tool |
+| --- | --- | --- | --- |
+| Playwright | Browse and inspect a website | [`playwright-cli`](https://playwright.dev/agent-cli/installation); [`npx playwright test`](https://playwright.dev/docs/test-cli) for tests | [Playwright MCP](https://playwright.dev/docs/getting-started-mcp) |
+| Claude in Chrome | Inspect and validate the web application | — | [Chrome extension](https://support.claude.com/en/articles/12012173-get-started-with-claude-in-chrome) |
+| Cursor Browser | Inspect and validate the web application | — | [Built-in browser](https://prod.cursor.com/docs/agent/tools/browser) |
 
 **Design**
 
-| Service | Usage | CLI | MCP or native tool | Memory |
-| --- | --- | --- | --- | --- |
-| Figma | Read designs to build an interface | — | [Figma MCP](https://developers.figma.com/docs/figma-mcp-server/remote-server-installation/) | [design.md](https://github.com/ai-driven-dev/framework/blob/next/plugins/aidd-context/skills/02-project-memory/assets/templates/memory/ui/design.md) |
+> Design context for implementation; UI conventions in [design.md](https://github.com/ai-driven-dev/framework/blob/next/plugins/aidd-context/skills/02-project-memory/assets/templates/memory/ui/design.md).
+
+| Service | Usage | CLI | MCP or native tool |
+| --- | --- | --- | --- |
+| Figma | Read designs to build an interface | — | [Figma MCP](https://developers.figma.com/docs/figma-mcp-server/remote-server-installation/) |
 
 **Monitoring**
 
-| Service | Usage | CLI | MCP or native tool | Memory |
-| --- | --- | --- | --- | --- |
-| Sentry | Inspect errors and investigate issues | [`sentry`](https://cli.sentry.dev/) | [Sentry MCP](https://github.com/getsentry/toolkit) | [deployment.md](https://github.com/ai-driven-dev/framework/blob/next/plugins/aidd-context/skills/02-project-memory/assets/templates/memory/deployment/deployment.md) |
+> Errors and incident investigation; monitoring setup in [deployment.md](https://github.com/ai-driven-dev/framework/blob/next/plugins/aidd-context/skills/02-project-memory/assets/templates/memory/deployment/deployment.md).
+
+| Service | Usage | CLI | MCP or native tool |
+| --- | --- | --- | --- |
+| Sentry | Inspect errors and investigate issues | [`sentry`](https://cli.sentry.dev/) | [Sentry MCP](https://github.com/getsentry/toolkit) |
 
 **Deployment**
 
-| Service | Usage | CLI | MCP or native tool | Memory |
-| --- | --- | --- | --- | --- |
-| Vercel | Deploy and read deployment logs | [`vercel`](https://vercel.com/docs/cli) | [Vercel MCP](https://vercel.com/docs/agent-resources/vercel-mcp) | [deployment.md](https://github.com/ai-driven-dev/framework/blob/next/plugins/aidd-context/skills/02-project-memory/assets/templates/memory/deployment/deployment.md) |
+> Releases and deployment logs; environments and pipeline in [deployment.md](https://github.com/ai-driven-dev/framework/blob/next/plugins/aidd-context/skills/02-project-memory/assets/templates/memory/deployment/deployment.md).
+
+| Service | Usage | CLI | MCP or native tool |
+| --- | --- | --- | --- |
+| Vercel | Deploy and read deployment logs | [`vercel`](https://vercel.com/docs/cli) | [Vercel MCP](https://vercel.com/docs/agent-resources/vercel-mcp) |
 
 **Database**
 
-| Service | Usage | CLI | MCP or native tool | Memory |
-| --- | --- | --- | --- | --- |
-| Supabase | Migrations, local development, database exploration | [`supabase`](https://supabase.com/docs/reference/cli/introduction) for migrations and local development | [Supabase MCP](https://supabase.com/docs/guides/ai-tools/mcp) for exploration | [database.md](https://github.com/ai-driven-dev/framework/blob/next/plugins/aidd-context/skills/02-project-memory/assets/templates/memory/database/database.md) |
+> Migrations and database exploration; data model and conventions in [database.md](https://github.com/ai-driven-dev/framework/blob/next/plugins/aidd-context/skills/02-project-memory/assets/templates/memory/database/database.md).
+
+| Service | Usage | CLI | MCP or native tool |
+| --- | --- | --- | --- |
+| Supabase | Migrations, local development, database exploration | [`supabase`](https://supabase.com/docs/reference/cli/introduction) for migrations and local development | [Supabase MCP](https://supabase.com/docs/guides/ai-tools/mcp) for exploration |
 
 Add any other services your team uses to the relevant table.
 
