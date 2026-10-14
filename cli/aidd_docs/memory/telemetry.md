@@ -1,6 +1,6 @@
 # Telemetry
 
-How the `telemetry` context turns Claude Code's own session files into per-task token counts. A map to the code: formats, rules and stores are in [`usage-contract.md`](../../../aidd_docs/product/usage-contract.md).
+> For: contributors. A map to the code. Formats, rules and stores: [usage contract](../../../aidd_docs/product/usage-contract.md). Usage: [plugin README](../../../plugins/aidd-telemetry/README.md).
 
 ## Adding a tool
 
@@ -49,7 +49,11 @@ flowchart LR
 | Why a call is counted once | `domain/usage-fold.ts` |
 | Where a call's repository comes from | `application/directory-resolver.ts`, `domain/repository-identity.ts` |
 | Which task a call belongs to | `domain/report/attribution.ts`, `domain/declaration/binding-resolution.ts` |
-| What counts as consent, and where it is read | `domain/telemetry-consent.ts`, `infrastructure/git-consent-adapter.ts`; the rule that stores a call is `application/directory-resolver.ts`, its clone's identity `domain/consent/clone-identity.ts`, and when a clone consented `domain/consent/consent-history.ts` |
+| What counts as consent | `domain/telemetry-consent.ts`, `infrastructure/git-consent-adapter.ts` |
+| Whether a call is stored | `application/directory-resolver.ts` |
+| What a clone is | `domain/consent/clone-identity.ts` |
+| When a clone consented | `domain/consent/consent-history.ts`, `application/consent-log.ts` |
+| Which transcripts are read | `application/ingest-usage-use-case.ts`, `application/read-usage-use-case.ts` |
 | What `on` and `forget` clean up from an earlier measurement | `domain/legacy/`, `application/switch/`, `application/forget/` |
 | The report axes and the envelope | `domain/report/usage-report.ts`, `application/report/report-envelope.ts` |
 
