@@ -128,14 +128,14 @@ Add any other services your team uses to the relevant table. `—` means no opti
 2. Follow the linked guide for your chosen CLI, MCP or API and client; install only what is missing.
 3. Review the account, workspace and requested permissions, then authenticate; use read-only access when you only need reads.
 
-- **CLI / GitHub.** Install `gh` from its [guide](https://github.com/cli/cli#installation), then sign in and inspect the account:
+- **CLI / GitHub**: Install `gh` from its [guide](https://github.com/cli/cli#installation), then sign in and inspect the account:
 
   ```bash
   gh auth login
   gh auth status
   ```
 
-- **MCP / Figma in Claude Code.** Install the recommended plugin:
+- **MCP / Figma in Claude Code**: Install the recommended plugin:
 
   ```bash
   claude plugin install figma@claude-plugins-official
@@ -143,7 +143,7 @@ Add any other services your team uses to the relevant table. `—` means no opti
 
   Start a new session, run `/mcp`, select Figma, then **Authenticate**; other clients use [Figma's setup guide](https://developers.figma.com/docs/figma-mcp-server/remote-server-installation/).
 
-- **API / GitHub.** With a token configured as described in the [REST API quickstart](https://docs.github.com/en/rest/quickstart), read the account:
+- **API / GitHub**: With a token configured as described in the [REST API quickstart](https://docs.github.com/en/rest/quickstart), read the account:
 
   ```bash
   curl --fail --silent --show-error \
