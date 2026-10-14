@@ -102,6 +102,7 @@ function checkOrthogonality(filePath, content) {
   const lines = toLines(content);
   const exemptLines = surface.kind === "agent" ? permissionListLines(lines) : new Set();
 
+  // Unlike router coherence, read through fences: a fenced command is still one the model runs.
   return addressesIn(content)
     .filter(({ plugin, line }) => plugin !== surface.owner && !exemptLines.has(line))
     .map(({ plugin, line, text }) =>
@@ -166,22 +167,24 @@ function tableCells(line) {
   return line.trim().replace(/^\|/, "").replace(/\|$/, "").split("|").map((cell) => cell.trim());
 }
 
-/** Contiguous runs of table rows: one table's header never speaks for the next one's columns. */
+/** Contiguous runs of table rows with the index of their first line: one table's header never speaks for the next one's columns. */
 function tableBlocks(lines) {
   const blocks = [];
   let current = [];
+  let start = 0;
 
-  for (const line of lines) {
+  lines.forEach((line, index) => {
     if (TABLE_ROW.test(line)) {
+      if (current.length === 0) start = index;
       current.push(line);
-      continue;
+      return;
     }
     if (current.length > 0) {
-      blocks.push(current);
+      blocks.push({ start, lines: current });
       current = [];
     }
-  }
-  if (current.length > 0) blocks.push(current);
+  });
+  if (current.length > 0) blocks.push({ start, lines: current });
 
   return blocks;
 }
@@ -197,27 +200,33 @@ function declaredActionColumn(headerCells) {
 // --- Rule two: router coherence -------------------------------------------------------------
 
 /**
- * Names cited from the column a table calls `Action`. A run of rows with no separator beneath it
- * is that table resumed after a blank line, so it keeps the column its header declared.
+ * Names cited from the column a table calls `Action`, and the first line of each run of rows with
+ * no separator that follows such a table. A blank line ends a table, so that run is no table at all:
+ * read as one, a glossary below the router would donate its cells as citations.
  */
 function citationsFromActionColumns(sectionLines) {
   const cited = new Set();
+  const cutOff = [];
   let actionColumn = -1;
 
   for (const block of tableBlocks(sectionLines)) {
-    const rows = block.map(tableCells);
+    const rows = block.lines.map(tableCells);
     const declaresItsOwnColumns = rows.length > 1 && isSeparatorRow(rows[1]);
 
-    if (declaresItsOwnColumns) actionColumn = declaredActionColumn(rows[0]);
+    if (!declaresItsOwnColumns) {
+      if (actionColumn !== -1) cutOff.push(block.start);
+      continue;
+    }
+    actionColumn = declaredActionColumn(rows[0]);
     if (actionColumn === -1) continue;
 
-    for (const cells of declaresItsOwnColumns ? rows.slice(1) : rows) {
+    for (const cells of rows.slice(1)) {
       if (isSeparatorRow(cells)) continue;
       const cell = stripBackticks(cells[actionColumn] ?? "");
       if (CITATION_TOKEN.test(cell)) cited.add(cell.toLowerCase());
     }
   }
-  return cited;
+  return { cited, cutOff };
 }
 
 function matchesOf(pattern, text) {
@@ -230,12 +239,12 @@ function matchesOf(pattern, text) {
 
 /**
  * The three citation shapes. Only the `actions/<name>.md` path is read through a fence, because
- * `aidd-dev:10-todo` cites its one action that way; a backticked file name inside a fence is an
+ * `aidd-dev:10-batch` cites its one action that way; a backticked file name inside a fence is an
  * example. A word loose in prose is never a citation.
  */
-function citationsIn(blankedLines, rawLines) {
+function citationsIn(cited, blankedLines, rawLines) {
   return new Set([
-    ...citationsFromActionColumns(blankedLines),
+    ...cited,
     ...matchesOf(ACTION_PATH, rawLines.join("\n")),
     ...matchesOf(BACKTICKED_FILE_NAME, blankedLines.join("\n")),
   ]);
@@ -279,7 +288,17 @@ function checkRouterCoherence(filePath, content, actionFileNames) {
   }
 
   const { startIndex, endIndex, headingLine } = section;
-  const citations = citationsIn(lines.slice(startIndex, endIndex), rawLines.slice(startIndex, endIndex));
+  const sectionLines = lines.slice(startIndex, endIndex);
+  const { cited, cutOff } = citationsFromActionColumns(sectionLines);
+
+  // One refusal at the cut, not one per action the rows below it would have named.
+  if (cutOff.length > 0) {
+    const line = startIndex + cutOff[0] + 1;
+    const message = `${filePath}:${line} table rows with no separator follow the action table; a blank line ends a table, so remove it or give these rows their own header`;
+    return [violation("router-coherence", filePath, line, surface.owner, message)];
+  }
+
+  const citations = citationsIn(cited, sectionLines, rawLines.slice(startIndex, endIndex));
   const sharedStems = ambiguousStems(names);
 
   return names

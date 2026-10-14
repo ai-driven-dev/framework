@@ -134,11 +134,24 @@ function describe(shape, omit) {
   }`;
 }
 
-test("every shape that cites all its actions is silent", () => {
+/** A blank line inside the router table is built only when the row it precedes is kept. */
+function isCut(shape, omit) {
+  return shape.splitAfter !== undefined && omit !== NAMES[shape.splitAfter];
+}
+
+function refusedOnceAtTheCut(violations) {
+  return violations.length === 1 && /no separator/.test(violations[0].message);
+}
+
+test("every unsplit shape that cites all its actions is silent, and every split one is refused at the cut", () => {
   const failures = [];
   for (const shape of shapes()) {
     const content = buildSkill({ ...shape, names: NAMES, omit: null });
     const violations = checkRouterCoherence(FILE, content, NAMES);
+    if (isCut(shape, null)) {
+      if (!refusedOnceAtTheCut(violations)) failures.push(`${describe(shape)} => ${violations.length} violations`);
+      continue;
+    }
     if (violations.length !== 0) {
       failures.push(`${describe(shape)} => ${violations.map((v) => v.message).join(" | ")}`);
     }
@@ -146,12 +159,16 @@ test("every shape that cites all its actions is silent", () => {
   assert.deepEqual(failures, [], `a router shape was refused although it cites every action:\n${failures.join("\n")}`);
 });
 
-test("every shape that drops one citation yields exactly that one violation", () => {
+test("every unsplit shape that drops one citation yields exactly that one violation", () => {
   const failures = [];
   for (const shape of shapes()) {
     for (const omit of NAMES) {
       const content = buildSkill({ ...shape, names: NAMES, omit });
       const violations = checkRouterCoherence(FILE, content, NAMES);
+      if (isCut(shape, omit)) {
+        if (!refusedOnceAtTheCut(violations)) failures.push(`${describe(shape, omit)} => ${violations.length} violations`);
+        continue;
+      }
       if (violations.length !== 1) {
         failures.push(`${describe(shape, omit)} => ${violations.length} violations`);
         continue;
@@ -226,9 +243,9 @@ test("every router in the tree cites every action it provides", () => {
 });
 
 test("removing a real router's citation is caught, for every action in the tree", () => {
-  // `aidd-dev:10-todo` names its one action as a fenced path rather than a table row, so there
+  // `aidd-dev:10-batch` names its one action as a fenced path rather than a table row, so there
   // is no row to remove and nothing to catch. It is the one documented exception.
-  const FENCED_PATH_SKILL = "plugins/aidd-dev/skills/10-todo/SKILL.md";
+  const FENCED_PATH_SKILL = "plugins/aidd-dev/skills/10-batch/SKILL.md";
   const missed = [];
   let checked = 0;
 

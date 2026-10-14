@@ -1,0 +1,23 @@
+{
+  "command": [
+    "/usr/bin/sandbox-exec",
+    "-f",
+    "/private/tmp/aidd-oct11-cursor-native-FEFX3q/network-filesystem.sb",
+    "/Users/baptistelafourcade/.local/bin/cursor-agent",
+    "--workspace",
+    "/private/tmp/aidd-oct11-cursor-native-FEFX3q/project",
+    "--trust",
+    "--sandbox",
+    "enabled",
+    "--model",
+    "auto",
+    "-p",
+    "--output-format",
+    "stream-json",
+    "Add an exported function invoiceReference(prefix: string, sequence: number): string in the new file src/domain/invoice-reference.ts. Return prefix followed by a hyphen followed by sequence. Keep the change minimal. Do not add tests or modify other files."
+  ],
+  "cwd": "/private/tmp/aidd-oct11-cursor-native-FEFX3q/project",
+  "timeoutSeconds": 90,
+  "model": "auto",
+  "auth": "existing access token in memory only; API keys absent; credential memory store"
+}

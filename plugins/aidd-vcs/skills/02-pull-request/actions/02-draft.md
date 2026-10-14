@@ -14,6 +14,10 @@ The proposed title, body, and base, approved by the user.
 
 1. **Template.** Load the request template, the project's own when set, else the bundled [pull_request.md](../assets/pull_request.md).
 2. **Write.** Draft a concise title and a body following the template from the change summary. Link every changed `**/qa/*.webm` under the template's testing or verification section.
+   - Give the fewest concrete verification steps needed for the changed behavior.
+     - State the expected result for each step.
+     - Omit generic CI summaries.
+     - Label scenarios that were not run.
 3. **Confirm.** Show the title, body, and base, apply any overrides, and wait for approval.
 
 ## Test

@@ -2,8 +2,8 @@ import "../../../../../src/contexts/tools/domain/profiles/cursor/profile.js";
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { UserPluginDistributionLoader } from "../../../../../src/contexts/framework/application/ownership/user-plugin-distribution-loader.js";
 import { UserPluginFileUpdater } from "../../../../../src/contexts/framework/application/ownership/user-plugin-file-updater.js";
+import { PluginDistributionLoader } from "../../../../../src/contexts/framework/application/plugin/plugin-distribution-loader.js";
 import { InstalledPlugin } from "../../../../../src/contexts/framework/domain/plugins/installed-plugin.js";
 import { PluginDistribution } from "../../../../../src/contexts/translate/domain/plugin-distribution.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
@@ -25,7 +25,7 @@ function fixture(installedVersion = "0.0.1") {
   });
   const updater = new UserPluginFileUpdater(
     fs,
-    new UserPluginDistributionLoader(new FixturePluginFetcher(), { read: async () => dist }),
+    new PluginDistributionLoader(new FixturePluginFetcher(), { read: async () => dist }),
     hasher
   );
   const plugin = InstalledPlugin.fromMetadata(

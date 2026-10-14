@@ -1,0 +1,86 @@
+[
+  {
+    "case": "edited native third source",
+    "exit": 1,
+    "error": "Edited or unowned native output: .cursor/rules/09-other/9-api-documentation.mdc. Restore the generated file; edit the canonical source instead.",
+    "unchangedProjectBytes": true,
+    "existingCanonicalSources": 3
+  },
+  {
+    "case": "duplicate shared block",
+    "exit": 1,
+    "error": "Duplicate, incomplete or legacy AIDD rule contribution; restore it explicitly. No automatic migration.",
+    "unchangedProjectBytes": true,
+    "existingCanonicalSources": 3
+  },
+  {
+    "case": "incomplete shared block",
+    "exit": 1,
+    "error": "Duplicate, incomplete or legacy AIDD rule contribution; restore it explicitly. No automatic migration.",
+    "unchangedProjectBytes": true,
+    "existingCanonicalSources": 3
+  },
+  {
+    "case": "symlink generated target",
+    "exit": 1,
+    "error": "Symlink target or ancestor: .github/instructions/09-api-documentation.instructions.md",
+    "unchangedProjectBytes": true,
+    "existingCanonicalSources": 3
+  },
+  {
+    "case": "symlink canonical source",
+    "exit": 1,
+    "error": "Symlink target or ancestor: aidd_docs/rules/09-other/9-api-documentation.md",
+    "unchangedProjectBytes": true,
+    "existingCanonicalSources": 3
+  },
+  {
+    "case": "Codex root override",
+    "exit": 1,
+    "error": "Root AGENTS.override.md masks Codex AGENTS.md; resolve the override explicitly.",
+    "unchangedProjectBytes": true,
+    "existingCanonicalSources": 3
+  },
+  {
+    "case": "Codex local limit",
+    "exit": 1,
+    "error": "Local AGENTS.md exceeds Codex's default 32 KiB combined instruction limit.",
+    "unchangedProjectBytes": true,
+    "existingCanonicalSources": 3
+  },
+  {
+    "case": "malformed staged JSON",
+    "exit": 1,
+    "error": "Expected property name or '}' in JSON at position 1 (line 1 column 2)",
+    "unchangedProjectBytes": true,
+    "existingCanonicalSources": 3
+  },
+  {
+    "case": "invalid UTF8 staged JSON",
+    "exit": 1,
+    "error": "Invalid UTF-8 in /private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/negative-input.json; refusing byte loss.",
+    "unchangedProjectBytes": true,
+    "existingCanonicalSources": 3
+  },
+  {
+    "case": "lone surrogate metadata",
+    "exit": 1,
+    "error": "Unpaired Unicode surrogate; UTF-8 text must roundtrip.",
+    "unchangedProjectBytes": true,
+    "existingCanonicalSources": 3
+  },
+  {
+    "case": "edited separator multi-source delete",
+    "exit": 1,
+    "error": "Edited AIDD rule contribution; restore it and edit canonical sources instead.",
+    "unchangedProjectBytes": true,
+    "existingCanonicalSources": 3
+  },
+  {
+    "case": "unsafe manual canonical publish",
+    "exit": 1,
+    "error": "Reserved AIDD rule marker outside a fenced example.",
+    "unchangedProjectBytes": true,
+    "existingCanonicalSources": 3
+  }
+]

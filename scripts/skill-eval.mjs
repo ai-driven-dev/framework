@@ -18,7 +18,7 @@ const CASES = JSON.parse(readFileSync(join(HERE, "skill-eval", "cases.json"), "u
 const args = process.argv.slice(2);
 const JUDGE = args.includes("--judge");
 const KEEP = args.includes("--keep");
-const MODEL = (args.find((a) => a.startsWith("--model=")) || "--model=sonnet").split("=")[1];
+const MODEL = args.find((a) => a.startsWith("--model="))?.slice("--model=".length);
 const JOBS = Number((args.find((a) => a.startsWith("--jobs=")) || "--jobs=4").split("=")[1]);
 const filter = args.find((a) => !a.startsWith("--"));
 const REPEAT = Number((args.find((a) => a.startsWith("--repeat=")) || "--repeat=1").split("=")[1]);
@@ -40,7 +40,7 @@ function runClaude(prompt, cwd) {
     // settings (hooks, output modes) so results are reproducible across machines.
     const child = spawn(
       "claude",
-      ["-p", prompt, "--model", MODEL, "--setting-sources", "project,local", "--add-dir", cwd, "--dangerously-skip-permissions"],
+      ["-p", prompt, ...(MODEL ? ["--model", MODEL] : []), "--setting-sources", "project,local", "--add-dir", cwd, "--dangerously-skip-permissions"],
       { cwd, timeout: 600000 },
     );
     let out = "";
@@ -176,7 +176,7 @@ async function runAll(list, jobs) {
   return out;
 }
 
-console.log(`Running ${cases.length} case(s) on ${MODEL}, ${JOBS} at a time${JUDGE ? ", with --judge" : ""}.\n`);
+console.log(`Running ${cases.length} case(s) on ${MODEL || "the host default model"}, ${JOBS} at a time${JUDGE ? ", with --judge" : ""}.\n`);
 const results = await runAll(cases, JOBS);
 const failed = results.filter(({ checks }) => checks.some((k) => !k.ok)).length;
 

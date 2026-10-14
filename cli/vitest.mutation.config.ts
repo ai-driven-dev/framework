@@ -2,7 +2,7 @@ import { defineConfig } from "vitest/config";
 import { UnloadableFileAsFailedTest } from "./tests/helpers/unloadable-file-as-failed-test.js";
 import { textLoader } from "./tests/helpers/vitest-text-loader.js";
 
-const TEXT_EXTENSIONS = [".md", ".toml"] as const;
+const TEXT_EXTENSIONS = [".md", ".toml", ".txt"] as const;
 
 /**
  * The projects a mutation run may use: the two that measure behaviour.
@@ -15,8 +15,8 @@ const TEXT_EXTENSIONS = [".md", ".toml"] as const;
  * The e2e project is left out for the opposite reason: it spawns the built binary, which
  * no mutant reaches, so every mutant would survive it and dilute the score with noise.
  *
- * A plain `test.exclude` does not do this. The workspace file defines the projects, and
- * it wins over a config passed with `--config`; only another workspace replaces it.
+ * A separate config limits `test.projects` to source tests; mutation runs must never
+ * inherit the architecture or subprocess e2e projects from the ordinary suite.
  *
  * A test file that fails to load still counts. Stryker's vitest runner reads only the tests it
  * collected, and a file whose import throws collects none, so a static mutant that stops a
@@ -29,6 +29,7 @@ export default defineConfig({
     reporters: ["default", new UnloadableFileAsFailedTest()],
     projects: [
       {
+        extends: false,
         plugins: [textLoader(TEXT_EXTENSIONS)],
         test: {
           name: "unit",
@@ -39,6 +40,7 @@ export default defineConfig({
         },
       },
       {
+        extends: false,
         plugins: [textLoader(TEXT_EXTENSIONS)],
         test: {
           name: "integration",

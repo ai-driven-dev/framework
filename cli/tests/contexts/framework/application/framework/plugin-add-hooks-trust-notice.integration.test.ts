@@ -1,3 +1,4 @@
+import { PluginDistributionLoader } from "../../../../../src/contexts/framework/application/plugin/plugin-distribution-loader.js";
 /** A hook a native tool delivers is not a skip but a component with a precondition: Codex
  * gates every hook behind a per-hook trust grant it can decline in silence. */
 import "../../../../../src/contexts/tools/domain/profiles/codex/profile.js";
@@ -24,8 +25,7 @@ async function installWithLogger(toolId: "codex" | "claude") {
   const useCase = new PluginAddUseCase(
     deps.fs,
     deps.manifestRepo,
-    deps.pluginFetcher,
-    new PluginDistributionReaderAdapter(deps.fs),
+    new PluginDistributionLoader(deps.pluginFetcher, new PluginDistributionReaderAdapter(deps.fs)),
     deps.hasher,
     logger,
     new InMemoryMarketplaceRegistry(),

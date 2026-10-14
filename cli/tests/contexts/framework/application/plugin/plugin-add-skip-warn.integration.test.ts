@@ -1,3 +1,4 @@
+import { PluginDistributionLoader } from "../../../../../src/contexts/framework/application/plugin/plugin-distribution-loader.js";
 /** Every registered tool now runs what a plugin's `hooks/` ships, so no live fixture reaches
  * `collectHooksSkips`'s non-empty branch; the warn format is pinned tool-agnostically below. */
 import "../../../../../src/contexts/tools/domain/profiles/opencode/profile.js";
@@ -26,8 +27,10 @@ describe("PluginAddUseCase skip warnings", () => {
       const useCase = new PluginAddUseCase(
         deps.fs,
         deps.manifestRepo,
-        deps.pluginFetcher,
-        new PluginDistributionReaderAdapter(deps.fs),
+        new PluginDistributionLoader(
+          deps.pluginFetcher,
+          new PluginDistributionReaderAdapter(deps.fs)
+        ),
         deps.hasher,
         capturingLogger,
         registry,

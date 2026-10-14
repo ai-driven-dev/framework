@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
+import { PluginDistributionLoader } from "../../../../src/contexts/framework/application/plugin/plugin-distribution-loader.js";
 import "../../../../src/contexts/tools/domain/profiles/claude/profile.js";
 import "../../../../src/contexts/tools/domain/profiles/codex/profile.js";
 import "../../../../src/contexts/tools/domain/profiles/opencode/profile.js";
@@ -32,8 +33,7 @@ describe("UninstallUseCase — plugin scope", () => {
     await new PluginAddUseCase(
       deps.fs,
       deps.manifestRepo,
-      deps.pluginFetcher,
-      reader,
+      new PluginDistributionLoader(deps.pluginFetcher, reader),
       deps.hasher,
       deps.logger,
       deps.marketplaceRegistry,

@@ -38,6 +38,15 @@ test("referencedPaths ignores what only looks like a path", () => {
   assert.deepEqual(referencedPaths(content), []);
 });
 
+test("referencedPaths skips a path the reader creates, never this repository's own content", () => {
+  // `.aidd/config.json` is the telemetry opt-in switch a repository commits to turn measurement
+  // on. This repository has not, so its absence is the state the prose describes — and the
+  // anchor exists as soon as a contributor runs the CLI here, which is what made this a refusal.
+  const content = "Opt in by committing `.aidd/config.json` with `telemetry.enabled: true`.";
+
+  assert.deepEqual(referencedPaths(content, new Set([".aidd"])), []);
+});
+
 test("deadReferences names the file, the line and the path", () => {
   const tempDir = fs.mkdtempSync(path.join(root, "scripts/__tests__/.tmp-check-referenced-paths-"));
 

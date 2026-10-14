@@ -11,7 +11,7 @@ Unify **engineering teams** around **standardized workflows** and **shared best 
 🧱 **IDE agnostic** · 🏗️ **Legacy systems** · 🌱 **Token-optimized** · 🇫🇷 **Made in France**
 
 <p>
-  <!--counts:start--><kbd>9 plugins</kbd> · <kbd>51 skills</kbd> · <kbd>4 agents</kbd><!--counts:end-->
+  <!--counts:start--><kbd>9 plugins</kbd> · <kbd>52 skills</kbd> · <kbd>4 agents</kbd><!--counts:end-->
 </p>
 
 [![Open Source](https://img.shields.io/badge/Open_Source-Yes-yellow?logo=open-source-initiative&logoColor=white)](https://opensource.org/)
@@ -193,7 +193,7 @@ Three ways in — pick one:
 | --- | --- | --- |
 | 🧭 **Guided onboarding** | `/aidd-context:00-onboard` | First time, or unsure what to run — it inspects the project and routes you. |
 | 🧠 **Project memory** | `/aidd-context:02-project-memory` | Build the project memory bank by hand. |
-| ⚙️ **Feature flow** | `/aidd-orchestrator:01-sdlc` | Autonomously ship a feature end to end (frame → deliver → check → PR). |
+| ⚙️ **Feature flow** | `/aidd-orchestrator:01-sdlc` | Ship a feature end to end, autonomous by default or supervised with `interactive` (frame → deliver → check → PR). |
 
 The full loop, and how onboarding sets it up:
 
@@ -236,7 +236,7 @@ Start with a functional need or User Story, then track it as an issue or ticket
 before planning. Shipping follows the project's own delivery process. Capture a
 learning only when it is durable enough to improve the next feature.
 
-> 🍳 **More flows** → bundled recipes: [start a project](plugins/aidd-context/skills/12-cook/assets/recipes/start-a-project.md), [ship a feature](plugins/aidd-context/skills/12-cook/assets/recipes/ship-a-feature.md), and more.
+> 🍳 **More flows** → bundled recipes: [MCP installations](plugins/aidd-context/skills/12-cook/assets/recipes/mcp-installation.md), [token optimization](plugins/aidd-context/skills/12-cook/assets/recipes/token-optimization.md), and [installing AIDDy](plugins/aidd-context/skills/12-cook/assets/recipes/install-aiddy-in-codex.md).
 
 ## 🧩 Plugins
 
@@ -266,7 +266,7 @@ Code transformation: plan, implement, assert, audit, review, test, refactor, deb
 
 ### 🌿 [aidd-vcs](plugins/aidd-vcs/README.md)
 
-`5 skills` · stable
+`6 skills` · stable
 
 Repo init, commits, pull / merge requests, release tags, issues.
 
@@ -338,10 +338,10 @@ Full catalog → [`CATALOG.md`](docs/CATALOG.md).
 
 | | |
 | --- | --- |
-| 🍳 **Recipes** | Bundled how-to sheets: [start a project](plugins/aidd-context/skills/12-cook/assets/recipes/start-a-project.md), [ship a feature](plugins/aidd-context/skills/12-cook/assets/recipes/ship-a-feature.md), [MCP installations](plugins/aidd-context/skills/12-cook/assets/recipes/mcp-installation.md), [token optimization](plugins/aidd-context/skills/12-cook/assets/recipes/token-optimization.md). Project recipes created by cook live in `aidd_docs/recipes/`. |
+| 🍳 **Recipes** | Bundled how-to sheets: [MCP installations](plugins/aidd-context/skills/12-cook/assets/recipes/mcp-installation.md), [token optimization](plugins/aidd-context/skills/12-cook/assets/recipes/token-optimization.md), [install AIDDy](plugins/aidd-context/skills/12-cook/assets/recipes/install-aiddy-in-codex.md). Project recipes created by cook live in `aidd_docs/recipes/`. |
 | 🏛️ **[Architecture](docs/ARCHITECTURE.md)** | How the framework composes: plugins, skills, hooks, agents. |
 | 🧩 **[Create a plugin](docs/CREATE_PLUGIN.md)** | Build and publish your own. |
-| 🛒 **[Marketplace](docs/MARKETPLACE.md)** | Install scopes, versioning, LLM tiers. |
+| 🛒 **[Marketplace](docs/MARKETPLACE.md)** | Install scopes and versioning. |
 | ❓ **[FAQ & Troubleshooting](docs/FAQ.md)** · **[Glossary](docs/GLOSSARY.md)** | Common questions, fixes, and terms. |
 
 ## 🔒 Trust and safety

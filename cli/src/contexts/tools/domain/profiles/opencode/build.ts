@@ -20,6 +20,8 @@ import { buildOpencodeFlatConfig } from "../../formats/opencode-mcp-merge.js";
 import { generateOpencodeHooksBridge } from "./opencode-hooks-bridge.js";
 import {
   makeOpencodeHooksBridgePath,
+  OPENCODE_EVENTS_ASSET,
+  OPENCODE_EVENTS_PATH,
   OPENCODE_FLAT_HOOKS_DIR,
   OPENCODE_HOOKS_DIR,
   OPENCODE_PLUGIN_ENTRY_BASENAME,
@@ -197,6 +199,16 @@ export function buildOpencodeFlatContract(): ToolBuildContract {
       const baseAsset = assetProvider.loadConfigAsset("opencode", "opencode.json");
       const base = typeof baseAsset === "string" ? baseAsset : JSON.stringify(baseAsset);
       await fs.writeFile(configPath, buildOpencodeFlatConfig(base, existing, incoming));
+      for (const plugin of builtPlugins) {
+        const native = `${outDir}/${OPENCODE_FLAT_HOOKS_DIR}${plugin}.js`;
+        const generated = `${outDir}/${makeOpencodeHooksBridgePath(plugin)}`;
+        if (!(await fs.fileExists(native)) && !(await fs.fileExists(generated))) continue;
+        const events = assetProvider.loadConfigAsset("opencode", OPENCODE_EVENTS_ASSET);
+        if (typeof events !== "string")
+          throw new TypeError("OpenCode event adapter must be source text");
+        await fs.writeFile(`${outDir}/${OPENCODE_EVENTS_PATH}`, events);
+        return 2;
+      }
       return 1;
     },
   };

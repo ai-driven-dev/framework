@@ -1,0 +1,16 @@
+✔ ownership rejects symlink and nonregular markers (2.736084ms)
+✔ regular reads reject symlinks without reading their targets (6.160792ms)
+✔ ownership reads the validated marker even if its pathname is replaced (1.565541ms)
+✔ read stays bound to the validated descriptor when its pathname is replaced (2.206958ms)
+✔ descriptor closes after successful read (1.650667ms)
+✔ descriptor closes after nonregular (1.180167ms)
+✔ descriptor closes after fstatSync (3.5755ms)
+✔ descriptor closes after readFileSync (1.7875ms)
+ℹ tests 8
+ℹ suites 0
+ℹ pass 8
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 89.994167

@@ -1,3 +1,4 @@
+import { PluginDistributionLoader } from "../../../../../src/contexts/framework/application/plugin/plugin-distribution-loader.js";
 /** Installing a plugin carrying hooks/ against OpenCode delivers the script, namespaced under
  * .opencode/hooks/<plugin>/ like .claude/ and .cursor/ already are. Never .opencode/plugin/,
  * which OpenCode's own loader imports in-process, where a plain hook script kills the host. */
@@ -24,8 +25,7 @@ async function installSamplePlugin() {
   const useCase = new PluginAddUseCase(
     deps.fs,
     deps.manifestRepo,
-    deps.pluginFetcher,
-    new PluginDistributionReaderAdapter(deps.fs),
+    new PluginDistributionLoader(deps.pluginFetcher, new PluginDistributionReaderAdapter(deps.fs)),
     deps.hasher,
     capturingLogger,
     registry,
@@ -77,6 +77,9 @@ describe("PluginAddUseCase OpenCode event bridge (Lot B)", () => {
     const writtenPaths = deps.fs.listUnder(PROJECT_ROOT);
     expect(writtenPaths).toContain(
       posix.join(PROJECT_ROOT, ".opencode", "plugin", "sample-plugin-hooks.js")
+    );
+    expect(writtenPaths).toContain(
+      posix.join(PROJECT_ROOT, ".opencode", "hooks", "opencode-events.js")
     );
   });
 });

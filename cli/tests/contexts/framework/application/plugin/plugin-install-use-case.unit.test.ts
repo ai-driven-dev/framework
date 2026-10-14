@@ -1,7 +1,7 @@
 import "../../../../../src/contexts/tools/domain/profiles/claude/profile.js";
 import "../../../../../src/contexts/tools/domain/profiles/cursor/profile.js";
 import { join } from "node:path";
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it, type Mock, vi } from "vitest";
 import type { MarketplaceTrustStore } from "../../../../../src/contexts/distribution/domain/ports/marketplace-trust-store.js";
 import type { PluginAdd } from "../../../../../src/contexts/framework/application/plugin/plugin-add-use-case.js";
 import type { PluginInstallFromMarketplace } from "../../../../../src/contexts/framework/application/plugin/plugin-install-from-marketplace-use-case.js";
@@ -44,9 +44,9 @@ function makeSilentPrompter(): Prompter {
 }
 
 function makeUseCases(overrides?: {
-  pickExecute?: ReturnType<typeof vi.fn>;
-  addExecute?: ReturnType<typeof vi.fn>;
-  marketplaceExecute?: ReturnType<typeof vi.fn>;
+  pickExecute?: Mock;
+  addExecute?: Mock;
+  marketplaceExecute?: Mock;
   trustStore?: MarketplaceTrustStore;
   prompter?: Prompter;
   manifestRepo?: InMemoryManifestRepository;

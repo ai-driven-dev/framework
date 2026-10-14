@@ -47,6 +47,10 @@ function makeInstalledRepo() {
   const scriptsDir = path.join(repo, ".opencode", "hooks", "aidd-telemetry");
   fs.mkdirSync(pluginDir, { recursive: true });
   fs.mkdirSync(scriptsDir, { recursive: true });
+  fs.copyFileSync(
+    path.resolve(__dirname, "../../cli/assets/configs/opencode/opencode-events.js.txt"),
+    path.join(repo, ".opencode", "hooks", "opencode-events.js")
+  );
   const hooksSrc = path.dirname(PLUGIN_SOURCE);
   for (const entry of fs.readdirSync(hooksSrc, { withFileTypes: true })) {
     if (entry.name === "hooks.json") continue;
@@ -142,4 +146,176 @@ test("opencode-plugin.js: an event whose own shape breaks journal call resolutio
   // into OpenCode's in-process event loop.
   await assert.doesNotReject(hooks.event({ event: null }));
   assert.deepEqual(readRunLines(repo), [], "a swallowed error must write no journal line either");
+});
+
+test("opencode-plugin.js: default server preserves V1 journal writes", async () => {
+  const { repo, esmTwin } = makeInstalledRepo();
+  const { default: plugin } = await import(pathToFileURL(esmTwin).href);
+
+  assert.equal(plugin.id, "aidd-telemetry");
+  assert.deepEqual(readRunLines(repo), []);
+  const hooks = await plugin.server({ directory: repo });
+  await hooks.event({
+    event: { type: "session.idle", properties: { sessionID: "ses_default_v1" } },
+  });
+
+  assert.deepEqual(
+    readRunLines(repo).map((line) => line.type),
+    ["session_start", "turn_end"]
+  );
+});
+
+test("opencode-plugin.js: V2 setup returns promptly, handles raw events and cancels its stream", {
+  timeout: 5000,
+}, async () => {
+  const { repo, esmTwin } = makeInstalledRepo();
+  const { default: plugin } = await import(pathToFileURL(esmTwin).href);
+  let signal;
+  let streamClosed = false;
+  const cleanup = await plugin.setup({
+    location: { directory: repo },
+    event: {
+      subscribe(options) {
+        signal = options.signal;
+        return (async function* () {
+          try {
+            yield null;
+            yield { type: "server.connected" };
+            yield {
+              type: "session.created",
+              data: { sessionID: "ses_default_v2", location: { directory: repo } },
+            };
+            const call = { sessionID: "ses_default_v2", assistantMessageID: "msg_1", id: "call_1" };
+            const failed = { ...call, id: "call_failed" };
+            yield { type: "session.tool.input.started", data: { ...failed, name: "read" } };
+            yield {
+              type: "session.tool.called",
+              data: {
+                ...failed,
+                input: { path: "aidd_docs/tasks/2026_10/failed/plan.md" },
+                executed: false,
+              },
+            };
+            yield { type: "session.tool.failed", data: { ...failed, error: "read failed" } };
+            yield {
+              type: "session.tool.success",
+              data: { ...failed, content: [], executed: false },
+            };
+            yield { type: "session.tool.input.started", data: { ...call, name: "read" } };
+            yield {
+              type: "session.tool.called",
+              data: {
+                ...call,
+                input: { path: "aidd_docs/tasks/2026_10/plugin-loading/plan.md" },
+                executed: false,
+              },
+            };
+            yield {
+              type: "session.tool.success",
+              data: { ...call, content: [{ type: "text", text: "task" }], executed: false },
+            };
+            yield {
+              type: "session.tool.success",
+              data: { ...call, content: [{ type: "text", text: "task" }], executed: false },
+            };
+            yield { type: "session.execution.succeeded", data: { sessionID: "ses_default_v2" } };
+            await new Promise((resolve) =>
+              signal.addEventListener("abort", resolve, { once: true })
+            );
+            throw new Error("subscription aborted");
+          } finally {
+            streamClosed = true;
+          }
+        })();
+      },
+    },
+  });
+
+  assert.equal(typeof cleanup, "function");
+  for (let attempt = 0; attempt < 100 && readRunLines(repo).length < 3; attempt++) {
+    await new Promise((resolve) => setTimeout(resolve, 10));
+  }
+  const lines = readRunLines(repo);
+  assert.deepEqual(
+    lines.map((line) => line.type),
+    ["session_start", "task_declared", "turn_end"]
+  );
+  assert.equal(lines[0].vendor_id, "ses_default_v2");
+  assert.equal(lines[1].path, "aidd_docs/tasks/2026_10/plugin-loading/plan.md");
+  cleanup();
+  await new Promise((resolve) => setImmediate(resolve));
+  assert.equal(signal.aborted, true);
+  assert.equal(streamClosed, true);
+});
+
+test("opencode-plugin.js: a failed V2 subscription never rejects into the host", async () => {
+  const { repo, esmTwin } = makeInstalledRepo();
+  const { default: plugin } = await import(pathToFileURL(esmTwin).href);
+  let signal;
+  const cleanup = await plugin.setup({
+    location: { directory: repo },
+    event: {
+      subscribe: async function* (options) {
+        signal = options.signal;
+        yield { type: "server.connected" };
+        throw new Error("stream unavailable");
+      },
+    },
+  });
+
+  await new Promise((resolve) => setImmediate(resolve));
+  assert.equal(signal.aborted, true);
+  cleanup();
+  assert.deepEqual(readRunLines(repo), []);
+});
+
+test("opencode-plugin.js: V2 failed and interrupted turns end on their own session, shutdown leaves it resumable", async () => {
+  for (const [type, reason, expected] of [
+    ["session.execution.failed", undefined, ["session_start", "turn_end"]],
+    ["session.execution.interrupted", "user", ["session_start", "turn_end"]],
+    ["session.execution.interrupted", "shutdown", ["session_start"]],
+  ]) {
+    const { repo, esmTwin } = makeInstalledRepo();
+    const { default: plugin } = await import(pathToFileURL(esmTwin).href);
+    let done;
+    const streamed = new Promise((resolve) => {
+      done = resolve;
+    });
+    const cleanup = await plugin.setup({
+      location: { directory: repo },
+      event: {
+        subscribe: async function* () {
+          yield {
+            type: "session.created",
+            data: { sessionID: "ses_child", location: { directory: repo } },
+          };
+          const call = {
+            sessionID: "ses_child",
+            assistantMessageID: "msg_pending",
+            id: "call_pending",
+          };
+          yield { type: "session.tool.input.started", data: { ...call, name: "read" } };
+          yield {
+            type: "session.tool.called",
+            data: {
+              ...call,
+              input: { path: "aidd_docs/tasks/2026_10/stale/plan.md" },
+              executed: false,
+            },
+          };
+          yield { type, data: { sessionID: "ses_child", reason, error: "tool failed" } };
+          yield { type: "session.tool.success", data: { ...call, content: [], executed: false } };
+          done();
+        },
+      },
+    });
+    await streamed;
+    cleanup();
+    const lines = readRunLines(repo);
+    assert.deepEqual(
+      lines.map((line) => line.type),
+      expected
+    );
+    assert.equal(lines[0].vendor_id, "ses_child");
+  }
 });

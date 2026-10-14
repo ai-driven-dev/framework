@@ -1,0 +1,19 @@
+
+Interrupted while running:
+
+⚠ /Users/baptistelafourcade/orca/workspaces/framework/basketstar/scripts/__tests__/rule-generation.test.js (scripts/__tests__/rule-generation.test.js:1:1)
+✖ /Users/baptistelafourcade/orca/workspaces/framework/basketstar/scripts/__tests__/rule-generation.test.js (73440.894166ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 0
+ℹ cancelled 1
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 73447.093375
+
+✖ failing tests:
+
+test at scripts/__tests__/rule-generation.test.js:1:1
+✖ /Users/baptistelafourcade/orca/workspaces/framework/basketstar/scripts/__tests__/rule-generation.test.js (73440.894166ms)
+  'Promise resolution is still pending but the event loop has already resolved'

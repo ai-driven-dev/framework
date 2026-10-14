@@ -7,3 +7,6 @@
 # "a test reads this file's raw bytes", which is true of any fixture format, not a property
 # of JSON specifically.
 tests/fixtures/** text eol=lf
+
+# Raw config assets are embedded in the bundle; CRLF changes their bytes and its size.
+assets/configs/** text eol=lf

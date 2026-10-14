@@ -1,0 +1,34 @@
+{
+  "command": [
+    "/usr/bin/sandbox-exec",
+    "-f",
+    "/private/tmp/aidd-oct11-cursor-mGLpBV/network.sb",
+    "/Users/baptistelafourcade/.local/bin/cursor-agent",
+    "--endpoint",
+    "http://127.0.0.1:53384",
+    "--print",
+    "--output-format",
+    "stream-json",
+    "--mode",
+    "ask",
+    "--sandbox",
+    "enabled",
+    "--trust",
+    "--workspace",
+    "/private/tmp/aidd-oct11-cursor-mGLpBV/project",
+    "Return LOCAL_OK without using tools."
+  ],
+  "version": "2026.10.01-e373342",
+  "exit": 1,
+  "endpoint": "http://127.0.0.1:53384",
+  "nativeRequests": 1,
+  "networkPolicy": "(version 1) (allow default) (deny network*) (allow network-outbound (remote ip \"localhost:*\"))",
+  "credentials": "dummy only; memory store; no auth copied",
+  "modelInference": false,
+  "verdict": "endpoint receipt only; controlled protocol refusal",
+  "markersReceived": {
+    "AIDD_CURSOR_AGENTS_OCT11": false,
+    "AIDD_CURSOR_GLOBAL_OCT11": false,
+    "AIDD_CURSOR_DOMAIN_OCT11": false
+  }
+}

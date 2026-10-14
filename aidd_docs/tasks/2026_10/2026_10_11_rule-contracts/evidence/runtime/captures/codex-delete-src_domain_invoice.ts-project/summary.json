@@ -1,0 +1,20 @@
+{
+  "host": "codex",
+  "command": [
+    "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/lib/node_modules/@openai/codex/bin/codex.js",
+    "exec",
+    "--ephemeral",
+    "--ignore-rules",
+    "--color",
+    "never",
+    "--json",
+    "-C",
+    "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-rule-contract-runtime-wbbvbyva/projects/codex",
+    "Return LOCAL_OK and use no tools."
+  ],
+  "exit": 0,
+  "requests": 1,
+  "paths": [
+    "/v1/responses"
+  ]
+}

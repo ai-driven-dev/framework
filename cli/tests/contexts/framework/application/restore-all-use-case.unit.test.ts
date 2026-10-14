@@ -3,6 +3,7 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { RestoreAllUseCase } from "../../../../src/contexts/framework/application/global/restore-all-use-case.js";
 import { PluginAddUseCase } from "../../../../src/contexts/framework/application/plugin/plugin-add-use-case.js";
+import { PluginDistributionLoader } from "../../../../src/contexts/framework/application/plugin/plugin-distribution-loader.js";
 import { RestoreUseCase } from "../../../../src/contexts/framework/application/restore/restore-use-case.js";
 import { DetectPluginDriftUseCase } from "../../../../src/contexts/framework/application/shared/detect-plugin-drift-use-case.js";
 import { StatusUseCase } from "../../../../src/contexts/framework/application/status-use-case.js";
@@ -42,8 +43,7 @@ async function installPlugin(
   await new PluginAddUseCase(
     deps.fs,
     deps.manifestRepo,
-    deps.pluginFetcher,
-    pluginReader,
+    new PluginDistributionLoader(deps.pluginFetcher, pluginReader),
     deps.hasher,
     deps.logger,
     deps.marketplaceRegistry,
@@ -289,8 +289,7 @@ describe("RestoreAllUseCase — plugin materialization", () => {
     await new PluginAddUseCase(
       deps.fs,
       deps.manifestRepo,
-      deps.pluginFetcher,
-      reader,
+      new PluginDistributionLoader(deps.pluginFetcher, reader),
       deps.hasher,
       deps.logger,
       deps.marketplaceRegistry,

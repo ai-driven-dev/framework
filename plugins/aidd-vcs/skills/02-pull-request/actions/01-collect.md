@@ -14,7 +14,7 @@ The VCS tool, the head and base branches, and the commits and changed files sinc
 
 1. **Tool.** Use the VCS tool from project memory, else infer it from the remote URL.
 2. **Base.** Use a provided base, else resolve it per the project's branch convention, else the repo's default branch. Surface the base and why.
-3. **Gather.** Summarize the commits and changed files since the base.
+3. **Gather.** Summarize the change from the diff against the resolved base.
 
 ## Test
 

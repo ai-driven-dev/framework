@@ -16,4 +16,4 @@ Resolved plan on a feature branch, `status: in-progress`, or a missing-plan erro
 
 ## Rules
 
-- **Source.** Never fabricate a missing plan.
+- **Source.** Require a readable plan or inline content; report missing input instead of fabricating a plan.

@@ -32,6 +32,8 @@ Read only the next numbered action file in `actions/`.
 
 ## Transversal rules
 
-- **Ownership.** Whole-plan runners own integration and plan/phase lifecycle statuses; assigned-phase runners own only their phase status and skip prepare/finalize. Never change requirements or criteria; the caller retains final acceptance.
-- **Commits.** Follow caller policy; when authorized, commit each phase's code with its `done` status and the final plan status separately, excluding unrelated changes. Runtime markers need no separate commit.
-- **Delegation.** Only the primary caller may delegate; isolated agents never spawn agents.
+- **Ownership.** Whole-plan runners own integration and plan status; assigned-phase runners own only their phase status and skip prepare/finalize. The caller retains requirements, criteria, and final acceptance.
+- **Statuses.** Track plans through `pending → in-progress → implemented` (or `blocked`), phases through `pending → in-progress → done`; `in-progress` is a runtime marker, not a separate commit.
+- **Commits.** Follow user/project policy; when commits are authorized, make one local commit per validated task, grouping only inseparable tasks. Include its code, tests, and docs, exclude unrelated changes, and include `done` in the phase's last task commit. Commit `implemented` separately; push only when requested.
+- **Formatting.** Use project formatters or hooks instead of manual formatting.
+- **Delegation.** The primary caller owns delegation; isolated agents return their assigned work directly.

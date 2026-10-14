@@ -96,25 +96,34 @@ describe("UserManifestRepositoryAdapter", () => {
       const held = new Promise<void>((resolve) => {
         release = resolve;
       });
+      let ready = () => {};
+      const firstReady = new Promise<void>((resolve) => {
+        ready = resolve;
+      });
       const firstMutation = adapter.withExclusiveAccess(async () => {
         const manifest = (await adapter.load()) ?? Manifest.create();
         manifest.addTool("cursor", "1.0.0", []);
         await adapter.save(manifest);
+        ready();
         await held;
       });
-      await pause(20);
-      expect(existsSync(`${adapter.path}.lock`)).toBe(true);
       let secondEntered = false;
-      const secondMutation = second.withExclusiveAccess(async () => {
-        secondEntered = true;
-        const manifest = (await second.load()) ?? Manifest.create();
-        manifest.addTool("codex", "1.0.0", []);
-        await second.save(manifest);
-      });
-      await pause(150);
-      expect(secondEntered).toBe(false);
-      release();
-      await Promise.all([firstMutation, secondMutation]);
+      let secondMutation: Promise<void> | undefined;
+      try {
+        await Promise.race([firstReady, firstMutation]);
+        expect(existsSync(`${adapter.path}.lock`)).toBe(true);
+        secondMutation = second.withExclusiveAccess(async () => {
+          secondEntered = true;
+          const manifest = (await second.load()) ?? Manifest.create();
+          manifest.addTool("codex", "1.0.0", []);
+          await second.save(manifest);
+        });
+        await pause(150);
+        expect(secondEntered).toBe(false);
+      } finally {
+        release();
+        await Promise.all([firstMutation, secondMutation]);
+      }
       expect((await adapter.load())?.getInstalledToolIds()).toEqual(["cursor", "codex"]);
       expect(existsSync(`${adapter.path}.lock`)).toBe(false);
     });

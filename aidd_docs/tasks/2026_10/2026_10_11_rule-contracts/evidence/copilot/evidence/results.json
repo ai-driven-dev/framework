@@ -1,0 +1,372 @@
+{
+  "writerSha256": "70783e579b75b9e22760239cbfd4309641bdd73840b17e7dfd606a252679a420",
+  "runs": [
+    {
+      "stage": "create",
+      "target": "domain",
+      "exit": 0,
+      "requests": 2,
+      "mockErrors": [],
+      "bodyCounts": {
+        "GLOBAL_OLD": [
+          1,
+          1
+        ],
+        "GLOBAL_NEW": [
+          0,
+          0
+        ],
+        "DOMAIN_OLD": [
+          0,
+          0
+        ],
+        "DOMAIN_NEW": [
+          0,
+          0
+        ],
+        "DOCS_OLD": [
+          0,
+          0
+        ],
+        "DOCS_NEW": [
+          0,
+          0
+        ]
+      },
+      "expectedBodies": [
+        "GLOBAL_OLD",
+        "DOMAIN_OLD"
+      ],
+      "expectedCompleteBodiesPresent": false,
+      "unexpectedBodiesAbsent": true,
+      "agentsExactlyPreserved": true,
+      "readerResultConfirmed": true,
+      "scopeBodyPass": false
+    },
+    {
+      "stage": "create",
+      "target": "docs",
+      "exit": 0,
+      "requests": 2,
+      "mockErrors": [],
+      "bodyCounts": {
+        "GLOBAL_OLD": [
+          1,
+          1
+        ],
+        "GLOBAL_NEW": [
+          0,
+          0
+        ],
+        "DOMAIN_OLD": [
+          0,
+          0
+        ],
+        "DOMAIN_NEW": [
+          0,
+          0
+        ],
+        "DOCS_OLD": [
+          0,
+          0
+        ],
+        "DOCS_NEW": [
+          0,
+          0
+        ]
+      },
+      "expectedBodies": [
+        "GLOBAL_OLD",
+        "DOCS_OLD"
+      ],
+      "expectedCompleteBodiesPresent": false,
+      "unexpectedBodiesAbsent": true,
+      "agentsExactlyPreserved": true,
+      "readerResultConfirmed": true,
+      "scopeBodyPass": false
+    },
+    {
+      "stage": "create",
+      "target": "outside",
+      "exit": 0,
+      "requests": 2,
+      "mockErrors": [],
+      "bodyCounts": {
+        "GLOBAL_OLD": [
+          1,
+          1
+        ],
+        "GLOBAL_NEW": [
+          0,
+          0
+        ],
+        "DOMAIN_OLD": [
+          0,
+          0
+        ],
+        "DOMAIN_NEW": [
+          0,
+          0
+        ],
+        "DOCS_OLD": [
+          0,
+          0
+        ],
+        "DOCS_NEW": [
+          0,
+          0
+        ]
+      },
+      "expectedBodies": [
+        "GLOBAL_OLD"
+      ],
+      "expectedCompleteBodiesPresent": true,
+      "unexpectedBodiesAbsent": true,
+      "agentsExactlyPreserved": true,
+      "readerResultConfirmed": true,
+      "scopeBodyPass": true
+    },
+    {
+      "stage": "update",
+      "target": "domain",
+      "exit": 0,
+      "requests": 2,
+      "mockErrors": [],
+      "bodyCounts": {
+        "GLOBAL_OLD": [
+          0,
+          0
+        ],
+        "GLOBAL_NEW": [
+          1,
+          1
+        ],
+        "DOMAIN_OLD": [
+          0,
+          0
+        ],
+        "DOMAIN_NEW": [
+          0,
+          0
+        ],
+        "DOCS_OLD": [
+          0,
+          0
+        ],
+        "DOCS_NEW": [
+          0,
+          0
+        ]
+      },
+      "expectedBodies": [
+        "GLOBAL_NEW",
+        "DOMAIN_NEW"
+      ],
+      "expectedCompleteBodiesPresent": false,
+      "unexpectedBodiesAbsent": true,
+      "agentsExactlyPreserved": true,
+      "readerResultConfirmed": true,
+      "scopeBodyPass": false
+    },
+    {
+      "stage": "update",
+      "target": "docs",
+      "exit": 0,
+      "requests": 2,
+      "mockErrors": [],
+      "bodyCounts": {
+        "GLOBAL_OLD": [
+          0,
+          0
+        ],
+        "GLOBAL_NEW": [
+          1,
+          1
+        ],
+        "DOMAIN_OLD": [
+          0,
+          0
+        ],
+        "DOMAIN_NEW": [
+          0,
+          0
+        ],
+        "DOCS_OLD": [
+          0,
+          0
+        ],
+        "DOCS_NEW": [
+          0,
+          0
+        ]
+      },
+      "expectedBodies": [
+        "GLOBAL_NEW",
+        "DOCS_NEW"
+      ],
+      "expectedCompleteBodiesPresent": false,
+      "unexpectedBodiesAbsent": true,
+      "agentsExactlyPreserved": true,
+      "readerResultConfirmed": true,
+      "scopeBodyPass": false
+    },
+    {
+      "stage": "update",
+      "target": "outside",
+      "exit": 0,
+      "requests": 2,
+      "mockErrors": [],
+      "bodyCounts": {
+        "GLOBAL_OLD": [
+          0,
+          0
+        ],
+        "GLOBAL_NEW": [
+          1,
+          1
+        ],
+        "DOMAIN_OLD": [
+          0,
+          0
+        ],
+        "DOMAIN_NEW": [
+          0,
+          0
+        ],
+        "DOCS_OLD": [
+          0,
+          0
+        ],
+        "DOCS_NEW": [
+          0,
+          0
+        ]
+      },
+      "expectedBodies": [
+        "GLOBAL_NEW"
+      ],
+      "expectedCompleteBodiesPresent": true,
+      "unexpectedBodiesAbsent": true,
+      "agentsExactlyPreserved": true,
+      "readerResultConfirmed": true,
+      "scopeBodyPass": true
+    },
+    {
+      "stage": "delete",
+      "target": "domain",
+      "exit": 0,
+      "requests": 2,
+      "mockErrors": [],
+      "bodyCounts": {
+        "GLOBAL_OLD": [
+          0,
+          0
+        ],
+        "GLOBAL_NEW": [
+          0,
+          0
+        ],
+        "DOMAIN_OLD": [
+          0,
+          0
+        ],
+        "DOMAIN_NEW": [
+          0,
+          0
+        ],
+        "DOCS_OLD": [
+          0,
+          0
+        ],
+        "DOCS_NEW": [
+          0,
+          0
+        ]
+      },
+      "expectedBodies": [],
+      "expectedCompleteBodiesPresent": true,
+      "unexpectedBodiesAbsent": true,
+      "agentsExactlyPreserved": true,
+      "readerResultConfirmed": true,
+      "scopeBodyPass": true
+    },
+    {
+      "stage": "delete",
+      "target": "docs",
+      "exit": 0,
+      "requests": 2,
+      "mockErrors": [],
+      "bodyCounts": {
+        "GLOBAL_OLD": [
+          0,
+          0
+        ],
+        "GLOBAL_NEW": [
+          0,
+          0
+        ],
+        "DOMAIN_OLD": [
+          0,
+          0
+        ],
+        "DOMAIN_NEW": [
+          0,
+          0
+        ],
+        "DOCS_OLD": [
+          0,
+          0
+        ],
+        "DOCS_NEW": [
+          0,
+          0
+        ]
+      },
+      "expectedBodies": [],
+      "expectedCompleteBodiesPresent": true,
+      "unexpectedBodiesAbsent": true,
+      "agentsExactlyPreserved": true,
+      "readerResultConfirmed": true,
+      "scopeBodyPass": true
+    },
+    {
+      "stage": "delete",
+      "target": "outside",
+      "exit": 0,
+      "requests": 2,
+      "mockErrors": [],
+      "bodyCounts": {
+        "GLOBAL_OLD": [
+          0,
+          0
+        ],
+        "GLOBAL_NEW": [
+          0,
+          0
+        ],
+        "DOMAIN_OLD": [
+          0,
+          0
+        ],
+        "DOMAIN_NEW": [
+          0,
+          0
+        ],
+        "DOCS_OLD": [
+          0,
+          0
+        ],
+        "DOCS_NEW": [
+          0,
+          0
+        ]
+      },
+      "expectedBodies": [],
+      "expectedCompleteBodiesPresent": true,
+      "unexpectedBodiesAbsent": true,
+      "agentsExactlyPreserved": true,
+      "readerResultConfirmed": true,
+      "scopeBodyPass": true
+    }
+  ]
+}

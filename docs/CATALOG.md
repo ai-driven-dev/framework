@@ -32,7 +32,7 @@ Bootstrap, project init, context-artifact generation, diagrams, learning, and ex
 | `09-mermaid`           | Generate Mermaid diagrams via a plan-validate workflow                        | `01-mermaid`                                                                                             |
 | `10-learn`             | Capture learnings, conventions, and decisions into memory, decisions, rules   | `01-gather`, `02-assess`, `03-write`, `04-sync`                                                          |
 | `11-explore`           | Survey the project across tooling, context, and codebase, then drill into one axis | `01-survey`, `02-drill`                                                                                  |
-| `12-cook`              | Manage project and bundled recipes: list, create/update, research, or apply one | `01-list`, `02-upsert`, `03-research`, `04-apply`                                                        |
+| `12-cook`              | Manage and validate technical project or bundled recipes                       | `01-list`, `02-upsert`, `03-research`, `04-apply`, `05-validate`                                         |
 
 ## 💻 aidd-dev
 
@@ -49,7 +49,7 @@ Code transformation: plan, implement, assert, audit, review, test, refactor, deb
 | `07-refactor`   | Improve code without changing behavior across four axes                    | `01-performance`, `02-security`, `03-cleanup`, `04-architecture`                 |
 | `08-debug`      | Reproduce and fix bugs with a test-driven workflow                         | `01-reproduce`, `02-debug`, `03-reflect-issue`                                   |
 | `09-for-sure`   | Iterative loop that retries until a success condition is met               | `01-init-tracking`, `02-auto-accept`, `03-autonomous-loop`                       |
-| `10-todo`       | Split the prompt into independent todos, run one implementer agent per todo in parallel | `01-todo`                                                            |
+| `10-batch`       | Execute independent tasks in parallel and summarize each agent's status and result | `01-batch`                                                            |
 
 ## 📋 aidd-pm
 
@@ -90,6 +90,7 @@ Version-control workflows: repo init, commit, pull/merge request, release tag, i
 | `02-pull-request` | Create a draft pull or merge request                                           | `01-pull-request`                       |
 | `03-release-tag`  | Cut a semver release with annotated tag and notes                              | `01-release-tag`                        |
 | `04-issue-create` | Create an issue in the configured ticketing tool                               | `01-issue-create`                       |
+| `05-resolve-conflict` | Resolve deterministic conflicts or approved choices | `01-resolve` |
 
 ## 🎼 aidd-orchestrator
 
@@ -98,7 +99,7 @@ Runs synchronous feature delivery, optional async issue automation, and the prod
 | Skill            | Role                                                    | Protocols                   |
 | ---------------- | ------------------------------------------------------- | --------------------------- |
 | `00-async-dev`   | Single entry point for the async-dev pipeline           | `setup`, `run`, `review`    |
-| `01-sdlc`        | Autonomously drive the full development flow end to end | `frame`, `deliver`, `check` |
+| `01-sdlc`        | Drive the full development flow end to end, autonomous or supervised | `frame`, `deliver`, `check` |
 | `02-backlog`     | Route backlog intake, refinement, lifecycle, and repair | `01-inspect` to `08-verify` |
 
 ## 🎨 aidd-ui

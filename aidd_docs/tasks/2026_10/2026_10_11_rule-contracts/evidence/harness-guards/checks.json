@@ -1,0 +1,33 @@
+{
+  "fifo": {
+    "exit": 1,
+    "elapsedSeconds": 0.08471258298959583,
+    "refusedBeforeOutput": true
+  },
+  "timeout": {
+    "exit": 1,
+    "elapsedSeconds": 1.5828769590007141,
+    "processStates": [
+      "gone",
+      "gone"
+    ],
+    "summary": {
+      "host": "codex",
+      "command": [
+        "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-rule-contract-runtime-0_c9_13o/forking-native.py",
+        "exec",
+        "--ephemeral",
+        "--ignore-rules",
+        "--color",
+        "never",
+        "--json",
+        "-C",
+        "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-rule-contract-runtime-0_c9_13o/projects/codex",
+        "Return LOCAL_OK and use no tools."
+      ],
+      "exit": "timeout",
+      "requests": 0,
+      "paths": []
+    }
+  }
+}

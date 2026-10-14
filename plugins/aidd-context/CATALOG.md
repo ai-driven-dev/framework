@@ -122,7 +122,7 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `assets` | [rule-template.md](skills/05-rule-generate/assets/rule-template.md) | - |
 | `references` | [rule-authoring.md](skills/05-rule-generate/references/rule-authoring.md) | - |
 | `references` | [tool-paths.md](skills/05-rule-generate/references/tool-paths.md) | - |
-| `-` | [SKILL.md](skills/05-rule-generate/SKILL.md) | `Generate a coding rule that governs editor and agent behavior across the host AI tools. Use when the user wants to write, add, or refactor a rule, convention, or coding standard. Not for other artifacts like skills, agents, or hooks.` |
+| `-` | [SKILL.md](skills/05-rule-generate/SKILL.md) | `Create, update, publish or delete a coding rule across host AI tools. Use when adding, changing or removing a rule, convention or coding standard. Not for skills, agents or hooks.` |
 
 #### `skills/06-agent-generate`
 
@@ -207,11 +207,13 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `actions` | [02-upsert.md](skills/12-cook/actions/02-upsert.md) | - |
 | `actions` | [03-research.md](skills/12-cook/actions/03-research.md) | - |
 | `actions` | [04-apply.md](skills/12-cook/actions/04-apply.md) | - |
+| `actions` | [05-validate.md](skills/12-cook/actions/05-validate.md) | - |
 | `assets` | [recipe-template.md](skills/12-cook/assets/recipe-template.md) | - |
 | `assets` | [research-checklist.md](skills/12-cook/assets/research-checklist.md) | - |
 | `assets` | [research-goal-checklist.md](skills/12-cook/assets/research-goal-checklist.md) | - |
+| `assets` | [validation-report-template.md](skills/12-cook/assets/validation-report-template.md) | - |
 | `references` | [recipe-contract.md](skills/12-cook/references/recipe-contract.md) | - |
 | `references` | [recipe-locations.md](skills/12-cook/references/recipe-locations.md) | - |
 | `references` | [research-playbook.md](skills/12-cook/references/research-playbook.md) | - |
-| `-` | [SKILL.md](skills/12-cook/SKILL.md) | `Manage project recipes/how-to sheets by listing, creating, updating, researching, or applying a recipe. Use for recipe, cook, /cook, list, new, update, research, apply.` |
+| `-` | [SKILL.md](skills/12-cook/SKILL.md) | `Manages project recipes and practical guides. Use when the user wants to find a recipe, document a technique, research improvements, follow an existing guide, or check that its steps are usable.` |
 

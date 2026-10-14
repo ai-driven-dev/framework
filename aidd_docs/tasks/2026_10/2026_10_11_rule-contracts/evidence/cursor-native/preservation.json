@@ -1,0 +1,13 @@
+{
+  "baselineBytes": 378,
+  "afterBytes": 304,
+  "wholeFilePreserved": false,
+  "outsideMemoryBlockPreserved": true,
+  "onlyProjectFileChanged": "AGENTS.md",
+  "applicationTestCount": 9,
+  "currentQuotaRefusal": true,
+  "freshConsumerPass": false,
+  "memoryHookInstalledSha256": "d5c3ee610c635a0286984d1fc51ee9e50f5c7e25b5f062feaa7ab9b92a146bf1",
+  "memoryHookSameAsSource": true,
+  "privateProfileDeleted": true
+}

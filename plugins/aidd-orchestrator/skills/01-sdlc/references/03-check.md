@@ -3,9 +3,22 @@
 ## Behavior
 
 - **Validate:** dispatch a fresh validator on the committed candidate, contract, criteria, and mandatory checks.
-- **Challenge:** after validation passes, dispatch a fresh checker for review and outcome challenge using that evidence.
-- **Route:** send product findings to Frame, independent repairs to Todo, dependent repairs to Deliver; revalidate each repaired candidate.
-- **Ship:** open the draft pull request when no actionable finding remains.
+- **Review:** after validation passes, dispatch a fresh checker independent from implementation to review quality using that evidence.
+- **Challenge:** after review clears, the same checker challenges whether the outcome is trustworthy and serves the user.
+
+## Findings
+
+A finding routes by its subject. User refusals at a pause route by artifact as `mode.md` says.
+
+- **Product:** send contract findings to Frame.
+- **Repair:** send independent implementation findings through Batch; keep dependent repairs together in Deliver.
+- **Candidate:** re-enter Check after each repaired candidate.
+- **Challenge:** after review clears, reopen a zone only for a contract contradiction; carry other findings onto the request as notes.
+- **Recurrence:** route a finding only once. If it returns after being acted on, wait for user authority before opening the request.
+
+## Handoff
+
+- **Ship:** commit anything this zone wrote, then open the draft pull request when no actionable finding remains.
 
 ```mermaid
 ---
@@ -32,7 +45,7 @@ flowchart TD
     direction TB
     Findings["$findings"]
     Frame["01 Frame"]
-    Todo["/aidd-dev:10-todo"]
+    Batch["/aidd-dev:10-batch"]
     Deliver["02 Deliver"]
   end
 
@@ -54,9 +67,9 @@ flowchart TD
   Challenge -- "Return actionable challenge findings." --> Findings
   Challenge -- "When the outcome is trustworthy, open the draft pull request." --> PullRequest
   Findings -- "Use product findings as the next Frame source." --> Frame
-  Findings -- "Repair independent implementation findings in parallel." --> Todo
+  Findings -- "Repair independent implementation findings in parallel." --> Batch
   Findings -- "Repair dependent implementation findings together." --> Deliver
-  Todo --> Deliver
+  Batch --> Deliver
   PullRequest --> PullRequestUrl
 
   classDef skill fill:#DBEAFE,stroke:#2563EB,color:#1E3A8A,stroke-width:2px
@@ -64,7 +77,7 @@ flowchart TD
   classDef artifact fill:#DCFCE7,stroke:#16A34A,color:#14532D,stroke-width:2px
   classDef zone fill:#F1F5F9,stroke:#64748B,color:#0F172A,stroke-width:2px
 
-  class Review,Challenge,Todo,PullRequest skill
+  class Review,Challenge,Batch,PullRequest skill
   class Checker,Validator agent
   class Contract,Plan,CommittedCandidate,ValidationReports,Findings,PullRequestUrl artifact
   class Frame,Deliver zone

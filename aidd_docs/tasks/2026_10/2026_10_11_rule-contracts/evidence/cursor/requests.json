@@ -1,0 +1,16 @@
+[
+  {
+    "method": "POST",
+    "path": "/auth/exchange_user_api_key",
+    "contentType": "application/json",
+    "accept": "*/*",
+    "bytes": 2,
+    "bodyBase64": "e30=",
+    "bodySha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+    "markerPresence": {
+      "AIDD_CURSOR_AGENTS_OCT11": false,
+      "AIDD_CURSOR_GLOBAL_OCT11": false,
+      "AIDD_CURSOR_DOMAIN_OCT11": false
+    }
+  }
+]

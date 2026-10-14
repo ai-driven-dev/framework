@@ -1,0 +1,26 @@
+[
+  {
+    "version": "0.162.1",
+    "tag": "7a078f6bb4ce0dc2a81408b334ce52979d92c603",
+    "commit": "092d3acd6bec3e3a14bdc7e7a2810ab628ab759d",
+    "type": "commit",
+    "sha256": "97427a870741b904a3f3c143f5990eaaa65b5bfa99ddac1808b2980052b5fc78",
+    "lineUser": 63,
+    "lineBudget": 68,
+    "lineSubtract": 92,
+    "lineUserSource": 302,
+    "sourceUrl": "https://github.com/openai/codex/blob/092d3acd6bec3e3a14bdc7e7a2810ab628ab759d/codex-rs/core/src/agents_md.rs"
+  },
+  {
+    "version": "0.160.1",
+    "tag": "c3e23d4c4385619ecec78408766e46b7fa7dd9ad",
+    "commit": "d27764b82f7118f674371e6d6e76271d9d606edb",
+    "type": "commit",
+    "sha256": "97427a870741b904a3f3c143f5990eaaa65b5bfa99ddac1808b2980052b5fc78",
+    "lineUser": 63,
+    "lineBudget": 68,
+    "lineSubtract": 92,
+    "lineUserSource": 302,
+    "sourceUrl": "https://github.com/openai/codex/blob/d27764b82f7118f674371e6d6e76271d9d606edb/codex-rs/core/src/agents_md.rs"
+  }
+]

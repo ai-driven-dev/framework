@@ -1,0 +1,2 @@
+{"sandbox":"/private/tmp/aidd-realistic-rule-repro-EGi6ZB","smoke":true}
+{"sandbox":"/private/tmp/aidd-realistic-rule-repro-EGi6ZB","checks":[{"name":"baseline API","exit":0},{"name":"install","exit":0},{"name":"lifecycle","exit":0},{"name":"cleanup-ownership","exit":0}],"evidence":"/private/tmp/aidd-realistic-rule-repro-EGi6ZB/reproduction-results.json"}

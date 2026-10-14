@@ -1,5 +1,6 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
+import { PluginDistributionLoader } from "../../../../../src/contexts/framework/application/plugin/plugin-distribution-loader.js";
 import "../../../../../src/contexts/tools/domain/profiles/cursor/profile.js";
 import "../../../../../src/contexts/tools/domain/profiles/opencode/profile.js";
 import { PluginAddUseCase } from "../../../../../src/contexts/framework/application/plugin/plugin-add-use-case.js";
@@ -65,8 +66,7 @@ async function installPlugin(
   const addUseCase = new PluginAddUseCase(
     deps.fs,
     deps.manifestRepo,
-    deps.pluginFetcher,
-    new PluginDistributionReaderAdapter(deps.fs),
+    new PluginDistributionLoader(deps.pluginFetcher, new PluginDistributionReaderAdapter(deps.fs)),
     deps.hasher,
     deps.logger,
     deps.marketplaceRegistry,

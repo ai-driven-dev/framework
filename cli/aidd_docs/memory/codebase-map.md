@@ -23,6 +23,7 @@ src/
 │   │   │   │   └── content/
 │   │   │   ├── ownership/    # machine plugin claims and safe project detach
 │   │   │   ├── plugin/
+│   │   │   ├── recipes/
 │   │   │   ├── restore/
 │   │   │   ├── setup/
 │   │   │   ├── shared/
@@ -31,7 +32,8 @@ src/
 │   │   │   ├── formats/
 │   │   │   ├── manifest/
 │   │   │   ├── plugins/
-│   │   │   └── ports/
+│   │   │   ├── ports/
+│   │   │   └── recipes/
 │   │   └── infrastructure/
 │   ├── telemetry/    # what a session cost and who it was for
 │   │   ├── application/

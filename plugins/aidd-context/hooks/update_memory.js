@@ -184,7 +184,7 @@ function updateBlock(content, innerContent) {
 
 // memory/-relative path, e.g. aidd_docs/memory/internal/x.md -> internal/x.md.
 function memoryRelative(path, filePath) {
-  return filePath.replace(/\\/g, "/").replace(`${memoryPath(path)}/`, "");
+  return filePath.replace(/\\/g, "/").replace(`${memoryPath(path).replace(/\\/g, "/")}/`, "");
 }
 
 function buildToc(rootFiles, onDemandFiles, path) {

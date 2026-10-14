@@ -25,6 +25,46 @@ async function readJson(path: string): Promise<Record<string, unknown>> {
 }
 
 describe("E2E: setup --scope user writes nothing under the project", () => {
+  it.each(["all", "recommended", "aidd-dev"])(
+    "prints a clean refusal for user-scope plugin mode %s",
+    async (plugins) => {
+      const { projectDir, fakeHome, cleanup } = await createTestEnv("scope-user-plugins");
+      try {
+        const result = await runCli(
+          ["setup", "--scope", "user", "--ai", "claude", "--plugins", plugins, "--yes"],
+          projectDir,
+          fakeHome
+        );
+
+        expect(result.exitCode).toBe(1);
+        expect(result.stdout).toBe("");
+        expect(result.stderr).toBe(
+          "Error: --scope user has no manifest entry a plugin can be recorded against yet, so " +
+            "--plugins has nothing to enable. Drop --plugins, or run `aidd plugin install` " +
+            "separately at project scope.\n"
+        );
+      } finally {
+        await cleanup();
+      }
+    }
+  );
+
+  it("explains user-scope restrictions in setup help", async () => {
+    const { projectDir, fakeHome, cleanup } = await createTestEnv("scope-user-help");
+    try {
+      const result = await runCli(["setup", "--help"], projectDir, fakeHome);
+
+      expect(result.exitCode).toBe(0);
+      expect(result.stderr).toBe("");
+      expect(result.stdout).toContain("--ai claude,codex,copilot,cursor");
+      expect(result.stdout).toContain("--plugins none");
+      expect(result.stdout).toContain("no --ide");
+      expect(result.stdout).toContain("host CLI on PATH");
+    } finally {
+      await cleanup();
+    }
+  });
+
   it("leaves the git-tracked project untouched and writes the user manifest under fakeHome", async () => {
     const { projectDir, fakeHome, cleanup } = await createTestEnv("scope-user-setup");
     try {

@@ -1,9 +1,10 @@
 {
-  "$comment": "The one declaration of what mutation testing covers and the floor each scope must hold. scripts/run-mutation.mjs runs a scope by name and fails below its break; tests/architecture/mutation-covers-source.arch.test.ts checks no source file falls outside both maps, that every scope declares a floor, and that package.json has a script per scope. Globs, never file lists: a list goes stale the day a file is added, and the score does not drop, because the mutants that would have died were never generated. A floor is raised to the measured score after a run, never lowered without the reason here. A scope's mutate is one glob or a list where a leading ! excludes; tools is split one scope per tool profile: a profile is a static declaration whose every mutant reruns each test that loads it, and the five together outlasted every other scope on a two-core runner; vscode's single file stays with the rest. canary mutates a fixture, not the product: its one mutant stops a module from loading, which Stryker's vitest runner scores as survived on its own; at 100 the scope fails the day that happens again, so a Stryker or vitest upgrade cannot quietly bypass tests/helpers/unloadable-file-as-failed-test.ts.",
+  "$comment": "The one declaration of what mutation testing covers and the floor each scope must hold. scripts/run-mutation.mjs runs a scope by name and fails below its break; tests/architecture/mutation-covers-source.arch.test.ts checks no source file falls outside both maps, that every scope declares a floor, and that package.json has a script per scope. Globs, never file lists: a list goes stale the day a file is added, and the score does not drop, because the mutants that would have died were never generated. A floor is raised to the measured score after a run, never lowered without the reason here. A scope's mutate is one glob or a list where a leading ! excludes; tools is split one scope per tool profile: a profile is a static declaration whose every mutant reruns each test that loads it, and the five together outlasted every other scope on a two-core runner; vscode's single file stays with the rest. canary mutates a fixture, not the product: its static mutant stops a module from loading, which Stryker's vitest runner scores as survived on its own; its dynamic mutants check exact selection through nested suites, repeated spaces, and regex characters. The scope requires 100 and exactly each dynamic mutant's covering test, so a Stryker or Vitest upgrade cannot quietly bypass tests/helpers/unloadable-file-as-failed-test.ts or widen or lose mutation test selection.",
   "scopes": {
     "kernel": {
       "mutate": "src/kernel/**/*.ts",
-      "break": 95
+      "break": 95,
+      "shards": 4
     },
     "tools": {
       "mutate": [
@@ -15,15 +16,18 @@
         "!src/contexts/tools/domain/profiles/kilo/**/*.ts",
         "!src/contexts/tools/domain/profiles/opencode/**/*.ts"
       ],
-      "break": 94
+      "break": 94,
+      "shards": 4
     },
     "telemetry": {
       "mutate": "src/contexts/telemetry/**/*.ts",
-      "break": 93
+      "break": 93,
+      "shards": 3
     },
     "translate": {
       "mutate": "src/contexts/translate/**/*.ts",
-      "break": 85
+      "break": 85,
+      "shards": 2
     },
     "distribution": {
       "mutate": "src/contexts/distribution/**/*.ts",
@@ -31,7 +35,8 @@
     },
     "framework": {
       "mutate": "src/contexts/framework/**/*.ts",
-      "break": 93
+      "break": 93,
+      "shards": 4
     },
     "presentation": {
       "mutate": "src/presentation/**/*.ts",
@@ -47,7 +52,8 @@
     },
     "tools-codex": {
       "mutate": "src/contexts/tools/domain/profiles/codex/**/*.ts",
-      "break": 94
+      "break": 94,
+      "shards": 2
     },
     "tools-copilot": {
       "mutate": "src/contexts/tools/domain/profiles/copilot/**/*.ts",
