@@ -3,8 +3,8 @@
 ## Behavior
 
 - **Plan:** reconcile scoped exploration, then produce the implementation plan.
-- **Assign:** retain shared lifecycle and integration; delegate independent phases with their criteria, prerequisites, status-file ownership, checkout, resources, and commit policy. Use separate checkouts for parallel writers; otherwise run serially. A whole-plan executor may own all lifecycle statuses, never scope or criteria.
-- **Integrate:** accept scoped changes and evidence before starting dependents; finalize against the combined candidate, with required end-to-end checks last. Reuse only evidence still valid for that candidate and scope.
+- **Assign:** own preparation, shared lifecycle, and integration; delegate only phases with their criteria, prerequisites, status-file ownership, checkout, resources, and commit policy. Use separate checkouts for parallel writers; otherwise run serially.
+- **Integrate:** accept scoped changes and evidence before starting dependents; complete required end-to-end checks before finalizing. Reuse only evidence still valid for that candidate and scope.
 - **Handoff:** commit and push through the commit capability; send the clean candidate and evidence to Check.
 
 ```mermaid
@@ -25,8 +25,9 @@ flowchart TD
     Executor(["@aidd-dev:executor"])
     Implement["/aidd-dev:02-implement"]
     Assert["/aidd-dev:03-assert"]
-    Integrate["Integrate phases and finalize plan"]
+    Integrate["Integrate phases"]
     Test["/aidd-dev:06-test"]
+    Finalize["Finalize integrated plan"]
     Commit["/aidd-vcs:01-commit"]
   end
 
@@ -40,14 +41,16 @@ flowchart TD
   Plan --> PlanArtifact
   PlanArtifact --> Dispatch
   Dispatch -- "Isolated executors for independent phases; serial otherwise." --> Executor
-  Executor --> Implement
+  Executor -- "Assigned phase only." --> Implement
   Implement --> Assert
   Assert --> Integrate
   Integrate -- "More ready phases." --> Dispatch
-  Integrate -- "No required end-to-end journey." --> Commit
+  Integrate -- "No required end-to-end journey." --> Finalize
   Integrate -- "Run required end-to-end journey last." --> Test
-  Test -- "After the journey succeeds, commit the result." --> Commit
+  Test -- "Journey passed." --> Finalize
   Test -- "Return a failed journey for repair." --> Executor
+  Finalize -- "Acceptance failed; repair affected phase." --> Executor
+  Finalize --> Commit
   Commit --> CommittedCandidate
   CommittedCandidate --> Check
 

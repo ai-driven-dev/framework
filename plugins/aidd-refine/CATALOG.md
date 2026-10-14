@@ -48,8 +48,7 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 |-------|------|---|
 | `actions` | [01-challenge.md](skills/02-challenge/actions/01-challenge.md) | - |
 | `assets` | [report-template.md](skills/02-challenge/assets/report-template.md) | - |
-| `references` | [confidence-rubric.md](skills/02-challenge/references/confidence-rubric.md) | - |
-| `-` | [SKILL.md](skills/02-challenge/SKILL.md) | `Rethink just-completed work against an agreed plan, classifying findings as deal-breaker, suggestion, or correct, with a confidence score. Use to challenge or critically review recent work. Not for line-by-line style review or writing code.` |
+| `-` | [SKILL.md](skills/02-challenge/SKILL.md) | `Challenge completed work against its intent and contracts. Use when the user wants to critically review recent work, find essential gaps, or simplify it. Not for line-by-line style review or writing code.` |
 
 #### `skills/03-shadow-areas`
 

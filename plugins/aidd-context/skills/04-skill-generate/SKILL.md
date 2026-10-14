@@ -25,7 +25,7 @@ Run the flow above. Read only the next action file.
 
 ## Transversal rules
 
-- Default to `create`; follow `modify` when asked.
-- If a cited reference cannot be read, stop and report the missing file.
-- Confirm every target and name with the user.
-- Never write silently.
+- **Entry.** Default to `create`; follow `modify` when asked.
+- **References.** If a cited reference cannot be read, stop and report the missing file.
+- **Confirmation.** Confirm every target and name with the user.
+- **Visibility.** Never write silently.

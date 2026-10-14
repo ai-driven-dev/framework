@@ -20,9 +20,9 @@ The contract every generated skill satisfies. `skill-generate` obeys it too.
 
 ## An action
 
-- **R11.** Sections in this order: `## Input` when the action consumes something, then `## Output`, `## Process`, `## Test`. A section earns its content or is omitted, never invented or reordered.
-- **R12.** A `## Process` step opens with `**Label.**`, then one imperative sentence. A number is always a step run in order; a case, a branch, a loop back, or a constraint is a dash sub-item of the step it belongs to, never a number. A fenced block is content the action emits, not structure: leave it as its consumer needs it.
-- **R13.** `## Test` is a `| Case | Pass |` table, each row observable by real execution, never a mock.
+- **R11.** Sections in this order: `## Input` when the action consumes something, then `## Output`, `## Process`, and optional `## Rules`. A section earns its content or is omitted, never invented or reordered.
+- **R12.** A `## Process` step opens with `**Label.**`, then one imperative sentence. A number is always a step run in order; a case, a branch, a loop back, or a constraint is a dash sub-item of the step it belongs to, never a number. Every instruction bullet starts with a bold label. A fenced block is content the action emits, not structure: leave it as its consumer needs it.
+- **R13.** Verify observable success in `## Process` through real execution. `## Rules` holds only constraints no process step owns; no separate `## Test` or duplicated checks.
 
 ## A reference
 
@@ -36,5 +36,5 @@ The contract every generated skill satisfies. `skill-generate` obeys it too.
 ## Across all of them
 
 - **R17.** One fact, one home. An action acts within a router rule and cites a shared reference, never restating either.
-- **R18.** A citation is a relative markdown link, `[name](path)`, never an `@` include: nothing resolves those. It sits in the sentence that uses it, a `## Process` step to read the file, an `## Output` or `## Test` line to conform to it. Never a block or a line of its own.
+- **R18.** A citation is a relative markdown link, `[name](path)`, never an `@` include: nothing resolves those. It sits in the sentence that uses it, a `## Process` step to read the file, an `## Output` or `## Rules` line to conform to it. Never a block or a line of its own.
 - **R19.** One file, one artifact. Split two apart only when a path needs one without the other.

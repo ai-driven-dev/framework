@@ -17,7 +17,7 @@ test("global instructions exclude project context and use each host's native age
     const content = render(instructionSource, host);
     assert.ok(content.includes(`| ${name} | Implement scope. |`));
     assert.doesNotMatch(content, /Memory|memory|aidd_docs|ARCHITECTURE/);
-    assert.match(content, /Keep scope/);
+    assert.doesNotMatch(content, /Keep scope|## Action|## Behavior|## Communication/);
   }
 });
 
@@ -34,16 +34,46 @@ test("global sync preserves personal rules, updates its block, and is idempotent
     const first = readFileSync(destination, "utf8");
     sync(source, [["codex", destination]]);
     assert.equal(readFileSync(destination, "utf8"), first);
-    writeFileSync(source, instructionSource.replace("Keep scope.", "Check scope."));
+    writeFileSync(source, instructionSource.replace("Implement scope.", "Implement updated scope."));
     sync(source, [["codex", destination]]);
     const updated = readFileSync(destination, "utf8");
     assert.ok(updated.startsWith(personal));
-    assert.match(updated, /Check scope/);
-    assert.doesNotMatch(updated, /Keep scope/);
+    assert.match(updated, /Implement updated scope/);
+    assert.doesNotMatch(updated, /Implement scope\./);
     assert.equal(updated.split("aidd_global_instructions:start").length, 2);
   } finally {
     rmSync(root, { recursive: true, force: true });
   }
+});
+
+test("global sync replaces legacy duplicated instructions without changing personal text", () => {
+  const root = mkdtempSync(join(tmpdir(), "aidd-global-migration-"));
+  try {
+    const source = join(root, "source.md");
+    const destination = join(root, "AGENTS.md");
+    const prefix = "## Behavior\nMy personal rules.\n\n";
+    const suffix = "\n\nMy private closing note.\n";
+    writeFileSync(source, instructionSource);
+    writeFileSync(destination, prefix + "<!-- aidd_global_instructions:start -->\n## Behavior\nLegacy duplicated rules.\n## Communication\nLegacy communication.\n<!-- aidd_global_instructions:end -->" + suffix);
+    sync(source, [["codex", destination]]);
+    const migrated = readFileSync(destination, "utf8");
+    assert.ok(migrated.startsWith(prefix));
+    assert.ok(migrated.endsWith(suffix));
+    assert.doesNotMatch(migrated, /Legacy|Keep scope|## Communication|## Action/);
+    assert.equal(migrated.match(/^## Behavior$/gm).length, 1);
+    assert.match(migrated, /@executor \| Implement scope/);
+    sync(source, [["codex", destination]]);
+    assert.equal(readFileSync(destination, "utf8"), migrated);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("global agent extraction works without project memory and stops at the next section", () => {
+  const source = "## Agents\n| name | role |\n| @executor | Implement scope. |\n\n## Project rules\nNever copy me.\n";
+  assert.match(render(source, "claude"), /@aidd-dev:executor/);
+  assert.doesNotMatch(render(source, "claude"), /Project rules|Never copy/);
+  assert.match(render(source.split("\n## Project rules")[0], "codex"), /Implement scope/);
 });
 
 test("first OpenCode sync retains effective Claude personal rules without its managed block", () => {
@@ -68,7 +98,7 @@ test("first OpenCode sync retains effective Claude personal rules without its ma
   }
 });
 
-test("malformed managed blocks and missing memory boundaries leave all global files untouched", () => {
+test("malformed managed blocks and missing agent sections leave all global files untouched", () => {
   const root = mkdtempSync(join(tmpdir(), "aidd-global-invalid-"));
   try {
     const source = join(root, "source.md");
@@ -83,7 +113,7 @@ test("malformed managed blocks and missing memory boundaries leave all global fi
       assert.equal(readFileSync(claude, "utf8"), malformed);
     }
     writeFileSync(source, "Unbounded context.\n");
-    assert.throws(() => sync(source, [["codex", codex]]), /Memory Management boundary/);
+    assert.throws(() => sync(source, [["codex", codex]]), /Agents section/);
     assert.equal(readFileSync(codex, "utf8"), "Keep Codex.\n");
   } finally {
     rmSync(root, { recursive: true, force: true });
@@ -109,7 +139,7 @@ function fixture(home) {
         writeFileSync(join(pluginDir, "agents", name), "source agent\n");
       }
     }
-    writeFileSync(join(source, "AGENTS.md"), "# AGENTS.md\n\n## Behavior\nKeep scope.\n\n## Memory Management\nProject-only memory.\n");
+    writeFileSync(join(source, "AGENTS.md"), instructionSource);
   }
   return source;
 }
@@ -163,7 +193,7 @@ test("managed OpenCode reload uses the fixed-purpose helper without a local buil
     assert.equal(result.status, 0, result.stderr);
     assert.match(result.stdout, /reload opencode\s+managed:ok/);
     assert.equal(existsSync(join(home, "build")), false);
-    assert.match(readFileSync(join(home, ".config/opencode/AGENTS.md"), "utf8"), /Keep scope/);
+    assert.match(readFileSync(join(home, ".config/opencode/AGENTS.md"), "utf8"), /Implement scope/);
   } finally {
     rmSync(root, { recursive: true, force: true });
   }
@@ -183,7 +213,7 @@ for (const flag of ["OPENCODE_DISABLE_CLAUDE_CODE", "OPENCODE_DISABLE_CLAUDE_COD
       assert.equal(result.status, 0, result.stderr);
       const installed = readFileSync(join(home, ".config/opencode/AGENTS.md"), "utf8");
       assert.doesNotMatch(installed, /Excluded Claude/);
-      assert.match(installed, /Keep scope/);
+      assert.match(installed, /Implement scope/);
     } finally {
       rmSync(root, { recursive: true, force: true });
     }

@@ -5,15 +5,16 @@ const start = "<!-- aidd_global_instructions:start -->";
 const end = "<!-- aidd_global_instructions:end -->";
 
 function render(source, host) {
-  const boundary = source.search(/^## Memory Management\s*$/m);
-  if (boundary < 0) throw new Error("AGENTS.md has no Memory Management boundary; refusing global sync");
+  const beginning = source.search(/^## Agents[ \t]*\r?$/m);
+  if (beginning < 0) throw new Error("AGENTS.md has no Agents section; refusing global sync");
+  const boundary = source.indexOf("\n## ", beginning + 1);
   const names = {
     codex: (role) => `@${role}`,
     claude: (role) => `@aidd-dev:${role}`,
     opencode: (role) => `@aidd-dev-${role}`,
   };
   if (!names[host]) throw new Error(`Unknown instruction host: ${host}`);
-  return source.slice(0, boundary).trim().replace(/^.*\bdocs\/ARCHITECTURE\.md.*\n?/gm, "").replace(
+  return source.slice(beginning, boundary < 0 ? undefined : boundary).trim().replace(
     /^\| @([a-z]+)[^|]*\|/gm,
     (_, role) => `| ${names[host](role)} |`,
   );

@@ -9,8 +9,8 @@
 #
 # Codex caveat: the .codex-plugin manifest does not declare codex-agents/*.toml, and Codex
 # loads agents only from ~/.codex/agents/, so the built TOML is copied there after install.
-# Global rules: replace only the managed AIDD block; exclude project memory and adapt agent
-# names. First OpenCode sync keeps its Claude personal-rule fallback unless disabled.
+# Global rules: sync only the Agents section in the managed block, preserving personal
+# rules. First OpenCode sync keeps its Claude personal-rule fallback unless disabled.
 # Instruction paths honor CODEX_HOME, CLAUDE_CONFIG_DIR and XDG_CONFIG_HOME; tests use
 # *_INSTRUCTIONS overrides. Sources checked 2026-10-14:
 # https://developers.openai.com/codex/guides/agents-md
@@ -228,6 +228,6 @@ instruction_fallback="$CLAUDE_INSTRUCTIONS"
 case "${OPENCODE_DISABLE_CLAUDE_CODE:-}" in 1|true) instruction_fallback="" ;; esac
 case "${OPENCODE_DISABLE_CLAUDE_CODE_PROMPT:-}" in 1|true) instruction_fallback="" ;; esac
 node "$SCRIPT_DIR/sync-global-instructions.cjs" "$FW/AGENTS.md" "$instruction_fallback" "${instructions[@]}"
-echo "ok (project memory excluded)"
+echo "ok (agents only)"
 
 echo "Done. Restart Claude/Codex; reload OpenCode configuration for refreshed agents, skills, and instructions."

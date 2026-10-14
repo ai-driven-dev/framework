@@ -10,7 +10,7 @@ Plan `status: implemented`, with integrated acceptance and validation evidence.
 
 ## Process
 
-1. **Verify.** Check every plan-level acceptance criterion and required validation on the integrated candidate; return failures to execution and revalidate repairs.
+1. **Verify.** Check the source outcome, phase criteria, and required validation together on the integrated candidate; return failures to execution and revalidate repairs.
 2. **Mark.** Set the plan `status: implemented` only when all required checks pass.
 
 ## Rules
