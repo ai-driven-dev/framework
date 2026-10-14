@@ -1,13 +1,13 @@
 # Connection Report
 
 <!--
-- **Categories.** Keep every category and group its services.
-- **Targets.** Name each tool, account and target.
-- **Evidence.** Keep results short; name one corrective action for each problem.
-- **Status.** Use the worst required result: failed, not configured, unverified.
-- **Success.** Pass only when every required read succeeds.
-- **Unused.** Mark not needed only when no access is required.
-- **Scaffold.** Remove this comment from the report.
+- Keep every category and group its services.
+- Name each tool, account and target.
+- Keep results short; name one corrective action for each problem.
+- Use the worst required result: failed, not configured, unverified.
+- Pass only when every required read succeeds.
+- Mark not needed only when no access is required.
+- Remove this comment from the report.
 -->
 
 | Category | Tool / target | Status | Evidence / next step |
