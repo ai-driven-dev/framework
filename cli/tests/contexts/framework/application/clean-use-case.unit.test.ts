@@ -2382,7 +2382,7 @@ describe("clean", () => {
       expect(fs.has(otherScriptPath)).toBe(true);
     });
 
-    it("rejects an edited Cursor hook before dropping a shared source reference or touching native state", async () => {
+    it("rejects an edited Cursor hook on a confirmed clean without --force, before dropping a shared source reference or touching native state", async () => {
       const pluginName = "aidd-context";
       const scriptMarker = cursorProjectHooksScriptDir(pluginName);
       const command = `./${scriptMarker}run.js`;
@@ -2473,7 +2473,7 @@ describe("clean", () => {
         new GitignoreUseCase(fs),
         new Map([["codex", activator]]),
         registry,
-        undefined,
+        new RecordingPrompter(true),
         new Map(),
         () => "/fake-home",
         references,
@@ -2481,9 +2481,9 @@ describe("clean", () => {
         new InMemoryManifestRepository(Manifest.create(), "/fake-home")
       );
 
-      await expect(useCase.execute({ projectRoot: PROJECT_ROOT, force: true })).rejects.toThrow(
-        "edited after install"
-      );
+      await expect(
+        useCase.execute({ projectRoot: PROJECT_ROOT, force: false, interactive: true })
+      ).rejects.toThrow("edited after install");
 
       expect(await references.listAllReferencingProjects()).toContain(PROJECT_ROOT);
       expect(await references.listAllReferencingProjects()).toContain("/other-project");

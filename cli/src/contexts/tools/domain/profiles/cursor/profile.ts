@@ -20,6 +20,7 @@ import {
   convertCommandFrontmatter,
   stripToolSuffix,
 } from "../../formats/command.js";
+import { cursorProjectHooksFormat } from "../../formats/cursor-hooks-project-merge.js";
 import { CURSOR_PLUGIN_ROOT_TOKEN } from "../../formats/plugin-root-token.js";
 import { registerTool } from "../../registry.js";
 import { buildCursorContract, buildCursorFlatContract } from "./build.js";
@@ -119,6 +120,7 @@ export const cursor: AiTool<HasAgents & HasSkills & HasCommands & HasRules & Has
         hooksContentFormat: "flat",
         hooksDestination: "project",
         projectHooksRelativePath: ".cursor/hooks.json",
+        projectHooksFormat: cursorProjectHooksFormat,
         acceptsMcp: true,
         mcpRelativePath: "mcp.json",
         installScope: "user",

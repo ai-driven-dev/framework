@@ -1,4 +1,5 @@
 import "../../../../../../src/contexts/tools/domain/profiles/claude/profile.js";
+import "../../../../../../src/contexts/tools/domain/profiles/cursor/profile.js";
 import "../../../../../../src/contexts/tools/domain/profiles/opencode/profile.js";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
@@ -161,6 +162,68 @@ describe("ModeBFlatMaterializationTranslator", () => {
       expect(fs.listAll().length).toBe(0);
       const plugins = manifest.getPlugins("opencode");
       expect(plugins.find((p) => p.name === "mcp-plugin")).toBeUndefined();
+    });
+  });
+
+  describe("when the tool merges the plugin's hooks into the project", () => {
+    // biome-ignore lint/suspicious/noTemplateCurlyInString: the Claude hook placeholder the merge rewrites
+    const PLUGIN_ROOT_VAR = "${CLAUDE_PLUGIN_ROOT}";
+    const SCRIPT_CONTENT = "module.exports = () => {};";
+
+    function hooksDist(): PluginDistribution {
+      const hooks = [
+        {
+          relativePath: "hooks/hooks.json",
+          content: JSON.stringify({
+            hooks: {
+              PreToolUse: [
+                { hooks: [{ type: "command", command: `node ${PLUGIN_ROOT_VAR}/hooks/pre.js` }] },
+              ],
+            },
+          }),
+        },
+        { relativePath: "hooks/pre.js", content: SCRIPT_CONTENT },
+      ];
+      return new PluginDistribution({
+        manifest: { name: "hooks-plugin", version: "1.0.0" },
+        format: "claude",
+        files: hooks,
+        components: { commands: [], agents: [], rules: [], skills: [], hooks, mcp: [] },
+      });
+    }
+
+    it("restores an edited project hook script only when told to overwrite edits", async () => {
+      const { adapter, fs } = buildAdapter();
+      const cursorManifest = () => {
+        const manifest = Manifest.create();
+        manifest.addTool("cursor", "test", []);
+        return manifest;
+      };
+      const manifest = cursorManifest();
+      const source = { kind: "local", path: "/plugin-source" } as const;
+      const scriptPath = join(PROJECT_ROOT, ".cursor/hooks/hooks-plugin/pre.js");
+      await adapter.addPlugin(hooksDist(), "cursor", source, PROJECT_ROOT, manifest, undefined);
+      const installed = manifest.getPlugins("cursor").find((p) => p.name === "hooks-plugin");
+      fs.setFile(scriptPath, "user edit");
+      const reinstall = (guard?: { overwriteEdited: boolean }) =>
+        adapter.addPlugin(
+          hooksDist(),
+          "cursor",
+          source,
+          PROJECT_ROOT,
+          cursorManifest(),
+          undefined,
+          new Map(),
+          false,
+          installed?.projectHooks,
+          guard
+        );
+
+      await expect(reinstall()).rejects.toThrow(/edited after install/);
+      expect(fs.getFile(scriptPath)).toBe("user edit");
+
+      await reinstall({ overwriteEdited: true });
+      expect(fs.getFile(scriptPath)).toBe(SCRIPT_CONTENT);
     });
   });
 
