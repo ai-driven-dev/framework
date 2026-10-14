@@ -21,13 +21,22 @@ Choose the smallest interface that fully covers the workflow, authentication mod
 
 The last column is a decision heuristic for this recipe, not a provider guarantee.
 
-| Service | CLI route | MCP route | Recipe heuristic |
-| --- | --- | --- | --- |
-| [GitHub](https://github.com/github/github-mcp-server) | [`gh`](https://cli.github.com/) | Remote toolsets, including read-only modes | CLI for routine API work; MCP for typed or remote-only capabilities |
-| [Atlassian](https://www.atlassian.com/platform/rovo-mcp) | [`acli`](https://developer.atlassian.com/cloud/acli/guides/introduction/) for Jira | The current Rovo MCP tool catalog; [OAuth 2.1 is recommended](https://support.atlassian.com/atlassian-rovo-mcp-server/docs/configuring-oauth-2-1/), with API-token authentication only when an administrator enables it | Decide from the Atlassian product, operation, and permitted authentication |
-| [Playwright](https://github.com/microsoft/playwright-mcp) | [`@playwright/cli`](https://playwright.dev/agent-cli/installation) | `@playwright/mcp` | CLI for direct browser automation; MCP for live tool calls |
-| [Figma](https://developers.figma.com/docs/figma-mcp-server/remote-server-installation/) | The [`@figma/code-connect` CLI](https://developers.figma.com/docs/code-connect/cli-reference/) manages component mappings, not live design context or canvas operations | `https://mcp.figma.com/mcp` | CLI for Code Connect mappings; MCP for live design and canvas workflows |
-| [Notion](https://developers.notion.com/guides/mcp/get-started-with-mcp) | The official [`ntn` CLI](https://developers.notion.com/cli/get-started/overview) supports API, page, data-source, file, and Worker operations | `https://mcp.notion.com/mcp` | CLI for scripts and raw API work; MCP for agent workflows, with human confirmation |
+“Official” means published by the service provider, not a guarantee of production readiness or contractual support. Statuses below were checked against the linked provider sources on 2026-10-13. “Not listed” means this recipe does not identify an official option.
+
+| Usage | Service | MCP offered and status | CLI alternative and status | Recommended |
+| --- | --- | --- | --- | --- |
+| **Version control**: Manage issues, PRs, releases, and CI runs | **GitHub** | **Official**: [`api.githubcopilot.com/mcp/`](https://github.com/github/github-mcp-server) | **Official**: [`gh`](https://cli.github.com/manual/) | **CLI** |
+| - | **GitLab** | **Official, experimental**: [`glab mcp serve`](https://docs.gitlab.com/cli/mcp/) | **Official**: [`glab`](https://docs.gitlab.com/cli/) | **CLI** |
+| **Ticketing**: Search, create, and update tickets | **Jira** | **Official**: [`mcp.atlassian.com/v1/mcp`](https://www.atlassian.com/platform/remote-mcp-server) | **Official**: [`acli`](https://developer.atlassian.com/cloud/acli/guides/introduction/) | **CLI** |
+| - | **Linear** | **Official**: [`mcp.linear.app/mcp`](https://linear.app/docs/mcp) | Not listed | **MCP** |
+| **Internal Doc**: Search and maintain team documentation | **Confluence** | **Official**: [`mcp.atlassian.com/v1/mcp`](https://www.atlassian.com/platform/remote-mcp-server) | Not listed | **MCP** |
+| - | **Notion** | **Official**: [`mcp.notion.com/mcp`](https://developers.notion.com/guides/mcp/get-started-with-mcp) | **Official**: [`ntn`](https://developers.notion.com/cli/get-started/overview) for API and page operations | **CLI** for scripts and API work; **MCP** for agent workflows |
+| **Workspace**: Work with Drive, Docs, Sheets, Gmail, and Calendar | **Google Workspace** | Not listed | [`gws`](https://github.com/googleworkspace/cli): published under `googleworkspace`, but **not officially supported by Google** | **CLI**, if its support status meets the project's requirements |
+| **Browsing**: Test user journeys and inspect browser behavior | **Playwright** | **Official**: [`@playwright/mcp`](https://github.com/microsoft/playwright-mcp) | **Official**: [`playwright-cli`](https://playwright.dev/agent-cli/installation) for browser automation; [`npx playwright`](https://playwright.dev/docs/test-cli) for tests | **CLI** for direct browser automation and tests; **MCP** for live tool calls |
+| **UI**: Read design context to implement an interface | **Figma** | **Official**: [`mcp.figma.com/mcp`](https://developers.figma.com/docs/figma-mcp-server/remote-server-installation/) | **Official**: [`@figma/code-connect`](https://developers.figma.com/docs/code-connect/cli-reference/) for component mappings, not live design context | **CLI** for Code Connect mappings; **MCP** for live design context |
+| **Monitoring**: Inspect errors and investigate incidents | **Sentry** | **Official**: [`mcp.sentry.dev/mcp`](https://github.com/getsentry/toolkit) | **Official**: [`sentry`](https://cli.sentry.dev/) for issue investigation; [`sentry-cli`](https://github.com/getsentry/sentry-cli) for releases and source maps | **CLI** when it covers the investigation; **MCP** for interactive debugging |
+| **Deployment**: Deploy applications and inspect deployment logs | **Vercel** | **Official**: [`mcp.vercel.com`](https://vercel.com/docs/agent-resources/vercel-mcp) | **Official**: [`vercel`](https://vercel.com/docs/cli) | **CLI** for repeatable deployment workflows; **MCP** for interactive exploration |
+| **Database**: Manage migrations, develop locally, and explore a project | **Supabase** | **Official**: [`mcp.supabase.com/mcp`](https://supabase.com/docs/guides/ai-tools/mcp) | **Official**: [`supabase`](https://supabase.com/docs/reference/cli/introduction) | **CLI** for migrations and local development; **MCP** for interactive exploration |
 
 ### 2) ⌨️ Install the CLI route
 
