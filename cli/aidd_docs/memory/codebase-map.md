@@ -50,6 +50,7 @@ src/
 │   │   │   ├── models/
 │   │   │   ├── ports/
 │   │   │   └── profiles/    # one directory per tool
+│   │   │       ├── antigravity/
 │   │   │       ├── claude/
 │   │   │       ├── codex/
 │   │   │       ├── copilot/

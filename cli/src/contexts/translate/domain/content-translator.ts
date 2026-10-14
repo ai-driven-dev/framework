@@ -254,7 +254,7 @@ export class PluginContentTranslator {
     const { flatNamespacePrefix } = tool.capabilities.plugins;
     if (flatNamespacePrefix === null) return { files: [], skipped: [] };
     const result: InstallationFile[] = [];
-    for (const file of dist.components.commands) {
+    for (const file of hasCommands(tool) ? dist.components.commands : []) {
       result.push(this.flatCommandFile(file, dist.manifest.name, tool, flatNamespacePrefix));
     }
     for (const section of ["agents", "rules", "skills"] as const) {
@@ -349,7 +349,12 @@ export class PluginContentTranslator {
     // Same rule as the native path: prose is rewritten, an artefact is carried. Rewriting every
     // flat file left a script intact only where a tool's own rewrite happened to spare it.
     const content = isProse(file.relativePath) ? tool.rewriteContent(file.content) : file.content;
-    return this.makeFile(`${tool.directory}${section}/${pluginName}/${fileName}`, content);
+    const singleLevel =
+      section === "skills" && tool.capabilities.plugins.flatSkillLayout === "single-level";
+    const path = singleLevel
+      ? `${tool.directory}skills/${pluginName}-${fileName}`
+      : `${tool.directory}${section}/${pluginName}/${fileName}`;
+    return this.makeFile(path, content);
   }
 
   private makeFile(relativePath: string, content: string): InstallationFile {
