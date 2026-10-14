@@ -1,6 +1,6 @@
 # 05 - Verify Connection
 
-Verify the assistant's access to the services declared in project memory.
+Check the assistant's service connections and fill the report.
 
 ## Input
 
@@ -8,44 +8,21 @@ The bank in `aidd_docs/memory/`.
 
 ## Output
 
-A connection report printed using [connection-report.md](../assets/connection-report.md).
+A printed report using [connection-report.md](../assets/connection-report.md).
 
 ## Process
 
-1. **Scope.** Read `aidd_docs/memory/ecosystem.md` and its referenced memory files to identify the assistant's expected tools, accounts and targets.
-   - Check assistant access, excluding human-only tools and application runtime connections.
+1. **Read.** Read `ecosystem.md`, its referenced memory files and `testing.md` to identify required assistant access and targets.
    - No memory bank: report it missing and stop.
-   - Include required access that the memory describes but this session lacks.
-   - Include browser access when the project's `testing.md` requires web validation.
-2. **Inspect.** Check one declared CLI, MCP or native tool per service against its official documentation.
-   - No available tool or configured connection: mark it not configured without installing or connecting anything.
-   - Unknown account or target: mark it unverified unless a read can resolve it.
-3. **Read.** Confirm the account and target, then read one known item through the selected tool.
-   - Browser: open the application and read visible content.
-   - Database: read metadata without changing data or running migrations.
-   - No writes, configuration changes, login flows or secret output.
-   - Continue with the other services when a check fails.
-4. **Report.** Fill `connection-report.md` with one row per category, grouping its required services.
-   - Keep every category; mark unused categories as not needed.
-   - A category passes only when every required service was read successfully.
-   - For mixed results, use this precedence: read failed, not configured, unverified.
-   - Name the affected service, the shortest useful error and one corrective action.
-   - A configured tool alone never proves access.
-   - A successful read never proves write permissions.
-   - Keep these session results out of the durable memory bank.
+2. **Check.** Use the available CLI, MCP or native tools to confirm the account and target, then perform one read per required service.
+   - Read browser content or database metadata where relevant.
+   - No writes, installs, login flows, configuration changes or secret output.
+3. **Report.** Fill `connection-report.md` from observed results, with one row per category.
 
 ## Test
 
 | Case | Pass |
 | --- | --- |
-| Report | exactly one row per template category, with its services grouped |
-| Declared service | its category row names the tool, account, target and observed read |
-| Several required services | the category passes only when every required read succeeds |
-| Category unused | its row remains and is marked not needed |
-| Required access not configured | its category is marked not configured with the next action |
-| Read fails | its row reports the error and other services are still checked |
-| Identity or target unresolved | its category cannot pass; failed or unconfigured access takes precedence |
-| Tool only configured | its category cannot pass until the required read succeeds |
-| Browser needed | its evidence names the application and visible content read |
-| Database checked | only metadata was read |
-| Run completes | no data, configuration or memory file changed |
+| Report | all eight categories appear, with observed evidence or a missing access |
+| Failed or unavailable read | no success is claimed; other services are still checked |
+| Completion | no data, configuration or memory file changed |

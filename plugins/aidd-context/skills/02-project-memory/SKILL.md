@@ -12,8 +12,8 @@ flowchart LR
   update([refresh]) --> scan --> check --> write
   rewire([rewire]) --> sync
   verify([verify]) --> verify-connection
-  verify-connection -->|checked| reported([connection report])
-  verify-connection -->|no memory bank| missing([memory missing])
+  verify-connection -->|report| reported([connection report])
+  verify-connection -->|memory missing| missing([memory missing])
   scan -.-> empty([nothing to remember])
 ```
 
