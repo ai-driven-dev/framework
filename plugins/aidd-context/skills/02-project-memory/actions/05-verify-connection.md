@@ -1,10 +1,10 @@
 # 05 - Verify Connection
 
-Check the assistant's service connections and fill the report.
+Check project access and fill the report.
 
 ## Input
 
-The bank in `aidd_docs/memory/`.
+The project's bank in `aidd_docs/memory/` and the service-connection recipe.
 
 ## Output
 
@@ -12,17 +12,15 @@ A printed report using [connection-report.md](../assets/connection-report.md).
 
 ## Process
 
-1. **Read.** Read `ecosystem.md`, its referenced memory files and `testing.md` to identify required assistant access and targets.
-   - No memory bank: report it missing and stop.
-2. **Check.** Use the available CLI, MCP or native tools to confirm the account and target, then perform one read per required service.
-   - Read browser content or database metadata where relevant.
-   - No writes, installs, login flows, configuration changes or secret output.
+1. **Map.** Read the available `connect-services` recipe ([source](https://github.com/ai-driven-dev/framework/blob/next/plugins/aidd-context/skills/12-cook/assets/recipes/connect-services.md)) and the project memory relevant to its categories to identify required services, accounts and targets.
+   - **Coverage.** Include any other relevant memory files or services.
+   - **Missing memory.** Mark missing context as unverified, never as not needed.
+2. **Check.** Inspect available CLI, MCP, native or API access and perform one read against each required account and target.
+   - **Failures.** Continue checking the other services when one fails.
 3. **Report.** Fill `connection-report.md` from observed results, with one row per category.
 
-## Test
+## Rules
 
-| Case | Pass |
-| --- | --- |
-| Report | all eight categories appear, with observed evidence or a missing access |
-| Failed or unavailable read | no success is claimed; other services are still checked |
-| Completion | no data, configuration or memory file changed |
+- **Scope.** Check the assistant access the project requires; the catalogue is not an installation checklist.
+- **Read-only.** No writes, installs, login flows, configuration or memory changes, or secret output.
+- **Evidence.** A configured tool alone never proves access; report success only after a read matches the intended account and target.
