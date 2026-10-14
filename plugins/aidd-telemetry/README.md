@@ -2,52 +2,52 @@
 
 # aidd-telemetry
 
-Counts the tokens your Claude Code sessions consume, each model call once, and breaks them down by person, session, model, agent, day, repository, task and ticket. Claude Code is the only tool measured in release 1.
+Counts the tokens your Claude Code sessions consume, each model call once, by person, session, model, agent, day, repository, task and ticket. Release 1 measures Claude Code only, and sends nothing anywhere.
 
-## What it measures
+## Start
 
-- Every billed model call, read from Claude Code's own session files: the main thread, sub-agents and advisor calls.
-- Four counters, always apart: input, output, cache read and cache write.
-- A value a call does not report is unknown, never zero, and a report says how many calls it concerns.
-- Tokens only. No amount in currency is computed.
+1. Install: `npm install -g @ai-driven-dev/cli`, then `aidd plugin install aidd-telemetry`. Its hooks need `node` on `PATH`.
+2. In each clone to measure: `aidd telemetry on`. Nothing from before is counted.
+3. Work. On a new branch, the first prompt asks for the task: send `aidd telemetry task <name> [--ticket <ref>]` as your next prompt.
+4. Read it: `aidd telemetry report --axis task` (or `ticket`, `day`, `model`…).
 
-The task and the ticket come only from what you declare. Nothing guesses them from a branch name, a folder, a commit or a prompt.
+## Commands
 
-## What it asks, and when
+| Command | Does |
+| --- | --- |
+| `aidd telemetry on` / `off` | start or stop measuring this clone; what was measured stays |
+| `aidd telemetry status` | whether this clone is measured, since when, and its task |
+| `aidd telemetry task <name> [--ticket <ref>]` | declare the task; `--none` for no task |
+| `aidd telemetry report [--axis <axis>] [--days <n>]` | what the work consumed, split along one axis; `--json` for the envelope |
+| `aidd telemetry identity <id>` / `--off` | be named on your own measurement, or not |
+| `aidd telemetry forget` / `--yes` | show what is kept, then erase it |
 
-Once per working branch, before the work starts: a task name, an optional ticket.
+## When it asks
+
+Once per working branch, never on the default branch or a detached `HEAD`, only in a measured clone.
 
 | Where | Asked | Declare with |
 | --- | --- | --- |
-| Terminal, desktop app | yes | `aidd telemetry task <name> [--ticket <ref>]` as your next prompt (never reaches the model) |
-| IDE extension (seen: VS Code) | no, it shows no hook message | the same command in a terminal: binds the branch |
+| Terminal, desktop app | yes | the command as your next prompt (it never reaches the model) |
+| IDE extension (seen: VS Code) | no, it shows no hook message | the command in a terminal: binds the branch |
 | Headless run | no | - |
 
-No task: `aidd telemetry task --none`.
+- After `/clear` or `/branch`, the new session keeps the task.
+- Work with no task is its own row, attributed once its branch is declared.
 
-State of a clone (measured, since when, task): `aidd telemetry status`.
+## What it measures
 
-Never asked:
+- Every billed call in Claude Code's session files: main thread, sub-agents, advisor.
+- Four counters apart: input, output, cache read, cache write. Unknown is never zero.
+- The task and ticket only from what you declare, never guessed.
+- Tokens only, no currency.
 
-- default branch or detached `HEAD`;
-- clone not measured: run `aidd telemetry on` in it first. A pulled repository, a copy, a moved clone or a hand-set key is not measured.
+## Privacy
 
-After `/clear` or `/branch` the new session keeps the task and tells you so. Declaring a task there replaces it for the whole session. Work with no task is a row of its own, and is attributed afterwards once its branch is declared.
-
-## What stays local
-
-Release 1 sends nothing anywhere. Measurement lives in one directory on your machine, `~/.config/aidd/telemetry` unless `AIDD_TELEMETRY_DIR`, `AIDD_USER_CONFIG_DIR` or `XDG_CONFIG_HOME` moves it, and in your repository's own git config for branch declarations and the clone's consent key. `aidd telemetry forget` shows what is kept, and `aidd telemetry forget --yes` removes it. The formats are in the [usage contract](../../aidd_docs/product/usage-contract.md).
-
-A person is named only if they choose to be, with `aidd telemetry identity <id>`.
-
-## What it needs
-
-| Part | Needs |
-| --- | --- |
-| Asking for the task and recording sessions | the plugin installed, and `node` on `PATH` |
-| Counting tokens, reporting, opting in and forgetting | the `aidd` CLI (`@ai-driven-dev/cli`) |
-
-Without `aidd` nothing is asked and nothing is counted. Measurement starts at `aidd telemetry on`: what a clone's sessions did before it is not counted, and `on` reads nothing back. After that, each run reads the session files Claude Code holds, and counts the calls made while the clone was on. A project is measured only after `aidd telemetry on` in it, and `AIDD_TELEMETRY=0` refuses measurement everywhere.
+- Consent is per clone: a git config key (never committed) plus an interval `on` opens. A pulled repository, a copy or a moved clone is not measured until `on` runs there.
+- Data stays in `~/.config/aidd/telemetry` (or `AIDD_TELEMETRY_DIR`) and in the clone's git config.
+- `AIDD_TELEMETRY=0` refuses measurement everywhere.
+- Formats and rules: [usage contract](../../aidd_docs/product/usage-contract.md).
 
 ## Skills
 
@@ -58,10 +58,10 @@ Without `aidd` nothing is asked and nothing is counted. Measurement starts at `a
 
 ## Hooks
 
-Plain Node, Claude Code only, silent unless the project is measured. They also end a clone's consent when its key was turned off by hand (a `git config aidd.telemetry off`), by closing its interval in `consents.jsonl`, so the next prompt's calls are not counted.
+Plain Node, Claude Code only, silent unless the clone is measured. Each also ends a clone's consent turned off by hand (`git config aidd.telemetry off`).
 
 | Event | Does |
 | --- | --- |
-| `SessionStart` | records which session a Claude process is on; after `/clear` or `/branch` keeps the task |
-| `SessionStart`, async | reads new session files into the ledger |
-| `UserPromptSubmit` | answers a typed declaration without the model, and asks once for a task when a person is present |
+| `SessionStart` | records the session; after `/clear` or `/branch` keeps the task |
+| `SessionStart`, async | reads new session files into the local ledger |
+| `UserPromptSubmit` | asks once for a task; runs a typed declaration without the model |
