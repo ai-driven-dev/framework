@@ -1,6 +1,6 @@
 # Connection Report
 
-<!-- Fill one row per category, grouping its required services. Include each service, tool, account and target in Tool / target. Keep every category, remove this comment, keep evidence short and omit secrets. -->
+<!-- Fill every category, grouping its services and naming each tool, account and target. Keep evidence short; for a problem, name one corrective action. Use the worst required result: failed, not configured, unverified. Pass only when every required read succeeds; not needed only when no access is required. Remove this comment. -->
 
 | Category | Tool / target | Status | Evidence / next step |
 | --- | --- | --- | --- |
