@@ -38,12 +38,23 @@ build_tool() {
 
 sync_opencode_skills() {
   local name source skill destination
+  local -a skills
   mkdir -p "$OPENCODE_SKILLS"
+  source="$BUILD/opencode/.opencode/skills"
   for name in "$@"; do
-    source="$BUILD/opencode/.opencode/skills"
+    skills=("$source/$name/"*/ "$source/$name-"*/)
+    if [ "${#skills[@]}" -eq 0 ]; then
+      echo "no built OpenCode skills for $name" >&2
+      return 1
+    fi
+    rm -rf -- "$OPENCODE_SKILLS/$name"
     find "$OPENCODE_SKILLS" -mindepth 1 -maxdepth 1 -type d -name "$name-*" -exec rm -rf -- {} +
-    for skill in "$source/$name-"*/; do
-      destination="$OPENCODE_SKILLS/$(basename "$skill")"
+    for skill in "${skills[@]}"; do
+      case "$skill" in
+        "$source/$name/"*) destination="$OPENCODE_SKILLS/$name/$(basename "$skill")" ;;
+        *) destination="$OPENCODE_SKILLS/$(basename "$skill")" ;;
+      esac
+      mkdir -p "$(dirname "$destination")"
       cp -R "$skill" "$destination"
     done
   done
