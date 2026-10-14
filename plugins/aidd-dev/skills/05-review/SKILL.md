@@ -9,8 +9,8 @@ argument-hint: diff | plan
 ```mermaid
 flowchart LR
   all([all axes]) --> prepare
-  one([one axis named]) --> prepare
-  prepare --> review-code & review-functional & review-relevancy --> finalize
+  one([selected axes]) --> prepare
+  prepare -->|selected only| review-code & review-functional & review-relevancy --> finalize
   finalize --> approve([approve])
   finalize --> changes([changes-requested])
   finalize --> blocked([blocked])

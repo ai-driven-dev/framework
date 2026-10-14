@@ -32,10 +32,10 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 
 | File | Description |
 |------|---|
-| [checker.md](agents/checker.md) | `Reviews quality, risks, and fitness for the intended need. Use for an independent judgment of a deliverable. Never edits the work or implements the fix.` |
-| [executor.md](agents/executor.md) | `Turns a dispatched task into working, validated code that fits the project. Use when an approved scope must become code. Never plans, never judges its own work.` |
-| [explorer.md](agents/explorer.md) | `Explores scoped questions and returns sourced findings. Use when a caller needs evidence before deciding. Never modifies the inspected material.` |
-| [validator.md](agents/validator.md) | `Validates an identified deliverable against supplied criteria and mandatory checks. Use for independent completion evidence. Never repairs or performs a general quality review.` |
+| [executor.md](agents/executor.md) | `Implements assigned work within defined scope. Use to build or fix a deliverable, verify the result, and repair failures against the requested outcome.` |
+| [explorer.md](agents/explorer.md) | `Explores scoped questions about code, documentation, or dependencies. Use to investigate a domain, trace behavior, or research evidence before deciding.` |
+| [reviewer.md](agents/reviewer.md) | `Reviews the quality and coherence of a deliverable. Use for a quality check of simplicity, consistency, maintainability, and alignment with project conventions.` |
+| [validator.md](agents/validator.md) | `Validates that delivered work satisfies the original request, acceptance criteria, and mandatory checks. Use to verify the requested outcome and establish completion independently.` |
 
 ### `skills`
 
@@ -97,6 +97,7 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `actions` | [04-review-relevancy.md](skills/05-review/actions/04-review-relevancy.md) | - |
 | `actions` | [05-finalize.md](skills/05-review/actions/05-finalize.md) | - |
 | `assets` | [review-template.md](skills/05-review/assets/review-template.md) | - |
+| `references` | [quality-checklist.md](skills/05-review/references/quality-checklist.md) | - |
 | `references` | [report-contract.md](skills/05-review/references/report-contract.md) | - |
 | `references` | [review-rubric.md](skills/05-review/references/review-rubric.md) | - |
 | `-` | [SKILL.md](skills/05-review/SKILL.md) | `Reviews a change or a diff and says whether it is ready to ship, naming every problem with its fix. Use when the user wants a change checked before it ships. Not for fixing what the review finds, and not for auditing a whole codebase.` |

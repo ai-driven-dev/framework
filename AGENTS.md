@@ -39,10 +39,10 @@ Use available agents when useful. The caller owns scope, delegation, and final a
 <!-- aidd_agents:start -->
 | name | role |
 | --- | --- |
-| @explorer (Codex), @aidd-dev-explorer (OpenCode) | Explore scoped questions. Return sourced findings, uncertainties, and risks. Never modify inspected material. |
-| @executor (Codex), @aidd-dev-executor (OpenCode) | Implement assigned scope. Validate, repair failures, and report evidence and blockers. Never change requirements. |
-| @validator (Codex), @aidd-dev-validator (OpenCode) | Validate supplied criteria and mandatory checks. Report PASS, FAIL, or BLOCKED with evidence. Never repair. |
-| @checker (Codex), @aidd-dev-checker (OpenCode) | Review quality, risks, and fitness for the need. Report actionable findings. Never modify the deliverable. |
+| @aidd-dev-explorer (Codex, OpenCode), @aidd-dev:explorer (Claude) | Explore scoped questions and return sourced findings before a decision. |
+| @aidd-dev-executor (Codex, OpenCode), @aidd-dev:executor (Claude) | Implement assigned work and return changes with verification evidence. |
+| @aidd-dev-validator (Codex, OpenCode), @aidd-dev:validator (Claude) | Validate that delivered work satisfies the requested outcome and acceptance criteria. |
+| @aidd-dev-reviewer (Codex, OpenCode), @aidd-dev:reviewer (Claude) | Review quality and coherence against project conventions and the quality checklist. |
 <!-- aidd_agents:end -->
 
 ## Memory Management

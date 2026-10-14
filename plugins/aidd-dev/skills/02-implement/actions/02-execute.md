@@ -21,5 +21,5 @@ Validated phases, `status: done`, workflow evidence and checked revision, or a b
 
 - **Evidence.** Exercise every acceptance criterion through the real affected interface (browser, CLI, API…); compare actual and expected behavior at every step. Repair mismatches and restart the affected workflow from the beginning; require a full successful run with observable evidence before a task commit or `done`.
 - **Readiness.** Missing/contradictory dependencies or unfinished phases with none ready require `replan needed`, not skipped work or completion.
-- **Drift.** If satisfying criteria requires changing scope or requirements, stop affected work and report `replan needed: <reason>`; leave replanning to the caller.
+- **Drift.** Adapt implementation within owned responsibility; report changes needed to requested outcomes, criteria, or cross-owner dependencies as `replan needed: <reason>` and stop affected work.
 - **Blocked.** Follow [blocked.md](../references/blocked.md); assigned executors report, the whole-plan owner records plan `status: blocked` under commit policy. Leave unfinished code uncommitted; blocked validation is not success.

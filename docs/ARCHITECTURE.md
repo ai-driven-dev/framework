@@ -111,7 +111,7 @@ Recipe actions carry inputs, outputs, process steps, and rules.
 | Skill | Host loads `SKILL.md` on invocation; work runs in the caller's context. |
 | Caller | Owns scope, delegation, integration, and acceptance. |
 | Orchestrator | Sequences capabilities on the caller's behalf. |
-| Agent | Isolates work and returns a result. Invokes only declared canonical recipe skills; never invokes orchestrators or reads skill files. |
+| Agent | Isolates work and returns a result. Invokes declared recipe capabilities; reads supporting references while leaving recipe routing and delegation to the caller. |
 | Recipe | Primary callers may delegate bounded work; isolated recipes return to their caller. |
 | Reconnaissance helper | Read-only; neither mutates nor spawns. |
 | Write path | At most two delegation layers; no cycles. |

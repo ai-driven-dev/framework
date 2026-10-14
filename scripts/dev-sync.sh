@@ -8,7 +8,8 @@
 # exposes `aidd-opencode-reload` instead, and that helper decides which checkout may load.
 #
 # Codex caveat: the .codex-plugin manifest does not declare codex-agents/*.toml, and Codex
-# loads agents only from ~/.codex/agents/, so the built TOML is copied there after install.
+# loads agents only from ~/.codex/agents/, so install namespaced TOML there. Retire old
+# short names only when identical to the previous plugin cache; preserve personal agents.
 # Global rules: sync only the Agents section in the managed block, preserving personal
 # rules. First OpenCode sync keeps its Claude personal-rule fallback unless disabled.
 # Instruction paths honor CODEX_HOME, CLAUDE_CONFIG_DIR and XDG_CONFIG_HOME; tests use
@@ -74,6 +75,18 @@ validate_opencode_content() {
   done
 }
 
+validate_codex_agents() {
+  local name agent
+  for name in "$@"; do
+    for agent in "$FW/plugins/$name/agents/"*.md; do
+      if [ ! -s "$BUILD/codex/plugins/$name/codex-agents/$(basename "$agent" .md).toml" ]; then
+        echo "no built Codex agent for $name-$(basename "$agent" .md)" >&2
+        return 1
+      fi
+    done
+  done
+}
+
 sync_opencode_skills() {
   # Accept nested and legacy flat builds; preserve personal and unselected plugin content.
   local name source skill destination
@@ -128,16 +141,19 @@ sync_one() {
   printf '%-22s' "$name"
 
   if [ "$HAVE_CODEX" = 1 ]; then
+    local previous cached version
+    previous="$(mktemp -d "$BUILD/codex-previous-$name.XXXXXX")"
+    for cached in "$CODEX_CACHE/$MKT/$name/"*/codex-agents/; do
+      version="$(basename "$(dirname "$cached")")"
+      mkdir -p "$previous/$version"
+      cp -R "$cached" "$previous/$version/codex-agents"
+    done
     codex plugin remove "$name" >/dev/null 2>&1 || true
     rm -rf "$CODEX_CACHE/$MKT/$name"
     if codex plugin add "$name@$MKT" >/dev/null 2>&1; then
       printf ' codex:ok'
-      # Codex ignores plugin-bundled agents (manifest gap) - drop the built TOML where it looks.
-      local toml n=0
-      for toml in "$BUILD/codex/plugins/$name/codex-agents/"*.toml; do
-        mkdir -p "$CODEX_AGENTS"; cp -f "$toml" "$CODEX_AGENTS/"; n=$((n + 1))
-      done
-      [ "$n" -gt 0 ] && printf '(+%d agents)' "$n"
+      node "$SCRIPT_DIR/sync-codex-agents.cjs" "$name" "$BUILD/codex/plugins/$name/codex-agents" "$CODEX_AGENTS" "$previous"
+      rm -rf -- "$previous"
     else
       printf ' codex:FAIL'
       echo "Codex plugin install failed for $name; rerun codex plugin add $name@$MKT for details." >&2
@@ -192,6 +208,7 @@ fi
 if [ "$HAVE_CODEX" = 1 ]; then
   printf '%-22s' "build codex"
   build_tool codex || { echo "FAIL"; echo "codex build failed; rerun the translate command in scripts/dev-sync.sh without output redirection for details." >&2; exit 1; }
+  validate_codex_agents "${targets[@]}" || { echo "FAIL"; exit 1; }
   register_marketplace codex || { echo "FAIL"; echo "Codex marketplace registration failed for $BUILD/codex." >&2; exit 1; }
   echo "ok"
 fi

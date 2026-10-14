@@ -9,13 +9,13 @@ function render(source, host) {
   if (beginning < 0) throw new Error("AGENTS.md has no Agents section; refusing global sync");
   const boundary = source.indexOf("\n## ", beginning + 1);
   const names = {
-    codex: (role) => `@${role}`,
+    codex: (role) => `@aidd-dev-${role}`,
     claude: (role) => `@aidd-dev:${role}`,
     opencode: (role) => `@aidd-dev-${role}`,
   };
   if (!names[host]) throw new Error(`Unknown instruction host: ${host}`);
   return source.slice(beginning, boundary < 0 ? undefined : boundary).trim().replace(
-    /^\| @([a-z]+)[^|]*\|/gm,
+    /^\| @(?:aidd-dev[:-])?([a-z]+)[^|]*\|/gm,
     (_, role) => `| ${names[host](role)} |`,
   );
 }

@@ -13,7 +13,7 @@ const buildDevAgents = devAgents.map((name) => `printf '%s\\n' 'updated agent' >
 const instructionSource = "# AGENTS.md\n\n## Action\n- Keep scope.\n- Follow `docs/ARCHITECTURE.md`.\n\n## Agents\n| name | role |\n| --- | --- |\n| @executor (Codex), @aidd-dev-executor (OpenCode) | Implement scope. |\n\n## Memory Management\nProject docs live in aidd_docs/.\n<!-- aidd_project_memory:start -->\n@aidd_docs/memory/private.md\n<!-- aidd_project_memory:end -->\nLoad more memory.\n";
 
 test("global instructions exclude project context and use each host's native agent names", () => {
-  for (const [host, name] of [["codex", "@executor"], ["claude", "@aidd-dev:executor"], ["opencode", "@aidd-dev-executor"]]) {
+  for (const [host, name] of [["codex", "@aidd-dev-executor"], ["claude", "@aidd-dev:executor"], ["opencode", "@aidd-dev-executor"]]) {
     const content = render(instructionSource, host);
     assert.ok(content.includes(`| ${name} | Implement scope. |`));
     assert.doesNotMatch(content, /Memory|memory|aidd_docs|ARCHITECTURE/);
@@ -61,7 +61,7 @@ test("global sync replaces legacy duplicated instructions without changing perso
     assert.ok(migrated.endsWith(suffix));
     assert.doesNotMatch(migrated, /Legacy|Keep scope|## Communication|## Action/);
     assert.equal(migrated.match(/^## Behavior$/gm).length, 1);
-    assert.match(migrated, /@executor \| Implement scope/);
+    assert.match(migrated, /@aidd-dev-executor \| Implement scope/);
     sync(source, [["codex", destination]]);
     assert.equal(readFileSync(destination, "utf8"), migrated);
   } finally {
@@ -229,7 +229,7 @@ test("reload delivers global instructions to all three hosts while preserving pe
     mkdirSync(home);
     const source = fixture(home);
     writeFileSync(join(source, "AGENTS.md"), instructionSource);
-    const destinations = [[".codex/AGENTS.md", "@executor"], [".claude/CLAUDE.md", "@aidd-dev:executor"], [".config/opencode/AGENTS.md", "@aidd-dev-executor"]];
+    const destinations = [[".codex/AGENTS.md", "@aidd-dev-executor"], [".claude/CLAUDE.md", "@aidd-dev:executor"], [".config/opencode/AGENTS.md", "@aidd-dev-executor"]];
     for (const [path] of destinations) {
       mkdirSync(dirname(join(home, path)), { recursive: true });
       writeFileSync(join(home, path), "Personal rules.\n");
@@ -481,12 +481,63 @@ for (const host of ["codex", "claude"]) {
       mkdirSync(fakeBin);
       executable(join(fakeBin, host), `if [ "$1" = plugin ] && [ "$2" = ${host === "codex" ? "add" : "install"} ]; then exit 8; fi\nexit 0`);
       executable(join(fakeBin, "npx"), "exit 0");
-      const result = runSync(fakeBin, home, ["aidd-dev"]);
+      const result = runSync(fakeBin, home, ["aidd-pm"]);
       assert.notEqual(result.status, 0);
-      assert.match(result.stderr, /plugin install failed for aidd-dev/);
+      assert.match(result.stderr, /plugin install failed for aidd-pm/);
       assert.doesNotMatch(result.stdout, /Done\./);
     } finally {
       rmSync(root, { recursive: true, force: true });
     }
   });
 }
+
+test("Codex reload rejects missing built agents before replacing the previous cache", () => {
+  const root = mkdtempSync(join(tmpdir(), "aidd-dev-sync-codex-incomplete-"));
+  try {
+    const fakeBin = join(root, "bin"), home = join(root, "home");
+    mkdirSync(fakeBin);
+    const cached = join(home, ".codex/plugins/cache/aidd-framework/aidd-dev/2.6.0/codex-agents/checker.toml");
+    mkdirSync(dirname(cached), { recursive: true });
+    writeFileSync(cached, "old cached agent\n");
+    executable(join(fakeBin, "codex"), "exit 0");
+    executable(join(fakeBin, "npx"), "exit 0");
+    const result = runSync(fakeBin, home, ["aidd-dev"]);
+    assert.notEqual(result.status, 0);
+    assert.match(result.stderr, /no built Codex agent/);
+    assert.equal(readFileSync(cached, "utf8"), "old cached agent\n");
+    assert.doesNotMatch(result.stdout, /Done\./);
+  } finally { rmSync(root, { recursive: true, force: true }); }
+});
+
+test("Codex reload namespaces renamed roles and retires only cache-matched short names", () => {
+  const root = mkdtempSync(join(tmpdir(), "aidd-dev-sync-codex-migration-"));
+  try {
+    const fakeBin = join(root, "bin"), home = join(root, "home");
+    mkdirSync(fakeBin); mkdirSync(home);
+    const source = fixture(home);
+    rmSync(join(source, "plugins/aidd-dev/agents/checker.md"));
+    writeFileSync(join(source, "plugins/aidd-dev/agents/reviewer.md"), "new reviewer\n");
+    const cached = join(home, ".codex/plugins/cache/aidd-framework/aidd-dev/2.6.0/codex-agents/checker.toml");
+    const agents = join(home, ".codex/agents");
+    mkdirSync(dirname(cached), { recursive: true }); mkdirSync(agents, { recursive: true });
+    const legacy = 'name = "checker"\ndescription = "Legacy"\n';
+    writeFileSync(cached, legacy); writeFileSync(join(agents, "checker.toml"), legacy);
+    writeFileSync(join(agents, "reviewer.toml"), "personal reviewer\n");
+    executable(join(fakeBin, "codex"), "exit 0");
+    executable(join(fakeBin, "npx"), String.raw`out=""
+while [ "$#" -gt 0 ]; do
+  if [ "$1" = "--out" ]; then shift; out=$1; fi
+  shift
+done
+mkdir -p "$out/plugins/aidd-dev/codex-agents"
+for role in reviewer executor; do
+  printf 'name = "%s"\ndescription = "New role"\n' "$role" > "$out/plugins/aidd-dev/codex-agents/$role.toml"
+done`);
+    const result = runSync(fakeBin, home, ["aidd-dev"]);
+    assert.equal(result.status, 0, result.stderr);
+    assert.equal(existsSync(join(agents, "checker.toml")), false);
+    assert.equal(readFileSync(join(agents, "reviewer.toml"), "utf8"), "personal reviewer\n");
+    assert.match(readFileSync(join(agents, "aidd-dev-reviewer.toml"), "utf8"), /^name = "aidd-dev-reviewer"/);
+    assert.match(readFileSync(join(agents, "aidd-dev-executor.toml"), "utf8"), /^name = "aidd-dev-executor"/);
+  } finally { rmSync(root, { recursive: true, force: true }); }
+});

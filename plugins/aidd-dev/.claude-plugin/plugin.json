@@ -23,7 +23,7 @@
     "./agents/explorer.md",
     "./agents/executor.md",
     "./agents/validator.md",
-    "./agents/checker.md"
+    "./agents/reviewer.md"
   ],
   "keywords": [
     "sdlc",

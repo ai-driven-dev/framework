@@ -3,8 +3,8 @@
 ## Behavior
 
 - **Validate:** dispatch a fresh validator on the committed candidate, contract, criteria, and mandatory checks.
-- **Review:** after validation passes, dispatch a fresh checker independent from implementation to review quality using that evidence.
-- **Challenge:** after review clears, the same checker challenges whether the outcome is trustworthy and serves the user.
+- **Review:** after validation passes, dispatch a fresh reviewer for quality and coherence; select code and relevancy axes, using the validator's acceptance evidence.
+- **Challenge:** after review clears, the same reviewer challenges whether the outcome is trustworthy and serves the user.
 
 ## Findings
 
@@ -32,7 +32,7 @@ flowchart TD
     CommittedCandidate["$committed_candidate"]
     ValidationReports["$validation_reports"]
     Validator(["@aidd-dev:validator"])
-    Checker(["@aidd-dev:checker"])
+    Reviewer(["@aidd-dev:reviewer"])
     Review["/aidd-dev:05-review"]
   end
 
@@ -59,9 +59,9 @@ flowchart TD
   Plan --> Validator
   CommittedCandidate --> Validator
   ValidationReports --> Validator
-  Validator -- "All criteria pass with evidence." --> Checker
+  Validator -- "All criteria pass with evidence." --> Reviewer
   Validator -- "Fail or blocked." --> Findings
-  Checker --> Review
+  Reviewer -- "Code and relevancy axes." --> Review
   Review -- "Return actionable review findings." --> Findings
   Review -- "When the review clears, challenge the outcome." --> Challenge
   Challenge -- "Return actionable challenge findings." --> Findings
@@ -78,7 +78,7 @@ flowchart TD
   classDef zone fill:#F1F5F9,stroke:#64748B,color:#0F172A,stroke-width:2px
 
   class Review,Challenge,Batch,PullRequest skill
-  class Checker,Validator agent
+  class Reviewer,Validator agent
   class Contract,Plan,CommittedCandidate,ValidationReports,Findings,PullRequestUrl artifact
   class Frame,Deliver zone
 ```

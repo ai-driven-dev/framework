@@ -12,17 +12,18 @@ The contract every generated agent must satisfy. An agent is a focused role with
 
 ## Naming
 
-- Short and catchy, a single word where possible: `executor`, `checker`, `auditor`.
+- Short and catchy, a single word where possible: `executor`, `reviewer`, `auditor`.
 - Fits the role at a glance. Propose three options for the user to pick.
 
 ## Body shape
 
 Short imperative sentences. Optional sections, added only when they earn their place:
 
+- `# References`: supporting criteria or checklists, verified accessible after installation.
 - `# Inputs`: what it receives.
 - `# Outputs`: what it returns.
-- `# Guardrails`: what it must never do.
-- `# Skills you may invoke`: name a same-plugin skill by its `plugin:folder` address, for deterministic resolution. Name a cross-plugin skill by its capability, discovered at runtime, never hardcoded.
+- `# Guardrails`: behavioral boundaries.
+- `# Skills you may invoke`: list allowed recipes by canonical `/plugin:folder` address; verify availability before invocation.
 - `# Definition of Ready` / `# Definition of Done`: start and finish gates.
 - `# Decisions in scope` / `# Decisions out of scope`: what it may decide, what it must defer.
 - `# Handoffs`: who it returns to.
