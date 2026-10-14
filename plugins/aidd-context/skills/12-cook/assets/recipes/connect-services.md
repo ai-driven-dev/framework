@@ -10,11 +10,11 @@ Each category points to the project memory that records how your team uses those
 
 ### 1) 🔎 Choose the tool
 
-Start with the CLI when it covers your task and your assistant can run shell commands. Use MCP or a native tool when you need it inside the assistant. Choose one option per service.
+Reuse existing connections. For each service your project uses, start with one option that covers your task. Prefer a CLI when your assistant can run shell commands. Add another option only for a need the first cannot cover.
 
 Memory links open the AIDD templates for the corresponding files in your project's `aidd_docs/memory/`.
 
-#### Version control
+#### 🔀 Version control
 
 > Work with repositories, pull requests and CI runs. Project conventions: [vcs.md](https://github.com/ai-driven-dev/framework/blob/next/plugins/aidd-context/skills/02-project-memory/assets/templates/memory/core/vcs.md).
 
@@ -24,7 +24,7 @@ Memory links open the AIDD templates for the corresponding files in your project
 | GitLab | [`glab`](https://docs.gitlab.com/cli/) | [GitLab MCP](https://docs.gitlab.com/user/model_context_protocol/mcp_server/) |
 | Bitbucket | — | [Atlassian Rovo MCP](https://developer.atlassian.com/cloud/rovo-mcp/guides/getting-started/) for search and read access |
 
-#### Ticketing
+#### 🎫 Ticketing
 
 > Find, create and update tickets. Team workflow: [backlog.md](https://github.com/ai-driven-dev/framework/blob/next/plugins/aidd-context/skills/02-project-memory/assets/templates/memory/backlog/backlog.md).
 
@@ -34,7 +34,7 @@ Memory links open the AIDD templates for the corresponding files in your project
 | Jira Cloud | [`acli`](https://developer.atlassian.com/cloud/acli/reference/commands/jira/) | [Atlassian Rovo MCP](https://developer.atlassian.com/cloud/rovo-mcp/guides/getting-started/) |
 | Linear | — | [Linear MCP](https://linear.app/docs/mcp) |
 
-#### Documentation and workspace
+#### 📚 Documentation and workspace
 
 > Access team documents, files, email and calendars. Connected tools: [ecosystem.md](https://github.com/ai-driven-dev/framework/blob/next/plugins/aidd-context/skills/02-project-memory/assets/templates/memory/ecosystem/ecosystem.md).
 
@@ -44,7 +44,7 @@ Memory links open the AIDD templates for the corresponding files in your project
 | Notion | [`ntn`](https://developers.notion.com/cli/get-started/overview) for API scripts | [Notion MCP](https://developers.notion.com/guides/mcp/get-started-with-mcp) |
 | Google Workspace | [`gws`](https://github.com/googleworkspace/cli) ⚠️ Not officially supported by Google | — |
 
-#### Browser
+#### 🌐 Browser
 
 > Open the application and check its behavior in a browser. Test instructions: [testing.md](https://github.com/ai-driven-dev/framework/blob/next/plugins/aidd-context/skills/02-project-memory/assets/templates/memory/core/testing.md).
 
@@ -54,7 +54,7 @@ Memory links open the AIDD templates for the corresponding files in your project
 | Claude in Chrome | — | [Chrome extension](https://support.claude.com/en/articles/12012173-get-started-with-claude-in-chrome) |
 | Cursor Browser | — | [Built-in browser](https://cursor.com/docs/agent/tools/browser) |
 
-#### Design
+#### 🎨 Design
 
 > Read designs and follow the project's design system. UI guidelines: [design.md](https://github.com/ai-driven-dev/framework/blob/next/plugins/aidd-context/skills/02-project-memory/assets/templates/memory/ui/design.md).
 
@@ -62,7 +62,7 @@ Memory links open the AIDD templates for the corresponding files in your project
 | --- | --- | --- |
 | Figma | — | [Figma MCP](https://developers.figma.com/docs/figma-mcp-server/remote-server-installation/) |
 
-#### Monitoring
+#### 🚨 Monitoring
 
 > Read application errors and investigate failures. Monitoring configuration: [deployment.md](https://github.com/ai-driven-dev/framework/blob/next/plugins/aidd-context/skills/02-project-memory/assets/templates/memory/deployment/deployment.md).
 
@@ -70,7 +70,7 @@ Memory links open the AIDD templates for the corresponding files in your project
 | --- | --- | --- |
 | Sentry | [`sentry`](https://cli.sentry.dev/) | [Sentry MCP](https://mcp.sentry.dev/) |
 
-#### Deployment
+#### 🚀 Deployment
 
 > Deploy the application and inspect deployment logs. Deployment instructions: [deployment.md](https://github.com/ai-driven-dev/framework/blob/next/plugins/aidd-context/skills/02-project-memory/assets/templates/memory/deployment/deployment.md).
 
@@ -78,7 +78,7 @@ Memory links open the AIDD templates for the corresponding files in your project
 | --- | --- | --- |
 | Vercel | [`vercel`](https://vercel.com/docs/cli) | [Vercel MCP](https://vercel.com/docs/agent-resources/vercel-mcp) |
 
-#### Database
+#### 🗄️ Database
 
 > Explore the database and run migrations. Database conventions: [database.md](https://github.com/ai-driven-dev/framework/blob/next/plugins/aidd-context/skills/02-project-memory/assets/templates/memory/database/database.md).
 
@@ -93,10 +93,10 @@ Add any other services your team uses to the relevant table.
 ### 2) 🔌 Install and sign in
 
 1. Check existing connections first; in [Claude Code](https://code.claude.com/docs/en/mcp#managing-your-servers), run `/mcp` to see MCP server status.
-2. Open your tool's documentation from the table.
-3. For a CLI, follow its installation and login instructions.
-4. For MCP, follow the provider's instructions for your AI client, then authenticate.
-5. Check the account, workspace and requested permissions before granting access.
+2. Open the linked setup guide for your tool; for MCP, select your AI client.
+3. Install the chosen CLI, server or plugin if it is not already available.
+4. Check the intended account, workspace and requested permissions before granting access.
+5. Authenticate using the provider's documented login method.
 
 **CLI example: GitHub.** Install `gh` using its [installation guide](https://github.com/cli/cli#installation), then run:
 
