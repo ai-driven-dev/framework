@@ -31,7 +31,7 @@ Prefer framework `03`, syntax `02`, style `01`, architecture `00`, then `04`–`
 
 ## Assessment
 
-- **needs review**: uncertainty that could affect comparison with existing policies. Overrides other labels; resolve before classifying conflict or proposing changes to that source.
+- **needs review**: uncertainty that could affect comparison with existing policies. Overrides other labels.
 - **new**: no coverage, overlap or conflict.
 - **covered**: all obligations supplied throughout scope.
 - **overlap**: compatible partial repetition/extension.
