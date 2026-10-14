@@ -117,7 +117,8 @@ Use a read-only mode when you only need to read. Require confirmation for writes
 Ask your assistant to verify the connections declared in project memory:
 
 ```text
-Verify this project's service connections against aidd_docs/memory/.
+Verify this project's connections against aidd_docs/memory/.
+Report one row per category.
 ```
 
 To disconnect later, remove the integration from your client and revoke its access in the service's account settings.

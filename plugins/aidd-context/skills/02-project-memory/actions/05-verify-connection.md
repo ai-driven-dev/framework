@@ -24,7 +24,10 @@ A connection report printed using [connection-report.md](../assets/connection-re
    - Database: read metadata without changing data or running migrations.
    - No writes, configuration changes, login flows or secret output.
    - Continue with the other services when a check fails.
-4. **Report.** Fill [connection-report.md](../assets/connection-report.md) from the observed results.
+4. **Report.** Fill [connection-report.md](../assets/connection-report.md) with one row per category, grouping its required services.
+   - Keep every category; mark unused categories as not needed.
+   - A category passes only when every required service was read successfully.
+   - A failure or missing access takes precedence over an unverified result.
    - A configured tool alone never proves access.
    - A successful read never proves write permissions.
    - Keep these session results out of the durable memory bank.
@@ -33,7 +36,10 @@ A connection report printed using [connection-report.md](../assets/connection-re
 
 | Case | Pass |
 | --- | --- |
-| Declared service | its row names the tool, account, target and observed read |
+| Report | exactly one row per template category, with its services grouped |
+| Declared service | its category row names the tool, account, target and observed read |
+| Several required services | the category passes only when every required read succeeds |
+| Category unused | its row remains and is marked not needed |
 | Required access missing | its row reports failure and the next action |
 | Read fails | its row reports the error and other services are still checked |
 | Identity or target unresolved | its row is unverified, never successful |
