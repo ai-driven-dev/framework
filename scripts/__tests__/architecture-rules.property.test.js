@@ -214,11 +214,13 @@ function realSkills() {
   return skills;
 }
 
-/** The skill's content with every table row citing `name` removed. */
+/** Remove each citation form the router checker accepts. */
 function withoutCitationOf(content, name) {
   const stem = stemOf(name).toLowerCase();
   const noExt = name.replace(/\.md$/, "").toLowerCase();
   return content
+    .replaceAll(`actions/${name}`, "")
+    .replaceAll(`${TICK}${name}${TICK}`, "")
     .split("\n")
     .filter((line) => {
       if (!/^\s*\|/.test(line)) return true;
@@ -233,6 +235,20 @@ function withoutCitationOf(content, name) {
     .join("\n");
 }
 
+test("citation mutation removes links, fenced paths and file names", () => {
+  const name = "01-run.md";
+  for (const citation of [
+    `[run](actions/${name})`,
+    `\`\`\`\nactions/${name}\n\`\`\``,
+    `${TICK}${name}${TICK}`,
+  ]) {
+    const file = "plugins/aidd-dev/skills/01-plan/SKILL.md";
+    const content = `## Actions\n\n${citation}`;
+    assert.equal(checkRouterCoherence(file, content, [name]).length, 0);
+    assert.equal(checkRouterCoherence(file, withoutCitationOf(content, name), [name]).length, 1);
+  }
+});
+
 test("every router in the tree cites every action it provides", () => {
   const failures = [];
   for (const { relPath, content, names } of realSkills()) {
@@ -243,14 +259,10 @@ test("every router in the tree cites every action it provides", () => {
 });
 
 test("removing a real router's citation is caught, for every action in the tree", () => {
-  // `aidd-dev:10-todo` names its one action as a fenced path rather than a table row, so there
-  // is no row to remove and nothing to catch. It is the one documented exception.
-  const FENCED_PATH_SKILL = "plugins/aidd-dev/skills/10-todo/SKILL.md";
   const missed = [];
   let checked = 0;
 
   for (const { relPath, content, names } of realSkills()) {
-    if (relPath === FENCED_PATH_SKILL) continue;
     for (const name of names) {
       checked += 1;
       const violations = checkRouterCoherence(relPath, withoutCitationOf(content, name), names);

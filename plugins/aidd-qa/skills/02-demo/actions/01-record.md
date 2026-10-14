@@ -2,26 +2,23 @@
 
 ## Input
 
-Journey steps and expected outcome (e.g. `qa.md` scenario), candidate (branch, commit, URL), optional destination.
+Journey steps and expected outcome, candidate, optional destination.
 
 ## Output
 
-One artifact named after its `journey slug`, never `happy-path` for a bug: browser journey => WebM; CLI journey => `.txt` transcript of commands, outputs and exit status. Label `pass`, `fail` (as observed, not expected), or `blocked`; never stage or fake.
+One artifact named for each journey: browser WebM or CLI `.txt` transcript (commands, outputs, exit status). Label observed `pass`/`fail` or `blocked`; never stage or invent outcomes.
 
-Caller's folder, else beside the journey's source (`qa/` beside `qa.md`), never a temporary directory.
+Use the caller's folder, else `qa/` beside the journey source; never a temporary destination.
 
 ## Process
 
-1. Check browser dependencies: `npx`, pinned `@playwright/cli`, plus `ffmpeg` and `ffprobe` only for a browser video.
-2. Missing dependency: ask once to install outside the application manifest; declined or recheck fails => stop with shortest decisive error.
-3. Reach initial state with deterministic data; authenticate off-camera. Require verified teardown for state changes.
-4. Browser: [recorder](../references/interface-browser-playwright-cli.md). CLI: capture commands, outputs and exit status verbatim. Failed step => `fail`, otherwise `pass`.
-5. Setup/tooling failure: discard, reset, retry once; second failure => `blocked`.
-6. After state changes, teardown and verify baseline before closing.
-7. Return paths and labels. Only when the user invoked it directly, ask `Open <video> in the browser for review?`; open on confirmation.
+1. Missing dependency: ask once to install outside the application manifest; refusal/recheck failure => `blocked` with the error.
+2. Use documented deterministic test data and verified teardown; authenticate off-camera, exclude secrets.
+3. Browser: [recorder](../references/interface-browser-playwright-cli.md). CLI: capture verbatim, including failures.
+4. Tool failure: reset and retry once, then `blocked`.
+5. Restore and verify baseline before closing.
+6. Direct browser calls: offer to open the video; open on agreement.
 
 ## Test
 
-- Mismatch: keep observed take, labelled `fail`.
-- Second operational failure: `blocked`.
-- Artifact: no secret or guessed live record.
+Artifact readable/playable; evidence matches the observed journey.

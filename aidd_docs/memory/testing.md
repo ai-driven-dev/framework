@@ -8,7 +8,7 @@ How the project is tested: the layers, the tools, and the conventions. Where tes
 
 | Surface | Validated by |
 | --- | --- |
-| Skills, agents, rules (markdown) | each action's own `## Test`, run end to end against a real project |
+| Skills, agents, rules (markdown) | static guards check structure; verify execution through host traces and artifacts from a frozen version |
 | `scripts/` and bundled hooks | `node --test` under the wrapper below |
 | `cli/` | vitest, four projects — see the CLI bank |
 | `kanban/` | its own vitest suite. It shares no code with `cli/` |
@@ -44,6 +44,6 @@ CI runs more: `validate.yml` re-runs the whole pre-commit over the whole tree on
 
 ## Browser QA
 
-- Runner: `npx --yes @playwright/cli@0.1.17`, the framework pin. Never `latest` during QA.
-- Also required: `ffmpeg` and `ffprobe`. Output is WebM evidence per scenario.
-- Owned by `aidd-qa:01-acceptance-qa`; this repository ships the capability, it has no browser journey of its own.
+- Acceptance QA: `aidd-qa:01-acceptance-qa` verifies browser or CLI criteria into `qa.md`.
+- Demo: `aidd-qa:02-demo` produces browser WebM (`ffmpeg` and `ffprobe` required) or a CLI transcript.
+- This repository ships these capabilities; it has no browser journey of its own.

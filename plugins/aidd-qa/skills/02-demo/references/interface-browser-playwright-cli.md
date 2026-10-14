@@ -2,26 +2,26 @@
 
 ## Invocation
 
-Run outside the application repository in a temporary directory; never `latest` or an application dependency:
+Requires `npx`, `ffmpeg`, `ffprobe`.
 
 ```bash
-npx --yes @playwright/cli@0.1.17 -s=demo-<run-id>-<journey-slug> <command>
+cd <temporary-directory-outside-application> && npx --offline --no -- @playwright/cli@0.1.17 -s=demo-<run-id>-<journey-slug> <command>
 ```
 
-Keep stdout, stderr and exit status visible: no redirects, pipes, command substitutions or `|| true`.
+Keep stdout, stderr and exit status visible.
 
 ## Recording
 
-One named session and raw WebM per journey; viewport/frame `1280×720`. Final: `<journey-slug>.webm` (`<evidence-name>` below).
+One session per journey.
 
-1. `resize 1280 720`; reach initial state before `video-start raw-<journey-slug>.webm --size=1280x720`.
-2. One `run-code 'async page => { ... }'` contains every interaction; never separate click/fill/scroll commands. Hold initial and verified final states `1000 ms`; pause `300 ms` between actions and after scrolls.
-3. Bound each expectation with `waitFor`; return `{ step, expected, actual, ok }` per step. Mismatches never throw. Throw, `SyntaxError`, or non-zero exit invalidates take.
-4. `video-stop` only after `run-code` succeeds; raw file lands in current directory. Teardown before `close`.
+1. `resize 1280 720`; reach initial state, then `video-start raw-<journey-slug>.webm --size=1280x720`.
+2. All interactions in one `run-code 'async page => { ... }'`. Hold initial/verified final states `1000 ms`; pause `300 ms` between actions and after scrolls; before every click, focus and hover its target for `300 ms`.
+3. Use bounded waits; log expected and observed results. Keep recording mismatches; execution errors invalidate the take.
+4. Successful `run-code` => `video-stop`.
 
 ## Duration
 
-Probe raw once and final after encoding:
+Probe raw and encoded video:
 
 ```bash
 ffprobe -v error -select_streams v:0 \
@@ -29,40 +29,38 @@ ffprobe -v error -select_streams v:0 \
   -of json <input.webm>
 ```
 
-Maximum 12 seconds, never a target: no padding/extension/acceleration. Above cap, remove non-journey actions and re-record; required journey cannot fit => `blocked`.
+Maximum 12 seconds; no padding, acceleration or head cuts. If the journey cannot fit, return `blocked`.
 
-Without `ffmpeg`, only already-short raw passes; otherwise `blocked: media-postprocess-unavailable`.
-
-Never trim head or infer first action from scene changes. Inspect both sides of tail cuts; preserve result and final one-second hold:
+For tail cuts, read both cut-point frames; preserve result and final hold:
 
 ```bash
 qa_cut_frames=$(mktemp -d)
-ffmpeg -v error -ss <cut-minus-0.25-seconds> -i raw-<evidence-name>.webm \
+ffmpeg -v error -ss <cut-minus-0.25-seconds> -i raw-<journey-slug>.webm \
   -frames:v 1 "$qa_cut_frames/before.png"
-ffmpeg -v error -ss <cut-plus-0.25-seconds> -i raw-<evidence-name>.webm \
+ffmpeg -v error -ss <cut-plus-0.25-seconds> -i raw-<journey-slug>.webm \
   -frames:v 1 "$qa_cut_frames/after.png"
 ```
 
 ## Normalization
 
-Encode without audio; only visually verified tail cut; omit unused `-to`:
+Use `-to` only for a verified tail cut:
 
 ```bash
-ffmpeg -y -to <verified-end-seconds> -i raw-<evidence-name>.webm \
+ffmpeg -y -to <verified-end-seconds> -i raw-<journey-slug>.webm \
   -an -vf "fps=12,scale=1280:-2:force_original_aspect_ratio=decrease" \
-  -c:v libvpx-vp9 -crf 36 -b:v 0 <evidence-name>.webm
+  -c:v libvpx-vp9 -crf 36 -b:v 0 <absolute-destination>/<journey-slug>.webm
 ```
 
 ## Validation
 
-After probing, inspect final frames chronologically, four/second:
+Read every generated sheet in filename order:
 
 ```bash
 qa_final_frames=$(mktemp -d)
-ffmpeg -v error -i <evidence-name>.webm -vf "fps=4" \
-  "$qa_final_frames/frame-%03d.png"
+ffmpeg -v error -i <absolute-destination>/<journey-slug>.webm -vf "fps=4,tile=2x4" \
+  "$qa_final_frames/sheet-%03d.png"
 ```
 
-Require `vp9`, width `1280`, duration ≤12 seconds; visible initial state, every action/transition, final result; each hold ≥four sampled frames. `ffprobe` alone is insufficient.
+Require `vp9`, width `1280`, ≤12 seconds; initial state, every action/transition, final result visible; holds ≥four frames.
 
-Only after every final passes probe and inspection, delete raw takes, cut-point and validation frames.
+Any unread sheet or unchecked hold => `blocked`. Delete raw takes/cut-point/validation frames only after all finals pass probe and inspection.

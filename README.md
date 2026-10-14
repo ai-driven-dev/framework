@@ -328,7 +328,7 @@ Answers what a piece of work cost — tokens, models, and which skill spent them
 
 `2 skills` · **new**
 
-Acceptance QA — locks browser scenarios from acceptance criteria and records reviewer evidence.
+Acceptance QA: verify browser or CLI criteria and demonstrate observed journeys.
 
 </td>
 </tr>

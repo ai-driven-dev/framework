@@ -31,7 +31,7 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `actions` | [04-run-scenarios.md](skills/01-acceptance-qa/actions/04-run-scenarios.md) | - |
 | `assets` | [qa-report-template.md](skills/01-acceptance-qa/assets/qa-report-template.md) | - |
 | `references` | [interface-browser-playwright-cli.md](skills/01-acceptance-qa/references/interface-browser-playwright-cli.md) | - |
-| `-` | [SKILL.md](skills/01-acceptance-qa/SKILL.md) | `Validate a reviewed candidate's observable behavior against its acceptance criteria into a verdict report. Use when acceptance criteria exist and a journey observable through a browser or a command needs proof it holds. Do NOT use for diff review, unit or integration tests, or application fixes.` |
+| `-` | [SKILL.md](skills/01-acceptance-qa/SKILL.md) | `Prove reviewed browser or command journeys against acceptance criteria. Use for acceptance QA, not diff review, unit or integration tests, or application fixes.` |
 
 #### `skills/02-demo`
 
@@ -39,5 +39,5 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 |-------|------|---|
 | `actions` | [01-record.md](skills/02-demo/actions/01-record.md) | - |
 | `references` | [interface-browser-playwright-cli.md](skills/02-demo/references/interface-browser-playwright-cli.md) | - |
-| `-` | [SKILL.md](skills/02-demo/SKILL.md) | `Demonstrate a journey with a short browser video or CLI transcript, labelled by observed outcome. Use when a journey or a bug needs showing to a reviewer. Not for acceptance verification, diff review, or application fixes.` |
+| `-` | [SKILL.md](skills/02-demo/SKILL.md) | `Show a journey or bug through a browser video or CLI transcript. Use for reviewer evidence, not acceptance verification or fixes.` |
 

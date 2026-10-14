@@ -1,13 +1,13 @@
 # Acceptance QA: {{feature}}
 
-- **Verdict**: {{pass | fail | blocked | skipped}}
-- **Source**: {{acceptance criteria path}}
-- **Candidate**: {{branch | commit | running URL}}
-- **Run**: {{yyyy_mm_dd}}
+- **Verdict**: {{verdict}}
+- **Source**: {{criteria source}}
+- **Candidate**: {{candidate}}
+- **Run**: {{date}}
 
 ## Out of interface
 
-{{criteria, or quoted parts, not observable through a browser or a command, or "none"}}
+{{quoted exclusions, or "none"}}
 
 ## Scenarios
 
@@ -16,10 +16,10 @@
 
 ## Rejected
 
-{{scenarios rejected in load-scope or prepare-run, criterion — reason, or "none"}}
+{{criterion, reason; or "none"}}
 
 ## Limitations
 
-{{what the run could not cover, or "none"}}
+{{limitations, or "none"}}
 
-{{findings-section-when-needed}}
+{{findings}}

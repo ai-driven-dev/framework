@@ -2,14 +2,7 @@
 
 ## Behavior
 
-- Use one fresh checker, independent from implementation, to review the candidate against the contract, plan, and validation evidence.
-- After the review clears, the same checker runs `/aidd-qa:01-acceptance-qa` on the same contract and committed candidate; without it, stop with the instruction to install `aidd-qa`, never run QA by other means. Then route its verdict:
-  - `pass` or `skipped`: Challenge.
-  - `fail`: Deliver.
-  - `blocked` by ambiguous or incomplete criteria: Frame.
-  - `blocked` by environment, permissions, dependencies or tooling: stop with the exact blocker and the user action.
-- On `pass`, run `/aidd-qa:02-demo` on the passing scenarios.
-- After QA, the same checker challenges whether the real outcome is trustworthy and serves the user.
+Drive the diagram with one fresh, independent `@aidd-dev:checker`, one skill per call. Supply the contract, committed candidate, plan and validation evidence.
 
 ## Findings
 
@@ -23,8 +16,7 @@ A checker's finding is routed by what it is about. A refusal the user gives at a
 
 ## Handoff
 
-- After QA and Challenge clear, a product or validator change re-enters Review.
-- Commit everything this zone wrote, never a failed or blocked QA run, then open the draft pull request passing `qa.md` and the artifact paths.
+- Commit whatever this zone wrote, then open the draft pull request with the report and artifact paths when the checker returns no actionable finding.
 
 ```mermaid
 ---
@@ -40,6 +32,7 @@ flowchart TD
     Checker(["@aidd-dev:checker"])
     Review["/aidd-dev:05-review"]
     QA["/aidd-qa:01-acceptance-qa"]
+    QAReport["$qa.md"]
     Demo["/aidd-qa:02-demo"]
   end
 
@@ -54,6 +47,7 @@ flowchart TD
     Frame["01 Frame"]
     Todo["/aidd-dev:10-todo"]
     Deliver["02 Deliver"]
+    Stop["Blocker + resume action"]
   end
 
   subgraph ShipStage["Ship the reviewed candidate"]
@@ -68,11 +62,14 @@ flowchart TD
   ValidationReports --> Checker
   Checker --> Review
   Review -- "Return actionable review findings." --> Findings
-  Review -- "When the review clears, verify acceptance." --> QA
-  QA -- "Return a failed or blocked verdict." --> Findings
-  QA -- "On pass, show the passing scenarios." --> Demo
-  QA -- "On skipped, challenge the outcome." --> Challenge
+  Review -- approve --> QA
+  QA -- pass --> QAReport
+  QAReport -- "Read passing scenarios." --> Demo
   Demo --> Challenge
+  QA -- skipped --> Challenge
+  QA -- fail --> Deliver
+  QA -- "blocked: criteria" --> Frame
+  QA -- "blocked: execution" --> Stop
   Challenge -- "Return actionable challenge findings." --> Findings
   Challenge -- "When the outcome is trustworthy, open the draft pull request." --> PullRequest
   Findings -- "Use product findings as the next Frame source." --> Frame
@@ -88,6 +85,6 @@ flowchart TD
 
   class Review,QA,Demo,Challenge,Todo,PullRequest skill
   class Checker agent
-  class Contract,Plan,CommittedCandidate,ValidationReports,Findings,PullRequestUrl artifact
-  class Frame,Deliver zone
+  class Contract,Plan,CommittedCandidate,ValidationReports,QAReport,Findings,PullRequestUrl artifact
+  class Frame,Deliver,Stop zone
 ```

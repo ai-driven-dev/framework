@@ -125,8 +125,9 @@ CLI, and each skill says so before doing anything else if it is missing.
 
 ## 🎬 aidd-qa
 
-Locks a scenario scope from acceptance criteria, runs it against a reviewed candidate, and hands back a per-scenario verdict with recorded evidence. Browser only, for now.
+Verify browser or CLI criteria; demonstrate observed journeys.
 
 | Skill               | Role                                                                 | Actions                                                              |
 | ------------------- | --------------------------------------------------------------------- | --------------------------------------------------------------------- |
-| `01-acceptance-qa`  | Lock scenarios from acceptance criteria, run them, and report a verdict per scenario | `01-load-scope`, `02-prerequisites`, `03-prepare-run`, `04-run-scenarios` |
+| `01-acceptance-qa` | Verify criteria into an acceptance report | `01-load-scope`, `02-prerequisites`, `03-prepare-run`, `04-run-scenarios` |
+| `02-demo` | Show a journey as video or transcript | `01-record` |

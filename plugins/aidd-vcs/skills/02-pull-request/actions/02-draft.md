@@ -13,15 +13,15 @@ The proposed title, body, and base, approved by the user.
 ## Process
 
 1. **Template.** Load the request template, the project's own when set, else the bundled [pull_request.md](../assets/pull_request.md).
-2. **Write.** Draft a concise title and a body following the template from the change summary. Link every evidence file the caller passes under the template's testing or verification section. Never present a failed or blocked run as cleared.
+2. **Write.** Draft a concise title and a body following the template from the change summary. Link caller-supplied evidence and every changed `**/qa/*.webm` under the template's testing or verification section.
    - Give the fewest concrete verification steps needed for the changed behavior.
      - State the expected result for each step.
      - Omit generic CI summaries.
-     - Label scenarios that were not run.
+     - Label failed, blocked or unrun scenarios.
 3. **Confirm.** Show the title, body, and base, apply any overrides, and wait for approval.
 
 ## Test
 
 - The body follows the project's template sections when one exists.
-- Every evidence file the caller passes is linked in the body.
+- Every changed `**/qa/*.webm` is linked in the body.
 - The user approved the title, body, and base before creation.
