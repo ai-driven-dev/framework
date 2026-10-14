@@ -14,7 +14,7 @@
 
 ## Discovery
 
-- Read-only; no writer. [Native paths/scopes](#publications).
+- Read-only policy discovery; no writer.
 - Hosts: canonical `aidd_docs/rules/**/*.md`, recorded targets, recursive native directories at relevant root/nested locations and guidance below.
 - Plugin: confirmed rules, project authoring guidance, known companion policies.
 
@@ -33,28 +33,22 @@
 - Copilot CLI recursively imports `@relative-path` from repository-wide/agent sources except GEMINI; never modular or absolute/home-relative. Disabled sources are inactive; repository/agent sources lack general precedence.
 - V1 plain references are not automatically expanded.
 
-## Write
+## Input and operations
 
-- **Plugin**: directly write/delete approved `plugins/<plugin>/rules/<category>/<slug>.md`; scoped YAML `paths` or no frontmatter. No writer/fan-out/project metadata.
+Writer: absolute `scripts/write-rule.cjs` beside loaded installed `SKILL.md`; no checkout/project-relative/CLI assumption.
 
-### Host mode
-
-- Resolve absolute `scripts/write-rule.cjs` beside loaded installed `SKILL.md`; no checkout/project-relative/CLI assumption.
-- After approval, JSON outside destinations: category, slug, description, body strings; optional paths array. One-line description; empty/omitted paths: all files; no leading body frontmatter. Refuse comma globs; split alternatives.
+JSON fields: category, slug, description, body strings; optional paths array. Description: one line; empty/omitted paths: all files; no body frontmatter. Reject comma globs; split alternatives.
 
 ```sh
 node "$installed_rule_script" --project "$project_root" --tools "$confirmed_ids" --input "$request_json"
 ```
 
-- Project: real absolute directory; comma-separated confirmed IDs. Replace `--input "$request_json"` with `--publish` (all canonical sources, no identity argument; confirm whole affected set or stop subset requests) or `--delete category/slug` (one source, all recorded publications).
-- Never manually edit generated outputs or canonical metadata, bypass refusals or silently migrate legacy rules. Canonical body edits remain publishable.
+- Project: real absolute directory; tools: comma-separated confirmed IDs.
+- Replace `--input "$request_json"` with `--publish`: all canonical sources, no identity argument; subset requests unsupported.
+- Or `--delete category/slug`: one source, all recorded publications; reports `files`.
+- Plugin: `plugins/<plugin>/rules/<category>/<slug>.md`; scoped YAML `paths` or no frontmatter. No writer, project metadata or host fan-out.
+- Canonical body edits beneath intact metadata remain publishable.
 - Physical deduplication does not ensure unique host context; local 32 KiB passes do not ensure total instruction budget.
-
-## Validation
-
-- Verify [Rules](rule-authoring.md#rules), [Naming](rule-authoring.md#naming), [Publications](#publications), exact approved bodies, metadata, scopes and targets.
-- Check existence/deletion, shared uniqueness/cleanup, surviving user/memory bytes.
-- Hosts: repeat approved publication for byte-idempotence; check actual matching/nonmatching files in fresh sessions.
 
 ## Official contracts
 

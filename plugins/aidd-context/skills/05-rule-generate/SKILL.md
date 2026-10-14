@@ -8,9 +8,7 @@ argument-hint: topic | auto
 
 ```mermaid
 flowchart TD
-  manual[Manual: topic] --> capture-rule
-  auto[Auto: propose then select] --> capture-rule
-  publish & delete --> capture-rule
+  request[Rule request] --> capture-rule
   capture-rule -->|create/update| decision[Assessed candidate]
   decision -->|revise/clarify| capture-rule
   decision -->|keep/cancel| stop
@@ -23,7 +21,7 @@ flowchart TD
 
 ## Actions
 
-Read only the next action in `actions/` and its cited reference sections.
+Read the next action in `actions/` and its references.
 
 | Action | Does |
 | --- | --- |
@@ -34,6 +32,6 @@ Read only the next action in `actions/` and its cited reference sections.
 ## Transversal rules
 
 - Missing/unreadable installed reference: stop.
-- Create/update: capture confirmation is not approval. Present the full assessed candidate, including new; await subsequent user approval before any rule/request/publication write. Repeat after candidate/resolution/evidence changes.
+- Create/update: present full assessed candidates, including new; await approval after capture confirmation before any rule/request/publication write. Renew after candidate/resolution/evidence changes.
 - Existing changes require explicit identified-source/publication permissions.
 - Keep/cancel leaves project bytes unchanged.
