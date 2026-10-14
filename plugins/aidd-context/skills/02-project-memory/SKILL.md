@@ -1,7 +1,7 @@
 ---
 name: 02-project-memory
-description: Build the project's memory of its architecture, conventions, and decisions, and wire it into your AI tools. Use when the user wants to set up or refresh project memory, or rewire it into a tool. Not for editing one existing memory file.
-argument-hint: setup | refresh | rewire
+description: Build project memory and wire it into AI tools. Use when the user wants to set up or refresh memory, rewire it, or verify the assistant's service connections. Not for editing one existing memory file.
+argument-hint: setup | refresh | rewire | connections
 ---
 
 # Project Memory
@@ -11,6 +11,9 @@ flowchart LR
   new([no argument, or setup]) --> scan --> write --> sync --> wired([memory wired])
   update([refresh]) --> scan --> check --> write
   rewire([rewire]) --> sync
+  connections([verify connections]) --> verify-connection
+  verify-connection -->|checked| reported([connection report])
+  verify-connection -->|no memory bank| missing([memory missing])
   scan -.-> empty([nothing to remember])
 ```
 
@@ -24,6 +27,7 @@ Run the flow above, reading only the next action file.
 | write  | write the memory                |
 | check  | show what drifted, change nothing |
 | sync   | pick the tools, wire it in      |
+| verify-connection | verify the assistant's service access |
 
 ## Transversal rules
 
