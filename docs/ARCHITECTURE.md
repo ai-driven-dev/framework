@@ -147,16 +147,16 @@ A skill never links outside itself (`scripts/__tests__/a-skill-links-only-inside
 
 Choose by context, not complexity: keep the work visible to the caller → skill; isolate it and take only the result → agent.
 
-- **Spawning is authorized by the high-level orchestrator, never invented by a recipe skill.** A recipe skill normally runs in the caller's context. A bounded fan-out capability may mechanically spawn leaf agents only when the orchestrator explicitly delegates that responsibility and retains routing ownership.
-- An orchestrator spawns each isolated step as a leaf agent that runs a recipe, or runs the recipe itself when isolation is unnecessary. The SDLC owns planning, delegates delivery to `executor`, and delegates independent judgments to a fresh `checker`. For independent repair findings, it may explicitly delegate bounded fan-out to `10-todo`; Todo's leaf executors return their results to the SDLC. A recipe invoked inside an agent never spawns again.
-- An agent invokes only the recipe skills it declares under `# Skills you may invoke`, never an orchestrator skill, and never reads a skill's files. It names every skill by its canonical `/plugin:folder` address so its permissions are explicit and auditable.
-- An agent never delegates flow work to another agent and never invokes an orchestrator skill. It may spawn a read-only recon helper (for example `Explore`) that mutates nothing and spawns nothing. So the write path stays two layers deep and delegation can never cycle.
+- **The primary caller owns delegation.** A user-invoked recipe may offer bounded delegation through available host capabilities. An orchestrator owns delegation when it invokes the recipe. Neither requires a fixed provider or model.
+- A primary caller may delegate independent read-only questions to explorers and independent implementation phases to executors. It owns scope, dependencies, shared state, integration, and acceptance. Concurrent writers need distinct checkouts and nonconflicting validation resources; otherwise execution stays serial.
+- An isolated agent is a leaf. It never spawns another agent or invokes an orchestrator. It invokes only recipe skills listed under `# Skills you may invoke`, using their canonical `/plugin:folder` addresses without reading their files.
+- Independent validation uses a validator on an identified candidate. A checker reviews quality and outcome using that evidence. Neither modifies the candidate; gaps return to the primary caller for repair and renewed verification.
 
 ## 🔗 Capability addressing
 
 Address a capability only where the dispatch is declared: a router's `## Actions` table, an agent's `# Skills you may invoke` list. Everywhere else, name the concept the capability owns, never the skill that owns it.
 
-Recipe skills never hardcode a sibling provider. They discover cross-plugin capabilities at runtime through description matching. Agent permission lists and orchestration references are responsibility maps, so they name the current provider with its canonical `/plugin:folder` or `@plugin:agent` address. The orchestrator must verify that provider is installed before calling it.
+Recipe skills never hardcode a sibling provider. They discover cross-plugin capabilities at runtime through description matching. Agent permission lists name allowed skills with canonical `/plugin:folder` addresses. Orchestration references map responsibilities to providers discovered from installed descriptions; canonical addresses in diagrams illustrate current providers. Verify availability and the role contract before dispatch.
 
 Two paths are exempt, both in `isExemptFromOrthogonality`:
 

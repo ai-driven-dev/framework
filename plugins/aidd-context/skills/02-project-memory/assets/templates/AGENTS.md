@@ -31,6 +31,15 @@
 - **Before adding any instruction, finding, or rule, check whether an existing one already covers or contradicts it.** If so, don't add a parallel: delete it, merge it into the stronger one, or rewrite with explicit scope and priority.
 - **Name by intention, not mechanism:** describe the goal or responsibility, not the tool or file format.
 
+## Agents
+
+Use available agents when useful. The caller owns scope, delegation, and final acceptance; no mandatory sequence.
+
+<!-- aidd_agents:start -->
+| name | role |
+| --- | --- |
+<!-- aidd_agents:end -->
+
 ## Memory Management
 
 Project docs, memory, specs, and plans live in `aidd_docs/`.

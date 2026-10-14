@@ -20,7 +20,9 @@
     "./skills/10-todo"
   ],
   "agents": [
+    "./agents/explorer.md",
     "./agents/executor.md",
+    "./agents/validator.md",
     "./agents/checker.md"
   ],
   "keywords": [

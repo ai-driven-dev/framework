@@ -32,6 +32,19 @@
 - **Before adding any instruction, finding, or rule, check whether an existing one already covers or contradicts it.** If so, don't add a parallel: delete it, merge it into the stronger one, or rewrite with explicit scope and priority.
 - **Name by intention, not mechanism:** describe the goal or responsibility, not the tool or file format.
 
+## Agents
+
+Use available agents when useful. The caller owns scope, delegation, and final acceptance; no mandatory sequence.
+
+<!-- aidd_agents:start -->
+| name | role |
+| --- | --- |
+| @explorer (Codex), @aidd-dev-explorer (OpenCode) | Explore scoped questions. Return sourced findings, uncertainties, and risks. Never modify inspected material. |
+| @executor (Codex), @aidd-dev-executor (OpenCode) | Implement assigned scope. Validate, repair failures, and report evidence and blockers. Never change requirements. |
+| @validator (Codex), @aidd-dev-validator (OpenCode) | Validate supplied criteria and mandatory checks. Report PASS, FAIL, or BLOCKED with evidence. Never repair. |
+| @checker (Codex), @aidd-dev-checker (OpenCode) | Review quality, risks, and fitness for the need. Report actionable findings. Never modify the deliverable. |
+<!-- aidd_agents:end -->
+
 ## Memory Management
 
 Project docs, memory, specs, and plans live in `aidd_docs/`.

@@ -1,26 +1,39 @@
 # 02 - Execute
 
-Loop the plan's phases in order, coding each until every acceptance criterion holds.
-
 ## Input
 
-The prepared plan on its feature branch, from `01-prepare`.
+A prepared whole plan, or an assigned phase whose file is included in the assigned scope, with its plan context, completed prerequisites, acceptance criteria, checkout, and commit policy.
 
 ## Output
 
-Every phase coded, asserted, and its frontmatter marked `status: done`, with the commits on the branch. Or a stop at `status: blocked` when a human is needed, or a `replan needed` report on any drift from the plan.
+The selected phases implemented with passing checks, `status: done`, and evidence identifying the checked revision. Or a blocker or `replan needed` report.
 
 ## Process
 
-1. **Open.** Walk the phases in order. In a feature folder each is a `phase-<n>.md` next to `plan.md`. Set its `status: in-progress` as a runtime marker; no commit yet.
-2. **Code.** Build the phase scope against its acceptance criteria.
-3. **Assert.** Assert the phase against its acceptance criteria. On failure, repair and repeat. The gate is the assertion passing, not a self-report. Once it passes, set `status: done` and commit the phase as one unit, its code and its status together.
-4. **Guard.** Stop the loop on either condition:
-   - **Blocked** (see [blocked.md](../references/blocked.md)): set the plan `status: blocked`, commit, stop.
-   - **Drift**: any mismatch with the plan, trivial or substantive, stop and report `replan needed: <reason>`. Never rewrite the plan; replanning is the caller's job.
+1. **Select.** Resolve the execution scope and its prerequisites before changing files.
+   - Assigned phase: implement only that phase. Require a distinct checkout and nonconflicting validation resources when other executors run concurrently. Do not restart the plan, update its shared status, or run finalization.
+   - Whole plan: select phases whose `Depends on` prerequisites are done and integrated. Check file projections, shared contracts, and mutable validation resources before the primary caller dispatches a parallel batch to available executors. Give each ownership of its phase file for lifecycle-status updates only, completed prerequisites, criteria, isolated checkout, resources, and commit policy.
+   - Execute serially when isolation is unavailable or independence is uncertain. A plan without declared dependencies runs in phase order.
+   - Report `replan needed` for missing or contradictory prerequisites, or when unfinished phases have no ready phase; never skip them to declare completion.
+2. **Code.** Mark the selected phase `in-progress` and implement only its projection against its acceptance criteria.
+3. **Assert.** Run the relevant phase checks, repair failures, and repeat until they pass.
+   - Then mark the phase `done` and deliver its code, phase status, check commands, results, and checked revision under the caller's commit policy.
+   - The whole-plan owner integrates returned work before considering a dependency complete. Run checks for interactions changed by integration; reserve full plan validation for finalize. Select the next ready phases until all are done.
+4. **Guard.** Stop affected work on a blocker or any scope drift.
+   - **Blocked:** apply [blocked.md](../references/blocked.md); an assigned executor reports to the caller, while the whole-plan owner marks the plan `blocked`.
+   - **Drift:** report `replan needed: <reason>` without rewriting the plan or criteria. The caller decides how to revise the plan before resuming dependent work.
 
 ## Test
 
-- A phase reaches `status: done` only after assert passes against its acceptance criteria, in one commit with its code (`git status --short` shows no dangling phase edits).
-- The branch holds one commit per phase; there are no separate `in-progress` status commits.
-- A blocker leaves the plan `status: blocked` with no later phase run.
+| Case | Pass |
+| --- | --- |
+| An assigned phase runs | Only its code and owned phase lifecycle status change; prepare, shared plan updates, other phases, and finalize are not run. |
+| A whole-plan executor runs | It updates only lifecycle statuses in supplied plan and phase files; scope, specifications, and criteria remain unchanged. |
+| A prerequisite is unfinished | Its dependent phase is not started. |
+| Prerequisites are missing or contradictory | Execution stops for replanning without marking unfinished phases done. |
+| A parallel batch runs | File changes and mutable validation resources do not conflict; executors use distinct checkouts and Git indexes. |
+| Isolation or independence is uncertain | Execution is serial. |
+| The plan has no dependency declarations | Phases run in their original order. |
+| A phase reaches done | Its criteria pass and the returned evidence identifies the checked revision. |
+| A returned phase has dependents | Its changes are integrated before any dependent starts. |
+| A blocker or scope drift occurs | Affected work stops; an assigned executor reports without rewriting shared plan state. |

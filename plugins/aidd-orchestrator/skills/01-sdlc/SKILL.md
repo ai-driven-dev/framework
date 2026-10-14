@@ -8,9 +8,9 @@ argument-hint: request
 
 ## Behavior
 
-Operate autonomously from the request to a draft pull request: decide and act without confirmation, asking only before spending money, taking an irreversible action, or making a decision that requires user authority. Read only the current zone reference. Verify that every named provider is installed before calling it.
+Operate autonomously from the request to a draft pull request: decide and act without confirmation, asking only before spending money, taking an irreversible action, or making a decision that requires user authority. Read only the current zone reference. Discover providers from installed skill and agent descriptions by responsibility. Verify their availability and contracts before dispatch; addresses in diagrams illustrate current providers.
 
-Spawn specialized agents for isolated work. Parallelize independent work when it is faster. Give each agent one focused task that a smaller model can execute. Repeat the responsible zone when delegated work returns an actionable gap.
+Spawn specialized agents for isolated work. Parallelize independent work when it is faster. Give each leaf agent one focused task. Keep model selection outside the role contract. Repeat the responsible zone when delegated work returns an actionable gap.
 
 ```mermaid
 ---

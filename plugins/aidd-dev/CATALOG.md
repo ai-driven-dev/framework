@@ -32,8 +32,10 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 
 | File | Description |
 |------|---|
-| [checker.md](agents/checker.md) | `Judges finished work against its validator and the real need, leaving nothing unchecked. Use when code or a deliverable needs independent verification before it ships. Never edits the work, never implements the fix.` |
+| [checker.md](agents/checker.md) | `Reviews quality, risks, and fitness for the intended need. Use for an independent judgment of a deliverable. Never edits the work or implements the fix.` |
 | [executor.md](agents/executor.md) | `Turns a dispatched task into working, validated code that fits the project. Use when an approved scope must become code. Never plans, never judges its own work.` |
+| [explorer.md](agents/explorer.md) | `Explores scoped questions and returns sourced findings. Use when a caller needs evidence before deciding. Never modifies the inspected material.` |
+| [validator.md](agents/validator.md) | `Validates an identified deliverable against supplied criteria and mandatory checks. Use for independent completion evidence. Never repairs or performs a general quality review.` |
 
 ### `skills`
 
@@ -59,7 +61,7 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `actions` | [02-execute.md](skills/02-implement/actions/02-execute.md) | - |
 | `actions` | [03-finalize.md](skills/02-implement/actions/03-finalize.md) | - |
 | `references` | [blocked.md](skills/02-implement/references/blocked.md) | `Conditions that make a plan blocked (needs a human).` |
-| `-` | [SKILL.md](skills/02-implement/SKILL.md) | `Write an existing plan's code, phase by phase, until every acceptance criterion holds. Use when a plan exists and needs implementing. Do NOT use to write a plan, review a diff.` |
+| `-` | [SKILL.md](skills/02-implement/SKILL.md) | `Implements an existing plan or an assigned phase until its acceptance criteria hold. Use when a plan or bounded phase needs implementing. Not for writing a plan or reviewing a diff.` |
 
 #### `skills/03-assert`
 

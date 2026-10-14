@@ -1,29 +1,44 @@
 ---
 name: 02-implement
-description: Write an existing plan's code, phase by phase, until every acceptance criterion holds. Use when a plan exists and needs implementing. Do NOT use to write a plan, review a diff.
-argument-hint: plan
+description: Implements an existing plan or an assigned phase until its acceptance criteria hold. Use when a plan or bounded phase needs implementing. Not for writing a plan or reviewing a diff.
+argument-hint: plan | phase
 ---
 
 # Skill: implement
 
-Run an existing plan to write its code, one phase at a time, until every acceptance criterion holds.
+```mermaid
+flowchart TD
+  Whole([whole plan]) --> prepare
+  Assigned([assigned phase]) --> execute
+  prepare --> execute
+  execute -- check failed, repair --> execute
+  execute -- more ready phases --> execute
+  execute -- assigned phase complete --> Returned([return phase and evidence])
+  execute -- whole plan complete --> finalize
+  finalize -- validation failed, repair affected scope --> execute
+  finalize --> Implemented([implemented])
+  prepare -- plan missing --> Missing([stop])
+  execute -- blocked or drift --> Stopped([report blocker or replan needed])
+```
 
 ## Actions
 
-| #   | Action     | Role                                            | Input         |
-| --- | ---------- | ----------------------------------------------- | ------------- |
-| 01  | `prepare`  | Resolve the plan, branch, mark it in-progress   | a plan path   |
-| 02  | `execute`  | Loop the phases, code and assert each           | prepared plan |
-| 03  | `finalize` | Verify and mark the plan implemented            | coded phases  |
+Read only the next matching numbered action file in `actions/`.
 
-Run them in order, `01 → 03`.
-Before running an action, read its file in `actions/`, not only the table or assets.
+| Action | Does |
+| --- | --- |
+| prepare | resolve the whole plan and prepare its branch |
+| execute | implement and validate the selected scope |
+| finalize | verify the integrated plan and mark it implemented |
 
 ## Transversal rules
 
-- Status: drive the plan through `pending → in-progress → implemented` (or `blocked`), and each phase through `pending → in-progress → done`. The `in-progress` values are runtime markers; only `done` and `implemented` need to land in a commit.
-- Commits: one commit per phase, its code together with the phase reaching `done`, plus a final commit for the plan reaching `implemented`. Never leave the tree dirty at a phase boundary. Do not scatter separate `in-progress` status commits: one context now owns both code and status, so there is nothing to guard against.
+- Supplying a whole plan assigns lifecycle-status ownership of that plan and its phases to the whole-plan runner. Supplying an assigned phase grants only that phase's lifecycle-status ownership. Neither grant permits changes to scope, specifications, or criteria.
+- A whole-plan run owns integration and completion verification. An assigned-phase run enters execute directly and returns without prepare or finalize. The primary caller retains final acceptance.
+- Phase status follows `pending → in-progress → done`. The whole-plan owner drives `pending → in-progress → implemented` or `blocked`. Runtime markers need no separate commit.
+- Follow the caller's commit policy. When commits are authorized, commit each phase's code with its own `done` status and the final plan status separately. Keep unrelated changes out of these commits.
+- Isolated agents never spawn agents. Only the primary caller may delegate bounded work using available host capabilities.
 
 ## References
 
-- `references/blocked.md`: the conditions that make a plan `blocked` and need a human.
+- `references/blocked.md`: conditions requiring a human.

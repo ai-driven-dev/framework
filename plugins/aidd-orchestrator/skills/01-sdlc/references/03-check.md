@@ -2,7 +2,9 @@
 
 ## Behavior
 
-Use one fresh checker, independent from implementation, to review the candidate against the contract, plan, and validation evidence. After the review clears, the same checker challenges whether the real outcome is trustworthy and serves the user.
+Use a fresh validator independent from implementation to verify the identified committed candidate against the contract, plan criteria, and mandatory checks. Require PASS, FAIL, or BLOCKED per criterion with evidence. The validator does not repair.
+
+Only after validation passes, use a fresh checker to review quality, risks, and fitness against the contract, plan, and validation evidence. Repeat targeted checks only when evidence is missing, inconsistent, or stale. After review clears, the same checker challenges the outcome. Any repaired candidate returns to independent validation; neither judgment carries forward automatically.
 
 Use product or contract findings as the next Frame source. Dispatch independent implementation findings through Todo and keep dependent repairs together in Deliver. Re-enter Check after every new candidate. Open the draft pull request when the checker returns no actionable finding.
 
@@ -17,6 +19,7 @@ flowchart TD
     Plan["$plan"]
     CommittedCandidate["$committed_candidate"]
     ValidationReports["$validation_reports"]
+    Validator(["@aidd-dev:validator"])
     Checker(["@aidd-dev:checker"])
     Review["/aidd-dev:05-review"]
   end
@@ -40,10 +43,12 @@ flowchart TD
     PullRequestUrl["$pull_request_url"]
   end
 
-  Contract --> Checker
-  Plan --> Checker
-  CommittedCandidate --> Checker
-  ValidationReports --> Checker
+  Contract --> Validator
+  Plan --> Validator
+  CommittedCandidate --> Validator
+  ValidationReports --> Validator
+  Validator -- "All criteria pass with evidence." --> Checker
+  Validator -- "Fail or blocked." --> Findings
   Checker --> Review
   Review -- "Return actionable review findings." --> Findings
   Review -- "When the review clears, challenge the outcome." --> Challenge
@@ -61,7 +66,7 @@ flowchart TD
   classDef zone fill:#F1F5F9,stroke:#64748B,color:#0F172A,stroke-width:2px
 
   class Review,Challenge,Todo,PullRequest skill
-  class Checker agent
+  class Checker,Validator agent
   class Contract,Plan,CommittedCandidate,ValidationReports,Findings,PullRequestUrl artifact
   class Frame,Deliver zone
 ```
