@@ -4,7 +4,7 @@ Verify the assistant's access to the services declared in project memory.
 
 ## Input
 
-The bank in `aidd_docs/memory/`, and an optional service to check.
+The bank in `aidd_docs/memory/`.
 
 ## Output
 
@@ -12,10 +12,11 @@ A connection report printed using [connection-report.md](../assets/connection-re
 
 ## Process
 
-1. **Scope.** Read the service map and relevant memory files to identify the assistant's expected tools, accounts and targets.
+1. **Scope.** Read `aidd_docs/memory/ecosystem.md` and its referenced memory files to identify the assistant's expected tools, accounts and targets.
+   - Check assistant access, excluding human-only tools and application runtime connections.
    - No memory bank: report it missing and stop.
    - Include required access that the memory describes but this session lacks.
-   - Include browser access when the project requires web validation.
+   - Include browser access when the project's `testing.md` requires web validation.
 2. **Inspect.** Check one declared CLI, MCP or native tool per service against its official documentation.
    - No available tool: report the missing access without installing anything.
    - Unknown account or target: mark it unverified unless a read can resolve it.
@@ -24,7 +25,7 @@ A connection report printed using [connection-report.md](../assets/connection-re
    - Database: read metadata without changing data or running migrations.
    - No writes, configuration changes, login flows or secret output.
    - Continue with the other services when a check fails.
-4. **Report.** Fill [connection-report.md](../assets/connection-report.md) with one row per category, grouping its required services.
+4. **Report.** Fill `connection-report.md` with one row per category, grouping its required services.
    - Keep every category; mark unused categories as not needed.
    - A category passes only when every required service was read successfully.
    - A failure or missing access takes precedence over an unverified result.
@@ -42,8 +43,8 @@ A connection report printed using [connection-report.md](../assets/connection-re
 | Category unused | its row remains and is marked not needed |
 | Required access missing | its row reports failure and the next action |
 | Read fails | its row reports the error and other services are still checked |
-| Identity or target unresolved | its row is unverified, never successful |
-| Tool only configured | its row is unverified until a read succeeds |
+| Identity or target unresolved | its category cannot pass; failure takes precedence over unverified |
+| Tool only configured | its category cannot pass until the required read succeeds |
 | Browser needed | its evidence names the application and visible content read |
 | Database checked | only metadata was read |
 | Run completes | no data, configuration or memory file changed |
