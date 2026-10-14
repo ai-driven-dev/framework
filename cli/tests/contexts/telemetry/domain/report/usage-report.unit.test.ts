@@ -115,6 +115,16 @@ describe("a usage report", () => {
     expect(values("repository", records)).toEqual([v("r-z"), v("r-a")]);
   });
 
+  it("splits by the agent that ran: the main session, its sub-agents and the advisor apart", () => {
+    const records = [
+      call({ agent: "main", output: 100 }),
+      call({ agent: "subagent", output: 300 }),
+      call({ agent: "advisor", output: 50 }),
+      call({ agent: "subagent", output: 1 }),
+    ];
+    expect(values("agent", records)).toEqual([v("subagent"), v("main"), v("advisor")]);
+  });
+
   it("orders rows of the same size by their text", () => {
     const records = [call({ session_id: "s-b" }), call({ session_id: "s-a" })];
     expect(values("session", records)).toEqual([v("s-a"), v("s-b")]);

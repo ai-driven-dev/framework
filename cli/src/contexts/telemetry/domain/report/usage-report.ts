@@ -13,6 +13,7 @@ export const REPORT_AXES = [
   "person",
   "session",
   "model",
+  "agent",
   "day",
   "repository",
   "task",
@@ -107,6 +108,8 @@ function axisValueOf(
       return value(record.session_id);
     case "model":
       return value(record.model);
+    case "agent":
+      return value(record.agent);
     case "day":
       return value(new Date(record.at).toISOString().slice(0, 10));
     case "repository":

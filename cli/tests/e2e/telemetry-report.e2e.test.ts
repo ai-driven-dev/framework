@@ -4,7 +4,17 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { git, initRepository, sandboxGitEnv } from "../helpers/git-sandbox.js";
 import { backdateConsent, createTestEnv, runCli } from "./helpers.js";
 
-const AXES = ["total", "person", "session", "model", "day", "repository", "task", "ticket"];
+const AXES = [
+  "total",
+  "person",
+  "session",
+  "model",
+  "agent",
+  "day",
+  "repository",
+  "task",
+  "ticket",
+];
 const COUNTERS = ["input", "output", "cache_read", "cache_write"] as const;
 
 const S_BRANCH = "a1b2c3d4-0000-4000-8000-000000000001";

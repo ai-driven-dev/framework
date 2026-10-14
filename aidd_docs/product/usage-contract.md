@@ -56,7 +56,7 @@ A call's repository is its working directory resolved at ingest: the directory's
 | --- | --- |
 | `version` | `1` |
 | `period` | `{from, to}`, UTC days, `null` for open |
-| `axis` | `total`, `person`, `session`, `model`, `day`, `repository`, `task` or `ticket` |
+| `axis` | `total`, `person`, `session`, `model`, `agent` (`main`, `subagent` or `advisor`), `day`, `repository`, `task` or `ticket` |
 | `rows` | one per value of the axis |
 | `totals` | the whole period |
 | `unknown_records` | calls with at least one counter unknown |

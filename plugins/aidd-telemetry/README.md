@@ -2,7 +2,7 @@
 
 # aidd-telemetry
 
-Counts the tokens your Claude Code sessions consume, each model call once, and breaks them down by person, session, model, day, repository, task and ticket. Claude Code is the only tool measured in release 1.
+Counts the tokens your Claude Code sessions consume, each model call once, and breaks them down by person, session, model, agent, day, repository, task and ticket. Claude Code is the only tool measured in release 1.
 
 ## What it measures
 

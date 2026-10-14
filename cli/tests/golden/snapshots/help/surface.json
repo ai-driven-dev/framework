@@ -167,7 +167,7 @@
   {
     "invocation": "aidd telemetry report",
     "exitCode": 0,
-    "help": "Usage: aidd telemetry report [options]\n\nShow what the work consumed, split along one axis, after reading new transcripts\n\nOptions:\n  --from <date>  First day to include, as YYYY-MM-DD (UTC)\n  --to <date>    Last day to include, as YYYY-MM-DD (UTC)\n  --days <n>     The last n days, today included\n  --axis <axis>  What to split by (choices: \"total\", \"person\", \"session\",\n                 \"model\", \"day\", \"repository\", \"task\", \"ticket\", default:\n                 \"total\")\n  --json         Print a versioned JSON envelope instead of text (default:\n                 false)\n  -h, --help     display help for command"
+    "help": "Usage: aidd telemetry report [options]\n\nShow what the work consumed, split along one axis, after reading new transcripts\n\nOptions:\n  --from <date>  First day to include, as YYYY-MM-DD (UTC)\n  --to <date>    Last day to include, as YYYY-MM-DD (UTC)\n  --days <n>     The last n days, today included\n  --axis <axis>  What to split by (choices: \"total\", \"person\", \"session\",\n                 \"model\", \"agent\", \"day\", \"repository\", \"task\", \"ticket\",\n                 default: \"total\")\n  --json         Print a versioned JSON envelope instead of text (default:\n                 false)\n  -h, --help     display help for command"
   },
   {
     "invocation": "aidd telemetry status",

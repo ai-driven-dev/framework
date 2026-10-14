@@ -27,6 +27,7 @@ const ABSENT: Readonly<Record<ReportAxis, string>> = {
   person: "not set",
   session: "no session",
   model: "unknown model",
+  agent: "no agent",
   day: "no day",
   repository: "no repository",
   task: "no task",

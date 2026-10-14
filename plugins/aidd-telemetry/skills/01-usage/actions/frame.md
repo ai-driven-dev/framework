@@ -23,6 +23,7 @@ The command to run, and the period and axis it stands for, said back to the pers
    | one total | `--axis total` |
    | each day | `--axis day` |
    | each model | `--axis model` |
+   | the main session, its sub-agents, the advisor | `--axis agent` |
    | each task | `--axis task` |
    | each ticket | `--axis ticket` |
    | each session | `--axis session` |

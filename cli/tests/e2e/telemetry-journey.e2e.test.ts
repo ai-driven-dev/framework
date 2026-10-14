@@ -15,7 +15,17 @@ import { cliPath, createTestEnv, runCli, sandboxedEnv } from "./helpers.js";
  */
 
 const HOOKS = join(REPOSITORY_ROOT, "plugins", "aidd-telemetry", "hooks");
-const AXES = ["total", "person", "session", "model", "day", "repository", "task", "ticket"];
+const AXES = [
+  "total",
+  "person",
+  "session",
+  "model",
+  "agent",
+  "day",
+  "repository",
+  "task",
+  "ticket",
+];
 const COUNTERS = ["input", "output", "cache_read", "cache_write"] as const;
 
 const S_MAIN = "a1b2c3d4-0000-4000-8000-0000000000a1";
