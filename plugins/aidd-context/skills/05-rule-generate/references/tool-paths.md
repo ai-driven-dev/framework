@@ -11,12 +11,13 @@ This reference covers project rule generation only. Confirm hosts explicitly; a 
 | GitHub Copilot | `copilot` | `.github/instructions/<NN>-<name>.instructions.md` | comma-joined `applyTo`; `**` for all files |
 | Codex | `codex` | root `AGENTS.md`, shared signed `aidd_rules` contribution | scopes are instructions to the model |
 | OpenCode | `opencode` | the same contribution in root `AGENTS.md` | scopes are instructions to the model |
+| Antigravity CLI | `antigravity` | `.agents/rules/<slug>.md` | with paths: `trigger: glob`, `description`, comma-joined `globs`; without: `trigger: always_on`, `description`, no `globs` |
 
-Use taxonomy and `#-slug` naming in [rule-authoring.md](rule-authoring.md). Copilot drops the slug's single-digit prefix and adds the category's two-digit prefix, e.g. `01-standards/1-naming` becomes `01-naming.instructions.md`.
+Use taxonomy and `#-slug` naming in [rule-authoring.md](rule-authoring.md). Copilot drops the slug's single-digit prefix and adds the category's two-digit prefix, e.g. `01-standards/1-naming` becomes `01-naming.instructions.md`. Antigravity reads only the direct `.md` children of `.agents/rules/`, so it drops the category folder and keeps the slug, e.g. `1-naming.md`; the slug's category digit keeps that flat name unique. Measured, `agy` truncates a rule file near 23 to 25 KB, so a rendered Antigravity rule over 24,000 bytes refuses the request before writes. Whether `agy` activates a `glob` rule only on matching files is unmeasured.
 
 Codex Markdown guidance is not a `.codex/rules` execution policy. OpenCode: write the root `AGENTS.md` only, never `.opencode/rules`. Native syntax tests prove rendering, not runtime consumption by every host. Codex/OpenCode selected together appear once in the shared file; other hosts may also discover AGENTS.md, so physical deduplication does not guarantee model-context deduplication across surfaces.
 
-Official contracts: [Claude Code rules](https://code.claude.com/docs/en/memory#organize-rules-with-clauderules), [Cursor rules](https://cursor.com/docs/rules) and [CLI loading](https://cursor.com/docs/cli/using#rules), [Copilot CLI instructions](https://docs.github.com/en/copilot/how-tos/copilot-cli/customize-copilot/add-custom-instructions), [Codex AGENTS.md](https://learn.chatgpt.com/docs/agent-configuration/agents-md), [OpenCode rules](https://opencode.ai/docs/rules/) and [instructions](https://opencode.ai/v2/docs/instructions/).
+Official contracts: [Claude Code rules](https://code.claude.com/docs/en/memory#organize-rules-with-clauderules), [Cursor rules](https://cursor.com/docs/rules) and [CLI loading](https://cursor.com/docs/cli/using#rules), [Copilot CLI instructions](https://docs.github.com/en/copilot/how-tos/copilot-cli/customize-copilot/add-custom-instructions), [Codex AGENTS.md](https://learn.chatgpt.com/docs/agent-configuration/agents-md), [OpenCode rules](https://opencode.ai/docs/rules/) and [instructions](https://opencode.ai/v2/docs/instructions/), [Antigravity rules](https://antigravity.google/docs/rules).
 
 Publication does not force a running host to reload. Verify changed rules in a fresh session: Codex builds its instruction chain at startup; Copilot applies edits to a new or resumed session. OpenCode V2 refreshes ambient AGENTS.md before the next request, but already loaded nested guidance needs a new session. Claude project rules require the `project` settings source; Cursor rules concern Agent rather than Tab or Inline Edit. The writer preserves patterns without implementing each host's glob parser; a syntactically invalid or unmatched pattern can activate no files. Confirm representative matching and nonmatching files in the selected host.
 
@@ -41,9 +42,9 @@ Prepare a JSON request outside the project rule destinations:
 Use an absolute real project directory and confirmed comma-separated script IDs:
 
 ```sh
-node "$installed_rule_script" --project "$project_root" --tools claude,cursor,copilot,codex,opencode --input "$request_json"
-node "$installed_rule_script" --project "$project_root" --tools claude,cursor,copilot,codex,opencode --publish
-node "$installed_rule_script" --project "$project_root" --tools claude,cursor,copilot,codex,opencode --delete 01-standards/1-naming
+node "$installed_rule_script" --project "$project_root" --tools claude,cursor,copilot,codex,opencode,antigravity --input "$request_json"
+node "$installed_rule_script" --project "$project_root" --tools claude,cursor,copilot,codex,opencode,antigravity --publish
+node "$installed_rule_script" --project "$project_root" --tools claude,cursor,copilot,codex,opencode,antigravity --delete 01-standards/1-naming
 ```
 
 Create/update records confirmed targets in `aidd_docs/rules/<category>/<slug>.md`. Publish synchronizes the named native hosts and the complete shared contribution from canonical targets; delete also cleans the deleted rule's previous targets. Updating targets cleans removed targets. JSON accepts exactly category, slug, description, optional paths and body. Empty/omitted paths mean all files. Reject comma-containing globs (including brace alternations) rather than serialize ambiguous native lists; supply separate globs. Description is one line. Body is preserved completely and must not begin with YAML frontmatter. Scope belongs in JSON, never an arbitrary YAML parser.
