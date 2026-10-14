@@ -18,7 +18,7 @@ A connection report printed using [connection-report.md](../assets/connection-re
    - Include required access that the memory describes but this session lacks.
    - Include browser access when the project's `testing.md` requires web validation.
 2. **Inspect.** Check one declared CLI, MCP or native tool per service against its official documentation.
-   - No available tool: report the missing access without installing anything.
+   - No available tool or configured connection: mark it not configured without installing or connecting anything.
    - Unknown account or target: mark it unverified unless a read can resolve it.
 3. **Read.** Confirm the account and target, then read one known item through the selected tool.
    - Browser: open the application and read visible content.
@@ -28,7 +28,8 @@ A connection report printed using [connection-report.md](../assets/connection-re
 4. **Report.** Fill `connection-report.md` with one row per category, grouping its required services.
    - Keep every category; mark unused categories as not needed.
    - A category passes only when every required service was read successfully.
-   - A failure or missing access takes precedence over an unverified result.
+   - For mixed results, use this precedence: read failed, not configured, unverified.
+   - Name the affected service, the shortest useful error and one corrective action.
    - A configured tool alone never proves access.
    - A successful read never proves write permissions.
    - Keep these session results out of the durable memory bank.
@@ -41,9 +42,9 @@ A connection report printed using [connection-report.md](../assets/connection-re
 | Declared service | its category row names the tool, account, target and observed read |
 | Several required services | the category passes only when every required read succeeds |
 | Category unused | its row remains and is marked not needed |
-| Required access missing | its row reports failure and the next action |
+| Required access not configured | its category is marked not configured with the next action |
 | Read fails | its row reports the error and other services are still checked |
-| Identity or target unresolved | its category cannot pass; failure takes precedence over unverified |
+| Identity or target unresolved | its category cannot pass; failed or unconfigured access takes precedence |
 | Tool only configured | its category cannot pass until the required read succeeds |
 | Browser needed | its evidence names the application and visible content read |
 | Database checked | only metadata was read |
