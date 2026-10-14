@@ -31,6 +31,7 @@ Read the next action in `actions/` and its references.
 
 ## Transversal rules
 
+- Report unsupported hosts and alternatives; AGENTS alone identifies no installed host.
 - Missing/unreadable installed reference: stop.
 - Create/update: present full assessed candidates, including new; await approval after capture confirmation before any rule/request/publication write. Renew after candidate/resolution/evidence changes.
 - Existing changes require explicit identified-source/publication permissions.

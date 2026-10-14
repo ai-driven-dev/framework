@@ -6,14 +6,14 @@ Approved capture.
 
 ## Output
 
-Recorded files/results or refusal.
+Files or refusal.
 
 ## Process
 
-1. **Prepare.** Host create/update: serialize approved fields into JSON outside destinations per [tool-paths.md](../references/tool-paths.md).
-2. **Publish.** Invoke the installed absolute writer with project, confirmed IDs and operation arguments. Plugin: directly write/delete only the approved source; no host fan-out.
-3. **Report.** Record results; report refusals verbatim and stop.
+1. Host create/update: serialize approved JSON outside destinations per [publication](../references/rule-publication.md).
+2. Invoke installed absolute writer per publication. Plugin: directly write/delete approved source only; no fan-out.
+3. Record results; stop on verbatim refusals.
 
 ## Rules
 
-- Preserve exact approved bodies, metadata, scope and targets; never regenerate, manually edit canonical metadata/generated outputs, migrate legacy rules or bypass refusals.
+- Preserve approved capture exactly. Never regenerate, edit canonical metadata or generated outputs manually, migrate legacy rules or bypass refusals.

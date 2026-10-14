@@ -2,19 +2,19 @@
 
 ## Input
 
-Approved capture and write results.
+Approved capture; write results.
 
 ## Output
 
-Explained pass/fail per affected rule.
+Per-rule pass/fail reasons.
 
 ## Process
 
-1. **Operation.** Check expected existence/deletion against reported files.
-2. **Contract.** Check approved bodies, metadata and scope against [rule-authoring.md](../references/rule-authoring.md); targets and host schemas against [tool-paths.md](../references/tool-paths.md).
-3. **Preservation.** For affected shared publications, check signed uniqueness and last-rule cleanup. Verify surviving rules, user guidance and memory bytes.
-4. **Repeat.** Hosts: repeat approved publication; require byte-identical results.
+1. Check reported existence/deletion.
+2. Match approved fields and host schemas against [authoring](../references/rule-authoring.md) and [publication](../references/rule-publication.md).
+3. Affected shared publications only: check signed uniqueness and last-rule cleanup. Verify survivors, user guidance and memory bytes.
+4. Hosts: repeat approved publication; require identical bytes.
 
 ## Rules
 
-- Publication does not prove runtime consumption; only matching/nonmatching file evidence in fresh host sessions does.
+- Consumption requires matching/nonmatching file evidence in fresh host sessions.

@@ -28,11 +28,3 @@
 Prefer framework `03`, syntax `02`, style `01`, architecture `00`, then `04`–`08` in order, else `09`.
 
 - Themes: `## group`; one tiny clarifying good-code example per group maximum.
-
-## Assessment
-
-- **needs review**: uncertainty that could affect comparison with existing policies. Overrides other labels.
-- **new**: no coverage, overlap or conflict.
-- **covered**: all obligations supplied throughout scope.
-- **overlap**: compatible partial repetition/extension.
-- **conflict**: incompatible obligations or unjustified weakening.
