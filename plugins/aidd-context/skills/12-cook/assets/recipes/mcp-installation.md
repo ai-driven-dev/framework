@@ -84,6 +84,8 @@ Memory links open the AIDD templates for the corresponding files in your project
 
 | Service | CLI | MCP or native tool |
 | --- | --- | --- |
+| PostgreSQL | [`psql`](https://www.postgresql.org/docs/current/app-psql.html) | — |
+| MongoDB | [`mongosh`](https://www.mongodb.com/docs/mongodb-shell/) | [MongoDB MCP](https://www.mongodb.com/docs/mcp-server/) |
 | Supabase | [`supabase`](https://supabase.com/docs/reference/cli/introduction) for migrations and local development | [Supabase MCP](https://supabase.com/docs/guides/ai-tools/mcp) for exploration |
 
 Add any other services your team uses to the relevant table.
