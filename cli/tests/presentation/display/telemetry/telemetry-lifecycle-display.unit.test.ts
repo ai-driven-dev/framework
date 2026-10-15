@@ -131,7 +131,7 @@ describe("printOnResult", () => {
     const output = new CapturingOutput(false);
     printOnResult(output, { status: "refused", reason: "invalid-identity" });
     expect(output.at("error")[0]).toBe(
-      "An identity is one line of at most 128 characters. Nothing was changed."
+      "An identity is one non-empty line of at most 128 characters. Nothing was changed."
     );
   });
 

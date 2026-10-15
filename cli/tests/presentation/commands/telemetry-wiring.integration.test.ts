@@ -337,7 +337,9 @@ describe("aidd telemetry on", () => {
     expect(await run("on", "--as", "a".repeat(129))).toBe(1);
     expect(confirm).not.toHaveBeenCalled();
     expect(turnOn).not.toHaveBeenCalled();
-    expect(stderr()).toContain("at most 128 characters");
+    expect(stderr()).toContain(
+      "An identity is one non-empty line of at most 128 characters. Nothing was changed."
+    );
   });
 
   it("refuses to guess an answer where nobody can be asked", async () => {
@@ -404,6 +406,21 @@ describe("aidd telemetry on", () => {
       select.mockResolvedValue("another");
       input.mockResolvedValue("Ada at Work");
       expect(await run("on")).toBeNull();
+      expect(input.mock.calls[0]?.[0]).toBe(
+        "Identifier (one non-empty line, at most 128 characters):"
+      );
+      expect(turnOn).toHaveBeenCalledWith(process.cwd(), { set: "Ada at Work" });
+    });
+
+    it("asks again until the identifier typed is one it can keep", async () => {
+      select.mockResolvedValue("another");
+      input
+        .mockResolvedValueOnce("   ")
+        .mockResolvedValueOnce("a".repeat(129))
+        .mockResolvedValueOnce("Ada at Work");
+      expect(await run("on")).toBeNull();
+      expect(input).toHaveBeenCalledTimes(3);
+      expect(turnOn).toHaveBeenCalledTimes(1);
       expect(turnOn).toHaveBeenCalledWith(process.cwd(), { set: "Ada at Work" });
     });
 

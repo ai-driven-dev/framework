@@ -36,7 +36,9 @@ describe("printIdentityResult", () => {
   });
 
   it("explains what an identity is when one is refused", () => {
-    expect(shown({ status: "refused" }).at("error")[0]).toContain("one line");
+    expect(shown({ status: "refused" }).at("error")[0]).toBe(
+      "An identity is one non-empty line of at most 128 characters."
+    );
   });
 });
 

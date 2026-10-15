@@ -168,6 +168,6 @@ export function printIdentityResult(output: CLIOutput, result: IdentityResult): 
       );
       return;
     case "refused":
-      output.error("An identity is one line of at most 128 characters.");
+      output.error("An identity is one non-empty line of at most 128 characters.");
   }
 }

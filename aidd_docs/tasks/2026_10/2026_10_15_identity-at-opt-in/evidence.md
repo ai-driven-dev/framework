@@ -211,3 +211,39 @@ Test Files  505 passed | 1 skipped (506)
 ✔️ cli-knip
 ✔️ cli-test
 ```
+
+## Review round 1 fixes
+
+### Red run
+
+`pnpm exec vitest run tests/presentation/display tests/presentation/commands/telemetry-wiring.integration.test.ts`, before the refusal says "non-empty", before the command prints it through `printOnResult`, and before a typed identifier is asked again:
+
+```txt
+× explains what an identity is when one is refused
+  AssertionError: expected 'An identity is one line of at most 12…' to be 'An identity is one non-empty line of …'
+× refuses an identity it cannot keep, and says nothing changed
+  AssertionError: expected 'An identity is one line of at most 12…' to be 'An identity is one non-empty line of …'
+× refuses an identifier the identity rules refuse, before asking anything
+  AssertionError: expected 'Error: An identity is one line of at …' to contain 'An identity is one non-empty line of …'
+× takes another identifier, typed
+  AssertionError: expected 'Identifier (one line, at most 128 cha…' to be 'Identifier (one non-empty line, at mo…'
+× asks again until the identifier typed is one it can keep
+  AssertionError: expected "vi.fn()" to be called 3 times, but got 1 times
+Tests  5 failed
+```
+
+### Guard
+
+The typed identifier taken without checking it (`return { set: typed };`), reverted after the run:
+
+```txt
+× asks again until the identifier typed is one it can keep
+Tests  1 failed | 45 passed (46)
+```
+
+### Gates
+
+- `cd cli && pnpm test`: `Test Files 505 passed | 1 skipped (506)`, `Tests 6554 passed | 1 skipped (6555)`.
+- `pnpm smoke`, sandboxed as before: `Bundle size: 686.3 KB / budget: 695 KB`, `PASS: 132   FAIL: 0   SKIP: 1`.
+- `node scripts/check-claude-tokens-end-to-end.cjs cli/dist/cli.js`, exit 0: `2 calls, 393 tokens, all on task demo, ticket T-1`.
+- Same with `--attended`, exit 0: `… asked, answered by the hook, kept across /clear`.

@@ -63,7 +63,10 @@ async function identityChoice(
     ]
   );
   if (answer !== "another") return answer;
-  return { set: await prompter.input("Identifier (one line, at most 128 characters):") };
+  for (;;) {
+    const typed = await prompter.input("Identifier (one non-empty line, at most 128 characters):");
+    if (personIdOf(typed) !== null) return { set: typed };
+  }
 }
 
 export function registerTelemetryCommand(program: Command): void {
@@ -84,7 +87,7 @@ export function registerTelemetryCommand(program: Command): void {
         process.exit(1);
       }
       if (cmdOptions.as !== undefined && personIdOf(cmdOptions.as) === null) {
-        output.error("An identity is one line of at most 128 characters. Nothing was changed.");
+        printOnResult(output, { status: "refused", reason: "invalid-identity" });
         process.exit(1);
       }
       if (!cmdOptions.yes && !process.stdout.isTTY) {

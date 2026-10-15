@@ -22,7 +22,8 @@ const REFUSALS = {
     "ledger/consents.jsonl holds a line that is not a consent event, so the log cannot be trusted and nothing was changed. Run `aidd telemetry forget --yes`, then `aidd telemetry on` again: nothing from before is stored.",
   "unidentified-clone":
     "This file system gives the clone's git directory no identity, so nothing measured here could be told to be its own. Nothing was changed.",
-  "invalid-identity": "An identity is one line of at most 128 characters. Nothing was changed.",
+  "invalid-identity":
+    "An identity is one non-empty line of at most 128 characters. Nothing was changed.",
   "identity-set":
     "An identity is set, so this clone cannot be measured anonymously. Remove it with `aidd telemetry identity --off`, then run this again. Nothing was changed.",
 } as const;
