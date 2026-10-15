@@ -2,6 +2,10 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { Command } from "commander";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import {
+  conflictsOf,
+  type ReportFilters,
+} from "../../../src/contexts/telemetry/domain/report/report-filter.js";
 
 const ingest = vi.fn();
 const declare = vi.fn();
@@ -253,11 +257,19 @@ describe("aidd telemetry report, narrowed", () => {
     [["--absent", "ticket", "--unattributed"], "--absent ticket and --unattributed"],
     [["--model", "m", "--absent", "model"], "--model and --absent model"],
   ])(
-    "refuses %j, which select on one axis, with exit 1 before reading anything",
+    "exits 1 on %j, which select on one axis, naming both as the report refuses them",
     async (args, flags) => {
+      // The use case's own refusal, as `report-usage-use-case.unit.test.ts` pins it.
+      report.mockImplementation(async ({ filters }: { filters: ReportFilters }) => {
+        const [conflict] = conflictsOf(filters);
+        return conflict === undefined
+          ? reported
+          : { status: "conflicting", flags: conflict, absent: filters.absent };
+      });
       expect(await run("report", ...args)).toBe(1);
+      expect(report).toHaveBeenCalledTimes(1);
       expect(stderr()).toContain(flags);
-      expect(report).not.toHaveBeenCalled();
+      expect(stdout()).toBe("");
     }
   );
 

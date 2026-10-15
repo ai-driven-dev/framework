@@ -3,7 +3,10 @@ import { DirectoryResolver } from "../../../../../src/contexts/telemetry/applica
 import { IngestUsageUseCase } from "../../../../../src/contexts/telemetry/application/ingest-usage-use-case.js";
 import { ReadUsageUseCase } from "../../../../../src/contexts/telemetry/application/read-usage-use-case.js";
 import { DeclaredBindings } from "../../../../../src/contexts/telemetry/application/report/declared-bindings.js";
-import { ReportUsageUseCase } from "../../../../../src/contexts/telemetry/application/report/report-usage-use-case.js";
+import {
+  ReportUsageUseCase,
+  type RequestedFilters,
+} from "../../../../../src/contexts/telemetry/application/report/report-usage-use-case.js";
 import { SnapshotBindingsUseCase } from "../../../../../src/contexts/telemetry/application/snapshot-bindings-use-case.js";
 import {
   declarationOf,
@@ -307,9 +310,13 @@ const WIDGETS = repositoryIdOf({
   remote: "https://github.com/acme/widgets.git",
   rootCommit: "c0ffee",
 }) as string;
-const filtered = (over: Partial<ReportFilters> & { here?: string }) => ({
+const filtered = (over: Partial<ReportFilters>): RequestedFilters => ({ ...NO_FILTERS, ...over });
+/** `--repository .`, run in `dir`. */
+const atHere = (dir: string, over: Partial<ReportFilters> = {}): RequestedFilters => ({
   ...NO_FILTERS,
   ...over,
+  repository: null,
+  here: dir,
 });
 
 /** Two sessions in one repository: A on task `auth` for 11 then 22, B with no task for 33. */
@@ -429,7 +436,7 @@ describe("narrowing a report", () => {
     const result = await s.report.execute({
       axis: "total",
       period: ANY,
-      filters: filtered({ here: "/work/a" }),
+      filters: atHere("/work/a"),
     });
     expect(s.ledger.records[0]?.repository_id).toBe(WIDGETS);
     expect(result).toMatchObject({
@@ -452,7 +459,7 @@ describe("narrowing a report", () => {
     const result = await s.report.execute({
       axis: "total",
       period: ANY,
-      filters: filtered({ here: "/work/fresh" }),
+      filters: atHere("/work/fresh"),
     });
     expect(result).toMatchObject({
       filters: { repository: WIDGETS.slice(0, 40) },
@@ -484,7 +491,7 @@ describe("narrowing a report", () => {
       await s.report.execute({
         axis: "total",
         period: ANY,
-        filters: filtered({ here: "/work/b" }),
+        filters: atHere("/work/b"),
       })
     ).toEqual({ status: "not-a-repository" });
     expect(s.events).toEqual([]);
@@ -497,7 +504,7 @@ describe("narrowing a report", () => {
       await s.report.execute({
         axis: "total",
         period: ANY,
-        filters: filtered({ here: "/work/a" }),
+        filters: atHere("/work/a"),
       })
     ).toEqual({ status: "refused" });
     expect(s.locator.asked).toEqual([]);
@@ -511,11 +518,19 @@ describe("narrowing a report", () => {
         await s.report.execute({
           axis: "total",
           period: ANY,
-          filters: filtered({ model: "m", absent: "model", here: "/work/a" }),
+          filters: atHere("/work/a", { model: "m", absent: "model" }),
         })
       ).toEqual({ status: "conflicting", flags: ["model", "absent"], absent: "model" });
       expect(s.locator.asked).toEqual([]);
       expect(s.events).toEqual([]);
     }
+  });
+
+  it("takes either a repository or `.`, never both", () => {
+    const typed: RequestedFilters = { ...NO_FILTERS, repository: "r" };
+    const here: RequestedFilters = { ...NO_FILTERS, repository: null, here: "/work/a" };
+    // @ts-expect-error `.` names the repository: a repository typed beside it is refused.
+    const both: RequestedFilters = { ...NO_FILTERS, repository: "r", here: "/work/a" };
+    expect([typed, here, both]).toHaveLength(3);
   });
 });

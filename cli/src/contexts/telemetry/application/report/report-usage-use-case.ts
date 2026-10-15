@@ -24,12 +24,12 @@ import type { IngestUsageUseCase } from "../ingest-usage-use-case.js";
 import { settleLedger } from "../ledger-upkeep.js";
 import type { DeclaredBindings } from "./declared-bindings.js";
 
-/** The filters as typed: a session or repository may be the start of an id. */
-export interface RequestedFilters extends ReportFilters {
-  /** `--repository .`: the directory whose repository is asked for; `repository` is then
-   * `null`. */
-  readonly here?: string;
-}
+/** The filters as typed: a session or repository may be the start of an id. A repository is
+ * either typed, or `--repository .`, the directory `here` whose repository is asked for; never
+ * both. */
+export type RequestedFilters =
+  | (ReportFilters & { readonly here?: undefined })
+  | (ReportFilters & { readonly repository: null; readonly here: string });
 
 export interface ReportRequest {
   readonly axis: ReportAxis;

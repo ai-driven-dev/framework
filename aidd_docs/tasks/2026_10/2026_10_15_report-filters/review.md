@@ -1,6 +1,6 @@
 # Review: The report answers about one task, ticket, person or more
 
-- Rounds: 1
+- Rounds: 2
 - Started: 2026-10-15
 
 ## Round 1 · r-7c3e
@@ -41,3 +41,33 @@ Criteria are the contract's acceptance 1-10, the authority the plan's phase tabl
 ### Notes
 
 - Finding 1, release type: no history rewrite. `next` is squash-merged (`ae8705f7` has one parent), so the PR's title, `feat(telemetry): …`, is the one commit release-please reads, and it decides the release type of every path the branch touches.
+
+## Round 2 · r-b41d
+
+- Date: 2026-10-15
+- By: Baptiste LAFOURCADE
+- Diff: `ae8705f7...c790dd82`
+- Axes: code, functional, relevancy
+- Verdict: changes-requested
+- Score: 10/10 met, 0 unmet, 0 unverified at runtime, 0 out of the diff
+
+Criteria are the contract's acceptance 1-10, the authority the plan's phase tables fold into.
+
+### Criteria
+
+- [x] 1. A filtered report adds up to the row it selects, `day` by its period, `total` by no filter — `report-filters.property.integration.test.ts:207`, green on rerun (`Test Files 96 passed`, `Tests 1438 passed` over `tests/contexts/telemetry`, the telemetry display, the command wiring and `tests/architecture`)
+- [x] 2. Filters commute and combine with AND — same file `:230`, green
+- [x] 3. Bounded and filtered equals unbounded and filtered, restricted to the period — `report-window.property.integration.test.ts`, green
+- [x] 4. Every error of rules 1, 2, 3, 5, 6, 7 exits 1 naming the flag, those of 1, 2, 3, 6, 7 before anything is read — `report-usage-use-case.unit.test.ts:507` (conflict refused in the use case, before the environment's refusal, locator never asked, `events` empty); built binary in a sandbox: `--unattributed --unattributed` and `--unattributed --unattributed no-binding` → `error: --unattributed is given twice: give it once.` exit 1; `--model m --absent model`, `--absent ticket --unattributed`, and `--task a --unattributed` under `AIDD_TELEMETRY=0` → exit 1 naming both flags; empty, ambiguous and `.` outside a repository unchanged, exit 1
+- [x] 5. `.` resolves to the id ingest stored — `telemetry-report.e2e.test.ts:541` green (`Tests 25 passed`); sandbox `--repository . --json` → the 64-hex id, `totals.records` 4
+- [x] 6. No filter: today's envelope plus `filters` all `null` — `report-usage-use-case.unit.test.ts:349`, `report-envelope.unit.test.ts:112`, green
+- [x] 7. Tests written first, red run recorded — `evidence.md` `## Review round 1`, 10 failing before the fix
+- [x] 8. Telemetry mutation at 96 or above, changed-line mutants killed or explained — `evidence.md` (`score 96.3, floor 96`); `cli/reports/mutation/telemetry/mutation.json` (22:55) holds 7 survivors or uncovered in the report files: the 2 equivalents the evidence names (`report-usage-use-case.ts:168`, `report-filter.ts:92`) and 5 on unchanged display lines (`:112` x3, `:123`, `:194`)
+- [x] 9. Docs say what a filter selects — unchanged from round 1, plus `answer.md:28` for a filter that matched nothing
+- [x] 10. Smoke and the tokens end to end pass — smoke rerun on the `22:57` build, relocated HOME: `PASS: 132   FAIL: 0   SKIP: 1`; `node --test scripts/__tests__/check-claude-tokens-end-to-end.test.js`: `pass 14`, `fail 0`, the root-commit case included; both live modes recorded in `evidence.md` on this head
+
+### Findings
+
+- `plugins/aidd-telemetry/skills/01-usage/actions/frame.md:33` : round 1's major is not fixed. Commit `05660554` is still `docs(telemetry)` and still carries the skill's new framing and a display test; no commit was split or retyped. The only other commit touching `plugins/aidd-telemetry` is `c790dd82` (`fix`), so `aidd-telemetry` releases a patch, with the feature under Documentation and Bug Fixes → split `05660554` into `feat(aidd-telemetry): …` for `plugins/aidd-telemetry/**`, `test(cli): …` for the display test and `docs(telemetry): …` for the rest, and push with `--force-with-lease` — 🟡 major, conform
+- `cli/src/presentation/commands/telemetry.ts:281` : the command still runs `conflictsOf` itself before `createDeps`, so the use case's own refusal never runs from the CLI, and the refusal is now worded through two call sites → drop the command's check and let the `conflicting` result exit 1, which the action already handles at `:299`; or keep it and accept the duplicate — 🟢 minor, rot
+- `cli/src/contexts/telemetry/application/report/report-usage-use-case.ts:29` : `RequestedFilters` lets a caller pass `here` and a non-null `repository` together; `here` then wins and `repository` is silently dropped → make the two exclusive in the type, or refuse the pair as a conflict — 🟢 minor, standards

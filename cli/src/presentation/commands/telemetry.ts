@@ -13,7 +13,6 @@ import {
 import { periodOf } from "../../contexts/telemetry/domain/report/period.js";
 import {
   ABSENT_AXES,
-  conflictsOf,
   type ReportFilters,
   UNATTRIBUTED_SELECTORS,
 } from "../../contexts/telemetry/domain/report/report-filter.js";
@@ -277,16 +276,6 @@ export function registerTelemetryCommand(program: Command): void {
           absent: cmdOptions.absent ?? null,
           unattributed: cmdOptions.unattributed ?? null,
         };
-        // Checked before anything is wired; the use case refuses the same flags on its own.
-        const [conflict] = conflictsOf(given);
-        if (conflict !== undefined) {
-          printUsageReport(output, {
-            status: "conflicting",
-            flags: conflict,
-            absent: given.absent,
-          });
-          process.exit(1);
-        }
         const filters: RequestedFilters =
           given.repository === "." ? { ...given, repository: null, here: projectRoot } : given;
         try {

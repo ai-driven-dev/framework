@@ -256,3 +256,22 @@ The selection line now reads `selectorsOf`, the list the filter matches with: a 
 | tokens end to end, `--attended` | same, then `; asked, answered by the hook, kept across /clear` |
 
 Survivors on changed lines: `report-usage-use-case.ts:168` (`typed === null` to `false`) and `report-filter.ts:92` (`value.kind === "value"` to `true`), both equivalent as explained above. The two earlier equivalents on the selector's and the label's `kind` are gone with the `unattributed-any` selector and `selectorsOf`. The other survivors in the touched files (`telemetry-report-display.ts:112`, `:123`, `:194`) are on lines this change did not write.
+
+## Review round 2
+
+Tests first, against `c790dd82`:
+
+```txt
+telemetry-wiring.integration > exits 1 on ["--model","m","--absent","model"], which select on one axis, naming both as the report refuses them (and the three other pairs)
+  AssertionError: expected "vi.fn()" to be called 1 times, but got 0 times
+  Tests  4 failed | 47 passed (51)
+pnpm typecheck
+  report-usage-use-case.unit.test.ts(528,5): error TS2578: Unused '@ts-expect-error' directive.
+```
+
+The command no longer checks the flags itself: the use case's `conflicting` result is the one refusal, still before refusal and before anything is read (`report-usage-use-case.unit.test.ts`, and the e2e "flags on one axis" case, which checks the telemetry directory is unchanged). `RequestedFilters` is a union: `here` comes only with `repository: null`, and a repository typed beside it does not compile.
+
+| Gate | Decisive line |
+| --- | --- |
+| `cd cli && pnpm test` | `Tests  6579 passed \| 1 skipped (6580)` |
+| telemetry mutation | not rerun: the only mutated file changed, `report-usage-use-case.ts`, changed a type alone, which holds no mutant; the command is outside the scope. Last score `96.3` |
