@@ -76,7 +76,7 @@ The ledger stores `StoredUsage`: the record plus `repository_id`, resolved at in
 | `consent-closed` | its live key names a closed interval; says "run `aidd telemetry on`", never says the clone has not opted in |
 | `unreadable-consent` | git config or `.git` unreadable, directory or git dir the file system will not let ingest look at, clone with no identity, damaged consent log |
 | `no-cwd` | no working directory |
-| `undated` | timestamp not a readable date |
+| `undated` | timestamp not a readable date, with no zone (`Z` or `±hh:mm`), or outside four-digit years |
 
 ## Report envelope
 
