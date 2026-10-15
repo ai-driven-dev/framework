@@ -21,7 +21,7 @@ The contract every generated skill satisfies. `skill-generate` obeys it too.
 ## An action
 
 - **R11.** Sections in this order: `## Input` when the action consumes something, then `## Output`, `## Process`, and optional `## Rules`. Omit unnecessary sections; preserve names and order.
-- **R12.** A `## Process` step opens with `**Label.**`, then one imperative sentence. Number sequential steps; use dash sub-items for cases, branches, loops, or constraints. Every instruction bullet starts with a bold label. A fenced block is content the action emits, not structure: leave it as its consumer needs it.
+- **R12.** Write concise imperative process steps. Number sequential steps; use dash sub-items for cases, branches, loops, or constraints. In bullets, bold important opening words instead of adding procedural labels. A fenced block is content the action emits, not structure: leave it as its consumer needs it.
 - **R13.** Verify observable success in `## Process` through real execution. `## Rules` holds only constraints no process step owns; no separate `## Test` or duplicated checks.
 
 ## A reference
