@@ -9,7 +9,7 @@
  *
  * `--attended` runs Claude in a pseudo-terminal, as a person would: the first prompt must be
  * blocked and asked for a task, the declaration typed as a prompt must be answered by the hook,
- * and `/clear` must keep the task. POSIX only: it needs Python's `pty`.
+ * and `/clear` must keep the task. It needs Python: its `pty` on POSIX, `pywinpty` on Windows.
  *
  * Usage: node scripts/check-claude-tokens-end-to-end.cjs [--attended] [path/to/cli.js]
  *
@@ -131,6 +131,28 @@ while True:
         os.write(fd, data)
 `;
 
+/** The same relay on Windows, over ConPTY. A `.cmd` shim such as `claude` runs under cmd.exe. */
+const TTY_RELAY_WINDOWS = `import shutil, sys, threading
+from winpty import PtyProcess
+command = shutil.which(sys.argv[1])
+child = PtyProcess.spawn(["cmd.exe", "/c", command] + sys.argv[2:], dimensions=(50, 160))
+def pump():
+    while True:
+        data = sys.stdin.buffer.read1(65536)
+        if not data:
+            child.terminate(force=True)
+            return
+        child.write(data.decode("utf-8", "replace"))
+threading.Thread(target=pump, daemon=True).start()
+while True:
+    try:
+        data = child.read(65536)
+    except EOFError:
+        break
+    sys.stdout.write(data)
+    sys.stdout.flush()
+`;
+
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 /** Resolves once `condition()` holds, or throws naming what never happened. */
@@ -171,9 +193,11 @@ function transcripts(configDir) {
 /** Types into Claude as a person: what the gate blocks, the declaration it asks for, `/clear`.
  * Each step waits on what it causes on disk or at the API, never on how the screen renders. */
 async function attendedSession({ root, env, project, api, telemetryDir }) {
+  const windows = process.platform === "win32";
   const relay = path.join(root, "tty-relay.py");
-  fs.writeFileSync(relay, TTY_RELAY);
-  const child = spawn("python3", ["-I", relay, "claude"], { cwd: project, env: { ...env, TERM: "xterm-256color" } });
+  fs.writeFileSync(relay, windows ? TTY_RELAY_WINDOWS : TTY_RELAY);
+  const python = windows ? "python" : "python3";
+  const child = spawn(python, ["-I", relay, "claude"], { cwd: project, env: { ...env, TERM: "xterm-256color", PYTHONIOENCODING: "utf-8" } });
   let screen = "";
   child.stdout.on("data", (chunk) => {
     screen += chunk;
@@ -311,6 +335,7 @@ async function checkIn({ root, cli, api, log, attended }) {
   const bin = path.join(root, "bin");
   fs.mkdirSync(bin);
   fs.writeFileSync(path.join(bin, "aidd"), `#!/bin/sh\nexec ${JSON.stringify(process.execPath)} ${JSON.stringify(cli)} "$@"\n`, { mode: 0o755 });
+  fs.writeFileSync(path.join(bin, "aidd.cmd"), `@"${process.execPath}" "${cli}" %*\r\n`);
   // Nothing of the session running this check may leak in: no git hook dir, no outer Claude or aidd.
   const inherited = Object.fromEntries(
     Object.entries(process.env).filter(([name]) => !/^(GIT_|CLAUDE|AIDD_|ANTHROPIC_)/u.test(name))
