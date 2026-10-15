@@ -1,4 +1,3 @@
-import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { opencode } from "../../../../../src/contexts/tools/domain/profiles/opencode/profile.js";
 import { OpencodeDualConfigError } from "../../../../../src/kernel/errors.js";
@@ -18,33 +17,6 @@ function makeFs(existingPaths: string[]): FileReader {
 }
 
 describe("opencode", () => {
-  describe("capabilities.agents delegation", () => {
-    const delegation = opencode.capabilities.agents.params.delegation;
-    if (delegation === undefined) throw new Error("OpenCode delegation must be declared");
-
-    it.each(["!high", "high!", "hi!gh"])(
-      "rejects an effort delimiter in %s before constructing a model variant",
-      async (effort) => {
-        await expect(
-          Promise.resolve().then(() =>
-            delegation.resolveNative({ model: "provider/model", effort }, "flat")
-          )
-        ).rejects.toMatchObject({ message: expect.stringContaining("Invalid effort") });
-      }
-    );
-
-    it("finds personal agents under the native XDG configuration override", () => {
-      expect(
-        delegation.userPath(
-          "/person",
-          { XDG_CONFIG_HOME: "/native-config" },
-          "aidd-dev",
-          "explorer"
-        )
-      ).toBe(join("/native-config", "opencode", "agents", "aidd-dev-explorer.md"));
-    });
-  });
-
   describe("capabilities.agents.buildInstallPath()", () => {
     it("builds path under .opencode/agents/", () => {
       const path = opencode.capabilities.agents.buildInstallPath("code-reviewer.md");

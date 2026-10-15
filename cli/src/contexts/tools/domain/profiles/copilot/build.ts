@@ -14,6 +14,7 @@ import {
 import { rewriteRelativeLinks } from "../../../../../kernel/materialization/relative-link-rewrite.js";
 import type { ToolBuildContract } from "../../build-contract.js";
 import { stripAgentFrontmatter } from "../../formats/agent-frontmatter-strip.js";
+import { agentModelOptions } from "../../formats/agent-models.js";
 import { flattenCopilotHooksShape } from "../../formats/flat-hooks-merge.js";
 import { PLUGIN_ROOT_TOKEN } from "../../formats/plugin-root-token.js";
 import { mergeVscodeMcp } from "../../formats/vscode-mcp-merge.js";
@@ -68,7 +69,10 @@ export function buildCopilotMarketplaceContract(): ToolBuildContract {
         supported: true,
         source: { kind: "filteredTree", srcDir: "agents", inputExt: ".md" },
         path: (_p, rel) => rel,
-        transform: transformClaudeAgent,
+        transform: (content, plugin, outName) =>
+          transformClaudeAgent(content, plugin, outName, (fm) =>
+            agentModelOptions("copilot", fm, plugin, outName, "marketplace")
+          ),
       },
       mcp: {
         supported: true,
@@ -135,7 +139,14 @@ function transformCopilotFlatAgent(content: string, plugin: string, outName: str
     resolveTargetPath: (rel) => copilotFlatResolveTarget(plugin, rel),
   });
   const prefixedName = `${plugin}-${outName.replace(/\.md$/, "")}`;
-  return serializeFrontmatter({ ...stripped, name: prefixedName }, rewrittenBody);
+  return serializeFrontmatter(
+    {
+      ...stripped,
+      ...agentModelOptions("copilot", frontmatter, plugin, outName),
+      name: prefixedName,
+    },
+    rewrittenBody
+  );
 }
 
 function copilotFlatResolveTarget(plugin: string, rel: string): string {

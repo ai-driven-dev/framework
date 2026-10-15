@@ -1,5 +1,17 @@
 # Sub-agent verification
 
+## Installed model defaults, 2026-10-15
+
+The [CLI configuration](../../../../cli/src/contexts/tools/domain/formats/agent-models.json) now owns provider defaults and native fields. Conversion applies them to the four AIDD roles; explicit settings survive. The resolver command and workflow dependencies on it are removed. Agent behaviors are reduced to three capabilities each.
+
+- **Checks:** 6,499 CLI tests pass, one skipped; 498 script tests pass. Typecheck, lint, architecture, type honesty and unused-code checks pass. Bundle: 684.5 KB / 695 KB.
+- **Headers:** nine built-CLI cases inspect all four real agent sources across native flat and marketplace outputs. Ordinary installation tests also inspect translated file paths and contents. A provider-switch test verifies Copilot's native Anthropic identifier; removing its lookup makes that test fail.
+- **Limits:** Codex loads the flat agent files, not TOMLs staged inside a plugin. Cursor flat agents accept the configured selector; plugin agents inherit their model. These file checks do not establish account access to a model or effective runtime selection.
+
+## Earlier runtime evidence
+
+The runtime probes below describe earlier candidates. Their traces and hashes predate the CLI-installed model defaults and the latest simplified agent bodies.
+
 Verified 2026-10-14 on `feature/sub-agents`: workflow candidate `1f151d19`, delivery candidate `e00f124c`.
 
 ## Native roles
@@ -50,7 +62,7 @@ OpenCode's configured local model server was unavailable. Its behavioral probe u
 
 The wrapped scripts suite passed 559 tests, including 12 reload regressions. Architecture, JSON manifest validation, Markdown links, duplication checks, and commit hooks passed. These results establish the observed contracts and host paths; they do not guarantee every future task or model choice.
 
-## Current candidate, 2026-10-15
+## Earlier four-role candidate, 2026-10-15
 
 The earlier results above describe the previous checker contract. Native runtime probes ran on macOS. Current probes use the four scoped roles: explorer, executor, validator and reviewer. Validator returns one completion verdict; reviewer independently assesses quality. Native dispatch events establish invocation; generated files and agent self-reports alone do not.
 

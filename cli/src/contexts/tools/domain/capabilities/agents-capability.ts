@@ -21,6 +21,11 @@ function buildTomlContent(frontmatter: Record<string, unknown>, body: string): s
   if (frontmatter.model !== undefined) {
     lines.push(`model = ${tomlString(String(frontmatter.model))}`);
   }
+  if (frontmatter.model_reasoning_effort !== undefined) {
+    lines.push(
+      `model_reasoning_effort = ${tomlString(String(frontmatter.model_reasoning_effort))}`
+    );
+  }
   lines.push(`developer_instructions = """\n${body}\n"""`);
   return `${lines.join("\n")}\n`;
 }
@@ -51,27 +56,11 @@ export class AgentsCapability {
       directory: string;
       toolSuffix: string;
       format: "markdown" | "toml";
-      delegation?: {
-        personalAgentsFirst?: boolean;
-        userPath: (home: string, env: NodeJS.ProcessEnv, plugin: string, role: string) => string;
-        identity: (
-          name: string,
-          plugin: string,
-          mode: "flat" | "marketplace",
-          role: string
-        ) => string;
-        resolveNative: (
-          requested: { model?: string; effort?: string },
-          mode: "flat" | "marketplace"
-        ) => Readonly<Record<string, string>>;
-        readName?: (content: string) => string | undefined;
-        marketplacePath?: (root: string, role: string) => string;
-        nativeSurface?: (mode: "flat" | "marketplace") => "agent-configuration" | "spawn";
-        diagnostics?: (
-          content: string,
-          requested: { model?: string; effort?: string }
-        ) => readonly string[];
-      };
+      modelOptions?: (
+        fm: Record<string, unknown>,
+        plugin?: string,
+        fileName?: string
+      ) => Record<string, unknown>;
       userFileExt?: string;
       buildInstallPath?: (fileName: string) => string | null;
       convertFrontmatter?: (
@@ -104,15 +93,26 @@ export class AgentsCapability {
     return !otherSuffixes.some((s) => basename.endsWith(s));
   }
 
-  convertFrontmatter(fm: Record<string, unknown>, fileName?: string): Record<string, unknown> {
+  convertFrontmatter(
+    fm: Record<string, unknown>,
+    fileName?: string,
+    plugin?: string
+  ): Record<string, unknown> {
+    const converted = this.convertAgentFrontmatter(fm, fileName);
+    return { ...converted, ...this.params.modelOptions?.(fm, plugin, fileName) };
+  }
+
+  private convertAgentFrontmatter(
+    fm: Record<string, unknown>,
+    fileName?: string
+  ): Record<string, unknown> {
     if (this.params.convertFrontmatter) return this.params.convertFrontmatter(fm, fileName);
     const name = agentNameFromFrontmatter(fm, fileName);
-    if (this.params.format === "toml") {
-      const result: Record<string, unknown> = { name, description: fm.description };
-      if (fm.model !== undefined) result.model = fm.model;
-      return result;
-    }
-    return { name, description: fm.description };
+    return {
+      name,
+      description: fm.description,
+      ...(this.params.format === "toml" && fm.model !== undefined ? { model: fm.model } : {}),
+    };
   }
 
   serialize(frontmatter: Record<string, unknown>, body: string): string {

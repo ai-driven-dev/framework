@@ -69,3 +69,16 @@ No consequential new findings in the scoped rereview. Full test results and nati
 - **False-positive assertion:** replace the malformed-error assertion that accepted an undefined rejection with an actual error-message check.
 - **Native boundaries:** add 15 meaningful cases in existing profile tests. Keep equivalent object serialization and unchanged baseline metadata out of scope.
 - **Results:** full mutation scopes pass at Cursor 97.4% / floor 97 and OpenCode 95.0% / floor 94. No production or threshold changes in these corrections.
+
+## Round 5 · native model configuration
+
+- Date: 2026-10-15
+- By: independent reviewer
+- Diff: replacement of runtime resolution with CLI-installed native headers
+- Axes: code, relevancy
+- Verdict: no actionable findings
+- Score: not scored
+
+- **Configuration:** one CLI JSON owns provider defaults, native fields and the Copilot alias. Explicit native choices survive; defaults stay scoped to the four AIDD roles.
+- **Simplicity:** resolver machinery and workflow dependencies are removed. Agent behavior is limited to three capabilities per role.
+- **Evidence:** 6,499 CLI tests and 498 script tests pass, including nine built-CLI header cases. Existing Codex/Cursor plugin limitations remain explicit; effective runtime selection is not claimed from generated files.

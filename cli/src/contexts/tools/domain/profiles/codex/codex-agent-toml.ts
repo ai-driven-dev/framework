@@ -1,10 +1,11 @@
 import { parseFrontmatter } from "../../../../../kernel/markdown.js";
+import { agentModelOptions } from "../../formats/agent-models.js";
 import { stringifyToml } from "./toml.js";
 
 /**
  * Converts a Claude-format agent markdown file (frontmatter + body) into a Codex subagent TOML
  * string. Key insertion order is fixed for deterministic output, and the conversion is lossy —
- * no model field is emitted and the TOML schema diverges from the frontmatter, so there is no
+ * the TOML schema diverges from the frontmatter, so there is no
  * inverse.
  *
  * `prefixName` is for flat mode, where every plugin shares one `.codex/agents/` directory and
@@ -18,7 +19,11 @@ export function codexAgentMarkdownToToml(
 ): string {
   const { frontmatter, body } = parseFrontmatter(content);
   const name = resolveName(frontmatter, pluginName, fileBaseName, prefixName);
-  const obj = buildTomlObject(name, frontmatter, body);
+  const obj = buildTomlObject(
+    name,
+    { ...frontmatter, ...agentModelOptions("codex", frontmatter, pluginName, fileBaseName) },
+    body
+  );
   return stringifyToml(obj);
 }
 
@@ -44,7 +49,9 @@ function buildTomlObject(
   obj.name = name;
   // description is a required subagent key; default to "" when absent.
   obj.description = typeof frontmatter.description === "string" ? frontmatter.description : "";
-  // model is intentionally omitted: no known Codex model id set.
+  for (const field of ["model", "model_reasoning_effort"]) {
+    if (frontmatter[field] !== undefined) obj[field] = frontmatter[field];
+  }
   obj.developer_instructions = body;
   return obj;
 }

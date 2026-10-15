@@ -121,9 +121,9 @@ aidd setup --scope user --ai claude,codex,copilot --plugins none --yes
 | `aidd auth status` | Show which credential resolves, from where, at which level |
 | `aidd auth logout` | Delete the stored credential |
 
-### Delegation
+## Agent models
 
-`aidd delegation resolve <task> --tool <id> [--json]` reads the project's suggestion, verifies an installed agent, and reports requested/native settings. Resolution is read-only; the caller starts the agent. Configuration, host support and runtime checks: [project delegation](../docs/DELEGATION.md).
+The [bundled configuration](src/contexts/tools/domain/formats/agent-models.json) supplies model and effort defaults when installing or translating AIDD agents. See [sub-agent models](../docs/DELEGATION.md).
 
 ## Translate
 

@@ -13,6 +13,7 @@ import {
 } from "../../../../../kernel/materialization/flat-paths.js";
 import { rewriteRelativeLinks } from "../../../../../kernel/materialization/relative-link-rewrite.js";
 import type { ToolBuildContract } from "../../build-contract.js";
+import { agentModelOptions } from "../../formats/agent-models.js";
 import { mergeClaudeSettingsHooks } from "../../formats/flat-hooks-merge.js";
 import { CLAUDE_PLUGIN_ROOT_TOKEN } from "../../formats/plugin-root-token.js";
 import { mergeVscodeMcp } from "../../formats/vscode-mcp-merge.js";
@@ -52,7 +53,10 @@ export function buildClaudeContract(): ToolBuildContract {
         supported: true,
         source: { kind: "filteredTree", srcDir: "agents", inputExt: ".md" },
         path: (_p, rel) => rel,
-        transform: transformClaudeAgent,
+        transform: (content, plugin, outName) =>
+          transformClaudeAgent(content, plugin, outName, (fm) =>
+            agentModelOptions("claude", fm, plugin, outName, "marketplace")
+          ),
       },
       mcp: {
         supported: true,
@@ -108,7 +112,14 @@ function transformClaudeFlatAgent(content: string, plugin: string, outName: stri
     resolveTargetPath: (rel) => claudeFlatResolveTarget(plugin, rel),
   });
   const prefixedName = `${plugin}-${outName.replace(/\.md$/, "")}`;
-  return serializeFrontmatter({ ...frontmatter, name: prefixedName }, rewrittenBody);
+  return serializeFrontmatter(
+    {
+      ...frontmatter,
+      ...agentModelOptions("claude", frontmatter, plugin, outName),
+      name: prefixedName,
+    },
+    rewrittenBody
+  );
 }
 
 export function buildClaudeFlatContract(): ToolBuildContract {

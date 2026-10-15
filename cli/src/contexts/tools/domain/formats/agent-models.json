@@ -1,0 +1,43 @@
+{
+  "plugin": "aidd-dev",
+  "roles": ["explorer", "executor", "reviewer", "validator"],
+  "providers": {
+    "openai": {
+      "model": "gpt-6-luna",
+      "effort": "medium"
+    },
+    "anthropic": {
+      "model": "claude-haiku-5-5",
+      "effort": "medium",
+      "nativeModels": {
+        "copilot": "claude-haiku-5.5"
+      }
+    }
+  },
+  "tools": {
+    "claude": {
+      "provider": "anthropic",
+      "effortField": "effort"
+    },
+    "codex": {
+      "provider": "openai",
+      "effortField": "model_reasoning_effort"
+    },
+    "copilot": {
+      "provider": "openai",
+      "effortField": "reasoningEffort"
+    },
+    "opencode": {
+      "provider": "openai",
+      "effortPrefix": "#",
+      "effortSuffix": "",
+      "providerPrefix": true
+    },
+    "cursor": {
+      "provider": "anthropic",
+      "effortPrefix": "[effort=",
+      "effortSuffix": "]",
+      "marketplace": false
+    }
+  }
+}

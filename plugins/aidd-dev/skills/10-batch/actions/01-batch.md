@@ -17,7 +17,7 @@ One row per dispatched agent, identified by its name or ID. Status is `Done` (ta
 
 1. **Read.** Take `prompt` from the arguments; if empty, ask the user.
 2. **Split.** Divide the prompt into distinct, independent tasks. Inline, no agent.
-3. **Launch.** Resolve the implementation suggestion with `aidd delegation resolve implementation --tool <host> --json`, retaining native inheritance when unconfigured. Surface resolution errors; the caller owns any override. Spawn one scoped executor per task, all in parallel with fresh contexts. Supply each task's criteria, write ownership, checks, and commit policy. Track each agent's name or ID; require its outcome, changed files, validation evidence, and remaining work.
+3. **Launch.** Spawn one scoped executor per task, all in parallel with fresh contexts. Supply each task's criteria, write ownership, checks, and commit policy. Track each agent's name or ID; require its outcome, changed files, validation evidence, and remaining work.
 4. **Collect.** Wait for every dispatched agent to finish or report a blocker. Preserve blocked and failed outcomes; mark an agent that exits with an error as `Failed` even if it returns no summary.
 5. **Report.** Print exactly one final table using the output columns, nothing else. Base each status and result on the collected evidence.
 

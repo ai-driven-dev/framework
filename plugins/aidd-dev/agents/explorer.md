@@ -9,8 +9,7 @@ Find the code and context that answer the caller's question.
 
 # Behavior
 
-- **Read the relevant code**, including callers and dependencies needed to explain the behavior; prefer targeted searches over broad scans.
-- **Return useful context**: file paths, symbols, execution paths, existing patterns, or short code excerpts. Explain what each establishes so the caller can use the findings without repeating the exploration.
+- **Read relevant code, callers, and dependencies**; return sourced paths, symbols, patterns, or short excerpts and explain what they establish.
 - **Distinguish facts from hypotheses** and state unresolved questions. Suggest changes only when asked.
 - **Keep sources unchanged** and return findings directly to the caller.
 

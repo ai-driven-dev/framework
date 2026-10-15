@@ -26,10 +26,10 @@ describe("copilot", () => {
   });
 
   describe("capabilities.agents.convertFrontmatter()", () => {
-    it("strips extra fields for agents sections — only name and description", () => {
+    it("preserves an explicitly selected agent model", () => {
       const fm = { name: "alexia", description: "Agent", model: "opus" };
       const result = copilot.capabilities.agents.convertFrontmatter(fm);
-      expect(result).toEqual({ name: "alexia", description: "Agent" });
+      expect(result).toEqual({ name: "alexia", description: "Agent", model: "opus" });
     });
 
     it("names an unnamed agent after its own file, whatever folders it sits in", () => {

@@ -1,4 +1,6 @@
 {
+  "candidate": "6194ce7aabd1e27622a35851019fddd165f84c21",
+  "scope": "Historical runtime probes before CLI-installed model defaults",
   "date": "2026-10-15",
   "source_agent_sha256": {
     "explorer": "735e8f34797b47acd1763cb0c84553974b82c4cf0601fbba0726c1fc5310b862",

@@ -3,9 +3,8 @@ import type { MarketplaceScope } from "../../../../kernel/scope.js";
 /**
  * What a host's own plugin registry says, read from the file that host maintains itself.
  *
- * Installation diagnostics read host records; delegation additionally checks native artifact
- * paths and project activation settings. Readers use the `<plugin>@<marketplace>` refs their
- * hosts record. A host with no implementation is absent from the map, never assumed to agree.
+ * Readers use the `<plugin>@<marketplace>` refs their hosts record. A host with no reader
+ * is absent from the map, never assumed to agree.
  */
 /** What a registry says about one ref: whether the host records it enabled and, for a host
  * whose registry carries a per-entry scope (Claude), the scope of the entry that answers for
@@ -15,9 +14,6 @@ import type { MarketplaceScope } from "../../../../kernel/scope.js";
 export interface HostPluginRegistryEntry {
   readonly enabled: boolean;
   readonly scope?: MarketplaceScope;
-  /** Native plugin directory from the host's registration and documented layout. */
-  readonly installPath?: string;
-  readonly activationUnverified?: string;
 }
 
 export interface HostPluginRegistryReading {
@@ -35,7 +31,5 @@ export interface HostPluginRegistryReading {
 }
 
 export interface HostPluginRegistryReader {
-  /** Delegation includes artifact paths and project activation; the default retains installation
-   * diagnostic semantics. Neither mode establishes the effective runtime configuration. */
-  read(projectRoot: string, forDelegation?: boolean): Promise<HostPluginRegistryReading>;
+  read(projectRoot: string): Promise<HostPluginRegistryReading>;
 }

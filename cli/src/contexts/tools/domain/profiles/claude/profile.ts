@@ -15,13 +15,12 @@ import type {
   HasRules,
   HasSkills,
 } from "../../contracts.js";
+import { agentModelOptions } from "../../formats/agent-models.js";
 import { convertCommandFrontmatter, stripToolSuffix } from "../../formats/command.js";
-import { nativeAgentOptions } from "../../formats/delegation-options.js";
 import { CLAUDE_PLUGIN_ROOT_TOKEN } from "../../formats/plugin-root-token.js";
 import { claudeStyleMarketplaceKey } from "../../marketplace-entry.js";
 import { registerTool } from "../../registry.js";
 import { buildClaudeContract, buildClaudeFlatContract } from "./build.js";
-import { claudeConfigDir } from "./claude-paths.js";
 
 const DIRECTORY = ".claude/";
 const TOOL_SUFFIX = ".claude.md";
@@ -50,14 +49,7 @@ export const claude: AiTool<HasAgents & HasSkills & HasCommands & HasRules & Has
         directory: DIRECTORY,
         toolSuffix: TOOL_SUFFIX,
         format: "markdown",
-        delegation: {
-          userPath: (home, env, plugin, role) =>
-            join(claudeConfigDir(home, env), "agents", `${plugin}-${role}.md`),
-          identity: (name, plugin, mode) => (mode === "marketplace" ? `${plugin}:${name}` : name),
-          resolveNative: (requested) =>
-            nativeAgentOptions(requested, "effort", ["low", "medium", "high", "xhigh", "max"]),
-          marketplacePath: (root, role) => join(root, "agents", `${role}.md`),
-        },
+        modelOptions: (fm, plugin, file) => agentModelOptions("claude", fm, plugin, file),
       }),
       skills: new SkillsCapability({
         directory: DIRECTORY,

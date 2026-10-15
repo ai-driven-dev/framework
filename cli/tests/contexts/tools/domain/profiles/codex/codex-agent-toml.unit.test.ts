@@ -94,32 +94,32 @@ describe("codexAgentMarkdownToToml()", () => {
     });
   });
 
-  describe("model omission (D-5)", () => {
-    it("omits model key when frontmatter has model: opus", () => {
+  describe("explicit model preservation", () => {
+    it("preserves an explicit opus model literal", () => {
       const toml = codexAgentMarkdownToToml(
         "---\nname: planner\ndescription: A planner.\nmodel: opus\n---\n\nBody.",
         "aidd-dev",
         "planner.md"
       );
-      expect(toml).not.toContain("model");
+      expect(parseToml(toml).model).toBe("opus");
     });
 
-    it("omits model key when frontmatter has model: sonnet", () => {
+    it("preserves an explicit sonnet model literal", () => {
       const toml = codexAgentMarkdownToToml(
         "---\nname: planner\nmodel: sonnet\n---\n\nBody.",
         "aidd-dev",
         "planner.md"
       );
-      expect(toml).not.toContain("model");
+      expect(parseToml(toml).model).toBe("sonnet");
     });
 
-    it("omits model key for hypothetical Codex model id (MVP1 always omits)", () => {
+    it("preserves an explicit native model identifier", () => {
       const toml = codexAgentMarkdownToToml(
         "---\nname: planner\nmodel: gpt-5-codex\n---\n\nBody.",
         "aidd-dev",
         "planner.md"
       );
-      expect(toml).not.toContain("model");
+      expect(parseToml(toml).model).toBe("gpt-5-codex");
     });
   });
 

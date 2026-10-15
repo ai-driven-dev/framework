@@ -64,9 +64,6 @@ export default defineConfig({
     };
     options.minifySyntax = true;
     options.minifyWhitespace = true;
-    // Compact local bindings while preserving names used by errors and diagnostics.
-    options.minifyIdentifiers = true;
-    options.keepNames = true;
   },
   async onSuccess() {
     copyFileSync(

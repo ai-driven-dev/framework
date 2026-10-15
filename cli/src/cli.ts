@@ -2,7 +2,6 @@ import { platform } from "node:os";
 import { Command } from "commander";
 import { registerAuthCommand } from "./presentation/commands/auth.js";
 import { registerCleanCommand } from "./presentation/commands/clean.js";
-import { registerDelegationCommand } from "./presentation/commands/delegation.js";
 import { registerDoctorCommand } from "./presentation/commands/doctor.js";
 import { registerFrameworkCommand } from "./presentation/commands/framework.js";
 import { registerMarketplaceCommand } from "./presentation/commands/marketplace.js";
@@ -42,7 +41,6 @@ registerUpdateCommand(program);
 registerDoctorCommand(program);
 registerCleanCommand(program);
 registerTelemetryCommand(program);
-registerDelegationCommand(program);
 
 // Commands already paying for network I/O, so the update-check refresh rides one of them.
 // `marketplace remove` is offline and `update` already resolves the latest version itself.

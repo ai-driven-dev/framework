@@ -14,7 +14,6 @@ Thirty leaf commands. Read them live: `aidd --help`, then each group's. `scripts
 - `telemetry on | off | forget | ingest | task | report | identity`: local token measurement for Claude Code, mapped in `telemetry.md`.
 - `translate <source>`: author-side, converts a source into a target-native plugin tree.
 - `update`, aliased `upgrade`: the CLI itself.
-- `delegation resolve <task> --tool <id>`: read-only project suggestion, installed agent identity, native option surface; `--json` separates requested/native settings and leaves effective runtime unknown.
 
 ## Interface
 

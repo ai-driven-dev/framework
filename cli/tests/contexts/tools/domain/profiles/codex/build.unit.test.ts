@@ -181,7 +181,7 @@ describe("buildCodexContract()", () => {
     const transform = supported(buildCodexContract().artifacts.agents).transform;
 
     expect(transform?.(AGENT_SOURCE, "aidd-dev", "planner.md")).toBe(
-      'name = "planner"\ndescription = "Plans the work"\ndeveloper_instructions = "Plan before building.\\n"\n'
+      'name = "planner"\ndescription = "Plans the work"\nmodel = "opus"\ndeveloper_instructions = "Plan before building.\\n"\n'
     );
   });
 
@@ -308,7 +308,7 @@ describe("buildCodexFlatContract()", () => {
     const transform = supported(buildCodexFlatContract().artifacts.agents).transform;
 
     expect(transform?.(AGENT_SOURCE, "aidd-dev", "planner.md")).toBe(
-      'name = "aidd-dev-planner"\ndescription = "Plans the work"\ndeveloper_instructions = "Plan before building.\\n"\n'
+      'name = "aidd-dev-planner"\ndescription = "Plans the work"\nmodel = "opus"\ndeveloper_instructions = "Plan before building.\\n"\n'
     );
   });
 

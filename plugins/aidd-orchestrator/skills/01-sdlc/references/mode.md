@@ -6,7 +6,6 @@
 - A request carrying nothing else is not one to run: say so and stop.
 - Ask only before spending money, taking an irreversible action, or making a decision that requires user authority.
 - An exception stops the action it guards, not the rest of the request. Say what was withheld and what would release it.
-- Before spawning, run `aidd delegation resolve <task> --tool <host> --json` for `exploration`, `implementation`, `validation`, or `verification`. Use the returned native identity and settings as suggestions; explain material overrides. Missing settings inherit. Surface configuration errors or an unavailable resolver instead of claiming a suggestion was applied.
 
 ## Auto
 

@@ -16,12 +16,12 @@ import type {
   HasRules,
   HasSkills,
 } from "../../contracts.js";
+import { agentModelOptions } from "../../formats/agent-models.js";
 import {
   buildAiddCommandFilePath,
   convertCommandFrontmatterNoHint,
   stripToolSuffix,
 } from "../../formats/command.js";
-import { embeddedAgentOptions } from "../../formats/delegation-options.js";
 import { registerTool } from "../../registry.js";
 import { buildOpencodeFlatContract, transformMcpToOpencode } from "./build.js";
 import { generateOpencodeHooksBridge } from "./opencode-hooks-bridge.js";
@@ -59,30 +59,7 @@ export const opencode: AiTool<
       directory: DIRECTORY,
       toolSuffix: TOOL_SUFFIX,
       format: "markdown",
-      delegation: {
-        userPath: (home, env, plugin, role) =>
-          join(
-            env.XDG_CONFIG_HOME || join(home, ".config"),
-            "opencode",
-            "agents",
-            `${plugin}-${role}.md`
-          ),
-        identity: (_name, plugin, _mode, role) => `${plugin}-${role}`,
-        resolveNative: (requested) =>
-          embeddedAgentOptions(requested, (model, effort) => {
-            if (!/^[a-zA-Z0-9_.-]+$/.test(effort))
-              throw new Error(
-                "Invalid effort variant: use a variant selector without spaces or #."
-              );
-            if (model.includes("#")) {
-              if (model.slice(model.lastIndexOf("#") + 1) === effort) return model;
-              throw new Error(
-                "Conflicting model variant: remove the model #suffix before specifying a different effort."
-              );
-            }
-            return `${model}#${effort}`;
-          }),
-      },
+      modelOptions: (fm, plugin, file) => agentModelOptions("opencode", fm, plugin, file),
       convertFrontmatter: (fm) => ({ description: fm.description, mode: "subagent" }),
     }),
     skills: new SkillsCapability({

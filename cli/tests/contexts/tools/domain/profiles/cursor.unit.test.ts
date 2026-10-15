@@ -4,46 +4,6 @@ import { CONFIG_MCP } from "../../../../../src/contexts/tools/domain/capabilitie
 import { cursor } from "../../../../../src/contexts/tools/domain/profiles/cursor/profile.js";
 
 describe("cursor", () => {
-  describe("capabilities.agents delegation", () => {
-    const delegation = cursor.capabilities.agents.params.delegation;
-    if (delegation === undefined) throw new Error("Cursor delegation must be declared");
-
-    it.each(["!high", "high!", "hi!gh"])(
-      "rejects an effort delimiter in %s before constructing a model option",
-      async (effort) => {
-        await expect(
-          Promise.resolve().then(() =>
-            delegation.resolveNative({ model: "native-model", effort }, "flat")
-          )
-        ).rejects.toMatchObject({ message: expect.stringContaining("Invalid effort") });
-      }
-    );
-
-    it.each([
-      "model]",
-      "[context=1m]",
-      "model[foo[bar=value]",
-      "model[=1]",
-      "model[context=a=b]",
-      "model[context=1 m]",
-    ])("rejects malformed model options in %s when adding effort", async (model) => {
-      await expect(
-        Promise.resolve().then(() => delegation.resolveNative({ model, effort: "high" }, "flat"))
-      ).rejects.toMatchObject({ message: expect.stringContaining("Malformed") });
-    });
-
-    it("preserves a personal agent's declared name in flat mode", () => {
-      expect(delegation.identity("personal-reviewer", "aidd-dev", "flat", "reviewer")).toBe(
-        "personal-reviewer"
-      );
-    });
-
-    it("distinguishes flat agent configuration from plugin spawn options", () => {
-      expect(delegation.nativeSurface?.("flat")).toBe("agent-configuration");
-      expect(delegation.nativeSurface?.("marketplace")).toBe("spawn");
-    });
-  });
-
   describe("capabilities.rules.convertFrontmatter()", () => {
     it("converts paths: to globs: as a JSON inline string and adds alwaysApply: false", () => {
       const result = cursor.capabilities.rules?.convertFrontmatter({
@@ -98,10 +58,10 @@ describe("cursor", () => {
   });
 
   describe("capabilities.agents.convertFrontmatter()", () => {
-    it("strips extra fields for agents sections — only name and description", () => {
+    it("preserves an explicitly selected agent model", () => {
       const fm = { name: "alexia", description: "Agent", model: "opus" };
       const result = cursor.capabilities.agents.convertFrontmatter(fm);
-      expect(result).toEqual({ name: "alexia", description: "Agent" });
+      expect(result).toEqual({ name: "alexia", description: "Agent", model: "opus" });
     });
   });
 
