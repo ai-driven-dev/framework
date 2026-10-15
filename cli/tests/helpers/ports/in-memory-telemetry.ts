@@ -44,7 +44,7 @@ import type {
   UsageLedger,
 } from "../../../src/contexts/telemetry/domain/ports/usage-ledger.js";
 import type { RepositoryResolution } from "../../../src/contexts/telemetry/domain/repository-resolution.js";
-import type { StoredUsage } from "../../../src/contexts/telemetry/domain/stored-usage.js";
+import { dayOf, type StoredUsage } from "../../../src/contexts/telemetry/domain/stored-usage.js";
 import {
   type CloneConsentReading,
   type ConsentReading,
@@ -113,24 +113,47 @@ export class InMemoryLedger implements UsageLedger {
     }
   }
 
-  async load(): Promise<LoadedLedger> {
+  /** The window the last load was given; `undefined` when it read everything. */
+  loadedDays: ReadonlySet<string> | undefined;
+
+  async load(days?: ReadonlySet<string>): Promise<LoadedLedger> {
     this.events.push("load");
+    this.loadedDays = days;
+    const read =
+      days === undefined
+        ? this.records
+        : this.records.filter((record) => days.has(dayOf(record.at) ?? ""));
     return {
-      records: foldUsage(this.records),
+      records: foldUsage(read),
       skippedLines: this.damaged.size,
-      damagedMonths: new Set(this.damaged),
+      damaged: new Set(this.damaged),
+      unsettled: new Set(this.unsettled),
     };
   }
 
-  /** Months whose partition holds a line that is not a record. */
+  /** Partitions holding a line that is not a record. Saving one repairs it. */
   damaged = new Set<string>();
-  savedMonths: ReadonlySet<string> | undefined;
+  /** Partitions not in canonical daily form. Saving one settles it. */
+  unsettled = new Set<string>();
+  savedPartitions: ReadonlySet<string> | undefined;
 
-  async save(records: readonly StoredUsage[], months?: ReadonlySet<string>): Promise<void> {
+  /** Named partitions take their records from `records`; the rest keep theirs, as on disk. */
+  async save(records: readonly StoredUsage[], partitions?: ReadonlySet<string>): Promise<void> {
     this.events.push("save");
-    this.savedMonths = months;
+    this.savedPartitions = partitions;
     if (this.failSave) throw new Error("disk full");
-    this.records = [...records];
+    const named = (record: StoredUsage): boolean => {
+      const day = dayOf(record.at) ?? "";
+      return partitions === undefined || partitions.has(day) || partitions.has(day.slice(0, 7));
+    };
+    this.records = foldUsage([
+      ...this.records.filter((record) => !named(record)),
+      ...records.filter(named),
+    ]);
+    for (const partition of partitions ?? [...this.damaged, ...this.unsettled]) {
+      this.damaged.delete(partition);
+      this.unsettled.delete(partition);
+    }
   }
 
   async positions(): Promise<ReadonlyMap<string, TranscriptPosition>> {

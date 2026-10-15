@@ -332,9 +332,13 @@ function writeTranscript(cwd: string, ids: readonly string[], name = "s-1", at?:
   utimesSync(file, written, written);
 }
 
+/** How many calls the ledger's days hold. */
 const stored = () => {
-  const file = join(box.telemetry, "ledger", "2026-10.jsonl");
-  return existsSync(file) ? read(file).split("\n").filter(Boolean).length : 0;
+  const dir = join(box.telemetry, "ledger");
+  if (!existsSync(dir)) return 0;
+  return readdirSync(dir)
+    .filter((name) => /^\d{4}-\d{2}-\d{2}\.jsonl$/u.test(name))
+    .flatMap((name) => read(join(dir, name)).split("\n").filter(Boolean)).length;
 };
 
 describe("measurement starts at on", () => {

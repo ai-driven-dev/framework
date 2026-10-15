@@ -4,12 +4,7 @@ import { isErrnoException } from "../../../kernel/reading/json-file.js";
 import { readTextIfPresent } from "../../../kernel/reading/text-file.js";
 import type { PrivateStorage } from "../domain/ports/private-storage.js";
 import type { LoadedLedger, UsageLedger } from "../domain/ports/usage-ledger.js";
-import {
-  monthOf,
-  parseStoredUsage,
-  partitionByMonth,
-  type StoredUsage,
-} from "../domain/stored-usage.js";
+import { parseStoredUsage, partitionByDay, type StoredUsage } from "../domain/stored-usage.js";
 import {
   parsePositions,
   renderPositions,
@@ -18,19 +13,29 @@ import {
 import { foldUsage } from "../domain/usage-fold.js";
 import { DirectoryLock, type LockOptions } from "./ledger-lock.js";
 
-const PARTITION = /^\d{4}-\d{2}\.jsonl$/;
+const DAILY = /^\d{4}-\d{2}-\d{2}\.jsonl$/;
+const MONTHLY = /^\d{4}-\d{2}\.jsonl$/;
+const EXTENSION = ".jsonl";
 const OFFSETS_FILE = "offsets.json";
 const LOCK_FILE = ".lock";
 
+function partitionOf(name: string): string {
+  return name.slice(0, -EXTENSION.length);
+}
+
 /** The ledger as files under one private directory.
  *
- * `<month>.jsonl`, one record per line, by the month of the record's own time. A better
- * snapshot of a call replaces the one held, and its time can fall in another month, so the
- * ledger is never appended to: a changed partition is rewritten whole, by temporary file and
- * rename, and an unchanged one is not touched (a save told which months changed reads and
- * writes only those). Each call is therefore on disk once, no
- * reader ever meets a torn line, and the bytes depend on what the ledger holds and not on how
- * it got there. A ledger holds a few hundred bytes a call, so a rewrite stays cheap.
+ * `<YYYY-MM-DD>.jsonl`, one record per line, by the UTC day of the record's own time. A better
+ * snapshot of a call replaces the one held, and its time can fall in another day, so the
+ * ledger is never appended to: a changed day is rewritten whole, by temporary file and
+ * rename, and an unchanged one is not touched. Each call is therefore on disk once, no reader
+ * ever meets a torn line, and the bytes depend on what the ledger holds and not on how it got
+ * there. An ingest reads and writes only the days around its calls, so its cost does not grow
+ * with the ledger.
+ *
+ * `<YYYY-MM>.jsonl` is a month as an earlier version wrote it: still read, and split into its
+ * days, its own file removed after them, so a crash in between leaves each call in both and
+ * read once.
  *
  * `offsets.json` is where each transcript was read up to; `.lock` serialises writers. */
 export class UsageLedgerAdapter implements UsageLedger {
@@ -44,41 +49,55 @@ export class UsageLedgerAdapter implements UsageLedger {
     return new DirectoryLock(this.dir, LOCK_FILE, this.storage, this.lockOptions).exclusively(work);
   }
 
-  async load(): Promise<LoadedLedger> {
+  async load(days?: ReadonlySet<string>): Promise<LoadedLedger> {
+    const names = await this.partitions();
     const found: StoredUsage[] = [];
     let skippedLines = 0;
-    const damagedMonths = new Set<string>();
-    for (const name of await this.partitions()) {
+    const damaged = new Set<string>();
+    const unsettled = new Set<string>();
+    const heldIn = new Map<string, string>();
+    for (const name of days === undefined ? names : inWindow(names, days)) {
+      const partition = partitionOf(name);
+      if (MONTHLY.test(name)) unsettled.add(partition);
       const text = (await readTextIfPresent(join(this.dir, name))) ?? "";
       for (const line of text.split("\n")) {
         if (line === "") continue;
         const record = parseStoredUsage(line);
         if (record === null) {
           skippedLines += 1;
-          damagedMonths.add(name.slice(0, -".jsonl".length));
-        } else found.push(record);
+          damaged.add(partition);
+          continue;
+        }
+        found.push(record);
+        const id = `${record.tool}\u0000${record.key}`;
+        const first = heldIn.get(id);
+        if (first === undefined) heldIn.set(id, partition);
+        else if (first !== partition) unsettled.add(first).add(partition);
       }
     }
-    return { records: foldUsage(found), skippedLines, damagedMonths };
+    return { records: foldUsage(found), skippedLines, damaged, unsettled };
   }
 
-  async save(records: readonly StoredUsage[], only?: ReadonlySet<string>): Promise<void> {
+  async save(records: readonly StoredUsage[], partitions?: ReadonlySet<string>): Promise<void> {
     await this.storage.ensureDirectory(this.dir);
-    const months = partitionByMonth(
-      only === undefined
-        ? records
-        : records.filter((record) => only.has(monthOf(record.at) as string))
-    );
-    for (const [month, inMonth] of months) {
-      const path = join(this.dir, `${month}.jsonl`);
-      const text = inMonth.map((record) => JSON.stringify(record)).join("\n");
-      const content = `${text}\n`;
+    const names = await this.partitions();
+    const named = (day: string): boolean =>
+      partitions === undefined || partitions.has(day) || partitions.has(day.slice(0, 7));
+    const days = partitionByDay(records);
+    for (const [day, inDay] of days) {
+      if (!named(day)) continue;
+      const path = join(this.dir, `${day}${EXTENSION}`);
+      const content = `${inDay.map((record) => JSON.stringify(record)).join("\n")}\n`;
       if ((await readTextIfPresent(path)) !== content) await this.storage.replace(path, content);
     }
-    // A record whose better snapshot moved to another month can leave its old month empty.
-    for (const name of await this.partitions()) {
-      const month = name.slice(0, -".jsonl".length);
-      if ((only === undefined || only.has(month)) && !months.has(month)) {
+    // A record whose better snapshot moved to another day can leave its old day empty.
+    for (const name of names.filter((name) => DAILY.test(name))) {
+      const day = partitionOf(name);
+      if (named(day) && !days.has(day)) await rm(join(this.dir, name));
+    }
+    // Last: until every day of a month is written, its monthly file still holds the calls.
+    for (const name of names.filter((name) => MONTHLY.test(name))) {
+      if (partitions === undefined || partitions.has(partitionOf(name))) {
         await rm(join(this.dir, name));
       }
     }
@@ -95,10 +114,28 @@ export class UsageLedgerAdapter implements UsageLedger {
 
   private async partitions(): Promise<string[]> {
     try {
-      return (await readdir(this.dir)).filter((name) => PARTITION.test(name));
+      return (await readdir(this.dir)).filter((name) => DAILY.test(name) || MONTHLY.test(name));
     } catch (error) {
       if (isErrnoException(error) && error.code === "ENOENT") return [];
       throw error;
     }
   }
+}
+
+/** The days asked for, and every partition of a month one of them falls in that still has its
+ * monthly file: a half-finished split may hold a better snapshot in any day of that month. */
+function inWindow(names: readonly string[], days: ReadonlySet<string>): string[] {
+  const touched = new Set([...days].map((day) => day.slice(0, 7)));
+  const splitting = new Set(
+    names
+      .filter((name) => MONTHLY.test(name))
+      .map(partitionOf)
+      .filter((month) => touched.has(month))
+  );
+  return names.filter((name) => {
+    const partition = partitionOf(name);
+    return MONTHLY.test(name)
+      ? splitting.has(partition)
+      : days.has(partition) || splitting.has(partition.slice(0, 7));
+  });
 }

@@ -20,12 +20,6 @@ const COUNTERS = [
   "reasoning",
 ] as const;
 
-/** `YYYY-MM` in UTC, so a ledger partition does not depend on the machine's time zone. */
-export function monthOf(at: string): string | null {
-  const instant = Date.parse(at);
-  return Number.isNaN(instant) ? null : new Date(instant).toISOString().slice(0, 7);
-}
-
 /** `YYYY-MM-DD` in UTC, so a ledger partition does not depend on the machine's time zone. */
 export function dayOf(at: string): string | null {
   const instant = Date.parse(at);
@@ -58,9 +52,9 @@ export interface Upserted {
   readonly records: readonly StoredUsage[];
   readonly added: number;
   readonly updated: number;
-  /** The months whose partition no longer says what it did: where each added or replaced
+  /** The days whose partition no longer says what it did: where each added or replaced
    * record is now, and where a replaced one was. The rest are as they were. */
-  readonly months: ReadonlySet<string>;
+  readonly days: ReadonlySet<string>;
 }
 
 /** Folds incoming records into what is held, with the same fold that counts a call once. Held
@@ -72,7 +66,7 @@ export function upsertUsage(
 ): Upserted {
   const before = new Map(held.map((record) => [id(record), record]));
   const records = foldUsage([...held, ...incoming]);
-  const months = new Set<string>();
+  const days = new Set<string>();
   let added = 0;
   let updated = 0;
   for (const record of records) {
@@ -81,11 +75,11 @@ export function upsertUsage(
     if (was === undefined) added += 1;
     else updated += 1;
     for (const moved of [record, was]) {
-      const month = moved === undefined ? null : monthOf(moved.at);
-      if (month !== null) months.add(month);
+      const day = moved === undefined ? null : dayOf(moved.at);
+      if (day !== null) days.add(day);
     }
   }
-  return { records, added, updated, months };
+  return { records, added, updated, days };
 }
 
 /** Records grouped by the day of their own time, each day in time order then key, so the
@@ -95,35 +89,22 @@ export function upsertUsage(
 export function partitionByDay(
   records: readonly StoredUsage[]
 ): ReadonlyMap<string, readonly StoredUsage[]> {
-  return partitionBy(records, dayOf);
-}
-
-export function partitionByMonth(
-  records: readonly StoredUsage[]
-): ReadonlyMap<string, readonly StoredUsage[]> {
-  return partitionBy(records, monthOf);
-}
-
-function partitionBy(
-  records: readonly StoredUsage[],
-  partitionOf: (at: string) => string | null
-): ReadonlyMap<string, readonly StoredUsage[]> {
   const dated: { readonly record: StoredUsage; readonly instant: number; readonly id: string }[] =
     [];
   for (const record of records) {
-    if (partitionOf(record.at) !== null) {
+    if (dayOf(record.at) !== null) {
       dated.push({ record, instant: Date.parse(record.at), id: id(record) });
     }
   }
   dated.sort((a, b) => a.instant - b.instant || compareText(a.id, b.id));
-  const partitions = new Map<string, StoredUsage[]>();
+  const days = new Map<string, StoredUsage[]>();
   for (const { record } of dated) {
-    const partition = partitionOf(record.at) as string;
-    const held = partitions.get(partition);
-    if (held === undefined) partitions.set(partition, [record]);
+    const day = dayOf(record.at) as string;
+    const held = days.get(day);
+    if (held === undefined) days.set(day, [record]);
     else held.push(record);
   }
-  return new Map([...partitions.entries()].sort(([a], [b]) => compareText(a, b)));
+  return new Map([...days.entries()].sort(([a], [b]) => compareText(a, b)));
 }
 
 function isText(value: unknown): value is string {

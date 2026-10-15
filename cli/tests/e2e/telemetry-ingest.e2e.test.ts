@@ -78,7 +78,7 @@ async function held(): Promise<Record<string, string>> {
 }
 
 async function ledgerLines(): Promise<string[]> {
-  const text = await readFile(join(telemetry, "ledger", "2026-10.jsonl"), "utf8");
+  const text = await readFile(join(telemetry, "ledger", "2026-10-07.jsonl"), "utf8");
   return text.split("\n").filter((line) => line !== "");
 }
 
@@ -89,13 +89,13 @@ describe("aidd telemetry ingest", () => {
     expect(first.exitCode).toBe(0);
     expect(first.stdout).toContain("4 calls added");
     expect(first.stdout).toContain("1 call from a clone with no consent at that time");
-    const before = await readFile(join(telemetry, "ledger", "2026-10.jsonl"), "utf8");
+    const before = await readFile(join(telemetry, "ledger", "2026-10-07.jsonl"), "utf8");
     const keys = (await ledgerLines()).map((line) => JSON.parse(line).key).sort();
     expect(keys).toEqual(["msg_A:req_A", "msg_B:req_B", "msg_B:req_B#advisor0", "msg_C:req_C"]);
 
     const second = await ingest();
     expect(second.stdout).toContain("Read 0 transcripts: 0 calls added, 0 updated");
-    expect(await readFile(join(telemetry, "ledger", "2026-10.jsonl"), "utf8")).toBe(before);
+    expect(await readFile(join(telemetry, "ledger", "2026-10-07.jsonl"), "utf8")).toBe(before);
   });
 
   it("ties each call to the repository id, never to its url or path", async () => {
@@ -131,7 +131,7 @@ describe("aidd telemetry ingest", () => {
       "msg_C:req_C",
     ]);
     expect((await readdir(join(telemetry, "ledger"))).sort()).toEqual([
-      "2026-10.jsonl",
+      "2026-10-07.jsonl",
       "consents.jsonl",
       "offsets.json",
       "roots.json",
@@ -204,7 +204,7 @@ describe("aidd telemetry ingest", () => {
     expect(run.stdout).toContain("0 calls added");
     // No clone ever opted in: no transcript is read, so no call is even counted.
     expect(run.stdout).toContain("Read 0 transcripts");
-    expect(await readdir(join(telemetry, "ledger"))).not.toContain("2026-10.jsonl");
+    expect(await readdir(join(telemetry, "ledger"))).not.toContain("2026-10-07.jsonl");
   });
 
   it("stores nothing for a clone whose key was set by hand, though it says 2", async () => {
