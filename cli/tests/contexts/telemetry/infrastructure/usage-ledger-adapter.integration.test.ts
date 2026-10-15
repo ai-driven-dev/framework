@@ -2,10 +2,10 @@ import { mkdtemp, readdir, readFile, rm, stat, writeFile } from "node:fs/promise
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import type { PrivateStorage } from "../../../../src/contexts/telemetry/domain/ports/private-storage.js";
 import type { StoredUsage } from "../../../../src/contexts/telemetry/domain/stored-usage.js";
 import { UsageLedgerAdapter } from "../../../../src/contexts/telemetry/infrastructure/usage-ledger-adapter.js";
 import { PrivateStorageAdapter } from "../../../../src/runtime/filesystem/private-storage-adapter.js";
+import { FailingStorage } from "../../../helpers/ports/failing-private-storage.js";
 
 let root: string;
 let dir: string;
@@ -54,24 +54,6 @@ const lines = (records: readonly StoredUsage[]): string =>
 async function writePartition(name: string, content: string): Promise<void> {
   await new PrivateStorageAdapter().ensureDirectory(dir);
   await writeFile(join(dir, name), content);
-}
-
-/** Storage whose `n`-th replace fails, as a crash between two writes would leave it. */
-class FailingStorage implements PrivateStorage {
-  private readonly inner = new PrivateStorageAdapter();
-  private calls = 0;
-  constructor(private readonly failAt: number) {}
-  ensureDirectory(path: string): Promise<void> {
-    return this.inner.ensureDirectory(path);
-  }
-  async replace(path: string, content: string): Promise<void> {
-    this.calls += 1;
-    if (this.calls === this.failAt) throw new Error("disk full");
-    await this.inner.replace(path, content);
-  }
-  append(path: string, content: string): Promise<void> {
-    return this.inner.append(path, content);
-  }
 }
 
 /** A window holding exactly these days. */

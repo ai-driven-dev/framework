@@ -4,7 +4,12 @@ import { isErrnoException } from "../../../kernel/reading/json-file.js";
 import { readTextIfPresent } from "../../../kernel/reading/text-file.js";
 import type { PrivateStorage } from "../domain/ports/private-storage.js";
 import type { LoadedLedger, UsageLedger } from "../domain/ports/usage-ledger.js";
-import { parseStoredUsage, partitionByDay, type StoredUsage } from "../domain/stored-usage.js";
+import {
+  parseStoredUsage,
+  partitionByDay,
+  type StoredUsage,
+  shiftDay,
+} from "../domain/stored-usage.js";
 import {
   parsePositions,
   renderPositions,
@@ -18,7 +23,6 @@ const MONTHLY = /^\d{4}-\d{2}\.jsonl$/;
 const EXTENSION = ".jsonl";
 const OFFSETS_FILE = "offsets.json";
 const LOCK_FILE = ".lock";
-const DAY_MS = 86_400_000;
 
 function partitionOf(name: string): string {
   return name.slice(0, -EXTENSION.length);
@@ -129,10 +133,9 @@ export class UsageLedgerAdapter implements UsageLedger {
 /** Whether the test holds one of the calendar days of a `YYYY-MM` month; never, for a month
  * no calendar has. */
 function holdsADayOf(month: string, holds: (day: string) => boolean): boolean {
-  const first = Date.parse(`${month}-01T00:00:00.000Z`);
-  if (Number.isNaN(first)) return false;
-  for (let instant = first; new Date(instant).toISOString().startsWith(month); instant += DAY_MS) {
-    if (holds(new Date(instant).toISOString().slice(0, 10))) return true;
+  if (Number.isNaN(Date.parse(`${month}-01T00:00:00.000Z`))) return false;
+  for (let day = `${month}-01`; day.startsWith(month); day = shiftDay(day, 1)) {
+    if (holds(day)) return true;
   }
   return false;
 }

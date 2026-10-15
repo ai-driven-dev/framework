@@ -36,7 +36,13 @@ export function dayOf(at: string): string | null {
   return day.startsWith("+") || day.startsWith("-") ? null : day;
 }
 
-const DAY_MS = 24 * 60 * 60 * 1000;
+const DAY_MS = 86_400_000;
+
+/** The UTC day `days` after a `YYYY-MM-DD` day, as `toISOString` writes its first ten
+ * characters: a day past four-digit years comes out in a shape no `YYYY-MM-DD` test accepts. */
+export function shiftDay(day: string, days: number): string {
+  return new Date(Date.parse(`${day}T00:00:00.000Z`) + days * DAY_MS).toISOString().slice(0, 10);
+}
 
 /** The days an ingest of these records reads: each record's day and the day on each side. A
  * call's snapshots are written minutes apart, so a neighbour day holds any earlier one. */
@@ -45,10 +51,7 @@ export function daysAround(records: readonly UsageRecord[]): ReadonlySet<string>
   for (const record of records) {
     const day = dayOf(record.at);
     if (day === null) continue;
-    const midnight = Date.parse(`${day}T00:00:00.000Z`);
-    for (const instant of [midnight - DAY_MS, midnight, midnight + DAY_MS]) {
-      days.add(new Date(instant).toISOString().slice(0, 10));
-    }
+    for (const offset of [-1, 0, 1]) days.add(shiftDay(day, offset));
   }
   return days;
 }

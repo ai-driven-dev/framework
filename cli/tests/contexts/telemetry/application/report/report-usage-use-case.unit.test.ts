@@ -13,6 +13,7 @@ import { readClaudeUsageLine } from "../../../../../src/contexts/telemetry/domai
 import type { Period } from "../../../../../src/contexts/telemetry/domain/report/period.js";
 import type { ReportAxis } from "../../../../../src/contexts/telemetry/domain/report/usage-report.js";
 import {
+  AUTUMN,
   cloneOf,
   FakeBindings,
   FakeConsents,
@@ -139,10 +140,7 @@ describe("reporting usage", () => {
     s.transcripts.files.set("/t/1.jsonl", [line("A", 10, "2026-10-07T10:00:00.000Z")]);
     await s.report.execute({ axis: "total", period: { from: "2026-10-03", to: "2026-10-09" } });
     const window = s.ledger.loadedWindow;
-    const autumn = Array.from({ length: 91 }, (_, n) =>
-      new Date(Date.parse("2026-09-01T00:00:00.000Z") + n * 86_400_000).toISOString().slice(0, 10)
-    );
-    expect(window && autumn.filter(window)).toEqual([
+    expect(window && AUTUMN.filter(window)).toEqual([
       "2026-10-02",
       "2026-10-03",
       "2026-10-04",

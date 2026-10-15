@@ -1,3 +1,5 @@
+import { shiftDay } from "../stored-usage.js";
+
 /** A span of whole UTC days, both ends included; `null` is open. */
 export interface Period {
   readonly from: string | null;
@@ -9,7 +11,6 @@ export type PeriodOutcome =
   | { readonly ok: false; readonly message: string };
 
 const DAY = /^\d{4}-\d{2}-\d{2}$/;
-const DAY_MS = 86_400_000;
 
 /** The UTC day of an instant, `YYYY-MM-DD`. */
 export function dayOf(at: string): string {
@@ -23,7 +24,7 @@ export function inPeriod(at: string, period: Period): boolean {
 
 /** The day `days` after a `YYYY-MM-DD` day, or `null` past what four digits can name. */
 function shift(day: string, days: number): string | null {
-  const shifted = dayOf(new Date(Date.parse(`${day}T00:00:00.000Z`) + days * DAY_MS).toISOString());
+  const shifted = shiftDay(day, days);
   return DAY.test(shifted) ? shifted : null;
 }
 
@@ -62,9 +63,7 @@ export function periodOf(
     const days = /^[1-9]\d*$/.test(asked.days) ? Number(asked.days) : 0;
     if (days === 0) return { ok: false, message: "--days takes a positive whole number." };
     const today = dayOf(now.toISOString());
-    const first = dayOf(
-      new Date(Date.parse(`${today}T00:00:00.000Z`) - (days - 1) * DAY_MS).toISOString()
-    );
+    const first = shiftDay(today, 1 - days);
     return { ok: true, period: { from: first, to: today } };
   }
   for (const [flag, value] of [

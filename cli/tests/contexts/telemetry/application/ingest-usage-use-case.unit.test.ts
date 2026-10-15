@@ -9,6 +9,7 @@ import { readClaudeUsageLine } from "../../../../src/contexts/telemetry/domain/f
 import type { LocatedDirectory } from "../../../../src/contexts/telemetry/domain/ports/repository-locator.js";
 import { resolutionKey } from "../../../../src/contexts/telemetry/domain/repository-resolution.js";
 import {
+  AUTUMN,
   cloneOf,
   FakeBindings,
   FakeConsents,
@@ -325,10 +326,7 @@ describe("ingesting usage into the ledger", () => {
     ]);
     await s.ingest.execute();
     const window = s.ledger.loadedWindow;
-    const autumn = Array.from({ length: 91 }, (_, n) =>
-      new Date(Date.parse("2026-09-01T00:00:00.000Z") + n * 86_400_000).toISOString().slice(0, 10)
-    );
-    expect(window && autumn.filter(window)).toEqual([
+    expect(window && AUTUMN.filter(window)).toEqual([
       "2026-10-06",
       "2026-10-07",
       "2026-10-08",

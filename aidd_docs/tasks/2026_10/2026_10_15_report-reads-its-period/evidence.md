@@ -98,3 +98,18 @@ A bounded report now costs its window, not the history. The unbounded report is 
 | `pnpm knip` | exit 0 |
 | `check-claude-tokens-end-to-end.cjs` | `2 calls, 393 tokens, all on task demo, ticket T-1` |
 | same, `--attended` | `2 calls, 393 tokens, all on task demo, ticket T-1; asked, answered by the hook, kept across /clear` |
+
+## Mutation
+
+`pnpm test:mutation:telemetry` on `4eabc58d`: `Report: reports/mutation/telemetry/ (score 96.2, floor 96)`.
+
+Survivors in the changed files, against the lines this change touched:
+
+| File | Survivors | On a changed line | Verdict |
+| --- | --- | --- | --- |
+| `application/ledger-upkeep.ts` | 0 of 14 | - | - |
+| `application/report/report-usage-use-case.ts` | 0 of 11 | - | - |
+| `domain/report/period.ts` | 6 of 139 | none: the `DAY` regex and the `--from`/`--to` order check predate this change | - |
+| `infrastructure/usage-ledger-adapter.ts` | 3 of 131 | one: `inWindow` without `.filter((name) => MONTHLY.test(name))` | equivalent: a day's name is not a month, so `holdsADayOf` already answers false for it (`Date.parse` of `YYYY-MM-DD-01` fails) |
+
+The day test that always catches a window without its day on each side is `period.unit.test.ts` ("the window a report reads"), on every run; the property found it after 40 cases in its recorded run.

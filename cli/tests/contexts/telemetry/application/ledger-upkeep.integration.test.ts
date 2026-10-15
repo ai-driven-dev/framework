@@ -6,7 +6,6 @@ import {
   settleLedger,
   storeCalls,
 } from "../../../../src/contexts/telemetry/application/ledger-upkeep.js";
-import type { PrivateStorage } from "../../../../src/contexts/telemetry/domain/ports/private-storage.js";
 import { buildReport } from "../../../../src/contexts/telemetry/domain/report/usage-report.js";
 import {
   partitionByDay,
@@ -14,6 +13,7 @@ import {
 } from "../../../../src/contexts/telemetry/domain/stored-usage.js";
 import { UsageLedgerAdapter } from "../../../../src/contexts/telemetry/infrastructure/usage-ledger-adapter.js";
 import { PrivateStorageAdapter } from "../../../../src/runtime/filesystem/private-storage-adapter.js";
+import { FailingStorage } from "../../../helpers/ports/failing-private-storage.js";
 
 let root: string;
 
@@ -153,24 +153,6 @@ describe("migrating a ledger kept by month", () => {
     expect(await bytes(dir)).toEqual(Object.fromEntries([...days].sort()));
   });
 });
-
-/** Storage whose `n`-th replace fails, as a crash between two writes would leave it. */
-class FailingStorage implements PrivateStorage {
-  private readonly inner = new PrivateStorageAdapter();
-  private calls = 0;
-  constructor(private readonly failAt: number) {}
-  ensureDirectory(path: string): Promise<void> {
-    return this.inner.ensureDirectory(path);
-  }
-  async replace(path: string, content: string): Promise<void> {
-    this.calls += 1;
-    if (this.calls === this.failAt) throw new Error("disk full");
-    await this.inner.replace(path, content);
-  }
-  append(path: string, content: string): Promise<void> {
-    return this.inner.append(path, content);
-  }
-}
 
 describe("settling only a window", () => {
   /** Mid-September, so the window touches September and no day of October. */

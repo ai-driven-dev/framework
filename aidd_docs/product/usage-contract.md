@@ -103,7 +103,7 @@ Row and `totals`: `records`, `input`, `output`, `cache_read`, `cache_write` (eac
 - Every axis partitions the same calls: each adds up to `totals`, counter by counter.
 - `AIDD_TELEMETRY=0`: nothing read, object is `{"version": 1, "refused": "AIDD_TELEMETRY=0"}`.
 - A report ingests first. `files_read` and `unrecognised_shapes` describe that run; `records` the period.
-- A report with `--days`, `--from` or `--to` reads only the days of its period and the day on each side, plus any monthly file one of them falls in; with none it reads the whole ledger. The copies of one call are less than a day apart, so both print the same figures. `skipped_ledger_lines` counts the lines of the partitions read.
+- A report with `--days`, `--from` or `--to` reads only the days of its period and the day on each side, plus any monthly file one of them falls in, with every day of its month; with none it reads the whole ledger. The copies of one call have been observed less than a day apart, and under that bound both print the same figures. `skipped_ledger_lines` counts the lines of the partitions read.
 - No path, working directory or branch. `session` keys are full session ids, `repository` keys are hashes.
 
 ## Stores
@@ -112,7 +112,7 @@ Directory: `AIDD_TELEMETRY_DIR`, else `AIDD_USER_CONFIG_DIR/telemetry`, else `XD
 
 | Store | Writer | Readers | Holds |
 | --- | --- | --- | --- |
-| `ledger/<YYYY-MM-DD>.jsonl` | `ingest`, `report` | `report`, `forget` | `StoredUsage` by UTC day of `at`, in time then key order, one call per line. Ingest reads its calls' days and the day on each side, and rewrites only a changed day, whole, by rename; no new bytes, no write. `report` rewrites, folded, the partitions it read that share a call or hold a line that is not a record; a report with no period reads every partition, so after it each call is on disk once. A monthly `<YYYY-MM>.jsonl` from an earlier version is still read, split into its days by the first ingest whose window touches it or by a report, then removed |
+| `ledger/<YYYY-MM-DD>.jsonl` | `ingest`, `report` | `report`, `forget` | `StoredUsage` by UTC day of `at`, in time then key order, one call per line. Ingest reads its calls' days and the day on each side, and rewrites only a changed day, whole, by rename; no new bytes, no write. `report` rewrites, folded, the partitions it read that share a call or hold a line that is not a record; a report with no period reads every partition, so after it each call is on disk once. A monthly `<YYYY-MM>.jsonl` from an earlier version is still read, split into its days by the first ingest or report whose window touches it, or by a report with no period, then removed |
 | `ledger/offsets.json` | `ingest`, `report` | same | per transcript: bytes consumed, size, file identity. Shrunk or changed identity: read whole |
 | `ledger/roots.json` | `ingest`, `on` | `ingest`, `forget` | `{version: 2, directories}`: per directory and per clone seen alive there, `repository_id`, `root`, `clone`, `seen_at`. Other format holds nothing: a live directory is remembered again, a gone one counts `never-seen-alive`. `on` records its own root for `forget` |
 | `ledger/consents.jsonl` | `on`, `off`, `ingest`, hooks (close only) | same, plus `forget` | consent intervals, see [Consent](#consent). Outlives the clone; removed with the ledger. Hooks parse it strictly, pinned by the shared fixture |

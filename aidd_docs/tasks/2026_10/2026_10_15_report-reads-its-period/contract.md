@@ -1,5 +1,5 @@
 ---
-status: in-progress
+status: done
 ---
 
 # A report reads its period
@@ -55,7 +55,7 @@ Copies less than a day apart are within one calendar day of each other. The fold
 
 **Evidence for the bound**, from #1001 (`2026_10_15_ledger-by-day/contract.md`): of 262,631 real keys, the largest spread between a key's first and last line is 0.3 h, and none spans a day.
 
-**Outside the bound**, never observed: a call whose copies are more than a day apart can sit in two partitions only if an ingest window missed one. A bounded report may then fold fewer copies than a full one. An unbounded report still folds every copy and settles the whole ledger.
+**Outside the bound**, never observed: a call whose copies are more than a day apart can sit in two partitions only if an ingest window missed one. A bounded report then folds only the copies in its window: it can count a call the full report leaves out of the period, or count another snapshot of it. An unbounded report still folds every copy and settles the whole ledger, and a bounded one never changes what a later full read keeps: it replaces only the copies it loaded with their winner.
 
 ## Attribution is per call
 
@@ -75,7 +75,7 @@ Copies less than a day apart are within one calendar day of each other. The fold
 | # | Criterion | Proof |
 | --- | --- | --- |
 | 1 | `--days 7` on the 265k-call ledger answers in well under 1 s, before and after measured | bench on the use case |
-| 2 | For any ledger whose copies of a call are less than a day apart, any period and any axis, the bounded envelope equals the full one filtered, byte for byte | fast-check property |
+| 2 | For any ledger with no damaged line whose copies of a call are less than a day apart, any period and any axis, the bounded envelope equals the full one filtered, byte for byte | fast-check property |
 | 3 | A bounded report reads no partition outside its window, and reads a monthly file the window touches | tests on the adapter and the in-memory ledger |
 | 4 | A bounded report never loses or doubles a call, from a monthly ledger or not, crash or not | tests |
 | 5 | An unbounded report still settles the whole ledger | existing tests |

@@ -1,6 +1,6 @@
 ---
 objective: "A report with a bounded period reads only the partitions that can hold a call of it, and prints the same figures as a full read."
-status: pending
+status: done
 ---
 
 # Plan: A report reads its period
