@@ -15,7 +15,7 @@ import {
   PluginDistribution,
 } from "../../../../src/contexts/translate/domain/plugin-distribution.js";
 import { FileHash } from "../../../../src/kernel/file.js";
-import { parseFrontmatter } from "../../../../src/kernel/markdown.js";
+import { parseFrontmatter, serializeFrontmatter } from "../../../../src/kernel/markdown.js";
 
 const stubHasher = { hash: (_content: string) => new FileHash("a".repeat(32)) };
 const translator = new PluginContentTranslator(stubHasher);
@@ -111,9 +111,21 @@ describe("PluginContentTranslator.translate()", () => {
       { model: "openai/gpt-6-luna#medium" },
     ],
   ] as const)(
-    "writes %s agent recommendations through ordinary installation",
+    "preserves %s explicit agent settings through ordinary installation",
     (label, host, path, expected) => {
-      const dist = makeDist({ manifest: { name: "aidd-dev", version: "1.0.0" } });
+      const base = makeDist({ manifest: { name: "aidd-dev", version: "1.0.0" } });
+      const agent = makeFile(
+        "agents/reviewer.md",
+        serializeFrontmatter(
+          { name: "reviewer", description: "Role", ...expected },
+          "Reviewer agent from sample-plugin."
+        )
+      );
+      const dist = makeDist({
+        manifest: base.manifest,
+        files: base.files.map((file) => (file.relativePath === agent.relativePath ? agent : file)),
+        components: { ...base.components, agents: [agent] },
+      });
       const installed = translator.translate(dist, host).find((file) => file.relativePath === path);
       expect(installed).toBeDefined();
       const content = installed?.content ?? "";

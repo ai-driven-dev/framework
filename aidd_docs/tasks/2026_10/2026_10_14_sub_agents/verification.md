@@ -1,12 +1,12 @@
 # Sub-agent verification
 
-## Installed model defaults, 2026-10-15
+## CLI opt-in, 2026-10-15
 
-The [CLI configuration](../../../../cli/src/contexts/tools/domain/formats/agent-models.json) now owns provider defaults and native fields. Conversion applies them to the four AIDD roles; explicit settings survive. The resolver command and workflow dependencies on it are removed. Agent behaviors are reduced to three capabilities each.
+The four agents are bundled with the CLI, outside plugins. Explicit installation selects a provider and IDE using the [CLI configuration](../../../../cli/src/contexts/tools/domain/formats/agent-models.json). Generic conversion applies no model defaults. Skills remain independent of installation and model selection.
 
-- **Checks:** 6,499 CLI tests pass, one skipped; 498 script tests pass. Typecheck, lint, architecture, type honesty and unused-code checks pass. Bundle: 684.5 KB / 695 KB.
-- **Headers:** nine built-CLI cases inspect all four real agent sources across native flat and marketplace outputs. Ordinary installation tests also inspect translated file paths and contents. A provider-switch test verifies Copilot's native Anthropic identifier; removing its lookup makes that test fail.
-- **Limits:** Codex loads the flat agent files, not TOMLs staged inside a plugin. Cursor flat agents accept the configured selector; plugin agents inherit their model. These file checks do not establish account access to a model or effective runtime selection.
+- **CLI:** 17 built-CLI cases pass, covering seven supported provider/IDE pairs, repeat installation, provider changes, removal, invalid selections, personal-file conflicts, cleanup, and a framework distribution without these agents.
+- **Ownership:** integration cases cover the project ledger, modified files, safe paths, and cleanup. Removing the ownership guard makes its named test fail; restored code passes. Cleanup preserves personal directory links; restoring recursive directory removal makes that test fail.
+- **Limits:** Native files are written directly into each host's agent directory. These checks establish headers and file behavior, not account access or effective runtime model selection.
 
 ## Earlier runtime evidence
 

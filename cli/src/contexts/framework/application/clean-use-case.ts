@@ -37,6 +37,7 @@ import { aiddGitignoreEntries } from "../domain/manifest-gitignore-entries.js";
 import type { InstalledPlugin } from "../domain/plugins/installed-plugin.js";
 import type { ManifestRepository } from "../domain/ports/manifest-repository.js";
 import type { UserSourceReferences } from "../domain/ports/user-source-references.js";
+import type { ManageAgentsUseCase } from "./agents/manage-agents-use-case.js";
 import type { GitignoreUseCase } from "./gitignore-use-case.js";
 import {
   assertNoForeignNativeRefs,
@@ -149,19 +150,42 @@ export class CleanUseCase {
       HostPluginRegistryReader
     > = new Map(),
     private readonly userManifestRepo?: ManifestRepository,
-    private readonly nativeSources: ReadonlyMap<AiToolId, NativeMarketplaceSourceReader> = new Map()
+    private readonly nativeSources: ReadonlyMap<
+      AiToolId,
+      NativeMarketplaceSourceReader
+    > = new Map(),
+    private readonly agents?: Pick<ManageAgentsUseCase, "preview" | "assertRemovable" | "removeAll">
   ) {}
 
   async execute(options: CleanOptions): Promise<CleanResult> {
     const manifest = await this.manifestRepo.load();
+    const agentTools = (await this.agents?.preview(options.projectRoot)) ?? [];
     if (manifest === null) {
+      if (agentTools.length > 0) {
+        const preview: CleanPreview = {
+          tools: agentTools,
+          totalFileCount: agentTools.reduce((sum, tool) => sum + tool.fileCount, 0),
+          nativeRegistrations: [],
+        };
+        const dryRun = await this.confirmOrDryRun(options, preview);
+        if (dryRun !== null) return dryRun;
+        const count = (await this.agents?.removeAll(options.projectRoot)) ?? 0;
+        return { dryRun: false, manifestFound: true, preview, fileCount: count };
+      }
       const emptyPreview: CleanPreview = { tools: [], totalFileCount: 0, nativeRegistrations: [] };
       return { dryRun: false, manifestFound: false, preview: emptyPreview, fileCount: 0 };
     }
     const home = this.homeDir();
     const preview = await this.buildPreview(manifest, home, options.projectRoot);
+    for (const agentTool of agentTools) {
+      const tool = preview.tools.find((entry) => entry.toolId === agentTool.toolId);
+      if (tool === undefined) preview.tools.push(agentTool);
+      else tool.fileCount += agentTool.fileCount;
+      preview.totalFileCount += agentTool.fileCount;
+    }
     const dryRunResult = await this.confirmOrDryRun(options, preview);
     if (dryRunResult !== null) return dryRunResult;
+    await this.agents?.assertRemovable(options.projectRoot);
     await this.assertNativeSourcesUnchanged(manifest, options.projectRoot);
     for (const toolId of manifest.getInstalledToolIds()) {
       if (!isAiToolId(toolId)) continue;
@@ -197,6 +221,7 @@ export class CleanUseCase {
     await this.purgeNativeCaches(home, undone);
     let deleted = await this.deleteAllToolFiles(manifest, options.projectRoot);
     deleted += await this.deleteMachineLocalFiles(manifest, options.projectRoot);
+    deleted += (await this.agents?.removeAll(options.projectRoot)) ?? 0;
     await this.removeAiddState(options.projectRoot);
     // Exactly what the pipeline added on install, never a subset of it.
     await this.gitignoreUseCase.remove(options.projectRoot, aiddGitignoreEntries(manifest));

@@ -14,7 +14,6 @@ import {
 import { rewriteRelativeLinks } from "../../../../../kernel/materialization/relative-link-rewrite.js";
 import type { ToolBuildContract } from "../../build-contract.js";
 import { stripCursorAgentFrontmatter } from "../../formats/agent-frontmatter-strip.js";
-import { agentModelOptions } from "../../formats/agent-models.js";
 import { mergeCursorFlatHooks } from "../../formats/flat-hooks-merge.js";
 import { CURSOR_PLUGIN_ROOT_TOKEN } from "../../formats/plugin-root-token.js";
 import { mergeVscodeMcp } from "../../formats/vscode-mcp-merge.js";
@@ -122,7 +121,6 @@ function transformCursorFlatAgent(content: string, plugin: string, outName: stri
   return serializeFrontmatter(
     {
       ...stripped,
-      ...agentModelOptions("cursor", frontmatter, plugin, outName),
       name: prefixedName,
     },
     rewrittenBody

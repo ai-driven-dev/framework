@@ -11,6 +11,8 @@ const PUBLIC_MODULES: Readonly<Record<string, readonly string[]>> = {
   tools: [
     // the tool contract and lookup surface
     "src/contexts/tools/domain/contracts.ts",
+    "src/contexts/tools/domain/capabilities/agents-capability.ts",
+    "src/contexts/tools/domain/formats/agent-models.ts",
     "src/contexts/tools/domain/registry.ts",
     "src/contexts/tools/domain/build-contract.ts",
     // co-owned configuration (settings.json, .mcp.json et al.)
@@ -82,6 +84,7 @@ const PUBLIC_MODULES: Readonly<Record<string, readonly string[]>> = {
   // The largest context: while it had no entry the mechanism below skipped every framework
   // file, so its interior was reached unchecked. Measured, composition root excluded.
   framework: [
+    "src/contexts/framework/application/agents/manage-agents-use-case.ts",
     "src/contexts/framework/domain/recipes/recipe-validation.ts",
     // the rule inventory `framework rules` prints, one row per installed rule
     "src/contexts/framework/domain/installed-rule.ts",
@@ -195,7 +198,6 @@ function reachesIntoInterior(
  * itself, and they resolve together when `install/` moves into `contexts/tools/application/`.
  */
 const BASELINE = [
-  "src/contexts/framework/application/install/content/install-agents-use-case.ts -> src/contexts/tools/domain/capabilities/agents-capability.ts",
   "src/contexts/framework/application/install/content/install-commands-use-case.ts -> src/contexts/tools/domain/capabilities/commands-capability.ts",
   "src/contexts/framework/application/install/content/install-content-section-use-case.ts -> src/contexts/tools/domain/formats/command.ts",
   "src/contexts/framework/application/install/content/install-rules-use-case.ts -> src/contexts/tools/domain/capabilities/rules-capability.ts",

@@ -1,6 +1,4 @@
 {
-  "plugin": "aidd-dev",
-  "roles": ["explorer", "executor", "reviewer", "validator"],
   "providers": {
     "openai": {
       "model": "gpt-6-luna",
@@ -14,30 +12,30 @@
       }
     }
   },
-  "tools": {
+  "hosts": {
     "claude": {
-      "provider": "anthropic",
+      "ide": "claude-code",
+      "providers": ["anthropic"],
       "effortField": "effort"
     },
     "codex": {
-      "provider": "openai",
+      "providers": ["openai"],
       "effortField": "model_reasoning_effort"
     },
     "copilot": {
-      "provider": "openai",
+      "providers": ["openai", "anthropic"],
       "effortField": "reasoningEffort"
     },
     "opencode": {
-      "provider": "openai",
+      "providers": ["openai", "anthropic"],
       "effortPrefix": "#",
       "effortSuffix": "",
       "providerPrefix": true
     },
     "cursor": {
-      "provider": "anthropic",
+      "providers": ["anthropic"],
       "effortPrefix": "[effort=",
-      "effortSuffix": "]",
-      "marketplace": false
+      "effortSuffix": "]"
     }
   }
 }

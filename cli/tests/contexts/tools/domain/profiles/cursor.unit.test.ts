@@ -61,8 +61,7 @@ describe("cursor", () => {
     it("keeps model inheritance for AIDD agents installed as native plugins", () => {
       const result = cursor.capabilities.agents.convertFrontmatter(
         { name: "explorer", description: "Role" },
-        "explorer.md",
-        "aidd-dev"
+        "explorer.md"
       );
       expect(result).toEqual({ name: "explorer", description: "Role" });
     });

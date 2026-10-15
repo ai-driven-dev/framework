@@ -1,9 +1,11 @@
-# Sub-agent models
+# Optional agents
 
-The CLI's [model configuration](../cli/src/contexts/tools/domain/formats/agent-models.json) defines provider defaults and native fields for the four AIDD agents.
+Install agents in the current project with a provider and IDE:
 
-Installation and translation write supported settings into native agent files. Explicit agent settings take precedence. Other agents keep their own settings.
+```sh
+aidd agents install --provider openai --ide codex
+aidd agents install --provider anthropic --ide claude-code
+aidd agents remove --ide codex
+```
 
-Agent behavior and skills stay independent of model selection. Hosts load the installed configuration when opening a session; model availability depends on the account.
-
-Codex and Cursor require their flat native agent files for these settings: Codex does not discover agents staged inside a plugin, and Cursor plugin agents inherit their model.
+The CLI writes native agents using its [model configuration](../cli/src/contexts/tools/domain/formats/agent-models.json). Plugins do not install these agents.

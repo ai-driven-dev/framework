@@ -25,17 +25,12 @@ type SrcEntry =
 
 /** Marketplace-mode agent transform shared by claude and copilot: the frontmatter is kept
  * untouched and only relative links are rewritten to the flattened output path. */
-export function transformClaudeAgent(
-  content: string,
-  _plugin: string,
-  outName: string,
-  modelOptions?: (fm: Record<string, unknown>) => Record<string, unknown>
-): string {
+export function transformClaudeAgent(content: string, _plugin: string, outName: string): string {
   const { frontmatter, body } = parseFrontmatter(content);
   const rewrittenBody = rewriteRelativeLinks(body, {
     currentFilePluginRelative: `agents/${outName}`,
   });
-  return serializeFrontmatter({ ...frontmatter, ...modelOptions?.(frontmatter) }, rewrittenBody);
+  return serializeFrontmatter(frontmatter, rewrittenBody);
 }
 
 export interface SynthesizeClaudeStyleManifestOpts {

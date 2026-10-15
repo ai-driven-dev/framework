@@ -56,11 +56,7 @@ export class AgentsCapability {
       directory: string;
       toolSuffix: string;
       format: "markdown" | "toml";
-      modelOptions?: (
-        fm: Record<string, unknown>,
-        plugin?: string,
-        fileName?: string
-      ) => Record<string, unknown>;
+      effortField?: string;
       userFileExt?: string;
       buildInstallPath?: (fileName: string) => string | null;
       convertFrontmatter?: (
@@ -93,13 +89,14 @@ export class AgentsCapability {
     return !otherSuffixes.some((s) => basename.endsWith(s));
   }
 
-  convertFrontmatter(
-    fm: Record<string, unknown>,
-    fileName?: string,
-    plugin?: string
-  ): Record<string, unknown> {
+  convertFrontmatter(fm: Record<string, unknown>, fileName?: string): Record<string, unknown> {
     const converted = this.convertAgentFrontmatter(fm, fileName);
-    return { ...converted, ...this.params.modelOptions?.(fm, plugin, fileName) };
+    if (fm.model !== undefined) converted.model = fm.model;
+    const effortField = this.params.effortField;
+    if (effortField !== undefined && fm[effortField] !== undefined) {
+      converted[effortField] = fm[effortField];
+    }
+    return converted;
   }
 
   private convertAgentFrontmatter(
@@ -111,7 +108,6 @@ export class AgentsCapability {
     return {
       name,
       description: fm.description,
-      ...(this.params.format === "toml" && fm.model !== undefined ? { model: fm.model } : {}),
     };
   }
 

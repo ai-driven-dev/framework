@@ -16,7 +16,6 @@ import type {
   HasRules,
   HasSkills,
 } from "../../contracts.js";
-import { agentModelOptions } from "../../formats/agent-models.js";
 import {
   buildAiddCommandFilePath,
   convertCommandFrontmatterNoHint,
@@ -59,7 +58,6 @@ export const opencode: AiTool<
       directory: DIRECTORY,
       toolSuffix: TOOL_SUFFIX,
       format: "markdown",
-      modelOptions: (fm, plugin, file) => agentModelOptions("opencode", fm, plugin, file),
       convertFrontmatter: (fm) => ({ description: fm.description, mode: "subagent" }),
     }),
     skills: new SkillsCapability({

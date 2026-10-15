@@ -19,7 +19,6 @@ import type {
   HasSettings,
   HasSkills,
 } from "../../contracts.js";
-import { agentModelOptions } from "../../formats/agent-models.js";
 import { convertCommandFrontmatter } from "../../formats/command.js";
 import { PLUGIN_ROOT_TOKEN } from "../../formats/plugin-root-token.js";
 import { claudeStyleMarketplaceKey } from "../../marketplace-entry.js";
@@ -225,8 +224,8 @@ export const copilot: AiTool<
       directory: DIRECTORY,
       toolSuffix: EXT_AGENT,
       format: "markdown",
+      effortField: "reasoningEffort",
       userFileExt: EXT_AGENT,
-      modelOptions: (fm, plugin, file) => agentModelOptions("copilot", fm, plugin, file),
       buildInstallPath: (fileName) => agentsHandler.buildFilePath(fileName),
       convertFrontmatter: (fm, fileName) => agentsHandler.convertFrontmatter(fm, fileName),
     }),

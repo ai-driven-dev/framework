@@ -17,7 +17,6 @@ import type {
   HasRules,
   HasSkills,
 } from "../../contracts.js";
-import { agentModelOptions } from "../../formats/agent-models.js";
 import {
   buildAiddCommandFilePath,
   convertCommandFrontmatter,
@@ -143,7 +142,7 @@ export const codex: AiTool<
       directory: DIRECTORY,
       toolSuffix: TOOL_SUFFIX,
       format: "toml",
-      modelOptions: (fm, plugin, file) => agentModelOptions("codex", fm, plugin, file),
+      effortField: "model_reasoning_effort",
     }),
     skills: new SkillsCapability({
       prefix: "aidd-",

@@ -10,6 +10,7 @@ import { MarketplaceAddUseCase } from "../../contexts/distribution/application/m
 import type { MarketplaceListUseCase } from "../../contexts/distribution/application/marketplace-list-use-case.js";
 import type { MarketplaceRefreshUseCase } from "../../contexts/distribution/application/marketplace-refresh-use-case.js";
 import type { MarketplaceRegisterFrameworkUseCase } from "../../contexts/distribution/application/marketplace-register-framework-use-case.js";
+import { ManageAgentsUseCase } from "../../contexts/framework/application/agents/manage-agents-use-case.js";
 import { CleanUserScopeUseCase } from "../../contexts/framework/application/clean/clean-user-scope-use-case.js";
 import { CleanUseCase } from "../../contexts/framework/application/clean-use-case.js";
 import { DoctorLayoutUseCase } from "../../contexts/framework/application/doctor/doctor-layout-use-case.js";
@@ -68,6 +69,7 @@ import { UninstallUseCase } from "../../contexts/framework/application/uninstall
 import type { Environment } from "../../contexts/framework/domain/ports/environment.js";
 import type { ManifestRepository } from "../../contexts/framework/domain/ports/manifest-repository.js";
 import type { UserSourceReferences } from "../../contexts/framework/domain/ports/user-source-references.js";
+import { AgentInstallationStoreAdapter } from "../../contexts/framework/infrastructure/agent-installation-store-adapter.js";
 import { EnvironmentAdapter } from "../../contexts/framework/infrastructure/environment-adapter.js";
 import { ManifestRepositoryAdapter } from "../../contexts/framework/infrastructure/manifest-repository-adapter.js";
 import { PluginDistributionReaderAdapter } from "../../contexts/framework/infrastructure/plugin-distribution-reader-adapter.js";
@@ -95,6 +97,7 @@ import { PluginPickUseCase } from "../../presentation/prompts/plugin-pick-use-ca
 import { SetupPluginsPromptUseCase } from "../../presentation/prompts/setup-plugins-prompt-use-case.js";
 import { SetupToolsPromptUseCase } from "../../presentation/prompts/setup-tools-prompt-use-case.js";
 import { SyncConflictResolverUseCase } from "../../presentation/prompts/sync-conflict-resolver-use-case.js";
+import { AGENT_SOURCES } from "../assets/agent-sources.js";
 import { BundledAssetProviderAdapter } from "../assets/asset-loader.js";
 import { AuthProviderAdapter } from "../auth/auth-provider-adapter.js";
 import { AuthReaderAdapter } from "../auth/auth-reader-adapter.js";
@@ -126,6 +129,7 @@ interface GlobalOptions {
 }
 
 interface Deps {
+  manageAgentsUseCase: ManageAgentsUseCase;
   fs: FileReader & FileWriter & FileMerger;
   manifestRepo: ManifestRepository;
   /** `--scope user`'s own manifest repository: `userConfigDir()/manifest.json`, never nested
@@ -210,6 +214,12 @@ export async function createDeps(
   const hasher = new HasherAdapter();
   const logger = output ?? new CLIOutput(options.verbose);
   const fs = new FileAdapter(hasher, logger);
+  const manageAgentsUseCase = new ManageAgentsUseCase(
+    fs,
+    new AgentInstallationStoreAdapter(fs),
+    hasher,
+    AGENT_SOURCES
+  );
   const pluginDistributionReader = new PluginDistributionReaderAdapter(fs);
   const manifestRepo = new ManifestRepositoryAdapter(projectRoot);
   const userManifestRepo = new UserManifestRepositoryAdapter(userConfigDir, atomicWriteFile);
@@ -569,7 +579,8 @@ export async function createDeps(
     userSourceReferences,
     hostPluginRegistries,
     userManifestRepo,
-    nativeSources
+    nativeSources,
+    manageAgentsUseCase
   );
   const cleanUserScopeUseCase = new CleanUserScopeUseCase(
     fs,
@@ -589,6 +600,7 @@ export async function createDeps(
   const listInstalledRulesUseCase = new ListInstalledRulesUseCase(fs);
   const checkUpdateUseCase = new CheckUpdateUseCase(cliUpdater, currentVersionProvider, logger, fs);
   const deps: Deps = {
+    manageAgentsUseCase,
     validateRecipesUseCase: new ValidateRecipesUseCase(new RecipeFilesAdapter()),
     fs,
     manifestRepo,

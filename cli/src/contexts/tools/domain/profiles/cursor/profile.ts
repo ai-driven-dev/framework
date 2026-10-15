@@ -15,7 +15,6 @@ import type {
   HasRules,
   HasSkills,
 } from "../../contracts.js";
-import { agentModelOptions } from "../../formats/agent-models.js";
 import {
   buildAiddCommandFilePath,
   convertCommandFrontmatter,
@@ -53,8 +52,6 @@ export const cursor: AiTool<HasAgents & HasSkills & HasCommands & HasRules & Has
         directory: DIRECTORY,
         toolSuffix: TOOL_SUFFIX,
         format: "markdown",
-        modelOptions: (fm, plugin, file) =>
-          agentModelOptions("cursor", fm, plugin, file, "marketplace"),
       }),
       skills: new SkillsCapability({
         directory: DIRECTORY,

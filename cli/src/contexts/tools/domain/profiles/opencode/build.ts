@@ -16,7 +16,6 @@ import { rewriteRelativeLinks } from "../../../../../kernel/materialization/rela
 import type { FileReader } from "../../../../../kernel/ports/file-reader.js";
 import type { FileWriter } from "../../../../../kernel/ports/file-writer.js";
 import type { ArtifactContract, ToolBuildContract } from "../../build-contract.js";
-import { agentModelOptions } from "../../formats/agent-models.js";
 import { buildOpencodeFlatConfig } from "../../formats/opencode-mcp-merge.js";
 import { generateOpencodeHooksBridge } from "./opencode-hooks-bridge.js";
 import {
@@ -138,7 +137,6 @@ function transformOpencodeFlatAgent(content: string, plugin: string, outName: st
   return serializeFrontmatter(
     {
       ...frontmatter,
-      ...agentModelOptions("opencode", frontmatter, plugin, outName),
       name: prefixedName,
       mode: "subagent",
     },

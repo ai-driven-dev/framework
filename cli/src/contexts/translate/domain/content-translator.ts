@@ -40,11 +40,7 @@ interface TranslatedFile {
 
 interface MarkdownCap {
   buildInstallPath: (fileName: string) => string | null;
-  convertFrontmatter: (
-    fm: Record<string, unknown>,
-    fileName: string,
-    plugin?: string
-  ) => Record<string, unknown>;
+  convertFrontmatter: (fm: Record<string, unknown>, fileName: string) => Record<string, unknown>;
   serialize: (fm: Record<string, unknown>, body: string) => string;
 }
 
@@ -141,7 +137,7 @@ export class PluginContentTranslator {
     const result: InstallationFile[] = [];
     const componentPaths = new Map<string, string>();
     for (const file of dist.files) {
-      const translated = this.translateFile(file, tool, dist.manifest.name);
+      const translated = this.translateFile(file, tool);
       if (translated === null) continue;
       const hooked = this.maybeConvertHooks(file.relativePath, translated.content, tool);
       // Prose is rewritten, an artefact is carried byte for byte: a tool's own rewrite leaving
@@ -206,8 +202,7 @@ export class PluginContentTranslator {
 
   private translateFile(
     file: PluginComponentFile,
-    tool: AiTool<HasPlugins>,
-    plugin: string
+    tool: AiTool<HasPlugins>
   ): TranslatedFile | null {
     if (PLUGIN_MANIFEST_PATHS.includes(file.relativePath)) return null;
     const cap = tool.capabilities.plugins;
@@ -229,20 +224,19 @@ export class PluginContentTranslator {
         verbatim: true,
       };
     }
-    return this.translateComponent(file, tool, plugin);
+    return this.translateComponent(file, tool);
   }
 
   private translateComponent(
     file: PluginComponentFile,
-    tool: AiTool<HasPlugins>,
-    plugin: string
+    tool: AiTool<HasPlugins>
   ): TranslatedFile | null {
     const top = file.relativePath.split("/")[0];
     if (top === "commands" && hasCommands(tool)) {
       return translateMarkdown(file, "commands/", tool.directory, tool.capabilities.commands);
     }
     if (top === "agents" && hasAgents(tool)) {
-      return translateMarkdown(file, "agents/", tool.directory, tool.capabilities.agents, plugin);
+      return translateMarkdown(file, "agents/", tool.directory, tool.capabilities.agents);
     }
     if (top === "rules" && hasRules(tool)) {
       return translateMarkdown(file, "rules/", tool.directory, tool.capabilities.rules);
@@ -355,11 +349,7 @@ export class PluginContentTranslator {
     // Same rule as the native path: prose is rewritten, an artefact is carried. Rewriting every
     // flat file left a script intact only where a tool's own rewrite happened to spare it.
     const content = isProse(file.relativePath) ? tool.rewriteContent(file.content) : file.content;
-    if (
-      section === "agents" &&
-      hasAgents(tool) &&
-      tool.capabilities.agents.params.modelOptions !== undefined
-    ) {
+    if (section === "agents" && hasAgents(tool)) {
       const artifact = tool.buildContracts?.flat?.().artifacts.agents;
       if (artifact?.supported) {
         return this.makeFile(
@@ -461,15 +451,14 @@ function translateMarkdown(
   file: PluginComponentFile,
   sectionDir: string,
   toolDirectory: string,
-  cap: MarkdownCap,
-  plugin?: string
+  cap: MarkdownCap
 ): TranslatedFile | null {
   const fileName = file.relativePath.slice(sectionDir.length);
   const fullPath = cap.buildInstallPath(fileName);
   if (fullPath === null) return null;
   const relativePath = toPluginRelativePath(fullPath, toolDirectory);
   const { frontmatter, body } = parseFrontmatter(file.content);
-  const newFm = cap.convertFrontmatter(frontmatter, fileName, plugin);
+  const newFm = cap.convertFrontmatter(frontmatter, fileName);
   const content = cap.serialize(newFm, body);
   return { relativePath, content };
 }

@@ -39,10 +39,10 @@ Use available agents when useful. The caller owns scope, delegation, and final a
 <!-- aidd_agents:start -->
 | name | role |
 | --- | --- |
-| @aidd-dev-explorer (Codex, Cursor, OpenCode), @aidd-dev:explorer (Claude, Copilot) | Explore the codebase and return relevant files, code, and explanations for a scoped question. |
-| @aidd-dev-executor (Codex, Cursor, OpenCode), @aidd-dev:executor (Claude, Copilot) | Implement assigned work and return changes with verification evidence. |
-| @aidd-dev-validator (Codex, Cursor, OpenCode), @aidd-dev:validator (Claude, Copilot) | Validate that delivered work satisfies the requested outcome and acceptance criteria. |
-| @aidd-dev-reviewer (Codex, Cursor, OpenCode), @aidd-dev:reviewer (Claude, Copilot) | Review quality and coherence against project conventions and the quality checklist. |
+| @aidd-dev-explorer | Explore the codebase and return relevant files, code, and explanations for a scoped question. |
+| @aidd-dev-executor | Implement assigned work and return changes with verification evidence. |
+| @aidd-dev-validator | Validate that delivered work satisfies the requested outcome and acceptance criteria. |
+| @aidd-dev-reviewer | Review quality and coherence against project conventions and the quality checklist. |
 <!-- aidd_agents:end -->
 
 ## Memory Management

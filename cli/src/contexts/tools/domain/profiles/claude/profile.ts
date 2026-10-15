@@ -15,7 +15,6 @@ import type {
   HasRules,
   HasSkills,
 } from "../../contracts.js";
-import { agentModelOptions } from "../../formats/agent-models.js";
 import { convertCommandFrontmatter, stripToolSuffix } from "../../formats/command.js";
 import { CLAUDE_PLUGIN_ROOT_TOKEN } from "../../formats/plugin-root-token.js";
 import { claudeStyleMarketplaceKey } from "../../marketplace-entry.js";
@@ -49,7 +48,7 @@ export const claude: AiTool<HasAgents & HasSkills & HasCommands & HasRules & Has
         directory: DIRECTORY,
         toolSuffix: TOOL_SUFFIX,
         format: "markdown",
-        modelOptions: (fm, plugin, file) => agentModelOptions("claude", fm, plugin, file),
+        effortField: "effort",
       }),
       skills: new SkillsCapability({
         directory: DIRECTORY,

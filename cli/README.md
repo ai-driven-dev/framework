@@ -121,9 +121,9 @@ aidd setup --scope user --ai claude,codex,copilot --plugins none --yes
 | `aidd auth status` | Show which credential resolves, from where, at which level |
 | `aidd auth logout` | Delete the stored credential |
 
-## Agent models
+## Agents
 
-The [bundled configuration](src/contexts/tools/domain/formats/agent-models.json) supplies model and effort defaults when installing or translating AIDD agents. See [sub-agent models](../docs/DELEGATION.md).
+Opt in with `aidd agents install --provider openai --ide codex`; see [agent installation](../docs/DELEGATION.md).
 
 ## Translate
 

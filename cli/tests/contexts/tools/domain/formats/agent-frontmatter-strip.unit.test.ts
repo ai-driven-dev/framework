@@ -8,11 +8,12 @@ import {
 
 describe("stripAgentFrontmatter", () => {
   describe("keeps allowlisted keys", () => {
-    it("preserves all six allowed keys when all are present", () => {
+    it("preserves all allowed keys when all are present", () => {
       const input = {
         name: "reviewer",
         description: "Reviews code",
         model: "claude-sonnet",
+        reasoningEffort: "medium",
         tools: ["Read", "Write"],
         agents: ["helper"],
         "argument-hint": "[file]",

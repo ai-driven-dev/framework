@@ -1,5 +1,6 @@
 import { platform } from "node:os";
 import { Command } from "commander";
+import { registerAgentsCommand } from "./presentation/commands/agents.js";
 import { registerAuthCommand } from "./presentation/commands/auth.js";
 import { registerCleanCommand } from "./presentation/commands/clean.js";
 import { registerDoctorCommand } from "./presentation/commands/doctor.js";
@@ -32,6 +33,7 @@ program
 
 registerSetupCommand(program);
 registerFrameworkCommand(program);
+registerAgentsCommand(program);
 registerTranslateCommand(program);
 registerPluginCommand(program);
 registerMarketplaceCommand(program);

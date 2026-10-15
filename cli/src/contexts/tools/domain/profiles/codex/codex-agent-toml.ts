@@ -1,5 +1,4 @@
 import { parseFrontmatter } from "../../../../../kernel/markdown.js";
-import { agentModelOptions } from "../../formats/agent-models.js";
 import { stringifyToml } from "./toml.js";
 
 /**
@@ -19,11 +18,7 @@ export function codexAgentMarkdownToToml(
 ): string {
   const { frontmatter, body } = parseFrontmatter(content);
   const name = resolveName(frontmatter, pluginName, fileBaseName, prefixName);
-  const obj = buildTomlObject(
-    name,
-    { ...frontmatter, ...agentModelOptions("codex", frontmatter, pluginName, fileBaseName) },
-    body
-  );
+  const obj = buildTomlObject(name, frontmatter, body);
   return stringifyToml(obj);
 }
 
