@@ -29,8 +29,6 @@ function stubTool(
     toolSuffix: `.${toolId}.md`,
     signalDir,
     displayName: toolId,
-    telemetryLocalRead: { kind: "unsupported", reason: "a stub reads nothing" },
-    telemetryTaskAttributable: false,
     capabilities,
     rewriteContent: (content: string) => content,
   };

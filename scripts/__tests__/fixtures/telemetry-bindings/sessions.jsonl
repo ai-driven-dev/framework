@@ -1,0 +1,7 @@
+{"session_id":"00000000-0000-4000-8000-00000000000a","task":"checkout-fix","ticket":"PROJ-12","none":false,"declared_at":"2026-10-09T10:00:00.000Z","by":"command"}
+{"session_id":"00000000-0000-4000-8000-00000000000b","task":"first-idea","ticket":null,"none":false,"declared_at":"2026-10-09T10:00:00.000Z","by":"command"}
+{"session_id":"00000000-0000-4000-8000-00000000000b","task":"second-idea","ticket":"PROJ-30","none":false,"declared_at":"2026-10-09T12:00:00.000Z","by":"hook-intercept"}
+{"session_id":"00000000-0000-4000-8000-00000000000c","task":null,"ticket":null,"none":true,"declared_at":"2026-10-09T10:30:00.000Z","by":"command"}
+{"session_id":"00000000-0000-4000-8000-00000000000e","task":"own-after-carry","ticket":null,"none":false,"declared_at":"2026-10-09T15:00:00.000Z","by":"command"}
+{"session_id":"00000000-0000-4000-8000-000000000014","task":"earlier-line","ticket":null,"none":false,"declared_at":"2026-10-09T10:00:00.000Z","by":"command"}
+{"session_id":"00000000-0000-4000-8000-000000000014","task":"later-line","ticket":null,"none":false,"declared_at":"2026-10-09T10:00:00.000Z","by":"command"}

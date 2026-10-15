@@ -270,7 +270,7 @@ export class CleanUseCase {
     }
   }
 
-  // `config.json` is the committed telemetry switch: a file clean did not write, so clean never
+  // `config.json` is a committed file clean did not write, so clean never
   // removes it. Everything AIDD did write must go before the emptiness check, or its own presence
   // blocks a removal that should happen — the registry `marketplace add` writes included.
   private async removeAiddState(projectRoot: string): Promise<void> {

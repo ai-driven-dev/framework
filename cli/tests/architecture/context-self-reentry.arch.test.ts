@@ -69,7 +69,7 @@ describe("the guard itself", () => {
     expect(
       climbsOutAndReenters("../framework/translator/plugin-translator.js", "framework", 5)
     ).toBe(false);
-    expect(climbsOutAndReenters("../domain/ports/version-control.js", "telemetry", 4)).toBe(false);
+    expect(climbsOutAndReenters("../domain/ports/version-control.js", "acme", 4)).toBe(false);
   });
 
   it("ignores a specifier that does not climb at all", () => {
@@ -80,7 +80,7 @@ describe("the guard itself", () => {
     expect(
       climbsOutAndReenters(
         "../../../contexts/tools/domain/formats/cursor-hooks-project-merge.js",
-        "telemetry",
+        "acme",
         4
       )
     ).toBe(false);

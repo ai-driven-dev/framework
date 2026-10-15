@@ -1,3 +1,7 @@
+---
+status: superseded
+---
+
 # The read path, met at a hundred sessions
 
 What [#694](https://github.com/ai-driven-dev/framework/issues/694) asks to be written down

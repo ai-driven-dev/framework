@@ -5,27 +5,29 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node ${CLAUDE_PLUGIN_ROOT}/hooks/journal.cjs session-start"
+            "command": "node ${CLAUDE_PLUGIN_ROOT}/hooks/session-start.cjs",
+            "timeout": 10
           }
         ]
-      }
-    ],
-    "Stop": [
+      },
       {
         "hooks": [
           {
             "type": "command",
-            "command": "node ${CLAUDE_PLUGIN_ROOT}/hooks/journal.cjs turn-end"
+            "command": "node ${CLAUDE_PLUGIN_ROOT}/hooks/catch-up.cjs",
+            "async": true,
+            "timeout": 120
           }
         ]
       }
     ],
-    "PostToolUse": [
+    "UserPromptSubmit": [
       {
         "hooks": [
           {
             "type": "command",
-            "command": "node ${CLAUDE_PLUGIN_ROOT}/hooks/journal.cjs tool-used"
+            "command": "node ${CLAUDE_PLUGIN_ROOT}/hooks/prompt-gate.cjs",
+            "timeout": 30
           }
         ]
       }

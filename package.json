@@ -30,8 +30,7 @@
   },
   "scripts": {
     "prepare": "lefthook install || true",
-    "test:changed": "node scripts/test-changed.mjs",
-    "telemetry:reference-week": "node scripts/telemetry-reference-week.cjs"
+    "test:changed": "node scripts/test-changed.mjs"
   },
   "devDependencies": {
     "@commitlint/cli": "^21.2.3",

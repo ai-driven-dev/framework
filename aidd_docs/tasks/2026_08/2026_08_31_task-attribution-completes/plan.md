@@ -1,6 +1,6 @@
 ---
 objective: "Work following a task declaration is attributed while the session still runs, every unattributed record says which of three things happened, and every tool that can declare is captured."
-status: pending
+status: superseded
 ---
 
 # Plan: task attribution completes

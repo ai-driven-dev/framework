@@ -52,11 +52,11 @@ jobs:
         run: pnpm exec lefthook run pre-commit --all-files --force
 
       # The generator hooks `git add` their output and never fail on drift, so a stale
-      # CATALOG.md, prompts doc or README count passes the step above in silence. Against
+      # CATALOG.md or README count passes the step above in silence. Against
       # HEAD, not the index: the generators already staged, so a plain `git diff` is empty.
       - name: Fail if a generated file drifted from what pre-commit regenerated
         run: |
-          if ! git diff --exit-code HEAD -- 'plugins/*/CATALOG.md' docs/prompts-documentation.md README.md; then
+          if ! git diff --exit-code HEAD -- 'plugins/*/CATALOG.md' README.md; then
             echo "::error::A generated file is stale. Run 'pnpm exec lefthook run pre-commit --all-files --force' locally and commit the result."
             exit 1
           fi

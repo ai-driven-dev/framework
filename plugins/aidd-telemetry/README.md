@@ -2,103 +2,53 @@
 
 # aidd-telemetry
 
-Understand token usage by skill and task to improve workflows.
+Counts the tokens your Claude Code sessions consume, each model call once, by person, session, model, agent, day, repository, task and ticket. Local only: nothing is sent anywhere.
 
-## Getting started
+> For: people who measure their work. Formats, rules and limits: [usage contract](../../aidd_docs/product/usage-contract.md).
 
-Recording requires only `node`; enabling and reporting require `aidd`.
-
-```sh
-npm install -g @ai-driven-dev/cli
-aidd plugin install aidd-telemetry
-```
-
-Enable measurement, work in a session, then report and verify. Use skills or CLI commands;
-skills stop and explain when `aidd` cannot answer.
-Report after the turn: hooks fire before its tokens are durably written.
-
-| Ask your tool for | It runs | You get |
-| --- | --- | --- |
-| `00-init` | `aidd telemetry on`, then reads a run file back | project opt-in and recording proof |
-| `01-cost` | `aidd telemetry report` | period or task usage |
-| `02-check` | `aidd telemetry check` | recording status and required repairs |
-
-## Reading a report
-
-### Report construction
-
-AIDD connects provider counts to units of work.
+## How it works
 
 ```mermaid
 flowchart LR
-  Journal["Hook journal: work observed"] --> Report["aidd telemetry report: join by session"]
-  Transcript["Tool transcript: tokens and model"] --> Report
-  Report --> Results["Local usage by step, task, flow, model, tool or person"]
+  Claude["Claude Code sessions"] -->|"write"| Files["session files"]
+  Files -->|"read, each call once"| Ledger[("local ledger")]
+  You["you"] -->|"aidd telemetry task"| Tasks[("task declarations")]
+  Hooks["plugin hooks"] -->|"ask when none"| You
+  Ledger --> Report["aidd telemetry report"]
+  Tasks -->|"attribute"| Report
 ```
 
-Tools write their own transcripts without AIDD skill knowledge. Reports join these with
-hook observations by session.
+- Only clones that ran `aidd telemetry on` are measured, from that moment on.
+- A task and a ticket come only from what you declare; nothing is guessed.
+- Every axis splits the same total.
 
-### Result interpretation
+## Start
 
-Usage groups: step, model, task, flow, tool and person. Attribution states its evidence:
+1. Install: `npm install -g @ai-driven-dev/cli`, then `aidd plugin install aidd-telemetry`. Its hooks need `node` on `PATH`.
+2. In each clone to measure: `aidd telemetry on`.
+3. Work. When the work has no task yet, Claude Code asks once: send `aidd telemetry task <name> [--ticket <ref>]` (or `--none`) as your next prompt, or run it in a terminal.
+4. Read: `aidd telemetry report --axis task`.
 
-- `stated by the tool`: exact attribution.
-- `from a journal interval`: inferred attribution.
-- `unattributed`: neither source identifies a step; it does not mean no step ran.
-- **Unknown values** remain unknown, never zero.
-- **Counts** are raw tokens, not currency; a separate service prices them. Vendor usage
-  screens weight cached tokens by price, so different counts do not mean either is wrong.
-- **Periods** reflect work time, not billing time. Activity before opt-in cannot be reconstructed.
+## Commands
 
-## Coverage
+| Command | Does |
+| --- | --- |
+| `aidd telemetry on` / `off` | start or stop measuring this clone; what was measured stays |
+| `aidd telemetry status` | whether this clone is measured, since when, and its task |
+| `aidd telemetry task <name> [--ticket <ref>]` | declare the task; `--none` for no task |
+| `aidd telemetry report [--axis <axis>] [--days <n>]` | what the work consumed, split along one axis; `--json` for the envelope |
+| `aidd telemetry identity <id>` / `--off` | be named on your own measurement, or not |
+| `aidd telemetry forget` / `--yes` | show what is kept, then erase it |
 
-> Beta. Proven end to end on Claude Code; other tools depend on their recorded data.
-> Excluded from curated installation pending validation on other users' machines.
+## Skills
 
-| Tool | Tokens | Step | Task |
-| --- | --- | --- | --- |
-| **Claude Code** | ✅ proven on live sessions | ✅ stated by the tool, and by interval | ✅ |
-| **Codex** | ✅ on captured rollouts | ✅ by interval | ✅ |
-| **OpenCode** | ✅ | ❌ no skill call reaches its plugin | ✅ |
-| **Copilot** | ⚠️ session total only, no per-request figure (cumulative at shutdown) | ✅ by interval | ✅ |
-| **Cursor** | ❌ no token count in any file it writes | ✅ | ✅ |
+| Skill | Use it to |
+| --- | --- |
+| `aidd-telemetry:00-init` | opt in, stop, set or remove your identity, forget |
+| `aidd-telemetry:01-usage` | ask what a period, a task or a ticket consumed |
 
-- **Codex:** approve each hook entry interactively. Headless runs cannot show the trust
-  prompt; sessions record nothing until approval.
-- **OpenCode:** supports V1 ≥ 1.18.29 and V2; older V1 lacks the default plugin definition.
-  OpenCode V1 can omit the session announcement; the first journalable event then opens it.
-  Without a known session directory, it uses the plugin's startup directory, which can be
-  wrong for a server serving several projects.
-  V2 supplies session directories and journals tool and execution completions through its
-  event subscription.
-- **OpenCode steps:** only task paths reach the journal, never skill calls. Every request
-  remains unattributed by step.
+## Privacy
 
-## Data and privacy
-
-### Stored data
-
-Recording is local and opt-in, with no export, prompts, code or diffs. Hooks append one
-line per observation to git-ignored `aidd_docs/runs/<run_id>__<vendor_id>.jsonl`, never
-rewriting it or recording tokens, cost or model. Joined measurement records are stored under
-`~/.config/aidd/telemetry/` according to [the record contract](../../aidd_docs/product/metrics-contract.md).
-
-### Privacy controls
-
-- **Project opt-in:** committing `.aidd/config.json` with measurement enabled affects all
-  clones. `AIDD_TELEMETRY=0` unconditionally overrides it for yourself.
-- **Retention:** `off` keeps records. `aidd telemetry forget` removes the project's journal,
-  this machine's records and identity file; deletion requires `--yes`.
-- **Legacy exports:** `aidd telemetry check` and `aidd telemetry off` detect old endpoints
-  and identify required manual removal.
-- **Identity:** attach it optionally through `aidd telemetry identity`. Share figures using
-  `AIDD_TELEMETRY_DIR`, never `AIDD_USER_CONFIG_DIR`: the latter also relocates `auth.json`
-  and its GitHub token.
-
-## Reference contracts
-
-- [`aidd_docs/runs/README.md`](../../aidd_docs/runs/README.md): journal contract.
-- [`cost-report-contract.md`](../../aidd_docs/product/cost-report-contract.md): the object
-  printed by `report --json`; optional `backlog-link.json` maps a task to its backlog item.
-- [`metrics-contract.md`](../../aidd_docs/product/metrics-contract.md): stored records for pricing.
+- Consent is per clone and never committed: a teammate who pulls is not measured until they run `on`.
+- Data stays in `~/.config/aidd/telemetry` and the clone's git config; `forget --yes` erases it.
+- `AIDD_TELEMETRY=0` refuses measurement everywhere.

@@ -46,8 +46,7 @@ jobs:
         id: filter
         run: |
           set -euo pipefail
-          # The scope the jobs below actually exercise. The telemetry plugin's own prose is
-          # excluded because validate.yml already asserts it on every push and pull request.
+          # The scope the jobs below actually exercise.
           if [[ "${{ github.event_name }}" == "pull_request" ]]; then
             BASE="${{ github.event.pull_request.base.sha }}"
             HEAD="${{ github.event.pull_request.head.sha }}"
@@ -71,16 +70,14 @@ jobs:
               cli/*|kanban/*|scripts/__tests__/*|README.md)
                 relevant=true
                 ;;
+              # The identifier-join probe, and the hook predicates it judges the real tool by.
+              scripts/probe-identifier-join.cjs|scripts/check-claude-tokens-end-to-end.cjs|plugins/aidd-telemetry/hooks/*)
+                relevant=true
+                ;;
               # This file: a change to how the suite runs matches nothing else here, so the
               # workflow deciding whether the suite passes would land unverified.
               .github/workflows/cli-ci.yml)
                 relevant=true
-                ;;
-              plugins/aidd-telemetry/*)
-                case "$f" in
-                  *.md) ;; # prose only, covered by validate.yml instead
-                  *) relevant=true ;;
-                esac
                 ;;
             esac
             [[ "$relevant" == "true" ]] && break
@@ -412,19 +409,52 @@ jobs:
           restore-keys: pnpm-${{ runner.os }}-
       - run: cd cli && pnpm install --frozen-lockfile
       - run: cd cli && pnpm build
-      # The probe drives the real tool, so the real tool has to be here. No credentials are
-      # needed: it points Claude Code at a dead address, and the session id is minted first.
+      # The check drives the real tool, so the real tool has to be here. No credentials are needed.
       - name: Install Claude Code
         run: npm install -g @anthropic-ai/claude-code # floats on purpose, declared in scripts/__tests__/workflows-pin-global-installs.test.js
-      # Everything in this layer joins on the identifier a hook receives being the one the
-      # export carries, and a tool update can break it with nothing else turning red. Exit 2
-      # means the probe could not form an opinion, rather than blaming the tool.
-      - name: Probe the identifier join
-        run: node scripts/probe-identifier-join.cjs
       # The golden snapshots pin what a claude build contains; only the host can say it loads.
       # Its `plugin validate` exits 0 either way, so the script reads the verdict from its text.
       - name: Claude Code accepts the translated marketplace
         run: node scripts/check-claude-accepts-build.cjs
+      # One session id in the hook's payload, its environment and the transcript: what the
+      # telemetry joins on. Against a dead API, so it spends nothing.
+      - name: Claude Code keeps the session id join
+        run: node scripts/probe-identifier-join.cjs
+
+  claude-tokens:
+    # The real tool, the shipped hooks and the built CLI on each OS, against a fake API whose
+    # billed usage is the expected answer. No credentials, no quota. No pnpm store cache: its
+    # key path is POSIX, not where a native Windows pnpm resolves its store.
+    name: cli / Tokens end to end (Claude Code, ${{ matrix.os }})
+    needs: [changes]
+    if: needs.changes.outputs.relevant == 'true'
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Install pnpm
+        run: corepack enable
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: "22"
+      - run: cd cli && pnpm install --frozen-lockfile
+      - run: cd cli && pnpm build
+      - name: Install Claude Code
+        run: npm install -g @anthropic-ai/claude-code # floats on purpose, declared in scripts/__tests__/workflows-pin-global-installs.test.js
+      - name: The report counts every billed token, on the declared task
+        run: node scripts/check-claude-tokens-end-to-end.cjs
+      # A person at a terminal, through a pseudo-terminal: asked, answered by the hook, kept
+      # across /clear. Python's `pty` is POSIX only; under ConPTY (pywinpty) Claude never got
+      # past its terminal setup on the runner, so Windows runs the headless check alone.
+      - name: A person is asked, answered and keeps the task across /clear
+        if: runner.os != 'Windows'
+        run: node scripts/check-claude-tokens-end-to-end.cjs --attended
 
   cli-jscpd:
     name: cli / JSCPD (duplication)
@@ -489,38 +519,9 @@ jobs:
         with:
           node-version: "22"
 
-      # The WRITE path, on the platform where a home directory, a line ending and an absolute
-      # path all resolve differently. It runs before the CLI is built on purpose: recording is
-      # supposed to need nothing installed, and this is where that claim is exercised.
-      - name: Chain - allow measurement, with nothing installed
-        run: |
-          # Written directly rather than through a command: the switch is a file the hooks
-          # read fresh at every write, so no binary has to exist for it to work.
-          mkdir -p .aidd
-          node -e "require('fs').writeFileSync('.aidd/config.json', JSON.stringify({ telemetry: { enabled: true } }, null, 2) + '\n');"
-      - name: Chain - journal a captured payload
-        run: |
-          # The fixture's cwd came off whatever machine captured it: rewritten so getRepoRoot
-          # resolves a repository that exists here.
-          node -e "const p=require('./scripts/__tests__/fixtures/claude-code-session-start.json'); p.cwd=process.cwd(); require('fs').writeFileSync('payload.json', JSON.stringify(p));"
-          node plugins/aidd-telemetry/hooks/journal.cjs session-start < payload.json
-          node plugins/aidd-telemetry/hooks/journal.cjs turn-end < payload.json
-      # `telemetry check` fails on `sessionFound: false`, and nothing in this chain places a
-      # transcript for the session just journalled. Copied from a local-cost fixture with its
-      # session id rewritten, under `$HOME` — which is what the read path itself resolves
-      # first, and which Git Bash sets on this runner.
-      - name: Chain - place the transcript where claude keeps it
-        run: |
-          node -e "const fs=require('fs'),os=require('os'),path=require('path');const homeDir=process.env.HOME||os.homedir();const sessionId='ffde6fda-14a8-4b32-8110-be1f1d13eebf';const src='cli/tests/fixtures/local-cost/.claude/projects/fake-project/22222222-2222-4222-8222-222222222222.jsonl';const dir=path.join(homeDir,'.claude','projects','fake-project');fs.mkdirSync(dir,{recursive:true});const content=fs.readFileSync(src,'utf8').split('22222222-2222-4222-8222-222222222222').join(sessionId);fs.writeFileSync(path.join(dir,sessionId+'.jsonl'),content);"
-      - name: Chain - the journal stays private and git add -A still works
-        run: |
-          git add -A
-          git status --porcelain >/dev/null
-
       # Wrapped: a suite writing into this repository's own .git/hooks passes every assertion
       # and destroys an install nothing can restore. The suite reads YAML through the root
-      # devDependencies, so the install has to precede it — and the chain steps above stay
-      # ahead of any install on purpose.
+      # devDependencies, so the install has to precede it.
       - run: pnpm install --frozen-lockfile
       - run: cd cli && pnpm install --frozen-lockfile
       - name: Plugin suite
@@ -554,21 +555,13 @@ jobs:
           pnpm build
           pnpm pack --pack-destination ./dist
           npm install -g ./dist/ai-driven-dev-cli-*.tgz --force
-      # The exact command `02-check`'s own markdown names, not a script beside it. Failing
-      # `aidd --version` means the CLI could not be resolved on the PATH.
-      - name: Chain - diagnose, through the command every skill's own markdown names
-        run: |
-          aidd --version
-          # A gated run judges nothing and exits 0, so the one row the chain exists to make
-          # true is asserted separately: the transcript placed for the session was read.
-          aidd telemetry check | tee telemetry-check.out
-          grep -E "tool files readable +ok" telemetry-check.out
+      # Failing `aidd --version` means the CLI could not be resolved on the PATH.
+      - name: Chain - the installed CLI resolves
+        run: aidd --version
       - run: cd cli && pnpm test:unit
       - run: cd cli && pnpm test:integration
       - run: cd cli && pnpm test:arch
-      # Every e2e but the two named below. `telemetry-commit-trailer.e2e.test.ts` is why the
-      # step matters most: it is the only thing proving the `prepare-commit-msg` hook is
-      # reachable by the shell Git for Windows ships, which a backslash path is not.
+      # Every e2e but the one named below.
       - name: cli e2e
         # `--max-workers=2`, and only here. Vitest transforms modules on its own main thread
         # while every worker calls back into it, and that call has a fixed 60 s timeout no
@@ -578,11 +571,8 @@ jobs:
         run: |
           cd cli
           pnpm exec vitest run --project=e2e --max-workers=2 \
-            --exclude "tests/e2e/persona.e2e.test.ts" \
-            --exclude "tests/e2e/telemetry-multi-tool.e2e.test.ts"
-        # persona.e2e.test.ts needs /usr/bin/expect, which windows-latest does not carry;
-        # telemetry-multi-tool.e2e.test.ts relies on a shebang, and Windows resolves an
-        # executable by PATHEXT.
+            --exclude "tests/e2e/persona.e2e.test.ts"
+        # persona.e2e.test.ts needs /usr/bin/expect, which windows-latest does not carry.
 
   # Fan-in: every job above either ran and passed, or was skipped because `changes` found
   # nothing relevant. The one check the branch rulesets require — without it a pull request
@@ -680,6 +670,7 @@ jobs:
       - cli-build
       - cli-knip
       - identifier-join
+      - claude-tokens
       - cli-jscpd
       - cli-mutation
       - cli-mutation-score
@@ -702,6 +693,7 @@ jobs:
             "${{ needs.cli-build.result }}" \
             "${{ needs.cli-knip.result }}" \
             "${{ needs.identifier-join.result }}" \
+            "${{ needs.claude-tokens.result }}" \
             "${{ needs.cli-jscpd.result }}" \
             "${{ needs.cli-mutation.result }}" \
             "${{ needs.cli-mutation-score.result }}" \

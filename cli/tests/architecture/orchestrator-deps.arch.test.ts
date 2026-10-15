@@ -40,7 +40,6 @@ const BASELINE: readonly { readonly path: string; readonly injected: number }[] 
     path: "src/contexts/framework/application/clean/clean-user-scope-use-case.ts",
     injected: 12,
   },
-  { path: "src/contexts/telemetry/application/diagnose-telemetry-use-case.ts", injected: 10 },
   {
     path: "src/contexts/framework/application/restore/restore-tool-files-use-case.ts",
     injected: 9,
@@ -55,8 +54,6 @@ const BASELINE: readonly { readonly path: string; readonly injected: number }[] 
     path: "src/contexts/framework/application/doctor/doctor-registration-use-case.ts",
     injected: 7,
   },
-  { path: "src/contexts/telemetry/application/read-local-cost-use-case.ts", injected: 7 },
-  { path: "src/contexts/telemetry/application/report-cost-use-case.ts", injected: 7 },
   { path: "src/contexts/framework/application/install/install-ide-tool-use-case.ts", injected: 6 },
   { path: "src/contexts/framework/application/plugin/plugin-install-use-case.ts", injected: 6 },
   { path: "src/contexts/framework/application/plugin/plugin-update-use-case.ts", injected: 6 },
@@ -89,7 +86,6 @@ const BASELINE: readonly { readonly path: string; readonly injected: number }[] 
     path: "src/contexts/framework/application/shared/ensure-built-marketplace-use-case.ts",
     injected: 5,
   },
-  { path: "src/contexts/telemetry/application/telemetry-on-use-case.ts", injected: 5 },
   {
     path: "src/contexts/translate/application/strategies/marketplace-build-strategy.ts",
     injected: 5,
@@ -98,6 +94,37 @@ const BASELINE: readonly { readonly path: string; readonly injected: number }[] 
   // Carries `clean`'s shared-source guard and the separate current-source witness so a
   // targeted remove cannot disable another project's plugin or a repointed catalogue.
   { path: "src/contexts/framework/application/plugin/plugin-remove-use-case.ts", injected: 9 },
+  // Ingest is four stages, each owned by a collaborator: read what the transcripts gained,
+  // tie each call to a repository, store it, snapshot the branch declarations. The fifth is
+  // the environment's refusal. A stage folded into another would hide where the ledger is
+  // written.
+  { path: "src/contexts/telemetry/application/ingest-usage-use-case.ts", injected: 5 },
+  // Tying a call to a clone is four things it cannot fold into one: where the directory is,
+  // what its clone says now, what was remembered of the directory, and when the clone
+  // consented. The fifth is the machine's spelling of a directory and the clock.
+  { path: "src/contexts/telemetry/application/directory-resolver.ts", injected: 5 },
+  // A declaration is checked against the clone's consent, kept for the session under the
+  // bindings lock, and kept for the branch, whose snapshot takes that lock too and shares it
+  // with ingest. The fifth is the environment's refusal. The lock cannot sit inside a store: it
+  // protects a write the stores do not know they share.
+  { path: "src/contexts/telemetry/application/declare-task-use-case.ts", injected: 5 },
+  // Opting in is one act with five effects, each in its own collaborator: the project's
+  // config, the commit hook, the run journal, the ledger and the roots it remembers, and
+  // Claude's retention, beside the repository it is run in. The count is mostly ports; the
+  // effects share an order (consent first, the ledger's lock last) that no collaborator knows.
+  // The consent is written through its own port, apart from the project config it clears.
+  // The consent's history is the eleventh: the interval opens with the key, under the same lock.
+  // The token that names the interval, in the key and in the history, is the twelfth: a fresh
+  // random one per interval, injected so a test can name it.
+  { path: "src/contexts/telemetry/application/switch/telemetry-on-use-case.ts", injected: 12 },
+  // Opting out is the consent's write, then the end of the clone's consent interval, under the
+  // ledger's lock so an ingest sees the key and the interval change together. The order is only
+  // this class's to hold; the clock is the sixth.
+  { path: "src/contexts/telemetry/application/switch/telemetry-off-use-case.ts", injected: 6 },
+  // Forgetting reads what was declared where (snapshots, remembered roots, the clones that
+  // consented), clears it, and erases the files, all under the ledger's lock. The declarations
+  // go before the files that lead to them, an order only this class holds.
+  { path: "src/contexts/telemetry/application/forget/forget-telemetry-use-case.ts", injected: 6 },
 ];
 
 /**

@@ -30,10 +30,19 @@ const pkg = JSON.parse(readFileSync(resolve(root, "package.json"), "utf8"));
 // guards for #829 (+10.4 KB over the preceding 703.8 KB); 1.1% measured headroom.
 // 734 KB: 725.8 KB, Kilo Code's profile, generated bridge, and runtime smoke support (+9.6 KB
 // over next's 716.2 KB); 1.1% measured headroom.
+// 653 KB: 639.8 KB, the deterministic token measurement replacing the previous telemetry
+// (-86.0 KB under the preceding 725.8 KB); 2.1% measured headroom.
+// 667 KB: 653.3 KB, consent as intervals keyed by a clone and a token, closed by ingest and the
+// hooks, and measurement starting at `on` (+13.5 KB over the 639.8 KB above, reached across the
+// consent rounds; 651.5 KB at the last one); 2.1% measured headroom.
 // 751 KB: 750.2 KB, recipe validation moved from Cook's script to the framework CLI after merging next;
 // 0.1% measured headroom, with no added runtime dependency.
+// 689 KB: 675.2 KB, that recipe validation merged into the deterministic token measurement
+// (+21.9 KB over the 653.3 KB above); 2.0% measured headroom.
 // 756 KB: 755.6 KB, patched esbuild 0.28.2 emits TypeScript parameter-property fields
 // correctly (+5,008 bytes over 0.27.3); unchanged application and minification settings.
+// 695 KB: 680.6 KB, that esbuild merged into the deterministic token measurement (+5.3 KB over
+// the 675.3 KB above); 2.1% measured headroom.
 const budgetKB = pkg.bundleBudgetKB ?? 500;
 const budgetBytes = budgetKB * 1024;
 

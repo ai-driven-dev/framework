@@ -6,7 +6,7 @@
 never with its steps inline. A use case that only changes the manifest saves it directly.
 
 **Steps, in order**: `manifestRepo.save()`, then `GitignoreUseCase.execute()` with
-`.aidd/cache/`, every installed tool's machine-local files, and `aidd_docs/runs/`.
+`.aidd/cache/` and every installed tool's machine-local files.
 
 ```typescript
 import { PostInstallPipelineUseCase } from "../install/post-install-pipeline-use-case.js";

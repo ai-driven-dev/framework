@@ -204,7 +204,7 @@ describe("PluginAddUseCase and opencode MCP servers", () => {
       });
 
       expect(logger.infoMessages).toStrictEqual([
-        'Plugin "mcp-plugin" (codex): Codex will not run this plugin\'s hooks until each one is trusted — approve the prompt once in an interactive session, or pass --dangerously-bypass-hook-trust to codex exec for a headless run. Until then, a session leaves no run journal and nothing says why.',
+        'Plugin "mcp-plugin" (codex): Codex will not run this plugin\'s hooks until each one is trusted — approve the prompt once in an interactive session, or pass --dangerously-bypass-hook-trust to codex exec for a headless run. Until then, none of its hooks run and nothing says why.',
       ]);
       expect(logger.warnMessages).toStrictEqual([]);
       const installed = deps.manifestRepo

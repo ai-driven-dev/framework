@@ -7,8 +7,7 @@ export class GitignoreUseCase {
   constructor(private readonly fs: FileReader & FileWriter) {}
 
   /** `true` when at least one of `entries` was newly appended, `false` when every one was already
-   * there. One caller depends on it: `aidd telemetry on` announces the journal being ignored only
-   * on the run that actually adds the line. */
+   * there. */
   async execute(projectRoot: string, entries: string[]): Promise<boolean> {
     const gitignorePath = `${projectRoot}/${GITIGNORE_FILENAME}`;
 

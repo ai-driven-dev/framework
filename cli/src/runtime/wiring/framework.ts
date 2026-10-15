@@ -106,7 +106,6 @@ import type { CredentialStore } from "../auth/ports/credential-store.js";
 import { atomicWriteFile } from "../filesystem/atomic-write.js";
 import { FileAdapter } from "../filesystem/file-adapter.js";
 import { HasherAdapter } from "../filesystem/hasher-adapter.js";
-import { GitAdapter } from "../git/git-adapter.js";
 import { HttpClient } from "../http/http-client.js";
 import { PlatformAdapter } from "../platform/platform-adapter.js";
 import { InquirerPrompterAdapter, SilentPrompterAdapter } from "../prompter/prompter-adapter.js";
@@ -127,7 +126,7 @@ interface GlobalOptions {
   token?: string;
 }
 
-interface Deps extends TelemetryDeps {
+interface Deps {
   resolveDelegationUseCase: ResolveDelegationUseCase;
   fs: FileReader & FileWriter & FileMerger;
   manifestRepo: ManifestRepository;
@@ -187,6 +186,7 @@ interface Deps extends TelemetryDeps {
   listInstalledRulesUseCase: ListInstalledRulesUseCase;
   validateRecipesUseCase: ValidateRecipesUseCase;
   checkUpdateUseCase: CheckUpdateUseCase;
+  telemetry: TelemetryDeps;
 }
 
 const _cache = new Map<string, Deps>();
@@ -360,7 +360,6 @@ export async function createDeps(
     nativeSources
   );
   const gitignoreUseCase = new GitignoreUseCase(fs);
-  const git = new GitAdapter(fs);
   const postInstallPipelineUseCase = new PostInstallPipelineUseCase(manifestRepo, gitignoreUseCase);
   const installRuntimeConfigUseCase = new InstallRuntimeConfigUseCase(
     fs,
@@ -591,19 +590,9 @@ export async function createDeps(
   const doctorAllUseCase = new DoctorAllUseCase(doctorUseCase);
   const listInstalledRulesUseCase = new ListInstalledRulesUseCase(fs);
   const checkUpdateUseCase = new CheckUpdateUseCase(cliUpdater, currentVersionProvider, logger, fs);
-  const telemetry = wireTelemetry({
-    fs,
-    logger,
-    git,
-    projectRoot,
-    gitignoreUseCase,
-    currentVersionProvider,
-    manifestRepo,
-  });
   const deps: Deps = {
     resolveDelegationUseCase: new ResolveDelegationUseCase(fs, manifestRepo, hostPluginRegistries),
     validateRecipesUseCase: new ValidateRecipesUseCase(new RecipeFilesAdapter()),
-    ...telemetry,
     fs,
     manifestRepo,
     userManifestRepo,
@@ -656,6 +645,7 @@ export async function createDeps(
     doctorAllUseCase,
     listInstalledRulesUseCase,
     checkUpdateUseCase,
+    telemetry: wireTelemetry(homedir),
   };
   _cache.set(cacheKey, deps);
   return deps;

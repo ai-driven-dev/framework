@@ -1,5 +1,5 @@
 ---
-status: pending
+status: superseded
 ---
 
 # Instruction: removing it, and saying what happened

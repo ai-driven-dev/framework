@@ -22,7 +22,6 @@ import { claudeStyleMarketplaceKey } from "../../marketplace-entry.js";
 import { registerTool } from "../../registry.js";
 import { buildClaudeContract, buildClaudeFlatContract } from "./build.js";
 import { claudeConfigDir } from "./claude-paths.js";
-import { CLAUDE_CODE_TRANSCRIPT_LOCATION } from "./claude-transcript-location.js";
 
 const DIRECTORY = ".claude/";
 const TOOL_SUFFIX = ".claude.md";
@@ -42,15 +41,6 @@ export const claude: AiTool<HasAgents & HasSkills & HasCommands & HasRules & Has
     directory: DIRECTORY,
     toolSuffix: TOOL_SUFFIX,
     displayName: "Claude Code",
-    telemetryLocalRead: {
-      kind: "declared",
-      transcript: CLAUDE_CODE_TRANSCRIPT_LOCATION,
-      // The mirror image of the export: the transcript names the running skill exactly, on
-      // the same line as the counters, and carries no amount at all.
-      supplies: { tokenCounters: true, amount: false, toolStatedStep: true, agentName: true },
-    },
-    telemetryTaskAttributable: true,
-    telemetryJournalHost: "claude-code",
     signalDir: ".claude/commands",
     configOutputPaths: { "settings.json": ".claude/settings.json" },
     buildContracts: { marketplace: buildClaudeContract, flat: buildClaudeFlatContract },

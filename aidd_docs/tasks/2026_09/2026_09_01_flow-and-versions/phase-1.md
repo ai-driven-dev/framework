@@ -1,5 +1,5 @@
 ---
-status: pending
+status: superseded
 ---
 
 # Instruction: the flow, read from what is already there

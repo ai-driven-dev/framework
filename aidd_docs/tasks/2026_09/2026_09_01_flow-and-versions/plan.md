@@ -1,6 +1,6 @@
 ---
 objective: "A period breaks down by the orchestrated run that produced it, derived from the journal as it stands, and every line names the version that wrote it."
-status: pending
+status: superseded
 ---
 
 # Plan: the flow, and who wrote what
