@@ -47,7 +47,7 @@ A key whose snapshots were more than a day apart would be outside the window. In
 
 - **Format.** `ledger/<YYYY-MM-DD>.jsonl`, one `StoredUsage` per line, by the UTC day of `at`, in time then key order. A record whose `at` does not parse is left out, as today.
 - **Ingest.** It loads the partitions of its records' days and the days on each side, folds only those with the incoming records, and rewrites only the days that changed. Its cost does not grow with the ledger's size.
-- **Report.** It reads every partition, monthly and daily, and folds them. When a call sits in more than one partition, or a monthly partition remains, it rewrites what it read in canonical daily form, under the ledger lock.
+- **Report.** It reads every partition, monthly and daily, and folds them. When a call sits in more than one partition, a monthly partition remains, or a partition holds a line that is not a record, it rewrites those partitions in canonical daily form, under the ledger lock.
 - **Migration.** A monthly `<YYYY-MM>.jsonl` is still read. The first ingest whose window touches a month splits it into its days, then removes it.
   - A crash between the two leaves each call in both files. Fold-at-read counts it once, and the next ingest or report finishes the split.
 - **Damage.** A line that is not a record is still skipped, counted, and dropped when its partition is rewritten, whichever format it sits in.
