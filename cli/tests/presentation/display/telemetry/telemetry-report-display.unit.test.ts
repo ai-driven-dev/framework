@@ -2,6 +2,10 @@ import { describe, expect, it } from "vitest";
 import type { ReportResult } from "../../../../src/contexts/telemetry/application/report/report-usage-use-case.js";
 import type { Period } from "../../../../src/contexts/telemetry/domain/report/period.js";
 import {
+  NO_FILTERS,
+  type ReportFilters,
+} from "../../../../src/contexts/telemetry/domain/report/report-filter.js";
+import {
   type AxisValue,
   REPORT_AXES,
   type ReportAxis,
@@ -48,11 +52,13 @@ function result(
   rows: [AxisValue, Tally][],
   totals: Tally,
   coverage: Partial<Coverage> = {},
-  period: Period = BOTH
+  period: Period = BOTH,
+  filters: ReportFilters = NO_FILTERS
 ): ReportResult {
   return {
     status: "reported",
     period,
+    filters,
     report: { axis, rows: rows.map(([value, t]) => ({ value, ...t })), totals },
     coverage: { ...COVERAGE, ...coverage },
   };
@@ -267,5 +273,28 @@ describe("printing a usage report", () => {
     const output = new CapturingOutput(false);
     printUsageReport(output, { status: "refused" });
     expect(output.lines).toEqual(["AIDD_TELEMETRY=0: nothing was read and nothing is reported."]);
+  });
+
+  it("names the flag and every id a start names, in full, when it names several", () => {
+    const output = new CapturingOutput(false);
+    printUsageReport(output, {
+      status: "ambiguous",
+      flag: "session",
+      typed: "a1b2",
+      ids: ["a1b2c3d4-0000", "a1b2ffff-0000"],
+    });
+    expect(output.at("error")).toEqual([
+      "--session a1b2 starts 2 sessions of this period: a1b2c3d4-0000, a1b2ffff-0000. Type more of it.",
+    ]);
+    expect(output.lines).toHaveLength(1);
+  });
+
+  it("says `.` names no repository where the command runs", () => {
+    const output = new CapturingOutput(false);
+    printUsageReport(output, { status: "not-a-repository" });
+    expect(output.at("error")).toEqual([
+      "--repository . names the repository this directory is in, and it is in none: not a git repository, unreadable, or with neither an origin nor a commit.",
+    ]);
+    expect(output.lines).toHaveLength(1);
   });
 });

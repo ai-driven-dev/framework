@@ -89,9 +89,21 @@ const NOT_STORED = {
   undated: 0,
 };
 const ZERO = { known: 0, unknownRecords: 0 };
+const NO_FILTERS = {
+  task: null,
+  ticket: null,
+  person: null,
+  model: null,
+  agent: null,
+  session: null,
+  repository: null,
+  absent: null,
+  unattributed: null,
+};
 const reported = {
   status: "reported",
   period: { from: null, to: null },
+  filters: NO_FILTERS,
   report: {
     axis: "total",
     rows: [],

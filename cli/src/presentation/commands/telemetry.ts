@@ -202,6 +202,10 @@ export function registerTelemetryCommand(program: Command): void {
             axis: cmdOptions.axis,
             period: period.period,
           });
+          if (result.status === "not-a-repository" || result.status === "ambiguous") {
+            printUsageReport(output, result);
+            process.exit(1);
+          }
           if (!cmdOptions.json) return printUsageReport(output, result);
           output.print(
             JSON.stringify(

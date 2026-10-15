@@ -137,6 +137,20 @@ export function printUsageReport(output: CLIOutput, result: ReportResult): void 
     output.info("AIDD_TELEMETRY=0: nothing was read and nothing is reported.");
     return;
   }
+  if (result.status === "not-a-repository") {
+    output.error(
+      "--repository . names the repository this directory is in, and it is in none: not a git repository, unreadable, or with neither an origin nor a commit."
+    );
+    return;
+  }
+  if (result.status === "ambiguous") {
+    const { flag, typed, ids } = result;
+    const many = flag === "session" ? "sessions" : "repositories";
+    output.error(
+      `--${flag} ${typed} starts ${ids.length} ${many} of this period: ${ids.join(", ")}. Type more of it.`
+    );
+    return;
+  }
   const { report, coverage, period } = result;
   output.print(`Usage, ${periodWords(period)}, by ${report.axis}`);
   if (report.totals.records === 0) {

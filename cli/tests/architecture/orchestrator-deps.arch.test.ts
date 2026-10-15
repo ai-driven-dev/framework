@@ -103,6 +103,10 @@ const BASELINE: readonly { readonly path: string; readonly injected: number }[] 
   // what its clone says now, what was remembered of the directory, and when the clone
   // consented. The fifth is the machine's spelling of a directory and the clock.
   { path: "src/contexts/telemetry/application/directory-resolver.ts", injected: 5 },
+  // A report reads what is new, settles the ledger, and attributes by what was declared and
+  // who is named. The fifth locates `.` for `--repository .`, and the sixth is the
+  // environment's refusal: it must come before `.` runs git, so it cannot be left to ingest.
+  { path: "src/contexts/telemetry/application/report/report-usage-use-case.ts", injected: 6 },
   // A declaration is checked against the clone's consent, kept for the session under the
   // bindings lock, and kept for the branch, whose snapshot takes that lock too and shares it
   // with ingest. The fifth is the environment's refusal. The lock cannot sit inside a store: it

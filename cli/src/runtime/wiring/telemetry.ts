@@ -151,7 +151,9 @@ export function wireTelemetry(homedir: () => string): TelemetryDeps {
       ingestUsageUseCase,
       ledger,
       new DeclaredBindings(sessions, snapshotStore),
-      identity
+      identity,
+      locator,
+      { refusedByEnvironment }
     ),
     manageIdentityUseCase: new ManageIdentityUseCase(identity),
     telemetryOnUseCase: new TelemetryOnUseCase(

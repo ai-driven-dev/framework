@@ -1,5 +1,5 @@
 ---
-status: todo
+status: done
 ---
 
 # Instruction: The report use case narrows, resolves and refuses in order

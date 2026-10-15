@@ -19,6 +19,18 @@ const tally = (records: number, unknown: number): Tally => ({
 const reported: Extract<ReportResult, { status: "reported" }> = {
   status: "reported",
   period: { from: "2026-10-01", to: null },
+  // Given out of order: the envelope prints its own order, whatever the object's.
+  filters: {
+    unattributed: null,
+    absent: "model",
+    repository: "r".repeat(64),
+    session: null,
+    agent: "subagent",
+    model: null,
+    person: null,
+    ticket: null,
+    task: "checkout",
+  },
   report: {
     axis: "task",
     rows: [
@@ -95,6 +107,22 @@ describe("the JSON envelope of a report", () => {
       oldest_transcript_at: "2026-09-20T08:00:00.000Z",
       skipped_ledger_lines: 0,
     });
+  });
+
+  it("names what the report was narrowed to, every flag in a fixed order, as resolved", () => {
+    const envelope = reportEnvelopeOf(reported);
+    expect(Object.keys(envelope).slice(0, 4)).toEqual(["version", "period", "axis", "filters"]);
+    expect(Object.entries(envelope.filters)).toEqual([
+      ["task", "checkout"],
+      ["ticket", null],
+      ["person", null],
+      ["model", null],
+      ["agent", "subagent"],
+      ["session", null],
+      ["repository", "r".repeat(64)],
+      ["absent", "model"],
+      ["unattributed", null],
+    ]);
   });
 
   it("is versioned when nothing was read under AIDD_TELEMETRY=0", () => {
