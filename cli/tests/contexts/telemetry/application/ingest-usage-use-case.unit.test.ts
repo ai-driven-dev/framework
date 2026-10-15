@@ -668,6 +668,14 @@ describe("where a call was made", () => {
     expect(result.notStored.undated).toBe(1);
   });
 
+  it("counts a call whose time names no zone as undated, and keeps it out of the ledger", async () => {
+    const s = setup();
+    s.transcripts.files.set("/t/1.jsonl", [line("A", 1, {}, "2026-10-15T22:00:00")]);
+    const result = await s.ingest.execute();
+    expect(result.notStored.undated).toBe(1);
+    expect(result.added).toBe(0);
+  });
+
   it("keeps what it learned about a directory only when it learned something new", async () => {
     const s = setup();
     s.transcripts.files.set("/t/1.jsonl", [line("A", 1)]);

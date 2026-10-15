@@ -48,6 +48,30 @@ describe("a record belongs to the day of its own time, in UTC", () => {
     expect(dayOf("yesterday")).toBeNull();
     expect(dayOf("")).toBeNull();
   });
+
+  it("has none for a time with no zone, so the day never depends on the machine's", () => {
+    expect(dayOf("2026-10-15T22:00:00")).toBeNull();
+    expect(dayOf("2026-10-15T22:00:00.000")).toBeNull();
+    expect(dayOf("2026-10-15")).toBeNull();
+    expect(dayOf("2026-10-15T22:00:00+0200")).toBeNull();
+  });
+
+  it("has none for a year that is not four digits, before or after the zone is applied", () => {
+    expect(dayOf("+010000-01-01T00:00:00Z")).toBeNull();
+    expect(dayOf("10000-01-01T00:00:00Z")).toBeNull();
+    expect(dayOf("9999-12-31T23:30:00-02:00")).toBeNull();
+    expect(dayOf("0000-01-01T00:30:00+02:00")).toBeNull();
+  });
+
+  it("keeps the last and first day a four-digit year has", () => {
+    expect(dayOf("9999-12-31T23:59:59.999Z")).toBe("9999-12-31");
+    expect(dayOf("0000-01-01T00:00:00Z")).toBe("0000-01-01");
+  });
+
+  it("maps an offset to the UTC day it falls in", () => {
+    expect(dayOf("2026-10-16T01:00:00+02:00")).toBe("2026-10-15");
+    expect(dayOf("2026-10-15T22:00:00z")).toBeNull();
+  });
 });
 
 describe("an ingest reads its calls' days and the day on each side", () => {
@@ -248,6 +272,8 @@ describe("a stored line is read back or refused", () => {
     ["a numeric repository", JSON.stringify({ ...stored(), repository_id: 4 })],
     ["a numeric key", JSON.stringify({ ...stored(), key: 4 })],
     ["a numeric time", JSON.stringify({ ...stored(), at: 4 })],
+    ["a time with no zone", JSON.stringify({ ...stored(), at: "2026-10-15T22:00:00" })],
+    ["a time past year 9999", JSON.stringify({ ...stored(), at: "+010000-01-01T00:00:00Z" })],
     ["a numeric session", JSON.stringify({ ...stored(), session_id: 4 })],
     ["a numeric version", JSON.stringify({ ...stored(), tool_version: 4 })],
     ["a numeric model", JSON.stringify({ ...stored(), model: 4 })],
