@@ -103,3 +103,87 @@ AssertionError: expected { status: 'ambiguous', …(3) } to match object { statu
 The unit case did not see this mutation at first: its out-of-period call sat outside the window read. It now sits on the day before the period, which the window reads to settle.
 
 Acceptance 5 (`.` on a real repository, main tree and linked worktree) is proven against the built binary in phase 3, where ingest really stores the id: the use case's own cases use the locator port.
+
+### Phase 3
+
+`pnpm exec vitest run tests/presentation/commands/telemetry-wiring.integration.test.ts`, before the flags existed:
+
+```txt
+× asks for every day on the total axis when nothing is given, and prints text
+  AssertionError: expected "vi.fn()" to be called with arguments: [ { axis: 'total', …(2) } ]
+× passes every flag it is given, trimmed as a declaration is
+  CommanderError: error: unknown option '--task'
+× reads a bare --unattributed as either reason, and takes one reason
+  CommanderError: error: unknown option '--unattributed'
+× refuses ["--model","m","--absent","model"], which select on one axis, with exit 1 before reading anything
+  CommanderError: error: unknown option '--model'
+× exits 1 when the report cannot name what was asked: {"status":"not-a-repository"}
+Tests  11 failed | 39 passed (50)
+```
+
+`pnpm exec vitest run tests/presentation/display/telemetry/telemetry-report-display.unit.test.ts`:
+
+```txt
+× names each filter as its row would label it, on one line before the table
+  AssertionError: expected [ …(3) ] to deeply equal [ …(3) ]
+× says no call matches when filters keep none, and still shows the coverage
+  AssertionError: expected [ …(4) ] to deeply equal [ …(5) ]
+Tests  2 failed | 19 passed (21)
+```
+
+`pnpm exec vitest run --project=e2e tests/e2e/telemetry-report.e2e.test.ts`, against the built binary:
+
+```txt
+× adds up to the row it selects, a session typed by the eight characters the text shows
+  AssertionError: error: unknown option '--ticket'
+× names with `.` the repository ingest stored, from the main tree and from a linked worktree
+  AssertionError: error: unknown option '--repository'
+× refuses a start two sessions share, naming both in full and sorted
+× refuses flags on one axis with exit 1, naming the flag, and reads nothing
+× refuses `.` outside any repository with exit 1, and reads nothing
+× runs no git for `.` under AIDD_TELEMETRY=0
+  AssertionError: expected 1 to be +0 // Object.is equality
+Tests  7 failed | 18 passed (25)
+```
+
+`node --test scripts/__tests__/check-claude-tokens-end-to-end.test.js`:
+
+```txt
+✖ fails when the report narrowed to the task in this repository misses a call
+✖ fails when `.` is not resolved to the repository's id
+```
+
+Green before the change, by construction, so not red runs: the refusals of a repeated flag, an empty value and an unknown choice (Commander refused the unknown option with exit 1, naming it). Each is proven a guard below.
+
+#### Each guard, broken
+
+The repeat check removed from the flag parser:
+
+```txt
+× refuses an open flag given twice with exit 1, naming the flag, before reading anything
+× refuses a closed flag given twice with exit 1, naming the flag, before reading anything
+× refuses a bare flag given twice with exit 1, naming the flag, before reading anything
+```
+
+An empty value passed through (`if (text === null) return value;`):
+
+```txt
+× refuses a value empty once trimmed with exit 1, naming the flag, before reading anything
+```
+
+The choice check removed:
+
+```txt
+× refuses an agent no call can have with exit 1, naming the flag, before reading anything
+× refuses an axis no call lacks with exit 1, naming the flag, before reading anything
+× refuses a reason no call has with exit 1, naming the flag, before reading anything
+```
+
+The conflict check skipped (`if (false)`):
+
+```txt
+× refuses ["--unattributed","--task","a"], which select on one axis, with exit 1 before reading anything
+× refuses ["--ticket","T","--unattributed","no-binding"], ...
+× refuses ["--absent","ticket","--unattributed"], ...
+× refuses ["--model","m","--absent","model"], ...
+```

@@ -127,7 +127,11 @@ describe("aidd telemetry report", () => {
   it("asks for every day on the total axis when nothing is given, and prints text", async () => {
     report.mockResolvedValue(reported);
     expect(await run("report")).toBeNull();
-    expect(report).toHaveBeenCalledWith({ axis: "total", period: { from: null, to: null } });
+    expect(report).toHaveBeenCalledWith({
+      axis: "total",
+      period: { from: null, to: null },
+      filters: NO_FILTERS,
+    });
     expect(stdout()).toContain("Usage, all days, by total");
   });
 
@@ -137,6 +141,7 @@ describe("aidd telemetry report", () => {
     expect(report).toHaveBeenCalledWith({
       axis: "task",
       period: { from: "2026-10-01", to: "2026-10-07" },
+      filters: NO_FILTERS,
     });
   });
 
@@ -168,6 +173,96 @@ describe("aidd telemetry report", () => {
 
   it("refuses an axis it does not know", async () => {
     await expect(run("report", "--axis", "colour")).rejects.toThrow();
+  });
+});
+
+describe("aidd telemetry report, narrowed", () => {
+  const asked = () => (report.mock.calls[0] as [{ filters: unknown }])[0].filters;
+  /** Commander refuses a flag value itself: with `exitOverride` it throws its exit code. */
+  async function refused(...args: string[]): Promise<number> {
+    try {
+      const code = await run("report", ...args);
+      if (code === null) throw new Error("not refused");
+      return code;
+    } catch (error) {
+      if (error instanceof Error && "exitCode" in error) return error.exitCode as number;
+      throw error;
+    }
+  }
+
+  it("passes every flag it is given, trimmed as a declaration is", async () => {
+    report.mockResolvedValue(reported);
+    await run(
+      "report",
+      ...["--task", "  auth refactor ", "--ticket", "PROJ-1", "--person", "p-1"],
+      ...["--model", "m-1", "--agent", " subagent", "--session", "a1b2", "--repository", "r-1"]
+    );
+    expect(asked()).toEqual({
+      ...NO_FILTERS,
+      task: "auth refactor",
+      ticket: "PROJ-1",
+      person: "p-1",
+      model: "m-1",
+      agent: "subagent",
+      session: "a1b2",
+      repository: "r-1",
+    });
+    vi.clearAllMocks();
+    await run("report", "--absent", " person ");
+    expect(asked()).toEqual({ ...NO_FILTERS, absent: "person" });
+  });
+
+  it("asks for the repository the command runs in for `.`", async () => {
+    report.mockResolvedValue(reported);
+    await run("report", "--repository", " . ");
+    expect(asked()).toEqual({ ...NO_FILTERS, repository: { here: process.cwd() } });
+  });
+
+  it("reads a bare --unattributed as either reason, and takes one reason", async () => {
+    report.mockResolvedValue(reported);
+    await run("report", "--unattributed");
+    expect(asked()).toEqual({ ...NO_FILTERS, unattributed: "any" });
+    vi.clearAllMocks();
+    await run("report", "--unattributed", "declared-none", "--axis", "day");
+    expect(asked()).toEqual({ ...NO_FILTERS, unattributed: "declared-none" });
+  });
+
+  it.each([
+    ["an open flag given twice", ["--task", "a", "--task", "b"], "--task"],
+    ["a closed flag given twice", ["--agent", "main", "--agent", "main"], "--agent"],
+    ["a bare flag given twice", ["--unattributed", "--unattributed"], "--unattributed"],
+    ["a value empty once trimmed", ["--ticket", "   "], "--ticket"],
+    ["an agent no call can have", ["--agent", "robot"], "--agent"],
+    ["an axis no call lacks", ["--absent", "session"], "--absent"],
+    ["a reason no call has", ["--unattributed", "no-task"], "--unattributed"],
+  ])("refuses %s with exit 1, naming the flag, before reading anything", async (_, args, flag) => {
+    expect(await refused(...args)).toBe(1);
+    expect(stderr()).toContain(flag);
+    expect(report).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    [["--unattributed", "--task", "a"], "--task and --unattributed"],
+    [["--ticket", "T", "--unattributed", "no-binding"], "--ticket and --unattributed"],
+    [["--absent", "ticket", "--unattributed"], "--absent ticket and --unattributed"],
+    [["--model", "m", "--absent", "model"], "--model and --absent model"],
+  ])(
+    "refuses %j, which select on one axis, with exit 1 before reading anything",
+    async (args, flags) => {
+      expect(await run("report", ...args)).toBe(1);
+      expect(stderr()).toContain(flags);
+      expect(report).not.toHaveBeenCalled();
+    }
+  );
+
+  it.each([
+    [{ status: "ambiguous", flag: "session", typed: "a", ids: ["a1", "a2"] }, "a1, a2"],
+    [{ status: "not-a-repository" }, "--repository ."],
+  ])("exits 1 when the report cannot name what was asked: %j", async (result, said) => {
+    report.mockResolvedValue(result);
+    expect(await run("report", "--json", "--session", "a")).toBe(1);
+    expect(stderr()).toContain(said);
+    expect(stdout()).toBe("");
   });
 });
 

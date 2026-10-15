@@ -1,6 +1,6 @@
 import type { StoredUsage } from "../stored-usage.js";
 import { compareText } from "../text-order.js";
-import type { Attribution, UnattributedReason } from "./attribution.js";
+import { type Attribution, UNATTRIBUTED_REASONS } from "./attribution.js";
 import { type AxisValue, axisValueOf, type ReportAxis } from "./usage-report.js";
 
 /** The axes a call can have no value for: no model said, no identity set, a task declared
@@ -22,7 +22,8 @@ export const FILTER_AXES = [
 export type FilterAxis = (typeof FILTER_AXES)[number];
 
 /** `--unattributed`: one reason, or either. */
-export type UnattributedSelector = UnattributedReason | "any";
+export const UNATTRIBUTED_SELECTORS = [...UNATTRIBUTED_REASONS, "any"] as const;
+export type UnattributedSelector = (typeof UNATTRIBUTED_SELECTORS)[number];
 
 /** What a report is narrowed to, one key per flag, in the order the envelope prints them;
  * `null` when the flag is not given. A call is kept when every flag given selects it. */

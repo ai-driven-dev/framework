@@ -1,18 +1,28 @@
-import { type Command, Option } from "commander";
+import { type Command, InvalidArgumentError, Option } from "commander";
 import {
   REFUSED_ENVELOPE,
   reportEnvelopeOf,
 } from "../../contexts/telemetry/application/report/report-envelope.js";
+import type { RequestedFilters } from "../../contexts/telemetry/application/report/report-usage-use-case.js";
 import {
   DECLARED_BY,
   type DeclaredBy,
   requestOf,
+  textOrNull,
 } from "../../contexts/telemetry/domain/declaration/task-declaration.js";
 import { periodOf } from "../../contexts/telemetry/domain/report/period.js";
+import {
+  ABSENT_AXES,
+  conflictsOf,
+  type FilterFlag,
+  type ReportFilters,
+  UNATTRIBUTED_SELECTORS,
+} from "../../contexts/telemetry/domain/report/report-filter.js";
 import {
   REPORT_AXES,
   type ReportAxis,
 } from "../../contexts/telemetry/domain/report/usage-report.js";
+import { USAGE_AGENTS } from "../../contexts/telemetry/domain/usage-record.js";
 import { createDeps } from "../../runtime/wiring/framework.js";
 import {
   printForgetResult,
@@ -28,6 +38,31 @@ import {
 } from "../display/telemetry-display.js";
 import { ErrorHandler } from "../error-handler.js";
 import { parseGlobalOptions } from "./global-options.js";
+
+/** One value per flag, trimmed, and one of `choices` when it has them. Commander keeps the last
+ * of a repeated flag silently, and its own `choices` replaces any parser, so both are checked
+ * here. */
+function once(choices?: readonly string[]) {
+  return (value: string, previous: string | undefined): string => {
+    if (previous !== undefined) throw new InvalidArgumentError("Give it once.");
+    const text = textOrNull(value);
+    if (text === null) throw new InvalidArgumentError("It is empty.");
+    if (choices !== undefined && !choices.includes(text)) {
+      throw new InvalidArgumentError(`Allowed choices are ${choices.join(", ")}.`);
+    }
+    return text;
+  };
+}
+
+function filterOption(flags: string, description: string, choices?: readonly string[]): Option {
+  const option = new Option(flags, description);
+  return (choices === undefined ? option : option.choices(choices)).argParser(once(choices));
+}
+
+/** A flag as typed, with its value when it names an axis. */
+function flagWords(filters: ReportFilters, flag: FilterFlag): string {
+  return flag === "absent" ? `--absent ${filters.absent}` : `--${flag}`;
+}
 
 export function registerTelemetryCommand(program: Command): void {
   const telemetry = program
@@ -181,26 +216,76 @@ export function registerTelemetryCommand(program: Command): void {
     .addOption(
       new Option("--axis <axis>", "What to split by").choices(REPORT_AXES).default("total")
     )
+    .addOption(filterOption("--task <name>", "Only the calls of this task"))
+    .addOption(filterOption("--ticket <ref>", "Only the calls of this ticket, as declared"))
+    .addOption(filterOption("--person <id>", "Only the calls of this identity"))
+    .addOption(filterOption("--model <id>", "Only the calls of this model"))
+    .addOption(filterOption("--agent <agent>", "Only the calls of this agent", USAGE_AGENTS))
+    .addOption(
+      filterOption("--session <id>", "Only the calls of this session, or a start of its id")
+    )
+    .addOption(
+      filterOption(
+        "--repository <id>",
+        "Only the calls of this repository, a start of its id, or . for the one here"
+      )
+    )
+    .addOption(
+      filterOption("--absent <axis>", "Only the calls with no value on this axis", ABSENT_AXES)
+    )
+    .addOption(
+      filterOption(
+        "--unattributed [reason]",
+        "Only the work with no task, for this reason",
+        UNATTRIBUTED_SELECTORS
+      ).preset("any")
+    )
     .option("--json", "Print a versioned JSON envelope instead of text", false)
     .action(
-      async (cmdOptions: {
-        from?: string;
-        to?: string;
-        days?: string;
-        axis: ReportAxis;
-        json: boolean;
-      }) => {
+      async (
+        cmdOptions: {
+          from?: string;
+          to?: string;
+          days?: string;
+          axis: ReportAxis;
+          json: boolean;
+        } & Partial<ReportFilters>
+      ) => {
         const { verbose, output, projectRoot } = parseGlobalOptions(program);
         const period = periodOf(cmdOptions, new Date());
         if (!period.ok) {
           output.error(period.message);
           process.exit(1);
         }
+        const given: ReportFilters = {
+          task: cmdOptions.task ?? null,
+          ticket: cmdOptions.ticket ?? null,
+          person: cmdOptions.person ?? null,
+          model: cmdOptions.model ?? null,
+          agent: cmdOptions.agent ?? null,
+          session: cmdOptions.session ?? null,
+          repository: cmdOptions.repository ?? null,
+          absent: cmdOptions.absent ?? null,
+          unattributed: cmdOptions.unattributed ?? null,
+        };
+        const [conflict] = conflictsOf(given);
+        if (conflict !== undefined) {
+          const [first, second] = conflict;
+          output.error(
+            `${flagWords(given, first)} and ${flagWords(given, second)} select on the same axis, so together they keep nothing: give one of them.`
+          );
+          process.exit(1);
+        }
+        const filters: RequestedFilters = {
+          ...given,
+          repository: given.repository === "." ? { here: projectRoot } : given.repository,
+        };
         try {
           const deps = await createDeps(projectRoot, { verbose }, output);
           const result = await deps.telemetry.reportUsageUseCase.execute({
             axis: cmdOptions.axis,
             period: period.period,
+            filters,
           });
           if (result.status === "not-a-repository" || result.status === "ambiguous") {
             printUsageReport(output, result);

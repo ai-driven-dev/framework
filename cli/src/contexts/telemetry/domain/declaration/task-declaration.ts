@@ -42,7 +42,9 @@ export type DeclarationRequest =
   | { readonly kind: "task"; readonly task: string; readonly ticket: string | null }
   | { readonly kind: "none" };
 
-function textOrNull(value: string | null | undefined): string | null {
+/** Text as a person typed it, trimmed; `null` when nothing is left. A report filter is trimmed
+ * the same way, so it compares with what was stored. */
+export function textOrNull(value: string | null | undefined): string | null {
   const trimmed = value?.trim() ?? "";
   return trimmed === "" ? null : trimmed;
 }

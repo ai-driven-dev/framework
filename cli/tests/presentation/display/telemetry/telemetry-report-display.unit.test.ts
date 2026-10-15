@@ -297,4 +297,47 @@ describe("printing a usage report", () => {
     ]);
     expect(output.lines).toHaveLength(1);
   });
+
+  it("names each filter as its row would label it, on one line before the table", () => {
+    const filters: ReportFilters = {
+      ...NO_FILTERS,
+      task: "auth\nrefactor",
+      ticket: "PROJ-1",
+      session: "a1b2c3d4-0000-4000-8000-000000000001",
+      repository: "f".repeat(64),
+      agent: "subagent",
+      absent: "model",
+      person: "p-1",
+    };
+    const lines = printed(result("day", [[value("2026-10-02"), one]], one, {}, BOTH, filters));
+    expect(lines.slice(0, 3)).toEqual([
+      "Usage, 2026-10-01 to 2026-10-07, by day",
+      "Selected: task = auth refactor, ticket = PROJ-1, person = p-1, agent = subagent, session = a1b2c3d4, repository = ffffffff, model = unknown model",
+      "",
+    ]);
+    const absentOf = (absent: ReportFilters["absent"]) =>
+      printed(result("total", [], one, {}, BOTH, { ...NO_FILTERS, absent }))[1];
+    expect(absentOf("person")).toBe("Selected: person = not set");
+    expect(absentOf("ticket")).toBe("Selected: ticket = no ticket");
+    const unattributed = (reason: ReportFilters["unattributed"]) =>
+      printed(result("total", [], one, {}, BOTH, { ...NO_FILTERS, unattributed: reason }))[1];
+    expect(unattributed("no-binding")).toBe("Selected: task = unattributed: no task declared");
+    expect(unattributed("declared-none")).toBe("Selected: task = unattributed: declared no task");
+    expect(unattributed("any")).toBe("Selected: task = unattributed, either reason");
+  });
+
+  it("prints no selection line when no filter is given", () => {
+    expect(printed(result("total", [[value("total"), one]], one))[1]).toBe("");
+  });
+
+  it("says no call matches when filters keep none, and still shows the coverage", () => {
+    const filters = { ...NO_FILTERS, task: "nothing" };
+    expect(printed(result("total", [], tally(0, [0, 0, 0, 0]), {}, BOTH, filters))).toEqual([
+      "Usage, 2026-10-01 to 2026-10-07, by total",
+      "Selected: task = nothing",
+      "No call in this period matches these filters.",
+      "",
+      "Read 2 transcripts just now; 3 calls in this period; oldest transcript on disk: 2026-09-20.",
+    ]);
+  });
 });

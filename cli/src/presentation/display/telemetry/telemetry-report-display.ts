@@ -4,6 +4,10 @@ import type {
 } from "../../../contexts/telemetry/application/report/report-usage-use-case.js";
 import type { Period } from "../../../contexts/telemetry/domain/report/period.js";
 import {
+  FILTER_AXES,
+  type ReportFilters,
+} from "../../../contexts/telemetry/domain/report/report-filter.js";
+import {
   type AxisValue,
   COUNTERS,
   type CounterSum,
@@ -53,6 +57,22 @@ function labelOf(axis: ReportAxis, value: AxisValue): string {
   const shown =
     axis === "session" || axis === "repository" ? value.value.slice(0, SHORT) : value.value;
   return oneLine(shown);
+}
+
+/** Each filter given, as the row it selects is labelled; `null` when none is. */
+function selectionLine(filters: ReportFilters): string | null {
+  const parts = FILTER_AXES.flatMap((axis) => {
+    const value = filters[axis];
+    return value === null ? [] : [`${axis} = ${labelOf(axis, { kind: "value", value })}`];
+  });
+  if (filters.absent !== null) {
+    parts.push(`${filters.absent} = ${labelOf(filters.absent, { kind: "absent" })}`);
+  }
+  if (filters.unattributed === "any") parts.push("task = unattributed, either reason");
+  else if (filters.unattributed !== null) {
+    parts.push(`task = ${labelOf("task", { kind: "unattributed", reason: filters.unattributed })}`);
+  }
+  return parts.length === 0 ? null : `Selected: ${parts.join(", ")}`;
 }
 
 function grouped(n: number): string {
@@ -151,10 +171,16 @@ export function printUsageReport(output: CLIOutput, result: ReportResult): void 
     );
     return;
   }
-  const { report, coverage, period } = result;
+  const { report, coverage, period, filters } = result;
   output.print(`Usage, ${periodWords(period)}, by ${report.axis}`);
+  const selection = selectionLine(filters);
+  if (selection !== null) output.print(selection);
   if (report.totals.records === 0) {
-    output.print("No calls in this period.");
+    output.print(
+      selection === null
+        ? "No calls in this period."
+        : "No call in this period matches these filters."
+    );
   } else {
     output.print("");
     for (const line of table(report.axis, report.rows, report.totals)) output.print(line);
