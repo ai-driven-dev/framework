@@ -2,9 +2,9 @@
 
 ## Behavior
 
-Turn the contract into a proportional plan, then give one executor the whole plan or delegate ready independent phases. For phase delegation, the caller owns preparation, dependencies, write isolation, integration, and finalization; give each executor its scope, criteria, checkout, validation resources, and commit policy. Integrate prerequisites before starting dependent phases.
+Turn the contract into a proportional plan, then give one executor the whole plan or delegate ready independent phases. For delegated phases, the caller owns preparation, dependencies, write isolation, integration, and finalization; give each executor its scope, criteria, validation resources, and commit policy. Integrate prerequisites before starting dependent phases.
 
-The executor implements its scope and calls the validation skills, which own their checks and repair loops. Include architecture conformance whenever the project documents architecture. Run an end-to-end journey after every other validation when the plan calls for one, and none otherwise. Finalize delegated phases together after integration and required validation.
+The executor follows the implementation skill for its assigned scope and calls the validation skills, which own their checks and repair loops. Include architecture conformance whenever the project documents architecture. Whole-plan execution keeps its normal flow; phase executors return for integration. Finalize the integrated plan once, including any required end-to-end journey after other checks and before marking it implemented.
 
 Commit and push the validated work through the commit skill. Send only the clean committed candidate and its evidence to Check.
 
@@ -26,8 +26,7 @@ flowchart TD
     Implement["/aidd-dev:02-implement"]
     Assert["/aidd-dev:03-assert"]
     Integrate["Integrate phases"]
-    Test["/aidd-dev:06-test"]
-    Finalize["Finalize if phases were delegated"]
+    Finalize["Finalize integrated plan; /aidd-dev:06-test journey last when required"]
     Commit["/aidd-vcs:01-commit"]
   end
 
@@ -41,14 +40,12 @@ flowchart TD
   Plan --> PlanArtifact
   PlanArtifact -- "Whole plan, or ready independent phases." --> Executor
   Executor -- "Assigned plan or phase." --> Implement
-  Implement --> Assert
+  Implement -- "Whole plan finalized." --> Commit
+  Implement -- "Assigned phase returned." --> Assert
   Assert --> Integrate
   Integrate -- "More ready phases." --> Executor
-  Integrate -- "No required end-to-end journey." --> Finalize
-  Integrate -- "Run required end-to-end journey last." --> Test
-  Test -- "Journey passed." --> Finalize
-  Test -- "Return a failed journey for repair." --> Executor
-  Finalize -- "Acceptance failed; repair affected phase." --> Executor
+  Integrate --> Finalize
+  Finalize -- "Validation or journey failed; repair affected phase." --> Executor
   Finalize --> Commit
   Commit --> CommittedCandidate
   CommittedCandidate --> Check
@@ -58,7 +55,7 @@ flowchart TD
   classDef artifact fill:#DCFCE7,stroke:#16A34A,color:#14532D,stroke-width:2px
   classDef zone fill:#F1F5F9,stroke:#64748B,color:#0F172A,stroke-width:2px
 
-  class Plan,Implement,Assert,Test,Commit skill
+  class Plan,Implement,Assert,Finalize,Commit skill
   class Executor agent
   class Contract,PlanArtifact,CommittedCandidate artifact
   class Check zone

@@ -12,9 +12,9 @@ Or a `blocked` / `replan needed` report.
 
 ## Process
 
-1. **Open.** Select assigned phases whose dependencies are done and integrated; use plan order when dependencies are undeclared.
-   - The caller may run independent phases in parallel with distinct checkouts/Git indexes, separate write ownership, and nonconflicting validation resources; otherwise run serially.
-   - Missing or contradictory dependencies, or unfinished work with no ready phase, require `replan needed`.
+1. **Open.** Select assigned phases whose dependencies are done and integrated; use serial plan order when dependencies are undeclared.
+   - The caller may run independent phases in parallel with separate write ownership and nonconflicting validation resources. Use separate checkouts/indexes when workers perform Git operations; otherwise the caller owns Git. Run serially when isolation is uncertain.
+   - A declared prerequisite with no matching phase, contradictory dependencies, or unfinished work with no ready phase requires `replan needed`.
    - Set the current phase `status: in-progress`.
    - In a feature folder, read `phase-<n>.md` beside `plan.md`.
 2. **Code.** Build the next task or inseparable group against its acceptance criteria.

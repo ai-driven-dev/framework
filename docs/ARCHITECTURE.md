@@ -109,7 +109,7 @@ flowchart TB
 | Skill | Host loads `SKILL.md` on invocation; work runs in the caller's context. |
 | Caller | Owns scope, delegation, integration, and acceptance. |
 | Orchestrator | Sequences capabilities on the caller's behalf. |
-| Agent | Isolates work and returns a result. Invokes declared recipe capabilities; reads supporting references while leaving recipe routing and delegation to the caller. |
+| Agent | Isolates a scoped task, invokes declared recipes, reads supporting references, and returns its result to the caller. |
 | Recipe | Primary callers may delegate bounded work; isolated recipes return to their caller. |
 | Reconnaissance helper | Read-only; neither mutates nor spawns. |
 | Write path | At most two delegation layers; no cycles. |
@@ -142,7 +142,7 @@ Queries and reports share one CLI implementation to avoid duplicated logic. CLI-
 | Context | Rule |
 | --- | --- |
 | Dispatch tables (`## Actions`), orchestration references and agent permissions (`# Skills you may invoke`) | Canonical `/plugin:folder` or `@plugin:agent` addresses. Elsewhere, name the responsibility. |
-| Cross-plugin providers | Discover by description; verify availability and role before dispatch. |
+| Cross-plugin providers | Recipes discover by description rather than hardcoding siblings; orchestrators verify installation before dispatch. |
 | Backlog flow | Owned by `aidd-orchestrator:02-backlog`. |
 | Orthogonality exceptions | `isExemptFromOrthogonality` permits responsibility maps in `plugins/aidd-orchestrator/**` and onboarding menus in `plugins/aidd-context/skills/00-onboard/**`. The onboarding exemption ends with runtime provider discovery. |
 

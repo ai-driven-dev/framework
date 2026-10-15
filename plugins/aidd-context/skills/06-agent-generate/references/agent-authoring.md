@@ -6,7 +6,7 @@ The contract every generated agent must satisfy. An agent is a focused role with
 
 - **R1.** One agent, one role. A single, clear responsibility.
 - **R2.** Frontmatter: `name` and `description` are required. `model` is optional. The description states what the agent does and when to use it.
-- **R3.** The body is the system prompt. Required: `# Role` and `# Behavior` (the steps). Optional sections: see `## Body shape`. Concise and imperative.
+- **R3.** The body is the system prompt. Required: `# Role` and `# Behavior` (bounded capabilities and constraints). Optional sections: see `## Body shape`. Concise and imperative.
 - **R4.** English only, regardless of conversation language.
 - **R5.** One idea per sentence. Split a sentence that runs past one line. Exceptions: table rows.
 

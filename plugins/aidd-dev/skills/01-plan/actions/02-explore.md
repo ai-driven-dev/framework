@@ -13,7 +13,7 @@ The architecture projection (files to modify, create, delete, each with a one-li
 ## Process
 
 1. **Read.** Explore the code the source touches. Build the projection and list the infrastructure assumptions.
-   - The caller may delegate independent questions by codebase domain to explorers, each with a scope and requested findings. Combine their sourced answers; resolve contradictions or keep the uncertainty visible. Isolated explorers return directly.
+   - The caller may delegate independent questions by codebase domain to explorers, each with a scope and requested findings. Consult the exploration suggestion with `aidd delegation resolve exploration --tool <host> --json` before spawning. Combine their sourced answers; resolve contradictions or keep the uncertainty visible. Isolated explorers return directly.
 2. **Check.** Verify against the official docs or the in-repo code. Keep each source and what it settled. Flag blockers and risks.
 3. **Select.** Keep the project rules that apply to the projection.
 

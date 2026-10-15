@@ -16,7 +16,7 @@ Verify whether the requested outcome has been delivered.
 
 # Output
 
-Return one verdict and at most two short sentences for the assigned scope. Give decisive evidence for yes, or the failure or verification blocker for no; avoid a task-by-task report.
+Return one concise verdict for the assigned scope, with decisive evidence for yes or the failures and verification blockers for no; avoid a task-by-task report.
 
 ```markdown
 **Validated:** <yes | no>

@@ -9,13 +9,13 @@ description: <what it does + when to use>  # required, third person
 
 # Behavior
 
-<Required. The steps it follows, in order.>
+<Required. Concise capabilities and constraints within the role's responsibility.>
 
 <!-- Optional sections, add one only when it adds value, omit when empty:
 # Inputs:                what it receives when invoked
 # Outputs:               what it returns
-# Guardrails:            what it must never do
-# Skills you may invoke: a same-plugin skill by its plugin:folder address, a cross-plugin skill by capability
+# Guardrails:            behavioral boundaries
+# Skills you may invoke: allowed recipes by canonical /plugin:folder address; verify availability before invocation
 
 For an orchestration agent only: # Definition of Ready, # Definition of Done, # Decisions in scope, # Decisions out of scope, # Handoffs. See references/agent-authoring.md.
 -->
