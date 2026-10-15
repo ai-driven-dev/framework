@@ -26,9 +26,10 @@ export interface UsageLedger {
   load(days?: ReadonlySet<string>): Promise<LoadedLedger>;
   /** Makes the ledger hold exactly these records, every other partition removed. A partition
    * that already holds what it should is not touched. Given `partitions`, a day is written
-   * from `records` (or removed once empty), and a month has each of its days written that
-   * `records` hold or that is on disk, then its monthly partition removed, last. No other
-   * partition is read: the caller vouches that the rest is as it was. */
+   * from `records`, or removed when they hold none for it; a month has each of its days
+   * written from `records`, each of its days on disk they hold none for removed, then its
+   * monthly partition removed, last. No other partition is read: the caller vouches that the
+   * rest is as it was. */
   save(records: readonly StoredUsage[], partitions?: ReadonlySet<string>): Promise<void>;
   positions(): Promise<ReadonlyMap<string, TranscriptPosition>>;
   savePositions(positions: ReadonlyMap<string, TranscriptPosition>): Promise<void>;

@@ -10,7 +10,8 @@ export interface Stored {
 
 /** Folds incoming calls into the days around them, and rewrites only the days that changed,
  * plus any partition read that was damaged or not in daily form, so a month is split and a
- * torn line dropped once. Nothing outside the window is read. Runs under the caller's lock. */
+ * torn line dropped once. Nothing outside the window is read, except a monthly file it
+ * splits and every day of that month. Runs under the caller's lock. */
 export async function storeCalls(
   ledger: UsageLedger,
   incoming: readonly StoredUsage[]

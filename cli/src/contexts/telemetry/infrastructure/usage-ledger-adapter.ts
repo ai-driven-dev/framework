@@ -28,10 +28,13 @@ function partitionOf(name: string): string {
  * `<YYYY-MM-DD>.jsonl`, one record per line, by the UTC day of the record's own time. A better
  * snapshot of a call replaces the one held, and its time can fall in another day, so the
  * ledger is never appended to: a changed day is rewritten whole, by temporary file and
- * rename, and an unchanged one is not touched. Each call is therefore on disk once, no reader
- * ever meets a torn line, and the bytes depend on what the ledger holds and not on how it got
- * there. An ingest reads and writes only the days around its calls, so its cost does not grow
- * with the ledger.
+ * rename, and an unchanged one is not touched, so no reader ever meets a torn line. An ingest
+ * reads the days around its calls, plus every day of a month it splits, and writes only what
+ * changed, so its cost does not grow with the ledger. Between reports, a call whose snapshots
+ * fell outside that window may sit in two days, and a crashed split leaves it in a month and a
+ * day: every reader folds at read, so it is still counted once. Once a report has settled the
+ * ledger, each call is on disk once and the bytes depend on what the ledger holds and not on
+ * how it got there.
  *
  * `<YYYY-MM>.jsonl` is a month as an earlier version wrote it: still read, and split into its
  * days, its own file removed after them, so a crash in between leaves each call in both and
