@@ -126,12 +126,8 @@ export class UsageLedgerAdapter implements UsageLedger {
  * monthly file: a half-finished split may hold a better snapshot in any day of that month. */
 function inWindow(names: readonly string[], days: ReadonlySet<string>): string[] {
   const touched = new Set([...days].map((day) => day.slice(0, 7)));
-  const splitting = new Set(
-    names
-      .filter((name) => MONTHLY.test(name))
-      .map(partitionOf)
-      .filter((month) => touched.has(month))
-  );
+  // A day's key never equals a month's, so only a monthly file can match a touched month.
+  const splitting = new Set(names.map(partitionOf).filter((month) => touched.has(month)));
   return names.filter((name) => {
     const partition = partitionOf(name);
     return MONTHLY.test(name)
