@@ -8,10 +8,18 @@ The skill written by 03.
 
 ## Output
 
-A report, one row per written file: checks, findings or none, and fixes applied.
+A report, one row per file: what was checked and any fix applied.
 
 ## Process
 
 1. **Review.** Review each file against [review-protocol.md](../references/review-protocol.md).
-2. **Fix.** Apply the confirmed fixes on disk, read them back, and re-review until no breach remains.
-3. **Report.** Deliver the report, even when clean.
+2. **Fix.** Apply the confirmed fixes on disk, then re-review the changed files.
+3. **Report.** Deliver the findings, even when clean.
+
+## Test
+
+| Case | Pass |
+| --- | --- |
+| The report is delivered | every written file has a row, with its findings or none |
+| The review finds a breach | it names the broken rule and a `file:line` |
+| A fix is confirmed | the file differs on disk and is reviewed again |
