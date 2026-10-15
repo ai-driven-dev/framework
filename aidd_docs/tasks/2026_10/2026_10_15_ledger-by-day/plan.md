@@ -1,6 +1,6 @@
 ---
 objective: "One ingested call costs the days it touches, not the whole ledger: the ledger is partitioned by UTC day, monthly partitions migrate, and a report leaves the bytes canonical."
-status: pending
+status: in-progress
 ---
 
 <!-- Fill or omit these sections; never add, rename, or reorder one. -->

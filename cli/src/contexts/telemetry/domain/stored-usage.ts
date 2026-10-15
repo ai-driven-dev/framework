@@ -26,6 +26,29 @@ export function monthOf(at: string): string | null {
   return Number.isNaN(instant) ? null : new Date(instant).toISOString().slice(0, 7);
 }
 
+/** `YYYY-MM-DD` in UTC, so a ledger partition does not depend on the machine's time zone. */
+export function dayOf(at: string): string | null {
+  const instant = Date.parse(at);
+  return Number.isNaN(instant) ? null : new Date(instant).toISOString().slice(0, 10);
+}
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+/** The days an ingest of these records reads: each record's day and the day on each side. A
+ * call's snapshots are written minutes apart, so a neighbour day holds any earlier one. */
+export function daysAround(records: readonly UsageRecord[]): ReadonlySet<string> {
+  const days = new Set<string>();
+  for (const record of records) {
+    const day = dayOf(record.at);
+    if (day === null) continue;
+    const midnight = Date.parse(`${day}T00:00:00.000Z`);
+    for (const instant of [midnight - DAY_MS, midnight, midnight + DAY_MS]) {
+      days.add(new Date(instant).toISOString().slice(0, 10));
+    }
+  }
+  return days;
+}
+
 function id(record: UsageRecord): string {
   return `${record.tool}\u0000${record.key}`;
 }
@@ -65,29 +88,42 @@ export function upsertUsage(
   return { records, added, updated, months };
 }
 
-/** Records grouped by the month of their own time, each month in time order then key, so the
+/** Records grouped by the day of their own time, each day in time order then key, so the
  * bytes of a partition depend on what it holds and never on the order it was found in. A
- * record whose time does not parse has no month and is left out. Linear in the records, bar
- * the sort: each time is parsed once, and each month's array only ever grows by `push`. */
+ * record whose time does not parse has no day and is left out. Linear in the records, bar
+ * the sort: each time is parsed once, and each day's array only ever grows by `push`. */
+export function partitionByDay(
+  records: readonly StoredUsage[]
+): ReadonlyMap<string, readonly StoredUsage[]> {
+  return partitionBy(records, dayOf);
+}
+
 export function partitionByMonth(
   records: readonly StoredUsage[]
+): ReadonlyMap<string, readonly StoredUsage[]> {
+  return partitionBy(records, monthOf);
+}
+
+function partitionBy(
+  records: readonly StoredUsage[],
+  partitionOf: (at: string) => string | null
 ): ReadonlyMap<string, readonly StoredUsage[]> {
   const dated: { readonly record: StoredUsage; readonly instant: number; readonly id: string }[] =
     [];
   for (const record of records) {
-    if (monthOf(record.at) !== null) {
+    if (partitionOf(record.at) !== null) {
       dated.push({ record, instant: Date.parse(record.at), id: id(record) });
     }
   }
   dated.sort((a, b) => a.instant - b.instant || compareText(a.id, b.id));
-  const months = new Map<string, StoredUsage[]>();
+  const partitions = new Map<string, StoredUsage[]>();
   for (const { record } of dated) {
-    const month = monthOf(record.at) as string;
-    const held = months.get(month);
-    if (held === undefined) months.set(month, [record]);
+    const partition = partitionOf(record.at) as string;
+    const held = partitions.get(partition);
+    if (held === undefined) partitions.set(partition, [record]);
     else held.push(record);
   }
-  return new Map([...months.entries()].sort(([a], [b]) => compareText(a, b)));
+  return new Map([...partitions.entries()].sort(([a], [b]) => compareText(a, b)));
 }
 
 function isText(value: unknown): value is string {
