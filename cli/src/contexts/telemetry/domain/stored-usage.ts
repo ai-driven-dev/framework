@@ -21,7 +21,8 @@ const COUNTERS = [
 ] as const;
 
 /** A time that names its own zone and a four-digit year: anything else would be read in the
- * machine's zone, or give a day no partition name can hold. */
+ * machine's zone, or give a day no partition name can hold. The closing anchor states the
+ * whole shape; V8 already rejects any text after an ISO time, so no test can observe it. */
 const ZONED = /^\d{4}-\d{2}-\d{2}T[^Z+-]*(Z|[+-]\d{2}:\d{2})$/;
 
 /** `YYYY-MM-DD` in UTC, so a ledger partition does not depend on the machine's time zone, or
@@ -136,7 +137,8 @@ function isStoredUsage(
     (USAGE_AGENTS as readonly unknown[]).includes(object.agent) &&
     isText(object.key) &&
     isText(object.session_id) &&
-    dayOf(String(object.at)) !== null &&
+    typeof object.at === "string" &&
+    dayOf(object.at) !== null &&
     isText(object.repository_id) &&
     isNullableText(object.tool_version) &&
     isNullableText(object.model) &&

@@ -277,6 +277,7 @@ describe("a stored line is read back or refused", () => {
     ["a numeric repository", JSON.stringify({ ...stored(), repository_id: 4 })],
     ["a numeric key", JSON.stringify({ ...stored(), key: 4 })],
     ["a numeric time", JSON.stringify({ ...stored(), at: 4 })],
+    ["a time in an array", JSON.stringify({ ...stored(), at: ["2026-10-07T10:00:00.000Z"] })],
     ["a time with no zone", JSON.stringify({ ...stored(), at: "2026-10-15T22:00:00" })],
     ["a time past year 9999", JSON.stringify({ ...stored(), at: "+010000-01-01T00:00:00Z" })],
     ["a numeric session", JSON.stringify({ ...stored(), session_id: 4 })],
