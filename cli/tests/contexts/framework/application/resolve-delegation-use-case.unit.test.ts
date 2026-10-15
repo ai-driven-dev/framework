@@ -120,7 +120,7 @@ describe("resolving an installed delegation suggestion", () => {
 
   it("honors CODEX_HOME and inherits omitted settings", async () => {
     const { fs, repo } = setup("codex");
-    const path = "/custom/codex/agents/aidd-dev-explorer.toml";
+    const path = join("/custom/codex", "agents", "aidd-dev-explorer.toml");
     await fs.writeFile(path, 'name = "actual-role"\ndeveloper_instructions = "Body"');
     const useCase = new ResolveDelegationUseCase(fs, repo, new Map());
     const result = await useCase.execute({
@@ -145,7 +145,7 @@ describe("resolving an installed delegation suggestion", () => {
       "---\nname: Personal\n---\nPersonal behavior"
     );
     expect((await selected.resolve()).agent?.path).toBe(
-      "/person/.copilot/agents/aidd-dev-explorer.agent.md"
+      join(HOME, ".copilot", "agents", "aidd-dev-explorer.agent.md")
     );
   });
 
@@ -172,7 +172,7 @@ describe("resolving an installed delegation suggestion", () => {
     });
     expect(result.agent).toMatchObject({
       name: "selected-agent",
-      path: "/relocated/agents/aidd-dev-explorer.md",
+      path: join("/relocated", "agents", "aidd-dev-explorer.md"),
     });
   });
 
@@ -256,7 +256,7 @@ describe("resolving an installed delegation suggestion", () => {
     ).execute({ projectRoot: ROOT, home: HOME, env: {}, task: "exploration", tool: "claude" });
     expect(result.agent).toEqual({
       name: "aidd-dev:explorer",
-      path: "/native/aidd-dev/agents/explorer.md",
+      path: join("/native/aidd-dev", "agents", "explorer.md"),
       mode: "marketplace",
     });
   });

@@ -140,7 +140,9 @@ describe("aidd auth login — what it refuses before building anything", () => {
   it("refuses a run that names two ways of authenticating at once", async () => {
     const exit = refusing();
 
-    await expect(run("login", "--gh", "--token", "ghp_x")).rejects.toThrow("exited");
+    await expect(run("login", "--gh", "--token", "ghp_x", "--level", "user")).rejects.toThrow(
+      "exited"
+    );
 
     expect(errors[0]).toBe("Error: --gh and --token are mutually exclusive.\n");
     expect(exit).toHaveBeenCalledWith(1);

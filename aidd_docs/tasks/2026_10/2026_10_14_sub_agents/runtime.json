@@ -369,6 +369,18 @@
         "Killed": 321,
         "Survived": 15
       }
+    },
+    "presentation": {
+      "score_percent": 95.0187,
+      "unchanged_floor": 95,
+      "exit": 0,
+      "mutant_status_counts": {
+        "NoCoverage": 35,
+        "Killed": 2516,
+        "Survived": 98,
+        "Timeout": 21
+      },
+      "isolated_auth_guard": "Killed"
     }
   }
 }

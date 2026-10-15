@@ -85,7 +85,7 @@ A disposable whole-plan execution invokes `/aidd-dev:02-implement`, repairs the 
 
 ### Final checks
 
-- **CLI:** after integrating `next` at `0a103e67`, 503 test files pass, one skipped; 6,545 tests pass, one skipped. Architecture, typecheck, lint, type honesty and unused-code gates pass. Bundle is 515.7 KB against Next's 695 KB budget. The local run unsets inherited `CODEX_THREAD_ID` so two imported telemetry fixtures use their own session IDs.
+- **CLI:** after integrating `next` at `0a103e67`, 504 test files pass, one skipped; 6,551 tests pass, one skipped. Architecture, typecheck, lint, type honesty and unused-code gates pass. Bundle is 515.7 KB against Next's 695 KB budget. The local run unsets inherited `CODEX_THREAD_ID` so two imported telemetry fixtures use their own session IDs.
 - **Scripts:** the wrapped full suite passes 498 tests after Next retires the previous telemetry suite. Five native-home regressions failed before their default-path corrections and pass afterward; explicit path overrides retain priority. Missing Claude installation paths fail without writing into the current directory; reload fixtures stay in their temporary home.
 - **Integration:** the real resolver finds installed agents on all five hosts, preserves project configuration bytes, leaves missing tasks inherited, and rejects unsupported Cursor plugin effort. Actual `make reload` exits 0 after the final corrections; the personal-file preservation check still passes.
 - **Guards:** removing the unknown-field rejection and bypassing Claude activation each causes the targeted test to fail. Exact source bytes were restored and the named tests pass; both full native scopes subsequently pass: Cursor 97.4% against 97%, OpenCode 95.0% against 94%, with unchanged floors.
@@ -96,6 +96,8 @@ A disposable whole-plan execution invokes `/aidd-dev:02-implement`, repairs the 
 
 The first CI run caught a missing smoke command, a stale checker-name expectation in the real Kilo probe, Windows fixture path/JSON issues, and two mutation-floor failures. Only test coverage and fixtures changed afterward; production behavior and mutation floors remain unchanged.
 
-Before the Next integration, the smoke suite passed 140 checks with 35/35 commands exercised; official Kilo 7.7.5 passed its real loopback runtime test with all four current roles. The Windows-style JSON serialization regression remains in the root suite. Windows execution is checked by the PR's CI jobs.
+After the Next integration, the smoke suite passes 135 checks with 33/33 commands exercised. Official Kilo 7.7.5 passed its real loopback runtime test with all four current roles before that integration. Windows fixture serialization and native path expectations are covered; Windows execution is checked by the PR's CI jobs.
 
 Fifteen native profile cases cover invalid selector boundaries, malformed option groups, personal agent identity, configuration versus spawn surfaces, and the OpenCode XDG override. Malformed-error assertions now inspect the actual error message; the earlier assertion could accept an undefined rejection. Both complete mutation scopes pass their original floors; exact status counts are retained in [runtime.json](runtime.json).
+
+Six command-wiring cases cover delegation JSON, text, inheritance, diagnostics, required host and failure routing. The existing authentication mutual-exclusion test now supplies a valid storage level, preventing a later guard from masking the one under test. Presentation mutation passes at 95.0187% against the unchanged 95% floor; the removed guard is detected. Production behavior is unchanged by these test corrections.
