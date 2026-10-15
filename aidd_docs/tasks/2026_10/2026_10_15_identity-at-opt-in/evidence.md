@@ -164,3 +164,50 @@ Tests  1 failed | 29 passed (30)
 Test Files  505 passed | 1 skipped (506)
      Tests  6553 passed | 1 skipped (6554)
 ```
+
+### Phase 3: gates
+
+Every run of the built binary was sandboxed: `pnpm smoke` relocates `HOME` and sets `AIDD_USER_CONFIG_DIR`, `AIDD_TELEMETRY_DIR`, `CLAUDE_CONFIG_DIR` itself, and was given a temporary `XDG_CONFIG_HOME` and `GIT_CONFIG_NOSYSTEM=1`; `check-claude-tokens-end-to-end.cjs` builds its own temporary home.
+
+`pnpm smoke` (builds first, so the bundle budget runs with it):
+
+```txt
+Bundle size: 686.2 KB / budget: 695 KB
+=== telemetry (sandboxed profile) ===
+  ✓ telemetry on
+PASS: 132   FAIL: 0   SKIP: 1   ·   coverage 100%
+```
+
+`node scripts/check-claude-tokens-end-to-end.cjs cli/dist/cli.js`, exit 0:
+
+```txt
+2 calls, 393 tokens, all on task demo, ticket T-1
+```
+
+`node scripts/check-claude-tokens-end-to-end.cjs --attended cli/dist/cli.js`, exit 0:
+
+```txt
+2 calls, 393 tokens, all on task demo, ticket T-1; asked, answered by the hook, kept across /clear
+```
+
+`pnpm knip`: no finding.
+
+`pnpm test:mutation:telemetry` (49 minutes, run alongside the other gates):
+
+```txt
+3998 mutants, 136 survived, 28 timed out
+Report: reports/mutation/telemetry/ (score 96.2, floor 96)
+```
+
+No mutant survives on a line this change added or modified: the survivors in the files it touched are on lines it left alone (`telemetry-on-use-case.ts` 153 and 155, inside `grant`; `telemetry-lifecycle-display.ts` 149, 167, 168, the forget listing; `telemetry-report-display.ts` 91, 102, 149; `person-identity.ts` 22). The new files (`propose-identity-use-case.ts`, `git-user-source-adapter.ts`) have every mutant killed: 6 of 6 and 13 of 13.
+
+`pnpm exec lefthook run pre-commit`: every command green (`cli-architecture`, `cli-biome`, `cli-typecheck`, `markdown-links`, `scripts-tests`, …), `summary: (done in 38.91 seconds)`.
+
+`pnpm exec lefthook run pre-push`, which runs the whole CLI suite (`cd cli && pnpm test`):
+
+```txt
+Test Files  505 passed | 1 skipped (506)
+     Tests  6553 passed | 1 skipped (6554)
+✔️ cli-knip
+✔️ cli-test
+```

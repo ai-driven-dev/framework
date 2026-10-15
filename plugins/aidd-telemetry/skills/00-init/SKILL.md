@@ -36,5 +36,5 @@ Run the flow above. Read only the action file the case needs.
 - Every change goes through `aidd telemetry`. Never edit git config, `.aidd/config.json` or any file by hand.
 - Never run a command that changes anything before the person has said yes to what it does. A silence, a previous yes to another case, or a standing instruction is not a yes.
 - Report what each command printed, including every warning, and never claim a result the output did not show.
-- Never choose, derive or guess a name for the person: not from git, from the machine, nor from the session.
+- Never choose or guess a name for the person. The name git gives may be offered, as `aidd telemetry on` offers it, and is used only when the person picks it; nothing from the machine or the session is.
 - When a command exits non-zero, show its message and stop. Do not retry with other flags.

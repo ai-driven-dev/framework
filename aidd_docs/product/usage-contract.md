@@ -102,6 +102,7 @@ Row and `totals`: `records`, `input`, `output`, `cache_read`, `cache_write` (eac
 
 - Every axis partitions the same calls: each adds up to `totals`, counter by counter.
 - `AIDD_TELEMETRY=0`: nothing read, object is `{"version": 1, "refused": "AIDD_TELEMETRY=0"}`.
+- The text report labels an `absent` person `anonymous`; the envelope keeps `kind: absent`, `key: null`.
 - A report ingests first. `files_read` and `unrecognised_shapes` describe that run; `records` the period.
 - A report with `--days`, `--from` or `--to` reads only the days of its period and the day on each side, plus any monthly file one of them falls in, with every day of its month; with none it reads the whole ledger. The copies of one call have been observed less than a day apart, and under that bound both print the same figures. Outside it, only a report with no period folds every copy of a call. `skipped_ledger_lines` counts the lines of the partitions read.
 - No path, working directory or branch. `session` keys are full session ids, `repository` keys are hashes.
@@ -122,7 +123,7 @@ Directory: `AIDD_TELEMETRY_DIR`, else `AIDD_USER_CONFIG_DIR/telemetry`, else `XD
 | `bindings/branches.jsonl` | `task`, `ingest`, `report` | `report`, `forget` | branch declaration at a moment, with branch creation time from its reflog |
 | `bindings/carries.jsonl` | `SessionStart` hook | hooks, `report` | `{session_id, from, at}` |
 | `bindings/processes.jsonl` | `SessionStart` hook | `SessionStart` hook | `{pid, session_id, source, at}` |
-| `identity.json` | `identity` | `report` | `{"person_id": "<id>"}`, owner-only |
+| `identity.json` | `identity`, `on` | `report`, `status`, `on` | `{"person_id": "<id>"}`, owner-only |
 | git config `--local` `branch.<name>.aiddTask`, `aiddTicket`, `aiddDeclaredAt` | `task` | hooks, `task`, `report` via snapshots | branch declaration; follows a rename, leaves with the branch |
 | git config `--local` `aidd.telemetry` | `on`, `off`, `forget` | hooks, CLI | `2:<token>` or `off`. Half of consent: alone it grants nothing |
 
@@ -234,7 +235,7 @@ stateDiagram-v2
 
 | Actor | Does |
 | --- | --- |
-| `on` | under the ledger lock: fresh token, key `2:<token>` first, then open line (a key with no interval measures nothing; an interval its key does not name would be closed by the first hook). Key naming an open interval of this clone: no change. Otherwise closes this clone's stale open intervals at its time. Refuses a clone with no identity |
+| `on` | under the ledger lock: fresh token, key `2:<token>` first, then open line (a key with no interval measures nothing; an interval its key does not name would be closed by the first hook). Key naming an open interval of this clone: no change. Otherwise closes this clone's stale open intervals at its time. Refuses a clone with no identity. Then, only once on, writes the person's identity when one was chosen |
 | `off` | under the same lock: close the clone's open token, then key `off`; key and interval change together, so an ingest never sees one without the other. Also closes the interval its key names at its path, whatever identity it reads there |
 | ingest | before judging any call, for every open interval, closes at observation time when the identity at its path changed or the live key is not `2:<that token>`. Nothing at the path: not closed (unmounted volume, folder moved and back); measured again when back. Unreadable config or `stat`: stays open, stores nothing |
 | hooks | after the Claude-only guard, even headless: key not naming an open interval recorded for this clone's real path => append a close at hook time. Ends a manual `git config aidd.telemetry off` or `--unset` before the next prompt's calls. `AIDD_TELEMETRY=0`: does nothing |
@@ -280,5 +281,18 @@ Release 1 opens no network connection, in the telemetry context or the hooks. `f
 
 - Local only: ledger `cwd` and `git_branch`, roots, process facts, transcripts.
 - Text report: no path, branch, working directory or whole session id (short keys); envelope per [Report envelope](#report-envelope). `task`, `status`, `forget` print what they act on (a branch: `Branch feat/x is bound.`; `forget` lists entries and repositories); the lock error names the lock file.
-- Identity only if chosen with `aidd telemetry identity <id>`; labels the `person` axis only.
+- Identity only if chosen: `aidd telemetry identity <id>`, `on --as <id>`, or the answer to `on`'s question. Labels the `person` axis only; `on` and `status` name it.
 - No currency amount: the destination owns the price table.
+
+**Who is measured, at `on`.**
+
+| Case | `on` does |
+| --- | --- |
+| identity set, no flag | keeps it, asks nothing |
+| none set, a terminal | after the opt-in is confirmed, asks: git's `user.name` in that directory, else `user.email` (offered only when `personIdOf` accepts it, never under `AIDD_TELEMETRY=0`), another identifier typed, or anonymous |
+| `--as <id>` | sets it, replacing one set; refused before anything is written when not one line of 1 to 128 characters |
+| `--anonymous` | sets nothing; refused while an identity is set (`identity --off` first) |
+| `--yes`, none set, no flag | refused, exit 1, nothing written |
+| `--as` with `--anonymous` | refused, exit 1 |
+
+A refused `on` writes neither consent nor identity. Staying anonymous is not stored: the next `on`, in any clone, asks again.
