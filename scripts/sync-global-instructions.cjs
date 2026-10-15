@@ -12,6 +12,8 @@ function render(source, host) {
     codex: (role) => `@aidd-dev-${role}`,
     claude: (role) => `@aidd-dev:${role}`,
     opencode: (role) => `@aidd-dev-${role}`,
+    copilot: (role) => `@aidd-dev:${role}`,
+    cursor: (role) => `@aidd-dev-${role}`,
   };
   if (!names[host]) throw new Error(`Unknown instruction host: ${host}`);
   return source.slice(beginning, boundary < 0 ? undefined : boundary).trim().replace(
@@ -39,6 +41,7 @@ function sync(sourcePath, destinations, claudeFallback) {
   // Prepare every destination before writing any: a malformed block must not partially sync hosts.
   const updates = destinations.map(([host, path]) => {
     let existing = existsSync(path) ? readFileSync(path, "utf8") : "";
+    if (host === "cursor" && !existsSync(path)) existing = "---\nalwaysApply: true\n---\n";
     // Creating OpenCode's global file disables its Claude fallback. Keep those personal rules.
     if (host === "opencode" && !existsSync(path) && claudeFallback && existsSync(claudeFallback)) {
       existing = merge(readFileSync(claudeFallback, "utf8"), null);
