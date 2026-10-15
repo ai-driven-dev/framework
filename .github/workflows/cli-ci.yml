@@ -449,6 +449,11 @@ jobs:
         run: npm install -g @anthropic-ai/claude-code # floats on purpose, declared in scripts/__tests__/workflows-pin-global-installs.test.js
       - name: The report counts every billed token, on the declared task
         run: node scripts/check-claude-tokens-end-to-end.cjs
+      # A person at a terminal, through a pseudo-terminal: asked, answered by the hook, kept
+      # across /clear. Python's `pty` is POSIX only, so Windows runs the headless check alone.
+      - name: A person is asked, answered and keeps the task across /clear
+        if: runner.os != 'Windows'
+        run: node scripts/check-claude-tokens-end-to-end.cjs --attended
 
   cli-jscpd:
     name: cli / JSCPD (duplication)

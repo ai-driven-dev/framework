@@ -1,7 +1,7 @@
 const assert = require("node:assert/strict");
 const { describe, it } = require("node:test");
 
-const { judge } = require("../check-claude-tokens-end-to-end.cjs");
+const { judge, judgeAttended } = require("../check-claude-tokens-end-to-end.cjs");
 
 const BILLED = [
   { input_tokens: 100, output_tokens: 7, cache_read_input_tokens: 11, cache_creation_input_tokens: 13 },
@@ -50,5 +50,42 @@ describe("the report of a real claude run, judged against what the API billed", 
 
   it("calls itself broken when the API billed fewer calls than prompts were sent", () => {
     assert.equal(judge({ ...reports(), billed: BILLED.slice(0, 1) }).code, 2);
+  });
+});
+
+const DECLARED = "00000000-0000-4000-8000-00000000000a";
+const CLEARED = "00000000-0000-4000-8000-00000000000b";
+
+/** What a person's session left when it held: nothing billed before the declaration, the
+ * declaration answered by the hook, and the declared session carried across `/clear`. */
+function attended(overrides = {}) {
+  return {
+    billedBeforeDeclaring: 0,
+    sessions: [{ session_id: DECLARED, task: "demo", ticket: "T-1", none: false, by: "hook-intercept" }],
+    carries: [{ session_id: CLEARED, from: DECLARED }],
+    ...overrides,
+  };
+}
+
+describe("a person's session, judged from what it left", () => {
+  it("passes when asked first, answered by the hook and carried across /clear", () => {
+    assert.equal(judgeAttended(attended()).code, 0);
+  });
+
+  it("fails when a prompt reached the API before the task was declared", () => {
+    assert.match(judgeAttended(attended({ billedBeforeDeclaring: 1 })).message, /before the task was declared/u);
+  });
+
+  it("fails when the declaration was made by the command, not answered by the hook", () => {
+    const byCommand = attended({ sessions: [{ ...attended().sessions[0], by: "command" }] });
+    assert.equal(judgeAttended(byCommand).code, 1);
+  });
+
+  it("fails when /clear carried another session than the declared one", () => {
+    assert.equal(judgeAttended(attended({ carries: [{ session_id: CLEARED, from: CLEARED }] })).code, 1);
+  });
+
+  it("fails when nothing was carried", () => {
+    assert.match(judgeAttended(attended({ carries: [] })).message, /0 carries/u);
   });
 });
