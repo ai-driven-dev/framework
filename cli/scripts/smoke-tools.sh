@@ -25,6 +25,7 @@ ALL_COMMANDS=(
   "setup" "doctor" "sync" "translate" "update" "clean"
   "framework install" "framework update" "framework remove" "framework rules"
   "framework validate-recipes"
+  "delegation resolve"
   "plugin remove" "plugin list" "plugin install" "plugin search" "plugin update"
   "marketplace add" "marketplace list" "marketplace remove" "marketplace refresh" "marketplace check"
   "auth login" "auth logout" "auth status"
@@ -65,7 +66,7 @@ project_tree_hash() {
   ' )
 }
 
-PARENTS=" plugin marketplace auth framework telemetry "
+PARENTS=" plugin marketplace auth framework telemetry delegation "
 # A parent one level deeper than PARENTS, so a covered key needs three words there, not two.
 GRANDPARENTS=" telemetry identity "
 derive_key() {
@@ -189,6 +190,20 @@ if run "translate --to claude" 0 "" "$ROOT" -- \
 FW_FLAT=$(mktemp -d "$TMPROOT/fw-flat.XXXXXX")
 run "translate --as flat" 0 "" "$ROOT" -- \
   translate "$FRAMEWORK_FIXTURE" --to claude --as flat --out "$FW_FLAT" --force
+
+section "delegation (read-only project settings)"
+P_DELEGATION=$(new_project)
+run "delegation resolve (native inheritance)" 0 '"configured": false' "$P_DELEGATION" -- \
+  delegation resolve exploration --tool codex --json
+mkdir -p "$P_DELEGATION/.aidd"
+printf '%s' '{"delegation":{"exploration":{"agent":"aidd-dev:explorer","tools":{"codex":{"reasoning":"high"}}}}}' > "$P_DELEGATION/.aidd/config.json"
+delegation_before=$(project_tree_hash "$P_DELEGATION")
+run "delegation resolve (unsupported requested setting)" 1 "unsupported field reasoning" "$P_DELEGATION" -- \
+  delegation resolve exploration --tool codex --json
+delegation_after=$(project_tree_hash "$P_DELEGATION")
+[[ -n "$delegation_before" && "$delegation_before" == "$delegation_after" ]] \
+  && ok "delegation error preserves project files" \
+  || bad "delegation error changed project files"
 
 section "auth (isolated config)"
 AUTH_HOME="$TMPROOT/auth-home"; mkdir -p "$AUTH_HOME"

@@ -280,8 +280,9 @@ describeKiloRuntime("E2E: real Kilo runtime", () => {
         shell: KILO_SHELL,
         maxBuffer: 8 * 1024 * 1024,
       });
-      expect(agents.stdout).toContain("aidd-dev-checker");
-      expect(agents.stdout).toContain("aidd-dev-executor");
+      for (const role of ["explorer", "executor", "reviewer", "validator"]) {
+        expect(agents.stdout).toContain(`aidd-dev-${role}`);
+      }
 
       const mcpProject = join(tempDir, "generated-mcp");
       await mkdir(mcpProject, { recursive: true });

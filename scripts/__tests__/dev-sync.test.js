@@ -213,7 +213,7 @@ test("reload fixtures run from their temporary home", () => {
   try {
     const fakeBin = join(root, "bin"), home = join(root, "home");
     mkdirSync(fakeBin);
-    executable(join(fakeBin, "aidd-opencode-reload"), 'pwd > "$HOME/observed-cwd"');
+    executable(join(fakeBin, "aidd-opencode-reload"), "node -e 'process.stdout.write(process.cwd())' > \"$HOME/observed-cwd\"");
     const result = runSync(fakeBin, home, []);
     assert.equal(result.status, 0, result.stderr);
     assert.equal(realpathSync(readFileSync(join(home, "observed-cwd"), "utf8").trim()), realpathSync(home));
@@ -679,11 +679,12 @@ test("another tool named agent does not trigger Cursor installation", () => {
   } finally { rmSync(root, { recursive: true, force: true }); }
 });
 
+const copilotMarketplaceList = String.raw`node -e 'process.stdout.write(JSON.stringify([{name:"aidd-framework",source:"Local: "+process.argv[1]}]))'`;
 const copilotStub = String.raw`printf '%s\n' "$*" >> "$HOME/copilot-calls"
 case "$1 $2 $3" in
   'plugin marketplace list')
     if [ -f "$HOME/copilot-source" ]; then
-      printf '[{"name":"aidd-framework","source":"Local: %s"}]\n' "$(cat "$HOME/copilot-source")"
+      ${copilotMarketplaceList} "$(cat "$HOME/copilot-source")"
     else echo '[]'; fi ;;
   'plugin marketplace add')
     if [ -f "$HOME/copilot-source" ]; then echo 'Marketplace "aidd-framework" already registered' >&2; exit 1; fi
@@ -691,6 +692,26 @@ case "$1 $2 $3" in
   'plugin marketplace remove') rm "$HOME/copilot-source" ;;
   'plugin marketplace update') : ;;
 esac`;
+
+test("Copilot fixture serializes Windows paths and quotes as JSON", () => {
+  const root = mkdtempSync(join(tmpdir(), "aidd-dev-sync-copilot-json-"));
+  try {
+    const fakeBin = join(root, "bin"), home = join(root, "home");
+    mkdirSync(fakeBin); mkdirSync(home);
+    const source = String.raw`C:\Users\Example "quoted"\Framework`;
+    writeFileSync(join(home, "copilot-source"), source);
+    executable(join(fakeBin, "node"), `exec '${process.execPath}' "$@"`);
+    const binary = join(fakeBin, "copilot");
+    executable(binary, copilotStub);
+    const result = spawnSync("bash", [binary, "plugin", "marketplace", "list", "--json"], {
+      cwd: home,
+      env: { ...process.env, HOME: home, PATH: [fakeBin, BASE_PATH].join(delimiter) },
+      encoding: "utf8",
+    });
+    assert.equal(result.status, 0, result.stderr);
+    assert.deepEqual(JSON.parse(result.stdout), [{ name: "aidd-framework", source: `Local: ${source}` }]);
+  } finally { rmSync(root, { recursive: true, force: true }); }
+});
 
 test("Copilot reload builds all native plugins, migrates its own source, and preserves personal files", () => {
   const root = mkdtempSync(join(tmpdir(), "aidd-dev-sync-copilot-"));
@@ -708,7 +729,7 @@ test("Copilot reload builds all native plugins, migrates its own source, and pre
     executable(join(fakeBin, "npx"), nativeBuildStub());
     const first = runSync(fakeBin, home, []);
     assert.equal(first.status, 0, first.stderr);
-    assert.equal(readFileSync(join(home, "copilot-source"), "utf8"), join(home, "build/copilot"));
+    assert.equal(realpathSync(readFileSync(join(home, "copilot-source"), "utf8")), realpathSync(join(home, "build/copilot")));
     for (const plugin of ["aidd-dev", "aidd-pm"]) {
       assert.match(readFileSync(join(home, "copilot-calls"), "utf8"), new RegExp(`plugin install ${plugin}@aidd-framework`));
       assert.equal(JSON.parse(readFileSync(join(home, `build/copilot/plugins/${plugin}/.plugin/plugin.json`), "utf8")).name, plugin);
@@ -757,14 +778,14 @@ test("Copilot registers an inherited own marketplace without trying to remove it
     mkdirSync(fakeBin);
     executable(join(fakeBin, "copilot"), String.raw`printf '%s\n' "$*" >> "$HOME/copilot-calls"
 case "$1 $2 $3" in
-  'plugin marketplace list') printf '[{"name":"aidd-framework","source":"Local: %s"}]\n' "$FW" ;;
+  'plugin marketplace list') ${copilotMarketplaceList} "$FW" ;;
   'plugin marketplace remove') echo 'Marketplace "aidd-framework" is not registered' >&2; exit 1 ;;
   'plugin marketplace add') printf '%s' "$4" > "$HOME/copilot-source" ;;
 esac`);
     executable(join(fakeBin, "npx"), nativeBuildStub());
     const result = runSync(fakeBin, home, []);
     assert.equal(result.status, 0, result.stderr);
-    assert.equal(readFileSync(join(home, "copilot-source"), "utf8"), join(home, "build/copilot"));
+    assert.equal(realpathSync(readFileSync(join(home, "copilot-source"), "utf8")), realpathSync(join(home, "build/copilot")));
     assert.doesNotMatch(readFileSync(join(home, "copilot-calls"), "utf8"), /marketplace remove/);
   } finally { rmSync(root, { recursive: true, force: true }); }
 });
@@ -776,7 +797,7 @@ for (const command of ["add", "update", "install"]) {
       const fakeBin = join(root, "bin"), home = join(root, "home");
       mkdirSync(fakeBin);
       executable(join(fakeBin, "copilot"), String.raw`case "$1 $2 $3" in
-  'plugin marketplace list') ${command === "update" ? 'printf \'[{"name":"aidd-framework","source":"Local: %s"}]\\n\' "$BUILD/copilot"' : "echo '[]'"} ;;
+  'plugin marketplace list') ${command === "update" ? `${copilotMarketplaceList} "$BUILD/copilot"` : "echo '[]'"} ;;
   'plugin marketplace ${command}'${command === "install" ? "|\'plugin install aidd-dev@aidd-framework\'" : ""}) echo 'fixture native permission denied' >&2; exit 9 ;;
 esac`);
       executable(join(fakeBin, "npx"), nativeBuildStub());
