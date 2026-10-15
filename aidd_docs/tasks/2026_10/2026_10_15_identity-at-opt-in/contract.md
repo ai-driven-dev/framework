@@ -41,14 +41,15 @@ issue: 1029
 
 ```mermaid
 flowchart TD
-  F["flags checked (rules 2, 3, decision 2)"] --> C{"opt-in confirmed?"}
+  F["flags checked (rules 2, 3)"] --> C{"opt-in confirmed?"}
   C -->|no| N["nothing changed"]
-  C -->|yes| O["on use case"]
-  O -->|refused| R["refused, no identity written"]
-  O -->|on| I{"identity set?"}
-  I -->|yes, no --as| S["say: measured as X"]
-  I -->|no, or --as| Q["--as / --anonymous / question"]
-  Q --> W["write identity, or none"]
+  C -->|yes| I{"identity set?"}
+  I -->|"yes, no --as"| K["choice: keep it (--anonymous here: error)"]
+  I -->|"no, or --as"| Q["choice: --as, --anonymous, or the question<br/>(--yes with neither: error, decision 2)"]
+  K --> O["on use case, given the choice"]
+  Q --> O
+  O -->|refused| R["refused: no consent, no identity written"]
+  O -->|on| W["identity written when one was chosen; output names it"]
 ```
 
 The question comes after the opt-in is confirmed and before the use case writes anything, so a refusal leaves both consent and identity untouched: the choice is passed to the use case, which writes the identity only on success.
