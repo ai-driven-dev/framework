@@ -215,7 +215,7 @@ describe("aidd telemetry report, narrowed", () => {
   it("asks for the repository the command runs in for `.`", async () => {
     report.mockResolvedValue(reported);
     await run("report", "--repository", " . ");
-    expect(asked()).toEqual({ ...NO_FILTERS, repository: { here: process.cwd() } });
+    expect(asked()).toEqual({ ...NO_FILTERS, here: process.cwd() });
   });
 
   it("reads a bare --unattributed as either reason, and takes one reason", async () => {
@@ -239,6 +239,12 @@ describe("aidd telemetry report, narrowed", () => {
     expect(await refused(...args)).toBe(1);
     expect(stderr()).toContain(flag);
     expect(report).not.toHaveBeenCalled();
+  });
+
+  it("refuses a bare flag given twice by its name, not by the value it was preset to", async () => {
+    expect(await refused("--unattributed", "--unattributed")).toBe(1);
+    expect(stderr()).toContain("--unattributed is given twice: give it once.");
+    expect(stderr()).not.toContain("null");
   });
 
   it.each([

@@ -307,11 +307,10 @@ const WIDGETS = repositoryIdOf({
   remote: "https://github.com/acme/widgets.git",
   rootCommit: "c0ffee",
 }) as string;
-const filtered = (
-  over: Omit<Partial<ReportFilters>, "repository"> & {
-    repository?: string | { here: string } | null;
-  }
-) => ({ ...NO_FILTERS, ...over });
+const filtered = (over: Partial<ReportFilters> & { here?: string }) => ({
+  ...NO_FILTERS,
+  ...over,
+});
 
 /** Two sessions in one repository: A on task `auth` for 11 then 22, B with no task for 33. */
 async function twoSessions(s: ReturnType<typeof setup>) {
@@ -430,7 +429,7 @@ describe("narrowing a report", () => {
     const result = await s.report.execute({
       axis: "total",
       period: ANY,
-      filters: filtered({ repository: { here: "/work/a" } }),
+      filters: filtered({ here: "/work/a" }),
     });
     expect(s.ledger.records[0]?.repository_id).toBe(WIDGETS);
     expect(result).toMatchObject({
@@ -453,7 +452,7 @@ describe("narrowing a report", () => {
     const result = await s.report.execute({
       axis: "total",
       period: ANY,
-      filters: filtered({ repository: { here: "/work/fresh" } }),
+      filters: filtered({ here: "/work/fresh" }),
     });
     expect(result).toMatchObject({
       filters: { repository: WIDGETS.slice(0, 40) },
@@ -485,7 +484,7 @@ describe("narrowing a report", () => {
       await s.report.execute({
         axis: "total",
         period: ANY,
-        filters: filtered({ repository: { here: "/work/b" } }),
+        filters: filtered({ here: "/work/b" }),
       })
     ).toEqual({ status: "not-a-repository" });
     expect(s.events).toEqual([]);
@@ -498,10 +497,25 @@ describe("narrowing a report", () => {
       await s.report.execute({
         axis: "total",
         period: ANY,
-        filters: filtered({ repository: { here: "/work/a" } }),
+        filters: filtered({ here: "/work/a" }),
       })
     ).toEqual({ status: "refused" });
     expect(s.locator.asked).toEqual([]);
     expect(s.events).toEqual([]);
+  });
+
+  it("refuses flags that select on one axis, before refusal and before anything is read", async () => {
+    for (const refused of [false, true]) {
+      const s = setup({ refused });
+      expect(
+        await s.report.execute({
+          axis: "total",
+          period: ANY,
+          filters: filtered({ model: "m", absent: "model", here: "/work/a" }),
+        })
+      ).toEqual({ status: "conflicting", flags: ["model", "absent"], absent: "model" });
+      expect(s.locator.asked).toEqual([]);
+      expect(s.events).toEqual([]);
+    }
   });
 });

@@ -270,7 +270,8 @@ function judge({ billed, byTask, byTicket, here, prompts = PROMPTS.length }) {
     ...compare("task demo", rowOf(byTask, "demo"), expected),
     ...compare("ticket T-1", rowOf(byTicket, "T-1"), expected),
     ...compare("task demo here", here?.totals, expected),
-    ...(/^[0-9a-f]{64}$/u.test(here?.filters?.repository ?? "")
+    // A hosted origin's hash, or the root commit of a repository with none.
+    ...(/^[0-9a-f]{40}(?:[0-9a-f]{24})?$/u.test(here?.filters?.repository ?? "")
       ? []
       : [`--repository . resolved to ${JSON.stringify(here?.filters?.repository)}`]),
   ];

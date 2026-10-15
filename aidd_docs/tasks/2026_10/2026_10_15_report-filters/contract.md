@@ -45,7 +45,7 @@ flowchart LR
 | # | Rule | Why |
 | --- | --- | --- |
 | 1 | Flags combine with AND. Each flag takes one value; given twice, it is an error. | Commander keeps the last value silently. |
-| 2 | **One selector per axis.** `--unattributed` selects on `task` and on `ticket`, so it cannot be combined with `--task`, `--ticket` or `--absent ticket`. Such a combination is an error, exit 1. | Two selectors on one axis select nothing, by construction. |
+| 2 | **One selector per axis.** `--unattributed` selects on `task` and on `ticket`, so it cannot be combined with `--task`, `--ticket` or `--absent ticket`; a value and `--absent` of the same axis (`--model m --absent model`) cannot be combined either. Such a combination is an error, exit 1. | Two selectors on one axis select nothing, by construction. |
 | 3 | A value is trimmed as a declaration is (`textOrNull`, `task-declaration.ts`). A value empty once trimmed is an error. | What is typed is compared with what was stored, and what was stored was trimmed. |
 | 4 | A value is compared exactly, case included. | Task names and tickets are kept as typed. |
 | 5 | `--session` and `--repository` take a full value or a prefix, looked up among the values of that axis in the calls of the period. A value equal to the one typed wins. Otherwise a prefix names the one value that starts with it. Two or more: error, exit 1, listing them in full, sorted. None: the report is empty, and `filters` prints the value as typed. | The text report shows 8 characters of each; that is what a person copies. |

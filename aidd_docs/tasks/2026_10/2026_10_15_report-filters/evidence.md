@@ -222,3 +222,37 @@ All equivalent:
 | `telemetry-report-display.ts:73` | `labelOf("task", …)` to `labelOf("", …)` | for an unattributed value `labelOf` reads only the reason; the axis matters for `absent` and for truncating a session or repository |
 
 The other survivors in the touched files (`telemetry-report-display.ts:111`, `:122`, `:189`) are on lines this change did not write.
+
+## Review round 1
+
+Tests first, against the code of `6651b9f7`:
+
+```txt
+report-usage-use-case.unit > refuses flags that select on one axis, before refusal and before anything is read
+  AssertionError: expected { status: 'reported', …(4) } to deeply equal { status: 'conflicting', …(2) }
+report-usage-use-case.unit > names the repository a directory is in for `.`, … (and the five other `.` cases, now given as `here`)
+  AssertionError: expected { status: 'reported', …(4) } to deeply equal { status: 'not-a-repository' }
+telemetry-wiring.integration > asks for the repository the command runs in for `.`
+  AssertionError: expected { task: null, ticket: null, …(7) } to deeply equal { task: null, ticket: null, …(8) }
+telemetry-wiring.integration > refuses a bare flag given twice by its name, not by the value it was preset to
+  AssertionError: expected 'error: option \'--unattributed [reaso…' to contain '--unattributed is given twice: give i…'
+telemetry-report-display.unit > names the two flags that select on one axis, with the axis --absent names
+  TypeError: Cannot read properties of undefined (reading 'from')
+Tests  10 failed | 128 passed (138)
+check-claude-tokens-end-to-end > passes when `.` names a repository with no hosted origin by its root commit
+  ✖ fail 1
+```
+
+The selection line now reads `selectorsOf`, the list the filter matches with: a refactor, green before and after (the display's selection cases are unchanged).
+
+### Gates after the review
+
+| Gate | Decisive line |
+| --- | --- |
+| `cd cli && pnpm test` | `Tests  6578 passed \| 1 skipped (6579)` |
+| `pnpm test:mutation:telemetry` | `score 96.3, floor 96` |
+| `pnpm build` | `Bundle size: 689.4 KB / budget: 695 KB` |
+| tokens end to end | `2 calls, 393 tokens, all on task demo, ticket T-1, and on task demo in this repository` |
+| tokens end to end, `--attended` | same, then `; asked, answered by the hook, kept across /clear` |
+
+Survivors on changed lines: `report-usage-use-case.ts:168` (`typed === null` to `false`) and `report-filter.ts:92` (`value.kind === "value"` to `true`), both equivalent as explained above. The two earlier equivalents on the selector's and the label's `kind` are gone with the `unattributed-any` selector and `selectorsOf`. The other survivors in the touched files (`telemetry-report-display.ts:112`, `:123`, `:194`) are on lines this change did not write.

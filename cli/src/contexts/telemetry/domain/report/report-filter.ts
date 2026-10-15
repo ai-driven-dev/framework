@@ -47,7 +47,8 @@ export const NO_FILTERS: ReportFilters = {
 
 const FLAGS = Object.keys(NO_FILTERS) as FilterFlag[];
 
-type Selector = AxisValue | { readonly kind: "unattributed"; readonly reason: "any" };
+/** What a flag asks an axis to be: a row's value, or work with no task for either reason. */
+export type Selector = AxisValue | { readonly kind: "unattributed-any" };
 
 /** The axes a flag selects on. Work with no task has neither task nor ticket, so
  * `--unattributed` selects on both. */
@@ -69,26 +70,33 @@ export function conflictsOf(filters: ReportFilters): (readonly [FilterFlag, Filt
   );
 }
 
-/** What each flag given asks the call's axis to be, as a row of that axis holds it. An
- * unattributed call is unattributed on task and ticket alike, so its task alone is asked. */
-function selectorsOf(filters: ReportFilters): (readonly [ReportAxis, Selector])[] {
+/** What each flag given asks the call's axis to be, as a row of that axis holds it, in the
+ * order the flags are printed. An unattributed call is unattributed on task and ticket alike,
+ * so its task alone is asked. */
+export function selectorsOf(filters: ReportFilters): (readonly [ReportAxis, Selector])[] {
   const selectors: (readonly [ReportAxis, Selector])[] = FILTER_AXES.flatMap((axis) => {
     const value = filters[axis];
     return value === null ? [] : [[axis, { kind: "value", value }] as const];
   });
   if (filters.absent !== null) selectors.push([filters.absent, { kind: "absent" }]);
-  if (filters.unattributed !== null) {
+  if (filters.unattributed === "any") selectors.push(["task", { kind: "unattributed-any" }]);
+  else if (filters.unattributed !== null) {
     selectors.push(["task", { kind: "unattributed", reason: filters.unattributed }]);
   }
   return selectors;
 }
 
 function selects(selector: Selector, value: AxisValue): boolean {
-  if (selector.kind === "value") return value.kind === "value" && value.value === selector.value;
-  if (selector.kind === "absent") return value.kind === "absent";
-  return (
-    value.kind === "unattributed" && (selector.reason === "any" || selector.reason === value.reason)
-  );
+  switch (selector.kind) {
+    case "value":
+      return value.kind === "value" && value.value === selector.value;
+    case "absent":
+      return value.kind === "absent";
+    case "unattributed":
+      return value.kind === "unattributed" && value.reason === selector.reason;
+    case "unattributed-any":
+      return value.kind === "unattributed";
+  }
 }
 
 /** Whether every flag given keeps the call: its axis is, by the function that builds the rows,

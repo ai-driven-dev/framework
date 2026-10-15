@@ -4,8 +4,8 @@ import type {
 } from "../../../contexts/telemetry/application/report/report-usage-use-case.js";
 import type { Period } from "../../../contexts/telemetry/domain/report/period.js";
 import {
-  FILTER_AXES,
   type ReportFilters,
+  selectorsOf,
 } from "../../../contexts/telemetry/domain/report/report-filter.js";
 import {
   type AxisValue,
@@ -61,18 +61,19 @@ function labelOf(axis: ReportAxis, value: AxisValue): string {
 
 /** Each filter given, as the row it selects is labelled; `null` when none is. */
 function selectionLine(filters: ReportFilters): string | null {
-  const parts = FILTER_AXES.flatMap((axis) => {
-    const value = filters[axis];
-    return value === null ? [] : [`${axis} = ${labelOf(axis, { kind: "value", value })}`];
-  });
-  if (filters.absent !== null) {
-    parts.push(`${filters.absent} = ${labelOf(filters.absent, { kind: "absent" })}`);
-  }
-  if (filters.unattributed === "any") parts.push("task = unattributed, either reason");
-  else if (filters.unattributed !== null) {
-    parts.push(`task = ${labelOf("task", { kind: "unattributed", reason: filters.unattributed })}`);
-  }
+  const parts = selectorsOf(filters).map(
+    ([axis, selector]) =>
+      `${axis} = ${selector.kind === "unattributed-any" ? "unattributed, either reason" : labelOf(axis, selector)}`
+  );
   return parts.length === 0 ? null : `Selected: ${parts.join(", ")}`;
+}
+
+/** Two flags given that select on one axis, as they were typed. */
+function conflictWords(result: Extract<ReportResult, { status: "conflicting" }>): string {
+  const [first, second] = result.flags.map((flag) =>
+    flag === "absent" ? `--absent ${result.absent}` : `--${flag}`
+  );
+  return `${first} and ${second} select on the same axis, so together they keep nothing: give one of them.`;
 }
 
 function grouped(n: number): string {
@@ -155,6 +156,10 @@ function coverageLines(coverage: ReportCoverage): string[] {
 export function printUsageReport(output: CLIOutput, result: ReportResult): void {
   if (result.status === "refused") {
     output.info("AIDD_TELEMETRY=0: nothing was read and nothing is reported.");
+    return;
+  }
+  if (result.status === "conflicting") {
+    output.error(conflictWords(result));
     return;
   }
   if (result.status === "not-a-repository") {

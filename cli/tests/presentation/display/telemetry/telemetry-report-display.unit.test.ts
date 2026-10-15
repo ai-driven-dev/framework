@@ -299,6 +299,19 @@ describe("printing a usage report", () => {
     ]);
   });
 
+  it("names the two flags that select on one axis, with the axis --absent names", () => {
+    const output = new CapturingOutput(false);
+    printUsageReport(output, {
+      status: "conflicting",
+      flags: ["ticket", "absent"],
+      absent: "ticket",
+    });
+    expect(output.at("error")).toEqual([
+      "--ticket and --absent ticket select on the same axis, so together they keep nothing: give one of them.",
+    ]);
+    expect(output.lines).toHaveLength(1);
+  });
+
   it("says `.` names no repository where the command runs", () => {
     const output = new CapturingOutput(false);
     printUsageReport(output, { status: "not-a-repository" });

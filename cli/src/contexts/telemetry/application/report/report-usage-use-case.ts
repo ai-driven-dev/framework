@@ -4,6 +4,9 @@ import type { UsageLedger } from "../../domain/ports/usage-ledger.js";
 import { attribute } from "../../domain/report/attribution.js";
 import { inPeriod, type Period, windowOf } from "../../domain/report/period.js";
 import {
+  type AbsentAxis,
+  conflictsOf,
+  type FilterFlag,
   matchesFilter,
   NO_FILTERS,
   type ReportFilters,
@@ -21,10 +24,11 @@ import type { IngestUsageUseCase } from "../ingest-usage-use-case.js";
 import { settleLedger } from "../ledger-upkeep.js";
 import type { DeclaredBindings } from "./declared-bindings.js";
 
-/** The filters as typed: a session or repository may be the start of an id, and a repository
- * may be the one a directory is in (`.`). */
-export interface RequestedFilters extends Omit<ReportFilters, "repository"> {
-  readonly repository: string | { readonly here: string } | null;
+/** The filters as typed: a session or repository may be the start of an id. */
+export interface RequestedFilters extends ReportFilters {
+  /** `--repository .`: the directory whose repository is asked for; `repository` is then
+   * `null`. */
+  readonly here?: string;
 }
 
 export interface ReportRequest {
@@ -58,6 +62,12 @@ export interface ReportCoverage {
 
 export type ReportResult =
   | { readonly status: "refused" }
+  /** Two flags given select on one axis, so together they would keep nothing. */
+  | {
+      readonly status: "conflicting";
+      readonly flags: readonly [FilterFlag, FilterFlag];
+      readonly absent: AbsentAxis | null;
+    }
   /** `.` was asked for in a directory that names no repository. */
   | { readonly status: "not-a-repository" }
   /** A start two ids or more of the period share, all of them, sorted. */
@@ -85,8 +95,9 @@ export type ReportResult =
  * settles the whole ledger.
  *
  * Filters keep the calls of the period whose axes are what they name, after attribution, so
- * the report they give adds up to the row of the unfiltered one they select. Refusal comes
- * first, then `.` is located, before anything is read: refusal means no git is run either. */
+ * the report they give adds up to the row of the unfiltered one they select. Flags that select
+ * on one axis are refused first, then the environment's refusal, then `.` is located, before
+ * anything is read: refusal means no git is run either. */
 export class ReportUsageUseCase {
   constructor(
     private readonly ingest: IngestUsageUseCase,
@@ -98,13 +109,14 @@ export class ReportUsageUseCase {
   ) {}
 
   async execute(request: ReportRequest): Promise<ReportResult> {
+    const { here, ...asked }: RequestedFilters = request.filters ?? NO_FILTERS;
+    const [conflict] = conflictsOf(asked);
+    if (conflict !== undefined) {
+      return { status: "conflicting", flags: conflict, absent: asked.absent };
+    }
     if (this.options.refusedByEnvironment) return { status: "refused" };
-    const asked = request.filters ?? NO_FILTERS;
-    const here =
-      typeof asked.repository === "object" && asked.repository !== null
-        ? await this.repositoryIn(asked.repository.here)
-        : undefined;
-    if (here === null) return { status: "not-a-repository" };
+    const located = here === undefined ? undefined : await this.repositoryIn(here);
+    if (located === null) return { status: "not-a-repository" };
     const ingested = await this.ingest.execute();
     const held = await this.ledger.exclusively(() =>
       settleLedger(this.ledger, windowOf(request.period))
@@ -114,9 +126,7 @@ export class ReportUsageUseCase {
     if ("status" in session) return session;
     // `.` names one repository in full: it is never the start of another.
     const repository =
-      here === undefined
-        ? resolvedIn(records, "repository", asked.repository as string | null)
-        : { id: here };
+      located === undefined ? resolvedIn(records, "repository", asked.repository) : { id: located };
     if ("status" in repository) return repository;
     const filters: ReportFilters = { ...asked, session: session.id, repository: repository.id };
     const facts = await this.declared.read();
