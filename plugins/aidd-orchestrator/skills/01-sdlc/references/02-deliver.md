@@ -2,10 +2,11 @@
 
 ## Behavior
 
-- Reconcile scoped exploration, then produce a proportional implementation plan.
-- Own preparation, shared lifecycle, and integration; delegate only phases with their criteria, prerequisites, status-file ownership, checkout, resources, and commit policy. Use separate checkouts for parallel writers; otherwise run serially.
-- Accept scoped changes and evidence before starting dependents. Include architecture conformance when the project documents architecture; run a required end-to-end journey after all other validation, then finalize. Reuse evidence only for its unchanged candidate and scope.
-- Commit and push through the commit capability; send the clean candidate and evidence to Check.
+Turn the contract into a proportional plan, then give one executor the whole plan or delegate ready independent phases. For phase delegation, the caller owns preparation, dependencies, write isolation, integration, and finalization; give each executor its scope, criteria, checkout, validation resources, and commit policy. Integrate prerequisites before starting dependent phases.
+
+The executor implements its scope and calls the validation skills, which own their checks and repair loops. Include architecture conformance whenever the project documents architecture. Run an end-to-end journey after every other validation when the plan calls for one, and none otherwise. Finalize delegated phases together after integration and required validation.
+
+Commit and push the validated work through the commit skill. Send only the clean committed candidate and its evidence to Check.
 
 ```mermaid
 ---
@@ -21,13 +22,12 @@ flowchart TD
 
   subgraph ExecuteStage["Execute and validate the plan"]
     direction TB
-    Dispatch["Caller selects ready phases"]
     Executor(["@aidd-dev:executor"])
     Implement["/aidd-dev:02-implement"]
     Assert["/aidd-dev:03-assert"]
     Integrate["Integrate phases"]
     Test["/aidd-dev:06-test"]
-    Finalize["Finalize integrated plan"]
+    Finalize["Finalize if phases were delegated"]
     Commit["/aidd-vcs:01-commit"]
   end
 
@@ -39,12 +39,11 @@ flowchart TD
 
   Contract --> Plan
   Plan --> PlanArtifact
-  PlanArtifact --> Dispatch
-  Dispatch -- "Isolated executors for independent phases; serial otherwise." --> Executor
-  Executor -- "Assigned phase only." --> Implement
+  PlanArtifact -- "Whole plan, or ready independent phases." --> Executor
+  Executor -- "Assigned plan or phase." --> Implement
   Implement --> Assert
   Assert --> Integrate
-  Integrate -- "More ready phases." --> Dispatch
+  Integrate -- "More ready phases." --> Executor
   Integrate -- "No required end-to-end journey." --> Finalize
   Integrate -- "Run required end-to-end journey last." --> Test
   Test -- "Journey passed." --> Finalize

@@ -8,9 +8,9 @@ argument-hint: request | interactive request
 
 ## Behavior
 
-Decide the mode as `mode.md` says, then read only it and the current zone's reference. Discover providers from installed descriptions by responsibility; verify availability and contracts before dispatch. Diagram addresses illustrate current providers. A blocked zone stops the run and states what would release it.
+Decide the mode as `mode.md` says, then read only it and the current zone's reference. Verify that every named provider is installed before calling it. A zone that cannot proceed stops the run and says what it would take to resume.
 
-Spawn specialized agents for isolated work. Parallelize independent work when it is faster. Give each leaf agent one focused task. Keep model selection outside the role contract. Repeat the responsible zone when delegated work returns an actionable gap.
+Spawn specialized agents for isolated work. Parallelize independent work when it is faster. Give each agent one focused task that a smaller model can execute. Repeat the responsible zone when delegated work returns an actionable gap.
 
 ```mermaid
 ---

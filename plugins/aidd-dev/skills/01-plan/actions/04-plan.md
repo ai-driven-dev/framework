@@ -12,7 +12,8 @@ A feature folder, always at `aidd_docs/tasks/<yyyy_mm>/<yyyy_mm_dd>_<feature-slu
 
 ## Process
 
-1. **Phases.** Break the work into phases, each a coherent unit of work that ships and verifies on its own, sized for one executor pass. Let the work decide how many. Prefer independent phases with separate file ownership; record earlier phase numbers in `Depends on` for required outputs, overlapping writes, or shared mutable validation resources. Keep phases ordered when independence is uncertain.
+1. **Phases.** Break the work into phases, each a coherent unit of work that ships and verifies on its own, sized for one executor pass. Let the work decide how many.
+   - Prefer independent phases with separate file ownership; record earlier phase numbers in `Depends on` for required outputs, overlapping writes, or shared mutable validation resources. Keep phases ordered when independence is uncertain.
 2. **Folder.** Reuse the feature folder the source already lives in, or create one. When creating one and `01-gather`'s own source reference names a backlog item — a ticket id or URL, or a file path naming its Markdown artefact, never raw text — with no `backlog-link.json` there yet, declare it the same way the skill that writes a spec does:
 
    ```json
