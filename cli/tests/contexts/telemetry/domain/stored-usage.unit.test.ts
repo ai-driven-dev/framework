@@ -61,6 +61,11 @@ describe("a record belongs to the day of its own time, in UTC", () => {
     expect(dayOf("10000-01-01T00:00:00Z")).toBeNull();
     expect(dayOf("9999-12-31T23:30:00-02:00")).toBeNull();
     expect(dayOf("0000-01-01T00:30:00+02:00")).toBeNull();
+    expect(dayOf("+002026-10-15T00:00:00Z")).toBeNull();
+  });
+
+  it("has none for a zoned time that names no real day", () => {
+    expect(dayOf("2026-13-45T00:00:00Z")).toBeNull();
   });
 
   it("keeps the last and first day a four-digit year has", () => {

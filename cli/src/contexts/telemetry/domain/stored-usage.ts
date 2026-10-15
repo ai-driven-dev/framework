@@ -23,7 +23,6 @@ const COUNTERS = [
 /** A time that names its own zone and a four-digit year: anything else would be read in the
  * machine's zone, or give a day no partition name can hold. */
 const ZONED = /^\d{4}-\d{2}-\d{2}T[^Z+-]*(Z|[+-]\d{2}:\d{2})$/;
-const FOUR_DIGIT_DAY = /^\d{4}-\d{2}-\d{2}$/;
 
 /** `YYYY-MM-DD` in UTC, so a ledger partition does not depend on the machine's time zone, or
  * `null` for a time with no zone, or whose UTC day falls outside four-digit years. */
@@ -31,8 +30,9 @@ export function dayOf(at: string): string | null {
   if (!ZONED.test(at)) return null;
   const instant = Date.parse(at);
   if (Number.isNaN(instant)) return null;
+  // An offset can carry the instant past year 9999 or before year 0, written `+YYYYYY`/`-YYYYYY`.
   const day = new Date(instant).toISOString().slice(0, 10);
-  return FOUR_DIGIT_DAY.test(day) ? day : null;
+  return day.startsWith("+") || day.startsWith("-") ? null : day;
 }
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -136,8 +136,7 @@ function isStoredUsage(
     (USAGE_AGENTS as readonly unknown[]).includes(object.agent) &&
     isText(object.key) &&
     isText(object.session_id) &&
-    typeof object.at === "string" &&
-    dayOf(object.at) !== null &&
+    dayOf(String(object.at)) !== null &&
     isText(object.repository_id) &&
     isNullableText(object.tool_version) &&
     isNullableText(object.model) &&
