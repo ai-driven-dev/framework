@@ -7,6 +7,7 @@ import {
   buildCursorContract,
   buildCursorFlatContract,
 } from "../../../../../../src/contexts/tools/domain/profiles/cursor/build.js";
+import { parseFrontmatter } from "../../../../../../src/kernel/markdown.js";
 import { InMemoryFileAdapter } from "../../../../../helpers/ports/in-memory-file-adapter.js";
 
 // Built, not written literally: biome reads a string holding "${...}" as a lost template.
@@ -35,6 +36,13 @@ function sourceOf(artifact: ArtifactContract): ArtifactSource | null {
 }
 
 describe("buildCursorContract()", () => {
+  it("gives same-named plugin roles distinct native identities", () => {
+    const transform = supported(buildCursorContract().artifacts.agents).transform;
+    const first = transform?.(AGENT_SOURCE, "first-plugin", "planner.md") ?? "";
+    const second = transform?.(AGENT_SOURCE, "second-plugin", "planner.md") ?? "";
+    expect(parseFrontmatter(first).frontmatter.name).toBe("first-plugin-planner");
+    expect(parseFrontmatter(second).frontmatter.name).toBe("second-plugin-planner");
+  });
   it("declares Cursor's own plugin manifest path, schema and root token", () => {
     const contract = buildCursorContract();
 
@@ -114,7 +122,7 @@ describe("buildCursorContract()", () => {
     expect(transform?.(AGENT_SOURCE, "aidd-dev", "planner.md")).toBe(
       [
         "---",
-        "name: 'planner'",
+        "name: 'aidd-dev-planner'",
         "description: 'Plans the work'",
         "model: 'opus'",
         "---",

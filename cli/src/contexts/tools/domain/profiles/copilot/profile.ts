@@ -20,11 +20,12 @@ import type {
   HasSkills,
 } from "../../contracts.js";
 import { convertCommandFrontmatter } from "../../formats/command.js";
+import { nativeAgentOptions } from "../../formats/delegation-options.js";
 import { PLUGIN_ROOT_TOKEN } from "../../formats/plugin-root-token.js";
 import { claudeStyleMarketplaceKey } from "../../marketplace-entry.js";
 import { registerTool } from "../../registry.js";
 import { buildCopilotFlatContract, buildCopilotMarketplaceContract } from "./build.js";
-import { COPILOT_WORKSPACE_DIR } from "./copilot-paths.js";
+import { COPILOT_WORKSPACE_DIR, copilotConfigDir } from "./copilot-paths.js";
 
 const DIRECTORY = COPILOT_WORKSPACE_DIR;
 const TOOL_SUFFIX = ".copilot.md";
@@ -240,6 +241,24 @@ export const copilot: AiTool<
       toolSuffix: EXT_AGENT,
       format: "markdown",
       userFileExt: EXT_AGENT,
+      delegation: {
+        userPath: (home, env, plugin, role) =>
+          join(copilotConfigDir(home, env), "agents", `${plugin}-${role}.agent.md`),
+        personalAgentsFirst: true,
+        identity: (_name, plugin, mode, role) =>
+          mode === "marketplace" ? `${plugin}:${role}` : `${plugin}-${role}`,
+        resolveNative: (requested) =>
+          nativeAgentOptions(requested, "reasoningEffort", [
+            "none",
+            "minimal",
+            "low",
+            "medium",
+            "high",
+            "xhigh",
+            "max",
+          ]),
+        marketplacePath: (root, role) => join(root, "agents", `${role}.md`),
+      },
       buildInstallPath: (fileName) => agentsHandler.buildFilePath(fileName),
       convertFrontmatter: (fm, fileName) => agentsHandler.convertFrontmatter(fm, fileName),
     }),

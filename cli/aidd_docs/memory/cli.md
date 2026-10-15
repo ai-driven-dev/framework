@@ -14,6 +14,7 @@ Thirty-three leaf commands. Read them live: `aidd --help`, then each group's. `s
 - `telemetry on | off | read | report | check | forget | identity`; `identity` carries `use | off | link | unlink`.
 - `translate <source>`: author-side, converts a source into a target-native plugin tree.
 - `update`, aliased `upgrade`: the CLI itself.
+- `delegation resolve <task> --tool <id>`: read-only project suggestion, installed agent identity, native option surface; `--json` separates requested/native settings and leaves effective runtime unknown.
 
 ## Interface
 

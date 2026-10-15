@@ -13,10 +13,10 @@ const MAX_FILES_PER_FOLDER = 10;
  * files are shuffled. The test asserts the count, so a reason nobody measured fails here.
  */
 const BASELINE: readonly { readonly path: string; readonly count: number }[] = [
-  // Twelve files carry the command surface, plus three helpers no other folder imports. That
-  // is the flattest mapping from the CLI's surface to its source; moving the helpers out
-  // would leave twelve, still over the limit and clearer about nothing.
-  { path: "src/presentation/commands", count: 15 },
+  // Thirteen files carry the command surface, including read-only delegation resolution,
+  // plus three helpers no other folder imports. One module per command keeps that mapping
+  // direct; moving helpers out would leave thirteen and clarify nothing.
+  { path: "src/presentation/commands", count: 16 },
   // One display module per command, mirroring `presentation/commands/`: that mirror is what
   // lets a command's rendering be asserted without running the binary. Fewer files would mean
   // one module rendering several commands, which is what put the printing in the actions.
@@ -37,9 +37,9 @@ const BASELINE: readonly { readonly path: string; readonly count: number }[] = [
   // not, and moving one out to make room is the shuffle this rule refuses.
   { path: "src/contexts/tools/domain", count: 11 },
 
-  // `marketplace-source-drift.ts` decides a version/migration drift, a fact about aidd's own
-  // migration: that concern belongs to `framework`, not `tools`.
-  { path: "src/contexts/framework/domain", count: 11 },
+  // Migration drift and project delegation are distinct framework vocabularies.
+  // Neither belongs in tools; a single-file folder would add no boundary.
+  { path: "src/contexts/framework/domain", count: 12 },
 
   // Four native-cache and host-CLI helpers are shared by `clean` at project and machine scope
   // both, which is what `earned-sharing.arch.test.ts` means by earned; a `clean/`-only home

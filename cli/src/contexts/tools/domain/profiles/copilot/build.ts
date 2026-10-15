@@ -23,11 +23,15 @@ import {
   synthesizeClaudeStyleManifest,
   transformClaudeAgent,
 } from "../../marketplace-catalog.js";
-import { COPILOT_VSCODE_MCP_PATH, COPILOT_WORKSPACE_DIR } from "./copilot-paths.js";
+import {
+  COPILOT_MARKETPLACE_RELATIVE,
+  COPILOT_VSCODE_MCP_PATH,
+  COPILOT_WORKSPACE_DIR,
+} from "./copilot-paths.js";
 
 const OUTPUT_PLUGIN_MANIFEST_RELATIVE = ".plugin/plugin.json";
 
-const OUTPUT_MARKETPLACE_RELATIVE = ".plugin/marketplace.json";
+const OUTPUT_MARKETPLACE_RELATIVE = COPILOT_MARKETPLACE_RELATIVE;
 
 /** Output prefix for agents in flat mode: .github/agents/<plugin>/<name>.agent.md */
 const FLAT_GITHUB_AGENTS_PREFIX = `${COPILOT_WORKSPACE_DIR}agents/`;

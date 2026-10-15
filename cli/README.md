@@ -135,6 +135,10 @@ Opt-in, off until asked. Record shapes and report axes: [`../plugins/aidd-teleme
 | `aidd telemetry identity` | Attach or drop this person's identifier: `use`, `off`, `link`, `unlink` |
 | `aidd telemetry forget` | Irreversibly drop the journal, the stored records, and the identity file |
 
+### Delegation
+
+`aidd delegation resolve <task> --tool <id> [--json]` reads the project's suggestion, verifies an installed agent, and reports requested/native settings. Resolution is read-only; the caller starts the agent. Configuration, host support and runtime checks: [project delegation](../docs/DELEGATION.md).
+
 ## Translate
 
 `aidd translate <source> --to <tool> --out <dir>` converts a framework source tree into a target-native plugin tree.

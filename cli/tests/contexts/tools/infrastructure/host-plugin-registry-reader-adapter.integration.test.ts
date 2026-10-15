@@ -28,13 +28,113 @@ async function write(relative: string, content: string): Promise<void> {
 }
 
 function readerFor(tool: AiToolId) {
-  const reader = hostPluginRegistryReaders(home).get(tool);
+  const reader = hostPluginRegistryReaders(home, {}).get(tool);
   if (reader === undefined) throw new Error(`no reader declared for ${tool}`);
   return reader;
 }
 
 describe("Claude Code's own installed_plugins.json", () => {
   const PATH = ".claude/plugins/installed_plugins.json";
+
+  it("does not treat a cached but disabled plugin as available during delegation", async () => {
+    const project = join(home, "project");
+    const cache = join(home, "cache", "aidd-dev");
+    await write(
+      PATH,
+      JSON.stringify({ plugins: { "aidd-dev@market": [{ scope: "user", installPath: cache }] } })
+    );
+    await write("cache/aidd-dev/agents/explorer.md", "---\nname: explorer\n---\nBody");
+    await write(
+      ".claude/settings.json",
+      JSON.stringify({ enabledPlugins: { "aidd-dev@market": true } })
+    );
+    await write(
+      "project/.claude/settings.json",
+      JSON.stringify({ enabledPlugins: { "aidd-dev@market": false } })
+    );
+    expect(
+      (await readerFor("claude").read(project, true)).refs?.get("aidd-dev@market")
+    ).toMatchObject({ enabled: false, installPath: cache });
+    expect((await readerFor("claude").read(project)).refs?.get("aidd-dev@market")?.enabled).toBe(
+      true
+    );
+  });
+
+  it("uses the highest mentioning Claude settings source without dropping unrelated lower keys", async () => {
+    const project = join(home, "project");
+    await write(
+      PATH,
+      JSON.stringify({
+        plugins: {
+          "aidd-dev@market": [{ scope: "user", installPath: "/cache" }],
+          "aidd-pm@market": [{ scope: "user", installPath: "/pm" }],
+        },
+      })
+    );
+    await write(
+      ".claude/settings.json",
+      JSON.stringify({ enabledPlugins: { "aidd-dev@market": false, "aidd-pm@market": true } })
+    );
+    await write(
+      "project/.claude/settings.json",
+      JSON.stringify({ enabledPlugins: { "aidd-dev@market": false } })
+    );
+    await write(
+      "project/.claude/settings.local.json",
+      JSON.stringify({ enabledPlugins: { "aidd-dev@market": true } })
+    );
+    const reading = await readerFor("claude").read(project, true);
+    expect(reading.refs?.get("aidd-dev@market")?.enabled).toBe(true);
+    expect(reading.refs?.get("aidd-pm@market")?.enabled).toBe(true);
+  });
+
+  it("marks Claude activation unverified when settings never mention the installed ref", async () => {
+    await write(
+      PATH,
+      JSON.stringify({ plugins: { "aidd-dev@market": [{ scope: "user", installPath: "/cache" }] } })
+    );
+    expect(
+      (await readerFor("claude").read(join(home, "project"), true)).refs?.get("aidd-dev@market")
+        ?.activationUnverified
+    ).toContain("enabledPlugins");
+  });
+
+  it("reads Claude's relocated settings and plugin registry rather than the default profile", async () => {
+    await write(PATH, JSON.stringify({ plugins: { "wrong@market": [{ scope: "user" }] } }));
+    await write(
+      "relocated-plugins/installed_plugins.json",
+      JSON.stringify({ plugins: { "aidd-dev@market": [{ scope: "user", installPath: "/cache" }] } })
+    );
+    await write(
+      "relocated-config/settings.json",
+      JSON.stringify({ enabledPlugins: { "aidd-dev@market": true } })
+    );
+    const reader = hostPluginRegistryReaders(home, {
+      CLAUDE_CONFIG_DIR: join(home, "relocated-config"),
+      CLAUDE_CODE_PLUGIN_CACHE_DIR: join(home, "relocated-plugins"),
+    }).get("claude");
+    const reading = await reader?.read(join(home, "project"), true);
+    expect(reading?.location).toBe(join(home, "relocated-plugins", "installed_plugins.json"));
+    expect(reading?.refs?.get("aidd-dev@market")?.enabled).toBe(true);
+    expect(reading?.refs?.has("wrong@market")).toBe(false);
+  });
+
+  it("carries the actual project plugin path before the user fallback for delegation", async () => {
+    await write(
+      PATH,
+      JSON.stringify({
+        plugins: {
+          "aidd-dev@market": [
+            { scope: "user", installPath: "/user/plugin" },
+            { scope: "project", projectPath: PROJECT, installPath: "/project/plugin" },
+          ],
+        },
+      })
+    );
+    expect(
+      (await readerFor("claude").read(PROJECT)).refs?.get("aidd-dev@market")?.installPath
+    ).toBe("/project/plugin");
+  });
 
   it("counts a ref installed for this project, and one installed for the machine", async () => {
     await write(
@@ -270,6 +370,146 @@ describe("Codex's own config.toml", () => {
  */
 describe("Copilot's own settings.json", () => {
   const PATH = ".copilot/settings.json";
+
+  it("applies repository disablement and local re-enablement per plugin during delegation", async () => {
+    const project = join(home, "project");
+    await write(
+      PATH,
+      JSON.stringify({ enabledPlugins: { "aidd-dev@market": true, "other@market": true } })
+    );
+    await write(
+      "project/.github/copilot/settings.json",
+      JSON.stringify({ enabledPlugins: { "aidd-dev@market": false } })
+    );
+    expect(
+      (await readerFor("copilot").read(project, true)).refs?.get("aidd-dev@market")?.enabled
+    ).toBe(false);
+    expect((await readerFor("copilot").read(project)).refs?.get("aidd-dev@market")?.enabled).toBe(
+      true
+    );
+    await write(
+      "project/.github/copilot/settings.local.json",
+      JSON.stringify({ enabledPlugins: { "aidd-dev@market": true } })
+    );
+    const reading = await readerFor("copilot").read(project, true);
+    expect(reading.refs?.get("aidd-dev@market")?.enabled).toBe(true);
+    expect(reading.refs?.get("other@market")?.enabled).toBe(true);
+  });
+
+  it("reads a repository-only Copilot registration from JSONC without using a personal profile", async () => {
+    const project = join(home, "project");
+    await write(
+      "project/.github/copilot/settings.json",
+      '// repository plugin\n{ "enabledPlugins": { "aidd-dev@market": true, }, }'
+    );
+    expect((await readerFor("copilot").read(project, true)).refs?.get("aidd-dev@market")).toEqual({
+      enabled: true,
+      installPath: join(home, ".copilot", "installed-plugins", "market", "aidd-dev"),
+    });
+  });
+
+  it("does not claim activation from a malformed Copilot enabledPlugins value", async () => {
+    await write(PATH, JSON.stringify({ enabledPlugins: { "aidd-dev@market": "false" } }));
+    const reading = await readerFor("copilot").read(PROJECT, true);
+    expect(reading.refs).toBeUndefined();
+    expect(reading.unreadable).toContain("enabledPlugins.aidd-dev@market must be a boolean");
+  });
+
+  it("reports conflicting cross-tool settings and accepts an explicit higher-scope answer", async () => {
+    const project = join(home, "project");
+    await write(
+      "project/.claude/settings.json",
+      JSON.stringify({ enabledPlugins: { "aidd-dev@market": false } })
+    );
+    await write(
+      "project/.github/copilot/settings.json",
+      JSON.stringify({ enabledPlugins: { "aidd-dev@market": true } })
+    );
+    const conflicting = await readerFor("copilot").read(project, true);
+    expect(conflicting.refs).toBeUndefined();
+    expect(conflicting.unreadable).toContain("conflicting enabledPlugins.aidd-dev@market");
+    await write(
+      "project/.github/copilot/settings.local.json",
+      JSON.stringify({ enabledPlugins: { "aidd-dev@market": true } })
+    );
+    expect(
+      (await readerFor("copilot").read(project, true)).refs?.get("aidd-dev@market")?.enabled
+    ).toBe(true);
+    await write(
+      "project/.github/copilot/settings.json",
+      JSON.stringify({ enabledPlugins: { "aidd-dev@market": false } })
+    );
+    await rm(join(project, ".github", "copilot", "settings.local.json"));
+    expect(
+      (await readerFor("copilot").read(project, true)).refs?.get("aidd-dev@market")?.enabled
+    ).toBe(false);
+  });
+
+  it.each([
+    "marketplace.json",
+    ".plugin/marketplace.json",
+    ".github/plugin/marketplace.json",
+    ".claude-plugin/marketplace.json",
+  ])("locates a live directory plugin through %s", async (catalogPath) => {
+    const marketplace = join(home, "market");
+    await write(
+      `market/${catalogPath}`,
+      JSON.stringify({ plugins: [{ name: "aidd-dev", source: "./plugins/aidd-dev" }] })
+    );
+    await write(
+      PATH,
+      JSON.stringify({
+        enabledPlugins: { "aidd-dev@market": true },
+        extraKnownMarketplaces: { market: { source: { source: "directory", path: marketplace } } },
+      })
+    );
+    expect(
+      (await readerFor("copilot").read(PROJECT, true)).refs?.get("aidd-dev@market")?.installPath
+    ).toBe(join(marketplace, "plugins", "aidd-dev"));
+  });
+
+  it("locates a remote Copilot plugin in its documented installed cache under COPILOT_HOME", async () => {
+    const config = join(home, "relocated-copilot");
+    await write(
+      ".copilot/settings.json",
+      JSON.stringify({ enabledPlugins: { "wrong@market": true } })
+    );
+    await write(
+      "relocated-copilot/settings.json",
+      JSON.stringify({
+        enabledPlugins: { "aidd-dev@market": true },
+        extraKnownMarketplaces: { market: { source: { source: "github", repo: "owner/repo" } } },
+      })
+    );
+    const reader = hostPluginRegistryReaders(home, { COPILOT_HOME: config }).get("copilot");
+    const reading = await reader?.read(join(home, "project"), true);
+    expect(reading?.location).toBe(join(config, "settings.json"));
+    expect(reading?.refs?.get("aidd-dev@market")?.installPath).toBe(
+      join(config, "installed-plugins", "market", "aidd-dev")
+    );
+    expect(reading?.refs?.has("wrong@market")).toBe(false);
+  });
+
+  it("uses the installed cache for a remote plugin listed by a live directory marketplace", async () => {
+    await write(
+      "market/.plugin/marketplace.json",
+      JSON.stringify({
+        plugins: [{ name: "aidd-dev", source: { source: "github", repo: "owner/plugin" } }],
+      })
+    );
+    await write(
+      PATH,
+      JSON.stringify({
+        enabledPlugins: { "aidd-dev@market": true },
+        extraKnownMarketplaces: {
+          market: { source: { source: "directory", path: join(home, "market") } },
+        },
+      })
+    );
+    expect(
+      (await readerFor("copilot").read(PROJECT, true)).refs?.get("aidd-dev@market")?.installPath
+    ).toBe(join(home, ".copilot", "installed-plugins", "market", "aidd-dev"));
+  });
 
   it("reads the refs its enabledPlugins carries", async () => {
     await write(

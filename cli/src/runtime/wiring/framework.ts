@@ -50,6 +50,7 @@ import { PluginRemoveUseCase } from "../../contexts/framework/application/plugin
 import { PluginSearchUseCase } from "../../contexts/framework/application/plugin/plugin-search-use-case.js";
 import { PluginUpdateUseCase } from "../../contexts/framework/application/plugin/plugin-update-use-case.js";
 import { ValidateRecipesUseCase } from "../../contexts/framework/application/recipes/validate-recipes-use-case.js";
+import { ResolveDelegationUseCase } from "../../contexts/framework/application/resolve-delegation-use-case.js";
 import { RestoreUseCase } from "../../contexts/framework/application/restore/restore-use-case.js";
 import { ProjectContextDetectorUseCase } from "../../contexts/framework/application/setup/project-context-detector-use-case.js";
 import { SetupMachineScopeUseCase } from "../../contexts/framework/application/setup/setup-machine-scope-use-case.js";
@@ -127,6 +128,7 @@ interface GlobalOptions {
 }
 
 interface Deps extends TelemetryDeps {
+  resolveDelegationUseCase: ResolveDelegationUseCase;
   fs: FileReader & FileWriter & FileMerger;
   manifestRepo: ManifestRepository;
   /** `--scope user`'s own manifest repository: `userConfigDir()/manifest.json`, never nested
@@ -599,6 +601,7 @@ export async function createDeps(
     manifestRepo,
   });
   const deps: Deps = {
+    resolveDelegationUseCase: new ResolveDelegationUseCase(fs, manifestRepo, hostPluginRegistries),
     validateRecipesUseCase: new ValidateRecipesUseCase(new RecipeFilesAdapter()),
     ...telemetry,
     fs,

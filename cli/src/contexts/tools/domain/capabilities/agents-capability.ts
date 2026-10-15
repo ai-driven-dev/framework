@@ -51,6 +51,27 @@ export class AgentsCapability {
       directory: string;
       toolSuffix: string;
       format: "markdown" | "toml";
+      delegation?: {
+        personalAgentsFirst?: boolean;
+        userPath: (home: string, env: NodeJS.ProcessEnv, plugin: string, role: string) => string;
+        identity: (
+          name: string,
+          plugin: string,
+          mode: "flat" | "marketplace",
+          role: string
+        ) => string;
+        resolveNative: (
+          requested: { model?: string; effort?: string },
+          mode: "flat" | "marketplace"
+        ) => Readonly<Record<string, string>>;
+        readName?: (content: string) => string | undefined;
+        marketplacePath?: (root: string, role: string) => string;
+        nativeSurface?: (mode: "flat" | "marketplace") => "agent-configuration" | "spawn";
+        diagnostics?: (
+          content: string,
+          requested: { model?: string; effort?: string }
+        ) => readonly string[];
+      };
       userFileExt?: string;
       buildInstallPath?: (fileName: string) => string | null;
       convertFrontmatter?: (

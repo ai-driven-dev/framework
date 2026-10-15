@@ -22,6 +22,7 @@ import {
   convertCommandFrontmatter,
   stripToolSuffix,
 } from "../../formats/command.js";
+import { nativeAgentOptions } from "../../formats/delegation-options.js";
 import { PLUGIN_ROOT_TOKEN } from "../../formats/plugin-root-token.js";
 import { registerTool } from "../../registry.js";
 import {
@@ -31,6 +32,7 @@ import {
   stripCodexSkillFrontmatter,
 } from "./build.js";
 import { CODEX_ROLLOUT_LOCATION } from "./codex-transcript-location.js";
+import { parseToml } from "./toml.js";
 
 const DIRECTORY = ".codex/";
 const TOOL_SUFFIX = ".codex.md";
@@ -148,7 +150,34 @@ export const codex: AiTool<
   buildContracts: { marketplace: buildCodexContract, flat: buildCodexFlatContract },
 
   capabilities: {
-    agents: new AgentsCapability({ directory: DIRECTORY, toolSuffix: TOOL_SUFFIX, format: "toml" }),
+    agents: new AgentsCapability({
+      directory: DIRECTORY,
+      toolSuffix: TOOL_SUFFIX,
+      format: "toml",
+      delegation: {
+        userPath: (home, env, plugin, role) =>
+          join(env.CODEX_HOME || join(home, ".codex"), "agents", `${plugin}-${role}.toml`),
+        identity: (name) => name,
+        resolveNative: (requested) => nativeAgentOptions(requested, "model_reasoning_effort"),
+        readName: (content) => {
+          const name = parseToml(content).name;
+          if (typeof name !== "string" || name.trim() === "")
+            throw new Error(
+              "Installed agent requires a nonempty TOML name; repair or reinstall its agent file."
+            );
+          return name;
+        },
+        diagnostics: (content, requested) => {
+          const pins = parseToml(content);
+          return Object.entries(nativeAgentOptions(requested, "model_reasoning_effort"))
+            .filter(([field, value]) => typeof pins[field] === "string" && pins[field] !== value)
+            .map(
+              ([field, value]) =>
+                `Installed agent pins ${field} to ${pins[field]}; update its agent configuration to ${value} before spawning. A spawn override may not replace this pin.`
+            );
+        },
+      },
+    }),
     skills: new SkillsCapability({
       prefix: "aidd-",
       buildInstallPath: buildCodexSkillFilePath,
