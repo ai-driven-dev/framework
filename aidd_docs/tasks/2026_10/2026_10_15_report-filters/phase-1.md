@@ -1,5 +1,5 @@
 ---
-status: todo
+status: done
 ---
 
 # Instruction: A filter selects what a row holds
