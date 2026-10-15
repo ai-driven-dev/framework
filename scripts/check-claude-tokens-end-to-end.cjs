@@ -149,9 +149,11 @@ while True:
         data = child.read(65536)
     except EOFError:
         break
-    # ConPTY asks the terminal where its cursor is and renders nothing until it is answered.
+    # A terminal answers where its cursor is and what it is; ConPTY and Claude wait for both.
     if "\\x1b[6n" in data:
         child.write("\\x1b[1;1R")
+    if "\\x1b[c" in data or "\\x1b[0c" in data:
+        child.write("\\x1b[?1;2c")
     sys.stdout.write(data)
     sys.stdout.flush()
 `;
