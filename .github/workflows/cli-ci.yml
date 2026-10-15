@@ -450,11 +450,10 @@ jobs:
       - name: The report counts every billed token, on the declared task
         run: node scripts/check-claude-tokens-end-to-end.cjs
       # A person at a terminal, through a pseudo-terminal: asked, answered by the hook, kept
-      # across /clear. Python's `pty` on POSIX; on Windows ConPTY, through pywinpty.
-      - name: Install pywinpty
-        if: runner.os == 'Windows'
-        run: python -m pip install pywinpty==3.0.5
+      # across /clear. Python's `pty` is POSIX only; under ConPTY (pywinpty) Claude never got
+      # past its terminal setup on the runner, so Windows runs the headless check alone.
       - name: A person is asked, answered and keeps the task across /clear
+        if: runner.os != 'Windows'
         run: node scripts/check-claude-tokens-end-to-end.cjs --attended
 
   cli-jscpd:
