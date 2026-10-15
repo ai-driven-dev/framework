@@ -8,7 +8,7 @@ The memory bank in `aidd_docs/memory/`.
 
 ## Output
 
-Each picked tool's context file, carrying the memory block and available agent table.
+Each picked tool's context file, carrying the filled block.
 
 ## Process
 
@@ -16,15 +16,20 @@ Each picked tool's context file, carrying the memory block and available agent t
 2. **Detect.** Find the AI tools present per [tools.md](../references/tools.md).
 3. **Pick.** Show every tool, the detected ones ticked, and wait for one or several.
 4. **Upsert.** Ensure each picked tool's context file carries the block, per [tools.md](../references/tools.md).
-   - **Absent:** create it from [AGENTS.md](../assets/templates/AGENTS.md).
-   - **Different:** reconcile its AIDD structure only with approval.
+   - Absent file: create it from [AGENTS.md](../assets/templates/AGENTS.md).
+   - Its AIDD structure differs: offer to reconcile it, applying only what the user approves.
 5. **Fill.** Run `hooks/update_memory.js` from the project root, naming the picked tools, and stop on a non-zero exit.
-   - **Standalone:** without the script, fill each block from the bank.
-6. **Agents.** Fill `aidd_agents:start` / `aidd_agents:end` with installed, invocable agents and short English verb-led roles; label differing names by host in shared files.
-7. **Verify.** Read back each selected block; stop if it differs from the bank or advertises an unavailable agent.
+   - No script, the skill shipped alone: write each block from the bank.
+6. **Agents.** Fill `aidd_agents:start` / `aidd_agents:end` with installed, invocable agents and short English verb-led roles; add the block when absent and label differing names by host. Preserve text outside managed blocks.
+7. **Verify.** Read each picked tool's block back and compare it to the bank; verify every listed agent is available.
+   - A file in one and not the other: the fill did not land, report it and stop.
 
-## Rules
+## Test
 
-- **Memory:** list every root `.md` except `README.md`.
-- **Preserve:** leave unselected tools and text outside managed blocks unchanged.
-- **Missing block:** add the agent block, even if only its table header; no new discovery hook or script.
+| Case | Pass |
+| --- | --- |
+| Empty bank | no context file created, the run stops |
+| Script | it exits `0` |
+| Picked tool | its block lists every root `.md` except `README.md`, nothing else |
+| Bank grew | the block gains that file and keeps the rest |
+| Unpicked tool | its context file is unchanged |

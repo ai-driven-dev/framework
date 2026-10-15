@@ -19,7 +19,6 @@ The contract every generated agent must satisfy. An agent is a focused role with
 
 Short imperative sentences. Optional sections, added only when they earn their place:
 
-- `# References`: supporting criteria or checklists, verified accessible after installation.
 - `# Inputs`: what it receives.
 - `# Outputs`: what it returns.
 - `# Guardrails`: behavioral boundaries.

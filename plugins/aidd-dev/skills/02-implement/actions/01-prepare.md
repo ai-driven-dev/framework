@@ -1,19 +1,19 @@
-# Prepare
+# 01 - Prepare
 
 ## Input
 
-A whole plan, as a path or inline content.
+A plan path or inline content.
 
 ## Output
 
-Resolved plan on a feature branch, `status: in-progress`, or a missing-plan error.
+The resolved plan on a feature branch with `status: in-progress`, or a missing-plan report.
 
 ## Process
 
-1. **Resolve.** Read the supplied plan; if unavailable, stop with `plan not found at <path>`.
-2. **Branch.** Create and announce a feature branch when on the default branch; otherwise keep the current branch.
-3. **Mark.** Set the plan `status: in-progress`.
+1. **Resolve.** Read the supplied plan.
+2. **Branch.** Create and announce a feature branch on the default branch; otherwise keep the current branch.
+3. **Mark.** Set the plan frontmatter `status: in-progress`.
 
 ## Rules
 
-- **Source.** Require a readable plan or inline content; report missing input instead of fabricating a plan.
+- Without a readable plan or inline content, stop with `plan not found at <path>`; never fabricate a plan.

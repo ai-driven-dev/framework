@@ -1,34 +1,39 @@
-# Plan
+# 04 - Plan
+
+Turn the explored source into a plan and its phases, save them, then review the whole before handoff. Never code.
 
 ## Input
 
-Exploration findings and any wireframes.
+The explore output from `02-explore` (projection, rules, feasibility, risks), plus any confirmed wireframe from `03-wireframe`.
 
 ## Output
 
-`plan.md` and `phase-<n>.md` files in the source's feature folder or `aidd_docs/tasks/<yyyy_mm>/<yyyy_mm_dd>_<feature-slug>/`.
+A feature folder, always at `aidd_docs/tasks/<yyyy_mm>/<yyyy_mm_dd>_<feature-slug>/`, holding `plan.md` from [plan-template.md](../assets/plan-template.md) and one `phase-<n>.md` per phase from [phase-template.md](../assets/phase-template.md).
 
 ## Process
 
-1. **Slice.** Prefer independent phases, each coherent, verifiable, and sized for one executor pass.
-2. **Write.** Fill [plan-template.md](../assets/plan-template.md) and [phase-template.md](../assets/phase-template.md), covering the full projection without placeholders.
-3. **Link.** For a new folder whose source reference names a backlog item, create `backlog-link.json` with that reference and the current UTC time:
+1. **Phases.** Break the work into phases, each a coherent unit of work that ships and verifies on its own, sized for one executor pass. Let the work decide how many. Prefer independent phases with separate file ownership; record earlier phase numbers in `Depends on` for required outputs, overlapping writes, or shared mutable validation resources. Keep phases ordered when independence is uncertain.
+2. **Folder.** Reuse the feature folder the source already lives in, or create one. When creating one and `01-gather`'s own source reference names a backlog item — a ticket id or URL, or a file path naming its Markdown artefact, never raw text — with no `backlog-link.json` there yet, declare it the same way the skill that writes a spec does:
 
    ```json
-   {"backlog": "owner/repo#123", "written_at": "2026-08-21T09:00:00Z", "written_by": "aidd-dev:01-plan"}
+   {
+     "backlog": "owner/repo#123",
+     "written_at": "2026-08-21T09:00:00Z",
+     "written_by": "aidd-dev:01-plan"
+   }
    ```
 
-4. **Challenge.** Check source coverage, phase boundaries, acceptance criteria, and dependencies; revise gaps, using an available challenge capability when useful.
-   - **Interactive.** Show paths and obtain approval.
-   - **Autonomous.** Ask only for product decisions the source cannot resolve.
-5. **Finish.** Emit the completion marker once the files are written and challenged.
+   `backlog` is the one field, on whatever support the item lives - a forge reference or a project-relative Markdown path, never both. When the source names none, write nothing. When `backlog-link.json` already exists, leave it untouched - it is correctable by hand, and a later run must never overwrite a correction.
+3. **Fill.** Fill the plan and each phase from their templates, following the inline contracts. Slice the projection across the phases.
+4. **Show.** Display the written paths.
+5. **Review.** Challenge source coverage, acceptance criteria, phase boundaries, and dependencies; revise gaps. In interactive mode, show them and revise until approved. Under an autonomous orchestrator, revise against the source without waiting for approval; ask only when a product decision cannot be resolved from the source.
 
-   ```shell
-   echo "aidd:step-end aidd-dev:01-plan"
-   ```
+## Test
 
-## Rules
-
-- **Dependencies.** Record earlier phase numbers in `Depends on` for required outputs, conflicting file changes, or shared mutable validation resources; preserve ordering when independence is uncertain.
-- **Link preservation.** Preserve existing backlog links; `backlog` holds one explicit forge reference or project-relative Markdown path.
-- **Lifecycle.** Follow [plan-status.md](../references/plan-status.md).
+- `aidd_docs/tasks/<yyyy_mm>/<yyyy_mm_dd>_<feature-slug>/plan.md` exists with one `phase-<n>.md` per phase next to it.
+- Every written file satisfies its template's inline contract.
+- No `{...}` placeholder is left in any written file.
+- The phase projection slices together cover the modify, create, and delete lists.
+- The complete plan and its phases were challenged against the source.
+- An autonomous run waits only for a product decision that the source cannot resolve.
+- A newly created folder whose source names a ticket carries a `backlog-link.json` naming it; reusing an existing folder never overwrites one already there.

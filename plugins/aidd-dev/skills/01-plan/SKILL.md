@@ -4,28 +4,40 @@ description: Turn a request, ticket, or file into a phased implementation plan. 
 argument-hint: request | ticket | file
 ---
 
-# Plan
+# Skill: plan
 
-```mermaid
-flowchart TD
-  Request([request, ticket, or file]) --> gather --> explore
-  explore -- UI --> wireframe --> plan
-  explore -- no UI --> plan
-  plan -- challenge finds gaps --> plan
-  plan --> Ready([plan ready])
-```
+Turn a gathered source into an implementation plan and its phase files. Never writes code.
 
 ## Actions
 
-Read only the next numbered action file in `actions/`.
+| #   | Action      | Role                                                 | Input                      |
+| --- | ----------- | ---------------------------------------------------- | -------------------------- |
+| 01  | `gather`    | Collect and restate the source                       | user request               |
+| 02  | `explore`   | Read the codebase for projection, rules, feasibility | gathered source            |
+| 03  | `wireframe` | Sketch a screen at low fidelity, frontend only       | source + explore context   |
+| 04  | `plan`      | Break into phases, write the plan and phase files    | explore output + wireframe |
 
-| Action | Does |
-| --- | --- |
-| gather | identify the source and constraints |
-| explore | ground scope and feasibility in evidence |
-| wireframe | sketch frontend screens |
-| plan | write and challenge phases |
+Run them in order, `01 → 04`. The plan is the culmination. Skip `03` when there is no UI.
+Before running an action, read its file in `actions/`, not only the table or assets.
 
-## Transversal rules
+Once the plan and its phase files are written, and only then, run:
 
-- **Read-only.** Never write application code.
+```shell
+echo "aidd:step-end aidd-dev:01-plan"
+```
+
+This is the one thing about a step nothing else can supply. No host reports when a skill's
+work finished — a skill call's own result comes back in a tenth of a second, which is the
+dispatch, not the completion — so a measurement that never hears this ends the step at the
+next pause and credits planning with one turn out of however many it took. The framework
+repository documents the run journal this writes into, in `aidd_docs/runs/README.md`.
+
+## References
+
+- `references/wireframe-conventions.md`: how to draw the ASCII wireframe a screen needs.
+- `references/plan-status.md`: the plan lifecycle `status` values and who writes each.
+
+## Assets
+
+- `assets/plan-template.md`: the `plan.md` scaffold.
+- `assets/phase-template.md`: the per-phase scaffold.

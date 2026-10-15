@@ -2,10 +2,10 @@
 
 ## Behavior
 
-- **Plan:** reconcile scoped exploration, then produce a proportional implementation plan.
-- **Assign:** own preparation, shared lifecycle, and integration; delegate only phases with their criteria, prerequisites, status-file ownership, checkout, resources, and commit policy. Use separate checkouts for parallel writers; otherwise run serially.
-- **Integrate:** accept scoped changes and evidence before starting dependents. Include architecture conformance when the project documents architecture; run a required end-to-end journey after all other validation, then finalize. Reuse evidence only for its unchanged candidate and scope.
-- **Handoff:** commit and push through the commit capability; send the clean candidate and evidence to Check.
+- Reconcile scoped exploration, then produce a proportional implementation plan.
+- Own preparation, shared lifecycle, and integration; delegate only phases with their criteria, prerequisites, status-file ownership, checkout, resources, and commit policy. Use separate checkouts for parallel writers; otherwise run serially.
+- Accept scoped changes and evidence before starting dependents. Include architecture conformance when the project documents architecture; run a required end-to-end journey after all other validation, then finalize. Reuse evidence only for its unchanged candidate and scope.
+- Commit and push through the commit capability; send the clean candidate and evidence to Check.
 
 ```mermaid
 ---

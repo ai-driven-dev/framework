@@ -39,7 +39,7 @@ Use available agents when useful. The caller owns scope, delegation, and final a
 <!-- aidd_agents:start -->
 | name | role |
 | --- | --- |
-| @aidd-dev-explorer (Codex, OpenCode), @aidd-dev:explorer (Claude) | Explore scoped questions and return sourced findings before a decision. |
+| @aidd-dev-explorer (Codex, OpenCode), @aidd-dev:explorer (Claude) | Explore the codebase and return relevant files, code, and explanations for a scoped question. |
 | @aidd-dev-executor (Codex, OpenCode), @aidd-dev:executor (Claude) | Implement assigned work and return changes with verification evidence. |
 | @aidd-dev-validator (Codex, OpenCode), @aidd-dev:validator (Claude) | Validate that delivered work satisfies the requested outcome and acceptance criteria. |
 | @aidd-dev-reviewer (Codex, OpenCode), @aidd-dev:reviewer (Claude) | Review quality and coherence against project conventions and the quality checklist. |

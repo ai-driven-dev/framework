@@ -2,23 +2,23 @@
 
 ## Behavior
 
-- **Validate:** dispatch a fresh validator on the committed candidate, contract, criteria, and mandatory checks.
-- **Review:** after validation passes, dispatch a fresh reviewer for quality and coherence; select code and relevancy axes, using the validator's acceptance evidence.
-- **Challenge:** after review clears, the same reviewer challenges whether the outcome is trustworthy and serves the user.
+- Dispatch a fresh validator on the committed candidate, contract, criteria, and mandatory checks.
+- After validation passes, dispatch a fresh reviewer for quality and coherence; select code and relevancy axes, using the validator's acceptance evidence.
+- After review clears, the same reviewer challenges whether the outcome is trustworthy and serves the user.
 
 ## Findings
 
-A finding routes by its subject. User refusals at a pause route by artifact as `mode.md` says.
+A review or validation finding is routed by what it is about. A refusal the user gives at a pause is not one of these: `mode.md` routes that by artifact.
 
-- **Product:** send contract findings to Frame.
-- **Repair:** send independent implementation findings through Batch; keep dependent repairs together in Deliver.
-- **Candidate:** re-enter Check after each repaired candidate.
-- **Challenge:** after review clears, reopen a zone only for a contract contradiction; carry other findings onto the request as notes.
-- **Recurrence:** route a finding only once. If it returns after being acted on, wait for user authority before opening the request.
+- Product or contract findings are the next Frame source.
+- Independent implementation findings go through Batch; dependent repairs stay together in Deliver.
+- Re-enter Check after every new candidate.
+- Once the review has cleared, only a finding that contradicts the contract reopens a zone: carry any other onto the request as a note.
+- A finding already acted on is never routed twice. Repaired or not, it is a decision that requires user authority, and no request opens until that arrives.
 
 ## Handoff
 
-- **Ship:** commit anything this zone wrote, then open the draft pull request when no actionable finding remains.
+- Commit whatever this zone wrote, then open the draft pull request when the reviewer returns no actionable finding.
 
 ```mermaid
 ---

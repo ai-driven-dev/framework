@@ -1,19 +1,26 @@
-# Finalize
+# 03 - Finalize
 
 ## Input
 
-A plan with all phases done and integrated.
+The coded plan.
 
 ## Output
 
-Plan `status: implemented`, with integrated acceptance and validation evidence.
+The validated plan marked `implemented`.
 
 ## Process
 
-1. **Verify.** Check the source outcome, phase criteria, and all required validation commands/tests together on the integrated candidate; start the required runtime if needed.
-2. **Repair.** Return failures to execution, rerun the affected workflow and validation commands/tests under Execute's validation, blocker, and drift rules.
-3. **Mark.** Set the plan `status: implemented` only when all required checks pass; commit according to commit policy.
+1. **Verify.** Validate the source outcome and phase criteria together after integration, then run the plan's validation commands and tests.
+   - Start the required runtime if needed.
+2. **Mark.** Set the plan `status: implemented`.
+   - Commit according to the commit policy.
 
 ## Rules
 
-- **Evidence.** Reuse passing results only for the same candidate and required scope; phase checks alone do not establish integrated acceptance.
+- Gate `implemented` on successful validation.
+  - Require every phase `done`.
+  - Require all validation commands and tests to pass.
+- Repair validation failures before `implemented`.
+  - Rerun the affected workflow after a repair.
+  - Rerun the validation commands and tests.
+  - Follow Execute's validation, blocker and drift rules.

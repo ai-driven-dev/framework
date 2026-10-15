@@ -4,10 +4,10 @@ A wireframe is a low-fidelity ASCII sketch of a screen. Structure only: no behav
 
 ## Drawing
 
-- **Screen.** One box per screen, drawn with `┌ ─ ┐ │ └ ┘`.
-- **Layout.** Place the regions (header, nav, main, aside, footer) and the key elements (lists, forms, cards, buttons, inputs) where they sit.
-- **Regions.** Number each region.
-- **Notes.** Under the sketch, one line per number on what it holds and why.
+- One box per screen, drawn with `┌ ─ ┐ │ └ ┘`.
+- Place the regions (header, nav, main, aside, footer) and the key elements (lists, forms, cards, buttons, inputs) where they sit.
+- Number each region.
+- Under the sketch, one line per number on what it holds and why.
 
 ## Example
 

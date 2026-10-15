@@ -1,39 +1,52 @@
 ---
 name: 02-implement
-description: Implements an existing plan or an assigned phase until its acceptance criteria hold. Use when a plan or bounded phase needs implementing. Not for writing a plan or reviewing a diff.
+description: Implement an existing plan or assigned phase until its acceptance criteria hold. Use when a plan or bounded phase needs implementing. Not for writing a plan or reviewing a diff.
 argument-hint: plan | phase
 ---
 
-# Implement
+# Skill: implement
 
 ```mermaid
-flowchart TD
-  Whole([whole plan]) --> prepare
-  Assigned([assigned phase]) --> execute
-  prepare --> execute
-  prepare -- plan missing --> Missing([stop])
-  execute -- repair or more ready phases --> execute
-  execute -- assigned phase done --> Returned([return evidence])
-  execute -- whole plan done --> finalize
-  execute -- blocked or drift --> Stopped([report blocker or replan])
-  finalize -- repair --> execute
-  finalize --> Implemented([implemented])
+flowchart LR
+  whole([whole plan]) --> prepare --> execute
+  assigned([assigned phase]) --> execute
+  execute -->|whole plan complete| finalize --> implemented
+  execute -->|assigned phase complete| returned([return changes and evidence])
+  prepare -->|missing plan| stop
+  execute -->|fix, next task or phase| execute
+  execute --> blocked
+  execute --> replan
+  finalize -->|validation fails| finalize
+  finalize --> blocked
+  finalize --> replan
 ```
 
 ## Actions
 
-Read only the next numbered action file in `actions/`.
+Run actions in order for a whole plan. An assigned-phase executor reads the plan context and executes only that phase, skipping shared preparation and finalization.
+Read each action file in `actions/` before executing it.
 
-| Action | Does |
-| --- | --- |
-| prepare | resolve the plan and prepare its branch |
-| execute | implement and check assigned scope |
-| finalize | validate the integrated plan |
+| Action   | Does                                  |
+| -------- | ------------------------------------- |
+| prepare  | resolve the plan and branch            |
+| execute  | implement and validate each task       |
+| finalize | validate and mark the plan implemented |
 
 ## Transversal rules
 
-- **Ownership.** Whole-plan runners own integration and plan status; assigned-phase runners own only their phase status and skip prepare/finalize. The caller retains requirements, criteria, and final acceptance.
-- **Statuses.** Track plans through `pending → in-progress → implemented` (or `blocked`), phases through `pending → in-progress → done`; `in-progress` is a runtime marker, not a separate commit.
-- **Commits.** Follow user/project policy; when commits are authorized, make one local commit per validated task, grouping only inseparable tasks. Include its code, tests, and docs, exclude unrelated changes, and include `done` in the phase's last task commit. Commit `implemented` separately; push only when requested.
-- **Formatting.** Use project formatters or hooks instead of manual formatting.
-- **Delegation.** The primary caller owns delegation; isolated agents return their assigned work directly.
+- The caller owns delegation, integration, shared plan status, and final acceptance; phase executors own only their assigned files and phase status.
+- Track the plan through `pending → in-progress → implemented` (or `blocked`).
+  - Track phases through `pending → in-progress → done`.
+  - Treat `in-progress` as a runtime marker.
+  - Never commit `in-progress` alone.
+- Follow user and project commit instructions.
+  - Push only when requested.
+- By default, make one local commit per validated task.
+  - Include all its code, tests and docs together.
+  - Group tasks only when they cannot be validated separately.
+  - Never split a task by step or file.
+  - Exclude unrelated changes.
+- Include `done` in the phase's last task commit.
+- Make a final commit for `implemented`.
+- Use project formatters or hooks.
+  - Never format code manually.

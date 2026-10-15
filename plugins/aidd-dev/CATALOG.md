@@ -33,9 +33,9 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | File | Description |
 |------|---|
 | [executor.md](agents/executor.md) | `Implements assigned work within defined scope. Use to build or fix a deliverable, verify the result, and repair failures against the requested outcome.` |
-| [explorer.md](agents/explorer.md) | `Explores scoped questions about code, documentation, or dependencies. Use to investigate a domain, trace behavior, or research evidence before deciding.` |
-| [reviewer.md](agents/reviewer.md) | `Reviews the quality and coherence of a deliverable. Use for a quality check of simplicity, consistency, maintainability, and alignment with project conventions.` |
-| [validator.md](agents/validator.md) | `Validates that delivered work satisfies the original request, acceptance criteria, and mandatory checks. Use to verify the requested outcome and establish completion independently.` |
+| [explorer.md](agents/explorer.md) | `Explores a codebase to answer scoped questions. Use to locate files and symbols, trace execution or dependencies, and return relevant code with an explanation before changes.` |
+| [reviewer.md](agents/reviewer.md) | `Reviews the quality and coherence of finished work. Use to find concrete defects, contradictions, duplication, and unnecessary complexity against project conventions and the real need.` |
+| [validator.md](agents/validator.md) | `Validates that delivered work satisfies the request and acceptance criteria. Use to independently confirm completion and explain failures or missing verification.` |
 
 ### `skills`
 
@@ -61,7 +61,7 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `actions` | [02-execute.md](skills/02-implement/actions/02-execute.md) | - |
 | `actions` | [03-finalize.md](skills/02-implement/actions/03-finalize.md) | - |
 | `references` | [blocked.md](skills/02-implement/references/blocked.md) | `Conditions that make a plan blocked (needs a human).` |
-| `-` | [SKILL.md](skills/02-implement/SKILL.md) | `Implements an existing plan or an assigned phase until its acceptance criteria hold. Use when a plan or bounded phase needs implementing. Not for writing a plan or reviewing a diff.` |
+| `-` | [SKILL.md](skills/02-implement/SKILL.md) | `Implement an existing plan or assigned phase until its acceptance criteria hold. Use when a plan or bounded phase needs implementing. Not for writing a plan or reviewing a diff.` |
 
 #### `skills/03-assert`
 

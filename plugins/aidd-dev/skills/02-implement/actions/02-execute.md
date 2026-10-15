@@ -1,25 +1,47 @@
-# Execute
+# 02 - Execute
 
 ## Input
 
-A prepared plan or assigned phase, with plan context, prerequisites, criteria, checkout, resources, and commit policy.
+The prepared plan, or an assigned phase with plan context, dependencies, file ownership, checkout, validation resources, and commit policy.
 
 ## Output
 
-Validated phases, `status: done`, workflow evidence and checked revision, or a blocker/replan report.
+Validated phases marked `done`.
+
+Or a `blocked` / `replan needed` report.
 
 ## Process
 
-1. **Select.** Read `phase-<n>.md` beside `plan.md`; run only assigned or whole-plan phases whose prerequisites are done and integrated.
-   - **Parallel.** The primary caller may dispatch independent phases with their owned files, criteria, completed prerequisites, distinct checkouts/Git indexes, and nonconflicting validation resources.
-   - **Serial.** Run in order when isolation or independence is uncertain, or dependencies are undeclared.
-2. **Implement.** Mark the phase `in-progress`; implement tasks in plan order, grouping only those inseparable for validation.
-3. **Validate.** Validate each task before its commit, then the full phase workflow before marking `done`; include that status in the last task commit according to commit policy.
-4. **Deliver.** Return changes and evidence to the caller. Whole-plan runners integrate returned work, recheck affected interactions, and select the next ready phases.
+1. **Open.** Select assigned phases whose dependencies are done and integrated; use plan order when dependencies are undeclared.
+   - The caller may run independent phases in parallel with distinct checkouts/Git indexes, separate write ownership, and nonconflicting validation resources; otherwise run serially.
+   - Missing or contradictory dependencies, or unfinished work with no ready phase, require `replan needed`.
+   - Set the current phase `status: in-progress`.
+   - In a feature folder, read `phase-<n>.md` beside `plan.md`.
+2. **Code.** Build the next task or inseparable group against its acceptance criteria.
+   - Follow the plan's task order.
+3. **Assert.** Apply the validation rules below to every acceptance criterion of the selected task or group.
+   - After the last task:
+     - Validate the full phase workflow.
+     - Set the phase `status: done` on success.
+4. **Complete.** Commit according to the commit policy.
+   - Repeat steps 2–4 for the remaining assigned tasks.
+   - Phase executors return changes and evidence. The caller integrates them, checks affected interactions, then starts dependents; only the whole-plan owner finalizes.
 
 ## Rules
 
-- **Evidence.** Exercise every acceptance criterion through the real affected interface (browser, CLI, API…); compare actual and expected behavior at every step. Repair mismatches and restart the affected workflow from the beginning; require a full successful run with observable evidence before a task commit or `done`.
-- **Readiness.** Missing/contradictory dependencies or unfinished phases with none ready require `replan needed`, not skipped work or completion.
-- **Drift.** Adapt implementation within owned responsibility; report changes needed to requested outcomes, criteria, or cross-owner dependencies as `replan needed: <reason>` and stop affected work.
-- **Blocked.** Follow [blocked.md](../references/blocked.md); assigned executors report, the whole-plan owner records plan `status: blocked` under commit policy. Leave unfinished code uncommitted; blocked validation is not success.
+- Validate every acceptance criterion through the real affected workflow.
+  - Use the appropriate interface (browser, CLI, API…).
+  - Check actual against expected behavior at every step.
+  - Fix any mismatch.
+  - Restart from the beginning after a repair.
+- Gate task commits and `done` on successful validation.
+  - Require a full successful run.
+  - Require observable evidence for every step.
+  - Report blocked validation.
+  - Never count blocked validation as success.
+- Follow [blocked.md](../references/blocked.md) when implementation is blocked.
+  - Assigned executors report the blocker; the whole-plan owner records the blocked plan according to the commit policy.
+  - Leave unfinished code uncommitted.
+- Stop if satisfying the acceptance criteria requires changing scope or requirements.
+  - Report `replan needed: <reason>`.
+  - Never rewrite the plan.
