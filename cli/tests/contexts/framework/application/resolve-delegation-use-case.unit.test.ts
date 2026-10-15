@@ -455,7 +455,9 @@ describe("resolving an installed delegation suggestion", () => {
       "/repo/.cursor/agents/aidd-dev-explorer.md",
       "---\nname: aidd-dev-explorer\n---\nBody"
     );
-    await expect(selected.resolve()).rejects.toThrow(reason);
+    await expect(selected.resolve()).rejects.toMatchObject({
+      message: expect.stringContaining(reason),
+    });
   });
 
   it("passes a literal Cursor model unchanged when effort is omitted", async () => {
