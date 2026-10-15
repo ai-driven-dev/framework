@@ -280,9 +280,7 @@ describeKiloRuntime("E2E: real Kilo runtime", () => {
         shell: KILO_SHELL,
         maxBuffer: 8 * 1024 * 1024,
       });
-      for (const role of ["explorer", "executor", "reviewer", "validator"]) {
-        expect(agents.stdout).toContain(`aidd-dev-${role}`);
-      }
+      expect(agents.stdout).not.toContain("aidd-dev-");
 
       const mcpProject = join(tempDir, "generated-mcp");
       await mkdir(mcpProject, { recursive: true });
@@ -301,6 +299,13 @@ describeKiloRuntime("E2E: real Kilo runtime", () => {
         fakeHome
       );
       expect(mcpBuild.exitCode, mcpBuild.stderr).toBe(0);
+      const fixtureAgents = await execFileAsync(KILO_BIN, ["agent", "list"], {
+        cwd: mcpProject,
+        env,
+        shell: KILO_SHELL,
+        maxBuffer: 8 * 1024 * 1024,
+      });
+      expect(fixtureAgents.stdout).toContain("aidd-test-code-reviewer");
       const mcp = await execFileAsync(KILO_BIN, ["mcp", "list"], {
         cwd: mcpProject,
         env,

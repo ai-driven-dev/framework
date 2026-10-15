@@ -31,8 +31,8 @@ flowchart TD
     Plan["$plan"]
     CommittedCandidate["$committed_candidate"]
     ValidationReports["$validation_reports"]
-    Validator(["@aidd-dev:validator"])
-    Reviewer(["@aidd-dev:reviewer"])
+    Validator(["@aidd-dev-validator"])
+    Reviewer(["@aidd-dev-reviewer"])
     Review["/aidd-dev:05-review"]
   end
 

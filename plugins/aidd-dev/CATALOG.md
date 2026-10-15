@@ -7,7 +7,6 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 ## Table of Contents
 
 - [`.claude-plugin`](#claude-plugin)
-- [`agents`](#agents)
 - [`skills`](#skills)
   - [`skills/01-plan`](#skills01-plan)
   - [`skills/02-implement`](#skills02-implement)
@@ -28,9 +27,6 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 |------|
 | [plugin.json](.claude-plugin/plugin.json) |
 
-### `agents`
-
-No files found.
 ### `skills`
 
 #### `skills/01-plan`
