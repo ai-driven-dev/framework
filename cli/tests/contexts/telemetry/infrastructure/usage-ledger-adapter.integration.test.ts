@@ -177,6 +177,7 @@ describe("the ledger on disk", () => {
     await ledger.savePositions(new Map([["/t", { offset: 1, size: 1, identity: "i" }]]));
     const beside = [
       "x2026-10-07.jsonl",
+      "x2026-10.jsonl",
       "2026-10-07.jsonl.bak",
       "26-10-07.jsonl",
       "2026-10-7.jsonl",
@@ -218,6 +219,16 @@ describe("the ledger on disk", () => {
     const loaded = await ledger.load();
     expect(loaded.records.map((r) => r.output)).toEqual([90, 10]);
     expect([...loaded.unsettled].sort()).toEqual(["2026-10-31", "2026-11-01"]);
+  });
+
+  it("says a day holding one call twice is unsettled, and settles it to one line", async () => {
+    await writePartition("2026-10-07.jsonl", lines([stored({ output: 1 }), stored({ output: 9 })]));
+    const loaded = await ledger.load();
+    expect([...loaded.unsettled]).toEqual(["2026-10-07"]);
+    await ledger.save(loaded.records, loaded.unsettled);
+    expect(await readFile(join(dir, "2026-10-07.jsonl"), "utf8")).toBe(
+      lines([stored({ output: 9 })])
+    );
   });
 
   it("counts a line that is not a record and drops it at the next save", async () => {

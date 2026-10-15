@@ -72,7 +72,7 @@ export class UsageLedgerAdapter implements UsageLedger {
         const id = `${record.tool}\u0000${record.key}`;
         const first = heldIn.get(id);
         if (first === undefined) heldIn.set(id, partition);
-        else if (first !== partition) unsettled.add(first).add(partition);
+        else unsettled.add(first).add(partition);
       }
     }
     return { records: foldUsage(found), skippedLines, damaged, unsettled };

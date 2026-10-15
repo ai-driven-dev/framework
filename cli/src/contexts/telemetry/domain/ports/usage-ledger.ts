@@ -11,7 +11,8 @@ export interface LoadedLedger {
   /** The partitions read that held one: saving them repairs them. */
   readonly damaged: ReadonlySet<string>;
   /** The partitions read that are not in canonical daily form: every monthly one, and every
-   * one holding a call another partition read also holds. Saving them settles them. */
+   * one holding a call twice or a call another partition read also holds. Saving them settles
+   * them. */
   readonly unsettled: ReadonlySet<string>;
 }
 
