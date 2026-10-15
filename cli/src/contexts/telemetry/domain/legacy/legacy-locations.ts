@@ -7,7 +7,8 @@ export interface LegacyLocations {
   readonly identityFiles: readonly string[];
 }
 
-/** A day file's name, and nothing the ledger names its partitions by. */
+/** A day file's name in the directories the previous version wrote to. The ledger names its
+ * days the same way, inside `ledger/`, which is never one of them. */
 export const DAY_FILE = /^\d{4}-\d{2}-\d{2}\.jsonl$/;
 
 function set(value: string | undefined): string | null {

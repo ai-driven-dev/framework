@@ -51,7 +51,7 @@ describe("where the previous version wrote", () => {
 });
 
 describe("a day file's name", () => {
-  it("is a date, not a ledger month", () => {
+  it("is a date, not a month", () => {
     expect(DAY_FILE.test("2026-10-07.jsonl")).toBe(true);
     expect(DAY_FILE.test("2026-10.jsonl")).toBe(false);
     expect(DAY_FILE.test("offsets.json")).toBe(false);

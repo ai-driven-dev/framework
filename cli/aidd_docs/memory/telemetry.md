@@ -54,6 +54,7 @@ flowchart LR
 | What a clone is | `domain/consent/clone-identity.ts` |
 | When a clone consented | `domain/consent/consent-history.ts`, `application/consent-log.ts` |
 | Which transcripts are read | `application/ingest-usage-use-case.ts`, `application/read-usage-use-case.ts` |
+| How the ledger lies on disk, and what an ingest reads | `infrastructure/usage-ledger-adapter.ts`, `domain/stored-usage.ts`, `application/ledger-upkeep.ts` |
 | What `on` and `forget` clean up from an earlier measurement | `domain/legacy/`, `application/switch/`, `application/forget/` |
 | The report axes and the envelope | `domain/report/usage-report.ts`, `application/report/report-envelope.ts` |
 

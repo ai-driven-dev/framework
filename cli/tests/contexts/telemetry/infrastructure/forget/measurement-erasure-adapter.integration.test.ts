@@ -66,6 +66,21 @@ describe("what measurement keeps", () => {
     ]);
   });
 
+  it("removes the ledger's daily and monthly partitions as the ledger, never as an earlier day file", async () => {
+    write(join(telemetry, "ledger", "2026-10-07.jsonl"));
+    write(join(telemetry, "ledger", "2026-09.jsonl"));
+    write(join(telemetry, "ledger", "offsets.json"));
+    write(join(sink, "2026-10-05.jsonl"));
+    const found = await erasure().inventory();
+    expect(found.map((e) => [e.kind, e.path.replace(root, ""), e.files])).toEqual([
+      ["previous-day-file", join("/", "previous-sink", "2026-10-05.jsonl"), 1],
+      ["ledger", join("/", "telemetry", "ledger"), 3],
+    ]);
+    await erasure().erase();
+    expect(existsSync(join(telemetry, "ledger"))).toBe(false);
+    expect(existsSync(join(sink, "2026-10-05.jsonl"))).toBe(false);
+  });
+
   it("counts the files a directory holds, nested ones too, and not its lock", async () => {
     write(join(telemetry, "ledger", "a.jsonl"));
     write(join(telemetry, "ledger", "nested", "b.jsonl"));
