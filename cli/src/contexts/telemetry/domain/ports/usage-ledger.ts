@@ -20,10 +20,11 @@ export interface LoadedLedger {
 export interface UsageLedger {
   /** Runs `work` while no other process writes the ledger. */
   exclusively<T>(work: () => Promise<T>): Promise<T>;
-  /** Every partition, daily and monthly. Given `days`, only those days, plus, for each month
-   * one of them falls in that still has its monthly partition, that partition and every day
-   * of the month: a half-finished split may hold a better snapshot in a day. */
-  load(days?: ReadonlySet<string>): Promise<LoadedLedger>;
+  /** Every partition, daily and monthly. Given `holds`, a test on a `YYYY-MM-DD` day, only the
+   * days it holds, plus every monthly partition it holds one of the calendar days of, read with
+   * every day of that month: a half-finished split may hold a better snapshot in a day. What a
+   * load costs is the partitions on disk, never how many days the test holds. */
+  load(holds?: (day: string) => boolean): Promise<LoadedLedger>;
   /** Makes the ledger hold exactly these records, every other partition removed. A partition
    * that already holds what it should is not touched. Given `partitions`, a day is written
    * from `records`, or removed when they hold none for it; a month has each of its days

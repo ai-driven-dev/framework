@@ -79,6 +79,6 @@ Copies less than a day apart are within one calendar day of each other. The fold
 | 3 | A bounded report reads no partition outside its window, and reads a monthly file the window touches | tests on the adapter and the in-memory ledger |
 | 4 | A bounded report never loses or doubles a call, from a monthly ledger or not, crash or not | tests |
 | 5 | An unbounded report still settles the whole ledger | existing tests |
-| 6 | Tests are written first, and their red run is recorded in the plan | red output in `plan.md` |
+| 6 | Tests are written first, and their red run is recorded | red output in `evidence.md` |
 | 7 | Telemetry mutation stays at 96 or above, and every mutant on the changed lines is killed or explained | stryker |
 | 8 | Contract, code map and envelope documentation say what a bounded report reads | grep, plus a fresh checker |

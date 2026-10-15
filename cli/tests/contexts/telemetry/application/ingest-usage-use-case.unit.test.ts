@@ -324,7 +324,11 @@ describe("ingesting usage into the ledger", () => {
       line("B", 20, {}, "2026-10-08T10:00:00.000Z"),
     ]);
     await s.ingest.execute();
-    expect([...(s.ledger.loadedDays ?? [])].sort()).toEqual([
+    const window = s.ledger.loadedWindow;
+    const autumn = Array.from({ length: 91 }, (_, n) =>
+      new Date(Date.parse("2026-09-01T00:00:00.000Z") + n * 86_400_000).toISOString().slice(0, 10)
+    );
+    expect(window && autumn.filter(window)).toEqual([
       "2026-10-06",
       "2026-10-07",
       "2026-10-08",

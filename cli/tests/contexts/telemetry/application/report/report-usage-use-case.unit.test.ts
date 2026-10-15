@@ -134,6 +134,34 @@ describe("reporting usage", () => {
     expect((await s.ledger.load()).skippedLines).toBe(0);
   });
 
+  it("loads and settles only a bounded period and the day on each side of it", async () => {
+    const s = setup();
+    s.transcripts.files.set("/t/1.jsonl", [line("A", 10, "2026-10-07T10:00:00.000Z")]);
+    await s.report.execute({ axis: "total", period: { from: "2026-10-03", to: "2026-10-09" } });
+    const window = s.ledger.loadedWindow;
+    const autumn = Array.from({ length: 91 }, (_, n) =>
+      new Date(Date.parse("2026-09-01T00:00:00.000Z") + n * 86_400_000).toISOString().slice(0, 10)
+    );
+    expect(window && autumn.filter(window)).toEqual([
+      "2026-10-02",
+      "2026-10-03",
+      "2026-10-04",
+      "2026-10-05",
+      "2026-10-06",
+      "2026-10-07",
+      "2026-10-08",
+      "2026-10-09",
+      "2026-10-10",
+    ]);
+  });
+
+  it("loads and settles the whole ledger when the period has no bound", async () => {
+    const s = setup();
+    s.transcripts.files.set("/t/1.jsonl", [line("A", 10, "2026-10-07T10:00:00.000Z")]);
+    await s.report.execute({ axis: "total", period: ANY });
+    expect(s.ledger.loadedWindow).toBeUndefined();
+  });
+
   it("reads new transcripts first, so the report holds what was just written", async () => {
     const s = setup();
     s.transcripts.files.set("/t/1.jsonl", [line("A", 10, "2026-10-07T10:00:00.000Z")]);

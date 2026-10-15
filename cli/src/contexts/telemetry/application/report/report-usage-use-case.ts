@@ -1,6 +1,6 @@
 import type { PersonIdentityStore } from "../../domain/ports/identity/person-identity-store.js";
 import type { UsageLedger } from "../../domain/ports/usage-ledger.js";
-import { inPeriod, type Period } from "../../domain/report/period.js";
+import { inPeriod, type Period, windowOf } from "../../domain/report/period.js";
 import {
   buildReport,
   type ReportAxis,
@@ -30,7 +30,8 @@ export interface ReportCoverage {
   readonly consentLogDamaged: boolean;
   /** When the oldest transcript still on disk was last written: nothing older can be read. */
   readonly oldestTranscriptAt: string | null;
-  /** Lines of the ledger that were not records. */
+  /** Lines of the partitions read that were not records: a bounded report reads its period
+   * and the day on each side. */
   readonly skippedLedgerLines: number;
 }
 
@@ -45,8 +46,11 @@ export type ReportResult =
 
 /** Reads what is new, then answers what the stored calls consumed in a period, split along one
  * axis. The ledger holds facts only: what a call belongs to is worked out here, every time, from
- * what people declared, so a declaration made later moves earlier work. It also leaves the
- * ledger settled: one call in one partition, by day, whatever order the ingests ran in. */
+ * what people declared, so a declaration made later moves earlier work. It also settles what it
+ * read: one call in one partition, by day, whatever order the ingests ran in. A report with a
+ * bounded period reads and settles only the partitions that can hold a call of it (see
+ * `windowOf`), so its cost follows its period and not the history; one with no bound reads and
+ * settles the whole ledger. */
 export class ReportUsageUseCase {
   constructor(
     private readonly ingest: IngestUsageUseCase,
@@ -58,7 +62,9 @@ export class ReportUsageUseCase {
   async execute(request: ReportRequest): Promise<ReportResult> {
     const ingested = await this.ingest.execute();
     if (ingested.refused) return { status: "refused" };
-    const held = await this.ledger.exclusively(() => settleLedger(this.ledger));
+    const held = await this.ledger.exclusively(() =>
+      settleLedger(this.ledger, windowOf(request.period))
+    );
     const records = held.records.filter((record) => inPeriod(record.at, request.period));
     const report = buildReport(
       records,

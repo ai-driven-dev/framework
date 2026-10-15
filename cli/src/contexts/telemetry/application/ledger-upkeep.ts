@@ -16,19 +16,25 @@ export async function storeCalls(
   ledger: UsageLedger,
   incoming: readonly StoredUsage[]
 ): Promise<Stored> {
-  const held = await ledger.load(daysAround(incoming));
+  const days = daysAround(incoming);
+  const held = await ledger.load((day) => days.has(day));
   const merged = upsertUsage(held.records, incoming);
   const partitions = new Set([...merged.days, ...held.damaged, ...held.unsettled]);
   if (partitions.size > 0) await ledger.save(merged.records, partitions);
   return { added: merged.added, updated: merged.updated, skippedLines: held.skippedLines };
 }
 
-/** Reads every partition and rewrites, folded, each one that is damaged or not in daily form:
- * a monthly one, or one holding a call another also holds. After it, the ledger is
- * byte-identical to a single ingest of the same calls; a settled day is not touched. Runs
- * under the caller's lock. */
-export async function settleLedger(ledger: UsageLedger): Promise<LoadedLedger> {
-  const held = await ledger.load();
+/** Reads the partitions and rewrites, folded, each one read that is damaged or not in daily
+ * form: a monthly one, or one holding a call another read also holds. With no test, it reads
+ * every partition, and after it the ledger is byte-identical to a single ingest of the same
+ * calls. With a test on the day, it reads and settles only what the ledger loads for it (see
+ * `UsageLedger.load`), and leaves every other partition as it is. A settled day is not
+ * touched. Runs under the caller's lock. */
+export async function settleLedger(
+  ledger: UsageLedger,
+  holds?: (day: string) => boolean
+): Promise<LoadedLedger> {
+  const held = await ledger.load(holds);
   const partitions = new Set([...held.unsettled, ...held.damaged]);
   if (partitions.size > 0) await ledger.save(held.records, partitions);
   return held;

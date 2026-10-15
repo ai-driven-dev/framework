@@ -114,15 +114,15 @@ export class InMemoryLedger implements UsageLedger {
   }
 
   /** The window the last load was given; `undefined` when it read everything. */
-  loadedDays: ReadonlySet<string> | undefined;
+  loadedWindow: ((day: string) => boolean) | undefined;
 
-  async load(days?: ReadonlySet<string>): Promise<LoadedLedger> {
+  async load(holds?: (day: string) => boolean): Promise<LoadedLedger> {
     this.events.push("load");
-    this.loadedDays = days;
+    this.loadedWindow = holds;
     const read =
-      days === undefined
+      holds === undefined
         ? this.records
-        : this.records.filter((record) => days.has(dayOf(record.at) ?? ""));
+        : this.records.filter((record) => holds(dayOf(record.at) ?? ""));
     return {
       records: foldUsage(read),
       skippedLines: this.damaged.size,

@@ -21,6 +21,27 @@ export function inPeriod(at: string, period: Period): boolean {
   return (period.from === null || day >= period.from) && (period.to === null || day <= period.to);
 }
 
+/** The day `days` after a `YYYY-MM-DD` day, or `null` past what four digits can name. */
+function shift(day: string, days: number): string | null {
+  const shifted = dayOf(new Date(Date.parse(`${day}T00:00:00.000Z`) + days * DAY_MS).toISOString());
+  return DAY.test(shifted) ? shifted : null;
+}
+
+/** The days whose partitions can hold a call of the period, as a test on a `YYYY-MM-DD` day:
+ * from the day before `from` to the day after `to`, an open side, or one past four-digit
+ * years, staying open. `undefined` when the period has no bound: every partition.
+ *
+ * One day on each side, because the copies of one call are less than a day apart (of 262,631
+ * real keys, the widest spread is 0.3 h), so they sit within a calendar day of each other: a
+ * call with a copy in the period has all of them in the window, and folds to the same one as a
+ * full read would. */
+export function windowOf(period: Period): ((day: string) => boolean) | undefined {
+  if (period.from === null && period.to === null) return undefined;
+  const first = period.from === null ? null : shift(period.from, -1);
+  const last = period.to === null ? null : shift(period.to, 1);
+  return (day) => (first === null || day >= first) && (last === null || day <= last);
+}
+
 function isCalendarDay(text: string): boolean {
   const instant = Date.parse(`${text}T00:00:00.000Z`);
   return (

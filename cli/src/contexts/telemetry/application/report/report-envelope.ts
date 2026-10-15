@@ -38,8 +38,10 @@ export interface EnvelopeRow extends EnvelopeTally {
  * this run alone, `records` of the period, `not_stored` counts calls this run read and left
  * out by reason, `consent_log_damaged` is true while `ledger/consents.jsonl` cannot be trusted
  * and nothing is stored, and `oldest_transcript_at` is when the oldest transcript still on disk was
- * last written (`null` when there is none). Nothing here is a path, a working directory or
- * a branch name.
+ * last written (`null` when there is none), and `skipped_ledger_lines` counts the lines that
+ * were not records in the ledger partitions the report read: a bounded report reads its period
+ * and the day on each side, so damage outside them is not counted. Nothing here is a path, a
+ * working directory or a branch name.
  *
  * Under `AIDD_TELEMETRY=0` nothing is read and the envelope is `{ "version": 1, "refused":
  * "AIDD_TELEMETRY=0" }` (`REFUSED_ENVELOPE`).
