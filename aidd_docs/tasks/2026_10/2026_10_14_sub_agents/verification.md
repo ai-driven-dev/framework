@@ -49,3 +49,44 @@ The large-project planning and review controllers exceeded their imposed time li
 OpenCode's configured local model server was unavailable. Its behavioral probe used the already authenticated `openai/gpt-6.1-sol` through an invocation-only override, with matching `cwd` and `PWD`. Global model and authentication settings were unchanged. Versioned discovery and directory behavior sources are recorded in deployment memory.
 
 The wrapped scripts suite passed 559 tests, including 12 reload regressions. Architecture, JSON manifest validation, Markdown links, duplication checks, and commit hooks passed. These results establish the observed contracts and host paths; they do not guarantee every future task or model choice.
+
+## Current candidate, 2026-10-15
+
+The earlier results above describe the previous checker contract. Current probes use the four scoped roles: explorer, executor, validator and reviewer. Validator returns one completion verdict; reviewer independently assesses quality. Native dispatch events establish invocation; generated files and agent self-reports alone do not.
+
+| Host | Tested version | Delivery and observed runtime |
+| --- | --- | --- |
+| Claude Code | 2.1.300 | Generated flat agents. Opus parent and Haiku children resolve to `claude-opus-5-5` / `claude-haiku-5-5`. Native calls request `low`; effective effort is not independently echoed. |
+| Codex | 0.145.0 | Installed user agents. Four fresh children report `gpt-5.6-sol` / `low` in native turn contexts. Signed-in backend rejects the suggested newer models. |
+| OpenCode | 2.0.28 | Generated project agents. Four native child message records identify their roles and `openai/gpt-6.1-sol#medium`; controller exits 0. An earlier Luna probe had a transport error and is excluded from clean passes. |
+| GitHub Copilot | 1.0.98 | Generated marketplace agents invoked through native `--plugin-dir`. Four roles run. Explicit child model `gpt-6-luna` works; actual effort remains `medium` despite requesting low. |
+| Cursor | 2026.10.14-941492e | Current official CLI in an isolated download; automatic discovery of four real global local-plugin agents, without `--plugin-dir`. Auto succeeds; the Free account rejects named models. Backend model and effort remain unverified. |
+
+The bounded scenarios cover sourced exploration, implementation output, rejection of a false completion criterion, and independent quality review. Claude's executor changes only the eight assigned modules and passes independent checks. Other four-role probes use text implementation; their files remain unchanged. Cursor's explorer and validator read the actual threshold file; its reviewer also reads the installed quality checklist. Filtered session identities, source hashes, native model metadata and limitations are retained in [runtime.json](runtime.json).
+
+### Direct versus delegated
+
+Same synthetic exploration and repetitive implementation tasks, once per mode. The delegated run includes its Opus parent and fresh Haiku child. Tokens include input, output, cache reads and cache writes; costs are native list-price estimates, not subscription charges.
+
+| Task | Mode | Total tokens | Wall time | Cost estimate, USD |
+| --- | --- | ---: | ---: | ---: |
+| Exploration | Direct | 136,486 | 26.0 s | 0.2386 |
+| Exploration | Delegated | 183,951 | 30.0 s | 0.2130 |
+| Implementation | Direct | 136,126 | 21.1 s | 0.2081 |
+| Implementation | Delegated | 188,423 | 29.4 s | 0.1899 |
+
+Both retained modes return correct source findings and pass the same independent implementation checks, with no task retries. An earlier implementation pair could not run checks under its Bash permission pattern; both modes were rerun with equal permissions. That excluded attempt is recorded in [comparison.json](comparison.json), alongside quality checks. Separate token-category counts were not retained after fixture cleanup. Different cache states and one observation per mode prevent a general savings claim. Delegation was slower here, with a lower reported cost estimate.
+
+### Reload and finalization
+
+`make reload` exits 0 and refreshes all nine plugins for Claude, Codex, OpenCode, Copilot and Cursor. Native Copilot lists all nine AIDD plugins; Cursor discovers the installed global roles. Byte hashes confirm preservation of 28 personal agent files and personal content in three pre-existing instruction files. Managed global instructions contain only the agent table. Cursor still requires its native Local Plugin Imports policy.
+
+A disposable whole-plan execution invokes `/aidd-dev:02-implement`, repairs the assigned value, runs the mandatory check, then runs the final journey and marks the phase and plan complete. Native tool chronology and the fixture's event ledger show `check` then `journey`, followed by the plan update and no further validation command. The fixture rejects checks after the journey and rejects a journey after premature completion. No commits or pushes occur in that probe.
+
+### Final checks
+
+- **CLI:** 543 test files passed, one skipped; 7,106 tests passed, one skipped. Architecture, typecheck, lint, type honesty, unused-code and duplication gates pass. Lint retains one pre-existing unused-private-field warning. Bundle is 567.8 KB against the unchanged 756 KB budget.
+- **Scripts:** the wrapped full suite passes 729 tests. Five native-home regressions failed before their default-path corrections and pass afterward; explicit path overrides retain priority. Missing Claude installation paths fail without writing into the current directory; reload fixtures stay in their temporary home.
+- **Integration:** the real resolver finds installed agents on all five hosts, preserves project configuration bytes, leaves missing tasks inherited, and rejects unsupported Cursor plugin effort. Actual `make reload` exits 0 after the final corrections; the personal-file preservation check still passes.
+- **Guards:** removing the unknown-field rejection and bypassing Claude activation each causes the targeted test to fail. Exact source bytes were restored and the named tests pass; no full mutation-score claim is made.
+- **Scope:** gather, wireframe, the challenge skill and generic skill generation have no diff against `next`. Generic generation work remains in PR #1028.
