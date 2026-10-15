@@ -1,6 +1,6 @@
 # Review: scoped sub-agents
 
-- Rounds: 3
+- Rounds: 4
 - Started: 2026-10-15
 
 ## Round 1 · r-1fd6
@@ -54,3 +54,18 @@
 - **Scope:** unrelated cross-plugin provider wording is restored. Gather, wireframe and generic skill generation remain unchanged against `next`; Batch drops the mandatory refine pipeline that exceeded a bounded executor's responsibility.
 
 No consequential new findings in the scoped rereview. Full test results and native limitations are recorded in [verification.md](verification.md).
+
+
+## Round 4 · r-ci
+
+- Date: 2026-10-15
+- By: independent mutation reviewer; caller for verification
+- Diff: CI follow-up after `6b5f5f58`
+- Axes: verification, relevancy
+- Verdict: approve local corrections
+- Score: not scored
+
+- **CI coverage:** register the new smoke command, require the four current roles in the real Kilo probe, and serialize Windows fixture paths correctly.
+- **False-positive assertion:** replace the malformed-error assertion that accepted an undefined rejection with an actual error-message check.
+- **Native boundaries:** add 15 meaningful cases in existing profile tests. Keep equivalent object serialization and unchanged baseline metadata out of scope.
+- **Results:** full mutation scopes pass at Cursor 97.4% / floor 97 and OpenCode 95.0% / floor 94. No production or threshold changes in these corrections.

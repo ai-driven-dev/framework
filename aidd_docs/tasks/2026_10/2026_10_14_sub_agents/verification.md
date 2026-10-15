@@ -52,7 +52,7 @@ The wrapped scripts suite passed 559 tests, including 12 reload regressions. Arc
 
 ## Current candidate, 2026-10-15
 
-The earlier results above describe the previous checker contract. Current probes use the four scoped roles: explorer, executor, validator and reviewer. Validator returns one completion verdict; reviewer independently assesses quality. Native dispatch events establish invocation; generated files and agent self-reports alone do not.
+The earlier results above describe the previous checker contract. Native runtime probes ran on macOS. Current probes use the four scoped roles: explorer, executor, validator and reviewer. Validator returns one completion verdict; reviewer independently assesses quality. Native dispatch events establish invocation; generated files and agent self-reports alone do not.
 
 | Host | Tested version | Delivery and observed runtime |
 | --- | --- | --- |
@@ -85,8 +85,17 @@ A disposable whole-plan execution invokes `/aidd-dev:02-implement`, repairs the 
 
 ### Final checks
 
-- **CLI:** 543 test files passed, one skipped; 7,106 tests passed, one skipped. Architecture, typecheck, lint, type honesty, unused-code and duplication gates pass. Lint retains one pre-existing unused-private-field warning. Bundle is 567.8 KB against the unchanged 756 KB budget.
-- **Scripts:** the wrapped full suite passes 729 tests. Five native-home regressions failed before their default-path corrections and pass afterward; explicit path overrides retain priority. Missing Claude installation paths fail without writing into the current directory; reload fixtures stay in their temporary home.
+- **CLI:** 543 test files passed, one skipped; 7,121 tests passed, one skipped. Architecture, typecheck, lint, type honesty, unused-code and duplication gates pass. Lint retains one pre-existing unused-private-field warning. Bundle is 567.8 KB against the unchanged 756 KB budget.
+- **Scripts:** the wrapped full suite passes 730 tests. Five native-home regressions failed before their default-path corrections and pass afterward; explicit path overrides retain priority. Missing Claude installation paths fail without writing into the current directory; reload fixtures stay in their temporary home.
 - **Integration:** the real resolver finds installed agents on all five hosts, preserves project configuration bytes, leaves missing tasks inherited, and rejects unsupported Cursor plugin effort. Actual `make reload` exits 0 after the final corrections; the personal-file preservation check still passes.
-- **Guards:** removing the unknown-field rejection and bypassing Claude activation each causes the targeted test to fail. Exact source bytes were restored and the named tests pass; no full mutation-score claim is made.
+- **Guards:** removing the unknown-field rejection and bypassing Claude activation each causes the targeted test to fail. Exact source bytes were restored and the named tests pass; both full native scopes subsequently pass: Cursor 97.4% against 97%, OpenCode 95.0% against 94%, with unchanged floors.
 - **Scope:** gather, wireframe, the challenge skill and generic skill generation have no diff against `next`. Generic generation work remains in PR #1028.
+
+
+### CI follow-up
+
+The first CI run caught a missing smoke command, a stale checker-name expectation in the real Kilo probe, Windows fixture path/JSON issues, and two mutation-floor failures. Only test coverage and fixtures changed afterward; production behavior and mutation floors remain unchanged.
+
+The smoke suite now passes 140 checks with 35/35 commands exercised. Official Kilo 7.7.5 passes its real loopback runtime test with all four current roles. The root suite passes 730 tests, including a Windows-style JSON serialization regression. Windows execution is checked by the PR's CI jobs.
+
+Fifteen native profile cases cover invalid selector boundaries, malformed option groups, personal agent identity, configuration versus spawn surfaces, and the OpenCode XDG override. Malformed-error assertions now inspect the actual error message; the earlier assertion could accept an undefined rejection. Both complete mutation scopes pass their original floors; exact status counts are retained in [runtime.json](runtime.json).

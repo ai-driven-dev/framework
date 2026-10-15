@@ -349,5 +349,26 @@
       }
     ],
     "unsupported_cursor_effort": "Error: Cursor plugin spawn does not accept effort; choose an advertised model slug or omit effort to inherit."
+  },
+  "final_mutation_gates": {
+    "tools-cursor": {
+      "score_percent": 97.4138,
+      "unchanged_floor": 97,
+      "exit": 0,
+      "mutant_status_counts": {
+        "Killed": 339,
+        "Survived": 9
+      }
+    },
+    "tools-opencode": {
+      "score_percent": 94.9704,
+      "unchanged_floor": 94,
+      "exit": 0,
+      "mutant_status_counts": {
+        "NoCoverage": 2,
+        "Killed": 321,
+        "Survived": 15
+      }
+    }
   }
 }
