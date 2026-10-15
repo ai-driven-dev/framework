@@ -16,6 +16,8 @@ One ingested call costs the size of the whole ledger (#1001). Measured on `next`
 | `save(month)` | 6.0 s | stringifies 265k records, re-reads the file to compare, rewrites it |
 | total | ~11.5 s | |
 
+The round-1 review re-ran the same bench on `next` code, with the real `PrivateStorageAdapter`, and got 0.41 s, 0.37 s and 0.87 s, ~1.65 s in all. The first figure is kept as measured; the setup that gave it is not recorded. On the ledger by day (`9b0f11c5`) the same bench gives 58-64 ms per call, and 1.6-1.7 s for the one-time split of a monthly file. Criterion #1 holds against either "before".
+
 ## Decision
 
 Partition the ledger by the UTC **day** of a record's `at` (`ledger/<YYYY-MM-DD>.jsonl`) instead of its month. Everything else stays: a changed partition is rewritten whole by rename, an unchanged one is not touched, records are in canonical order, one call is one line.
