@@ -44,7 +44,7 @@ What `aidd telemetry report --json` prints, and what each part means. Version `1
 | `not_stored` | Calls read and left out, by reason: `outside-repo`, `never-seen-alive`, `no-consent`, `consent-closed`, `unreadable-consent`, `no-cwd`, `undated` |
 | `consent_log_damaged` | `true` while `ledger/consents.jsonl` cannot be trusted and nothing is stored |
 | `oldest_transcript_at` | When the oldest session file still on disk was last written, `null` when there is none |
-| `skipped_ledger_lines` | Lines that were not records, in the stored days this report read: with a period, those days and the day on each side |
+| `skipped_ledger_lines` | Lines that were not records, in the stored days this report read: with a period, those days and the day on each side, plus every day of a month still kept in one file |
 
 ## When there is nothing
 

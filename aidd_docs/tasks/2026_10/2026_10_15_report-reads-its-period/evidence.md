@@ -113,3 +113,5 @@ Survivors in the changed files, against the lines this change touched:
 | `infrastructure/usage-ledger-adapter.ts` | 3 of 131 | one: `inWindow` without `.filter((name) => MONTHLY.test(name))` | equivalent: a day's name is not a month, so `holdsADayOf` already answers false for it (`Date.parse` of `YYYY-MM-DD-01` fails) |
 
 The day test that always catches a window without its day on each side is `period.unit.test.ts` ("the window a report reads"), on every run; the property found it after 40 cases in its recorded run.
+
+Rerun on `280edb4d`, after the review's refactor (`shiftDay`): `Report: reports/mutation/telemetry/ (score 96.2, floor 96)`. `domain/stored-usage.ts` survivors sit on lines 26, 120 and 128, none in `shiftDay` or `daysAround`; the others are the same as above.
