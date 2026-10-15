@@ -71,7 +71,7 @@ jobs:
                 relevant=true
                 ;;
               # The identifier-join probe, and the hook predicates it judges the real tool by.
-              scripts/probe-identifier-join.cjs|plugins/aidd-telemetry/hooks/*)
+              scripts/probe-identifier-join.cjs|scripts/check-claude-tokens-end-to-end.cjs|plugins/aidd-telemetry/hooks/*)
                 relevant=true
                 ;;
               # This file: a change to how the suite runs matches nothing else here, so the
@@ -421,6 +421,35 @@ jobs:
       - name: Claude Code keeps the session id join
         run: node scripts/probe-identifier-join.cjs
 
+  claude-tokens:
+    # The real tool, the shipped hooks and the built CLI on each OS, against a fake API whose
+    # billed usage is the expected answer. No credentials, no quota. No pnpm store cache: its
+    # key path is POSIX, not where a native Windows pnpm resolves its store.
+    name: cli / Tokens end to end (Claude Code, ${{ matrix.os }})
+    needs: [changes]
+    if: needs.changes.outputs.relevant == 'true'
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Install pnpm
+        run: corepack enable
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: "22"
+      - run: cd cli && pnpm install --frozen-lockfile
+      - run: cd cli && pnpm build
+      - name: Install Claude Code
+        run: npm install -g @anthropic-ai/claude-code # floats on purpose, declared in scripts/__tests__/workflows-pin-global-installs.test.js
+      - name: The report counts every billed token, on the declared task
+        run: node scripts/check-claude-tokens-end-to-end.cjs
+
   cli-jscpd:
     name: cli / JSCPD (duplication)
     needs: [changes]
@@ -635,6 +664,7 @@ jobs:
       - cli-build
       - cli-knip
       - identifier-join
+      - claude-tokens
       - cli-jscpd
       - cli-mutation
       - cli-mutation-score
@@ -657,6 +687,7 @@ jobs:
             "${{ needs.cli-build.result }}" \
             "${{ needs.cli-knip.result }}" \
             "${{ needs.identifier-join.result }}" \
+            "${{ needs.claude-tokens.result }}" \
             "${{ needs.cli-jscpd.result }}" \
             "${{ needs.cli-mutation.result }}" \
             "${{ needs.cli-mutation-score.result }}" \

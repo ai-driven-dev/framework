@@ -130,6 +130,7 @@ test("only a proven next snapshot tree skips the promotion or main mutation matr
     "cli-build",
     "cli-knip",
     "identifier-join",
+    "claude-tokens",
     "cli-jscpd",
     "kanban-checks",
     "windows",
