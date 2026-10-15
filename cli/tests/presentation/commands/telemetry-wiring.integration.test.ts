@@ -290,7 +290,7 @@ describe("aidd telemetry on", () => {
   it("turns measurement on in the directory it was run from, without asking, with --yes", async () => {
     turnOn.mockResolvedValue(ON);
     expect(await run("on", "--yes")).toBeNull();
-    expect(turnOn).toHaveBeenCalledWith(process.cwd());
+    expect(turnOn).toHaveBeenCalledWith(process.cwd(), "keep");
     expect(confirm).not.toHaveBeenCalled();
     expect(stdout()).toContain("Measurement is on");
   });

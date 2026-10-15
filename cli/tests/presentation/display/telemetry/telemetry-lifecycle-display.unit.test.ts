@@ -15,6 +15,7 @@ const ON: Extract<OnResult, { status: "on" }> = {
   hook: { lineRemoved: false, delegateRemoved: false, stillCalledBy: [] },
   journal: { journalRemoved: false, trackedKept: false, ignoreEntryRemoved: false },
   retention: { days: 3650, short: false },
+  identity: { personId: null, previous: null },
 };
 
 function on(overrides: Partial<typeof ON>): CapturingOutput {
@@ -111,6 +112,21 @@ describe("printOnResult", () => {
     expect(output.at("error")[0]).toContain("not inside a git repository");
     expect(output.at("error")[1]).toContain("git config cannot be read");
     expect(output.at("error")[1]).toContain("This clone's git config");
+  });
+
+  it("refuses an identity it cannot keep, and says nothing changed", () => {
+    const output = new CapturingOutput(false);
+    printOnResult(output, { status: "refused", reason: "invalid-identity" });
+    expect(output.at("error")[0]).toBe(
+      "An identity is one line of at most 128 characters. Nothing was changed."
+    );
+  });
+
+  it("sends a person who wants to stay anonymous to removing the identity first", () => {
+    const output = new CapturingOutput(false);
+    printOnResult(output, { status: "refused", reason: "identity-set" });
+    expect(output.at("error")[0]).toContain("`aidd telemetry identity --off`");
+    expect(output.at("error")[0]).toContain("Nothing was changed.");
   });
 
   it("sends a damaged consent log to forget, never to a hand edit", () => {

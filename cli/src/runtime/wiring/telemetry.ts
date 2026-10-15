@@ -7,6 +7,7 @@ import { DeclareTaskUseCase } from "../../contexts/telemetry/application/declare
 import { DirectoryResolver } from "../../contexts/telemetry/application/directory-resolver.js";
 import { ForgetTelemetryUseCase } from "../../contexts/telemetry/application/forget/forget-telemetry-use-case.js";
 import { ManageIdentityUseCase } from "../../contexts/telemetry/application/identity/manage-identity-use-case.js";
+import { ProposeIdentityUseCase } from "../../contexts/telemetry/application/identity/propose-identity-use-case.js";
 import { IngestUsageUseCase } from "../../contexts/telemetry/application/ingest-usage-use-case.js";
 import { ReadUsageUseCase } from "../../contexts/telemetry/application/read-usage-use-case.js";
 import { DeclaredBindings } from "../../contexts/telemetry/application/report/declared-bindings.js";
@@ -33,6 +34,7 @@ import { RepositoryDeclarationsAdapter } from "../../contexts/telemetry/infrastr
 import { GitBranchBindingSourceAdapter } from "../../contexts/telemetry/infrastructure/git-branch-binding-source-adapter.js";
 import { GitConsentAdapter } from "../../contexts/telemetry/infrastructure/git-consent-adapter.js";
 import { GitRepositoryLocatorAdapter } from "../../contexts/telemetry/infrastructure/git-repository-locator-adapter.js";
+import { GitUserSourceAdapter } from "../../contexts/telemetry/infrastructure/identity/git-user-source-adapter.js";
 import { PersonIdentityAdapter } from "../../contexts/telemetry/infrastructure/identity/person-identity-adapter.js";
 import { ResolutionStoreAdapter } from "../../contexts/telemetry/infrastructure/resolution-store-adapter.js";
 import { ClaudeSettingsAdapter } from "../../contexts/telemetry/infrastructure/switch/claude-settings-adapter.js";
@@ -51,6 +53,7 @@ export interface TelemetryDeps {
   snapshotBindingsUseCase: SnapshotBindingsUseCase;
   reportUsageUseCase: ReportUsageUseCase;
   manageIdentityUseCase: ManageIdentityUseCase;
+  proposeIdentityUseCase: ProposeIdentityUseCase;
   telemetryOnUseCase: TelemetryOnUseCase;
   telemetryOffUseCase: TelemetryOffUseCase;
   forgetTelemetryUseCase: ForgetTelemetryUseCase;
@@ -154,6 +157,10 @@ export function wireTelemetry(homedir: () => string): TelemetryDeps {
       identity
     ),
     manageIdentityUseCase: new ManageIdentityUseCase(identity),
+    proposeIdentityUseCase: new ProposeIdentityUseCase(
+      new GitUserSourceAdapter(gitEnv),
+      refusedByEnvironment
+    ),
     telemetryOnUseCase: new TelemetryOnUseCase(
       locator,
       consents,
@@ -166,7 +173,8 @@ export function wireTelemetry(homedir: () => string): TelemetryDeps {
       consentHistory,
       new ClaudeSettingsAdapter(claudeDir),
       environment,
-      randomUUID
+      randomUUID,
+      identity
     ),
     telemetryOffUseCase: new TelemetryOffUseCase(
       locator,

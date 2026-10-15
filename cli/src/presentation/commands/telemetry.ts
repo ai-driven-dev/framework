@@ -56,7 +56,7 @@ export function registerTelemetryCommand(program: Command): void {
           output.info("Nothing changed.");
           return;
         }
-        const result = await deps.telemetry.telemetryOnUseCase.execute(projectRoot);
+        const result = await deps.telemetry.telemetryOnUseCase.execute(projectRoot, "keep");
         printOnResult(output, result);
         if (result.status === "refused") process.exit(1);
       } catch (error) {

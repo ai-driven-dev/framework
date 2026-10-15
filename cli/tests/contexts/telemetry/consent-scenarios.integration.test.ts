@@ -143,7 +143,7 @@ class World {
 
   async on(dir: string, seconds: number) {
     this.at(seconds);
-    return deps.telemetryOnUseCase.execute(dir);
+    return deps.telemetryOnUseCase.execute(dir, "keep");
   }
 
   async off(dir: string, seconds: number) {

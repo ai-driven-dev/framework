@@ -1,5 +1,5 @@
 ---
-status: todo
+status: done
 ---
 
 # Instruction: The on use case takes an identity choice and writes it only on success

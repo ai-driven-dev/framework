@@ -115,8 +115,9 @@ const BASELINE: readonly { readonly path: string; readonly injected: number }[] 
   // The consent is written through its own port, apart from the project config it clears.
   // The consent's history is the eleventh: the interval opens with the key, under the same lock.
   // The token that names the interval, in the key and in the history, is the twelfth: a fresh
-  // random one per interval, injected so a test can name it.
-  { path: "src/contexts/telemetry/application/switch/telemetry-on-use-case.ts", injected: 12 },
+  // random one per interval, injected so a test can name it. The person's identity is the
+  // thirteenth: written only once the consent is, so a refused `on` leaves it as it was.
+  { path: "src/contexts/telemetry/application/switch/telemetry-on-use-case.ts", injected: 13 },
   // Opting out is the consent's write, then the end of the clone's consent interval, under the
   // ledger's lock so an ingest sees the key and the interval change together. The order is only
   // this class's to hold; the clock is the sixth.
