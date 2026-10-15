@@ -239,7 +239,9 @@ sync_one() {
       # the count, so a miss is never silent.
       if [ -d "$FW/plugins/$name/agents" ]; then
         local dest src n=0 fixed=0
-        dest="$(ls -d "$CLAUDE_CACHE/$MKT/$name"/*/ 2>/dev/null | head -1)"
+        local -a install_paths
+        install_paths=("$CLAUDE_CACHE/$MKT/$name"/*/)
+        dest="${install_paths[0]:-}"
         if [ -n "$dest" ]; then
           mkdir -p "${dest}agents"
           for src in "$FW/plugins/$name/agents/"*.md; do

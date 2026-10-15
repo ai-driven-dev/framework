@@ -1,6 +1,6 @@
 const assert = require("node:assert/strict");
 const { spawnSync } = require("node:child_process");
-const { chmodSync, existsSync, mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } = require("node:fs");
+const { chmodSync, existsSync, mkdtempSync, mkdirSync, readFileSync, realpathSync, rmSync, writeFileSync } = require("node:fs");
 const { tmpdir } = require("node:os");
 const { delimiter, dirname, join, resolve } = require("node:path");
 const test = require("node:test");
@@ -182,7 +182,7 @@ function runSync(fakeBin, home, args = ["all"], overrides = {}) {
   // Windows, where bash is the one Git for Windows ships. `spawnSync` resolves a bare name
   // through the platform's own rules on both.
   return spawnSync("bash", [join(repo, "scripts/dev-sync.sh"), ...args], {
-    cwd: repo,
+    cwd: home,
     env: {
       ...process.env,
       PATH: [fakeBin, BASE_PATH].join(delimiter),
@@ -207,6 +207,31 @@ function runSync(fakeBin, home, args = ["all"], overrides = {}) {
     encoding: "utf8",
   });
 }
+
+test("reload fixtures run from their temporary home", () => {
+  const root = mkdtempSync(join(tmpdir(), "aidd-dev-sync-cwd-"));
+  try {
+    const fakeBin = join(root, "bin"), home = join(root, "home");
+    mkdirSync(fakeBin);
+    executable(join(fakeBin, "aidd-opencode-reload"), 'pwd > "$HOME/observed-cwd"');
+    const result = runSync(fakeBin, home, []);
+    assert.equal(result.status, 0, result.stderr);
+    assert.equal(realpathSync(readFileSync(join(home, "observed-cwd"), "utf8").trim()), realpathSync(home));
+  } finally { rmSync(root, { recursive: true, force: true }); }
+});
+
+test("Claude reload rejects a missing native installation path without writing into cwd", () => {
+  const root = mkdtempSync(join(tmpdir(), "aidd-dev-sync-claude-no-path-"));
+  try {
+    const fakeBin = join(root, "bin"), home = join(root, "home");
+    mkdirSync(fakeBin);
+    executable(join(fakeBin, "claude"), "exit 0");
+    const result = runSync(fakeBin, home, []);
+    assert.notEqual(result.status, 0);
+    assert.match(result.stderr, /install path missing/);
+    assert.equal(existsSync(join(home, ".agents")), false);
+  } finally { rmSync(root, { recursive: true, force: true }); }
+});
 
 test("managed OpenCode reload uses the fixed-purpose helper without a local build", () => {
   const root = mkdtempSync(join(tmpdir(), "aidd-dev-sync-managed-"));
