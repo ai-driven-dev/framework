@@ -124,8 +124,9 @@ function coverageLines(coverage: ReportCoverage): string[] {
   }
   if (coverage.consentLogDamaged) lines.push(DAMAGED_CONSENT_LOG_WORDS);
   if (coverage.skippedLedgerLines > 0) {
+    const n = coverage.skippedLedgerLines;
     lines.push(
-      `${count(coverage.skippedLedgerLines, "ledger line", "ledger lines")} not a record and skipped.`
+      `${count(n, "ledger line", "ledger lines")} ${n === 1 ? "was" : "were"} not a record and dropped.`
     );
   }
   return lines;
