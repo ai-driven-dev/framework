@@ -10,8 +10,9 @@ What `aidd telemetry report --json` prints, and what each part means. Version `1
 | `refused` | Only present, with `version`, when measurement is refused by the environment; nothing was read |
 | `period` | `from` and `to`, UTC days, `null` for open |
 | `axis` | What `rows` split by |
-| `rows` | One per value of the axis; every axis adds up to the same `totals` |
-| `totals` | The whole period |
+| `filters` | What the report was narrowed to: `task`, `ticket`, `person`, `model`, `agent`, `session`, `repository`, `absent`, `unattributed`. `null` when not given, else the value as resolved: a full id for a start or `.`, the axis for `absent`, the reason or `any` for `unattributed` |
+| `rows` | One per value of the axis, of the calls the filters keep; every axis adds up to the same `totals` |
+| `totals` | The calls of the period the filters keep |
 | `unknown_records` | Calls with at least one counter unknown |
 | `coverage` | What the figures rest on |
 
@@ -39,7 +40,7 @@ What `aidd telemetry report --json` prints, and what each part means. Version `1
 | Field | Meaning |
 | --- | --- |
 | `files_read` | Session files read by this run |
-| `records` | Calls recorded in the period |
+| `records` | Calls recorded in the period, whether the filters keep them or not |
 | `unrecognised_shapes` | Lines of a shape the reader did not recognise, reported and never guessed |
 | `not_stored` | Calls read and left out, by reason: `outside-repo`, `never-seen-alive`, `no-consent`, `consent-closed`, `unreadable-consent`, `no-cwd`, `undated` |
 | `consent_log_damaged` | `true` while `ledger/consents.jsonl` cannot be trusted and nothing is stored |
@@ -54,4 +55,5 @@ What `aidd telemetry report --json` prints, and what each part means. Version `1
 | `not_stored.consent-closed` above `0` | The clone opted in once and its consent was closed: `aidd telemetry on` in that clone measures again, from then on |
 | `not_stored.unreadable-consent` above `0` | A clone's git config or git directory cannot be read: nothing is stored for it until it can |
 | `consent_log_damaged` is `true` | A line of the consent log `ledger/consents.jsonl` is not an event, so nothing is stored for any clone. Recovery is `aidd telemetry forget --yes`, then `aidd telemetry on` in each clone: nothing from before is stored. Do not edit the log by hand |
+| `totals.records` of `0` and `coverage.records` above `0`, with a filter given | No call of the period matches the filters: a value no call has, or a start of a session or repository id that names none, printed as typed in `filters` |
 | `records` of `0` and `files_read` of `0` | No clone on this machine has opted in, so no session file is read (`aidd telemetry status` says so in the clone); or no Claude Code session file was written since the first `aidd telemetry on` |

@@ -17,7 +17,7 @@ The figures the report holds for the question, each counter apart, followed by e
 2. **Check.** Read [the envelope reference](../references/envelope.md) for the fields.
    - `refused` present: measurement is refused by the environment. Say so and give no figure.
    - `version` other than `1`: say the report has a shape this skill does not know, and give no figure.
-3. **State.** Give the rows and the `totals` as the report holds them: input, output, cache read, cache write and `total`, each with its token count. Name the period and the axis.
+3. **State.** Give the rows and the `totals` as the report holds them: input, output, cache read, cache write and `total`, each with its token count. Name the period, the axis, and each filter as `filters` prints it.
 4. **Say the unknowns.** Say each of these that applies, in this order:
    - a counter whose `unknown_records` is above `0`: its figure is a lower bound, and that many calls did not report it;
    - `unknown_records` on the totals above `0`: the same for the total;

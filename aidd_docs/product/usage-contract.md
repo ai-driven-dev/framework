@@ -87,10 +87,11 @@ The ledger stores `StoredUsage`: the record plus `repository_id`, resolved at in
 | `version` | `1` |
 | `period` | `{from, to}`, UTC days, `null` for open |
 | `axis` | `total`, `person`, `session`, `model`, `agent`, `day`, `repository`, `task`, `ticket` |
-| `rows` | one per axis value |
-| `totals` | the whole period |
+| `filters` | `task`, `ticket`, `person`, `model`, `agent`, `session`, `repository`, `absent`, `unattributed`, in that order: `null` when not given, else as resolved (see [Filters](#filters)) |
+| `rows` | one per axis value, of the calls that match |
+| `totals` | the calls of the period that match |
 | `unknown_records` | calls with at least one counter unknown |
-| `coverage` | `files_read`, `records`, `unrecognised_shapes`, `not_stored`, `consent_log_damaged`, `oldest_transcript_at`, `skipped_ledger_lines` |
+| `coverage` | `files_read`, `records`, `unrecognised_shapes`, `not_stored`, `consent_log_damaged`, `oldest_transcript_at`, `skipped_ledger_lines`. `records` counts the calls of the period, matching or not |
 
 Row and `totals`: `records`, `input`, `output`, `cache_read`, `cache_write` (each `{tokens, unknown_records}`), `total`. A row also has:
 
@@ -105,6 +106,34 @@ Row and `totals`: `records`, `input`, `output`, `cache_read`, `cache_write` (eac
 - A report ingests first. `files_read` and `unrecognised_shapes` describe that run; `records` the period.
 - A report with `--days`, `--from` or `--to` reads only the days of its period and the day on each side, plus any monthly file one of them falls in, with every day of its month; with none it reads the whole ledger. The copies of one call have been observed less than a day apart, and under that bound both print the same figures. Outside it, only a report with no period folds every copy of a call. `skipped_ledger_lines` counts the lines of the partitions read.
 - No path, working directory or branch. `session` keys are full session ids, `repository` keys are hashes.
+
+### Filters
+
+Every row a report prints can be selected, and the report it selects adds up to that row. A filter keeps a call when the axis it names gives that call exactly the value named, by the same function that builds the rows. A `day` row is selected by the period, `--from D --to D`; the `total` row by no filter.
+
+| Flag | Keeps the calls whose | Value |
+| --- | --- | --- |
+| `--task <name>` | `task` is that value | a task name |
+| `--ticket <ref>` | `ticket` is that value | a ticket, as declared |
+| `--person <id>` | `person` is that value | the identity |
+| `--model <id>` | `model` is that value | a model id |
+| `--agent <agent>` | `agent` is that value | `main`, `subagent`, `advisor` |
+| `--session <id>` | `session` is that value | a session id, or a start of one |
+| `--repository <id>` | `repository` is that value | a repository id, a start of one, or `.` |
+| `--absent <axis>` | axis has no value | `person`, `model`, `ticket` |
+| `--unattributed [reason]` | `task` and `ticket` are unattributed | `no-binding`, `declared-none`, or `any` (the default) |
+
+- Flags combine with AND. Each takes one value; given twice, exit 1.
+- One selector per axis: `--unattributed` selects on `task` and `ticket`, so it cannot be combined with `--task`, `--ticket` or `--absent ticket`; nor can a value and `--absent` of the same axis. Exit 1.
+- A value is trimmed as a declaration is; empty once trimmed, exit 1. It is compared exactly, case included.
+- A value outside a closed set (`--agent`, `--absent`, `--unattributed`) exits 1. A value of an open set that no call has gives an empty report, exit 0.
+- `--session` and `--repository` resolve among the values of that axis in the calls of the period: a value equal to the one typed wins, else the one value it starts. Two or more: exit 1, listing them in full, sorted. None: an empty report, and `filters` prints the value as typed.
+- `--repository .` names the repository the command runs in, by the rule ingest uses: its hosted `origin`, else its first commit. A linked worktree names its main tree's repository. Not a repository, gone, unreadable, or with neither: exit 1. It is compared in full, never as a start.
+- Order: the flags are checked, then `AIDD_TELEMETRY=0` refuses (no git is run, the envelope has no `filters`), then `.` is located, then transcripts are ingested and the ledger read, then starts are resolved. Filters apply after attribution and after the period; the window a bounded report reads is unchanged.
+- A task name belongs to no repository: `--task refactor` adds up every repository's `refactor`, as `--axis task` does. Add `--repository .` for one.
+- The text report folds whitespace in a name onto one line. A filter compares with the stored value, which `--json` prints as `key`.
+- `--repository .` names the repository as it stands now. Calls stored under an earlier `origin`, or before a remote was added, carry another id and are not selected; `--axis repository` lists them.
+- `--person` is the identity of the machine reporting, as `--axis person` is: locally it selects every call or none.
 
 ## Stores
 

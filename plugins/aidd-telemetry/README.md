@@ -36,7 +36,7 @@ flowchart LR
 | `aidd telemetry on` / `off` | start or stop measuring this clone; what was measured stays |
 | `aidd telemetry status` | whether this clone is measured, since when, and its task |
 | `aidd telemetry task <name> [--ticket <ref>]` | declare the task; `--none` for no task |
-| `aidd telemetry report [--axis <axis>] [--days <n>]` | what the work consumed, split along one axis; `--json` for the envelope |
+| `aidd telemetry report [--axis <axis>] [--days <n>] [--task <name>]` | what the work consumed, split along one axis, narrowed by `--task`, `--ticket`, `--repository .` and the other filters of `--help`; `--json` for the envelope |
 | `aidd telemetry identity <id>` / `--off` | be named on your own measurement, or not |
 | `aidd telemetry forget` / `--yes` | show what is kept, then erase it |
 

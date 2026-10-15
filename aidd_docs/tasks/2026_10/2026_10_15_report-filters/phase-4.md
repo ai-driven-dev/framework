@@ -1,5 +1,5 @@
 ---
-status: todo
+status: done
 ---
 
 # Instruction: Docs, skill and gates

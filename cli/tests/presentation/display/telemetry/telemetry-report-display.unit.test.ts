@@ -287,6 +287,16 @@ describe("printing a usage report", () => {
       "--session a1b2 starts 2 sessions of this period: a1b2c3d4-0000, a1b2ffff-0000. Type more of it.",
     ]);
     expect(output.lines).toHaveLength(1);
+    const repositories = new CapturingOutput(false);
+    printUsageReport(repositories, {
+      status: "ambiguous",
+      flag: "repository",
+      typed: "ab",
+      ids: ["abc", "abd"],
+    });
+    expect(repositories.at("error")).toEqual([
+      "--repository ab starts 2 repositories of this period: abc, abd. Type more of it.",
+    ]);
   });
 
   it("says `.` names no repository where the command runs", () => {

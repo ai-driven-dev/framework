@@ -187,3 +187,38 @@ The conflict check skipped (`if (false)`):
 × refuses ["--absent","ticket","--unattributed"], ...
 × refuses ["--model","m","--absent","model"], ...
 ```
+
+### Phase 4
+
+The one assertion added in this phase, the ambiguity message for a repository, was written after mutation found the case uncovered (`"repositories"`: NoCoverage; `flag === "session"` to `true`: Survived). Both are killed in the second run below.
+
+## Gates
+
+| Gate | Command | Decisive line |
+| --- | --- | --- |
+| CLI suite | `cd cli && pnpm test` | `Tests  6575 passed \| 1 skipped (6576)` |
+| Telemetry mutation | `pnpm test:mutation:telemetry` | first run `score 96.5, floor 96`; after the added test `score 96.2, floor 96` |
+| Build and bundle budget | `pnpm build` | `Bundle size: 689.2 KB / budget: 695 KB` |
+| Smoke | `bash scripts/smoke-tools.sh` against the build, in a relocated HOME | `PASS: 132   FAIL: 0   SKIP: 1   ·   coverage 100%` |
+| Tokens end to end | `node scripts/check-claude-tokens-end-to-end.cjs cli/dist/cli.js` | `2 calls, 393 tokens, all on task demo, ticket T-1, and on task demo in this repository` |
+| Tokens end to end, attended | same, `--attended` | `…, and on task demo in this repository; asked, answered by the hook, kept across /clear` |
+| Pre-commit | `pnpm exec lefthook run pre-commit` | every job `✔️`, `cli-architecture`, `cli-biome`, `cli-typecheck`, `scripts-tests` included |
+| Pre-push | `pnpm exec lefthook run pre-push` | `✔️ cli-knip`, `✔️ cli-test` (`Tests  6575 passed \| 1 skipped (6576)`) |
+
+Every binary run went through a script setting `HOME`, `XDG_CONFIG_HOME`, `AIDD_USER_CONFIG_DIR`, `AIDD_TELEMETRY_DIR` and `CLAUDE_CONFIG_DIR` to a fresh temp directory, with `GIT_CONFIG_NOSYSTEM=1`.
+
+The 96.5 and 96.2 differ by mutants that timed out in one run and survived in the other, in files this change does not touch.
+
+### Surviving mutants on changed lines
+
+All equivalent:
+
+| Where | Mutant | Why nothing can kill it |
+| --- | --- | --- |
+| `report-usage-use-case.ts:158` | `typed === null` to `false` | `resolveId(null, …)` finds no id equal to `null` nor starting with `"null"`, returns `none`, and `{ id: typed }` is `{ id: null }` again |
+| `report-filter.ts:81` | the selector's `kind: "unattributed"` to `""` | `selects` tests `value`, then `absent`, and treats every other kind as unattributed |
+| `report-filter.ts:87` | `value.kind === "value"` to `true` | a row value of another kind has no `value`, so `value.value === selector.value` is false all the same |
+| `telemetry-report-display.ts:66` | `kind: "value"` to `""` | `labelOf` tests `absent`, then `unattributed`, and labels every other kind as a value |
+| `telemetry-report-display.ts:73` | `labelOf("task", …)` to `labelOf("", …)` | for an unattributed value `labelOf` reads only the reason; the axis matters for `absent` and for truncating a session or repository |
+
+The other survivors in the touched files (`telemetry-report-display.ts:111`, `:122`, `:189`) are on lines this change did not write.

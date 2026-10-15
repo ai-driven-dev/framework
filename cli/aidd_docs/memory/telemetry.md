@@ -22,7 +22,7 @@ flowchart LR
     Resolver -->|upsert, one record per call| Ledger[("ledger/")]
     Hooks["plugin hooks"] -->|write| Bindings[("bindings/ and git config")]
     Task["telemetry task"] -->|write| Bindings
-    Ledger --> Report["report: attribute, then split by one axis"]
+    Ledger --> Report["report: attribute, keep what the filters name, then split by one axis"]
     Bindings --> Report
     Report --> Out["text or the version 1 envelope"]
 ```
@@ -57,6 +57,7 @@ flowchart LR
 | How the ledger lies on disk, and what an ingest or a report reads | `infrastructure/usage-ledger-adapter.ts`, `domain/stored-usage.ts`, `application/ledger-upkeep.ts`, `domain/report/period.ts` |
 | What `on` and `forget` clean up from an earlier measurement | `domain/legacy/`, `application/switch/`, `application/forget/` |
 | The report axes and the envelope | `domain/report/usage-report.ts`, `application/report/report-envelope.ts` |
+| What a report's `filters` select (`--task`, `--ticket`, `--person`, `--model`, `--agent`, `--session`, `--repository`, `--absent`, `--unattributed`), and where a start of an id or `.` is resolved | `domain/report/report-filter.ts`, `application/report/report-usage-use-case.ts` |
 
 ## The plugin side
 
