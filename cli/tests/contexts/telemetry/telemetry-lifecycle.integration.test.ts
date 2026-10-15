@@ -341,6 +341,15 @@ const stored = () => {
     .flatMap((name) => read(join(dir, name)).split("\n").filter(Boolean)).length;
 };
 
+describe("the identifier offered at on", () => {
+  it("is not read from git under AIDD_TELEMETRY=0", async () => {
+    git(repo, box.gitEnv, "config", "--local", "user.name", "Ada Example");
+    vi.stubEnv("AIDD_TELEMETRY", "0");
+    deps = wireTelemetry(() => box.home);
+    expect(await deps.proposeIdentityUseCase.execute(repo)).toBeNull();
+  });
+});
+
 describe("measurement starts at on", () => {
   it("does not read back what was said before opting in, though ingest had not read past it", async () => {
     await configure(BARE);

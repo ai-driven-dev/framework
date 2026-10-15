@@ -26,8 +26,9 @@ describe("printIdentityResult", () => {
     expect(output.at("success")[0]).toContain("--off");
   });
 
-  it("says the person axis is not set when nobody is named", () => {
-    expect(shown({ status: "unset" }).at("info")[0]).toContain("not set");
+  it("says the person axis shows anonymous when nobody is named", () => {
+    expect(shown({ status: "unset" }).at("info")[0]).toContain('shows "anonymous"');
+    expect(shown({ status: "removed" }).at("success")[0]).toContain('shows "anonymous"');
   });
 
   it("says the identity was removed", () => {
@@ -226,6 +227,7 @@ describe("printTelemetryStatus", () => {
     branch: "feat/x",
     role: "working",
     binding: { state: "unbound" },
+    personId: null,
     ...over,
   });
   const bound = (
@@ -243,6 +245,19 @@ describe("printTelemetryStatus", () => {
         declaredAt: "2026-10-09T10:00:00.000Z",
       },
     });
+
+  it("says last who the measurement names, whatever the work is bound to", () => {
+    for (const result of [shown({ personId: "Ada Example" }), bound("branch")]) {
+      const lines = linesOf((o) => printTelemetryStatus(o, result));
+      expect(lines).toHaveLength(3);
+    }
+    expect(linesOf((o) => printTelemetryStatus(o, shown({ personId: "Ada Example" })))[2]).toBe(
+      'Measured as "Ada Example".'
+    );
+    expect(linesOf((o) => printTelemetryStatus(o, shown({})))[2]).toBe(
+      "Measured anonymously. To be named, run `aidd telemetry identity <id>`."
+    );
+  });
 
   it("says first since when the clone is measured", () => {
     expect(linesOf((o) => printTelemetryStatus(o, shown({})))[0]).toBe(

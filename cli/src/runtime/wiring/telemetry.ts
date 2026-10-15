@@ -123,11 +123,13 @@ export function wireTelemetry(homedir: () => string): TelemetryDeps {
     bindingsLock,
     declaration
   );
+  const identity = new PersonIdentityAdapter(root, storage);
   const telemetryStatusUseCase = new TelemetryStatusUseCase(
     repositories,
     sessions,
     branchDeclarations,
-    declaration
+    declaration,
+    identity
   );
   const ingestUsageUseCase = new IngestUsageUseCase(
     [
@@ -143,7 +145,6 @@ export function wireTelemetry(homedir: () => string): TelemetryDeps {
     snapshotBindingsUseCase,
     { refusedByEnvironment }
   );
-  const identity = new PersonIdentityAdapter(root, storage);
   const claudeDir = claudeConfigDir(process.env.CLAUDE_CONFIG_DIR, homedir());
   return {
     declareTaskUseCase,

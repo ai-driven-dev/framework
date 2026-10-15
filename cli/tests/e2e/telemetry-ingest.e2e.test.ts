@@ -25,7 +25,7 @@ beforeEach(async () => {
   initRepository(repoB, gitEnv, { remote: "git@github.com:acme/other.git" });
   await mkdir(join(repoA, "src"));
   // Opting in is `on`: a key set by hand opens no consent interval, and nothing is stored.
-  const on = await runCli(["telemetry", "on", "--yes"], repoA, env.fakeHome, {
+  const on = await runCli(["telemetry", "on", "--yes", "--anonymous"], repoA, env.fakeHome, {
     env: { AIDD_TELEMETRY_DIR: telemetry, CLAUDE_CONFIG_DIR: claude, AIDD_TELEMETRY: "" },
   });
   expect(on.exitCode, on.stderr + on.stdout).toBe(0);

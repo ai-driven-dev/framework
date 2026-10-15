@@ -32,6 +32,12 @@ export type LegacyConfigOutcome = "none" | "block-removed" | "file-deleted" | "u
 /** Who the clone is measured as: the identity already set, none, or the one the person chose. */
 export type IdentityChoice = "keep" | "none" | { readonly set: string };
 
+/** Who the clone is measured as, `null` for nobody, and who it was before this `on`. */
+export interface OnIdentity {
+  readonly personId: string | null;
+  readonly previous: string | null;
+}
+
 export type OnResult =
   | {
       readonly status: "refused";
@@ -58,8 +64,7 @@ export type OnResult =
       /** How long Claude Code keeps a transcript, and whether that is short of what history
        * needs. */
       readonly retention: { readonly days: number; readonly short: boolean };
-      /** `null` for nobody: the person stays anonymous. */
-      readonly identity: { readonly personId: string | null; readonly previous: string | null };
+      readonly identity: OnIdentity;
     };
 
 /** Opts a clone in, in its own git config, and leaves it as if the previous measurement had

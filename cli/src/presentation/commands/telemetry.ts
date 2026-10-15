@@ -3,17 +3,21 @@ import {
   REFUSED_ENVELOPE,
   reportEnvelopeOf,
 } from "../../contexts/telemetry/application/report/report-envelope.js";
+import type { IdentityChoice } from "../../contexts/telemetry/application/switch/telemetry-on-use-case.js";
 import {
   DECLARED_BY,
   type DeclaredBy,
   requestOf,
 } from "../../contexts/telemetry/domain/declaration/task-declaration.js";
+import { personIdOf } from "../../contexts/telemetry/domain/identity/person-identity.js";
 import { periodOf } from "../../contexts/telemetry/domain/report/period.js";
 import {
   REPORT_AXES,
   type ReportAxis,
 } from "../../contexts/telemetry/domain/report/usage-report.js";
+import type { Prompter } from "../../kernel/ports/prompter.js";
 import { createDeps } from "../../runtime/wiring/framework.js";
+import type { TelemetryDeps } from "../../runtime/wiring/telemetry.js";
 import {
   printForgetResult,
   printOffResult,
@@ -29,6 +33,39 @@ import {
 import { ErrorHandler } from "../error-handler.js";
 import { parseGlobalOptions } from "./global-options.js";
 
+interface OnOptions {
+  readonly yes: boolean;
+  readonly as?: string;
+  readonly anonymous: boolean;
+}
+
+/** Who the clone is measured as: a flag's answer, the identity already set, or the person's
+ * answer. `null` when none of them can be had. */
+async function identityChoice(
+  telemetry: TelemetryDeps,
+  prompter: Prompter,
+  cwd: string,
+  options: OnOptions
+): Promise<IdentityChoice | null> {
+  if (options.as !== undefined) return { set: options.as };
+  if (options.anonymous) return "none";
+  if ((await telemetry.manageIdentityUseCase.show()).status === "set") return "keep";
+  if (options.yes) return null;
+  const proposal = await telemetry.proposeIdentityUseCase.execute(cwd);
+  const answer = await prompter.select<IdentityChoice | "another">(
+    "How should your own measurement name you? The identity stays on this machine.",
+    [
+      ...(proposal === null
+        ? []
+        : [{ name: `As "${proposal}", your git name`, value: { set: proposal } }]),
+      { name: "As another identifier, typed next", value: "another" },
+      { name: "Anonymously", value: "none" },
+    ]
+  );
+  if (answer !== "another") return answer;
+  return { set: await prompter.input("Identifier (one line, at most 128 characters):") };
+}
+
 export function registerTelemetryCommand(program: Command): void {
   const telemetry = program
     .command("telemetry")
@@ -38,8 +75,18 @@ export function registerTelemetryCommand(program: Command): void {
     .command("on")
     .description("Measure this clone, and remove what the previous version left in it")
     .option("--yes", "Do not ask first", false)
-    .action(async (cmdOptions: { yes: boolean }) => {
+    .option("--as <id>", "Name you by this identifier on your own measurement")
+    .option("--anonymous", "Name nobody on your own measurement", false)
+    .action(async (cmdOptions: OnOptions) => {
       const { verbose, output, projectRoot } = parseGlobalOptions(program);
+      if (cmdOptions.as !== undefined && cmdOptions.anonymous) {
+        output.error("--as names you and --anonymous names nobody: give one of them.");
+        process.exit(1);
+      }
+      if (cmdOptions.as !== undefined && personIdOf(cmdOptions.as) === null) {
+        output.error("An identity is one line of at most 128 characters. Nothing was changed.");
+        process.exit(1);
+      }
       if (!cmdOptions.yes && !process.stdout.isTTY) {
         output.error("Nothing to ask in a non-interactive run: pass --yes to turn measurement on.");
         process.exit(1);
@@ -56,7 +103,14 @@ export function registerTelemetryCommand(program: Command): void {
           output.info("Nothing changed.");
           return;
         }
-        const result = await deps.telemetry.telemetryOnUseCase.execute(projectRoot, "keep");
+        const choice = await identityChoice(deps.telemetry, deps.prompter, projectRoot, cmdOptions);
+        if (choice === null) {
+          output.error(
+            "No identity is set, and --yes asks nothing: pass --as <id> to be named, or --anonymous to name nobody."
+          );
+          process.exit(1);
+        }
+        const result = await deps.telemetry.telemetryOnUseCase.execute(projectRoot, choice);
         printOnResult(output, result);
         if (result.status === "refused") process.exit(1);
       } catch (error) {

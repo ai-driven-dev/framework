@@ -1,5 +1,5 @@
 ---
-status: todo
+status: done
 ---
 
 # Instruction: The command asks, the flags answer, status and report name the person

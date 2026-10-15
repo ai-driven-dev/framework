@@ -162,7 +162,7 @@
   {
     "invocation": "aidd telemetry on",
     "exitCode": 0,
-    "help": "Usage: aidd telemetry on [options]\n\nMeasure this clone, and remove what the previous version left in it\n\nOptions:\n  --yes       Do not ask first (default: false)\n  -h, --help  display help for command"
+    "help": "Usage: aidd telemetry on [options]\n\nMeasure this clone, and remove what the previous version left in it\n\nOptions:\n  --yes        Do not ask first (default: false)\n  --as <id>    Name you by this identifier on your own measurement\n  --anonymous  Name nobody on your own measurement (default: false)\n  -h, --help   display help for command"
   },
   {
     "invocation": "aidd telemetry report",

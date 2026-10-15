@@ -167,7 +167,7 @@ describe("printing a usage report", () => {
   it("says what an absent value is on each axis", () => {
     const labels: Record<ReportAxis, string> = {
       total: "all",
-      person: "not set",
+      person: "anonymous",
       session: "no session",
       model: "unknown model",
       agent: "no agent",

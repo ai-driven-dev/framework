@@ -13,6 +13,7 @@ import {
   grantedBy,
   InMemoryBindingsLock,
   InMemoryConsentHistory,
+  InMemoryIdentity,
   InMemorySessions,
   InMemorySnapshots,
 } from "../../../helpers/ports/in-memory-telemetry.js";
@@ -37,6 +38,7 @@ function setup(sessionId: string | null = "sess-1234567890", refusedByEnvironmen
   const sessions = new InMemorySessions();
   const branches = new FakeBranchStore();
   const source = new FakeBindings();
+  const identities = new InMemoryIdentity();
   const useCase = new TelemetryStatusUseCase(
     new ConsentedRepositories(locator, consents, history),
     sessions,
@@ -50,9 +52,10 @@ function setup(sessionId: string | null = "sess-1234567890", refusedByEnvironmen
         () => new Date()
       )
     ),
-    { refusedByEnvironment, sessionId, now: () => new Date("2026-10-09T12:00:00.000Z") }
+    { refusedByEnvironment, sessionId, now: () => new Date("2026-10-09T12:00:00.000Z") },
+    identities
   );
-  return { useCase, consents, sessions, branches, source };
+  return { useCase, consents, sessions, branches, source, identities };
 }
 
 const branchBinding = {
@@ -64,6 +67,13 @@ const branchBinding = {
 };
 
 describe("showing what the work is bound to", () => {
+  it("names the person the measurement names, or nobody", async () => {
+    const { useCase, identities } = setup();
+    expect(await useCase.execute(CWD)).toMatchObject({ status: "shown", personId: null });
+    identities.personId = "Ada Example";
+    expect(await useCase.execute(CWD)).toMatchObject({ personId: "Ada Example" });
+  });
+
   it("says since when the clone is measured: the start of the interval its key names", async () => {
     const { useCase } = setup();
     expect(await useCase.execute(CWD)).toMatchObject({

@@ -3,7 +3,10 @@ import type {
   ForgetResult,
 } from "../../../contexts/telemetry/application/forget/forget-telemetry-use-case.js";
 import type { OffResult } from "../../../contexts/telemetry/application/switch/telemetry-off-use-case.js";
-import type { OnResult } from "../../../contexts/telemetry/application/switch/telemetry-on-use-case.js";
+import type {
+  OnIdentity,
+  OnResult,
+} from "../../../contexts/telemetry/application/switch/telemetry-on-use-case.js";
 import type { ErasureKind } from "../../../contexts/telemetry/domain/ports/forget/measurement-erasure.js";
 import {
   RETENTION_DEFAULT_DAYS,
@@ -26,6 +29,14 @@ const REFUSALS = {
 
 function plural(count: number, noun: string): string {
   return `${count} ${noun}${count === 1 ? "" : "s"}`;
+}
+
+function identityLine({ personId, previous }: OnIdentity): string {
+  if (personId === null) {
+    return 'Measured anonymously: the person axis shows "anonymous". To be named, run `aidd telemetry identity <id>`.';
+  }
+  const before = previous === null || previous === personId ? "" : `, no longer as "${previous}"`;
+  return `Measured as "${personId}"${before}.`;
 }
 
 export function printOnResult(output: CLIOutput, result: OnResult): void {
@@ -79,6 +90,7 @@ export function printOnResult(output: CLIOutput, result: OnResult): void {
         `To keep them longer, add \`"cleanupPeriodDays": ${RETENTION_WANTED_DAYS}\` to your Claude settings.json.`
     );
   }
+  output.info(identityLine(result.identity));
   output.info(
     "Next: declare what you work on with `aidd telemetry task <name> [--ticket <ref>]`, or `--none` for no task. " +
       "In Claude Code, the aidd-telemetry plugin's hooks ask for it before the first prompt on an undeclared working branch."

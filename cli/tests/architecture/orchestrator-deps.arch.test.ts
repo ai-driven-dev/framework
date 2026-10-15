@@ -122,6 +122,9 @@ const BASELINE: readonly { readonly path: string; readonly injected: number }[] 
   // ledger's lock so an ingest sees the key and the interval change together. The order is only
   // this class's to hold; the clock is the sixth.
   { path: "src/contexts/telemetry/application/switch/telemetry-off-use-case.ts", injected: 6 },
+  // Status shows what the work is bound to, from the session's declarations and the branch's,
+  // then who the measurement names: the person's identity is the fifth, read and only shown.
+  { path: "src/contexts/telemetry/application/telemetry-status-use-case.ts", injected: 5 },
   // Forgetting reads what was declared where (snapshots, remembered roots, the clones that
   // consented), clears it, and erases the files, all under the ledger's lock. The declarations
   // go before the files that lead to them, an order only this class holds.

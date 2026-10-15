@@ -238,7 +238,7 @@ beforeEach(async () => {
   await writeFile(join(telemetry, "bindings", "sessions.jsonl"), `${SESSIONS.join("\n")}\n`);
   await writeFile(join(telemetry, "bindings", "carries.jsonl"), `${CARRIES.join("\n")}\n`);
   // Opting in is `on`: a key set by hand opens no consent interval, and nothing is stored.
-  expect((await aidd(["on", "--yes"])).exitCode).toBe(0);
+  expect((await aidd(["on", "--yes", "--anonymous"])).exitCode).toBe(0);
   await backdateConsent(telemetry);
 });
 afterEach(async () => {
@@ -478,10 +478,10 @@ describe("aidd telemetry report", () => {
 });
 
 describe("aidd telemetry identity", () => {
-  it("shows the person axis as not set until an identity is chosen", async () => {
+  it("shows the person axis as anonymous until an identity is chosen", async () => {
     const before = rowsOf(await json("person"));
     expect(Object.keys(before)).toEqual(["absent"]);
-    expect((await aidd(["report", ...WINDOW, "--axis", "person"])).stdout).toContain("not set");
+    expect((await aidd(["report", ...WINDOW, "--axis", "person"])).stdout).toContain("anonymous");
     expect((await aidd(["identity"])).stdout).toContain("No identity is set");
   });
 

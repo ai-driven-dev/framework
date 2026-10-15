@@ -346,7 +346,7 @@ async function checkIn({ root, cli, api, log, attended }) {
     ]) {
       await step(`git ${args[0]}`, "git", args);
     }
-    await aidd("aidd telemetry on", "on", "--yes");
+    await aidd("aidd telemetry on", "on", "--yes", "--anonymous");
     let session = null;
     if (attended) {
       session = await attendedSession({ root, env, project, api, telemetryDir });

@@ -121,6 +121,15 @@ export function printTelemetryStatus(output: CLIOutput, result: StatusResult): v
     return;
   }
   output.info(`This clone is measured since ${result.since.slice(0, 10)}.`);
+  printBinding(output, result);
+  output.info(
+    result.personId === null
+      ? "Measured anonymously. To be named, run `aidd telemetry identity <id>`."
+      : `Measured as "${result.personId}".`
+  );
+}
+
+function printBinding(output: CLIOutput, result: Extract<StatusResult, { status: "shown" }>): void {
   const { binding, sessionId, branch, role } = result;
   if (binding.state === "unbound") {
     const where =
@@ -151,11 +160,11 @@ export function printIdentityResult(output: CLIOutput, result: IdentityResult): 
       output.success(`Measurement names you as "${result.personId}". Stop with \`--off\`.`);
       return;
     case "removed":
-      output.success('Identity removed: the person axis shows "not set".');
+      output.success('Identity removed: the person axis shows "anonymous".');
       return;
     case "unset":
       output.info(
-        'No identity is set: the person axis shows "not set". Choose one with `aidd telemetry identity <id>`.'
+        'No identity is set: the person axis shows "anonymous". Choose one with `aidd telemetry identity <id>`.'
       );
       return;
     case "refused":

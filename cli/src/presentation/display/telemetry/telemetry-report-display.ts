@@ -24,7 +24,7 @@ const COLUMNS = ["Input", "Output", "Cache read", "Cache write", "Total"] as con
 
 const ABSENT: Readonly<Record<ReportAxis, string>> = {
   total: "all",
-  person: "not set",
+  person: "anonymous",
   session: "no session",
   model: "unknown model",
   agent: "no agent",

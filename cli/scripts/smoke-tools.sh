@@ -212,7 +212,7 @@ unset AIDD_TELEMETRY CLAUDE_CODE_SESSION_ID
 P_TEL=$(new_project)
 (cd "$P_TEL" && git -c user.name=t -c user.email=t@t -c commit.gpgsign=false commit -q --allow-empty -m first \
   && git switch -q -c feat/smoke)
-run "telemetry on" 0 "Measurement is on" "$P_TEL" -- telemetry on --yes
+run "telemetry on" 0 "Measurement is on" "$P_TEL" -- telemetry on --yes --anonymous
 run "telemetry task" 0 "Declared task" "$P_TEL" -- telemetry task smoke-task --ticket SMOKE-1
 run "telemetry status" 0 "measured since" "$P_TEL" -- telemetry status
 run "telemetry ingest" 0 "" "$P_TEL" -- telemetry ingest

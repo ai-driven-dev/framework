@@ -30,16 +30,29 @@ describe("printOnResult", () => {
     expect(output.at("success")).toEqual([
       "Measurement is on for this clone, from now: calls made before this moment are not counted. `git config aidd.telemetry` holds this clone's own token, in this clone's own config.",
     ]);
-    expect(output.lines).toHaveLength(3);
+    expect(output.lines).toHaveLength(4);
     expect(output.lines[1]).toContain("never committed");
     expect(output.lines[1]).toContain("this clone's linked worktrees");
     expect(output.lines.join("\n")).not.toContain("repository");
     expect(output.lines[1]).toContain(
       "a teammate is measured only after running `aidd telemetry on`"
     );
-    expect(output.lines[2]).toMatch(/^Next: declare what you work on with /u);
-    expect(output.lines[2]).toContain("aidd telemetry task <name> [--ticket <ref>]");
-    expect(output.lines[2]).toContain("the aidd-telemetry plugin's hooks ask");
+    expect(output.lines[3]).toMatch(/^Next: declare what you work on with /u);
+    expect(output.lines[3]).toContain("aidd telemetry task <name> [--ticket <ref>]");
+    expect(output.lines[3]).toContain("the aidd-telemetry plugin's hooks ask");
+  });
+
+  it("says who the clone is measured as, before the next step", () => {
+    const named = (personId: string | null, previous: string | null) =>
+      on({ identity: { personId, previous } }).lines.at(-2);
+    expect(named(null, null)).toBe(
+      'Measured anonymously: the person axis shows "anonymous". To be named, run `aidd telemetry identity <id>`.'
+    );
+    expect(named("Ada Example", null)).toBe('Measured as "Ada Example".');
+    expect(named("Ada Example", "Ada Example")).toBe('Measured as "Ada Example".');
+    expect(named("Ada Example", "Ada at Home")).toBe(
+      'Measured as "Ada Example", no longer as "Ada at Home".'
+    );
   });
 
   it("says it already was", () => {
