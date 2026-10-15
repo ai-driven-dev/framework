@@ -81,8 +81,26 @@ const scenario = fc.array(call, { minLength: 1, maxLength: 12 }).chain((calls) =
     ),
     batchOf: each(fc.nat(4)),
     monthly: each(fc.boolean()),
+    // A call an earlier version kept that a transcript read again offers once more.
+    alsoIngested: each(fc.boolean()),
+    tornMonth: fc.boolean(),
+    strayDay: fc.boolean(),
   });
 });
+
+/** A line that is not a record, as a crash or a hand edit leaves one. */
+const TORN = '{"tool":"claude-code","key":';
+/** A day no anchor's window reaches, so only a report ever reads it. */
+const STRAY_DAY = "2024-06-15.jsonl";
+
+/** The ledger one ingest of these calls would leave: each call once, in canonical order. */
+function canonical(calls: readonly StoredUsage[]): Record<string, string> {
+  const files: Record<string, string> = {};
+  for (const [day, inDay] of partitionByDay(foldUsage(calls))) {
+    files[`${day}.jsonl`] = `${inDay.map((record) => JSON.stringify(record)).join("\n")}\n`;
+  }
+  return files;
+}
 
 /** What an earlier version would have written for these calls: one file per month. */
 function monthsOf(records: readonly StoredUsage[]): Map<string, string> {
@@ -114,23 +132,43 @@ async function bytes(dir: string): Promise<Record<string, string>> {
 }
 
 describe("the ledger's bytes, once a report has run", () => {
-  it("are those of one ingest of the same calls, whatever the order, grouping and starting format", async () => {
+  it("are those of one ingest of the same calls, whatever the order, grouping, starting format and damage", async () => {
     await fc.assert(
-      fc.asyncProperty(scenario, async ({ calls, order, batchOf, monthly }) => {
-        const earlier = calls.filter((_, index) => monthly[index]);
-        const { dir, ledger } = await freshLedger(monthsOf(earlier));
-        const batches: StoredUsage[][] = [[], [], [], [], []];
-        for (const index of order) {
-          if (!monthly[index]) batches[batchOf[index] as number]?.push(calls[index] as StoredUsage);
-        }
-        for (const batch of batches) if (batch.length > 0) await storeCalls(ledger, batch);
-        await settleLedger(ledger);
+      fc.asyncProperty(
+        scenario,
+        async ({ calls, order, batchOf, monthly, alsoIngested, tornMonth, strayDay }) => {
+          const earlier = calls.filter((_, index) => monthly[index]);
+          const files = monthsOf(earlier);
+          const firstMonth = [...files.keys()][0];
+          if (tornMonth && firstMonth !== undefined) {
+            files.set(firstMonth, `${files.get(firstMonth)}${TORN}\n`);
+          }
+          if (strayDay) files.set(STRAY_DAY, `${TORN}\n`);
+          const { dir, ledger } = await freshLedger(files);
+          const batches: StoredUsage[][] = [[], [], [], [], []];
+          for (const index of order) {
+            if (!monthly[index] || alsoIngested[index]) {
+              batches[batchOf[index] as number]?.push(calls[index] as StoredUsage);
+            }
+          }
+          for (const batch of batches) if (batch.length > 0) await storeCalls(ledger, batch);
+          await settleLedger(ledger);
 
-        const reference = await freshLedger();
-        await storeCalls(reference.ledger, calls);
-        await settleLedger(reference.ledger);
-        expect(await bytes(dir)).toEqual(await bytes(reference.dir));
-      })
+          const settled = await bytes(dir);
+          expect(settled).toEqual(canonical(calls));
+          const lines = Object.values(settled).flatMap((text) => text.split("\n").slice(0, -1));
+          expect(lines).toHaveLength(new Set(calls.map((c) => `${c.tool}\u0000${c.key}`)).size);
+          const reference = await freshLedger();
+          await storeCalls(reference.ledger, calls);
+          await settleLedger(reference.ledger);
+          expect(settled).toEqual(await bytes(reference.dir));
+
+          const again = await settleLedger(ledger);
+          expect([again.skippedLines, again.damaged.size, again.unsettled.size]).toEqual([0, 0, 0]);
+          expect(await bytes(dir)).toEqual(settled);
+        }
+      ),
+      { numRuns: 200 }
     );
-  }, 120_000);
+  }, 240_000);
 });
