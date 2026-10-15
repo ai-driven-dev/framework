@@ -1,6 +1,6 @@
 # Review: The report answers about one task, ticket, person or more
 
-- Rounds: 2
+- Rounds: 3
 - Started: 2026-10-15
 
 ## Round 1 · r-7c3e
@@ -71,3 +71,33 @@ Criteria are the contract's acceptance 1-10, the authority the plan's phase tabl
 - `plugins/aidd-telemetry/skills/01-usage/actions/frame.md:33` : round 1's major is not fixed. Commit `05660554` is still `docs(telemetry)` and still carries the skill's new framing and a display test; no commit was split or retyped. The only other commit touching `plugins/aidd-telemetry` is `c790dd82` (`fix`), so `aidd-telemetry` releases a patch, with the feature under Documentation and Bug Fixes → split `05660554` into `feat(aidd-telemetry): …` for `plugins/aidd-telemetry/**`, `test(cli): …` for the display test and `docs(telemetry): …` for the rest, and push with `--force-with-lease` — 🟡 major, conform
 - `cli/src/presentation/commands/telemetry.ts:281` : the command still runs `conflictsOf` itself before `createDeps`, so the use case's own refusal never runs from the CLI, and the refusal is now worded through two call sites → drop the command's check and let the `conflicting` result exit 1, which the action already handles at `:299`; or keep it and accept the duplicate — 🟢 minor, rot
 - `cli/src/contexts/telemetry/application/report/report-usage-use-case.ts:29` : `RequestedFilters` lets a caller pass `here` and a non-null `repository` together; `here` then wins and `repository` is silently dropped → make the two exclusive in the type, or refuse the pair as a conflict — 🟢 minor, standards
+
+## Round 3 · r-e95a
+
+- Date: 2026-10-15
+- By: Baptiste LAFOURCADE
+- Diff: `ae8705f7...20661e65`
+- Axes: code, functional, relevancy
+- Verdict: approve
+- Score: 10/10 met, 0 unmet, 0 unverified at runtime, 0 out of the diff
+
+Criteria are the contract's acceptance 1-10. Only the command and the use case's request type changed since round 2, so 1-3 and 5-10 stand on round 2's evidence, rerun where the change reaches.
+
+### Criteria
+
+- [x] 1. A filtered report adds up to the row it selects — `report-filters.property.integration.test.ts:207`, green on rerun (`Test Files 42 passed`, `Tests 424 passed` over the report domain and application, the telemetry display, the command wiring and `tests/architecture`)
+- [x] 2. Filters commute and combine with AND — same file `:230`, green
+- [x] 3. Bounded and filtered equals unbounded and filtered, restricted to the period — `report-window.property.integration.test.ts`, green
+- [x] 4. Every error exits 1 naming the flag, conflicts before anything is read — the command no longer checks conflicts (`telemetry.ts`, `conflictsOf` gone), the use case refuses them first (`report-usage-use-case.unit.test.ts`); built binary in a sandbox: `--model m --absent model`, `--absent ticket --unattributed`, `--ticket T --unattributed no-binding`, `--unattributed --task a --json`, `--repository . --task a --unattributed`, and `--task a --unattributed` under `AIDD_TELEMETRY=0` each exit 1 naming both flags, and the ledger holds no day partition after them
+- [x] 5. `.` resolves to the id ingest stored — `telemetry-report.e2e.test.ts:541` green (`Tests 25 passed`); sandbox `--task auth --repository . --axis day` → `Selected: task = auth, repository = f60ecdb1`, 11 + 22 = 33
+- [x] 6. No filter: today's envelope plus `filters` all `null` — `report-usage-use-case.unit.test.ts:349`, `report-envelope.unit.test.ts:112`, green
+- [x] 7. Tests written first, red run recorded — `evidence.md`
+- [x] 8. Telemetry mutation at 96 or above — `evidence.md` (`score 96.3, floor 96`), recorded on `c790dd82`; this round removes a duplicate check and narrows a type, adding no branch
+- [x] 9. Docs say what a filter selects — unchanged since round 2
+- [x] 10. Smoke and the tokens end to end pass — round 2's smoke rerun and `pass 14` stand; typecheck, `biome check` and `knip` clean on this head
+
+### Findings
+
+- Round 2's `telemetry.ts:281` duplicate conflict check: fixed, the use case is the one refusal.
+- Round 2's `report-usage-use-case.ts:29` `here` with `repository`: fixed, `RequestedFilters` is a union in which `here` forces `repository: null`.
+- Round 2's commit-type major on `05660554`: accepted by decision, not fixed. Every PR into `next` is squash-merged; the last 6 commits on `origin/next` each have one parent and carry their PR number (`fcb6022b … (#1032)`, `0a103e67 … (#1031)`, `aaca070a … (#993)`), and this PR will merge as `feat(telemetry)`, the only commit release-please reads. The branch's commit types then never reach a release.

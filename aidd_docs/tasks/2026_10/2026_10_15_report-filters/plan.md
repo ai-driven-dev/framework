@@ -1,6 +1,6 @@
 ---
 objective: "A report can be narrowed to the calls of one task, ticket, person, model, agent, session or repository, and every row it prints can be selected that way."
-status: in-progress
+status: done
 ---
 
 # Plan: The report takes filters
