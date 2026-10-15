@@ -205,9 +205,9 @@ The one assertion added in this phase, the ambiguity message for a repository, w
 | Pre-commit | `pnpm exec lefthook run pre-commit` | every job `✔️`, `cli-architecture`, `cli-biome`, `cli-typecheck`, `scripts-tests` included |
 | Pre-push | `pnpm exec lefthook run pre-push` | `✔️ cli-knip`, `✔️ cli-test` (`Tests  6575 passed \| 1 skipped (6576)`) |
 
-Every binary run went through a script setting `HOME`, `XDG_CONFIG_HOME`, `AIDD_USER_CONFIG_DIR`, `AIDD_TELEMETRY_DIR` and `CLAUDE_CONFIG_DIR` to a fresh temp directory, with `GIT_CONFIG_NOSYSTEM=1`.
+Smoke and both token checks ran through a script setting `HOME`, `XDG_CONFIG_HOME`, `AIDD_USER_CONFIG_DIR`, `AIDD_TELEMETRY_DIR` and `CLAUDE_CONFIG_DIR` to a fresh temp directory, with `GIT_CONFIG_NOSYSTEM=1`. The e2e tests, the help golden update and `cli-test` ran the build through `tests/e2e/helpers.ts`, which relocates `HOME`, `XDG_CONFIG_HOME` and `AIDD_USER_CONFIG_DIR` (the report e2e also sets `AIDD_TELEMETRY_DIR` and `CLAUDE_CONFIG_DIR`, and its git runs under `sandboxGitEnv`), but does not set `GIT_CONFIG_NOSYSTEM` for the binary.
 
-The 96.5 and 96.2 differ by mutants that timed out in one run and survived in the other, in files this change does not touch.
+Between the two runs, survived and uncovered mutants in the four report files this change writes went from 13 to 10, so the drop from 96.5 to 96.2 lies in other files; the runs were not compared file by file, and the second overwrote the first report.
 
 ### Surviving mutants on changed lines
 
