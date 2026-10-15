@@ -149,6 +149,9 @@ while True:
         data = child.read(65536)
     except EOFError:
         break
+    # ConPTY asks the terminal where its cursor is and renders nothing until it is answered.
+    if "\\x1b[6n" in data:
+        child.write("\\x1b[1;1R")
     sys.stdout.write(data)
     sys.stdout.flush()
 `;
@@ -240,7 +243,7 @@ async function attendedSession({ root, env, project, api, telemetryDir }) {
     await waitFor("the call after /clear in a transcript", () => billedInTranscript(2));
     return { billedBeforeDeclaring, sessions: readLines(sessions), carries: readLines(carries) };
   } catch (error) {
-    const tail = screen.replace(/\x1b\[[0-9;?]*[ -/]*[@-~]/gu, "").slice(-600);
+    const tail = screen.slice(-600);
     throw new Error(`${error.message}; the screen ended with: ${JSON.stringify(tail)}`);
   } finally {
     child.stdin.end();
