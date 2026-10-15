@@ -522,6 +522,7 @@ describe("copilot declarations the rest of the CLI reads", () => {
     expect(nativeActivationOf("copilot")).toMatchObject({
       binary: "copilot",
       upgradeVerb: "update",
+      updateVerb: "update",
       enableVerb: "install",
       disableVerb: "uninstall",
       sourceCheckVerb: "update",

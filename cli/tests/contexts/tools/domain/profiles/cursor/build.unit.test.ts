@@ -43,6 +43,14 @@ describe("buildCursorContract()", () => {
     expect(parseFrontmatter(first).frontmatter.name).toBe("first-plugin-planner");
     expect(parseFrontmatter(second).frontmatter.name).toBe("second-plugin-planner");
   });
+
+  it("drops only the file's final .md from a plugin agent's name", () => {
+    const transform = supported(buildCursorContract().artifacts.agents).transform;
+    const output = transform?.(AGENT_SOURCE, "aidd-dev", "read.md-first.md") ?? "";
+
+    expect(parseFrontmatter(output).frontmatter.name).toBe("aidd-dev-read.md-first");
+  });
+
   it("declares Cursor's own plugin manifest path, schema and root token", () => {
     const contract = buildCursorContract();
 
