@@ -104,6 +104,36 @@ async function rows(s: ReturnType<typeof setup>, axis: ReportAxis, period = ANY)
 }
 
 describe("reporting usage", () => {
+  it("settles a call held in two partitions under the ledger lock", async () => {
+    const s = setup();
+    s.transcripts.files.set("/t/1.jsonl", [line("A", 10, "2026-10-07T10:00:00.000Z")]);
+    await s.report.execute({ axis: "total", period: ANY });
+    s.ledger.unsettled = new Set(["2026-10-06", "2026-10-07"]);
+    s.events.length = 0;
+    await s.report.execute({ axis: "total", period: ANY });
+    expect(s.events.slice(-4)).toEqual(["lock", "load", "save", "unlock"]);
+    expect(s.ledger.savedPartitions).toEqual(new Set(["2026-10-06", "2026-10-07"]));
+    expect(s.ledger.records).toHaveLength(1);
+  });
+
+  it("writes nothing when the ledger is settled", async () => {
+    const s = setup();
+    s.transcripts.files.set("/t/1.jsonl", [line("A", 10, "2026-10-07T10:00:00.000Z")]);
+    await s.report.execute({ axis: "total", period: ANY });
+    s.events.length = 0;
+    await s.report.execute({ axis: "total", period: ANY });
+    expect(s.events).not.toContain("save");
+  });
+
+  it("repairs a damaged partition outside any ingest window", async () => {
+    const s = setup();
+    s.ledger.damaged.add("2026-01-15");
+    const result = await s.report.execute({ axis: "total", period: ANY });
+    expect(result).toMatchObject({ coverage: { skippedLedgerLines: 1 } });
+    expect(s.ledger.savedPartitions).toEqual(new Set(["2026-01-15"]));
+    expect((await s.ledger.load()).skippedLines).toBe(0);
+  });
+
   it("reads new transcripts first, so the report holds what was just written", async () => {
     const s = setup();
     s.transcripts.files.set("/t/1.jsonl", [line("A", 10, "2026-10-07T10:00:00.000Z")]);

@@ -8,6 +8,7 @@ import {
 } from "../../domain/report/usage-report.js";
 import type { NotStoredReason } from "../../domain/repository-resolution.js";
 import type { IngestUsageUseCase } from "../ingest-usage-use-case.js";
+import { settleLedger } from "../ledger-upkeep.js";
 import type { DeclaredBindings } from "./declared-bindings.js";
 
 export interface ReportRequest {
@@ -44,7 +45,8 @@ export type ReportResult =
 
 /** Reads what is new, then answers what the stored calls consumed in a period, split along one
  * axis. The ledger holds facts only: what a call belongs to is worked out here, every time, from
- * what people declared, so a declaration made later moves earlier work. */
+ * what people declared, so a declaration made later moves earlier work. It also leaves the
+ * ledger settled: one call in one partition, by day, whatever order the ingests ran in. */
 export class ReportUsageUseCase {
   constructor(
     private readonly ingest: IngestUsageUseCase,
@@ -56,7 +58,7 @@ export class ReportUsageUseCase {
   async execute(request: ReportRequest): Promise<ReportResult> {
     const ingested = await this.ingest.execute();
     if (ingested.refused) return { status: "refused" };
-    const held = await this.ledger.exclusively(() => this.ledger.load());
+    const held = await this.ledger.exclusively(() => settleLedger(this.ledger));
     const records = held.records.filter((record) => inPeriod(record.at, request.period));
     const report = buildReport(
       records,
