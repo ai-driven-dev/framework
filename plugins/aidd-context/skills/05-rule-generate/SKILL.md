@@ -21,18 +21,18 @@ flowchart TD
 
 ## Actions
 
-Read the next action in `actions/` and its references.
+Run the flow above. Read only the next action file and its references.
 
 | Action | Does |
 | --- | --- |
-| `01-capture-rule.md` | frame, compare and decide |
-| `02-write-rule.md` | publish the approved result |
-| `03-validate.md` | check affected files |
+| capture-rule | frame, compare and decide |
+| write-rule | publish the approved result |
+| validate | check the affected files |
 
 ## Transversal rules
 
-- Report unsupported hosts and alternatives; AGENTS alone identifies no installed host.
-- Missing/unreadable installed reference: stop.
-- Create/update: present full assessed candidates, including new; await approval after capture confirmation before any rule/request/publication write. Renew after candidate/resolution/evidence changes.
-- Existing changes require explicit identified-source/publication permissions.
-- Keep/cancel leaves project bytes unchanged.
+- **Report unsupported hosts** with alternatives; a lone AGENTS file identifies no installed host.
+- **If an installed reference cannot be read**, stop and report the missing file.
+- **Await approval** of the full assessed candidate, new rules included, before any rule, request or publication write; renew it when the candidate, resolution or evidence changes.
+- **Change existing sources or publications** only with explicit permission naming them.
+- **Keep or cancel** leaves project bytes unchanged.

@@ -1,19 +1,24 @@
 # 02 - Write rule
 
+Publish the approved result.
+
 ## Input
 
-Approved capture.
+The approved capture.
 
 ## Output
 
-Files or refusal.
+The written files, or the refusal.
 
 ## Process
 
-1. Host create/update: serialize approved JSON outside destinations per [publication](../references/rule-publication.md).
-2. Invoke installed absolute writer per publication. Plugin: directly write/delete approved source only; no fan-out.
-3. Record results; stop on verbatim refusals.
+1. **Match.** For create/update, check body, fields, publication paths, resolution and evidence against the last approved capture; on any difference, return to capture-rule.
+2. **Serialize.** For host create/update, write the JSON request outside the destinations per [publication](../references/rule-publication.md).
+3. **Write.** Apply the approved result.
+   - **Host.** Resolve the installed writer to an absolute path and reuse it for every call.
+   - **Plugin.** Write or delete the approved source only.
+4. **Report.** List the written files; on refusal, stop and quote it verbatim.
 
 ## Rules
 
-- Preserve approved capture exactly. Never regenerate, edit canonical metadata or generated outputs manually, migrate legacy rules or bypass refusals.
+- **Leave generated files to the writer.** Canonical metadata and generated outputs stay writer-owned, and legacy rules stay unchanged.

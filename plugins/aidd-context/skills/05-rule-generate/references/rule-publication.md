@@ -10,6 +10,8 @@
 | Codex / `codex` | root `AGENTS.md` | shared signed `aidd_rules`, textual scope |
 | OpenCode / `opencode` | root `AGENTS.md` | same contribution |
 
+Copilot `<name>` drops the slug's numeric prefix: category `01-standards`, slug `1-local-names` → `01-local-names.instructions.md`.
+
 ## Operations
 
 Writer: absolute `scripts/write-rule.cjs` beside loaded installed `SKILL.md`; no checkout/project-relative/CLI assumption.

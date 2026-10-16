@@ -2,18 +2,21 @@
 
 ## Labels
 
-- **needs review**: uncertainty that could affect comparison with existing policies. Overrides other labels.
-- **new**: no coverage, overlap or conflict.
-- **covered**: all obligations supplied throughout scope.
-- **overlap**: compatible partial repetition/extension.
-- **conflict**: incompatible obligations or unjustified weakening.
+| Label | Means |
+| --- | --- |
+| needs review | uncertainty that could change the comparison; overrides every other label |
+| new | no coverage, overlap or conflict |
+| covered | existing policies supply every obligation throughout the scope |
+| overlap | compatible partial repetition or extension |
+| conflict | incompatible obligations, or an unjustified weakening |
 
 ## Comparison
 
-- Compare obligations, prohibitions, scopes, conditions, exceptions and priority, including prior sources when updating and future files.
-- Exclude only proven disjoint scopes.
-- Findings include source paths, decisive quotes and scope reasons.
+- **Compare** obligations, prohibitions, scopes, conditions, exceptions and priority, including prior sources on update and future files.
+- **Exclude** only scopes proven disjoint.
+- **Cite** source paths, decisive quotes and scope reasons in every finding.
 
 ## Choices
 
-Choices: create, keep, update, merge, scope, priority or cancel. Needs review: evidence, keep or cancel; no source-change choice.
+- **Offer** create, keep, update, merge, scope, priority or cancel as applicable.
+- **On needs review**, request evidence and reassess before offering source changes; keep and cancel stay available.

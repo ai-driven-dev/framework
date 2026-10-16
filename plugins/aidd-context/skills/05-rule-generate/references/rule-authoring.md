@@ -6,7 +6,7 @@
 - **R2.** Concise bullets only; preserve literals, conditions and exceptions.
 - **R3.** Explicit scope or all files.
 - **R4.** English unless explicitly requested otherwise.
-- **R5.** Never repeat, weaken or contradict active bullets within a rule.
+- **R5.** Keep bullets distinct: repeat, weaken or contradict no active bullet within a rule.
 
 ## Naming
 

@@ -1,21 +1,25 @@
 # 01 - Capture rule
 
+Frame the request, compare it with existing policies and decide with the user.
+
 ## Input
 
-Topic, `auto`, or publish/delete; default manual.
+**Request.** A topic, `auto`, or a publish/delete; default manual.
 
 ## Output
 
-Approved candidates or confirmed sources, operation and destinations.
+Approved candidates, or confirmed sources, operation and destinations.
 
 ## Process
 
-1. Confirm operation and [destination](../references/rule-publication.md). Missing hosts: detect and propose installations; await selection before drafting/assessment.
-2. Manual: request missing topic. Auto: scan/propose topics; await selection. Publish/delete: confirm sources and whole publications; skip drafting/assessment to Write.
-3. Create/update: confirm topic and [fields](../references/rule-publication.md#operations); draft full [candidates](../assets/rule-template.md) per [authoring](../references/rule-authoring.md).
-4. [Discover policies](../references/rule-discovery.md) read-only; [compare](../references/rule-assessment.md).
-5. Show full candidates and all findings. Needs review: request evidence; reassess before proposing source changes. Otherwise offer relevant choices; await resolution, then explicit subsequent approval.
-
-## Rules
-
-- Unresolved conflicts/uncertainty prevent proceeding.
+1. **Confirm.** Confirm the operation and [destination](../references/rule-publication.md).
+   - **Missing hosts.** Detect them, propose installations and await selection before drafting.
+2. **Frame.** Settle the topic.
+   - **Manual.** Ask for the missing topic.
+   - **Auto.** Scan, propose topics and await selection.
+   - **Publish/delete.** Confirm sources and whole publications, then go to write-rule.
+3. **Draft.** Fill the [template](../assets/rule-template.md) per [authoring](../references/rule-authoring.md), once the topic and [fields](../references/rule-publication.md#operations) are confirmed.
+4. **Compare.** [Discover policies](../references/rule-discovery.md) read-only in the project and loaded ancestors, skip home and account scans, then [assess](../references/rule-assessment.md) each candidate.
+5. **Present.** Show full candidates, exact publication paths and every finding, new rules included.
+   - **Needs review.** Ask for evidence and reassess before offering source changes.
+   - **Resolved.** Await the resolution, then the explicit approval.

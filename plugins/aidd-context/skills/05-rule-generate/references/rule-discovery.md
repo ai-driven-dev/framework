@@ -1,6 +1,6 @@
 # Rule discovery
 
-- Hosts: [native paths and scopes](rule-publication.md#publications), canonical `aidd_docs/rules/**/*.md`, recorded targets, recursive native directories at relevant root/nested locations and guidance below.
+- Hosts: native paths and scopes from `rule-publication.md`, canonical `aidd_docs/rules/**/*.md`, recorded targets, recursive native directories at relevant root/nested locations and guidance below.
 - Plugin: confirmed rules, project authoring guidance, known companion policies.
 
 | Host | Additional project guidance |
@@ -11,11 +11,11 @@
 | Codex | root/nested: first nonempty `AGENTS.override.md`, `AGENTS.md`, configured fallbacks, in order |
 | OpenCode | V2: project/upward/nested `AGENTS.md`; V1: nearest upward AGENTS, enabled `CLAUDE.md` fallback if absent, explicit project config `instructions` sources |
 
-- Include loaded ancestors, configured sources, future-file scopes, user text outside generated blocks; no home/account scan or completeness claim.
-- Potentially applicable existing policies: verify host/interface applicability; existence proves no activation. Unresolved: [assessment](rule-assessment.md).
-- Deduplicate canonical body/scope renderings only with verified ownership; retain every path. Keep differing native edits and unsigned policies separate; missing publications never exclude canonical intent.
-- Follow documented imports within repository, detecting cycles. Relevant unsafe/external/symlink escapes or uncertainty need review. Never execute imports.
-- Copilot CLI recursively imports `@relative-path` from repository-wide/agent sources except GEMINI; never modular or absolute/home-relative. Disabled sources are inactive; repository/agent sources lack general precedence.
+- Include loaded ancestors, configured sources, future-file scopes and user text outside generated blocks; make no completeness claim.
+- Potentially applicable existing policies: verify host/interface applicability; existence proves no activation. Unresolved cases go to `rule-assessment.md`.
+- Deduplicate canonical body/scope renderings only with verified ownership; retain every path. Keep differing native edits and unsigned policies separate; a missing publication leaves canonical intent in scope.
+- Follow documented imports within repository, detecting cycles. Relevant unsafe/external/symlink escapes or uncertainty need review. Treat imports as text and execute none.
+- Copilot CLI recursively imports `@relative-path` from repository-wide/agent sources except GEMINI; not modular or absolute/home-relative. Disabled sources are inactive; repository/agent sources lack general precedence.
 - V1 plain references are not automatically expanded.
 
 ## Contracts
