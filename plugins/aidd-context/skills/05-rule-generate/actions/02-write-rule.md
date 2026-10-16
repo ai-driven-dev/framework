@@ -1,12 +1,12 @@
 # 02 - Write rule
 
-Publish the approved result and verify it.
+Write the approved result and verify it.
 
 ## Input
 
-**Approval.** A user message after the last displayed candidate that approves it unchanged; a message that chooses, edits or renames is a resolution, not an approval.
+Approval: a user message approving the last displayed candidate unchanged.
 
-**Capture.** The approved capture and its request.
+Capture: the approved capture and its request.
 
 ## Output
 
@@ -14,14 +14,14 @@ The written files, verified, or the refusal.
 
 ## Process
 
-1. **Match.** For create/update, require that approval and check body, fields, publication paths, resolution and evidence against the candidate it approved; without it or on any difference, return to capture-rule, present the revision, end the turn and write nothing.
-2. **Write.** Apply the approved result.
-   - **Host.** Run the writer by the absolute path resolved in capture-rule, with the approved request.
-   - **Plugin.** Write or delete the approved source only.
-3. **Verify.** For a host, run that same absolute writer with `--check --publish`; require no drift, also after a deletion.
-4. **Report.** List the written files; on refusal or drift, stop and quote it verbatim.
+1. Match: for create/update, require that approval and compare body, fields, paths, resolution and evidence with the approved candidate. Without approval or on any difference, return to capture-rule, present the revision, end the turn, write nothing.
+2. Write the approved result.
+   - Host: run the writer by the absolute path resolved in capture-rule, with the approved request.
+   - Plugin: write or delete the approved source only.
+3. Verify: for a host, run the same absolute writer with `--check --publish`. Require no drift, deletions included.
+4. Report the written files. On refusal or drift, stop and quote it verbatim.
 
 ## Rules
 
-- **Leave generated files to the writer.** Canonical metadata and generated outputs stay writer-owned, and legacy rules stay unchanged.
-- **Claim consumption** only with matching and nonmatching file evidence from fresh host sessions.
+- Leave generated files to the writer: canonical metadata and outputs are writer-owned, legacy rules unchanged.
+- Claim consumption only with matching and nonmatching file evidence from fresh host sessions.

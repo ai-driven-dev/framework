@@ -21,16 +21,17 @@ flowchart TD
 
 ## Actions
 
-Run the flow above. Read only the next action file and its references.
+Follow the flow. Read only the next action and its references.
 
 | Action | Does |
 | --- | --- |
-| capture-rule | frame, compare, plan and decide |
-| write-rule | publish the approved result and verify it |
+| capture-rule | frame, compare, plan, decide |
+| write-rule | write the approved result, verify |
 
 ## Transversal rules
 
-- **Report unsupported hosts** with alternatives; a lone AGENTS file identifies no installed host.
-- **If an installed reference cannot be read**, stop and report the missing file.
-- **Change existing sources or publications** only with explicit permission naming them.
-- **Keep or cancel** leaves project bytes unchanged.
+- Report unsupported hosts with alternatives; a lone AGENTS file identifies no installed host.
+- Stop and name any installed reference that cannot be read.
+- Change existing sources or publications only with explicit permission naming them.
+- Write only after the user approves the candidate shown last. A choice, merge, edit or rename is not an approval: show the revision and wait.
+- Keep or cancel leaves project bytes unchanged.

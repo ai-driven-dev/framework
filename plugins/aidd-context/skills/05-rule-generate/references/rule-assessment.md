@@ -12,11 +12,11 @@
 
 ## Comparison
 
-- **Compare** obligations, prohibitions, scopes, conditions, exceptions and priority, including prior sources on update and future files.
-- **Exclude** only scopes proven disjoint.
-- **Cite** source paths, decisive quotes and scope reasons in every finding.
+- Compare obligations, prohibitions, scopes, conditions, exceptions and priority, prior sources on update and future files included.
+- Exclude only scopes proven disjoint.
+- Cite source paths, decisive quotes and scope reasons in every finding.
 
 ## Choices
 
-- **Offer** create, keep, update, merge, scope, priority or cancel as applicable.
-- **On needs review**, request evidence and reassess before offering source changes; keep and cancel stay available.
+- Offer create, keep, update, merge, scope, priority or cancel as applicable.
+- Needs review: request evidence, reassess before offering source changes. Keep and cancel stay available.
