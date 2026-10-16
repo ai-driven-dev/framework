@@ -1,5 +1,6 @@
-// UserPromptSubmit: answers a typed declaration without the model, and asks for one, once
-// per working branch, before any token is spent. Inert outside Claude, outside an opted-in
+// UserPromptSubmit: answers a typed declaration without the model, and holds every prompt on
+// an undeclared working branch until one is made, so no token is spent before the work has a
+// task. A declared branch is never asked again. Inert outside Claude, outside an opted-in
 // project, and whenever nobody is there to answer.
 const { resolveAidd, runAidd } = require("./lib/aidd.cjs");
 const { guardedContext } = require("./lib/context.cjs");

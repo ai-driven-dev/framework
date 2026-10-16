@@ -26,7 +26,7 @@ flowchart LR
 
 1. Install: `npm install -g @ai-driven-dev/cli`, then `aidd plugin install aidd-telemetry`. Its hooks need `node` on `PATH`.
 2. In each clone to measure: `aidd telemetry on`. With no identity set, it asks how you appear: your git name, another identifier, or anonymous. Without a terminal, answer with `--yes --as <id>` or `--yes --anonymous`.
-3. Work. When the work has no task yet, Claude Code asks once: send `aidd telemetry task <name> [--ticket <ref>]` (or `--none`) as your next prompt, or run it in a terminal.
+3. Work. While the branch has no task, Claude Code holds each prompt and asks for one: send `aidd telemetry task <name> [--ticket <ref>]` (or `--none`) as your next prompt, or run it in a terminal. Once declared, the branch is never asked again. A declaration belongs to the branch it was made on: a branch copied or renamed with `git branch -c` or `-m` is asked again.
 4. Read: `aidd telemetry report --axis task`.
 
 ## Commands

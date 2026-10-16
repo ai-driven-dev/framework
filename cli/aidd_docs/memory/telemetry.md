@@ -49,6 +49,7 @@ flowchart LR
 | Why a call is counted once | `domain/usage-fold.ts` |
 | Where a call's repository comes from | `application/directory-resolver.ts`, `domain/repository-identity.ts` |
 | Which task a call belongs to | `domain/report/attribution.ts`, `domain/declaration/binding-resolution.ts` |
+| Whether a branch is declared: only by `task`, on that branch (`aiddDeclaredAt` set, `aiddDeclaredFor` absent or equal to the branch); the hook's twin is `plugins/aidd-telemetry/hooks/lib/git.cjs` | `domain/branch-binding.ts` `parseBranchConfig`; rule and limits in the [usage contract](../../../aidd_docs/product/usage-contract.md#branch-declaration) |
 | What counts as consent | `domain/telemetry-consent.ts`, `infrastructure/git-consent-adapter.ts` |
 | Whether a call is stored | `application/directory-resolver.ts` |
 | What a clone is | `domain/consent/clone-identity.ts` |

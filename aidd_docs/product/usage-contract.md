@@ -153,7 +153,7 @@ Directory: `AIDD_TELEMETRY_DIR`, else `AIDD_USER_CONFIG_DIR/telemetry`, else `XD
 | `bindings/carries.jsonl` | `SessionStart` hook | hooks, `report` | `{session_id, from, at}` |
 | `bindings/processes.jsonl` | `SessionStart` hook | `SessionStart` hook | `{pid, session_id, source, at}` |
 | `identity.json` | `identity`, `on` | `report`, `status`, `on` | `{"person_id": "<id>"}`, owner-only |
-| git config `--local` `branch.<name>.aiddTask`, `aiddTicket`, `aiddDeclaredAt` | `task` | hooks, `task`, `report` via snapshots | branch declaration; follows a rename, leaves with the branch |
+| git config `--local` `branch.<name>.aiddTask`, `aiddTicket`, `aiddDeclaredFor`, `aiddDeclaredAt` | `task` | hooks, `task`, `report` via snapshots | branch declaration, `aiddDeclaredAt` written last, `aiddDeclaredFor` = `<name>`; see [Branch declaration](#branch-declaration) |
 | git config `--local` `aidd.telemetry` | `on`, `off`, `forget` | hooks, CLI | `2:<token>` or `off`. Half of consent: alone it grants nothing |
 
 - A line not exactly its store's format is skipped, never guessed. Every JSON Lines store is append-only except the ledger.
@@ -178,6 +178,21 @@ flowchart TD
 
 - A declaration of no task is `declared-none`.
 - Declaring a branch late moves its earlier calls onto the task.
+- A branch snapshot with no `declared_at` attributes nothing.
+
+### Branch declaration
+
+A branch is declared only when the command declared it on that branch. Both readers, the CLI (`parseBranchConfig`) and the hook (`lib/git.cjs`), apply the same rule, pinned by the shared fixture.
+
+| git config of the branch read | Declared? | Why |
+| --- | --- | --- |
+| `aiddDeclaredAt` set, `aiddDeclaredFor` = this branch | yes | written by `task` on this branch |
+| `aiddDeclaredAt` set, no `aiddDeclaredFor` | yes | written by cli-v5.5.0 or earlier, which did not stamp. Kept readable: reports and the gate do not change for data already written. Declaring again stamps it |
+| `aiddDeclaredAt` set, `aiddDeclaredFor` = another branch | no | carried by `git branch -c` (copy) or `git branch -m` (rename), which move every `branch.<name>.*` key |
+| `aiddTask` or `aiddTicket` without `aiddDeclaredAt` | no | set by hand, or a declaration cut short: `task` writes `aiddDeclaredAt` last |
+
+- **Rename** (`git branch -m A B`): B is undeclared, so the gate asks on B. One declaration on B covers B from its creation, since the reflog moves with the branch; calls made while it was A keep A's task. git moves the keys the same way for a copy and a rename, and telling them apart would mean reading reflog entries that expire: one question after a rename is the cost.
+- **Copy** (`git branch -c A B`): B is undeclared until declared on B.
 - Sub-agent and advisor calls follow their parent session.
 
 ## Ask
@@ -193,7 +208,8 @@ flowchart TD
 | CLI usable | `aidd` on `PATH` and knows `telemetry task` |
 
 - Anything else passes. A crash exits 0: the hook never fails a prompt.
-- Asks once per working branch; switching to an unbound branch asks again.
+- Re-checked on every prompt: each prompt on an undeclared working branch is blocked until the branch or the session is declared (`--none` included). A declared branch is never asked again; switching to an undeclared one asks.
+- Why every prompt and not once: the gate exists so that no token of the work is spent before it has a task ([spec](../tasks/2026_10/2026_10_09_deterministic-tokens/spec.md), [target](../tasks/2026_10/2026_10_09_deterministic-tokens/context/target.md)). "Once per working branch" there meant answered once and remembered; letting the next prompt through would spend tokens unattributed. This sentence said "asks once" until 2026-10-16; the hook never did.
 
 Answering never blocks and never reaches the model:
 - `! aidd telemetry task ...` in the terminal fires no `UserPromptSubmit`.
@@ -304,6 +320,9 @@ None observable by the CLI.
 | Call read while git config, `.git` or git dir unreadable | `unreadable-consent`, offsets move on: not recovered on repair | - |
 | pid reused within one boot by a Claude process whose `startup` was never recorded (e.g. started before `on`) | can take the dead process's last session as predecessor, so `/clear` carries its task | announced, replaced by first declaration |
 | `AIDD_TELEMETRY=0` | stops hooks too; a key turned off meanwhile is observed at the next run without it | - |
+| Every declaration key written by hand, `aiddDeclaredFor` and `aiddDeclaredAt` included | the branch reads as declared: no reader can tell who wrote a git config key | - |
+| Copy of an unstamped (cli-v5.5.0) declaration | the copy inherits it | declare on the copy, or on the original to stamp it before copying |
+| Branch snapshots recorded before stamping (a copied branch, a hand-set task with a `declared_at`) | keep attributing: attribution reads snapshots, `branches.jsonl` is append-only | - |
 
 ## Never leaves the machine
 
