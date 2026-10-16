@@ -34,7 +34,8 @@ Step 1 alone took the run from 45.5 to 8.9 minutes at a similar load. Step 2 rem
 Keyed on file, start and end position, mutator and replacement.
 
 - 4169 mutants in both. Changes: Timeout to Killed 165, Timeout to Survived 7, Killed to Timeout 2. **No mutant Killed in the baseline survives.**
-- Timeout to Survived (7), each Survived in the fresh run on unchanged 06dbb980, so load-hidden survivors, not new ones: `task-declaration.ts:111` ConditionalExpression, `claude-transcript-usage.ts:16` ConditionalExpression, `:36` ArrayDeclaration, `:57` StringLiteral, `usage-report.ts:133` ConditionalExpression, `stored-usage.ts:120` ArrowFunction. Plus `git-repository-locator-adapter.ts:78` MethodExpression in step 1 and 2, which reads Timeout, Survived and Killed across runs: a flaky kill.
+- Timeout to Survived (7), each Survived in the fresh run on unchanged 06dbb980, so load-hidden survivors, not new ones: `task-declaration.ts:111` ConditionalExpression, `claude-transcript-usage.ts:16` ConditionalExpression, `:36` ArrayDeclaration, `:57` StringLiteral, `usage-report.ts:133` ConditionalExpression, `stored-usage.ts:120` ArrowFunction, `task-declaration.ts:103` MethodExpression.
+- Flaky: `git-repository-locator-adapter.ts:78` MethodExpression reads Timeout (given), Survived (fresh, step 1, step 2) and Killed (concurrency probe, shards, final): something kills it only sometimes.
 - Every Survived mutant of step 2 (140) is Survived in the given baseline, the fresh baseline, or both: no new survivor.
 - Killed to Timeout (2), `ledger-lock.ts:107` EqualityOperator and `:135` ConditionalExpression: the deadline or the release never comes, a real hang. The killer was `ledger-lock.integration`; the smaller `bindings-lock-adapter.integration` now runs first and hangs on the same lock. Still detected.
 - 59 mutants only in the baseline, 76 only in the final run: `consented-repositories.ts` and `telemetry-consent.ts`, changed by #1041. Removed: 57 Killed, 2 Survived. New: 73 Killed, 3 Survived (`consented-repositories.ts:54` ConditionalExpression, `:58` StringLiteral, `telemetry-consent.ts:50` ConditionalExpression), from #1041's code.
@@ -101,4 +102,4 @@ Test counts: 6621 at 06dbb980, 6624 after the sequencer tests; 6637 at origin/ne
 | kernel | 96.6 | 95 | 1406 / 28 / 49 / 2 | 3.0 min |
 | tools | 95.2 | 94 | 1786 / 7 / 75 / 15 | 3.9 min |
 
-`framework` sits on its floor; whether it did before this change is not measured here.
+`framework` before this change: CI run 38772859849 on `next` at ae8705f7 (2026-10-15, the last run that mutated `framework`; its `src/contexts/framework` is identical to this branch) aggregated `score 93.1, floor 93`, the same in runs 38754022619 and 38692912973. Per mutant against that run's four shard reports, keyed as above: on the 9451 mutants both hold, no Killed or Timeout mutant became Survived or NoCoverage (Timeout to Killed 3, Killed to Timeout 1). The local report holds 15 mutants CI's incremental report did not list, 6 of them Survived (`config-capability.ts` 4, `install-scope.ts` 1, `resolve-plugin-translator.ts` 1): they make 93.08 read 93.03. This branch did not lower `framework`.
