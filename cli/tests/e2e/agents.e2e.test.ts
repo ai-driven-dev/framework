@@ -75,6 +75,30 @@ const cases = [
 ] as const;
 
 describe.concurrent("explicit native agent installation", () => {
+  it.each(["marketplace", "flat"])("Codex %s translation omits Claude aliases", async (layout) => {
+    const box = await createTestEnv(`agents-codex-${layout}`);
+    try {
+      const source = join(REPOSITORY_ROOT, "cli", "tests", "fixtures", "framework-codex");
+      const output = join(box.tempDir, "translated");
+      await mkdir(output);
+      const result = await runCli(
+        ["translate", source, "--to", "codex", "--as", layout, "--out", output],
+        box.projectDir,
+        box.fakeHome
+      );
+      expect(result.exitCode, result.stderr).toBe(0);
+      const path =
+        layout === "flat"
+          ? join(output, ".codex", "agents", "aidd-codex-fixture-test-agent.toml")
+          : join(output, "plugins", "aidd-codex-fixture", "codex-agents", "test-agent.toml");
+      const agent = parseToml(await readFile(path, "utf8"));
+      expect(agent).not.toHaveProperty("model");
+      expect(agent.developer_instructions).toContain("# Test Agent");
+    } finally {
+      await box.cleanup();
+    }
+  });
+
   for (const [ide, provider, directory, suffix, expected, reviewModel] of cases) {
     it(`${ide} installs the four agents with ${provider} headers, then removes them`, async () => {
       const box = await createTestEnv(`agents-${ide}-${provider}`);
@@ -93,6 +117,7 @@ describe.concurrent("explicit native agent installation", () => {
           const fields =
             ide === "codex" ? parseToml(content) : parseFrontmatter(content).frontmatter;
           expect(fields).toMatchObject(role === "reviewer" ? reviewModel : expected);
+          if (ide === "copilot") expect(fields["include-custom-instructions"]).toBe(true);
           if (ide === "opencode") expect(fields.mode).toBe("subagent");
           else expect(fields.name).toBe(`aidd-dev-${role}`);
           expect(content).toContain("# Behavior");

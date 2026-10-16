@@ -98,7 +98,11 @@ const agentsHandler = {
   convertFrontmatter(fm: Record<string, unknown>, fileName?: string): Record<string, unknown> {
     const base = fileName?.split("/").at(-1);
     const name = fm.name ?? base?.replace(/\.md$/, "");
-    return { name: typeof name === "string" ? name : undefined, description: fm.description };
+    return {
+      name: typeof name === "string" ? name : undefined,
+      description: fm.description,
+      "include-custom-instructions": fm["include-custom-instructions"] ?? true,
+    };
   },
 };
 
