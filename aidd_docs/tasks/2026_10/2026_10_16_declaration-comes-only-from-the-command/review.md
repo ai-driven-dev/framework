@@ -38,7 +38,7 @@ Acceptance after round 1: 1, 2, 4, 5, 6 fulfilled; 3 and 8 partial (findings 5, 
 - Diff: `origin/next...88755b10`
 - Verdict: request changes, 6.5/10. Rounds 1 and 2 confirmed resolved; readers agree; M8 decision confirmed.
 
-| # | Class | Finding | Resolution |
+| # | Class | Finding | Resolution (6c52b68c, fd94dbc1) |
 | --- | --- | --- | --- |
 | D1 | deal breaker | after `-C`/`-M` onto a declared branch, or a rename onto a reused name, declaring again did not reach the report: the copied reflog made the old generation look younger (`attribution.ts` `generationAt`) | the branch's start is now read as the newest reflog entry where it took its name (`branchCreatedAt`), else its oldest; two e2e tests red first; contract decision 8, usage contract rename bullet and a reflog-expiry limit |
 | S1 | suggestion | forget over-counts duplicated keys after `-C` | kept: forget counts the config entries it removes, so the number is what it deletes |
@@ -51,8 +51,20 @@ Acceptance after round 1: 1, 2, 4, 5, 6 fulfilled; 3 and 8 partial (findings 5, 
 
 | # | Class | Finding | Resolution |
 | --- | --- | --- | --- |
-| D1 | deal breaker | a rename by a libgit2 client writes `branch: renamed …` in lower case, which `branchCreatedAt` did not read | subject matched case-insensitively (`/^branch: (renamed\|copied) /i`), red unit test first |
+| D1 | deal breaker | a rename by a libgit2 client writes `branch: renamed …` in lower case, which `branchCreatedAt` did not read | 9fa7ff9d: subject matched case-insensitively (`/^branch: (renamed\|copied) /i`), red unit test first |
 | S1 | suggestion | before a reused name is declared again, the report still gives its calls to the earlier generation while `status` says undeclared | stated as a limit in the usage contract: only calls the gate did not hold can land there |
 | S2 | suggestion | `branch-binding-source.ts` port comments stale | reworded |
 | S3 | suggestion | `generationAt` comment spoke only of deleted names | now names copies and renames |
 | S4 | suggestion | decision 4's reason said only the reflog tells copy from rename, yet the reflog is now read | reason reworded: the stamp cannot tell them apart; a declaration held only while a reflog entry lasts would change meaning on its own |
+
+## Round 5
+
+- Diff: `origin/next...9fa7ff9d`
+- Verdict: request changes, 8/10. Rounds 1-4 hold; readers agree; M8 confirmed.
+
+| # | Class | Finding | Resolution |
+| --- | --- | --- | --- |
+| D1 | deal breaker | usage contract and decision 4 said a rename always leaves the new name undeclared; an unstamped (cli-v5.5.0) declaration is inherited by a rename too | limit row and decision 4 now say copy or rename |
+| S1 | suggestion | dropping no-time snapshots before choosing the generation let an older generation answer for a newer one | generation chosen over every snapshot, then only declared ones speak; red test first |
+| S2 | suggestion | task contract limits missed the two added in rounds 3 and 4 | added, pointing to the usage contract |
+| S3 | suggestion | round 3 and 4 resolutions named no commit | hashes added |

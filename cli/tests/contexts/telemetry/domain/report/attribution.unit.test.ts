@@ -378,6 +378,18 @@ describe("attribution: a branch name used again", () => {
     expect(attribute(onBranch("2026-10-07T00:00:00.000Z"), f)).toEqual(task("dated"));
   });
 
+  it("lets a newer generation with only a snapshot no command wrote attribute nothing, not the older one", () => {
+    const old = snapshot({ task: "old", branch_created_at: "2026-10-01T08:00:00.000Z" });
+    const handSet = snapshot({
+      task: "by-hand",
+      declared_at: null,
+      branch_created_at: "2026-10-05T08:00:00.000Z",
+    });
+    const f = facts({ branches: [old, handSet] });
+    expect(attribute(onBranch("2026-10-03T00:00:00.000Z"), f)).toEqual(task("old"));
+    expect(attribute(onBranch("2026-10-06T00:00:00.000Z"), f)).toEqual(unattributed("no-binding"));
+  });
+
   it("belongs to the youngest generation created strictly before the call, an exact tie included", () => {
     const old = snapshot({ task: "old", branch_created_at: "2026-10-01T08:00:00.000Z" });
     const young = snapshot({

@@ -111,7 +111,7 @@ function latestOfFirst(
  * declaration in force at the call (see `inForce`). A snapshot with no creation time speaks
  * only when no dated generation was created before the call. */
 function generationAt(
-  snapshots: readonly DeclaredSnapshot[],
+  snapshots: readonly BranchSnapshot[],
   at: number
 ): DeclaredSnapshot | undefined {
   let chosenCreated = Number.NEGATIVE_INFINITY;
@@ -130,7 +130,8 @@ function generationAt(
         Date.parse(snapshot.branch_created_at) === chosenCreated
       : snapshot.branch_created_at === null
   );
-  return inForce(generation, at);
+  // Chosen over every snapshot, so one no command wrote still marks its generation apart.
+  return inForce(generation.filter(isDeclared), at);
 }
 
 /** A branch binds every call made on it after it was created, not only those after it was
@@ -143,7 +144,7 @@ function branchVerdict(
   if (record.git_branch === null) return null;
   const snapshots = facts.branches.get(snapshotKey(record.repository_id, record.git_branch));
   if (snapshots === undefined) return null;
-  const branch = generationAt(snapshots.filter(isDeclared), at);
+  const branch = generationAt(snapshots, at);
   if (branch === undefined) return null;
   return verdict(branch.task, branch.ticket);
 }
