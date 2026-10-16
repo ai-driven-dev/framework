@@ -152,12 +152,18 @@ describe("migrating a ledger kept by month", () => {
     expect(await bytes(dir)).toEqual(before);
   });
 
-  it("drops a line that is not a record, wherever it is, once settled", async () => {
+  it("keeps a line that is not a record, after its day's calls, and still counts it once settled", async () => {
     const damaged = new Map(days());
-    damaged.set("2026-09-15.jsonl", `${damaged.get("2026-09-15.jsonl")}{torn\n`);
+    damaged.set("2026-09-15.jsonl", `{torn\n${damaged.get("2026-09-15.jsonl")}`);
     const { dir, ledger } = await ledgerAt("damaged", damaged);
     expect((await settleLedger(ledger)).skippedLines).toBe(1);
-    expect(await bytes(dir)).toEqual(Object.fromEntries([...days()].sort()));
+    const settled = Object.fromEntries([...days()].sort());
+    settled["2026-09-15.jsonl"] = `${settled["2026-09-15.jsonl"]}{torn\n`;
+    expect(await bytes(dir)).toEqual(settled);
+    expect((await settleLedger(ledger)).skippedLines).toBe(1);
+    const result = await storeCalls(ledger, [stored("late", "2026-09-15T12:00:00.000Z", 1)]);
+    expect(result.skippedLines).toBe(1);
+    expect((await bytes(dir))["2026-09-15.jsonl"]).toMatch(/\{torn\n$/);
   });
 });
 

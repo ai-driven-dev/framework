@@ -85,14 +85,14 @@ describe("printIngestResult", () => {
     ]);
   });
 
-  it("warns of shapes not recognised and ledger lines dropped, and counts snapshots", () => {
+  it("warns of shapes not recognised and ledger lines kept, and counts snapshots", () => {
     const lines = linesOf((o) =>
       printIngestResult(o, { ...INGESTED, unrecognised: 2, skippedLedgerLines: 1, snapshots: 2 })
     );
     expect(lines).toEqual([
       "Read 1 transcript: 1 call added, 0 updated.",
       `2 shapes${UNRECOGNISED}`,
-      "1 ledger line was not a record and dropped.",
+      "1 ledger line is not a record, kept as found.",
       "2 branch declarations snapshotted.",
     ]);
     expect(
@@ -102,7 +102,7 @@ describe("printIngestResult", () => {
     ).toEqual([
       "Read 1 transcript: 1 call added, 0 updated.",
       `1 shape${UNRECOGNISED}`,
-      "2 ledger lines were not a record and dropped.",
+      "2 ledger lines are not a record, kept as found.",
       "1 branch declaration snapshotted.",
     ]);
   });

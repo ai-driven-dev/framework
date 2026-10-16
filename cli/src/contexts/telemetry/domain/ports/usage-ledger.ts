@@ -6,9 +6,9 @@ import type { TranscriptPosition } from "../transcript-position.js";
 export interface LoadedLedger {
   /** One record per `(tool, key)` across every partition read. */
   readonly records: readonly StoredUsage[];
-  /** Lines that were not records and are gone once their partition is saved. */
+  /** Lines that were not records. Saving keeps them: a newer version may have written them. */
   readonly skippedLines: number;
-  /** The partitions read that held one: saving them repairs them. */
+  /** The partitions read that held one: saving them puts them in canonical order. */
   readonly damaged: ReadonlySet<string>;
   /** The partitions read that are not in canonical daily form: every monthly one, and every
    * one holding a call twice or a call another partition read also holds. Saving them settles
@@ -30,7 +30,8 @@ export interface UsageLedger {
    * from `records`, or removed when they hold none for it; a month has each of its days
    * written from `records`, each of its days on disk they hold none for removed, then its
    * monthly partition removed, last. No other partition is read: the caller vouches that the
-   * rest is as it was. */
+   * rest is as it was. A line that is not a record is never removed: it stays in its day,
+   * after the records, in text order and once, and a month's goes to its first day. */
   save(records: readonly StoredUsage[], partitions?: ReadonlySet<string>): Promise<void>;
   positions(): Promise<ReadonlyMap<string, TranscriptPosition>>;
   savePositions(positions: ReadonlyMap<string, TranscriptPosition>): Promise<void>;

@@ -136,13 +136,13 @@ describe("reporting usage", () => {
     expect(s.events).not.toContain("save");
   });
 
-  it("repairs a damaged partition outside any ingest window", async () => {
+  it("rewrites a damaged partition outside any ingest window, and still counts what it keeps", async () => {
     const s = setup();
     s.ledger.damaged.add("2026-01-15");
     const result = await s.report.execute({ axis: "total", period: ANY });
     expect(result).toMatchObject({ coverage: { skippedLedgerLines: 1 } });
     expect(s.ledger.savedPartitions).toEqual(new Set(["2026-01-15"]));
-    expect((await s.ledger.load()).skippedLines).toBe(0);
+    expect((await s.ledger.load()).skippedLines).toBe(1);
   });
 
   it("loads and settles only a bounded period and the day on each side of it", async () => {

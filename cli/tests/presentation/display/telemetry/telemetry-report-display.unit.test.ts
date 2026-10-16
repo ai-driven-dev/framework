@@ -249,12 +249,12 @@ describe("printing a usage report", () => {
     expect(one_).toContain(`1 shape${UNRECOGNISED}`);
   });
 
-  it("says when ledger lines were dropped", () => {
+  it("says when ledger lines are not records, and kept", () => {
     const lines = printed(result("total", [], tally(0, [0, 0, 0, 0]), { skippedLedgerLines: 2 }));
-    expect(lines.at(-1)).toBe("2 ledger lines were not a record and dropped.");
+    expect(lines.at(-1)).toBe("2 ledger lines are not a record, kept as found.");
     expect(
       printed(result("total", [], tally(0, [0, 0, 0, 0]), { skippedLedgerLines: 1 })).at(-1)
-    ).toBe("1 ledger line was not a record and dropped.");
+    ).toBe("1 ledger line is not a record, kept as found.");
     expect(printed(result("total", [], tally(0, [0, 0, 0, 0]))).join("\n")).not.toContain("ledger");
   });
 

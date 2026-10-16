@@ -29,6 +29,11 @@ export const NOT_STORED_WORDS: Readonly<Record<NotStoredReason, string>> = {
 export const DAMAGED_CONSENT_LOG_WORDS =
   "ledger/consents.jsonl holds a line that is not a consent event, so the log cannot be trusted and nothing is stored for any clone. Run `aidd telemetry forget --yes`, then `aidd telemetry on` in each clone to measure again: nothing from before is stored.";
 
+/** Ledger lines that are not records: never removed, since a newer version may have written them. */
+export function keptLedgerLines(n: number): string {
+  return `${n} ledger line${n === 1 ? " is" : "s are"} not a record, kept as found.`;
+}
+
 export function printIngestResult(output: CLIOutput, result: IngestResult): void {
   if (result.refused) {
     output.info("AIDD_TELEMETRY=0: nothing was read and nothing was stored.");
@@ -43,11 +48,7 @@ export function printIngestResult(output: CLIOutput, result: IngestResult): void
       `${result.unrecognised} shape${result.unrecognised === 1 ? "" : "s"} ${UNRECOGNISED_WORDS}`
     );
   }
-  if (result.skippedLedgerLines > 0) {
-    output.warn(
-      `${result.skippedLedgerLines} ledger line${result.skippedLedgerLines === 1 ? " was" : "s were"} not a record and dropped.`
-    );
-  }
+  if (result.skippedLedgerLines > 0) output.warn(keptLedgerLines(result.skippedLedgerLines));
   if (result.snapshots > 0) {
     output.info(
       `${result.snapshots} branch declaration${result.snapshots === 1 ? "" : "s"} snapshotted.`

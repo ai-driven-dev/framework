@@ -85,21 +85,56 @@ const scenario = fc.array(call, { minLength: 1, maxLength: 12 }).chain((calls) =
     alsoIngested: each(fc.boolean()),
     tornMonth: fc.boolean(),
     strayDay: fc.boolean(),
+    // Lines a newer version wrote, or a hand edit left, in days of their own.
+    foreign: fc.array(
+      fc.record({ anchor: fc.nat(ANCHORS.length - 1), line: fc.nat(FOREIGN.length - 1) }),
+      {
+        maxLength: 4,
+      }
+    ),
+    // Between batches, a report: none, one with no period, or one on an anchor's window.
+    reports: fc.array(fc.option(fc.nat(ANCHORS.length - 1)), { minLength: 5, maxLength: 5 }),
   });
 });
 
 /** A line that is not a record, as a crash or a hand edit leaves one. */
 const TORN = '{"tool":"claude-code","key":';
+/** Lines no reader of this version recognises: a newer version's record, a torn one. */
+const FOREIGN = [
+  '{"tool":"claude-code","key":"k0","agent":"reviewer","at":"2026-06-15T12:00:00.000Z"}',
+  '{"tool":"cursor","key":"k9"}',
+  TORN,
+];
+
+const dayOfAnchor = (anchor: number): string =>
+  new Date(ANCHORS[anchor] as number).toISOString().slice(0, 10);
+
 /** A day no anchor's window reaches, so only a report ever reads it. */
 const STRAY_DAY = "2024-06-15.jsonl";
 
-/** The ledger one ingest of these calls would leave: each call once, in canonical order. */
-function canonical(calls: readonly StoredUsage[]): Record<string, string> {
+/** The ledger one ingest of these calls would leave: each call once, in canonical order, then
+ * each day's kept lines in text order, each once. */
+function canonical(
+  calls: readonly StoredUsage[],
+  kept: ReadonlyMap<string, readonly string[]> = new Map()
+): Record<string, string> {
   const files: Record<string, string> = {};
   for (const [day, inDay] of partitionByDay(foldUsage(calls))) {
     files[`${day}.jsonl`] = `${inDay.map((record) => JSON.stringify(record)).join("\n")}\n`;
   }
-  return files;
+  for (const [name, lines] of kept) {
+    const text = [...new Set(lines)]
+      .sort()
+      .map((line) => `${line}\n`)
+      .join("");
+    files[name] = (files[name] ?? "") + text;
+  }
+  return Object.fromEntries(Object.entries(files).sort(([a], [b]) => (a < b ? -1 : 1)));
+}
+
+/** Every line of the ledger's partitions, as a multiset. */
+function linesIn(files: Record<string, string>): string[] {
+  return Object.values(files).flatMap((text) => text.split("\n").slice(0, -1));
 }
 
 /** What an earlier version would have written for these calls: one file per month. */
@@ -132,39 +167,88 @@ async function bytes(dir: string): Promise<Record<string, string>> {
 }
 
 describe("the ledger's bytes, once a report has run", () => {
-  it("are those of one ingest of the same calls, whatever the order, grouping, starting format and damage", async () => {
+  it("are those of one ingest of the same calls, whatever the order, grouping, starting format, damage and lines no reader knows, and no such line is ever lost", async () => {
     await fc.assert(
       fc.asyncProperty(
         scenario,
-        async ({ calls, order, batchOf, monthly, alsoIngested, tornMonth, strayDay }) => {
+        async ({
+          calls,
+          order,
+          batchOf,
+          monthly,
+          alsoIngested,
+          tornMonth,
+          strayDay,
+          foreign,
+          reports,
+        }) => {
           const earlier = calls.filter((_, index) => monthly[index]);
           const files = monthsOf(earlier);
+          const kept = new Map<string, string[]>();
+          const keep = (name: string, line: string) =>
+            kept.set(name, [...(kept.get(name) ?? []), line]);
           const firstMonth = [...files.keys()][0];
           if (tornMonth && firstMonth !== undefined) {
             files.set(firstMonth, `${files.get(firstMonth)}${TORN}\n`);
+            keep(`${firstMonth.slice(0, 7)}-01.jsonl`, TORN);
           }
-          if (strayDay) files.set(STRAY_DAY, `${TORN}\n`);
+          if (strayDay) {
+            files.set(STRAY_DAY, `${TORN}\n`);
+            keep(STRAY_DAY, TORN);
+          }
+          const placed = new Map<string, string>();
+          for (const { anchor, line } of foreign) {
+            const name = `${dayOfAnchor(anchor)}.jsonl`;
+            const text = FOREIGN[line] as string;
+            placed.set(name, `${placed.get(name) ?? ""}${text}\n`);
+            keep(name, text);
+          }
+          for (const [name, text] of placed) files.set(name, `${files.get(name) ?? ""}${text}`);
           const { dir, ledger } = await freshLedger(files);
+          const keptLines = [...kept.values()].flatMap((lines) => [...new Set(lines)]);
+          const stillKept = async () => {
+            const held = linesIn(await bytes(dir));
+            for (const line of keptLines) expect(held).toContain(line);
+          };
           const batches: StoredUsage[][] = [[], [], [], [], []];
           for (const index of order) {
             if (!monthly[index] || alsoIngested[index]) {
               batches[batchOf[index] as number]?.push(calls[index] as StoredUsage);
             }
           }
-          for (const batch of batches) if (batch.length > 0) await storeCalls(ledger, batch);
+          for (const [index, batch] of batches.entries()) {
+            if (batch.length > 0) await storeCalls(ledger, batch);
+            await stillKept();
+            const report = reports[index];
+            if (report === null) await settleLedger(ledger);
+            else if (report !== undefined) {
+              const day = dayOfAnchor(report);
+              await settleLedger(ledger, (d) => d === day);
+            }
+            await stillKept();
+          }
           await settleLedger(ledger);
 
           const settled = await bytes(dir);
-          expect(settled).toEqual(canonical(calls));
-          const lines = Object.values(settled).flatMap((text) => text.split("\n").slice(0, -1));
-          expect(lines).toHaveLength(new Set(calls.map((c) => `${c.tool}\u0000${c.key}`)).size);
-          const reference = await freshLedger();
+          expect(settled).toEqual(canonical(calls, kept));
+          expect(linesIn(settled)).toHaveLength(
+            new Set(calls.map((c) => `${c.tool}\u0000${c.key}`)).size + keptLines.length
+          );
+          const reference = await freshLedger(
+            new Map(
+              [...kept].map(([name, lines]) => [name, lines.map((line) => `${line}\n`).join("")])
+            )
+          );
           await storeCalls(reference.ledger, calls);
           await settleLedger(reference.ledger);
           expect(settled).toEqual(await bytes(reference.dir));
 
           const again = await settleLedger(ledger);
-          expect([again.skippedLines, again.damaged.size, again.unsettled.size]).toEqual([0, 0, 0]);
+          expect([again.skippedLines, again.damaged.size, again.unsettled.size]).toEqual([
+            keptLines.length,
+            kept.size,
+            0,
+          ]);
           expect(await bytes(dir)).toEqual(settled);
         }
       ),

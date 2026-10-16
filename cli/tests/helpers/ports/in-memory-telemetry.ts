@@ -136,7 +136,7 @@ export class InMemoryLedger implements UsageLedger {
     };
   }
 
-  /** Partitions holding a line that is not a record. Saving one repairs it. */
+  /** Partitions holding a line that is not a record. Saving one keeps it. */
   damaged = new Set<string>();
   /** Partitions not in canonical daily form. Saving one settles it. */
   unsettled = new Set<string>();
@@ -155,10 +155,7 @@ export class InMemoryLedger implements UsageLedger {
       ...this.records.filter((record) => !named(record)),
       ...records.filter(named),
     ]);
-    for (const partition of partitions ?? [...this.damaged, ...this.unsettled]) {
-      this.damaged.delete(partition);
-      this.unsettled.delete(partition);
-    }
+    for (const partition of partitions ?? [...this.unsettled]) this.unsettled.delete(partition);
   }
 
   async positions(): Promise<ReadonlyMap<string, TranscriptPosition>> {
