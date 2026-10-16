@@ -140,7 +140,8 @@ function branchVerdict(
   facts: AttributionFacts
 ): Attribution | null {
   if (record.git_branch === null) return null;
-  const snapshots = facts.branches.get(snapshotKey(record.repository_id, record.git_branch)) ?? [];
+  const snapshots = facts.branches.get(snapshotKey(record.repository_id, record.git_branch));
+  if (snapshots === undefined) return null;
   const branch = generationAt(snapshots.filter(isDeclared), at);
   if (branch === undefined || (branch.task === null && !branch.none)) return null;
   return verdict(branch.task, branch.ticket);

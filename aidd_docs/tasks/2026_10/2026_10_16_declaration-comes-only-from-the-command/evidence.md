@@ -104,3 +104,20 @@ Each mutation applied alone to the source, the named suite run, the file restore
 | H3 | hook: legacy rejected | same | 3: fixture via git, binding fixture, `a bound branch, session or carried session passes` |
 | H4 | hook regex without `declaredfor` | same | 3 |
 | H5 | hook: `branchDeclaration` returns what it read, declared or not | same | 3 |
+
+## Mutation (`pnpm test:mutation:telemetry`, under the lock)
+
+- Run 1: `Report: reports/mutation/telemetry/ (score 96.3, floor 96)`. On changed lines, one survivor: `attribution.ts` `?? []` to `?? ["Stryker was here"]`, equivalent (a string is no snapshot of any generation, so the branch still binds nothing).
+- The `?? []` was replaced by an explicit `if (snapshots === undefined) return null;`, which leaves no equivalent mutant.
+- Run 2: `score 96.3, floor 96`. Mutants on the lines this change touches: `branch-binding.ts` 17 killed, `attribution.ts` 12 killed, store, source and forget adapters 1 killed each. None survived.
+
+## Gates
+
+| Gate | Shortest decisive line |
+| --- | --- |
+| `cd cli && pnpm test` | `Test Files  511 passed \| 1 skipped (512)`, `Tests  6668 passed \| 1 skipped (6669)` |
+| `node --test 'scripts/__tests__/*.test.js'` | `ℹ tests 459`, `ℹ fail 0` |
+| bundle budget | before: `693.2 KB / budget: 695 KB`; after: `693.6 KB / budget: 695 KB`, `OK: within budget` |
+| `pnpm smoke` (`XDG_CONFIG_HOME`, `AIDD_TELEMETRY_DIR`, `CLAUDE_CONFIG_DIR` temp, `GIT_CONFIG_NOSYSTEM=1`; the script moves `HOME` and `AIDD_USER_CONFIG_DIR`) | `PASS: 132   FAIL: 0   SKIP: 1   ·   coverage 100%` |
+| `node scripts/check-claude-tokens-end-to-end.cjs cli/dist/cli.js` | `2 calls, 393 tokens, all on task demo, ticket T-1, and on task demo in this repository` |
+| same with `--attended` | `…; asked, answered by the hook, kept across /clear` |
