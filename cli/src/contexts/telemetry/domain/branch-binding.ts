@@ -17,7 +17,8 @@ export interface BranchConfigBinding {
  * the work it carried. */
 export interface BranchSnapshot extends BranchConfigBinding {
   readonly repository_id: string;
-  /** The oldest reflog entry when first read: the work before it was not on this branch. */
+  /** When the branch took its name, from its reflog when first read (see `branchCreatedAt`):
+   * the work before it was not on this branch. */
   readonly branch_created_at: string | null;
   readonly snapshot_at: string;
 }
@@ -102,16 +103,32 @@ export function parseBranchConfig(output: string): BranchConfigBinding[] {
     }));
 }
 
-/** `git reflog show --date=iso-strict --format=%gd` lists newest first, each as
- * `refs/heads/<name>@{<time>}`; the last line is the branch's creation. */
-export function oldestReflogTime(output: string): string | null {
-  const lines = output.split("\n").filter((line) => line !== "");
-  const last = lines.at(-1);
-  if (last === undefined) return null;
-  const open = last.lastIndexOf("@{");
-  if (open === -1 || !last.endsWith("}")) return null;
-  const instant = Date.parse(last.slice(open + 2, -1));
+function selectorTime(selector: string): string | null {
+  const open = selector.lastIndexOf("@{");
+  if (open === -1 || !selector.endsWith("}")) return null;
+  const instant = Date.parse(selector.slice(open + 2, -1));
   return Number.isNaN(instant) ? null : new Date(instant).toISOString();
+}
+
+/** When the branch took its name, from `git reflog show --date=iso-strict --format=%gd%x09%gs`:
+ * newest first, each `<selector>@{<time>}`, a tab, the entry's subject. A copy or a rename
+ * (`git branch -c`, `-m`, `-C`, `-M`) brings the source's reflog along, so the newest entry
+ * where the branch arrived under this name is its start; otherwise the oldest entry is its
+ * creation. A name used before keeps its earlier work apart from what came after. */
+export function branchCreatedAt(output: string, branch: string): string | null {
+  const lines = output.split("\n").filter((line) => line !== "");
+  const arrived = ` to refs/heads/${branch}`;
+  const tookName = lines.find((line) => {
+    const subject = line.slice(line.indexOf("\t") + 1);
+    return (
+      (subject.startsWith("Branch: renamed ") || subject.startsWith("Branch: copied ")) &&
+      subject.endsWith(arrived)
+    );
+  });
+  const entry = tookName ?? lines.at(-1);
+  if (entry === undefined) return null;
+  const tab = entry.indexOf("\t");
+  return selectorTime(tab === -1 ? entry : entry.slice(0, tab));
 }
 
 /** Whether the reflog has to be read at all: not when this declaration was already snapshotted

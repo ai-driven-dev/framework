@@ -149,7 +149,7 @@ Directory: `AIDD_TELEMETRY_DIR`, else `AIDD_USER_CONFIG_DIR/telemetry`, else `XD
 | `ledger/.lock` | CLI | CLI | `{pid, created_at}`; dead process or older than ten minutes: cleared |
 | `bindings/.lock` | CLI | CLI | same format. Declarations and snapshots run under it; `task` never takes the ledger lock, which an ingest holds while reading transcripts |
 | `bindings/sessions.jsonl` | `task` | hooks, `report`, `task` | `{session_id, task, ticket, none, declared_at, by}`, `by` = `command` \| `hook-intercept` |
-| `bindings/branches.jsonl` | `task`, `ingest`, `report` | `report`, `forget` | branch declaration at a moment, with branch creation time from its reflog |
+| `bindings/branches.jsonl` | `task`, `ingest`, `report` | `report`, `forget` | branch declaration at a moment, with when the branch took its name, from its reflog |
 | `bindings/carries.jsonl` | `SessionStart` hook | hooks, `report` | `{session_id, from, at}` |
 | `bindings/processes.jsonl` | `SessionStart` hook | `SessionStart` hook | `{pid, session_id, source, at}` |
 | `identity.json` | `identity`, `on` | `report`, `status`, `on` | `{"person_id": "<id>"}`, owner-only |
@@ -193,7 +193,7 @@ A branch is declared only when the command declared it on that branch. Both read
 | `aiddTask` or `aiddTicket` without `aiddDeclaredAt` | no | set by hand, or a declaration cut short: `task` writes `aiddDeclaredAt` last |
 | any declaration key listed twice | no | left by `git branch -C` or `-M` onto a branch that had keys: the copied declaration and the branch's own are mixed |
 
-- **Rename** (`git branch -m A B`): B is undeclared, so the gate asks on B. One declaration on B covers B from its creation, since the reflog moves with the branch; calls made while it was A keep A's task. git moves the keys the same way for a copy and a rename, and telling them apart would mean reading reflog entries that expire: one question after a rename is the cost.
+- **Rename** (`git branch -m A B`): B is undeclared, so the gate asks on B. One declaration on B covers B from when it took the name: the newest reflog entry renaming or copying a branch to B, else B's oldest entry. Calls made while it was A keep A's task, and on a name used before, the earlier B keeps its own. git moves the keys the same way for a copy and a rename, and telling them apart would mean reading reflog entries that expire: one question after a rename is the cost.
 - **Copy** (`git branch -c A B`): B is undeclared until declared on B.
 - **Copy or rename onto an existing branch** (`-C`, `-M`): git keeps both sets of keys, so some are listed twice and the two declarations mix. A branch with any declaration key listed twice is undeclared; declaring again replaces every value.
 
@@ -324,6 +324,7 @@ None observable by the CLI.
 | `AIDD_TELEMETRY=0` | stops hooks too; a key turned off meanwhile is observed at the next run without it | - |
 | Every declaration key written by hand, `aiddDeclaredFor` and `aiddDeclaredAt` included | the branch reads as declared: no reader can tell who wrote a git config key | - |
 | Copy of an unstamped (cli-v5.5.0) declaration | the copy inherits it | declare on the copy, or on the original to stamp it before copying |
+| Reflog entry of the rename or copy expired before B's first declaration | B's start is its oldest remaining entry; on a name used before, an older start can let the earlier B's declaration speak for later calls | declare soon after a rename or copy |
 | Branch snapshots recorded before stamping (a copied branch, a hand-set task with a `declared_at`) | keep attributing: attribution reads snapshots, `branches.jsonl` is append-only | - |
 
 ## Never leaves the machine

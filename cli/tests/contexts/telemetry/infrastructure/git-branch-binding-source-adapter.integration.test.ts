@@ -99,6 +99,16 @@ describe("reading a branch's creation from its reflog", () => {
     expect(await source.createdAt(repo, "feat/old")).toBe("2026-01-02T03:04:05.000Z");
   });
 
+  it("is when the branch took its name, for a copy or a rename onto a name used before", async () => {
+    git(repo, at("2026-01-01T00:00:00Z"), "branch", "feat/source");
+    git(repo, at("2026-01-02T00:00:00Z"), "branch", "feat/copy");
+    git(repo, at("2026-01-03T00:00:00Z"), "branch", "-C", "feat/source", "feat/copy");
+    expect(await source.createdAt(repo, "feat/copy")).toBe("2026-01-03T00:00:00.000Z");
+    git(repo, at("2026-01-04T00:00:00Z"), "branch", "-m", "feat/copy", "feat/renamed");
+    expect(await source.createdAt(repo, "feat/renamed")).toBe("2026-01-04T00:00:00.000Z");
+    expect(await source.createdAt(repo, "feat/source")).toBe("2026-01-01T00:00:00.000Z");
+  });
+
   it("is unknown for a branch that does not exist", async () => {
     expect(await source.createdAt(repo, "never")).toBeNull();
   });

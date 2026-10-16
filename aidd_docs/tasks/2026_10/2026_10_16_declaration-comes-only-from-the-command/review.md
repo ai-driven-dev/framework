@@ -32,3 +32,14 @@ Acceptance after round 1: 1, 2, 4, 5, 6 fulfilled; 3 and 8 partial (findings 5, 
 | S1 | suggestion | README and skill said a copied branch is always asked again; legacy copies are inherited | both name the cli-v5.5.0 exception |
 | S2 | suggestion | forget count test did not include `aiddDeclaredFor` | count test now has four keys |
 | S3 | suggestion | spec.md:34 "at most once" unexplained | reading note added under it, pointing to the usage contract |
+
+## Round 3
+
+- Diff: `origin/next...88755b10`
+- Verdict: request changes, 6.5/10. Rounds 1 and 2 confirmed resolved; readers agree; M8 decision confirmed.
+
+| # | Class | Finding | Resolution |
+| --- | --- | --- | --- |
+| D1 | deal breaker | after `-C`/`-M` onto a declared branch, or a rename onto a reused name, declaring again did not reach the report: the copied reflog made the old generation look younger (`attribution.ts` `generationAt`) | the branch's start is now read as the newest reflog entry where it took its name (`branchCreatedAt`), else its oldest; two e2e tests red first; contract decision 8, usage contract rename bullet and a reflog-expiry limit |
+| S1 | suggestion | forget over-counts duplicated keys after `-C` | kept: forget counts the config entries it removes, so the number is what it deletes |
+| S2 | suggestion | evidence counts stale (1225, hook count missing) | re-recorded in `evidence.md` |

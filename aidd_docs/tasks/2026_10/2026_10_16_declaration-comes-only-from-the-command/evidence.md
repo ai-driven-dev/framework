@@ -135,3 +135,22 @@ Each mutation applied alone to the source, the named suite run, the file restore
 - Green: `Tests  1225 passed`, hook `ℹ fail 0`, e2e `Tests  5 passed (5)`.
 - Guards: T1 (CLI ignores a key listed twice) turns 6 unit tests and the e2e red; T2 (`||=` to `=`) turns `reads nothing from a branch whose task alone is listed twice` red; HT1 (hook ignores it) turns 3 hook tests red; HT2 (`||=` to `=`) survived until the fixture case `task-listed-twice` was added, then `✖ a branch declaration read back from real git follows the fixture`.
 - Gates on 0c5eab26: `cd cli && pnpm test` `Tests  6676 passed | 1 skipped (6677)`; `node --test 'scripts/__tests__/*.test.js'` `ℹ tests 460`, `ℹ fail 0`; bundle `693.6 KB / budget: 695 KB`; mutation `score 96.4, floor 96`, changed lines: `branch-binding.ts` 24, `attribution.ts` 15, store adapter 11, `binding-resolution.ts` 4, source and forget adapters 1 each, all killed; smoke `PASS: 132   FAIL: 0   SKIP: 1`; tokens end to end and `--attended`: unchanged lines.
+
+Count note (round 3, S2): after the round 2 changes the CLI telemetry suites hold `Tests  1226 passed (1226)` and the hook suite `ℹ tests 66`, `ℹ fail 0`; the 1225 above was before the `task-listed-twice` fixture case.
+
+## Review round 3 fixes
+
+- Probe, dated git in a scratch repository: every way a branch takes a name writes one reflog subject, and the source's reflog comes along.
+
+```txt
+-C:      b@{2026-10-05T00:00:00Z} | Branch: copied refs/heads/a to refs/heads/b
+         b@{2026-10-01T00:00:00Z} | branch: Created from main        <- a's creation
+-M:      d@{2026-10-05T00:00:00Z} | Branch: renamed refs/heads/c to refs/heads/d
+-D;-m:   f@{2026-10-05T00:00:00Z} | Branch: renamed refs/heads/e to refs/heads/f
+-c;-m:   i@{2026-10-06T00:00:00Z} | Branch: renamed refs/heads/h to refs/heads/i
+         i@{2026-10-05T00:00:00Z} | Branch: copied refs/heads/g to refs/heads/h
+```
+
+- Red first, e2e: `× lets a declaration on a branch copied onto with -C reach the report, the source older`, `× lets a declaration on a name renamed onto, after the old branch was deleted, reach the report`, both `AssertionError: expected undefined to be 1` (the new declaration's row is missing: its call went to `old-b`). Integration: `× is when the branch took its name, for a copy or a rename onto a name used before`. Unit tests red on the missing `branchCreatedAt` export.
+- Green: `vitest tests/contexts/telemetry` `Tests  1229 passed (1229)`; `vitest --project=e2e tests/e2e/telemetry` `Tests  79 passed (79)`. The rename e2e now dates its rename (10-08) before the call it adds, as it happens in real use.
+- Guards: R1 (always the oldest entry) turns both new e2e tests, the integration test and `takes the newest entry where the branch took its name…` red; R2 (copies not matched) turns the integration and that unit test red; R3 (any target name) turns `ignores an entry that moved another name, or that names this one only as a prefix` red.

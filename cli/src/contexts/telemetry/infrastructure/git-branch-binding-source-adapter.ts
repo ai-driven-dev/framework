@@ -1,6 +1,6 @@
 import {
   type BranchConfigBinding,
-  oldestReflogTime,
+  branchCreatedAt,
   parseBranchConfig,
 } from "../domain/branch-binding.js";
 import type { BranchBindingSource } from "../domain/ports/branch-binding-source.js";
@@ -33,10 +33,10 @@ export class GitBranchBindingSourceAdapter implements BranchBindingSource {
       "reflog",
       "show",
       "--date=iso-strict",
-      "--format=%gd",
+      "--format=%gd%x09%gs",
       `refs/heads/${branch}`,
     ]);
     // A branch with no reflog makes git fail with nothing on stdout.
-    return oldestReflogTime(run.stdout);
+    return branchCreatedAt(run.stdout, branch);
   }
 }
