@@ -104,8 +104,9 @@ function latestOfFirst(
   return generation.filter((s) => declaredAt(s) === declaredAt(first)).at(-1) ?? first;
 }
 
-/** The snapshot that speaks for a branch at an instant. A name used again after its branch was
- * deleted has one generation per creation, told apart by `branch_created_at`: a call belongs to
+/** The snapshot that speaks for a branch at an instant. A name used again, after its branch was
+ * deleted or by a copy or a rename onto it, has one generation per time it took the name, told
+ * apart by `branch_created_at`: a call belongs to
  * the youngest generation created strictly before it, and within that generation to the
  * declaration in force at the call (see `inForce`). A snapshot with no creation time speaks
  * only when no dated generation was created before the call. */

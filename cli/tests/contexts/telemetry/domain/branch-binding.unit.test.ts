@@ -195,6 +195,14 @@ describe("the reflog says when the branch took its name", () => {
     expect(branchCreatedAt(out.replace("renamed", "copied"), "y")).toBe("2026-10-08T10:00:00.000Z");
   });
 
+  it("reads the rename libgit2 writes, in lower case, as git's own", () => {
+    const out = [
+      "y@{2026-10-08T12:00:00+02:00}\tbranch: renamed refs/heads/x to refs/heads/y",
+      "y@{2026-10-01T12:00:00+02:00}\tbranch: Created from main",
+    ].join("\n");
+    expect(branchCreatedAt(out, "y")).toBe("2026-10-08T10:00:00.000Z");
+  });
+
   it("ignores an entry that moved another name, or that names this one only as a prefix", () => {
     const out = [
       "y@{2026-10-08T12:00:00+02:00}\tBranch: renamed refs/heads/x to refs/heads/yy",

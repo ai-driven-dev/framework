@@ -43,3 +43,16 @@ Acceptance after round 1: 1, 2, 4, 5, 6 fulfilled; 3 and 8 partial (findings 5, 
 | D1 | deal breaker | after `-C`/`-M` onto a declared branch, or a rename onto a reused name, declaring again did not reach the report: the copied reflog made the old generation look younger (`attribution.ts` `generationAt`) | the branch's start is now read as the newest reflog entry where it took its name (`branchCreatedAt`), else its oldest; two e2e tests red first; contract decision 8, usage contract rename bullet and a reflog-expiry limit |
 | S1 | suggestion | forget over-counts duplicated keys after `-C` | kept: forget counts the config entries it removes, so the number is what it deletes |
 | S2 | suggestion | evidence counts stale (1225, hook count missing) | re-recorded in `evidence.md` |
+
+## Round 4
+
+- Diff: `origin/next...fd94dbc1`
+- Verdict: request changes, 7/10. Rounds 1-3 hold, no regression found in six scenarios run against the built binary.
+
+| # | Class | Finding | Resolution |
+| --- | --- | --- | --- |
+| D1 | deal breaker | a rename by a libgit2 client writes `branch: renamed …` in lower case, which `branchCreatedAt` did not read | subject matched case-insensitively (`/^branch: (renamed\|copied) /i`), red unit test first |
+| S1 | suggestion | before a reused name is declared again, the report still gives its calls to the earlier generation while `status` says undeclared | stated as a limit in the usage contract: only calls the gate did not hold can land there |
+| S2 | suggestion | `branch-binding-source.ts` port comments stale | reworded |
+| S3 | suggestion | `generationAt` comment spoke only of deleted names | now names copies and renames |
+| S4 | suggestion | decision 4's reason said only the reflog tells copy from rename, yet the reflog is now read | reason reworded: the stamp cannot tell them apart; a declaration held only while a reflog entry lasts would change meaning on its own |

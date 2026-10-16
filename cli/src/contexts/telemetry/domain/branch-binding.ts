@@ -103,6 +103,10 @@ export function parseBranchConfig(output: string): BranchConfigBinding[] {
     }));
 }
 
+/** git writes `Branch: renamed` or `Branch: copied`; libgit2, behind many git clients,
+ * `branch: renamed`. */
+const TOOK_NAME = /^branch: (renamed|copied) /i;
+
 function selectorTime(selector: string): string | null {
   const open = selector.lastIndexOf("@{");
   if (open === -1 || !selector.endsWith("}")) return null;
@@ -120,10 +124,7 @@ export function branchCreatedAt(output: string, branch: string): string | null {
   const arrived = ` to refs/heads/${branch}`;
   const tookName = lines.find((line) => {
     const subject = line.slice(line.indexOf("\t") + 1);
-    return (
-      (subject.startsWith("Branch: renamed ") || subject.startsWith("Branch: copied ")) &&
-      subject.endsWith(arrived)
-    );
+    return TOOK_NAME.test(subject) && subject.endsWith(arrived);
   });
   const entry = tookName ?? lines.at(-1);
   if (entry === undefined) return null;
