@@ -101,14 +101,14 @@ async function identityChoice(
 /** One value per flag, trimmed, and one of `choices` when it has them. Commander keeps the last
  * of a repeated flag silently, and its own `choices` replaces any parser, so both are checked
  * here. A repeat is refused by the flag's name: a bare flag's value is its preset, not what was
- * typed. */
+ * typed. Its help says what it keeps: "Only the " then `kept`. */
 function filterOption(
   command: Command,
   flags: string,
-  description: string,
+  kept: string,
   choices?: readonly string[]
 ): Option {
-  const option = new Option(flags, `Only the ${description}`);
+  const option = new Option(flags, `Only the ${kept}`);
   return (choices === undefined ? option : option.choices(choices)).argParser(
     (value: string, previous: string | undefined): string => {
       if (previous !== undefined) {
