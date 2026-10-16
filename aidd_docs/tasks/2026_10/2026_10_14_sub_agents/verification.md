@@ -23,7 +23,8 @@ The four agents are bundled with the CLI, outside plugins. Explicit installation
 - **Native headers:** Codex translation drops Claude shorthand selectors; Copilot custom agents include repository instructions unless explicitly disabled.
 - **Ownership:** installation, updates and removal restore native files after a handled failure. Concurrent mutations serialize across CLI processes; framework cleanup holds the same lock until state removal finishes.
 - **Regression evidence:** 36 lifecycle integration tests pass. Five independent mutations disable model filtering, instruction injection, rollback, serialization or cleanup coordination; each makes its named test fail, and restored code passes.
-- **Checks:** normal commit hooks pass, including 494 script tests, 168 architecture assertions, types and lint. Bundle: 697.7 KB against 705 KB.
+- **Checks:** normal commit hooks pass, including 494 script tests, 168 architecture assertions, types and lint. The full CLI suite passes 6,620 tests, one skipped.
+- **CI merge:** the bundle reaches 706.36 KB with `next` at `7084a88c`, reproduced locally. Telemetry code on `next` adds 8,839 bytes over the 697.73 KB branch. The reviewed budget is 715 KB, with 1.2% measured headroom.
 - **Limits:** abrupt process termination can require recovery; no new authenticated model inference was performed.
 
 ## Earlier runtime evidence
