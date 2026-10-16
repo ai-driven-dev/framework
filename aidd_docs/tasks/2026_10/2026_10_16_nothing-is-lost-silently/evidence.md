@@ -122,13 +122,13 @@ Each applied alone to `usage-ledger-adapter.ts`, same three files run, then reve
 | `read-usage-use-case.ts:63` `<=` | `<` | equivalent: an equal time leaves the same time held |
 | `read-usage-use-case.ts:63` `held ?? ""` | `"Stryker was here!"` | equivalent: both parse to `NaN` |
 | `report-filter.ts:52` `{ ...NO_FILTERS }` | `{}` | equivalent: the loop then sets every flag, in the same order |
-| `measurement-erasure-adapter.ts:14` `return []` | `["Stryker was here"]` | equivalent: a name kept from a missing directory is only ever filtered as a day file, which that name is not; the ledger and bindings are listed only once seen as directories |
+| `measurement-erasure-adapter.ts:14` `return []` | `["Stryker was here"]` | race only: a previous sink directory that is missing gives a name no day-file test accepts; the ledger and bindings are listed only once seen as directories, so only one removed between that look and the listing would reach it, and the mutant would then recurse. The line moved with the shared `isAbsent`; its code is as on `origin/next` |
 
 ## Gates
 
 | Gate | Shortest decisive line |
 | --- | --- |
-| `cd cli && pnpm test` | `Tests  6709 passed \| 1 skipped (6710)` (before the last test commit) |
+| `cd cli && pnpm test` | at `ac504053`..`a0bc5a8a`: `Tests  6709 passed \| 1 skipped (6710)`; at `3fe21ddd`, the last source change, through the pre-push `cli-test` step: `Tests  6711 passed \| 1 skipped (6712)` |
 | `pnpm exec vitest run tests/contexts/telemetry` | `Tests  1258 passed (1258)` |
 | `node --test 'scripts/__tests__/**/*.test.js'` | `ℹ pass 460` `ℹ fail 0` |
 | `pnpm smoke` (sandboxed) | `PASS: 132   FAIL: 0   SKIP: 1   ·   coverage 100%`; `Bundle size: 694.7 KB / budget: 695 KB` |

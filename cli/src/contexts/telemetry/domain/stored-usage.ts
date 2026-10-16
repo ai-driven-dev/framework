@@ -162,7 +162,8 @@ export function parseStoredUsage(line: string): StoredUsage | null {
 
 /** A call read and not stored, as it is kept: its tool, key and agent, the start of the UTC day
  * of `earliest`, its earliest copy's time, and the reason where a stored call names its
- * repository. Nothing else of it: storing follows consent. */
+ * repository. Nothing else of it, storing following consent; but its key is the call's own, which
+ * for a line with no `requestId` holds its session id and time. */
 export function leftOutOf(
   record: UsageRecord,
   reason: NotStoredReason,

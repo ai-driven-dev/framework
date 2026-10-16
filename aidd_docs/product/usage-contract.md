@@ -89,7 +89,8 @@ What an ingest reads and does not store is kept under `ledger/left-out/`, so eve
 | A line that is no usage line | `unrecognised <hash>`, a hash of its text | same |
 
 - Named by what it is, so a re-read, a reset of offsets or a second ingest adds nothing. `no-day.txt`: one line each, in text order, each once; a line this version does not know is kept and not counted.
-- No counter, model, session, directory, branch, repository or transcript text: the least that counts a call once. `forget` removes it with `ledger/`.
+- No counter, model, directory, branch, repository or transcript text: the least that counts a call once. The key is the call's own: for a line with no `requestId` it holds the session id and the time. `forget` removes it with `ledger/`.
+- Every call read and not stored since the first `on` leaves one line in `left-out/`; an unbounded report reads all of them.
 - A report counts, in `not_stored`, the left-out calls of its period that no read has stored since: stored beats left out. `undated` and `unrecognised_shapes` have no day: every report counts all of them.
 - A call's copy missing a counter is stored with that counter `null` and counted in `unknown_records`, never in `unrecognised_shapes`.
 - Limits: two lines that are no usage line with one text count once. Nothing left out before this version was kept.

@@ -37,7 +37,7 @@ flowchart LR
 - **Idempotent.** An entry is named by what it is: a call by its key, a line by its text. A re-read, an offsets reset or the same ingest run twice adds nothing. Dated entries go through the ledger's own fold and settle, so their bytes after a full report are those of one ingest, as the ledger's are.
 - **Why the earliest copy.** With no counter kept, the fold of left-out copies keeps the earliest. A call whose copies straddle a midnight, read in one ingest, must land on the day two ingests would give it: so it is dated by its earliest copy, not by the copy that won.
 - **Stored beats left out.** A call left out once and stored on a later read (an `unreadable-consent` repaired, offsets reset) is counted as stored. The report applies the rule, so the bytes never depend on the order of the ingests.
-- **Consent.** Storing follows consent. A left-out entry holds no counter, model, session, directory, branch or repository, and no transcript text: a hash. It is the least that counts a call once, and `forget` removes it with `ledger/`.
+- **Consent.** Storing follows consent. A left-out entry holds no counter, model, directory, branch or repository, and no transcript text: a hash. Its `key` is the call's own key: for a line with no `requestId`, that key is `message.id:sessionId:timestamp`, so it holds the session id and the exact time. It is the least that counts a call once, and `forget` removes it with `ledger/`.
 - **Reported.** `coverage.not_stored` counts the calls of the report's period that were left out and are not stored, whoever ran the ingest. `undated` and `coverage.unrecognised_shapes` have no day: every report counts all of them, since hiding them would print `0`.
 - **What a shape is now.** The reader also notes a call it keeps with a counter missing. That call is stored with the counter `null`, already counted in `unknown_records`, so `unrecognised_shapes` now counts only the lines that are no usage line.
 - **Unchanged.** The hook: the ingest it runs now keeps what it leaves out. `ingest` still prints its own run. `files_read` stays the run's. The envelope stays `version: 1`: no field is renamed, retyped or removed; the meaning of `not_stored` and `unrecognised_shapes` moves from "this run" to "of the period, durable".
@@ -77,5 +77,7 @@ flowchart LR
 - Two identical lines that are no usage line count once, wherever they are: a line is named by its text.
 - Two identical lines that are not ledger records, in one partition, are kept once.
 - A left-out reason this version does not know (a newer version's) is kept and not counted.
+- A call with no `requestId` is kept under its key, which holds its session id and time (see Consent). Hashing the key would make the report hash every stored key to tell stored from left out: not done here.
+- Reach and cost: every call read from a clone that never opted in, or outside any repository, since the first `on`, now leaves one line in `left-out/`. An unbounded report parses all of them. That cost is not measured.
 - Entries left out before this version were never written: they cannot be recovered.
 - cli-v5.5.0 still deletes a line it does not recognise when it rewrites a day. `left-out/` is a directory it never reads.
