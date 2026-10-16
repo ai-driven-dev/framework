@@ -43,6 +43,19 @@ describe("what measurement keeps", () => {
     expect(existsSync(telemetry)).toBe(false);
   });
 
+  it.skipIf(process.platform === "win32" || process.getuid?.() === 0)(
+    "fails where the directory cannot be looked into, instead of reading it as empty",
+    async () => {
+      write(join(telemetry, "ledger", "2026-10-07.jsonl"));
+      chmodSync(telemetry, 0o000);
+      try {
+        await expect(erasure().inventory()).rejects.toThrow();
+      } finally {
+        chmodSync(telemetry, 0o700);
+      }
+    }
+  );
+
   it("is nothing where the directory is a file", async () => {
     writeFileSync(telemetry, "x");
     expect(await erasure(join(telemetry, "inside")).inventory()).toEqual([]);

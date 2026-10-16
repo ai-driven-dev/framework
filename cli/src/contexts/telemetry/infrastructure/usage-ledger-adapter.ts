@@ -137,9 +137,8 @@ export class UsageLedgerAdapter implements UsageLedger, LeftOutLedger {
     }
     const days = partitionByDay(records);
     const emptied: string[] = [];
-    for (const day of [...new Set([...days.keys(), ...kept.keys(), ...held.keys()])].sort(
-      compareText
-    )) {
+    // Every write comes before any removal, so the order of the writes is free.
+    for (const day of new Set([...days.keys(), ...kept.keys(), ...held.keys()])) {
       if (!named(day)) continue;
       const lines = [
         ...(days.get(day) ?? []).map((record) => JSON.stringify(record)),

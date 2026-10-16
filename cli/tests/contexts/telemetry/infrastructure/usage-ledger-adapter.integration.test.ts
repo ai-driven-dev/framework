@@ -591,6 +591,14 @@ describe("what was left out, beside the ledger", () => {
     expect(await ledger.leftOut.noDay()).toEqual({ undated: 1, unrecognised: 1 });
   });
 
+  it("tells two things of one reason apart by what they are", async () => {
+    await ledger.leftOut.addNoDay([
+      { reason: "undated", of: "claude-code\u0000a" },
+      { reason: "undated", of: "claude-code\u0000b" },
+    ]);
+    expect(await ledger.leftOut.noDay()).toEqual({ undated: 2, unrecognised: 0 });
+  });
+
   it("names a thing by its reason and what it is, so two reasons of one text are two", async () => {
     await ledger.leftOut.addNoDay([
       { reason: "undated", of: "x" },

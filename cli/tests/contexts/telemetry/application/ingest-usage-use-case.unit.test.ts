@@ -1153,6 +1153,7 @@ describe("what is read and not stored is kept, so a report run later says it", (
       "{not json",
       line("B", 1, {}, "not a time"),
       JSON.stringify(missing),
+      JSON.stringify({ type: "user", message: { content: "a prompt" } }),
     ]);
     await s.ingest.execute();
     expect([...s.ledger.leftOut.noDayLines].sort()).toEqual([
