@@ -262,3 +262,18 @@ Tests  1 failed | 45 passed (46)
 Green after: `tests/presentation`, `Tests  610 passed (610)`.
 
 Guard: with `printIdentityRule(output);` removed from the loop, `× asks again until the identifier typed is one it can keep`, `Tests  1 failed | 45 passed (46)`; reverted.
+
+## After merging origin/next (report filters)
+
+Merge `612f7019`. The three conflicts kept both sides (the `on` identity question beside the filter options, both public modules, both rows of the map). `report-display` test from `origin/next` expected `Selected: person = not set`, red on the merged tree as `AssertionError: expected 'Selected: person = anonymous' to be 'Selected: person = not set'`; aligned on `anonymous`.
+
+Every run of the built binary was sandboxed: `HOME`, `XDG_CONFIG_HOME`, `AIDD_USER_CONFIG_DIR`, `AIDD_TELEMETRY_DIR`, `CLAUDE_CONFIG_DIR` in fresh temp directories, `GIT_CONFIG_NOSYSTEM=1`.
+
+- `cd cli && pnpm test`: `Test Files  507 passed | 1 skipped (508)`, `Tests  6621 passed | 1 skipped (6622)`.
+- `pnpm exec lefthook run pre-commit` (on the merge commit): every command green, `scripts-tests` included.
+- `pnpm exec lefthook run pre-push`: the first run, beside the mutation run, failed 3 tests (`Tests 3 failed | 6618 passed`) and was not kept; rerun green, `✔️ cli-knip`, `✔️ cli-test`; the direct `pnpm test` above is green.
+- `pnpm smoke`: `Bundle size: 692.8 KB / budget: 695 KB`, `PASS: 132   FAIL: 0   SKIP: 1`.
+- `pnpm test:mutation:telemetry`: `Report: reports/mutation/telemetry/ (score 96.6, floor 96)`; no `Survived` or `NoCoverage` mutant on a line this branch changes against `origin/next`.
+- `node scripts/check-claude-tokens-end-to-end.cjs cli/dist/cli.js`, exit 0: `2 calls, 393 tokens, all on task demo, ticket T-1, and on task demo in this repository`.
+- Same with `--attended`, exit 0: `… ; asked, answered by the hook, kept across /clear`.
+- Identity set at `on`, then filtered (one seeded call): `on --yes --as "Ada Example"` printed `Measured as "Ada Example".`; `report --axis person --person "Ada Example"` printed `Selected: person = Ada Example` and the row `Ada Example 100 7 11 13 131`, JSON rows `[["value","Ada Example",1]]`; `report --axis person --absent person` printed `Selected: person = anonymous` and `No call in this period matches these filters.`, JSON rows `[]`.

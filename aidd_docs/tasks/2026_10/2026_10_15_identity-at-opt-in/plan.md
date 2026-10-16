@@ -1,6 +1,6 @@
 ---
 objective: "Each person chooses, at opt-in, the name they are measured under, or to stay anonymous, and the report and status say which."
-status: in-progress
+status: done
 ---
 
 # Plan: Who is measured is chosen at opt-in
