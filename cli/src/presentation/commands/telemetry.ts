@@ -20,6 +20,7 @@ import { createDeps } from "../../runtime/wiring/framework.js";
 import type { TelemetryDeps } from "../../runtime/wiring/telemetry.js";
 import {
   printForgetResult,
+  printIdentityRule,
   printOffResult,
   printOnResult,
 } from "../display/telemetry/telemetry-lifecycle-display.js";
@@ -31,6 +32,7 @@ import {
   printTelemetryStatus,
 } from "../display/telemetry-display.js";
 import { ErrorHandler } from "../error-handler.js";
+import type { CLIOutput } from "../output.js";
 import { parseGlobalOptions } from "./global-options.js";
 
 interface OnOptions {
@@ -44,6 +46,7 @@ interface OnOptions {
 async function identityChoice(
   telemetry: TelemetryDeps,
   prompter: Prompter,
+  output: CLIOutput,
   cwd: string,
   options: OnOptions
 ): Promise<IdentityChoice | null> {
@@ -66,6 +69,7 @@ async function identityChoice(
   for (;;) {
     const typed = await prompter.input("Identifier (one non-empty line, at most 128 characters):");
     if (personIdOf(typed) !== null) return { set: typed };
+    printIdentityRule(output);
   }
 }
 
@@ -106,7 +110,13 @@ export function registerTelemetryCommand(program: Command): void {
           output.info("Nothing changed.");
           return;
         }
-        const choice = await identityChoice(deps.telemetry, deps.prompter, projectRoot, cmdOptions);
+        const choice = await identityChoice(
+          deps.telemetry,
+          deps.prompter,
+          output,
+          projectRoot,
+          cmdOptions
+        );
         if (choice === null) {
           output.error(
             "No identity is set, and --yes asks nothing: pass --as <id> to be named, or --anonymous to name nobody."

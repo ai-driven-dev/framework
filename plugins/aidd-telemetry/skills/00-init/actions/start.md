@@ -25,7 +25,7 @@ Measurement is on for the project, or nothing changed and the reason is stated. 
    - Not set: explain that a name only labels the person axis of their own report and stays on this machine, then ask the person to type the identifier they want, or to stay anonymous. Wait for the answer; never suggest or pick one for them. Say that `aidd telemetry on`, run in their own terminal, offers their git name instead.
 4. **Turn on.** The yes was given in step 2, so the command's own confirmation is skipped:
    - identity already set: `aidd telemetry on --yes`;
-   - a name typed: `aidd telemetry on --yes --as '<id>'`, with exactly the text typed, quoted for the shell;
+   - a name typed: `aidd telemetry on --yes --as '<id>'`, with exactly the text typed, single-quoted for the shell, each `'` it holds written as `'\''` (`O'Brien` becomes `'O'\''Brien'`);
    - anonymous: `aidd telemetry on --yes --anonymous`. Staying anonymous is not stored: the next `on`, in another clone, asks again.
    - Outside a git repository, with a git config git cannot read, or with an identifier that is not one non-empty line of at most 128 characters, the command refuses: show its message and stop.
 5. **Report.** Relay everything the command printed, the removals and the warnings included, in the person's words rather than pasted.

@@ -420,6 +420,8 @@ describe("aidd telemetry on", () => {
         .mockResolvedValueOnce("Ada at Work");
       expect(await run("on")).toBeNull();
       expect(input).toHaveBeenCalledTimes(3);
+      expect(stderr().split("one non-empty line of at most 128 characters.")).toHaveLength(3);
+      expect(stderr()).not.toContain("Nothing was changed.");
       expect(turnOn).toHaveBeenCalledTimes(1);
       expect(turnOn).toHaveBeenCalledWith(process.cwd(), { set: "Ada at Work" });
     });

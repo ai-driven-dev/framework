@@ -248,3 +248,17 @@ Tests  1 failed | 45 passed (46)
 - `node scripts/check-claude-tokens-end-to-end.cjs cli/dist/cli.js`, exit 0: `2 calls, 393 tokens, all on task demo, ticket T-1`.
 - Same with `--attended`, exit 0: `… asked, answered by the hook, kept across /clear`.
 - `pnpm test:mutation:telemetry`, on the final code: `Report: reports/mutation/telemetry/ (score 96.2, floor 96)`. The one changed line in its scope (`telemetry-lifecycle-display.ts` 25-26, the refusal text) has no survivor; the file's survivors are the same untouched forget-listing lines as before, shifted by one (150, 168, 169). `commands/telemetry.ts` is in the `presentation` scope; its loop is proven by the guard above.
+
+## Review round 2 fixes
+
+`pnpm exec vitest run tests/presentation/commands/telemetry-wiring.integration.test.ts`, before a refused typed identifier is explained before it is asked again:
+
+```txt
+× asks again until the identifier typed is one it can keep
+  AssertionError: expected [ '' ] to have a length of 3 but got 1
+Tests  1 failed | 45 passed (46)
+```
+
+Green after: `tests/presentation`, `Tests  610 passed (610)`.
+
+Guard: with `printIdentityRule(output);` removed from the loop, `× asks again until the identifier typed is one it can keep`, `Tests  1 failed | 45 passed (46)`; reverted.
