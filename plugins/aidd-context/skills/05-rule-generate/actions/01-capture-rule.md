@@ -20,7 +20,7 @@ Approved candidates with their planned publication paths, or confirmed sources, 
    - **Publish/delete.** Confirm sources and whole publications, then plan.
 3. **Draft.** Fill the [template](../assets/rule-template.md) per [authoring](../references/rule-authoring.md), once the topic and [fields](../references/rule-publication.md#operations) are confirmed.
 4. **Compare.** [Discover policies](../references/rule-discovery.md) read-only in the project and loaded ancestors, skip home and account scans, then [assess](../references/rule-assessment.md) each candidate.
-5. **Plan.** For a host, serialize the request outside the destinations and run the writer with `--plan` per [publication](../references/rule-publication.md); a refusal returns to Draft.
-6. **Present.** Show full candidates, the planned paths and every finding, new rules included.
+5. **Plan.** For a host, resolve the installed writer to an absolute path, serialize the request outside the destinations and run it with `--plan` per [publication](../references/rule-publication.md); a refusal returns to Draft.
+6. **Present.** Show full candidates, the planned paths and every finding, new rules included, then end the turn.
    - **Needs review.** Ask for evidence and reassess before offering source changes.
-   - **Resolved.** Await the resolution, then the explicit approval.
+   - **Resolved.** A resolution is not an approval: replan, present the revised candidate and end the turn again; only a later explicit approval releases the write.

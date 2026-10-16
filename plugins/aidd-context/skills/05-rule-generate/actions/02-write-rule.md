@@ -14,9 +14,9 @@ The written files, verified, or the refusal.
 
 1. **Match.** For create/update, check body, fields, publication paths, resolution and evidence against the last approved capture; on any difference, return to capture-rule, present the revision and await approval before writing.
 2. **Write.** Apply the approved result.
-   - **Host.** Run the installed writer by the same absolute path as the plan, with the approved request.
+   - **Host.** Run the writer by the absolute path resolved in capture-rule, never `$PWD`-relative, with the approved request.
    - **Plugin.** Write or delete the approved source only.
-3. **Verify.** For a host, run the same absolute writer with `--check --publish`; require no drift, also after a deletion.
+3. **Verify.** For a host, run that same absolute writer with `--check --publish`; require no drift, also after a deletion.
 4. **Report.** List the written files; on refusal or drift, stop and quote it verbatim.
 
 ## Rules
