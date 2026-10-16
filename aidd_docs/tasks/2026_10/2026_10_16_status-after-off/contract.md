@@ -32,7 +32,7 @@ After `aidd telemetry on` then `aidd telemetry off`, `aidd telemetry status` pri
 | --- | --- |
 | 1 | A key of exactly `off` is `turned-off`, whether `off` wrote it or a person did by hand: either way measurement was turned off in this clone, and `on` turns it back on |
 | 2 | Any other key that grants nothing (absent, `2`, `true`, `{}`) stays `no-consent` |
-| 3 | Precedence is unchanged: `AIDD_TELEMETRY=0`, outside a repository, unidentified repository and an unreadable git config come first. `turned-off` is decided where `no-consent` is for an absent key, before the consent log is read, so a key `off` with a damaged log reads `turned-off`, as an absent key reads `no-consent` today |
+| 3 | Precedence is unchanged: `AIDD_TELEMETRY=0`, outside a repository, unidentified repository and an unreadable git config come first. `turned-off` is decided only once the consent log is read and the clone identified, where `on` would not refuse it: a key `off` with a damaged log, or a clone with no identity, reads `unreadable-consent`, so status never advises an `on` that would fail. An absent key still reads `no-consent` before the log, as today |
 | 4 | `on` after `off` measures again and status says so, as today |
 
 ## Unchanged

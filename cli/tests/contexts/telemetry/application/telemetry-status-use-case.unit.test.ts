@@ -55,7 +55,7 @@ function setup(sessionId: string | null = "sess-1234567890", refusedByEnvironmen
     { refusedByEnvironment, sessionId, now: () => new Date("2026-10-09T12:00:00.000Z") },
     identities
   );
-  return { useCase, consents, history, sessions, branches, source, identities };
+  return { useCase, locator, consents, history, sessions, branches, source, identities };
 }
 
 const branchBinding = {
@@ -168,16 +168,26 @@ describe("showing what the work is bound to", () => {
     });
   });
 
-  it("says a clone turned off was turned off, even with a log that cannot be read", async () => {
+  it("says a clone turned off was turned off", async () => {
     const off = setup();
     off.consents.values.set(CWD, "off");
     expect(await off.useCase.execute(CWD)).toEqual({ status: "refused", reason: "turned-off" });
+  });
+
+  it("says a clone turned off cannot be read, not to run on, when on would refuse", async () => {
     const damaged = setup();
     damaged.consents.values.set(CWD, "off");
     damaged.history.damaged = true;
     expect(await damaged.useCase.execute(CWD)).toEqual({
       status: "refused",
-      reason: "turned-off",
+      reason: "unreadable-consent",
+    });
+    const unidentified = setup();
+    unidentified.consents.values.set(CWD, "off");
+    unidentified.locator.directories.set(CWD, { ...REPOSITORY, clone: null });
+    expect(await unidentified.useCase.execute(CWD)).toEqual({
+      status: "refused",
+      reason: "unreadable-consent",
     });
   });
 
@@ -185,7 +195,7 @@ describe("showing what the work is bound to", () => {
     const never = setup();
     never.consents.values.delete(CWD);
     expect(await never.useCase.execute(CWD)).toEqual({ status: "refused", reason: "no-consent" });
-    for (const key of ["2", "true", "OFF"]) {
+    for (const key of ["2", "true", "{}", "OFF"]) {
       const other = setup();
       other.consents.values.set(CWD, key);
       expect(await other.useCase.execute(CWD)).toEqual({ status: "refused", reason: "no-consent" });
