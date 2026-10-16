@@ -1,3 +1,5 @@
+import { shiftDay } from "../stored-usage.js";
+
 /** A span of whole UTC days, both ends included; `null` is open. */
 export interface Period {
   readonly from: string | null;
@@ -9,7 +11,6 @@ export type PeriodOutcome =
   | { readonly ok: false; readonly message: string };
 
 const DAY = /^\d{4}-\d{2}-\d{2}$/;
-const DAY_MS = 86_400_000;
 
 /** The UTC day of an instant, `YYYY-MM-DD`. */
 export function dayOf(at: string): string {
@@ -19,6 +20,28 @@ export function dayOf(at: string): string {
 export function inPeriod(at: string, period: Period): boolean {
   const day = dayOf(at);
   return (period.from === null || day >= period.from) && (period.to === null || day <= period.to);
+}
+
+/** The day `days` after a `YYYY-MM-DD` day, or `null` past what four digits can name. */
+function shift(day: string, days: number): string | null {
+  const shifted = shiftDay(day, days);
+  return DAY.test(shifted) ? shifted : null;
+}
+
+/** The days whose partitions can hold a call of the period, as a test on a `YYYY-MM-DD` day:
+ * from the day before `from` to the day after `to`, an open side, or one past four-digit
+ * years, staying open. `undefined` when the period has no bound: every partition.
+ *
+ * One day on each side, because the copies of one call have been observed less than a day
+ * apart (of 262,631 real keys, the widest spread is 0.3 h). Under that bound they sit within a
+ * calendar day of each other: a call with a copy in the period has all of them in the window,
+ * and folds to the same one as a full read would. Outside it, only an unbounded read folds
+ * every copy. */
+export function windowOf(period: Period): ((day: string) => boolean) | undefined {
+  if (period.from === null && period.to === null) return undefined;
+  const first = period.from === null ? null : shift(period.from, -1);
+  const last = period.to === null ? null : shift(period.to, 1);
+  return (day) => (first === null || day >= first) && (last === null || day <= last);
 }
 
 function isCalendarDay(text: string): boolean {
@@ -41,9 +64,7 @@ export function periodOf(
     const days = /^[1-9]\d*$/.test(asked.days) ? Number(asked.days) : 0;
     if (days === 0) return { ok: false, message: "--days takes a positive whole number." };
     const today = dayOf(now.toISOString());
-    const first = dayOf(
-      new Date(Date.parse(`${today}T00:00:00.000Z`) - (days - 1) * DAY_MS).toISOString()
-    );
+    const first = shiftDay(today, 1 - days);
     return { ok: true, period: { from: first, to: today } };
   }
   for (const [flag, value] of [

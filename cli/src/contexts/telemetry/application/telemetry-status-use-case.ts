@@ -1,6 +1,7 @@
 import { type Binding, resolveBinding } from "../domain/declaration/binding-resolution.js";
 import type { BranchRole } from "../domain/declaration/branch-role.js";
 import type { SessionBindingStore } from "../domain/ports/bindings/session-binding-store.js";
+import type { PersonIdentityStore } from "../domain/ports/identity/person-identity-store.js";
 import type { BranchDeclarations } from "./branch-declarations.js";
 import type { ConsentedRepositories, RefusalReason } from "./consented-repositories.js";
 
@@ -14,6 +15,8 @@ export type StatusResult =
       readonly branch: string | null;
       readonly role: BranchRole;
       readonly binding: Binding;
+      /** Who the measurement names, `null` for nobody. */
+      readonly personId: string | null;
     };
 
 export interface StatusOptions {
@@ -28,7 +31,8 @@ export class TelemetryStatusUseCase {
     private readonly repositories: ConsentedRepositories,
     private readonly sessions: SessionBindingStore,
     private readonly branches: BranchDeclarations,
-    private readonly options: StatusOptions
+    private readonly options: StatusOptions,
+    private readonly identities: PersonIdentityStore
   ) {}
 
   async execute(cwd: string): Promise<StatusResult> {
@@ -50,6 +54,7 @@ export class TelemetryStatusUseCase {
       branch: current.name,
       role: current.role,
       binding,
+      personId: await this.identities.read(),
     };
   }
 }

@@ -143,7 +143,7 @@ class World {
 
   async on(dir: string, seconds: number) {
     this.at(seconds);
-    return deps.telemetryOnUseCase.execute(dir);
+    return deps.telemetryOnUseCase.execute(dir, "keep");
   }
 
   async off(dir: string, seconds: number) {
@@ -168,7 +168,7 @@ class World {
     const dir = join(this.sandbox.telemetry, "ledger");
     if (!existsSync(dir)) return [];
     return readdirSync(dir)
-      .filter((name) => /^\d{4}-\d{2}\.jsonl$/u.test(name))
+      .filter((name) => /^\d{4}-\d{2}-\d{2}\.jsonl$/u.test(name))
       .flatMap((name) => readFileSync(join(dir, name), "utf8").split("\n"))
       .filter((line) => line !== "")
       .map((line) => String(JSON.parse(line).key).replace(/^msg_(.+):req_.*$/u, "$1"))

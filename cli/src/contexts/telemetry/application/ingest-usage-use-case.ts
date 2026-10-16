@@ -1,9 +1,10 @@
 import type { UsageLedger } from "../domain/ports/usage-ledger.js";
 import type { NotStoredReason } from "../domain/repository-resolution.js";
-import { monthOf, type StoredUsage, upsertUsage } from "../domain/stored-usage.js";
+import { dayOf, type StoredUsage } from "../domain/stored-usage.js";
 import type { TranscriptPosition } from "../domain/transcript-position.js";
 import type { UsageRecord } from "../domain/usage-record.js";
 import type { DirectoryOutcome, DirectoryResolver, ResolutionRun } from "./directory-resolver.js";
+import { storeCalls } from "./ledger-upkeep.js";
 import type { ReadUsageUseCase, UsageReading } from "./read-usage-use-case.js";
 import type { SnapshotBindingsUseCase } from "./snapshot-bindings-use-case.js";
 
@@ -16,7 +17,7 @@ export interface IngestResult {
   readonly updated: number;
   /** Shapes the reader met and did not recognise. */
   readonly unrecognised: number;
-  /** Lines of the ledger that were not records. */
+  /** Lines of the partitions this ingest read that were not records: its window only. */
   readonly skippedLedgerLines: number;
   /** Branch declarations newly snapshotted. */
   readonly snapshots: number;
@@ -113,21 +114,10 @@ export class IngestUsageUseCase {
       if (outcome.live) live.set(outcome.stored.repository_id, outcome.stored.root);
     }
 
-    let added = 0;
-    let updated = 0;
-    let skippedLedgerLines = 0;
-    if (toStore.length > 0) {
-      const held = await this.ledger.load();
-      skippedLedgerLines = held.skippedLines;
-      const merged = upsertUsage(held.records, toStore);
-      added = merged.added;
-      updated = merged.updated;
-      // A month that holds a line that is not a record is rewritten with the rest, so the line
-      // is dropped once and the report stops warning of it.
-      if (added + updated > 0 || held.damagedMonths.size > 0) {
-        await this.ledger.save(merged.records, new Set([...merged.months, ...held.damagedMonths]));
-      }
-    }
+    const stored =
+      toStore.length > 0
+        ? await storeCalls(this.ledger, toStore)
+        : { added: 0, updated: 0, skippedLines: 0 };
     await resolver.close();
     const consentLogDamaged = resolver.consentLogDamaged;
 
@@ -142,10 +132,10 @@ export class IngestUsageUseCase {
     return {
       refused: false,
       filesRead,
-      added,
-      updated,
+      added: stored.added,
+      updated: stored.updated,
       unrecognised: reading.unrecognised.length,
-      skippedLedgerLines,
+      skippedLedgerLines: stored.skippedLines,
       snapshots,
       notStored,
       consentLogDamaged,
@@ -172,10 +162,10 @@ export class IngestUsageUseCase {
     };
   }
 
-  /** A call with no time has no month to be kept in, and one with no directory has no
+  /** A call with no time has no day to be kept in, and one with no directory has no
    * repository to be tied to. */
   private async outcomeOf(record: UsageRecord, resolver: ResolutionRun): Promise<DirectoryOutcome> {
-    if (monthOf(record.at) === null) return { skipped: "undated" };
+    if (dayOf(record.at) === null) return { skipped: "undated" };
     if (record.cwd === null) return { skipped: "no-cwd" };
     return resolver.resolve(record.cwd, record.at);
   }

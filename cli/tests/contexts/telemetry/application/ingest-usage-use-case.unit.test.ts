@@ -9,6 +9,7 @@ import { readClaudeUsageLine } from "../../../../src/contexts/telemetry/domain/f
 import type { LocatedDirectory } from "../../../../src/contexts/telemetry/domain/ports/repository-locator.js";
 import { resolutionKey } from "../../../../src/contexts/telemetry/domain/repository-resolution.js";
 import {
+  AUTUMN,
   cloneOf,
   FakeBindings,
   FakeConsents,
@@ -317,39 +318,68 @@ describe("ingesting usage into the ledger", () => {
     ]);
   });
 
-  it("tells the ledger to rewrite only the month a new call falls in", async () => {
+  it("tells the ledger to load only its calls' days and the day on each side", async () => {
     const s = setup();
-    s.transcripts.files.set("/t/1.jsonl", [line("A", 10, {}, "2026-09-07T10:00:00.000Z")]);
+    s.transcripts.files.set("/t/1.jsonl", [
+      line("A", 10, {}, "2026-10-07T10:00:00.000Z"),
+      line("B", 20, {}, "2026-10-08T10:00:00.000Z"),
+    ]);
+    await s.ingest.execute();
+    const window = s.ledger.loadedWindow;
+    expect(window && AUTUMN.filter(window)).toEqual([
+      "2026-10-06",
+      "2026-10-07",
+      "2026-10-08",
+      "2026-10-09",
+    ]);
+  });
+
+  it("tells the ledger to rewrite only the day a new call falls in", async () => {
+    const s = setup();
+    s.transcripts.files.set("/t/1.jsonl", [line("A", 10, {}, "2026-10-06T10:00:00.000Z")]);
     await s.ingest.execute();
     s.transcripts.files.set("/t/1.jsonl", [
-      line("A", 10, {}, "2026-09-07T10:00:00.000Z"),
+      line("A", 10, {}, "2026-10-06T10:00:00.000Z"),
       line("B", 20, {}, "2026-10-07T10:00:00.000Z"),
     ]);
     await s.ingest.execute();
-    expect([...(s.ledger.savedMonths ?? [])]).toEqual(["2026-10"]);
+    expect([...(s.ledger.savedPartitions ?? [])]).toEqual(["2026-10-07"]);
+    expect(s.ledger.records.map((r) => r.key)).toEqual(["msg_A:req_A", "msg_B:req_B"]);
   });
 
-  it("also rewrites a month that holds a line that is not a record, whatever the call that came", async () => {
+  it("also rewrites a damaged partition its window read, whatever the call that came", async () => {
     const s = setup();
-    s.ledger.damaged.add("2026-08");
+    s.ledger.damaged.add("2026-10-06");
     s.transcripts.files.set("/t/1.jsonl", [line("A", 10)]);
     await s.ingest.execute();
-    expect([...(s.ledger.savedMonths ?? [])].sort()).toEqual(["2026-08", "2026-10"]);
+    expect([...(s.ledger.savedPartitions ?? [])].sort()).toEqual(["2026-10-06", "2026-10-07"]);
   });
 
-  it("repairs a damaged month even when every call it read was already held", async () => {
+  it("repairs damage in its window even when every call it read was already held", async () => {
     const s = setup();
     s.transcripts.files.set("/t/1.jsonl", [line("A", 10)]);
     await s.ingest.execute();
-    s.ledger.damaged.add("2026-10");
+    s.ledger.damaged.add("2026-10-07");
     s.ledger.events.length = 0;
     s.ledger.stored = new Map();
-    s.ledger.savedMonths = undefined;
+    s.ledger.savedPartitions = undefined;
     const again = await s.ingest.execute();
-    expect(again).toMatchObject({ added: 0, updated: 0 });
+    expect(again).toMatchObject({ added: 0, updated: 0, skippedLedgerLines: 1 });
     expect(s.ledger.events).toContain("save");
-    // The month that was damaged is the one saved, and no other.
-    expect([...(s.ledger.savedMonths ?? [])]).toEqual(["2026-10"]);
+    // The partition that was damaged is the one saved, and no other.
+    expect([...(s.ledger.savedPartitions ?? [])]).toEqual(["2026-10-07"]);
+  });
+
+  it("finishes a monthly partition its window read even when every call was already held", async () => {
+    const s = setup();
+    s.transcripts.files.set("/t/1.jsonl", [line("A", 10)]);
+    await s.ingest.execute();
+    s.ledger.unsettled.add("2026-10");
+    s.ledger.stored = new Map();
+    s.ledger.savedPartitions = undefined;
+    expect(await s.ingest.execute()).toMatchObject({ added: 0, updated: 0 });
+    expect([...(s.ledger.savedPartitions ?? [])]).toEqual(["2026-10"]);
+    expect(s.ledger.records).toHaveLength(1);
   });
 
   it("changes nothing when the same transcripts are ingested again", async () => {
@@ -638,6 +668,14 @@ describe("where a call was made", () => {
     const result = await s.ingest.execute();
     expect(result.notStored["no-cwd"]).toBe(1);
     expect(result.notStored.undated).toBe(1);
+  });
+
+  it("counts a call whose time names no zone as undated, and keeps it out of the ledger", async () => {
+    const s = setup();
+    s.transcripts.files.set("/t/1.jsonl", [line("A", 1, {}, "2026-10-15T22:00:00")]);
+    const result = await s.ingest.execute();
+    expect(result.notStored.undated).toBe(1);
+    expect(result.added).toBe(0);
   });
 
   it("keeps what it learned about a directory only when it learned something new", async () => {

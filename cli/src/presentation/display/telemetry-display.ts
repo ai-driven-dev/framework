@@ -69,6 +69,8 @@ const REFUSALS: Readonly<Record<RefusalReason, string>> = {
     "This repository has no remote and no commit yet, so nothing can name it. Commit once, then declare again.",
   "no-consent":
     "This clone has not opted in to measurement, so no task was declared. Run `aidd telemetry on` here first.",
+  "turned-off":
+    "Measurement was turned off in this clone, so no task was declared. Run `aidd telemetry on` here to measure it again.",
   "unreadable-consent":
     "This clone's git config cannot be read, so no task was declared. Fix it, then declare again.",
 };
@@ -78,6 +80,8 @@ const NOT_MEASURED: Readonly<Record<RefusalReason, string>> = {
   "outside-repository": "Not measured: not inside a git repository.",
   "unidentified-repository": "Not measured: this repository has no remote and no commit yet.",
   "no-consent": "Not measured: this clone has not run `aidd telemetry on`.",
+  "turned-off":
+    "Not measured: measurement was turned off in this clone. Run `aidd telemetry on` to measure it again.",
   "unreadable-consent": "Not measured: this clone's git config or the consent log cannot be read.",
 };
 
@@ -121,6 +125,15 @@ export function printTelemetryStatus(output: CLIOutput, result: StatusResult): v
     return;
   }
   output.info(`This clone is measured since ${result.since.slice(0, 10)}.`);
+  printBinding(output, result);
+  output.info(
+    result.personId === null
+      ? "Measured anonymously. To be named, run `aidd telemetry identity <id>`."
+      : `Measured as "${result.personId}".`
+  );
+}
+
+function printBinding(output: CLIOutput, result: Extract<StatusResult, { status: "shown" }>): void {
   const { binding, sessionId, branch, role } = result;
   if (binding.state === "unbound") {
     const where =
@@ -151,14 +164,14 @@ export function printIdentityResult(output: CLIOutput, result: IdentityResult): 
       output.success(`Measurement names you as "${result.personId}". Stop with \`--off\`.`);
       return;
     case "removed":
-      output.success('Identity removed: the person axis shows "not set".');
+      output.success('Identity removed: the person axis shows "anonymous".');
       return;
     case "unset":
       output.info(
-        'No identity is set: the person axis shows "not set". Choose one with `aidd telemetry identity <id>`.'
+        'No identity is set: the person axis shows "anonymous". Choose one with `aidd telemetry identity <id>`.'
       );
       return;
     case "refused":
-      output.error("An identity is one line of at most 128 characters.");
+      output.error("An identity is one non-empty line of at most 128 characters.");
   }
 }

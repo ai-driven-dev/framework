@@ -2,6 +2,10 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { Command } from "commander";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import {
+  conflictsOf,
+  type ReportFilters,
+} from "../../../src/contexts/telemetry/domain/report/report-filter.js";
 
 const ingest = vi.fn();
 const declare = vi.fn();
@@ -12,10 +16,13 @@ const turnOn = vi.fn();
 const turnOff = vi.fn();
 const forget = vi.fn();
 const confirm = vi.fn();
+const select = vi.fn();
+const input = vi.fn();
+const propose = vi.fn();
 
 vi.mock("../../../src/runtime/wiring/framework.js", () => ({
   createDeps: vi.fn(async () => ({
-    prompter: { confirm },
+    prompter: { confirm, select, input },
     telemetry: {
       telemetryOnUseCase: { execute: turnOn },
       telemetryOffUseCase: { execute: turnOff },
@@ -25,6 +32,7 @@ vi.mock("../../../src/runtime/wiring/framework.js", () => ({
       telemetryStatusUseCase: { execute: show },
       reportUsageUseCase: { execute: report },
       manageIdentityUseCase: identity,
+      proposeIdentityUseCase: { execute: propose },
     },
   })),
   createMenuDeps: vi.fn(),
@@ -89,9 +97,21 @@ const NOT_STORED = {
   undated: 0,
 };
 const ZERO = { known: 0, unknownRecords: 0 };
+const NO_FILTERS = {
+  task: null,
+  ticket: null,
+  person: null,
+  model: null,
+  agent: null,
+  session: null,
+  repository: null,
+  absent: null,
+  unattributed: null,
+};
 const reported = {
   status: "reported",
   period: { from: null, to: null },
+  filters: NO_FILTERS,
   report: {
     axis: "total",
     rows: [],
@@ -115,7 +135,11 @@ describe("aidd telemetry report", () => {
   it("asks for every day on the total axis when nothing is given, and prints text", async () => {
     report.mockResolvedValue(reported);
     expect(await run("report")).toBeNull();
-    expect(report).toHaveBeenCalledWith({ axis: "total", period: { from: null, to: null } });
+    expect(report).toHaveBeenCalledWith({
+      axis: "total",
+      period: { from: null, to: null },
+      filters: NO_FILTERS,
+    });
     expect(stdout()).toContain("Usage, all days, by total");
   });
 
@@ -125,6 +149,7 @@ describe("aidd telemetry report", () => {
     expect(report).toHaveBeenCalledWith({
       axis: "task",
       period: { from: "2026-10-01", to: "2026-10-07" },
+      filters: NO_FILTERS,
     });
   });
 
@@ -156,6 +181,110 @@ describe("aidd telemetry report", () => {
 
   it("refuses an axis it does not know", async () => {
     await expect(run("report", "--axis", "colour")).rejects.toThrow();
+  });
+});
+
+describe("aidd telemetry report, narrowed", () => {
+  const asked = () => (report.mock.calls[0] as [{ filters: unknown }])[0].filters;
+  /** Commander refuses a flag value itself: with `exitOverride` it throws its exit code. */
+  async function refused(...args: string[]): Promise<number> {
+    try {
+      const code = await run("report", ...args);
+      if (code === null) throw new Error("not refused");
+      return code;
+    } catch (error) {
+      if (error instanceof Error && "exitCode" in error) return error.exitCode as number;
+      throw error;
+    }
+  }
+
+  it("passes every flag it is given, trimmed as a declaration is", async () => {
+    report.mockResolvedValue(reported);
+    await run(
+      "report",
+      ...["--task", "  auth refactor ", "--ticket", "PROJ-1", "--person", "p-1"],
+      ...["--model", "m-1", "--agent", " subagent", "--session", "a1b2", "--repository", "r-1"]
+    );
+    expect(asked()).toEqual({
+      ...NO_FILTERS,
+      task: "auth refactor",
+      ticket: "PROJ-1",
+      person: "p-1",
+      model: "m-1",
+      agent: "subagent",
+      session: "a1b2",
+      repository: "r-1",
+    });
+    vi.clearAllMocks();
+    await run("report", "--absent", " person ");
+    expect(asked()).toEqual({ ...NO_FILTERS, absent: "person" });
+  });
+
+  it("asks for the repository the command runs in for `.`", async () => {
+    report.mockResolvedValue(reported);
+    await run("report", "--repository", " . ");
+    expect(asked()).toEqual({ ...NO_FILTERS, here: process.cwd() });
+  });
+
+  it("reads a bare --unattributed as either reason, and takes one reason", async () => {
+    report.mockResolvedValue(reported);
+    await run("report", "--unattributed");
+    expect(asked()).toEqual({ ...NO_FILTERS, unattributed: "any" });
+    vi.clearAllMocks();
+    await run("report", "--unattributed", "declared-none", "--axis", "day");
+    expect(asked()).toEqual({ ...NO_FILTERS, unattributed: "declared-none" });
+  });
+
+  it.each([
+    ["an open flag given twice", ["--task", "a", "--task", "b"], "--task"],
+    ["a closed flag given twice", ["--agent", "main", "--agent", "main"], "--agent"],
+    ["a bare flag given twice", ["--unattributed", "--unattributed"], "--unattributed"],
+    ["a value empty once trimmed", ["--ticket", "   "], "--ticket"],
+    ["an agent no call can have", ["--agent", "robot"], "--agent"],
+    ["an axis no call lacks", ["--absent", "session"], "--absent"],
+    ["a reason no call has", ["--unattributed", "no-task"], "--unattributed"],
+  ])("refuses %s with exit 1, naming the flag, before reading anything", async (_, args, flag) => {
+    expect(await refused(...args)).toBe(1);
+    expect(stderr()).toContain(flag);
+    expect(report).not.toHaveBeenCalled();
+  });
+
+  it("refuses a bare flag given twice by its name, not by the value it was preset to", async () => {
+    expect(await refused("--unattributed", "--unattributed")).toBe(1);
+    expect(stderr()).toContain("--unattributed is given twice: give it once.");
+    expect(stderr()).not.toContain("null");
+  });
+
+  it.each([
+    [["--unattributed", "--task", "a"], "--task and --unattributed"],
+    [["--ticket", "T", "--unattributed", "no-binding"], "--ticket and --unattributed"],
+    [["--absent", "ticket", "--unattributed"], "--absent ticket and --unattributed"],
+    [["--model", "m", "--absent", "model"], "--model and --absent model"],
+  ])(
+    "exits 1 on %j, which select on one axis, naming both as the report refuses them",
+    async (args, flags) => {
+      // The use case's own refusal, as `report-usage-use-case.unit.test.ts` pins it.
+      report.mockImplementation(async ({ filters }: { filters: ReportFilters }) => {
+        const [conflict] = conflictsOf(filters);
+        return conflict === undefined
+          ? reported
+          : { status: "conflicting", flags: conflict, absent: filters.absent };
+      });
+      expect(await run("report", ...args)).toBe(1);
+      expect(report).toHaveBeenCalledTimes(1);
+      expect(stderr()).toContain(flags);
+      expect(stdout()).toBe("");
+    }
+  );
+
+  it.each([
+    [{ status: "ambiguous", flag: "session", typed: "a", ids: ["a1", "a2"] }, "a1, a2"],
+    [{ status: "not-a-repository" }, "--repository ."],
+  ])("exits 1 when the report cannot name what was asked: %j", async (result, said) => {
+    report.mockResolvedValue(result);
+    expect(await run("report", "--json", "--session", "a")).toBe(1);
+    expect(stderr()).toContain(said);
+    expect(stdout()).toBe("");
   });
 });
 
@@ -284,15 +413,58 @@ const ON = {
   hook: { lineRemoved: false, delegateRemoved: false, stillCalledBy: [] },
   journal: { journalRemoved: false, trackedKept: false, ignoreEntryRemoved: false },
   retention: { days: 3650, short: false },
+  identity: { personId: null, previous: null },
 };
 
 describe("aidd telemetry on", () => {
-  it("turns measurement on in the directory it was run from, without asking, with --yes", async () => {
+  const ANONYMOUS = { status: "unset" };
+  const NAMED = { status: "set", personId: "Ada Example" };
+  beforeEach(() => {
+    identity.show.mockResolvedValue(ANONYMOUS);
     turnOn.mockResolvedValue(ON);
-    expect(await run("on", "--yes")).toBeNull();
-    expect(turnOn).toHaveBeenCalledWith(process.cwd());
+  });
+
+  it("turns measurement on in the directory it was run from, without asking, with --yes and a choice", async () => {
+    expect(await run("on", "--yes", "--anonymous")).toBeNull();
+    expect(turnOn).toHaveBeenCalledWith(process.cwd(), "none");
     expect(confirm).not.toHaveBeenCalled();
     expect(stdout()).toContain("Measurement is on");
+  });
+
+  it("names the person given with --as", async () => {
+    expect(await run("on", "--yes", "--as", "Ada Example")).toBeNull();
+    expect(turnOn).toHaveBeenCalledWith(process.cwd(), { set: "Ada Example" });
+  });
+
+  it("keeps the identity already set when --yes is given no choice, and asks nothing", async () => {
+    identity.show.mockResolvedValue(NAMED);
+    expect(await run("on", "--yes")).toBeNull();
+    expect(turnOn).toHaveBeenCalledWith(process.cwd(), "keep");
+    expect(select).not.toHaveBeenCalled();
+    expect(propose).not.toHaveBeenCalled();
+  });
+
+  it("refuses --yes with no identity set and no choice, before anything is written", async () => {
+    expect(await run("on", "--yes")).toBe(1);
+    expect(turnOn).not.toHaveBeenCalled();
+    expect(propose).not.toHaveBeenCalled();
+    expect(stderr()).toContain("--as <id>");
+    expect(stderr()).toContain("--anonymous");
+  });
+
+  it("refuses --as with --anonymous, before asking anything", async () => {
+    expect(await run("on", "--yes", "--as", "Ada Example", "--anonymous")).toBe(1);
+    expect(identity.show).not.toHaveBeenCalled();
+    expect(turnOn).not.toHaveBeenCalled();
+  });
+
+  it("refuses an identifier the identity rules refuse, before asking anything", async () => {
+    expect(await run("on", "--as", "a".repeat(129))).toBe(1);
+    expect(confirm).not.toHaveBeenCalled();
+    expect(turnOn).not.toHaveBeenCalled();
+    expect(stderr()).toContain(
+      "An identity is one non-empty line of at most 128 characters. Nothing was changed."
+    );
   });
 
   it("refuses to guess an answer where nobody can be asked", async () => {
@@ -312,30 +484,99 @@ describe("aidd telemetry on", () => {
     const original = process.stdout.isTTY;
     beforeEach(() => {
       process.stdout.isTTY = true;
+      confirm.mockResolvedValue(true);
+      propose.mockResolvedValue("Ada Example");
     });
     afterEach(() => {
       process.stdout.isTTY = original;
     });
 
+    const choices = () => select.mock.calls[0]?.[1] as { name: string; value: unknown }[];
+    const offered = () => choices().map((c) => c.value);
+
     it("turns on after a yes, defaulting the question to no", async () => {
-      confirm.mockResolvedValue(true);
-      turnOn.mockResolvedValue(ON);
+      select.mockResolvedValue("none");
       expect(await run("on")).toBeNull();
       expect(confirm.mock.calls[0]?.[1]).toBe(false);
       expect(turnOn).toHaveBeenCalled();
     });
 
-    it("changes nothing after a no", async () => {
+    it("changes nothing after a no, and reads no proposal", async () => {
       confirm.mockResolvedValue(false);
       expect(await run("on")).toBeNull();
       expect(turnOn).not.toHaveBeenCalled();
+      expect(propose).not.toHaveBeenCalled();
       expect(stdout()).toContain("Nothing changed.");
+    });
+
+    it("offers the proposal, another identifier, or anonymity, and names the one chosen", async () => {
+      select.mockImplementation(
+        async (_message, choices: { value: unknown }[]) => choices[0]?.value
+      );
+      expect(await run("on")).toBeNull();
+      expect(propose).toHaveBeenCalledWith(process.cwd());
+      expect(offered()).toEqual([{ set: "Ada Example" }, "another", "none"]);
+      expect(choices()[0]?.name).toContain("Ada Example");
+      expect(turnOn).toHaveBeenCalledWith(process.cwd(), { set: "Ada Example" });
+    });
+
+    it("offers no proposal when there is none", async () => {
+      propose.mockResolvedValue(null);
+      select.mockResolvedValue("none");
+      await run("on");
+      expect(offered()).toEqual(["another", "none"]);
+    });
+
+    it("takes another identifier, typed", async () => {
+      select.mockResolvedValue("another");
+      input.mockResolvedValue("Ada at Work");
+      expect(await run("on")).toBeNull();
+      expect(input.mock.calls[0]?.[0]).toBe(
+        "Identifier (one non-empty line, at most 128 characters):"
+      );
+      expect(turnOn).toHaveBeenCalledWith(process.cwd(), { set: "Ada at Work" });
+    });
+
+    it("asks again until the identifier typed is one it can keep", async () => {
+      select.mockResolvedValue("another");
+      input
+        .mockResolvedValueOnce("   ")
+        .mockResolvedValueOnce("a".repeat(129))
+        .mockResolvedValueOnce("Ada at Work");
+      expect(await run("on")).toBeNull();
+      expect(input).toHaveBeenCalledTimes(3);
+      expect(stderr().split("one non-empty line of at most 128 characters.")).toHaveLength(3);
+      expect(stderr()).not.toContain("Nothing was changed.");
+      expect(turnOn).toHaveBeenCalledTimes(1);
+      expect(turnOn).toHaveBeenCalledWith(process.cwd(), { set: "Ada at Work" });
+    });
+
+    it("stays anonymous when chosen", async () => {
+      select.mockResolvedValue("none");
+      await run("on");
+      expect(turnOn).toHaveBeenCalledWith(process.cwd(), "none");
+    });
+
+    it("asks nothing about the person when an identity is set", async () => {
+      identity.show.mockResolvedValue(NAMED);
+      expect(await run("on")).toBeNull();
+      expect(select).not.toHaveBeenCalled();
+      expect(propose).not.toHaveBeenCalled();
+      expect(turnOn).toHaveBeenCalledWith(process.cwd(), "keep");
+    });
+
+    it("asks nothing about the person when a flag answered", async () => {
+      expect(await run("on", "--anonymous")).toBeNull();
+      expect(confirm).toHaveBeenCalled();
+      expect(select).not.toHaveBeenCalled();
+      expect(turnOn).toHaveBeenCalledWith(process.cwd(), "none");
     });
   });
 
   it("exits 1 when it is refused", async () => {
-    turnOn.mockResolvedValue({ status: "refused", reason: "outside-repository" });
-    expect(await run("on", "--yes")).toBe(1);
+    turnOn.mockResolvedValue({ status: "refused", reason: "identity-set" });
+    expect(await run("on", "--yes", "--anonymous")).toBe(1);
+    expect(stderr()).toContain("aidd telemetry identity --off");
   });
 });
 

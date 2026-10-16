@@ -2,7 +2,7 @@ import type { ConsentHistory } from "../domain/ports/consent-history.js";
 import type { ConsentSource } from "../domain/ports/consent-source.js";
 import type { RepositoryLocator } from "../domain/ports/repository-locator.js";
 import { repositoryIdOf } from "../domain/repository-identity.js";
-import { consentOf, tokenOfKey } from "../domain/telemetry-consent.js";
+import { consentOf, tokenOfKey, turnedOff } from "../domain/telemetry-consent.js";
 import { ConsentLog } from "./consent-log.js";
 
 export type RefusalReason =
@@ -10,6 +10,7 @@ export type RefusalReason =
   | "outside-repository"
   | "unidentified-repository"
   | "no-consent"
+  | "turned-off"
   | "unreadable-consent";
 
 export type ConsentedRepository =
@@ -41,12 +42,15 @@ export class ConsentedRepositories {
     const reading = await this.consents.read(located.root);
     const consent = consentOf(reading);
     if (consent === "unreadable") return { status: "refused", reason: "unreadable-consent" };
-    if (consent === "absent") return { status: "refused", reason: "no-consent" };
+    const off = turnedOff(reading);
+    if (consent === "absent" && !off) return { status: "refused", reason: "no-consent" };
     const log = await ConsentLog.load(this.history);
-    // A log that cannot be read, or a clone the platform cannot identify, measures nothing.
+    // A log that cannot be read, or a clone the platform cannot identify, measures nothing. A
+    // clone turned off is told so only past this point, where `on` would not refuse it.
     if (log.damaged || located.clone === null) {
       return { status: "refused", reason: "unreadable-consent" };
     }
+    if (off) return { status: "refused", reason: "turned-off" };
     const token = tokenOfKey(reading.kind === "value" ? reading.value : null);
     const named = log.openFor(located.clone).find((interval) => interval.token === token);
     if (named === undefined) return { status: "refused", reason: "no-consent" };

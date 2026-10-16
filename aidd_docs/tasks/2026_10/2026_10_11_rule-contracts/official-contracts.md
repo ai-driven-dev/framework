@@ -22,4 +22,4 @@ Native instruction text guides model behavior; it does not guarantee compliance.
 
 [6] [Codex 0.162.1 implementation](https://github.com/openai/codex/blob/092d3acd6bec3e3a14bdc7e7a2810ab628ab759d/codex-rs/core/src/agents_md.rs#L63) and [0.160.1 implementation](https://github.com/openai/codex/blob/d27764b82f7118f674371e6d6e76271d9d606edb/codex-rs/core/src/agents_md.rs#L63): separate global assembly and project budget. [HTTP receipts and hashes](evidence/official/http-receipts.json).
 
-[7] [Skill host contract](../../../../plugins/aidd-context/skills/05-rule-generate/references/tool-paths.md) and [publication script](../../../../plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs): restricted serialization, body ownership and shared publication.
+[7] [Skill host contract](../../../../plugins/aidd-context/skills/05-rule-generate/references/rule-publication.md) and [publication script](../../../../plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs): restricted serialization, body ownership and shared publication.

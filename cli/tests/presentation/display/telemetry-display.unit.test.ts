@@ -26,8 +26,9 @@ describe("printIdentityResult", () => {
     expect(output.at("success")[0]).toContain("--off");
   });
 
-  it("says the person axis is not set when nobody is named", () => {
-    expect(shown({ status: "unset" }).at("info")[0]).toContain("not set");
+  it("says the person axis shows anonymous when nobody is named", () => {
+    expect(shown({ status: "unset" }).at("info")[0]).toContain('shows "anonymous"');
+    expect(shown({ status: "removed" }).at("success")[0]).toContain('shows "anonymous"');
   });
 
   it("says the identity was removed", () => {
@@ -35,7 +36,9 @@ describe("printIdentityResult", () => {
   });
 
   it("explains what an identity is when one is refused", () => {
-    expect(shown({ status: "refused" }).at("error")[0]).toContain("one line");
+    expect(shown({ status: "refused" }).at("error")[0]).toBe(
+      "An identity is one non-empty line of at most 128 characters."
+    );
   });
 });
 
@@ -211,7 +214,12 @@ describe("printDeclareResult", () => {
     const refusal = (reason: Extract<DeclareResult, { status: "refused" }>["reason"]) =>
       linesOf((o) => printDeclareResult(o, { status: "refused", reason }))[0];
     expect(refusal("environment")).toBe("AIDD_TELEMETRY=0: nothing was declared.");
-    expect(refusal("no-consent")).toContain("has not opted in");
+    expect(refusal("no-consent")).toBe(
+      "This clone has not opted in to measurement, so no task was declared. Run `aidd telemetry on` here first."
+    );
+    expect(refusal("turned-off")).toBe(
+      "Measurement was turned off in this clone, so no task was declared. Run `aidd telemetry on` here to measure it again."
+    );
     expect(refusal("outside-repository")).toContain("Not inside a git repository");
     expect(refusal("unreadable-consent")).toContain("cannot be read");
     expect(refusal("unidentified-repository")).toContain("no remote and no commit");
@@ -226,6 +234,7 @@ describe("printTelemetryStatus", () => {
     branch: "feat/x",
     role: "working",
     binding: { state: "unbound" },
+    personId: null,
     ...over,
   });
   const bound = (
@@ -243,6 +252,19 @@ describe("printTelemetryStatus", () => {
         declaredAt: "2026-10-09T10:00:00.000Z",
       },
     });
+
+  it("says last who the measurement names, whatever the work is bound to", () => {
+    for (const result of [shown({ personId: "Ada Example" }), bound("branch")]) {
+      const lines = linesOf((o) => printTelemetryStatus(o, result));
+      expect(lines).toHaveLength(3);
+    }
+    expect(linesOf((o) => printTelemetryStatus(o, shown({ personId: "Ada Example" })))[2]).toBe(
+      'Measured as "Ada Example".'
+    );
+    expect(linesOf((o) => printTelemetryStatus(o, shown({})))[2]).toBe(
+      "Measured anonymously. To be named, run `aidd telemetry identity <id>`."
+    );
+  });
 
   it("says first since when the clone is measured", () => {
     expect(linesOf((o) => printTelemetryStatus(o, shown({})))[0]).toBe(
@@ -284,5 +306,10 @@ describe("printTelemetryStatus", () => {
     expect(
       linesOf((o) => printTelemetryStatus(o, { status: "refused", reason: "no-consent" }))
     ).toEqual(["Not measured: this clone has not run `aidd telemetry on`."]);
+    expect(
+      linesOf((o) => printTelemetryStatus(o, { status: "refused", reason: "turned-off" }))
+    ).toEqual([
+      "Not measured: measurement was turned off in this clone. Run `aidd telemetry on` to measure it again.",
+    ]);
   });
 });

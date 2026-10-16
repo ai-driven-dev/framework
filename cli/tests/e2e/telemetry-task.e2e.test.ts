@@ -18,7 +18,7 @@ beforeEach(async () => {
   telemetry = join(env.tempDir, "telemetry-dir");
   initRepository(repo, gitEnv, { remote: "git@github.com:acme/widgets.git" });
   git(repo, gitEnv, "switch", "-q", "-c", "feat/x");
-  await runCli(["telemetry", "on", "--yes"], repo, env.fakeHome, {
+  await runCli(["telemetry", "on", "--yes", "--anonymous"], repo, env.fakeHome, {
     env: { AIDD_TELEMETRY_DIR: telemetry, AIDD_TELEMETRY: "" },
   });
 });

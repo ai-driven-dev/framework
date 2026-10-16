@@ -14,6 +14,7 @@ import {
   FakeConsents,
   FakeLocator,
   InMemoryConsentHistory,
+  InMemoryIdentity,
   InMemoryLedger,
   InMemoryResolutions,
 } from "../../../../helpers/ports/in-memory-telemetry.js";
@@ -62,6 +63,7 @@ function setup(settings: (string | null)[] = []) {
   };
   const hooksSeen: string[] = [];
   const journalSeen: string[] = [];
+  const identities = new InMemoryIdentity();
   const writer = {
     async set(root: string, value: string) {
       events.push("consent");
@@ -109,7 +111,8 @@ function setup(settings: (string | null)[] = []) {
     history,
     { texts: async () => settings },
     { caseInsensitiveFileSystem: false, now: () => clock.now },
-    () => `tok-${++minted}`
+    () => `tok-${++minted}`,
+    identities
   );
   const off = new TelemetryOffUseCase(locator, consents, writer, ledger, history, () => clock.now);
   locator.directories.set("/w/repo", repository("/w/repo", "/w/main"));
@@ -127,13 +130,14 @@ function setup(settings: (string | null)[] = []) {
     events,
     hooksSeen,
     journalSeen,
+    identities,
   };
 }
 
 describe("aidd telemetry on", () => {
   it("writes consent before it cleans, and cleans the repository it was run in", async () => {
     const s = setup();
-    const result = await s.on.execute("/w/repo");
+    const result = await s.on.execute("/w/repo", "keep");
     expect(s.events.slice(0, 5)).toEqual(["lock", "consent", "unlock", "hooks", "journal"]);
     expect(s.writes).toEqual([{ root: "/w/repo", value: "2:tok-1" }]);
     expect(s.hooksSeen).toEqual(["/w/repo"]);
@@ -148,9 +152,9 @@ describe("aidd telemetry on", () => {
 
   it("still cleans, and writes no consent, when the clone already granted this version", async () => {
     const s = setup();
-    await s.on.execute("/w/repo");
+    await s.on.execute("/w/repo", "keep");
     s.writes.length = 0;
-    const result = await s.on.execute("/w/repo");
+    const result = await s.on.execute("/w/repo", "keep");
     expect(s.writes).toEqual([]);
     expect(s.hooksSeen).toEqual(["/w/repo", "/w/repo"]);
     expect(result).toMatchObject({ status: "on", consentWritten: false });
@@ -160,16 +164,16 @@ describe("aidd telemetry on", () => {
     for (const value of ["off", "1", "true", "2", "2:forged"]) {
       const s = setup();
       s.consents.values.set("/w/repo", value);
-      await s.on.execute("/w/repo");
+      await s.on.execute("/w/repo", "keep");
       expect(s.writes).toEqual([{ root: "/w/repo", value: "2:tok-1" }]);
     }
   });
 
   it("mints a fresh token each time it opens an interval", async () => {
     const s = setup();
-    await s.on.execute("/w/repo");
+    await s.on.execute("/w/repo", "keep");
     await s.off.execute("/w/repo");
-    await s.on.execute("/w/repo");
+    await s.on.execute("/w/repo", "keep");
     expect(s.writes.map((write) => write.value)).toEqual(["2:tok-1", "off", "2:tok-2"]);
   });
 
@@ -180,7 +184,7 @@ describe("aidd telemetry on", () => {
       s.events.push(`interval-${event.kind}`);
       await append(event);
     };
-    await s.on.execute("/w/repo");
+    await s.on.execute("/w/repo", "keep");
     expect(s.events.slice(0, 4)).toEqual(["lock", "consent", "interval-open", "unlock"]);
   });
 
@@ -190,7 +194,7 @@ describe("aidd telemetry on", () => {
       "/w/repo",
       '{\n  "keep": 1,\n  "telemetry": { "enabled": true, "endpoint": "x" }\n}\n'
     );
-    const result = await s.on.execute("/w/repo");
+    const result = await s.on.execute("/w/repo", "keep");
     expect(result).toMatchObject({ legacyConfig: "block-removed" });
     expect(s.config.written).toEqual([{ root: "/w/repo", text: '{\n  "keep": 1\n}\n' }]);
     expect(s.config.removed).toEqual([]);
@@ -199,7 +203,7 @@ describe("aidd telemetry on", () => {
   it("deletes .aidd/config.json when the block was all it held", async () => {
     const s = setup();
     s.config.texts.set("/w/repo", '{"telemetry":{"enabled":true,"endpoint":"x"}}');
-    expect(await s.on.execute("/w/repo")).toMatchObject({ legacyConfig: "file-deleted" });
+    expect(await s.on.execute("/w/repo", "keep")).toMatchObject({ legacyConfig: "file-deleted" });
     expect(s.config.removed).toEqual(["/w/repo"]);
     expect(s.config.written).toEqual([]);
   });
@@ -207,7 +211,7 @@ describe("aidd telemetry on", () => {
   it("leaves a config that does not parse alone, and still turns measurement on", async () => {
     const s = setup();
     s.config.texts.set("/w/repo", "{nope");
-    expect(await s.on.execute("/w/repo")).toMatchObject({
+    expect(await s.on.execute("/w/repo", "keep")).toMatchObject({
       consentWritten: true,
       legacyConfig: "unparseable",
     });
@@ -218,14 +222,14 @@ describe("aidd telemetry on", () => {
   it("never reads .aidd/config.json as consent", async () => {
     const s = setup();
     s.config.texts.set("/w/repo", '{"telemetry":{"enabled":true,"version":2}}');
-    const result = await s.on.execute("/w/repo");
+    const result = await s.on.execute("/w/repo", "keep");
     expect(result).toMatchObject({ consentWritten: true });
     expect(s.writes).toEqual([{ root: "/w/repo", value: "2:tok-1" }]);
   });
 
   it("refuses outside a repository without touching anything", async () => {
     const s = setup();
-    expect(await s.on.execute("/elsewhere")).toEqual({
+    expect(await s.on.execute("/elsewhere", "keep")).toEqual({
       status: "refused",
       reason: "outside-repository",
     });
@@ -235,7 +239,7 @@ describe("aidd telemetry on", () => {
   it("refuses a repository git cannot read, as an unreadable git config, without touching anything", async () => {
     const s = setup();
     s.locator.directories.set("/w/broken", { status: "unreadable" });
-    expect(await s.on.execute("/w/broken")).toEqual({
+    expect(await s.on.execute("/w/broken", "keep")).toEqual({
       status: "refused",
       reason: "unreadable-git-config",
     });
@@ -250,7 +254,7 @@ describe("aidd telemetry on", () => {
   it("refuses a git config it cannot read without touching anything", async () => {
     const s = setup();
     s.consents.unreadable.add("/w/repo");
-    expect(await s.on.execute("/w/repo")).toEqual({
+    expect(await s.on.execute("/w/repo", "keep")).toEqual({
       status: "refused",
       reason: "unreadable-git-config",
     });
@@ -260,14 +264,14 @@ describe("aidd telemetry on", () => {
   it("reads nothing back: the offsets are left as they are, and the root is remembered under the lock", async () => {
     const s = setup();
     s.ledger.stored.set("/t", { offset: 9, size: 9, identity: "i" });
-    await s.on.execute("/w/repo");
+    await s.on.execute("/w/repo", "keep");
     expect(s.ledger.stored.size).toBe(1);
     expect(s.events.slice(5)).toEqual(["lock", "unlock"]);
   });
 
   it("remembers its own root, seen alive, so forget can find the clone later", async () => {
     const s = setup();
-    await s.on.execute("/w/repo");
+    await s.on.execute("/w/repo", "keep");
     expect(s.resolutions.resolutions.get(resolutionKey("/w/repo", MAIN))).toEqual({
       dir: "/w/repo",
       repository_id: ID,
@@ -291,9 +295,9 @@ describe("aidd telemetry on", () => {
 
   it("opens the clone's interval at its own time, once", async () => {
     const s = setup();
-    await s.on.execute("/w/repo");
+    await s.on.execute("/w/repo", "keep");
     s.clock.now = new Date(T2);
-    await s.on.execute("/w/repo");
+    await s.on.execute("/w/repo", "keep");
     expect(s.history.written).toEqual([{ kind: "open", token: "tok-1", clone: MAIN, at: T1 }]);
   });
 
@@ -301,7 +305,7 @@ describe("aidd telemetry on", () => {
     for (const value of ["2", "2:forged"]) {
       const s = setup();
       s.consents.values.set("/w/repo", value);
-      await s.on.execute("/w/repo");
+      await s.on.execute("/w/repo", "keep");
       expect(s.history.written).toEqual([{ kind: "open", token: "tok-1", clone: MAIN, at: T1 }]);
       expect(s.writes).toEqual([{ root: "/w/repo", value: "2:tok-1" }]);
     }
@@ -312,7 +316,7 @@ describe("aidd telemetry on", () => {
     s.history.written.push({ kind: "open", token: "old", clone: MAIN, at: T1 });
     s.consents.values.set("/w/repo", "off");
     s.clock.now = new Date(T2);
-    await s.on.execute("/w/repo");
+    await s.on.execute("/w/repo", "keep");
     expect(s.history.written).toEqual([
       { kind: "open", token: "old", clone: MAIN, at: T1 },
       { kind: "close", token: "old", at: T2 },
@@ -324,20 +328,20 @@ describe("aidd telemetry on", () => {
     const s = setup();
     const other = cloneOf("/w/other/.git");
     s.history.written.push({ kind: "open", token: "theirs", clone: other, at: T1 });
-    await s.on.execute("/w/repo");
+    await s.on.execute("/w/repo", "keep");
     expect(s.history.written.map((event) => event.kind)).toEqual(["open", "open"]);
   });
 
   it("opens the consent under the ledger's lock, with the key", async () => {
     const s = setup();
-    await s.on.execute("/w/repo");
+    await s.on.execute("/w/repo", "keep");
     expect(s.events.slice(0, 3)).toEqual(["lock", "consent", "unlock"]);
   });
 
   it("refuses a clone the file system gives no identity, and changes nothing", async () => {
     const s = setup();
     s.locator.directories.set("/w/repo", { ...repository("/w/repo", "/w/main"), clone: null });
-    expect(await s.on.execute("/w/repo")).toEqual({
+    expect(await s.on.execute("/w/repo", "keep")).toEqual({
       status: "refused",
       reason: "unidentified-clone",
     });
@@ -351,7 +355,7 @@ describe("aidd telemetry on", () => {
       "/w/repo",
       repository("/w/repo", "/w/main", { remote: null, rootCommit: null })
     );
-    await s.on.execute("/w/repo");
+    await s.on.execute("/w/repo", "keep");
     expect(s.resolutions.saves).toBe(0);
   });
 
@@ -362,7 +366,7 @@ describe("aidd telemetry on", () => {
       at = T3
     ) {
       s.resolutions.resolutions.set(resolutionKey(entry.dir, entry.clone), entry);
-      await s.on.execute("/w/repo");
+      await s.on.execute("/w/repo", "keep");
       const run = await new DirectoryResolver(s.locator, s.consents, s.resolutions, s.history, {
         caseInsensitiveFileSystem: false,
         now: () => s.clock.now,
@@ -416,8 +420,8 @@ describe("aidd telemetry on", () => {
 
   it("does not rewrite what it already remembered of its own root", async () => {
     const s = setup();
-    await s.on.execute("/w/repo");
-    await s.on.execute("/w/repo");
+    await s.on.execute("/w/repo", "keep");
+    await s.on.execute("/w/repo", "keep");
     expect(s.resolutions.saves).toBe(1);
   });
 
@@ -427,7 +431,91 @@ describe("aidd telemetry on", () => {
     [['{"cleanupPeriodDays":3649}', '{"cleanupPeriodDays":3650}'], 3649, true],
   ])("reports retention from %j", async (settings, days, short) => {
     const s = setup(settings as (string | null)[]);
-    expect(await s.on.execute("/w/repo")).toMatchObject({ retention: { days, short } });
+    expect(await s.on.execute("/w/repo", "keep")).toMatchObject({ retention: { days, short } });
+  });
+});
+
+describe("aidd telemetry on, given who the clone is measured as", () => {
+  it("writes the identity chosen once the clone is on, and names it", async () => {
+    const s = setup();
+    const result = await s.on.execute("/w/repo", { set: " Ada Example " });
+    expect(s.identities.personId).toBe("Ada Example");
+    expect(result).toMatchObject({
+      status: "on",
+      identity: { personId: "Ada Example", previous: null },
+    });
+  });
+
+  it("replaces the identity already set, and names the previous one", async () => {
+    const s = setup();
+    s.identities.personId = "Ada at Home";
+    const result = await s.on.execute("/w/repo", { set: "Ada Example" });
+    expect(s.identities.personId).toBe("Ada Example");
+    expect(result).toMatchObject({
+      identity: { personId: "Ada Example", previous: "Ada at Home" },
+    });
+  });
+
+  it("writes no identity when the clone is refused, whatever was chosen", async () => {
+    const s = setup();
+    s.locator.directories.set("/w/repo", { ...repository("/w/repo", "/w/main"), clone: null });
+    for (const cwd of ["/elsewhere", "/w/repo"]) {
+      expect(await s.on.execute(cwd, { set: "Ada Example" })).toMatchObject({
+        status: "refused",
+      });
+    }
+    expect(s.identities.writes).toBe(0);
+    expect(s.writes).toEqual([]);
+  });
+
+  it("writes no identity when the consent log cannot be trusted", async () => {
+    const s = setup();
+    s.history.damaged = true;
+    expect(await s.on.execute("/w/repo", { set: "Ada Example" })).toEqual({
+      status: "refused",
+      reason: "damaged-consent-log",
+    });
+    expect(s.identities.writes).toBe(0);
+  });
+
+  it("refuses an identifier the identity rules refuse, before writing anything", async () => {
+    for (const typed of ["  ", "Ada\nExample", "a".repeat(129)]) {
+      const s = setup();
+      expect(await s.on.execute("/w/repo", { set: typed })).toEqual({
+        status: "refused",
+        reason: "invalid-identity",
+      });
+      expect(s.events).toEqual([]);
+      expect(s.identities.writes).toBe(0);
+    }
+  });
+
+  it("refuses to stay anonymous while an identity is set, before writing anything", async () => {
+    const s = setup();
+    s.identities.personId = "Ada Example";
+    expect(await s.on.execute("/w/repo", "none")).toEqual({
+      status: "refused",
+      reason: "identity-set",
+    });
+    expect(s.events).toEqual([]);
+    expect(s.identities.personId).toBe("Ada Example");
+  });
+
+  it("stays anonymous when nobody is named, and writes no identity", async () => {
+    const s = setup();
+    const result = await s.on.execute("/w/repo", "none");
+    expect(s.identities.writes).toBe(0);
+    expect(result).toMatchObject({ status: "on", identity: { personId: null, previous: null } });
+  });
+
+  it("keeps the identity as it is, and names it", async () => {
+    const s = setup();
+    s.identities.personId = "Ada Example";
+    const result = await s.on.execute("/w/repo", "keep");
+    expect(s.identities.writes).toBe(0);
+    expect(result).toMatchObject({
+      identity: { personId: "Ada Example", previous: "Ada Example" },
+    });
   });
 });
 
@@ -442,7 +530,7 @@ describe("aidd telemetry off, kept as the end of an interval", () => {
 
   it("closes the consent at its own time, and the clone's calls after it are refused", async () => {
     const s = setup();
-    await s.on.execute("/w/repo");
+    await s.on.execute("/w/repo", "keep");
     s.clock.now = new Date(T2);
     await s.off.execute("/w/repo");
     expect(s.history.written).toEqual([
@@ -458,7 +546,7 @@ describe("aidd telemetry off, kept as the end of an interval", () => {
 
   it("closes a consent whose key was already changed by hand", async () => {
     const s = setup();
-    await s.on.execute("/w/repo");
+    await s.on.execute("/w/repo", "keep");
     s.consents.values.set("/w/repo", "off");
     s.clock.now = new Date(T2);
     expect(await s.off.execute("/w/repo")).toEqual({ status: "off", changed: true });
@@ -467,7 +555,7 @@ describe("aidd telemetry off, kept as the end of an interval", () => {
 
   it("closes the interval its key names at its path, though the identity read there moved since `on`", async () => {
     const s = setup();
-    await s.on.execute("/w/repo");
+    await s.on.execute("/w/repo", "keep");
     // Where Linux refuses `statx`, the birth time is the change time, and `on` itself moved it.
     s.locator.directories.set("/w/repo", {
       ...repository("/w/repo", "/w/main"),
@@ -480,7 +568,7 @@ describe("aidd telemetry off, kept as the end of an interval", () => {
 
   it("leaves the interval of the clone a copy was made from, its key naming it at another path", async () => {
     const s = setup();
-    await s.on.execute("/w/repo");
+    await s.on.execute("/w/repo", "keep");
     s.locator.directories.set("/w/copy", repository("/w/copy"));
     s.consents.values.set("/w/copy", s.writes[0]?.value ?? "");
     await s.off.execute("/w/copy");
@@ -489,7 +577,7 @@ describe("aidd telemetry off, kept as the end of an interval", () => {
 
   it("writes under the ledger's lock, the interval with the key", async () => {
     const s = setup();
-    await s.on.execute("/w/repo");
+    await s.on.execute("/w/repo", "keep");
     s.events.length = 0;
     await s.off.execute("/w/repo");
     expect(s.events).toEqual(["lock", "consent", "unlock"]);
@@ -503,7 +591,7 @@ describe("aidd telemetry off, kept as the end of an interval", () => {
 
   it("closes a consent once", async () => {
     const s = setup();
-    await s.on.execute("/w/repo");
+    await s.on.execute("/w/repo", "keep");
     await s.off.execute("/w/repo");
     await s.off.execute("/w/repo");
     expect(s.history.written.map((event) => event.kind)).toEqual(["open", "close"]);

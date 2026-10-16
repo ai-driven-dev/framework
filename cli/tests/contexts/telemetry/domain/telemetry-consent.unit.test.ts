@@ -3,6 +3,7 @@ import {
   consentOf,
   consentValue,
   tokenOfKey,
+  turnedOff,
 } from "../../../../src/contexts/telemetry/domain/telemetry-consent.js";
 
 const value = (text: string | null) => ({ kind: "value", value: text }) as const;
@@ -39,5 +40,22 @@ describe("a clone's consent", () => {
 
   it("is unreadable, not absent, when git could not answer", () => {
     expect(consentOf({ kind: "unreadable" })).toBe("unreadable");
+  });
+});
+
+describe("a clone turned off", () => {
+  it("is one whose key is off, as `aidd telemetry off` writes it", () => {
+    expect(turnedOff(value("off"))).toBe(true);
+  });
+
+  it.each([[null], ["2"], ["2:t"], ["true"], ["{}"], ["OFF"], [" off"], ["off "], [""]])(
+    "is not one whose key is %j",
+    (text) => {
+      expect(turnedOff(value(text))).toBe(false);
+    }
+  );
+
+  it("is not one whose git config cannot be read", () => {
+    expect(turnedOff({ kind: "unreadable" })).toBe(false);
   });
 });

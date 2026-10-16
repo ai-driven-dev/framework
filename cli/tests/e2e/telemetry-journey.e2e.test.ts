@@ -213,7 +213,7 @@ const sessionStart = (session: Session, source: string) =>
   runHook("session-start.cjs", session, { hook_event_name: "SessionStart", source });
 
 async function optIn(): Promise<void> {
-  const run = await runCli(["telemetry", "on", "--yes"], repo, env.fakeHome, {
+  const run = await runCli(["telemetry", "on", "--yes", "--anonymous"], repo, env.fakeHome, {
     env: { ...sandboxVariables(), CLAUDE_CODE_SESSION_ID: "" },
   });
   expect(run.exitCode, run.stderr).toBe(0);

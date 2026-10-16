@@ -118,10 +118,11 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 |-------|------|---|
 | `actions` | [01-capture-rule.md](skills/05-rule-generate/actions/01-capture-rule.md) | - |
 | `actions` | [02-write-rule.md](skills/05-rule-generate/actions/02-write-rule.md) | - |
-| `actions` | [03-validate.md](skills/05-rule-generate/actions/03-validate.md) | - |
 | `assets` | [rule-template.md](skills/05-rule-generate/assets/rule-template.md) | - |
+| `references` | [rule-assessment.md](skills/05-rule-generate/references/rule-assessment.md) | - |
 | `references` | [rule-authoring.md](skills/05-rule-generate/references/rule-authoring.md) | - |
-| `references` | [tool-paths.md](skills/05-rule-generate/references/tool-paths.md) | - |
+| `references` | [rule-discovery.md](skills/05-rule-generate/references/rule-discovery.md) | - |
+| `references` | [rule-publication.md](skills/05-rule-generate/references/rule-publication.md) | - |
 | `-` | [SKILL.md](skills/05-rule-generate/SKILL.md) | `Create, update, publish or delete a coding rule across host AI tools. Use when adding, changing or removing a rule, convention or coding standard. Not for skills, agents or hooks.` |
 
 #### `skills/06-agent-generate`

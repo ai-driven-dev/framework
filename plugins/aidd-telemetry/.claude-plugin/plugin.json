@@ -1,7 +1,7 @@
 {
   "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
   "name": "aidd-telemetry",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "description": "Measurement: counts the tokens of Claude Code sessions per task, ticket, model and day, locally. Opt in with the 00-init skill; ask with 01-usage.",
   "author": {
     "name": "AI-Driven Dev",

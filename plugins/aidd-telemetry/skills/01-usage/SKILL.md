@@ -23,7 +23,7 @@ Run the flow above. Read only the next action file.
 
 | Action | Does |
 | --- | --- |
-| frame | map the question to a period and one axis, and name the command |
+| frame | map the question to a period, one axis and the filters it fixes, and name the command |
 | answer | run it, read the JSON, and state the figures with what is unknown |
 
 ## Transversal rules

@@ -1,5 +1,27 @@
 # Changelog
 
+## [2.6.0](https://github.com/ai-driven-dev/framework/compare/aidd-pm-v2.5.0...aidd-pm-v2.6.0) (2026-10-16)
+
+
+### ⚠ BREAKING CHANGES
+
+* the aidd telemetry commands, the aidd-telemetry hooks and skills, backlog-link.json and the AIDD-Session-Id commit trailer are removed; measurement returns, for Claude Code first, later on this branch.
+
+### Features
+
+* **telemetry:** deterministic claude code token measurement, release 1 ([#993](https://github.com/ai-driven-dev/framework/issues/993)) ([0a103e6](https://github.com/ai-driven-dev/framework/commit/0a103e6725cd9619a861d1ec3136b7534edabae3))
+
+
+### Bug Fixes
+
+* **aidd-pm:** give a spec gap one home, and refuse only one written elsewhere ([#969](https://github.com/ai-driven-dev/framework/issues/969)) ([22c541a](https://github.com/ai-driven-dev/framework/commit/22c541a70b9829305863a4c38ecac931b2914274))
+* **cli:** preserve noninteractive git fetches with simple-git v4 ([4ffbc0a](https://github.com/ai-driven-dev/framework/commit/4ffbc0a2f96a679b403d5eaa3f9c74c36bc5138e))
+
+
+### Documentation
+
+* delete the cost-report and metrics contracts and aidd_docs/runs/, rewrite ([0a103e6](https://github.com/ai-driven-dev/framework/commit/0a103e6725cd9619a861d1ec3136b7534edabae3))
+
 ## [2.5.0](https://github.com/ai-driven-dev/framework/compare/aidd-pm-v2.4.2...aidd-pm-v2.5.0) (2026-09-09)
 
 

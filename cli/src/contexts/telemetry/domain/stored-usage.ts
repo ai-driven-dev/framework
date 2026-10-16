@@ -20,10 +20,40 @@ const COUNTERS = [
   "reasoning",
 ] as const;
 
-/** `YYYY-MM` in UTC, so a ledger partition does not depend on the machine's time zone. */
-export function monthOf(at: string): string | null {
+/** A time that names its own zone and a four-digit year: anything else would be read in the
+ * machine's zone, or give a day no partition name can hold. The closing anchor states the
+ * whole shape; V8 already rejects any text after an ISO time, so no test can observe it. */
+const ZONED = /^\d{4}-\d{2}-\d{2}T[^Z+-]*(Z|[+-]\d{2}:\d{2})$/;
+
+/** `YYYY-MM-DD` in UTC, so a ledger partition does not depend on the machine's time zone, or
+ * `null` for a time with no zone, or whose UTC day falls outside four-digit years. */
+export function dayOf(at: string): string | null {
+  if (!ZONED.test(at)) return null;
   const instant = Date.parse(at);
-  return Number.isNaN(instant) ? null : new Date(instant).toISOString().slice(0, 7);
+  if (Number.isNaN(instant)) return null;
+  // An offset can carry the instant past year 9999 or before year 0, written `+YYYYYY`/`-YYYYYY`.
+  const day = new Date(instant).toISOString().slice(0, 10);
+  return day.startsWith("+") || day.startsWith("-") ? null : day;
+}
+
+const DAY_MS = 86_400_000;
+
+/** The UTC day `days` after a `YYYY-MM-DD` day, as `toISOString` writes its first ten
+ * characters: a day past four-digit years comes out in a shape no `YYYY-MM-DD` test accepts. */
+export function shiftDay(day: string, days: number): string {
+  return new Date(Date.parse(`${day}T00:00:00.000Z`) + days * DAY_MS).toISOString().slice(0, 10);
+}
+
+/** The days an ingest of these records reads: each record's day and the day on each side. A
+ * call's snapshots are written minutes apart, so a neighbour day holds any earlier one. */
+export function daysAround(records: readonly UsageRecord[]): ReadonlySet<string> {
+  const days = new Set<string>();
+  for (const record of records) {
+    const day = dayOf(record.at);
+    if (day === null) continue;
+    for (const offset of [-1, 0, 1]) days.add(shiftDay(day, offset));
+  }
+  return days;
 }
 
 function id(record: UsageRecord): string {
@@ -35,9 +65,9 @@ export interface Upserted {
   readonly records: readonly StoredUsage[];
   readonly added: number;
   readonly updated: number;
-  /** The months whose partition no longer says what it did: where each added or replaced
+  /** The days whose partition no longer says what it did: where each added or replaced
    * record is now, and where a replaced one was. The rest are as they were. */
-  readonly months: ReadonlySet<string>;
+  readonly days: ReadonlySet<string>;
 }
 
 /** Folds incoming records into what is held, with the same fold that counts a call once. Held
@@ -49,7 +79,7 @@ export function upsertUsage(
 ): Upserted {
   const before = new Map(held.map((record) => [id(record), record]));
   const records = foldUsage([...held, ...incoming]);
-  const months = new Set<string>();
+  const days = new Set<string>();
   let added = 0;
   let updated = 0;
   for (const record of records) {
@@ -58,36 +88,36 @@ export function upsertUsage(
     if (was === undefined) added += 1;
     else updated += 1;
     for (const moved of [record, was]) {
-      const month = moved === undefined ? null : monthOf(moved.at);
-      if (month !== null) months.add(month);
+      const day = moved === undefined ? null : dayOf(moved.at);
+      if (day !== null) days.add(day);
     }
   }
-  return { records, added, updated, months };
+  return { records, added, updated, days };
 }
 
-/** Records grouped by the month of their own time, each month in time order then key, so the
+/** Records grouped by the day of their own time, each day in time order then key, so the
  * bytes of a partition depend on what it holds and never on the order it was found in. A
- * record whose time does not parse has no month and is left out. Linear in the records, bar
- * the sort: each time is parsed once, and each month's array only ever grows by `push`. */
-export function partitionByMonth(
+ * record with no day (see `dayOf`) is left out. Linear in the records, bar the sort: each
+ * time is parsed once, and each day's array only ever grows by `push`. */
+export function partitionByDay(
   records: readonly StoredUsage[]
 ): ReadonlyMap<string, readonly StoredUsage[]> {
   const dated: { readonly record: StoredUsage; readonly instant: number; readonly id: string }[] =
     [];
   for (const record of records) {
-    if (monthOf(record.at) !== null) {
+    if (dayOf(record.at) !== null) {
       dated.push({ record, instant: Date.parse(record.at), id: id(record) });
     }
   }
   dated.sort((a, b) => a.instant - b.instant || compareText(a.id, b.id));
-  const months = new Map<string, StoredUsage[]>();
+  const days = new Map<string, StoredUsage[]>();
   for (const { record } of dated) {
-    const month = monthOf(record.at) as string;
-    const held = months.get(month);
-    if (held === undefined) months.set(month, [record]);
+    const day = dayOf(record.at) as string;
+    const held = days.get(day);
+    if (held === undefined) days.set(day, [record]);
     else held.push(record);
   }
-  return new Map([...months.entries()].sort(([a], [b]) => compareText(a, b)));
+  return new Map([...days.entries()].sort(([a], [b]) => compareText(a, b)));
 }
 
 function isText(value: unknown): value is string {
@@ -110,7 +140,8 @@ function isStoredUsage(
     (USAGE_AGENTS as readonly unknown[]).includes(object.agent) &&
     isText(object.key) &&
     isText(object.session_id) &&
-    isText(object.at) &&
+    typeof object.at === "string" &&
+    dayOf(object.at) !== null &&
     isText(object.repository_id) &&
     isNullableText(object.tool_version) &&
     isNullableText(object.model) &&

@@ -91,7 +91,8 @@ function unattributedValue(
   return { kind: "unattributed", reason: attribution.reason };
 }
 
-function axisValueOf(
+/** What a call is on one axis: the row it lands on, and what a filter on that axis compares. */
+export function axisValueOf(
   axis: ReportAxis,
   record: StoredUsage,
   attribution: Attribution,

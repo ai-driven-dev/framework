@@ -13,6 +13,7 @@ import {
   grantedBy,
   InMemoryBindingsLock,
   InMemoryConsentHistory,
+  InMemoryIdentity,
   InMemorySessions,
   InMemorySnapshots,
 } from "../../../helpers/ports/in-memory-telemetry.js";
@@ -37,6 +38,7 @@ function setup(sessionId: string | null = "sess-1234567890", refusedByEnvironmen
   const sessions = new InMemorySessions();
   const branches = new FakeBranchStore();
   const source = new FakeBindings();
+  const identities = new InMemoryIdentity();
   const useCase = new TelemetryStatusUseCase(
     new ConsentedRepositories(locator, consents, history),
     sessions,
@@ -50,9 +52,10 @@ function setup(sessionId: string | null = "sess-1234567890", refusedByEnvironmen
         () => new Date()
       )
     ),
-    { refusedByEnvironment, sessionId, now: () => new Date("2026-10-09T12:00:00.000Z") }
+    { refusedByEnvironment, sessionId, now: () => new Date("2026-10-09T12:00:00.000Z") },
+    identities
   );
-  return { useCase, consents, sessions, branches, source };
+  return { useCase, locator, consents, history, sessions, branches, source, identities };
 }
 
 const branchBinding = {
@@ -64,6 +67,13 @@ const branchBinding = {
 };
 
 describe("showing what the work is bound to", () => {
+  it("names the person the measurement names, or nobody", async () => {
+    const { useCase, identities } = setup();
+    expect(await useCase.execute(CWD)).toMatchObject({ status: "shown", personId: null });
+    identities.personId = "Ada Example";
+    expect(await useCase.execute(CWD)).toMatchObject({ personId: "Ada Example" });
+  });
+
   it("says since when the clone is measured: the start of the interval its key names", async () => {
     const { useCase } = setup();
     expect(await useCase.execute(CWD)).toMatchObject({
@@ -156,5 +166,39 @@ describe("showing what the work is bound to", () => {
       status: "refused",
       reason: "environment",
     });
+  });
+
+  it("says a clone turned off was turned off", async () => {
+    const off = setup();
+    off.consents.values.set(CWD, "off");
+    expect(await off.useCase.execute(CWD)).toEqual({ status: "refused", reason: "turned-off" });
+  });
+
+  it("says a clone turned off cannot be read, not to run on, when on would refuse", async () => {
+    const damaged = setup();
+    damaged.consents.values.set(CWD, "off");
+    damaged.history.damaged = true;
+    expect(await damaged.useCase.execute(CWD)).toEqual({
+      status: "refused",
+      reason: "unreadable-consent",
+    });
+    const unidentified = setup();
+    unidentified.consents.values.set(CWD, "off");
+    unidentified.locator.directories.set(CWD, { ...REPOSITORY, clone: null });
+    expect(await unidentified.useCase.execute(CWD)).toEqual({
+      status: "refused",
+      reason: "unreadable-consent",
+    });
+  });
+
+  it("never says a clone with no key, or a key that grants nothing, was turned off", async () => {
+    const never = setup();
+    never.consents.values.delete(CWD);
+    expect(await never.useCase.execute(CWD)).toEqual({ status: "refused", reason: "no-consent" });
+    for (const key of ["2", "true", "{}", "OFF"]) {
+      const other = setup();
+      other.consents.values.set(CWD, key);
+      expect(await other.useCase.execute(CWD)).toEqual({ status: "refused", reason: "no-consent" });
+    }
   });
 });

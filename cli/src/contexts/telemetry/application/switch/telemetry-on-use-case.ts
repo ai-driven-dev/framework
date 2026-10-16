@@ -1,6 +1,8 @@
 import type { CloneIdentity } from "../../domain/consent/clone-identity.js";
+import { personIdOf } from "../../domain/identity/person-identity.js";
 import type { ConsentHistory } from "../../domain/ports/consent-history.js";
 import type { ConsentSource } from "../../domain/ports/consent-source.js";
+import type { PersonIdentityStore } from "../../domain/ports/identity/person-identity-store.js";
 import type { LocatedDirectory, RepositoryLocator } from "../../domain/ports/repository-locator.js";
 import type { ResolutionStore } from "../../domain/ports/resolution-store.js";
 import type { ClaudeSettingsSource } from "../../domain/ports/switch/claude-settings-source.js";
@@ -27,6 +29,15 @@ type Located = Extract<LocatedDirectory, { status: "repository" }>;
 
 export type LegacyConfigOutcome = "none" | "block-removed" | "file-deleted" | "unparseable";
 
+/** Who the clone is measured as: the identity already set, none, or the one the person chose. */
+export type IdentityChoice = "keep" | "none" | { readonly set: string };
+
+/** Who the clone is measured as, `null` for nobody, and who it was before this `on`. */
+export interface OnIdentity {
+  readonly personId: string | null;
+  readonly previous: string | null;
+}
+
 export type OnResult =
   | {
       readonly status: "refused";
@@ -37,7 +48,9 @@ export type OnResult =
         | "outside-repository"
         | "unreadable-git-config"
         | "unidentified-clone"
-        | "damaged-consent-log";
+        | "damaged-consent-log"
+        | "invalid-identity"
+        | "identity-set";
     }
   | {
       readonly status: "on";
@@ -51,6 +64,7 @@ export type OnResult =
       /** How long Claude Code keeps a transcript, and whether that is short of what history
        * needs. */
       readonly retention: { readonly days: number; readonly short: boolean };
+      readonly identity: OnIdentity;
     };
 
 /** Opts a clone in, in its own git config, and leaves it as if the previous measurement had
@@ -69,10 +83,17 @@ export class TelemetryOnUseCase {
     private readonly claudeSettings: ClaudeSettingsSource,
     private readonly environment: ResolutionEnvironment,
     /** A fresh random token for each interval. */
-    private readonly newToken: () => string
+    private readonly newToken: () => string,
+    private readonly identities: PersonIdentityStore
   ) {}
 
-  async execute(cwd: string): Promise<OnResult> {
+  async execute(cwd: string, choice: IdentityChoice): Promise<OnResult> {
+    const previous = await this.identities.read();
+    const chosen = typeof choice === "object" ? personIdOf(choice.set) : null;
+    if (typeof choice === "object" && chosen === null)
+      return { status: "refused", reason: "invalid-identity" };
+    if (choice === "none" && previous !== null)
+      return { status: "refused", reason: "identity-set" };
     const clone = await readCloneConsent(this.locator, this.consents, cwd);
     if (clone.status === "refused") return clone;
     const { located } = clone;
@@ -80,6 +101,8 @@ export class TelemetryOnUseCase {
     if (identity === null) return { status: "refused", reason: "unidentified-clone" };
     const consentWritten = await this.ledger.exclusively(() => this.grant(located.root, identity));
     if (consentWritten === "damaged") return { status: "refused", reason: "damaged-consent-log" };
+    // Written only once the clone is on: a refused `on` leaves the identity as it was.
+    if (chosen !== null) await this.identities.write(chosen);
     const legacyConfig = await this.clearLegacyConfig(located.root);
 
     // Pairing and removal live in one adapter call: the line and its script go together.
@@ -95,6 +118,7 @@ export class TelemetryOnUseCase {
       hook,
       journal,
       retention: { days, short: retentionShort(days) },
+      identity: { personId: choice === "keep" ? previous : chosen, previous },
     };
   }
 

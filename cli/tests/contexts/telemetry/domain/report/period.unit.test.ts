@@ -3,6 +3,7 @@ import {
   dayOf,
   inPeriod,
   periodOf,
+  windowOf,
 } from "../../../../../src/contexts/telemetry/domain/report/period.js";
 
 const NOW = new Date("2026-10-09T15:00:00.000Z");
@@ -112,5 +113,80 @@ describe("the period of a report", () => {
 
   it("names the UTC day of an instant", () => {
     expect(dayOf("2026-10-02T23:59:59.999Z")).toBe("2026-10-02");
+  });
+});
+
+describe("the window a report reads", () => {
+  /** The days of a window among those given, so a test names exactly what it holds. */
+  const held = (period: { from: string | null; to: string | null }, days: readonly string[]) => {
+    const window = windowOf(period);
+    if (window === undefined) throw new Error("no window");
+    return days.filter(window);
+  };
+
+  it("is every partition when the period has no bound", () => {
+    expect(windowOf({ from: null, to: null })).toBeUndefined();
+  });
+
+  it("holds the period and the day on each side of it, and nothing beyond", () => {
+    expect(
+      held({ from: "2026-10-03", to: "2026-10-09" }, [
+        "2026-10-01",
+        "2026-10-02",
+        "2026-10-03",
+        "2026-10-06",
+        "2026-10-09",
+        "2026-10-10",
+        "2026-10-11",
+      ])
+    ).toEqual(["2026-10-02", "2026-10-03", "2026-10-06", "2026-10-09", "2026-10-10"]);
+  });
+
+  it("stays open on the side the period leaves open", () => {
+    const days = ["0001-01-01", "2026-10-01", "2026-10-02", "2026-10-03", "9999-12-31"];
+    expect(held({ from: "2026-10-02", to: null }, days)).toEqual([
+      "2026-10-01",
+      "2026-10-02",
+      "2026-10-03",
+      "9999-12-31",
+    ]);
+    expect(held({ from: null, to: "2026-10-02" }, days)).toEqual([
+      "0001-01-01",
+      "2026-10-01",
+      "2026-10-02",
+      "2026-10-03",
+    ]);
+  });
+
+  it("crosses a month and a year end", () => {
+    expect(
+      held({ from: "2026-03-01", to: "2026-12-31" }, [
+        "2026-02-27",
+        "2026-02-28",
+        "2027-01-01",
+        "2027-01-02",
+      ])
+    ).toEqual(["2026-02-28", "2027-01-01"]);
+  });
+
+  it("knows a leap day", () => {
+    const days = ["2024-02-27", "2024-02-28", "2024-02-29", "2024-03-01", "2024-03-02"];
+    expect(held({ from: "2024-03-01", to: null }, days)).toEqual([
+      "2024-02-29",
+      "2024-03-01",
+      "2024-03-02",
+    ]);
+    expect(held({ from: null, to: "2024-02-28" }, days)).toEqual([
+      "2024-02-27",
+      "2024-02-28",
+      "2024-02-29",
+    ]);
+  });
+
+  it("stays open past the first and last day a partition can be named", () => {
+    expect(held({ from: "0000-01-01", to: "9999-12-31" }, ["0000-01-01", "9999-12-31"])).toEqual([
+      "0000-01-01",
+      "9999-12-31",
+    ]);
   });
 });

@@ -1,5 +1,34 @@
 # Changelog
 
+## [2.7.0](https://github.com/ai-driven-dev/framework/compare/aidd-dev-v2.6.0...aidd-dev-v2.7.0) (2026-10-16)
+
+
+### ⚠ BREAKING CHANGES
+
+* the aidd telemetry commands, the aidd-telemetry hooks and skills, backlog-link.json and the AIDD-Session-Id commit trailer are removed; measurement returns, for Claude Code first, later on this branch.
+
+### Features
+
+* **aidd-dev:** rename todo to batch and report each agent's outcome ([#984](https://github.com/ai-driven-dev/framework/issues/984)) ([eeb9b21](https://github.com/ai-driven-dev/framework/commit/eeb9b2140578accfd09abe74c4f4d94f9ac987c2))
+* **telemetry:** deterministic claude code token measurement, release 1 ([#993](https://github.com/ai-driven-dev/framework/issues/993)) ([0a103e6](https://github.com/ai-driven-dev/framework/commit/0a103e6725cd9619a861d1ec3136b7534edabae3))
+
+
+### Bug Fixes
+
+* **aidd-dev:** a review appends a round and scores the whole plan ([#977](https://github.com/ai-driven-dev/framework/issues/977)) ([b25ae36](https://github.com/ai-driven-dev/framework/commit/b25ae36a9215d9fddc6dfb8b645b2be47e79d99f)), closes [#858](https://github.com/ai-driven-dev/framework/issues/858)
+* **aidd-dev:** a review never checks a runtime criterion from the code ([#995](https://github.com/ai-driven-dev/framework/issues/995)) ([3f91201](https://github.com/ai-driven-dev/framework/commit/3f91201402d0def02709f9f7ecaec6604e05119d)), closes [#976](https://github.com/ai-driven-dev/framework/issues/976)
+* **aidd-dev:** name one severity scale across assert, audit and refactor ([#997](https://github.com/ai-driven-dev/framework/issues/997)) ([3710dd3](https://github.com/ai-driven-dev/framework/commit/3710dd3446cf6182dd13f1d9d27bce1abbfe3f73))
+* **aidd-dev:** validate all CI failures before repushing ([d8ad9e6](https://github.com/ai-driven-dev/framework/commit/d8ad9e6a2237726fd2ddf113c60cd531e60efb82))
+* **aidd-dev:** validate all CI failures before repushing ([8ddd2cc](https://github.com/ai-driven-dev/framework/commit/8ddd2cc619772cc39379a37d58a7e1f596d91e5d))
+* **cli:** preserve noninteractive git fetches with simple-git v4 ([4ffbc0a](https://github.com/ai-driven-dev/framework/commit/4ffbc0a2f96a679b403d5eaa3f9c74c36bc5138e))
+* **framework:** leave model selection to the user ([#989](https://github.com/ai-driven-dev/framework/issues/989)) ([41e9169](https://github.com/ai-driven-dev/framework/commit/41e91691b5837a8c27475d0115725131bb53bf41))
+
+
+### Documentation
+
+* **aidd-dev:** simplify implementation rules and require workflow evidence ([#950](https://github.com/ai-driven-dev/framework/issues/950)) ([bad23d1](https://github.com/ai-driven-dev/framework/commit/bad23d1ea71301101a92ab0480a3f8a2706c7558))
+* delete the cost-report and metrics contracts and aidd_docs/runs/, rewrite ([0a103e6](https://github.com/ai-driven-dev/framework/commit/0a103e6725cd9619a861d1ec3136b7534edabae3))
+
 ## [2.6.0](https://github.com/ai-driven-dev/framework/compare/aidd-dev-v2.5.0...aidd-dev-v2.6.0) (2026-09-24)
 
 

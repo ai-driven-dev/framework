@@ -3,13 +3,18 @@ import type {
   ForgetResult,
 } from "../../../contexts/telemetry/application/forget/forget-telemetry-use-case.js";
 import type { OffResult } from "../../../contexts/telemetry/application/switch/telemetry-off-use-case.js";
-import type { OnResult } from "../../../contexts/telemetry/application/switch/telemetry-on-use-case.js";
+import type {
+  OnIdentity,
+  OnResult,
+} from "../../../contexts/telemetry/application/switch/telemetry-on-use-case.js";
 import type { ErasureKind } from "../../../contexts/telemetry/domain/ports/forget/measurement-erasure.js";
 import {
   RETENTION_DEFAULT_DAYS,
   RETENTION_WANTED_DAYS,
 } from "../../../contexts/telemetry/domain/switch/claude-retention.js";
 import type { CLIOutput } from "../../output.js";
+
+const IDENTITY_RULE = "An identity is one non-empty line of at most 128 characters.";
 
 const REFUSALS = {
   "outside-repository": "This directory is not inside a git repository.",
@@ -19,10 +24,26 @@ const REFUSALS = {
     "ledger/consents.jsonl holds a line that is not a consent event, so the log cannot be trusted and nothing was changed. Run `aidd telemetry forget --yes`, then `aidd telemetry on` again: nothing from before is stored.",
   "unidentified-clone":
     "This file system gives the clone's git directory no identity, so nothing measured here could be told to be its own. Nothing was changed.",
+  "invalid-identity": `${IDENTITY_RULE} Nothing was changed.`,
+  "identity-set":
+    "An identity is set, so this clone cannot be measured anonymously. Remove it with `aidd telemetry identity --off`, then run this again. Nothing was changed.",
 } as const;
 
 function plural(count: number, noun: string): string {
   return `${count} ${noun}${count === 1 ? "" : "s"}`;
+}
+
+function identityLine({ personId, previous }: OnIdentity): string {
+  if (personId === null) {
+    return 'Measured anonymously: the person axis shows "anonymous". To be named, run `aidd telemetry identity <id>`.';
+  }
+  const before = previous === null || previous === personId ? "" : `, no longer as "${previous}"`;
+  return `Measured as "${personId}"${before}.`;
+}
+
+/** A typed identifier refused, before it is asked for again. */
+export function printIdentityRule(output: CLIOutput): void {
+  output.warn(IDENTITY_RULE);
 }
 
 export function printOnResult(output: CLIOutput, result: OnResult): void {
@@ -76,6 +97,7 @@ export function printOnResult(output: CLIOutput, result: OnResult): void {
         `To keep them longer, add \`"cleanupPeriodDays": ${RETENTION_WANTED_DAYS}\` to your Claude settings.json.`
     );
   }
+  output.info(identityLine(result.identity));
   output.info(
     "Next: declare what you work on with `aidd telemetry task <name> [--ticket <ref>]`, or `--none` for no task. " +
       "In Claude Code, the aidd-telemetry plugin's hooks ask for it before the first prompt on an undeclared working branch."
