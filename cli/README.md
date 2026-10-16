@@ -121,6 +121,10 @@ aidd setup --scope user --ai claude,codex,copilot --plugins none --yes
 | `aidd auth status` | Show which credential resolves, from where, at which level |
 | `aidd auth logout` | Delete the stored credential |
 
+## Agents (beta)
+
+Install optional agents per project with the [subagent guide](../docs/SUBAGENTS.md).
+
 ## Translate
 
 `aidd translate <source> --to <tool> --out <dir>` converts a framework source tree into a target-native plugin tree.

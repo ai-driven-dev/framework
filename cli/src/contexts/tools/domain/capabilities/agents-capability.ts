@@ -21,6 +21,11 @@ function buildTomlContent(frontmatter: Record<string, unknown>, body: string): s
   if (frontmatter.model !== undefined) {
     lines.push(`model = ${tomlString(String(frontmatter.model))}`);
   }
+  if (frontmatter.model_reasoning_effort !== undefined) {
+    lines.push(
+      `model_reasoning_effort = ${tomlString(String(frontmatter.model_reasoning_effort))}`
+    );
+  }
   lines.push(`developer_instructions = """\n${body}\n"""`);
   return `${lines.join("\n")}\n`;
 }
@@ -51,6 +56,7 @@ export class AgentsCapability {
       directory: string;
       toolSuffix: string;
       format: "markdown" | "toml";
+      effortField?: string;
       userFileExt?: string;
       buildInstallPath?: (fileName: string) => string | null;
       convertFrontmatter?: (
@@ -84,14 +90,25 @@ export class AgentsCapability {
   }
 
   convertFrontmatter(fm: Record<string, unknown>, fileName?: string): Record<string, unknown> {
+    const converted = this.convertAgentFrontmatter(fm, fileName);
+    if (fm.model !== undefined) converted.model = fm.model;
+    const effortField = this.params.effortField;
+    if (effortField !== undefined && fm[effortField] !== undefined) {
+      converted[effortField] = fm[effortField];
+    }
+    return converted;
+  }
+
+  private convertAgentFrontmatter(
+    fm: Record<string, unknown>,
+    fileName?: string
+  ): Record<string, unknown> {
     if (this.params.convertFrontmatter) return this.params.convertFrontmatter(fm, fileName);
     const name = agentNameFromFrontmatter(fm, fileName);
-    if (this.params.format === "toml") {
-      const result: Record<string, unknown> = { name, description: fm.description };
-      if (fm.model !== undefined) result.model = fm.model;
-      return result;
-    }
-    return { name, description: fm.description };
+    return {
+      name,
+      description: fm.description,
+    };
   }
 
   serialize(frontmatter: Record<string, unknown>, body: string): string {

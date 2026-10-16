@@ -7,6 +7,7 @@ import {
   buildCopilotFlatContract,
   buildCopilotMarketplaceContract,
 } from "../../../../../../src/contexts/tools/domain/profiles/copilot/build.js";
+import { parseFrontmatter } from "../../../../../../src/kernel/markdown.js";
 import { InMemoryFileAdapter } from "../../../../../helpers/ports/in-memory-file-adapter.js";
 
 // Built, not written literally: biome reads a string holding "${...}" as a lost template.
@@ -303,4 +304,19 @@ describe("buildCopilotFlatContract()", () => {
       transform?.("---\ndescription: Helps\n---\nBody.\n", "aidd-dev", "notes.md-helper.md")
     ).toBe("---\ndescription: 'Helps'\nname: 'aidd-dev-notes.md-helper'\n---\nBody.\n");
   });
+
+  it.each([true, false])(
+    "preserves repository instruction selection %s in flat agents",
+    (include) => {
+      const transform = supported(buildCopilotFlatContract().artifacts.agents).transform;
+      const result = transform?.(
+        `---\nname: reviewer\ninclude-custom-instructions: ${include}\n---\nReview.\n`,
+        "aidd-dev",
+        "reviewer.md"
+      );
+      expect(parseFrontmatter(result ?? "").frontmatter["include-custom-instructions"]).toBe(
+        include
+      );
+    }
+  );
 });

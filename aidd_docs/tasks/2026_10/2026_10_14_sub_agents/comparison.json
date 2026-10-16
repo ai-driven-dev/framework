@@ -1,0 +1,72 @@
+{
+  "date": "2026-10-15",
+  "host": "Claude Code 2.1.300",
+  "parent": {
+    "model": "opus",
+    "effort_requested": "low"
+  },
+  "child": {
+    "model": "haiku",
+    "effort_requested": "low"
+  },
+  "delivery": "Generated flat agents in disposable projects, with fresh native Agent children.",
+  "measurement": "Native CLI JSON modelUsage summed across parent and child: input, output, cache-read and cache-write. One observation per retained case, with differing cache state. Host list-price estimates, not billing. Values captured from process output; temporary fixtures were subsequently swept.",
+  "earlier_attempt": "One earlier implementation pair used Bash(node *) permissions. The child authored valid code but could not run checks. The independent check passed; both modes were rerun with the same Bash permission in isolated fixtures. Earlier attempt costs and timings are excluded.",
+  "cases": [
+    {
+      "task": "exploration",
+      "mode": "direct",
+      "session": "42f186ac-3d4d-4986-8421-89c79c651119",
+      "wall_ms": 25997,
+      "total_tokens_including_cache": 136486,
+      "host_list_cost_usd": 0.2386296,
+      "models": [
+        "claude-opus-5-5"
+      ],
+      "quality": "Correct five-file trace, threshold 5000 inclusive, tax 700 bps; no fixture edits.",
+      "task_retries": 0
+    },
+    {
+      "task": "exploration",
+      "mode": "delegated",
+      "session": "42fd2da4-d84f-47dc-8843-cdcb1e997b92",
+      "wall_ms": 29960,
+      "total_tokens_including_cache": 183951,
+      "host_list_cost_usd": 0.2129891,
+      "models": [
+        "claude-opus-5-5",
+        "claude-haiku-5-5"
+      ],
+      "quality": "Same correct trace and cited values; no fixture edits.",
+      "task_retries": 0
+    },
+    {
+      "task": "implementation",
+      "mode": "direct",
+      "session": "f9056995-d39b-4b09-b890-d1dbdded8b56",
+      "wall_ms": 21064,
+      "total_tokens_including_cache": 136126,
+      "host_list_cost_usd": 0.2080506,
+      "models": [
+        "claude-opus-5-5"
+      ],
+      "quality": "Eight modules pass 32 lookup cases plus checkout; only assigned new files.",
+      "task_retries": 0
+    },
+    {
+      "task": "implementation",
+      "mode": "delegated",
+      "session": "08903722-ab01-45dd-9799-f9a8ff7209e5",
+      "wall_ms": 29374,
+      "total_tokens_including_cache": 188423,
+      "host_list_cost_usd": 0.18985041,
+      "models": [
+        "claude-opus-5-5",
+        "claude-haiku-5-5"
+      ],
+      "quality": "Same independent checks pass; only assigned new files.",
+      "task_retries": 0
+    }
+  ],
+  "token_breakdown": "Totals were captured from native modelUsage categories. The separate category counts were not retained after temporary fixture cleanup; repeat the documented procedure before a cache-normalized decision."
+}

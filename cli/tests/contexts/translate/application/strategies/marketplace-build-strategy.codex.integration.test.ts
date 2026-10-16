@@ -212,15 +212,18 @@ describe("CodexOutputStrategy", () => {
       }
     });
 
-    it("TOML files do not contain model key (D-5)", async () => {
+    it("TOML files leave Claude selectors unpinned for native model inheritance", async () => {
       const fs = await makeSeededFsFromReal();
       const uc = makeUseCase(fs);
       await uc.execute({ sourceDir: REAL_FIXTURE_DIR, outDir: OUT_DIR, target: "codex" });
-      const tomlFiles = fs.listUnder(OUT_DIR).filter((p) => p.endsWith(".toml"));
-      for (const tomlPath of tomlFiles) {
-        const content = fs.getFile(tomlPath) ?? "";
+      for (const [plugin, agent, model] of [
+        ["aidd-dev", "reviewer", undefined],
+        ["aidd-dev", "implementer", undefined],
+        ["aidd-async-dev", "async-orchestrator", undefined],
+      ]) {
+        const content = fs.getFile(`${OUT_DIR}/plugins/${plugin}/codex-agents/${agent}.toml`) ?? "";
         const parsed = parseToml(content) as Record<string, unknown>;
-        expect(parsed.model).toBeUndefined();
+        expect(parsed.model).toBe(model);
       }
     });
   });
@@ -448,15 +451,15 @@ describe("CodexOutputStrategy", () => {
     });
   });
 
-  describe("model key omission (D-5)", () => {
-    it("fixture agent with model: opus produces TOML with no model key", async () => {
+  describe("explicit model preservation", () => {
+    it("fixture agent with model: opus inherits the parent model", async () => {
       const fs = await makeSeededFsFromCodex();
       const uc = makeUseCase(fs);
       await uc.execute({ sourceDir: CODEX_FIXTURE_DIR, outDir: OUT_DIR, target: "codex" });
       const tomlContent =
         fs.getFile(`${OUT_DIR}/plugins/aidd-codex-fixture/codex-agents/test-agent.toml`) ?? "";
       const parsed = parseToml(tomlContent) as Record<string, unknown>;
-      expect(parsed.model).toBeUndefined();
+      expect(parsed).not.toHaveProperty("model");
     });
   });
 });

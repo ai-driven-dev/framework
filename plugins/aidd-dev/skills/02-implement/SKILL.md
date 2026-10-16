@@ -1,14 +1,17 @@
 ---
 name: 02-implement
-description: Write an existing plan's code, phase by phase, until every acceptance criterion holds. Use when a plan exists and needs implementing. Do NOT use to write a plan, review a diff.
-argument-hint: plan
+description: Implement an existing plan or assigned phase until its acceptance criteria hold. Use when a plan or bounded phase needs implementing. Not for writing a plan or reviewing a diff.
+argument-hint: plan | phase
 ---
 
 # Skill: implement
 
 ```mermaid
 flowchart LR
-  prepare --> execute --> finalize --> implemented
+  whole([whole plan]) --> prepare --> execute
+  assigned([assigned phase]) --> execute
+  execute -->|whole plan complete| finalize --> implemented
+  execute -->|assigned phase complete| returned([return changes and evidence])
   prepare -->|missing plan| stop
   execute -->|fix, next task or phase| execute
   execute --> blocked
@@ -20,7 +23,7 @@ flowchart LR
 
 ## Actions
 
-Run actions in order.
+Run actions in order for a whole plan. An assigned-phase executor reads the plan context and executes only that phase, skipping shared preparation and finalization.
 Read each action file in `actions/` before executing it.
 
 | Action   | Does                                  |
@@ -31,6 +34,7 @@ Read each action file in `actions/` before executing it.
 
 ## Transversal rules
 
+- The caller owns delegation, integration, shared plan status, and final acceptance; phase executors own only their assigned files and phase status.
 - Track the plan through `pending → in-progress → implemented` (or `blocked`).
   - Track phases through `pending → in-progress → done`.
   - Treat `in-progress` as a runtime marker.

@@ -27,13 +27,16 @@ import {
   OUTPUT_CURSOR_MARKETPLACE_RELATIVE,
 } from "./cursor-paths.js";
 
-function transformCursorAgent(content: string, _plugin: string, outName: string): string {
+function transformCursorAgent(content: string, plugin: string, outName: string): string {
   const { frontmatter, body } = parseFrontmatter(content);
   const stripped = stripCursorAgentFrontmatter(frontmatter);
   const rewrittenBody = rewriteRelativeLinks(body, {
     currentFilePluginRelative: `agents/${outName}`,
   });
-  return serializeFrontmatter(stripped, rewrittenBody);
+  return serializeFrontmatter(
+    { ...stripped, name: `${plugin}-${outName.replace(/\.md$/, "")}` },
+    rewrittenBody
+  );
 }
 
 export function buildCursorContract(): ToolBuildContract {
@@ -115,7 +118,13 @@ function transformCursorFlatAgent(content: string, plugin: string, outName: stri
     resolveTargetPath: (rel) => cursorFlatResolveTarget(plugin, rel),
   });
   const prefixedName = `${plugin}-${outName.replace(/\.md$/, "")}`;
-  return serializeFrontmatter({ ...stripped, name: prefixedName }, rewrittenBody);
+  return serializeFrontmatter(
+    {
+      ...stripped,
+      name: prefixedName,
+    },
+    rewrittenBody
+  );
 }
 
 export function buildCursorFlatContract(): ToolBuildContract {

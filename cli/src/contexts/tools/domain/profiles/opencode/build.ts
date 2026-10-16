@@ -135,7 +135,11 @@ function transformOpencodeFlatAgent(content: string, plugin: string, outName: st
   const prefixedName = `${plugin}-${outName.replace(/\.md$/, "")}`;
   // mode: subagent ensures opencode treats copied agents as subagents, not primary agents.
   return serializeFrontmatter(
-    { ...frontmatter, name: prefixedName, mode: "subagent" },
+    {
+      ...frontmatter,
+      name: prefixedName,
+      mode: "subagent",
+    },
     rewrittenBody
   );
 }

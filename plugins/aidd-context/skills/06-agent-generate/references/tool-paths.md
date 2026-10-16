@@ -16,15 +16,19 @@ Agents are supported on all five tools.
 
 ## Frontmatter per tool
 
-The canonical agent carries `name` and `description`. Emit those a row accepts, drop the rest. Optional fields, including `model`, only if the user asked. Never invent a value.
+The canonical agent carries `name` and `description`. Emit those a row accepts, drop the rest. Add model or effort settings only when requested and supported.
 
 | Tool           | Accepts                                                      |
 | -------------- | ----------------------------------------------------------- |
-| Claude Code    | `name`, `description`, optional `model`, `color`, `tools`   |
+| Claude Code    | `name`, `description`, optional `model`, `effort`, `color`, `tools` |
 | Cursor         | `name`, `description`, optional `model`, `readonly`, `is_background` |
-| OpenCode       | `name`, `description`, optional `model`, `temperature`, `permission` |
-| GitHub Copilot | `name`, `description`, optional `model`, `tools`            |
-| Codex CLI      | `name`, `description` (drops `model`)                       |
+| OpenCode V2    | `description`, `mode: subagent`, optional `model` as `provider/model#variant`, `permissions` |
+| GitHub Copilot | `name`, `description`, optional `model`, `reasoningEffort`, `tools`, `include-custom-instructions` |
+| Codex CLI      | `name`, `description`, optional `model`, `model_reasoning_effort` |
+
+For Copilot agents that rely on repository instructions, set `include-custom-instructions: true` unless the user explicitly opts out.
+
+Native fields checked 2026-10-16: [Claude](https://code.claude.com/docs/en/sub-agents#frontmatter-reference), [Cursor](https://cursor.com/docs/subagents#file-format), [OpenCode V2](https://opencode.ai/v2/docs/agents#model), [Copilot](https://docs.github.com/en/copilot/reference/copilot-cli-reference/cli-command-reference#custom-agent-frontmatter-fields), [Codex](https://developers.openai.com/codex/subagents#custom-agent-file-schema).
 
 ## Codex TOML conversion
 
@@ -32,7 +36,7 @@ Codex agents are TOML, not markdown. Convert:
 
 - Each frontmatter field becomes a top-level TOML key. Quote every string value with `"double quotes"` (a TOML basic string) and escape any embedded `"` or backslash, so a quote or apostrophe in the description stays valid TOML.
 - The body becomes `developer_instructions`, wrapped in `'''` literal delimiters (no escaping of the markdown).
-- Drop `model`.
+- Keep an explicitly requested `model` and `model_reasoning_effort`.
 
 ## Detect (which tools are installed)
 

@@ -34,6 +34,10 @@
 - **Fan out genuinely independent subtasks when coordination costs less than serial work.**
 - **Name by intention, scope by responsibility** ; not mechanism.
 
+## Agents
+
+Use available host agents by responsibility when useful; custom agents are optional. The caller owns scope, delegation, and final acceptance.
+
 ## Memory Management
 
 Project docs, memory, specs, and plans live in `aidd_docs/`.

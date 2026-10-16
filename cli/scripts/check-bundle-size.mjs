@@ -43,6 +43,10 @@ const pkg = JSON.parse(readFileSync(resolve(root, "package.json"), "utf8"));
 // correctly (+5,008 bytes over 0.27.3); unchanged application and minification settings.
 // 695 KB: 680.6 KB, that esbuild merged into the deterministic token measurement (+5.3 KB over
 // the 675.3 KB above); 2.1% measured headroom.
+// 705 KB: 697.0 KB, optional native agents and model policy measured on #1027's CI merge
+// with next ae8705f7; 1.1% headroom. The branch alone measured 694.7 KB.
+// 715 KB: 706.36 KB, #1027 merge 49e5cae4 with next 7084a88c after agent lifecycle fixes;
+// next's telemetry filtering adds 8,839 bytes over the 697.73 KB branch; 1.2% headroom.
 const budgetKB = pkg.bundleBudgetKB ?? 500;
 const budgetBytes = budgetKB * 1024;
 

@@ -11,7 +11,7 @@ Unify **engineering teams** around **standardized workflows** and **shared best 
 🧱 **IDE agnostic** · 🏗️ **Legacy systems** · 🌱 **Token-optimized** · 🇫🇷 **Made in France**
 
 <p>
-  <!--counts:start--><kbd>9 plugins</kbd> · <kbd>51 skills</kbd> · <kbd>2 agents</kbd><!--counts:end-->
+  <!--counts:start--><kbd>9 plugins</kbd> · <kbd>51 skills</kbd> · <kbd>0 agents</kbd><!--counts:end-->
 </p>
 
 [![Open Source](https://img.shields.io/badge/Open_Source-Yes-yellow?logo=open-source-initiative&logoColor=white)](https://opensource.org/)
@@ -26,7 +26,7 @@ Unify **engineering teams** around **standardized workflows** and **shared best 
 
 ---
 
-The **AI-Driven Dev Framework** installs a working SDLC (Software Development Life Cycle) into your AI coding tool — **skills, agents, commands, rules** — that turns a rough idea into a reviewed, shipped pull request:
+The **AI-Driven Dev Framework** installs a working SDLC (Software Development Life Cycle) into your AI coding tool — **skills, commands, rules** — that turns a rough idea into a reviewed, shipped pull request:
 
 ```text
 /aidd-orchestrator:01-sdlc "add rate limiting to the /login endpoint"
@@ -184,6 +184,10 @@ codex plugin add aidd-context@aidd-framework   # per plugin
 [Plugins documentation](https://kilo.ai/docs/automate/extending/plugins)
 
 </details>
+
+### Optional subagents (beta)
+
+Custom agents are a separate, project-local opt-in. Plugins work without them. See the [subagent guide](docs/SUBAGENTS.md) for installation, a native trial, and removal by IDE.
 
 ## 🚀 Quick start
 

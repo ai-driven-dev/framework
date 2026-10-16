@@ -3,12 +3,8 @@ import type { MarketplaceScope } from "../../../../kernel/scope.js";
 /**
  * What a host's own plugin registry says, read from the file that host maintains itself.
  *
- * A host loads a plugin only once it appears in its own user-global registry, whatever the
- * project's settings declare: `aidd` writes a declaration, the host keeps a registry, and only
- * the second one decides. All three hosts that declare a native activation key that registry on
- * the same `<plugin>@<marketplace>` string `enabledPlugins` uses, so a reading is a set of refs
- * whatever file it came out of. A host with no implementation here is simply absent from the
- * map the diagnostic consults, never assumed to agree.
+ * Readers use the `<plugin>@<marketplace>` refs their hosts record. A host with no reader
+ * is absent from the map, never assumed to agree.
  */
 /** What a registry says about one ref: whether the host records it enabled and, for a host
  * whose registry carries a per-entry scope (Claude), the scope of the entry that answers for
@@ -35,8 +31,5 @@ export interface HostPluginRegistryReading {
 }
 
 export interface HostPluginRegistryReader {
-  /** `projectRoot` because a registry may bind a ref to one project rather than to the machine
-   * — Claude's does. A reader whose host records no such binding ignores it and says so, rather
-   * than silently answering a narrower question than it was asked. */
   read(projectRoot: string): Promise<HostPluginRegistryReading>;
 }

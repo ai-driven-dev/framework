@@ -1,0 +1,73 @@
+{
+  "roles": {
+    "main": "standard",
+    "explorer": "light",
+    "executor": "light",
+    "validator": "light",
+    "reviewer": "standard"
+  },
+  "providers": {
+    "openai": {
+      "standard": {
+        "model": "gpt-6.1-sol",
+        "effort": "medium"
+      },
+      "light": {
+        "model": "gpt-6-luna",
+        "effort": "medium"
+      }
+    },
+    "anthropic": {
+      "standard": {
+        "model": "claude-opus-5-5",
+        "effort": "medium",
+        "nativeModels": {
+          "copilot": "claude-opus-5.5"
+        }
+      },
+      "light": {
+        "model": "claude-haiku-5-5",
+        "effort": "medium",
+        "nativeModels": {
+          "copilot": "claude-haiku-5.5"
+        }
+      }
+    },
+    "mistral": {
+      "standard": {
+        "model": "mistral-large-4",
+        "effort": "high"
+      },
+      "light": {
+        "model": "mistral-small-2603",
+        "effort": "high"
+      }
+    }
+  },
+  "hosts": {
+    "claude": {
+      "ide": "claude-code",
+      "providers": ["anthropic"],
+      "effortField": "effort"
+    },
+    "codex": {
+      "providers": ["openai"],
+      "effortField": "model_reasoning_effort"
+    },
+    "copilot": {
+      "providers": ["openai", "anthropic"],
+      "effortField": "reasoningEffort"
+    },
+    "opencode": {
+      "providers": ["openai", "anthropic", "mistral"],
+      "effortPrefix": "#",
+      "effortSuffix": "",
+      "providerPrefix": true
+    },
+    "cursor": {
+      "providers": ["anthropic"],
+      "effortPrefix": "[effort=",
+      "effortSuffix": "]"
+    }
+  }
+}

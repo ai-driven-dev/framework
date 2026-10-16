@@ -20,4 +20,4 @@ The plan's `status` frontmatter field tracks its lifecycle for kanban views. The
 - Linear: `pending → in-progress → implemented → reviewed`. `blocked` is reachable from any active state.
 - Review reject (`iterate` / `changes-requested`) does NOT set `reviewed`. The plan stays `implemented` while the loop fixes the diff, not the plan.
 - `implemented` ≠ reviewed. Only the review layer sets `reviewed`.
-- Workers never write `status`; only plan creation and the orchestration layers do.
+- Assigned phase workers update only their own phase status; plan creation and the whole-plan owner update plan status.

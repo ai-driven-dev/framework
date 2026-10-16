@@ -8,11 +8,13 @@ import {
 
 describe("stripAgentFrontmatter", () => {
   describe("keeps allowlisted keys", () => {
-    it("preserves all six allowed keys when all are present", () => {
+    it("preserves all allowed keys when all are present", () => {
       const input = {
         name: "reviewer",
         description: "Reviews code",
         model: "claude-sonnet",
+        reasoningEffort: "medium",
+        "include-custom-instructions": true,
         tools: ["Read", "Write"],
         agents: ["helper"],
         "argument-hint": "[file]",
@@ -25,6 +27,12 @@ describe("stripAgentFrontmatter", () => {
       const input = { name: "reviewer", description: "Reviews code" };
       const result = stripAgentFrontmatter(input);
       expect(result).toEqual({ name: "reviewer", description: "Reviews code" });
+    });
+  });
+
+  it("preserves an explicit repository-instruction opt-out", () => {
+    expect(stripAgentFrontmatter({ "include-custom-instructions": false })).toEqual({
+      "include-custom-instructions": false,
     });
   });
 

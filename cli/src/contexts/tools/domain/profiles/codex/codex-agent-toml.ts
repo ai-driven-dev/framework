@@ -1,10 +1,13 @@
 import { parseFrontmatter } from "../../../../../kernel/markdown.js";
 import { stringifyToml } from "./toml.js";
 
+const CLAUDE_MODEL_SELECTOR =
+  /^(?:default|inherit|best|fable|haiku|opus|opusplan|sonnet)(?:\[1m\])?$/i;
+
 /**
  * Converts a Claude-format agent markdown file (frontmatter + body) into a Codex subagent TOML
  * string. Key insertion order is fixed for deterministic output, and the conversion is lossy —
- * no model field is emitted and the TOML schema diverges from the frontmatter, so there is no
+ * the TOML schema diverges from the frontmatter, so there is no
  * inverse.
  *
  * `prefixName` is for flat mode, where every plugin shares one `.codex/agents/` directory and
@@ -44,7 +47,13 @@ function buildTomlObject(
   obj.name = name;
   // description is a required subagent key; default to "" when absent.
   obj.description = typeof frontmatter.description === "string" ? frontmatter.description : "";
-  // model is intentionally omitted: no known Codex model id set.
+  // Claude shorthand selectors are not native model IDs; leave the model inherited.
+  if (typeof frontmatter.model === "string" && !CLAUDE_MODEL_SELECTOR.test(frontmatter.model)) {
+    obj.model = frontmatter.model;
+  }
+  if (frontmatter.model_reasoning_effort !== undefined) {
+    obj.model_reasoning_effort = frontmatter.model_reasoning_effort;
+  }
   obj.developer_instructions = body;
   return obj;
 }

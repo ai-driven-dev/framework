@@ -256,6 +256,9 @@ export function sandboxedEnv(
     // Defaults, before `extra`: a caller passing one means to change it. The sandbox's own
     // home variables come after, where nothing can override them.
     AIDD_USER_CONFIG_DIR: join(fakeHome, ".config", "aidd"),
+    CLAUDE_CONFIG_DIR: join(fakeHome, ".claude"),
+    CLAUDE_CODE_PLUGIN_CACHE_DIR: join(fakeHome, ".claude", "plugins"),
+    COPILOT_HOME: join(fakeHome, ".copilot"),
     // The check asks GitHub for the latest release and prints a notice from the answer, so
     // captured stderr would change with every publish.
     AIDD_SKIP_UPDATE_CHECK: "1",
