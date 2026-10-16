@@ -1,7 +1,7 @@
 import { mkdir, mkdtemp, readFile, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ManageAgentsUseCase } from "../../../../../src/contexts/framework/application/agents/manage-agents-use-case.js";
 import { AgentInstallationStoreAdapter } from "../../../../../src/contexts/framework/infrastructure/agent-installation-store-adapter.js";
 import "../../../../../src/contexts/tools/domain/profiles/codex/profile.js";
@@ -17,14 +17,150 @@ const sources = {
 describe("ManageAgentsUseCase", () => {
   let root: string;
   let manager: ManageAgentsUseCase;
+  let fs: FileAdapter;
+  let store: AgentInstallationStoreAdapter;
   beforeEach(async () => {
     root = await mkdtemp(join(tmpdir(), "aidd-agents-"));
     const hasher = new HasherAdapter();
-    const fs = new FileAdapter(hasher);
-    manager = new ManageAgentsUseCase(fs, new AgentInstallationStoreAdapter(fs), hasher, sources);
+    fs = new FileAdapter(hasher);
+    store = new AgentInstallationStoreAdapter(fs);
+    manager = new ManageAgentsUseCase(fs, store, hasher, sources);
   });
   afterEach(async () => {
+    vi.restoreAllMocks();
     await rm(root, { recursive: true, force: true });
+  });
+
+  it("rolls back a new installation when ownership cannot be saved, then allows retry", async () => {
+    vi.spyOn(store, "save").mockRejectedValueOnce(new Error("registry refused"));
+    await expect(
+      manager.install({ projectRoot: root, host: "codex", provider: "openai" })
+    ).rejects.toThrow("registry refused");
+    for (const name of Object.keys(sources))
+      await expect(readFile(join(root, `.codex/agents/${name}.toml`))).rejects.toMatchObject({
+        code: "ENOENT",
+      });
+    expect(await manager.install({ projectRoot: root, host: "codex", provider: "openai" })).toBe(2);
+  });
+
+  it("restores the previous provider and ledger after a failed update", async () => {
+    await manager.install({ projectRoot: root, host: "opencode", provider: "openai" });
+    const ledger = await readFile(join(root, ".aidd/agents.json"), "utf8");
+    const contents = await Promise.all(
+      Object.keys(sources).map((name) =>
+        readFile(join(root, `.opencode/agents/${name}.md`), "utf8")
+      )
+    );
+    vi.spyOn(store, "save").mockRejectedValueOnce(new Error("registry refused"));
+    await expect(
+      manager.install({ projectRoot: root, host: "opencode", provider: "anthropic" })
+    ).rejects.toThrow("registry refused");
+    expect(await readFile(join(root, ".aidd/agents.json"), "utf8")).toBe(ledger);
+    expect(
+      await Promise.all(
+        Object.keys(sources).map((name) =>
+          readFile(join(root, `.opencode/agents/${name}.md`), "utf8")
+        )
+      )
+    ).toEqual(contents);
+    expect(
+      await manager.install({ projectRoot: root, host: "opencode", provider: "anthropic" })
+    ).toBe(2);
+  });
+
+  it("rolls back earlier files when a later native write fails", async () => {
+    const write = fs.writeFile.bind(fs);
+    vi.spyOn(fs, "writeFile")
+      .mockImplementationOnce(write)
+      .mockRejectedValueOnce(new Error("write refused"));
+    await expect(
+      manager.install({ projectRoot: root, host: "codex", provider: "openai" })
+    ).rejects.toThrow("write refused");
+    await expect(
+      readFile(join(root, ".codex/agents/aidd-dev-explorer.toml"))
+    ).rejects.toMatchObject({ code: "ENOENT" });
+    await expect(readFile(join(root, ".aidd/agents.json"))).rejects.toMatchObject({
+      code: "ENOENT",
+    });
+    expect(await manager.install({ projectRoot: root, host: "codex", provider: "openai" })).toBe(2);
+  });
+
+  it("keeps the original error when a refused native write left the existing file intact", async () => {
+    await manager.install({ projectRoot: root, host: "opencode", provider: "openai" });
+    const failure = new Error("native directory is read-only");
+    vi.spyOn(fs, "writeFile").mockRejectedValue(failure);
+    await expect(
+      manager.install({ projectRoot: root, host: "opencode", provider: "anthropic" })
+    ).rejects.toBe(failure);
+    expect(await readFile(join(root, ".opencode/agents/aidd-dev-explorer.md"), "utf8")).toContain(
+      "openai/gpt-6-luna"
+    );
+  });
+
+  it("reports an incomplete rollback instead of hiding a restoration failure", async () => {
+    vi.spyOn(store, "save").mockRejectedValueOnce(new Error("registry refused"));
+    vi.spyOn(fs, "deleteFile").mockResolvedValue();
+    const failed = manager.install({ projectRoot: root, host: "codex", provider: "openai" });
+    await expect(failed).rejects.toBeInstanceOf(AggregateError);
+    await expect(failed).rejects.toThrow("rollback was incomplete");
+  });
+
+  it.each(["remove", "removeAll"] as const)(
+    "restores agents when %s cannot save ownership",
+    async (method) => {
+      await manager.install({ projectRoot: root, host: "codex", provider: "openai" });
+      const ledger = await readFile(join(root, ".aidd/agents.json"), "utf8");
+      vi.spyOn(store, "save").mockRejectedValueOnce(new Error("registry refused"));
+      const remove = () =>
+        method === "remove"
+          ? manager.remove({ projectRoot: root, host: "codex" })
+          : manager.removeAll(root);
+      await expect(remove()).rejects.toThrow("registry refused");
+      expect(await readFile(join(root, ".aidd/agents.json"), "utf8")).toBe(ledger);
+      expect(await manager.install({ projectRoot: root, host: "codex", provider: "openai" })).toBe(
+        0
+      );
+      expect(await remove()).toBe(2);
+    }
+  );
+
+  it("records both IDEs during simultaneous installations", async () => {
+    await Promise.all([
+      manager.install({ projectRoot: root, host: "codex", provider: "openai" }),
+      manager.install({ projectRoot: root, host: "opencode", provider: "openai" }),
+    ]);
+    expect((await manager.preview(root)).map((tool) => tool.toolId).sort()).toEqual([
+      "codex",
+      "opencode",
+    ]);
+    expect(await manager.remove({ projectRoot: root, host: "codex" })).toBe(2);
+    expect(await manager.preview(root)).toEqual([{ toolId: "opencode", fileCount: 2 }]);
+    expect(await manager.remove({ projectRoot: root, host: "opencode" })).toBe(2);
+  });
+
+  it("keeps a concurrent installation registered when another IDE is removed", async () => {
+    await manager.install({ projectRoot: root, host: "codex", provider: "openai" });
+    await Promise.all([
+      manager.remove({ projectRoot: root, host: "codex" }),
+      manager.install({ projectRoot: root, host: "opencode", provider: "anthropic" }),
+    ]);
+    expect(await manager.preview(root)).toEqual([{ toolId: "opencode", fileCount: 2 }]);
+    expect(await manager.removeAll(root)).toBe(2);
+  });
+
+  it("serializes remove-all with installation even when the registry directory becomes empty", async () => {
+    await manager.install({ projectRoot: root, host: "codex", provider: "openai" });
+    await Promise.all([
+      manager.removeAll(root),
+      manager.install({ projectRoot: root, host: "opencode", provider: "mistral" }),
+    ]);
+    const remaining = await manager.preview(root);
+    const opencodeExists = await fs.fileExists(join(root, ".opencode/agents/aidd-dev-explorer.md"));
+    expect(opencodeExists).toBe(remaining.some(({ toolId }) => toolId === "opencode"));
+    expect(remaining.every(({ toolId }) => toolId === "opencode")).toBe(true);
+    await expect(readFile(join(root, ".aidd/agents.json.lock"))).rejects.toMatchObject({
+      code: "ENOENT",
+    });
   });
 
   it("installs namespaced native Codex agents and records ownership", async () => {
@@ -118,6 +254,7 @@ describe("ManageAgentsUseCase", () => {
           manager.install({ projectRoot: root, host: "codex", provider: "openai" })
         ).rejects.toThrow("outside project");
         await rm(join(root, ".codex"));
+        await rm(join(root, ".aidd"), { recursive: true, force: true });
         await symlink(outside, join(root, ".aidd"));
         await expect(
           manager.install({ projectRoot: root, host: "codex", provider: "openai" })

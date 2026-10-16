@@ -35,6 +35,7 @@ import type { NativeRegistrations } from "../domain/manifest/native-registration
 import type { Manifest } from "../domain/manifest.js";
 import { aiddGitignoreEntries } from "../domain/manifest-gitignore-entries.js";
 import type { InstalledPlugin } from "../domain/plugins/installed-plugin.js";
+import { AGENT_INSTALLATIONS_LOCK_PATH } from "../domain/ports/agent-installation-store.js";
 import type { ManifestRepository } from "../domain/ports/manifest-repository.js";
 import type { UserSourceReferences } from "../domain/ports/user-source-references.js";
 import type { ManageAgentsUseCase } from "./agents/manage-agents-use-case.js";
@@ -221,8 +222,9 @@ export class CleanUseCase {
     await this.purgeNativeCaches(home, undone);
     let deleted = await this.deleteAllToolFiles(manifest, options.projectRoot);
     deleted += await this.deleteMachineLocalFiles(manifest, options.projectRoot);
-    deleted += (await this.agents?.removeAll(options.projectRoot)) ?? 0;
-    await this.removeAiddState(options.projectRoot);
+    const removeState = () => this.removeAiddState(options.projectRoot);
+    if (this.agents) deleted += await this.agents.removeAll(options.projectRoot, removeState);
+    else await removeState();
     // Exactly what the pipeline added on install, never a subset of it.
     await this.gitignoreUseCase.remove(options.projectRoot, aiddGitignoreEntries(manifest));
     // One project-level decrement, only after the local projection has been cleaned successfully.
@@ -309,7 +311,10 @@ export class CleanUseCase {
 
     if (!(await this.fs.fileExists(aiddDir))) return;
     const remaining = await this.fs.listDirectory(aiddDir);
-    if (remaining.length === 0) {
+    if (
+      remaining.length === 0 &&
+      !(await this.fs.fileExists(join(projectRoot, AGENT_INSTALLATIONS_LOCK_PATH)))
+    ) {
       await this.fs.deleteDirectory(aiddDir);
       return;
     }

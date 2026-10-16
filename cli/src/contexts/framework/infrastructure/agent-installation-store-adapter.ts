@@ -1,9 +1,12 @@
-import { join } from "node:path";
+import { mkdir, rmdir } from "node:fs/promises";
+import { dirname, join } from "node:path";
+import { setTimeout as pause } from "node:timers/promises";
 import { FileHash } from "../../../kernel/file.js";
 import type { FileReader } from "../../../kernel/ports/file-reader.js";
 import type { FileWriter } from "../../../kernel/ports/file-writer.js";
 import { isAgentHost } from "../../tools/domain/formats/agent-models.js";
 import {
+  AGENT_INSTALLATIONS_LOCK_PATH,
   AGENT_INSTALLATIONS_PATH,
   type AgentInstallationStore,
   type AgentInstallations,
@@ -11,6 +14,41 @@ import {
 
 export class AgentInstallationStoreAdapter implements AgentInstallationStore {
   constructor(private readonly fs: FileReader & FileWriter) {}
+
+  async withExclusiveAccess<T>(projectRoot: string, action: () => Promise<T>): Promise<T> {
+    const lock = join(projectRoot, AGENT_INSTALLATIONS_LOCK_PATH);
+    const deadline = Date.now() + 30_000;
+    while (true) {
+      try {
+        await mkdir(dirname(lock), { recursive: true });
+        await mkdir(lock);
+        break;
+      } catch (error) {
+        if (!["EEXIST", "ENOENT"].includes((error as NodeJS.ErrnoException).code ?? ""))
+          throw error;
+        if (Date.now() >= deadline)
+          throw new Error(
+            `Agent ownership registry is busy: ${lock}. Retry after the other AIDD operation finishes; remove this lock only if that operation has stopped.`
+          );
+        await pause(50);
+      }
+    }
+    try {
+      return await action();
+    } finally {
+      await this.release(lock);
+    }
+  }
+
+  private async release(lock: string): Promise<void> {
+    await rmdir(lock);
+    try {
+      await rmdir(dirname(lock));
+    } catch (error) {
+      if (!["ENOENT", "ENOTEMPTY", "EEXIST"].includes((error as NodeJS.ErrnoException).code ?? ""))
+        throw error;
+    }
+  }
 
   async load(projectRoot: string): Promise<AgentInstallations> {
     const path = join(projectRoot, AGENT_INSTALLATIONS_PATH);

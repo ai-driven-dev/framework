@@ -1,7 +1,7 @@
-import { lstat, mkdir, mkdtemp, readFile, rm, symlink, writeFile } from "node:fs/promises";
+import { access, lstat, mkdir, mkdtemp, readFile, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ManageAgentsUseCase } from "../../../../../src/contexts/framework/application/agents/manage-agents-use-case.js";
 import { CleanUseCase } from "../../../../../src/contexts/framework/application/clean-use-case.js";
 import { GitignoreUseCase } from "../../../../../src/contexts/framework/application/gitignore-use-case.js";
@@ -30,6 +30,7 @@ describe("clean includes opt-in agents", () => {
     await manager.install({ projectRoot: root, host: "codex", provider: "openai" });
   });
   afterEach(async () => {
+    vi.restoreAllMocks();
     await rm(root, { recursive: true, force: true });
   });
 
@@ -81,6 +82,41 @@ describe("clean includes opt-in agents", () => {
     await clean().execute({ projectRoot: root, force: true });
     expect((await lstat(link)).isSymbolicLink()).toBe(true);
     expect(await readFile(join(link, "note.txt"), "utf8")).toBe("personal");
+  });
+
+  it("holds the agent mutex throughout framework state cleanup before a waiting install proceeds", async () => {
+    const scanning = Promise.withResolvers<void>();
+    const finishScan = Promise.withResolvers<void>();
+    const list = fs.listDirectory.bind(fs);
+    vi.spyOn(fs, "listDirectory").mockImplementation(async (path) => {
+      if (path === join(root, ".aidd")) {
+        await access(join(root, ".aidd/agents.json.lock"));
+        scanning.resolve();
+        await finishScan.promise;
+      }
+      return list(path);
+    });
+    const cleaning = clean(Manifest.create()).execute({ projectRoot: root, force: true });
+    // Reject immediately if cleanup failed before reaching the gate.
+    await Promise.race([
+      scanning.promise,
+      cleaning.then(() => {
+        throw new Error("cleanup skipped the gate");
+      }),
+    ]);
+    const installing = manager.install({
+      projectRoot: root,
+      host: "opencode",
+      provider: "mistral",
+    });
+    finishScan.resolve();
+    await Promise.all([cleaning, installing]);
+    expect(await manager.preview(root)).toEqual([{ toolId: "opencode", fileCount: 1 }]);
+    expect(await readFile(join(root, ".opencode/agents/aidd-dev-explorer.md"), "utf8")).toContain(
+      "mistral/mistral-small-2603#high"
+    );
+    await expect(access(join(root, ".codex/agents/aidd-dev-explorer.toml"))).rejects.toThrow();
+    await expect(access(join(root, ".aidd/agents.json.lock"))).rejects.toThrow();
   });
 
   it("counts agents once alongside framework files and other opted-in hosts", async () => {

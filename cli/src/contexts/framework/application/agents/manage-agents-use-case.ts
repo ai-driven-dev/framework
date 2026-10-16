@@ -23,6 +23,11 @@ interface AgentTarget {
   host: AgentHost;
 }
 
+interface AgentChange {
+  path: string;
+  content: string | null;
+}
+
 export class ManageAgentsUseCase {
   constructor(
     private readonly fs: FileReader & FileWriter,
@@ -32,7 +37,6 @@ export class ManageAgentsUseCase {
   ) {}
 
   async install(options: AgentTarget & { provider: AgentProvider }): Promise<number> {
-    const installed = await this.load(options.projectRoot);
     const capability = this.capability(options.host);
     const entries = Object.entries(this.sources).map(([name, source]) => {
       const { frontmatter, body } = parseFrontmatter(source);
@@ -47,34 +51,84 @@ export class ManageAgentsUseCase {
         ),
       };
     });
-    for (const entry of entries)
-      await this.assertOwned(
-        options.projectRoot,
-        entry.path,
-        installed[options.host]?.[entry.name]
-      );
-    let written = 0;
-    const hashes = { ...installed[options.host] };
-    for (const { name, path, content } of entries) {
-      const hash = this.hasher.hash(content);
-      if (!(await this.fs.fileExists(path)) || !(await this.fs.readFileHash(path)).equals(hash)) {
-        await this.fs.writeFile(path, content);
-        written++;
+    return this.exclusively(options.projectRoot, async () => {
+      const installed = await this.load(options.projectRoot);
+      for (const entry of entries)
+        await this.assertOwned(
+          options.projectRoot,
+          entry.path,
+          installed[options.host]?.[entry.name]
+        );
+      installed[options.host] = {
+        ...installed[options.host],
+        ...Object.fromEntries(
+          entries.map(({ name, content }) => [name, this.hasher.hash(content)])
+        ),
+      };
+      return this.save(options.projectRoot, installed, entries);
+    });
+  }
+
+  private async exclusively<T>(root: string, action: () => Promise<T>): Promise<T> {
+    await assertProjectPathWithinRoot(this.fs, root, join(root, AGENT_INSTALLATIONS_PATH));
+    return this.store.withExclusiveAccess(root, action);
+  }
+
+  private async save(
+    root: string,
+    installed: AgentInstallations,
+    changes: readonly AgentChange[]
+  ): Promise<number> {
+    const previous: AgentChange[] = [];
+    try {
+      for (const change of changes) {
+        const content = (await this.fs.fileExists(change.path))
+          ? await this.fs.readFile(change.path)
+          : null;
+        if (content === change.content) continue;
+        previous.push({ path: change.path, content });
+        await this.write(change);
       }
-      hashes[name] = hash;
+      await this.store.save(root, installed);
+      return previous.length;
+    } catch (error) {
+      const restored = await Promise.allSettled(
+        previous.reverse().map(async (change) => {
+          const content = (await this.fs.fileExists(change.path))
+            ? await this.fs.readFile(change.path)
+            : null;
+          if (content !== change.content) await this.write(change);
+        })
+      );
+      const failures = restored.filter((result) => result.status === "rejected");
+      if (failures.length > 0)
+        throw new AggregateError(
+          [error, ...failures.map((result) => result.reason)],
+          "Agent update failed and rollback was incomplete. Preserve the registry and agent files before retrying."
+        );
+      throw error;
     }
-    installed[options.host] = hashes;
-    await this.store.save(options.projectRoot, installed);
-    return written;
+  }
+
+  private async write({ path, content }: AgentChange): Promise<void> {
+    if (content !== null) await this.fs.writeFile(path, content);
+    else {
+      await this.fs.deleteFile(path);
+      if (await this.fs.fileExists(path)) throw new Error(`Could not remove agent: ${path}`);
+    }
   }
 
   async remove(options: AgentTarget): Promise<number> {
-    const installed = await this.load(options.projectRoot);
-    const entries = await this.removable(options.projectRoot, installed, options.host);
-    const count = await this.delete(entries);
-    delete installed[options.host];
-    await this.store.save(options.projectRoot, installed);
-    return count;
+    return this.exclusively(options.projectRoot, async () => {
+      const installed = await this.load(options.projectRoot);
+      const entries = await this.removable(options.projectRoot, installed, options.host);
+      delete installed[options.host];
+      return this.save(
+        options.projectRoot,
+        installed,
+        entries.map((path) => ({ path, content: null }))
+      );
+    });
   }
 
   async preview(projectRoot: string): Promise<Array<{ toolId: AgentHost; fileCount: number }>> {
@@ -92,11 +146,17 @@ export class ManageAgentsUseCase {
     await this.removable(projectRoot, await this.load(projectRoot));
   }
 
-  async removeAll(projectRoot: string): Promise<number> {
-    const entries = await this.removable(projectRoot, await this.load(projectRoot));
-    const count = await this.delete(entries);
-    await this.store.save(projectRoot, {});
-    return count;
+  async removeAll(projectRoot: string, afterRemoval?: () => Promise<void>): Promise<number> {
+    return this.exclusively(projectRoot, async () => {
+      const entries = await this.removable(projectRoot, await this.load(projectRoot));
+      const count = await this.save(
+        projectRoot,
+        {},
+        entries.map((path) => ({ path, content: null }))
+      );
+      await afterRemoval?.();
+      return count;
+    });
   }
 
   private capability(host: AgentHost): AgentsCapability {
@@ -148,13 +208,5 @@ export class ManageAgentsUseCase {
       }
     }
     return paths;
-  }
-
-  private async delete(paths: readonly string[]): Promise<number> {
-    for (const path of paths) {
-      await this.fs.deleteFile(path);
-      if (await this.fs.fileExists(path)) throw new Error(`Could not remove agent: ${path}`);
-    }
-    return paths.length;
   }
 }
