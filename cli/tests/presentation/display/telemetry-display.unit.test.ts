@@ -118,6 +118,14 @@ describe("printIngestResult", () => {
       "Not stored: 1 call from a clone with no consent at that time.",
       "Not stored: 2 calls with no usable time.",
     ]);
+    const output = new CapturingOutput(false);
+    printIngestResult(output, {
+      ...INGESTED,
+      unrecognised: 1,
+      notStored: { ...NOT_STORED, "no-cwd": 1 },
+    });
+    expect(output.at("info")).toEqual(["Not stored: 1 call with no working directory."]);
+    expect(output.at("warn")).toEqual([`1 shape${UNRECOGNISED}`]);
   });
 
   it("says a closed consent was closed, and never that the clone has not opted in", () => {

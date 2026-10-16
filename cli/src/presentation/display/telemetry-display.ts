@@ -80,7 +80,11 @@ export function printIngestResult(output: CLIOutput, result: IngestResult): void
       `${count(result.snapshots, "branch declaration", "branch declarations")} snapshotted.`
     );
   }
-  for (const line of leftOutLines(result)) output.warn(line);
+  // A call not stored is information; a line that could not be read, a warning.
+  for (const line of leftOutLines(result)) {
+    if (line.startsWith("Not stored")) output.info(line);
+    else output.warn(line);
+  }
 }
 
 const REFUSALS: Readonly<Record<RefusalReason, string>> = {
