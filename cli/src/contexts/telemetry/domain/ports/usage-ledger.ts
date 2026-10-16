@@ -16,10 +16,8 @@ export interface LoadedLedger {
   readonly unsettled: ReadonlySet<string>;
 }
 
-/** The ledger of billed calls, and where each transcript was read up to. */
-export interface UsageLedger {
-  /** Runs `work` while no other process writes the ledger. */
-  exclusively<T>(work: () => Promise<T>): Promise<T>;
+/** Calls kept by day, folded at read: what a fold and a settle need. */
+export interface DayLedger {
   /** Every partition, daily and monthly. Given `holds`, a test on a `YYYY-MM-DD` day, only the
    * days it holds, plus every monthly partition it holds one of the calendar days of, read with
    * every day of that month: a half-finished split may hold a better snapshot in a day. What a
@@ -33,6 +31,35 @@ export interface UsageLedger {
    * rest is as it was. A line that is not a record is never removed: it stays in its day,
    * after the records, in text order and once, and a month's goes to its first day. */
   save(records: readonly StoredUsage[], partitions?: ReadonlySet<string>): Promise<void>;
+}
+
+/** What is left out with no day: a call with no usable time, a transcript line that is no
+ * usage line. */
+export type NoDayReason = "undated" | "unrecognised";
+
+/** One thing left out with no day, named by what it is: a call by its tool and key, a line by
+ * its text. */
+export interface NoDayEntry {
+  readonly reason: NoDayReason;
+  readonly of: string;
+}
+
+/** What ingests read and did not store, so a report run later still says it. A call with a day
+ * is kept by day, as the ledger keeps its own, with nothing of it but its tool, key, agent, day
+ * and the reason (see `leftOutOf`). What has no day is kept once, by a hash of what it is. */
+export interface LeftOutLedger extends DayLedger {
+  /** Adds these; one already held is not added again. */
+  addNoDay(entries: readonly NoDayEntry[]): Promise<void>;
+  /** How many are held, by reason. */
+  noDay(): Promise<Readonly<Record<NoDayReason, number>>>;
+}
+
+/** The ledger of billed calls, what was left out of it, and where each transcript was read up
+ * to. */
+export interface UsageLedger extends DayLedger {
+  /** Runs `work` while no other process writes the ledger, what it left out included. */
+  exclusively<T>(work: () => Promise<T>): Promise<T>;
+  readonly leftOut: LeftOutLedger;
   positions(): Promise<ReadonlyMap<string, TranscriptPosition>>;
   savePositions(positions: ReadonlyMap<string, TranscriptPosition>): Promise<void>;
 }

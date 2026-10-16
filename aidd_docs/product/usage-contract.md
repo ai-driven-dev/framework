@@ -49,7 +49,7 @@ The ledger stores `StoredUsage`: the record plus `repository_id`, resolved at in
 **Null is not zero.**
 - Unknown is `null`, never `0`. A `null` counter is left out of its sum and counted in that counter's `unknown_records`.
 - A usage line missing a counter is still a record, that counter `null`.
-- A line that is no usage line (not JSON, no `message.usage`, no `message.id`, `sessionId` or `timestamp`) is never a record. An unrecognised shape counts in `coverage.unrecognised_shapes`.
+- A line that is no usage line (not JSON, no `message.usage`, no `message.id`, `sessionId` or `timestamp`) is never a record. It is kept, as a hash of its text, and counts in `coverage.unrecognised_shapes` of every report (see [Left out](#left-out)).
 - The report says: "not recognised: a call missing a counter is kept with that counter unknown; a line that is no usage line is not counted".
 
 **Key and fold** (`domain/formats/claude-transcript-usage.ts`).
@@ -66,7 +66,7 @@ The ledger stores `StoredUsage`: the record plus `repository_id`, resolved at in
 
 **Repository.** The call's working directory resolved at ingest: its git root, named by the hash of the `origin` address (`host/owner/repo`), else the root commit. The address is never kept.
 
-**Not stored.** Storing follows [Consent](#consent). A call read and left out counts in `coverage.not_stored` under one reason:
+**Not stored.** Storing follows [Consent](#consent). A call read and left out is kept as [left out](#left-out) and counts in `coverage.not_stored` under one reason:
 
 | Reason | When |
 | --- | --- |
@@ -77,6 +77,22 @@ The ledger stores `StoredUsage`: the record plus `repository_id`, resolved at in
 | `unreadable-consent` | git config or `.git` unreadable, directory or git dir the file system will not let ingest look at, clone with no identity, damaged consent log |
 | `no-cwd` | no working directory |
 | `undated` | timestamp not a readable date, with no zone (`Z` or `±hh:mm`), or outside four-digit years |
+
+### Left out
+
+What an ingest reads and does not store is kept under `ledger/left-out/`, so every report says it, whoever ran the ingest: `aidd telemetry ingest --quiet` from the plugin's hook prints nothing and moves the offsets on.
+
+| Left out | Kept as | Store |
+| --- | --- | --- |
+| A call not stored, with a day | `tool`, `key`, `agent`; `at` the start of the UTC day of its earliest copy with a day; `session_id` `left-out`; the reason in `repository_id`; every other field `null` | `ledger/left-out/<YYYY-MM-DD>.jsonl`, the ledger's format, fold, settle and kept lines |
+| A call `undated` | `undated <hash>`, a hash of its tool and key | `ledger/left-out/no-day.txt` |
+| A line that is no usage line | `unrecognised <hash>`, a hash of its text | same |
+
+- Named by what it is, so a re-read, a reset of offsets or a second ingest adds nothing. `no-day.txt`: one line each, in text order, each once; a line this version does not know is kept and not counted.
+- No counter, model, session, directory, branch, repository or transcript text: the least that counts a call once. `forget` removes it with `ledger/`.
+- A report counts, in `not_stored`, the left-out calls of its period that no read has stored since: stored beats left out. `undated` and `unrecognised_shapes` have no day: every report counts all of them.
+- A call's copy missing a counter is stored with that counter `null` and counted in `unknown_records`, never in `unrecognised_shapes`.
+- Limits: two lines that are no usage line with one text count once. Nothing left out before this version was kept.
 
 ## Report envelope
 
@@ -91,7 +107,7 @@ The ledger stores `StoredUsage`: the record plus `repository_id`, resolved at in
 | `rows` | one per axis value, of the calls that match |
 | `totals` | the calls of the period that match |
 | `unknown_records` | calls with at least one counter unknown |
-| `coverage` | `files_read`, `records`, `unrecognised_shapes`, `not_stored`, `consent_log_damaged`, `oldest_transcript_at`, `skipped_ledger_lines`. `records` counts the calls of the period, matching or not |
+| `coverage` | `files_read`, `records`, `unrecognised_shapes`, `not_stored`, `consent_log_damaged`, `oldest_transcript_at`, `skipped_ledger_lines`. `records` counts the calls of the period, matching or not; `not_stored` the calls of the period [left out](#left-out), whoever ingested them; `unrecognised_shapes` and `not_stored.undated` all there are |
 
 Row and `totals`: `records`, `input`, `output`, `cache_read`, `cache_write` (each `{tokens, unknown_records}`), `total`. A row also has:
 
@@ -104,8 +120,8 @@ Row and `totals`: `records`, `input`, `output`, `cache_read`, `cache_write` (eac
 - Every axis partitions the same calls: each adds up to `totals`, counter by counter.
 - `AIDD_TELEMETRY=0`: nothing read, object is `{"version": 1, "refused": "AIDD_TELEMETRY=0"}`.
 - The text report labels an `absent` person `anonymous`; the envelope keeps `kind: absent`, `key: null`.
-- A report ingests first. `files_read` and `unrecognised_shapes` describe that run; `records` the period.
-- A report with `--days`, `--from` or `--to` reads only the days of its period and the day on each side, plus any monthly file one of them falls in, with every day of its month; with none it reads the whole ledger. The copies of one call have been observed less than a day apart, and under that bound both print the same figures. Outside it, only a report with no period folds every copy of a call. `skipped_ledger_lines` counts the lines of the partitions read.
+- A report ingests first. `files_read` describes that run; `records` and `not_stored` the period; `unrecognised_shapes` every ingest so far.
+- A report with `--days`, `--from` or `--to` reads only the days of its period and the day on each side, plus any monthly file one of them falls in, with every day of its month; with none it reads the whole ledger. The copies of one call have been observed less than a day apart, and under that bound both print the same figures. Outside it, only a report with no period folds every copy of a call. `skipped_ledger_lines` counts the lines of the partitions read, of the ledger and of `left-out/`.
 - No path, working directory or branch. `session` keys are full session ids, `repository` keys are hashes.
 
 ### Filters
@@ -143,6 +159,7 @@ Directory: `AIDD_TELEMETRY_DIR`, else `AIDD_USER_CONFIG_DIR/telemetry`, else `XD
 | Store | Writer | Readers | Holds |
 | --- | --- | --- | --- |
 | `ledger/<YYYY-MM-DD>.jsonl` | `ingest`, `report` | `report`, `forget` | `StoredUsage` by UTC day of `at`, in time then key order, one call per line. Ingest reads its calls' days and the day on each side, and rewrites only a changed day, whole, by rename; no new bytes, no write. `report` rewrites, folded, the partitions it read that share a call or hold a line that is not a record; a report with no period reads every partition, so after it each call is on disk once. A line that is not a record (a newer version's, a hand edit, a torn one) is never removed: a rewrite keeps it in its day, after the records, in text order and once, and counts it in `skipped_ledger_lines` on every read. A day holding only such lines stays. A monthly `<YYYY-MM>.jsonl` from an earlier version is still read, split into its days by the first ingest or report whose window touches it, or by a report with no period, then removed; its lines that are not records go to the first day of its month |
+| `ledger/left-out/` | `ingest`, `report` | `report`, `forget` | what ingests read and did not store, see [Left out](#left-out). cli-v5.5.0 never reads it |
 | `ledger/offsets.json` | `ingest`, `report` | same | per transcript: bytes consumed, size, file identity. Shrunk or changed identity: read whole |
 | `ledger/roots.json` | `ingest`, `on` | `ingest`, `forget` | `{version: 2, directories}`: per directory and per clone seen alive there, `repository_id`, `root`, `clone`, `seen_at`. Other format holds nothing: a live directory is remembered again, a gone one counts `never-seen-alive`. `on` records its own root for `forget` |
 | `ledger/consents.jsonl` | `on`, `off`, `ingest`, hooks (close only) | same, plus `forget` | consent intervals, see [Consent](#consent). Outlives the clone; removed with the ledger. Hooks parse it strictly, pinned by the shared fixture |

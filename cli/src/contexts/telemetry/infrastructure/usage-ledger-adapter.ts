@@ -1,9 +1,16 @@
+import { createHash } from "node:crypto";
 import { readdir, rm } from "node:fs/promises";
 import { join } from "node:path";
 import { isErrnoException } from "../../../kernel/reading/json-file.js";
 import { readTextIfPresent } from "../../../kernel/reading/text-file.js";
 import type { PrivateStorage } from "../domain/ports/private-storage.js";
-import type { LoadedLedger, UsageLedger } from "../domain/ports/usage-ledger.js";
+import type {
+  LeftOutLedger,
+  LoadedLedger,
+  NoDayEntry,
+  NoDayReason,
+  UsageLedger,
+} from "../domain/ports/usage-ledger.js";
 import {
   parseStoredUsage,
   partitionByDay,
@@ -24,6 +31,8 @@ const MONTHLY = /^\d{4}-\d{2}\.jsonl$/;
 const EXTENSION = ".jsonl";
 const OFFSETS_FILE = "offsets.json";
 const LOCK_FILE = ".lock";
+const LEFT_OUT_DIR = "left-out";
+const NO_DAY_FILE = "no-day.txt";
 
 function partitionOf(name: string): string {
   return name.slice(0, -EXTENSION.length);
@@ -46,16 +55,33 @@ function partitionOf(name: string): string {
  * days, its own file removed after them, so a crash in between leaves each call in both and
  * read once.
  *
- * `offsets.json` is where each transcript was read up to; `.lock` serialises writers. */
-export class UsageLedgerAdapter implements UsageLedger {
+ * `left-out/` holds what ingests read and did not store, in the same form: its calls by day,
+ * and `no-day.txt`, one `<reason> <hash>` per line, in text order, each once; a line of it this
+ * version does not know is kept and not counted. `offsets.json` is where each transcript was
+ * read up to; `.lock` serialises the writers of all of them. */
+export class UsageLedgerAdapter implements UsageLedger, LeftOutLedger {
   constructor(
     private readonly dir: string,
     private readonly storage: PrivateStorage,
     private readonly lockOptions: Partial<LockOptions> = {}
   ) {}
 
+  /** What ingests left out: the same files under `left-out/`, and `no-day.txt`. */
+  get leftOut(): LeftOutLedger {
+    return new UsageLedgerAdapter(join(this.dir, LEFT_OUT_DIR), this.storage);
+  }
+
   exclusively<T>(work: () => Promise<T>): Promise<T> {
     return new DirectoryLock(this.dir, LOCK_FILE, this.storage, this.lockOptions).exclusively(work);
+  }
+
+  async positions(): Promise<ReadonlyMap<string, TranscriptPosition>> {
+    return parsePositions(await readTextIfPresent(join(this.dir, OFFSETS_FILE)));
+  }
+
+  async savePositions(positions: ReadonlyMap<string, TranscriptPosition>): Promise<void> {
+    await this.storage.ensureDirectory(this.dir);
+    await this.storage.replace(join(this.dir, OFFSETS_FILE), renderPositions(positions));
   }
 
   async load(holds?: (day: string) => boolean): Promise<LoadedLedger> {
@@ -129,15 +155,6 @@ export class UsageLedgerAdapter implements UsageLedger {
     for (const path of [...emptied, ...months.map((name) => join(this.dir, name))]) await rm(path);
   }
 
-  async positions(): Promise<ReadonlyMap<string, TranscriptPosition>> {
-    return parsePositions(await readTextIfPresent(join(this.dir, OFFSETS_FILE)));
-  }
-
-  async savePositions(positions: ReadonlyMap<string, TranscriptPosition>): Promise<void> {
-    await this.storage.ensureDirectory(this.dir);
-    await this.storage.replace(join(this.dir, OFFSETS_FILE), renderPositions(positions));
-  }
-
   private async partitions(): Promise<string[]> {
     try {
       return (await readdir(this.dir)).filter((name) => DAILY.test(name) || MONTHLY.test(name));
@@ -145,6 +162,26 @@ export class UsageLedgerAdapter implements UsageLedger {
       if (isErrnoException(error) && error.code === "ENOENT") return [];
       throw error;
     }
+  }
+
+  async addNoDay(entries: readonly NoDayEntry[]): Promise<void> {
+    const path = join(this.dir, NO_DAY_FILE);
+    const held = (await readTextIfPresent(path)) ?? "";
+    const named = entries.map(
+      ({ reason, of }) =>
+        `${reason} ${createHash("sha256").update(`${reason}\u0000${of}`).digest("hex").slice(0, 32)}`
+    );
+    const lines = [...new Set([...held.split("\n").filter(Boolean), ...named])].sort(compareText);
+    const content = `${lines.join("\n")}\n`;
+    if (content === held) return;
+    await this.storage.ensureDirectory(this.dir);
+    await this.storage.replace(path, content);
+  }
+
+  async noDay(): Promise<Readonly<Record<NoDayReason, number>>> {
+    const text = `\n${(await readTextIfPresent(join(this.dir, NO_DAY_FILE))) ?? ""}`;
+    const count = (reason: NoDayReason) => text.split(`\n${reason} `).length - 1;
+    return { undated: count("undated"), unrecognised: count("unrecognised") };
   }
 }
 

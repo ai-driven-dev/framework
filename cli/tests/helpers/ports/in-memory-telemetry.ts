@@ -40,7 +40,10 @@ import type {
   TranscriptSource,
 } from "../../../src/contexts/telemetry/domain/ports/transcript-source.js";
 import type {
+  LeftOutLedger,
   LoadedLedger,
+  NoDayEntry,
+  NoDayReason,
   UsageLedger,
 } from "../../../src/contexts/telemetry/domain/ports/usage-ledger.js";
 import type { RepositoryResolution } from "../../../src/contexts/telemetry/domain/repository-resolution.js";
@@ -102,6 +105,12 @@ export class InMemoryTranscripts implements TranscriptSource {
 
 export class InMemoryLedger implements UsageLedger {
   records: StoredUsage[] = [];
+  private left: InMemoryLeftOut | undefined;
+  /** What ingests left out, beside the calls; made on first use. */
+  get leftOut(): InMemoryLeftOut {
+    this.left ??= new InMemoryLeftOut();
+    return this.left;
+  }
   stored = new Map<string, TranscriptPosition>();
   /** Pass one array to several fakes to see the order they were used in. */
   constructor(readonly events: string[] = []) {}
@@ -165,6 +174,23 @@ export class InMemoryLedger implements UsageLedger {
   async savePositions(positions: ReadonlyMap<string, TranscriptPosition>): Promise<void> {
     this.events.push("positions");
     this.stored = new Map(positions);
+  }
+}
+
+/** The calls left out, as a ledger; what has no day, as the text it is named by, unhashed. */
+export class InMemoryLeftOut extends InMemoryLedger implements LeftOutLedger {
+  readonly noDayLines = new Set<string>();
+
+  async addNoDay(entries: readonly NoDayEntry[]): Promise<void> {
+    this.events.push("no-day");
+    if (this.failSave) throw new Error("disk full");
+    for (const { reason, of } of entries) this.noDayLines.add(`${reason} ${of}`);
+  }
+
+  async noDay(): Promise<Readonly<Record<NoDayReason, number>>> {
+    const count = (reason: NoDayReason) =>
+      [...this.noDayLines].filter((line) => line.startsWith(`${reason} `)).length;
+    return { undated: count("undated"), unrecognised: count("unrecognised") };
   }
 }
 

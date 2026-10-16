@@ -423,6 +423,36 @@ describe("the telemetry journey, on the built binary", () => {
     expect(prompt({ id: S_OTHER }, "start").stdout).toBe("");
   });
 
+  it("says in a report what the catch-up hook read and left out, though the report reads nothing new", async () => {
+    await optIn();
+    const elsewhere = join(env.tempDir, "elsewhere");
+    initRepository(elsewhere, gitEnv, { remote: "git@github.com:acme/other.git" });
+    // After `on`: what is made before it is never stored.
+    const base = Date.now() + 60_000;
+    const project = join(claude, "projects", "sandbox");
+    await mkdir(project, { recursive: true });
+    const [first, second] = CALLS as [Call, Call];
+    const away = usageLine(second, base).replace(JSON.stringify(repo), JSON.stringify(elsewhere));
+    await writeFile(
+      join(project, `${S_MAIN}.jsonl`),
+      `${usageLine(first, base)}\n${away}\n{torn\n`
+    );
+
+    runHook("catch-up.cjs", { id: S_MAIN }, { hook_event_name: "SessionStart", source: "startup" });
+    const run = await aidd(["report", "--json"]);
+    expect(run.exitCode, run.stderr).toBe(0);
+    const { coverage } = JSON.parse(run.stdout) as {
+      coverage: {
+        files_read: number;
+        records: number;
+        unrecognised_shapes: number;
+        not_stored: Record<string, number>;
+      };
+    };
+    expect(coverage).toMatchObject({ files_read: 0, records: 1, unrecognised_shapes: 1 });
+    expect(coverage.not_stored["no-consent"]).toBe(1);
+  });
+
   it("shows nothing, blocks nothing and stores nothing in a project that never opted in", async () => {
     const main: Session = { id: S_MAIN };
     expect(sessionStart(main, "startup").stdout).toBe("");

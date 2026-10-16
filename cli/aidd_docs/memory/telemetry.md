@@ -20,6 +20,8 @@ flowchart LR
     Files[("each tool's session files")] -->|read from the saved offset| Reader["read: one reader per tool"]
     Reader --> Resolver["resolve: cwd to repository and consent"]
     Resolver -->|upsert, one record per call| Ledger[("ledger/")]
+    Resolver -->|what is not stored, by key| Left[("ledger/left-out/")]
+    Left --> Report
     Hooks["plugin hooks"] -->|write| Bindings[("bindings/ and git config")]
     Task["telemetry task"] -->|write| Bindings
     Ledger --> Report["report: attribute, keep what the filters name, then split by one axis"]
@@ -56,6 +58,7 @@ flowchart LR
 | When a clone consented | `domain/consent/consent-history.ts`, `application/consent-log.ts` |
 | Which transcripts are read | `application/ingest-usage-use-case.ts`, `application/read-usage-use-case.ts` |
 | How the ledger lies on disk, and what an ingest or a report reads | `infrastructure/usage-ledger-adapter.ts`, `domain/stored-usage.ts`, `application/ledger-upkeep.ts`, `domain/report/period.ts` |
+| What an ingest left out, kept for every report (`ledger/left-out/`), and why a ledger line no reader knows is kept | `infrastructure/usage-ledger-adapter.ts`, `leftOutOf` in `domain/stored-usage.ts`, `application/ingest-usage-use-case.ts`; rules in the [usage contract](../../../aidd_docs/product/usage-contract.md#left-out) |
 | What `on` and `forget` clean up from an earlier measurement | `domain/legacy/`, `application/switch/`, `application/forget/` |
 | The report axes and the envelope | `domain/report/usage-report.ts`, `application/report/report-envelope.ts` |
 | Who the measurement names, and what `on` offers | `domain/identity/person-identity.ts`, `application/identity/`, `infrastructure/identity/git-user-source-adapter.ts`; the question is the `on` command's |

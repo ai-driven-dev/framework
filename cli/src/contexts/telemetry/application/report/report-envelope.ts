@@ -42,14 +42,17 @@ export interface EnvelopeRow extends EnvelopeTally {
  *
  * `rows` split the period along `axis`; the rows of every axis add up to the same `totals`,
  * counter by counter. `unknown_records` is how many calls had at least one counter unknown.
- * `coverage` says what the figures rest on: `files_read` and `unrecognised_shapes` are of
- * this run alone, `records` of the period, `not_stored` counts calls this run read and left
- * out by reason, `consent_log_damaged` is true while `ledger/consents.jsonl` cannot be trusted
- * and nothing is stored, and `oldest_transcript_at` is when the oldest transcript still on disk was
- * last written (`null` when there is none), and `skipped_ledger_lines` counts the lines that
- * were not records in the ledger partitions the report read: a bounded report reads its period
- * and the day on each side, so damage outside them is not counted. Nothing here is a path, a
- * working directory or a branch name.
+ * `coverage` says what the figures rest on. `files_read` is of this run alone and `records` of
+ * the period. What ingests left out is kept, so it is said whoever ran the ingest, the plugin's
+ * hook included: `not_stored` counts the calls of the period read and left out and never stored
+ * since, by reason, and `undated` and `unrecognised_shapes` (transcript lines that were no usage
+ * line) count all there are, having no day. `consent_log_damaged` is true while
+ * `ledger/consents.jsonl` cannot be trusted and nothing is stored, `oldest_transcript_at` is when
+ * the oldest transcript still on disk was last written (`null` when there is none), and
+ * `skipped_ledger_lines` counts the lines that were not records, kept as found, in the ledger
+ * partitions the report read: a bounded report reads its period and the day on each side, so
+ * damage outside them is not counted. Nothing here is a path, a working directory or a branch
+ * name.
  *
  * `filters` names what the report was narrowed to, every flag in a fixed order, `null` when it
  * was not given, else as resolved: the full id for a start or `.`, the start as typed when it

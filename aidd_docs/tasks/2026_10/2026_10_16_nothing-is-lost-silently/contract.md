@@ -30,11 +30,12 @@ flowchart LR
 
 | Left out | Kept as | Where |
 | --- | --- | --- |
-| A call not stored, with a day | the call's `tool`, `key` and `agent`, its time cut to the start of its UTC day, `session_id` `left-out`, the reason in `repository_id`, every other field `null` | `ledger/left-out/<YYYY-MM-DD>.jsonl`, the ledger's own format and code |
+| A call not stored, with a day | the call's `tool`, `key` and `agent`, the start of the UTC day of its earliest copy with a day, `session_id` `left-out`, the reason in `repository_id`, every other field `null` | `ledger/left-out/<YYYY-MM-DD>.jsonl`, the ledger's own format and code |
 | A call not stored, `undated` | `undated <hash of tool and key>` | `ledger/left-out/no-day.txt`, one line each, sorted, each line once |
 | A transcript line that is no usage line | `unrecognised <hash of the line>` | same |
 
 - **Idempotent.** An entry is named by what it is: a call by its key, a line by its text. A re-read, an offsets reset or the same ingest run twice adds nothing. Dated entries go through the ledger's own fold and settle, so their bytes after a full report are those of one ingest, as the ledger's are.
+- **Why the earliest copy.** With no counter kept, the fold of left-out copies keeps the earliest. A call whose copies straddle a midnight, read in one ingest, must land on the day two ingests would give it: so it is dated by its earliest copy, not by the copy that won.
 - **Stored beats left out.** A call left out once and stored on a later read (an `unreadable-consent` repaired, offsets reset) is counted as stored. The report applies the rule, so the bytes never depend on the order of the ingests.
 - **Consent.** Storing follows consent. A left-out entry holds no counter, model, session, directory, branch or repository, and no transcript text: a hash. It is the least that counts a call once, and `forget` removes it with `ledger/`.
 - **Reported.** `coverage.not_stored` counts the calls of the report's period that were left out and are not stored, whoever ran the ingest. `undated` and `coverage.unrecognised_shapes` have no day: every report counts all of them, since hiding them would print `0`.
@@ -75,6 +76,6 @@ flowchart LR
 
 - Two identical lines that are no usage line count once, wherever they are: a line is named by its text.
 - Two identical lines that are not ledger records, in one partition, are kept once.
-- A call left out on one day and on the next, in two reads (its snapshots straddle midnight), is folded by the same rule as a stored one: counted once in an unbounded report, and by the window rule in a bounded one.
+- A left-out reason this version does not know (a newer version's) is kept and not counted.
 - Entries left out before this version were never written: they cannot be recovered.
 - cli-v5.5.0 still deletes a line it does not recognise when it rewrites a day. `left-out/` is a directory it never reads.
