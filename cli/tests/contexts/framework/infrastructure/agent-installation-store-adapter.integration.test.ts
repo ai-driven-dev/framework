@@ -1,4 +1,4 @@
-import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, readlink, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -71,6 +71,18 @@ describe("AgentInstallationStoreAdapter", () => {
       code: "ENOENT",
     });
   });
+
+  it.skipIf(process.platform === "win32")(
+    "refuses a dangling registry symlink instead of treating it as an empty registry",
+    async () => {
+      const path = join(root, ".aidd/agents.json");
+      const target = join(root, "personal-registry.json");
+      await mkdir(join(root, ".aidd"));
+      await symlink(target, path);
+      await expect(store.load(root)).rejects.toMatchObject({ code: "ENOENT" });
+      expect(await readlink(path)).toBe(target);
+    }
+  );
 
   it.each([
     "null",

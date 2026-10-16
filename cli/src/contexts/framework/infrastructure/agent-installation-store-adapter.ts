@@ -52,7 +52,7 @@ export class AgentInstallationStoreAdapter implements AgentInstallationStore {
 
   async load(projectRoot: string): Promise<AgentInstallations> {
     const path = join(projectRoot, AGENT_INSTALLATIONS_PATH);
-    if (!(await this.fs.fileExists(path))) return {};
+    if (!(await this.fs.fileExists(path, false))) return {};
     const parsed: unknown = JSON.parse(await this.fs.readFile(path));
     if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed))
       throw new Error(`Invalid agent ownership file: ${path}`);

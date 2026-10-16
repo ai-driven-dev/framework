@@ -1,9 +1,40 @@
-import { access, chmod, mkdir, readFile } from "node:fs/promises";
-import { join } from "node:path";
+import { access, chmod, mkdir, readFile, readlink, symlink } from "node:fs/promises";
+import { dirname, join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { createTestEnv, runCli } from "./helpers.js";
 
 describe("agent ownership across CLI processes", () => {
+  it
+    .skipIf(process.platform === "win32")
+    .each([".codex/agents/aidd-dev-reviewer.toml", ".aidd/agents.json"])(
+    "refuses a dangling personal symlink at %s before writing agents",
+    async (relativePath) => {
+      const box = await createTestEnv("agents-dangling-symlink");
+      const path = join(box.projectDir, relativePath);
+      const target = join(box.projectDir, "personal-missing-file");
+      try {
+        await mkdir(dirname(path), { recursive: true });
+        await symlink(target, path);
+        const failed = await runCli(
+          ["agents", "install", "--provider", "openai", "--ide", "codex"],
+          box.projectDir,
+          box.fakeHome
+        );
+        expect(failed.exitCode).toBe(1);
+        expect(await readlink(path)).toBe(target);
+        await expect(
+          access(join(box.projectDir, ".codex/agents/aidd-dev-explorer.toml"))
+        ).rejects.toMatchObject({ code: "ENOENT" });
+        if (relativePath !== ".aidd/agents.json")
+          await expect(access(join(box.projectDir, ".aidd/agents.json"))).rejects.toMatchObject({
+            code: "ENOENT",
+          });
+      } finally {
+        await box.cleanup();
+      }
+    }
+  );
+
   it("retains both concurrent installations and removes only the selected IDE", async () => {
     const box = await createTestEnv("agents-concurrent");
     const run = (args: string[]) => runCli(args, box.projectDir, box.fakeHome);

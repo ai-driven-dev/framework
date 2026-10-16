@@ -186,7 +186,7 @@ export class ManageAgentsUseCase {
     expected: ReturnType<Hasher["hash"]> | undefined
   ): Promise<void> {
     await assertProjectPathWithinRoot(this.fs, root, path);
-    if (!(await this.fs.fileExists(path))) return;
+    if (!(await this.fs.fileExists(path, false))) return;
     if (expected === undefined) throw new Error(`Agent file is not owned by AIDD: ${path}`);
     if (!(await this.fs.readFileHash(path)).equals(expected))
       throw new Error(`Agent file was modified; preserve or move it before continuing: ${path}`);

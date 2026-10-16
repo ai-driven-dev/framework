@@ -1,4 +1,4 @@
-import { mkdir, mkdtemp, readFile, rm, symlink, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, readlink, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -211,6 +211,53 @@ describe("ManageAgentsUseCase", () => {
       code: "ENOENT",
     });
   });
+
+  it.skipIf(process.platform === "win32")(
+    "preserves a dangling personal agent symlink before writing any agent",
+    async () => {
+      const path = join(root, ".codex/agents/aidd-dev-reviewer.toml");
+      const target = join(root, "personal.toml");
+      await mkdir(join(root, ".codex/agents"), { recursive: true });
+      await symlink(target, path);
+      expect(await fs.fileExists(path)).toBe(false);
+      expect(await fs.fileExists(path, false)).toBe(true);
+      await expect(
+        manager.install({ projectRoot: root, host: "codex", provider: "openai" })
+      ).rejects.toThrow("not owned");
+      expect(await readlink(path)).toBe(target);
+      await expect(
+        readFile(join(root, ".codex/agents/aidd-dev-explorer.toml"))
+      ).rejects.toMatchObject({ code: "ENOENT" });
+      await expect(readFile(join(root, ".aidd/agents.json"))).rejects.toMatchObject({
+        code: "ENOENT",
+      });
+    }
+  );
+
+  it.skipIf(process.platform === "win32").each(["install", "remove", "removeAll"] as const)(
+    "refuses %s when an owned agent becomes a dangling symlink",
+    async (operation) => {
+      await manager.install({ projectRoot: root, host: "codex", provider: "openai" });
+      const path = join(root, ".codex/agents/aidd-dev-reviewer.toml");
+      const target = join(root, "personal.toml");
+      const ledger = await readFile(join(root, ".aidd/agents.json"), "utf8");
+      const explorer = await readFile(join(root, ".codex/agents/aidd-dev-explorer.toml"), "utf8");
+      await rm(path);
+      await symlink(target, path);
+      const change =
+        operation === "install"
+          ? manager.install({ projectRoot: root, host: "codex", provider: "openai" })
+          : operation === "remove"
+            ? manager.remove({ projectRoot: root, host: "codex" })
+            : manager.removeAll(root);
+      await expect(change).rejects.toMatchObject({ code: "ENOENT" });
+      expect(await readlink(path)).toBe(target);
+      expect(await readFile(join(root, ".aidd/agents.json"), "utf8")).toBe(ledger);
+      expect(await readFile(join(root, ".codex/agents/aidd-dev-explorer.toml"), "utf8")).toBe(
+        explorer
+      );
+    }
+  );
 
   it("removes owned agents, tolerates missing files, and keeps personal agents", async () => {
     await manager.install({ projectRoot: root, host: "codex", provider: "openai" });
