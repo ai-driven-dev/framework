@@ -37,7 +37,7 @@ export function mutationOrder<T extends Ordered>(
 }
 
 export class CheapestKillerFirst extends BaseSequencer {
-  override async sort(files: TestSpecification[]): Promise<TestSpecification[]> {
+  override async sort<T extends Ordered>(files: T[]): Promise<T[]> {
     return mutationOrder(files);
   }
 }
