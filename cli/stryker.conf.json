@@ -6,6 +6,7 @@
   "ignorePatterns": ["reports"],
   "coverageAnalysis": "perTest",
   "timeoutMS": 20000,
+  "timeoutFactor": 3,
   "thresholds": {
     "high": 80,
     "low": 60,
