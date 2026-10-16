@@ -1,6 +1,6 @@
 ---
 objective: "After `off`, status and task say measurement was turned off in this clone and how to turn it back on; a clone that never ran `on` keeps today's words."
-status: in-progress
+status: done
 ---
 
 # Plan: Status after `off` says measurement was turned off
