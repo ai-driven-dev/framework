@@ -6,6 +6,8 @@ import type { StatusResult } from "../../contexts/telemetry/application/telemetr
 import type { NotStoredReason } from "../../contexts/telemetry/domain/repository-resolution.js";
 import type { CLIOutput } from "../output.js";
 
+export const IDENTITY_RULE = "An identity is one non-empty line of at most 128 characters.";
+
 /** What a shape the reader did not recognise came to: it is kept when a call lacks a counter
  * (stored unknown, never zero) and dropped when the line is no usage line at all. */
 export const UNRECOGNISED_WORDS =
@@ -26,12 +28,42 @@ export const NOT_STORED_WORDS: Readonly<Record<NotStoredReason, string>> = {
 
 /** Said on every run while `ledger/consents.jsonl` cannot be trusted. Recovery is `forget`, not
  * a hand edit: a line removed by hand can reopen a window that was closed. */
-export const DAMAGED_CONSENT_LOG_WORDS =
-  "ledger/consents.jsonl holds a line that is not a consent event, so the log cannot be trusted and nothing is stored for any clone. Run `aidd telemetry forget --yes`, then `aidd telemetry on` in each clone to measure again: nothing from before is stored.";
+export const DAMAGED_CONSENT_LOG =
+  "ledger/consents.jsonl holds a line that is not a consent event, so the log cannot be trusted and";
+/** The way out of a damaged consent log, finished by where `on` is run again. */
+export const FORGET_THEN_ON = "Run `aidd telemetry forget --yes`, then `aidd telemetry on`";
+export const DAMAGED_CONSENT_LOG_WORDS = `${DAMAGED_CONSENT_LOG} nothing is stored for any clone. ${FORGET_THEN_ON} in each clone to measure again: nothing from before is stored.`;
 
-/** Ledger lines that are not records: never removed, since a newer version may have written them. */
-export function keptLedgerLines(n: number): string {
-  return `${n} ledger line${n === 1 ? " is" : "s are"} not a record, kept as found.`;
+export function grouped(n: number): string {
+  return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+}
+
+export function count(n: number, one: string, many: string): string {
+  return `${grouped(n)} ${n === 1 ? one : many}`;
+}
+
+/** What was read and left out, one line each: by an ingest of its own run, by a report of its
+ * period. A ledger line that is not a record is never removed: a newer version may have
+ * written it. */
+export function leftOutLines(
+  left: Pick<
+    IngestResult,
+    "unrecognised" | "notStored" | "consentLogDamaged" | "skippedLedgerLines"
+  >
+): string[] {
+  const lines =
+    left.unrecognised > 0
+      ? [`${count(left.unrecognised, "shape", "shapes")} ${UNRECOGNISED_WORDS}`]
+      : [];
+  for (const [reason, n] of Object.entries(left.notStored) as [NotStoredReason, number][]) {
+    if (n > 0) lines.push(`Not stored: ${count(n, "call", "calls")} ${NOT_STORED_WORDS[reason]}.`);
+  }
+  if (left.consentLogDamaged) lines.push(DAMAGED_CONSENT_LOG_WORDS);
+  const kept = left.skippedLedgerLines;
+  if (kept > 0) {
+    lines.push(`${count(kept, "ledger line is", "ledger lines are")} not a record, kept as found.`);
+  }
+  return lines;
 }
 
 export function printIngestResult(output: CLIOutput, result: IngestResult): void {
@@ -40,27 +72,15 @@ export function printIngestResult(output: CLIOutput, result: IngestResult): void
     return;
   }
   output.success(
-    `Read ${result.filesRead} transcript${result.filesRead === 1 ? "" : "s"}: ` +
-      `${result.added} call${result.added === 1 ? "" : "s"} added, ${result.updated} updated.`
+    `Read ${count(result.filesRead, "transcript", "transcripts")}: ` +
+      `${count(result.added, "call", "calls")} added, ${result.updated} updated.`
   );
-  if (result.unrecognised > 0) {
-    output.warn(
-      `${result.unrecognised} shape${result.unrecognised === 1 ? "" : "s"} ${UNRECOGNISED_WORDS}`
-    );
-  }
-  if (result.skippedLedgerLines > 0) output.warn(keptLedgerLines(result.skippedLedgerLines));
   if (result.snapshots > 0) {
     output.info(
-      `${result.snapshots} branch declaration${result.snapshots === 1 ? "" : "s"} snapshotted.`
+      `${count(result.snapshots, "branch declaration", "branch declarations")} snapshotted.`
     );
   }
-  for (const [reason, count] of Object.entries(result.notStored) as [NotStoredReason, number][]) {
-    if (count > 0)
-      output.info(
-        `Not stored: ${count} call${count === 1 ? "" : "s"} ${NOT_STORED_WORDS[reason]}.`
-      );
-  }
-  if (result.consentLogDamaged) output.warn(DAMAGED_CONSENT_LOG_WORDS);
+  for (const line of leftOutLines(result)) output.warn(line);
 }
 
 const REFUSALS: Readonly<Record<RefusalReason, string>> = {
@@ -173,6 +193,6 @@ export function printIdentityResult(output: CLIOutput, result: IdentityResult): 
       );
       return;
     case "refused":
-      output.error("An identity is one non-empty line of at most 128 characters.");
+      output.error(IDENTITY_RULE);
   }
 }

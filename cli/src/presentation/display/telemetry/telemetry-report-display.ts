@@ -15,14 +15,8 @@ import {
   type ReportRow,
   type Tally,
 } from "../../../contexts/telemetry/domain/report/usage-report.js";
-import type { NotStoredReason } from "../../../contexts/telemetry/domain/repository-resolution.js";
 import type { CLIOutput } from "../../output.js";
-import {
-  DAMAGED_CONSENT_LOG_WORDS,
-  keptLedgerLines,
-  NOT_STORED_WORDS,
-  UNRECOGNISED_WORDS,
-} from "../telemetry-display.js";
+import { count, grouped, leftOutLines } from "../telemetry-display.js";
 
 const SHORT = 8;
 const COLUMNS = ["Input", "Output", "Cache read", "Cache write", "Total"] as const;
@@ -77,10 +71,6 @@ function conflictWords(result: Extract<ReportResult, { status: "conflicting" }>)
   return `${first} and ${second} select on the same axis, so together they keep nothing: give one of them.`;
 }
 
-function grouped(n: number): string {
-  return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-}
-
 /** A sum that left calls out is marked `+?`; one with nothing known at all is `unknown`. */
 function cell(sum: CounterSum, records: number): string {
   if (sum.unknownRecords === 0) return grouped(sum.known);
@@ -124,10 +114,6 @@ function titleOf(axis: ReportAxis): string {
   return axis === "total" ? "Period" : axis[0]?.toUpperCase() + axis.slice(1);
 }
 
-function count(n: number, one: string, many: string): string {
-  return `${grouped(n)} ${n === 1 ? one : many}`;
-}
-
 function periodWords(period: Period): string {
   if (period.from !== null && period.to !== null) return `${period.from} to ${period.to}`;
   if (period.from !== null) return `since ${period.from}`;
@@ -135,18 +121,10 @@ function periodWords(period: Period): string {
 }
 
 function coverageLines(coverage: ReportCoverage): string[] {
-  const lines = [
+  return [
     `Read ${count(coverage.filesRead, "transcript", "transcripts")} just now; ${count(coverage.records, "call", "calls")} in this period; oldest transcript on disk: ${coverage.oldestTranscriptAt?.slice(0, 10) ?? "none"}.`,
+    ...leftOutLines(coverage),
   ];
-  if (coverage.unrecognised > 0) {
-    lines.push(`${count(coverage.unrecognised, "shape", "shapes")} ${UNRECOGNISED_WORDS}`);
-  }
-  for (const [reason, n] of Object.entries(coverage.notStored) as [NotStoredReason, number][]) {
-    if (n > 0) lines.push(`Not stored: ${count(n, "call", "calls")} ${NOT_STORED_WORDS[reason]}.`);
-  }
-  if (coverage.consentLogDamaged) lines.push(DAMAGED_CONSENT_LOG_WORDS);
-  if (coverage.skippedLedgerLines > 0) lines.push(keptLedgerLines(coverage.skippedLedgerLines));
-  return lines;
 }
 
 export function printUsageReport(output: CLIOutput, result: ReportResult): void {

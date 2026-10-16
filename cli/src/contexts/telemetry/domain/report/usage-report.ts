@@ -62,17 +62,16 @@ function addCounter(sum: CounterSum, value: number | null): CounterSum {
 const EMPTY_SUM: CounterSum = { known: 0, unknownRecords: 0 };
 const EMPTY_TALLY: Tally = {
   records: 0,
-  counters: { input: EMPTY_SUM, output: EMPTY_SUM, cache_read: EMPTY_SUM, cache_write: EMPTY_SUM },
+  counters: Object.fromEntries(
+    COUNTERS.map((counter) => [counter, EMPTY_SUM])
+  ) as Tally["counters"],
   total: EMPTY_SUM,
 };
 
 function tally(held: Tally, record: StoredUsage): Tally {
-  const counters = {
-    input: addCounter(held.counters.input, record.input),
-    output: addCounter(held.counters.output, record.output),
-    cache_read: addCounter(held.counters.cache_read, record.cache_read),
-    cache_write: addCounter(held.counters.cache_write, record.cache_write),
-  };
+  const counters = Object.fromEntries(
+    COUNTERS.map((counter) => [counter, addCounter(held.counters[counter], record[counter])])
+  ) as Tally["counters"];
   const known = COUNTERS.reduce((sum, counter) => sum + (record[counter] ?? 0), 0);
   const unknown = COUNTERS.some((counter) => record[counter] === null);
   return {

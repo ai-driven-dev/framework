@@ -42,18 +42,22 @@ import {
 } from "../display/telemetry-display.js";
 import { ErrorHandler } from "../error-handler.js";
 import type { CLIOutput } from "../output.js";
-import { type GlobalOptions, parseGlobalOptions } from "./global-options.js";
+import { parseGlobalOptions } from "./global-options.js";
 
-/** Runs a command's work with its dependencies, any failure reported the one way. */
-async function withDeps(
-  options: GlobalOptions,
-  work: (deps: Awaited<ReturnType<typeof createDeps>>) => Promise<void>
-): Promise<void> {
-  try {
-    await work(await createDeps(options.projectRoot, { verbose: options.verbose }, options.output));
-  } catch (error) {
-    new ErrorHandler(options.output).handle(error);
-  }
+/** A command's output and directory, and `run`, which wires its dependencies for some work
+ * and reports any failure the one way. */
+function commandOf(program: Command) {
+  const { verbose, output, projectRoot } = parseGlobalOptions(program);
+  const run = async (
+    work: (deps: Awaited<ReturnType<typeof createDeps>>) => Promise<void>
+  ): Promise<void> => {
+    try {
+      await work(await createDeps(projectRoot, { verbose }, output));
+    } catch (error) {
+      new ErrorHandler(output).handle(error);
+    }
+  };
+  return { output, projectRoot, run };
 }
 
 interface OnOptions {
@@ -104,7 +108,7 @@ function filterOption(
   description: string,
   choices?: readonly string[]
 ): Option {
-  const option = new Option(flags, description);
+  const option = new Option(flags, `Only the ${description}`);
   return (choices === undefined ? option : option.choices(choices)).argParser(
     (value: string, previous: string | undefined): string => {
       if (previous !== undefined) {
@@ -132,8 +136,7 @@ export function registerTelemetryCommand(program: Command): void {
     .option("--as <id>", "Name you by this identifier on your own measurement")
     .option("--anonymous", "Name nobody on your own measurement", false)
     .action(async (cmdOptions: OnOptions) => {
-      const options = parseGlobalOptions(program);
-      const { output, projectRoot } = options;
+      const { output, projectRoot, run } = commandOf(program);
       if (cmdOptions.as !== undefined && cmdOptions.anonymous) {
         output.error("--as names you and --anonymous names nobody: give one of them.");
         process.exit(1);
@@ -146,7 +149,7 @@ export function registerTelemetryCommand(program: Command): void {
         output.error("Nothing to ask in a non-interactive run: pass --yes to turn measurement on.");
         process.exit(1);
       }
-      await withDeps(options, async (deps) => {
+      await run(async (deps) => {
         const confirmed =
           cmdOptions.yes ||
           (await deps.prompter.confirm(
@@ -180,9 +183,8 @@ export function registerTelemetryCommand(program: Command): void {
     .command("off")
     .description("Stop measuring this clone; what was measured stays")
     .action(async () => {
-      const options = parseGlobalOptions(program);
-      const { output, projectRoot } = options;
-      await withDeps(options, async (deps) => {
+      const { output, projectRoot, run } = commandOf(program);
+      await run(async (deps) => {
         const result = await deps.telemetry.telemetryOffUseCase.execute(projectRoot);
         printOffResult(output, result);
         if (result.status === "refused") process.exit(1);
@@ -194,9 +196,8 @@ export function registerTelemetryCommand(program: Command): void {
     .description("Show everything measurement keeps on this machine, or remove it with --yes")
     .option("--yes", "Remove it, instead of only showing it", false)
     .action(async (cmdOptions: { yes: boolean }) => {
-      const options = parseGlobalOptions(program);
-      const { output } = options;
-      await withDeps(options, async (deps) => {
+      const { output, run } = commandOf(program);
+      await run(async (deps) => {
         printForgetResult(
           output,
           await deps.telemetry.forgetTelemetryUseCase.execute(cmdOptions.yes)
@@ -209,9 +210,8 @@ export function registerTelemetryCommand(program: Command): void {
     .description("Read new transcripts into the local ledger, for clones that opted in")
     .option("--quiet", "Print nothing on success (for hooks)", false)
     .action(async (cmdOptions: { quiet: boolean }) => {
-      const options = parseGlobalOptions(program);
-      const { output } = options;
-      await withDeps(options, async (deps) => {
+      const { output, run } = commandOf(program);
+      await run(async (deps) => {
         const result = await deps.telemetry.ingestUsageUseCase.execute();
         if (!cmdOptions.quiet) printIngestResult(output, result);
       });
@@ -233,8 +233,7 @@ export function registerTelemetryCommand(program: Command): void {
         name: string | undefined,
         cmdOptions: { ticket?: string; none: boolean; by: DeclaredBy }
       ) => {
-        const options = parseGlobalOptions(program);
-        const { output, projectRoot } = options;
+        const { output, projectRoot, run } = commandOf(program);
         const request = cmdOptions.none
           ? { kind: "none" as const }
           : requestOf(name, cmdOptions.ticket);
@@ -248,7 +247,7 @@ export function registerTelemetryCommand(program: Command): void {
           );
           process.exit(1);
         }
-        await withDeps(options, async (deps) => {
+        await run(async (deps) => {
           const result = await deps.telemetry.declareTaskUseCase.execute({
             cwd: projectRoot,
             request,
@@ -264,9 +263,8 @@ export function registerTelemetryCommand(program: Command): void {
     .command("status")
     .description("Show if this clone is measured, since when, and its task")
     .action(async () => {
-      const options = parseGlobalOptions(program);
-      const { output, projectRoot } = options;
-      await withDeps(options, async (deps) => {
+      const { output, projectRoot, run } = commandOf(program);
+      await run(async (deps) => {
         printTelemetryStatus(
           output,
           await deps.telemetry.telemetryStatusUseCase.execute(projectRoot)
@@ -283,36 +281,29 @@ export function registerTelemetryCommand(program: Command): void {
     .addOption(
       new Option("--axis <axis>", "What to split by").choices(REPORT_AXES).default("total")
     )
-    .addOption(filterOption(report, "--task <name>", "Only the calls of this task"))
-    .addOption(filterOption(report, "--ticket <ref>", "Only the calls of this ticket, as declared"))
-    .addOption(filterOption(report, "--person <id>", "Only the calls of this identity"))
-    .addOption(filterOption(report, "--model <id>", "Only the calls of this model"))
+    .addOption(filterOption(report, "--task <name>", "calls of this task"))
+    .addOption(filterOption(report, "--ticket <ref>", "calls of this ticket, as declared"))
+    .addOption(filterOption(report, "--person <id>", "calls of this identity"))
+    .addOption(filterOption(report, "--model <id>", "calls of this model"))
+    .addOption(filterOption(report, "--agent <agent>", "calls of this agent", USAGE_AGENTS))
     .addOption(
-      filterOption(report, "--agent <agent>", "Only the calls of this agent", USAGE_AGENTS)
-    )
-    .addOption(
-      filterOption(report, "--session <id>", "Only the calls of this session, or a start of its id")
+      filterOption(report, "--session <id>", "calls of this session, or a start of its id")
     )
     .addOption(
       filterOption(
         report,
         "--repository <id>",
-        "Only the calls of this repository, a start of its id, or . for the one here"
+        "calls of this repository, a start of its id, or . for the one here"
       )
     )
     .addOption(
-      filterOption(
-        report,
-        "--absent <axis>",
-        "Only the calls with no value on this axis",
-        ABSENT_AXES
-      )
+      filterOption(report, "--absent <axis>", "calls with no value on this axis", ABSENT_AXES)
     )
     .addOption(
       filterOption(
         report,
         "--unattributed [reason]",
-        "Only the work with no task, for this reason",
+        "work with no task, for this reason",
         UNATTRIBUTED_SELECTORS
       ).preset("any")
     )
@@ -327,8 +318,7 @@ export function registerTelemetryCommand(program: Command): void {
           json: boolean;
         } & Partial<ReportFilters>
       ) => {
-        const options = parseGlobalOptions(program);
-        const { output, projectRoot } = options;
+        const { output, projectRoot, run } = commandOf(program);
         const period = periodOf(cmdOptions, new Date());
         if (!period.ok) {
           output.error(period.message);
@@ -337,7 +327,7 @@ export function registerTelemetryCommand(program: Command): void {
         const given = filtersOf(cmdOptions);
         const filters: RequestedFilters =
           given.repository === "." ? { ...given, repository: null, here: projectRoot } : given;
-        await withDeps(options, async (deps) => {
+        await run(async (deps) => {
           const result = await deps.telemetry.reportUsageUseCase.execute({
             axis: cmdOptions.axis,
             period: period.period,
@@ -368,13 +358,12 @@ export function registerTelemetryCommand(program: Command): void {
     .description("Choose to be named on your own measurement, or show or remove that choice")
     .option("--off", "Stop naming you and remove the identity", false)
     .action(async (id: string | undefined, cmdOptions: { off: boolean }) => {
-      const options = parseGlobalOptions(program);
-      const { output } = options;
+      const { output, run } = commandOf(program);
       if (cmdOptions.off && id !== undefined) {
         output.error("--off removes the identity: give it no identifier.");
         process.exit(1);
       }
-      await withDeps(options, async (deps) => {
+      await run(async (deps) => {
         const use = deps.telemetry.manageIdentityUseCase;
         const result = cmdOptions.off
           ? await use.off()

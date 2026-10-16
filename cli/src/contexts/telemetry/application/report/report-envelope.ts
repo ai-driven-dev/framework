@@ -1,7 +1,14 @@
 import type { UnattributedReason } from "../../domain/report/attribution.js";
 import type { Period } from "../../domain/report/period.js";
 import { filtersOf, type ReportFilters } from "../../domain/report/report-filter.js";
-import type { CounterSum, ReportAxis, ReportRow, Tally } from "../../domain/report/usage-report.js";
+import {
+  COUNTERS,
+  type Counter,
+  type CounterSum,
+  type ReportAxis,
+  type ReportRow,
+  type Tally,
+} from "../../domain/report/usage-report.js";
 import type { NotStoredReason } from "../../domain/repository-resolution.js";
 import type { ReportResult } from "./report-usage-use-case.js";
 
@@ -78,12 +85,10 @@ function counterOf(sum: CounterSum): EnvelopeCounter {
 }
 
 function tallyOf(tally: Tally): EnvelopeTally {
+  const counters = COUNTERS.map((counter) => [counter, counterOf(tally.counters[counter])]);
   return {
     records: tally.records,
-    input: counterOf(tally.counters.input),
-    output: counterOf(tally.counters.output),
-    cache_read: counterOf(tally.counters.cache_read),
-    cache_write: counterOf(tally.counters.cache_write),
+    ...(Object.fromEntries(counters) as Record<Counter, EnvelopeCounter>),
     total: counterOf(tally.total),
   };
 }

@@ -13,15 +13,13 @@ import {
   RETENTION_WANTED_DAYS,
 } from "../../../contexts/telemetry/domain/switch/claude-retention.js";
 import type { CLIOutput } from "../../output.js";
-
-const IDENTITY_RULE = "An identity is one non-empty line of at most 128 characters.";
+import { DAMAGED_CONSENT_LOG, FORGET_THEN_ON, IDENTITY_RULE } from "../telemetry-display.js";
 
 const REFUSALS = {
   "outside-repository": "This directory is not inside a git repository.",
   "unreadable-git-config":
     "This clone's git config cannot be read, so its consent was left as it is. Fix it, then run this again.",
-  "damaged-consent-log":
-    "ledger/consents.jsonl holds a line that is not a consent event, so the log cannot be trusted and nothing was changed. Run `aidd telemetry forget --yes`, then `aidd telemetry on` again: nothing from before is stored.",
+  "damaged-consent-log": `${DAMAGED_CONSENT_LOG} nothing was changed. ${FORGET_THEN_ON} again: nothing from before is stored.`,
   "unidentified-clone":
     "This file system gives the clone's git directory no identity, so nothing measured here could be told to be its own. Nothing was changed.",
   "invalid-identity": `${IDENTITY_RULE} Nothing was changed.`,
