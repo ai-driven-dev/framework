@@ -25,12 +25,13 @@ function options(args) {
   const result = {};
   for (let i = 0; i < args.length; i++) {
     const key = args[i];
-    if (!["--project", "--tools", "--input", "--delete", "--publish"].includes(key) || key in result) fail(`Unknown or repeated option: ${key}`);
-    result[key] = key === "--publish" ? true : args[++i];
+    if (!["--project", "--tools", "--input", "--delete", "--publish", "--plan", "--check"].includes(key) || key in result) fail(`Unknown or repeated option: ${key}`);
+    result[key] = ["--publish", "--plan", "--check"].includes(key) ? true : args[++i];
     if (!result[key] || (typeof result[key] === "string" && result[key].startsWith("--"))) fail(`Missing value: ${key}`);
   }
   if (!result["--project"] || !result["--tools"]) fail("Explicit --project and --tools are required.");
   if (["--input", "--delete", "--publish"].filter((key) => key in result).length !== 1) fail("Choose exactly one of --input, --delete or --publish.");
+  if (result["--check"] && (!result["--publish"] || result["--plan"])) fail("--check verifies --publish alone and excludes --plan.");
   return result;
 }
 
@@ -263,6 +264,12 @@ function main() {
   }
   // Preflight every destination and ownership above; no validation can first happen after mutation.
   for (const relative of writes.keys()) target(relative);
+  if (opts["--plan"]) return void process.stdout.write(JSON.stringify({ dryRun: true, files: [...writes.keys()] }) + "\n");
+  if (opts["--check"]) {
+    const drift = [...writes].filter(([relative, text]) => text !== read(relative)).map(([relative]) => relative);
+    process.exitCode = drift.length ? 1 : 0;
+    return void process.stdout.write(JSON.stringify({ drift }) + "\n");
+  }
   for (const [relative, text] of writes) {
     const file = target(relative);
     if (text === read(relative)) continue;

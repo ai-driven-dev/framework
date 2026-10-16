@@ -214,7 +214,12 @@ describe("printDeclareResult", () => {
     const refusal = (reason: Extract<DeclareResult, { status: "refused" }>["reason"]) =>
       linesOf((o) => printDeclareResult(o, { status: "refused", reason }))[0];
     expect(refusal("environment")).toBe("AIDD_TELEMETRY=0: nothing was declared.");
-    expect(refusal("no-consent")).toContain("has not opted in");
+    expect(refusal("no-consent")).toBe(
+      "This clone has not opted in to measurement, so no task was declared. Run `aidd telemetry on` here first."
+    );
+    expect(refusal("turned-off")).toBe(
+      "Measurement was turned off in this clone, so no task was declared. Run `aidd telemetry on` here to measure it again."
+    );
     expect(refusal("outside-repository")).toContain("Not inside a git repository");
     expect(refusal("unreadable-consent")).toContain("cannot be read");
     expect(refusal("unidentified-repository")).toContain("no remote and no commit");
@@ -301,5 +306,10 @@ describe("printTelemetryStatus", () => {
     expect(
       linesOf((o) => printTelemetryStatus(o, { status: "refused", reason: "no-consent" }))
     ).toEqual(["Not measured: this clone has not run `aidd telemetry on`."]);
+    expect(
+      linesOf((o) => printTelemetryStatus(o, { status: "refused", reason: "turned-off" }))
+    ).toEqual([
+      "Not measured: measurement was turned off in this clone. Run `aidd telemetry on` to measure it again.",
+    ]);
   });
 });

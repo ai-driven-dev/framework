@@ -151,6 +151,25 @@ describe("aidd telemetry on, choosing who is measured", () => {
     expect((await cli(["status"])).stdout).toContain("Measured anonymously.");
   });
 
+  it("says, after on then off, that measurement was turned off and how to turn it back on", async () => {
+    const never = await cli(["status"]);
+    expect(never.exitCode).toBe(0);
+    expect(never.stdout).toContain("Not measured: this clone has not run `aidd telemetry on`.");
+    expect((await cli(["on", "--yes", "--anonymous"])).exitCode).toBe(0);
+    expect((await cli(["off"])).exitCode).toBe(0);
+    const status = await cli(["status"]);
+    expect(status.exitCode).toBe(0);
+    expect(status.stdout).toContain(
+      "Not measured: measurement was turned off in this clone. Run `aidd telemetry on` to measure it again."
+    );
+    expect(status.stdout).not.toContain("has not run");
+    const task = await cli(["task", "t1"]);
+    expect(task.exitCode).toBe(1);
+    expect(task.stderr).toContain("Measurement was turned off in this clone");
+    expect((await cli(["on", "--yes", "--anonymous"])).exitCode).toBe(0);
+    expect((await cli(["status"])).stdout).toContain("This clone is measured since");
+  });
+
   it("turns on under AIDD_TELEMETRY=0 as before, when the choice is given", async () => {
     const run = await cli(["on", "--yes", "--anonymous"], { AIDD_TELEMETRY: "0" });
     expect(run.exitCode).toBe(0);

@@ -1,5 +1,59 @@
 # Changelog
 
+## [5.5.0](https://github.com/ai-driven-dev/framework/compare/cli-v5.4.0...cli-v5.5.0) (2026-10-16)
+
+
+### ⚠ BREAKING CHANGES
+
+* the aidd telemetry commands, the aidd-telemetry hooks and skills, backlog-link.json and the AIDD-Session-Id commit trailer are removed; measurement returns, for Claude Code first, later on this branch.
+
+### Features
+
+* **telemetry:** ask who is measured at opt-in ([#1034](https://github.com/ai-driven-dev/framework/issues/1034)) ([06dbb98](https://github.com/ai-driven-dev/framework/commit/06dbb980e2041267c3c20c8c4d236a63208213d6))
+* **telemetry:** deterministic claude code token measurement, release 1 ([#993](https://github.com/ai-driven-dev/framework/issues/993)) ([0a103e6](https://github.com/ai-driven-dev/framework/commit/0a103e6725cd9619a861d1ec3136b7534edabae3))
+* **telemetry:** filter the report by task, ticket, person and more ([#1033](https://github.com/ai-driven-dev/framework/issues/1033)) ([7084a88](https://github.com/ai-driven-dev/framework/commit/7084a88c009dca9fa422101dff789d410c9ec476))
+
+
+### Bug Fixes
+
+* **aidd-pm:** give a spec gap one home, and refuse only one written elsewhere ([#969](https://github.com/ai-driven-dev/framework/issues/969)) ([22c541a](https://github.com/ai-driven-dev/framework/commit/22c541a70b9829305863a4c38ecac931b2914274))
+* **cli:** clear remaining dependency security advisories ([#1013](https://github.com/ai-driven-dev/framework/issues/1013)) ([05b166b](https://github.com/ai-driven-dev/framework/commit/05b166b2ef9fee456176ecff1df900513ba1eaad)), closes [#469](https://github.com/ai-driven-dev/framework/issues/469)
+* **cli:** launch Biome reliably in the Windows architecture guards ([#1000](https://github.com/ai-driven-dev/framework/issues/1000)) ([aab3480](https://github.com/ai-driven-dev/framework/commit/aab3480883295c44fbdfe272f55abaaa230950dd))
+* **cli:** patch vulnerable development dependencies ([#1011](https://github.com/ai-driven-dev/framework/issues/1011)) ([4704286](https://github.com/ai-driven-dev/framework/commit/4704286066d57e8469b02f3953d0f86ebbb38f55)), closes [#1008](https://github.com/ai-driven-dev/framework/issues/1008)
+* **cli:** preserve exact mutation filtering with vitest 5 ([#1003](https://github.com/ai-driven-dev/framework/issues/1003)) ([0940c07](https://github.com/ai-driven-dev/framework/commit/0940c0769ba56feca46f409e0a55e53b405eaf9c))
+* **cli:** preserve noninteractive git fetches with simple-git v4 ([4ffbc0a](https://github.com/ai-driven-dev/framework/commit/4ffbc0a2f96a679b403d5eaa3f9c74c36bc5138e))
+* **cli:** render setup validation errors cleanly ([#966](https://github.com/ai-driven-dev/framework/issues/966)) ([7f92f85](https://github.com/ai-driven-dev/framework/commit/7f92f859c90edba8cd92509672b0d5396c1da349))
+* **cli:** restore OpenCode plugins and verify Kilo runtime hooks ([#971](https://github.com/ai-driven-dev/framework/issues/971)) ([12777d0](https://github.com/ai-driven-dev/framework/commit/12777d03808cee29f611e18d3816ae62ebc5c969))
+* **cli:** the test sandbox keeps node when a tool binary shares its directory ([#968](https://github.com/ai-driven-dev/framework/issues/968)) ([bf0f216](https://github.com/ai-driven-dev/framework/commit/bf0f216c951d29bcc6a2b52b7fd835524d3c9f7f))
+* **cli:** validate github token responses without leaking credentials ([3e67f6f](https://github.com/ai-driven-dev/framework/commit/3e67f6f594b7b7f6cc7bceb0581ad6d515519080)), closes [#467](https://github.com/ai-driven-dev/framework/issues/467)
+* **cli:** validate GitHub token responses without leaking credentials ([#1004](https://github.com/ai-driven-dev/framework/issues/1004)) ([3e67f6f](https://github.com/ai-driven-dev/framework/commit/3e67f6f594b7b7f6cc7bceb0581ad6d515519080))
+* **test:** keep node available in isolated E2E PATH ([21afc26](https://github.com/ai-driven-dev/framework/commit/21afc26efc1228db6cbe184cc5b5aac49e719c0c))
+* **test:** preserve Node in E2E sandbox ([#963](https://github.com/ai-driven-dev/framework/issues/963)) ([21afc26](https://github.com/ai-driven-dev/framework/commit/21afc26efc1228db6cbe184cc5b5aac49e719c0c))
+
+
+### Miscellaneous
+
+* **deps-dev:** bump the npm-dev-dependencies group ([44084ff](https://github.com/ai-driven-dev/framework/commit/44084ff88334bb5ee00d248eeca625576c1e6d8d))
+* **deps-dev:** bump the npm-dev-dependencies group across 1 directory with 11 updates ([9ac49ac](https://github.com/ai-driven-dev/framework/commit/9ac49ac3d6113d2096fc17542a4f9c65366a9e65))
+* **deps-dev:** bump the npm-dev-dependencies group in /cli with 3 updates ([#1020](https://github.com/ai-driven-dev/framework/issues/1020)) ([44084ff](https://github.com/ai-driven-dev/framework/commit/44084ff88334bb5ee00d248eeca625576c1e6d8d))
+* **deps-dev:** upgrade CLI tooling with compatible vitest and stryker ([#912](https://github.com/ai-driven-dev/framework/issues/912)) ([9ac49ac](https://github.com/ai-driven-dev/framework/commit/9ac49ac3d6113d2096fc17542a4f9c65366a9e65))
+* **deps:** bump @inquirer/prompts from 8.7.2 to 8.7.3 in /cli ([#1021](https://github.com/ai-driven-dev/framework/issues/1021)) ([015c35a](https://github.com/ai-driven-dev/framework/commit/015c35a466ba1a9ab201bb38b1dd18469cb5e579))
+* **deps:** bump simple-git from 3.36.0 to 4.0.2 in /cli ([536b901](https://github.com/ai-driven-dev/framework/commit/536b901fe2c062377c49d8a5807e6bb6bc5b14d3))
+* **deps:** bump simple-git from 3.36.0 to 4.0.2 in /cli ([477aeed](https://github.com/ai-driven-dev/framework/commit/477aeed9fefd539be784d53c69f4433dcbe4dd52))
+* **deps:** bump smol-toml from 1.8.0 to 1.9.0 in /cli ([#934](https://github.com/ai-driven-dev/framework/issues/934)) ([4919f04](https://github.com/ai-driven-dev/framework/commit/4919f04690350cb02d5f24e186137e04c8e6172e))
+* **deps:** bump smol-toml from 1.9.0 to 1.9.1 in /cli ([#1022](https://github.com/ai-driven-dev/framework/issues/1022)) ([aaca070](https://github.com/ai-driven-dev/framework/commit/aaca070a328bb78124e487f2c2ec31d57806ba69))
+
+
+### Performance
+
+* **telemetry:** a report reads its period, not the whole history ([#1032](https://github.com/ai-driven-dev/framework/issues/1032)) ([ae8705f](https://github.com/ai-driven-dev/framework/commit/ae8705f761671478bed9c66a1884fe8a2870e3e4))
+* **telemetry:** the ledger is kept by day, so an ingest costs what it adds ([#1031](https://github.com/ai-driven-dev/framework/issues/1031)) ([fcb6022](https://github.com/ai-driven-dev/framework/commit/fcb6022b0a37e892c05876e72cddc9791e43040b))
+
+
+### Documentation
+
+* delete the cost-report and metrics contracts and aidd_docs/runs/, rewrite ([0a103e6](https://github.com/ai-driven-dev/framework/commit/0a103e6725cd9619a861d1ec3136b7534edabae3))
+
 ## [5.4.0](https://github.com/ai-driven-dev/framework/compare/cli-v5.3.0...cli-v5.4.0) (2026-09-24)
 
 

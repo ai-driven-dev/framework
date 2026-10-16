@@ -1,5 +1,18 @@
 # Changelog
 
+## [2.5.0](https://github.com/ai-driven-dev/framework/compare/aidd-vcs-v2.4.0...aidd-vcs-v2.5.0) (2026-10-16)
+
+
+### Features
+
+* **aidd-vcs:** add conflict resolution skill ([#747](https://github.com/ai-driven-dev/framework/issues/747)) ([b03e64e](https://github.com/ai-driven-dev/framework/commit/b03e64e075f9c889825adfaf9b0c208df1454d31))
+
+
+### Bug Fixes
+
+* **aidd-vcs:** scope PR verification to changed behavior ([#982](https://github.com/ai-driven-dev/framework/issues/982)) ([60aab10](https://github.com/ai-driven-dev/framework/commit/60aab1059c2bd4d0f1f89ba3390c3d912a93a036))
+* **cli:** preserve noninteractive git fetches with simple-git v4 ([4ffbc0a](https://github.com/ai-driven-dev/framework/commit/4ffbc0a2f96a679b403d5eaa3f9c74c36bc5138e))
+
 ## [2.4.0](https://github.com/ai-driven-dev/framework/compare/aidd-vcs-v2.3.2...aidd-vcs-v2.4.0) (2026-09-24)
 
 

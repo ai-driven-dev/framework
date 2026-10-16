@@ -69,6 +69,8 @@ const REFUSALS: Readonly<Record<RefusalReason, string>> = {
     "This repository has no remote and no commit yet, so nothing can name it. Commit once, then declare again.",
   "no-consent":
     "This clone has not opted in to measurement, so no task was declared. Run `aidd telemetry on` here first.",
+  "turned-off":
+    "Measurement was turned off in this clone, so no task was declared. Run `aidd telemetry on` here to measure it again.",
   "unreadable-consent":
     "This clone's git config cannot be read, so no task was declared. Fix it, then declare again.",
 };
@@ -78,6 +80,8 @@ const NOT_MEASURED: Readonly<Record<RefusalReason, string>> = {
   "outside-repository": "Not measured: not inside a git repository.",
   "unidentified-repository": "Not measured: this repository has no remote and no commit yet.",
   "no-consent": "Not measured: this clone has not run `aidd telemetry on`.",
+  "turned-off":
+    "Not measured: measurement was turned off in this clone. Run `aidd telemetry on` to measure it again.",
   "unreadable-consent": "Not measured: this clone's git config or the consent log cannot be read.",
 };
 

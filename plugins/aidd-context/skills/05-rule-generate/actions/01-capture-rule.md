@@ -1,29 +1,26 @@
 # 01 - Capture rule
 
-Settle the rule's topic and place before writing.
+Frame the request, compare it with existing policies, plan the publication, decide with the user.
 
 ## Input
 
-A rule topic (e.g. "TypeScript naming"), or `auto` to scan the codebase and propose rules. Empty means manual.
+Request: a topic, `auto`, or a publish/delete. Default manual.
 
 ## Output
 
-In-context: the topic, its category and slug, the file scope, a one-line description, and the write mode (host with supported tools, or plugin source).
+Approved candidates with planned paths, or confirmed sources, operation and destinations.
 
 ## Process
 
-1. **Gate.** Run the asset-access precheck ([tool-paths.md](../references/tool-paths.md)).
-   For an explicitly confirmed host publish/delete, identify the existing rule or rule set and hosts, then continue to Render in action 02; no new topic or body is needed.
-2. **Auto or manual.** Ask whether to run auto or manual mode:
-   - **Auto**: scan the codebase, propose a rules architecture, wait for approval.
-   - **Manual**: ask the topic (blocking). Confirm any candidate first.
-3. **Place.** Pick the category and slug from [rule-authoring.md](../references/rule-authoring.md). The category index drives the slug prefix.
-4. **Scope.** State the glob the rule applies to, or note it applies to all files. Note a one-line description of what the rule governs, for tools whose scope frontmatter needs it.
-5. **Write mode.** Ask where the rule goes:
-   - **Host project**: detect the installed tools ([tool-paths.md](../references/tool-paths.md)), propose the supported ones, and confirm which to target. Never pick one silently.
-   - **Plugin source**: confirm or create `plugins/<plugin>/rules/`.
-
-## Test
-
-- The topic, category and slug, or existing publish/delete selection, are confirmed in writing.
-- Unsupported tools are named with what to do instead.
+1. Confirm the operation and [destination](../references/rule-publication.md).
+   - Hosts: reuse the existing rule's hosts, else ask. Missing hosts: detect, propose installation, await selection before drafting.
+2. Frame the topic.
+   - Manual: ask for it.
+   - Auto: scan, propose topics, await selection.
+   - Publish/delete: confirm sources and whole publications, then plan.
+3. Draft with the [template](../assets/rule-template.md) and [authoring](../references/rule-authoring.md), once topic and [fields](../references/rule-publication.md#operations) are confirmed.
+4. Compare: [discover policies](../references/rule-discovery.md) read-only in the project and loaded ancestors, never home or account scans, then [assess](../references/rule-assessment.md) each candidate.
+5. Plan: for a host, resolve the installed writer to an absolute path, write the request outside the destinations, run it with `--plan` per [publication](../references/rule-publication.md). A refusal returns to step 3.
+6. Present each candidate in full (body, description, scope, hosts), the planned paths and every finding (new rules too), then end the turn.
+   - Needs review: ask for evidence, reassess before offering source changes.
+   - Resolved: replan, present the revised candidate, end the turn again.
