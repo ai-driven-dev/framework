@@ -99,8 +99,8 @@ function logText(logLines: readonly LogLine[], tail = ""): string {
     .join("")}${tail}`;
 }
 
-const declarations = lines("sessions.jsonl").map((line) => parseSessionDeclaration(line));
-const carries = lines("carries.jsonl").map((line) => parseSessionCarry(line));
+const declarations = () => lines("sessions.jsonl").map((line) => parseSessionDeclaration(line));
+const carries = () => lines("carries.jsonl").map((line) => parseSessionCarry(line));
 
 /** What `git config --local -z --get-regexp` prints for a case: the variable part of every
  * key in lower case, the branch name as it is. */
@@ -125,8 +125,8 @@ describe("the shared fixture of task bindings", () => {
   });
 
   it("holds only lines the CLI reads", () => {
-    expect(declarations).not.toContain(null);
-    expect(carries).not.toContain(null);
+    expect(declarations()).not.toContain(null);
+    expect(carries()).not.toContain(null);
   });
 
   it("is written with the fields the CLI writes: a renamed field turns this red", () => {
@@ -154,8 +154,8 @@ describe("the shared fixture of task bindings", () => {
     const binding = resolveBinding({
       sessionId: input.session_id,
       at: new Date(input.at),
-      declarations: declarations.filter((entry) => entry !== null),
-      carries: carries.filter((entry) => entry !== null),
+      declarations: declarations().filter((entry) => entry !== null),
+      carries: carries().filter((entry) => entry !== null),
       branch: declared,
     });
     const answer =

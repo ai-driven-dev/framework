@@ -306,10 +306,11 @@ describe("reporting usage", () => {
 
 const SESSION_A = "a1b2c3d4-0000-4000-8000-000000000001";
 const SESSION_B = "a1b2ffff-0000-4000-8000-000000000002";
-const WIDGETS = repositoryIdOf({
-  remote: "https://github.com/acme/widgets.git",
-  rootCommit: "c0ffee",
-}) as string;
+const widgets = () =>
+  repositoryIdOf({
+    remote: "https://github.com/acme/widgets.git",
+    rootCommit: "c0ffee",
+  }) as string;
 const filtered = (over: Partial<ReportFilters>): RequestedFilters => ({ ...NO_FILTERS, ...over });
 /** `--repository .`, run in `dir`. */
 const atHere = (dir: string, over: Partial<ReportFilters> = {}): RequestedFilters => ({
@@ -422,10 +423,10 @@ describe("narrowing a report", () => {
     const result = await s.report.execute({
       axis: "total",
       period: ANY,
-      filters: filtered({ repository: WIDGETS.slice(0, 8) }),
+      filters: filtered({ repository: widgets().slice(0, 8) }),
     });
     expect(result).toMatchObject({
-      filters: { repository: WIDGETS },
+      filters: { repository: widgets() },
       report: { totals: { records: 3 } },
     });
   });
@@ -438,9 +439,9 @@ describe("narrowing a report", () => {
       period: ANY,
       filters: atHere("/work/a"),
     });
-    expect(s.ledger.records[0]?.repository_id).toBe(WIDGETS);
+    expect(s.ledger.records[0]?.repository_id).toBe(widgets());
     expect(result).toMatchObject({
-      filters: { repository: WIDGETS },
+      filters: { repository: widgets() },
       report: { totals: { records: 3 } },
     });
   });
@@ -454,7 +455,7 @@ describe("narrowing a report", () => {
       mainRoot: "/work/fresh",
       clone: cloneOf("/work/fresh/.git"),
       remote: null,
-      rootCommit: WIDGETS.slice(0, 40),
+      rootCommit: widgets().slice(0, 40),
     });
     const result = await s.report.execute({
       axis: "total",
@@ -462,7 +463,7 @@ describe("narrowing a report", () => {
       filters: atHere("/work/fresh"),
     });
     expect(result).toMatchObject({
-      filters: { repository: WIDGETS.slice(0, 40) },
+      filters: { repository: widgets().slice(0, 40) },
       report: { totals: { records: 0 } },
     });
   });
