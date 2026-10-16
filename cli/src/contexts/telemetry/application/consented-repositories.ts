@@ -2,7 +2,7 @@ import type { ConsentHistory } from "../domain/ports/consent-history.js";
 import type { ConsentSource } from "../domain/ports/consent-source.js";
 import type { RepositoryLocator } from "../domain/ports/repository-locator.js";
 import { repositoryIdOf } from "../domain/repository-identity.js";
-import { consentOf, tokenOfKey } from "../domain/telemetry-consent.js";
+import { consentOf, tokenOfKey, turnedOff } from "../domain/telemetry-consent.js";
 import { ConsentLog } from "./consent-log.js";
 
 export type RefusalReason =
@@ -10,6 +10,7 @@ export type RefusalReason =
   | "outside-repository"
   | "unidentified-repository"
   | "no-consent"
+  | "turned-off"
   | "unreadable-consent";
 
 export type ConsentedRepository =
@@ -41,7 +42,9 @@ export class ConsentedRepositories {
     const reading = await this.consents.read(located.root);
     const consent = consentOf(reading);
     if (consent === "unreadable") return { status: "refused", reason: "unreadable-consent" };
-    if (consent === "absent") return { status: "refused", reason: "no-consent" };
+    if (consent === "absent") {
+      return { status: "refused", reason: turnedOff(reading) ? "turned-off" : "no-consent" };
+    }
     const log = await ConsentLog.load(this.history);
     // A log that cannot be read, or a clone the platform cannot identify, measures nothing.
     if (log.damaged || located.clone === null) {

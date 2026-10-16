@@ -44,6 +44,12 @@ export function consentOf(reading: ConsentReading): Consent {
   return tokenOfKey(reading.value) === null ? "absent" : "granted";
 }
 
+/** Whether the clone's key says measurement was turned off in it: `off` writes `off`, and a
+ * person who writes it by hand turned it off too. Either way `on` measures it again. */
+export function turnedOff(reading: ConsentReading): boolean {
+  return reading.kind === "value" && reading.value === CONSENT_WITHDRAWN;
+}
+
 /** `AIDD_TELEMETRY` set to exactly `0` refuses measurement, whatever a clone granted. Reading
  * the environment is the composition root's job; this is only what its value means. */
 export function refusedByEnvironment(value: string | undefined): boolean {

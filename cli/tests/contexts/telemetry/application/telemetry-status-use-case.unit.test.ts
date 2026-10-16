@@ -55,7 +55,7 @@ function setup(sessionId: string | null = "sess-1234567890", refusedByEnvironmen
     { refusedByEnvironment, sessionId, now: () => new Date("2026-10-09T12:00:00.000Z") },
     identities
   );
-  return { useCase, consents, sessions, branches, source, identities };
+  return { useCase, consents, history, sessions, branches, source, identities };
 }
 
 const branchBinding = {
@@ -166,5 +166,29 @@ describe("showing what the work is bound to", () => {
       status: "refused",
       reason: "environment",
     });
+  });
+
+  it("says a clone turned off was turned off, even with a log that cannot be read", async () => {
+    const off = setup();
+    off.consents.values.set(CWD, "off");
+    expect(await off.useCase.execute(CWD)).toEqual({ status: "refused", reason: "turned-off" });
+    const damaged = setup();
+    damaged.consents.values.set(CWD, "off");
+    damaged.history.damaged = true;
+    expect(await damaged.useCase.execute(CWD)).toEqual({
+      status: "refused",
+      reason: "turned-off",
+    });
+  });
+
+  it("never says a clone with no key, or a key that grants nothing, was turned off", async () => {
+    const never = setup();
+    never.consents.values.delete(CWD);
+    expect(await never.useCase.execute(CWD)).toEqual({ status: "refused", reason: "no-consent" });
+    for (const key of ["2", "true", "OFF"]) {
+      const other = setup();
+      other.consents.values.set(CWD, key);
+      expect(await other.useCase.execute(CWD)).toEqual({ status: "refused", reason: "no-consent" });
+    }
   });
 });
