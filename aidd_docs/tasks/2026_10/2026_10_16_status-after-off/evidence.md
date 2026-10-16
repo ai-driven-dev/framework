@@ -150,3 +150,49 @@ Error: Measurement was turned off in this clone, so no task was declared. Run `a
 exit=1
 == off: git key = off
 ```
+
+## Review round 1 fixes
+
+Both minor findings of `review.md` round 1, fixed in `f0f30ac3`. Contract Rule 3, the plan and the usage contract now say a key `off` reads `turned-off` only once the consent log is read and the clone identified; otherwise `unreadable-consent`, because `on` would refuse there.
+
+### Red run
+
+`pnpm exec vitest run tests/contexts/telemetry/application/telemetry-status-use-case.unit.test.ts tests/contexts/telemetry/application/declare-task-use-case.unit.test.ts`, before the change:
+
+```txt
+× says a clone turned off cannot be read, not to run on, when on would refuse
+AssertionError: expected { status: 'refused', …(1) } to deeply equal { status: 'refused', …(1) }
+Tests  1 failed | 27 passed (28)
+```
+
+`"{}"` in the never-opted-in loop is green by construction: it was already `no-consent`. G4 below proves it a guard.
+
+### Guard breaks
+
+Each applied to the source, the two files above run, then reverted:
+
+```txt
+## G1 turned-off decided before the log again: 1 red
+   × says a clone turned off cannot be read, not to run on, when on would refuse
+## G2 an off key reads no-consent: 3 red
+   × says a clone turned off was turned off
+   × says a clone turned off cannot be read, not to run on, when on would refuse
+   × refuses a clone turned off as turned off, and writes nothing
+## G3 the turned-off answer is skipped: 2 red
+   × says a clone turned off was turned off
+   × refuses a clone turned off as turned off, and writes nothing
+## G4 a key {} reads turned off: 2 red
+   × refuses like a declaration does
+   × never says a clone with no key, or a key that grants nothing, was turned off
+```
+
+### Gates
+
+| Gate | Decisive line |
+| --- | --- |
+| `cd cli && pnpm test` | `Tests  6637 passed \| 1 skipped (6638)`, exit 0 |
+| lefthook pre-commit (on `f0f30ac3`) | `cli-architecture`, `cli-biome`, `cli-type-honesty`, `cli-typecheck`, `markdown-links`, `scripts-tests`, `commitlint`: all `✔️` |
+| lefthook pre-push | `Tests  6637 passed \| 1 skipped (6638)`, `✔️ cli-knip`, `✔️ cli-test`, exit 0 |
+| `pnpm test:mutation:telemetry` | `score 96.3, floor 96` |
+
+Mutants on changed lines: `consented-repositories.ts` 15 of 15 killed. `telemetry-consent.ts` lines 49 to 50: 8 of 9 killed. The survivor is the same equivalent mutant as before (`reading.kind === "value"` replaced by `true`).
