@@ -27,7 +27,7 @@ issue: 1036
 | --- | --- |
 | 1 | No test deleted, no assertion dropped, no `numRuns` lowered, no file excluded from mutation, no floor changed. |
 | 2 | No mutant killed in the baseline report survives after the change. Every mutant whose status changes is listed with its reason. |
-| 3 | No baseline kill survives, and the telemetry score stays at or above the baseline once the baseline's load-hidden survivors are counted the same way on both sides. The given baseline read 96.5 because the load scored some survivors as timeouts; counted alike on the 4169 shared mutants, both runs score 96.33. Acknowledged by the orchestrator. |
+| 3 | No baseline kill survives, and the telemetry score stays at or above the baseline once the baseline's load-hidden survivors are counted the same way on both sides. The given baseline read 96.5 because the load scored some survivors as timeouts; counted alike on the 4169 shared mutants, both runs score 96.33. Accepted by the maintainer on 2026-10-16, final score 96.35 (floor 96). |
 | 4 | A slow survivor is never reported as a timeout. |
 | 5 | Every timing is taken on the same machine, with the load (`uptime`) recorded beside it. |
 
