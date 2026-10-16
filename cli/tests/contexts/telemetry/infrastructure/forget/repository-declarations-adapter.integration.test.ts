@@ -35,18 +35,19 @@ describe("the declarations in a repository's git config", () => {
     });
   });
 
-  it("counts the three keys of every branch, dotted and upper-case names included", async () => {
+  it("counts the four keys of every branch, dotted and upper-case names included", async () => {
     config(
       "branch.main.aiddTask",
       "branch.feat/a.b.aiddTicket",
       "branch.Feat/X.aiddDeclaredAt",
+      "branch.Feat/X.aiddDeclaredFor",
       "branch.main.remote",
       "branch.main.aiddOther",
       "aidd.task",
       "other.aiddTask"
     );
     expect(await new RepositoryDeclarationsAdapter(env).count(clone)).toEqual({
-      taskKeys: 3,
+      taskKeys: 4,
       consent: false,
     });
   });

@@ -9,7 +9,9 @@
     "dotted-branch-name": "declared",
     "stamped-for-this-branch": "declared",
     "stamped-for-another-branch": "undeclared",
-    "stamp-without-declared-at": "undeclared"
+    "stamp-without-declared-at": "undeclared",
+    "copied-onto-a-branch-declared-none": "undeclared",
+    "task-listed-twice": "undeclared"
   },
   "binding": {
     "session-declared-once": {
@@ -162,6 +164,9 @@
       "state": "unbound"
     },
     "branch-stamp-without-declared-at-is-unbound": {
+      "state": "unbound"
+    },
+    "branch-copied-onto-a-declared-branch-is-unbound": {
       "state": "unbound"
     },
     "branch-unstamped-legacy-declaration-is-bound": {

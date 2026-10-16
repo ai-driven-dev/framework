@@ -96,15 +96,12 @@ describe("declaring on a branch", () => {
   it("declares again over a branch copied onto with -C, which leaves every key twice", async () => {
     await store.declare(repo, "feat/x", task("theirs", "PROJ-1"));
     git(repo, env, "branch", "feat/y");
-    await store.declare(repo, "feat/y", task("ours", "PROJ-2"));
+    await store.declare(repo, "feat/y", declarationOf({ kind: "none" }, at, "command"));
     git(repo, env, "branch", "-C", "feat/x", "feat/y");
-    // git puts the copied keys first, so the branch's own values, listed last, are read.
+    // Both declarations are now mixed under feat/y: it is declared by neither.
     expect(
       (await new GitBranchBindingSourceAdapter(env).bindings(repo)).map((b) => [b.branch, b.task])
-    ).toEqual([
-      ["feat/x", "theirs"],
-      ["feat/y", "ours"],
-    ]);
+    ).toEqual([["feat/x", "theirs"]]);
     await store.declare(repo, "feat/y", task("again"));
     expect(
       (await new GitBranchBindingSourceAdapter(env).bindings(repo)).map((b) => [

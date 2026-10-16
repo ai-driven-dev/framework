@@ -69,6 +69,26 @@
         "aiddTask": "half-written",
         "aiddDeclaredFor": "feat/x"
       }
+    },
+    "copied-onto-a-branch-declared-none": {
+      "branch": "feat/x",
+      "keys": [
+        ["aiddTask", "copied"],
+        ["aiddTicket", "PROJ-32"],
+        ["aiddDeclaredFor", "feat/original"],
+        ["aiddDeclaredAt", "2026-10-09T09:00:00.000Z"],
+        ["aiddDeclaredFor", "feat/x"],
+        ["aiddDeclaredAt", "2026-10-09T10:00:00.000Z"]
+      ]
+    },
+    "task-listed-twice": {
+      "branch": "feat/x",
+      "keys": [
+        ["aiddTask", "copied"],
+        ["aiddTask", "own"],
+        ["aiddDeclaredFor", "feat/x"],
+        ["aiddDeclaredAt", "2026-10-09T10:00:00.000Z"]
+      ]
     }
   },
   "binding": {
@@ -244,6 +264,13 @@
       "session_id": null,
       "at": "2026-10-09T15:00:00.000Z",
       "gitConfig": "task-and-ticket",
+      "head": "refs/heads/feat/x",
+      "originHead": null
+    },
+    "branch-copied-onto-a-declared-branch-is-unbound": {
+      "session_id": null,
+      "at": "2026-10-09T15:00:00.000Z",
+      "gitConfig": "copied-onto-a-branch-declared-none",
       "head": "refs/heads/feat/x",
       "originHead": null
     },

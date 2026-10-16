@@ -41,13 +41,20 @@ interface DeclaredFields {
   /** The branch the command declared on: a copy or a rename moves the keys, not this name. */
   declared_for: string | null;
   declared_at: string | null;
+  /** The keys read so far: one read again was left twice by `git branch -C` or `-M`. */
+  seen: Set<string>;
+  listedTwice: boolean;
 }
 
 /** Only the command declares, and it writes `aiddDeclaredAt` last: a key without it was set by
  * hand or cut short. A stamp naming another branch was carried here by `git branch -c` or
- * `-m`. A declaration with no stamp was written before stamping existed and still counts. */
+ * `-m`. A key listed twice mixes the declaration copied by `-C` or `-M` with the branch's own:
+ * neither is whole. A declaration with no stamp was written before stamping existed and still
+ * counts. */
 function declaredByTheCommand(branch: string, fields: DeclaredFields): boolean {
-  return fields.declared_at !== null && (fields.declared_for ?? branch) === branch;
+  return (
+    !fields.listedTwice && fields.declared_at !== null && (fields.declared_for ?? branch) === branch
+  );
 }
 
 function textOrNull(value: string): string | null {
@@ -66,7 +73,7 @@ export function parseBranchConfig(output: string): BranchConfigBinding[] {
     const key = newline === -1 ? entry : entry.slice(0, newline);
     const value = newline === -1 ? "" : entry.slice(newline + 1);
     const lower = key.toLowerCase();
-    for (const [field, suffix] of Object.entries(FIELDS) as [keyof DeclaredFields, string][]) {
+    for (const [field, suffix] of Object.entries(FIELDS) as [keyof typeof FIELDS, string][]) {
       if (!lower.endsWith(suffix)) continue;
       const branch = key.slice(PREFIX.length, key.length - suffix.length);
       const held = branches.get(branch) ?? {
@@ -74,7 +81,11 @@ export function parseBranchConfig(output: string): BranchConfigBinding[] {
         ticket: null,
         declared_for: null,
         declared_at: null,
+        seen: new Set<string>(),
+        listedTwice: false,
       };
+      held.listedTwice ||= held.seen.has(field);
+      held.seen.add(field);
       held[field] = textOrNull(value);
       branches.set(branch, held);
     }

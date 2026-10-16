@@ -34,7 +34,8 @@ const lines = (name: string): string[] =>
 
 interface GitConfigCase {
   branch: string;
-  keys: Record<string, string>;
+  /** Pairs in order when a key is listed twice, as `git branch -C` leaves it. */
+  keys: Record<string, string> | [string, string][];
 }
 interface BindingCase {
   session_id: string | null;
@@ -105,7 +106,7 @@ const carries = () => lines("carries.jsonl").map((line) => parseSessionCarry(lin
 /** What `git config --local -z --get-regexp` prints for a case: the variable part of every
  * key in lower case, the branch name as it is. */
 function gitConfigOutput(config: GitConfigCase): string {
-  return Object.entries(config.keys)
+  return (Array.isArray(config.keys) ? config.keys : Object.entries(config.keys))
     .map(([variable, value]) => `branch.${config.branch}.${variable.toLowerCase()}\n${value}\0`)
     .join("");
 }

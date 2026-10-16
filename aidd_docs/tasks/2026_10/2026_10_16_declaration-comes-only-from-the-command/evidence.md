@@ -125,6 +125,6 @@ Each mutation applied alone to the source, the named suite run, the file restore
 ## Review round 1 fixes
 
 - Red first, `git-branch-binding-store-adapter.integration.test.ts`: `× declares again over a branch copied onto with -C, which leaves every key twice`, `Error: git config branch.feat/y.aiddTask failed`. Green after `--replace-all` / `--unset-all`: `Tests  13 passed (13)`.
-- Probe: after `git branch -C x y` the config holds `[branch "y"]` twice, the copied section first; both readers keep the last value of a key, so `y` reads as its own declaration.
+- Probe: after `git branch -C x y` the config holds `[branch "y"]` twice, the copied section first; both readers kept the last value of a key. Round 2 showed this mixes the two declarations when the branch's own left a key unset (see below).
 - Guards: plain set (S1) and plain unset (S2) each turn `declares again over a branch copied onto with -C…` red; the stamp mutation (M2) turns `asks again after a rename, and one declaration on the new name covers it` red (now checked on a call made on the renamed branch, `feat/c`).
 - Gates on 703b646e: `cd cli && pnpm test` `Tests  6669 passed | 1 skipped (6670)`; `node --test 'scripts/__tests__/*.test.js'` `ℹ tests 459`, `ℹ fail 0`; bundle `693.5 KB / budget: 695 KB`; mutation `score 96.5, floor 96`, changed lines: `branch-binding.ts` 17, `binding-resolution.ts` 4, `attribution.ts` 15, store adapter 11, source and forget adapters 1 each, all killed; smoke `PASS: 132   FAIL: 0   SKIP: 1`; tokens end to end and `--attended`: same lines as above.

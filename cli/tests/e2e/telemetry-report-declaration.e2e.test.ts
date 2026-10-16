@@ -58,6 +58,18 @@ describe("a branch is bound only by a declaration the command made on it", () =>
     expect(declared["no-binding"]?.records).toBe(1);
   });
 
+  it("does not mix a declaration copied with -C into the one the branch already had", async () => {
+    await declareBranch();
+    gitHere("switch", "-q", "feat/b");
+    expect((await aidd(["task", "--none"])).exitCode).toBe(0);
+    gitHere("switch", "-q", "feat/a");
+    gitHere("branch", "-C", "feat/a", "feat/b");
+    const tickets = rowsOf(await json("ticket"));
+    expect(tickets["PROJ-1"]?.records).toBe(2);
+    expect(tickets["declared-none"]?.records).toBeGreaterThanOrEqual(1);
+    expect(tickets["no-binding"]).toBeUndefined();
+  });
+
   it("still reads a declaration written before the branch was stamped", async () => {
     gitHere("config", "--local", "branch.feat/b.aiddTask", "legacy");
     gitHere("config", "--local", "branch.feat/b.aiddDeclaredAt", "2026-10-06T00:00:00.000Z");

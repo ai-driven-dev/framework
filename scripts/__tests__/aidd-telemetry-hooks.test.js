@@ -284,11 +284,14 @@ test("the branch role follows the fixture", () => {
   }
 });
 
+/** A case's keys: an object, or pairs in order when a key is listed twice. */
+const entriesOf = (keys) => (Array.isArray(keys) ? keys : Object.entries(keys));
+
 test("a branch declaration read back from real git follows the fixture", () => {
   for (const [name, c] of Object.entries(cases.gitConfig)) {
     withBox({ aidd: false, branch: c.branch }, (box) => {
-      for (const [key, value] of Object.entries(c.keys)) {
-        git(box.repo, "config", "--local", `branch.${c.branch}.${key}`, value);
+      for (const [key, value] of entriesOf(c.keys)) {
+        git(box.repo, "config", "--local", "--add", `branch.${c.branch}.${key}`, value);
       }
       const found = lookup({ cwd: box.repo, sessionId: null, at: new Date(), dir: box.tel, env: process.env });
       const want = expected.gitConfig[name] === "declared" ? "bound" : "unbound";
@@ -309,10 +312,10 @@ test("binding follows the fixture, through real git and the shared files", () =>
       if (c.originHead) git(box.repo, "symbolic-ref", "refs/remotes/origin/HEAD", c.originHead);
       if (c.gitConfig) {
         const set = cases.gitConfig[c.gitConfig];
-        for (const [key, value] of Object.entries(set.keys)) {
+        for (const [key, value] of entriesOf(set.keys)) {
           // the declaration belongs to the branch HEAD is on
           const branch = head.replace(/^refs\/heads\//u, "");
-          git(box.repo, "config", "--local", `branch.${c.head === null ? set.branch : branch}.${key}`, value);
+          git(box.repo, "config", "--local", "--add", `branch.${c.head === null ? set.branch : branch}.${key}`, value);
         }
       }
       fs.mkdirSync(path.join(box.tel, "bindings"), { recursive: true });
@@ -357,6 +360,7 @@ test("parseBranchConfig cuts the known suffix off a dotted branch name", () => {
     ticket: null,
     declared_for: null,
     declared_at: "t",
+    listed_twice: false,
   });
 });
 
@@ -707,6 +711,17 @@ test("a branch the command did not declare is asked: a task set by hand, a decla
     git(box.repo, "config", "--local", "branch.feat/x.aiddTask", "theirs");
     git(box.repo, "config", "--local", "branch.feat/x.aiddDeclaredFor", "feat/original");
     git(box.repo, "config", "--local", "branch.feat/x.aiddDeclaredAt", "2026-10-09T09:00:00.000Z");
+    assert.equal(gate(box).json.decision, "block");
+  });
+});
+
+test("the gate asks on a branch copied onto with -C, whose keys are listed twice", () => {
+  withBox({}, (box) => {
+    git(box.repo, "config", "--local", "branch.feat/x.aiddTask", "theirs");
+    git(box.repo, "config", "--local", "branch.feat/x.aiddDeclaredFor", "feat/original");
+    git(box.repo, "config", "--local", "branch.feat/x.aiddDeclaredAt", "2026-10-09T09:00:00.000Z");
+    git(box.repo, "config", "--local", "--add", "branch.feat/x.aiddDeclaredFor", "feat/x");
+    git(box.repo, "config", "--local", "--add", "branch.feat/x.aiddDeclaredAt", "2026-10-09T10:00:00.000Z");
     assert.equal(gate(box).json.decision, "block");
   });
 });

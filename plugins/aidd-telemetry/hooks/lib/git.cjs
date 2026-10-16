@@ -60,7 +60,8 @@ const FIELDS = {
  * a key in lower case and the branch name keeps its case; the branch name may hold dots, so
  * the known suffix is cut off the end. */
 function parseBranchConfig(output, branch) {
-  const held = { task: null, ticket: null, declared_for: null, declared_at: null };
+  const held = { task: null, ticket: null, declared_for: null, declared_at: null, listed_twice: false };
+  const seen = new Set();
   for (const entry of output.split("\0")) {
     if (!entry.startsWith("branch.")) continue;
     const newline = entry.indexOf("\n");
@@ -70,6 +71,8 @@ function parseBranchConfig(output, branch) {
     for (const [field, suffix] of Object.entries(FIELDS)) {
       if (!lower.endsWith(suffix)) continue;
       if (key.slice("branch.".length, key.length - suffix.length) === branch) {
+        held.listed_twice ||= seen.has(field);
+        seen.add(field);
         held[field] = value === "" ? null : value;
       }
     }
@@ -79,9 +82,11 @@ function parseBranchConfig(output, branch) {
 
 /** Only the command declares, and it writes `aiddDeclaredAt` last: a key without it was set by
  * hand or cut short. A stamp naming another branch was carried here by `git branch -c` or
- * `-m`. A declaration with no stamp was written before stamping existed and still counts. */
+ * `-m`. A key listed twice mixes the declaration copied by `-C` or `-M` with the branch's own:
+ * neither is whole. A declaration with no stamp was written before stamping existed and still
+ * counts. */
 function declaredByTheCommand(held, branch) {
-  return held.declared_at !== null && (held.declared_for ?? branch) === branch;
+  return !held.listed_twice && held.declared_at !== null && (held.declared_for ?? branch) === branch;
 }
 
 /** The branch's declaration ({task, ticket, declared_at}) when the command made it on this

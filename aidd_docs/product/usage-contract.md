@@ -191,10 +191,11 @@ A branch is declared only when the command declared it on that branch. Both read
 | `aiddDeclaredAt` set, no `aiddDeclaredFor` | yes | written by cli-v5.5.0 or earlier, which did not stamp. Kept readable: reports and the gate do not change for data already written. Declaring again stamps it |
 | `aiddDeclaredAt` set, `aiddDeclaredFor` = another branch | no | carried by `git branch -c` (copy) or `git branch -m` (rename), which move every `branch.<name>.*` key |
 | `aiddTask` or `aiddTicket` without `aiddDeclaredAt` | no | set by hand, or a declaration cut short: `task` writes `aiddDeclaredAt` last |
+| any declaration key listed twice | no | left by `git branch -C` or `-M` onto a branch that had keys: the copied declaration and the branch's own are mixed |
 
 - **Rename** (`git branch -m A B`): B is undeclared, so the gate asks on B. One declaration on B covers B from its creation, since the reflog moves with the branch; calls made while it was A keep A's task. git moves the keys the same way for a copy and a rename, and telling them apart would mean reading reflog entries that expire: one question after a rename is the cost.
 - **Copy** (`git branch -c A B`): B is undeclared until declared on B.
-- **Copy or rename onto an existing branch** (`-C`, `-M`): git keeps both sets of keys, the copied ones first. The branch's own values, listed last, are read; declaring again replaces every value.
+- **Copy or rename onto an existing branch** (`-C`, `-M`): git keeps both sets of keys, so some are listed twice and the two declarations mix. A branch with any declaration key listed twice is undeclared; declaring again replaces every value.
 
 ## Ask
 

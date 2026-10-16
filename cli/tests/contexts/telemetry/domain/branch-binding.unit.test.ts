@@ -123,6 +123,27 @@ describe("only a declaration the command made on the branch counts", () => {
     expect(parseBranchConfig(out)).toEqual([]);
   });
 
+  it("reads nothing from a branch copied onto with -C, which lists a key twice", () => {
+    const out = listing(
+      entry("branch.y.aiddtask", "theirs"),
+      entry("branch.y.aidddeclaredfor", "x"),
+      declaredAt("y"),
+      entry("branch.y.aidddeclaredfor", "y"),
+      declaredAt("y")
+    );
+    expect(parseBranchConfig(out)).toEqual([]);
+  });
+
+  it("reads nothing from a branch whose task alone is listed twice", () => {
+    const out = listing(
+      entry("branch.y.aiddtask", "theirs"),
+      entry("branch.y.aiddtask", "ours"),
+      entry("branch.y.aidddeclaredfor", "y"),
+      declaredAt("y")
+    );
+    expect(parseBranchConfig(out)).toEqual([]);
+  });
+
   it("still reads a declaration written before declarations were stamped", () => {
     const out = listing(entry("branch.x.aiddtask", "legacy"), declaredAt("x"));
     expect(parseBranchConfig(out)).toMatchObject([{ branch: "x", task: "legacy" }]);
