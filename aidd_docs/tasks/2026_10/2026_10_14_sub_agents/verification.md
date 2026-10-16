@@ -18,6 +18,14 @@ The four agents are bundled with the CLI, outside plugins. Explicit installation
 - **CI build:** the completed run on `78344131` measured 697.0 KB after merging `next` at `ae8705f7`, versus 694.7 KB on the branch. Nine checks failed from the same 695 KB limit. Dependencies and build settings match; the merge adds the daily telemetry ledger and bounded reports. The budget is now 705 KB, with 1.1% headroom on that measured merge; the next CI run must confirm it.
 - **Limits:** no authenticated inference establishes effective runtime model selection for this candidate.
 
+## Review fixes, 2026-10-16
+
+- **Native headers:** Codex translation drops Claude shorthand selectors; Copilot custom agents include repository instructions unless explicitly disabled.
+- **Ownership:** installation, updates and removal restore native files after a handled failure. Concurrent mutations serialize across CLI processes; framework cleanup holds the same lock until state removal finishes.
+- **Regression evidence:** 36 lifecycle integration tests pass. Five independent mutations disable model filtering, instruction injection, rollback, serialization or cleanup coordination; each makes its named test fail, and restored code passes.
+- **Checks:** normal commit hooks pass, including 494 script tests, 168 architecture assertions, types and lint. Bundle: 697.7 KB against 705 KB.
+- **Limits:** abrupt process termination can require recovery; no new authenticated model inference was performed.
+
 ## Earlier runtime evidence
 
 The runtime probes below describe earlier candidates. Their traces and hashes predate the CLI-installed model defaults and the latest simplified agent bodies.

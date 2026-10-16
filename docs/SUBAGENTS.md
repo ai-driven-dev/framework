@@ -70,8 +70,8 @@ The other IDEs' agents remain installed. Installation and removal refuse changes
 
 ## 🚧 Beta limitations
 
-- **Copilot:** installed custom subagents currently lack `include-custom-instructions: true`, required to receive repository instructions such as `AGENTS.md`. [Native contract](https://docs.github.com/en/copilot/reference/copilot-cli-reference/cli-command-reference#repository-custom-instructions-for-subagents), checked 2026-10-16.
-- **Ownership registry:** run installation and removal sequentially. Concurrent commands can lose ownership records; a failed registry write can leave files requiring manual recovery.
+- **Runtime selection:** verify the host actually uses the configured model and effort during your trial.
+- **Interrupted command:** inspect the native files and registry before clearing `.aidd/agents.json.lock`; confirm no installation or removal is still running. Handled write failures restore the previous agent files.
 
 ## 📝 Share a trial
 
@@ -89,7 +89,7 @@ Copy one report per trial:
 
 ## 💡 Model notes
 
-Mistral is supported on OpenCode; its documented reasoning levels are `none` and `high`.
+Mistral is supported on OpenCode; its documented reasoning levels are `none` and `high`. [Mistral Small 4](https://docs.mistral.ai/models/mistral-small-4-0-26-03) uses the API ID `mistral-small-2603`, checked 2026-10-16.
 
 Codex Fast supports Luna where available, but agents inherit the root session's service tier. Enable it with `/fast` in the parent session; agent installation does not change that setting. Fast consumes more usage. [Speed](https://learn.chatgpt.com/docs/agent-configuration/speed), [subagent inheritance](https://learn.chatgpt.com/docs/agent-configuration/subagents#custom-agent-file-schema), checked 2026-10-16.
 
