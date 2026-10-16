@@ -14,9 +14,9 @@ flowchart TD
   decision -->|keep/cancel| stop
   decision -->|approved| write-rule
   capture-rule -->|publish/delete confirmed| write-rule
-  write-rule -->|written| validate
+  write-rule -->|revised| capture-rule
   write-rule -->|refused| stop
-  validate --> result
+  write-rule -->|verified| result
 ```
 
 ## Actions
@@ -25,14 +25,12 @@ Run the flow above. Read only the next action file and its references.
 
 | Action | Does |
 | --- | --- |
-| capture-rule | frame, compare and decide |
-| write-rule | publish the approved result |
-| validate | check the affected files |
+| capture-rule | frame, compare, plan and decide |
+| write-rule | publish the approved result and verify it |
 
 ## Transversal rules
 
 - **Report unsupported hosts** with alternatives; a lone AGENTS file identifies no installed host.
 - **If an installed reference cannot be read**, stop and report the missing file.
-- **Await approval** of the full assessed candidate, new rules included, before any rule, request or publication write; renew it when the candidate, resolution or evidence changes.
 - **Change existing sources or publications** only with explicit permission naming them.
 - **Keep or cancel** leaves project bytes unchanged.

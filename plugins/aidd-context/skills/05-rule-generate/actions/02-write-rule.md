@@ -1,24 +1,25 @@
 # 02 - Write rule
 
-Publish the approved result.
+Publish the approved result and verify it.
 
 ## Input
 
-The approved capture.
+The approved capture and its request.
 
 ## Output
 
-The written files, or the refusal.
+The written files, verified, or the refusal.
 
 ## Process
 
-1. **Match.** For create/update, check body, fields, publication paths, resolution and evidence against the last approved capture; on any difference, return to capture-rule.
-2. **Serialize.** For host create/update, write the JSON request outside the destinations per [publication](../references/rule-publication.md).
-3. **Write.** Apply the approved result.
-   - **Host.** Resolve the installed writer to an absolute path and reuse it for every call.
+1. **Match.** For create/update, check body, fields, publication paths, resolution and evidence against the last approved capture; on any difference, return to capture-rule, present the revision and await approval before writing.
+2. **Write.** Apply the approved result.
+   - **Host.** Run the installed writer by the same absolute path as the plan, with the approved request.
    - **Plugin.** Write or delete the approved source only.
-4. **Report.** List the written files; on refusal, stop and quote it verbatim.
+3. **Verify.** For a host, run the same absolute writer with `--check --publish`; require no drift, also after a deletion.
+4. **Report.** List the written files; on refusal or drift, stop and quote it verbatim.
 
 ## Rules
 
 - **Leave generated files to the writer.** Canonical metadata and generated outputs stay writer-owned, and legacy rules stay unchanged.
+- **Claim consumption** only with matching and nonmatching file evidence from fresh host sessions.

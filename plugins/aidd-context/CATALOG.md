@@ -118,7 +118,6 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 |-------|------|---|
 | `actions` | [01-capture-rule.md](skills/05-rule-generate/actions/01-capture-rule.md) | - |
 | `actions` | [02-write-rule.md](skills/05-rule-generate/actions/02-write-rule.md) | - |
-| `actions` | [03-validate.md](skills/05-rule-generate/actions/03-validate.md) | - |
 | `assets` | [rule-template.md](skills/05-rule-generate/assets/rule-template.md) | - |
 | `references` | [rule-assessment.md](skills/05-rule-generate/references/rule-assessment.md) | - |
 | `references` | [rule-authoring.md](skills/05-rule-generate/references/rule-authoring.md) | - |
