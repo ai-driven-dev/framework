@@ -123,7 +123,7 @@ aidd setup --scope user --ai claude,codex,copilot --plugins none --yes
 
 ## Agents (beta)
 
-Agents are an optional project-local add-on, separate from plugin installation. This command is unreleased; see [the local build and native execution trial](../docs/DELEGATION.md).
+Install optional agents per project with the [subagent guide](../docs/SUBAGENTS.md).
 
 ## Translate
 

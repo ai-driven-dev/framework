@@ -185,9 +185,9 @@ codex plugin add aidd-context@aidd-framework   # per plugin
 
 </details>
 
-### Optional agents (beta)
+### Optional subagents (beta)
 
-Custom agents are a separate, project-local opt-in. Plugins work without them. See the [installation and native execution trial](docs/DELEGATION.md) to test the unreleased CLI feature.
+Custom agents are a separate, project-local opt-in. Plugins work without them. See the [subagent guide](docs/SUBAGENTS.md) for installation, a native trial, and removal by IDE.
 
 ## 🚀 Quick start
 
