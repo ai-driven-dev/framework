@@ -15,6 +15,7 @@ The four agents are bundled with the CLI, outside plugins. Explicit installation
 - **CLI:** 19 built-CLI cases pass, including eight provider/IDE pairs and switching to Mistral; 77 focused unit and command integration cases pass. Build: 694.7 KB / 695 KB.
 - **Reload:** 47 script cases pass. Regressions first reproduced personal-agent deletion and the wrong OpenCode Claude fallback; both now pass. Standalone agents remain unchanged.
 - **Gates:** 6,574 CLI tests pass, one skipped (`env -u CODEX_THREAD_ID pnpm test`); 494 script tests pass through the Git-safe wrapper. Lint, typecheck, type honesty, architecture, links, duplication, and knip pass. An initial run exposed the expected help snapshot change and two inherited-session fixture failures; the refreshed snapshot and isolated environment pass.
+- **CI build:** the completed run on `78344131` measured 697.0 KB after merging `next` at `ae8705f7`, versus 694.7 KB on the branch. Nine checks failed from the same 695 KB limit. Dependencies and build settings match; the merge adds the daily telemetry ledger and bounded reports. The budget is now 705 KB, with 1.1% headroom on that measured merge; the next CI run must confirm it.
 - **Limits:** no authenticated inference establishes effective runtime model selection for this candidate.
 
 ## Earlier runtime evidence
