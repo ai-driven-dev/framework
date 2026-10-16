@@ -25,7 +25,7 @@
     },
     "mistral": {
       "main": {
-        "model": "mistral-medium-2604",
+        "model": "mistral-large-4",
         "effort": "high"
       },
       "subagent": {
