@@ -1,6 +1,6 @@
 ---
 objective: "The telemetry mutation run and the CLI suite take less time, with every guard as strong as before."
-status: in-progress
+status: done
 ---
 
 # Plan: Faster mutation and test runs, guards unchanged
