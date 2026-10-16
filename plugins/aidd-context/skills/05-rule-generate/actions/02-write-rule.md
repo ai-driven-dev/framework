@@ -4,7 +4,9 @@ Publish the approved result and verify it.
 
 ## Input
 
-The approved capture and its request.
+**Approval.** A user message after the last displayed candidate that approves it unchanged; a message that chooses, edits or renames is a resolution, not an approval.
+
+**Capture.** The approved capture and its request.
 
 ## Output
 
@@ -12,7 +14,7 @@ The written files, verified, or the refusal.
 
 ## Process
 
-1. **Match.** For create/update, check body, fields, publication paths, resolution and evidence against the last approved capture; on any difference, return to capture-rule, present the revision and await approval before writing.
+1. **Match.** For create/update, require that approval and check body, fields, publication paths, resolution and evidence against the candidate it approved; without it or on any difference, return to capture-rule, present the revision, end the turn and write nothing.
 2. **Write.** Apply the approved result.
    - **Host.** Run the writer by the absolute path resolved in capture-rule, never `$PWD`-relative, with the approved request.
    - **Plugin.** Write or delete the approved source only.
