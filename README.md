@@ -26,7 +26,7 @@ Unify **engineering teams** around **standardized workflows** and **shared best 
 
 ---
 
-The **AI-Driven Dev Framework** installs a working SDLC (Software Development Life Cycle) into your AI coding tool — **skills, agents, commands, rules** — that turns a rough idea into a reviewed, shipped pull request:
+The **AI-Driven Dev Framework** installs a working SDLC (Software Development Life Cycle) into your AI coding tool — **skills, commands, rules** — that turns a rough idea into a reviewed, shipped pull request:
 
 ```text
 /aidd-orchestrator:01-sdlc "add rate limiting to the /login endpoint"
@@ -184,6 +184,10 @@ codex plugin add aidd-context@aidd-framework   # per plugin
 [Plugins documentation](https://kilo.ai/docs/automate/extending/plugins)
 
 </details>
+
+### Optional agents (beta)
+
+Custom agents are a separate, project-local opt-in. Plugins work without them. See the [installation and native execution trial](docs/DELEGATION.md) to test the unreleased CLI feature.
 
 ## 🚀 Quick start
 

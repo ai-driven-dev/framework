@@ -121,9 +121,9 @@ aidd setup --scope user --ai claude,codex,copilot --plugins none --yes
 | `aidd auth status` | Show which credential resolves, from where, at which level |
 | `aidd auth logout` | Delete the stored credential |
 
-## Agents
+## Agents (beta)
 
-Opt in with `aidd agents install --provider openai --ide codex`; see [agent installation](../docs/DELEGATION.md).
+Agents are an optional project-local add-on, separate from plugin installation. This command is unreleased; see [the local build and native execution trial](../docs/DELEGATION.md).
 
 ## Translate
 
