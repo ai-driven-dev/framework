@@ -15,6 +15,7 @@ import { personIdOf } from "../../contexts/telemetry/domain/identity/person-iden
 import { periodOf } from "../../contexts/telemetry/domain/report/period.js";
 import {
   ABSENT_AXES,
+  filtersOf,
   type ReportFilters,
   UNATTRIBUTED_SELECTORS,
 } from "../../contexts/telemetry/domain/report/report-filter.js";
@@ -41,7 +42,19 @@ import {
 } from "../display/telemetry-display.js";
 import { ErrorHandler } from "../error-handler.js";
 import type { CLIOutput } from "../output.js";
-import { parseGlobalOptions } from "./global-options.js";
+import { type GlobalOptions, parseGlobalOptions } from "./global-options.js";
+
+/** Runs a command's work with its dependencies, any failure reported the one way. */
+async function withDeps(
+  options: GlobalOptions,
+  work: (deps: Awaited<ReturnType<typeof createDeps>>) => Promise<void>
+): Promise<void> {
+  try {
+    await work(await createDeps(options.projectRoot, { verbose: options.verbose }, options.output));
+  } catch (error) {
+    new ErrorHandler(options.output).handle(error);
+  }
+}
 
 interface OnOptions {
   readonly yes: boolean;
@@ -119,7 +132,8 @@ export function registerTelemetryCommand(program: Command): void {
     .option("--as <id>", "Name you by this identifier on your own measurement")
     .option("--anonymous", "Name nobody on your own measurement", false)
     .action(async (cmdOptions: OnOptions) => {
-      const { verbose, output, projectRoot } = parseGlobalOptions(program);
+      const options = parseGlobalOptions(program);
+      const { output, projectRoot } = options;
       if (cmdOptions.as !== undefined && cmdOptions.anonymous) {
         output.error("--as names you and --anonymous names nobody: give one of them.");
         process.exit(1);
@@ -132,8 +146,7 @@ export function registerTelemetryCommand(program: Command): void {
         output.error("Nothing to ask in a non-interactive run: pass --yes to turn measurement on.");
         process.exit(1);
       }
-      try {
-        const deps = await createDeps(projectRoot, { verbose }, output);
+      await withDeps(options, async (deps) => {
         const confirmed =
           cmdOptions.yes ||
           (await deps.prompter.confirm(
@@ -160,24 +173,20 @@ export function registerTelemetryCommand(program: Command): void {
         const result = await deps.telemetry.telemetryOnUseCase.execute(projectRoot, choice);
         printOnResult(output, result);
         if (result.status === "refused") process.exit(1);
-      } catch (error) {
-        new ErrorHandler(output).handle(error);
-      }
+      });
     });
 
   telemetry
     .command("off")
     .description("Stop measuring this clone; what was measured stays")
     .action(async () => {
-      const { verbose, output, projectRoot } = parseGlobalOptions(program);
-      try {
-        const deps = await createDeps(projectRoot, { verbose }, output);
+      const options = parseGlobalOptions(program);
+      const { output, projectRoot } = options;
+      await withDeps(options, async (deps) => {
         const result = await deps.telemetry.telemetryOffUseCase.execute(projectRoot);
         printOffResult(output, result);
         if (result.status === "refused") process.exit(1);
-      } catch (error) {
-        new ErrorHandler(output).handle(error);
-      }
+      });
     });
 
   telemetry
@@ -185,16 +194,14 @@ export function registerTelemetryCommand(program: Command): void {
     .description("Show everything measurement keeps on this machine, or remove it with --yes")
     .option("--yes", "Remove it, instead of only showing it", false)
     .action(async (cmdOptions: { yes: boolean }) => {
-      const { verbose, output, projectRoot } = parseGlobalOptions(program);
-      try {
-        const deps = await createDeps(projectRoot, { verbose }, output);
+      const options = parseGlobalOptions(program);
+      const { output } = options;
+      await withDeps(options, async (deps) => {
         printForgetResult(
           output,
           await deps.telemetry.forgetTelemetryUseCase.execute(cmdOptions.yes)
         );
-      } catch (error) {
-        new ErrorHandler(output).handle(error);
-      }
+      });
     });
 
   telemetry
@@ -202,14 +209,12 @@ export function registerTelemetryCommand(program: Command): void {
     .description("Read new transcripts into the local ledger, for clones that opted in")
     .option("--quiet", "Print nothing on success (for hooks)", false)
     .action(async (cmdOptions: { quiet: boolean }) => {
-      const { verbose, output, projectRoot } = parseGlobalOptions(program);
-      try {
-        const deps = await createDeps(projectRoot, { verbose }, output);
+      const options = parseGlobalOptions(program);
+      const { output } = options;
+      await withDeps(options, async (deps) => {
         const result = await deps.telemetry.ingestUsageUseCase.execute();
         if (!cmdOptions.quiet) printIngestResult(output, result);
-      } catch (error) {
-        new ErrorHandler(output).handle(error);
-      }
+      });
     });
 
   telemetry
@@ -228,7 +233,8 @@ export function registerTelemetryCommand(program: Command): void {
         name: string | undefined,
         cmdOptions: { ticket?: string; none: boolean; by: DeclaredBy }
       ) => {
-        const { verbose, output, projectRoot } = parseGlobalOptions(program);
+        const options = parseGlobalOptions(program);
+        const { output, projectRoot } = options;
         const request = cmdOptions.none
           ? { kind: "none" as const }
           : requestOf(name, cmdOptions.ticket);
@@ -242,8 +248,7 @@ export function registerTelemetryCommand(program: Command): void {
           );
           process.exit(1);
         }
-        try {
-          const deps = await createDeps(projectRoot, { verbose }, output);
+        await withDeps(options, async (deps) => {
           const result = await deps.telemetry.declareTaskUseCase.execute({
             cwd: projectRoot,
             request,
@@ -251,9 +256,7 @@ export function registerTelemetryCommand(program: Command): void {
           });
           printDeclareResult(output, result);
           if (result.status === "refused") process.exit(1);
-        } catch (error) {
-          new ErrorHandler(output).handle(error);
-        }
+        });
       }
     );
 
@@ -261,16 +264,14 @@ export function registerTelemetryCommand(program: Command): void {
     .command("status")
     .description("Show if this clone is measured, since when, and its task")
     .action(async () => {
-      const { verbose, output, projectRoot } = parseGlobalOptions(program);
-      try {
-        const deps = await createDeps(projectRoot, { verbose }, output);
+      const options = parseGlobalOptions(program);
+      const { output, projectRoot } = options;
+      await withDeps(options, async (deps) => {
         printTelemetryStatus(
           output,
           await deps.telemetry.telemetryStatusUseCase.execute(projectRoot)
         );
-      } catch (error) {
-        new ErrorHandler(output).handle(error);
-      }
+      });
     });
 
   const report = telemetry.command("report");
@@ -326,27 +327,17 @@ export function registerTelemetryCommand(program: Command): void {
           json: boolean;
         } & Partial<ReportFilters>
       ) => {
-        const { verbose, output, projectRoot } = parseGlobalOptions(program);
+        const options = parseGlobalOptions(program);
+        const { output, projectRoot } = options;
         const period = periodOf(cmdOptions, new Date());
         if (!period.ok) {
           output.error(period.message);
           process.exit(1);
         }
-        const given: ReportFilters = {
-          task: cmdOptions.task ?? null,
-          ticket: cmdOptions.ticket ?? null,
-          person: cmdOptions.person ?? null,
-          model: cmdOptions.model ?? null,
-          agent: cmdOptions.agent ?? null,
-          session: cmdOptions.session ?? null,
-          repository: cmdOptions.repository ?? null,
-          absent: cmdOptions.absent ?? null,
-          unattributed: cmdOptions.unattributed ?? null,
-        };
+        const given = filtersOf(cmdOptions);
         const filters: RequestedFilters =
           given.repository === "." ? { ...given, repository: null, here: projectRoot } : given;
-        try {
-          const deps = await createDeps(projectRoot, { verbose }, output);
+        await withDeps(options, async (deps) => {
           const result = await deps.telemetry.reportUsageUseCase.execute({
             axis: cmdOptions.axis,
             period: period.period,
@@ -368,9 +359,7 @@ export function registerTelemetryCommand(program: Command): void {
               2
             )
           );
-        } catch (error) {
-          new ErrorHandler(output).handle(error);
-        }
+        });
       }
     );
 
@@ -379,13 +368,13 @@ export function registerTelemetryCommand(program: Command): void {
     .description("Choose to be named on your own measurement, or show or remove that choice")
     .option("--off", "Stop naming you and remove the identity", false)
     .action(async (id: string | undefined, cmdOptions: { off: boolean }) => {
-      const { verbose, output, projectRoot } = parseGlobalOptions(program);
+      const options = parseGlobalOptions(program);
+      const { output } = options;
       if (cmdOptions.off && id !== undefined) {
         output.error("--off removes the identity: give it no identifier.");
         process.exit(1);
       }
-      try {
-        const deps = await createDeps(projectRoot, { verbose }, output);
+      await withDeps(options, async (deps) => {
         const use = deps.telemetry.manageIdentityUseCase;
         const result = cmdOptions.off
           ? await use.off()
@@ -394,8 +383,6 @@ export function registerTelemetryCommand(program: Command): void {
             : await use.set(id);
         printIdentityResult(output, result);
         if (result.status === "refused") process.exit(1);
-      } catch (error) {
-        new ErrorHandler(output).handle(error);
-      }
+      });
     });
 }

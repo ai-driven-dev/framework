@@ -1,6 +1,6 @@
 import type { UnattributedReason } from "../../domain/report/attribution.js";
 import type { Period } from "../../domain/report/period.js";
-import type { ReportFilters } from "../../domain/report/report-filter.js";
+import { filtersOf, type ReportFilters } from "../../domain/report/report-filter.js";
 import type { CounterSum, ReportAxis, ReportRow, Tally } from "../../domain/report/usage-report.js";
 import type { NotStoredReason } from "../../domain/repository-resolution.js";
 import type { ReportResult } from "./report-usage-use-case.js";
@@ -106,17 +106,7 @@ export function reportEnvelopeOf(
     version: 1,
     period,
     axis: report.axis,
-    filters: {
-      task: filters.task,
-      ticket: filters.ticket,
-      person: filters.person,
-      model: filters.model,
-      agent: filters.agent,
-      session: filters.session,
-      repository: filters.repository,
-      absent: filters.absent,
-      unattributed: filters.unattributed,
-    },
+    filters: filtersOf(filters),
     rows: report.rows.map(rowOf),
     totals: tallyOf(report.totals),
     unknown_records: report.totals.total.unknownRecords,
