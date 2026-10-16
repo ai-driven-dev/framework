@@ -1,21 +1,31 @@
 {
+  "roles": {
+    "main": "standard",
+    "explorer": "light",
+    "executor": "light",
+    "validator": "light",
+    "reviewer": "standard"
+  },
   "providers": {
     "openai": {
-      "main": {
+      "standard": {
         "model": "gpt-6.1-sol",
         "effort": "medium"
       },
-      "subagent": {
+      "light": {
         "model": "gpt-6-luna",
         "effort": "medium"
       }
     },
     "anthropic": {
-      "main": {
+      "standard": {
         "model": "claude-opus-5-5",
-        "effort": "medium"
+        "effort": "medium",
+        "nativeModels": {
+          "copilot": "claude-opus-5.5"
+        }
       },
-      "subagent": {
+      "light": {
         "model": "claude-haiku-5-5",
         "effort": "medium",
         "nativeModels": {
@@ -24,11 +34,11 @@
       }
     },
     "mistral": {
-      "main": {
+      "standard": {
         "model": "mistral-large-4",
         "effort": "high"
       },
-      "subagent": {
+      "light": {
         "model": "mistral-small-2603",
         "effort": "high"
       }

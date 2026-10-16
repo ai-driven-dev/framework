@@ -33,6 +33,9 @@ describe("ManageAgentsUseCase", () => {
     expect(content).toContain('model = "gpt-6-luna"');
     expect(content).toContain('model_reasoning_effort = "medium"');
     expect(content).toContain('name = "aidd-dev-explorer"');
+    const review = await readFile(join(root, ".codex/agents/aidd-dev-reviewer.toml"), "utf8");
+    expect(review).toContain('model = "gpt-6.1-sol"');
+    expect(review).toContain('model_reasoning_effort = "medium"');
     expect(
       JSON.parse(await readFile(join(root, ".aidd/agents.json"), "utf8")).codex
     ).toHaveProperty("aidd-dev-explorer");
@@ -46,6 +49,9 @@ describe("ManageAgentsUseCase", () => {
     ).toBe(2);
     expect(await readFile(join(root, ".opencode/agents/aidd-dev-explorer.md"), "utf8")).toContain(
       "anthropic/claude-haiku-5-5#medium"
+    );
+    expect(await readFile(join(root, ".opencode/agents/aidd-dev-reviewer.md"), "utf8")).toContain(
+      "anthropic/claude-opus-5-5#medium"
     );
     await writeFile(join(root, ".opencode/agents/aidd-dev-reviewer.md"), "personal edit");
     await expect(

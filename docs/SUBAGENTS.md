@@ -26,7 +26,7 @@ Add focused roles to your project's AI tool. Installation is explicit; workflows
 
 ## 🧠 Models and IDEs
 
-[agent-models.json](../cli/src/contexts/tools/domain/formats/agent-models.json) is the source for supported provider/IDE pairs and model and effort settings. Installation applies `subagent` settings; `main` is a recommendation only.
+[agent-models.json](../cli/src/contexts/tools/domain/formats/agent-models.json) assigns every role a `standard` or `light` profile. Each provider defines the profiles' model and effort. Main and review share `standard`; the `main` role is advisory and installation leaves the main session configuration unchanged.
 
 ## 📦 Install
 
@@ -93,4 +93,4 @@ Mistral is supported on OpenCode; its documented reasoning levels are `none` and
 
 Codex Fast supports Luna where available, but agents inherit the root session's service tier. Enable it with `/fast` in the parent session; agent installation does not change that setting. Fast consumes more usage. [Speed](https://learn.chatgpt.com/docs/agent-configuration/speed), [subagent inheritance](https://learn.chatgpt.com/docs/agent-configuration/subagents#custom-agent-file-schema), checked 2026-10-16.
 
-Sources checked 2026-10-16: [OpenAI models](https://developers.openai.com/api/docs/models), [Claude models](https://platform.claude.com/docs/en/models/overview), [Mistral models](https://docs.mistral.ai/models), [Mistral Large 4 (public preview)](https://docs.mistral.ai/models/mistral-large-4-0), [Mistral reasoning](https://docs.mistral.ai/studio/conversations/reasoning), [OpenCode V2 variants](https://opencode.ai/v2/docs/models#variants). These recommendations are not a comparative benchmark or proof of account access.
+Sources checked 2026-10-16: [OpenAI models](https://developers.openai.com/api/docs/models), [Claude models](https://platform.claude.com/docs/en/models/overview), [Mistral models](https://docs.mistral.ai/models), [Mistral Large 4 (public preview)](https://docs.mistral.ai/models/mistral-large-4-0), [Mistral reasoning](https://docs.mistral.ai/studio/conversations/reasoning), [OpenCode V2 variants](https://opencode.ai/v2/docs/models#variants), [Copilot model IDs](https://docs.github.com/en/copilot/reference/copilot-cli-reference/cli-command-reference#supported-models). These recommendations are not a comparative benchmark or proof of account access.

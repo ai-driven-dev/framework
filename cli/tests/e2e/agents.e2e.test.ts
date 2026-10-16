@@ -8,24 +8,74 @@ import { createTestEnv, runCli } from "./helpers.js";
 
 const roles = ["explorer", "executor", "validator", "reviewer"];
 const cases = [
-  ["claude-code", "anthropic", ".claude", ".md", { model: "claude-haiku-5-5", effort: "medium" }],
-  ["codex", "openai", ".codex", ".toml", { model: "gpt-6-luna", model_reasoning_effort: "medium" }],
-  ["copilot", "openai", ".github", ".agent.md", { model: "gpt-6-luna", reasoningEffort: "medium" }],
+  [
+    "claude-code",
+    "anthropic",
+    ".claude",
+    ".md",
+    { model: "claude-haiku-5-5", effort: "medium" },
+    { model: "claude-opus-5-5", effort: "medium" },
+  ],
+  [
+    "codex",
+    "openai",
+    ".codex",
+    ".toml",
+    { model: "gpt-6-luna", model_reasoning_effort: "medium" },
+    { model: "gpt-6.1-sol", model_reasoning_effort: "medium" },
+  ],
+  [
+    "copilot",
+    "openai",
+    ".github",
+    ".agent.md",
+    { model: "gpt-6-luna", reasoningEffort: "medium" },
+    { model: "gpt-6.1-sol", reasoningEffort: "medium" },
+  ],
   [
     "copilot",
     "anthropic",
     ".github",
     ".agent.md",
     { model: "claude-haiku-5.5", reasoningEffort: "medium" },
+    { model: "claude-opus-5.5", reasoningEffort: "medium" },
   ],
-  ["opencode", "openai", ".opencode", ".md", { model: "openai/gpt-6-luna#medium" }],
-  ["opencode", "anthropic", ".opencode", ".md", { model: "anthropic/claude-haiku-5-5#medium" }],
-  ["opencode", "mistral", ".opencode", ".md", { model: "mistral/mistral-small-2603#high" }],
-  ["cursor", "anthropic", ".cursor", ".md", { model: "claude-haiku-5-5[effort=medium]" }],
+  [
+    "opencode",
+    "openai",
+    ".opencode",
+    ".md",
+    { model: "openai/gpt-6-luna#medium" },
+    { model: "openai/gpt-6.1-sol#medium" },
+  ],
+  [
+    "opencode",
+    "anthropic",
+    ".opencode",
+    ".md",
+    { model: "anthropic/claude-haiku-5-5#medium" },
+    { model: "anthropic/claude-opus-5-5#medium" },
+  ],
+  [
+    "opencode",
+    "mistral",
+    ".opencode",
+    ".md",
+    { model: "mistral/mistral-small-2603#high" },
+    { model: "mistral/mistral-large-4#high" },
+  ],
+  [
+    "cursor",
+    "anthropic",
+    ".cursor",
+    ".md",
+    { model: "claude-haiku-5-5[effort=medium]" },
+    { model: "claude-opus-5-5[effort=medium]" },
+  ],
 ] as const;
 
 describe.concurrent("explicit native agent installation", () => {
-  for (const [ide, provider, directory, suffix, expected] of cases) {
+  for (const [ide, provider, directory, suffix, expected, reviewModel] of cases) {
     it(`${ide} installs the four agents with ${provider} headers, then removes them`, async () => {
       const box = await createTestEnv(`agents-${ide}-${provider}`);
       try {
@@ -42,7 +92,7 @@ describe.concurrent("explicit native agent installation", () => {
           );
           const fields =
             ide === "codex" ? parseToml(content) : parseFrontmatter(content).frontmatter;
-          expect(fields).toMatchObject(expected);
+          expect(fields).toMatchObject(role === "reviewer" ? reviewModel : expected);
           if (ide === "opencode") expect(fields.mode).toBe("subagent");
           else expect(fields.name).toBe(`aidd-dev-${role}`);
           expect(content).toContain("# Behavior");
@@ -124,7 +174,9 @@ describe.concurrent("explicit native agent installation", () => {
       }
       for (const role of roles) {
         const content = await readFile(join(directory, `aidd-dev-${role}.md`), "utf8");
-        expect(parseFrontmatter(content).frontmatter.model).toBe("mistral/mistral-small-2603#high");
+        expect(parseFrontmatter(content).frontmatter.model).toBe(
+          role === "reviewer" ? "mistral/mistral-large-4#high" : "mistral/mistral-small-2603#high"
+        );
       }
       const removed = await runCli(
         ["agents", "remove", "--ide", "opencode"],

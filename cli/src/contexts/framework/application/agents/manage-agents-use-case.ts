@@ -32,11 +32,12 @@ export class ManageAgentsUseCase {
   ) {}
 
   async install(options: AgentTarget & { provider: AgentProvider }): Promise<number> {
-    const model = agentModelOptions(options.host, options.provider);
     const installed = await this.load(options.projectRoot);
     const capability = this.capability(options.host);
     const entries = Object.entries(this.sources).map(([name, source]) => {
       const { frontmatter, body } = parseFrontmatter(source);
+      const role = typeof frontmatter.name === "string" ? frontmatter.name : name;
+      const model = agentModelOptions(options.host, options.provider, role);
       return {
         name,
         path: this.path(options.projectRoot, capability, name),

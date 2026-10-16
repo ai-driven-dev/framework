@@ -50,7 +50,29 @@ describe("explicit agent models", () => {
     ["opencode", "mistral", { model: "mistral/mistral-small-2603#high" }],
     ["cursor", "anthropic", { model: "claude-haiku-5-5[effort=medium]" }],
   ] as const)("serializes %s with the selected %s provider", (host, provider, expected) => {
-    expect(agentModelOptions(host, provider)).toStrictEqual(expected);
+    for (const role of ["explorer", "executor", "validator"])
+      expect(agentModelOptions(host, provider, role)).toStrictEqual(expected);
+  });
+
+  it.each([
+    ["claude", "anthropic", { model: "claude-opus-5-5", effort: "medium" }],
+    ["codex", "openai", { model: "gpt-6.1-sol", model_reasoning_effort: "medium" }],
+    ["copilot", "openai", { model: "gpt-6.1-sol", reasoningEffort: "medium" }],
+    ["copilot", "anthropic", { model: "claude-opus-5.5", reasoningEffort: "medium" }],
+    ["opencode", "openai", { model: "openai/gpt-6.1-sol#medium" }],
+    ["opencode", "anthropic", { model: "anthropic/claude-opus-5-5#medium" }],
+    ["opencode", "mistral", { model: "mistral/mistral-large-4#high" }],
+    ["cursor", "anthropic", { model: "claude-opus-5-5[effort=medium]" }],
+  ] as const)(
+    "shares model and effort between main and review on %s / %s",
+    (host, provider, expected) => {
+      for (const role of ["main", "reviewer"])
+        expect(agentModelOptions(host, provider, role)).toStrictEqual(expected);
+    }
+  );
+
+  it.each(["unknown", "constructor", "__proto__", ""])("rejects unconfigured role %s", (role) => {
+    expect(() => agentModelOptions("codex", "openai", role)).toThrow(/role.*not configured/);
   });
 
   it.each([
@@ -62,7 +84,7 @@ describe("explicit agent models", () => {
     ["copilot", "mistral"],
     ["cursor", "mistral"],
   ] as const)("rejects unsupported %s / %s selections", (host, provider) => {
-    expect(() => agentModelOptions(host, provider)).toThrow(/not supported/);
+    expect(() => agentModelOptions(host, provider, "reviewer")).toThrow(/not supported/);
   });
 
   it.each(["claude", "codex", "copilot", "opencode", "cursor"])(
