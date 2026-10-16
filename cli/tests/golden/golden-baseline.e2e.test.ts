@@ -5,7 +5,7 @@ import { createHash } from "node:crypto";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { describe, expect, it } from "vitest";
+import { afterAll, describe, expect, it } from "vitest";
 import { createTestEnv, runCli } from "../e2e/helpers.js";
 
 const ROOT = resolve(fileURLToPath(import.meta.url), "../../..");
@@ -370,40 +370,55 @@ async function captureAll(projectDir: string, fakeHome: string): Promise<Command
   }
 }
 
+type Sandbox = Awaited<ReturnType<typeof createTestEnv>>;
+const sandboxes: Sandbox[] = [];
+let first: Promise<CommandEntry[]> | undefined;
+let second: Promise<CommandEntry[]> | undefined;
+
+async function captureIn(prefix: string): Promise<CommandEntry[]> {
+  const env = await createTestEnv(prefix);
+  sandboxes.push(env);
+  return normalizeSnapshot(await captureAll(env.projectDir, env.fakeHome));
+}
+
+/** Two captures in two sandboxes, the second started once the first is done, so a difference
+ * that depends on the time still shows. The determinism test compares them; the baseline test
+ * compares the first to the stored snapshot. A capture of its own would check nothing more. */
+const firstCapture = () => {
+  first ??= captureIn("golden-det-1");
+  return first;
+};
+const secondCapture = () => {
+  second ??= firstCapture().then(() => captureIn("golden-det-2"));
+  return second;
+};
+
 describe.concurrent("Golden baseline — command matrix", () => {
+  afterAll(async () => {
+    for (const sandbox of sandboxes) await sandbox.cleanup();
+  });
+
   it("snapshot is deterministic (two captures are byte-identical)", async () => {
-    const env1 = await createTestEnv("golden-det-1");
-    const env2 = await createTestEnv("golden-det-2");
-    try {
-      const capture1 = normalizeSnapshot(await captureAll(env1.projectDir, env1.fakeHome));
-      const capture2 = normalizeSnapshot(await captureAll(env2.projectDir, env2.fakeHome));
-      expect(JSON.stringify(capture1, null, 2)).toStrictEqual(JSON.stringify(capture2, null, 2));
-    } finally {
-      await env1.cleanup();
-      await env2.cleanup();
-    }
+    const capture1 = await firstCapture();
+    const capture2 = await secondCapture();
+    expect(JSON.stringify(capture1, null, 2)).toStrictEqual(JSON.stringify(capture2, null, 2));
   });
 
   it("snapshot matches stored baseline (behavior-preserving gate)", async () => {
-    const { projectDir, fakeHome, cleanup } = await createTestEnv("golden-baseline");
-    try {
-      const captured = normalizeSnapshot(await captureAll(projectDir, fakeHome));
+    const captured = await firstCapture();
 
-      if (process.env.UPDATE_GOLDEN === "1") {
-        await mkdir(join(ROOT, "tests/golden/snapshots/phase0"), { recursive: true });
-        await writeFile(SNAPSHOT_FILE, `${JSON.stringify(captured, null, 2)}\n`, "utf-8");
-        console.log(`Golden snapshot updated: ${SNAPSHOT_FILE}`);
-        return;
-      }
-
-      const stored = JSON.parse(await readFile(SNAPSHOT_FILE, "utf-8")) as CommandEntry[];
-      const storedNormalized = normalizeSnapshot(stored);
-
-      expect(JSON.stringify(captured, null, 2)).toStrictEqual(
-        JSON.stringify(storedNormalized, null, 2)
-      );
-    } finally {
-      await cleanup();
+    if (process.env.UPDATE_GOLDEN === "1") {
+      await mkdir(join(ROOT, "tests/golden/snapshots/phase0"), { recursive: true });
+      await writeFile(SNAPSHOT_FILE, `${JSON.stringify(captured, null, 2)}\n`, "utf-8");
+      console.log(`Golden snapshot updated: ${SNAPSHOT_FILE}`);
+      return;
     }
+
+    const stored = JSON.parse(await readFile(SNAPSHOT_FILE, "utf-8")) as CommandEntry[];
+    const storedNormalized = normalizeSnapshot(stored);
+
+    expect(JSON.stringify(captured, null, 2)).toStrictEqual(
+      JSON.stringify(storedNormalized, null, 2)
+    );
   });
 });
