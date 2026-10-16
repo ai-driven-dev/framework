@@ -8,18 +8,8 @@ function render(source, host) {
   const beginning = source.search(/^## Agents[ \t]*\r?$/m);
   if (beginning < 0) throw new Error("AGENTS.md has no Agents section; refusing global sync");
   const boundary = source.indexOf("\n## ", beginning + 1);
-  const names = {
-    codex: (role) => `@aidd-dev-${role}`,
-    claude: (role) => `@aidd-dev:${role}`,
-    opencode: (role) => `@aidd-dev-${role}`,
-    copilot: (role) => `@aidd-dev:${role}`,
-    cursor: (role) => `@aidd-dev-${role}`,
-  };
-  if (!names[host]) throw new Error(`Unknown instruction host: ${host}`);
-  return source.slice(beginning, boundary < 0 ? undefined : boundary).trim().replace(
-    /^\| @(?:aidd-dev[:-])?([a-z]+)[^|]*\|/gm,
-    (_, role) => `| ${names[host](role)} |`,
-  );
+  if (!["codex", "claude", "opencode", "copilot", "cursor"].includes(host)) throw new Error(`Unknown instruction host: ${host}`);
+  return source.slice(beginning, boundary < 0 ? undefined : boundary).trim();
 }
 
 function merge(existing, content) {

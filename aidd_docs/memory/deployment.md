@@ -58,7 +58,7 @@ Config: `release-please-config.json`, eleven packages. Manifest: `.release-pleas
 
 ## Local reload
 
-`make reload` syncs all plugins and agent-only global instructions to installed hosts; details in `scripts/dev-sync.sh`.
+`make reload` syncs all plugins and generic delegation guidance to installed hosts; details in `scripts/dev-sync.sh`.
 
 ## Monitoring
 

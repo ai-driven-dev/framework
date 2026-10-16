@@ -5,8 +5,16 @@
 The four agents are bundled with the CLI, outside plugins. Explicit installation selects a provider and IDE using the [CLI configuration](../../../../cli/src/contexts/tools/domain/formats/agent-models.json). Generic conversion applies no model defaults. Skills remain independent of installation and model selection.
 
 - **CLI:** 17 built-CLI cases pass, covering seven supported provider/IDE pairs, repeat installation, provider changes, removal, invalid selections, personal-file conflicts, cleanup, and a framework distribution without these agents.
-- **Ownership:** integration cases cover the project ledger, modified files, safe paths, and cleanup. Removing the ownership guard makes its named test fail; restored code passes. Cleanup preserves personal directory links; restoring recursive directory removal makes that test fail.
+- **Ownership:** integration cases cover the project ledger, modified files, safe paths, and cleanup. Removing the ownership guard makes its named test fail; restored code passes. Without a framework manifest, cleanup preserves personal directory links; restoring recursive directory removal makes that test fail. The pre-existing manifest-present branch remains outside this proof.
 - **Limits:** Native files are written directly into each host's agent directory. These checks establish headers and file behavior, not account access or effective runtime model selection.
+
+## Optional behavior-only agents, 2026-10-16
+
+- **Configuration:** the same JSON separates advisory `main` models from applied `subagent` settings and adds Mistral on OpenCode V2. Sources and native-format references are in [the agent guide](../../../../docs/DELEGATION.md).
+- **CLI:** 19 built-CLI cases pass, including eight provider/IDE pairs and switching to Mistral; 77 focused unit and command integration cases pass. Build: 694.7 KB / 695 KB.
+- **Reload:** 47 script cases pass. Regressions first reproduced personal-agent deletion and the wrong OpenCode Claude fallback; both now pass. Standalone agents remain unchanged.
+- **Gates:** 6,574 CLI tests pass, one skipped (`env -u CODEX_THREAD_ID pnpm test`); 494 script tests pass through the Git-safe wrapper. Lint, typecheck, type honesty, architecture, links, duplication, and knip pass. An initial run exposed the expected help snapshot change and two inherited-session fixture failures; the refreshed snapshot and isolated environment pass.
+- **Limits:** no authenticated inference establishes effective runtime model selection for this candidate.
 
 ## Earlier runtime evidence
 
