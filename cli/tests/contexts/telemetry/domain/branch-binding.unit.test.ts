@@ -206,6 +206,8 @@ describe("the reflog says when the branch took its name", () => {
 
   it("is none for a selector without its closing brace", () => {
     expect(branchCreatedAt("x@{2026-10-07T12:00:00+02:00\n", "x")).toBeNull();
+    // A last character other than the brace, with a valid time before it.
+    expect(branchCreatedAt("x@{2026-10-07T12:00:00+02:00)\n", "x")).toBeNull();
   });
 
   it("is none for a time in braces with no selector before it", () => {
