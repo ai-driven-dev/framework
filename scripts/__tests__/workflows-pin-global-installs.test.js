@@ -15,7 +15,7 @@ const ALLOWLIST = [
     file: ".github/workflows/cli-ci.yml",
     pattern: /npm install -g @anthropic-ai\/claude-code\b/,
     reason:
-      "Deliberately unpinned: the identifier-join probe exists to catch drift against " +
+      "Deliberately unpinned: the identifier-join probe and the tokens end-to-end check exist to catch drift against " +
       "whatever claude-code currently ships, not a version this repo controls. Pinning " +
       "it would defeat the point of the probe.",
   },

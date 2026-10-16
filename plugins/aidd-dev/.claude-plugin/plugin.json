@@ -17,7 +17,7 @@
     "./skills/07-refactor",
     "./skills/08-debug",
     "./skills/09-for-sure",
-    "./skills/10-todo"
+    "./skills/10-batch"
   ],
   "agents": [
     "./agents/executor.md",

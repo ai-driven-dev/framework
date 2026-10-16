@@ -143,7 +143,7 @@ export interface UnsupportedPluginsParams {
  * considered loses its hooks quietly when the field falls back to `false`.
  * `hooksTrustNotice` is the opposite case — the tool runs a delivered hook, but only once a
  * per-hook trust a headless run is never prompted for is granted (measured on Codex: four
- * clean `codex exec` sessions wrote no journal until `--dangerously-bypass-hook-trust` did).
+ * clean `codex exec` sessions ran none of the hooks until `--dangerously-bypass-hook-trust` did).
  */
 export type HooksSupport =
   | { acceptsHooks: true; hooksTrustNotice?: string }

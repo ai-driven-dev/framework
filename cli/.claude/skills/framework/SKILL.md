@@ -4,7 +4,7 @@ description: >
   Owns the installation record and everything done to a project, under
   src/contexts/framework/ — the manifest aggregate, and the setup/install/restore/uninstall/doctor
   orchestration built on top of it. This is the only context allowed to reach `translate` and
-  `distribution`; `tools` is reachable from `telemetry` too. Use when adding a use-case that touches the manifest, a
+  `distribution`. Use when adding a use-case that touches the manifest, a
   setup/doctor/sync/uninstall flow, a new top-level CLI orchestration, or a launcher that runs an
   external binary (kanban-shaped). Do NOT use for a tool's own profile or capability classes —
   use `tools`. Do NOT use for the translation pipeline — use `translate`. Do NOT use for where
@@ -16,7 +16,7 @@ description: >
 `framework` is what is posed on a project and the record of it: the manifest that tracks every
 installed file, and every flow that reads or changes that record — setup, doctor, sync (restore),
 uninstall, plugin install/update/remove, and the global chain orchestrators. It is the one
-context the dependency chain lets reach every other context but `telemetry` (`framework →
+context the dependency chain lets reach every other context (`framework →
 translate → tools → kernel`, plus `framework → distribution`), because assembling what goes on
 disk is exactly the job that needs all three.
 

@@ -1,6 +1,6 @@
 ---
 objective: "A task folder names the backlog item it delivers, and a period breaks down by it, reconciling with every other breakdown."
-status: pending
+status: superseded
 ---
 
 # Plan: the upward link

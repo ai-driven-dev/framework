@@ -1,5 +1,4 @@
 import { join, posix, win32 } from "node:path";
-import { repositoryRootAbove } from "./reading/repository-root.js";
 
 export const AIDD_DIR = ".aidd";
 export const AIDD_CONFIG_FILENAME = "config.json";
@@ -11,25 +10,9 @@ export const AIDD_MARKETPLACES_FILENAME = "marketplaces.json";
  * `clean` purges it, and a second spelling is how one of them forgets the other. */
 export const USER_SOURCE_REFERENCES_FILENAME = "references.json";
 export const DOCS_DIR = "aidd_docs" as const;
-export const RUNS_SUBDIR = "runs" as const;
 export const PLUGIN_CACHE_SUBDIR = join(AIDD_DIR, "plugin-cache");
 export const MARKETPLACE_CACHE_SUBDIR = join(AIDD_DIR, "cache", "marketplaces");
 export const BUILT_CACHE_SUBDIR = join(AIDD_DIR, "cache", "built");
-
-// The one spelling of "the run journal's directory, as a gitignore/pathspec entry":
-// `telemetry-on-use-case.ts` and `forget-telemetry-use-case.ts` both ask
-// `VersionControl.listTrackedFiles` about exactly this path.
-export const RUNS_ENTRY = `${DOCS_DIR}/${RUNS_SUBDIR}/`;
-
-/**
- * Where the run journal lives — at the repository root above `projectRoot`, never
- * `projectRoot` itself, because the hook that writes it anchors there (`repositoryRootAbove`
- * carries why). The one resolver, so two readers cannot disagree from a subdirectory.
- * `AIDD_RUNS_DIR` overrides it outright, matching the hook.
- */
-export function resolvedRunsDir(projectRoot: string): string {
-  return process.env.AIDD_RUNS_DIR || join(repositoryRootAbove(projectRoot), DOCS_DIR, RUNS_SUBDIR);
-}
 
 export function marketplaceCacheDir(projectRoot: string, marketplaceName: string): string {
   return join(projectRoot, MARKETPLACE_CACHE_SUBDIR, marketplaceName);
@@ -218,9 +201,7 @@ export function userManifestPath(userConfigDir: string): string {
   return join(userConfigDir, MANIFEST_FILENAME);
 }
 
-/** The manifest's filename, named once because `telemetry-evidence-adapter.ts` and
- * `manifest-repository-adapter.ts` both open that file and `aidd telemetry check` prints a
- * row from each: two literals would let a rename make those rows contradict each other. */
+/** The manifest's filename, named once so every reader and writer of that file spells it the same. */
 export const MANIFEST_FILENAME = "manifest.json";
 
 /**

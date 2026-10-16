@@ -17,7 +17,6 @@ import {
   getAllRegisteredTools,
   getToolConfig,
   isAiTool,
-  journalHostToAiToolId,
   machineLocalFilesOf,
   projectHooksFileOf,
   userMachineLocalFilesOf,
@@ -30,9 +29,7 @@ import {
   distributionProbesOf,
   marketplaceProbes,
 } from "../../../../src/contexts/translate/domain/plugin-format.js";
-import type { TelemetryLocalRead } from "../../../../src/kernel/measurement.js";
 import { AI_TOOL_IDS, type ToolId } from "../../../../src/kernel/tool.js";
-import { journalHost } from "../../../helpers/telemetry-journal-hook.js";
 
 /** Every assertion iterates the registry rather than a hardcoded list, so adding a tool file
  * subjects it to all of them instead of letting it misbehave at runtime. */
@@ -112,50 +109,6 @@ describe("AiTool contract conformance", () => {
         `${toolId} declares marketplaceSettings without nativeActivation — its settings.json declaration is never registered with the runtime that resolves plugins`
       ).not.toBeNull();
     });
-
-    // Same shape guard for local-read: the type system requires `telemetryLocalRead` to
-    // exist, but not that its `kind` is one of the two this union defines.
-    it("declares its local-read shape as declared or explicitly unsupported", () => {
-      const kinds: readonly TelemetryLocalRead["kind"][] = ["declared", "unsupported"];
-      expect(
-        kinds,
-        `${toolId} declares an unrecognized telemetryLocalRead kind: ${tool.telemetryLocalRead.kind}`
-      ).toContain(tool.telemetryLocalRead.kind);
-      if (tool.telemetryLocalRead.kind === "unsupported") {
-        expect(
-          tool.telemetryLocalRead.reason.length,
-          `${toolId}: telemetryLocalRead.reason must not be empty`
-        ).toBeGreaterThan(0);
-      }
-    });
-  });
-});
-
-// Cursor's local-read reason is a measured fact, not a guess; Copilot is read at session
-// rather than request granularity.
-describe("telemetryLocalRead — exact declarations, phase 2 of local-cost-read", () => {
-  const EXPECTED: Record<string, { kind: TelemetryLocalRead["kind"]; reason?: string }> = {
-    claude: { kind: "declared" },
-    codex: { kind: "declared" },
-    opencode: { kind: "declared" },
-    copilot: { kind: "declared" },
-    cursor: { kind: "unsupported", reason: "token count" },
-    kilo: { kind: "unsupported", reason: "OpenTelemetry is experimental" },
-  };
-
-  it.each(Object.entries(EXPECTED))("%s", (toolId, expected) => {
-    const tool = registeredAiTools.find(([id]) => id === toolId)?.[1];
-    if (!tool) throw new Error(`${toolId} is not registered`);
-
-    const shape = tool.telemetryLocalRead;
-    expect(shape.kind).toBe(expected.kind);
-    if (shape.kind === "unsupported" && expected.reason) {
-      expect(shape.reason).toContain(expected.reason);
-    }
-  });
-
-  it("covers exactly the five registered AI tools — no tool escapes this check", () => {
-    expect(Object.keys(EXPECTED).sort()).toEqual(registeredAiTools.map(([id]) => id).sort());
   });
 });
 
@@ -166,57 +119,6 @@ describe("no parallel list references an unregistered tool", () => {
       expect(isAiTool(config), `AI_TOOL_IDS lists "${id}" but its config is not an AI tool`).toBe(
         true
       );
-    }
-  });
-
-  it("every host the journal hook writes for is claimed by exactly one tool declaration", () => {
-    // These declarations relate the hook's own host name to a toolId, so a host the hook
-    // writes for and nothing declares joins to nothing, silently.
-    for (const host of journalHost.DECLARED_HOSTS) {
-      expect(
-        journalHostToAiToolId(host),
-        `the journal hook writes for host "${host}", which no registered AI tool declares as its telemetryJournalHost`
-      ).not.toBeNull();
-    }
-  });
-
-  it("declares no journal host the hook does not write for", () => {
-    for (const [toolId, config] of registeredAiTools) {
-      const declared = config.telemetryJournalHost;
-      if (declared === undefined) continue;
-      expect(
-        journalHost.DECLARED_HOSTS.has(declared),
-        `"${toolId}" declares telemetryJournalHost "${declared}", which the journal hook never writes`
-      ).toBe(true);
-    }
-  });
-
-  it("resolves an unknown host to null rather than to a nearby tool", () => {
-    expect(journalHostToAiToolId("not-a-host")).toBeNull();
-  });
-
-  it("declares task attributability exactly where journal attribution is possible at all", () => {
-    // A declared task carries no per-host gate the way a written path or a step does, so
-    // attributability collapses to whether a host reaches the journal hook at all.
-    for (const [toolId, config] of registeredAiTools) {
-      const host = config.telemetryJournalHost;
-      const hookReachesToolUse = host !== undefined;
-
-      expect(
-        config.telemetryTaskAttributable,
-        `"${toolId}" declares telemetryTaskAttributable ${config.telemetryTaskAttributable}, but the journal hook ${hookReachesToolUse ? "does" : "never"} dispatch a tool-used event for host "${host}"`
-      ).toBe(hookReachesToolUse);
-    }
-  });
-
-  it("declares what its local-read route supplies, for every tool", () => {
-    for (const [toolId, config] of registeredAiTools) {
-      const declaration = config.telemetryLocalRead;
-      if (declaration.kind !== "declared") continue;
-      expect(
-        declaration.supplies,
-        `"${toolId}" declares a telemetryLocalRead route without saying what it supplies`
-      ).toBeDefined();
     }
   });
 });
@@ -249,8 +151,6 @@ function fakeTool(overrides: Partial<AiTool<unknown>>): AiTool<unknown> {
     toolSuffix: ".md",
     signalDir: null,
     capabilities: {},
-    telemetryLocalRead: { kind: "unsupported", reason: "a stub reads nothing" },
-    telemetryTaskAttributable: false,
     rewriteContent: (content) => content,
     ...overrides,
   };

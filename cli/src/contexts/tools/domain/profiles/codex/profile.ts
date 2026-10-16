@@ -30,7 +30,6 @@ import {
   mergeCodexConfigToml,
   stripCodexSkillFrontmatter,
 } from "./build.js";
-import { CODEX_ROLLOUT_LOCATION } from "./codex-transcript-location.js";
 
 const DIRECTORY = ".codex/";
 const TOOL_SUFFIX = ".codex.md";
@@ -51,15 +50,15 @@ export function rewriteCodexContent(content: string): string {
 
 const CONFIG_CODEX_HOOKS = "codex-hooks";
 
-// Measured: four consecutive `codex exec` sessions installed a plugin's hooks, ran clean and
-// journalled nothing — no warning, no line in the output — until `--dangerously-bypass-hook-trust`
-// made the same install produce all three hooks and its journal. Codex writes one `trusted_hash`
+// Measured: four consecutive `codex exec` sessions installed a plugin's hooks and ran
+// none of them — no warning, no line in the output — until `--dangerously-bypass-hook-trust`
+// made the same install run all three. Codex writes one `trusted_hash`
 // per hook under `[hooks.state]` when a person approves it; a hook with no entry is skipped in
 // silence, and nothing prompts for it outside a terminal.
 const CODEX_HOOKS_TRUST_NOTICE =
   "Codex will not run this plugin's hooks until each one is trusted — approve the prompt " +
   "once in an interactive session, or pass --dangerously-bypass-hook-trust to codex exec " +
-  "for a headless run. Until then, a session leaves no run journal and nothing says why.";
+  "for a headless run. Until then, none of its hooks run and nothing says why.";
 
 const AIDD_HOOK_COMMAND = "node .aidd/scripts/update_memory.cjs";
 
@@ -134,15 +133,6 @@ export const codex: AiTool<
   directory: DIRECTORY,
   toolSuffix: TOOL_SUFFIX,
   displayName: "Codex",
-  telemetryLocalRead: {
-    kind: "declared",
-    transcript: CODEX_ROLLOUT_LOCATION,
-    // Complete counters per turn, no currency anywhere in a rollout, and no field naming a
-    // running skill - so a step here can only ever come from a run journal interval.
-    supplies: { tokenCounters: true, amount: false, toolStatedStep: false, agentName: false },
-  },
-  telemetryTaskAttributable: true,
-  telemetryJournalHost: "codex",
   signalDir: `${DIRECTORY}commands`,
   configOutputPaths: { "config.toml": ".codex/config.toml" },
   buildContracts: { marketplace: buildCodexContract, flat: buildCodexFlatContract },
