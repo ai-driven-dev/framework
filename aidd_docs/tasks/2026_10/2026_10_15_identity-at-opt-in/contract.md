@@ -36,8 +36,8 @@ issue: 1029
 | 2 | A proposal or a typed identifier goes through `personIdOf` (trimmed, one line, 1 to 128 characters). A proposal it rejects is not offered. A rejected `--as` is an error before anything is written. |
 | 3 | `--as` and `--anonymous` together: error, exit 1. Either with `--yes` or interactive is accepted. |
 | 4 | The identity is written only when `on` succeeds (status `on`). A refused `on` writes no identity. |
-| 5 | `AIDD_TELEMETRY=0` refuses as today, before git is asked for a proposal. |
-| 6 | `identity`, `identity <id>` and `identity --off` are unchanged. |
+| 5 | `AIDD_TELEMETRY=0` does not refuse `on`, as before this change. Under it, the git name is neither read nor proposed: the question offers only another identifier or anonymous. |
+| 6 | `identity`, `identity <id>` and `identity --off` behave as before; their wording says `anonymous` for nobody, as the report does (decision 1). |
 
 ```mermaid
 flowchart TD
@@ -60,7 +60,7 @@ The identity store format, `identity.json` and where it lives; the envelope; con
 
 ## Docs
 
-Usage contract (person axis, opt-in), `cli/aidd_docs/memory/telemetry.md`, `plugins/aidd-telemetry/README.md`, and the `00-init` skill's `start` action: it asks the person how to appear, offering the git name, and runs `aidd telemetry on --yes --as <id>` or `--anonymous`.
+Usage contract (person axis, opt-in), `cli/aidd_docs/memory/telemetry.md`, `plugins/aidd-telemetry/README.md`, and the `00-init` skill's `start` action: it asks the person to type an identifier or stay anonymous, reads nothing from git so no name reaches the session before the person chooses, says that `aidd telemetry on` in a terminal offers the git name, and runs `aidd telemetry on --yes --as '<id>'` or `--anonymous`.
 
 ## Acceptance
 
