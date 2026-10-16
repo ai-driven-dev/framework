@@ -61,20 +61,28 @@ function sessionVerdict(record: AttributableUsage, at: number, facts: Attributio
   return binding.state === "bound" ? verdict(binding.task, binding.ticket) : null;
 }
 
-/** The instant a snapshot's declaration was made; one with no time speaks from the start. */
-function declaredAt(snapshot: BranchSnapshot): number {
-  return snapshot.declared_at === null
-    ? Number.NEGATIVE_INFINITY
-    : Date.parse(snapshot.declared_at);
+/** A snapshot of a declaration the command made: it always has a time. */
+type DeclaredSnapshot = BranchSnapshot & { readonly declared_at: string };
+
+/** A snapshot with no declaration time records keys no command wrote: it binds nothing. */
+function isDeclared(snapshot: BranchSnapshot): snapshot is DeclaredSnapshot {
+  return snapshot.declared_at !== null;
+}
+
+function declaredAt(snapshot: DeclaredSnapshot): number {
+  return Date.parse(snapshot.declared_at);
 }
 
 /** The declaration in force at an instant within one generation. The generation's first
  * declaration covers it from its creation, so declaring late still moves its earlier work;
  * each later one applies from its own time, so work already attributed stays where it was.
  * Equal declaration times are one declaration: the latest snapshot of it speaks. */
-function inForce(generation: readonly BranchSnapshot[], at: number): BranchSnapshot | undefined {
-  let first: BranchSnapshot | undefined;
-  let current: BranchSnapshot | undefined;
+function inForce(
+  generation: readonly DeclaredSnapshot[],
+  at: number
+): DeclaredSnapshot | undefined {
+  let first: DeclaredSnapshot | undefined;
+  let current: DeclaredSnapshot | undefined;
   for (const snapshot of generation) {
     if (first === undefined || declaredAt(snapshot) < declaredAt(first)) first = snapshot;
     if (
@@ -90,9 +98,9 @@ function inForce(generation: readonly BranchSnapshot[], at: number): BranchSnaps
 
 /** The latest snapshot of the earliest declaration. */
 function latestOfFirst(
-  generation: readonly BranchSnapshot[],
-  first: BranchSnapshot
-): BranchSnapshot {
+  generation: readonly DeclaredSnapshot[],
+  first: DeclaredSnapshot
+): DeclaredSnapshot {
   return generation.filter((s) => declaredAt(s) === declaredAt(first)).at(-1) ?? first;
 }
 
@@ -102,9 +110,9 @@ function latestOfFirst(
  * declaration in force at the call (see `inForce`). A snapshot with no creation time speaks
  * only when no dated generation was created before the call. */
 function generationAt(
-  snapshots: readonly BranchSnapshot[],
+  snapshots: readonly DeclaredSnapshot[],
   at: number
-): BranchSnapshot | undefined {
+): DeclaredSnapshot | undefined {
   let chosenCreated = Number.NEGATIVE_INFINITY;
   let found = false;
   for (const snapshot of snapshots) {
@@ -132,10 +140,8 @@ function branchVerdict(
   facts: AttributionFacts
 ): Attribution | null {
   if (record.git_branch === null) return null;
-  const branch = generationAt(
-    facts.branches.get(snapshotKey(record.repository_id, record.git_branch)) ?? [],
-    at
-  );
+  const snapshots = facts.branches.get(snapshotKey(record.repository_id, record.git_branch)) ?? [];
+  const branch = generationAt(snapshots.filter(isDeclared), at);
   if (branch === undefined || (branch.task === null && !branch.none)) return null;
   return verdict(branch.task, branch.ticket);
 }

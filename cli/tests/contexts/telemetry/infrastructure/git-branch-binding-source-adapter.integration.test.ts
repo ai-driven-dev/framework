@@ -29,6 +29,7 @@ describe("reading branch declarations from git config", () => {
   it("reads the keys as the declaration command will write them", async () => {
     git(repo, env, "config", "branch.feat/x.aiddTask", "checkout-fix");
     git(repo, env, "config", "branch.feat/x.aiddTicket", "PROJ-12");
+    git(repo, env, "config", "branch.feat/x.aiddDeclaredFor", "feat/x");
     git(repo, env, "config", "branch.feat/x.aiddDeclaredAt", "2026-10-07T10:00:00.000Z");
     expect(await source.bindings(repo)).toEqual([
       {
@@ -43,12 +44,21 @@ describe("reading branch declarations from git config", () => {
 
   it("reads a branch named with dots and capitals whole", async () => {
     git(repo, env, "config", "branch.Release/1.2.aiddTask", "t");
+    git(repo, env, "config", "branch.Release/1.2.aiddDeclaredAt", "2026-10-07T10:00:00.000Z");
     expect((await source.bindings(repo)).map((b) => b.branch)).toEqual(["Release/1.2"]);
   });
 
   it("reads a declaration of no task as none", async () => {
     git(repo, env, "config", "branch.x.aiddDeclaredAt", "2026-10-07T10:00:00.000Z");
     expect(await source.bindings(repo)).toMatchObject([{ branch: "x", task: null, none: true }]);
+  });
+
+  it("reads nothing from a declaration the command did not make on that branch", async () => {
+    git(repo, env, "config", "branch.by-hand.aiddTask", "t");
+    git(repo, env, "config", "branch.copy.aiddTask", "t");
+    git(repo, env, "config", "branch.copy.aiddDeclaredFor", "original");
+    git(repo, env, "config", "branch.copy.aiddDeclaredAt", "2026-10-07T10:00:00.000Z");
+    expect(await source.bindings(repo)).toEqual([]);
   });
 
   it("ignores branch settings that are not declarations", async () => {
@@ -58,6 +68,7 @@ describe("reading branch declarations from git config", () => {
 
   it("reads the same keys from a linked worktree, which shares the repository's config", async () => {
     git(repo, env, "config", "branch.x.aiddTask", "t");
+    git(repo, env, "config", "branch.x.aiddDeclaredAt", "2026-10-07T10:00:00.000Z");
     const linked = join(base, "linked");
     git(repo, env, "worktree", "add", "-q", "-b", "wt", linked);
     expect((await source.bindings(linked)).map((b) => b.branch)).toEqual(["x"]);

@@ -7,7 +7,7 @@ const NOT_SYMBOLIC = 1;
 const KEY_ABSENT = 5;
 
 /** Keeps a branch's declaration in the repository's own git config: `branch.<name>.aiddTask`,
- * `aiddTicket` and `aiddDeclaredAt`. */
+ * `aiddTicket`, `aiddDeclaredFor` (the branch it was made on) and `aiddDeclaredAt`. */
 export class GitBranchBindingStoreAdapter implements BranchBindingStore {
   /** `env` carries none of git's own variables, which would point it at another repository. */
   constructor(private readonly env: NodeJS.ProcessEnv) {}
@@ -20,10 +20,13 @@ export class GitBranchBindingStoreAdapter implements BranchBindingStore {
   }
 
   /** `aiddDeclaredAt` goes last: a branch counts as declared only once the rest is in place,
-   * so a crash in between leaves it undeclared rather than half declared. */
+   * so a crash in between leaves it undeclared rather than half declared. `aiddDeclaredFor`
+   * names the branch, so a copy or a rename, which carries the keys away, carries no
+   * declaration. */
   async declare(root: string, branch: string, declaration: TaskDeclaration): Promise<void> {
     this.setOrUnset(root, branch, "aiddTask", declaration.task);
     this.setOrUnset(root, branch, "aiddTicket", declaration.ticket);
+    this.setOrUnset(root, branch, "aiddDeclaredFor", branch);
     this.setOrUnset(root, branch, "aiddDeclaredAt", declaration.declared_at);
   }
 

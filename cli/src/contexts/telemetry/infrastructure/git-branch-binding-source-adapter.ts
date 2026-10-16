@@ -7,7 +7,7 @@ import type { BranchBindingSource } from "../domain/ports/branch-binding-source.
 import { runGit } from "./run-git.js";
 
 const NO_MATCH = 1;
-const DECLARATION_KEYS = "^branch\\..*\\.aidd(task|ticket|declaredat)$";
+const DECLARATION_KEYS = "^branch\\..*\\.aidd(task|ticket|declaredfor|declaredat)$";
 
 /** Reads branch declarations from a repository's own git config and reflog. */
 export class GitBranchBindingSourceAdapter implements BranchBindingSource {

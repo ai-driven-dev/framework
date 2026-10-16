@@ -291,7 +291,7 @@ test("a branch declaration read back from real git follows the fixture", () => {
         git(box.repo, "config", "--local", `branch.${c.branch}.${key}`, value);
       }
       const found = lookup({ cwd: box.repo, sessionId: null, at: new Date(), dir: box.tel, env: process.env });
-      const want = c.keys.aiddTask || c.keys.aiddDeclaredAt ? "bound" : "unbound";
+      const want = expected.gitConfig[name] === "declared" ? "bound" : "unbound";
       assert.equal(found.binding.state, want, name);
     });
   }
@@ -352,7 +352,12 @@ test("the shared files are read in full by the hook's own readers", () => {
 
 test("parseBranchConfig cuts the known suffix off a dotted branch name", () => {
   const out = "branch.release/1.2.aidd.aiddtask\nx\0branch.release/1.2.aidd.aidddeclaredat\nt\0";
-  assert.deepEqual(parseBranchConfig(out, "release/1.2.aidd"), { task: "x", ticket: null, declared_at: "t" });
+  assert.deepEqual(parseBranchConfig(out, "release/1.2.aidd"), {
+    task: "x",
+    ticket: null,
+    declared_for: null,
+    declared_at: "t",
+  });
 });
 
 // ---------------------------------------------------------------- the guards, end to end
@@ -670,6 +675,8 @@ test("the default branch and a detached head are never asked, and git is not nee
 test("a bound branch, session or carried session passes", () => {
   withBox({}, (box) => {
     git(box.repo, "config", "--local", "branch.feat/x.aiddTask", "t");
+    git(box.repo, "config", "--local", "branch.feat/x.aiddDeclaredFor", "feat/x");
+    git(box.repo, "config", "--local", "branch.feat/x.aiddDeclaredAt", "2026-10-09T09:00:00.000Z");
     assertPasses(gate(box));
   });
   withBox({}, (box) => {
@@ -687,6 +694,30 @@ test("a bound branch, session or carried session passes", () => {
       { session_id: OTHER, task: "t", ticket: null, none: false, declared_at: "2026-01-01T00:00:00.000Z", by: "command" },
     ]);
     box.write("carries.jsonl", [{ session_id: SESSION, from: OTHER, at: "2026-01-02T00:00:00.000Z" }]);
+    assertPasses(gate(box));
+  });
+});
+
+test("a branch the command did not declare is asked: a task set by hand, a declaration copied from another branch", () => {
+  withBox({}, (box) => {
+    git(box.repo, "config", "--local", "branch.feat/x.aiddTask", "by-hand");
+    assert.equal(gate(box).json.decision, "block");
+  });
+  withBox({}, (box) => {
+    git(box.repo, "config", "--local", "branch.feat/x.aiddTask", "theirs");
+    git(box.repo, "config", "--local", "branch.feat/x.aiddDeclaredFor", "feat/original");
+    git(box.repo, "config", "--local", "branch.feat/x.aiddDeclaredAt", "2026-10-09T09:00:00.000Z");
+    assert.equal(gate(box).json.decision, "block");
+  });
+});
+
+test("the gate asks on every prompt until the branch is declared, then never again", () => {
+  withBox({}, (box) => {
+    assert.equal(gate(box).json.decision, "block");
+    assert.equal(gate(box).json.decision, "block");
+    git(box.repo, "config", "--local", "branch.feat/x.aiddDeclaredFor", "feat/x");
+    git(box.repo, "config", "--local", "branch.feat/x.aiddDeclaredAt", "2026-10-09T09:00:00.000Z");
+    assertPasses(gate(box));
     assertPasses(gate(box));
   });
 });

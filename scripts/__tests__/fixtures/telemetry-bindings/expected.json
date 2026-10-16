@@ -1,4 +1,16 @@
 {
+  "gitConfig": {
+    "task-and-ticket": "declared",
+    "task-only": "declared",
+    "none": "declared",
+    "none-empty-task": "declared",
+    "task-without-declared-at": "undeclared",
+    "undeclared": "undeclared",
+    "dotted-branch-name": "declared",
+    "stamped-for-this-branch": "declared",
+    "stamped-for-another-branch": "undeclared",
+    "stamp-without-declared-at": "undeclared"
+  },
   "binding": {
     "session-declared-once": {
       "state": "bound",
@@ -136,12 +148,8 @@
       "ticket": null,
       "none": true
     },
-    "branch-task-without-declared-at-is-bound": {
-      "state": "bound",
-      "source": "branch",
-      "task": "orphan",
-      "ticket": null,
-      "none": false
+    "branch-task-without-declared-at-is-unbound": {
+      "state": "unbound"
     },
     "branch-undeclared-is-unbound": {
       "state": "unbound"
@@ -162,6 +170,26 @@
     "default-branch-still-has-its-session": {
       "state": "bound",
       "source": "session-declared",
+      "task": "checkout-fix",
+      "ticket": "PROJ-12",
+      "none": false
+    },
+    "branch-stamped-for-itself-is-bound": {
+      "state": "bound",
+      "source": "branch",
+      "task": "stamped",
+      "ticket": "PROJ-30",
+      "none": false
+    },
+    "branch-stamped-for-another-branch-is-unbound": {
+      "state": "unbound"
+    },
+    "branch-stamp-without-declared-at-is-unbound": {
+      "state": "unbound"
+    },
+    "branch-unstamped-legacy-declaration-is-bound": {
+      "state": "bound",
+      "source": "branch",
       "task": "checkout-fix",
       "ticket": "PROJ-12",
       "none": false
@@ -342,13 +370,23 @@
     "torn-last-line-is-not-yet-written": {
       "damaged": false,
       "intervals": [
-        { "token": "t1", "path": "/work/a/.git", "from": "2026-10-09T09:00:00.000Z", "to": null }
+        {
+          "token": "t1",
+          "path": "/work/a/.git",
+          "from": "2026-10-09T09:00:00.000Z",
+          "to": null
+        }
       ]
     },
     "whole-event-without-its-newline-is-not-yet-written": {
       "damaged": false,
       "intervals": [
-        { "token": "t1", "path": "/work/a/.git", "from": "2026-10-09T09:00:00.000Z", "to": null }
+        {
+          "token": "t1",
+          "path": "/work/a/.git",
+          "from": "2026-10-09T09:00:00.000Z",
+          "to": null
+        }
       ]
     },
     "torn-line-with-a-line-after-it-damages": {

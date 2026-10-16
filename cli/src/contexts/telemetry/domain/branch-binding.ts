@@ -31,22 +31,33 @@ const PREFIX = "branch.";
 const FIELDS = {
   task: ".aiddtask",
   ticket: ".aiddticket",
+  declared_for: ".aidddeclaredfor",
   declared_at: ".aidddeclaredat",
 } as const;
 
 interface DeclaredFields {
   task: string | null;
   ticket: string | null;
+  /** The branch the command declared on: a copy or a rename moves the keys, not this name. */
+  declared_for: string | null;
   declared_at: string | null;
+}
+
+/** Only the command declares, and it writes `aiddDeclaredAt` last: a key without it was set by
+ * hand or cut short. A stamp naming another branch was carried here by `git branch -c` or
+ * `-m`. A declaration with no stamp was written before stamping existed and still counts. */
+function declaredByTheCommand(branch: string, fields: DeclaredFields): boolean {
+  return fields.declared_at !== null && (fields.declared_for ?? branch) === branch;
 }
 
 function textOrNull(value: string): string | null {
   return value === "" ? null : value;
 }
 
-/** Reads `git config --local -z --get-regexp` output: entries end in NUL, a key and its value
- * are split by a newline, and a key given with no value has no newline at all. A branch name
- * can hold dots, so the known suffix is cut off the end, never split on. */
+/** Reads `git config --local -z --get-regexp` output into the branches the command declared:
+ * entries end in NUL, a key and its value are split by a newline, and a key given with no value
+ * has no newline at all. A branch name can hold dots, so the known suffix is cut off the end,
+ * never split on. */
 export function parseBranchConfig(output: string): BranchConfigBinding[] {
   const branches = new Map<string, DeclaredFields>();
   for (const entry of output.split("\0")) {
@@ -58,17 +69,25 @@ export function parseBranchConfig(output: string): BranchConfigBinding[] {
     for (const [field, suffix] of Object.entries(FIELDS) as [keyof DeclaredFields, string][]) {
       if (!lower.endsWith(suffix)) continue;
       const branch = key.slice(PREFIX.length, key.length - suffix.length);
-      const held = branches.get(branch) ?? { task: null, ticket: null, declared_at: null };
+      const held = branches.get(branch) ?? {
+        task: null,
+        ticket: null,
+        declared_for: null,
+        declared_at: null,
+      };
       held[field] = textOrNull(value);
       branches.set(branch, held);
     }
   }
   return [...branches.entries()]
+    .filter(([branch, fields]) => declaredByTheCommand(branch, fields))
     .sort(([a], [b]) => compareText(a, b))
-    .map(([branch, fields]) => ({
+    .map(([branch, { task, ticket, declared_at }]) => ({
       branch,
-      ...fields,
-      none: fields.declared_at !== null && fields.task === null,
+      task,
+      ticket,
+      declared_at,
+      none: task === null,
     }));
 }
 

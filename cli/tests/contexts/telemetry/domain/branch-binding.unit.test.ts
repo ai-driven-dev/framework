@@ -12,39 +12,50 @@ import {
 const entry = (key: string, value: string): string => `${key}\n${value}`;
 const listing = (...entries: string[]): string => entries.map((e) => `${e}\0`).join("");
 
+const D = "2026-10-07T10:00:00.000Z";
+const declaredAt = (branch: string): string => entry(`branch.${branch}.aidddeclaredat`, D);
+
 describe("git config output is read into bindings", () => {
-  it("reads the three keys of a branch, which git lists in lower case", () => {
+  it("reads the keys of a branch, which git lists in lower case", () => {
     const out = listing(
       entry("branch.feat/x.aiddtask", "checkout-fix"),
       entry("branch.feat/x.aiddticket", "PROJ-12"),
-      entry("branch.feat/x.aidddeclaredat", "2026-10-07T10:00:00.000Z")
+      entry("branch.feat/x.aidddeclaredfor", "feat/x"),
+      entry("branch.feat/x.aidddeclaredat", D)
     );
     expect(parseBranchConfig(out)).toEqual([
       {
         branch: "feat/x",
         task: "checkout-fix",
         ticket: "PROJ-12",
-        declared_at: "2026-10-07T10:00:00.000Z",
+        declared_at: D,
         none: false,
       },
     ]);
   });
 
   it("reads the keys whatever case they are spelt in", () => {
-    const out = listing(entry("branch.x.aiddTask", "t"), entry("branch.x.AIDDDeclaredAt", "d"));
+    const out = listing(
+      entry("branch.x.aiddTask", "t"),
+      entry("branch.x.AIDDDeclaredFor", "x"),
+      entry("branch.x.AIDDDeclaredAt", "d")
+    );
     expect(parseBranchConfig(out)).toMatchObject([{ branch: "x", task: "t", declared_at: "d" }]);
   });
 
   it("keeps a branch name with dots and mixed case whole", () => {
-    const out = listing(entry("branch.Release/1.2.aiddtask", "t"));
+    const out = listing(entry("branch.Release/1.2.aiddtask", "t"), declaredAt("Release/1.2"));
     expect(parseBranchConfig(out).map((b) => b.branch)).toEqual(["Release/1.2"]);
   });
 
   it("lists branches apart, in name order", () => {
     const out = listing(
       entry("branch.b.aiddtask", "tb"),
+      declaredAt("b"),
       entry("branch.c.aiddtask", "tc"),
-      entry("branch.a.aiddtask", "ta")
+      declaredAt("c"),
+      entry("branch.a.aiddtask", "ta"),
+      declaredAt("a")
     );
     expect(parseBranchConfig(out).map((b) => [b.branch, b.task])).toEqual([
       ["a", "ta"],
@@ -54,44 +65,77 @@ describe("git config output is read into bindings", () => {
   });
 
   it("reads a declaration of no task as none", () => {
-    const out = listing(entry("branch.x.aidddeclaredat", "2026-10-07T10:00:00.000Z"));
+    const out = listing(declaredAt("x"));
     expect(parseBranchConfig(out)).toEqual([
-      {
-        branch: "x",
-        task: null,
-        ticket: null,
-        declared_at: "2026-10-07T10:00:00.000Z",
-        none: true,
-      },
+      { branch: "x", task: null, ticket: null, declared_at: D, none: true },
     ]);
   });
 
   it("reads an empty task as none too", () => {
-    const out = listing(
-      entry("branch.x.aiddtask", ""),
-      entry("branch.x.aidddeclaredat", "2026-10-07T10:00:00.000Z")
-    );
+    const out = listing(entry("branch.x.aiddtask", ""), declaredAt("x"));
     expect(parseBranchConfig(out)[0]).toMatchObject({ task: null, none: true });
   });
 
-  it("does not call a branch none while it has no declaration time", () => {
-    const out = listing(entry("branch.x.aiddticket", "T-1"));
-    expect(parseBranchConfig(out)[0]).toMatchObject({ task: null, declared_at: null, none: false });
-  });
-
   it("keeps a value holding a newline whole", () => {
-    const out = listing(entry("branch.x.aiddtask", "line one\nline two"));
+    const out = listing(entry("branch.x.aiddtask", "line one\nline two"), declaredAt("x"));
     expect(parseBranchConfig(out)[0]?.task).toBe("line one\nline two");
   });
 
   it("reads a key given with no value as an empty one", () => {
-    expect(parseBranchConfig("branch.x.aiddtask\0")[0]).toMatchObject({ task: null });
+    expect(parseBranchConfig(`branch.x.aiddtask\0${listing(declaredAt("x"))}`)[0]).toMatchObject({
+      task: null,
+      none: true,
+    });
   });
 
-  it("ignores keys that are not the three, and no output at all", () => {
+  it("ignores keys that are not the four, and no output at all", () => {
     expect(parseBranchConfig(listing(entry("branch.x.remote", "origin")))).toEqual([]);
     expect(parseBranchConfig(listing(entry("core.aiddtask", "x")))).toEqual([]);
     expect(parseBranchConfig("")).toEqual([]);
+  });
+});
+
+describe("only a declaration the command made on the branch counts", () => {
+  it("reads nothing from a task or a ticket with no declaration time", () => {
+    const out = listing(
+      entry("branch.x.aiddtask", "by-hand"),
+      entry("branch.y.aiddticket", "T-1"),
+      entry("branch.z.aidddeclaredfor", "z")
+    );
+    expect(parseBranchConfig(out)).toEqual([]);
+  });
+
+  it("reads nothing from a declaration made for another branch, as a copy or a rename leaves it", () => {
+    const out = listing(
+      entry("branch.copy.aiddtask", "theirs"),
+      entry("branch.copy.aidddeclaredfor", "original"),
+      declaredAt("copy")
+    );
+    expect(parseBranchConfig(out)).toEqual([]);
+  });
+
+  it("tells a stamp apart from a branch whose name differs only in case", () => {
+    const out = listing(
+      entry("branch.Feat.aiddtask", "t"),
+      entry("branch.Feat.aidddeclaredfor", "feat"),
+      declaredAt("Feat")
+    );
+    expect(parseBranchConfig(out)).toEqual([]);
+  });
+
+  it("still reads a declaration written before declarations were stamped", () => {
+    const out = listing(entry("branch.x.aiddtask", "legacy"), declaredAt("x"));
+    expect(parseBranchConfig(out)).toMatchObject([{ branch: "x", task: "legacy" }]);
+  });
+
+  it("keeps the declared branches when another one is not declared", () => {
+    const out = listing(
+      entry("branch.a.aiddtask", "kept"),
+      entry("branch.a.aidddeclaredfor", "a"),
+      declaredAt("a"),
+      entry("branch.b.aiddtask", "dropped")
+    );
+    expect(parseBranchConfig(out).map((b) => b.task)).toEqual(["kept"]);
   });
 });
 

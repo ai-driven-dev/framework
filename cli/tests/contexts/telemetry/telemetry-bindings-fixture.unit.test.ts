@@ -117,11 +117,12 @@ describe("the shared fixture of task bindings", () => {
         Object.keys((cases as Record<string, object>)[section] ?? {}).sort()
       );
     }
-    expect(Object.keys(expected).sort()).toEqual(
-      Object.keys(cases)
-        .filter((section) => section !== "gitConfig")
-        .sort()
-    );
+    expect(Object.keys(expected).sort()).toEqual(Object.keys(cases).sort());
+  });
+
+  it.each(Object.entries(cases.gitConfig))("reads %s as the fixture says", (name, config) => {
+    const read = parseBranchConfig(gitConfigOutput(config));
+    expect(read.length === 1 ? "declared" : "undeclared").toBe(expected.gitConfig?.[name]);
   });
 
   it("holds only lines the CLI reads", () => {

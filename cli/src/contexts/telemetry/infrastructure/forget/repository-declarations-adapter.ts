@@ -13,7 +13,7 @@ const NO_MATCH = 1;
 const KEY_ABSENT = 5;
 /** The three keys a declaration writes, as git lists them: the variable in lower case, the
  * branch name, which may hold dots, kept as it is. */
-const TASK_KEYS = "^branch\\..+\\.(aiddtask|aiddticket|aidddeclaredat)$";
+const TASK_KEYS = "^branch\\..+\\.(aiddtask|aiddticket|aidddeclaredfor|aidddeclaredat)$";
 
 export class RepositoryDeclarationsAdapter implements RepositoryDeclarations {
   /** `env` carries none of git's own variables, which would point it at another repository. */
