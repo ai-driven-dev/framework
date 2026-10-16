@@ -268,6 +268,14 @@ describe("printing a usage report", () => {
       "Kept from every read: 1 call with no usable time.",
     ]);
     expect(printed(result("total", [], tally(0, [0, 0, 0, 0]))).join("\n")).not.toContain("Kept");
+    expect(
+      printed(
+        result("total", [], tally(0, [0, 0, 0, 0]), { leftOut: { undated: 2, unrecognised: 1 } })
+      ).slice(-2)
+    ).toEqual([
+      "Kept from every read: 1 line that is no usage line.",
+      "Kept from every read: 2 calls with no usable time.",
+    ]);
   });
 
   it("warns on every report while the consent log is damaged, and not otherwise", () => {

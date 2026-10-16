@@ -1172,6 +1172,36 @@ describe("what was measured and could not be stored is kept, so a report run lat
     expect([...s.ledger.leftOut.lines]).toEqual([]);
   });
 
+  it("keeps nothing of a call its clone did not consent to then, though it consents now", async () => {
+    const s = setup();
+    s.transcripts.files.set("/t/1.jsonl", [line("B", 1, {}, "2025-06-01T00:00:00.000Z")]);
+    const result = await s.ingest.execute();
+    expect(result.notStored["no-consent"]).toBe(1);
+    expect([...s.ledger.leftOut.lines]).toEqual([]);
+  });
+
+  it("keeps nothing of an undated call that names no directory, wherever git would look", async () => {
+    const s = setup();
+    // As a real locator asked for no directory looks where the command runs.
+    s.locator.locate = async () => repository("/work/a");
+    s.transcripts.files.set("/t/1.jsonl", [line("U", 1, { cwd: undefined }, "not a time")]);
+    await s.ingest.execute();
+    expect([...s.ledger.leftOut.lines]).toEqual([]);
+  });
+
+  it("judges a line that is no usage line with no usable time of its own at the read", async () => {
+    const s = setup();
+    const undatedJunk = JSON.stringify({
+      type: "assistant",
+      cwd: "/work/a",
+      timestamp: "not a time",
+      message: { usage: 7 },
+    });
+    s.transcripts.files.set("/t/1.jsonl", [undatedJunk]);
+    await s.ingest.execute();
+    expect([...s.ledger.leftOut.lines]).toEqual([`unrecognised ${undatedJunk}`]);
+  });
+
   it("adds nothing when every position is forgotten and the same transcripts are read again", async () => {
     const s = setup();
     s.transcripts.files.set("/t/1.jsonl", [junk("/work/a"), line("U", 1, {}, "not a time")]);

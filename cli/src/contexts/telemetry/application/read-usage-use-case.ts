@@ -58,8 +58,8 @@ export class ReadUsageUseCase {
       for (const line of read.lines) {
         const outcome = this.readLine(line);
         candidates.push(...outcome.records);
-        if (outcome.records.length === 0 && outcome.named?.cwd)
-          dropped.push({ line, ...outcome.named });
+        // Only a line that gives no call names anything.
+        if (outcome.named?.cwd) dropped.push({ line, ...outcome.named });
         unrecognised.push(...outcome.unrecognised.map((reason) => `${path}: ${reason}`));
       }
     }
