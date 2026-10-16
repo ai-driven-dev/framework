@@ -23,8 +23,10 @@ The canonical agent carries `name` and `description`. Emit those a row accepts, 
 | Claude Code    | `name`, `description`, optional `model`, `effort`, `color`, `tools` |
 | Cursor         | `name`, `description`, optional `model`, `readonly`, `is_background` |
 | OpenCode V2    | `description`, `mode: subagent`, optional `model` as `provider/model#variant`, `permissions` |
-| GitHub Copilot | `name`, `description`, optional `model`, `reasoningEffort`, `tools` |
+| GitHub Copilot | `name`, `description`, optional `model`, `reasoningEffort`, `tools`, `include-custom-instructions` |
 | Codex CLI      | `name`, `description`, optional `model`, `model_reasoning_effort` |
+
+For Copilot agents that rely on repository instructions, set `include-custom-instructions: true` unless the user explicitly opts out.
 
 Native fields checked 2026-10-16: [Claude](https://code.claude.com/docs/en/sub-agents#frontmatter-reference), [Cursor](https://cursor.com/docs/subagents#file-format), [OpenCode V2](https://opencode.ai/v2/docs/agents#model), [Copilot](https://docs.github.com/en/copilot/reference/copilot-cli-reference/cli-command-reference#custom-agent-frontmatter-fields), [Codex](https://developers.openai.com/codex/subagents#custom-agent-file-schema).
 
