@@ -1,4 +1,4 @@
-import { mkdir, readdir, readFile, writeFile } from "node:fs/promises";
+import { appendFile, mkdir, readdir, readFile, writeFile } from "node:fs/promises";
 import { join, relative } from "node:path";
 import { afterEach, beforeEach, expect } from "vitest";
 import { git, initRepository, sandboxGitEnv } from "../helpers/git-sandbox.js";
@@ -269,6 +269,11 @@ export function useReportSandbox(): void {
   afterEach(async () => {
     await env.cleanup();
   });
+}
+
+/** Appends a call to the sandbox's main transcript, as Claude would write it later. */
+export async function addCall(call: Call): Promise<void> {
+  await appendFile(join(claude, "projects", "sandbox", "main.jsonl"), `${usageLine(call, repo)}\n`);
 }
 
 /** Every file under the telemetry directory with its bytes: what a run changed shows. */

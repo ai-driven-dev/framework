@@ -219,6 +219,34 @@
       "head": "refs/heads/feat/x",
       "originHead": null
     },
+    "branch-stamped-for-itself-is-bound": {
+      "session_id": null,
+      "at": "2026-10-09T15:00:00.000Z",
+      "gitConfig": "stamped-for-this-branch",
+      "head": "refs/heads/feat/x",
+      "originHead": null
+    },
+    "branch-stamped-for-another-branch-is-unbound": {
+      "session_id": null,
+      "at": "2026-10-09T15:00:00.000Z",
+      "gitConfig": "stamped-for-another-branch",
+      "head": "refs/heads/feat/x",
+      "originHead": null
+    },
+    "branch-stamp-without-declared-at-is-unbound": {
+      "session_id": null,
+      "at": "2026-10-09T15:00:00.000Z",
+      "gitConfig": "stamp-without-declared-at",
+      "head": "refs/heads/feat/x",
+      "originHead": null
+    },
+    "branch-unstamped-legacy-declaration-is-bound": {
+      "session_id": null,
+      "at": "2026-10-09T15:00:00.000Z",
+      "gitConfig": "task-and-ticket",
+      "head": "refs/heads/feat/x",
+      "originHead": null
+    },
     "branch-undeclared-is-unbound": {
       "session_id": null,
       "at": "2026-10-09T15:00:00.000Z",
@@ -252,34 +280,6 @@
       "at": "2026-10-09T11:00:00.000Z",
       "gitConfig": null,
       "head": "refs/heads/main",
-      "originHead": null
-    },
-    "branch-stamped-for-itself-is-bound": {
-      "session_id": null,
-      "at": "2026-10-09T15:00:00.000Z",
-      "gitConfig": "stamped-for-this-branch",
-      "head": "refs/heads/feat/x",
-      "originHead": null
-    },
-    "branch-stamped-for-another-branch-is-unbound": {
-      "session_id": null,
-      "at": "2026-10-09T15:00:00.000Z",
-      "gitConfig": "stamped-for-another-branch",
-      "head": "refs/heads/feat/x",
-      "originHead": null
-    },
-    "branch-stamp-without-declared-at-is-unbound": {
-      "session_id": null,
-      "at": "2026-10-09T15:00:00.000Z",
-      "gitConfig": "stamp-without-declared-at",
-      "head": "refs/heads/feat/x",
-      "originHead": null
-    },
-    "branch-unstamped-legacy-declaration-is-bound": {
-      "session_id": null,
-      "at": "2026-10-09T15:00:00.000Z",
-      "gitConfig": "task-and-ticket",
-      "head": "refs/heads/feat/x",
       "originHead": null
     }
   },
@@ -707,12 +707,7 @@
       "lines": [
         {
           "token": "t1",
-          "clone": {
-            "path": "/work/a/.git",
-            "dev": "16777231",
-            "ino": "100",
-            "birthtimeMs": 1760000000000
-          },
+          "clone": { "path": "/work/a/.git", "dev": "16777231", "ino": "100", "birthtimeMs": 1760000000000 },
           "open": "2026-10-09T09:00:00.000Z"
         }
       ],
@@ -722,12 +717,7 @@
       "lines": [
         {
           "token": "t1",
-          "clone": {
-            "path": "/work/a/.git",
-            "dev": "16777231",
-            "ino": "100",
-            "birthtimeMs": 1760000000000
-          },
+          "clone": { "path": "/work/a/.git", "dev": "16777231", "ino": "100", "birthtimeMs": 1760000000000 },
           "open": "2026-10-09T09:00:00.000Z"
         }
       ],

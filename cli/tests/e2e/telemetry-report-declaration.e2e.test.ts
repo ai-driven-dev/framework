@@ -1,10 +1,12 @@
 import { describe, expect, it } from "vitest";
 import { git } from "../helpers/git-sandbox.js";
 import {
+  addCall,
   aidd,
   declareBranch,
   json,
   rowsOf,
+  S_BRANCH,
   sandbox,
   useReportSandbox,
 } from "./telemetry-report-sandbox.js";
@@ -32,18 +34,28 @@ describe("a branch is bound only by a declaration the command made on it", () =>
     expect(tasks["no-binding"]?.records).toBe(3);
   });
 
-  it("asks again after a rename, and one declaration covers the renamed branch", async () => {
+  it("asks again after a rename, and one declaration on the new name covers it", async () => {
     await declareBranch();
-    gitHere("branch", "-D", "feat/b");
-    gitHere("branch", "-m", "feat/a", "feat/b");
+    gitHere("branch", "-m", "feat/a", "feat/c");
+    await addCall({
+      id: "c1",
+      session: S_BRANCH,
+      at: "2026-10-08T12:00:00.000Z",
+      branch: "feat/c",
+      model: "m-big",
+      input: 1,
+      output: 1,
+      read: 1,
+      write: 1,
+    });
     const renamed = rowsOf(await json("task"));
     expect(renamed.checkout?.records).toBe(2);
-    expect(renamed["no-binding"]?.records).toBe(1);
+    expect(renamed["no-binding"]?.records).toBe(2);
     expect((await aidd(["task", "after-rename"])).exitCode).toBe(0);
     const declared = rowsOf(await json("task"));
     expect(declared.checkout?.records).toBe(2);
     expect(declared["after-rename"]?.records).toBe(1);
-    expect(declared["no-binding"]).toBeUndefined();
+    expect(declared["no-binding"]?.records).toBe(1);
   });
 
   it("still reads a declaration written before the branch was stamped", async () => {

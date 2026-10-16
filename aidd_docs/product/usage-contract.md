@@ -179,6 +179,7 @@ flowchart TD
 - A declaration of no task is `declared-none`.
 - Declaring a branch late moves its earlier calls onto the task.
 - A branch snapshot with no `declared_at` attributes nothing.
+- Sub-agent and advisor calls follow their parent session.
 
 ### Branch declaration
 
@@ -193,7 +194,7 @@ A branch is declared only when the command declared it on that branch. Both read
 
 - **Rename** (`git branch -m A B`): B is undeclared, so the gate asks on B. One declaration on B covers B from its creation, since the reflog moves with the branch; calls made while it was A keep A's task. git moves the keys the same way for a copy and a rename, and telling them apart would mean reading reflog entries that expire: one question after a rename is the cost.
 - **Copy** (`git branch -c A B`): B is undeclared until declared on B.
-- Sub-agent and advisor calls follow their parent session.
+- **Copy or rename onto an existing branch** (`-C`, `-M`): git keeps both sets of keys, the copied ones first. The branch's own values, listed last, are read; declaring again replaces every value.
 
 ## Ask
 
@@ -209,7 +210,7 @@ A branch is declared only when the command declared it on that branch. Both read
 
 - Anything else passes. A crash exits 0: the hook never fails a prompt.
 - Re-checked on every prompt: each prompt on an undeclared working branch is blocked until the branch or the session is declared (`--none` included). A declared branch is never asked again; switching to an undeclared one asks.
-- Why every prompt and not once: the gate exists so that no token of the work is spent before it has a task ([spec](../tasks/2026_10/2026_10_09_deterministic-tokens/spec.md), [target](../tasks/2026_10/2026_10_09_deterministic-tokens/context/target.md)). "Once per working branch" there meant answered once and remembered; letting the next prompt through would spend tokens unattributed. This sentence said "asks once" until 2026-10-16; the hook never did.
+- Why every prompt and not once: the gate exists so that no token of the work is spent before it has a task ([spec](../tasks/2026_10/2026_10_09_deterministic-tokens/spec.md), [target](../tasks/2026_10/2026_10_09_deterministic-tokens/context/target.md)). "Once per working branch" there meant answered once and remembered; letting the next prompt through would spend tokens unattributed.
 
 Answering never blocks and never reaches the model:
 - `! aidd telemetry task ...` in the terminal fires no `UserPromptSubmit`.

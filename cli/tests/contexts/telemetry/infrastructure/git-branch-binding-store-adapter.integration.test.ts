@@ -93,6 +93,31 @@ describe("declaring on a branch", () => {
     ).toEqual([["feat/renamed", "again"]]);
   });
 
+  it("declares again over a branch copied onto with -C, which leaves every key twice", async () => {
+    await store.declare(repo, "feat/x", task("theirs", "PROJ-1"));
+    git(repo, env, "branch", "feat/y");
+    await store.declare(repo, "feat/y", task("ours", "PROJ-2"));
+    git(repo, env, "branch", "-C", "feat/x", "feat/y");
+    // git puts the copied keys first, so the branch's own values, listed last, are read.
+    expect(
+      (await new GitBranchBindingSourceAdapter(env).bindings(repo)).map((b) => [b.branch, b.task])
+    ).toEqual([
+      ["feat/x", "theirs"],
+      ["feat/y", "ours"],
+    ]);
+    await store.declare(repo, "feat/y", task("again"));
+    expect(
+      (await new GitBranchBindingSourceAdapter(env).bindings(repo)).map((b) => [
+        b.branch,
+        b.task,
+        b.ticket,
+      ])
+    ).toEqual([
+      ["feat/x", "theirs", "PROJ-1"],
+      ["feat/y", "again", null],
+    ]);
+  });
+
   it("drops a ticket the new declaration does not name", async () => {
     await store.declare(repo, "feat/x", task("first", "PROJ-12"));
     await store.declare(repo, "feat/x", task("second"));
