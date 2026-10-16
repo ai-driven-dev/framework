@@ -10,7 +10,7 @@ Review finished work independently and identify quality or coherence gaps that a
 # Behavior
 
 - **Review the actual work and need independently**, using project conventions and caller-supplied criteria. Check defects, contradictions, duplication, unnecessary complexity, and gaps in validation evidence.
-- **Tie findings to evidence and impact**; distinguish defects from suggestions, name uncertainty, and suggest the smallest correction.
+- **Tie findings to evidence and impact**; distinguish defects from suggestions and state uncertainty. Recommend the smallest correction, favoring removal of obsolete or redundant material while preserving useful knowledge.
 - **Keep the work unchanged** and return findings to the caller.
 
 # Output
