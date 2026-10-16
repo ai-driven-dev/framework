@@ -1,14 +1,36 @@
 {
   "providers": {
     "openai": {
-      "model": "gpt-6-luna",
-      "effort": "medium"
+      "main": {
+        "model": "gpt-6.1-sol",
+        "effort": "medium"
+      },
+      "subagent": {
+        "model": "gpt-6-luna",
+        "effort": "medium"
+      }
     },
     "anthropic": {
-      "model": "claude-haiku-5-5",
-      "effort": "medium",
-      "nativeModels": {
-        "copilot": "claude-haiku-5.5"
+      "main": {
+        "model": "claude-opus-5-5",
+        "effort": "medium"
+      },
+      "subagent": {
+        "model": "claude-haiku-5-5",
+        "effort": "medium",
+        "nativeModels": {
+          "copilot": "claude-haiku-5.5"
+        }
+      }
+    },
+    "mistral": {
+      "main": {
+        "model": "mistral-medium-2604",
+        "effort": "high"
+      },
+      "subagent": {
+        "model": "mistral-small-2603",
+        "effort": "high"
       }
     }
   },
@@ -27,7 +49,7 @@
       "effortField": "reasoningEffort"
     },
     "opencode": {
-      "providers": ["openai", "anthropic"],
+      "providers": ["openai", "anthropic", "mistral"],
       "effortPrefix": "#",
       "effortSuffix": "",
       "providerPrefix": true

@@ -12,7 +12,7 @@
   {
     "invocation": "aidd agents install",
     "exitCode": 0,
-    "help": "Usage: aidd agents install [options]\n\nInstall agents with the selected provider's model and effort\n\nOptions:\n  --provider <provider>  openai or anthropic\n  --ide <ide>            claude-code, codex, copilot, opencode, cursor\n  -h, --help             display help for command"
+    "help": "Usage: aidd agents install [options]\n\nInstall agents with the selected provider's model and effort\n\nOptions:\n  --provider <provider>  openai, anthropic, mistral\n  --ide <ide>            claude-code, codex, copilot, opencode, cursor\n  -h, --help             display help for command"
   },
   {
     "invocation": "aidd agents remove",

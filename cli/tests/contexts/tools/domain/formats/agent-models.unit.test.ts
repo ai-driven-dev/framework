@@ -47,6 +47,7 @@ describe("explicit agent models", () => {
     ["copilot", "anthropic", { model: "claude-haiku-5.5", reasoningEffort: "medium" }],
     ["opencode", "openai", { model: "openai/gpt-6-luna#medium" }],
     ["opencode", "anthropic", { model: "anthropic/claude-haiku-5-5#medium" }],
+    ["opencode", "mistral", { model: "mistral/mistral-small-2603#high" }],
     ["cursor", "anthropic", { model: "claude-haiku-5-5[effort=medium]" }],
   ] as const)("serializes %s with the selected %s provider", (host, provider, expected) => {
     expect(agentModelOptions(host, provider)).toStrictEqual(expected);
@@ -56,6 +57,10 @@ describe("explicit agent models", () => {
     ["claude", "openai"],
     ["codex", "anthropic"],
     ["cursor", "openai"],
+    ["claude", "mistral"],
+    ["codex", "mistral"],
+    ["copilot", "mistral"],
+    ["cursor", "mistral"],
   ] as const)("rejects unsupported %s / %s selections", (host, provider) => {
     expect(() => agentModelOptions(host, provider)).toThrow(/not supported/);
   });
@@ -70,7 +75,7 @@ describe("explicit agent models", () => {
       expect(isAgentHost(host)).toBe(false);
     }
   );
-  it.each(["openai", "anthropic"])("recognizes provider %s", (provider) => {
+  it.each(["openai", "anthropic", "mistral"])("recognizes provider %s", (provider) => {
     expect(isAgentProvider(provider)).toBe(true);
   });
   it.each(["unknown", "", "toString", "constructor", "__proto__", null, undefined, 1])(

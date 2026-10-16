@@ -1,6 +1,7 @@
 import type { Command } from "commander";
 import {
   agentIdeNames,
+  agentProviderNames,
   isAgentProvider,
   resolveAgentHost,
 } from "../../contexts/tools/domain/formats/agent-models.js";
@@ -15,7 +16,7 @@ export function registerAgentsCommand(program: Command): void {
   agents
     .command("install")
     .description("Install agents with the selected provider's model and effort")
-    .requiredOption("--provider <provider>", "openai or anthropic")
+    .requiredOption("--provider <provider>", agentProviderNames().join(", "))
     .requiredOption("--ide <ide>", agentIdeNames().join(", "))
     .action(async (options: { provider: string; ide: string }) => {
       const { projectRoot, verbose, output } = parseGlobalOptions(program);

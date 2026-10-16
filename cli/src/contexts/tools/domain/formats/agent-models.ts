@@ -11,6 +11,10 @@ export function isAgentProvider(value: unknown): value is AgentProvider {
   return typeof value === "string" && Object.hasOwn(models.providers, value);
 }
 
+export function agentProviderNames(): string[] {
+  return Object.keys(models.providers);
+}
+
 export function agentIdeNames(): string[] {
   return Object.entries(models.hosts).map(([host, target]) =>
     "ide" in target ? target.ide : host
@@ -34,7 +38,7 @@ export function agentModelOptions(
   if (!target.providers.includes(provider)) {
     throw new Error(`Provider "${provider}" is not supported by "${host}".`);
   }
-  const source = models.providers[provider];
+  const source = models.providers[provider].subagent;
   const nativeModel =
     "nativeModels" in source
       ? (Object.entries(source.nativeModels).find(([name]) => name === host)?.[1] ?? source.model)

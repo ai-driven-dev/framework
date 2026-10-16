@@ -20,6 +20,7 @@ const cases = [
   ],
   ["opencode", "openai", ".opencode", ".md", { model: "openai/gpt-6-luna#medium" }],
   ["opencode", "anthropic", ".opencode", ".md", { model: "anthropic/claude-haiku-5-5#medium" }],
+  ["opencode", "mistral", ".opencode", ".md", { model: "mistral/mistral-small-2603#high" }],
   ["cursor", "anthropic", ".cursor", ".md", { model: "claude-haiku-5-5[effort=medium]" }],
 ] as const;
 
@@ -73,6 +74,7 @@ describe.concurrent("explicit native agent installation", () => {
     ["--provider", "openai"],
     ["--provider", "anthropic", "--ide", "codex"],
     ["--provider", "openai", "--ide", "claude-code"],
+    ["--provider", "mistral", "--ide", "codex"],
     ["--provider", "unknown", "--ide", "codex"],
     ["--provider", "openai", "--ide", "unknown"],
   ])("rejects missing or unsupported selection: %s %s", async (...args) => {
@@ -112,7 +114,7 @@ describe.concurrent("explicit native agent installation", () => {
       const directory = join(box.projectDir, ".opencode", "agents");
       await mkdir(directory, { recursive: true });
       await writeFile(join(directory, "personal.md"), "personal agent\n");
-      for (const provider of ["openai", "anthropic"]) {
+      for (const provider of ["openai", "anthropic", "mistral"]) {
         const result = await runCli(
           ["agents", "install", "--provider", provider, "--ide", "opencode"],
           box.projectDir,
@@ -122,9 +124,7 @@ describe.concurrent("explicit native agent installation", () => {
       }
       for (const role of roles) {
         const content = await readFile(join(directory, `aidd-dev-${role}.md`), "utf8");
-        expect(parseFrontmatter(content).frontmatter.model).toBe(
-          "anthropic/claude-haiku-5-5#medium"
-        );
+        expect(parseFrontmatter(content).frontmatter.model).toBe("mistral/mistral-small-2603#high");
       }
       const removed = await runCli(
         ["agents", "remove", "--ide", "opencode"],

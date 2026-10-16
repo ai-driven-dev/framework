@@ -47,13 +47,17 @@ describe("explicit agent command routing", () => {
     registerAgentsCommand(program);
     const command = program.commands[0]?.commands.find((entry) => entry.name() === action);
     const words = new Set(command?.helpInformation().match(/[\w-]+/g));
-    const choices = [...agentIdeNames(), ...(action === "install" ? ["openai", "anthropic"] : [])];
+    const choices = [
+      ...agentIdeNames(),
+      ...(action === "install" ? ["openai", "anthropic", "mistral"] : []),
+    ];
     for (const choice of choices) expect(words.has(choice), choice).toBe(true);
   });
 
   it.each([
     ["codex", "openai", "codex"],
     ["claude-code", "anthropic", "claude"],
+    ["opencode", "mistral", "opencode"],
   ])("passes %s and the chosen provider to installation", async (ide, provider, host) => {
     expect(await run("agents", "install", "--ide", ide, "--provider", provider)).toBe(
       `4 agent files installed for ${ide}.\n`
