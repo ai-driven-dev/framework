@@ -10,7 +10,8 @@ import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterAll, describe, expect, it } from "vitest";
 import { AI_TOOL_IDS } from "../../src/kernel/tool.js";
-import { createTestEnv, runCli } from "../e2e/helpers.js";
+import { runCli } from "../e2e/helpers.js";
+import { twoCaptures } from "./two-captures.js";
 
 const ROOT = resolve(fileURLToPath(import.meta.url), "../../..");
 const FRAMEWORK_FIXTURE = join(ROOT, "tests/fixtures/framework-real");
@@ -107,40 +108,18 @@ async function captureAllCells(
   return captured;
 }
 
-type Sandbox = Awaited<ReturnType<typeof createTestEnv>>;
-const sandboxes: Sandbox[] = [];
-let first: Promise<GoldenSnapshot> | undefined;
-let second: Promise<GoldenSnapshot> | undefined;
-
-async function captureIn(prefix: string): Promise<GoldenSnapshot> {
-  const env = await createTestEnv(prefix);
-  sandboxes.push(env);
-  return captureAllCells(env.projectDir, env.fakeHome, env.tempDir);
-}
-
-/** Two captures of every cell in two sandboxes, the second started once the first is done, so a
- * difference that depends on the time still shows. The determinism test compares them; the
- * baseline test compares the first to the stored snapshot. A capture of its own would check
- * nothing more. */
-const firstCapture = () => {
-  first ??= captureIn("fb-golden-det-1");
-  return first;
-};
-const secondCapture = () => {
-  second ??= firstCapture().then(() => captureIn("fb-golden-det-2"));
-  return second;
-};
+const captures = twoCaptures("fb-golden-det", (env) =>
+  captureAllCells(env.projectDir, env.fakeHome, env.tempDir)
+);
 
 describe.concurrent("Framework build golden — 10-cell matrix", () => {
-  afterAll(async () => {
-    for (const sandbox of sandboxes) await sandbox.cleanup();
-  });
+  afterAll(captures.cleanup);
 
   // Two full 9-cell builds measured just past the 60s default on a Windows runner, not a
   // hang. Raised per test so no other e2e file's budget moves.
   it("snapshot is deterministic (two captures of each target are byte-identical)", async () => {
-    const snap1 = await firstCapture();
-    const snap2 = await secondCapture();
+    const snap1 = await captures.first();
+    const snap2 = await captures.second();
     for (const target of MARKETPLACE_TARGETS) {
       expect(snap1[target], `target ${target}: capture 1 vs 2 differ`).toStrictEqual(snap2[target]);
     }
@@ -151,7 +130,7 @@ describe.concurrent("Framework build golden — 10-cell matrix", () => {
   }, 120_000);
 
   it("every one of the 10 cells is byte-identical to its stored baseline", async () => {
-    const captured = await firstCapture();
+    const captured = await captures.first();
 
     if (process.env.UPDATE_FRAMEWORK_GOLDEN === "1") {
       await mkdir(join(ROOT, "tests/golden/snapshots/framework-build"), { recursive: true });

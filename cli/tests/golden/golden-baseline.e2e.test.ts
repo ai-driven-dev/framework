@@ -7,6 +7,7 @@ import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterAll, describe, expect, it } from "vitest";
 import { createTestEnv, runCli } from "../e2e/helpers.js";
+import { twoCaptures } from "./two-captures.js";
 
 const ROOT = resolve(fileURLToPath(import.meta.url), "../../..");
 const FRAMEWORK_FIXTURE = join(ROOT, "tests/fixtures/framework");
@@ -370,42 +371,21 @@ async function captureAll(projectDir: string, fakeHome: string): Promise<Command
   }
 }
 
-type Sandbox = Awaited<ReturnType<typeof createTestEnv>>;
-const sandboxes: Sandbox[] = [];
-let first: Promise<CommandEntry[]> | undefined;
-let second: Promise<CommandEntry[]> | undefined;
-
-async function captureIn(prefix: string): Promise<CommandEntry[]> {
-  const env = await createTestEnv(prefix);
-  sandboxes.push(env);
-  return normalizeSnapshot(await captureAll(env.projectDir, env.fakeHome));
-}
-
-/** Two captures in two sandboxes, the second started once the first is done, so a difference
- * that depends on the time still shows. The determinism test compares them; the baseline test
- * compares the first to the stored snapshot. A capture of its own would check nothing more. */
-const firstCapture = () => {
-  first ??= captureIn("golden-det-1");
-  return first;
-};
-const secondCapture = () => {
-  second ??= firstCapture().then(() => captureIn("golden-det-2"));
-  return second;
-};
+const captures = twoCaptures("golden-det", async (env) =>
+  normalizeSnapshot(await captureAll(env.projectDir, env.fakeHome))
+);
 
 describe.concurrent("Golden baseline — command matrix", () => {
-  afterAll(async () => {
-    for (const sandbox of sandboxes) await sandbox.cleanup();
-  });
+  afterAll(captures.cleanup);
 
   it("snapshot is deterministic (two captures are byte-identical)", async () => {
-    const capture1 = await firstCapture();
-    const capture2 = await secondCapture();
+    const capture1 = await captures.first();
+    const capture2 = await captures.second();
     expect(JSON.stringify(capture1, null, 2)).toStrictEqual(JSON.stringify(capture2, null, 2));
   });
 
   it("snapshot matches stored baseline (behavior-preserving gate)", async () => {
-    const captured = await firstCapture();
+    const captured = await captures.first();
 
     if (process.env.UPDATE_GOLDEN === "1") {
       await mkdir(join(ROOT, "tests/golden/snapshots/phase0"), { recursive: true });
