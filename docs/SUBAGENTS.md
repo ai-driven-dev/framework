@@ -9,6 +9,10 @@ Add focused roles to your project's AI tool. Installation is explicit; workflows
 | Validation | Confirm the requested outcome and acceptance criteria hold. |
 | Review | Find quality gaps, contradictions, duplication, and unnecessary complexity. |
 
+## Models and IDEs
+
+[agent-models.json](../cli/src/contexts/tools/domain/formats/agent-models.json) is the source for supported provider/IDE pairs and model and effort settings. Installation applies `subagent` settings; `main` is a recommendation only.
+
 ## Install
 
 The CLI command is unreleased. Build the `feature/sub-agents` checkout from the framework root:
@@ -24,7 +28,7 @@ From the target project's root, install with a supported provider and IDE:
 node /absolute/path/to/framework/cli/dist/cli.js agents install --provider openai --ide codex
 ```
 
-The [CLI configuration](../cli/src/contexts/tools/domain/formats/agent-models.json) defines supported provider/IDE pairs, recommended `main` models, and applied `subagent` model and effort settings. Installation writes four self-contained native files and the ownership registry at `.aidd/agents.json`. The main model stays unchanged.
+Installation writes four self-contained native files and the ownership registry at `.aidd/agents.json`.
 
 ## Try a small task
 
