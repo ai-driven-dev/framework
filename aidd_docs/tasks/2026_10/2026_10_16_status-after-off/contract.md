@@ -16,7 +16,7 @@ After `aidd telemetry on` then `aidd telemetry off`, `aidd telemetry status` pri
 | # | Decision | Why |
 | --- | --- | --- |
 | 1 | A new refusal reason, `turned-off`, beside `no-consent`, read from the key `off` | The refusal reason is printed as text only: `status` and `task` have no JSON output, and the report's refused envelope carries no reason. No contract changes, and the exhaustive word tables force both commands to say something true |
-| 2 | The domain says what a key means: `consentOf` returns `withdrawn` for `off` | The key's grammar lives in `telemetry-consent.ts` beside `CONSENT_WITHDRAWN`; the application compares no strings |
+| 2 | The domain says what the key `off` means, in a function of its own beside `CONSENT_WITHDRAWN`; `consentOf` keeps its three answers | `consentOf` is pinned by the fixture the hooks share (`scripts/__tests__/fixtures/telemetry-bindings`, `off` reads `absent`), and the hooks only ask whether a key grants. The application compares no strings |
 | 3 | `NotStoredReason` and the report envelope are not touched | `not_stored.no-consent` is part of `version: 1`, and the issue is about status |
 
 ## Surface
