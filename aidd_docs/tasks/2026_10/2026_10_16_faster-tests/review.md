@@ -1,6 +1,6 @@
 # Review: Faster mutation and test runs, guards unchanged
 
-- Rounds: 1
+- Rounds: 2
 - Started: 2026-10-16
 
 ## Round 1 · r-5e9a
@@ -31,4 +31,26 @@
 - `cli/stryker.conf.json:9` : `timeoutFactor` 3 is shared by every scope; each holds its floor on one local run, but `framework` lands exactly on its floor (93.0, `evidence.md:100`) with no before figure, and a larger budget can only turn timeouts into survivors → record `framework`'s score on `origin/next` from the last CI run, so a CI failure on that scope is not read as caused by this change, or not — 🟢 minor, fit
 - `cli/tests/golden/framework-build-golden.e2e.test.ts:110-131` : the guard holds (capture 2 is compared to capture 1 and capture 1 to the stored snapshot, so the third capture checked nothing more; the second still starts after the first; the update path still writes the first; every assertion kept), but the `Sandbox`/`sandboxes`/`first`/`second`/`captureIn`/`firstCapture`/`secondCapture` block and its doc comment are copied almost verbatim in `cli/tests/golden/golden-baseline.e2e.test.ts:373-393` → one helper beside them taking the capture function and returning the two memoised captures plus the cleanup — 🟢 minor, rot
 
-- Fixed: all six findings of round 1 (r-5e9a), last fix at 6c8c8b70: contract rows 3 and 4 and rule 3 amended (6c8c8b70), seventh load-hidden survivor named and flaky locator mutant noted (6c8c8b70), `CheapestKillerFirst.sort` guarded on files read from disk (eac5877b), framework CI score before recorded (6c8c8b70), golden capture sharing in one helper (9cf919bc).
+## Round 2 · r-c71d
+
+- Date: 2026-10-16
+- By: Baptiste LAFOURCADE
+- Diff: `origin/next...697a4788`
+- Axes: code, functional, relevancy
+- Verdict: changes-requested
+- Score: 5/7 met, 0 unmet, 2 unverified at runtime, 0 out of the diff
+
+### Criteria
+
+- [x] The mutation order is unit first, then smallest file; the normal order is unchanged — `cli/tests/helpers/mutation-sequencer.ts:39-43`, `cli/tests/helpers/mutation-sequencer.unit.test.ts:52-65`; reran: 4 passed; `sort` returning `files` turns `is what Vitest calls: it reads each file's size from disk` red, so does a default size of `0`, both reverted, `cmp` clean; the generic `sort<T extends Ordered>` changes the type only, the body is still `mutationOrder(files)`, and a sandboxed `vitest run -c vitest.mutation.config.ts --maxWorkers=1 tests/contexts/telemetry/application/report` still runs `report-envelope.unit`, `report-usage-use-case.unit`, `report-filters.property.integration`, `report-window.property.integration` in that order
+- [x] The fixable static mutants are no longer static — fresh baseline 330, final 158 static, recounted from the reports; round 2 touches none of the 6 telemetry test files
+- [x] No baseline kill survives; the score equals the baseline once load-hidden survivors are counted alike, 96.35 holds the floor of 96 — `contract.md:48`; recomputed on the 4169 shared mutants: no Killed→Survived, both sides 96.33 counted alike; the 7 Timeout→Survived listed in `evidence.md:37` match the reports, and `git-repository-locator-adapter.ts:78` MethodExpression reads Timeout (given), Survived (fresh, step 1, step 2), Killed (concurrency probe, shard 3 of 3, final), as `evidence.md:38` states
+- [x] Telemetry mutation wall time is lower; `pnpm test` as measured — `contract.md:49` now states the measurement, which `evidence.md:69` and its `pnpm test` table record
+- Unverified at runtime: Shards stay balanced — modelled and measured on `fc143682`, before `timeoutFactor` 3; a sharded run on the head would show it
+- Unverified at runtime: Canary scope passes, exact selection held — recorded on `639cee19`; `cli/src`, `stryker.conf.json`, `vitest.mutation.config.ts` and `mutation-scopes.json` are unchanged since, and the sequencer change is type-only, but no canary run is recorded on `697a4788`
+- [x] `pnpm test`, lefthook pre-commit and pre-push, `pnpm smoke` pass — reran sandboxed on `697a4788`: `pnpm test` 510 files / 6641 passed, 1 skipped; `vitest run tests/golden` 3 files / 6 passed; `tsc --noEmit` exit 0; biome 1 warning, `uninstall-use-case.ts:33`, outside the diff; `knip` exit 0; smoke from `evidence.md:80` on `639cee19`, `cli/src` unchanged since
+
+### Findings
+
+- `aidd_docs/tasks/2026_10/2026_10_16_faster-tests/contract.md:30` : rule 3 and rows 3-4 now state what was measured, and the reasoning holds, but the lowered threshold is recorded as "Acknowledged by the orchestrator"; round 1 asked for the user's acknowledgement, and an agent cannot give it for them → get the user's acknowledgement and record it as theirs, or say the orchestrator relayed the user's decision if it did — 🟡 major, fit
+- Round 1 findings, against `697a4788`. Fixed: `evidence.md:37` names `task-declaration.ts:103` and moves the flaky locator mutant to its own line (`:38`), checked against the reports. Fixed: `CheapestKillerFirst.sort` guarded on files read from disk, red on both breaks. Fixed: `evidence.md:105` records `framework` at 93.1 before the change; `gh run view 38772859849 --job 116561193617 --log` prints `Report: framework over 4 shards (score 93.1, floor 93)` on `next` at `ae8705f7`, and `cli/src/contexts/framework` is identical between `ae8705f7` and the head. Fixed: `cli/tests/golden/two-captures.ts` holds the shared block once; capture 2 still starts after capture 1 resolves (`:26`), the determinism tests still compare `second()` to `first()`, the baseline tests and both update paths still use `first()`, sandbox prefixes unchanged. Partly fixed: the two contract findings, wording done, acknowledgement as above.
