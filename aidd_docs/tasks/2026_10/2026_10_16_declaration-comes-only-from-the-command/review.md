@@ -62,9 +62,24 @@ Acceptance after round 1: 1, 2, 4, 5, 6 fulfilled; 3 and 8 partial (findings 5, 
 - Diff: `origin/next...9fa7ff9d`
 - Verdict: request changes, 8/10. Rounds 1-4 hold; readers agree; M8 confirmed.
 
-| # | Class | Finding | Resolution |
+| # | Class | Finding | Resolution (c7ae6e38) |
 | --- | --- | --- | --- |
 | D1 | deal breaker | usage contract and decision 4 said a rename always leaves the new name undeclared; an unstamped (cli-v5.5.0) declaration is inherited by a rename too | limit row and decision 4 now say copy or rename |
 | S1 | suggestion | dropping no-time snapshots before choosing the generation let an older generation answer for a newer one | generation chosen over every snapshot, then only declared ones speak; red test first |
 | S2 | suggestion | task contract limits missed the two added in rounds 3 and 4 | added, pointing to the usage contract |
 | S3 | suggestion | round 3 and 4 resolutions named no commit | hashes added |
+
+## Round 6
+
+- Diff: `origin/next...c7ae6e38`
+- Verdict: approve, 9/10, no deal breaker. Rounds 1-5 hold; CLI and hook agree on six cases through real git; the flaky run in `evidence.md` judged honestly reported.
+
+| # | Class | Finding | Resolution |
+| --- | --- | --- | --- |
+| S1 | suggestion | the hand-edit limit named only "every key"; `aiddTask` and `aiddDeclaredAt` alone, or a removed stamp, also declare | limit widened in the usage contract and the task contract |
+| S2 | suggestion | decision 2 said "when present"; an empty stamp counts as absent | "when present and non-empty" |
+| S3 | suggestion | "a declared branch is never asked again" without the `-C`/`-M` case | qualified in the usage contract, README, hook header and decision 6 |
+| S4 | suggestion | round 5 resolutions named no commit | c7ae6e38 added |
+| S5 | suggestion | keep the reporter output of gate runs | noted for the next runs |
+
+The resolutions are wording only, applied after the approval (no code changed).
