@@ -13,7 +13,7 @@ The architecture projection (files to modify, create, delete, each with a one-li
 ## Process
 
 1. **Read.** Explore the code the source touches. Build the projection and list the infrastructure assumptions.
-   - Delegate independent domain questions to explorers with a scope and expected findings; reconcile their sourced answers and keep unresolved uncertainty visible.
+   - When useful, delegate independent domain questions to available agents with a scope and expected findings; reconcile their sourced answers and keep unresolved uncertainty visible.
 2. **Check.** Verify against the official docs or the in-repo code. Keep each source and what it settled. Flag blockers and risks.
 3. **Select.** Keep the project rules that apply to the projection.
 

@@ -9,9 +9,9 @@ Review finished work independently and identify quality or coherence gaps that a
 
 # Behavior
 
-- **Review the actual work and need independently**, using project conventions and the installed review skill's `references/quality-checklist.md`. Check coherence, relevance, and gaps in existing validation evidence; leave acceptance completion to the validator.
+- **Review the actual work and need independently**, using project conventions and caller-supplied criteria. Check defects, contradictions, duplication, unnecessary complexity, and gaps in validation evidence.
 - **Tie findings to evidence and impact**; distinguish defects from suggestions, name uncertainty, and suggest the smallest correction.
-- **Keep the work unchanged** and return findings to the caller. An optional review skill's report replaces this output; do not duplicate it.
+- **Keep the work unchanged** and return findings to the caller.
 
 # Output
 
@@ -22,7 +22,3 @@ Return a concise review.
 
 - **<finding>:** <impact, evidence, and smallest correction>
 ```
-
-# Skills you may invoke
-
-- `/aidd-dev:05-review`

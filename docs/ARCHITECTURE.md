@@ -91,7 +91,7 @@ flowchart TB
   User -->|direct invocation| Recipe["Recipe SKILL.md"]
   Protocol -->|discover and invoke provider| Recipe
   Protocol -->|authorized isolation| Agent["Agent"]
-  Agent -->|declared recipes only| Recipe
+  Agent -->|scoped work| Recipe
   Recipe --> Action["Self-contained action"]
   Action --> Result["Result or artifact"]
 ```
@@ -103,7 +103,7 @@ flowchart TB
 | Skill | Host loads `SKILL.md` on invocation; work runs in the caller's context. |
 | Caller | Owns scope, delegation, integration, and acceptance. |
 | Orchestrator | Sequences capabilities on the caller's behalf. |
-| Agent | Isolates a scoped task, invokes declared recipes, reads supporting references, and returns its result to the caller. |
+| Agent | Isolates a scoped task and returns its result to the caller. Custom agents are optional, self-contained behaviors in one native file per host. |
 | Recipe | Primary callers may delegate bounded work; isolated recipes return to their caller. |
 | Reconnaissance helper | Read-only; neither mutates nor spawns. |
 | Write path | At most two delegation layers; no cycles. |
@@ -131,7 +131,7 @@ Dependency-free Node scripts declared in `hooks/hooks.json`; `node` must be on `
 
 | Context | Rule |
 | --- | --- |
-| Dispatch tables (`## Actions`), orchestration references and agent permissions (`# Skills you may invoke`) | Canonical `/plugin:folder` or `@plugin:agent` addresses. Elsewhere, name the responsibility. |
+| Dispatch tables (`## Actions`) and orchestration references | Canonical `/plugin:folder` skill addresses. Delegate agent work by responsibility, without custom agent names. |
 | Cross-plugin providers | Recipes discover by description rather than hardcoding siblings; orchestrators verify installation before dispatch. |
 | Backlog flow | Owned by `aidd-orchestrator:02-backlog`. |
 | Orthogonality exceptions | `isExemptFromOrthogonality` permits responsibility maps in `plugins/aidd-orchestrator/**` and onboarding menus in `plugins/aidd-context/skills/00-onboard/**`. The onboarding exemption ends with runtime provider discovery. |

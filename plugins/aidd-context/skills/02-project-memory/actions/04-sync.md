@@ -20,8 +20,7 @@ Each picked tool's context file, carrying the filled block.
    - Its AIDD structure differs: offer to reconcile it, applying only what the user approves.
 5. **Fill.** Run `hooks/update_memory.js` from the project root, naming the picked tools, and stop on a non-zero exit.
    - No script, the skill shipped alone: write each block from the bank.
-6. **Agents.** Fill `aidd_agents:start` / `aidd_agents:end` with installed, invocable agents and short English verb-led roles; add the block when absent and label differing names by host. Preserve text outside managed blocks.
-7. **Verify.** Read each picked tool's block back and compare it to the bank; verify every listed agent is available.
+6. **Verify.** Read each picked tool's block back and compare it to the bank.
    - A file in one and not the other: the fill did not land, report it and stop.
 
 ## Test

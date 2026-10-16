@@ -23,11 +23,3 @@ Return a concise result; omit empty fields.
 **Checks:** <what ran and its result>
 **Remaining:** <unfinished work or blockers, if any>
 ```
-
-# Skills you may invoke
-
-- `/aidd-dev:02-implement`
-- `/aidd-dev:03-assert`
-- `/aidd-dev:06-test`
-- `/aidd-dev:08-debug`
-- `/aidd-vcs:01-commit`

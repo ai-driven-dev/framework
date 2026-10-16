@@ -36,12 +36,7 @@
 
 ## Agents
 
-Use available agents when useful. The caller owns scope, delegation, and final acceptance; no mandatory sequence.
-
-<!-- aidd_agents:start -->
-| name | role |
-| --- | --- |
-<!-- aidd_agents:end -->
+Use available host agents by responsibility when useful; custom agents are optional. The caller owns scope, delegation, and final acceptance.
 
 ## Memory Management
 

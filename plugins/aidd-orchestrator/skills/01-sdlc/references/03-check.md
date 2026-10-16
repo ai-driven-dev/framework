@@ -2,9 +2,9 @@
 
 ## Behavior
 
-- Dispatch a fresh validator on the committed candidate, contract, criteria, and mandatory checks.
-- After validation passes, dispatch a fresh reviewer for quality and coherence; select code and relevancy axes, using the validator's acceptance evidence.
-- After review clears, the same reviewer challenges whether the outcome is trustworthy and serves the user.
+- **Validate the committed candidate** against the contract, criteria, and mandatory checks using a fresh agent.
+- **Review quality and coherence** with a fresh agent after validation passes; select code and relevancy axes, using the acceptance evidence.
+- **Challenge the outcome** after review clears: verify that it is trustworthy and serves the user.
 
 ## Findings
 
@@ -18,7 +18,7 @@ A review or validation finding is routed by what it is about. A refusal the user
 
 ## Handoff
 
-- Commit whatever this zone wrote, then open the draft pull request when the reviewer returns no actionable finding.
+- Commit whatever this zone wrote, then open the draft pull request when no actionable finding remains.
 
 ```mermaid
 ---
@@ -31,8 +31,8 @@ flowchart TD
     Plan["$plan"]
     CommittedCandidate["$committed_candidate"]
     ValidationReports["$validation_reports"]
-    Validator(["@aidd-dev-validator"])
-    Reviewer(["@aidd-dev-reviewer"])
+    Validator(["Validation agent"])
+    Reviewer(["Review agent"])
     Review["/aidd-dev:05-review"]
   end
 

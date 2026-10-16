@@ -34,16 +34,7 @@
 
 ## Agents
 
-Use available agents when useful. The caller owns scope, delegation, and final acceptance; no mandatory sequence.
-
-<!-- aidd_agents:start -->
-| name | role |
-| --- | --- |
-| @aidd-dev-explorer | Explore the codebase and return relevant files, code, and explanations for a scoped question. |
-| @aidd-dev-executor | Implement assigned work and return changes with verification evidence. |
-| @aidd-dev-validator | Validate that delivered work satisfies the requested outcome and acceptance criteria. |
-| @aidd-dev-reviewer | Review quality and coherence against project conventions and the quality checklist. |
-<!-- aidd_agents:end -->
+Use available host agents by responsibility when useful; custom agents are optional. The caller owns scope, delegation, and final acceptance.
 
 ## Memory Management
 

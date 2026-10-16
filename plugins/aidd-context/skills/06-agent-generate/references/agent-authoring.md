@@ -4,7 +4,7 @@ The contract every generated agent must satisfy. An agent is a focused role with
 
 ## Rules
 
-- **R1.** One agent, one role. A single, clear responsibility.
+- **R1.** One agent, one behavior, self-contained in one file per target. Workflows belong in skills; omit skill permission lists and required companion files.
 - **R2.** Frontmatter: `name` and `description` are required. `model` is optional. The description states what the agent does and when to use it.
 - **R3.** The body is the system prompt. Required: `# Role` and `# Behavior` (bounded capabilities and constraints). Optional sections: see `## Body shape`. Concise and imperative.
 - **R4.** English only, regardless of conversation language.
@@ -21,8 +21,3 @@ Short imperative sentences. Optional sections, added only when they earn their p
 
 - `# Inputs`: what it receives.
 - `# Outputs`: what it returns.
-- `# Guardrails`: behavioral boundaries.
-- `# Skills you may invoke`: list allowed recipes by canonical `/plugin:folder` address; verify availability before invocation.
-- `# Definition of Ready` / `# Definition of Done`: start and finish gates.
-- `# Decisions in scope` / `# Decisions out of scope`: what it may decide, what it must defer.
-- `# Handoffs`: who it returns to.

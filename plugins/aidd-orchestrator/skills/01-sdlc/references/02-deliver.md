@@ -22,7 +22,7 @@ flowchart TD
 
   subgraph ExecuteStage["Execute and validate the plan"]
     direction TB
-    Executor(["@aidd-dev-executor"])
+    Executor(["Implementation agent"])
     Implement["/aidd-dev:02-implement"]
     Assert["/aidd-dev:03-assert"]
     Integrate["Integrate phases"]
