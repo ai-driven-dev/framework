@@ -20,3 +20,15 @@
 | 8 | suggestion | fixture JSON reformatted unrelated entries | fixture re-applied as text insertions; diff now only the new cases |
 
 Acceptance after round 1: 1, 2, 4, 5, 6 fulfilled; 3 and 8 partial (findings 5, 1, 3); 7 not re-run by the checker.
+
+## Round 2
+
+- Diff: `origin/next...fd7a31d6`
+- Verdict: request changes, 7/10. Round 1 findings 1-5, 7, 8 confirmed resolved; 6 partial.
+
+| # | Class | Finding | Resolution (0c5eab26) |
+| --- | --- | --- | --- |
+| D1 | deal breaker | after `git branch -C` onto a declared branch, both readers kept the last value per key, mixing the copied task or ticket into the branch's own declaration | any declaration key listed twice makes the branch undeclared, in both readers; red tests in each, fixture case listed in order, e2e; usage contract and contract decision 7 corrected |
+| S1 | suggestion | README and skill said a copied branch is always asked again; legacy copies are inherited | both name the cli-v5.5.0 exception |
+| S2 | suggestion | forget count test did not include `aiddDeclaredFor` | count test now has four keys |
+| S3 | suggestion | spec.md:34 "at most once" unexplained | reading note added under it, pointing to the usage contract |
