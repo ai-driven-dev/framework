@@ -4,6 +4,10 @@ import type {
 } from "../../../contexts/telemetry/application/report/report-usage-use-case.js";
 import type { Period } from "../../../contexts/telemetry/domain/report/period.js";
 import {
+  type ReportFilters,
+  selectorsOf,
+} from "../../../contexts/telemetry/domain/report/report-filter.js";
+import {
   type AxisValue,
   COUNTERS,
   type CounterSum,
@@ -53,6 +57,23 @@ function labelOf(axis: ReportAxis, value: AxisValue): string {
   const shown =
     axis === "session" || axis === "repository" ? value.value.slice(0, SHORT) : value.value;
   return oneLine(shown);
+}
+
+/** Each filter given, as the row it selects is labelled; `null` when none is. */
+function selectionLine(filters: ReportFilters): string | null {
+  const parts = selectorsOf(filters).map(
+    ([axis, selector]) =>
+      `${axis} = ${selector.kind === "unattributed-any" ? "unattributed, either reason" : labelOf(axis, selector)}`
+  );
+  return parts.length === 0 ? null : `Selected: ${parts.join(", ")}`;
+}
+
+/** Two flags given that select on one axis, as they were typed. */
+function conflictWords(result: Extract<ReportResult, { status: "conflicting" }>): string {
+  const [first, second] = result.flags.map((flag) =>
+    flag === "absent" ? `--absent ${result.absent}` : `--${flag}`
+  );
+  return `${first} and ${second} select on the same axis, so together they keep nothing: give one of them.`;
 }
 
 function grouped(n: number): string {
@@ -137,10 +158,34 @@ export function printUsageReport(output: CLIOutput, result: ReportResult): void 
     output.info("AIDD_TELEMETRY=0: nothing was read and nothing is reported.");
     return;
   }
-  const { report, coverage, period } = result;
+  if (result.status === "conflicting") {
+    output.error(conflictWords(result));
+    return;
+  }
+  if (result.status === "not-a-repository") {
+    output.error(
+      "--repository . names the repository this directory is in, and it is in none: not a git repository, unreadable, or with neither an origin nor a commit."
+    );
+    return;
+  }
+  if (result.status === "ambiguous") {
+    const { flag, typed, ids } = result;
+    const many = flag === "session" ? "sessions" : "repositories";
+    output.error(
+      `--${flag} ${typed} starts ${ids.length} ${many} of this period: ${ids.join(", ")}. Type more of it.`
+    );
+    return;
+  }
+  const { report, coverage, period, filters } = result;
   output.print(`Usage, ${periodWords(period)}, by ${report.axis}`);
+  const selection = selectionLine(filters);
+  if (selection !== null) output.print(selection);
   if (report.totals.records === 0) {
-    output.print("No calls in this period.");
+    output.print(
+      selection === null
+        ? "No calls in this period."
+        : "No call in this period matches these filters."
+    );
   } else {
     output.print("");
     for (const line of table(report.axis, report.rows, report.totals)) output.print(line);

@@ -259,8 +259,9 @@ function compare(label, actual, expected) {
   return wrong;
 }
 
-/** The verdict on the task and ticket reports against the billed calls. */
-function judge({ billed, byTask, byTicket, prompts = PROMPTS.length }) {
+/** The verdict on the task and ticket reports, and on the report narrowed to the task in this
+ * repository, against the billed calls. */
+function judge({ billed, byTask, byTicket, here, prompts = PROMPTS.length }) {
   if (billed.length < prompts) return { code: BROKEN, message: `the API billed ${billed.length} calls for ${prompts} prompts` };
   const expected = expectedTotals(billed);
   const rowOf = (report, key) => report?.rows?.find((row) => row.kind === "value" && row.key === key);
@@ -268,9 +269,14 @@ function judge({ billed, byTask, byTicket, prompts = PROMPTS.length }) {
     ...compare("totals", byTask?.totals, expected),
     ...compare("task demo", rowOf(byTask, "demo"), expected),
     ...compare("ticket T-1", rowOf(byTicket, "T-1"), expected),
+    ...compare("task demo here", here?.totals, expected),
+    // A hosted origin's hash, or the root commit of a repository with none.
+    ...(/^[0-9a-f]{40}(?:[0-9a-f]{24})?$/u.test(here?.filters?.repository ?? "")
+      ? []
+      : [`--repository . resolved to ${JSON.stringify(here?.filters?.repository)}`]),
   ];
   if (wrong.length > 0) return { code: WRONG, message: wrong.join("; ") };
-  return { code: 0, message: `${expected.records} calls, ${expected.input + expected.output + expected.cache_read + expected.cache_write} tokens, all on task demo, ticket T-1` };
+  return { code: 0, message: `${expected.records} calls, ${expected.input + expected.output + expected.cache_read + expected.cache_write} tokens, all on task demo, ticket T-1, and on task demo in this repository` };
 }
 
 async function check({ cli, log, attended = false }) {
@@ -360,7 +366,10 @@ async function checkIn({ root, cli, api, log, attended }) {
     }
     const byTask = JSON.parse(await aidd("aidd telemetry report --axis task", "report", "--json", "--axis", "task"));
     const byTicket = JSON.parse(await aidd("aidd telemetry report --axis ticket", "report", "--json", "--axis", "ticket"));
-    let verdict = judge({ billed: api.billed, byTask, byTicket });
+    const here = JSON.parse(
+      await aidd("aidd telemetry report --task demo --repository .", "report", "--json", "--task", "demo", "--repository", ".")
+    );
+    let verdict = judge({ billed: api.billed, byTask, byTicket, here });
     if (verdict.code === 0 && session !== null) {
       const person = judgeAttended(session);
       verdict = person.code === 0 ? { code: 0, message: `${verdict.message}; ${person.message}` } : person;

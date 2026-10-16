@@ -2,6 +2,10 @@ import { describe, expect, it } from "vitest";
 import type { ReportResult } from "../../../../src/contexts/telemetry/application/report/report-usage-use-case.js";
 import type { Period } from "../../../../src/contexts/telemetry/domain/report/period.js";
 import {
+  NO_FILTERS,
+  type ReportFilters,
+} from "../../../../src/contexts/telemetry/domain/report/report-filter.js";
+import {
   type AxisValue,
   REPORT_AXES,
   type ReportAxis,
@@ -48,11 +52,13 @@ function result(
   rows: [AxisValue, Tally][],
   totals: Tally,
   coverage: Partial<Coverage> = {},
-  period: Period = BOTH
+  period: Period = BOTH,
+  filters: ReportFilters = NO_FILTERS
 ): ReportResult {
   return {
     status: "reported",
     period,
+    filters,
     report: { axis, rows: rows.map(([value, t]) => ({ value, ...t })), totals },
     coverage: { ...COVERAGE, ...coverage },
   };
@@ -267,5 +273,94 @@ describe("printing a usage report", () => {
     const output = new CapturingOutput(false);
     printUsageReport(output, { status: "refused" });
     expect(output.lines).toEqual(["AIDD_TELEMETRY=0: nothing was read and nothing is reported."]);
+  });
+
+  it("names the flag and every id a start names, in full, when it names several", () => {
+    const output = new CapturingOutput(false);
+    printUsageReport(output, {
+      status: "ambiguous",
+      flag: "session",
+      typed: "a1b2",
+      ids: ["a1b2c3d4-0000", "a1b2ffff-0000"],
+    });
+    expect(output.at("error")).toEqual([
+      "--session a1b2 starts 2 sessions of this period: a1b2c3d4-0000, a1b2ffff-0000. Type more of it.",
+    ]);
+    expect(output.lines).toHaveLength(1);
+    const repositories = new CapturingOutput(false);
+    printUsageReport(repositories, {
+      status: "ambiguous",
+      flag: "repository",
+      typed: "ab",
+      ids: ["abc", "abd"],
+    });
+    expect(repositories.at("error")).toEqual([
+      "--repository ab starts 2 repositories of this period: abc, abd. Type more of it.",
+    ]);
+  });
+
+  it("names the two flags that select on one axis, with the axis --absent names", () => {
+    const output = new CapturingOutput(false);
+    printUsageReport(output, {
+      status: "conflicting",
+      flags: ["ticket", "absent"],
+      absent: "ticket",
+    });
+    expect(output.at("error")).toEqual([
+      "--ticket and --absent ticket select on the same axis, so together they keep nothing: give one of them.",
+    ]);
+    expect(output.lines).toHaveLength(1);
+  });
+
+  it("says `.` names no repository where the command runs", () => {
+    const output = new CapturingOutput(false);
+    printUsageReport(output, { status: "not-a-repository" });
+    expect(output.at("error")).toEqual([
+      "--repository . names the repository this directory is in, and it is in none: not a git repository, unreadable, or with neither an origin nor a commit.",
+    ]);
+    expect(output.lines).toHaveLength(1);
+  });
+
+  it("names each filter as its row would label it, on one line before the table", () => {
+    const filters: ReportFilters = {
+      ...NO_FILTERS,
+      task: "auth\nrefactor",
+      ticket: "PROJ-1",
+      session: "a1b2c3d4-0000-4000-8000-000000000001",
+      repository: "f".repeat(64),
+      agent: "subagent",
+      absent: "model",
+      person: "p-1",
+    };
+    const lines = printed(result("day", [[value("2026-10-02"), one]], one, {}, BOTH, filters));
+    expect(lines.slice(0, 3)).toEqual([
+      "Usage, 2026-10-01 to 2026-10-07, by day",
+      "Selected: task = auth refactor, ticket = PROJ-1, person = p-1, agent = subagent, session = a1b2c3d4, repository = ffffffff, model = unknown model",
+      "",
+    ]);
+    const absentOf = (absent: ReportFilters["absent"]) =>
+      printed(result("total", [], one, {}, BOTH, { ...NO_FILTERS, absent }))[1];
+    expect(absentOf("person")).toBe("Selected: person = anonymous");
+    expect(absentOf("ticket")).toBe("Selected: ticket = no ticket");
+    const unattributed = (reason: ReportFilters["unattributed"]) =>
+      printed(result("total", [], one, {}, BOTH, { ...NO_FILTERS, unattributed: reason }))[1];
+    expect(unattributed("no-binding")).toBe("Selected: task = unattributed: no task declared");
+    expect(unattributed("declared-none")).toBe("Selected: task = unattributed: declared no task");
+    expect(unattributed("any")).toBe("Selected: task = unattributed, either reason");
+  });
+
+  it("prints no selection line when no filter is given", () => {
+    expect(printed(result("total", [[value("total"), one]], one))[1]).toBe("");
+  });
+
+  it("says no call matches when filters keep none, and still shows the coverage", () => {
+    const filters = { ...NO_FILTERS, task: "nothing" };
+    expect(printed(result("total", [], tally(0, [0, 0, 0, 0]), {}, BOTH, filters))).toEqual([
+      "Usage, 2026-10-01 to 2026-10-07, by total",
+      "Selected: task = nothing",
+      "No call in this period matches these filters.",
+      "",
+      "Read 2 transcripts just now; 3 calls in this period; oldest transcript on disk: 2026-09-20.",
+    ]);
   });
 });

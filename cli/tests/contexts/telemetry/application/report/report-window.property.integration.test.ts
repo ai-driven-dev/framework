@@ -13,10 +13,17 @@ import { reportEnvelopeOf } from "../../../../../src/contexts/telemetry/applicat
 import { ReportUsageUseCase } from "../../../../../src/contexts/telemetry/application/report/report-usage-use-case.js";
 import { SnapshotBindingsUseCase } from "../../../../../src/contexts/telemetry/application/snapshot-bindings-use-case.js";
 import type { UsageLedger } from "../../../../../src/contexts/telemetry/domain/ports/usage-ledger.js";
+import { attribute } from "../../../../../src/contexts/telemetry/domain/report/attribution.js";
 import {
   inPeriod,
   type Period,
 } from "../../../../../src/contexts/telemetry/domain/report/period.js";
+import {
+  conflictsOf,
+  matchesFilter,
+  type ReportFilters,
+  resolveId,
+} from "../../../../../src/contexts/telemetry/domain/report/report-filter.js";
 import {
   buildReport,
   REPORT_AXES,
@@ -94,10 +101,31 @@ const period = fc
       a !== null && b !== null && a > b ? { from: b, to: a } : { from: a, to: b }
   );
 
+/** Flags a report may be narrowed by; a start like `s-` may name one session, both or none. */
+const filters = fc
+  .record({
+    task: fc.constant(null),
+    ticket: fc.constant(null),
+    person: fc.constantFrom(null, "person-a", "person-b"),
+    model: fc.constantFrom(null, "m-1", "m-2"),
+    agent: fc.constantFrom(null, ...USAGE_AGENTS),
+    session: fc.constantFrom(null, "s-1", "s-", "s-2", "x"),
+    repository: fc.constantFrom(null, "repo-1", "repo-", "repo-2"),
+    absent: fc.constantFrom(null, "person" as const, "model" as const, "ticket" as const),
+    unattributed: fc.constantFrom(
+      null,
+      "any" as const,
+      "no-binding" as const,
+      "declared-none" as const
+    ),
+  })
+  .filter((f: ReportFilters) => conflictsOf(f).length === 0);
+
 const scenario = fc.record({
   calls: fc.array(call, { minLength: 1, maxLength: 10 }),
   period,
   axis: fc.constantFrom(...REPORT_AXES),
+  filters,
 });
 
 /** Every copy of every call, as the partition files that hold them. */
@@ -186,9 +214,9 @@ function ingestOf(ledger: UsageLedger): IngestUsageUseCase {
 }
 
 describe("a report on a bounded period", () => {
-  it("prints the envelope of the full ledger filtered to its period, byte for byte, and loses no call, when a call's copies are under a day apart", async () => {
+  it("prints the envelope of the full ledger filtered to its period and its filters, byte for byte, and loses no call, when a call's copies are under a day apart", async () => {
     await fc.assert(
-      fc.asyncProperty(scenario, async ({ calls, period, axis }) => {
+      fc.asyncProperty(scenario, async ({ calls, period, axis, filters }) => {
         const files = filesOf(calls);
         const declared = new DeclaredBindings(new InMemorySessions(), new InMemorySnapshots());
         const identity = new InMemoryIdentity();
@@ -199,19 +227,39 @@ describe("a report on a bounded period", () => {
           ingestOf(settled),
           settled,
           declared,
-          identity
-        ).execute({
-          axis,
-          period,
-        });
-        if (bounded.status !== "reported") throw new Error("refused");
+          identity,
+          new FakeLocator(),
+          { refusedByEnvironment: false }
+        ).execute({ axis, period, filters });
 
         const full = await (await ledgerWith(files)).load();
         const kept = full.records.filter((record) => inPeriod(record.at, period));
+        // A session or repository typed by its start names a value among the period's calls.
+        const resolved: { -readonly [K in keyof ReportFilters]: ReportFilters[K] } = { ...filters };
+        for (const flag of ["session", "repository"] as const) {
+          const typed = filters[flag];
+          if (typed === null) continue;
+          const found = resolveId(
+            typed,
+            kept.map((record) => (flag === "session" ? record.session_id : record.repository_id))
+          );
+          if (found.kind === "ambiguous") {
+            expect(bounded).toEqual({ status: "ambiguous", flag, typed, ids: found.ids });
+            return;
+          }
+          if (found.kind === "found") resolved[flag] = found.id;
+        }
+        if (bounded.status !== "reported") throw new Error(bounded.status);
+        const facts = await declared.read();
+        const person = await identity.read();
+        const selected = kept.filter((record) =>
+          matchesFilter(resolved, record, attribute(record, facts), person)
+        );
         const reference = reportEnvelopeOf({
           status: "reported",
           period,
-          report: buildReport(kept, await declared.read(), await identity.read(), axis),
+          filters: resolved,
+          report: buildReport(selected, facts, person, axis),
           coverage: {
             filesRead: NOTHING_NEW.filesRead,
             records: kept.length,

@@ -1,5 +1,6 @@
 import type { UnattributedReason } from "../../domain/report/attribution.js";
 import type { Period } from "../../domain/report/period.js";
+import type { ReportFilters } from "../../domain/report/report-filter.js";
 import type { CounterSum, ReportAxis, ReportRow, Tally } from "../../domain/report/usage-report.js";
 import type { NotStoredReason } from "../../domain/repository-resolution.js";
 import type { ReportResult } from "./report-usage-use-case.js";
@@ -43,6 +44,11 @@ export interface EnvelopeRow extends EnvelopeTally {
  * and the day on each side, so damage outside them is not counted. Nothing here is a path, a
  * working directory or a branch name.
  *
+ * `filters` names what the report was narrowed to, every flag in a fixed order, `null` when it
+ * was not given, else as resolved: the full id for a start or `.`, the start as typed when it
+ * names no call of the period. `rows` and `totals` count the calls that match;
+ * `coverage.records` counts every call of the period, matching or not.
+ *
  * Under `AIDD_TELEMETRY=0` nothing is read and the envelope is `{ "version": 1, "refused":
  * "AIDD_TELEMETRY=0" }` (`REFUSED_ENVELOPE`).
  *
@@ -52,6 +58,7 @@ export interface ReportEnvelope {
   readonly version: 1;
   readonly period: Period;
   readonly axis: ReportAxis;
+  readonly filters: ReportFilters;
   readonly rows: readonly EnvelopeRow[];
   readonly totals: EnvelopeTally;
   readonly unknown_records: number;
@@ -94,11 +101,22 @@ function rowOf(row: ReportRow): EnvelopeRow {
 export function reportEnvelopeOf(
   result: Extract<ReportResult, { status: "reported" }>
 ): ReportEnvelope {
-  const { period, report, coverage } = result;
+  const { period, filters, report, coverage } = result;
   return {
     version: 1,
     period,
     axis: report.axis,
+    filters: {
+      task: filters.task,
+      ticket: filters.ticket,
+      person: filters.person,
+      model: filters.model,
+      agent: filters.agent,
+      session: filters.session,
+      repository: filters.repository,
+      absent: filters.absent,
+      unattributed: filters.unattributed,
+    },
     rows: report.rows.map(rowOf),
     totals: tallyOf(report.totals),
     unknown_records: report.totals.total.unknownRecords,
