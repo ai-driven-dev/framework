@@ -556,71 +556,70 @@ describe("writing under the lock", () => {
   });
 });
 
-describe("what was left out, beside the ledger", () => {
-  const NO_DAY = () => join(dir, "left-out", "no-day.txt");
+describe("what was measured and left out, beside the ledger", () => {
+  const FILE = () => join(dir, "left-out.txt");
 
-  it("holds nothing before anything is kept", async () => {
-    expect(await ledger.leftOut.noDay()).toEqual({ undated: 0, unrecognised: 0 });
-    expect(await ledger.leftOut.load()).toEqual(NOTHING);
+  it("holds nothing before anything is kept, and creates nothing", async () => {
+    expect(await ledger.leftOut.counts()).toEqual({ undated: 0, unrecognised: 0 });
+    await expect(readdir(root)).resolves.toEqual([]);
   });
 
-  it("keeps its calls by day under left-out/, apart from the ledger's", async () => {
-    const left = stored({ key: "gone", repository_id: "no-consent" });
-    await ledger.leftOut.save([left]);
-    await ledger.save([stored()]);
-    expect(await readdir(join(dir, "left-out"))).toEqual(["2026-10-07.jsonl"]);
-    expect((await ledger.leftOut.load()).records).toEqual([left]);
-    expect((await ledger.load()).records).toEqual([stored()]);
-  });
-
-  it("keeps what has no day once each, by a hash, in text order, and never its text", async () => {
-    await ledger.leftOut.addNoDay([
+  it("keeps each thing once, by a hash, in text order, and never its text", async () => {
+    await ledger.leftOut.add([
       { reason: "unrecognised", of: "{secret prompt" },
       { reason: "undated", of: "claude-code\u0000msg_A:req_A" },
       { reason: "unrecognised", of: "{secret prompt" },
     ]);
-    const first = await readFile(NO_DAY(), "utf8");
-    await ledger.leftOut.addNoDay([{ reason: "undated", of: "claude-code\u0000msg_A:req_A" }]);
-    const text = await readFile(NO_DAY(), "utf8");
+    const first = await readFile(FILE(), "utf8");
+    await ledger.leftOut.add([{ reason: "undated", of: "claude-code\u0000msg_A:req_A" }]);
+    const text = await readFile(FILE(), "utf8");
     expect(text).toBe(first);
     expect(text).not.toContain("secret");
+    expect(text).not.toContain("msg_A");
     const found = text.split("\n").slice(0, -1);
     expect(found).toHaveLength(2);
     expect(found).toEqual([...found].sort());
     for (const entry of found) expect(entry).toMatch(/^(undated|unrecognised) [0-9a-f]{32}$/);
-    expect(await ledger.leftOut.noDay()).toEqual({ undated: 1, unrecognised: 1 });
+    expect(await ledger.leftOut.counts()).toEqual({ undated: 1, unrecognised: 1 });
   });
 
   it("tells two things of one reason apart by what they are", async () => {
-    await ledger.leftOut.addNoDay([
+    await ledger.leftOut.add([
       { reason: "undated", of: "claude-code\u0000a" },
       { reason: "undated", of: "claude-code\u0000b" },
     ]);
-    expect(await ledger.leftOut.noDay()).toEqual({ undated: 2, unrecognised: 0 });
+    expect(await ledger.leftOut.counts()).toEqual({ undated: 2, unrecognised: 0 });
   });
 
   it("names a thing by its reason and what it is, so two reasons of one text are two", async () => {
-    await ledger.leftOut.addNoDay([
+    await ledger.leftOut.add([
       { reason: "undated", of: "x" },
       { reason: "unrecognised", of: "x" },
     ]);
-    expect(await ledger.leftOut.noDay()).toEqual({ undated: 1, unrecognised: 1 });
+    expect(await ledger.leftOut.counts()).toEqual({ undated: 1, unrecognised: 1 });
   });
 
-  it("keeps a line of no-day.txt it does not know, and counts only its own", async () => {
-    await new PrivateStorageAdapter().ensureDirectory(join(dir, "left-out"));
-    await writeFile(NO_DAY(), "zz-later 0123\nconstructor 1\n");
-    await ledger.leftOut.addNoDay([{ reason: "undated", of: "k" }]);
-    const text = await readFile(NO_DAY(), "utf8");
+  it("keeps a line it does not know, and counts only its own", async () => {
+    await new PrivateStorageAdapter().ensureDirectory(dir);
+    await writeFile(FILE(), "zz-later 0123\nconstructor 1\n");
+    await ledger.leftOut.add([{ reason: "undated", of: "k" }]);
+    const text = await readFile(FILE(), "utf8");
     expect(text).toContain("zz-later 0123\n");
     expect(text).toContain("constructor 1\n");
-    expect(await ledger.leftOut.noDay()).toEqual({ undated: 1, unrecognised: 0 });
+    expect(await ledger.leftOut.counts()).toEqual({ undated: 1, unrecognised: 0 });
   });
 
   it("writes nothing when nothing new is added", async () => {
-    await ledger.leftOut.addNoDay([{ reason: "undated", of: "k" }]);
-    const before = await stat(NO_DAY());
-    await ledger.leftOut.addNoDay([{ reason: "undated", of: "k" }]);
-    expect((await stat(NO_DAY())).ino).toBe(before.ino);
+    await ledger.leftOut.add([{ reason: "undated", of: "k" }]);
+    const before = await stat(FILE());
+    await ledger.leftOut.add([{ reason: "undated", of: "k" }]);
+    expect((await stat(FILE())).ino).toBe(before.ino);
+  });
+
+  it("is no partition: the ledger neither loads it nor removes it", async () => {
+    await ledger.leftOut.add([{ reason: "undated", of: "k" }]);
+    await ledger.save([stored()]);
+    expect((await ledger.load()).skippedLines).toBe(0);
+    expect(await readdir(dir)).toContain("left-out.txt");
   });
 });

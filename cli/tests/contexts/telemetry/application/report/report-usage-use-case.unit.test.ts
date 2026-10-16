@@ -122,7 +122,7 @@ describe("reporting usage", () => {
     s.ledger.unsettled = new Set(["2026-10-06", "2026-10-07"]);
     s.events.length = 0;
     await s.report.execute({ axis: "total", period: ANY });
-    expect(s.events.slice(-4)).toEqual(["lock", "load", "save", "unlock"]);
+    expect(s.events.slice(-5)).toEqual(["lock", "load", "save", "left-out", "unlock"]);
     expect(s.ledger.savedPartitions).toEqual(new Set(["2026-10-06", "2026-10-07"]));
     expect(s.ledger.records).toHaveLength(1);
   });
@@ -536,101 +536,31 @@ describe("narrowing a report", () => {
   });
 });
 
-describe("saying what was left out, whoever ingested it", () => {
+describe("saying what was measured and left out, whoever ingested it", () => {
   const OCTOBER: Period = { from: "2026-10-01", to: "2026-10-31" };
-  /** A call an earlier ingest left out, as it is kept. */
-  const leftOut = (key: string, reason: string, at: string) => ({
-    tool: "claude-code" as const,
-    tool_version: null,
-    key,
-    session_id: "left-out",
-    agent: "main" as const,
-    at,
-    model: null,
-    input: null,
-    output: null,
-    cache_read: null,
-    cache_write: null,
-    cache_write_1h: null,
-    reasoning: null,
-    cwd: null,
-    git_branch: null,
-    repository_id: reason,
-  });
 
-  it("counts the calls of its period an earlier ingest left out, though its own reads nothing new", async () => {
+  it("counts what every ingest kept, in every report, bounded or not, though its own reads nothing", async () => {
     const s = setup();
-    s.ledger.leftOut.records = [
-      leftOut("in-a", "no-consent", "2026-10-07T00:00:00.000Z"),
-      leftOut("in-b", "no-consent", "2026-10-31T00:00:00.000Z"),
-      leftOut("in-c", "outside-repo", "2026-10-01T00:00:00.000Z"),
-      leftOut("before", "no-consent", "2026-09-30T00:00:00.000Z"),
-    ];
-    const result = await s.report.execute({ axis: "total", period: OCTOBER });
-    expect(result).toMatchObject({
-      coverage: {
-        filesRead: 0,
-        notStored: { "no-consent": 2, "outside-repo": 1, undated: 0 },
-      },
-    });
-  });
-
-  it("counts a call stored as stored, though an ingest once left it out", async () => {
-    const s = setup();
-    s.transcripts.files.set("/t/1.jsonl", [line("A", 10, "2026-10-07T10:00:00.000Z")]);
-    s.ledger.leftOut.records = [
-      leftOut("msg_A:req_A", "unreadable-consent", "2026-10-07T00:00:00.000Z"),
-    ];
-    const result = await s.report.execute({ axis: "total", period: OCTOBER });
-    expect(result).toMatchObject({
-      coverage: { records: 1, notStored: { "unreadable-consent": 0 } },
-    });
-  });
-
-  it("counts no reason it does not know, and adds none to the reasons it prints", async () => {
-    const s = setup();
-    s.ledger.leftOut.records = [
-      leftOut("a", "a-later-reason", "2026-10-07T00:00:00.000Z"),
-      leftOut("b", "constructor", "2026-10-07T00:00:00.000Z"),
-    ];
-    const result = await s.report.execute({ axis: "total", period: OCTOBER });
-    if (result.status !== "reported") throw new Error(result.status);
-    expect(result.coverage.notStored).toEqual({
-      "outside-repo": 0,
-      "never-seen-alive": 0,
-      "no-consent": 0,
-      "consent-closed": 0,
-      "unreadable-consent": 0,
-      "no-cwd": 0,
-      undated: 0,
-    });
-  });
-
-  it("counts everything kept with no day in every report, bounded or not", async () => {
-    const s = setup();
-    s.ledger.leftOut.noDayLines.add("undated a").add("unrecognised b").add("unrecognised c");
+    s.ledger.leftOut.lines.add("undated a").add("unrecognised b").add("unrecognised c");
     for (const period of [OCTOBER, ANY]) {
       const result = await s.report.execute({ axis: "total", period });
       expect(result).toMatchObject({
-        coverage: { unrecognised: 2, notStored: { undated: 1 } },
+        coverage: { filesRead: 0, unrecognised: 0, leftOut: { undated: 1, unrecognised: 2 } },
       });
     }
   });
 
-  it("settles what was left out in the window it reads its calls in", async () => {
+  it("says nothing was left out when nothing was kept", async () => {
     const s = setup();
-    s.ledger.leftOut.unsettled = new Set(["2026-10-07"]);
-    await s.report.execute({ axis: "total", period: { from: "2026-10-07", to: "2026-10-07" } });
-    const window = s.ledger.leftOut.loadedWindow;
-    expect(window && AUTUMN.filter(window)).toEqual(["2026-10-06", "2026-10-07", "2026-10-08"]);
-    expect(s.ledger.leftOut.savedPartitions).toEqual(new Set(["2026-10-07"]));
+    const result = await s.report.execute({ axis: "total", period: OCTOBER });
+    expect(result).toMatchObject({ coverage: { leftOut: { undated: 0, unrecognised: 0 } } });
   });
 
-  it("counts the lines that are not records in what was left out with the ledger's", async () => {
+  it("reads what was kept under the ledger lock, after its own ingest", async () => {
     const s = setup();
-    s.ledger.damaged.add("2026-10-07");
-    s.ledger.leftOut.damaged.add("2026-10-08");
-    const result = await s.report.execute({ axis: "total", period: OCTOBER });
-    expect(result).toMatchObject({ coverage: { skippedLedgerLines: 2 } });
+    s.transcripts.files.set("/t/1.jsonl", [line("U", 1, "not a time")]);
+    const result = await s.report.execute({ axis: "total", period: ANY });
+    expect(result).toMatchObject({ coverage: { leftOut: { undated: 1 } } });
+    expect(s.events.slice(-3)).toEqual(["load", "left-out", "unlock"]);
   });
 });

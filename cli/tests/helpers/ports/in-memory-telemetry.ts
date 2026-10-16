@@ -40,10 +40,10 @@ import type {
   TranscriptSource,
 } from "../../../src/contexts/telemetry/domain/ports/transcript-source.js";
 import type {
-  LeftOutLedger,
+  LeftOutEntry,
+  LeftOutReason,
+  LeftOutStore,
   LoadedLedger,
-  NoDayEntry,
-  NoDayReason,
   UsageLedger,
 } from "../../../src/contexts/telemetry/domain/ports/usage-ledger.js";
 import type { RepositoryResolution } from "../../../src/contexts/telemetry/domain/repository-resolution.js";
@@ -105,15 +105,12 @@ export class InMemoryTranscripts implements TranscriptSource {
 
 export class InMemoryLedger implements UsageLedger {
   records: StoredUsage[] = [];
-  private left: InMemoryLeftOut | undefined;
-  /** What ingests left out, beside the calls; made on first use. */
-  get leftOut(): InMemoryLeftOut {
-    this.left ??= new InMemoryLeftOut();
-    return this.left;
-  }
   stored = new Map<string, TranscriptPosition>();
   /** Pass one array to several fakes to see the order they were used in. */
-  constructor(readonly events: string[] = []) {}
+  readonly leftOut: InMemoryLeftOut;
+  constructor(readonly events: string[] = []) {
+    this.leftOut = new InMemoryLeftOut(events);
+  }
   failSave = false;
   exclusiveRuns = 0;
 
@@ -177,19 +174,26 @@ export class InMemoryLedger implements UsageLedger {
   }
 }
 
-/** The calls left out, as a ledger; what has no day, as the text it is named by, unhashed. */
-export class InMemoryLeftOut extends InMemoryLedger implements LeftOutLedger {
-  readonly noDayLines = new Set<string>();
+/** What was measured and left out, as the text each thing is named by, unhashed. Shares its
+ * ledger's events: `left-out` when counted, `left-out-add` when added to. */
+export class InMemoryLeftOut implements LeftOutStore {
+  readonly lines = new Set<string>();
+  /** Things handed to `add`, kept or not. */
+  added = 0;
+  failSave = false;
+  constructor(readonly events: string[]) {}
 
-  async addNoDay(entries: readonly NoDayEntry[]): Promise<void> {
-    this.events.push("no-day");
+  async add(entries: readonly LeftOutEntry[]): Promise<void> {
+    this.events.push("left-out-add");
     if (this.failSave) throw new Error("disk full");
-    for (const { reason, of } of entries) this.noDayLines.add(`${reason} ${of}`);
+    this.added += entries.length;
+    for (const { reason, of } of entries) this.lines.add(`${reason} ${of}`);
   }
 
-  async noDay(): Promise<Readonly<Record<NoDayReason, number>>> {
-    const count = (reason: NoDayReason) =>
-      [...this.noDayLines].filter((line) => line.startsWith(`${reason} `)).length;
+  async counts(): Promise<Readonly<Record<LeftOutReason, number>>> {
+    this.events.push("left-out");
+    const count = (reason: LeftOutReason) =>
+      [...this.lines].filter((line) => line.startsWith(`${reason} `)).length;
     return { undated: count("undated"), unrecognised: count("unrecognised") };
   }
 }

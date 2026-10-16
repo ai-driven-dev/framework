@@ -23,7 +23,7 @@ The figures the report holds for the question, each counter apart, followed by e
    - `unknown_records` on the totals above `0`: the same for the total;
    - a row of kind `unattributed`: its `reason`, with its meaning from the reference;
    - a row of kind `absent`: that the axis had no value for those calls;
-   - `coverage.unrecognised_shapes`, `coverage.skipped_ledger_lines` or any `coverage.not_stored` entry above `0`: that some lines were read and left out, with the counts, whatever read them;
+   - `coverage.unrecognised_shapes`, `coverage.skipped_ledger_lines`, any `coverage.not_stored` entry or any `coverage.left_out` entry above `0`: that some lines were read and left out, with the counts;
    - `coverage.records` of `0`: that no call is recorded for the period, and why that may be, from the reference.
    - `totals.records` of `0` with `coverage.records` above `0`: that a filter matched no call of the period, naming each as `filters` prints it, from the reference.
 5. **Bound the past.** When the period starts before `coverage.oldest_transcript_at`, say that Claude Code may have removed older session files, so earlier figures can be incomplete.

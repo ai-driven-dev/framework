@@ -44,15 +44,28 @@ const NOW = new Date("2026-10-09T00:00:00.000Z");
  * directory gone and never seen, and none at all. */
 const PLACES = ["/work/in", "/work/out", "/work/none", "/work/gone", undefined] as const;
 /** The times a call's snapshots may carry, by the kind of call: either side of a midnight, as a
- * streamed call can be, noon, no time, and a time with no zone. */
+ * streamed call can be, noon, no time, and a time with no zone. A call's copies are all of one
+ * kind: the contract assumes no call has both a dated and an undated copy. */
 const TIMES = [
   ["2026-10-07T23:59:59.000Z", "2026-10-08T00:00:01.000Z"],
   ["2026-10-08T12:00:00.000Z"],
   ["not a time"],
   ["2026-10-08T12:00:00"],
 ];
-/** Lines that are no usage line. */
-const JUNK = ["{torn", "[]", '{"type":"assistant","message":{"usage":7}}'];
+const UNDATED_KINDS = [2, 3];
+/** A line that is no usage line: naming a place, at a time inside or before any consent, or no
+ * time, or naming nothing. */
+const junk = fc.oneof(
+  fc
+    .record({
+      place: fc.constantFrom(...PLACES),
+      at: fc.constantFrom(undefined, "2026-10-08T12:00:00.000Z", "2025-06-01T00:00:00.000Z"),
+    })
+    .map(({ place, at }) =>
+      JSON.stringify({ type: "assistant", cwd: place, timestamp: at, message: { usage: 7 } })
+    ),
+  fc.constantFrom("{torn", "[]")
+);
 
 const transcriptLine = fc.oneof(
   {
@@ -84,8 +97,33 @@ const transcriptLine = fc.oneof(
         })
       ),
   },
-  { weight: 1, arbitrary: fc.constantFrom(...JUNK) }
+  { weight: 1, arbitrary: junk }
 );
+
+/** What one machine keeps, by the contract, from these lines: the undated calls and the lines
+ * that are no usage line of the clone that consents, at a time it consents, each once. */
+function expectedLeftOut(lines: readonly string[]) {
+  const undated = new Set<string>();
+  const unrecognised = new Set<string>();
+  for (const line of lines) {
+    const parsed = (() => {
+      try {
+        return JSON.parse(line);
+      } catch {
+        return null;
+      }
+    })();
+    if (parsed?.cwd !== "/work/in") continue;
+    if (parsed.message?.id === undefined) {
+      if (parsed.timestamp !== "2025-06-01T00:00:00.000Z") unrecognised.add(line);
+    } else if (
+      UNDATED_KINDS.includes(Math.floor(Number(parsed.requestId.slice(4)) / PLACES.length))
+    ) {
+      undated.add(parsed.requestId);
+    }
+  }
+  return { undated: undated.size, unrecognised: unrecognised.size };
+}
 
 const scenario = fc.record({
   files: fc.array(fc.array(transcriptLine, { minLength: 1, maxLength: 6 }), {
@@ -197,9 +235,17 @@ describe("what ingests leave out, once a report has run", () => {
           return JSON.stringify(reportEnvelopeOf(result));
         });
         expect(envelopes[0]).toBe(envelopes[1]);
-        await many.report.execute({ axis: "total", period: { from: null, to: null } });
+        const full = await many.report.execute({ axis: "total", period: { from: null, to: null } });
         await one.report.execute({ axis: "total", period: { from: null, to: null } });
         expect(await bytes(many.dir)).toEqual(await bytes(one.dir));
+        // A bounded report says what a full one says; both what the contract keeps.
+        if (full.status !== "reported" || reported[0]?.status !== "reported") throw new Error();
+        expect(reported[0].coverage.leftOut).toEqual(full.coverage.leftOut);
+        expect(full.coverage.leftOut).toEqual(expectedLeftOut(files.flat()));
+        // A clone that never opted in leaves no byte of this.
+        if (!files.flat().some((line) => line.includes('"cwd":"/work/in"'))) {
+          expect(Object.keys(await bytes(many.dir))).not.toContain("/left-out.txt");
+        }
       }),
       { numRuns: 150 }
     );

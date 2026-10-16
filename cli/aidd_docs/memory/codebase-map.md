@@ -74,6 +74,7 @@ src/
 │   │       ├── declaration/    # where a declaration is kept: git config and the telemetry dir
 │   │       ├── forget/    # erasing the telemetry dir, the previous version's files, git config keys
 │   │       ├── identity/    # the identity file in the telemetry dir
+│   │       ├── left-out/    # what ingests measured and could not store, by hash, beside the ledger
 │   │       └── switch/    # the project config, what an earlier measurement left in a repository, and Claude settings; the clone's consent in git config is `git-consent-adapter.ts`, beside this folder
 │   └── translate/    # canonical source to target-native content
 │       ├── application/

@@ -1,4 +1,4 @@
-import type { DayLedger, LoadedLedger } from "../domain/ports/usage-ledger.js";
+import type { LoadedLedger, UsageLedger } from "../domain/ports/usage-ledger.js";
 import { daysAround, type StoredUsage, upsertUsage } from "../domain/stored-usage.js";
 
 export interface Stored {
@@ -13,7 +13,7 @@ export interface Stored {
  * line that is not a record put after the records, kept. Nothing outside the window is read,
  * except a monthly file it splits and every day of that month. Runs under the caller's lock. */
 export async function storeCalls(
-  ledger: DayLedger,
+  ledger: UsageLedger,
   incoming: readonly StoredUsage[]
 ): Promise<Stored> {
   const days = daysAround(incoming);
@@ -31,7 +31,7 @@ export async function storeCalls(
  * `UsageLedger.load`), and leaves every other partition as it is. A settled day is not
  * touched. Runs under the caller's lock. */
 export async function settleLedger(
-  ledger: DayLedger,
+  ledger: UsageLedger,
   holds?: (day: string) => boolean
 ): Promise<LoadedLedger> {
   const held = await ledger.load(holds);

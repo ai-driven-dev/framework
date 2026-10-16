@@ -1,6 +1,6 @@
 import type { PersonIdentityStore } from "../../domain/ports/identity/person-identity-store.js";
 import type { RepositoryLocator } from "../../domain/ports/repository-locator.js";
-import type { UsageLedger } from "../../domain/ports/usage-ledger.js";
+import type { LeftOutReason, UsageLedger } from "../../domain/ports/usage-ledger.js";
 import { attribute } from "../../domain/report/attribution.js";
 import { inPeriod, type Period, windowOf } from "../../domain/report/period.js";
 import {
@@ -19,8 +19,8 @@ import {
 } from "../../domain/report/usage-report.js";
 import { repositoryIdOf } from "../../domain/repository-identity.js";
 import type { NotStoredReason } from "../../domain/repository-resolution.js";
-import { callId, type StoredUsage } from "../../domain/stored-usage.js";
-import { type IngestUsageUseCase, NOT_STORED } from "../ingest-usage-use-case.js";
+import type { StoredUsage } from "../../domain/stored-usage.js";
+import type { IngestUsageUseCase } from "../ingest-usage-use-case.js";
 import { settleLedger } from "../ledger-upkeep.js";
 import type { DeclaredBindings } from "./declared-bindings.js";
 
@@ -47,19 +47,20 @@ export interface ReportCoverage {
   readonly filesRead: number;
   /** Billed calls in the report's period. */
   readonly records: number;
-  /** Transcript lines that were no usage line, of every ingest so far, whoever ran it: they
-   * have no day, so every report counts all of them. */
+  /** Shapes this run met and did not recognise, so did not count. */
   readonly unrecognised: number;
-  /** Billed calls of the period an ingest, whoever ran it, read and did not store and no read
-   * stored since, by the reason. `undated` has no day: every report counts all of them. */
+  /** Billed calls this run read and did not store, by the reason. */
   readonly notStored: Readonly<Record<NotStoredReason, number>>;
   /** A line of `ledger/consents.jsonl` was not an event: nothing is stored until it is recovered. */
   readonly consentLogDamaged: boolean;
   /** When the oldest transcript still on disk was last written: nothing older can be read. */
   readonly oldestTranscriptAt: string | null;
-  /** Lines of the partitions read that were not records, kept: a bounded report reads its
-   * period and the day on each side, of the ledger and of what was left out. */
+  /** Lines of the partitions read that were not records: a bounded report reads its period
+   * and the day on each side. */
   readonly skippedLedgerLines: number;
+  /** What every ingest so far, whoever ran it, measured and could not store, by reason: none of
+   * it has a day, so every report counts all of it. */
+  readonly leftOut: Readonly<Record<LeftOutReason, number>>;
 }
 
 export type ReportResult =
@@ -119,26 +120,11 @@ export class ReportUsageUseCase {
     if (this.options.refusedByEnvironment) return { status: "refused" };
     const located = here === undefined ? undefined : await this.repositoryIn(here);
     if (located === null) return { status: "not-a-repository" };
-    const { filesRead, consentLogDamaged, oldestTranscriptAt } = await this.ingest.execute();
-    const window = windowOf(request.period);
-    const [held, left, noDay] = await this.ledger.exclusively(async () => [
-      await settleLedger(this.ledger, window),
-      await settleLedger(this.ledger.leftOut, window),
-      await this.ledger.leftOut.noDay(),
+    const ingested = await this.ingest.execute();
+    const [held, leftOut] = await this.ledger.exclusively(async () => [
+      await settleLedger(this.ledger, windowOf(request.period)),
+      await this.ledger.leftOut.counts(),
     ]);
-    // Whoever ingested: a call of the period left out and never stored, by its reason.
-    const stored = new Set(held.records.map(callId));
-    const notStored = { ...NOT_STORED, undated: noDay.undated };
-    for (const call of left.records) {
-      const reason = call.repository_id;
-      if (
-        inPeriod(call.at, request.period) &&
-        !stored.has(callId(call)) &&
-        Object.hasOwn(NOT_STORED, reason)
-      ) {
-        notStored[reason as NotStoredReason] += 1;
-      }
-    }
     const records = held.records.filter((record) => inPeriod(record.at, request.period));
     const session = resolvedIn(records, "session", asked.session);
     if ("status" in session) return session;
@@ -158,13 +144,14 @@ export class ReportUsageUseCase {
       filters,
       report: buildReport(selected, facts, person, request.axis),
       coverage: {
-        filesRead,
+        filesRead: ingested.filesRead,
         records: records.length,
-        unrecognised: noDay.unrecognised,
-        notStored,
-        consentLogDamaged,
-        oldestTranscriptAt,
-        skippedLedgerLines: held.skippedLines + left.skippedLines,
+        unrecognised: ingested.unrecognised,
+        notStored: ingested.notStored,
+        consentLogDamaged: ingested.consentLogDamaged,
+        oldestTranscriptAt: ingested.oldestTranscriptAt,
+        skippedLedgerLines: held.skippedLines,
+        leftOut,
       },
     };
   }

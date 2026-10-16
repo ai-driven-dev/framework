@@ -1108,122 +1108,85 @@ describe("a call is judged at its own time", () => {
   });
 });
 
-describe("what is read and not stored is kept, so a report run later says it", () => {
-  /** A call left out, as it is kept: its key, agent and day, and why. */
-  const leftOut = (key: string, reason: string, at = "2026-10-07T00:00:00.000Z") => ({
-    tool: "claude-code",
-    tool_version: null,
-    key,
-    session_id: "left-out",
-    agent: "main",
-    at,
-    model: null,
-    input: null,
-    output: null,
-    cache_read: null,
-    cache_write: null,
-    cache_write_1h: null,
-    reasoning: null,
-    cwd: null,
-    git_branch: null,
-    repository_id: reason,
-  });
+describe("what was measured and could not be stored is kept, so a report run later says it", () => {
+  /** A clone that never opted in, at `/work/b`. */
+  const notOptedIn = (s: ReturnType<typeof setup>) =>
+    s.locator.directories.set("/work/b", repository("/work/b", { clone: cloneOf("/work/b/.git") }));
+  const junk = (cwd: string) => JSON.stringify({ type: "assistant", cwd, message: { usage: 7 } });
 
-  it("keeps each call it does not store by its key, its day and its reason, and nothing else of it", async () => {
+  it("keeps nothing of a call a clone did not consent to, made outside any repository, or naming no directory", async () => {
     const s = setup();
-    s.locator.directories.set("/work/b", { status: "outside-repository" });
+    notOptedIn(s);
+    s.locator.directories.set("/work/c", { status: "outside-repository" });
     s.transcripts.files.set("/t/1.jsonl", [
-      line("A", 1),
-      line("B", 7, { cwd: "/work/b" }, "2026-10-07T23:59:59.000Z"),
-      line("C", 1, { cwd: undefined }),
+      line("B", 1, { cwd: "/work/b" }),
+      line("C", 1, { cwd: "/work/c" }),
+      line("D", 1, { cwd: undefined }),
     ]);
-    await s.ingest.execute();
-    expect(s.ledger.leftOut.records).toEqual([
-      leftOut("msg_B:req_B", "outside-repo"),
-      leftOut("msg_C:req_C", "no-cwd"),
-    ]);
-    expect(s.ledger.records.map((r) => r.key)).toEqual(["msg_A:req_A"]);
+    const result = await s.ingest.execute();
+    expect(result.notStored).toMatchObject({ "no-consent": 1, "outside-repo": 1, "no-cwd": 1 });
+    expect([...s.ledger.leftOut.lines]).toEqual([]);
+    expect(s.ledger.events).not.toContain("left-out-add");
   });
 
-  it("keeps a call with no usable time and a line that is no usage line, by what they are, and not a call missing a counter", async () => {
+  it("keeps an undated call and a line that is no usage line of a clone that consents, by what they are", async () => {
     const s = setup();
-    const missing = JSON.parse(line("D", 1));
+    const missing = JSON.parse(line("M", 1));
     delete missing.message.usage.output_tokens;
     s.transcripts.files.set("/t/1.jsonl", [
-      "{not json",
-      line("B", 1, {}, "not a time"),
+      junk("/work/a"),
+      line("U", 1, {}, "not a time"),
       JSON.stringify(missing),
-      JSON.stringify({ type: "user", message: { content: "a prompt" } }),
+      "{names no directory",
+      JSON.stringify({ type: "user", cwd: "/work/a", message: { content: "a prompt" } }),
     ]);
     await s.ingest.execute();
-    expect([...s.ledger.leftOut.noDayLines].sort()).toEqual([
-      "undated claude-code\u0000msg_B:req_B",
-      "unrecognised {not json",
+    expect([...s.ledger.leftOut.lines].sort()).toEqual([
+      "undated claude-code\u0000msg_U:req_U",
+      `unrecognised ${junk("/work/a")}`,
     ]);
-    expect(s.ledger.leftOut.records).toEqual([]);
-    expect(s.ledger.records.map((r) => [r.key, r.output])).toEqual([["msg_D:req_D", null]]);
+    expect(s.ledger.records.map((r) => [r.key, r.output])).toEqual([["msg_M:req_M", null]]);
+  });
+
+  it("keeps nothing of an undated call or a line that is no usage line of a clone that never opted in", async () => {
+    const s = setup();
+    notOptedIn(s);
+    s.transcripts.files.set("/t/1.jsonl", [
+      junk("/work/b"),
+      line("U", 1, { cwd: "/work/b" }, "not a time"),
+    ]);
+    await s.ingest.execute();
+    expect([...s.ledger.leftOut.lines]).toEqual([]);
+  });
+
+  it("judges a line that is no usage line by its own time, when it has one", async () => {
+    const s = setup();
+    const before = JSON.stringify({
+      type: "assistant",
+      cwd: "/work/a",
+      timestamp: "2025-06-01T00:00:00.000Z",
+      message: { usage: 7 },
+    });
+    s.transcripts.files.set("/t/1.jsonl", [before]);
+    await s.ingest.execute();
+    expect([...s.ledger.leftOut.lines]).toEqual([]);
   });
 
   it("adds nothing when every position is forgotten and the same transcripts are read again", async () => {
     const s = setup();
-    s.locator.directories.set("/work/b", { status: "outside-repository" });
-    s.transcripts.files.set("/t/1.jsonl", [
-      line("B", 1, { cwd: "/work/b" }),
-      line("B", 9, { cwd: "/work/b" }),
-      "{not json",
-      line("U", 1, {}, "not a time"),
-    ]);
+    s.transcripts.files.set("/t/1.jsonl", [junk("/work/a"), line("U", 1, {}, "not a time")]);
     await s.ingest.execute();
-    const kept = [s.ledger.leftOut.records, [...s.ledger.leftOut.noDayLines]];
     s.ledger.stored.clear();
     await s.ingest.execute();
-    await s.ingest.execute();
-    expect([s.ledger.leftOut.records, [...s.ledger.leftOut.noDayLines]]).toEqual(kept);
-    expect(s.ledger.leftOut.records).toHaveLength(1);
-  });
-
-  it("keeps a left-out call by the day of its earliest copy, not of the copy that won", async () => {
-    const s = setup();
-    s.locator.directories.set("/work/b", { status: "outside-repository" });
-    s.transcripts.files.set("/t/1.jsonl", [
-      line("B", 1, { cwd: "/work/b" }, "2026-10-07T23:59:59.000Z"),
-      line("B", 9, { cwd: "/work/b" }, "2026-10-08T00:00:01.000Z"),
-    ]);
-    await s.ingest.execute();
-    expect(s.ledger.leftOut.records.map((r) => r.at)).toEqual(["2026-10-07T00:00:00.000Z"]);
-  });
-
-  it("dates a left-out call by its copies that have a day, whatever copy without one follows", async () => {
-    const s = setup();
-    s.locator.directories.set("/work/b", { status: "outside-repository" });
-    s.transcripts.files.set("/t/1.jsonl", [
-      line("B", 9, { cwd: "/work/b" }, "2026-10-07T10:00:00.000Z"),
-      line("B", 1, { cwd: "/work/b" }, "not a time"),
-    ]);
-    await s.ingest.execute();
-    expect(s.ledger.leftOut.records.map((r) => r.at)).toEqual(["2026-10-07T00:00:00.000Z"]);
+    expect(s.ledger.leftOut.lines.size).toBe(2);
+    expect(s.ledger.leftOut.added).toBe(4);
   });
 
   it("does not move the positions when what it left out could not be kept", async () => {
     const s = setup();
-    s.transcripts.files.set("/t/1.jsonl", [line("A", 1), "{not json"]);
+    s.transcripts.files.set("/t/1.jsonl", [line("A", 1), junk("/work/a")]);
     s.ledger.leftOut.failSave = true;
     await expect(s.ingest.execute()).rejects.toThrow("disk full");
     expect(s.ledger.stored.size).toBe(0);
-  });
-
-  it("does not move the positions when a call it left out could not be kept", async () => {
-    const s = setup();
-    s.transcripts.files.set("/t/1.jsonl", [line("C", 1, { cwd: undefined })]);
-    s.ledger.leftOut.failSave = true;
-    await expect(s.ingest.execute()).rejects.toThrow("disk full");
-    expect(s.ledger.stored.size).toBe(0);
-  });
-
-  it("touches nothing it keeps when it leaves nothing out", async () => {
-    const s = setup();
-    s.transcripts.files.set("/t/1.jsonl", [line("A", 1)]);
-    await s.ingest.execute();
-    expect(s.ledger.leftOut.events).toEqual([]);
   });
 });

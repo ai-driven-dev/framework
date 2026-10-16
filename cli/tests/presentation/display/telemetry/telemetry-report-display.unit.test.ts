@@ -44,6 +44,7 @@ const COVERAGE: Coverage = {
   consentLogDamaged: false,
   oldestTranscriptAt: "2026-09-20T08:00:00.000Z",
   skippedLedgerLines: 0,
+  leftOut: { undated: 0, unrecognised: 0 },
 };
 const BOTH: Period = { from: "2026-10-01", to: "2026-10-07" };
 
@@ -72,7 +73,7 @@ const value = (text: string): AxisValue => ({ kind: "value", value: text });
 const one = tally(1, [1, 10, 1000, 100]);
 
 const UNRECOGNISED =
-  " not recognised: a call missing a counter is kept with that counter unknown; a line that is no usage line is not counted.";
+  " not recognised: a call missing a counter is kept with that counter unknown; a line that is no usage line is never a call, and is kept apart when its clone is measured.";
 
 describe("printing a usage report", () => {
   it("lays out the four counters apart, a row total, a total row, and the coverage", () => {
@@ -256,6 +257,17 @@ describe("printing a usage report", () => {
       printed(result("total", [], tally(0, [0, 0, 0, 0]), { skippedLedgerLines: 1 })).at(-1)
     ).toBe("1 ledger line is not a record, kept as found.");
     expect(printed(result("total", [], tally(0, [0, 0, 0, 0]))).join("\n")).not.toContain("ledger");
+  });
+
+  it("says what every read kept of what it measured and could not store, and nothing when none", () => {
+    const lines = printed(
+      result("total", [], tally(0, [0, 0, 0, 0]), { leftOut: { undated: 1, unrecognised: 1_200 } })
+    );
+    expect(lines.slice(-2)).toEqual([
+      "Kept from every read: 1,200 lines that are no usage line.",
+      "Kept from every read: 1 call with no usable time.",
+    ]);
+    expect(printed(result("total", [], tally(0, [0, 0, 0, 0]))).join("\n")).not.toContain("Kept");
   });
 
   it("warns on every report while the consent log is damaged, and not otherwise", () => {

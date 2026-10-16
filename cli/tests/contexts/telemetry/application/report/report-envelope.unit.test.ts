@@ -56,6 +56,7 @@ const reported: Extract<ReportResult, { status: "reported" }> = {
     consentLogDamaged: false,
     oldestTranscriptAt: "2026-09-20T08:00:00.000Z",
     skippedLedgerLines: 0,
+    leftOut: { undated: 2, unrecognised: 5 },
   },
 };
 
@@ -106,6 +107,7 @@ describe("the JSON envelope of a report", () => {
       consent_log_damaged: false,
       oldest_transcript_at: "2026-09-20T08:00:00.000Z",
       skipped_ledger_lines: 0,
+      left_out: { undated: 2, unrecognised: 5 },
     });
   });
 

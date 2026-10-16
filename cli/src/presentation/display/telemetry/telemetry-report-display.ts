@@ -123,7 +123,17 @@ function periodWords(period: Period): string {
 function coverageLines(coverage: ReportCoverage): string[] {
   return [
     `Read ${count(coverage.filesRead, "transcript", "transcripts")} just now; ${count(coverage.records, "call", "calls")} in this period; oldest transcript on disk: ${coverage.oldestTranscriptAt?.slice(0, 10) ?? "none"}.`,
-    ...leftOutLines(coverage),
+    ...leftOutLines(coverage).map(({ text }) => text),
+    ...(coverage.leftOut.unrecognised > 0
+      ? [
+          `Kept from every read: ${count(coverage.leftOut.unrecognised, "line that is", "lines that are")} no usage line.`,
+        ]
+      : []),
+    ...(coverage.leftOut.undated > 0
+      ? [
+          `Kept from every read: ${count(coverage.leftOut.undated, "call", "calls")} with no usable time.`,
+        ]
+      : []),
   ];
 }
 

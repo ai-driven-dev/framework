@@ -133,16 +133,9 @@ describe("aidd telemetry ingest", () => {
     expect((await readdir(join(telemetry, "ledger"))).sort()).toEqual([
       "2026-10-07.jsonl",
       "consents.jsonl",
-      "left-out",
       "offsets.json",
       "roots.json",
     ]);
-    // What was left out, once, however many ingests read it together.
-    const left = await readdir(join(telemetry, "ledger", "left-out"));
-    const leftLines = await Promise.all(
-      left.map((name) => readFile(join(telemetry, "ledger", "left-out", name), "utf8"))
-    );
-    expect(leftLines.join("").trim().split("\n")).toHaveLength(1);
   });
 
   it("clears a lock left by a process that is gone and completes", async () => {

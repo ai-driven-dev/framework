@@ -17,7 +17,7 @@ function shown(result: Parameters<typeof printIdentityResult>[1]): CapturingOutp
 }
 
 const UNRECOGNISED =
-  " not recognised: a call missing a counter is kept with that counter unknown; a line that is no usage line is not counted.";
+  " not recognised: a call missing a counter is kept with that counter unknown; a line that is no usage line is never a call, and is kept apart when its clone is measured.";
 
 describe("printIdentityResult", () => {
   it("says who the measurement names, and how to stop", () => {
@@ -77,6 +77,12 @@ describe("printIngestResult", () => {
     expect(linesOf((o) => printIngestResult(o, { ...INGESTED, filesRead: 2, added: 3 }))).toEqual([
       "Read 2 transcripts: 3 calls added, 0 updated.",
     ]);
+  });
+
+  it("groups thousands in every count of its first line", () => {
+    expect(
+      linesOf((o) => printIngestResult(o, { ...INGESTED, added: 1_000, updated: 2_000 }))[0]
+    ).toBe("Read 1 transcript: 1,000 calls added, 2,000 updated.");
   });
 
   it("says nothing was read under AIDD_TELEMETRY=0", () => {

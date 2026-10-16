@@ -128,6 +128,7 @@ const reported = {
     notStored: NOT_STORED,
     oldestTranscriptAt: null,
     skippedLedgerLines: 0,
+    leftOut: { undated: 0, unrecognised: 0 },
   },
 };
 
@@ -331,6 +332,7 @@ describe("aidd telemetry ingest", () => {
     updated: 0,
     unrecognised: 0,
     skippedLedgerLines: 0,
+    leftOut: { undated: 0, unrecognised: 0 },
     snapshots: 0,
     notStored: NOT_STORED,
     oldestTranscriptAt: null,

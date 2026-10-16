@@ -1,6 +1,6 @@
-import type { NoDayEntry, UsageLedger } from "../domain/ports/usage-ledger.js";
+import type { LeftOutEntry, UsageLedger } from "../domain/ports/usage-ledger.js";
 import type { NotStoredReason } from "../domain/repository-resolution.js";
-import { callId, dayOf, leftOutOf, type StoredUsage } from "../domain/stored-usage.js";
+import { dayOf, type StoredUsage } from "../domain/stored-usage.js";
 import type { TranscriptPosition } from "../domain/transcript-position.js";
 import type { UsageRecord } from "../domain/usage-record.js";
 import type { DirectoryOutcome, DirectoryResolver, ResolutionRun } from "./directory-resolver.js";
@@ -31,7 +31,7 @@ export interface IngestResult {
   readonly oldestTranscriptAt: string | null;
 }
 
-export const NOT_STORED: Readonly<Record<NotStoredReason, number>> = {
+const NOT_STORED: Readonly<Record<NotStoredReason, number>> = {
   "outside-repo": 0,
   "never-seen-alive": 0,
   "no-consent": 0,
@@ -103,18 +103,24 @@ export class IngestUsageUseCase {
 
     const notStored = { ...NOT_STORED };
     const toStore: StoredUsage[] = [];
-    // What is left out is kept, so a report run later, whoever ingested, still says it.
-    const leftOut: StoredUsage[] = [];
-    const noDay: NoDayEntry[] = reading.dropped.map((of) => ({ reason: "unrecognised", of }));
+    // What was measured and cannot be stored is kept, so a later report says it, whoever ran
+    // this: only of a clone that consents, at the thing's own time or, with none, now.
+    const leftOut: LeftOutEntry[] = [];
+    const measured = async (cwd: string | null, at: string | null) =>
+      cwd !== null &&
+      "stored" in
+        (await resolver.resolve(cwd, at !== null && dayOf(at) !== null ? at : resolver.now));
+    for (const { line, cwd, at } of reading.dropped) {
+      if (await measured(cwd, at)) leftOut.push({ reason: "unrecognised", of: line });
+    }
     const live = new Map<string, string>();
     for (const record of reading.records) {
       const outcome = await this.outcomeOf(record, resolver);
       if ("skipped" in outcome) {
-        const reason = outcome.skipped;
-        notStored[reason] += 1;
-        const id = callId(record);
-        if (reason === "undated") noDay.push({ reason, of: id });
-        else leftOut.push(leftOutOf(record, reason, reading.earliest.get(id) ?? record.at));
+        notStored[outcome.skipped] += 1;
+        if (outcome.skipped === "undated" && (await measured(record.cwd, null))) {
+          leftOut.push({ reason: "undated", of: `${record.tool}\u0000${record.key}` });
+        }
         continue;
       }
       toStore.push({ ...record, repository_id: outcome.stored.repository_id });
@@ -125,8 +131,7 @@ export class IngestUsageUseCase {
       toStore.length > 0
         ? await storeCalls(this.ledger, toStore)
         : { added: 0, updated: 0, skippedLines: 0 };
-    if (leftOut.length > 0) await storeCalls(this.ledger.leftOut, leftOut);
-    if (noDay.length > 0) await this.ledger.leftOut.addNoDay(noDay);
+    if (leftOut.length > 0) await this.ledger.leftOut.add(leftOut);
     await resolver.close();
     const consentLogDamaged = resolver.consentLogDamaged;
 
@@ -167,7 +172,6 @@ export class IngestUsageUseCase {
       positions: new Map([...before, ...readings.flatMap((reading) => [...reading.positions])]),
       unrecognised: readings.flatMap((reading) => reading.unrecognised),
       dropped: readings.flatMap((reading) => reading.dropped),
-      earliest: new Map(readings.flatMap((reading) => [...reading.earliest])),
       oldestTranscriptAt: oldest[0] ?? null,
       skipped: new Set(readings.flatMap((reading) => [...reading.skipped])),
     };

@@ -1,3 +1,4 @@
+import type { LeftOutReason } from "../../domain/ports/usage-ledger.js";
 import type { UnattributedReason } from "../../domain/report/attribution.js";
 import type { Period } from "../../domain/report/period.js";
 import { filtersOf, type ReportFilters } from "../../domain/report/report-filter.js";
@@ -42,11 +43,11 @@ export interface EnvelopeRow extends EnvelopeTally {
  *
  * `rows` split the period along `axis`; the rows of every axis add up to the same `totals`,
  * counter by counter. `unknown_records` is how many calls had at least one counter unknown.
- * `coverage` says what the figures rest on. `files_read` is of this run alone and `records` of
- * the period. What ingests left out is kept, so it is said whoever ran the ingest, the plugin's
- * hook included: `not_stored` counts the calls of the period read and left out and never stored
- * since, by reason, and `undated` and `unrecognised_shapes` (transcript lines that were no usage
- * line) count all there are, having no day. `consent_log_damaged` is true while
+ * `coverage` says what the figures rest on: `files_read`, `unrecognised_shapes` and `not_stored`
+ * are of this run alone, `records` of the period. `left_out` is what every ingest so far,
+ * whoever ran it (the plugin's included), measured and could not store, of a clone that
+ * consents: `undated` calls and `unrecognised` lines that are no usage line, each once; none has
+ * a day, so every report counts all of them. `consent_log_damaged` is true while
  * `ledger/consents.jsonl` cannot be trusted and nothing is stored, `oldest_transcript_at` is when
  * the oldest transcript still on disk was last written (`null` when there is none), and
  * `skipped_ledger_lines` counts the lines that were not records, kept as found, in the ledger
@@ -80,6 +81,7 @@ export interface ReportEnvelope {
     readonly consent_log_damaged: boolean;
     readonly oldest_transcript_at: string | null;
     readonly skipped_ledger_lines: number;
+    readonly left_out: Readonly<Record<LeftOutReason, number>>;
   };
 }
 
@@ -126,6 +128,7 @@ export function reportEnvelopeOf(
       consent_log_damaged: coverage.consentLogDamaged,
       oldest_transcript_at: coverage.oldestTranscriptAt,
       skipped_ledger_lines: coverage.skippedLedgerLines,
+      left_out: coverage.leftOut,
     },
   };
 }

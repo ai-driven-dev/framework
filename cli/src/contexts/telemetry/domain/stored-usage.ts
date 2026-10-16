@@ -1,6 +1,5 @@
 import { tryParseJson } from "../../../kernel/reading/json-file.js";
 import { asPlainObject } from "../../../kernel/reading/plain-object.js";
-import type { NotStoredReason } from "./repository-resolution.js";
 import { compareText } from "./text-order.js";
 import { foldUsage } from "./usage-fold.js";
 import { USAGE_AGENTS, USAGE_TOOLS, type UsageRecord } from "./usage-record.js";
@@ -57,8 +56,7 @@ export function daysAround(records: readonly UsageRecord[]): ReadonlySet<string>
   return days;
 }
 
-/** What names a call: its tool and its key. */
-export function callId(record: UsageRecord): string {
+function id(record: UsageRecord): string {
   return `${record.tool}\u0000${record.key}`;
 }
 
@@ -79,13 +77,13 @@ export function upsertUsage(
   held: readonly StoredUsage[],
   incoming: readonly StoredUsage[]
 ): Upserted {
-  const before = new Map(held.map((record) => [callId(record), record]));
+  const before = new Map(held.map((record) => [id(record), record]));
   const records = foldUsage([...held, ...incoming]);
   const days = new Set<string>();
   let added = 0;
   let updated = 0;
   for (const record of records) {
-    const was = before.get(callId(record));
+    const was = before.get(id(record));
     if (was !== undefined && was === record) continue;
     if (was === undefined) added += 1;
     else updated += 1;
@@ -108,7 +106,7 @@ export function partitionByDay(
     [];
   for (const record of records) {
     if (dayOf(record.at) !== null) {
-      dated.push({ record, instant: Date.parse(record.at), id: callId(record) });
+      dated.push({ record, instant: Date.parse(record.at), id: id(record) });
     }
   }
   dated.sort((a, b) => a.instant - b.instant || compareText(a.id, b.id));
@@ -158,33 +156,4 @@ export function parseStoredUsage(line: string): StoredUsage | null {
   const parsed = tryParseJson(line);
   const object = parsed.ok ? asPlainObject(parsed.value) : null;
   return object !== null && isStoredUsage(object) ? object : null;
-}
-
-/** A call read and not stored, as it is kept: its tool, key and agent, the start of the UTC day
- * of `earliest`, its earliest copy's time, and the reason where a stored call names its
- * repository. Nothing else of it, storing following consent; but its key is the call's own, which
- * for a line with no `requestId` holds its session id and time. */
-export function leftOutOf(
-  record: UsageRecord,
-  reason: NotStoredReason,
-  earliest: string
-): StoredUsage {
-  return {
-    tool: record.tool,
-    tool_version: null,
-    key: record.key,
-    session_id: "left-out",
-    agent: record.agent,
-    at: `${dayOf(earliest)}T00:00:00.000Z`,
-    model: null,
-    input: null,
-    output: null,
-    cache_read: null,
-    cache_write: null,
-    cache_write_1h: null,
-    reasoning: null,
-    cwd: null,
-    git_branch: null,
-    repository_id: reason,
-  };
 }

@@ -8,10 +8,11 @@ import type { CLIOutput } from "../output.js";
 
 export const IDENTITY_RULE = "An identity is one non-empty line of at most 128 characters.";
 
-/** What a shape the reader did not recognise came to: it is kept when a call lacks a counter
- * (stored unknown, never zero) and dropped when the line is no usage line at all. */
+/** What a shape the reader did not recognise came to: a call lacking a counter is stored with it
+ * unknown, never zero; a line that is no usage line is no call, and is kept apart, by a hash,
+ * when it names a clone that consents. */
 export const UNRECOGNISED_WORDS =
-  "not recognised: a call missing a counter is kept with that counter unknown; a line that is no usage line is not counted.";
+  "not recognised: a call missing a counter is kept with that counter unknown; a line that is no usage line is never a call, and is kept apart when its clone is measured.";
 
 /** Why a billed call was read and not stored, as the end of a sentence about N calls. */
 export const NOT_STORED_WORDS: Readonly<Record<NotStoredReason, string>> = {
@@ -50,18 +51,23 @@ export function leftOutLines(
     IngestResult,
     "unrecognised" | "notStored" | "consentLogDamaged" | "skippedLedgerLines"
   >
-): string[] {
-  const lines =
-    left.unrecognised > 0
-      ? [`${count(left.unrecognised, "shape", "shapes")} ${UNRECOGNISED_WORDS}`]
-      : [];
-  for (const [reason, n] of Object.entries(left.notStored) as [NotStoredReason, number][]) {
-    if (n > 0) lines.push(`Not stored: ${count(n, "call", "calls")} ${NOT_STORED_WORDS[reason]}.`);
+): { readonly warn: boolean; readonly text: string }[] {
+  const lines = [];
+  if (left.unrecognised > 0) {
+    lines.push({
+      warn: true,
+      text: `${count(left.unrecognised, "shape", "shapes")} ${UNRECOGNISED_WORDS}`,
+    });
   }
-  if (left.consentLogDamaged) lines.push(DAMAGED_CONSENT_LOG_WORDS);
+  for (const [reason, n] of Object.entries(left.notStored) as [NotStoredReason, number][]) {
+    const text = `Not stored: ${count(n, "call", "calls")} ${NOT_STORED_WORDS[reason]}.`;
+    if (n > 0) lines.push({ warn: false, text });
+  }
+  if (left.consentLogDamaged) lines.push({ warn: true, text: DAMAGED_CONSENT_LOG_WORDS });
   const kept = left.skippedLedgerLines;
   if (kept > 0) {
-    lines.push(`${count(kept, "ledger line is", "ledger lines are")} not a record, kept as found.`);
+    const text = `${count(kept, "ledger line is", "ledger lines are")} not a record, kept as found.`;
+    lines.push({ warn: true, text });
   }
   return lines;
 }
@@ -73,7 +79,7 @@ export function printIngestResult(output: CLIOutput, result: IngestResult): void
   }
   output.success(
     `Read ${count(result.filesRead, "transcript", "transcripts")}: ` +
-      `${count(result.added, "call", "calls")} added, ${result.updated} updated.`
+      `${count(result.added, "call", "calls")} added, ${grouped(result.updated)} updated.`
   );
   if (result.snapshots > 0) {
     output.info(
@@ -81,9 +87,9 @@ export function printIngestResult(output: CLIOutput, result: IngestResult): void
     );
   }
   // A call not stored is information; a line that could not be read, a warning.
-  for (const line of leftOutLines(result)) {
-    if (line.startsWith("Not stored")) output.info(line);
-    else output.warn(line);
+  for (const { warn, text } of leftOutLines(result)) {
+    if (warn) output.warn(text);
+    else output.info(text);
   }
 }
 

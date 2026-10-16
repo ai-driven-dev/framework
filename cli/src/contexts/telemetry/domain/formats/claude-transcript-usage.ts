@@ -1,10 +1,12 @@
 import { asPlainObject } from "../../../../kernel/reading/plain-object.js";
-import type { UsageRecord } from "../usage-record.js";
+import type { LineNames, UsageRecord } from "../usage-record.js";
 
 export interface ClaudeUsageLine {
   readonly records: readonly UsageRecord[];
   /** One entry per shape not recognised, never turned into a record. */
   readonly unrecognised: readonly string[];
+  /** For a line that is no usage line but an object: the directory and time it names. */
+  readonly named?: LineNames;
 }
 
 type Json = Record<string, unknown>;
@@ -20,8 +22,9 @@ function text(value: unknown): string | null {
   return typeof value === "string" && value !== "" ? value : null;
 }
 
-function unrecognised(reason: string): ClaudeUsageLine {
-  return { records: [], unrecognised: [reason] };
+function unrecognised(reason: string, root?: Json): ClaudeUsageLine {
+  const named = root && { cwd: text(root.cwd), at: text(root.timestamp) };
+  return { records: [], unrecognised: [reason], named };
 }
 
 /** A counter that must be there: absent or malformed is unknown, and said so. */
@@ -82,13 +85,13 @@ export function readClaudeUsageLine(line: string): ClaudeUsageLine {
   if (message === null || message.usage === undefined) return NONE;
   if (message.model === SYNTHETIC_MODEL) return NONE;
   const usage = asPlainObject(message.usage);
-  if (usage === null) return unrecognised("message.usage is not an object");
+  if (usage === null) return unrecognised("message.usage is not an object", root);
 
   const id = text(message.id);
   const sessionId = text(root.sessionId);
   const at = text(root.timestamp);
   if (id === null || sessionId === null || at === null) {
-    return unrecognised("a usage line lacks message.id, sessionId or timestamp");
+    return unrecognised("a usage line lacks message.id, sessionId or timestamp", root);
   }
 
   const notes: string[] = [];

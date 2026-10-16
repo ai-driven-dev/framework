@@ -116,6 +116,27 @@ describe("reading Claude usage from the fixture transcripts", () => {
     expect(reading.records).toHaveLength(5);
   });
 
+  it("hands back, of the lines that give no call, only those naming a directory, with their time", async () => {
+    const named = JSON.stringify({
+      type: "assistant",
+      cwd: "/work/a",
+      timestamp: "2026-10-07T10:00:00.000Z",
+      message: { usage: 7 },
+    });
+    await appendFile(
+      join(projects, "proj-a", "s-2.jsonl"),
+      `{broken\n${JSON.stringify({ type: "assistant", message: { usage: 7 } })}\n${named}\n`
+    );
+    const reading = await new ReadUsageUseCase(
+      new ClaudeTranscriptSourceAdapter(projects),
+      readClaudeUsageLine
+    ).execute(new Map());
+    expect(reading.unrecognised).toHaveLength(3);
+    expect(reading.dropped).toEqual([
+      { line: named, cwd: "/work/a", at: "2026-10-07T10:00:00.000Z" },
+    ]);
+  });
+
   it("prefixes each unrecognised shape with its file", async () => {
     const file = join(projects, "proj-a", "s-2.jsonl");
     await appendFile(file, "{broken\n");

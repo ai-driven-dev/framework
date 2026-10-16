@@ -121,8 +121,18 @@ const filters = fc
   })
   .filter((f: ReportFilters) => conflictsOf(f).length === 0);
 
+/** What earlier ingests kept of what they measured and could not store. */
+const leftOut = fc.array(
+  fc.record({
+    reason: fc.constantFrom("undated" as const, "unrecognised" as const),
+    of: fc.string(),
+  }),
+  { maxLength: 4 }
+);
+
 const scenario = fc.record({
   calls: fc.array(call, { minLength: 1, maxLength: 10 }),
+  leftOut,
   period,
   axis: fc.constantFrom(...REPORT_AXES),
   filters,
@@ -214,15 +224,16 @@ function ingestOf(ledger: UsageLedger): IngestUsageUseCase {
 }
 
 describe("a report on a bounded period", () => {
-  it("prints the envelope of the full ledger filtered to its period and its filters, byte for byte, and loses no call, when a call's copies are under a day apart", async () => {
+  it("prints the envelope of the full ledger filtered to its period and its filters, byte for byte, what was left out included, and loses no call, when a call's copies are under a day apart", async () => {
     await fc.assert(
-      fc.asyncProperty(scenario, async ({ calls, period, axis, filters }) => {
+      fc.asyncProperty(scenario, async ({ calls, leftOut, period, axis, filters }) => {
         const files = filesOf(calls);
         const declared = new DeclaredBindings(new InMemorySessions(), new InMemorySnapshots());
         const identity = new InMemoryIdentity();
         identity.personId = "person-a";
 
         const settled = await ledgerWith(files);
+        await settled.leftOut.add(leftOut);
         const bounded = await new ReportUsageUseCase(
           ingestOf(settled),
           settled,
@@ -232,7 +243,9 @@ describe("a report on a bounded period", () => {
           { refusedByEnvironment: false }
         ).execute({ axis, period, filters });
 
-        const full = await (await ledgerWith(files)).load();
+        const fullLedger = await ledgerWith(files);
+        await fullLedger.leftOut.add(leftOut);
+        const full = await fullLedger.load();
         const kept = full.records.filter((record) => inPeriod(record.at, period));
         // A session or repository typed by its start names a value among the period's calls.
         const resolved: { -readonly [K in keyof ReportFilters]: ReportFilters[K] } = { ...filters };
@@ -268,9 +281,16 @@ describe("a report on a bounded period", () => {
             consentLogDamaged: NOTHING_NEW.consentLogDamaged,
             oldestTranscriptAt: NOTHING_NEW.oldestTranscriptAt,
             skippedLedgerLines: full.skippedLines,
+            leftOut: await fullLedger.leftOut.counts(),
           },
         });
         expect(JSON.stringify(reportEnvelopeOf(bounded))).toBe(JSON.stringify(reference));
+        // Whatever the period: each thing kept once, by reason.
+        const distinct = new Set(leftOut.map(({ reason, of }) => `${reason}\u0000${of}`));
+        expect(bounded.coverage.leftOut).toEqual({
+          undated: [...distinct].filter((entry) => entry.startsWith("undated")).length,
+          unrecognised: [...distinct].filter((entry) => entry.startsWith("unrecognised")).length,
+        });
         // What it settled lost no call, doubled none, and kept the snapshot a full read keeps.
         expect((await settled.load()).records).toEqual(full.records);
       }),

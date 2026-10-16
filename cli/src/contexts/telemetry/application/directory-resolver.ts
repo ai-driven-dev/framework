@@ -93,6 +93,11 @@ export class ResolutionRun {
     return this.consents.firstOpened();
   }
 
+  /** This run's moment, for what has no time of its own. */
+  get now(): string {
+    return this.environment.now().toISOString();
+  }
+
   /** A line of the consent log was not an event: nothing is stored for any clone. */
   get consentLogDamaged(): boolean {
     return this.consents.damaged;

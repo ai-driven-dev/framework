@@ -41,8 +41,9 @@ What `aidd telemetry report --json` prints, and what each part means. Version `1
 | --- | --- |
 | `files_read` | Session files read by this run |
 | `records` | Calls recorded in the period, whether the filters keep them or not |
-| `unrecognised_shapes` | Session-file lines that were no usage line, of every read so far, whoever ran it: never guessed, kept and counted in every report |
-| `not_stored` | Calls of the period read and left out, whoever ran the read, one at session start included, by reason: `outside-repo`, `never-seen-alive`, `no-consent`, `consent-closed`, `unreadable-consent`, `no-cwd`, `undated`. `undated` calls have no day: every report counts all of them |
+| `unrecognised_shapes` | Lines of a shape the reader did not recognise in this run, reported and never guessed |
+| `not_stored` | Calls this run read and left out, by reason: `outside-repo`, `never-seen-alive`, `no-consent`, `consent-closed`, `unreadable-consent`, `no-cwd`, `undated` |
+| `left_out` | What every read so far, one at session start included, measured in a clone that consents and could not store: `undated` calls and `unrecognised` lines that are no usage line, each counted once in every report |
 | `consent_log_damaged` | `true` while `ledger/consents.jsonl` cannot be trusted and nothing is stored |
 | `oldest_transcript_at` | When the oldest session file still on disk was last written, `null` when there is none |
 | `skipped_ledger_lines` | Lines that were not records, kept as found (a newer version may have written them), in the stored days this report read: with a period, those days and the day on each side, plus every day of a month still kept in one file |
