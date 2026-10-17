@@ -96,7 +96,7 @@ export function readClaudeUsageLine(line: string): ClaudeUsageLine {
 
   const notes: string[] = [];
   const requestId = text(root.requestId);
-  const key = requestId === null ? `${id}:${sessionId}:${at}` : `${id}:${requestId}`;
+  const key = `${id}:${requestId ?? sessionId}`;
   const iterations = messageIterations(usage, notes);
   const writes = cacheWrites(usage, iterations, notes);
   const shared = {
