@@ -1,6 +1,6 @@
 # Review: Report envelope v2
 
-- Rounds: 1
+- Rounds: 2
 - Started: 2026-10-17
 
 ## Round 1 · r-7c3e
@@ -34,3 +34,35 @@
 - `cli/src/contexts/telemetry/application/report/report-envelope.ts:130` : v2 is the declared clean, no-shim target, yet it keeps top-level `unknown_records`, a copy of `totals.total.unknown_records`, "for readers that check it alone" → drop it in the break, or record why a duplicate survives a clean break — 🟢 minor, rot
 - `aidd_docs/product/usage-contract.md:106` : `period` is an input. Under `--days` it is resolved from the UTC clock at run time (`periodOf`, `dayOf(now.toISOString())`), and the resolved `{from, to}` is printed in the figures, so it is TZ-independent and not a run fact. But nothing says the purity holds for the resolved period, not for the flags: `--days 7` across UTC midnight prints different figures by design → add "under `--days`, the UTC days ending today" to the `period` row — 🟢 minor, fit
 - `aidd_docs/tasks/2026_10/2026_10_17_report-envelope-v2/evidence.md:1` : tests and code land in one commit (`d25f7ca7`), so git cannot show red-first; only the recorded output does. The gates are recorded at `25c9f857`, not at head (since then, head changed only a comment in `attribution.ts` and the docs) → re-record the gates at head, or say they carry over and why — 🟢 minor, code-health
+
+## Round 2 · r-2b91
+
+- Date: 2026-10-17
+- By: Baptiste LAFOURCADE
+- Diff: `80293f4d...63bda506` (round-1 fixes), whole PR re-checked against `origin/next`
+- Axes: code, functional, relevancy
+- Verdict: changes-requested. `cli / Windows` fails on head, and `cli / gate`, the required check on `next`, needs it (`cli-ci.yml:666-683`). On ubuntu, `Test & Coverage thresholds` passes, including the step `Telemetry tests under TZ=Pacific/Kiritimati and LC_ALL=ar_SA.UTF-8, both seen by Node` (job 117314876160). `Mutation (telemetry 3/3)` passes; shards 1/3 and 2/3 were still pending when this round was written
+- Score: 6.5/10
+
+### Round-1 findings
+
+- [x] Release heads-up: the PR body now names CLI 6.0.0, `aidd-telemetry` 1.0.0 and root `.` 6.0.0, cites #1037 and #1040, and leaves the decision to the maintainer. Checked against `release-please-config.json`: `bump-minor-pre-major: false` (so 0.3.0 → 1.0.0 holds), and `.` has no path exclusion except the manifest
+- [x] The probe checks how the locale writes, not its name (`cli/scripts/foreign-clock.mjs`). Run sandboxed on this machine: `ar_SA` and `fr_FR` → `null`; `xx_BOGUS`, `en_GB`, `C`, `POSIX` and empty → `formats as English`; `Not/AZone`, `UTC` and `Etc/GMT` → `runs in UTC`. A probe that crashes exits non-zero. CI wiring is `cli-ci.yml:302-303`, after `pnpm test:coverage`
+- [x] P1 builds the envelope and the figures' bytes inside `inZone`. The red run is recorded: a `toLocaleDateString("sv")` mutation in `report-envelope.ts` is missed by round 0 and caught by round 1
+- [x] P1 now has monthly partitions, holding both calls and lines that are not records, and stores the second history inside `inZone(first)`. Sandboxed targeted run: `Test Files 3 passed`, `Tests 13 passed`. Not proved: no hand mutation shows that the monthly arm catches a split that loses or duplicates a call
+- [x] Skill mismatch: `answer.md:19` names the fix in both directions (below 2, update `@ai-driven-dev/cli`; above 2, update `aidd-telemetry`), and `## Test` now has rows for version 1 and version 3
+- [x] `envelope.md` "Figures and run" lists the same inputs as the contract
+- [x] One definition: `usage-contract.md:101` and `cli/aidd_docs/memory/telemetry.md:34` link to `envelope.md#figures-and-run` (the anchor exists, and both relative paths resolve), and the JSDoc in `report-envelope.ts` points there
+- [x] Top-level `unknown_records` removed. `git grep unknown_records` outside `aidd_docs/tasks` finds only per-counter and `totals.total` reads: `answer.md:23`, `envelope.md:21`, the e2e sandbox and the journey `Envelope` types, and `check-claude-tokens-end-to-end.cjs:259` (it reads the totals counter). `node --test scripts/__tests__/check-claude-tokens-end-to-end.test.js`: `pass 15, fail 0`. The sibling `brainstorm-telemetry` worktree has no reader in `cli/src`, `plugins` or `scripts`
+- [x] Gates re-recorded at `4a3cdc56`. `git diff --stat 4a3cdc56 63bda506` shows only `evidence.md`, so they carry over to head
+- [ ] Worker-thread zone skip made visible: not done. `inZone` still returns `work()` silently when `!isMainThread` (`report-figures.property.integration.test.ts:234`), and the gap is documented only in a comment and in the PR Limits. I accept it: the forked default pool, P2 and the guard all vary the zone, so under Stryker a zone mutant can only survive (score too low), never hide a failure from CI. It stays an open minor
+- [ ] `period` under `--days`: not done. Neither `usage-contract.md:106` nor `envelope.md:17` says that the figures are pure in the resolved `{from, to}`, not in the flags
+
+### Findings
+
+- `cli/tests/scripts/foreign-clock.integration.test.ts:13-15` : the "accepts … `ar_SA`" case asserts `null`, which holds only where ICU honours `LC_ALL`/`LANG`. On windows-latest, `pnpm test:integration` runs it and it fails: `expected 'a child Node formats as English: 1,23…' to be null`, received `"a child Node formats as English: 1,234,567.5, 10/2/2026"` (job 117314876110). The PR's own Limits say Windows ICU ignores `LC_ALL`, yet the test sits in the default integration tier, which runs on every platform. `cli / gate` therefore fails and the PR cannot merge into `next`. The probe is right to refuse there; it is the test that assumes the platform → skip the acceptance case where ICU ignores the environment (`it.skipIf(process.platform === "win32")`, with the reason in the title), or derive what it expects from a probe of the platform. Keep the three refusal cases unconditional, since they hold everywhere. Then rerun `cli / Windows` — 🔴 critical, error-handling
+- PR body, Heads-up, "Release impact": the body says the squash title decides. But the repository allows merge commits (`allow_merge_commit=true`), and a merge commit carries `d25f7ca7 feat(telemetry)!` into `next`, then through the promote merge to `main`, which ships three majors whatever the title says → state that this PR must be squash-merged, or reword `d25f7ca7` before merging if the majors are not wanted — 🟡 major, fit
+- `report-figures.property.integration.test.ts:234`: the worker-thread zone skip is still silent (carried over from round 1) → add a `skipIf(!isMainThread)` zone case, or one logged line — 🟢 minor, code-health
+- `envelope.md:17`, `usage-contract.md:106`: `--days` resolves from the UTC clock at run time. Two runs across UTC midnight print different figures by design (carried over from round 1) → add "under `--days`, the UTC days ending today" to the `period` row — 🟢 minor, fit
+- `usage-contract.md:126`: this restates what `run` holds ("what it opened, met and left out, whether the consent log let it store…") next to the link that calls `envelope.md` the one definition. The contract's field table also repeats `envelope.md`'s top-level table → keep the storage-side facts the contract owns (partitions read, settling), and link for what each field means — 🟢 minor, rot
+- `evidence.md` "Gates after round 1": telemetry mutation and `pnpm smoke` were not rerun after round 1. CI `Mutation (telemetry 3/3)` passes on head. Shards 1/3 and 2/3 and `Test & Coverage thresholds` were pending when this round was written → confirm all are green before marking the PR ready — 🟢 minor, code-health

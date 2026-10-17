@@ -103,7 +103,7 @@ What an ingest measured and could not store is kept in `ledger/left-out.txt`, so
 | Field | Meaning |
 | --- | --- |
 | `version` | `2` |
-| `period` | `{from, to}`, UTC days, `null` for open |
+| `period` | `{from, to}`, UTC days, `null` for open, as resolved: `--days` against today's UTC day. The figures depend on these days, not on the flags |
 | `axis` | `total`, `person`, `session`, `model`, `agent`, `day`, `repository`, `task`, `ticket` |
 | `filters` | `task`, `ticket`, `person`, `model`, `agent`, `session`, `repository`, `absent`, `unattributed`, in that order: `null` when not given, else as resolved (see [Filters](#filters)) |
 | `rows` | one per axis value, of the calls that match |
@@ -123,7 +123,7 @@ Row and `totals`: `records`, `input`, `output`, `cache_read`, `cache_write` (eac
 - Envelope version 1 put the figures and the run together. Version 2 keeps them apart and has no compatibility shape.
 - `AIDD_TELEMETRY=0`: nothing read, object is `{"version": 2, "refused": "AIDD_TELEMETRY=0"}`.
 - The text report labels an `absent` person `anonymous`; the envelope keeps `kind: absent`, `key: null`.
-- A report ingests first. `run` describes that read: what it opened, met and left out, whether the consent log let it store, how old the transcripts on disk are, and the lines that are not records in the partitions it loaded, counted before it settled them (a rewrite keeps each once, so the next report can count fewer). `coverage.records` describes the period; `coverage.left_out` every ingest so far.
+- A report ingests first; what that read found is its `run`, see [the envelope reference](../../plugins/aidd-telemetry/skills/01-usage/references/envelope.md#run). `coverage.records` describes the period; `coverage.left_out` every ingest so far.
 - A report with `--days`, `--from` or `--to` reads only the days of its period and the day on each side, plus any monthly file one of them falls in, with every day of its month; with none it reads the whole ledger. The copies of one call have been observed less than a day apart, and under that bound both print the same figures. Outside it, only a report with no period folds every copy of a call. `run.skipped_ledger_lines` counts the lines of the partitions read.
 - No path, working directory or branch. `session` keys are full session ids, `repository` keys are hashes.
 

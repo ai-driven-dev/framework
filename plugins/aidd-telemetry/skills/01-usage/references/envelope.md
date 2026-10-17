@@ -4,7 +4,7 @@ What `aidd telemetry report --json` prints, and what each part means. Version `2
 
 ## Figures and run
 
-Every field but `run` is a figure. The figures depend on these inputs and nothing else: the ledger's records, its left-out file, the declarations, the chosen identity, the period, the filters and the axis. Two reports with the same inputs print them byte for byte the same, whatever ingest ran before and in whatever order, run again or not, in any time zone or locale. `run`, always last, is what the read that printed the report found, and may differ from one report to the next.
+Every field but `run` is a figure. The figures depend on these inputs and nothing else: the ledger's records, its left-out file, the declarations, the chosen identity, the period as resolved, the filters and the axis. Two reports with the same inputs print them byte for byte the same, whatever ingest ran before and in whatever order, run again or not, in any time zone or locale. `run`, always last, is what the read that printed the report found, and may differ from one report to the next.
 
 A field may be added to version `2`: a figure outside `run`, a fact of the read inside it. A field is never renamed, retyped, moved or removed without a new `version`.
 
@@ -14,7 +14,7 @@ A field may be added to version `2`: a figure outside `run`, a fact of the read 
 | --- | --- |
 | `version` | `2`. Any other value is a shape not known here |
 | `refused` | Only present, with `version`, when measurement is refused by the environment; nothing was read |
-| `period` | `from` and `to`, UTC days, `null` for open |
+| `period` | `from` and `to`, UTC days, `null` for open: resolved from the flags, `--days` against today's UTC day. The figures depend on these days, not on the flags |
 | `axis` | What `rows` split by |
 | `filters` | What the report was narrowed to: `task`, `ticket`, `person`, `model`, `agent`, `session`, `repository`, `absent`, `unattributed`. `null` when not given, else the value as resolved: a full id for a start or `.`, the axis for `absent`, the reason or `any` for `unattributed` |
 | `rows` | One per value of the axis, of the calls the filters keep; every axis adds up to the same `totals` |
