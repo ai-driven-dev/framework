@@ -57,8 +57,10 @@ Each mutation was made by hand, run once under the default conditions (`TZ=UTC L
 | Mutation | Default (UTC, C) | Guard (UTC+14, ar-SA) |
 | --- | --- | --- |
 | none | `Tests 1497 passed` | `Tests 1497 passed`, 32 s |
-| `stored-usage.ts` `dayOf`: the local day, `new Date(instant - new Date(instant).getTimezoneOffset() * 60_000).toISOString().slice(0, 10)` | `1 failed`: P1 only, which sets `TZ` itself. On `origin/next`, which has no P1, nothing catches it | `Tests 36 failed`, 7 files (ledger adapter, ingest e2e, report e2e…) |
+| `stored-usage.ts` `dayOf`: the local day, `new Date(instant - new Date(instant).getTimezoneOffset() * 60_000).toISOString().slice(0, 10)` | `1 failed`: P1 only, which sets `TZ` itself. The same mutation on `616dbbea`, same scope, `TZ=UTC LC_ALL=C`: `Tests 1493 passed (1493)` | `Tests 36 failed`, 7 files (ledger adapter, ingest e2e, report e2e…) |
 | `telemetry-display.ts` `grouped`: `n.toLocaleString()` | `Tests 1497 passed`: English groups the way the code did | `Tests 24 failed`, 5 files (`1,200` printed as `١٬٢٠٠`) |
+
+A first TZ variant, built from `getFullYear`/`getMonth`/`getDate`, also broke two year-edge tests of `dayOf` under UTC, which has nothing to do with the zone. So the offset variant above is the one on record.
 
 The guard checks itself first:
 

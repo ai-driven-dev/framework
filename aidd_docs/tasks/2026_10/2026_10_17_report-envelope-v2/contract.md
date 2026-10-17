@@ -74,9 +74,11 @@ Nothing is dropped: the 01-usage skill reads every run field (unknowns, "when th
 
 ## The time zone and locale guard (M9)
 
-- `cli/scripts/test-foreign-clock.mjs` (`pnpm test:foreign-clock`) runs the telemetry tests (`tests/contexts/telemetry`, `tests/e2e/telemetry-report`) under `TZ=Pacific/Kiritimati` and `LC_ALL=LANG=ar_SA.UTF-8`. First it checks that a child Node sees a UTC offset other than 0 and a locale that is not `en`, and fails if it does not.
+- `cli/scripts/test-foreign-clock.mjs` (`pnpm test:foreign-clock`) runs the telemetry tests (`tests/contexts/telemetry`, `tests/presentation/commands/telemetry`, `tests/presentation/display/telemetry`, `tests/e2e/telemetry`) under `TZ=Pacific/Kiritimati` and `LC_ALL=LANG=ar_SA.UTF-8`. First it checks that a child Node sees a UTC offset other than 0 and a locale that is not `en`, and fails if it does not.
 - CI: one step in the existing `cli-coverage` job (ubuntu), after the suite. No new job, no matrix.
-- Proven by hand: `dayOf` switched to local getters. The default suite stays green under that mutation and the guard goes red (`evidence.md`).
+- Proven by hand (`evidence.md`):
+  - the ledger's day read in local time: under UTC it changes nothing, so on `origin/next` the default suite passes it, and with P1 one test fails. The guard fails 36;
+  - counts grouped by the default locale: the default suite passes it, and the guard fails 24.
 
 ## Acceptance
 
@@ -84,7 +86,7 @@ Nothing is dropped: the 01-usage skill reads every run field (unknowns, "when th
 | --- | --- | --- |
 | 1 | P1, P2 hold, red on `origin/next` for a behavioural reason | fast-check, e2e, `evidence.md` |
 | 2 | The envelope test pins v2: `run` last, every figure field, refused v2 | unit test, red first |
-| 3 | The guard runs locally and in CI, and goes red on a hand-made TZ dependence that the default suite misses | `evidence.md` |
+| 3 | The guard runs locally and in CI, and goes red on a hand-made dependence on the local zone, and on one on the locale that the default suite misses | `evidence.md` |
 | 4 | Every reader updated, and the text report unchanged | e2e text assertions untouched, scripts tests |
 | 5 | `cd cli && pnpm test`, `node --test 'scripts/__tests__/**/*.test.js'`, `pnpm test:mutation:telemetry` ≥ 96 with changed-line survivors explained, `pnpm smoke`, both token end-to-end checks | `evidence.md` |
 | 6 | Bundle within 709 KB, never weakened. A raise only per `check-bundle-size.mjs`, in its own `chore(cli):` commit | `evidence.md` |

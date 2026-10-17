@@ -14,4 +14,4 @@ cli/package.json                     ✏️ test:foreign-clock
 
 ## Proof
 
-A hand mutation of `dayOf` to local getters: the default suite stays green, the guard goes red. See [`evidence.md`](./evidence.md).
+Two hand mutations: the ledger's day read in local time (the guard fails 36 tests; on `origin/next` the default suite passes it), and counts grouped by the default locale (the default suite passes it, the guard fails 24). See [`evidence.md`](./evidence.md).
