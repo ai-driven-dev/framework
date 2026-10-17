@@ -24,7 +24,18 @@ describe("the table of ids an earlier version gave repositories", () => {
   it.each([
     ["missing", null],
     ["not JSON", "{"],
-    ["another format", JSON.stringify({ version: 2, complete: true, aliases: {} })],
+    [
+      "another format, all else valid",
+      JSON.stringify({ version: 2, complete: true, aliases: {}, pending: [] }),
+    ],
+    [
+      "a completion that is no boolean, all else valid",
+      JSON.stringify({ version: 1, complete: "yes", aliases: {}, pending: [] }),
+    ],
+    [
+      "no table, all else valid",
+      JSON.stringify({ version: 1, complete: true, aliases: null, pending: [] }),
+    ],
     ["no completion", JSON.stringify({ version: 1, aliases: {} })],
     ["a completion that is no boolean", JSON.stringify({ version: 1, complete: 1, aliases: {} })],
     ["no table", JSON.stringify({ version: 1, complete: true })],

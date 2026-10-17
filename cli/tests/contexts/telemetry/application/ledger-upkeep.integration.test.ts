@@ -229,6 +229,20 @@ describe("storing a requestless call, whose copies nothing bounds in time", () =
     expect(await readdir(join(root, "ledger"))).toEqual(["2026-10-04.jsonl"]);
   });
 
+  it("reads every day for a batch mixing a requestless call with one that has a request id", async () => {
+    const ledger = new UsageLedgerAdapter(join(root, "ledger"), new PrivateStorageAdapter());
+    await storeCalls(ledger, [stored("msg_1:s-1", "2026-10-01T10:00:00.000Z", 1)]);
+    await storeCalls(ledger, [
+      stored("msg_2:req_2", "2026-10-04T09:00:00.000Z", 5),
+      stored("msg_1:s-1", "2026-10-04T10:00:00.000Z", 2),
+    ]);
+    expect((await ledger.load()).records.map((record) => record.key).sort()).toEqual([
+      "msg_1:s-1",
+      "msg_2:req_2",
+    ]);
+    expect(await readdir(join(root, "ledger"))).toEqual(["2026-10-04.jsonl"]);
+  });
+
   it("still reads only the days around a call with a request id", async () => {
     const ledger = new UsageLedgerAdapter(join(root, "ledger"), new PrivateStorageAdapter());
     await storeCalls(ledger, [stored("msg_1:req_1", "2026-10-01T10:00:00.000Z", 1)]);

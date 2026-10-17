@@ -1,4 +1,4 @@
-import { appendFile, mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
+import { appendFile, mkdir, mkdtemp, readdir, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import * as fc from "fast-check";
@@ -13,6 +13,7 @@ import { DeclaredBindings } from "../../../../../src/contexts/telemetry/applicat
 import { reportEnvelopeOf } from "../../../../../src/contexts/telemetry/application/report/report-envelope.js";
 import { ReportUsageUseCase } from "../../../../../src/contexts/telemetry/application/report/report-usage-use-case.js";
 import { SnapshotBindingsUseCase } from "../../../../../src/contexts/telemetry/application/snapshot-bindings-use-case.js";
+import { currentKeyOf } from "../../../../../src/contexts/telemetry/domain/legacy/legacy-usage-key.js";
 import type { UsageLedger } from "../../../../../src/contexts/telemetry/domain/ports/usage-ledger.js";
 import { attribute } from "../../../../../src/contexts/telemetry/domain/report/attribution.js";
 import {
@@ -385,6 +386,23 @@ describe("calls stored by ingests, a requestless call's copies days apart, some 
           const inside = (records: readonly StoredUsage[]) =>
             records.filter((record) => inPeriod(record.at, asked) && !exempt.has(record.key));
           expect(inside(bounded)).toEqual(inside(full));
+          // What the limit allows for those calls, and no less: the bounded read holds such a call
+          // once when a day of its window holds a copy of it, read off the disk here, and never
+          // drops it; the full read holds it once.
+          const window = windowOf(asked) ?? (() => true);
+          const onDisk = new Set<string>();
+          for (const name of await readdir(dir)) {
+            if (!/^\d{4}-\d{2}-\d{2}\.jsonl$/.test(name) || !window(name.slice(0, 10))) continue;
+            for (const line of (await readFile(join(dir, name), "utf8")).split("\n")) {
+              if (line !== "") onDisk.add(currentKeyOf(JSON.parse(line)));
+            }
+          }
+          for (const key of exempt) {
+            const count = (records: readonly StoredUsage[]) =>
+              records.filter((record) => record.key === key).length;
+            expect(count(bounded)).toBe(onDisk.has(key) ? 1 : 0);
+            expect(count(full)).toBe(1);
+          }
           // One record per call, whatever its copies' spread.
           expect(full.length).toBe(calls.filter((c) => c.copies.length > 0).length);
         }
