@@ -404,8 +404,8 @@ Conserves pour qu'un test disparu se voie, et pas seulement un compte qui baisse
 # tests/domain/formats/local-cost-fixtures.redaction.unit.test.ts
   tests/fixtures/local-cost — no fixture carries prompt, response, or file content .claude/projects/fake-project/22222222-2222-4222-8222-222222222222.jsonl carries no forbidden key, absolute path, email, or oversized string
   tests/fixtures/local-cost — no fixture carries prompt, response, or file content .claude/projects/fake-project/22222222-2222-4222-8222-222222222222/subagents/agent-aa81cdef3bb58820c.jsonl carries no forbidden key, absolute path, email, or oversized string
-  tests/fixtures/local-cost — no fixture carries prompt, response, or file content .codex/sessions/2026/07/16/rollout-2026-07-16T09-25-07-019f69d0-9e1f-7951-86c9-ddb23cfd51f4.jsonl carries no forbidden key, absolute path, email, or oversized string
-  tests/fixtures/local-cost — no fixture carries prompt, response, or file content .codex/sessions/2026/07/29/rollout-2026-07-29T17-12-26-019fae6f-2009-7cd3-86b2-b8f83481b160.jsonl carries no forbidden key, absolute path, email, or oversized string
+  tests/fixtures/local-cost — no fixture carries prompt, response, or file content .codex/sessions/2026/07/16/rollout-<timestamp>-<session>.jsonl carries no forbidden key, absolute path, email, or oversized string
+  tests/fixtures/local-cost — no fixture carries prompt, response, or file content .codex/sessions/2026/07/29/rollout-<timestamp>-<session>.jsonl carries no forbidden key, absolute path, email, or oversized string
   tests/fixtures/local-cost — no fixture carries prompt, response, or file content .copilot/session-state/33333333-3333-4333-8333-333333333333/events.jsonl carries no forbidden key, absolute path, email, or oversized string
   tests/fixtures/local-cost — no fixture carries prompt, response, or file content .copilot/session-state/44444444-4444-4444-8444-444444444444/events.jsonl carries no forbidden key, absolute path, email, or oversized string
   tests/fixtures/local-cost — no fixture carries prompt, response, or file content finds at least the four known fixtures — the scan itself is not vacuous
