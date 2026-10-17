@@ -6,6 +6,7 @@
 import { spawnSync } from "node:child_process";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { foreignClockProblem } from "./foreign-clock.mjs";
 
 const CLI_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 /** UTC+14, the farthest ahead: a call before 10:00 UTC is on the next local day. */
@@ -22,22 +23,14 @@ const TESTS = [
 const env = { ...process.env, TZ: ZONE, LC_ALL: LOCALE, LANG: LOCALE };
 
 // A zone or locale the platform ignores would run the tests in UTC and English, and pass.
-const probe = spawnSync(
-  process.execPath,
-  [
-    "-p",
-    'JSON.stringify([new Date("2026-10-01T12:00:00Z").getTimezoneOffset(), Intl.DateTimeFormat().resolvedOptions().locale])',
-  ],
-  { env, encoding: "utf8" }
-);
-const [offset, locale] = probe.status === 0 ? JSON.parse(probe.stdout) : [0, "unknown"];
-if (offset === 0 || locale.startsWith("en")) {
+const problem = foreignClockProblem(env);
+if (problem !== null) {
   console.error(
-    `A child Node sees UTC offset ${-offset} min and locale ${locale} under TZ=${ZONE} LC_ALL=${LOCALE}: this guard would prove nothing here.`
+    `Under TZ=${ZONE} LC_ALL=${LOCALE}, ${problem}: this guard would prove nothing here.`
   );
   process.exit(1);
 }
-console.log(`Telemetry tests under TZ=${ZONE}, ${-offset} min from UTC, locale ${locale}`);
+console.log(`Telemetry tests under TZ=${ZONE} and LC_ALL=${LOCALE}, both seen by Node`);
 
 const run = spawnSync(
   process.execPath,
