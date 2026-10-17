@@ -12,6 +12,10 @@ export type PeriodOutcome =
 
 const DAY = /^\d{4}-\d{2}-\d{2}$/;
 
+/** More days than lie between 0000-01-01 and 9999-12-31: a shift past it never names a
+ * four-digit day, and one far enough past it leaves what a date can hold. */
+const MAX_SHIFT = 3_652_425;
+
 /** The UTC day of an instant, `YYYY-MM-DD`. */
 export function dayOf(at: string): string {
   return new Date(at).toISOString().slice(0, 10);
@@ -22,8 +26,10 @@ export function inPeriod(at: string, period: Period): boolean {
   return (period.from === null || day >= period.from) && (period.to === null || day <= period.to);
 }
 
-/** The day `days` after a `YYYY-MM-DD` day, or `null` past what four digits can name. */
+/** The day `days` after a `YYYY-MM-DD` day, or `null` past what four digits can name, the
+ * end of what a date can hold included. */
 function shift(day: string, days: number): string | null {
+  if (Math.abs(days) > MAX_SHIFT) return null;
   const shifted = shiftDay(day, days);
   return DAY.test(shifted) ? shifted : null;
 }
@@ -65,7 +71,10 @@ export function periodOf(
     const days = /^[1-9]\d*$/.test(asked.days) ? Number(asked.days) : 0;
     if (days === 0) return { ok: false, message: "--days takes a positive whole number." };
     const today = dayOf(now.toISOString());
-    const first = shiftDay(today, 1 - days);
+    const first = shift(today, 1 - days);
+    if (first === null) {
+      return { ok: false, message: "--days reaches before the year 0000: give fewer days." };
+    }
     return { ok: true, period: { from: first, to: today } };
   }
   for (const [flag, value] of [

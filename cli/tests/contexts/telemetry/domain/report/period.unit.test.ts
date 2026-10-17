@@ -74,6 +74,19 @@ describe("the period of a report", () => {
     }
   });
 
+  it("reaches back to the year 0000 and refuses a count that goes further, saying so", () => {
+    expect(periodOf({ days: "740264" }, NOW)).toEqual({
+      ok: true,
+      period: { from: "0000-01-01", to: "2026-10-09" },
+    });
+    for (const days of ["740265", "99999999", "99999999999", "1000000000000000000000"]) {
+      expect(periodOf({ days }, NOW)).toEqual({
+        ok: false,
+        message: "--days reaches before the year 0000: give fewer days.",
+      });
+    }
+  });
+
   it("refuses a date that is not a calendar day, naming the flag", () => {
     for (const from of [
       "2026-13-01",
