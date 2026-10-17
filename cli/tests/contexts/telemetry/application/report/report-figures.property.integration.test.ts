@@ -140,10 +140,19 @@ const scenario = fc.record({
     }),
     { maxLength: 5 }
   ),
-  // Lines no version reads, already on disk, some twice: settling keeps each once.
-  damaged: fc.array(fc.record({ day: fc.constantFrom(...DAYS), text: fc.constantFrom("x", "y") }), {
-    maxLength: 3,
-  }),
+  // Lines no version reads, already on disk, some twice, some in a month an earlier version
+  // kept in one file: settling keeps each once, in its day or its month's first day.
+  damaged: fc.array(
+    fc.record({
+      day: fc.constantFrom(...DAYS),
+      text: fc.constantFrom("x", "y"),
+      inMonth: fc.boolean(),
+    }),
+    { maxLength: 3 }
+  ),
+  // Snapshots an earlier version already wrote, in their month's single file: both histories
+  // start from them, and the first read that reaches the month splits it into days.
+  inMonth: fc.array(fc.boolean(), { minLength: 40, maxLength: 40 }),
   request: fc.record({ axis: fc.constantFrom(...REPORT_AXES), period, filters }),
   // How another history reached the same data: each snapshot and left-out entry in a batch of
   // its own choosing, the batches in any order, and stores that bring nothing in between.
@@ -184,14 +193,20 @@ function recordsOf(calls: Scenario["calls"]): StoredUsage[] {
   );
 }
 
-/** A ledger directory holding the damaged lines, as an earlier version or a hand edit left. */
-async function ledgerWith(damaged: Scenario["damaged"]): Promise<UsageLedgerAdapter> {
+/** A ledger directory as an earlier version or a hand edit left it: records in their month's
+ * single file, and lines that are no record in a day's file or a month's. */
+async function ledgerWith(
+  damaged: readonly { day: string; text: string; inMonth?: boolean }[],
+  monthly: readonly StoredUsage[] = []
+): Promise<UsageLedgerAdapter> {
   ledgers += 1;
   const dir = join(root, `ledger-${ledgers}`);
   await mkdir(dir, { recursive: true });
-  const byDay = new Map<string, string>();
-  for (const { day, text } of damaged) byDay.set(day, `${byDay.get(day) ?? ""}${text}\n`);
-  for (const [day, text] of byDay) await writeFile(join(dir, `${day}.jsonl`), text);
+  const files = new Map<string, string>();
+  const put = (name: string, line: string) => files.set(name, `${files.get(name) ?? ""}${line}\n`);
+  for (const record of monthly) put(record.at.slice(0, 7), JSON.stringify(record));
+  for (const { day, text, inMonth } of damaged) put(inMonth ? day.slice(0, 7) : day, text);
+  for (const [name, text] of files) await writeFile(join(dir, `${name}.jsonl`), text);
   return new UsageLedgerAdapter(dir, new PrivateStorageAdapter());
 }
 
@@ -228,7 +243,8 @@ async function inZone<T>(zone: Zone, work: () => Promise<T>): Promise<T> {
   }
 }
 
-/** Reports once over the ledger, after a read that found `facts`, with the clock in `zone`. */
+/** Reports once over the ledger, after a read that found `facts`, with the clock in `zone`:
+ * the envelope, and the figures' bytes, are made in that zone too. */
 async function report(
   held: Scenario,
   ledger: UsageLedgerAdapter,
@@ -252,21 +268,22 @@ async function report(
   const ingest: Pick<IngestUsageUseCase, "execute"> = {
     execute: async () => ingestResultOf(facts),
   };
-  const result = await inZone(zone, () =>
-    new ReportUsageUseCase(
+  return inZone(zone, async () => {
+    const result = await new ReportUsageUseCase(
       ingest,
       ledger,
       new DeclaredBindings(sessions, new InMemorySnapshots()),
       identity,
       new FakeLocator(),
       { refusedByEnvironment: false }
-    ).execute(request)
-  );
-  return result.status === "reported" ? reportEnvelopeOf(result) : result;
+    ).execute(request);
+    const envelope = result.status === "reported" ? reportEnvelopeOf(result) : result;
+    return { envelope, figures: figuresOf(envelope) };
+  });
 }
 
 /** The figures' bytes: the envelope as printed, but its `run`. */
-function figuresOf(envelope: Awaited<ReturnType<typeof report>>): string {
+function figuresOf(envelope: object): string {
   const { run: _run, ...figures } = envelope as Record<string, unknown>;
   return JSON.stringify(figures, null, 2);
 }
@@ -275,46 +292,51 @@ describe("the figures of a report", () => {
   it("are byte for byte the same whatever history stored the same calls, whatever the read before found, on a second report, and in any zone", async () => {
     await fc.assert(
       fc.asyncProperty(scenario, async (held) => {
-        const records = recordsOf(held.calls);
+        const all = recordsOf(held.calls);
+        const monthly = all.filter((_, n) => held.inMonth[n % held.inMonth.length]);
+        const records = all.filter((_, n) => !held.inMonth[n % held.inMonth.length]);
         const leftOut: LeftOutEntry[] = held.leftOut;
 
         // One history: every call and left-out entry stored at once, reported in UTC.
-        const once = await ledgerWith(held.damaged);
+        const once = await ledgerWith(held.damaged, monthly);
         await once.exclusively(() => storeCalls(once, records));
         await once.leftOut.add(leftOut);
         const reference = await report(held, once, held.request, held.runs[0], "UTC");
 
-        // Another: in batches, in another order, with stores that bring nothing.
-        const batched = await ledgerWith(held.damaged);
+        // Another: in batches, in another order, with stores that bring nothing, stored with
+        // the clock in another zone.
+        const batched = await ledgerWith(held.damaged, monthly);
         const { batchOf, order, noOps } = held.history;
         const nth = (n: number) => batchOf[n % batchOf.length] as number;
-        for (const batch of order) {
-          const calls = records.filter((_, n) => nth(n) === batch);
-          await batched.exclusively(() => storeCalls(batched, calls));
-          await batched.leftOut.add(leftOut.filter((_, n) => nth(n + 7) === batch));
-          if (batch < noOps) {
-            await batched.exclusively(() => storeCalls(batched, []));
-            await batched.leftOut.add([]);
-          }
-        }
         const [first, second] = held.zones;
+        await inZone(first, async () => {
+          for (const batch of order) {
+            const calls = records.filter((_, n) => nth(n) === batch);
+            await batched.exclusively(() => storeCalls(batched, calls));
+            await batched.leftOut.add(leftOut.filter((_, n) => nth(n + 7) === batch));
+            if (batch < noOps) {
+              await batched.exclusively(() => storeCalls(batched, []));
+              await batched.leftOut.add([]);
+            }
+          }
+        });
         const later = await report(held, batched, held.request, held.runs[1], first);
         const again = await report(held, batched, held.request, held.runs[2], second);
 
-        expect(figuresOf(later)).toBe(figuresOf(reference));
-        expect(figuresOf(again)).toBe(figuresOf(reference));
-        if (!("run" in again)) return;
+        expect(later.figures).toBe(reference.figures);
+        expect(again.figures).toBe(reference.figures);
+        if (!("run" in again.envelope)) return;
         // What the read found is in `run`, and only there.
         const facts = held.runs[2];
-        expect(again.run).toEqual({
+        expect(again.envelope.run).toEqual({
           files_read: facts.filesRead,
           unrecognised_shapes: facts.unrecognised,
           not_stored: ingestResultOf(facts).notStored,
           consent_log_damaged: facts.consentLogDamaged,
           oldest_transcript_at: facts.oldestTranscriptAt,
-          skipped_ledger_lines: again.run.skipped_ledger_lines,
+          skipped_ledger_lines: again.envelope.run.skipped_ledger_lines,
         });
-        expect(Object.keys(again).at(-1)).toBe("run");
+        expect(Object.keys(again.envelope).at(-1)).toBe("run");
       }),
       { numRuns: 60 }
     );
@@ -339,9 +361,9 @@ describe("the figures of a report", () => {
     };
     const first = await report(held, ledger, request, quiet, "UTC");
     const second = await report(held, ledger, request, quiet, "UTC");
-    expect(figuresOf(second)).toBe(figuresOf(first));
+    expect(second.figures).toBe(first.figures);
     // The rewrite kept the line once: the same ledger, read again, counts one fewer.
-    expect(first).toMatchObject({ run: { skipped_ledger_lines: 2 } });
-    expect(second).toMatchObject({ run: { skipped_ledger_lines: 1 } });
+    expect(first.envelope).toMatchObject({ run: { skipped_ledger_lines: 2 } });
+    expect(second.envelope).toMatchObject({ run: { skipped_ledger_lines: 1 } });
   });
 });
