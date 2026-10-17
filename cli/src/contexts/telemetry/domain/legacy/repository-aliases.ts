@@ -6,7 +6,11 @@ import { compareText } from "../text-order.js";
  * has been rewritten to it. Both sides are hashes or root commits: no address is kept. */
 export interface RepositoryAliases {
   readonly ids: ReadonlyMap<string, string>;
+  /** Every store has been rewritten under `ids`. */
   readonly complete: boolean;
+  /** Roots that could not be read, or were not there, when last looked at: looked at again by
+   * the next run, since an earlier id can only be told from a clone's origin. */
+  readonly pending: readonly string[];
 }
 
 const FORMAT = 1;
@@ -21,10 +25,13 @@ export function parseRepositoryAliases(text: string | null): RepositoryAliases |
   }
   const entries = Object.entries(aliases);
   if (entries.some(([, id]) => typeof id !== "string" || id === "")) return null;
-  return { ids: new Map(entries as [string, string][]), complete: object.complete };
+  const { pending } = object;
+  if (!Array.isArray(pending) || pending.some((root) => typeof root !== "string")) return null;
+  return { ids: new Map(entries as [string, string][]), complete: object.complete, pending };
 }
 
-export function renderRepositoryAliases({ ids, complete }: RepositoryAliases): string {
+export function renderRepositoryAliases({ ids, complete, pending }: RepositoryAliases): string {
   const aliases = Object.fromEntries([...ids].sort(([a], [b]) => compareText(a, b)));
-  return `${JSON.stringify({ version: FORMAT, complete, aliases }, null, 2)}\n`;
+  const roots = [...pending].sort(compareText);
+  return `${JSON.stringify({ version: FORMAT, complete, aliases, pending: roots }, null, 2)}\n`;
 }

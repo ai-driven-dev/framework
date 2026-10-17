@@ -7,12 +7,14 @@ import { repositoryIdOf } from "../../domain/repository-identity.js";
 
 /** Brings what an earlier version stored to the rules of now: one key per call, one id per
  * repository. A stored id is a hash, so only a live clone's origin can say which id an earlier
- * version gave it: each root `roots.json` names is located once, and the earlier id of its
- * origin mapped to the id of now. The table is written first; every reader of the ledger,
+ * version gave it: each root `roots.json` names is located, and the earlier id of its origin
+ * mapped to the id of now. The table is written first; every reader of the ledger,
  * `roots.json` and the branch snapshots applies it, and the key rule, from then on. Then
  * `roots.json` and every ledger partition are rewritten under it, and the table is marked
  * complete, last. A run stopped anywhere leaves a state the next one completes with the same
- * table, asking git nothing. Runs under the ledger's lock. */
+ * table, asking git nothing. A root that could not be read, or was not there, stays pending:
+ * each later run looks at those roots alone, and rewrites the stores again only when one of
+ * them adds an id. Runs under the ledger's lock. */
 export class StoredUsageMigration {
   constructor(
     private readonly locator: RepositoryLocator,
@@ -23,28 +25,48 @@ export class StoredUsageMigration {
 
   async execute(): Promise<void> {
     const held = await this.aliases.load();
-    if (held?.complete) return;
-    const ids = held?.ids ?? (await this.table());
-    if (held === null) await this.aliases.save({ ids, complete: false });
+    if (held?.complete && held.pending.length === 0) return;
+    let table = held;
+    if (table === null || table.complete) {
+      const roots = table?.pending ?? (await this.roots());
+      const found = await this.locate(roots);
+      const ids = new Map([...(table?.ids ?? []), ...found.ids]);
+      if (table !== null && ids.size === table.ids.size) {
+        // Nothing new: only the roots still pending may have changed.
+        if (found.pending.length < table.pending.length) {
+          await this.aliases.save({ ...table, pending: found.pending });
+        }
+        return;
+      }
+      table = { ids, complete: false, pending: found.pending };
+      await this.aliases.save(table);
+    }
     const roots = await this.resolutions.load();
     if (roots.size > 0) await this.resolutions.save(roots);
     // Every partition, not only the ones a read finds unsettled: a day is put in the order one
     // ingest writes, whatever order it was found in. One already in it is not touched.
     await this.ledger.save((await this.ledger.load()).records);
-    await this.aliases.save({ ids, complete: true });
+    await this.aliases.save({ ...table, complete: true });
   }
 
-  private async table(): Promise<Map<string, string>> {
-    const roots = [...new Set([...(await this.resolutions.load()).values()].map((r) => r.root))];
+  private async roots(): Promise<string[]> {
+    return [...new Set([...(await this.resolutions.load()).values()].map((r) => r.root))];
+  }
+
+  private async locate(
+    roots: readonly string[]
+  ): Promise<{ ids: Map<string, string>; pending: string[] }> {
     const ids = new Map<string, string>();
+    const pending: string[] = [];
     for (const root of roots) {
       const located = await this.locator.locate(root);
+      if (located.status === "unreadable" || located.status === "gone") pending.push(root);
       if (located.status !== "repository") continue;
       // Both rules fall back to the root commit alike, so one is null only when both are.
       const earlier = legacyRepositoryIdOf(located);
       const now = repositoryIdOf(located);
       if (earlier !== now) ids.set(earlier as string, now as string);
     }
-    return ids;
+    return { ids, pending };
   }
 }

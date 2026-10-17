@@ -10,11 +10,15 @@ describe("the table of ids an earlier version gave repositories", () => {
       ["b", "y"],
       ["a", "x"],
     ]);
-    const text = renderRepositoryAliases({ ids, complete: false });
+    const text = renderRepositoryAliases({ ids, complete: false, pending: ["/w/b", "/w/a"] });
     expect(text).toBe(
-      `${JSON.stringify({ version: 1, complete: false, aliases: { a: "x", b: "y" } }, null, 2)}\n`
+      `${JSON.stringify({ version: 1, complete: false, aliases: { a: "x", b: "y" }, pending: ["/w/a", "/w/b"] }, null, 2)}\n`
     );
-    expect(parseRepositoryAliases(text)).toEqual({ ids, complete: false });
+    expect(parseRepositoryAliases(text)).toEqual({
+      ids,
+      complete: false,
+      pending: ["/w/a", "/w/b"],
+    });
   });
 
   it.each([
@@ -24,8 +28,19 @@ describe("the table of ids an earlier version gave repositories", () => {
     ["no completion", JSON.stringify({ version: 1, aliases: {} })],
     ["a completion that is no boolean", JSON.stringify({ version: 1, complete: 1, aliases: {} })],
     ["no table", JSON.stringify({ version: 1, complete: true })],
-    ["an id that is no text", JSON.stringify({ version: 1, complete: true, aliases: { a: 1 } })],
-    ["an empty id", JSON.stringify({ version: 1, complete: true, aliases: { a: "x", b: "" } })],
+    [
+      "an id that is no text",
+      JSON.stringify({ version: 1, complete: true, aliases: { a: 1 }, pending: [] }),
+    ],
+    ["no pending roots", JSON.stringify({ version: 1, complete: true, aliases: {} })],
+    [
+      "a pending root that is no text",
+      JSON.stringify({ version: 1, complete: true, aliases: {}, pending: [1] }),
+    ],
+    [
+      "an empty id",
+      JSON.stringify({ version: 1, complete: true, aliases: { a: "x", b: "" }, pending: [] }),
+    ],
   ])("is none when %s, so it is made again", (_name, text) => {
     expect(parseRepositoryAliases(text)).toBeNull();
   });

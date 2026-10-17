@@ -59,7 +59,7 @@ function call(overrides: Record<string, unknown> = {}) {
 async function writeAliases(complete = true): Promise<void> {
   await writeFile(
     join(dir, "repository-ids.json"),
-    `${JSON.stringify({ version: 1, complete, aliases: { [OLD]: NEW } }, null, 2)}\n`
+    `${JSON.stringify({ version: 1, complete, aliases: { [OLD]: NEW }, pending: [] }, null, 2)}\n`
   );
 }
 
@@ -191,7 +191,12 @@ describe("the migration", () => {
     const locator = new FakeLocator();
     locator.directories.set("/work/a", live(MIXED.remote));
     await migration(locator).execute();
-    expect(await table()).toEqual({ version: 1, complete: true, aliases: { [OLD]: NEW } });
+    expect(await table()).toEqual({
+      version: 1,
+      complete: true,
+      aliases: { [OLD]: NEW },
+      pending: ["/work/gone"],
+    });
     expect(locator.asked).toEqual(["/work/a", "/work/gone"]);
     expect(await readFile(join(dir, "roots.json"), "utf8")).not.toContain(OLD);
     expect(await readFile(join(dir, "2026-10-07.jsonl"), "utf8")).toBe(
@@ -206,13 +211,64 @@ describe("the migration", () => {
     locator.directories.set("/work/b", live(null));
     locator.directories.set("/work/c", { ...live(null), rootCommit: null });
     await migration(locator).execute();
-    expect(await table()).toEqual({ version: 1, complete: true, aliases: {} });
+    expect(await table()).toEqual({ version: 1, complete: true, aliases: {}, pending: [] });
   });
 
   it("leaves no roots.json where there was none", async () => {
     await migration(new FakeLocator()).execute();
     await expect(readFile(join(dir, "roots.json"), "utf8")).rejects.toThrow();
-    expect(await table()).toEqual({ version: 1, complete: true, aliases: {} });
+    expect(await table()).toEqual({ version: 1, complete: true, aliases: {}, pending: [] });
+  });
+
+  it("maps a root it could not read at its first run once it can, so the repository keeps one id", async () => {
+    // Found by the independent check: the table was marked complete with the root unmapped.
+    await rooted("/work/a");
+    await writeFile(join(dir, "2026-10-07.jsonl"), `${JSON.stringify(call())}\n`);
+    const locator = new FakeLocator();
+    locator.directories.set("/work/a", { status: "unreadable" });
+    await migration(locator).execute();
+    expect(await table()).toEqual({
+      version: 1,
+      complete: true,
+      aliases: {},
+      pending: ["/work/a"],
+    });
+    locator.directories.set("/work/a", live(MIXED.remote));
+    await migration(locator).execute();
+    expect(await table()).toEqual({
+      version: 1,
+      complete: true,
+      aliases: { [OLD]: NEW },
+      pending: [],
+    });
+    expect(await readFile(join(dir, "2026-10-07.jsonl"), "utf8")).toBe(
+      `${JSON.stringify(call({ key: "msg_A:s-1", repository_id: NEW }))}\n`
+    );
+    expect(await readFile(join(dir, "roots.json"), "utf8")).not.toContain(OLD);
+  });
+
+  it("keeps a root gone at its first run pending, and drops one that is no repository now", async () => {
+    await rooted("/work/a", "/work/b");
+    const locator = new FakeLocator();
+    locator.directories.set("/work/b", { status: "outside-repository" });
+    await migration(locator).execute();
+    expect((await table()).pending).toEqual(["/work/a"]);
+    locator.directories.set("/work/a", { status: "outside-repository" });
+    await migration(locator).execute();
+    expect(await table()).toEqual({ version: 1, complete: true, aliases: {}, pending: [] });
+  });
+
+  it("asks only the pending roots again, and writes nothing while none can be read", async () => {
+    await rooted("/work/a", "/work/b");
+    const locator = new FakeLocator();
+    locator.directories.set("/work/a", { status: "unreadable" });
+    locator.directories.set("/work/b", live("https://github.com/acme/tool"));
+    await migration(locator).execute();
+    const before = await table();
+    locator.asked.length = 0;
+    await migration(locator, new FailingStorage(1)).execute();
+    expect(locator.asked).toEqual(["/work/a"]);
+    expect(await table()).toEqual(before);
   });
 
   it("asks git nothing and rewrites nothing once complete", async () => {
@@ -245,7 +301,12 @@ describe("the migration", () => {
     const locator = new FakeLocator();
     locator.directories.set("/work/a", live(MIXED.remote));
     await expect(migration(locator, new FailingStorage(2)).execute()).rejects.toThrow();
-    expect(await table()).toEqual({ version: 1, complete: false, aliases: { [OLD]: NEW } });
+    expect(await table()).toEqual({
+      version: 1,
+      complete: false,
+      aliases: { [OLD]: NEW },
+      pending: [],
+    });
     // Rerun: roots.json, the day, then the table marked complete, which fails.
     await expect(migration(new FakeLocator(), new FailingStorage(3)).execute()).rejects.toThrow();
     expect(await readFile(join(dir, "2026-10-07.jsonl"), "utf8")).toContain(NEW);
