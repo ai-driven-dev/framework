@@ -8,7 +8,7 @@ The checks that must pass for code to count as done. Minimal, run after every ch
 code it covers confirms what was built; only one that failed first can tell you it is
 checking anything at all.
 
-Two consequences, both learned by paying for them:
+Three consequences, all learned by paying for them:
 
 - **A guard ships with the mutation that proves it.** Break the thing the test is named for
   and watch that test — not another — go red. A guard nothing fails for is not a guard, and
@@ -17,6 +17,10 @@ Two consequences, both learned by paying for them:
   whose anchor drifted applies to nothing and reports nothing, which is how a field can be
   declared in a type, believed by a display and produced by no code. An inconsistent state is
   worse than a missing feature: nobody designed it, so nobody can reason about it.
+- **A test fails for a case; only real data says the case occurs.** Write no code for an
+  input never observed in real data: state it as a limit. A review finding about such an
+  input is closed by that written limit, not by code. Between two fixes, take the one that
+  deletes.
 
 Never state in a commit message or a report anything not just observed in output.
 
