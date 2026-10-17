@@ -402,6 +402,12 @@ describe("calls stored by ingests, a requestless call's copies days apart, some 
               records.filter((record) => record.key === key).length;
             expect(count(bounded)).toBe(onDisk.has(key) ? 1 : 0);
             expect(count(full)).toBe(1);
+            // Over-counting is all the limit allows: once the full read's copy is in the period,
+            // its day is in the window and the bounded read keeps that very copy.
+            const kept = full.find((record) => record.key === key);
+            if (kept !== undefined && inPeriod(kept.at, asked)) {
+              expect(bounded.find((record) => record.key === key)).toEqual(kept);
+            }
           }
           // One record per call, whatever its copies' spread.
           expect(full.length).toBe(calls.filter((c) => c.copies.length > 0).length);

@@ -12,7 +12,8 @@ export interface ClaudeUsageLine {
 type Json = Record<string, unknown>;
 
 const SYNTHETIC_MODEL = "<synthetic>";
-/** What an advisor iteration adds to its message's key. */
+/** What an advisor iteration adds to its message's key. Anchored for clarity only: the format
+ * writes it as a suffix alone, and message and session ids hold no `#`. */
 export const ADVISOR = /#advisor\d+$/;
 const NONE: ClaudeUsageLine = { records: [], unrecognised: [] };
 
