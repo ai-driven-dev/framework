@@ -26,10 +26,8 @@ Found by the R1 telemetry audit. Maintainer decision: migrate the stored data, t
 | `.git` suffix, leading and trailing `/` | dropped | dropped, after case-folding where the host folds it |
 | No origin | root commit | root commit |
 | Key, with `requestId` | `message.id:requestId` | unchanged |
-| Key, without `requestId` | `message.id:sessionId:timestamp` | `message.id:sessionId` |
+| Key, without `requestId` | `message.id:sessionId:timestamp` | not stored, counted in `left_out` as `requestless` (see the usage contract) |
 | Advisor iteration | key + `#advisor<n>` | unchanged |
-
-**Why `message.id:sessionId` is one key per call.** The Messages API: `id` is a "Unique object identifier" of the message ([reference](https://platform.claude.com/docs/en/api/messages)), so no two calls share a `message.id`, and none share it with a session added. The session stays in the key: dropping it, or `requestId`, would re-key every stored call and every `undated` hash, which this fix does not take on (see Limits).
 
 ## Store inventory
 
@@ -37,7 +35,7 @@ Everything under the telemetry directory, and what this fix does to it.
 
 | Store | Holds an id or a key | Migration |
 | --- | --- | --- |
-| `ledger/<YYYY-MM-DD>.jsonl` | `repository_id`, `key` | every read re-keys and re-ids; the first run rewrites them all, folded |
+| `ledger/<YYYY-MM-DD>.jsonl` | `repository_id`, `key` | every read re-ids; the first run rewrites them all, folded |
 | `ledger/<YYYY-MM>.jsonl` (earlier layout) | `repository_id`, `key` | same; split into days by that rewrite, as any full settle does |
 | `ledger/left-out.txt` | `undated <hash>` = hash of tool and key | none: the hash cannot be undone (see Limits). `unrecognised` hashes a line's text: no id, no key |
 | `ledger/roots.json` | `repository_id` per directory and clone | every read re-ids; the first run rewrites it |
@@ -63,7 +61,7 @@ flowchart TD
   J -->|absent| M["locate each root roots.json names: earlier id to id, from its origin now"]
   M --> W1["write repository-ids.json, not complete"]
   J -->|not complete| R
-  W1 --> R["rewrite roots.json and every ledger partition: re-keyed, re-ided, folded"]
+  W1 --> R["rewrite roots.json and every ledger partition: re-ided, folded"]
   R --> W2["write repository-ids.json, complete"]
   W2 --> I
 ```
@@ -72,12 +70,12 @@ flowchart TD
 | --- | --- |
 | Automatic | first step of every ingest, so of every report and of the plugin's hook |
 | Deterministic | the alias table is a function of each root's `origin` now, written before anything else; a rerun reuses it |
-| Idempotent | a key re-keys at most once (the new shape never ends in its own `:at`); an alias never names an id that is itself aliased: an earlier address differs from today's only by an upper-case letter or `ssh.github.com`, which no address of today holds |
+| Idempotent | an alias never names an id that is itself aliased: an earlier address differs from today's only by an upper-case letter or `ssh.github.com`, which no address of today holds |
 | Crash-safe | under the ledger lock; every write is the existing write-then-rename; the table is written first and marked complete last, so a run stopped at any step leaves it incomplete and the next run redoes the whole rewrite. Exercised: a failure at every write (`replace`). Reasoned, not exercised: a stop during the removals that follow the writes, and a `kill -9` |
-| Read-time | every reader of the ledger, `roots.json` and `branches.jsonl` applies the key rule and the table, so a state the migration has not finished, or lines an older CLI writes afterwards, still count each call once under one id in a report with no period; a bounded report may count a requestless copy an older CLI stored after the migration (see Limits) |
-| No double count | copies of a call re-keyed alike fold, by the existing fold, to the copy one ingest would have kept |
+| Read-time | every reader of the ledger, `roots.json` and `branches.jsonl` applies the table, so a state the migration has not finished, or lines an older CLI writes afterwards, still count each call once under one id in a report with no period |
+| No double count | copies of a call fold, by the existing fold, to the copy one ingest would have kept |
 
-**An older CLI on migrated data** (cli-v5.5.0): the lines have the same shape, so it reads and reports them as they are, and ignores `repository-ids.json`. What it ingests afterwards it stores under its own rules; the newer CLI then re-keys it, and re-ids it when its repository is in the table, at every read. A requestless call it stores is not held once: a report with no period settles it.
+**An older CLI on migrated data** (cli-v5.5.0): the lines have the same shape, so it reads and reports them as they are, and ignores `repository-ids.json`. What it ingests afterwards it stores under its own rules; the newer CLI then re-ids it when its repository is in the table, at every read.
 
 ## Acceptance
 
@@ -94,11 +92,8 @@ flowchart TD
 | --- | --- |
 | A root unreadable or absent at the migration | kept pending and looked at again by every ingest; until it can be read, its stored calls keep the earlier id and its new calls get the new one: two ids. A clone deleted for good stays pending, at the cost of one look per ingest |
 | `repository-ids.json` damaged | made again from the clones still there; `branches.jsonl`, never rewritten, then loses the alias of a repository with no clone left, and its declarations stop matching the calls of now |
-| Requestless copies more than a day apart | measured: no requestless line in 512,820 real usage lines (3,837 transcripts); copies of a message with a request id, 184,502 of them, at most 0.27 h apart. Nothing bounds the requestless ones, so storing one reads the whole ledger (measured by the checker at 250,000 records: 1,672 ms, against 13 ms with a request id) and the ledger holds it once |
-| Requestless lines an older CLI writes after the migration | keyed by their timestamp, stored in their own day: a report with a period may count such a copy as well as the call's other copy, until a report with no period settles the ledger. Needs a downgrade or a pinned older binary, and no requestless line was measured |
 | A root whose `origin` changed since its calls were stored | the table maps the address it has now, so those calls keep their id, as before |
 | `undated` hashes in `left-out.txt` from before (unreleased: cli-v5.5.0 has no such file) | cannot be re-keyed; copies of one undated requestless call kept apart stay counted apart, and one read again from the start of its transcript adds a hash beside the old one |
-| A requestless call copied into another session | two keys, as before; seen copies across sessions carry a `requestId`, keyed without the session |
-| One call seen with and without a `requestId` | two keys, as before |
+| One call seen with and without a `requestId` | stored by the copy with one, and counted in `left_out` by the copy without |
 | A host alias from `~/.ssh/config` (`git@work-github:o/r`) | its own host: nothing on disk says what it stands for |
 | Percent-encoding in a URL path | kept as written; a scp-like address is never encoded |

@@ -3,7 +3,6 @@ import { join } from "node:path";
 import { isErrnoException } from "../../../kernel/reading/json-file.js";
 import { readTextIfPresent } from "../../../kernel/reading/text-file.js";
 import { isRequestless, requestlessCallOf } from "../domain/formats/claude-transcript-usage.js";
-import { storedNow } from "../domain/legacy/legacy-usage-key.js";
 import type { PrivateStorage } from "../domain/ports/private-storage.js";
 import type {
   LeftOutEntry,
@@ -39,8 +38,7 @@ function partitionOf(name: string): string {
  * ledger is never appended to: a changed day is rewritten whole, by temporary file and
  * rename, and an unchanged one is not touched, so no reader ever meets a torn line. An ingest
  * reads the days around its calls and writes only what changed, so its cost does not grow with
- * the ledger; one storing a call with no request id reads every day (see `storeCalls`).
- * Between reports, a call whose snapshots fell outside that window may sit in two days: every
+ * the ledger. Between reports, a call whose snapshots fell outside that window may sit in two days: every
  * reader folds at read, so it is still counted once. Once a report with no bound has settled
  * the ledger, each call is on disk once and the bytes depend on what the ledger holds and not
  * on how it got there.
@@ -72,8 +70,9 @@ export class UsageLedgerAdapter implements UsageLedger {
     const damaged = new Set<string>();
     const unsettled = new Set<string>();
     const heldIn = new Map<string, string>();
-    // Every read applies the rules of now, so a call an earlier version keyed or named
-    // otherwise is still one call of one repository, and its partition is rewritten.
+    // Every read applies the rules of now, so a call an earlier version named otherwise is
+    // still a call of one repository, and a call with no request id is none: its partition is
+    // rewritten.
     const ids = (await this.aliases.load())?.ids ?? new Map<string, string>();
     for (const name of names) {
       const partition = partitionOf(name);
@@ -91,7 +90,8 @@ export class UsageLedgerAdapter implements UsageLedger {
           unsettled.add(partition);
           continue;
         }
-        const record = storedNow(read, ids);
+        const now = ids.get(read.repository_id);
+        const record = now === undefined ? read : { ...read, repository_id: now };
         if (record !== read) unsettled.add(partition);
         found.push(record);
         const id = `${record.tool}\u0000${record.key}`;

@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
-  isKeyedBySession,
+  isRequestless,
   readClaudeUsageLine,
+  requestlessCallOf,
 } from "../../../../../src/contexts/telemetry/domain/formats/claude-transcript-usage.js";
 
 const USAGE = {
@@ -322,18 +323,29 @@ describe("one transcript line to usage records", () => {
   });
 });
 
-describe("a call keyed by its session, having no request id", () => {
-  it("is told by its key ending in its own session, advisor iteration or not", () => {
-    const call = (key: string, tool: "claude-code" | "codex" = "claude-code") => ({
-      tool,
-      key,
-      session_id: "s-1",
-    });
-    expect(isKeyedBySession(call("msg_A:s-1"))).toBe(true);
-    expect(isKeyedBySession(call("msg_A:s-1#advisor3"))).toBe(true);
-    expect(isKeyedBySession(call("msg_A:s-1#advisor10"))).toBe(true);
-    expect(isKeyedBySession(call("msg_A:req_A"))).toBe(false);
-    expect(isKeyedBySession(call("msg_A:xs-1"))).toBe(false);
-    expect(isKeyedBySession(call("msg_A:s-1", "codex"))).toBe(false);
+describe("a call with no request id", () => {
+  const call = (key: string, tool: "claude-code" | "codex" = "claude-code") => ({
+    tool,
+    key,
+    session_id: "s-1",
+  });
+
+  it("is told by its key naming its own session, as this version or cli-v5.5.0 keyed it", () => {
+    expect(isRequestless(call("msg_A:s-1"))).toBe(true);
+    expect(isRequestless(call("msg_A:s-1#advisor3"))).toBe(true);
+    expect(isRequestless(call("msg_A:s-1#advisor10"))).toBe(true);
+    expect(isRequestless(call("msg_A:s-1:2026-10-07T23:59:59.000Z"))).toBe(true);
+    expect(isRequestless(call("msg_A:s-1:2026-10-07T23:59:59.000Z#advisor0"))).toBe(true);
+    expect(isRequestless(call("msg_A:req_A"))).toBe(false);
+    expect(isRequestless(call("msg_A:xs-1"))).toBe(false);
+    expect(isRequestless(call("msg_A:s-1x"))).toBe(false);
+    expect(isRequestless(call("s-1:req_A"))).toBe(false);
+    expect(isRequestless(call("msg_A:s-1", "codex"))).toBe(false);
+  });
+
+  it("is left out as one call, whatever copy or iteration", () => {
+    const one = requestlessCallOf(call("msg_A:s-1"));
+    expect(requestlessCallOf(call("msg_A:s-1:2026-10-07T23:59:59.000Z#advisor0"))).toBe(one);
+    expect(one).toBe("claude-code\u0000msg_A:s-1");
   });
 });
