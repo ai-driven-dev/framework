@@ -137,12 +137,12 @@ describe("clean", () => {
     expect(content).toContain("dist/");
   });
 
-  it("with force removes aidd_docs/runs/ entry from .gitignore, same as the pipeline adds", async () => {
+  it("with force removes the .aidd/cache/ entry from .gitignore, same as the pipeline adds", async () => {
     const deps = await buildUnitDeps(PROJECT_ROOT);
     await initAndInstall(deps, PROJECT_ROOT, "claude" as ToolId);
 
     const gitignorePath = join(PROJECT_ROOT, ".gitignore");
-    await deps.fs.writeFile(gitignorePath, "node_modules/\n.aidd/cache/\naidd_docs/runs/\ndist/\n");
+    await deps.fs.writeFile(gitignorePath, "node_modules/\n.aidd/cache/\ndist/\n");
 
     const useCase = new CleanWithKnownHostSource(
       deps.fs,
@@ -154,7 +154,6 @@ describe("clean", () => {
 
     const content = deps.fs.getFile(gitignorePath);
     expect(content).not.toContain(".aidd/cache/");
-    expect(content).not.toContain("aidd_docs/runs/");
     expect(content).toContain("node_modules/");
     expect(content).toContain("dist/");
   });

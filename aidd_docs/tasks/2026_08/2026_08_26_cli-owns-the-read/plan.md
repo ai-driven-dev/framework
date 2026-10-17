@@ -1,6 +1,6 @@
 ---
 objective: "One implementation answers what work consumed — the CLI — while plain node keeps writing the journal, and the plugin says which half needs which."
-status: pending
+status: superseded
 ---
 
 # Plan: The CLI owns the read path, node keeps the write path

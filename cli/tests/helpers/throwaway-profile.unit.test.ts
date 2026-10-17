@@ -1,11 +1,11 @@
 import { homedir, tmpdir } from "node:os";
 import { describe, expect, it } from "vitest";
-import { resolveAiddConfigDir, resolveHomeDir } from "../../src/kernel/reading/home-dir.js";
+import { resolveHomeDir } from "../../src/kernel/reading/home-dir.js";
 import { userConfigDir } from "../../src/runtime/user-config-dir.js";
 
 describe("the profile a test run sees", () => {
   it("is a home under the temp directory, whichever route resolves it", () => {
-    for (const resolved of [homedir(), resolveHomeDir(), resolveAiddConfigDir(), userConfigDir()]) {
+    for (const resolved of [homedir(), resolveHomeDir(), userConfigDir()]) {
       expect(resolved.startsWith(tmpdir()), resolved).toBe(true);
     }
   });

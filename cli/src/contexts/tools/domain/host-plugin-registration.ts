@@ -6,7 +6,7 @@ import type {
 
 /**
  * Whether a host will actually load a plugin AIDD installed for it — the comparison
- * `telemetry`'s own diagnostic and `framework`'s `doctor` both need and neither owns. A
+ * `framework`'s `doctor` needs. A
  * project's settings can carry a perfectly good `enabledPlugins` entry while the host's
  * registry knows nothing about it, at which point the host drops the entry as orphaned and
  * every visible signal still says healthy.

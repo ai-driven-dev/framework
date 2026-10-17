@@ -43,12 +43,6 @@ export const cursor: AiTool<HasAgents & HasSkills & HasCommands & HasRules & Has
     directory: DIRECTORY,
     toolSuffix: TOOL_SUFFIX,
     displayName: "Cursor",
-    telemetryLocalRead: {
-      kind: "unsupported",
-      reason: "It writes no token count in any file it produces.",
-    },
-    telemetryTaskAttributable: true,
-    telemetryJournalHost: "cursor",
     signalDir: ".cursor/commands",
     configOutputPaths: { "settings.json": ".cursor/settings.json" },
     buildContracts: { marketplace: buildCursorContract, flat: buildCursorFlatContract },

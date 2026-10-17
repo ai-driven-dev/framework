@@ -1,242 +1,165 @@
 #!/usr/bin/env node
 /**
- * Re-checks, without spending quota, the assumption the whole telemetry layer rests on:
- * the session identifier a hook receives is the one the tool's own files carry, so a cost
- * read out of those files can be placed against the work the journal recorded.
+ * Re-checks, without spending quota, what the telemetry rests on in Claude Code: one session id,
+ * the same in a hook's payload, in the hook's environment and on every transcript line, so a
+ * declaration made in the session, a carry across `/clear` and a billed call meet on it.
  *
- * It costs nothing because Claude Code mints its session identifier, fires `SessionStart`
- * and opens its transcript *before* it ever reaches the API: pointed at a dead address with
- * a fake key and an empty home, it still does all three and then fails the call. That is
- * what lets this run on every pull request rather than nightly.
+ * It costs nothing because Claude Code mints the session id, fires `SessionStart` and opens the
+ * transcript before it reaches the API: pointed at a dead address with a fake key and an empty
+ * home, it does all three and then retries in vain until the probe stops it.
  *
- * Exit codes are the point, not decoration:
+ * The verdicts use the shipped predicates (`claude-only.cjs`, `presence.cjs`), so a change in the
+ * tool is judged by what the hooks will actually do with it.
+ *
+ * Exit codes:
  *   0  the join holds
- *   1  the tool changed — everything ran, and the identifiers disagree
- *   2  the probe is broken — it could not get far enough to have an opinion
- * Never report the second as the first: a missing binary is not evidence about the tool.
+ *   1  the tool changed: it ran, and what the telemetry assumes is no longer true
+ *   2  the probe is broken: it could not get far enough to have an opinion
  */
 const { spawnSync } = require("node:child_process");
 const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
+const { isClaudePayload } = require("../plugins/aidd-telemetry/hooks/lib/claude-only.cjs");
+const { personIsPresent } = require("../plugins/aidd-telemetry/hooks/lib/presence.cjs");
 
 const TOOL_CHANGED = 1;
 const PROBE_BROKEN = 2;
 
-/** Generous on purpose: against a dead address the tool retries, and every artefact this
- * probe reads is written long before the retries end, so the timeout bounds the run. */
+/** Every artefact this probe reads is written before the first API call; the tool then retries
+ * against the dead address, so the timeout only bounds the run. */
 const RUN_TIMEOUT_MS = 90_000;
 
-/** Printed whichever way the run ends: a silent removal has to be visible in the log,
- * not only in a red cross. */
-const CHECKED = [];
-
-function report(name, verdict, detail) {
-  CHECKED.push({ name, verdict, detail });
-}
-
-function printReport() {
-  process.stdout.write("\nattributes checked by this probe\n");
-  for (const { name, verdict, detail } of CHECKED) {
-    process.stdout.write(`  ${verdict.padEnd(8)} ${name.padEnd(28)} ${detail}\n`);
-  }
-}
-
-function fail(code, message) {
-  printReport();
-  const kind = code === PROBE_BROKEN ? "PROBE BROKEN" : "TOOL CHANGED";
-  process.stderr.write(`\n${kind}: ${message}\n`);
-  process.exit(code);
-}
-
-function resolveCli() {
-  const built = path.resolve(__dirname, "..", "cli", "dist", "cli.js");
-  if (!fs.existsSync(built)) fail(PROBE_BROKEN, `the CLI is not built at ${built}`);
-  return built;
-}
-
-function resolveJournalHook() {
-  const hook = path.resolve(__dirname, "..", "plugins", "aidd-telemetry", "hooks", "journal.cjs");
-  if (!fs.existsSync(hook)) fail(PROBE_BROKEN, `the journal hook is not at ${hook}`);
-  return hook;
-}
-
-function requireClaude() {
-  const found = spawnSync(process.platform === "win32" ? "where" : "which", ["claude"], {
-    encoding: "utf8",
-  });
-  if (found.status !== 0 || !found.stdout.trim()) {
-    fail(PROBE_BROKEN, "`claude` is not on PATH; install it before running this probe");
-  }
-  const version = spawnSync("claude", ["--version"], { encoding: "utf8" });
-  return (version.stdout || "").trim();
-}
-
-/** Two hooks on one event: the capture hook witnesses what the tool handed over, the
- * journal hook is the real one — which is what makes a disagreement attributable. */
-function makeProject(root, capture, journalHook) {
-  const project = path.join(root, "project");
-  fs.mkdirSync(path.join(project, ".claude"), { recursive: true });
-  fs.mkdirSync(path.join(project, ".aidd"), { recursive: true });
-  fs.writeFileSync(
-    path.join(project, ".aidd", "config.json"),
-    `${JSON.stringify({ telemetry: { enabled: true } })}\n`
-  );
-  const witness = path.join(root, "capture.cjs");
-  fs.writeFileSync(witness, CAPTURE_HOOK);
-  fs.writeFileSync(
-    path.join(project, ".claude", "settings.local.json"),
-    `${JSON.stringify(
-      {
-        hooks: {
-          SessionStart: [
-            {
-              hooks: [
-                { type: "command", command: `node ${witness} SessionStart ${capture}` },
-                { type: "command", command: `node ${journalHook} session-start` },
-              ],
-            },
-          ],
-        },
-      },
-      null,
-      2
-    )}\n`
-  );
-  spawnSync("git", ["init", "-q", project]);
-  spawnSync("git", ["remote", "add", "origin", "git@github.com:aidd/identifier-join-probe.git"], {
-    cwd: project,
-  });
-  return project;
-}
-
-const CAPTURE_HOOK = `const fs=require("node:fs"),path=require("node:path");
-let raw="";process.stdin.setEncoding("utf8");
-process.stdin.on("data",(c)=>{raw+=c});
-process.stdin.on("end",()=>{try{fs.mkdirSync(process.argv[3],{recursive:true});
-fs.writeFileSync(path.join(process.argv[3],process.argv[2]+".json"),raw)}catch{}process.exit(0)});
+/** Records the hook's stdin, the variables the telemetry reads and its parent pid. */
+const CAPTURE_HOOK = `const fs = require("node:fs");
+let raw = "";
+process.stdin.setEncoding("utf8");
+process.stdin.on("data", (chunk) => { raw += chunk; });
+process.stdin.on("end", () => {
+  const e = process.env;
+  const env = {};
+  for (const name of ["CLAUDE_CODE_SESSION_ID", "CLAUDE_PID", "CLAUDE_CODE_SESSION_ATTENDED", "CLAUDE_CODE_ENTRYPOINT"]) env[name] = e[name];
+  fs.writeFileSync(process.argv[2], JSON.stringify({ payload: JSON.parse(raw), env, ppid: process.ppid }));
+});
 `;
 
-/** The name is half the join: the hook writes `<run id>__<the tool's own session id>.jsonl`. */
-function journalledSessionIds(project) {
-  const dir = path.join(project, "aidd_docs", "runs");
-  if (!fs.existsSync(dir)) return [];
-  return fs
-    .readdirSync(dir)
-    .filter((name) => name.endsWith(".jsonl") && name.includes("__"))
-    .map((name) => name.slice(name.indexOf("__") + 2, -".jsonl".length));
-}
+const changed = (message) => ({ code: TOOL_CHANGED, message });
 
-/** `claude-code-transcript.ts` locates a session by the identifier in the file name, so
- * this reads the same fact the production reader will. */
-function transcriptSessionIds(configDir) {
-  const root = path.join(configDir, "projects");
-  if (!fs.existsSync(root)) return [];
-  const ids = [];
-  for (const dir of fs.readdirSync(root)) {
-    const full = path.join(root, dir);
-    if (!fs.statSync(full).isDirectory()) continue;
-    for (const name of fs.readdirSync(full)) {
-      if (name.endsWith(".jsonl")) ids.push(name.slice(0, -".jsonl".length));
-    }
+/** The verdict on one headless run: `captured` is what the hook saw (null when it never ran),
+ * `transcript` the parsed lines of the file the payload names (null when there is none). */
+function judge({ configDir, captured, transcript }) {
+  if (captured === null) return changed("the SessionStart hook never fired before the API call");
+  const { payload, env, ppid } = captured;
+  if (!isClaudePayload(payload, env)) {
+    return changed(
+      `the Claude-only guard refuses Claude's own payload: session_id ${payload.session_id}, ` +
+        `CLAUDE_CODE_SESSION_ID ${env.CLAUDE_CODE_SESSION_ID}, transcript ${payload.transcript_path}`
+    );
   }
-  return ids;
+  const projects = path.join(configDir, "projects");
+  const relative = path.relative(projects, payload.transcript_path);
+  if (relative.startsWith("..") || path.isAbsolute(relative)) {
+    return changed(`the transcript ${payload.transcript_path} is not under ${projects}, where ingest reads`);
+  }
+  if (transcript === null) return changed("no transcript was written before the API call");
+  const ids = transcript.map((line) => line.sessionId).filter((id) => id !== undefined);
+  if (ids.length === 0 || ids.some((id) => id !== payload.session_id)) {
+    return changed(`the transcript's sessionId values (${[...new Set(ids)].join(", ") || "none"}) are not ${payload.session_id}`);
+  }
+  // The hook names Claude's process by CLAUDE_PID, and by its parent pid only when it is gone.
+  if (!/^[1-9]\d*$/u.test(env.CLAUDE_PID ?? "")) {
+    return changed(
+      `CLAUDE_PID is ${env.CLAUDE_PID ?? "unset"}: a /clear carry now rests on the hook's parent pid, ${ppid}, being Claude's`
+    );
+  }
+  if (personIsPresent(env)) {
+    return changed(
+      `a headless run reads as a person present (CLAUDE_CODE_SESSION_ATTENDED ${env.CLAUDE_CODE_SESSION_ATTENDED}, ` +
+        `CLAUDE_CODE_ENTRYPOINT ${env.CLAUDE_CODE_ENTRYPOINT}): the prompt gate would block automation`
+    );
+  }
+  return { code: 0, message: `the join holds: ${payload.session_id}` };
 }
 
-function main() {
-  const version = requireClaude();
-  const cli = resolveCli();
-  const journalHook = resolveJournalHook();
+function readJson(file) {
+  try {
+    return JSON.parse(fs.readFileSync(file, "utf8"));
+  } catch {
+    return null;
+  }
+}
+
+function readLines(file) {
+  try {
+    return fs
+      .readFileSync(file, "utf8")
+      .split("\n")
+      .filter((line) => line.trim() !== "")
+      .map((line) => JSON.parse(line));
+  } catch {
+    return null;
+  }
+}
+
+/** Runs `host` (an argv) headless in a fresh project and home, and judges what it left. */
+function probe({ host, log }) {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "aidd-join-probe-"));
-  const capture = path.join(root, "capture");
-  const sinkDir = path.join(root, "sink");
+  try {
+    return probeIn(root, host, log);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+}
+
+function probeIn(root, host, log) {
   const home = path.join(root, "home");
   const configDir = path.join(home, ".claude");
-  const project = makeProject(root, capture, journalHook);
+  const project = path.join(root, "project");
+  const capture = path.join(root, "captured.json");
+  const witness = path.join(root, "capture.cjs");
+  fs.mkdirSync(configDir, { recursive: true });
+  fs.mkdirSync(path.join(project, ".claude"), { recursive: true });
+  fs.writeFileSync(witness, CAPTURE_HOOK);
+  // Shaped like the shipped hook, `node <script>`, so Claude spawns it the same way.
+  const command = [process.execPath, witness, capture].map((word) => JSON.stringify(word)).join(" ");
+  fs.writeFileSync(
+    path.join(project, ".claude", "settings.local.json"),
+    `${JSON.stringify({ hooks: { SessionStart: [{ hooks: [{ type: "command", command }] }] } })}\n`
+  );
+  // A `GIT_DIR` inherited from a git hook would point `init` at the repository running it.
+  const env = Object.fromEntries(Object.entries(process.env).filter(([name]) => !name.startsWith("GIT_")));
+  spawnSync("git", ["init", "-q", project], { env });
 
-  // A dead address, a fake key and an empty home: the session opens, both hooks fire and
-  // the transcript is created before any of the three matter.
-  const run = spawnSync("claude", ["-p", "say OK"], {
+  const [bin, ...leading] = host;
+  const run = spawnSync(bin, [...leading, "-p", "say OK"], {
     cwd: project,
     encoding: "utf8",
     timeout: RUN_TIMEOUT_MS,
     killSignal: "SIGKILL",
     env: {
-      ...process.env,
+      ...env,
       HOME: home,
       CLAUDE_CONFIG_DIR: configDir,
       ANTHROPIC_BASE_URL: "http://127.0.0.1:9",
       ANTHROPIC_API_KEY: "sk-ant-probe-not-a-real-key",
     },
   });
-
-  const capturedPath = path.join(capture, "SessionStart.json");
-  if (!fs.existsSync(capturedPath)) {
-    report("SessionStart hook", "MISSING", "no payload captured");
-    fail(
-      TOOL_CHANGED,
-      `the SessionStart hook never fired on ${version}. It fired before the API call on ` +
-        `2.1.250, which is what made this probe free. claude exited ${run.status}.`
-    );
+  if (run.error !== undefined && run.error.code !== "ETIMEDOUT") {
+    log(`PROBE BROKEN: ${host.join(" ")} could not be run (${run.error.code ?? run.error.message})\n`);
+    return PROBE_BROKEN;
   }
-  const payload = JSON.parse(fs.readFileSync(capturedPath, "utf8"));
-  const hookId = payload.session_id;
-  if (typeof hookId !== "string" || hookId === "") {
-    report("session_id (hook)", "MISSING", `keys: ${Object.keys(payload).sort().join(", ")}`);
-    fail(TOOL_CHANGED, "the SessionStart payload carries no session_id");
-  }
-  report("session_id (hook)", "present", hookId);
-
-  const journalled = journalledSessionIds(project);
-  report("session id (journal)", journalled.length ? "present" : "MISSING", journalled.join(", "));
-  if (!journalled.includes(hookId)) {
-    fail(
-      TOOL_CHANGED,
-      `the journal did not record the identifier the hook was handed on ${version}: the hook ` +
-        `saw ${hookId}, the journal names ${journalled.join(", ") || "nothing"}.`
-    );
-  }
-
-  const transcripts = transcriptSessionIds(configDir);
-  report("session id (transcript)", transcripts.length ? "present" : "MISSING", transcripts.join(", "));
-  if (transcripts.length === 0) {
-    fail(
-      TOOL_CHANGED,
-      `${version} wrote no transcript against a dead API. It did on 2.1.250; if this is now ` +
-        "deliberate, the probe has to run real sessions and stops being free."
-    );
-  }
-  if (!transcripts.includes(hookId)) {
-    fail(
-      TOOL_CHANGED,
-      `the join is broken on ${version}: the hook saw ${hookId}, the transcript is named ` +
-        `${transcripts.join(", ")}. Every attribution in this layer assumes they are one value.`
-    );
-  }
-
-  // What makes it *this system's* join rather than the probe's own comparison: the shipped
-  // reader resolves the journalled session against the transcript, unaided.
-  const read = spawnSync(process.execPath, [cli, "telemetry", "read"], {
-    cwd: project,
-    encoding: "utf8",
-    env: { ...process.env, HOME: home, AIDD_USER_CONFIG_DIR: sinkDir },
-  });
-  const stdout = read.stdout || "";
-  // "no session found" says the join failed; "read" says it held and the session carried no
-  // billable record, which is right against a dead API. Two sentences on purpose.
-  const found = /Claude Code:\s*read/u.test(stdout);
-  report("read locates the session", found ? "present" : "MISSING", stdout.trim().split("\n")[1] ?? "");
-  if (!found) {
-    fail(
-      TOOL_CHANGED,
-      `\`aidd telemetry read\` did not locate the session the journal named on ${version}. ` +
-        `It exited ${read.status} and said:\n${stdout}`
-    );
-  }
-
-  printReport();
-  process.stdout.write(`\nthe identifier join holds on ${version} — ${hookId}\n`);
-  process.stdout.write("cost: zero tokens, no credentials, no model call reached.\n");
+  const captured = readJson(capture);
+  const transcriptPath = captured?.payload?.transcript_path;
+  const transcript = typeof transcriptPath === "string" ? readLines(transcriptPath) : null;
+  const verdict = judge({ configDir, captured, transcript });
+  log(verdict.code === 0 ? `${verdict.message}\n` : `TOOL CHANGED: ${verdict.message}\n`);
+  return verdict.code;
 }
 
-main();
+module.exports = { judge, probe };
+
+if (require.main === module) {
+  const version = spawnSync("claude", ["--version"], { encoding: "utf8" });
+  process.stdout.write(`${(version.stdout ?? "").trim() || "claude: no version"}\n`);
+  process.exit(probe({ host: ["claude"], log: (text) => process.stdout.write(text) }));
+}

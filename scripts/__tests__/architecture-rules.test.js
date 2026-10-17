@@ -229,7 +229,7 @@ test("sweeping the repository's own plugins/ tree yields zero violations", () =>
   assert.deepEqual(violations, []);
   // A sweep that never actually exercised a skill with action files would pass the same way —
   // this pins the sweep to the measured count so it cannot go vacuously green.
-  assert.equal(skillsWithActions, 49);
+  assert.equal(skillsWithActions, 48);
 });
 
 test("a table that declares no action column cites nothing, whatever its cells read", () => {
@@ -514,7 +514,7 @@ test("a fenced example table inside the Actions section cites nothing", () => {
   assert.match(violations[0].message, /never names action file "02-second\.md"/);
 });
 
-test("a fenced actions/<name>.md path still cites, the way 10-todo does", () => {
+test("a fenced actions/<name>.md path still cites, the way 10-batch does", () => {
   const content = [
     "# Fenced path skill",
     "",

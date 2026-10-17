@@ -250,6 +250,14 @@ describe("buildCursorFlatContract()", () => {
     });
   });
 
+  it("drops only the file's own .md from a flat agent's name", () => {
+    const transform = supported(buildCursorFlatContract().artifacts.agents).transform;
+
+    expect(transform?.(AGENT_SOURCE, "aidd-dev", "read.md-first.md")).toMatch(
+      /^name: 'aidd-dev-read\.md-first'$/mu
+    );
+  });
+
   it("renames a flat agent after its plugin and points its references at their flat destinations", () => {
     const transform = supported(buildCursorFlatContract().artifacts.agents).transform;
 

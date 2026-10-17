@@ -6,24 +6,32 @@ argument-hint: topic | auto
 
 # Rule Generate
 
-Manage canonical rules and their active publications per confirmed host, or author a plugin source.
+```mermaid
+flowchart TD
+  request[Rule request] --> capture-rule
+  capture-rule -->|create/update| decision[Assessed candidate]
+  decision -->|revise/clarify| capture-rule
+  decision -->|keep/cancel| stop
+  decision -->|approved| write-rule
+  capture-rule -->|publish/delete confirmed| write-rule
+  write-rule -->|revised| capture-rule
+  write-rule -->|refused| stop
+  write-rule -->|verified| result
+```
 
 ## Actions
 
-| #   | Action         | Role                                      | Input        |
-| --- | -------------- | ----------------------------------------- | ------------ |
-| 01  | `capture-rule` | Capture the topic, pick category and slug | user request |
-| 02  | `write-rule`   | Write the rule file per supported tool    | the topic    |
-| 03  | `validate`     | Check each rule file                      | the files    |
+Follow the flow. Read only the next action and its references.
 
-Run the actions in order, `01 → 03`, and run each action's `## Test` before the next.
-Before running an action, read its file in `actions/`, not only the table or assets.
+| Action | Does |
+| --- | --- |
+| capture-rule | frame, compare, plan, decide |
+| write-rule | write the approved result, verify |
 
-## References
+## Transversal rules
 
-- `references/rule-authoring.md`: the contract (taxonomy, naming, frontmatter, content).
-- `references/tool-paths.md`: per-tool rules path, frontmatter, unsupported tools, the gate.
-
-## Assets
-
-- `assets/rule-template.md`: rule file scaffold.
+- Report unsupported hosts with alternatives; a lone AGENTS file identifies no installed host.
+- Stop and name any installed reference that cannot be read.
+- Change existing sources or publications only with explicit permission naming them.
+- Write only after the user approves the candidate shown last. A choice, merge, edit or rename is not an approval: show the revision and wait.
+- Keep or cancel leaves project bytes unchanged.

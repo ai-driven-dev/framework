@@ -23,7 +23,6 @@ Organise by bounded context, never by layer.
 - Keep only shared vocabulary: types, pure helpers, typed errors.
 - A port two contexts need lives in `kernel/ports/`.
 - A domain decision is never kernel material.
-- Measurement vocabulary sits in `kernel/measurement.ts`; `tools` never imports `telemetry`.
 
 ## Interior
 

@@ -1,3 +1,7 @@
+---
+status: superseded
+---
+
 # One place per nature
 
 ## The ask

@@ -1,5 +1,34 @@
 # Changelog
 
+## [0.3.0](https://github.com/ai-driven-dev/framework/compare/aidd-telemetry-v0.2.1...aidd-telemetry-v0.3.0) (2026-10-16)
+
+
+### ⚠ BREAKING CHANGES
+
+* the aidd telemetry commands, the aidd-telemetry hooks and skills, backlog-link.json and the AIDD-Session-Id commit trailer are removed; measurement returns, for Claude Code first, later on this branch.
+
+### Features
+
+* **telemetry:** ask who is measured at opt-in ([#1034](https://github.com/ai-driven-dev/framework/issues/1034)) ([06dbb98](https://github.com/ai-driven-dev/framework/commit/06dbb980e2041267c3c20c8c4d236a63208213d6))
+* **telemetry:** deterministic claude code token measurement, release 1 ([#993](https://github.com/ai-driven-dev/framework/issues/993)) ([0a103e6](https://github.com/ai-driven-dev/framework/commit/0a103e6725cd9619a861d1ec3136b7534edabae3))
+* **telemetry:** filter the report by task, ticket, person and more ([#1033](https://github.com/ai-driven-dev/framework/issues/1033)) ([7084a88](https://github.com/ai-driven-dev/framework/commit/7084a88c009dca9fa422101dff789d410c9ec476))
+
+
+### Bug Fixes
+
+* **cli:** preserve noninteractive git fetches with simple-git v4 ([4ffbc0a](https://github.com/ai-driven-dev/framework/commit/4ffbc0a2f96a679b403d5eaa3f9c74c36bc5138e))
+* **cli:** restore OpenCode plugins and verify Kilo runtime hooks ([#971](https://github.com/ai-driven-dev/framework/issues/971)) ([12777d0](https://github.com/ai-driven-dev/framework/commit/12777d03808cee29f611e18d3816ae62ebc5c969))
+
+
+### Performance
+
+* **telemetry:** a report reads its period, not the whole history ([#1032](https://github.com/ai-driven-dev/framework/issues/1032)) ([ae8705f](https://github.com/ai-driven-dev/framework/commit/ae8705f761671478bed9c66a1884fe8a2870e3e4))
+
+
+### Documentation
+
+* delete the cost-report and metrics contracts and aidd_docs/runs/, rewrite ([0a103e6](https://github.com/ai-driven-dev/framework/commit/0a103e6725cd9619a861d1ec3136b7534edabae3))
+
 ## [0.2.1](https://github.com/ai-driven-dev/framework/compare/aidd-telemetry-v0.2.0...aidd-telemetry-v0.2.1) (2026-09-24)
 
 

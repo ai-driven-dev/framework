@@ -389,3 +389,72 @@ test("valid Unicode pairs and CRLF body survive installed generation and publica
   assert.equal(f.run(null, ALL, ["--publish"]).status, 0);
   assert.deepEqual(f.snapshot(), before);
 });
+
+const json = (result) => JSON.parse(result.stdout);
+
+test("--plan lists exact publication paths for create, update and delete without touching any byte", (t) => {
+  const f = fixture(t);
+  const before = f.snapshot();
+  const planned = f.run(rule, ALL, ["--plan", "--input", path.join(f.dir, "input.json")]);
+  assert.equal(planned.status, 0, planned.stderr);
+  assert.equal(json(planned).dryRun, true);
+  assert.deepEqual(json(planned).files.sort(), ["AGENTS.md", ".claude/rules/01-standards/1-naming.md", ".cursor/rules/01-standards/1-naming.mdc", ".github/instructions/01-naming.instructions.md", "aidd_docs/rules/01-standards/1-naming.md"].sort());
+  assert.deepEqual(f.snapshot(), before);
+  assert.equal(f.run().status, 0);
+  const published = f.snapshot();
+  const removal = f.run(null, ALL, ["--plan", "--delete", "01-standards/1-naming"]);
+  assert.equal(removal.status, 0, removal.stderr);
+  assert.ok(json(removal).files.includes(".claude/rules/01-standards/1-naming.md"));
+  assert.deepEqual(f.snapshot(), published);
+});
+
+test("--plan refuses exactly what the real run refuses and still changes nothing", (t) => {
+  const f = fixture(t);
+  const before = f.snapshot();
+  const bad = f.run({ ...rule, slug: "naming" }, ALL, ["--plan", "--input", path.join(f.dir, "input.json")]);
+  assert.equal(bad.status, 1);
+  assert.match(bad.stderr, /Invalid taxonomy category or matching #-slug/);
+  const absent = f.run(null, ALL, ["--plan", "--delete", "01-standards/1-naming"]);
+  assert.equal(absent.status, 1);
+  assert.match(absent.stderr, /Cannot delete an absent canonical rule/);
+  assert.deepEqual(f.snapshot(), before);
+});
+
+test("--check passes on an idempotent publication and names every drifting file otherwise", (t) => {
+  const f = fixture(t);
+  assert.equal(f.run().status, 0);
+  const before = f.snapshot();
+  const clean = f.run(null, ALL, ["--check", "--publish"]);
+  assert.equal(clean.status, 0, clean.stderr);
+  assert.deepEqual(json(clean).drift, []);
+  const source = "aidd_docs/rules/01-standards/1-naming.md";
+  f.put(source, f.read(source).replace(rule.body, "- Manual source edit.\n"));
+  const edited = f.snapshot();
+  const drifted = f.run(null, ALL, ["--check", "--publish"]);
+  assert.equal(drifted.status, 1);
+  assert.ok(json(drifted).drift.includes(".claude/rules/01-standards/1-naming.md"));
+  assert.ok(json(drifted).drift.includes("AGENTS.md"));
+  assert.deepEqual(f.snapshot(), edited);
+  assert.notDeepEqual(edited, before);
+});
+
+test("--check holds after a deletion that emptied the publications", (t) => {
+  const f = fixture(t);
+  assert.equal(f.run().status, 0);
+  assert.equal(f.run(null, ALL, ["--delete", "01-standards/1-naming"]).status, 0);
+  const after = f.snapshot();
+  const checked = f.run(null, ALL, ["--check", "--publish"]);
+  assert.equal(checked.status, 0, checked.stderr);
+  assert.deepEqual(json(checked).drift, []);
+  assert.deepEqual(f.snapshot(), after);
+});
+
+test("--plan and --check accept only the operations they can simulate", (t) => {
+  const f = fixture(t);
+  assert.equal(f.run().status, 0);
+  for (const extra of [["--check", "--delete", "01-standards/1-naming"], ["--check", "--plan", "--publish"], ["--plan"], ["--check"], ["--plan", "--plan", "--publish"]]) {
+    const result = f.run(null, ALL, extra);
+    assert.equal(result.status, 1, extra.join(" "));
+    assert.equal(result.stdout, "");
+  }
+});

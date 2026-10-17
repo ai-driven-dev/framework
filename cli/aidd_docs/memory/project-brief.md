@@ -25,13 +25,12 @@ What this package is, the problem it solves, and its domain language.
 | Marketplace | where plugins come from, registered per project or per machine |
 | Context | a bounded area of this codebase; the unit that owns a concern |
 | Capability | what a tool declares it can host — hooks, mcp, plugins, settings |
-| Record | one measured figure for one session, stored per machine |
-| Run journal | what a session did, written into the project by a hook |
-| Attribution | how strongly a figure is tied to a person, a task or a step |
+| Usage record | one billed model call, counted once and stored on this machine |
+| Declaration | the task and ticket a person states for their work; the only source of attribution |
 
 ## Key features
 
 - Install, update and remove the framework for a tool, and repair what drifted.
 - Install plugins from a marketplace, driving a tool's own CLI where its project files are inert.
 - Translate an arbitrary source into a target-native plugin tree, recording nothing.
-- Measure what sessions cost, from local files, with no service and no upload.
+- Count what Claude Code sessions consume, from local files, with no service and no upload.

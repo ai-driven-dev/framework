@@ -1,6 +1,6 @@
 ---
 objective: "A period breaks down by total, model, task, skill, person and project — all six from the shipped command, each resting on a capture really taken from the tool it describes."
-status: pending
+status: superseded
 ---
 
 # Plan: the core answers its six questions

@@ -48,24 +48,6 @@ export const opencode: AiTool<
   directory: DIRECTORY,
   toolSuffix: TOOL_SUFFIX,
   displayName: "OpenCode",
-  telemetryLocalRead: {
-    kind: "declared",
-    // Counters per message, and no amount: `info.cost` is `0` in every message captured and its
-    // denomination was never established, so it is deliberately never read. No field names a
-    // running skill either.
-    supplies: { tokenCounters: true, amount: false, toolStatedStep: false, agentName: false },
-    // `input` is measured exclusive of `cache.read` for providerID "anthropic", matching that
-    // API's own documented behaviour. A second, OpenAI-compatible provider reconciled the same
-    // way but never exercised its cache across two turns, so it corroborates without confirming;
-    // a provider reporting prompt tokens inclusive of the cached ones has never been captured.
-    limitation:
-      "Its four counters are measured disjoint for the anthropic provider and for one " +
-      "OpenAI-compatible provider whose cache was exercised — not confirmed for a " +
-      "provider that reports prompt tokens inclusive of the cached ones, which none " +
-      "captured here does.",
-  },
-  telemetryTaskAttributable: true,
-  telemetryJournalHost: "opencode",
   signalDir: ".opencode/commands",
   configOutputPaths: { "opencode.json": "opencode.json" },
   pluginRuntimeFiles: { [OPENCODE_EVENTS_ASSET]: OPENCODE_EVENTS_PATH },

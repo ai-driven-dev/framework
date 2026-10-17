@@ -1,5 +1,17 @@
 # Changelog
 
+## [3.1.1](https://github.com/ai-driven-dev/framework/compare/aidd-refine-v3.1.0...aidd-refine-v3.1.1) (2026-10-16)
+
+
+### Bug Fixes
+
+* **cli:** preserve noninteractive git fetches with simple-git v4 ([4ffbc0a](https://github.com/ai-driven-dev/framework/commit/4ffbc0a2f96a679b403d5eaa3f9c74c36bc5138e))
+
+
+### Refactoring
+
+* **aidd-refine:** simplify improve instructions ([#945](https://github.com/ai-driven-dev/framework/issues/945)) ([0cb7911](https://github.com/ai-driven-dev/framework/commit/0cb791163411b62f710441f6f5fe83a0c4319182))
+
 ## [3.1.0](https://github.com/ai-driven-dev/framework/compare/aidd-refine-v3.0.1...aidd-refine-v3.1.0) (2026-09-24)
 
 

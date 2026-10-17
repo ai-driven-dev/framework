@@ -1,5 +1,39 @@
 # Changelog
 
+## [2.9.0](https://github.com/ai-driven-dev/framework/compare/aidd-context-v2.8.1...aidd-context-v2.9.0) (2026-10-16)
+
+
+### Features
+
+* **aidd-orchestrator:** add an interactive SDLC mode ([#967](https://github.com/ai-driven-dev/framework/issues/967)) ([c5ac56b](https://github.com/ai-driven-dev/framework/commit/c5ac56bed2fb791042de060e1db8e1d9b97da18e))
+
+
+### Bug Fixes
+
+* **aidd-context:** generate rules through a standalone skill script ([#979](https://github.com/ai-driven-dev/framework/issues/979)) ([c827990](https://github.com/ai-driven-dev/framework/commit/c827990ff483a4bcba11185c8e069c3fb5ca36f2)), closes [#913](https://github.com/ai-driven-dev/framework/issues/913)
+* **aidd-context:** keep memory readme links relative on windows ([#987](https://github.com/ai-driven-dev/framework/issues/987)) ([4205484](https://github.com/ai-driven-dev/framework/commit/4205484062fa4e1a1be912a0e4ddca0ef4afe84f)), closes [#986](https://github.com/ai-driven-dev/framework/issues/986)
+* **cli:** preserve noninteractive git fetches with simple-git v4 ([4ffbc0a](https://github.com/ai-driven-dev/framework/commit/4ffbc0a2f96a679b403d5eaa3f9c74c36bc5138e))
+* **framework:** close the architecture guard's three recorded gaps ([#1005](https://github.com/ai-driven-dev/framework/issues/1005)) ([4140a53](https://github.com/ai-driven-dev/framework/commit/4140a53902774e0448651a8549cdd488e12947ec)), closes [#884](https://github.com/ai-driven-dev/framework/issues/884)
+* **framework:** leave model selection to the user ([#989](https://github.com/ai-driven-dev/framework/issues/989)) ([41e9169](https://github.com/ai-driven-dev/framework/commit/41e91691b5837a8c27475d0115725131bb53bf41))
+
+
+### Documentation
+
+* **aidd-context:** avoid revisiting completed answers ([f63c943](https://github.com/ai-driven-dev/framework/commit/f63c943041d3a0f72147f081c16ef84885f5cdbd))
+* **aidd-context:** clarify simplicity and efficiency guidance ([1968392](https://github.com/ai-driven-dev/framework/commit/196839269252da414435ff58d8d9a319d0d7f3fd))
+* **aidd-context:** expand the mcp and cli guide by usage ([#1015](https://github.com/ai-driven-dev/framework/issues/1015)) ([b688e40](https://github.com/ai-driven-dev/framework/commit/b688e40209a779fd20df1ad55791d8cdd6cce4c7))
+* **aidd-context:** let rule generation cover OpenCode V1 ([#1009](https://github.com/ai-driven-dev/framework/issues/1009)) ([fd82072](https://github.com/ai-driven-dev/framework/commit/fd820724fb6563358a9619b1204678d851ce5fd4))
+* **aidd-context:** preserve precision in concise instructions ([48a92c5](https://github.com/ai-driven-dev/framework/commit/48a92c54ddd2efbf2bec7e9eb451880d7fc8d083))
+* **aidd-context:** recognize insults as frustration signals ([6507957](https://github.com/ai-driven-dev/framework/commit/6507957ea3b8c217eec0ecbb849a54b41e890f90))
+* **aidd-context:** reduce cognitive load in agents instructions ([7f0b344](https://github.com/ai-driven-dev/framework/commit/7f0b344b4ae37c083aa9473e0e6347b196b630ef))
+* **aidd-context:** reduce reader cognitive load ([c0c5a8d](https://github.com/ai-driven-dev/framework/commit/c0c5a8d47158064c956cc3eb5c859fa69af06e85))
+* **aidd-context:** refine agent behavior and context guidance ([4b5065e](https://github.com/ai-driven-dev/framework/commit/4b5065e2fc1cdf0e7f82b1b505ab8b7444730af0))
+* **aidd-context:** refine concise communication guidance ([cb8d0f0](https://github.com/ai-driven-dev/framework/commit/cb8d0f097f48b97eedd012fca9a753be1fa71811))
+* **aidd-context:** restore memory loading conditions ([cef34df](https://github.com/ai-driven-dev/framework/commit/cef34df8d2e75f589f1902d657b349b29dc6ed30))
+* **aidd-context:** retain intention in naming guidance ([b573fb3](https://github.com/ai-driven-dev/framework/commit/b573fb376056e60dfa02e9e6ac7f7ea76ed6f65c))
+* **aidd-context:** shorten repeated file citations ([156f543](https://github.com/ai-driven-dev/framework/commit/156f54320849fcf4ee11cebbdcdb063ccf668c70))
+* **aidd-context:** shorten repeated file citations ([18bc4f2](https://github.com/ai-driven-dev/framework/commit/18bc4f22d38ec95f4ed5e2c746f37b5b0f6f371a))
+
 ## [2.8.1](https://github.com/ai-driven-dev/framework/compare/aidd-context-v2.8.0...aidd-context-v2.8.1) (2026-09-24)
 
 

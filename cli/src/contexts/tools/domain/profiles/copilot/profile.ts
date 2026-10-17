@@ -213,21 +213,6 @@ export const copilot: AiTool<
   directory: DIRECTORY,
   toolSuffix: TOOL_SUFFIX,
   displayName: "GitHub Copilot",
-  telemetryLocalRead: {
-    kind: "declared",
-    supplies: { tokenCounters: true, amount: false, toolStatedStep: false, agentName: false },
-    // `input` is measured exclusive of `cache_read`: on a session carrying a non-zero
-    // `cache_read`, 9 (`input`) + 42038 (`cache_read`) + 21404 (`cache_write`) = 63451, exactly
-    // `modelMetrics.<model>.usage.inputTokens`. The four counters this reader stores are
-    // therefore disjoint and the report is right to add them; an `input` that included
-    // `cache_read` would have over-counted every Copilot session by its cached share.
-    limitation:
-      "Its own file names outputTokens per turn, but session.shutdown carries all four " +
-      "counters for the whole session — a session total, never a sum of requests. Its four " +
-      "counters are measured disjoint, cached prompt included.",
-  },
-  telemetryTaskAttributable: true,
-  telemetryJournalHost: "copilot",
   signalDir: ".github/prompts",
   buildContracts: {
     marketplace: buildCopilotMarketplaceContract,

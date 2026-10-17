@@ -70,8 +70,8 @@ describe("E2E: the sandbox a test spawns into", () => {
     try {
       const env = sandboxedEnv(fakeHome);
 
-      // The hook helper shells out to git; absolute Node avoids resolving Codex from PATH.
-      // Requiring both executables catches a sandbox that would otherwise pass vacuously.
+      // The hook shells out to git; each spawned command is absolute Node, so the sandbox
+      // cannot pass vacuously by resolving neither executable from PATH.
       expect(await whichUnderSandbox("git", projectDir, env)).not.toBe("");
       const { stdout } = await execFileAsync(process.execPath, ["--version"], {
         cwd: projectDir,

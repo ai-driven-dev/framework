@@ -121,20 +121,6 @@ aidd setup --scope user --ai claude,codex,copilot --plugins none --yes
 | `aidd auth status` | Show which credential resolves, from where, at which level |
 | `aidd auth logout` | Delete the stored credential |
 
-### Telemetry
-
-Opt-in, off until asked. Record shapes and report axes: [`../plugins/aidd-telemetry/README.md`](../plugins/aidd-telemetry/README.md).
-
-| Command | Does |
-| --- | --- |
-| `aidd telemetry on` | Flip the git-tracked switch on and git-ignore the run journal |
-| `aidd telemetry off` | Flip the switch off, warning when a tool still exports on its own |
-| `aidd telemetry check` | Say whether the chain is actually recording for this project |
-| `aidd telemetry read` | Read session cost from the files the tools already wrote |
-| `aidd telemetry report` | Report a period, or one task in it, along one `--axis` |
-| `aidd telemetry identity` | Attach or drop this person's identifier: `use`, `off`, `link`, `unlink` |
-| `aidd telemetry forget` | Irreversibly drop the journal, the stored records, and the identity file |
-
 ## Translate
 
 `aidd translate <source> --to <tool> --out <dir>` converts a framework source tree into a target-native plugin tree.
@@ -163,11 +149,7 @@ OpenCode and Kilo Code declare no marketplace contract, so they are flat only. E
 | `AIDD_TOKEN` | Token used for every fetch, ahead of any stored credential |
 | `AIDD_USER_CONFIG_DIR` | Relocates the user config directory outright, credentials included |
 | `XDG_CONFIG_HOME` | Names the config root when `AIDD_USER_CONFIG_DIR` is unset |
-| `AIDD_TELEMETRY_DIR` | Names where telemetry records are kept, ahead of the config directory |
-| `AIDD_RUNS_DIR` | Names the run journal directory, read alike by the CLI and the hook |
 | `AIDD_SKIP_UPDATE_CHECK` | Set to `1`, skips the self-update check before a command |
-
-Share `AIDD_TELEMETRY_DIR` to pool figures across a team. Never share `AIDD_USER_CONFIG_DIR`: it also moves `auth.json`.
 
 ## Where things live
 
@@ -176,11 +158,10 @@ In the project:
 | Path | Holds |
 | --- | --- |
 | `.aidd/manifest.json` | Every owned file and its hash |
-| `.aidd/config.json` | The telemetry switch, git-tracked, kept by `clean` |
+| `.aidd/config.json` | A git-tracked file `clean` never removes |
 | `.aidd/auth.json` | The project-level credential |
 | `.aidd/marketplaces.json` | Marketplaces registered at project scope |
 | `.aidd/cache/`, `.aidd/plugin-cache/` | Fetched catalogs, built trees, plugin sources |
-| `aidd_docs/runs/` | The run journal, at the repository root above the project |
 
 On the machine, under `$AIDD_USER_CONFIG_DIR`, else `$XDG_CONFIG_HOME/aidd`, else `~/.config/aidd`:
 
@@ -188,9 +169,6 @@ On the machine, under `$AIDD_USER_CONFIG_DIR`, else `$XDG_CONFIG_HOME/aidd`, els
 - `marketplaces.json` and `references.json`, the user-scope registry and the projects claiming it.
 - `manifest.json`, what `--scope user` owns.
 - `cache/built/<version>/`, one built tree per CLI version.
-- Telemetry records, unless `AIDD_TELEMETRY_DIR` moves them.
-
-The person identity file stays in the user profile and is never relocated by `AIDD_USER_CONFIG_DIR`.
 
 Per tool, the settings file the CLI writes:
 

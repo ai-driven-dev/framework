@@ -20,8 +20,8 @@
       "shards": 4
     },
     "telemetry": {
-      "mutate": "src/contexts/telemetry/**/*.ts",
-      "break": 93,
+      "mutate": ["src/contexts/telemetry/**/*.ts", "src/presentation/display/telemetry/**/*.ts"],
+      "break": 96,
       "shards": 3
     },
     "translate": {
@@ -39,7 +39,7 @@
       "shards": 4
     },
     "presentation": {
-      "mutate": "src/presentation/**/*.ts",
+      "mutate": ["src/presentation/**/*.ts", "!src/presentation/display/telemetry/**/*.ts"],
       "break": 95
     },
     "runtime": {

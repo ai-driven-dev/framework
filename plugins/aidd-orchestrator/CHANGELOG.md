@@ -1,5 +1,28 @@
 # Changelog
 
+## [2.4.0](https://github.com/ai-driven-dev/framework/compare/aidd-orchestrator-v2.3.1...aidd-orchestrator-v2.4.0) (2026-10-16)
+
+
+### ⚠ BREAKING CHANGES
+
+* the aidd telemetry commands, the aidd-telemetry hooks and skills, backlog-link.json and the AIDD-Session-Id commit trailer are removed; measurement returns, for Claude Code first, later on this branch.
+
+### Features
+
+* **aidd-dev:** rename todo to batch and report each agent's outcome ([#984](https://github.com/ai-driven-dev/framework/issues/984)) ([eeb9b21](https://github.com/ai-driven-dev/framework/commit/eeb9b2140578accfd09abe74c4f4d94f9ac987c2))
+* **aidd-orchestrator:** add an interactive SDLC mode ([#967](https://github.com/ai-driven-dev/framework/issues/967)) ([c5ac56b](https://github.com/ai-driven-dev/framework/commit/c5ac56bed2fb791042de060e1db8e1d9b97da18e))
+* **telemetry:** deterministic claude code token measurement, release 1 ([#993](https://github.com/ai-driven-dev/framework/issues/993)) ([0a103e6](https://github.com/ai-driven-dev/framework/commit/0a103e6725cd9619a861d1ec3136b7534edabae3))
+
+
+### Bug Fixes
+
+* **cli:** preserve noninteractive git fetches with simple-git v4 ([4ffbc0a](https://github.com/ai-driven-dev/framework/commit/4ffbc0a2f96a679b403d5eaa3f9c74c36bc5138e))
+
+
+### Documentation
+
+* delete the cost-report and metrics contracts and aidd_docs/runs/, rewrite ([0a103e6](https://github.com/ai-driven-dev/framework/commit/0a103e6725cd9619a861d1ec3136b7534edabae3))
+
 ## [2.3.1](https://github.com/ai-driven-dev/framework/compare/aidd-orchestrator-v2.3.0...aidd-orchestrator-v2.3.1) (2026-09-24)
 
 

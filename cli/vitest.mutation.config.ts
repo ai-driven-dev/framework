@@ -1,4 +1,5 @@
 import { defineConfig } from "vitest/config";
+import { CheapestKillerFirst } from "./tests/helpers/mutation-sequencer.js";
 import { UnloadableFileAsFailedTest } from "./tests/helpers/unloadable-file-as-failed-test.js";
 import { textLoader } from "./tests/helpers/vitest-text-loader.js";
 
@@ -23,10 +24,15 @@ const TEXT_EXTENSIONS = [".md", ".toml", ".txt"] as const;
  * module from loading was reported as survived. `UnloadableFileAsFailedTest` gives such a file
  * one failed test carrying its load error. Vitest types a test with a context only it can build;
  * that test has none, and nothing reads one once the run has finished.
+ *
+ * Stryker stops a mutant at its first failing test, so `CheapestKillerFirst` runs the unit
+ * files before the integration ones, the smallest first: the test that kills a mutant in a
+ * millisecond no longer waits behind the slow files Vitest would otherwise start with.
  */
 export default defineConfig({
   test: {
     reporters: ["default", new UnloadableFileAsFailedTest()],
+    sequence: { sequencer: CheapestKillerFirst },
     projects: [
       {
         extends: false,

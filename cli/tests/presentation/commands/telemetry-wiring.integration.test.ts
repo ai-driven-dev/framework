@@ -1,622 +1,644 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { Command } from "commander";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import "../../../src/contexts/tools/domain/profiles/claude/profile.js";
-import { buildCostReport } from "../../../src/contexts/telemetry/domain/cost-report.js";
-import { DEFAULT_REPORT_DAYS } from "../../../src/contexts/telemetry/domain/report-period.js";
-import type { TelemetryRemovalPreview } from "../../../src/contexts/telemetry/domain/telemetry-removal.js";
-import { ARTEFACT_AXES } from "../../../src/presentation/display/cost-report-artefact.js";
+import {
+  conflictsOf,
+  type ReportFilters,
+} from "../../../src/contexts/telemetry/domain/report/report-filter.js";
 
-const telemetryOn = vi.fn();
-const telemetryOff = vi.fn();
-const readLocalCost = vi.fn();
-const reportCost = vi.fn();
-const diagnose = vi.fn();
-const forgetPreview = vi.fn();
-const forgetRemove = vi.fn();
-const identityStatus = vi.fn();
-const identityUse = vi.fn();
-const identityOff = vi.fn();
-const identityLink = vi.fn();
-const identityUnlink = vi.fn();
+const ingest = vi.fn();
+const declare = vi.fn();
+const show = vi.fn();
+const report = vi.fn();
+const identity = { show: vi.fn(), set: vi.fn(), off: vi.fn() };
+const turnOn = vi.fn();
+const turnOff = vi.fn();
+const forget = vi.fn();
+const confirm = vi.fn();
+const select = vi.fn();
+const input = vi.fn();
+const propose = vi.fn();
 
 vi.mock("../../../src/runtime/wiring/framework.js", () => ({
   createDeps: vi.fn(async () => ({
-    telemetryOnUseCase: { execute: telemetryOn },
-    telemetryOffUseCase: { execute: telemetryOff },
-    readLocalCostUseCase: { execute: readLocalCost },
-    reportCostUseCase: { execute: reportCost },
-    diagnoseTelemetryUseCase: { execute: diagnose },
-    forgetTelemetryUseCase: { preview: forgetPreview, remove: forgetRemove },
-    personIdentityUseCase: {
-      status: identityStatus,
-      use: identityUse,
-      off: identityOff,
-      link: identityLink,
-      unlink: identityUnlink,
+    prompter: { confirm, select, input },
+    telemetry: {
+      telemetryOnUseCase: { execute: turnOn },
+      telemetryOffUseCase: { execute: turnOff },
+      forgetTelemetryUseCase: { execute: forget },
+      ingestUsageUseCase: { execute: ingest },
+      declareTaskUseCase: { execute: declare },
+      telemetryStatusUseCase: { execute: show },
+      reportUsageUseCase: { execute: report },
+      manageIdentityUseCase: identity,
+      proposeIdentityUseCase: { execute: propose },
     },
-    telemetrySink: { locatedBy: "default", rootDir: "/records" },
   })),
   createMenuDeps: vi.fn(),
 }));
 
-const { createDeps } = await import("../../../src/runtime/wiring/framework.js");
 const { registerTelemetryCommand } = await import(
   "../../../src/presentation/commands/telemetry.js"
 );
 
-const PROJECT_ROOT = process.cwd();
-
-function emptyReport() {
-  return buildCostReport({
-    fromDay: "2026-08-17",
-    toDay: "2026-08-17",
-    records: [],
-    journals: [],
-    declaredTools: [
-      {
-        tool: "claude",
-        coverage: "covered",
-        capability: {
-          localRead: null,
-          export: null,
-          journalAttributable: false,
-          taskAttributable: false,
-        },
-      },
-    ],
-    undatedRecords: 0,
-    unreadableLines: 0,
-    measurementEnabled: true,
-  });
+class Exit extends Error {
+  constructor(readonly code: number | undefined) {
+    super(`exit ${String(code)}`);
+  }
 }
 
-const NOTHING_TO_REMOVE: TelemetryRemovalPreview = {
-  journal: { scope: "project", path: "/repo/aidd_docs/runs", runFileNames: [] },
-  sink: { scope: "machine", path: "/records", dayFileNames: [] },
-  identity: { scope: "machine", path: "/h/identity.json", present: false, unreadable: false },
-  history: { certainty: "none" },
-};
-
-const ONE_RUN_FILE: TelemetryRemovalPreview = {
-  ...NOTHING_TO_REMOVE,
-  journal: { scope: "project", path: "/repo/aidd_docs/runs", runFileNames: ["a.jsonl"] },
-};
-
-let written: string[] = [];
+let out: string[] = [];
+let err: string[] = [];
 
 beforeEach(() => {
   vi.clearAllMocks();
-  written = [];
+  out = [];
+  err = [];
   vi.spyOn(process.stdout, "write").mockImplementation((chunk) => {
-    written.push(String(chunk));
+    out.push(String(chunk));
     return true;
   });
-  vi.spyOn(process.stderr, "write").mockImplementation(() => true);
-  telemetryOn.mockResolvedValue({ switchPath: "/repo/.aidd/config.json", switchChanged: true });
-  telemetryOff.mockResolvedValue({ switchPath: "/repo/.aidd/config.json", switchChanged: true });
-  readLocalCost.mockResolvedValue({ sessions: [], toolReports: [] });
-  reportCost.mockResolvedValue(emptyReport());
-  diagnose.mockResolvedValue({
-    gate: "measurement is off",
-    setup: checkSetup(),
-    leftoverExportConfig: [],
+  vi.spyOn(process.stderr, "write").mockImplementation((chunk) => {
+    err.push(String(chunk));
+    return true;
   });
-  forgetPreview.mockResolvedValue(NOTHING_TO_REMOVE);
-  forgetRemove.mockResolvedValue({
-    journal: { removed: 0, failed: [] },
-    sink: { removed: 0, failed: [] },
-    identity: { removed: 0, failed: [] },
-    history: { certainty: "none" },
-  });
-  identityStatus.mockResolvedValue({ filePath: "/h/identity.json", identity: null });
-  identityUse.mockResolvedValue({
-    filePath: "/h/identity.json",
-    identity: { personId: "p-1", origin: "minted", alsoMe: [] },
-    outcome: "minted",
-  });
-  identityOff.mockResolvedValue({
-    filePath: "/h/identity.json",
-    removed: false,
-    discardedDamaged: false,
-    addedIdentifiersRemoved: 0,
-  });
-  identityLink.mockResolvedValue({
-    filePath: "/h/identity.json",
-    personId: "p-1",
-    identity: "machine-2",
-    alreadyListed: true,
-  });
-  identityUnlink.mockResolvedValue({
-    filePath: "/h/identity.json",
-    identity: "machine-2",
-    removed: false,
+  vi.spyOn(process, "exit").mockImplementation((code) => {
+    throw new Exit(code as number | undefined);
   });
 });
-
 afterEach(() => {
   vi.restoreAllMocks();
-  process.exitCode = undefined;
 });
 
-function checkSetup() {
-  return {
-    allowed: {
-      allowed: true,
-      readable: true,
-      location: "/repo/.aidd/config.json",
-      decidedBy: "project-switch",
-    },
-    identity: { attached: false, path: "/h/identity.json", readable: true },
-    recordsLocation: { path: "/records" },
-    hostRegistration: { entries: [] },
-    commitTrailer: {
-      delegate: "executable",
-      callSite: "present",
-      hookHasOtherContent: false,
-      hooksDir: "/repo/.git/hooks",
-    },
-    recorderDeclaration: {
-      declared: true,
-      declaredAt: ["/repo/.aidd/manifest.json"],
-      locationsChecked: ["/repo/.aidd/manifest.json"],
-      unreadable: [],
-    },
-    versions: { cli: "5.2.2", plugin: { kind: "nothing-journalled" } },
-  } as const;
-}
-
-async function run(...args: string[]): Promise<string[]> {
+async function run(...args: string[]): Promise<number | null> {
   const program = new Command();
   program.exitOverride();
+  program.option("--verbose");
   registerTelemetryCommand(program);
-  await program.parseAsync(["node", "aidd", "telemetry", ...args]);
-  return written.join("").split("\n").slice(0, -1);
+  try {
+    await program.parseAsync(["node", "aidd", "telemetry", ...args]);
+    return null;
+  } catch (error) {
+    if (error instanceof Exit) return error.code ?? 0;
+    throw error;
+  }
 }
+const stdout = () => out.join("");
+const stderr = () => err.join("");
 
-describe("aidd telemetry on | off", () => {
-  it("passes the flag a person confirmed with, and prints what the switch became", async () => {
-    expect(await run("on", "--yes")).toEqual([
-      "AIDD telemetry: on (/repo/.aidd/config.json)",
-      "/repo/.aidd/config.json is git-tracked — this applies to everyone who clones.",
-    ]);
-    expect(telemetryOn).toHaveBeenCalledWith({ projectRoot: PROJECT_ROOT, confirmed: true });
+const NOT_STORED = {
+  "outside-repo": 0,
+  "never-seen-alive": 0,
+  "no-consent": 0,
+  "consent-closed": 0,
+  "unreadable-consent": 0,
+  "no-cwd": 0,
+  undated: 0,
+};
+const ZERO = { known: 0, unknownRecords: 0 };
+const NO_FILTERS = {
+  task: null,
+  ticket: null,
+  person: null,
+  model: null,
+  agent: null,
+  session: null,
+  repository: null,
+  absent: null,
+  unattributed: null,
+};
+const reported = {
+  status: "reported",
+  period: { from: null, to: null },
+  filters: NO_FILTERS,
+  report: {
+    axis: "total",
+    rows: [],
+    totals: {
+      records: 0,
+      counters: { input: ZERO, output: ZERO, cache_read: ZERO, cache_write: ZERO },
+      total: ZERO,
+    },
+  },
+  coverage: { records: 0, leftOut: { undated: 0, unrecognised: 0 } },
+  run: {
+    filesRead: 0,
+    unrecognised: 0,
+    notStored: NOT_STORED,
+    consentLogDamaged: false,
+    oldestTranscriptAt: null,
+    skippedLedgerLines: 0,
+  },
+};
+
+describe("aidd telemetry report", () => {
+  it("asks for every day on the total axis when nothing is given, and prints text", async () => {
+    report.mockResolvedValue(reported);
+    expect(await run("report")).toBeNull();
+    expect(report).toHaveBeenCalledWith({
+      axis: "total",
+      period: { from: null, to: null },
+      filters: NO_FILTERS,
+    });
+    expect(stdout()).toContain("Usage, all days, by total");
   });
 
-  it("passes an unconfirmed run as unconfirmed, never as absent", async () => {
-    await run("on");
-
-    expect(telemetryOn).toHaveBeenCalledWith({ projectRoot: PROJECT_ROOT, confirmed: false });
-  });
-
-  it("asks off for nothing but the project, and prints what stays behind", async () => {
-    const lines = await run("off");
-
-    expect(telemetryOff).toHaveBeenCalledWith({ projectRoot: PROJECT_ROOT });
-    expect(lines[0]).toBe("AIDD telemetry: off (/repo/.aidd/config.json)");
-  });
-});
-
-describe("aidd telemetry read", () => {
-  it("sweeps every journalled session when none was named", async () => {
-    const lines = await run("read");
-
-    expect(Object.keys(readLocalCost.mock.calls[0][0]).sort()).toEqual(["env", "projectRoot"]);
-    expect(lines).toEqual(["  No session journalled yet — nothing to read."]);
-  });
-
-  it("narrows to the one session a person named", async () => {
-    await run("read", "--session", "s-1");
-
-    expect(readLocalCost).toHaveBeenCalledWith({
-      projectRoot: PROJECT_ROOT,
-      env: process.env,
-      sessionId: "s-1",
+  it("passes the axis and the days it was given", async () => {
+    report.mockResolvedValue(reported);
+    await run("report", "--axis", "task", "--from", "2026-10-01", "--to", "2026-10-07");
+    expect(report).toHaveBeenCalledWith({
+      axis: "task",
+      period: { from: "2026-10-01", to: "2026-10-07" },
+      filters: NO_FILTERS,
     });
   });
-});
 
-describe("aidd telemetry report — what it asks for", () => {
-  it("resolves the period from the days given, and carries no filter nobody gave", async () => {
-    await run("report", "--from", "2026-08-17", "--to", "2026-08-19");
-
-    const asked = reportCost.mock.calls[0][0];
-    expect(asked.period).toEqual({ fromDay: "2026-08-17", toDay: "2026-08-19" });
-    expect(Object.keys(asked).sort()).toEqual(["env", "filters", "period", "projectRoot"]);
-    expect(Object.keys(asked.filters)).toEqual([]);
+  it("turns --days into the last days, today included", async () => {
+    report.mockResolvedValue(reported);
+    await run("report", "--days", "1");
+    const [asked] = report.mock.calls[0] as [{ period: { from: string; to: string } }];
+    const { period } = asked;
+    expect(period.from).toBe(period.to);
   });
 
-  it("carries the task and every filter a person named, each under its own key", async () => {
+  it("prints the versioned envelope with --json, and nothing else", async () => {
+    report.mockResolvedValue(reported);
+    await run("report", "--json");
+    expect(JSON.parse(stdout())).toMatchObject({ version: 2, axis: "total", rows: [] });
+  });
+
+  it("prints the refusal envelope with --json when nothing was read", async () => {
+    report.mockResolvedValue({ status: "refused" });
+    await run("report", "--json");
+    expect(JSON.parse(stdout())).toEqual({ version: 2, refused: "AIDD_TELEMETRY=0" });
+  });
+
+  it("refuses a bad period before reading anything, with exit 1", async () => {
+    expect(await run("report", "--days", "0")).toBe(1);
+    expect(stderr()).toContain("--days takes a positive whole number.");
+    expect(report).not.toHaveBeenCalled();
+  });
+
+  it("refuses an axis it does not know", async () => {
+    await expect(run("report", "--axis", "colour")).rejects.toThrow();
+  });
+});
+
+describe("aidd telemetry report, narrowed", () => {
+  const asked = () => (report.mock.calls[0] as [{ filters: unknown }])[0].filters;
+  /** Commander refuses a flag value itself: with `exitOverride` it throws its exit code. */
+  async function refused(...args: string[]): Promise<number> {
+    try {
+      const code = await run("report", ...args);
+      if (code === null) throw new Error("not refused");
+      return code;
+    } catch (error) {
+      if (error instanceof Error && "exitCode" in error) return error.exitCode as number;
+      throw error;
+    }
+  }
+
+  it("passes every flag it is given, trimmed as a declaration is", async () => {
+    report.mockResolvedValue(reported);
     await run(
       "report",
-      "--from",
-      "2026-08-17",
-      "--to",
-      "2026-08-19",
-      "--task",
-      "2026_08/x",
-      "--project",
-      "acme/widgets",
-      "--step",
-      "aidd-dev:02-implement",
-      "--model",
-      "opus",
-      "--tool",
-      "claude"
+      ...["--task", "  auth refactor ", "--ticket", "PROJ-1", "--person", "p-1"],
+      ...["--model", "m-1", "--agent", " subagent", "--session", "a1b2", "--repository", "r-1"]
     );
-
-    expect(reportCost).toHaveBeenCalledWith({
-      period: { fromDay: "2026-08-17", toDay: "2026-08-19" },
-      projectRoot: PROJECT_ROOT,
-      env: process.env,
-      task: "2026_08/x",
-      filters: {
-        project: "acme/widgets",
-        step: "aidd-dev:02-implement",
-        model: "opus",
-        tool: "claude",
-      },
+    expect(asked()).toEqual({
+      ...NO_FILTERS,
+      task: "auth refactor",
+      ticket: "PROJ-1",
+      person: "p-1",
+      model: "m-1",
+      agent: "subagent",
+      session: "a1b2",
+      repository: "r-1",
     });
+    vi.clearAllMocks();
+    await run("report", "--absent", " person ");
+    expect(asked()).toEqual({ ...NO_FILTERS, absent: "person" });
   });
 
-  it("counts back from the last day when a span, not a first day, was given", async () => {
-    await run("report", "--to", "2026-08-19", "--days", "3");
-
-    expect(reportCost).toHaveBeenCalledWith(
-      expect.objectContaining({ period: { fromDay: "2026-08-17", toDay: "2026-08-19" } })
-    );
-  });
-});
-
-describe("aidd telemetry report — the rendering it picks", () => {
-  const PERIOD = ["--from", "2026-08-17", "--to", "2026-08-17"];
-
-  it("prints the terminal rendering when neither shape was asked for", async () => {
-    expect(await run("report", ...PERIOD)).toEqual([
-      "period    2026-08-17 to 2026-08-17",
-      "",
-      "  sessions                  nothing in this period",
-      "  requests                  nothing in this period",
-      "",
-      "  by tool",
-      "    Claude Code               nothing in this period",
-      "",
-      "  by day",
-      "    2026-08-17                nothing in this period",
-    ]);
+  it("asks for the repository the command runs in for `.`", async () => {
+    report.mockResolvedValue(reported);
+    await run("report", "--repository", " . ");
+    expect(asked()).toEqual({ ...NO_FILTERS, here: process.cwd() });
   });
 
-  it("prints one parseable object, and nothing else, for --json", async () => {
-    const lines = await run("report", ...PERIOD, "--json");
-
-    expect(JSON.parse(lines.join("\n"))).toMatchObject({
-      period: { from_day: "2026-08-17", to_day: "2026-08-17" },
-    });
+  it("reads a bare --unattributed as either reason, and takes one reason", async () => {
+    report.mockResolvedValue(reported);
+    await run("report", "--unattributed");
+    expect(asked()).toEqual({ ...NO_FILTERS, unattributed: "any" });
+    vi.clearAllMocks();
+    await run("report", "--unattributed", "declared-none", "--axis", "day");
+    expect(asked()).toEqual({ ...NO_FILTERS, unattributed: "declared-none" });
   });
 
-  it("prints the one axis asked for as a table, never the whole report", async () => {
-    expect(await run("report", ...PERIOD, "--axis", "total")).toEqual([
-      "period 2026-08-17 to 2026-08-17 — axis: total",
-      "",
-      "nothing in this period",
-    ]);
+  it.each([
+    ["an open flag given twice", ["--task", "a", "--task", "b"], "--task"],
+    ["a closed flag given twice", ["--agent", "main", "--agent", "main"], "--agent"],
+    ["a bare flag given twice", ["--unattributed", "--unattributed"], "--unattributed"],
+    ["a value empty once trimmed", ["--ticket", "   "], "--ticket"],
+    ["an agent no call can have", ["--agent", "robot"], "--agent"],
+    ["an axis no call lacks", ["--absent", "session"], "--absent"],
+    ["a reason no call has", ["--unattributed", "no-task"], "--unattributed"],
+  ])("refuses %s with exit 1, naming the flag, before reading anything", async (_, args, flag) => {
+    expect(await refused(...args)).toBe(1);
+    expect(stderr()).toContain(flag);
+    expect(report).not.toHaveBeenCalled();
   });
 
-  it("prefers the object over the table when both were asked for", async () => {
-    const lines = await run("report", ...PERIOD, "--json", "--axis", "total");
-
-    expect(() => JSON.parse(lines.join("\n"))).not.toThrow();
-  });
-});
-
-describe("aidd telemetry check", () => {
-  it("asks for this project and its environment, then prints the report", async () => {
-    const lines = await run("check");
-
-    expect(diagnose).toHaveBeenCalledWith({ projectRoot: PROJECT_ROOT, env: process.env });
-    expect(lines.at(-1)).toBe("  measurement is off");
+  it("refuses a bare flag given twice by its name, not by the value it was preset to", async () => {
+    expect(await refused("--unattributed", "--unattributed")).toBe(1);
+    expect(stderr()).toContain("--unattributed is given twice: give it once.");
+    expect(stderr()).not.toContain("null");
   });
 
-  // A gated run judged nothing, so it can find nothing wanting: failing the process there
-  // would report a project that switched measurement off as broken.
-  it("leaves the exit code alone when the run was gated before judging", async () => {
-    diagnose.mockResolvedValue({
-      gate: "measurement is off",
-      setup: checkSetup(),
-      claims: [{ claim: "hook-fired", verdict: "fail", reason: "none", detail: "none" }],
-      leftoverExportConfig: [],
-    });
+  it.each([
+    [["--unattributed", "--task", "a"], "--task and --unattributed"],
+    [["--ticket", "T", "--unattributed", "no-binding"], "--ticket and --unattributed"],
+    [["--absent", "ticket", "--unattributed"], "--absent ticket and --unattributed"],
+    [["--model", "m", "--absent", "model"], "--model and --absent model"],
+  ])(
+    "exits 1 on %j, which select on one axis, naming both as the report refuses them",
+    async (args, flags) => {
+      // The use case's own refusal, as `report-usage-use-case.unit.test.ts` pins it.
+      report.mockImplementation(async ({ filters }: { filters: ReportFilters }) => {
+        const [conflict] = conflictsOf(filters);
+        return conflict === undefined
+          ? reported
+          : { status: "conflicting", flags: conflict, absent: filters.absent };
+      });
+      expect(await run("report", ...args)).toBe(1);
+      expect(report).toHaveBeenCalledTimes(1);
+      expect(stderr()).toContain(flags);
+      expect(stdout()).toBe("");
+    }
+  );
 
-    await run("check");
-
-    expect(process.exitCode).toBeUndefined();
-  });
-
-  it("fails the process on one claim found wanting among claims that held", async () => {
-    diagnose.mockResolvedValue({
-      setup: checkSetup(),
-      claims: [
-        { claim: "hook-fired", verdict: "ok", reason: "session-anchored", detail: "1 run file" },
-        {
-          claim: "records-join",
-          verdict: "fail",
-          reason: "all-unattributed",
-          detail: "none",
-        },
-      ],
-      uncovered: [],
-      leftoverExportConfig: [],
-    });
-
-    await run("check");
-
-    expect(process.exitCode).toBe(1);
-  });
-
-  it("leaves the exit code alone when every judged claim held", async () => {
-    diagnose.mockResolvedValue({
-      setup: checkSetup(),
-      claims: [{ claim: "hook-fired", verdict: "ok", reason: "fired", detail: "1 run file(s)" }],
-      uncovered: [],
-      leftoverExportConfig: [],
-    });
-
-    await run("check");
-
-    expect(process.exitCode).toBeUndefined();
-  });
-});
-
-describe("aidd telemetry forget", () => {
-  it("shows the preview and removes nothing when there was never anything to remove", async () => {
-    const lines = await run("forget", "--yes");
-
-    expect(forgetPreview).toHaveBeenCalledWith({ projectRoot: PROJECT_ROOT });
-    expect(forgetRemove).not.toHaveBeenCalled();
-    expect(lines[0]).toContain("nothing was ever measured here");
-  });
-
-  it("refuses without the flag, after showing exactly what would go", async () => {
-    forgetPreview.mockResolvedValue(ONE_RUN_FILE);
-
-    const lines = await run("forget");
-
-    expect(forgetRemove).not.toHaveBeenCalled();
-    expect(lines[0]).toBe("This would remove:");
-    expect(lines.at(-1)).toBe(
-      "Nothing removed. Pass --yes to remove exactly what is listed above."
-    );
-  });
-
-  it("removes exactly the preview it showed, once the flag confirms it", async () => {
-    forgetPreview.mockResolvedValue(ONE_RUN_FILE);
-
-    const lines = await run("forget", "--yes");
-
-    expect(forgetRemove).toHaveBeenCalledWith(ONE_RUN_FILE);
-    expect(lines).toContain("AIDD telemetry: removed");
+  it.each([
+    [{ status: "ambiguous", flag: "session", typed: "a", ids: ["a1", "a2"] }, "a1, a2"],
+    [{ status: "not-a-repository" }, "--repository ."],
+  ])("exits 1 when the report cannot name what was asked: %j", async (result, said) => {
+    report.mockResolvedValue(result);
+    expect(await run("report", "--json", "--session", "a")).toBe(1);
+    expect(stderr()).toContain(said);
+    expect(stdout()).toBe("");
   });
 });
 
 describe("aidd telemetry identity", () => {
-  it("answers the bare noun with the state, never a help screen", async () => {
-    const lines = await run("identity");
-
-    expect(identityStatus).toHaveBeenCalledWith();
-    expect(lines).toEqual(["AIDD identity: off - records carry no person"]);
+  it("shows who is named when given nothing", async () => {
+    identity.show.mockResolvedValue({ status: "unset" });
+    expect(await run("identity")).toBeNull();
+    expect(identity.show).toHaveBeenCalled();
+    expect(stdout()).toContain("No identity is set");
   });
 
-  it("mints without an identifier or a name when neither was given", async () => {
-    await run("identity", "use");
-
-    expect(Object.keys(identityUse.mock.calls[0][0])).toEqual([]);
+  it("names the person it is given", async () => {
+    identity.set.mockResolvedValue({ status: "set", personId: "person-a" });
+    await run("identity", "person-a");
+    expect(identity.set).toHaveBeenCalledWith("person-a");
+    expect(stdout()).toContain('"person-a"');
   });
 
-  it("takes the identifier given, alone", async () => {
-    await run("identity", "use", "p-9");
-
-    expect(Object.keys(identityUse.mock.calls[0][0])).toEqual(["identifier"]);
-    expect(identityUse).toHaveBeenCalledWith({ identifier: "p-9" });
+  it("removes the identity with --off", async () => {
+    identity.off.mockResolvedValue({ status: "removed" });
+    await run("identity", "--off");
+    expect(identity.off).toHaveBeenCalled();
+    expect(stdout()).toContain("removed");
   });
 
-  it("attaches a display name to whichever identifier the call settles on", async () => {
-    await run("identity", "use", "--name", "Ada");
-
-    expect(Object.keys(identityUse.mock.calls[0][0])).toEqual(["displayName"]);
-    expect(identityUse).toHaveBeenCalledWith({ displayName: "Ada" });
+  it("exits 1 for an identifier it refuses", async () => {
+    identity.set.mockResolvedValue({ status: "refused" });
+    expect(await run("identity", "x")).toBe(1);
   });
 
-  it("carries both an identifier and a name when both were given", async () => {
-    await run("identity", "use", "p-9", "--name", "Ada");
-
-    expect(identityUse).toHaveBeenCalledWith({ identifier: "p-9", displayName: "Ada" });
-  });
-
-  it("opts out with no argument at all", async () => {
-    const lines = await run("identity", "off");
-
-    expect(identityOff).toHaveBeenCalledWith();
-    expect(lines).toEqual(["AIDD identity: already off - nothing to withdraw"]);
-  });
-
-  it("links and unlinks the identifier named on the command line", async () => {
-    await run("identity", "link", "machine-2");
-    await run("identity", "unlink", "machine-2");
-
-    expect(identityLink).toHaveBeenCalledWith("machine-2");
-    expect(identityUnlink).toHaveBeenCalledWith("machine-2");
+  it("refuses --off together with an identifier, touching nothing", async () => {
+    expect(await run("identity", "person-a", "--off")).toBe(1);
+    expect(stderr()).toContain("--off removes the identity");
+    expect(identity.off).not.toHaveBeenCalled();
+    expect(identity.set).not.toHaveBeenCalled();
   });
 });
 
-describe("aidd telemetry — a use case that throws", () => {
-  it.each([
-    [["on"], telemetryOn],
-    [["off"], telemetryOff],
-    [["read"], readLocalCost],
-    [["report", "--from", "2026-08-17", "--to", "2026-08-17"], reportCost],
-    [["check"], diagnose],
-    [["forget"], forgetPreview],
-    [["identity"], identityStatus],
-    [["identity", "use"], identityUse],
-    [["identity", "off"], identityOff],
-    [["identity", "link", "m-2"], identityLink],
-    [["identity", "unlink", "m-2"], identityUnlink],
-  ])("names the failure of %j on stderr and fails the process", async (args, useCase) => {
-    useCase.mockRejectedValue(new Error("boom"));
-    const errors: string[] = [];
-    vi.spyOn(process.stderr, "write").mockImplementation((chunk) => {
-      errors.push(String(chunk));
-      return true;
-    });
-    const exit = vi.spyOn(process, "exit").mockImplementation(() => {
-      throw new Error("exited");
-    });
+describe("aidd telemetry ingest", () => {
+  const result = {
+    refused: false,
+    filesRead: 1,
+    added: 2,
+    updated: 0,
+    unrecognised: 0,
+    skippedLedgerLines: 0,
+    leftOut: { undated: 0, unrecognised: 0 },
+    snapshots: 0,
+    notStored: NOT_STORED,
+    oldestTranscriptAt: null,
+  };
 
-    await expect(run(...args)).rejects.toThrow("exited");
+  it("prints what it read", async () => {
+    ingest.mockResolvedValue(result);
+    await run("ingest");
+    expect(stdout()).toContain("Read 1 transcript: 2 calls added");
+  });
 
-    expect(errors.join("")).toBe("Error: boom\n");
-    expect(exit).toHaveBeenCalledWith(1);
+  it("prints nothing with --quiet", async () => {
+    ingest.mockResolvedValue(result);
+    await run("ingest", "--quiet");
+    expect(stdout()).toBe("");
   });
 });
 
-describe("aidd telemetry — the help surface", () => {
-  function telemetryCommand(): Command {
-    const program = new Command();
+describe("aidd telemetry status", () => {
+  it("shows whether this clone is measured and what its work is bound to", async () => {
+    show.mockResolvedValue({ status: "refused", reason: "no-consent" });
+    // Not measured is an answer, not a failure: no exit code is set.
+    expect(await run("status")).toBeNull();
+    expect(show).toHaveBeenCalledWith(process.cwd());
+  });
+});
+
+describe("aidd telemetry task", () => {
+  const declared = {
+    status: "declared",
+    declaration: { task: "checkout", ticket: "P-1", none: false },
+    sessionId: null,
+    branch: { status: "bound", branch: "feat/x" },
+  };
+
+  it("declares the task it is given, with its ticket", async () => {
+    declare.mockResolvedValue(declared);
+    await run("task", "checkout", "--ticket", "P-1");
+    expect(declare).toHaveBeenCalledWith({
+      cwd: process.cwd(),
+      request: { kind: "task", task: "checkout", ticket: "P-1" },
+      by: "command",
+    });
+  });
+
+  it("declares no task with --none, and marks a hook's declaration", async () => {
+    declare.mockResolvedValue(declared);
+    await run("task", "--none", "--by", "hook-intercept");
+    expect(declare).toHaveBeenCalledWith({
+      cwd: process.cwd(),
+      request: { kind: "none" },
+      by: "hook-intercept",
+    });
+  });
+
+  it("refuses to declare nothing, and points at status", async () => {
+    expect(await run("task")).toBe(1);
+    expect(stderr()).toContain("aidd telemetry status");
+    expect(show).not.toHaveBeenCalled();
+    expect(declare).not.toHaveBeenCalled();
+  });
+
+  it("refuses --none with a name or a ticket, and a ticket with no name", async () => {
+    expect(await run("task", "--none", "x")).toBe(1);
+    expect(await run("task", "--none", "--ticket", "P-1")).toBe(1);
+    expect(await run("task", "--ticket", "P-1")).toBe(1);
+    expect(declare).not.toHaveBeenCalled();
+  });
+
+  it("exits 1 when the declaration is refused", async () => {
+    declare.mockResolvedValue({ status: "refused", reason: "no-consent" });
+    expect(await run("task", "x")).toBe(1);
+  });
+});
+
+const ON = {
+  status: "on",
+  consentWritten: true,
+  legacyConfig: "none",
+  hook: { lineRemoved: false, delegateRemoved: false, stillCalledBy: [] },
+  journal: { journalRemoved: false, trackedKept: false, ignoreEntryRemoved: false },
+  retention: { days: 3650, short: false },
+  identity: { personId: null, previous: null },
+};
+
+describe("aidd telemetry on", () => {
+  const ANONYMOUS = { status: "unset" };
+  const NAMED = { status: "set", personId: "Ada Example" };
+  beforeEach(() => {
+    identity.show.mockResolvedValue(ANONYMOUS);
+    turnOn.mockResolvedValue(ON);
+  });
+
+  it("turns measurement on in the directory it was run from, without asking, with --yes and a choice", async () => {
+    expect(await run("on", "--yes", "--anonymous")).toBeNull();
+    expect(turnOn).toHaveBeenCalledWith(process.cwd(), "none");
+    expect(confirm).not.toHaveBeenCalled();
+    expect(stdout()).toContain("Measurement is on");
+  });
+
+  it("names the person given with --as", async () => {
+    expect(await run("on", "--yes", "--as", "Ada Example")).toBeNull();
+    expect(turnOn).toHaveBeenCalledWith(process.cwd(), { set: "Ada Example" });
+  });
+
+  it("keeps the identity already set when --yes is given no choice, and asks nothing", async () => {
+    identity.show.mockResolvedValue(NAMED);
+    expect(await run("on", "--yes")).toBeNull();
+    expect(turnOn).toHaveBeenCalledWith(process.cwd(), "keep");
+    expect(select).not.toHaveBeenCalled();
+    expect(propose).not.toHaveBeenCalled();
+  });
+
+  it("refuses --yes with no identity set and no choice, before anything is written", async () => {
+    expect(await run("on", "--yes")).toBe(1);
+    expect(turnOn).not.toHaveBeenCalled();
+    expect(propose).not.toHaveBeenCalled();
+    expect(stderr()).toContain("--as <id>");
+    expect(stderr()).toContain("--anonymous");
+  });
+
+  it("refuses --as with --anonymous, before asking anything", async () => {
+    expect(await run("on", "--yes", "--as", "Ada Example", "--anonymous")).toBe(1);
+    expect(identity.show).not.toHaveBeenCalled();
+    expect(turnOn).not.toHaveBeenCalled();
+  });
+
+  it("refuses an identifier the identity rules refuse, before asking anything", async () => {
+    expect(await run("on", "--as", "a".repeat(129))).toBe(1);
+    expect(confirm).not.toHaveBeenCalled();
+    expect(turnOn).not.toHaveBeenCalled();
+    expect(stderr()).toContain(
+      "An identity is one non-empty line of at most 128 characters. Nothing was changed."
+    );
+  });
+
+  it("refuses to guess an answer where nobody can be asked", async () => {
+    const original = process.stdout.isTTY;
+    process.stdout.isTTY = false;
+    try {
+      expect(await run("on")).toBe(1);
+    } finally {
+      process.stdout.isTTY = original;
+    }
+    expect(turnOn).not.toHaveBeenCalled();
+    expect(confirm).not.toHaveBeenCalled();
+    expect(stderr()).toContain("pass --yes");
+  });
+
+  describe("where a person can be asked", () => {
+    const original = process.stdout.isTTY;
+    beforeEach(() => {
+      process.stdout.isTTY = true;
+      confirm.mockResolvedValue(true);
+      propose.mockResolvedValue("Ada Example");
+    });
+    afterEach(() => {
+      process.stdout.isTTY = original;
+    });
+
+    const choices = () => select.mock.calls[0]?.[1] as { name: string; value: unknown }[];
+    const offered = () => choices().map((c) => c.value);
+
+    it("turns on after a yes, defaulting the question to no", async () => {
+      select.mockResolvedValue("none");
+      expect(await run("on")).toBeNull();
+      expect(confirm.mock.calls[0]?.[1]).toBe(false);
+      expect(turnOn).toHaveBeenCalled();
+    });
+
+    it("changes nothing after a no, and reads no proposal", async () => {
+      confirm.mockResolvedValue(false);
+      expect(await run("on")).toBeNull();
+      expect(turnOn).not.toHaveBeenCalled();
+      expect(propose).not.toHaveBeenCalled();
+      expect(stdout()).toContain("Nothing changed.");
+    });
+
+    it("offers the proposal, another identifier, or anonymity, and names the one chosen", async () => {
+      select.mockImplementation(
+        async (_message, choices: { value: unknown }[]) => choices[0]?.value
+      );
+      expect(await run("on")).toBeNull();
+      expect(propose).toHaveBeenCalledWith(process.cwd());
+      expect(offered()).toEqual([{ set: "Ada Example" }, "another", "none"]);
+      expect(choices()[0]?.name).toContain("Ada Example");
+      expect(turnOn).toHaveBeenCalledWith(process.cwd(), { set: "Ada Example" });
+    });
+
+    it("offers no proposal when there is none", async () => {
+      propose.mockResolvedValue(null);
+      select.mockResolvedValue("none");
+      await run("on");
+      expect(offered()).toEqual(["another", "none"]);
+    });
+
+    it("takes another identifier, typed", async () => {
+      select.mockResolvedValue("another");
+      input.mockResolvedValue("Ada at Work");
+      expect(await run("on")).toBeNull();
+      expect(input.mock.calls[0]?.[0]).toBe(
+        "Identifier (one non-empty line, at most 128 characters):"
+      );
+      expect(turnOn).toHaveBeenCalledWith(process.cwd(), { set: "Ada at Work" });
+    });
+
+    it("asks again until the identifier typed is one it can keep", async () => {
+      select.mockResolvedValue("another");
+      input
+        .mockResolvedValueOnce("   ")
+        .mockResolvedValueOnce("a".repeat(129))
+        .mockResolvedValueOnce("Ada at Work");
+      expect(await run("on")).toBeNull();
+      expect(input).toHaveBeenCalledTimes(3);
+      expect(stderr().split("one non-empty line of at most 128 characters.")).toHaveLength(3);
+      expect(stderr()).not.toContain("Nothing was changed.");
+      expect(turnOn).toHaveBeenCalledTimes(1);
+      expect(turnOn).toHaveBeenCalledWith(process.cwd(), { set: "Ada at Work" });
+    });
+
+    it("stays anonymous when chosen", async () => {
+      select.mockResolvedValue("none");
+      await run("on");
+      expect(turnOn).toHaveBeenCalledWith(process.cwd(), "none");
+    });
+
+    it("asks nothing about the person when an identity is set", async () => {
+      identity.show.mockResolvedValue(NAMED);
+      expect(await run("on")).toBeNull();
+      expect(select).not.toHaveBeenCalled();
+      expect(propose).not.toHaveBeenCalled();
+      expect(turnOn).toHaveBeenCalledWith(process.cwd(), "keep");
+    });
+
+    it("asks nothing about the person when a flag answered", async () => {
+      expect(await run("on", "--anonymous")).toBeNull();
+      expect(confirm).toHaveBeenCalled();
+      expect(select).not.toHaveBeenCalled();
+      expect(turnOn).toHaveBeenCalledWith(process.cwd(), "none");
+    });
+  });
+
+  it("exits 1 when it is refused", async () => {
+    turnOn.mockResolvedValue({ status: "refused", reason: "identity-set" });
+    expect(await run("on", "--yes", "--anonymous")).toBe(1);
+    expect(stderr()).toContain("aidd telemetry identity --off");
+  });
+});
+
+describe("aidd telemetry off", () => {
+  it("turns measurement off", async () => {
+    turnOff.mockResolvedValue({ status: "off", changed: true });
+    expect(await run("off")).toBeNull();
+    expect(turnOff).toHaveBeenCalledWith(process.cwd());
+    expect(stdout()).toContain("Measurement is off");
+  });
+
+  it("exits 1 when it is refused", async () => {
+    turnOff.mockResolvedValue({ status: "refused", reason: "unreadable-config" });
+    expect(await run("off")).toBe(1);
+  });
+});
+
+describe("aidd telemetry forget", () => {
+  const plan = { entries: [], repositories: [], missing: [], unlocated: 0 };
+
+  it("only previews without --yes", async () => {
+    forget.mockResolvedValue({ status: "preview", plan });
+    expect(await run("forget")).toBeNull();
+    expect(forget).toHaveBeenCalledWith(false);
+  });
+
+  it("removes with --yes", async () => {
+    forget.mockResolvedValue({ status: "forgotten", plan });
+    await run("forget", "--yes");
+    expect(forget).toHaveBeenCalledWith(true);
+  });
+});
+
+describe("the telemetry command surface", () => {
+  /** What the built binary prints, captured by the help golden: the one place it is pinned. */
+  const golden = JSON.parse(
+    readFileSync(join(import.meta.dirname, "../../golden/snapshots/help/surface.json"), "utf8")
+  ) as { invocation: string; help: string }[];
+
+  it("prints each subcommand's help as the golden pins it", () => {
+    const program = new Command().name("aidd");
     registerTelemetryCommand(program);
     const telemetry = program.commands.find((command) => command.name() === "telemetry");
-    if (telemetry === undefined) throw new Error("telemetry command was not registered");
-    return telemetry;
-  }
-
-  function describedCommands(parent: Command): [string, string][] {
-    return parent.commands.flatMap((command): [string, string][] => [
-      [command.name(), command.description()],
-      ...describedCommands(command),
-    ]);
-  }
-
-  function optionsOf(path: readonly string[]): [string, string][] {
-    let command = telemetryCommand();
-    for (const name of path) {
-      const child = command.commands.find((candidate) => candidate.name() === name);
-      if (child === undefined) throw new Error(`no subcommand ${name}`);
-      command = child;
+    const helps = [telemetry, ...(telemetry?.commands ?? [])].map((command) => ({
+      invocation: command === telemetry ? "aidd telemetry" : `aidd telemetry ${command?.name()}`,
+      help: command?.helpInformation().trimEnd(),
+    }));
+    for (const { invocation, help } of helps) {
+      expect(help, invocation).toBe(golden.find((entry) => entry.invocation === invocation)?.help);
     }
-    return command.options.map((option) => [option.flags, option.description]);
-  }
-
-  it("describes the group by what a person decides with it", () => {
-    expect(telemetryCommand().description()).toBe("Control whether AIDD may measure this project");
   });
 
-  it("describes every subcommand, in the order they are registered", () => {
-    expect(describedCommands(telemetryCommand())).toEqual([
-      ["on", "Turn on the AIDD telemetry switch and git-ignore the run journal"],
-      [
-        "read",
-        "Read what sessions cost from the files their tools already wrote, with no process running",
-      ],
-      ["identity", "Whether this person's own identifier is attached to records read locally"],
-      [
-        "use",
-        "Mint this person's identifier, or take one minted on another machine. --name attaches a display name",
-      ],
-      ["off", "Opt out: new records carry no person, from now on"],
-      [
-        "link",
-        "Add an identifier this person cannot choose onto this same person - one row, not two, in a report",
-      ],
-      ["unlink", "Withdraw an added identifier from this person"],
-      ["check", "Check whether the measurement chain is actually recording for this project"],
-      [
-        "report",
-        "Report what a period, or one task inside it, cost — tokens, models and steps, with how strongly each was attributed",
-      ],
-      [
-        "off",
-        "Turn off the AIDD telemetry switch, warning if a tool's own settings file still exports",
-      ],
-      [
-        "forget",
-        "Irreversibly remove what this tool measured: this project's run journal, this " +
-          "machine's stored records, and this machine's identity file",
-      ],
-    ]);
-  });
-
-  it("says what confirming on and confirming forget each mean", () => {
-    expect(optionsOf(["on"])).toEqual([
-      [
-        "--yes",
-        "Confirm writing the git-tracked switch — this turns measurement on for everyone who clones",
-      ],
-    ]);
-    expect(optionsOf(["forget"])).toEqual([
-      ["--yes", "Confirm removal after seeing what would go — without it, nothing is removed"],
-    ]);
-  });
-
-  it("says what omitting read's own session means", () => {
-    expect(optionsOf(["read"])).toEqual([
-      [
-        "--session <id>",
-        "One session to read. Omitted, every session the run journal knows is read",
-      ],
-    ]);
-  });
-
-  it("names every day, filter and shape report accepts, and every axis by name", () => {
-    expect(optionsOf(["report"])).toEqual([
-      ["--from <day>", "First UTC day to report, as YYYY-MM-DD"],
-      ["--to <day>", "Last UTC day to report, as YYYY-MM-DD (default today)"],
-      [
-        "--days <n>",
-        `How many days back to report, ending at --to (default ${DEFAULT_REPORT_DAYS})`,
-      ],
-      [
-        "--task <identity>",
-        "Restrict to the sessions that wrote into this task, as <yyyy_mm>/<name>",
-      ],
-      ["--project <id>", "Restrict to this project"],
-      ["--step <name>", "Restrict to this step"],
-      ["--model <name>", "Restrict to this model"],
-      ["--tool <id>", "Restrict to this tool"],
-      [
-        "--axis <axis>",
-        `Print one axis as a table to paste elsewhere: ${ARTEFACT_AXES.join(" | ")}`,
-      ],
-      ["--json", "Print one object a program can parse, instead of text for a person"],
-    ]);
-  });
-
-  it("names the display name identity use attaches, and asks nothing else anywhere", () => {
-    expect(optionsOf(["identity", "use"])).toEqual([
-      ["--name <value>", "A display name for whichever identifier this call settles on"],
-    ]);
-    expect(optionsOf(["identity"])).toEqual([]);
-    expect(optionsOf(["check"])).toEqual([]);
-  });
-});
-
-describe("aidd telemetry — how every subcommand builds its graph", () => {
   it.each([
-    ["on"],
-    ["off"],
-    ["read"],
-    ["report", "--from", "2026-08-17", "--to", "2026-08-17"],
-    ["check"],
-    ["forget"],
-    ["identity"],
-    ["identity", "use"],
-    ["identity", "off"],
-    ["identity", "link", "m-2"],
-    ["identity", "unlink", "m-2"],
-  ])("hands %j's own graph this run's verbosity, never an empty option set", async (...args) => {
-    await run(...args);
-
-    expect(vi.mocked(createDeps)).toHaveBeenCalledWith(
-      PROJECT_ROOT,
-      { verbose: false },
-      expect.anything()
-    );
+    ["status", () => show],
+    ["ingest", () => ingest],
+    ["forget", () => forget],
+    ["report", () => report],
+  ])("says what failed and exits 1 when %s throws", async (name, useCase) => {
+    useCase().mockRejectedValue(new Error("disk full"));
+    expect(await run(name)).toBe(1);
+    expect(stderr()).toContain("disk full");
   });
 });
