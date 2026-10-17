@@ -16,9 +16,10 @@ export interface LoadedLedger {
 }
 
 /** What is measured and cannot be stored: a call with no usable time, a transcript line that is
- * no usage line. Only of a clone that consents, at the time of the thing or, with none, of the
- * read: a clone that never opted in, or work after `off`, leaves nothing here. */
-export type LeftOutReason = "undated" | "unrecognised";
+ * no usage line, a call with no request id. Only of a clone that consents, at the time of the
+ * thing or, with none, of the read: a clone that never opted in, or work after `off`, leaves
+ * nothing here. */
+export type LeftOutReason = "undated" | "unrecognised" | "requestless";
 
 /** One thing left out, named by what it is: a call by its tool and key, a line by its text. */
 export interface LeftOutEntry {

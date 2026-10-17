@@ -1,3 +1,4 @@
+import { isRequestless, requestlessCallOf } from "../domain/formats/claude-transcript-usage.js";
 import type { LeftOutEntry, UsageLedger } from "../domain/ports/usage-ledger.js";
 import type { NotStoredReason } from "../domain/repository-resolution.js";
 import { dayOf, type StoredUsage } from "../domain/stored-usage.js";
@@ -142,6 +143,10 @@ export class IngestUsageUseCase {
         ) {
           leftOut.push({ reason: "undated", of: `${record.tool}\u0000${record.key}` });
         }
+        continue;
+      }
+      if (isRequestless(record)) {
+        leftOut.push({ reason: "requestless", of: requestlessCallOf(record) });
         continue;
       }
       toStore.push({ ...record, repository_id: outcome.stored.repository_id });

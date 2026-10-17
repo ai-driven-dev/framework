@@ -2,9 +2,15 @@ import { readdir, rm } from "node:fs/promises";
 import { join } from "node:path";
 import { isErrnoException } from "../../../kernel/reading/json-file.js";
 import { readTextIfPresent } from "../../../kernel/reading/text-file.js";
+import { isRequestless, requestlessCallOf } from "../domain/formats/claude-transcript-usage.js";
 import { storedNow } from "../domain/legacy/legacy-usage-key.js";
 import type { PrivateStorage } from "../domain/ports/private-storage.js";
-import type { LeftOutStore, LoadedLedger, UsageLedger } from "../domain/ports/usage-ledger.js";
+import type {
+  LeftOutEntry,
+  LeftOutStore,
+  LoadedLedger,
+  UsageLedger,
+} from "../domain/ports/usage-ledger.js";
 import { parseStoredUsage, partitionByDay, type StoredUsage } from "../domain/stored-usage.js";
 import { compareText } from "../domain/text-order.js";
 import {
@@ -81,6 +87,10 @@ export class UsageLedgerAdapter implements UsageLedger {
           damaged.add(partition);
           continue;
         }
+        if (isRequestless(read)) {
+          unsettled.add(partition);
+          continue;
+        }
         const record = storedNow(read, ids);
         if (record !== read) unsettled.add(partition);
         found.push(record);
@@ -98,17 +108,23 @@ export class UsageLedgerAdapter implements UsageLedger {
     const named = (day: string): boolean => partitions === undefined || partitions.has(day);
     const held = new Map<string, string | null>();
     const kept = new Map<string, Set<string>>();
+    const requestless: LeftOutEntry[] = [];
     for (const name of await this.partitions()) {
       const day = partitionOf(name);
       if (!named(day)) continue;
       const text = await readTextIfPresent(join(this.dir, name));
       held.set(day, text);
       for (const line of (text ?? "").split("\n")) {
-        if (line !== "" && parseStoredUsage(line) === null) {
-          kept.set(day, (kept.get(day) ?? new Set()).add(line));
+        if (line === "") continue;
+        const read = parseStoredUsage(line);
+        if (read === null) kept.set(day, (kept.get(day) ?? new Set()).add(line));
+        else if (isRequestless(read)) {
+          requestless.push({ reason: "requestless", of: requestlessCallOf(read) });
         }
       }
     }
+    // Counted before the writes that drop it, so a run stopped between them loses nothing.
+    if (requestless.length > 0) await this.leftOut.add(requestless);
     const days = partitionByDay(records);
     const emptied: string[] = [];
     // Every write comes before any removal, so the order of the writes is free.

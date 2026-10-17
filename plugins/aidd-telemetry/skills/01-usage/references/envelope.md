@@ -46,7 +46,7 @@ A field may be added to version `2`: a figure outside `run`, a fact of the read 
 | Field | Meaning |
 | --- | --- |
 | `records` | Calls recorded in the period, whether the filters keep them or not |
-| `left_out` | What every read so far, one at session start included, measured in a clone that consents and could not store: `undated` calls and `unrecognised` lines that are no usage line, each counted once in every report |
+| `left_out` | What every read so far, one at session start included, measured in a clone that consents and could not store: `undated` calls, `unrecognised` lines that are no usage line, and `requestless` calls, which carry no request id, each counted once in every report |
 
 ## Run
 

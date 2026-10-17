@@ -83,6 +83,23 @@ export function isKeyedBySession(call: Pick<UsageRecord, "tool" | "key" | "sessi
   );
 }
 
+/** Whether a Claude Code call has no request id: keyed by message and session, as the reader
+ * keys it, or with its own time after, as cli-v5.5.0 keyed it. Such a call is never stored, at
+ * ingest or when found in the ledger, and is counted left out instead: none was seen in real
+ * transcripts (see the usage contract), so nothing measured bounds how far apart its copies lie. */
+export function isRequestless(call: Pick<UsageRecord, "tool" | "key" | "session_id">): boolean {
+  if (call.tool !== "claude-code") return false;
+  const base = call.key.replace(ADVISOR, "");
+  const rest = base.slice(base.indexOf(":") + 1);
+  return rest === call.session_id || rest.startsWith(`${call.session_id}:`);
+}
+
+/** A requestless call as it is left out: its message and session, the same for each of its
+ * copies and iterations, whichever version keyed them. */
+export function requestlessCallOf(call: Pick<UsageRecord, "tool" | "key" | "session_id">): string {
+  return `${call.tool}\u0000${call.key.slice(0, call.key.indexOf(":"))}:${call.session_id}`;
+}
+
 export function readClaudeUsageLine(line: string): ClaudeUsageLine {
   let parsed: unknown;
   try {

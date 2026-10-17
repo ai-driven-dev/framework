@@ -40,7 +40,7 @@ const reported: Extract<ReportResult, { status: "reported" }> = {
     ],
     totals: tally(4, 1),
   },
-  coverage: { records: 4, leftOut: { undated: 2, unrecognised: 5 } },
+  coverage: { records: 4, leftOut: { undated: 2, unrecognised: 5, requestless: 1 } },
   run: {
     filesRead: 3,
     unrecognised: 1,
@@ -100,7 +100,7 @@ describe("the JSON envelope of a report", () => {
     const envelope = reportEnvelopeOf(reported);
     expect(envelope.coverage).toStrictEqual({
       records: 4,
-      left_out: { undated: 2, unrecognised: 5 },
+      left_out: { undated: 2, unrecognised: 5, requestless: 1 },
     });
   });
 

@@ -122,7 +122,7 @@ function periodWords(period: Period): string {
 }
 
 function coverageLines(coverage: ReportCoverage, run: ReportRun): string[] {
-  const { undated, unrecognised } = coverage.leftOut;
+  const { undated, unrecognised, requestless } = coverage.leftOut;
   return [
     `Read ${count(run.filesRead, "transcript", "transcripts")} just now; ${count(coverage.records, "call", "calls")} in this period; oldest transcript on disk: ${run.oldestTranscriptAt?.slice(0, 10) ?? "none"}.`,
     ...leftOutLines(run).map(({ text }) => text),
@@ -133,6 +133,9 @@ function coverageLines(coverage: ReportCoverage, run: ReportRun): string[] {
       : []),
     ...(undated > 0
       ? [`Kept from every read: ${count(undated, "call", "calls")} with no usable time.`]
+      : []),
+    ...(requestless > 0
+      ? [`Kept from every read: ${count(requestless, "call", "calls")} with no request id.`]
       : []),
   ];
 }

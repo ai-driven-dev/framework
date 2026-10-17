@@ -30,6 +30,10 @@ export class LeftOutAdapter implements LeftOutStore {
   async counts(): Promise<Readonly<Record<LeftOutReason, number>>> {
     const text = `\n${(await readTextIfPresent(this.path)) ?? ""}`;
     const count = (reason: LeftOutReason) => text.split(`\n${reason} `).length - 1;
-    return { undated: count("undated"), unrecognised: count("unrecognised") };
+    return {
+      undated: count("undated"),
+      unrecognised: count("unrecognised"),
+      requestless: count("requestless"),
+    };
   }
 }

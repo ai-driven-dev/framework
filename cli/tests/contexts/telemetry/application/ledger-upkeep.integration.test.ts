@@ -119,43 +119,7 @@ describe("settling only a window", () => {
   });
 });
 
-describe("storing a requestless call, whose copies nothing bounds in time", () => {
-  it("finds its copy days away, so the ledger holds the call once and a bounded read agrees", async () => {
-    // Found by the independent check: copies three days apart were stored in two days.
-    const ledger = new UsageLedgerAdapter(join(root, "ledger"), new PrivateStorageAdapter());
-    await storeCalls(ledger, [stored("msg_1:s-1", "2026-10-01T10:00:00.000Z", 1)]);
-    await storeCalls(ledger, [stored("msg_1:s-1", "2026-10-04T10:00:00.000Z", 2)]);
-    expect((await ledger.load()).records).toEqual([
-      stored("msg_1:s-1", "2026-10-04T10:00:00.000Z", 2),
-    ]);
-    expect(await readdir(join(root, "ledger"))).toEqual(["2026-10-04.jsonl"]);
-  });
-
-  it("reads every day for a batch mixing a requestless call with one that has a request id", async () => {
-    const ledger = new UsageLedgerAdapter(join(root, "ledger"), new PrivateStorageAdapter());
-    await storeCalls(ledger, [stored("msg_1:s-1", "2026-10-01T10:00:00.000Z", 1)]);
-    await storeCalls(ledger, [
-      stored("msg_2:req_2", "2026-10-04T09:00:00.000Z", 5),
-      stored("msg_1:s-1", "2026-10-04T10:00:00.000Z", 2),
-    ]);
-    expect((await ledger.load()).records.map((record) => record.key).sort()).toEqual([
-      "msg_1:s-1",
-      "msg_2:req_2",
-    ]);
-    expect(await readdir(join(root, "ledger"))).toEqual(["2026-10-04.jsonl"]);
-  });
-
-  it("rewrites a day holding an older CLI's timestamped key when it settles that day", async () => {
-    const dir = join(root, "ledger");
-    await mkdir(dir, { recursive: true });
-    const older = stored("msg_1:s-1:2026-10-01T10:00:00.000Z", "2026-10-01T10:00:00.000Z", 1);
-    await writeFile(join(dir, "2026-10-01.jsonl"), `${JSON.stringify(older)}\n`);
-    await settleLedger(new UsageLedgerAdapter(dir, new PrivateStorageAdapter()));
-    expect(await readFile(join(dir, "2026-10-01.jsonl"), "utf8")).toBe(
-      `${JSON.stringify({ ...older, key: "msg_1:s-1" })}\n`
-    );
-  });
-
+describe("storing a call", () => {
   it("still reads only the days around a call with a request id", async () => {
     const ledger = new UsageLedgerAdapter(join(root, "ledger"), new PrivateStorageAdapter());
     await storeCalls(ledger, [stored("msg_1:req_1", "2026-10-01T10:00:00.000Z", 1)]);

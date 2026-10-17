@@ -64,6 +64,8 @@ const TIMES = [
   ["2026-10-08T12:00:00"],
 ];
 const UNDATED_KINDS = [2, 3];
+/** Calls with a request id; as many again have none. */
+const CALLS = PLACES.length * TIMES.length;
 /** A line that is no usage line: naming a place, at a time inside or before any consent, or no
  * time, or naming nothing. */
 const junk = fc.oneof(
@@ -82,17 +84,19 @@ const transcriptLine = fc.oneof(
   {
     weight: 4,
     arbitrary: fc
-      .record({ id: fc.nat(PLACES.length * TIMES.length - 1), output: fc.nat(3), time: fc.nat(1) })
-      // A call is made in one place, at one kind of time: only its snapshots differ.
+      .record({ id: fc.nat(CALLS * 2 - 1), output: fc.nat(3), time: fc.nat(1) })
+      // A call is made in one place, at one kind of time, with or without a request id: only
+      // its snapshots differ.
       .map(({ id, output, time }) => {
-        const times = TIMES[Math.floor(id / PLACES.length)] as string[];
-        return { id, output, place: PLACES[id % PLACES.length], at: times[time % times.length] };
+        const times = TIMES[Math.floor((id % CALLS) / PLACES.length)] as string[];
+        const place = PLACES[id % PLACES.length];
+        return { id, output, place, at: times[time % times.length], requestless: id >= CALLS };
       })
-      .map(({ id, output, place, at }) =>
+      .map(({ id, output, place, at, requestless }) =>
         JSON.stringify({
           type: "assistant",
           sessionId: "s-1",
-          requestId: `req_${id}`,
+          ...(requestless ? {} : { requestId: `req_${id}` }),
           timestamp: at,
           cwd: place,
           message: {
@@ -111,10 +115,12 @@ const transcriptLine = fc.oneof(
   { weight: 1, arbitrary: junk }
 );
 
-/** What one machine keeps, by the contract, from these lines: the undated calls and the lines
- * that are no usage line of the clone that consents, at a time it consents, each once. */
+/** What one machine keeps, by the contract, from these lines: the undated calls, the dated
+ * calls with no request id, and the lines that are no usage line of the clone that consents, at
+ * a time it consents, each once. */
 function expectedLeftOut(lines: readonly string[]) {
-  const undated = new Set<string>();
+  const undated = new Set<number>();
+  const requestless = new Set<number>();
   const unrecognised = new Set<string>();
   for (const line of lines) {
     const parsed = (() => {
@@ -127,13 +133,13 @@ function expectedLeftOut(lines: readonly string[]) {
     if (!CONSENTING.includes(parsed?.cwd)) continue;
     if (parsed.message?.id === undefined) {
       if (parsed.timestamp !== "2025-06-01T00:00:00.000Z") unrecognised.add(line);
-    } else if (
-      UNDATED_KINDS.includes(Math.floor(Number(parsed.requestId.slice(4)) / PLACES.length))
-    ) {
-      undated.add(parsed.requestId);
+    } else {
+      const id = Number(parsed.message.id.slice(4));
+      if (UNDATED_KINDS.includes(Math.floor((id % CALLS) / PLACES.length))) undated.add(id);
+      else if (parsed.requestId === undefined) requestless.add(id);
     }
   }
-  return { undated: undated.size, unrecognised: unrecognised.size };
+  return { undated: undated.size, unrecognised: unrecognised.size, requestless: requestless.size };
 }
 
 const scenario = fc.record({

@@ -87,6 +87,9 @@ interface Copy {
   readonly output: number;
   /** Read by an earlier version, before the migration, rather than after it. */
   readonly before: boolean;
+  /** Of a call with no request id: read after the migration by an older CLI, stored by its
+   * rules, rather than by this one. */
+  readonly older: boolean;
 }
 
 const copy = fc.record({
@@ -94,19 +97,23 @@ const copy = fc.record({
   time: fc.nat(2),
   output: fc.nat(3),
   before: fc.boolean(),
+  older: fc.boolean(),
 });
+
+const requestless = (c: Copy): boolean => c.call % 2 === 0;
+const byOlder = (c: Copy): boolean => !c.before && c.older && requestless(c);
 
 /** A call is made in one place, by one session, with or without a request id, on or off the
  * declared branch, and with or without an advisor: only its copies' times and counts differ. */
-function lineOf({ call, time, output }: Copy): string {
+function lineOf(c: Copy): string {
+  const { call, time, output } = c;
   const dir = DIRS[call % DIRS.length] as string;
   const times = TIMES[Math.floor(call / 2) % TIMES.length] as string[];
-  const requestless = call % 2 === 0;
   const advisor = call % 3 === 0;
   return JSON.stringify({
     type: "assistant",
     sessionId: `s-${call % 4}`,
-    ...(requestless ? {} : { requestId: `req_${call}` }),
+    ...(requestless(c) ? {} : { requestId: `req_${call}` }),
     timestamp: times[time % times.length],
     cwd: dir,
     gitBranch: call % 5 === 0 ? null : "feat/x",
@@ -155,15 +162,14 @@ const scenario = fc.record({
 });
 type Scenario = typeof scenario extends fc.Arbitrary<infer T> ? T : never;
 
-/** Writes, as cli-v5.5.0 left them, the ledger, `roots.json` and branch snapshots of the copies
- * it read: each read's calls folded by its own keys and ids, appended to their days, so a call
- * can sit in several days and a day hold a call twice. */
-async function writeEarlierStore(dir: string, bindings: string, s: Scenario): Promise<void> {
+/** Appends, as cli-v5.5.0 stores them, the copies it read: each read's calls folded by its own
+ * keys and ids, appended to their days, so a call can sit in several days and a day hold a call
+ * twice. */
+async function appendAsEarlier(dir: string, s: Scenario, read: (c: Copy) => boolean) {
   await mkdir(dir, { recursive: true });
-  await mkdir(bindings, { recursive: true });
-  const before = s.copies.map((c, n) => ({ c, n })).filter(({ c }) => c.before);
+  const copies = s.copies.map((c, n) => ({ c, n })).filter(({ c }) => read(c));
   for (let batch = 0; batch < 4; batch += 1) {
-    const read = before
+    const records = copies
       .filter(({ n }) => s.batches[n] === batch)
       .flatMap(({ c }) => {
         const line = lineOf(c);
@@ -174,11 +180,18 @@ async function writeEarlierStore(dir: string, bindings: string, s: Scenario): Pr
           repository_id: legacyRepositoryIdOf(facts(dirOf)) as string,
         }));
       });
-    for (const stored of foldUsage(read)) {
+    for (const stored of foldUsage(records)) {
       const day = dayOf(stored.at) as string;
       await appendFile(join(dir, `${day}.jsonl`), `${JSON.stringify(stored)}\n`);
     }
   }
+}
+
+/** Writes, as cli-v5.5.0 left them, the ledger, `roots.json` and branch snapshots of the copies
+ * it read before the upgrade. */
+async function writeEarlierStore(dir: string, bindings: string, s: Scenario): Promise<void> {
+  await mkdir(bindings, { recursive: true });
+  await appendAsEarlier(dir, s, (c) => c.before);
   await writeRoots(dir, legacyRepositoryIdOf);
   await writeSnapshots(bindings, legacyRepositoryIdOf);
 }
@@ -297,7 +310,10 @@ async function bytes(dir: string): Promise<Record<string, string>> {
 async function upgraded(s: Scenario, storage?: PrivateStorage, name = named("up")) {
   const m = machine(name, storage);
   await writeEarlierStore(m.dir, m.bindings, s);
-  m.transcripts.files.set("/t/0.jsonl", s.copies.filter((c) => !c.before).map(lineOf));
+  m.transcripts.files.set(
+    "/t/0.jsonl",
+    s.copies.filter((c) => !c.before && !byOlder(c)).map(lineOf)
+  );
   return { ...m, name };
 }
 
@@ -320,6 +336,8 @@ describe("stored data from an earlier version, once migrated", () => {
     for (const { dir, as } of s.away) up.locator.directories.set(dir, { status: as });
     await up.report.execute({ axis: "total", period: { from: null, to: null } });
     for (const [dir, located] of back) if (located) up.locator.directories.set(dir, located);
+    // An older CLI run after the upgrade stores what it reads beside the migrated data.
+    await appendAsEarlier(up.dir, s, byOlder);
     await figures(up);
     await figures(one);
     expect(await figures(up)).toEqual(await figures(one));
@@ -335,9 +353,9 @@ describe("stored data from an earlier version, once migrated", () => {
     // no rule of now changes, and no later read touches.
     await asFresh({
       copies: [
-        { call: 7, time: 0, output: 0, before: true },
-        { call: 9, time: 1, output: 0, before: true },
-        { call: 0, time: 0, output: 0, before: false },
+        { call: 7, time: 0, output: 0, before: true, older: false },
+        { call: 9, time: 1, output: 0, before: true, older: false },
+        { call: 0, time: 0, output: 0, before: false, older: false },
       ],
       batches: Array.from({ length: 24 }, () => 0),
       away: [],

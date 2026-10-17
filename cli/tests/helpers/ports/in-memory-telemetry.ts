@@ -195,7 +195,11 @@ export class InMemoryLeftOut implements LeftOutStore {
     this.events.push("left-out");
     const count = (reason: LeftOutReason) =>
       [...this.lines].filter((line) => line.startsWith(`${reason} `)).length;
-    return { undated: count("undated"), unrecognised: count("unrecognised") };
+    return {
+      undated: count("undated"),
+      unrecognised: count("unrecognised"),
+      requestless: count("requestless"),
+    };
   }
 }
 

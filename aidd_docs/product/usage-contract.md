@@ -56,7 +56,7 @@ The ledger stores `StoredUsage`: the record plus `repository_id`, resolved at in
 
 | Rule | Value |
 | --- | --- |
-| Key | `message.id:requestId`; without `requestId`, `message.id:sessionId` (a message id is unique per call; nothing bounds how far apart its copies are written, so an ingest storing such a call reads every day, and the ledger holds it once, except copies an older CLI stores after the migration, which only a report with no period folds); each advisor iteration adds `#advisor<n>` |
+| Key | `message.id:requestId`; each advisor iteration adds `#advisor<n>`. A call with no `requestId` is not stored (see [Left out](#left-out)) |
 | Fold | a call is written several times (streamed snapshots, resumed sessions, sub-agents); one record per `(tool, key)`: largest sum of the four counters (`null` as `0` for this comparison only) |
 | Tie | earliest `at`, then lowest `session_id`, then serialised record. No input order changes the winner |
 | Dropped | model `<synthetic>` |
@@ -66,7 +66,7 @@ The ledger stores `StoredUsage`: the record plus `repository_id`, resolved at in
 
 **Repository.** The call's working directory resolved at ingest: its git root, named by the hash of the `origin` address (`host/owner/repo`), else the root commit. The address is never kept. Every form (https, `ssh://`, `git://`, scp-like) gives one address: scheme, credentials, port, `.git` and trailing `/` dropped, host case-folded, `ssh.github.com` read as `github.com`. Owner and repo are case-folded on `github.com` only, which documents them as not case sensitive; any other host keeps their case, so two spellings there may still give two ids.
 
-**Not stored.** Storing follows [Consent](#consent). A call read and left out counts in `run.not_stored` of the report that read it, under one reason, and nothing of it is kept, except an `undated` call of a clone that consents (see [Left out](#left-out)):
+**Not stored.** Storing follows [Consent](#consent). A call read and left out counts in `run.not_stored` of the report that read it, under one reason, and nothing of it is kept, except an `undated` call of a clone that consents (see [Left out](#left-out)). A call with no `requestId` is not stored either, and counts under no reason here: only in `coverage.left_out.requestless`.
 
 | Reason | When |
 | --- | --- |
@@ -86,6 +86,9 @@ What an ingest measured and could not store is kept in `ledger/left-out.txt`, so
 | --- | --- |
 | A call `undated`, of a clone that consents at the time of the read | `undated <hash>`, 41 bytes: a hash of its tool and key |
 | A line that is no usage line, naming the directory of a clone that consents at the line's own time or, with none, at the time of the read | `unrecognised <hash>`, 46 bytes: a hash of the line |
+| A call with no `requestId`, of a clone that consents at its time | `requestless <hash>`, 45 bytes: a hash of its tool, message id and session, one for all its copies and iterations |
+
+- A call with no `requestId` has nothing measured to bound how far apart its copies are written, so it is not stored. None was seen: 0 of 512,820 usage lines, and 0 of 265,472 measured again (Claude Code 2.1.232 to 2.1.302). Such a call found in the ledger, stored by an earlier or an older CLI, leaves it at the next write of its day, and is counted then. The reason is defined in [the envelope reference](../../plugins/aidd-telemetry/skills/01-usage/references/envelope.md).
 
 - What consent or scope excludes is not measured: a call of a clone that never opted in, made after `off`, outside any repository, in a directory never seen alive, with no directory, or while consent cannot be read, leaves nothing here. Neither does a line that names no directory, nor one of such a clone: the run that read it still counts it in its own `unrecognised_shapes`.
 - A call whose consent cannot be read yet (`unreadable-consent`: git refused the `.git`, a config that does not parse, a git dir the file system will not show) is not a no when a clone `roots.json` remembers at that directory, seen while it could be read, consented at the call's time (or, for an undated call or a line with no time, at the read). Then ingest keeps the transcript's position from before that read, so the next ingest, a report's included, reads it again: the call is stored, or the undated call or line kept, once its consent can be read, and until then every run counts it. Otherwise (a directory no read saw readable, a repository that never opted in, a call made while its clone did not consent) the transcript moves on and only that run says it: once readable it could never be stored, so a hold would never end. A damaged consent log moves on too: it stays damaged until `forget`, which removes it, so a hold would never end. Cost: while a clone that consents stays unreadable, the part of its transcripts read since is read again by every ingest. A hold ends when the clone can be read again, when `forget --yes` removes `roots.json` and the offsets, or when the clone is removed (its directory then gone); `off` does not end it, since `off` refuses a clone whose config cannot be read. Inferred, not measured: if that re-read alone outlasts the hook's 110 s limit on `ingest`, the hook's runs are killed before they save any position, and measurement stalls for every clone until the hold ends or a report runs without that limit.

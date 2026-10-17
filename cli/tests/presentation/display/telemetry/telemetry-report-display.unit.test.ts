@@ -46,7 +46,7 @@ const COVERAGE: Coverage = {
   consentLogDamaged: false,
   oldestTranscriptAt: "2026-09-20T08:00:00.000Z",
   skippedLedgerLines: 0,
-  leftOut: { undated: 0, unrecognised: 0 },
+  leftOut: { undated: 0, unrecognised: 0, requestless: 0 },
 };
 const BOTH: Period = { from: "2026-10-01", to: "2026-10-07" };
 
@@ -266,20 +266,26 @@ describe("printing a usage report", () => {
 
   it("says what every read kept of what it measured and could not store, and nothing when none", () => {
     const lines = printed(
-      result("total", [], tally(0, [0, 0, 0, 0]), { leftOut: { undated: 1, unrecognised: 1_200 } })
+      result("total", [], tally(0, [0, 0, 0, 0]), {
+        leftOut: { undated: 1, unrecognised: 1_200, requestless: 3 },
+      })
     );
-    expect(lines.slice(-2)).toEqual([
+    expect(lines.slice(-3)).toEqual([
       "Kept from every read: 1,200 lines that are no usage line.",
       "Kept from every read: 1 call with no usable time.",
+      "Kept from every read: 3 calls with no request id.",
     ]);
     expect(printed(result("total", [], tally(0, [0, 0, 0, 0]))).join("\n")).not.toContain("Kept");
     expect(
       printed(
-        result("total", [], tally(0, [0, 0, 0, 0]), { leftOut: { undated: 2, unrecognised: 1 } })
-      ).slice(-2)
+        result("total", [], tally(0, [0, 0, 0, 0]), {
+          leftOut: { undated: 2, unrecognised: 1, requestless: 1 },
+        })
+      ).slice(-3)
     ).toEqual([
       "Kept from every read: 1 line that is no usage line.",
       "Kept from every read: 2 calls with no usable time.",
+      "Kept from every read: 1 call with no request id.",
     ]);
   });
 

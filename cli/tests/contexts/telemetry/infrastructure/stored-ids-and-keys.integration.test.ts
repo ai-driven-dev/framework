@@ -38,7 +38,7 @@ function call(overrides: Record<string, unknown> = {}) {
   return {
     tool: "claude-code",
     tool_version: "2",
-    key: "msg_A:s-1:2026-10-07T23:59:59.000Z",
+    key: "msg_A:req_A",
     session_id: "s-1",
     agent: "main",
     at: "2026-10-07T23:59:59.000Z",
@@ -64,40 +64,34 @@ async function writeAliases(complete = true): Promise<void> {
 }
 
 describe("the ledger, read after the rules changed", () => {
-  it("re-keys a requestless call's copies stored apart, re-ids them, and counts the call once", async () => {
+  it("drops a call with no request id, as any version keyed it, and counts it once as left out when its days are written", async () => {
     await writeAliases();
-    await writeFile(join(dir, "2026-10-07.jsonl"), `${JSON.stringify(call())}\n`);
-    const later = call({
-      key: "msg_A:s-1:2026-10-08T00:00:02.000Z",
-      at: "2026-10-08T00:00:02.000Z",
-      output: 9,
-    });
-    await writeFile(join(dir, "2026-10-08.jsonl"), `${JSON.stringify(later)}\n`);
+    const kept = call({ key: "msg_B:req_B", at: "2026-10-08T00:00:01.000Z" });
+    const copies = [
+      call({ key: "msg_A:s-1:2026-10-07T23:59:59.000Z" }),
+      call({ key: "msg_A:s-1:2026-10-08T00:00:02.000Z", at: "2026-10-08T00:00:02.000Z" }),
+      call({ key: "msg_A:s-1#advisor0", at: "2026-10-08T00:00:03.000Z" }),
+    ];
+    await writeFile(join(dir, "2026-10-07.jsonl"), `${JSON.stringify(copies[0])}\n`);
+    await writeFile(
+      join(dir, "2026-10-08.jsonl"),
+      `${[kept, copies[1], copies[2]].map((line) => JSON.stringify(line)).join("\n")}\n`
+    );
     const ledger = new UsageLedgerAdapter(dir, storage);
     const held = await ledger.load();
-    expect(held.records).toEqual([{ ...later, key: "msg_A:s-1", repository_id: NEW }]);
+    expect(held.records).toEqual([{ ...kept, repository_id: NEW }]);
     expect([...held.unsettled].sort()).toEqual(["2026-10-07", "2026-10-08"]);
     await ledger.save(held.records, held.unsettled);
+    expect(await ledger.leftOut.counts()).toEqual({ undated: 0, unrecognised: 0, requestless: 1 });
     expect(await readFile(join(dir, "2026-10-08.jsonl"), "utf8")).toBe(
-      `${JSON.stringify({ ...later, key: "msg_A:s-1", repository_id: NEW })}\n`
+      `${JSON.stringify({ ...kept, repository_id: NEW })}\n`
     );
     await expect(readFile(join(dir, "2026-10-07.jsonl"), "utf8")).rejects.toThrow();
   });
 
-  it("folds a line an earlier version writes after the migration into the call it is a copy of", async () => {
-    await writeAliases();
-    const now = call({ key: "msg_A:s-1", repository_id: NEW, output: 5 });
-    await writeFile(
-      join(dir, "2026-10-07.jsonl"),
-      `${JSON.stringify(now)}\n${JSON.stringify(call({ output: 2 }))}\n`
-    );
-    const held = await new UsageLedgerAdapter(dir, storage).load();
-    expect(held.records).toEqual([now]);
-  });
-
   it("leaves a call keyed and named by the rules of now as settled", async () => {
     await writeAliases();
-    const now = call({ key: "msg_A:req_A", repository_id: NEW });
+    const now = call({ repository_id: NEW });
     await writeFile(join(dir, "2026-10-07.jsonl"), `${JSON.stringify(now)}\n`);
     const held = await new UsageLedgerAdapter(dir, storage).load();
     expect(held.records).toEqual([now]);
@@ -200,7 +194,7 @@ describe("the migration", () => {
     expect(locator.asked).toEqual(["/work/a", "/work/gone"]);
     expect(await readFile(join(dir, "roots.json"), "utf8")).not.toContain(OLD);
     expect(await readFile(join(dir, "2026-10-07.jsonl"), "utf8")).toBe(
-      `${JSON.stringify(call({ key: "msg_A:s-1", repository_id: NEW }))}\n`
+      `${JSON.stringify(call({ repository_id: NEW }))}\n`
     );
   });
 
@@ -242,7 +236,7 @@ describe("the migration", () => {
       pending: [],
     });
     expect(await readFile(join(dir, "2026-10-07.jsonl"), "utf8")).toBe(
-      `${JSON.stringify(call({ key: "msg_A:s-1", repository_id: NEW }))}\n`
+      `${JSON.stringify(call({ repository_id: NEW }))}\n`
     );
     expect(await readFile(join(dir, "roots.json"), "utf8")).not.toContain(OLD);
   });

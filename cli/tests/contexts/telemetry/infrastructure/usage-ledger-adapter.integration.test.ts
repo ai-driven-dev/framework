@@ -410,7 +410,7 @@ describe("what was measured and left out, beside the ledger", () => {
   const FILE = () => join(dir, "left-out.txt");
 
   it("holds nothing before anything is kept, and creates nothing", async () => {
-    expect(await ledger.leftOut.counts()).toEqual({ undated: 0, unrecognised: 0 });
+    expect(await ledger.leftOut.counts()).toEqual({ undated: 0, unrecognised: 0, requestless: 0 });
     await expect(readdir(root)).resolves.toEqual([]);
   });
 
@@ -430,7 +430,7 @@ describe("what was measured and left out, beside the ledger", () => {
     expect(found).toHaveLength(2);
     expect(found).toEqual([...found].sort());
     for (const entry of found) expect(entry).toMatch(/^(undated|unrecognised) [0-9a-f]{32}$/);
-    expect(await ledger.leftOut.counts()).toEqual({ undated: 1, unrecognised: 1 });
+    expect(await ledger.leftOut.counts()).toEqual({ undated: 1, unrecognised: 1, requestless: 0 });
   });
 
   it("tells two things of one reason apart by what they are", async () => {
@@ -438,7 +438,7 @@ describe("what was measured and left out, beside the ledger", () => {
       { reason: "undated", of: "claude-code\u0000a" },
       { reason: "undated", of: "claude-code\u0000b" },
     ]);
-    expect(await ledger.leftOut.counts()).toEqual({ undated: 2, unrecognised: 0 });
+    expect(await ledger.leftOut.counts()).toEqual({ undated: 2, unrecognised: 0, requestless: 0 });
   });
 
   it("names a thing by its reason and what it is, so two reasons of one text are two", async () => {
@@ -446,7 +446,7 @@ describe("what was measured and left out, beside the ledger", () => {
       { reason: "undated", of: "x" },
       { reason: "unrecognised", of: "x" },
     ]);
-    expect(await ledger.leftOut.counts()).toEqual({ undated: 1, unrecognised: 1 });
+    expect(await ledger.leftOut.counts()).toEqual({ undated: 1, unrecognised: 1, requestless: 0 });
   });
 
   it("keeps a line it does not know, and counts only its own", async () => {
@@ -456,7 +456,7 @@ describe("what was measured and left out, beside the ledger", () => {
     const text = await readFile(FILE(), "utf8");
     expect(text).toContain("zz-later 0123\n");
     expect(text).toContain("constructor 1\n");
-    expect(await ledger.leftOut.counts()).toEqual({ undated: 1, unrecognised: 0 });
+    expect(await ledger.leftOut.counts()).toEqual({ undated: 1, unrecognised: 0, requestless: 0 });
   });
 
   it("writes nothing when nothing new is added", async () => {
