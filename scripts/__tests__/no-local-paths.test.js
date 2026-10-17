@@ -17,15 +17,24 @@ const CLEAN_ENV = Object.fromEntries(Object.entries(process.env).filter(([k]) =>
 const slash = (...parts) => parts.join("/");
 const back = (sep, ...parts) => parts.join(sep);
 const LEAKER = "zq-leaker";
+/** Random-looking, as a real one is: a placeholder id repeats a digit and is let through. */
+const SESSION = ["0d2c1f3e", "9a7b", "4c5d", "8e6f", "1a2b3c4d5e6f"].join("-");
 
 /** The shapes the repository actually leaked, under a made-up account. */
 const LEAKS = {
   home: `cd ${slash("", "Users", LEAKER, "orca", "workspaces", "framework", "wt")}`,
   linuxHome: `"cwd": "${slash("", "home", LEAKER, "repo")}"`,
-  scratch: `in \`${slash("", "private", "tmp", "claude-501", "-Users-x-y", "0d2c1f3e-0000-4000-8000-0000000000aa", "scratchpad")}\``,
+  scratch: `in \`${slash("", "private", "tmp", "claude-501", "-Users-user-y", "0d2c1f3e-0000-4000-8000-0000000000aa", "scratchpad")}\``,
   macTemp: `"root": "${slash("", "private", "var", "folders", "xr", "abc123", "T", "aidd-x")}"`,
   windows: `"home": "${back("\\\\", "C:", "Users", LEAKER, "AppData")}"`,
   windowsRaw: `at ${back("\\", "D:", "Users", LEAKER, "repo")}`,
+  bareHome: `"home": "${slash("", "Users", LEAKER)}"`,
+  bareLinuxHome: `HOME=${slash("", "home", LEAKER)}`,
+  bareWindows: `cd ${back("\\", "C:", "Users", LEAKER)}`,
+  slug: `${slash("~", ".claude", "projects", `-Users-${LEAKER}-orca-x`, "abc.jsonl")}`,
+  windowsSlug: `projects ${["C", "", "Users", LEAKER, "repo"].join("-")}`,
+  sessionKey: `{"session_id":"${SESSION}"}`,
+  sessionState: `${slash("~", ".copilot", "session-state", SESSION, "events.jsonl")}`,
 };
 
 describe("findLocalPaths", () => {
@@ -35,15 +44,24 @@ describe("findLocalPaths", () => {
     assert.deepEqual(
       found.map(({ label }) => label),
       [
-        "/Users/<name>/",
-        "/home/<name>/",
+        "/Users/<name>",
+        "/home/<name>",
         "/private/tmp/claude-<uid>/",
         slash("", "var", "folders", ""),
-        "C:\\Users\\<name>\\",
-        "C:\\Users\\<name>\\",
+        "C:\\Users\\<name>",
+        "C:\\Users\\<name>",
+        "/Users/<name>",
+        "/home/<name>",
+        "C:\\Users\\<name>",
+        "-Users-<name>-",
+        "-Users-<name>-",
+        "session id",
+        "session id",
       ]
     );
-    for (const { label } of found) assert.doesNotMatch(label, new RegExp(LEAKER, "u"));
+    for (const { label } of found) {
+      assert.doesNotMatch(label, new RegExp(`${LEAKER}|zq|${SESSION}`, "u"));
+    }
   });
 
   it("reports the line each leak sits on", () => {
@@ -62,6 +80,9 @@ describe("findLocalPaths", () => {
       slash("", "home", "U", "x"),
       back("\\\\", "C:", "Users", "runner", "x"),
       back("\\\\", "C:", "Users", "RUNNER~1", "x"),
+      `ends a sentence at ${slash("", "home", "user")}.`,
+      `${slash("~", ".claude", "projects", "-Users-user-repo", "a.jsonl")}`,
+      `{"session_id":"${["00000000", "0000", "4000", "8000", "00000000000a"].join("-")}"}`,
     ];
 
     for (const sample of placeholders) assert.deepEqual(findLocalPaths(sample), [], sample);
@@ -72,7 +93,7 @@ describe("findLocalPaths", () => {
       slash("", "home", ".claude", "settings.json"),
       slash("", "proj", "home", LEAKER, "x"),
       slash("", "Users", ""),
-      `${slash("", "home", LEAKER)} with no trailing separator`,
+      `{"thread_id":"${SESSION}"}`,
     ];
 
     for (const sample of lookalikes) assert.deepEqual(findLocalPaths(sample), [], sample);
@@ -122,15 +143,16 @@ describe("the command line", () => {
     }
   });
 
-  it("checks only the files it is handed, and skips a binary one", () => {
+  it("checks only the files it is handed, skipping a binary, a deleted file and a folder", () => {
     const cwd = repoWith({
       "staged.md": `${LEAKS.home}\n`,
       "untouched.md": `${LEAKS.linuxHome}\n`,
       "blob.bin": Buffer.concat([Buffer.from([0]), Buffer.from(LEAKS.home)]),
+      "docs/inner.md": "clean\n",
     });
 
     try {
-      const run = runIn(cwd, ["staged.md", "blob.bin"]);
+      const run = runIn(cwd, ["staged.md", "blob.bin", "deleted.md", "docs"]);
       const out = run.stdout + run.stderr;
 
       assert.equal(run.status, 1, out);
