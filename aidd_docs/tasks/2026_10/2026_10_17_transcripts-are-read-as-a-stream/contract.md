@@ -6,7 +6,7 @@ status: done
 
 ## Need
 
-Found by the R1 telemetry audit (M3). Ingest reads the unread tail of a transcript whole: one `Buffer` of the tail, one string of it, then one string per line, all alive at once (`infrastructure/claude-transcript-source-adapter.ts` `read`, handed to `application/read-usage-use-case.ts` as `lines: string[]`). Claude Code transcripts of 371 MB and 417 MB exist. One ingest of such a tail needs a multiple of its size in memory, and a tail over V8's longest string (512 MB) throws on every ingest, so that transcript is never read again (inferred, not run).
+Found by the R1 telemetry audit (M3). Ingest reads the unread tail of a transcript whole: one `Buffer` of the tail, one string of it, then one string per line, all alive at once (`infrastructure/claude-transcript-source-adapter.ts` `read`, handed to `application/read-usage-use-case.ts` as `lines: string[]`). The audit reports Claude Code transcripts of 371 MB and 417 MB (not observed here). One ingest of such a tail needs a multiple of its size in memory, and a tail over V8's longest string (512 MB) throws on every ingest, so that transcript is never read again (inferred, not run).
 
 ## Decision
 

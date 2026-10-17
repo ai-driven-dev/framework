@@ -29,7 +29,16 @@ Each mutation applied alone to `eachLine` in `claude-transcript-source-adapter.t
 | Reads a full block past the size stat'd | reads up to the size it found, not what is appended while it reads (green at first with blocks of 4 and a 12-byte file; the test now uses blocks of 5 and turns red) |
 | No stop at a short read | stops where a file truncated while it reads ends (times out) |
 | Unterminated line consumed | does not consume an unterminated last line; leaves an unterminated last line; S1; S2 |
+| Empty line not handed over | hands empty lines over as lines; S1; S2 |
+| No floor on the block size (`size - from` may be negative) | reads nothing past the size when its saved offset is beyond it; S1 |
+| A short read counted as reaching the size | stops where a file truncated while it reads ends |
+| Consumed starts one past the offset | reads nothing from an empty file; reads nothing past the size when its saved offset is beyond it; S1; S2 |
+| Loop runs once more at the end (`at <= size`) | none: the extra read asks 0 bytes and breaks, equivalent (also left alive by Stryker, below) |
 | Partial piece not copied before the block is reused | joins a line split across blocks; decodes a character split across blocks; strips a CRLF split across blocks; leaves an unterminated last line; reads a line many blocks long; S1; S2 |
+
+## S2 is not vacuous
+
+One throwaway run of S2, instrumented and not committed, counted its ingest steps: 227 steps over 80 runs; 43 stored at least one call (`added > 0`), 23 met a call whose consent could not be read, and 16 saved an offset short of the transcript's last complete line, which only the #1046 hold-back does. Ledger days, the hold-back and `left-out.txt` are all exercised.
 
 ## Memory
 
@@ -61,7 +70,7 @@ Mutants still alive in `claude-transcript-source-adapter.ts` (`read-usage-use-ca
 
 `dist/cli.js` 712,435 B, `Bundle size: 695.7 KB / budget: 709 KB`. No raise.
 
-## Gates, on `13a0ee62`
+## Gates, on `13a0ee62` (the commits after it change only this folder)
 
 Every CLI and hook run with `HOME`, `XDG_CONFIG_HOME`, `AIDD_USER_CONFIG_DIR`, `AIDD_TELEMETRY_DIR`, `CLAUDE_CONFIG_DIR` in temporary directories and `GIT_CONFIG_NOSYSTEM=1`.
 
@@ -73,4 +82,4 @@ Every CLI and hook run with `HOME`, `XDG_CONFIG_HOME`, `AIDD_USER_CONFIG_DIR`, `
 | `pnpm smoke` | `PASS: 132 FAIL: 0 SKIP: 1 · coverage 100%` |
 | `node scripts/check-claude-tokens-end-to-end.cjs cli/dist/cli.js` | exit 0, `2 calls, 393 tokens, all on task demo, ticket T-1, and on task demo in this repository` |
 | same, `--attended` | exit 0, same, `; asked, answered by the hook, kept across /clear` |
-| `pnpm lint`, `pnpm typecheck` | clean but one warning in `uninstall-use-case.ts`, present on `origin/next` |
+| `pnpm lint`, `pnpm typecheck` | run by the pre-commit hook of every commit (exit 0). Run by hand before `1522c00d`: lint clean but one warning in `uninstall-use-case.ts`, present on `origin/next` |
