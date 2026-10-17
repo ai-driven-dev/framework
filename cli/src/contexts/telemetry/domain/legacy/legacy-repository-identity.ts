@@ -2,7 +2,7 @@ import { addressOf, hashOf, ownerAndRepo, type RepositoryFacts } from "../reposi
 
 /** The id cli-v5.5.0 stored for a repository: the host case-folded only when scp-like or of a
  * special scheme, the path as written. Kept so the migration can tell which stored id a live
- * clone's origin had (see `RepositoryIdMigration`); nothing new is ever named by it. */
+ * clone's origin had (see `StoredUsageMigration`); nothing new is ever named by it. */
 export function legacyRepositoryIdOf(facts: RepositoryFacts): string | null {
   const address = facts.remote === null ? null : addressOf(facts.remote);
   const path = address === null ? null : ownerAndRepo(address.path);

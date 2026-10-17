@@ -28,6 +28,7 @@ import {
 import type { StoredUsage } from "../../../../../src/contexts/telemetry/domain/stored-usage.js";
 import { USAGE_AGENTS } from "../../../../../src/contexts/telemetry/domain/usage-record.js";
 import {
+  ALREADY_MIGRATED,
   FakeBindings,
   FakeConsents,
   FakeLocator,
@@ -132,7 +133,8 @@ async function reporterOf({ calls, declarations, person }: Ledger) {
         { caseInsensitiveFileSystem: false, now }
       ),
       new SnapshotBindingsUseCase(new FakeBindings(), snapshots, new InMemoryBindingsLock(), now),
-      { refusedByEnvironment: false }
+      { refusedByEnvironment: false },
+      ALREADY_MIGRATED
     ),
     ledger,
     new DeclaredBindings(sessions, snapshots),

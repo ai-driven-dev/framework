@@ -71,7 +71,8 @@ export class IngestUsageUseCase {
     private readonly directories: DirectoryResolver,
     private readonly snapshots: SnapshotBindingsUseCase,
     private readonly options: IngestOptions,
-    private readonly migration?: { execute(): Promise<void> }
+    /** Brings stored data to today's key and id rules first (`StoredUsageMigration`). */
+    private readonly migration: { execute(): Promise<void> }
   ) {}
 
   async execute(): Promise<IngestResult> {
@@ -94,7 +95,7 @@ export class IngestUsageUseCase {
 
   private async ingest(): Promise<IngestResult> {
     // Stored data first brought to the rules of now, before anything is added to it.
-    await this.migration?.execute();
+    await this.migration.execute();
     const before = await this.ledger.positions();
     // The consent log first: a transcript last written before any interval opened is not read.
     const resolver = await this.directories.open();

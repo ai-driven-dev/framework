@@ -7,7 +7,7 @@ import { BindingSnapshotStoreAdapter } from "../../../../src/contexts/telemetry/
 import { BindingsLockAdapter } from "../../../../src/contexts/telemetry/infrastructure/bindings-lock-adapter.js";
 import { UsageLedgerAdapter } from "../../../../src/contexts/telemetry/infrastructure/usage-ledger-adapter.js";
 import { PrivateStorageAdapter } from "../../../../src/runtime/filesystem/private-storage-adapter.js";
-import { FakeBindings } from "../../../helpers/ports/in-memory-telemetry.js";
+import { FakeBindings, NO_ALIASES } from "../../../helpers/ports/in-memory-telemetry.js";
 
 let root: string;
 const storage = new PrivateStorageAdapter();
@@ -98,7 +98,7 @@ describe("the bindings lock", () => {
     const snapshotter = () =>
       new SnapshotBindingsUseCase(
         source,
-        new BindingSnapshotStoreAdapter(dir, storage),
+        new BindingSnapshotStoreAdapter(dir, storage, NO_ALIASES),
         new BindingsLockAdapter(dir, storage),
         () => new Date("2026-10-09T09:00:00.000Z")
       );

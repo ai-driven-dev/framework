@@ -9,6 +9,7 @@ import { readClaudeUsageLine } from "../../../../src/contexts/telemetry/domain/f
 import type { LocatedDirectory } from "../../../../src/contexts/telemetry/domain/ports/repository-locator.js";
 import { resolutionKey } from "../../../../src/contexts/telemetry/domain/repository-resolution.js";
 import {
+  ALREADY_MIGRATED,
   AUTUMN,
   cloneOf,
   FakeBindings,
@@ -113,7 +114,8 @@ function setup(options: { refused?: boolean; caseInsensitive?: boolean } = {}) {
       now: () => NOW,
     }),
     snapshots,
-    { refusedByEnvironment: options.refused ?? false }
+    { refusedByEnvironment: options.refused ?? false },
+    ALREADY_MIGRATED
   );
   locator.directories.set("/work/a", repository("/work/a"));
   /** The clone at `path` consents: it says so now, and it opted in once. */
@@ -135,7 +137,8 @@ function setup(options: { refused?: boolean; caseInsensitive?: boolean } = {}) {
         now: () => NOW,
       }),
       snapshots,
-      { refusedByEnvironment: false }
+      { refusedByEnvironment: false },
+      ALREADY_MIGRATED
     );
   return {
     ingestReadingAll,
