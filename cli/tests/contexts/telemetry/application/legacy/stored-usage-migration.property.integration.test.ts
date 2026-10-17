@@ -77,6 +77,8 @@ const TIMES = [
   ["2026-10-07T23:59:59.000Z", "2026-10-08T00:00:01.000Z", "2026-10-08T00:00:03.000Z"],
   ["2026-10-08T12:00:00.000Z", "2026-10-08T12:00:04.000Z"],
   ["2026-10-31T23:59:58.000Z", "2026-11-01T00:00:02.000Z"],
+  // Days apart: a requestless call's copies are bound by nothing measured.
+  ["2026-10-03T10:00:00.000Z", "2026-10-06T09:00:00.000Z", "2026-10-12T11:00:00.000Z"],
 ];
 
 interface Copy {
@@ -88,7 +90,7 @@ interface Copy {
 }
 
 const copy = fc.record({
-  call: fc.nat(11),
+  call: fc.nat(23),
   time: fc.nat(2),
   output: fc.nat(3),
   before: fc.boolean(),
@@ -98,7 +100,7 @@ const copy = fc.record({
  * declared branch, and with or without an advisor: only its copies' times and counts differ. */
 function lineOf({ call, time, output }: Copy): string {
   const dir = DIRS[call % DIRS.length] as string;
-  const times = TIMES[call % TIMES.length] as string[];
+  const times = TIMES[Math.floor(call / 2) % TIMES.length] as string[];
   const requestless = call % 2 === 0;
   const advisor = call % 3 === 0;
   return JSON.stringify({

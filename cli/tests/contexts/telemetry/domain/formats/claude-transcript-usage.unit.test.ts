@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { readClaudeUsageLine } from "../../../../../src/contexts/telemetry/domain/formats/claude-transcript-usage.js";
+import {
+  isKeyedBySession,
+  readClaudeUsageLine,
+} from "../../../../../src/contexts/telemetry/domain/formats/claude-transcript-usage.js";
 
 const USAGE = {
   input_tokens: 3,
@@ -316,5 +319,20 @@ describe("one transcript line to usage records", () => {
     const outcome = readClaudeUsageLine(line({}, { usage }));
     expect(outcome.records[0]?.cache_write).toBe(9);
     expect(outcome.unrecognised).toEqual(["usage.iterations holds a non-object"]);
+  });
+});
+
+describe("a call keyed by its session, having no request id", () => {
+  it("is told by its key ending in its own session, advisor iteration or not", () => {
+    const call = (key: string, tool: "claude-code" | "codex" = "claude-code") => ({
+      tool,
+      key,
+      session_id: "s-1",
+    });
+    expect(isKeyedBySession(call("msg_A:s-1"))).toBe(true);
+    expect(isKeyedBySession(call("msg_A:s-1#advisor3"))).toBe(true);
+    expect(isKeyedBySession(call("msg_A:req_A"))).toBe(false);
+    expect(isKeyedBySession(call("msg_A:xs-1"))).toBe(false);
+    expect(isKeyedBySession(call("msg_A:s-1", "codex"))).toBe(false);
   });
 });

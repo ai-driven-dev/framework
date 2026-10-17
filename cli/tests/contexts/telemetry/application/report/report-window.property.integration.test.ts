@@ -8,6 +8,7 @@ import {
   type IngestResult,
   IngestUsageUseCase,
 } from "../../../../../src/contexts/telemetry/application/ingest-usage-use-case.js";
+import { storeCalls } from "../../../../../src/contexts/telemetry/application/ledger-upkeep.js";
 import { DeclaredBindings } from "../../../../../src/contexts/telemetry/application/report/declared-bindings.js";
 import { reportEnvelopeOf } from "../../../../../src/contexts/telemetry/application/report/report-envelope.js";
 import { ReportUsageUseCase } from "../../../../../src/contexts/telemetry/application/report/report-usage-use-case.js";
@@ -17,6 +18,7 @@ import { attribute } from "../../../../../src/contexts/telemetry/domain/report/a
 import {
   inPeriod,
   type Period,
+  windowOf,
 } from "../../../../../src/contexts/telemetry/domain/report/period.js";
 import {
   conflictsOf,
@@ -33,6 +35,7 @@ import { USAGE_AGENTS } from "../../../../../src/contexts/telemetry/domain/usage
 import { UsageLedgerAdapter } from "../../../../../src/contexts/telemetry/infrastructure/usage-ledger-adapter.js";
 import { PrivateStorageAdapter } from "../../../../../src/runtime/filesystem/private-storage-adapter.js";
 import {
+  ALREADY_MIGRATED,
   FakeBindings,
   FakeConsents,
   FakeLocator,
@@ -219,7 +222,8 @@ function ingestOf(ledger: UsageLedger): IngestUsageUseCase {
       new InMemoryBindingsLock(),
       now
     ),
-    { refusedByEnvironment: false }
+    { refusedByEnvironment: false },
+    ALREADY_MIGRATED
   );
 }
 
@@ -296,4 +300,73 @@ describe("a report on a bounded period", () => {
       { numRuns: 100 }
     );
   }, 60_000);
+});
+
+/** A call with no request id is keyed by its message and session, and nothing bounds how far
+ * apart its copies are written. A call with one keeps its copies under half a day apart, the
+ * measured bound. */
+const storedCall = fc.record({
+  anchor: fc.nat(ANCHORS.length - 1),
+  requestless: fc.boolean(),
+  copies: fc.array(
+    fc.record({
+      days: fc.integer({ min: -5, max: 5 }),
+      offset: fc.integer({ min: -HALF_DAY, max: HALF_DAY }),
+      output: fc.nat(5),
+      // Which ingest read this copy.
+      ingest: fc.nat(3),
+    }),
+    { minLength: 1, maxLength: 3 }
+  ),
+});
+
+describe("calls stored by ingests, a requestless call's copies days apart", () => {
+  it("leave every bounded read equal to the full ledger filtered to its period", async () => {
+    await fc.assert(
+      fc.asyncProperty(
+        fc.array(storedCall, { minLength: 1, maxLength: 8 }),
+        period,
+        async (calls, asked) => {
+          const ledger = await ledgerWith(new Map());
+          for (let ingest = 0; ingest < 4; ingest += 1) {
+            const batch = calls.flatMap(({ anchor, requestless, copies }, index) =>
+              copies
+                .filter((c) => c.ingest === ingest)
+                .map(
+                  ({ days, offset, output }): StoredUsage => ({
+                    tool: "claude-code",
+                    tool_version: "1.0.0",
+                    key: requestless ? `msg_${index}:s-1` : `msg_${index}:req_${index}`,
+                    session_id: "s-1",
+                    agent: "main",
+                    at: new Date(
+                      (ANCHORS[anchor] as number) + (requestless ? days * DAY_MS : 0) + offset
+                    ).toISOString(),
+                    model: "m-1",
+                    input: 1,
+                    output,
+                    cache_read: 0,
+                    cache_write: 0,
+                    cache_write_1h: null,
+                    reasoning: null,
+                    cwd: null,
+                    git_branch: null,
+                    repository_id: "repo-1",
+                  })
+                )
+            );
+            if (batch.length > 0) await storeCalls(ledger, batch);
+          }
+          const bounded = (await ledger.load(windowOf(asked))).records;
+          const full = (await ledger.load()).records;
+          const inside = (records: readonly StoredUsage[]) =>
+            records.filter((record) => inPeriod(record.at, asked));
+          expect(inside(bounded)).toEqual(inside(full));
+          // One record per call, whatever its copies' spread.
+          expect(full.length).toBe(calls.filter((c) => c.copies.length > 0).length);
+        }
+      ),
+      { numRuns: 150 }
+    );
+  }, 240_000);
 });

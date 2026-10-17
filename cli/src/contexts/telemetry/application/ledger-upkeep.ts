@@ -1,3 +1,4 @@
+import { isKeyedBySession } from "../domain/formats/claude-transcript-usage.js";
 import type { LoadedLedger, UsageLedger } from "../domain/ports/usage-ledger.js";
 import { daysAround, type StoredUsage, upsertUsage } from "../domain/stored-usage.js";
 
@@ -11,13 +12,16 @@ export interface Stored {
 /** Folds incoming calls into the days around them, and rewrites only the days that changed,
  * plus any partition read that was damaged or not in daily form, so a month is split and a
  * line that is not a record put after the records, kept. Nothing outside the window is read,
- * except a monthly file it splits and every day of that month. Runs under the caller's lock. */
+ * except a monthly file it splits and every day of that month, and every day when a call has no
+ * request id. Runs under the caller's lock. */
 export async function storeCalls(
   ledger: UsageLedger,
   incoming: readonly StoredUsage[]
 ): Promise<Stored> {
-  const days = daysAround(incoming);
-  const held = await ledger.load((day) => days.has(day));
+  // A requestless call's copies may lie any distance apart: storing one reads every day, so
+  // the ledger never holds such a call twice and no window has to reach its other copies.
+  const days = incoming.some(isKeyedBySession) ? null : daysAround(incoming);
+  const held = await ledger.load(days === null ? undefined : (day) => days.has(day));
   const merged = upsertUsage(held.records, incoming);
   const partitions = new Set([...merged.days, ...held.damaged, ...held.unsettled]);
   if (partitions.size > 0) await ledger.save(merged.records, partitions);

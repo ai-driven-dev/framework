@@ -71,6 +71,16 @@ function sum(values: readonly (number | null)[]): number {
   return values.reduce<number>((all, value) => all + (value ?? 0), 0);
 }
 
+/** Whether a call is keyed `message.id:sessionId`, having no request id. Its copies are bound
+ * in time by nothing measured: none was seen in real transcripts, whereas the copies of a call
+ * with a request id were measured under half an hour apart (see `windowOf`). */
+export function isKeyedBySession(call: Pick<UsageRecord, "tool" | "key" | "session_id">): boolean {
+  return (
+    call.tool === "claude-code" &&
+    call.key.replace(/#advisor\d+$/, "").endsWith(`:${call.session_id}`)
+  );
+}
+
 export function readClaudeUsageLine(line: string): ClaudeUsageLine {
   let parsed: unknown;
   try {

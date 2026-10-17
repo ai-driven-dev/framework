@@ -32,11 +32,14 @@ function shift(day: string, days: number): string | null {
  * from the day before `from` to the day after `to`, an open side, or one past four-digit
  * years, staying open. `undefined` when the period has no bound: every partition.
  *
- * One day on each side, because the copies of one call have been observed less than a day
- * apart (of 262,631 real keys, the widest spread is 0.3 h). Under that bound they sit within a
+ * One day on each side, because the copies of one call with a request id have been observed
+ * less than a day apart (of 262,631 real keys, the widest spread is 0.3 h; measured again on
+ * 184,502 message ids written more than once, 0.27 h). Under that bound they sit within a
  * calendar day of each other: a call with a copy in the period has all of them in the window,
  * and folds to the same one as a full read would. Outside it, only an unbounded read folds
- * every copy. */
+ * every copy. A call with no request id is bound by nothing measured (none was seen in
+ * 512,820 real usage lines), so the window does not rely on it: storing one reads every day
+ * (see `storeCalls`), and the ledger holds it once. */
 export function windowOf(period: Period): ((day: string) => boolean) | undefined {
   if (period.from === null && period.to === null) return undefined;
   const first = period.from === null ? null : shift(period.from, -1);

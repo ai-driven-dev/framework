@@ -30,6 +30,7 @@ import type {
 import type { ConsentHistory } from "../../../src/contexts/telemetry/domain/ports/consent-history.js";
 import type { ConsentSource } from "../../../src/contexts/telemetry/domain/ports/consent-source.js";
 import type { PersonIdentityStore } from "../../../src/contexts/telemetry/domain/ports/identity/person-identity-store.js";
+import type { RepositoryAliasStore } from "../../../src/contexts/telemetry/domain/ports/repository-alias-store.js";
 import type {
   LocatedDirectory,
   RepositoryLocator,
@@ -411,3 +412,12 @@ export class InMemoryIdentity implements PersonIdentityStore {
     return held;
   }
 }
+
+/** A ledger already under today's key and id rules: the migration finds nothing to do. */
+export const ALREADY_MIGRATED = { execute: async (): Promise<void> => {} };
+
+/** No table of ids an earlier version gave repositories: every id is read as stored. */
+export const NO_ALIASES: RepositoryAliasStore = {
+  load: async () => null,
+  save: async () => {},
+};

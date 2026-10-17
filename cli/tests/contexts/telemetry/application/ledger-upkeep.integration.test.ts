@@ -216,3 +216,26 @@ describe("settling only a window", () => {
     expect((await bytes(dir))["2026-10-20.jsonl"]).toBe(torn);
   });
 });
+
+describe("storing a requestless call, whose copies nothing bounds in time", () => {
+  it("finds its copy days away, so the ledger holds the call once and a bounded read agrees", async () => {
+    // Found by the independent check: copies three days apart were stored in two days.
+    const ledger = new UsageLedgerAdapter(join(root, "ledger"), new PrivateStorageAdapter());
+    await storeCalls(ledger, [stored("msg_1:s-1", "2026-10-01T10:00:00.000Z", 1)]);
+    await storeCalls(ledger, [stored("msg_1:s-1", "2026-10-04T10:00:00.000Z", 2)]);
+    expect((await ledger.load()).records).toEqual([
+      stored("msg_1:s-1", "2026-10-04T10:00:00.000Z", 2),
+    ]);
+    expect(await readdir(join(root, "ledger"))).toEqual(["2026-10-04.jsonl"]);
+  });
+
+  it("still reads only the days around a call with a request id", async () => {
+    const ledger = new UsageLedgerAdapter(join(root, "ledger"), new PrivateStorageAdapter());
+    await storeCalls(ledger, [stored("msg_1:req_1", "2026-10-01T10:00:00.000Z", 1)]);
+    await storeCalls(ledger, [stored("msg_1:req_1", "2026-10-04T10:00:00.000Z", 2)]);
+    expect((await readdir(join(root, "ledger"))).sort()).toEqual([
+      "2026-10-01.jsonl",
+      "2026-10-04.jsonl",
+    ]);
+  });
+});
