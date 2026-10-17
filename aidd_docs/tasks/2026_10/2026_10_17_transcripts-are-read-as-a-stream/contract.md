@@ -20,7 +20,7 @@ flowchart LR
 - **The port hands lines one at a time.** `TranscriptSource.read(path, since, writtenFrom, each)` calls `each(line)` for every complete line, in order, and resolves to `{position, restarted, skipped}`. An array of lines, or an async iterator collected into one, keeps the memory this fixes. `ReadUsageUseCase` moves its loop body into `each`; what it returns, and everything after it (ingest, the #1046 hold-back, `readAll`), is unchanged.
 - **The adapter reads a block at a time** (1 MiB by default, a constructor parameter so tests can use a few bytes), from the handle it already opened and stat'd. A line split across blocks is kept as pieces and joined once at its newline. Each line's bytes are decoded alone: byte `0x0a` never occurs inside a UTF-8 sequence, so this decodes as the whole tail did, invalid bytes and a BOM included.
 - **Memory**: one block, up to about three copies of the longest line at its peak (pieces, joined bytes, decoded string), and what the use case keeps (records, unrecognised lines naming a directory). No longer proportional to the tail.
-- **Changed under the read (review round 1).** A read now spans many block reads, so a file can change between two of them. After the last block the adapter stats the open handle and the path: shorter than when read began, or another file at the path, and the read returns no position. `ReadUsageUseCase` keeps the file's records, unrecognised lines and position out of its reading, so ingest keeps the position it had and the next ingest reads the same bytes again.
+- **Changed under the read (review round 1).** A read now spans many block reads, so a file can change between two of them. After the last block the adapter stats the open handle: shorter than when read began, and the read returns no position. Review round 2 dropped a check of the path's identity: the open handle reads a replaced file whole and consistently, and discarding that read lost its lines, so a path rotated at every read would never be counted. `ReadUsageUseCase` keeps the file's records, unrecognised lines and position out of its reading, so ingest keeps the position it had and the next ingest reads the same bytes again.
 
 ## Rules kept, byte for byte
 
@@ -32,7 +32,7 @@ flowchart LR
 | Saved offset | just after the last `0x0a` consumed; an unterminated last line (still being written) is not consumed and is read again next time |
 | Saved size, identity | those stat'd |
 | File shorter than stat'd when read (truncated meanwhile) | changed by review round 1: no position, nothing of the read counted, read again next time (before: lines up to where reading stopped, offset after the last of them) |
-| Another file at the path once read (replaced meanwhile) | changed by review round 1: as above (before: the old file's lines, its identity saved, so the next read restarted) |
+| Another file at the path once read (replaced meanwhile) | as before: the opened file's lines, its identity saved, so the next read restarts on the new file |
 | Saved offset past the size, same identity and size not smaller | nothing read, offset kept |
 | Last written before `writtenFrom` | not read, offset at its last complete line (`lastLineEnd`, already a block at a time) |
 | Held transcript (#1046) | positions from before the read restored by ingest: untouched |

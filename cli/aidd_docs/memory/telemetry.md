@@ -30,7 +30,7 @@ flowchart LR
 ```
 
 - A command that reports or ingests reads new lines first, under the ledger lock. `ingest` is the same step on its own, run quietly by the plugin at session start.
-- A transcript is read a block at a time (1 MiB), each complete line handed on as it is found, never the unread tail whole. An ingest holds a block, up to about three copies of the longest line at once (its pieces, the joined bytes, the decoded string), and what the reading keeps: every record and every unrecognised line naming a directory. An unterminated last line waits for the next read. A transcript that shrank, or that another file replaced at its path, while it was read counts none of that read and keeps its position, to be read again.
+- A transcript is read a block at a time (1 MiB), each complete line handed on as it is found, never the unread tail whole. An ingest holds a block, up to about three copies of the longest line at once (its pieces, the joined bytes, the decoded string), and what the reading keeps: every record and every unrecognised line naming a directory. An unterminated last line waits for the next read. A transcript that shrank while it was read counts none of that read and keeps its position, to be read again. One replaced at its path meanwhile is read as it was opened, whole.
 - Reading is one pass: tool-specific only up to the usage record. Resolving, storing, attributing and reporting are written once for every tool.
 - The hooks and the CLI never call each other's code. They meet in the files, whose formats one fixture pins on both sides.
 

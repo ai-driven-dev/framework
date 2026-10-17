@@ -1,5 +1,5 @@
 import { constants, type Stats } from "node:fs";
-import { type FileHandle, open, readdir, stat } from "node:fs/promises";
+import { type FileHandle, open, readdir } from "node:fs/promises";
 import { join } from "node:path";
 import { isErrnoException } from "../../../kernel/reading/json-file.js";
 import { modifiedAtIfPresent } from "../../../kernel/reading/text-file.js";
@@ -37,7 +37,8 @@ async function lastLineEnd(handle: FileHandle, size: number): Promise<number> {
 /** Hands `each` every complete line between `from` and `size`, a block at a time, and returns
  * the end of the last one. A line split across blocks is kept in pieces and decoded once whole:
  * byte 0x0a is never inside a UTF-8 sequence, so this decodes as the whole range would. Memory is
- * a block and the longest line, whatever the range. */
+ * a block and up to about three copies of the longest line (its pieces, the joined bytes, the
+ * decoded string), whatever the range. */
 async function eachLine(
   handle: FileHandle,
   from: number,
@@ -50,7 +51,7 @@ async function eachLine(
   let consumed = from;
   for (let at = from; at < size; ) {
     const { bytesRead } = await handle.read(block, 0, Math.min(block.length, size - at), at);
-    // Shorter than it was when stat'd: what is left is read next time.
+    // Shorter than it was when stat'd: the caller sees it and discards this read.
     if (bytesRead === 0) break;
     const read = block.subarray(0, bytesRead);
     let start = 0;
@@ -130,13 +131,10 @@ export class ClaudeTranscriptSourceAdapter implements TranscriptSource {
       }
       const { offset, restarted } = resumeOffset(since, now);
       const end = await eachLine(handle, offset, now.size, this.blockBytes, each);
-      // A transcript only grows. Shorter now, or another file at its path: it changed under the
-      // read, a line may be spliced from two versions, and no position past it can be trusted.
-      const there = await stat(path).catch(absentIsNothing);
-      if (
-        (await handle.stat()).size < now.size ||
-        (there !== null && identityOf(there) !== now.identity)
-      ) {
+      // A transcript only grows. Shorter now: it was rewritten under the read, a line may be
+      // spliced from two versions, and no position past it can be trusted. Another file put at
+      // its path is no harm: the handle still reads the one it opened, whole.
+      if ((await handle.stat()).size < now.size) {
         return { position: null, restarted, skipped: false };
       }
       return {

@@ -1,7 +1,7 @@
 import type { TranscriptPosition } from "../transcript-position.js";
 
 export interface TranscriptRead {
-  /** `null`: the file shrank, or another took its path, while it was read. The lines handed over
+  /** `null`: the file shrank while it was read. The lines handed over
    * may be spliced from two versions: they are not to be counted, and the file is read again
    * from where it stood. */
   readonly position: TranscriptPosition | null;

@@ -387,14 +387,18 @@ describe("reading a transcript in blocks of a few bytes", () => {
     expect(read.position).toMatchObject({ offset: 8, size: 8 });
   });
 
-  it("gives no position for a file replaced at its path while it reads", async () => {
+  it("reads a file replaced at its path while it reads as it was, and the new one whole next time", async () => {
     const path = await file("aaa\nbbb\nccc\n");
     const other = join(projects, "other.jsonl");
     await writeFile(other, "zzz\n");
+    const lines: string[] = [];
     const read = await inBlocksOf(4).read(path, null, EVERYTHING, (line) => {
-      if (line === "aaa") renameSync(other, path);
+      if (lines.push(line) === 1) renameSync(other, path);
     });
-    expect(read.position).toBeNull();
+    expect(lines).toEqual(["aaa", "bbb", "ccc"]);
+    expect(read.position).toMatchObject({ offset: 12, size: 12 });
+    const next = await readLines(inBlocksOf(4), path, read.position, EVERYTHING);
+    expect(next).toMatchObject({ lines: ["zzz"], restarted: true });
   });
 
   it("reads nothing past the size when its saved offset is beyond it", async () => {
