@@ -1,6 +1,6 @@
 ---
 name: 01-usage
-description: Answer what a period or one piece of work consumed in tokens, per day, model, task, ticket, session, repository or person, from the local measurement. Use when the user asks how many tokens were spent, where the effort went, or what a task or ticket consumed. Not for turning measurement on or off.
+description: Answer what a period or one piece of work consumed in tokens, per day, model, agent, task, ticket, session, repository or person, from the local measurement. Use when the user asks how many tokens were spent, where the effort went, or what a task or ticket consumed. Not for turning measurement on or off.
 argument-hint: question | period
 ---
 

@@ -11,7 +11,7 @@
 | one reader in the ingest list | `runtime/wiring/telemetry.ts` |
 | its name | `USAGE_TOOLS` in `domain/usage-record.ts` |
 
-Storage, attribution and the report need nothing. Session declarations come from Claude's hooks only (release 1): another tool's calls are attributed by branch.
+Storage, attribution and the report need nothing. Task and ticket come only from `aidd telemetry task`, whoever runs it; the plugin's hooks only invoke it from Claude Code, so another tool's calls are attributed by branch. Rules: [usage contract](../../../aidd_docs/product/usage-contract.md#attribution).
 
 ## Data flow
 
@@ -30,7 +30,7 @@ flowchart LR
 ```
 
 - A command that reports or ingests reads new lines first, under the ledger lock. `ingest` is the same step on its own, run quietly by the plugin at session start.
-- A transcript is read a block at a time (1 MiB), each complete line handed on as it is found, never the unread tail whole. An ingest holds a block, up to about three copies of the longest line at once (its pieces, the joined bytes, the decoded string), and what the reading keeps: every record and every unrecognised line naming a directory. An unterminated last line waits for the next read. A transcript that shrank while it was read counts none of that read and keeps its position, to be read again. One replaced at its path meanwhile is read as it was opened, whole.
+- A transcript is read a block at a time (1 MiB), each complete line handed on as it is found, never the unread tail whole. An ingest holds a block, up to about three copies of the longest line at once (its pieces, the joined bytes, the decoded string), and what the reading keeps: every record and every unrecognised line naming a directory. What a rewrite, a shrink or a replacement during a read does: [residual limits](../../../aidd_docs/product/usage-contract.md#residual-limits).
 - A report's envelope keeps its figures apart from its `run`: defined once in [the envelope reference](../../../plugins/aidd-telemetry/skills/01-usage/references/envelope.md#figures-and-run).
 - Reading is one pass: tool-specific only up to the usage record. Resolving, storing, attributing and reporting are written once for every tool.
 - The hooks and the CLI never call each other's code. They meet in the files, whose formats one fixture pins on both sides.
@@ -54,7 +54,7 @@ flowchart LR
 | Where a call's repository comes from | `application/directory-resolver.ts`, `domain/repository-identity.ts` |
 | How data an earlier version stored is brought to today's key and id rules: read-time in every store reader, rewritten by the first ingest and again when a root left pending adds an id | `application/legacy/stored-usage-migration.ts`, `domain/legacy/` (key, id and table rules), `infrastructure/legacy/repository-alias-store-adapter.ts`; rules in the [usage contract](../../../aidd_docs/product/usage-contract.md#stores) |
 | Which task a call belongs to | `domain/report/attribution.ts`, `domain/declaration/binding-resolution.ts` |
-| Whether a branch is declared: only by `task`, on that branch (`aiddDeclaredAt` set, `aiddDeclaredFor` absent or equal to the branch); the hook's twin is `plugins/aidd-telemetry/hooks/lib/git.cjs` | `domain/branch-binding.ts` `parseBranchConfig`; rule and limits in the [usage contract](../../../aidd_docs/product/usage-contract.md#branch-declaration) |
+| Whether a branch is declared; the hook's twin is `plugins/aidd-telemetry/hooks/lib/git.cjs` | `domain/branch-binding.ts` `parseBranchConfig`; rule and limits in the [usage contract](../../../aidd_docs/product/usage-contract.md#branch-declaration) |
 | What counts as consent | `domain/telemetry-consent.ts`, `infrastructure/git-consent-adapter.ts` |
 | Whether a call is stored | `application/directory-resolver.ts` |
 | What a clone is | `domain/consent/clone-identity.ts` |
@@ -66,7 +66,7 @@ flowchart LR
 | What `on` and `forget` clean up from an earlier measurement | `domain/legacy/`, `application/switch/`, `application/forget/` |
 | The report axes and the envelope | `domain/report/usage-report.ts`, `application/report/report-envelope.ts` |
 | Who the measurement names, and what `on` offers | `domain/identity/person-identity.ts`, `application/identity/`, `infrastructure/identity/git-user-source-adapter.ts`; the question is the `on` command's |
-| What a report's `filters` select (`--task`, `--ticket`, `--person`, `--model`, `--agent`, `--session`, `--repository`, `--absent`, `--unattributed`), and where a start of an id or `.` is resolved | `domain/report/report-filter.ts`, `application/report/report-usage-use-case.ts` |
+| What a report's `filters` select, and where a start of an id or `.` is resolved | `domain/report/report-filter.ts`, `application/report/report-usage-use-case.ts`; flags in the [usage contract](../../../aidd_docs/product/usage-contract.md#filters) |
 
 ## The plugin side
 

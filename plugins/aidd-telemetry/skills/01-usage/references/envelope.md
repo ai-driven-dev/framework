@@ -61,11 +61,13 @@ A field may be added to version `2`: a figure outside `run`, a fact of the read 
 
 ## When there is nothing
 
+`run.not_stored` and `run.files_read` describe only the read that printed the report. Except under `unreadable-consent`, a call one read left out is never read again: every later report shows `0` for it, so only the first report's `run` says why. `aidd telemetry status`, run in the clone, says whether it measures now.
+
 | Sign | Likely reason |
 | --- | --- |
-| `records` of `0` and `run.not_stored.no-consent` above `0` | The clone has not opted in, or the calls were made before it did or while it was off: measurement starts at `aidd telemetry on` and reads nothing back |
+| `coverage.records` of `0` and `run.not_stored.no-consent` above `0` | The clone has not opted in, or the calls were made before it did or while it was off: measurement starts at `aidd telemetry on` and reads nothing back |
 | `run.not_stored.consent-closed` above `0` | The clone opted in once and its consent was closed: `aidd telemetry on` in that clone measures again, from then on |
 | `run.not_stored.unreadable-consent` above `0` | A clone's git config or git directory cannot be read: nothing is stored for it until it can. For a clone that had opted in, its calls are then stored, read again by the next run; for any other directory, they are not |
 | `run.consent_log_damaged` is `true` | A line of the consent log `ledger/consents.jsonl` is not an event, so nothing is stored for any clone. Recovery is `aidd telemetry forget --yes`, then `aidd telemetry on` in each clone: nothing from before is stored. Do not edit the log by hand |
 | `totals.records` of `0` and `coverage.records` above `0`, with a filter given | No call of the period matches the filters: a value no call has, or a start of a session or repository id that names none, printed as typed in `filters` |
-| `records` of `0` and `run.files_read` of `0` | No clone on this machine has opted in, so no session file is read (`aidd telemetry status` says so in the clone); or no Claude Code session file was written since the first `aidd telemetry on` |
+| `coverage.records` of `0`, `run.files_read` of `0` and every `run.not_stored` at `0` | Nothing new was read: no clone on this machine has opted in, so no session file is read (`aidd telemetry status` says so in the clone); no Claude Code session file was written since the first `aidd telemetry on`; or an earlier report already read the calls and left them out, and only its `run` said why |

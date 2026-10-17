@@ -49,7 +49,7 @@ The ledger stores `StoredUsage`: the record plus `repository_id`, resolved at in
 **Null is not zero.**
 - Unknown is `null`, never `0`. A `null` counter is left out of its sum and counted in that counter's `unknown_records`.
 - A usage line missing a counter is still a record, that counter `null`.
-- A line that is no usage line (not JSON, no `message.usage`, no `message.id`, `sessionId` or `timestamp`) is never a record. It counts in `run.unrecognised_shapes` of the report that read it, and, when it names a clone that consents, in `coverage.left_out.unrecognised` of every report (see [Left out](#left-out)).
+- A line of a shape the reader does not recognise is never a record: one that is not JSON or not an object, or an `assistant` line whose `message.usage` is not an object or that lacks `message.id`, `sessionId` or `timestamp`. It counts in `run.unrecognised_shapes` of the report that read it, and, when it names a clone that consents, in `coverage.left_out.unrecognised` of every report (see [Left out](#left-out)). A line that is not `assistant`, has no `message.usage` or names the model `<synthetic>` is no call at all, and counts nowhere.
 - Ingest and report say: "not recognised by this read: a call missing a counter is kept with that counter unknown; a line that is no usage line is never a call." (`UNRECOGNISED_WORDS`, `presentation/display/telemetry-display.ts`). What is kept of such lines is said apart: "Kept from every read: …".
 
 **Key and fold** (`domain/formats/claude-transcript-usage.ts`).

@@ -11,7 +11,7 @@ Thirty leaf commands. Read them live: `aidd --help`, then each group's. `scripts
 - `plugin install | list | remove | search | update`.
 - `marketplace add | list | remove | refresh | check`.
 - `auth login | logout | status`.
-- `telemetry on | off | forget | ingest | task | report | identity`: local token measurement for Claude Code, mapped in `telemetry.md`.
+- `telemetry on | off | forget | ingest | task | status | report | identity`: local token measurement for Claude Code, mapped in `telemetry.md`.
 - `translate <source>`: author-side, converts a source into a target-native plugin tree.
 - `update`, aliased `upgrade`: the CLI itself.
 
