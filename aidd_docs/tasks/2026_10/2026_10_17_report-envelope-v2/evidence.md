@@ -132,3 +132,14 @@ Hand mutation in `report-envelope.ts`: `period.from` written as `new Date(`${per
 | round 1 (envelope and figures' bytes built in the zone) | `Tests 1 failed`, `-  "from": "2026-09-30"` `+  "from": "2026-09-29"` |
 
 P1 now also starts from monthly partitions (calls and lines that are no record) and stores its second history with the clock in another zone.
+
+### Gates after round 1, at `4a3cdc56`
+
+| Gate | Result |
+| --- | --- |
+| `cd cli && pnpm test` | `Test Files 517 passed \| 1 skipped (518)`, `Tests 6748 passed \| 1 skipped (6749)`, first run green |
+| `pnpm test:foreign-clock` | `Telemetry tests under TZ=Pacific/Kiritimati and LC_ALL=ar_SA.UTF-8, both seen by Node`, `Tests 1497 passed (1497)` |
+| targeted (`tests/contexts/telemetry tests/presentation tests/scripts tests/e2e/telemetry`) | `Tests 2008 passed (2008)` |
+| Bundle | 712,713 B, `696.0 KB / budget: 709 KB` |
+| `pnpm test:mutation:telemetry` | not completed: stopped by the machine running low on memory at 318/339 mutants. Not rerun |
+| `pnpm smoke` | not rerun after round 1, with memory short |
