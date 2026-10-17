@@ -1,5 +1,5 @@
 ---
-status: framed
+status: done
 branch: feat/telemetry-deterministic-tokens
 ---
 
