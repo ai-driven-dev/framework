@@ -86,8 +86,10 @@ const PATTERNS = [
   },
 ];
 
-/** An array of ids under a session key, which may span lines: matched on the whole text. */
-const SESSION_ARRAY = new RegExp(String.raw`${SESSION_KEY}\[([^\]]*)\]`, "giu");
+/** An array of ids under a session key, which may span lines: found on the whole text. */
+const SESSION_ARRAY_OPEN = new RegExp(String.raw`${SESSION_KEY}\[`, "giu");
+/** How much of one array is read: a capture never holds more ids than this under one key. */
+const MAX_ARRAY_BODY = 64 * 1024;
 const ANY_UUID = new RegExp(UUID, "giu");
 
 function isPlaceholder(name) {
@@ -113,16 +115,48 @@ function findLocalPaths(text) {
     }
   });
 
-  for (const array of text.matchAll(SESSION_ARRAY)) {
-    const start = array.index + array[0].indexOf("[");
-    for (const id of array[1].matchAll(ANY_UUID)) {
+  const lineAt = lineFinder(text);
+  for (const { start, body } of sessionArrays(text)) {
+    for (const id of body.matchAll(ANY_UUID)) {
       if (isPlaceholderId(id[0])) continue;
-      const line = text.slice(0, start + 1 + id.index).split("\n").length;
-      found.push({ line, label: "session id" });
+      found.push({ line: lineAt(start + id.index), label: "session id" });
     }
   }
 
   return found.sort((a, b) => a.line - b.line);
+}
+
+/**
+ * Each array under a session key, as its body and where the body starts. One pass: the next `]`
+ * is looked up once and reused by every key before it, so neither many keys nor an unclosed one
+ * rescans the text. An array with no `]` after it, or nested, is not read.
+ */
+function* sessionArrays(text) {
+  const open = new RegExp(SESSION_ARRAY_OPEN.source, SESSION_ARRAY_OPEN.flags);
+  let close = -1;
+  for (let key = open.exec(text); key; key = open.exec(text)) {
+    const start = key.index + key[0].length;
+    if (close < start) close = text.indexOf("]", start);
+    if (close === -1) return;
+    yield { start, body: text.slice(start, Math.min(close, start + MAX_ARRAY_BODY)) };
+    open.lastIndex = Math.max(open.lastIndex, close + 1);
+  }
+}
+
+/** The 1-based line of an offset, by binary search over newline offsets computed once. */
+function lineFinder(text) {
+  let newlines;
+  return (offset) => {
+    newlines ??= [...text.matchAll(/\n/gu)].map((m) => m.index);
+    let low = 0;
+    let high = newlines.length;
+    while (low < high) {
+      const mid = (low + high) >> 1;
+      if (newlines[mid] < offset) low = mid + 1;
+      else high = mid;
+    }
+    return low + 1;
+  };
 }
 
 /** NUL in the first 8 KiB, git's own test for binary. */
