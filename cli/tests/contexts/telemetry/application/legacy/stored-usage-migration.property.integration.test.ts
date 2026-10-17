@@ -303,19 +303,33 @@ async function fresh(s: Scenario) {
 }
 
 describe("stored data from an earlier version, once migrated", () => {
+  /** The migrated store reports, and lies on disk, as one fresh ingest does. */
+  async function asFresh(s: Scenario): Promise<void> {
+    const up = await upgraded(s);
+    const one = await fresh(s);
+    await figures(up);
+    await figures(one);
+    expect(await figures(up)).toEqual(await figures(one));
+    expect(await bytes(up.dir)).toEqual(await bytes(one.dir));
+  }
+
   it("reports, and lies on disk, as one fresh ingest of the same copies under the rules of now", async () => {
-    await fc.assert(
-      fc.asyncProperty(scenario, async (s) => {
-        const up = await upgraded(s);
-        const one = await fresh(s);
-        await figures(up);
-        await figures(one);
-        expect(await figures(up)).toEqual(await figures(one));
-        expect(await bytes(up.dir)).toEqual(await bytes(one.dir));
-      }),
-      { numRuns: 60 }
-    );
+    await fc.assert(fc.asyncProperty(scenario, asFresh), { numRuns: 60 });
   }, 240_000);
+
+  it("puts a day it neither re-keys nor re-ids in the order one ingest writes, whatever order it was found in", async () => {
+    // Found by the property: two calls of one day, in key order rather than time order, that
+    // no rule of now changes, and no later read touches.
+    await asFresh({
+      copies: [
+        { call: 7, time: 0, output: 0, before: true },
+        { call: 9, time: 1, output: 0, before: true },
+        { call: 0, time: 0, output: 0, before: false },
+      ],
+      batches: Array.from({ length: 24 }, () => 0),
+      monthly: false,
+    });
+  });
 
   it("migrated twice is migrated once", async () => {
     await fc.assert(

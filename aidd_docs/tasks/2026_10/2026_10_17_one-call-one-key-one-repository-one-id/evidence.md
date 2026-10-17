@@ -120,3 +120,27 @@ Left, on changed lines, both equivalent:
 | `binding-snapshot-store-adapter.ts:45` | `?? ""` to `?? "Stryker was here!"` | an absent file then reads as one line that is no snapshot, skipped: no snapshot either way. The line moved from `history()` and `latest()` into `read()` unchanged |
 
 The other survivors in the touched files (`ingest-usage-use-case.ts` 88, 117, 121, 136; `usage-ledger-adapter.ts` 84, 121, 159; `claude-transcript-usage.ts` 42, 47) are on lines this change does not touch.
+
+## After merging `next` (#1048): a migrated day kept the order it was found in
+
+The fresh-ingest property failed in the pre-push run on the merge commit `ffe60df1`, seed `-554519443`. It fails the same way on `247ced3a`, before the merge (temporary worktree, same test): the merge did not cause it.
+
+Counterexample, pinned as its own test ("puts a day it neither re-keys nor re-ids in the order one ingest writes"): calls 7 and 9 read before the migration in one batch, call 0 after. The earlier store wrote `2026-10-08.jsonl` in key order (`msg_7` at 12:00, then `msg_9` at 00:00:01). Neither call is re-keyed or re-ided, and no later read touches that day.
+
+```txt
+× puts a day it neither re-keys nor re-ids in the order one ingest writes, whatever order it was found in
+  AssertionError: expected { …(3) } to deeply equal { …(3) }
+-   "2026-10-08.jsonl": "{…\"key\":\"msg_9:req_9\"…}
++   "2026-10-08.jsonl": "{…\"key\":\"msg_7:req_7\"…}
+```
+
+**Root cause:** `StoredUsageMigration.execute` called `settleLedger`, which rewrites only the partitions a read finds unsettled (`application/ledger-upkeep.ts` `settleLedger`). `UsageLedgerAdapter.load` marks a day unsettled when a record changes or a call is held twice, never for line order. So a day the rules left alone kept whatever order it had. The contract said the first run rewrites every partition. A released writer always wrote time-then-key order (cli-v5.5.0 `partitionByDay`), so this needs a store no released CLI wrote, such as a hand edit or the test's emulation. It is still a gap between the code and the contract.
+
+**Fix:** the migration saves every partition from one full load (`ledger.save(records)` with no partition list). `save` leaves a partition that already holds its canonical bytes untouched.
+
+| Proof | Result |
+| --- | --- |
+| Pinned test, before the fix | red, above |
+| Pinned test and the three properties, after | 4 of 4, in 15 runs with random seeds |
+| Mutation G-j: rewrite only the unsettled and damaged partitions again | killed by the pinned test |
+| Mutation G-e: no ledger rewrite | killed (3 tests) |

@@ -4,7 +4,6 @@ import type { RepositoryLocator } from "../../domain/ports/repository-locator.js
 import type { ResolutionStore } from "../../domain/ports/resolution-store.js";
 import type { UsageLedger } from "../../domain/ports/usage-ledger.js";
 import { repositoryIdOf } from "../../domain/repository-identity.js";
-import { settleLedger } from "../ledger-upkeep.js";
 
 /** Brings what an earlier version stored to the rules of now: one key per call, one id per
  * repository. A stored id is a hash, so only a live clone's origin can say which id an earlier
@@ -29,7 +28,9 @@ export class StoredUsageMigration {
     if (held === null) await this.aliases.save({ ids, complete: false });
     const roots = await this.resolutions.load();
     if (roots.size > 0) await this.resolutions.save(roots);
-    await settleLedger(this.ledger);
+    // Every partition, not only the ones a read finds unsettled: a day is put in the order one
+    // ingest writes, whatever order it was found in. One already in it is not touched.
+    await this.ledger.save((await this.ledger.load()).records);
     await this.aliases.save({ ids, complete: true });
   }
 
