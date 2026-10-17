@@ -1146,6 +1146,8 @@ describe("what was measured and could not be stored is kept, so a report run lat
       `unrecognised ${junk("/work/a")}`,
     ]);
     expect(s.ledger.records.map((r) => [r.key, r.output])).toEqual([["msg_M:req_M", null]]);
+    // Kept, so nothing to read again.
+    expect(s.ledger.stored.get("/t/1.jsonl")?.offset).toBe(5);
   });
 
   it("keeps nothing of an undated call or a line that is no usage line of a clone that never opted in", async () => {
