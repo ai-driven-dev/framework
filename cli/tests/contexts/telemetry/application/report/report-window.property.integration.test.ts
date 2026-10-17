@@ -84,9 +84,6 @@ const copy = fc.record({
   model: fc.constantFrom("m-1", "m-2"),
   agent: fc.constantFrom(...USAGE_AGENTS),
   repository: fc.constantFrom("repo-1", "repo-2"),
-  // Where this copy sits on disk: its day, its month as an earlier version wrote it, or both,
-  // as a split that crashed half-way leaves it.
-  placed: fc.constantFrom("day", "month", "both"),
 });
 
 const call = fc.record({
@@ -148,7 +145,7 @@ function filesOf(calls: readonly Call[]): Map<string, string> {
   const put = (name: string, record: StoredUsage) =>
     files.set(name, `${files.get(name) ?? ""}${JSON.stringify(record)}\n`);
   calls.forEach(({ anchor, tool, copies }, index) => {
-    for (const { offset, output, session, model, agent, repository, placed } of copies) {
+    for (const { offset, output, session, model, agent, repository } of copies) {
       const at = new Date((ANCHORS[anchor] as number) + offset).toISOString();
       const record: StoredUsage = {
         tool,
@@ -168,8 +165,7 @@ function filesOf(calls: readonly Call[]): Map<string, string> {
         git_branch: null,
         repository_id: repository,
       };
-      if (placed !== "month") put(`${at.slice(0, 10)}.jsonl`, record);
-      if (placed !== "day") put(`${at.slice(0, 7)}.jsonl`, record);
+      put(`${at.slice(0, 10)}.jsonl`, record);
     }
   });
   return files;

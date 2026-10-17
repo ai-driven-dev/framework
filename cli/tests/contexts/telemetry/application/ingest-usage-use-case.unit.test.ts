@@ -373,15 +373,15 @@ describe("ingesting usage into the ledger", () => {
     expect([...(s.ledger.savedPartitions ?? [])]).toEqual(["2026-10-07"]);
   });
 
-  it("finishes a monthly partition its window read even when every call was already held", async () => {
+  it("settles an unsettled day its window read even when every call was already held", async () => {
     const s = setup();
     s.transcripts.files.set("/t/1.jsonl", [line("A", 10)]);
     await s.ingest.execute();
-    s.ledger.unsettled.add("2026-10");
+    s.ledger.unsettled.add("2026-10-07");
     s.ledger.stored = new Map();
     s.ledger.savedPartitions = undefined;
     expect(await s.ingest.execute()).toMatchObject({ added: 0, updated: 0 });
-    expect([...(s.ledger.savedPartitions ?? [])]).toEqual(["2026-10"]);
+    expect([...(s.ledger.savedPartitions ?? [])]).toEqual(["2026-10-07"]);
     expect(s.ledger.records).toHaveLength(1);
   });
 

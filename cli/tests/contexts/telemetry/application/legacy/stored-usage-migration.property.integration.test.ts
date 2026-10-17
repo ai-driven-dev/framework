@@ -143,8 +143,6 @@ const scenario = fc.record({
   copies: fc.array(copy, { minLength: 1, maxLength: 24 }),
   /** How the earlier version's reads were cut: each copy read before goes into one of them. */
   batches: fc.array(fc.nat(3), { minLength: 24, maxLength: 24 }),
-  /** Whether October is still in the earlier monthly layout. */
-  monthly: fc.boolean(),
   /** Clones git cannot read, or not there (an unmounted volume), at the first run after the
    * upgrade, and back by the next. */
   away: fc.array(
@@ -178,8 +176,7 @@ async function writeEarlierStore(dir: string, bindings: string, s: Scenario): Pr
       });
     for (const stored of foldUsage(read)) {
       const day = dayOf(stored.at) as string;
-      const name = s.monthly && day.startsWith("2026-10") ? day.slice(0, 7) : day;
-      await appendFile(join(dir, `${name}.jsonl`), `${JSON.stringify(stored)}\n`);
+      await appendFile(join(dir, `${day}.jsonl`), `${JSON.stringify(stored)}\n`);
     }
   }
   await writeRoots(dir, legacyRepositoryIdOf);
@@ -343,7 +340,6 @@ describe("stored data from an earlier version, once migrated", () => {
         { call: 0, time: 0, output: 0, before: false },
       ],
       batches: Array.from({ length: 24 }, () => 0),
-      monthly: false,
       away: [],
     });
   });

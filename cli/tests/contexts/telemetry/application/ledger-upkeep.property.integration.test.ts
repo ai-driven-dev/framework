@@ -80,10 +80,11 @@ const scenario = fc.array(call, { minLength: 1, maxLength: 12 }).chain((calls) =
       { minLength: calls.length, maxLength: calls.length }
     ),
     batchOf: each(fc.nat(4)),
-    monthly: each(fc.boolean()),
-    // A call an earlier version kept that a transcript read again offers once more.
+    // A call the ledger already holds before the first batch.
+    held: each(fc.boolean()),
+    // A held call that a transcript read again offers once more.
     alsoIngested: each(fc.boolean()),
-    tornMonth: fc.boolean(),
+    tornDay: fc.boolean(),
     strayDay: fc.boolean(),
     // Lines a newer version wrote, or a hand edit left, in days of their own.
     foreign: fc.array(
@@ -137,15 +138,13 @@ function linesIn(files: Record<string, string>): string[] {
   return Object.values(files).flatMap((text) => text.split("\n").slice(0, -1));
 }
 
-/** What an earlier version would have written for these calls: one file per month. */
-function monthsOf(records: readonly StoredUsage[]): Map<string, string> {
-  const months = new Map<string, string>();
+/** The days an earlier ingest of these calls wrote. */
+function daysOf(records: readonly StoredUsage[]): Map<string, string> {
+  const days = new Map<string, string>();
   for (const [day, inDay] of partitionByDay(foldUsage(records))) {
-    const month = `${day.slice(0, 7)}.jsonl`;
-    const text = `${inDay.map((record) => JSON.stringify(record)).join("\n")}\n`;
-    months.set(month, (months.get(month) ?? "") + text);
+    days.set(`${day}.jsonl`, `${inDay.map((record) => JSON.stringify(record)).join("\n")}\n`);
   }
-  return months;
+  return days;
 }
 
 async function freshLedger(files: ReadonlyMap<string, string> = new Map()) {
@@ -159,7 +158,7 @@ async function freshLedger(files: ReadonlyMap<string, string> = new Map()) {
 async function bytes(dir: string): Promise<Record<string, string>> {
   const found: Record<string, string> = {};
   for (const name of (await readdir(dir)).sort()) {
-    if (/^\d{4}-\d{2}(-\d{2})?\.jsonl$/.test(name)) {
+    if (/^\d{4}-\d{2}-\d{2}\.jsonl$/.test(name)) {
       found[name] = await readFile(join(dir, name), "utf8");
     }
   }
@@ -167,7 +166,7 @@ async function bytes(dir: string): Promise<Record<string, string>> {
 }
 
 describe("the ledger's bytes, once a report has run", () => {
-  it("are those of one ingest of the same calls, whatever the order, grouping, starting format, damage and lines no reader knows, and no such line is ever lost", async () => {
+  it("are those of one ingest of the same calls, whatever the order, grouping, starting ledger, damage and lines no reader knows, and no such line is ever lost", async () => {
     await fc.assert(
       fc.asyncProperty(
         scenario,
@@ -175,22 +174,22 @@ describe("the ledger's bytes, once a report has run", () => {
           calls,
           order,
           batchOf,
-          monthly,
+          held,
           alsoIngested,
-          tornMonth,
+          tornDay,
           strayDay,
           foreign,
           reports,
         }) => {
-          const earlier = calls.filter((_, index) => monthly[index]);
-          const files = monthsOf(earlier);
+          const earlier = calls.filter((_, index) => held[index]);
+          const files = daysOf(earlier);
           const kept = new Map<string, string[]>();
           const keep = (name: string, line: string) =>
             kept.set(name, [...(kept.get(name) ?? []), line]);
-          const firstMonth = [...files.keys()][0];
-          if (tornMonth && firstMonth !== undefined) {
-            files.set(firstMonth, `${files.get(firstMonth)}${TORN}\n`);
-            keep(`${firstMonth.slice(0, 7)}-01.jsonl`, TORN);
+          const firstDay = [...files.keys()][0];
+          if (tornDay && firstDay !== undefined) {
+            files.set(firstDay, `${files.get(firstDay)}${TORN}\n`);
+            keep(firstDay, TORN);
           }
           if (strayDay) {
             files.set(STRAY_DAY, `${TORN}\n`);
@@ -212,7 +211,7 @@ describe("the ledger's bytes, once a report has run", () => {
           };
           const batches: StoredUsage[][] = [[], [], [], [], []];
           for (const index of order) {
-            if (!monthly[index] || alsoIngested[index]) {
+            if (!held[index] || alsoIngested[index]) {
               batches[batchOf[index] as number]?.push(calls[index] as StoredUsage);
             }
           }

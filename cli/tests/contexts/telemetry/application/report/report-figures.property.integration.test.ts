@@ -140,19 +140,17 @@ const scenario = fc.record({
     }),
     { maxLength: 5 }
   ),
-  // Lines no version reads, already on disk, some twice, some in a month an earlier version
-  // kept in one file: settling keeps each once, in its day or its month's first day.
+  // Lines no version reads, already on disk, some twice: settling keeps each once, in its day.
   damaged: fc.array(
     fc.record({
       day: fc.constantFrom(...DAYS),
       text: fc.constantFrom("x", "y"),
-      inMonth: fc.boolean(),
     }),
     { maxLength: 3 }
   ),
-  // Snapshots an earlier version already wrote, in their month's single file: both histories
-  // start from them, and the first read that reaches the month splits it into days.
-  inMonth: fc.array(fc.boolean(), { minLength: 40, maxLength: 40 }),
+  // Snapshots an earlier ingest already wrote, each in its day, unfolded: both histories start
+  // from them, and the first read that reaches a day settles it.
+  heldBefore: fc.array(fc.boolean(), { minLength: 40, maxLength: 40 }),
   request: fc.record({ axis: fc.constantFrom(...REPORT_AXES), period, filters }),
   // How another history reached the same data: each snapshot and left-out entry in a batch of
   // its own choosing, the batches in any order, and stores that bring nothing in between.
@@ -193,19 +191,19 @@ function recordsOf(calls: Scenario["calls"]): StoredUsage[] {
   );
 }
 
-/** A ledger directory as an earlier version or a hand edit left it: records in their month's
- * single file, and lines that are no record in a day's file or a month's. */
+/** A ledger directory as an earlier ingest or a hand edit left it: records in their day's file,
+ * unfolded, and lines that are no record. */
 async function ledgerWith(
-  damaged: readonly { day: string; text: string; inMonth?: boolean }[],
-  monthly: readonly StoredUsage[] = []
+  damaged: readonly { day: string; text: string }[],
+  earlier: readonly StoredUsage[] = []
 ): Promise<UsageLedgerAdapter> {
   ledgers += 1;
   const dir = join(root, `ledger-${ledgers}`);
   await mkdir(dir, { recursive: true });
   const files = new Map<string, string>();
   const put = (name: string, line: string) => files.set(name, `${files.get(name) ?? ""}${line}\n`);
-  for (const record of monthly) put(record.at.slice(0, 7), JSON.stringify(record));
-  for (const { day, text, inMonth } of damaged) put(inMonth ? day.slice(0, 7) : day, text);
+  for (const record of earlier) put(record.at.slice(0, 10), JSON.stringify(record));
+  for (const { day, text } of damaged) put(day, text);
   for (const [name, text] of files) await writeFile(join(dir, `${name}.jsonl`), text);
   return new UsageLedgerAdapter(dir, new PrivateStorageAdapter());
 }
@@ -293,19 +291,20 @@ describe("the figures of a report", () => {
     await fc.assert(
       fc.asyncProperty(scenario, async (held) => {
         const all = recordsOf(held.calls);
-        const monthly = all.filter((_, n) => held.inMonth[n % held.inMonth.length]);
-        const records = all.filter((_, n) => !held.inMonth[n % held.inMonth.length]);
+        const wasHeld = (n: number) => held.heldBefore[n % held.heldBefore.length];
+        const earlier = all.filter((_, n) => wasHeld(n));
+        const records = all.filter((_, n) => !wasHeld(n));
         const leftOut: LeftOutEntry[] = held.leftOut;
 
         // One history: every call and left-out entry stored at once, reported in UTC.
-        const once = await ledgerWith(held.damaged, monthly);
+        const once = await ledgerWith(held.damaged, earlier);
         await once.exclusively(() => storeCalls(once, records));
         await once.leftOut.add(leftOut);
         const reference = await report(held, once, held.request, held.runs[0], "UTC");
 
         // Another: in batches, in another order, with stores that bring nothing, stored with
         // the clock in another zone.
-        const batched = await ledgerWith(held.damaged, monthly);
+        const batched = await ledgerWith(held.damaged, earlier);
         const { batchOf, order, noOps } = held.history;
         const nth = (n: number) => batchOf[n % batchOf.length] as number;
         const [first, second] = held.zones;

@@ -5,7 +5,6 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import type { StoredUsage } from "../../../../src/contexts/telemetry/domain/stored-usage.js";
 import { UsageLedgerAdapter } from "../../../../src/contexts/telemetry/infrastructure/usage-ledger-adapter.js";
 import { PrivateStorageAdapter } from "../../../../src/runtime/filesystem/private-storage-adapter.js";
-import { FailingStorage } from "../../../helpers/ports/failing-private-storage.js";
 
 let root: string;
 let dir: string;
@@ -42,7 +41,7 @@ function stored(overrides: Partial<StoredUsage> = {}): StoredUsage {
   };
 }
 
-const PARTITION_NAME = /^\d{4}-\d{2}(-\d{2})?\.jsonl$/;
+const PARTITION_NAME = /^\d{4}-\d{2}-\d{2}\.jsonl$/;
 
 const partitions = async (): Promise<string[]> =>
   (await readdir(dir)).filter((name) => PARTITION_NAME.test(name)).sort();
@@ -161,10 +160,11 @@ describe("the ledger on disk", () => {
     expect(records.map((r) => r.output)).toEqual([90]);
   });
 
-  it("reads only partition files, and leaves the offsets, roots, consents and lock beside them alone", async () => {
+  it("reads only day files, and leaves a month's name, the offsets, roots, consents and lock alone", async () => {
     await ledger.savePositions(new Map([["/t", { offset: 1, size: 1, identity: "i" }]]));
     const beside = [
       "x2026-10-07.jsonl",
+      "2026-10.jsonl",
       "x2026-10.jsonl",
       "2026-10-07.jsonl.bak",
       "26-10-07.jsonl",
@@ -323,60 +323,9 @@ describe("reading a window of days", () => {
     expect(loaded.skippedLines).toBe(0);
   });
 
-  it("reads a monthly file the window touches by one day, with every day of its month", async () => {
-    const early = stored({ key: "early", at: "2026-02-01T10:00:00Z" });
-    const late = stored({ key: "late", at: "2026-02-27T10:00:00Z" });
-    const daily = stored({ key: "daily", at: "2026-02-03T10:00:00Z" });
-    await writePartition("2026-02.jsonl", lines([early, late]));
-    await writePartition("2026-02-03.jsonl", lines([daily]));
-    await writePartition(
-      "2026-03-01.jsonl",
-      lines([stored({ key: "march", at: "2026-03-01T10:00:00Z" })])
-    );
-    const loaded = await ledger.load((day) => day >= "2026-02-28" && day <= "2026-03-01");
-    expect(loaded.records.map((r) => r.key)).toEqual(["daily", "early", "late", "march"]);
-    expect([...loaded.unsettled]).toEqual(["2026-02"]);
-  });
-
-  it("does not read a monthly file the window touches on none of its days", async () => {
-    await writePartition(
-      "2026-02.jsonl",
-      `${lines([stored({ at: "2026-02-28T10:00:00Z" })])}{torn\n`
-    );
-    await writePartition("2026-02-28.jsonl", "{torn\n");
-    expect(await ledger.load((day) => day >= "2026-03-01")).toEqual(NOTHING);
-    expect(await ledger.load((day) => day <= "2026-01-31")).toEqual(NOTHING);
-  });
-
-  it("passes over a monthly name no calendar holds, as it did before windows were tests", async () => {
-    await ledger.save([stored()]);
-    await writePartition("2026-13.jsonl", lines([stored({ key: "never" })]));
-    expect((await ledger.load(only("2026-10-07"))).records).toEqual([stored()]);
-  });
-
   it("reads nothing for an empty window", async () => {
     await ledger.save([stored()]);
     expect(await ledger.load(() => false)).toEqual(NOTHING);
-  });
-
-  it("reads a monthly partition, and the daily ones of its month, when a day of the window falls in it", async () => {
-    const early = stored({ key: "early", at: "2026-09-10T10:00:00Z" });
-    const late = stored({ key: "late", at: "2026-09-28T10:00:00Z" });
-    const daily = stored({ key: "daily", at: "2026-09-25T10:00:00Z" });
-    await writePartition("2026-09.jsonl", lines([early, late]));
-    await writePartition("2026-09-25.jsonl", lines([daily]));
-    for (const loaded of [await ledger.load(), await ledger.load(only("2026-09-10"))]) {
-      expect(loaded.records.map((r) => r.key)).toEqual(["daily", "early", "late"]);
-      expect([...loaded.unsettled]).toEqual(["2026-09"]);
-    }
-    expect(await ledger.load(only("2026-10-07"))).toEqual(NOTHING);
-  });
-
-  it("reads a monthly partition its window reaches by the day before", async () => {
-    await writePartition("2026-09.jsonl", lines([stored({ at: "2026-09-30T10:00:00Z" })]));
-    const loaded = await ledger.load(only("2026-09-30", "2026-10-01"));
-    expect(loaded.records).toHaveLength(1);
-    expect([...loaded.unsettled]).toEqual(["2026-09"]);
   });
 
   it("finds a call held in two days of its window", async () => {
@@ -388,105 +337,6 @@ describe("reading a window of days", () => {
     const loaded = await ledger.load(only("2026-10-06", "2026-10-07", "2026-10-08"));
     expect(loaded.records.map((r) => r.output)).toEqual([9]);
     expect([...loaded.unsettled].sort()).toEqual(["2026-10-06", "2026-10-07"]);
-  });
-});
-
-describe("splitting a monthly partition into its days", () => {
-  const september = [
-    stored({ key: "a", at: "2026-09-01T00:00:00Z" }),
-    stored({ key: "b", at: "2026-09-15T12:00:00Z" }),
-    stored({ key: "c", at: "2026-09-30T23:59:00Z" }),
-  ];
-
-  it("writes each day of the month, then removes the monthly file, in the bytes a fresh ledger has", async () => {
-    await writePartition("2026-09.jsonl", lines(september));
-    await writePartition(
-      "2026-09-20.jsonl",
-      lines([stored({ key: "gone", at: "2026-09-20T00:00:00Z" })])
-    );
-    await ledger.save(september, new Set(["2026-09"]));
-    const fresh = new UsageLedgerAdapter(join(root, "fresh"), new PrivateStorageAdapter());
-    await fresh.save(september);
-    const names = ["2026-09-01.jsonl", "2026-09-15.jsonl", "2026-09-30.jsonl"];
-    expect(await partitions()).toEqual(names);
-    for (const name of names) {
-      expect(await readFile(join(dir, name), "utf8")).toBe(
-        await readFile(join(root, "fresh", name), "utf8")
-      );
-    }
-  });
-
-  it("writes only the days of the month it is told", async () => {
-    await writePartition("2026-09.jsonl", lines(september));
-    await ledger.save(
-      [...september, stored({ key: "d", at: "2026-10-01T00:00:00Z" })],
-      new Set(["2026-09"])
-    );
-    expect(await partitions()).not.toContain("2026-10-01.jsonl");
-  });
-
-  it("removes the monthly file only after its days are written", async () => {
-    await writePartition("2026-09.jsonl", lines(september));
-    const crashing = new UsageLedgerAdapter(dir, new FailingStorage(2));
-    await expect(crashing.save(september, new Set(["2026-09"]))).rejects.toThrow("disk full");
-    expect(await partitions()).toContain("2026-09.jsonl");
-    const { records } = await ledger.load();
-    expect(records.map((r) => r.key)).toEqual(["a", "b", "c"]);
-  });
-
-  it("removes every monthly file when told to hold exactly some records", async () => {
-    await writePartition("2026-09.jsonl", lines(september));
-    await ledger.save(september);
-    expect(await partitions()).toEqual([
-      "2026-09-01.jsonl",
-      "2026-09-15.jsonl",
-      "2026-09-30.jsonl",
-    ]);
-  });
-
-  it("keeps the better snapshot a half-finished split already wrote, and finishes it", async () => {
-    const worse = stored({ key: "a", output: 1, at: "2026-09-10T10:00:00Z" });
-    const better = stored({ key: "a", output: 90, at: "2026-09-10T10:00:01Z" });
-    const other = stored({ key: "b", at: "2026-09-20T10:00:00Z" });
-    await writePartition("2026-09.jsonl", lines([worse, other]));
-    await writePartition("2026-09-10.jsonl", lines([better]));
-    const loaded = await ledger.load(only("2026-09-20"));
-    expect(loaded.records).toEqual([better, other]);
-    expect([...loaded.unsettled].sort()).toEqual(["2026-09", "2026-09-10"]);
-    await ledger.save(loaded.records, loaded.unsettled);
-    expect(await partitions()).toEqual(["2026-09-10.jsonl", "2026-09-20.jsonl"]);
-    expect(await ledger.load()).toEqual({ ...NOTHING, records: [better, other] });
-  });
-
-  it("counts a line of a monthly file that is not a record, and keeps it in the first day of its month", async () => {
-    await writePartition("2026-09.jsonl", `${lines(september)}{torn\n`);
-    const loaded = await ledger.load();
-    expect(loaded.skippedLines).toBe(1);
-    expect([...loaded.damaged]).toEqual(["2026-09"]);
-    await ledger.save(loaded.records, new Set([...loaded.damaged, ...loaded.unsettled]));
-    expect(await partitions()).toEqual([
-      "2026-09-01.jsonl",
-      "2026-09-15.jsonl",
-      "2026-09-30.jsonl",
-    ]);
-    expect(await readFile(join(dir, "2026-09-01.jsonl"), "utf8")).toBe(
-      `${lines(september.slice(0, 1))}{torn\n`
-    );
-    expect((await ledger.load()).skippedLines).toBe(1);
-  });
-
-  it("keeps a monthly file's line once, after a crash between its first day and the file's removal", async () => {
-    await writePartition("2026-09.jsonl", `${lines(september)}{torn\n`);
-    const crashing = new UsageLedgerAdapter(dir, new FailingStorage(2));
-    await expect(crashing.save(september, new Set(["2026-09"]))).rejects.toThrow("disk full");
-    expect(await readFile(join(dir, "2026-09-01.jsonl"), "utf8")).toContain("{torn");
-    expect(await partitions()).toContain("2026-09.jsonl");
-    const loaded = await ledger.load();
-    await ledger.save(loaded.records, new Set([...loaded.damaged, ...loaded.unsettled]));
-    expect(await readFile(join(dir, "2026-09-01.jsonl"), "utf8")).toBe(
-      `${lines(september.slice(0, 1))}{torn\n`
-    );
-    expect(await partitions()).not.toContain("2026-09.jsonl");
   });
 });
 

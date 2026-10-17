@@ -79,9 +79,9 @@ describe("what measurement keeps", () => {
     ]);
   });
 
-  it("removes the ledger's daily and monthly partitions as the ledger, never as an earlier day file", async () => {
+  it("removes the ledger's day files as the ledger, never as an earlier day file", async () => {
     write(join(telemetry, "ledger", "2026-10-07.jsonl"));
-    write(join(telemetry, "ledger", "2026-09.jsonl"));
+    write(join(telemetry, "ledger", "2026-09-30.jsonl"));
     write(join(telemetry, "ledger", "offsets.json"));
     write(join(sink, "2026-10-05.jsonl"));
     const found = await erasure().inventory();

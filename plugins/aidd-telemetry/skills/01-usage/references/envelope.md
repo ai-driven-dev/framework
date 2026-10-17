@@ -57,7 +57,7 @@ A field may be added to version `2`: a figure outside `run`, a fact of the read 
 | `not_stored` | Calls this run read and left out, by reason: `outside-repo`, `never-seen-alive`, `no-consent`, `consent-closed`, `unreadable-consent`, `no-cwd`, `undated` |
 | `consent_log_damaged` | `true` while `ledger/consents.jsonl` cannot be trusted and nothing is stored |
 | `oldest_transcript_at` | When the oldest session file still on disk was last written, `null` when there is none |
-| `skipped_ledger_lines` | Lines that were not records, kept as found (a newer version may have written them), in the stored days this run read before tidying them: with a period, those days and the day on each side, plus every day of a month still kept in one file |
+| `skipped_ledger_lines` | Lines that were not records, kept as found (a newer version may have written them), in the stored days this run read before tidying them: with a period, those days and the day on each side |
 
 ## When there is nothing
 
