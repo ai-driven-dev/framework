@@ -1,4 +1,4 @@
-import { appendFileSync, renameSync, truncateSync, writeFileSync } from "node:fs";
+import { appendFileSync, renameSync, rmSync, truncateSync, writeFileSync } from "node:fs";
 import {
   appendFile,
   cp,
@@ -360,7 +360,7 @@ describe("reading a transcript in blocks of a few bytes", () => {
       if (lines.push(line) === 1) truncateSync(path, 0);
     });
     expect(lines).toEqual(["aaa"]);
-    expect(read.position).toBeNull();
+    expect(read).toMatchObject({ position: null, skipped: false });
     await appendFile(path, "new\n");
     expect((await readLines(inBlocksOf(4), path, null, EVERYTHING)).lines).toEqual(["new"]);
   });
@@ -375,6 +375,16 @@ describe("reading a transcript in blocks of a few bytes", () => {
       "xxxxxxxx",
       "yy",
     ]);
+  });
+
+  it("reads a file deleted while it reads as it was: its open handle still holds it whole", async () => {
+    const path = await file("aaa\nbbb\n");
+    const lines: string[] = [];
+    const read = await inBlocksOf(4).read(path, null, EVERYTHING, (line) => {
+      if (lines.push(line) === 1) rmSync(path);
+    });
+    expect(lines).toEqual(["aaa", "bbb"]);
+    expect(read.position).toMatchObject({ offset: 8, size: 8 });
   });
 
   it("gives no position for a file replaced at its path while it reads", async () => {
