@@ -6,7 +6,7 @@
  *
  * Patterns, not the current account: a check keyed to one username passes for everyone else.
  * A bare username outside a path, or a path shape not listed below, is out of its reach. Line by
- * line: multi-line structures are not parsed.
+ * line: multi-line structures are not parsed, nor is an array of ids, even on one line.
  *
  *   node scripts/check-no-local-paths.js <file…>   the files handed over (pre-commit)
  *   node scripts/check-no-local-paths.js --all     every tracked file (CI)
