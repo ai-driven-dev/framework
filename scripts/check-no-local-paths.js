@@ -16,21 +16,10 @@ const path = require("node:path");
 
 /**
  * Account names that are placeholders in tests and examples, never a person: the generic ones
- * (user, u, a, me, dev, someone, alice) and the GitHub Actions accounts, `runner` and Windows'
- * `runneradmin`, whose home also appears in its 8.3 short form (`RUNNER~1`). Each one was found
- * on the tree.
+ * (user, u, a, me, dev, someone, alice) and `runner`, the GitHub Actions account, whose Windows
+ * home also appears in its 8.3 short form (`RUNNER~1`). Each one is matched on the tree.
  */
-const PLACEHOLDER_NAMES = new Set([
-  "user",
-  "u",
-  "a",
-  "me",
-  "dev",
-  "someone",
-  "alice",
-  "runner",
-  "runneradmin",
-]);
+const PLACEHOLDER_NAMES = new Set(["user", "u", "a", "me", "dev", "someone", "alice", "runner"]);
 
 /** An account name: alphanumeric first, so `/home/.claude/` (a fake HOME) is no account. */
 const NAME = String.raw`([A-Za-z0-9][\w.~-]*)`;

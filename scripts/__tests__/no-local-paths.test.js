@@ -60,7 +60,7 @@ describe("findLocalPaths", () => {
       slash("", "home", "user", "x"),
       slash("", "Users", "someone", ".config"),
       slash("", "home", "U", "x"),
-      back("\\\\", "C:", "Users", "runneradmin", "x"),
+      back("\\\\", "C:", "Users", "runner", "x"),
       back("\\\\", "C:", "Users", "RUNNER~1", "x"),
     ];
 
