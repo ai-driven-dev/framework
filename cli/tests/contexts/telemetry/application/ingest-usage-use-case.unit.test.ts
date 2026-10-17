@@ -1315,6 +1315,17 @@ describe("a call whose consent is not known yet is read again, never kept", () =
     expect(await s.ingest.execute()).toMatchObject({ filesRead: 1, added: 1, updated: 0 });
   });
 
+  it("moves on past an undated call of a directory its clone left, though that clone consents", async () => {
+    const s = setup();
+    s.transcripts.files.set("/t/0.jsonl", [line("A", 1)]);
+    await s.ingest.execute();
+    // Its `.git` removed, the directory kept: no longer in any repository.
+    s.locator.directories.set("/work/a", { status: "outside-repository" });
+    s.transcripts.files.set("/t/1.jsonl", [line("U", 1, {}, "not a time")]);
+    await s.ingest.execute();
+    expect(s.ledger.stored.get("/t/1.jsonl")?.offset).toBe(1);
+  });
+
   it("moves on while the consent log cannot be trusted: it stays so until forget, so a hold would never end", async () => {
     const s = setup();
     // Its directory was seen in a clone that consents, before the log was damaged.
