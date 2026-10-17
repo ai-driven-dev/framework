@@ -1,6 +1,6 @@
 {
   "root": "/private/tmp/aidd-realistic-rule-repro-EGi6ZB",
-  "repo": "/Users/baptistelafourcade/orca/workspaces/framework/basketstar",
+  "repo": "<worktree>",
   "hosts": [
     "opencode"
   ],
@@ -30,9 +30,9 @@
       "name": "install",
       "args": [
         "/opt/homebrew/Cellar/node/26.8.2/bin/node",
-        "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/aidd_docs/tasks/2026_10/2026_10_09_autonomous-rule-generation/realistic-sandbox/reproduction/install.cjs",
+        "<worktree>/aidd_docs/tasks/2026_10/2026_10_09_autonomous-rule-generation/realistic-sandbox/reproduction/install.cjs",
         "/private/tmp/aidd-realistic-rule-repro-EGi6ZB",
-        "/Users/baptistelafourcade/orca/workspaces/framework/basketstar"
+        "<worktree>"
       ],
       "cwd": "/private/tmp/aidd-realistic-rule-repro-EGi6ZB",
       "exit": 0,
@@ -43,9 +43,9 @@
       "name": "lifecycle",
       "args": [
         "/opt/homebrew/Cellar/node/26.8.2/bin/node",
-        "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/aidd_docs/tasks/2026_10/2026_10_09_autonomous-rule-generation/realistic-sandbox/reproduction/lifecycle.cjs",
+        "<worktree>/aidd_docs/tasks/2026_10/2026_10_09_autonomous-rule-generation/realistic-sandbox/reproduction/lifecycle.cjs",
         "/private/tmp/aidd-realistic-rule-repro-EGi6ZB",
-        "/Users/baptistelafourcade/orca/workspaces/framework/basketstar"
+        "<worktree>"
       ],
       "cwd": "/private/tmp/aidd-realistic-rule-repro-EGi6ZB",
       "exit": 0,
@@ -56,9 +56,9 @@
       "name": "cleanup-ownership",
       "args": [
         "/opt/homebrew/Cellar/node/26.8.2/bin/node",
-        "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/aidd_docs/tasks/2026_10/2026_10_09_autonomous-rule-generation/realistic-sandbox/reproduction/cleanup-ownership.cjs",
+        "<worktree>/aidd_docs/tasks/2026_10/2026_10_09_autonomous-rule-generation/realistic-sandbox/reproduction/cleanup-ownership.cjs",
         "/private/tmp/aidd-realistic-rule-repro-EGi6ZB",
-        "/Users/baptistelafourcade/orca/workspaces/framework/basketstar"
+        "<worktree>"
       ],
       "cwd": "/private/tmp/aidd-realistic-rule-repro-EGi6ZB",
       "exit": 0,

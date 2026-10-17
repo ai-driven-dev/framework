@@ -14,8 +14,8 @@
   "commands": [
     {
       "args": [
-        "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
-        "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/cli/dist/cli.js",
+        "<home>/.nvm/versions/node/v24.20.0/bin/node",
+        "<worktree>/cli/dist/cli.js",
         "doctor",
         "--tool",
         "opencode",
@@ -28,8 +28,8 @@
     },
     {
       "args": [
-        "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
-        "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/cli/dist/cli.js",
+        "<home>/.nvm/versions/node/v24.20.0/bin/node",
+        "<worktree>/cli/dist/cli.js",
         "sync",
         "--tool",
         "opencode",
@@ -43,8 +43,8 @@
     },
     {
       "args": [
-        "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
-        "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/cli/dist/cli.js",
+        "<home>/.nvm/versions/node/v24.20.0/bin/node",
+        "<worktree>/cli/dist/cli.js",
         "doctor",
         "--tool",
         "opencode",
@@ -57,8 +57,8 @@
     },
     {
       "args": [
-        "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
-        "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/cli/dist/cli.js",
+        "<home>/.nvm/versions/node/v24.20.0/bin/node",
+        "<worktree>/cli/dist/cli.js",
         "plugin",
         "remove",
         "aidd-context",
@@ -73,8 +73,8 @@
     },
     {
       "args": [
-        "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
-        "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/cli/dist/cli.js",
+        "<home>/.nvm/versions/node/v24.20.0/bin/node",
+        "<worktree>/cli/dist/cli.js",
         "doctor",
         "--tool",
         "opencode"

@@ -1,7 +1,7 @@
 [
   {
     "argv": [
-      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+      "<home>/.nvm/versions/node/v24.20.0/bin/node",
       "/private/tmp/aidd-oct11-copilot-probe-3svb9u/evidence/project/.github/skills/aidd-rule-generate/scripts/write-rule.cjs",
       "--project",
       "/private/tmp/aidd-oct11-copilot-probe-3svb9u/evidence/project",
@@ -16,7 +16,7 @@
   },
   {
     "argv": [
-      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+      "<home>/.nvm/versions/node/v24.20.0/bin/node",
       "/private/tmp/aidd-oct11-copilot-probe-3svb9u/evidence/project/.github/skills/aidd-rule-generate/scripts/write-rule.cjs",
       "--project",
       "/private/tmp/aidd-oct11-copilot-probe-3svb9u/evidence/project",
@@ -31,7 +31,7 @@
   },
   {
     "argv": [
-      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+      "<home>/.nvm/versions/node/v24.20.0/bin/node",
       "/private/tmp/aidd-oct11-copilot-probe-3svb9u/evidence/project/.github/skills/aidd-rule-generate/scripts/write-rule.cjs",
       "--project",
       "/private/tmp/aidd-oct11-copilot-probe-3svb9u/evidence/project",
@@ -46,7 +46,7 @@
   },
   {
     "argv": [
-      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+      "<home>/.nvm/versions/node/v24.20.0/bin/node",
       "/private/tmp/aidd-oct11-copilot-probe-3svb9u/evidence/project/.github/skills/aidd-rule-generate/scripts/write-rule.cjs",
       "--project",
       "/private/tmp/aidd-oct11-copilot-probe-3svb9u/evidence/project",
@@ -61,7 +61,7 @@
   },
   {
     "argv": [
-      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+      "<home>/.nvm/versions/node/v24.20.0/bin/node",
       "/private/tmp/aidd-oct11-copilot-probe-3svb9u/evidence/project/.github/skills/aidd-rule-generate/scripts/write-rule.cjs",
       "--project",
       "/private/tmp/aidd-oct11-copilot-probe-3svb9u/evidence/project",
@@ -76,7 +76,7 @@
   },
   {
     "argv": [
-      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+      "<home>/.nvm/versions/node/v24.20.0/bin/node",
       "/private/tmp/aidd-oct11-copilot-probe-3svb9u/evidence/project/.github/skills/aidd-rule-generate/scripts/write-rule.cjs",
       "--project",
       "/private/tmp/aidd-oct11-copilot-probe-3svb9u/evidence/project",
@@ -91,7 +91,7 @@
   },
   {
     "argv": [
-      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+      "<home>/.nvm/versions/node/v24.20.0/bin/node",
       "/private/tmp/aidd-oct11-copilot-probe-3svb9u/evidence/project/.github/skills/aidd-rule-generate/scripts/write-rule.cjs",
       "--project",
       "/private/tmp/aidd-oct11-copilot-probe-3svb9u/evidence/project",
@@ -106,7 +106,7 @@
   },
   {
     "argv": [
-      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+      "<home>/.nvm/versions/node/v24.20.0/bin/node",
       "/private/tmp/aidd-oct11-copilot-probe-3svb9u/evidence/project/.github/skills/aidd-rule-generate/scripts/write-rule.cjs",
       "--project",
       "/private/tmp/aidd-oct11-copilot-probe-3svb9u/evidence/project",
@@ -121,7 +121,7 @@
   },
   {
     "argv": [
-      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+      "<home>/.nvm/versions/node/v24.20.0/bin/node",
       "/private/tmp/aidd-oct11-copilot-probe-3svb9u/evidence/project/.github/skills/aidd-rule-generate/scripts/write-rule.cjs",
       "--project",
       "/private/tmp/aidd-oct11-copilot-probe-3svb9u/evidence/project",

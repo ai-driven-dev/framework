@@ -3,7 +3,7 @@
     "/usr/bin/sandbox-exec",
     "-f",
     "/private/tmp/aidd-oct11-cursor-mGLpBV/network.sb",
-    "/Users/baptistelafourcade/.local/bin/cursor-agent",
+    "<home>/.local/bin/cursor-agent",
     "--endpoint",
     "http://127.0.0.1:53384",
     "--print",

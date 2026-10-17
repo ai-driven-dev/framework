@@ -1,7 +1,7 @@
 {
   "historicalProvenance": {
     "sandbox": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG",
-    "repository": "/Users/baptistelafourcade/orca/workspaces/framework/basketstar",
+    "repository": "<worktree>",
     "node": "v24.20.0",
     "scriptSha256": "9fa10479a267d899a6a024f68e75573f1d009080cd60851f23f06c8f2d190591",
     "paths": "Recorded arguments preserve original physical paths; portable reproduction accepts --repo or AIDD_REPO_ROOT and allocates a new owned temporary root."
@@ -9,7 +9,7 @@
   "historical": {
     "application-baseline": {
       "args": [
-        "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+        "<home>/.nvm/versions/node/v24.20.0/bin/node",
         "--test",
         "tests/invoice.test.ts",
         "tests/http.test.ts"
@@ -178,8 +178,8 @@
       {
         "project": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/claude",
         "args": [
-          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
-          "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/cli/dist/cli.js",
+          "<home>/.nvm/versions/node/v24.20.0/bin/node",
+          "<worktree>/cli/dist/cli.js",
           "framework",
           "install",
           "--tool",
@@ -193,11 +193,11 @@
       {
         "project": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/claude",
         "args": [
-          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
-          "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/cli/dist/cli.js",
+          "<home>/.nvm/versions/node/v24.20.0/bin/node",
+          "<worktree>/cli/dist/cli.js",
           "plugin",
           "install",
-          "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/plugins/aidd-context",
+          "<worktree>/plugins/aidd-context",
           "--tool",
           "claude",
           "--scope",
@@ -211,8 +211,8 @@
       {
         "project": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/cursor",
         "args": [
-          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
-          "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/cli/dist/cli.js",
+          "<home>/.nvm/versions/node/v24.20.0/bin/node",
+          "<worktree>/cli/dist/cli.js",
           "framework",
           "install",
           "--tool",
@@ -226,11 +226,11 @@
       {
         "project": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/cursor",
         "args": [
-          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
-          "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/cli/dist/cli.js",
+          "<home>/.nvm/versions/node/v24.20.0/bin/node",
+          "<worktree>/cli/dist/cli.js",
           "plugin",
           "install",
-          "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/plugins/aidd-context",
+          "<worktree>/plugins/aidd-context",
           "--tool",
           "cursor",
           "--scope",
@@ -244,10 +244,10 @@
       {
         "project": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/cursor",
         "args": [
-          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
-          "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/cli/dist/cli.js",
+          "<home>/.nvm/versions/node/v24.20.0/bin/node",
+          "<worktree>/cli/dist/cli.js",
           "translate",
-          "/Users/baptistelafourcade/orca/workspaces/framework/basketstar",
+          "<worktree>",
           "--to",
           "cursor",
           "--as",
@@ -262,8 +262,8 @@
       {
         "project": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/copilot",
         "args": [
-          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
-          "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/cli/dist/cli.js",
+          "<home>/.nvm/versions/node/v24.20.0/bin/node",
+          "<worktree>/cli/dist/cli.js",
           "framework",
           "install",
           "--tool",
@@ -277,11 +277,11 @@
       {
         "project": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/copilot",
         "args": [
-          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
-          "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/cli/dist/cli.js",
+          "<home>/.nvm/versions/node/v24.20.0/bin/node",
+          "<worktree>/cli/dist/cli.js",
           "plugin",
           "install",
-          "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/plugins/aidd-context",
+          "<worktree>/plugins/aidd-context",
           "--tool",
           "copilot",
           "--scope",
@@ -295,10 +295,10 @@
       {
         "project": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/copilot",
         "args": [
-          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
-          "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/cli/dist/cli.js",
+          "<home>/.nvm/versions/node/v24.20.0/bin/node",
+          "<worktree>/cli/dist/cli.js",
           "translate",
-          "/Users/baptistelafourcade/orca/workspaces/framework/basketstar",
+          "<worktree>",
           "--to",
           "copilot",
           "--as",
@@ -313,8 +313,8 @@
       {
         "project": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/codex",
         "args": [
-          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
-          "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/cli/dist/cli.js",
+          "<home>/.nvm/versions/node/v24.20.0/bin/node",
+          "<worktree>/cli/dist/cli.js",
           "framework",
           "install",
           "--tool",
@@ -328,11 +328,11 @@
       {
         "project": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/codex",
         "args": [
-          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
-          "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/cli/dist/cli.js",
+          "<home>/.nvm/versions/node/v24.20.0/bin/node",
+          "<worktree>/cli/dist/cli.js",
           "plugin",
           "install",
-          "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/plugins/aidd-context",
+          "<worktree>/plugins/aidd-context",
           "--tool",
           "codex",
           "--scope",
@@ -346,10 +346,10 @@
       {
         "project": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/codex",
         "args": [
-          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
-          "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/cli/dist/cli.js",
+          "<home>/.nvm/versions/node/v24.20.0/bin/node",
+          "<worktree>/cli/dist/cli.js",
           "translate",
-          "/Users/baptistelafourcade/orca/workspaces/framework/basketstar",
+          "<worktree>",
           "--to",
           "codex",
           "--as",
@@ -364,8 +364,8 @@
       {
         "project": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/opencode",
         "args": [
-          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
-          "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/cli/dist/cli.js",
+          "<home>/.nvm/versions/node/v24.20.0/bin/node",
+          "<worktree>/cli/dist/cli.js",
           "framework",
           "install",
           "--tool",
@@ -379,11 +379,11 @@
       {
         "project": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/opencode",
         "args": [
-          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
-          "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/cli/dist/cli.js",
+          "<home>/.nvm/versions/node/v24.20.0/bin/node",
+          "<worktree>/cli/dist/cli.js",
           "plugin",
           "install",
-          "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/plugins/aidd-context",
+          "<worktree>/plugins/aidd-context",
           "--tool",
           "opencode",
           "--scope",
@@ -397,8 +397,8 @@
       {
         "project": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/mixed",
         "args": [
-          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
-          "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/cli/dist/cli.js",
+          "<home>/.nvm/versions/node/v24.20.0/bin/node",
+          "<worktree>/cli/dist/cli.js",
           "framework",
           "install",
           "--tool",
@@ -412,11 +412,11 @@
       {
         "project": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/mixed",
         "args": [
-          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
-          "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/cli/dist/cli.js",
+          "<home>/.nvm/versions/node/v24.20.0/bin/node",
+          "<worktree>/cli/dist/cli.js",
           "plugin",
           "install",
-          "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/plugins/aidd-context",
+          "<worktree>/plugins/aidd-context",
           "--tool",
           "claude",
           "--scope",
@@ -430,8 +430,8 @@
       {
         "project": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/mixed",
         "args": [
-          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
-          "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/cli/dist/cli.js",
+          "<home>/.nvm/versions/node/v24.20.0/bin/node",
+          "<worktree>/cli/dist/cli.js",
           "framework",
           "install",
           "--tool",
@@ -445,11 +445,11 @@
       {
         "project": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/mixed",
         "args": [
-          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
-          "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/cli/dist/cli.js",
+          "<home>/.nvm/versions/node/v24.20.0/bin/node",
+          "<worktree>/cli/dist/cli.js",
           "plugin",
           "install",
-          "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/plugins/aidd-context",
+          "<worktree>/plugins/aidd-context",
           "--tool",
           "cursor",
           "--scope",
@@ -463,10 +463,10 @@
       {
         "project": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/mixed",
         "args": [
-          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
-          "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/cli/dist/cli.js",
+          "<home>/.nvm/versions/node/v24.20.0/bin/node",
+          "<worktree>/cli/dist/cli.js",
           "translate",
-          "/Users/baptistelafourcade/orca/workspaces/framework/basketstar",
+          "<worktree>",
           "--to",
           "cursor",
           "--as",
@@ -481,8 +481,8 @@
       {
         "project": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/mixed",
         "args": [
-          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
-          "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/cli/dist/cli.js",
+          "<home>/.nvm/versions/node/v24.20.0/bin/node",
+          "<worktree>/cli/dist/cli.js",
           "framework",
           "install",
           "--tool",
@@ -496,11 +496,11 @@
       {
         "project": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/mixed",
         "args": [
-          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
-          "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/cli/dist/cli.js",
+          "<home>/.nvm/versions/node/v24.20.0/bin/node",
+          "<worktree>/cli/dist/cli.js",
           "plugin",
           "install",
-          "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/plugins/aidd-context",
+          "<worktree>/plugins/aidd-context",
           "--tool",
           "copilot",
           "--scope",
@@ -514,10 +514,10 @@
       {
         "project": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/mixed",
         "args": [
-          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
-          "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/cli/dist/cli.js",
+          "<home>/.nvm/versions/node/v24.20.0/bin/node",
+          "<worktree>/cli/dist/cli.js",
           "translate",
-          "/Users/baptistelafourcade/orca/workspaces/framework/basketstar",
+          "<worktree>",
           "--to",
           "copilot",
           "--as",
@@ -532,8 +532,8 @@
       {
         "project": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/mixed",
         "args": [
-          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
-          "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/cli/dist/cli.js",
+          "<home>/.nvm/versions/node/v24.20.0/bin/node",
+          "<worktree>/cli/dist/cli.js",
           "framework",
           "install",
           "--tool",
@@ -547,11 +547,11 @@
       {
         "project": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/mixed",
         "args": [
-          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
-          "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/cli/dist/cli.js",
+          "<home>/.nvm/versions/node/v24.20.0/bin/node",
+          "<worktree>/cli/dist/cli.js",
           "plugin",
           "install",
-          "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/plugins/aidd-context",
+          "<worktree>/plugins/aidd-context",
           "--tool",
           "codex",
           "--scope",
@@ -565,10 +565,10 @@
       {
         "project": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/mixed",
         "args": [
-          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
-          "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/cli/dist/cli.js",
+          "<home>/.nvm/versions/node/v24.20.0/bin/node",
+          "<worktree>/cli/dist/cli.js",
           "translate",
-          "/Users/baptistelafourcade/orca/workspaces/framework/basketstar",
+          "<worktree>",
           "--to",
           "codex",
           "--as",
@@ -583,8 +583,8 @@
       {
         "project": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/mixed",
         "args": [
-          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
-          "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/cli/dist/cli.js",
+          "<home>/.nvm/versions/node/v24.20.0/bin/node",
+          "<worktree>/cli/dist/cli.js",
           "framework",
           "install",
           "--tool",
@@ -598,11 +598,11 @@
       {
         "project": "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/mixed",
         "args": [
-          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
-          "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/cli/dist/cli.js",
+          "<home>/.nvm/versions/node/v24.20.0/bin/node",
+          "<worktree>/cli/dist/cli.js",
           "plugin",
           "install",
-          "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/plugins/aidd-context",
+          "<worktree>/plugins/aidd-context",
           "--tool",
           "opencode",
           "--scope",
@@ -668,7 +668,7 @@
       {
         "host": "claude",
         "args": [
-          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "<home>/.nvm/versions/node/v24.20.0/bin/node",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/claude/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
           "--project",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/claude",
@@ -684,7 +684,7 @@
       {
         "host": "claude",
         "args": [
-          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "<home>/.nvm/versions/node/v24.20.0/bin/node",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/claude/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
           "--project",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/claude",
@@ -700,7 +700,7 @@
       {
         "host": "claude",
         "args": [
-          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "<home>/.nvm/versions/node/v24.20.0/bin/node",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/claude/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
           "--project",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/claude",
@@ -716,7 +716,7 @@
       {
         "host": "claude",
         "args": [
-          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "<home>/.nvm/versions/node/v24.20.0/bin/node",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/claude/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
           "--project",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/claude",
@@ -732,7 +732,7 @@
       {
         "host": "claude",
         "args": [
-          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "<home>/.nvm/versions/node/v24.20.0/bin/node",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/claude/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
           "--project",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/claude",
@@ -748,7 +748,7 @@
       {
         "host": "claude",
         "args": [
-          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "<home>/.nvm/versions/node/v24.20.0/bin/node",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/claude/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
           "--project",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/claude",
@@ -764,7 +764,7 @@
       {
         "host": "claude",
         "args": [
-          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "<home>/.nvm/versions/node/v24.20.0/bin/node",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/claude/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
           "--project",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/claude",
@@ -779,7 +779,7 @@
       {
         "host": "claude",
         "args": [
-          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "<home>/.nvm/versions/node/v24.20.0/bin/node",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/claude/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
           "--project",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/claude",
@@ -794,7 +794,7 @@
       {
         "host": "claude",
         "args": [
-          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "<home>/.nvm/versions/node/v24.20.0/bin/node",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/claude/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
           "--project",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/claude",
@@ -810,7 +810,7 @@
       {
         "host": "claude",
         "args": [
-          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "<home>/.nvm/versions/node/v24.20.0/bin/node",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/claude/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
           "--project",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/claude",
@@ -826,7 +826,7 @@
       {
         "host": "claude",
         "args": [
-          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "<home>/.nvm/versions/node/v24.20.0/bin/node",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/claude/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
           "--project",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/claude",
@@ -842,7 +842,7 @@
       {
         "host": "claude",
         "args": [
-          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "<home>/.nvm/versions/node/v24.20.0/bin/node",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/claude/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
           "--project",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/claude",
@@ -858,7 +858,7 @@
       {
         "host": "claude",
         "args": [
-          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "<home>/.nvm/versions/node/v24.20.0/bin/node",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/claude/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
           "--project",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/claude",
@@ -874,7 +874,7 @@
       {
         "host": "cursor",
         "args": [
-          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "<home>/.nvm/versions/node/v24.20.0/bin/node",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/cursor/.cursor/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
           "--project",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/cursor",
@@ -890,7 +890,7 @@
       {
         "host": "cursor",
         "args": [
-          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "<home>/.nvm/versions/node/v24.20.0/bin/node",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/cursor/.cursor/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
           "--project",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/cursor",
@@ -906,7 +906,7 @@
       {
         "host": "cursor",
         "args": [
-          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "<home>/.nvm/versions/node/v24.20.0/bin/node",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/cursor/.cursor/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
           "--project",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/cursor",
@@ -922,7 +922,7 @@
       {
         "host": "cursor",
         "args": [
-          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "<home>/.nvm/versions/node/v24.20.0/bin/node",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/cursor/.cursor/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
           "--project",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/cursor",
@@ -938,7 +938,7 @@
       {
         "host": "cursor",
         "args": [
-          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "<home>/.nvm/versions/node/v24.20.0/bin/node",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/cursor/.cursor/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
           "--project",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/cursor",
@@ -954,7 +954,7 @@
       {
         "host": "cursor",
         "args": [
-          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "<home>/.nvm/versions/node/v24.20.0/bin/node",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/cursor/.cursor/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
           "--project",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/cursor",
@@ -970,7 +970,7 @@
       {
         "host": "cursor",
         "args": [
-          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "<home>/.nvm/versions/node/v24.20.0/bin/node",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/cursor/.cursor/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
           "--project",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/cursor",
@@ -985,7 +985,7 @@
       {
         "host": "cursor",
         "args": [
-          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "<home>/.nvm/versions/node/v24.20.0/bin/node",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/cursor/.cursor/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
           "--project",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/cursor",
@@ -1000,7 +1000,7 @@
       {
         "host": "cursor",
         "args": [
-          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "<home>/.nvm/versions/node/v24.20.0/bin/node",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/cursor/.cursor/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
           "--project",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/cursor",
@@ -1016,7 +1016,7 @@
       {
         "host": "cursor",
         "args": [
-          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "<home>/.nvm/versions/node/v24.20.0/bin/node",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/cursor/.cursor/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
           "--project",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/cursor",
@@ -1032,7 +1032,7 @@
       {
         "host": "cursor",
         "args": [
-          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "<home>/.nvm/versions/node/v24.20.0/bin/node",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/cursor/.cursor/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
           "--project",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/cursor",
@@ -1048,7 +1048,7 @@
       {
         "host": "cursor",
         "args": [
-          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "<home>/.nvm/versions/node/v24.20.0/bin/node",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/cursor/.cursor/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
           "--project",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/cursor",
@@ -1064,7 +1064,7 @@
       {
         "host": "cursor",
         "args": [
-          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "<home>/.nvm/versions/node/v24.20.0/bin/node",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/cursor/.cursor/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
           "--project",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/cursor",
@@ -1080,7 +1080,7 @@
       {
         "host": "copilot",
         "args": [
-          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "<home>/.nvm/versions/node/v24.20.0/bin/node",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/copilot/.github/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
           "--project",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/copilot",
@@ -1096,7 +1096,7 @@
       {
         "host": "copilot",
         "args": [
-          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "<home>/.nvm/versions/node/v24.20.0/bin/node",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/copilot/.github/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
           "--project",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/copilot",
@@ -1112,7 +1112,7 @@
       {
         "host": "copilot",
         "args": [
-          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "<home>/.nvm/versions/node/v24.20.0/bin/node",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/copilot/.github/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
           "--project",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/copilot",
@@ -1128,7 +1128,7 @@
       {
         "host": "copilot",
         "args": [
-          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "<home>/.nvm/versions/node/v24.20.0/bin/node",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/copilot/.github/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
           "--project",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/copilot",
@@ -1144,7 +1144,7 @@
       {
         "host": "copilot",
         "args": [
-          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "<home>/.nvm/versions/node/v24.20.0/bin/node",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/copilot/.github/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
           "--project",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/copilot",
@@ -1160,7 +1160,7 @@
       {
         "host": "copilot",
         "args": [
-          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "<home>/.nvm/versions/node/v24.20.0/bin/node",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/copilot/.github/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
           "--project",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/copilot",
@@ -1176,7 +1176,7 @@
       {
         "host": "copilot",
         "args": [
-          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "<home>/.nvm/versions/node/v24.20.0/bin/node",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/copilot/.github/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
           "--project",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/copilot",
@@ -1191,7 +1191,7 @@
       {
         "host": "copilot",
         "args": [
-          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "<home>/.nvm/versions/node/v24.20.0/bin/node",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/copilot/.github/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
           "--project",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/copilot",
@@ -1206,7 +1206,7 @@
       {
         "host": "copilot",
         "args": [
-          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "<home>/.nvm/versions/node/v24.20.0/bin/node",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/copilot/.github/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
           "--project",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/copilot",
@@ -1222,7 +1222,7 @@
       {
         "host": "copilot",
         "args": [
-          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "<home>/.nvm/versions/node/v24.20.0/bin/node",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/copilot/.github/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
           "--project",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/copilot",
@@ -1238,7 +1238,7 @@
       {
         "host": "copilot",
         "args": [
-          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "<home>/.nvm/versions/node/v24.20.0/bin/node",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/copilot/.github/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
           "--project",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/copilot",
@@ -1254,7 +1254,7 @@
       {
         "host": "copilot",
         "args": [
-          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "<home>/.nvm/versions/node/v24.20.0/bin/node",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/copilot/.github/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
           "--project",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/copilot",
@@ -1270,7 +1270,7 @@
       {
         "host": "copilot",
         "args": [
-          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "<home>/.nvm/versions/node/v24.20.0/bin/node",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/copilot/.github/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
           "--project",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/copilot",
@@ -1286,7 +1286,7 @@
       {
         "host": "codex",
         "args": [
-          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "<home>/.nvm/versions/node/v24.20.0/bin/node",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/codex/.agents/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
           "--project",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/codex",
@@ -1302,7 +1302,7 @@
       {
         "host": "codex",
         "args": [
-          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "<home>/.nvm/versions/node/v24.20.0/bin/node",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/codex/.agents/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
           "--project",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/codex",
@@ -1318,7 +1318,7 @@
       {
         "host": "codex",
         "args": [
-          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "<home>/.nvm/versions/node/v24.20.0/bin/node",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/codex/.agents/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
           "--project",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/codex",
@@ -1334,7 +1334,7 @@
       {
         "host": "codex",
         "args": [
-          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "<home>/.nvm/versions/node/v24.20.0/bin/node",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/codex/.agents/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
           "--project",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/codex",
@@ -1350,7 +1350,7 @@
       {
         "host": "codex",
         "args": [
-          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "<home>/.nvm/versions/node/v24.20.0/bin/node",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/codex/.agents/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
           "--project",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/codex",
@@ -1366,7 +1366,7 @@
       {
         "host": "codex",
         "args": [
-          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "<home>/.nvm/versions/node/v24.20.0/bin/node",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/codex/.agents/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
           "--project",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/codex",
@@ -1382,7 +1382,7 @@
       {
         "host": "codex",
         "args": [
-          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "<home>/.nvm/versions/node/v24.20.0/bin/node",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/codex/.agents/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
           "--project",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/codex",
@@ -1397,7 +1397,7 @@
       {
         "host": "codex",
         "args": [
-          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "<home>/.nvm/versions/node/v24.20.0/bin/node",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/codex/.agents/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
           "--project",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/codex",
@@ -1412,7 +1412,7 @@
       {
         "host": "codex",
         "args": [
-          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "<home>/.nvm/versions/node/v24.20.0/bin/node",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/codex/.agents/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
           "--project",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/codex",
@@ -1428,7 +1428,7 @@
       {
         "host": "codex",
         "args": [
-          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "<home>/.nvm/versions/node/v24.20.0/bin/node",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/codex/.agents/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
           "--project",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/codex",
@@ -1444,7 +1444,7 @@
       {
         "host": "codex",
         "args": [
-          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "<home>/.nvm/versions/node/v24.20.0/bin/node",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/codex/.agents/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
           "--project",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/codex",
@@ -1460,7 +1460,7 @@
       {
         "host": "codex",
         "args": [
-          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "<home>/.nvm/versions/node/v24.20.0/bin/node",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/codex/.agents/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
           "--project",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/codex",
@@ -1476,7 +1476,7 @@
       {
         "host": "codex",
         "args": [
-          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "<home>/.nvm/versions/node/v24.20.0/bin/node",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/codex/.agents/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
           "--project",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/codex",
@@ -1492,7 +1492,7 @@
       {
         "host": "opencode",
         "args": [
-          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "<home>/.nvm/versions/node/v24.20.0/bin/node",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/opencode/.opencode/skills/aidd-context/05-rule-generate/scripts/write-rule.cjs",
           "--project",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/opencode",
@@ -1508,7 +1508,7 @@
       {
         "host": "opencode",
         "args": [
-          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "<home>/.nvm/versions/node/v24.20.0/bin/node",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/opencode/.opencode/skills/aidd-context/05-rule-generate/scripts/write-rule.cjs",
           "--project",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/opencode",
@@ -1524,7 +1524,7 @@
       {
         "host": "opencode",
         "args": [
-          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "<home>/.nvm/versions/node/v24.20.0/bin/node",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/opencode/.opencode/skills/aidd-context/05-rule-generate/scripts/write-rule.cjs",
           "--project",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/opencode",
@@ -1540,7 +1540,7 @@
       {
         "host": "opencode",
         "args": [
-          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "<home>/.nvm/versions/node/v24.20.0/bin/node",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/opencode/.opencode/skills/aidd-context/05-rule-generate/scripts/write-rule.cjs",
           "--project",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/opencode",
@@ -1556,7 +1556,7 @@
       {
         "host": "opencode",
         "args": [
-          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "<home>/.nvm/versions/node/v24.20.0/bin/node",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/opencode/.opencode/skills/aidd-context/05-rule-generate/scripts/write-rule.cjs",
           "--project",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/opencode",
@@ -1572,7 +1572,7 @@
       {
         "host": "opencode",
         "args": [
-          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "<home>/.nvm/versions/node/v24.20.0/bin/node",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/opencode/.opencode/skills/aidd-context/05-rule-generate/scripts/write-rule.cjs",
           "--project",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/opencode",
@@ -1588,7 +1588,7 @@
       {
         "host": "opencode",
         "args": [
-          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "<home>/.nvm/versions/node/v24.20.0/bin/node",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/opencode/.opencode/skills/aidd-context/05-rule-generate/scripts/write-rule.cjs",
           "--project",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/opencode",
@@ -1603,7 +1603,7 @@
       {
         "host": "opencode",
         "args": [
-          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "<home>/.nvm/versions/node/v24.20.0/bin/node",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/opencode/.opencode/skills/aidd-context/05-rule-generate/scripts/write-rule.cjs",
           "--project",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/opencode",
@@ -1618,7 +1618,7 @@
       {
         "host": "opencode",
         "args": [
-          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "<home>/.nvm/versions/node/v24.20.0/bin/node",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/opencode/.opencode/skills/aidd-context/05-rule-generate/scripts/write-rule.cjs",
           "--project",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/opencode",
@@ -1634,7 +1634,7 @@
       {
         "host": "opencode",
         "args": [
-          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "<home>/.nvm/versions/node/v24.20.0/bin/node",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/opencode/.opencode/skills/aidd-context/05-rule-generate/scripts/write-rule.cjs",
           "--project",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/opencode",
@@ -1650,7 +1650,7 @@
       {
         "host": "opencode",
         "args": [
-          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "<home>/.nvm/versions/node/v24.20.0/bin/node",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/opencode/.opencode/skills/aidd-context/05-rule-generate/scripts/write-rule.cjs",
           "--project",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/opencode",
@@ -1666,7 +1666,7 @@
       {
         "host": "opencode",
         "args": [
-          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "<home>/.nvm/versions/node/v24.20.0/bin/node",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/opencode/.opencode/skills/aidd-context/05-rule-generate/scripts/write-rule.cjs",
           "--project",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/opencode",
@@ -1682,7 +1682,7 @@
       {
         "host": "opencode",
         "args": [
-          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "<home>/.nvm/versions/node/v24.20.0/bin/node",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/opencode/.opencode/skills/aidd-context/05-rule-generate/scripts/write-rule.cjs",
           "--project",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/opencode",
@@ -1698,7 +1698,7 @@
       {
         "host": "mixed",
         "args": [
-          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "<home>/.nvm/versions/node/v24.20.0/bin/node",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/mixed/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
           "--project",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/mixed",
@@ -1714,7 +1714,7 @@
       {
         "host": "mixed",
         "args": [
-          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "<home>/.nvm/versions/node/v24.20.0/bin/node",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/mixed/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
           "--project",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/mixed",
@@ -1730,7 +1730,7 @@
       {
         "host": "mixed",
         "args": [
-          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "<home>/.nvm/versions/node/v24.20.0/bin/node",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/mixed/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
           "--project",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/mixed",
@@ -1746,7 +1746,7 @@
       {
         "host": "mixed",
         "args": [
-          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "<home>/.nvm/versions/node/v24.20.0/bin/node",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/mixed/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
           "--project",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/mixed",
@@ -1762,7 +1762,7 @@
       {
         "host": "mixed",
         "args": [
-          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "<home>/.nvm/versions/node/v24.20.0/bin/node",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/mixed/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
           "--project",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/mixed",
@@ -1778,7 +1778,7 @@
       {
         "host": "mixed",
         "args": [
-          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "<home>/.nvm/versions/node/v24.20.0/bin/node",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/mixed/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
           "--project",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/mixed",
@@ -1794,7 +1794,7 @@
       {
         "host": "mixed",
         "args": [
-          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "<home>/.nvm/versions/node/v24.20.0/bin/node",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/mixed/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
           "--project",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/mixed",
@@ -1809,7 +1809,7 @@
       {
         "host": "mixed",
         "args": [
-          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "<home>/.nvm/versions/node/v24.20.0/bin/node",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/mixed/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
           "--project",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/mixed",
@@ -1824,7 +1824,7 @@
       {
         "host": "mixed",
         "args": [
-          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "<home>/.nvm/versions/node/v24.20.0/bin/node",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/mixed/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
           "--project",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/mixed",
@@ -1840,7 +1840,7 @@
       {
         "host": "mixed",
         "args": [
-          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "<home>/.nvm/versions/node/v24.20.0/bin/node",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/mixed/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
           "--project",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/mixed",
@@ -1856,7 +1856,7 @@
       {
         "host": "mixed",
         "args": [
-          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "<home>/.nvm/versions/node/v24.20.0/bin/node",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/mixed/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
           "--project",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/mixed",
@@ -1872,7 +1872,7 @@
       {
         "host": "mixed",
         "args": [
-          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "<home>/.nvm/versions/node/v24.20.0/bin/node",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/mixed/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
           "--project",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/mixed",
@@ -1888,7 +1888,7 @@
       {
         "host": "mixed",
         "args": [
-          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "<home>/.nvm/versions/node/v24.20.0/bin/node",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/mixed/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
           "--project",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/projects/mixed",
@@ -1991,7 +1991,7 @@
     "negative-commands": [
       {
         "args": [
-          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "<home>/.nvm/versions/node/v24.20.0/bin/node",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/negative-seed/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
           "--project",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/negative-seed",
@@ -2006,7 +2006,7 @@
       },
       {
         "args": [
-          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "<home>/.nvm/versions/node/v24.20.0/bin/node",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/negative-seed/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
           "--project",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/negative-seed",
@@ -2021,7 +2021,7 @@
       },
       {
         "args": [
-          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "<home>/.nvm/versions/node/v24.20.0/bin/node",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/negative-seed/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
           "--project",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/negative-seed",
@@ -2036,7 +2036,7 @@
       },
       {
         "args": [
-          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "<home>/.nvm/versions/node/v24.20.0/bin/node",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/negative-projects/edited-native-third-source/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
           "--project",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/negative-projects/edited-native-third-source",
@@ -2051,7 +2051,7 @@
       },
       {
         "args": [
-          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "<home>/.nvm/versions/node/v24.20.0/bin/node",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/negative-projects/duplicate-shared-block/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
           "--project",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/negative-projects/duplicate-shared-block",
@@ -2066,7 +2066,7 @@
       },
       {
         "args": [
-          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "<home>/.nvm/versions/node/v24.20.0/bin/node",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/negative-projects/incomplete-shared-block/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
           "--project",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/negative-projects/incomplete-shared-block",
@@ -2081,7 +2081,7 @@
       },
       {
         "args": [
-          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "<home>/.nvm/versions/node/v24.20.0/bin/node",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/negative-projects/symlink-generated-target/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
           "--project",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/negative-projects/symlink-generated-target",
@@ -2096,7 +2096,7 @@
       },
       {
         "args": [
-          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "<home>/.nvm/versions/node/v24.20.0/bin/node",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/negative-projects/symlink-canonical-source/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
           "--project",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/negative-projects/symlink-canonical-source",
@@ -2111,7 +2111,7 @@
       },
       {
         "args": [
-          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "<home>/.nvm/versions/node/v24.20.0/bin/node",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/negative-projects/Codex-root-override/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
           "--project",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/negative-projects/Codex-root-override",
@@ -2126,7 +2126,7 @@
       },
       {
         "args": [
-          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "<home>/.nvm/versions/node/v24.20.0/bin/node",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/negative-projects/Codex-local-limit/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
           "--project",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/negative-projects/Codex-local-limit",
@@ -2141,7 +2141,7 @@
       },
       {
         "args": [
-          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "<home>/.nvm/versions/node/v24.20.0/bin/node",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/negative-projects/malformed-staged-JSON/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
           "--project",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/negative-projects/malformed-staged-JSON",
@@ -2156,7 +2156,7 @@
       },
       {
         "args": [
-          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "<home>/.nvm/versions/node/v24.20.0/bin/node",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/negative-projects/invalid-UTF8-staged-JSON/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
           "--project",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/negative-projects/invalid-UTF8-staged-JSON",
@@ -2171,7 +2171,7 @@
       },
       {
         "args": [
-          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "<home>/.nvm/versions/node/v24.20.0/bin/node",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/negative-projects/lone-surrogate-metadata/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
           "--project",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/negative-projects/lone-surrogate-metadata",
@@ -2186,7 +2186,7 @@
       },
       {
         "args": [
-          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "<home>/.nvm/versions/node/v24.20.0/bin/node",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/negative-projects/edited-separator-multi-source-delete/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
           "--project",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/negative-projects/edited-separator-multi-source-delete",
@@ -2201,7 +2201,7 @@
       },
       {
         "args": [
-          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "<home>/.nvm/versions/node/v24.20.0/bin/node",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/negative-projects/unsafe-manual-canonical-publish/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
           "--project",
           "/private/tmp/aidd-realistic-rule-sandbox-UMAHYG/negative-projects/unsafe-manual-canonical-publish",
@@ -2230,8 +2230,8 @@
       "commands": [
         {
           "args": [
-            "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
-            "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/cli/dist/cli.js",
+            "<home>/.nvm/versions/node/v24.20.0/bin/node",
+            "<worktree>/cli/dist/cli.js",
             "doctor",
             "--tool",
             "opencode",
@@ -2244,8 +2244,8 @@
         },
         {
           "args": [
-            "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
-            "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/cli/dist/cli.js",
+            "<home>/.nvm/versions/node/v24.20.0/bin/node",
+            "<worktree>/cli/dist/cli.js",
             "sync",
             "--tool",
             "opencode",
@@ -2259,8 +2259,8 @@
         },
         {
           "args": [
-            "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
-            "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/cli/dist/cli.js",
+            "<home>/.nvm/versions/node/v24.20.0/bin/node",
+            "<worktree>/cli/dist/cli.js",
             "doctor",
             "--tool",
             "opencode",
@@ -2273,8 +2273,8 @@
         },
         {
           "args": [
-            "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
-            "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/cli/dist/cli.js",
+            "<home>/.nvm/versions/node/v24.20.0/bin/node",
+            "<worktree>/cli/dist/cli.js",
             "plugin",
             "remove",
             "aidd-context",
@@ -2289,8 +2289,8 @@
         },
         {
           "args": [
-            "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
-            "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/cli/dist/cli.js",
+            "<home>/.nvm/versions/node/v24.20.0/bin/node",
+            "<worktree>/cli/dist/cli.js",
             "doctor",
             "--tool",
             "opencode"
@@ -2303,8 +2303,8 @@
     }
   },
   "portableSmoke": {
-    "root": "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-ZfRFu0",
-    "repo": "/Users/baptistelafourcade/orca/workspaces/framework/basketstar",
+    "root": "<tmp>/aidd-realistic-rule-repro-ZfRFu0",
+    "repo": "<worktree>",
     "hosts": [
       "opencode"
     ],
@@ -2320,12 +2320,12 @@
       {
         "name": "baseline API",
         "args": [
-          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+          "<home>/.nvm/versions/node/v24.20.0/bin/node",
           "--test",
           "tests/invoice.test.ts",
           "tests/http.test.ts"
         ],
-        "cwd": "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-ZfRFu0/baseline",
+        "cwd": "<tmp>/aidd-realistic-rule-repro-ZfRFu0/baseline",
         "exit": 0,
         "stdout": "✔ real HTTP create, validation rejection, lookup, and not-found journey (31.394ms)\n✔ exact cents totals and repository isolation (1.736583ms)\n✔ invalid invoice refuses null (0.204292ms)\n✔ invalid invoice refuses {\"customerId\":\"bad\",\"currency\":\"EUR\",\"lines\":[{\"sku\":\"CONSULTING\",\"quantity\":3,\"unitPriceCents\":1999},{\"sku\":\"FREIGHT\",\"quantity\":1,\"unitPriceCents\":450}]} (0.07325ms)\n✔ invalid invoice refuses {\"customerId\":\"cus_acme\",\"currency\":\"GBP\",\"lines\":[{\"sku\":\"CONSULTING\",\"quantity\":3,\"unitPriceCents\":1999},{\"sku\":\"FREIGHT\",\"quantity\":1,\"unitPriceCents\":450}]} (0.047541ms)\n✔ invalid invoice refuses {\"customerId\":\"cus_acme\",\"currency\":\"EUR\",\"lines\":[]} (0.050375ms)\n✔ invalid invoice refuses {\"customerId\":\"cus_acme\",\"currency\":\"EUR\",\"lines\":[{\"sku\":\"X\",\"quantity\":0,\"unitPriceCents\":1}]} (0.048708ms)\n✔ invalid invoice refuses {\"customerId\":\"cus_acme\",\"currency\":\"EUR\",\"lines\":[{\"sku\":\"X\",\"quantity\":1,\"unitPriceCents\":1.25}]} (0.045375ms)\n✔ invalid invoice refuses {\"customerId\":\"cus_acme\",\"currency\":\"EUR\",\"lines\":[{\"sku\":\"X\",\"quantity\":2,\"unitPriceCents\":9007199254740991}]} (0.040875ms)\nℹ tests 9\nℹ suites 0\nℹ pass 9\nℹ fail 0\nℹ cancelled 0\nℹ skipped 0\nℹ todo 0\nℹ duration_ms 143.778375\n",
         "stderr": ""
@@ -2333,40 +2333,40 @@
       {
         "name": "install",
         "args": [
-          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
-          "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/aidd_docs/tasks/2026_10/2026_10_09_autonomous-rule-generation/realistic-sandbox/reproduction/install.cjs",
-          "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-ZfRFu0",
-          "/Users/baptistelafourcade/orca/workspaces/framework/basketstar"
+          "<home>/.nvm/versions/node/v24.20.0/bin/node",
+          "<worktree>/aidd_docs/tasks/2026_10/2026_10_09_autonomous-rule-generation/realistic-sandbox/reproduction/install.cjs",
+          "<tmp>/aidd-realistic-rule-repro-ZfRFu0",
+          "<worktree>"
         ],
-        "cwd": "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-ZfRFu0",
+        "cwd": "<tmp>/aidd-realistic-rule-repro-ZfRFu0",
         "exit": 0,
-        "stdout": "{\"projects\":1,\"installedScripts\":1,\"evidence\":\"/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-ZfRFu0/installations.json\"}\n",
+        "stdout": "{\"projects\":1,\"installedScripts\":1,\"evidence\":\"<tmp>/aidd-realistic-rule-repro-ZfRFu0/installations.json\"}\n",
         "stderr": ""
       },
       {
         "name": "lifecycle",
         "args": [
-          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
-          "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/aidd_docs/tasks/2026_10/2026_10_09_autonomous-rule-generation/realistic-sandbox/reproduction/lifecycle.cjs",
-          "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-ZfRFu0",
-          "/Users/baptistelafourcade/orca/workspaces/framework/basketstar"
+          "<home>/.nvm/versions/node/v24.20.0/bin/node",
+          "<worktree>/aidd_docs/tasks/2026_10/2026_10_09_autonomous-rule-generation/realistic-sandbox/reproduction/lifecycle.cjs",
+          "<tmp>/aidd-realistic-rule-repro-ZfRFu0",
+          "<worktree>"
         ],
-        "cwd": "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-ZfRFu0",
+        "cwd": "<tmp>/aidd-realistic-rule-repro-ZfRFu0",
         "exit": 0,
-        "stdout": "{\"projects\":1,\"installedInvocations\":13,\"allUserBytesPreserved\":true,\"applicationTests\":9,\"evidence\":\"/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-ZfRFu0/lifecycle-results.json\"}\n",
+        "stdout": "{\"projects\":1,\"installedInvocations\":13,\"allUserBytesPreserved\":true,\"applicationTests\":9,\"evidence\":\"<tmp>/aidd-realistic-rule-repro-ZfRFu0/lifecycle-results.json\"}\n",
         "stderr": ""
       },
       {
         "name": "cleanup-ownership",
         "args": [
-          "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
-          "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/aidd_docs/tasks/2026_10/2026_10_09_autonomous-rule-generation/realistic-sandbox/reproduction/cleanup-ownership.cjs",
-          "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-ZfRFu0",
-          "/Users/baptistelafourcade/orca/workspaces/framework/basketstar"
+          "<home>/.nvm/versions/node/v24.20.0/bin/node",
+          "<worktree>/aidd_docs/tasks/2026_10/2026_10_09_autonomous-rule-generation/realistic-sandbox/reproduction/cleanup-ownership.cjs",
+          "<tmp>/aidd-realistic-rule-repro-ZfRFu0",
+          "<worktree>"
         ],
-        "cwd": "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-ZfRFu0",
+        "cwd": "<tmp>/aidd-realistic-rule-repro-ZfRFu0",
         "exit": 0,
-        "stdout": "{\"generatedRulesPreserved\":true,\"scriptRemoved\":true,\"exits\":[0,0,0,0,0],\"evidence\":\"/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-ZfRFu0/cleanup-results.json\"}\n",
+        "stdout": "{\"generatedRulesPreserved\":true,\"scriptRemoved\":true,\"exits\":[0,0,0,0,0],\"evidence\":\"<tmp>/aidd-realistic-rule-repro-ZfRFu0/cleanup-results.json\"}\n",
         "stderr": ""
       }
     ],
@@ -2396,8 +2396,8 @@
       "commands": [
         {
           "args": [
-            "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
-            "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/cli/dist/cli.js",
+            "<home>/.nvm/versions/node/v24.20.0/bin/node",
+            "<worktree>/cli/dist/cli.js",
             "doctor",
             "--tool",
             "opencode",
@@ -2410,8 +2410,8 @@
         },
         {
           "args": [
-            "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
-            "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/cli/dist/cli.js",
+            "<home>/.nvm/versions/node/v24.20.0/bin/node",
+            "<worktree>/cli/dist/cli.js",
             "sync",
             "--tool",
             "opencode",
@@ -2425,8 +2425,8 @@
         },
         {
           "args": [
-            "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
-            "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/cli/dist/cli.js",
+            "<home>/.nvm/versions/node/v24.20.0/bin/node",
+            "<worktree>/cli/dist/cli.js",
             "doctor",
             "--tool",
             "opencode",
@@ -2439,8 +2439,8 @@
         },
         {
           "args": [
-            "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
-            "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/cli/dist/cli.js",
+            "<home>/.nvm/versions/node/v24.20.0/bin/node",
+            "<worktree>/cli/dist/cli.js",
             "plugin",
             "remove",
             "aidd-context",
@@ -2455,8 +2455,8 @@
         },
         {
           "args": [
-            "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
-            "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/cli/dist/cli.js",
+            "<home>/.nvm/versions/node/v24.20.0/bin/node",
+            "<worktree>/cli/dist/cli.js",
             "doctor",
             "--tool",
             "opencode"
@@ -2469,10 +2469,10 @@
     },
     "unownedDirectoryRefusal": {
       "args": [
-        "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
-        "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/aidd_docs/tasks/2026_10/2026_10_09_autonomous-rule-generation/realistic-sandbox/reproduction/install.cjs",
-        "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-t6Kqo6",
-        "/Users/baptistelafourcade/orca/workspaces/framework/basketstar"
+        "<home>/.nvm/versions/node/v24.20.0/bin/node",
+        "<worktree>/aidd_docs/tasks/2026_10/2026_10_09_autonomous-rule-generation/realistic-sandbox/reproduction/install.cjs",
+        "<tmp>/aidd-realistic-rule-repro-t6Kqo6",
+        "<worktree>"
       ],
       "exit": 1,
       "directoryBytesUnchanged": true

@@ -22,7 +22,7 @@ test at scripts/__tests__/rule-reproduction-files.test.js:14:1
   
   'Error: EISDIR: illegal operation on a directory, read'
   
-      at TestContext.<anonymous> (/Users/baptistelafourcade/orca/workspaces/framework/basketstar/scripts/__tests__/rule-reproduction-files.test.js:26:10)
+      at TestContext.<anonymous> (<worktree>/scripts/__tests__/rule-reproduction-files.test.js:26:10)
       at Test.runInAsyncScope (node:async_hooks:227:14)
       at Test.run (node:internal/test_runner/test:1397:25)
       at Test.start (node:internal/test_runner/test:1257:17)
@@ -31,11 +31,11 @@ test at scripts/__tests__/rule-reproduction-files.test.js:14:1
     code: 'ERR_ASSERTION',
     actual: Error: EISDIR: illegal operation on a directory, read
         at Object.readFileSync (node:fs:484:20)
-        at open (/Users/baptistelafourcade/orca/workspaces/framework/basketstar/aidd_docs/tasks/2026_10/2026_10_09_autonomous-rule-generation/realistic-sandbox/reproduction/common.cjs:31:34)
-        at /Users/baptistelafourcade/orca/workspaces/framework/basketstar/scripts/__tests__/rule-reproduction-files.test.js:26:23
+        at open (<worktree>/aidd_docs/tasks/2026_10/2026_10_09_autonomous-rule-generation/realistic-sandbox/reproduction/common.cjs:31:34)
+        at <worktree>/scripts/__tests__/rule-reproduction-files.test.js:26:23
         at getActual (node:assert:611:5)
         at strict.throws (node:assert:759:24)
-        at TestContext.<anonymous> (/Users/baptistelafourcade/orca/workspaces/framework/basketstar/scripts/__tests__/rule-reproduction-files.test.js:26:10)
+        at TestContext.<anonymous> (<worktree>/scripts/__tests__/rule-reproduction-files.test.js:26:10)
         at Test.runInAsyncScope (node:async_hooks:227:14)
         at Test.run (node:internal/test_runner/test:1397:25)
         at Test.start (node:internal/test_runner/test:1257:17)
@@ -53,7 +53,7 @@ test at scripts/__tests__/rule-reproduction-files.test.js:38:1
   + 'replacement'
   - 'original'
   
-      at TestContext.<anonymous> (/Users/baptistelafourcade/orca/workspaces/framework/basketstar/scripts/__tests__/rule-reproduction-files.test.js:58:12)
+      at TestContext.<anonymous> (<worktree>/scripts/__tests__/rule-reproduction-files.test.js:58:12)
       at Test.runInAsyncScope (node:async_hooks:227:14)
       at Test.run (node:internal/test_runner/test:1397:25)
       at Test.processPendingSubtests (node:internal/test_runner/test:969:18)
@@ -71,7 +71,7 @@ test at scripts/__tests__/rule-reproduction-files.test.js:38:1
 test at scripts/__tests__/rule-reproduction-files.test.js:66:1
 ✖ read stays bound to the validated descriptor when its pathname is replaced (0.557375ms)
   TypeError: readRegular is not a function
-      at TestContext.<anonymous> (/Users/baptistelafourcade/orca/workspaces/framework/basketstar/scripts/__tests__/rule-reproduction-files.test.js:80:18)
+      at TestContext.<anonymous> (<worktree>/scripts/__tests__/rule-reproduction-files.test.js:80:18)
       at Test.runInAsyncScope (node:async_hooks:227:14)
       at Test.run (node:internal/test_runner/test:1397:25)
       at Test.processPendingSubtests (node:internal/test_runner/test:969:18)
@@ -82,7 +82,7 @@ test at scripts/__tests__/rule-reproduction-files.test.js:66:1
 test at scripts/__tests__/rule-reproduction-files.test.js:87:3
 ✖ descriptor closes after successful read (1.258791ms)
   TypeError: readRegular is not a function
-      at TestContext.<anonymous> (/Users/baptistelafourcade/orca/workspaces/framework/basketstar/scripts/__tests__/rule-reproduction-files.test.js:98:25)
+      at TestContext.<anonymous> (<worktree>/scripts/__tests__/rule-reproduction-files.test.js:98:25)
       at Test.runInAsyncScope (node:async_hooks:227:14)
       at Test.run (node:internal/test_runner/test:1397:25)
       at Test.processPendingSubtests (node:internal/test_runner/test:969:18)
@@ -96,7 +96,7 @@ test at scripts/__tests__/rule-reproduction-files.test.js:87:3
   
   'TypeError: readRegular is not a function'
   
-      at TestContext.<anonymous> (/Users/baptistelafourcade/orca/workspaces/framework/basketstar/scripts/__tests__/rule-reproduction-files.test.js:97:27)
+      at TestContext.<anonymous> (<worktree>/scripts/__tests__/rule-reproduction-files.test.js:97:27)
       at Test.runInAsyncScope (node:async_hooks:227:14)
       at Test.run (node:internal/test_runner/test:1397:25)
       at Test.processPendingSubtests (node:internal/test_runner/test:969:18)
@@ -106,10 +106,10 @@ test at scripts/__tests__/rule-reproduction-files.test.js:87:3
     generatedMessage: true,
     code: 'ERR_ASSERTION',
     actual: TypeError: readRegular is not a function
-        at /Users/baptistelafourcade/orca/workspaces/framework/basketstar/scripts/__tests__/rule-reproduction-files.test.js:97:40
+        at <worktree>/scripts/__tests__/rule-reproduction-files.test.js:97:40
         at getActual (node:assert:611:5)
         at strict.throws (node:assert:759:24)
-        at TestContext.<anonymous> (/Users/baptistelafourcade/orca/workspaces/framework/basketstar/scripts/__tests__/rule-reproduction-files.test.js:97:27)
+        at TestContext.<anonymous> (<worktree>/scripts/__tests__/rule-reproduction-files.test.js:97:27)
         at Test.runInAsyncScope (node:async_hooks:227:14)
         at Test.run (node:internal/test_runner/test:1397:25)
         at Test.processPendingSubtests (node:internal/test_runner/test:969:18)
@@ -127,7 +127,7 @@ test at scripts/__tests__/rule-reproduction-files.test.js:87:3
   
   'TypeError: readRegular is not a function'
   
-      at TestContext.<anonymous> (/Users/baptistelafourcade/orca/workspaces/framework/basketstar/scripts/__tests__/rule-reproduction-files.test.js:97:27)
+      at TestContext.<anonymous> (<worktree>/scripts/__tests__/rule-reproduction-files.test.js:97:27)
       at Test.runInAsyncScope (node:async_hooks:227:14)
       at Test.run (node:internal/test_runner/test:1397:25)
       at Test.processPendingSubtests (node:internal/test_runner/test:969:18)
@@ -137,10 +137,10 @@ test at scripts/__tests__/rule-reproduction-files.test.js:87:3
     generatedMessage: true,
     code: 'ERR_ASSERTION',
     actual: TypeError: readRegular is not a function
-        at /Users/baptistelafourcade/orca/workspaces/framework/basketstar/scripts/__tests__/rule-reproduction-files.test.js:97:40
+        at <worktree>/scripts/__tests__/rule-reproduction-files.test.js:97:40
         at getActual (node:assert:611:5)
         at strict.throws (node:assert:759:24)
-        at TestContext.<anonymous> (/Users/baptistelafourcade/orca/workspaces/framework/basketstar/scripts/__tests__/rule-reproduction-files.test.js:97:27)
+        at TestContext.<anonymous> (<worktree>/scripts/__tests__/rule-reproduction-files.test.js:97:27)
         at Test.runInAsyncScope (node:async_hooks:227:14)
         at Test.run (node:internal/test_runner/test:1397:25)
         at Test.processPendingSubtests (node:internal/test_runner/test:969:18)

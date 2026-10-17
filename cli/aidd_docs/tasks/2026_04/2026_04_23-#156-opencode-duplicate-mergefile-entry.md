@@ -86,7 +86,7 @@ flowchart TD
 
 ### Phase 4: Local end-to-end validation with real framework
 
-> Manual verification against the real framework at `../../../../framework/` (absolute: `/Users/baptistelafourcade/Projects/freelance/aidd/aidd/framework`). Each case MUST run in its own fresh `/tmp/aidd-156-caseN` directory — no state carried across cases.
+> Manual verification against the real framework at `../../../../framework/` (absolute: `<worktree>`). Each case MUST run in its own fresh `/tmp/aidd-156-caseN` directory — no state carried across cases.
 
 Setup steps (run once before all cases):
 

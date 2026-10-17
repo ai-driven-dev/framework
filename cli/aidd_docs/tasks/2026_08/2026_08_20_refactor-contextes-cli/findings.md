@@ -219,7 +219,7 @@ tranché ce jour.
 
 ```
 Registered marketplaces:
-  • aidd-framework (Local: /private/var/folders/…/aidd-smoke-tools-XXXXXXXX.5XlhflGviM/proj.sxDyTW/.aidd/cache/built/aidd-framework/copilot)
+  • aidd-framework (Local: <tmp>/aidd-smoke-tools-XXXXXXXX.5XlhflGviM/proj.sxDyTW/.aidd/cache/built/aidd-framework/copilot)
 ```
 
 Le répertoire n'existe plus. Les enregistrements de copilot sont **globaux à l'utilisateur**, pas au

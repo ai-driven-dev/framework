@@ -3,49 +3,49 @@
     "path": "sandbox/reproduction-results.json",
     "sha256": "2027ecc3a394148e8115688bc06836cda3af9faba7c75f76f0da748f5aaf2a63",
     "bytes": 5632,
-    "source": "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/reproduction-results.json"
+    "source": "<tmp>/aidd-realistic-rule-repro-x9OUfF/reproduction-results.json"
   },
   {
     "path": "sandbox/install-commands.json",
     "sha256": "ae18ce12b7104fe68583e1fee3c7f68ddfa28e6b5bf7fed4ba2929ba2e9577e2",
     "bytes": 16363,
-    "source": "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/install-commands.json"
+    "source": "<tmp>/aidd-realistic-rule-repro-x9OUfF/install-commands.json"
   },
   {
     "path": "sandbox/installations.json",
     "sha256": "31305f68a0c70ad9e644df92633d605570062133a421407c8b1bb8dad1e8d865",
     "bytes": 4843,
-    "source": "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/installations.json"
+    "source": "<tmp>/aidd-realistic-rule-repro-x9OUfF/installations.json"
   },
   {
     "path": "sandbox/lifecycle-commands.json",
     "sha256": "8c3f16f40940c698082934c33e67641f68db6b66cdcac6c71856b0491f2568d8",
     "bytes": 66848,
-    "source": "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/lifecycle-commands.json"
+    "source": "<tmp>/aidd-realistic-rule-repro-x9OUfF/lifecycle-commands.json"
   },
   {
     "path": "sandbox/lifecycle-results.json",
     "sha256": "95d99cca97808e988c93960d09ec980bcd91df00e881645cc30b4cbd1979169c",
     "bytes": 1431,
-    "source": "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/lifecycle-results.json"
+    "source": "<tmp>/aidd-realistic-rule-repro-x9OUfF/lifecycle-results.json"
   },
   {
     "path": "sandbox/negative-commands.json",
     "sha256": "9ae68a283371464045eb59ed7ffeb30e3aa9d3b6329909c4472fdce0c0ae6b90",
     "bytes": 12977,
-    "source": "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/negative-commands.json"
+    "source": "<tmp>/aidd-realistic-rule-repro-x9OUfF/negative-commands.json"
   },
   {
     "path": "sandbox/negative-results.json",
     "sha256": "22109f822e7129367056599922550622500e39aa84349af5cb8daf2867f127f9",
     "bytes": 2862,
-    "source": "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/negative-results.json"
+    "source": "<tmp>/aidd-realistic-rule-repro-x9OUfF/negative-results.json"
   },
   {
     "path": "sandbox/cleanup-results.json",
     "sha256": "941b4002ba9ba8eb56b96b50d01d375dfdb7faa1056d979a6e6474720bda5d10",
     "bytes": 2864,
-    "source": "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/cleanup-results.json"
+    "source": "<tmp>/aidd-realistic-rule-repro-x9OUfF/cleanup-results.json"
   },
   {
     "path": "root-tests.log",
@@ -57,7 +57,7 @@
     "path": "write-rule.cjs",
     "sha256": "70783e579b75b9e22760239cbfd4309641bdd73840b17e7dfd606a252679a420",
     "bytes": 15650,
-    "source": "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs"
+    "source": "<worktree>/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs"
   },
   {
     "path": "runtime/codex-create/summary.json",
@@ -207,7 +207,7 @@
     "path": "runtime-checks.json",
     "sha256": "bccc5ad8313b08dba511e5deb54214d2b7be8e4cf0918fba460670d806ec55a4",
     "bytes": 812,
-    "source": "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/aidd_docs/tasks/2026_10/2026_10_09_autonomous-rule-generation/rule-presentation/evidence/runtime-checks.json"
+    "source": "<worktree>/aidd_docs/tasks/2026_10/2026_10_09_autonomous-rule-generation/rule-presentation/evidence/runtime-checks.json"
   },
   {
     "path": "rendered/create/AGENTS.txt",
@@ -243,12 +243,12 @@
     "path": "installed-writers.json",
     "sha256": "805144fb45560213a2ddc3b2319f7c032cf2e8e79de3ce10a883681d700ab9a5",
     "bytes": 1343,
-    "source": "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/aidd_docs/tasks/2026_10/2026_10_09_autonomous-rule-generation/rule-presentation/evidence/installed-writers.json"
+    "source": "<worktree>/aidd_docs/tasks/2026_10/2026_10_09_autonomous-rule-generation/rule-presentation/evidence/installed-writers.json"
   },
   {
     "path": "repository-gates.json",
     "sha256": "df24c1e2a1f343c87e1d837e1ba2fcbdb5916d8cf3fbe28bfdc39803d6ed3a80",
     "bytes": 2867,
-    "source": "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/aidd_docs/tasks/2026_10/2026_10_09_autonomous-rule-generation/rule-presentation/evidence/repository-gates.json"
+    "source": "<worktree>/aidd_docs/tasks/2026_10/2026_10_09_autonomous-rule-generation/rule-presentation/evidence/repository-gates.json"
   }
 ]

@@ -58,7 +58,7 @@
   {
     "case": "invalid UTF8 staged JSON",
     "exit": 1,
-    "error": "Invalid UTF-8 in /private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/negative-input.json; refusing byte loss.",
+    "error": "Invalid UTF-8 in <tmp>/aidd-realistic-rule-repro-x9OUfF/negative-input.json; refusing byte loss.",
     "unchangedProjectBytes": true,
     "existingCanonicalSources": 3
   },

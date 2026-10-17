@@ -3,7 +3,7 @@
   "translationExit": 0,
   "translationArguments": [
     "translate",
-    "/Users/baptistelafourcade/orca/workspaces/framework/basketstar",
+    "<worktree>",
     "--to",
     "cursor",
     "--as",

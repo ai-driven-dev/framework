@@ -2,14 +2,14 @@
   {
     "host": "claude",
     "args": [
-      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/claude/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
+      "<home>/.nvm/versions/node/v24.20.0/bin/node",
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/claude/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
       "--project",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/claude",
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/claude",
       "--tools",
       "claude",
       "--input",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/requests/claude-0.json"
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/requests/claude-0.json"
     ],
     "exit": 0,
     "stdout": "{\"files\":[\"aidd_docs/rules/07-quality/7-monetary-precision.md\",\".claude/rules/07-quality/7-monetary-precision.md\"]}\n",
@@ -18,14 +18,14 @@
   {
     "host": "claude",
     "args": [
-      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/claude/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
+      "<home>/.nvm/versions/node/v24.20.0/bin/node",
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/claude/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
       "--project",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/claude",
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/claude",
       "--tools",
       "claude",
       "--input",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/requests/claude-1.json"
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/requests/claude-1.json"
     ],
     "exit": 0,
     "stdout": "{\"files\":[\"aidd_docs/rules/02-programming-languages/2-domain-invariants.md\",\".claude/rules/07-quality/7-monetary-precision.md\",\".claude/rules/02-programming-languages/2-domain-invariants.md\"]}\n",
@@ -34,14 +34,14 @@
   {
     "host": "claude",
     "args": [
-      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/claude/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
+      "<home>/.nvm/versions/node/v24.20.0/bin/node",
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/claude/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
       "--project",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/claude",
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/claude",
       "--tools",
       "claude",
       "--input",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/requests/claude-2.json"
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/requests/claude-2.json"
     ],
     "exit": 0,
     "stdout": "{\"files\":[\"aidd_docs/rules/09-other/9-api-documentation.md\",\".claude/rules/02-programming-languages/2-domain-invariants.md\",\".claude/rules/07-quality/7-monetary-precision.md\",\".claude/rules/09-other/9-api-documentation.md\"]}\n",
@@ -50,14 +50,14 @@
   {
     "host": "claude",
     "args": [
-      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/claude/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
+      "<home>/.nvm/versions/node/v24.20.0/bin/node",
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/claude/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
       "--project",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/claude",
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/claude",
       "--tools",
       "claude",
       "--input",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/requests/claude-3.json"
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/requests/claude-3.json"
     ],
     "exit": 0,
     "stdout": "{\"files\":[\"aidd_docs/rules/07-quality/7-monetary-precision.md\",\".claude/rules/02-programming-languages/2-domain-invariants.md\",\".claude/rules/07-quality/7-monetary-precision.md\",\".claude/rules/09-other/9-api-documentation.md\"]}\n",
@@ -66,14 +66,14 @@
   {
     "host": "claude",
     "args": [
-      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/claude/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
+      "<home>/.nvm/versions/node/v24.20.0/bin/node",
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/claude/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
       "--project",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/claude",
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/claude",
       "--tools",
       "claude",
       "--input",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/requests/claude-4.json"
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/requests/claude-4.json"
     ],
     "exit": 0,
     "stdout": "{\"files\":[\"aidd_docs/rules/02-programming-languages/2-domain-invariants.md\",\".claude/rules/02-programming-languages/2-domain-invariants.md\",\".claude/rules/07-quality/7-monetary-precision.md\",\".claude/rules/09-other/9-api-documentation.md\"]}\n",
@@ -82,14 +82,14 @@
   {
     "host": "claude",
     "args": [
-      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/claude/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
+      "<home>/.nvm/versions/node/v24.20.0/bin/node",
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/claude/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
       "--project",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/claude",
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/claude",
       "--tools",
       "claude",
       "--input",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/requests/claude-5.json"
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/requests/claude-5.json"
     ],
     "exit": 0,
     "stdout": "{\"files\":[\"aidd_docs/rules/09-other/9-api-documentation.md\",\".claude/rules/02-programming-languages/2-domain-invariants.md\",\".claude/rules/07-quality/7-monetary-precision.md\",\".claude/rules/09-other/9-api-documentation.md\"]}\n",
@@ -98,10 +98,10 @@
   {
     "host": "claude",
     "args": [
-      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/claude/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
+      "<home>/.nvm/versions/node/v24.20.0/bin/node",
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/claude/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
       "--project",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/claude",
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/claude",
       "--tools",
       "claude",
       "--publish"
@@ -113,10 +113,10 @@
   {
     "host": "claude",
     "args": [
-      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/claude/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
+      "<home>/.nvm/versions/node/v24.20.0/bin/node",
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/claude/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
       "--project",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/claude",
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/claude",
       "--tools",
       "claude",
       "--publish"
@@ -128,14 +128,14 @@
   {
     "host": "claude",
     "args": [
-      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/claude/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
+      "<home>/.nvm/versions/node/v24.20.0/bin/node",
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/claude/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
       "--project",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/claude",
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/claude",
       "--tools",
       "opencode",
       "--input",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/requests/claude-8.json"
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/requests/claude-8.json"
     ],
     "exit": 0,
     "stdout": "{\"files\":[\"aidd_docs/rules/09-other/9-api-documentation.md\",\".claude/rules/02-programming-languages/2-domain-invariants.md\",\".claude/rules/07-quality/7-monetary-precision.md\",\".claude/rules/09-other/9-api-documentation.md\",\"AGENTS.md\"]}\n",
@@ -144,14 +144,14 @@
   {
     "host": "claude",
     "args": [
-      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/claude/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
+      "<home>/.nvm/versions/node/v24.20.0/bin/node",
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/claude/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
       "--project",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/claude",
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/claude",
       "--tools",
       "claude",
       "--input",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/requests/claude-9.json"
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/requests/claude-9.json"
     ],
     "exit": 0,
     "stdout": "{\"files\":[\"aidd_docs/rules/09-other/9-api-documentation.md\",\".claude/rules/02-programming-languages/2-domain-invariants.md\",\".claude/rules/07-quality/7-monetary-precision.md\",\".claude/rules/09-other/9-api-documentation.md\",\"AGENTS.md\"]}\n",
@@ -160,10 +160,10 @@
   {
     "host": "claude",
     "args": [
-      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/claude/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
+      "<home>/.nvm/versions/node/v24.20.0/bin/node",
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/claude/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
       "--project",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/claude",
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/claude",
       "--tools",
       "claude",
       "--delete",
@@ -176,10 +176,10 @@
   {
     "host": "claude",
     "args": [
-      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/claude/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
+      "<home>/.nvm/versions/node/v24.20.0/bin/node",
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/claude/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
       "--project",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/claude",
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/claude",
       "--tools",
       "claude",
       "--delete",
@@ -192,10 +192,10 @@
   {
     "host": "claude",
     "args": [
-      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/claude/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
+      "<home>/.nvm/versions/node/v24.20.0/bin/node",
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/claude/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
       "--project",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/claude",
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/claude",
       "--tools",
       "claude",
       "--delete",
@@ -208,14 +208,14 @@
   {
     "host": "cursor",
     "args": [
-      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/cursor/.cursor/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
+      "<home>/.nvm/versions/node/v24.20.0/bin/node",
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/cursor/.cursor/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
       "--project",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/cursor",
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/cursor",
       "--tools",
       "cursor",
       "--input",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/requests/cursor-13.json"
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/requests/cursor-13.json"
     ],
     "exit": 0,
     "stdout": "{\"files\":[\"aidd_docs/rules/07-quality/7-monetary-precision.md\",\".cursor/rules/07-quality/7-monetary-precision.mdc\"]}\n",
@@ -224,14 +224,14 @@
   {
     "host": "cursor",
     "args": [
-      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/cursor/.cursor/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
+      "<home>/.nvm/versions/node/v24.20.0/bin/node",
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/cursor/.cursor/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
       "--project",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/cursor",
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/cursor",
       "--tools",
       "cursor",
       "--input",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/requests/cursor-14.json"
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/requests/cursor-14.json"
     ],
     "exit": 0,
     "stdout": "{\"files\":[\"aidd_docs/rules/02-programming-languages/2-domain-invariants.md\",\".cursor/rules/07-quality/7-monetary-precision.mdc\",\".cursor/rules/02-programming-languages/2-domain-invariants.mdc\"]}\n",
@@ -240,14 +240,14 @@
   {
     "host": "cursor",
     "args": [
-      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/cursor/.cursor/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
+      "<home>/.nvm/versions/node/v24.20.0/bin/node",
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/cursor/.cursor/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
       "--project",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/cursor",
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/cursor",
       "--tools",
       "cursor",
       "--input",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/requests/cursor-15.json"
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/requests/cursor-15.json"
     ],
     "exit": 0,
     "stdout": "{\"files\":[\"aidd_docs/rules/09-other/9-api-documentation.md\",\".cursor/rules/02-programming-languages/2-domain-invariants.mdc\",\".cursor/rules/07-quality/7-monetary-precision.mdc\",\".cursor/rules/09-other/9-api-documentation.mdc\"]}\n",
@@ -256,14 +256,14 @@
   {
     "host": "cursor",
     "args": [
-      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/cursor/.cursor/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
+      "<home>/.nvm/versions/node/v24.20.0/bin/node",
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/cursor/.cursor/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
       "--project",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/cursor",
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/cursor",
       "--tools",
       "cursor",
       "--input",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/requests/cursor-16.json"
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/requests/cursor-16.json"
     ],
     "exit": 0,
     "stdout": "{\"files\":[\"aidd_docs/rules/07-quality/7-monetary-precision.md\",\".cursor/rules/02-programming-languages/2-domain-invariants.mdc\",\".cursor/rules/07-quality/7-monetary-precision.mdc\",\".cursor/rules/09-other/9-api-documentation.mdc\"]}\n",
@@ -272,14 +272,14 @@
   {
     "host": "cursor",
     "args": [
-      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/cursor/.cursor/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
+      "<home>/.nvm/versions/node/v24.20.0/bin/node",
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/cursor/.cursor/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
       "--project",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/cursor",
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/cursor",
       "--tools",
       "cursor",
       "--input",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/requests/cursor-17.json"
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/requests/cursor-17.json"
     ],
     "exit": 0,
     "stdout": "{\"files\":[\"aidd_docs/rules/02-programming-languages/2-domain-invariants.md\",\".cursor/rules/02-programming-languages/2-domain-invariants.mdc\",\".cursor/rules/07-quality/7-monetary-precision.mdc\",\".cursor/rules/09-other/9-api-documentation.mdc\"]}\n",
@@ -288,14 +288,14 @@
   {
     "host": "cursor",
     "args": [
-      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/cursor/.cursor/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
+      "<home>/.nvm/versions/node/v24.20.0/bin/node",
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/cursor/.cursor/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
       "--project",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/cursor",
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/cursor",
       "--tools",
       "cursor",
       "--input",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/requests/cursor-18.json"
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/requests/cursor-18.json"
     ],
     "exit": 0,
     "stdout": "{\"files\":[\"aidd_docs/rules/09-other/9-api-documentation.md\",\".cursor/rules/02-programming-languages/2-domain-invariants.mdc\",\".cursor/rules/07-quality/7-monetary-precision.mdc\",\".cursor/rules/09-other/9-api-documentation.mdc\"]}\n",
@@ -304,10 +304,10 @@
   {
     "host": "cursor",
     "args": [
-      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/cursor/.cursor/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
+      "<home>/.nvm/versions/node/v24.20.0/bin/node",
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/cursor/.cursor/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
       "--project",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/cursor",
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/cursor",
       "--tools",
       "cursor",
       "--publish"
@@ -319,10 +319,10 @@
   {
     "host": "cursor",
     "args": [
-      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/cursor/.cursor/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
+      "<home>/.nvm/versions/node/v24.20.0/bin/node",
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/cursor/.cursor/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
       "--project",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/cursor",
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/cursor",
       "--tools",
       "cursor",
       "--publish"
@@ -334,14 +334,14 @@
   {
     "host": "cursor",
     "args": [
-      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/cursor/.cursor/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
+      "<home>/.nvm/versions/node/v24.20.0/bin/node",
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/cursor/.cursor/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
       "--project",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/cursor",
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/cursor",
       "--tools",
       "opencode",
       "--input",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/requests/cursor-21.json"
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/requests/cursor-21.json"
     ],
     "exit": 0,
     "stdout": "{\"files\":[\"aidd_docs/rules/09-other/9-api-documentation.md\",\".cursor/rules/02-programming-languages/2-domain-invariants.mdc\",\".cursor/rules/07-quality/7-monetary-precision.mdc\",\".cursor/rules/09-other/9-api-documentation.mdc\",\"AGENTS.md\"]}\n",
@@ -350,14 +350,14 @@
   {
     "host": "cursor",
     "args": [
-      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/cursor/.cursor/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
+      "<home>/.nvm/versions/node/v24.20.0/bin/node",
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/cursor/.cursor/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
       "--project",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/cursor",
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/cursor",
       "--tools",
       "cursor",
       "--input",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/requests/cursor-22.json"
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/requests/cursor-22.json"
     ],
     "exit": 0,
     "stdout": "{\"files\":[\"aidd_docs/rules/09-other/9-api-documentation.md\",\".cursor/rules/02-programming-languages/2-domain-invariants.mdc\",\".cursor/rules/07-quality/7-monetary-precision.mdc\",\".cursor/rules/09-other/9-api-documentation.mdc\",\"AGENTS.md\"]}\n",
@@ -366,10 +366,10 @@
   {
     "host": "cursor",
     "args": [
-      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/cursor/.cursor/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
+      "<home>/.nvm/versions/node/v24.20.0/bin/node",
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/cursor/.cursor/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
       "--project",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/cursor",
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/cursor",
       "--tools",
       "cursor",
       "--delete",
@@ -382,10 +382,10 @@
   {
     "host": "cursor",
     "args": [
-      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/cursor/.cursor/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
+      "<home>/.nvm/versions/node/v24.20.0/bin/node",
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/cursor/.cursor/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
       "--project",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/cursor",
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/cursor",
       "--tools",
       "cursor",
       "--delete",
@@ -398,10 +398,10 @@
   {
     "host": "cursor",
     "args": [
-      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/cursor/.cursor/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
+      "<home>/.nvm/versions/node/v24.20.0/bin/node",
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/cursor/.cursor/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
       "--project",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/cursor",
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/cursor",
       "--tools",
       "cursor",
       "--delete",
@@ -414,14 +414,14 @@
   {
     "host": "copilot",
     "args": [
-      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/copilot/.github/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
+      "<home>/.nvm/versions/node/v24.20.0/bin/node",
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/copilot/.github/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
       "--project",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/copilot",
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/copilot",
       "--tools",
       "copilot",
       "--input",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/requests/copilot-26.json"
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/requests/copilot-26.json"
     ],
     "exit": 0,
     "stdout": "{\"files\":[\"aidd_docs/rules/07-quality/7-monetary-precision.md\",\".github/instructions/07-monetary-precision.instructions.md\"]}\n",
@@ -430,14 +430,14 @@
   {
     "host": "copilot",
     "args": [
-      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/copilot/.github/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
+      "<home>/.nvm/versions/node/v24.20.0/bin/node",
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/copilot/.github/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
       "--project",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/copilot",
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/copilot",
       "--tools",
       "copilot",
       "--input",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/requests/copilot-27.json"
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/requests/copilot-27.json"
     ],
     "exit": 0,
     "stdout": "{\"files\":[\"aidd_docs/rules/02-programming-languages/2-domain-invariants.md\",\".github/instructions/07-monetary-precision.instructions.md\",\".github/instructions/02-domain-invariants.instructions.md\"]}\n",
@@ -446,14 +446,14 @@
   {
     "host": "copilot",
     "args": [
-      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/copilot/.github/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
+      "<home>/.nvm/versions/node/v24.20.0/bin/node",
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/copilot/.github/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
       "--project",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/copilot",
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/copilot",
       "--tools",
       "copilot",
       "--input",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/requests/copilot-28.json"
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/requests/copilot-28.json"
     ],
     "exit": 0,
     "stdout": "{\"files\":[\"aidd_docs/rules/09-other/9-api-documentation.md\",\".github/instructions/02-domain-invariants.instructions.md\",\".github/instructions/07-monetary-precision.instructions.md\",\".github/instructions/09-api-documentation.instructions.md\"]}\n",
@@ -462,14 +462,14 @@
   {
     "host": "copilot",
     "args": [
-      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/copilot/.github/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
+      "<home>/.nvm/versions/node/v24.20.0/bin/node",
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/copilot/.github/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
       "--project",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/copilot",
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/copilot",
       "--tools",
       "copilot",
       "--input",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/requests/copilot-29.json"
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/requests/copilot-29.json"
     ],
     "exit": 0,
     "stdout": "{\"files\":[\"aidd_docs/rules/07-quality/7-monetary-precision.md\",\".github/instructions/02-domain-invariants.instructions.md\",\".github/instructions/07-monetary-precision.instructions.md\",\".github/instructions/09-api-documentation.instructions.md\"]}\n",
@@ -478,14 +478,14 @@
   {
     "host": "copilot",
     "args": [
-      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/copilot/.github/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
+      "<home>/.nvm/versions/node/v24.20.0/bin/node",
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/copilot/.github/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
       "--project",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/copilot",
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/copilot",
       "--tools",
       "copilot",
       "--input",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/requests/copilot-30.json"
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/requests/copilot-30.json"
     ],
     "exit": 0,
     "stdout": "{\"files\":[\"aidd_docs/rules/02-programming-languages/2-domain-invariants.md\",\".github/instructions/02-domain-invariants.instructions.md\",\".github/instructions/07-monetary-precision.instructions.md\",\".github/instructions/09-api-documentation.instructions.md\"]}\n",
@@ -494,14 +494,14 @@
   {
     "host": "copilot",
     "args": [
-      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/copilot/.github/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
+      "<home>/.nvm/versions/node/v24.20.0/bin/node",
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/copilot/.github/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
       "--project",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/copilot",
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/copilot",
       "--tools",
       "copilot",
       "--input",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/requests/copilot-31.json"
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/requests/copilot-31.json"
     ],
     "exit": 0,
     "stdout": "{\"files\":[\"aidd_docs/rules/09-other/9-api-documentation.md\",\".github/instructions/02-domain-invariants.instructions.md\",\".github/instructions/07-monetary-precision.instructions.md\",\".github/instructions/09-api-documentation.instructions.md\"]}\n",
@@ -510,10 +510,10 @@
   {
     "host": "copilot",
     "args": [
-      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/copilot/.github/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
+      "<home>/.nvm/versions/node/v24.20.0/bin/node",
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/copilot/.github/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
       "--project",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/copilot",
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/copilot",
       "--tools",
       "copilot",
       "--publish"
@@ -525,10 +525,10 @@
   {
     "host": "copilot",
     "args": [
-      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/copilot/.github/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
+      "<home>/.nvm/versions/node/v24.20.0/bin/node",
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/copilot/.github/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
       "--project",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/copilot",
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/copilot",
       "--tools",
       "copilot",
       "--publish"
@@ -540,14 +540,14 @@
   {
     "host": "copilot",
     "args": [
-      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/copilot/.github/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
+      "<home>/.nvm/versions/node/v24.20.0/bin/node",
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/copilot/.github/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
       "--project",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/copilot",
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/copilot",
       "--tools",
       "opencode",
       "--input",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/requests/copilot-34.json"
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/requests/copilot-34.json"
     ],
     "exit": 0,
     "stdout": "{\"files\":[\"aidd_docs/rules/09-other/9-api-documentation.md\",\".github/instructions/02-domain-invariants.instructions.md\",\".github/instructions/07-monetary-precision.instructions.md\",\".github/instructions/09-api-documentation.instructions.md\",\"AGENTS.md\"]}\n",
@@ -556,14 +556,14 @@
   {
     "host": "copilot",
     "args": [
-      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/copilot/.github/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
+      "<home>/.nvm/versions/node/v24.20.0/bin/node",
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/copilot/.github/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
       "--project",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/copilot",
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/copilot",
       "--tools",
       "copilot",
       "--input",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/requests/copilot-35.json"
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/requests/copilot-35.json"
     ],
     "exit": 0,
     "stdout": "{\"files\":[\"aidd_docs/rules/09-other/9-api-documentation.md\",\".github/instructions/02-domain-invariants.instructions.md\",\".github/instructions/07-monetary-precision.instructions.md\",\".github/instructions/09-api-documentation.instructions.md\",\"AGENTS.md\"]}\n",
@@ -572,10 +572,10 @@
   {
     "host": "copilot",
     "args": [
-      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/copilot/.github/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
+      "<home>/.nvm/versions/node/v24.20.0/bin/node",
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/copilot/.github/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
       "--project",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/copilot",
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/copilot",
       "--tools",
       "copilot",
       "--delete",
@@ -588,10 +588,10 @@
   {
     "host": "copilot",
     "args": [
-      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/copilot/.github/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
+      "<home>/.nvm/versions/node/v24.20.0/bin/node",
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/copilot/.github/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
       "--project",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/copilot",
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/copilot",
       "--tools",
       "copilot",
       "--delete",
@@ -604,10 +604,10 @@
   {
     "host": "copilot",
     "args": [
-      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/copilot/.github/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
+      "<home>/.nvm/versions/node/v24.20.0/bin/node",
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/copilot/.github/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
       "--project",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/copilot",
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/copilot",
       "--tools",
       "copilot",
       "--delete",
@@ -620,14 +620,14 @@
   {
     "host": "codex",
     "args": [
-      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/codex/.agents/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
+      "<home>/.nvm/versions/node/v24.20.0/bin/node",
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/codex/.agents/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
       "--project",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/codex",
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/codex",
       "--tools",
       "codex",
       "--input",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/requests/codex-39.json"
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/requests/codex-39.json"
     ],
     "exit": 0,
     "stdout": "{\"files\":[\"aidd_docs/rules/07-quality/7-monetary-precision.md\",\"AGENTS.md\"]}\n",
@@ -636,14 +636,14 @@
   {
     "host": "codex",
     "args": [
-      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/codex/.agents/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
+      "<home>/.nvm/versions/node/v24.20.0/bin/node",
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/codex/.agents/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
       "--project",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/codex",
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/codex",
       "--tools",
       "codex",
       "--input",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/requests/codex-40.json"
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/requests/codex-40.json"
     ],
     "exit": 0,
     "stdout": "{\"files\":[\"aidd_docs/rules/02-programming-languages/2-domain-invariants.md\",\"AGENTS.md\"]}\n",
@@ -652,14 +652,14 @@
   {
     "host": "codex",
     "args": [
-      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/codex/.agents/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
+      "<home>/.nvm/versions/node/v24.20.0/bin/node",
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/codex/.agents/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
       "--project",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/codex",
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/codex",
       "--tools",
       "codex",
       "--input",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/requests/codex-41.json"
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/requests/codex-41.json"
     ],
     "exit": 0,
     "stdout": "{\"files\":[\"aidd_docs/rules/09-other/9-api-documentation.md\",\"AGENTS.md\"]}\n",
@@ -668,14 +668,14 @@
   {
     "host": "codex",
     "args": [
-      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/codex/.agents/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
+      "<home>/.nvm/versions/node/v24.20.0/bin/node",
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/codex/.agents/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
       "--project",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/codex",
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/codex",
       "--tools",
       "codex",
       "--input",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/requests/codex-42.json"
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/requests/codex-42.json"
     ],
     "exit": 0,
     "stdout": "{\"files\":[\"aidd_docs/rules/07-quality/7-monetary-precision.md\",\"AGENTS.md\"]}\n",
@@ -684,14 +684,14 @@
   {
     "host": "codex",
     "args": [
-      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/codex/.agents/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
+      "<home>/.nvm/versions/node/v24.20.0/bin/node",
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/codex/.agents/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
       "--project",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/codex",
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/codex",
       "--tools",
       "codex",
       "--input",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/requests/codex-43.json"
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/requests/codex-43.json"
     ],
     "exit": 0,
     "stdout": "{\"files\":[\"aidd_docs/rules/02-programming-languages/2-domain-invariants.md\",\"AGENTS.md\"]}\n",
@@ -700,14 +700,14 @@
   {
     "host": "codex",
     "args": [
-      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/codex/.agents/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
+      "<home>/.nvm/versions/node/v24.20.0/bin/node",
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/codex/.agents/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
       "--project",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/codex",
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/codex",
       "--tools",
       "codex",
       "--input",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/requests/codex-44.json"
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/requests/codex-44.json"
     ],
     "exit": 0,
     "stdout": "{\"files\":[\"aidd_docs/rules/09-other/9-api-documentation.md\",\"AGENTS.md\"]}\n",
@@ -716,10 +716,10 @@
   {
     "host": "codex",
     "args": [
-      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/codex/.agents/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
+      "<home>/.nvm/versions/node/v24.20.0/bin/node",
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/codex/.agents/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
       "--project",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/codex",
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/codex",
       "--tools",
       "codex",
       "--publish"
@@ -731,10 +731,10 @@
   {
     "host": "codex",
     "args": [
-      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/codex/.agents/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
+      "<home>/.nvm/versions/node/v24.20.0/bin/node",
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/codex/.agents/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
       "--project",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/codex",
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/codex",
       "--tools",
       "codex",
       "--publish"
@@ -746,14 +746,14 @@
   {
     "host": "codex",
     "args": [
-      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/codex/.agents/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
+      "<home>/.nvm/versions/node/v24.20.0/bin/node",
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/codex/.agents/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
       "--project",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/codex",
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/codex",
       "--tools",
       "opencode",
       "--input",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/requests/codex-47.json"
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/requests/codex-47.json"
     ],
     "exit": 0,
     "stdout": "{\"files\":[\"aidd_docs/rules/09-other/9-api-documentation.md\",\"AGENTS.md\"]}\n",
@@ -762,14 +762,14 @@
   {
     "host": "codex",
     "args": [
-      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/codex/.agents/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
+      "<home>/.nvm/versions/node/v24.20.0/bin/node",
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/codex/.agents/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
       "--project",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/codex",
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/codex",
       "--tools",
       "codex",
       "--input",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/requests/codex-48.json"
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/requests/codex-48.json"
     ],
     "exit": 0,
     "stdout": "{\"files\":[\"aidd_docs/rules/09-other/9-api-documentation.md\",\"AGENTS.md\"]}\n",
@@ -778,10 +778,10 @@
   {
     "host": "codex",
     "args": [
-      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/codex/.agents/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
+      "<home>/.nvm/versions/node/v24.20.0/bin/node",
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/codex/.agents/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
       "--project",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/codex",
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/codex",
       "--tools",
       "codex",
       "--delete",
@@ -794,10 +794,10 @@
   {
     "host": "codex",
     "args": [
-      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/codex/.agents/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
+      "<home>/.nvm/versions/node/v24.20.0/bin/node",
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/codex/.agents/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
       "--project",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/codex",
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/codex",
       "--tools",
       "codex",
       "--delete",
@@ -810,10 +810,10 @@
   {
     "host": "codex",
     "args": [
-      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/codex/.agents/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
+      "<home>/.nvm/versions/node/v24.20.0/bin/node",
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/codex/.agents/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
       "--project",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/codex",
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/codex",
       "--tools",
       "codex",
       "--delete",
@@ -826,14 +826,14 @@
   {
     "host": "opencode",
     "args": [
-      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/opencode/.opencode/skills/aidd-context/05-rule-generate/scripts/write-rule.cjs",
+      "<home>/.nvm/versions/node/v24.20.0/bin/node",
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/opencode/.opencode/skills/aidd-context/05-rule-generate/scripts/write-rule.cjs",
       "--project",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/opencode",
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/opencode",
       "--tools",
       "opencode",
       "--input",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/requests/opencode-52.json"
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/requests/opencode-52.json"
     ],
     "exit": 0,
     "stdout": "{\"files\":[\"aidd_docs/rules/07-quality/7-monetary-precision.md\",\"AGENTS.md\"]}\n",
@@ -842,14 +842,14 @@
   {
     "host": "opencode",
     "args": [
-      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/opencode/.opencode/skills/aidd-context/05-rule-generate/scripts/write-rule.cjs",
+      "<home>/.nvm/versions/node/v24.20.0/bin/node",
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/opencode/.opencode/skills/aidd-context/05-rule-generate/scripts/write-rule.cjs",
       "--project",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/opencode",
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/opencode",
       "--tools",
       "opencode",
       "--input",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/requests/opencode-53.json"
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/requests/opencode-53.json"
     ],
     "exit": 0,
     "stdout": "{\"files\":[\"aidd_docs/rules/02-programming-languages/2-domain-invariants.md\",\"AGENTS.md\"]}\n",
@@ -858,14 +858,14 @@
   {
     "host": "opencode",
     "args": [
-      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/opencode/.opencode/skills/aidd-context/05-rule-generate/scripts/write-rule.cjs",
+      "<home>/.nvm/versions/node/v24.20.0/bin/node",
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/opencode/.opencode/skills/aidd-context/05-rule-generate/scripts/write-rule.cjs",
       "--project",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/opencode",
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/opencode",
       "--tools",
       "opencode",
       "--input",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/requests/opencode-54.json"
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/requests/opencode-54.json"
     ],
     "exit": 0,
     "stdout": "{\"files\":[\"aidd_docs/rules/09-other/9-api-documentation.md\",\"AGENTS.md\"]}\n",
@@ -874,14 +874,14 @@
   {
     "host": "opencode",
     "args": [
-      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/opencode/.opencode/skills/aidd-context/05-rule-generate/scripts/write-rule.cjs",
+      "<home>/.nvm/versions/node/v24.20.0/bin/node",
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/opencode/.opencode/skills/aidd-context/05-rule-generate/scripts/write-rule.cjs",
       "--project",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/opencode",
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/opencode",
       "--tools",
       "opencode",
       "--input",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/requests/opencode-55.json"
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/requests/opencode-55.json"
     ],
     "exit": 0,
     "stdout": "{\"files\":[\"aidd_docs/rules/07-quality/7-monetary-precision.md\",\"AGENTS.md\"]}\n",
@@ -890,14 +890,14 @@
   {
     "host": "opencode",
     "args": [
-      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/opencode/.opencode/skills/aidd-context/05-rule-generate/scripts/write-rule.cjs",
+      "<home>/.nvm/versions/node/v24.20.0/bin/node",
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/opencode/.opencode/skills/aidd-context/05-rule-generate/scripts/write-rule.cjs",
       "--project",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/opencode",
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/opencode",
       "--tools",
       "opencode",
       "--input",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/requests/opencode-56.json"
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/requests/opencode-56.json"
     ],
     "exit": 0,
     "stdout": "{\"files\":[\"aidd_docs/rules/02-programming-languages/2-domain-invariants.md\",\"AGENTS.md\"]}\n",
@@ -906,14 +906,14 @@
   {
     "host": "opencode",
     "args": [
-      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/opencode/.opencode/skills/aidd-context/05-rule-generate/scripts/write-rule.cjs",
+      "<home>/.nvm/versions/node/v24.20.0/bin/node",
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/opencode/.opencode/skills/aidd-context/05-rule-generate/scripts/write-rule.cjs",
       "--project",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/opencode",
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/opencode",
       "--tools",
       "opencode",
       "--input",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/requests/opencode-57.json"
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/requests/opencode-57.json"
     ],
     "exit": 0,
     "stdout": "{\"files\":[\"aidd_docs/rules/09-other/9-api-documentation.md\",\"AGENTS.md\"]}\n",
@@ -922,10 +922,10 @@
   {
     "host": "opencode",
     "args": [
-      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/opencode/.opencode/skills/aidd-context/05-rule-generate/scripts/write-rule.cjs",
+      "<home>/.nvm/versions/node/v24.20.0/bin/node",
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/opencode/.opencode/skills/aidd-context/05-rule-generate/scripts/write-rule.cjs",
       "--project",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/opencode",
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/opencode",
       "--tools",
       "opencode",
       "--publish"
@@ -937,10 +937,10 @@
   {
     "host": "opencode",
     "args": [
-      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/opencode/.opencode/skills/aidd-context/05-rule-generate/scripts/write-rule.cjs",
+      "<home>/.nvm/versions/node/v24.20.0/bin/node",
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/opencode/.opencode/skills/aidd-context/05-rule-generate/scripts/write-rule.cjs",
       "--project",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/opencode",
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/opencode",
       "--tools",
       "opencode",
       "--publish"
@@ -952,14 +952,14 @@
   {
     "host": "opencode",
     "args": [
-      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/opencode/.opencode/skills/aidd-context/05-rule-generate/scripts/write-rule.cjs",
+      "<home>/.nvm/versions/node/v24.20.0/bin/node",
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/opencode/.opencode/skills/aidd-context/05-rule-generate/scripts/write-rule.cjs",
       "--project",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/opencode",
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/opencode",
       "--tools",
       "claude",
       "--input",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/requests/opencode-60.json"
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/requests/opencode-60.json"
     ],
     "exit": 0,
     "stdout": "{\"files\":[\"aidd_docs/rules/09-other/9-api-documentation.md\",\".claude/rules/09-other/9-api-documentation.md\",\"AGENTS.md\"]}\n",
@@ -968,14 +968,14 @@
   {
     "host": "opencode",
     "args": [
-      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/opencode/.opencode/skills/aidd-context/05-rule-generate/scripts/write-rule.cjs",
+      "<home>/.nvm/versions/node/v24.20.0/bin/node",
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/opencode/.opencode/skills/aidd-context/05-rule-generate/scripts/write-rule.cjs",
       "--project",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/opencode",
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/opencode",
       "--tools",
       "opencode",
       "--input",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/requests/opencode-61.json"
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/requests/opencode-61.json"
     ],
     "exit": 0,
     "stdout": "{\"files\":[\"aidd_docs/rules/09-other/9-api-documentation.md\",\".claude/rules/09-other/9-api-documentation.md\",\"AGENTS.md\"]}\n",
@@ -984,10 +984,10 @@
   {
     "host": "opencode",
     "args": [
-      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/opencode/.opencode/skills/aidd-context/05-rule-generate/scripts/write-rule.cjs",
+      "<home>/.nvm/versions/node/v24.20.0/bin/node",
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/opencode/.opencode/skills/aidd-context/05-rule-generate/scripts/write-rule.cjs",
       "--project",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/opencode",
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/opencode",
       "--tools",
       "opencode",
       "--delete",
@@ -1000,10 +1000,10 @@
   {
     "host": "opencode",
     "args": [
-      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/opencode/.opencode/skills/aidd-context/05-rule-generate/scripts/write-rule.cjs",
+      "<home>/.nvm/versions/node/v24.20.0/bin/node",
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/opencode/.opencode/skills/aidd-context/05-rule-generate/scripts/write-rule.cjs",
       "--project",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/opencode",
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/opencode",
       "--tools",
       "opencode",
       "--delete",
@@ -1016,10 +1016,10 @@
   {
     "host": "opencode",
     "args": [
-      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/opencode/.opencode/skills/aidd-context/05-rule-generate/scripts/write-rule.cjs",
+      "<home>/.nvm/versions/node/v24.20.0/bin/node",
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/opencode/.opencode/skills/aidd-context/05-rule-generate/scripts/write-rule.cjs",
       "--project",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/opencode",
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/opencode",
       "--tools",
       "opencode",
       "--delete",
@@ -1032,14 +1032,14 @@
   {
     "host": "mixed",
     "args": [
-      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/mixed/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
+      "<home>/.nvm/versions/node/v24.20.0/bin/node",
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/mixed/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
       "--project",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/mixed",
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/mixed",
       "--tools",
       "claude,cursor,copilot,codex,opencode",
       "--input",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/requests/mixed-65.json"
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/requests/mixed-65.json"
     ],
     "exit": 0,
     "stdout": "{\"files\":[\"aidd_docs/rules/07-quality/7-monetary-precision.md\",\".claude/rules/07-quality/7-monetary-precision.md\",\".github/instructions/07-monetary-precision.instructions.md\",\".cursor/rules/07-quality/7-monetary-precision.mdc\",\"AGENTS.md\"]}\n",
@@ -1048,14 +1048,14 @@
   {
     "host": "mixed",
     "args": [
-      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/mixed/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
+      "<home>/.nvm/versions/node/v24.20.0/bin/node",
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/mixed/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
       "--project",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/mixed",
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/mixed",
       "--tools",
       "claude,cursor,copilot,codex,opencode",
       "--input",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/requests/mixed-66.json"
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/requests/mixed-66.json"
     ],
     "exit": 0,
     "stdout": "{\"files\":[\"aidd_docs/rules/02-programming-languages/2-domain-invariants.md\",\".claude/rules/07-quality/7-monetary-precision.md\",\".claude/rules/02-programming-languages/2-domain-invariants.md\",\".github/instructions/07-monetary-precision.instructions.md\",\".github/instructions/02-domain-invariants.instructions.md\",\".cursor/rules/07-quality/7-monetary-precision.mdc\",\".cursor/rules/02-programming-languages/2-domain-invariants.mdc\",\"AGENTS.md\"]}\n",
@@ -1064,14 +1064,14 @@
   {
     "host": "mixed",
     "args": [
-      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/mixed/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
+      "<home>/.nvm/versions/node/v24.20.0/bin/node",
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/mixed/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
       "--project",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/mixed",
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/mixed",
       "--tools",
       "claude,cursor,copilot,codex,opencode",
       "--input",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/requests/mixed-67.json"
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/requests/mixed-67.json"
     ],
     "exit": 0,
     "stdout": "{\"files\":[\"aidd_docs/rules/09-other/9-api-documentation.md\",\".claude/rules/02-programming-languages/2-domain-invariants.md\",\".claude/rules/07-quality/7-monetary-precision.md\",\".claude/rules/09-other/9-api-documentation.md\",\".github/instructions/02-domain-invariants.instructions.md\",\".github/instructions/07-monetary-precision.instructions.md\",\".github/instructions/09-api-documentation.instructions.md\",\".cursor/rules/02-programming-languages/2-domain-invariants.mdc\",\".cursor/rules/07-quality/7-monetary-precision.mdc\",\".cursor/rules/09-other/9-api-documentation.mdc\",\"AGENTS.md\"]}\n",
@@ -1080,14 +1080,14 @@
   {
     "host": "mixed",
     "args": [
-      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/mixed/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
+      "<home>/.nvm/versions/node/v24.20.0/bin/node",
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/mixed/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
       "--project",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/mixed",
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/mixed",
       "--tools",
       "claude,cursor,copilot,codex,opencode",
       "--input",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/requests/mixed-68.json"
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/requests/mixed-68.json"
     ],
     "exit": 0,
     "stdout": "{\"files\":[\"aidd_docs/rules/07-quality/7-monetary-precision.md\",\".claude/rules/02-programming-languages/2-domain-invariants.md\",\".claude/rules/07-quality/7-monetary-precision.md\",\".claude/rules/09-other/9-api-documentation.md\",\".github/instructions/02-domain-invariants.instructions.md\",\".github/instructions/07-monetary-precision.instructions.md\",\".github/instructions/09-api-documentation.instructions.md\",\".cursor/rules/02-programming-languages/2-domain-invariants.mdc\",\".cursor/rules/07-quality/7-monetary-precision.mdc\",\".cursor/rules/09-other/9-api-documentation.mdc\",\"AGENTS.md\"]}\n",
@@ -1096,14 +1096,14 @@
   {
     "host": "mixed",
     "args": [
-      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/mixed/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
+      "<home>/.nvm/versions/node/v24.20.0/bin/node",
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/mixed/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
       "--project",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/mixed",
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/mixed",
       "--tools",
       "claude,cursor,copilot,codex,opencode",
       "--input",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/requests/mixed-69.json"
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/requests/mixed-69.json"
     ],
     "exit": 0,
     "stdout": "{\"files\":[\"aidd_docs/rules/02-programming-languages/2-domain-invariants.md\",\".claude/rules/02-programming-languages/2-domain-invariants.md\",\".claude/rules/07-quality/7-monetary-precision.md\",\".claude/rules/09-other/9-api-documentation.md\",\".github/instructions/02-domain-invariants.instructions.md\",\".github/instructions/07-monetary-precision.instructions.md\",\".github/instructions/09-api-documentation.instructions.md\",\".cursor/rules/02-programming-languages/2-domain-invariants.mdc\",\".cursor/rules/07-quality/7-monetary-precision.mdc\",\".cursor/rules/09-other/9-api-documentation.mdc\",\"AGENTS.md\"]}\n",
@@ -1112,14 +1112,14 @@
   {
     "host": "mixed",
     "args": [
-      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/mixed/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
+      "<home>/.nvm/versions/node/v24.20.0/bin/node",
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/mixed/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
       "--project",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/mixed",
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/mixed",
       "--tools",
       "claude,cursor,copilot,codex,opencode",
       "--input",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/requests/mixed-70.json"
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/requests/mixed-70.json"
     ],
     "exit": 0,
     "stdout": "{\"files\":[\"aidd_docs/rules/09-other/9-api-documentation.md\",\".claude/rules/02-programming-languages/2-domain-invariants.md\",\".claude/rules/07-quality/7-monetary-precision.md\",\".claude/rules/09-other/9-api-documentation.md\",\".github/instructions/02-domain-invariants.instructions.md\",\".github/instructions/07-monetary-precision.instructions.md\",\".github/instructions/09-api-documentation.instructions.md\",\".cursor/rules/02-programming-languages/2-domain-invariants.mdc\",\".cursor/rules/07-quality/7-monetary-precision.mdc\",\".cursor/rules/09-other/9-api-documentation.mdc\",\"AGENTS.md\"]}\n",
@@ -1128,10 +1128,10 @@
   {
     "host": "mixed",
     "args": [
-      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/mixed/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
+      "<home>/.nvm/versions/node/v24.20.0/bin/node",
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/mixed/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
       "--project",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/mixed",
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/mixed",
       "--tools",
       "claude,cursor,copilot,codex,opencode",
       "--publish"
@@ -1143,10 +1143,10 @@
   {
     "host": "mixed",
     "args": [
-      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/mixed/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
+      "<home>/.nvm/versions/node/v24.20.0/bin/node",
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/mixed/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
       "--project",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/mixed",
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/mixed",
       "--tools",
       "claude,cursor,copilot,codex,opencode",
       "--publish"
@@ -1158,14 +1158,14 @@
   {
     "host": "mixed",
     "args": [
-      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/mixed/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
+      "<home>/.nvm/versions/node/v24.20.0/bin/node",
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/mixed/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
       "--project",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/mixed",
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/mixed",
       "--tools",
       "codex",
       "--input",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/requests/mixed-73.json"
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/requests/mixed-73.json"
     ],
     "exit": 0,
     "stdout": "{\"files\":[\"aidd_docs/rules/09-other/9-api-documentation.md\",\".claude/rules/02-programming-languages/2-domain-invariants.md\",\".claude/rules/07-quality/7-monetary-precision.md\",\".claude/rules/09-other/9-api-documentation.md\",\".github/instructions/02-domain-invariants.instructions.md\",\".github/instructions/07-monetary-precision.instructions.md\",\".github/instructions/09-api-documentation.instructions.md\",\".cursor/rules/02-programming-languages/2-domain-invariants.mdc\",\".cursor/rules/07-quality/7-monetary-precision.mdc\",\".cursor/rules/09-other/9-api-documentation.mdc\",\"AGENTS.md\"]}\n",
@@ -1174,14 +1174,14 @@
   {
     "host": "mixed",
     "args": [
-      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/mixed/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
+      "<home>/.nvm/versions/node/v24.20.0/bin/node",
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/mixed/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
       "--project",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/mixed",
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/mixed",
       "--tools",
       "claude,cursor,copilot,codex,opencode",
       "--input",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/requests/mixed-74.json"
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/requests/mixed-74.json"
     ],
     "exit": 0,
     "stdout": "{\"files\":[\"aidd_docs/rules/09-other/9-api-documentation.md\",\".claude/rules/02-programming-languages/2-domain-invariants.md\",\".claude/rules/07-quality/7-monetary-precision.md\",\".claude/rules/09-other/9-api-documentation.md\",\".github/instructions/02-domain-invariants.instructions.md\",\".github/instructions/07-monetary-precision.instructions.md\",\".github/instructions/09-api-documentation.instructions.md\",\".cursor/rules/02-programming-languages/2-domain-invariants.mdc\",\".cursor/rules/07-quality/7-monetary-precision.mdc\",\".cursor/rules/09-other/9-api-documentation.mdc\",\"AGENTS.md\"]}\n",
@@ -1190,10 +1190,10 @@
   {
     "host": "mixed",
     "args": [
-      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/mixed/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
+      "<home>/.nvm/versions/node/v24.20.0/bin/node",
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/mixed/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
       "--project",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/mixed",
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/mixed",
       "--tools",
       "claude,cursor,copilot,codex,opencode",
       "--delete",
@@ -1206,10 +1206,10 @@
   {
     "host": "mixed",
     "args": [
-      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/mixed/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
+      "<home>/.nvm/versions/node/v24.20.0/bin/node",
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/mixed/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
       "--project",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/mixed",
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/mixed",
       "--tools",
       "claude,cursor,copilot,codex,opencode",
       "--delete",
@@ -1222,10 +1222,10 @@
   {
     "host": "mixed",
     "args": [
-      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/mixed/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
+      "<home>/.nvm/versions/node/v24.20.0/bin/node",
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/mixed/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
       "--project",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/mixed",
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/mixed",
       "--tools",
       "claude,cursor,copilot,codex,opencode",
       "--delete",

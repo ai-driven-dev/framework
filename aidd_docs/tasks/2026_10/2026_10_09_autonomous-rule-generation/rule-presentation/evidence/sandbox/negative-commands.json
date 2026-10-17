@@ -1,14 +1,14 @@
 [
   {
     "args": [
-      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/negative-seed/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
+      "<home>/.nvm/versions/node/v24.20.0/bin/node",
+      "<tmp>/aidd-realistic-rule-repro-x9OUfF/negative-seed/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
       "--project",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/negative-seed",
+      "<tmp>/aidd-realistic-rule-repro-x9OUfF/negative-seed",
       "--tools",
       "claude,cursor,copilot,codex,opencode",
       "--input",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/negative-input.json"
+      "<tmp>/aidd-realistic-rule-repro-x9OUfF/negative-input.json"
     ],
     "exit": 0,
     "stdout": "{\"files\":[\"aidd_docs/rules/07-quality/7-monetary-precision.md\",\".claude/rules/07-quality/7-monetary-precision.md\",\".github/instructions/07-monetary-precision.instructions.md\",\".cursor/rules/07-quality/7-monetary-precision.mdc\",\"AGENTS.md\"]}\n",
@@ -16,14 +16,14 @@
   },
   {
     "args": [
-      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/negative-seed/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
+      "<home>/.nvm/versions/node/v24.20.0/bin/node",
+      "<tmp>/aidd-realistic-rule-repro-x9OUfF/negative-seed/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
       "--project",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/negative-seed",
+      "<tmp>/aidd-realistic-rule-repro-x9OUfF/negative-seed",
       "--tools",
       "claude,cursor,copilot,codex,opencode",
       "--input",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/negative-input.json"
+      "<tmp>/aidd-realistic-rule-repro-x9OUfF/negative-input.json"
     ],
     "exit": 0,
     "stdout": "{\"files\":[\"aidd_docs/rules/02-programming-languages/2-domain-invariants.md\",\".claude/rules/07-quality/7-monetary-precision.md\",\".claude/rules/02-programming-languages/2-domain-invariants.md\",\".github/instructions/07-monetary-precision.instructions.md\",\".github/instructions/02-domain-invariants.instructions.md\",\".cursor/rules/07-quality/7-monetary-precision.mdc\",\".cursor/rules/02-programming-languages/2-domain-invariants.mdc\",\"AGENTS.md\"]}\n",
@@ -31,14 +31,14 @@
   },
   {
     "args": [
-      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/negative-seed/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
+      "<home>/.nvm/versions/node/v24.20.0/bin/node",
+      "<tmp>/aidd-realistic-rule-repro-x9OUfF/negative-seed/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
       "--project",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/negative-seed",
+      "<tmp>/aidd-realistic-rule-repro-x9OUfF/negative-seed",
       "--tools",
       "claude,cursor,copilot,codex,opencode",
       "--input",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/negative-input.json"
+      "<tmp>/aidd-realistic-rule-repro-x9OUfF/negative-input.json"
     ],
     "exit": 0,
     "stdout": "{\"files\":[\"aidd_docs/rules/09-other/9-api-documentation.md\",\".claude/rules/02-programming-languages/2-domain-invariants.md\",\".claude/rules/07-quality/7-monetary-precision.md\",\".claude/rules/09-other/9-api-documentation.md\",\".github/instructions/02-domain-invariants.instructions.md\",\".github/instructions/07-monetary-precision.instructions.md\",\".github/instructions/09-api-documentation.instructions.md\",\".cursor/rules/02-programming-languages/2-domain-invariants.mdc\",\".cursor/rules/07-quality/7-monetary-precision.mdc\",\".cursor/rules/09-other/9-api-documentation.mdc\",\"AGENTS.md\"]}\n",
@@ -46,14 +46,14 @@
   },
   {
     "args": [
-      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/negative-projects/edited-native-third-source/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
+      "<home>/.nvm/versions/node/v24.20.0/bin/node",
+      "<tmp>/aidd-realistic-rule-repro-x9OUfF/negative-projects/edited-native-third-source/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
       "--project",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/negative-projects/edited-native-third-source",
+      "<tmp>/aidd-realistic-rule-repro-x9OUfF/negative-projects/edited-native-third-source",
       "--tools",
       "claude,cursor,copilot,codex,opencode",
       "--input",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/negative-input.json"
+      "<tmp>/aidd-realistic-rule-repro-x9OUfF/negative-input.json"
     ],
     "exit": 1,
     "stdout": "",
@@ -61,14 +61,14 @@
   },
   {
     "args": [
-      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/negative-projects/duplicate-shared-block/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
+      "<home>/.nvm/versions/node/v24.20.0/bin/node",
+      "<tmp>/aidd-realistic-rule-repro-x9OUfF/negative-projects/duplicate-shared-block/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
       "--project",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/negative-projects/duplicate-shared-block",
+      "<tmp>/aidd-realistic-rule-repro-x9OUfF/negative-projects/duplicate-shared-block",
       "--tools",
       "claude,cursor,copilot,codex,opencode",
       "--input",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/negative-input.json"
+      "<tmp>/aidd-realistic-rule-repro-x9OUfF/negative-input.json"
     ],
     "exit": 1,
     "stdout": "",
@@ -76,14 +76,14 @@
   },
   {
     "args": [
-      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/negative-projects/incomplete-shared-block/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
+      "<home>/.nvm/versions/node/v24.20.0/bin/node",
+      "<tmp>/aidd-realistic-rule-repro-x9OUfF/negative-projects/incomplete-shared-block/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
       "--project",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/negative-projects/incomplete-shared-block",
+      "<tmp>/aidd-realistic-rule-repro-x9OUfF/negative-projects/incomplete-shared-block",
       "--tools",
       "claude,cursor,copilot,codex,opencode",
       "--input",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/negative-input.json"
+      "<tmp>/aidd-realistic-rule-repro-x9OUfF/negative-input.json"
     ],
     "exit": 1,
     "stdout": "",
@@ -91,14 +91,14 @@
   },
   {
     "args": [
-      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/negative-projects/symlink-generated-target/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
+      "<home>/.nvm/versions/node/v24.20.0/bin/node",
+      "<tmp>/aidd-realistic-rule-repro-x9OUfF/negative-projects/symlink-generated-target/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
       "--project",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/negative-projects/symlink-generated-target",
+      "<tmp>/aidd-realistic-rule-repro-x9OUfF/negative-projects/symlink-generated-target",
       "--tools",
       "claude,cursor,copilot,codex,opencode",
       "--input",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/negative-input.json"
+      "<tmp>/aidd-realistic-rule-repro-x9OUfF/negative-input.json"
     ],
     "exit": 1,
     "stdout": "",
@@ -106,14 +106,14 @@
   },
   {
     "args": [
-      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/negative-projects/symlink-canonical-source/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
+      "<home>/.nvm/versions/node/v24.20.0/bin/node",
+      "<tmp>/aidd-realistic-rule-repro-x9OUfF/negative-projects/symlink-canonical-source/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
       "--project",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/negative-projects/symlink-canonical-source",
+      "<tmp>/aidd-realistic-rule-repro-x9OUfF/negative-projects/symlink-canonical-source",
       "--tools",
       "claude,cursor,copilot,codex,opencode",
       "--input",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/negative-input.json"
+      "<tmp>/aidd-realistic-rule-repro-x9OUfF/negative-input.json"
     ],
     "exit": 1,
     "stdout": "",
@@ -121,14 +121,14 @@
   },
   {
     "args": [
-      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/negative-projects/Codex-root-override/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
+      "<home>/.nvm/versions/node/v24.20.0/bin/node",
+      "<tmp>/aidd-realistic-rule-repro-x9OUfF/negative-projects/Codex-root-override/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
       "--project",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/negative-projects/Codex-root-override",
+      "<tmp>/aidd-realistic-rule-repro-x9OUfF/negative-projects/Codex-root-override",
       "--tools",
       "claude,cursor,copilot,codex,opencode",
       "--input",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/negative-input.json"
+      "<tmp>/aidd-realistic-rule-repro-x9OUfF/negative-input.json"
     ],
     "exit": 1,
     "stdout": "",
@@ -136,14 +136,14 @@
   },
   {
     "args": [
-      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/negative-projects/Codex-local-limit/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
+      "<home>/.nvm/versions/node/v24.20.0/bin/node",
+      "<tmp>/aidd-realistic-rule-repro-x9OUfF/negative-projects/Codex-local-limit/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
       "--project",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/negative-projects/Codex-local-limit",
+      "<tmp>/aidd-realistic-rule-repro-x9OUfF/negative-projects/Codex-local-limit",
       "--tools",
       "claude,cursor,copilot,codex,opencode",
       "--input",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/negative-input.json"
+      "<tmp>/aidd-realistic-rule-repro-x9OUfF/negative-input.json"
     ],
     "exit": 1,
     "stdout": "",
@@ -151,14 +151,14 @@
   },
   {
     "args": [
-      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/negative-projects/malformed-staged-JSON/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
+      "<home>/.nvm/versions/node/v24.20.0/bin/node",
+      "<tmp>/aidd-realistic-rule-repro-x9OUfF/negative-projects/malformed-staged-JSON/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
       "--project",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/negative-projects/malformed-staged-JSON",
+      "<tmp>/aidd-realistic-rule-repro-x9OUfF/negative-projects/malformed-staged-JSON",
       "--tools",
       "claude,cursor,copilot,codex,opencode",
       "--input",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/negative-input.json"
+      "<tmp>/aidd-realistic-rule-repro-x9OUfF/negative-input.json"
     ],
     "exit": 1,
     "stdout": "",
@@ -166,29 +166,29 @@
   },
   {
     "args": [
-      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/negative-projects/invalid-UTF8-staged-JSON/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
+      "<home>/.nvm/versions/node/v24.20.0/bin/node",
+      "<tmp>/aidd-realistic-rule-repro-x9OUfF/negative-projects/invalid-UTF8-staged-JSON/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
       "--project",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/negative-projects/invalid-UTF8-staged-JSON",
+      "<tmp>/aidd-realistic-rule-repro-x9OUfF/negative-projects/invalid-UTF8-staged-JSON",
       "--tools",
       "claude,cursor,copilot,codex,opencode",
       "--input",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/negative-input.json"
+      "<tmp>/aidd-realistic-rule-repro-x9OUfF/negative-input.json"
     ],
     "exit": 1,
     "stdout": "",
-    "stderr": "Invalid UTF-8 in /private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/negative-input.json; refusing byte loss.\n"
+    "stderr": "Invalid UTF-8 in <tmp>/aidd-realistic-rule-repro-x9OUfF/negative-input.json; refusing byte loss.\n"
   },
   {
     "args": [
-      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/negative-projects/lone-surrogate-metadata/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
+      "<home>/.nvm/versions/node/v24.20.0/bin/node",
+      "<tmp>/aidd-realistic-rule-repro-x9OUfF/negative-projects/lone-surrogate-metadata/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
       "--project",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/negative-projects/lone-surrogate-metadata",
+      "<tmp>/aidd-realistic-rule-repro-x9OUfF/negative-projects/lone-surrogate-metadata",
       "--tools",
       "claude,cursor,copilot,codex,opencode",
       "--input",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/negative-input.json"
+      "<tmp>/aidd-realistic-rule-repro-x9OUfF/negative-input.json"
     ],
     "exit": 1,
     "stdout": "",
@@ -196,10 +196,10 @@
   },
   {
     "args": [
-      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/negative-projects/edited-separator-multi-source-delete/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
+      "<home>/.nvm/versions/node/v24.20.0/bin/node",
+      "<tmp>/aidd-realistic-rule-repro-x9OUfF/negative-projects/edited-separator-multi-source-delete/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
       "--project",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/negative-projects/edited-separator-multi-source-delete",
+      "<tmp>/aidd-realistic-rule-repro-x9OUfF/negative-projects/edited-separator-multi-source-delete",
       "--tools",
       "claude,cursor,copilot,codex,opencode",
       "--delete",
@@ -211,10 +211,10 @@
   },
   {
     "args": [
-      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/negative-projects/unsafe-manual-canonical-publish/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
+      "<home>/.nvm/versions/node/v24.20.0/bin/node",
+      "<tmp>/aidd-realistic-rule-repro-x9OUfF/negative-projects/unsafe-manual-canonical-publish/.claude/plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs",
       "--project",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-x9OUfF/negative-projects/unsafe-manual-canonical-publish",
+      "<tmp>/aidd-realistic-rule-repro-x9OUfF/negative-projects/unsafe-manual-canonical-publish",
       "--tools",
       "claude,cursor,copilot,codex,opencode",
       "--publish"

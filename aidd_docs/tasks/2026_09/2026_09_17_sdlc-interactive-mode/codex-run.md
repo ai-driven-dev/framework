@@ -17,7 +17,7 @@ The shared build was rebuilt with:
 
 ```shell
 aidd setup --ai codex --source local \
-  --path /Users/baptistelafourcade/orca/workspaces/framework/fix-sdlc-manual \
+  --path "<worktree>" \
   --plugins aidd-context,aidd-orchestrator,aidd-dev,aidd-pm,aidd-refine,aidd-vcs --yes
 ```
 
@@ -51,7 +51,7 @@ nothing says why.
 ## Run it
 
 ```shell
-cd /Users/baptistelafourcade/orca/workspaces/framework/test-sdlc-891-codex
+cd ../test-sdlc-891-codex
 codex
 ```
 

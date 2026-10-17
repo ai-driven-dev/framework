@@ -1,7 +1,7 @@
 {
   "host": "claude",
   "command": [
-    "/Users/baptistelafourcade/.local/share/claude/versions/2.1.295",
+    "<home>/.local/share/claude/versions/2.1.295",
     "-p",
     "Read docs/overview.md once, then reply LOCAL_OK.",
     "--model",

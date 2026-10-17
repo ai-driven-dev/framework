@@ -1,6 +1,6 @@
 {
   "command": [
-    "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
+    "<home>/.nvm/versions/node/v24.20.0/bin/node",
     "/private/tmp/aidd-oct11-cursor-native-FEFX3q/project/.cursor/skills/aidd-context-05-rule-generate/scripts/write-rule.cjs",
     "--project",
     "/private/tmp/aidd-oct11-cursor-native-FEFX3q/project",

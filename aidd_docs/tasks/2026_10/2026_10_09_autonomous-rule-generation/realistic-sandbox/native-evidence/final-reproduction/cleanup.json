@@ -15,7 +15,7 @@
     {
       "args": [
         "/opt/homebrew/Cellar/node/26.8.2/bin/node",
-        "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/cli/dist/cli.js",
+        "<worktree>/cli/dist/cli.js",
         "doctor",
         "--tool",
         "opencode",
@@ -29,7 +29,7 @@
     {
       "args": [
         "/opt/homebrew/Cellar/node/26.8.2/bin/node",
-        "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/cli/dist/cli.js",
+        "<worktree>/cli/dist/cli.js",
         "sync",
         "--tool",
         "opencode",
@@ -44,7 +44,7 @@
     {
       "args": [
         "/opt/homebrew/Cellar/node/26.8.2/bin/node",
-        "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/cli/dist/cli.js",
+        "<worktree>/cli/dist/cli.js",
         "doctor",
         "--tool",
         "opencode",
@@ -58,7 +58,7 @@
     {
       "args": [
         "/opt/homebrew/Cellar/node/26.8.2/bin/node",
-        "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/cli/dist/cli.js",
+        "<worktree>/cli/dist/cli.js",
         "plugin",
         "remove",
         "aidd-context",
@@ -74,7 +74,7 @@
     {
       "args": [
         "/opt/homebrew/Cellar/node/26.8.2/bin/node",
-        "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/cli/dist/cli.js",
+        "<worktree>/cli/dist/cli.js",
         "doctor",
         "--tool",
         "opencode"
