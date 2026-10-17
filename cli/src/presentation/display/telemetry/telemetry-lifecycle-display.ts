@@ -27,8 +27,8 @@ const REFUSALS = {
     "An identity is set, so this clone cannot be measured anonymously. Remove it with `aidd telemetry identity --off`, then run this again. Nothing was changed.",
 } as const;
 
-function plural(count: number, noun: string): string {
-  return `${count} ${noun}${count === 1 ? "" : "s"}`;
+function plural(count: number, noun: string, nouns = `${noun}s`): string {
+  return `${count} ${count === 1 ? noun : nouns}`;
 }
 
 function identityLine({ personId, previous }: OnIdentity): string {
@@ -144,7 +144,7 @@ function warnSkipped(output: CLIOutput, plan: ForgetPlan): void {
   }
   if (plan.unlocated > 0) {
     output.warn(
-      `${plural(plan.unlocated, "repository")} declared a task and could not be located.`
+      `${plural(plan.unlocated, "repository", "repositories")} declared a task and could not be located.`
     );
   }
 }

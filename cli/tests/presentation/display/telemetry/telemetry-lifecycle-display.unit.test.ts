@@ -229,6 +229,11 @@ describe("printForgetResult", () => {
     ]);
   });
 
+  it("counts several repositories it could not locate in plain English", () => {
+    const output = forgotten({ status: "preview", plan: { ...PLAN, unlocated: 2 } });
+    expect(output.at("warn")).toContain("2 repositories declared a task and could not be located.");
+  });
+
   it("still names a repository it skipped when nothing else is kept", () => {
     const output = forgotten({
       status: "preview",
