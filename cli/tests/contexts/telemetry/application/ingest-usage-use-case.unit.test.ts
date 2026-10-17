@@ -681,6 +681,18 @@ describe("where a call was made", () => {
     expect(result.added).toBe(0);
   });
 
+  it("stores no call with no request id, and keeps it left out once, whatever its copies", async () => {
+    const s = setup();
+    s.transcripts.files.set("/t/1.jsonl", [
+      line("A", 1, { requestId: undefined }),
+      line("A", 2, { requestId: undefined }, "2026-10-07T10:00:05.000Z"),
+      line("B", 1),
+    ]);
+    expect((await s.ingest.execute()).added).toBe(1);
+    expect(s.ledger.records.map((r) => r.key)).toEqual(["msg_B:req_B"]);
+    expect(await s.ledger.leftOut.counts()).toMatchObject({ requestless: 1 });
+  });
+
   it("keeps what it learned about a directory only when it learned something new", async () => {
     const s = setup();
     s.transcripts.files.set("/t/1.jsonl", [line("A", 1)]);
