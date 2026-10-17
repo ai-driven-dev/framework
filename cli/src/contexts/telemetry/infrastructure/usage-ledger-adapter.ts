@@ -2,6 +2,7 @@ import { readdir, rm } from "node:fs/promises";
 import { join } from "node:path";
 import { isErrnoException } from "../../../kernel/reading/json-file.js";
 import { readTextIfPresent } from "../../../kernel/reading/text-file.js";
+import { storedNow } from "../domain/legacy/legacy-usage-key.js";
 import type { PrivateStorage } from "../domain/ports/private-storage.js";
 import type { LeftOutStore, LoadedLedger, UsageLedger } from "../domain/ports/usage-ledger.js";
 import {
@@ -19,6 +20,7 @@ import {
 import { foldUsage } from "../domain/usage-fold.js";
 import { DirectoryLock, type LockOptions } from "./ledger-lock.js";
 import { LeftOutAdapter } from "./left-out/left-out-adapter.js";
+import { RepositoryAliasStoreAdapter } from "./legacy/repository-alias-store-adapter.js";
 
 const DAILY = /^\d{4}-\d{2}-\d{2}\.jsonl$/;
 const MONTHLY = /^\d{4}-\d{2}\.jsonl$/;
@@ -51,6 +53,7 @@ function partitionOf(name: string): string {
  * and could not store (see `LeftOutAdapter`); `.lock` serialises the writers of all of them. */
 export class UsageLedgerAdapter implements UsageLedger {
   readonly leftOut: LeftOutStore;
+  private readonly aliases: RepositoryAliasStoreAdapter;
 
   constructor(
     private readonly dir: string,
@@ -58,6 +61,7 @@ export class UsageLedgerAdapter implements UsageLedger {
     private readonly lockOptions: Partial<LockOptions> = {}
   ) {
     this.leftOut = new LeftOutAdapter(join(dir, "left-out.txt"), dir, storage);
+    this.aliases = new RepositoryAliasStoreAdapter(dir, storage);
   }
 
   exclusively<T>(work: () => Promise<T>): Promise<T> {
@@ -71,18 +75,23 @@ export class UsageLedgerAdapter implements UsageLedger {
     const damaged = new Set<string>();
     const unsettled = new Set<string>();
     const heldIn = new Map<string, string>();
+    // Every read applies the rules of now, so a call an earlier version keyed or named
+    // otherwise is still one call of one repository, and its partition is rewritten.
+    const ids = (await this.aliases.load())?.ids ?? new Map<string, string>();
     for (const name of holds === undefined ? names : inWindow(names, holds)) {
       const partition = partitionOf(name);
       if (MONTHLY.test(name)) unsettled.add(partition);
       const text = (await readTextIfPresent(join(this.dir, name))) ?? "";
       for (const line of text.split("\n")) {
         if (line === "") continue;
-        const record = parseStoredUsage(line);
-        if (record === null) {
+        const read = parseStoredUsage(line);
+        if (read === null) {
           skippedLines += 1;
           damaged.add(partition);
           continue;
         }
+        const record = storedNow(read, ids);
+        if (record !== read) unsettled.add(partition);
         found.push(record);
         const id = `${record.tool}\u0000${record.key}`;
         const first = heldIn.get(id);

@@ -54,6 +54,7 @@ src/
 │   │   ├── application/
 │   │   │   ├── forget/    # what measurement keeps on a machine, shown and erased
 │   │   │   ├── identity/    # who, if anyone, the measurement names
+│   │   │   ├── legacy/    # bringing what an earlier version stored to today's key and id rules
 │   │   │   ├── report/    # what the stored calls consumed in a period, along one axis
 │   │   │   └── switch/    # opting a repository in or out, and leaving it clean of the previous version
 │   │   ├── domain/
@@ -61,7 +62,7 @@ src/
 │   │   │   ├── formats/
 │   │   │   ├── consent/    # a clone's identity, and when it consented
 │   │   │   ├── identity/    # the identifier a person chose to be named by
-│   │   │   ├── legacy/    # what the previous version wrote, by name and location
+│   │   │   ├── legacy/    # what the previous version wrote, by name and location, and its key and id rules
 │   │   │   ├── ports/
 │   │   │   │   ├── bindings/    # the declarations kept beside the ledger, and the lock their writers share
 │   │   │   │   ├── forget/
@@ -74,6 +75,7 @@ src/
 │   │       ├── declaration/    # where a declaration is kept: git config and the telemetry dir
 │   │       ├── forget/    # erasing the telemetry dir, the previous version's files, git config keys
 │   │       ├── identity/    # the identity file in the telemetry dir
+│   │       ├── legacy/    # the table of ids an earlier version gave repositories, beside the ledger
 │   │       ├── left-out/    # what ingests measured and could not store, by hash, beside the ledger
 │   │       └── switch/    # the project config, what an earlier measurement left in a repository, and Claude settings; the clone's consent in git config is `git-consent-adapter.ts`, beside this folder
 │   └── translate/    # canonical source to target-native content
