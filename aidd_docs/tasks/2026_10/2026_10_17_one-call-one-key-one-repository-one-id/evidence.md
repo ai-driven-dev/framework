@@ -41,6 +41,8 @@
 × migrated twice is migrated once
 ```
 
+What the properties generate: requestless and requested calls, advisor iterations, copies across midnight and a month end, earlier reads in up to four batches, the monthly layout, three spellings of one GitHub repository, another host and a repository with no origin, every clone live and recorded in `roots.json`. Not generated: undated calls, a clone gone at the migration, an origin changed since its calls were stored (all stated limits). The stop property injects a failure at every `replace`; the removals that follow the writes and a `kill -9` are reasoned, not exercised.
+
 The third property (stop at any write, then rerun) passed against the skeleton, since a migration that does nothing also does nothing when stopped. It is proven by mutation G-h below.
 
 ## Hand mutations

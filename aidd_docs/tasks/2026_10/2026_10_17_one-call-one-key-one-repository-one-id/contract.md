@@ -70,7 +70,7 @@ flowchart TD
 | Automatic | first step of every ingest, so of every report and of the plugin's hook |
 | Deterministic | the alias table is a function of each root's `origin` now, written before anything else; a rerun reuses it |
 | Idempotent | a key re-keys at most once (the new shape never ends in its own `:at`); an alias never names an id that is itself aliased: an earlier address differs from today's only by an upper-case letter or `ssh.github.com`, which no address of today holds |
-| Crash-safe | under the ledger lock; every write is the existing write-then-rename; the table is written first and marked complete last, so a kill at any step leaves a state the next run completes |
+| Crash-safe | under the ledger lock; every write is the existing write-then-rename; the table is written first and marked complete last, so a run stopped at any step leaves it incomplete and the next run redoes the whole rewrite. Exercised: a failure at every write (`replace`). Reasoned, not exercised: a stop during the removals that follow the writes, and a `kill -9` |
 | Read-time | every reader of the ledger, `roots.json` and `branches.jsonl` applies the key rule and the table, so a state the migration has not finished, or lines an older CLI writes afterwards, still count each call once under one id |
 | No double count | copies of a call re-keyed alike fold, by the existing fold, to the copy one ingest would have kept |
 
