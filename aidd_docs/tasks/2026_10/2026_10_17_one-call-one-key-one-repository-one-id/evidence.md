@@ -214,3 +214,33 @@ Both stay well inside 110 s. The 250,000-record case is about half the usage lin
 ### Hand mutations, round 2
 
 Each applied alone, the named tests run, the file restored: 12 of 12 went red. D1-a to D1-d: the full read, the session test, the advisor suffix, the tool. m1. M1-a to M1-g: unreadable roots pending, gone ones too, a complete table with pending roots looks again, only the pending roots are asked, nothing new writes nothing, a dropped root is saved, `pending` kept in the file.
+
+## Review round 2 (86/100): n1 to n5
+
+| # | Change | Proof |
+| --- | --- | --- |
+| n1 | Requestless lines an older CLI writes after the migration are a stated limit. A bounded report may count such a copy until a report with no period settles the ledger. Stated in both contracts, with the Key row, the Read-time row and the older-CLI paragraph qualified | the window property now generates them (below) |
+| n2 | six stale statements fixed: usage contract (Key row, day-file row, window paragraph), `usage-ledger-adapter.ts` header, CLI memory row, task contract (flowchart with pending roots, the measured 1,672 ms against 13 ms) | doc |
+| n3 | one advisor pattern, `ADVISOR` in the Claude format, used by the re-keying too; the redundant guard in `StoredUsageMigration.execute` deleted (a complete table with nothing pending locates nothing and writes nothing) | `#advisor10` and `#advisor3` cases; mutation `\d+` to `\d` killed |
+| n4 | the migration property's first run after the upgrade has up to two clones `unreadable` or `gone`, back by the next run; a failure at every write of a pending root's retry, then a rerun, equals a clean retry | mutations P-a and M1-h below |
+| n5 | the ledger and `roots.json` adapters keep building their table from their own directory, with one line saying so: no wiring can leave it out | doc |
+
+Red run, n1: the window property with an older CLI's requestless lines, before the exemption was named:
+
+```txt
+× leave every bounded read equal to the full ledger filtered to its period
+  Counterexample: [[{"anchor":1,"requestless":true,"copies":[{"days":0,…,"older":false},{"days":2,…,"older":true}]},…],{"from":"2025-12-29","to":"2026-02-28"}]
+  Caused by: AssertionError: expected [ Array(2) ] to deeply equal [ { tool: 'claude-code', …(15) } ]
+```
+
+After it, the property exempts the bounded read for the calls an older CLI stored a copy of, and only those. It still asserts one record per call in the full read for every call.
+
+The n3 two-digit case, the n4 generator and the retry test passed against the code as it stood: the behaviour was right and unpinned. Each is proven by a mutation, all applied alone and killed:
+
+| # | Mutation | Killed by |
+| --- | --- | --- |
+| n3 | `ADVISOR` `\d+` to `\d` | keeps an advisor iteration's suffix; is told by its key ending in its own session |
+| P-a | an unreadable or gone root not kept pending | the fresh-ingest migration property |
+| M1-h | the retry writes its table complete before the rewrite | stopped at any write of a pending root's retry; writes its table before anything else |
+
+Re-run with them: D1-a to D1-d, m1, M1-a, M1-b, M1-d to M1-g, all killed again (M1-c gone with its guard).

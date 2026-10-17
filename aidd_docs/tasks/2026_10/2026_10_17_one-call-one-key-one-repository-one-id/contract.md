@@ -56,7 +56,10 @@ Everything under the telemetry directory, and what this fix does to it.
 ```mermaid
 flowchart TD
   S["ingest or report, under the ledger lock"] --> J{"repository-ids.json complete?"}
-  J -->|yes| I["ingest as usual"]
+  J -->|"yes, none pending"| I["ingest as usual"]
+  J -->|"yes, roots pending"| P["locate the pending roots alone"]
+  P -->|"no new id"| I
+  P -->|"a new id"| W1
   J -->|absent| M["locate each root roots.json names: earlier id to id, from its origin now"]
   M --> W1["write repository-ids.json, not complete"]
   J -->|not complete| R
@@ -71,10 +74,10 @@ flowchart TD
 | Deterministic | the alias table is a function of each root's `origin` now, written before anything else; a rerun reuses it |
 | Idempotent | a key re-keys at most once (the new shape never ends in its own `:at`); an alias never names an id that is itself aliased: an earlier address differs from today's only by an upper-case letter or `ssh.github.com`, which no address of today holds |
 | Crash-safe | under the ledger lock; every write is the existing write-then-rename; the table is written first and marked complete last, so a run stopped at any step leaves it incomplete and the next run redoes the whole rewrite. Exercised: a failure at every write (`replace`). Reasoned, not exercised: a stop during the removals that follow the writes, and a `kill -9` |
-| Read-time | every reader of the ledger, `roots.json` and `branches.jsonl` applies the key rule and the table, so a state the migration has not finished, or lines an older CLI writes afterwards, still count each call once under one id |
+| Read-time | every reader of the ledger, `roots.json` and `branches.jsonl` applies the key rule and the table, so a state the migration has not finished, or lines an older CLI writes afterwards, still count each call once under one id in a report with no period; a bounded report may count a requestless copy an older CLI stored after the migration (see Limits) |
 | No double count | copies of a call re-keyed alike fold, by the existing fold, to the copy one ingest would have kept |
 
-**An older CLI on migrated data** (cli-v5.5.0): the lines have the same shape, so it reads and reports them as they are, and ignores `repository-ids.json`. What it ingests afterwards it stores under its own rules; the newer CLI then re-keys it, and re-ids it when its repository is in the table, at every read.
+**An older CLI on migrated data** (cli-v5.5.0): the lines have the same shape, so it reads and reports them as they are, and ignores `repository-ids.json`. What it ingests afterwards it stores under its own rules; the newer CLI then re-keys it, and re-ids it when its repository is in the table, at every read. A requestless call it stores is not held once: a report with no period settles it.
 
 ## Acceptance
 
@@ -91,7 +94,8 @@ flowchart TD
 | --- | --- |
 | A root unreadable or absent at the migration | kept pending and looked at again by every ingest; until it can be read, its stored calls keep the earlier id and its new calls get the new one: two ids. A clone deleted for good stays pending, at the cost of one look per ingest |
 | `repository-ids.json` damaged | made again from the clones still there; `branches.jsonl`, never rewritten, then loses the alias of a repository with no clone left, and its declarations stop matching the calls of now |
-| Requestless copies more than a day apart | measured: no requestless line in 512,820 real usage lines (3,837 transcripts); copies of a message with a request id, 184,502 of them, at most 0.27 h apart. Nothing bounds the requestless ones, so storing one reads the whole ledger (4.5 s at 250,000 records) and the ledger holds it once |
+| Requestless copies more than a day apart | measured: no requestless line in 512,820 real usage lines (3,837 transcripts); copies of a message with a request id, 184,502 of them, at most 0.27 h apart. Nothing bounds the requestless ones, so storing one reads the whole ledger (measured by the checker at 250,000 records: 1,672 ms, against 13 ms with a request id) and the ledger holds it once |
+| Requestless lines an older CLI writes after the migration | keyed by their timestamp, stored in their own day: a report with a period may count such a copy as well as the call's other copy, until a report with no period settles the ledger. Needs a downgrade or a pinned older binary, and no requestless line was measured |
 | A root whose `origin` changed since its calls were stored | the table maps the address it has now, so those calls keep their id, as before |
 | `undated` hashes in `left-out.txt` from before (unreleased: cli-v5.5.0 has no such file) | cannot be re-keyed; copies of one undated requestless call kept apart stay counted apart, and one read again from the start of its transcript adds a hash beside the old one |
 | A requestless call copied into another session | two keys, as before; seen copies across sessions carry a `requestId`, keyed without the session |

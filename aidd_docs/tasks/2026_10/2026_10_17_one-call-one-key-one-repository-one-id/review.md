@@ -2,93 +2,120 @@
 status: changes-requested
 ---
 
-# Review: One call, one key; one repository, one id
+# Review: One call, one key; one repository, one id (round 2)
 
-Head `57169330`, base `origin/next`. Independent check, read-only on the code.
+Head `a06f9857`, base `origin/next`. Independent check, read-only on the code. Round 1 (62/100, head `57169330`) is superseded by this report.
 
-**Verdict: changes requested. Score 62/100.**
+**Verdict: changes requested, minors only. Score 86/100.**
+
+No deal breaker. D1 and M1 hold under every interleaving the new code owns. One interleaving it does not own, lines an older CLI writes after the migration, still breaks the window property, and the contract says it does not. The project's rule forbids that ("Never state ... anything not just observed"). Every other finding is cheap.
 
 ## Deal breakers
 
-### D1. The new requestless key breaks the #1032 window property, under a bound nobody measured (High)
+None.
 
-- **Where:** `domain/formats/claude-transcript-usage.ts:99` (the key), `domain/report/period.ts:34-39` (`windowOf`), `domain/stored-usage.ts` `daysAround`.
-- **Why the bound does not cover it:** `windowOf` and `daysAround` read one day on each side. `period.ts` justifies that with "of 262,631 real keys, the widest spread is 0.3 h". That data could never contain a requestless call's copies: the earlier key ended in the timestamp, so each copy had its own key, with a spread of 0. M10 now folds copies whose spread nobody has measured. The contract says those copies "carry different timestamps", which is why they need folding at all.
-- **Failure, reproduced:** one requestless call, `msg_1` in session `s`, copies at `2026-10-01T10:00Z` and `2026-10-04T10:00Z`.
-  - Each `storeCalls` reads only the days around its own copy, so both copies are stored, in two days.
-  - `settleLedger(windowOf({from: 2026-10-04, to: 2026-10-04}))`, filtered to the period, holds 1 record. The unbounded settle, filtered the same way, holds 0.
-  - Probe output: `PROBE window bounded= 1 full= 0`.
-  - Effect: the reports for 10-01 and for 10-04 sum to 2 calls. The full report says 1. The period axis is not deterministic.
-- **Why the tests miss it:**
-  - `report-window.property` keys every call `k${index}` and keeps its copies within `HALF_DAY`.
-  - The migration property's `TIMES` keep copies seconds apart.
-- **Fix:**
-  - Measure the spread of `message.id:sessionId` among requestless lines in real transcripts. Then either cite the measurement in `period.ts` and in the contract's Limits, or widen the window to match it.
-  - Add requestless copies more than a day apart to the window property's generator, and to the migration property's `TIMES`.
+## Round 1 findings, re-checked
 
-## Major
+| # | Claim | Status | Evidence |
+| --- | --- | --- | --- |
+| D1 | a requestless store reads the whole ledger | fulfilled for the new CLI | `ledger-upkeep.ts:22-23`. Probe of 300 random runs (requestless copies up to ±5 days apart, requestful ±12 h, 4 ingests, then a full settle, compared with one ingest of all copies): `PROBE byte-identity mismatches 0 of 300`. The round 1 repro is now a test (`ledger-upkeep.integration.test.ts:220`) |
+| D1 | settle path | holds | `settleLedger` reads the window and folds. A call the new `storeCalls` stores is on disk once, so no window can miss a copy |
+| D1 | legacy monthly file | moot | `cli-v5.5.0` writes daily files only (`git show cli-v5.5.0:…/usage-ledger-adapter.ts`: monthly is "as an earlier version wrote it"). The migration's unpartitioned `save()` splits and removes any monthly file. A requestless store's full read marks every monthly file `unsettled`, and that store splits it |
+| D1 | deadlock, hook cost | holds | `ledger.load` takes no lock: nothing nests under `exclusively`. Measured on 250,000 records: `PROBE cost ms withRequest= 13 requestless= 1672 heapMB= 307`. The hook allows 110 s and the lock goes stale after 10 min |
+| M1 | a pending root is retried | fulfilled | `stored-usage-migration.ts:26-50`. Probe: retry twice is idempotent. A failure at each of writes 1 to 6, then a rerun, ends byte-identical to a clean retry: `crash mismatches= 0 of 6` |
+| M1 | a clone replaced at the same path | no misattribution | the alias is keyed by the origin's legacy id, never by the root. Probe: the table holds only `legacyRepositoryIdOf(B) → repositoryIdOf(B)` (`09ae01a7… → aecf4b10…`, confirmed). `OLD_A` stays unmapped and its calls keep `OLD_A`. That is the documented split, not a wrong id |
+| M1 | a root pending for good | cheap | `gone` costs one `realpath`, with no git spawn (`git-repository-locator-adapter.ts:33`). `unreadable` costs the git spawns per ingest. Nothing is written while the list is unchanged |
+| m1 | re-keying limited to `claude-code` | fulfilled | `legacy-usage-key.ts:14`; mutant killed |
+| m2 | damaged-table cost documented | fulfilled | `usage-contract.md` `repository-ids.json` row |
+| m3 | first-run cost measured | fulfilled | evidence.md: 4.5 s and 20.8 s |
+| m4 | wiring required | partial | see n5 |
+| m5 | stale reference | fulfilled | `legacy-repository-identity.ts:5` |
+| m6 | `period.ts` states both bounds | fulfilled | `period.ts:35-42` |
 
-### M1. A root unreadable at the first run is never mapped, so the PR creates the split it set out to remove
-
-- **Where:** `application/legacy/stored-usage-migration.ts:39-47`. `table()` skips any root whose status is not `repository`, and `execute` marks the table `complete` regardless.
-- **Failure, reproduced:**
-  - Setup: root `/w/a` has origin `git@github.com:Acme/Tool.git`, where the legacy id differs from the new one. It reads `unreadable` on the first run and `repository` on the second.
-  - Probe output after both runs: `{"complete":true,"size":0}`.
-  - The resolver then names that clone's new calls by the new id (`directory-resolver.ts:183`), while its stored calls keep the legacy id. Before this PR the repository had one id; after it, two.
-  - The first run after an upgrade is likely to be the async `catch-up.cjs` hook, with a 110 s timeout and the hook's environment. That makes a transient `unreadable` or `gone` (an unmounted volume) plausible.
-- **Contradiction:** `DirectoryResolver` treats `unreadable` as something that may become readable later (`mayConsent`). The migration treats it as final.
-- **Fix:** do not mark the table `complete` while any root is `unreadable`, or keep a list of pending roots and re-locate them on later runs. Adding an alias later is safe: every reader applies the table at read time, and aliases cannot chain (see Verified).
-- **Docs:** the `repository-ids.json` row in `usage-contract.md` says such a repository "keeps its earlier id". It does not say that its new calls get the new id. State the split.
+Round 1 "Verified" properties re-checked, no regression: no two repositories share an id; no alias chains (a pending root adds only a legacy-to-new pair, and new ids carry no upper case and no `ssh.github.com`); no merge across key forms; write-then-rename crash order; the migration runs inside `ledger.exclusively`; hooks compute no id and no key.
 
 ## Minor
 
-| # | Where | Finding | Fix |
-| --- | --- | --- | --- |
-| m1 | `domain/legacy/legacy-usage-key.ts:10-17` | Re-keying ignores `tool`. No released writer stores `codex` records: `cli-v5.5.0` and HEAD have only the Claude format, so nothing is affected today. A future codex key ending in `:session:at` would be collapsed silently. | Re-key only `claude-code` records. |
-| m2 | `infrastructure/binding-snapshot-store-adapter.ts` `read()` | `branches.jsonl` is never rewritten, so it depends on `repository-ids.json` for good. If the table is damaged, `parseRepositoryAliases` returns `null` and the table is rebuilt from the clones that still exist. Snapshots of a repository whose clones are gone by then lose their alias for good, and so does their task attribution. | Document it, or rewrite `branches.jsonl` once under the bindings lock. |
-| m3 | `stored-usage-migration.ts:37-48` | First-run cost is not measured. `locate` costs about four git spawns per root, including `rev-list --max-parents=0 HEAD`, which walks the whole history, though only `origin` is needed when it exists. The table is saved only after every root is located. If the `catch-up` hook's 110 s timeout is exceeded, the work is lost and redone at every SessionStart, and the hook's ingest never runs. | Measure on a large `roots.json`, or locate the remote only. |
-| m4 | `usage-ledger-adapter.ts:64`, `resolution-store-adapter.ts:23`, `binding-snapshot-store-adapter.ts:17`, `ingest-usage-use-case.ts:74` | The alias store is wired three ways: built inside two adapters, and an optional parameter in the third. The `migration?` collaborator is also optional. A wiring that omits either one silently skips re-iding or migrating. | Inject both and make them required. |
-| m5 | `domain/legacy/legacy-repository-identity.ts:5` | Cites `RepositoryIdMigration`, which does not exist. The class is `StoredUsageMigration`. | Rename the reference. |
-| m6 | `domain/report/period.ts:34-38` | The doc's empirical bound no longer covers every key (see D1). | Update it together with D1. |
-| m7 | evidence.md | Tests are committed with their code. The red runs are recorded only as text. The legacy tests went red because their modules were missing, not on behaviour. The stop property passed against the skeleton and is proven only by mutation G-h. evidence.md admits all of this, and the hand mutations compensate. | None required. |
+### n1. An older CLI's requestless lines, written after the migration, still break the window property (Medium)
 
-## Verified, holds
+- **Where:**
+  - the claims: `contract.md:74` (Read-time row), `contract.md:77`, `usage-contract.md:59` (Key row: "the ledger holds it once");
+  - the cause: `ledger-upkeep.ts:22`, which takes the full read only when an incoming record is requestless.
+- **Failure, reproduced:**
+  - Setup: the table is complete. cli-v5.5.0 then stores `msg_1:s-1:<at>` on 10-01 (output 9) and on 10-04 (output 1).
+  - A report bounded to 10-04 re-keys and counts the 10-04 copy. The full read folds both copies to the 10-01 one.
+  - Probe: `PROBE old-cli bounded= 1 full= 0`.
+  - Only a report with no period heals it, or a later requestless ingest by the new CLI.
+- **Likelihood:** low. 0 requestless lines were measured, and it needs a downgrade or a pinned older binary.
+- **Fix:** add a Limits row ("requestless lines an older CLI writes after the migration: a bounded report may count a copy until a report with no period settles the ledger"), and qualify `contract.md:74` and `usage-contract.md:59` to match.
 
-- **Identity: no two repositories get one id.**
-  - Host folding follows RFC 3986.
-  - Path folding applies to `github.com` only, which GitHub documents as case-insensitive.
-  - `ssh.github.com` maps to `github.com`.
-  - A root-commit fallback is 40 hex characters; an address hash is 64. They cannot collide.
-- **Aliases cannot chain.** A legacy id differs from its new id only when the address held an upper-case host, an upper-case path on `github.com`, or `ssh.github.com`. No new address holds any of these, so no alias target is itself aliased. Idempotence holds.
-- **Legacy rule is faithful.** `legacyRepositoryIdOf` reproduces `cli-v5.5.0` exactly: it uses URL `hostname`, folds the host for scp-like addresses only, and applies the same `ownerAndRepo`.
-- **Key: no merge across forms, no double count.**
-  - `currentKeyOf` strips only the record's own `:session_id:at`.
-  - A stored `at` is the raw `timestamp` text that the earlier key embedded, so the two always agree.
-  - Keys with a `requestId` are untouched, and advisor suffixes are kept.
-  - Covered: an old CLI writing after the migration, and a half-migrated store. Every reader re-keys and re-ids at read time, whether or not the table is `complete`.
-- **Crash order and lock.**
-  - Order: table (incomplete), then `roots.json`, then every partition, then `complete`. `save` writes before it removes, by write-then-rename.
-  - The migration runs inside `ledger.exclusively`.
-  - `task` takes only the bindings lock, so `prompt-gate` is not blocked.
-- **git missing:** `runGit` throws inside `table()` before any write. The ingest fails, nothing persists, and the next run retries. Ingest already needs git.
-- **Plugin hooks** compute no id and no key. Grep of `hooks/` for `repository_id|branches.jsonl|roots.json`: no hit.
-- **Equivalent mutants confirmed.**
-  - `legacy-repository-identity.ts:9`: `path` is `null` whenever `address` is.
-  - `binding-snapshot-store-adapter.ts:45`: `parseBranchSnapshot` returns `null` on non-JSON and does not throw.
-  - Other survivors are on untouched lines. `git diff -U0` hunks: ingest 73-74 and 96-97; ledger 5, 23, 56, 64, 78-80, 87-88, 93-94; transcript 99.
-- **Docs:** `usage-contract.md` and `telemetry.md` are consistent with the code and with envelope v2. The 01-usage skill states no key or id rule, so it needs no change.
-- **Bundle:** `node scripts/check-bundle-size.mjs` prints `Bundle size: 699.8 KB / budget: 709 KB`, `OK: within budget`. There is no raise, so the policy's ~2 % headroom rule does not apply. Headroom is now 1.3 %.
+### n2. Stale docs: the window and the cost claims no longer hold for every ingest
+
+| Where | Says | Now |
+| --- | --- | --- |
+| `usage-contract.md:164` | "Ingest reads its calls' days and the day on each side" | a requestless store reads every day and splits every monthly file. This contradicts the Key row at `:59` |
+| `usage-contract.md:127` | "The copies of one call have been observed less than a day apart" | true only of calls with a request id. Qualify it as `period.ts` does |
+| `usage-ledger-adapter.ts:41-42` | "An ingest reads the days around its calls … so its cost does not grow with the ledger" | false for a requestless store |
+| `cli/aidd_docs/memory/telemetry.md:55` | "rewritten once by the first ingest" | rewritten again when a pending root adds an id |
+| `contract.md:59` (flowchart) | `complete? yes → ingest as usual` | complete with roots pending → locate the pending roots, and maybe rewrite |
+| `contract.md:94` | "storing one reads the whole ledger (4.5 s at 250,000 records)" | 4.5 s is the migration's first run, git included. The requestless store measured 1,672 ms at 250,000 records. Cite the figure that was observed |
+
+### n3. Survivors in the changed lines (Stryker, narrow scope: 97.12 %, 101 killed, 3 survived)
+
+- **`claude-transcript-usage.ts:80`, `\d+$` mutated to `\d$`: survives.** A key ending `#advisor10` is not recognised. This is harmless in practice: the main record of the same message is in the same batch and triggers the full read. It is still a guard the tests do not pin.
+  - Fix: add a two-digit case to `claude-transcript-usage.unit.test.ts:333`.
+  - Better: reuse `ADVISOR` from `legacy-usage-key.ts:4`. The regex is duplicated (DRY).
+- **`claude-transcript-usage.ts:80`, with the `$` anchor removed: equivalent.** `#advisor` only ever appears as the suffix the format appends (`:139`). Message and session ids carry no `#advisor<n>`.
+- **`stored-usage-migration.ts:28` mutated to `if (false) return`: equivalent.** A complete table with nothing pending reaches `locate([])`. The sizes are then equal and nothing is pending, so the run returns without writing. The guard is redundant ("a guard nothing fails for is not a guard", `coding-assertions.md`).
+  - Fix: delete it, or keep it and label it as a fast path.
+
+The "12 of 12 hand mutations" claim stands. They were not exhaustive.
+
+### n4. Generator gaps
+
+- The migration property (`stored-usage-migration.property.integration.test.ts`) generates no `unreadable` or `gone` roots. The retry path is covered only by example tests.
+- No test fails a write during a retry rewrite. My probe covered that case (above).
+- The window property drives `storeCalls` directly and never emits legacy-keyed lines written after the migration. That gap is why n1 went unseen.
+- Fix: add a pending root that turns readable to the migration generator, and an older CLI's timestamped requestless lines to the window generator. The second one should go red until n1 is either fixed or excluded by name.
+
+### n5. m4 is half done; the placement is arguable
+
+- **m4:** `UsageLedgerAdapter` (`usage-ledger-adapter.ts:58`) and `ResolutionStoreAdapter` (`resolution-store-adapter.ts:22`) still build their own `RepositoryAliasStoreAdapter`. `BindingSnapshotStoreAdapter` has its store injected. All three read the same file, so nothing is incorrect, but the wiring is inconsistent. Fix: inject the store everywhere, or say in one line why the two adapters build their own.
+- **Placement:** `ledger-upkeep.ts:1` makes the tool-agnostic upkeep import a Claude-format predicate. A per-format "copies unbounded in time" predicate would keep the format knowledge in its own module. No action is needed while there is only one format.
+
+## Tests-first
+
+- evidence.md records red runs for D1 (the pinned case and the window property's counterexample), M1 (10 failed, 15 passed) and m1.
+- Tests ship in the same commits as their code, as in round 1 (m7, accepted).
+- The migration property was extended, but it passed on the unfixed code. evidence.md says so.
+
+## Checklist
+
+| Item | Result |
+| --- | --- |
+| No duplication | partial: the advisor regex is duplicated (n3) |
+| No incoherence | partial: n1 and n2 |
+| No over-engineering | partial: redundant guard at `stored-usage-migration.ts:28` (n3) |
+| No dead code or debug leftovers | holds: `git diff 57169330..a06f9857 -- cli/src` has no logs and no TODOs |
+
+## Bundle
+
+`node scripts/check-bundle-size.mjs` prints `Bundle size: 700.7 KB / budget: 709 KB`, `OK: within budget`. `dist/cli.js` was built at the head commit's time. The budget is unchanged, so the headroom rule in `check-bundle-size.mjs` is not triggered. Headroom is now 1.2 %.
 
 ## Commands
 
 | Command | Decisive output |
 | --- | --- |
-| `vitest run` on the identity, legacy, format and `stored-ids-and-keys` tests | `Test Files 9 passed`, `Tests 140 passed` |
-| `vitest run` on `stored-usage-migration.property` and `report-window.property` | `Tests 5 passed` |
-| `vitest run` on `telemetry-ingest.e2e` and `ledger-upkeep` | `Tests 27 passed` |
-| scratch probe (outside the repo): requestless copies 3 days apart | `PROBE window bounded= 1 full= 0` |
-| scratch probe: root `unreadable`, then readable | `{"complete":true,"size":0}` |
-| `git grep "key =" cli-v5.5.0 -- formats/` | Claude format only, no codex writer |
-| `node scripts/check-bundle-size.mjs` | `699.8 KB / budget: 709 KB` |
+| `vitest run` on the 14 test files changed since `57169330` | `Test Files 14 passed`, `Tests 242 passed` |
+| scratch probe: N ingests plus a full settle vs one ingest, 300 runs | `PROBE byte-identity mismatches 0 of 300` |
+| scratch probe: requestless lines from an older CLI, after the migration | `PROBE old-cli bounded= 1 full= 0` |
+| scratch probe: 250,000-record ledger, one store | `withRequest= 13 requestless= 1672 heapMB= 307` |
+| scratch probe: M1 retry, failure at each write, replaced clone | `twice-idempotent= true crash mismatches= 0 of 6`; `OLD_A mapped? false` |
+| `stryker run -m <changed line ranges of 5 files>`, under `mutation.lock` | `97.12`, 101 killed, 3 survived |
+| `node scripts/check-bundle-size.mjs` | `700.7 KB / budget: 709 KB` |
 
-Not run: the full suite and Stryker, per the constraints. The mutation claims were verified by reading the code and the diff hunks.
+Not run: the full suite (pre-push passed it at `a06f9857`: 6,808 tests).
+
+## Score
+
+86 = 100, minus 6 (n1: a contract claim falsified by a probe), minus 4 (n2: six stale statements), minus 2 (n3), minus 1 (n4), minus 1 (n5).
