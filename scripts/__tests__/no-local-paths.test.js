@@ -106,12 +106,19 @@ describe("findLocalPaths", () => {
     ]);
   });
 
-  it("reads every session array in a text, not only the first", () => {
-    const text = [`"threadIds": ["${SESSION}"],`, `"sessionIds": [],`, `"session_id": ["${SESSION_13}"]`].join("\n");
+  it("reads every session array in a text, not only the first, whatever the case of its ids", () => {
+    const text = [
+      `"threadIds": ["${SESSION}"],`,
+      `"sessionIds": [],`,
+      `"session_id": ["${SESSION_13}"]`,
+      `"threadIds": [`,
+      `  "${SESSION.toUpperCase()}"`,
+      "]",
+    ].join("\n");
 
     assert.deepEqual(
       findLocalPaths(text).map(({ line }) => line),
-      [1, 3]
+      [1, 3, 5]
     );
   });
 
@@ -119,22 +126,16 @@ describe("findLocalPaths", () => {
     assert.deepEqual(findLocalPaths(`"threadIds": [\n"${SESSION}"]`), [{ line: 2, label: "session id" }]);
   });
 
-  it("stops at the first unclosed session key instead of rescanning the text for each", () => {
+  it("stops at the first unclosed session key instead of rescanning the text for each", (t) => {
     const unclosed = Array.from({ length: 1000 }, () => '"threadIds": [').join("\n");
     // Counted, not timed: a time bound is flaky on a shared runner, a count of scans is not.
-    const indexOf = String.prototype.indexOf;
-    let scans = 0;
-    String.prototype.indexOf = function (search, ...rest) {
-      if (search === "]") scans++;
-      return indexOf.call(this, search, ...rest);
-    };
+    const indexOf = t.mock.method(String.prototype, "indexOf");
 
-    try {
-      assert.deepEqual(findLocalPaths(unclosed), []);
-    } finally {
-      String.prototype.indexOf = indexOf;
-    }
-    assert.equal(scans, 1);
+    const found = findLocalPaths(unclosed);
+    indexOf.mock.restore();
+
+    assert.deepEqual(found, []);
+    assert.equal(indexOf.mock.calls.filter((call) => call.arguments[0] === "]").length, 1);
   });
 
   it("reads a key inside an array once, as part of that array", () => {
