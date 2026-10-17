@@ -24,7 +24,7 @@ flowchart LR
   I["the ingest this report ran first, transcripts on disk, partitions read"] --> R["run"]
 ```
 
-- **The figures** are every top-level field except `run`. They are a pure function of the ledger (records and `left-out.txt`), the declarations, the chosen identity, the period, the filters and the axis. Their bytes are `JSON.stringify` of the envelope with `run` removed.
+- **The figures** are every top-level field except `run`. They are a pure function of the ledger (records and `left-out.txt`), the declarations, the chosen identity, the period, the filters and the axis. Their bytes are `JSON.stringify` of the envelope with `run` removed. The canonical definition, linked from the usage contract and the CLI memory, is the skill's envelope reference (`plugins/aidd-telemetry/skills/01-usage/references/envelope.md#figures-and-run`): a skill links nowhere outside itself, so the definition lives there.
 - **`run`**, always last, holds what the read that printed the envelope found. It can differ between two reports over the same data.
 - **Inside the CLI**, `ReportResult` makes the same split: `coverage` (`records`, `leftOut`) and `run` (`filesRead`, `unrecognised`, `notStored`, `consentLogDamaged`, `oldestTranscriptAt`, `skippedLedgerLines`). The text report prints exactly what it printed before.
 - **Refused** becomes `{"version": 2, "refused": "AIDD_TELEMETRY=0"}`.
@@ -40,7 +40,7 @@ flowchart LR
 | `filters` | `filters` | inputs, resolved against the period's calls (a function of the ledger). `--repository .` resolves from the working directory, which is part of the request |
 | `rows` | `rows` | ledger, declarations and identity, filtered |
 | `totals` | `totals` | same |
-| `unknown_records` | `unknown_records` | same as `totals.total.unknown_records`, kept for readers that check it alone |
+| `unknown_records` | dropped: `totals.total.unknown_records` | a copy of a totals field; review round 1 kept one |
 | `coverage.records` | `coverage.records` | the calls of the period in the ledger |
 | `coverage.left_out` | `coverage.left_out` | a set of hashes, each kept once. Neither order nor a repeated ingest changes it, and none of it has a day, so every report counts all of it |
 | `coverage.files_read` | `run.files_read` | what this read opened: 2 then 0 over the same data |
@@ -69,12 +69,12 @@ Nothing is dropped: the 01-usage skill reads every run field (unknowns, "when th
 
 | # | Property |
 | --- | --- |
-| P1 | For any ledger, left-out entries, declarations, identity, period, axis and filters, the figures are byte-identical across: the order and grouping the calls and left-out entries were stored in, extra no-op stores, a second report right after, and `TZ` in `UTC`, `Pacific/Kiritimati`, `America/Adak`. `run` is exactly what the ingest and the load reported, never part of the figures |
+| P1 | For any ledger (daily and monthly partitions, lines that are no record), left-out entries, declarations, identity, period, axis and filters, the figures are byte-identical across: the order and grouping the calls and left-out entries were stored in, the zone they were stored in, extra no-op stores, a second report right after, and `TZ` in `UTC`, `Pacific/Kiritimati`, `America/Adak`, the envelope built in that zone. `run` is exactly what the ingest and the load reported, never part of the figures |
 | P2 | Through the built CLI, over one sandbox with real transcripts, the figures of the first report (which reads 2 transcripts) and of every later one are byte-identical across `TZ` ∈ {`UTC`, `Pacific/Kiritimati`, `America/Adak`} × `LC_ALL`/`LANG` ∈ {`C`, `fr_FR.UTF-8`, `ar_SA.UTF-8`}, on the `day` and `task` axes. `run.files_read` is 2, then 0 |
 
 ## The time zone and locale guard (M9)
 
-- `cli/scripts/test-foreign-clock.mjs` (`pnpm test:foreign-clock`) runs the telemetry tests (`tests/contexts/telemetry`, `tests/presentation/commands/telemetry`, `tests/presentation/display/telemetry`, `tests/e2e/telemetry`) under `TZ=Pacific/Kiritimati` and `LC_ALL=LANG=ar_SA.UTF-8`. First it checks that a child Node sees a UTC offset other than 0 and a locale that is not `en`, and fails if it does not.
+- `cli/scripts/test-foreign-clock.mjs` (`pnpm test:foreign-clock`) runs the telemetry tests (`tests/contexts/telemetry`, `tests/presentation/commands/telemetry`, `tests/presentation/display/telemetry`, `tests/e2e/telemetry`) under `TZ=Pacific/Kiritimati` and `LC_ALL=LANG=ar_SA.UTF-8`. First it checks, in a child Node, that the offset is not 0 and that a number and a date are written otherwise than in `en-US`, and exits 1 if not: a locale ICU has no data for keeps its name and formats as English (review round 1).
 - CI: one step in the existing `cli-coverage` job (ubuntu), after the suite. No new job, no matrix.
 - Proven by hand (`evidence.md`):
   - the ledger's day read in local time: under UTC it changes nothing, so on `origin/next` the default suite passes it, and with P1 one test fails. The guard fails 36;

@@ -89,3 +89,46 @@ The first `pnpm test:mutation:telemetry` stopped in Stryker's initial run: `UTC:
 | `pnpm lint`, `pnpm typecheck`, type honesty, markdown links | green in the pre-commit hook of each commit |
 
 Not run here: Windows. The new tests use `join` for paths and rename no open file. `test-foreign-clock.mjs` spawns `node` directly, never a shell.
+
+## Review round 1 fixes
+
+### Red runs, tests first
+
+`report-envelope.unit.test.ts`, before `unknown_records` left the top level:
+
+```txt
+× states how many records had an unknown counter once, in the totals
+× puts what the read that printed it found apart, last, so the rest is the figures
+Tests  2 failed | 5 passed (7)
+```
+
+`tests/scripts/foreign-clock.integration.test.ts`, against the round 0 check, which only looked at the locale's name (extracted unchanged into `scripts/foreign-clock.mjs`):
+
+```txt
+× refuses a locale ICU has no data for, which formats as English whatever its name
+TypeError: .toMatch() expects to receive a string, but got object
+```
+
+The check returned `null` for `xx_BOGUS.UTF-8`, so it accepted that locale.
+
+### The guard's own check fails closed
+
+`scripts/test-foreign-clock.mjs`, each constant swapped by hand, then restored:
+
+```txt
+Under TZ=Pacific/Kiritimati LC_ALL=xx_BOGUS.UTF-8, a child Node formats as English: 1,234,567.5: this guard would prove nothing here.
+bogus locale exit 1
+Under TZ=Not/AZone LC_ALL=ar_SA.UTF-8, a child Node runs in UTC: this guard would prove nothing here.
+bogus zone exit 1
+```
+
+### P1 sees a zone dependence in the envelope
+
+Hand mutation in `report-envelope.ts`: `period.from` written as `new Date(`${period.from}T00:00:00.000Z`).toLocaleDateString("sv")`, the local day of a UTC midnight. Reverted after.
+
+| P1 | Result |
+| --- | --- |
+| round 0 (`HEAD`, envelope built after the zone is restored) | `Tests 2 passed (2)`: missed |
+| round 1 (envelope and figures' bytes built in the zone) | `Tests 1 failed`, `-  "from": "2026-09-30"` `+  "from": "2026-09-29"` |
+
+P1 now also starts from monthly partitions (calls and lines that are no record) and stores its second history with the clock in another zone.
