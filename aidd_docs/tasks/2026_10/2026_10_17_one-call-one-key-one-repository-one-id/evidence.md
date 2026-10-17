@@ -292,6 +292,49 @@ Survivors left, all equivalent:
 
 The checker's 95.11 (11 survivors) mutated whole line ranges, including lines this change does not touch, such as `claude-transcript-usage.ts:20-62` and `ingest-usage-use-case.ts:89`. The two figures measure different scopes.
 
-### Hand mutations, all rounds
 
-45, each killed: 23 in the first build, 12 in round 1, 3 in round 2 (`ADVISOR`, P-a, M1-h), 7 in round 3 (the five above, and the two Stryker survivors).
+
+## Review round 4 (94/100): r1b, r5, r6
+
+### r1b: a bounded read must keep the full read's copy
+
+The window property counted the records of a call an older CLI also stored, but never compared them. It now asserts, for each such call whose full-read record lies in the period, that the bounded read's record deep-equals it: its day is then in the window, and the window's fold keeps that same copy. The limit allows over-counting only.
+
+The checker's mutant, applied alone before `usage-ledger-adapter.ts:96`:
+
+```ts
+if (record !== read && holds !== undefined && heldIn.has(`${record.tool}\u0000${record.key}`)) continue;
+```
+
+| Test | Runs |
+| --- | --- |
+| window property as committed in `102baf98` | survived 3 of 3 |
+| window property with the content check (`8dee6830`) | killed 3 of 3: `× leave every bounded read equal to the full ledger filtered to its period` |
+
+The `$` anchor of `ADVISOR` now carries a comment saying it is there for clarity only.
+
+### Hand mutations, all rounds, counted as mutants
+
+Each row of the tables above is one mutant: one replacement, applied alone. All 47 were killed.
+
+| Round | Mutants |
+| --- | --- |
+| First build | 23 (M7-a to M7-e, M10-a, K-a to K-c, L-a, L-b, R-a, S-a, G-a to G-i, I-a) |
+| Canonical day order (`57169330`) | 1 (G-j) |
+| Review round 1 | 12 (D1-a to D1-d, m1, M1-a to M1-g) |
+| Review round 2 | 3 (`ADVISOR` `\d+` to `\d`, P-a, M1-h) |
+| Review round 3 | 7 (mixed batch, version check, completion check, two re-keyed-line drops, `>=` on a bare session key, the unsettled mark) |
+| Review round 4 | 1 (r1b) |
+
+## Gates at the last code commit (`8dee6830`)
+
+| Gate | Result |
+| --- | --- |
+| `cd cli && pnpm test` | `Test Files 522 passed | 1 skipped (523)`, `Tests 6813 passed | 1 skipped (6814)` |
+| `node --test 'scripts/__tests__/**/*.test.js'` | 461 tests, 461 pass, 0 fail |
+| `pnpm build` | `Bundle size: 700.6 KB / budget: 709 KB`; `dist/cli.js` 717,408 B of 726,016 B |
+| `pnpm smoke` | `PASS: 132   FAIL: 0   SKIP: 1   ·   coverage 100%` |
+| `node scripts/check-claude-tokens-end-to-end.cjs cli/dist/cli.js` | `2 calls, 393 tokens, all on task demo, ticket T-1, and on task demo in this repository` |
+| same, `--attended` | same, then `asked, answered by the hook, kept across /clear` |
+| `pnpm test:mutation:telemetry`, full scope, before the review fixes | 97.2 (see above) |
+| Stryker, changed lines, after `8086176b` | 98.8 since `57169330` (83 mutants), 98.8 since `origin/next` (252 mutants) |
