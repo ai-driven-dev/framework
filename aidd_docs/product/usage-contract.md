@@ -56,7 +56,7 @@ The ledger stores `StoredUsage`: the record plus `repository_id`, resolved at in
 
 | Rule | Value |
 | --- | --- |
-| Key | `message.id:requestId`; without `requestId`, `message.id:sessionId:timestamp`; each advisor iteration adds `#advisor<n>` |
+| Key | `message.id:requestId`; without `requestId`, `message.id:sessionId` (a message id is unique per call); each advisor iteration adds `#advisor<n>` |
 | Fold | a call is written several times (streamed snapshots, resumed sessions, sub-agents); one record per `(tool, key)`: largest sum of the four counters (`null` as `0` for this comparison only) |
 | Tie | earliest `at`, then lowest `session_id`, then serialised record. No input order changes the winner |
 | Dropped | model `<synthetic>` |
@@ -64,7 +64,7 @@ The ledger stores `StoredUsage`: the record plus `repository_id`, resolved at in
 | Advisor | each `advisor_message` iteration is a record, `agent: advisor`, own model |
 | Sub-agent | `isSidechain` or an `agentId` |
 
-**Repository.** The call's working directory resolved at ingest: its git root, named by the hash of the `origin` address (`host/owner/repo`), else the root commit. The address is never kept.
+**Repository.** The call's working directory resolved at ingest: its git root, named by the hash of the `origin` address (`host/owner/repo`), else the root commit. The address is never kept. Every form (https, `ssh://`, `git://`, scp-like) gives one address: scheme, credentials, port, `.git` and trailing `/` dropped, host case-folded, `ssh.github.com` read as `github.com`. Owner and repo are case-folded on `github.com` only, which documents them as not case sensitive; any other host keeps their case, so two spellings there may still give two ids.
 
 **Not stored.** Storing follows [Consent](#consent). A call read and left out counts in the run's `coverage.not_stored` under one reason, and nothing of it is kept, except an `undated` call of a clone that consents (see [Left out](#left-out)):
 
@@ -162,13 +162,14 @@ Directory: `AIDD_TELEMETRY_DIR`, else `AIDD_USER_CONFIG_DIR/telemetry`, else `XD
 | --- | --- | --- | --- |
 | `ledger/<YYYY-MM-DD>.jsonl` | `ingest`, `report` | `report`, `forget` | `StoredUsage` by UTC day of `at`, in time then key order, one call per line. Ingest reads its calls' days and the day on each side, and rewrites only a changed day, whole, by rename; no new bytes, no write. `report` rewrites, folded, the partitions it read that share a call or hold a line that is not a record; a report with no period reads every partition, so after it each call is on disk once. A line that is not a record (a newer version's, a hand edit, a torn one) is never removed: a rewrite keeps it in its day, after the records, in text order and once, and counts it in `skipped_ledger_lines` on every read. A day holding only such lines stays. A monthly `<YYYY-MM>.jsonl` from an earlier version is still read, split into its days by the first ingest or report whose window touches it, or by a report with no period, then removed; its lines that are not records go to the first day of its month |
 | `ledger/left-out.txt` | `ingest` | `report`, `forget` | what ingests measured and could not store, by hash, see [Left out](#left-out). cli-v5.5.0 never reads it |
+| `ledger/repository-ids.json` | `ingest`, `report` | every reader of the ledger, `roots.json` and `branches.jsonl` | `{version: 1, complete, aliases}`: the id an earlier version gave a repository, to its id now, both hashes or root commits. Made once, from each root `roots.json` names, by its `origin` now. Every read re-keys a call stored as `message.id:sessionId:timestamp` and re-ids by this table; the first ingest or report also rewrites `roots.json` and every ledger partition so, then marks it `complete`. A run stopped part way is finished by the next with the same table. An earlier version reading migrated data reads it as written; what it stores afterwards is re-keyed, and re-ided when its repository is in the table, at every read. A repository none of whose clones could be read then keeps its earlier id, and an `undated` hash in `left-out.txt` keeps its earlier key |
 | `ledger/offsets.json` | `ingest`, `report` | same | per transcript: bytes consumed, size, file identity. Shrunk or changed identity: read whole |
 | `ledger/roots.json` | `ingest`, `on` | `ingest`, `forget` | `{version: 2, directories}`: per directory and per clone seen alive there, `repository_id`, `root`, `clone`, `seen_at`, for every directory a read call or line named, in any clone. Other format holds nothing: a live directory is remembered again, a gone one counts `never-seen-alive`. `on` records its own root for `forget` |
 | `ledger/consents.jsonl` | `on`, `off`, `ingest`, hooks (close only) | same, plus `forget` | consent intervals, see [Consent](#consent). Outlives the clone; removed with the ledger. Hooks parse it strictly, pinned by the shared fixture |
 | `ledger/.lock` | CLI | CLI | `{pid, created_at}`; dead process or older than ten minutes: cleared |
 | `bindings/.lock` | CLI | CLI | same format. Declarations and snapshots run under it; `task` never takes the ledger lock, which an ingest holds while reading transcripts |
 | `bindings/sessions.jsonl` | `task` | hooks, `report`, `task` | `{session_id, task, ticket, none, declared_at, by}`, `by` = `command` \| `hook-intercept` |
-| `bindings/branches.jsonl` | `task`, `ingest`, `report` | `report`, `forget` | branch declaration at a moment, with when the branch took its name, from its reflog |
+| `bindings/branches.jsonl` | `task`, `ingest`, `report` | `report`, `forget` | branch declaration at a moment, with when the branch took its name, from its reflog. Read with `repository-ids.json` applied, never rewritten |
 | `bindings/carries.jsonl` | `SessionStart` hook | hooks, `report` | `{session_id, from, at}` |
 | `bindings/processes.jsonl` | `SessionStart` hook | `SessionStart` hook | `{pid, session_id, source, at}` |
 | `identity.json` | `identity`, `on` | `report`, `status`, `on` | `{"person_id": "<id>"}`, owner-only |

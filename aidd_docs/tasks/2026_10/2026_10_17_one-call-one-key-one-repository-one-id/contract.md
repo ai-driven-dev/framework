@@ -1,0 +1,98 @@
+---
+status: done
+---
+
+# One call, one key; one repository, one id
+
+## Need
+
+Found by the R1 telemetry audit. Maintainer decision: migrate the stored data, the measurement is a beta.
+
+| # | Hole | Where |
+| --- | --- | --- |
+| M7 | One repository gets several ids. The owner and repository keep their case on every host, and an `ssh://` or `git://` host keeps its case too (WHATWG `URL` folds only special schemes): `git@github.com:Example/X.git`, `ssh://git@GitHub.com/example/x` and `https://github.com/example/x` give three ids. | `domain/repository-identity.ts` |
+| M10 | A call with no `requestId` is keyed `message.id:sessionId:timestamp`. Its copies carry different timestamps, so they are never folded and the call is counted once per copy. | `domain/formats/claude-transcript-usage.ts` |
+
+## Rules, before and after
+
+| Rule | Before (cli-v5.5.0 to `616dbbea`) | After |
+| --- | --- | --- |
+| Scheme | dropped | dropped |
+| Userinfo | dropped | dropped |
+| Port | dropped (a scp-like address has none) | dropped |
+| Host | case-folded for `http(s)`, `ws(s)`, `ftp` and scp-like; kept for `ssh://`, `git://`, `git+ssh://` | case-folded on every form ([RFC 3986 §3.2.2](https://www.rfc-editor.org/rfc/rfc3986#section-3.2.2): the host is case-insensitive) |
+| `ssh.github.com` | its own host | `github.com`: GitHub's SSH over port 443 answers there for the same repositories ([GitHub docs](https://docs.github.com/en/authentication/troubleshooting-ssh/using-ssh-over-the-https-port)) |
+| Owner and repository | case kept | `github.com`: case-folded (GitHub REST: owner and repo, "The name is not case sensitive", [docs](https://docs.github.com/en/rest/repos/repos#get-a-repository)). Any other host, GitHub Enterprise included: case kept, since no primary source says otherwise there; two spellings may then still give two ids, never one id for two repositories |
+| `.git` suffix, leading and trailing `/` | dropped | dropped, after case-folding where the host folds it |
+| No origin | root commit | root commit |
+| Key, with `requestId` | `message.id:requestId` | unchanged |
+| Key, without `requestId` | `message.id:sessionId:timestamp` | `message.id:sessionId` |
+| Advisor iteration | key + `#advisor<n>` | unchanged |
+
+**Why `message.id:sessionId` is one key per call.** The Messages API: `id` is a "Unique object identifier" of the message ([reference](https://platform.claude.com/docs/en/api/messages)), so no two calls share a `message.id`, and none share it with a session added. The session stays in the key: dropping it, or `requestId`, would re-key every stored call and every `undated` hash, which this fix does not take on (see Limits).
+
+## Store inventory
+
+Everything under the telemetry directory, and what this fix does to it.
+
+| Store | Holds an id or a key | Migration |
+| --- | --- | --- |
+| `ledger/<YYYY-MM-DD>.jsonl` | `repository_id`, `key` | every read re-keys and re-ids; the first run rewrites them all, folded |
+| `ledger/<YYYY-MM>.jsonl` (earlier layout) | `repository_id`, `key` | same; split into days by that rewrite, as any full settle does |
+| `ledger/left-out.txt` | `undated <hash>` = hash of tool and key | none: the hash cannot be undone (see Limits). `unrecognised` hashes a line's text: no id, no key |
+| `ledger/roots.json` | `repository_id` per directory and clone | every read re-ids; the first run rewrites it |
+| `ledger/repository-ids.json` | earlier id to id, both hashes | new: the migration's journal and alias table |
+| `ledger/offsets.json` | transcript path to position | none |
+| `ledger/consents.jsonl` | token, clone, time | none |
+| `ledger/.lock`, `bindings/.lock` | pid, time | none |
+| `bindings/branches.jsonl` | `repository_id` per snapshot | every read re-ids; never rewritten, it stays append-only |
+| `bindings/sessions.jsonl`, `carries.jsonl`, `processes.jsonl` | session ids | none |
+| `identity.json` | person id | none |
+| git config `aidd.telemetry`, `branch.<name>.aidd*` | token, task | none |
+| plugin hooks (`plugins/aidd-telemetry/hooks/lib/`) | compute no repository id and no key | none |
+
+## Migration
+
+```mermaid
+flowchart TD
+  S["ingest or report, under the ledger lock"] --> J{"repository-ids.json complete?"}
+  J -->|yes| I["ingest as usual"]
+  J -->|absent| M["locate each root roots.json names: earlier id to id, from its origin now"]
+  M --> W1["write repository-ids.json, not complete"]
+  J -->|not complete| R
+  W1 --> R["rewrite roots.json and every ledger partition: re-keyed, re-ided, folded"]
+  R --> W2["write repository-ids.json, complete"]
+  W2 --> I
+```
+
+| Requirement | How |
+| --- | --- |
+| Automatic | first step of every ingest, so of every report and of the plugin's hook |
+| Deterministic | the alias table is a function of each root's `origin` now, written before anything else; a rerun reuses it |
+| Idempotent | a key re-keys at most once (the new shape never ends in its own `:at`); an alias never names an id that is itself aliased: an earlier address differs from today's only by an upper-case letter or `ssh.github.com`, which no address of today holds |
+| Crash-safe | under the ledger lock; every write is the existing write-then-rename; the table is written first and marked complete last, so a kill at any step leaves a state the next run completes |
+| Read-time | every reader of the ledger, `roots.json` and `branches.jsonl` applies the key rule and the table, so a state the migration has not finished, or lines an older CLI writes afterwards, still count each call once under one id |
+| No double count | copies of a call re-keyed alike fold, by the existing fold, to the copy one ingest would have kept |
+
+**An older CLI on migrated data** (cli-v5.5.0): the lines have the same shape, so it reads and reports them as they are, and ignores `repository-ids.json`. What it ingests afterwards it stores under its own rules; the newer CLI then re-keys it, and re-ids it when its repository is in the table, at every read.
+
+## Acceptance
+
+1. `normaliseRemote` folds every form in the table above to one address, and keeps owner and repo case for any host but `github.com`.
+2. A requestless call's copies at different timestamps are one record.
+3. For any pre-migration store (mixed-case ids, timestamped keys, copies across days, partitions and the earlier monthly layout), the migrated report and ledger bytes equal those of one fresh ingest under the new rules.
+4. Migrating twice equals once; a failure at every write, then a rerun, equals a clean run.
+5. The id and key in `roots.json` and the ledger are rewritten on disk by the first run; `branches.jsonl` is aliased at read.
+6. Gates: `cd cli && pnpm test`, `node --test 'scripts/__tests__/**/*.test.js'`, `pnpm test:mutation:telemetry` at 96 or more, `pnpm smoke`, the tokens end-to-end checks, bundle within 709 KB.
+
+## Limits
+
+| Limit | Effect |
+| --- | --- |
+| A repository none of whose clones is readable at the migration | its earlier id stays; a later clone of it is stored under the new id: two ids |
+| A root whose `origin` changed since its calls were stored | the table maps the address it has now, so those calls keep their id, as before |
+| `undated` hashes in `left-out.txt` from before (unreleased: cli-v5.5.0 has no such file) | cannot be re-keyed; copies of one undated requestless call kept apart stay counted apart, and one read again from the start of its transcript adds a hash beside the old one |
+| A requestless call copied into another session | two keys, as before; seen copies across sessions carry a `requestId`, keyed without the session |
+| One call seen with and without a `requestId` | two keys, as before |
+| A host alias from `~/.ssh/config` (`git@work-github:o/r`) | its own host: nothing on disk says what it stands for |
+| Percent-encoding in a URL path | kept as written; a scp-like address is never encoded |
