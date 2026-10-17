@@ -273,15 +273,14 @@ describe("a report on a bounded period", () => {
           period,
           filters: resolved,
           report: buildReport(selected, facts, person, axis),
-          coverage: {
+          coverage: { records: kept.length, leftOut: await fullLedger.leftOut.counts() },
+          run: {
             filesRead: NOTHING_NEW.filesRead,
-            records: kept.length,
             unrecognised: NOTHING_NEW.unrecognised,
             notStored: NOTHING_NEW.notStored,
             consentLogDamaged: NOTHING_NEW.consentLogDamaged,
             oldestTranscriptAt: NOTHING_NEW.oldestTranscriptAt,
             skippedLedgerLines: full.skippedLines,
-            leftOut: await fullLedger.leftOut.counts(),
           },
         });
         expect(JSON.stringify(reportEnvelopeOf(bounded))).toBe(JSON.stringify(reference));

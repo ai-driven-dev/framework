@@ -141,7 +141,7 @@ describe("reporting usage", () => {
     const s = setup();
     s.ledger.damaged.add("2026-01-15");
     const result = await s.report.execute({ axis: "total", period: ANY });
-    expect(result).toMatchObject({ coverage: { skippedLedgerLines: 1 } });
+    expect(result).toMatchObject({ run: { skippedLedgerLines: 1 } });
     expect(s.ledger.savedPartitions).toEqual(new Set(["2026-01-15"]));
     expect((await s.ledger.load()).skippedLines).toBe(1);
   });
@@ -175,7 +175,11 @@ describe("reporting usage", () => {
     const s = setup();
     s.transcripts.files.set("/t/1.jsonl", [line("A", 10, "2026-10-07T10:00:00.000Z")]);
     const result = await s.report.execute({ axis: "total", period: ANY });
-    expect(result).toMatchObject({ status: "reported", coverage: { filesRead: 1, records: 1 } });
+    expect(result).toMatchObject({
+      status: "reported",
+      coverage: { records: 1 },
+      run: { filesRead: 1 },
+    });
     expect(s.events.indexOf("save")).toBeLessThan(s.events.lastIndexOf("load"));
   });
 
@@ -287,9 +291,9 @@ describe("reporting usage", () => {
     s.transcripts.modified.set("/t/1.jsonl", "2026-09-20T08:00:00.000Z");
     const result = await s.report.execute({ axis: "total", period: ANY });
     expect(result).toMatchObject({
-      coverage: {
+      coverage: { records: 1 },
+      run: {
         filesRead: 1,
-        records: 1,
         unrecognised: 0,
         oldestTranscriptAt: "2026-09-20T08:00:00.000Z",
         notStored: { "no-consent": 0, "outside-repo": 0 },
@@ -546,7 +550,8 @@ describe("saying what was measured and left out, whoever ingested it", () => {
     for (const period of [OCTOBER, ANY]) {
       const result = await s.report.execute({ axis: "total", period });
       expect(result).toMatchObject({
-        coverage: { filesRead: 0, unrecognised: 0, leftOut: { undated: 1, unrecognised: 2 } },
+        coverage: { leftOut: { undated: 1, unrecognised: 2 } },
+        run: { filesRead: 0, unrecognised: 0 },
       });
     }
   });
@@ -573,12 +578,14 @@ describe("a call whose consent cannot be read yet", () => {
     s.consents.unreadableClones.add(cloneKey(cloneOf("/work/a/.git")));
     for (const _ of [1, 2]) {
       expect(await s.report.execute({ axis: "total", period: ANY })).toMatchObject({
-        coverage: { records: 0, notStored: { "unreadable-consent": 1 } },
+        coverage: { records: 0 },
+        run: { notStored: { "unreadable-consent": 1 } },
       });
     }
     s.consents.unreadableClones.clear();
     expect(await s.report.execute({ axis: "total", period: ANY })).toMatchObject({
-      coverage: { records: 1, notStored: { "unreadable-consent": 0 } },
+      coverage: { records: 1 },
+      run: { notStored: { "unreadable-consent": 0 } },
     });
   });
 });

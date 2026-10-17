@@ -1,6 +1,7 @@
 import type {
   ReportCoverage,
   ReportResult,
+  ReportRun,
 } from "../../../contexts/telemetry/application/report/report-usage-use-case.js";
 import type { Period } from "../../../contexts/telemetry/domain/report/period.js";
 import {
@@ -120,11 +121,11 @@ function periodWords(period: Period): string {
   return period.to === null ? "all days" : `until ${period.to}`;
 }
 
-function coverageLines(coverage: ReportCoverage): string[] {
+function coverageLines(coverage: ReportCoverage, run: ReportRun): string[] {
   const { undated, unrecognised } = coverage.leftOut;
   return [
-    `Read ${count(coverage.filesRead, "transcript", "transcripts")} just now; ${count(coverage.records, "call", "calls")} in this period; oldest transcript on disk: ${coverage.oldestTranscriptAt?.slice(0, 10) ?? "none"}.`,
-    ...leftOutLines(coverage).map(({ text }) => text),
+    `Read ${count(run.filesRead, "transcript", "transcripts")} just now; ${count(coverage.records, "call", "calls")} in this period; oldest transcript on disk: ${run.oldestTranscriptAt?.slice(0, 10) ?? "none"}.`,
+    ...leftOutLines(run).map(({ text }) => text),
     ...(unrecognised > 0
       ? [
           `Kept from every read: ${count(unrecognised, "line that is", "lines that are")} no usage line.`,
@@ -159,7 +160,7 @@ export function printUsageReport(output: CLIOutput, result: ReportResult): void 
     );
     return;
   }
-  const { report, coverage, period, filters } = result;
+  const { report, coverage, run, period, filters } = result;
   output.print(`Usage, ${periodWords(period)}, by ${report.axis}`);
   const selection = selectionLine(filters);
   if (selection !== null) output.print(selection);
@@ -181,5 +182,5 @@ export function printUsageReport(output: CLIOutput, result: ReportResult): void 
     }
   }
   output.print("");
-  for (const line of coverageLines(coverage)) output.print(line);
+  for (const line of coverageLines(coverage, run)) output.print(line);
 }

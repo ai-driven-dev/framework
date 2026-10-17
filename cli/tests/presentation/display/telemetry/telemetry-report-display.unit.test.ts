@@ -35,7 +35,9 @@ const NOT_STORED = {
   "no-cwd": 0,
   undated: 0,
 };
-type Coverage = Extract<ReportResult, { status: "reported" }>["coverage"];
+type Reported = Extract<ReportResult, { status: "reported" }>;
+/** What the figures rest on and what the read found, given flat: `result` splits them. */
+type Coverage = Reported["coverage"] & Reported["run"];
 const COVERAGE: Coverage = {
   filesRead: 2,
   records: 3,
@@ -61,8 +63,11 @@ function result(
     period,
     filters,
     report: { axis, rows: rows.map(([value, t]) => ({ value, ...t })), totals },
-    coverage: { ...COVERAGE, ...coverage },
+    ...split({ ...COVERAGE, ...coverage }),
   };
+}
+function split({ records, leftOut, ...run }: Coverage): Pick<Reported, "coverage" | "run"> {
+  return { coverage: { records, leftOut }, run };
 }
 const printed = (r: ReportResult): string[] => {
   const output = new CapturingOutput(false);

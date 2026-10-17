@@ -328,8 +328,8 @@ export interface Envelope {
   filters: Record<string, string | null>;
   rows: Row[];
   totals: Row;
-  unknown_records: number;
-  coverage: { records: number; oldest_transcript_at: string | null };
+  coverage: { records: number };
+  run: { files_read: number; oldest_transcript_at: string | null };
 }
 export async function json(axis: string): Promise<Envelope> {
   const run = await aidd(["report", ...WINDOW, "--axis", axis, "--json"]);

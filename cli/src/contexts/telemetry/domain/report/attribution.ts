@@ -3,7 +3,7 @@ import { resolveBinding } from "../declaration/binding-resolution.js";
 import type { SessionCarry, SessionDeclaration } from "../declaration/task-declaration.js";
 
 /** Why a billed call has no task. A call from outside any repository, or from a directory never
- * seen alive, is never stored, so it reaches a report only as a count in `coverage.not_stored`
+ * seen alive, is never stored, so it reaches a report only as a count in `run.not_stored`
  * and is not a reason here. */
 export const UNATTRIBUTED_REASONS = ["no-binding", "declared-none"] as const;
 export type UnattributedReason = (typeof UNATTRIBUTED_REASONS)[number];

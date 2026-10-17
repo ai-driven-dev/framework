@@ -280,7 +280,6 @@ interface Envelope {
   axis: string;
   rows: Row[];
   totals: Row;
-  unknown_records: number;
 }
 
 async function report(axis: string, from: string, to: string): Promise<Envelope> {
@@ -362,7 +361,7 @@ describe("the telemetry journey, on the built binary", () => {
     const totals = new Set<number>();
     for (const axis of AXES) {
       const envelope = await report(axis, first, last);
-      expect(envelope.version).toBe(1);
+      expect(envelope.version).toBe(2);
       expect(envelope.axis).toBe(axis);
       expect(envelope.totals.records, axis).toBe(CALLS.length);
       expect(
@@ -452,13 +451,13 @@ describe("the telemetry journey, on the built binary", () => {
     runHook("catch-up.cjs", { id: S_MAIN }, { hook_event_name: "SessionStart", source: "startup" });
     const run = await aidd(["report", "--json"]);
     expect(run.exitCode, run.stderr).toBe(0);
-    const { coverage } = JSON.parse(run.stdout) as {
-      coverage: { files_read: number; records: number; left_out: Record<string, number> };
+    const envelope = JSON.parse(run.stdout) as {
+      coverage: { records: number; left_out: Record<string, number> };
+      run: { files_read: number };
     };
-    expect(coverage).toMatchObject({
-      files_read: 0,
-      records: 1,
-      left_out: { undated: 1, unrecognised: 1 },
+    expect(envelope).toMatchObject({
+      coverage: { records: 1, left_out: { undated: 1, unrecognised: 1 } },
+      run: { files_read: 0 },
     });
   });
 

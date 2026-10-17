@@ -32,7 +32,7 @@ describe("aidd telemetry report", () => {
     const sums: Record<string, number> = {};
     for (const axis of AXES) {
       const envelope = await json(axis);
-      expect(envelope.version).toBe(1);
+      expect(envelope.version).toBe(2);
       expect(envelope.axis).toBe(axis);
       expect(envelope.totals.records).toBe(CALLS.length);
       expect(envelope.rows.reduce((n, row) => n + row.records, 0)).toBe(CALLS.length);
@@ -46,7 +46,7 @@ describe("aidd telemetry report", () => {
       expect(envelope.rows.reduce((n, row) => n + row.total.tokens, 0)).toBe(
         envelope.totals.total.tokens
       );
-      expect(envelope.unknown_records).toBe(1);
+      expect(envelope.totals.total.unknown_records).toBe(1);
       expect(envelope.totals.cache_read.unknown_records).toBe(1);
       sums[axis] = envelope.totals.total.tokens;
     }
@@ -183,7 +183,7 @@ describe("aidd telemetry report", () => {
     expect(text.exitCode).toBe(0);
     expect(text.stdout).toContain("AIDD_TELEMETRY=0");
     const asJson = await aidd(["report", "--json"], { AIDD_TELEMETRY: "0" });
-    expect(JSON.parse(asJson.stdout)).toEqual({ version: 1, refused: "AIDD_TELEMETRY=0" });
+    expect(JSON.parse(asJson.stdout)).toEqual({ version: 2, refused: "AIDD_TELEMETRY=0" });
     expect(await held()).toEqual(before);
   });
 });

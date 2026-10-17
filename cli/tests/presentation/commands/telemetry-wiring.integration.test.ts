@@ -121,14 +121,14 @@ const reported = {
       total: ZERO,
     },
   },
-  coverage: {
+  coverage: { records: 0, leftOut: { undated: 0, unrecognised: 0 } },
+  run: {
     filesRead: 0,
-    records: 0,
     unrecognised: 0,
     notStored: NOT_STORED,
+    consentLogDamaged: false,
     oldestTranscriptAt: null,
     skippedLedgerLines: 0,
-    leftOut: { undated: 0, unrecognised: 0 },
   },
 };
 
@@ -165,13 +165,13 @@ describe("aidd telemetry report", () => {
   it("prints the versioned envelope with --json, and nothing else", async () => {
     report.mockResolvedValue(reported);
     await run("report", "--json");
-    expect(JSON.parse(stdout())).toMatchObject({ version: 1, axis: "total", rows: [] });
+    expect(JSON.parse(stdout())).toMatchObject({ version: 2, axis: "total", rows: [] });
   });
 
   it("prints the refusal envelope with --json when nothing was read", async () => {
     report.mockResolvedValue({ status: "refused" });
     await run("report", "--json");
-    expect(JSON.parse(stdout())).toEqual({ version: 1, refused: "AIDD_TELEMETRY=0" });
+    expect(JSON.parse(stdout())).toEqual({ version: 2, refused: "AIDD_TELEMETRY=0" });
   });
 
   it("refuses a bad period before reading anything, with exit 1", async () => {

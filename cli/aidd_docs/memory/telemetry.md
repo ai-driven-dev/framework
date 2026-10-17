@@ -26,11 +26,12 @@ flowchart LR
     Task["telemetry task"] -->|write| Bindings
     Ledger --> Report["report: attribute, keep what the filters name, then split by one axis"]
     Bindings --> Report
-    Report --> Out["text or the version 1 envelope"]
+    Report --> Out["text or the version 2 envelope"]
 ```
 
 - A command that reports or ingests reads new lines first, under the ledger lock. `ingest` is the same step on its own, run quietly by the plugin at session start.
 - A transcript is read a block at a time (1 MiB), each complete line handed on as it is found, never the unread tail whole. An ingest holds a block, up to about three copies of the longest line at once (its pieces, the joined bytes, the decoded string), and what the reading keeps: every record and every unrecognised line naming a directory. An unterminated last line waits for the next read. A transcript that shrank while it was read counts none of that read and keeps its position, to be read again. One replaced at its path meanwhile is read as it was opened, whole.
+- A report's envelope keeps its figures apart from its `run`: defined once in [the envelope reference](../../../plugins/aidd-telemetry/skills/01-usage/references/envelope.md#figures-and-run).
 - Reading is one pass: tool-specific only up to the usage record. Resolving, storing, attributing and reporting are written once for every tool.
 - The hooks and the CLI never call each other's code. They meet in the files, whose formats one fixture pins on both sides.
 
@@ -75,4 +76,5 @@ flowchart LR
 
 - Unit and integration tests mirror `src/` under `tests/contexts/telemetry/`.
 - The `telemetry` end-to-end tests under `tests/e2e/` run the built binary; `tests/e2e/telemetry-journey.e2e.test.ts` drives the plugin's real hooks through a shim to it and checks that every axis adds up to the total.
+- `pnpm test:foreign-clock` (`scripts/test-foreign-clock.mjs`) runs the telemetry tests with the clock in `Pacific/Kiritimati` and the locale `ar_SA.UTF-8`, after checking that a child Node really sees both. CI runs it in `cli-coverage`. A test that compares figures across zones sets `TZ` itself; the locale is fixed at process start, so only a child process can vary it.
 - The skills' commands are checked against the help golden by `scripts/__tests__/telemetry-skills-name-real-commands.test.js`.
