@@ -18,7 +18,7 @@ status: done
 | --- | --- | --- |
 | 1 | Room in the bundle, measured first | [`phase-1.md`](./phase-1.md) |
 | 2 | A ledger line no reader knows is kept (M2) | [`phase-2.md`](./phase-2.md) |
-| 3 | What an ingest leaves out is kept and reported (M1) | [`phase-3.md`](./phase-3.md) |
+| 3 | What was measured and could not be stored is kept and reported (M1) | [`phase-3.md`](./phase-3.md) |
 | 4 | Docs and gates | [`phase-4.md`](./phase-4.md) |
 
 ## Decisions
@@ -26,8 +26,7 @@ status: done
 | Decision | Why |
 | --- | --- |
 | Kept lines stay in their own day | a newer CLI reads its lines where it wrote them; a quarantine is a loss to it |
-| Left-out calls in `ledger/left-out/`, by day, in the ledger's own format | the fold, settle, window and kept lines come for free; cli-v5.5.0 never reads that directory, so it cannot erase or count them |
-| Undated calls and dropped lines in `no-day.txt`, by hash | they have no day to be filed under; a hash counts once and keeps no transcript text |
-| Dated by the earliest copy | without counters the left-out fold keeps the earliest; dating by the winner would make the bytes depend on how many ingests read a call |
-| The report applies "stored beats left out" | deleting at ingest would make the bytes depend on ingest order |
+| Keep only what was measured and cannot be stored (review round 1) | a clone that never opted in, or work after `off`, leaves nothing on disk: what consent or scope excludes is counted by the run that read it, never kept |
+| One file, `ledger/left-out.txt`, by hash | an undated call or a line that is no usage line has no day; a 32-hex hash counts once and keeps no key or text |
+| `coverage.left_out`, a new field | `not_stored` and `unrecognised_shapes` keep their run-only meaning: no v1 reader is misled |
 | No budget raise | 1,044 B of headroom; savings found in telemetry code first, in their own commits |

@@ -137,3 +137,82 @@ Each applied alone to `usage-ledger-adapter.ts`, same three files run, then reve
 | `pnpm exec lefthook run pre-push` | `✔️ cli-knip`, `✔️ cli-test` |
 
 Sandbox: `HOME`, `XDG_CONFIG_HOME`, `AIDD_USER_CONFIG_DIR`, `AIDD_TELEMETRY_DIR`, `CLAUDE_CONFIG_DIR` under the session scratchpad, `GIT_CONFIG_NOSYSTEM=1`.
+
+## Round 1 fixes
+
+### Red run
+
+`pnpm exec vitest run tests/contexts/telemetry tests/presentation/display`, the new tests on `f51c7f99` (the code still keeping every key):
+
+```txt
+× keeps nothing of a call a clone did not consent to, made outside any repository, or naming no directory
+  TypeError: ledger.load is not a function
+× keeps an undated call and a line that is no usage line of a clone that consents, by what they are
+× keeps nothing of an undated call or a line that is no usage line of a clone that never opted in
+× judges a line that is no usage line by its own time, when it has one
+  TypeError: this.ledger.leftOut.addNoDay is not a function
+× counts what every ingest kept, in every report, bounded or not, though its own reads nothing
+× says what every read kept of what it measured and could not store, and nothing when none
+× groups thousands in every count of its first line
+  AssertionError: expected 'Read 1 transcript: 1,000 calls added,…' to be 'Read 1 transcript: 1,000 calls added,…'
+× prints the envelope of the full ledger filtered … what was left out included …
+× is kept and reported as one ingest of the same transcripts keeps and reports it …
+× what was measured and left out, beside the ledger > (7 cases)
+```
+
+Most fail on the port they now name (`add`, `counts`, `left-out.txt`), so the behaviour is proven by the mutations below. Other ingest tests also failed in that run, because the in-memory ledger they share changed its left-out store.
+
+The end-to-end case on `f51c7f99`, the new test copied in:
+
+```txt
+× says in a report what the catch-up hook measured and could not store, and keeps nothing of a clone that never opted in
+AssertionError: expected { files_read: +0, records: 1, …(5) } to match object { files_read: +0, records: 1, …(1) }
+```
+
+### Mutations, by hand
+
+| Mutation | Red |
+| --- | --- |
+| R1-a: consent ignored, every named thing kept | "keeps nothing of an undated call or a line … never opted in", "judges a line … by its own time", P3 |
+| R1-b: a dated line judged at the read | "judges a line … by its own time", P3 |
+| R1-c: nothing kept | 5 failed, P3 among them |
+| R1-d: undated not kept | 4 failed, P3 among them |
+| R1-e: a line naming nothing handed back | "hands back … only those naming a directory" |
+| R1-f: clear text kept beside the hash | "keeps each thing once, by a hash, … never its text" |
+| R1-g: the report ignores what was kept | 5 failed, the window property and P3 among them |
+| R1-h: every ingest line a warning | "lists the calls it did not store, by reason" |
+| R1-i: `updated` not grouped | "groups thousands in every count of its first line" |
+| S-110: an undated call naming no directory resolved | "keeps nothing of an undated call that names no directory, wherever git would look" |
+| S-112: a line's unusable time used as its time | "judges a line … with no usable time of its own at the read" |
+| S-121: every reason, not only undated, kept | "keeps nothing of a call its clone did not consent to then, though it consents now" |
+| S-129/S-134: the kept counts' one and many | "says what every read kept …" |
+
+### Bundle
+
+`711,256 B` (694.6 KB of 695) at `6fe224d7`: the per-day left-out store, the earliest-copy dating and the report-time matching are gone.
+
+### Telemetry mutation
+
+| Run | Score | Survivors on changed lines |
+| --- | --- | --- |
+| at `40727489` | 96.5 (floor 96) | 12, of which 7 killed by `6fe224d7` (S-110, S-112, S-121, S-129, S-134 above; the reader's `records.length === 0` guard removed as redundant) |
+| at `6fe224d7` | 96.7 (floor 96) | 5, each below |
+
+| File:line | Mutant | Why it lives |
+| --- | --- | --- |
+| `usage-ledger-adapter.ts:112` `(text ?? "")` | `"Stryker was here!"` | no coverage: a partition listed a moment before and gone when read |
+| `ingest-usage-use-case.ts:112` `at !== null` | `true` | equivalent: `dayOf(null)` is `null`, so the read's time is used either way |
+| `report-filter.ts:52` `{ ...NO_FILTERS }` | `{}` | equivalent: the loop sets every flag, in the same order |
+| `measurement-erasure-adapter.ts:14` `return []` | `["Stryker was here"]` | race only, as recorded above |
+| `left-out-adapter.ts:31` `?? ""` | `"Stryker was here!"` | equivalent: with no file, no `\n<reason> ` is found, every count stays `0` |
+
+### Gates, at `6fe224d7`
+
+| Gate | Shortest decisive line |
+| --- | --- |
+| `cd cli && pnpm test` (pre-push `cli-test`) | `Tests  6712 passed \| 1 skipped (6713)` |
+| `node --test 'scripts/__tests__/**/*.test.js'` | `ℹ pass 460` `ℹ fail 0` |
+| `pnpm smoke` (sandboxed) | `PASS: 132   FAIL: 0   SKIP: 1   ·   coverage 100%`; `Bundle size: 694.6 KB / budget: 695 KB` |
+| `check-claude-tokens-end-to-end.cjs cli/dist/cli.js` (sandboxed) | `2 calls, 393 tokens, all on task demo, ticket T-1, and on task demo in this repository` |
+| same, `--attended` | `…; asked, answered by the hook, kept across /clear` |
+| `pnpm exec lefthook run pre-push` | `✔️ cli-knip`, `✔️ cli-test` |
