@@ -144,3 +144,73 @@ Counterexample, pinned as its own test ("puts a day it neither re-keys nor re-id
 | Pinned test and the three properties, after | 4 of 4, in 15 runs with random seeds |
 | Mutation G-j: rewrite only the unsettled and damaged partitions again | killed by the pinned test |
 | Mutation G-e: no ledger rewrite | killed (3 tests) |
+
+## Review round 1 (62/100): D1, M1, minors
+
+### D1: how far apart are a requestless call's copies? Measured first
+
+Read-only scan of the maintainer's own Claude Code transcripts (script outside the repository; only these aggregates are kept):
+
+| Measure | Value |
+| --- | --- |
+| Transcript files, lines | 3,837; 2,147,449 |
+| Usage lines (assistant, `message.usage`, not `<synthetic>`) | 512,820 |
+| Of which with no `requestId` | 0 |
+| Message ids with a request id, written more than once | 184,502 |
+| Their widest spread between copies (any session) | 0.2687 h |
+
+No requestless copy exists to measure, so no spread can be cited for them and the window cannot rely on one. **Decision:** keep M10 (`message.id:sessionId`) and fix it structurally. An ingest that stores a requestless call reads every day, not the days around it (`storeCalls`), so the ledger holds such a call once, whatever its spread, and a bounded read cannot see a copy the full read folds away. The window stays ±1 day for calls with a request id, the measured case. Cost: one full ledger load per ingest that meets a requestless line, which these transcripts never did.
+
+Red run, before the fix (the probe's case pinned, both generators extended):
+
+```txt
+× finds its copy days away, so the ledger holds the call once and a bounded read agrees
+  AssertionError: expected [ '2026-10-01.jsonl', …(1) ] to deeply equal [ '2026-10-04.jsonl' ]
+× leave every bounded read equal to the full ledger filtered to its period
+  Counterexample: [[{"anchor":5,"requestless":true,"copies":[{"days":0,…},{"days":3,…,"ingest":1}]}],{"from":null,"to":"2026-11-01"}]
+  Caused by: AssertionError: expected [ { tool: 'claude-code', …(15) } ] to deeply equal []
+```
+
+The new window property generates requestless copies up to five days apart, stored by up to four ingests (requested copies stay within the measured half day). The migration property's times gain copies 3 and 9 days apart, for requestless and requested calls alike. Its run against the unfixed code passed: it compares full reports only, which fold every copy.
+
+### M1: a root unreadable at the first run
+
+The table now keeps `pending`: the roots that were `unreadable` or `gone`. A complete table with pending roots makes each later run locate those roots alone. When one adds an id, it rewrites `roots.json` and the ledger again. When none does, it writes nothing, or only the shorter `pending` once a root is no repository any more.
+
+Red run, before the fix: 10 failed, 15 passed.
+
+```txt
+× maps a root it could not read at its first run once it can, so the repository keeps one id
+  AssertionError: expected [] to deeply equal [ '/work/a' ]
+× keeps a root gone at its first run pending, and drops one that is no repository now
+× asks only the pending roots again, and writes nothing while none can be read
+× reads back what it wrote, its ids in text order (and the table's other shapes, with `pending`)
+```
+
+The "drops one that is no repository now" second half was added after the fix. It is proven by mutation M1-g.
+
+### Minors
+
+| # | Change | Proof |
+| --- | --- | --- |
+| m1 | re-keying applies to `claude-code` records only | red before: `× re-keys only what Claude Code keyed so, never another tool's key`; mutation m1 killed |
+| m2 | the contract says what a damaged table costs `branches.jsonl` | doc |
+| m3 | first-run cost measured, below | no change needed |
+| m4 | the migration (`IngestUsageUseCase`) and the alias store (`BindingSnapshotStoreAdapter`) are required. The ledger and `roots.json` adapters build theirs from their own directory, so no wiring can leave them out | `tsc` |
+| m5 | `RepositoryIdMigration` reference fixed | - |
+| m6 | `period.ts` states both bounds | - |
+
+### m3: first-run cost against the hook's 110 s
+
+Probe outside the repository, sandboxed `HOME`, real git: every root is a `git clone --shared` of this repository (1,077 commits), origin `git@github.com:Acme/Tool<n>.git`, so each needs an alias. The ledger has 365 days of records, one in ten with an earlier requestless key.
+
+| Roots | Records | Ledger | `locate` per root | First run | Second run | Heap |
+| --- | --- | --- | --- | --- | --- | --- |
+| 50 | 250,000 | 112 MB | 29 ms | 4.5 s | 0 ms | 313 MB |
+| 200 | 1,000,000 | 449 MB | 38 ms | 20.8 s | 1 ms | 1.4 GB |
+
+Both stay well inside 110 s. The 250,000-record case is about half the usage lines found on the measuring machine, before folding. Progress is not split further.
+
+### Hand mutations, round 2
+
+Each applied alone, the named tests run, the file restored: 12 of 12 went red. D1-a to D1-d: the full read, the session test, the advisor suffix, the tool. m1. M1-a to M1-g: unreadable roots pending, gone ones too, a complete table with pending roots looks again, only the pending roots are asked, nothing new writes nothing, a dropped root is saved, `pending` kept in the file.

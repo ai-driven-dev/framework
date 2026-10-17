@@ -89,7 +89,9 @@ flowchart TD
 
 | Limit | Effect |
 | --- | --- |
-| A repository none of whose clones is readable at the migration | its earlier id stays; a later clone of it is stored under the new id: two ids |
+| A root unreadable or absent at the migration | kept pending and looked at again by every ingest; until it can be read, its stored calls keep the earlier id and its new calls get the new one: two ids. A clone deleted for good stays pending, at the cost of one look per ingest |
+| `repository-ids.json` damaged | made again from the clones still there; `branches.jsonl`, never rewritten, then loses the alias of a repository with no clone left, and its declarations stop matching the calls of now |
+| Requestless copies more than a day apart | measured: no requestless line in 512,820 real usage lines (3,837 transcripts); copies of a message with a request id, 184,502 of them, at most 0.27 h apart. Nothing bounds the requestless ones, so storing one reads the whole ledger (4.5 s at 250,000 records) and the ledger holds it once |
 | A root whose `origin` changed since its calls were stored | the table maps the address it has now, so those calls keep their id, as before |
 | `undated` hashes in `left-out.txt` from before (unreleased: cli-v5.5.0 has no such file) | cannot be re-keyed; copies of one undated requestless call kept apart stay counted apart, and one read again from the start of its transcript adds a hash beside the old one |
 | A requestless call copied into another session | two keys, as before; seen copies across sessions carry a `requestId`, keyed without the session |
