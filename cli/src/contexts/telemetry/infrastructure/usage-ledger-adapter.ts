@@ -39,7 +39,8 @@ function partitionOf(name: string): string {
  * ledger is never appended to: a changed day is rewritten whole, by temporary file and
  * rename, and an unchanged one is not touched, so no reader ever meets a torn line. An ingest
  * reads the days around its calls, plus every day of a month it splits, and writes only what
- * changed, so its cost does not grow with the ledger. Between reports, a call whose snapshots
+ * changed, so its cost does not grow with the ledger; one storing a call with no request id
+ * reads every day (see `storeCalls`). Between reports, a call whose snapshots
  * fell outside that window may sit in two days, and a crashed split leaves it in a month and a
  * day: every reader folds at read, so it is still counted once. Once a report with no bound
  * has settled the ledger, each call is on disk once and the bytes depend on what the ledger
@@ -61,6 +62,7 @@ export class UsageLedgerAdapter implements UsageLedger {
     private readonly lockOptions: Partial<LockOptions> = {}
   ) {
     this.leftOut = new LeftOutAdapter(join(dir, "left-out.txt"), dir, storage);
+    // Its own directory's table, read at every load: no wiring can leave it out.
     this.aliases = new RepositoryAliasStoreAdapter(dir, storage);
   }
 

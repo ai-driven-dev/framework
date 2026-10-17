@@ -19,6 +19,7 @@ export class ResolutionStoreAdapter implements ResolutionStore {
     private readonly storage: PrivateStorage
   ) {
     this.path = join(ledgerDir, "roots.json");
+    // Its own directory's table, read at every load: no wiring can leave it out.
     this.aliases = new RepositoryAliasStoreAdapter(ledgerDir, storage);
   }
 

@@ -145,6 +145,15 @@ const scenario = fc.record({
   batches: fc.array(fc.nat(3), { minLength: 24, maxLength: 24 }),
   /** Whether October is still in the earlier monthly layout. */
   monthly: fc.boolean(),
+  /** Clones git cannot read, or not there (an unmounted volume), at the first run after the
+   * upgrade, and back by the next. */
+  away: fc.array(
+    fc.record({
+      dir: fc.constantFrom(...DIRS),
+      as: fc.constantFrom("unreadable" as const, "gone" as const),
+    }),
+    { maxLength: 2 }
+  ),
 });
 type Scenario = typeof scenario extends fc.Arbitrary<infer T> ? T : never;
 
@@ -259,7 +268,7 @@ function machine(name: string, storage: PrivateStorage = new PrivateStorageAdapt
     locator,
     { refusedByEnvironment: false }
   );
-  return { dir, bindings, transcripts, report };
+  return { dir, bindings, transcripts, report, locator };
 }
 
 const AXES: readonly ReportAxis[] = ["total", "repository", "task", "session", "agent", "day"];
@@ -309,6 +318,11 @@ describe("stored data from an earlier version, once migrated", () => {
   async function asFresh(s: Scenario): Promise<void> {
     const up = await upgraded(s);
     const one = await fresh(s);
+    // The first run after the upgrade, with some clones out of reach; then they are back.
+    const back = new Map(s.away.map(({ dir }) => [dir, up.locator.directories.get(dir)]));
+    for (const { dir, as } of s.away) up.locator.directories.set(dir, { status: as });
+    await up.report.execute({ axis: "total", period: { from: null, to: null } });
+    for (const [dir, located] of back) if (located) up.locator.directories.set(dir, located);
     await figures(up);
     await figures(one);
     expect(await figures(up)).toEqual(await figures(one));
@@ -330,6 +344,7 @@ describe("stored data from an earlier version, once migrated", () => {
       ],
       batches: Array.from({ length: 24 }, () => 0),
       monthly: false,
+      away: [],
     });
   });
 

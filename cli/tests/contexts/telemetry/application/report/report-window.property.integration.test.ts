@@ -1,4 +1,4 @@
-import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
+import { appendFile, mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import * as fc from "fast-check";
@@ -315,12 +315,15 @@ const storedCall = fc.record({
       output: fc.nat(5),
       // Which ingest read this copy.
       ingest: fc.nat(3),
+      // Read by an older CLI after the migration: a requestless copy then gets its own
+      // timestamped key, appended to its own day.
+      older: fc.boolean(),
     }),
     { minLength: 1, maxLength: 3 }
   ),
 });
 
-describe("calls stored by ingests, a requestless call's copies days apart", () => {
+describe("calls stored by ingests, a requestless call's copies days apart, some by an older CLI", () => {
   it("leave every bounded read equal to the full ledger filtered to its period", async () => {
     await fc.assert(
       fc.asyncProperty(
@@ -328,20 +331,24 @@ describe("calls stored by ingests, a requestless call's copies days apart", () =
         period,
         async (calls, asked) => {
           const ledger = await ledgerWith(new Map());
+          const dir = join(root, `ledger-${runs}`);
+          const olderOf = (requestless: boolean, older: boolean) => requestless && older;
           for (let ingest = 0; ingest < 4; ingest += 1) {
             const batch = calls.flatMap(({ anchor, requestless, copies }, index) =>
               copies
                 .filter((c) => c.ingest === ingest)
-                .map(
-                  ({ days, offset, output }): StoredUsage => ({
+                .map(({ days, offset, output, older }): StoredUsage => {
+                  const at = new Date(
+                    (ANCHORS[anchor] as number) + (requestless ? days * DAY_MS : 0) + offset
+                  ).toISOString();
+                  const key = requestless ? `msg_${index}:s-1` : `msg_${index}:req_${index}`;
+                  return {
                     tool: "claude-code",
                     tool_version: "1.0.0",
-                    key: requestless ? `msg_${index}:s-1` : `msg_${index}:req_${index}`,
+                    key: olderOf(requestless, older) ? `${key}:${at}` : key,
                     session_id: "s-1",
                     agent: "main",
-                    at: new Date(
-                      (ANCHORS[anchor] as number) + (requestless ? days * DAY_MS : 0) + offset
-                    ).toISOString(),
+                    at,
                     model: "m-1",
                     input: 1,
                     output,
@@ -352,15 +359,31 @@ describe("calls stored by ingests, a requestless call's copies days apart", () =
                     cwd: null,
                     git_branch: null,
                     repository_id: "repo-1",
-                  })
-                )
+                  };
+                })
             );
-            if (batch.length > 0) await storeCalls(ledger, batch);
+            const older = batch.filter((record) => record.key.split(":").length > 2);
+            const now = batch.filter((record) => !older.includes(record));
+            if (now.length > 0) await storeCalls(ledger, now);
+            for (const record of older) {
+              await appendFile(
+                join(dir, `${record.at.slice(0, 10)}.jsonl`),
+                `${JSON.stringify(record)}\n`
+              );
+            }
           }
           const bounded = (await ledger.load(windowOf(asked))).records;
           const full = (await ledger.load()).records;
+          // A stated limit, and the only one: a requestless call an older CLI also stored after
+          // the migration may sit in two days until a report with no period settles it, so a
+          // bounded read is exempt for that call alone. The full read is never exempt.
+          const exempt = new Set(
+            calls.flatMap(({ requestless, copies }, index) =>
+              copies.some((c) => olderOf(requestless, c.older)) ? [`msg_${index}:s-1`] : []
+            )
+          );
           const inside = (records: readonly StoredUsage[]) =>
-            records.filter((record) => inPeriod(record.at, asked));
+            records.filter((record) => inPeriod(record.at, asked) && !exempt.has(record.key));
           expect(inside(bounded)).toEqual(inside(full));
           // One record per call, whatever its copies' spread.
           expect(full.length).toBe(calls.filter((c) => c.copies.length > 0).length);

@@ -247,6 +247,39 @@ describe("the migration", () => {
     expect(await readFile(join(dir, "roots.json"), "utf8")).not.toContain(OLD);
   });
 
+  it("stopped at any write of a pending root's retry and run again, ends as a retry never stopped", async () => {
+    const files = async () =>
+      Promise.all(
+        ["2026-10-07.jsonl", "roots.json", "repository-ids.json"].map((name) =>
+          readFile(join(dir, name), "utf8")
+        )
+      );
+    const firstRun = async () => {
+      await rooted("/work/a");
+      await writeFile(join(dir, "2026-10-07.jsonl"), `${JSON.stringify(call())}\n`);
+      await rm(join(dir, "repository-ids.json"), { force: true });
+      const locator = new FakeLocator();
+      locator.directories.set("/work/a", { status: "unreadable" });
+      await migration(locator).execute();
+      locator.directories.set("/work/a", live(MIXED.remote));
+      return locator;
+    };
+    await migration(await firstRun()).execute();
+    const clean = await files();
+    for (let failAt = 1; ; failAt += 1) {
+      const locator = await firstRun();
+      const stopped = await migration(locator, new FailingStorage(failAt))
+        .execute()
+        .then(
+          () => false,
+          () => true
+        );
+      await migration(locator).execute();
+      expect(await files()).toEqual(clean);
+      if (!stopped) break;
+    }
+  });
+
   it("keeps a root gone at its first run pending, and drops one that is no repository now", async () => {
     await rooted("/work/a", "/work/b");
     const locator = new FakeLocator();
