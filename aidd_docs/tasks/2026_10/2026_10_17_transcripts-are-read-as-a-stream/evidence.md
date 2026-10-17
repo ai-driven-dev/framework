@@ -147,3 +147,29 @@ The in-place rewrite saved offset 12 of a 16-byte file whose new content is 12 b
 | end-to-end token checks, plain and `--attended` | exit 0, `2 calls, 393 tokens, all on task demo, ticket T-1, …` |
 | `pnpm lint`, `pnpm typecheck` | by hand before `6780110b`: one warning in `uninstall-use-case.ts`, present on `origin/next`; `tsc` clean. Pre-commit hook passed on every commit |
 | `node --test 'scripts/__tests__/**/*.test.js'` | not rerun: nothing under `scripts/` or the plugins changed since `1522c00d` (460 passed) |
+
+## Review round 2
+
+The path-identity half of round 1's item 3 was wrong: the open handle reads a replaced file whole and consistently, so discarding that read lost the old file's lines, and a path rotated at every read would never be counted. `c7eb5d71` drops the `stat(path)` check; only a file that shrank under the read is discarded. Round 1's rows above about another file at the path, and the "Path identity check removed" and "Path check without its absent case" mutations, no longer apply.
+
+### Red run
+
+The replaced-file test rewritten first to expect the old file's lines, on `621bcf59`'s code:
+
+```txt
+× reads a file replaced at its path while it reads as it was, and the new one whole next time
+AssertionError: expected null to match object { offset: 12, size: 12 }
+Tests  1 failed | 35 passed (36)
+```
+
+That red run is also the mutation for this guard: putting the path check back turns it red.
+
+### Gates, on `c7eb5d71`
+
+| Gate | Result |
+| --- | --- |
+| `cd cli && pnpm test` | `Test Files 514 passed \| 1 skipped (515)`, `Tests 6740 passed \| 1 skipped (6741)` |
+| `pnpm test:mutation:telemetry` under the lock | 96.6, floor 96; `read-usage-use-case.ts` 30 of 30 killed. Changed-line survivors in the adapter, all equivalent: `:49` `size + from`, `:52` `at <= size`, `:60` fast path `false`, `:69` `start <= bytesRead` and `true`. The rest (`:22`, `:27`, `:29`, `:103`, `:145`) are on lines this change does not touch |
+| `pnpm smoke` | `Bundle size: 696.0 KB / budget: 709 KB` (712,722 B), `PASS: 132 FAIL: 0 SKIP: 1 · coverage 100%` |
+| end-to-end token checks, plain and `--attended` | exit 0 |
+| `pnpm lint`, `tsc` | by hand before `c7eb5d71`: one warning in `uninstall-use-case.ts`, present on `origin/next`; `tsc` clean |
