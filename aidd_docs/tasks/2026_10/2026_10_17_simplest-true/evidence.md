@@ -58,8 +58,22 @@ The first run had two more survivors on the ingest check: the ledger read drops 
 | `node scripts/check-no-local-paths.js --all` | 0 leaks in 3,154 files; the old `phase-5.md:54` line, checked from a scratch file, fails |
 | Bundle | 716,561 bytes before, 716,702 after (+141) |
 
+## Open: property (a) at the report level
+
+(a) holds with no exemption on the records a bounded read loads. It does not hold on the report envelope: a requestless line found in the ledger is counted in `left_out` by the write that removes it, so a bounded report has not counted one outside its days. Scratch check, not committed: one line keyed `msg_0:s-1:<time>` on 2026-06-01, a report on 2026-10-01 to 2026-10-02 against one with no period:
+
+```text
+-   "requestless": 1,
++   "requestless": 0,
+```
+
+No placement of that count is both free of the window and true for lines an older CLI writes after the migration, which (b) requires: counting only in the migration's full pass leaves those lines uncounted, and counting at any read depends on the days read. The contract and the envelope reference say so; it is a stated limit, handed back for decision.
+
+## Guard: why the key form stayed
+
+Read literally, "a session key with a UUID on the same line" flagged 46 tracked lines (stream logs whose lines carry a session key and other ids), so the key-then-UUID form was kept as it was.
+
 ## Stated, not changed
 
-- `left_out` is counted when a write removes the line: a bounded report has not counted a requestless line an older CLI writes outside its window until a read writes that day.
 - A request-id line an older CLI appends after the upgrade, out of time order, is read right, but not rewritten into canonical order: bytes then differ from one fresh ingest. The migration property's older-CLI copies are requestless ones only.
 - The #1049 contract's acceptance item 2 ("a requestless call's copies at different timestamps are one record") describes that PR and is left as written.
