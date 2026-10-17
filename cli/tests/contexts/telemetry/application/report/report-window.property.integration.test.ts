@@ -88,6 +88,9 @@ const copy = fc.record({
 const call = fc.record({
   anchor: fc.nat(ANCHORS.length - 1),
   tool: fc.constantFrom("claude-code" as const, "codex" as const),
+  // A Claude Code call with no request id, as an earlier or an older CLI stored it: a line this
+  // version does not accept.
+  keyed: fc.constantFrom("request", "session", "timestamped"),
   copies: fc.array(copy, { minLength: 1, maxLength: 3 }),
 });
 
@@ -143,13 +146,16 @@ function filesOf(calls: readonly Call[]): Map<string, string> {
   const files = new Map<string, string>();
   const put = (name: string, record: StoredUsage) =>
     files.set(name, `${files.get(name) ?? ""}${JSON.stringify(record)}\n`);
-  calls.forEach(({ anchor, tool, copies }, index) => {
+  calls.forEach(({ anchor, tool, keyed, copies }, index) => {
     for (const { offset, output, session, model, agent, repository } of copies) {
       const at = new Date((ANCHORS[anchor] as number) + offset).toISOString();
+      const requestless = tool === "claude-code" && keyed !== "request";
       const record: StoredUsage = {
         tool,
         tool_version: "1.0.0",
-        key: `k${index}`,
+        key: requestless
+          ? `msg_${index}:${session}${keyed === "timestamped" ? `:${at}` : ""}`
+          : `k${index}`,
         session_id: session,
         agent,
         at,
@@ -224,7 +230,7 @@ function ingestOf(ledger: UsageLedger): IngestUsageUseCase {
 }
 
 describe("a report on a bounded period", () => {
-  it("prints the envelope of the full ledger filtered to its period and its filters, byte for byte, what was left out included, and loses no call, when a call's copies are under a day apart", async () => {
+  it("prints the figures of the full ledger filtered to its period and its filters, byte for byte, what was left out included, and loses no call, when a call's copies are under a day apart", async () => {
     await fc.assert(
       fc.asyncProperty(scenario, async ({ calls, leftOut, period, axis, filters }) => {
         const files = filesOf(calls);
@@ -283,7 +289,9 @@ describe("a report on a bounded period", () => {
             skippedLedgerLines: full.skippedLines,
           },
         });
-        expect(JSON.stringify(reportEnvelopeOf(bounded))).toBe(JSON.stringify(reference));
+        // The figures: `run` is what this read found, and a bounded read finds less.
+        const figures = (envelope: object) => JSON.stringify({ ...envelope, run: undefined });
+        expect(figures(reportEnvelopeOf(bounded))).toBe(figures(reference));
         // Whatever the period: each thing kept once, by reason.
         const distinct = new Set(leftOut.map(({ reason, of }) => `${reason}\u0000${of}`));
         expect(bounded.coverage.leftOut).toEqual({

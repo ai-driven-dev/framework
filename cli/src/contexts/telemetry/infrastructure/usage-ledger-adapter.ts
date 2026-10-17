@@ -2,15 +2,15 @@ import { readdir, rm } from "node:fs/promises";
 import { join } from "node:path";
 import { isErrnoException } from "../../../kernel/reading/json-file.js";
 import { readTextIfPresent } from "../../../kernel/reading/text-file.js";
-import { isRequestless, requestlessCallOf } from "../domain/formats/claude-transcript-usage.js";
+import { requestlessCallOf } from "../domain/formats/claude-transcript-usage.js";
 import type { PrivateStorage } from "../domain/ports/private-storage.js";
-import type {
-  LeftOutEntry,
-  LeftOutStore,
-  LoadedLedger,
-  UsageLedger,
-} from "../domain/ports/usage-ledger.js";
-import { parseStoredUsage, partitionByDay, type StoredUsage } from "../domain/stored-usage.js";
+import type { LeftOutStore, LoadedLedger, UsageLedger } from "../domain/ports/usage-ledger.js";
+import {
+  parseStoredUsage,
+  partitionByDay,
+  requestlessIn,
+  type StoredUsage,
+} from "../domain/stored-usage.js";
 import { compareText } from "../domain/text-order.js";
 import {
   parsePositions,
@@ -71,8 +71,7 @@ export class UsageLedgerAdapter implements UsageLedger {
     const unsettled = new Set<string>();
     const heldIn = new Map<string, string>();
     // Every read applies the rules of now, so a call an earlier version named otherwise is
-    // still a call of one repository, and a call with no request id is none: its partition is
-    // rewritten.
+    // still a call of one repository, and its partition is rewritten.
     const ids = (await this.aliases.load())?.ids ?? new Map<string, string>();
     for (const name of names) {
       const partition = partitionOf(name);
@@ -84,10 +83,6 @@ export class UsageLedgerAdapter implements UsageLedger {
         if (read === null) {
           skippedLines += 1;
           damaged.add(partition);
-          continue;
-        }
-        if (isRequestless(read)) {
-          unsettled.add(partition);
           continue;
         }
         const now = ids.get(read.repository_id);
@@ -108,23 +103,17 @@ export class UsageLedgerAdapter implements UsageLedger {
     const named = (day: string): boolean => partitions === undefined || partitions.has(day);
     const held = new Map<string, string | null>();
     const kept = new Map<string, Set<string>>();
-    const requestless: LeftOutEntry[] = [];
     for (const name of await this.partitions()) {
       const day = partitionOf(name);
       if (!named(day)) continue;
       const text = await readTextIfPresent(join(this.dir, name));
       held.set(day, text);
       for (const line of (text ?? "").split("\n")) {
-        if (line === "") continue;
-        const read = parseStoredUsage(line);
-        if (read === null) kept.set(day, (kept.get(day) ?? new Set()).add(line));
-        else if (isRequestless(read)) {
-          requestless.push({ reason: "requestless", of: requestlessCallOf(read) });
+        if (line !== "" && parseStoredUsage(line) === null) {
+          kept.set(day, (kept.get(day) ?? new Set()).add(line));
         }
       }
     }
-    // Counted before the writes that drop it, so a run stopped between them loses nothing.
-    if (requestless.length > 0) await this.leftOut.add(requestless);
     const days = partitionByDay(records);
     const emptied: string[] = [];
     // Every write comes before any removal, so the order of the writes is free.
@@ -142,6 +131,24 @@ export class UsageLedgerAdapter implements UsageLedger {
     // After the writes: a record whose better snapshot moved to another day can leave its old
     // day empty.
     for (const path of emptied) await rm(path);
+  }
+
+  /** The day it empties stays, empty, for the `save` that follows to remove. */
+  async leaveOutRequestless(): Promise<void> {
+    for (const name of await this.partitions()) {
+      const path = join(this.dir, name);
+      const lines = ((await readTextIfPresent(path)) ?? "").split("\n");
+      const calls = lines.flatMap((line) => requestlessIn(line) ?? []);
+      if (calls.length === 0) continue;
+      // Kept before the line goes, so a run stopped between them loses nothing.
+      await this.leftOut.add(
+        calls.map((call) => ({ reason: "requestless", of: requestlessCallOf(call) }))
+      );
+      await this.storage.replace(
+        path,
+        lines.filter((line) => requestlessIn(line) === null).join("\n")
+      );
+    }
   }
 
   async positions(): Promise<ReadonlyMap<string, TranscriptPosition>> {

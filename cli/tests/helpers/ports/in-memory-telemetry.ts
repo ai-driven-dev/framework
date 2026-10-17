@@ -165,6 +165,10 @@ export class InMemoryLedger implements UsageLedger {
     for (const partition of partitions ?? [...this.unsettled]) this.unsettled.delete(partition);
   }
 
+  async leaveOutRequestless(): Promise<void> {
+    this.events.push("leave-out-requestless");
+  }
+
   async positions(): Promise<ReadonlyMap<string, TranscriptPosition>> {
     return new Map(this.stored);
   }

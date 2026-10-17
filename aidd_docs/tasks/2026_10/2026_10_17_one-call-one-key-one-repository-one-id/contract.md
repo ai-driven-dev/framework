@@ -2,6 +2,8 @@
 status: done
 ---
 
+Superseded on the requestless rule by aidd_docs/tasks/2026_10/2026_10_17_simplest-true/contract.md
+
 # One call, one key; one repository, one id
 
 ## Need

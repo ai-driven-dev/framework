@@ -64,29 +64,27 @@ async function writeAliases(complete = true): Promise<void> {
 }
 
 describe("the ledger, read after the rules changed", () => {
-  it("drops a call with no request id, as any version keyed it, and counts it once as left out when its days are written", async () => {
+  it("reads a call with no request id, as any version keyed it, as a line it does not accept, and keeps it as found", async () => {
     await writeAliases();
     const kept = call({ key: "msg_B:req_B", at: "2026-10-08T00:00:01.000Z" });
     const copies = [
-      call({ key: "msg_A:s-1:2026-10-07T23:59:59.000Z" }),
       call({ key: "msg_A:s-1:2026-10-08T00:00:02.000Z", at: "2026-10-08T00:00:02.000Z" }),
       call({ key: "msg_A:s-1#advisor0", at: "2026-10-08T00:00:03.000Z" }),
     ];
-    await writeFile(join(dir, "2026-10-07.jsonl"), `${JSON.stringify(copies[0])}\n`);
-    await writeFile(
-      join(dir, "2026-10-08.jsonl"),
-      `${[kept, copies[1], copies[2]].map((line) => JSON.stringify(line)).join("\n")}\n`
-    );
+    const text = `${[kept, ...copies].map((line) => JSON.stringify(line)).join("\n")}\n`;
+    await writeFile(join(dir, "2026-10-08.jsonl"), text);
     const ledger = new UsageLedgerAdapter(dir, storage);
     const held = await ledger.load();
     expect(held.records).toEqual([{ ...kept, repository_id: NEW }]);
-    expect([...held.unsettled].sort()).toEqual(["2026-10-07", "2026-10-08"]);
-    await ledger.save(held.records, held.unsettled);
-    expect(await ledger.leftOut.counts()).toEqual({ undated: 0, unrecognised: 0, requestless: 1 });
+    expect(held.skippedLines).toBe(2);
+    await ledger.save(held.records, new Set(["2026-10-08"]));
     expect(await readFile(join(dir, "2026-10-08.jsonl"), "utf8")).toBe(
-      `${JSON.stringify({ ...kept, repository_id: NEW })}\n`
+      `${[
+        JSON.stringify({ ...kept, repository_id: NEW }),
+        ...copies.map((line) => JSON.stringify(line)).sort(),
+      ].join("\n")}\n`
     );
-    await expect(readFile(join(dir, "2026-10-07.jsonl"), "utf8")).rejects.toThrow();
+    expect(await ledger.leftOut.counts()).toEqual({ undated: 0, unrecognised: 0, requestless: 0 });
   });
 
   it("leaves a call keyed and named by the rules of now as settled", async () => {
@@ -195,6 +193,27 @@ describe("the migration", () => {
     expect(await readFile(join(dir, "roots.json"), "utf8")).not.toContain(OLD);
     expect(await readFile(join(dir, "2026-10-07.jsonl"), "utf8")).toBe(
       `${JSON.stringify(call({ repository_id: NEW }))}\n`
+    );
+  });
+
+  it("leaves out every call with no request id an earlier version stored, once per call, and keeps every other line", async () => {
+    const requestless = (at: string) => call({ key: `msg_A:s-1:${at}`, at });
+    await writeFile(
+      join(dir, "2026-10-07.jsonl"),
+      `${JSON.stringify(requestless("2026-10-07T23:59:59.000Z"))}\n`
+    );
+    await writeFile(
+      join(dir, "2026-10-08.jsonl"),
+      `${[call({ at: "2026-10-08T00:00:01.000Z" }), requestless("2026-10-08T00:00:02.000Z")]
+        .map((line) => JSON.stringify(line))
+        .join("\n")}\n{torn\n`
+    );
+    const ledger = new UsageLedgerAdapter(dir, storage);
+    await migration(new FakeLocator()).execute();
+    expect(await ledger.leftOut.counts()).toEqual({ undated: 0, unrecognised: 0, requestless: 1 });
+    await expect(readFile(join(dir, "2026-10-07.jsonl"), "utf8")).rejects.toThrow();
+    expect(await readFile(join(dir, "2026-10-08.jsonl"), "utf8")).toBe(
+      `${JSON.stringify(call({ at: "2026-10-08T00:00:01.000Z" }))}\n{torn\n`
     );
   });
 

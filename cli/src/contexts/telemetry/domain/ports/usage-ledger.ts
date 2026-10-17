@@ -5,7 +5,7 @@ import type { TranscriptPosition } from "../transcript-position.js";
 export interface LoadedLedger {
   /** One record per `(tool, key)` across every partition read. */
   readonly records: readonly StoredUsage[];
-  /** Lines that were not records. Saving keeps them: a newer version may have written them. */
+  /** Lines that were not records. Saving keeps them: another version may have written them. */
   readonly skippedLines: number;
   /** The partitions read that held one: saving them puts them in canonical order. */
   readonly damaged: ReadonlySet<string>;
@@ -51,6 +51,9 @@ export interface UsageLedger {
    * caller vouches that the rest is as it was. A line that is not a record is never removed:
    * it stays in its day, after the records, in text order and once. */
   save(records: readonly StoredUsage[], partitions?: ReadonlySet<string>): Promise<void>;
+  /** Moves every call with no request id an earlier version stored into `leftOut`, out of its
+   * day: the migration's one pass over the whole ledger. */
+  leaveOutRequestless(): Promise<void>;
   positions(): Promise<ReadonlyMap<string, TranscriptPosition>>;
   savePositions(positions: ReadonlyMap<string, TranscriptPosition>): Promise<void>;
 }

@@ -46,7 +46,7 @@ A field may be added to version `2`: a figure outside `run`, a fact of the read 
 | Field | Meaning |
 | --- | --- |
 | `records` | Calls recorded in the period, whether the filters keep them or not |
-| `left_out` | What every read so far, one at session start included, measured in a clone that consents and could not store: `undated` calls, `unrecognised` lines that are no usage line, and `requestless` calls, which carry no request id, each counted once in every report. A `requestless` call an older CLI stored is counted once a read rewrites its day |
+| `left_out` | What every read so far, one at session start included, measured in a clone that consents and could not store: `undated` calls, `unrecognised` lines that are no usage line, and `requestless` calls, which carry no request id, each counted once in every report. |
 
 ## Run
 
@@ -57,7 +57,7 @@ A field may be added to version `2`: a figure outside `run`, a fact of the read 
 | `not_stored` | Calls this run read and left out, by reason: `outside-repo`, `never-seen-alive`, `no-consent`, `consent-closed`, `unreadable-consent`, `no-cwd`, `undated` |
 | `consent_log_damaged` | `true` while `ledger/consents.jsonl` cannot be trusted and nothing is stored |
 | `oldest_transcript_at` | When the oldest session file still on disk was last written, `null` when there is none |
-| `skipped_ledger_lines` | Lines that were not records, kept as found (a newer version may have written them), in the stored days this run read before tidying them: with a period, those days and the day on each side |
+| `skipped_ledger_lines` | Lines that were not records, kept as found (another version may have written them), in the stored days this run read before tidying them: with a period, those days and the day on each side |
 
 ## When there is nothing
 
