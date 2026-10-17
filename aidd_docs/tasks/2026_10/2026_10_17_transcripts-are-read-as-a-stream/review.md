@@ -1,6 +1,6 @@
 # Review: Transcripts are read as a stream
 
-- Rounds: 2
+- Rounds: 3
 - Started: 2026-10-17
 
 ## Round 1 · r-2b7d
@@ -58,3 +58,26 @@
 - `cli/src/contexts/telemetry/infrastructure/claude-transcript-source-adapter.ts:39-40` : the docstring still says "Memory is a block and the longest line, whatever the range", which the round-1 fix corrected everywhere else (about three copies of the longest line) → align it, or point to `cli/aidd_docs/memory/telemetry.md` — 🟢 minor, coherence
 - `cli/src/contexts/telemetry/infrastructure/claude-transcript-source-adapter.ts:53` : "Shorter than it was when stat'd: what is left is read next time." now describes a read that returns no position, so nothing of it is kept, not "what is left" → "Shorter than when stat'd: the read is discarded below" — 🟢 minor, coherence
 - `cli/src/contexts/telemetry/infrastructure/claude-transcript-source-adapter.ts:135` : `stat(path)` rethrows anything but `ENOENT` (`absentIsNothing`, `:14-17`), so an `EACCES` or `ENOTDIR` on the path after a successful read now rejects the whole ingest where round 1 returned the read. Goes away with the first finding's fix; otherwise treat any stat failure as "not replaced" — 🟢 minor, error-handling
+
+## Round 3 · r-9c41
+
+- Date: 2026-10-17
+- By: Baptiste LAFOURCADE
+- Diff: `621bcf59...861f8782` (round 2 fixes, code in `c7eb5d71`; working tree clean)
+- Axes: code, functional, relevancy
+- Verdict: approve
+- Score: 6/7 met, 0 unmet, 1 unverified at runtime, 0 out of the diff
+
+### Criteria
+
+- [x] 1. Path identity check removed, only a shrink on the handle discards a read — `claude-transcript-source-adapter.ts:137` is `(await handle.stat()).size < now.size` alone; `stat` import gone (`:2`), no `stat(path)` left in the file, so the round-2 `EACCES`/`ENOTDIR` rejection minor goes with it
+- [x] 2. Replaced file keeps the old lines, then restarts on the new one — test `claude-transcript-source-adapter.integration.test.ts:390`: rename over after the first line, blocks of 4, handed `["aaa","bbb","ccc"]`, position `{offset: 12, size: 12}` (the old 12-byte file, not the 4-byte new one), next read `["zzz"]` with `restarted: true`. The open handle holds the old inode until close, so its number cannot be reused by the new file during the read; the saved identity differs and `resumeOffset` restarts. A path rotated at every read now converges: each read counts the inode it opened
+- [x] 3. Docs and comments consistent — port docstring (`transcript-source.ts:4`) names only the shrink; `usage-contract.md:344`, `cli/aidd_docs/memory/telemetry.md:33`, `contract.md` "Changed under the read" and its rules table all say the replaced file is read as opened and the new one whole next time; `eachLine` docstring (`:37-41`) now says about three copies of the longest line; `:54` comment now says the caller discards the read. `evidence.md` round-1 rows (`:103`, `:129`) still describe the path check, but `:153` marks them superseded: an append-only log, acceptable
+- [x] 4. No regression of round 1 equivalence — `eachLine` unchanged but for comments; this review ran the targeted suites on `861f8782`, sandboxed (HOME, XDG_CONFIG_HOME, AIDD_USER_CONFIG_DIR, AIDD_TELEMETRY_DIR, CLAUDE_CONFIG_DIR temp, `GIT_CONFIG_NOSYSTEM=1`): adapter, `transcript-stream.property` (S1 oracle), `read-usage-use-case`, `ingest-usage-use-case` → `Test Files 4 passed (4)`, `Tests 151 passed (151)`
+- [x] 5. Shrink path untouched — truncation tests (`:356`, `:368`) and `read-usage-use-case.integration.test.ts:207` still pass in the run above; `ReadUsageUseCase` null handling not in this diff
+- [x] 6. Test first — red run recorded in `evidence.md:159-163` (`expected null to match object { offset: 12, size: 12 }` on `621bcf59`); consistent with the old code, which returned `null` on an identity change. Not rerun here (read-only, low RAM)
+- Unverified at runtime: 7. Full gates on `c7eb5d71` (`evidence.md:167-175`: 6740 tests, mutation 96.6, smoke 132 pass) — not rerun by instruction
+
+### Findings
+
+- `aidd_docs/tasks/2026_10/2026_10_17_transcripts-are-read-as-a-stream/evidence.md:103` : the round-1 fix row still reads "or another file at the path, and the read returns no position", corrected only by the note at `:153`. A reader landing on the table gets the dropped behaviour → optionally strike or annotate the row in place — 🟢 minor, coherence

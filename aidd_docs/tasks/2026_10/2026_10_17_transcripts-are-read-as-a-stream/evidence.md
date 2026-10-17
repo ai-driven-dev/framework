@@ -100,7 +100,7 @@ Four minors from [`review.md`](./review.md), applied.
 | --- | --- | --- |
 | 1 | The memory bound was overstated | usage contract and `telemetry.md`: a block, up to about three copies of the longest line, every record and every unrecognised line naming a directory |
 | 2 | Every line copied by `Buffer.concat` | a line whole in one block is decoded in place |
-| 3 | A file rewritten in place between two blocks could splice a line and save a wrong offset | after the last block, `fstat` of the handle and `stat` of the path: shorter than when the read began, or another file at the path, and the read returns no position; `ReadUsageUseCase` keeps none of that file's records, lines or position, so ingest keeps the one it had. A rewrite to the same size or larger is not seen: residual limit in the usage contract |
+| 3 | A file rewritten in place between two blocks could splice a line and save a wrong offset | after the last block, `fstat` of the handle: shorter than when the read began, and the read returns no position (the path check added here was dropped in round 2, see below); `ReadUsageUseCase` keeps none of that file's records, lines or position, so ingest keeps the one it had. A rewrite to the same size or larger is not seen: residual limit in the usage contract |
 | 4 | The bench was not kept | [`memory-bench.mjs`](./memory-bench.mjs), rerun above |
 
 ### Red run
