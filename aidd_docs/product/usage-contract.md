@@ -98,7 +98,7 @@ What an ingest measured and could not store is kept in `ledger/left-out.txt`, so
 
 ## Report envelope
 
-`aidd telemetry report --json` prints one object, `version: 2`. A field may be added to version 2, a figure outside `run`, a fact of the read inside it; never renamed, retyped, moved or removed without a new `version`. Type: `ReportEnvelope`, `cli/src/contexts/telemetry/application/report/report-envelope.ts`.
+`aidd telemetry report --json` prints one object, `version: 2`. What a figure is, what it depends on, what `run` holds, and how the envelope may change are defined once, in [the envelope reference](../../plugins/aidd-telemetry/skills/01-usage/references/envelope.md#figures-and-run). Type: `ReportEnvelope`, `cli/src/contexts/telemetry/application/report/report-envelope.ts`.
 
 | Field | Meaning |
 | --- | --- |
@@ -108,7 +108,6 @@ What an ingest measured and could not store is kept in `ledger/left-out.txt`, so
 | `filters` | `task`, `ticket`, `person`, `model`, `agent`, `session`, `repository`, `absent`, `unattributed`, in that order: `null` when not given, else as resolved (see [Filters](#filters)) |
 | `rows` | one per axis value, of the calls that match |
 | `totals` | the calls of the period that match |
-| `unknown_records` | calls with at least one counter unknown |
 | `coverage` | `records`, `left_out`. `records` counts the calls of the period, matching or not; `left_out` (`undated`, `unrecognised`) what every ingest so far measured and could not store, see [Left out](#left-out) |
 | `run` | last: `files_read`, `unrecognised_shapes`, `not_stored`, `consent_log_damaged`, `oldest_transcript_at`, `skipped_ledger_lines`, what the read that printed the report found |
 
@@ -121,7 +120,7 @@ Row and `totals`: `records`, `input`, `output`, `cache_read`, `cache_write` (eac
 | `reason` | `no-binding` or `declared-none` for `unattributed`, else `null` |
 
 - Every axis partitions the same calls: each adds up to `totals`, counter by counter.
-- **The figures** are every field but `run`: a function of the ledger (its calls and `left-out.txt`), the declarations, the chosen identity, the period, the filters and the axis. Two reports over the same of those print them byte for byte the same, whatever ingests ran before and in whatever order, run again or not, in any time zone and locale. Envelope version 1 mixed the two; version 2 has no compatibility shape.
+- Envelope version 1 put the figures and the run together. Version 2 keeps them apart and has no compatibility shape.
 - `AIDD_TELEMETRY=0`: nothing read, object is `{"version": 2, "refused": "AIDD_TELEMETRY=0"}`.
 - The text report labels an `absent` person `anonymous`; the envelope keeps `kind: absent`, `key: null`.
 - A report ingests first. `run` describes that read: what it opened, met and left out, whether the consent log let it store, how old the transcripts on disk are, and the lines that are not records in the partitions it loaded, counted before it settled them (a rewrite keeps each once, so the next report can count fewer). `coverage.records` describes the period; `coverage.left_out` every ingest so far.
