@@ -334,6 +334,8 @@ None observable by the CLI.
 | Calls on a name used before, after a copy, rename or recreation and before it is declared again | the earlier generation's declaration still answers in the report, while `status` and the gate say undeclared: a branch with no declaration takes no snapshot, so nothing marks the new generation. Only calls the gate did not hold (unattended runs, IDE extensions) can land there | declare right after reusing a name |
 | Reflog entry of the rename or copy expired before B's first declaration | B's start is its oldest remaining entry; on a name used before, an older start can let the earlier B's declaration speak for later calls | declare soon after a rename or copy |
 | Branch snapshots recorded before stamping (a copied branch, a hand-set task with a `declared_at`) | keep attributing: attribution reads snapshots, `branches.jsonl` is append-only | - |
+| An ingest holding the ledger lock more than 10 minutes | another run clears the lock as stale while its holder still runs, and both write the ledger. An ingest was measured at 4.5 s for 250k records over 50 roots and 20.8 s for 1M over 200; one machine's whole history is about 267k usage lines | - |
+| Records stored before reasoning and an advisor's one-hour write were read | keep `reasoning` and the advisor `cache_write_1h` at `null`: a transcript line already read is not read again | - |
 
 ## Never leaves the machine
 
