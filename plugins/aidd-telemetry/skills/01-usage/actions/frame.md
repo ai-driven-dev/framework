@@ -45,6 +45,7 @@ The command to run, and the period, axis and filters it stands for, said back to
    - `--unattributed` cannot be combined with `--task`, `--ticket` or `--absent ticket`; a value and `--absent` of the same axis cannot be combined either.
 4. **One open axis.** When the question splits by two axes with neither fixed, such as tasks per day, run one report per axis and answer each. Say that the report has no cross of two, and do not combine them.
    - A question about a currency cost, a skill, a step, a prompt or a file has no axis: say what the report can split by, and stop.
+   - Reasoning or thinking tokens have no figure of their own: they are counted in `output`. Say so.
 5. **Name.** Write the command as `aidd telemetry report --json` plus the flags chosen, e.g. `aidd telemetry report --days 7 --axis task --json`.
 
 ## Test
@@ -54,6 +55,7 @@ The command to run, and the period, axis and filters it stands for, said back to
 | "What did last week cost in tokens?" | `aidd telemetry report --days 7 --axis total --json`, with the window stated |
 | "Which tasks used the most?" | `--axis task`, no period, stated as every recorded day |
 | "How much money was that?" | No command; the answer says the report holds token counts only |
+| "How many thinking tokens this week?" | No figure apart; the answer says reasoning is counted in `output` |
 | "Tasks per day", no task named | Two commands, `--axis task` and `--axis day`, and no figure combined from both |
 | "What did task auth cost per day?" | `aidd telemetry report --task auth --axis day --json`, no period, stated as every recorded day |
 | "Which models did ticket PROJ-7 use this week?" | `aidd telemetry report --days 7 --ticket PROJ-7 --axis model --json` |
