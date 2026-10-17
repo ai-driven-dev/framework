@@ -12,7 +12,7 @@ status: implemented
 | Field      | Value                                                     |
 | ---------- | --------------------------------------------------------- |
 | **Goal**   | Replace the previous telemetry with a deterministic, declaration-attributed token count for Claude Code |
-| **Source** | [`spec.md`](./spec.md), with [`context/target.md`](./context/target.md) and [`context/usage-record-contract.md`](./context/usage-record-contract.md) |
+| **Source** | [`spec.md`](./spec.md), with [`context/target.md`](./context/target.md) |
 
 ## Phases
 

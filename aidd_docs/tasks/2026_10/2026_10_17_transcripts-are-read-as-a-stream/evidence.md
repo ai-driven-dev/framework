@@ -51,7 +51,7 @@ Generated transcript of synthetic lines (fake ids, about 2 KB each, one usage li
 | this branch | 158,520,954 B (151 MB) | 1,580 | 158,520,954 | 69,402,624 B (66 MB) |
 | this branch | 421,389,954 B (402 MB) | 4,200 | 421,389,954 | 80,478,208 B (77 MB) |
 
-Rerun with [`memory-bench.mjs`](./memory-bench.mjs) after review round 1 (`node memory-bench.mjs <MB> [<cli src dir>]`, peak RSS of the reading process from `process.resourceUsage().maxRSS`; `origin/next` measured from its source extracted with `git archive`), `TMPDIR` in the scratchpad, files deleted by the script:
+Rerun with `memory-bench.mjs` after review round 1 (the bench was removed after the merge, the figures below are what it measured; peak RSS of the reading process from `process.resourceUsage().maxRSS`; `origin/next` measured from its source extracted with `git archive`), `TMPDIR` in the scratchpad, files deleted by the script:
 
 | Run | Transcript | Records | Offset saved | Peak RSS |
 | --- | --- | --- | --- | --- |
@@ -101,7 +101,7 @@ Four minors from [`review.md`](./review.md), applied.
 | 1 | The memory bound was overstated | usage contract and `telemetry.md`: a block, up to about three copies of the longest line, every record and every unrecognised line naming a directory |
 | 2 | Every line copied by `Buffer.concat` | a line whole in one block is decoded in place |
 | 3 | A file rewritten in place between two blocks could splice a line and save a wrong offset | after the last block, `fstat` of the handle: shorter than when the read began, and the read returns no position (the path check added here was dropped in round 2, see below); `ReadUsageUseCase` keeps none of that file's records, lines or position, so ingest keeps the one it had. A rewrite to the same size or larger is not seen: residual limit in the usage contract |
-| 4 | The bench was not kept | [`memory-bench.mjs`](./memory-bench.mjs), rerun above |
+| 4 | The bench was not kept | `memory-bench.mjs`, rerun above, then removed after the merge: probes stay out of task folders |
 
 ### Red run
 

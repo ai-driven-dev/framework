@@ -105,7 +105,6 @@ None.
 ## Context
 
 - Measurements, verified behaviours and the target shape: [`context/target.md`](context/target.md).
-- The common usage record and per-tool normalisation: [`context/usage-record-contract.md`](context/usage-record-contract.md).
-- Prototype readers and their mutation-proved fixtures: [`context/prototype/`](context/prototype/).
+- The common usage record, as shipped: [usage contract](../../../product/usage-contract.md). The draft record and the Python prototype readers were removed after the merge; git history keeps them.
 - Decision records kept: [hosted destination](../../../memory/internal/decisions/measurement-may-reach-a-hosted-destination.md),
   [price table](../../../memory/internal/decisions/a-price-table-is-the-destination-s.md).
