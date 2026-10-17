@@ -56,16 +56,27 @@ export class ReadUsageUseCase {
     const positions = new Map<string, TranscriptPosition>();
     const paths = await this.source.list();
     for (const path of paths) {
+      const records: UsageRecord[] = [];
+      const lines: DroppedLine[] = [];
+      const reasons: string[] = [];
       const read = await this.source.read(path, since.get(path) ?? null, writtenFrom, (line) => {
         const outcome = this.readLine(line);
-        candidates.push(...outcome.records);
-        for (const record of outcome.records) fileOf.set(record, path);
+        records.push(...outcome.records);
         // Only a line that gives no call names anything.
-        if (outcome.named?.cwd) dropped.push({ line, path, ...outcome.named });
-        unrecognised.push(...outcome.unrecognised.map((reason) => `${path}: ${reason}`));
+        if (outcome.named?.cwd) lines.push({ line, path, ...outcome.named });
+        reasons.push(...outcome.unrecognised.map((reason) => `${path}: ${reason}`));
       });
-      positions.set(path, read.position);
       if (read.skipped) skipped.add(path);
+      // Changed under the read: what it handed over may be spliced from two versions, so none
+      // of it counts and the file keeps its position, to be read again.
+      if (read.position === null) continue;
+      positions.set(path, read.position);
+      for (const record of records) {
+        candidates.push(record);
+        fileOf.set(record, path);
+      }
+      for (const line of lines) dropped.push(line);
+      for (const reason of reasons) unrecognised.push(reason);
     }
     return {
       records: foldUsage(candidates),

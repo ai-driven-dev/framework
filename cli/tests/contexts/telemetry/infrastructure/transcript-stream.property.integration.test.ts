@@ -40,7 +40,9 @@ async function readLines(source: TranscriptSource, path: string, since: Transcri
   const read = await source.read(path, since, EVERYTHING, (line) => {
     lines.push(line);
   });
-  return { ...read, lines };
+  const { position } = read;
+  if (position === null) throw new Error(`${path} changed under the read`);
+  return { ...read, position, lines };
 }
 
 describe("a transcript read as a stream", () => {

@@ -1,5 +1,5 @@
 import { constants, type Stats } from "node:fs";
-import { type FileHandle, open, readdir } from "node:fs/promises";
+import { type FileHandle, open, readdir, stat } from "node:fs/promises";
 import { join } from "node:path";
 import { isErrnoException } from "../../../kernel/reading/json-file.js";
 import { modifiedAtIfPresent } from "../../../kernel/reading/text-file.js";
@@ -55,7 +55,10 @@ async function eachLine(
     const read = block.subarray(0, bytesRead);
     let start = 0;
     for (let end = read.indexOf(NEWLINE); end !== -1; end = read.indexOf(NEWLINE, start)) {
-      const line = Buffer.concat([...pieces, read.subarray(start, end)]).toString("utf8");
+      const line =
+        pieces.length === 0
+          ? read.toString("utf8", start, end)
+          : Buffer.concat([...pieces, read.subarray(start, end)]).toString("utf8");
       each(line.endsWith("\r") ? line.slice(0, -1) : line);
       pieces = [];
       start = end + 1;
@@ -127,6 +130,15 @@ export class ClaudeTranscriptSourceAdapter implements TranscriptSource {
       }
       const { offset, restarted } = resumeOffset(since, now);
       const end = await eachLine(handle, offset, now.size, this.blockBytes, each);
+      // A transcript only grows. Shorter now, or another file at its path: it changed under the
+      // read, a line may be spliced from two versions, and no position past it can be trusted.
+      const there = await stat(path).catch(absentIsNothing);
+      if (
+        (await handle.stat()).size < now.size ||
+        (there !== null && identityOf(there) !== now.identity)
+      ) {
+        return { position: null, restarted, skipped: false };
+      }
       return {
         position: { offset: end, size: now.size, identity: now.identity },
         restarted,

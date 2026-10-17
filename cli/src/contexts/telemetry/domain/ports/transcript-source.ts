@@ -1,7 +1,10 @@
 import type { TranscriptPosition } from "../transcript-position.js";
 
 export interface TranscriptRead {
-  readonly position: TranscriptPosition;
+  /** `null`: the file shrank, or another took its path, while it was read. The lines handed over
+   * may be spliced from two versions: they are not to be counted, and the file is read again
+   * from where it stood. */
+  readonly position: TranscriptPosition | null;
   /** The file was not the one the position described, so its lines start at its beginning. */
   readonly restarted: boolean;
   /** Last written before `writtenFrom`: not read, and its position is its end. */

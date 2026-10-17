@@ -1,3 +1,4 @@
+import { truncateSync } from "node:fs";
 import { appendFile, cp, mkdir, mkdtemp, open, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
@@ -199,5 +200,45 @@ describe("reading a long transcript", () => {
     }).execute(new Map());
     expect(lines).toBe(3 * 1024);
     expect(readsBeforeFirstLine).toBeLessThan(reads.mock.calls.length);
+  });
+});
+
+describe("reading a transcript that changes under the read", () => {
+  it("keeps nothing it handed over and no position, so the next read starts again", async () => {
+    const alone = join(root, "alone");
+    await mkdir(join(alone, "p"), { recursive: true });
+    const path = join(alone, "p", "s.jsonl");
+    const usage = (id: number) =>
+      JSON.stringify({
+        type: "assistant",
+        sessionId: "s",
+        requestId: `r${id}`,
+        timestamp: "2026-10-08T12:00:00.000Z",
+        cwd: "/w",
+        message: {
+          id: `m${id}`,
+          model: "m",
+          usage: {
+            input_tokens: 1,
+            output_tokens: 1,
+            cache_read_input_tokens: 0,
+            cache_creation_input_tokens: 0,
+          },
+        },
+      });
+    await writeFile(path, `${usage(1)}\n{torn\n${usage(2)}\n`);
+    let seen = 0;
+    const reading = await new ReadUsageUseCase(
+      new ClaudeTranscriptSourceAdapter(alone, 16),
+      (line) => {
+        if (++seen === 2) truncateSync(path, 0);
+        return readClaudeUsageLine(line);
+      }
+    ).execute(new Map());
+    expect(seen).toBe(2);
+    expect(reading.records).toEqual([]);
+    expect(reading.unrecognised).toEqual([]);
+    expect(reading.fileOf.size).toBe(0);
+    expect(reading.positions.has(path)).toBe(false);
   });
 });

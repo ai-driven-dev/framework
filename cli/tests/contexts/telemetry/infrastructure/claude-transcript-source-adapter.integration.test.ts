@@ -1,4 +1,4 @@
-import { appendFileSync, truncateSync } from "node:fs";
+import { appendFileSync, renameSync, truncateSync, writeFileSync } from "node:fs";
 import {
   appendFile,
   cp,
@@ -48,7 +48,9 @@ async function readLines(
   const read = await source.read(path, since, writtenFrom, (line) => {
     lines.push(line);
   });
-  return { ...read, lines };
+  const { position } = read;
+  if (position === null) throw new Error(`${path} changed under the read`);
+  return { ...read, position, lines };
 }
 
 /** Every read asked of any file handle from now on. */
@@ -351,17 +353,38 @@ describe("reading a transcript in blocks of a few bytes", () => {
     expect((await readLines(inBlocksOf(5), path, read.position, EVERYTHING)).lines).toEqual(["d"]);
   });
 
-  it("stops where a file truncated while it reads ends, and reads it whole next time", async () => {
+  it("gives no position for a file truncated while it reads, so it is read again whole", async () => {
     const path = await file("aaa\nbbb\nccc\n");
     const lines: string[] = [];
     const read = await inBlocksOf(4).read(path, null, EVERYTHING, (line) => {
       if (lines.push(line) === 1) truncateSync(path, 0);
     });
     expect(lines).toEqual(["aaa"]);
-    expect(read.position).toMatchObject({ offset: 4, size: 12 });
+    expect(read.position).toBeNull();
     await appendFile(path, "new\n");
-    const next = await readLines(inBlocksOf(4), path, read.position, EVERYTHING);
-    expect(next).toMatchObject({ lines: ["new"], restarted: true });
+    expect((await readLines(inBlocksOf(4), path, null, EVERYTHING)).lines).toEqual(["new"]);
+  });
+
+  it("gives no position for a file rewritten shorter in place while it reads, whatever line that splices", async () => {
+    const path = await file("aaa\nbbbbbbb\nccc\n");
+    const read = await inBlocksOf(4).read(path, null, EVERYTHING, (line) => {
+      if (line === "aaa") writeFileSync(path, "xxxxxxxx\nyy\n");
+    });
+    expect(read.position).toBeNull();
+    expect((await readLines(inBlocksOf(4), path, null, EVERYTHING)).lines).toEqual([
+      "xxxxxxxx",
+      "yy",
+    ]);
+  });
+
+  it("gives no position for a file replaced at its path while it reads", async () => {
+    const path = await file("aaa\nbbb\nccc\n");
+    const other = join(projects, "other.jsonl");
+    await writeFile(other, "zzz\n");
+    const read = await inBlocksOf(4).read(path, null, EVERYTHING, (line) => {
+      if (line === "aaa") renameSync(other, path);
+    });
+    expect(read.position).toBeNull();
   });
 
   it("reads nothing past the size when its saved offset is beyond it", async () => {
