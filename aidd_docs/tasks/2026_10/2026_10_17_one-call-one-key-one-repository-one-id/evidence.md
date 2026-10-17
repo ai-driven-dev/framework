@@ -244,3 +244,54 @@ The n3 two-digit case, the n4 generator and the retry test passed against the co
 | M1-h | the retry writes its table complete before the rewrite | stopped at any write of a pending root's retry; writes its table before anything else |
 
 Re-run with them: D1-a to D1-d, m1, M1-a, M1-b, M1-d to M1-g, all killed again (M1-c gone with its guard).
+
+## Review round 3 (90/100): r1 to r4
+
+### r4 and r1: tests, each proven by a mutation applied alone, five runs each
+
+| # | Test | Mutation | Runs killed |
+| --- | --- | --- | --- |
+| r4 | a fixed batch mixing a requestless call with one that has a request id; the requestless call's earlier copy is three days away | `incoming.some(isKeyedBySession)` to `every` | 5 of 5 |
+| r4 | a table of another version, all else valid, is rejected | the version check dropped | 5 of 5 |
+| r4 | a table whose completion is no boolean, all else valid, is rejected | the completion check dropped | 5 of 5 |
+| r1 | the window property no longer skips a call an older CLI stored a copy of. It asserts the limit: the bounded read holds the call exactly once when a day of its window holds a copy of it on disk (read off the files, not through the adapter), never otherwise; the full read holds it once | a bounded read drops re-keyed lines (`usage-ledger-adapter.ts:96`) | 5 of 5 |
+| r1 | same | every read drops re-keyed lines | 5 of 5 |
+
+These tests passed against the code as it stood: the behaviour was right, but before them the r4 trigger was pinned only by chance, and the r1 exemption hid an undercount.
+
+### r3: Stryker on exactly the changed lines, under the lock
+
+`node scripts/run-mutation.mjs --changed <base>` mutates the `git diff -U0` ranges of `cli/src` since the merge base. The first runs:
+
+```txt
+--changed 57169330:   Report: reports/mutation/changed/ (score 98.8, 31 changed range(s) since 57169330)
+--changed origin/next: Report: reports/mutation/changed/ (score 97.2, 44 changed range(s) since origin/next)
+```
+
+The `origin/next` run left 7 survivors. Two were not equivalent; tests were added for both (commit `8086176b`), each proven by a mutation applied alone:
+
+| Survivor | Now |
+| --- | --- |
+| `legacy-usage-key.ts:17` `base.length > earlier.length` to `>=`, and to `true` | killed: a key that is only `:session:at` is no earlier key to strip |
+| `usage-ledger-adapter.ts:96` the re-keyed partition no longer marked unsettled (two mutants) | killed: a day holding an older CLI's timestamped key is rewritten when it is settled. The migration's full save had hidden it since `57169330` |
+
+Final runs, after `8086176b`:
+
+```txt
+--changed 57169330:   Instrumented 11 source file(s) with 83 mutant(s); Report: reports/mutation/changed/ (score 98.8, 31 changed range(s) since 57169330)
+--changed origin/next: Instrumented 15 source file(s) with 252 mutant(s); Report: reports/mutation/changed/ (score 98.8, 44 changed range(s) since origin/next)
+```
+
+Survivors left, all equivalent:
+
+| Survivor | Why it cannot be killed |
+| --- | --- |
+| `claude-transcript-usage.ts:16` `/#advisor\d+$/` to `/#advisor\d+/` | `#advisor<n>` is only ever written as a key's suffix; message and session ids hold no `#` |
+| `repository-aliases.ts:20` `text ?? ""` to `?? "Stryker was here!"` | a missing file then parses as no JSON, and `null` is returned either way |
+| `legacy-repository-identity.ts:9` `address === null` to `false` | `path` is `null` whenever `address` is |
+
+The checker's 95.11 (11 survivors) mutated whole line ranges, including lines this change does not touch, such as `claude-transcript-usage.ts:20-62` and `ingest-usage-use-case.ts:89`. The two figures measure different scopes.
+
+### Hand mutations, all rounds
+
+45, each killed: 23 in the first build, 12 in round 1, 3 in round 2 (`ADVISOR`, P-a, M1-h), 7 in round 3 (the five above, and the two Stryker survivors).

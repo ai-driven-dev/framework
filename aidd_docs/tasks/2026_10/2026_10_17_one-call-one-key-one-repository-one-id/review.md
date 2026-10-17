@@ -2,120 +2,101 @@
 status: changes-requested
 ---
 
-# Review: One call, one key; one repository, one id (round 2)
+# Review: One call, one key; one repository, one id (round 3)
 
-Head `a06f9857`, base `origin/next`. Independent check, read-only on the code. Round 1 (62/100, head `57169330`) is superseded by this report.
+Head `429948a3`, base `origin/next`. Independent check, read-only on the code. Round 2 (86/100, head `a06f9857`) is superseded by this report.
 
-**Verdict: changes requested, minors only. Score 86/100.**
+**Verdict: changes requested, minors only. Score 90/100.**
 
-No deal breaker. D1 and M1 hold under every interleaving the new code owns. One interleaving it does not own, lines an older CLI writes after the migration, still breaks the window property, and the contract says it does not. The project's rule forbids that ("Never state ... anything not just observed"). Every other finding is cheap.
+No deal breaker. n2 to n5 hold. n1 is documented, but the window property's exemption is wider than the limit it names: it also hides a bounded report that *loses* a call, which the limit does not allow. A hand mutation of that kind survives half the runs. The PR description still contradicts the new limit in two sentences. Its "98.8, one equivalent survivor" Stryker claim is unrecorded and not reproduced: a non-equivalent mutant of the D1 trigger survives a run.
 
 ## Deal breakers
 
 None.
 
-## Round 1 findings, re-checked
+## Round 2 findings, re-checked
 
 | # | Claim | Status | Evidence |
 | --- | --- | --- | --- |
-| D1 | a requestless store reads the whole ledger | fulfilled for the new CLI | `ledger-upkeep.ts:22-23`. Probe of 300 random runs (requestless copies up to ±5 days apart, requestful ±12 h, 4 ingests, then a full settle, compared with one ingest of all copies): `PROBE byte-identity mismatches 0 of 300`. The round 1 repro is now a test (`ledger-upkeep.integration.test.ts:220`) |
-| D1 | settle path | holds | `settleLedger` reads the window and folds. A call the new `storeCalls` stores is on disk once, so no window can miss a copy |
-| D1 | legacy monthly file | moot | `cli-v5.5.0` writes daily files only (`git show cli-v5.5.0:…/usage-ledger-adapter.ts`: monthly is "as an earlier version wrote it"). The migration's unpartitioned `save()` splits and removes any monthly file. A requestless store's full read marks every monthly file `unsettled`, and that store splits it |
-| D1 | deadlock, hook cost | holds | `ledger.load` takes no lock: nothing nests under `exclusively`. Measured on 250,000 records: `PROBE cost ms withRequest= 13 requestless= 1672 heapMB= 307`. The hook allows 110 s and the lock goes stale after 10 min |
-| M1 | a pending root is retried | fulfilled | `stored-usage-migration.ts:26-50`. Probe: retry twice is idempotent. A failure at each of writes 1 to 6, then a rerun, ends byte-identical to a clean retry: `crash mismatches= 0 of 6` |
-| M1 | a clone replaced at the same path | no misattribution | the alias is keyed by the origin's legacy id, never by the root. Probe: the table holds only `legacyRepositoryIdOf(B) → repositoryIdOf(B)` (`09ae01a7… → aecf4b10…`, confirmed). `OLD_A` stays unmapped and its calls keep `OLD_A`. That is the documented split, not a wrong id |
-| M1 | a root pending for good | cheap | `gone` costs one `realpath`, with no git spawn (`git-repository-locator-adapter.ts:33`). `unreadable` costs the git spawns per ingest. Nothing is written while the list is unchanged |
-| m1 | re-keying limited to `claude-code` | fulfilled | `legacy-usage-key.ts:14`; mutant killed |
-| m2 | damaged-table cost documented | fulfilled | `usage-contract.md` `repository-ids.json` row |
-| m3 | first-run cost measured | fulfilled | evidence.md: 4.5 s and 20.8 s |
-| m4 | wiring required | partial | see n5 |
-| m5 | stale reference | fulfilled | `legacy-repository-identity.ts:5` |
-| m6 | `period.ts` states both bounds | fulfilled | `period.ts:35-42` |
+| n1 | limit stated, claims qualified | fulfilled | `contract.md` Read-time row, older-CLI paragraph, new Limits row; `usage-contract.md` Key row, window paragraph, `repository-ids.json` row |
+| n1 | window property generates older-CLI requestless lines | partial | generated and red run recorded (evidence.md). Exemption too wide: see r1 |
+| n2 | six stale statements | fulfilled | `usage-contract.md` :59, :127, :164; `usage-ledger-adapter.ts:42-43` (header); `telemetry.md:55`; `contract.md` flowchart and Limits row now cite 1,672 ms vs 13 ms |
+| n3 | one `ADVISOR` pattern, `#advisor10` pinned | fulfilled | `claude-transcript-usage.ts:16`, imported by `legacy-usage-key.ts:1`; tests at `claude-transcript-usage.unit.test.ts:334`, `legacy-usage-key.unit.test.ts:19` |
+| n3 | guard deleted, no behaviour change | fulfilled | `stored-usage-migration.ts:29-38`: complete table, `pending: []` => `roots = []` (`[] ?? …` keeps `[]`), `locate([])` spawns no git, `ids.size === table.ids.size`, `0 < 0` false => return, zero writes. Idempotence and per-ingest cost unchanged. Only cost added: none (one `load()` was already there) |
+| n4 | migration property with `unreadable`/`gone`; failing retry writes | fulfilled | `stored-usage-migration.property.integration.test.ts:148-156, 321-325`; `stored-ids-and-keys.integration.test.ts:250`. Mutation M1-h reproduced: killed (below) |
+| n5 | one-line rationale | fulfilled | `usage-ledger-adapter.ts:65`, `resolution-store-adapter.ts:22` |
 
-Round 1 "Verified" properties re-checked, no regression: no two repositories share an id; no alias chains (a pending root adds only a legacy-to-new pair, and new ids carry no upper case and no `ssh.github.com`); no merge across key forms; write-then-rename crash order; the migration runs inside `ledger.exclusively`; hooks compute no id and no key.
+Earlier rounds, no regression: the `cli/src` diff since `a06f9857` is the regex move, the guard deletion and two comments. Identity, keys, fold, lock, crash order, hook path and M1 retry code are untouched. The D1 full read (`ledger-upkeep.ts:23`) is still pinned by the window property despite the exemption (mutation D1 below, killed 3 of 3). The six changed test files pass.
 
 ## Minor
 
-### n1. An older CLI's requestless lines, written after the migration, still break the window property (Medium)
+### r1. The window property's exemption also hides an undercount (Medium)
 
-- **Where:**
-  - the claims: `contract.md:74` (Read-time row), `contract.md:77`, `usage-contract.md:59` (Key row: "the ledger holds it once");
-  - the cause: `ledger-upkeep.ts:22`, which takes the full read only when an incoming record is requestless.
-- **Failure, reproduced:**
-  - Setup: the table is complete. cli-v5.5.0 then stores `msg_1:s-1:<at>` on 10-01 (output 9) and on 10-04 (output 1).
-  - A report bounded to 10-04 re-keys and counts the 10-04 copy. The full read folds both copies to the 10-01 one.
-  - Probe: `PROBE old-cli bounded= 1 full= 0`.
-  - Only a report with no period heals it, or a later requestless ingest by the new CLI.
-- **Likelihood:** low. 0 requestless lines were measured, and it needs a downgrade or a pinned older binary.
-- **Fix:** add a Limits row ("requestless lines an older CLI writes after the migration: a bounded report may count a copy until a report with no period settles the ledger"), and qualify `contract.md:74` and `usage-contract.md:59` to match.
+- **Where:** `report-window.property.integration.test.ts:380-387`. Every record of a call with an older-CLI copy is dropped from both sides of `expect(inside(bounded)).toEqual(inside(full))`.
+- **The documented limit** (`contract.md` Limits row, `usage-contract.md` `repository-ids.json` row): a bounded report "may count such a copy as well as the call's other copy". An over-count only. Reasoned: when the full read's winner is in the period, its day is in the window and no in-window copy can beat it, so the bounded read must return that same record. A bounded read never legitimately loses the call.
+- **Failure, reproduced by hand mutation:** `usage-ledger-adapter.ts:96`, insert before it `if (record !== read && holds !== undefined) continue;`, so every bounded read drops each re-keyed older-CLI line.
+  - A report with a period then silently omits those calls.
+  - The window property passed in 2 of 4 runs. It went red only when a later requestful store rewrote the older line's day and so deleted it from disk (`full.length` assertion), not through the exempted comparison.
+  - The other 74 telemetry test files passed with the mutant.
+- **Not an older-CLI case:** none found. The exemption also covers the new-CLI copies of an exempt call, but non-exempt requestless calls still kill the D1 mutant 3 of 3.
+- **Fix:** for exempt keys, assert the limit instead of skipping it. Each in-period full record of an exempt call must equal the bounded record of its key. The bounded read may hold an extra exempt record only when the full winner of that key is outside the period.
 
-### n2. Stale docs: the window and the cost claims no longer hold for every ingest
+### r2. The PR description contradicts the new limit
 
-| Where | Says | Now |
-| --- | --- | --- |
-| `usage-contract.md:164` | "Ingest reads its calls' days and the day on each side" | a requestless store reads every day and splits every monthly file. This contradicts the Key row at `:59` |
-| `usage-contract.md:127` | "The copies of one call have been observed less than a day apart" | true only of calls with a request id. Qualify it as `period.ts` does |
-| `usage-ledger-adapter.ts:41-42` | "An ingest reads the days around its calls … so its cost does not grow with the ledger" | false for a requestless store |
-| `cli/aidd_docs/memory/telemetry.md:55` | "rewritten once by the first ingest" | rewritten again when a pending root adds an id |
-| `contract.md:59` (flowchart) | `complete? yes → ingest as usual` | complete with roots pending → locate the pending roots, and maybe rewrite |
-| `contract.md:94` | "storing one reads the whole ledger (4.5 s at 250,000 records)" | 4.5 s is the migration's first run, git included. The requestless store measured 1,672 ms at 250,000 records. Cite the figure that was observed |
+- `## How it works`, Read-time rules: "Figures stay right in a half-migrated state, and when an older CLI writes again afterwards." Since n1 this holds only for a report with no period.
+- Requestless calls: "A bounded report then agrees with the full one." Same qualifier missing. The Limits bullet in the same body says the opposite.
+- "hand mutations (23, then 12 more, all killed)": round 3 added n3, P-a and M1-h.
+- **Fix:** qualify both sentences ("in a report with no period; see Limits") and update the count.
 
-### n3. Survivors in the changed lines (Stryker, narrow scope: 97.12 %, 101 killed, 3 survived)
+### r3. Stryker 98.8 is claimed in the PR, not recorded in evidence.md, and not reproduced
 
-- **`claude-transcript-usage.ts:80`, `\d+$` mutated to `\d$`: survives.** A key ending `#advisor10` is not recognised. This is harmless in practice: the main record of the same message is in the same batch and triggers the full read. It is still a guard the tests do not pin.
-  - Fix: add a two-digit case to `claude-transcript-usage.unit.test.ts:333`.
-  - Better: reuse `ADVISOR` from `legacy-usage-key.ts:4`. The regex is duplicated (DRY).
-- **`claude-transcript-usage.ts:80`, with the `$` anchor removed: equivalent.** `#advisor` only ever appears as the suffix the format appends (`:139`). Message and session ids carry no `#advisor<n>`.
-- **`stored-usage-migration.ts:28` mutated to `if (false) return`: equivalent.** A complete table with nothing pending reaches `locate([])`. The sizes are then equal and nothing is pending, so the run returns without writing. The guard is redundant ("a guard nothing fails for is not a guard", `coding-assertions.md`).
-  - Fix: delete it, or keep it and label it as a fast path.
+- The PR claims "Stryker on the lines changed since `57169330`: 98.8, one equivalent survivor". evidence.md has no such run: its last Stryker figure is 97.2.
+- Rerun (scope below, wider than the changed lines): `All files | 95.11 | 214 killed | 11 survived`. In lines changed since `57169330`, two survive, not one:
+  - `claude-transcript-usage.ts:16`, `$` anchor removed: equivalent, as the PR says.
+  - `ledger-upkeep.ts:23`, `incoming.some(isKeyedBySession)` to `incoming.every(...)`: **not equivalent** (r4).
+- **Fix:** record the command, scope, score and survivors in evidence.md, or drop the claim. "Never state … anything not just observed" (`coding-assertions.md`).
 
-The "12 of 12 hand mutations" claim stands. They were not exhaustive.
+### r4. The D1 trigger for a mixed batch is pinned only by chance (Medium)
 
-### n4. Generator gaps
-
-- The migration property (`stored-usage-migration.property.integration.test.ts`) generates no `unreadable` or `gone` roots. The retry path is covered only by example tests.
-- No test fails a write during a retry rewrite. My probe covered that case (above).
-- The window property drives `storeCalls` directly and never emits legacy-keyed lines written after the migration. That gap is why n1 went unseen.
-- Fix: add a pending root that turns readable to the migration generator, and an older CLI's timestamped requestless lines to the window generator. The second one should go red until n1 is either fixed or excluded by name.
-
-### n5. m4 is half done; the placement is arguable
-
-- **m4:** `UsageLedgerAdapter` (`usage-ledger-adapter.ts:58`) and `ResolutionStoreAdapter` (`resolution-store-adapter.ts:22`) still build their own `RepositoryAliasStoreAdapter`. `BindingSnapshotStoreAdapter` has its store injected. All three read the same file, so nothing is incorrect, but the wiring is inconsistent. Fix: inject the store everywhere, or say in one line why the two adapters build their own.
-- **Placement:** `ledger-upkeep.ts:1` makes the tool-agnostic upkeep import a Claude-format predicate. A per-format "copies unbounded in time" predicate would keep the format knowledge in its own module. No action is needed while there is only one format.
+- **Where:** `ledger-upkeep.ts:23`. With `every`, a batch holding one requestless call and one with a `requestId` takes the one-day window, so the requestless call's far copies are not read and the ledger holds it twice: the D1 defect, back for any transcript that mixes both kinds.
+- **Evidence:** survived the Stryker run. By hand, window property plus `ledger-upkeep.integration.test.ts`, three runs: passed, red, red (`× leave every bounded read equal to the full ledger filtered to its period`). Only the random generator catches it; no example test builds a mixed batch.
+- **Fix:** an example test in `ledger-upkeep.integration.test.ts`: a requestless copy stored days earlier, then one batch of its other copy plus a call with a `requestId`; the ledger holds the requestless call once. It must go red under `every`.
+- Also surviving, PR code outside the changed-since-`57169330` lines: `repository-aliases.ts:23`, dropping `object?.version !== FORMAT` or `typeof object.complete !== "boolean"`. A table with a wrong version or a non-boolean `complete` is read as valid. Low: only this CLI writes the file. Fix: one parse test each. `repository-aliases.ts:20` (`text ?? ""` to any non-JSON string) is equivalent.
 
 ## Tests-first
 
-- evidence.md records red runs for D1 (the pinned case and the window property's counterexample), M1 (10 failed, 15 passed) and m1.
-- Tests ship in the same commits as their code, as in round 1 (m7, accepted).
-- The migration property was extended, but it passed on the unfixed code. evidence.md says so.
+- n1: red run recorded before the exemption (evidence.md).
+- n3, n4: tests passed on the code as it stood, and evidence.md says so. Each is proven by a mutation instead. M1-h re-run here: killed.
 
 ## Checklist
 
 | Item | Result |
 | --- | --- |
-| No duplication | partial: the advisor regex is duplicated (n3) |
-| No incoherence | partial: n1 and n2 |
-| No over-engineering | partial: redundant guard at `stored-usage-migration.ts:28` (n3) |
-| No dead code or debug leftovers | holds: `git diff 57169330..a06f9857 -- cli/src` has no logs and no TODOs |
+| No duplication | holds: one `ADVISOR` |
+| No incoherence | partial: PR body vs Limits (r2) |
+| No over-engineering | holds. `olderOf` (`report-window…test.ts:335`) is a one-line helper, used twice, acceptable |
+| No dead code or debug leftovers | holds: `git diff a06f9857..429948a3 -- cli/src` adds no logs and no TODOs |
 
 ## Bundle
 
-`node scripts/check-bundle-size.mjs` prints `Bundle size: 700.7 KB / budget: 709 KB`, `OK: within budget`. `dist/cli.js` was built at the head commit's time. The budget is unchanged, so the headroom rule in `check-bundle-size.mjs` is not triggered. Headroom is now 1.2 %.
+`node scripts/check-bundle-size.mjs`: `Bundle size: 700.6 KB / budget: 709 KB`, `OK: within budget`. `dist/cli.js` 717,408 B, built 09:38, after the head commit (09:33). Matches the PR.
 
 ## Commands
 
+All CLI runs sandboxed (`HOME`, `XDG_CONFIG_HOME`, `AIDD_USER_CONFIG_DIR`, `AIDD_TELEMETRY_DIR`, `CLAUDE_CONFIG_DIR` in the scratchpad, `GIT_CONFIG_NOSYSTEM=1`). Mutations under `mutation.lock`, each file restored, `git status` clean after.
+
 | Command | Decisive output |
 | --- | --- |
-| `vitest run` on the 14 test files changed since `57169330` | `Test Files 14 passed`, `Tests 242 passed` |
-| scratch probe: N ingests plus a full settle vs one ingest, 300 runs | `PROBE byte-identity mismatches 0 of 300` |
-| scratch probe: requestless lines from an older CLI, after the migration | `PROBE old-cli bounded= 1 full= 0` |
-| scratch probe: 250,000-record ledger, one store | `withRequest= 13 requestless= 1672 heapMB= 307` |
-| scratch probe: M1 retry, failure at each write, replaced clone | `twice-idempotent= true crash mismatches= 0 of 6`; `OLD_A mapped? false` |
-| `stryker run -m <changed line ranges of 5 files>`, under `mutation.lock` | `97.12`, 101 killed, 3 survived |
-| `node scripts/check-bundle-size.mjs` | `700.7 KB / budget: 709 KB` |
+| `vitest run` on `application/legacy`, the window property, `claude-transcript-usage.unit`, `legacy-usage-key.unit`, `stored-ids-and-keys`, `ledger-upkeep` | `Test Files 6 passed`, `Tests 78 passed` |
+| mutant D1, `ledger-upkeep.ts:23` full read disabled, window property x3 | red 3 of 3, counterexamples with two non-older requestless copies |
+| mutant r1, `usage-ledger-adapter.ts:96` bounded read drops re-keyed lines, window property x3 then `vitest run tests/contexts/telemetry` | passed, red, passed; then `1 failed | 74 passed` (the window property only) |
+| mutant M1-h, `stored-usage-migration.ts:40` `complete: table !== null` | `× stopped at any write of a pending root's retry …`, `1 failed | 14 passed` |
+| `stryker run --mutate` on `ledger-upkeep.ts:1-24`, `stored-usage-migration.ts:10-70`, `claude-transcript-usage.ts:15-84`, `legacy-usage-key.ts:1-14`, `repository-aliases.ts:9-36`, `period.ts:35-42`, `ingest-usage-use-case.ts:74-98`, `usage-ledger-adapter.ts:42-66` | `95.11`, `214` killed, `11` survived; in-PR survivors listed in r3, r4. The rest (`claude-transcript-usage.ts:20-62`, `ingest-usage-use-case.ts:89`) are lines this PR does not change |
+| mutant r4, `ledger-upkeep.ts:23` `some` to `every`, window property + `ledger-upkeep` x3 | passed, red, red |
+| `node scripts/check-bundle-size.mjs` | `700.6 KB / budget: 709 KB` |
 
-Not run: the full suite (pre-push passed it at `a06f9857`: 6,808 tests).
+Not run: the full suite (pre-push passed it at `429948a3`: 6,809 tests).
 
 ## Score
 
-86 = 100, minus 6 (n1: a contract claim falsified by a probe), minus 4 (n2: six stale statements), minus 2 (n3), minus 1 (n4), minus 1 (n5).
+90 = 100, minus 3 (r1: the exemption hides an undercount, which a mutant survives), minus 2 (r2: the PR body contradicts the limit), minus 2 (r3: a mutation score unrecorded and contradicted by a rerun), minus 3 (r4: the D1 trigger for a mixed batch has no deterministic test; two unpinned table checks).
