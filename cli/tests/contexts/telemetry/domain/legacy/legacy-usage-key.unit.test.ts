@@ -32,6 +32,7 @@ describe("a key an earlier version stored, as it is keyed now", () => {
     );
     expect(currentKeyOf(call(`msg_A:xs-1:${AT}`))).toBe(`msg_A:xs-1:${AT}`);
     expect(currentKeyOf(call(`s-1:${AT}`))).toBe(`s-1:${AT}`);
+    expect(currentKeyOf(call(`:s-1:${AT}`))).toBe(`:s-1:${AT}`);
   });
 
   it("re-keys only what Claude Code keyed so, never another tool's key", () => {

@@ -243,6 +243,17 @@ describe("storing a requestless call, whose copies nothing bounds in time", () =
     expect(await readdir(join(root, "ledger"))).toEqual(["2026-10-04.jsonl"]);
   });
 
+  it("rewrites a day holding an older CLI's timestamped key when it settles that day", async () => {
+    const dir = join(root, "ledger");
+    await mkdir(dir, { recursive: true });
+    const older = stored("msg_1:s-1:2026-10-01T10:00:00.000Z", "2026-10-01T10:00:00.000Z", 1);
+    await writeFile(join(dir, "2026-10-01.jsonl"), `${JSON.stringify(older)}\n`);
+    await settleLedger(new UsageLedgerAdapter(dir, new PrivateStorageAdapter()));
+    expect(await readFile(join(dir, "2026-10-01.jsonl"), "utf8")).toBe(
+      `${JSON.stringify({ ...older, key: "msg_1:s-1" })}\n`
+    );
+  });
+
   it("still reads only the days around a call with a request id", async () => {
     const ledger = new UsageLedgerAdapter(join(root, "ledger"), new PrivateStorageAdapter());
     await storeCalls(ledger, [stored("msg_1:req_1", "2026-10-01T10:00:00.000Z", 1)]);
