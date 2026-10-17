@@ -10,9 +10,13 @@ const guarded = (zone: string, locale: string): NodeJS.ProcessEnv => ({
 });
 
 describe("the foreign clock guard's own check", () => {
-  it("accepts a zone far from UTC and a locale that writes numbers and dates otherwise", () => {
-    expect(foreignClockProblem(guarded("Pacific/Kiritimati", "ar_SA.UTF-8"))).toBeNull();
-  });
+  // Windows ICU takes its locale from the system, never LC_ALL: there no locale can be accepted.
+  it.skipIf(process.platform === "win32")(
+    "accepts a zone far from UTC and a locale that writes numbers and dates otherwise",
+    () => {
+      expect(foreignClockProblem(guarded("Pacific/Kiritimati", "ar_SA.UTF-8"))).toBeNull();
+    }
+  );
 
   it("refuses a locale ICU has no data for, which formats as English whatever its name", () => {
     expect(foreignClockProblem(guarded("Pacific/Kiritimati", "xx_BOGUS.UTF-8"))).toMatch(
