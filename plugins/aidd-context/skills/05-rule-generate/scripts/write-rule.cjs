@@ -5,8 +5,9 @@
 const fs = require("node:fs");
 const path = require("node:path");
 const { createHash, randomUUID } = require("node:crypto");
+const { inspectProject, prepareInstructionEdit, prepareInstructionRemoval } = require("./kilo-config.cjs");
 
-const TOOLS = ["claude", "cursor", "copilot", "codex", "opencode"];
+const TOOLS = ["claude", "cursor", "copilot", "codex", "opencode", "kilo"];
 const CATEGORIES = ["architecture", "standards", "programming-languages", "frameworks-and-libraries", "tooling", "testing", "design-patterns", "quality", "domain", "other"];
 const SHARED = ["codex", "opencode"];
 const SOURCE = "aidd_docs/rules";
@@ -25,7 +26,7 @@ function options(args) {
   const result = {};
   for (let i = 0; i < args.length; i++) {
     const key = args[i];
-    if (!["--project", "--tools", "--input", "--delete", "--publish", "--plan", "--check"].includes(key) || key in result) fail(`Unknown or repeated option: ${key}`);
+    if (!["--project", "--tools", "--input", "--delete", "--publish", "--plan", "--check", "--kilo-config"].includes(key) || key in result) fail(`Unknown or repeated option: ${key}`);
     result[key] = ["--publish", "--plan", "--check"].includes(key) ? true : args[++i];
     if (!result[key] || (typeof result[key] === "string" && result[key].startsWith("--"))) fail(`Missing value: ${key}`);
   }
@@ -37,7 +38,7 @@ function options(args) {
 
 function tools(value) {
   const selected = typeof value === "string" ? value.split(",") : value;
-  if (!Array.isArray(selected) || !selected.length || new Set(selected).size !== selected.length || selected.some((tool) => !TOOLS.includes(tool))) fail("Targets must be distinct confirmed tools: claude,cursor,copilot,codex,opencode.");
+  if (!Array.isArray(selected) || !selected.length || new Set(selected).size !== selected.length || selected.some((tool) => !TOOLS.includes(tool))) fail(`Targets must be distinct confirmed tools: ${TOOLS.join(",")}.`);
   return [...selected].sort();
 }
 
@@ -108,6 +109,7 @@ function nativePath(rule, tool) {
   const id = identity(rule.category, rule.slug);
   if (tool === "claude") return `.claude/rules/${id}.md`;
   if (tool === "cursor") return `.cursor/rules/${id}.mdc`;
+  if (tool === "kilo") return `.kilo/rules/${id}.md`;
   return `.github/instructions/${rule.category.slice(0, 2)}-${rule.slug.slice(2)}.instructions.md`;
 }
 
@@ -117,7 +119,9 @@ function renderNative(rule, tool, signed = true) {
   if (tool === "claude") fields = rule.paths.length ? `paths:\n${rule.paths.map((glob) => `  - ${quote(glob)}\n`).join("")}` : "";
   if (tool === "cursor") fields = `description: ${quote(rule.description)}\n${rule.paths.length ? `globs: ${quote(rule.paths.join(","))}\n` : ""}alwaysApply: ${!rule.paths.length}\n`;
   if (tool === "copilot") fields = `applyTo: ${quote(rule.paths.length ? rule.paths.join(",") : "**")}\n`;
-  const text = (fields ? `---\n${fields}---\n` : "") + rule.body;
+  if (tool === "kilo") fields = "";
+  const kiloScope = tool === "kilo" && rule.paths.length ? `Applies to: ${rule.paths.map(codeSpan).join(", ")}.\n\n` : "";
+  const text = (fields ? `---\n${fields}---\n` : "") + kiloScope + rule.body;
   safeText(text);
   return signed ? `${text}\n<!-- aidd_rule_output:path=${nativePath(rule, tool)} sha256=${hash(text)} -->\n` : text;
 }
@@ -240,6 +244,7 @@ function main() {
   const affected = new Set(selected);
   if (changed && previous.has(changed)) for (const tool of previous.get(changed).targets) affected.add(tool);
   const writes = new Map();
+  const configChoices = [];
   if (changed) writes.set(changed, prospective.has(changed) ? canonical(prospective.get(changed)) : null);
   for (const tool of affected) {
     if (SHARED.includes(tool)) continue;
@@ -253,6 +258,36 @@ function main() {
       writes.set(relative, next?.targets.includes(tool) ? renderNative(next, tool) : null);
     }
   }
+  if (affected.has("kilo")) {
+    const configWrites = new Map();
+    for (const name of new Set([...previous.keys(), ...prospective.keys()])) {
+      const old = previous.get(name);
+      const next = prospective.get(name);
+      if (!old?.targets.includes("kilo") && !next?.targets.includes("kilo")) continue;
+      const instruction = nativePath(next || old, "kilo");
+      const choice = inspectProject(root, instruction, opts["--kilo-config"]);
+      if (choice.needsChoice) fail(`Choose a Kilo config for ${instruction}: ${choice.candidates.map((item) => item.path).join(", ")}`);
+      if (!next?.targets.includes("kilo") && choice.multipleOwners) fail(`Multiple Kilo configs own ${instruction}; resolve references before deletion.`);
+      configChoices.push({ instruction, choice });
+      const config = choice.selectedPath;
+      const original = configWrites.has(config) ? configWrites.get(config) : read(config);
+      if (!configWrites.has(config)) {
+        const snapshot = choice.candidates.find((item) => item.path === config)?.snapshot;
+        if (snapshot) {
+          let stat;
+          try { stat = fs.lstatSync(target(config)); }
+          catch (error) { if (error.code !== "ENOENT") throw error; }
+          if (original === null || !stat || stat.dev !== snapshot.dev || stat.ino !== snapshot.ino || (stat.mode & 0o7777) !== snapshot.mode || hash(original) !== snapshot.hash) fail(`Kilo config changed after inspection: ${config}`);
+        } else if (original !== null) fail(`Kilo config appeared after inspection: ${config}`);
+      }
+      if (next?.targets.includes("kilo")) {
+        configWrites.set(config, prepareInstructionEdit(original ?? "{}\n", instruction).content);
+      } else if (original !== null) {
+        configWrites.set(config, prepareInstructionRemoval(original, instruction).content);
+      }
+    }
+    for (const [relative, content] of configWrites) writes.set(relative, content);
+  } else if (opts["--kilo-config"]) fail("--kilo-config requires a Kilo target.");
   if ([...affected].some((tool) => SHARED.includes(tool))) {
     const existing = read("AGENTS.md");
     const updated = renderShared(existing || "", nextRules);
@@ -262,22 +297,90 @@ function main() {
     }
     if (existing !== null || updated) writes.set("AGENTS.md", updated);
   }
-  // Preflight every destination and ownership above; no validation can first happen after mutation.
+  // Stage every result before publication. Recheck each snapshot at mutation
+  // time and restore completed replacements if a covered filesystem call fails.
+  const pending = [];
+  const createdDirs = [];
+  const staged = [];
+  const applied = [];
+  function stage(item, text, temporary) {
+    target(item.relative);
+    const mode = item.stat ? item.stat.mode & 0o7777 : undefined;
+    const fd = fs.openSync(temporary, "wx", mode === undefined ? 0o666 : mode);
+    staged.push(temporary);
+    try {
+      target(item.relative);
+      fs.writeFileSync(fd, text);
+      if (mode !== undefined && process.platform !== "win32") fs.fchmodSync(fd, mode);
+    } finally { fs.closeSync(fd); }
+  }
+  function checkConfigChoices() {
+    for (const { instruction, choice } of configChoices) {
+      const current = inspectProject(root, instruction, opts["--kilo-config"]);
+      if (current.selectedPath !== choice.selectedPath || JSON.stringify(current.candidates) !== JSON.stringify(choice.candidates)) {
+        fail(`Kilo config changed during publication: ${instruction}`);
+      }
+    }
+  }
+  // Preflight every destination before either read-only mode or publication.
   for (const relative of writes.keys()) target(relative);
+  checkConfigChoices();
   if (opts["--plan"]) return void process.stdout.write(JSON.stringify({ dryRun: true, files: [...writes.keys()] }) + "\n");
   if (opts["--check"]) {
     const drift = [...writes].filter(([relative, text]) => text !== read(relative)).map(([relative]) => relative);
     process.exitCode = drift.length ? 1 : 0;
     return void process.stdout.write(JSON.stringify({ drift }) + "\n");
   }
-  for (const [relative, text] of writes) {
-    const file = target(relative);
-    if (text === read(relative)) continue;
-    if (text === null) { fs.rmSync(file, { force: true }); continue; }
-    fs.mkdirSync(path.dirname(file), { recursive: true });
-    const temporary = `${file}.${randomUUID()}.tmp`;
-    try { fs.writeFileSync(temporary, text, { flag: "wx" }); fs.renameSync(temporary, file); }
-    finally { fs.rmSync(temporary, { force: true }); }
+  try {
+    for (const [relative, text] of writes) {
+      const file = target(relative);
+      let stat = null;
+      try { stat = fs.lstatSync(file); } catch (error) { if (error.code !== "ENOENT") throw error; }
+      if (stat && !stat.isFile()) fail(`Unsafe output type: ${relative}`);
+      const original = read(relative);
+      if (text === original) continue;
+      pending.push({ relative, file, text, original, stat });
+    }
+    checkConfigChoices();
+    for (const item of pending) {
+      target(item.relative);
+      let dir = path.dirname(item.file);
+      const missing = [];
+      while (dir !== root && !fs.existsSync(dir)) { missing.push(dir); dir = path.dirname(dir); }
+      for (const name of missing.reverse()) { fs.mkdirSync(name); createdDirs.push(name); }
+      if (item.text !== null) {
+        item.temporary = `${item.file}.${randomUUID()}.tmp`;
+        stage(item, item.text, item.temporary);
+      }
+    }
+    checkConfigChoices();
+    for (const item of pending) {
+      const now = target(item.relative);
+      let stat = null;
+      try { stat = fs.lstatSync(now); } catch (error) { if (error.code !== "ENOENT") throw error; }
+      if (Boolean(stat) !== Boolean(item.stat) || (stat && (stat.dev !== item.stat.dev || stat.ino !== item.stat.ino || (stat.mode & 0o7777) !== (item.stat.mode & 0o7777))) || read(item.relative) !== item.original) fail(`Output changed during publication: ${item.relative}`);
+      if (item.text === null) fs.rmSync(item.file);
+      else fs.renameSync(item.temporary, item.file);
+      applied.push(item);
+    }
+  } catch (error) {
+    const rollbackErrors = [];
+    for (const item of applied.reverse()) {
+      try {
+        if (item.original === null) fs.rmSync(item.file, { force: true });
+        else {
+          const restore = `${item.file}.${randomUUID()}.tmp`;
+          stage(item, item.original, restore);
+          target(item.relative);
+          fs.renameSync(restore, item.file);
+        }
+      } catch (rollback) { rollbackErrors.push(rollback.message); }
+    }
+    if (rollbackErrors.length) fail(`${error.message}; rollback failed: ${rollbackErrors.join("; ")}`);
+    throw error;
+  } finally {
+    for (const temporary of staged) fs.rmSync(temporary, { force: true });
+    for (const dir of createdDirs.reverse()) { try { fs.rmdirSync(dir); } catch (error) { if (error.code !== "ENOTEMPTY" && error.code !== "ENOENT") throw error; } }
   }
   process.stdout.write(JSON.stringify({ files: [...writes.keys()] }) + "\n");
 }

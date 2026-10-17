@@ -140,7 +140,7 @@
       "fileContains": {
         "aidd_docs/memory/ecosystem.md": [
           "flowchart",
-          "·",
+          "\u00b7",
           "ependabot"
         ],
         "aidd_docs/GUIDELINES.md": [
@@ -317,6 +317,556 @@
           "Ticketing"
         ]
       }
+    }
+  },
+  {
+    "plugin": "aidd-context",
+    "skill": "02-project-memory",
+    "evalName": "xeval-memory",
+    "name": "Kilo-only sync shares root memory and preserves user content",
+    "setup": {
+      "files": {
+        "kilo.json": "{}\n",
+        "aidd_docs/memory/architecture.md": "# Architecture\n\n- Node\n",
+        "AGENTS.md": "# User context\n\nKEEP_USER_CONTEXT\n"
+      }
+    },
+    "prompt": "Use the {{SKILL}} skill to sync the existing memory. Select only Kilo; approve adding its memory block and keeping the existing user text. Do not refresh or regenerate the bank. Do not wait for input.",
+    "expect": {
+      "filesExist": [
+        "AGENTS.md"
+      ],
+      "fileContains": {
+        "AGENTS.md": [
+          "KEEP_USER_CONTEXT",
+          "<!-- aidd_project_memory:start -->",
+          "[aidd_docs/memory/architecture.md](aidd_docs/memory/architecture.md)"
+        ]
+      },
+      "filesUnchanged": [
+        "kilo.json",
+        "aidd_docs/memory/architecture.md"
+      ],
+      "filesAbsent": [
+        "CLAUDE.md",
+        ".github/copilot-instructions.md",
+        ".kilocode/AGENTS.md"
+      ]
+    }
+  },
+  {
+    "plugin": "aidd-context",
+    "skill": "02-project-memory",
+    "evalName": "xeval-memory",
+    "name": "external project sync shares one AGENTS block across selected tools",
+    "setup": {
+      "files": {
+        "aidd_docs/memory/architecture.md": "# Architecture\n\n- Node\n",
+        "CLAUDE.md": "# Claude context\n\nKEEP_CLAUDE_CONTEXT\n",
+        "AGENTS.md": "# Shared context\n\nKEEP_SHARED_CONTEXT\n",
+        ".codex/config.toml": "",
+        ".opencode/opencode.json": "{}\n",
+        "kilo.json": "{}\n"
+      }
+    },
+    "prompt": "Use the {{SKILL}} skill to sync the existing memory from this external project into Claude, Codex, OpenCode and Kilo. All four selections and adding their memory blocks are approved. Keep user text, do not refresh the bank, and do not wait for input.",
+    "expect": {
+      "fileContains": {
+        "CLAUDE.md": ["KEEP_CLAUDE_CONTEXT", "@aidd_docs/memory/architecture.md"],
+        "AGENTS.md": ["KEEP_SHARED_CONTEXT", "[aidd_docs/memory/architecture.md](aidd_docs/memory/architecture.md)"]
+      },
+      "fileMatches": {
+        "AGENTS.md": "^(?:(?!<!-- aidd_project_memory:start -->)[\\s\\S])*<!-- aidd_project_memory:start -->(?:(?!<!-- aidd_project_memory:start -->)[\\s\\S])*<!-- aidd_project_memory:end -->(?:(?!<!-- aidd_project_memory:start -->)[\\s\\S])*$"
+      },
+      "filesUnchanged": ["aidd_docs/memory/architecture.md", ".codex/config.toml", ".opencode/opencode.json", "kilo.json"],
+      "filesAbsent": [".github/copilot-instructions.md", ".kilocode/AGENTS.md"]
+    }
+  },
+  {
+    "plugin": "aidd-context",
+    "skill": "02-project-memory",
+    "evalName": "xeval-memory",
+    "name": "sync preflight refuses before creating an earlier context",
+    "setup": {
+      "files": {
+        "kilo.json": "{}\n",
+        "aidd_docs/memory/architecture.md": "# Architecture\n\n- Node\n",
+        "AGENTS.md": "# User context\n<!-- aidd_project_memory:start -->\n"
+      }
+    },
+    "prompt": "Use the {{SKILL}} skill to sync the existing memory into Claude and Kilo. Both selections are approved. Do not repair malformed markers; refuse unsafe synchronization. Do not wait for input.",
+    "expect": {
+      "filesAbsent": [
+        "CLAUDE.md"
+      ],
+      "filesUnchanged": [
+        "AGENTS.md",
+        "kilo.json",
+        "aidd_docs/memory/architecture.md"
+      ],
+      "judge": "The sync stops at preflight, reports the malformed AGENTS.md block, and creates or changes no context file."
+    }
+  },
+  {
+    "plugin": "aidd-context",
+    "skill": "04-skill-generate",
+    "evalName": "xeval-kilo-skill",
+    "name": "Kilo native skill uses one canonical tree",
+    "setup": {
+      "files": {
+        "kilo.json": "{}\n"
+      }
+    },
+    "prompt": "Use the {{SKILL}} skill. Create verify-payload with a single verify action that reads assets/payload.txt and replies with its content. Name, purpose, action and test are confirmed. Select Kilo native only; do not select portable. After validating it, repeat the same request once and verify nothing changed. Do not wait for input.",
+    "expect": {
+      "filesExist": [
+        ".kilo/skills/verify-payload/SKILL.md",
+        ".kilo/skills/verify-payload/actions/01-verify.md"
+      ],
+      "filesAbsent": [
+        ".agents/skills/verify-payload/SKILL.md"
+      ],
+      "fileContains": {
+        ".kilo/skills/verify-payload/SKILL.md": [
+          "name: verify-payload",
+          "description:"
+        ]
+      },
+      "fileNotContains": {
+        ".kilo/skills/verify-payload/SKILL.md": [
+          "argument-hint:",
+          "allowed-tools:"
+        ]
+      },
+      "repeat": true
+    }
+  },
+  {
+    "plugin": "aidd-context",
+    "skill": "04-skill-generate",
+    "evalName": "xeval-kilo-skill",
+    "name": "Kilo portable choice shares exactly one tree with Codex",
+    "setup": {
+      "files": {
+        "kilo.json": "{}\n",
+        ".codex/config.toml": "# fixture\n"
+      }
+    },
+    "prompt": "Use the {{SKILL}} skill. Create verify-payload with one verify action that replies VERIFIED. Select Kilo portable and Codex explicitly. Name, purpose, action and test confirmed. I explicitly approve .agents/skills placement. Complete the flow without waiting for input.",
+    "expect": {
+      "filesExist": [
+        ".agents/skills/verify-payload/SKILL.md"
+      ],
+      "filesAbsent": [
+        ".kilo/skills/verify-payload/SKILL.md"
+      ],
+      "fileContains": {
+        ".agents/skills/verify-payload/SKILL.md": [
+          "name: verify-payload",
+          "description:"
+        ]
+      }
+    }
+  },
+  {
+    "plugin": "aidd-context",
+    "skill": "04-skill-generate",
+    "evalName": "xeval-kilo-skill",
+    "name": "Kilo cannot choose portable without agreement",
+    "setup": {
+      "files": {
+        "kilo.json": "{}\n"
+      }
+    },
+    "prompt": "Use the {{SKILL}} skill. Create verify-payload for Kilo but do not write until I choose a placement. I have not approved native or portable placement. Do not infer consent or answer for me.",
+    "expect": {
+      "filesAbsent": [
+        ".agents/skills/verify-payload/SKILL.md",
+        ".kilo/skills/verify-payload/SKILL.md"
+      ],
+      "filesUnchanged": [
+        "kilo.json"
+      ],
+      "stdoutMatches": ["placement|choose|native|portable"],
+      "judge": "The response asks for an explicit placement choice and does not write the skill."
+    }
+  },
+  {
+    "plugin": "aidd-context",
+    "skill": "04-skill-generate",
+    "evalName": "xeval-kilo-skill",
+    "name": "existing Kilo copies require resolution before any write",
+    "setup": {
+      "files": {
+        "kilo.json": "{}\n",
+        ".kilo/skills/verify-payload/SKILL.md": "# NATIVE_USER_COPY\n",
+        ".agents/skills/verify-payload/SKILL.md": "# PORTABLE_USER_COPY\n"
+      }
+    },
+    "prompt": "Use the {{SKILL}} skill. Modify verify-payload for Kilo. Two user copies exist; I have not resolved the collision. Do not repair, delete or choose between copies without asking.",
+    "expect": {
+      "filesUnchanged": [
+        "kilo.json",
+        ".kilo/skills/verify-payload/SKILL.md",
+        ".agents/skills/verify-payload/SKILL.md"
+      ],
+      "judge": "The generator requests a resolution and changes no copy."
+    }
+  },
+  {
+    "plugin": "aidd-context",
+    "skill": "04-skill-generate",
+    "evalName": "xeval-kilo-skill",
+    "name": "unsafe late Kilo target leaves earlier Claude target absent",
+    "setup": {
+      "files": {
+        "kilo.json": "{}\n",
+        ".kilo/skills/verify-payload": "USER_FILE_NOT_DIRECTORY\n"
+      }
+    },
+    "prompt": "Use the {{SKILL}} skill. Create verify-payload for Claude first and Kilo native second. Name, purpose, one verify action returning VERIFIED and its test are confirmed. Both targets approved. Do not replace conflicting user files; refuse the whole publication if any target is unsafe.",
+    "expect": {
+      "filesAbsent": [
+        ".claude/skills/verify-payload/SKILL.md"
+      ],
+      "filesUnchanged": [
+        "kilo.json",
+        ".kilo/skills/verify-payload"
+      ],
+      "stdoutMatches": ["refus|unsafe|conflict|target"],
+      "judge": "The preflight refuses the non-directory Kilo target before creating any Claude files."
+    }
+  },
+  {
+    "plugin": "aidd-context",
+    "skill": "04-skill-generate",
+    "evalName": "xeval-kilo-skill",
+    "name": "shared portable fields need resolution before writing",
+    "setup": {
+      "files": {
+        "kilo.json": "{}\n",
+        ".codex/config.toml": "# fixture\n"
+      }
+    },
+    "prompt": "Use the {{SKILL}} skill. Create verify-payload for Kilo portable and Codex on one shared destination, and emit license MIT in its frontmatter. Both targets and this requested field are explicit. If their field contracts conflict, ask me for a resolution; do not drop my requested field or answer for me.",
+    "expect": {
+      "filesAbsent": [
+        ".agents/skills/verify-payload/SKILL.md",
+        ".kilo/skills/verify-payload/SKILL.md"
+      ],
+      "filesUnchanged": [
+        "kilo.json",
+        ".codex/config.toml"
+      ],
+      "judge": "The generator requests a target or field resolution before writing because the shared Codex output strips optional Kilo fields."
+    }
+  },
+  {
+    "plugin": "aidd-context",
+    "skill": "04-skill-generate",
+    "evalName": "xeval-kilo-skill",
+    "name": "Kilo native plus Codex requires one placement resolution",
+    "setup": {
+      "files": {
+        "kilo.json": "{}\n",
+        ".codex/config.toml": "# fixture\n"
+      }
+    },
+    "prompt": "Use the {{SKILL}} skill. Create verify-payload for Kilo native and Codex. I have not approved portable placement or deselecting a target. If these targets would duplicate one skill across native and portable roots, ask me to resolve the placement before writing. Do not answer for me.",
+    "expect": {
+      "filesAbsent": [
+        ".agents/skills/verify-payload/SKILL.md",
+        ".kilo/skills/verify-payload/SKILL.md"
+      ],
+      "filesUnchanged": [
+        "kilo.json",
+        ".codex/config.toml"
+      ],
+      "judge": "The generator requests shared portable consent or a revised target selection, and publishes neither tree."
+    }
+  },
+  {
+    "plugin": "aidd-context",
+    "skill": "08-hook-generate",
+    "evalName": "xeval-kilo-hook",
+    "name": "Kilo-only session start gives guidance without files",
+    "setup": {
+      "files": {
+        "kilo.json": "{}\n",
+        "USER.txt": "KEEP\n"
+      }
+    },
+    "prompt": "Use the {{SKILL}} skill for Kilo only. The requested moment is session start; recommend the explicitly documented .kilo/plugin/ project path and cite session.created. Explicitly state that the docs do not confirm .kilo/plugins/ as a project path. Do not create a plugin or hook file.",
+    "expect": {
+      "filesAbsent": [
+        ".kilo/hooks.json",
+        ".kilo/plugin/aidd-hook.ts",
+        ".kilo/plugins/aidd-hook.ts"
+      ],
+      "filesUnchanged": [
+        "kilo.json",
+        "USER.txt"
+      ],
+      "projectTreeUnchanged": true,
+      "stdoutMatches": ["\\.kilo/plugin/", "session\\.created"],
+      "judge": "The response recommends the documented .kilo/plugin/ JS/TS project path, explicitly states that .kilo/plugins/ is not a confirmed project path, cites session.created as documented, and creates no file."
+    }
+  },
+  {
+    "plugin": "aidd-context",
+    "skill": "08-hook-generate",
+    "evalName": "xeval-kilo-hook",
+    "name": "unproved Kilo moment has no invented mapping",
+    "setup": {
+      "files": {
+        "kilo.json": "{}\n"
+      }
+    },
+    "prompt": "Use the {{SKILL}} skill for Kilo only. I need a hook exactly when an agent switches from planning to editing; keep that exact lifecycle meaning. If Kilo has no documented event for it, say so. No file writes.",
+    "expect": {
+      "filesUnchanged": [
+        "kilo.json"
+      ],
+      "judge": "The exact event is reported unsupported without claiming another event is equivalent, and no hook config, script or plugin is generated."
+    }
+  },
+  {
+    "plugin": "aidd-context",
+    "skill": "08-hook-generate",
+    "evalName": "xeval-kilo-hook",
+    "name": "invalid final mixed target stops before prior writes",
+    "setup": {
+      "files": {
+        "kilo.json": "{}\n",
+        ".github/hooks/aidd.json": "{\"version\":1,\"hooks\":{\"SessionStart\":\"INVALID\"}}\n"
+      }
+    },
+    "prompt": "Use the {{SKILL}} skill for Kilo, Claude and Copilot. Session start, shared project scope, simple no-op action, no matcher, host project, and every target is confirmed. Preserve user files. Preflight all targets before writing, including Copilot last; if its config is invalid, stop the entire write.",
+    "expect": {
+      "filesAbsent": [
+        ".claude/settings.json",
+        ".claude/hooks/aidd.sh",
+        ".kilo/hooks.json"
+      ],
+      "filesUnchanged": [
+        "kilo.json",
+        ".github/hooks/aidd.json"
+      ],
+      "stdoutMatches": ["invalid|refus|preflight|target"],
+      "judge": "The invalid Copilot event list is reported before Claude script/config writes; Kilo guidance is separate and no Kilo file is produced."
+    }
+  },
+  {
+    "plugin": "aidd-context",
+    "skill": "08-hook-generate",
+    "evalName": "xeval-kilo-hook",
+    "name": "existing exact AIDD entry and user duplicates remain unchanged",
+    "setup": {
+      "files": {
+        "kilo.json": "{}\n",
+        ".claude/settings.json": "{\"hooks\":{\"SessionStart\":[{\"hooks\":[{\"type\":\"command\",\"command\":\"bash ${CLAUDE_PROJECT_DIR}/hooks/user.sh\"}]},{\"hooks\":[{\"type\":\"command\",\"command\":\"bash ${CLAUDE_PROJECT_DIR}/hooks/user.sh\"}]},{\"hooks\":[{\"type\":\"command\",\"command\":\"bash ${CLAUDE_PROJECT_DIR}/hooks/aidd.sh\"}]}]}}\n",
+        "hooks/aidd.sh": "#!/usr/bin/env bash\ncat >/dev/null\nexit 0\n"
+      }
+    },
+    "prompt": "Use the {{SKILL}} skill for Kilo and Claude. Repeat the existing SessionStart shared-project hook with exact command bash ${CLAUDE_PROJECT_DIR}/hooks/aidd.sh, no matcher. Both targets and scope are confirmed. The existing AIDD entry is exact; preserve its bytes and the two user duplicate entries. Give Kilo guidance separately.",
+    "expect": {
+      "filesUnchanged": [
+        "kilo.json",
+        ".claude/settings.json",
+        "hooks/aidd.sh"
+      ],
+      "filesAbsent": [
+        ".kilo/hooks.json"
+      ],
+      "judge": "The existing exact AIDD entry is not duplicated, both user entries remain and no file is rewritten; Kilo receives only guidance."
+    }
+  },
+  {
+    "plugin": "aidd-context",
+    "skill": "08-hook-generate",
+    "evalName": "xeval-multi-tool-hook",
+    "name": "OpenCode-only session start gives plugin guidance without files",
+    "setup": {
+      "files": {
+        "opencode.json": "{}\n",
+        "USER.txt": "KEEP\n"
+      }
+    },
+    "prompt": "Use the {{SKILL}} skill for OpenCode only. I want a project plugin reacting to session start. Give sourced guidance for a documented event and path; do not generate a plugin, hook, config entry or script. No declarative scope or file choice is needed.",
+    "expect": {
+      "filesAbsent": [".opencode/plugins/aidd-hook.ts", ".opencode/hooks.json", "hooks/aidd.sh"],
+      "filesUnchanged": ["opencode.json", "USER.txt"],
+      "projectTreeUnchanged": true,
+      "stdoutMatches": ["\\.opencode/plugins/", "session\\.created"],
+      "judge": "OpenCode receives sourced JS/TS plugin guidance with the documented session.created event. The full project tree stays unchanged and no declarative hook file or script is requested."
+    }
+  },
+  {
+    "plugin": "aidd-context",
+    "skill": "08-hook-generate",
+    "evalName": "xeval-multi-tool-hook",
+    "name": "declarative session start keeps documented event names",
+    "setup": { "files": { "USER.txt": "KEEP\n" } },
+    "prompt": "Use the {{SKILL}} skill for Claude, Codex, Cursor and Copilot. The requested moment is exactly session start, with a simple no-op handler, no matcher, shared project scope, host project mode; all four targets and this scope are confirmed. Use each documented declarative event and format. Write Copilot's entry to .github/hooks/aidd.json. Preserve USER.txt.",
+    "expect": {
+      "filesExist": [".claude/settings.json", ".codex/hooks.json", ".cursor/hooks.json", ".github/hooks/aidd.json"],
+      "jsonValid": [".claude/settings.json", ".codex/hooks.json", ".cursor/hooks.json", ".github/hooks/aidd.json"],
+      "fileMatches": {
+        ".claude/settings.json": "\\\"SessionStart\\\"[\\s\\S]*\\\"type\\\"\\s*:\\s*\\\"command\\\"",
+        ".codex/hooks.json": "\\\"SessionStart\\\"[\\s\\S]*\\\"type\\\"\\s*:\\s*\\\"command\\\"",
+        ".cursor/hooks.json": "\\\"version\\\"\\s*:\\s*1[\\s\\S]*\\\"sessionStart\\\"[\\s\\S]*\\\"command\\\"\\s*:",
+        ".github/hooks/aidd.json": "\\\"version\\\"\\s*:\\s*1[\\s\\S]*\\\"SessionStart\\\"[\\s\\S]*\\\"type\\\"\\s*:\\s*\\\"command\\\""
+      },
+      "fileNotContains": {
+        ".claude/settings.json": ["\"matcher\""],
+        ".codex/hooks.json": ["\"matcher\""],
+        ".cursor/hooks.json": ["\"matcher\""],
+        ".github/hooks/aidd.json": ["\"matcher\""]
+      },
+      "filesUnchanged": ["USER.txt"],
+      "judge": "Each selected declarative tool receives its documented session-start event and native entry shape; a single generated handler may serve multiple tools. User bytes survive."
+    }
+  },
+  {
+    "plugin": "aidd-context",
+    "skill": "08-hook-generate",
+    "evalName": "xeval-multi-tool-hook",
+    "name": "declarative session start publishes supported non-Codex targets",
+    "setup": { "files": { "USER.txt": "KEEP\n" } },
+    "prompt": "Use the {{SKILL}} skill for Claude, Cursor and Copilot. The requested moment is exactly session start, with a simple no-op handler, no matcher, shared project scope, host project mode; all three targets and this scope are confirmed. Use each documented declarative event and format. Write Copilot's entry to .github/hooks/aidd.json. Preserve USER.txt.",
+    "expect": {
+      "filesExist": [".claude/settings.json", ".cursor/hooks.json", ".github/hooks/aidd.json"],
+      "jsonValid": [".claude/settings.json", ".cursor/hooks.json", ".github/hooks/aidd.json"],
+      "fileMatches": {
+        ".claude/settings.json": "\\\"SessionStart\\\"[\\s\\S]*\\\"type\\\"\\s*:\\s*\\\"command\\\"",
+        ".cursor/hooks.json": "\\\"version\\\"\\s*:\\s*1[\\s\\S]*\\\"sessionStart\\\"[\\s\\S]*\\\"command\\\"\\s*:",
+        ".github/hooks/aidd.json": "\\\"version\\\"\\s*:\\s*1[\\s\\S]*\\\"SessionStart\\\"[\\s\\S]*\\\"type\\\"\\s*:\\s*\\\"command\\\""
+      },
+      "fileNotContains": {
+        ".claude/settings.json": ["\"matcher\""],
+        ".cursor/hooks.json": ["\"matcher\""],
+        ".github/hooks/aidd.json": ["\"matcher\""]
+      },
+      "filesAbsent": [".codex/hooks.json"],
+      "filesUnchanged": ["USER.txt"],
+      "judge": "Claude, Cursor and Copilot receive their documented session-start events in valid native entries. No Codex target is written and user bytes survive."
+    }
+  },
+  {
+    "plugin": "aidd-context",
+    "skill": "08-hook-generate",
+    "evalName": "xeval-multi-tool-hook",
+    "name": "unsupported exact moment skips every declarative target",
+    "setup": { "files": { "USER.txt": "KEEP\n" } },
+    "prompt": "Use the {{SKILL}} skill for Claude, Codex, Cursor and Copilot. I require a hook exactly when an agent switches from planning to editing, not merely after a response or before a tool. Keep that exact meaning. If the documentation does not establish an equivalent event and its timing, do not publish for that target. No alternative moment is approved.",
+    "expect": {
+      "filesAbsent": [".claude/settings.json", ".codex/hooks.json", ".cursor/hooks.json", ".github/hooks/aidd.json", "hooks/aidd.sh"],
+      "filesUnchanged": ["USER.txt"],
+      "judge": "For each target without a documented equivalent of the exact planning-to-editing transition, the response explains the missing guarantee and publishes nothing. A nearby event is not silently substituted."
+    }
+  },
+  {
+    "plugin": "aidd-context",
+    "skill": "08-hook-generate",
+    "evalName": "xeval-multi-tool-hook",
+    "name": "tool failure does not become Codex PostToolUse",
+    "setup": { "files": { "USER.txt": "KEEP\n" } },
+    "prompt": "Use the {{SKILL}} skill for Codex only. I need a hook that fires after tool failures and never after successful tool calls. A nearby event that also fires on success is unacceptable. No different moment has been approved. Explain any documented limitation and do not publish an approximate hook.",
+    "expect": {
+      "filesAbsent": [".codex/hooks.json", "hooks/aidd.sh"],
+      "filesUnchanged": ["USER.txt"],
+      "judge": "Codex PostToolUse is rejected as an automatic equivalent because it observes success as well as failure. No Codex hook or handler is published; any broader alternative is described as different and requires confirmation."
+    }
+  },
+  {
+    "plugin": "aidd-context",
+    "skill": "08-hook-generate",
+    "evalName": "xeval-multi-tool-hook",
+    "name": "plugin-only guidance and declarative hook stay separate",
+    "setup": { "files": { "kilo.json": "{}\n", "opencode.json": "{}\n", "USER.txt": "KEEP\n" } },
+    "prompt": "Use the {{SKILL}} skill for OpenCode, Kilo and Claude. Session start is the exact requested moment. For Claude, the shared project scope, no matcher, simple no-op handler and host project mode are confirmed. Give sourced plugin guidance for OpenCode and Kilo, and publish only the documented Claude declarative hook. Do not write plugin-only files.",
+    "expect": {
+      "filesExist": [".claude/settings.json"],
+      "filesAbsent": [".kilo/hooks.json", ".kilo/plugin/aidd-hook.ts", ".opencode/plugins/aidd-hook.ts", ".opencode/hooks.json"],
+      "filesUnchanged": ["kilo.json", "opencode.json", "USER.txt"],
+      "judge": "Claude receives a valid SessionStart publication while OpenCode and Kilo receive separately sourced plugin guidance. No plugin-only file, config, or script is generated for either guidance target."
+    }
+  },
+  {
+    "plugin": "aidd-context",
+    "skill": "06-agent-generate",
+    "evalName": "xeval-kilo-agent",
+    "name": "Kilo agent rerun preserves its destination and user files",
+    "setup": {
+      "files": {
+        "kilo.json": "{}\n",
+        "USER.txt": "KEEP\n"
+      }
+    },
+    "prompt": "Use the {{SKILL}} skill to create a verify-agent subagent with one clear purpose for Kilo only. The name, quality score of 9, host-project mode and Kilo target are confirmed. When this same request is repeated, reuse the existing approved artifact without changing its destination or rewriting unchanged content. Do not wait for input.",
+    "expect": {
+      "filesExist": [".kilo/agents/verify-agent.md"],
+      "filesAbsent": [".kilocode/agents/verify-agent.md", ".claude/agents/verify-agent.md"],
+      "filesUnchanged": ["kilo.json", "USER.txt"],
+      "fileContains": { ".kilo/agents/verify-agent.md": ["description:", "mode: subagent"] },
+      "repeat": true
+    }
+  },
+  {
+    "plugin": "aidd-context",
+    "skill": "07-command-generate",
+    "evalName": "xeval-kilo-command",
+    "name": "Kilo workflow rerun preserves its destination and user files",
+    "setup": {
+      "files": {
+        "kilo.json": "{}\n",
+        "USER.txt": "KEEP\n"
+      }
+    },
+    "prompt": "Use the {{SKILL}} skill to create a one-shot verify-workflow command for Kilo only. The name, root command location, host-project mode and Kilo target are confirmed. Give it one objective, no arguments and no optional frontmatter. When this same request is repeated, reuse the existing approved artifact without changing its destination or rewriting unchanged content. Do not wait for input.",
+    "expect": {
+      "filesExist": [".kilo/commands/verify-workflow.md"],
+      "filesAbsent": [".kilocode/commands/verify-workflow.md", ".claude/commands/verify-workflow.md"],
+      "filesUnchanged": ["kilo.json", "USER.txt"],
+      "repeat": true
+    }
+  },
+  {
+    "plugin": "aidd-context",
+    "skill": "06-agent-generate",
+    "evalName": "xeval-kilo-agent",
+    "name": "last Kilo agent collision refuses before Claude write",
+    "setup": {
+      "files": {
+        ".kilo/agents/verify-agent.md": "USER AGENT\n",
+        "USER.txt": "KEEP\n"
+      }
+    },
+    "prompt": "Use the {{SKILL}} skill to create a verify-agent subagent with a clear one-purpose role and no optional fields. The name verify-agent, a quality score of 9, host-project mode and targets Claude first and Kilo last are confirmed. This is create, not modify: the existing Kilo agent is user-owned and must not be overwritten. Preflight every selected target before any write. If the last target collides, refuse the complete publication without creating the earlier Claude agent.",
+    "expect": {
+      "filesAbsent": [".claude/agents/verify-agent.md"],
+      "filesUnchanged": [".kilo/agents/verify-agent.md", "USER.txt"],
+      "judge": "The existing user-owned Kilo agent is reported as a preflight collision. No selected target is written, including the earlier Claude agent; the user file remains unchanged."
+    }
+  },
+  {
+    "plugin": "aidd-context",
+    "skill": "07-command-generate",
+    "evalName": "xeval-kilo-command",
+    "name": "last Kilo workflow collision refuses before Claude write",
+    "setup": {
+      "files": {
+        ".kilo/commands/verify-workflow.md": "USER WORKFLOW\n",
+        "USER.txt": "KEEP\n"
+      }
+    },
+    "prompt": "Use the {{SKILL}} skill to create a one-shot verify-workflow command with one objective, no arguments and no optional frontmatter. The name verify-workflow, root command location, host-project mode and targets Claude first and Kilo last are confirmed. This is create, not modify: the existing Kilo workflow is user-owned and must not be overwritten. Preflight every selected target before any write. If the last target collides, refuse the complete publication without creating the earlier Claude command.",
+    "expect": {
+      "filesAbsent": [".claude/commands/verify-workflow.md"],
+      "filesUnchanged": [".kilo/commands/verify-workflow.md", "USER.txt"],
+      "projectTreeUnchanged": true,
+      "stdoutMatches": ["refus|unsafe|conflict|collision|preflight"],
+      "judge": "The existing user-owned Kilo workflow is reported as a preflight collision, and the earlier Claude command is not created."
     }
   }
 ]

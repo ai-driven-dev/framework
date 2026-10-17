@@ -1,0 +1,12 @@
+[
+  { "name": "canonical directory", "project": "canonical", "kilo": true, "signals": [".kilo/"] },
+  { "name": "legacy directory", "project": "legacy", "kilo": true, "signals": [".kilocode/"] },
+  { "name": "root JSON", "project": "root-json", "kilo": true, "signals": ["kilo.json"] },
+  { "name": "root JSONC", "project": "root-jsonc", "kilo": true, "signals": ["kilo.jsonc"] },
+  { "name": "nested JSON", "project": "nested-json", "kilo": true, "signals": [".kilo/kilo.json"] },
+  { "name": "nested JSONC", "project": "nested-jsonc", "kilo": true, "signals": [".kilo/kilo.jsonc"] },
+  { "name": "shared AGENTS alone", "project": "agents-only", "kilo": false },
+  { "name": "OpenCode JSON alone", "project": "opencode-json", "kilo": false },
+  { "name": "OpenCode JSONC alone", "project": "opencode-jsonc", "kilo": false },
+  { "name": "multiple tools share memory", "project": "multi-tool", "kilo": true, "tools": ["kilo", "codex", "opencode", "cursor"] }
+]
