@@ -51,6 +51,14 @@ Generated transcript of synthetic lines (fake ids, about 2 KB each, one usage li
 | this branch | 158,520,954 B (151 MB) | 1,580 | 158,520,954 | 69,402,624 B (66 MB) |
 | this branch | 421,389,954 B (402 MB) | 4,200 | 421,389,954 | 80,478,208 B (77 MB) |
 
+Rerun with [`memory-bench.mjs`](./memory-bench.mjs) after review round 1 (`node memory-bench.mjs <MB> [<cli src dir>]`, peak RSS of the reading process from `process.resourceUsage().maxRSS`; `origin/next` measured from its source extracted with `git archive`), `TMPDIR` in the scratchpad, files deleted by the script:
+
+| Run | Transcript | Records | Offset saved | Peak RSS |
+| --- | --- | --- | --- | --- |
+| `origin/next` | 158,520,954 B | 1,580 | 158,520,954 | 371 MB |
+| `6780110b` | 158,520,954 B | 1,580 | 158,520,954 | 62 MB |
+| `6780110b` | 421,389,954 B | 4,200 | 421,389,954 | 67 MB |
+
 Before, peak memory grew with the tail: about 2.2 times the 151 MB transcript above the bare process. After, it stays some 25 to 35 MB above it at 151 MB and at 402 MB. `origin/next` was not run on the 402 MB file: by the ratio above it would need about 900 MB (inferred, not run), over what this machine can spare.
 
 ## Mutation
@@ -83,3 +91,59 @@ Every CLI and hook run with `HOME`, `XDG_CONFIG_HOME`, `AIDD_USER_CONFIG_DIR`, `
 | `node scripts/check-claude-tokens-end-to-end.cjs cli/dist/cli.js` | exit 0, `2 calls, 393 tokens, all on task demo, ticket T-1, and on task demo in this repository` |
 | same, `--attended` | exit 0, same, `; asked, answered by the hook, kept across /clear` |
 | `pnpm lint`, `pnpm typecheck` | run by the pre-commit hook of every commit (exit 0). Run by hand before `1522c00d`: lint clean but one warning in `uninstall-use-case.ts`, present on `origin/next` |
+
+## Review round 1
+
+Four minors from [`review.md`](./review.md), applied.
+
+| # | Finding | Change |
+| --- | --- | --- |
+| 1 | The memory bound was overstated | usage contract and `telemetry.md`: a block, up to about three copies of the longest line, every record and every unrecognised line naming a directory |
+| 2 | Every line copied by `Buffer.concat` | a line whole in one block is decoded in place |
+| 3 | A file rewritten in place between two blocks could splice a line and save a wrong offset | after the last block, `fstat` of the handle and `stat` of the path: shorter than when the read began, or another file at the path, and the read returns no position; `ReadUsageUseCase` keeps none of that file's records, lines or position, so ingest keeps the one it had. A rewrite to the same size or larger is not seen: residual limit in the usage contract |
+| 4 | The bench was not kept | [`memory-bench.mjs`](./memory-bench.mjs), rerun above |
+
+### Red run
+
+The four tests written first, on `5d6df36d`'s code:
+
+```txt
+× keeps nothing it handed over and no position, so the next read starts again
+× gives no position for a file truncated while it reads, so it is read again whole
+× gives no position for a file rewritten shorter in place while it reads, whatever line that splices
+× gives no position for a file replaced at its path while it reads
+AssertionError: expected [ { tool: 'claude-code', …(14) } ] to deeply equal []
+AssertionError: expected { offset: 4, size: 12, …(1) } to be null
+AssertionError: expected { offset: 12, size: 16, …(1) } to be null
+AssertionError: expected { offset: 12, size: 12, …(1) } to be null
+Tests  4 failed | 40 passed (44)
+```
+
+The in-place rewrite saved offset 12 of a 16-byte file whose new content is 12 bytes: the wrong offset the review described.
+
+### Hand mutations
+
+| Mutation | Tests turned red |
+| --- | --- |
+| Size check removed | gives no position for a file truncated while it reads; for a file rewritten shorter in place; keeps nothing it handed over and no position |
+| Path identity check removed | gives no position for a file replaced at its path while it reads |
+| Path check without its absent case (`true && identityOf(there)`) | reads a file deleted while it reads as it was |
+| Torn read says `skipped: true` | gives no position for a file truncated while it reads |
+| Torn read still counted by `ReadUsageUseCase` | keeps nothing it handed over and no position |
+| Fast path decodes from the block's start | 16 tests, S1 among them |
+| Fast path off (`false`) | none: the concat path gives the same string, equivalent |
+
+### Mutation
+
+`pnpm test:mutation:telemetry` under the lock on `6780110b`: 96.6, with `:138` `there !== null` → `true` and `:140` `skipped: false` → `true` alive; `65f4a161` adds the deletion test and asserts `skipped`. Rerun: **96.6**, floor 96, `read-usage-use-case.ts` 30 killed of 30. Changed-line survivors in the adapter, all equivalent: `:48` `size + from`, `:51` `at <= size`, `:59` fast path `false` (the concat path decodes the same bytes), `:68` `start <= bytesRead` and `true` (an empty piece). The rest (`:22`, `:27`, `:29`, `:102`, `:147`) are on lines this change does not touch.
+
+### Gates, on `65f4a161` (the commit after it adds only the bench and this file)
+
+| Gate | Result |
+| --- | --- |
+| `cd cli && pnpm test` | `Test Files 514 passed \| 1 skipped (515)`, `Tests 6740 passed \| 1 skipped (6741)` |
+| `pnpm smoke` | `Bundle size: 696.1 KB / budget: 709 KB` (712,832 B), `PASS: 132 FAIL: 0 SKIP: 1 · coverage 100%` |
+| `pnpm test:mutation:telemetry` | 96.6, floor 96 |
+| end-to-end token checks, plain and `--attended` | exit 0, `2 calls, 393 tokens, all on task demo, ticket T-1, …` |
+| `pnpm lint`, `pnpm typecheck` | by hand before `6780110b`: one warning in `uninstall-use-case.ts`, present on `origin/next`; `tsc` clean. Pre-commit hook passed on every commit |
+| `node --test 'scripts/__tests__/**/*.test.js'` | not rerun: nothing under `scripts/` or the plugins changed since `1522c00d` (460 passed) |
