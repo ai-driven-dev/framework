@@ -1,6 +1,6 @@
 # Review: Nothing is lost silently
 
-- Rounds: 3
+- Rounds: 4
 - Started: 2026-10-17
 
 ## Round 1 · r-7c3e
@@ -201,3 +201,50 @@ Run in this round (sandboxed HOME, XDG, AIDD, CLAUDE_CONFIG_DIR, `GIT_CONFIG_NOS
   - → Add `/work/unreadable` to `PLACES`, flip it readable before the final ingest, and compare with the oracle.
   - 🟢 minor, test coverage.
 - `plugins/aidd-telemetry/skills/01-usage/references/envelope.md:57` : "nothing is stored for it until it can" is true, but it no longer says that the calls are then stored retroactively. Someone answering "will I lose them?" gets no answer. → Add "then its calls are stored". 🟢 minor, skill clarity.
+
+## Round 4 · r-4ad5
+
+- Date: 2026-10-17
+- By: Baptiste LAFOURCADE
+- Diff: `8f1b9686...4ad5547e` (round-3 fixes: `e6f91006...4ad5547e`)
+- Axes: code, functional, relevancy
+- Verdict: approved, with minors
+- Score: 8.5/10. 7/8 met, 0 unmet, 1 unverified at runtime; round-3 findings 5/6 fixed, 1 partly; no deal breaker, 0 major, 5 minor
+
+### Criteria
+
+- [x] 1. The hook's leftovers counted by a later report. Verified at runtime for the first time: `tests/e2e/telemetry-journey.e2e.test.ts`, built from this head by its own global setup, `Tests 4 passed (4)`.
+- [x] 2. A clone that never opted in, or work after `off`, leaves nothing in `left-out.txt`. The hold writes nothing. "moves on past a directory git refuses that no clone it knows of consents in" and "moves on past a call of a clone it knows, made when that clone did not consent" pin the narrower hold. Green.
+- [x] 3. Re-ingesting counts nothing twice. P3 now re-reads a held transcript (`/work/locked`) and still matches one ingest byte for byte. Green.
+- [x] 4. Unrecognised ledger lines survive. `usage-ledger-adapter`, `ledger-upkeep` and its property: green.
+- [x] 5. P1 to P4 hold. Green. P3 now holds: `many.lock(true)` for every ingest but the last (`left-out.property.integration.test.ts:230`, `:239`). `evidence.md` records P3 red under R3-c and R3-d.
+- [x] 6. Tests first. The round-3 red run fails on behaviour (`expected [ true, true ] to deeply equal [ false, false ]`, `expected undefined to be 3`, P3 `Property failed after 1 tests`). Mutations R3-a to R3-e are recorded, not reproduced (read-only round).
+- Unverified at runtime: 7. Mutation 96.6, claimed at `59b4811e`. Stryker was not run (low RAM). One survivor is mislabelled (finding below).
+- [x] 8. Bundle. `cli/dist/cli.js` built at 03:08, after `c93462c8`: `712014` bytes = 695.3 KB, under 709 KB. The raise follows the policy in `check-bundle-size.mjs:8-9`: its own commit (`7287c9ce`, `chore(cli)`), a registry line, and 709 / 695.3 = 1.97 % headroom (at most ~2 %). "+1.3 KB over next's 694.0 KB" was not remeasured. The criterion text itself is stale (finding below).
+
+Run in this round (sandboxed HOME, XDG, AIDD, CLAUDE_CONFIG_DIR, `GIT_CONFIG_NOSYSTEM=1`): ingest unit, left-out property, consent-scenarios, read-usage, report unit (`Tests 181 passed (181)`); ledger-upkeep and its property, ledger adapter, report-window property, telemetry display (`Tests 89 passed (89)`); telemetry-journey e2e (`Tests 4 passed (4)`). The worktree is clean afterwards.
+
+### Round 3 findings, rechecked
+
+- Unbounded hold (major): fixed. `ResolutionRun.mayConsent` (`directory-resolver.ts:104-107`) holds only when a clone remembered at that exact directory has an interval covering the call's time. The check reads only `roots.json` and the consent log, never the clock, so it is deterministic. For an undated call or a line, `at` is the run's `now`, as its verdict already is. The damaged log is excluded before it (`ingest-usage-use-case.ts:114`). Round 2's scenario B still holds: `on` remembers its root (`remember-own-root.ts`), and "broken config" in `consent-scenarios` stores `c1` once the config is mended. Residual, stated: a consenting clone that stays unreadable is held until repaired (finding below).
+- Undated calls and lines outside the round-2 rule: fixed. `measured` holds on `unreadable-consent` with the same rule (`ingest-usage-use-case.ts:116-122`). "holds an undated call and a line of a clone that consents but cannot be read, and keeps them once it can" pins it. The masking dated call was removed from "says it again on every run".
+- Damaged-log reason: fixed in the code comment (`:109-111`), the test name, `contract.md:43` and `usage-contract.md:91`.
+- Subagent worktree recovery: partly fixed. The Recovery column now says "none for a subagent's worktree" (`usage-contract.md:336`), and `contract.md` Limits names it. No follow-up issue was opened: `gh issue list --search subagent` shows none.
+- P3 without an unreadable directory: fixed (`/work/locked`). P3 exercises the `unreadable` set path only (git config refused, directory located, so remembered in the same run). The `locate`-refused path with an earlier memory is covered by the real-git "broken config" scenario, not by a property.
+- `envelope.md:57`: fixed. It now says a clone that had opted in gets its calls stored, and any other directory does not.
+
+### Findings
+
+- `ingest-usage-use-case.ts:113-115`, `directory-resolver.ts:104-107`, `usage-contract.md:91`, `:341` : the hold is now bounded by the clone's repair, but not by time.
+  - A clone that opted in and that git refuses for good (`chown` to another user, a share unmounted under the same path) is held forever. Every transcript with one call there is re-read from its pre-hold position by every SessionStart hook and every report. That cost grows with each new session in that clone.
+  - This is stated ("Cost: while a clone that consents stays unreadable…", and `contract.md` Limits). It is acceptable: the person opted in, every report counts `unreadable-consent`, and the loss is recoverable.
+  - Two gaps remain in the statement. The Recovery column (`usage-contract.md:341`) names only "repair the clone". The other ways out are not named: `aidd telemetry forget --yes` (it removes the consent log, so `mayConsent` refuses), or removing or moving the clone (`gone` then resolves from memory). `off` is not a way out, because it refuses an unreadable git config. Round 3's inferred cascade is also unstated: past the hook's 110 s kill (`catch-up.cjs:6`), positions are saved last, so no position is saved for any clone. It is narrower now but not gone.
+  - → Add "or `forget --yes`" to the Recovery column, and one clause on the hook timeout. 🟢 minor, docs.
+- `evidence.md`, Round 3 "Telemetry mutation", row `ingest-usage-use-case.ts:120` `outcome.skipped === "unreadable-consent"` → `true`, "equivalent in practice" : this mutant is not equivalent.
+  - Scenario: `/w` was a consenting clone, remembered, its interval open. Its `.git` is removed while the directory stays, and `observeOpenConsents` leaves an `absent` clone's interval open (`directory-resolver.ts:130`). `/w` then resolves `outside-repo`, but `mayConsent("/w", now)` is true.
+  - Under the mutant, an undated call or a line there is held forever. Under the real code it moves on. No test kills it.
+  - → Relabel it as a test gap, or add the test: an undated call in a directory that was a consenting clone and is now outside any repository moves on. 🟢 minor, test coverage and evidence accuracy.
+- `ingest-usage-use-case.ts:114` `path ?? ""`, `:133` `record.cwd ?? ""` : two fallbacks that no input reaches. Stryker reports both as "no coverage". `held.add("")` would be a silent no-op if one ever fired. → Type `DroppedLine.path` and the `fileOf` lookup so that neither can be missing, or leave it as is. The bytes saved may not justify the change. 🟢 nit, lean.
+- `aidd_docs/tasks/2026_10/2026_10_16_nothing-is-lost-silently/contract.md`, Acceptance row 8 : it still reads "Bundle within 695 KB, never raised". `7287c9ce` raised the budget to 709 KB. → Restate it as "within the budget; a raise in its own commit with a registry line, per `check-bundle-size.mjs`". 🟢 minor, docs versus code.
+- `directory-resolver.ts:105` : `mayConsent` matches only the exact directory remembered. A session whose `cwd` is a subdirectory of a consenting clone that no read saw readable (`on` remembers the root only) moves on when git refuses the clone. Its calls are lost, and only that run says it. "A directory no read saw readable" covers this in the contract, but a reader would not guess that a subdirectory of an opted-in clone counts as one. → Say "the directory itself, not its clone's root" in that sentence. 🟢 minor, docs.
+- Carried from round 3: the follow-up issue for the subagent worktree loss (`never-seen-alive`) is still not opened. 🟢 minor, scope.

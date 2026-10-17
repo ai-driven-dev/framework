@@ -308,7 +308,7 @@ At `59b4811e`: **96.6** (floor 96). Survivors on changed lines, beyond the five 
 | `ingest-usage-use-case.ts:133` `record.cwd ?? ""` | `"Stryker was here!"` | no coverage: an `unreadable-consent` call always has a directory (`no-cwd` is judged first) |
 | `ingest-usage-use-case.ts:118` `at !== null` | `true` | equivalent: `dayOf(null)` is `null` |
 | `ingest-usage-use-case.ts:120` `"skipped" in outcome && …` | `\|\|` | equivalent: a stored outcome has no `skipped`, so the comparison is false; checked by hand (M-120) |
-| `ingest-usage-use-case.ts:120` `outcome.skipped === "unreadable-consent"` | `true` | equivalent in practice: any other skip means no clone remembered there consented at that time, so `mayConsent` refuses the hold |
+| `ingest-usage-use-case.ts:120` `outcome.skipped === "unreadable-consent"` | `true` | not equivalent: killed in round 4 by "moves on past an undated call of a directory its clone left, though that clone consents" (`outside-repo` of a remembered consenting clone); red under the mutant, recorded below |
 
 ### Gates, at `c93462c8`
 
@@ -320,3 +320,8 @@ At `59b4811e`: **96.6** (floor 96). Survivors on changed lines, beyond the five 
 | `check-claude-tokens-end-to-end.cjs cli/dist/cli.js` (sandboxed) | `2 calls, 393 tokens, all on task demo, ticket T-1, and on task demo in this repository` |
 | same, `--attended` | `…; asked, answered by the hook, kept across /clear` |
 | `pnpm exec lefthook run pre-push` | `✔️ cli-knip`, `✔️ cli-test` |
+
+## Round 4 minors
+
+- `ingest-usage-use-case.ts:120` `=== "unreadable-consent"` → `true`, by hand: `× moves on past an undated call of a directory its clone left, though that clone consents`, `Tests  1 failed | 1454 passed (1455)`. Green with the code as it is.
+- The `?? ""` fallbacks at `:114` and `:133` stay: `fileOf.get` returns `string | undefined` and `record.cwd` is `string | null`, and dropping them would take a type assertion.
