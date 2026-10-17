@@ -216,3 +216,50 @@ AssertionError: expected { files_read: +0, records: 1, …(5) } to match object 
 | `check-claude-tokens-end-to-end.cjs cli/dist/cli.js` (sandboxed) | `2 calls, 393 tokens, all on task demo, ticket T-1, and on task demo in this repository` |
 | same, `--attended` | `…; asked, answered by the hook, kept across /clear` |
 | `pnpm exec lefthook run pre-push` | `✔️ cli-knip`, `✔️ cli-test` |
+
+## Round 2 fixes
+
+### Red run
+
+`pnpm exec vitest run` on the ingest unit tests and the display tests, before any round-2 code:
+
+```txt
+× keeps where a transcript stood before a call whose consent could not be read, and stores it once it can
+  AssertionError: expected true to be false
+× says it again on every run while its consent still cannot be read, and keeps nothing of it
+  AssertionError: expected +0 to be 1
+× lists the calls it did not store, by reason            (and 4 more display cases: "by this read")
+  AssertionError: expected [ …(2) ] to deeply equal [ …(2) ]
+Tests  10 failed | 280 passed (290)
+```
+
+These fail on behaviour. Two cases in that run were dropped with the features they tested (`here`, `consentsAt`, see the contract), and the `never-seen-alive` case was rewritten to pin the stated loss. The report-level case and the earlier-position case were added after the advisor review; the mutations below prove them.
+
+### Mutations, by hand
+
+| Mutation | Red |
+| --- | --- |
+| R2-a: nothing held | 5 failed, the `broken config` consent scenario among them |
+| R2-b: held while the consent log is damaged | "moves on while the consent log cannot be trusted…" |
+| R2-c: `never-seen-alive` held too | "says a call of a directory gone … once, moves on…", P3 |
+| R2-d: a held transcript taken back to its start, not its earlier position | "keeps a transcript's earlier position, not its start…" |
+| R2-e: the wrong reasons held | 6 failed |
+
+### Bundle
+
+`711,575 B` (694.9 KB of 695) at `b13669ae`. `consentsAt` (remembering a directory only for a clone that consents) and `here` (recording the directory a command runs in) cost about 330 B and were dropped; the hold-back fits by tracking each record's file, and the lock and the report destructuring what they use.
+
+### Telemetry mutation
+
+At `b13669ae`: **96.5** (floor 96). Survivors on changed lines: the five recorded above, and `ingest-usage-use-case.ts:127` `fileOf.get(record) ?? ""` → `"Stryker was here!"`, no coverage: every record read has its file.
+
+### Gates, at `b13669ae`
+
+| Gate | Shortest decisive line |
+| --- | --- |
+| `cd cli && pnpm test` (pre-push `cli-test`) | `Tests  6718 passed \| 1 skipped (6719)` |
+| `node --test 'scripts/__tests__/**/*.test.js'` | `ℹ pass 460` `ℹ fail 0` |
+| `pnpm smoke` (sandboxed) | `PASS: 132   FAIL: 0   SKIP: 1   ·   coverage 100%`; `Bundle size: 694.9 KB / budget: 695 KB` |
+| `check-claude-tokens-end-to-end.cjs cli/dist/cli.js` (sandboxed) | `2 calls, 393 tokens, all on task demo, ticket T-1, and on task demo in this repository` |
+| same, `--attended` | `…; asked, answered by the hook, kept across /clear` |
+| `pnpm exec lefthook run pre-push` | `✔️ cli-knip`, `✔️ cli-test` |

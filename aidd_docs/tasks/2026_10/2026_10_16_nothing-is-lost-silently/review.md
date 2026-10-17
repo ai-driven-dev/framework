@@ -1,6 +1,6 @@
 # Review: Nothing is lost silently
 
-- Rounds: 1
+- Rounds: 2
 - Started: 2026-10-17
 
 ## Round 1 · r-7c3e
@@ -81,3 +81,54 @@
   - The unit test pins the info and warn levels.
   - No action.
   - 🟢 minor, scope (accepted).
+
+## Round 2 · r-ddbc
+
+- Date: 2026-10-17
+- By: Baptiste LAFOURCADE
+- Diff: `8f1b9686...78fbc530`
+- Axes: code, functional, relevancy
+- Verdict: changes-requested
+- Score: 4/8 met, 0 unmet, 4 unverified at runtime, 0 out of the diff
+
+### Criteria
+
+- Unverified at runtime: 1. What the catch-up hook measured and could not store is counted by a report run later. `cli/tests/e2e/telemetry-journey.e2e.test.ts` "says in a report what the catch-up hook measured and could not store…" reads correctly (hook, then `report --json`, `left_out: {undated: 1, unrecognised: 1}`), its red run on `f51c7f99` is recorded in `evidence.md:165-170`. Not re-run: the e2e needs the built binary. The criterion holds only for the plan's narrowed meaning of "measured" (see the first finding).
+- [x] 2. A clone that never opted in, or work after `off`, leaves no byte of this. `ingest-usage-use-case.ts:109-122` keeps only when `resolve` answers `stored`; `left-out.property.integration.test.ts:244-247` asserts no `left-out.txt` without the consenting place; the unit cases "keeps nothing of an undated call or a line … never opted in" and "keeps nothing of a call its clone did not consent to then, though it consents now" are green. The edge where a thing has no time of its own is a finding below.
+- [x] 3. Re-ingesting counts nothing twice: P3 (`left-out.property`, `forget` of positions between ingests, byte equality of `left-out.txt` and envelope) and "adds nothing when every position is forgotten…". Green: 10 files, `Tests 242 passed (242)`, sandboxed.
+- [x] 4. An unrecognised ledger line survives every rewrite and is counted: `usage-ledger-adapter.ts:98-131` collects every non-record line of the partitions it rewrites, monthly ones to the first day, writes before any `rm`; adapter tests and P2 green.
+- [x] 5. P1 to P4 hold: P1/P2 `ledger-upkeep.property`, P3 `left-out.property` (150 runs, oracle `expectedLeftOut` written from the contract table, bounded equal to full), P4 `report-window.property` now seeds `left-out.txt` (`:124-131`, `:236`, `:247`) and compares the bounded envelope to the full one byte for byte. All green in this round. Round 1's coverage gap on bounded-versus-full is closed.
+- Unverified at runtime: 6. Tests first, each guard proven by a mutation. Red runs recorded in `evidence.md:143-170`, 13 hand mutations in `:172-188`. Not reproduced: this round edits no code. The red run is mostly a `TypeError` on the renamed port, not the behaviour (see Findings).
+- Unverified at runtime: 7. Telemetry mutation 96.7, 5 survivors on changed lines (`evidence.md:199-207`). Stryker not run (low RAM). Each explanation checked against the code and holds: `ingest-usage-use-case.ts:112` `at !== null` is equivalent because `dayOf(null)` fails `ZONED.test` and returns `null` (`stored-usage.ts:31`); `left-out-adapter.ts:31` `?? ""` is equivalent (no `\n<reason> ` in the mutant text); `report-filter.ts:52` is equivalent (the loop sets every flag); `usage-ledger-adapter.ts:112` and `measurement-erasure-adapter.ts:14` are race-only lines.
+- Unverified at runtime: 8. Bundle within 695 KB: claimed `711,256 B` (694.6 KB) at `6fe224d7` (`evidence.md:190-192`), no source change since. Not rebuilt.
+
+### Findings
+
+- `cli/src/contexts/telemetry/application/ingest-usage-use-case.ts:109-124`, `:144` : M1 is closed for two reasons out of seven. A call the hook reads and does not store for `never-seen-alive` or `unreadable-consent` is still counted only by that run, which the hook runs `--quiet`, and the positions move on at `:144`. No later report ever says it.
+  - Scenario A, `never-seen-alive`: a clone has run `on`. An agent works in a git worktree of it (Claude Code `isolation: worktree`), which is removed before the next ingest. The worktree is the same clone (`git-repository-locator-adapter.ts:36-41` names a clone by `--git-common-dir`), so these calls had consent. At the next SessionStart the hook reads them, `directory-resolver.ts:163-167` answers `never-seen-alive`, nothing is kept, the positions advance. A `report --json` afterwards prints `files_read: 0`, every `not_stored` at `0` and `left_out` at `0`.
+  - Scenario B, `unreadable-consent`: in an opted-in clone, git refuses the `.git` once (dubious ownership after a `chown`, or `realpath` gets `EACCES`). `locate` answers `unreadable` (`git-repository-locator-adapter.ts:34`, `:38`), so `resolve` returns `unreadable-consent` (`directory-resolver.ts:173`). Same silent loss after the user fixes it.
+  - Here an unknown becomes a zero, which the contract forbids. The resolver's own comment says such a directory "may be a clone: not known to be outside any" (`directory-resolver.ts:171-172`). The plan classes these with consent exclusions (`plan.md` Decisions, `usage-contract.md` Left out first bullet), but neither is a "no".
+  - → For `unreadable-consent`, keep the transcript's position before the first call so judged, so the next ingest reads it again. That keeps nothing on disk, so consent is safe, and storing is idempotent. For `never-seen-alive`, either record the session's working directory as seen alive at SessionStart, or name it in the contract's Left out limits as a loss the hook leaves unsaid, and open a follow-up issue.
+  - 🟡 major, fit.
+- `aidd_docs/product/usage-contract.md:53` : the contract still quotes the old output: "a line that is no usage line is not counted". Both commands now print `UNRECOGNISED_WORDS` from `cli/src/presentation/display/telemetry-display.ts:15`: "…is never a call, and is kept apart when its clone is measured." Round 1's finding on this sentence is half fixed: the code changed, the doc did not. → Quote the current string, or stop quoting it and link to `UNRECOGNISED_WORDS`. 🟡 major, docs versus code.
+- `cli/src/contexts/telemetry/application/ingest-usage-use-case.ts:112`, `:121` : a thing with no usable time is judged by consent at the read. Two consequences:
+  - An undated call made while the clone was `off`, read after `on` again, leaves a 41 B hash. That is a trace of work after `off`, which `usage-contract.md:269` and `:315` say never happens.
+  - One made while the clone was on and read after `off` is lost silently.
+  - Both are stated in the contract table ("at the time of the read") and in `contract.md` Limits. Neither is cross-referenced from the Consent section that makes the promise.
+  - → Add one line to the Consent section naming the exception. Or fail closed: keep an undated thing only when the clone's consent covers every moment since the transcript's previous position.
+  - 🟢 minor, consent edge.
+- `cli/src/contexts/telemetry/application/ingest-usage-use-case.ts:109-112` : `measured` calls `resolver.resolve` on the directories of undated calls and of lines that are no usage line, which no ingest resolved before. `resolve` remembers a live directory in `roots.json` (`directory-resolver.ts:179`, `:185-202`), including one in a clone that never opted in. There is a precedent: `roots.json` already records such directories for dated calls (`usage-contract.md:320`). But this is a new path that writes on behalf of what was not measured, and no test pins `roots.json` after an undated-only read. → Accept it and note it beside the `roots.json` row, or resolve these without remembering. 🟢 minor, privacy.
+- `aidd_docs/tasks/2026_10/2026_10_16_nothing-is-lost-silently/evidence.md:149-163` : the round-1 fixes' red run fails mostly on `TypeError: ledger.load is not a function` and `…addNoDay is not a function`, so the tests did not fail for the reason they name (`aidd_docs/memory/coding-assertions.md:7`). `evidence.md:163` acknowledges this and leans on the hand mutations (R1-a to S-134), which this round did not reproduce. → Keep it as recorded, and next time stub the new port first so the red run is behavioural. 🟢 minor, process.
+- `cli/src/presentation/display/telemetry/telemetry-report-display.ts:126-136` : a report whose own ingest read an undated call prints both "Not stored: 1 call with no usable time." (this run) and "Kept from every read: 1 call with no usable time." (cumulative). Only the second line names its scope, so a reader may add the two and get 2. → Say "this run" on the run-only lines of the report, as the envelope reference does. 🟢 minor, clarity.
+
+Round 1 findings, rechecked on this head:
+
+- Clear keys of every call left out: fixed. `left-out-adapter.ts:20-23` stores `sha256(reason\0of)` cut to 32 hex characters. It keeps only what `resolve` answers `stored` for. The e2e asserts no `left-out.txt` for the clone that never opted in.
+- Bounded versus full with things left out: fixed (criterion 5).
+- `unrecognised_shapes` with two meanings: fixed in code. Ingest and report both use `reading.unrecognised.length` (`ingest-usage-use-case.ts:151`, `report-usage-use-case.ts:149`). The contract quote is still stale (finding above).
+- Mixed dated and undated copies: documented in `contract.md` Limits and in `usage-contract.md` Left out limits.
+- Growth: now 41 or 46 B per entry, only for a clone that consents.
+- One class with two ports: split into `left-out-adapter.ts`.
+- `startsWith` level: replaced by `{ warn, text }`.
+- `updated` grouped: fixed.
+- Envelope meaning change: avoided with the new `coverage.left_out` field. `not_stored` and `unrecognised_shapes` keep their run-only meaning. The 01-usage skill files `answer.md` and `references/envelope.md` are updated.
