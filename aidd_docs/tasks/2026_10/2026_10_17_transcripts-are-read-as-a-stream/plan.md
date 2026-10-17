@@ -1,6 +1,6 @@
 ---
 objective: "A transcript's unread tail is read a block at a time, with the same lines and positions as before, byte for byte."
-status: in-progress
+status: done
 ---
 
 # Plan: Transcripts are read as a stream

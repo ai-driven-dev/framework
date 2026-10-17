@@ -1,5 +1,5 @@
 ---
-status: in-progress
+status: done
 ---
 
 # Transcripts are read as a stream
