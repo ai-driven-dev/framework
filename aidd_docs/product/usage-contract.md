@@ -104,7 +104,7 @@ What an ingest measured and could not store is kept in `ledger/left-out.txt`, so
 - `AIDD_TELEMETRY=0`: nothing read, object is `{"version": 2, "refused": "AIDD_TELEMETRY=0"}`.
 - The text report labels an `absent` person `anonymous`; the envelope keeps `kind: absent`, `key: null`.
 - A report ingests first: what that read found is its `run`.
-- A report with `--days`, `--from` or `--to` reads only the days of its period and the day on each side; with none it reads the whole ledger. The copies of a call with a `requestId` have been observed less than a day apart, and under that bound both print the same figures; a call with none is held once by the ingest that stores it, so no bound is needed. Outside these, only a report with no period folds every copy of a call: copies an older CLI stores after the migration are one such case. `run.skipped_ledger_lines` counts the lines of the partitions read.
+- A report with `--days`, `--from` or `--to` reads only the days of its period and the day on each side; with none it reads the whole ledger. The copies of a call with a `requestId` have been observed less than a day apart, and under that bound both print the same figures; a call with none is held once by the ingest that stores it, so no bound is needed. Outside these, only a report with no period folds every copy of a call: copies an older CLI stores after the migration are one such case.
 - No path, working directory or branch. `session` keys are full session ids, `repository` keys are hashes.
 
 ### Filters
@@ -316,6 +316,7 @@ None observable by the CLI.
 | Key changed by hand, then no hook or ingest before next `on` | interval stays open until observed; calls before observation covered, after turning off included | any session start, prompt or ingest observes it |
 | Machine clock | judged by transcript timestamp. Stamped inside an interval: covered whenever written; future-dated: covered by an open interval; outside: by stamp alone. File mtime more than a day behind its calls (set back, lagging network fs): not read. Copied transcripts: read only if written after first local `on`, stored only for a clone opted in here | - |
 | Worktree made and removed between two ingests | `never-seen-alive`, said only by the run that read it: a hook's run says nothing | for a `claude --worktree` session, the session start inside it sees it alive; none for a subagent's worktree |
+| A month file (`ledger/<YYYY-MM>.jsonl`) left by an unreleased build between #993 and #1031 | ignored: neither read nor reported | `aidd telemetry forget` removes the whole ledger |
 | No birth time | a clone reusing a deleted clone's path and inode is taken for it; of two at one directory, the later is told apart only from first seen | - |
 | Linux refuses `statx` (seccomp, kernel before 4.11) | birth = change time; identity moves on any git dir entry change, `on` included; clone stops being measured and asked | fails closed: `off` closes by key token at path |
 | Moved or renamed clone | new clone. Old interval open while path empty, closed when another directory appears; nothing stored or asked at new path until `on`. Back at same path, same identity: same clone, still measured | - |

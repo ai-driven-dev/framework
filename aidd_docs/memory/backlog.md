@@ -43,5 +43,5 @@ The board is moved by hand, by a human or an agent through `gh`. No workflow adv
 ## Relations
 
 - An issue's branch and pull request carry the routing: the branch prefix decides the target, per `vcs.md`.
-- A `aidd_docs/` task folder holds `contract.md`, `plan.md` with its phases folded in, and `evidence.md`. The review lives in the pull request, not in a file, and no executable code or prototype goes in the folder: probes stay in the scratchpad.
-- A task folder is grouped by its parent document (`plan.md`, then `master-plan.md`, then `spec.md`), which goes to `done` when its pull request merges. A sub-document's status never moves that parent.
+- A new `aidd_docs/` task folder holds `contract.md`, `plan.md` with its phases folded in, and `evidence.md`. The review lives in the pull request, not in a file, and no executable code or prototype goes in the folder: probes stay in the scratchpad. In this repository this overrides the `phase-<n>.md` that `aidd-dev:01-plan` writes and `aidd-dev:02-implement` reads, and the `review.md` that `aidd-dev:05-review` writes; folders made before this rule keep their files.
+- A task folder is grouped by its parent document (`plan.md`, then `master-plan.md`, then `spec.md`), which goes to a Done status (`done` or `implemented`) when its pull request merges. A sub-document's status never moves that parent.
