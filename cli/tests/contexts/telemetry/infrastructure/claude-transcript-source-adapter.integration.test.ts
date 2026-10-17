@@ -195,6 +195,7 @@ describe("reading a transcript from a byte offset", () => {
     const read = await readLines(adapter, join(projects, "gone.jsonl"), null, EVERYTHING);
     expect(read.lines).toEqual([]);
     expect(read.skipped).toBe(false);
+    expect(read.restarted).toBe(false);
   });
 
   it("tells when the oldest of the given transcripts was last written, in any order", async () => {
@@ -243,7 +244,12 @@ describe("not reading a transcript last written before a given instant", () => {
     await writeFile(path, "one\ntwo\npartial");
     await utimes(path, OLD, OLD);
     const read = await readLines(adapter, path, null, FROM);
-    expect(read).toMatchObject({ lines: [], skipped: true, position: { offset: 8, size: 15 } });
+    expect(read).toMatchObject({
+      lines: [],
+      skipped: true,
+      restarted: false,
+      position: { offset: 8, size: 15 },
+    });
     await appendFile(path, " line\nthree\n");
     expect((await readLines(adapter, path, read.position, EVERYTHING)).lines).toEqual([
       "partial line",
