@@ -26,6 +26,8 @@ const path = require("node:path");
 
 const WRONG = 1;
 const BROKEN = 2;
+/** The `aidd telemetry report --json` shape this check reads. */
+const ENVELOPE_VERSION = 2;
 const RUN_TIMEOUT_MS = 120_000;
 const WAIT_MS = 60_000;
 const API_KEY = "sk-ant-e2e-not-a-real-key-0000000000";
@@ -263,6 +265,12 @@ function compare(label, actual, expected) {
  * repository, against the billed calls. */
 function judge({ billed, byTask, byTicket, here, prompts = PROMPTS.length }) {
   if (billed.length < prompts) return { code: BROKEN, message: `the API billed ${billed.length} calls for ${prompts} prompts` };
+  // The figures are read as envelope version 2 shapes them: another version cannot be judged.
+  for (const [label, report] of [["--axis task", byTask], ["--axis ticket", byTicket], ["--task demo --repository .", here]]) {
+    if (report?.version !== ENVELOPE_VERSION) {
+      return { code: BROKEN, message: `the report ${label} is envelope version ${report?.version}, not ${ENVELOPE_VERSION}` };
+    }
+  }
   const expected = expectedTotals(billed);
   const rowOf = (report, key) => report?.rows?.find((row) => row.kind === "value" && row.key === key);
   const wrong = [

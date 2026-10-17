@@ -40,9 +40,9 @@ const reported: Extract<ReportResult, { status: "reported" }> = {
     ],
     totals: tally(4, 1),
   },
-  coverage: {
+  coverage: { records: 4, leftOut: { undated: 2, unrecognised: 5 } },
+  run: {
     filesRead: 3,
-    records: 4,
     unrecognised: 1,
     notStored: {
       "outside-repo": 0,
@@ -55,8 +55,7 @@ const reported: Extract<ReportResult, { status: "reported" }> = {
     },
     consentLogDamaged: false,
     oldestTranscriptAt: "2026-09-20T08:00:00.000Z",
-    skippedLedgerLines: 0,
-    leftOut: { undated: 2, unrecognised: 5 },
+    skippedLedgerLines: 6,
   },
 };
 
@@ -65,7 +64,7 @@ describe("the JSON envelope of a report", () => {
     const envelope = reportEnvelopeOf(reported);
     expect(Object.keys(envelope)[0]).toBe("version");
     expect(envelope).toMatchObject({
-      version: 1,
+      version: 2,
       period: { from: "2026-10-01", to: null },
       axis: "task",
     });
@@ -97,17 +96,34 @@ describe("the JSON envelope of a report", () => {
     expect(envelope.unknown_records).toBe(1);
   });
 
-  it("states the coverage in snake case, and nothing about where the data lives", () => {
+  it("states what the figures rest on, in snake case, and nothing about where the data lives", () => {
     const envelope = reportEnvelopeOf(reported);
-    expect(envelope.coverage).toEqual({
-      files_read: 3,
+    expect(envelope.coverage).toStrictEqual({
       records: 4,
+      left_out: { undated: 2, unrecognised: 5 },
+    });
+  });
+
+  it("puts what the read that printed it found apart, last, so the rest is the figures", () => {
+    const envelope = reportEnvelopeOf(reported);
+    expect(Object.keys(envelope)).toEqual([
+      "version",
+      "period",
+      "axis",
+      "filters",
+      "rows",
+      "totals",
+      "unknown_records",
+      "coverage",
+      "run",
+    ]);
+    expect(envelope.run).toStrictEqual({
+      files_read: 3,
       unrecognised_shapes: 1,
-      not_stored: reported.coverage.notStored,
+      not_stored: reported.run.notStored,
       consent_log_damaged: false,
       oldest_transcript_at: "2026-09-20T08:00:00.000Z",
-      skipped_ledger_lines: 0,
-      left_out: { undated: 2, unrecognised: 5 },
+      skipped_ledger_lines: 6,
     });
   });
 
@@ -128,6 +144,6 @@ describe("the JSON envelope of a report", () => {
   });
 
   it("is versioned when nothing was read under AIDD_TELEMETRY=0", () => {
-    expect(REFUSED_ENVELOPE).toEqual({ version: 1, refused: "AIDD_TELEMETRY=0" });
+    expect(REFUSED_ENVELOPE).toEqual({ version: 2, refused: "AIDD_TELEMETRY=0" });
   });
 });

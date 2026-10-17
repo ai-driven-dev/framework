@@ -49,7 +49,7 @@ The ledger stores `StoredUsage`: the record plus `repository_id`, resolved at in
 **Null is not zero.**
 - Unknown is `null`, never `0`. A `null` counter is left out of its sum and counted in that counter's `unknown_records`.
 - A usage line missing a counter is still a record, that counter `null`.
-- A line that is no usage line (not JSON, no `message.usage`, no `message.id`, `sessionId` or `timestamp`) is never a record. It counts in the run's `coverage.unrecognised_shapes`, and, when it names a clone that consents, in `coverage.left_out.unrecognised` of every report (see [Left out](#left-out)).
+- A line that is no usage line (not JSON, no `message.usage`, no `message.id`, `sessionId` or `timestamp`) is never a record. It counts in `run.unrecognised_shapes` of the report that read it, and, when it names a clone that consents, in `coverage.left_out.unrecognised` of every report (see [Left out](#left-out)).
 - Ingest and report say: "not recognised by this read: a call missing a counter is kept with that counter unknown; a line that is no usage line is never a call." (`UNRECOGNISED_WORDS`, `presentation/display/telemetry-display.ts`). What is kept of such lines is said apart: "Kept from every read: …".
 
 **Key and fold** (`domain/formats/claude-transcript-usage.ts`).
@@ -66,7 +66,7 @@ The ledger stores `StoredUsage`: the record plus `repository_id`, resolved at in
 
 **Repository.** The call's working directory resolved at ingest: its git root, named by the hash of the `origin` address (`host/owner/repo`), else the root commit. The address is never kept.
 
-**Not stored.** Storing follows [Consent](#consent). A call read and left out counts in the run's `coverage.not_stored` under one reason, and nothing of it is kept, except an `undated` call of a clone that consents (see [Left out](#left-out)):
+**Not stored.** Storing follows [Consent](#consent). A call read and left out counts in `run.not_stored` of the report that read it, under one reason, and nothing of it is kept, except an `undated` call of a clone that consents (see [Left out](#left-out)):
 
 | Reason | When |
 | --- | --- |
@@ -98,18 +98,19 @@ What an ingest measured and could not store is kept in `ledger/left-out.txt`, so
 
 ## Report envelope
 
-`aidd telemetry report --json` prints one object, `version: 1`. A field may be added to version 1; never renamed, retyped or removed without a new `version`. Type: `ReportEnvelope`, `cli/src/contexts/telemetry/application/report/report-envelope.ts`.
+`aidd telemetry report --json` prints one object, `version: 2`. A field may be added to version 2, a figure outside `run`, a fact of the read inside it; never renamed, retyped, moved or removed without a new `version`. Type: `ReportEnvelope`, `cli/src/contexts/telemetry/application/report/report-envelope.ts`.
 
 | Field | Meaning |
 | --- | --- |
-| `version` | `1` |
+| `version` | `2` |
 | `period` | `{from, to}`, UTC days, `null` for open |
 | `axis` | `total`, `person`, `session`, `model`, `agent`, `day`, `repository`, `task`, `ticket` |
 | `filters` | `task`, `ticket`, `person`, `model`, `agent`, `session`, `repository`, `absent`, `unattributed`, in that order: `null` when not given, else as resolved (see [Filters](#filters)) |
 | `rows` | one per axis value, of the calls that match |
 | `totals` | the calls of the period that match |
 | `unknown_records` | calls with at least one counter unknown |
-| `coverage` | `files_read`, `records`, `unrecognised_shapes`, `not_stored`, `consent_log_damaged`, `oldest_transcript_at`, `skipped_ledger_lines`, `left_out`. `records` counts the calls of the period, matching or not; `left_out` (`undated`, `unrecognised`) what every ingest so far measured and could not store, see [Left out](#left-out) |
+| `coverage` | `records`, `left_out`. `records` counts the calls of the period, matching or not; `left_out` (`undated`, `unrecognised`) what every ingest so far measured and could not store, see [Left out](#left-out) |
+| `run` | last: `files_read`, `unrecognised_shapes`, `not_stored`, `consent_log_damaged`, `oldest_transcript_at`, `skipped_ledger_lines`, what the read that printed the report found |
 
 Row and `totals`: `records`, `input`, `output`, `cache_read`, `cache_write` (each `{tokens, unknown_records}`), `total`. A row also has:
 
@@ -120,10 +121,11 @@ Row and `totals`: `records`, `input`, `output`, `cache_read`, `cache_write` (eac
 | `reason` | `no-binding` or `declared-none` for `unattributed`, else `null` |
 
 - Every axis partitions the same calls: each adds up to `totals`, counter by counter.
-- `AIDD_TELEMETRY=0`: nothing read, object is `{"version": 1, "refused": "AIDD_TELEMETRY=0"}`.
+- **The figures** are every field but `run`: a function of the ledger (its calls and `left-out.txt`), the declarations, the chosen identity, the period, the filters and the axis. Two reports over the same of those print them byte for byte the same, whatever ingests ran before and in whatever order, run again or not, in any time zone and locale. Envelope version 1 mixed the two; version 2 has no compatibility shape.
+- `AIDD_TELEMETRY=0`: nothing read, object is `{"version": 2, "refused": "AIDD_TELEMETRY=0"}`.
 - The text report labels an `absent` person `anonymous`; the envelope keeps `kind: absent`, `key: null`.
-- A report ingests first. `files_read`, `unrecognised_shapes` and `not_stored` describe that run; `records` the period; `left_out` every ingest so far.
-- A report with `--days`, `--from` or `--to` reads only the days of its period and the day on each side, plus any monthly file one of them falls in, with every day of its month; with none it reads the whole ledger. The copies of one call have been observed less than a day apart, and under that bound both print the same figures. Outside it, only a report with no period folds every copy of a call. `skipped_ledger_lines` counts the lines of the partitions read.
+- A report ingests first. `run` describes that read: what it opened, met and left out, whether the consent log let it store, how old the transcripts on disk are, and the lines that are not records in the partitions it loaded, counted before it settled them (a rewrite keeps each once, so the next report can count fewer). `coverage.records` describes the period; `coverage.left_out` every ingest so far.
+- A report with `--days`, `--from` or `--to` reads only the days of its period and the day on each side, plus any monthly file one of them falls in, with every day of its month; with none it reads the whole ledger. The copies of one call have been observed less than a day apart, and under that bound both print the same figures. Outside it, only a report with no period folds every copy of a call. `run.skipped_ledger_lines` counts the lines of the partitions read.
 - No path, working directory or branch. `session` keys are full session ids, `repository` keys are hashes.
 
 ### Filters
@@ -321,7 +323,7 @@ stateDiagram-v2
 **`forget --yes`** unsets `aidd.telemetry` and branch task keys in every clone in `roots.json` or `consents.jsonl` that still exists. Names only gone clones that had consented. A clone that never ran `on` is recorded only if a call from it was read after some clone opted in, so a hand-set key there may stay.
 
 **Fail closed.**
-- A terminated `consents.jsonl` line not exactly one of the two shapes: log untrusted. Storage refused for every clone; `on` and `off` refuse and change nothing; every `ingest` and `report` says so, `coverage.consent_log_damaged` in `--json`. Calls read meanwhile are lost (offsets move on).
+- A terminated `consents.jsonl` line not exactly one of the two shapes: log untrusted. Storage refused for every clone; `on` and `off` refuse and change nothing; every `ingest` and `report` says so, `run.consent_log_damaged` in `--json`. Calls read meanwhile are lost (offsets move on).
 - An unterminated last line is not a line yet (cut write, or still writing): both readers ignore it, even if it parses. The next writer, CLI or hook, cuts it off before appending. A lost close is re-observed; a lost open leaves a key with no interval, measuring nothing.
 - Recovery: `aidd telemetry forget --yes`, then `aidd telemetry on` per clone. Safe: `forget` removes the log and offsets, no backfill, intervals open at `on`. Removing the line by hand is not recovery and is no longer suggested: a lost close would reopen a window turned off.
 

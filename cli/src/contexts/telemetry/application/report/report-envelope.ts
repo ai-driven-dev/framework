@@ -39,34 +39,40 @@ export interface EnvelopeRow extends EnvelopeTally {
   readonly reason: UnattributedReason | null;
 }
 
-/** What `aidd telemetry report --json` prints. Version 1.
+/** What `aidd telemetry report --json` prints. Version 2.
+ *
+ * Every field but `run` is a figure: a function of the ledger (its calls and what was left out
+ * of it), the declarations, the chosen identity, the period, the filters and the axis, alone.
+ * Two reports over the same of those print them byte for byte the same, whatever ingest ran
+ * before, in any time zone and locale. `run`, last, is what the read that printed the envelope
+ * found, and may differ between two such reports.
  *
  * `rows` split the period along `axis`; the rows of every axis add up to the same `totals`,
  * counter by counter. `unknown_records` is how many calls had at least one counter unknown.
- * `coverage` says what the figures rest on: `files_read`, `unrecognised_shapes` and `not_stored`
- * are of this run alone, `records` of the period. `left_out` is what every ingest so far,
- * whoever ran it (the plugin's included), measured and could not store, of a clone that
- * consents: `undated` calls and `unrecognised` lines that are no usage line, each once; none has
- * a day, so every report counts all of them. `consent_log_damaged` is true while
- * `ledger/consents.jsonl` cannot be trusted and nothing is stored, `oldest_transcript_at` is when
+ * `coverage.records` counts every call of the period, matching the filters or not, and
+ * `coverage.left_out` what every ingest so far, whoever ran it (the plugin's included),
+ * measured and could not store, of a clone that consents: `undated` calls and `unrecognised`
+ * lines that are no usage line, each once; none has a day, so every report counts all of them.
+ *
+ * `run`: `files_read` transcripts this read opened, `unrecognised_shapes` and `not_stored` (by
+ * reason) what it met and did not store, `consent_log_damaged` true while
+ * `ledger/consents.jsonl` cannot be trusted and nothing is stored, `oldest_transcript_at` when
  * the oldest transcript still on disk was last written (`null` when there is none), and
- * `skipped_ledger_lines` counts the lines that were not records, kept as found, in the ledger
- * partitions the report read: a bounded report reads its period and the day on each side, so
- * damage outside them is not counted. Nothing here is a path, a working directory or a branch
- * name.
+ * `skipped_ledger_lines` the lines that were not records, kept as found, in the ledger
+ * partitions it read before settling them: a bounded report reads its period and the day on
+ * each side. Nothing here is a path, a working directory or a branch name.
  *
  * `filters` names what the report was narrowed to, every flag in a fixed order, `null` when it
  * was not given, else as resolved: the full id for a start or `.`, the start as typed when it
- * names no call of the period. `rows` and `totals` count the calls that match;
- * `coverage.records` counts every call of the period, matching or not.
+ * names no call of the period. `rows` and `totals` count the calls that match.
  *
- * Under `AIDD_TELEMETRY=0` nothing is read and the envelope is `{ "version": 1, "refused":
+ * Under `AIDD_TELEMETRY=0` nothing is read and the envelope is `{ "version": 2, "refused":
  * "AIDD_TELEMETRY=0" }` (`REFUSED_ENVELOPE`).
  *
- * A new field may appear in a version 1 envelope; a field is never renamed, retyped or removed
- * without a new `version`. */
+ * A new field may appear in a version 2 envelope, a figure outside `run`, a fact of the read in
+ * it; a field is never renamed, retyped, moved or removed without a new `version`. */
 export interface ReportEnvelope {
-  readonly version: 1;
+  readonly version: 2;
   readonly period: Period;
   readonly axis: ReportAxis;
   readonly filters: ReportFilters;
@@ -74,14 +80,16 @@ export interface ReportEnvelope {
   readonly totals: EnvelopeTally;
   readonly unknown_records: number;
   readonly coverage: {
-    readonly files_read: number;
     readonly records: number;
+    readonly left_out: Readonly<Record<LeftOutReason, number>>;
+  };
+  readonly run: {
+    readonly files_read: number;
     readonly unrecognised_shapes: number;
     readonly not_stored: Readonly<Record<NotStoredReason, number>>;
     readonly consent_log_damaged: boolean;
     readonly oldest_transcript_at: string | null;
     readonly skipped_ledger_lines: number;
-    readonly left_out: Readonly<Record<LeftOutReason, number>>;
   };
 }
 
@@ -111,27 +119,26 @@ function rowOf(row: ReportRow): EnvelopeRow {
 export function reportEnvelopeOf(
   result: Extract<ReportResult, { status: "reported" }>
 ): ReportEnvelope {
-  const { period, filters, report, coverage } = result;
+  const { period, filters, report, coverage, run } = result;
   return {
-    version: 1,
+    version: 2,
     period,
     axis: report.axis,
     filters: filtersOf(filters),
     rows: report.rows.map(rowOf),
     totals: tallyOf(report.totals),
     unknown_records: report.totals.total.unknownRecords,
-    coverage: {
-      files_read: coverage.filesRead,
-      records: coverage.records,
-      unrecognised_shapes: coverage.unrecognised,
-      not_stored: coverage.notStored,
-      consent_log_damaged: coverage.consentLogDamaged,
-      oldest_transcript_at: coverage.oldestTranscriptAt,
-      skipped_ledger_lines: coverage.skippedLedgerLines,
-      left_out: coverage.leftOut,
+    coverage: { records: coverage.records, left_out: coverage.leftOut },
+    run: {
+      files_read: run.filesRead,
+      unrecognised_shapes: run.unrecognised,
+      not_stored: run.notStored,
+      consent_log_damaged: run.consentLogDamaged,
+      oldest_transcript_at: run.oldestTranscriptAt,
+      skipped_ledger_lines: run.skippedLedgerLines,
     },
   };
 }
 
 /** What `--json` prints under `AIDD_TELEMETRY=0`, when nothing was read. */
-export const REFUSED_ENVELOPE = { version: 1, refused: "AIDD_TELEMETRY=0" } as const;
+export const REFUSED_ENVELOPE = { version: 2, refused: "AIDD_TELEMETRY=0" } as const;

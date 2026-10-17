@@ -132,6 +132,6 @@ describe("aidd telemetry report, narrowed", () => {
       outside
     );
     expect(run.exitCode).toBe(0);
-    expect(JSON.parse(run.stdout)).toEqual({ version: 1, refused: "AIDD_TELEMETRY=0" });
+    expect(JSON.parse(run.stdout)).toEqual({ version: 2, refused: "AIDD_TELEMETRY=0" });
   });
 });
