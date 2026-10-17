@@ -47,10 +47,12 @@ const call = fc
       { weight: 1, arbitrary: fc.integer({ min: -10 * DAY_MS, max: 10 * DAY_MS }) }
     ),
     output: fc.nat(5),
+    // Observed on most real calls: the thinking part of `output`, so never above it.
+    reasoning: fc.option(fc.nat(5), { nil: null }),
     session: fc.constantFrom("s-1", "s-2"),
   })
   .map(
-    ({ keyIndex, tool, offset, output, session }): StoredUsage => ({
+    ({ keyIndex, tool, offset, output, reasoning, session }): StoredUsage => ({
       tool,
       tool_version: "1.0.0",
       key: `k${keyIndex}`,
@@ -63,7 +65,7 @@ const call = fc
       cache_read: 0,
       cache_write: 0,
       cache_write_1h: null,
-      reasoning: null,
+      reasoning: reasoning === null ? null : Math.min(reasoning, output),
       cwd: null,
       git_branch: null,
       repository_id: "repo-1",
