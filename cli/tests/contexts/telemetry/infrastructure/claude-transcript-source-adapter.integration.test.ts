@@ -387,19 +387,23 @@ describe("reading a transcript in blocks of a few bytes", () => {
     expect(read.position).toMatchObject({ offset: 8, size: 8 });
   });
 
-  it("reads a file replaced at its path while it reads as it was, and the new one whole next time", async () => {
-    const path = await file("aaa\nbbb\nccc\n");
-    const other = join(projects, "other.jsonl");
-    await writeFile(other, "zzz\n");
-    const lines: string[] = [];
-    const read = await inBlocksOf(4).read(path, null, EVERYTHING, (line) => {
-      if (lines.push(line) === 1) renameSync(other, path);
-    });
-    expect(lines).toEqual(["aaa", "bbb", "ccc"]);
-    expect(read.position).toMatchObject({ offset: 12, size: 12 });
-    const next = await readLines(inBlocksOf(4), path, read.position, EVERYTHING);
-    expect(next).toMatchObject({ lines: ["zzz"], restarted: true });
-  });
+  // Windows refuses to rename over a file another handle holds open, so the case cannot arise there.
+  it.skipIf(process.platform === "win32")(
+    "reads a file replaced at its path while it reads as it was, and the new one whole next time",
+    async () => {
+      const path = await file("aaa\nbbb\nccc\n");
+      const other = join(projects, "other.jsonl");
+      await writeFile(other, "zzz\n");
+      const lines: string[] = [];
+      const read = await inBlocksOf(4).read(path, null, EVERYTHING, (line) => {
+        if (lines.push(line) === 1) renameSync(other, path);
+      });
+      expect(lines).toEqual(["aaa", "bbb", "ccc"]);
+      expect(read.position).toMatchObject({ offset: 12, size: 12 });
+      const next = await readLines(inBlocksOf(4), path, read.position, EVERYTHING);
+      expect(next).toMatchObject({ lines: ["zzz"], restarted: true });
+    }
+  );
 
   it("reads nothing past the size when its saved offset is beyond it", async () => {
     const path = await file("aaa\nbb");
