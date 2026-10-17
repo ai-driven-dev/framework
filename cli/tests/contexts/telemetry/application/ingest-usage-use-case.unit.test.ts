@@ -1220,3 +1220,61 @@ describe("what was measured and could not be stored is kept, so a report run lat
     expect(s.ledger.stored.size).toBe(0);
   });
 });
+
+describe("a call whose consent is not known yet is read again, never kept", () => {
+  it("keeps where a transcript stood before a call whose consent could not be read, and stores it once it can", async () => {
+    const s = setup();
+    s.consents.unreadableClones.add(cloneKey(A));
+    s.transcripts.files.set("/t/1.jsonl", [line("A", 1)]);
+    s.transcripts.files.set("/t/2.jsonl", [line("C", 1, { cwd: undefined })]);
+    const first = await s.ingest.execute();
+    expect(first.notStored["unreadable-consent"]).toBe(1);
+    expect(s.ledger.stored.has("/t/1.jsonl")).toBe(false);
+    expect(s.ledger.stored.get("/t/2.jsonl")?.offset).toBe(1);
+    s.consents.unreadableClones.clear();
+    expect(await s.ingest.execute()).toMatchObject({ added: 1 });
+    expect(s.ledger.records.map((r) => r.key)).toEqual(["msg_A:req_A"]);
+    expect(s.ledger.stored.get("/t/1.jsonl")?.offset).toBe(1);
+  });
+
+  it("says it again on every run while its consent still cannot be read, and keeps nothing of it", async () => {
+    const s = setup();
+    s.consents.unreadableClones.add(cloneKey(A));
+    s.transcripts.files.set("/t/1.jsonl", [line("A", 1), line("U", 1, {}, "not a time")]);
+    for (const _ of [1, 2]) {
+      expect((await s.ingest.execute()).notStored["unreadable-consent"]).toBe(1);
+    }
+    expect([...s.ledger.leftOut.lines]).toEqual([]);
+    expect(s.ledger.records).toEqual([]);
+  });
+
+  it("says a call of a directory gone before it was ever seen once, moves on, and keeps nothing of it", async () => {
+    const s = setup();
+    s.transcripts.files.set("/t/1.jsonl", [line("W", 1, { cwd: "/work/gone" })]);
+    expect((await s.ingest.execute()).notStored["never-seen-alive"]).toBe(1);
+    expect((await s.ingest.execute()).notStored["never-seen-alive"]).toBe(0);
+    expect(s.ledger.stored.get("/t/1.jsonl")?.offset).toBe(1);
+    expect([...s.ledger.leftOut.lines]).toEqual([]);
+    expect(s.resolutions.resolutions.size).toBe(0);
+  });
+
+  it("keeps a transcript's earlier position, not its start, while a call appended to it cannot be judged", async () => {
+    const s = setup();
+    s.transcripts.files.set("/t/1.jsonl", [line("A", 1)]);
+    await s.ingest.execute();
+    s.consents.unreadableClones.add(cloneKey(A));
+    s.transcripts.files.get("/t/1.jsonl")?.push(line("B", 2));
+    await s.ingest.execute();
+    expect(s.ledger.stored.get("/t/1.jsonl")?.offset).toBe(1);
+    s.consents.unreadableClones.clear();
+    expect(await s.ingest.execute()).toMatchObject({ filesRead: 1, added: 1, updated: 0 });
+  });
+
+  it("moves on while the consent log cannot be trusted: forget is the way out, and it reads all again", async () => {
+    const s = setup();
+    s.history.damaged = true;
+    s.transcripts.files.set("/t/1.jsonl", [line("A", 1)]);
+    await s.ingest.execute();
+    expect(s.ledger.stored.get("/t/1.jsonl")?.offset).toBe(1);
+  });
+});

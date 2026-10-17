@@ -120,7 +120,8 @@ export class ReportUsageUseCase {
     if (this.options.refusedByEnvironment) return { status: "refused" };
     const located = here === undefined ? undefined : await this.repositoryIn(here);
     if (located === null) return { status: "not-a-repository" };
-    const ingested = await this.ingest.execute();
+    const { filesRead, unrecognised, notStored, consentLogDamaged, oldestTranscriptAt } =
+      await this.ingest.execute();
     const [held, leftOut] = await this.ledger.exclusively(async () => [
       await settleLedger(this.ledger, windowOf(request.period)),
       await this.ledger.leftOut.counts(),
@@ -144,12 +145,12 @@ export class ReportUsageUseCase {
       filters,
       report: buildReport(selected, facts, person, request.axis),
       coverage: {
-        filesRead: ingested.filesRead,
+        filesRead,
         records: records.length,
-        unrecognised: ingested.unrecognised,
-        notStored: ingested.notStored,
-        consentLogDamaged: ingested.consentLogDamaged,
-        oldestTranscriptAt: ingested.oldestTranscriptAt,
+        unrecognised,
+        notStored,
+        consentLogDamaged,
+        oldestTranscriptAt,
         skippedLedgerLines: held.skippedLines,
         leftOut,
       },

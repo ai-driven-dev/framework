@@ -8,6 +8,7 @@ import {
   type RequestedFilters,
 } from "../../../../../src/contexts/telemetry/application/report/report-usage-use-case.js";
 import { SnapshotBindingsUseCase } from "../../../../../src/contexts/telemetry/application/snapshot-bindings-use-case.js";
+import { cloneKey } from "../../../../../src/contexts/telemetry/domain/consent/clone-identity.js";
 import {
   declarationOf,
   type SessionCarry,
@@ -105,7 +106,7 @@ function setup(options: { refused?: boolean } = {}) {
     locator,
     { refusedByEnvironment: options.refused ?? false }
   );
-  return { transcripts, ledger, bindings, sessions, identity, report, events, locator };
+  return { transcripts, ledger, bindings, sessions, identity, report, events, locator, consents };
 }
 
 async function rows(s: ReturnType<typeof setup>, axis: ReportAxis, period = ANY) {
@@ -562,5 +563,22 @@ describe("saying what was measured and left out, whoever ingested it", () => {
     const result = await s.report.execute({ axis: "total", period: ANY });
     expect(result).toMatchObject({ coverage: { leftOut: { undated: 1 } } });
     expect(s.events.slice(-3)).toEqual(["load", "left-out", "unlock"]);
+  });
+});
+
+describe("a call whose consent cannot be read yet", () => {
+  it("is said by every report's own read while it cannot be, then counted once it can", async () => {
+    const s = setup();
+    s.transcripts.files.set("/t/1.jsonl", [line("A", 10, "2026-10-07T10:00:00.000Z")]);
+    s.consents.unreadableClones.add(cloneKey(cloneOf("/work/a/.git")));
+    for (const _ of [1, 2]) {
+      expect(await s.report.execute({ axis: "total", period: ANY })).toMatchObject({
+        coverage: { records: 0, notStored: { "unreadable-consent": 1 } },
+      });
+    }
+    s.consents.unreadableClones.clear();
+    expect(await s.report.execute({ axis: "total", period: ANY })).toMatchObject({
+      coverage: { records: 1, notStored: { "unreadable-consent": 0 } },
+    });
   });
 });

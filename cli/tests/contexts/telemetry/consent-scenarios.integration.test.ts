@@ -693,8 +693,8 @@ const ROWS: readonly Row[] = [
   {
     n: "broken config",
     scenario:
-      "an opted-in clone whose .git/config cannot be parsed: its calls are counted unreadable, not outside any repository",
-    expected: ["c2"],
+      "an opted-in clone whose .git/config cannot be parsed: its calls are counted unreadable, not outside any repository, and stored once it can be read",
+    expected: ["c1", "c2"],
     run: async (w) => {
       const a = w.repository("a", SHARED);
       await w.on(a, HOUR);

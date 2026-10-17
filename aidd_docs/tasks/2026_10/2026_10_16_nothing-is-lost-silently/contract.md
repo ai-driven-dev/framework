@@ -40,6 +40,9 @@ Round 1 of review (`review.md`) found the first design kept the key of every cal
 - **One file, `ledger/left-out.txt`.** Sorted, each line once, a sha-256 cut to 32 hex characters of the reason and what the thing is. No key, no line in clear. A line this version does not know is kept and not counted. Its own small adapter (`infrastructure/left-out/left-out-adapter.ts`): the main ledger exposes it as `leftOut`, nothing more.
 - **Idempotent.** Named by what it is: a re-read, an offsets reset or the same ingest twice adds nothing.
 - **Envelope.** `version: 1`, one field added: `coverage.left_out: {undated, unrecognised}`, cumulative, the same in every report. `files_read`, `unrecognised_shapes` and `not_stored` keep their meaning: this run's. Ingest and report count `unrecognised_shapes` the same way.
+- **A call whose consent is not known yet (review round 2).** `unreadable-consent` is not a no: the clone may consent once git can read it. Ingest keeps the position of every transcript holding such a call from before that read, so the next ingest, a report's included, reads it again; nothing is written. Stored once readable; until then every run says it. Not for a damaged consent log: `forget` resets the offsets anyway.
+- **`never-seen-alive` is a stated loss.** Its consent is unknown, so nothing may be kept; the directory never comes back, so reading it again would never end. Only the run that read it says it. Recording a session's directory at SessionStart was weighed and left out: subagent worktrees fire no SessionStart, and the budget left no room (`consentsAt`, `here`: about 330 B).
+- **`roots.json`.** Resolving the directory of an undated call or a line remembers it when alive, in any clone, as for every dated call already: a directory and its clone, never a call. This narrows round 1's "a clone that never opted in leaves no byte" to `left-out.txt`.
 - **The hook is unchanged.**
 
 ### M2: a ledger line that is not a record is kept, in its partition
@@ -77,7 +80,8 @@ Round 1 of review (`review.md`) found the first design kept the key of every cal
 - Two identical lines that are no usage line count once, wherever they are: a line is named by its text.
 - Two identical lines that are not ledger records, in one partition, are kept once.
 - A call is assumed to have its copies all dated or all undated. One read with only a dated copy and another with only an undated one would store it and keep it as undated: `P3`'s generator holds to the assumption, which no transcript seen breaks.
-- An undated call is judged by its clone's consent at the time of the read, having no time of its own.
+- An undated call is judged by its clone's consent at the time of the read, having no time of its own: one made while `off` and read after `on` again leaves a hash; one made while on and read after `off` is lost. Named in the usage contract's Consent section.
+- A clone that stays unreadable, or can never be identified, has the part of its transcripts read since re-read by every ingest.
 - A line that is no usage line and names no directory cannot be tied to a clone: only the run that read it says it.
 - Growth: 41 or 46 bytes per thing kept (`undated ` or `unrecognised `, 32 hex characters, a newline: the format the adapter test pins), only for a clone that consents. `left-out.txt` is read whole by every report and rewritten by an ingest that adds to it.
 - Nothing measured before this version was kept.

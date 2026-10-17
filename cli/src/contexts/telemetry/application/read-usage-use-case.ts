@@ -24,6 +24,8 @@ export interface UsageReading {
   readonly positions: ReadonlyMap<string, TranscriptPosition>;
   /** Shapes seen and not recognised, each prefixed with its file. */
   readonly unrecognised: readonly string[];
+  /** The file each record was read from. */
+  readonly fileOf: ReadonlyMap<UsageRecord, string>;
   /** The lines that gave no call and name a directory: what a reading drops and can tie to a
    * clone. */
   readonly dropped: readonly DroppedLine[];
@@ -49,6 +51,7 @@ export class ReadUsageUseCase {
     const skipped = new Set<string>();
     const unrecognised: string[] = [];
     const dropped: DroppedLine[] = [];
+    const fileOf = new Map<UsageRecord, string>();
     const positions = new Map<string, TranscriptPosition>();
     const paths = await this.source.list();
     for (const path of paths) {
@@ -58,6 +61,7 @@ export class ReadUsageUseCase {
       for (const line of read.lines) {
         const outcome = this.readLine(line);
         candidates.push(...outcome.records);
+        for (const record of outcome.records) fileOf.set(record, path);
         // Only a line that gives no call names anything.
         if (outcome.named?.cwd) dropped.push({ line, ...outcome.named });
         unrecognised.push(...outcome.unrecognised.map((reason) => `${path}: ${reason}`));
@@ -68,6 +72,7 @@ export class ReadUsageUseCase {
       positions,
       unrecognised,
       dropped,
+      fileOf,
       oldestTranscriptAt: await this.source.oldestModified(paths),
       skipped,
     };

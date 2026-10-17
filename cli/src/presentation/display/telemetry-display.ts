@@ -9,10 +9,10 @@ import type { CLIOutput } from "../output.js";
 export const IDENTITY_RULE = "An identity is one non-empty line of at most 128 characters.";
 
 /** What a shape the reader did not recognise came to: a call lacking a counter is stored with it
- * unknown, never zero; a line that is no usage line is no call, and is kept apart, by a hash,
- * when it names a clone that consents. */
+ * unknown, never zero; a line that is no usage line is no call (what is kept of it is said
+ * apart, from every read). */
 export const UNRECOGNISED_WORDS =
-  "not recognised: a call missing a counter is kept with that counter unknown; a line that is no usage line is never a call, and is kept apart when its clone is measured.";
+  "not recognised by this read: a call missing a counter is kept with that counter unknown; a line that is no usage line is never a call.";
 
 /** Why a billed call was read and not stored, as the end of a sentence about N calls. */
 export const NOT_STORED_WORDS: Readonly<Record<NotStoredReason, string>> = {
@@ -60,7 +60,7 @@ export function leftOutLines(
     });
   }
   for (const [reason, n] of Object.entries(left.notStored) as [NotStoredReason, number][]) {
-    const text = `Not stored: ${count(n, "call", "calls")} ${NOT_STORED_WORDS[reason]}.`;
+    const text = `Not stored by this read: ${count(n, "call", "calls")} ${NOT_STORED_WORDS[reason]}.`;
     if (n > 0) lines.push({ warn: false, text });
   }
   if (left.consentLogDamaged) lines.push({ warn: true, text: DAMAGED_CONSENT_LOG_WORDS });

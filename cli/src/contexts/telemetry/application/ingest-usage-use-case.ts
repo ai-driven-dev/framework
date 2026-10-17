@@ -110,6 +110,8 @@ export class IngestUsageUseCase {
       cwd !== null &&
       "stored" in
         (await resolver.resolve(cwd, at !== null && dayOf(at) !== null ? at : resolver.now));
+    // A transcript holding a call whose consent is not known yet is read again next time.
+    const held = new Set<string>();
     for (const { line, cwd, at } of reading.dropped) {
       if (await measured(cwd, at)) leftOut.push({ reason: "unrecognised", of: line });
     }
@@ -117,8 +119,14 @@ export class IngestUsageUseCase {
     for (const record of reading.records) {
       const outcome = await this.outcomeOf(record, resolver);
       if ("skipped" in outcome) {
-        notStored[outcome.skipped] += 1;
-        if (outcome.skipped === "undated" && (await measured(record.cwd, null))) {
+        const { skipped } = outcome;
+        notStored[skipped] += 1;
+        // Not a no: the clone may consent once it can be read. A consent log that cannot be
+        // trusted is not this: `forget` is the way out, and it reads all again.
+        if (skipped === "unreadable-consent" && !resolver.consentLogDamaged) {
+          held.add(reading.fileOf.get(record) ?? "");
+        }
+        if (skipped === "undated" && (await measured(record.cwd, null))) {
           leftOut.push({ reason: "undated", of: `${record.tool}\u0000${record.key}` });
         }
         continue;
@@ -141,7 +149,13 @@ export class IngestUsageUseCase {
     }
 
     // Last, so a crash before it only means the same lines are read again.
-    if (movedPaths.length > 0) await this.ledger.savePositions(reading.positions);
+    const positions = new Map(reading.positions);
+    for (const path of held) {
+      const was = before.get(path);
+      if (was === undefined) positions.delete(path);
+      else positions.set(path, was);
+    }
+    if (movedPaths.length > 0) await this.ledger.savePositions(positions);
 
     return {
       refused: false,
@@ -171,6 +185,7 @@ export class IngestUsageUseCase {
       records: readings.flatMap((reading) => reading.records),
       positions: new Map([...before, ...readings.flatMap((reading) => [...reading.positions])]),
       unrecognised: readings.flatMap((reading) => reading.unrecognised),
+      fileOf: new Map(readings.flatMap((reading) => [...reading.fileOf])),
       dropped: readings.flatMap((reading) => reading.dropped),
       oldestTranscriptAt: oldest[0] ?? null,
       skipped: new Set(readings.flatMap((reading) => [...reading.skipped])),

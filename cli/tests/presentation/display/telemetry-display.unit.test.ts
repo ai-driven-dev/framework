@@ -17,7 +17,7 @@ function shown(result: Parameters<typeof printIdentityResult>[1]): CapturingOutp
 }
 
 const UNRECOGNISED =
-  " not recognised: a call missing a counter is kept with that counter unknown; a line that is no usage line is never a call, and is kept apart when its clone is measured.";
+  " not recognised by this read: a call missing a counter is kept with that counter unknown; a line that is no usage line is never a call.";
 
 describe("printIdentityResult", () => {
   it("says who the measurement names, and how to stop", () => {
@@ -121,8 +121,8 @@ describe("printIngestResult", () => {
       })
     );
     expect(lines.slice(1)).toEqual([
-      "Not stored: 1 call from a clone with no consent at that time.",
-      "Not stored: 2 calls with no usable time.",
+      "Not stored by this read: 1 call from a clone with no consent at that time.",
+      "Not stored by this read: 2 calls with no usable time.",
     ]);
     const output = new CapturingOutput(false);
     printIngestResult(output, {
@@ -130,7 +130,9 @@ describe("printIngestResult", () => {
       unrecognised: 1,
       notStored: { ...NOT_STORED, "no-cwd": 1 },
     });
-    expect(output.at("info")).toEqual(["Not stored: 1 call with no working directory."]);
+    expect(output.at("info")).toEqual([
+      "Not stored by this read: 1 call with no working directory.",
+    ]);
     expect(output.at("warn")).toEqual([`1 shape${UNRECOGNISED}`]);
   });
 
@@ -142,7 +144,7 @@ describe("printIngestResult", () => {
       })
     );
     expect(lines.slice(1)).toEqual([
-      "Not stored: 1 call from a clone whose consent was closed; run `aidd telemetry on` in it to measure again.",
+      "Not stored by this read: 1 call from a clone whose consent was closed; run `aidd telemetry on` in it to measure again.",
     ]);
     expect(lines.join("\n")).not.toContain("has not opted in");
   });
@@ -165,7 +167,7 @@ describe("printIngestResult", () => {
       })
     );
     expect(lines.slice(1)).toEqual([
-      "Not stored: 1 call from a clone whose consent cannot be read: its git config, its git directory, or a damaged ledger/consents.jsonl.",
+      "Not stored by this read: 1 call from a clone whose consent cannot be read: its git config, its git directory, or a damaged ledger/consents.jsonl.",
     ]);
     expect(lines.join("\n")).not.toContain("config.json");
   });
