@@ -78,6 +78,12 @@ const PATTERNS = [
     ),
     session: true,
   },
+  // A UUID naming a transcript: Claude's `<project>/<id>.jsonl`, Codex's `rollout-<time>-<id>.jsonl`.
+  {
+    label: "session file",
+    re: new RegExp(String.raw`(?:rollout-[\dT:-]+-|[/\\])(${UUID})\.jsonl`, "giu"),
+    session: true,
+  },
 ];
 
 function isPlaceholder(name) {

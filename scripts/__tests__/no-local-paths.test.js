@@ -19,6 +19,12 @@ const back = (sep, ...parts) => parts.join(sep);
 const LEAKER = "zq-leaker";
 /** Random-looking, as a real one is: a placeholder id repeats a digit and is let through. */
 const SESSION = ["0d2c1f3e", "9a7b", "4c5d", "8e6f", "1a2b3c4d5e6f"].join("-");
+/** Thirteen distinct hex digits: as varied as a real id gets, yet short of all sixteen. */
+const SESSION_13 = ["9c1a7b30", "52c8", "4a16", "b073", "c18a59b26c40"].join("-");
+/** The made-up-id boundary: seven distinct digits pass, eight are a real id. */
+const SEVEN_DIGITS = ["01234801", "2340", "4801", "8a01", "234801234801"].join("-");
+const EIGHT_DIGITS = ["01234801", "2340", "4801", "8a01", "23480123480b"].join("-");
+const sessionKey = (id) => `{"session_id":"${id}"}`;
 
 /** The shapes the repository actually leaked, under a made-up account. */
 const LEAKS = {
@@ -35,6 +41,11 @@ const LEAKS = {
   windowsSlug: `projects ${["C", "", "Users", LEAKER, "repo"].join("-")}`,
   sessionKey: `{"session_id":"${SESSION}"}`,
   sessionState: `${slash("~", ".copilot", "session-state", SESSION, "events.jsonl")}`,
+  sessionVaried: sessionKey(SESSION_13),
+  sessionBoundary: sessionKey(EIGHT_DIGITS),
+  sessionEscaped: `"user_id": "{\\"session_id\\":\\"${SESSION}\\"}"`,
+  rollout: slash("~", ".codex", "sessions", "2026", "07", "16", `rollout-2026-07-16T09-25-07-${SESSION}.jsonl`),
+  transcript: `"transcript_path": "${slash("~", ".claude", "projects", "repo", `${SESSION_13}.jsonl`)}"`,
 };
 
 describe("findLocalPaths", () => {
@@ -57,6 +68,11 @@ describe("findLocalPaths", () => {
         "-Users-<name>-",
         "session id",
         "session id",
+        "session id",
+        "session id",
+        "session id",
+        "session file",
+        "session file",
       ]
     );
     for (const { label } of found) {
@@ -82,7 +98,9 @@ describe("findLocalPaths", () => {
       back("\\\\", "C:", "Users", "RUNNER~1", "x"),
       `ends a sentence at ${slash("", "home", "user")}.`,
       `${slash("~", ".claude", "projects", "-Users-user-repo", "a.jsonl")}`,
-      `{"session_id":"${["00000000", "0000", "4000", "8000", "00000000000a"].join("-")}"}`,
+      sessionKey(["00000000", "0000", "4000", "8000", "00000000000a"].join("-")),
+      sessionKey(SEVEN_DIGITS),
+      slash("", "fake-project", `${SEVEN_DIGITS}.jsonl`),
     ];
 
     for (const sample of placeholders) assert.deepEqual(findLocalPaths(sample), [], sample);
@@ -94,6 +112,7 @@ describe("findLocalPaths", () => {
       slash("", "proj", "home", LEAKER, "x"),
       slash("", "Users", ""),
       `{"thread_id":"${SESSION}"}`,
+      `${SESSION}.json`,
     ];
 
     for (const sample of lookalikes) assert.deepEqual(findLocalPaths(sample), [], sample);
