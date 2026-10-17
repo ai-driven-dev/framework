@@ -280,7 +280,6 @@ interface Envelope {
   axis: string;
   rows: Row[];
   totals: Row;
-  unknown_records: number;
 }
 
 async function report(axis: string, from: string, to: string): Promise<Envelope> {

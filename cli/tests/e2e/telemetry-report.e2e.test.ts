@@ -46,7 +46,7 @@ describe("aidd telemetry report", () => {
       expect(envelope.rows.reduce((n, row) => n + row.total.tokens, 0)).toBe(
         envelope.totals.total.tokens
       );
-      expect(envelope.unknown_records).toBe(1);
+      expect(envelope.totals.total.unknown_records).toBe(1);
       expect(envelope.totals.cache_read.unknown_records).toBe(1);
       sums[axis] = envelope.totals.total.tokens;
     }

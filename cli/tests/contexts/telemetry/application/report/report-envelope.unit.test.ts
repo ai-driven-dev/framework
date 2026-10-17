@@ -87,13 +87,13 @@ describe("the JSON envelope of a report", () => {
     expect(rows[2]).toMatchObject({ kind: "absent", key: null, reason: null });
   });
 
-  it("states the totals and how many records had an unknown counter", () => {
+  it("states how many records had an unknown counter once, in the totals", () => {
     const envelope = reportEnvelopeOf(reported);
     expect(envelope.totals).toMatchObject({
       records: 4,
       total: { tokens: 10, unknown_records: 1 },
     });
-    expect(envelope.unknown_records).toBe(1);
+    expect(envelope).not.toHaveProperty("unknown_records");
   });
 
   it("states what the figures rest on, in snake case, and nothing about where the data lives", () => {
@@ -113,7 +113,6 @@ describe("the JSON envelope of a report", () => {
       "filters",
       "rows",
       "totals",
-      "unknown_records",
       "coverage",
       "run",
     ]);

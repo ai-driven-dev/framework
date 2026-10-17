@@ -328,7 +328,6 @@ export interface Envelope {
   filters: Record<string, string | null>;
   rows: Row[];
   totals: Row;
-  unknown_records: number;
   coverage: { records: number };
   run: { files_read: number; oldest_transcript_at: string | null };
 }
