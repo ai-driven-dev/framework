@@ -315,7 +315,7 @@ The `$` anchor of `ADVISOR` now carries a comment saying it is there for clarity
 
 ### Hand mutations, all rounds, counted as mutants
 
-Each row of the tables above is one mutant: one replacement, applied alone. All 47 were killed.
+The 47 counts the hand mutations, each one replacement applied alone; all were killed. Two rows of the round-3 survivor table hold two Stryker mutants each (`>=` and `true`; the two at `:96`), all four killed too.
 
 | Round | Mutants |
 | --- | --- |
