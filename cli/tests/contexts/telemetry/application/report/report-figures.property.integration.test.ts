@@ -1,6 +1,7 @@
 import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { isMainThread } from "node:worker_threads";
 import * as fc from "fast-check";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import type {
@@ -211,7 +212,11 @@ function ingestResultOf(facts: Run): IngestResult {
   };
 }
 
+/** Node moves the clock's zone when `TZ` is set, but only on a process's main thread: a worker
+ * thread (Stryker runs Vitest on them) keeps the zone it started in. There the zone is not
+ * varied, and the zones are left to the forked suite and to `pnpm test:foreign-clock`. */
 async function inZone<T>(zone: Zone, work: () => Promise<T>): Promise<T> {
+  if (!isMainThread) return work();
   const before = process.env.TZ;
   process.env.TZ = zone;
   try {
