@@ -190,6 +190,27 @@ describe("one transcript line to usage records", () => {
     });
   });
 
+  it("takes the call's reasoning from its thinking tokens, and none for an advisor", () => {
+    const usage = {
+      ...USAGE,
+      output_tokens_details: { thinking_tokens: 120 },
+      iterations: [{ type: "advisor_message", model: "m", input_tokens: 1, output_tokens: 2 }],
+    };
+    const { records } = readClaudeUsageLine(line({}, { usage }));
+    expect(records.map((r) => r.reasoning)).toEqual([120, null]);
+  });
+
+  it("takes an advisor iteration's one-hour write from its own split", () => {
+    const advisor = {
+      type: "advisor_message",
+      model: "m",
+      cache_creation_input_tokens: 7,
+      cache_creation: { ephemeral_5m_input_tokens: 4, ephemeral_1h_input_tokens: 3 },
+    };
+    const usage = { ...USAGE, iterations: [advisor] };
+    expect(readClaudeUsageLine(line({}, { usage })).records[1]?.cache_write_1h).toBe(3);
+  });
+
   it("reports a usage line of an unexpected shape and guesses no record", () => {
     const noId = line({}, { id: undefined });
     const outcome = readClaudeUsageLine(noId);

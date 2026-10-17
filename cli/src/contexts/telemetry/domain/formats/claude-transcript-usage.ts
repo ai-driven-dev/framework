@@ -124,7 +124,6 @@ export function readClaudeUsageLine(line: string): ClaudeUsageLine {
     tool_version: text(root.version),
     session_id: sessionId,
     at,
-    reasoning: null,
     cwd: text(root.cwd),
     git_branch: text(root.gitBranch),
   } as const;
@@ -139,6 +138,7 @@ export function readClaudeUsageLine(line: string): ClaudeUsageLine {
     cache_read: expected(usage, "cache_read_input_tokens", "usage", notes),
     cache_write: writes.total,
     cache_write_1h: writes.oneHour,
+    reasoning: counter(asPlainObject(usage.output_tokens_details)?.thinking_tokens),
   };
 
   const advisors = iterations
@@ -153,7 +153,8 @@ export function readClaudeUsageLine(line: string): ClaudeUsageLine {
         output: expected(advisor, "output_tokens", "advisor", notes),
         cache_read: expected(advisor, "cache_read_input_tokens", "advisor", notes),
         cache_write: expected(advisor, "cache_creation_input_tokens", "advisor", notes),
-        cache_write_1h: null,
+        cache_write_1h: counter(asPlainObject(advisor.cache_creation)?.ephemeral_1h_input_tokens),
+        reasoning: null,
       })
     );
 
