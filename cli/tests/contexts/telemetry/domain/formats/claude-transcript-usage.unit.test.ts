@@ -331,6 +331,7 @@ describe("a call keyed by its session, having no request id", () => {
     });
     expect(isKeyedBySession(call("msg_A:s-1"))).toBe(true);
     expect(isKeyedBySession(call("msg_A:s-1#advisor3"))).toBe(true);
+    expect(isKeyedBySession(call("msg_A:s-1#advisor10"))).toBe(true);
     expect(isKeyedBySession(call("msg_A:req_A"))).toBe(false);
     expect(isKeyedBySession(call("msg_A:xs-1"))).toBe(false);
     expect(isKeyedBySession(call("msg_A:s-1", "codex"))).toBe(false);

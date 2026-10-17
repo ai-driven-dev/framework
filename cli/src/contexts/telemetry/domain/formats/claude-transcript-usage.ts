@@ -12,6 +12,8 @@ export interface ClaudeUsageLine {
 type Json = Record<string, unknown>;
 
 const SYNTHETIC_MODEL = "<synthetic>";
+/** What an advisor iteration adds to its message's key. */
+export const ADVISOR = /#advisor\d+$/;
 const NONE: ClaudeUsageLine = { records: [], unrecognised: [] };
 
 function counter(value: unknown): number | null {
@@ -76,8 +78,7 @@ function sum(values: readonly (number | null)[]): number {
  * with a request id were measured under half an hour apart (see `windowOf`). */
 export function isKeyedBySession(call: Pick<UsageRecord, "tool" | "key" | "session_id">): boolean {
   return (
-    call.tool === "claude-code" &&
-    call.key.replace(/#advisor\d+$/, "").endsWith(`:${call.session_id}`)
+    call.tool === "claude-code" && call.key.replace(ADVISOR, "").endsWith(`:${call.session_id}`)
   );
 }
 

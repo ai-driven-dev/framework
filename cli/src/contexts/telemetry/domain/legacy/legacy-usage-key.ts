@@ -1,7 +1,6 @@
+import { ADVISOR } from "../formats/claude-transcript-usage.js";
 import type { StoredUsage } from "../stored-usage.js";
 import type { UsageRecord } from "../usage-record.js";
-
-const ADVISOR = /#advisor\d+$/;
 
 /** A call's key as it is keyed now. An earlier version keyed a call with no request id
  * `message.id:sessionId:timestamp`, so each copy of it had its own key; the timestamp is the

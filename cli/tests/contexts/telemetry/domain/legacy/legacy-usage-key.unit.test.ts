@@ -16,6 +16,7 @@ describe("a key an earlier version stored, as it is keyed now", () => {
 
   it("keeps an advisor iteration's suffix", () => {
     expect(currentKeyOf(call(`msg_A:s-1:${AT}#advisor12`))).toBe("msg_A:s-1#advisor12");
+    expect(currentKeyOf(call(`msg_A:s-1:${AT}#advisor3`))).toBe("msg_A:s-1#advisor3");
   });
 
   it("keeps a key with a request id, and one keyed now, as they are", () => {

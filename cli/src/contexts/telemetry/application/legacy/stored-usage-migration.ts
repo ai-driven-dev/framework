@@ -25,7 +25,6 @@ export class StoredUsageMigration {
 
   async execute(): Promise<void> {
     const held = await this.aliases.load();
-    if (held?.complete && held.pending.length === 0) return;
     let table = held;
     if (table === null || table.complete) {
       const roots = table?.pending ?? (await this.roots());
