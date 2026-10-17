@@ -133,7 +133,12 @@ describe("reading Claude usage from the fixture transcripts", () => {
     ).execute(new Map());
     expect(reading.unrecognised).toHaveLength(3);
     expect(reading.dropped).toEqual([
-      { line: named, cwd: "/work/a", at: "2026-10-07T10:00:00.000Z" },
+      {
+        line: named,
+        path: join(projects, "proj-a", "s-2.jsonl"),
+        cwd: "/work/a",
+        at: "2026-10-07T10:00:00.000Z",
+      },
     ]);
   });
 

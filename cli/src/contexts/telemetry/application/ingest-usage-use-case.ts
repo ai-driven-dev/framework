@@ -106,14 +106,22 @@ export class IngestUsageUseCase {
     // What was measured and cannot be stored is kept, so a later report says it, whoever ran
     // this: only of a clone that consents, at the thing's own time or, with none, now.
     const leftOut: LeftOutEntry[] = [];
-    const measured = async (cwd: string | null, at: string | null) =>
-      cwd !== null &&
-      "stored" in
-        (await resolver.resolve(cwd, at !== null && dayOf(at) !== null ? at : resolver.now));
-    // A transcript holding a call whose consent is not known yet is read again next time.
+    // A transcript holding what a clone that consents could not be read for is read again
+    // next time; a hold that could never end (no clone known to consent there, a consent log
+    // that stays damaged until `forget`) is not taken.
     const held = new Set<string>();
-    for (const { line, cwd, at } of reading.dropped) {
-      if (await measured(cwd, at)) leftOut.push({ reason: "unrecognised", of: line });
+    const hold = (path: string | undefined, cwd: string, at: string) => {
+      if (!resolver.consentLogDamaged && resolver.mayConsent(cwd, at)) held.add(path ?? "");
+    };
+    const measured = async (cwd: string | null, at: string | null, path: string | undefined) => {
+      if (cwd === null) return false;
+      const when = at !== null && dayOf(at) !== null ? at : resolver.now;
+      const outcome = await resolver.resolve(cwd, when);
+      if ("skipped" in outcome && outcome.skipped === "unreadable-consent") hold(path, cwd, when);
+      return "stored" in outcome;
+    };
+    for (const { line, cwd, at, path } of reading.dropped) {
+      if (await measured(cwd, at, path)) leftOut.push({ reason: "unrecognised", of: line });
     }
     const live = new Map<string, string>();
     for (const record of reading.records) {
@@ -121,12 +129,13 @@ export class IngestUsageUseCase {
       if ("skipped" in outcome) {
         const { skipped } = outcome;
         notStored[skipped] += 1;
-        // Not a no: the clone may consent once it can be read. A consent log that cannot be
-        // trusted is not this: `forget` is the way out, and it reads all again.
-        if (skipped === "unreadable-consent" && !resolver.consentLogDamaged) {
-          held.add(reading.fileOf.get(record) ?? "");
+        if (skipped === "unreadable-consent") {
+          hold(reading.fileOf.get(record), record.cwd ?? "", record.at);
         }
-        if (skipped === "undated" && (await measured(record.cwd, null))) {
+        if (
+          skipped === "undated" &&
+          (await measured(record.cwd, null, reading.fileOf.get(record)))
+        ) {
           leftOut.push({ reason: "undated", of: `${record.tool}\u0000${record.key}` });
         }
         continue;

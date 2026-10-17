@@ -98,6 +98,14 @@ export class ResolutionRun {
     return this.environment.now().toISOString();
   }
 
+  /** Whether a clone remembered at `cwd` consented at `at`: what an unreadable directory could
+   * still turn out to be once it can be read. Never true for a directory no read saw readable,
+   * nor while the consent log cannot be trusted. */
+  mayConsent(cwd: string, at: string): boolean {
+    const owners = this.ownersOf(cwdKey(cwd, this.environment.caseInsensitiveFileSystem));
+    return owners.some((owner) => this.consents.covers(owner.clone, Date.parse(at)));
+  }
+
   /** A line of the consent log was not an event: nothing is stored for any clone. */
   get consentLogDamaged(): boolean {
     return this.consents.damaged;

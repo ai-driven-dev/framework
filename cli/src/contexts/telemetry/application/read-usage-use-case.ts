@@ -12,9 +12,10 @@ export type ReadUsageLine = (line: string) => {
   readonly named?: LineNames;
 };
 
-/** A line that gave no call, and the directory and time it names. */
+/** A line that gave no call, the directory and time it names, and its file. */
 export interface DroppedLine extends LineNames {
   readonly line: string;
+  readonly path: string;
 }
 
 export interface UsageReading {
@@ -63,7 +64,7 @@ export class ReadUsageUseCase {
         candidates.push(...outcome.records);
         for (const record of outcome.records) fileOf.set(record, path);
         // Only a line that gives no call names anything.
-        if (outcome.named?.cwd) dropped.push({ line, ...outcome.named });
+        if (outcome.named?.cwd) dropped.push({ line, path, ...outcome.named });
         unrecognised.push(...outcome.unrecognised.map((reason) => `${path}: ${reason}`));
       }
     }
