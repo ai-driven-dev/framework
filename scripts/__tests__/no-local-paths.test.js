@@ -46,6 +46,9 @@ const LEAKS = {
   sessionEscaped: `"user_id": "{\\"session_id\\":\\"${SESSION}\\"}"`,
   rollout: slash("~", ".codex", "sessions", "2026", "07", "16", `rollout-2026-07-16T09-25-07-${SESSION}.jsonl`),
   transcript: `"transcript_path": "${slash("~", ".claude", "projects", "repo", `${SESSION_13}.jsonl`)}"`,
+  windowsTranscript: `at ${back("\\", "D:", "work", `${SESSION}.jsonl`)}`,
+  threadKey: `{"thread_id":"${SESSION}"}`,
+  threadArrayInline: `"threadIds": ["${SESSION_13}"]`,
 };
 
 describe("findLocalPaths", () => {
@@ -73,6 +76,9 @@ describe("findLocalPaths", () => {
         "session id",
         "session file",
         "session file",
+        "session file",
+        "session id",
+        "session id",
       ]
     );
     for (const { label } of found) {
@@ -87,6 +93,15 @@ describe("findLocalPaths", () => {
       findLocalPaths(text).map(({ line }) => line),
       [2, 4]
     );
+  });
+
+  it("reports every id of a session array on its own line, and lets made-up ones through", () => {
+    const text = ['  "threadIds": [', `    "${SESSION}",`, `    "${SEVEN_DIGITS}",`, `    "${SESSION_13}"`, "  ],"].join("\n");
+
+    assert.deepEqual(findLocalPaths(text), [
+      { line: 2, label: "session id" },
+      { line: 4, label: "session id" },
+    ]);
   });
 
   it("lets a placeholder account through, whatever its case or 8.3 suffix", () => {
@@ -111,8 +126,8 @@ describe("findLocalPaths", () => {
       slash("", "home", ".claude", "settings.json"),
       slash("", "proj", "home", LEAKER, "x"),
       slash("", "Users", ""),
-      `{"thread_id":"${SESSION}"}`,
-      `${SESSION}.json`,
+      `{"turn_id":"${SESSION}"}`,
+      slash("", "dir", `${SESSION}.json`),
     ];
 
     for (const sample of lookalikes) assert.deepEqual(findLocalPaths(sample), [], sample);

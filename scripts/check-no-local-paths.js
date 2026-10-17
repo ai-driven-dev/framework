@@ -49,6 +49,8 @@ const NAME_END = String.raw`(?=[/\\"'\x60\s),;:]|$)`;
 /** At the root of a path only: `/proj/home/x/` is a project folder, not a home. */
 const ROOTED = String.raw`(?<![\w.-])`;
 const UUID = String.raw`[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}`;
+/** A JSON key naming a session or a Codex thread, its quotes optionally escaped. */
+const SESSION_KEY = String.raw`\\?"(?:session|session_id|sessionId|thread_id|threadId|threadIds)\\?"\s*:\s*`;
 
 const PATTERNS = [
   { label: "/Users/<name>", re: new RegExp(`${ROOTED}/Users/${NAME}${NAME_END}`, "giu"), named: true },
@@ -70,12 +72,10 @@ const PATTERNS = [
   // Joined, not written out: this file is tracked too, and must pass its own check.
   { label: ["", "var", "folders", ""].join("/"), re: /\/var\/folders\//gu, named: false },
   // A UUID where a key or Copilot's state folder says it is a session, escaped in JSON or not.
+  // An array under such a key is read whole by SESSION_ARRAY, below.
   {
     label: "session id",
-    re: new RegExp(
-      String.raw`(?:session-state/|\\?"(?:session|session_id|sessionId)\\?"\s*:\s*\\?")(${UUID})`,
-      "giu"
-    ),
+    re: new RegExp(String.raw`(?:session-state/|${SESSION_KEY}\\?")(${UUID})`, "giu"),
     session: true,
   },
   // A UUID naming a transcript: Claude's `<project>/<id>.jsonl`, Codex's `rollout-<time>-<id>.jsonl`.
@@ -85,6 +85,10 @@ const PATTERNS = [
     session: true,
   },
 ];
+
+/** An array of ids under a session key, which may span lines: matched on the whole text. */
+const SESSION_ARRAY = new RegExp(String.raw`${SESSION_KEY}\[([^\]]*)\]`, "giu");
+const ANY_UUID = new RegExp(UUID, "giu");
 
 function isPlaceholder(name) {
   return PLACEHOLDER_NAMES.has(name.toLowerCase().replace(/\.$/u, "").replace(/~\d+$/u, ""));
@@ -109,7 +113,16 @@ function findLocalPaths(text) {
     }
   });
 
-  return found;
+  for (const array of text.matchAll(SESSION_ARRAY)) {
+    const start = array.index + array[0].indexOf("[");
+    for (const id of array[1].matchAll(ANY_UUID)) {
+      if (isPlaceholderId(id[0])) continue;
+      const line = text.slice(0, start + 1 + id.index).split("\n").length;
+      found.push({ line, label: "session id" });
+    }
+  }
+
+  return found.sort((a, b) => a.line - b.line);
 }
 
 /** NUL in the first 8 KiB, git's own test for binary. */
