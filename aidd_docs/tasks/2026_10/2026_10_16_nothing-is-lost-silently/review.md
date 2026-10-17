@@ -1,6 +1,6 @@
 # Review: Nothing is lost silently
 
-- Rounds: 2
+- Rounds: 3
 - Started: 2026-10-17
 
 ## Round 1 · r-7c3e
@@ -132,3 +132,72 @@ Round 1 findings, rechecked on this head:
 - `startsWith` level: replaced by `{ warn, text }`.
 - `updated` grouped: fixed.
 - Envelope meaning change: avoided with the new `coverage.left_out` field. `not_stored` and `unrecognised_shapes` keep their run-only meaning. The 01-usage skill files `answer.md` and `references/envelope.md` are updated.
+
+## Round 3 · r-e6f9
+
+- Date: 2026-10-17
+- By: Baptiste LAFOURCADE
+- Diff: `8f1b9686...e6f91006` (round-2 fixes: `78fbc530...e6f91006`)
+- Axes: code, functional, relevancy
+- Verdict: changes-requested
+- Score: 7/10. 5/8 met, 0 unmet, 3 unverified at runtime; round-2 findings 6/6 fixed; no deal breaker; 1 major, 5 minor
+
+### Criteria
+
+- Unverified at runtime: 1. The hook's leftovers counted by a later report. The e2e is unchanged since round 2 and was not re-run, because it needs the built binary. It now holds for `unreadable-consent`, which a later report reads again. `never-seen-alive` stays a stated loss (finding below).
+- [x] 2. A clone that never opted in, or work after `off`, leaves nothing in `left-out.txt`. The hold writes nothing: it only puts back `before`'s position (`ingest-usage-use-case.ts:152-157`). "says it again on every run … keeps nothing of it" is green. The `roots.json` narrowing is stated (finding 4 below).
+- [x] 3. Re-ingesting counts nothing twice. Re-reading a held transcript stores its calls again by key: "keeps a transcript's earlier position …" asserts `added: 1, updated: 0`. `left-out.txt` is a hashed set. P3 is green.
+- [x] 4. Unrecognised ledger lines survive. No change since round 2. Green.
+- [x] 5. P1 to P4 hold. Green in this round. The hold has no property, though: P3's `PLACES` (`left-out.property.integration.test.ts:45`) has no unreadable directory (minor below).
+- [x] 6. Tests first. The round-2 red run in `evidence.md` now fails on behaviour (`expected true to be false`, `expected +0 to be 1`), not on a `TypeError`. Mutations R2-a to R2-e are recorded but were not reproduced, because this round is read-only.
+- Unverified at runtime: 7. Mutation 96.5. Stryker was not run (low RAM). The new survivor, `fileOf.get(record) ?? ""`, was checked: `foldUsage` returns the original winner objects (`usage-fold.ts:34-36`), so every record has a file. It is equivalent.
+- Unverified at runtime: 8. Bundle `711,575 B`, claimed at `b13669ae`. That leaves 105 B of headroom against 695 KB, which is too little for any later fix. The `ledger-lock.ts` and report destructuring changes exist only to save bytes.
+
+Run in this round (sandboxed HOME, XDG, AIDD, CLAUDE_CONFIG_DIR, `GIT_CONFIG_NOSYSTEM=1`): ingest unit, report unit, consent-scenarios, left-out property, telemetry displays. Result: `Test Files 6 passed (6)`, `Tests 200 passed (200)`.
+
+### Round 2 findings, rechecked
+
+- M1 for `unreadable-consent` and `never-seen-alive`: fixed. `unreadable-consent` is now held: the next ingest reads the transcript again, stores the call once it can be read, and every run says it until then. `never-seen-alive` is named as a stated loss in `usage-contract.md:92` and `:336`. The follow-up issue that round 2 asked for was not opened (minor below).
+- `usage-contract.md:53` stale quote: fixed. It now quotes `UNRECOGNISED_WORDS` and names its source.
+- Undated calls judged by consent at read time: fixed. The exception is now stated in the Consent section (`usage-contract.md:270`).
+- `roots.json` written for undated calls and lines: accepted and stated in the `roots.json` row and at `usage-contract.md:316`.
+- Red run failing on a `TypeError`: fixed for round 2 (see criterion 6).
+- "this run" scope: fixed. Run-only lines say "Not stored by this read" and "not recognised by this read". Cumulative lines say "Kept from every read". This matches `envelope.md:42-46` and `answer.md:26`.
+
+### Findings
+
+- `cli/src/contexts/telemetry/application/ingest-usage-use-case.ts:126-128`, `application/directory-resolver.ts:173,178` : a hold can last forever, with no hope of recovery, and its cost grows on every hook run.
+  - `unreadable-consent` comes from any directory that `locate` calls `unreadable`, or whose clone has no identity. This includes a repository that never opted in and that the user cannot or will not fix: one owned by another user (git "dubious ownership"), a protected or unmounted share, or a platform with no inode.
+  - Every transcript with one call there is held at its pre-hold position. That transcript's stored calls are held with it, and so is a whole session that once worked in that directory.
+  - Every ingest re-parses all of them: each SessionStart and each report. Their total grows with every new session there. The only bound is Claude Code's transcript retention, which `on` warns the user to lengthen.
+  - The hook kills ingest after `INGEST_TIMEOUT_MS = 110_000` (`plugins/aidd-telemetry/hooks/catch-up.cjs:6`), and positions are saved last. Once the re-read alone passes that limit, no hook run saves any position. Measurement would then stall for every clone, not only the held one. This is an inferred failure mode, not measured: no parse throughput was taken.
+  - The limit is stated (`usage-contract.md:91`, "Cost: …"), which is why this is not a deal breaker. It is still unbounded, and it is paid even when recovery is impossible: once that directory becomes readable, a clone that never opted in resolves to `no-consent` anyway.
+  - → Hold only when the call could ever be stored: when some clone that `roots.json` remembers at that directory (`ownersOf(dir)`) has a consent interval covering the call's `at` (`consents.covers`).
+    - `look` returns `unreadable-consent` at `directory-resolver.ts:173` and `:178` before any lookup of an owner, so the hold needs that check on its own.
+    - Round 2's scenario B is kept: an opted-in clone's directories were remembered while they could be read, and its interval covers the call.
+    - A repository that never opted in, or a directory never seen while readable, moves on, as for `never-seen-alive`.
+    - The check needs no `now`, so it stays deterministic, and it uses data the resolver already loads.
+  - Fallback if that does not fit: bound the hold by age. Once the held call is older than a fixed span (for example 7 days), move on and let that run say it, as for `never-seen-alive`. This adds no non-determinism beyond what the hold already has, because whether the clone can be read is already a fact about the environment that changes over time. Pin it with a test of a directory that never becomes readable, and assert its transcript eventually moves on.
+  - Not enough on its own: holding only while `ResolutionRun.unreadable` is not empty. It probably does not keep round 2's scenario B. `GitConsentAdapter.readClone` runs `git config --file <gitdir>/config` (`git-consent-adapter.ts:41-43`), which may still read under dubious ownership while `locate`'s `rev-parse` refuses. That was not verified in this round.
+  - 🟡 major, performance and fit.
+- `ingest-usage-use-case.ts:109-112`, `:129` : the round-2 rationale ("unreadable is not a no") covers dated calls only.
+  - An undated call, or a line that is no usage line, in a clone whose consent cannot be read gets `measured` = false. It is neither kept nor held, and the transcript moves on unless it also holds a dated call of that clone.
+  - Once the clone can be read, that undated call would have been kept as a hash. Instead it is lost. Only the run that read it says it, and for the hook that is nobody.
+  - The test "says it again on every run … keeps nothing of it" (`ingest-usage-use-case.unit.test.ts:1240`) masks this, because the dated call in the same file holds the file anyway.
+  - → Hold on an `unreadable-consent` verdict from `measured` too, or state the exception in the Left out bullet at `usage-contract.md:91`.
+  - 🟢 minor, coherence.
+- `ingest-usage-use-case.ts:124-125`, `contract.md:43`, `usage-contract.md:91`, test name at `ingest-usage-use-case.unit.test.ts` "moves on while the consent log cannot be trusted: forget is the way out, and it reads all again" : the reason given for not holding under a damaged log is wrong.
+  - `forget` removes `consents.jsonl` with the ledger, and `DAMAGED_CONSENT_LOG_WORDS` itself says "nothing from before is stored". Reading everything again therefore recovers nothing.
+  - Moving on is still the right behaviour: the log stays damaged until `forget`, so a hold would never end, and every run warns that the log is damaged.
+  - → Give that as the reason in all three places.
+  - 🟢 minor, docs versus code.
+- `usage-contract.md:336` (Recovery column: "the session start inside it sees it alive") and `contract.md:44` : the recovery stated in the limits table covers `claude --worktree` sessions. It does not cover the case `contract.md` itself names, subagent worktrees, which fire no SessionStart. No follow-up issue was opened for the loss.
+  - A lean alternative was not weighed. Claude Code documents `SubagentStart` and `SubagentStop` hook events (code.claude.com/docs/en/hooks). Whether their `cwd` is the worktree root was not verified in this round. If it is, an async hook could remember the directory alive at no CLI bundle cost. `WorktreeRemove` fires only for worktrees that a `WorktreeCreate` hook created, so it does not fit.
+  - → Say "none for a subagent worktree" in the Recovery column, and open the follow-up issue.
+  - 🟢 minor, docs and scope.
+- `cli/tests/contexts/telemetry/application/report/left-out.property.integration.test.ts:45` : `PLACES` has no unreadable directory.
+  - P3's claims (any order and split, offsets lost, identical bytes) are therefore unproven for a held transcript.
+  - This holds especially for a key whose copies sit in two files: only the fold winner's file is held (`fileOf`), and the other file moves on. By reading, the result is the same, because the winner's file is the one read again, but nothing checks it.
+  - → Add `/work/unreadable` to `PLACES`, flip it readable before the final ingest, and compare with the oracle.
+  - 🟢 minor, test coverage.
+- `plugins/aidd-telemetry/skills/01-usage/references/envelope.md:57` : "nothing is stored for it until it can" is true, but it no longer says that the calls are then stored retroactively. Someone answering "will I lose them?" gets no answer. → Add "then its calls are stored". 🟢 minor, skill clarity.

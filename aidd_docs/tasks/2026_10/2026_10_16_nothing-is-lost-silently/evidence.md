@@ -263,3 +263,60 @@ At `b13669ae`: **96.5** (floor 96). Survivors on changed lines: the five recorde
 | `check-claude-tokens-end-to-end.cjs cli/dist/cli.js` (sandboxed) | `2 calls, 393 tokens, all on task demo, ticket T-1, and on task demo in this repository` |
 | same, `--attended` | `…; asked, answered by the hook, kept across /clear` |
 | `pnpm exec lefthook run pre-push` | `✔️ cli-knip`, `✔️ cli-test` |
+
+## Round 3 fixes
+
+### Red run
+
+`pnpm exec vitest run` on the ingest unit tests and P3, before the bounded hold:
+
+```txt
+× holds an undated call and a line of a clone that consents but cannot be read, and keeps them once it can
+  AssertionError: expected [ true, true ] to deeply equal [ false, false ]
+× moves on past a directory git refuses that no clone it knows of consents in, saying it once
+  AssertionError: expected undefined to be 3
+× moves on past a call of a clone it knows, made when that clone did not consent, though it cannot be read now
+  AssertionError: expected undefined to be 1
+× is kept and reported as one ingest … and while a clone that consents could not be read
+  Error: Property failed after 1 tests
+Tests  4 failed | 101 passed (105)
+```
+
+All fail on behaviour. The damaged-log test was then made to remember the clone first, so that R3-e below can fail.
+
+### Mutations, by hand
+
+| Mutation | Red |
+| --- | --- |
+| R3-a: every unreadable directory held | "moves on past a directory git refuses that no clone it knows of consents in…", "moves on past a call … made when that clone did not consent…" |
+| R3-b: a known clone held whatever its consent at the time | "moves on past a call … made when that clone did not consent…" |
+| R3-c: undated calls and lines never held | "holds an undated call and a line…", P3 |
+| R3-d: dated calls never held | 6 failed, the `broken config` scenario and P3 among them |
+| R3-e: held while the consent log is damaged | "moves on while the consent log cannot be trusted…" |
+
+### Bundle
+
+Budget raised in its own commit (`7287c9ce`, `chore(cli)`) to 709 KB, per the policy in `check-bundle-size.mjs`: measured 712,014 B (695.3 KB), 2.0% headroom, registry line added.
+
+### Telemetry mutation
+
+At `59b4811e`: **96.6** (floor 96). Survivors on changed lines, beyond the five recorded above:
+
+| File:line | Mutant | Why it lives |
+| --- | --- | --- |
+| `ingest-usage-use-case.ts:114` `path ?? ""` | `"Stryker was here!"` | no coverage: every dropped line and every record has its file |
+| `ingest-usage-use-case.ts:133` `record.cwd ?? ""` | `"Stryker was here!"` | no coverage: an `unreadable-consent` call always has a directory (`no-cwd` is judged first) |
+| `ingest-usage-use-case.ts:118` `at !== null` | `true` | equivalent: `dayOf(null)` is `null` |
+| `ingest-usage-use-case.ts:120` `"skipped" in outcome && …` | `\|\|` | equivalent: a stored outcome has no `skipped`, so the comparison is false; checked by hand (M-120) |
+| `ingest-usage-use-case.ts:120` `outcome.skipped === "unreadable-consent"` | `true` | equivalent in practice: any other skip means no clone remembered there consented at that time, so `mayConsent` refuses the hold |
+
+### Gates, at `c93462c8`
+
+| Gate | Shortest decisive line |
+| --- | --- |
+| `cd cli && pnpm test` (pre-push `cli-test`) | `Tests  6721 passed \| 1 skipped (6722)` |
+| `node --test 'scripts/__tests__/**/*.test.js'` | `ℹ pass 460` `ℹ fail 0` |
+| `pnpm smoke` (sandboxed) | `PASS: 132   FAIL: 0   SKIP: 1   ·   coverage 100%`; `Bundle size: 695.3 KB / budget: 709 KB` |
+| `check-claude-tokens-end-to-end.cjs cli/dist/cli.js` (sandboxed) | `2 calls, 393 tokens, all on task demo, ticket T-1, and on task demo in this repository` |
+| same, `--attended` | `…; asked, answered by the hook, kept across /clear` |
+| `pnpm exec lefthook run pre-push` | `✔️ cli-knip`, `✔️ cli-test` |
