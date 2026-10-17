@@ -102,6 +102,12 @@ function resolveCommandPath(actionCommand: Command): string {
   return parts.join(" ");
 }
 
+// A reader that stops reading (`aidd … | head -1`) closes stdout under the run: what is left to
+// print has nobody to read it, so the run goes on without it and exits on its own outcome.
+process.stdout.on("error", (error: NodeJS.ErrnoException) => {
+  if (error.code !== "EPIPE") throw error;
+});
+
 const cliArgs = process.argv.slice(2);
 
 if (cliArgs.length === 0 && process.stdout.isTTY) {
