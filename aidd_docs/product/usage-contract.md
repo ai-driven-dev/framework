@@ -340,6 +340,7 @@ None observable by the CLI.
 | Consent log edited by hand | outside the contract; can reopen a window `off` closed | tool says `forget --yes` |
 | Call read while git config, `.git` or git dir unreadable | `unreadable-consent`. A clone remembered there that consented at the time: the transcript read again by every ingest until its consent can be read, then stored. Otherwise: said only by that run | repair the clone, or `forget --yes`, or remove the clone; not `off` |
 | pid reused within one boot by a Claude process whose `startup` was never recorded (e.g. started before `on`) | can take the dead process's last session as predecessor, so `/clear` carries its task | announced, replaced by first declaration |
+| One transcript line longer than the longest string the runtime holds (512 MB) | every ingest fails when it reaches that line (inferred, not run). A transcript is otherwise read a block at a time: an ingest holds 1 MiB and its longest line, whatever the transcript's size | - |
 | `AIDD_TELEMETRY=0` | stops hooks too; a key turned off meanwhile is observed at the next run without it | - |
 | Declaration keys edited by hand: every key including the stamp, `aiddTask` and `aiddDeclaredAt` alone (read as unstamped), or a stamp removed or emptied | the branch reads as declared: no reader can tell who wrote a git config key | - |
 | Copy or rename of an unstamped (cli-v5.5.0) declaration | the new name inherits it | declare on the new name, or on the original to stamp it before copying or renaming |

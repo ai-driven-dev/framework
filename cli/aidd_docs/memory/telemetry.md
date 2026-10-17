@@ -30,6 +30,7 @@ flowchart LR
 ```
 
 - A command that reports or ingests reads new lines first, under the ledger lock. `ingest` is the same step on its own, run quietly by the plugin at session start.
+- A transcript is read a block at a time (1 MiB), each complete line handed on as it is found: an ingest holds a block and the longest line, never the unread tail. An unterminated last line waits for the next read.
 - Reading is one pass: tool-specific only up to the usage record. Resolving, storing, attributing and reporting are written once for every tool.
 - The hooks and the CLI never call each other's code. They meet in the files, whose formats one fixture pins on both sides.
 
@@ -57,6 +58,7 @@ flowchart LR
 | What a clone is | `domain/consent/clone-identity.ts` |
 | When a clone consented | `domain/consent/consent-history.ts`, `application/consent-log.ts` |
 | Which transcripts are read | `application/ingest-usage-use-case.ts`, `application/read-usage-use-case.ts` |
+| How one is read: from its saved offset, a block at a time, up to its last complete line | `infrastructure/claude-transcript-source-adapter.ts`, `domain/transcript-position.ts` |
 | How the ledger lies on disk, and what an ingest or a report reads | `infrastructure/usage-ledger-adapter.ts`, `domain/stored-usage.ts`, `application/ledger-upkeep.ts`, `domain/report/period.ts` |
 | What an ingest measured and could not store, kept for every report (`ledger/left-out.txt`), and why a ledger line no reader knows is kept | `infrastructure/left-out/left-out-adapter.ts`, `infrastructure/usage-ledger-adapter.ts`, `application/ingest-usage-use-case.ts`; rules in the [usage contract](../../../aidd_docs/product/usage-contract.md#left-out) |
 | What `on` and `forget` clean up from an earlier measurement | `domain/legacy/`, `application/switch/`, `application/forget/` |

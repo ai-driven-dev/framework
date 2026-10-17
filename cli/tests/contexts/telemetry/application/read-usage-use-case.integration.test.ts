@@ -1,7 +1,7 @@
-import { appendFile, cp, mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
+import { appendFile, cp, mkdir, mkdtemp, open, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ReadUsageUseCase } from "../../../../src/contexts/telemetry/application/read-usage-use-case.js";
 import { readClaudeUsageLine } from "../../../../src/contexts/telemetry/domain/formats/claude-transcript-usage.js";
 import type { TranscriptSource } from "../../../../src/contexts/telemetry/domain/ports/transcript-source.js";
@@ -19,6 +19,7 @@ beforeEach(async () => {
 });
 
 afterEach(async () => {
+  vi.restoreAllMocks();
   await rm(root, { recursive: true, force: true });
 });
 
@@ -26,7 +27,7 @@ function reversed(source: TranscriptSource): TranscriptSource {
   return {
     list: async () => [...(await source.list())].reverse(),
     oldestModified: (paths) => source.oldestModified(paths),
-    read: (path, since, writtenFrom) => source.read(path, since, writtenFrom),
+    read: (path, since, writtenFrom, each) => source.read(path, since, writtenFrom, each),
   };
 }
 
@@ -178,5 +179,25 @@ describe("reading Claude usage from the fixture transcripts", () => {
     );
     const second = await useCase.execute(first.positions);
     expect(second.records.map((r) => r.key)).toEqual(["msg_E:req_E"]);
+  });
+});
+
+describe("reading a long transcript", () => {
+  it("hands its first lines to the line reader before the rest of it is read", async () => {
+    const alone = join(root, "alone");
+    await mkdir(join(alone, "p"), { recursive: true });
+    await writeFile(join(alone, "p", "s.jsonl"), `${"x".repeat(1023)}\n`.repeat(3 * 1024));
+    const probe = await open(import.meta.filename);
+    const reads = vi.spyOn(Object.getPrototypeOf(probe), "read");
+    await probe.close();
+    let readsBeforeFirstLine: number | null = null;
+    let lines = 0;
+    await new ReadUsageUseCase(new ClaudeTranscriptSourceAdapter(alone), () => {
+      readsBeforeFirstLine ??= reads.mock.calls.length;
+      lines += 1;
+      return { records: [], unrecognised: [] };
+    }).execute(new Map());
+    expect(lines).toBe(3 * 1024);
+    expect(readsBeforeFirstLine).toBeLessThan(reads.mock.calls.length);
   });
 });

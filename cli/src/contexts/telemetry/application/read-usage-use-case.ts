@@ -56,17 +56,16 @@ export class ReadUsageUseCase {
     const positions = new Map<string, TranscriptPosition>();
     const paths = await this.source.list();
     for (const path of paths) {
-      const read = await this.source.read(path, since.get(path) ?? null, writtenFrom);
-      positions.set(path, read.position);
-      if (read.skipped) skipped.add(path);
-      for (const line of read.lines) {
+      const read = await this.source.read(path, since.get(path) ?? null, writtenFrom, (line) => {
         const outcome = this.readLine(line);
         candidates.push(...outcome.records);
         for (const record of outcome.records) fileOf.set(record, path);
         // Only a line that gives no call names anything.
         if (outcome.named?.cwd) dropped.push({ line, path, ...outcome.named });
         unrecognised.push(...outcome.unrecognised.map((reason) => `${path}: ${reason}`));
-      }
+      });
+      positions.set(path, read.position);
+      if (read.skipped) skipped.add(path);
     }
     return {
       records: foldUsage(candidates),

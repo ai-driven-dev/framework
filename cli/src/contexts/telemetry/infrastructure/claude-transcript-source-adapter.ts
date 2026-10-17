@@ -34,9 +34,47 @@ async function lastLineEnd(handle: FileHandle, size: number): Promise<number> {
   return 0;
 }
 
+/** Hands `each` every complete line between `from` and `size`, a block at a time, and returns
+ * the end of the last one. A line split across blocks is kept in pieces and decoded once whole:
+ * byte 0x0a is never inside a UTF-8 sequence, so this decodes as the whole range would. Memory is
+ * a block and the longest line, whatever the range. */
+async function eachLine(
+  handle: FileHandle,
+  from: number,
+  size: number,
+  blockBytes: number,
+  each: (line: string) => void
+): Promise<number> {
+  const block = Buffer.alloc(Math.min(blockBytes, Math.max(0, size - from)));
+  let pieces: Buffer[] = [];
+  let consumed = from;
+  for (let at = from; at < size; ) {
+    const { bytesRead } = await handle.read(block, 0, Math.min(block.length, size - at), at);
+    // Shorter than it was when stat'd: what is left is read next time.
+    if (bytesRead === 0) break;
+    const read = block.subarray(0, bytesRead);
+    let start = 0;
+    for (let end = read.indexOf(NEWLINE); end !== -1; end = read.indexOf(NEWLINE, start)) {
+      const line = Buffer.concat([...pieces, read.subarray(start, end)]).toString("utf8");
+      each(line.endsWith("\r") ? line.slice(0, -1) : line);
+      pieces = [];
+      start = end + 1;
+      consumed = at + start;
+    }
+    // A copy: the block is read into again.
+    if (start < bytesRead) pieces.push(Buffer.from(read.subarray(start)));
+    at += bytesRead;
+  }
+  return consumed;
+}
+
 /** Reads the transcripts Claude Code keeps under `<config dir>/projects`. */
 export class ClaudeTranscriptSourceAdapter implements TranscriptSource {
-  constructor(private readonly projectsRoot: string) {}
+  constructor(
+    private readonly projectsRoot: string,
+    /** How much of a transcript is read at once. */
+    private readonly blockBytes = 1 << 20
+  ) {}
 
   async list(): Promise<readonly string[]> {
     const found: string[] = [];
@@ -66,12 +104,12 @@ export class ClaudeTranscriptSourceAdapter implements TranscriptSource {
   async read(
     path: string,
     since: TranscriptPosition | null,
-    writtenFrom: number
+    writtenFrom: number,
+    each: (line: string) => void
   ): Promise<TranscriptRead> {
     const handle = await open(path, constants.O_RDONLY).catch(absentIsNothing);
     if (handle === null) {
       return {
-        lines: [],
         position: since ?? { offset: 0, size: 0, identity: "" },
         restarted: false,
         skipped: false,
@@ -85,21 +123,12 @@ export class ClaudeTranscriptSourceAdapter implements TranscriptSource {
       if (stats.mtimeMs < writtenFrom) {
         // Nothing in it is covered: every line was written before the first interval opened.
         const offset = await lastLineEnd(handle, now.size);
-        return { lines: [], position: { offset, ...now }, restarted: false, skipped: true };
+        return { position: { offset, ...now }, restarted: false, skipped: true };
       }
       const { offset, restarted } = resumeOffset(since, now);
-      const bytes = Buffer.alloc(Math.max(0, now.size - offset));
-      const { bytesRead } = await handle.read(bytes, 0, bytes.length, offset);
-      const end = bytes.subarray(0, bytesRead).lastIndexOf(NEWLINE) + 1;
-      const lines = bytes
-        .subarray(0, end)
-        .toString("utf8")
-        .split("\n")
-        .slice(0, -1)
-        .map((line) => (line.endsWith("\r") ? line.slice(0, -1) : line));
+      const end = await eachLine(handle, offset, now.size, this.blockBytes, each);
       return {
-        lines,
-        position: { offset: offset + end, size: now.size, identity: now.identity },
+        position: { offset: end, size: now.size, identity: now.identity },
         restarted,
         skipped: false,
       };
