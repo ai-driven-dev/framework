@@ -5,13 +5,13 @@ import type { ResolutionStore } from "../../domain/ports/resolution-store.js";
 import type { UsageLedger } from "../../domain/ports/usage-ledger.js";
 import { repositoryIdOf } from "../../domain/repository-identity.js";
 
-/** Brings what an earlier version stored to the rules of now: one key per call, one id per
- * repository. A stored id is a hash, so only a live clone's origin can say which id an earlier
+/** Brings what an earlier version stored to the rules of now: no call without a request id,
+ * one id per repository. A stored id is a hash, so only a live clone's origin can say which id an earlier
  * version gave it: each root `roots.json` names is located, and the earlier id of its origin
  * mapped to the id of now. The table is written first; every reader of the ledger,
  * `roots.json` and the branch snapshots applies it from then on. Then every call with no request
- * id is left out, and `roots.json` and every ledger partition are rewritten under the table, and the table is marked
- * complete, last. A run stopped anywhere leaves a state the next one completes with the same
+ * id is left out, `roots.json` and every ledger partition are rewritten under the table, and the
+ * table is marked complete, last. A run stopped anywhere leaves a state the next one completes with the same
  * table, asking git nothing. A root that could not be read, or was not there, stays pending:
  * each later run looks at those roots alone, and rewrites the stores again only when one of
  * them adds an id. Runs under the ledger's lock. */
@@ -42,9 +42,9 @@ export class StoredUsageMigration {
     }
     const roots = await this.resolutions.load();
     if (roots.size > 0) await this.resolutions.save(roots);
+    await this.ledger.leaveOutRequestless();
     // Every partition, not only the ones a read finds unsettled: a day is put in the order one
     // ingest writes, whatever order it was found in. One already in it is not touched.
-    await this.ledger.leaveOutRequestless();
     await this.ledger.save((await this.ledger.load()).records);
     await this.aliases.save({ ...table, complete: true });
   }

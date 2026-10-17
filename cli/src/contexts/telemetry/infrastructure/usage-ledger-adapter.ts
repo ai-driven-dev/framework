@@ -38,8 +38,8 @@ function partitionOf(name: string): string {
  * ledger is never appended to: a changed day is rewritten whole, by temporary file and
  * rename, and an unchanged one is not touched, so no reader ever meets a torn line. An ingest
  * reads the days around its calls and writes only what changed, so its cost does not grow with
- * the ledger. Between reports, a call whose snapshots fell outside that window may sit in two days: every
- * reader folds at read, so it is still counted once. Once a report with no bound has settled
+ * the ledger. Between reports, a call whose snapshots fell outside that window may sit in two
+ * days: every reader folds at read, so it is still counted once. Once a report with no bound has settled
  * the ledger, each call is on disk once and the bytes depend on what the ledger holds and not
  * on how it got there.
  *

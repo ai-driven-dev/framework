@@ -51,7 +51,7 @@ const NAME_END = String.raw`(?=[/\\"'\x60\s),;:]|$)`;
 const ROOTED = String.raw`(?<![\w.-])`;
 const UUID = String.raw`[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}`;
 /** A JSON key naming a session or a Codex thread, its quotes optionally escaped. */
-const SESSION_KEY = String.raw`\\?"(?:session|session_id|sessionId|thread_id|threadId|threadIds)\\?"\s*:\s*`;
+const SESSION_KEY = String.raw`\\?"(?:session|session_id|sessionId|thread_id|threadId)\\?"\s*:\s*`;
 
 const PATTERNS = [
   { label: "/Users/<name>", re: new RegExp(`${ROOTED}/Users/${NAME}${NAME_END}`, "giu"), named: true },
