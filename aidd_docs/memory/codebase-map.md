@@ -9,6 +9,7 @@ flowchart TD
     Root["framework/"] --> Plugins["plugins/"]
     Root --> Cli["cli/"]
     Root --> Kanban["kanban/"]
+    Root --> Kits["kits/"]
     Root --> Scripts["scripts/"]
     Root --> Docs["docs/"]
     Root --> AiddDocs["aidd_docs/"]
@@ -24,6 +25,7 @@ flowchart TD
 | `plugins/` | the product — one dir per plugin, each with `plugins/<plugin>/.claude-plugin/plugin.json` and `skills/`, optionally `agents/`, `commands/`, `hooks/`, `rules/` |
 | `cli/` | the `aidd` binary. Has its own memory bank and `CLAUDE.md` |
 | `kanban/` | the task board. A private package with its own lockfile, unwired from the CLI |
+| `kits/` | Docker Sandbox mixin kits that install the framework into a sandbox, native `claude plugin` calls, no CLI dependency. `kits/<name>/spec.yaml` |
 | `scripts/` | repository checks and generators, run by lefthook and CI. Tests in `scripts/__tests__/` |
 | `docs/` | durable docs — architecture, plugin authoring, glossary, maintainer runbook. `prompts-documentation.md` is generated |
 | `aidd_docs/` | this memory bank, plus `tasks/`, `runs/`, `product/`, `specs/`, `recipes/`, `brainstorm/` |
