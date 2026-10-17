@@ -98,32 +98,12 @@ What an ingest measured and could not store is kept in `ledger/left-out.txt`, so
 
 ## Report envelope
 
-`aidd telemetry report --json` prints one object, `version: 2`. What a figure is, what it depends on, what `run` holds, and how the envelope may change are defined once, in [the envelope reference](../../plugins/aidd-telemetry/skills/01-usage/references/envelope.md#figures-and-run). Type: `ReportEnvelope`, `cli/src/contexts/telemetry/application/report/report-envelope.ts`.
+`aidd telemetry report --json` prints one object, `version: 2`. Every field, what a figure is, what it depends on, what `run` holds, and how the envelope may change are defined once, in [the envelope reference](../../plugins/aidd-telemetry/skills/01-usage/references/envelope.md). Type: `ReportEnvelope`, `cli/src/contexts/telemetry/application/report/report-envelope.ts`. What the reference does not say:
 
-| Field | Meaning |
-| --- | --- |
-| `version` | `2` |
-| `period` | `{from, to}`, UTC days, `null` for open, as resolved: `--days` against today's UTC day. The figures depend on these days, not on the flags |
-| `axis` | `total`, `person`, `session`, `model`, `agent`, `day`, `repository`, `task`, `ticket` |
-| `filters` | `task`, `ticket`, `person`, `model`, `agent`, `session`, `repository`, `absent`, `unattributed`, in that order: `null` when not given, else as resolved (see [Filters](#filters)) |
-| `rows` | one per axis value, of the calls that match |
-| `totals` | the calls of the period that match |
-| `coverage` | `records`, `left_out`. `records` counts the calls of the period, matching or not; `left_out` (`undated`, `unrecognised`) what every ingest so far measured and could not store, see [Left out](#left-out) |
-| `run` | last: `files_read`, `unrecognised_shapes`, `not_stored`, `consent_log_damaged`, `oldest_transcript_at`, `skipped_ledger_lines`, what the read that printed the report found |
-
-Row and `totals`: `records`, `input`, `output`, `cache_read`, `cache_write` (each `{tokens, unknown_records}`), `total`. A row also has:
-
-| Field | Values |
-| --- | --- |
-| `kind` | `value`, `unattributed`, `absent` |
-| `key` | axis value for `value`, else `null` |
-| `reason` | `no-binding` or `declared-none` for `unattributed`, else `null` |
-
-- Every axis partitions the same calls: each adds up to `totals`, counter by counter.
 - Envelope version 1 put the figures and the run together. Version 2 keeps them apart and has no compatibility shape.
 - `AIDD_TELEMETRY=0`: nothing read, object is `{"version": 2, "refused": "AIDD_TELEMETRY=0"}`.
 - The text report labels an `absent` person `anonymous`; the envelope keeps `kind: absent`, `key: null`.
-- A report ingests first; what that read found is its `run`, see [the envelope reference](../../plugins/aidd-telemetry/skills/01-usage/references/envelope.md#run). `coverage.records` describes the period; `coverage.left_out` every ingest so far.
+- A report ingests first: what that read found is its `run`.
 - A report with `--days`, `--from` or `--to` reads only the days of its period and the day on each side; with none it reads the whole ledger. The copies of a call with a `requestId` have been observed less than a day apart, and under that bound both print the same figures; a call with none is held once by the ingest that stores it, so no bound is needed. Outside these, only a report with no period folds every copy of a call: copies an older CLI stores after the migration are one such case. `run.skipped_ledger_lines` counts the lines of the partitions read.
 - No path, working directory or branch. `session` keys are full session ids, `repository` keys are hashes.
 
