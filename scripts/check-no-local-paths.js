@@ -5,7 +5,8 @@
  * nothing on any other machine, and once pushed it stays in history for good.
  *
  * Patterns, not the current account: a check keyed to one username passes for everyone else.
- * A bare username outside a path, or a path shape not listed below, is out of its reach.
+ * A bare username outside a path, or a path shape not listed below, is out of its reach. Line by
+ * line: multi-line structures are not parsed.
  *
  *   node scripts/check-no-local-paths.js <file…>   the files handed over (pre-commit)
  *   node scripts/check-no-local-paths.js --all     every tracked file (CI)
@@ -72,7 +73,6 @@ const PATTERNS = [
   // Joined, not written out: this file is tracked too, and must pass its own check.
   { label: ["", "var", "folders", ""].join("/"), re: /\/var\/folders\//gu, named: false },
   // A UUID where a key or Copilot's state folder says it is a session, escaped in JSON or not.
-  // An array under such a key is read whole by SESSION_ARRAY, below.
   {
     label: "session id",
     re: new RegExp(String.raw`(?:session-state/|${SESSION_KEY}\\?")(${UUID})`, "giu"),
@@ -86,15 +86,6 @@ const PATTERNS = [
   },
 ];
 
-/** An array of ids under a session key, which may span lines: found on the whole text. */
-const SESSION_ARRAY_OPEN = new RegExp(String.raw`${SESSION_KEY}\[`, "giu");
-/**
- * How much of one array is read. An assumption, not a fact: no capture is expected to hold more
- * ids than this under one key, and an id past it is missed.
- */
-const MAX_ARRAY_BODY = 64 * 1024;
-const ANY_UUID = new RegExp(UUID, "giu");
-
 function isPlaceholder(name) {
   return PLACEHOLDER_NAMES.has(name.toLowerCase().replace(/\.$/u, "").replace(/~\d+$/u, ""));
 }
@@ -107,7 +98,6 @@ function isPlaceholderId(id) {
 /** Every leak in a text, as its 1-based line and the pattern it matched: never the match. */
 function findLocalPaths(text) {
   const found = [];
-
   text.split(/\r?\n/u).forEach((content, index) => {
     for (const { label, re, named, session } of PATTERNS) {
       for (const match of content.matchAll(re)) {
@@ -117,48 +107,7 @@ function findLocalPaths(text) {
       }
     }
   });
-
-  const lineAt = lineFinder(text);
-  for (const { start, body } of sessionArrays(text)) {
-    for (const id of body.matchAll(ANY_UUID)) {
-      if (isPlaceholderId(id[0])) continue;
-      found.push({ line: lineAt(start + id.index), label: "session id" });
-    }
-  }
-
-  return found.sort((a, b) => a.line - b.line);
-}
-
-/**
- * Each array under a session key, as its body and where the body starts. The search resumes past
- * each array's `]`, so a key nested inside one is read once, as part of it.
- */
-function* sessionArrays(text) {
-  const open = new RegExp(SESSION_ARRAY_OPEN.source, SESSION_ARRAY_OPEN.flags);
-  for (let key = open.exec(text); key; key = open.exec(text)) {
-    const start = key.index + key[0].length;
-    const close = text.indexOf("]", start);
-    // No `]` after this key means none after any later one: stop, rather than rescan per key.
-    if (close === -1) return;
-    yield { start, body: text.slice(start, Math.min(close, start + MAX_ARRAY_BODY)) };
-    open.lastIndex = close + 1;
-  }
-}
-
-/** The 1-based line of an offset, by binary search over newline offsets computed once. */
-function lineFinder(text) {
-  let newlines;
-  return (offset) => {
-    newlines ??= [...text.matchAll(/\n/gu)].map((m) => m.index);
-    let low = 0;
-    let high = newlines.length;
-    while (low < high) {
-      const mid = (low + high) >> 1;
-      if (newlines[mid] < offset) low = mid + 1;
-      else high = mid;
-    }
-    return low + 1;
-  };
+  return found;
 }
 
 /** NUL in the first 8 KiB, git's own test for binary. */

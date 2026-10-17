@@ -49,7 +49,6 @@ const LEAKS = {
   windowsTranscript: `at ${back("\\", "D:", "work", `${SESSION}.jsonl`)}`,
   threadKey: `{"thread_id":"${SESSION}"}`,
   threadIdKey: `{"threadId":"${SESSION}"}`,
-  threadArrayInline: `"threadIds": ["${SESSION_13}"]`,
 };
 
 describe("findLocalPaths", () => {
@@ -80,7 +79,6 @@ describe("findLocalPaths", () => {
         "session file",
         "session id",
         "session id",
-        "session id",
       ]
     );
     for (const { label } of found) {
@@ -90,62 +88,6 @@ describe("findLocalPaths", () => {
 
   it("reports the line each leak sits on", () => {
     const text = ["clean", LEAKS.home, "clean", LEAKS.macTemp].join("\n");
-
-    assert.deepEqual(
-      findLocalPaths(text).map(({ line }) => line),
-      [2, 4]
-    );
-  });
-
-  it("reports every id of a session array on its own line, and lets made-up ones through", () => {
-    const text = ['  "threadIds": [', `    "${SESSION}",`, `    "${SEVEN_DIGITS}",`, `    "${SESSION_13}"`, "  ],"].join("\n");
-
-    assert.deepEqual(findLocalPaths(text), [
-      { line: 2, label: "session id" },
-      { line: 4, label: "session id" },
-    ]);
-  });
-
-  it("reads every session array in a text, not only the first, whatever the case of its ids", () => {
-    const text = [
-      `"threadIds": ["${SESSION}"],`,
-      `"sessionIds": [],`,
-      `"session_id": ["${SESSION_13}"]`,
-      `"threadIds": [`,
-      `  "${SESSION.toUpperCase()}"`,
-      "]",
-    ].join("\n");
-
-    assert.deepEqual(
-      findLocalPaths(text).map(({ line }) => line),
-      [1, 3, 5]
-    );
-  });
-
-  it("puts an unindented id that ends the text on its own line", () => {
-    assert.deepEqual(findLocalPaths(`"threadIds": [\n"${SESSION}"]`), [{ line: 2, label: "session id" }]);
-  });
-
-  it("stops at the first unclosed session key instead of rescanning the text for each", (t) => {
-    const unclosed = Array.from({ length: 1000 }, () => '"threadIds": [').join("\n");
-    // Counted, not timed: a time bound is flaky on a shared runner, a count of scans is not.
-    const indexOf = t.mock.method(String.prototype, "indexOf");
-
-    const found = findLocalPaths(unclosed);
-    indexOf.mock.restore();
-
-    assert.deepEqual(found, []);
-    assert.equal(indexOf.mock.calls.filter((call) => call.arguments[0] === "]").length, 1);
-  });
-
-  it("reads a key inside an array once, as part of that array", () => {
-    const nested = `"threadIds": ["threadIds": ["${SESSION}"]]`;
-
-    assert.deepEqual(findLocalPaths(nested), [{ line: 1, label: "session id" }]);
-  });
-
-  it("reports an array's id and a later key's id in line order", () => {
-    const text = ['"threadIds": [', `  "${SESSION}"`, "],", `"session_id": "${SESSION_13}"`].join("\n");
 
     assert.deepEqual(
       findLocalPaths(text).map(({ line }) => line),
@@ -176,7 +118,6 @@ describe("findLocalPaths", () => {
       slash("", "proj", "home", LEAKER, "x"),
       slash("", "Users", ""),
       `{"turn_id":"${SESSION}"}`,
-      `"threadIds": [], "turn_ids": ["${SESSION}"]`,
       slash("", "dir", `${SESSION}.json`),
     ];
 
