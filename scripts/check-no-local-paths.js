@@ -88,7 +88,10 @@ const PATTERNS = [
 
 /** An array of ids under a session key, which may span lines: found on the whole text. */
 const SESSION_ARRAY_OPEN = new RegExp(String.raw`${SESSION_KEY}\[`, "giu");
-/** How much of one array is read: a capture never holds more ids than this under one key. */
+/**
+ * How much of one array is read. An assumption, not a fact: no capture is expected to hold more
+ * ids than this under one key, and an id past it is missed.
+ */
 const MAX_ARRAY_BODY = 64 * 1024;
 const ANY_UUID = new RegExp(UUID, "giu");
 
@@ -127,19 +130,18 @@ function findLocalPaths(text) {
 }
 
 /**
- * Each array under a session key, as its body and where the body starts. One pass: the next `]`
- * is looked up once and reused by every key before it, so neither many keys nor an unclosed one
- * rescans the text. An array with no `]` after it, or nested, is not read.
+ * Each array under a session key, as its body and where the body starts. The search resumes past
+ * each array's `]`, so a key nested inside one is read once, as part of it.
  */
 function* sessionArrays(text) {
   const open = new RegExp(SESSION_ARRAY_OPEN.source, SESSION_ARRAY_OPEN.flags);
-  let close = -1;
   for (let key = open.exec(text); key; key = open.exec(text)) {
     const start = key.index + key[0].length;
-    if (close < start) close = text.indexOf("]", start);
+    const close = text.indexOf("]", start);
+    // No `]` after this key means none after any later one: stop, rather than rescan per key.
     if (close === -1) return;
     yield { start, body: text.slice(start, Math.min(close, start + MAX_ARRAY_BODY)) };
-    open.lastIndex = Math.max(open.lastIndex, close + 1);
+    open.lastIndex = close + 1;
   }
 }
 

@@ -106,6 +106,37 @@ describe("findLocalPaths", () => {
     ]);
   });
 
+  it("reads every session array in a text, not only the first", () => {
+    const text = [`"threadIds": ["${SESSION}"],`, `"sessionIds": [],`, `"session_id": ["${SESSION_13}"]`].join("\n");
+
+    assert.deepEqual(
+      findLocalPaths(text).map(({ line }) => line),
+      [1, 3]
+    );
+  });
+
+  it("puts an unindented id that ends the text on its own line", () => {
+    assert.deepEqual(findLocalPaths(`"threadIds": [\n"${SESSION}"]`), [{ line: 2, label: "session id" }]);
+  });
+
+  it("stops at the first unclosed session key instead of rescanning the text for each", () => {
+    const unclosed = Array.from({ length: 1000 }, () => '"threadIds": [').join("\n");
+    // Counted, not timed: a time bound is flaky on a shared runner, a count of scans is not.
+    const indexOf = String.prototype.indexOf;
+    let scans = 0;
+    String.prototype.indexOf = function (search, ...rest) {
+      if (search === "]") scans++;
+      return indexOf.call(this, search, ...rest);
+    };
+
+    try {
+      assert.deepEqual(findLocalPaths(unclosed), []);
+    } finally {
+      String.prototype.indexOf = indexOf;
+    }
+    assert.equal(scans, 1);
+  });
+
   it("reads a key inside an array once, as part of that array", () => {
     const nested = `"threadIds": ["threadIds": ["${SESSION}"]]`;
 
