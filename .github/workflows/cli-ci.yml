@@ -297,6 +297,10 @@ jobs:
           restore-keys: pnpm-${{ runner.os }}-
       - run: cd cli && pnpm install --frozen-lockfile
       - run: cd cli && pnpm test:coverage
+      # The runner is UTC and English: the telemetry tests again with the clock at UTC+14 and an
+      # Arabic locale, so a figure that reads the machine's zone or language cannot pass unseen.
+      - name: Telemetry tests under a foreign clock and locale
+        run: cd cli && pnpm test:foreign-clock
 
   cli-smoke:
     name: cli / Smoke
