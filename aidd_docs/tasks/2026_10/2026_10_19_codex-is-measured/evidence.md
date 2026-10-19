@@ -40,6 +40,15 @@ Each test was run red first, failing on the assertion it names, before the code 
 | A `.zst` read once | re-read whatever its position | adapter "keeps the file read by its size and identity" |
 | The no-zstd shape reaches the run | the source's `unrecognised` dropped by the use case | use case "names each compressed file a Node with no zstd cannot read" |
 
+Review round 1, red first:
+
+| Guard | Broken how | What went red |
+| --- | --- | --- |
+| A `.zst` that does not decompress stops nothing (adapter, and an ingest beside a Claude Code transcript) | before the fix | both tests, on `Error: Unknown frame descriptor` |
+| Only zlib's own codes are passed over | the code check removed | adapter "fails the read: only a stream that does not decompress is named and passed over" (an `EACCES` open) |
+| The file keeps its position, so it is tried again | a made-up position saved | adapter "…when it does not decompress, and is read again next time", and the no-zstd test |
+| The sandbox points `CODEX_HOME` inside it | the relocation removed from `sandboxedEnv` | "points Codex's home inside the sandbox, even when the runner sets its own" |
+
 P3 (plain then compressed) passes under the re-read-every-time break: the ledger takes a key once whatever reads it, which is what P3 states; the re-read itself is killed by the adapter test.
 
 ## Verification
@@ -92,3 +101,25 @@ The first changed-line run scored 95.0. The five survivors in Codex code were ki
 | `oldestModifiedOf` | `<` to `<=` | equivalent: an equal time replaces itself |
 | `readTranscript` | the `finally` that closes the handle emptied | not observable through the port: the handle is an own property, not on a prototype a test can spy on, and Node closes a leaked one on collection |
 | `line-values.ts` `counter` | `typeof value === "number"` dropped | equivalent: `Number.isInteger` is false for every non-number |
+
+### Review round 1
+
+The gates above were run again after the fixes, in one pass:
+
+| Gate | Decisive line |
+| --- | --- |
+| `pnpm lint`, `pnpm typecheck`, `pnpm test:arch` | `No fixes applied.`; no error; `Tests 168 passed (168)` |
+| `check-cli-type-honesty.mjs` (repository root) | `No type is widened through unknown, any or never` |
+| `pnpm knip`, `pnpm jscpd` | exit 0; `1.55%` duplicated |
+| `pnpm test` | `Tests 6840 passed \| 1 skipped` |
+| `pnpm build` | `Bundle size: 704.9 KB / budget: 709 KB` |
+| `pnpm smoke` | `PASS: 132 FAIL: 0 SKIP: 1 · coverage 100%` |
+| `check-claude-tokens-end-to-end.cjs`, plain and `--attended` | `2 calls, 393 tokens, all on task demo, ticket T-1` in both, the second `asked, answered by the hook, kept across /clear` |
+| `check-no-local-paths.js` | `0 leak(s)` |
+| `run-mutation.mjs --changed` | score 96.3 over 22 changed ranges |
+| `run-mutation.mjs telemetry` | score 96.6, floor 96 |
+| The checker's case, against the built binary in a sandbox | 100 random bytes as a `rollout-*.jsonl.zst` in a clone that opted in: `report --json` exits 0 with `unrecognised_shapes` 1, twice in a row; `ingest` exits 0 and names it |
+
+New survivor on the changed lines, beside the ones justified above: `UNDECOMPRESSABLE` without its `^` anchor. It is equivalent for every code a read meets: an I/O code never holds `Z_` or `ZSTD_`. The `ZSTD_` and `Z_` prefixes are each held by a test (`ZSTD_error_prefix_unknown`, `Z_BUF_ERROR`).
+
+The telemetry scope fell from 97.2 to 96.6 over the round, still above its floor of 96.

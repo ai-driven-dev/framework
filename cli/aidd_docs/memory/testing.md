@@ -26,7 +26,7 @@ How this package is tested: the layers, the tools, the conventions.
 - A golden snapshot is machine-independent, never derived from an absolute path: [`golden-machine-independence.md`](../../.claude/skills/test/references/golden-machine-independence.md).
 - `describe.concurrent` appears in no unit or integration file; in e2e the golden and command-matrix suites use it. An observed split, not a rule.
 - A bug fix's review reproduces the user's scenario against the built binary: [`bug-empirical-reproduction.md`](../../.claude/skills/test/references/bug-empirical-reproduction.md).
-- A sandboxed run reaches no tool binary and no real profile: `tests/e2e/helpers.ts` narrows `PATH`, relocates `HOME`/`XDG_CONFIG_HOME`/`USERPROFILE`/`APPDATA` and `CODEX_HOME`, which Codex and the telemetry reader of its sessions read before `HOME`; `sandbox-reaches-no-tool-binary.e2e.test.ts` holds it.
+- A sandboxed run reaches no tool binary and no real profile: `tests/e2e/helpers.ts` narrows `PATH`, relocates `HOME`/`XDG_CONFIG_HOME`/`USERPROFILE`/`APPDATA` and `CODEX_HOME`, which Codex and the telemetry reader of its sessions read before `HOME`; `sandbox-reaches-no-tool-binary.e2e.test.ts` holds both.
 - Records land under `AppData\Roaming` on Windows, `.config` elsewhere. Assert through the helper.
 - Green unit and integration tests prove output shape, never that a tool consumes it: that is `pnpm smoke`.
 

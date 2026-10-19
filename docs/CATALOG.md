@@ -9,7 +9,7 @@ The exhaustive list of AIDD plugins, skills, and actions. Skills are invoked thr
 - [aidd-vcs](#-aidd-vcs) - version control workflows
 - [aidd-orchestrator](#-aidd-orchestrator) - async orchestration (optional)
 - [aidd-ui](#-aidd-ui) - UI / UX (🚧 alpha, not ready)
-- [aidd-telemetry](#-aidd-telemetry) - token measurement for Claude Code (🧪 beta, off the curated path)
+- [aidd-telemetry](#-aidd-telemetry) - token measurement for Claude Code and Codex (🧪 beta, off the curated path)
 - [aidd-qa](#-aidd-qa) - acceptance QA (🆕 new, off the curated path)
 
 ---
@@ -112,7 +112,7 @@ Runs synchronous feature delivery, optional async issue automation, and the prod
 
 ## 📈 aidd-telemetry
 
-🧪 **Beta.** Measurement: counts the tokens of Claude Code sessions, per person, session, model, day, repository, task and ticket, and keeps everything on your machine.
+🧪 **Beta.** Measurement: counts the tokens of Claude Code and Codex sessions, per person, session, model, day, repository, task and ticket, and keeps everything on your machine.
 
 | Skill | Role | Actions |
 | ----- | ---- | ------- |

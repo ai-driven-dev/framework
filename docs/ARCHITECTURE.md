@@ -78,7 +78,7 @@ Place each capability in its owning concern and delegate to it.
 
 ### Measurement boundary
 
-`aidd-telemetry` counts the tokens of Claude Code sessions deterministically and attributes them to the task a person declared. The CLI reads, stores, attributes and reports; the plugin's hooks only ask, answer and record session facts. The contract is [`aidd_docs/product/usage-contract.md`](../aidd_docs/product/usage-contract.md).
+`aidd-telemetry` counts the tokens of Claude Code and Codex sessions deterministically and attributes them to the task a person declared. The CLI reads, stores, attributes and reports; the plugin's hooks only ask, answer and record session facts. The contract is [`aidd_docs/product/usage-contract.md`](../aidd_docs/product/usage-contract.md).
 
 ## Execution model
 

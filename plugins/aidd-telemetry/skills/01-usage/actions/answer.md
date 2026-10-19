@@ -27,7 +27,7 @@ The figures the report holds for the question, each counter apart, followed by e
    - any `coverage.left_out` entry above `0`: that many calls or lines were left out, from any day, not only the period;
    - `coverage.records` of `0`: that no call is recorded for the period, and why that may be, from the reference.
    - `totals.records` of `0` with `coverage.records` above `0`: that a filter matched no call of the period, naming each as `filters` prints it, from the reference.
-5. **Bound the past.** When the period starts before `run.oldest_transcript_at`, say that Claude Code may have removed older session files, so earlier figures can be incomplete.
+5. **Bound the past.** When the period starts before `run.oldest_transcript_at`, say that a tool may have removed older session files, so earlier figures can be incomplete.
 6. **Offer the fix.** For work with no task, say it can be attributed afterwards by declaring the task from that branch with `aidd telemetry task <name> [--ticket <ref>]`. A branch renamed or copied since it was declared is undeclared under its new name (unless declared by `aidd` 5.5.0 or earlier), and is declared the same way. Declare nothing yourself.
 
 ## Test

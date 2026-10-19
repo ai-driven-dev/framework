@@ -59,7 +59,7 @@ Only a `token_usage_record` line is a call. Every other line is context or nothi
 A call's directory and model are written earlier in the file than the call. A read that started at the saved offset would see calls with no directory, counted `no-cwd` and never stored.
 
 - When a Codex file moved (size or identity), it is read from its start. The lines before the saved offset only build the file's context; the lines after it give calls and unrecognised shapes, exactly as a read from that offset would. So a run counts each line once, whatever the number of ingests.
-- `offsets.json` keeps its format and meaning: the end of the last complete line consumed.
+- `offsets.json` keeps its format. For a `.jsonl`, its meaning too: the end of the last complete line consumed. For a `.jsonl.zst`, read whole once, the offset is its compressed size.
 - A file that did not move is not opened again. One last written before the first consent interval is skipped, as for Claude Code.
 
 ## Properties

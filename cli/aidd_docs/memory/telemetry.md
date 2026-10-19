@@ -10,7 +10,7 @@
 | its transcript source, on the block reader in `infrastructure/transcripts/transcript-files.ts` | `contexts/telemetry/infrastructure/` |
 | one reader in the ingest list | `runtime/wiring/telemetry.ts` |
 | its name | `USAGE_TOOLS` in `domain/usage-record.ts` |
-| its home relocated in every sandbox that runs the CLI | `tests/e2e/helpers.ts`, `tests/helpers/telemetry-sandbox.ts`, `scripts/check-claude-tokens-end-to-end.cjs` |
+| its home relocated in every sandbox that runs the CLI | `tests/e2e/helpers.ts`, `tests/helpers/telemetry-sandbox.ts`, `scripts/check-claude-tokens-end-to-end.cjs`, `scripts/probe-identifier-join.cjs` |
 
 Storage, attribution and the report need nothing. Task and ticket come only from `aidd telemetry task`, whoever runs it; the plugin's hooks only invoke it from Claude Code, so another tool's calls are attributed by branch. Rules: [usage contract](../../../aidd_docs/product/usage-contract.md#attribution).
 
