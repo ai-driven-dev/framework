@@ -65,20 +65,21 @@ describe("where Codex keeps its session files", () => {
 describe("listing Codex session files", () => {
   it("lists every rollout file, plain or compressed, at any depth, under both roots", async () => {
     const day = join(sessions, "2026", "10", "07");
-    for (const name of [
-      "rollout-a.jsonl",
-      "rollout-b.jsonl.zst",
+    const names = [
+      "rollout-2026-10-07T10-00-00-aaaa.jsonl",
+      "rollout-2026-10-07T11-00-00-bbbb.jsonl.zst",
       "notes.jsonl",
-      "rollout-c.json",
-    ]) {
-      await writeFile(join(day, name), "");
-    }
-    await writeFile(join(archived, "rollout-d.jsonl.zst"), "");
+      "old-rollout-c.jsonl",
+      "rollout-d.jsonl.bak",
+      "rollout-e.json",
+    ];
+    for (const name of names) await writeFile(join(day, name), "");
+    await writeFile(join(archived, "rollout-f.jsonl.zst"), "");
     expect(await source().list()).toEqual(
       [
-        join(day, "rollout-a.jsonl"),
-        join(day, "rollout-b.jsonl.zst"),
-        join(archived, "rollout-d.jsonl.zst"),
+        join(day, "rollout-2026-10-07T10-00-00-aaaa.jsonl"),
+        join(day, "rollout-2026-10-07T11-00-00-bbbb.jsonl.zst"),
+        join(archived, "rollout-f.jsonl.zst"),
       ].sort()
     );
   });
@@ -86,6 +87,21 @@ describe("listing Codex session files", () => {
   it("lists nothing when no root exists", async () => {
     await rm(root, { recursive: true, force: true });
     expect(await source().list()).toEqual([]);
+  });
+
+  it("says when the oldest of its files was last written", async () => {
+    const [older, newer] = [
+      join(sessions, "rollout-a.jsonl"),
+      join(archived, "rollout-b.jsonl.zst"),
+    ];
+    for (const [path, at] of [
+      [older, "2026-09-01T00:00:00.000Z"],
+      [newer, "2026-10-01T00:00:00.000Z"],
+    ] as const) {
+      await writeFile(path, "");
+      await utimes(path, new Date(at), new Date(at));
+    }
+    expect(await source().oldestModified([newer, older])).toBe("2026-09-01T00:00:00.000Z");
   });
 });
 

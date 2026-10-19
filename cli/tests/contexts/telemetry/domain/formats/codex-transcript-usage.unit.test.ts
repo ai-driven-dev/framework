@@ -120,6 +120,11 @@ describe("a Codex session file to usage records", () => {
     ]);
   });
 
+  it("takes the file's own session_meta, even after a turn_context", () => {
+    const record = only([turn({ cwd: undefined }), meta(), call()]);
+    expect([record.cwd, record.tool_version]).toEqual(["/work/meta", "0.160.0"]);
+  });
+
   it("takes the model and directory of the latest turn_context before the call", () => {
     const records = readAll([
       meta(),
