@@ -8,7 +8,7 @@ The repository at the release candidate.
 
 ## Output
 
-`aidd_docs/release-video/scenes.json` that `node scripts/check-release-video.js` accepts.
+`aidd_docs/release-video/scenes.json` that `node scripts/check-release-video.js` accepts; the next step is [render](02-render.md).
 
 ## Process
 

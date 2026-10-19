@@ -18,7 +18,6 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
   - [`skills/08-three-amigos`](#skills08-three-amigos)
   - [`skills/09-defect`](#skills09-defect)
   - [`skills/10-task`](#skills10-task)
-  - [`skills/11-release-video`](#skills11-release-video)
 
 ---
 
@@ -172,12 +171,4 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `references` | [readiness.md](skills/10-task/references/readiness.md) | - |
 | `references` | [relations.md](skills/10-task/references/relations.md) | - |
 | `-` | [SKILL.md](skills/10-task/SKILL.md) | `Produces or refines a backlog Task for bounded delivery work without independent user value. Use when the user wants to create, link, order, estimate, transition, or complete one. Not for User Stories, Spikes, Defects, or implementation.` |
-
-#### `skills/11-release-video`
-
-| Group | File | Description |
-|-------|------|---|
-| `actions` | [01-plan.md](skills/11-release-video/actions/01-plan.md) | - |
-| `assets` | [scenes-template.json](skills/11-release-video/assets/scenes-template.json) | - |
-| `-` | [SKILL.md](skills/11-release-video/SKILL.md) | `Plans the release video, one scene per feature shipped since the last release. Use when preparing a release announcement video or when the release video check reports missing scenes. Not for rendering, publishing, or release notes.` |
 

@@ -17,8 +17,7 @@
     "./skills/07-epic",
     "./skills/08-three-amigos",
     "./skills/09-defect",
-    "./skills/10-task",
-    "./skills/11-release-video"
+    "./skills/10-task"
   ],
   "keywords": [
     "backlog",
