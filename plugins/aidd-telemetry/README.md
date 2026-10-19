@@ -21,7 +21,7 @@ flowchart LR
 - Only clones that ran `aidd telemetry on` are measured, from that moment on.
 - A task and a ticket come only from what you declare; nothing is guessed.
 - Every axis splits the same total.
-- Codex is read with the rest, from `CODEX_HOME` or `~/.codex`, whenever `aidd telemetry ingest` or `report` runs. Its hooks are not installed: a Codex call takes its task from its branch's declaration only.
+- Codex is read with the rest, from `CODEX_HOME` or `~/.codex`, whenever `aidd telemetry ingest` or `report` runs. The plugin's hooks run in Claude Code, so nothing asks a Codex session for its task: a Codex call takes it from its branch's declaration only.
 
 ## Start
 

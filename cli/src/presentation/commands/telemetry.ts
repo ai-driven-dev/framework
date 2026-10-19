@@ -127,7 +127,7 @@ function filterOption(
 export function registerTelemetryCommand(program: Command): void {
   const telemetry = program
     .command("telemetry")
-    .description("Measure what Claude Code sessions consume, locally");
+    .description("Measure what Claude Code and Codex sessions consume, locally");
 
   telemetry
     .command("on")
