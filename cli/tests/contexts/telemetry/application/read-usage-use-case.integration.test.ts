@@ -36,7 +36,7 @@ describe("reading Claude usage from the fixture transcripts", () => {
   it("yields exactly the expected records, field for field", async () => {
     const reading = await new ReadUsageUseCase(
       new ClaudeTranscriptSourceAdapter(projects),
-      readClaudeUsageLine
+      () => readClaudeUsageLine
     ).execute(new Map());
 
     const summary = reading.records.map((r) => ({
@@ -88,17 +88,20 @@ describe("reading Claude usage from the fixture transcripts", () => {
 
   it("gives identical records when the files are read in the opposite order", async () => {
     const source = new ClaudeTranscriptSourceAdapter(projects);
-    const forward = await new ReadUsageUseCase(source, readClaudeUsageLine).execute(new Map());
-    const backward = await new ReadUsageUseCase(reversed(source), readClaudeUsageLine).execute(
+    const forward = await new ReadUsageUseCase(source, () => readClaudeUsageLine).execute(
       new Map()
     );
+    const backward = await new ReadUsageUseCase(
+      reversed(source),
+      () => readClaudeUsageLine
+    ).execute(new Map());
     expect(backward.records).toEqual(forward.records);
   });
 
   it("folds a key across files: the resumed copy never beats the larger original", async () => {
     const reading = await new ReadUsageUseCase(
       new ClaudeTranscriptSourceAdapter(projects),
-      readClaudeUsageLine
+      () => readClaudeUsageLine
     ).execute(new Map());
     const a = reading.records.find((r) => r.key === "msg_A:req_A");
     expect([a?.session_id, a?.output]).toEqual(["s-1", 250]);
@@ -112,7 +115,7 @@ describe("reading Claude usage from the fixture transcripts", () => {
     );
     const reading = await new ReadUsageUseCase(
       new ClaudeTranscriptSourceAdapter(projects),
-      readClaudeUsageLine
+      () => readClaudeUsageLine
     ).execute(new Map());
     expect(reading.unrecognised).toHaveLength(1);
     expect(reading.records).toHaveLength(5);
@@ -131,7 +134,7 @@ describe("reading Claude usage from the fixture transcripts", () => {
     );
     const reading = await new ReadUsageUseCase(
       new ClaudeTranscriptSourceAdapter(projects),
-      readClaudeUsageLine
+      () => readClaudeUsageLine
     ).execute(new Map());
     expect(reading.unrecognised).toHaveLength(3);
     expect(reading.dropped).toEqual([
@@ -149,14 +152,14 @@ describe("reading Claude usage from the fixture transcripts", () => {
     await appendFile(file, "{broken\n");
     const reading = await new ReadUsageUseCase(
       new ClaudeTranscriptSourceAdapter(projects),
-      readClaudeUsageLine
+      () => readClaudeUsageLine
     ).execute(new Map());
     expect(reading.unrecognised).toEqual([`${file}: a complete line is not JSON`]);
   });
 
   it("continues from the positions it returned and reads only what was appended", async () => {
     const source = new ClaudeTranscriptSourceAdapter(projects);
-    const useCase = new ReadUsageUseCase(source, readClaudeUsageLine);
+    const useCase = new ReadUsageUseCase(source, () => readClaudeUsageLine);
     const first = await useCase.execute(new Map());
     await mkdir(join(projects, "proj-b"), { recursive: true });
     await writeFile(
@@ -193,7 +196,7 @@ describe("reading a long transcript", () => {
     await probe.close();
     let readsBeforeFirstLine: number | null = null;
     let lines = 0;
-    await new ReadUsageUseCase(new ClaudeTranscriptSourceAdapter(alone), () => {
+    await new ReadUsageUseCase(new ClaudeTranscriptSourceAdapter(alone), () => () => {
       readsBeforeFirstLine ??= reads.mock.calls.length;
       lines += 1;
       return { records: [], unrecognised: [] };
@@ -230,7 +233,7 @@ describe("reading a transcript that changes under the read", () => {
     let seen = 0;
     const reading = await new ReadUsageUseCase(
       new ClaudeTranscriptSourceAdapter(alone, 16),
-      (line) => {
+      () => (line) => {
         if (++seen === 2) truncateSync(path, 0);
         return readClaudeUsageLine(line);
       }

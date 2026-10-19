@@ -77,7 +77,8 @@ src/
 │   │       ├── identity/    # the identity file in the telemetry dir
 │   │       ├── legacy/    # the table of ids an earlier version gave repositories, beside the ledger
 │   │       ├── left-out/    # what ingests measured and could not store, by hash, beside the ledger
-│   │       └── switch/    # the project config, what an earlier measurement left in a repository, and Claude settings; the clone's consent in git config is `git-consent-adapter.ts`, beside this folder
+│   │       ├── switch/    # the project config, what an earlier measurement left in a repository, and Claude settings; the clone's consent in git config is `git-consent-adapter.ts`, beside this folder
+│   │       └── transcripts/    # reading each tool's session files a block at a time; the Codex source
 │   └── translate/    # canonical source to target-native content
 │       ├── application/
 │       │   └── strategies/

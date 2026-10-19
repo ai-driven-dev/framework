@@ -75,7 +75,7 @@ function setup(options: { refused?: boolean } = {}) {
   const sessions = new InMemorySessions(events);
   const identity = new InMemoryIdentity();
   const ingest = new IngestUsageUseCase(
-    [new ReadUsageUseCase(transcripts, readClaudeUsageLine)],
+    [new ReadUsageUseCase(transcripts, () => readClaudeUsageLine)],
     ledger,
     new DirectoryResolver(locator, consents, new InMemoryResolutions(), history, {
       caseInsensitiveFileSystem: false,

@@ -242,7 +242,7 @@ function machine(name: string, storage: PrivateStorage = new PrivateStorageAdapt
   }
   const snapshots = new BindingSnapshotStoreAdapter(bindings, storage, aliases);
   const ingest = new IngestUsageUseCase(
-    [new ReadUsageUseCase(transcripts, readClaudeUsageLine)],
+    [new ReadUsageUseCase(transcripts, () => readClaudeUsageLine)],
     ledger,
     new DirectoryResolver(locator, consents, resolutions, history, {
       caseInsensitiveFileSystem: false,

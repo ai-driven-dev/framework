@@ -133,7 +133,7 @@ function machine(source: TranscriptSource) {
   }
   locator.directories.set("/work/none", { status: "outside-repository" });
   const ingest = new IngestUsageUseCase(
-    [new ReadUsageUseCase(source, readClaudeUsageLine)],
+    [new ReadUsageUseCase(source, () => readClaudeUsageLine)],
     ledger,
     new DirectoryResolver(locator, consents, new InMemoryResolutions(), history, {
       caseInsensitiveFileSystem: false,

@@ -101,9 +101,9 @@ function setup(options: { refused?: boolean; caseInsensitive?: boolean } = {}) {
   );
   const ingest = new IngestUsageUseCase(
     [
-      new ReadUsageUseCase(transcripts, readClaudeUsageLine),
+      new ReadUsageUseCase(transcripts, () => readClaudeUsageLine),
       // Another tool's format: the same lines, its own name on every record.
-      new ReadUsageUseCase(other, (text) => {
+      new ReadUsageUseCase(other, () => (text) => {
         const read = readClaudeUsageLine(text);
         return { ...read, records: read.records.map((r) => ({ ...r, tool: "codex" as const })) };
       }),
@@ -128,7 +128,7 @@ function setup(options: { refused?: boolean; caseInsensitive?: boolean } = {}) {
   const ingestReadingAll = () =>
     new IngestUsageUseCase(
       [transcripts, other].map((source) => {
-        const reader = new ReadUsageUseCase(source, readClaudeUsageLine);
+        const reader = new ReadUsageUseCase(source, () => readClaudeUsageLine);
         return { execute: (since) => reader.execute(since) } as ReadUsageUseCase;
       }),
       ledger,

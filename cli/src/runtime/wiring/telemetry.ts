@@ -140,7 +140,7 @@ export function wireTelemetry(homedir: () => string): TelemetryDeps {
         new ClaudeTranscriptSourceAdapter(
           claudeProjectsRoot(process.env.CLAUDE_CONFIG_DIR, homedir())
         ),
-        readClaudeUsageLine
+        () => readClaudeUsageLine
       ),
     ],
     ledger,

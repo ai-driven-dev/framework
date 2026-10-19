@@ -1,5 +1,6 @@
 import { asPlainObject } from "../../../../kernel/reading/plain-object.js";
 import type { LineNames, UsageRecord } from "../usage-record.js";
+import { counter, expected, type Json, text } from "./line-values.js";
 
 export interface ClaudeUsageLine {
   readonly records: readonly UsageRecord[];
@@ -9,32 +10,15 @@ export interface ClaudeUsageLine {
   readonly named?: LineNames;
 }
 
-type Json = Record<string, unknown>;
-
 const SYNTHETIC_MODEL = "<synthetic>";
 /** What an advisor iteration adds to its message's key. Anchored for clarity only: the format
  * writes it as a suffix alone, and message and session ids hold no `#`. */
 const ADVISOR = /#advisor\d+$/;
 const NONE: ClaudeUsageLine = { records: [], unrecognised: [] };
 
-function counter(value: unknown): number | null {
-  return typeof value === "number" && Number.isInteger(value) && value >= 0 ? value : null;
-}
-
-function text(value: unknown): string | null {
-  return typeof value === "string" && value !== "" ? value : null;
-}
-
 function unrecognised(reason: string, root?: Json): ClaudeUsageLine {
   const named = root && { cwd: text(root.cwd), at: text(root.timestamp) };
   return { records: [], unrecognised: [reason], named };
-}
-
-/** A counter that must be there: absent or malformed is unknown, and said so. */
-function expected(source: Json, field: string, where: string, notes: string[]): number | null {
-  const value = counter(source[field]);
-  if (value === null) notes.push(`${where}.${field} is missing or not a count`);
-  return value;
 }
 
 function messageIterations(usage: Json, notes: string[]): Json[] {

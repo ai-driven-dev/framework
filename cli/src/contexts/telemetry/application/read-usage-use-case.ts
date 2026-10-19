@@ -12,6 +12,9 @@ export type ReadUsageLine = (line: string) => {
   readonly named?: LineNames;
 };
 
+/** A tool's format, made once per file read: it may hold what earlier lines of the file said. */
+export type UsageFormat = () => ReadUsageLine;
+
 /** A line that gave no call, the directory and time it names, and its file. */
 export interface DroppedLine extends LineNames {
   readonly line: string;
@@ -40,7 +43,7 @@ export interface UsageReading {
 export class ReadUsageUseCase {
   constructor(
     private readonly source: TranscriptSource,
-    private readonly readLine: ReadUsageLine
+    private readonly format: UsageFormat
   ) {}
 
   /** `writtenFrom`: files last written before it are not read; none, by default. */
@@ -59,13 +62,22 @@ export class ReadUsageUseCase {
       const records: UsageRecord[] = [];
       const lines: DroppedLine[] = [];
       const reasons: string[] = [];
-      const read = await this.source.read(path, since.get(path) ?? null, writtenFrom, (line) => {
-        const outcome = this.readLine(line);
-        records.push(...outcome.records);
-        // Only a line that gives no call names anything.
-        if (outcome.named?.cwd) lines.push({ line, path, ...outcome.named });
-        reasons.push(...outcome.unrecognised.map((reason) => `${path}: ${reason}`));
-      });
+      const readLine = this.format();
+      const read = await this.source.read(
+        path,
+        since.get(path) ?? null,
+        writtenFrom,
+        (line, counted) => {
+          const outcome = readLine(line);
+          // A line read again only to know what came before: its calls were counted already.
+          if (!counted) return;
+          records.push(...outcome.records);
+          // Only a line that gives no call names anything.
+          if (outcome.named?.cwd) lines.push({ line, path, ...outcome.named });
+          reasons.push(...outcome.unrecognised.map((reason) => `${path}: ${reason}`));
+        }
+      );
+      reasons.push(...(read.unrecognised ?? []).map((reason) => `${path}: ${reason}`));
       if (read.skipped) skipped.add(path);
       // Changed under the read: what it handed over may be spliced from two versions, so none
       // of it counts and the file keeps its position, to be read again.

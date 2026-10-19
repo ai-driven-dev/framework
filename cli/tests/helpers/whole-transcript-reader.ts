@@ -16,7 +16,7 @@ export class WholeTranscriptReader extends ClaudeTranscriptSourceAdapter {
     path: string,
     since: TranscriptPosition | null,
     writtenFrom: number,
-    each: (line: string) => void
+    each: (line: string, counted: boolean) => void
   ): Promise<TranscriptRead> {
     const handle = await open(path, constants.O_RDONLY).catch(() => null);
     if (handle === null) return super.read(path, since, writtenFrom, each);
@@ -36,7 +36,7 @@ export class WholeTranscriptReader extends ClaudeTranscriptSourceAdapter {
         .split("\n")
         .slice(0, -1)
         .map((line) => (line.endsWith("\r") ? line.slice(0, -1) : line));
-      for (const line of lines) each(line);
+      for (const line of lines) each(line, true);
       return {
         position: { offset: offset + end, size: now.size, identity: now.identity },
         restarted,

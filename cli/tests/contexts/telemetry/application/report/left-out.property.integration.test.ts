@@ -194,7 +194,7 @@ function machine() {
     () => NOW
   );
   const ingest = new IngestUsageUseCase(
-    [new ReadUsageUseCase(transcripts, readClaudeUsageLine)],
+    [new ReadUsageUseCase(transcripts, () => readClaudeUsageLine)],
     ledger,
     new DirectoryResolver(locator, consents, new InMemoryResolutions(), history, {
       caseInsensitiveFileSystem: false,
