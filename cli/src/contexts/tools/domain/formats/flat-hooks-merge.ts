@@ -16,7 +16,7 @@ type CursorFlatShape = { version: 1; hooks: Record<string, CursorHookEntry[]> };
 
 type CodexHookEntry = {
   matcher?: string;
-  hooks: Array<{ type: string; command: string; timeout?: number; statusMessage?: string }>;
+  hooks: Array<ClaudeHookItem & { type: string; command: string }>;
 };
 type CodexHooksShape = { hooks?: Record<string, CodexHookEntry[]> };
 
@@ -196,26 +196,15 @@ function parseCodexHooks(
   return { hooks: parsed.hooks ?? {} };
 }
 
+/** Keeps each entry whole, as the plugin tree does: Codex trusts a hook by its whole entry, and an
+ * entry stripped of `async` runs in the way of the session it was written to stay out of. */
 function convertToCodexEntries(matchers: ClaudeMatcherGroup[]): CodexHookEntry[] {
   return matchers.map((group) => ({
     ...(group.matcher !== undefined ? { matcher: group.matcher } : {}),
     hooks: group.hooks
-      .filter((item) => typeof item.command === "string")
-      .map((item) => buildCodexHookItem(item)),
+      .filter(
+        (item): item is ClaudeHookItem & { command: string } => typeof item.command === "string"
+      )
+      .map((item) => ({ ...item, type: item.type ?? "command" })),
   }));
-}
-
-function buildCodexHookItem(item: ClaudeHookItem): {
-  type: string;
-  command: string;
-  timeout?: number;
-  statusMessage?: string;
-} {
-  const entry: { type: string; command: string; timeout?: number; statusMessage?: string } = {
-    type: item.type ?? "command",
-    command: item.command as string,
-  };
-  if (typeof item.timeout === "number") entry.timeout = item.timeout;
-  if (typeof item.statusMessage === "string") entry.statusMessage = item.statusMessage;
-  return entry;
 }
