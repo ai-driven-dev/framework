@@ -234,25 +234,31 @@ A branch is declared only when the command declared it on that branch. Both read
 
 | Condition | Test |
 | --- | --- |
-| Claude's own payload | `session_id` = `CLAUDE_CODE_SESSION_ID`, `transcript_path` under a `projects` directory |
+| a tool's own payload | Claude Code: `session_id` = `CLAUDE_CODE_SESSION_ID`, `transcript_path` under a `projects` directory and no Codex session file. Codex: `session_id` set, `transcript_path` a Codex session file (`…/sessions/YYYY/MM/DD/rollout-…`), whatever `CLAUDE_CODE_SESSION_ID` says, since a Codex started inside Claude Code inherits it (`hooks/lib/tool.cjs`, fixture `hookTool`) |
 | clone measured | consenting per [Consent](#consent), `AIDD_TELEMETRY` not `0` |
-| person present | `CLAUDE_CODE_SESSION_ATTENDED=1` and `CLAUDE_CODE_ENTRYPOINT` is `cli` or `claude-desktop` (surfaces seen showing a hook message; an IDE extension is not asked, VS Code seen showing none) |
+| person present | Claude Code: `CLAUDE_CODE_SESSION_ATTENDED=1` and `CLAUDE_CODE_ENTRYPOINT` is `cli` or `claude-desktop` (surfaces seen showing a hook message; an IDE extension is not asked, VS Code seen showing none). Codex: see below |
 | work undeclared | working branch, no declaration for session or branch |
 | CLI usable | `aidd` on `PATH` and knows `telemetry task` |
 
 - Anything else passes. A crash exits 0: the hook never fails a prompt.
+- Codex shows a block's reason in the TUI only (`codex exec` prints none, the IDE extension and the desktop app are unobserved), and hands a hook nothing that names its surface. The session file's first line does. A person is present only when all hold, anything else (a field missing, another value, an unreadable file, a first line longer than the 1 MiB read) being nobody to answer:
+  - the first line of `transcript_path`, read up to 1 MiB, is a `session_meta` with `source` `cli` and `originator` `codex-tui` (a sub-agent's own file has an object `source`). Codex writes it before it hands a hook the path; seen up to 48 KiB, base instructions included;
+  - the payload has no `agent_id`: a sub-agent's spawn message reaches the hook with its root's `session_id`, and nobody typed it;
+  - `permission_mode` is `default`: `codex exec` forces approvals off (`bypassPermissions`), and a TUI thread resumed by `codex exec` keeps its first line.
 - Re-checked on every prompt: each prompt on an undeclared working branch is blocked until the branch or the session is declared (`--none` included). A declared branch is never asked again, unless a copy or rename onto it changes its keys; switching to an undeclared one asks.
 - Why every prompt and not once: the gate exists so that no token of the work is spent before it has a task ([spec](../tasks/2026_10/2026_10_09_deterministic-tokens/spec.md), [target](../tasks/2026_10/2026_10_09_deterministic-tokens/context/target.md)). "Once per working branch" there meant answered once and remembered; letting the next prompt through would spend tokens unattributed.
 
 Answering never blocks and never reaches the model:
 - `! aidd telemetry task ...` in the terminal fires no `UserPromptSubmit`.
 - `aidd telemetry task ...` typed as a prompt runs through the CLI with `--by hook-intercept`. Block reason: one line, what was declared, "Send your prompt again."
+- The session it binds: `AIDD_TELEMETRY_SESSION_ID`, else `CLAUDE_CODE_SESSION_ID`, read by the composition root (`runtime/wiring/telemetry.ts`). The Codex hook sets the first, to its payload's `session_id`, for the command it runs; nothing else does. A sub-agent's calls carry their root's session, so they take its declaration.
+- Claude Code hides the typed declaration from the transcript. Codex was never seen to accept that, so its block keeps the prompt shown; it is still never sent to the model.
 - Grammar: a name, `--ticket <ref>`, `--none`, nothing else. Outside it nothing runs.
 - A one-line prompt starting like a declaration, only words and quoted strings, no `?`, `!`, comma or final full stop (`aidd telemetry task fix cart`) is blocked with the grammar and quoting hint, kept visible. Any other prompt starting with those words is ordinary.
 
 ## Carry
 
-`/clear` and `/branch` (source `fork`) start a new session in the same process; the payload names no predecessor. The `SessionStart` hook (`hooks/session-start.cjs`) records every start.
+`/clear` and `/branch` (source `fork`) start a new session in the same process; the payload names no predecessor. The `SessionStart` hook (`hooks/session-start.cjs`) records every Claude Code start. Codex gives a hook no process id, so for Codex it does nothing, not even the consent check: a Codex `/clear` or fork is a new session, asked again on an undeclared branch.
 
 ```mermaid
 sequenceDiagram
@@ -316,7 +322,7 @@ stateDiagram-v2
 | `on` | under the ledger lock: fresh token, key `2:<token>` first, then open line (a key with no interval measures nothing; an interval its key does not name would be closed by the first hook). Key naming an open interval of this clone: no change. Otherwise closes this clone's stale open intervals at its time. Refuses a clone with no identity. Then, only once on, writes the person's identity when one was chosen |
 | `off` | under the same lock: close the clone's open token, then key `off`; key and interval change together, so an ingest never sees one without the other. Also closes the interval its key names at its path, whatever identity it reads there |
 | ingest | before judging any call, for every open interval, closes at observation time when the identity at its path changed or the live key is not `2:<that token>`. Nothing at the path: not closed (unmounted volume, folder moved and back); measured again when back. Unreadable config or `stat`: stays open, stores nothing |
-| hooks | after the Claude-only guard, even headless: key not naming an open interval recorded for this clone's real path => append a close at hook time. Ends a manual `git config aidd.telemetry off` or `--unset` before the next prompt's calls. `AIDD_TELEMETRY=0`: does nothing |
+| hooks | after the tool guard, even headless (Codex's `SessionStart` hook excepted, which does nothing): key not naming an open interval recorded for this clone's real path => append a close at hook time. Ends a manual `git config aidd.telemetry off` or `--unset` before the next prompt's calls. `AIDD_TELEMETRY=0`: does nothing |
 | `forget --yes` | removes the log with the ledger; unsets the key in every recorded clone |
 
 **Consenting, for hooks and `task`.** All three: key is `2:<token>`; log holds an open interval with it; that interval's clone is this one, by common-dir real path and by `dev`, `ino`, `birthtimeMs`, normalised as the CLI does (inode as text, missing birth as `0`, any other kept even if equal to change time, no inode = no identity; fixture `cloneIdentity` and `hookConsent` cases). Not consenting: a hand-set key (`2`, made-up token), a `cp -R` copy, a copy moved onto a deleted original's path, a clone remade at a path, a moved clone. There: nothing asked, nothing blocked, nothing closed that is not this clone's; run `aidd telemetry on`.
@@ -328,7 +334,7 @@ stateDiagram-v2
 - A clone that never opted in: nothing stored, asked or blocked. Nothing is kept of its calls in `left-out.txt` either; `roots.json` may name its directory, as for any directory read.
 - Key `off`, from `off` or by hand: `status` and `task` say measurement was turned off in this clone and that `aidd telemetry on` measures it again; a damaged log or an unidentified clone reads unreadable instead, since `on` would refuse. Any other key that grants nothing reads as never opted in. Ingest still counts its calls under `no-consent`.
 
-**`on` also:** removes the old `telemetry` block from `.aidd/config.json` byte-for-byte otherwise, deleting the file only if that block was all (says the change may need committing); removes an earlier measurement's leftovers in the repository; records its clone for `forget`; warns when Claude Code's transcript retention is short; ends with the next step, declaring a task, which the hooks ask for in Claude Code. Does not reset offsets.
+**`on` also:** removes the old `telemetry` block from `.aidd/config.json` byte-for-byte otherwise, deleting the file only if that block was all (says the change may need committing); removes an earlier measurement's leftovers in the repository; records its clone for `forget`; warns when Claude Code's transcript retention is short; ends with the next step, declaring a task, which the hooks ask for in Claude Code and the Codex TUI. Does not reset offsets.
 
 **`forget --yes`** unsets `aidd.telemetry` and branch task keys in every clone in `roots.json` or `consents.jsonl` that still exists. Names only gone clones that had consented. A clone that never ran `on` is recorded only if a call from it was read after some clone opted in, so a hand-set key there may stay.
 
@@ -355,9 +361,12 @@ None observable by the CLI.
 | pid reused within one boot by a Claude process whose `startup` was never recorded (e.g. started before `on`) | can take the dead process's last session as predecessor, so `/clear` carries its task | announced, replaced by first declaration |
 | One transcript line longer than the longest string the runtime holds (512 MB) | every ingest fails when it reaches that line (inferred, not run). A transcript is otherwise read a block at a time: an ingest holds 1 MiB, up to about three copies of the longest line, and what the reading keeps (every record, every unrecognised line naming a directory), whatever the transcript's size | - |
 | Transcript rewritten in place, to the same size or larger, while an ingest reads it | not seen: a line may be spliced from the two versions and the offset saved inside the new one. Shrunk: that read counts nothing and the transcript is read again from where it stood. Replaced at its path: the read finishes the file it opened, and the next one reads the new file whole. Claude Code only appends; Codex is assumed to only append to a `.jsonl` | - |
-| Task and ticket of a Codex call | come from its branch's declaration only: the plugin's hooks run in Claude Code, so nothing asks a Codex session for its task, and a session declaration never binds one | declare the branch |
+| Codex hooks not trusted | Codex runs a plugin's hooks only once a person trusted each one (`/hooks` in the TUI); until then nothing asks, and ingest runs only from Claude Code or a report. Trust covers a hook's entry in `hooks.json` (command, timeout, `async`), not its script: an update that changes an entry needs trusting again, a change to the script alone does not | `/hooks` in the Codex TUI |
+| Codex surfaces never asked | `codex exec`, the IDE extension, the desktop app, and the TUI in full-access mode (approval `never`): their calls take a branch's declaration, or one made elsewhere for the session | declare the branch |
+| A TUI thread resumed by `codex exec` with an auto-review approver (`--approve-for-me`, `approvals_reviewer = "auto_review"`) | not `bypassPermissions`, so its prompt would be held with nobody to see why. Not seen | - |
+| A Codex `/clear` or fork | a new session with no carried task: asked again on an undeclared branch | declare the branch |
 | Branch of a Codex call | the branch its session started on: a branch changed during the session is not seen | - |
-| A person who only uses Codex | measured when `aidd telemetry ingest` or `report` runs, which the plugin does at a Claude Code session start | run a report |
+| A person who only uses Codex | measured when `aidd telemetry ingest` or `report` runs, which the plugin does at a Claude Code or a trusted Codex session start | run a report |
 | Codex cache writes | part of `input_tokens`, which `input` subtracts them from, as OpenAI's own formula does; billed only on GPT-5.6 and later. OpenAI has one write rate, so `cache_write_1h` is `null`. A cached read and write above `input_tokens` was never seen: its `input` would be below zero, which the ledger does not read as a record | - |
 | Codex versions | per-call records ship from Codex CLI 0.153. An earlier version writes calls only as running totals (`token_count`), which are not read: a session it wrote counts nothing. Observed: 0.149 pre-releases to 0.163 | - |
 | Codex calls written with no record | not counted. Off by default: background remote compaction, memory extraction, the Guardian scorer. Always: title generation, `codex exec --ephemeral` (no session file), realtime and voice conversations, failed, aborted or dropped-stream responses, and, before 0.163, a response cut short by its output limit | - |

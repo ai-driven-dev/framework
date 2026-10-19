@@ -14,7 +14,7 @@ Measurement is on for the project, or nothing changed and the reason is stated. 
 
 1. **Explain.** Tell the person, before asking anything:
    - what is measured: the token counts of Claude Code and Codex sessions run in this project, read from each tool's own session files (Codex's under `CODEX_HOME`, else `~/.codex`), split into input, output, cache read and cache write;
-   - what is asked: one question per working branch, a task name and optionally a ticket, only when a person is at the keyboard;
+   - what is asked: one question per working branch, a task name and optionally a ticket, only when a person is at the keyboard, in Claude Code or the Codex TUI. Codex asks only once the person has reviewed and trusted this plugin's checks in its TUI, which lists them for review, and never in `codex exec`, its IDE extension, its desktop app or full-access mode;
    - when it starts: now. Measurement starts at the moment it is turned on, and what this project's sessions did before is not counted, whatever Claude Code still holds of it;
    - where it stays: on this machine, and nothing is sent anywhere;
    - whose consent it is: this clone's alone, kept in its git config and never committed, so a teammate is not measured until they run it in theirs.

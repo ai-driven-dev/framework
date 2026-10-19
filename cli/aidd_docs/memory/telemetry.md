@@ -12,7 +12,7 @@
 | its name | `USAGE_TOOLS` in `domain/usage-record.ts` |
 | its home relocated in every sandbox that runs the CLI | `tests/e2e/helpers.ts`, `tests/helpers/telemetry-sandbox.ts`, `scripts/check-claude-tokens-end-to-end.cjs`, `scripts/probe-identifier-join.cjs` |
 
-Storage, attribution and the report need nothing. Task and ticket come only from `aidd telemetry task`, whoever runs it; the plugin's hooks only invoke it from Claude Code, so another tool's calls are attributed by branch. Rules: [usage contract](../../../aidd_docs/product/usage-contract.md#attribution).
+Storage, attribution and the report need nothing. Task and ticket come only from `aidd telemetry task`, whoever runs it; the plugin's hooks invoke it from Claude Code and the Codex TUI, naming the session with `AIDD_TELEMETRY_SESSION_ID` where the tool sets no variable of its own. Another tool's calls are attributed by branch. Rules: [usage contract](../../../aidd_docs/product/usage-contract.md#attribution).
 
 ## Data flow
 
@@ -72,7 +72,7 @@ flowchart LR
 
 ## The plugin side
 
-`plugins/aidd-telemetry/hooks/` is plain Node and imports nothing from here. It asks for a task, answers a typed declaration by running `aidd telemetry task`, and records which session a process is on. Its reading of the stores is pinned against `scripts/__tests__/fixtures/telemetry-bindings/`, read by `tests/contexts/telemetry/telemetry-bindings-fixture.unit.test.ts` and by the hook tests.
+`plugins/aidd-telemetry/hooks/` is plain Node and imports nothing from here. It tells Claude Code's payload from Codex's (`hooks/lib/tool.cjs`), asks for a task, answers a typed declaration by running `aidd telemetry task`, and records which session a Claude Code process is on. Its reading of the stores is pinned against `scripts/__tests__/fixtures/telemetry-bindings/`, read by `tests/contexts/telemetry/telemetry-bindings-fixture.unit.test.ts` and by the hook tests.
 
 ## Tests
 

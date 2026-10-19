@@ -12,7 +12,7 @@ Measurement is off for the project, and the person knows the measured data is st
 
 ## Process
 
-1. **Confirm.** Say what stopping does: new Claude Code or Codex work in this project is no longer counted, nor asked about, and what was measured stays. Wait for a yes.
+1. **Confirm.** Say what stopping does: new Claude Code or Codex work in this project is no longer counted, nor asked about where it was asked (Claude Code, the Codex TUI), and what was measured stays. Wait for a yes.
 2. **Turn off.** Run `aidd telemetry off` and relay its message.
 3. **Offer the rest.** Say that deleting what was measured is a separate step, and that it needs its own confirmation.
 
