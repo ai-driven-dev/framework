@@ -1,7 +1,7 @@
 import { appendFile, chmod, mkdir, mkdtemp, rename, rm, utimes, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { Transform } from "node:stream";
+import { PassThrough, Transform } from "node:stream";
 import * as zlib from "node:zlib";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import type { TranscriptPosition } from "../../../../../src/contexts/telemetry/domain/transcript-position.js";
@@ -229,6 +229,22 @@ describe.skipIf(NO_ZSTD)("reading a compressed Codex session file", () => {
       ),
     ]);
     expect((await readLines(adapter, path, first.read.position)).read).toEqual(first.read);
+  });
+
+  it("reads whole, unchecked, a stream whose frame declares no size", async () => {
+    const path = join(archived, "rollout-a.jsonl.zst");
+    await writeFile(path, "a\nb\n");
+    const passesThrough = () => new PassThrough();
+    const { lines, read } = await readLines(
+      new CodexTranscriptSourceAdapter([sessions, archived], passesThrough),
+      path,
+      null
+    );
+    expect(lines).toEqual([
+      ["a", true],
+      ["b", true],
+    ]);
+    expect(read.unrecognised).toBeUndefined();
   });
 
   it("names a stream that ends short of the size its frame declares", async () => {

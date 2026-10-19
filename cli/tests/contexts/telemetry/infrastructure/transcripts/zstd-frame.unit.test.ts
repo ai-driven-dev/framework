@@ -17,6 +17,10 @@ describe("the content size a zstd frame declares", () => {
     expect(declaredContentSize(header(0b0100_0000, 0x58, 0x01, 0x02))).toBe(0x0201 + 256);
   });
 
+  it("reads a two-byte size on a single segment, where the flag alone gives its width", () => {
+    expect(declaredContentSize(header(0b0110_0000, 0x01, 0x02))).toBe(0x0201 + 256);
+  });
+
   it("reads a four-byte size", () => {
     expect(declaredContentSize(header(0b1000_0000, 0x58, 0x04, 0x03, 0x02, 0x01))).toBe(0x01020304);
   });
@@ -35,7 +39,7 @@ describe("the content size a zstd frame declares", () => {
   });
 
   it("is unknown when the frame declares no size", () => {
-    expect(declaredContentSize(header(0b0000_0000, 0x58))).toBeNull();
+    expect(declaredContentSize(header(0b0000_0000, 0x58, 0x07))).toBeNull();
   });
 
   it("is unknown for bytes that are no zstd frame, or too few to hold the size", () => {
