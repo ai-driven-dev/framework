@@ -1,4 +1,5 @@
 import { join } from "node:path";
+import type { Duplex } from "node:stream";
 import { pipeline } from "node:stream/promises";
 import * as zlib from "node:zlib";
 import { isErrnoException } from "../../../../kernel/reading/json-file.js";
@@ -14,6 +15,7 @@ import {
   oldestModifiedOf,
   readTranscript,
 } from "./transcript-files.js";
+import { declaredContentSize, FRAME_HEADER_BYTES } from "./zstd-frame.js";
 
 const SESSION_FILE = /^rollout-.*\.jsonl(\.zst)?$/;
 const COMPRESSED = ".zst";
@@ -21,6 +23,9 @@ const COMPRESSED = ".zst";
 const UNDECOMPRESSABLE = /^Z(STD)?_/;
 
 /** A compressed file not read, named once per run: its position stays, so it is tried again. */
+/** A stream that decompressed to another size than its frame declares. */
+class FrameSizeMismatch extends Error {}
+
 function unread(since: TranscriptPosition | null, reason: string): TranscriptRead {
   return { position: since ?? NOWHERE, restarted: false, skipped: false, unrecognised: [reason] };
 }
@@ -40,8 +45,7 @@ export class CodexTranscriptSourceAdapter implements TranscriptSource {
   constructor(
     private readonly roots: readonly string[],
     /** Absent from a Node whose zlib has no zstd. */
-    private readonly decompress: (() => zlib.ZstdDecompress) | null = zlib.createZstdDecompress ??
-      null,
+    private readonly decompress: (() => Duplex) | null = zlib.createZstdDecompress ?? null,
     /** How much of a plain file is read at once. */
     private readonly blockBytes = 1 << 20
   ) {}
@@ -78,17 +82,32 @@ export class CodexTranscriptSourceAdapter implements TranscriptSource {
       skippedEnd: async (_handle, size) => size,
       lines: async (handle, now, { restarted }) => {
         if (!restarted && since?.size === now.size) return now.size;
+        const header = Buffer.alloc(FRAME_HEADER_BYTES);
+        const { bytesRead } = await handle.read(header, 0, header.length, 0);
+        const declared = declaredContentSize(header.subarray(0, bytesRead));
         const splitter = new LineSplitter(0, 0, each);
+        let decompressed = 0;
         await pipeline(
           handle.createReadStream({ start: 0, autoClose: false }),
           decompress(),
           async (chunks: AsyncIterable<Buffer>) => {
-            for await (const chunk of chunks) splitter.push(chunk);
+            for await (const chunk of chunks) {
+              decompressed += chunk.length;
+              splitter.push(chunk);
+            }
           }
         );
+        if (declared !== null && decompressed !== declared) {
+          throw new FrameSizeMismatch(
+            `${decompressed} of the ${declared} bytes its frame declares`
+          );
+        }
         return now.size;
       },
     }).catch((error: unknown) => {
+      if (error instanceof FrameSizeMismatch) {
+        return unread(since, `a compressed session file does not decompress: ${error.message}`);
+      }
       if (!isErrnoException(error) || !UNDECOMPRESSABLE.test(String(error.code))) throw error;
       return unread(since, `a compressed session file does not decompress: ${error.code}`);
     });

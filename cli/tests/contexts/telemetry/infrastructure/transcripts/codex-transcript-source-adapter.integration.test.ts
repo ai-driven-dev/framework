@@ -1,6 +1,7 @@
 import { appendFile, chmod, mkdir, mkdtemp, rename, rm, utimes, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { Transform } from "node:stream";
 import * as zlib from "node:zlib";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import type { TranscriptPosition } from "../../../../../src/contexts/telemetry/domain/transcript-position.js";
@@ -215,13 +216,48 @@ describe.skipIf(NO_ZSTD)("reading a compressed Codex session file", () => {
     expect(read).toMatchObject({ skipped: true, position: { offset: bytes.length } });
   });
 
-  it("names a stream cut short by zlib's own code", async () => {
+  it("names a stream cut short and reads it again next time, whichever of zlib or the frame's size says so", async () => {
+    // Node 24's zlib fails a cut frame with Z_BUF_ERROR; Node 22's ends it quietly, short.
     const path = join(archived, "rollout-a.jsonl.zst");
     await writeFile(path, compressed("a\nb\n").subarray(0, 8));
-    const { read } = await readLines(source(), path, null);
-    expect(read.unrecognised).toEqual([
-      "a compressed session file does not decompress: Z_BUF_ERROR",
+    const adapter = source();
+    const first = await readLines(adapter, path, null);
+    expect(first.read.position).toEqual({ offset: 0, size: 0, identity: "" });
+    expect(first.read.unrecognised).toEqual([
+      expect.stringMatching(
+        /^a compressed session file does not decompress: (Z_BUF_ERROR|\d+ of the 4 bytes its frame declares)$/
+      ),
     ]);
+    expect((await readLines(adapter, path, first.read.position)).read).toEqual(first.read);
+  });
+
+  it("names a stream that ends short of the size its frame declares", async () => {
+    const path = join(archived, "rollout-a.jsonl.zst");
+    await writeFile(path, compressed("a\nb\n"));
+    // A decompressor that ends quietly one byte short, as Node 22's does on a cut frame.
+    const dropsLastByte = () => {
+      const input: Buffer[] = [];
+      return new Transform({
+        transform(chunk: Buffer, _encoding, done) {
+          input.push(chunk);
+          done();
+        },
+        flush(done) {
+          done(null, zlib.zstdDecompressSync(Buffer.concat(input)).subarray(0, -1));
+        },
+      });
+    };
+    const { read } = await readLines(
+      new CodexTranscriptSourceAdapter([sessions, archived], dropsLastByte),
+      path,
+      null
+    );
+    expect(read).toMatchObject({
+      position: { offset: 0, size: 0, identity: "" },
+      unrecognised: [
+        "a compressed session file does not decompress: 3 of the 4 bytes its frame declares",
+      ],
+    });
   });
 
   it("is one unrecognised shape, naming why, when it does not decompress, and is read again next time", async () => {
