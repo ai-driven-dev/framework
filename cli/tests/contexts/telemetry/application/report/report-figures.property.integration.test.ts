@@ -168,7 +168,7 @@ function recordsOf(calls: Scenario["calls"]): StoredUsage[] {
   return calls.flatMap((c, index) =>
     c.snapshots.map(
       (s): StoredUsage => ({
-        tool: "claude-code",
+        tool: index % 2 === 0 ? "claude-code" : "codex",
         tool_version: "1.0.0",
         key: `k${index}`,
         session_id: c.session,

@@ -88,7 +88,7 @@ async function reporterOf({ calls, declarations, person }: Ledger) {
   const ledger = new InMemoryLedger();
   ledger.records = calls.map(
     (c, index): StoredUsage => ({
-      tool: "claude-code",
+      tool: index % 2 === 0 ? "claude-code" : "codex",
       tool_version: null,
       key: `k${index}`,
       session_id: c.session,

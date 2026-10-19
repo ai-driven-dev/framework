@@ -32,6 +32,7 @@ const usage = fc
     session_id: fc.constantFrom(...SESSIONS),
     repository_id: fc.constantFrom(...REPOS),
     git_branch: fc.option(fc.constantFrom(...BRANCHES), { nil: null }),
+    tool: fc.constantFrom("claude-code" as const, "codex" as const),
     model: fc.option(fc.constantFrom("m-1", "m-2"), { nil: null }),
     at: instant,
     input: counter,
@@ -42,7 +43,6 @@ const usage = fc
   .map(
     (r): StoredUsage => ({
       ...r,
-      tool: "claude-code",
       tool_version: null,
       agent: "main",
       cache_write_1h: null,

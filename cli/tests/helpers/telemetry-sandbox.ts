@@ -63,6 +63,7 @@ export function createTelemetrySandbox(): TelemetrySandbox {
         APPDATA: join(home, "AppData", "Roaming"),
         USERPROFILE: home,
         CLAUDE_CONFIG_DIR: claude,
+        CODEX_HOME: join(home, ".codex"),
         AIDD_TELEMETRY: "",
         CLAUDE_CODE_SESSION_ID: "",
         CODEX_THREAD_ID: "",

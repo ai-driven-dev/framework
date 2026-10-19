@@ -22,6 +22,7 @@ import {
   claudeProjectsRoot,
 } from "../../contexts/telemetry/domain/claude-projects-root.js";
 import { readClaudeUsageLine } from "../../contexts/telemetry/domain/formats/claude-transcript-usage.js";
+import { codexUsageReader } from "../../contexts/telemetry/domain/formats/codex-transcript-usage.js";
 import { legacyLocations } from "../../contexts/telemetry/domain/legacy/legacy-locations.js";
 import { refusedByEnvironment as refusedByEnvironmentValue } from "../../contexts/telemetry/domain/telemetry-consent.js";
 import { BindingSnapshotStoreAdapter } from "../../contexts/telemetry/infrastructure/binding-snapshot-store-adapter.js";
@@ -43,6 +44,10 @@ import { ClaudeSettingsAdapter } from "../../contexts/telemetry/infrastructure/s
 import { LegacyHookAdapter } from "../../contexts/telemetry/infrastructure/switch/legacy-hook-adapter.js";
 import { ProjectConfigAdapter } from "../../contexts/telemetry/infrastructure/switch/project-config-adapter.js";
 import { RunJournalAdapter } from "../../contexts/telemetry/infrastructure/switch/run-journal-adapter.js";
+import {
+  CodexTranscriptSourceAdapter,
+  codexSessionRoots,
+} from "../../contexts/telemetry/infrastructure/transcripts/codex-transcript-source-adapter.js";
 import { UsageLedgerAdapter } from "../../contexts/telemetry/infrastructure/usage-ledger-adapter.js";
 import { PrivateStorageAdapter } from "../filesystem/private-storage-adapter.js";
 import { environmentWithoutGitVariables } from "../git/git-environment.js";
@@ -141,6 +146,10 @@ export function wireTelemetry(homedir: () => string): TelemetryDeps {
           claudeProjectsRoot(process.env.CLAUDE_CONFIG_DIR, homedir())
         ),
         () => readClaudeUsageLine
+      ),
+      new ReadUsageUseCase(
+        new CodexTranscriptSourceAdapter(codexSessionRoots(process.env.CODEX_HOME, homedir())),
+        codexUsageReader
       ),
     ],
     ledger,

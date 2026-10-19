@@ -1,0 +1,212 @@
+import { appendFile, mkdir, mkdtemp, rename, rm, utimes, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { zstdCompressSync } from "node:zlib";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import type { TranscriptPosition } from "../../../../../src/contexts/telemetry/domain/transcript-position.js";
+import {
+  CodexTranscriptSourceAdapter,
+  codexSessionRoots,
+} from "../../../../../src/contexts/telemetry/infrastructure/transcripts/codex-transcript-source-adapter.js";
+
+const EVERYTHING = Number.NEGATIVE_INFINITY;
+
+let root: string;
+let sessions: string;
+let archived: string;
+
+beforeEach(async () => {
+  root = await mkdtemp(join(tmpdir(), "aidd-codex-source-"));
+  sessions = join(root, "sessions");
+  archived = join(root, "archived_sessions");
+  await mkdir(join(sessions, "2026", "10", "07"), { recursive: true });
+  await mkdir(archived, { recursive: true });
+});
+
+afterEach(async () => {
+  await rm(root, { recursive: true, force: true });
+});
+
+function source(blockBytes?: number) {
+  return new CodexTranscriptSourceAdapter([sessions, archived], undefined, blockBytes);
+}
+
+async function readLines(
+  adapter: CodexTranscriptSourceAdapter,
+  path: string,
+  since: TranscriptPosition | null,
+  writtenFrom = EVERYTHING
+) {
+  const lines: [string, boolean][] = [];
+  const read = await adapter.read(path, since, writtenFrom, (line, counted) => {
+    lines.push([line, counted]);
+  });
+  return { lines, read };
+}
+
+describe("where Codex keeps its session files", () => {
+  it("is sessions/ and archived_sessions/ under CODEX_HOME when it is set", () => {
+    expect(codexSessionRoots("/cfg/codex", "/home/p")).toEqual([
+      join("/cfg/codex", "sessions"),
+      join("/cfg/codex", "archived_sessions"),
+    ]);
+  });
+
+  it("is under .codex in the home directory otherwise, an empty CODEX_HOME being none", () => {
+    for (const unset of [undefined, ""]) {
+      expect(codexSessionRoots(unset, "/home/p")).toEqual([
+        join("/home/p", ".codex", "sessions"),
+        join("/home/p", ".codex", "archived_sessions"),
+      ]);
+    }
+  });
+});
+
+describe("listing Codex session files", () => {
+  it("lists every rollout file, plain or compressed, at any depth, under both roots", async () => {
+    const day = join(sessions, "2026", "10", "07");
+    for (const name of [
+      "rollout-a.jsonl",
+      "rollout-b.jsonl.zst",
+      "notes.jsonl",
+      "rollout-c.json",
+    ]) {
+      await writeFile(join(day, name), "");
+    }
+    await writeFile(join(archived, "rollout-d.jsonl.zst"), "");
+    expect(await source().list()).toEqual(
+      [
+        join(day, "rollout-a.jsonl"),
+        join(day, "rollout-b.jsonl.zst"),
+        join(archived, "rollout-d.jsonl.zst"),
+      ].sort()
+    );
+  });
+
+  it("lists nothing when no root exists", async () => {
+    await rm(root, { recursive: true, force: true });
+    expect(await source().list()).toEqual([]);
+  });
+});
+
+describe("reading a plain Codex session file", () => {
+  it("hands every line of a new file, each counted", async () => {
+    const path = join(sessions, "rollout-a.jsonl");
+    await writeFile(path, "a\nb\npart");
+    const { lines, read } = await readLines(source(), path, null);
+    expect(lines).toEqual([
+      ["a", true],
+      ["b", true],
+    ]);
+    expect(read.position?.offset).toBe(4);
+  });
+
+  it("reads a grown file from its start, counting only the lines past the saved offset", async () => {
+    const path = join(sessions, "rollout-a.jsonl");
+    await writeFile(path, "a\nb\n");
+    const adapter = source(3);
+    const first = await readLines(adapter, path, null);
+    await appendFile(path, "c\nd\n");
+    const { lines, read } = await readLines(adapter, path, first.read.position);
+    expect(lines).toEqual([
+      ["a", false],
+      ["b", false],
+      ["c", true],
+      ["d", true],
+    ]);
+    expect(read).toMatchObject({ position: { offset: 8, size: 8 }, restarted: false });
+  });
+
+  it("hands no line of a file that did not move", async () => {
+    const path = join(sessions, "rollout-a.jsonl");
+    await writeFile(path, "a\nb\npart");
+    const adapter = source();
+    const first = await readLines(adapter, path, null);
+    const again = await readLines(adapter, path, first.read.position);
+    expect(again.lines).toEqual([]);
+    expect(again.read.position).toEqual(first.read.position);
+  });
+
+  it("counts every line of a file that is no longer the one the position describes", async () => {
+    const path = join(sessions, "rollout-a.jsonl");
+    await writeFile(path, "a\n");
+    const adapter = source();
+    const first = await readLines(adapter, path, null);
+    await writeFile(join(sessions, "other"), "x\ny\nz\n");
+    await rename(join(sessions, "other"), path);
+    const { lines, read } = await readLines(adapter, path, first.read.position);
+    expect(lines.map(([, counted]) => counted)).toEqual([true, true, true]);
+    expect(read.restarted).toBe(true);
+  });
+
+  it("does not read a file last written before the given instant, and keeps its end", async () => {
+    const path = join(sessions, "rollout-a.jsonl");
+    await writeFile(path, "a\nb\npart");
+    await utimes(path, new Date("2026-01-01"), new Date("2026-01-01"));
+    const { lines, read } = await readLines(source(), path, null, Date.parse("2026-06-01"));
+    expect(lines).toEqual([]);
+    expect(read).toMatchObject({ skipped: true, position: { offset: 4 } });
+  });
+});
+
+describe("reading a compressed Codex session file", () => {
+  const compressed = (text: string) => zstdCompressSync(Buffer.from(text));
+
+  it("hands every line, each counted, and keeps the file read by its size and identity", async () => {
+    const path = join(archived, "rollout-a.jsonl.zst");
+    const bytes = compressed("a\nb\nc\n");
+    await writeFile(path, bytes);
+    const adapter = source();
+    const { lines, read } = await readLines(adapter, path, null);
+    expect(lines).toEqual([
+      ["a", true],
+      ["b", true],
+      ["c", true],
+    ]);
+    expect(read).toMatchObject({
+      position: { offset: bytes.length, size: bytes.length },
+      skipped: false,
+    });
+    const again = await readLines(adapter, path, read.position);
+    expect(again.lines).toEqual([]);
+    expect(again.read.position).toEqual(read.position);
+  });
+
+  it("reads it whole again once it is another file", async () => {
+    const path = join(archived, "rollout-a.jsonl.zst");
+    await writeFile(path, compressed("a\n"));
+    const adapter = source();
+    const first = await readLines(adapter, path, null);
+    await writeFile(join(archived, "other"), compressed("a\nb\n"));
+    await rename(join(archived, "other"), path);
+    const { lines } = await readLines(adapter, path, first.read.position);
+    expect(lines).toEqual([
+      ["a", true],
+      ["b", true],
+    ]);
+  });
+
+  it("does not decompress one last written before the given instant", async () => {
+    const path = join(archived, "rollout-a.jsonl.zst");
+    const bytes = compressed("a\n");
+    await writeFile(path, bytes);
+    await utimes(path, new Date("2026-01-01"), new Date("2026-01-01"));
+    const { lines, read } = await readLines(source(), path, null, Date.parse("2026-06-01"));
+    expect(lines).toEqual([]);
+    expect(read).toMatchObject({ skipped: true, position: { offset: bytes.length } });
+  });
+
+  it("is one unrecognised shape, naming why, where Node has no zstd, and stays unread", async () => {
+    const path = join(archived, "rollout-a.jsonl.zst");
+    await writeFile(path, compressed("a\n"));
+    const adapter = new CodexTranscriptSourceAdapter([sessions, archived], null);
+    const { lines, read } = await readLines(adapter, path, null);
+    expect(lines).toEqual([]);
+    expect(read).toEqual({
+      position: { offset: 0, size: 0, identity: "" },
+      restarted: false,
+      skipped: false,
+      unrecognised: ["a compressed session file is not read: this Node has no zstd"],
+    });
+  });
+});

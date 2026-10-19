@@ -5,8 +5,10 @@ import { join, resolve } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ReadUsageUseCase } from "../../../../src/contexts/telemetry/application/read-usage-use-case.js";
 import { readClaudeUsageLine } from "../../../../src/contexts/telemetry/domain/formats/claude-transcript-usage.js";
+import { codexUsageReader } from "../../../../src/contexts/telemetry/domain/formats/codex-transcript-usage.js";
 import type { TranscriptSource } from "../../../../src/contexts/telemetry/domain/ports/transcript-source.js";
 import { ClaudeTranscriptSourceAdapter } from "../../../../src/contexts/telemetry/infrastructure/claude-transcript-source-adapter.js";
+import { CodexTranscriptSourceAdapter } from "../../../../src/contexts/telemetry/infrastructure/transcripts/codex-transcript-source-adapter.js";
 
 const FIXTURES = resolve(import.meta.dirname, "../../../fixtures/claude-usage/projects");
 
@@ -243,5 +245,65 @@ describe("reading a transcript that changes under the read", () => {
     expect(reading.unrecognised).toEqual([]);
     expect(reading.fileOf.size).toBe(0);
     expect(reading.positions.has(path)).toBe(false);
+  });
+});
+
+describe("reading Codex usage", () => {
+  const SESSION = "33333333-3333-4333-8333-333333333333";
+  const entry = (type: string, payload: Record<string, unknown>) =>
+    `${JSON.stringify({ timestamp: "2026-10-08T12:00:00.000Z", type, payload })}\n`;
+  const meta = entry("session_meta", {
+    session_id: SESSION,
+    cwd: "/work/meta",
+    cli_version: "0.160.0",
+  });
+  const turn = (model: string, cwd: string) => entry("turn_context", { model, cwd });
+  const call = (id: string) =>
+    entry("token_usage_record", {
+      response_id: id,
+      session_id: SESSION,
+      thread_id: SESSION,
+      usage: {
+        input_tokens: 10,
+        cached_input_tokens: 4,
+        cache_write_input_tokens: 0,
+        output_tokens: 2,
+        reasoning_output_tokens: 1,
+        total_tokens: 12,
+      },
+    });
+
+  it("gives a call written after a resumed read the directory and model written before it", async () => {
+    const sessions = join(root, "codex", "sessions");
+    await mkdir(sessions, { recursive: true });
+    const path = join(sessions, "rollout-a.jsonl");
+    await writeFile(path, meta + turn("gpt-5.5", "/work/one") + call("resp_1"));
+    const useCase = new ReadUsageUseCase(
+      new CodexTranscriptSourceAdapter([sessions]),
+      codexUsageReader
+    );
+    const first = await useCase.execute(new Map());
+    await appendFile(path, call("resp_2") + turn("gpt-5.6", "/work/two") + call("resp_3"));
+    const second = await useCase.execute(first.positions);
+    expect(second.records.map((r) => [r.key, r.model, r.cwd])).toEqual([
+      ["resp_2", "gpt-5.5", "/work/one"],
+      ["resp_3", "gpt-5.6", "/work/two"],
+    ]);
+    expect(second.unrecognised).toEqual([]);
+  });
+
+  it("names each compressed file a Node with no zstd cannot read, with its file", async () => {
+    const sessions = join(root, "codex", "sessions");
+    await mkdir(sessions, { recursive: true });
+    const path = join(sessions, "rollout-a.jsonl.zst");
+    await writeFile(path, "");
+    const reading = await new ReadUsageUseCase(
+      new CodexTranscriptSourceAdapter([sessions], null),
+      codexUsageReader
+    ).execute(new Map());
+    expect(reading.unrecognised).toEqual([
+      `${path}: a compressed session file is not read: this Node has no zstd`,
+    ]);
+    expect(reading.records).toEqual([]);
   });
 });

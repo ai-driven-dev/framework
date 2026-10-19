@@ -259,6 +259,8 @@ export function sandboxedEnv(
     // The check asks GitHub for the latest release and prints a notice from the answer, so
     // captured stderr would change with every publish.
     AIDD_SKIP_UPDATE_CHECK: "1",
+    // Codex reads `CODEX_HOME` before `HOME`, and so does the telemetry reader of its sessions.
+    CODEX_HOME: join(fakeHome, ".codex"),
     ...extra,
     HOME: fakeHome,
     XDG_CONFIG_HOME: join(fakeHome, ".config"),
