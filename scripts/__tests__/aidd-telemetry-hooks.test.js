@@ -947,10 +947,18 @@ test("a typed declaration reaches no model: the CLI stores it, the hook blocks w
     assert.equal(calls.length, 1);
     assert.deepEqual(calls[0].argv, ["telemetry", "task", "fix-cart", "--ticket", "PROJ-1", "--by", "hook-intercept"]);
     assert.equal(fs.realpathSync(calls[0].cwd), box.repo);
-    assert.equal(calls[0].session, null, "Claude Code's declaration binds its own variable, never one the hook sets");
+    assert.equal(calls[0].session, SESSION, "the hook names the payload's session, which the guard made Claude Code's own");
     assert.equal(box.bindings("sessions.jsonl").length, 1);
     // the next prompt passes
     assertPasses(gate(box));
+  });
+});
+
+test("a stale AIDD_TELEMETRY_SESSION_ID exported by the user does not win over the session of the prompt", () => {
+  withBox({}, (box) => {
+    const env = box.env({ AIDD_TELEMETRY_SESSION_ID: OTHER });
+    gate(box, { payload: box.payload({ prompt: "aidd telemetry task fix-cart" }), env });
+    assert.deepEqual(box.bindings("sessions.jsonl").map((d) => d.session_id), [SESSION]);
   });
 });
 

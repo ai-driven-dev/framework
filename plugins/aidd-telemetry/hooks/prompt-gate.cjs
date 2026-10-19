@@ -26,10 +26,12 @@ function block(reason, { keepPrompt = false } = {}) {
   return output;
 }
 
-/** Codex sets no session variable: the hook names the session the declaration binds. */
+/** The hook names the session the declaration binds: Codex sets no session variable, and for
+ * Claude Code the payload's id is `CLAUDE_CODE_SESSION_ID` by the guard, so a stale exported
+ * `AIDD_TELEMETRY_SESSION_ID` cannot win. */
 function intercept(argv, { cwd, tool }, sessionId) {
   const keepPrompt = tool === "codex";
-  const env = tool === "codex" ? { ...process.env, AIDD_TELEMETRY_SESSION_ID: sessionId } : process.env;
+  const env = { ...process.env, AIDD_TELEMETRY_SESSION_ID: sessionId };
   const aidd = resolveAidd();
   if (aidd === null) {
     return block("aidd is needed to record the declaration and was not found on PATH. Install @ai-driven-dev/cli, then declare again.", { keepPrompt });

@@ -34,3 +34,4 @@ In an isolated `CODEX_HOME` holding a temporary copy of the maintainer's Codex c
 3. Type the declaration: it binds, the next prompt goes through.
 4. `codex exec` in the same clone: never held.
 5. `aidd telemetry report`: the session's calls are on the declared task.
+6. Resume a TUI thread in the desktop app and observe whether the block reason shows. If it does not, the presence rule needs a stronger signal before the PR ships; the orchestrator decides after the run.

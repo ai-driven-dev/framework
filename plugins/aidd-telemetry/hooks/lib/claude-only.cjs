@@ -1,7 +1,7 @@
 // Codex delivers the same event names, and a Codex started inside Claude inherits Claude's
 // session variable. Only a payload whose id equals the variable AND whose transcript lives
 // in a Claude `projects` directory is Claude's own.
-const CODEX_ROLLOUT = /\/sessions\/\d{4}\/\d{2}\/\d{2}\/rollout-/u;
+const { CODEX_ROLLOUT } = require("./codex-session-file.cjs");
 const CLAUDE_TRANSCRIPT = /(?:^|\/)projects\/.+\.jsonl$/u;
 
 function text(value) {
@@ -18,4 +18,4 @@ function isClaudePayload(payload, env = process.env) {
   return !CODEX_ROLLOUT.test(normalised) && CLAUDE_TRANSCRIPT.test(normalised);
 }
 
-module.exports = { isClaudePayload, CODEX_ROLLOUT };
+module.exports = { isClaudePayload };

@@ -38,7 +38,8 @@ flowchart LR
 | Claude Code, terminal and desktop app | yes |
 | Claude Code, an IDE extension or the SDK | no |
 | Codex TUI | yes, unless in full-access mode (approval `never`) |
-| `codex exec`, the Codex IDE extension and desktop app | no |
+| `codex exec`, and the Codex IDE extension and desktop app on threads of their own | no |
+| a Codex TUI thread resumed in the IDE extension or desktop app | possibly: the thread keeps its TUI origin, and those surfaces are not seen to show why a prompt was held |
 
 Where nobody is asked, a call takes its task from its branch's declaration, so declare the branch with `aidd telemetry task` in a terminal. A Codex `/clear` or fork starts a new session, which is asked again on an undeclared branch; Claude Code keeps the task across both. The usage contract lists the rest.
 

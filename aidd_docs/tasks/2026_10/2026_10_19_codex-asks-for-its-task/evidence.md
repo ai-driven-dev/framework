@@ -45,6 +45,7 @@ Each test written before its code, run and seen failing for the reason it names.
 - Phase 2, the session a declaration binds (`vitest run tests/runtime/wiring/telemetry-wiring.unit.test.ts`): the five `the session a declaration binds` cases `×`, `declaringSessionOf` not exported.
 - Phase 2, end to end (`vitest run --project e2e tests/e2e/telemetry-journey.e2e.test.ts -t Codex`, `declaringSessionOf` put back to `CLAUDE_CODE_SESSION_ID` alone): `×`, `ENOENT: no such file or directory, open '…/telemetry-dir/bindings/sessions.jsonl'`: the Codex declaration bound no session.
 - Phase 3, the merged `.codex/hooks.json` (`vitest run tests/contexts/tools/domain/formats/flat-hooks-merge.unit.test.ts`): `Tests  3 failed | 38 passed (41)`, among them `expected { type: 'command', …(2) } to match object { async: true, timeout: 120 }`.
+- Checker round 1, the session named for both tools: `✖ a stale AIDD_TELEMETRY_SESSION_ID exported by the user does not win over the session of the prompt` (`actual: [ '…00bb' ]`, the stale value bound) and `✖ a typed declaration reaches no model …` (`actual: null, expected: '…00aa'`).
 
 ## Verification
 
@@ -62,6 +63,7 @@ Stryker mutates `cli/` only, so each rule of the hooks was broken by hand, the h
 | `permission_mode` only refuses `bypassPermissions` | the presence table (`no permission_mode`, `a permission_mode never seen`) |
 | bound 4 MiB / 64 KiB | the presence table (`past the bound` / `well inside the bound`) |
 | whole file read as the first line | the presence table and the Codex gate tests |
+| env injection removed (`const env = process.env`) | the stale-value test, the Claude Code declaration test, the Codex declaration test |
 | session start runs for Codex | `codex: session start does nothing, not even the consent check` |
 | Codex declaration names no session | `codex: a typed declaration binds the payload's session …` |
 | every declaration names a session | `a typed declaration reaches no model …` (Claude Code's binds its own variable) |
@@ -71,7 +73,7 @@ Stryker mutates `cli/` only, so each rule of the hooks was broken by hand, the h
 
 Two earlier mutations survived and the rule behind each was deleted rather than tested: an anchored `rollout-….jsonl$` path (the Claude Code guard's own pattern is reused), and a separate refusal of a first line with no end (a line cut at the bound is no JSON).
 
-## Verification
+## Gates
 
 Run in a sandbox: `HOME`, `XDG_CONFIG_HOME`, `AIDD_USER_CONFIG_DIR`, `AIDD_TELEMETRY_DIR`, `CLAUDE_CONFIG_DIR`, `CODEX_HOME` fresh temp dirs, `GIT_CONFIG_NOSYSTEM=1`.
 

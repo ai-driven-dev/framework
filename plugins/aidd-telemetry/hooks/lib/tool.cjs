@@ -1,4 +1,5 @@
-const { CODEX_ROLLOUT, isClaudePayload } = require("./claude-only.cjs");
+const { isClaudePayload } = require("./claude-only.cjs");
+const { CODEX_ROLLOUT } = require("./codex-session-file.cjs");
 
 function text(value) {
   return typeof value === "string" && value !== "" ? value : null;

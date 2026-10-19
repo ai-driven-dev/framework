@@ -30,7 +30,7 @@ A Codex prompt is held only when all of these hold. Anything else, a field missi
 | --- | --- |
 | the session file's first line is a `session_meta` with `source` `cli` and `originator` `codex-tui` | the TUI, the one surface seen to show a block. A sub-agent's own file has an object `source` |
 | the payload has no `agent_id` | a sub-agent's spawn message reaches `UserPromptSubmit` with the root's `session_id`; nobody types it |
-| `permission_mode` is not `bypassPermissions` | a resumed thread keeps its first line, so a TUI thread resumed by `codex exec` still reads `codex-tui`; `exec` forces approval `never`, which is `bypassPermissions` |
+| `permission_mode` is exactly `default` (missing or any other value is nobody to answer) | a resumed thread keeps its first line, so a TUI thread resumed by `codex exec` still reads `codex-tui`; `exec` forces approval `never`, which is `bypassPermissions` |
 
 - The first line is read up to a bound, never the file whole. Codex writes and flushes it before it hands a hook the path.
 
@@ -57,6 +57,7 @@ Written into the usage contract and the plugin README; none is code.
 - Asked in the Codex TUI only, and not in full-access mode (approval `never`). `codex exec`, the IDE extension and the desktop app are never asked.
 - A TUI thread resumed by `codex exec` with an auto-review approver (`--approve-for-me`, or `approvals_reviewer = "auto_review"`) is not `bypassPermissions`: its prompt would be held with no one to see why. Not observed.
 - A Codex `/clear` or fork is a new session with no carried task: asked again on an undeclared branch.
+- A TUI thread resumed in the IDE extension or the desktop app is still held: a resume writes no new `session_meta`, so line 1 still reads `cli` and `codex-tui`, and those surfaces default to `permission_mode` `default`. They are not seen to show a block's reason. Not observed; the real run checks it.
 
 ## Out of scope
 
