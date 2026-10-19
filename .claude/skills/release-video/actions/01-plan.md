@@ -16,7 +16,9 @@ The repository at the release candidate.
 2. **Read.** Open the skill or command each surface names; take its real behavior, never a guess.
 3. **Draft.** Fill the [plan template](../assets/scenes-template.json): one scene per surface, a template from the list below, a short title, example values marked as examples.
 4. **Skip.** Move a surface to `skipped` with a reason only when a user would not notice it.
-5. **Check.** Rerun the script until it passes, then show the plan and fold corrections.
+5. **Fixes.** List the `fix:` commits since the last release tag. Group the ones a user would notice into one `bullet-grid` scene: the title says what was broken, the detail names who reported it when an issue exists. No scene when none qualifies.
+6. **Contributors.** Name who shipped the release with `gh api repos/{owner}/{repo}/compare/<last-tag>...next --jq '[.commits[].author.login] | unique'`. Drop bots. Put the logins in one `contributors` scene, last.
+7. **Check.** Rerun the script until it passes, then show the plan and fold corrections.
 
 | Template | Fits |
 | --- | --- |
@@ -24,7 +26,8 @@ The repository at the release candidate.
 | `two-panels` | a request beside its result |
 | `bullet-grid` | several small changes |
 | `contributors` | who shipped the release |
-| `outro` | version and install command |
+
+The intro and the outro, with the version and the install command, are generated: never planned.
 
 ## Test
 
@@ -34,3 +37,5 @@ The repository at the release candidate.
 | Skip without reason | script fails; reason added |
 | Release with no `feat:` commit | no video; plan left empty |
 | Invented demo value | marked as an example in the scene |
+| `fix:` commits a user would notice | one grouped scene; internal ones left out |
+| Contributor list | bots dropped; one `contributors` scene, last |
