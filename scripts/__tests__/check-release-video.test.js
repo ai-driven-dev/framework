@@ -149,6 +149,16 @@ test("featSurfaces reads only feat commits made since the last release tag", () 
   assert.deepEqual(found, ["aidd-dev:10-batch"]);
 });
 
+test("featSurfaces drops a surface that no longer exists at HEAD", () => {
+  const { repo, git, remove } = makeRepo();
+  git("rm", "-q", "-r", "plugins/aidd-dev/skills/10-batch");
+  git("commit", "-q", "-m", "chore: remove the skill again");
+  const found = require("../check-release-video.js").featSurfaces(repo);
+  remove();
+
+  assert.deepEqual(found, []);
+});
+
 test("featSurfaces reads the repository it is given even when a hook set GIT_DIR", () => {
   const { repo, remove } = makeRepo();
   const decoy = makeRepo();

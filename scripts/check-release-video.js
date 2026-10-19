@@ -39,6 +39,15 @@ function surfacesOf(files) {
   return [...found].sort();
 }
 
+/** Where a surface lives, so a surface added then removed or renamed in the same cycle is dropped. */
+function pathOf(surface) {
+  if (surface.startsWith("aidd ")) {
+    return `cli/src/presentation/commands/${surface.slice(5)}.ts`;
+  }
+  const [plugin, skill] = surface.split(":");
+  return `plugins/${plugin}/skills/${skill}`;
+}
+
 function shown(plan) {
   return new Set(plan.scenes.flatMap((scene) => scene.surfaces ?? []));
 }
@@ -64,7 +73,7 @@ function git(cwd, ...args) {
   return execFileSync("git", args, { cwd, encoding: "utf8", env: withoutGitEnv() }).trim();
 }
 
-/** Surfaces touched by `feat:` commits since the last release tag. */
+/** Surfaces touched by `feat:` commits since the last release tag and still present at HEAD. */
 function featSurfaces(cwd = ROOT) {
   const tag = git(cwd, "describe", "--tags", "--abbrev=0", "--match", "v[0-9]*");
   const log = git(cwd, "log", `${tag}..HEAD`, "--no-merges", "--format=%H%x09%s");
@@ -76,7 +85,7 @@ function featSurfaces(cwd = ROOT) {
     .flatMap(([sha]) =>
       git(cwd, "show", "--name-only", "--diff-filter=AM", "--format=", sha).split("\n")
     );
-  return surfacesOf(files);
+  return surfacesOf(files).filter((surface) => fs.existsSync(path.join(cwd, pathOf(surface))));
 }
 
 function readPlan() {

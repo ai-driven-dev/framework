@@ -1,0 +1,27 @@
+{
+  "scenes": [
+    {
+      "template": "terminal-demo",
+      "pill": "/aidd-context:05-rule-generate",
+      "title": "A new rule is compared",
+      "accent": "before it is written.",
+      "surfaces": ["aidd-context:05-rule-generate"],
+      "window": {
+        "label": "Claude Code · ~/acme-app",
+        "rows": [
+          { "prompt": "/aidd-context:05-rule-generate named exports only" },
+          { "text": "compares the candidate with your existing rules and project guidance", "tone": "dim" },
+          { "text": "conflict: an existing rule allows default exports", "tone": "amb" },
+          { "text": "nothing is written until you choose: keep, revise or cancel", "tone": "grn" }
+        ]
+      },
+      "note": "Example run."
+    }
+  ],
+  "skipped": [
+    {
+      "surface": "aidd-telemetry:01-usage",
+      "reason": "internal report format change; the command and the answer a user reads are the same"
+    }
+  ]
+}
