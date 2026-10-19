@@ -215,6 +215,15 @@ describe.skipIf(NO_ZSTD)("reading a compressed Codex session file", () => {
     expect(read).toMatchObject({ skipped: true, position: { offset: bytes.length } });
   });
 
+  it("names a stream cut short by zlib's own code", async () => {
+    const path = join(archived, "rollout-a.jsonl.zst");
+    await writeFile(path, compressed("a\nb\n").subarray(0, 8));
+    const { read } = await readLines(source(), path, null);
+    expect(read.unrecognised).toEqual([
+      "a compressed session file does not decompress: Z_BUF_ERROR",
+    ]);
+  });
+
   it("is one unrecognised shape, naming why, when it does not decompress, and is read again next time", async () => {
     const path = join(archived, "rollout-a.jsonl.zst");
     await writeFile(path, Buffer.from("not a zstd frame, only bytes"));

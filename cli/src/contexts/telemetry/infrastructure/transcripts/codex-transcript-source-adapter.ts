@@ -89,7 +89,7 @@ export class CodexTranscriptSourceAdapter implements TranscriptSource {
         return now.size;
       },
     }).catch((error: unknown) => {
-      if (!isErrnoException(error) || !UNDECOMPRESSABLE.test(error.code ?? "")) throw error;
+      if (!isErrnoException(error) || !UNDECOMPRESSABLE.test(String(error.code))) throw error;
       return unread(since, `a compressed session file does not decompress: ${error.code}`);
     });
   }
