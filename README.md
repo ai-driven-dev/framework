@@ -317,7 +317,7 @@ UI / UX design — smoke-test only, not ready for use.
 
 `2 skills` · **beta**
 
-Counts the tokens of Claude Code sessions per task, ticket, model and day. Opt-in, and local to your machine.
+Counts the tokens of Claude Code and Codex sessions per task, ticket, model and day. Opt-in, and local to your machine.
 
 </td>
 <td width="33%" valign="top">

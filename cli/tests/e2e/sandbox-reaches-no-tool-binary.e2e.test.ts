@@ -99,4 +99,16 @@ describe("E2E: the sandbox a test spawns into", () => {
       await cleanup();
     }
   });
+
+  it("points Codex's home inside the sandbox, even when the runner sets its own", () => {
+    const set = process.env.CODEX_HOME;
+    process.env.CODEX_HOME = "/the/runner/own/codex";
+    try {
+      const home = join("/sandbox", "home");
+      expect(sandboxedEnv(home).CODEX_HOME).toBe(join(home, ".codex"));
+    } finally {
+      if (set === undefined) delete process.env.CODEX_HOME;
+      else process.env.CODEX_HOME = set;
+    }
+  });
 });
