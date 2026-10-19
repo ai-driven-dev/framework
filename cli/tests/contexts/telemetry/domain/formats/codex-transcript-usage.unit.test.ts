@@ -185,6 +185,18 @@ describe("a Codex session file to usage records", () => {
     }
   });
 
+  it("gives nothing, and names nothing, for a compacted line holding a copy of the latest call", () => {
+    const compacted = JSON.stringify({
+      timestamp: "2026-10-07T10:00:03.000Z",
+      type: "compacted",
+      payload: {
+        message: "summary",
+        latest_token_usage_record: JSON.parse(call()).payload,
+      },
+    });
+    expect(readAll([meta(), turn(), compacted]).at(-1)).toEqual({ records: [], unrecognised: [] });
+  });
+
   it("gives nothing for a line that is not JSON and holds no call", () => {
     expect(readAll(["{torn"])[0]).toEqual({ records: [], unrecognised: [] });
   });
