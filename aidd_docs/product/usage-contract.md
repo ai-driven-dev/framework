@@ -1,6 +1,6 @@
 # Usage contract
 
-> For: maintainers, hook authors, a later destination. What `aidd telemetry` records, stores and reports for Claude Code, release 1. How to use it: [plugin README](../../plugins/aidd-telemetry/README.md). Where the code is: [`cli/aidd_docs/memory/telemetry.md`](../../cli/aidd_docs/memory/telemetry.md).
+> For: maintainers, hook authors, a later destination. What `aidd telemetry` records, stores and reports for Claude Code and Codex. How to use it: [plugin README](../../plugins/aidd-telemetry/README.md). Where the code is: [`cli/aidd_docs/memory/telemetry.md`](../../cli/aidd_docs/memory/telemetry.md).
 
 The code is the authority. A change to a format below changes this page in the same commit.
 
@@ -9,11 +9,11 @@ The code is the authority. A change to a format below changes this page in the s
 | CLI, `cli/src/contexts/telemetry/` | reading, storing, attributing, reporting |
 | Plugin hooks, `plugins/aidd-telemetry/hooks/`, plain Node | asking for a task, answering it, recording session facts |
 
-Only Claude Code is measured. The record admits other tools; no reader for them exists.
+Claude Code and Codex are measured, each from the files it writes itself. Reading is the only part written per tool: resolving, consent, storing, attribution and the report are written once for both.
 
 ```mermaid
 flowchart LR
-  T["Claude Code transcripts"] -->|"ingest"| L[("ledger")]
+  T["Claude Code transcripts, Codex session files"] -->|"ingest"| L[("ledger")]
   C[("consent log + git key")] -->|"gates storing"| L
   H["hooks"] -->|"session facts, carries"| B[("bindings")]
   H -->|"close lines"| C
@@ -49,7 +49,7 @@ The ledger stores `StoredUsage`: the record plus `repository_id`, resolved at in
 **Null is not zero.**
 - Unknown is `null`, never `0`. A `null` counter is left out of its sum and counted in that counter's `unknown_records`.
 - A usage line missing a counter is still a record, that counter `null`.
-- A line of a shape the reader does not recognise is never a record: one that is not JSON or not an object, or an `assistant` line whose `message.usage` is not an object or that lacks `message.id`, `sessionId` or `timestamp`. It counts in `run.unrecognised_shapes` of the report that read it, and, when it names a clone that consents, in `coverage.left_out.unrecognised` of every report (see [Left out](#left-out)). A line that is not `assistant`, has no `message.usage` or names the model `<synthetic>` is no call at all, and counts nowhere.
+- A line of a shape the reader does not recognise is never a record. For Claude Code: one that is not JSON or not an object, or an `assistant` line whose `message.usage` is not an object or that lacks `message.id`, `sessionId` or `timestamp`. It counts in `run.unrecognised_shapes` of the report that read it, and, when it names a clone that consents, in `coverage.left_out.unrecognised` of every report (see [Left out](#left-out)). A line that is not `assistant`, has no `message.usage` or names the model `<synthetic>` is no call at all, and counts nowhere. For Codex, see [Codex](#codex).
 - Ingest and report say: "not recognised by this read: a call missing a counter is kept with that counter unknown; a line that is no usage line is never a call." (`UNRECOGNISED_WORDS`, `presentation/display/telemetry-display.ts`). What is kept of such lines is said apart: "Kept from every read: …".
 
 **Key and fold** (`domain/formats/claude-transcript-usage.ts`).
@@ -63,6 +63,32 @@ The ledger stores `StoredUsage`: the record plus `repository_id`, resolved at in
 | `cache_write` | summed over `message` iterations (the top-level split reflects only the first) |
 | Advisor | each `advisor_message` iteration is a record, `agent: advisor`, own model |
 | Sub-agent | `isSidechain` or an `agentId` |
+
+### Codex
+
+Read from `CODEX_HOME`, else `~/.codex`: every `rollout-*.jsonl` and `rollout-*.jsonl.zst` under `sessions/` and `archived_sessions/`, at any depth (`domain/formats/codex-transcript-usage.ts`, `infrastructure/transcripts/codex-transcript-source-adapter.ts`). Archiving moves a file, and Codex compresses one it no longer writes to `.jsonl.zst` and removes the `.jsonl`: either way its calls are the same keys, so the ledger takes them once.
+
+Only a `token_usage_record` line is a call. Every other line is context or nothing, and never left out.
+
+| Record field | From |
+| --- | --- |
+| `key` | `payload.response_id` |
+| `session_id` | `payload.session_id`: the root session, also on a sub-agent's call |
+| `agent` | `subagent` when `payload.thread_id` differs from `payload.session_id`, else `main` |
+| `at` | the line's `timestamp` |
+| `input` | `usage.input_tokens − usage.cached_input_tokens − usage.cache_write_input_tokens`; `null` unless all three are counts |
+| `cache_read`, `cache_write` | `usage.cached_input_tokens`, `usage.cache_write_input_tokens` |
+| `cache_write_1h` | `null`: Codex does not say |
+| `output`, `reasoning` | `usage.output_tokens` (reasoning included), `usage.reasoning_output_tokens` |
+| `model`, `cwd` | of the latest `turn_context` before the line; `cwd` else of the file's first `session_meta`; `model` else `null` |
+| `tool_version`, `git_branch` | `cli_version` and `git.branch` of the file's first `session_meta`: a sub-agent's file carries its parent's after its own |
+
+- Only `payload.usage` is read. `turn_token_usage`, `thread_token_usage` and `event_msg` `token_count` are running totals: reading them would count a call many times.
+- A missing or malformed counter is `null` and said, as for Claude Code.
+- A `token_usage_record` with no `response_id`, `session_id`, `thread_id`, `timestamp` or `usage` object, or a line that is not JSON and holds the text `token_usage_record`, is unrecognised, named with the directory its context gives and its time.
+- Lines are cut on byte `0x0a` only: a line holds U+2028 and U+2029 unescaped.
+- A call's directory and model are written before it. A `.jsonl` that moved is read from its start: the lines before the saved offset only build its context, the lines after it give calls and unrecognised shapes exactly as a read from that offset would. `offsets.json` keeps its meaning, the end of the last complete line consumed.
+- A `.jsonl.zst` is read whole, once, decompressed as a stream: its offset is its size, and its size and identity keep it read. A Node whose `zlib` has no zstd reads none, and each one listed counts in that run's unrecognised shapes, saying why.
 
 **Repository.** The call's working directory resolved at ingest: its git root, named by the hash of the `origin` address (`host/owner/repo`), else the root commit. The address is never kept. Every form (https, `ssh://`, `git://`, scp-like) gives one address: scheme, credentials, port, `.git` and trailing `/` dropped, host case-folded, `ssh.github.com` read as `github.com`. Owner and repo are case-folded on `github.com` only, which documents them as not case sensitive; any other host keeps their case, so two spellings there may still give two ids.
 
@@ -327,7 +353,14 @@ None observable by the CLI.
 | Call read while git config, `.git` or git dir unreadable | `unreadable-consent`. A clone remembered there that consented at the time: the transcript read again by every ingest until its consent can be read, then stored. Otherwise: said only by that run | repair the clone, or `forget --yes`, or remove the clone; not `off` |
 | pid reused within one boot by a Claude process whose `startup` was never recorded (e.g. started before `on`) | can take the dead process's last session as predecessor, so `/clear` carries its task | announced, replaced by first declaration |
 | One transcript line longer than the longest string the runtime holds (512 MB) | every ingest fails when it reaches that line (inferred, not run). A transcript is otherwise read a block at a time: an ingest holds 1 MiB, up to about three copies of the longest line, and what the reading keeps (every record, every unrecognised line naming a directory), whatever the transcript's size | - |
-| Transcript rewritten in place, to the same size or larger, while an ingest reads it | not seen: a line may be spliced from the two versions and the offset saved inside the new one. Shrunk: that read counts nothing and the transcript is read again from where it stood. Replaced at its path: the read finishes the file it opened, and the next one reads the new file whole. Claude Code only appends | - |
+| Transcript rewritten in place, to the same size or larger, while an ingest reads it | not seen: a line may be spliced from the two versions and the offset saved inside the new one. Shrunk: that read counts nothing and the transcript is read again from where it stood. Replaced at its path: the read finishes the file it opened, and the next one reads the new file whole. Claude Code only appends; Codex is assumed to only append to a `.jsonl` | - |
+| Task and ticket of a Codex call | come from its branch's declaration only: the plugin's hooks run in Claude Code, so nothing asks a Codex session for its task, and a session declaration never binds one | declare the branch |
+| Branch of a Codex call | the branch its session started on: a branch changed during the session is not seen | - |
+| A person who only uses Codex | measured when `aidd telemetry ingest` or `report` runs, which the plugin does at a Claude Code session start | run a report |
+| Codex `cache_write_input_tokens` above zero | never seen; read as part of `input_tokens`, like the cached read. A cached read and write above `input_tokens` was never seen either: its `input` would be below zero, which the ledger does not read as a record | - |
+| Codex versions | observed from 0.149 to 0.162. An earlier one may write calls only as running totals, which are not read | - |
+| A Codex thread resumed from a history that holds no per-call records | only the calls written as `token_usage_record` count: what the thread consumed before them is in no record. Seen once, its running total already large on its first call | - |
+| A Codex `.jsonl.zst` that does not decompress, or whose last line is unterminated | not seen. One that does not decompress fails the ingest with its error, every run, until it is removed; an unterminated last line is never read, the file being read once | - |
 | `AIDD_TELEMETRY=0` | stops hooks too; a key turned off meanwhile is observed at the next run without it | - |
 | Declaration keys edited by hand: every key including the stamp, `aiddTask` and `aiddDeclaredAt` alone (read as unstamped), or a stamp removed or emptied | the branch reads as declared: no reader can tell who wrote a git config key | - |
 | Copy or rename of an unstamped (cli-v5.5.0) declaration | the new name inherits it | declare on the new name, or on the original to stamp it before copying or renaming |

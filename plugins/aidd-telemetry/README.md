@@ -2,7 +2,7 @@
 
 # aidd-telemetry
 
-Counts the tokens your Claude Code sessions consume, each model call once, by person, session, model, agent, day, repository, task and ticket. Local only: nothing is sent anywhere.
+Counts the tokens your Claude Code and Codex sessions consume, each model call once, by person, session, model, agent, day, repository, task and ticket. Local only: nothing is sent anywhere.
 
 > For: people who measure their work. Formats, rules and limits: [usage contract](../../aidd_docs/product/usage-contract.md).
 
@@ -10,7 +10,7 @@ Counts the tokens your Claude Code sessions consume, each model call once, by pe
 
 ```mermaid
 flowchart LR
-  Claude["Claude Code sessions"] -->|"write"| Files["session files"]
+  Claude["Claude Code and Codex sessions"] -->|"write"| Files["session files"]
   Files -->|"read, each call once"| Ledger[("local ledger")]
   You["you"] -->|"aidd telemetry task"| Tasks[("task declarations")]
   Hooks["plugin hooks"] -->|"ask when none"| You
@@ -21,6 +21,7 @@ flowchart LR
 - Only clones that ran `aidd telemetry on` are measured, from that moment on.
 - A task and a ticket come only from what you declare; nothing is guessed.
 - Every axis splits the same total.
+- Codex is read with the rest, from `CODEX_HOME` or `~/.codex`, whenever `aidd telemetry ingest` or `report` runs. Its hooks are not installed: a Codex call takes its task from its branch's declaration only.
 
 ## Start
 

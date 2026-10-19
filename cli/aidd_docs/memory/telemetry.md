@@ -6,10 +6,11 @@
 
 | Edit | Where |
 | --- | --- |
-| its line format | `contexts/telemetry/domain/formats/` |
-| its transcript source | `contexts/telemetry/infrastructure/` |
+| its line format, made once per file read when a line needs what came before it | `contexts/telemetry/domain/formats/` |
+| its transcript source, on the block reader in `infrastructure/transcripts/transcript-files.ts` | `contexts/telemetry/infrastructure/` |
 | one reader in the ingest list | `runtime/wiring/telemetry.ts` |
 | its name | `USAGE_TOOLS` in `domain/usage-record.ts` |
+| its home relocated in every sandbox that runs the CLI | `tests/e2e/helpers.ts`, `tests/helpers/telemetry-sandbox.ts`, `scripts/check-claude-tokens-end-to-end.cjs` |
 
 Storage, attribution and the report need nothing. Task and ticket come only from `aidd telemetry task`, whoever runs it; the plugin's hooks only invoke it from Claude Code, so another tool's calls are attributed by branch. Rules: [usage contract](../../../aidd_docs/product/usage-contract.md#attribution).
 
@@ -60,7 +61,8 @@ flowchart LR
 | What a clone is | `domain/consent/clone-identity.ts` |
 | When a clone consented | `domain/consent/consent-history.ts`, `application/consent-log.ts` |
 | Which transcripts are read | `application/ingest-usage-use-case.ts`, `application/read-usage-use-case.ts` |
-| How one is read: from its saved offset, a block at a time, up to its last complete line | `infrastructure/claude-transcript-source-adapter.ts`, `domain/transcript-position.ts` |
+| How one is read: from its saved offset, a block at a time, up to its last complete line | `infrastructure/claude-transcript-source-adapter.ts`, `infrastructure/transcripts/transcript-files.ts` (shared by every tool), `domain/transcript-position.ts` |
+| What a Codex line becomes, and why a Codex file that moved is read from its start | `domain/formats/codex-transcript-usage.ts`, `infrastructure/transcripts/codex-transcript-source-adapter.ts` |
 | How the ledger lies on disk, and what an ingest or a report reads | `infrastructure/usage-ledger-adapter.ts`, `domain/stored-usage.ts`, `application/ledger-upkeep.ts`, `domain/report/period.ts` |
 | What an ingest measured and could not store, kept for every report (`ledger/left-out.txt`), and why a ledger line no reader knows is kept | `infrastructure/left-out/left-out-adapter.ts`, `infrastructure/usage-ledger-adapter.ts`, `application/ingest-usage-use-case.ts`; rules in the [usage contract](../../../aidd_docs/product/usage-contract.md#left-out) |
 | What `on` and `forget` clean up from an earlier measurement | `domain/legacy/`, `application/switch/`, `application/forget/` |
