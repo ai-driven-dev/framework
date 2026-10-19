@@ -24,3 +24,4 @@ Covers backlog artifacts, refinement, lifecycle, Product Briefs, Epics, User Sto
 | [4.8] | [three-amigos](skills/08-three-amigos/SKILL.md) | Assess Epic or Story refinement through product, delivery, and quality lenses. |
 | [4.9] | [defect](skills/09-defect/SKILL.md) | Record, assess, and verify an observed product mismatch. |
 | [4.10] | [task](skills/10-task/SKILL.md) | Record and manage bounded functional or technical delivery work. |
+| [4.11] | [release-video](skills/11-release-video/SKILL.md) | Plan the release video, one scene per shipped feature. |
