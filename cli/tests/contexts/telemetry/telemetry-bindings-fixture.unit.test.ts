@@ -75,7 +75,7 @@ interface DirCase {
   home: string;
   env: NodeJS.ProcessEnv;
 }
-interface ClaudeOnlyCase {
+interface HookToolCase {
   payload_session_id: string | null;
   env_session_id: string | null;
   transcript_path: string | null;
@@ -90,7 +90,7 @@ const cases = JSON.parse(text("cases.json")) as {
   cloneIdentity: Record<string, StatCase>;
   environmentRefusal: Record<string, NodeJS.ProcessEnv>;
   telemetryDir: Record<string, DirCase>;
-  claudeOnly: Record<string, ClaudeOnlyCase>;
+  hookTool: Record<string, HookToolCase>;
 };
 const expected = JSON.parse(text("expected.json")) as Record<string, Record<string, unknown>>;
 
@@ -236,16 +236,17 @@ describe("the shared fixture of task bindings", () => {
     expect(telemetryDirOf(input.env, input.home, joinPath)).toBe(expected.telemetryDir?.[name]);
   });
 
-  it("states the Claude-only cases well formed, for the hook test to execute", () => {
-    for (const [name, input] of Object.entries(cases.claudeOnly)) {
-      expect(typeof expected.claudeOnly?.[name], name).toBe("boolean");
+  it("states which tool each hook payload is, well formed, for the hook test to execute", () => {
+    for (const [name, input] of Object.entries(cases.hookTool)) {
+      expect(["claude", "codex", null], name).toContain(expected.hookTool?.[name]);
       expect(Object.keys(input).sort(), name).toEqual([
         "env_session_id",
         "payload_session_id",
         "transcript_path",
       ]);
     }
-    expect(Object.values(expected.claudeOnly ?? {})).toContain(true);
-    expect(Object.values(expected.claudeOnly ?? {})).toContain(false);
+    expect(Object.values(expected.hookTool ?? {})).toEqual(
+      expect.arrayContaining(["claude", "codex", null])
+    );
   });
 });

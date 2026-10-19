@@ -18,4 +18,4 @@ function isClaudePayload(payload, env = process.env) {
   return !CODEX_ROLLOUT.test(normalised) && CLAUDE_TRANSCRIPT.test(normalised);
 }
 
-module.exports = { isClaudePayload };
+module.exports = { isClaudePayload, CODEX_ROLLOUT };

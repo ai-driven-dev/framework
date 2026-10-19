@@ -71,7 +71,10 @@ answer, or an answer with no case, is an error.
 - `telemetryDir`: `AIDD_TELEMETRY_DIR`, else `AIDD_USER_CONFIG_DIR/telemetry`, else
   `XDG_CONFIG_HOME/aidd/telemetry`, else `<home>/.config/aidd/telemetry`. An empty variable is
   unset. `win32` cases are joined with backslashes.
-- `claudeOnly`: a hook acts only when the payload's `session_id` equals `CLAUDE_CODE_SESSION_ID`
-  and the payload's `transcript_path`, separators normalised, runs under a `projects`
-  directory. The CLI has no such guard, so only the hook test executes these cases; the CLI
-  test checks that they are well formed.
+- `hookTool`: which tool's hooks a payload is, `claude`, `codex` or `null` (neither: the hook does
+  nothing). Claude Code: the payload's `session_id` equals `CLAUDE_CODE_SESSION_ID` and its
+  `transcript_path`, separators normalised, runs under a `projects` directory and is no Codex
+  session file. Codex: a `session_id` is set and the `transcript_path` is a Codex session file,
+  `…/sessions/YYYY/MM/DD/rollout-…`, whatever `CLAUDE_CODE_SESSION_ID` says: a Codex
+  started inside Claude Code inherits it. The CLI has no such guard, so only the hook test
+  executes these cases; the CLI test checks that they are well formed.

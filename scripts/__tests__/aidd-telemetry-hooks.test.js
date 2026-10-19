@@ -24,6 +24,8 @@ const { readCarries, readDeclarations } = require(path.join(HOOKS, "lib/binding.
 const { lookup } = require(path.join(HOOKS, "lib/lookup.cjs"));
 const { parseDeclaration } = require(path.join(HOOKS, "lib/declaration.cjs"));
 const { cmdLine } = require(path.join(HOOKS, "lib/aidd.cjs"));
+const { isClaudePayload } = require(path.join(HOOKS, "lib/claude-only.cjs"));
+const { hookTool } = require(path.join(HOOKS, "lib/tool.cjs"));
 
 const WINDOWS = process.platform === "win32";
 const SESSION_ONE_FOR_GATE = {
@@ -63,7 +65,8 @@ const fs = require("node:fs");
 const path = require("node:path");
 const argv = process.argv.slice(2);
 if (process.env.FAKE_AIDD_LOG) {
-  fs.appendFileSync(process.env.FAKE_AIDD_LOG, JSON.stringify({ argv, cwd: process.cwd() }) + "\\n");
+  const session = process.env.AIDD_TELEMETRY_SESSION_ID ?? null;
+  fs.appendFileSync(process.env.FAKE_AIDD_LOG, JSON.stringify({ argv, cwd: process.cwd(), session }) + "\\n");
 }
 if (process.env.FAKE_AIDD_NOISE) { process.stdout.write("noise\\n"); process.stderr.write("noise\\n"); }
 if (argv.includes("--help")) process.exit(process.env.FAKE_AIDD_NO_TASK ? 1 : 0);
@@ -73,7 +76,7 @@ if (argv[0] === "telemetry" && argv[1] === "task") {
   const dir = path.join(process.env.AIDD_TELEMETRY_DIR, "bindings");
   fs.mkdirSync(dir, { recursive: true });
   fs.appendFileSync(path.join(dir, "sessions.jsonl"), JSON.stringify({
-    session_id: process.env.CLAUDE_CODE_SESSION_ID, task: name, ticket: null, none: name === null,
+    session_id: process.env.AIDD_TELEMETRY_SESSION_ID || process.env.CLAUDE_CODE_SESSION_ID, task: name, ticket: null, none: name === null,
     declared_at: new Date().toISOString(), by: "hook-intercept",
   }) + "\\n");
   process.stdout.write("Declared " + (name ?? "none") + "\\n");
@@ -381,8 +384,19 @@ test("the gate asks on an unbound working branch with a person present", () => {
   });
 });
 
-test("claude-only: every fixture case passes or asks as expected", () => {
-  for (const [name, c] of Object.entries(cases.claudeOnly)) {
+test("hook tool: every fixture case is Claude Code's, Codex's or neither, as expected", () => {
+  for (const [name, c] of Object.entries(cases.hookTool)) {
+    const env = c.env_session_id === null ? {} : { CLAUDE_CODE_SESSION_ID: c.env_session_id };
+    const payload = { session_id: c.payload_session_id, transcript_path: c.transcript_path };
+    for (const key of Object.keys(payload)) if (payload[key] === null) delete payload[key];
+    assert.equal(hookTool(payload, env), expected.hookTool[name], name);
+    // Claude Code's own guard is unchanged, and refuses every case that is not Claude Code's.
+    assert.equal(isClaudePayload(payload, env), expected.hookTool[name] === "claude", name);
+  }
+});
+
+test("hook tool: a Claude Code fixture case asks, any other passes, through the gate", () => {
+  for (const [name, c] of Object.entries(cases.hookTool)) {
     withBox({}, (box) => {
       const env = box.env();
       if (c.env_session_id === null) delete env.CLAUDE_CODE_SESSION_ID;
@@ -391,28 +405,181 @@ test("claude-only: every fixture case passes or asks as expected", () => {
       if (c.payload_session_id === null) delete payload.session_id;
       if (c.transcript_path === null) delete payload.transcript_path;
       const result = gate(box, { payload, env });
-      assert.equal(asks(result), expected.claudeOnly[name], name);
-      if (!expected.claudeOnly[name]) assertPasses(result);
+      // The fixture's Codex paths name no file here, so nobody is there to answer.
+      assert.equal(asks(result), expected.hookTool[name] === "claude", name);
+      if (expected.hookTool[name] !== "claude") assertPasses(result);
     });
   }
 });
 
-test("claude-only: a Codex or Copilot shaped payload passes and writes nothing", () => {
+test("hook tool: a Copilot shaped payload passes and writes nothing", () => {
   withBox({}, (box) => {
-    const codex = box.payload({
-      transcript_path: path.join(box.home, ".codex", "sessions", "2026", "10", "09", `rollout-x-${SESSION}.jsonl`),
-    });
-    assertPasses(gate(box, { payload: codex }));
-    // a Codex home that happens to sit under a `projects` directory is still Codex
-    const nested = box.payload({
-      transcript_path: path.join(box.root, "projects", ".codex", "sessions", "2026", "10", "09", `rollout-x-${SESSION}.jsonl`),
-    });
-    assertPasses(gate(box, { payload: nested }));
-    assertPasses(run(START, box, { payload: { ...codex, hook_event_name: "SessionStart", source: "startup" } }));
     const copilot = { sessionId: SESSION, timestamp: 1, prompt: "x", cwd: box.repo };
     assertPasses(gate(box, { payload: copilot }));
+    assertPasses(run(START, box, { payload: { ...copilot, hook_event_name: "SessionStart", source: "startup" } }));
     assert.equal(fs.existsSync(path.join(box.tel, "bindings")), false);
     assert.deepEqual(box.calls(), []);
+  });
+});
+
+// ---------------------------------------------------------------- Codex
+
+const CODEX_SESSION = "00000000-0000-4000-8000-0000000000dd";
+const TUI = { source: "cli", originator: "codex-tui" };
+
+/** The first line Codex writes in a session file, before it hands a hook its path. */
+function sessionMeta(fields = TUI, pad = 0) {
+  const payload = { id: CODEX_SESSION, cwd: "/work", cli_version: "0.163.0", ...fields };
+  if (pad > 0) payload.base_instructions = { text: "x".repeat(pad) };
+  return JSON.stringify({ timestamp: "2026-10-19T10:00:00.000Z", type: "session_meta", payload });
+}
+
+/** A Codex session file whose content is `text` (null: none written). */
+function codexFile(box, text = `${sessionMeta()}\n`) {
+  const file = path.join(box.home, ".codex", "sessions", "2026", "10", "19", `rollout-2026-10-19T10-00-00-${CODEX_SESSION}.jsonl`);
+  if (text !== null) {
+    fs.mkdirSync(path.dirname(file), { recursive: true });
+    fs.writeFileSync(file, `${text}${JSON.stringify({ type: "turn_context", payload: { cwd: "/work" } })}\n`);
+  }
+  return file;
+}
+
+/** Codex's hook environment: none of Claude Code's variables, unless a test adds them. */
+function codexEnv(box, extra = {}) {
+  return box.env({
+    CLAUDE_CODE_SESSION_ID: undefined,
+    CLAUDE_CODE_SESSION_ATTENDED: undefined,
+    CLAUDE_CODE_ENTRYPOINT: undefined,
+    CODEX_HOME: path.join(box.home, ".codex"),
+    ...extra,
+  });
+}
+
+function codexPayload(box, transcript, extra = {}) {
+  return {
+    session_id: CODEX_SESSION,
+    transcript_path: transcript,
+    cwd: box.repo,
+    hook_event_name: "UserPromptSubmit",
+    model: "m",
+    permission_mode: "default",
+    turn_id: "t",
+    prompt: "do the thing",
+    ...extra,
+  };
+}
+
+function codexGate(box, { text, payload = {}, env = {} } = {}) {
+  const file = codexFile(box, text);
+  return gate(box, { payload: codexPayload(box, file, payload), env: codexEnv(box, env) });
+}
+
+test("codex presence: a prompt is held when, and only when, every condition holds", () => {
+  const BOUND = 1024 * 1024;
+  const meta = (fields) => `${sessionMeta({ ...TUI, ...fields })}\n`;
+  const rows = [
+    ["the TUI", {}, true],
+    ["the TUI started inside Claude Code", { env: { CLAUDE_CODE_SESSION_ID: SESSION, CLAUDE_CODE_SESSION_ATTENDED: "1", CLAUDE_CODE_ENTRYPOINT: "cli" } }, true],
+    ["a first line well inside the bound", { text: `${sessionMeta(TUI, BOUND / 2)}\n` }, true],
+    ["codex exec", { text: meta({ source: "exec", originator: "codex_exec" }) }, false],
+    ["the IDE extension", { text: meta({ source: "vscode", originator: "codex_vscode" }) }, false],
+    ["the desktop app", { text: meta({ source: "vscode", originator: "Codex Desktop" }) }, false],
+    ["originator Claude Code", { text: meta({ originator: "Claude Code" }) }, false],
+    ["originator codex_exec with source cli", { text: meta({ originator: "codex_exec" }) }, false],
+    ["source exec with originator codex-tui", { text: meta({ source: "exec" }) }, false],
+    ["a sub-agent's file, its source an object", { text: meta({ source: { subagent: { thread_spawn: { parent_thread_id: SESSION, depth: 1 } } } }) }, false],
+    ["no source", { text: `${sessionMeta({ originator: "codex-tui" })}\n` }, false],
+    ["no originator", { text: `${sessionMeta({ source: "cli" })}\n` }, false],
+    ["a sub-agent's spawn message", { payload: { agent_id: OTHER, agent_type: "default" } }, false],
+    ["full access (bypassPermissions)", { payload: { permission_mode: "bypassPermissions" } }, false],
+    ["no permission_mode", { payload: { permission_mode: undefined } }, false],
+    ["a permission_mode never seen", { payload: { permission_mode: "acceptEdits" } }, false],
+    ["no session file", { text: null }, false],
+    ["a first line past the bound", { text: `${sessionMeta(TUI, BOUND)}\n` }, false],
+    ["a first line that is not JSON", { text: "{torn\n" }, false],
+    ["a first line that is no session_meta", { text: `${JSON.stringify({ type: "turn_context", payload: TUI })}\n` }, false],
+    ["an empty file", { text: "" }, false],
+  ];
+  // Every row is judged before failing, so a mutation names all the rows it turns red.
+  const wrong = [];
+  for (const [name, row, want] of rows) {
+    withBox({}, (box) => {
+      const file = codexFile(box, row.text === undefined ? `${sessionMeta()}\n` : row.text);
+      if (row.text === "") fs.writeFileSync(file, "");
+      const payload = codexPayload(box, file, row.payload);
+      for (const key of Object.keys(payload)) if (payload[key] === undefined) delete payload[key];
+      const result = gate(box, { payload, env: codexEnv(box, row.env) });
+      if (asks(result) !== want) wrong.push(name);
+      else if (!want) assertPasses(result);
+    });
+  }
+  assert.deepEqual(wrong, []);
+});
+
+test("codex: the gate asks on an undeclared working branch and keeps the prompt visible", () => {
+  withBox({}, (box) => {
+    const result = codexGate(box);
+    assert.equal(
+      result.json.reason,
+      'Telemetry: no task on feat/x yet. Send "aidd telemetry task <name> [--ticket <ref>]", or "--none", as your next prompt.'
+    );
+    assert.deepEqual(Object.keys(result.json).sort(), ["decision", "reason"]);
+  });
+});
+
+test("codex: a typed declaration binds the payload's session, never an inherited Claude Code one", () => {
+  for (const inherited of [{}, { CLAUDE_CODE_SESSION_ID: SESSION, CLAUDE_CODE_SESSION_ATTENDED: "1", CLAUDE_CODE_ENTRYPOINT: "cli" }]) {
+    withBox({}, (box) => {
+      const result = codexGate(box, { payload: { prompt: "aidd telemetry task fix-cart --ticket PROJ-1" }, env: inherited });
+      // Codex was never seen to accept a hidden prompt: the block says the declaration was
+      // recorded, and nothing else.
+      assert.deepEqual(result.json, { decision: "block", reason: "Task fix-cart (ticket PROJ-1) declared. Send your prompt again." });
+      const declarations = box.calls().filter((c) => c.argv[1] === "task" && !c.argv.includes("--help"));
+      assert.deepEqual(declarations.map((c) => c.session), [CODEX_SESSION]);
+      assert.deepEqual(box.bindings("sessions.jsonl").map((d) => d.session_id), [CODEX_SESSION]);
+      // the next prompt passes: the session is bound
+      assertPasses(codexGate(box, { env: inherited }));
+    });
+  }
+});
+
+test("codex: a mistyped declaration is told so, naming Codex", () => {
+  withBox({}, (box) => {
+    const result = codexGate(box, { payload: { prompt: "aidd telemetry task fix --ticket" } });
+    assert.deepEqual(result.json, {
+      decision: "block",
+      reason: 'Not a declaration, nothing sent. Send "aidd telemetry task <name> [--ticket <ref>]" (quote a name with spaces), or "--none". To ask Codex instead, end with "?".',
+    });
+  });
+});
+
+test("codex: a declaration typed where nobody can see the answer is not run", () => {
+  withBox({}, (box) => {
+    const text = `${sessionMeta({ source: "exec", originator: "codex_exec" })}\n`;
+    assertPasses(codexGate(box, { text, payload: { prompt: "aidd telemetry task x" } }));
+    assert.deepEqual(box.calls(), []);
+  });
+});
+
+test("codex: session start does nothing, not even the consent check", () => {
+  withBox({}, (box) => {
+    git(box.repo, "config", "--local", "aidd.telemetry", "off");
+    const payload = { ...codexPayload(box, codexFile(box)), hook_event_name: "SessionStart", source: "startup" };
+    delete payload.prompt;
+    assertPasses(run(START, box, { payload, env: codexEnv(box) }));
+    assert.equal(fs.existsSync(path.join(box.tel, "bindings")), false);
+    assert.equal(consentLines(box).length, 1, "the consent check would close the interval");
+    // the same payload through the gate does reach the consent check, which closes it
+    assertPasses(gate(box, { payload: codexPayload(box, codexFile(box)), env: codexEnv(box) }));
+    assert.equal(consentLines(box).length, 2);
+  });
+});
+
+test("codex: the catch-up ingests, silently, once", () => {
+  withBox({}, (box) => {
+    const payload = { ...codexPayload(box, codexFile(box, null)), hook_event_name: "SessionStart", source: "startup" };
+    assertPasses(run(CATCH_UP, box, { payload, env: codexEnv(box, { FAKE_AIDD_NOISE: "1" }) }));
+    assert.deepEqual(box.calls().map((c) => c.argv), [["telemetry", "ingest", "--quiet"]]);
   });
 });
 
@@ -780,6 +947,7 @@ test("a typed declaration reaches no model: the CLI stores it, the hook blocks w
     assert.equal(calls.length, 1);
     assert.deepEqual(calls[0].argv, ["telemetry", "task", "fix-cart", "--ticket", "PROJ-1", "--by", "hook-intercept"]);
     assert.equal(fs.realpathSync(calls[0].cwd), box.repo);
+    assert.equal(calls[0].session, null, "Claude Code's declaration binds its own variable, never one the hook sets");
     assert.equal(box.bindings("sessions.jsonl").length, 1);
     // the next prompt passes
     assertPasses(gate(box));

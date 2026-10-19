@@ -496,7 +496,7 @@
       "env": {}
     }
   },
-  "claudeOnly": {
+  "hookTool": {
     "claude-posix-transcript": {
       "payload_session_id": "00000000-0000-4000-8000-00000000000a",
       "env_session_id": "00000000-0000-4000-8000-00000000000a",
@@ -551,6 +551,21 @@
       "payload_session_id": "00000000-0000-4000-8000-00000000000a",
       "env_session_id": "00000000-0000-4000-8000-00000000000a",
       "transcript_path": "/home/someone/.codex/old-projects/rollout.jsonl"
+    },
+    "codex-outside-claude": {
+      "payload_session_id": "00000000-0000-4000-8000-00000000000a",
+      "env_session_id": null,
+      "transcript_path": "/home/someone/.codex/sessions/2026/10/09/rollout-2026-10-09T10-00-00-00000000-0000-4000-8000-00000000000a.jsonl"
+    },
+    "codex-home-under-a-projects-directory": {
+      "payload_session_id": "00000000-0000-4000-8000-00000000000a",
+      "env_session_id": "00000000-0000-4000-8000-00000000000a",
+      "transcript_path": "/work/projects/.codex/sessions/2026/10/09/rollout-2026-10-09T10-00-00-00000000-0000-4000-8000-00000000000a.jsonl"
+    },
+    "codex-payload-has-no-session-id": {
+      "payload_session_id": null,
+      "env_session_id": null,
+      "transcript_path": "/home/someone/.codex/sessions/2026/10/09/rollout-2026-10-09T10-00-00-00000000-0000-4000-8000-00000000000a.jsonl"
     }
   },
   "consentLog": {
