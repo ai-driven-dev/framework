@@ -25,6 +25,12 @@ Report kept outside the repository; the points used here:
 - A resumed thread keeps the originator it was created with; the originator is per process.
 - Plugin hooks receive `PLUGIN_ROOT`, `PLUGIN_DATA`, `CLAUDE_PLUGIN_ROOT`, `CLAUDE_PLUGIN_DATA`.
 
+## Real run, Codex CLI 0.163.0 TUI
+
+Isolated `CODEX_HOME`, the plugin installed by `aidd setup` from this branch, hooks trusted. The hooks ran, but the prompt was not asked: the session file's first line says `source: "vscode"`, `originator: "codex-tui"`, where the bare-config probe above said `source: "cli"`. With plugins installed the TUI runs through the app server, which hard-codes `SessionSource::VSCode`. `permission_mode` was `default` and `agent_id` absent. A probe hook saw no controlling terminal (`/dev/tty` gave ENXIO, the parent's tty `??`), so a terminal is no signal either.
+
+Read-only on the maintainer's sessions under `~/.codex/sessions`, first-line `source|originator` pairs, counts only: `vscode|codex-tui` 29, `cli|codex-tui` 4, `object|codex-tui` 266 (sub-agents), `exec|codex_exec` 143, `object|codex_exec` 26, `vscode|Codex Desktop` 3, `vscode|codex_work_desktop` 3, `vscode|Claude Code` 2. The rule therefore reads `originator` alone and refuses an object `source`.
+
 ## First line of a Codex session file
 
 Measured read-only on the maintainer's machine, by byte length only, over every plain `rollout-*.jsonl` under `~/.codex/sessions`: 476 files, first line 18,552 bytes minimum, 22,740 median, 23,215 p90, 23,477 p99, 48,786 maximum; every file had a first newline. The 1,056 `.jsonl.zst` files were not measured: a hook is handed a plain file (a resumed compressed file is expanded back for append). The hook reads 1 MiB, about 21 times the largest seen.
@@ -46,6 +52,7 @@ Each test written before its code, run and seen failing for the reason it names.
 - Phase 2, end to end (`vitest run --project e2e tests/e2e/telemetry-journey.e2e.test.ts -t Codex`, `declaringSessionOf` put back to `CLAUDE_CODE_SESSION_ID` alone): `×`, `ENOENT: no such file or directory, open '…/telemetry-dir/bindings/sessions.jsonl'`: the Codex declaration bound no session.
 - Phase 3, the merged `.codex/hooks.json` (`vitest run tests/contexts/tools/domain/formats/flat-hooks-merge.unit.test.ts`): `Tests  3 failed | 38 passed (41)`, among them `expected { type: 'command', …(2) } to match object { async: true, timeout: 120 }`.
 - Checker round 1, the session named for both tools: `✖ a stale AIDD_TELEMETRY_SESSION_ID exported by the user does not win over the session of the prompt` (`actual: [ '…00bb' ]`, the stale value bound) and `✖ a typed declaration reaches no model …` (`actual: null, expected: '…00aa'`).
+- Real-run correction, presence table: `✖ codex presence: a prompt is held …`, the new rows `'the TUI through the app server (source vscode)'` and `'no source'` were not held.
 
 ## Verification
 
@@ -64,6 +71,7 @@ Stryker mutates `cli/` only, so each rule of the hooks was broken by hand, the h
 | bound 4 MiB / 64 KiB | the presence table (`past the bound` / `well inside the bound`) |
 | whole file read as the first line | the presence table and the Codex gate tests |
 | env injection removed (`const env = process.env`) | the stale-value test, the Claude Code declaration test, the Codex declaration test |
+| object `source` no longer refused | the presence table (`a sub-agent's file, its source an object`) |
 | session start runs for Codex | `codex: session start does nothing, not even the consent check` |
 | Codex declaration names no session | `codex: a typed declaration binds the payload's session …` |
 | every declaration names a session | `a typed declaration reaches no model …` (Claude Code's binds its own variable) |

@@ -28,7 +28,7 @@ A Codex prompt is held only when all of these hold. Anything else, a field missi
 
 | Condition | Why |
 | --- | --- |
-| the session file's first line is a `session_meta` with `source` `cli` and `originator` `codex-tui` | the TUI, the one surface seen to show a block. A sub-agent's own file has an object `source` |
+| the session file's first line is a `session_meta` with `originator` `codex-tui` and no object `source` | the TUI, the one surface seen to show a block. Its `source` is `cli` bare and `vscode` once plugins run it through the app server, so `originator` alone tells the surface. A sub-agent's own file has an object `source`, refused as a second guard |
 | the payload has no `agent_id` | a sub-agent's spawn message reaches `UserPromptSubmit` with the root's `session_id`; nobody types it |
 | `permission_mode` is exactly `default` (missing or any other value is nobody to answer) | a resumed thread keeps its first line, so a TUI thread resumed by `codex exec` still reads `codex-tui`; `exec` forces approval `never`, which is `bypassPermissions` |
 

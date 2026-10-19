@@ -30,8 +30,9 @@ function firstLine(file) {
 }
 
 /** Codex hands a hook nothing that names its surface, and shows a block's reason only in the TUI.
- * So a person is there only when the session file says the TUI made it (a sub-agent's file has an
- * object `source`), no sub-agent sent the prompt, and approvals are on: `codex exec` forces them
+ * So a person is there only when the session file's `originator` says the TUI made it (its
+ * `source` is `cli` bare and `vscode` under the app server, so it tells nothing; a sub-agent's
+ * file has an object `source`), no sub-agent sent the prompt, and approvals are on: `codex exec` forces them
  * off, and a resumed thread keeps the first line of the surface that made it. Anything else is
  * nobody to answer. */
 function codexPersonIsPresent(payload) {
@@ -42,7 +43,8 @@ function codexPersonIsPresent(payload) {
   } catch {
     return false;
   }
-  return meta?.type === "session_meta" && meta.payload?.source === "cli" && meta.payload?.originator === "codex-tui";
+  const { source, originator } = meta?.payload ?? {};
+  return meta?.type === "session_meta" && originator === "codex-tui" && typeof source !== "object";
 }
 
 module.exports = { personIsPresent, codexPersonIsPresent };

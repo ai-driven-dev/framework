@@ -479,6 +479,7 @@ test("codex presence: a prompt is held when, and only when, every condition hold
   const meta = (fields) => `${sessionMeta({ ...TUI, ...fields })}\n`;
   const rows = [
     ["the TUI", {}, true],
+    ["the TUI through the app server (source vscode)", { text: meta({ source: "vscode" }) }, true],
     ["the TUI started inside Claude Code", { env: { CLAUDE_CODE_SESSION_ID: SESSION, CLAUDE_CODE_SESSION_ATTENDED: "1", CLAUDE_CODE_ENTRYPOINT: "cli" } }, true],
     ["a first line well inside the bound", { text: `${sessionMeta(TUI, BOUND / 2)}\n` }, true],
     ["codex exec", { text: meta({ source: "exec", originator: "codex_exec" }) }, false],
@@ -486,10 +487,11 @@ test("codex presence: a prompt is held when, and only when, every condition hold
     ["the desktop app", { text: meta({ source: "vscode", originator: "Codex Desktop" }) }, false],
     ["originator Claude Code", { text: meta({ originator: "Claude Code" }) }, false],
     ["originator codex_exec with source cli", { text: meta({ originator: "codex_exec" }) }, false],
-    ["source exec with originator codex-tui", { text: meta({ source: "exec" }) }, false],
     ["a sub-agent's file, its source an object", { text: meta({ source: { subagent: { thread_spawn: { parent_thread_id: SESSION, depth: 1 } } } }) }, false],
-    ["no source", { text: `${sessionMeta({ originator: "codex-tui" })}\n` }, false],
+    ["no source", { text: `${sessionMeta({ originator: "codex-tui" })}\n` }, true],
     ["no originator", { text: `${sessionMeta({ source: "cli" })}\n` }, false],
+    ["codex_vscode from the app server", { text: meta({ source: "vscode", originator: "codex_vscode" }) }, false],
+    ["the desktop app's work originator", { text: meta({ source: "vscode", originator: "codex_work_desktop" }) }, false],
     ["a sub-agent's spawn message", { payload: { agent_id: OTHER, agent_type: "default" } }, false],
     ["full access (bypassPermissions)", { payload: { permission_mode: "bypassPermissions" } }, false],
     ["no permission_mode", { payload: { permission_mode: undefined } }, false],
