@@ -123,3 +123,45 @@ The gates above were run again after the fixes, in one pass:
 New survivor on the changed lines, beside the ones justified above: `UNDECOMPRESSABLE` without its `^` anchor. It is equivalent for every code a read meets: an I/O code never holds `Z_` or `ZSTD_`. The `ZSTD_` and `Z_` prefixes are each held by a test (`ZSTD_error_prefix_unknown`, `Z_BUF_ERROR`).
 
 The telemetry scope fell from 97.2 to 96.6 over the round, still above its floor of 96.
+
+### Review round 2: a cut frame on Node 22
+
+CI runs Node 22, where `createZstdDecompress` ends a cut frame with no error and short output: a truncated `.zst` was read as whole, its position saved, its missing calls lost. Node 24 fails the same stream with `Z_BUF_ERROR`. Every real compressed file is one frame declaring its content size, equal to its decompressed length (measured by the coordinator, read-only), so the reader counts the decompressed bytes against that size.
+
+Red first, with the frame header reader stubbed to declare nothing:
+
+| Node | Red |
+| --- | --- |
+| v24.20.0 | the 7 header-reading unit tests, and "names a stream that ends short of the size its frame declares" (a decompressor that ends one byte short, as Node 22's does) |
+| v22.18.0 | the same 8, plus "names a stream cut short and reads it again next time…": the CI failure, reproduced |
+
+The size check removed on purpose: "ends short" goes red on v24.20.0, "ends short" and "cut short" on v22.18.0.
+
+Green after the fix, `npx vitest run tests/contexts/telemetry`:
+
+| Node | Result |
+| --- | --- |
+| v24.20.0 | `Test Files 78 passed (78)`, `Tests 1388 passed (1388)` |
+| v22.18.0 | `Test Files 78 passed (78)`, `Tests 1388 passed (1388)` |
+
+Real corpus again, read-only, after the fix: the independent probe and the CLI reader give 1,537 files, 75,588 calls, 9,314,170,585 tokens, the same on both Node versions, with 0 unrecognised shapes: no real file fails the size check.
+
+A file of several frames: `zlib` decodes the first alone on both versions, so the reader cannot see more than the first frame declares. Never seen; a written limit.
+
+Gates after round 2, in one pass:
+
+| Gate | Decisive line |
+| --- | --- |
+| `pnpm lint`, `pnpm typecheck`, `pnpm test:arch` | `No fixes applied.`; no error; `Tests 168 passed (168)` |
+| `check-cli-type-honesty.mjs` (repository root) | `No type is widened through unknown, any or never` |
+| `pnpm knip`, `pnpm jscpd` | exit 0; `1.55%` duplicated |
+| `pnpm test`, Node v24.20.0 | `Test Files 526 passed \| 1 skipped`, `Tests 6851 passed \| 1 skipped` |
+| `pnpm test`, Node v22.18.0 | `Test Files 526 passed \| 1 skipped`, `Tests 6851 passed \| 1 skipped` |
+| `pnpm build` | `Bundle size: 706.0 KB / budget: 709 KB` |
+| `pnpm smoke` | `PASS: 132 FAIL: 0 SKIP: 1 · coverage 100%` |
+| `check-claude-tokens-end-to-end.cjs`, plain and `--attended` | `2 calls, 393 tokens, all on task demo, ticket T-1` in both |
+| `check-no-local-paths.js` | `0 leak(s)` |
+| `run-mutation.mjs --changed` | score 96.8 over 23 changed ranges; the frame reader's survivors were killed by tests added for them, the one left is the anchor-less `UNDECOMPRESSABLE` justified above |
+| `run-mutation.mjs telemetry` | score 96.7, floor 96 |
+
+`Z_BUF_ERROR` is held by a test on Node 24 only: on Node 22 a cut frame reaches the size check instead, so a mutation run on Node 22 leaves the `Z_` prefix of `UNDECOMPRESSABLE` to the code alone.
