@@ -1,5 +1,5 @@
 ---
-status: in-progress
+status: done
 ---
 
 # Codex is measured
