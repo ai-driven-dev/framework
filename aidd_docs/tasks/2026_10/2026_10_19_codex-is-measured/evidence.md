@@ -165,3 +165,7 @@ Gates after round 2, in one pass:
 | `run-mutation.mjs telemetry` | score 96.7, floor 96 |
 
 `Z_BUF_ERROR` is held by a test on Node 24 only: on Node 22 a cut frame reaches the size check instead, so a mutation run on Node 22 leaves the `Z_` prefix of `UNDECOMPRESSABLE` to the code alone.
+
+### Review round 3: Codex's own source
+
+A `compacted` line embeds a copy of the latest record as `payload.latest_token_usage_record`. A unit test pins that it gives no record, no unrecognised shape and no `named`; it passed as written, and goes red, with two other "gives nothing" tests, when the top-level type check is dropped. Format tests: `Tests 69 passed (69)` on Node v24.20.0 and on v22.18.0. The usage contract's Codex limits now follow Codex's source: per-call records from 0.153, the calls Codex writes no record for, the cost fields not in the file, cache writes, a frame with no size before 0.152, coexisting copies, forks.

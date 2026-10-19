@@ -78,8 +78,8 @@ These are written into the usage contract's residual limits; none is code.
 - Task and ticket of a Codex call come from its branch's declaration only. The plugin's hooks run in Claude Code, so nothing asks a Codex session for its task, and a session declaration never binds one.
 - `git_branch` is the branch the session started on: a branch changed during the session is not seen.
 - Codex is read by `aidd telemetry ingest` and `report`, which the plugin runs at a Claude Code session start. A person who only uses Codex is measured when they run a report.
-- A non-zero `cache_write_input_tokens` was never seen. It is read as part of `input_tokens`, like the cached read.
-- Versions observed: Codex CLI 0.149 to 0.162. An earlier one may write calls only as running totals, which are not read.
+- Cache writes are part of `input_tokens`, and `input` subtracts them as OpenAI's own formula does; they are billed only on GPT-5.6 and later.
+- Per-call records ship from Codex CLI 0.153; an earlier version writes only running totals, which are not read. Observed: 0.149 pre-releases to 0.163.
 - Codex is assumed to only append to a `.jsonl`. A rewrite in place behaves as for Claude Code.
 
 ## Out of scope
