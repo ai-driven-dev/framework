@@ -12,7 +12,7 @@ Where the project runs and how it ships: CI/CD, environments, and release.
 | `cli-ci.yml` | the `cli` and `kanban` gates — job list in the CLI bank. No `paths:` filter, deliberately: it runs on every push and pull request, and a `changes` job decides in bash whether the rest has anything to do — `cli/**`, `kanban/**`, `scripts/__tests__/**`, `README.md`, the workflow file itself. Mutations skip only for a same-repository numeric `promote/next-to-main-*` snapshot whose `cli / gate` passed in a successful `next` push and whose PR merge tree equals that snapshot with `main` already its ancestor; the resulting `main` push reuses it only for that exact two-parent promotion merge when its tree, associated merged PR, and source snapshot all match. Missing, failed, unreadable, or mismatched Git/API proof keeps normal mutation scopes. All non-mutation checks still run on the current PR merge ref or `main` commit. |
 | `validate.yml` | plugin and marketplace manifests against their schemas, plus the whole pre-commit over the whole tree |
 | `codeql.yml` | code scanning |
-| `promote.yml` | opens the `next` to `main` promote PR, merge auto-merge |
+| `promote.yml` | checks the release video covers what ships (`skip_video` bypasses), then opens the `next` to `main` promote PR, merge auto-merge |
 | `back-merge.yml` | folds `main` back into `next` after each release |
 | `dependabot-auto-merge.yml` | merges dependency PRs that pass |
 | `close-finished-milestones.yml` | closes a milestone once its issues are |
