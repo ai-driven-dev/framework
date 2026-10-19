@@ -83,6 +83,12 @@ export function telemetryDir(): string {
   return telemetryDirOf(process.env, homedir());
 }
 
+/** The session a declaration binds: the one a hook names (Codex sets no session variable), else
+ * Claude Code's. An empty variable is no session. */
+export function declaringSessionOf(env: NodeJS.ProcessEnv): string | null {
+  return env.AIDD_TELEMETRY_SESSION_ID || env.CLAUDE_CODE_SESSION_ID || null;
+}
+
 /** macOS and Windows file systems answer one directory to several spellings. */
 export function caseInsensitiveFileSystem(platform: NodeJS.Platform): boolean {
   return platform === "darwin" || platform === "win32";
@@ -114,8 +120,7 @@ export function wireTelemetry(homedir: () => string): TelemetryDeps {
     now: () => new Date(),
   };
   const sessions = new SessionBindingStoreAdapter(bindingsDir, storage);
-  // An empty variable is no session: only a set, non-empty id is one a declaration can bind.
-  const sessionId = process.env.CLAUDE_CODE_SESSION_ID || null;
+  const sessionId = declaringSessionOf(process.env);
   const refusedByEnvironment = refusedByEnvironmentValue(process.env.AIDD_TELEMETRY);
   const repositories = new ConsentedRepositories(locator, consents, consentHistory);
   const branchDeclarations = new BranchDeclarations(

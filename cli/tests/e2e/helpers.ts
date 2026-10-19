@@ -248,6 +248,7 @@ export function sandboxedEnv(
   // the test's explicit `env` is applied.
   delete base.CODEX_THREAD_ID;
   delete base.CLAUDE_CODE_SESSION_ID;
+  delete base.AIDD_TELEMETRY_SESSION_ID;
   if (options?.realHome) {
     return { ...base, ...extra, AIDD_USER_CONFIG_DIR: join(fakeHome, ".config", "aidd") };
   }

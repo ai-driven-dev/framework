@@ -29,7 +29,8 @@ export type DeclareResult =
 export interface DeclareOptions {
   /** `AIDD_TELEMETRY=0`, read by the composition root. */
   readonly refusedByEnvironment: boolean;
-  /** `CLAUDE_CODE_SESSION_ID`, read by the composition root; `null` outside a session. */
+  /** `AIDD_TELEMETRY_SESSION_ID`, else `CLAUDE_CODE_SESSION_ID`, read by the composition root;
+   * `null` outside a session. */
   readonly sessionId: string | null;
   readonly now: () => Date;
 }
