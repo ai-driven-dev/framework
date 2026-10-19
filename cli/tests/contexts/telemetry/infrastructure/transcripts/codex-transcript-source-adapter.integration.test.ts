@@ -1,7 +1,7 @@
-import { appendFile, mkdir, mkdtemp, rename, rm, utimes, writeFile } from "node:fs/promises";
+import { appendFile, chmod, mkdir, mkdtemp, rename, rm, utimes, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { zstdCompressSync } from "node:zlib";
+import * as zlib from "node:zlib";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import type { TranscriptPosition } from "../../../../../src/contexts/telemetry/domain/transcript-position.js";
 import {
@@ -165,8 +165,11 @@ describe("reading a plain Codex session file", () => {
   });
 });
 
-describe("reading a compressed Codex session file", () => {
-  const compressed = (text: string) => zstdCompressSync(Buffer.from(text));
+/** A Node from before zstd still loads this file, and skips what needs zstd to write a file. */
+const NO_ZSTD = typeof zlib.zstdCompressSync !== "function";
+
+describe.skipIf(NO_ZSTD)("reading a compressed Codex session file", () => {
+  const compressed = (text: string) => zlib.zstdCompressSync(Buffer.from(text));
 
   it("hands every line, each counted, and keeps the file read by its size and identity", async () => {
     const path = join(archived, "rollout-a.jsonl.zst");
@@ -212,9 +215,38 @@ describe("reading a compressed Codex session file", () => {
     expect(read).toMatchObject({ skipped: true, position: { offset: bytes.length } });
   });
 
+  it("is one unrecognised shape, naming why, when it does not decompress, and is read again next time", async () => {
+    const path = join(archived, "rollout-a.jsonl.zst");
+    await writeFile(path, Buffer.from("not a zstd frame, only bytes"));
+    const adapter = source();
+    const first = await readLines(adapter, path, null);
+    const expected = {
+      position: { offset: 0, size: 0, identity: "" },
+      restarted: false,
+      skipped: false,
+      unrecognised: ["a compressed session file does not decompress: ZSTD_error_prefix_unknown"],
+    };
+    expect(first.read).toEqual(expected);
+    expect((await readLines(adapter, path, first.read.position)).read).toEqual(expected);
+  });
+});
+
+describe("a compressed file that cannot be opened", () => {
+  it.skipIf(process.platform === "win32" || process.getuid?.() === 0)(
+    "fails the read: only a stream that does not decompress is named and passed over",
+    async () => {
+      const path = join(archived, "rollout-a.jsonl.zst");
+      await writeFile(path, "");
+      await chmod(path, 0o000);
+      await expect(readLines(source(), path, null)).rejects.toMatchObject({ code: "EACCES" });
+    }
+  );
+});
+
+describe("a Node with no zstd", () => {
   it("is one unrecognised shape, naming why, where Node has no zstd, and stays unread", async () => {
     const path = join(archived, "rollout-a.jsonl.zst");
-    await writeFile(path, compressed("a\n"));
+    await writeFile(path, "not read");
     const adapter = new CodexTranscriptSourceAdapter([sessions, archived], null);
     const { lines, read } = await readLines(adapter, path, null);
     expect(lines).toEqual([]);

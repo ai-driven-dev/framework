@@ -1,7 +1,7 @@
 import { mkdir, mkdtemp, readdir, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { zstdCompressSync } from "node:zlib";
+import * as zlib from "node:zlib";
 import * as fc from "fast-check";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { DirectoryResolver } from "../../../../src/contexts/telemetry/application/directory-resolver.js";
@@ -11,7 +11,9 @@ import {
 } from "../../../../src/contexts/telemetry/application/ingest-usage-use-case.js";
 import { ReadUsageUseCase } from "../../../../src/contexts/telemetry/application/read-usage-use-case.js";
 import { SnapshotBindingsUseCase } from "../../../../src/contexts/telemetry/application/snapshot-bindings-use-case.js";
+import { readClaudeUsageLine } from "../../../../src/contexts/telemetry/domain/formats/claude-transcript-usage.js";
 import { codexUsageReader } from "../../../../src/contexts/telemetry/domain/formats/codex-transcript-usage.js";
+import { ClaudeTranscriptSourceAdapter } from "../../../../src/contexts/telemetry/infrastructure/claude-transcript-source-adapter.js";
 import { CodexTranscriptSourceAdapter } from "../../../../src/contexts/telemetry/infrastructure/transcripts/codex-transcript-source-adapter.js";
 import { UsageLedgerAdapter } from "../../../../src/contexts/telemetry/infrastructure/usage-ledger-adapter.js";
 import { PrivateStorageAdapter } from "../../../../src/runtime/filesystem/private-storage-adapter.js";
@@ -44,7 +46,7 @@ const THREAD = "55555555-5555-4555-8555-555555555555";
 /** A clone that consents, one that does not, outside any repository, and none. */
 const PLACES = ["/work/in", "/work/out", "/work/none", undefined] as const;
 
-function machine(sessions: string) {
+function machine(sessions: string, projects?: string) {
   runs += 1;
   const dir = join(root, `ledger-${runs}`);
   const ledger = new UsageLedgerAdapter(dir, new PrivateStorageAdapter());
@@ -68,7 +70,17 @@ function machine(sessions: string) {
   }
   locator.directories.set("/work/none", { status: "outside-repository" });
   const ingest = new IngestUsageUseCase(
-    [new ReadUsageUseCase(new CodexTranscriptSourceAdapter([sessions]), codexUsageReader)],
+    [
+      new ReadUsageUseCase(new CodexTranscriptSourceAdapter([sessions]), codexUsageReader),
+      ...(projects === undefined
+        ? []
+        : [
+            new ReadUsageUseCase(
+              new ClaudeTranscriptSourceAdapter(projects),
+              () => readClaudeUsageLine
+            ),
+          ]),
+    ],
     ledger,
     new DirectoryResolver(locator, consents, new InMemoryResolutions(), history, {
       caseInsensitiveFileSystem: false,
@@ -205,29 +217,75 @@ describe("ingesting a Codex session file as it grows (P1)", () => {
   }, 240_000);
 });
 
-describe("a session read plain, then compressed (P3)", () => {
-  it("stores each of its calls once", async () => {
+describe.skipIf(typeof zlib.zstdCompressSync !== "function")(
+  "a session read plain, then compressed (P3)",
+  () => {
+    it("stores each of its calls once", async () => {
+      const sessions = join(root, "sessions");
+      const day = join(sessions, "2026", "10", "08");
+      await mkdir(day, { recursive: true });
+      const content = [
+        entry("session_meta", { session_id: SESSION, cwd: "/work/in" }),
+        entry("turn_context", { cwd: "/work/in", model: "gpt-5.5" }),
+        call(1, false, "2026-10-08T12:00:00.000Z", 5),
+        call(2, true, "2026-10-08T12:00:01.000Z", 7),
+        "",
+      ].join("\n");
+      const { dir, ingest } = machine(sessions);
+      await writeFile(join(day, "rollout-a.jsonl"), content);
+      const plain = await ingest.execute();
+      const stored = await bytes(dir);
+      await rm(join(day, "rollout-a.jsonl"));
+      await writeFile(
+        join(day, "rollout-a.jsonl.zst"),
+        zlib.zstdCompressSync(Buffer.from(content))
+      );
+      const compressed = await ingest.execute();
+      expect([plain.added, compressed.added, compressed.updated]).toEqual([2, 0, 0]);
+      const after = await bytes(dir);
+      const ledgerOnly = (files: Record<string, string>) =>
+        Object.fromEntries(
+          Object.entries(files).filter(([path]) => !path.endsWith("offsets.json"))
+        );
+      expect(ledgerOnly(after)).toEqual(ledgerOnly(stored));
+    });
+  }
+);
+
+describe("a compressed session file that does not decompress", () => {
+  it("stops no other measurement, and is named again by the next run", async () => {
     const sessions = join(root, "sessions");
-    const day = join(sessions, "2026", "10", "08");
-    await mkdir(day, { recursive: true });
-    const content = [
-      entry("session_meta", { session_id: SESSION, cwd: "/work/in" }),
-      entry("turn_context", { cwd: "/work/in", model: "gpt-5.5" }),
-      call(1, false, "2026-10-08T12:00:00.000Z", 5),
-      call(2, true, "2026-10-08T12:00:01.000Z", 7),
-      "",
-    ].join("\n");
-    const { dir, ingest } = machine(sessions);
-    await writeFile(join(day, "rollout-a.jsonl"), content);
-    const plain = await ingest.execute();
-    const stored = await bytes(dir);
-    await rm(join(day, "rollout-a.jsonl"));
-    await writeFile(join(day, "rollout-a.jsonl.zst"), zstdCompressSync(Buffer.from(content)));
-    const compressed = await ingest.execute();
-    expect([plain.added, compressed.added, compressed.updated]).toEqual([2, 0, 0]);
-    const after = await bytes(dir);
-    const ledgerOnly = (files: Record<string, string>) =>
-      Object.fromEntries(Object.entries(files).filter(([path]) => !path.endsWith("offsets.json")));
-    expect(ledgerOnly(after)).toEqual(ledgerOnly(stored));
+    const projects = join(root, "projects", "p");
+    await mkdir(sessions, { recursive: true });
+    await mkdir(projects, { recursive: true });
+    await writeFile(
+      join(sessions, "rollout-b.jsonl.zst"),
+      Buffer.from("not a zstd frame, only bytes")
+    );
+    await writeFile(
+      join(projects, "s.jsonl"),
+      `${JSON.stringify({
+        type: "assistant",
+        sessionId: "s-1",
+        requestId: "req_A",
+        timestamp: "2026-10-08T12:00:00.000Z",
+        cwd: "/work/in",
+        message: {
+          id: "msg_A",
+          model: "m",
+          usage: {
+            input_tokens: 1,
+            output_tokens: 2,
+            cache_read_input_tokens: 0,
+            cache_creation_input_tokens: 0,
+          },
+        },
+      })}\n`
+    );
+    const { ingest } = machine(sessions, join(root, "projects"));
+    const first = await ingest.execute();
+    const second = await ingest.execute();
+    expect([first.added, first.unrecognised]).toEqual([1, 1]);
+    expect([second.added, second.unrecognised]).toEqual([0, 1]);
   });
 });

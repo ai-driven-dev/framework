@@ -1,6 +1,7 @@
 import { join } from "node:path";
 import { pipeline } from "node:stream/promises";
 import * as zlib from "node:zlib";
+import { isErrnoException } from "../../../../kernel/reading/json-file.js";
 import type { TranscriptRead, TranscriptSource } from "../../domain/ports/transcript-source.js";
 import type { TranscriptPosition } from "../../domain/transcript-position.js";
 import {
@@ -16,6 +17,13 @@ import {
 
 const SESSION_FILE = /^rollout-.*\.jsonl(\.zst)?$/;
 const COMPRESSED = ".zst";
+/** What zlib names a stream it cannot decompress by: `Z_…` or `ZSTD_error_…`, never an I/O code. */
+const UNDECOMPRESSABLE = /^Z(STD)?_/;
+
+/** A compressed file not read, named once per run: its position stays, so it is tried again. */
+function unread(since: TranscriptPosition | null, reason: string): TranscriptRead {
+  return { position: since ?? NOWHERE, restarted: false, skipped: false, unrecognised: [reason] };
+}
 
 /** Where Codex keeps its session files. `codexHome` is `CODEX_HOME`; reading the environment is
  * the composition root's job. Archiving moves a file from the first to the second. */
@@ -63,12 +71,7 @@ export class CodexTranscriptSourceAdapter implements TranscriptSource {
     }
     const decompress = this.decompress;
     if (decompress === null) {
-      return {
-        position: since ?? NOWHERE,
-        restarted: false,
-        skipped: false,
-        unrecognised: ["a compressed session file is not read: this Node has no zstd"],
-      };
+      return unread(since, "a compressed session file is not read: this Node has no zstd");
     }
     // Its offset is its size: it does not change, so its size and identity keep it read.
     return readTranscript(path, since, writtenFrom, {
@@ -85,6 +88,9 @@ export class CodexTranscriptSourceAdapter implements TranscriptSource {
         );
         return now.size;
       },
+    }).catch((error: unknown) => {
+      if (!isErrnoException(error) || !UNDECOMPRESSABLE.test(error.code ?? "")) throw error;
+      return unread(since, `a compressed session file does not decompress: ${error.code}`);
     });
   }
 }
