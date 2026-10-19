@@ -62,11 +62,21 @@ const plan = {
 
 const sum = (scenes) => scenes.reduce((total, scene) => total + sceneDuration(scene), 0);
 
-test("the intro types the version and the outro shows it", () => {
+test("the intro starts with no version on screen and types it in", () => {
   const html = buildHtml(plan, { version: "5.13" });
 
-  assert.match(html, /<span id="ver-t">v5<\/span><span class="dot">\.<\/span><span id="ver-n">13<\/span>/);
+  assert.match(html, /<span id="ver-t"><\/span><span class="dot"><\/span><span id="ver-n"><\/span>/);
+  assert.match(html, /const full = "5\.13"/);
   assert.match(html, /AIDD <span class="g">v5\.13<\/span>/);
+});
+
+test("a scene's note appears after its last row, not with its window", () => {
+  const html = buildHtml(plan, { version: "5.13" });
+  const noteAt = Number(/enter\("#s1 \.fin", ([\d.]+)/.exec(html)?.[1]);
+  const lastRowAt = 5 + 1.3 + 0.45 * (plan.scenes[0].window.rows.length - 1);
+
+  assert.match(html, /<p class="note fin">Example figures\.<\/p>/);
+  assert.ok(noteAt > lastRowAt, `note at ${noteAt}, last row at ${lastRowAt}`);
 });
 
 test("a window has the traffic-light bar and its label", () => {

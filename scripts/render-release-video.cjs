@@ -141,9 +141,13 @@ const flowHtml = (steps) =>
     .join("") +
   `</div>`;
 
-const noteHtml = (s) => (s.note ? `<p class="note it">${esc(s.note)}</p>` : "");
+const noteHtml = (s) => (s.note ? `<p class="note fin">${esc(s.note)}</p>` : "");
 
 const rowsIn = (rows = []) => rows.reduce((n, r) => n + (r.table ? 1 + r.table.rows.length : 1), 0);
+
+/** Rows are revealed one by one; the note comes after the last. */
+const rowElements = (s) =>
+  (s.window ? [s.window] : s.panels ?? []).reduce((n, w) => n + (w.rows ?? []).length, 0);
 
 const scene = {
   "terminal-demo": {
@@ -187,12 +191,12 @@ const headHtml = (s, id) =>
   `<span class="pill" id="${id}-pill">${esc(s.pill)}</span>` +
   `<h2 id="${id}-h">${esc(s.title)}${s.accent ? ` <span class="g">${esc(s.accent)}</span>` : ""}</h2>`;
 
-function introHtml(version) {
-  const [major, minor = ""] = String(version).split(".");
+/** The version is typed in by the timeline: until it starts, nothing of it is on screen. */
+function introHtml() {
   return (
     `<img id="intro-logo" src="assets/logo.png" alt="" /><div class="intro-text">` +
     `<div class="intro-top"><span class="pill" id="intro-pill">AIDD Framework</span><span class="rel" id="intro-rel">NEW RELEASE</span></div>` +
-    `<div id="ver"><span id="ver-t">v${esc(major)}</span><span class="dot">.</span><span id="ver-n">${esc(minor)}</span></div>` +
+    `<div id="ver"><span id="ver-t"></span><span class="dot"></span><span id="ver-n"></span></div>` +
     `<p class="tagline" id="intro-tag">What's new, <b>end to end.</b></p></div>`
   );
 }
@@ -206,7 +210,7 @@ function buildHtml(plan, { version }) {
       `<section id="${id}" class="scene clip" data-start="${t}" data-duration="${duration}" data-track-index="0"><div class="inner">${inner}</div></section>`
     );
 
-  open("intro", INTRO, introHtml(version));
+  open("intro", INTRO, introHtml());
   script.push(
     `enter("#intro-logo", 0.1, { y: 0, scale: 0.85, duration: 0.9 });`,
     `enter("#intro-pill", 0.4, { y: 20 });`,
@@ -215,6 +219,7 @@ function buildHtml(plan, { version }) {
     `tl.to(typed, { n: 1, duration: 1.1, ease: "none", onUpdate: () => { const len = Math.round(typed.n * (full.length + 1));` +
       ` const [a, b = ""] = full.split(".");` +
       ` document.getElementById("ver-t").textContent = ("v" + a).slice(0, Math.min(len, a.length + 1));` +
+      ` document.querySelector("#ver .dot").textContent = len > a.length + 1 ? "." : "";` +
       ` document.getElementById("ver-n").textContent = len > a.length + 1 ? b.slice(0, len - a.length - 1) : ""; } }, 0.8);`,
     `enter("#intro-tag", 2.0, { y: 20 });`,
     `cut("intro", ${INTRO});`
@@ -230,6 +235,7 @@ function buildHtml(plan, { version }) {
       `enter("#${id}-h", ${t} + 0.28);`,
       `enter("#${id} .it", ${t} + 0.63, { y: 30, duration: 0.7, stagger: 0.3 });`,
       `enter("#${id} .row", ${t} + 1.3, { y: 14, duration: 0.5, stagger: 0.45 });`,
+      ...(s.note ? [`enter("#${id} .fin", ${Math.round((t + 1.3 + 0.45 * rowElements(s) + 0.3) * 100) / 100}, { y: 10 });`] : []),
       `cut("${id}", ${t + duration});`
     );
     t += duration;
