@@ -33,6 +33,7 @@ Bootstrap, project init, context-artifact generation, diagrams, learning, and ex
 | `10-learn`             | Capture learnings, conventions, and decisions into memory, decisions, rules   | `01-gather`, `02-assess`, `03-write`, `04-sync`                                                          |
 | `11-explore`           | Survey the project across tooling, context, and codebase, then drill into one axis | `01-survey`, `02-drill`                                                                                  |
 | `12-cook`              | Manage and validate technical project or bundled recipes                       | `01-list`, `02-upsert`, `03-research`, `04-apply`, `05-validate`                                         |
+| `13-access-check`      | Check, read-only, that the assistant reaches the services in project memory    | `01-check`                                                                                               |
 
 ## 💻 aidd-dev
 

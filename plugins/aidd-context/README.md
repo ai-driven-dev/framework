@@ -8,7 +8,7 @@ Knowledge production plugin for the AI-Driven Development framework.
 
 First time? Install with `/plugin install aidd-context@aidd-framework`, then run `aidd-context:00-onboard`.
 
-Covers project bootstrap, the project memory bank, generation of context artifacts (skills, agents, rules, commands, hooks), Mermaid diagrams, learning, project exploration, recipes, and a plain-language onboarding guide.
+Covers project bootstrap, the project memory bank, generation of context artifacts (skills, agents, rules, commands, hooks), Mermaid diagrams, learning, project exploration, recipes, a read-only service access check, and a plain-language onboarding guide.
 
 ## Skills
 
@@ -22,6 +22,7 @@ Covers project bootstrap, the project memory bank, generation of context artifac
 | [1.5]      | [learn](skills/10-learn/SKILL.md)                     | Capture durable learnings from the conversation or git history, score each, and route the worthwhile ones to memory, a decision record, a rule, or a new skill. |
 | [1.6]      | [explore](skills/11-explore/SKILL.md)                 | Survey the project across three axes (tooling, context, codebase), then drill into one axis and point to the best-matching item for a goal.                      |
 | [1.7]      | [cook](skills/12-cook/SKILL.md)                       | Maintain project and bundled recipes: list, research, create/update, apply, or validate one or all.                                                        |
+| [1.8]      | [access-check](skills/13-access-check/SKILL.md)       | Check, read-only, that the assistant reaches each service the project memory records, and report what to fix.                                              |
 
 ## Onboarding
 
