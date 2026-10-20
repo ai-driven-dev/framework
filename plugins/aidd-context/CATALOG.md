@@ -22,6 +22,7 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
   - [`skills/10-learn`](#skills10-learn)
   - [`skills/11-explore`](#skills11-explore)
   - [`skills/12-cook`](#skills12-cook)
+  - [`skills/13-access-check`](#skills13-access-check)
 
 ---
 
@@ -219,4 +220,12 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `references` | [recipe-locations.md](skills/12-cook/references/recipe-locations.md) | - |
 | `references` | [research-playbook.md](skills/12-cook/references/research-playbook.md) | - |
 | `-` | [SKILL.md](skills/12-cook/SKILL.md) | `Manages project recipes and practical guides. Use when the user wants to find a recipe, document a technique, research improvements, follow an existing guide, or check that its steps are usable.` |
+
+#### `skills/13-access-check`
+
+| Group | File | Description |
+|-------|------|---|
+| `actions` | [01-check.md](skills/13-access-check/actions/01-check.md) | - |
+| `assets` | [access-report.md](skills/13-access-check/assets/access-report.md) | - |
+| `-` | [SKILL.md](skills/13-access-check/SKILL.md) | `Check that the assistant can reach the services recorded in project memory, read-only. Use when the user wants to verify or diagnose service access. Not for installing or configuring services.` |
 
