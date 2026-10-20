@@ -22,17 +22,40 @@ test('root loads routing before exactly one selected mode', () => {
   assert.doesNotMatch(skill, /## Routing: hybrid contract|### Setup \(11 actions\)|### Run \(6 actions\)|### Review \(4 actions\)/);
 });
 
-test('routing reference owns aliases, precedence, and conflict decisions', () => {
+test('documented scenarios preserve the baseline selection outcomes', () => {
   const route = read('actions/route.md');
   const reference = read('references/routing.md');
-  assert.match(route, /references\/routing\.md/);
-  assert.match(reference, /action=<keyword>/);
-  assert.match(reference, /@claude\\s\+\/\(implement\|aidd-dev:02-implement\|run\)/);
-  assert.match(reference, /@claude\\s\+\/\(review\|aidd-dev:05-review\)/);
-  assert.match(reference, /to-implement.*to-review/s);
-  assert.match(reference, /config is absent/);
-  assert.match(reference, /open closing PR/);
-  assert.match(reference, /Unresolved: ask the human/);
+  const evidence = readFileSync(join(__dirname, '../../aidd_docs/tasks/2026_10/2026_10_20_delivery-loop-router/evidence.md'), 'utf8');
+  const scenarios = [
+    ['Arguments exactly `RUN`', 'run', /arguments are exactly `setup`, `run`, or `review` \(case-insensitive\)/],
+    ['Prompt `action=review on PR #17`', 'review', /prompt contains `action=<keyword>` as a standalone token/],
+    ['label `to-implement`', 'run', /label `to-implement`\s+\| `run`/],
+    ['label `to-review`', 'review', /label `to-review`\s+\| `review`/],
+    ['`@claude \/aidd-dev:02-implement`', 'run', /@claude\\s\+\/\(implement\|aidd-dev:02-implement\|run\)/],
+    ['`@claude \/aidd-dev:05-review`', 'review', /@claude\\s\+\/\(review\|aidd-dev:05-review\)/],
+    ['input `action=setup`', 'setup', /workflow_dispatch` \+ input `action=<X>`/],
+    ['Workflow and config both absent', 'setup', /aidd-async\.yml` missing AND `.claude\/aidd-orchestrator\.json` missing\s+\| `setup`/],
+    ['Workflow present, config absent', 'setup', /orchestrator\.json` missing but workflow present.*`setup` \(incomplete install\)/],
+    ['Open PR closes referenced issue', 'review', /Open PR closes the referenced issue\s+\| `review`/],
+    ['Fresh issue, no linked PR', 'run', /Fresh issue with no linked PR \+ intent to implement\s+\| `run`/],
+    ['`bootstrap async dev`', 'setup', /`bootstrap`.*`setup`/],
+    ['`pick up the queue`', 'run', /`pick up the queue`.*`run`/],
+    ['`apply feedback`', 'review', /`apply feedback`.*`review`/],
+    ['`action=review` and label `to-implement`', 'review', /Arguments keyword \(1\) > trigger env \(2\)/],
+    ['User requests run, config absent', 'stop, request setup', /User says "run" but config is absent[\s\S]*?Surface the conflict and stop/],
+    ['Webhook `to-implement`, open closing PR', 'review, comment', /Workflow webhook fires `to-implement` but the issue already has an open closing PR[\s\S]*?Route to `review`/],
+    ['Both `to-implement` and `to-review` labels', 'review, comment', /Label `to-implement` AND label `to-review` both present[\s\S]*?Route to `review`/],
+    ['No matching arguments, trigger, state, or intent', 'ask which mode', /If none of the above produces a single match[\s\S]*?ask/],
+  ];
+  for (const [input, outcome, contract] of scenarios) {
+    const row = evidence.split('\n').find((line) => line.startsWith('| ') && line.includes(input));
+    assert.ok(row, `missing scenario: ${input}`);
+    assert.ok(row.endsWith(`| ${outcome} | ${outcome} |`), `baseline/new mismatch: ${input}`);
+    assert.match(reference, contract, `missing selection contract: ${input}`);
+  }
+  assert.match(route, /resolves a conflict to a mode, load that mode/);
+  assert.match(route, /Stop before loading a mode only when.*blocking or the signals unresolved/);
+  assert.match(evidence, /Runtime LLM selection and mode execution remain unverified/);
 });
 
 for (const mode of modeNames) {

@@ -1,6 +1,6 @@
 # Routing: decision tree
 
-Full contract for picking a sub-flow inside `aidd-orchestrator:00-async-dev`. The router walks these signals in order; the first match wins.
+Full contract for picking a sub-flow inside `aidd-orchestrator:00-async-dev`. The router walks these signals in precedence order, then applies the conflict resolutions below. A resolved conflict overrides the ordinary signal result.
 
 ---
 
@@ -80,7 +80,7 @@ Within a category, the most specific concrete signal wins:
 
 ## Conflict resolution
 
-The router NEVER silently switches sub-flow when the request and the state disagree.
+The router applies these explicit conflict outcomes when the request and state disagree. Only a conflict marked as blocking stops delegation; a conflict resolved to a mode continues through that mode.
 
 Examples:
 
