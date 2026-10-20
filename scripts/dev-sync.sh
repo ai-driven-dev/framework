@@ -7,7 +7,12 @@
 # whose CLI is absent is skipped, and the first run needs network. A managed OpenCode host
 # exposes `aidd-opencode-reload` instead, and that helper decides which checkout may load.
 #
-# Optional agents are installed separately with `aidd agents install`; reload leaves them alone.
+# Agents: with a built local CLI, reload installs the AIDD agents globally for Claude, Codex and
+# local OpenCode, overwriting only the files that install generates; other agents stay untouched.
+# Global agent directories checked 2026-10-20:
+# https://code.claude.com/docs/en/sub-agents
+# https://developers.openai.com/codex/subagents
+# https://opencode.ai/docs/agents
 # Global rules: sync only the Agents section in the managed block, preserving personal
 # rules. First OpenCode sync keeps its Claude personal-rule fallback unless disabled.
 # Paths honor native home/cache overrides; explicit task paths take precedence.
@@ -38,6 +43,10 @@ CODEX_CACHE="${CODEX_CACHE:-${CODEX_HOME:-$HOME/.codex}/plugins/cache}"
 CLAUDE_CACHE="${CLAUDE_CACHE:-${CLAUDE_CODE_PLUGIN_CACHE_DIR:-${CLAUDE_CONFIG_DIR:-$HOME/.claude}/plugins}/cache}"
 OPENCODE_SKILLS="${OPENCODE_SKILLS:-${XDG_CONFIG_HOME:-$HOME/.config}/opencode/skills}"
 CURSOR_PLUGINS="${CURSOR_PLUGINS:-$HOME/.cursor/plugins/local}"
+CLAUDE_AGENTS="${CLAUDE_AGENTS:-${CLAUDE_CONFIG_DIR:-$HOME/.claude}/agents}"
+CODEX_AGENTS="${CODEX_AGENTS:-${CODEX_HOME:-$HOME/.codex}/agents}"
+OPENCODE_AGENTS="${OPENCODE_AGENTS:-${XDG_CONFIG_HOME:-$HOME/.config}/opencode/agents}"
+OPENCODE_AGENT_PROVIDER="${OPENCODE_AGENT_PROVIDER:-anthropic}"  # openai, anthropic or mistral
 CODEX_INSTRUCTIONS="${CODEX_INSTRUCTIONS:-${CODEX_HOME:-$HOME/.codex}/AGENTS.md}"
 CLAUDE_INSTRUCTIONS="${CLAUDE_INSTRUCTIONS:-${CLAUDE_CONFIG_DIR:-$HOME/.claude}/CLAUDE.md}"
 OPENCODE_INSTRUCTIONS="${OPENCODE_INSTRUCTIONS:-${XDG_CONFIG_HOME:-$HOME/.config}/opencode/AGENTS.md}"
@@ -118,6 +127,19 @@ sync_opencode_skills() {
       cp -R "$skill" "$destination"
     done
   done
+}
+
+install_global_agents() {
+  # Generate the project-scoped agents in a staging root, then copy exactly those files globally.
+  local ide="$1" provider="$2" native_dir="$3" destination="$4" stage file
+  local -a files
+  stage="$BUILD/agents/$ide"
+  rm -rf "$stage"; mkdir -p "$stage"
+  (cd "$stage" && node "$FW/cli/dist/cli.js" agents install --ide "$ide" --provider "$provider" >/dev/null) || return 1
+  files=("$stage/$native_dir/agents/"*)
+  [ "${#files[@]}" -gt 0 ] || { echo "no agents generated for $ide" >&2; return 1; }
+  mkdir -p "$destination"
+  for file in "${files[@]}"; do cp "$file" "$destination/"; done
 }
 
 register_marketplace() {
@@ -252,6 +274,25 @@ if [ "$HAVE_CURSOR" = 1 ]; then
     cp -R "$BUILD/cursor/plugins/$t" "$CURSOR_PLUGINS/$t"
   done
   echo "plugins:ok (requires local plugin imports)"
+fi
+
+if [ -f "$FW/cli/dist/cli.js" ]; then
+  agent_hosts=()
+  [ "$HAVE_CLAUDE" = 0 ] || agent_hosts+=("claude-code anthropic .claude $CLAUDE_AGENTS")
+  [ "$HAVE_CODEX" = 0 ] || agent_hosts+=("codex openai .codex $CODEX_AGENTS")
+  if [ "$HAVE_OPENCODE" = 1 ] && [ "$HAVE_MANAGED_OPENCODE" = 0 ]; then
+    agent_hosts+=("opencode $OPENCODE_AGENT_PROVIDER .opencode $OPENCODE_AGENTS")
+  fi
+  if [ "${#agent_hosts[@]}" -gt 0 ]; then
+    printf '%-22s' "global agents"
+    for entry in "${agent_hosts[@]}"; do
+      read -r ide provider native_dir destination <<<"$entry"
+      install_global_agents "$ide" "$provider" "$native_dir" "$destination" ||
+        { echo " $ide:FAIL"; echo "Agent install failed for $ide; rerun node $FW/cli/dist/cli.js agents install --ide $ide --provider $provider in a scratch directory for details." >&2; exit 1; }
+      printf ' %s:ok' "$ide"
+    done
+    echo
+  fi
 fi
 
 instructions=()

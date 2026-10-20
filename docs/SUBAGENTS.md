@@ -58,7 +58,7 @@ Use host dispatch records to identify the agent and actual model, effort, and ti
 
 ## 🔄 Update or remove
 
-After updating the CLI, rerun the install command to refresh unmodified agents. Plugins, `sync`, and `make reload` do not install or refresh this add-on.
+After updating the CLI, rerun the install command to refresh unmodified agents. Plugins and `sync` do not install or refresh this add-on. For framework development, `make reload` installs the agents globally for Claude Code (Anthropic), Codex (OpenAI), and OpenCode (`OPENCODE_AGENT_PROVIDER`, default `anthropic`), overwriting same-named global agent files.
 
 To remove only one IDE's agents from the current project:
 

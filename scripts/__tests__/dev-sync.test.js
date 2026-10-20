@@ -815,7 +815,40 @@ for (const override of ["CLAUDE_CONFIG_DIR", "CLAUDE_INSTRUCTIONS"]) {
   });
 }
 
-test("Codex reload leaves opted-in and personal agents unchanged", () => {
+test("reload with a built CLI installs agents globally and keeps other agents", () => {
+  const root = mkdtempSync(join(tmpdir(), "aidd-dev-sync-global-agents-"));
+  try {
+    const fakeBin = join(root, "bin"), home = join(root, "home");
+    mkdirSync(fakeBin);
+    const source = fixture(home);
+    mkdirSync(join(source, "cli/dist"), { recursive: true });
+    writeFileSync(join(source, "cli/dist/cli.js"), String.raw`
+const { mkdirSync, writeFileSync } = require("node:fs");
+const args = process.argv.slice(2);
+if (args[0] !== "agents") { mkdirSync(args[args.indexOf("--out") + 1] + "/.opencode/skills/aidd-dev-01-plan", { recursive: true }); writeFileSync(args[args.indexOf("--out") + 1] + "/.opencode/skills/aidd-dev-01-plan/SKILL.md", "skill\n"); process.exit(0); }
+const ide = args[args.indexOf("--ide") + 1], provider = args[args.indexOf("--provider") + 1];
+const [dir, ext] = { "claude-code": [".claude", "md"], codex: [".codex", "toml"], opencode: [".opencode", "md"] }[ide];
+mkdirSync(dir + "/agents", { recursive: true });
+writeFileSync(dir + "/agents/aidd-dev-executor." + ext, ide + " " + provider + "\n");
+`);
+    for (const host of ["claude", "codex", "opencode"]) executable(join(fakeBin, host), "exit 0");
+    const dirs = { claude: ".claude/agents", codex: ".codex/agents", opencode: ".config/opencode/agents" };
+    for (const dir of Object.values(dirs)) {
+      mkdirSync(join(home, dir), { recursive: true });
+      writeFileSync(join(home, dir, "personal.md"), "keep\n");
+    }
+    writeFileSync(join(home, dirs.codex, "aidd-dev-executor.toml"), "old\n");
+    const result = runSync(fakeBin, home, [], { OPENCODE_AGENT_PROVIDER: "mistral" });
+    assert.equal(result.status, 0, result.stderr);
+    assert.match(result.stdout, /global agents\s+claude-code:ok codex:ok opencode:ok/);
+    assert.equal(readFileSync(join(home, dirs.claude, "aidd-dev-executor.md"), "utf8"), "claude-code anthropic\n");
+    assert.equal(readFileSync(join(home, dirs.codex, "aidd-dev-executor.toml"), "utf8"), "codex openai\n");
+    assert.equal(readFileSync(join(home, dirs.opencode, "aidd-dev-executor.md"), "utf8"), "opencode mistral\n");
+    for (const dir of Object.values(dirs)) assert.equal(readFileSync(join(home, dir, "personal.md"), "utf8"), "keep\n");
+  } finally { rmSync(root, { recursive: true, force: true }); }
+});
+
+test("Codex reload without a built CLI leaves agents unchanged", () => {
   const root = mkdtempSync(join(tmpdir(), "aidd-dev-sync-codex-personal-"));
   try {
     const fakeBin = join(root, "bin"), home = join(root, "home");
