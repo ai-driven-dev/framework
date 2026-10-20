@@ -183,6 +183,7 @@ describe("printing a usage report", () => {
       session: "no session",
       model: "unknown model",
       agent: "no agent",
+      tool: "no tool",
       day: "no day",
       repository: "no repository",
       task: "no task",
@@ -360,13 +361,14 @@ describe("printing a usage report", () => {
       session: "a1b2c3d4-0000-4000-8000-000000000001",
       repository: "f".repeat(64),
       agent: "subagent",
+      tool: "codex",
       absent: "model",
       person: "p-1",
     };
     const lines = printed(result("day", [[value("2026-10-02"), one]], one, {}, BOTH, filters));
     expect(lines.slice(0, 3)).toEqual([
       "Usage, 2026-10-01 to 2026-10-07, by day",
-      "Selected: task = auth refactor, ticket = PROJ-1, person = p-1, agent = subagent, session = a1b2c3d4, repository = ffffffff, model = unknown model",
+      "Selected: task = auth refactor, ticket = PROJ-1, person = p-1, agent = subagent, session = a1b2c3d4, repository = ffffffff, tool = codex, model = unknown model",
       "",
     ]);
     const absentOf = (absent: ReportFilters["absent"]) =>

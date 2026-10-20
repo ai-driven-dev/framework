@@ -21,6 +21,7 @@ const reported: Extract<ReportResult, { status: "reported" }> = {
   period: { from: "2026-10-01", to: null },
   // Given out of order: the envelope prints its own order, whatever the object's.
   filters: {
+    tool: "codex",
     unattributed: null,
     absent: "model",
     repository: "r".repeat(64),
@@ -139,6 +140,7 @@ describe("the JSON envelope of a report", () => {
       ["repository", "r".repeat(64)],
       ["absent", "model"],
       ["unattributed", null],
+      ["tool", "codex"],
     ]);
   });
 

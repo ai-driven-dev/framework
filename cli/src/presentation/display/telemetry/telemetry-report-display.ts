@@ -32,6 +32,7 @@ const ABSENT: Readonly<Record<ReportAxis, string>> = {
   repository: "no repository",
   task: "no task",
   ticket: "no ticket",
+  tool: "no tool",
 };
 
 type Reason = Extract<AxisValue, { kind: "unattributed" }>["reason"];

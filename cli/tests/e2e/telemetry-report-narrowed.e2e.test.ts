@@ -29,7 +29,7 @@ describe("aidd telemetry report, narrowed", () => {
 
   it("adds up to the row it selects, a session typed by the eight characters the text shows", async () => {
     await declareBranch();
-    for (const axis of ["ticket", "session", "model"]) {
+    for (const axis of ["ticket", "session", "model", "tool"]) {
       for (const row of (await json(axis)).rows) {
         const flags =
           row.kind === "absent"
@@ -67,6 +67,7 @@ describe("aidd telemetry report, narrowed", () => {
       repository: null,
       absent: null,
       unattributed: null,
+      tool: null,
     });
     expect(envelope.rows.map((row) => [row.key, row.records])).toEqual([
       ["2026-10-07", 1],

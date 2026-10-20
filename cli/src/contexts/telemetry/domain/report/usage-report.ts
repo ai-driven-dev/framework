@@ -18,6 +18,7 @@ export const REPORT_AXES = [
   "repository",
   "task",
   "ticket",
+  "tool",
 ] as const;
 export type ReportAxis = (typeof REPORT_AXES)[number];
 
@@ -110,6 +111,8 @@ export function axisValueOf(
       return value(record.model);
     case "agent":
       return value(record.agent);
+    case "tool":
+      return value(record.tool);
     case "day":
       return value(new Date(record.at).toISOString().slice(0, 10));
     case "repository":

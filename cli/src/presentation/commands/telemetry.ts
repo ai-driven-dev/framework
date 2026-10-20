@@ -23,7 +23,7 @@ import {
   REPORT_AXES,
   type ReportAxis,
 } from "../../contexts/telemetry/domain/report/usage-report.js";
-import { USAGE_AGENTS } from "../../contexts/telemetry/domain/usage-record.js";
+import { USAGE_AGENTS, USAGE_TOOLS } from "../../contexts/telemetry/domain/usage-record.js";
 import type { Prompter } from "../../kernel/ports/prompter.js";
 import { createDeps } from "../../runtime/wiring/framework.js";
 import type { TelemetryDeps } from "../../runtime/wiring/telemetry.js";
@@ -296,6 +296,7 @@ export function registerTelemetryCommand(program: Command): void {
         "calls of this repository, a start of its id, or . for the one here"
       )
     )
+    .addOption(filterOption(report, "--tool <tool>", "calls of this tool", USAGE_TOOLS))
     .addOption(
       filterOption(report, "--absent <axis>", "calls with no value on this axis", ABSENT_AXES)
     )

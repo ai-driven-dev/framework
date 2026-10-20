@@ -24,7 +24,10 @@ import {
 } from "../../../../../src/contexts/telemetry/domain/report/report-filter.js";
 import { REPORT_AXES } from "../../../../../src/contexts/telemetry/domain/report/usage-report.js";
 import type { StoredUsage } from "../../../../../src/contexts/telemetry/domain/stored-usage.js";
-import { USAGE_AGENTS } from "../../../../../src/contexts/telemetry/domain/usage-record.js";
+import {
+  USAGE_AGENTS,
+  USAGE_TOOLS,
+} from "../../../../../src/contexts/telemetry/domain/usage-record.js";
 import { UsageLedgerAdapter } from "../../../../../src/contexts/telemetry/infrastructure/usage-ledger-adapter.js";
 import { PrivateStorageAdapter } from "../../../../../src/runtime/filesystem/private-storage-adapter.js";
 import {
@@ -76,6 +79,7 @@ const call = fc.record({
   session: fc.constantFrom(...SESSIONS),
   repository: fc.constantFrom(...REPOSITORIES),
   agent: fc.constantFrom(...USAGE_AGENTS),
+  tool: fc.constantFrom(...USAGE_TOOLS),
   model: fc.constantFrom("m-1", "m-2", null),
   snapshots: fc.array(snapshot, { minLength: 1, maxLength: 3 }),
 });
@@ -100,6 +104,7 @@ const filters = fc
     person: fc.constantFrom(null, "p-1"),
     model: fc.constantFrom(null, "m-1"),
     agent: fc.constantFrom(null, ...USAGE_AGENTS),
+    tool: fc.constantFrom(null, ...USAGE_TOOLS),
     session: fc.constantFrom(null, "s-a1", "s-b", "zz"),
     repository: fc.constantFrom(null, "r-a1", "r-b"),
     absent: fc.constantFrom(null, "person" as const, "model" as const, "ticket" as const),
@@ -168,7 +173,7 @@ function recordsOf(calls: Scenario["calls"]): StoredUsage[] {
   return calls.flatMap((c, index) =>
     c.snapshots.map(
       (s): StoredUsage => ({
-        tool: index % 2 === 0 ? "claude-code" : "codex",
+        tool: c.tool,
         tool_version: "1.0.0",
         key: `k${index}`,
         session_id: c.session,

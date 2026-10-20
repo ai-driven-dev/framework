@@ -31,7 +31,10 @@ import {
   REPORT_AXES,
 } from "../../../../../src/contexts/telemetry/domain/report/usage-report.js";
 import type { StoredUsage } from "../../../../../src/contexts/telemetry/domain/stored-usage.js";
-import { USAGE_AGENTS } from "../../../../../src/contexts/telemetry/domain/usage-record.js";
+import {
+  USAGE_AGENTS,
+  USAGE_TOOLS,
+} from "../../../../../src/contexts/telemetry/domain/usage-record.js";
 import { UsageLedgerAdapter } from "../../../../../src/contexts/telemetry/infrastructure/usage-ledger-adapter.js";
 import { PrivateStorageAdapter } from "../../../../../src/runtime/filesystem/private-storage-adapter.js";
 import {
@@ -112,6 +115,7 @@ const filters = fc
     person: fc.constantFrom(null, "person-a", "person-b"),
     model: fc.constantFrom(null, "m-1", "m-2"),
     agent: fc.constantFrom(null, ...USAGE_AGENTS),
+    tool: fc.constantFrom(null, ...USAGE_TOOLS),
     session: fc.constantFrom(null, "s-1", "s-", "s-2", "x"),
     repository: fc.constantFrom(null, "repo-1", "repo-", "repo-2"),
     absent: fc.constantFrom(null, "person" as const, "model" as const, "ticket" as const),
