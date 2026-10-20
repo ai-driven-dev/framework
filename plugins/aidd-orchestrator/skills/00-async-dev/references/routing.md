@@ -6,7 +6,7 @@ Full contract for picking a sub-flow inside `aidd-orchestrator:00-async-dev`. Th
 
 ## 1. Explicit override: the arguments keyword
 
-If the arguments contain exactly `setup`, `run`, or `review` as a standalone case-insensitive token, route there immediately. No fallback consideration.
+If the arguments are exactly `setup`, `run`, or `review` (case-insensitive), or the prompt contains `action=<keyword>` as a standalone token, route there immediately, subject to conflict resolution below.
 
 This is the contract the bundled CI workflow relies on:
 
@@ -15,7 +15,7 @@ prompt: "Use skill aidd-orchestrator:00-async-dev with action=run on issue #..."
 prompt: "Use skill aidd-orchestrator:00-async-dev with action=review on PR #..."
 ```
 
-The router parses `action=<keyword>` from the prompt body. Plain `setup` / `run` / `review` words elsewhere in the body do NOT match, only the explicit `action=` form, or the arguments set to exactly one of the three keywords.
+The router parses `action=<keyword>` from the prompt body. Plain `setup` / `run` / `review` words elsewhere in the body do not count as an override; they may count as natural-language intent. The arguments also match when they consist of exactly one mode keyword.
 
 ---
 
@@ -72,7 +72,7 @@ Arguments keyword (1) > trigger env (2) > repo state (3) > NL intent (4)
 
 Within a category, the most specific concrete signal wins:
 
-- A PR number in the arguments beats a label payload.
+- An explicit mode argument beats a label payload. A PR number identifies the active review surface when repo state is considered.
 - A label beats a free-text keyword.
 - A specific config file presence beats a generic verb.
 
@@ -112,10 +112,10 @@ Never proceed blindly.
 
 ## Sub-flow handoff
 
-Once committed, the router invokes the first action of the chosen sub-flow:
+Once committed, the router invokes the sequence action of the chosen sub-flow:
 
-- `setup` → `actions/setup/01-detect-context.md`
-- `run` → `actions/run/01-poll-ready.md`
-- `review` → `actions/review/01-collect-comments.md`
+- `setup` → `actions/setup.md`
+- `run` → `actions/run.md`
+- `review` → `actions/review.md`
 
 The sub-flow runs to completion (or abort on a pre-flight failure). The router does not re-dispatch mid-flow.
