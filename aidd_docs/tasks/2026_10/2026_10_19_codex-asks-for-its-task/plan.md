@@ -25,13 +25,13 @@ Contract: `contract.md`. Each phase starts with its tests, run red first, the re
 - Usage contract, plugin README, `00-init` and `01-usage` texts, `stop.md`'s "asked about" line: what Codex asks, where, trust, the limits.
 - Acceptance: the repository gates green, then the real run below.
 
-## Real run (final acceptance, needs the maintainer)
+## Real run (final acceptance, done: see `evidence.md`, "Real run")
 
 In an isolated `CODEX_HOME` holding a temporary copy of the maintainer's Codex credentials, deleted after:
 
-1. Install the built plugin with `aidd`, trust its hooks with `/hooks`.
-2. In a clone that opted in, on an undeclared working branch: the TUI holds a prompt and says why.
-3. Type the declaration: it binds, the next prompt goes through.
-4. `codex exec` in the same clone: never held.
-5. `aidd telemetry report`: the session's calls are on the declared task.
-6. Resume a TUI thread in the desktop app and observe whether the block reason shows. If it does not, the presence rule needs a stronger signal before the PR ships; the orchestrator decides after the run.
+1. [x] Install the built plugin with `aidd`, trust its hooks with `/hooks`.
+2. [x] In a clone that opted in, on an undeclared working branch: the TUI holds a prompt and says why.
+3. [x] Type the declaration: it binds, the next prompt goes through.
+4. [x] `codex exec` in the same clone: never held.
+5. [x] `aidd telemetry report`: the session's calls are on the declared task.
+6. [x] Resume a TUI thread in the desktop app and observe whether the block reason shows. If it does not, the presence rule needs a stronger signal before the PR ships; the orchestrator decides after the run.

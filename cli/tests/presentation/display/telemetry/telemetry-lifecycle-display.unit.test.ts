@@ -40,6 +40,7 @@ describe("printOnResult", () => {
     expect(output.lines[3]).toMatch(/^Next: declare what you work on with /u);
     expect(output.lines[3]).toContain("aidd telemetry task <name> [--ticket <ref>]");
     expect(output.lines[3]).toContain("the aidd-telemetry plugin's hooks ask");
+    expect(output.lines[3]).toContain("Codex TUI");
   });
 
   it("says who the clone is measured as, before the next step", () => {

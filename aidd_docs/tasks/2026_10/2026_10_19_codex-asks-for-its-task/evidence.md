@@ -35,6 +35,25 @@ Read-only on the maintainer's sessions under `~/.codex/sessions`, first-line `so
 
 Measured read-only on the maintainer's machine, by byte length only, over every plain `rollout-*.jsonl` under `~/.codex/sessions`: 476 files, first line 18,552 bytes minimum, 22,740 median, 23,215 p90, 23,477 p99, 48,786 maximum; every file had a first newline. The 1,056 `.jsonl.zst` files were not measured: a hook is handed a plain file (a resumed compressed file is expanded back for append). The hook reads 1 MiB, about 21 times the largest seen.
 
+## Real run
+
+Codex 0.163.0. The plugin was installed by `aidd setup --source local` from this branch into an isolated `CODEX_HOME`, and its hooks trusted with `/hooks` in the TUI. Aggregates only.
+
+| Step | Observed |
+| --- | --- |
+| TUI, undeclared working branch, prompt | held: "• Blocked by hook └ Telemetry: no task on feat/real-run yet. …" |
+| TUI, typed declaration | "• Blocked by hook └ Task real-run-demo (ticket T-42) declared. Send your prompt again." |
+| TUI, prompt again | answered |
+| `codex exec` on another undeclared branch | answered, never held; payload `permission_mode` `bypassPermissions`, first line `exec`/`codex_exec` |
+| `report --axis task` | TUI calls on `real-run-demo`, the exec call "unattributed: no task declared". `--axis ticket` shows `T-42` |
+| Tokens | report total 46,578 equals the sum of `usage.total_tokens` over the session files' records (3 calls). The exec session's 15,148 equals `codex exec --json` `turn.completed` input+output |
+| First line under the TUI | `source` `vscode`, `originator` `codex-tui` |
+| Hook process, TUI and exec | no controlling terminal (`/dev/tty` ENXIO) |
+| Desktop app | a hook's `decision: block` is shown ("Le hook a bloqué ce message" followed by the reason); the prompt is not answered. Payload: first line `vscode`/`codex_work_desktop`, `permission_mode` `bypassPermissions` |
+| Desktop, hook trust | Desktop trusted the folder but offered no hook review. The hook stayed untrusted and was skipped silently until it was trusted with `/hooks` in the TUI; Desktop then ran it, since trust is shared through `config.toml` |
+
+A branch declaration also attributes the branch's calls made before it. That rule predates this change and is unchanged.
+
 ## Red run
 
 Each test written before its code, run and seen failing for the reason it names.

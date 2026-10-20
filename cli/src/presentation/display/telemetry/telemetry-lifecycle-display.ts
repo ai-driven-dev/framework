@@ -98,7 +98,7 @@ export function printOnResult(output: CLIOutput, result: OnResult): void {
   output.info(identityLine(result.identity));
   output.info(
     "Next: declare what you work on with `aidd telemetry task <name> [--ticket <ref>]`, or `--none` for no task. " +
-      "In Claude Code, the aidd-telemetry plugin's hooks ask for it before the first prompt on an undeclared working branch."
+      "In Claude Code and the Codex TUI, the aidd-telemetry plugin's hooks ask for it before the first prompt on an undeclared working branch."
   );
 }
 

@@ -22,7 +22,7 @@ The same three hooks serve both tools. Only what tells the tool, its session and
 
 ### Whether a person can see a block
 
-Codex shows a hook's block reason in the TUI only: `codex exec` prints none, its `--json` output nothing, and the IDE and desktop apps are undocumented. A hook receives nothing that names the surface. The session file's first line does: `session_meta.originator`.
+Codex shows a hook's block reason in the TUI only: `codex exec` prints none, its `--json` output nothing, the desktop app shows it (observed), and the IDE extension is undocumented. A hook receives nothing that names the surface. The session file's first line does: `session_meta.originator`.
 
 A Codex prompt is held only when all of these hold. Anything else, a field missing, another value, an unreadable file, a first line longer than the bound read, is "nobody to answer": the prompt goes through. A change in Codex can only stop the asking, never block work.
 
@@ -54,12 +54,12 @@ A Codex prompt is held only when all of these hold. Anything else, a field missi
 Written into the usage contract and the plugin README; none is code.
 
 - Codex runs a plugin's hooks only once a person trusted each one (`/hooks` in the TUI). Until then nothing asks, and ingest runs only from Claude Code or a report. A plugin update that changes a hook's entry in `hooks.json` needs trusting again; a change to the script alone does not.
-- Asked in the Codex TUI only, and not in full-access mode (approval `never`). `codex exec`, the IDE extension and the desktop app are never asked.
+- Asked in the Codex TUI only, and not in full-access mode (approval `never`). `codex exec`, the IDE extension and the desktop app's own threads are never asked.
 - A TUI thread resumed by `codex exec` with an auto-review approver (`--approve-for-me`, or `approvals_reviewer = "auto_review"`) is not `bypassPermissions`: its prompt would be held with no one to see why. Not observed.
 - A Codex `/clear` or fork is a new session with no carried task: asked again on an undeclared branch.
-- A TUI thread resumed in the IDE extension or the desktop app is still held: a resume writes no new `session_meta`, so line 1 still reads `cli` and `codex-tui`, and those surfaces default to `permission_mode` `default`. They are not seen to show a block's reason. Not observed; the real run checks it.
+- A TUI thread resumed in the desktop app is held there too, and the desktop app shows the reason (observed). The IDE extension was not observed.
 
 ## Out of scope
 
 - Reading Codex's hook trust to report it in `aidd telemetry status`.
-- The IDE extension and the desktop app, until observed.
+- The IDE extension, until observed.

@@ -27,7 +27,7 @@ flowchart LR
 
 1. Install: `npm install -g @ai-driven-dev/cli`, then `aidd plugin install aidd-telemetry`. Its hooks need `node` on `PATH`.
 2. In each clone to measure: `aidd telemetry on`. With no identity set, it asks how you appear: your git name, another identifier, or anonymous. Without a terminal, answer with `--yes --as <id>` or `--yes --anonymous`.
-3. In Codex, trust the plugin's hooks once: `/hooks` in the TUI. Codex runs none it was not told to trust, and asks again when an update changes a hook's entry.
+3. In Codex, trust the plugin's hooks once with `/hooks` in the TUI. Codex runs none it was not told to trust, and asks again when an update changes a hook's entry. The desktop app offers no review of its own: it runs the hooks once they are trusted from the TUI.
 4. Work. While the branch has no task, Claude Code and the Codex TUI hold each prompt and ask for one: send `aidd telemetry task <name> [--ticket <ref>]` (or `--none`) as your next prompt, or run it in a terminal. Once declared, the branch is never asked again, unless a copy or rename onto it changes its keys. A declaration belongs to the branch it was made on: a branch copied or renamed with `git branch -c` or `-m` is asked again, unless the declaration was written by cli-v5.5.0 or earlier (see the usage contract's limits).
 5. Read: `aidd telemetry report --axis task`.
 
@@ -38,8 +38,8 @@ flowchart LR
 | Claude Code, terminal and desktop app | yes |
 | Claude Code, an IDE extension or the SDK | no |
 | Codex TUI | yes, unless in full-access mode (approval `never`) |
-| `codex exec`, and the Codex IDE extension and desktop app on threads of their own | no |
-| a Codex TUI thread resumed in the IDE extension or desktop app | possibly: the thread keeps its TUI origin, and those surfaces are not seen to show why a prompt was held |
+| `codex exec`, and the Codex IDE extension and desktop app on their own threads (`originator` is not `codex-tui`) | no |
+| a Codex TUI thread resumed in the desktop app | yes, and the desktop app shows the reason; the IDE extension was not observed |
 
 Where nobody is asked, a call takes its task from its branch's declaration, so declare the branch with `aidd telemetry task` in a terminal. A Codex `/clear` or fork starts a new session, which is asked again on an undeclared branch; Claude Code keeps the task across both. The usage contract lists the rest.
 
