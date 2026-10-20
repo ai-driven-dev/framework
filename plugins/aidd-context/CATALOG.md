@@ -76,8 +76,6 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `actions` | [02-write.md](skills/02-project-memory/actions/02-write.md) | - |
 | `actions` | [03-check.md](skills/02-project-memory/actions/03-check.md) | - |
 | `actions` | [04-sync.md](skills/02-project-memory/actions/04-sync.md) | - |
-| `actions` | [05-verify-connection.md](skills/02-project-memory/actions/05-verify-connection.md) | - |
-| `assets` | [connection-report.md](skills/02-project-memory/assets/connection-report.md) | - |
 | `assets` | [report.md](skills/02-project-memory/assets/report.md) | - |
 | `assets` | [scan-summary.md](skills/02-project-memory/assets/scan-summary.md) | - |
 | `references` | [capability-signals.md](skills/02-project-memory/references/capability-signals.md) | - |
@@ -88,7 +86,7 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `references` | [review-protocol.md](skills/02-project-memory/references/review-protocol.md) | - |
 | `references` | [structure.md](skills/02-project-memory/references/structure.md) | - |
 | `references` | [tools.md](skills/02-project-memory/references/tools.md) | - |
-| `-` | [SKILL.md](skills/02-project-memory/SKILL.md) | `Build project memory and wire it into AI tools. Use when the user wants to set up or refresh memory, rewire it, or verify the assistant's service connections. Not for editing one existing memory file.` |
+| `-` | [SKILL.md](skills/02-project-memory/SKILL.md) | `Build the project's memory of its architecture, conventions, and decisions, and wire it into your AI tools. Use when the user wants to set up or refresh project memory, or rewire it into a tool. Not for editing one existing memory file.` |
 
 #### `skills/03-context-generate`
 
