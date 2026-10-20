@@ -47,7 +47,7 @@ describe("explicit agent models", () => {
     ["copilot", "anthropic", { model: "claude-haiku-5.5", reasoningEffort: "medium" }],
     ["opencode", "openai", { model: "openai/gpt-6-luna#medium" }],
     ["opencode", "anthropic", { model: "anthropic/claude-haiku-5-5#medium" }],
-    ["opencode", "mistral", { model: "mistral/mistral-small-2603#high" }],
+    ["opencode", "mistral", { model: "mistral/mistral-small-latest#high" }],
     ["cursor", "anthropic", { model: "claude-haiku-5-5[effort=medium]" }],
   ] as const)("serializes %s with the selected %s provider", (host, provider, expected) => {
     for (const role of ["explorer", "executor", "validator"])
@@ -55,14 +55,9 @@ describe("explicit agent models", () => {
   });
 
   it.each([
-    ["claude", "anthropic", { model: "claude-opus-5-5", effort: "medium" }],
     ["codex", "openai", { model: "gpt-6.1-sol", model_reasoning_effort: "medium" }],
     ["copilot", "openai", { model: "gpt-6.1-sol", reasoningEffort: "medium" }],
-    ["copilot", "anthropic", { model: "claude-opus-5.5", reasoningEffort: "medium" }],
     ["opencode", "openai", { model: "openai/gpt-6.1-sol#medium" }],
-    ["opencode", "anthropic", { model: "anthropic/claude-opus-5-5#medium" }],
-    ["opencode", "mistral", { model: "mistral/mistral-large-4#high" }],
-    ["cursor", "anthropic", { model: "claude-opus-5-5[effort=medium]" }],
   ] as const)(
     "shares model and effort between main and review on %s / %s",
     (host, provider, expected) => {
@@ -70,6 +65,41 @@ describe("explicit agent models", () => {
         expect(agentModelOptions(host, provider, role)).toStrictEqual(expected);
     }
   );
+
+  it.each([
+    [
+      "claude",
+      { model: "claude-opus-5-5", effort: "medium" },
+      { model: "claude-sonnet-5-5", effort: "medium" },
+    ],
+    [
+      "copilot",
+      { model: "claude-opus-5.5", reasoningEffort: "medium" },
+      { model: "claude-sonnet-5.5", reasoningEffort: "medium" },
+    ],
+    [
+      "opencode",
+      { model: "anthropic/claude-opus-5-5#medium" },
+      { model: "anthropic/claude-sonnet-5-5#medium" },
+    ],
+    [
+      "cursor",
+      { model: "claude-opus-5-5[effort=medium]" },
+      { model: "claude-sonnet-5-5[effort=medium]" },
+    ],
+  ] as const)("runs Anthropic's main on Opus and review on Sonnet on %s", (host, main, review) => {
+    expect(agentModelOptions(host, "anthropic", "main")).toStrictEqual(main);
+    expect(agentModelOptions(host, "anthropic", "reviewer")).toStrictEqual(review);
+  });
+
+  it("gives Mistral a larger main model than its reviewer on opencode", () => {
+    expect(agentModelOptions("opencode", "mistral", "main")).toStrictEqual({
+      model: "mistral/mistral-large-4#high",
+    });
+    expect(agentModelOptions("opencode", "mistral", "reviewer")).toStrictEqual({
+      model: "mistral/mistral-medium-latest#high",
+    });
+  });
 
   it.each(["unknown", "constructor", "__proto__", ""])("rejects unconfigured role %s", (role) => {
     expect(() => agentModelOptions("codex", "openai", role)).toThrow(/role.*not configured/);

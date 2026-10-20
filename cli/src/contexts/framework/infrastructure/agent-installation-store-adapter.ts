@@ -10,6 +10,8 @@ import {
   AGENT_INSTALLATIONS_PATH,
   type AgentInstallationStore,
   type AgentInstallations,
+  MAIN_MODEL_INSTALLATIONS_PATH,
+  type MainModelInstallations,
 } from "../domain/ports/agent-installation-store.js";
 
 export class AgentInstallationStoreAdapter implements AgentInstallationStore {
@@ -90,5 +92,43 @@ export class AgentInstallationStoreAdapter implements AgentInstallationStore {
       ])
     );
     await this.fs.writeFile(path, `${JSON.stringify(data, null, 2)}\n`);
+  }
+
+  async loadMainModels(projectRoot: string): Promise<MainModelInstallations> {
+    const path = join(projectRoot, MAIN_MODEL_INSTALLATIONS_PATH);
+    if (!(await this.fs.fileExists(path, false))) return {};
+    const parsed: unknown = JSON.parse(await this.fs.readFile(path));
+    const invalid = new Error(`Invalid main model ownership file: ${path}`);
+    if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) throw invalid;
+    const installations: MainModelInstallations = {};
+    const strings = (value: unknown, nullable = false) =>
+      typeof value === "object" &&
+      value !== null &&
+      Object.values(value).every(
+        (entry) => typeof entry === "string" || (nullable && entry === null)
+      );
+    for (const [host, record] of Object.entries(parsed)) {
+      if (
+        !isAgentHost(host) ||
+        !strings(record?.written) ||
+        !strings(record?.previous, true) ||
+        typeof record?.created !== "boolean"
+      )
+        throw invalid;
+      installations[host] = record;
+    }
+    return installations;
+  }
+
+  async saveMainModels(projectRoot: string, installations: MainModelInstallations): Promise<void> {
+    const path = join(projectRoot, MAIN_MODEL_INSTALLATIONS_PATH);
+    if (Object.keys(installations).length > 0) {
+      await this.fs.writeFile(path, `${JSON.stringify(installations, null, 2)}\n`);
+      return;
+    }
+    if (!(await this.fs.fileExists(path, false))) return;
+    await this.fs.deleteFile(path);
+    if (await this.fs.fileExists(path))
+      throw new Error(`Could not remove main model ownership file: ${path}`);
   }
 }

@@ -13,6 +13,7 @@ const PUBLIC_MODULES: Readonly<Record<string, readonly string[]>> = {
     "src/contexts/tools/domain/contracts.ts",
     "src/contexts/tools/domain/capabilities/agents-capability.ts",
     "src/contexts/tools/domain/formats/agent-models.ts",
+    "src/contexts/tools/domain/formats/main-model-config.ts",
     "src/contexts/tools/domain/registry.ts",
     "src/contexts/tools/domain/build-contract.ts",
     // co-owned configuration (settings.json, .mcp.json et al.)

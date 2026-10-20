@@ -59,6 +59,8 @@ export const opencode: AiTool<
       toolSuffix: TOOL_SUFFIX,
       format: "markdown",
       convertFrontmatter: (fm) => ({ description: fm.description, mode: "subagent" }),
+      userDirectory: (home, env) =>
+        join(env("XDG_CONFIG_HOME") || join(home, ".config"), "opencode"),
     }),
     skills: new SkillsCapability({
       directory: DIRECTORY,

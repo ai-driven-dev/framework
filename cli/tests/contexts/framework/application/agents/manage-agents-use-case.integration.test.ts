@@ -1,6 +1,6 @@
 import { mkdir, mkdtemp, readFile, readlink, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ManageAgentsUseCase } from "../../../../../src/contexts/framework/application/agents/manage-agents-use-case.js";
 import { AgentInstallationStoreAdapter } from "../../../../../src/contexts/framework/infrastructure/agent-installation-store-adapter.js";
@@ -29,6 +29,96 @@ describe("ManageAgentsUseCase", () => {
   afterEach(async () => {
     vi.restoreAllMocks();
     await rm(root, { recursive: true, force: true });
+  });
+
+  it("sets the main model on install and reverts only unchanged values on removal", async () => {
+    const config = join(root, ".codex/config.toml");
+    await mkdir(join(root, ".codex"), { recursive: true });
+    await writeFile(config, '# mine\napproval_policy = "never"\n');
+    await manager.install({ projectRoot: root, host: "codex", provider: "openai" });
+    expect(await readFile(config, "utf8")).toBe('# mine\napproval_policy = "never"\n');
+    await manager.install({ projectRoot: root, host: "codex", provider: "openai", main: true });
+    expect(await readFile(config, "utf8")).toBe(
+      'model = "gpt-6.1-sol"\nmodel_reasoning_effort = "medium"\n# mine\napproval_policy = "never"\n'
+    );
+    await writeFile(config, (await readFile(config, "utf8")).replace('"medium"', '"high"'));
+    await manager.remove({ projectRoot: root, host: "codex" });
+    expect(await readFile(config, "utf8")).toBe(
+      'model_reasoning_effort = "high"\n# mine\napproval_policy = "never"\n'
+    );
+    await expect(readFile(join(root, ".aidd/main-model.json"))).rejects.toMatchObject({
+      code: "ENOENT",
+    });
+  });
+
+  it("deletes a settings file it created once removeAll reverts it", async () => {
+    await manager.install({ projectRoot: root, host: "opencode", provider: "mistral", main: true });
+    expect(JSON.parse(await readFile(join(root, "opencode.json"), "utf8"))).toStrictEqual({
+      model: "mistral/mistral-large-4",
+    });
+    await manager.removeAll(root);
+    await expect(readFile(join(root, "opencode.json"))).rejects.toMatchObject({ code: "ENOENT" });
+  });
+
+  it("installs user-level agents and restores the main model on removal", async () => {
+    const home = join(root, "home");
+    const userRoot = {
+      home,
+      env: (name: string) => (name === "CODEX_HOME" ? join(home, "codex-home") : undefined),
+      configDir: join(home, ".config/aidd"),
+    };
+    const settings = join(home, "codex-home/config.toml");
+    await mkdir(dirname(settings), { recursive: true });
+    await writeFile(settings, 'model = "mine"\n');
+    const user = manager;
+    const target = { projectRoot: root, host: "codex", user: userRoot } as const;
+    expect(await user.install({ ...target, provider: "openai", main: true })).toBe(2);
+    expect(
+      await readFile(join(home, "codex-home/agents/aidd-dev-explorer.toml"), "utf8")
+    ).toContain("Explore");
+    expect(await readFile(settings, "utf8")).toBe(
+      'model_reasoning_effort = "medium"\nmodel = "gpt-6.1-sol"\n'
+    );
+    await expect(readFile(join(root, ".aidd/agents.json"))).rejects.toMatchObject({
+      code: "ENOENT",
+    });
+    expect(await user.remove(target)).toBe(2);
+    expect(await readFile(settings, "utf8")).toBe('model = "mine"\n');
+  });
+
+  it("removes an unmodified agent whose role is no longer bundled", async () => {
+    await manager.install({ projectRoot: root, host: "codex", provider: "openai" });
+    const { "aidd-dev-reviewer": _, ...remaining } = sources;
+    const next = new ManageAgentsUseCase(fs, store, new HasherAdapter(), remaining);
+    await next.install({ projectRoot: root, host: "codex", provider: "openai" });
+    await expect(
+      readFile(join(root, ".codex/agents/aidd-dev-reviewer.toml"))
+    ).rejects.toMatchObject({ code: "ENOENT" });
+    expect(
+      Object.keys(JSON.parse(await readFile(join(root, ".aidd/agents.json"), "utf8")).codex)
+    ).toEqual(["aidd-dev-explorer"]);
+  });
+
+  it("restores files and both registries when the main model registry cannot be saved", async () => {
+    await manager.install({ projectRoot: root, host: "opencode", provider: "openai" });
+    const ledger = await readFile(join(root, ".aidd/agents.json"), "utf8");
+    vi.spyOn(store, "saveMainModels").mockRejectedValueOnce(new Error("registry refused"));
+    await expect(
+      manager.install({ projectRoot: root, host: "opencode", provider: "anthropic", main: true })
+    ).rejects.toThrow("registry refused");
+    expect(await readFile(join(root, ".aidd/agents.json"), "utf8")).toBe(ledger);
+    await expect(readFile(join(root, "opencode.json"))).rejects.toMatchObject({ code: "ENOENT" });
+    expect(await readFile(join(root, ".opencode/agents/aidd-dev-explorer.md"), "utf8")).toContain(
+      "openai/"
+    );
+  });
+
+  it("refuses to bypass an existing opencode.jsonc", async () => {
+    await writeFile(join(root, "opencode.jsonc"), "// mine\n{}\n");
+    await expect(
+      manager.install({ projectRoot: root, host: "opencode", provider: "mistral", main: true })
+    ).rejects.toThrow(/opencode\.jsonc/);
+    await expect(readFile(join(root, "opencode.json"))).rejects.toMatchObject({ code: "ENOENT" });
   });
 
   it("rolls back a new installation when ownership cannot be saved, then allows retry", async () => {
@@ -187,7 +277,7 @@ describe("ManageAgentsUseCase", () => {
       "anthropic/claude-haiku-5-5#medium"
     );
     expect(await readFile(join(root, ".opencode/agents/aidd-dev-reviewer.md"), "utf8")).toContain(
-      "anthropic/claude-opus-5-5#medium"
+      "anthropic/claude-sonnet-5-5#medium"
     );
     await writeFile(join(root, ".opencode/agents/aidd-dev-reviewer.md"), "personal edit");
     await expect(

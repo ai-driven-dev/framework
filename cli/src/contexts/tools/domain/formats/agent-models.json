@@ -1,6 +1,6 @@
 {
   "roles": {
-    "main": "standard",
+    "main": "main",
     "explorer": "light",
     "executor": "light",
     "validator": "light",
@@ -8,6 +8,10 @@
   },
   "providers": {
     "openai": {
+      "main": {
+        "model": "gpt-6.1-sol",
+        "effort": "medium"
+      },
       "standard": {
         "model": "gpt-6.1-sol",
         "effort": "medium"
@@ -18,11 +22,18 @@
       }
     },
     "anthropic": {
-      "standard": {
+      "main": {
         "model": "claude-opus-5-5",
         "effort": "medium",
         "nativeModels": {
           "copilot": "claude-opus-5.5"
+        }
+      },
+      "standard": {
+        "model": "claude-sonnet-5-5",
+        "effort": "medium",
+        "nativeModels": {
+          "copilot": "claude-sonnet-5.5"
         }
       },
       "light": {
@@ -34,12 +45,16 @@
       }
     },
     "mistral": {
-      "standard": {
+      "main": {
         "model": "mistral-large-4",
         "effort": "high"
       },
+      "standard": {
+        "model": "mistral-medium-latest",
+        "effort": "high"
+      },
       "light": {
-        "model": "mistral-small-2603",
+        "model": "mistral-small-latest",
         "effort": "high"
       }
     }
@@ -48,11 +63,23 @@
     "claude": {
       "ide": "claude-code",
       "providers": ["anthropic"],
-      "effortField": "effort"
+      "effortField": "effort",
+      "mainSettings": {
+        "path": ".claude/settings.json",
+        "userPath": "settings.json",
+        "format": "json",
+        "effortKey": "effortLevel"
+      }
     },
     "codex": {
       "providers": ["openai"],
-      "effortField": "model_reasoning_effort"
+      "effortField": "model_reasoning_effort",
+      "mainSettings": {
+        "path": ".codex/config.toml",
+        "userPath": "config.toml",
+        "format": "toml",
+        "effortKey": "model_reasoning_effort"
+      }
     },
     "copilot": {
       "providers": ["openai", "anthropic"],
@@ -62,7 +89,13 @@
       "providers": ["openai", "anthropic", "mistral"],
       "effortPrefix": "#",
       "effortSuffix": "",
-      "providerPrefix": true
+      "providerPrefix": true,
+      "mainSettings": {
+        "path": "opencode.json",
+        "userPath": "opencode.json",
+        "format": "json",
+        "alternatives": ["opencode.jsonc"]
+      }
     },
     "cursor": {
       "providers": ["anthropic"],

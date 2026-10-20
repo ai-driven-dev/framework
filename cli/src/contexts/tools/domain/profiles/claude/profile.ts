@@ -49,6 +49,7 @@ export const claude: AiTool<HasAgents & HasSkills & HasCommands & HasRules & Has
         toolSuffix: TOOL_SUFFIX,
         format: "markdown",
         effortField: "effort",
+        userDirectory: (home, env) => env("CLAUDE_CONFIG_DIR") || join(home, ".claude"),
       }),
       skills: new SkillsCapability({
         directory: DIRECTORY,

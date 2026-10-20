@@ -4,9 +4,13 @@ import { agentIdeNames } from "../../../src/contexts/tools/domain/formats/agent-
 
 const install = vi.fn();
 const remove = vi.fn();
+const USER_ROOT = { home: "/home", env: () => undefined, configDir: "/home/.config/aidd" };
 
 vi.mock("../../../src/runtime/wiring/framework.js", () => ({
-  createDeps: vi.fn(async () => ({ manageAgentsUseCase: { install, remove } })),
+  createDeps: vi.fn(async () => ({
+    manageAgentsUseCase: { install, remove },
+    userAgentRoot: USER_ROOT,
+  })),
 }));
 
 const { createDeps } = await import("../../../src/runtime/wiring/framework.js");
@@ -62,15 +66,44 @@ describe("explicit agent command routing", () => {
     expect(await run("agents", "install", "--ide", ide, "--provider", provider)).toBe(
       `4 agent files installed for ${ide}.\n`
     );
-    expect(install).toHaveBeenCalledExactlyOnceWith({ projectRoot: process.cwd(), host, provider });
+    expect(install).toHaveBeenCalledExactlyOnceWith({
+      projectRoot: process.cwd(),
+      host,
+      provider,
+      main: false,
+    });
     expect(remove).not.toHaveBeenCalled();
+  });
+
+  it("opts in to the main session model only with --main", async () => {
+    await run("agents", "install", "--ide", "codex", "--provider", "openai", "--main");
+    expect(install).toHaveBeenCalledExactlyOnceWith({
+      projectRoot: process.cwd(),
+      host: "codex",
+      provider: "openai",
+      main: true,
+    });
+  });
+
+  it("targets the IDE's user configuration with --scope user", async () => {
+    await run("agents", "install", "--ide", "codex", "--provider", "openai", "--scope", "user");
+    expect(install).toHaveBeenCalledExactlyOnceWith({
+      projectRoot: process.cwd(),
+      host: "codex",
+      user: USER_ROOT,
+      provider: "openai",
+      main: false,
+    });
   });
 
   it("removes only the selected IDE's agents without selecting a provider", async () => {
     expect(await run("agents", "remove", "--ide", "codex")).toBe(
       "2 agent files removed for codex.\n"
     );
-    expect(remove).toHaveBeenCalledExactlyOnceWith({ projectRoot: process.cwd(), host: "codex" });
+    expect(remove).toHaveBeenCalledExactlyOnceWith({
+      projectRoot: process.cwd(),
+      host: "codex",
+    });
     expect(install).not.toHaveBeenCalled();
   });
 

@@ -35,12 +35,12 @@ export function resolveAgentHost(ide: string): AgentHost {
   return host;
 }
 
-/** Native fields for a configured role on the selected host and provider. */
-export function agentModelOptions(
+/** The host's native model id and the effort for a configured role. */
+export function agentModel(
   host: AgentHost,
   provider: AgentProvider,
   role: string
-): Record<string, unknown> {
+): { model: string; effort: string } {
   const target = models.hosts[host];
   if (!target.providers.includes(provider)) {
     throw new Error(`Provider "${provider}" is not supported by "${host}".`);
@@ -53,8 +53,19 @@ export function agentModelOptions(
   if (source === undefined)
     throw new Error(`Agent profile "${profile}" is not configured for "${provider}".`);
   const nativeModel = source.nativeModels?.[host] ?? source.model;
-  const model = `${"providerPrefix" in target && target.providerPrefix ? `${provider}/` : ""}${nativeModel}`;
+  const prefix = "providerPrefix" in target && target.providerPrefix ? `${provider}/` : "";
+  return { model: `${prefix}${nativeModel}`, effort: source.effort };
+}
+
+/** Native fields for a configured role on the selected host and provider. */
+export function agentModelOptions(
+  host: AgentHost,
+  provider: AgentProvider,
+  role: string
+): Record<string, unknown> {
+  const target = models.hosts[host];
+  const { model, effort } = agentModel(host, provider, role);
   return "effortField" in target
-    ? { model, [target.effortField]: source.effort }
-    : { model: `${model}${target.effortPrefix}${source.effort}${target.effortSuffix}` };
+    ? { model, [target.effortField]: effort }
+    : { model: `${model}${target.effortPrefix}${effort}${target.effortSuffix}` };
 }

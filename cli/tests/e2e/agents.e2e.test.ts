@@ -14,7 +14,7 @@ const cases = [
     ".claude",
     ".md",
     { model: "claude-haiku-5-5", effort: "medium" },
-    { model: "claude-opus-5-5", effort: "medium" },
+    { model: "claude-sonnet-5-5", effort: "medium" },
   ],
   [
     "codex",
@@ -38,7 +38,7 @@ const cases = [
     ".github",
     ".agent.md",
     { model: "claude-haiku-5.5", reasoningEffort: "medium" },
-    { model: "claude-opus-5.5", reasoningEffort: "medium" },
+    { model: "claude-sonnet-5.5", reasoningEffort: "medium" },
   ],
   [
     "opencode",
@@ -54,15 +54,15 @@ const cases = [
     ".opencode",
     ".md",
     { model: "anthropic/claude-haiku-5-5#medium" },
-    { model: "anthropic/claude-opus-5-5#medium" },
+    { model: "anthropic/claude-sonnet-5-5#medium" },
   ],
   [
     "opencode",
     "mistral",
     ".opencode",
     ".md",
-    { model: "mistral/mistral-small-2603#high" },
-    { model: "mistral/mistral-large-4#high" },
+    { model: "mistral/mistral-small-latest#high" },
+    { model: "mistral/mistral-medium-latest#high" },
   ],
   [
     "cursor",
@@ -70,7 +70,7 @@ const cases = [
     ".cursor",
     ".md",
     { model: "claude-haiku-5-5[effort=medium]" },
-    { model: "claude-opus-5-5[effort=medium]" },
+    { model: "claude-sonnet-5-5[effort=medium]" },
   ],
 ] as const;
 
@@ -200,7 +200,9 @@ describe.concurrent("explicit native agent installation", () => {
       for (const role of roles) {
         const content = await readFile(join(directory, `aidd-dev-${role}.md`), "utf8");
         expect(parseFrontmatter(content).frontmatter.model).toBe(
-          role === "reviewer" ? "mistral/mistral-large-4#high" : "mistral/mistral-small-2603#high"
+          role === "reviewer"
+            ? "mistral/mistral-medium-latest#high"
+            : "mistral/mistral-small-latest#high"
         );
       }
       const removed = await runCli(

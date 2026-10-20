@@ -7,17 +7,17 @@
   {
     "invocation": "aidd agents",
     "exitCode": 0,
-    "help": "Usage: aidd agents [options] [command]\n\nOpt in to native specialist agents for this project\n\nOptions:\n  -h, --help         display help for command\n\nCommands:\n  install [options]  Install agents with the selected provider's model and\n                     effort\n  remove [options]   Remove unmodified AIDD agents from this project\n  help [command]     display help for command"
+    "help": "Usage: aidd agents [options] [command]\n\nOpt in to native specialist agents for this project\n\nOptions:\n  -h, --help         display help for command\n\nCommands:\n  install [options]  Install agents with the selected provider's model and\n                     effort\n  remove [options]   Remove unmodified AIDD agents and restore the main model\n                     they replaced\n  help [command]     display help for command"
   },
   {
     "invocation": "aidd agents install",
     "exitCode": 0,
-    "help": "Usage: aidd agents install [options]\n\nInstall agents with the selected provider's model and effort\n\nOptions:\n  --provider <provider>  openai, anthropic, mistral\n  --ide <ide>            claude-code, codex, copilot, opencode, cursor\n  -h, --help             display help for command"
+    "help": "Usage: aidd agents install [options]\n\nInstall agents with the selected provider's model and effort\n\nOptions:\n  --provider <provider>  openai, anthropic, mistral\n  --ide <ide>            claude-code, codex, copilot, opencode, cursor\n  --main                 also set the provider's main session model in the IDE's\n                         settings\n  --scope <scope>        project (default) or user, the IDE's user configuration\n                         directory\n  -h, --help             display help for command"
   },
   {
     "invocation": "aidd agents remove",
     "exitCode": 0,
-    "help": "Usage: aidd agents remove [options]\n\nRemove unmodified AIDD agents from this project\n\nOptions:\n  --ide <ide>  claude-code, codex, copilot, opencode, cursor\n  -h, --help   display help for command"
+    "help": "Usage: aidd agents remove [options]\n\nRemove unmodified AIDD agents and restore the main model they replaced\n\nOptions:\n  --ide <ide>      claude-code, codex, copilot, opencode, cursor\n  --scope <scope>  project (default) or user, the IDE's user configuration\n                   directory\n  -h, --help       display help for command"
   },
   {
     "invocation": "aidd auth",

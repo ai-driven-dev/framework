@@ -47,6 +47,8 @@ const pkg = JSON.parse(readFileSync(resolve(root, "package.json"), "utf8"));
 // with next ae8705f7; 1.1% headroom. The branch alone measured 694.7 KB.
 // 715 KB: 706.36 KB, #1027 merge 49e5cae4 with next 7084a88c after agent lifecycle fixes;
 // next's telemetry filtering adds 8,839 bytes over the 697.73 KB branch; 1.2% headroom.
+// 726 KB: 717.3 KB, #1027 main-session model per provider written into host settings, with
+// ownership-checked removal (+6.9 KB over the 710.4 KB branch); 1.2% headroom.
 const budgetKB = pkg.bundleBudgetKB ?? 500;
 const budgetBytes = budgetKB * 1024;
 

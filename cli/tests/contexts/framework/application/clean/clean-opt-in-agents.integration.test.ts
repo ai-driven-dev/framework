@@ -113,7 +113,7 @@ describe("clean includes opt-in agents", () => {
     await Promise.all([cleaning, installing]);
     expect(await manager.preview(root)).toEqual([{ toolId: "opencode", fileCount: 1 }]);
     expect(await readFile(join(root, ".opencode/agents/aidd-dev-explorer.md"), "utf8")).toContain(
-      "mistral/mistral-small-2603#high"
+      "mistral/mistral-small-latest#high"
     );
     await expect(access(join(root, ".codex/agents/aidd-dev-explorer.toml"))).rejects.toThrow();
     await expect(access(join(root, ".aidd/agents.json.lock"))).rejects.toThrow();

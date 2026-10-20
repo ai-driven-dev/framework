@@ -1,4 +1,5 @@
 import { parseFrontmatter, serializeFrontmatter } from "../../../../kernel/markdown.js";
+import type { EnvironmentReader } from "./plugins-capability.js";
 
 function agentNameFromFrontmatter(
   fm: Record<string, unknown>,
@@ -58,6 +59,8 @@ export class AgentsCapability {
       format: "markdown" | "toml";
       effortField?: string;
       userFileExt?: string;
+      /** The IDE's user configuration directory, holding `agents/` and the main settings file. */
+      userDirectory?: (home: string, env: EnvironmentReader) => string;
       buildInstallPath?: (fileName: string) => string | null;
       convertFrontmatter?: (
         fm: Record<string, unknown>,
