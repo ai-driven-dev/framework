@@ -40,9 +40,9 @@ flowchart TD
   Plan --> PlanArtifact
   PlanArtifact -- "Whole plan, or ready independent phases." --> Executor
   Executor -- "Assigned plan or phase." --> Implement
-  Implement -- "Whole plan finalized." --> Commit
-  Implement -- "Assigned phase returned." --> Assert
-  Assert --> Integrate
+  Implement --> Assert
+  Assert -- "Whole plan finalized." --> Commit
+  Assert -- "Assigned phase returned." --> Integrate
   Integrate -- "More ready phases." --> Executor
   Integrate --> Finalize
   Finalize -- "Validation or journey failed; repair affected phase." --> Executor

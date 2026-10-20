@@ -28,13 +28,12 @@
 - **Don't guess** APIs, signatures, flags, or behavior - read the source or docs to confirm before relying on them.
 - **Ambiguous or expensive task:** ask one sharp question to pin down scope before building, rather than guess.
 - **Batch independent operations** in one pass, not one at a time.
-- **Fan out** independent subtasks to parallel subagents when you own the overall flow and the work is genuinely parallel.
 - **Before adding any instruction, finding, or rule, check whether an existing one already covers or contradicts it.** If so, don't add a parallel: delete it, merge it into the stronger one, or rewrite with explicit scope and priority.
 - **Name by intention, not mechanism:** describe the goal or responsibility, not the tool or file format.
 
 ## Agents
 
-Use available host agents by responsibility when useful; custom agents are optional. The caller owns scope, delegation, and final acceptance.
+When you own the overall flow, fan out genuinely parallel subtasks to available host agents by responsibility; custom agents are optional. The caller owns scope, delegation, and final acceptance.
 
 ## Memory Management
 

@@ -31,12 +31,11 @@
 - **Verify APIs, signatures, flags, and behavior against source or docs.**
 - **Ask one sharp question when ambiguity materially changes the scope or outcome.**
 - **Batch independent operations when it saves time or context.**
-- **Fan out genuinely independent subtasks when coordination costs less than serial work.**
 - **Name by intention, scope by responsibility** ; not mechanism.
 
 ## Agents
 
-Use available host agents by responsibility when useful; custom agents are optional. The caller owns scope, delegation, and final acceptance.
+Fan out genuinely independent subtasks to available host agents by responsibility when coordination costs less than serial work; custom agents are optional. The caller owns scope, delegation, and final acceptance.
 
 ## Memory Management
 
