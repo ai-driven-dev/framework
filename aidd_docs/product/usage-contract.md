@@ -148,6 +148,7 @@ Every row a report prints can be selected, and the report it selects adds up to 
 | `--person <id>` | `person` is that value | the identity |
 | `--model <id>` | `model` is that value | a model id |
 | `--agent <agent>` | `agent` is that value | `main`, `subagent`, `advisor` |
+| `--tool <tool>` | `tool` is that value | `claude-code`, `codex` |
 | `--session <id>` | `session` is that value | a session id, or a start of one |
 | `--repository <id>` | `repository` is that value | a repository id, a start of one, or `.` |
 | `--absent <axis>` | axis has no value | `person`, `model`, `ticket` |
@@ -156,7 +157,7 @@ Every row a report prints can be selected, and the report it selects adds up to 
 - Flags combine with AND. Each takes one value; given twice, exit 1.
 - One selector per axis: `--unattributed` selects on `task` and `ticket`, so it cannot be combined with `--task`, `--ticket` or `--absent ticket`; nor can a value and `--absent` of the same axis. Exit 1.
 - A value is trimmed as a declaration is; empty once trimmed, exit 1. It is compared exactly, case included.
-- A value outside a closed set (`--agent`, `--absent`, `--unattributed`) exits 1. A value of an open set that no call has gives an empty report, exit 0.
+- A value outside a closed set (`--agent`, `--tool`, `--absent`, `--unattributed`) exits 1. A value of an open set that no call has gives an empty report, exit 0.
 - `--session` and `--repository` resolve among the values of that axis in the calls of the period: a value equal to the one typed wins, else the one value it starts. Two or more: exit 1, listing them in full, sorted. None: an empty report, and `filters` prints the value as typed.
 - `--repository .` names the repository the command runs in, by the rule ingest uses: its hosted `origin`, else its first commit. A linked worktree names its main tree's repository. Not a repository, gone, unreadable, or with neither: exit 1. It is compared in full, never as a start.
 - Order: the flags are checked, then `AIDD_TELEMETRY=0` refuses (no git is run, the envelope has no `filters`), then `.` is located, then transcripts are ingested and the ledger read, then starts are resolved. Filters apply after attribution and after the period; the window a bounded report reads is unchanged.

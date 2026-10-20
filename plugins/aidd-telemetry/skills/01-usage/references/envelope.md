@@ -15,8 +15,8 @@ A field may be added to version `2`: a figure outside `run`, a fact of the read 
 | `version` | `2`. Any other value is a shape not known here |
 | `refused` | Only present, with `version`, when measurement is refused by the environment; nothing was read |
 | `period` | `from` and `to`, UTC days, `null` for open: resolved from the flags, `--days` against today's UTC day. The figures depend on these days, not on the flags |
-| `axis` | What `rows` split by: `total`, `person`, `session`, `model`, `agent`, `day`, `repository`, `task` or `ticket` |
-| `filters` | What the report was narrowed to: `task`, `ticket`, `person`, `model`, `agent`, `session`, `repository`, `absent`, `unattributed`, in that order. `null` when not given, else the value as resolved: a full id for a start or `.`, the axis for `absent`, the reason or `any` for `unattributed` |
+| `axis` | What `rows` split by: `total`, `person`, `session`, `model`, `agent`, `day`, `repository`, `task`, `ticket` or `tool` (`claude-code` or `codex`, always set) |
+| `filters` | What the report was narrowed to: `task`, `ticket`, `person`, `model`, `agent`, `session`, `repository`, `absent`, `unattributed`, `tool`, in that order. `null` when not given, else the value as resolved: a full id for a start or `.`, the axis for `absent`, the reason or `any` for `unattributed` |
 | `rows` | One per value of the axis, of the calls the filters keep; every axis adds up to the same `totals` |
 | `totals` | The calls of the period the filters keep; `totals.total.unknown_records` is how many had at least one counter unknown |
 | `coverage` | What the figures rest on |
