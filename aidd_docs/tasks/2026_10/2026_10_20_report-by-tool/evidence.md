@@ -61,7 +61,7 @@ Only changed printed output: `filters.tool: null` in the envelope, and the `--ax
 ## Round 1 follow-up
 
 - The built binary reads Codex through `cli/tests/e2e/telemetry-journey.e2e.test.ts`: `tool` joined its `AXES` (per-axis oracle loop on the Claude Code fixture), and the Codex TUI case asserts `--axis tool` gives `[["codex", 3]]`. These passed on first run: they pin behaviour already built, so there is no red run for them.
-- `usage-report.property.unit.test.ts` now counts the records by `record.tool` and compares the tool axis rows to that count. Mutation: `axisValueOf` returning `record.agent` for `tool` made the property red (`expected Map{ 'main' => 1 } to deeply equal Map{ 'claude-code' => 1 }`); restored, green. The file runs in 846 ms and 221 ms per test, alone, against the 5 s unit timeout. The full `pnpm test` once timed out on it under load (5000 ms, with the added count), so the property now carries a 30 s timeout like the other report properties; the next full run passed.
+- `usage-report.property.unit.test.ts` now counts the records by `record.tool` and compares the tool axis rows to that count. Mutation: `axisValueOf` returning `record.agent` for `tool` made the property red (`expected Map{ 'main' => 1 } to deeply equal Map{ 'claude-code' => 1 }`); restored, green. The file runs in 846 ms and 221 ms per test, alone, against the 5 s unit timeout. The full `pnpm test` once timed out on it under load (5000 ms, with the added count), so the property now carries an explicit 30 s timeout (the unit tier defaults to 5 s); the next full run passed.
 - Plugin descriptions (`plugin.json`, `marketplace.json`, root `README.md`, `docs/CATALOG.md`) now name `tool`.
 
 ## Not exercised
