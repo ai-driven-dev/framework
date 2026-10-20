@@ -60,3 +60,6 @@ temp/
 tmp/
 setup-test/
 tmp-test/
+
+# Personal make reload agent opt-in (see scripts/reload-agents.example.json)
+scripts/reload-agents.json

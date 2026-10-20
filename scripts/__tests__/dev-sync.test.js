@@ -815,38 +815,90 @@ for (const override of ["CLAUDE_CONFIG_DIR", "CLAUDE_INSTRUCTIONS"]) {
   });
 }
 
-test("reload with a built CLI installs agents globally and keeps other agents", () => {
-  const root = mkdtempSync(join(tmpdir(), "aidd-dev-sync-global-agents-"));
-  try {
-    const fakeBin = join(root, "bin"), home = join(root, "home");
-    mkdirSync(fakeBin);
-    const source = fixture(home);
-    mkdirSync(join(source, "cli/dist"), { recursive: true });
-    writeFileSync(join(source, "cli/dist/cli.js"), String.raw`
-const { mkdirSync, writeFileSync } = require("node:fs");
+/** A built CLI and host stubs that log every call, so order and flags are observable. */
+function optInFixture(root, optIn, hosts = ["claude", "codex", "opencode"]) {
+  const fakeBin = join(root, "bin"), home = join(root, "home");
+  mkdirSync(fakeBin);
+  mkdirSync(home);
+  const source = fixture(home);
+  if (optIn !== undefined) {
+    mkdirSync(join(source, "scripts"), { recursive: true });
+    writeFileSync(join(source, "scripts/reload-agents.json"), typeof optIn === "string" ? optIn : JSON.stringify(optIn));
+  }
+  mkdirSync(join(source, "cli/dist"), { recursive: true });
+  writeFileSync(join(source, "cli/dist/cli.js"), String.raw`
+const { appendFileSync, mkdirSync, writeFileSync } = require("node:fs");
 const args = process.argv.slice(2);
-if (args[0] !== "agents") { mkdirSync(args[args.indexOf("--out") + 1] + "/.opencode/skills/aidd-dev-01-plan", { recursive: true }); writeFileSync(args[args.indexOf("--out") + 1] + "/.opencode/skills/aidd-dev-01-plan/SKILL.md", "skill\n"); process.exit(0); }
-const ide = args[args.indexOf("--ide") + 1], provider = args[args.indexOf("--provider") + 1];
-const [dir, ext] = { "claude-code": [".claude", "md"], codex: [".codex", "toml"], opencode: [".opencode", "md"] }[ide];
-mkdirSync(dir + "/agents", { recursive: true });
-writeFileSync(dir + "/agents/aidd-dev-executor." + ext, ide + " " + provider + "\n");
+if (args[0] !== "agents") {
+  const out = args[args.indexOf("--out") + 1] + "/.opencode/skills/aidd-dev-01-plan";
+  mkdirSync(out, { recursive: true });
+  writeFileSync(out + "/SKILL.md", "skill\n");
+  process.exit(0);
+}
+appendFileSync(process.env.HOME + "/calls.log", "cli " + args.join(" ") + "\n");
+if (args.includes("cursor")) { console.error("cursor has no user-level agents."); process.exit(1); }
 `);
-    for (const host of ["claude", "codex", "opencode"]) executable(join(fakeBin, host), "exit 0");
-    const dirs = { claude: ".claude/agents", codex: ".codex/agents", opencode: ".config/opencode/agents" };
-    for (const dir of Object.values(dirs)) {
-      mkdirSync(join(home, dir), { recursive: true });
-      writeFileSync(join(home, dir, "personal.md"), "keep\n");
-    }
-    writeFileSync(join(home, dirs.codex, "aidd-dev-executor.toml"), "old\n");
-    const result = runSync(fakeBin, home, [], { OPENCODE_AGENT_PROVIDER: "mistral" });
+  for (const host of hosts) executable(join(fakeBin, host), `echo "${host} $*" >> "$HOME/calls.log"`);
+  const calls = () => (existsSync(join(home, "calls.log")) ? readFileSync(join(home, "calls.log"), "utf8") : "");
+  return { fakeBin, home, calls };
+}
+
+test("reload installs opted-in user agents first, with --main only where asked", () => {
+  const root = mkdtempSync(join(tmpdir(), "aidd-dev-sync-agents-"));
+  try {
+    const { fakeBin, home, calls } = optInFixture(root, {
+      "claude-code": { provider: "anthropic", main: true },
+      codex: { provider: "openai" },
+    });
+    const result = runSync(fakeBin, home, []);
     assert.equal(result.status, 0, result.stderr);
-    assert.match(result.stdout, /global agents\s+claude-code:ok codex:ok opencode:ok/);
-    assert.equal(readFileSync(join(home, dirs.claude, "aidd-dev-executor.md"), "utf8"), "claude-code anthropic\n");
-    assert.equal(readFileSync(join(home, dirs.codex, "aidd-dev-executor.toml"), "utf8"), "codex openai\n");
-    assert.equal(readFileSync(join(home, dirs.opencode, "aidd-dev-executor.md"), "utf8"), "opencode mistral\n");
-    for (const dir of Object.values(dirs)) assert.equal(readFileSync(join(home, dir, "personal.md"), "utf8"), "keep\n");
+    assert.match(result.stdout, /global agents\s+claude-code:ok\+main codex:ok\n/);
+    const lines = calls().trim().split("\n");
+    assert.deepEqual(lines.slice(0, 2), [
+      "cli agents install --scope user --ide claude-code --provider anthropic --main",
+      "cli agents install --scope user --ide codex --provider openai",
+    ]);
+    assert.ok(lines.length > 2, "plugins still install after the agents");
   } finally { rmSync(root, { recursive: true, force: true }); }
 });
+
+test("reload without an opt-in file installs no agent", () => {
+  const root = mkdtempSync(join(tmpdir(), "aidd-dev-sync-no-opt-in-"));
+  try {
+    const { fakeBin, home, calls } = optInFixture(root);
+    const result = runSync(fakeBin, home, []);
+    assert.equal(result.status, 0, result.stderr);
+    assert.doesNotMatch(result.stdout, /global agents/);
+    assert.doesNotMatch(calls(), /cli agents/);
+  } finally { rmSync(root, { recursive: true, force: true }); }
+});
+
+test("reload names an opted-in IDE it skips", () => {
+  const root = mkdtempSync(join(tmpdir(), "aidd-dev-sync-skip-"));
+  try {
+    const { fakeBin, home, calls } = optInFixture(root, { codex: { provider: "openai" } }, ["claude"]);
+    const result = runSync(fakeBin, home, []);
+    assert.equal(result.status, 0, result.stderr);
+    assert.match(result.stdout, /global agents\s+codex:skip\(not installed\)/);
+    assert.doesNotMatch(calls(), /cli agents/);
+  } finally { rmSync(root, { recursive: true, force: true }); }
+});
+
+for (const [label, optIn, error] of [
+  ["a refused IDE", { cursor: { provider: "anthropic" } }, /cursor has no user-level agents/],
+  ["an invalid entry", { codex: { provider: "openai", main: "yes" } }, /Invalid agent opt-in file/],
+]) {
+  test(`reload stops on ${label} before changing any plugin`, () => {
+    const root = mkdtempSync(join(tmpdir(), "aidd-dev-sync-bad-opt-in-"));
+    try {
+      const { fakeBin, home, calls } = optInFixture(root, optIn);
+      const result = runSync(fakeBin, home, []);
+      assert.notEqual(result.status, 0);
+      assert.match(result.stderr, error);
+      assert.doesNotMatch(calls(), /^(claude|codex|opencode) /m);
+    } finally { rmSync(root, { recursive: true, force: true }); }
+  });
+}
 
 test("Codex reload without a built CLI leaves agents unchanged", () => {
   const root = mkdtempSync(join(tmpdir(), "aidd-dev-sync-codex-personal-"));

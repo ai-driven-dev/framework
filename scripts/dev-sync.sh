@@ -7,12 +7,9 @@
 # whose CLI is absent is skipped, and the first run needs network. A managed OpenCode host
 # exposes `aidd-opencode-reload` instead, and that helper decides which checkout may load.
 #
-# Agents: with a built local CLI, reload installs the AIDD agents globally for Claude, Codex and
-# local OpenCode, overwriting only the files that install generates; other agents stay untouched.
-# Global agent directories checked 2026-10-20:
-# https://code.claude.com/docs/en/sub-agents
-# https://developers.openai.com/codex/subagents
-# https://opencode.ai/docs/agents
+# Agents are opt-in through the gitignored scripts/reload-agents.json (or RELOAD_AGENTS; see
+# reload-agents.example.json): each listed IDE runs `aidd agents install --scope user`, adding
+# `--main` when `"main": true`. They run first, so a bad entry fails before any plugin changes.
 # Global rules: sync only the Agents section in the managed block, preserving personal
 # rules. First OpenCode sync keeps its Claude personal-rule fallback unless disabled.
 # Paths honor native home/cache overrides; explicit task paths take precedence.
@@ -43,10 +40,7 @@ CODEX_CACHE="${CODEX_CACHE:-${CODEX_HOME:-$HOME/.codex}/plugins/cache}"
 CLAUDE_CACHE="${CLAUDE_CACHE:-${CLAUDE_CODE_PLUGIN_CACHE_DIR:-${CLAUDE_CONFIG_DIR:-$HOME/.claude}/plugins}/cache}"
 OPENCODE_SKILLS="${OPENCODE_SKILLS:-${XDG_CONFIG_HOME:-$HOME/.config}/opencode/skills}"
 CURSOR_PLUGINS="${CURSOR_PLUGINS:-$HOME/.cursor/plugins/local}"
-CLAUDE_AGENTS="${CLAUDE_AGENTS:-${CLAUDE_CONFIG_DIR:-$HOME/.claude}/agents}"
-CODEX_AGENTS="${CODEX_AGENTS:-${CODEX_HOME:-$HOME/.codex}/agents}"
-OPENCODE_AGENTS="${OPENCODE_AGENTS:-${XDG_CONFIG_HOME:-$HOME/.config}/opencode/agents}"
-OPENCODE_AGENT_PROVIDER="${OPENCODE_AGENT_PROVIDER:-anthropic}"  # openai, anthropic or mistral
+RELOAD_AGENTS="${RELOAD_AGENTS:-$FW/scripts/reload-agents.json}"
 CODEX_INSTRUCTIONS="${CODEX_INSTRUCTIONS:-${CODEX_HOME:-$HOME/.codex}/AGENTS.md}"
 CLAUDE_INSTRUCTIONS="${CLAUDE_INSTRUCTIONS:-${CLAUDE_CONFIG_DIR:-$HOME/.claude}/CLAUDE.md}"
 OPENCODE_INSTRUCTIONS="${OPENCODE_INSTRUCTIONS:-${XDG_CONFIG_HOME:-$HOME/.config}/opencode/AGENTS.md}"
@@ -129,17 +123,43 @@ sync_opencode_skills() {
   done
 }
 
-install_global_agents() {
-  # Generate the project-scoped agents in a staging root, then copy exactly those files globally.
-  local ide="$1" provider="$2" native_dir="$3" destination="$4" stage file
-  local -a files
-  stage="$BUILD/agents/$ide"
-  rm -rf "$stage"; mkdir -p "$stage"
-  (cd "$stage" && node "$FW/cli/dist/cli.js" agents install --ide "$ide" --provider "$provider" >/dev/null) || return 1
-  files=("$stage/$native_dir/agents/"*)
-  [ "${#files[@]}" -gt 0 ] || { echo "no agents generated for $ide" >&2; return 1; }
-  mkdir -p "$destination"
-  for file in "${files[@]}"; do cp "$file" "$destination/"; done
+install_opted_in_agents() {
+  # The CLI owns paths, ownership and refusals; this only maps the opt-in file to its flags.
+  [ -f "$RELOAD_AGENTS" ] || return 0
+  local opted_in ide provider main have result
+  opted_in="$(node -e '
+    const file = process.argv[1];
+    const config = JSON.parse(require("node:fs").readFileSync(file, "utf8"));
+    const text = (value) => typeof value === "string" && /^[\w.-]+$/.test(value);
+    for (const [ide, entry] of Object.entries(config)) {
+      if (!text(ide) || !text(entry?.provider)) throw new Error(`${file}: ${ide} needs a provider`);
+      if (entry.main !== undefined && typeof entry.main !== "boolean")
+        throw new Error(`${file}: ${ide}.main must be true or false`);
+      console.log(`${ide}\t${entry.provider}\t${entry.main === true}`);
+    }
+  ' "$RELOAD_AGENTS")" || { echo "Invalid agent opt-in file: $RELOAD_AGENTS" >&2; return 1; }
+  [ -n "$opted_in" ] || return 0
+  printf '%-22s' "global agents"
+  if [ ! -f "$FW/cli/dist/cli.js" ]; then echo " skip (no built CLI; run make reload)"; return 0; fi
+  while IFS=$'\t' read -r ide provider main; do
+    case "$ide" in
+      claude-code) have="$HAVE_CLAUDE" ;;
+      codex) have="$HAVE_CODEX" ;;
+      opencode) have="$HAVE_OPENCODE"; [ "$HAVE_MANAGED_OPENCODE" = 0 ] || have=managed ;;
+      *) have=1 ;;  # the CLI rejects an IDE without user-level agents
+    esac
+    case "$have" in
+      0) printf ' %s:skip(not installed)' "$ide"; continue ;;
+      managed) printf ' %s:skip(managed host)' "$ide"; continue ;;
+    esac
+    local -a args=(agents install --scope user --ide "$ide" --provider "$provider")
+    [ "$main" != true ] || args+=(--main)
+    if ! result="$(node "$FW/cli/dist/cli.js" "${args[@]}" 2>&1)"; then
+      echo " $ide:FAIL"; printf '%s\n' "$result" >&2; return 1
+    fi
+    if [ "$main" = true ]; then printf ' %s:ok+main' "$ide"; else printf ' %s:ok' "$ide"; fi
+  done <<<"$opted_in"
+  echo
 }
 
 register_marketplace() {
@@ -222,6 +242,8 @@ if [ "$HAVE_CODEX" = 0 ] && [ "$HAVE_CLAUDE" = 0 ] && [ "$HAVE_OPENCODE" = 0 ] &
   echo "No supported host installation found - nothing to install."; exit 0
 fi
 
+install_opted_in_agents || exit 1
+
 targets=()
 for d in "$FW"/plugins/*/; do targets+=("$(basename "$d")"); done
 
@@ -274,25 +296,6 @@ if [ "$HAVE_CURSOR" = 1 ]; then
     cp -R "$BUILD/cursor/plugins/$t" "$CURSOR_PLUGINS/$t"
   done
   echo "plugins:ok (requires local plugin imports)"
-fi
-
-if [ -f "$FW/cli/dist/cli.js" ]; then
-  agent_hosts=()
-  [ "$HAVE_CLAUDE" = 0 ] || agent_hosts+=("claude-code anthropic .claude $CLAUDE_AGENTS")
-  [ "$HAVE_CODEX" = 0 ] || agent_hosts+=("codex openai .codex $CODEX_AGENTS")
-  if [ "$HAVE_OPENCODE" = 1 ] && [ "$HAVE_MANAGED_OPENCODE" = 0 ]; then
-    agent_hosts+=("opencode $OPENCODE_AGENT_PROVIDER .opencode $OPENCODE_AGENTS")
-  fi
-  if [ "${#agent_hosts[@]}" -gt 0 ]; then
-    printf '%-22s' "global agents"
-    for entry in "${agent_hosts[@]}"; do
-      read -r ide provider native_dir destination <<<"$entry"
-      install_global_agents "$ide" "$provider" "$native_dir" "$destination" ||
-        { echo " $ide:FAIL"; echo "Agent install failed for $ide; rerun node $FW/cli/dist/cli.js agents install --ide $ide --provider $provider in a scratch directory for details." >&2; exit 1; }
-      printf ' %s:ok' "$ide"
-    done
-    echo
-  fi
 fi
 
 instructions=()
