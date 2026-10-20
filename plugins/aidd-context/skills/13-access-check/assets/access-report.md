@@ -12,4 +12,4 @@
 | --- | --- | --- | --- | --- |
 | | | | | |
 
-✅ Read matched · ❌ Read failed · 🔌 Not configured · ⚠️ Unverified
+✅ Target read · ❌ Read failed · 🔌 Not configured · ⚠️ Unverified
