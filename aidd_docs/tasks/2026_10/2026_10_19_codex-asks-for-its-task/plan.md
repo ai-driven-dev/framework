@@ -1,5 +1,5 @@
 ---
-status: in-progress
+status: done
 ---
 
 # Plan: Codex asks for its task
