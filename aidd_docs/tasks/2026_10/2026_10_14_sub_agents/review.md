@@ -1,6 +1,6 @@
 # Review: scoped sub-agents
 
-- Rounds: 4
+- Rounds: 5
 - Started: 2026-10-15
 
 ## Round 1 · r-1fd6
