@@ -6,6 +6,8 @@ Connect CLI, MCP, API or SDK access so your AI assistant can work with your team
 
 > This gives the assistant the right repository, workspace and conventions for its work.
 
+Project memory records which services your team uses, and how, in `ecosystem.md`; `/aidd-context:02-project-memory` builds it.
+
 ## CLI, MCP, API or SDK?
 
 Reuse an existing connection that covers your task. Prefer CLI when it covers the task and follows official recommendations.
@@ -109,6 +111,16 @@ Add any other services your team uses to the relevant table. `—` means no opti
 2. Follow the linked guide for your chosen option and client; install only what is missing.
 3. Review the account, workspace and requested permissions, then authenticate; use read-only access when you only need reads.
 
+Each client documents its own MCP setup:
+
+| Client | MCP setup guide |
+| --- | --- |
+| Claude Code | [Connect Claude Code to tools via MCP](https://code.claude.com/docs/en/mcp) |
+| Codex | [Model Context Protocol](https://learn.chatgpt.com/docs/extend/mcp?surface=cli) |
+| Cursor | [Model Context Protocol (MCP)](https://cursor.com/docs/mcp) |
+| GitHub Copilot | [Extend Copilot Chat with MCP](https://docs.github.com/en/copilot/how-tos/copilot-in-your-ide/customize-copilot/extend-copilot-with-tools-and-context/extend-copilot-chat-with-mcp) |
+| OpenCode | [MCP servers](https://opencode.ai/docs/mcp-servers/) |
+
 These are setup examples, not required installations. Follow the guide for your service and client.
 
 - **CLI / GitHub**: Install `gh` from its [guide](https://github.com/cli/cli#installation), then sign in and inspect the account:
@@ -126,22 +138,29 @@ These are setup examples, not required installations. Follow the guide for your 
 
   Start a new session, run `/mcp`, select Figma, then **Authenticate**; other clients use [Figma's setup guide](https://developers.figma.com/docs/figma-mcp-server/remote-server-installation/).
 
-- **API / GitHub**: Wrap reusable API access in a skill with `/aidd-context:04-skill-generate` ([Generate Skill](https://github.com/ai-driven-dev/framework/blob/next/plugins/aidd-context/skills/04-skill-generate/SKILL.md)). With a token configured as described in the [REST API quickstart](https://docs.github.com/en/rest/quickstart), read the account:
+- **API / your team's internal service**: When a service has neither a CLI nor an MCP server, run `/aidd-context:04-skill-generate` starting from its API. Keep the token in an environment variable, never in the prompt, and read the account:
 
   ```bash
   curl --fail --silent --show-error \
-    -H "Authorization: Bearer $GITHUB_TOKEN" \
-    https://api.github.com/user
+    -H "Authorization: Bearer $INTERNAL_API_TOKEN" \
+    https://api.internal.example.com/v1/me
+  ```
+
+- **SDK / Stripe in application code**: Call the service through its [official client](https://github.com/stripe/stripe-node), the key read from the environment:
+
+  ```js
+  import Stripe from "stripe";
+
+  const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+  const customers = await stripe.customers.list({ limit: 1 });
   ```
 
 Require confirmation for writes; if your client cannot enforce it, disable write tools or use provider-enforced read-only access.
 
 ### 3) ✅ Check the connection
 
-Ask your assistant to verify project access using the [verification action](https://github.com/ai-driven-dev/framework/blob/next/plugins/aidd-context/skills/02-project-memory/actions/05-verify-connection.md) and its [report table](https://github.com/ai-driven-dev/framework/blob/next/plugins/aidd-context/skills/02-project-memory/assets/connection-report.md):
+After recording the services and their targets in project memory, run the access check. It probes each access read-only and reports what to fix:
 
-- Run this prompt after recording the services and targets in project memory:
-
-  ```text
-  Verify this project's connections against aidd_docs/memory/.
-  ```
+```text
+/aidd-context:13-access-check
+```
