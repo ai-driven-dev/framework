@@ -17,6 +17,7 @@ const ROOT = path.resolve(__dirname, "..");
 const KIT = path.join(ROOT, "aidd_docs/release-video");
 const HYPERFRAMES = "hyperframes@0.8.162";
 const INTRO = 5;
+const INTRO_WITH_HIGHLIGHTS = 6.5;
 const OUTRO = 4;
 
 const CSS = `
@@ -79,6 +80,9 @@ td { padding: 14px 14px; border-bottom: 2px solid #15153f; vertical-align: top; 
 #ver .dot { color: #5ee6a8; }
 .tagline { font-family: "JetBrains Mono", monospace; font-size: 40px; color: #a6abe0; }
 .tagline b { color: #fff; font-weight: 700; }
+.hls { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 6px; }
+.hl { font-family: "JetBrains Mono", monospace; font-size: 28px; padding: 10px 22px; border-radius: 12px; border: 2px solid #3b4c99; color: #8aa6ff; }
+.lead { font-size: 36px; line-height: 1.3; color: #a6abe0; max-width: 1500px; }
 #outro .inner { align-items: center; justify-content: center; gap: 26px; }
 .logo { width: 280px; height: 280px; border-radius: 50%; }
 #outro h2 { font-size: 150px; text-align: center; }
@@ -181,27 +185,51 @@ const scene = {
   },
 };
 
-/** Head (2.5 s), a beat per item, and a closing pause so the last thing shown can be read. */
+/** Head (2.5 s), a second to read the lead, a beat per item, and a closing pause. */
 function sceneDuration(s) {
   if (!scene[s.template]) throw new Error(`Unknown template: ${s.template}`);
-  return half(4.5 + 0.7 * scene[s.template].items(s));
+  return half(4.5 + (s.lead ? 1 : 0) + 0.7 * scene[s.template].items(s));
 }
 
 const headHtml = (s, id) =>
   `<span class="pill" id="${id}-pill">${esc(s.pill)}</span>` +
-  `<h2 id="${id}-h">${esc(s.title)}${s.accent ? ` <span class="g">${esc(s.accent)}</span>` : ""}</h2>`;
+  `<h2 id="${id}-h">${esc(s.title)}${s.accent ? ` <span class="g">${esc(s.accent)}</span>` : ""}</h2>` +
+  (s.lead ? `<p class="lead" id="${id}-lead">${esc(s.lead)}</p>` : "");
 
 /** The version is typed in by the timeline: until it starts, nothing of it is on screen. */
-function introHtml() {
+function introHtml(intro = {}) {
+  const tagline = intro.tagline ? esc(intro.tagline) : "What's new, <b>end to end.</b>";
+  const highlights = (intro.highlights ?? []).map((h) => `<span class="hl it">${esc(h)}</span>`).join("");
   return (
     `<img id="intro-logo" src="assets/logo.png" alt="" /><div class="intro-text">` +
     `<div class="intro-top"><span class="pill" id="intro-pill">AIDD Framework</span><span class="rel" id="intro-rel">NEW RELEASE</span></div>` +
     `<div id="ver"><span id="ver-t"></span><span class="dot"></span><span id="ver-n"></span></div>` +
-    `<p class="tagline" id="intro-tag">What's new, <b>end to end.</b></p></div>`
+    `<p class="tagline" id="intro-tag">${tagline}</p>` +
+    (highlights ? `<div class="hls">${highlights}</div>` : "") +
+    `</div>`
   );
 }
 
-function buildHtml(plan, { version }) {
+const musicHtml = (src, total) => {
+  const lane = {
+    version: 1,
+    lanes: [
+      {
+        target: "volume",
+        points: [
+          { t: 0, v: 0 },
+          { t: 1.5, v: 1 },
+          { t: total - 2.5, v: 1 },
+          { t: total, v: 0 },
+        ],
+      },
+    ],
+  };
+  return `<audio id="music" src="${esc(src)}" data-start="0" data-duration="${total}" data-track-index="10" data-volume="0.35" data-automation="${esc(JSON.stringify(lane))}"></audio>`;
+};
+
+function buildHtml(plan, { version, music }) {
+  const introSeconds = plan.intro?.highlights?.length ? INTRO_WITH_HIGHLIGHTS : INTRO;
   const sections = [];
   const script = [];
   let t = 0;
@@ -210,7 +238,7 @@ function buildHtml(plan, { version }) {
       `<section id="${id}" class="scene clip" data-start="${t}" data-duration="${duration}" data-track-index="0"><div class="inner">${inner}</div></section>`
     );
 
-  open("intro", INTRO, introHtml());
+  open("intro", introSeconds, introHtml(plan.intro));
   script.push(
     `enter("#intro-logo", 0.1, { y: 0, scale: 0.85, duration: 0.9 });`,
     `enter("#intro-pill", 0.4, { y: 20 });`,
@@ -222,9 +250,10 @@ function buildHtml(plan, { version }) {
       ` document.querySelector("#ver .dot").textContent = len > a.length + 1 ? "." : "";` +
       ` document.getElementById("ver-n").textContent = len > a.length + 1 ? b.slice(0, len - a.length - 1) : ""; } }, 0.8);`,
     `enter("#intro-tag", 2.0, { y: 20 });`,
-    `cut("intro", ${INTRO});`
+    `enter("#intro .hl", 2.6, { y: 16, duration: 0.5, stagger: 0.3 });`,
+    `cut("intro", ${introSeconds});`
   );
-  t += INTRO;
+  t += introSeconds;
 
   plan.scenes.forEach((s, i) => {
     const id = `s${i + 1}`;
@@ -233,6 +262,7 @@ function buildHtml(plan, { version }) {
     script.push(
       `enter("#${id}-pill", ${t} + 0.14, { y: 20 });`,
       `enter("#${id}-h", ${t} + 0.28);`,
+      ...(s.lead ? [`enter("#${id}-lead", ${t} + 0.5, { y: 20 });`] : []),
       `enter("#${id} .it", ${t} + 0.63, { y: 30, duration: 0.7, stagger: 0.3 });`,
       `enter("#${id} .row", ${t} + 1.3, { y: 14, duration: 0.5, stagger: 0.45 });`,
       ...(s.note ? [`enter("#${id} .fin", ${Math.round((t + 1.3 + 0.45 * rowElements(s) + 0.3) * 100) / 100}, { y: 10 });`] : []),
@@ -263,6 +293,7 @@ function buildHtml(plan, { version }) {
 <style>${CSS}</style></head>
 <body><div id="root" data-composition-id="main" data-start="0" data-duration="${t}" data-width="1920" data-height="1080">
 ${sections.join("\n")}
+${music ? musicHtml(music, t) : ""}
 </div>
 <script>
 const tl = gsap.timeline({ paused: true });
@@ -286,7 +317,8 @@ function writeProject(dir, plan, version) {
   );
   fs.writeFileSync(path.join(dir, "meta.json"), JSON.stringify({ id: "release-video", name: "release-video" }));
   fs.writeFileSync(path.join(dir, "hyperframes.json"), JSON.stringify({ paths: { assets: "assets" } }));
-  fs.writeFileSync(path.join(dir, "index.html"), buildHtml(plan, { version }));
+  const music = fs.existsSync(path.join(KIT, "assets/music.mp3")) ? "assets/music.mp3" : undefined;
+  fs.writeFileSync(path.join(dir, "index.html"), buildHtml(plan, { version, music }));
 }
 
 /** An account renamed or deleted since the release notes were written has no avatar: the logo

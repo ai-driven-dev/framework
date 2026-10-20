@@ -14,11 +14,12 @@ The repository at the release candidate.
 
 1. **List.** Run `node scripts/check-release-video.js`. Each surface under "Scènes manquantes" needs a scene or a skip.
 2. **Read.** Open the skill or command each surface names; take its real behavior, never a guess.
-3. **Draft.** Fill the [plan template](../assets/scenes-template.json): one scene per surface, a template from the list below, a short title, example values marked as examples.
+3. **Draft.** Fill the [plan template](../assets/scenes-template.json): one scene per surface, a template from the list below, a short title, example values marked as examples. Each scene has a `lead`: one plain sentence saying what it does for the user and why it matters. A viewer who never read the release notes must understand it from the lead alone; no internal names, no jargon.
 4. **Skip.** Move a surface to `skipped` with a reason only when a user would not notice it.
 5. **Fixes.** List the `fix:` commits since the last release tag. Group the ones a user would notice into one `bullet-grid` scene: the title says what was broken, the detail names who reported it when an issue exists. No scene when none qualifies.
 6. **Contributors.** Name who shipped the release with `gh api repos/{owner}/{repo}/compare/<last-tag>...next --jq '[.commits[].author.login] | unique'`. Drop bots. Put the logins in one `contributors` scene, last.
-7. **Check.** Rerun the script until it passes, then show the plan and fold corrections.
+7. **Intro.** Fill `intro`: a `tagline` and three or four `highlights` of a few words each, saying what the release holds. Take them from the release announcement, so the video and the message say the same thing.
+8. **Check.** Rerun the script until it passes, then show the plan and fold corrections.
 
 | Template | Fits |
 | --- | --- |
@@ -39,3 +40,5 @@ The intro and the outro, with the version and the install command, are generated
 | Invented demo value | marked as an example in the scene |
 | `fix:` commits a user would notice | one grouped scene; internal ones left out |
 | Contributor list | bots dropped; one `contributors` scene, last |
+| Scene without a lead | refused on review: a viewer could not tell what it brings |
+| Intro | tagline and highlights say what the release holds, not only its version |

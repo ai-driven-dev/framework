@@ -1,20 +1,41 @@
 {
+  "intro": {
+    "tagline": "What the release brings, in a few words.",
+    "highlights": [
+      "Short phrase",
+      "Short phrase",
+      "Short phrase"
+    ]
+  },
   "scenes": [
     {
       "template": "terminal-demo",
       "pill": "/plugin:NN-skill",
       "title": "What it does,",
       "accent": "in a few words.",
-      "surfaces": ["plugin:NN-skill"],
+      "surfaces": [
+        "plugin:NN-skill"
+      ],
       "window": {
         "label": "Claude Code · ~/acme-app",
         "rows": [
-          { "prompt": "/plugin:NN-skill a request" },
-          { "text": "an output line", "tone": "dim" }
+          {
+            "prompt": "/plugin:NN-skill a request"
+          },
+          {
+            "text": "an output line",
+            "tone": "dim"
+          }
         ]
       },
-      "note": "Example run."
+      "note": "Example run.",
+      "lead": "One plain sentence: what it does for the user, and why it matters."
     }
   ],
-  "skipped": [{ "surface": "", "reason": "" }]
+  "skipped": [
+    {
+      "surface": "",
+      "reason": ""
+    }
+  ]
 }

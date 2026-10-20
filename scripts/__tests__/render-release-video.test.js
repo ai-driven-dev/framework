@@ -160,3 +160,49 @@ test("buildHtml fails on an unknown template", () => {
 test("a contributor avatar points at a file next to the page", () => {
   assert.match(buildHtml(plan, { version: "5.13" }), /src="assets\/av-alice\.png"/);
 });
+
+test("a scene's lead says in plain words what it brings, under its title", () => {
+  const withLead = {
+    scenes: [{ ...plan.scenes[0], lead: "Ask what a task cost and get the answer." }],
+    skipped: [],
+  };
+  const html = buildHtml(withLead, { version: "5.13" });
+
+  assert.match(html, /<\/h2><p class="lead" id="s1-lead">Ask what a task cost and get the answer\.<\/p>/);
+});
+
+test("a lead gives the scene time to be read", () => {
+  const bare = plan.scenes[0];
+
+  assert.ok(sceneDuration({ ...bare, lead: "Ask what a task cost." }) > sceneDuration(bare));
+});
+
+test("the intro says what the release holds, in a few words", () => {
+  const html = buildHtml(
+    { ...plan, intro: { tagline: "Costs, batches, conflicts.", highlights: ["Token costs", "Parallel agents", "Git conflicts"] } },
+    { version: "5.13" },
+  );
+
+  assert.match(html, /<p class="tagline" id="intro-tag">Costs, batches, conflicts\.<\/p>/);
+  assert.match(html, /<span class="hl it">Token costs<\/span><span class="hl it">Parallel agents<\/span><span class="hl it">Git conflicts<\/span>/);
+});
+
+test("the intro keeps a default tagline when the plan gives none", () => {
+  assert.match(buildHtml(plan, { version: "5.13" }), /What's new, <b>end to end\.<\/b>/);
+});
+
+test("a music track plays under the whole video and fades in and out", () => {
+  const total = 5 + sum(plan.scenes) + 4;
+  const html = buildHtml(plan, { version: "5.13", music: "assets/music.mp3" });
+  const audio = /<audio[^>]*>/.exec(html)?.[0] ?? "";
+
+  assert.match(audio, /id="music"/);
+  assert.match(audio, /src="assets\/music\.mp3"/);
+  assert.match(audio, new RegExp(`data-start="0" data-duration="${total}"`));
+  assert.match(audio, /data-automation="[^"]*&quot;target&quot;:&quot;volume&quot;/);
+  assert.ok(audio.includes(`&quot;t&quot;:${total}`), "the fade ends with the video");
+});
+
+test("no music track, no audio element", () => {
+  assert.ok(!buildHtml(plan, { version: "5.13" }).includes("<audio"));
+});
