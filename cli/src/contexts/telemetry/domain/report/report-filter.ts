@@ -26,7 +26,7 @@ export type FilterAxis = (typeof FILTER_AXES)[number];
 export const UNATTRIBUTED_SELECTORS = [...UNATTRIBUTED_REASONS, "any"] as const;
 export type UnattributedSelector = (typeof UNATTRIBUTED_SELECTORS)[number];
 
-/** What a report is narrowed to, one key per flag, in the order the envelope prints them (`tool`, added last, stays last);
+/** What a report is narrowed to, one key per flag, in the order the envelope prints them;
  * `null` when the flag is not given. A call is kept when every flag given selects it. */
 export interface ReportFilters extends Readonly<Record<FilterAxis, string | null>> {
   readonly absent: AbsentAxis | null;

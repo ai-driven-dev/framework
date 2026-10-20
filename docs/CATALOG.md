@@ -112,7 +112,7 @@ Runs synchronous feature delivery, optional async issue automation, and the prod
 
 ## 📈 aidd-telemetry
 
-🧪 **Beta.** Measurement: counts the tokens of Claude Code and Codex sessions, per person, session, model, day, repository, task and ticket, and keeps everything on your machine.
+🧪 **Beta.** Measurement: counts the tokens of Claude Code and Codex sessions, per person, session, model, agent, tool, day, repository, task and ticket, and keeps everything on your machine.
 
 | Skill | Role | Actions |
 | ----- | ---- | ------- |
