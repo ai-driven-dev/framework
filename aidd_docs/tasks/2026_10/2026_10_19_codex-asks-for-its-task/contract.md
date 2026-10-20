@@ -57,7 +57,7 @@ Written into the usage contract and the plugin README; none is code.
 - Asked in the Codex TUI only, and not in full-access mode (approval `never`). `codex exec`, the IDE extension and the desktop app's own threads are never asked.
 - A TUI thread resumed by `codex exec` with an auto-review approver (`--approve-for-me`, or `approvals_reviewer = "auto_review"`) is not `bypassPermissions`: its prompt would be held with no one to see why. Not observed.
 - A Codex `/clear` or fork is a new session with no carried task: asked again on an undeclared branch.
-- A TUI thread resumed in the desktop app is held there too, and the desktop app shows the reason (observed). The IDE extension was not observed.
+- A TUI thread resumed in the desktop app or the IDE extension is held there unless approvals are off (inferred: a resume keeps the thread's first line). The desktop app shows a block's reason, observed on its own thread; the IDE extension was not observed.
 
 ## Out of scope
 

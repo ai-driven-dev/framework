@@ -25,7 +25,7 @@ Report kept outside the repository; the points used here:
 - A resumed thread keeps the originator it was created with; the originator is per process.
 - Plugin hooks receive `PLUGIN_ROOT`, `PLUGIN_DATA`, `CLAUDE_PLUGIN_ROOT`, `CLAUDE_PLUGIN_DATA`.
 
-## Real run, Codex CLI 0.163.0 TUI
+## The TUI's first line under plugins
 
 Isolated `CODEX_HOME`, the plugin installed by `aidd setup` from this branch, hooks trusted. The hooks ran, but the prompt was not asked: the session file's first line says `source: "vscode"`, `originator: "codex-tui"`, where the bare-config probe above said `source: "cli"`. With plugins installed the TUI runs through the app server, which hard-codes `SessionSource::VSCode`. `permission_mode` was `default` and `agent_id` absent. A probe hook saw no controlling terminal (`/dev/tty` gave ENXIO, the parent's tty `??`), so a terminal is no signal either.
 
