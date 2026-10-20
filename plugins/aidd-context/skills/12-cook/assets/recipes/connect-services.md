@@ -27,15 +27,18 @@ Reuse an existing connection that covers your task. Prefer CLI when it covers th
 
 For each service your project uses, choose an option that covers your task. Add another only for a need the first cannot cover.
 
-Connect fewer categories when your model is smaller: every tool definition takes context, and wrong tool selection is the most common failure as the list grows.
+What to connect, by model:
 
-| 🧠 Model size | 📦 Categories to connect | 🔌 Access |
+| Category | Light models | Standard models |
 | --- | --- | --- |
-| Small or local, such as Mistral Small 4 | Version control, plus Ticketing when work starts from tickets | CLI only, no MCP server |
-| Mid-size, such as Claude Haiku or a GPT mini model | Small tier, plus Documentation and workspace, and Browser | CLI first; MCP only where no CLI exists |
-| Large, such as Claude Opus or Gemini Pro | Every category the project uses | Any option; load MCP tools on demand when they pile up |
-
-These tiers are a starting point, not a measurement. [OpenAI advises fewer than 20 functions at a time and testing other counts](https://developers.openai.com/api/docs/guides/function-calling); [Anthropic reports wrong tool selection as the most common failure with large tool libraries](https://www.anthropic.com/engineering/advanced-tool-use). Compare the same task before and after adding a category.
+| 🔀 Version control | x | x |
+| 🎫 Ticketing | | x |
+| 📚 Documentation and workspace | | x |
+| 🌐 Browser | x | x |
+| 🎨 Design | | x |
+| 🚨 Monitoring | | x |
+| 🚀 Deployment | | x |
+| 🗄️ Database | x | x |
 
 Memory links open the AIDD templates for the corresponding files in your project's `aidd_docs/memory/`.
 
