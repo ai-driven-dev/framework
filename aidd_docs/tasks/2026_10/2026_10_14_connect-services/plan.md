@@ -1,6 +1,6 @@
 ---
 objective: "Service access verification lives in its own read-only aidd-context skill driven by project memory, 02-project-memory is back to memory only, and connect-services.md addresses the PR #1026 review."
-status: in-progress
+status: implemented
 ---
 
 # Plan: Move service access verification into `aidd-context:13-access-check`

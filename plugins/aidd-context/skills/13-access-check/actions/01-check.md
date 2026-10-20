@@ -5,7 +5,7 @@ Probe each access the project memory records for the assistant, then fill the re
 ## Input
 
 - `aidd_docs/memory/ecosystem.md`: the services and how each actor reaches them.
-- `aidd_docs/memory/vcs.md` and `aidd_docs/memory/backlog.md`, when present: the expected accounts and targets.
+- The memory file each tool's node names, such as `vcs.md` or `backlog.md`: the expected account and target.
 - Optionally, one tool name, to check that tool only.
 
 ## Output
@@ -18,7 +18,8 @@ A printed report from [access-report.md](../assets/access-report.md), or one sto
    - `aidd_docs/memory/` holds no `.md`: propose `/aidd-context:02-project-memory` to set up the memory.
    - No `ecosystem.md`: propose `/aidd-context:02-project-memory refresh` to add it.
    - No `Agent` edge in `ecosystem.md`: report that nothing is for the assistant to check.
-2. **Map.** One row per `Agent -- <mode> --> <Tool>` edge.
+2. **Map.** One row per `Agent -- <label> --> <Tool>` edge.
+   - The label is an access mode, or the command that reaches the tool, probed as `cli`.
    - `Human` and `App` edges get no row: their access is not the assistant's.
    - Take the expected account and target from the memory, never from the tool itself.
    - A tool argument keeps its rows only; an unknown tool stops with the tools the memory lists.
