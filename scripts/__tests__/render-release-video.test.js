@@ -1,7 +1,7 @@
 const assert = require("node:assert/strict");
 const test = require("node:test");
 
-const { buildHtml, sceneDuration } = require("../render-release-video.cjs");
+const { buildHtml, sceneDuration, totalDuration } = require("../render-release-video.cjs");
 
 const window = (rows) => ({ label: "Claude Code · ~/acme-app", rows });
 
@@ -205,4 +205,19 @@ test("a music track plays under the whole video and fades in and out", () => {
 
 test("no music track, no audio element", () => {
   assert.ok(!buildHtml(plan, { version: "5.13" }).includes("<audio"));
+});
+
+test("totalDuration is what the root declares, so a music track can be cut to fit", () => {
+  const withIntro = { ...plan, intro: { highlights: ["a"] } };
+
+  assert.equal(totalDuration(plan), 5 + sum(plan.scenes) + 4);
+  assert.equal(totalDuration(withIntro), 6.5 + sum(plan.scenes) + 4);
+  assert.match(buildHtml(withIntro, { version: "5.13" }), new RegExp(`data-duration="${totalDuration(withIntro)}"`));
+});
+
+test("the music stays under the picture: the fade peaks at the music level, not at full volume", () => {
+  const audio = /<audio[^>]*>/.exec(buildHtml(plan, { version: "5.13", music: "assets/music.mp3" }))[0];
+
+  assert.match(audio, /&quot;t&quot;:1\.5,&quot;v&quot;:0\.35/);
+  assert.ok(!audio.includes("&quot;v&quot;:1}"), "a point at full volume");
 });

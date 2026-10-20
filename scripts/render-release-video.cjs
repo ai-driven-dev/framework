@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * Renders the release video from `aidd_docs/release-video/scenes.json`, locally, with no AI tool
- * involved: `node scripts/render-release-video.cjs --version 5.13 [--plan <file>] [--out <file>]`.
+ * involved: `node scripts/render-release-video.cjs --version 5.13 [--plan <file>] [--music <file>] [--out <file>]`.
  *
  * Needs `npx`, a network (fonts and avatars are local, GSAP and the avatars are fetched) and
  * ffmpeg + Chrome as Hyperframes does. The renderer is pinned: a new Hyperframes release
@@ -210,6 +210,9 @@ function introHtml(intro = {}) {
   );
 }
 
+/** The fade lane sets the level itself: it is absolute, so it carries the music level too. */
+const MUSIC_LEVEL = 0.35;
+
 const musicHtml = (src, total) => {
   const lane = {
     version: 1,
@@ -218,18 +221,22 @@ const musicHtml = (src, total) => {
         target: "volume",
         points: [
           { t: 0, v: 0 },
-          { t: 1.5, v: 1 },
-          { t: total - 2.5, v: 1 },
+          { t: 1.5, v: MUSIC_LEVEL },
+          { t: total - 2.5, v: MUSIC_LEVEL },
           { t: total, v: 0 },
         ],
       },
     ],
   };
-  return `<audio id="music" src="${esc(src)}" data-start="0" data-duration="${total}" data-track-index="10" data-volume="0.35" data-automation="${esc(JSON.stringify(lane))}"></audio>`;
+  return `<audio id="music" src="${esc(src)}" data-start="0" data-duration="${total}" data-track-index="10" data-automation="${esc(JSON.stringify(lane))}"></audio>`;
 };
 
+const introSeconds = (plan) => (plan.intro?.highlights?.length ? INTRO_WITH_HIGHLIGHTS : INTRO);
+
+/** What the root declares: the length a music track is cut to. */
+const totalDuration = (plan) => introSeconds(plan) + plan.scenes.reduce((n, s) => n + sceneDuration(s), 0) + OUTRO;
+
 function buildHtml(plan, { version, music }) {
-  const introSeconds = plan.intro?.highlights?.length ? INTRO_WITH_HIGHLIGHTS : INTRO;
   const sections = [];
   const script = [];
   let t = 0;
@@ -238,7 +245,7 @@ function buildHtml(plan, { version, music }) {
       `<section id="${id}" class="scene clip" data-start="${t}" data-duration="${duration}" data-track-index="0"><div class="inner">${inner}</div></section>`
     );
 
-  open("intro", introSeconds, introHtml(plan.intro));
+  open("intro", introSeconds(plan), introHtml(plan.intro));
   script.push(
     `enter("#intro-logo", 0.1, { y: 0, scale: 0.85, duration: 0.9 });`,
     `enter("#intro-pill", 0.4, { y: 20 });`,
@@ -251,9 +258,9 @@ function buildHtml(plan, { version, music }) {
       ` document.getElementById("ver-n").textContent = len > a.length + 1 ? b.slice(0, len - a.length - 1) : ""; } }, 0.8);`,
     `enter("#intro-tag", 2.0, { y: 20 });`,
     `enter("#intro .hl", 2.6, { y: 16, duration: 0.5, stagger: 0.3 });`,
-    `cut("intro", ${introSeconds});`
+    `cut("intro", ${introSeconds(plan)});`
   );
-  t += introSeconds;
+  t += introSeconds(plan);
 
   plan.scenes.forEach((s, i) => {
     const id = `s${i + 1}`;
@@ -308,7 +315,17 @@ tl.seek(0);
 `;
 }
 
-function writeProject(dir, plan, version) {
+/** The track, looped or cut to the video's length: a track shorter than the video would fall silent. */
+function fitMusic(source, target, seconds) {
+  const cut = spawnSync(
+    "ffmpeg",
+    ["-loglevel", "error", "-y", "-stream_loop", "-1", "-i", source, "-t", String(seconds), "-c:a", "libmp3lame", "-q:a", "2", target],
+    { stdio: "inherit" }
+  );
+  if (cut.status !== 0) throw new Error(`ffmpeg could not fit the music (${cut.status})`);
+}
+
+function writeProject(dir, plan, version, musicSource) {
   fs.mkdirSync(path.join(dir, "assets"), { recursive: true });
   fs.cpSync(path.join(KIT, "assets"), path.join(dir, "assets"), { recursive: true });
   fs.writeFileSync(
@@ -317,12 +334,14 @@ function writeProject(dir, plan, version) {
   );
   fs.writeFileSync(path.join(dir, "meta.json"), JSON.stringify({ id: "release-video", name: "release-video" }));
   fs.writeFileSync(path.join(dir, "hyperframes.json"), JSON.stringify({ paths: { assets: "assets" } }));
-  const music = fs.existsSync(path.join(KIT, "assets/music.mp3")) ? "assets/music.mp3" : undefined;
+  let music;
+  if (musicSource) {
+    music = "assets/music-fit.mp3";
+    fitMusic(musicSource, path.join(dir, music), totalDuration(plan));
+  }
   fs.writeFileSync(path.join(dir, "index.html"), buildHtml(plan, { version, music }));
 }
 
-/** An account renamed or deleted since the release notes were written has no avatar: the logo
- * stands in, and the video still renders. */
 async function fetchAvatars(dir, plan) {
   const logins = plan.scenes.flatMap((s) => s.logins ?? []);
   for (const login of new Set(logins)) {
@@ -344,11 +363,13 @@ function argument(name) {
 
 async function main() {
   const version = argument("version");
-  if (!version) throw new Error("Usage: render-release-video.cjs --version <x.y> [--plan <file>] [--out <file>]");
+  if (!version) throw new Error("Usage: render-release-video.cjs --version <x.y> [--plan <file>] [--music <file>] [--out <file>]");
   const plan = JSON.parse(fs.readFileSync(path.resolve(argument("plan") ?? path.join(KIT, "scenes.json")), "utf8"));
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "release-video-"));
 
-  writeProject(dir, plan, version);
+  const kitMusic = path.join(KIT, "assets/music.mp3");
+  const musicSource = argument("music") ?? (fs.existsSync(kitMusic) ? kitMusic : undefined);
+  writeProject(dir, plan, version, musicSource);
   await fetchAvatars(dir, plan);
 
   const render = spawnSync("npx", ["--yes", HYPERFRAMES, "render", "--output", "release-video.mp4"], {
@@ -362,7 +383,7 @@ async function main() {
   console.log(`✅ ${out}`);
 }
 
-module.exports = { buildHtml, sceneDuration };
+module.exports = { buildHtml, sceneDuration, totalDuration };
 
 if (require.main === module) {
   main().catch((error) => {
