@@ -59,12 +59,13 @@ if [ "$MODE" = "all" ] || [ "$MODE" = "contributor" ]; then
     nv_major=${nv%%.*}
     nv_rest=${nv#*.}
     nv_minor=${nv_rest%%.*}
-    # The floor every package.json in this repository declares (`engines.node: ">=22.12"`),
-    # minor included: 22.0 is a Node 22 that `pnpm install` still refuses.
-    if [ "$nv_major" -gt 22 ] || { [ "$nv_major" -eq 22 ] && [ "$nv_minor" -ge 12 ]; }; then
-      ok "node v$nv (>= 22.12)"
+    # Contributor tooling (tsup 9); the published CLI has its own runtime requirement.
+    if { [ "$nv_major" -eq 22 ] && [ "$nv_minor" -ge 18 ]; } ||
+       { [ "$nv_major" -eq 24 ] && [ "$nv_minor" -ge 11 ]; } ||
+       [ "$nv_major" -ge 26 ]; then
+      ok "node v$nv (^22.18.0 || ^24.11.0 || >=26.0.0)"
     else
-      fail "node v$nv (need >= 22.12)"
+      fail "node v$nv (need ^22.18.0 || ^24.11.0 || >=26.0.0)"
     fi
   else
     fail "node not found (https://nodejs.org/)"
