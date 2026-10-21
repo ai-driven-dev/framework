@@ -61,6 +61,8 @@ export class AgentsCapability {
       userFileExt?: string;
       /** The IDE's user configuration directory, holding `agents/` and the main settings file. */
       userDirectory?: (home: string, env: EnvironmentReader) => string;
+      /** How frontmatter strings are quoted; `double` for readers that keep single quotes. */
+      quote?: "single" | "double";
       buildInstallPath?: (fileName: string) => string | null;
       convertFrontmatter?: (
         fm: Record<string, unknown>,
@@ -118,7 +120,7 @@ export class AgentsCapability {
     if (this.params.format === "toml") {
       return buildTomlContent(frontmatter, body);
     }
-    return serializeFrontmatter(frontmatter, body);
+    return serializeFrontmatter(frontmatter, body, this.params.quote);
   }
 
   deserialize(content: string): { frontmatter: Record<string, unknown>; body: string } {

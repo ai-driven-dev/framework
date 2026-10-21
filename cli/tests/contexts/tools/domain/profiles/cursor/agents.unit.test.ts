@@ -18,6 +18,21 @@ describe("cursor agents", () => {
     });
   });
 
+  describe("capabilities.agents.serialize()", () => {
+    it("double-quotes values, since Cursor keeps single quotes in the name", () => {
+      expect(
+        cursor.capabilities.agents.serialize(
+          { name: "explorer", model: "m[effort=medium]" },
+          "Body"
+        )
+      ).toBe('---\nname: "explorer"\nmodel: "m[effort=medium]"\n---\nBody');
+    });
+
+    it("declares no user directory: the Cursor CLI does not load user agents", () => {
+      expect(cursor.capabilities.agents.params.userDirectory).toBeUndefined();
+    });
+  });
+
   describe("capabilities.agents.buildInstallPath()", () => {
     it("keeps .md extension for agents", () => {
       const path = cursor.capabilities.agents.buildInstallPath("code-reviewer.md");

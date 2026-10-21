@@ -152,6 +152,7 @@ install_opted_in_agents() {
     case "$ide" in
       claude-code) have="$HAVE_CLAUDE" ;;
       codex) have="$HAVE_CODEX" ;;
+      copilot) have="$HAVE_COPILOT" ;;
       opencode) have="$HAVE_OPENCODE"; [ "$HAVE_MANAGED_OPENCODE" = 0 ] || have=managed ;;
       *) have=1 ;;  # the CLI rejects an IDE without user-level agents
     esac

@@ -36,7 +36,7 @@ The main session stays as configured unless you add `--main`, which sets the pro
 | Codex | `.codex/config.toml` | top-level `model`, `model_reasoning_effort`; a selected `profile` still wins, and project files load only for trusted projects |
 | OpenCode | `opencode.json` | `model` only: the root model keeps no variant; refused when `opencode.jsonc` holds the settings |
 
-Copilot and Cursor are left unchanged. AIDD records what it replaced in `.aidd/main-model.json` and restores it on removal; it refuses to overwrite a value you changed since, and refuses TOML it cannot edit line by line safely. Sources checked 2026-10-20: [Claude Code settings](https://code.claude.com/docs/en/settings), [Codex config](https://developers.openai.com/codex/config-reference), [OpenCode V2 models](https://opencode.ai/v2/docs/models#variants).
+Copilot and Cursor refuse `--main`. AIDD records what it replaced in `.aidd/main-model.json` and restores it on removal; it refuses to overwrite a value you changed since, and refuses TOML it cannot edit line by line safely. Sources checked 2026-10-20: [Claude Code settings](https://code.claude.com/docs/en/settings), [Codex config](https://developers.openai.com/codex/config-reference), [OpenCode V2 models](https://opencode.ai/v2/docs/models#variants).
 
 ## 📦 Install
 
@@ -53,7 +53,17 @@ From the target project's root, install with a supported provider and IDE:
 node /absolute/path/to/framework/cli/dist/cli.js agents install --provider openai --ide codex
 ```
 
-Installation writes four self-contained native files and the ownership registry at `.aidd/agents.json`. Add `--main` to also set the main session model. Add `--scope user` to install into the IDE's user configuration instead (Claude Code, Codex, and OpenCode), with the registry in AIDD's user configuration directory.
+Installation writes four self-contained native files and the ownership registry at `.aidd/agents.json`. Add `--main` to also set the main session model. Add `--scope user` to install into the IDE's user configuration instead, with the registry in AIDD's user configuration directory.
+
+| IDE | Project | User scope | `--main` |
+| --- | --- | --- | --- |
+| Claude Code | `.claude/agents/` | `~/.claude/agents/` (`CLAUDE_CONFIG_DIR`) | yes |
+| Codex | `.codex/agents/` | `~/.codex/agents/` (`CODEX_HOME`) | yes |
+| OpenCode | `.opencode/agents/` | `~/.config/opencode/agents/` (`XDG_CONFIG_HOME`) | yes |
+| Copilot | `.github/agents/` | `~/.copilot/agents/` (`COPILOT_HOME`) | no |
+| Cursor | `.cursor/agents/` | no: Cursor CLI 2026.10.19 loaded no agent from `~/.cursor/agents/` | no |
+
+Loading was checked on 2026-10-21 with Copilot CLI 1.0.98 (`--agent` lists and runs the four roles, project and user scope) and Cursor CLI 2026.10.19 (project scope). Cursor keeps single quotes in frontmatter values, so its agents are written with double quotes. A Copilot account limited to `auto` ignores the configured model with a warning. User directories, sources checked 2026-10-20 and 2026-10-21: [Claude Code sub-agents](https://code.claude.com/docs/en/sub-agents), [Codex subagents](https://developers.openai.com/codex/subagents), [OpenCode agents](https://opencode.ai/docs/agents), [Copilot configuration directory](https://docs.github.com/en/copilot/reference/copilot-cli-reference/cli-config-dir-reference), [Cursor subagents](https://cursor.com/docs/subagents).
 
 ## 🧪 Try a small task
 

@@ -52,6 +52,8 @@ export const cursor: AiTool<HasAgents & HasSkills & HasCommands & HasRules & Has
         directory: DIRECTORY,
         toolSuffix: TOOL_SUFFIX,
         format: "markdown",
+        // Cursor keeps single quotes as part of the value, so `'name'` would be the agent's name.
+        quote: "double",
       }),
       skills: new SkillsCapability({
         directory: DIRECTORY,
