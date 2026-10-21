@@ -13,7 +13,7 @@
 
 ## 👥 Roles
 
-Add focused roles to your project's AI tool. Installation is explicit; workflows can also use the host's available agents.
+Add focused roles to your project's AI tool. Installation is explicit.
 
 | Role | Responsibility |
 | --- | --- |
@@ -70,7 +70,7 @@ Use host dispatch records to identify the agent and actual model, effort, and ti
 
 After updating the CLI, rerun the install command to refresh unmodified agents; agents of retired roles are removed. Plugins and `sync` do not install or refresh this add-on.
 
-For framework development, copy [reload-agents.example.json](../scripts/reload-agents.example.json) to the gitignored `scripts/reload-agents.json` (or point `RELOAD_AGENTS` at another file). `make reload` then runs `agents install --scope user` for each listed IDE with its `provider`, adding `--main` where `"main": true`. Without the file, reload installs no agent. The file only adds: to undo an IDE or its main model, run `agents remove --scope user --ide <ide>`. Reload stops on a modified or unowned agent file; move it aside, then rerun.
+For framework development, copy [reload-agents.example.json](../scripts/reload-agents.example.json) beside it as the gitignored `reload-agents.json` (or point `RELOAD_AGENTS` at another file). `make reload` then runs `agents install --scope user` for each listed IDE with its `provider`, adding `--main` where `"main": true`. Without the file, reload installs no agent. The file only adds: to undo an IDE or its main model, run `agents remove --scope user --ide <ide>`. Reload stops on a modified or unowned agent file; move it aside, then rerun.
 
 To remove only one IDE's agents from the current project:
 
@@ -78,7 +78,7 @@ To remove only one IDE's agents from the current project:
 node /absolute/path/to/framework/cli/dist/cli.js agents remove --ide codex
 ```
 
-The other IDEs' agents remain installed; add `--scope user` for user-level agents. Removal also restores the main model it replaced. Installation and removal refuse changes to personal or modified agent files. `aidd clean` retires the entire AIDD project installation, including all managed agents.
+The other IDEs' agents remain installed; add `--scope user` for user-level agents. Removal also restores the main model it replaced. Installation and removal refuse changes to personal or modified agent files. `aidd clean` retires the entire AIDD project installation, including its managed agents; user-level agents stay until `agents remove --scope user`.
 
 ## 🚧 Beta limitations
 

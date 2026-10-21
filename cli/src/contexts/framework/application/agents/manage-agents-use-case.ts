@@ -73,6 +73,8 @@ export class ManageAgentsUseCase {
   ): Promise<number> {
     const capability = this.capability(options.host);
     const location = this.location(options);
+    if (options.main === true && location.settingsPath === null)
+      throw new Error(`${options.host} has no main model setting AIDD can write.`);
     const entries = Object.entries(this.sources).map(([name, source]) => {
       const { frontmatter, body } = parseFrontmatter(source);
       const role = typeof frontmatter.name === "string" ? frontmatter.name : name;
@@ -350,6 +352,15 @@ export class ManageAgentsUseCase {
     for (const [host, entries] of Object.entries(installed)) {
       if (onlyHost !== undefined && host !== onlyHost) continue;
       const location = this.location({ ...target, host: host as AgentHost });
+      // A user directory resolved elsewhere than at install would drop the record unseen.
+      const names = Object.keys(entries);
+      if (target.user !== undefined && names.length > 0) {
+        const directory = dirname(location.agentPath(names[0] as string));
+        if (!(await this.fs.fileExists(directory)))
+          throw new Error(
+            `No agents directory at ${directory}; restore the ${host} configuration directory used at install.`
+          );
+      }
       for (const [name, hash] of Object.entries(entries)) {
         const path = location.agentPath(name);
         await this.assertOwned(location, path, hash);

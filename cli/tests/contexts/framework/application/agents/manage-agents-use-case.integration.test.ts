@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ManageAgentsUseCase } from "../../../../../src/contexts/framework/application/agents/manage-agents-use-case.js";
 import { AgentInstallationStoreAdapter } from "../../../../../src/contexts/framework/infrastructure/agent-installation-store-adapter.js";
 import "../../../../../src/contexts/tools/domain/profiles/codex/profile.js";
+import "../../../../../src/contexts/tools/domain/profiles/cursor/profile.js";
 import "../../../../../src/contexts/tools/domain/profiles/opencode/profile.js";
 import { FileAdapter } from "../../../../../src/runtime/filesystem/file-adapter.js";
 import { HasherAdapter } from "../../../../../src/runtime/filesystem/hasher-adapter.js";
@@ -84,6 +85,28 @@ describe("ManageAgentsUseCase", () => {
     });
     expect(await user.remove(target)).toBe(2);
     expect(await readFile(settings, "utf8")).toBe('model = "mine"\n');
+  });
+
+  it("refuses user-level removal from a configuration directory other than the install's", async () => {
+    const home = join(root, "home");
+    const at = (codexHome: string) => ({
+      projectRoot: root,
+      host: "codex" as const,
+      user: {
+        home,
+        env: (name: string) => (name === "CODEX_HOME" ? join(home, codexHome) : undefined),
+        configDir: join(home, ".config/aidd"),
+      },
+    });
+    await manager.install({ ...at("codex-a"), provider: "openai" });
+    await expect(manager.remove(at("codex-b"))).rejects.toThrow(/No agents directory/);
+    expect(await manager.remove(at("codex-a"))).toBe(2);
+  });
+
+  it("refuses --main where the IDE has no main model setting", async () => {
+    await expect(
+      manager.install({ projectRoot: root, host: "cursor", provider: "anthropic", main: true })
+    ).rejects.toThrow(/no main model setting/);
   });
 
   it("removes an unmodified agent whose role is no longer bundled", async () => {

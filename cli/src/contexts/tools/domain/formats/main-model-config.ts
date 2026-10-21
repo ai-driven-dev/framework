@@ -118,8 +118,14 @@ function editSettings(
     return `${bom}${JSON.stringify(settings, null, indent)}\n`;
   }
   const next = editTomlLines(content ?? "", set, unset);
-  if (canonical(parse(next)) !== canonical(settings))
-    throw new Error("Cannot edit this TOML safely; set the model yourself.");
+  const unsafe = new Error("Cannot edit this TOML safely; set the model yourself.");
+  let edited: unknown;
+  try {
+    edited = parse(next);
+  } catch {
+    throw unsafe;
+  }
+  if (canonical(edited) !== canonical(settings)) throw unsafe;
   return next;
 }
 
