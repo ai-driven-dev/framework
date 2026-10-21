@@ -34,11 +34,11 @@ flowchart LR
 
 ## 🗓️ Weekly release, step by step
 
-1. Plan the release video with the `release-video` skill (`.claude/skills/release-video`) until `node scripts/check-release-video.js` passes. The promotion refuses otherwise; `skip_video` lets an urgent one through.
+1. Plan the release video with the `release-video` skill (`.claude/skills/release-video`) until `node .claude/skills/release-video/assets/check-release-video.js` passes. The promotion refuses otherwise; `skip_video` lets an urgent one through.
 2. Open the [promotion `next` to `main`](https://github.com/ai-driven-dev/framework/actions/workflows/promote.yml) once the week's work is ready.
 3. release-please opens a Release PR on `main`: it is auto-merged.
 4. Tags and version bumps are created, release artifacts are attached.
-5. Render the video with `node scripts/render-release-video.cjs --version <x.y>` and attach it with `gh release upload <tag> release-video.mp4`.
+5. Render the video with `node .claude/skills/release-video/assets/render-release-video.cjs --version <x.y>` and attach it with `gh release upload <tag> release-video.mp4`.
 6. `main` is back-merged into `next` automatically.
 
 ## 🚑 Hotfix

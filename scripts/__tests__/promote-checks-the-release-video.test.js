@@ -20,7 +20,7 @@ test("promote offers a way to skip the release video check", () => {
 });
 
 test("promote checks the release video on next's tip, before it pushes anything", () => {
-  const check = open.run.indexOf("node scripts/check-release-video.js");
+  const check = open.run.indexOf("node .claude/skills/release-video/assets/check-release-video.js");
   const push = open.run.indexOf("git push origin");
 
   assert.ok(check > -1, "the check never runs");
@@ -29,5 +29,5 @@ test("promote checks the release video on next's tip, before it pushes anything"
 });
 
 test("the skip is the only way past the check", () => {
-  assert.match(open.run, /if \[ "\$\{SKIP_VIDEO\}" != "true" \]; then\n\s+git checkout --detach origin\/next\n\s+node scripts\/check-release-video\.js\nfi/);
+  assert.match(open.run, /if \[ "\$\{SKIP_VIDEO\}" != "true" \]; then\n\s+git checkout --detach origin\/next\n\s+node \.claude\/skills\/release-video\/assets\/check-release-video\.js\nfi/);
 });

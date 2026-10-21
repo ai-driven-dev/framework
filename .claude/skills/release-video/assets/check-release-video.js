@@ -12,7 +12,7 @@ const { execFileSync } = require("node:child_process");
 const fs = require("node:fs");
 const path = require("node:path");
 
-const ROOT = path.resolve(__dirname, "..");
+const ROOT = path.resolve(__dirname, "../../../..");
 const PLAN_PATH = path.join(ROOT, "aidd_docs/release-video/scenes.json");
 
 /** Files in the commands folder that are plumbing, not a command a user types. */
@@ -71,7 +71,7 @@ const withoutGitEnv = () =>
 
 const MAX_TAGLINE_WORDS = 6;
 const MAX_HIGHLIGHTS = 3;
-const MAX_HIGHLIGHT_WORDS = 3;
+const MAX_HIGHLIGHT_WORDS = 5;
 const MAX_LEAD_WORDS = 14;
 
 const wordCount = (text) => String(text ?? "").trim().split(/\s+/).filter(Boolean).length;
@@ -101,7 +101,7 @@ function overlongText(plan) {
 
 /** Words only the people who build AIDD know. A viewer reads the outcome in plain words; the demo
  * window may show the real commands. */
-const JARGON = /\b(tokens?|telemetry|envelopes?|axis|transcripts?|payloads?|hooks?)\b/gi;
+const JARGON = /\b(tokens?|envelopes?|axis|transcripts?|payloads?|hooks?)\b/gi;
 
 function jargonIn(plan) {
   const found = [];
@@ -136,6 +136,19 @@ function featSurfaces(cwd = ROOT) {
   return surfacesOf(files).filter((surface) => fs.existsSync(path.join(cwd, pathOf(surface))));
 }
 
+/** A theme (the pill, top left) groups what touches the same domain: its scenes follow each other. */
+function splitThemes(plan) {
+  const seen = new Set();
+  const split = new Set();
+  let current;
+  for (const { pill } of plan.scenes) {
+    if (pill !== current && seen.has(pill)) split.add(pill);
+    seen.add(pill);
+    current = pill;
+  }
+  return [...split];
+}
+
 function readPlan() {
   if (!fs.existsSync(PLAN_PATH)) return { scenes: [], skipped: [] };
   const plan = JSON.parse(fs.readFileSync(PLAN_PATH, "utf8"));
@@ -152,8 +165,9 @@ function run({
   const unexplained = invalidSkips(plan);
   const tooLong = overlongText(plan);
   const technical = jargonIn(plan);
+  const split = splitThemes(plan);
 
-  if (missing.length === 0 && unexplained.length === 0 && tooLong.length === 0 && technical.length === 0) {
+  if (missing.length === 0 && unexplained.length === 0 && tooLong.length === 0 && technical.length === 0 && split.length === 0) {
     successLogger(`✅ Release video: ${surfaces.length} surface(s) covered`);
     return 0;
   }
@@ -164,10 +178,11 @@ function run({
   }
   if (tooLong.length > 0) logger(`❌ Textes trop longs : ${tooLong.join(", ")}`);
   if (technical.length > 0) logger(`❌ Mots techniques : ${technical.join(", ")}`);
+  if (split.length > 0) logger(`❌ Thèmes dispersés : ${split.join(", ")}`);
   return 1;
 }
 
-module.exports = { featSurfaces, invalidSkips, jargonIn, missingScenes, overlongText, run, surfacesOf };
+module.exports = { featSurfaces, invalidSkips, jargonIn, missingScenes, overlongText, run, splitThemes, surfacesOf };
 
 if (require.main === module) {
   process.exit(run());

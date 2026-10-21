@@ -1,7 +1,7 @@
 const assert = require("node:assert/strict");
 const test = require("node:test");
 
-const { buildHtml, musicSegments, musicSections, sceneDuration, totalDuration } = require("../render-release-video.cjs");
+const { buildHtml, musicSegments, musicSections, sceneDuration, soundCues, soundTrack, totalDuration } = require("../../.claude/skills/release-video/assets/render-release-video.cjs");
 
 const window = (rows) => ({ label: "Claude Code · ~/acme-app", rows });
 
@@ -228,20 +228,20 @@ const rms = [
   -37, ...Array(11).fill(-10), ...Array(61).fill(-26), ...Array(5).fill(-8), -23, -61,
 ];
 
-test("musicSections finds the hook, the bed and the finale of a track", () => {
+test("musicSections finds the hook and the ending of a track, the bed is what lies between", () => {
   assert.deepEqual(musicSections(rms), {
     headStart: 0.5,
     headEnd: 6,
-    tailStart: 36.5,
-    tailEnd: 39,
+    tailStart: 35.5,
+    tailEnd: 39.5,
   });
 });
 
-test("a track with no loud hook or finale has no sections", () => {
+test("a track with no loud hook has no sections", () => {
   assert.equal(musicSections(Array(40).fill(-26)), null);
 });
 
-test("the hook plays under the intro, the bed under the scenes, the finale under the outro", () => {
+test("the hook plays under the intro, the bed under the scenes and the outro, the ending closes the video", () => {
   const sections = musicSections(rms);
   const [head, body, tail] = musicSegments(sections, { intro: 5, total: 30, outro: 4 });
 
@@ -249,7 +249,7 @@ test("the hook plays under the intro, the bed under the scenes, the finale under
   assert.equal(body.part, "body");
   assert.equal(body.at, 5);
   assert.equal(body.length, 30 - 4 - 5);
-  assert.deepEqual(tail, { part: "tail", from: 36.5, length: 2.5, at: 26 });
+  assert.deepEqual(tail, { part: "tail", from: 35.5, length: 4, at: 26 });
 });
 
 test("an intro longer than the hook lets the bed start early, never a gap", () => {
@@ -257,4 +257,110 @@ test("an intro longer than the hook lets the bed start early, never a gap", () =
 
   assert.equal(head.length, 5.5);
   assert.equal(body.at, head.at + head.length);
+});
+
+const cuesOf = (kind, from, to) => soundCues(plan, { version: "5.13" }).filter((c) => c.kind === kind && c.t >= from && c.t < to);
+
+test("every sound is on a time of the video, in order", () => {
+  const cues = soundCues(plan, { version: "5.13" });
+
+  assert.ok(cues.length > 0);
+  assert.ok(cues.every((c) => c.t >= 0 && c.t < totalDuration(plan)), "a cue outside the video");
+  assert.deepEqual(cues.map((c) => c.t), cues.map((c) => c.t).sort((a, b) => a - b));
+});
+
+test("a key tick sounds for each character of the version as it is typed", () => {
+  const typed = cuesOf("key", 0.8, 1.9);
+
+  assert.equal(typed.length, "5.13".length + 1);
+});
+
+test("each scene opens with a whoosh at its own start", () => {
+  const starts = plan.scenes.reduce(
+    (acc, scene) => [...acc, acc[acc.length - 1] + sceneDuration(scene)],
+    [5],
+  ).slice(0, plan.scenes.length);
+  const whooshes = soundCues(plan, { version: "5.13" }).filter((c) => c.kind === "whoosh").map((c) => c.t);
+
+  assert.deepEqual(whooshes, starts);
+});
+
+test("a click sounds when each row of a window appears", () => {
+  const first = plan.scenes[0];
+  const start = 5;
+  const clicks = cuesOf("click", start + 1.3, start + sceneDuration(first)).map((c) => c.t);
+  const rows = first.window.rows.length;
+
+  assert.deepEqual(clicks, Array.from({ length: rows }, (_, i) => Math.round((start + 1.3 + 0.45 * i) * 100) / 100));
+});
+
+test("a pop sounds as each window or item slides in", () => {
+  const start = 5;
+  const first = plan.scenes[0];
+  const pops = cuesOf("pop", start + 0.6, start + 0.7 + 0.3 * 2).map((c) => c.t);
+
+  assert.ok(first.window, "scene 1 has a window");
+  assert.ok(pops.includes(start + 0.63 + 0.3 * 0), "the window pop");
+});
+
+test("the outro has no sound of its own: the ending of the music opens it", () => {
+  assert.equal(soundCues(plan, { version: "5.13" }).filter((c) => c.kind === "chime").length, 0);
+  assert.equal(cuesOf("pop", totalDuration(plan) - 4, totalDuration(plan)).length, 2);
+});
+
+test("the sound track is a wav as long as the video, loud on a cue and silent between", () => {
+  const wav = soundTrack(plan, { version: "5.13" });
+  const rate = wav.readUInt32LE(24);
+  const sample = (seconds) => Math.abs(wav.readInt16LE(44 + 2 * Math.floor(seconds * rate)));
+  const peakNear = (seconds) => Math.max(...Array.from({ length: 400 }, (_, i) => sample(seconds + i / rate)));
+
+  assert.equal(wav.toString("latin1", 0, 4), "RIFF");
+  assert.equal(wav.length, 44 + 2 * Math.round(totalDuration(plan) * rate));
+  assert.ok(peakNear(5 + 1.3) > 1000, "silent on a click");
+  assert.equal(peakNear(5 + 0.3), 0, "noise between cues");
+});
+
+test("the sound track plays under the whole video, quieter than the picture would", () => {
+  const html = buildHtml(plan, { version: "5.13", sfx: "assets/sfx.wav" });
+  const audio = /<audio id="sfx"[^>]*>/.exec(html)?.[0] ?? "";
+
+  assert.match(audio, /src="assets\/sfx\.wav"/);
+  assert.match(audio, new RegExp(`data-start="0" data-duration="${totalDuration(plan)}"`));
+  assert.match(audio, /data-volume="0\.\d+"/);
+});
+
+test("no sound track, no sfx element", () => {
+  assert.ok(!buildHtml(plan, { version: "5.13" }).includes('id="sfx"'));
+});
+
+test("a red line flags a problem: the row and its colour are drawn", () => {
+  const html = buildHtml(
+    { scenes: [{ template: "terminal-demo", pill: "p", title: "t", window: window([{ text: "Conflict", tone: "red" }]) }], skipped: [] },
+    { version: "5.13" },
+  );
+
+  assert.match(html, /<div class="row red">Conflict<\/div>/);
+  assert.match(html, /\.row\.red \{/);
+});
+
+test("the kit ships its own music, so a render on the CI sounds like a local one", () => {
+  const kit = require("node:path").join(__dirname, "../../.claude/skills/release-video/assets/music.mp3");
+
+  assert.ok(require("node:fs").existsSync(kit), "the skill's music.mp3 is missing");
+});
+
+test("an intro with tags and no phrase shows the tags alone, from the start of the text", () => {
+  const withTags = { ...plan, intro: { highlights: ["Telemetry for Codex", "No clashing rules"] } };
+  const html = buildHtml(withTags, { version: "5.13" });
+
+  assert.ok(!html.includes('id="intro-tag"'), "a phrase is drawn");
+  assert.match(html, /<span class="hl it">Telemetry for Codex<\/span>/);
+  assert.match(html, /enter\("#intro \.hl", 2,/);
+});
+
+test("no pop is cued for a phrase the intro does not draw", () => {
+  const withTags = { ...plan, intro: { highlights: ["a", "b"] } };
+  const pops = soundCues(withTags, { version: "5.13" }).filter((c) => c.kind === "pop" && c.t < 4).map((c) => c.t);
+
+  assert.deepEqual(pops, [0.1, 2, 2.3]);
 });

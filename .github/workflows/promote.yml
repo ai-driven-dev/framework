@@ -63,7 +63,7 @@ jobs:
           # Checked here, before anything is pushed, so a refusal leaves no branch or PR behind.
           if [ "${SKIP_VIDEO}" != "true" ]; then
             git checkout --detach origin/next
-            node scripts/check-release-video.js
+            node .claude/skills/release-video/assets/check-release-video.js
           fi
 
           # A snapshot of next, never next itself: a PR headed by the live branch widens as

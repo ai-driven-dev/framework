@@ -7,8 +7,9 @@ const {
   missingScenes,
   overlongText,
   run,
+  splitThemes,
   surfacesOf,
-} = require("../check-release-video.js");
+} = require("../../.claude/skills/release-video/assets/check-release-video.js");
 
 test("surfacesOf names a plugin skill by plugin and skill folder", () => {
   assert.deepEqual(
@@ -145,7 +146,7 @@ function makeRepo() {
 
 test("featSurfaces reads only feat commits made since the last release tag", () => {
   const { repo, remove } = makeRepo();
-  const found = require("../check-release-video.js").featSurfaces(repo);
+  const found = require("../../.claude/skills/release-video/assets/check-release-video.js").featSurfaces(repo);
   remove();
 
   assert.deepEqual(found, ["aidd-dev:10-batch"]);
@@ -155,7 +156,7 @@ test("featSurfaces drops a surface that no longer exists at HEAD", () => {
   const { repo, git, remove } = makeRepo();
   git("rm", "-q", "-r", "plugins/aidd-dev/skills/10-batch");
   git("commit", "-q", "-m", "chore: remove the skill again");
-  const found = require("../check-release-video.js").featSurfaces(repo);
+  const found = require("../../.claude/skills/release-video/assets/check-release-video.js").featSurfaces(repo);
   remove();
 
   assert.deepEqual(found, []);
@@ -167,7 +168,7 @@ test("featSurfaces reads the repository it is given even when a hook set GIT_DIR
   decoy.commit("feat: only the decoy has this", "plugins/aidd-vcs/skills/05-decoy/SKILL.md");
   process.env.GIT_DIR = `${decoy.repo}/.git`;
   try {
-    assert.deepEqual(require("../check-release-video.js").featSurfaces(repo), ["aidd-dev:10-batch"]);
+    assert.deepEqual(require("../../.claude/skills/release-video/assets/check-release-video.js").featSurfaces(repo), ["aidd-dev:10-batch"]);
   } finally {
     delete process.env.GIT_DIR;
     remove();
@@ -207,7 +208,7 @@ const words = (n) => Array.from({ length: n }, (_, i) => `w${i}`).join(" ");
 
 test("overlongText accepts a short intro and a short lead", () => {
   const plan = {
-    intro: { tagline: words(6), highlights: [words(3), words(3), words(3)] },
+    intro: { tagline: words(6), highlights: [words(5), words(5), words(5)] },
     scenes: [{ lead: words(14) }],
     skipped: [],
   };
@@ -222,9 +223,9 @@ test("overlongText names the intro tagline that is too long", () => {
 });
 
 test("overlongText names a highlight that is too long and too many highlights", () => {
-  const plan = { intro: { highlights: [words(4), "a", "b", "c"] }, scenes: [], skipped: [] };
+  const plan = { intro: { highlights: [words(6), "a", "b", "c"] }, scenes: [], skipped: [] };
 
-  assert.deepEqual(overlongText(plan), ["intro highlights: 4, 3 at most", "intro highlight 1: 4 words, 3 at most"]);
+  assert.deepEqual(overlongText(plan), ["intro highlights: 4, 3 at most", "intro highlight 1: 6 words, 5 at most"]);
 });
 
 test("overlongText names the scene whose lead is too long", () => {
@@ -248,22 +249,22 @@ test("run fails on a text that is too long even when every surface is covered", 
 
 test("jargonIn names the technical word a viewer would not know, and where it is", () => {
   const plan = {
-    intro: { tagline: "Count your tokens", highlights: ["Telemetry for Codex"] },
+    intro: { tagline: "Count your tokens", highlights: ["Payloads for Codex"] },
     scenes: [{ title: "A clean", accent: "envelope.", lead: "Read the transcript." }],
     skipped: [],
   };
 
   assert.deepEqual(jargonIn(plan), [
     'intro tagline: "tokens"',
-    'intro highlight 1: "telemetry"',
+    'intro highlight 1: "payloads"',
     'scene 1 accent: "envelope"',
     'scene 1 lead: "transcript"',
   ]);
 });
 
-test("jargonIn leaves plain words and the demo window alone", () => {
+test("jargonIn leaves plain words, the word telemetry and the demo window alone", () => {
   const plan = {
-    intro: { tagline: "Know what your AI costs." },
+    intro: { tagline: "Know what your AI costs.", highlights: ["Telemetry for Claude and Codex"] },
     scenes: [{ title: "See the cost", lead: "One report.", window: { rows: [{ text: "$ aidd telemetry report" }] } }],
     skipped: [],
   };
@@ -286,7 +287,7 @@ test("run fails on a technical word in the text a viewer reads", () => {
 
 test("jargonIn catches every technical word it lists, singular or plural", () => {
   const plan = {
-    scenes: [{ title: "axis payloads hooks", accent: "token telemetry envelope transcripts" }],
+    scenes: [{ title: "axis payloads hooks", accent: "token envelope transcripts" }],
     skipped: [],
   };
 
@@ -295,8 +296,39 @@ test("jargonIn catches every technical word it lists, singular or plural", () =>
     'scene 1 title: "payloads"',
     'scene 1 title: "hooks"',
     'scene 1 accent: "token"',
-    'scene 1 accent: "telemetry"',
     'scene 1 accent: "envelope"',
     'scene 1 accent: "transcripts"',
   ]);
+});
+
+test("splitThemes names a theme whose scenes are separated by another theme", () => {
+  const plan = {
+    scenes: [{ pill: "Telemetry" }, { pill: "Rules" }, { pill: "Telemetry" }, { pill: "Rules" }],
+    skipped: [],
+  };
+
+  assert.deepEqual(splitThemes(plan), ["Telemetry", "Rules"]);
+});
+
+test("splitThemes leaves a theme whose scenes follow each other", () => {
+  const plan = { scenes: [{ pill: "Telemetry" }, { pill: "Telemetry" }, { pill: "Rules" }], skipped: [] };
+
+  assert.deepEqual(splitThemes(plan), []);
+});
+
+test("run fails on a theme split in two parts of the video", () => {
+  const errors = [];
+  const code = run({
+    surfaces: [],
+    plan: { scenes: [{ pill: "Telemetry" }, { pill: "Rules" }, { pill: "Telemetry" }], skipped: [] },
+    logger: (line) => errors.push(line),
+    successLogger: () => {},
+  });
+
+  assert.equal(code, 1);
+  assert.match(errors.join("\n"), /Thèmes dispersés : Telemetry/);
+});
+
+test("overlongText accepts an intro made of tags alone", () => {
+  assert.deepEqual(overlongText({ intro: { highlights: ["Telemetry for Codex"] }, scenes: [], skipped: [] }), []);
 });

@@ -2,12 +2,60 @@
   "scenes": [
     {
       "template": "terminal-demo",
-      "pill": "aidd telemetry",
-      "title": "See what your AI costs,",
-      "accent": "in Codex too.",
-      "lead": "One report shows Claude and Codex side by side.",
+      "pill": "Telemetry",
+      "title": "Your Codex work,",
+      "accent": "measured too.",
+      "lead": "Ask Codex what your work cost and get the full report.",
       "surfaces": [
-        "aidd telemetry",
+        "aidd telemetry"
+      ],
+      "window": {
+        "label": "Codex · ~/acme-app",
+        "rows": [
+          {
+            "prompt": "what did my work cost this week?"
+          },
+          {
+            "text": "$ aidd telemetry report --tool codex --axis task",
+            "tone": "dim"
+          },
+          {
+            "table": {
+              "head": [
+                "Task",
+                "Requests",
+                "Usage"
+              ],
+              "rows": [
+                [
+                  "fix the login bug",
+                  "38",
+                  "120k"
+                ],
+                [
+                  "add dark mode",
+                  "41",
+                  "190k"
+                ],
+                [
+                  "no task declared",
+                  "17",
+                  "100k"
+                ]
+              ]
+            }
+          }
+        ]
+      },
+      "note": "Example figures."
+    },
+    {
+      "template": "terminal-demo",
+      "pill": "Telemetry",
+      "title": "Every tool,",
+      "accent": "told apart.",
+      "lead": "See Claude and Codex side by side, each with its own total.",
+      "surfaces": [
         "aidd-telemetry:00-init"
       ],
       "window": {
@@ -43,7 +91,7 @@
     },
     {
       "template": "terminal-demo",
-      "pill": "/aidd-context:05-rule-generate",
+      "pill": "Rules",
       "title": "No more rules",
       "accent": "that clash.",
       "surfaces": [
@@ -60,7 +108,11 @@
             "tone": "dim"
           },
           {
-            "text": "clash: another rule allows default exports",
+            "text": "Conflict: another rule allows default exports",
+            "tone": "red"
+          },
+          {
+            "text": "Which one should win?  1 named exports   2 default exports",
             "tone": "amb"
           },
           {
@@ -73,28 +125,12 @@
       "lead": "Before saving a new rule, your AI checks it against the others."
     },
     {
-      "template": "bullet-grid",
-      "pill": "reliability",
-      "title": "Usage tracking",
-      "accent": "you can trust.",
-      "cells": [
-        {
-          "title": "Nothing is lost without telling you"
-        },
-        {
-          "title": "Turning it off is shown clearly"
-        },
-        {
-          "title": "Big files are read piece by piece"
-        }
-      ]
-    },
-    {
       "template": "contributors",
-      "pill": "release notes",
+      "pill": "Team",
       "title": "Shipped by",
-      "accent": "1 contributor.",
+      "accent": "2 contributors.",
       "logins": [
+        "alexsoyes",
         "blafourcade"
       ]
     }
@@ -106,10 +142,10 @@
     }
   ],
   "intro": {
-    "tagline": "Know what your AI costs.",
     "highlights": [
-      "Claude and Codex",
-      "No clashing rules"
+      "Telemetry now covers Codex",
+      "Telemetry report split by tool",
+      "Rules checked for conflicts"
     ]
   }
 }

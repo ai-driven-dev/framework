@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * Renders the release video from `aidd_docs/release-video/scenes.json`, locally, with no AI tool
- * involved: `node scripts/render-release-video.cjs --version 5.13 [--plan <file>] [--music <file>] [--out <file>]`.
+ * involved: `node .claude/skills/release-video/assets/render-release-video.cjs --version 5.13 [--plan <file>] [--music <file>] [--out <file>]`.
  *
  * Needs `npx`, a network (fonts and avatars are local, GSAP and the avatars are fetched) and
  * ffmpeg + Chrome as Hyperframes does. The renderer is pinned: a new Hyperframes release
@@ -13,8 +13,8 @@ const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
 
-const ROOT = path.resolve(__dirname, "..");
-const KIT = path.join(ROOT, "aidd_docs/release-video");
+const ROOT = path.resolve(__dirname, "../../../..");
+const PLAN = path.join(ROOT, "aidd_docs/release-video/scenes.json");
 const HYPERFRAMES = "hyperframes@0.8.162";
 const INTRO = 5;
 const INTRO_WITH_HIGHLIGHTS = 6.5;
@@ -42,9 +42,10 @@ h2 { font-size: 78px; line-height: 1.08; letter-spacing: -0.02em; font-weight: 8
 .bar i { width: 18px; height: 18px; border-radius: 50%; display: block; }
 .body { padding: 30px 36px; display: flex; flex-direction: column; gap: 18px; font-family: "JetBrains Mono", monospace; font-weight: 500; font-size: 32px; line-height: 1.4; }
 .dim { color: #8a8fc0; } .grn { color: #5ee6a8; } .blu { color: #8aa6ff; } .pnk { color: #ff8fa8; } .amb { color: #ffd37a; }
+.row.red { color: #ff9aa8; background: rgba(255,107,107,.14); border-left: 4px solid #ff6b6b; padding-left: 14px; }
 .note { font-family: "JetBrains Mono", monospace; font-size: 22px; color: #8a8fc0; }
 .chips { display: flex; flex-wrap: wrap; gap: 18px; }
-.chip { font-size: 28px; padding: 10px 22px; border-radius: 12px; border: 2px solid; }
+.chip { font-size: 34px; padding: 12px 26px; border-radius: 12px; border: 2px solid; }
 .c1 { color: #5ee6a8; border-color: #2f7a60; } .c2 { color: #8aa6ff; border-color: #3b4c99; }
 .c3 { color: #c88bff; border-color: #5f3d8c; } .c4 { color: #ff8fa8; border-color: #8a4057; }
 table { border-collapse: collapse; width: 100%; font-size: 28px; }
@@ -80,7 +81,7 @@ td { padding: 14px 14px; border-bottom: 2px solid #15153f; vertical-align: top; 
 #ver .dot { color: #5ee6a8; }
 .tagline { font-family: "JetBrains Mono", monospace; font-size: 40px; color: #a6abe0; }
 .tagline b { color: #fff; font-weight: 700; }
-.hls { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 6px; }
+.hls { display: flex; flex-direction: column; align-items: flex-start; gap: 14px; margin-top: 10px; }
 .hl { font-family: "JetBrains Mono", monospace; font-size: 28px; padding: 10px 22px; border-radius: 12px; border: 2px solid #3b4c99; color: #8aa6ff; }
 .lead { font-size: 36px; line-height: 1.3; color: #a6abe0; max-width: 1500px; }
 #outro .inner { align-items: center; justify-content: center; gap: 26px; }
@@ -196,6 +197,10 @@ const headHtml = (s, id) =>
   `<h2 id="${id}-h">${esc(s.title)}${s.accent ? ` <span class="g">${esc(s.accent)}</span>` : ""}</h2>` +
   (s.lead ? `<p class="lead" id="${id}-lead">${esc(s.lead)}</p>` : "");
 
+/** The tags say what the release brings; the phrase above them is optional, and only an intro with
+ * neither keeps a default one. */
+const hasTagline = (intro = {}) => Boolean(intro.tagline) || !intro.highlights?.length;
+
 /** The version is typed in by the timeline: until it starts, nothing of it is on screen. */
 function introHtml(intro = {}) {
   const tagline = intro.tagline ? esc(intro.tagline) : "What's new, <b>end to end.</b>";
@@ -204,7 +209,7 @@ function introHtml(intro = {}) {
     `<img id="intro-logo" src="assets/logo.png" alt="" /><div class="intro-text">` +
     `<div class="intro-top"><span class="pill" id="intro-pill">AIDD Framework</span><span class="rel" id="intro-rel">NEW RELEASE</span></div>` +
     `<div id="ver"><span id="ver-t"></span><span class="dot"></span><span id="ver-n"></span></div>` +
-    `<p class="tagline" id="intro-tag">${tagline}</p>` +
+    (hasTagline(intro) ? `<p class="tagline" id="intro-tag">${tagline}</p>` : "") +
     (highlights ? `<div class="hls">${highlights}</div>` : "") +
     `</div>`
   );
@@ -231,12 +236,83 @@ const musicHtml = (src, total) => {
   return `<audio id="music" src="${esc(src)}" data-start="0" data-duration="${total}" data-track-index="10" data-automation="${esc(JSON.stringify(lane))}"></audio>`;
 };
 
+/** The interface sounds sit well under the picture and the music. */
+const SFX_LEVEL = 0.2;
+
+const sfxHtml = (src, total) =>
+  `<audio id="sfx" src="${esc(src)}" data-start="0" data-duration="${total}" data-track-index="11" data-volume="${SFX_LEVEL}"></audio>`;
+
 const introSeconds = (plan) => (plan.intro?.highlights?.length ? INTRO_WITH_HIGHLIGHTS : INTRO);
+
+const round2 = (x) => Math.round(x * 100) / 100;
+const itemsIn = (html) => (html.match(/class="[^"]*\bit\b/g) ?? []).length;
+
+/** One sound per thing that appears, at the time the timeline shows it: a whoosh as a scene
+ * opens, a pop as a window or item slides in, a click per row, a key tick per typed character. */
+function soundCues(plan, { version }) {
+  const cues = [];
+  const cue = (kind, t) => cues.push({ kind, t: round2(t) });
+  const chars = String(version).length + 1;
+  cue("pop", 0.1);
+  for (let k = 0; k < chars; k++) cue("key", 0.8 + (1.1 * k) / chars);
+  if (hasTagline(plan.intro)) cue("pop", 2.0);
+  (plan.intro?.highlights ?? []).forEach((_, k) => cue("pop", (hasTagline(plan.intro) ? 2.6 : 2) + 0.3 * k));
+
+  let t = introSeconds(plan);
+  for (const s of plan.scenes) {
+    cue("whoosh", t);
+    for (let k = 0; k < itemsIn(scene[s.template].body(s)); k++) cue("pop", t + 0.63 + 0.3 * k);
+    for (let k = 0; k < rowElements(s); k++) cue("click", t + 1.3 + 0.45 * k);
+    t += sceneDuration(s);
+  }
+  for (let k = 0; k < 2; k++) cue("pop", t + 0.63 + 0.2 * k);
+  return cues.sort((a, b) => a.t - b.t);
+}
+
+const SFX_RATE = 44100;
+const square = (phase, duty = 0.5) => (phase % 1 < duty ? 1 : -1);
+
+/** Each sound is a short 8-bit blip: a square wave with a fast decay, no noise. */
+const SOUNDS = {
+  key: { seconds: 0.025, wave: (x) => square(1400 * x) * Math.exp(-x * 120) },
+  click: { seconds: 0.05, wave: (x) => square(2000 * x) * Math.exp(-x * 80) },
+  pop: { seconds: 0.12, wave: (x) => square((480 + 2000 * x) * x) * Math.exp(-x * 25) },
+  whoosh: { seconds: 0.26, wave: (x) => square((150 + 2400 * x) * x, 0.25) * Math.sin((Math.PI * x) / 0.26) * 0.6 },
+};
+
+/** The sounds of the cues, laid on a silent mono 16-bit wav as long as the video. */
+function soundTrack(plan, { version }) {
+  const total = Math.round(totalDuration(plan) * SFX_RATE);
+  const mix = new Float64Array(total);
+  for (const { kind, t } of soundCues(plan, { version })) {
+    const { seconds, wave } = SOUNDS[kind];
+    const from = Math.round(t * SFX_RATE);
+    for (let i = 0; i < Math.round(seconds * SFX_RATE) && from + i < total; i++) mix[from + i] += wave(i / SFX_RATE);
+  }
+  const wav = Buffer.alloc(44 + 2 * total);
+  wav.write("RIFF", 0, "latin1");
+  wav.writeUInt32LE(36 + 2 * total, 4);
+  wav.write("WAVEfmt ", 8, "latin1");
+  wav.writeUInt32LE(16, 16);
+  wav.writeUInt16LE(1, 20);
+  wav.writeUInt16LE(1, 22);
+  wav.writeUInt32LE(SFX_RATE, 24);
+  wav.writeUInt32LE(SFX_RATE * 2, 28);
+  wav.writeUInt16LE(2, 32);
+  wav.writeUInt16LE(16, 34);
+  wav.write("data", 36, "latin1");
+  wav.writeUInt32LE(2 * total, 40);
+  for (let i = 0; i < total; i++) {
+    const steps = Math.round(Math.max(-1, Math.min(1, mix[i] * 0.8)) * 31) / 31; // 5-bit grain
+    wav.writeInt16LE(Math.round(steps * 32767), 44 + 2 * i);
+  }
+  return wav;
+}
 
 /** What the root declares: the length a music track is cut to. */
 const totalDuration = (plan) => introSeconds(plan) + plan.scenes.reduce((n, s) => n + sceneDuration(s), 0) + OUTRO;
 
-function buildHtml(plan, { version, music }) {
+function buildHtml(plan, { version, music, sfx }) {
   const sections = [];
   const script = [];
   let t = 0;
@@ -256,8 +332,8 @@ function buildHtml(plan, { version, music }) {
       ` document.getElementById("ver-t").textContent = ("v" + a).slice(0, Math.min(len, a.length + 1));` +
       ` document.querySelector("#ver .dot").textContent = len > a.length + 1 ? "." : "";` +
       ` document.getElementById("ver-n").textContent = len > a.length + 1 ? b.slice(0, len - a.length - 1) : ""; } }, 0.8);`,
-    `enter("#intro-tag", 2.0, { y: 20 });`,
-    `enter("#intro .hl", 2.6, { y: 16, duration: 0.5, stagger: 0.3 });`,
+    ...(hasTagline(plan.intro) ? [`enter("#intro-tag", 2.0, { y: 20 });`] : []),
+    `enter("#intro .hl", ${hasTagline(plan.intro) ? 2.6 : 2}, { y: 16, duration: 0.5, stagger: 0.3 });`,
     `cut("intro", ${introSeconds(plan)});`
   );
   t += introSeconds(plan);
@@ -301,6 +377,7 @@ function buildHtml(plan, { version, music }) {
 <body><div id="root" data-composition-id="main" data-start="0" data-duration="${t}" data-width="1920" data-height="1080">
 ${sections.join("\n")}
 ${music ? musicHtml(music, t) : ""}
+${sfx ? sfxHtml(sfx, t) : ""}
 </div>
 <script>
 const tl = gsap.timeline({ paused: true });
@@ -319,8 +396,12 @@ const STEP = 0.5;
 const HOOK_STARTS_WITHIN = 2;
 const LOUD_ABOVE_MEDIAN = 8;
 
-/** Where a track is loud at its start (a hook, after at most two quiet seconds) and at its end (a
- * finale), from its energy in dB per half second. Null when it has neither: such a track is only
+/** The ending is the last stretch of a track before it falls silent, as long as the outro it opens: small, never louder than a hook. */
+const ENDING_SECONDS = 4;
+const SILENT_BELOW = -55;
+
+/** Where a track is loud at its start (a hook, after at most two quiet seconds) and where its small
+ * ending is, from its energy in dB per half second. Null when it has no hook: such a track is only
  * looped. */
 function musicSections(rms) {
   const sorted = [...rms].sort((a, b) => a - b);
@@ -328,18 +409,18 @@ function musicSections(rms) {
   const first = rms.findIndex(loud);
   let end = first;
   while (end < rms.length && loud(rms[end])) end += 1;
-  const last = rms.map(loud).lastIndexOf(true);
-  let start = last;
-  while (start > 0 && loud(rms[start - 1])) start -= 1;
-  if (first < 0 || first * STEP > HOOK_STARTS_WITHIN || last < 0 || start <= end) return null;
-  return { headStart: first * STEP, headEnd: end * STEP, tailStart: start * STEP, tailEnd: (last + 1) * STEP };
+  const tailEnd = (rms.map((v) => v > SILENT_BELOW).lastIndexOf(true) + 1) * STEP;
+  const tailStart = tailEnd - ENDING_SECONDS;
+  if (first < 0 || first * STEP > HOOK_STARTS_WITHIN || tailStart <= end * STEP) return null;
+  return { headStart: first * STEP, headEnd: end * STEP, tailStart, tailEnd };
 }
 
-/** The hook under the intro, the bed under the scenes, the finale under the outro. */
-function musicSegments(sections, { intro, total, outro }) {
+/** The hook under the intro, the bed under the scenes and the outro, the small ending last. */
+function musicSegments(sections, { intro, total }) {
   const head = { part: "head", from: sections.headStart, length: Math.min(intro, sections.headEnd - sections.headStart), at: 0 };
-  const body = { part: "body", from: sections.headEnd, length: total - outro - head.length, at: head.length };
-  const tail = { part: "tail", from: sections.tailStart, length: Math.min(outro, sections.tailEnd - sections.tailStart), at: total - outro };
+  const tail = { part: "tail", from: sections.tailStart, length: sections.tailEnd - sections.tailStart };
+  tail.at = total - tail.length;
+  const body = { part: "body", from: sections.headEnd, length: tail.at - head.length, at: head.length };
   return [head, body, tail];
 }
 
@@ -359,8 +440,8 @@ const ffmpeg = (args) => {
   if (run.status !== 0) throw new Error(`ffmpeg failed (${run.status})`);
 };
 
-/** The track shaped to the video: its hook under the intro, its bed looped under the scenes, its
- * finale under the outro. A track with no such structure is only looped to the video's length. */
+/** The track shaped to the video: its hook under the intro, its bed looped under the scenes and the
+ * outro, its small ending closing the video. A track with no such structure is only looped to the video's length. */
 function fitMusic(source, target, plan) {
   const total = totalDuration(plan);
   const sections = musicSections(measureRms(source));
@@ -368,7 +449,7 @@ function fitMusic(source, target, plan) {
     ffmpeg(["-stream_loop", "-1", "-i", source, "-t", String(total), "-c:a", "libmp3lame", "-q:a", "2", target]);
     return;
   }
-  const [head, body, tail] = musicSegments(sections, { intro: introSeconds(plan), total, outro: OUTRO });
+  const [head, body, tail] = musicSegments(sections, { intro: introSeconds(plan), total });
   const bed = sections.tailStart - sections.headEnd;
   const cut = (seg, label, fades) =>
     `[0:a]aresample=48000,atrim=start=${seg.from}:duration=${seg.length},asetpts=PTS-STARTPTS${fades}[${label}]`;
@@ -387,7 +468,9 @@ function fitMusic(source, target, plan) {
 
 function writeProject(dir, plan, version, musicSource) {
   fs.mkdirSync(path.join(dir, "assets"), { recursive: true });
-  fs.cpSync(path.join(KIT, "assets"), path.join(dir, "assets"), { recursive: true });
+  fs.mkdirSync(path.join(dir, "assets"), { recursive: true });
+  fs.cpSync(path.join(__dirname, "fonts"), path.join(dir, "assets/fonts"), { recursive: true });
+  fs.copyFileSync(path.join(__dirname, "logo.png"), path.join(dir, "assets/logo.png"));
   fs.writeFileSync(
     path.join(dir, "package.json"),
     JSON.stringify({ name: "release-video", private: true, type: "module" })
@@ -399,7 +482,9 @@ function writeProject(dir, plan, version, musicSource) {
     music = "assets/music-fit.mp3";
     fitMusic(musicSource, path.join(dir, music), plan);
   }
-  fs.writeFileSync(path.join(dir, "index.html"), buildHtml(plan, { version, music }));
+  const sfx = "assets/sfx.wav";
+  fs.writeFileSync(path.join(dir, sfx), soundTrack(plan, { version }));
+  fs.writeFileSync(path.join(dir, "index.html"), buildHtml(plan, { version, music, sfx }));
 }
 
 async function fetchAvatars(dir, plan) {
@@ -424,10 +509,10 @@ function argument(name) {
 async function main() {
   const version = argument("version");
   if (!version) throw new Error("Usage: render-release-video.cjs --version <x.y> [--plan <file>] [--music <file>] [--out <file>]");
-  const plan = JSON.parse(fs.readFileSync(path.resolve(argument("plan") ?? path.join(KIT, "scenes.json")), "utf8"));
+  const plan = JSON.parse(fs.readFileSync(path.resolve(argument("plan") ?? PLAN), "utf8"));
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "release-video-"));
 
-  const kitMusic = path.join(KIT, "assets/music.mp3");
+  const kitMusic = path.join(__dirname, "music.mp3");
   const musicSource = argument("music") ?? (fs.existsSync(kitMusic) ? kitMusic : undefined);
   writeProject(dir, plan, version, musicSource);
   await fetchAvatars(dir, plan);
@@ -443,7 +528,7 @@ async function main() {
   console.log(`✅ ${out}`);
 }
 
-module.exports = { buildHtml, musicSections, musicSegments, sceneDuration, totalDuration };
+module.exports = { buildHtml, musicSections, musicSegments, sceneDuration, soundCues, soundTrack, totalDuration };
 
 if (require.main === module) {
   main().catch((error) => {
