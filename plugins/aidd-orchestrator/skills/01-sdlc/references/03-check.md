@@ -3,7 +3,7 @@
 ## Behavior
 
 - **Validate the committed candidate** against the contract, criteria, and mandatory checks using a fresh agent.
-- **Review quality and coherence** with a fresh agent after validation passes, on the code and relevancy axes using the acceptance evidence; record its findings through `/aidd-dev:05-review`.
+- **Review quality and coherence** after validation passes: a fresh agent runs `/aidd-dev:05-review` on the code and relevancy axes with the acceptance evidence.
 - **Challenge the outcome** with another fresh agent after review clears, not the one that sequenced delivery: verify that it is trustworthy and serves the user.
 
 ## Findings
@@ -61,7 +61,7 @@ flowchart TD
   ValidationReports --> Validator
   Validator -- "All criteria pass with evidence." --> Reviewer
   Validator -- "Fail or blocked." --> Findings
-  Reviewer -- "Caller records code and relevancy findings." --> Review
+  Reviewer -- "Runs code and relevancy axes." --> Review
   Review -- "Return actionable review findings." --> Findings
   Review -- "When the review clears, challenge the outcome." --> Challenge
   Challenge -- "Return actionable challenge findings." --> Findings

@@ -35,6 +35,7 @@ Read each action file in `actions/` before executing it.
 ## Transversal rules
 
 - The caller owns delegation, integration, shared plan status, and final acceptance; phase executors own only their assigned files and phase status.
+  - Parallel phases need separate write ownership and validation resources; workers running Git get their own checkout and index, otherwise the caller owns Git. Run serially when isolation is uncertain.
 - Track the plan through `pending → in-progress → implemented` (or `blocked`).
   - Track phases through `pending → in-progress → done`.
   - Treat `in-progress` as a runtime marker.

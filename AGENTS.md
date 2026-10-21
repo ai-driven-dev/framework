@@ -33,7 +33,7 @@
 
 ## Agents
 
-When you own the overall flow, fan out genuinely parallel subtasks to available host agents by responsibility; custom agents are optional. The caller owns scope, delegation, and final acceptance.
+When you own the overall flow, fan out genuinely independent subtasks to available host agents by responsibility when coordination costs less than serial work; custom agents are optional. The caller owns scope, delegation, and final acceptance.
 
 ## Memory Management
 
