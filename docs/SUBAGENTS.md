@@ -1,118 +1,126 @@
 # 🤝 Optional subagents (beta)
 
+Four specialist agents your AI tool can hand work to, each in a fresh context and on a model sized for the job. Plugins work without them; you install them explicitly.
+
 ## 📑 Contents
 
-- [Roles](#-roles)
-- [Models and IDEs](#-models-and-ides)
+- [How it works](#-how-it-works)
+- [Which agent for which task](#-which-agent-for-which-task)
 - [Install](#-install)
-- [Try a small task](#-try-a-small-task)
+- [Models](#-models)
 - [Update or remove](#-update-or-remove)
-- [Beta limitations](#-beta-limitations)
-- [Share a trial](#-share-a-trial)
-- [Model notes](#-model-notes)
+- [Limits](#-limits)
 
-## 👥 Roles
+## 🔀 How it works
 
-Add focused roles to your project's AI tool. Installation is explicit.
+Your main session keeps the conversation and decides what to delegate. Each agent gets a scoped brief, works in its own context, and returns its result to the main session, which owns the final answer.
 
-| Role | Responsibility |
-| --- | --- |
-| [Exploration](../cli/assets/agents/explorer.md) | Answer scoped codebase questions with source references. |
-| [Implementation](../cli/assets/agents/executor.md) | Deliver simple code or documentation with minimal changes and verification evidence. |
-| [Validation](../cli/assets/agents/validator.md) | Confirm the requested outcome and acceptance criteria hold. |
-| [Review](../cli/assets/agents/reviewer.md) | Find quality gaps, contradictions, duplication, and unnecessary complexity. |
+```mermaid
+sequenceDiagram
+  actor You
+  participant Main as Main session (main model)
+  participant Explorer as Explorer (light)
+  participant Executor as Executor (light)
+  participant Validator as Validator (light)
+  participant Reviewer as Reviewer (standard)
+  You->>Main: Request
+  Main->>Explorer: Where is it? How does it work?
+  Explorer-->>Main: Answer with sources
+  Main->>Executor: Build or fix this, with criteria
+  Executor-->>Main: Changes and checks
+  Main->>Validator: Does it meet the criteria?
+  Validator-->>Main: Validated yes or no
+  Main->>Reviewer: Is it clean and coherent?
+  Reviewer-->>Main: Findings
+  Main-->>You: Result
+```
 
-**Scope and delegation:** see the [Project Memory AGENTS.md template](../plugins/aidd-context/skills/02-project-memory/assets/templates/AGENTS.md#agents).
+Each step is optional: the main session calls only the agents the task needs, and repeats execution when validation or review finds a gap.
 
-## 🧠 Models and IDEs
+Delegation is by responsibility: workflows such as `/aidd-orchestrator:01-sdlc` ask for "a fresh validation agent", and the host picks one of these if installed, or a general-purpose agent otherwise.
 
-[agent-models.json](../cli/src/contexts/tools/domain/formats/agent-models.json) assigns each role a profile: `main` for the main session, `standard` for review, `light` for exploration, implementation, and validation. Each provider sets every profile's model and effort, for example Opus, Sonnet, and Haiku for Anthropic. Implementation and validation run on `light` to save cost; edit the role mapping to trade it for quality.
+## 🧭 Which agent for which task
 
-The main session stays as configured unless you add `--main`, which sets the provider's `main` model and keeps every other setting:
+| Agent | Use it to | It returns | Changes files |
+| --- | --- | --- | --- |
+| [Explorer](../cli/assets/agents/explorer.md) | Find files and symbols, trace a flow, answer a codebase question before a change | The answer, with sources and unknowns | No |
+| [Executor](../cli/assets/agents/executor.md) | Write or fix code and docs within a defined scope, then verify them | `COMPLETE`, `INCOMPLETE` or `BLOCKED`, with changes and checks run | Yes |
+| [Validator](../cli/assets/agents/validator.md) | Confirm delivered work meets the request and its acceptance criteria | `Validated: yes` or `no`, with what failed | No |
+| [Reviewer](../cli/assets/agents/reviewer.md) | Find defects, contradictions, duplication and needless complexity in finished work | `no actionable findings`, `changes needed` or `insufficient evidence`, with findings | No |
 
-| IDE | File | Keys |
-| --- | --- | --- |
-| Claude Code | `.claude/settings.json` | `model`, `effortLevel` |
-| Codex | `.codex/config.toml` | top-level `model`, `model_reasoning_effort`; a selected `profile` still wins, and project files load only for trusted projects |
-| OpenCode | `opencode.json` | `model` only: the root model keeps no variant; refused when `opencode.jsonc` holds the settings |
-
-Copilot and Cursor refuse `--main`. AIDD records what it replaced in `.aidd/main-model.json` and restores it on removal; it refuses to overwrite a value you changed since, and refuses TOML it cannot edit line by line safely. Sources checked 2026-10-20: [Claude Code settings](https://code.claude.com/docs/en/settings), [Codex config](https://developers.openai.com/codex/config-reference), [OpenCode V2 models](https://opencode.ai/v2/docs/models#variants).
+Typical order for a change: explore, execute, validate, then review.
 
 ## 📦 Install
 
-The CLI command is unreleased. Build a framework checkout from its root:
+The command is not released yet; build it from a framework checkout:
 
 ```sh
 pnpm --dir cli install --frozen-lockfile
 pnpm --dir cli build
 ```
 
-From the target project's root, install with a supported provider and IDE:
+Then pick your IDE and provider:
 
 ```sh
-node /absolute/path/to/framework/cli/dist/cli.js agents install --provider openai --ide codex
+# In one project (from its root)
+node /path/to/framework/cli/dist/cli.js agents install --ide claude-code --provider anthropic
+
+# For every project of this user
+node /path/to/framework/cli/dist/cli.js agents install --ide claude-code --provider anthropic --scope user
+
+# Also set the main session model (optional)
+node /path/to/framework/cli/dist/cli.js agents install --ide claude-code --provider anthropic --main
 ```
 
-Installation writes four self-contained native files and the ownership registry at `.aidd/agents.json`. Add `--main` to also set the main session model. Add `--scope user` to install into the IDE's user configuration instead, with the registry in AIDD's user configuration directory.
+Open a new session afterwards so the IDE loads them.
 
-| IDE | Project | User scope | `--main` |
-| --- | --- | --- | --- |
-| Claude Code | `.claude/agents/` | `~/.claude/agents/` (`CLAUDE_CONFIG_DIR`) | yes |
-| Codex | `.codex/agents/` | `~/.codex/agents/` (`CODEX_HOME`) | yes |
-| OpenCode | `.opencode/agents/` | `~/.config/opencode/agents/` (`XDG_CONFIG_HOME`) | yes |
-| Copilot | `.github/agents/` | `~/.copilot/agents/` (`COPILOT_HOME`) | no |
-| Cursor | `.cursor/agents/` | no: Cursor CLI 2026.10.19 loaded no agent from `~/.cursor/agents/` | no |
+| IDE (`--ide`) | Providers | Project | `--scope user` | `--main` |
+| --- | --- | --- | --- | --- |
+| `claude-code` | anthropic | `.claude/agents/` | `~/.claude/agents/` | yes |
+| `codex` | openai | `.codex/agents/` | `~/.codex/agents/` | yes |
+| `opencode` | openai, anthropic, mistral | `.opencode/agents/` | `~/.config/opencode/agents/` | yes |
+| `copilot` | openai, anthropic | `.github/agents/` | `~/.copilot/agents/` | no |
+| `cursor` | anthropic | `.cursor/agents/` | no | no |
 
-Loading was checked on 2026-10-21 with Copilot CLI 1.0.98 (`--agent` lists and runs the four roles, project and user scope) and Cursor CLI 2026.10.19 (project scope). Cursor keeps single quotes in frontmatter values, so its agents are written with double quotes. A Copilot account limited to `auto` ignores the configured model with a warning. User directories, sources checked 2026-10-20 and 2026-10-21: [Claude Code sub-agents](https://code.claude.com/docs/en/sub-agents), [Codex subagents](https://developers.openai.com/codex/subagents), [OpenCode agents](https://opencode.ai/docs/agents), [Copilot configuration directory](https://docs.github.com/en/copilot/reference/copilot-cli-reference/cli-config-dir-reference), [Cursor subagents](https://cursor.com/docs/subagents).
+User paths follow `CLAUDE_CONFIG_DIR`, `CODEX_HOME`, `XDG_CONFIG_HOME` and `COPILOT_HOME`. AIDD records what it wrote in `.aidd/agents.json` (user scope: AIDD's user config directory) and never overwrites a file you edited.
 
-## 🧪 Try a small task
+## 🧠 Models
 
-Use a disposable project or clean branch with explicit success criteria. Open a fresh host session after installation.
+Each role uses a profile; each provider sets the profile's model and effort in [agent-models.json](../cli/src/contexts/tools/domain/formats/agent-models.json).
 
-1. **Load:** confirm the installed roles are available; record the loaded definition's path and configured model and effort.
-2. **Explore:** delegate one read-only codebase question; check the answer's source references and confirm a separate agent ran.
-3. **Implement:** delegate one small code or documentation change with owned files and a check; inspect the diff and results.
-4. **Verify:** request independent validation against the criteria and review of quality and coherence.
+| Profile | Roles | Anthropic | OpenAI | Mistral (OpenCode) |
+| --- | --- | --- | --- | --- |
+| `main` | main session, with `--main` | Opus 5.5 | GPT-6.1 Sol | Large 4 |
+| `standard` | reviewer | Sonnet 5.5 | GPT-6.1 Sol | Medium (`-latest`) |
+| `light` | explorer, executor, validator | Haiku 5.5 | GPT-6 Luna | Small (`-latest`) |
 
-Use host dispatch records to identify the agent and actual model, effort, and tier where exposed. Headers and agent self-reports alone do not prove runtime selection; mark unavailable evidence **unverified**.
+Implementation and validation run on `light` to save cost; change the role mapping in that file to trade cost for quality.
+
+`--main` writes only these keys and keeps the rest of the file:
+
+| IDE | File | Keys |
+| --- | --- | --- |
+| Claude Code | `.claude/settings.json` | `model`, `effortLevel` |
+| Codex | `.codex/config.toml` | `model`, `model_reasoning_effort`; a selected `profile` still wins |
+| OpenCode | `opencode.json` | `model` (OpenCode keeps no effort at that level); refused when `opencode.jsonc` holds the settings |
+
+It records the previous values in `.aidd/main-model.json` and restores them on removal; it refuses a value you changed since, and TOML it cannot edit safely.
 
 ## 🔄 Update or remove
 
-After updating the CLI, rerun the install command to refresh unmodified agents; agents of retired roles are removed. Plugins and `sync` do not install or refresh this add-on.
+- **Update:** rerun the same install command; unmodified agents are refreshed and retired roles removed.
+- **Remove:** `agents remove --ide <ide>` (add `--scope user` for user agents). It also restores the main model it replaced.
+- **Clean:** `aidd clean` removes project agents with the rest of AIDD; user agents stay until `agents remove --scope user`.
 
-For framework development, copy [reload-agents.example.json](../scripts/reload-agents.example.json) beside it as the gitignored `reload-agents.json` (or point `RELOAD_AGENTS` at another file). `make reload` then runs `agents install --scope user` for each listed IDE with its `provider`, adding `--main` where `"main": true`. Without the file, reload installs no agent. The file only adds: to undo an IDE or its main model, run `agents remove --scope user --ide <ide>`. Reload stops on a modified or unowned agent file; move it aside, then rerun.
+**Framework contributors:** copy [reload-agents.example.json](../scripts/reload-agents.example.json) beside it as the gitignored `reload-agents.json`. `make reload` then runs `agents install --scope user` for each listed IDE, adding `--main` where `"main": true`. The file only adds: undo with `agents remove --scope user --ide <ide>`.
 
-To remove only one IDE's agents from the current project:
+## 🚧 Limits
 
-```sh
-node /absolute/path/to/framework/cli/dist/cli.js agents remove --ide codex
-```
+- **Runtime model:** the files set model and effort; your plan or account decides what actually runs. A Copilot account limited to `auto` ignores the configured model with a warning.
+- **Cursor user scope:** Cursor CLI 2026.10.19 loaded no agent from `~/.cursor/agents/`, so only project install is supported. Cursor agents are written with double quotes because Cursor keeps single quotes in names.
+- **Codex:** project files load only for trusted projects; agents inherit the parent session's service tier, so Fast is enabled with `/fast` in the parent ([speed](https://learn.chatgpt.com/docs/agent-configuration/speed)).
+- **Interrupted command:** check the files before deleting `.aidd/agents.json.lock`; a handled failure already restores files and registries.
 
-The other IDEs' agents remain installed; add `--scope user` for user-level agents. Removal also restores the main model it replaced. Installation and removal refuse changes to personal or modified agent files. `aidd clean` retires the entire AIDD project installation, including its managed agents; user-level agents stay until `agents remove --scope user`.
+Loading checked on 2026-10-21 with `pnpm --dir cli test:e2e:agents`, which asks each installed host which agents it loaded: Claude Code, Codex, OpenCode, Copilot CLI 1.0.98 and Cursor CLI 2026.10.19 (project scope); Copilot also at user scope.
 
-## 🚧 Beta limitations
-
-- **Runtime selection:** verify the host actually uses the configured model and effort during your trial.
-- **Interrupted command:** inspect the native files and registry before clearing `.aidd/agents.json.lock`; confirm no installation or removal is still running. Handled write failures restore the previous agent files, settings, and registries.
-
-## 📝 Share a trial
-
-Copy one report per trial:
-
-```markdown
-- **IDE/version:**
-- **CLI version/commit:**
-- **Provider:**
-- **Task and success criteria:**
-- **Observed source/dispatch/model/effort/tier:**
-- **Result:** passed / failed / unverified
-- **Evidence:** host records, relevant diff, check command and result
-```
-
-## 💡 Model notes
-
-Mistral is supported on OpenCode; its documented reasoning levels are `none` and `high`. Review and light roles use the `mistral-medium-latest` and `mistral-small-latest` aliases, which resolved to Medium 3.5 and [Small 4](https://docs.mistral.ai/models/mistral-small-4-0-26-03) on 2026-10-20, so they follow Mistral's updates. The main session pins [`mistral-large-4`](https://docs.mistral.ai/models/mistral-large-4-0) (public preview): `mistral-large-latest` still resolved to Large 3, without reasoning levels, in OpenCode's model list on 2026-10-20. Medium 3.5 is also a public preview.
-
-Codex Fast supports Luna where available, but agents inherit the root session's service tier. Enable it with `/fast` in the parent session; agent installation does not change that setting. Fast consumes more usage. [Speed](https://learn.chatgpt.com/docs/agent-configuration/speed), [subagent inheritance](https://learn.chatgpt.com/docs/agent-configuration/subagents#custom-agent-file-schema), checked 2026-10-16.
-
-Sources checked 2026-10-16, Mistral and Claude Sonnet 2026-10-20: [OpenAI models](https://developers.openai.com/api/docs/models), [Claude models](https://platform.claude.com/docs/en/models/overview), [Mistral models](https://docs.mistral.ai/models), [Mistral Medium 3.5 (public preview)](https://mistral.ai/news/vibe-remote-agents-mistral-medium-3-5), [Mistral reasoning](https://docs.mistral.ai/studio/conversations/reasoning), [OpenCode V2 variants](https://opencode.ai/v2/docs/models#variants), [Copilot model IDs](https://docs.github.com/en/copilot/reference/copilot-cli-reference/cli-command-reference#supported-models). These recommendations are not a comparative benchmark or proof of account access.
+Sources, checked 2026-10-16 to 2026-10-21: [Claude Code sub-agents](https://code.claude.com/docs/en/sub-agents) and [settings](https://code.claude.com/docs/en/settings), [Codex subagents](https://developers.openai.com/codex/subagents) and [config](https://developers.openai.com/codex/config-reference), [OpenCode agents](https://opencode.ai/docs/agents) and [models](https://opencode.ai/v2/docs/models#variants), [Copilot configuration directory](https://docs.github.com/en/copilot/reference/copilot-cli-reference/cli-config-dir-reference) and [model IDs](https://docs.github.com/en/copilot/reference/copilot-cli-reference/cli-command-reference#supported-models), [Cursor subagents](https://cursor.com/docs/subagents), [Claude models](https://platform.claude.com/docs/en/models/overview), [OpenAI models](https://developers.openai.com/api/docs/models), [Mistral models](https://docs.mistral.ai/models), [Mistral Large 4](https://docs.mistral.ai/models/mistral-large-4-0), [Mistral reasoning](https://docs.mistral.ai/studio/conversations/reasoning). Mistral Large 4 and Medium 3.5 are public previews; `mistral-large-latest` still pointed to Large 3, without reasoning, so the main model is pinned.

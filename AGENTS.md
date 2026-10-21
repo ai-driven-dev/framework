@@ -35,6 +35,15 @@
 
 When you own the overall flow, fan out genuinely independent subtasks to available host agents by responsibility when coordination costs less than serial work; custom agents are optional. The caller owns scope, delegation, and final acceptance.
 
+| Responsibility | Agent when installed |
+| --- | --- |
+| Answer a scoped codebase question with sources | `aidd-dev-explorer` |
+| Implement assigned work and verify it | `aidd-dev-executor` |
+| Confirm the outcome meets its acceptance criteria | `aidd-dev-validator` |
+| Review quality, coherence, and needless complexity | `aidd-dev-reviewer` |
+
+Without them, give the same brief to a general-purpose agent.
+
 ## Memory Management
 
 Project docs, memory, specs, and plans live in `aidd_docs/`.
