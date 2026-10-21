@@ -1,6 +1,6 @@
 # Conversation sources
 
-Use this static routing map to load one complete conversation. Do not fill or copy it into the report.
+Use this static routing map to load one complete conversation and the sessions it spawned. Do not fill or copy it into the report.
 
 | Host | Preferred complete source | Session path | Timing or usage source |
 | --- | --- | --- | --- |
