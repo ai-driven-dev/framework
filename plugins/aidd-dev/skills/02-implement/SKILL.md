@@ -23,7 +23,7 @@ flowchart LR
 
 ## Actions
 
-Run actions in order for a whole plan. An assigned-phase executor reads the plan context and executes only that phase, skipping shared preparation and finalization.
+Run actions in order for a whole plan. An assigned-phase executor reads the plan context and `execute` only.
 Read each action file in `actions/` before executing it.
 
 | Action   | Does                                  |
@@ -47,7 +47,7 @@ Read each action file in `actions/` before executing it.
   - Group tasks only when they cannot be validated separately.
   - Never split a task by step or file.
   - Exclude unrelated changes.
-- Include `done` in the phase's last task commit.
+- Commit `done` once the phase is validated.
 - Make a final commit for `implemented`.
 - Use project formatters or hooks.
   - Never format code manually.
