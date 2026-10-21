@@ -22,6 +22,6 @@ Return a concise result; omit empty fields.
 ```markdown
 **Status:** <COMPLETE | INCOMPLETE | BLOCKED>
 **Changes:** <delivered behavior and paths>
-**Checks:** <what ran and its result>
+**Checks:** <what ran, on which commit, and its result>
 **Remaining:** <unfinished work or blockers, if any>
 ```
