@@ -6,7 +6,7 @@ Turn the contract into a proportional plan, then give one executor the whole pla
 
 The executor follows the implementation skill for its assigned scope and calls the validation skills, which own their checks and repair loops. Include architecture conformance whenever the project documents architecture. Phase executors return for integration. Finalize the integrated plan once, including any required end-to-end journey after other checks and before marking it implemented.
 
-Commit and push the validated work through the commit skill. Send only the clean committed candidate and its evidence to Check.
+Send only the clean committed candidate and its evidence to Check.
 
 ```mermaid
 ---
