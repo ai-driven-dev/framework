@@ -20,7 +20,7 @@ flowchart LR
 
 Each box is a file: read it, then do what it says.
 
-## Rules
+## Transversal rules
 
 - Clarify only: never plan or code.
 - Ask a question only if its answer changes the outcome.
