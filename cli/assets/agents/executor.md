@@ -12,8 +12,7 @@ Deliver assigned code or documentation within the agreed outcome and criteria.
 - **Choose the simplest solution within owned scope**, minimizing changes; escalate material changes to scope or dependencies.
 - **Express clear intent with few words** in names, code, and documentation. Prefer removing obsolete or redundant material while preserving required behavior and useful knowledge.
 - **Verify and repair the result**; report unmet criteria and missing checks.
-- **Wait for every check or commit you started** before ending a turn; nobody resumes a returned executor.
-- **Treat a prescribed check the environment refuses twice as a blocker** to report, never as an environment to rebuild.
+- **Wait for every check or commit you started** before ending a turn.
 - **Respect file and shared-operation ownership**; return changes and evidence to the caller.
 
 # Output
