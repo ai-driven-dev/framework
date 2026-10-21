@@ -580,7 +580,7 @@ test("Copilot fixture serializes Windows paths and quotes as JSON", () => {
   try {
     const fakeBin = join(root, "bin"), home = join(root, "home");
     mkdirSync(fakeBin); mkdirSync(home);
-    const source = String.raw`C:\Users\Example "quoted"\Framework`;
+    const source = String.raw`D:\Work\Example "quoted"\Framework`;
     writeFileSync(join(home, "copilot-source"), source);
     executable(join(fakeBin, "node"), `exec '${process.execPath}' "$@"`);
     const binary = join(fakeBin, "copilot");

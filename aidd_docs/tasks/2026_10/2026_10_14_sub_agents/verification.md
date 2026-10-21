@@ -1,6 +1,6 @@
 # Sub-agent verification
 
-Current state, 2026-10-20. Behavior and sources are in [the agent guide](../../../../docs/SUBAGENTS.md).
+Current state, 2026-10-21, merged with next. Behavior and sources are in [the agent guide](../../../../docs/SUBAGENTS.md).
 
 ## Scope
 
@@ -11,9 +11,9 @@ Current state, 2026-10-20. Behavior and sources are in [the agent guide](../../.
 
 ## Checks
 
-- **CLI:** 6,839 tests pass, one skipped. Typecheck, lint, architecture rules, knip and duplication (1.47%) pass. Bundle 720.0 KB against 726 KB.
+- **CLI:** 7,070 tests pass, one skipped. Typecheck, lint, architecture rules, knip and duplication (1.44%) pass. Bundle 733.5 KB against 742 KB.
 - **Smoke:** 140 checks pass, one remote check skipped; 34/34 leaf commands exercised.
-- **Reload:** 52 script cases pass, including opt-in order, skips with a reason, and refusal before plugin changes.
+- **Reload:** 539 script tests pass, including reload opt-in order, skips with a reason, and refusal before plugin changes.
 - **Edge cases:** unit cases cover multi-line strings, quoted and dotted keys, nested arrays, inline comments, CRLF and a JSON BOM; integration cases cover user scope, restore on removal, retired roles and rollback of both registries.
 
 ## Earlier runtime probes
