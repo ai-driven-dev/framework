@@ -99,6 +99,24 @@ function overlongText(plan) {
   return found;
 }
 
+/** Words only the people who build AIDD know. A viewer reads the outcome in plain words; the demo
+ * window may show the real commands. */
+const JARGON = /\b(tokens?|telemetry|envelopes?|axis|transcripts?|payloads?|hooks?)\b/gi;
+
+function jargonIn(plan) {
+  const found = [];
+  const scan = (where, text) => {
+    for (const [word] of String(text ?? "").matchAll(JARGON)) found.push(`${where}: "${word.toLowerCase()}"`);
+  };
+  const { tagline, highlights = [] } = plan.intro ?? {};
+  scan("intro tagline", tagline);
+  highlights.forEach((text, i) => scan(`intro highlight ${i + 1}`, text));
+  plan.scenes.forEach((scene, i) => {
+    for (const field of ["title", "accent", "lead"]) scan(`scene ${i + 1} ${field}`, scene[field]);
+  });
+  return found;
+}
+
 function git(cwd, ...args) {
   return execFileSync("git", args, { cwd, encoding: "utf8", env: withoutGitEnv() }).trim();
 }
@@ -133,8 +151,9 @@ function run({
   const missing = missingScenes(surfaces, plan);
   const unexplained = invalidSkips(plan);
   const tooLong = overlongText(plan);
+  const technical = jargonIn(plan);
 
-  if (missing.length === 0 && unexplained.length === 0 && tooLong.length === 0) {
+  if (missing.length === 0 && unexplained.length === 0 && tooLong.length === 0 && technical.length === 0) {
     successLogger(`✅ Release video: ${surfaces.length} surface(s) covered`);
     return 0;
   }
@@ -144,10 +163,11 @@ function run({
     logger(`❌ Surfaces ignorées sans raison : ${unexplained.join(", ")}`);
   }
   if (tooLong.length > 0) logger(`❌ Textes trop longs : ${tooLong.join(", ")}`);
+  if (technical.length > 0) logger(`❌ Mots techniques : ${technical.join(", ")}`);
   return 1;
 }
 
-module.exports = { featSurfaces, invalidSkips, missingScenes, overlongText, run, surfacesOf };
+module.exports = { featSurfaces, invalidSkips, jargonIn, missingScenes, overlongText, run, surfacesOf };
 
 if (require.main === module) {
   process.exit(run());

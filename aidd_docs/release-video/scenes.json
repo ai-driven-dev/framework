@@ -3,9 +3,9 @@
     {
       "template": "terminal-demo",
       "pill": "aidd telemetry",
-      "title": "Count tokens in",
-      "accent": "Codex too.",
-      "lead": "Codex sessions are counted from their own files, like Claude Code.",
+      "title": "See what your AI costs,",
+      "accent": "in Codex too.",
+      "lead": "One report shows Claude and Codex side by side.",
       "surfaces": [
         "aidd telemetry",
         "aidd-telemetry:00-init"
@@ -20,26 +20,22 @@
             "table": {
               "head": [
                 "Tool",
-                "Calls",
-                "Tokens"
+                "Requests",
+                "Usage"
               ],
               "rows": [
                 [
-                  "claude-code",
+                  "Claude Code",
                   "412",
                   "1.8M"
                 ],
                 [
-                  "codex",
+                  "Codex",
                   "96",
                   "410k"
                 ]
               ]
             }
-          },
-          {
-            "text": "$ aidd telemetry report --tool codex",
-            "tone": "dim"
           }
         ]
       },
@@ -48,8 +44,8 @@
     {
       "template": "terminal-demo",
       "pill": "/aidd-context:05-rule-generate",
-      "title": "A new rule is compared",
-      "accent": "before it is written.",
+      "title": "No more rules",
+      "accent": "that clash.",
       "surfaces": [
         "aidd-context:05-rule-generate"
       ],
@@ -57,39 +53,39 @@
         "label": "Claude Code · ~/acme-app",
         "rows": [
           {
-            "prompt": "/aidd-context:05-rule-generate named exports only"
+            "prompt": "/aidd-context:05-rule-generate always use named exports"
           },
           {
-            "text": "compares the candidate with your existing rules and project guidance",
+            "text": "checking your existing rules…",
             "tone": "dim"
           },
           {
-            "text": "conflict: an existing rule allows default exports",
+            "text": "clash: another rule allows default exports",
             "tone": "amb"
           },
           {
-            "text": "nothing is written until you choose: keep, revise or cancel",
+            "text": "nothing is saved until you decide",
             "tone": "grn"
           }
         ]
       },
       "note": "Example run.",
-      "lead": "New rules are compared with your existing ones before anything is saved."
+      "lead": "Before saving a new rule, your AI checks it against the others."
     },
     {
       "template": "bullet-grid",
       "pill": "reliability",
-      "title": "Telemetry,",
-      "accent": "more reliable.",
+      "title": "Usage tracking",
+      "accent": "you can trust.",
       "cells": [
         {
-          "title": "Nothing measured is lost silently"
+          "title": "Nothing is lost without telling you"
         },
         {
-          "title": "Status after turning off tells the truth"
+          "title": "Turning it off is shown clearly"
         },
         {
-          "title": "Large session files are read in blocks"
+          "title": "Big files are read piece by piece"
         }
       ]
     },
@@ -110,10 +106,10 @@
     }
   ],
   "intro": {
-    "tagline": "Now counting Codex too.",
+    "tagline": "Know what your AI costs.",
     "highlights": [
-      "Report by tool",
-      "Safer new rules"
+      "Claude and Codex",
+      "No clashing rules"
     ]
   }
 }

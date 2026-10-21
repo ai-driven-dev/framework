@@ -3,6 +3,7 @@ const test = require("node:test");
 
 const {
   invalidSkips,
+  jargonIn,
   missingScenes,
   overlongText,
   run,
@@ -243,4 +244,59 @@ test("run fails on a text that is too long even when every surface is covered", 
 
   assert.equal(code, 1);
   assert.match(errors.join("\n"), /Textes trop longs : intro tagline: 9 words, 6 at most/);
+});
+
+test("jargonIn names the technical word a viewer would not know, and where it is", () => {
+  const plan = {
+    intro: { tagline: "Count your tokens", highlights: ["Telemetry for Codex"] },
+    scenes: [{ title: "A clean", accent: "envelope.", lead: "Read the transcript." }],
+    skipped: [],
+  };
+
+  assert.deepEqual(jargonIn(plan), [
+    'intro tagline: "tokens"',
+    'intro highlight 1: "telemetry"',
+    'scene 1 accent: "envelope"',
+    'scene 1 lead: "transcript"',
+  ]);
+});
+
+test("jargonIn leaves plain words and the demo window alone", () => {
+  const plan = {
+    intro: { tagline: "Know what your AI costs." },
+    scenes: [{ title: "See the cost", lead: "One report.", window: { rows: [{ text: "$ aidd telemetry report" }] } }],
+    skipped: [],
+  };
+
+  assert.deepEqual(jargonIn(plan), []);
+});
+
+test("run fails on a technical word in the text a viewer reads", () => {
+  const errors = [];
+  const code = run({
+    surfaces: [],
+    plan: { intro: { tagline: "Your tokens" }, scenes: [], skipped: [] },
+    logger: (line) => errors.push(line),
+    successLogger: () => {},
+  });
+
+  assert.equal(code, 1);
+  assert.match(errors.join("\n"), /Mots techniques : intro tagline: "tokens"/);
+});
+
+test("jargonIn catches every technical word it lists, singular or plural", () => {
+  const plan = {
+    scenes: [{ title: "axis payloads hooks", accent: "token telemetry envelope transcripts" }],
+    skipped: [],
+  };
+
+  assert.deepEqual(jargonIn(plan), [
+    'scene 1 title: "axis"',
+    'scene 1 title: "payloads"',
+    'scene 1 title: "hooks"',
+    'scene 1 accent: "token"',
+    'scene 1 accent: "telemetry"',
+    'scene 1 accent: "envelope"',
+    'scene 1 accent: "transcripts"',
+  ]);
 });
