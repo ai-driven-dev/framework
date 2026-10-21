@@ -4,7 +4,7 @@
 
 - The mode is `auto` unless the caller asks for `interactive`, named as the request's first whole word and no part of the source.
 - A request carrying nothing else is not one to run: say so and stop.
-- Ask only before spending money, taking an irreversible action, or making a decision that requires user authority.
+- Ask only before spending money, taking an irreversible action such as deleting a branch, or making a decision that requires user authority.
 - An exception stops the action it guards, not the rest of the request. Say what was withheld and what would release it.
 
 ## Auto
