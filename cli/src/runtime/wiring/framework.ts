@@ -10,10 +10,8 @@ import { MarketplaceAddUseCase } from "../../contexts/distribution/application/m
 import type { MarketplaceListUseCase } from "../../contexts/distribution/application/marketplace-list-use-case.js";
 import type { MarketplaceRefreshUseCase } from "../../contexts/distribution/application/marketplace-refresh-use-case.js";
 import type { MarketplaceRegisterFrameworkUseCase } from "../../contexts/distribution/application/marketplace-register-framework-use-case.js";
-import {
-  ManageAgentsUseCase,
-  type UserAgentRoot,
-} from "../../contexts/framework/application/agents/manage-agents-use-case.js";
+import type { UserAgentRoot } from "../../contexts/framework/application/agents/agent-location.js";
+import { ManageAgentsUseCase } from "../../contexts/framework/application/agents/manage-agents-use-case.js";
 import { CleanUserScopeUseCase } from "../../contexts/framework/application/clean/clean-user-scope-use-case.js";
 import { CleanUseCase } from "../../contexts/framework/application/clean-use-case.js";
 import { DoctorLayoutUseCase } from "../../contexts/framework/application/doctor/doctor-layout-use-case.js";

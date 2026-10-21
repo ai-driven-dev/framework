@@ -1,23 +1,13 @@
-import { basename, dirname, join } from "node:path";
+import { dirname, join } from "node:path";
 import { parseFrontmatter } from "../../../../kernel/markdown.js";
 import type { FileReader } from "../../../../kernel/ports/file-reader.js";
 import type { FileWriter } from "../../../../kernel/ports/file-writer.js";
 import type { Hasher } from "../../../../kernel/ports/hasher.js";
-import type { AgentsCapability } from "../../../tools/domain/capabilities/agents-capability.js";
-import type { EnvironmentReader } from "../../../tools/domain/capabilities/plugins-capability.js";
-import type { HasAgents } from "../../../tools/domain/contracts.js";
 import {
   type AgentHost,
   type AgentProvider,
   agentModelOptions,
 } from "../../../tools/domain/formats/agent-models.js";
-import {
-  mainModelTarget,
-  mainModelValues,
-  planMainModelInstall,
-  planMainModelRemoval,
-} from "../../../tools/domain/formats/main-model-config.js";
-import { getAiToolConfig } from "../../../tools/domain/registry.js";
 import {
   AGENT_INSTALLATIONS_PATH,
   type AgentInstallationStore,
@@ -26,39 +16,23 @@ import {
   type MainModelInstallations,
 } from "../../domain/ports/agent-installation-store.js";
 import { assertProjectPathWithinRoot } from "../ownership/project-path-boundary.js";
-
-interface AgentTarget {
-  projectRoot: string;
-  host: AgentHost;
-  /** Targets the IDE's user configuration directory instead of the project. */
-  user?: UserAgentRoot;
-}
-
-interface AgentChange {
-  path: string;
-  content: string | null;
-}
-
-/** Where one host's agents, main settings and ownership registry live for a scope. */
-interface AgentLocation {
-  registryRoot: string;
-  /** Creates the registry root when the scope owns it. */
-  prepare?: () => Promise<void>;
-  agentPath(name: string): string;
-  settingsPath: string | null;
-  guard(path: string): Promise<void>;
-}
-
-/** The user's home, environment and AIDD configuration directory, for user-scoped agents. */
-export interface UserAgentRoot {
-  home: string;
-  env: EnvironmentReader;
-  configDir: string;
-}
+import {
+  type AgentLocation,
+  type AgentTarget,
+  agentsCapability,
+  resolveAgentLocation,
+} from "./agent-location.js";
+import {
+  type FileChange,
+  mainModelInstall,
+  mainModelRemovals,
+  readOptional,
+} from "./main-model-changes.js";
 
 /** A registry name maps to one file inside the agents directory, never a path. */
 const AGENT_NAME = /^[a-z0-9][a-z0-9-]*$/;
 
+/** Installs, refreshes and removes the bundled agents, owning only the files it wrote. */
 export class ManageAgentsUseCase {
   constructor(
     private readonly fs: FileReader & FileWriter,
@@ -71,8 +45,8 @@ export class ManageAgentsUseCase {
   async install(
     options: AgentTarget & { provider: AgentProvider; main?: boolean }
   ): Promise<number> {
-    const capability = this.capability(options.host);
-    const location = this.location(options);
+    const capability = agentsCapability(options.host);
+    const location = resolveAgentLocation(this.fs, options);
     if (options.main === true && location.settingsPath === null)
       throw new Error(`${options.host} has no main model setting AIDD can write.`);
     const entries = Object.entries(this.sources).map(([name, source]) => {
@@ -94,7 +68,7 @@ export class ManageAgentsUseCase {
       const owned = installed[options.host] ?? {};
       for (const entry of entries) await this.assertOwned(location, entry.path, owned[entry.name]);
       // Roles no longer bundled: remove their unmodified files.
-      const retired: AgentChange[] = [];
+      const retired: FileChange[] = [];
       for (const [name, hash] of Object.entries(owned)) {
         if (Object.hasOwn(this.sources, name)) continue;
         const path = location.agentPath(name);
@@ -105,141 +79,28 @@ export class ManageAgentsUseCase {
         entries.map(({ name, content }) => [name, this.hasher.hash(content)])
       );
       const mainModels = await this.store.loadMainModels(location.registryRoot);
-      const mainChanges: AgentChange[] = [];
-      if (options.main === true) {
-        const main = await this.mainModelInstall(options, location, mainModels);
-        if (main !== null) mainChanges.push(main);
-      }
+      const main =
+        options.main === true
+          ? await mainModelInstall(this.fs, options, location, mainModels)
+          : null;
       return this.save(
         location.registryRoot,
         installed,
         mainModels,
         [...entries, ...retired],
-        mainChanges
+        main === null ? [] : [main]
       );
     });
   }
 
-  /** Writes the provider's main model into the host settings, recording what it replaces. */
-  private async mainModelInstall(
-    options: AgentTarget & { provider: AgentProvider },
-    location: AgentLocation,
-    mainModels: MainModelInstallations
-  ): Promise<AgentChange | null> {
-    const target = mainModelTarget(options.host);
-    const path = location.settingsPath;
-    if (target === null || path === null) return null;
-    await location.guard(path);
-    if ((await this.fs.fileExists(path, false)) && !(await this.fs.fileExists(path)))
-      throw new Error(`Settings link is broken; fix it before installing agents: ${path}`);
-    const content = await this.readOptional(path);
-    for (const alternative of content === null ? (target.alternatives ?? []) : [])
-      if (await this.fs.fileExists(join(dirname(path), alternative)))
-        throw new Error(
-          `Settings live in ${alternative}; move them to ${basename(path)} before installing agents.`
-        );
-    try {
-      const plan = planMainModelInstall(
-        content,
-        target.format,
-        mainModelValues(options.host, options.provider),
-        mainModels[options.host]
-      );
-      mainModels[options.host] = plan.record;
-      return { path, content: plan.content };
-    } catch (error) {
-      throw new Error(`Cannot set the main model in ${path}: ${(error as Error).message}`);
-    }
-  }
-
-  /** Restores the settings each recorded main model replaced. */
-  private async mainModelRemovals(
-    target: Omit<AgentTarget, "host">,
-    mainModels: MainModelInstallations,
-    onlyHost?: AgentHost
-  ): Promise<AgentChange[]> {
-    const changes: AgentChange[] = [];
-    for (const [host, record] of Object.entries(mainModels)) {
-      if (onlyHost !== undefined && host !== onlyHost) continue;
-      const settings = mainModelTarget(host as AgentHost);
-      const location = this.location({ ...target, host: host as AgentHost });
-      if (settings === null || location.settingsPath === null || record === undefined) continue;
-      await location.guard(location.settingsPath);
-      const content = await this.readOptional(location.settingsPath);
-      const next = planMainModelRemoval(content, settings.format, record);
-      if (next !== content) changes.push({ path: location.settingsPath, content: next });
-    }
-    return changes;
-  }
-
-  private async readOptional(path: string): Promise<string | null> {
-    return (await this.fs.fileExists(path)) ? this.fs.readFile(path) : null;
-  }
-
-  private async exclusively<T>(root: string, action: () => Promise<T>): Promise<T> {
-    await assertProjectPathWithinRoot(this.fs, root, join(root, AGENT_INSTALLATIONS_PATH));
-    return this.store.withExclusiveAccess(root, action);
-  }
-
-  /** Applies every change, then both registries; any failure restores all of them. */
-  private async save(
-    root: string,
-    installed: AgentInstallations,
-    mainModels: MainModelInstallations,
-    changes: readonly AgentChange[],
-    mainChanges: readonly AgentChange[] = []
-  ): Promise<number> {
-    const previous: AgentChange[] = [];
-    const agentPaths = new Set(changes.map((change) => change.path));
-    try {
-      for (const change of [...changes, ...mainChanges]) {
-        const content = await this.readOptional(change.path);
-        if (content === change.content) continue;
-        previous.push({ path: change.path, content });
-        await this.write(change);
-      }
-      for (const registry of [AGENT_INSTALLATIONS_PATH, MAIN_MODEL_INSTALLATIONS_PATH]) {
-        const path = join(root, registry);
-        previous.push({ path, content: await this.readOptional(path) });
-      }
-      await this.store.save(root, installed);
-      await this.store.saveMainModels(root, mainModels);
-      return previous.filter((change) => agentPaths.has(change.path)).length;
-    } catch (error) {
-      const restored = await Promise.allSettled(
-        previous.reverse().map(async (change) => {
-          if ((await this.readOptional(change.path)) !== change.content) await this.write(change);
-        })
-      );
-      const failures = restored.filter((result) => result.status === "rejected");
-      if (failures.length > 0)
-        throw new AggregateError(
-          [error, ...failures.map((result) => result.reason)],
-          "Agent update failed and rollback was incomplete. Preserve the registry and agent files before retrying."
-        );
-      throw error;
-    }
-  }
-
-  /** Writes through an existing link, so linked settings files stay linked. */
-  private async write({ path, content }: AgentChange): Promise<void> {
-    if (content !== null) {
-      const target = (await this.fs.fileExists(path)) ? await this.fs.realpath(path) : path;
-      await this.fs.writeFile(target, content);
-    } else {
-      await this.fs.deleteFile(path);
-      if (await this.fs.fileExists(path)) throw new Error(`Could not remove agent: ${path}`);
-    }
-  }
-
   async remove(options: AgentTarget): Promise<number> {
-    const location = this.location(options);
+    const location = resolveAgentLocation(this.fs, options);
     await location.prepare?.();
     return this.exclusively(location.registryRoot, async () => {
       const installed = await this.load(location.registryRoot);
       const entries = await this.removable(options, installed, options.host);
       const mainModels = await this.store.loadMainModels(location.registryRoot);
-      const main = await this.mainModelRemovals(options, mainModels, options.host);
+      const main = await mainModelRemovals(this.fs, options, mainModels, options.host);
       delete installed[options.host];
       delete mainModels[options.host];
       return this.save(
@@ -270,7 +131,8 @@ export class ManageAgentsUseCase {
   async removeAll(projectRoot: string, afterRemoval?: () => Promise<void>): Promise<number> {
     return this.exclusively(projectRoot, async () => {
       const entries = await this.removable({ projectRoot }, await this.load(projectRoot));
-      const main = await this.mainModelRemovals(
+      const main = await mainModelRemovals(
+        this.fs,
         { projectRoot },
         await this.store.loadMainModels(projectRoot)
       );
@@ -286,38 +148,61 @@ export class ManageAgentsUseCase {
     });
   }
 
-  private capability(host: AgentHost): AgentsCapability {
-    return (getAiToolConfig(host).capabilities as HasAgents).agents;
+  private async exclusively<T>(root: string, action: () => Promise<T>): Promise<T> {
+    await assertProjectPathWithinRoot(this.fs, root, join(root, AGENT_INSTALLATIONS_PATH));
+    return this.store.withExclusiveAccess(root, action);
   }
 
-  private location(target: AgentTarget): AgentLocation {
-    const capability = this.capability(target.host);
-    const settings = mainModelTarget(target.host);
-    const file = (name: string) => {
-      const path = capability.buildInstallPath(`${name}.md`);
-      if (path === null) throw new Error(`Agent ${name} has no native install path.`);
-      return path;
-    };
-    const user = target.user;
-    if (user === undefined) {
-      const root = target.projectRoot;
-      return {
-        registryRoot: root,
-        agentPath: (name) => join(root, file(name)),
-        settingsPath: settings === null ? null : join(root, settings.path),
-        guard: (path) => assertProjectPathWithinRoot(this.fs, root, path),
-      };
+  /** Applies every change, then both registries; any failure restores all of them. */
+  private async save(
+    root: string,
+    installed: AgentInstallations,
+    mainModels: MainModelInstallations,
+    changes: readonly FileChange[],
+    mainChanges: readonly FileChange[] = []
+  ): Promise<number> {
+    const previous: FileChange[] = [];
+    const agentPaths = new Set(changes.map((change) => change.path));
+    try {
+      for (const change of [...changes, ...mainChanges]) {
+        const content = await readOptional(this.fs, change.path);
+        if (content === change.content) continue;
+        previous.push({ path: change.path, content });
+        await this.write(change);
+      }
+      for (const registry of [AGENT_INSTALLATIONS_PATH, MAIN_MODEL_INSTALLATIONS_PATH]) {
+        const path = join(root, registry);
+        previous.push({ path, content: await readOptional(this.fs, path) });
+      }
+      await this.store.save(root, installed);
+      await this.store.saveMainModels(root, mainModels);
+      return previous.filter((change) => agentPaths.has(change.path)).length;
+    } catch (error) {
+      const restored = await Promise.allSettled(
+        previous.reverse().map(async (change) => {
+          if ((await readOptional(this.fs, change.path)) !== change.content)
+            await this.write(change);
+        })
+      );
+      const failures = restored.filter((result) => result.status === "rejected");
+      if (failures.length > 0)
+        throw new AggregateError(
+          [error, ...failures.map((result) => result.reason)],
+          "Agent update failed and rollback was incomplete. Preserve the registry and agent files before retrying."
+        );
+      throw error;
     }
-    const directory = capability.params.userDirectory?.(user.home, user.env);
-    if (directory === undefined) throw new Error(`${target.host} has no user-level agents.`);
-    const configDir = user.configDir;
-    return {
-      registryRoot: configDir,
-      prepare: () => this.fs.createDirectory(configDir),
-      agentPath: (name) => join(directory, "agents", basename(file(name))),
-      settingsPath: settings === null ? null : join(directory, settings.userPath),
-      guard: async () => {},
-    };
+  }
+
+  /** Writes through an existing link, so linked settings files stay linked. */
+  private async write({ path, content }: FileChange): Promise<void> {
+    if (content !== null) {
+      const target = (await this.fs.fileExists(path)) ? await this.fs.realpath(path) : path;
+      await this.fs.writeFile(target, content);
+    } else {
+      await this.fs.deleteFile(path);
+      if (await this.fs.fileExists(path)) throw new Error(`Could not remove agent: ${path}`);
+    }
   }
 
   private async load(root: string): Promise<AgentInstallations> {
@@ -351,7 +236,7 @@ export class ManageAgentsUseCase {
     const paths: string[] = [];
     for (const [host, entries] of Object.entries(installed)) {
       if (onlyHost !== undefined && host !== onlyHost) continue;
-      const location = this.location({ ...target, host: host as AgentHost });
+      const location = resolveAgentLocation(this.fs, { ...target, host: host as AgentHost });
       // A user directory resolved elsewhere than at install would drop the record unseen.
       const names = Object.keys(entries);
       if (target.user !== undefined && names.length > 0) {
