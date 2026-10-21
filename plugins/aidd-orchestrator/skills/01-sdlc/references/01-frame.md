@@ -2,7 +2,7 @@
 
 ## Behavior
 
-Start from `$source` only. Resolve a ticket when the source references one. Use the source directly when it is planning-ready. Otherwise clarify only the intent that can change what is built, then formalize the missing contract requirements.
+Start from `$source` only. Resolve a ticket when the source references one. Use the source directly when it is planning-ready. Otherwise clarify only the intent that can change what is built, then write the spec, which is the contract.
 
 A source is planning-ready when it names the artifact to change, states the observable outcome, and leaves open no decision that changes what is built.
 
