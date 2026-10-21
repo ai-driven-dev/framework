@@ -8,8 +8,9 @@
 # exposes `aidd-opencode-reload` instead, and that helper decides which checkout may load.
 #
 # Agents are opt-in through the gitignored scripts/reload-agents.json (or RELOAD_AGENTS; see
-# reload-agents.example.json): each listed IDE runs `aidd agents install --scope user`, adding
-# `--main` when `"main": true`. They run first, so a bad entry fails before any plugin changes.
+# reload-agents.example.json): each listed IDE runs the built CLI's `agents install --scope user`,
+# adding `--main` when `"main": true`. The file only adds; `agents remove --scope user` undoes.
+# Agents run before plugins, so a failure changes no plugin; IDEs listed earlier stay installed.
 # Global rules: sync only the Agents section in the managed block, preserving personal
 # rules. First OpenCode sync keeps its Claude personal-rule fallback unless disabled.
 # Paths honor native home/cache overrides; explicit task paths take precedence.
@@ -128,13 +129,19 @@ install_opted_in_agents() {
   [ -f "$RELOAD_AGENTS" ] || return 0
   local opted_in ide provider main have result
   opted_in="$(node -e '
-    const file = process.argv[1];
-    const config = JSON.parse(require("node:fs").readFileSync(file, "utf8"));
+    const fail = (message) => { console.error(message); process.exit(1); };
+    let config;
+    try { config = JSON.parse(require("node:fs").readFileSync(process.argv[1], "utf8")); }
+    catch (error) { fail(error.message); }
+    if (typeof config !== "object" || config === null || Array.isArray(config))
+      fail("expected an object keyed by IDE");
     const text = (value) => typeof value === "string" && /^[\w.-]+$/.test(value);
     for (const [ide, entry] of Object.entries(config)) {
-      if (!text(ide) || !text(entry?.provider)) throw new Error(`${file}: ${ide} needs a provider`);
-      if (entry.main !== undefined && typeof entry.main !== "boolean")
-        throw new Error(`${file}: ${ide}.main must be true or false`);
+      if (!text(ide)) fail(`invalid IDE name "${ide}"`);
+      if (!text(entry?.provider)) fail(`${ide} needs a provider`);
+      const unknown = Object.keys(entry).filter((key) => key !== "provider" && key !== "main");
+      if (unknown.length > 0) fail(`${ide} has unknown keys: ${unknown.join(", ")}`);
+      if (entry.main !== undefined && entry.main !== true) fail(`${ide}.main must be true or omitted`);
       console.log(`${ide}\t${entry.provider}\t${entry.main === true}`);
     }
   ' "$RELOAD_AGENTS")" || { echo "Invalid agent opt-in file: $RELOAD_AGENTS" >&2; return 1; }
@@ -155,7 +162,9 @@ install_opted_in_agents() {
     local -a args=(agents install --scope user --ide "$ide" --provider "$provider")
     [ "$main" != true ] || args+=(--main)
     if ! result="$(node "$FW/cli/dist/cli.js" "${args[@]}" 2>&1)"; then
-      echo " $ide:FAIL"; printf '%s\n' "$result" >&2; return 1
+      echo " $ide:FAIL"; printf '%s\n' "$result" >&2
+      echo "Fix the cause, or rebuild with 'pnpm --dir cli build' if the CLI predates this checkout." >&2
+      return 1
     fi
     if [ "$main" = true ]; then printf ' %s:ok+main' "$ide"; else printf ' %s:ok' "$ide"; fi
   done <<<"$opted_in"

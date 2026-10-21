@@ -873,6 +873,18 @@ test("reload without an opt-in file installs no agent", () => {
   } finally { rmSync(root, { recursive: true, force: true }); }
 });
 
+test("reload skips opted-in OpenCode on a managed host", () => {
+  const root = mkdtempSync(join(tmpdir(), "aidd-dev-sync-managed-agents-"));
+  try {
+    const { fakeBin, home, calls } = optInFixture(root, { opencode: { provider: "anthropic" } }, ["opencode"]);
+    executable(join(fakeBin, "aidd-opencode-reload"), "exit 0");
+    const result = runSync(fakeBin, home, []);
+    assert.equal(result.status, 0, result.stderr);
+    assert.match(result.stdout, /global agents\s+opencode:skip\(managed host\)/);
+    assert.doesNotMatch(calls(), /cli agents/);
+  } finally { rmSync(root, { recursive: true, force: true }); }
+});
+
 test("reload names an opted-in IDE it skips", () => {
   const root = mkdtempSync(join(tmpdir(), "aidd-dev-sync-skip-"));
   try {
@@ -886,7 +898,9 @@ test("reload names an opted-in IDE it skips", () => {
 
 for (const [label, optIn, error] of [
   ["a refused IDE", { cursor: { provider: "anthropic" } }, /cursor has no user-level agents/],
-  ["an invalid entry", { codex: { provider: "openai", main: "yes" } }, /Invalid agent opt-in file/],
+  ["an invalid entry", { codex: { provider: "openai", main: "yes" } }, /codex\.main must be true or omitted/],
+  ["a misspelled key", { codex: { provider: "openai", mian: true } }, /codex has unknown keys: mian/],
+  ["malformed JSON", "{ codex: ", /Invalid agent opt-in file/],
 ]) {
   test(`reload stops on ${label} before changing any plugin`, () => {
     const root = mkdtempSync(join(tmpdir(), "aidd-dev-sync-bad-opt-in-"));

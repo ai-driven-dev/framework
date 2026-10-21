@@ -70,7 +70,7 @@ Use host dispatch records to identify the agent and actual model, effort, and ti
 
 After updating the CLI, rerun the install command to refresh unmodified agents; agents of retired roles are removed. Plugins and `sync` do not install or refresh this add-on.
 
-For framework development, copy [reload-agents.example.json](../scripts/reload-agents.example.json) to the gitignored `scripts/reload-agents.json` (or point `RELOAD_AGENTS` at another file). `make reload` then runs `agents install --scope user` for each listed IDE with its `provider`, adding `--main` where `"main": true`. Without the file, reload installs no agent.
+For framework development, copy [reload-agents.example.json](../scripts/reload-agents.example.json) to the gitignored `scripts/reload-agents.json` (or point `RELOAD_AGENTS` at another file). `make reload` then runs `agents install --scope user` for each listed IDE with its `provider`, adding `--main` where `"main": true`. Without the file, reload installs no agent. The file only adds: to undo an IDE or its main model, run `agents remove --scope user --ide <ide>`. Reload stops on a modified or unowned agent file; move it aside, then rerun.
 
 To remove only one IDE's agents from the current project:
 

@@ -45,7 +45,7 @@ make setup   # deps, git hooks, registers the marketplace, installs plugins into
 ## ✏️ Make your change
 
 - **Follow the [Principles](#-principles).**
-- **Test locally** — run `make reload`, restart your session(s). Test in Claude *and* one other tool (e.g. Codex).
+- **Test locally** — run `make reload`, restart your session(s). Test in Claude *and* one other tool (e.g. Codex). To load the optional agents too, see [reload opt-in](docs/SUBAGENTS.md#-update-or-remove).
 - **Commit** — `<type>(<scope>): description`, one scope per commit → [convention](aidd_docs/memory/vcs.md#commits).
 
 ## 🔀 Open a pull request
