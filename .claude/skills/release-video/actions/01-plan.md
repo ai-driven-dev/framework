@@ -18,7 +18,7 @@ The repository at the release candidate.
 4. **Skip.** Move a surface to `skipped` with a reason only when a user would not notice it.
 5. **Fixes.** List the `fix:` commits since the last release tag. Group the ones a user would notice into one `bullet-grid` scene: the title says what was broken, the detail names who reported it when an issue exists. No scene when none qualifies.
 6. **Contributors.** Name who shipped the release with `gh api repos/{owner}/{repo}/compare/<last-tag>...next --jq '[.commits[].author.login] | unique'`. Drop bots. Put the logins in one `contributors` scene, last.
-7. **Intro.** Fill `intro`: a `tagline` and three or four `highlights` of a few words each, saying what the release holds. Take them from the release announcement, so the video and the message say the same thing.
+7. **Intro.** Fill `intro` so that someone who never used AIDD wants to know more. The `tagline` is a hook: the pain the release removes, often as a question, never the name of a feature. The three or four `highlights` are outcomes in a few words, each starting from what the user gets. Take the facts from the release announcement, so the video and the message say the same thing. Read it aloud: if it could open any release, rewrite it.
 8. **Check.** Rerun the script until it passes, then show the plan and fold corrections.
 
 | Template | Fits |
@@ -41,4 +41,4 @@ The intro and the outro, with the version and the install command, are generated
 | `fix:` commits a user would notice | one grouped scene; internal ones left out |
 | Contributor list | bots dropped; one `contributors` scene, last |
 | Scene without a lead | refused on review: a viewer could not tell what it brings |
-| Intro | tagline and highlights say what the release holds, not only its version |
+| Intro | a hook and outcomes that make a newcomer want to watch on, not a feature list |

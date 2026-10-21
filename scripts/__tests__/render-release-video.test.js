@@ -1,7 +1,7 @@
 const assert = require("node:assert/strict");
 const test = require("node:test");
 
-const { buildHtml, sceneDuration, totalDuration } = require("../render-release-video.cjs");
+const { buildHtml, musicSegments, musicSections, sceneDuration, totalDuration } = require("../render-release-video.cjs");
 
 const window = (rows) => ({ label: "Claude Code · ~/acme-app", rows });
 
@@ -218,6 +218,43 @@ test("totalDuration is what the root declares, so a music track can be cut to fi
 test("the music stays under the picture: the fade peaks at the music level, not at full volume", () => {
   const audio = /<audio[^>]*>/.exec(buildHtml(plan, { version: "5.13", music: "assets/music.mp3" }))[0];
 
-  assert.match(audio, /&quot;t&quot;:1\.5,&quot;v&quot;:0\.35/);
+  assert.match(audio, /&quot;t&quot;:0\.3,&quot;v&quot;:0\.5/);
   assert.ok(!audio.includes("&quot;v&quot;:1}"), "a point at full volume");
+});
+
+// Energy of a real track, one value per half second: a silent start, a loud hook, a quiet bed,
+// a loud finale that fades out.
+const rms = [
+  -37, ...Array(11).fill(-10), ...Array(61).fill(-26), ...Array(5).fill(-8), -23, -61,
+];
+
+test("musicSections finds the hook, the bed and the finale of a track", () => {
+  assert.deepEqual(musicSections(rms), {
+    headStart: 0.5,
+    headEnd: 6,
+    tailStart: 36.5,
+    tailEnd: 39,
+  });
+});
+
+test("a track with no loud hook or finale has no sections", () => {
+  assert.equal(musicSections(Array(40).fill(-26)), null);
+});
+
+test("the hook plays under the intro, the bed under the scenes, the finale under the outro", () => {
+  const sections = musicSections(rms);
+  const [head, body, tail] = musicSegments(sections, { intro: 5, total: 30, outro: 4 });
+
+  assert.deepEqual(head, { part: "head", from: 0.5, length: 5, at: 0 });
+  assert.equal(body.part, "body");
+  assert.equal(body.at, 5);
+  assert.equal(body.length, 30 - 4 - 5);
+  assert.deepEqual(tail, { part: "tail", from: 36.5, length: 2.5, at: 26 });
+});
+
+test("an intro longer than the hook lets the bed start early, never a gap", () => {
+  const [head, body] = musicSegments(musicSections(rms), { intro: 6.5, total: 30, outro: 4 });
+
+  assert.equal(head.length, 5.5);
+  assert.equal(body.at, head.at + head.length);
 });

@@ -211,7 +211,7 @@ function introHtml(intro = {}) {
 }
 
 /** The fade lane sets the level itself: it is absolute, so it carries the music level too. */
-const MUSIC_LEVEL = 0.35;
+const MUSIC_LEVEL = 0.5;
 
 const musicHtml = (src, total) => {
   const lane = {
@@ -221,8 +221,8 @@ const musicHtml = (src, total) => {
         target: "volume",
         points: [
           { t: 0, v: 0 },
-          { t: 1.5, v: MUSIC_LEVEL },
-          { t: total - 2.5, v: MUSIC_LEVEL },
+          { t: 0.3, v: MUSIC_LEVEL },
+          { t: total - 1, v: MUSIC_LEVEL },
           { t: total, v: 0 },
         ],
       },
@@ -315,14 +315,74 @@ tl.seek(0);
 `;
 }
 
-/** The track, looped or cut to the video's length: a track shorter than the video would fall silent. */
-function fitMusic(source, target, seconds) {
-  const cut = spawnSync(
+const STEP = 0.5;
+const HOOK_STARTS_WITHIN = 2;
+const LOUD_ABOVE_MEDIAN = 8;
+
+/** Where a track is loud at its start (a hook, after at most two quiet seconds) and at its end (a
+ * finale), from its energy in dB per half second. Null when it has neither: such a track is only
+ * looped. */
+function musicSections(rms) {
+  const sorted = [...rms].sort((a, b) => a - b);
+  const loud = (v) => v > sorted[Math.floor(sorted.length / 2)] + LOUD_ABOVE_MEDIAN;
+  const first = rms.findIndex(loud);
+  let end = first;
+  while (end < rms.length && loud(rms[end])) end += 1;
+  const last = rms.map(loud).lastIndexOf(true);
+  let start = last;
+  while (start > 0 && loud(rms[start - 1])) start -= 1;
+  if (first < 0 || first * STEP > HOOK_STARTS_WITHIN || last < 0 || start <= end) return null;
+  return { headStart: first * STEP, headEnd: end * STEP, tailStart: start * STEP, tailEnd: (last + 1) * STEP };
+}
+
+/** The hook under the intro, the bed under the scenes, the finale under the outro. */
+function musicSegments(sections, { intro, total, outro }) {
+  const head = { part: "head", from: sections.headStart, length: Math.min(intro, sections.headEnd - sections.headStart), at: 0 };
+  const body = { part: "body", from: sections.headEnd, length: total - outro - head.length, at: head.length };
+  const tail = { part: "tail", from: sections.tailStart, length: Math.min(outro, sections.tailEnd - sections.tailStart), at: total - outro };
+  return [head, body, tail];
+}
+
+function measureRms(source) {
+  const run = spawnSync(
     "ffmpeg",
-    ["-loglevel", "error", "-y", "-stream_loop", "-1", "-i", source, "-t", String(seconds), "-c:a", "libmp3lame", "-q:a", "2", target],
-    { stdio: "inherit" }
+    ["-hide_banner", "-loglevel", "error", "-i", source, "-af",
+      "aresample=48000,asetnsamples=n=24000:p=0,astats=metadata=1:reset=1,ametadata=print:key=lavfi.astats.Overall.RMS_level:file=-",
+      "-f", "null", "-"],
+    { encoding: "utf8" }
   );
-  if (cut.status !== 0) throw new Error(`ffmpeg could not fit the music (${cut.status})`);
+  return [...run.stdout.matchAll(/RMS_level=(-?[\d.]+|-inf)/g)].map((m) => (m[1] === "-inf" ? -100 : Number(m[1])));
+}
+
+const ffmpeg = (args) => {
+  const run = spawnSync("ffmpeg", ["-loglevel", "error", "-y", ...args], { stdio: "inherit" });
+  if (run.status !== 0) throw new Error(`ffmpeg failed (${run.status})`);
+};
+
+/** The track shaped to the video: its hook under the intro, its bed looped under the scenes, its
+ * finale under the outro. A track with no such structure is only looped to the video's length. */
+function fitMusic(source, target, plan) {
+  const total = totalDuration(plan);
+  const sections = musicSections(measureRms(source));
+  if (!sections) {
+    ffmpeg(["-stream_loop", "-1", "-i", source, "-t", String(total), "-c:a", "libmp3lame", "-q:a", "2", target]);
+    return;
+  }
+  const [head, body, tail] = musicSegments(sections, { intro: introSeconds(plan), total, outro: OUTRO });
+  const bed = sections.tailStart - sections.headEnd;
+  const cut = (seg, label, fades) =>
+    `[0:a]aresample=48000,atrim=start=${seg.from}:duration=${seg.length},asetpts=PTS-STARTPTS${fades}[${label}]`;
+  const loopedBed =
+    `[0:a]aresample=48000,atrim=start=${body.from}:duration=${Math.min(bed, body.length)},asetpts=PTS-STARTPTS,` +
+    `aloop=loop=-1:size=${Math.ceil(bed * 48000)},atrim=duration=${body.length},asetpts=PTS-STARTPTS[b]`;
+  const fadeOut = (seg) => `,afade=t=out:st=${Math.max(0, seg.length - 0.15)}:d=0.15`;
+  const filter = [
+    cut(head, "h", `,afade=t=in:d=0.05${fadeOut(head)}`),
+    loopedBed,
+    cut(tail, "t", `,afade=t=in:d=0.05`),
+    `[h][b][t]concat=n=3:v=0:a=1,apad=whole_dur=${total},atrim=duration=${total}[a]`,
+  ].join(";");
+  ffmpeg(["-i", source, "-filter_complex", filter, "-map", "[a]", "-c:a", "libmp3lame", "-q:a", "2", target]);
 }
 
 function writeProject(dir, plan, version, musicSource) {
@@ -337,7 +397,7 @@ function writeProject(dir, plan, version, musicSource) {
   let music;
   if (musicSource) {
     music = "assets/music-fit.mp3";
-    fitMusic(musicSource, path.join(dir, music), totalDuration(plan));
+    fitMusic(musicSource, path.join(dir, music), plan);
   }
   fs.writeFileSync(path.join(dir, "index.html"), buildHtml(plan, { version, music }));
 }
@@ -383,7 +443,7 @@ async function main() {
   console.log(`✅ ${out}`);
 }
 
-module.exports = { buildHtml, sceneDuration, totalDuration };
+module.exports = { buildHtml, musicSections, musicSegments, sceneDuration, totalDuration };
 
 if (require.main === module) {
   main().catch((error) => {

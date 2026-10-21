@@ -39,10 +39,10 @@
     }
   ],
   "intro": {
-    "tagline": "Safer rules, before they are written.",
+    "tagline": "What if your AI stopped writing rules that contradict each other?",
     "highlights": [
-      "Rule conflicts caught",
-      "You choose what is kept"
+      "Conflicts caught before saving",
+      "Nothing written without your say"
     ]
   }
 }
