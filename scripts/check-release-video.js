@@ -69,6 +69,36 @@ function invalidSkips(plan) {
 const withoutGitEnv = () =>
   Object.fromEntries(Object.entries(process.env).filter(([key]) => !key.startsWith("GIT_")));
 
+const MAX_TAGLINE_WORDS = 6;
+const MAX_HIGHLIGHTS = 3;
+const MAX_HIGHLIGHT_WORDS = 3;
+const MAX_LEAD_WORDS = 14;
+
+const wordCount = (text) => String(text ?? "").trim().split(/\s+/).filter(Boolean).length;
+
+/** The first slide and each lead are read in a glance: a long one is refused, not trimmed. */
+function overlongText(plan) {
+  const found = [];
+  const { tagline, highlights = [] } = plan.intro ?? {};
+  if (wordCount(tagline) > MAX_TAGLINE_WORDS) {
+    found.push(`intro tagline: ${wordCount(tagline)} words, ${MAX_TAGLINE_WORDS} at most`);
+  }
+  if (highlights.length > MAX_HIGHLIGHTS) {
+    found.push(`intro highlights: ${highlights.length}, ${MAX_HIGHLIGHTS} at most`);
+  }
+  highlights.forEach((text, i) => {
+    if (wordCount(text) > MAX_HIGHLIGHT_WORDS) {
+      found.push(`intro highlight ${i + 1}: ${wordCount(text)} words, ${MAX_HIGHLIGHT_WORDS} at most`);
+    }
+  });
+  plan.scenes.forEach((scene, i) => {
+    if (wordCount(scene.lead) > MAX_LEAD_WORDS) {
+      found.push(`scene ${i + 1} lead: ${wordCount(scene.lead)} words, ${MAX_LEAD_WORDS} at most`);
+    }
+  });
+  return found;
+}
+
 function git(cwd, ...args) {
   return execFileSync("git", args, { cwd, encoding: "utf8", env: withoutGitEnv() }).trim();
 }
@@ -91,7 +121,7 @@ function featSurfaces(cwd = ROOT) {
 function readPlan() {
   if (!fs.existsSync(PLAN_PATH)) return { scenes: [], skipped: [] };
   const plan = JSON.parse(fs.readFileSync(PLAN_PATH, "utf8"));
-  return { scenes: plan.scenes ?? [], skipped: plan.skipped ?? [] };
+  return { intro: plan.intro, scenes: plan.scenes ?? [], skipped: plan.skipped ?? [] };
 }
 
 function run({
@@ -102,8 +132,9 @@ function run({
 } = {}) {
   const missing = missingScenes(surfaces, plan);
   const unexplained = invalidSkips(plan);
+  const tooLong = overlongText(plan);
 
-  if (missing.length === 0 && unexplained.length === 0) {
+  if (missing.length === 0 && unexplained.length === 0 && tooLong.length === 0) {
     successLogger(`✅ Release video: ${surfaces.length} surface(s) covered`);
     return 0;
   }
@@ -112,10 +143,11 @@ function run({
   if (unexplained.length > 0) {
     logger(`❌ Surfaces ignorées sans raison : ${unexplained.join(", ")}`);
   }
+  if (tooLong.length > 0) logger(`❌ Textes trop longs : ${tooLong.join(", ")}`);
   return 1;
 }
 
-module.exports = { featSurfaces, invalidSkips, missingScenes, run, surfacesOf };
+module.exports = { featSurfaces, invalidSkips, missingScenes, overlongText, run, surfacesOf };
 
 if (require.main === module) {
   process.exit(run());

@@ -2,6 +2,51 @@
   "scenes": [
     {
       "template": "terminal-demo",
+      "pill": "aidd telemetry",
+      "title": "Count tokens in",
+      "accent": "Codex too.",
+      "lead": "Codex sessions are counted from their own files, like Claude Code.",
+      "surfaces": [
+        "aidd telemetry",
+        "aidd-telemetry:00-init"
+      ],
+      "window": {
+        "label": "Terminal · ~/acme-app",
+        "rows": [
+          {
+            "text": "$ aidd telemetry report --axis tool"
+          },
+          {
+            "table": {
+              "head": [
+                "Tool",
+                "Calls",
+                "Tokens"
+              ],
+              "rows": [
+                [
+                  "claude-code",
+                  "412",
+                  "1.8M"
+                ],
+                [
+                  "codex",
+                  "96",
+                  "410k"
+                ]
+              ]
+            }
+          },
+          {
+            "text": "$ aidd telemetry report --tool codex",
+            "tone": "dim"
+          }
+        ]
+      },
+      "note": "Example figures."
+    },
+    {
+      "template": "terminal-demo",
       "pill": "/aidd-context:05-rule-generate",
       "title": "A new rule is compared",
       "accent": "before it is written.",
@@ -29,7 +74,33 @@
         ]
       },
       "note": "Example run.",
-      "lead": "Before a new rule is saved, it is compared with your existing rules and project guidance. You decide what happens next."
+      "lead": "New rules are compared with your existing ones before anything is saved."
+    },
+    {
+      "template": "bullet-grid",
+      "pill": "reliability",
+      "title": "Telemetry,",
+      "accent": "more reliable.",
+      "cells": [
+        {
+          "title": "Nothing measured is lost silently"
+        },
+        {
+          "title": "Status after turning off tells the truth"
+        },
+        {
+          "title": "Large session files are read in blocks"
+        }
+      ]
+    },
+    {
+      "template": "contributors",
+      "pill": "release notes",
+      "title": "Shipped by",
+      "accent": "1 contributor.",
+      "logins": [
+        "blafourcade"
+      ]
     }
   ],
   "skipped": [
@@ -39,10 +110,10 @@
     }
   ],
   "intro": {
-    "tagline": "What if your AI stopped writing rules that contradict each other?",
+    "tagline": "Now counting Codex too.",
     "highlights": [
-      "Conflicts caught before saving",
-      "Nothing written without your say"
+      "Report by tool",
+      "Safer new rules"
     ]
   }
 }

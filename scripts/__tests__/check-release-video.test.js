@@ -4,6 +4,7 @@ const test = require("node:test");
 const {
   invalidSkips,
   missingScenes,
+  overlongText,
   run,
   surfacesOf,
 } = require("../check-release-video.js");
@@ -199,4 +200,47 @@ test("a video that shows five of the twelve surfaces a real release shipped is r
     "aidd-pm:04-spec",
     "aidd-telemetry:00-init",
   ]);
+});
+
+const words = (n) => Array.from({ length: n }, (_, i) => `w${i}`).join(" ");
+
+test("overlongText accepts a short intro and a short lead", () => {
+  const plan = {
+    intro: { tagline: words(6), highlights: [words(3), words(3), words(3)] },
+    scenes: [{ lead: words(14) }],
+    skipped: [],
+  };
+
+  assert.deepEqual(overlongText(plan), []);
+});
+
+test("overlongText names the intro tagline that is too long", () => {
+  assert.deepEqual(overlongText({ intro: { tagline: words(7) }, scenes: [], skipped: [] }), [
+    "intro tagline: 7 words, 6 at most",
+  ]);
+});
+
+test("overlongText names a highlight that is too long and too many highlights", () => {
+  const plan = { intro: { highlights: [words(4), "a", "b", "c"] }, scenes: [], skipped: [] };
+
+  assert.deepEqual(overlongText(plan), ["intro highlights: 4, 3 at most", "intro highlight 1: 4 words, 3 at most"]);
+});
+
+test("overlongText names the scene whose lead is too long", () => {
+  const plan = { scenes: [{ lead: "short" }, { lead: words(15) }], skipped: [] };
+
+  assert.deepEqual(overlongText(plan), ["scene 2 lead: 15 words, 14 at most"]);
+});
+
+test("run fails on a text that is too long even when every surface is covered", () => {
+  const errors = [];
+  const code = run({
+    surfaces: [],
+    plan: { intro: { tagline: words(9) }, scenes: [], skipped: [] },
+    logger: (line) => errors.push(line),
+    successLogger: () => {},
+  });
+
+  assert.equal(code, 1);
+  assert.match(errors.join("\n"), /Textes trop longs : intro tagline: 9 words, 6 at most/);
 });
