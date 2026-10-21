@@ -32,9 +32,8 @@ Or a `blocked` / `replan needed` report.
   - Use the appropriate interface (browser, CLI, API…).
   - Check actual against expected behavior at every step.
   - Fix any mismatch.
-  - Restart from the beginning after a repair.
+  - Rerun the affected workflow after a repair.
 - Gate task commits and `done` on successful validation.
-  - Require a full successful run.
   - Require observable evidence for every step.
   - Report blocked validation.
   - Never count blocked validation as success.
