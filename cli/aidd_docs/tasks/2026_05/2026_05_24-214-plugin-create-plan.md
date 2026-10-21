@@ -31,7 +31,7 @@ This command is a **pure write-side scaffolder**. It does not touch `.aidd/manif
 
 Two design forks the brief left open are resolved up front, in this plan, before any code is written (see Decisions D1 and D2). Both lean toward determinism and offline reliability over runtime flexibility.
 
-The framework-canonical skill layout is `SKILL.md` + `actions/` + `references/` + `evals/scenarios.json` + `assets/`. This is verified against `/Users/baptistelafourcade/Projects/freelance/aidd/aidd/framework/plugins/aidd-context/skills/01-bootstrap/` and locked as the scaffold target.
+The framework-canonical skill layout is `SKILL.md` + `actions/` + `references/` + `evals/scenarios.json` + `assets/`. This is verified against `<worktree>/plugins/aidd-context/skills/01-bootstrap/` and locked as the scaffold target.
 
 ---
 
@@ -52,7 +52,7 @@ The framework-canonical skill layout is `SKILL.md` + `actions/` + `references/` 
 - **M11.** Validation runs on the **in-memory** `plugin.json` content before any write. If validation throws, nothing lands on disk. See D2.
 - **M12.** Wire `pluginCreateUseCase` into `createDeps()`. Add `ajvSchemaValidator` instantiation; pass it + `fs` + `prompter` + `logger` + `assetProvider` into the use-case.
 - **M13.** Acceptance-critical tests: 5 scaffold-shape unit tests (one per `--type`), 1 schema-validation throw unit test (malformed manifest), 1 conflict-fails unit test, 1 force-overwrites unit test, 1 marketplace-append unit test (accept + decline), 1 integration test `create → plugin install` round-trip on a tmpdir.
-- **M14.** CLI's **own** `CHANGELOG.md` (`/Users/baptistelafourcade/Projects/freelance/aidd/aidd/cli/CHANGELOG.md`) gets an Unreleased entry. Do not conflate with the **generated plugin's** `CHANGELOG.md` (which is a template artifact written by the scaffold).
+- **M14.** CLI's **own** `CHANGELOG.md` (`<worktree>/cli/CHANGELOG.md`) gets an Unreleased entry. Do not conflate with the **generated plugin's** `CHANGELOG.md` (which is a template artifact written by the scaffold).
 - **M15.** Empty dirs in the scaffold (`skills/00-example/actions/`, `references/`, `assets/`, `hooks/routing/`) are preserved on disk via `.gitkeep` placeholder files. Justification: framework convention; `FileWriter` writes files, not directories, and downstream tooling (`aidd plugin install`) walks files only — empty dirs would vanish on copy regardless.
 
 ### Could (deferred to follow-up unless time allows)
@@ -122,7 +122,7 @@ The plugin scaffold itself still lands on disk; the marketplace-append step is a
 
 Spec example shows `source: "./plugins/<name>"` but that example assumes the default `--output <cwd>/plugins/`. If the author runs `aidd plugin create demo --output ../shared/plugins` while standing in a project whose `.claude-plugin/marketplace.json` exists, the entry's `source` must resolve from the marketplace.json's directory to the new plugin directory.
 
-Decision: compute `entry.source` as `./` + `path.relative(path.dirname(marketplaceJsonPath), pluginDir)` (with the leading `./` preserved when the path is non-absolute and inside the project, mirroring the existing entries' shape — see `/Users/baptistelafourcade/Projects/freelance/aidd/aidd/framework/.claude-plugin/marketplace.json` lines 11, 19, 27, 35, 43, 51).
+Decision: compute `entry.source` as `./` + `path.relative(path.dirname(marketplaceJsonPath), pluginDir)` (with the leading `./` preserved when the path is non-absolute and inside the project, mirroring the existing entries' shape — see `<worktree>/.claude-plugin/marketplace.json` lines 11, 19, 27, 35, 43, 51).
 
 If the plugin lives **outside** the marketplace.json's containing directory tree, `path.relative` will produce `../...` — that's correct and valid for Claude Code marketplace local sources.
 
@@ -430,7 +430,7 @@ Bundle is chosen. Residual risk: upstream schema drift makes our generated manif
 
 ### R2 — Marketplace.json shape correctness (verified at planning)
 
-The framework's `marketplace.json` shape was inspected at planning time (file at `/Users/baptistelafourcade/Projects/freelance/aidd/aidd/framework/.claude-plugin/marketplace.json`). Confirmed fields on each entry: `name`, `version`, `source`, `description`, `strict`, `recommended`. The schemastore URL for marketplace is `https://json.schemastore.org/claude-code-marketplace.json` (different from the plugin manifest schema). We do NOT validate the marketplace.json against its schema in this ticket — that's a separate concern; we just append a well-shaped entry. The pure helper `appendPluginToMarketplace` round-trips JSON without adding fields, preserving any extra fields a user has hand-added.
+The framework's `marketplace.json` shape was inspected at planning time (file at `<worktree>/.claude-plugin/marketplace.json`). Confirmed fields on each entry: `name`, `version`, `source`, `description`, `strict`, `recommended`. The schemastore URL for marketplace is `https://json.schemastore.org/claude-code-marketplace.json` (different from the plugin manifest schema). We do NOT validate the marketplace.json against its schema in this ticket — that's a separate concern; we just append a well-shaped entry. The pure helper `appendPluginToMarketplace` round-trips JSON without adding fields, preserving any extra fields a user has hand-added.
 
 ### R3 — Marketplace name collision (resolved in D3)
 

@@ -102,5 +102,5 @@ Root-scoped bindings and their adoption/`ambiguous` rule; cross-machine binding 
 
 ## Oracles
 
-Fixture + mutation per rule (contract/check.py: 6/6 killed); 16 counting pitfalls; ccusage
+Fixture + mutation per rule (the prototype `check.py`, since removed: 6/6 killed); 16 counting pitfalls; ccusage
 diff; OTel `api_request` by `request_id`; Analytics API daily totals.

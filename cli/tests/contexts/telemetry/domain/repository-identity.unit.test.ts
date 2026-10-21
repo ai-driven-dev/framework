@@ -27,6 +27,17 @@ describe("a remote is reduced to host/owner/repo", () => {
     ["several slashes before the path", "https://github.com//acme/widgets"],
     ["several slashes after the path", "https://github.com/acme/widgets//"],
     ["several slashes after .git", "https://github.com/acme/widgets.git//"],
+    ["owner and repo in another case", "git@github.com:Acme/Widgets.git"],
+    ["https in another case", "https://github.com/ACME/widgets"],
+    ["upper-case .GIT on github.com", "https://github.com/acme/widgets.GIT"],
+    ["ssh:// upper-case host", "ssh://git@GitHub.COM/acme/widgets.git"],
+    ["ssh:// upper-case host with a port", "ssh://git@GitHub.COM:22/Acme/Widgets.git/"],
+    ["git:// upper-case host", "git://GITHUB.com/acme/widgets"],
+    ["git+ssh:// upper-case host", "git+ssh://git@GitHub.com/acme/widgets.git"],
+    ["ssh over the https port", "ssh://git@ssh.github.com:443/acme/widgets.git"],
+    ["ssh over the https port, upper case", "ssh://git@SSH.GitHub.com:443/Acme/Widgets"],
+    ["https with a port", "https://github.com:443/acme/widgets"],
+    ["credentials and a port", "https://u:p@GitHub.com:8443/Acme/widgets.git/"],
   ])("%s gives one spelling", (_name, url) => {
     expect(normaliseRemote(url)).toBe(CANONICAL);
   });
@@ -52,8 +63,22 @@ describe("a remote is reduced to host/owner/repo", () => {
     );
   });
 
-  it("keeps the case of the path: only the host is case-folded", () => {
-    expect(normaliseRemote("https://github.com/Acme/Widgets")).toBe("github.com/Acme/Widgets");
+  it("keeps the case of the path on a host not known to ignore it, whatever the form", () => {
+    for (const url of [
+      "https://git.example.org/Team/Repo.git",
+      "ssh://git@Git.Example.ORG:2222/Team/Repo.git/",
+      "git@GIT.example.org:Team/Repo",
+      "git://git.example.org/Team/Repo",
+    ]) {
+      expect(normaliseRemote(url)).toBe("git.example.org/Team/Repo");
+    }
+  });
+
+  it("does not take a host that merely contains github.com for github.com", () => {
+    expect(normaliseRemote("https://github.com.example.org/Acme/X")).toBe(
+      "github.com.example.org/Acme/X"
+    );
+    expect(normaliseRemote("git@ghe.acme.io:Acme/X.git")).toBe("ghe.acme.io/Acme/X");
   });
 
   it.each([
@@ -81,8 +106,10 @@ describe("a repository id", () => {
   it("is the sha256 of the normalised remote, whatever its spelling", () => {
     const a = repositoryIdOf({ remote: "git@github.com:acme/widgets.git", rootCommit: "c0ffee" });
     const b = repositoryIdOf({ remote: "https://u:p@GitHub.com/acme/widgets", rootCommit: "beef" });
+    const c = repositoryIdOf({ remote: "ssh://git@GitHub.com/Acme/Widgets.git", rootCommit: null });
     expect(a).toBe(sha(CANONICAL));
     expect(b).toBe(a);
+    expect(c).toBe(a);
   });
 
   it("never contains the remote it came from", () => {

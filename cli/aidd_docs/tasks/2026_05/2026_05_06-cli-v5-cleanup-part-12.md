@@ -218,7 +218,7 @@ done
 ## Manual validation
 
 ```bash
-cd /Users/baptistelafourcade/Projects/freelance/aidd/aidd/cli
+cd cli
 pnpm clean && pnpm install
 time pnpm test            # <60s
 pnpm typecheck            # clean

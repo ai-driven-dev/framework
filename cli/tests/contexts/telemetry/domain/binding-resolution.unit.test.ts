@@ -170,8 +170,7 @@ describe("a branch", () => {
     });
   });
 
-  it("is unbound when it declares nothing, or when it is not a working branch", () => {
-    expect(resolveBinding(facts(branch(null)))).toEqual({ state: "unbound" });
+  it("is unbound when no declared branch is given: parseBranchConfig keeps only declared ones", () => {
     expect(resolveBinding(facts(null))).toEqual({ state: "unbound" });
   });
 

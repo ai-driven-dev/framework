@@ -1,4 +1,18 @@
 {
+  "gitConfig": {
+    "task-and-ticket": "declared",
+    "task-only": "declared",
+    "none": "declared",
+    "none-empty-task": "declared",
+    "task-without-declared-at": "undeclared",
+    "undeclared": "undeclared",
+    "dotted-branch-name": "declared",
+    "stamped-for-this-branch": "declared",
+    "stamped-for-another-branch": "undeclared",
+    "stamp-without-declared-at": "undeclared",
+    "copied-onto-a-branch-declared-none": "undeclared",
+    "task-listed-twice": "undeclared"
+  },
   "binding": {
     "session-declared-once": {
       "state": "bound",
@@ -136,11 +150,30 @@
       "ticket": null,
       "none": true
     },
-    "branch-task-without-declared-at-is-bound": {
+    "branch-task-without-declared-at-is-unbound": {
+      "state": "unbound"
+    },
+    "branch-stamped-for-itself-is-bound": {
       "state": "bound",
       "source": "branch",
-      "task": "orphan",
-      "ticket": null,
+      "task": "stamped",
+      "ticket": "PROJ-30",
+      "none": false
+    },
+    "branch-stamped-for-another-branch-is-unbound": {
+      "state": "unbound"
+    },
+    "branch-stamp-without-declared-at-is-unbound": {
+      "state": "unbound"
+    },
+    "branch-copied-onto-a-declared-branch-is-unbound": {
+      "state": "unbound"
+    },
+    "branch-unstamped-legacy-declaration-is-bound": {
+      "state": "bound",
+      "source": "branch",
+      "task": "checkout-fix",
+      "ticket": "PROJ-12",
       "none": false
     },
     "branch-undeclared-is-unbound": {
@@ -216,18 +249,21 @@
     "win32-xdg": "D:\\xdg\\aidd\\telemetry",
     "win32-default": "C:\\Users\\someone\\.config\\aidd\\telemetry"
   },
-  "claudeOnly": {
-    "claude-posix-transcript": true,
-    "claude-windows-transcript-with-backslashes": true,
-    "claude-custom-config-dir": true,
-    "session-id-differs-from-the-environment": false,
-    "environment-has-no-session-id": false,
-    "environment-session-id-empty": false,
-    "payload-has-no-session-id": false,
-    "codex-rollout-path-with-the-inherited-claude-id": false,
-    "codex-windows-rollout-path": false,
-    "payload-has-no-transcript-path": false,
-    "projects-is-only-part-of-a-name": false
+  "hookTool": {
+    "claude-posix-transcript": "claude",
+    "claude-windows-transcript-with-backslashes": "claude",
+    "claude-custom-config-dir": "claude",
+    "session-id-differs-from-the-environment": null,
+    "environment-has-no-session-id": null,
+    "environment-session-id-empty": null,
+    "payload-has-no-session-id": null,
+    "codex-rollout-path-with-the-inherited-claude-id": "codex",
+    "codex-windows-rollout-path": "codex",
+    "payload-has-no-transcript-path": null,
+    "projects-is-only-part-of-a-name": null,
+    "codex-outside-claude": "codex",
+    "codex-home-under-a-projects-directory": "codex",
+    "codex-payload-has-no-session-id": null
   },
   "consentLog": {
     "no-file": {

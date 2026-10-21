@@ -3,6 +3,7 @@ import { readTextIfPresent } from "../../../kernel/reading/text-file.js";
 import { type BranchSnapshot, parseBranchSnapshot, snapshotKey } from "../domain/branch-binding.js";
 import type { BindingSnapshotStore } from "../domain/ports/bindings/binding-snapshot-store.js";
 import type { PrivateStorage } from "../domain/ports/private-storage.js";
+import type { RepositoryAliasStore } from "../domain/ports/repository-alias-store.js";
 
 /** `branches.jsonl`: append-only, one snapshot per line, the latest line of a branch being its
  * current one. It is appended to, never rewritten, because a snapshot is a fact about a moment
@@ -12,16 +13,15 @@ export class BindingSnapshotStoreAdapter implements BindingSnapshotStore {
 
   constructor(
     private readonly dir: string,
-    private readonly storage: PrivateStorage
+    private readonly storage: PrivateStorage,
+    private readonly aliases: RepositoryAliasStore
   ) {
     this.path = join(dir, "branches.jsonl");
   }
 
   async history(): Promise<ReadonlyMap<string, readonly BranchSnapshot[]>> {
     const history = new Map<string, BranchSnapshot[]>();
-    for (const line of ((await readTextIfPresent(this.path)) ?? "").split("\n")) {
-      const snapshot = parseBranchSnapshot(line);
-      if (snapshot === null) continue;
+    for (const snapshot of await this.read()) {
       const key = snapshotKey(snapshot.repository_id, snapshot.branch);
       history.set(key, [...(history.get(key) ?? []), snapshot]);
     }
@@ -30,12 +30,25 @@ export class BindingSnapshotStoreAdapter implements BindingSnapshotStore {
 
   async latest(): Promise<ReadonlyMap<string, BranchSnapshot>> {
     const latest = new Map<string, BranchSnapshot>();
-    for (const line of ((await readTextIfPresent(this.path)) ?? "").split("\n")) {
-      const snapshot = parseBranchSnapshot(line);
-      if (snapshot !== null)
-        latest.set(snapshotKey(snapshot.repository_id, snapshot.branch), snapshot);
+    for (const snapshot of await this.read()) {
+      latest.set(snapshotKey(snapshot.repository_id, snapshot.branch), snapshot);
     }
     return latest;
+  }
+
+  /** Every snapshot, in the order taken, each repository by its id of now: a snapshot taken
+   * under an id an earlier version gave joins the history of the id it has now, and the file
+   * is never rewritten. */
+  private async read(): Promise<BranchSnapshot[]> {
+    const ids = (await this.aliases.load())?.ids;
+    const snapshots: BranchSnapshot[] = [];
+    for (const line of ((await readTextIfPresent(this.path)) ?? "").split("\n")) {
+      const snapshot = parseBranchSnapshot(line);
+      if (snapshot === null) continue;
+      const id = ids?.get(snapshot.repository_id);
+      snapshots.push(id === undefined ? snapshot : { ...snapshot, repository_id: id });
+    }
+    return snapshots;
   }
 
   async append(snapshots: readonly BranchSnapshot[]): Promise<void> {

@@ -498,7 +498,7 @@ describe("mergeCodexFrameworkHooksJson, entry by entry", () => {
     });
   });
 
-  it("carries timeout and statusMessage only when each is declared in its own type", () => {
+  it("keeps every field of an entry, as the plugin route does, and defaults only its type", () => {
     const { content } = mergeCodexFrameworkHooksJson(
       null,
       JSON.stringify({
@@ -506,8 +506,8 @@ describe("mergeCodexFrameworkHooksJson, entry by entry", () => {
           Stop: [
             {
               hooks: [
-                { command: "a", timeout: 5, statusMessage: "working" },
-                { command: "b", timeout: "5", statusMessage: 7 },
+                { command: "a", timeout: 5, statusMessage: "working", async: true },
+                { type: "prompt", command: "b", timeout: "5" },
               ],
             },
           ],
@@ -520,13 +520,35 @@ describe("mergeCodexFrameworkHooksJson, entry by entry", () => {
         SessionEnd: [
           {
             hooks: [
-              { type: "command", command: "a", timeout: 5, statusMessage: "working" },
-              { type: "command", command: "b" },
+              { type: "command", command: "a", timeout: 5, statusMessage: "working", async: true },
+              { type: "prompt", command: "b", timeout: "5" },
             ],
           },
         ],
       },
     });
+  });
+});
+
+describe("the telemetry plugin's hooks on both Codex routes", () => {
+  const shipped = () =>
+    readFileSync(join(REPOSITORY_ROOT, "plugins", "aidd-telemetry", "hooks", "hooks.json"), "utf8");
+  const entries = (document: string) =>
+    (
+      JSON.parse(document) as { hooks: Record<string, { hooks: Record<string, unknown>[] }[]> }
+    ).hooks.SessionStart?.flatMap((group) => group.hooks);
+
+  it("keeps the catch-up async with its timeout in the merged .codex/hooks.json", () => {
+    const merged = entries(mergeCodexFrameworkHooksJson(null, shipped()).content);
+    expect(merged?.find((entry) => String(entry.command).endsWith("catch-up.cjs"))).toMatchObject({
+      async: true,
+      timeout: 120,
+    });
+  });
+
+  it("writes the same entries as the plugin tree, so one trust review covers both", () => {
+    const merged = JSON.parse(mergeCodexFrameworkHooksJson(null, shipped()).content);
+    expect(merged).toStrictEqual(JSON.parse(renameCodexHookEvents(shipped())));
   });
 });
 

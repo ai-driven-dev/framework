@@ -9,6 +9,7 @@ import { ForgetTelemetryUseCase } from "../../contexts/telemetry/application/for
 import { ManageIdentityUseCase } from "../../contexts/telemetry/application/identity/manage-identity-use-case.js";
 import { ProposeIdentityUseCase } from "../../contexts/telemetry/application/identity/propose-identity-use-case.js";
 import { IngestUsageUseCase } from "../../contexts/telemetry/application/ingest-usage-use-case.js";
+import { StoredUsageMigration } from "../../contexts/telemetry/application/legacy/stored-usage-migration.js";
 import { ReadUsageUseCase } from "../../contexts/telemetry/application/read-usage-use-case.js";
 import { DeclaredBindings } from "../../contexts/telemetry/application/report/declared-bindings.js";
 import { ReportUsageUseCase } from "../../contexts/telemetry/application/report/report-usage-use-case.js";
@@ -21,6 +22,7 @@ import {
   claudeProjectsRoot,
 } from "../../contexts/telemetry/domain/claude-projects-root.js";
 import { readClaudeUsageLine } from "../../contexts/telemetry/domain/formats/claude-transcript-usage.js";
+import { codexUsageReader } from "../../contexts/telemetry/domain/formats/codex-transcript-usage.js";
 import { legacyLocations } from "../../contexts/telemetry/domain/legacy/legacy-locations.js";
 import { refusedByEnvironment as refusedByEnvironmentValue } from "../../contexts/telemetry/domain/telemetry-consent.js";
 import { BindingSnapshotStoreAdapter } from "../../contexts/telemetry/infrastructure/binding-snapshot-store-adapter.js";
@@ -36,11 +38,16 @@ import { GitConsentAdapter } from "../../contexts/telemetry/infrastructure/git-c
 import { GitRepositoryLocatorAdapter } from "../../contexts/telemetry/infrastructure/git-repository-locator-adapter.js";
 import { GitUserSourceAdapter } from "../../contexts/telemetry/infrastructure/identity/git-user-source-adapter.js";
 import { PersonIdentityAdapter } from "../../contexts/telemetry/infrastructure/identity/person-identity-adapter.js";
+import { RepositoryAliasStoreAdapter } from "../../contexts/telemetry/infrastructure/legacy/repository-alias-store-adapter.js";
 import { ResolutionStoreAdapter } from "../../contexts/telemetry/infrastructure/resolution-store-adapter.js";
 import { ClaudeSettingsAdapter } from "../../contexts/telemetry/infrastructure/switch/claude-settings-adapter.js";
 import { LegacyHookAdapter } from "../../contexts/telemetry/infrastructure/switch/legacy-hook-adapter.js";
 import { ProjectConfigAdapter } from "../../contexts/telemetry/infrastructure/switch/project-config-adapter.js";
 import { RunJournalAdapter } from "../../contexts/telemetry/infrastructure/switch/run-journal-adapter.js";
+import {
+  CodexTranscriptSourceAdapter,
+  codexSessionRoots,
+} from "../../contexts/telemetry/infrastructure/transcripts/codex-transcript-source-adapter.js";
 import { UsageLedgerAdapter } from "../../contexts/telemetry/infrastructure/usage-ledger-adapter.js";
 import { PrivateStorageAdapter } from "../filesystem/private-storage-adapter.js";
 import { environmentWithoutGitVariables } from "../git/git-environment.js";
@@ -76,6 +83,12 @@ export function telemetryDir(): string {
   return telemetryDirOf(process.env, homedir());
 }
 
+/** The session a declaration binds: the one a hook names (Codex sets no session variable), else
+ * Claude Code's. An empty variable is no session. */
+export function declaringSessionOf(env: NodeJS.ProcessEnv): string | null {
+  return env.AIDD_TELEMETRY_SESSION_ID || env.CLAUDE_CODE_SESSION_ID || null;
+}
+
 /** macOS and Windows file systems answer one directory to several spellings. */
 export function caseInsensitiveFileSystem(platform: NodeJS.Platform): boolean {
   return platform === "darwin" || platform === "win32";
@@ -88,7 +101,8 @@ export function wireTelemetry(homedir: () => string): TelemetryDeps {
   const gitEnv = environmentWithoutGitVariables();
   const bindingsDir = join(root, "bindings");
   const branchSource = new GitBranchBindingSourceAdapter(gitEnv);
-  const snapshotStore = new BindingSnapshotStoreAdapter(bindingsDir, storage);
+  const aliases = new RepositoryAliasStoreAdapter(ledgerDir, storage);
+  const snapshotStore = new BindingSnapshotStoreAdapter(bindingsDir, storage, aliases);
   const bindingsLock = new BindingsLockAdapter(bindingsDir, storage);
   const snapshotBindingsUseCase = new SnapshotBindingsUseCase(
     branchSource,
@@ -106,8 +120,7 @@ export function wireTelemetry(homedir: () => string): TelemetryDeps {
     now: () => new Date(),
   };
   const sessions = new SessionBindingStoreAdapter(bindingsDir, storage);
-  // An empty variable is no session: only a set, non-empty id is one a declaration can bind.
-  const sessionId = process.env.CLAUDE_CODE_SESSION_ID || null;
+  const sessionId = declaringSessionOf(process.env);
   const refusedByEnvironment = refusedByEnvironmentValue(process.env.AIDD_TELEMETRY);
   const repositories = new ConsentedRepositories(locator, consents, consentHistory);
   const branchDeclarations = new BranchDeclarations(
@@ -137,13 +150,18 @@ export function wireTelemetry(homedir: () => string): TelemetryDeps {
         new ClaudeTranscriptSourceAdapter(
           claudeProjectsRoot(process.env.CLAUDE_CONFIG_DIR, homedir())
         ),
-        readClaudeUsageLine
+        () => readClaudeUsageLine
+      ),
+      new ReadUsageUseCase(
+        new CodexTranscriptSourceAdapter(codexSessionRoots(process.env.CODEX_HOME, homedir())),
+        codexUsageReader
       ),
     ],
     ledger,
     new DirectoryResolver(locator, consents, resolutionStore, consentHistory, environment),
     snapshotBindingsUseCase,
-    { refusedByEnvironment }
+    { refusedByEnvironment },
+    new StoredUsageMigration(locator, resolutionStore, aliases, ledger)
   );
   const claudeDir = claudeConfigDir(process.env.CLAUDE_CONFIG_DIR, homedir());
   return {

@@ -83,6 +83,13 @@ const BASELINE: readonly { readonly path: string; readonly named: number }[] = [
   { path: "src/contexts/telemetry/domain/usage-record.ts", named: 1 },
   // Where Claude Code keeps its transcripts, named for the one tool whose directory it is.
   { path: "src/contexts/telemetry/domain/claude-projects-root.ts", named: 1 },
+  // Codex's own session-file format and where Codex keeps those files, each named for the one
+  // tool whose files it reads: a tool measured is its reader, not a list a new tool joins.
+  { path: "src/contexts/telemetry/domain/formats/codex-transcript-usage.ts", named: 1 },
+  {
+    path: "src/contexts/telemetry/infrastructure/transcripts/codex-transcript-source-adapter.ts",
+    named: 1,
+  },
   // Claude Code's own settings files, read to say how long it keeps a transcript.
   { path: "src/contexts/telemetry/infrastructure/switch/claude-settings-adapter.ts", named: 1 },
   // Cursor's project hooks file, named after the tool whose file it is: the directory it

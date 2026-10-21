@@ -95,7 +95,8 @@ export class LedgerLock {
 
   /** Resolves with the function that releases the lock. */
   async acquire(): Promise<() => Promise<void>> {
-    const deadline = this.options.now() + this.options.waitMs;
+    const { now, waitMs, name, sleep, pollMs } = this.options;
+    const deadline = now() + waitMs;
     for (;;) {
       if (await this.tryCreate()) return () => this.release();
       const holder = await this.holder();
@@ -104,13 +105,13 @@ export class LedgerLock {
         await rm(this.path, { force: true });
         continue;
       }
-      if (this.options.now() >= deadline) {
+      if (now() >= deadline) {
         throw new Error(
-          `The ${this.options.name} is locked by process ${holder.pid ?? "unknown"}, which is still running. ` +
+          `The ${name} is locked by process ${holder.pid ?? "unknown"}, which is still running. ` +
             `Wait for it to finish, or remove ${this.path} if that process is not an aidd command.`
         );
       }
-      await this.options.sleep(this.options.pollMs);
+      await sleep(pollMs);
     }
   }
 

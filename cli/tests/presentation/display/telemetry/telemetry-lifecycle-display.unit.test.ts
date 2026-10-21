@@ -40,6 +40,7 @@ describe("printOnResult", () => {
     expect(output.lines[3]).toMatch(/^Next: declare what you work on with /u);
     expect(output.lines[3]).toContain("aidd telemetry task <name> [--ticket <ref>]");
     expect(output.lines[3]).toContain("the aidd-telemetry plugin's hooks ask");
+    expect(output.lines[3]).toContain("Codex TUI");
   });
 
   it("says who the clone is measured as, before the next step", () => {
@@ -227,6 +228,11 @@ describe("printForgetResult", () => {
     expect(forgotten({ status: "forgotten", plan: empty }).lines).toEqual([
       "Nothing measured is kept on this machine.",
     ]);
+  });
+
+  it("counts several repositories it could not locate in plain English", () => {
+    const output = forgotten({ status: "preview", plan: { ...PLAN, unlocated: 2 } });
+    expect(output.at("warn")).toContain("2 repositories declared a task and could not be located.");
   });
 
   it("still names a repository it skipped when nothing else is kept", () => {

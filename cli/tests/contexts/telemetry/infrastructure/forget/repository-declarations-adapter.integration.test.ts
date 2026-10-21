@@ -35,18 +35,19 @@ describe("the declarations in a repository's git config", () => {
     });
   });
 
-  it("counts the three keys of every branch, dotted and upper-case names included", async () => {
+  it("counts the four keys of every branch, dotted and upper-case names included", async () => {
     config(
       "branch.main.aiddTask",
       "branch.feat/a.b.aiddTicket",
       "branch.Feat/X.aiddDeclaredAt",
+      "branch.Feat/X.aiddDeclaredFor",
       "branch.main.remote",
       "branch.main.aiddOther",
       "aidd.task",
       "other.aiddTask"
     );
     expect(await new RepositoryDeclarationsAdapter(env).count(clone)).toEqual({
-      taskKeys: 3,
+      taskKeys: 4,
       consent: false,
     });
   });
@@ -56,17 +57,18 @@ describe("the declarations in a repository's git config", () => {
       "branch.main.aiddTask",
       "branch.feat/a.b.aiddTicket",
       "branch.Feat/X.aiddDeclaredAt",
+      "branch.Feat/X.aiddDeclaredFor",
       "branch.main.remote",
       "branch.main.aiddOther"
     );
     expect(await new RepositoryDeclarationsAdapter(env).clear(clone)).toEqual({
-      taskKeys: 3,
+      taskKeys: 4,
       consent: false,
     });
     const left = listed();
     expect(left).toContain("branch.main.remote=v");
     expect(left).toContain("branch.main.aiddother=v");
-    expect(left).not.toMatch(/aiddtask|aiddticket|aidddeclaredat/);
+    expect(left).not.toMatch(/aiddtask|aiddticket|aidddeclaredat|aidddeclaredfor/);
   });
 
   it("counts and removes the consent beside the task keys, and nothing like it", async () => {

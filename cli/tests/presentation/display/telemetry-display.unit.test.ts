@@ -17,7 +17,7 @@ function shown(result: Parameters<typeof printIdentityResult>[1]): CapturingOutp
 }
 
 const UNRECOGNISED =
-  " not recognised: a call missing a counter is kept with that counter unknown; a line that is no usage line is not counted.";
+  " not recognised by this read: a call missing a counter is kept with that counter unknown; a line that is no usage line is never a call.";
 
 describe("printIdentityResult", () => {
   it("says who the measurement names, and how to stop", () => {
@@ -79,21 +79,27 @@ describe("printIngestResult", () => {
     ]);
   });
 
+  it("groups thousands in every count of its first line", () => {
+    expect(
+      linesOf((o) => printIngestResult(o, { ...INGESTED, added: 1_000, updated: 2_000 }))[0]
+    ).toBe("Read 1 transcript: 1,000 calls added, 2,000 updated.");
+  });
+
   it("says nothing was read under AIDD_TELEMETRY=0", () => {
     expect(linesOf((o) => printIngestResult(o, { ...INGESTED, refused: true }))).toEqual([
       "AIDD_TELEMETRY=0: nothing was read and nothing was stored.",
     ]);
   });
 
-  it("warns of shapes not recognised and ledger lines dropped, and counts snapshots", () => {
+  it("counts snapshots, then warns of shapes not recognised and ledger lines kept", () => {
     const lines = linesOf((o) =>
       printIngestResult(o, { ...INGESTED, unrecognised: 2, skippedLedgerLines: 1, snapshots: 2 })
     );
     expect(lines).toEqual([
       "Read 1 transcript: 1 call added, 0 updated.",
-      `2 shapes${UNRECOGNISED}`,
-      "1 ledger line was not a record and dropped.",
       "2 branch declarations snapshotted.",
+      `2 shapes${UNRECOGNISED}`,
+      "1 ledger line is not a record, kept as found.",
     ]);
     expect(
       linesOf((o) =>
@@ -101,9 +107,9 @@ describe("printIngestResult", () => {
       )
     ).toEqual([
       "Read 1 transcript: 1 call added, 0 updated.",
-      `1 shape${UNRECOGNISED}`,
-      "2 ledger lines were not a record and dropped.",
       "1 branch declaration snapshotted.",
+      `1 shape${UNRECOGNISED}`,
+      "2 ledger lines are not a record, kept as found.",
     ]);
   });
 
@@ -115,9 +121,19 @@ describe("printIngestResult", () => {
       })
     );
     expect(lines.slice(1)).toEqual([
-      "Not stored: 1 call from a clone with no consent at that time.",
-      "Not stored: 2 calls with no usable time.",
+      "Not stored by this read: 1 call from a clone with no consent at that time.",
+      "Not stored by this read: 2 calls with no usable time.",
     ]);
+    const output = new CapturingOutput(false);
+    printIngestResult(output, {
+      ...INGESTED,
+      unrecognised: 1,
+      notStored: { ...NOT_STORED, "no-cwd": 1 },
+    });
+    expect(output.at("info")).toEqual([
+      "Not stored by this read: 1 call with no working directory.",
+    ]);
+    expect(output.at("warn")).toEqual([`1 shape${UNRECOGNISED}`]);
   });
 
   it("says a closed consent was closed, and never that the clone has not opted in", () => {
@@ -128,7 +144,7 @@ describe("printIngestResult", () => {
       })
     );
     expect(lines.slice(1)).toEqual([
-      "Not stored: 1 call from a clone whose consent was closed; run `aidd telemetry on` in it to measure again.",
+      "Not stored by this read: 1 call from a clone whose consent was closed; run `aidd telemetry on` in it to measure again.",
     ]);
     expect(lines.join("\n")).not.toContain("has not opted in");
   });
@@ -151,7 +167,7 @@ describe("printIngestResult", () => {
       })
     );
     expect(lines.slice(1)).toEqual([
-      "Not stored: 1 call from a clone whose consent cannot be read: its git config, its git directory, or a damaged ledger/consents.jsonl.",
+      "Not stored by this read: 1 call from a clone whose consent cannot be read: its git config, its git directory, or a damaged ledger/consents.jsonl.",
     ]);
     expect(lines.join("\n")).not.toContain("config.json");
   });

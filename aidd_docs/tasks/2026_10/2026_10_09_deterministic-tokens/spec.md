@@ -1,5 +1,5 @@
 ---
-status: framed
+status: done
 branch: feat/telemetry-deterministic-tokens
 ---
 
@@ -39,6 +39,9 @@ coming only from what a person declared, with the previous telemetry removed ent
   > **Deviation, 2026-10-12, maintainer decision.** IDE extensions are not asked: VS Code shows
   > no hook message, so a block would eat the prompt. Declare in a terminal; it binds the branch.
   > Evidence: [target.md](context/target.md).
+  > **Reading, 2026-10-16.** "At most once" means answered once and remembered for the branch:
+  > the gate holds every prompt until then, as "before any token of that work is spent" requires.
+  > See the usage contract, section Ask.
 - A session started by `/clear` keeps the task of the session it replaced, says so to the
   person, and a later declaration in it re-attributes the whole session.
 - Work with no declared task is its own row, with the reason it has none, and is attributed
@@ -102,7 +105,6 @@ None.
 ## Context
 
 - Measurements, verified behaviours and the target shape: [`context/target.md`](context/target.md).
-- The common usage record and per-tool normalisation: [`context/usage-record-contract.md`](context/usage-record-contract.md).
-- Prototype readers and their mutation-proved fixtures: [`context/prototype/`](context/prototype/).
+- The common usage record, as shipped: [usage contract](../../../product/usage-contract.md). The draft record and the Python prototype readers were removed after the merge; git history keeps them.
 - Decision records kept: [hosted destination](../../../memory/internal/decisions/measurement-may-reach-a-hosted-destination.md),
   [price table](../../../memory/internal/decisions/a-price-table-is-the-destination-s.md).

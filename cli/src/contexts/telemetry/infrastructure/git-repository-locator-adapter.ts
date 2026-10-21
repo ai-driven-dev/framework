@@ -1,14 +1,13 @@
 import { existsSync, realpath } from "node:fs";
 import { basename, dirname, join, resolve } from "node:path";
 import { promisify } from "node:util";
-import { isErrnoException } from "../../../kernel/reading/json-file.js";
+import { isAbsent } from "../../../kernel/reading/text-file.js";
 import type { LocatedDirectory, RepositoryLocator } from "../domain/ports/repository-locator.js";
 import { type CloneIdentityReader, readCloneIdentity } from "./consent/clone-identity-reader.js";
 import { runGit } from "./run-git.js";
 
 // `native` so Windows hands back the long, correctly cased name, not an 8.3 one.
 const realPath = promisify(realpath.native);
-const GONE = new Set(["ENOENT", "ENOTDIR"]);
 
 /** Whether `dir` or a directory above it holds a `.git`. */
 function holdsGit(dir: string): boolean {
@@ -31,7 +30,7 @@ export class GitRepositoryLocatorAdapter implements RepositoryLocator {
     try {
       real = await realPath(cwd);
     } catch (error) {
-      if (isErrnoException(error) && GONE.has(error.code ?? "")) return { status: "gone" };
+      if (isAbsent(error)) return { status: "gone" };
       return { status: "unreadable" };
     }
     const top = runGit(this.env, real, ["rev-parse", "--show-toplevel", "--git-common-dir"]);

@@ -41,3 +41,10 @@ export function usageTotal(record: UsageRecord): number {
     (record.cache_write ?? 0)
   );
 }
+
+/** What a transcript line that is no usage line names of where and when it was written, so it
+ * can be tied to a clone's consent. */
+export interface LineNames {
+  readonly cwd: string | null;
+  readonly at: string | null;
+}

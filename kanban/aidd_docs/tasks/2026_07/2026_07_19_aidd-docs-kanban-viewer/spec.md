@@ -39,9 +39,9 @@ Provide a local CLI tool that scans a target project's `aidd_docs` directory, pa
 
 ## Stakeholders
 
-- Decider: francois.duval.auto@gmail.com
-- Owner: francois.duval.auto@gmail.com
-- Consumer: francois.duval.auto@gmail.com
+- Decider: someone@example.com
+- Owner: someone@example.com
+- Consumer: someone@example.com
 
 ## Context
 

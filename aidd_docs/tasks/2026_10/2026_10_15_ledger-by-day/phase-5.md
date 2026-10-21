@@ -51,9 +51,9 @@ journey
 
 > Same machine, same stub storage, same record shape as the "before" run of phase 1.
 
-1. Adapt `bench.ts` in `/private/tmp/claude-501/-Users-baptistelafourcade-orca-workspaces-framework-brainstorm-telemetry/2c21d903-3a7e-47ac-83f8-d8b7ae3aa579/scratchpad/bench/`: seed with `ledger.save(allRecords)` (daily files), then time `storeCalls(ledger, [fresh])` and, separately, its three steps (`load(daysAround([fresh]))`, `upsertUsage`, `save`). A second section seeds the old `2026-10.jsonl` and times the same one call, labelled "one-time split".
+1. Adapt `bench.ts` in `<scratch>/bench/`: seed with `ledger.save(allRecords)` (daily files), then time `storeCalls(ledger, [fresh])` and, separately, its three steps (`load(daysAround([fresh]))`, `upsertUsage`, `save`). A second section seeds the old `2026-10.jsonl` and times the same one call, labelled "one-time split".
 2. Build and run, from the repository root:
-   `B=/private/tmp/claude-501/-Users-baptistelafourcade-orca-workspaces-framework-brainstorm-telemetry/2c21d903-3a7e-47ac-83f8-d8b7ae3aa579/scratchpad/bench; cli/node_modules/.pnpm/esbuild@0.27.3/node_modules/esbuild/bin/esbuild $B/bench.ts --bundle --platform=node --format=esm --outfile=$B/bench.mjs && node $B/bench.mjs 265000`
+   `B='<scratch>/bench'; cli/node_modules/.pnpm/esbuild@0.27.3/node_modules/esbuild/bin/esbuild $B/bench.ts --bundle --platform=node --format=esm --outfile=$B/bench.mjs && node $B/bench.mjs 265000`
 3. Report before (phase 1) and after side by side. A 3-day window at this density is ~29k records, roughly 0.8 s by linear scaling of the contract's table: if it lands over 1 s, find the dominating step (likely the compare-read in `save` or the full `foldUsage` sort) and fix it in the phase 2 code, not in the bench.
 
 ### `2)` Gate, in order

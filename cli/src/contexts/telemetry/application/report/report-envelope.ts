@@ -1,7 +1,15 @@
+import type { LeftOutReason } from "../../domain/ports/usage-ledger.js";
 import type { UnattributedReason } from "../../domain/report/attribution.js";
 import type { Period } from "../../domain/report/period.js";
-import type { ReportFilters } from "../../domain/report/report-filter.js";
-import type { CounterSum, ReportAxis, ReportRow, Tally } from "../../domain/report/usage-report.js";
+import { filtersOf, type ReportFilters } from "../../domain/report/report-filter.js";
+import {
+  COUNTERS,
+  type Counter,
+  type CounterSum,
+  type ReportAxis,
+  type ReportRow,
+  type Tally,
+} from "../../domain/report/usage-report.js";
 import type { NotStoredReason } from "../../domain/repository-resolution.js";
 import type { ReportResult } from "./report-usage-use-case.js";
 
@@ -31,40 +39,24 @@ export interface EnvelopeRow extends EnvelopeTally {
   readonly reason: UnattributedReason | null;
 }
 
-/** What `aidd telemetry report --json` prints. Version 1.
- *
- * `rows` split the period along `axis`; the rows of every axis add up to the same `totals`,
- * counter by counter. `unknown_records` is how many calls had at least one counter unknown.
- * `coverage` says what the figures rest on: `files_read` and `unrecognised_shapes` are of
- * this run alone, `records` of the period, `not_stored` counts calls this run read and left
- * out by reason, `consent_log_damaged` is true while `ledger/consents.jsonl` cannot be trusted
- * and nothing is stored, and `oldest_transcript_at` is when the oldest transcript still on disk was
- * last written (`null` when there is none), and `skipped_ledger_lines` counts the lines that
- * were not records in the ledger partitions the report read: a bounded report reads its period
- * and the day on each side, so damage outside them is not counted. Nothing here is a path, a
- * working directory or a branch name.
- *
- * `filters` names what the report was narrowed to, every flag in a fixed order, `null` when it
- * was not given, else as resolved: the full id for a start or `.`, the start as typed when it
- * names no call of the period. `rows` and `totals` count the calls that match;
- * `coverage.records` counts every call of the period, matching or not.
- *
- * Under `AIDD_TELEMETRY=0` nothing is read and the envelope is `{ "version": 1, "refused":
- * "AIDD_TELEMETRY=0" }` (`REFUSED_ENVELOPE`).
- *
- * A new field may appear in a version 1 envelope; a field is never renamed, retyped or removed
- * without a new `version`. */
+/** What `aidd telemetry report --json` prints, version 2: every field but `run` is a figure,
+ * `run` is what the read that printed it found. What each field means, and what the figures
+ * depend on, is defined once, in `plugins/aidd-telemetry/skills/01-usage/references/envelope.md`.
+ * Under `AIDD_TELEMETRY=0` nothing is read: `REFUSED_ENVELOPE`. A field is never renamed,
+ * retyped, moved or removed without a new `version`. */
 export interface ReportEnvelope {
-  readonly version: 1;
+  readonly version: 2;
   readonly period: Period;
   readonly axis: ReportAxis;
   readonly filters: ReportFilters;
   readonly rows: readonly EnvelopeRow[];
   readonly totals: EnvelopeTally;
-  readonly unknown_records: number;
   readonly coverage: {
-    readonly files_read: number;
     readonly records: number;
+    readonly left_out: Readonly<Record<LeftOutReason, number>>;
+  };
+  readonly run: {
+    readonly files_read: number;
     readonly unrecognised_shapes: number;
     readonly not_stored: Readonly<Record<NotStoredReason, number>>;
     readonly consent_log_damaged: boolean;
@@ -78,12 +70,10 @@ function counterOf(sum: CounterSum): EnvelopeCounter {
 }
 
 function tallyOf(tally: Tally): EnvelopeTally {
+  const counters = COUNTERS.map((counter) => [counter, counterOf(tally.counters[counter])]);
   return {
     records: tally.records,
-    input: counterOf(tally.counters.input),
-    output: counterOf(tally.counters.output),
-    cache_read: counterOf(tally.counters.cache_read),
-    cache_write: counterOf(tally.counters.cache_write),
+    ...(Object.fromEntries(counters) as Record<Counter, EnvelopeCounter>),
     total: counterOf(tally.total),
   };
 }
@@ -101,36 +91,25 @@ function rowOf(row: ReportRow): EnvelopeRow {
 export function reportEnvelopeOf(
   result: Extract<ReportResult, { status: "reported" }>
 ): ReportEnvelope {
-  const { period, filters, report, coverage } = result;
+  const { period, filters, report, coverage, run } = result;
   return {
-    version: 1,
+    version: 2,
     period,
     axis: report.axis,
-    filters: {
-      task: filters.task,
-      ticket: filters.ticket,
-      person: filters.person,
-      model: filters.model,
-      agent: filters.agent,
-      session: filters.session,
-      repository: filters.repository,
-      absent: filters.absent,
-      unattributed: filters.unattributed,
-    },
+    filters: filtersOf(filters),
     rows: report.rows.map(rowOf),
     totals: tallyOf(report.totals),
-    unknown_records: report.totals.total.unknownRecords,
-    coverage: {
-      files_read: coverage.filesRead,
-      records: coverage.records,
-      unrecognised_shapes: coverage.unrecognised,
-      not_stored: coverage.notStored,
-      consent_log_damaged: coverage.consentLogDamaged,
-      oldest_transcript_at: coverage.oldestTranscriptAt,
-      skipped_ledger_lines: coverage.skippedLedgerLines,
+    coverage: { records: coverage.records, left_out: coverage.leftOut },
+    run: {
+      files_read: run.filesRead,
+      unrecognised_shapes: run.unrecognised,
+      not_stored: run.notStored,
+      consent_log_damaged: run.consentLogDamaged,
+      oldest_transcript_at: run.oldestTranscriptAt,
+      skipped_ledger_lines: run.skippedLedgerLines,
     },
   };
 }
 
 /** What `--json` prints under `AIDD_TELEMETRY=0`, when nothing was read. */
-export const REFUSED_ENVELOPE = { version: 1, refused: "AIDD_TELEMETRY=0" } as const;
+export const REFUSED_ENVELOPE = { version: 2, refused: "AIDD_TELEMETRY=0" } as const;

@@ -1,4 +1,4 @@
-{"type":"thread.started","thread_id":"01a12c6f-d11b-7ff3-829d-356fa7d0ac30"}
+{"type":"thread.started","thread_id":"<session>"}
 {"type":"item.completed","item":{"id":"item_0","type":"error","message":"Model metadata for `gpt-5.1-codex` not found. Defaulting to fallback metadata; this can degrade performance and cause issues."}}
 {"type":"turn.started"}
 {"type":"item.completed","item":{"id":"item_1","type":"agent_message","text":"LOCAL_OK"}}

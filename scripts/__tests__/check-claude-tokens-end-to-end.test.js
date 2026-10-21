@@ -18,9 +18,9 @@ function exact(overrides = {}) {
 function reports(row = exact(), totals = exact()) {
   return {
     billed: BILLED,
-    byTask: { totals, rows: [{ kind: "value", key: "demo", ...row }] },
-    byTicket: { totals, rows: [{ kind: "value", key: "T-1", ...row }] },
-    here: { filters: { task: "demo", repository: "a".repeat(64) }, totals: row },
+    byTask: { version: 2, totals, rows: [{ kind: "value", key: "demo", ...row }] },
+    byTicket: { version: 2, totals, rows: [{ kind: "value", key: "T-1", ...row }] },
+    here: { version: 2, filters: { task: "demo", repository: "a".repeat(64) }, totals: row },
   };
 }
 
@@ -65,6 +65,16 @@ describe("the report of a real claude run, judged against what the API billed", 
     const narrowed = reports();
     narrowed.here.filters.repository = ".";
     assert.match(judge(narrowed).message, /--repository \. resolved to "\."/u);
+  });
+
+  it("calls itself broken on a report of a version it does not read, figures right or not", () => {
+    for (const which of ["byTask", "byTicket", "here"]) {
+      const older = reports();
+      older[which].version = 1;
+      const verdict = judge(older);
+      assert.equal(verdict.code, 2, which);
+      assert.match(verdict.message, /version 1, not 2/u);
+    }
   });
 
   it("calls itself broken when the API billed fewer calls than prompts were sent", () => {

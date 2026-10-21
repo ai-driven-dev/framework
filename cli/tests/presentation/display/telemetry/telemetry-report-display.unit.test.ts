@@ -35,7 +35,9 @@ const NOT_STORED = {
   "no-cwd": 0,
   undated: 0,
 };
-type Coverage = Extract<ReportResult, { status: "reported" }>["coverage"];
+type Reported = Extract<ReportResult, { status: "reported" }>;
+/** What the figures rest on and what the read found, given flat: `result` splits them. */
+type Coverage = Reported["coverage"] & Reported["run"];
 const COVERAGE: Coverage = {
   filesRead: 2,
   records: 3,
@@ -44,6 +46,7 @@ const COVERAGE: Coverage = {
   consentLogDamaged: false,
   oldestTranscriptAt: "2026-09-20T08:00:00.000Z",
   skippedLedgerLines: 0,
+  leftOut: { undated: 0, unrecognised: 0, requestless: 0 },
 };
 const BOTH: Period = { from: "2026-10-01", to: "2026-10-07" };
 
@@ -60,8 +63,11 @@ function result(
     period,
     filters,
     report: { axis, rows: rows.map(([value, t]) => ({ value, ...t })), totals },
-    coverage: { ...COVERAGE, ...coverage },
+    ...split({ ...COVERAGE, ...coverage }),
   };
+}
+function split({ records, leftOut, ...run }: Coverage): Pick<Reported, "coverage" | "run"> {
+  return { coverage: { records, leftOut }, run };
 }
 const printed = (r: ReportResult): string[] => {
   const output = new CapturingOutput(false);
@@ -72,7 +78,7 @@ const value = (text: string): AxisValue => ({ kind: "value", value: text });
 const one = tally(1, [1, 10, 1000, 100]);
 
 const UNRECOGNISED =
-  " not recognised: a call missing a counter is kept with that counter unknown; a line that is no usage line is not counted.";
+  " not recognised by this read: a call missing a counter is kept with that counter unknown; a line that is no usage line is never a call.";
 
 describe("printing a usage report", () => {
   it("lays out the four counters apart, a row total, a total row, and the coverage", () => {
@@ -177,6 +183,7 @@ describe("printing a usage report", () => {
       session: "no session",
       model: "unknown model",
       agent: "no agent",
+      tool: "no tool",
       day: "no day",
       repository: "no repository",
       task: "no task",
@@ -242,20 +249,45 @@ describe("printing a usage report", () => {
     expect(lines.slice(3)).toEqual([
       "Read 2 transcripts just now; 1 call in this period; oldest transcript on disk: 2026-09-20.",
       `3 shapes${UNRECOGNISED}`,
-      "Not stored: 2 calls outside any repository.",
-      "Not stored: 1 call from a directory never seen while it existed.",
+      "Not stored by this read: 2 calls outside any repository.",
+      "Not stored by this read: 1 call from a directory never seen while it existed.",
     ]);
     const one_ = printed(result("total", [], tally(0, [0, 0, 0, 0]), { unrecognised: 1 }));
     expect(one_).toContain(`1 shape${UNRECOGNISED}`);
   });
 
-  it("says when ledger lines were dropped", () => {
+  it("says when ledger lines are not records, and kept", () => {
     const lines = printed(result("total", [], tally(0, [0, 0, 0, 0]), { skippedLedgerLines: 2 }));
-    expect(lines.at(-1)).toBe("2 ledger lines were not a record and dropped.");
+    expect(lines.at(-1)).toBe("2 ledger lines are not a record, kept as found.");
     expect(
       printed(result("total", [], tally(0, [0, 0, 0, 0]), { skippedLedgerLines: 1 })).at(-1)
-    ).toBe("1 ledger line was not a record and dropped.");
+    ).toBe("1 ledger line is not a record, kept as found.");
     expect(printed(result("total", [], tally(0, [0, 0, 0, 0]))).join("\n")).not.toContain("ledger");
+  });
+
+  it("says what every read kept of what it measured and could not store, and nothing when none", () => {
+    const lines = printed(
+      result("total", [], tally(0, [0, 0, 0, 0]), {
+        leftOut: { undated: 1, unrecognised: 1_200, requestless: 3 },
+      })
+    );
+    expect(lines.slice(-3)).toEqual([
+      "Kept from every read: 1,200 lines that are no usage line.",
+      "Kept from every read: 1 call with no usable time.",
+      "Kept from every read: 3 calls with no request id.",
+    ]);
+    expect(printed(result("total", [], tally(0, [0, 0, 0, 0]))).join("\n")).not.toContain("Kept");
+    expect(
+      printed(
+        result("total", [], tally(0, [0, 0, 0, 0]), {
+          leftOut: { undated: 2, unrecognised: 1, requestless: 1 },
+        })
+      ).slice(-3)
+    ).toEqual([
+      "Kept from every read: 1 line that is no usage line.",
+      "Kept from every read: 2 calls with no usable time.",
+      "Kept from every read: 1 call with no request id.",
+    ]);
   });
 
   it("warns on every report while the consent log is damaged, and not otherwise", () => {
@@ -329,13 +361,14 @@ describe("printing a usage report", () => {
       session: "a1b2c3d4-0000-4000-8000-000000000001",
       repository: "f".repeat(64),
       agent: "subagent",
+      tool: "codex",
       absent: "model",
       person: "p-1",
     };
     const lines = printed(result("day", [[value("2026-10-02"), one]], one, {}, BOTH, filters));
     expect(lines.slice(0, 3)).toEqual([
       "Usage, 2026-10-01 to 2026-10-07, by day",
-      "Selected: task = auth refactor, ticket = PROJ-1, person = p-1, agent = subagent, session = a1b2c3d4, repository = ffffffff, model = unknown model",
+      "Selected: task = auth refactor, ticket = PROJ-1, person = p-1, agent = subagent, session = a1b2c3d4, repository = ffffffff, tool = codex, model = unknown model",
       "",
     ]);
     const absentOf = (absent: ReportFilters["absent"]) =>

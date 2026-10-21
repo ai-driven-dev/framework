@@ -30,7 +30,7 @@
       "nativeFinalResult": true,
       "model": "Auto",
       "backendModel": "not exposed by native CLI JSON",
-      "session": "7116dbbb-0e5e-4a15-b79c-61b06cda7320"
+      "session": "<session>"
     },
     {
       "run": "cursor-02",
@@ -49,7 +49,7 @@
       "nativeFinalResult": true,
       "model": "Auto",
       "backendModel": "not exposed by native CLI JSON",
-      "session": "1f914936-0834-440f-894e-336aa9f1ff19"
+      "session": "<session>"
     },
     {
       "run": "cursor-03",
@@ -68,7 +68,7 @@
       "nativeFinalResult": true,
       "model": "Auto",
       "backendModel": "not exposed by native CLI JSON",
-      "session": "d001b55e-83e7-4dbc-bc6f-ae5ff4896ebb"
+      "session": "<session>"
     },
     {
       "run": "cursor-04",
@@ -82,7 +82,7 @@
       "nativeFinalResult": false,
       "model": "Auto",
       "backendModel": "not exposed by native CLI JSON",
-      "session": "97e9448e-40eb-48c3-9ae1-22dd7354fd1b"
+      "session": "<session>"
     },
     {
       "run": "cursor-05",
@@ -96,7 +96,7 @@
       "nativeFinalResult": false,
       "model": "Auto",
       "backendModel": "not exposed by native CLI JSON",
-      "session": "98880902-c210-4461-81cc-36fc71b668ab"
+      "session": "<session>"
     },
     {
       "run": "cursor-06",
@@ -110,7 +110,7 @@
       "nativeFinalResult": false,
       "model": "Auto",
       "backendModel": "not exposed by native CLI JSON",
-      "session": "08d6c2c2-2176-40c4-a78e-bb3d7fb8021b"
+      "session": "<session>"
     },
     {
       "run": "cursor-retry-05",
@@ -129,7 +129,7 @@
       "nativeFinalResult": true,
       "model": "Auto",
       "backendModel": "not exposed by native CLI JSON",
-      "session": "3a9d3ef4-6de1-4faf-94ed-59cc0170f99c"
+      "session": "<session>"
     },
     {
       "run": "cursor-retry-06",
@@ -148,7 +148,7 @@
       "nativeFinalResult": true,
       "model": "Auto",
       "backendModel": "not exposed by native CLI JSON",
-      "session": "faaa64cd-46bb-4ff3-983f-55c465931ec6"
+      "session": "<session>"
     },
     {
       "run": "cursor-retry-07",
@@ -167,7 +167,7 @@
       "nativeFinalResult": true,
       "model": "Auto",
       "backendModel": "not exposed by native CLI JSON",
-      "session": "f67ce053-24ff-4f53-ade5-b5f01cb85568"
+      "session": "<session>"
     },
     {
       "run": "cursor-exact-01",
@@ -186,7 +186,7 @@
       "nativeFinalResult": true,
       "model": "Auto",
       "backendModel": "not exposed by native CLI JSON",
-      "session": "bcafc3b0-553b-46b1-b776-af2b85eb7efb"
+      "session": "<session>"
     },
     {
       "run": "cursor-exact-02",
@@ -205,7 +205,7 @@
       "nativeFinalResult": true,
       "model": "Auto",
       "backendModel": "not exposed by native CLI JSON",
-      "session": "c62f06d4-b873-4a60-a313-1246ba214d6d"
+      "session": "<session>"
     },
     {
       "run": "cursor-exact-03",
@@ -224,7 +224,7 @@
       "nativeFinalResult": true,
       "model": "Auto",
       "backendModel": "not exposed by native CLI JSON",
-      "session": "75249d29-ca17-4cf3-a748-89bae71bf01e"
+      "session": "<session>"
     },
     {
       "run": "cursor-exact-04",
@@ -238,7 +238,7 @@
       "nativeFinalResult": false,
       "model": "Auto",
       "backendModel": "not exposed by native CLI JSON",
-      "session": "4efedae4-bda3-43df-842b-854950654dcc"
+      "session": "<session>"
     }
   ],
   "mainJourney": {

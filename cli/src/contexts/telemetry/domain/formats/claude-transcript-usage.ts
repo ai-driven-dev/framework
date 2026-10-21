@@ -1,34 +1,24 @@
 import { asPlainObject } from "../../../../kernel/reading/plain-object.js";
-import type { UsageRecord } from "../usage-record.js";
+import type { LineNames, UsageRecord } from "../usage-record.js";
+import { counter, expected, type Json, text } from "./line-values.js";
 
 export interface ClaudeUsageLine {
   readonly records: readonly UsageRecord[];
   /** One entry per shape not recognised, never turned into a record. */
   readonly unrecognised: readonly string[];
+  /** For a line that is no usage line but an object: the directory and time it names. */
+  readonly named?: LineNames;
 }
-
-type Json = Record<string, unknown>;
 
 const SYNTHETIC_MODEL = "<synthetic>";
+/** What an advisor iteration adds to its message's key. Anchored for clarity only: the format
+ * writes it as a suffix alone, and message and session ids hold no `#`. */
+const ADVISOR = /#advisor\d+$/;
 const NONE: ClaudeUsageLine = { records: [], unrecognised: [] };
 
-function counter(value: unknown): number | null {
-  return typeof value === "number" && Number.isInteger(value) && value >= 0 ? value : null;
-}
-
-function text(value: unknown): string | null {
-  return typeof value === "string" && value !== "" ? value : null;
-}
-
-function unrecognised(reason: string): ClaudeUsageLine {
-  return { records: [], unrecognised: [reason] };
-}
-
-/** A counter that must be there: absent or malformed is unknown, and said so. */
-function expected(source: Json, field: string, where: string, notes: string[]): number | null {
-  const value = counter(source[field]);
-  if (value === null) notes.push(`${where}.${field} is missing or not a count`);
-  return value;
+function unrecognised(reason: string, root?: Json): ClaudeUsageLine {
+  const named = root && { cwd: text(root.cwd), at: text(root.timestamp) };
+  return { records: [], unrecognised: [reason], named };
 }
 
 function messageIterations(usage: Json, notes: string[]): Json[] {
@@ -68,6 +58,23 @@ function sum(values: readonly (number | null)[]): number {
   return values.reduce<number>((all, value) => all + (value ?? 0), 0);
 }
 
+/** Whether a Claude Code call has no request id: keyed by message and session, as the reader
+ * keys it, or with its own time after, as cli-v5.5.0 keyed it. Such a call is never stored, at
+ * ingest or when found in the ledger, and is counted left out instead: none was seen in real
+ * transcripts (see the usage contract), so nothing measured bounds how far apart its copies lie. */
+export function isRequestless(call: Pick<UsageRecord, "tool" | "key" | "session_id">): boolean {
+  if (call.tool !== "claude-code") return false;
+  const base = call.key.replace(ADVISOR, "");
+  const rest = base.slice(base.indexOf(":") + 1);
+  return rest === call.session_id || rest.startsWith(`${call.session_id}:`);
+}
+
+/** A requestless call as it is left out: its message and session, the same for each of its
+ * copies and iterations, whichever version keyed them. */
+export function requestlessCallOf(call: Pick<UsageRecord, "tool" | "key" | "session_id">): string {
+  return `${call.tool}\u0000${call.key.slice(0, call.key.indexOf(":"))}:${call.session_id}`;
+}
+
 export function readClaudeUsageLine(line: string): ClaudeUsageLine {
   let parsed: unknown;
   try {
@@ -82,18 +89,18 @@ export function readClaudeUsageLine(line: string): ClaudeUsageLine {
   if (message === null || message.usage === undefined) return NONE;
   if (message.model === SYNTHETIC_MODEL) return NONE;
   const usage = asPlainObject(message.usage);
-  if (usage === null) return unrecognised("message.usage is not an object");
+  if (usage === null) return unrecognised("message.usage is not an object", root);
 
   const id = text(message.id);
   const sessionId = text(root.sessionId);
   const at = text(root.timestamp);
   if (id === null || sessionId === null || at === null) {
-    return unrecognised("a usage line lacks message.id, sessionId or timestamp");
+    return unrecognised("a usage line lacks message.id, sessionId or timestamp", root);
   }
 
   const notes: string[] = [];
   const requestId = text(root.requestId);
-  const key = requestId === null ? `${id}:${sessionId}:${at}` : `${id}:${requestId}`;
+  const key = `${id}:${requestId ?? sessionId}`;
   const iterations = messageIterations(usage, notes);
   const writes = cacheWrites(usage, iterations, notes);
   const shared = {
@@ -101,7 +108,6 @@ export function readClaudeUsageLine(line: string): ClaudeUsageLine {
     tool_version: text(root.version),
     session_id: sessionId,
     at,
-    reasoning: null,
     cwd: text(root.cwd),
     git_branch: text(root.gitBranch),
   } as const;
@@ -116,6 +122,7 @@ export function readClaudeUsageLine(line: string): ClaudeUsageLine {
     cache_read: expected(usage, "cache_read_input_tokens", "usage", notes),
     cache_write: writes.total,
     cache_write_1h: writes.oneHour,
+    reasoning: counter(asPlainObject(usage.output_tokens_details)?.thinking_tokens),
   };
 
   const advisors = iterations
@@ -130,7 +137,8 @@ export function readClaudeUsageLine(line: string): ClaudeUsageLine {
         output: expected(advisor, "output_tokens", "advisor", notes),
         cache_read: expected(advisor, "cache_read_input_tokens", "advisor", notes),
         cache_write: expected(advisor, "cache_creation_input_tokens", "advisor", notes),
-        cache_write_1h: null,
+        cache_write_1h: counter(asPlainObject(advisor.cache_creation)?.ephemeral_1h_input_tokens),
+        reasoning: null,
       })
     );
 

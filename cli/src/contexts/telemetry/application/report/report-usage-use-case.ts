@@ -1,6 +1,6 @@
 import type { PersonIdentityStore } from "../../domain/ports/identity/person-identity-store.js";
 import type { RepositoryLocator } from "../../domain/ports/repository-locator.js";
-import type { UsageLedger } from "../../domain/ports/usage-ledger.js";
+import type { LeftOutReason, UsageLedger } from "../../domain/ports/usage-ledger.js";
 import { attribute } from "../../domain/report/attribution.js";
 import { inPeriod, type Period, windowOf } from "../../domain/report/period.js";
 import {
@@ -18,9 +18,8 @@ import {
   type UsageReport,
 } from "../../domain/report/usage-report.js";
 import { repositoryIdOf } from "../../domain/repository-identity.js";
-import type { NotStoredReason } from "../../domain/repository-resolution.js";
 import type { StoredUsage } from "../../domain/stored-usage.js";
-import type { IngestUsageUseCase } from "../ingest-usage-use-case.js";
+import type { IngestResult, IngestUsageUseCase } from "../ingest-usage-use-case.js";
 import { settleLedger } from "../ledger-upkeep.js";
 import type { DeclaredBindings } from "./declared-bindings.js";
 
@@ -41,22 +40,25 @@ export interface ReportRequest {
 /** The flags typed as the start of an id. */
 type PrefixFlag = "session" | "repository";
 
-/** What the figures rest on, so a reader can tell a small number from a missing one. */
+/** What the figures rest on, so a reader can tell a small number from a missing one. Like the
+ * figures, a function of what is stored and asked alone. */
 export interface ReportCoverage {
-  /** Transcripts read by this run: new, or grown since the last. */
-  readonly filesRead: number;
   /** Billed calls in the report's period. */
   readonly records: number;
-  /** Shapes this run met and did not recognise, so did not count. */
-  readonly unrecognised: number;
-  /** Billed calls this run read and did not store, by the reason. */
-  readonly notStored: Readonly<Record<NotStoredReason, number>>;
-  /** A line of `ledger/consents.jsonl` was not an event: nothing is stored until it is recovered. */
-  readonly consentLogDamaged: boolean;
-  /** When the oldest transcript still on disk was last written: nothing older can be read. */
-  readonly oldestTranscriptAt: string | null;
-  /** Lines of the partitions read that were not records: a bounded report reads its period
-   * and the day on each side. */
+  /** What every ingest so far, whoever ran it, measured and could not store, by reason: none of
+   * it has a day, so every report counts all of it. */
+  readonly leftOut: Readonly<Record<LeftOutReason, number>>;
+}
+
+/** What the read that made the report found: two reports over the same stored calls can find
+ * different things. */
+export interface ReportRun
+  extends Pick<
+    IngestResult,
+    "filesRead" | "unrecognised" | "notStored" | "consentLogDamaged" | "oldestTranscriptAt"
+  > {
+  /** Lines of the partitions read that were not records, counted before the report settled
+   * them: a bounded report reads its period and the day on each side. */
   readonly skippedLedgerLines: number;
 }
 
@@ -84,6 +86,7 @@ export type ReportResult =
       readonly filters: ReportFilters;
       readonly report: UsageReport;
       readonly coverage: ReportCoverage;
+      readonly run: ReportRun;
     };
 
 /** Reads what is new, then answers what the stored calls consumed in a period, split along one
@@ -100,7 +103,8 @@ export type ReportResult =
  * anything is read: refusal means no git is run either. */
 export class ReportUsageUseCase {
   constructor(
-    private readonly ingest: IngestUsageUseCase,
+    /** Only its run is used: whatever it found is the report's `run`, never a figure. */
+    private readonly ingest: Pick<IngestUsageUseCase, "execute">,
     private readonly ledger: UsageLedger,
     private readonly declared: DeclaredBindings,
     private readonly identity: PersonIdentityStore,
@@ -117,10 +121,12 @@ export class ReportUsageUseCase {
     if (this.options.refusedByEnvironment) return { status: "refused" };
     const located = here === undefined ? undefined : await this.repositoryIn(here);
     if (located === null) return { status: "not-a-repository" };
-    const ingested = await this.ingest.execute();
-    const held = await this.ledger.exclusively(() =>
-      settleLedger(this.ledger, windowOf(request.period))
-    );
+    const { filesRead, unrecognised, notStored, consentLogDamaged, oldestTranscriptAt } =
+      await this.ingest.execute();
+    const [held, leftOut] = await this.ledger.exclusively(async () => [
+      await settleLedger(this.ledger, windowOf(request.period)),
+      await this.ledger.leftOut.counts(),
+    ]);
     const records = held.records.filter((record) => inPeriod(record.at, request.period));
     const session = resolvedIn(records, "session", asked.session);
     if ("status" in session) return session;
@@ -139,13 +145,13 @@ export class ReportUsageUseCase {
       period: request.period,
       filters,
       report: buildReport(selected, facts, person, request.axis),
-      coverage: {
-        filesRead: ingested.filesRead,
-        records: records.length,
-        unrecognised: ingested.unrecognised,
-        notStored: ingested.notStored,
-        consentLogDamaged: ingested.consentLogDamaged,
-        oldestTranscriptAt: ingested.oldestTranscriptAt,
+      coverage: { records: records.length, leftOut },
+      run: {
+        filesRead,
+        unrecognised,
+        notStored,
+        consentLogDamaged,
+        oldestTranscriptAt,
         skippedLedgerLines: held.skippedLines,
       },
     };

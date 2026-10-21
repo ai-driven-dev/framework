@@ -35,9 +35,9 @@ Prove the frontmatter extraction correct against a representative set of fixture
 
 ## Stakeholders
 
-- Decider: francois.duval.auto@gmail.com
-- Owner: francois.duval.auto@gmail.com
-- Consumer: francois.duval.auto@gmail.com
+- Decider: someone@example.com
+- Owner: someone@example.com
+- Consumer: someone@example.com
 
 ## Context
 

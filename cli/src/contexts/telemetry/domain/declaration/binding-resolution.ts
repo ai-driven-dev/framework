@@ -24,7 +24,8 @@ export interface BindingFacts {
   readonly at: Date;
   readonly declarations: readonly SessionDeclaration[];
   readonly carries: readonly SessionCarry[];
-  /** The declaration of the branch being worked on, `null` when it is not a working branch. */
+  /** The declaration of the branch being worked on, as `parseBranchConfig` keeps it: `null`
+   * when it is not a working branch or the command did not declare it. */
   readonly branch: BranchConfigBinding | null;
 }
 
@@ -95,7 +96,7 @@ export function resolveBinding(facts: BindingFacts): Binding {
     if (session !== null) return session;
   }
   const branch = facts.branch;
-  if (branch !== null && (branch.task !== null || branch.none)) {
+  if (branch !== null) {
     return {
       state: "bound",
       source: "branch",

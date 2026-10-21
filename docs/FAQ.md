@@ -46,7 +46,7 @@ You can write your own Claude Code skills — nothing stops you. AIDD exists bec
 
 ## 📊 Measurement
 
-**Nothing is measured until you opt in.** `aidd telemetry on` turns it on for one project, and `aidd telemetry forget --yes` removes everything it kept. It counts the tokens of Claude Code sessions and sends nothing anywhere. What it asks, what it keeps and what it needs are in the plugin's [README](../plugins/aidd-telemetry/README.md).
+**Nothing is measured until you opt in.** `aidd telemetry on` turns it on for one project, and `aidd telemetry forget --yes` removes everything it kept. It counts the tokens of Claude Code and Codex sessions and sends nothing anywhere. What it asks, what it keeps and what it needs are in the plugin's [README](../plugins/aidd-telemetry/README.md).
 
 ## 🆘 Still stuck?
 

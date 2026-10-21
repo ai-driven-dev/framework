@@ -140,6 +140,7 @@ function probeIn(root, host, log) {
       ...env,
       HOME: home,
       CLAUDE_CONFIG_DIR: configDir,
+      CODEX_HOME: path.join(home, ".codex"),
       ANTHROPIC_BASE_URL: "http://127.0.0.1:9",
       ANTHROPIC_API_KEY: "sk-ant-probe-not-a-real-key",
     },

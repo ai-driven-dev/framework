@@ -160,7 +160,7 @@
         {
           "command": [
             "node",
-            "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/cli/dist/cli.js",
+            "<worktree>/cli/dist/cli.js",
             "framework",
             "rules",
             "--tool",
@@ -182,7 +182,7 @@
         {
           "command": [
             "node",
-            "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/cli/dist/cli.js",
+            "<worktree>/cli/dist/cli.js",
             "framework",
             "rules",
             "--tool",
@@ -208,7 +208,7 @@
         {
           "command": [
             "node",
-            "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/cli/dist/cli.js",
+            "<worktree>/cli/dist/cli.js",
             "framework",
             "rules",
             "--tool",
@@ -234,7 +234,7 @@
         {
           "command": [
             "node",
-            "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/cli/dist/cli.js",
+            "<worktree>/cli/dist/cli.js",
             "framework",
             "rules",
             "--tool",
@@ -260,7 +260,7 @@
         {
           "command": [
             "node",
-            "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/cli/dist/cli.js",
+            "<worktree>/cli/dist/cli.js",
             "framework",
             "rules",
             "--tool",
@@ -276,7 +276,7 @@
         {
           "command": [
             "node",
-            "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/cli/dist/cli.js",
+            "<worktree>/cli/dist/cli.js",
             "framework",
             "rules",
             "--tool",
@@ -297,7 +297,7 @@
       "frontmatter-fixed": {
         "command": [
           "node",
-          "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/cli/dist/cli.js",
+          "<worktree>/cli/dist/cli.js",
           "framework",
           "rules",
           "--tool",
@@ -316,7 +316,7 @@
       "final-project": {
         "command": [
           "node",
-          "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/cli/dist/cli.js",
+          "<worktree>/cli/dist/cli.js",
           "framework",
           "rules",
           "--tool",

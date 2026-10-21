@@ -248,6 +248,7 @@ export function sandboxedEnv(
   // the test's explicit `env` is applied.
   delete base.CODEX_THREAD_ID;
   delete base.CLAUDE_CODE_SESSION_ID;
+  delete base.AIDD_TELEMETRY_SESSION_ID;
   if (options?.realHome) {
     return { ...base, ...extra, AIDD_USER_CONFIG_DIR: join(fakeHome, ".config", "aidd") };
   }
@@ -262,6 +263,8 @@ export function sandboxedEnv(
     // The check asks GitHub for the latest release and prints a notice from the answer, so
     // captured stderr would change with every publish.
     AIDD_SKIP_UPDATE_CHECK: "1",
+    // Codex reads `CODEX_HOME` before `HOME`, and so does the telemetry reader of its sessions.
+    CODEX_HOME: join(fakeHome, ".codex"),
     ...extra,
     HOME: fakeHome,
     XDG_CONFIG_HOME: join(fakeHome, ".config"),

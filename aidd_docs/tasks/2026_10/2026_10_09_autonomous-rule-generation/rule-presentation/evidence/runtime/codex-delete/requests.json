@@ -489,14 +489,14 @@
       "include": [
         "reasoning.encrypted_content"
       ],
-      "prompt_cache_key": "01a11f99-979a-7882-8fd6-de1efcfe24aa",
+      "prompt_cache_key": "<session>",
       "client_metadata": {
-        "thread_id": "01a11f99-979a-7882-8fd6-de1efcfe24aa",
-        "x-codex-turn-metadata": "{\"installation_id\":\"315eb36b-7875-4e7c-b6b0-35d06783c21c\",\"session_id\":\"01a11f99-979a-7882-8fd6-de1efcfe24aa\",\"thread_id\":\"01a11f99-979a-7882-8fd6-de1efcfe24aa\",\"agent_name\":\"/root\",\"turn_id\":\"01a11f99-97db-7da3-9c40-7c6100f8e718\",\"window_id\":\"01a11f99-979a-7882-8fd6-de1efcfe24aa:0\",\"window_number\":0,\"context_window_id\":\"01a11f99-979a-7882-8fd6-de3dbfca42ef\",\"request_kind\":\"turn\",\"root_turn_id\":\"01a11f99-97db-7da3-9c40-7c6100f8e718\",\"thread_source\":\"user\",\"turn_trigger\":\"exec\",\"sandbox\":\"seatbelt\",\"sandbox_mode\":\"read-only\",\"auto_review_enabled\":false,\"node_repl_auto_review_required\":false,\"node_repl_disabled\":false,\"turn_started_at_unix_ms\":1791531522014,\"analytics_enabled\":false,\"model\":\"gpt-5.1-codex\"}",
-        "session_id": "01a11f99-979a-7882-8fd6-de1efcfe24aa",
-        "x-codex-window-id": "01a11f99-979a-7882-8fd6-de1efcfe24aa:0",
+        "thread_id": "<session>",
+        "x-codex-turn-metadata": "{\"installation_id\":\"<installation>\",\"session_id\":\"<session>\",\"thread_id\":\"<session>\",\"agent_name\":\"/root\",\"turn_id\":\"01a11f99-97db-7da3-9c40-7c6100f8e718\",\"window_id\":\"<session>:0\",\"window_number\":0,\"context_window_id\":\"01a11f99-979a-7882-8fd6-de3dbfca42ef\",\"request_kind\":\"turn\",\"root_turn_id\":\"01a11f99-97db-7da3-9c40-7c6100f8e718\",\"thread_source\":\"user\",\"turn_trigger\":\"exec\",\"sandbox\":\"seatbelt\",\"sandbox_mode\":\"read-only\",\"auto_review_enabled\":false,\"node_repl_auto_review_required\":false,\"node_repl_disabled\":false,\"turn_started_at_unix_ms\":1791531522014,\"analytics_enabled\":false,\"model\":\"gpt-5.1-codex\"}",
+        "session_id": "<session>",
+        "x-codex-window-id": "<session>:0",
         "turn_id": "01a11f99-97db-7da3-9c40-7c6100f8e718",
-        "x-codex-installation-id": "315eb36b-7875-4e7c-b6b0-35d06783c21c",
+        "x-codex-installation-id": "<installation>",
         "root_turn_id": "01a11f99-97db-7da3-9c40-7c6100f8e718"
       }
     }

@@ -48,7 +48,7 @@
       },
       "tests": 9,
       "testsExit": 0,
-      "session": "d5c0cc5f-9281-4e49-a41c-6b3cd875af8f"
+      "session": "<session>"
     },
     {
       "run": "claude-02",
@@ -92,7 +92,7 @@
       },
       "tests": 24,
       "testsExit": 0,
-      "session": "432f1dbe-40c9-4cef-8ea9-8bce1256e5e5"
+      "session": "<session>"
     },
     {
       "run": "claude-03",
@@ -136,7 +136,7 @@
       },
       "tests": 24,
       "testsExit": 0,
-      "session": "864752e0-2ec8-49be-9c8c-4032ff5c8898"
+      "session": "<session>"
     },
     {
       "run": "claude-04",
@@ -180,7 +180,7 @@
       },
       "tests": 24,
       "testsExit": 0,
-      "session": "6b12bb01-d045-45f2-9d33-e4b97dfc7f68"
+      "session": "<session>"
     },
     {
       "run": "claude-05",
@@ -224,7 +224,7 @@
       },
       "tests": 39,
       "testsExit": 0,
-      "session": "b209aa20-4080-4ee5-8734-4120cb526f46"
+      "session": "<session>"
     },
     {
       "run": "claude-06",
@@ -268,7 +268,7 @@
       },
       "tests": 39,
       "testsExit": 0,
-      "session": "b1f8df06-f3e4-4855-86c4-484024670251"
+      "session": "<session>"
     },
     {
       "run": "claude-07",
@@ -312,7 +312,7 @@
       },
       "tests": 54,
       "testsExit": 0,
-      "session": "ce219f62-2b21-4800-b410-8c3f7389b84a"
+      "session": "<session>"
     },
     {
       "run": "claude-08",
@@ -356,7 +356,7 @@
       },
       "tests": 54,
       "testsExit": 0,
-      "session": "0bfe007a-bfb1-4211-9b2b-df904de9d7a1"
+      "session": "<session>"
     },
     {
       "run": "claude-native-09",
@@ -400,7 +400,7 @@
       },
       "tests": 69,
       "testsExit": 0,
-      "session": "e76c0dcc-c950-4548-8ed3-d3b216bf4570"
+      "session": "<session>"
     },
     {
       "run": "claude-native-10",
@@ -444,7 +444,7 @@
       },
       "tests": 69,
       "testsExit": 0,
-      "session": "2c081ecb-f127-4802-a682-55a9a8384996"
+      "session": "<session>"
     }
   ],
   "sources": [

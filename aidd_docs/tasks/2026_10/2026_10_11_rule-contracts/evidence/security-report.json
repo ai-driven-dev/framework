@@ -37,7 +37,7 @@
   },
   "reproduction": {
     "exit": 0,
-    "root": "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT",
+    "root": "<tmp>/aidd-realistic-rule-repro-kclpyT",
     "checks": [
       {
         "name": "baseline API",
@@ -63,7 +63,7 @@
     "invocations": 78,
     "negativeCases": 12,
     "path": "/tmp/aidd-rule-reproduction-files-full.log",
-    "command": "node scripts/check-tests-leave-git-alone.js -- node aidd_docs/tasks/2026_10/2026_10_09_autonomous-rule-generation/realistic-sandbox/reproduction/run.cjs --repo /Users/baptistelafourcade/orca/workspaces/framework/basketstar"
+    "command": "node scripts/check-tests-leave-git-alone.js -- node aidd_docs/tasks/2026_10/2026_10_09_autonomous-rule-generation/realistic-sandbox/reproduction/run.cjs --repo <worktree>"
   },
   "gitDiffCheck": 0,
   "hooksUnchanged": true,

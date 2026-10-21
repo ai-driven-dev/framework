@@ -107,6 +107,7 @@ const NO_FILTERS = {
   repository: null,
   absent: null,
   unattributed: null,
+  tool: null,
 };
 const reported = {
   status: "reported",
@@ -121,11 +122,12 @@ const reported = {
       total: ZERO,
     },
   },
-  coverage: {
+  coverage: { records: 0, leftOut: { undated: 0, unrecognised: 0 } },
+  run: {
     filesRead: 0,
-    records: 0,
     unrecognised: 0,
     notStored: NOT_STORED,
+    consentLogDamaged: false,
     oldestTranscriptAt: null,
     skippedLedgerLines: 0,
   },
@@ -164,13 +166,13 @@ describe("aidd telemetry report", () => {
   it("prints the versioned envelope with --json, and nothing else", async () => {
     report.mockResolvedValue(reported);
     await run("report", "--json");
-    expect(JSON.parse(stdout())).toMatchObject({ version: 1, axis: "total", rows: [] });
+    expect(JSON.parse(stdout())).toMatchObject({ version: 2, axis: "total", rows: [] });
   });
 
   it("prints the refusal envelope with --json when nothing was read", async () => {
     report.mockResolvedValue({ status: "refused" });
     await run("report", "--json");
-    expect(JSON.parse(stdout())).toEqual({ version: 1, refused: "AIDD_TELEMETRY=0" });
+    expect(JSON.parse(stdout())).toEqual({ version: 2, refused: "AIDD_TELEMETRY=0" });
   });
 
   it("refuses a bad period before reading anything, with exit 1", async () => {
@@ -203,7 +205,8 @@ describe("aidd telemetry report, narrowed", () => {
     await run(
       "report",
       ...["--task", "  auth refactor ", "--ticket", "PROJ-1", "--person", "p-1"],
-      ...["--model", "m-1", "--agent", " subagent", "--session", "a1b2", "--repository", "r-1"]
+      ...["--model", "m-1", "--agent", " subagent", "--session", "a1b2", "--repository", "r-1"],
+      ...["--tool", " codex "]
     );
     expect(asked()).toEqual({
       ...NO_FILTERS,
@@ -214,6 +217,7 @@ describe("aidd telemetry report, narrowed", () => {
       agent: "subagent",
       session: "a1b2",
       repository: "r-1",
+      tool: "codex",
     });
     vi.clearAllMocks();
     await run("report", "--absent", " person ");
@@ -241,6 +245,8 @@ describe("aidd telemetry report, narrowed", () => {
     ["a bare flag given twice", ["--unattributed", "--unattributed"], "--unattributed"],
     ["a value empty once trimmed", ["--ticket", "   "], "--ticket"],
     ["an agent no call can have", ["--agent", "robot"], "--agent"],
+    ["a tool no call can have", ["--tool", "robot"], "--tool"],
+    ["a tool given twice", ["--tool", "codex", "--tool", "codex"], "--tool"],
     ["an axis no call lacks", ["--absent", "session"], "--absent"],
     ["a reason no call has", ["--unattributed", "no-task"], "--unattributed"],
   ])("refuses %s with exit 1, naming the flag, before reading anything", async (_, args, flag) => {
@@ -331,6 +337,7 @@ describe("aidd telemetry ingest", () => {
     updated: 0,
     unrecognised: 0,
     skippedLedgerLines: 0,
+    leftOut: { undated: 0, unrecognised: 0 },
     snapshots: 0,
     notStored: NOT_STORED,
     oldestTranscriptAt: null,

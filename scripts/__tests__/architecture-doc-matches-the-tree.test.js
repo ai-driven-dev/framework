@@ -126,16 +126,25 @@ test("the bundled hooks table names the events each plugin actually declares", (
   }
 });
 
-test("the bundled hooks table names a script that exists", () => {
-  // Without this the table can point at a deleted hook and still read as current.
+/** The scripts a plugin's `hooks/hooks.json` runs, relative to the plugin. */
+function declaredHookScripts(plugin) {
+  const manifest = fs.readFileSync(path.join(ROOT, "plugins", plugin, "hooks/hooks.json"), "utf8");
+  return [...new Set([...manifest.matchAll(/\$\{CLAUDE_PLUGIN_ROOT\}\/([^\s"]+)/g)].map((m) => m[1]))].sort();
+}
+
+test("the bundled hooks table names every script a plugin runs, each one existing", () => {
+  // Without this the table can point at a deleted hook, or leave one out, and still read as current.
   const table = hooksTable();
   const plugin = column(table, "Plugin");
   const runs = column(table, "Runs");
   for (const cells of table.rows) {
     const name = onlyBacktickedName(plugin(cells), "hooks table");
-    const script = onlyBacktickedName(runs(cells), `hooks table, ${name} Runs cell`);
-    const full = path.join(ROOT, "plugins", name, script);
-    assert.ok(fs.existsSync(full), `plugins/${name}/${script} is named in ARCHITECTURE.md and does not exist`);
+    const scripts = backticked(runs(cells)).sort();
+    assert.deepEqual(scripts, declaredHookScripts(name), `${name}: the Runs cell and plugins/${name}/hooks/hooks.json disagree`);
+    for (const script of scripts) {
+      const full = path.join(ROOT, "plugins", name, script);
+      assert.ok(fs.existsSync(full), `plugins/${name}/${script} is named in ARCHITECTURE.md and does not exist`);
+    }
   }
 });
 

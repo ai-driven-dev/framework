@@ -23,7 +23,7 @@
       "--test",
       "--test-isolation=none",
       "--test-name-pattern=CRLF body and user suffix|a signed native output copied",
-      "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/scripts/__tests__/rule-generation.test.js"
+      "<worktree>/scripts/__tests__/rule-generation.test.js"
     ],
     "diagnosticPreloader": {
       "sha256": "bc71670c2a3b0dfeefb03f7bc7346041a9c5908730c4fa96a2cf94b4022b61cf",

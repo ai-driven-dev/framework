@@ -7,7 +7,7 @@ parser.add_argument('--expect', action='append', default=[])
 parser.add_argument('--absent', action='append', default=[])
 args = parser.parse_args()
 root = pathlib.Path(tempfile.mkdtemp(prefix='aidd-913-codex-run-', dir='/tmp')).resolve()
-binary = '/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/codex'
+binary = '<home>/.nvm/versions/node/v24.20.0/bin/codex'
 captures = []
 
 class Model(BaseHTTPRequestHandler):

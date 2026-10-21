@@ -14,8 +14,8 @@ path or token volume of the person whose history it was.
 2. **CLI.** The built `cli/dist/cli.js` ran `aidd telemetry report --axis day --json` from that
    repository. `HOME`, `CLAUDE_CONFIG_DIR`, `AIDD_TELEMETRY_DIR`, `AIDD_USER_CONFIG_DIR` and
    `XDG_CONFIG_HOME` all pointed into the sandbox, and `CLAUDE_CODE_SESSION_ID` was unset.
-3. **Independent count.** The `claude()` reader of [`prototype/check.py`](./prototype/check.py)
-   (Python, written before the CLI) read the same files. Its records were grouped by the UTC day
+3. **Independent count.** The `claude()` reader of `prototype/check.py`
+   (Python, written before the CLI, removed after the merge; git history keeps it) read the same files. Its records were grouped by the UTC day
    of `at`, and each day's four counters and record count were compared with the CLI's row.
 
 > **Note, 2026-10-10.** Step 1 describes the opt-in of the day the run was recorded (`b2b732eb`,

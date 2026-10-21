@@ -34,7 +34,7 @@ What holds for every contribution, whatever you're building:
 
 ## 🔧 Set up
 
-Requires **Node 22.12+**, **pnpm**, **jq**, **python3**, **pipx**.
+Requires **Node `^22.18.0 || ^24.11.0 || >=26.0.0`**, **pnpm**, **jq**, **python3**, **pipx**.
 
 ```bash
 make setup   # deps, git hooks, registers the marketplace, installs plugins into Claude + Codex

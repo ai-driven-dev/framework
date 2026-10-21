@@ -13,15 +13,13 @@ import {
   RETENTION_WANTED_DAYS,
 } from "../../../contexts/telemetry/domain/switch/claude-retention.js";
 import type { CLIOutput } from "../../output.js";
-
-const IDENTITY_RULE = "An identity is one non-empty line of at most 128 characters.";
+import { DAMAGED_CONSENT_LOG, FORGET_THEN_ON, IDENTITY_RULE } from "../telemetry-display.js";
 
 const REFUSALS = {
   "outside-repository": "This directory is not inside a git repository.",
   "unreadable-git-config":
     "This clone's git config cannot be read, so its consent was left as it is. Fix it, then run this again.",
-  "damaged-consent-log":
-    "ledger/consents.jsonl holds a line that is not a consent event, so the log cannot be trusted and nothing was changed. Run `aidd telemetry forget --yes`, then `aidd telemetry on` again: nothing from before is stored.",
+  "damaged-consent-log": `${DAMAGED_CONSENT_LOG} nothing was changed. ${FORGET_THEN_ON} again: nothing from before is stored.`,
   "unidentified-clone":
     "This file system gives the clone's git directory no identity, so nothing measured here could be told to be its own. Nothing was changed.",
   "invalid-identity": `${IDENTITY_RULE} Nothing was changed.`,
@@ -29,8 +27,8 @@ const REFUSALS = {
     "An identity is set, so this clone cannot be measured anonymously. Remove it with `aidd telemetry identity --off`, then run this again. Nothing was changed.",
 } as const;
 
-function plural(count: number, noun: string): string {
-  return `${count} ${noun}${count === 1 ? "" : "s"}`;
+function plural(count: number, noun: string, nouns = `${noun}s`): string {
+  return `${count} ${count === 1 ? noun : nouns}`;
 }
 
 function identityLine({ personId, previous }: OnIdentity): string {
@@ -100,7 +98,7 @@ export function printOnResult(output: CLIOutput, result: OnResult): void {
   output.info(identityLine(result.identity));
   output.info(
     "Next: declare what you work on with `aidd telemetry task <name> [--ticket <ref>]`, or `--none` for no task. " +
-      "In Claude Code, the aidd-telemetry plugin's hooks ask for it before the first prompt on an undeclared working branch."
+      "In Claude Code and the Codex TUI, the aidd-telemetry plugin's hooks ask for it before the first prompt on an undeclared working branch."
   );
 }
 
@@ -146,7 +144,7 @@ function warnSkipped(output: CLIOutput, plan: ForgetPlan): void {
   }
   if (plan.unlocated > 0) {
     output.warn(
-      `${plural(plan.unlocated, "repository")} declared a task and could not be located.`
+      `${plural(plan.unlocated, "repository", "repositories")} declared a task and could not be located.`
     );
   }
 }

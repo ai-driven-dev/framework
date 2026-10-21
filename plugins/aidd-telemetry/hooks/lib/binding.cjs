@@ -72,12 +72,13 @@ function resolveSession(facts) {
   return sessionBinding(facts, facts.sessionId, facts.at.getTime(), new Set());
 }
 
-/** `branch` is the working branch's declaration ({task, ticket, declared_at}), or null. */
+/** `branch` is the working branch's declaration ({task, ticket, declared_at}) as the command
+ * made it, or null. */
 function resolveBinding(facts) {
   const session = resolveSession(facts);
   if (session !== null) return session;
   const branch = facts.branch;
-  if (branch && (branch.task !== null || branch.declared_at !== null)) {
+  if (branch) {
     const none = branch.task === null;
     return { state: "bound", source: "branch", task: branch.task, ticket: branch.ticket, none };
   }
