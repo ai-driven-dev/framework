@@ -135,6 +135,16 @@ describe("claude", () => {
     });
   });
 
+  describe("capabilities.agents.params.userDirectory()", () => {
+    const userDirectory = claude.capabilities.agents.params.userDirectory;
+    it("follows CLAUDE_CONFIG_DIR, else ~/.claude", () => {
+      expect(
+        userDirectory?.("/home", (name) => (name === "CLAUDE_CONFIG_DIR" ? "/cfg" : undefined))
+      ).toBe("/cfg");
+      expect(userDirectory?.("/home", () => undefined)).toBe(join("/home", ".claude"));
+    });
+  });
+
   describe("capabilities.rules.buildInstallPath()", () => {
     it("builds path for rules section with subdirectory", () => {
       const path = claude.capabilities.rules?.buildInstallPath("01-standards/naming.md");

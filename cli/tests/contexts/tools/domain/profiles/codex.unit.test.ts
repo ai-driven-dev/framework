@@ -65,6 +65,16 @@ describe("codex", () => {
     expect(codex.configOutputPaths).toStrictEqual({ "config.toml": ".codex/config.toml" });
   });
 
+  describe("capabilities.agents.params.userDirectory()", () => {
+    it("follows CODEX_HOME, else ~/.codex", () => {
+      const userDirectory = codex.capabilities.agents.params.userDirectory;
+      expect(userDirectory?.("/home", (name) => (name === "CODEX_HOME" ? "/cx" : undefined))).toBe(
+        "/cx"
+      );
+      expect(userDirectory?.("/home", () => undefined)).toBe(join("/home", ".codex"));
+    });
+  });
+
   describe("capabilities.agents.buildInstallPath()", () => {
     it("builds .toml path under .codex/agents/", () => {
       const path = codex.capabilities.agents.buildInstallPath("alexia.md");
