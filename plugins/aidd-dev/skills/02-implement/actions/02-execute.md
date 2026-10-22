@@ -20,7 +20,7 @@ Or a `blocked` / `replan needed` report.
 3. **Assert.** Apply the validation rules below to every acceptance criterion of the selected task or group.
    - After the last task:
      - Validate the full phase workflow.
-     - Set the phase `status: done` on success.
+     - Set the phase `status: done` on success, `partial` otherwise, never `done` with a criterion unmet.
 4. **Complete.** Commit according to the commit policy.
    - Repeat steps 2–4 for the remaining tasks.
 

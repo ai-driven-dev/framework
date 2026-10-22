@@ -37,7 +37,7 @@ Read each action file in `actions/` before executing it.
 - The caller owns delegation, integration, shared plan status, and final acceptance; phase executors own only their assigned files and phase status.
   - Parallel phases need separate write ownership and validation resources; workers running Git get their own checkout and index, otherwise the caller owns Git. Run serially when isolation is uncertain.
 - Track the plan through `pending → in-progress → implemented` (or `blocked`).
-  - Track phases through `pending → in-progress → done`.
+  - Track phases through `pending → in-progress → done`, or `partial` when the executor stops with a criterion unmet and returns what remains.
   - Treat `in-progress` as a runtime marker.
   - Never commit `in-progress` alone.
 - Follow user and project commit instructions.
