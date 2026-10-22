@@ -11,6 +11,7 @@
 const { execFileSync } = require("node:child_process");
 const fs = require("node:fs");
 const path = require("node:path");
+const { youtubeProblems } = require("./youtube-metadata.js");
 
 const ROOT = path.resolve(__dirname, "../../../..");
 const PLAN_PATH = path.join(ROOT, "aidd_docs/release-video/scenes.json");
@@ -152,7 +153,7 @@ function splitThemes(plan) {
 function readPlan() {
   if (!fs.existsSync(PLAN_PATH)) return { scenes: [], skipped: [] };
   const plan = JSON.parse(fs.readFileSync(PLAN_PATH, "utf8"));
-  return { intro: plan.intro, scenes: plan.scenes ?? [], skipped: plan.skipped ?? [] };
+  return { intro: plan.intro, youtube: plan.youtube, scenes: plan.scenes ?? [], skipped: plan.skipped ?? [] };
 }
 
 function run({
@@ -166,8 +167,9 @@ function run({
   const tooLong = overlongText(plan);
   const technical = jargonIn(plan);
   const split = splitThemes(plan);
+  const youtube = plan.scenes.length > 0 ? youtubeProblems(plan) : [];
 
-  if (missing.length === 0 && unexplained.length === 0 && tooLong.length === 0 && technical.length === 0 && split.length === 0) {
+  if (missing.length === 0 && unexplained.length === 0 && tooLong.length === 0 && technical.length === 0 && split.length === 0 && youtube.length === 0) {
     successLogger(`✅ Release video: ${surfaces.length} surface(s) covered`);
     return 0;
   }
@@ -179,10 +181,11 @@ function run({
   if (tooLong.length > 0) logger(`❌ Textes trop longs : ${tooLong.join(", ")}`);
   if (technical.length > 0) logger(`❌ Mots techniques : ${technical.join(", ")}`);
   if (split.length > 0) logger(`❌ Thèmes dispersés : ${split.join(", ")}`);
+  if (youtube.length > 0) logger(`❌ Texte YouTube : ${youtube.join(", ")}`);
   return 1;
 }
 
-module.exports = { featSurfaces, invalidSkips, jargonIn, missingScenes, overlongText, run, splitThemes, surfacesOf };
+module.exports = { featSurfaces, invalidSkips, jargonIn, missingScenes, overlongText, readPlan, run, splitThemes, surfacesOf };
 
 if (require.main === module) {
   process.exit(run());

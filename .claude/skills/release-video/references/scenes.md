@@ -9,6 +9,11 @@ What a plan holds and how each part is drawn.
 | `bullet-grid` | several small changes | `cells`, each with `title`, optional `detail`, `wide` |
 | `contributors` | who shipped the release | `logins` |
 
+| Plan field | Holds |
+| --- | --- |
+| `intro` | `highlights`, the tags shown first |
+| `youtube` | `themes`, 1 to 4 short French theme names for the title; `programme`, one `{surface, text}` per surface a scene covers, `text` a French sentence that starts with a verb |
+
 | Scene field | Holds |
 | --- | --- |
 | `pill` | the theme, top left: `Telemetry`, `Rules`, never a command |
@@ -45,3 +50,4 @@ What a plan holds and how each part is drawn.
 | outro | 4 seconds |
 | refused words | tokens, envelope, axis, transcript, payload, hook; `telemetry` stays; the demo window is not read, it shows real commands and flags |
 | themes | scenes of one theme follow each other |
+| YouTube title | 100 characters, built from `youtube.themes` as `Framework - Release 5.12 : Batch, SDLC, Télémétrie et Review` |

@@ -147,5 +147,26 @@
       "Telemetry report split by tool",
       "Rules checked for conflicts"
     ]
+  },
+  "youtube": {
+    "themes": [
+      "Télémétrie",
+      "Codex",
+      "Règles"
+    ],
+    "programme": [
+      {
+        "surface": "aidd telemetry",
+        "text": "compter aussi ce que coûte le travail fait avec Codex, avec le rapport complet."
+      },
+      {
+        "surface": "aidd-telemetry:00-init",
+        "text": "activer la mesure et distinguer le résultat par outil, Claude Code ou Codex."
+      },
+      {
+        "surface": "aidd-context:05-rule-generate",
+        "text": "vérifier qu'une règle n'en contredit pas une autre, et décider laquelle garder."
+      }
+    ]
   }
 }

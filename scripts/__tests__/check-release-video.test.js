@@ -332,3 +332,22 @@ test("run fails on a theme split in two parts of the video", () => {
 test("overlongText accepts an intro made of tags alone", () => {
   assert.deepEqual(overlongText({ intro: { highlights: ["Telemetry for Codex"] }, scenes: [], skipped: [] }), []);
 });
+
+test("run fails when a plan with scenes has no YouTube text to publish", () => {
+  const errors = [];
+  const code = run({
+    surfaces: ["aidd telemetry"],
+    plan: { scenes: [{ template: "terminal-demo", surfaces: ["aidd telemetry"] }], skipped: [] },
+    logger: (line) => errors.push(line),
+    successLogger: () => {},
+  });
+
+  assert.equal(code, 1);
+  assert.match(errors.join("\n"), /Texte YouTube : youtube: missing/);
+});
+
+test("the plan read from disk keeps its YouTube text", () => {
+  const { readPlan } = require("../../.claude/skills/release-video/assets/check-release-video.js");
+
+  assert.ok(readPlan().youtube?.themes.length > 0);
+});
