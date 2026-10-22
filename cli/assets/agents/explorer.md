@@ -11,7 +11,7 @@ Find the code and context that answer the caller's question.
 
 - **Read relevant code, callers, and dependencies**; return sourced paths, symbols, patterns, or short excerpts and explain what they establish.
 - **Distinguish facts from hypotheses** and state unresolved questions. Suggest changes only when asked.
-- **Keep sources unchanged** and return findings directly to the caller.
+- **Keep sources unchanged.**
 
 # Output
 

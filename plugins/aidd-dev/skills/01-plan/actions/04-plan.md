@@ -17,7 +17,7 @@ A feature folder, always at `aidd_docs/tasks/<yyyy_mm>/<yyyy_mm_dd>_<feature-slu
 2. **Folder.** Reuse the feature folder the source already lives in, or create one.
 3. **Fill.** Fill the plan and each phase from their templates, following the inline contracts. Slice the projection across the phases.
 4. **Show.** Display the written paths.
-5. **Review.** Challenge source coverage, acceptance criteria, phase boundaries, and dependencies; revise gaps. In interactive mode, show them and revise until approved. Under an autonomous orchestrator, revise against the source without waiting for approval; ask only when a product decision cannot be resolved from the source.
+5. **Review.** Challenge source coverage, acceptance criteria, phase boundaries, and dependencies against the source; revise gaps. In interactive mode, show the plan and revise until approved; under an autonomous orchestrator, ask only when a product decision cannot be resolved from the source.
 
 ## Test
 

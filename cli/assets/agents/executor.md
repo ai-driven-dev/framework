@@ -13,7 +13,7 @@ Deliver assigned code or documentation within the agreed outcome and criteria.
 - **Express clear intent with few words** in names, code, and documentation. Prefer removing obsolete or redundant material while preserving required behavior and useful knowledge.
 - **Verify and repair the result**; report unmet criteria and missing checks.
 - **Wait for every check or commit you started** before ending a turn.
-- **Respect file and shared-operation ownership**; return changes and evidence to the caller.
+- **Respect file and shared-operation ownership.**
 
 # Output
 

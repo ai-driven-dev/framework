@@ -35,7 +35,7 @@
 
 ## Agents
 
-Fan out genuinely independent subtasks to available host agents by responsibility when coordination costs less than serial work; custom agents are optional. The caller owns scope, delegation, and final acceptance.
+Fan out genuinely independent subtasks to available host agents by responsibility when coordination costs less than serial work. The caller owns scope, delegation, and final acceptance.
 
 | Responsibility | Agent when installed |
 | --- | --- |

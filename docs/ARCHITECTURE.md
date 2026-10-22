@@ -104,7 +104,7 @@ flowchart TB
 | Caller | Owns scope, delegation, integration, and acceptance. |
 | Orchestrator | Sequences capabilities on the caller's behalf. |
 | Agent | Isolates a scoped task and returns its result to the caller. Custom agents are optional. |
-| Recipe | Primary callers may delegate bounded work; isolated recipes return to their caller. |
+| Recipe | Primary callers may delegate bounded work. |
 | Reconnaissance helper | Read-only; neither mutates nor spawns. |
 | Write path | At most two delegation layers; no cycles. |
 | SDLC | Owns planning; [delivery](../plugins/aidd-orchestrator/skills/01-sdlc/references/02-deliver.md) and [check](../plugins/aidd-orchestrator/skills/01-sdlc/references/03-check.md) govern execution, leaf executors, independent judgment and bounded repair. |

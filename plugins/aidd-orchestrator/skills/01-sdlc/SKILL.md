@@ -10,7 +10,7 @@ argument-hint: request | interactive request
 
 Decide the mode as `mode.md` says, then read only it and the current zone's reference. A zone that cannot proceed stops the run and says what it would take to resume. A zone commits what it wrote through the commit skill before handing off.
 
-Use available host agents by responsibility, or a general-purpose agent with a scoped brief; custom agents are optional. Parallelize independent work when it is faster. Repeat the responsible zone when delegated work returns an actionable gap.
+Use available host agents by responsibility, or a general-purpose agent with a scoped brief. Parallelize independent work when it is faster. Repeat the responsible zone when delegated work returns an actionable gap.
 
 ```mermaid
 ---

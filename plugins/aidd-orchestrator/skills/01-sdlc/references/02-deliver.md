@@ -2,9 +2,9 @@
 
 ## Behavior
 
-Turn the contract into a proportional plan, then give one executor the whole plan or delegate ready independent phases. For delegated phases, the caller owns preparation, dependencies, write isolation, integration, and finalization; the phase file is the executor's brief, and the same executor session resumes for its next phase. Integrate prerequisites before starting dependent phases.
+Turn the contract into a proportional plan, then give one executor the whole plan or delegate ready independent phases. For delegated phases, the caller owns preparation, dependencies, write isolation, integration, and finalization; the phase file is the executor's brief, and the same executor session resumes for its next phase.
 
-The executor follows the implementation skill for its assigned scope and calls the validation skills, which own their checks and repair loops. Include architecture conformance whenever the project documents architecture. Phase executors return for integration. Finalize the integrated plan once, including any required end-to-end journey after other checks and before marking it implemented.
+The executor follows the implementation skill for its assigned scope; the validation skills own their checks and repair loops. Include architecture conformance whenever the project documents architecture.
 
 Send only the clean committed candidate and its evidence to Check.
 
@@ -26,7 +26,7 @@ flowchart TD
     Implement["/aidd-dev:02-implement"]
     Assert["/aidd-dev:03-assert"]
     Integrate["Integrate phases"]
-    Finalize["Finalize integrated plan; /aidd-dev:06-test journey last when required"]
+    Finalize["Finalize integrated plan"]
     Commit["/aidd-vcs:01-commit"]
   end
 
@@ -38,14 +38,14 @@ flowchart TD
 
   Contract --> Plan
   Plan --> PlanArtifact
-  PlanArtifact -- "Whole plan, or ready independent phases." --> Executor
-  Executor -- "Assigned plan or phase." --> Implement
+  PlanArtifact -- "Whole plan, or ready phases." --> Executor
+  Executor --> Implement
   Implement --> Assert
-  Assert -- "Whole plan finalized." --> Commit
-  Assert -- "Assigned phase returned." --> Integrate
-  Integrate -- "More ready phases." --> Executor
+  Assert -- "Whole plan." --> Commit
+  Assert -- "Phase." --> Integrate
+  Integrate -- "Next ready phase." --> Executor
   Integrate --> Finalize
-  Finalize -- "Validation or journey failed; repair affected phase." --> Executor
+  Finalize -- "Failure: repair the phase." --> Executor
   Finalize --> Commit
   Commit --> CommittedCandidate
   CommittedCandidate --> Check

@@ -123,7 +123,7 @@ aidd setup --scope user --ai claude,codex,copilot --plugins none --yes
 
 ## Agents (beta)
 
-Install optional agents per project with the [subagent guide](../docs/SUBAGENTS.md).
+Install optional agents per project or per user with the [subagent guide](../docs/SUBAGENTS.md).
 
 ## Translate
 

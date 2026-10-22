@@ -2,9 +2,11 @@
 
 ## Behavior
 
-- **Validate the committed candidate** against the contract, criteria, and mandatory checks using a fresh agent.
-- **Review quality and coherence** after validation passes: a fresh agent runs `/aidd-dev:05-review` on the code and relevancy axes with the acceptance evidence.
-- **Challenge the outcome** with another fresh agent after review clears, not the one that sequenced delivery: verify that it is trustworthy and serves the user.
+Use a fresh agent for each step:
+
+- **Validate the committed candidate** against the contract, criteria, and mandatory checks.
+- **Review quality and coherence** after validation passes: run `/aidd-dev:05-review` on the code and relevancy axes with the acceptance evidence.
+- **Challenge the outcome** after review clears: verify that it is trustworthy and serves the user.
 
 ## Findings
 

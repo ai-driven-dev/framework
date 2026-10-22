@@ -48,8 +48,6 @@ Delegation is by responsibility: workflows such as `/aidd-orchestrator:01-sdlc` 
 | [Validator](../cli/assets/agents/validator.md) | Confirm delivered work meets the request and its acceptance criteria | `Validated: yes` or `no`, with what failed | No |
 | [Reviewer](../cli/assets/agents/reviewer.md) | Find defects, contradictions, duplication and needless complexity in finished work | `no actionable findings`, `changes needed` or `insufficient evidence`, with findings | No |
 
-Typical order for a change: explore, execute, validate, then review.
-
 ## 📦 Install
 
 The command is not released yet; build it from a framework checkout:
@@ -94,7 +92,7 @@ Each role uses a profile; each provider sets the profile's model and effort in [
 | `standard` | reviewer | Sonnet 5.5 | GPT-6.1 Sol | Medium (`-latest`) |
 | `light` | explorer, executor, validator | Haiku 5.5 | GPT-6 Luna | Small (`-latest`) |
 
-Implementation and validation run on `light` to save cost; change the role mapping in that file to trade cost for quality.
+`light` saves cost; change the role mapping in that file to trade cost for quality.
 
 `--main` writes only these keys and keeps the rest of the file:
 
@@ -109,15 +107,15 @@ It records the previous values in `.aidd/main-model.json` and restores them on r
 ## 🔄 Update or remove
 
 - **Update:** rerun the same install command; unmodified agents are refreshed and retired roles removed.
-- **Remove:** `agents remove --ide <ide>` (add `--scope user` for user agents). It also restores the main model it replaced.
+- **Remove:** `agents remove --ide <ide>` (add `--scope user` for user agents).
 - **Clean:** `aidd clean` removes project agents with the rest of AIDD; user agents stay until `agents remove --scope user`.
 
-**Framework contributors:** copy [reload-agents.example.json](../scripts/reload-agents.example.json) beside it as the gitignored `reload-agents.json`. `make reload` then runs `agents install --scope user` for each listed IDE, adding `--main` where `"main": true`. The file only adds: undo with `agents remove --scope user --ide <ide>`.
+**Framework contributors:** `make reload` runs `agents install --scope user` for each IDE in [reload-agents.json](../scripts/reload-agents.json), adding `--main` where `"main": true`, so it also sets your main model. Point `RELOAD_AGENTS` at another file to change that. The file only adds: undo with `agents remove --scope user --ide <ide>`.
 
 ## 🚧 Limits
 
 - **Runtime model:** the files set model and effort; your plan or account decides what actually runs. A Copilot account limited to `auto` ignores the configured model with a warning.
-- **Cursor user scope:** Cursor CLI 2026.10.19 loaded no agent from `~/.cursor/agents/`, so only project install is supported. Cursor agents are written with double quotes because Cursor keeps single quotes in names.
+- **Cursor user scope:** Cursor CLI 2026.10.19 loaded no agent from `~/.cursor/agents/`, so only project install is supported.
 - **Codex:** project files load only for trusted projects; agents inherit the parent session's service tier, so Fast is enabled with `/fast` in the parent ([speed](https://learn.chatgpt.com/docs/agent-configuration/speed)).
 - **Interrupted command:** check the files before deleting `.aidd/agents.json.lock`; a handled failure already restores files and registries.
 
