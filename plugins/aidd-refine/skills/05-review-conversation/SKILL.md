@@ -15,16 +15,16 @@ flowchart LR
 
 ## Actions
 
-Run all three actions in order without confirmation. Read only the next file in `actions/`.
+Run each action in order without confirmation, reading only its file in `actions/` when its turn comes.
 
-| Order | Action |
+| Action | Does |
 | --- | --- |
-| 1 | `01-read-conversation.md` |
-| 2 | `02-recommend.md` |
-| 3 | `03-target-edits.md` |
+| read-conversation | load the tree and delegate one reader per child session |
+| recommend | attribute each finding to one owner and draft its edit |
+| target-edits | render the HTML report and ask the next intent |
 
 ## Transversal rules
 
 - Access only the selected conversation tree and its relevant sources.
 - Use recorded evidence only; every finding cites a message sequence. Mark unavailable measurements as such.
-- Keep project files read-only; write only a unique temporary report.
+- Keep project files read-only; write only inside one unique temporary run directory.

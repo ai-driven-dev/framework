@@ -80,8 +80,8 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `actions` | [01-read-conversation.md](skills/05-review-conversation/actions/01-read-conversation.md) | - |
 | `actions` | [02-recommend.md](skills/05-review-conversation/actions/02-recommend.md) | - |
 | `actions` | [03-target-edits.md](skills/05-review-conversation/actions/03-target-edits.md) | - |
-| `assets` | [conversation-sources.md](skills/05-review-conversation/assets/conversation-sources.md) | - |
 | `assets` | [report.js](skills/05-review-conversation/assets/report.js) | - |
 | `assets` | [session-review-brief.md](skills/05-review-conversation/assets/session-review-brief.md) | - |
+| `references` | [conversation-sources.md](skills/05-review-conversation/references/conversation-sources.md) | - |
 | `-` | [SKILL.md](skills/05-review-conversation/SKILL.md) | `Reviews a finished conversation and every session it spawned to find what cost time, tokens, or correctness, and attributes each finding to the framework, the orchestration, the host, or the project. Use when the user wants to review a conversation, understand a wasted run, or choose which instruction to fix. Not for delivery review or automatic edits.` |
 
