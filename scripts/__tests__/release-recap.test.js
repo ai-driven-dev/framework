@@ -22,7 +22,7 @@ test("a clean release says it is published and links the release and the run", (
   const text = recap({ ...base, published: true });
 
   assert.match(text, /^Release v5\.13\.0 published/);
-  assert.match(text, /https:\/\/github\.com\/ai-driven-dev\/framework\/releases\/tag\/v5\.13\.0/);
+  assert.ok(text.includes("https://github.com/ai-driven-dev/framework/releases/tag/v5.13.0"));
   assert.match(text, /actions\/runs\/1/);
   assert.doesNotMatch(text, /failed/);
 });
