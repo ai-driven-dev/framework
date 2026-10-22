@@ -379,8 +379,8 @@ jobs:
           TAG="${{ needs.release-please.outputs.tag_name }}"
           gh release edit "${TAG}" --draft=false --latest --repo "${{ github.repository }}"
 
-  # A recap of what ran and what broke, whatever the outcome. Sent only when the
-  # SLACK_RELEASE_WEBHOOK secret exists; without it the recap is printed in the log.
+  # A recap of what ran and what broke, whatever the outcome, printed in the log.
+  # The Slack message is n8n's.
   release-recap:
     name: Recap the release
     needs: [release-please, build-and-attach, build-per-tool, build-plugin, build-release-video, publish-cli, publish-release]
@@ -395,13 +395,12 @@ jobs:
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: "22"
-      - name: Send the recap
+      - name: Print the recap
         env:
           GH_TOKEN: ${{ github.token }}
           NEEDS: ${{ toJSON(needs) }}
           TAG: ${{ needs.release-please.outputs.tag_name }}
           REPO: ${{ github.repository }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_RELEASE_WEBHOOK }}
         run: node scripts/release-recap.js
 

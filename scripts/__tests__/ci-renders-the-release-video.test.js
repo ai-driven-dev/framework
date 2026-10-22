@@ -82,11 +82,11 @@ test("every release leaves a recap, whatever happened to its jobs", () => {
   ]);
 });
 
-test("the recap reads every job's result and goes to Slack through a secret", () => {
+test("the recap reads every job's result and posts nowhere, n8n owns the Slack message", () => {
   const step = recapJob.steps.find((s) => (s.run ?? "").includes("scripts/release-recap.js"));
 
   assert.equal(step.env.NEEDS, "${{ toJSON(needs) }}");
-  assert.equal(step.env.SLACK_WEBHOOK_URL, "${{ secrets.SLACK_RELEASE_WEBHOOK }}");
+  assert.equal(step.env.SLACK_WEBHOOK_URL, undefined);
 });
 
 test("the recap checks out the whole history so it can compare with the previous release", () => {

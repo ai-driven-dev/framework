@@ -47,7 +47,7 @@ function previousManifest(tag) {
 }
 
 async function main() {
-  const { NEEDS, TAG, REPO, RUN_URL, SLACK_WEBHOOK_URL } = process.env;
+  const { NEEDS, TAG, REPO, RUN_URL } = process.env;
   const needs = JSON.parse(NEEDS);
   const assets = JSON.parse(
     execFileSync("gh", ["release", "view", TAG, "--repo", REPO, "--json", "assets", "--jq", "[.assets[].name]"], {
@@ -64,17 +64,10 @@ async function main() {
     versions: changedVersions(readManifest("HEAD"), previousManifest(TAG)),
   });
   console.log(text);
-  if (!SLACK_WEBHOOK_URL) return console.log("No SLACK_WEBHOOK_URL: recap not sent.");
-  const response = await fetch(SLACK_WEBHOOK_URL, {
-    method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify({ text }),
-  });
-  if (!response.ok) console.log(`Slack refused the recap: ${response.status}`);
 }
 
 module.exports = { recap, changedVersions };
 
 if (require.main === module) {
-  main().catch((error) => console.log(`Recap not sent: ${error.message}`));
+  main().catch((error) => console.log(`Recap not printed: ${error.message}`));
 }
