@@ -8,7 +8,7 @@ From 01: the role, the chosen name, an optional user-specified model, and the wr
 
 ## Output
 
-One self-contained agent file per confirmed tool, and the list of files written.
+One agent file per confirmed tool, and the list of files written.
 
 ## Process
 
@@ -16,7 +16,7 @@ One self-contained agent file per confirmed tool, and the list of files written.
 2. **Frontmatter.** Apply the per-tool frontmatter from [tool-paths.md](../references/tool-paths.md). Drop a field where the tool does not support it. Plugin source: keep the canonical frontmatter.
 3. **Convert.** Apply any per-tool structural conversion listed in [tool-paths.md](../references/tool-paths.md). Plugin source skips conversion.
 4. **Render.** Per the write mode ([tool-paths.md](../references/tool-paths.md)):
-   - **Host**: for each confirmed tool, write one file at its path and extension; keep the full behavior in that file.
+   - **Host**: for each confirmed tool, write one file at its path and extension.
    - **Plugin source**: write one canonical agent. No per-tool fan-out.
 5. **Validate.** Run the write-target validation ([tool-paths.md](../references/tool-paths.md)).
 

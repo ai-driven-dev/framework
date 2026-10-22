@@ -6,7 +6,7 @@ argument-hint: role
 
 # Agent Generate
 
-Write one self-contained behavior per agent and render it as one file per confirmed host tool, or once as a plugin source.
+Write an agent once and render it as one file per confirmed host tool, or once as a plugin source.
 
 ## Actions
 

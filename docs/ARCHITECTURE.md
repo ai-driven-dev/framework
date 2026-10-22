@@ -103,7 +103,7 @@ flowchart TB
 | Skill | Host loads `SKILL.md` on invocation; work runs in the caller's context. |
 | Caller | Owns scope, delegation, integration, and acceptance. |
 | Orchestrator | Sequences capabilities on the caller's behalf. |
-| Agent | Isolates a scoped task and returns its result to the caller. Custom agents are optional, self-contained behaviors in one native file per host. |
+| Agent | Isolates a scoped task and returns its result to the caller. Custom agents are optional. |
 | Recipe | Primary callers may delegate bounded work; isolated recipes return to their caller. |
 | Reconnaissance helper | Read-only; neither mutates nor spawns. |
 | Write path | At most two delegation layers; no cycles. |
