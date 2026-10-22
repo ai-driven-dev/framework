@@ -2,7 +2,7 @@
 
 ## Input
 
-The prepared plan, or an assigned phase with plan context, dependencies, file ownership, checkout, validation resources, and commit policy.
+The prepared plan, or one assigned phase of it.
 
 ## Output
 
@@ -12,8 +12,7 @@ Or a `blocked` / `replan needed` report.
 
 ## Process
 
-1. **Open.** Select assigned phases whose dependencies are done; use serial plan order when dependencies are undeclared.
-   - A declared prerequisite with no matching phase, contradictory dependencies, or unfinished work with no ready phase requires `replan needed`.
+1. **Open.** Walk the assigned phases in order.
    - Set the current phase `status: in-progress`.
    - In a feature folder, read `phase-<n>.md` beside `plan.md`.
 2. **Code.** Build the next task or inseparable group against its acceptance criteria.
@@ -23,8 +22,7 @@ Or a `blocked` / `replan needed` report.
      - Validate the full phase workflow.
      - Set the phase `status: done` on success.
 4. **Complete.** Commit according to the commit policy.
-   - Repeat steps 2–4 for the remaining assigned tasks.
-   - Phase executors return changes and evidence to the caller.
+   - Repeat steps 2–4 for the remaining tasks.
 
 ## Rules
 
@@ -38,7 +36,7 @@ Or a `blocked` / `replan needed` report.
   - Report blocked validation.
   - Never count blocked validation as success.
 - Follow [blocked.md](../references/blocked.md) when implementation is blocked.
-  - Assigned executors report the blocker; the whole-plan owner records the blocked plan according to the commit policy.
+  - Record the blocked plan according to the commit policy.
   - Leave unfinished code uncommitted.
 - Stop if satisfying the acceptance criteria requires changing scope or requirements.
   - Report `replan needed: <reason>`.
