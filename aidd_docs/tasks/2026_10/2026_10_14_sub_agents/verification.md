@@ -7,7 +7,7 @@ Current state, 2026-10-21, merged with next. Behavior and sources are in [the ag
 - **Agents:** explorer, executor, validator and reviewer ship with the CLI, outside plugins. `aidd agents install --provider --ide` writes them per project; `--scope user` writes them to the IDE's user directory (Claude Code, Codex, OpenCode). Ownership hashes guard every write; retired roles are removed when unmodified.
 - **Models:** [agent-models.json](../../../../cli/src/contexts/tools/domain/formats/agent-models.json) maps roles to `main`, `standard` and `light` profiles per provider.
 - **Main model:** opt-in with `--main`. The prior value is recorded and restored on removal; a value changed since, or TOML that cannot be edited line by line, is refused. OpenCode's root model takes no variant.
-- **Reload:** `make reload` runs `agents install --scope user` for each IDE listed in the gitignored `scripts/reload-agents.json`, before any plugin change.
+- **Reload:** `make reload` runs `agents install --scope user` for each IDE listed in `scripts/reload-agents.json`, before any plugin change.
 
 ## Checks
 

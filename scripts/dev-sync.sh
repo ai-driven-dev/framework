@@ -7,9 +7,9 @@
 # whose CLI is absent is skipped, and the first run needs network. A managed OpenCode host
 # exposes `aidd-opencode-reload` instead, and that helper decides which checkout may load.
 #
-# Agents are opt-in through the gitignored scripts/reload-agents.json (or RELOAD_AGENTS; see
-# reload-agents.example.json): each listed IDE runs the built CLI's `agents install --scope user`,
-# adding `--main` when `"main": true`. The file only adds; `agents remove --scope user` undoes.
+# Agents come from scripts/reload-agents.json (or the file RELOAD_AGENTS names): each listed IDE
+# runs the built CLI's `agents install --scope user`, adding `--main` when `"main": true`.
+# The file only adds; `agents remove --scope user` undoes.
 # Agents run before plugins, so a failure changes no plugin; IDEs listed earlier stay installed.
 # Global rules: sync only the Agents section in the managed block, preserving personal
 # rules. First OpenCode sync keeps its Claude personal-rule fallback unless disabled.
