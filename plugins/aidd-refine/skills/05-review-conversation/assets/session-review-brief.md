@@ -1,8 +1,8 @@
 # Session review brief
 
-Give this brief, the session transcript, and the report path to each delegated reader.
+> Fill `<transcript path>` and `<report path>`, delete this title and this line, and pass the rest verbatim as the reader's prompt.
 
-Read the whole transcript in order. Report only what the instructions the model read, the brief it received, or the environment made it lose: time, tokens, or correctness. Application defects are out of scope.
+Read the whole transcript at `<transcript path>` in order, then write your report to `<report path>`. Report only what the instructions the model read, the brief it received, or the environment made it lose: time, tokens, or correctness. Application defects are out of scope.
 
 Classify every finding in one category:
 
