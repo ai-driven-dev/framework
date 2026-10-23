@@ -4,16 +4,18 @@ Disk/VCS checks that place the project. Each check is met, drift (present, off c
 
 ## Foundations
 
-State-aware order: existing repo (code) => memory first, stack skipped. Greenfield => stack → memory → wire.
+State-aware order: existing repo (code) => memory first, stack skipped. Greenfield => stack → memory → wire → access.
 
 | Check          | Met when                                                       | Drift when               | Deliverable                | Command                          |
 | -------------- | ------------------------------------------------------------- | ------------------------ | -------------------------- | -------------------------------- |
 | tech stack     | `INSTALL.md` exists OR repo established (code or synced memory) | —                        | tech stack                 | `aidd-context:01-bootstrap`      |
 | project memory | `aidd_docs/memory/` has real content                          | files empty/placeholder  | project knowledge saved    | `aidd-context:02-project-memory` |
 | memory wiring  | the standard project memory block in each used tool's context file | block present, off shape | knowledge loaded by the AI | `aidd-context:02-project-memory` |
+| service access | memory and wiring were met before this session, or the check ran or was skipped since they were set up | —                        | services reached by the AI | `aidd-context:13-access-check`   |
 
 - tech stack missing only on greenfield (no code AND no synced memory).
 - memory wiring: no block or no context file = missing. Drift = a block present but not the standard one that imports the memory files.
+- service access: the ledger decides, never a probe at scan. A bank set up in an earlier session never brings it back.
 
 ## Dev flow
 
