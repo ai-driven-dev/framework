@@ -1,0 +1,320 @@
+{
+  "baseCommit": "3e67f6f594b7b7f6cc7bceb0581ad6d515519080",
+  "measuredOn": "2026-10-12",
+  "pnpm": "12.3.4",
+  "full": {
+    "info": 0,
+    "low": 1,
+    "moderate": 6,
+    "high": 12,
+    "critical": 0
+  },
+  "production": {
+    "info": 0,
+    "low": 0,
+    "moderate": 1,
+    "high": 0,
+    "critical": 0
+  },
+  "findings": [
+    {
+      "advisory": "GHSA-g7r4-m6w7-qqqr",
+      "url": "https://github.com/advisories/GHSA-g7r4-m6w7-qqqr",
+      "package": "esbuild",
+      "severity": "low",
+      "resolvedVersions": [
+        "0.27.3"
+      ],
+      "patchedRange": ">=0.28.1",
+      "scope": "development-only",
+      "pathWitnesses": [
+        ".>tsup>esbuild",
+        ".>vitest>vite>esbuild",
+        ".>@stryker-mutator/vitest-runner>vitest>vite>esbuild",
+        ".>@vitest/coverage-v8>vitest>vite>esbuild"
+      ]
+    },
+    {
+      "advisory": "GHSA-3jxr-9vmj-r5cp",
+      "url": "https://github.com/advisories/GHSA-3jxr-9vmj-r5cp",
+      "package": "brace-expansion",
+      "severity": "high",
+      "resolvedVersions": [
+        "5.0.6"
+      ],
+      "patchedRange": ">=5.0.7",
+      "scope": "development-only",
+      "pathWitnesses": [
+        ".>@stryker-mutator/core>minimatch>brace-expansion",
+        ".>@stryker-mutator/vitest-runner>@stryker-mutator/core>minimatch>brace-expansion"
+      ]
+    },
+    {
+      "advisory": "GHSA-mh99-v99m-4gvg",
+      "url": "https://github.com/advisories/GHSA-mh99-v99m-4gvg",
+      "package": "brace-expansion",
+      "severity": "high",
+      "resolvedVersions": [
+        "5.0.6"
+      ],
+      "patchedRange": ">=5.0.8",
+      "scope": "development-only",
+      "pathWitnesses": [
+        ".>@stryker-mutator/core>minimatch>brace-expansion",
+        ".>@stryker-mutator/vitest-runner>@stryker-mutator/core>minimatch>brace-expansion"
+      ]
+    },
+    {
+      "advisory": "GHSA-fxqj-rqcc-2cmp",
+      "url": "https://github.com/advisories/GHSA-fxqj-rqcc-2cmp",
+      "package": "postcss",
+      "severity": "moderate",
+      "resolvedVersions": [
+        "8.5.15"
+      ],
+      "patchedRange": ">=8.5.23",
+      "scope": "development-only",
+      "pathWitnesses": [
+        ".>tsup>postcss",
+        ".>vitest>vite>postcss",
+        ".>@stryker-mutator/vitest-runner>vitest>vite>postcss",
+        ".>@vitest/coverage-v8>vitest>vite>postcss"
+      ]
+    },
+    {
+      "advisory": "GHSA-rgw5-rvv9-x895",
+      "url": "https://github.com/advisories/GHSA-rgw5-rvv9-x895",
+      "package": "brace-expansion",
+      "severity": "high",
+      "resolvedVersions": [
+        "5.0.6"
+      ],
+      "patchedRange": ">=5.0.9",
+      "scope": "development-only",
+      "pathWitnesses": [
+        ".>@stryker-mutator/core>minimatch>brace-expansion",
+        ".>@stryker-mutator/vitest-runner>@stryker-mutator/core>minimatch>brace-expansion"
+      ]
+    },
+    {
+      "advisory": "GHSA-28wg-ghj8-5hjv",
+      "url": "https://github.com/advisories/GHSA-28wg-ghj8-5hjv",
+      "package": "nanoid",
+      "severity": "high",
+      "resolvedVersions": [
+        "3.3.12"
+      ],
+      "patchedRange": ">=3.3.16",
+      "scope": "development-only",
+      "pathWitnesses": [
+        ".>tsup>postcss>nanoid",
+        ".>vitest>vite>postcss>nanoid",
+        ".>@stryker-mutator/vitest-runner>vitest>vite>postcss>nanoid",
+        ".>@vitest/coverage-v8>vitest>vite>postcss>nanoid"
+      ]
+    },
+    {
+      "advisory": "GHSA-2v37-7h3g-55p8",
+      "url": "https://github.com/advisories/GHSA-2v37-7h3g-55p8",
+      "package": "nanoid",
+      "severity": "high",
+      "resolvedVersions": [
+        "3.3.12"
+      ],
+      "patchedRange": ">=3.3.18",
+      "scope": "development-only",
+      "pathWitnesses": [
+        ".>tsup>postcss>nanoid",
+        ".>vitest>vite>postcss>nanoid",
+        ".>@stryker-mutator/vitest-runner>vitest>vite>postcss>nanoid",
+        ".>@vitest/coverage-v8>vitest>vite>postcss>nanoid"
+      ]
+    },
+    {
+      "advisory": "GHSA-r28c-9q8g-f849",
+      "url": "https://github.com/advisories/GHSA-r28c-9q8g-f849",
+      "package": "postcss",
+      "severity": "high",
+      "resolvedVersions": [
+        "8.5.15"
+      ],
+      "patchedRange": ">=8.5.18",
+      "scope": "development-only",
+      "pathWitnesses": [
+        ".>tsup>postcss",
+        ".>vitest>vite>postcss",
+        ".>@stryker-mutator/vitest-runner>vitest>vite>postcss",
+        ".>@vitest/coverage-v8>vitest>vite>postcss"
+      ]
+    },
+    {
+      "advisory": "GHSA-c83g-rgw3-j3cx",
+      "url": "https://github.com/advisories/GHSA-c83g-rgw3-j3cx",
+      "package": "browserslist",
+      "severity": "high",
+      "resolvedVersions": [
+        "4.28.2"
+      ],
+      "patchedRange": ">=4.28.7",
+      "scope": "development-only",
+      "pathWitnesses": [
+        ".>@stryker-mutator/core>@stryker-mutator/instrumenter>@babel/core>@babel/helper-compilation-targets>browserslist",
+        ".>@stryker-mutator/vitest-runner>@stryker-mutator/core>@stryker-mutator/instrumenter>@babel/core>@babel/helper-compilation-targets>browserslist"
+      ]
+    },
+    {
+      "advisory": "GHSA-73wf-gq98-2v4g",
+      "url": "https://github.com/advisories/GHSA-73wf-gq98-2v4g",
+      "package": "browserslist",
+      "severity": "high",
+      "resolvedVersions": [
+        "4.28.2"
+      ],
+      "patchedRange": ">=4.28.7",
+      "scope": "development-only",
+      "pathWitnesses": [
+        ".>@stryker-mutator/core>@stryker-mutator/instrumenter>@babel/core>@babel/helper-compilation-targets>browserslist",
+        ".>@stryker-mutator/vitest-runner>@stryker-mutator/core>@stryker-mutator/instrumenter>@babel/core>@babel/helper-compilation-targets>browserslist"
+      ]
+    },
+    {
+      "advisory": "GHSA-x5fp-wj9c-mxmx",
+      "url": "https://github.com/advisories/GHSA-x5fp-wj9c-mxmx",
+      "package": "qs",
+      "severity": "moderate",
+      "resolvedVersions": [
+        "6.15.2"
+      ],
+      "patchedRange": ">=6.16.0",
+      "scope": "development-only",
+      "pathWitnesses": [
+        ".>@stryker-mutator/core>typed-rest-client>qs",
+        ".>@stryker-mutator/vitest-runner>@stryker-mutator/core>typed-rest-client>qs"
+      ]
+    },
+    {
+      "advisory": "GHSA-4mjr-xmp4-gh2g",
+      "url": "https://github.com/advisories/GHSA-4mjr-xmp4-gh2g",
+      "package": "qs",
+      "severity": "moderate",
+      "resolvedVersions": [
+        "6.15.2"
+      ],
+      "patchedRange": ">=6.16.0",
+      "scope": "development-only",
+      "pathWitnesses": [
+        ".>@stryker-mutator/core>typed-rest-client>qs",
+        ".>@stryker-mutator/vitest-runner>@stryker-mutator/core>typed-rest-client>qs"
+      ]
+    },
+    {
+      "advisory": "GHSA-w5vr-8v7q-w6rv",
+      "url": "https://github.com/advisories/GHSA-w5vr-8v7q-w6rv",
+      "package": "baseline-browser-mapping",
+      "severity": "moderate",
+      "resolvedVersions": [
+        "2.10.27"
+      ],
+      "patchedRange": ">=2.11.0",
+      "scope": "development-only",
+      "pathWitnesses": [
+        ".>@stryker-mutator/core>@stryker-mutator/instrumenter>@babel/core>@babel/helper-compilation-targets>browserslist>baseline-browser-mapping",
+        ".>@stryker-mutator/vitest-runner>@stryker-mutator/core>@stryker-mutator/instrumenter>@babel/core>@babel/helper-compilation-targets>browserslist>baseline-browser-mapping"
+      ]
+    },
+    {
+      "advisory": "GHSA-2883-xcg3-v3hh",
+      "url": "https://github.com/advisories/GHSA-2883-xcg3-v3hh",
+      "package": "js-yaml",
+      "severity": "high",
+      "resolvedVersions": [
+        "4.3.1"
+      ],
+      "patchedRange": ">=4.3.2",
+      "scope": "development-only",
+      "pathWitnesses": [
+        ".>@commitlint/cli>@commitlint/load>cosmiconfig>js-yaml"
+      ]
+    },
+    {
+      "advisory": "GHSA-hrr3-gc8f-f4qj",
+      "url": "https://github.com/advisories/GHSA-hrr3-gc8f-f4qj",
+      "package": "fast-uri",
+      "severity": "moderate",
+      "resolvedVersions": [
+        "3.1.7"
+      ],
+      "patchedRange": ">=3.1.8",
+      "scope": "production-shared",
+      "pathWitnesses": [
+        ".>ajv>fast-uri",
+        ".>@stryker-mutator/core>ajv>fast-uri",
+        ".>ajv-formats>ajv>fast-uri",
+        ".>@stryker-mutator/vitest-runner>@stryker-mutator/core>ajv>fast-uri",
+        ".>@commitlint/cli>@commitlint/load>@commitlint/config-validator>ajv>fast-uri"
+      ]
+    },
+    {
+      "advisory": "GHSA-q2hr-2g5m-vwhr",
+      "url": "https://github.com/advisories/GHSA-q2hr-2g5m-vwhr",
+      "package": "brace-expansion",
+      "severity": "moderate",
+      "resolvedVersions": [
+        "5.0.6"
+      ],
+      "patchedRange": ">=5.0.12",
+      "scope": "development-only",
+      "pathWitnesses": [
+        ".>@stryker-mutator/core>minimatch>brace-expansion",
+        ".>@stryker-mutator/vitest-runner>@stryker-mutator/core>minimatch>brace-expansion"
+      ]
+    },
+    {
+      "advisory": "GHSA-qhr7-859c-m2p7",
+      "url": "https://github.com/advisories/GHSA-qhr7-859c-m2p7",
+      "package": "brace-expansion",
+      "severity": "high",
+      "resolvedVersions": [
+        "5.0.6"
+      ],
+      "patchedRange": ">=5.0.11",
+      "scope": "development-only",
+      "pathWitnesses": [
+        ".>@stryker-mutator/core>minimatch>brace-expansion",
+        ".>@stryker-mutator/vitest-runner>@stryker-mutator/core>minimatch>brace-expansion"
+      ]
+    },
+    {
+      "advisory": "GHSA-6j4f-fj2g-mc7p",
+      "url": "https://github.com/advisories/GHSA-6j4f-fj2g-mc7p",
+      "package": "brace-expansion",
+      "severity": "high",
+      "resolvedVersions": [
+        "5.0.6"
+      ],
+      "patchedRange": ">=5.0.10",
+      "scope": "development-only",
+      "pathWitnesses": [
+        ".>@stryker-mutator/core>minimatch>brace-expansion",
+        ".>@stryker-mutator/vitest-runner>@stryker-mutator/core>minimatch>brace-expansion"
+      ]
+    },
+    {
+      "advisory": "GHSA-68fv-2mgg-jv7q",
+      "url": "https://github.com/advisories/GHSA-68fv-2mgg-jv7q",
+      "package": "source-map-js",
+      "severity": "high",
+      "resolvedVersions": [
+        "1.2.1"
+      ],
+      "patchedRange": ">=1.2.2",
+      "scope": "development-only",
+      "pathWitnesses": [
+        ".>@vitest/coverage-v8>magicast>source-map-js",
+        ".>tsup>postcss>source-map-js",
+        ".>vitest>@vitest/coverage-v8>magicast>source-map-js",
+        ".>@stryker-mutator/vitest-runner>vitest>@vitest/coverage-v8>magicast>source-map-js"
+      ]
+    }
+  ]
+}
