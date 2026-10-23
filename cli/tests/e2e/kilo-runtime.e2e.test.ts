@@ -1,6 +1,6 @@
 import { spawn } from "node:child_process";
 import { existsSync } from "node:fs";
-import { mkdir, readdir, readFile, writeFile } from "node:fs/promises";
+import { cp, mkdir, readdir, readFile, writeFile } from "node:fs/promises";
 import { createServer } from "node:http";
 import { delimiter, join } from "node:path";
 import { setTimeout as delay } from "node:timers/promises";
@@ -285,17 +285,17 @@ describeKiloRuntime("E2E: real Kilo runtime", () => {
 
       const mcpProject = join(tempDir, "generated-mcp");
       await mkdir(mcpProject, { recursive: true });
+      // Kilo refuses the fixture's path-scoped Rule; this copy keeps it all-files.
+      const mcpSource = join(tempDir, "mcp-source");
+      await cp(join(REPOSITORY_ROOT, "cli/tests/fixtures/framework"), mcpSource, {
+        recursive: true,
+      });
+      await writeFile(
+        join(mcpSource, "plugins", "aidd-test", "rules", "01-standards", "naming.md"),
+        "# Naming\n"
+      );
       const mcpBuild = await runCli(
-        [
-          "translate",
-          join(REPOSITORY_ROOT, "cli/tests/fixtures/framework"),
-          "--to",
-          "kilo",
-          "--as",
-          "flat",
-          "--out",
-          mcpProject,
-        ],
+        ["translate", mcpSource, "--to", "kilo", "--as", "flat", "--out", mcpProject],
         projectDir,
         fakeHome
       );
@@ -355,6 +355,8 @@ describeKiloRuntime("E2E: real Kilo runtime", () => {
         join(proofPlugin, "hooks", "capture.js"),
         `import { appendFileSync } from "node:fs"; import { join } from "node:path"; let input = ""; process.stdin.on("data", chunk => input += chunk); process.stdin.on("end", () => { const payload = JSON.parse(input); appendFileSync(join(payload.cwd, "payloads.jsonl"), JSON.stringify({ pid: process.pid, payload }) + "\\n"); });`
       );
+      await mkdir(join(proofPlugin, "rules"));
+      await writeFile(join(proofPlugin, "rules", "runtime.md"), "KILO_RULE_MARKER\n");
       await writeFile(
         join(proofPlugin, "hooks", "hooks.json"),
         JSON.stringify({
@@ -407,6 +409,10 @@ describeKiloRuntime("E2E: real Kilo runtime", () => {
         }
       );
       expect(run.stdout).toContain("KILO_LOCAL_READ_CONFIRMED");
+      expect(JSON.parse(deliveredConfig).instructions).toContain(
+        ".kilo/rules/runtime-proof-runtime.md"
+      );
+      expect(JSON.stringify(model.requests)).toContain("KILO_RULE_MARKER");
       expect(model.requests.flatMap((request) => request.messages)).toEqual(
         expect.arrayContaining([
           expect.objectContaining({

@@ -142,6 +142,8 @@ Two output layouts, chosen by `--as`:
 
 OpenCode and Kilo Code declare no marketplace contract, so they are flat only. Every other target accepts both layouts.
 
+A Kilo flat build also writes each plugin Rule to `.kilo/rules/` and appends it to the Kilo config's `instructions`, after any entries already there. Kilo loads those for every file, so a Rule scoped by `paths` fails the build. A Kilo plugin install skips such a Rule with a warning and installs the rest. Every other target skips `rules/` with a warning. A Rule's links to files the build does not emit, such as non-`.md` siblings or plugin files outside `agents/`, `skills/` and `rules/`, are left unchanged.
+
 ## Environment variables
 
 | Variable | Effect |

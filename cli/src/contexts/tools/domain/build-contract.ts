@@ -21,6 +21,8 @@ export type ArtifactContract =
       readonly ext?: string;
       /** Defaults to identity, a byte-copy. */
       readonly transform?: (content: string, plugin: string, basename: string) => string;
+      /** The scope a file declares that this target cannot express, or `undefined` when it has none. */
+      readonly inexpressibleScope?: (content: string) => unknown;
       /** VS Code Copilot discovers a skill by its parent folder name, so flat mode rewrites
        * SKILL.md's `name` frontmatter to match. Meaningless outside a flat skill artifact. */
       readonly rewriteSkillName?: boolean;

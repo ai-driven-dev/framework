@@ -46,6 +46,8 @@ const pkg = JSON.parse(readFileSync(resolve(root, "package.json"), "utf8"));
 // 709 KB: 695.3 KB, telemetry keeping what an ingest measured and could not store, ledger lines
 // no reader knows, and a bounded re-read of a call whose consent cannot be read yet (#1046,
 // +1.3 KB over next's 694.0 KB, after 1.7 KB of savings in telemetry code); 2.0% measured headroom.
+// 725 KB: 711.7 KB, Kilo flat Rules: emission, link relocation, `instructions` merge, install skip
+// (+5.7 KB over next's 706.0 KB); 1.9% measured headroom.
 const budgetKB = pkg.bundleBudgetKB ?? 500;
 const budgetBytes = budgetKB * 1024;
 

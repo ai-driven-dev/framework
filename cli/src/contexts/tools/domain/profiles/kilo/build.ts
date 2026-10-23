@@ -1,15 +1,19 @@
 /** Kilo's project distribution is flat. Its config and MCP format follow the OpenCode runtime,
  * but Kilo has its own .kilo/ discovery paths and bundled base configuration. */
 
-import { join } from "node:path";
+import { join, relative } from "node:path";
 import { parseFrontmatter, serializeFrontmatter } from "../../../../../kernel/markdown.js";
 import {
   flatHooksPathWithLoaderEntry,
   flatMcpKeyPrefix,
   genericFlatAgentPath,
+  genericFlatRulePath,
   genericFlatSkillTreePath,
 } from "../../../../../kernel/materialization/flat-paths.js";
-import { rewriteRelativeLinks } from "../../../../../kernel/materialization/relative-link-rewrite.js";
+import {
+  relocateRelativeLinks,
+  rewriteRelativeLinks,
+} from "../../../../../kernel/materialization/relative-link-rewrite.js";
 import type { FileReader } from "../../../../../kernel/ports/file-reader.js";
 import type { FileWriter } from "../../../../../kernel/ports/file-writer.js";
 import type { ToolBuildContract } from "../../build-contract.js";
@@ -40,10 +44,19 @@ function kiloFlatSkillPath(plugin: string, rel: string): string {
   return genericFlatSkillTreePath(`${KILO_DIRECTORY}skills/`, plugin, rel.replace(/^skills\//, ""));
 }
 
-function kiloFlatResolveTarget(plugin: string, rel: string): string {
+function kiloFlatRulePath(plugin: string, rel: string): string {
+  return genericFlatRulePath(`${KILO_DIRECTORY}rules/`, plugin, rel);
+}
+
+function kiloFlatEmittedTarget(plugin: string, rel: string): string | null {
   if (rel.startsWith("agents/")) return kiloFlatAgentPath(plugin, rel);
   if (rel.startsWith("skills/")) return kiloFlatSkillPath(plugin, rel);
-  return rel;
+  if (rel.startsWith("rules/") && rel.endsWith(".md")) return kiloFlatRulePath(plugin, rel);
+  return null;
+}
+
+function kiloFlatResolveTarget(plugin: string, rel: string): string {
+  return kiloFlatEmittedTarget(plugin, rel) ?? rel;
 }
 
 function kiloFlatHooksPath(plugin: string, rel: string): string {
@@ -66,6 +79,39 @@ function transformKiloFlatAgent(content: string, plugin: string, outName: string
     { ...frontmatter, name: `${plugin}-${outName.replace(/\.md$/, "")}`, mode: "subagent" },
     rewrittenBody
   );
+}
+
+// Kilo loads `instructions` for every session: a `paths` scope would silently widen to all files.
+function kiloRulePathScope(content: string): unknown {
+  return parseFrontmatter(content).frontmatter.paths;
+}
+
+function transformKiloFlatRule(content: string, plugin: string, ruleRel: string): string {
+  const sourceRel = `rules/${ruleRel}`;
+  return relocateRelativeLinks(content, {
+    sourceFilePluginRelative: sourceRel,
+    materializedFileRelative: kiloFlatRulePath(plugin, sourceRel),
+    resolveTargetPath: (rel) => kiloFlatEmittedTarget(plugin, rel),
+  });
+}
+
+async function collectKiloRuleInstructions(
+  builtPlugins: readonly string[],
+  sourceDir: string,
+  fs: FsType
+): Promise<string[]> {
+  const instructions: string[] = [];
+  for (const plugin of builtPlugins) {
+    const rulesSrc = join(sourceDir, "plugins", plugin, "rules");
+    if (!(await fs.fileExists(rulesSrc))) continue;
+    for (const absPath of await fs.listFilesRecursive(rulesSrc)) {
+      if (!absPath.endsWith(".md")) continue;
+      if (kiloRulePathScope(await fs.readFile(absPath)) !== undefined) continue;
+      const rel = relative(rulesSrc, absPath).replace(/\\/g, "/");
+      instructions.push(kiloFlatRulePath(plugin, `rules/${rel}`));
+    }
+  }
+  return instructions.sort();
 }
 
 async function collectKiloMcp(
@@ -117,7 +163,13 @@ export function buildKiloFlatContract(): ToolBuildContract {
           skipIfSourceHas: KILO_PLUGIN_ENTRY_BASENAME,
         },
       },
-      rules: { supported: false },
+      rules: {
+        supported: true,
+        source: { kind: "filteredTree", srcDir: "rules", inputExt: ".md" },
+        path: kiloFlatRulePath,
+        inexpressibleScope: kiloRulePathScope,
+        transform: transformKiloFlatRule,
+      },
       commands: { supported: false },
     },
     buildMarketplaceCatalog: null,
@@ -127,8 +179,15 @@ export function buildKiloFlatContract(): ToolBuildContract {
       const existing = (await fs.fileExists(configPath)) ? await fs.readFile(configPath) : null;
       const incoming = await collectKiloMcp(builtPlugins, sourceDir, fs);
       const asset = assetProvider.loadConfigAsset("kilo", "kilo.json");
-      const base = typeof asset === "string" ? asset : JSON.stringify(asset);
-      await fs.writeFile(configPath, buildOpencodeFlatConfig(base, existing, incoming));
+      const assetJson = typeof asset === "string" ? asset : JSON.stringify(asset);
+      const instructions = await collectKiloRuleInstructions(builtPlugins, sourceDir, fs);
+      // Generated Rule paths follow the user's own `instructions`, never duplicated on rebuild.
+      const base =
+        instructions.length > 0
+          ? JSON.stringify({ ...JSON.parse(assetJson), instructions })
+          : assetJson;
+      const mergedKeys = instructions.length > 0 ? ["instructions"] : [];
+      await fs.writeFile(configPath, buildOpencodeFlatConfig(base, existing, incoming, mergedKeys));
       return 1;
     },
   };
