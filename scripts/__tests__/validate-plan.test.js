@@ -18,9 +18,21 @@ let project;
 
 const template = (name, skill = SKILL) => fs.readFileSync(path.join(skill, "assets", name), "utf8");
 
+function withoutComments(text) {
+  let out = "";
+  for (let i = 0; i < text.length; ) {
+    const open = text.indexOf("<!--", i);
+    if (open < 0) return out + text.slice(i);
+    out += text.slice(i, open);
+    const close = text.indexOf("-->", open);
+    i = close < 0 ? text.length : close + 3;
+    while (text[i] === "\n") i += 1;
+  }
+  return out;
+}
+
 function fill(tpl, tree) {
-  return tpl
-    .replace(/<!--[\s\S]*?-->\n*/g, "")
+  return withoutComments(tpl)
     .replace(/\{\{number\}\}/g, "1")
     .replace(/\{\{url\}\}/g, "https://example.test")
     .replace(/\| 1\.\.\. \|/g, "| 1 |")
