@@ -143,6 +143,13 @@ test("the root duration is intro, scenes and outro added up", () => {
   assert.match(html, new RegExp(`id="root"[^>]*data-duration="${5 + sum(plan.scenes) + 4}"`));
 });
 
+test("a scene lasts 3.5 seconds, plus 1 with a lead, plus 0.7 per row, rounded up to a half second", () => {
+  const one = { template: "terminal-demo", window: window([{ text: "a" }]) };
+
+  assert.equal(sceneDuration(one), 4.5);
+  assert.equal(sceneDuration({ ...one, lead: "Ask what a task cost." }), 5.5);
+});
+
 test("a scene with more rows lasts longer", () => {
   const few = { template: "terminal-demo", window: window([{ text: "a" }]) };
   const many = { template: "terminal-demo", window: window([{ text: "a" }, { text: "b" }, { text: "c" }]) };

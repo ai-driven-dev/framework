@@ -43,10 +43,10 @@ What a plan holds and how each part is drawn.
 | Limit | Value |
 | --- | --- |
 | intro tagline | optional and left out by default; 6 words when used |
-| intro highlights | 3, of 5 words each, drawn one per line: clear sentences, not labels |
+| intro highlights | 5, of 5 words each, drawn one per line: clear sentences, not labels |
 | scene lead | 14 words |
 | intro | 5 seconds, 6.5 with highlights |
-| scene | 4.5 seconds, plus 1 with a lead, plus 0.7 per item, rounded up to a half second |
+| scene | 3.5 seconds, plus 1 with a lead, plus 0.7 per item, rounded up to a half second |
 | outro | 4 seconds |
 | refused words | tokens, envelope, axis, transcript, payload, hook; `telemetry` stays; the demo window is not read, it shows real commands and flags |
 | themes | scenes of one theme follow each other |

@@ -189,7 +189,7 @@ const scene = {
 /** Head (2.5 s), a second to read the lead, a beat per item, and a closing pause. */
 function sceneDuration(s) {
   if (!scene[s.template]) throw new Error(`Unknown template: ${s.template}`);
-  return half(4.5 + (s.lead ? 1 : 0) + 0.7 * scene[s.template].items(s));
+  return half(3.5 + (s.lead ? 1 : 0) + 0.7 * scene[s.template].items(s));
 }
 
 const headHtml = (s, id) =>
