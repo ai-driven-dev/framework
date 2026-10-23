@@ -125,6 +125,7 @@ Dependency-free Node scripts declared in `hooks/hooks.json`; `node` must be on `
 | Skills | Links stay inside the skill directory. Flat distribution renames skills `<plugin>-<skill>`; marketplace installation preserves the tree. | [Portability guard](../scripts/__tests__/a-skill-links-only-inside-itself.test.js) |
 | Bundled scripts | Named plugin-relative in backticks, never linked. | [Portability guard](../scripts/__tests__/a-skill-links-only-inside-itself.test.js) |
 | Hook adapters | CLI owns OpenCode's shared host protocol; plugins own payload mapping. | [Delivery and compatibility](../cli/ARCHITECTURE.md#hook-adaptation) |
+| Model selection | The user and host own the concrete model and reasoning settings; no shipped skill or agent pins one, and a target build carries over a model the user wrote only where the target supports one. | [Source guard](../scripts/__tests__/model-selection.test.js) · [Build guard](../cli/tests/e2e/framework-model-inheritance.e2e.test.ts) |
 
 ## Capability discovery and addressing
 
