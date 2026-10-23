@@ -1,7 +1,7 @@
 const assert = require("node:assert/strict");
 const test = require("node:test");
 
-const { buildHtml, musicSegments, musicSections, sceneDuration, soundCues, soundTrack, totalDuration } = require("../../.claude/skills/release-video/assets/render-release-video.cjs");
+const { buildHtml, measureRms, musicSegments, musicSections, sceneDuration, soundCues, soundTrack, totalDuration } = require("../../.claude/skills/release-video/assets/render-release-video.cjs");
 
 const window = (rows) => ({ label: "Claude Code · ~/acme-app", rows });
 
@@ -141,6 +141,13 @@ test("the root duration is intro, scenes and outro added up", () => {
   const html = buildHtml(plan, { version: "5.13" });
 
   assert.match(html, new RegExp(`id="root"[^>]*data-duration="${5 + sum(plan.scenes) + 4}"`));
+});
+
+test("a scene lasts 3.5 seconds, plus 1 with a lead, plus 0.7 per row, rounded up to a half second", () => {
+  const one = { template: "terminal-demo", window: window([{ text: "a" }]) };
+
+  assert.equal(sceneDuration(one), 4.5);
+  assert.equal(sceneDuration({ ...one, lead: "Ask what a task cost." }), 5.5);
 });
 
 test("a scene with more rows lasts longer", () => {
@@ -305,7 +312,7 @@ test("a pop sounds as each window or item slides in", () => {
 
 test("the outro has no sound of its own: the ending of the music opens it", () => {
   assert.equal(soundCues(plan, { version: "5.13" }).filter((c) => c.kind === "chime").length, 0);
-  assert.equal(cuesOf("pop", totalDuration(plan) - 4, totalDuration(plan)).length, 2);
+  assert.equal(cuesOf("pop", totalDuration(plan) - 4, totalDuration(plan)).length, 4, "logo, title and two items");
 });
 
 test("the sound track is a wav as long as the video, loud on a cue and silent between", () => {
@@ -317,7 +324,7 @@ test("the sound track is a wav as long as the video, loud on a cue and silent be
   assert.equal(wav.toString("latin1", 0, 4), "RIFF");
   assert.equal(wav.length, 44 + 2 * Math.round(totalDuration(plan) * rate));
   assert.ok(peakNear(5 + 1.3) > 1000, "silent on a click");
-  assert.equal(peakNear(5 + 0.3), 0, "noise between cues");
+  assert.equal(peakNear(4.5), 0, "noise between cues");
 });
 
 test("the sound track plays under the whole video, quieter than the picture would", () => {
@@ -363,4 +370,62 @@ test("no pop is cued for a phrase the intro does not draw", () => {
   const pops = soundCues(withTags, { version: "5.13" }).filter((c) => c.kind === "pop" && c.t < 4).map((c) => c.t);
 
   assert.deepEqual(pops, [0.1, 2, 2.3]);
+});
+
+const full = {
+  scenes: [{ template: "terminal-demo", pill: "p", title: "t", lead: "l", window: window([{ prompt: "a" }, { text: "b" }]), note: "n" }],
+  skipped: [],
+};
+const inRange = (p, from, to) => soundCues(p, { version: "5.13" }).filter((c) => c.t >= from && c.t < to);
+
+test("everything that appears in a scene has a sound at its own time", () => {
+  assert.deepEqual(inRange(full, 5, 8), [
+    { kind: "whoosh", t: 5 },
+    { kind: "tick", t: 5.14 },
+    { kind: "pop", t: 5.28 },
+    { kind: "tick", t: 5.5 },
+    { kind: "pop", t: 5.63 },
+    { kind: "click", t: 6.3 },
+    { kind: "click", t: 6.75 },
+    { kind: "pop", t: 7.5 },
+  ]);
+});
+
+test("a scene without a lead or a note has no sound for them", () => {
+  const bare = { scenes: [{ ...full.scenes[0], lead: undefined, note: undefined }], skipped: [] };
+
+  assert.deepEqual(inRange(bare, 5, 8).map((c) => c.t), [5, 5.14, 5.28, 5.63, 6.3, 6.75]);
+});
+
+test("the intro pill and release label, the outro logo and title each have a sound", () => {
+  const end = totalDuration(full) - 4;
+
+  assert.deepEqual(inRange(full, 0.3, 0.7).map((c) => [c.kind, c.t]), [["tick", 0.4], ["tick", 0.55]]);
+  assert.deepEqual(inRange(full, end, end + 0.5).map((c) => [c.kind, c.t]), [["pop", end + 0.07], ["pop", end + 0.28]]);
+});
+
+test("the sounds are smooth, not the 5-bit steps of a chip tune", () => {
+  const wav = soundTrack(full, { version: "5.13" });
+  const levels = new Set();
+  for (let i = 44; i < wav.length; i += 2) levels.add(wav.readInt16LE(i));
+
+  assert.ok(levels.size > 500, `only ${levels.size} sample values`);
+});
+
+test("a hook only a few dB above the bed is still found", () => {
+  const close = [-30, ...Array(13).fill(-21), ...Array(32).fill(-25.5), ...Array(8).fill(-24), -61];
+
+  assert.deepEqual(musicSections(close), { headStart: 0.5, headEnd: 7, tailStart: 23, tailEnd: 27 });
+});
+
+const kit = require("node:path").join(__dirname, "../../.claude/skills/release-video/assets/music.mp3");
+const hasFfmpeg = require("node:child_process").spawnSync("ffmpeg", ["-version"]).status === 0;
+
+test("the shipped track has a hook as long as the intro with tags, a bed of whole bars and a 4 s ending", { skip: !hasFfmpeg }, () => {
+  const sections = musicSections(measureRms(kit));
+
+  assert.ok(sections, "no hook found");
+  assert.equal(sections.headEnd, 6.5);
+  assert.equal(sections.tailEnd - sections.tailStart, 4);
+  assert.equal((sections.tailStart - sections.headEnd) % 2, 0, "the bed is not a whole number of bars");
 });

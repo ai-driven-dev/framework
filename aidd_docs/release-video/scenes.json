@@ -90,6 +90,184 @@
       "note": "Example figures."
     },
     {
+      "template": "bullet-grid",
+      "pill": "Brainstorm",
+      "title": "Brainstorm, cut down",
+      "accent": "to the essentials.",
+      "lead": "A shorter skill that a small model can follow.",
+      "cells": [
+        {
+          "title": "13 → 8 files",
+          "detail": "what the skill is made of"
+        },
+        {
+          "title": "1,506 → ~940 words",
+          "detail": "−38% to read"
+        },
+        {
+          "title": "4 → 3 steps",
+          "detail": "capture, explore, conclude"
+        }
+      ],
+      "note": "Skill before and after."
+    },
+    {
+      "template": "terminal-demo",
+      "pill": "Brainstorm",
+      "title": "No guess passes",
+      "accent": "as a fact.",
+      "lead": "Every point of the brief is clear, assumed or open.",
+      "surfaces": [
+        "aidd-refine:01-brainstorm"
+      ],
+      "window": {
+        "label": "Claude Code · ~/acme-app",
+        "rows": [
+          {
+            "prompt": "/aidd-refine:01-brainstorm a way to share reports"
+          },
+          {
+            "text": "Who reads these reports, a teammate or a client?",
+            "tone": "amb"
+          },
+          {
+            "text": "Clear: clients read the reports",
+            "tone": "grn"
+          },
+          {
+            "text": "Assumed: a weekly report is enough",
+            "tone": "amb"
+          },
+          {
+            "text": "Open: who owns the data?",
+            "tone": "blu"
+          },
+          {
+            "text": "Approve, correct, or explore more?",
+            "tone": "amb"
+          }
+        ]
+      },
+      "note": "Example run."
+    },
+    {
+      "template": "bullet-grid",
+      "pill": "Planning",
+      "title": "Planning, cut down",
+      "accent": "like brainstorm.",
+      "lead": "Same three steps as brainstorm, with half the instructions.",
+      "cells": [
+        {
+          "title": "968 → 478 words",
+          "detail": "−51% of instructions"
+        },
+        {
+          "title": "1,750 → 1,322 words",
+          "detail": "−24% of everything a run reads"
+        },
+        {
+          "title": "4 → 3 steps",
+          "detail": "capture, explore, conclude"
+        }
+      ],
+      "note": "Skill before and after."
+    },
+    {
+      "template": "two-panels",
+      "pill": "Planning",
+      "title": "A plan that says",
+      "accent": "what it touches.",
+      "lead": "Phases name their order, and the impact is spelled out.",
+      "panels": [
+        {
+          "label": "plan.md · Phases",
+          "flex": 1,
+          "rows": [
+            {
+              "table": {
+                "head": [
+                  "Phase",
+                  "Depends on"
+                ],
+                "rows": [
+                  [
+                    "1 safety net",
+                    "none"
+                  ],
+                  [
+                    "2 theme switch",
+                    "1"
+                  ],
+                  [
+                    "3 settings page",
+                    "2"
+                  ]
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "label": "plan.md · Impact",
+          "flex": 1,
+          "rows": [
+            {
+              "text": "Runtime: the theme is read at startup",
+              "tone": "grn"
+            },
+            {
+              "text": "Regression: print pages stay light",
+              "tone": "amb"
+            },
+            {
+              "text": "Architecture: one theme provider",
+              "tone": "blu"
+            },
+            {
+              "text": "Documentation: a settings guide section",
+              "tone": "pnk"
+            }
+          ]
+        }
+      ],
+      "note": "Example plan."
+    },
+    {
+      "template": "terminal-demo",
+      "pill": "Planning",
+      "title": "Plans checked by",
+      "accent": "an independent judge.",
+      "lead": "A second reader checks the plan: no score, only what is missing.",
+      "surfaces": [
+        "aidd-dev:01-plan"
+      ],
+      "window": {
+        "label": "Claude Code · ~/acme-app",
+        "rows": [
+          {
+            "prompt": "/aidd-dev:01-plan add dark mode"
+          },
+          {
+            "text": "plan written, an independent reader checks it…",
+            "tone": "dim"
+          },
+          {
+            "text": "✗ Reading: the login page was not read",
+            "tone": "amb"
+          },
+          {
+            "text": "✗ Evidence: the settings page impact was assumed",
+            "tone": "amb"
+          },
+          {
+            "text": "Approve, correct, or explore more?",
+            "tone": "amb"
+          }
+        ]
+      },
+      "note": "Example run."
+    },
+    {
       "template": "terminal-demo",
       "pill": "Rules",
       "title": "No more rules",
@@ -128,10 +306,11 @@
       "template": "contributors",
       "pill": "Team",
       "title": "Shipped by",
-      "accent": "2 contributors.",
+      "accent": "3 contributors.",
       "logins": [
         "alexsoyes",
-        "blafourcade"
+        "blafourcade",
+        "waewoo"
       ]
     }
   ],
@@ -144,14 +323,17 @@
   "intro": {
     "highlights": [
       "Telemetry now covers Codex",
-      "Telemetry report split by tool",
+      "Brainstorm and plan, much leaner",
+      "Brainstorm separates fact from guess",
+      "Plans get an independent judge",
       "Rules checked for conflicts"
     ]
   },
   "youtube": {
     "themes": [
       "Télémétrie",
-      "Codex",
+      "Plan",
+      "Brainstorm",
       "Règles"
     ],
     "programme": [
@@ -162,6 +344,14 @@
       {
         "surface": "aidd-telemetry:00-init",
         "text": "activer la mesure et distinguer le résultat par outil, Claude Code ou Codex."
+      },
+      {
+        "surface": "aidd-dev:01-plan",
+        "text": "alléger le plan de moitié, y lister l'ordre des phases et l'impact, et le faire relire par un juge indépendant."
+      },
+      {
+        "surface": "aidd-refine:01-brainstorm",
+        "text": "alléger le brainstorm et distinguer ce qui est établi, supposé ou resté ouvert."
       },
       {
         "surface": "aidd-context:05-rule-generate",
