@@ -25,7 +25,6 @@ ALL_COMMANDS=(
   "setup" "doctor" "sync" "translate" "update" "clean"
   "framework install" "framework update" "framework remove" "framework rules"
   "framework validate-recipes"
-  "agents install" "agents remove"
   "plugin remove" "plugin list" "plugin install" "plugin search" "plugin update"
   "marketplace add" "marketplace list" "marketplace remove" "marketplace refresh" "marketplace check"
   "auth login" "auth logout" "auth status"
@@ -65,7 +64,7 @@ project_tree_hash() {
   ' )
 }
 
-PARENTS=" plugin marketplace auth framework telemetry agents "
+PARENTS=" plugin marketplace auth framework telemetry "
 # A parent one level deeper than PARENTS, so a covered key needs three words there, not two.
 GRANDPARENTS=" "
 derive_key() {
@@ -179,34 +178,6 @@ run "unknown command exits non-zero" 1 "" "$ROOT" -- definitely-not-a-command
 section "recipe validation (bundled)"
 run "framework validate-recipes (bundled)" 0 "PASS: 3 recipe(s) validated." "$ROOT" -- \
   framework validate-recipes --bundled "$ROOT/../plugins/aidd-context/skills/12-cook/assets/recipes"
-
-section "agents (explicit opt-in)"
-P_AGENTS=$(new_project)
-run "agents install (OpenAI / Codex)" 0 "4 agent files installed" "$P_AGENTS" -- \
-  agents install --provider openai --ide codex
-codex_agent="$P_AGENTS/.codex/agents/aidd-dev-explorer.toml"
-if [[ -f "$codex_agent" ]] && grep -qF 'model = "gpt-6-luna"' "$codex_agent" \
-  && grep -qF 'model_reasoning_effort = "medium"' "$codex_agent"; then
-  ok "Codex agent carries the OpenAI model and medium effort"
-else
-  bad "Codex agent lacks the requested native model or effort"
-fi
-run "agents install (unchanged repeat)" 0 "0 agent files installed" "$P_AGENTS" -- \
-  agents install --provider openai --ide codex
-run "agents remove (Codex)" 0 "4 agent files removed" "$P_AGENTS" -- agents remove --ide codex
-run "agents install (Anthropic / Claude Code)" 0 "4 agent files installed" "$P_AGENTS" -- \
-  agents install --provider anthropic --ide claude-code
-claude_agent="$P_AGENTS/.claude/agents/aidd-dev-explorer.md"
-if [[ -f "$claude_agent" ]] && grep -qF 'claude-haiku-5-5' "$claude_agent" \
-  && grep -q 'effort: .*medium' "$claude_agent"; then
-  ok "Claude Code agent carries the Anthropic model and medium effort"
-else
-  bad "Claude Code agent lacks the requested native model or effort"
-fi
-run "agents remove (Claude Code)" 0 "4 agent files removed" "$P_AGENTS" -- agents remove --ide claude-code
-[[ ! -f "$codex_agent" && ! -f "$claude_agent" && ! -f "$P_AGENTS/.aidd/agents.json" ]] \
-  && ok "agents remove clears owned files and the empty ledger" \
-  || bad "agents remove left native files or an empty ledger"
 
 section "translate (local fixture)"
 FW_OUT="$TMPROOT/fw-out"

@@ -1,6 +1,7 @@
 ---
 name: validator
 description: Validates that delivered work satisfies the request and acceptance criteria. Use to independently confirm completion and explain failures or missing verification.
+tools: Read, Grep, Glob, Bash
 ---
 
 # Role

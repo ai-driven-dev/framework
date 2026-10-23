@@ -1,25 +1,18 @@
 # Sub-agent verification
 
-Current state, 2026-10-21, merged with next. Behavior and sources are in [the agent guide](../../../../docs/SUBAGENTS.md).
+Current state, 2026-10-23, after the review of #1027. Behavior and sources are in [the agent guide](../../../../docs/SUBAGENTS.md).
 
 ## Scope
 
-- **Agents:** explorer, executor, validator and reviewer ship with the CLI, outside plugins. `aidd agents install --provider --ide` writes them per project; `--scope user` writes them to the IDE's user directory (Claude Code, Codex, OpenCode). Ownership hashes guard every write; retired roles are removed when unmodified.
-- **Models:** [agent-models.json](../../../../cli/src/contexts/tools/domain/formats/agent-models.json) maps roles to `main`, `standard` and `light` profiles per provider.
-- **Main model:** opt-in with `--main`. The prior value is recorded and restored on removal; a value changed since, or TOML that cannot be edited line by line, is refused. OpenCode's root model takes no variant.
-- **Reload:** `make reload` runs `agents install --scope user` for each IDE listed in `scripts/reload-agents.json`, before any plugin change.
+- **Agents:** explorer, executor, validator and reviewer ship in `plugins/aidd-orchestrator/agents/`, installed with the plugin. No model is pinned.
+- **Read-only:** explorer (`Read, Grep, Glob`) and validator (`Read, Grep, Glob, Bash`) declare a Claude Code `tools` allowlist. Copilot reads it through its aliases; the OpenCode build turns it into a V2 `permissions` rule denying `edit`; Codex, Cursor and Kilo drop it. The reviewer stays unrestricted because `/aidd-dev:05-review` writes its report.
+- **Out of scope:** the `aidd agents` command, per-provider models and effort, and the reload opt-in moved to a follow-up change; the code is at `f7786c5`.
 
 ## Checks
 
-- **CLI:** 7,070 tests pass, one skipped. Typecheck, lint, architecture rules, knip and duplication (1.44%) pass. Bundle 733.5 KB against 742 KB.
-- **Smoke:** 140 checks pass, one remote check skipped; 34/34 leaf commands exercised.
-- **Reload:** 539 script tests pass, including reload opt-in order, skips with a reason, and refusal before plugin changes.
-- **Edge cases:** unit cases cover multi-line strings, quoted and dotted keys, nested arrays, inline comments, CRLF and a JSON BOM; integration cases cover user scope, restore on removal, retired roles and rollback of both registries.
-
-## Earlier runtime probes
-
-Native probes on 2026-10-14 and 2026-10-15 confirmed that Claude Code, Codex, OpenCode, Copilot and Cursor dispatch the four roles in fresh contexts. They predate the current agent bodies and model profiles. One delegated-versus-direct observation per task gave no general cost or speed claim.
+- **Build output:** a flat build per host writes the expected frontmatter: Claude Code and Copilot keep `tools`, OpenCode gets the `permissions` rule, Codex and Cursor carry neither.
+- **OpenCode runtime:** `opencode debug agents` loaded the four agents with a final `edit` rule of `deny` for explorer and validator, using the V1 `permission` map. The V2 `permissions` list now emitted is covered by unit tests only: after a restart, this environment stopped discovering project agents at all.
 
 ## Limits
 
-Headers and files do not prove account access or the model and effort a host applies at runtime.
+Only the explorer is fully read-only; the validator keeps a shell, through which it can still write.

@@ -1,4 +1,3 @@
-import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { copilot } from "../../../../../../src/contexts/tools/domain/profiles/copilot/profile.js";
 
@@ -75,16 +74,6 @@ describe("copilot agents", () => {
         description: "Helps",
         "include-custom-instructions": true,
       });
-    });
-  });
-
-  describe("capabilities.agents.params.userDirectory()", () => {
-    it("follows COPILOT_HOME, else ~/.copilot", () => {
-      const userDirectory = copilot.capabilities.agents.params.userDirectory;
-      expect(
-        userDirectory?.("/home", (name) => (name === "COPILOT_HOME" ? "/cp" : undefined))
-      ).toBe("/cp");
-      expect(userDirectory?.("/home", () => undefined)).toBe(join("/home", ".copilot"));
     });
   });
 

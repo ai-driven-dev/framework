@@ -1751,10 +1751,10 @@
     ".opencode/plugin/aidd-context-hooks.js": "4d4de407a2afae13045eaf8291efac247717f9fdbe7d983be9f977eb947e4b6e",
     ".opencode/hooks/opencode-events.js": "ce9363e18f1f5b11c401a30bd1d8643dcdd72ced0182d97baae763276216babf",
     ".opencode/hooks/aidd-context/update_memory.js": "140d7db788452f5f4c32316d522f595a36e06638b19a42d32e42a1a7324b7149",
-    ".opencode/agents/aidd-async-dev-async-orchestrator.md": "3eb709fb7da8f6df7d4d76c7c69fce0a00b596d7b9522b5dcf3898c7a94d91cf",
-    ".opencode/agents/aidd-dev-implementer.md": "4b4fe709e0ed56b097b697a49f6adfc200cccaad36a0e978a12e4f062a3a5e38",
-    ".opencode/agents/aidd-dev-planner.md": "c83648c34068b6fa762fdc6b073e31cb3e9dfe5bd5bf2fd7e2cb4ad3e865feee",
-    ".opencode/agents/aidd-dev-reviewer.md": "30e2dbb93309d23fc99cbce36a4fcfd0b6d76e49c3425979827727327ba697a6"
+    ".opencode/agents/aidd-async-dev-async-orchestrator.md": "cff54df5e690a947431982b41ea4172bb4a1306df11fb6a5953491112fcd0ea7",
+    ".opencode/agents/aidd-dev-implementer.md": "ec7bd170333d20033679ffdab1976a810067c415dd98b985154f907e2bce78b3",
+    ".opencode/agents/aidd-dev-planner.md": "c832e2830e5148d9cd44daa408636e3e93b914570ea579ee6fc40ec562143495",
+    ".opencode/agents/aidd-dev-reviewer.md": "58b25536395be2be05f14a6213b667011dd16f94fca689cedfc46cda7438e2b9"
   },
   "kilo:flat": {
     ".kilo/kilo.jsonc": "3710c8020f13262b04d8e30ca8eee430c9bf07c7a8bc557d6e9dfb4dffaa8478",

@@ -143,7 +143,6 @@ export const codex: AiTool<
       toolSuffix: TOOL_SUFFIX,
       format: "toml",
       effortField: "model_reasoning_effort",
-      userDirectory: (home, env) => env("CODEX_HOME") || join(home, ".codex"),
     }),
     skills: new SkillsCapability({
       prefix: "aidd-",

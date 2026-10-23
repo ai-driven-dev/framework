@@ -12,8 +12,6 @@ const PUBLIC_MODULES: Readonly<Record<string, readonly string[]>> = {
     // the tool contract and lookup surface
     "src/contexts/tools/domain/contracts.ts",
     "src/contexts/tools/domain/capabilities/agents-capability.ts",
-    "src/contexts/tools/domain/formats/agent-models.ts",
-    "src/contexts/tools/domain/formats/main-model-config.ts",
     "src/contexts/tools/domain/registry.ts",
     "src/contexts/tools/domain/build-contract.ts",
     // co-owned configuration (settings.json, .mcp.json et al.)
@@ -85,7 +83,6 @@ const PUBLIC_MODULES: Readonly<Record<string, readonly string[]>> = {
   // The largest context: while it had no entry the mechanism below skipped every framework
   // file, so its interior was reached unchecked. Measured, composition root excluded.
   framework: [
-    "src/contexts/framework/application/agents/manage-agents-use-case.ts",
     "src/contexts/framework/domain/recipes/recipe-validation.ts",
     // the rule inventory `framework rules` prints, one row per installed rule
     "src/contexts/framework/domain/installed-rule.ts",

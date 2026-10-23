@@ -26,13 +26,15 @@ The canonical agent carries `name` and `description`. Emit those a row accepts, 
 | -------------- | ----------------------------------------------------------- |
 | Claude Code    | `name`, `description`, optional `model`, `effort`, `color`, `tools` |
 | Cursor         | `name`, `description`, optional `model`, `readonly`, `is_background` |
-| OpenCode V2    | `description`, `mode: subagent`, optional `model` as `provider/model#variant`, `permissions` |
+| OpenCode V2    | `description`, `mode: subagent`, optional `model` as `provider/model#variant`, `permissions` as a list of `action`, `resource`, `effect` rules. No `name`: the file name is the ID, and with `name` OpenCode 2.1.2 ignores `permissions` |
 | GitHub Copilot | `name`, `description`, optional `model`, `reasoningEffort`, `tools`, `include-custom-instructions` |
 | Codex CLI      | `name`, `description`, optional `model`, `model_reasoning_effort` |
 
+Write OpenCode agents for V2 only: V2 still loads V1 definitions, and treats their `tools` and `permission` fields as legacy.
+
 Copilot subagents skip `AGENTS.md` and other repository instructions unless `include-custom-instructions: true`; set it by default.
 
-Sources: [Claude](https://code.claude.com/docs/en/sub-agents#frontmatter-reference), [Cursor](https://cursor.com/docs/subagents#file-format), [OpenCode V2](https://opencode.ai/v2/docs/agents#model), [Copilot](https://docs.github.com/en/copilot/reference/copilot-cli-reference/cli-command-reference#custom-agent-frontmatter-fields), [Codex](https://developers.openai.com/codex/subagents#custom-agent-file-schema).
+Sources: [Claude](https://code.claude.com/docs/en/sub-agents#frontmatter-reference), [Cursor](https://cursor.com/docs/subagents#file-format), [OpenCode V2](https://opencode.ai/v2/docs/agents#options), [V1 compatibility](https://opencode.ai/v2/docs/migrate-v1), [Copilot](https://docs.github.com/en/copilot/reference/copilot-cli-reference/cli-command-reference#custom-agent-frontmatter-fields), [Codex](https://developers.openai.com/codex/subagents#custom-agent-file-schema).
 
 ## Codex TOML conversion
 

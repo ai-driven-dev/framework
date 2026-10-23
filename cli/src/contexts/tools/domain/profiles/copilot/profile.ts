@@ -230,7 +230,6 @@ export const copilot: AiTool<
       format: "markdown",
       effortField: "reasoningEffort",
       userFileExt: EXT_AGENT,
-      userDirectory: (home, env) => env("COPILOT_HOME") || join(home, ".copilot"),
       buildInstallPath: (fileName) => agentsHandler.buildFilePath(fileName),
       convertFrontmatter: (fm, fileName) => agentsHandler.convertFrontmatter(fm, fileName),
     }),

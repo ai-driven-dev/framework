@@ -11,7 +11,7 @@ Unify **engineering teams** around **standardized workflows** and **shared best 
 🧱 **IDE agnostic** · 🏗️ **Legacy systems** · 🌱 **Token-optimized** · 🇫🇷 **Made in France**
 
 <p>
-  <!--counts:start--><kbd>9 plugins</kbd> · <kbd>51 skills</kbd><!--counts:end-->
+  <!--counts:start--><kbd>9 plugins</kbd> · <kbd>51 skills</kbd> · <kbd>4 agents</kbd><!--counts:end-->
 </p>
 
 [![Open Source](https://img.shields.io/badge/Open_Source-Yes-yellow?logo=open-source-initiative&logoColor=white)](https://opensource.org/)
@@ -185,9 +185,9 @@ codex plugin add aidd-context@aidd-framework   # per plugin
 
 </details>
 
-### Optional subagents (beta)
+### Subagents
 
-Optional, installed separately; plugins work without them. See the [subagent guide](docs/SUBAGENTS.md).
+Explorer, executor, validator and reviewer ship with `aidd-orchestrator`. See the [subagent guide](docs/SUBAGENTS.md).
 
 ## 🚀 Quick start
 

@@ -29,8 +29,7 @@ const BASELINE: readonly { readonly path: string; readonly injected: number }[] 
   { path: "src/contexts/framework/application/restore/restore-use-case.ts", injected: 12 },
   // Host plugin registries prove ref scope/enablement; the added native source reader independently
   // proves the current catalogue before these flows mutate it. Neither witness replaces the other.
-  // Independent opt-in agents have their own ownership record and participate in full cleanup.
-  { path: "src/contexts/framework/application/clean-use-case.ts", injected: 14 },
+  { path: "src/contexts/framework/application/clean-use-case.ts", injected: 13 },
   {
     path: "src/contexts/framework/application/flows/marketplace-sync-settings-use-case.ts",
     injected: 15,

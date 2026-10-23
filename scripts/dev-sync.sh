@@ -7,10 +7,6 @@
 # whose CLI is absent is skipped, and the first run needs network. A managed OpenCode host
 # exposes `aidd-opencode-reload` instead, and that helper decides which checkout may load.
 #
-# Agents come from scripts/reload-agents.json (or the file RELOAD_AGENTS names): each listed IDE
-# runs the built CLI's `agents install --scope user`, adding `--main` when `"main": true`.
-# The file only adds; `agents remove --scope user` undoes.
-# Agents run before plugins, so a failure changes no plugin; IDEs listed earlier stay installed.
 # Global rules: sync only the Agents section in the managed block, preserving personal
 # rules. First OpenCode sync keeps its Claude personal-rule fallback unless disabled.
 # Paths honor native home/cache overrides; explicit task paths take precedence.
@@ -41,7 +37,6 @@ CODEX_CACHE="${CODEX_CACHE:-${CODEX_HOME:-$HOME/.codex}/plugins/cache}"
 CLAUDE_CACHE="${CLAUDE_CACHE:-${CLAUDE_CODE_PLUGIN_CACHE_DIR:-${CLAUDE_CONFIG_DIR:-$HOME/.claude}/plugins}/cache}"
 OPENCODE_SKILLS="${OPENCODE_SKILLS:-${XDG_CONFIG_HOME:-$HOME/.config}/opencode/skills}"
 CURSOR_PLUGINS="${CURSOR_PLUGINS:-$HOME/.cursor/plugins/local}"
-RELOAD_AGENTS="${RELOAD_AGENTS:-$FW/scripts/reload-agents.json}"
 CODEX_INSTRUCTIONS="${CODEX_INSTRUCTIONS:-${CODEX_HOME:-$HOME/.codex}/AGENTS.md}"
 CLAUDE_INSTRUCTIONS="${CLAUDE_INSTRUCTIONS:-${CLAUDE_CONFIG_DIR:-$HOME/.claude}/CLAUDE.md}"
 OPENCODE_INSTRUCTIONS="${OPENCODE_INSTRUCTIONS:-${XDG_CONFIG_HOME:-$HOME/.config}/opencode/AGENTS.md}"
@@ -124,54 +119,6 @@ sync_opencode_skills() {
   done
 }
 
-install_opted_in_agents() {
-  # The CLI owns paths, ownership and refusals; this only maps the opt-in file to its flags.
-  [ -f "$RELOAD_AGENTS" ] || return 0
-  local opted_in ide provider main have result
-  opted_in="$(node -e '
-    const fail = (message) => { console.error(message); process.exit(1); };
-    let config;
-    try { config = JSON.parse(require("node:fs").readFileSync(process.argv[1], "utf8")); }
-    catch (error) { fail(error.message); }
-    if (typeof config !== "object" || config === null || Array.isArray(config))
-      fail("expected an object keyed by IDE");
-    const text = (value) => typeof value === "string" && /^[\w.-]+$/.test(value);
-    for (const [ide, entry] of Object.entries(config)) {
-      if (!text(ide)) fail(`invalid IDE name "${ide}"`);
-      if (!text(entry?.provider)) fail(`${ide} needs a provider`);
-      const unknown = Object.keys(entry).filter((key) => key !== "provider" && key !== "main");
-      if (unknown.length > 0) fail(`${ide} has unknown keys: ${unknown.join(", ")}`);
-      if (entry.main !== undefined && entry.main !== true) fail(`${ide}.main must be true or omitted`);
-      console.log(`${ide}\t${entry.provider}\t${entry.main === true}`);
-    }
-  ' "$RELOAD_AGENTS")" || { echo "Invalid agent opt-in file: $RELOAD_AGENTS" >&2; return 1; }
-  [ -n "$opted_in" ] || return 0
-  printf '%-22s' "global agents"
-  if [ ! -f "$FW/cli/dist/cli.js" ]; then echo " skip (no built CLI; run make reload)"; return 0; fi
-  while IFS=$'\t' read -r ide provider main; do
-    case "$ide" in
-      claude-code) have="$HAVE_CLAUDE" ;;
-      codex) have="$HAVE_CODEX" ;;
-      copilot) have="$HAVE_COPILOT" ;;
-      opencode) have="$HAVE_OPENCODE"; [ "$HAVE_MANAGED_OPENCODE" = 0 ] || have=managed ;;
-      *) have=1 ;;  # the CLI rejects an IDE without user-level agents
-    esac
-    case "$have" in
-      0) printf ' %s:skip(not installed)' "$ide"; continue ;;
-      managed) printf ' %s:skip(managed host)' "$ide"; continue ;;
-    esac
-    local -a args=(agents install --scope user --ide "$ide" --provider "$provider")
-    [ "$main" != true ] || args+=(--main)
-    if ! result="$(node "$FW/cli/dist/cli.js" "${args[@]}" 2>&1)"; then
-      echo " $ide:FAIL"; printf '%s\n' "$result" >&2
-      echo "Fix the cause, or rebuild with 'pnpm --dir cli build' if the CLI predates this checkout." >&2
-      return 1
-    fi
-    if [ "$main" = true ]; then printf ' %s:ok+main' "$ide"; else printf ' %s:ok' "$ide"; fi
-  done <<<"$opted_in"
-  echo
-}
-
 register_marketplace() {
   case "$1" in
     # Codex needs the native .codex-plugin tree.
@@ -251,8 +198,6 @@ sync_one() {
 if [ "$HAVE_CODEX" = 0 ] && [ "$HAVE_CLAUDE" = 0 ] && [ "$HAVE_OPENCODE" = 0 ] && [ "$HAVE_MANAGED_OPENCODE" = 0 ] && [ "$HAVE_COPILOT" = 0 ] && [ "$HAVE_CURSOR" = 0 ]; then
   echo "No supported host installation found - nothing to install."; exit 0
 fi
-
-install_opted_in_agents || exit 1
 
 targets=()
 for d in "$FW"/plugins/*/; do targets+=("$(basename "$d")"); done

@@ -5,6 +5,7 @@ import type {
 } from "../../../../../../src/contexts/tools/domain/build-contract.js";
 import {
   buildOpencodeFlatContract,
+  toOpencodeAgentFrontmatter,
   transformMcpToOpencode,
 } from "../../../../../../src/contexts/tools/domain/profiles/opencode/build.js";
 import { InMemoryFileAdapter } from "../../../../../helpers/ports/in-memory-file-adapter.js";
@@ -77,6 +78,38 @@ describe("transformMcpToOpencode()", () => {
   it("refuses a config that is null or a bare value", () => {
     expect(() => transformMcpToOpencode("null")).toThrow("MCP config must be a JSON object");
     expect(() => transformMcpToOpencode("42")).toThrow("MCP config must be a JSON object");
+  });
+});
+
+describe("toOpencodeAgentFrontmatter()", () => {
+  it("denies edits for a Claude allowlist holding no write tool, and drops the allowlist", () => {
+    expect(
+      toOpencodeAgentFrontmatter({ description: "d", tools: "Read, Grep, Bash" })
+    ).toStrictEqual({
+      description: "d",
+      permissions: [{ action: "edit", resource: "*", effect: "deny" }],
+    });
+  });
+
+  it("drops an allowlist holding a write tool without restricting edits", () => {
+    expect(toOpencodeAgentFrontmatter({ description: "d", tools: ["Read", "Edit"] })).toStrictEqual(
+      {
+        description: "d",
+      }
+    );
+  });
+
+  it("leaves an agent without an allowlist unchanged", () => {
+    expect(toOpencodeAgentFrontmatter({ description: "d" })).toStrictEqual({ description: "d" });
+  });
+
+  it("drops the name, which would make OpenCode ignore the agent's permissions", () => {
+    expect(
+      toOpencodeAgentFrontmatter({ name: "explorer", description: "d", tools: "Read" })
+    ).toStrictEqual({
+      description: "d",
+      permissions: [{ action: "edit", resource: "*", effect: "deny" }],
+    });
   });
 });
 
@@ -164,13 +197,12 @@ describe("buildOpencodeFlatContract()", () => {
     );
   });
 
-  it("declares an agent a subagent, renames it after its plugin, and points its references at their flat destinations", () => {
+  it("declares an agent a subagent, leaves its ID to the file name, and points its references at their flat destinations", () => {
     const transform = supported(buildOpencodeFlatContract().artifacts.agents).transform;
 
     expect(transform?.(AGENT_SOURCE, "aidd-dev", "planner.md")).toBe(
       [
         "---",
-        "name: 'aidd-dev-planner'",
         "description: 'Plans the work'",
         "mode: 'subagent'",
         "---",
@@ -179,16 +211,6 @@ describe("buildOpencodeFlatContract()", () => {
         "Run [journal.cjs](../../hooks/journal.cjs)",
         "",
       ].join("\n")
-    );
-  });
-
-  it("drops only the trailing .md from the name it gives a flat agent", () => {
-    const transform = supported(buildOpencodeFlatContract().artifacts.agents).transform;
-
-    expect(
-      transform?.("---\ndescription: Helps\n---\nBody.\n", "aidd-dev", "notes.md-helper.md")
-    ).toBe(
-      "---\ndescription: 'Helps'\nname: 'aidd-dev-notes.md-helper'\nmode: 'subagent'\n---\nBody.\n"
     );
   });
 

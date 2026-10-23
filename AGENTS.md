@@ -33,16 +33,14 @@
 
 ## Agents
 
-When you own the overall flow, fan out genuinely independent subtasks to available host agents by responsibility when coordination costs less than serial work. The caller owns scope, delegation, and final acceptance.
+When you own the overall flow, fan out genuinely independent subtasks to available host agents by responsibility when coordination costs less than serial work. The caller owns scope, delegation, and final acceptance. Responsibilities:
 
-| Responsibility | Agent when installed |
-| --- | --- |
-| Answer a scoped codebase question with sources | `aidd-dev-explorer` |
-| Implement assigned work and verify it | `aidd-dev-executor` |
-| Confirm the outcome meets its acceptance criteria | `aidd-dev-validator` |
-| Review quality, coherence, and needless complexity | `aidd-dev-reviewer` |
+- Answer a scoped codebase question with sources.
+- Implement assigned work and verify it.
+- Confirm the outcome meets its acceptance criteria.
+- Review quality, coherence, and needless complexity.
 
-Without them, give the same brief to a general-purpose agent.
+Without a matching agent, give the same brief to the host's default subagent.
 
 ## Memory Management
 

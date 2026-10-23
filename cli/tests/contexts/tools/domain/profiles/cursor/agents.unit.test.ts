@@ -27,10 +27,6 @@ describe("cursor agents", () => {
         )
       ).toBe('---\nname: "explorer"\nmodel: "m[effort=medium]"\n---\nBody');
     });
-
-    it("declares no user directory: the Cursor CLI does not load user agents", () => {
-      expect(cursor.capabilities.agents.params.userDirectory).toBeUndefined();
-    });
   });
 
   describe("capabilities.agents.buildInstallPath()", () => {

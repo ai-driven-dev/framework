@@ -13,7 +13,6 @@ src/
 │   │   └── infrastructure/
 │   ├── framework/    # the installation record and everything done to a project
 │   │   ├── application/
-│   │   │   ├── agents/       # opt-in native agents and file ownership
 │   │   │   ├── clean/
 │   │   │   ├── doctor/
 │   │   │   ├── flows/

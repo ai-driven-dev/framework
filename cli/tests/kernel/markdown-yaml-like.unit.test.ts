@@ -115,6 +115,12 @@ describe("serializeFrontmatter, line by line", () => {
     );
   });
 
+  it("writes a list of records as block items with quoted fields", () => {
+    expect(serializeFrontmatter({ permissions: [{ action: "edit", resource: "*" }] }, "body")).toBe(
+      "---\npermissions:\n  - action: 'edit'\n    resource: '*'\n---\nbody"
+    );
+  });
+
   it("quotes a value that only starts with a bracket", () => {
     expect(serializeFrontmatter({ a: "[open" }, "body")).toBe("---\na: '[open'\n---\nbody");
   });

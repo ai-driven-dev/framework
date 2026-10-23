@@ -1,5 +1,0 @@
-{
-  "claude-code": { "provider": "anthropic", "main": true },
-  "codex": { "provider": "openai", "main": true },
-  "opencode": { "provider": "mistral", "main": true }
-}
