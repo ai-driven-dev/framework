@@ -13,13 +13,13 @@ Classify every finding in one category:
 5. Tools and permissions: refusals, timeouts, truncated output, a tool chosen against the one the project names.
 6. Context: compactions, large reads, oversized outputs kept.
 7. Validation and stopping: done without evidence, never concluding, checks skipped or replayed.
-8. Human interventions: every user message after the first, and why it was needed.
+8. Interventions: every message after the first, from the user or the parent, and why it was needed.
 
 Report format:
 
 ```markdown
 # <session title> (<id>)
-Duration, messages, user messages, compactions, delegations, tool errors.
+Duration, messages, interventions, compactions, delegations, tool errors.
 
 ## Timeline (10 to 20 lines)
 
@@ -28,15 +28,16 @@ Duration, messages, user messages, compactions, delegations, tool errors.
 - Category: 1..8
 - Evidence: [sequence] and a quote of three lines at most
 - Instruction involved: file and passage, when identifiable
-- Why a smaller model loses its way here
 - Smallest fix: remove, clarify, or move; add text only when nothing else works
 
-## User messages (sequence and one line each)
+## Interventions (sequence and one line each)
 
 ## Raw counts
+- Tokens and cost, when exposed
+- Tool calls and tool errors by name
 - Files read more than once
 - Commands replayed identically
-- Tool errors by name
+- Waits by polling
 ```
 
 Invent nothing. Say which parts you did not read.
