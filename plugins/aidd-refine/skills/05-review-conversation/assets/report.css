@@ -67,6 +67,8 @@ main { width: min(1040px, calc(100% - 48px)); margin: auto; }
 .finding { border-bottom: 1px solid var(--ink); }
 .finding-header { padding: 22px 0; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 18px; align-items: start; }
 .finding-title h3 { margin: 0; font-size: 18px; line-height: 1.3; }
+.finding-owner { margin: 4px 0 0; color: var(--soft-ink); font-size: 13px; }
+.unedited-findings { margin: 0; padding-left: 20px; }
 .accept-toggle { min-height: 31px; border: 1px solid var(--ink); padding: 5px 9px; display: flex; align-items: center; gap: 7px; font-weight: 700; cursor: pointer; }
 .accept-input { width: 14px; height: 14px; margin: 0; accent-color: var(--red); }
 .finding-collapse { display: grid; grid-template-rows: 1fr; transition: grid-template-rows 180ms ease-out, opacity 180ms ease-out; }

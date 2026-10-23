@@ -288,7 +288,7 @@ Three Amigos refinement, Product Briefs, Epics, User Stories, Tasks, Spikes, Def
 
 `5 skills` · stable
 
-Brainstorm, challenge, shadow-areas, fact-check, improve.
+Brainstorm, challenge, shadow-areas, fact-check, review-conversation.
 
 </td>
 <td width="33%" valign="top">
