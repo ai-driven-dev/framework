@@ -7,7 +7,6 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 ## Table of Contents
 
 - [`.claude-plugin`](#claude-plugin)
-- [`agents`](#agents)
 - [`skills`](#skills)
   - [`skills/01-plan`](#skills01-plan)
   - [`skills/02-implement`](#skills02-implement)
@@ -27,13 +26,6 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | File |
 |------|
 | [plugin.json](.claude-plugin/plugin.json) |
-
-### `agents`
-
-| File | Description |
-|------|---|
-| [checker.md](agents/checker.md) | `Judges finished work against its validator and the real need, leaving nothing unchecked. Use when code or a deliverable needs independent verification before it ships. Never edits the work, never implements the fix.` |
-| [executor.md](agents/executor.md) | `Turns a dispatched task into working, validated code that fits the project. Use when an approved scope must become code. Never plans, never judges its own work.` |
 
 ### `skills`
 
@@ -59,7 +51,7 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `actions` | [02-execute.md](skills/02-implement/actions/02-execute.md) | - |
 | `actions` | [03-finalize.md](skills/02-implement/actions/03-finalize.md) | - |
 | `references` | [blocked.md](skills/02-implement/references/blocked.md) | `Conditions that make a plan blocked (needs a human).` |
-| `-` | [SKILL.md](skills/02-implement/SKILL.md) | `Write an existing plan's code, phase by phase, until every acceptance criterion holds. Use when a plan exists and needs implementing. Do NOT use to write a plan, review a diff.` |
+| `-` | [SKILL.md](skills/02-implement/SKILL.md) | `Implement an existing plan or assigned phase until its acceptance criteria hold. Use when a plan or bounded phase needs implementing. Not for writing a plan or reviewing a diff.` |
 
 #### `skills/03-assert`
 
@@ -95,6 +87,7 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `actions` | [04-review-relevancy.md](skills/05-review/actions/04-review-relevancy.md) | - |
 | `actions` | [05-finalize.md](skills/05-review/actions/05-finalize.md) | - |
 | `assets` | [review-template.md](skills/05-review/assets/review-template.md) | - |
+| `references` | [quality-checklist.md](skills/05-review/references/quality-checklist.md) | - |
 | `references` | [report-contract.md](skills/05-review/references/report-contract.md) | - |
 | `references` | [review-rubric.md](skills/05-review/references/review-rubric.md) | - |
 | `-` | [SKILL.md](skills/05-review/SKILL.md) | `Reviews a change or a diff and says whether it is ready to ship, naming every problem with its fix. Use when the user wants a change checked before it ships. Not for fixing what the review finds, and not for auditing a whole codebase.` |

@@ -26,6 +26,13 @@ describe("buildKiloFlatContract", () => {
     expect(hooks.hooksBridge?.path("aidd-context")).toBe(".kilo/plugin/aidd-context-hooks.js");
   });
 
+  it("drops a Claude tools allowlist from a flat agent", () => {
+    const transform = supported(buildKiloFlatContract().artifacts.agents).transform;
+    expect(
+      transform?.("---\ndescription: Reads\ntools: Read, Grep\n---\nBody.\n", "aidd-dev", "x.md")
+    ).toBe("---\ndescription: 'Reads'\nname: 'aidd-dev-x'\nmode: 'subagent'\n---\nBody.\n");
+  });
+
   it("writes Kilo's project-local base config and Kilo-compatible MCP entries", async () => {
     const fs = new InMemoryFileAdapter({
       "/source/plugins/aidd-dev/.mcp.json": JSON.stringify({

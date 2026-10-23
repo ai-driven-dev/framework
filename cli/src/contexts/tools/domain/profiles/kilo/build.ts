@@ -62,8 +62,14 @@ function transformKiloFlatAgent(content: string, plugin: string, outName: string
     currentFilePluginRelative: flatRelPath,
     resolveTargetPath: (rel) => kiloFlatResolveTarget(plugin, rel),
   });
+  // Claude's `tools` allowlist means nothing to Kilo, so it is dropped rather than translated.
+  const { tools: _claudeTools, ...kiloFrontmatter } = frontmatter;
   return serializeFrontmatter(
-    { ...frontmatter, name: `${plugin}-${outName.replace(/\.md$/, "")}`, mode: "subagent" },
+    {
+      ...kiloFrontmatter,
+      name: `${plugin}-${outName.replace(/\.md$/, "")}`,
+      mode: "subagent",
+    },
     rewrittenBody
   );
 }

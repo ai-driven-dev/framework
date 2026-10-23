@@ -138,7 +138,12 @@ export const codex: AiTool<
   buildContracts: { marketplace: buildCodexContract, flat: buildCodexFlatContract },
 
   capabilities: {
-    agents: new AgentsCapability({ directory: DIRECTORY, toolSuffix: TOOL_SUFFIX, format: "toml" }),
+    agents: new AgentsCapability({
+      directory: DIRECTORY,
+      toolSuffix: TOOL_SUFFIX,
+      format: "toml",
+      effortField: "model_reasoning_effort",
+    }),
     skills: new SkillsCapability({
       prefix: "aidd-",
       buildInstallPath: buildCodexSkillFilePath,

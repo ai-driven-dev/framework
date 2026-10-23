@@ -28,7 +28,12 @@ export function parseFrontmatter(content: string): {
   return { frontmatter, body };
 }
 
-export function serializeFrontmatter(frontmatter: Record<string, unknown>, body: string): string {
+/** `quote: "double"` writes strings as YAML double-quoted scalars, for readers that keep single quotes literally. */
+export function serializeFrontmatter(
+  frontmatter: Record<string, unknown>,
+  body: string,
+  quote: "single" | "double" = "single"
+): string {
   if (Object.keys(frontmatter).length === 0) {
     return body.replace(/^\n/, "");
   }
@@ -39,6 +44,14 @@ export function serializeFrontmatter(frontmatter: Record<string, unknown>, body:
     if (Array.isArray(value)) {
       lines.push(`${key}:`);
       for (const item of value) {
+        if (item !== null && typeof item === "object") {
+          // A list of flat records, such as OpenCode's `permissions` rules.
+          Object.entries(item).forEach(([field, fieldValue], index) => {
+            const quoted = `'${String(fieldValue).replaceAll("'", "''")}'`;
+            lines.push(`${index === 0 ? "  - " : "    "}${field}: ${quoted}`);
+          });
+          continue;
+        }
         const s = String(item);
         // Glob patterns (*, ?, {) are syntactically ambiguous in YAML — quote them to prevent misinterpretation.
         lines.push(
@@ -53,7 +66,11 @@ export function serializeFrontmatter(frontmatter: Record<string, unknown>, body:
       if (s.startsWith("[") && s.endsWith("]")) {
         lines.push(`${key}: ${s}`);
       } else {
-        lines.push(`${key}: '${s.replaceAll("'", "''")}'`);
+        lines.push(
+          quote === "double"
+            ? `${key}: ${JSON.stringify(s)}`
+            : `${key}: '${s.replaceAll("'", "''")}'`
+        );
       }
     }
   }

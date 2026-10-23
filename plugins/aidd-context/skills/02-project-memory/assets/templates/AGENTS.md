@@ -31,8 +31,18 @@
 - **Verify APIs, signatures, flags, and behavior against source or docs.**
 - **Ask one sharp question when ambiguity materially changes the scope or outcome.**
 - **Batch independent operations when it saves time or context.**
-- **Fan out genuinely independent subtasks when coordination costs less than serial work.**
 - **Name by intention, scope by responsibility** ; not mechanism.
+
+## Agents
+
+Fan out genuinely independent subtasks to available host agents by responsibility when coordination costs less than serial work. The caller owns scope, delegation, and final acceptance. Responsibilities:
+
+- Answer a scoped codebase question with sources.
+- Implement assigned work and verify it.
+- Confirm the outcome meets its acceptance criteria.
+- Review quality, coherence, and needless complexity.
+
+Without a matching agent, give the same brief to the host's default subagent.
 
 ## Memory Management
 

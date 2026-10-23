@@ -63,6 +63,10 @@ Config: `release-please-config.json`, eleven packages. Manifest: `.release-pleas
 
 - `build-per-tool` builds the CLI from this run's own checkout (`pnpm build`, then `node cli/dist/cli.js translate`), never a pinned published version: nothing to bump, nothing to go stale.
 
+## Local reload
+
+`make reload` syncs all plugins and generic delegation guidance to installed hosts; details in `scripts/dev-sync.sh`.
+
 ## Monitoring
 
 None. Failures are a red run; `back-merge.yml` opens an issue when it cannot push.

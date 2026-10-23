@@ -4,10 +4,21 @@ export const COPILOT_AGENT_FRONTMATTER_KEYS: readonly [
   "name",
   "description",
   "model",
+  "reasoningEffort",
+  "include-custom-instructions",
   "tools",
   "agents",
   "argument-hint",
-] = ["name", "description", "model", "tools", "agents", "argument-hint"];
+] = [
+  "name",
+  "description",
+  "model",
+  "reasoningEffort",
+  "include-custom-instructions",
+  "tools",
+  "agents",
+  "argument-hint",
+];
 
 /** Cursor-supported frontmatter keys: Cursor documents only name, description and model —
  * never tools or color. */

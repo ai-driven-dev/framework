@@ -2,7 +2,7 @@
 
 ## Input
 
-The prepared plan.
+The prepared plan, or one assigned phase of it.
 
 ## Output
 
@@ -12,7 +12,7 @@ Or a `blocked` / `replan needed` report.
 
 ## Process
 
-1. **Open.** Walk phases in order.
+1. **Open.** Walk the assigned phases in order.
    - Set the current phase `status: in-progress`.
    - In a feature folder, read `phase-<n>.md` beside `plan.md`.
 2. **Code.** Build the next task or inseparable group against its acceptance criteria.
@@ -20,7 +20,7 @@ Or a `blocked` / `replan needed` report.
 3. **Assert.** Apply the validation rules below to every acceptance criterion of the selected task or group.
    - After the last task:
      - Validate the full phase workflow.
-     - Set the phase `status: done` on success.
+     - Set the phase `status: done` on success, `partial` otherwise, never `done` with a criterion unmet.
 4. **Complete.** Commit according to the commit policy.
    - Repeat steps 2–4 for the remaining tasks.
 
@@ -30,9 +30,8 @@ Or a `blocked` / `replan needed` report.
   - Use the appropriate interface (browser, CLI, API…).
   - Check actual against expected behavior at every step.
   - Fix any mismatch.
-  - Restart from the beginning after a repair.
+  - Rerun the affected workflow after a repair.
 - Gate task commits and `done` on successful validation.
-  - Require a full successful run.
   - Require observable evidence for every step.
   - Report blocked validation.
   - Never count blocked validation as success.

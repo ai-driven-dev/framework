@@ -94,33 +94,38 @@ describe("codexAgentMarkdownToToml()", () => {
     });
   });
 
-  describe("model omission (D-5)", () => {
-    it("omits model key when frontmatter has model: opus", () => {
+  describe("explicit model preservation", () => {
+    it.each([
+      "opus",
+      "sonnet",
+      "haiku",
+      "inherit",
+      "default",
+      "opusplan",
+      "best",
+      "fable",
+      "sonnet[1m]",
+      "opus[1m]",
+    ])("omits Claude selector %s so the parent model is inherited", (model) => {
       const toml = codexAgentMarkdownToToml(
-        "---\nname: planner\ndescription: A planner.\nmodel: opus\n---\n\nBody.",
+        `---\nname: planner\nmodel: ${model}\n---\n\nBody.`,
         "aidd-dev",
         "planner.md"
       );
-      expect(toml).not.toContain("model");
+      expect(parseToml(toml)).not.toHaveProperty("model");
     });
 
-    it("omits model key when frontmatter has model: sonnet", () => {
-      const toml = codexAgentMarkdownToToml(
-        "---\nname: planner\nmodel: sonnet\n---\n\nBody.",
-        "aidd-dev",
-        "planner.md"
-      );
-      expect(toml).not.toContain("model");
-    });
-
-    it("omits model key for hypothetical Codex model id (MVP1 always omits)", () => {
-      const toml = codexAgentMarkdownToToml(
-        "---\nname: planner\nmodel: gpt-5-codex\n---\n\nBody.",
-        "aidd-dev",
-        "planner.md"
-      );
-      expect(toml).not.toContain("model");
-    });
+    it.each(["gpt-5-codex", "gpt-6-luna", "local-coder", "claude-opus-5-5"])(
+      "preserves explicit model identifier %s for the configured provider",
+      (model) => {
+        const toml = codexAgentMarkdownToToml(
+          `---\nname: planner\nmodel: ${model}\nmodel_reasoning_effort: medium\n---\n\nBody.`,
+          "aidd-dev",
+          "planner.md"
+        );
+        expect(parseToml(toml)).toMatchObject({ model, model_reasoning_effort: "medium" });
+      }
+    );
   });
 
   describe("verbatim body preservation (D-4)", () => {

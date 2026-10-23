@@ -32,6 +32,17 @@ See the [skill's SKILL.md](skills/00-async-dev/SKILL.md) for the sub-flow invent
 |------------|-------|-------------|
 | [6.2] | [backlog](skills/02-backlog/SKILL.md) | Route backlog intake, refinement, lifecycle events, review, and repair across PM capabilities. |
 
+## Agents
+
+Generic roles the orchestrated flows delegate to. The calling skill gives each one its concern; see [sub-agents](../../docs/SUBAGENTS.md).
+
+| Agent | Role |
+|-------|------|
+| [explorer](agents/explorer.md) | Answers scoped questions about a codebase, before any change. |
+| [executor](agents/executor.md) | Delivers assigned code or documentation within the agreed scope. |
+| [validator](agents/validator.md) | Confirms the delivered work meets the request and its criteria. |
+| [reviewer](agents/reviewer.md) | Finds quality and coherence gaps that acceptance checks miss. |
+
 ### Roadmap
 
 | Use case | Direction |

@@ -13,10 +13,11 @@ A feature folder, always at `aidd_docs/tasks/<yyyy_mm>/<yyyy_mm_dd>_<feature-slu
 ## Process
 
 1. **Phases.** Break the work into phases, each a coherent unit of work that ships and verifies on its own, sized for one executor pass. Let the work decide how many.
+   - Prefer independent phases with separate file ownership; record earlier phase numbers in `Depends on` for required outputs, overlapping writes, or shared mutable validation resources. Keep phases ordered when independence is uncertain.
 2. **Folder.** Reuse the feature folder the source already lives in, or create one.
 3. **Fill.** Fill the plan and each phase from their templates, following the inline contracts. Slice the projection across the phases.
 4. **Show.** Display the written paths.
-5. **Review.** Score the complete plan and its phases from 0 to 10, with ✓ reasons and ✗ risks. In interactive mode, show them and revise until approved. Under an autonomous orchestrator, revise against the source without waiting for approval; ask only when a product decision cannot be resolved from the source. The score is never written to the plan.
+5. **Review.** Challenge source coverage, acceptance criteria, phase boundaries, and dependencies against the source; revise gaps. In interactive mode, show the plan and revise until approved; under an autonomous orchestrator, ask only when a product decision cannot be resolved from the source.
 
 ## Test
 
@@ -24,5 +25,5 @@ A feature folder, always at `aidd_docs/tasks/<yyyy_mm>/<yyyy_mm_dd>_<feature-slu
 - Every written file satisfies its template's inline contract.
 - No `{...}` placeholder is left in any written file.
 - The phase projection slices together cover the modify, create, and delete lists.
-- A confidence score was reported and written to no file.
+- The complete plan and its phases were challenged against the source.
 - An autonomous run waits only for a product decision that the source cannot resolve.

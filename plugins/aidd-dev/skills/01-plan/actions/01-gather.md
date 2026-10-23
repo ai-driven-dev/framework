@@ -4,7 +4,7 @@ Collect the source the plan will rest on, before any planning. Read only.
 
 ## Input
 
-The user's request, which may be empty.
+The user's request, which may be empty, and any exploration already done.
 
 ## Output
 

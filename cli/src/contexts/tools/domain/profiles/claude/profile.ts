@@ -48,6 +48,7 @@ export const claude: AiTool<HasAgents & HasSkills & HasCommands & HasRules & Has
         directory: DIRECTORY,
         toolSuffix: TOOL_SUFFIX,
         format: "markdown",
+        effortField: "effort",
       }),
       skills: new SkillsCapability({
         directory: DIRECTORY,
