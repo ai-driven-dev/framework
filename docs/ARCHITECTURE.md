@@ -96,6 +96,8 @@ flowchart TB
   Action --> Result["Result or artifact"]
 ```
 
+Recipe actions carry inputs, outputs, process steps, and rules.
+
 ### Agents and delegation
 
 | Role | Contract |
