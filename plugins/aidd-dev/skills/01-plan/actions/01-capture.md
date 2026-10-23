@@ -10,7 +10,7 @@ The user's request.
 
 1. With no source to plan from (file, ticket, or text), ask for one and stop.
 2. Read it, noting what it asks and the constraints it states.
-3. Go to explore.
+3. Read [explore](02-explore.md).
 
 ## Output
 
