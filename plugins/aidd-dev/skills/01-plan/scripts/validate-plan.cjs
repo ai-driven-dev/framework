@@ -7,7 +7,8 @@ const path = require("path");
 const errors = [];
 const fail = (file, rule) => errors.push(`${file}: ${rule}`);
 const norm = (s) => s.replace(/\s+/g, " ").trim();
-const asset = (name) => fs.readFileSync(path.join(__dirname, "..", "assets", name), "utf8");
+const read = (file) => fs.readFileSync(file, "utf8").replace(/\r\n/g, "\n");
+const asset = (name) => read(path.join(__dirname, "..", "assets", name));
 
 function parse(md) {
   const fm = {};
@@ -114,7 +115,7 @@ if (!fromSkill.startsWith("..") && !path.isAbsolute(fromSkill)) {
 
 const planTpl = parse(asset("plan-template.md"));
 const phaseTpl = parse(asset("phase-template.md"));
-const plan = matchTemplate("plan.md", fs.readFileSync(planFile, "utf8"), planTpl);
+const plan = matchTemplate("plan.md", read(planFile), planTpl);
 
 const listed = (section(plan, "Phases")?.body.match(/^\|\s*\d+\s*\|/gm) || []).length;
 if (!listed) fail("plan.md", "no row in ## Phases");
@@ -141,7 +142,7 @@ for (let n = 1; n <= listed; n++) {
   const file = `phase-${n}.md`;
   const f = path.join(dir, file);
   if (!fs.existsSync(f)) continue;
-  const md = fs.readFileSync(f, "utf8");
+  const md = read(f);
   const doc = matchTemplate(file, md, phaseTpl);
   checkTree(file, section(doc, "Architecture projection")?.body || "");
   const frame = section(doc, "Wireframe")?.body;

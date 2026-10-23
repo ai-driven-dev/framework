@@ -81,6 +81,11 @@ describe("validate-plan", () => {
     assert.match(r.out, /^VALID$/);
   });
 
+  it("accepts the same plan saved with Windows line endings", () => {
+    const files = Object.fromEntries(Object.entries(good()).map(([name, text]) => [name, text.replace(/\n/g, "\r\n")]));
+    assert.match(run(files).out, /^VALID$/);
+  });
+
   it("asks for the files when the folder holds no plan", () => {
     assert.match(run({}).out, /^INVALID\n.*plan\.md: missing/);
   });
