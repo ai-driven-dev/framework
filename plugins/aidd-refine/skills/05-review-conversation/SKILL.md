@@ -5,23 +5,18 @@ argument-hint: conversation | export
 ---
 # Review conversation
 
-```mermaid
-flowchart LR
-  start([conversation ID or export]) --> read-conversation
-  read-conversation -->|complete| recommend --> target-edits
-  read-conversation -->|unavailable| unavailable([stop])
-  target-edits --> question([ask next intent]) --> stop([stop])
-```
-
 ## Actions
 
-Run each action in order without confirmation, reading only its file in `actions/` when its turn comes.
+```mermaid
+flowchart LR
+  start([conversation ID or export]) --> read["read conversation<br>actions/01-read-conversation.md"]
+  read -->|complete| recommend["recommend<br>actions/02-recommend.md"]
+  read -->|incomplete| unavailable((stop))
+  recommend --> render["target edits<br>actions/03-target-edits.md"]
+  render --> question((ask next intent))
+```
 
-| Action | Does |
-| --- | --- |
-| read-conversation | load the tree and delegate one reader per child session |
-| recommend | attribute each finding to one owner and draft its edit |
-| target-edits | render the HTML report and ask the next intent |
+Each box is a file: read it, then do what it says, without confirmation.
 
 ## Transversal rules
 
