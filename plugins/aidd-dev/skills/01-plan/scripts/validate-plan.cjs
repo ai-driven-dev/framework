@@ -107,7 +107,8 @@ if (!dir || !fs.existsSync(planFile)) {
   report();
 }
 
-if (!path.relative(path.join(__dirname, ".."), fs.realpathSync(dir)).startsWith("..")) {
+const fromSkill = path.relative(path.join(__dirname, ".."), fs.realpathSync(dir));
+if (!fromSkill.startsWith("..") && !path.isAbsolute(fromSkill)) {
   fail(dir, "folder is inside the skill itself, write the plan in the project");
 }
 
