@@ -1,0 +1,74 @@
+# schemaVersion "2" needs Docker Sandboxes 0.36+; an older sbx rejects
+# permissions/setup/agentInstructions. Check with `sbx version`.
+schemaVersion: "2"
+kind: mixin
+name: aidd
+version: "1.0.0"
+displayName: AI-Driven Dev Framework
+description: "Installs the AI-Driven Dev (AIDD) plugins into Claude Code: an SDLC of skills and agents, from idea to reviewed pull request"
+sourceURL: "https://github.com/ai-driven-dev/framework"
+
+permissions:
+  network:
+    allow:
+      - github.com # for `claude plugin marketplace add`
+
+setup:
+  install:
+    # Runs as the agent, not root: `claude plugin install` writes to $HOME/.claude.
+    - command: |
+        set -e
+        command -v claude >/dev/null 2>&1 || {
+          echo "aidd: this kit only applies to the claude-code agent" >&2
+          exit 1
+        }
+        claude plugin marketplace add ai-driven-dev/framework
+        # aidd-ui/telemetry/qa (alpha/beta/unproven) stay out — opt in by name.
+        for plugin in \
+          aidd-context \
+          aidd-refine \
+          aidd-dev \
+          aidd-vcs \
+          aidd-pm \
+          aidd-orchestrator
+        do
+          claude plugin install "${plugin}@aidd-framework"
+        done
+      user: "1000"
+      description: "Install the AIDD marketplace and its recommended plugins"
+
+    # `claude plugin install` writes ~/.claude/settings.json, but the sandbox
+    # runtime overwrites that file at every session start. Mirror the install
+    # into managed-settings.json instead, which the runtime doesn't touch.
+    # Merged, not overwritten: other kits and the base image share that file.
+    - command: |
+        set -e
+        managed=/etc/claude-code/managed-settings.json
+        user=/home/agent/.claude/settings.json
+        mkdir -p "$(dirname "$managed")"
+        [ -s "$managed" ] || echo '{}' > "$managed"
+        # Runs as root; only reads the user file, never writes it (would leave it root-owned).
+        [ -s "$user" ] || user=/dev/null
+        tmp="$(mktemp)"
+        jq -s '.[0] * (.[1]
+                 | {extraKnownMarketplaces, enabledPlugins}
+                 | with_entries(select(.value != null)))' \
+           "$managed" "$user" > "$tmp"
+        mv "$tmp" "$managed"
+        chmod 0644 "$managed"
+      description: "Keep the plugins enabled once the runtime replaces the user settings"
+
+agentInstructions:
+  content: |
+    The AI-Driven Dev (AIDD) framework is installed as Claude Code plugins. Its
+    skills are namespaced `/<plugin>:<skill>`, and cover a full SDLC:
+
+    - `/aidd-orchestrator:01-sdlc "<goal>"` runs the whole pipeline: frame →
+      plan → implement → validate → review → challenge → ship.
+    - Single steps live in `aidd-dev` (`01-plan`, `02-implement`, `05-review`,
+      `08-debug`, …), `aidd-context` (project onboarding and context artifacts),
+      `aidd-pm` (backlog, user stories), `aidd-vcs` (commit, pull-request).
+
+    Prefer these skills over an ad-hoc approach when the user asks for AIDD, a
+    structured SDLC, or names one of the steps above. Run `/plugin` to list
+    what is available.
