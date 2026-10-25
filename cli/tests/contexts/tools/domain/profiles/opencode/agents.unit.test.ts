@@ -18,7 +18,7 @@ describe("opencode agents", () => {
     it("adds mode subagent to OpenCode agent frontmatter", () => {
       const fm = { name: "alexia", description: "Act like the user" };
       const result = opencode.capabilities.agents.convertFrontmatter(fm);
-      expect(result).toEqual({ description: "Act like the user", mode: "subagent" });
+      expect(result).toStrictEqual({ description: "Act like the user", mode: "subagent" });
     });
 
     it("turns an allowlist without a write tool into a rule denying edits", () => {

@@ -99,6 +99,24 @@ describe("toOpencodeAgentFrontmatter()", () => {
     );
   });
 
+  it.each(["Edit", "Write", "MultiEdit", "NotebookEdit"])(
+    "reads %s, listed after a comma and a space, as a write tool",
+    (tool) => {
+      expect(
+        toOpencodeAgentFrontmatter({ description: "d", tools: `Read, ${tool}` })
+      ).toStrictEqual({ description: "d" });
+    }
+  );
+
+  it("denies edits for an allowlist given as a list without a write tool", () => {
+    expect(toOpencodeAgentFrontmatter({ description: "d", tools: ["Read", "Grep"] })).toStrictEqual(
+      {
+        description: "d",
+        permissions: [{ action: "edit", resource: "*", effect: "deny" }],
+      }
+    );
+  });
+
   it("leaves an agent without an allowlist unchanged", () => {
     expect(toOpencodeAgentFrontmatter({ description: "d" })).toStrictEqual({ description: "d" });
   });
