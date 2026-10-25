@@ -1,31 +1,33 @@
 ---
 name: 01-plan
-description: Turn a request, ticket, or file into a phased implementation plan. Use to plan a feature before building, or to turn a ticket into phases. Do NOT use to write code or review a diff.
+description: Turn a request, ticket, or file into a phased implementation plan. Use to plan a feature before building, or to turn a ticket into phases. Not for writing code or reviewing a diff.
 argument-hint: request | ticket | file
 ---
-
-# Skill: plan
-
-Turn a gathered source into an implementation plan and its phase files. Never writes code.
+# Plan
 
 ## Actions
 
-| #   | Action      | Role                                                 | Input                      |
-| --- | ----------- | ---------------------------------------------------- | -------------------------- |
-| 01  | `gather`    | Collect and restate the source                       | user request               |
-| 02  | `explore`   | Read the codebase for projection, rules, feasibility | gathered source            |
-| 03  | `wireframe` | Sketch a screen at low fidelity, frontend only       | source + explore context   |
-| 04  | `plan`      | Break into phases, write the plan and phase files    | explore output + wireframe |
+```mermaid
+flowchart LR
+  capture --> explore
+  explore -->|"the code opens a question"| explore
+  explore -->|"a decision blocks"| user((user answers))
+  user --> explore
+  explore -->|"nothing blocks"| conclude
+  conclude -->|"correct: revise, ask again"| conclude
+  conclude -->|"explore more"| explore
+  conclude -->|"approve"| done((done))
+```
 
-Run them in order, `01 → 04`. The plan is the culmination. Skip `03` when there is no UI.
-Before running an action, read its file in `actions/`, not only the table or assets.
+Read an action's file, then do what it says.
 
-## References
+| Action | File |
+| ------ | ---- |
+| capture | [actions/01-capture.md](actions/01-capture.md) |
+| explore | [actions/02-explore.md](actions/02-explore.md) |
+| conclude | [actions/03-conclude.md](actions/03-conclude.md) |
 
-- `references/wireframe-conventions.md`: how to draw the ASCII wireframe a screen needs.
-- `references/plan-status.md`: the plan lifecycle `status` values and who writes each.
+## Transversal rules
 
-## Assets
-
-- `assets/plan-template.md`: the `plan.md` scaffold.
-- `assets/phase-template.md`: the per-phase scaffold.
+- Speak only to ask or to give the final reply; otherwise call tools.
+- Plan only: the plan files are the only files you write.

@@ -1,0 +1,172 @@
+{
+  "scenes": [
+    {
+      "template": "terminal-demo",
+      "pill": "Telemetry",
+      "title": "Your Codex work,",
+      "accent": "measured too.",
+      "lead": "Ask Codex what your work cost and get the full report.",
+      "surfaces": [
+        "aidd telemetry"
+      ],
+      "window": {
+        "label": "Codex · ~/acme-app",
+        "rows": [
+          {
+            "prompt": "what did my work cost this week?"
+          },
+          {
+            "text": "$ aidd telemetry report --tool codex --axis task",
+            "tone": "dim"
+          },
+          {
+            "table": {
+              "head": [
+                "Task",
+                "Requests",
+                "Usage"
+              ],
+              "rows": [
+                [
+                  "fix the login bug",
+                  "38",
+                  "120k"
+                ],
+                [
+                  "add dark mode",
+                  "41",
+                  "190k"
+                ],
+                [
+                  "no task declared",
+                  "17",
+                  "100k"
+                ]
+              ]
+            }
+          }
+        ]
+      },
+      "note": "Example figures."
+    },
+    {
+      "template": "terminal-demo",
+      "pill": "Telemetry",
+      "title": "Every tool,",
+      "accent": "told apart.",
+      "lead": "See Claude and Codex side by side, each with its own total.",
+      "surfaces": [
+        "aidd-telemetry:00-init"
+      ],
+      "window": {
+        "label": "Terminal · ~/acme-app",
+        "rows": [
+          {
+            "text": "$ aidd telemetry report --axis tool"
+          },
+          {
+            "table": {
+              "head": [
+                "Tool",
+                "Requests",
+                "Usage"
+              ],
+              "rows": [
+                [
+                  "Claude Code",
+                  "412",
+                  "1.8M"
+                ],
+                [
+                  "Codex",
+                  "96",
+                  "410k"
+                ]
+              ]
+            }
+          }
+        ]
+      },
+      "note": "Example figures."
+    },
+    {
+      "template": "terminal-demo",
+      "pill": "Rules",
+      "title": "No more rules",
+      "accent": "that clash.",
+      "surfaces": [
+        "aidd-context:05-rule-generate"
+      ],
+      "window": {
+        "label": "Claude Code · ~/acme-app",
+        "rows": [
+          {
+            "prompt": "/aidd-context:05-rule-generate always use named exports"
+          },
+          {
+            "text": "checking your existing rules…",
+            "tone": "dim"
+          },
+          {
+            "text": "Conflict: another rule allows default exports",
+            "tone": "red"
+          },
+          {
+            "text": "Which one should win?  1 named exports   2 default exports",
+            "tone": "amb"
+          },
+          {
+            "text": "nothing is saved until you decide",
+            "tone": "grn"
+          }
+        ]
+      },
+      "note": "Example run.",
+      "lead": "Before saving a new rule, your AI checks it against the others."
+    },
+    {
+      "template": "contributors",
+      "pill": "Team",
+      "title": "Shipped by",
+      "accent": "2 contributors.",
+      "logins": [
+        "alexsoyes",
+        "blafourcade"
+      ]
+    }
+  ],
+  "skipped": [
+    {
+      "surface": "aidd-telemetry:01-usage",
+      "reason": "internal report format change; the command and the answer a user reads are the same"
+    }
+  ],
+  "intro": {
+    "highlights": [
+      "Telemetry now covers Codex",
+      "Telemetry report split by tool",
+      "Rules checked for conflicts"
+    ]
+  },
+  "youtube": {
+    "themes": [
+      "Télémétrie",
+      "Codex",
+      "Règles"
+    ],
+    "programme": [
+      {
+        "surface": "aidd telemetry",
+        "text": "compter aussi ce que coûte le travail fait avec Codex, avec le rapport complet."
+      },
+      {
+        "surface": "aidd-telemetry:00-init",
+        "text": "activer la mesure et distinguer le résultat par outil, Claude Code ou Codex."
+      },
+      {
+        "surface": "aidd-context:05-rule-generate",
+        "text": "vérifier qu'une règle n'en contredit pas une autre, et décider laquelle garder."
+      }
+    ]
+  }
+}

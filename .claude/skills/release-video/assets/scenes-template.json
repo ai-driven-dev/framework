@@ -1,0 +1,52 @@
+{
+  "intro": {
+    "highlights": [
+      "Feature in a few words",
+      "Feature in a few words",
+      "Feature in a few words"
+    ]
+  },
+  "scenes": [
+    {
+      "template": "terminal-demo",
+      "pill": "/plugin:NN-skill",
+      "title": "What it does,",
+      "accent": "in a few words.",
+      "surfaces": [
+        "plugin:NN-skill"
+      ],
+      "window": {
+        "label": "Claude Code · ~/acme-app",
+        "rows": [
+          {
+            "prompt": "/plugin:NN-skill a request"
+          },
+          {
+            "text": "an output line",
+            "tone": "dim"
+          }
+        ]
+      },
+      "note": "Example run.",
+      "lead": "One plain sentence: what it does for the user, and why it matters."
+    }
+  ],
+  "skipped": [
+    {
+      "surface": "",
+      "reason": ""
+    }
+  ],
+  "youtube": {
+    "themes": [
+      "Theme one",
+      "Theme two"
+    ],
+    "programme": [
+      {
+        "surface": "aidd command",
+        "text": "what it does for the user, in French."
+      }
+    ]
+  }
+}

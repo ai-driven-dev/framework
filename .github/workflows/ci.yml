@@ -85,16 +85,6 @@ jobs:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
         run: gh pr merge "${{ fromJSON(steps.release.outputs.pr).number }}" --merge --admin --body "" --repo "${{ github.repository }}"
 
-      # GitHub marks whichever release is created last as "Latest", and release-please
-      # creates the umbrella and every plugin release in one unordered run — so a plugin
-      # release can outrank the marketplace version. Bare `tag_name` is the root tag, the one
-      # carrying the marketplace bundle, and it bumps every cycle.
-      - name: Pin umbrella release as latest
-        if: ${{ steps.release.outputs.release_created == 'true' }}
-        env:
-          GH_TOKEN: ${{ steps.app-token.outputs.token }}
-        run: gh release edit "${{ steps.release.outputs.tag_name }}" --latest --repo "${{ github.repository }}"
-
       # Credits commit authors; native `include-commit-authors` is broken (release-please#2761).
       # Remove with the script once #2892 ships. continue-on-error: never blocks the publish jobs.
       - name: Checkout
@@ -143,6 +133,39 @@ jobs:
           gh release upload "${TAG}" \
             "/tmp/aidd-framework-marketplace-${VERSION}.zip" \
             --clobber
+
+  build-release-video:
+    name: Render and attach the release video
+    needs: [release-please]
+    if: needs.release-please.outputs.release_created == 'true'
+    runs-on: ubuntu-latest
+    # `gh release upload` writes a release asset, which GitHub treats as a contents change.
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "22"
+      - name: Install ffmpeg
+        run: sudo apt-get update && sudo apt-get install -y ffmpeg
+      # The plan is the one the promotion checked, so the video shows what this release holds.
+      # The video names the release by major.minor: 5.13.0 renders "5.13".
+      - name: Render the release video
+        run: |
+          VERSION="${{ needs.release-please.outputs.version }}"
+          MINOR="${VERSION%.*}"
+          node .claude/skills/release-video/assets/render-release-video.cjs --version "${MINOR}"
+      # The title and description published with the video, in the layout of the earlier ones.
+      - name: Attach the release video and its YouTube text to the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          VERSION="${{ needs.release-please.outputs.version }}"
+          MINOR="${VERSION%.*}"
+          TAG="${{ needs.release-please.outputs.tag_name }}"
+          node .claude/skills/release-video/assets/youtube-metadata.js --version "${MINOR}" --tag "${TAG}" --repo "${{ github.repository }}"
+          gh release upload "${TAG}" release-video.mp4 release-video.json --clobber
 
   build-per-tool:
     name: Build and attach per-tool distribution
@@ -321,3 +344,63 @@ jobs:
           rm -f .npmrc
           npm install -g npm@11.19.1
           npm publish --access public
+
+  # The umbrella release is created as a draft, so no `release` event reaches a subscriber
+  # before its bundle, distributions and video are attached. Publishing it sends the event
+  # with everything in place. A failed video does not hold the release back; a failed bundle
+  # or distribution does, and the release stays a draft for a person to see.
+  # `--latest` is set here: GitHub refuses it on a draft. GitHub marks whichever release is
+  # created last as "Latest", and release-please creates the umbrella and every plugin release
+  # in one unordered run, so a plugin release can outrank the marketplace version. Bare
+  # `tag_name` is the root tag and bumps every cycle.
+  # The App token, not GITHUB_TOKEN: only an App token re-fires the `release: published` workflows.
+  publish-release:
+    name: Publish the release
+    needs: [release-please, build-and-attach, build-per-tool, build-plugin, build-release-video]
+    if: |
+      always() &&
+      needs.release-please.outputs.release_created == 'true' &&
+      needs.build-and-attach.result == 'success' &&
+      needs.build-per-tool.result == 'success' &&
+      (needs.build-plugin.result == 'success' || needs.build-plugin.result == 'skipped')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
+        id: app-token
+        with:
+          app-id: ${{ secrets.AIDD_BOT_APP_ID }}
+          private-key: ${{ secrets.AIDD_BOT_PRIVATE_KEY }}
+      - name: Publish the umbrella release as the latest
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          TAG="${{ needs.release-please.outputs.tag_name }}"
+          gh release edit "${TAG}" --draft=false --latest --repo "${{ github.repository }}"
+
+  # A recap of what ran and what broke, whatever the outcome, printed in the log.
+  # The Slack message is n8n's.
+  release-recap:
+    name: Recap the release
+    needs: [release-please, build-and-attach, build-per-tool, build-plugin, build-release-video, publish-cli, publish-release]
+    if: always() && needs.release-please.outputs.release_created == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "22"
+      - name: Print the recap
+        env:
+          GH_TOKEN: ${{ github.token }}
+          NEEDS: ${{ toJSON(needs) }}
+          TAG: ${{ needs.release-please.outputs.tag_name }}
+          REPO: ${{ github.repository }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: node scripts/release-recap.js
+
