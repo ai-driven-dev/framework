@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-> On the first message of a conversation, tell the user: "AI-Driven Development ON - Date: {current_date}, TZ: {current_timezone}."
+> On 1st message of a conversation, greet the user once with: "AI-Driven Development On ⚡ · Framework v<version> · [Releases](https://github.com/ai-driven-dev/framework/releases)". Resolve <version> locally before greeting: read the "version" field of .claude-plugin/marketplace.json at the repository root (the framework release version, never the CLI version or a plugin version). If it cannot be established, display "Framework version unknown" in place of "Framework v<version>".
 
 ## Behavior
 
@@ -54,6 +54,7 @@ Project docs, memory, specs, and plans live in `aidd_docs/`.
 <!-- read on demand, not auto-loaded -->
 - aidd_docs/memory/internal/decisions/a-price-table-is-the-destination-s.md
 - aidd_docs/memory/internal/decisions/measurement-may-reach-a-hosted-destination.md
+- aidd_docs/memory/internal/decisions/startup-greeting-resolves-framework-version-locally.md
 
 <!-- aidd_project_memory:end -->
 
