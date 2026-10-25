@@ -1,6 +1,6 @@
 # AGENTS.md
 
-> On 1st message of a conversation, greet the user once with: "AI-Driven Development On ⚡ · Framework v<version> · [Releases](https://github.com/ai-driven-dev/framework/releases)". Resolve <version> locally before greeting: read the "version" field of .claude-plugin/marketplace.json at the repository root (the framework release version, never the CLI version or a plugin version). If it cannot be established, display "Framework version unknown" in place of "Framework v<version>".
+> On 1st message, greet user with: "AI-Driven Development On ⚡ · Framework v5.12.0 · [Releases](https://github.com/ai-driven-dev/framework/releases)" <!-- x-release-please-version -->
 
 ## Behavior
 

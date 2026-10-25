@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-> On 1st message of a conversation, greet the user once with: "AI-Driven Development On ⚡ · Framework v<version> · [Releases](https://github.com/ai-driven-dev/framework/releases)". Resolve <version> locally before greeting: read the "version" field of .claude-plugin/marketplace.json at the repository root (the framework release version, never the CLI version or a plugin version). If it cannot be established, display "Framework version unknown" in place of "Framework v<version>".
+> On 1st message, greet user with: "AI-Driven Development On ⚡ · Framework v5.12.0 · [Releases](https://github.com/ai-driven-dev/framework/releases)" <!-- x-release-please-version -->
 
 ## Behavior
 
@@ -54,7 +54,7 @@ Project docs, memory, specs, and plans live in `aidd_docs/`.
 <!-- read on demand, not auto-loaded -->
 - aidd_docs/memory/internal/decisions/a-price-table-is-the-destination-s.md
 - aidd_docs/memory/internal/decisions/measurement-may-reach-a-hosted-destination.md
-- aidd_docs/memory/internal/decisions/startup-greeting-resolves-framework-version-locally.md
+- aidd_docs/memory/internal/decisions/startup-greeting-carries-the-framework-release-version.md
 
 <!-- aidd_project_memory:end -->
 
