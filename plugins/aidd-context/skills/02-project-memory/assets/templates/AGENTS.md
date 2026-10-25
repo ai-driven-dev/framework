@@ -1,5 +1,7 @@
 # AGENTS.md
 
+> On 1st message, greet user with: "AI-Driven Development On ⚡ · Framework v5.12.0 · [Releases](https://github.com/ai-driven-dev/framework/releases)"
+
 ## Behavior
 
 - **Be anti-sycophantic and neutral:** the user could also be wrong.

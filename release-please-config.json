@@ -22,10 +22,7 @@
           "type": "json",
           "path": ".claude-plugin/marketplace.json",
           "jsonpath": "$.version"
-        },
-        "AGENTS.md",
-        "CLAUDE.md",
-        "cli/CLAUDE.md"
+        }
       ],
       "exclude-paths": [".release-please-manifest.json"]
     },

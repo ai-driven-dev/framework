@@ -149,6 +149,14 @@ pre-commit:
         fi
         node scripts/sync-readme-counts.mjs >/dev/null
         git add README.md 2>/dev/null || true
+    sync-greeting-version:
+      run: |
+        if ! command -v node >/dev/null 2>&1; then
+          echo 'ℹ️  node not available; skipping sync-greeting-version'
+          exit 0
+        fi
+        node scripts/sync-greeting-version.mjs >/dev/null
+        git add AGENTS.md CLAUDE.md cli/CLAUDE.md plugins/aidd-context/skills/02-project-memory/assets/templates/AGENTS.md 2>/dev/null || true
     cli-biome:
       glob: "cli/**"
       run: cd cli && pnpm lint
