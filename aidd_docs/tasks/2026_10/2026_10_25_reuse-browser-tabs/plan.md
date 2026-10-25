@@ -1,6 +1,6 @@
 ---
 objective: "The browser QA instructions require reusing one tab or tab group for each scenario and closing its session when finished."
-status: in-progress
+status: implemented
 ---
 
 # Plan: Reuse browser tabs in QA
