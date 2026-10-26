@@ -17,7 +17,7 @@ A checker's finding is routed by what it is about. A refusal the user gives at a
 
 ## Handoff
 
-- Commit whatever this zone wrote, then open the draft pull request when the checker returns no actionable finding.
+- Open the draft pull request when the checker returns no actionable finding.
 
 ```mermaid
 ---
