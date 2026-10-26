@@ -2,9 +2,9 @@
 
 ## Behavior
 
-Turn the contract into a proportional plan, then give one executor the whole plan or delegate ready independent phases. For delegated phases, the caller owns preparation, dependencies, write isolation, integration, and finalization; the phase file is the executor's brief, and the same executor session resumes for its next phase.
+Turn the contract into a proportional plan, then give one executor the whole plan. When the plan has ready independent phases, delegate them instead: prepare the plan through the implementation skill, dispatch the ready phases through the batch skill, one executor per phase with its phase file as the brief, and finalize the integrated plan through the implementation skill. A `partial` or failed phase goes back to an executor with what remains.
 
-The executor follows the implementation skill for its assigned scope; the validation skills own their checks and repair loops. Include architecture conformance whenever the project documents architecture.
+The caller owns delegation, integration, plan status, and final acceptance; the validation skills own their checks and repair loops. Include architecture conformance whenever the project documents architecture.
 
 Send only the clean committed candidate and its evidence to Check.
 
@@ -25,8 +25,8 @@ flowchart TD
     Executor(["@aidd-dev:executor"])
     Implement["/aidd-dev:02-implement"]
     Assert["/aidd-dev:03-assert"]
-    Integrate["Integrate phases"]
-    Finalize["Finalize integrated plan"]
+    Batch["/aidd-dev:10-batch"]
+    Finalize["/aidd-dev:02-implement finalize"]
     Commit["/aidd-vcs:01-commit"]
   end
 
@@ -38,13 +38,15 @@ flowchart TD
 
   Contract --> Plan
   Plan --> PlanArtifact
-  PlanArtifact -- "Whole plan, or ready phases." --> Executor
+  PlanArtifact -- "Whole plan." --> Executor
+  PlanArtifact -- "Ready independent phases." --> Batch
+  Batch -- "One executor per phase." --> Executor
   Executor --> Implement
   Implement --> Assert
   Assert -- "Whole plan." --> Commit
-  Assert -- "Phase." --> Integrate
-  Integrate -- "Next ready phase." --> Executor
-  Integrate --> Finalize
+  Assert -- "Phase." --> Batch
+  Batch -- "Partial or failed phase." --> Executor
+  Batch -- "Every phase integrated." --> Finalize
   Finalize -- "Failure: repair the phase." --> Executor
   Finalize --> Commit
   Commit --> CommittedCandidate
@@ -55,7 +57,7 @@ flowchart TD
   classDef artifact fill:#DCFCE7,stroke:#16A34A,color:#14532D,stroke-width:2px
   classDef zone fill:#F1F5F9,stroke:#64748B,color:#0F172A,stroke-width:2px
 
-  class Plan,Implement,Assert,Finalize,Commit skill
+  class Plan,Batch,Implement,Assert,Finalize,Commit skill
   class Executor agent
   class Contract,PlanArtifact,CommittedCandidate artifact
   class Check zone
