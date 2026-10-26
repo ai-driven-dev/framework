@@ -1,7 +1,7 @@
 const assert = require("node:assert/strict");
 const test = require("node:test");
 
-const { buildHtml, measureRms, musicSegments, musicSections, sceneDuration, soundCues, soundTrack, totalDuration } = require("../../.claude/skills/release-video/assets/render-release-video.cjs");
+const { buildHtml, measureRms, musicSegments, musicSections, sceneDuration, soundCues, soundTrack, thumbnailAt, totalDuration } = require("../../.claude/skills/release-video/assets/render-release-video.cjs");
 
 const window = (rows) => ({ label: "Claude Code · ~/acme-app", rows });
 
@@ -69,6 +69,11 @@ test("the intro is already drawn at its first frame: logo, pill, release label a
   assert.doesNotMatch(html, /const full = /);
   for (const id of ["intro-logo", "intro-pill", "intro-rel"]) assert.doesNotMatch(html, new RegExp(`enter\\("#${id}"`));
   assert.match(html, /AIDD <span class="g">v5\.13<\/span>/);
+});
+
+test("the thumbnail is the intro once its last tag is in, half a second before the intro ends", () => {
+  assert.equal(thumbnailAt({ ...plan, intro: { highlights: ["a", "b"] } }), 6);
+  assert.equal(thumbnailAt({ ...plan, intro: {} }), 4.5);
 });
 
 test("a scene's note appears after its last row, not with its window", () => {

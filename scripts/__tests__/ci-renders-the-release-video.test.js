@@ -16,7 +16,7 @@ test("a release renders its video once the release exists", () => {
 test("the video is rendered for the release's major.minor and attached to its tag", () => {
   assert.match(script, /render-release-video\.cjs --version "\$\{MINOR\}"/);
   assert.match(script, /MINOR="\$\{VERSION%\.\*\}"/);
-  assert.match(script, /gh release upload "\$\{TAG\}" release-video\.mp4 release-video\.json --clobber/);
+  assert.match(script, /gh release upload "\$\{TAG\}" release-video\.mp4 release-video\.json release-video\.png --clobber/);
 });
 
 test("the YouTube title and description are written for the tag and attached with the video", () => {
