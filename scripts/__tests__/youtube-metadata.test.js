@@ -50,6 +50,13 @@ test("the description follows the published layout, with commands, contributors 
   );
 });
 
+test("the themes and the programme travel with the text, so an announcement can be built from the video", () => {
+  const metadata = youtubeMetadata(plan, context);
+
+  assert.deepEqual(metadata.themes, plan.youtube.themes);
+  assert.deepEqual(metadata.programme, plan.youtube.programme);
+});
+
 test("a plugin skill is written as a slash command and a CLI command is left as it is", () => {
   const { description } = youtubeMetadata(plan, context);
 
