@@ -2,9 +2,11 @@
 
 ## Behavior
 
-Turn the contract into a proportional plan, then give one executor the plan. The executor implements it and calls the validation skills, which own their checks and repair loops. Include architecture conformance whenever the project documents architecture. Run an end-to-end journey after every other validation when the plan calls for one, and none otherwise.
+Turn the contract into a proportional plan, then give one executor the whole plan or delegate ready independent phases. For delegated phases, the caller owns preparation, dependencies, write isolation, integration, and finalization; the phase file is the executor's brief, and the same executor session resumes for its next phase.
 
-Commit and push the validated work through the commit skill. Send only the clean committed candidate to Check.
+The executor follows the implementation skill for its assigned scope; the validation skills own their checks and repair loops. Include architecture conformance whenever the project documents architecture.
+
+Send only the clean committed candidate and its evidence to Check.
 
 ```mermaid
 ---
@@ -23,7 +25,8 @@ flowchart TD
     Executor(["@aidd-dev:executor"])
     Implement["/aidd-dev:02-implement"]
     Assert["/aidd-dev:03-assert"]
-    Test["/aidd-dev:06-test"]
+    Integrate["Integrate phases"]
+    Finalize["Finalize integrated plan"]
     Commit["/aidd-vcs:01-commit"]
   end
 
@@ -35,13 +38,15 @@ flowchart TD
 
   Contract --> Plan
   Plan --> PlanArtifact
-  PlanArtifact --> Executor
+  PlanArtifact -- "Whole plan, or ready phases." --> Executor
   Executor --> Implement
   Implement --> Assert
-  Assert -- "When no end-to-end journey is required, commit the result." --> Commit
-  Assert -- "When an end-to-end journey is required, run it last." --> Test
-  Test -- "After the journey succeeds, commit the result." --> Commit
-  Test -- "Return a failed journey for repair." --> Executor
+  Assert -- "Whole plan." --> Commit
+  Assert -- "Phase." --> Integrate
+  Integrate -- "Next ready phase." --> Executor
+  Integrate --> Finalize
+  Finalize -- "Failure: repair the phase." --> Executor
+  Finalize --> Commit
   Commit --> CommittedCandidate
   CommittedCandidate --> Check
 
@@ -50,7 +55,7 @@ flowchart TD
   classDef artifact fill:#DCFCE7,stroke:#16A34A,color:#14532D,stroke-width:2px
   classDef zone fill:#F1F5F9,stroke:#64748B,color:#0F172A,stroke-width:2px
 
-  class Plan,Implement,Assert,Test,Commit skill
+  class Plan,Implement,Assert,Finalize,Commit skill
   class Executor agent
   class Contract,PlanArtifact,CommittedCandidate artifact
   class Check zone
