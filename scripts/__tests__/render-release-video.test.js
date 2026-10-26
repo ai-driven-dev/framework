@@ -70,9 +70,16 @@ test("the intro starts with no version on screen and types it in", () => {
   assert.match(html, /AIDD <span class="g">v5\.13<\/span>/);
 });
 
-test("the thumbnail is the intro once its last tag is in, half a second before the intro ends", () => {
-  assert.equal(thumbnailAt({ ...plan, intro: { highlights: ["a", "b"] } }), 6);
-  assert.equal(thumbnailAt({ ...plan, intro: {} }), 4.5);
+test("the thumbnail is the intro with its logo and its whole version, before the first tag comes in", () => {
+  for (const intro of [{ highlights: ["a", "b"] }, {}]) {
+    const at = thumbnailAt({ ...plan, intro });
+    const html = buildHtml({ ...plan, intro }, { version: "5.13" });
+    const tagAt = Number(/enter\("#intro (?:\.hl|-tag)", ([\d.]+)/.exec(html)[1]);
+
+    assert.equal(at, 1.95);
+    assert.ok(at < tagAt, `thumbnail at ${at}, first tag at ${tagAt}`);
+    assert.match(html, /tl\.to\(typed, \{ n: 1, duration: 1\.1,.*\}, 0\.8\)/s);
+  }
 });
 
 test("a scene's note appears after its last row, not with its window", () => {

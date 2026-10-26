@@ -18,6 +18,8 @@ const PLAN = path.join(ROOT, "aidd_docs/release-video/scenes.json");
 const HYPERFRAMES = "hyperframes@0.8.162";
 const INTRO = 5;
 const INTRO_WITH_HIGHLIGHTS = 6.5;
+const VERSION_TYPING_FROM = 0.8, VERSION_TYPING_SECONDS = 1.1;
+const VERSION_TYPED_AT = VERSION_TYPING_FROM + VERSION_TYPING_SECONDS;
 const OUTRO = 4;
 
 const CSS = `
@@ -398,11 +400,11 @@ function buildHtml(plan, { version, music, sfx }) {
     `enter("#intro-pill", 0.4, { y: 20 });`,
     `enter("#intro-rel", 0.55, { y: 20 });`,
     `const typed = { n: 0 }; const full = ${JSON.stringify(String(version))};`,
-    `tl.to(typed, { n: 1, duration: 1.1, ease: "none", onUpdate: () => { const len = Math.round(typed.n * (full.length + 1));` +
+    `tl.to(typed, { n: 1, duration: ${VERSION_TYPING_SECONDS}, ease: "none", onUpdate: () => { const len = Math.round(typed.n * (full.length + 1));` +
       ` const [a, b = ""] = full.split(".");` +
       ` document.getElementById("ver-t").textContent = ("v" + a).slice(0, Math.min(len, a.length + 1));` +
       ` document.querySelector("#ver .dot").textContent = len > a.length + 1 ? "." : "";` +
-      ` document.getElementById("ver-n").textContent = len > a.length + 1 ? b.slice(0, len - a.length - 1) : ""; } }, 0.8);`,
+      ` document.getElementById("ver-n").textContent = len > a.length + 1 ? b.slice(0, len - a.length - 1) : ""; } }, ${VERSION_TYPING_FROM});`,
     ...(hasTagline(plan.intro) ? [`enter("#intro-tag", 2.0, { y: 20 });`] : []),
     `enter("#intro .hl", ${hasTagline(plan.intro) ? 2.6 : 2}, { y: 16, duration: 0.5, stagger: 0.3 });`,
     `cut("intro", ${introSeconds(plan)});`
@@ -604,8 +606,9 @@ async function main() {
   console.log(`✅ ${thumbnail}`);
 }
 
-/** The picture a video is announced with: the intro once its last tag is in, just before it ends. */
-const thumbnailAt = (plan) => introSeconds(plan) - 0.5;
+/** The picture a video is announced with: the intro with its logo and its whole version, the moment before
+ * the first tag comes in. */
+const thumbnailAt = () => Math.round((VERSION_TYPED_AT + 0.05) * 100) / 100;
 
 module.exports = { buildHtml, measureRms, musicSections, musicSegments, sceneDuration, soundCues, soundTrack, thumbnailAt, totalDuration };
 
