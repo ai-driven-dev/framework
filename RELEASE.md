@@ -38,7 +38,7 @@ flowchart LR
 2. Open the [promotion `next` to `main`](https://github.com/ai-driven-dev/framework/actions/workflows/promote.yml) once the week's work is ready.
 3. release-please opens a Release PR on `main`: it is auto-merged.
 4. Tags and version bumps are created. The umbrella release is a draft: the bundle, the distributions and the rendered video are attached to it, then it is published. Announcements fire on that publication, with everything in place.
-5. The video is rendered by CI from the plan the promotion checked. A failed video does not hold the release; a failed bundle or distribution does, and the release stays a draft. Publish it by hand with `gh release edit <tag> --draft=false --latest` once fixed.
+5. The video is rendered by CI from the plan the promotion checked. A failed video, bundle or distribution holds the release, and it stays a draft. Publish it by hand with `gh release edit <tag> --draft=false --latest` once fixed.
 6. `main` is back-merged into `next` automatically.
 
 ## 🚑 Hotfix

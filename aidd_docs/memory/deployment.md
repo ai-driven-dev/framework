@@ -12,7 +12,7 @@ Where the project runs and how it ships: CI/CD, environments, and release.
 | `cli-ci.yml` | the `cli` and `kanban` gates, jobs in the CLI bank. No `paths:` filter: a `changes` job decides in bash what has work. Mutations skip only for a verified `promote/next-to-main-*` snapshot; anything unproven keeps normal scopes |
 | `validate.yml` | manifests against their schemas, plus the whole pre-commit over the whole tree |
 | `codeql.yml` | code scanning |
-| `promote.yml` | checks the release video covers what ships (`skip_video` bypasses), opens the `next` to `main` PR, auto-merges |
+| `promote.yml` | checks the release video covers what ships, opens the `next` to `main` PR, auto-merges |
 | `back-merge.yml` | folds `main` into `next` after each release |
 | `dependabot-auto-merge.yml` | merges dependency PRs that pass |
 | `close-finished-milestones.yml` | closes a milestone once its issues are |
@@ -55,7 +55,7 @@ flowchart TD
 - The Release PR merges with `--merge --admin`: the only method `.github/rulesets/main.json` allows, so `main` never holds merged but unversioned code.
 - Tags: umbrella, `cli-v<semver>`, `<plugin>-v<semver>`. `scripts/credit-release-authors.cjs` appends each author as `(@login)`, a workaround until [googleapis/release-please#2892](https://github.com/googleapis/release-please/pull/2892) ships.
 - The umbrella stays a draft until every asset is attached; its publication is the event n8n listens to.
-- A failed video build does not block publication, and a failed YouTube upload does not stop Discord and Skool: they post without the video link.
+- A failed video build keeps the release a draft, so nothing is announced without its video. A failed YouTube upload does not stop Discord and Skool: they post without the video link.
 
 Config: `release-please-config.json`, eleven packages. Manifest: `.release-please-manifest.json`.
 
