@@ -617,6 +617,14 @@ async function main() {
   const frame = spawnSync("ffmpeg", ["-y", "-v", "error", "-i", path.join(still, "thumbnail.mp4"), "-frames:v", "1", "-vf", "scale=1280:720", thumbnail], { stdio: "inherit" });
   if (frame.status !== 0) throw new Error(`The thumbnail could not be taken (${frame.status})`);
   console.log(`✅ ${thumbnail}`);
+
+  const probe = spawnSync("ffprobe", ["-v", "error", "-select_streams", "v:0", "-show_entries", "stream=bit_rate", "-of", "csv=p=0", out], { encoding: "utf8" });
+  const bitrate = Number(probe.stdout.trim());
+  if (!bitrate) throw new Error("The bitrate of the video could not be read");
+  const posted = out.replace(/\.mp4$/, ".poster.mp4");
+  const withPoster = spawnSync("ffmpeg", posterArgs({ video: out, poster: thumbnail, out: posted, bitrate }), { stdio: "inherit" });
+  if (withPoster.status !== 0) throw new Error(`The thumbnail could not be put first (${withPoster.status})`);
+  fs.renameSync(posted, out);
 }
 
 /** The picture a video is announced with, drawn as its own still composition rather than taken from a frame
@@ -644,7 +652,25 @@ window.__timelines["main"] = gsap.timeline({ paused: true });
 `;
 }
 
-module.exports = { buildHtml, measureRms, musicSections, musicSegments, sceneDuration, soundCues, soundTrack, thumbnailHtml, totalDuration };
+/** The video opens on its thumbnail for one frame: a chat shows a video's first frame as its preview, and the
+ * intro starts on the bare background. The video is encoded again at its own bitrate, and its sound is delayed
+ * by that frame. */
+function posterArgs({ video, poster, out, bitrate }) {
+  const kbps = Math.round(bitrate / 1000);
+  return [
+    "-y", "-v", "error",
+    "-loop", "1", "-framerate", "30", "-t", "0.0334", "-i", poster,
+    "-i", video,
+    "-filter_complex",
+    "[0:v]scale=1920:1080,setsar=1,fps=30,format=yuv420p[p];[1:v]setsar=1,fps=30,format=yuv420p[v];[p][v]concat=n=2:v=1:a=0[vo];[1:a]adelay=34|34[ao]",
+    "-map", "[vo]", "-map", "[ao]",
+    "-c:v", "libx264", "-profile:v", "high", "-b:v", `${kbps}k`, "-maxrate", `${Math.round(kbps * 1.25)}k`, "-bufsize", `${kbps * 2}k`, "-preset", "slow",
+    "-c:a", "aac", "-b:a", "192k", "-movflags", "+faststart",
+    out,
+  ];
+}
+
+module.exports = { buildHtml, measureRms, musicSections, musicSegments, sceneDuration, soundCues, posterArgs, soundTrack, thumbnailHtml, totalDuration };
 
 if (require.main === module) {
   main().catch((error) => {

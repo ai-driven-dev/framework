@@ -8,7 +8,7 @@ Turn the accepted plan into the release video and look at it.
 
 ## Output
 
-`release-video.mp4` in the working directory, and `release-video.png` beside it: the thumbnail, a still composition of the logo, the version and the themes, not a frame of the video.
+`release-video.mp4` in the working directory, and `release-video.png` beside it: the thumbnail, a still composition of the logo, the version and the themes, not a frame of the video, and it is also the video's first frame, one frame long, so a chat shows it as the preview.
 
 ## Process
 
