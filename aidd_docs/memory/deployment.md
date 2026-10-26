@@ -12,7 +12,7 @@ Where the project runs and how it ships: CI/CD, environments, and release.
 | `cli-ci.yml` | the `cli` and `kanban` gates, jobs in the CLI bank. No `paths:` filter: a `changes` job decides in bash what has work. Mutations skip only for a verified `promote/next-to-main-*` snapshot; anything unproven keeps normal scopes |
 | `validate.yml` | manifests against their schemas, plus the whole pre-commit over the whole tree |
 | `codeql.yml` | code scanning |
-| `promote.yml` | checks the release video covers what ships (`skip_video` bypasses), opens the `next` to `main` PR, auto-merges |
+| `promote.yml` | checks the release video covers what ships, opens the `next` to `main` PR, auto-merges |
 | `back-merge.yml` | folds `main` into `next` after each release |
 | `dependabot-auto-merge.yml` | merges dependency PRs that pass |
 | `close-finished-milestones.yml` | closes a milestone once its issues are |
