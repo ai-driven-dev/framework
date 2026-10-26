@@ -108,7 +108,7 @@ Memory ownership (CLAUDE.md, AGENTS.md, copilot-instructions.md) is delegated to
 
 ## Hook adaptation
 
-OpenCode needs JS adapters. The CLI owns the shared host protocol; plugins own payload mapping. Its helper is delivered once outside plugin discovery, tracked as a tool file, and backfilled only when missing. Installation must neither rewrite user configuration nor claim existing untracked helpers. Generic `SessionStart` runs idempotently at host initialization.
+OpenCode needs JS adapters. The CLI owns the shared host protocol; plugins own payload mapping. Its helper is delivered once outside plugin discovery, tracked as a tool file, and backfilled only when missing. Installation must neither rewrite user configuration nor claim existing untracked helpers. Generic `SessionStart` runs idempotently at host initialization; what its scripts print (`additionalContext` or plain text, as Claude Code and Codex read it) is added to every model call through V1's `experimental.chat.system.transform` or V2's `session.hook("context")`.
 
 <details>
 <summary>Tool compatibility and adapter contracts</summary>

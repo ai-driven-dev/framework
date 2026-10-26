@@ -114,7 +114,7 @@ Dependency-free Node scripts declared in `hooks/hooks.json`; `node` must be on `
 
 | Plugin           | Event                                   | Runs                     | Purpose                                                     |
 | ---------------- | --------------------------------------- | ------------------------ | ----------------------------------------------------------- |
-| `aidd-context`   | `SessionStart`                          | `hooks/update_memory.js` | Refresh the project memory block in the AI context files    |
+| `aidd-context`   | `SessionStart`                          | `hooks/update_memory.js` · `hooks/framework-version.cjs` | Refresh the project memory block in the AI context files; tell the conversation the installed framework release for the greeting, and announce a newer one from the same source, cached and refreshed in the background |
 | `aidd-telemetry` | `SessionStart` · `UserPromptSubmit`     | `hooks/session-start.cjs` · `hooks/catch-up.cjs` · `hooks/prompt-gate.cjs` | At session start, record which session a process is on and keep its task across `/clear`, and catch the ledger up (async); on a prompt, hold it on an undeclared branch until a task is declared, and answer the declaration without the model |
 
 ## Portability

@@ -201,8 +201,14 @@ const INSTALLED_NODES: MenuNode[] = [
   {
     name: "System",
     value: "system",
-    description: "CLI update and authentication",
+    description: "CLI version, update and authentication",
     children: [
+      {
+        name: "CLI version",
+        value: "self-update-check",
+        description: "Show the installed CLI version and whether a newer one is published",
+        command: ["update", "--check"],
+      },
       {
         name: "Update CLI",
         value: "self-update",

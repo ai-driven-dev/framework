@@ -32,6 +32,7 @@ Read on demand:
 
 - [internal/decisions/a-price-table-is-the-destination-s.md](internal/decisions/a-price-table-is-the-destination-s.md)
 - [internal/decisions/measurement-may-reach-a-hosted-destination.md](internal/decisions/measurement-may-reach-a-hosted-destination.md)
+- [internal/decisions/the-greeting-reads-the-installed-framework-version.md](internal/decisions/the-greeting-reads-the-installed-framework-version.md)
 <!-- files:end -->
 
 ## Maintaining it

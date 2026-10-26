@@ -53,20 +53,44 @@ describe("generateOpencodeHooksBridge", () => {
       const SESSION_START = [{"script":"update_memory.js","args":[]}];
       const STOP = [{"script":"journal.cjs","args":["turn-end"]}];
       const POST_TOOL_USE = [{"script":"journal.cjs","args":["tool-used"],"matcher":"Bash"}];
+      const MAX_CONTEXT_CHARS = 16000;
 
       // Asynchronous on purpose: this can spawn one script per matching hook across every mapped
       // event, and blocking OpenCode's event loop once per hook would multiply the cost. A failed spawn (ENOENT, a killed timeout)
       // must not throw past this function - both listeners below, plus the caller's own
       // try/catch, exist because a spawn that never launches can still throw on the stdin write.
-      function runHook(script, args, payload, directory) {
-        const child = spawn("node", [HOOKS_DIR + script, ...args], {
-          cwd: directory,
-          stdio: ["pipe", "ignore", "ignore"],
-          timeout: 5000,
+      // Resolves with the script's stdout once it exits, or "" when it never ran.
+      function runHook(script, args, payload, directory, { captureOutput = false } = {}) {
+        return new Promise((resolve) => {
+          const child = spawn("node", [HOOKS_DIR + script, ...args], {
+            cwd: directory,
+            stdio: ["pipe", captureOutput ? "pipe" : "ignore", "ignore"],
+            timeout: 5000,
+          });
+          let output = "";
+          child.stdout?.on("data", (chunk) => {
+            if (output.length < MAX_CONTEXT_CHARS) output += chunk;
+          });
+          child.on("error", () => resolve(""));
+          child.on("close", () => resolve(output));
+          child.stdin.on("error", () => {});
+          child.stdin.end(JSON.stringify(payload));
         });
-        child.on("error", () => {});
-        child.stdin.on("error", () => {});
-        child.stdin.end(JSON.stringify(payload));
+      }
+
+      /** Pure: a SessionStart script's stdout -> the context Claude Code and Codex would add for it:
+       * \`hookSpecificOutput.additionalContext\` from JSON, plain text as is, "" for nothing. A
+       * \`systemMessage\` has no OpenCode surface, and the context already carries what it says. */
+      function sessionContextOf(output) {
+        const text = output.trim();
+        if (text === "") return "";
+        try {
+          const parsed = JSON.parse(text);
+          const context = parsed?.hookSpecificOutput?.additionalContext;
+          return typeof context === "string" ? context.trim() : "";
+        } catch {
+          return text;
+        }
       }
 
       /** Pure: \`session.idle\` -> every Stop hook's own {script, args, payload} - or \`[]\` for
@@ -109,19 +133,32 @@ describe("generateOpencodeHooksBridge", () => {
         // SessionStart's own approximation (module doc comment above): fired once here, never
         // per session. Silent on purpose: a memory refresh
         // that breaks OpenCode's own startup is worse than one that never ran.
+        let sessionContext = Promise.resolve("");
         try {
-          for (const hook of SESSION_START) {
-            runHook(
-              hook.script,
-              hook.args,
-              { hook_event_name: "SessionStart", session_id: null, cwd: input.directory },
-              input.directory
-            );
-          }
+          sessionContext = Promise.all(
+            SESSION_START.map((hook) =>
+              runHook(
+                hook.script,
+                hook.args,
+                { hook_event_name: "SessionStart", session_id: null, cwd: input.directory },
+                input.directory,
+                { captureOutput: true }
+              )
+            )
+          )
+            .then((outputs) => outputs.map(sessionContextOf).filter(Boolean).join("\\n\\n"))
+            .catch(() => "");
         } catch {
           // Silent on purpose - see above.
         }
         return {
+          // What SessionStart printed reaches every model call, as Claude Code and Codex add it to
+          // the conversation. V1 calls this per request; V2 reaches it through opencode-events.js.
+          // \`sessionContext\` never rejects, so a model call never fails over it.
+          "experimental.chat.system.transform": async (_input, output) => {
+            const context = await sessionContext;
+            if (context && Array.isArray(output?.system)) output.system.push(context);
+          },
           event: async ({ event }) => {
             try {
               const directory = event?.properties?.directory ?? input.directory;
@@ -141,6 +178,7 @@ describe("generateOpencodeHooksBridge", () => {
 
       AiddSampleHooks.stopCallsFor = stopCallsFor;
       AiddSampleHooks.postToolUseCallsFor = postToolUseCallsFor;
+      AiddSampleHooks.sessionContextOf = sessionContextOf;
 
       export default {
         id: "aidd-sample-hooks",

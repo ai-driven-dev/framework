@@ -248,7 +248,7 @@ describe("interactive menu — the rows each level offers", () => {
           value: "maintain",
           description: "Update tools, sync tracked files, and clean everything",
         },
-        { name: "System", value: "system", description: "CLI update and authentication" },
+        { name: "System", value: "system", description: "CLI version, update and authentication" },
         { name: "Exit", value: "exit" },
       ],
     ]);
@@ -395,10 +395,15 @@ describe("interactive menu — the rows each level offers", () => {
     ]);
   });
 
-  it("offers the CLI's own update and a nested authentication branch under System", async () => {
+  it("offers the CLI's version, its own update and a nested authentication branch under System", async () => {
     expect(await choicesAt(["system"])).toEqual([
       "System",
       [
+        {
+          name: "CLI version",
+          value: "self-update-check",
+          description: "Show the installed CLI version and whether a newer one is published",
+        },
         {
           name: "Update CLI",
           value: "self-update",
@@ -482,6 +487,10 @@ describe("interactive menu — the command each pick hands over", () => {
     ],
     [["maintain", "sync-all"], ["sync"]],
     [["maintain", "clean"], ["clean"]],
+    [
+      ["system", "self-update-check"],
+      ["update", "--check"],
+    ],
     [["system", "self-update"], ["update"]],
     [
       ["system", "auth", "auth-status"],

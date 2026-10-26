@@ -67,6 +67,22 @@ export async function setupOpencodeEvents(ctx, factory) {
   const controller = new AbortController();
   const toolCalls = new Map();
   const hooks = await factory({ directory: ctx.location.directory });
+  const registrations = [];
+  // V1's system transform, replayed on V2's context hook: same text, one block per model call.
+  const transform = hooks["experimental.chat.system.transform"];
+  if (typeof transform === "function" && typeof ctx.session?.hook === "function") {
+    try {
+      registrations.push(
+        await ctx.session.hook("context", async (event) => {
+          const output = { system: [] };
+          await transform({}, output);
+          for (const text of output.system) event.system.push({ type: "text", text });
+        })
+      );
+    } catch {
+      // A host without the hook keeps the events below.
+    }
+  }
   // The subscription lives until cleanup. Awaiting it here would block plugin startup.
   void (async () => {
     try {
@@ -85,5 +101,10 @@ export async function setupOpencodeEvents(ctx, factory) {
   return () => {
     controller.abort();
     toolCalls.clear();
+    for (const registration of registrations) {
+      Promise.resolve()
+        .then(() => registration?.dispose?.())
+        .catch(() => {});
+    }
   };
 }

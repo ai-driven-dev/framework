@@ -1,6 +1,6 @@
 # AGENTS.md
 
-> On 1st message, greet user with: "AI-Driven Development On ⚡ · Framework v5.12.0 · [Releases](https://github.com/ai-driven-dev/framework/releases)"
+> On 1st message, greet user with: "AI-Driven Development On ⚡ · Framework v{version} · [Releases](https://github.com/ai-driven-dev/framework/releases)", {version} being the one the `AIDD framework:` session context reports; when it reports none, write "Framework version unknown" in its place, never a plugin or CLI version. When that context announces an update, add that notice verbatim on the next line.
 
 ## Behavior
 

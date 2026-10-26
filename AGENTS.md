@@ -1,6 +1,6 @@
 # AGENTS.md
 
-> On 1st message, greet user with: "AI-Driven Development On ⚡ · Framework v5.12.0 · [Releases](https://github.com/ai-driven-dev/framework/releases)"
+> On 1st message, greet user with: "AI-Driven Development On ⚡ · Framework v{version} · [Releases](https://github.com/ai-driven-dev/framework/releases)", {version} being the one the `AIDD framework:` session context reports; when it reports none, write "Framework version unknown" in its place, never a plugin or CLI version. When that context announces an update, add that notice verbatim on the next line.
 
 ## Behavior
 
@@ -54,7 +54,7 @@ Project docs, memory, specs, and plans live in `aidd_docs/`.
 <!-- read on demand, not auto-loaded -->
 - aidd_docs/memory/internal/decisions/a-price-table-is-the-destination-s.md
 - aidd_docs/memory/internal/decisions/measurement-may-reach-a-hosted-destination.md
-- aidd_docs/memory/internal/decisions/startup-greeting-carries-the-framework-release-version.md
+- aidd_docs/memory/internal/decisions/the-greeting-reads-the-installed-framework-version.md
 
 <!-- aidd_project_memory:end -->
 
