@@ -248,7 +248,7 @@ describe("interactive menu — the rows each level offers", () => {
           value: "maintain",
           description: "Update tools, sync tracked files, and clean everything",
         },
-        { name: "System", value: "system", description: "CLI version, update and authentication" },
+        { name: "System", value: "system", description: "CLI update and authentication" },
         { name: "Exit", value: "exit" },
       ],
     ]);
@@ -400,9 +400,9 @@ describe("interactive menu — the rows each level offers", () => {
       "System",
       [
         {
-          name: "CLI version",
+          name: "Check for CLI update",
           value: "self-update-check",
-          description: "Show the installed CLI version and whether a newer one is published",
+          description: "Check whether a newer CLI is published, without installing it",
         },
         {
           name: "Update CLI",
