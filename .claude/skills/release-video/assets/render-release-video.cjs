@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * Renders the release video from `aidd_docs/release-video/scenes.json`, locally, with no AI tool
- * involved: `node .claude/skills/release-video/assets/render-release-video.cjs --version 5.13 [--plan <file>] [--music <file>] [--out <file>]`.
+ * involved: `node .claude/skills/release-video/assets/render-release-video.cjs --version 5.13 [--plan <file>] [--music <file>] [--out <file>]`, which also writes the thumbnail next to the video as a `.png`.
  *
  * Needs `npx`, a network (fonts and avatars are local, GSAP and the avatars are fetched) and
  * ffmpeg + Chrome as Hyperframes does. The renderer is pinned: a new Hyperframes release
@@ -597,9 +597,17 @@ async function main() {
   const out = path.resolve(argument("out") ?? "release-video.mp4");
   fs.copyFileSync(path.join(dir, "release-video.mp4"), out);
   console.log(`✅ ${out}`);
+
+  const thumbnail = out.replace(/\.mp4$/, ".png");
+  const frame = spawnSync("ffmpeg", ["-y", "-v", "error", "-ss", String(thumbnailAt(plan)), "-i", out, "-frames:v", "1", "-vf", "scale=1280:720", thumbnail], { stdio: "inherit" });
+  if (frame.status !== 0) throw new Error(`The thumbnail could not be taken (${frame.status})`);
+  console.log(`✅ ${thumbnail}`);
 }
 
-module.exports = { buildHtml, measureRms, musicSections, musicSegments, sceneDuration, soundCues, soundTrack, totalDuration };
+/** The picture a video is announced with: the intro once its last tag is in, just before it ends. */
+const thumbnailAt = (plan) => introSeconds(plan) - 0.5;
+
+module.exports = { buildHtml, measureRms, musicSections, musicSegments, sceneDuration, soundCues, soundTrack, thumbnailAt, totalDuration };
 
 if (require.main === module) {
   main().catch((error) => {

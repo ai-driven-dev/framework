@@ -156,8 +156,9 @@ jobs:
           VERSION="${{ needs.release-please.outputs.version }}"
           MINOR="${VERSION%.*}"
           node .claude/skills/release-video/assets/render-release-video.cjs --version "${MINOR}"
-      # The title and description published with the video, in the layout of the earlier ones.
-      - name: Attach the release video and its YouTube text to the release
+      # The title and description published with the video, in the layout of the earlier ones, and the
+      # thumbnail the render took beside it.
+      - name: Attach the release video, its thumbnail and its YouTube text to the release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -165,7 +166,7 @@ jobs:
           MINOR="${VERSION%.*}"
           TAG="${{ needs.release-please.outputs.tag_name }}"
           node .claude/skills/release-video/assets/youtube-metadata.js --version "${MINOR}" --tag "${TAG}" --repo "${{ github.repository }}"
-          gh release upload "${TAG}" release-video.mp4 release-video.json --clobber
+          gh release upload "${TAG}" release-video.mp4 release-video.json release-video.png --clobber
 
   build-per-tool:
     name: Build and attach per-tool distribution
