@@ -62,11 +62,12 @@ const plan = {
 
 const sum = (scenes) => scenes.reduce((total, scene) => total + sceneDuration(scene), 0);
 
-test("the intro starts with no version on screen and types it in", () => {
+test("the intro is already drawn at its first frame: logo, pill, release label and version", () => {
   const html = buildHtml(plan, { version: "5.13" });
 
-  assert.match(html, /<span id="ver-t"><\/span><span class="dot"><\/span><span id="ver-n"><\/span>/);
-  assert.match(html, /const full = "5\.13"/);
+  assert.match(html, /<div id="ver"><span id="ver-t">v5<\/span><span class="dot">\.<\/span><span id="ver-n">13<\/span><\/div>/);
+  assert.doesNotMatch(html, /const full = /);
+  for (const id of ["intro-logo", "intro-pill", "intro-rel"]) assert.doesNotMatch(html, new RegExp(`enter\\("#${id}"`));
   assert.match(html, /AIDD <span class="g">v5\.13<\/span>/);
 });
 
@@ -276,10 +277,9 @@ test("every sound is on a time of the video, in order", () => {
   assert.deepEqual(cues.map((c) => c.t), cues.map((c) => c.t).sort((a, b) => a - b));
 });
 
-test("a key tick sounds for each character of the version as it is typed", () => {
-  const typed = cuesOf("key", 0.8, 1.9);
-
-  assert.equal(typed.length, "5.13".length + 1);
+test("the intro is silent until its first tag appears", () => {
+  assert.deepEqual(cuesOf("key", 0, 1.9), []);
+  assert.deepEqual(soundCues(plan, { version: "5.13" }).filter((c) => c.t < 1.9), []);
 });
 
 test("each scene opens with a whoosh at its own start", () => {
@@ -404,7 +404,7 @@ test("no pop is cued for a phrase the intro does not draw", () => {
   const withTags = { ...plan, intro: { highlights: ["a", "b"] } };
   const pops = soundCues(withTags, { version: "5.13" }).filter((c) => c.kind === "pop" && c.t < 4).map((c) => c.t);
 
-  assert.deepEqual(pops, [0.1, 2, 2.3]);
+  assert.deepEqual(pops, [2, 2.3]);
 });
 
 const full = {
@@ -432,10 +432,9 @@ test("a scene without a lead or a note has no sound for them", () => {
   assert.deepEqual(inRange(bare, 5, 8).map((c) => c.t), [5, 5.14, 5.28, 5.63, 6.3, 6.75]);
 });
 
-test("the intro pill and release label, the outro logo and title each have a sound", () => {
+test("the outro logo and title each have a sound", () => {
   const end = totalDuration(full) - 4;
 
-  assert.deepEqual(inRange(full, 0.3, 0.7).map((c) => [c.kind, c.t]), [["tick", 0.4], ["tick", 0.55]]);
   assert.deepEqual(inRange(full, end, end + 0.5).map((c) => [c.kind, c.t]), [["pop", end + 0.07], ["pop", end + 0.28]]);
 });
 
