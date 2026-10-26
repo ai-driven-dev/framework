@@ -54,7 +54,6 @@ Project docs, memory, specs, and plans live in `aidd_docs/`.
 <!-- read on demand, not auto-loaded -->
 - aidd_docs/memory/internal/decisions/a-price-table-is-the-destination-s.md
 - aidd_docs/memory/internal/decisions/measurement-may-reach-a-hosted-destination.md
-- aidd_docs/memory/internal/decisions/the-greeting-reads-the-installed-framework-version.md
 
 <!-- aidd_project_memory:end -->
 
