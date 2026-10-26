@@ -29,5 +29,5 @@ Turn the accepted plan into the release video and look at it.
 | Text that does not fit a window | seen on a frame, fixed in the plan, rendered again |
 | Version typed on screen | the real release version, not a placeholder |
 | Frame read with the sound off | the picture alone says what the release brings |
-| Levels measured | the hook is loud, the bed about 10 dB lower under the scenes and the outro, the ending no louder than the bed, the interface sounds stand out of the bed |
+| Levels measured | the hook is the loudest, the bed about 4 dB lower under the scenes and the outro, the ending no louder than the bed, the interface sounds stand out of the bed |
 | Finished render | MP4 present, duration reported, nothing published |

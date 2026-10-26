@@ -7,6 +7,7 @@ What a plan holds and how each part is drawn.
 | `terminal-demo` | one command and its output | `window`, optional `flow` |
 | `two-panels` | a request beside its result | `panels`, each with `label`, `flex`, `rows` |
 | `bullet-grid` | several small changes | `cells`, each with `title`, optional `detail`, `wide` |
+| `before-after` | a change shown as an old card and a new one, such as a leaner skill | `before` and `after`, two windows whose rows are `del` and `add` |
 | `contributors` | who shipped the release | `logins` |
 
 | Plan field | Holds |
@@ -18,7 +19,7 @@ What a plan holds and how each part is drawn.
 | --- | --- |
 | `pill` | the theme, top left: `Telemetry`, `Rules`, never a command |
 | `title`, `accent` | a short title; the accent takes the gradient |
-| `lead` | one plain sentence under the title: what it does for the user |
+| `lead` | optional and left out by default: the picture says it. One plain sentence under the title when a scene cannot be understood without it |
 | `surfaces` | the skills and commands the scene covers, for the check |
 | `window` | `label` and `rows` |
 | `note` | a line shown after the last row, such as `Example figures.` |
@@ -31,6 +32,7 @@ What a plan holds and how each part is drawn.
 | table | `{"table": {"head": [], "rows": []}}`, a cell may be `{"status": "…"}` or `{"dim": "…"}` |
 | code | `{"code": "…"}` |
 | check | `{"check": "…", "mark": "!"}` |
+| diff | `{"del": "…"}` drawn red with `-`, `{"add": "…"}` drawn green with `+` |
 
 | Tone | Means |
 | --- | --- |
@@ -43,10 +45,10 @@ What a plan holds and how each part is drawn.
 | Limit | Value |
 | --- | --- |
 | intro tagline | optional and left out by default; 6 words when used |
-| intro highlights | 3, of 5 words each, drawn one per line: clear sentences, not labels |
-| scene lead | 14 words |
+| intro highlights | 5, of 5 words each, drawn one per line in large type: clear sentences, not labels |
+| scene lead | 14 words, when there is one |
 | intro | 5 seconds, 6.5 with highlights |
-| scene | 4.5 seconds, plus 1 with a lead, plus 0.7 per item, rounded up to a half second |
+| scene | 3.5 seconds, plus 1 with a lead, plus 0.7 per item, rounded up to a half second |
 | outro | 4 seconds |
 | refused words | tokens, envelope, axis, transcript, payload, hook; `telemetry` stays; the demo window is not read, it shows real commands and flags |
 | themes | scenes of one theme follow each other |

@@ -71,7 +71,7 @@ const withoutGitEnv = () =>
   Object.fromEntries(Object.entries(process.env).filter(([key]) => !key.startsWith("GIT_")));
 
 const MAX_TAGLINE_WORDS = 6;
-const MAX_HIGHLIGHTS = 3;
+const MAX_HIGHLIGHTS = 5;
 const MAX_HIGHLIGHT_WORDS = 5;
 const MAX_LEAD_WORDS = 14;
 

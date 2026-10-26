@@ -28,7 +28,7 @@
         ]
       },
       "note": "Example run.",
-      "lead": "One plain sentence: what it does for the user, and why it matters."
+      "lead": "Optional, left out by default: only when the picture alone cannot say it."
     }
   ],
   "skipped": [

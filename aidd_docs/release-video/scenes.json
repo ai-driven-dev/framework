@@ -3,9 +3,8 @@
     {
       "template": "terminal-demo",
       "pill": "Telemetry",
-      "title": "Your Codex work,",
-      "accent": "measured too.",
-      "lead": "Ask Codex what your work cost and get the full report.",
+      "title": "See what your AI costs,",
+      "accent": "in Codex too.",
       "surfaces": [
         "aidd telemetry"
       ],
@@ -52,9 +51,8 @@
     {
       "template": "terminal-demo",
       "pill": "Telemetry",
-      "title": "Every tool,",
-      "accent": "told apart.",
-      "lead": "See Claude and Codex side by side, each with its own total.",
+      "title": "Know which tool",
+      "accent": "costs what.",
       "surfaces": [
         "aidd-telemetry:00-init"
       ],
@@ -90,10 +88,209 @@
       "note": "Example figures."
     },
     {
+      "template": "before-after",
+      "pill": "Brainstorm",
+      "title": "38% leaner Brainstorm",
+      "accent": "for small models.",
+      "before": {
+        "label": "Before · 01-capture.md",
+        "rows": [
+          {
+            "del": "Require. If no idea is present, ask for one and wait."
+          },
+          {
+            "del": "Restate. Capture the idea in short bullets, preserving uncertainty."
+          },
+          {
+            "del": "Scan. Apply interview depth and discovery map silently."
+          },
+          {
+            "del": "Open. Hand the highest-impact open point to probe."
+          }
+        ]
+      },
+      "after": {
+        "label": "After · 01-capture.md",
+        "rows": [
+          {
+            "add": "With no idea, ask for one and stop."
+          },
+          {
+            "add": "Say the idea back briefly, in the user's words, keeping what is still uncertain."
+          },
+          {
+            "add": "Go to explore."
+          }
+        ]
+      }
+    },
+    {
+      "template": "terminal-demo",
+      "pill": "Brainstorm",
+      "title": "See what your AI",
+      "accent": "only guessed.",
+      "surfaces": [
+        "aidd-refine:01-brainstorm"
+      ],
+      "window": {
+        "label": "Claude Code · ~/acme-app",
+        "rows": [
+          {
+            "prompt": "/aidd-refine:01-brainstorm a way to share reports"
+          },
+          {
+            "text": "Who reads these reports, a teammate or a client?",
+            "tone": "amb"
+          },
+          {
+            "text": "Clear: clients read the reports",
+            "tone": "grn"
+          },
+          {
+            "text": "Assumed: a weekly report is enough",
+            "tone": "amb"
+          },
+          {
+            "text": "Open: who owns the data?",
+            "tone": "blu"
+          },
+          {
+            "text": "Approve, correct, or explore more?",
+            "tone": "amb"
+          }
+        ]
+      }
+    },
+    {
+      "template": "before-after",
+      "pill": "Planning",
+      "title": "51% leaner Planning",
+      "accent": "for small models.",
+      "before": {
+        "label": "Before · 01-gather.md",
+        "rows": [
+          {
+            "del": "Find. Identify what the request points to: a file path, a ticket URL or id, or raw text."
+          },
+          {
+            "del": "Pull. Read the file, fetch the ticket, or take the text as given."
+          },
+          {
+            "del": "Restate. Summarize the source in a few bullets: what is asked, and the hard constraints it states."
+          }
+        ]
+      },
+      "after": {
+        "label": "After · 01-capture.md",
+        "rows": [
+          {
+            "add": "With no source to plan from (file, ticket, or text), ask for one and stop."
+          },
+          {
+            "add": "Read it, noting what it asks and the constraints it states."
+          },
+          {
+            "add": "Read explore."
+          }
+        ]
+      }
+    },
+    {
+      "template": "two-panels",
+      "pill": "Planning",
+      "title": "Know what a plan",
+      "accent": "will change.",
+      "panels": [
+        {
+          "label": "plan.md · Phases",
+          "flex": 1,
+          "rows": [
+            {
+              "table": {
+                "head": [
+                  "Phase",
+                  "Depends on"
+                ],
+                "rows": [
+                  [
+                    "1 safety net",
+                    "none"
+                  ],
+                  [
+                    "2 theme switch",
+                    "1"
+                  ],
+                  [
+                    "3 settings page",
+                    "2"
+                  ]
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "label": "plan.md · Impact",
+          "flex": 1,
+          "rows": [
+            {
+              "text": "Runtime: the theme is read at startup",
+              "tone": "grn"
+            },
+            {
+              "text": "Regression: print pages stay light",
+              "tone": "amb"
+            },
+            {
+              "text": "Architecture: one theme provider",
+              "tone": "blu"
+            },
+            {
+              "text": "Documentation: a settings guide section",
+              "tone": "pnk"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "template": "terminal-demo",
+      "pill": "Planning",
+      "title": "Catch plan gaps",
+      "accent": "before you build.",
+      "surfaces": [
+        "aidd-dev:01-plan"
+      ],
+      "window": {
+        "label": "Claude Code · ~/acme-app",
+        "rows": [
+          {
+            "prompt": "/aidd-dev:01-plan add dark mode"
+          },
+          {
+            "text": "plan written, an independent reader checks it…",
+            "tone": "dim"
+          },
+          {
+            "text": "✗ Reading: the login page was not read",
+            "tone": "amb"
+          },
+          {
+            "text": "✗ Evidence: the settings page impact was assumed",
+            "tone": "amb"
+          },
+          {
+            "text": "Approve, correct, or explore more?",
+            "tone": "amb"
+          }
+        ]
+      }
+    },
+    {
       "template": "terminal-demo",
       "pill": "Rules",
-      "title": "No more rules",
-      "accent": "that clash.",
+      "title": "Rules that never",
+      "accent": "contradict each other.",
       "surfaces": [
         "aidd-context:05-rule-generate"
       ],
@@ -120,18 +317,17 @@
             "tone": "grn"
           }
         ]
-      },
-      "note": "Example run.",
-      "lead": "Before saving a new rule, your AI checks it against the others."
+      }
     },
     {
       "template": "contributors",
       "pill": "Team",
       "title": "Shipped by",
-      "accent": "2 contributors.",
+      "accent": "3 contributors.",
       "logins": [
         "alexsoyes",
-        "blafourcade"
+        "blafourcade",
+        "waewoo"
       ]
     }
   ],
@@ -143,15 +339,18 @@
   ],
   "intro": {
     "highlights": [
-      "Telemetry now covers Codex",
-      "Telemetry report split by tool",
-      "Rules checked for conflicts"
+      "See what Codex costs you",
+      "Lean skills small models follow",
+      "See what your AI guessed",
+      "Catch plan gaps before building",
+      "No more contradicting rules"
     ]
   },
   "youtube": {
     "themes": [
       "Télémétrie",
-      "Codex",
+      "Plan",
+      "Brainstorm",
       "Règles"
     ],
     "programme": [
@@ -162,6 +361,14 @@
       {
         "surface": "aidd-telemetry:00-init",
         "text": "activer la mesure et distinguer le résultat par outil, Claude Code ou Codex."
+      },
+      {
+        "surface": "aidd-dev:01-plan",
+        "text": "alléger le plan de moitié, y lister l'ordre des phases et l'impact, et le faire relire par un juge indépendant."
+      },
+      {
+        "surface": "aidd-refine:01-brainstorm",
+        "text": "alléger le brainstorm et distinguer ce qui est établi, supposé ou resté ouvert."
       },
       {
         "surface": "aidd-context:05-rule-generate",
