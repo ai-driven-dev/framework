@@ -42,6 +42,14 @@ h2 { font-size: 78px; line-height: 1.08; letter-spacing: -0.02em; font-weight: 8
 .bar i { width: 18px; height: 18px; border-radius: 50%; display: block; }
 .body { padding: 30px 36px; display: flex; flex-direction: column; gap: 18px; font-family: "JetBrains Mono", monospace; font-weight: 500; font-size: 32px; line-height: 1.4; }
 .dim { color: #8a8fc0; } .grn { color: #5ee6a8; } .blu { color: #8aa6ff; } .pnk { color: #ff8fa8; } .amb { color: #ffd37a; }
+.row.del { color: #ff9aa8; background: rgba(255,107,107,.14); border-left: 4px solid #ff6b6b; padding-left: 14px; }
+.row.add { color: #5ee6a8; background: rgba(94,230,168,.12); border-left: 4px solid #5ee6a8; padding-left: 14px; }
+.diff .row { font-size: 27px; line-height: 1.35; }
+.figs { display: flex; gap: 24px; margin-top: 18px; }
+.fig { flex: 1; background: #0b0b36; border: 2px solid #26265f; border-radius: 16px; padding: 18px 28px; display: flex; flex-direction: column; gap: 6px; }
+.fig b { font-size: 72px; font-weight: 800; line-height: 1; }
+.fig .from { color: #ff9aa8; } .fig .arr { color: #8a8fc0; padding: 0 14px; } .fig .to { color: #5ee6a8; }
+.fig small { font-family: "JetBrains Mono", monospace; font-size: 26px; color: #8a8fc0; }
 .row.red { color: #ff9aa8; background: rgba(255,107,107,.14); border-left: 4px solid #ff6b6b; padding-left: 14px; }
 .note { font-family: "JetBrains Mono", monospace; font-size: 22px; color: #8a8fc0; }
 .chips { display: flex; flex-wrap: wrap; gap: 18px; }
@@ -81,8 +89,8 @@ td { padding: 14px 14px; border-bottom: 2px solid #15153f; vertical-align: top; 
 #ver .dot { color: #5ee6a8; }
 .tagline { font-family: "JetBrains Mono", monospace; font-size: 40px; color: #a6abe0; }
 .tagline b { color: #fff; font-weight: 700; }
-.hls { display: flex; flex-direction: column; align-items: flex-start; gap: 14px; margin-top: 10px; }
-.hl { font-family: "JetBrains Mono", monospace; font-size: 28px; padding: 10px 22px; border-radius: 12px; border: 2px solid #3b4c99; color: #8aa6ff; }
+.hls { display: flex; flex-direction: column; align-items: flex-start; gap: 16px; margin-top: 10px; }
+.hl { font-family: "JetBrains Mono", monospace; font-size: 42px; padding: 12px 28px; border-radius: 12px; border: 2px solid #3b4c99; color: #8aa6ff; }
 .lead { font-size: 36px; line-height: 1.3; color: #a6abe0; max-width: 1500px; }
 #outro .inner { align-items: center; justify-content: center; gap: 26px; }
 .logo { width: 280px; height: 280px; border-radius: 50%; }
@@ -115,6 +123,8 @@ const row = {
     `<table class="row"><thead><tr>${r.table.head.map((h) => `<th>${esc(h)}</th>`).join("")}</tr></thead><tbody>` +
     r.table.rows.map((cells) => `<tr>${cells.map(cell).join("")}</tr>`).join("") +
     `</tbody></table>`,
+  del: (r) => `<div class="row del">- ${esc(r.del)}</div>`,
+  add: (r) => `<div class="row add">+ ${esc(r.add)}</div>`,
   code: (r) => `<div class="row code">${esc(r.code)}</div>`,
   check: (r) =>
     `<div class="row check"><span class="${r.mark === "!" ? "amb" : "grn"}">${esc(r.mark ?? "✓")}</span><span>${esc(r.check)}</span></div>`,
@@ -152,12 +162,26 @@ const rowsIn = (rows = []) => rows.reduce((n, r) => n + (r.table ? 1 + r.table.r
 
 /** Rows are revealed one by one; the note comes after the last. */
 const rowElements = (s) =>
-  (s.window ? [s.window] : s.panels ?? []).reduce((n, w) => n + (w.rows ?? []).length, 0);
+  (s.window ? [s.window] : s.panels ?? [s.before, s.after].filter(Boolean)).reduce((n, w) => n + (w.rows ?? []).length, 0);
 
 const scene = {
   "terminal-demo": {
     items: (s) => rowsIn(s.window?.rows) + (s.flow ? 2 : 0),
     body: (s) => windowHtml(s.window) + (s.flow ? flowHtml(s.flow) : "") + noteHtml(s),
+  },
+  "before-after": {
+    items: (s) => (s.figures ?? []).length + rowsIn(s.before?.rows) + rowsIn(s.after?.rows),
+    body: (s) =>
+      `<div class="figs">` +
+      (s.figures ?? [])
+        .map(
+          (f) =>
+            `<div class="fig it"><b><span class="from">${esc(f.from)}</span><span class="arr">→</span><span class="to">${esc(f.to)}</span></b><small>${esc(f.label)}</small></div>`
+        )
+        .join("") +
+      `</div>` +
+      `<div class="split diff">${windowHtml({ ...s.before, flex: 1 })}${windowHtml({ ...s.after, flex: 1 })}</div>` +
+      noteHtml(s),
   },
   "two-panels": {
     items: (s) => (s.panels ?? []).reduce((n, p) => n + rowsIn(p.rows), 0),

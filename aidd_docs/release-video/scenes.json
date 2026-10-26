@@ -3,9 +3,8 @@
     {
       "template": "terminal-demo",
       "pill": "Telemetry",
-      "title": "Your Codex work,",
-      "accent": "measured too.",
-      "lead": "Ask Codex what your work cost and get the full report.",
+      "title": "See what your AI costs,",
+      "accent": "in Codex too.",
       "surfaces": [
         "aidd telemetry"
       ],
@@ -52,9 +51,8 @@
     {
       "template": "terminal-demo",
       "pill": "Telemetry",
-      "title": "Every tool,",
-      "accent": "told apart.",
-      "lead": "See Claude and Codex side by side, each with its own total.",
+      "title": "Know which tool",
+      "accent": "costs what.",
       "surfaces": [
         "aidd-telemetry:00-init"
       ],
@@ -90,33 +88,47 @@
       "note": "Example figures."
     },
     {
-      "template": "bullet-grid",
+      "template": "before-after",
       "pill": "Brainstorm",
-      "title": "Brainstorm, cut down",
-      "accent": "to the essentials.",
-      "lead": "A shorter skill that a small model can follow.",
-      "cells": [
-        {
-          "title": "13 → 8 files",
-          "detail": "what the skill is made of"
-        },
-        {
-          "title": "1,506 → ~940 words",
-          "detail": "−38% to read"
-        },
-        {
-          "title": "4 → 3 steps",
-          "detail": "capture, explore, conclude"
-        }
-      ],
-      "note": "Skill before and after."
+      "title": "38% leaner Brainstorm",
+      "accent": "for small models.",
+      "before": {
+        "label": "Before · 01-capture.md",
+        "rows": [
+          {
+            "del": "Require. If no idea is present, ask for one and wait."
+          },
+          {
+            "del": "Restate. Capture the idea in short bullets, preserving uncertainty."
+          },
+          {
+            "del": "Scan. Apply interview depth and discovery map silently."
+          },
+          {
+            "del": "Open. Hand the highest-impact open point to probe."
+          }
+        ]
+      },
+      "after": {
+        "label": "After · 01-capture.md",
+        "rows": [
+          {
+            "add": "With no idea, ask for one and stop."
+          },
+          {
+            "add": "Say the idea back briefly, in the user's words, keeping what is still uncertain."
+          },
+          {
+            "add": "Go to explore."
+          }
+        ]
+      }
     },
     {
       "template": "terminal-demo",
       "pill": "Brainstorm",
-      "title": "No guess passes",
-      "accent": "as a fact.",
-      "lead": "Every point of the brief is clear, assumed or open.",
+      "title": "See what your AI",
+      "accent": "only guessed.",
       "surfaces": [
         "aidd-refine:01-brainstorm"
       ],
@@ -147,37 +159,47 @@
             "tone": "amb"
           }
         ]
-      },
-      "note": "Example run."
+      }
     },
     {
-      "template": "bullet-grid",
+      "template": "before-after",
       "pill": "Planning",
-      "title": "Planning, cut down",
-      "accent": "like brainstorm.",
-      "lead": "Same three steps as brainstorm, with half the instructions.",
-      "cells": [
-        {
-          "title": "968 → 478 words",
-          "detail": "−51% of instructions"
-        },
-        {
-          "title": "1,750 → 1,322 words",
-          "detail": "−24% of everything a run reads"
-        },
-        {
-          "title": "4 → 3 steps",
-          "detail": "capture, explore, conclude"
-        }
-      ],
-      "note": "Skill before and after."
+      "title": "51% leaner Planning",
+      "accent": "for small models.",
+      "before": {
+        "label": "Before · 01-gather.md",
+        "rows": [
+          {
+            "del": "Find. Identify what the request points to: a file path, a ticket URL or id, or raw text."
+          },
+          {
+            "del": "Pull. Read the file, fetch the ticket, or take the text as given."
+          },
+          {
+            "del": "Restate. Summarize the source in a few bullets: what is asked, and the hard constraints it states."
+          }
+        ]
+      },
+      "after": {
+        "label": "After · 01-capture.md",
+        "rows": [
+          {
+            "add": "With no source to plan from (file, ticket, or text), ask for one and stop."
+          },
+          {
+            "add": "Read it, noting what it asks and the constraints it states."
+          },
+          {
+            "add": "Read explore."
+          }
+        ]
+      }
     },
     {
       "template": "two-panels",
       "pill": "Planning",
-      "title": "A plan that says",
-      "accent": "what it touches.",
-      "lead": "Phases name their order, and the impact is spelled out.",
+      "title": "Know what a plan",
+      "accent": "will change.",
       "panels": [
         {
           "label": "plan.md · Phases",
@@ -229,15 +251,13 @@
             }
           ]
         }
-      ],
-      "note": "Example plan."
+      ]
     },
     {
       "template": "terminal-demo",
       "pill": "Planning",
-      "title": "Plans checked by",
-      "accent": "an independent judge.",
-      "lead": "A second reader checks the plan: no score, only what is missing.",
+      "title": "Catch plan gaps",
+      "accent": "before you build.",
       "surfaces": [
         "aidd-dev:01-plan"
       ],
@@ -264,14 +284,13 @@
             "tone": "amb"
           }
         ]
-      },
-      "note": "Example run."
+      }
     },
     {
       "template": "terminal-demo",
       "pill": "Rules",
-      "title": "No more rules",
-      "accent": "that clash.",
+      "title": "Rules that never",
+      "accent": "contradict each other.",
       "surfaces": [
         "aidd-context:05-rule-generate"
       ],
@@ -298,9 +317,7 @@
             "tone": "grn"
           }
         ]
-      },
-      "note": "Example run.",
-      "lead": "Before saving a new rule, your AI checks it against the others."
+      }
     },
     {
       "template": "contributors",
@@ -322,11 +339,11 @@
   ],
   "intro": {
     "highlights": [
-      "Telemetry now covers Codex",
-      "Brainstorm and plan, much leaner",
-      "Brainstorm separates fact from guess",
-      "Plans get an independent judge",
-      "Rules checked for conflicts"
+      "See what Codex costs you",
+      "Lean skills small models follow",
+      "See what your AI guessed",
+      "Catch plan gaps before building",
+      "No more contradicting rules"
     ]
   },
   "youtube": {

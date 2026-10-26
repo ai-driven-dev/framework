@@ -365,6 +365,41 @@ test("an intro with tags and no phrase shows the tags alone, from the start of t
   assert.match(html, /enter\("#intro \.hl", 2,/);
 });
 
+test("the intro tags are drawn large enough to be read first", () => {
+  const html = buildHtml(plan, { version: "5.13" });
+  const size = Number(html.match(/\.hl \{[^}]*font-size: (\d+)px/)?.[1]);
+
+  assert.ok(size >= 40, `tags at ${size}px`);
+});
+
+const beforeAfter = {
+  template: "before-after",
+  pill: "Brainstorm",
+  title: "Brainstorm, lean",
+  figures: [
+    { from: "13", to: "8", label: "files" },
+    { from: "4", to: "3", label: "steps" },
+  ],
+  before: { label: "Before", rows: [{ del: "probe" }, { del: "integrate" }] },
+  after: { label: "After", rows: [{ add: "explore" }] },
+};
+
+test("a before-after scene puts its figures above the old and the new side by side", () => {
+  const html = buildHtml({ scenes: [beforeAfter], skipped: [] }, { version: "5.13" });
+
+  assert.ok(html.indexOf('class="fig it"') < html.indexOf('class="split diff"'), "figures come after the cards");
+  assert.match(html, /<span class="from">13<\/span>[^]*<span class="to">8<\/span>[^]*files/);
+  assert.ok(html.indexOf("Before") < html.indexOf("After"), "the new comes first");
+  assert.match(html, /<div class="row del">- probe<\/div>/);
+  assert.match(html, /<div class="row add">\+ explore<\/div>/);
+});
+
+test("a before-after scene lasts for its figures and the lines of both cards", () => {
+  const bare = { ...beforeAfter, figures: [], before: { label: "Before", rows: [] }, after: { label: "After", rows: [] } };
+
+  assert.equal(sceneDuration(beforeAfter) - sceneDuration(bare), 3.5);
+});
+
 test("no pop is cued for a phrase the intro does not draw", () => {
   const withTags = { ...plan, intro: { highlights: ["a", "b"] } };
   const pops = soundCues(withTags, { version: "5.13" }).filter((c) => c.kind === "pop" && c.t < 4).map((c) => c.t);

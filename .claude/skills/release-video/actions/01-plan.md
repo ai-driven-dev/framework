@@ -15,7 +15,9 @@ The repository at the release candidate, read again from the last release tag, n
 1. **List.** Read every commit since the last release tag, whatever its type: `git log <last-tag>..HEAD --no-merges`. Keep what a user would notice, a `refactor:` or `docs:` that changes how a skill behaves included. Then run the check: it sees only `feat:` commits, so it proves nothing is missing from those, not that the plan is complete. Each surface under "Scènes manquantes" needs a scene or a skip.
 2. **Read.** Open the skill or command each surface names; take its real behavior, never a guess.
 3. **Draft.** Fill the [plan template](../assets/scenes-template.json), one scene per surface, with the templates, rows and fields of [scenes.md](../references/scenes.md).
-   - Write every title, lead, tag and highlight in everyday words, outcome first: what changes for the user, not how it works. `Count tokens in Codex too` becomes `See what your AI costs, in Codex too`.
+   - Write every title, tag and highlight in everyday words, outcome first: what the user gains, not what the feature is or how it works. `Count tokens in Codex too` becomes `See what your AI costs, in Codex too`. A title that names a feature without saying what it brings is rewritten.
+   - A measured gain goes in the title as one figure computed from the scene's own before and after (`38% leaner Brainstorm for small models`); the scene carries no row of numbers beside it.
+   - Leave `lead` out: the picture must say it, a subtitle under the title competes with it. Add one only when a scene cannot be understood without it.
    - Only the demo window shows real commands.
 4. **Skip.** Move a surface to `skipped` with a reason only when a user would not notice it.
 5. **Fixes.** List the `fix:` commits since the last release tag. A fix is worth a scene only when its before and after can be shown on screen; a fix that only makes figures or states more reliable has none. Group the ones that qualify into one `bullet-grid` scene; the usual outcome is no scene.
@@ -34,10 +36,13 @@ The repository at the release candidate, read again from the last release tag, n
 | Plan left from the previous release | scenes rebuilt from this release's log; none kept because they were there |
 | Skip without reason | the check fails; a reason is added |
 | Release with no `feat:` commit | no video; plan left empty |
-| Invented demo value | marked as an example in the scene |
+| Invented figure | marked as an example in the scene |
+| Demo of text alone | no mark: a session whose lines are plainly illustrative |
 | `fix:` commits a user would notice | one grouped scene; internal ones left out |
 | Contributor list | bots dropped; commit authors and openers of closed issues; one `contributors` scene, last |
-| Scene without a lead | refused on review: a viewer could not tell what it brings |
+| Scene with a measured gain | one title carrying the figure, computed from the scene's own numbers; no figures row |
+| Scene that needs a lead to be understood | the picture is redrawn until it says it alone; a lead is the last resort |
+| Title that names a feature, not what it brings | refused on review; rewritten from the user's gain |
 | Internal word or text over the limits | the check fails naming the word or the field and where it is |
 | Theme split by another one | the check fails naming the theme; its scenes are brought together |
 | Surface with no `programme` line, or a title over 100 characters | the check fails naming it |
