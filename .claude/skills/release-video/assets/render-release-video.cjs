@@ -19,7 +19,6 @@ const HYPERFRAMES = "hyperframes@0.8.162";
 const INTRO = 5;
 const INTRO_WITH_HIGHLIGHTS = 6.5;
 const VERSION_TYPING_FROM = 0.8, VERSION_TYPING_SECONDS = 1.1;
-const VERSION_TYPED_AT = VERSION_TYPING_FROM + VERSION_TYPING_SECONDS;
 const OUTRO = 4;
 
 const CSS = `
@@ -84,6 +83,11 @@ td { padding: 14px 14px; border-bottom: 2px solid #15153f; vertical-align: top; 
 .av span { font-family: "JetBrains Mono", monospace; font-size: 32px; font-weight: 700; }
 #intro .inner { flex-direction: row; align-items: center; justify-content: center; gap: 90px; }
 #intro-logo { width: 420px; height: 420px; border-radius: 50%; border: 2px solid #2a2a66; }
+#thumb .inner { flex-direction: row; align-items: center; justify-content: center; gap: 110px; }
+#thumb #intro-logo { width: 560px; height: 560px; }
+#thumb #ver { font-size: 330px; }
+#thumb .intro-text { min-width: 0; gap: 30px; }
+.themes { font-family: "JetBrains Mono", monospace; font-size: 38px; font-weight: 700; color: #a6abe0; white-space: nowrap; }
 .intro-text { display: flex; flex-direction: column; gap: 22px; min-width: 720px; }
 .intro-top { display: flex; align-items: center; gap: 22px; }
 .rel { font-family: "JetBrains Mono", monospace; font-size: 28px; letter-spacing: 0.12em; color: #8a8fc0; }
@@ -539,8 +543,8 @@ function fitMusic(source, target, plan) {
   ffmpeg(["-i", source, "-filter_complex", filter, "-map", "[a]", "-c:a", "libmp3lame", "-q:a", "2", target]);
 }
 
-function writeProject(dir, plan, version, musicSource) {
-  fs.mkdirSync(path.join(dir, "assets"), { recursive: true });
+/** What a Hyperframes project needs around its page: the fonts, the logo and the project files. */
+function writeShell(dir) {
   fs.mkdirSync(path.join(dir, "assets"), { recursive: true });
   fs.cpSync(path.join(__dirname, "fonts"), path.join(dir, "assets/fonts"), { recursive: true });
   fs.copyFileSync(path.join(__dirname, "logo.png"), path.join(dir, "assets/logo.png"));
@@ -550,6 +554,10 @@ function writeProject(dir, plan, version, musicSource) {
   );
   fs.writeFileSync(path.join(dir, "meta.json"), JSON.stringify({ id: "release-video", name: "release-video" }));
   fs.writeFileSync(path.join(dir, "hyperframes.json"), JSON.stringify({ paths: { assets: "assets" } }));
+}
+
+function writeProject(dir, plan, version, musicSource) {
+  writeShell(dir);
   let music;
   if (musicSource) {
     music = "assets/music-fit.mp3";
@@ -600,17 +608,43 @@ async function main() {
   fs.copyFileSync(path.join(dir, "release-video.mp4"), out);
   console.log(`✅ ${out}`);
 
+  const still = fs.mkdtempSync(path.join(os.tmpdir(), "release-thumbnail-"));
+  writeShell(still);
+  fs.writeFileSync(path.join(still, "index.html"), thumbnailHtml(plan, { version }));
+  const stillRender = spawnSync("npx", ["--yes", HYPERFRAMES, "render", "--output", "thumbnail.mp4"], { cwd: still, stdio: "inherit" });
+  if (stillRender.status !== 0) throw new Error(`Hyperframes render of the thumbnail failed (${stillRender.status})`);
   const thumbnail = out.replace(/\.mp4$/, ".png");
-  const frame = spawnSync("ffmpeg", ["-y", "-v", "error", "-ss", String(thumbnailAt(plan)), "-i", out, "-frames:v", "1", "-vf", "scale=1280:720", thumbnail], { stdio: "inherit" });
+  const frame = spawnSync("ffmpeg", ["-y", "-v", "error", "-i", path.join(still, "thumbnail.mp4"), "-frames:v", "1", "-vf", "scale=1280:720", thumbnail], { stdio: "inherit" });
   if (frame.status !== 0) throw new Error(`The thumbnail could not be taken (${frame.status})`);
   console.log(`✅ ${thumbnail}`);
 }
 
-/** The picture a video is announced with: the intro with its logo and its whole version, the moment before
- * the first tag comes in. */
-const thumbnailAt = () => Math.round((VERSION_TYPED_AT + 0.05) * 100) / 100;
+/** The picture a video is announced with, drawn as its own still composition rather than taken from a frame
+ * of the video: the logo, the release and the whole version, then the themes. */
+function thumbnailHtml(plan, { version }) {
+  const [major, minor = ""] = String(version).split(".");
+  const themes = plan.youtube?.themes ?? [];
+  const inner =
+    `<img id="intro-logo" src="assets/logo.png" alt="" /><div class="intro-text">` +
+    `<div class="intro-top"><span class="pill">AIDD Framework</span><span class="rel">NEW RELEASE</span></div>` +
+    `<div id="ver"><span id="ver-t">v${esc(major)}</span><span class="dot">${minor ? "." : ""}</span><span id="ver-n">${esc(minor)}</span></div>` +
+    (themes.length ? `<p class="themes">${themes.map(esc).join(" · ")}</p>` : "") +
+    `</div>`;
+  return `<!doctype html>
+<html lang="en"><head><meta charset="UTF-8" /><meta name="viewport" content="width=1920, height=1080" />
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+<style>${CSS}</style></head>
+<body><div id="root" data-composition-id="main" data-start="0" data-duration="1" data-width="1920" data-height="1080">
+<section id="thumb" class="scene clip" data-start="0" data-duration="1" data-track-index="0"><div class="inner">${inner}</div></section>
+</div>
+<script>
+window.__timelines = window.__timelines || {};
+window.__timelines["main"] = gsap.timeline({ paused: true });
+</script></body></html>
+`;
+}
 
-module.exports = { buildHtml, measureRms, musicSections, musicSegments, sceneDuration, soundCues, soundTrack, thumbnailAt, totalDuration };
+module.exports = { buildHtml, measureRms, musicSections, musicSegments, sceneDuration, soundCues, soundTrack, thumbnailHtml, totalDuration };
 
 if (require.main === module) {
   main().catch((error) => {

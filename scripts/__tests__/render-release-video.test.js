@@ -1,7 +1,7 @@
 const assert = require("node:assert/strict");
 const test = require("node:test");
 
-const { buildHtml, measureRms, musicSegments, musicSections, sceneDuration, soundCues, soundTrack, thumbnailAt, totalDuration } = require("../../.claude/skills/release-video/assets/render-release-video.cjs");
+const { buildHtml, measureRms, musicSegments, musicSections, sceneDuration, soundCues, soundTrack, thumbnailHtml, totalDuration } = require("../../.claude/skills/release-video/assets/render-release-video.cjs");
 
 const window = (rows) => ({ label: "Claude Code · ~/acme-app", rows });
 
@@ -70,16 +70,20 @@ test("the intro starts with no version on screen and types it in", () => {
   assert.match(html, /AIDD <span class="g">v5\.13<\/span>/);
 });
 
-test("the thumbnail is the intro with its logo and its whole version, before the first tag comes in", () => {
-  for (const intro of [{ highlights: ["a", "b"] }, {}]) {
-    const at = thumbnailAt({ ...plan, intro });
-    const html = buildHtml({ ...plan, intro }, { version: "5.13" });
-    const tagAt = Number(/enter\("#intro (?:\.hl|-tag)", ([\d.]+)/.exec(html)[1]);
+test("the thumbnail is its own still composition: the logo, the release and the whole version, then the themes", () => {
+  const html = thumbnailHtml({ ...plan, youtube: { themes: ["Télémétrie", "Plan"], programme: [] } }, { version: "5.13" });
 
-    assert.equal(at, 1.95);
-    assert.ok(at < tagAt, `thumbnail at ${at}, first tag at ${tagAt}`);
-    assert.match(html, /tl\.to\(typed, \{ n: 1, duration: 1\.1,.*\}, 0\.8\)/s);
-  }
+  assert.match(html, /<span id="ver-t">v5<\/span><span class="dot">\.<\/span><span id="ver-n">13<\/span>/);
+  assert.match(html, /<img id="intro-logo"/);
+  assert.match(html, /AIDD Framework/);
+  assert.match(html, /NEW RELEASE/);
+  assert.match(html, /<p class="themes">Télémétrie · Plan<\/p>/);
+  assert.match(html, /data-duration="1"/);
+  assert.doesNotMatch(html, /class="hl|typed|enter\(/);
+});
+
+test("a thumbnail with no themes draws none", () => {
+  assert.doesNotMatch(thumbnailHtml({ ...plan, youtube: undefined }, { version: "5.13" }), /class="themes"/);
 });
 
 test("a scene's note appears after its last row, not with its window", () => {
