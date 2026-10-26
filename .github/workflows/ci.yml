@@ -347,8 +347,8 @@ jobs:
 
   # The umbrella release is created as a draft, so no `release` event reaches a subscriber
   # before its bundle, distributions and video are attached. Publishing it sends the event
-  # with everything in place. A failed video does not hold the release back; a failed bundle
-  # or distribution does, and the release stays a draft for a person to see.
+  # with everything in place. A failed video, bundle or distribution holds the release back, and it
+  # stays a draft for a person to see: no announcement goes out without its video.
   # `--latest` is set here: GitHub refuses it on a draft. GitHub marks whichever release is
   # created last as "Latest", and release-please creates the umbrella and every plugin release
   # in one unordered run, so a plugin release can outrank the marketplace version. Bare
@@ -362,6 +362,7 @@ jobs:
       needs.release-please.outputs.release_created == 'true' &&
       needs.build-and-attach.result == 'success' &&
       needs.build-per-tool.result == 'success' &&
+      needs.build-release-video.result == 'success' &&
       (needs.build-plugin.result == 'success' || needs.build-plugin.result == 'skipped')
     runs-on: ubuntu-latest
     permissions:
