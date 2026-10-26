@@ -62,18 +62,24 @@ const plan = {
 
 const sum = (scenes) => scenes.reduce((total, scene) => total + sceneDuration(scene), 0);
 
-test("the intro is already drawn at its first frame: logo, pill, release label and version", () => {
+test("the intro starts with no version on screen and types it in", () => {
   const html = buildHtml(plan, { version: "5.13" });
 
-  assert.match(html, /<div id="ver"><span id="ver-t">v5<\/span><span class="dot">\.<\/span><span id="ver-n">13<\/span><\/div>/);
-  assert.doesNotMatch(html, /const full = /);
-  for (const id of ["intro-logo", "intro-pill", "intro-rel"]) assert.doesNotMatch(html, new RegExp(`enter\\("#${id}"`));
+  assert.match(html, /<span id="ver-t"><\/span><span class="dot"><\/span><span id="ver-n"><\/span>/);
+  assert.match(html, /const full = "5\.13"/);
   assert.match(html, /AIDD <span class="g">v5\.13<\/span>/);
 });
 
-test("the thumbnail is the intro once its last tag is in, half a second before the intro ends", () => {
-  assert.equal(thumbnailAt({ ...plan, intro: { highlights: ["a", "b"] } }), 6);
-  assert.equal(thumbnailAt({ ...plan, intro: {} }), 4.5);
+test("the thumbnail is the intro with its logo and its whole version, before the first tag comes in", () => {
+  for (const intro of [{ highlights: ["a", "b"] }, {}]) {
+    const at = thumbnailAt({ ...plan, intro });
+    const html = buildHtml({ ...plan, intro }, { version: "5.13" });
+    const tagAt = Number(/enter\("#intro (?:\.hl|-tag)", ([\d.]+)/.exec(html)[1]);
+
+    assert.equal(at, 1.95);
+    assert.ok(at < tagAt, `thumbnail at ${at}, first tag at ${tagAt}`);
+    assert.match(html, /tl\.to\(typed, \{ n: 1, duration: 1\.1,.*\}, 0\.8\)/s);
+  }
 });
 
 test("a scene's note appears after its last row, not with its window", () => {
@@ -282,9 +288,10 @@ test("every sound is on a time of the video, in order", () => {
   assert.deepEqual(cues.map((c) => c.t), cues.map((c) => c.t).sort((a, b) => a - b));
 });
 
-test("the intro is silent until its first tag appears", () => {
-  assert.deepEqual(cuesOf("key", 0, 1.9), []);
-  assert.deepEqual(soundCues(plan, { version: "5.13" }).filter((c) => c.t < 1.9), []);
+test("a key tick sounds for each character of the version as it is typed", () => {
+  const typed = cuesOf("key", 0.8, 1.9);
+
+  assert.equal(typed.length, "5.13".length + 1);
 });
 
 test("each scene opens with a whoosh at its own start", () => {
@@ -409,7 +416,7 @@ test("no pop is cued for a phrase the intro does not draw", () => {
   const withTags = { ...plan, intro: { highlights: ["a", "b"] } };
   const pops = soundCues(withTags, { version: "5.13" }).filter((c) => c.kind === "pop" && c.t < 4).map((c) => c.t);
 
-  assert.deepEqual(pops, [2, 2.3]);
+  assert.deepEqual(pops, [0.1, 2, 2.3]);
 });
 
 const full = {
@@ -437,9 +444,10 @@ test("a scene without a lead or a note has no sound for them", () => {
   assert.deepEqual(inRange(bare, 5, 8).map((c) => c.t), [5, 5.14, 5.28, 5.63, 6.3, 6.75]);
 });
 
-test("the outro logo and title each have a sound", () => {
+test("the intro pill and release label, the outro logo and title each have a sound", () => {
   const end = totalDuration(full) - 4;
 
+  assert.deepEqual(inRange(full, 0.3, 0.7).map((c) => [c.kind, c.t]), [["tick", 0.4], ["tick", 0.55]]);
   assert.deepEqual(inRange(full, end, end + 0.5).map((c) => [c.kind, c.t]), [["pop", end + 0.07], ["pop", end + 0.28]]);
 });
 

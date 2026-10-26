@@ -11,12 +11,13 @@ Everything that appears has a sound, at the time the timeline shows it.
 
 | Moment | Sound |
 | --- | --- |
-| a scene's pill or lead appears | a tick |
+| the version typed in the intro | a key tick per character |
+| a pill, the release label or a lead appears | a tick |
 | a title, a window, an item, a note, the outro logo or title appears | a pop |
 | a row appears | a click |
 | a scene opens | a whoosh |
 
-The intro's logo, pill and version are on screen from the first frame, which a chat shows as the video's preview, so they have no sound: the first sound is the first tag. The sounds take their times from the animation: changing the plan moves them, nothing is placed by hand.
+The sounds take their times from the animation: changing the plan moves them, nothing is placed by hand.
 
 | Part of the track | Plays under | Level in the video |
 | --- | --- | --- |

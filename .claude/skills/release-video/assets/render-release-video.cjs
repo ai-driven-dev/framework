@@ -18,6 +18,8 @@ const PLAN = path.join(ROOT, "aidd_docs/release-video/scenes.json");
 const HYPERFRAMES = "hyperframes@0.8.162";
 const INTRO = 5;
 const INTRO_WITH_HIGHLIGHTS = 6.5;
+const VERSION_TYPING_FROM = 0.8, VERSION_TYPING_SECONDS = 1.1;
+const VERSION_TYPED_AT = VERSION_TYPING_FROM + VERSION_TYPING_SECONDS;
 const OUTRO = 4;
 
 const CSS = `
@@ -225,16 +227,14 @@ const headHtml = (s, id) =>
  * neither keeps a default one. */
 const hasTagline = (intro = {}) => Boolean(intro.tagline) || !intro.highlights?.length;
 
-/** The intro is drawn at its first frame, with the logo, the pill and the version: that frame is the preview
- * a chat shows for the video. Only the tags come in afterwards. */
-function introHtml(intro = {}, version = "") {
-  const [major, minor = ""] = String(version).split(".");
+/** The version is typed in by the timeline: until it starts, nothing of it is on screen. */
+function introHtml(intro = {}) {
   const tagline = intro.tagline ? esc(intro.tagline) : "What's new, <b>end to end.</b>";
   const highlights = (intro.highlights ?? []).map((h) => `<span class="hl it">${esc(h)}</span>`).join("");
   return (
     `<img id="intro-logo" src="assets/logo.png" alt="" /><div class="intro-text">` +
     `<div class="intro-top"><span class="pill" id="intro-pill">AIDD Framework</span><span class="rel" id="intro-rel">NEW RELEASE</span></div>` +
-    `<div id="ver"><span id="ver-t">v${esc(major)}</span><span class="dot">${minor ? "." : ""}</span><span id="ver-n">${esc(minor)}</span></div>` +
+    `<div id="ver"><span id="ver-t"></span><span class="dot"></span><span id="ver-n"></span></div>` +
     (hasTagline(intro) ? `<p class="tagline" id="intro-tag">${tagline}</p>` : "") +
     (highlights ? `<div class="hls">${highlights}</div>` : "") +
     `</div>`
@@ -274,11 +274,16 @@ const round2 = (x) => Math.round(x * 100) / 100;
 const itemsIn = (html) => (html.match(/class="[^"]*\bit\b/g) ?? []).length;
 
 /** One sound per thing that appears, at the time the timeline shows it: a whoosh as a scene
- * opens, a tick for its pill and lead, a pop for its title, window, items and note, a click per row.
- * The intro's logo, pill and version are on screen from the first frame, so they have none. */
+ * opens, a tick for its pill and lead, a pop for its title, window, items and note, a click per row,
+ * a key tick per typed character. */
 function soundCues(plan, { version }) {
   const cues = [];
   const cue = (kind, t) => cues.push({ kind, t: round2(t) });
+  const chars = String(version).length + 1;
+  cue("pop", 0.1);
+  cue("tick", 0.4);
+  cue("tick", 0.55);
+  for (let k = 0; k < chars; k++) cue("key", 0.8 + (1.1 * k) / chars);
   if (hasTagline(plan.intro)) cue("pop", 2.0);
   (plan.intro?.highlights ?? []).forEach((_, k) => cue("pop", (hasTagline(plan.intro) ? 2.6 : 2) + 0.3 * k));
 
@@ -389,8 +394,17 @@ function buildHtml(plan, { version, music, sfx }) {
       `<section id="${id}" class="scene clip" data-start="${t}" data-duration="${duration}" data-track-index="0"><div class="inner">${inner}</div></section>`
     );
 
-  open("intro", introSeconds(plan), introHtml(plan.intro, version));
+  open("intro", introSeconds(plan), introHtml(plan.intro));
   script.push(
+    `enter("#intro-logo", 0.1, { y: 0, scale: 0.85, duration: 0.9 });`,
+    `enter("#intro-pill", 0.4, { y: 20 });`,
+    `enter("#intro-rel", 0.55, { y: 20 });`,
+    `const typed = { n: 0 }; const full = ${JSON.stringify(String(version))};`,
+    `tl.to(typed, { n: 1, duration: ${VERSION_TYPING_SECONDS}, ease: "none", onUpdate: () => { const len = Math.round(typed.n * (full.length + 1));` +
+      ` const [a, b = ""] = full.split(".");` +
+      ` document.getElementById("ver-t").textContent = ("v" + a).slice(0, Math.min(len, a.length + 1));` +
+      ` document.querySelector("#ver .dot").textContent = len > a.length + 1 ? "." : "";` +
+      ` document.getElementById("ver-n").textContent = len > a.length + 1 ? b.slice(0, len - a.length - 1) : ""; } }, ${VERSION_TYPING_FROM});`,
     ...(hasTagline(plan.intro) ? [`enter("#intro-tag", 2.0, { y: 20 });`] : []),
     `enter("#intro .hl", ${hasTagline(plan.intro) ? 2.6 : 2}, { y: 16, duration: 0.5, stagger: 0.3 });`,
     `cut("intro", ${introSeconds(plan)});`
@@ -592,8 +606,9 @@ async function main() {
   console.log(`✅ ${thumbnail}`);
 }
 
-/** The picture a video is announced with: the intro once its last tag is in, just before it ends. */
-const thumbnailAt = (plan) => introSeconds(plan) - 0.5;
+/** The picture a video is announced with: the intro with its logo and its whole version, the moment before
+ * the first tag comes in. */
+const thumbnailAt = () => Math.round((VERSION_TYPED_AT + 0.05) * 100) / 100;
 
 module.exports = { buildHtml, measureRms, musicSections, musicSegments, sceneDuration, soundCues, soundTrack, thumbnailAt, totalDuration };
 
