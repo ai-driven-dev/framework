@@ -13,8 +13,10 @@ const GITHUB_MANIFEST_URL =
   "https://raw.githubusercontent.com/ai-driven-dev/framework/HEAD/.claude-plugin/marketplace.json";
 
 function sandbox(t) {
-  const root = fs.mkdtempSync(path.join(os.tmpdir(), "aidd-framework-version-"));
-  t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+  // Real path: macOS's temp dir is a symlink, and the script reports where it really runs from.
+  const root = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "aidd-framework-version-")));
+  // Retried: a detached refresh may still be writing its cache entry when the test ends.
+  t.after(() => fs.rmSync(root, { recursive: true, force: true, maxRetries: 10, retryDelay: 100 }));
   return root;
 }
 

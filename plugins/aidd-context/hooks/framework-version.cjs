@@ -204,6 +204,8 @@ function knownLatest(url, env, now) {
     // Claimed before the child runs, so concurrent sessions start one refresh, not one each.
     writeCacheEntry(env, url, { checkedAt: now, latest });
     const child = spawn(process.execPath, [__filename, "--refresh", url], {
+      // Not the project: on Windows a live child's working directory cannot be removed.
+      cwd: os.tmpdir(),
       detached: true,
       stdio: "ignore",
       windowsHide: true,
