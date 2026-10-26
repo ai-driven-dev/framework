@@ -19,7 +19,8 @@ function titleOf(plan, version) {
 }
 
 function youtubeMetadata(plan, { version, tag, repo }) {
-  const contributors = plan.scenes.find((scene) => scene.template === "contributors")?.logins?.length;
+  const logins = plan.scenes.find((scene) => scene.template === "contributors")?.logins ?? [];
+  const contributors = logins.length;
   const lines = [
     `Les nouveautés du framework AI-Driven Dev ${version}, démontrées de bout en bout.`,
     "",
@@ -30,7 +31,7 @@ function youtubeMetadata(plan, { version, tag, repo }) {
   if (contributors) lines.push(`Version livrée par ${contributors} contributeurs (crédits dans les notes de version).`, "");
   lines.push(`Notes de version : https://github.com/${repo}/releases/tag/${tag}`, `Code source : https://github.com/${repo}`);
   const { themes, programme } = plan.youtube;
-  return { title: titleOf(plan, version), description: lines.join("\n"), themes, programme };
+  return { title: titleOf(plan, version), description: lines.join("\n"), themes, programme, contributors: logins };
 }
 
 /** What a plan lacks to be published: the block, a title that fits, a line for every scene's surface. */
@@ -40,6 +41,9 @@ function youtubeProblems(plan) {
   const title = titleOf(plan, "0.0");
   if (title.length > MAX_TITLE) problems.push(`title: ${title.length} characters, ${MAX_TITLE} at most`);
   const covered = new Set(plan.youtube.programme.map((line) => line.surface));
+  for (const line of plan.youtube.programme) {
+    if (!plan.youtube.themes.includes(line.theme)) problems.push(`youtube programme: ${line.surface} has no theme from themes`);
+  }
   for (const surface of plan.scenes.flatMap((scene) => scene.surfaces ?? [])) {
     if (!covered.has(surface)) problems.push(`youtube programme: no line for ${surface}`);
   }

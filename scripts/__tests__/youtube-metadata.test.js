@@ -13,8 +13,8 @@ const plan = {
   youtube: {
     themes: ["Télémétrie", "Codex", "Règles"],
     programme: [
-      { surface: "aidd telemetry", text: "compter aussi le travail fait avec Codex." },
-      { surface: "aidd-context:05-rule-generate", text: "vérifier qu'aucune règle n'en contredit une autre." },
+      { surface: "aidd telemetry", theme: "Télémétrie", text: "compter aussi le travail fait avec Codex." },
+      { surface: "aidd-context:05-rule-generate", theme: "Règles", text: "vérifier qu'aucune règle n'en contredit une autre." },
     ],
   },
 };
@@ -57,6 +57,11 @@ test("the themes and the programme travel with the text, so an announcement can 
   assert.deepEqual(metadata.programme, plan.youtube.programme);
 });
 
+test("the contributors of the video travel with the text, so the announcements credit the same people", () => {
+  assert.deepEqual(youtubeMetadata(plan, context).contributors, ["alexsoyes", "blafourcade"]);
+  assert.deepEqual(youtubeMetadata({ ...plan, scenes: plan.scenes.slice(0, 2) }, context).contributors, []);
+});
+
 test("a plugin skill is written as a slash command and a CLI command is left as it is", () => {
   const { description } = youtubeMetadata(plan, context);
 
@@ -72,6 +77,15 @@ test("a release with no contributors scene leaves the contributors line out", ()
 
 test("youtubeProblems accepts a plan whose programme covers every scene surface", () => {
   assert.deepEqual(youtubeProblems(plan), []);
+});
+
+test("youtubeProblems names a programme line whose theme is missing or not one of the themes", () => {
+  const [first, second] = plan.youtube.programme;
+  const bare = { ...plan, youtube: { ...plan.youtube, programme: [{ surface: first.surface, text: first.text }, second] } };
+  assert.deepEqual(youtubeProblems(bare), ["youtube programme: aidd telemetry has no theme from themes"]);
+
+  const foreign = { ...plan, youtube: { ...plan.youtube, programme: [{ ...first, theme: "Autre" }, second] } };
+  assert.deepEqual(youtubeProblems(foreign), ["youtube programme: aidd telemetry has no theme from themes"]);
 });
 
 test("youtubeProblems names a missing block, a title that is too long and an uncovered surface", () => {
