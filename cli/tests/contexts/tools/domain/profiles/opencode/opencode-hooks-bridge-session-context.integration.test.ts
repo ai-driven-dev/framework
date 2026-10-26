@@ -128,9 +128,11 @@ describe("the generated bridge hands SessionStart's output to every model call",
   });
 
   it("V2 without a session hook API still sets up, adding nothing", async () => {
-    const { setup, directory } = await importGeneratedModule();
+    const { setup } = await importGeneratedModule();
     const ctx = {
-      location: { directory },
+      // Nothing here awaits the scripts, so they must not run inside the directory the test
+      // removes: Windows refuses to delete a live process's working directory.
+      location: { directory: tmpdir() },
       event: {
         subscribe: async function* () {
           // No event.
