@@ -362,7 +362,7 @@
       {
         "surface": "aidd-telemetry:00-init",
         "theme": "Télémétrie",
-        "text": "activer la mesure et distinguer le résultat par outil, Claude Code ou Codex."
+        "text": "activer la mesure, avec votre accord, du travail fait avec Claude Code et Codex."
       },
       {
         "surface": "aidd-dev:01-plan",
