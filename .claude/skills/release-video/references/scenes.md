@@ -13,7 +13,7 @@ What a plan holds and how each part is drawn.
 | Plan field | Holds |
 | --- | --- |
 | `intro` | `highlights`, the tags shown first |
-| `youtube` | `themes`, 1 to 4 short French theme names for the title; `programme`, one `{surface, text}` per surface a scene covers, `text` a French sentence that starts with a verb |
+| `youtube` | `themes`, 1 to 4 short French theme names for the title; `programme`, one `{surface, theme, text}` per surface a scene covers, `theme` one of `themes`, `text` a French sentence that starts with a verb |
 
 | Scene field | Holds |
 | --- | --- |

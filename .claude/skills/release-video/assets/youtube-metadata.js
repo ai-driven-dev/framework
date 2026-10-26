@@ -40,6 +40,9 @@ function youtubeProblems(plan) {
   const title = titleOf(plan, "0.0");
   if (title.length > MAX_TITLE) problems.push(`title: ${title.length} characters, ${MAX_TITLE} at most`);
   const covered = new Set(plan.youtube.programme.map((line) => line.surface));
+  for (const line of plan.youtube.programme) {
+    if (!plan.youtube.themes.includes(line.theme)) problems.push(`youtube programme: ${line.surface} has no theme from themes`);
+  }
   for (const surface of plan.scenes.flatMap((scene) => scene.surfaces ?? [])) {
     if (!covered.has(surface)) problems.push(`youtube programme: no line for ${surface}`);
   }
