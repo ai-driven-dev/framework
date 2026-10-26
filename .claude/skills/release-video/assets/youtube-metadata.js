@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 /**
- * The YouTube title and description of the release video, in the layout of the published ones:
+ * The YouTube title and description of the release video, in the layout of the published ones, with the
+ * themes and the programme they are built from, which the announcements are built from too:
  * `node .claude/skills/release-video/assets/youtube-metadata.js --version 5.13 --tag v5.13.0 --repo <owner/repo> [--out release-video.json]`.
  */
 const fs = require("node:fs");
@@ -28,7 +29,8 @@ function youtubeMetadata(plan, { version, tag, repo }) {
   ];
   if (contributors) lines.push(`Version livrée par ${contributors} contributeurs (crédits dans les notes de version).`, "");
   lines.push(`Notes de version : https://github.com/${repo}/releases/tag/${tag}`, `Code source : https://github.com/${repo}`);
-  return { title: titleOf(plan, version), description: lines.join("\n") };
+  const { themes, programme } = plan.youtube;
+  return { title: titleOf(plan, version), description: lines.join("\n"), themes, programme };
 }
 
 /** What a plan lacks to be published: the block, a title that fits, a line for every scene's surface. */
