@@ -11,7 +11,6 @@ const PUBLIC_MODULES: Readonly<Record<string, readonly string[]>> = {
   tools: [
     // the tool contract and lookup surface
     "src/contexts/tools/domain/contracts.ts",
-    "src/contexts/tools/domain/capabilities/agents-capability.ts",
     "src/contexts/tools/domain/registry.ts",
     "src/contexts/tools/domain/build-contract.ts",
     // co-owned configuration (settings.json, .mcp.json et al.)
@@ -200,6 +199,7 @@ function reachesIntoInterior(
  * itself, and they resolve together when `install/` moves into `contexts/tools/application/`.
  */
 const BASELINE = [
+  "src/contexts/framework/application/install/content/install-agents-use-case.ts -> src/contexts/tools/domain/capabilities/agents-capability.ts",
   "src/contexts/framework/application/install/content/install-commands-use-case.ts -> src/contexts/tools/domain/capabilities/commands-capability.ts",
   "src/contexts/framework/application/install/content/install-content-section-use-case.ts -> src/contexts/tools/domain/formats/command.ts",
   "src/contexts/framework/application/install/content/install-rules-use-case.ts -> src/contexts/tools/domain/capabilities/rules-capability.ts",

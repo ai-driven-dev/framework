@@ -60,7 +60,6 @@ describe("copilot agents", () => {
       expect(
         copilot.capabilities.agents.convertFrontmatter({ description: "Helps" })
       ).toStrictEqual({
-        name: undefined,
         description: "Helps",
         "include-custom-instructions": true,
       });
@@ -70,7 +69,6 @@ describe("copilot agents", () => {
       expect(
         copilot.capabilities.agents.convertFrontmatter({ name: 42, description: "Helps" }, "x.md")
       ).toStrictEqual({
-        name: undefined,
         description: "Helps",
         "include-custom-instructions": true,
       });

@@ -14,20 +14,20 @@ The per-tool agent path and the gate every run executes before writing. Agent sl
 
 Agents are supported on all five tools.
 
-User-level agents, for every project of the user: Claude Code `~/.claude/agents/` (`CLAUDE_CONFIG_DIR`), Codex `~/.codex/agents/` (`CODEX_HOME`), OpenCode `~/.config/opencode/agents/` (`XDG_CONFIG_HOME`), Copilot `~/.copilot/agents/<name>.agent.md` (`COPILOT_HOME`). Cursor documents `~/.cursor/agents/`, but its CLI 2026.10.19 loaded none from there; prefer the project path. Sources: [Claude](https://code.claude.com/docs/en/sub-agents), [Codex](https://developers.openai.com/codex/subagents), [OpenCode](https://opencode.ai/docs/agents), [Copilot](https://docs.github.com/en/copilot/reference/copilot-cli-reference/cli-config-dir-reference), [Cursor](https://cursor.com/docs/subagents).
+User-level agents, for every project of the user: Claude Code `~/.claude/agents/` (`CLAUDE_CONFIG_DIR`), Codex `~/.codex/agents/` (`CODEX_HOME`), OpenCode `~/.config/opencode/agents/` (`XDG_CONFIG_HOME`), Copilot `~/.copilot/agents/<name>.agent.md` (`COPILOT_HOME`). Cursor documents `~/.cursor/agents/`; prefer the project path. Sources: [Claude](https://code.claude.com/docs/en/sub-agents), [Codex](https://developers.openai.com/codex/subagents), [OpenCode](https://opencode.ai/docs/agents), [Copilot](https://docs.github.com/en/copilot/reference/copilot-cli-reference/cli-config-dir-reference), [Cursor](https://cursor.com/docs/subagents).
 
 Cursor keeps single quotes as part of a frontmatter value: quote Cursor values with `"double quotes"` or not at all.
 
 ## Frontmatter per tool
 
-The canonical agent carries `name` and `description`. Emit those a row accepts, drop the rest. Add model or effort settings only when requested and supported.
+The canonical agent carries `name` and `description` and no tool list: every host gives an agent all tools by default. Emit those a row accepts, drop the rest. Add model or effort settings only when requested and supported.
 
 | Tool           | Accepts                                                      |
 | -------------- | ----------------------------------------------------------- |
-| Claude Code    | `name`, `description`, optional `model`, `effort`, `color`, `tools` |
-| Cursor         | `name`, `description`, optional `model`, `readonly`, `is_background` |
-| OpenCode V2    | `description`, `mode: subagent`, optional `model` as `provider/model#variant`, `permissions` as a list of `action`, `resource`, `effect` rules. No `name`: the file name is the ID, and with `name` OpenCode 2.1.2 ignores `permissions` |
-| GitHub Copilot | `name`, `description`, optional `model`, `reasoningEffort`, `tools`, `include-custom-instructions` |
+| Claude Code    | `name`, `description`, optional `model`, `effort` |
+| Cursor         | `name`, `description`, optional `model` |
+| OpenCode V2    | `description`, `mode: subagent`, optional `model` as `provider/model#variant`. No `name`: the file path is the ID |
+| GitHub Copilot | `name`, `description`, optional `model`, `reasoningEffort`, `include-custom-instructions` |
 | Codex CLI      | `name`, `description`, optional `model`, `model_reasoning_effort` |
 
 Write OpenCode agents for V2 only: V2 still loads V1 definitions, and treats their `tools` and `permission` fields as legacy.

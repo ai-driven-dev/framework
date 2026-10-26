@@ -16,6 +16,7 @@ import { rewriteRelativeLinks } from "../../../../../kernel/materialization/rela
 import type { FileReader } from "../../../../../kernel/ports/file-reader.js";
 import type { FileWriter } from "../../../../../kernel/ports/file-writer.js";
 import type { ArtifactContract, ToolBuildContract } from "../../build-contract.js";
+import { stripPathIdAgentFrontmatter } from "../../formats/agent-frontmatter-strip.js";
 import { buildOpencodeFlatConfig } from "../../formats/opencode-mcp-merge.js";
 import { generateOpencodeHooksBridge } from "./opencode-hooks-bridge.js";
 import {
@@ -125,24 +126,6 @@ function opencodeFlatResolveTarget(plugin: string, rel: string): string {
   return rel;
 }
 
-const CLAUDE_WRITE_TOOLS = ["Edit", "Write", "MultiEdit", "NotebookEdit"];
-
-/** A Claude agent's frontmatter in OpenCode V2's terms. V2 reads no `tools`, so Claude's
- * allowlist never passes through: one holding no write tool becomes a rule denying edits.
- * `name` is dropped: the file name is the agent's ID, and V2 2.1.2 ignores the agent's
- * `permissions` when the frontmatter also carries `name`. */
-export function toOpencodeAgentFrontmatter(
-  frontmatter: Record<string, unknown>
-): Record<string, unknown> {
-  const { tools, name: _name, ...rest } = frontmatter;
-  if (tools === undefined) return rest;
-  const allowed = (Array.isArray(tools) ? tools.map(String) : String(tools).split(",")).map(
-    (tool) => tool.trim()
-  );
-  if (allowed.some((tool) => CLAUDE_WRITE_TOOLS.includes(tool))) return rest;
-  return { ...rest, permissions: [{ action: "edit", resource: "*", effect: "deny" }] };
-}
-
 function transformOpencodeFlatAgent(content: string, plugin: string, outName: string): string {
   const { frontmatter, body } = parseFrontmatter(content);
   const flatRelPath = opencodeFlatAgentPath(plugin, `agents/${outName}`);
@@ -152,7 +135,7 @@ function transformOpencodeFlatAgent(content: string, plugin: string, outName: st
   });
   // mode: subagent ensures opencode treats copied agents as subagents, not primary agents.
   return serializeFrontmatter(
-    { ...toOpencodeAgentFrontmatter(frontmatter), mode: "subagent" },
+    { ...stripPathIdAgentFrontmatter(frontmatter), mode: "subagent" },
     rewrittenBody
   );
 }

@@ -14,6 +14,7 @@ import type {
   HasRules,
   HasSkills,
 } from "../../contracts.js";
+import { stripPathIdAgentFrontmatter } from "../../formats/agent-frontmatter-strip.js";
 import {
   buildAiddCommandFilePath,
   convertCommandFrontmatterNoHint,
@@ -50,7 +51,7 @@ export const kilo: AiTool<HasAgents & HasSkills & HasCommands & HasRules & HasMc
       directory: KILO_DIRECTORY,
       toolSuffix: TOOL_SUFFIX,
       format: "markdown",
-      convertFrontmatter: (fm) => ({ description: fm.description, mode: "subagent" }),
+      convertFrontmatter: (fm) => ({ ...stripPathIdAgentFrontmatter(fm), mode: "subagent" }),
     }),
     skills: new SkillsCapability({
       directory: KILO_DIRECTORY,

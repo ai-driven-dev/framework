@@ -20,7 +20,7 @@ A review or validation finding is routed by what it is about. A refusal the user
 
 ## Handoff
 
-- Open the draft pull request when no actionable finding remains.
+- Commit whatever this zone wrote, then open the draft pull request when no actionable finding remains.
 
 ```mermaid
 ---

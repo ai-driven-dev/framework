@@ -103,7 +103,7 @@ flowchart TB
 | Skill | Host loads `SKILL.md` on invocation; work runs in the caller's context. |
 | Caller | Owns scope, delegation, integration, and acceptance. |
 | Orchestrator | Sequences capabilities on the caller's behalf. |
-| Agent | Isolates a scoped task and returns its result to the caller. The generic roles ship with `aidd-orchestrator`; without them, the host's default subagent takes the brief. |
+| Agent | Isolates a scoped task and returns its result to the caller. The generic roles ship with `aidd-orchestrator`, the coordination plugin, because each serves every concern and the caller supplies it; without them, the host's default subagent takes the brief. |
 | Recipe | Primary callers may delegate bounded work. |
 | Reconnaissance helper | Read-only; neither mutates nor spawns. |
 | Write path | At most two delegation layers; no cycles. |

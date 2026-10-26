@@ -48,24 +48,12 @@ describe("AgentsCapability", () => {
     });
   });
 
-  describe("serialize (toml)", () => {
-    it("produces TOML format with name, description, and developer_instructions", () => {
-      const cap = new AgentsCapability(tomlParams);
-      const result = cap.serialize({ name: "my-agent", description: "A test" }, "Body text.");
-      expect(result).toContain('name = "my-agent"');
-      expect(result).toContain('description = "A test"');
-      expect(result).toContain("developer_instructions");
-      expect(result).toContain("Body text.");
+  it("writes through the host's own serializer when it declares one", () => {
+    const cap = new AgentsCapability({
+      ...tomlParams,
+      serialize: (fm, body) => `${fm.name}|${body}`,
     });
-
-    it("includes model field when provided", () => {
-      const cap = new AgentsCapability(tomlParams);
-      const result = cap.serialize(
-        { name: "agent", description: "desc", model: "claude-3" },
-        "body"
-      );
-      expect(result).toContain('model = "claude-3"');
-    });
+    expect(cap.serialize({ name: "a" }, "b")).toBe("a|b");
   });
 
   describe("deserialize", () => {
@@ -224,32 +212,6 @@ describe("AgentsCapability frontmatter conversion", () => {
       file: "p.md",
       keys: ["name"],
     });
-  });
-});
-
-describe("AgentsCapability toml serialization", () => {
-  const toml = new AgentsCapability({
-    directory: ".codex/",
-    toolSuffix: ".codex.md",
-    format: "toml",
-  });
-
-  it("writes name, description and the body as developer instructions, one key per line", () => {
-    expect(toml.serialize({ name: "p", description: "d" }, "body")).toBe(
-      'name = "p"\ndescription = "d"\ndeveloper_instructions = """\nbody\n"""\n'
-    );
-  });
-
-  it("writes an empty name and description when the frontmatter declares none", () => {
-    expect(toml.serialize({}, "body")).toBe(
-      'name = ""\ndescription = ""\ndeveloper_instructions = """\nbody\n"""\n'
-    );
-  });
-
-  it("escapes a quote and a backslash inside a value", () => {
-    expect(toml.serialize({ name: 'a"b\\c', description: "d" }, "body")).toBe(
-      'name = "a\\"b\\\\c"\ndescription = "d"\ndeveloper_instructions = """\nbody\n"""\n'
-    );
   });
 });
 

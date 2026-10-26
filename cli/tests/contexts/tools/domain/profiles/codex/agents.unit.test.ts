@@ -8,4 +8,15 @@ describe("codex agents", () => {
       expect(path).toBe(".codex/agents/alexia.toml");
     });
   });
+
+  it("writes the same TOML as the built distributions: Claude selectors dropped, effort mapped", () => {
+    const agents = codex.capabilities.agents;
+    const fm = agents.convertFrontmatter(
+      { description: "d", model: "opus", effort: "high" },
+      "reviewer.md"
+    );
+    expect(agents.serialize(fm, "Body.\n")).toBe(
+      'name = "reviewer"\ndescription = "d"\nmodel_reasoning_effort = "high"\ndeveloper_instructions = "Body.\\n"\n'
+    );
+  });
 });

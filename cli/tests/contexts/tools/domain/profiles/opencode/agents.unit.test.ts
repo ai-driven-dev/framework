@@ -21,7 +21,7 @@ describe("opencode agents", () => {
       expect(result).toStrictEqual({ description: "Act like the user", mode: "subagent" });
     });
 
-    it("turns an allowlist without a write tool into a rule denying edits", () => {
+    it("drops a tools allowlist, so the agent keeps every tool", () => {
       const result = opencode.capabilities.agents.convertFrontmatter({
         name: "explorer",
         description: "Explore",
@@ -30,7 +30,6 @@ describe("opencode agents", () => {
       expect(result).toEqual({
         description: "Explore",
         mode: "subagent",
-        permissions: [{ action: "edit", resource: "*", effect: "deny" }],
       });
     });
   });

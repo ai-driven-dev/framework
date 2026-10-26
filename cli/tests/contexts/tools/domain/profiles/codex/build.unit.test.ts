@@ -177,11 +177,11 @@ describe("buildCodexContract()", () => {
     ).toBe("---\nname: 'plan'\ndescription: 'Plan it'\n---\nBody.\n");
   });
 
-  it("names an agent after its own frontmatter when the plugin tree keeps them apart", () => {
+  it("prefixes an agent's name with its plugin, since Codex loads agents from one shared directory", () => {
     const transform = supported(buildCodexContract().artifacts.agents).transform;
 
     expect(transform?.(AGENT_SOURCE, "aidd-dev", "planner.md")).toBe(
-      'name = "planner"\ndescription = "Plans the work"\ndeveloper_instructions = "Plan before building.\\n"\n'
+      'name = "aidd-dev-planner"\ndescription = "Plans the work"\ndeveloper_instructions = "Plan before building.\\n"\n'
     );
   });
 

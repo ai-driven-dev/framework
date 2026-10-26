@@ -1,4 +1,4 @@
-import { chmod, mkdtemp, readdir, readFile, rm, stat, writeFile } from "node:fs/promises";
+import { mkdtemp, readdir, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
@@ -24,16 +24,6 @@ describe("atomicWriteFile", () => {
 
     expect(await readdir(tempDir)).toStrictEqual(["out.txt"]);
     expect(await readFile(path, "utf-8")).toBe("héllo");
-  });
-
-  it.skipIf(process.platform === "win32")("keeps a replaced file's permissions", async () => {
-    const path = join(tempDir, "private.json");
-    await writeFile(path, "{}");
-    await chmod(path, 0o600);
-
-    await atomicWriteFile(path, '{"model":"x"}');
-
-    expect((await stat(path)).mode & 0o777).toBe(0o600);
   });
 });
 

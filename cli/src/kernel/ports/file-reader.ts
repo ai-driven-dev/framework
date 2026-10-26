@@ -6,7 +6,7 @@ export interface FileReader {
    * these paths are compared against profile and manifest entries, which use `/` on every
    * platform, so Windows' native separator must never reach a caller. */
   listDirectory(path: string): Promise<string[]>;
-  fileExists(path: string, followSymlinks?: boolean): Promise<boolean>;
+  fileExists(path: string): Promise<boolean>;
   readFileHash(path: string): Promise<FileHash>;
   listFilesRecursive(dirPath: string): Promise<string[]>;
 

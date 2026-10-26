@@ -130,9 +130,9 @@ describe("buildCursorContract()", () => {
     expect(transform?.(AGENT_SOURCE, "aidd-dev", "planner.md")).toBe(
       [
         "---",
-        "name: 'aidd-dev-planner'",
-        "description: 'Plans the work'",
-        "model: 'opus'",
+        'name: "aidd-dev-planner"',
+        'description: "Plans the work"',
+        'model: "opus"',
         "---",
         "Read [SKILL.md](../skills/01-plan/SKILL.md)",
         "Ask [reviewer.md](./reviewer.md)",
@@ -270,7 +270,7 @@ describe("buildCursorFlatContract()", () => {
     const transform = supported(buildCursorFlatContract().artifacts.agents).transform;
 
     expect(transform?.(AGENT_SOURCE, "aidd-dev", "read.md-first.md")).toMatch(
-      /^name: 'aidd-dev-read\.md-first'$/mu
+      /^name: "aidd-dev-read\.md-first"$/mu
     );
   });
 
@@ -280,9 +280,9 @@ describe("buildCursorFlatContract()", () => {
     expect(transform?.(AGENT_SOURCE, "aidd-dev", "planner.md")).toBe(
       [
         "---",
-        "name: 'aidd-dev-planner'",
-        "description: 'Plans the work'",
-        "model: 'opus'",
+        'name: "aidd-dev-planner"',
+        'description: "Plans the work"',
+        'model: "opus"',
         "---",
         "Read [SKILL.md](../skills/aidd-dev-01-plan/SKILL.md)",
         "Ask [reviewer.md](./aidd-dev-reviewer.md)",

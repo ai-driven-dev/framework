@@ -35,7 +35,8 @@ function transformCursorAgent(content: string, plugin: string, outName: string):
   });
   return serializeFrontmatter(
     { ...stripped, name: `${plugin}-${outName.replace(/\.md$/, "")}` },
-    rewrittenBody
+    rewrittenBody,
+    "double"
   );
 }
 
@@ -118,13 +119,7 @@ function transformCursorFlatAgent(content: string, plugin: string, outName: stri
     resolveTargetPath: (rel) => cursorFlatResolveTarget(plugin, rel),
   });
   const prefixedName = `${plugin}-${outName.replace(/\.md$/, "")}`;
-  return serializeFrontmatter(
-    {
-      ...stripped,
-      name: prefixedName,
-    },
-    rewrittenBody
-  );
+  return serializeFrontmatter({ ...stripped, name: prefixedName }, rewrittenBody, "double");
 }
 
 export function buildCursorFlatContract(): ToolBuildContract {

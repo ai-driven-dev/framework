@@ -31,8 +31,7 @@ const totalAgents = plugins.reduce((n, p) => n + agentsOf(p), 0);
 let md = readFileSync(README, "utf8");
 const before = md;
 
-const hero = `<kbd>${totalPlugins} plugins</kbd> · <kbd>${totalSkills} skills</kbd>` +
-  (totalAgents ? ` · <kbd>${totalAgents} agents</kbd>` : "");
+const hero = `<kbd>${totalPlugins} plugins</kbd> · <kbd>${totalSkills} skills</kbd> · <kbd>${totalAgents} agents</kbd>`;
 md = md.replace(/<!--counts:start-->[\s\S]*?<!--counts:end-->/, `<!--counts:start-->${hero}<!--counts:end-->`);
 
 for (const name of plugins) {

@@ -1,17 +1,14 @@
 ---
 name: 02-implement
-description: Implement an existing plan or assigned phase until its acceptance criteria hold. Use when a plan or bounded phase needs implementing. Not for writing a plan or reviewing a diff.
-argument-hint: plan | phase
+description: Write an existing plan's code, phase by phase, until every acceptance criterion holds. Use when a plan exists and needs implementing. Do NOT use to write a plan, review a diff.
+argument-hint: plan
 ---
 
 # Skill: implement
 
 ```mermaid
 flowchart LR
-  whole([whole plan]) --> prepare --> execute
-  assigned([assigned phase]) --> execute
-  execute -->|whole plan complete| finalize --> implemented
-  execute -->|assigned phase complete| returned([return changes and evidence])
+  prepare --> execute --> finalize --> implemented
   prepare -->|missing plan| stop
   execute -->|fix, next task or phase| execute
   execute --> blocked
@@ -23,7 +20,7 @@ flowchart LR
 
 ## Actions
 
-Run actions in order for a whole plan. An assigned-phase executor reads the plan context and `execute` only.
+Run actions in order.
 Read each action file in `actions/` before executing it.
 
 | Action   | Does                                  |
@@ -34,10 +31,8 @@ Read each action file in `actions/` before executing it.
 
 ## Transversal rules
 
-- The caller owns delegation, integration, shared plan status, and final acceptance; phase executors own only their assigned files and phase status.
-  - Parallel phases need separate write ownership and validation resources; workers running Git get their own checkout and index, otherwise the caller owns Git. Run serially when isolation is uncertain.
 - Track the plan through `pending → in-progress → implemented` (or `blocked`).
-  - Track phases through `pending → in-progress → done`, or `partial` when the executor stops with a criterion unmet and returns what remains.
+  - Track phases through `pending → in-progress → done`.
   - Treat `in-progress` as a runtime marker.
   - Never commit `in-progress` alone.
 - Follow user and project commit instructions.
@@ -47,7 +42,7 @@ Read each action file in `actions/` before executing it.
   - Group tasks only when they cannot be validated separately.
   - Never split a task by step or file.
   - Exclude unrelated changes.
-- Commit `done` once the phase is validated.
+- Include `done` in the phase's last task commit.
 - Make a final commit for `implemented`.
 - Use project formatters or hooks.
   - Never format code manually.

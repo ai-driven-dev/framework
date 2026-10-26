@@ -26,7 +26,7 @@ Unify **engineering teams** around **standardized workflows** and **shared best 
 
 ---
 
-The **AI-Driven Dev Framework** installs a working SDLC (Software Development Life Cycle) into your AI coding tool — **skills, commands, rules** — that turns a rough idea into a reviewed, shipped pull request:
+The **AI-Driven Dev Framework** installs a working SDLC (Software Development Life Cycle) into your AI coding tool — **skills, agents, commands, rules** — that turns a rough idea into a reviewed, shipped pull request:
 
 ```text
 /aidd-orchestrator:01-sdlc "add rate limiting to the /login endpoint"

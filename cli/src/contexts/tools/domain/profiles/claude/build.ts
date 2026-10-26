@@ -108,13 +108,7 @@ function transformClaudeFlatAgent(content: string, plugin: string, outName: stri
     resolveTargetPath: (rel) => claudeFlatResolveTarget(plugin, rel),
   });
   const prefixedName = `${plugin}-${outName.replace(/\.md$/, "")}`;
-  return serializeFrontmatter(
-    {
-      ...frontmatter,
-      name: prefixedName,
-    },
-    rewrittenBody
-  );
+  return serializeFrontmatter({ ...frontmatter, name: prefixedName }, rewrittenBody);
 }
 
 export function buildClaudeFlatContract(): ToolBuildContract {

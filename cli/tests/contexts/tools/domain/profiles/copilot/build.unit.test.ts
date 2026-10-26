@@ -115,7 +115,7 @@ describe("buildCopilotMarketplaceContract()", () => {
     });
   });
 
-  it("keeps an agent's whole frontmatter and links its plugin-root references from agents/", () => {
+  it("keeps what Copilot reads of an agent and links its plugin-root references from agents/", () => {
     const transform = supported(buildCopilotMarketplaceContract().artifacts.agents).transform;
 
     expect(transform?.(AGENT_SOURCE, "aidd-dev", "planner.md")).toBe(
@@ -124,7 +124,7 @@ describe("buildCopilotMarketplaceContract()", () => {
         "name: 'planner'",
         "description: 'Plans the work'",
         "model: 'opus'",
-        "color: 'blue'",
+        "include-custom-instructions: true",
         "---",
         "Read [SKILL.md](../skills/01-plan/SKILL.md)",
         "Ask [reviewer.md](./reviewer.md)",
@@ -288,6 +288,7 @@ describe("buildCopilotFlatContract()", () => {
         "name: 'aidd-dev-planner'",
         "description: 'Plans the work'",
         "model: 'opus'",
+        "include-custom-instructions: true",
         "---",
         "Read [SKILL.md](../skills/aidd-dev-01-plan/SKILL.md)",
         "Ask [reviewer.md](./aidd-dev-reviewer.agent.md)",
@@ -302,7 +303,9 @@ describe("buildCopilotFlatContract()", () => {
 
     expect(
       transform?.("---\ndescription: Helps\n---\nBody.\n", "aidd-dev", "notes.md-helper.md")
-    ).toBe("---\ndescription: 'Helps'\nname: 'aidd-dev-notes.md-helper'\n---\nBody.\n");
+    ).toBe(
+      "---\ndescription: 'Helps'\ninclude-custom-instructions: true\nname: 'aidd-dev-notes.md-helper'\n---\nBody.\n"
+    );
   });
 
   it.each([true, false])(

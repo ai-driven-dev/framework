@@ -1,7 +1,6 @@
 ---
 name: explorer
 description: Explores a codebase to answer scoped questions. Use to locate files and symbols, trace execution or dependencies, and return relevant code with an explanation before changes.
-tools: Read, Grep, Glob
 ---
 
 # Role

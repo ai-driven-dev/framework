@@ -14,8 +14,7 @@ The commit message, conventional unless the project sets another convention.
 
 1. **Source.** Use an imposed message as-is, else write a conventional message following the project's convention.
 2. **Write.** Draft from the staged diff: imperative subject, a body that says why when it is not obvious.
-3. **Lint.** Validate the message with the project's commit linter when it has one.
-4. **Confirm.** In `interactive`, show it and wait for approval. In `auto`, proceed.
+3. **Confirm.** In `interactive`, show it and wait for approval. In `auto`, proceed.
 
 ## Test
 

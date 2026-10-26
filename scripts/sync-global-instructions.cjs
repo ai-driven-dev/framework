@@ -1,4 +1,4 @@
-const { existsSync, mkdirSync, readFileSync, writeFileSync } = require("node:fs");
+const { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } = require("node:fs");
 const { dirname } = require("node:path");
 
 const start = "<!-- aidd_global_instructions:start -->";
@@ -40,7 +40,9 @@ function sync(sourcePath, destinations, claudeFallback) {
   });
   for (const { path, content } of updates) {
     mkdirSync(dirname(path), { recursive: true });
-    writeFileSync(path, content);
+    // Write beside, then rename: an interrupted run never truncates personal rules.
+    writeFileSync(`${path}.tmp`, content);
+    renameSync(`${path}.tmp`, path);
   }
 }
 
@@ -48,8 +50,13 @@ module.exports = { render, merge, sync };
 
 if (require.main === module) {
   const [sourcePath, claudeFallback, ...args] = process.argv.slice(2);
-  if (!sourcePath || claudeFallback === undefined || args.length % 2) throw new Error("Usage: sync-global-instructions.cjs SOURCE CLAUDE_FALLBACK [HOST DESTINATION ...]");
-  const destinations = [];
-  for (let i = 0; i < args.length; i += 2) destinations.push([args[i], args[i + 1]]);
-  sync(sourcePath, destinations, claudeFallback);
+  try {
+    if (!sourcePath || claudeFallback === undefined || args.length % 2) throw new Error("Usage: sync-global-instructions.cjs SOURCE CLAUDE_FALLBACK [HOST DESTINATION ...]");
+    const destinations = [];
+    for (let i = 0; i < args.length; i += 2) destinations.push([args[i], args[i + 1]]);
+    sync(sourcePath, destinations, claudeFallback);
+  } catch (error) {
+    console.error(error.message);
+    process.exitCode = 1;
+  }
 }

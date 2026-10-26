@@ -19,6 +19,7 @@ import type {
   HasSettings,
   HasSkills,
 } from "../../contracts.js";
+import { stripCopilotAgentFrontmatter } from "../../formats/agent-frontmatter-strip.js";
 import { convertCommandFrontmatter } from "../../formats/command.js";
 import { PLUGIN_ROOT_TOKEN } from "../../formats/plugin-root-token.js";
 import { claudeStyleMarketplaceKey } from "../../marketplace-entry.js";
@@ -98,11 +99,10 @@ const agentsHandler = {
   convertFrontmatter(fm: Record<string, unknown>, fileName?: string): Record<string, unknown> {
     const base = fileName?.split("/").at(-1);
     const name = fm.name ?? base?.replace(/\.md$/, "");
-    return {
+    return stripCopilotAgentFrontmatter({
+      ...fm,
       name: typeof name === "string" ? name : undefined,
-      description: fm.description,
-      "include-custom-instructions": fm["include-custom-instructions"] ?? true,
-    };
+    });
   },
 };
 
@@ -228,7 +228,6 @@ export const copilot: AiTool<
       directory: DIRECTORY,
       toolSuffix: EXT_AGENT,
       format: "markdown",
-      effortField: "reasoningEffort",
       userFileExt: EXT_AGENT,
       buildInstallPath: (fileName) => agentsHandler.buildFilePath(fileName),
       convertFrontmatter: (fm, fileName) => agentsHandler.convertFrontmatter(fm, fileName),

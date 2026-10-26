@@ -13,10 +13,10 @@ The round's misfit findings, each with its lens as kind.
 ## Process
 
 1. **Gather.** Capture the need, and read the project's declared rules, never assuming one.
-2. **Flag.** Record each misfit under its lens, tied to a rule, a site or the need.
+2. **Flag.** Record each misfit under its lens, tied to a rule, a site or the need; a bare opinion is no finding.
    - `fit`: drift from the real intent, end to end, not only the literal criteria.
    - `conform`: a violation of a declared rule, naming it.
-   - `rot`: a [quality-checklist.md](../references/quality-checklist.md) item failing, citing the site.
+   - `rot`: duplication, over-engineering or incoherence, citing the site.
 
 ## Test
 

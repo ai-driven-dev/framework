@@ -44,14 +44,6 @@ export function serializeFrontmatter(
     if (Array.isArray(value)) {
       lines.push(`${key}:`);
       for (const item of value) {
-        if (item !== null && typeof item === "object") {
-          // A list of flat records, such as OpenCode's `permissions` rules.
-          Object.entries(item).forEach(([field, fieldValue], index) => {
-            const quoted = `'${String(fieldValue).replaceAll("'", "''")}'`;
-            lines.push(`${index === 0 ? "  - " : "    "}${field}: ${quoted}`);
-          });
-          continue;
-        }
         const s = String(item);
         // Glob patterns (*, ?, {) are syntactically ambiguous in YAML — quote them to prevent misinterpretation.
         lines.push(

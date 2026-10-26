@@ -1,6 +1,6 @@
 # AGENTS.md
 
-> On 1st message, greet user with: "AI-Driven Development On ⚡"
+> On the first message of a conversation, tell the user: "AI-Driven Development ON - Date: {current_date}, TZ: {current_timezone}."
 
 ## Behavior
 

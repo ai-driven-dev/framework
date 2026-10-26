@@ -9,8 +9,6 @@ import type {
   HostPluginRegistryReader,
   HostPluginRegistryReading,
 } from "../domain/ports/host-plugin-registry-reader.js";
-import { claudePluginsDir } from "../domain/profiles/claude/claude-paths.js";
-import { copilotConfigDir } from "../domain/profiles/copilot/copilot-paths.js";
 
 function failedRead(location: string, error: unknown): HostPluginRegistryReading {
   if (error instanceof Error && "code" in error && error.code === "ENOENT")
@@ -32,19 +30,15 @@ function failedRead(location: string, error: unknown): HostPluginRegistryReading
  * rather than deleting it, so registered-but-off is an ordinary state, not a Codex-only one.
  */
 export function hostPluginRegistryReaders(
-  home: string = resolveHomeDir(),
-  env: NodeJS.ProcessEnv = process.env
+  home: string = resolveHomeDir()
 ): ReadonlyMap<AiToolId, HostPluginRegistryReader> {
   return new Map<AiToolId, HostPluginRegistryReader>([
     [
       "claude",
-      new ClaudeInstalledPluginsReader(join(claudePluginsDir(home, env), "installed_plugins.json")),
+      new ClaudeInstalledPluginsReader(join(home, ".claude", "plugins", "installed_plugins.json")),
     ],
     ["codex", new CodexConfigPluginsReader(join(home, ".codex", "config.toml"))],
-    [
-      "copilot",
-      new CopilotSettingsPluginsReader(join(copilotConfigDir(home, env), "settings.json")),
-    ],
+    ["copilot", new CopilotSettingsPluginsReader(join(home, ".copilot", "settings.json"))],
   ]);
 }
 
@@ -75,9 +69,7 @@ class ClaudeInstalledPluginsReader implements HostPluginRegistryReader {
       const here = await resolvedPath(projectRoot);
       for (const [ref, entries] of Object.entries(plugins)) {
         const scope = await scopeForProject(entries, here);
-        if (scope !== null) {
-          refs.set(ref, { enabled: true, scope });
-        }
+        if (scope !== null) refs.set(ref, { enabled: true, scope });
       }
       return { location: this.path, refs };
     } catch (error) {
@@ -112,23 +104,31 @@ class CodexConfigPluginsReader implements HostPluginRegistryReader {
 
 /**
  * Copilot's own registry: `enabledPlugins` in `~/.copilot/settings.json`, keyed on the same
- * `<plugin>@<marketplace>` ref as every other host and carrying a boolean. It answers the user registry; project activation is owned by the native host.
+ * `<plugin>@<marketplace>` ref as every other host and carrying a boolean. No project binding,
+ * so like Codex it answers for the machine and cannot answer for one project.
  */
 class CopilotSettingsPluginsReader implements HostPluginRegistryReader {
   constructor(private readonly path: string) {}
 
   async read(_projectRoot: string): Promise<HostPluginRegistryReading> {
+    let content: string;
     try {
-      const parsed = JSON.parse(await readFile(this.path, "utf8")) as {
-        enabledPlugins?: Record<string, unknown>;
-      };
-      const refs = new Map<string, HostPluginRegistryEntry>();
-      for (const [ref, enabled] of Object.entries(parsed.enabledPlugins ?? {})) {
-        refs.set(ref, { enabled: enabled !== false });
-      }
-      return { location: this.path, refs };
+      content = await readFile(this.path, "utf8");
     } catch (error) {
       return failedRead(this.path, error);
+    }
+    try {
+      const parsed = JSON.parse(content) as { enabledPlugins?: Record<string, unknown> };
+      const enabled = parsed.enabledPlugins;
+      // Absent is a real answer here, unlike a file that would not open: Copilot writes the
+      // key on its first install, so a settings file without one carries no plugin.
+      if (enabled === undefined) return { location: this.path, refs: new Map() };
+      return {
+        location: this.path,
+        refs: new Map(Object.entries(enabled).map(([ref, on]) => [ref, { enabled: on !== false }])),
+      };
+    } catch (error) {
+      return { location: this.path, unreadable: describeError(error) };
     }
   }
 }
@@ -201,17 +201,6 @@ interface ClaudeEntry {
   readonly projectPath?: string;
 }
 
-async function projectEntry(
-  entries: readonly ClaudeEntry[],
-  projectRoot: string
-): Promise<ClaudeEntry | undefined> {
-  for (const entry of entries) {
-    if (entry.projectPath !== undefined && (await resolvedPath(entry.projectPath)) === projectRoot)
-      return entry;
-  }
-  return undefined;
-}
-
 /** A user-scoped entry applies everywhere and carries no `projectPath`; any other scope applies
  * to the project it names, and an entry with neither is ignored rather than guessed. `null`
  * when nothing here answers for `projectRoot`. A user-scope entry wins over a project-path
@@ -223,7 +212,11 @@ async function scopeForProject(
 ): Promise<MarketplaceScope | null> {
   if (!Array.isArray(entries)) return null;
   if (entries.some((entry) => entry.scope === "user")) return "user";
-  return (await projectEntry(entries, projectRoot)) === undefined ? null : "project";
+  for (const entry of entries) {
+    if (entry.projectPath === undefined) continue;
+    if ((await resolvedPath(entry.projectPath)) === projectRoot) return "project";
+  }
+  return null;
 }
 
 /**

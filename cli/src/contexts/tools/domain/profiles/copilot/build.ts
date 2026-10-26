@@ -13,7 +13,7 @@ import {
 } from "../../../../../kernel/materialization/flat-paths.js";
 import { rewriteRelativeLinks } from "../../../../../kernel/materialization/relative-link-rewrite.js";
 import type { ToolBuildContract } from "../../build-contract.js";
-import { stripAgentFrontmatter } from "../../formats/agent-frontmatter-strip.js";
+import { stripCopilotAgentFrontmatter } from "../../formats/agent-frontmatter-strip.js";
 import { flattenCopilotHooksShape } from "../../formats/flat-hooks-merge.js";
 import { PLUGIN_ROOT_TOKEN } from "../../formats/plugin-root-token.js";
 import { mergeVscodeMcp } from "../../formats/vscode-mcp-merge.js";
@@ -21,17 +21,12 @@ import {
   resolveDescription,
   resolveVersion,
   synthesizeClaudeStyleManifest,
-  transformClaudeAgent,
 } from "../../marketplace-catalog.js";
-import {
-  COPILOT_MARKETPLACE_RELATIVE,
-  COPILOT_VSCODE_MCP_PATH,
-  COPILOT_WORKSPACE_DIR,
-} from "./copilot-paths.js";
+import { COPILOT_VSCODE_MCP_PATH, COPILOT_WORKSPACE_DIR } from "./copilot-paths.js";
 
 const OUTPUT_PLUGIN_MANIFEST_RELATIVE = ".plugin/plugin.json";
 
-const OUTPUT_MARKETPLACE_RELATIVE = COPILOT_MARKETPLACE_RELATIVE;
+const OUTPUT_MARKETPLACE_RELATIVE = ".plugin/marketplace.json";
 
 /** Output prefix for agents in flat mode: .github/agents/<plugin>/<name>.agent.md */
 const FLAT_GITHUB_AGENTS_PREFIX = `${COPILOT_WORKSPACE_DIR}agents/`;
@@ -68,7 +63,7 @@ export function buildCopilotMarketplaceContract(): ToolBuildContract {
         supported: true,
         source: { kind: "filteredTree", srcDir: "agents", inputExt: ".md" },
         path: (_p, rel) => rel,
-        transform: transformClaudeAgent,
+        transform: transformCopilotAgent,
       },
       mcp: {
         supported: true,
@@ -126,22 +121,24 @@ function copilotFlatHooksPath(plugin: string, rel: string): string {
   return genericFlatHooksScriptPath(FLAT_GITHUB_HOOKS_PREFIX, plugin, rest);
 }
 
+function transformCopilotAgent(content: string, _plugin: string, outName: string): string {
+  const { frontmatter, body } = parseFrontmatter(content);
+  const rewrittenBody = rewriteRelativeLinks(body, {
+    currentFilePluginRelative: `agents/${outName}`,
+  });
+  return serializeFrontmatter(stripCopilotAgentFrontmatter(frontmatter), rewrittenBody);
+}
+
 function transformCopilotFlatAgent(content: string, plugin: string, outName: string): string {
   const { frontmatter, body } = parseFrontmatter(content);
-  const stripped = stripAgentFrontmatter(frontmatter);
+  const stripped = stripCopilotAgentFrontmatter(frontmatter);
   const flatRelPath = copilotFlatAgentPath(plugin, `agents/${outName}`);
   const rewrittenBody = rewriteRelativeLinks(body, {
     currentFilePluginRelative: flatRelPath,
     resolveTargetPath: (rel) => copilotFlatResolveTarget(plugin, rel),
   });
   const prefixedName = `${plugin}-${outName.replace(/\.md$/, "")}`;
-  return serializeFrontmatter(
-    {
-      ...stripped,
-      name: prefixedName,
-    },
-    rewrittenBody
-  );
+  return serializeFrontmatter({ ...stripped, name: prefixedName }, rewrittenBody);
 }
 
 function copilotFlatResolveTarget(plugin: string, rel: string): string {

@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # (Re)install every plugin into Claude, Codex, OpenCode, Copilot and Cursor from THIS checkout.
-# Claude reads the raw repo, already native; Codex installs from a tree
-# the aidd CLI builds, so what runs locally matches what ships.
+# Claude reads the raw repo, already native; the others install from a tree the aidd CLI
+# builds, so what runs locally matches what ships. Codex and OpenCode load no
+# agent from a plugin, so their built agents are copied to the user's agents directory.
 #
 # NOT live: the install copies built files, so an edit needs a re-run. Idempotent; a tool
 # whose CLI is absent is skipped, and the first run needs network. A managed OpenCode host
@@ -10,16 +11,16 @@
 # Global rules: sync only the Agents section in the managed block, preserving personal
 # rules. First OpenCode sync keeps its Claude personal-rule fallback unless disabled.
 # Paths honor native home/cache overrides; explicit task paths take precedence.
-# Sources checked 2026-10-14:
+# Sources:
 # https://developers.openai.com/codex/guides/agents-md
 # https://code.claude.com/docs/en/memory
-# OpenCode fallback and disable flags checked 2026-10-16:
+# OpenCode fallback and disable flags:
 # https://opencode.ai/docs/rules/#claude-code-compatibility
-# Cursor local plugins: real directories only; local imports must be allowed (read 2026-10-15).
+# Cursor local plugins: real directories only; local imports must be allowed.
 # https://cursor.com/docs/plugins#test-plugins-locally
-# Copilot native list/install verified with 1.0.5 and 1.0.98 (read 2026-10-15).
+# Copilot native plugin list and install:
 # https://docs.github.com/en/copilot/reference/copilot-cli-reference/cli-plugin-reference
-# Global rules: Copilot personal instructions; Cursor always-on .mdc rules (read 2026-10-15).
+# Global rules: Copilot personal instructions; Cursor always-on .mdc rules.
 # https://docs.github.com/en/copilot/how-tos/copilot-cli/customize-copilot/add-custom-instructions
 # https://prod.cursor.com/help/customization/rules
 set -euo pipefail
@@ -35,7 +36,9 @@ AIDD_CLI_VERSION="${AIDD_CLI_VERSION:-latest}"  # published fallback for sources
 BUILD="${BUILD:-$HOME/.cache/aidd-framework-dev}"  # per-tool native trees the marketplaces point at
 CODEX_CACHE="${CODEX_CACHE:-${CODEX_HOME:-$HOME/.codex}/plugins/cache}"
 CLAUDE_CACHE="${CLAUDE_CACHE:-${CLAUDE_CODE_PLUGIN_CACHE_DIR:-${CLAUDE_CONFIG_DIR:-$HOME/.claude}/plugins}/cache}"
+CODEX_AGENTS="${CODEX_AGENTS:-${CODEX_HOME:-$HOME/.codex}/agents}"
 OPENCODE_SKILLS="${OPENCODE_SKILLS:-${XDG_CONFIG_HOME:-$HOME/.config}/opencode/skills}"
+OPENCODE_AGENTS="${OPENCODE_AGENTS:-${XDG_CONFIG_HOME:-$HOME/.config}/opencode/agents}"
 CURSOR_PLUGINS="${CURSOR_PLUGINS:-$HOME/.cursor/plugins/local}"
 CODEX_INSTRUCTIONS="${CODEX_INSTRUCTIONS:-${CODEX_HOME:-$HOME/.codex}/AGENTS.md}"
 CLAUDE_INSTRUCTIONS="${CLAUDE_INSTRUCTIONS:-${CLAUDE_CONFIG_DIR:-$HOME/.claude}/CLAUDE.md}"
@@ -119,6 +122,16 @@ sync_opencode_skills() {
   done
 }
 
+copy_agents() {
+  # Overwrite only the plugin's own agents; personal agents are left untouched.
+  local destination="$1" prefix="$2" agent
+  shift 2
+  for agent in "$@"; do
+    mkdir -p "$destination"
+    cp -f "$agent" "$destination/$prefix$(basename "$agent")"
+  done
+}
+
 register_marketplace() {
   case "$1" in
     # Codex needs the native .codex-plugin tree.
@@ -169,6 +182,7 @@ sync_one() {
     rm -rf "$CODEX_CACHE/$MKT/$name"
     if codex plugin add "$name@$MKT" >/dev/null 2>&1; then
       printf ' codex:ok'
+      copy_agents "$CODEX_AGENTS" "$name-" "$BUILD/codex/plugins/$name/codex-agents/"*.toml
     else
       printf ' codex:FAIL'
       echo "Codex plugin install failed for $name; rerun codex plugin add $name@$MKT for details." >&2
@@ -235,9 +249,10 @@ for t in "${targets[@]}"; do sync_one "$t"; done
 
 if [ "$HAVE_OPENCODE" = 1 ] && [ "$HAVE_MANAGED_OPENCODE" = 0 ]; then
   printf '%-22s' "install opencode"
-  validate_opencode_skills "${targets[@]}"
+  validate_opencode_skills "${targets[@]}" || { echo "FAIL"; exit 1; }
   sync_opencode_skills "${targets[@]}"
-  echo "skills:ok"
+  for t in "${targets[@]}"; do copy_agents "$OPENCODE_AGENTS" "" "$BUILD/opencode/.opencode/agents/$t-"*.md; done
+  echo "skills:ok agents:ok"
 fi
 if [ "$HAVE_MANAGED_OPENCODE" = 1 ]; then
   printf '%-22s' "reload opencode"
@@ -266,7 +281,8 @@ printf '%-22s' "global instructions"
 instruction_fallback="$HOME/.claude/CLAUDE.md"
 case "${OPENCODE_DISABLE_CLAUDE_CODE:-}" in 1|true) instruction_fallback="" ;; esac
 case "${OPENCODE_DISABLE_CLAUDE_CODE_PROMPT:-}" in 1|true) instruction_fallback="" ;; esac
-node "$SCRIPT_DIR/sync-global-instructions.cjs" "$FW/AGENTS.md" "$instruction_fallback" "${instructions[@]}"
+node "$SCRIPT_DIR/sync-global-instructions.cjs" "$FW/AGENTS.md" "$instruction_fallback" "${instructions[@]}" ||
+  { echo "FAIL"; exit 1; }
 echo "ok (delegation guidance only)"
 
 echo "Done. Restart hosts or reload their configuration for refreshed plugins and instructions."

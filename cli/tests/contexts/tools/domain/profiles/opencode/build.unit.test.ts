@@ -5,7 +5,6 @@ import type {
 } from "../../../../../../src/contexts/tools/domain/build-contract.js";
 import {
   buildOpencodeFlatContract,
-  toOpencodeAgentFrontmatter,
   transformMcpToOpencode,
 } from "../../../../../../src/contexts/tools/domain/profiles/opencode/build.js";
 import { InMemoryFileAdapter } from "../../../../../helpers/ports/in-memory-file-adapter.js";
@@ -78,56 +77,6 @@ describe("transformMcpToOpencode()", () => {
   it("refuses a config that is null or a bare value", () => {
     expect(() => transformMcpToOpencode("null")).toThrow("MCP config must be a JSON object");
     expect(() => transformMcpToOpencode("42")).toThrow("MCP config must be a JSON object");
-  });
-});
-
-describe("toOpencodeAgentFrontmatter()", () => {
-  it("denies edits for a Claude allowlist holding no write tool, and drops the allowlist", () => {
-    expect(
-      toOpencodeAgentFrontmatter({ description: "d", tools: "Read, Grep, Bash" })
-    ).toStrictEqual({
-      description: "d",
-      permissions: [{ action: "edit", resource: "*", effect: "deny" }],
-    });
-  });
-
-  it("drops an allowlist holding a write tool without restricting edits", () => {
-    expect(toOpencodeAgentFrontmatter({ description: "d", tools: ["Read", "Edit"] })).toStrictEqual(
-      {
-        description: "d",
-      }
-    );
-  });
-
-  it.each(["Edit", "Write", "MultiEdit", "NotebookEdit"])(
-    "reads %s, listed after a comma and a space, as a write tool",
-    (tool) => {
-      expect(
-        toOpencodeAgentFrontmatter({ description: "d", tools: `Read, ${tool}` })
-      ).toStrictEqual({ description: "d" });
-    }
-  );
-
-  it("denies edits for an allowlist given as a list without a write tool", () => {
-    expect(toOpencodeAgentFrontmatter({ description: "d", tools: ["Read", "Grep"] })).toStrictEqual(
-      {
-        description: "d",
-        permissions: [{ action: "edit", resource: "*", effect: "deny" }],
-      }
-    );
-  });
-
-  it("leaves an agent without an allowlist unchanged", () => {
-    expect(toOpencodeAgentFrontmatter({ description: "d" })).toStrictEqual({ description: "d" });
-  });
-
-  it("drops the name, which would make OpenCode ignore the agent's permissions", () => {
-    expect(
-      toOpencodeAgentFrontmatter({ name: "explorer", description: "d", tools: "Read" })
-    ).toStrictEqual({
-      description: "d",
-      permissions: [{ action: "edit", resource: "*", effect: "deny" }],
-    });
   });
 });
 

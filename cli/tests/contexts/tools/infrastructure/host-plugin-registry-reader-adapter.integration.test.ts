@@ -28,7 +28,7 @@ async function write(relative: string, content: string): Promise<void> {
 }
 
 function readerFor(tool: AiToolId) {
-  const reader = hostPluginRegistryReaders(home, {}).get(tool);
+  const reader = hostPluginRegistryReaders(home).get(tool);
   if (reader === undefined) throw new Error(`no reader declared for ${tool}`);
   return reader;
 }

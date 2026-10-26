@@ -111,13 +111,13 @@ describe("PluginContentTranslator.translate()", () => {
       { model: "openai/gpt-6-luna#medium" },
     ],
   ] as const)(
-    "preserves %s explicit agent settings through ordinary installation",
+    "carries %s's model and Claude's effort, under the host's own key, through ordinary installation",
     (label, host, path, expected) => {
       const base = makeDist({ manifest: { name: "aidd-dev", version: "1.0.0" } });
       const agent = makeFile(
         "agents/reviewer.md",
         serializeFrontmatter(
-          { name: "reviewer", description: "Role", ...expected },
+          { name: "reviewer", description: "Role", model: expected.model, effort: "medium" },
           "Reviewer agent from sample-plugin."
         )
       );

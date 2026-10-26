@@ -9,27 +9,6 @@ function agentNameFromFrontmatter(
   return typeof name === "string" ? name : undefined;
 }
 
-function tomlString(value: string): string {
-  return `"${value.replace(/\\/g, "\\\\").replace(/"/g, '\\"')}"`;
-}
-
-function buildTomlContent(frontmatter: Record<string, unknown>, body: string): string {
-  const lines: string[] = [
-    `name = ${tomlString(String(frontmatter.name ?? ""))}`,
-    `description = ${tomlString(String(frontmatter.description ?? ""))}`,
-  ];
-  if (frontmatter.model !== undefined) {
-    lines.push(`model = ${tomlString(String(frontmatter.model))}`);
-  }
-  if (frontmatter.model_reasoning_effort !== undefined) {
-    lines.push(
-      `model_reasoning_effort = ${tomlString(String(frontmatter.model_reasoning_effort))}`
-    );
-  }
-  lines.push(`developer_instructions = """\n${body}\n"""`);
-  return `${lines.join("\n")}\n`;
-}
-
 function stripSuffix(toolSuffix: string, fileName: string): string {
   const basename = fileName.split("/").at(-1) ?? fileName;
   const dir = fileName.slice(0, fileName.length - basename.length);
@@ -56,10 +35,13 @@ export class AgentsCapability {
       directory: string;
       toolSuffix: string;
       format: "markdown" | "toml";
+      /** The host's key for Claude's `effort`; a host without one drops it. */
       effortField?: string;
       userFileExt?: string;
       /** How frontmatter strings are quoted; `double` for readers that keep single quotes. */
       quote?: "single" | "double";
+      /** Writes the agent file when the host's format is not markdown frontmatter. */
+      serialize?: (frontmatter: Record<string, unknown>, body: string) => string;
       buildInstallPath?: (fileName: string) => string | null;
       convertFrontmatter?: (
         fm: Record<string, unknown>,
@@ -95,9 +77,7 @@ export class AgentsCapability {
     const converted = this.convertAgentFrontmatter(fm, fileName);
     if (fm.model !== undefined) converted.model = fm.model;
     const effortField = this.params.effortField;
-    if (effortField !== undefined && fm[effortField] !== undefined) {
-      converted[effortField] = fm[effortField];
-    }
+    if (effortField !== undefined && fm.effort !== undefined) converted[effortField] = fm.effort;
     return converted;
   }
 
@@ -107,16 +87,11 @@ export class AgentsCapability {
   ): Record<string, unknown> {
     if (this.params.convertFrontmatter) return this.params.convertFrontmatter(fm, fileName);
     const name = agentNameFromFrontmatter(fm, fileName);
-    return {
-      name,
-      description: fm.description,
-    };
+    return { name, description: fm.description };
   }
 
   serialize(frontmatter: Record<string, unknown>, body: string): string {
-    if (this.params.format === "toml") {
-      return buildTomlContent(frontmatter, body);
-    }
+    if (this.params.serialize) return this.params.serialize(frontmatter, body);
     return serializeFrontmatter(frontmatter, body, this.params.quote);
   }
 

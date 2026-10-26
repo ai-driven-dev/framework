@@ -13,6 +13,7 @@ import { rewriteRelativeLinks } from "../../../../../kernel/materialization/rela
 import type { FileReader } from "../../../../../kernel/ports/file-reader.js";
 import type { FileWriter } from "../../../../../kernel/ports/file-writer.js";
 import type { ToolBuildContract } from "../../build-contract.js";
+import { stripPathIdAgentFrontmatter } from "../../formats/agent-frontmatter-strip.js";
 import { buildOpencodeFlatConfig } from "../../formats/opencode-mcp-merge.js";
 import { transformMcpToOpencode } from "../opencode/build.js";
 import { generateKiloHooksBridge } from "./kilo-hooks-bridge.js";
@@ -62,14 +63,8 @@ function transformKiloFlatAgent(content: string, plugin: string, outName: string
     currentFilePluginRelative: flatRelPath,
     resolveTargetPath: (rel) => kiloFlatResolveTarget(plugin, rel),
   });
-  // Claude's `tools` allowlist means nothing to Kilo, so it is dropped rather than translated.
-  const { tools: _claudeTools, ...kiloFrontmatter } = frontmatter;
   return serializeFrontmatter(
-    {
-      ...kiloFrontmatter,
-      name: `${plugin}-${outName.replace(/\.md$/, "")}`,
-      mode: "subagent",
-    },
+    { ...stripPathIdAgentFrontmatter(frontmatter), mode: "subagent" },
     rewrittenBody
   );
 }

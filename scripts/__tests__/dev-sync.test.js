@@ -187,6 +187,8 @@ function runSync(fakeBin, home, args = ["all"], overrides = {}) {
       CODEX_CACHE: join(home, ".codex/plugins/cache"),
       CLAUDE_CACHE: join(home, ".claude/plugins/cache"),
       OPENCODE_SKILLS: join(home, ".config/opencode/skills"),
+      CODEX_AGENTS: join(home, ".codex/agents"),
+      OPENCODE_AGENTS: join(home, ".config/opencode/agents"),
       CODEX_INSTRUCTIONS: join(home, ".codex/AGENTS.md"),
       CLAUDE_INSTRUCTIONS: join(home, ".claude/CLAUDE.md"),
       OPENCODE_INSTRUCTIONS: join(home, ".config/opencode/AGENTS.md"),
@@ -331,6 +333,8 @@ mkdir -p "$skill/actions" "$skill/assets"
 printf '%s\n' '---' 'name: aidd-dev-01-plan' 'description: test' '---' > "$skill/SKILL.md"
 printf '%s\n' 'updated action' > "$skill/actions/04-plan.md"
 printf '%s\n' 'updated template' > "$skill/assets/plan-template.md"
+mkdir -p "$out/.opencode/agents"
+printf '%s\n' 'built executor' > "$out/.opencode/agents/aidd-dev-executor.md"
 `,
       );
 
@@ -343,10 +347,9 @@ printf '%s\n' 'updated template' > "$skill/assets/plan-template.md"
       assert.equal(existsSync(join(home, ".config/opencode/skills/aidd-dev-stale")), false);
       assert.equal(existsSync(join(home, ".config/opencode/skills/aidd-dev/removed")), false);
       assert.equal(readFileSync(unrelated, "utf8"), "keep\n");
-      assert.match(result.stdout, /install opencode\s+skills:ok/);
+      assert.match(result.stdout, /install opencode\s+skills:ok agents:ok/);
+      assert.equal(readFileSync(join(agentDir, "aidd-dev-executor.md"), "utf8"), "built executor\n");
       assert.equal(readFileSync(join(agentDir, "aidd-dev-checker.md"), "utf8"), "old agent\n");
-      assert.equal(readFileSync(join(agentDir, "aidd-dev-removed.md"), "utf8"), "stale\n");
-      assert.equal(existsSync(join(agentDir, "aidd-dev-executor.md")), false);
       assert.equal(readFileSync(join(agentDir, "personal.md"), "utf8"), "keep\n");
       assert.equal(readFileSync(join(agentDir, "aidd-pm-review.md"), "utf8"), "keep\n");
 
@@ -378,7 +381,7 @@ test("local OpenCode reload rejects missing framework skills before removing ins
   }
 });
 
-test("default OpenCode reload installs every plugin's skills without agents", () => {
+test("default OpenCode reload installs every plugin's skills", () => {
   const root = mkdtempSync(join(tmpdir(), "aidd-dev-sync-all-"));
   try {
     const fakeBin = join(root, "bin");
@@ -815,19 +818,27 @@ for (const override of ["CLAUDE_CONFIG_DIR", "CLAUDE_INSTRUCTIONS"]) {
   });
 }
 
-test("Codex reload without a built CLI leaves agents unchanged", () => {
+test("Codex reload installs the plugin's built agents beside personal ones", () => {
   const root = mkdtempSync(join(tmpdir(), "aidd-dev-sync-codex-personal-"));
   try {
     const fakeBin = join(root, "bin"), home = join(root, "home");
     mkdirSync(fakeBin);
     const agents = join(home, ".codex/agents");
     mkdirSync(agents, { recursive: true });
-    const existing = ["aidd-dev-executor.toml", "aidd-dev-personal.toml", "executor.toml"];
+    const existing = ["aidd-dev-personal.toml", "executor.toml"];
     for (const file of existing) writeFileSync(join(agents, file), `Personal ${file}\n`);
     executable(join(fakeBin, "codex"), "exit 0");
-    executable(join(fakeBin, "npx"), "exit 0");
+    executable(join(fakeBin, "npx"), String.raw`out=""
+while [ "$#" -gt 0 ]; do
+  if [ "$1" = --out ]; then shift; out=$1; fi
+  shift
+done
+mkdir -p "$out/plugins/aidd-dev/codex-agents"
+printf '%s\n' 'built executor' > "$out/plugins/aidd-dev/codex-agents/executor.toml"
+`);
     const result = runSync(fakeBin, home, []);
     assert.equal(result.status, 0, result.stderr);
+    assert.equal(readFileSync(join(agents, "aidd-dev-executor.toml"), "utf8"), "built executor\n");
     for (const file of existing) assert.equal(readFileSync(join(agents, file), "utf8"), `Personal ${file}\n`);
   } finally { rmSync(root, { recursive: true, force: true }); }
 });
