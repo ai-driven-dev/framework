@@ -34,7 +34,7 @@ flowchart LR
 
 ## 🗓️ Weekly release, step by step
 
-1. Plan the release video with the `release-video` skill (`.claude/skills/release-video`) until `node .claude/skills/release-video/assets/check-release-video.js` passes. The promotion refuses otherwise; `skip_video` lets an urgent one through.
+1. Plan the release video with the `release-video` skill (`.claude/skills/release-video`) until `node .claude/skills/release-video/assets/check-release-video.js` passes. The promotion refuses otherwise, and the release stays a draft until its video is attached.
 2. Open the [promotion `next` to `main`](https://github.com/ai-driven-dev/framework/actions/workflows/promote.yml) once the week's work is ready.
 3. release-please opens a Release PR on `main`: it is auto-merged.
 4. Tags and version bumps are created. The umbrella release is a draft: the bundle, the distributions and the rendered video are attached to it, then it is published. Announcements fire on that publication, with everything in place.
