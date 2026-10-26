@@ -59,7 +59,7 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `actions` | [02-execute.md](skills/02-implement/actions/02-execute.md) | - |
 | `actions` | [03-finalize.md](skills/02-implement/actions/03-finalize.md) | - |
 | `references` | [blocked.md](skills/02-implement/references/blocked.md) | `Conditions that make a plan blocked (needs a human).` |
-| `-` | [SKILL.md](skills/02-implement/SKILL.md) | `Implement an existing plan or assigned phase until its acceptance criteria hold. Use when a plan or bounded phase needs implementing. Not for writing a plan or reviewing a diff.` |
+| `-` | [SKILL.md](skills/02-implement/SKILL.md) | `Implement an existing plan or one of its phases until its acceptance criteria hold. Use when a plan or an assigned phase needs implementing. Not for writing a plan or reviewing a diff.` |
 
 #### `skills/03-assert`
 

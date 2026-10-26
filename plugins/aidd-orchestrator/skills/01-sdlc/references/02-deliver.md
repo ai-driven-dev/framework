@@ -2,11 +2,11 @@
 
 ## Behavior
 
-Turn the contract into a proportional plan, then give one executor the whole plan. When the plan has ready independent phases, delegate them instead: prepare the plan through the implementation skill, dispatch the ready phases through the batch skill, one executor per phase with its phase file as the brief, and finalize the integrated plan through the implementation skill. A `partial` or failed phase goes back to an executor with what remains.
+Turn the contract into a proportional plan, then give one implementation agent the whole plan. When phases have their dependencies met and touch separate files, delegate them instead: prepare the plan through the implementation skill, give each ready phase its own agent and checkout with its phase file as the brief, merge each returned phase and run the checks it affects, and repeat for the phases a merge made ready. A `partial` or failing phase goes back to an agent with what remains. Once every phase is integrated, finalize the plan through the implementation skill.
 
-The caller owns delegation, integration, plan status, and final acceptance; the validation skills own their checks and repair loops. Include architecture conformance whenever the project documents architecture.
+The caller owns delegation, integration, plan status, and final acceptance; the validation skills own their checks and repair loops. Include architecture conformance whenever the project documents architecture. Run an end-to-end journey after every other validation when the plan calls for one, and none otherwise.
 
-Send only the clean committed candidate and its evidence to Check.
+Send only the clean committed candidate to Check.
 
 ```mermaid
 ---
@@ -22,11 +22,12 @@ flowchart TD
 
   subgraph ExecuteStage["Execute and validate the plan"]
     direction TB
-    Executor(["@aidd-dev:executor"])
+    Executor(["Implementation agent"])
     Implement["/aidd-dev:02-implement"]
     Assert["/aidd-dev:03-assert"]
-    Batch["/aidd-dev:10-batch"]
+    Integrate["Merge the phase and run the checks it affects"]
     Finalize["/aidd-dev:02-implement finalize"]
+    Test["/aidd-dev:06-test"]
     Commit["/aidd-vcs:01-commit"]
   end
 
@@ -39,16 +40,19 @@ flowchart TD
   Contract --> Plan
   Plan --> PlanArtifact
   PlanArtifact -- "Whole plan." --> Executor
-  PlanArtifact -- "Ready independent phases." --> Batch
-  Batch -- "One executor per phase." --> Executor
+  PlanArtifact -- "One agent and checkout per ready phase." --> Executor
   Executor --> Implement
   Implement --> Assert
-  Assert -- "Whole plan." --> Commit
-  Assert -- "Phase." --> Batch
-  Batch -- "Partial or failed phase." --> Executor
-  Batch -- "Every phase integrated." --> Finalize
-  Finalize -- "Failure: repair the phase." --> Executor
-  Finalize --> Commit
+  Assert -- "Delegated phase." --> Integrate
+  Integrate -- "Partial or failing: what remains." --> Executor
+  Integrate -- "Phases this merge made ready." --> Executor
+  Integrate -- "Every phase integrated." --> Finalize
+  Assert -- "Whole plan, no journey required." --> Commit
+  Finalize -- "No journey required." --> Commit
+  Assert -- "Whole plan, journey required: run it last." --> Test
+  Finalize -- "Journey required: run it last." --> Test
+  Test -- "After the journey succeeds, commit the result." --> Commit
+  Test -- "Return a failed journey for repair." --> Executor
   Commit --> CommittedCandidate
   CommittedCandidate --> Check
 
@@ -57,8 +61,8 @@ flowchart TD
   classDef artifact fill:#DCFCE7,stroke:#16A34A,color:#14532D,stroke-width:2px
   classDef zone fill:#F1F5F9,stroke:#64748B,color:#0F172A,stroke-width:2px
 
-  class Plan,Batch,Implement,Assert,Finalize,Commit skill
+  class Plan,Implement,Assert,Finalize,Test,Commit skill
   class Executor agent
   class Contract,PlanArtifact,CommittedCandidate artifact
-  class Check zone
+  class Integrate,Check zone
 ```

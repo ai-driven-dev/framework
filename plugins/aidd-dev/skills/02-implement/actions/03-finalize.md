@@ -1,23 +1,22 @@
 # 03 - Finalize
 
+Validate the whole plan and mark it implemented.
+
 ## Input
 
-The coded plan.
-
-## Output
-
-The validated plan marked `implemented`.
+The plan with every phase `done`, implemented here or integrated by the caller.
 
 ## Process
 
-1. **Verify.** Validate the source outcome and phase criteria together after integration, then run the plan's validation commands and tests.
-   - Start the required runtime if needed.
-   - Run any required end-to-end journey last, through `/aidd-dev:06-test`.
-2. **Mark.** Set the plan `status: implemented`.
-   - Commit according to the commit policy.
+1. Start the runtime the checks need.
+2. Validate the source outcome and the phase criteria together, then run the plan's validation commands and tests.
+   - On a failure, repair it, then rerun what the repair affects.
+3. Set the plan `status: implemented`, and commit it.
+
+## Output
+
+The plan marked `implemented`.
 
 ## Rules
 
-- Gate `implemented` on every phase `done` and every Verify check passing.
-- Repair failures first, then rerun what the repair affects and any final journey.
-  - Follow Execute's validation, blocker and drift rules.
+- Mark `implemented` only when every phase is `done` and every check passes.
