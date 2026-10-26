@@ -63,10 +63,11 @@ describe("the branch HEAD is on", () => {
 });
 
 describe("declaring on a branch", () => {
-  it("writes the three keys the reader reads back", async () => {
+  it("writes the keys the reader reads back, stamped with the branch it was made on", async () => {
     await store.declare(repo, "feat/x", task("checkout-fix", "PROJ-12"));
     expect(config("branch.feat/x.aiddTask")).toBe("checkout-fix");
     expect(config("branch.feat/x.aiddTicket")).toBe("PROJ-12");
+    expect(config("branch.feat/x.aiddDeclaredFor")).toBe("feat/x");
     expect(config("branch.feat/x.aiddDeclaredAt")).toBe("2026-10-09T10:00:00.000Z");
     expect(await new GitBranchBindingSourceAdapter(env).bindings(repo)).toEqual([
       {
@@ -79,11 +80,39 @@ describe("declaring on a branch", () => {
     ]);
   });
 
-  it("survives a rename of the branch", async () => {
+  it("leaves a renamed or copied branch undeclared: git moves the keys, the stamp keeps the old name", async () => {
     await store.declare(repo, "feat/x", task("checkout-fix"));
+    git(repo, env, "branch", "-c", "feat/x", "feat/copy");
     git(repo, env, "branch", "-m", "feat/x", "feat/renamed");
     expect(config("branch.feat/renamed.aiddTask")).toBe("checkout-fix");
     expect(absent("branch.feat/x.aiddTask")).toBe(true);
+    expect(await new GitBranchBindingSourceAdapter(env).bindings(repo)).toEqual([]);
+    await store.declare(repo, "feat/renamed", task("again"));
+    expect(
+      (await new GitBranchBindingSourceAdapter(env).bindings(repo)).map((b) => [b.branch, b.task])
+    ).toEqual([["feat/renamed", "again"]]);
+  });
+
+  it("declares again over a branch copied onto with -C, which leaves every key twice", async () => {
+    await store.declare(repo, "feat/x", task("theirs", "PROJ-1"));
+    git(repo, env, "branch", "feat/y");
+    await store.declare(repo, "feat/y", declarationOf({ kind: "none" }, at, "command"));
+    git(repo, env, "branch", "-C", "feat/x", "feat/y");
+    // Both declarations are now mixed under feat/y: it is declared by neither.
+    expect(
+      (await new GitBranchBindingSourceAdapter(env).bindings(repo)).map((b) => [b.branch, b.task])
+    ).toEqual([["feat/x", "theirs"]]);
+    await store.declare(repo, "feat/y", task("again"));
+    expect(
+      (await new GitBranchBindingSourceAdapter(env).bindings(repo)).map((b) => [
+        b.branch,
+        b.task,
+        b.ticket,
+      ])
+    ).toEqual([
+      ["feat/x", "theirs", "PROJ-1"],
+      ["feat/y", "again", null],
+    ]);
   });
 
   it("drops a ticket the new declaration does not name", async () => {

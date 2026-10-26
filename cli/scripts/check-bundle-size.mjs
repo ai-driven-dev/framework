@@ -43,6 +43,9 @@ const pkg = JSON.parse(readFileSync(resolve(root, "package.json"), "utf8"));
 // correctly (+5,008 bytes over 0.27.3); unchanged application and minification settings.
 // 695 KB: 680.6 KB, that esbuild merged into the deterministic token measurement (+5.3 KB over
 // the 675.3 KB above); 2.1% measured headroom.
+// 709 KB: 695.3 KB, telemetry keeping what an ingest measured and could not store, ledger lines
+// no reader knows, and a bounded re-read of a call whose consent cannot be read yet (#1046,
+// +1.3 KB over next's 694.0 KB, after 1.7 KB of savings in telemetry code); 2.0% measured headroom.
 const budgetKB = pkg.bundleBudgetKB ?? 500;
 const budgetBytes = budgetKB * 1024;
 

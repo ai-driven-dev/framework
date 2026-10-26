@@ -3,11 +3,11 @@ import type { BranchBindingStore, BranchHeads } from "../../domain/ports/branch-
 import { runGit } from "../run-git.js";
 
 const NOT_SYMBOLIC = 1;
-/** `git config --unset` of a key that is not there. */
+/** `git config --unset-all` of a key that is not there. */
 const KEY_ABSENT = 5;
 
 /** Keeps a branch's declaration in the repository's own git config: `branch.<name>.aiddTask`,
- * `aiddTicket` and `aiddDeclaredAt`. */
+ * `aiddTicket`, `aiddDeclaredFor` (the branch it was made on) and `aiddDeclaredAt`. */
 export class GitBranchBindingStoreAdapter implements BranchBindingStore {
   /** `env` carries none of git's own variables, which would point it at another repository. */
   constructor(private readonly env: NodeJS.ProcessEnv) {}
@@ -20,10 +20,13 @@ export class GitBranchBindingStoreAdapter implements BranchBindingStore {
   }
 
   /** `aiddDeclaredAt` goes last: a branch counts as declared only once the rest is in place,
-   * so a crash in between leaves it undeclared rather than half declared. */
+   * so a crash in between leaves it undeclared rather than half declared. `aiddDeclaredFor`
+   * names the branch, so a copy or a rename, which carries the keys away, carries no
+   * declaration. */
   async declare(root: string, branch: string, declaration: TaskDeclaration): Promise<void> {
     this.setOrUnset(root, branch, "aiddTask", declaration.task);
     this.setOrUnset(root, branch, "aiddTicket", declaration.ticket);
+    this.setOrUnset(root, branch, "aiddDeclaredFor", branch);
     this.setOrUnset(root, branch, "aiddDeclaredAt", declaration.declared_at);
   }
 
@@ -36,11 +39,12 @@ export class GitBranchBindingStoreAdapter implements BranchBindingStore {
 
   private setOrUnset(root: string, branch: string, variable: string, value: string | null): void {
     const key = `branch.${branch}.${variable}`;
-    // After `--`, so a value that starts with a dash is never read as an option.
+    // After `--`, so a value that starts with a dash is never read as an option. `-all`: a
+    // branch copied onto with `git branch -C` holds every key twice, and a plain set refuses.
     const args =
       value === null
-        ? ["config", "--local", "--unset", "--", key]
-        : ["config", "--local", "--", key, value];
+        ? ["config", "--local", "--unset-all", "--", key]
+        : ["config", "--local", "--replace-all", "--", key, value];
     const run = runGit(this.env, root, args);
     if (run.status === 0 || (value === null && run.status === KEY_ABSENT)) return;
     throw new Error(`git config ${key} failed in ${root}`);

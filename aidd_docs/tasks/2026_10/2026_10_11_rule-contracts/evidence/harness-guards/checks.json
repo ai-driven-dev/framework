@@ -14,7 +14,7 @@
     "summary": {
       "host": "codex",
       "command": [
-        "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-rule-contract-runtime-0_c9_13o/forking-native.py",
+        "<tmp>/aidd-rule-contract-runtime-0_c9_13o/forking-native.py",
         "exec",
         "--ephemeral",
         "--ignore-rules",
@@ -22,7 +22,7 @@
         "never",
         "--json",
         "-C",
-        "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-rule-contract-runtime-0_c9_13o/projects/codex",
+        "<tmp>/aidd-rule-contract-runtime-0_c9_13o/projects/codex",
         "Return LOCAL_OK and use no tools."
       ],
       "exit": "timeout",

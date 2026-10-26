@@ -13,7 +13,7 @@
     "Read src/http/app.ts using view, then reply LOCAL_CAPTURE_DONE. Do not write files."
   ],
   "env": {
-    "PATH": "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin:/usr/bin:/bin",
+    "PATH": "<home>/.nvm/versions/node/v24.20.0/bin:/usr/bin:/bin",
     "HOME": "/private/tmp/aidd-oct11-copilot-probe-3svb9u/indexed-evidence/update-outside/home",
     "USERPROFILE": "/private/tmp/aidd-oct11-copilot-probe-3svb9u/indexed-evidence/update-outside/home",
     "COPILOT_HOME": "/private/tmp/aidd-oct11-copilot-probe-3svb9u/indexed-evidence/update-outside/home/.copilot",
@@ -31,7 +31,7 @@
     "COPILOT_PROVIDER_WIRE_MODEL": "aidd-capture",
     "COPILOT_PROVIDER_MAX_PROMPT_TOKENS": "131072",
     "COPILOT_PROVIDER_MAX_OUTPUT_TOKENS": "2048",
-    "COPILOT_CLI_DIST_DIR": "/Users/baptistelafourcade/Library/Caches/copilot/pkg/darwin-arm64/1.0.83"
+    "COPILOT_CLI_DIST_DIR": "<home>/Library/Caches/copilot/pkg/darwin-arm64/1.0.83"
   },
   "cwd": "/private/tmp/aidd-oct11-copilot-probe-3svb9u/indexed-evidence/update-outside/project",
   "localProviderKeyWasFake": true

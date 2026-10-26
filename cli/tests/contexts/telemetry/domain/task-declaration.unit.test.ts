@@ -55,12 +55,13 @@ describe("a declaration", () => {
 });
 
 describe("a session declaration line", () => {
-  const declaration = declarationOf({ kind: "task", task: "t", ticket: null }, NOW, "command");
+  const declaration = () =>
+    declarationOf({ kind: "task", task: "t", ticket: null }, NOW, "command");
 
   it("is written with the fields of the format, in order, and read back whole", () => {
-    const line = renderSessionDeclaration("s-1", declaration);
+    const line = renderSessionDeclaration("s-1", declaration());
     expect(Object.keys(JSON.parse(line))).toEqual([...SESSION_DECLARATION_FIELDS]);
-    expect(parseSessionDeclaration(line)).toEqual({ session_id: "s-1", ...declaration });
+    expect(parseSessionDeclaration(line)).toEqual({ session_id: "s-1", ...declaration() });
   });
 
   it.each([

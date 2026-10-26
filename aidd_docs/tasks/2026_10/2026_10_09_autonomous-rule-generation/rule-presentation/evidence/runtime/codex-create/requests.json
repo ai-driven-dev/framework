@@ -489,14 +489,14 @@
       "include": [
         "reasoning.encrypted_content"
       ],
-      "prompt_cache_key": "01a11f99-979d-77e2-a5d8-3c192a5b2ab5",
+      "prompt_cache_key": "<session>",
       "client_metadata": {
-        "x-codex-window-id": "01a11f99-979d-77e2-a5d8-3c192a5b2ab5:0",
-        "session_id": "01a11f99-979d-77e2-a5d8-3c192a5b2ab5",
-        "thread_id": "01a11f99-979d-77e2-a5d8-3c192a5b2ab5",
+        "x-codex-window-id": "<session>:0",
+        "session_id": "<session>",
+        "thread_id": "<session>",
         "turn_id": "01a11f99-97d6-7e80-8fee-adaeeb5a58d1",
-        "x-codex-installation-id": "7c76d04c-c8d3-4d92-ae28-bf9fcc35239e",
-        "x-codex-turn-metadata": "{\"installation_id\":\"7c76d04c-c8d3-4d92-ae28-bf9fcc35239e\",\"session_id\":\"01a11f99-979d-77e2-a5d8-3c192a5b2ab5\",\"thread_id\":\"01a11f99-979d-77e2-a5d8-3c192a5b2ab5\",\"agent_name\":\"/root\",\"turn_id\":\"01a11f99-97d6-7e80-8fee-adaeeb5a58d1\",\"window_id\":\"01a11f99-979d-77e2-a5d8-3c192a5b2ab5:0\",\"window_number\":0,\"context_window_id\":\"01a11f99-979e-7191-99e8-114f8b4ed8a4\",\"request_kind\":\"turn\",\"root_turn_id\":\"01a11f99-97d6-7e80-8fee-adaeeb5a58d1\",\"thread_source\":\"user\",\"turn_trigger\":\"exec\",\"sandbox\":\"seatbelt\",\"sandbox_mode\":\"read-only\",\"auto_review_enabled\":false,\"node_repl_auto_review_required\":false,\"node_repl_disabled\":false,\"turn_started_at_unix_ms\":1791531522009,\"analytics_enabled\":false,\"model\":\"gpt-5.1-codex\"}",
+        "x-codex-installation-id": "<installation>",
+        "x-codex-turn-metadata": "{\"installation_id\":\"<installation>\",\"session_id\":\"<session>\",\"thread_id\":\"<session>\",\"agent_name\":\"/root\",\"turn_id\":\"01a11f99-97d6-7e80-8fee-adaeeb5a58d1\",\"window_id\":\"<session>:0\",\"window_number\":0,\"context_window_id\":\"01a11f99-979e-7191-99e8-114f8b4ed8a4\",\"request_kind\":\"turn\",\"root_turn_id\":\"01a11f99-97d6-7e80-8fee-adaeeb5a58d1\",\"thread_source\":\"user\",\"turn_trigger\":\"exec\",\"sandbox\":\"seatbelt\",\"sandbox_mode\":\"read-only\",\"auto_review_enabled\":false,\"node_repl_auto_review_required\":false,\"node_repl_disabled\":false,\"turn_started_at_unix_ms\":1791531522009,\"analytics_enabled\":false,\"model\":\"gpt-5.1-codex\"}",
         "root_turn_id": "01a11f99-97d6-7e80-8fee-adaeeb5a58d1"
       }
     }

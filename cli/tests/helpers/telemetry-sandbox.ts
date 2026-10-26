@@ -41,7 +41,12 @@ export function createTelemetrySandbox(): TelemetrySandbox {
   for (const dir of [home, claude]) mkdirSync(dir, { recursive: true });
   assertUnderTemporaryDirectory([root, home, telemetry, claude]);
   writeFileSync(join(home, ".gitconfig"), "");
-  const gitEnv = sandboxGitEnv(home, { GIT_CONFIG_GLOBAL: join(home, ".gitconfig") });
+  // A hook git runs reads the session from these: the runner's own must not reach a commit.
+  const gitEnv = sandboxGitEnv(home, {
+    GIT_CONFIG_GLOBAL: join(home, ".gitconfig"),
+    CLAUDE_CODE_SESSION_ID: "",
+    CODEX_THREAD_ID: "",
+  });
   return {
     root,
     home,
@@ -63,6 +68,7 @@ export function createTelemetrySandbox(): TelemetrySandbox {
         APPDATA: join(home, "AppData", "Roaming"),
         USERPROFILE: home,
         CLAUDE_CONFIG_DIR: claude,
+        CODEX_HOME: join(home, ".codex"),
         AIDD_TELEMETRY: "",
         CLAUDE_CODE_SESSION_ID: "",
         CODEX_THREAD_ID: "",

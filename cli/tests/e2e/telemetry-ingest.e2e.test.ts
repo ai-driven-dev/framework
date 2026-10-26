@@ -134,6 +134,7 @@ describe("aidd telemetry ingest", () => {
       "2026-10-07.jsonl",
       "consents.jsonl",
       "offsets.json",
+      "repository-ids.json",
       "roots.json",
     ]);
   });

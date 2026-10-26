@@ -1,19 +1,17 @@
 import { readdir, rm, stat } from "node:fs/promises";
 import { join } from "node:path";
-import { isErrnoException } from "../../../../kernel/reading/json-file.js";
+import { isAbsent } from "../../../../kernel/reading/text-file.js";
 import { DAY_FILE, type LegacyLocations } from "../../domain/legacy/legacy-locations.js";
 import type {
   ErasureEntry,
   MeasurementErasure,
 } from "../../domain/ports/forget/measurement-erasure.js";
 
-const ABSENT = new Set(["ENOENT", "ENOTDIR"]);
-
 async function entriesOf(dir: string): Promise<string[]> {
   try {
     return await readdir(dir);
   } catch (error) {
-    if (isErrnoException(error) && ABSENT.has(error.code ?? "")) return [];
+    if (isAbsent(error)) return [];
     throw error;
   }
 }
@@ -23,7 +21,7 @@ async function kindOf(path: string): Promise<"file" | "directory" | null> {
     const found = await stat(path);
     return found.isFile() ? "file" : found.isDirectory() ? "directory" : null;
   } catch (error) {
-    if (isErrnoException(error) && ABSENT.has(error.code ?? "")) return null;
+    if (isAbsent(error)) return null;
     throw error;
   }
 }

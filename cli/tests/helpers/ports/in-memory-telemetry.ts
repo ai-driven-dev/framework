@@ -30,6 +30,7 @@ import type {
 import type { ConsentHistory } from "../../../src/contexts/telemetry/domain/ports/consent-history.js";
 import type { ConsentSource } from "../../../src/contexts/telemetry/domain/ports/consent-source.js";
 import type { PersonIdentityStore } from "../../../src/contexts/telemetry/domain/ports/identity/person-identity-store.js";
+import type { RepositoryAliasStore } from "../../../src/contexts/telemetry/domain/ports/repository-alias-store.js";
 import type {
   LocatedDirectory,
   RepositoryLocator,
@@ -40,6 +41,9 @@ import type {
   TranscriptSource,
 } from "../../../src/contexts/telemetry/domain/ports/transcript-source.js";
 import type {
+  LeftOutEntry,
+  LeftOutReason,
+  LeftOutStore,
   LoadedLedger,
   UsageLedger,
 } from "../../../src/contexts/telemetry/domain/ports/usage-ledger.js";
@@ -78,17 +82,17 @@ export class InMemoryTranscripts implements TranscriptSource {
   async read(
     path: string,
     since: TranscriptPosition | null,
-    writtenFrom: number
+    writtenFrom: number,
+    each: (line: string, counted: boolean) => void
   ): Promise<TranscriptRead> {
     const all = this.files.get(path) ?? [];
     const modified = this.modified.get(path);
     if (modified !== undefined && Date.parse(modified) < writtenFrom) {
       const position = { offset: all.length, size: all.length, identity: "inode" };
-      return { lines: [], position, restarted: false, skipped: true };
+      return { position, restarted: false, skipped: true };
     }
-    const from = since?.offset ?? 0;
+    for (const line of all.slice(since?.offset ?? 0)) each(line, true);
     return {
-      lines: all.slice(from),
       position: {
         offset: all.length,
         size: this.stats.get(path)?.size ?? all.length,
@@ -104,7 +108,10 @@ export class InMemoryLedger implements UsageLedger {
   records: StoredUsage[] = [];
   stored = new Map<string, TranscriptPosition>();
   /** Pass one array to several fakes to see the order they were used in. */
-  constructor(readonly events: string[] = []) {}
+  readonly leftOut: InMemoryLeftOut;
+  constructor(readonly events: string[] = []) {
+    this.leftOut = new InMemoryLeftOut(events);
+  }
   failSave = false;
   exclusiveRuns = 0;
 
@@ -136,7 +143,7 @@ export class InMemoryLedger implements UsageLedger {
     };
   }
 
-  /** Partitions holding a line that is not a record. Saving one repairs it. */
+  /** Partitions holding a line that is not a record. Saving one keeps it. */
   damaged = new Set<string>();
   /** Partitions not in canonical daily form. Saving one settles it. */
   unsettled = new Set<string>();
@@ -155,10 +162,11 @@ export class InMemoryLedger implements UsageLedger {
       ...this.records.filter((record) => !named(record)),
       ...records.filter(named),
     ]);
-    for (const partition of partitions ?? [...this.damaged, ...this.unsettled]) {
-      this.damaged.delete(partition);
-      this.unsettled.delete(partition);
-    }
+    for (const partition of partitions ?? [...this.unsettled]) this.unsettled.delete(partition);
+  }
+
+  async leaveOutRequestless(): Promise<void> {
+    this.events.push("leave-out-requestless");
   }
 
   async positions(): Promise<ReadonlyMap<string, TranscriptPosition>> {
@@ -168,6 +176,34 @@ export class InMemoryLedger implements UsageLedger {
   async savePositions(positions: ReadonlyMap<string, TranscriptPosition>): Promise<void> {
     this.events.push("positions");
     this.stored = new Map(positions);
+  }
+}
+
+/** What was measured and left out, as the text each thing is named by, unhashed. Shares its
+ * ledger's events: `left-out` when counted, `left-out-add` when added to. */
+export class InMemoryLeftOut implements LeftOutStore {
+  readonly lines = new Set<string>();
+  /** Things handed to `add`, kept or not. */
+  added = 0;
+  failSave = false;
+  constructor(readonly events: string[]) {}
+
+  async add(entries: readonly LeftOutEntry[]): Promise<void> {
+    this.events.push("left-out-add");
+    if (this.failSave) throw new Error("disk full");
+    this.added += entries.length;
+    for (const { reason, of } of entries) this.lines.add(`${reason} ${of}`);
+  }
+
+  async counts(): Promise<Readonly<Record<LeftOutReason, number>>> {
+    this.events.push("left-out");
+    const count = (reason: LeftOutReason) =>
+      [...this.lines].filter((line) => line.startsWith(`${reason} `)).length;
+    return {
+      undated: count("undated"),
+      unrecognised: count("unrecognised"),
+      requestless: count("requestless"),
+    };
   }
 }
 
@@ -384,3 +420,12 @@ export class InMemoryIdentity implements PersonIdentityStore {
     return held;
   }
 }
+
+/** A ledger already under today's key and id rules: the migration finds nothing to do. */
+export const ALREADY_MIGRATED = { execute: async (): Promise<void> => {} };
+
+/** No table of ids an earlier version gave repositories: every id is read as stored. */
+export const NO_ALIASES: RepositoryAliasStore = {
+  load: async () => null,
+  save: async () => {},
+};

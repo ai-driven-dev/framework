@@ -44,6 +44,51 @@
         "aiddTask": "dotted",
         "aiddDeclaredAt": "2026-10-09T09:00:00.000Z"
       }
+    },
+    "stamped-for-this-branch": {
+      "branch": "feat/x",
+      "keys": {
+        "aiddTask": "stamped",
+        "aiddTicket": "PROJ-30",
+        "aiddDeclaredFor": "feat/x",
+        "aiddDeclaredAt": "2026-10-09T09:00:00.000Z"
+      }
+    },
+    "stamped-for-another-branch": {
+      "branch": "feat/x",
+      "keys": {
+        "aiddTask": "copied",
+        "aiddTicket": "PROJ-31",
+        "aiddDeclaredFor": "feat/original",
+        "aiddDeclaredAt": "2026-10-09T09:00:00.000Z"
+      }
+    },
+    "stamp-without-declared-at": {
+      "branch": "feat/x",
+      "keys": {
+        "aiddTask": "half-written",
+        "aiddDeclaredFor": "feat/x"
+      }
+    },
+    "copied-onto-a-branch-declared-none": {
+      "branch": "feat/x",
+      "keys": [
+        ["aiddTask", "copied"],
+        ["aiddTicket", "PROJ-32"],
+        ["aiddDeclaredFor", "feat/original"],
+        ["aiddDeclaredAt", "2026-10-09T09:00:00.000Z"],
+        ["aiddDeclaredFor", "feat/x"],
+        ["aiddDeclaredAt", "2026-10-09T10:00:00.000Z"]
+      ]
+    },
+    "task-listed-twice": {
+      "branch": "feat/x",
+      "keys": [
+        ["aiddTask", "copied"],
+        ["aiddTask", "own"],
+        ["aiddDeclaredFor", "feat/x"],
+        ["aiddDeclaredAt", "2026-10-09T10:00:00.000Z"]
+      ]
     }
   },
   "binding": {
@@ -187,10 +232,45 @@
       "head": "refs/heads/feat/x",
       "originHead": null
     },
-    "branch-task-without-declared-at-is-bound": {
+    "branch-task-without-declared-at-is-unbound": {
       "session_id": null,
       "at": "2026-10-09T15:00:00.000Z",
       "gitConfig": "task-without-declared-at",
+      "head": "refs/heads/feat/x",
+      "originHead": null
+    },
+    "branch-stamped-for-itself-is-bound": {
+      "session_id": null,
+      "at": "2026-10-09T15:00:00.000Z",
+      "gitConfig": "stamped-for-this-branch",
+      "head": "refs/heads/feat/x",
+      "originHead": null
+    },
+    "branch-stamped-for-another-branch-is-unbound": {
+      "session_id": null,
+      "at": "2026-10-09T15:00:00.000Z",
+      "gitConfig": "stamped-for-another-branch",
+      "head": "refs/heads/feat/x",
+      "originHead": null
+    },
+    "branch-stamp-without-declared-at-is-unbound": {
+      "session_id": null,
+      "at": "2026-10-09T15:00:00.000Z",
+      "gitConfig": "stamp-without-declared-at",
+      "head": "refs/heads/feat/x",
+      "originHead": null
+    },
+    "branch-unstamped-legacy-declaration-is-bound": {
+      "session_id": null,
+      "at": "2026-10-09T15:00:00.000Z",
+      "gitConfig": "task-and-ticket",
+      "head": "refs/heads/feat/x",
+      "originHead": null
+    },
+    "branch-copied-onto-a-declared-branch-is-unbound": {
+      "session_id": null,
+      "at": "2026-10-09T15:00:00.000Z",
+      "gitConfig": "copied-onto-a-branch-declared-none",
       "head": "refs/heads/feat/x",
       "originHead": null
     },
@@ -416,7 +496,7 @@
       "env": {}
     }
   },
-  "claudeOnly": {
+  "hookTool": {
     "claude-posix-transcript": {
       "payload_session_id": "00000000-0000-4000-8000-00000000000a",
       "env_session_id": "00000000-0000-4000-8000-00000000000a",
@@ -471,6 +551,21 @@
       "payload_session_id": "00000000-0000-4000-8000-00000000000a",
       "env_session_id": "00000000-0000-4000-8000-00000000000a",
       "transcript_path": "/home/someone/.codex/old-projects/rollout.jsonl"
+    },
+    "codex-outside-claude": {
+      "payload_session_id": "00000000-0000-4000-8000-00000000000a",
+      "env_session_id": null,
+      "transcript_path": "/home/someone/.codex/sessions/2026/10/09/rollout-2026-10-09T10-00-00-00000000-0000-4000-8000-00000000000a.jsonl"
+    },
+    "codex-home-under-a-projects-directory": {
+      "payload_session_id": "00000000-0000-4000-8000-00000000000a",
+      "env_session_id": "00000000-0000-4000-8000-00000000000a",
+      "transcript_path": "/work/projects/.codex/sessions/2026/10/09/rollout-2026-10-09T10-00-00-00000000-0000-4000-8000-00000000000a.jsonl"
+    },
+    "codex-payload-has-no-session-id": {
+      "payload_session_id": null,
+      "env_session_id": null,
+      "transcript_path": "/home/someone/.codex/sessions/2026/10/09/rollout-2026-10-09T10-00-00-00000000-0000-4000-8000-00000000000a.jsonl"
     }
   },
   "consentLog": {

@@ -125,6 +125,15 @@ describe("a usage report", () => {
     expect(values("agent", records)).toEqual([v("subagent"), v("main"), v("advisor")]);
   });
 
+  it("splits by the tool that ran: Claude Code and Codex apart, each call on its own tool's row", () => {
+    const records = [
+      call({ tool: "claude-code", output: 100 }),
+      call({ tool: "codex", output: 300 }),
+      call({ tool: "codex", output: 1 }),
+    ];
+    expect(values("tool", records)).toEqual([v("codex"), v("claude-code")]);
+  });
+
   it("orders rows of the same size by their text", () => {
     const records = [call({ session_id: "s-b" }), call({ session_id: "s-a" })];
     expect(values("session", records)).toEqual([v("s-a"), v("s-b")]);

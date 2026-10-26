@@ -107,7 +107,7 @@ Single document: `aidd_docs/tasks/2026_05/2026_05_06-cli-v5-cleanup-part-0-inven
 
 ```bash
 # Run from repo root
-cd /Users/baptistelafourcade/Projects/freelance/aidd/aidd/cli
+cd cli
 
 # 1. Verify zero functional reads of dead fields
 rg "manifest\.docsDir|manifest\.repo|manifest\._scripts|manifest\._plugins|manifest\._mode" src/

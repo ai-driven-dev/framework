@@ -15,7 +15,8 @@
   ],
   "packages": {
     ".": {
-      "release-as": "5.12.0",
+      "draft": true,
+      "force-tag-creation": true,
       "extra-files": [
         {
           "type": "json",
@@ -37,7 +38,6 @@
     },
     "plugins/aidd-dev": {
       "package-name": "aidd-dev",
-      "release-as": "2.7.0",
       "extra-files": [
         {
           "type": "json",
@@ -58,7 +58,6 @@
     },
     "plugins/aidd-pm": {
       "package-name": "aidd-pm",
-      "release-as": "2.6.0",
       "extra-files": [
         {
           "type": "json",
@@ -69,7 +68,6 @@
     },
     "plugins/aidd-orchestrator": {
       "package-name": "aidd-orchestrator",
-      "release-as": "2.4.0",
       "extra-files": [
         {
           "type": "json",
@@ -100,7 +98,6 @@
     },
     "plugins/aidd-telemetry": {
       "package-name": "aidd-telemetry",
-      "release-as": "0.3.0",
       "extra-files": [
         {
           "type": "json",
@@ -120,7 +117,6 @@
       ]
     },
     "cli": {
-      "release-as": "5.5.0",
       "release-type": "node",
       "package-name": "@ai-driven-dev/cli"
     }

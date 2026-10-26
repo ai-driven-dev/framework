@@ -60,3 +60,6 @@ temp/
 tmp/
 setup-test/
 tmp-test/
+
+# Session journals the previous telemetry plugin wrote into a project: private, never tracked.
+aidd_docs/runs/

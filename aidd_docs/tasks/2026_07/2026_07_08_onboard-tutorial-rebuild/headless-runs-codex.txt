@@ -12,14 +12,14 @@ Generated 2026-07-10 10:44.
 Reading additional input from stdin...
 OpenAI Codex v0.143.0
 --------
-workdir: /private/tmp/claude-501/-Users-baptistelafourcade-Projects-freelance-aidd-aidd-framework/e56b2570-3814-4f77-9b5e-5b026f1c7453/scratchpad/fixtures/01-greenfield
+workdir: <scratch>/fixtures/01-greenfield
 model: gpt-5.5
 provider: openai
 approval: never
 sandbox: read-only
 reasoning effort: high
 reasoning summaries: none
-session id: 019f4b33-13d6-7470-80f8-47896e286b8b
+session id: <session>
 --------
 user
 onboard me
@@ -27,9 +27,9 @@ warning: Skill descriptions were shortened to fit the 2% skills context budget. 
 codex
 I’m using `aidd-context:00-onboard` because you asked to be onboarded. I’ll read its local instructions first, then run the greenfield onboarding flow with sensible defaults.
 exec
-/bin/zsh -lc "pwd && sed -n '1,240p' /Users/baptistelafourcade/.codex/plugins/cache/aidd-framework/aidd-context/2.2.0/skills/00-onboard/SKILL.md && sed -n '1,200p' RTK.md" in /private/tmp/claude-501/-Users-baptistelafourcade-Projects-freelance-aidd-aidd-framework/e56b2570-3814-4f77-9b5e-5b026f1c7453/scratchpad/fixtures/01-greenfield
+/bin/zsh -lc "pwd && sed -n '1,240p' <home>/.codex/plugins/cache/aidd-framework/aidd-context/2.2.0/skills/00-onboard/SKILL.md && sed -n '1,200p' RTK.md" in <scratch>/fixtures/01-greenfield
  exited 1 in 0ms:
-/private/tmp/claude-501/-Users-baptistelafourcade-Projects-freelance-aidd-aidd-framework/e56b2570-3814-4f77-9b5e-5b026f1c7453/scratchpad/fixtures/01-greenfield
+<scratch>/fixtures/01-greenfield
 ---
 name: 00-onboard
 description: Guide a project's journey through AIDD, from first setup to shipping a feature. Use when the user says onboard me, where do I start, or what to do next. Not for listing every installed surface.
@@ -63,17 +63,17 @@ flowchart LR
 sed: RTK.md: No such file or directory
 
 exec
-/bin/zsh -lc 'wc -l /Users/baptistelafourcade/.codex/plugins/cache/aidd-framework/aidd-context/2.2.0/skills/00-onboard/SKILL.md' in /private/tmp/claude-501/-Users-baptistelafourcade-Projects-freelance-aidd-aidd-framework/e56b2570-3814-4f77-9b5e-5b026f1c7453/scratchpad/fixtures/01-greenfield
+/bin/zsh -lc 'wc -l <home>/.codex/plugins/cache/aidd-framework/aidd-context/2.2.0/skills/00-onboard/SKILL.md' in <scratch>/fixtures/01-greenfield
  succeeded in 0ms:
-      30 /Users/baptistelafourcade/.codex/plugins/cache/aidd-framework/aidd-context/2.2.0/skills/00-onboard/SKILL.md
+      30 <home>/.codex/plugins/cache/aidd-framework/aidd-context/2.2.0/skills/00-onboard/SKILL.md
 
 exec
-/bin/zsh -lc 'ls -la' in /private/tmp/claude-501/-Users-baptistelafourcade-Projects-freelance-aidd-aidd-framework/e56b2570-3814-4f77-9b5e-5b026f1c7453/scratchpad/fixtures/01-greenfield
+/bin/zsh -lc 'ls -la' in <scratch>/fixtures/01-greenfield
  succeeded in 0ms:
 total 0
-drwxr-xr-x   3 baptistelafourcade  wheel   96 Jul 10 10:37 .
-drwxr-xr-x  10 baptistelafourcade  wheel  320 Jul 10 10:37 ..
-drwxr-xr-x   9 baptistelafourcade  wheel  288 Jul 10 10:37 .git
+drwxr-xr-x   3 <user>  wheel   96 Jul 10 10:37 .
+drwxr-xr-x  10 <user>  wheel  320 Jul 10 10:37 ..
+drwxr-xr-x   9 <user>  wheel  288 Jul 10 10:37 .git
 
 codex
 You’re in an empty greenfield repo: only `.git` exists. The project also references `RTK.md` from `AGENTS.md`, but that file is missing.
@@ -111,14 +111,14 @@ One constraint: this session is currently read-only, so I can guide and inspect,
 Reading additional input from stdin...
 OpenAI Codex v0.143.0
 --------
-workdir: /private/tmp/claude-501/-Users-baptistelafourcade-Projects-freelance-aidd-aidd-framework/e56b2570-3814-4f77-9b5e-5b026f1c7453/scratchpad/fixtures/02-existing-no-memory
+workdir: <scratch>/fixtures/02-existing-no-memory
 model: gpt-5.5
 provider: openai
 approval: never
 sandbox: read-only
 reasoning effort: high
 reasoning summaries: none
-session id: 019f4b33-9853-7981-9ed4-9b3ce6e5e2e0
+session id: <session>
 --------
 user
 onboard me
@@ -126,11 +126,11 @@ warning: Skill descriptions were shortened to fit the 2% skills context budget. 
 codex
 I’ll use `aidd-context:00-onboard` because this is the project onboarding flow. I’m going to read the project instructions and the skill’s workflow first, then I’ll inspect the repo without making changes.
 exec
-/bin/zsh -lc "sed -n '1,220p' /Users/baptistelafourcade/.codex/plugins/cache/aidd-framework/aidd-context/2.2.0/skills/00-onboard/SKILL.md" in /private/tmp/claude-501/-Users-baptistelafourcade-Projects-freelance-aidd-aidd-framework/e56b2570-3814-4f77-9b5e-5b026f1c7453/scratchpad/fixtures/02-existing-no-memory
+/bin/zsh -lc "sed -n '1,220p' <home>/.codex/plugins/cache/aidd-framework/aidd-context/2.2.0/skills/00-onboard/SKILL.md" in <scratch>/fixtures/02-existing-no-memory
 exec
-/bin/zsh -lc 'pwd && ls' in /private/tmp/claude-501/-Users-baptistelafourcade-Projects-freelance-aidd-aidd-framework/e56b2570-3814-4f77-9b5e-5b026f1c7453/scratchpad/fixtures/02-existing-no-memory
+/bin/zsh -lc 'pwd && ls' in <scratch>/fixtures/02-existing-no-memory
  succeeded in 0ms:
-/private/tmp/claude-501/-Users-baptistelafourcade-Projects-freelance-aidd-aidd-framework/e56b2570-3814-4f77-9b5e-5b026f1c7453/scratchpad/fixtures/02-existing-no-memory
+<scratch>/fixtures/02-existing-no-memory
 package.json
 src
 
@@ -167,35 +167,35 @@ flowchart LR
 - Wait for an explicit reply before running anything.
 
 exec
-/bin/zsh -lc "sed -n '1,220p' RTK.md" in /private/tmp/claude-501/-Users-baptistelafourcade-Projects-freelance-aidd-aidd-framework/e56b2570-3814-4f77-9b5e-5b026f1c7453/scratchpad/fixtures/02-existing-no-memory
+/bin/zsh -lc "sed -n '1,220p' RTK.md" in <scratch>/fixtures/02-existing-no-memory
  exited 1 in 0ms:
 sed: RTK.md: No such file or directory
 
 codex
 The local `RTK.md` referenced by the instructions is not present in this fixture root, so I’ll proceed with the visible project files and call out that missing instruction file in the onboarding status. Next I’m checking the package metadata and source shape so the next-step recommendation is based on this repo, not a template.
 exec
-/bin/zsh -lc "sed -n '1,220p' package.json" in /private/tmp/claude-501/-Users-baptistelafourcade-Projects-freelance-aidd-aidd-framework/e56b2570-3814-4f77-9b5e-5b026f1c7453/scratchpad/fixtures/02-existing-no-memory
+/bin/zsh -lc "sed -n '1,220p' package.json" in <scratch>/fixtures/02-existing-no-memory
  succeeded in 0ms:
 {"name":"demo","version":"1.0.0"}
 
 exec
-/bin/zsh -lc 'rg --files' in /private/tmp/claude-501/-Users-baptistelafourcade-Projects-freelance-aidd-aidd-framework/e56b2570-3814-4f77-9b5e-5b026f1c7453/scratchpad/fixtures/02-existing-no-memory
+/bin/zsh -lc 'rg --files' in <scratch>/fixtures/02-existing-no-memory
  succeeded in 0ms:
 src/index.js
 package.json
 
 exec
-/bin/zsh -lc 'find .. -name RTK.md -print' in /private/tmp/claude-501/-Users-baptistelafourcade-Projects-freelance-aidd-aidd-framework/e56b2570-3814-4f77-9b5e-5b026f1c7453/scratchpad/fixtures/02-existing-no-memory
+/bin/zsh -lc 'find .. -name RTK.md -print' in <scratch>/fixtures/02-existing-no-memory
  succeeded in 0ms:
 codex
 This is a very small Node fixture: `package.json` plus one source file, with no visible memory artifacts or test setup yet. I’m reading the source file now, then I’ll give you the onboarding screen and wait for your chosen next step.
 exec
-/bin/zsh -lc "sed -n '1,220p' src/index.js" in /private/tmp/claude-501/-Users-baptistelafourcade-Projects-freelance-aidd-aidd-framework/e56b2570-3814-4f77-9b5e-5b026f1c7453/scratchpad/fixtures/02-existing-no-memory
+/bin/zsh -lc "sed -n '1,220p' src/index.js" in <scratch>/fixtures/02-existing-no-memory
  succeeded in 0ms:
 export const hi = () => "hi"
 
 exec
-/bin/zsh -lc 'find . -maxdepth 3 -type d -print' in /private/tmp/claude-501/-Users-baptistelafourcade-Projects-freelance-aidd-aidd-framework/e56b2570-3814-4f77-9b5e-5b026f1c7453/scratchpad/fixtures/02-existing-no-memory
+/bin/zsh -lc 'find . -maxdepth 3 -type d -print' in <scratch>/fixtures/02-existing-no-memory
  succeeded in 0ms:
 .
 ./.git
@@ -217,7 +217,7 @@ exec
 ./src
 
 exec
-/bin/zsh -lc 'git status --short --branch' in /private/tmp/claude-501/-Users-baptistelafourcade-Projects-freelance-aidd-aidd-framework/e56b2570-3814-4f77-9b5e-5b026f1c7453/scratchpad/fixtures/02-existing-no-memory
+/bin/zsh -lc 'git status --short --branch' in <scratch>/fixtures/02-existing-no-memory
  succeeded in 0ms:
 ## main
 
@@ -226,7 +226,7 @@ codex
 
 I scanned the repo. Current state:
 
-- Project is a tiny Node fixture: `package.json` and [src/index.js](/private/tmp/claude-501/-Users-baptistelafourcade-Projects-freelance-aidd-aidd-framework/e56b2570-3814-4f77-9b5e-5b026f1c7453/scratchpad/fixtures/02-existing-no-memory/src/index.js:1)
+- Project is a tiny Node fixture: `package.json` and [src/index.js](<scratch>/fixtures/02-existing-no-memory/src/index.js:1)
 - `package.json` only has `name` and `version`
 - No tests, scripts, README, or project memory files are present
 - Git worktree is clean on `main`
@@ -245,7 +245,7 @@ Choose one:
 
 I scanned the repo. Current state:
 
-- Project is a tiny Node fixture: `package.json` and [src/index.js](/private/tmp/claude-501/-Users-baptistelafourcade-Projects-freelance-aidd-aidd-framework/e56b2570-3814-4f77-9b5e-5b026f1c7453/scratchpad/fixtures/02-existing-no-memory/src/index.js:1)
+- Project is a tiny Node fixture: `package.json` and [src/index.js](<scratch>/fixtures/02-existing-no-memory/src/index.js:1)
 - `package.json` only has `name` and `version`
 - No tests, scripts, README, or project memory files are present
 - Git worktree is clean on `main`
@@ -269,14 +269,14 @@ Choose one:
 Reading additional input from stdin...
 OpenAI Codex v0.143.0
 --------
-workdir: /private/tmp/claude-501/-Users-baptistelafourcade-Projects-freelance-aidd-aidd-framework/e56b2570-3814-4f77-9b5e-5b026f1c7453/scratchpad/fixtures/03-drift-tool-unwired
+workdir: <scratch>/fixtures/03-drift-tool-unwired
 model: gpt-5.5
 provider: openai
 approval: never
 sandbox: read-only
 reasoning effort: high
 reasoning summaries: none
-session id: 019f4b34-4e4c-71e3-9fbc-6eeeb381e9a9
+session id: <session>
 --------
 user
 onboard me
@@ -284,7 +284,7 @@ warning: Skill descriptions were shortened to fit the 2% skills context budget. 
 codex
 I’ll use the AIDD onboarding skill and first read the local project instructions so the walkthrough matches this fixture.
 exec
-/bin/zsh -lc "sed -n '1,240p' /Users/baptistelafourcade/.codex/plugins/cache/aidd-framework/aidd-context/2.2.0/skills/00-onboard/SKILL.md" in /private/tmp/claude-501/-Users-baptistelafourcade-Projects-freelance-aidd-aidd-framework/e56b2570-3814-4f77-9b5e-5b026f1c7453/scratchpad/fixtures/03-drift-tool-unwired
+/bin/zsh -lc "sed -n '1,240p' <home>/.codex/plugins/cache/aidd-framework/aidd-context/2.2.0/skills/00-onboard/SKILL.md" in <scratch>/fixtures/03-drift-tool-unwired
  succeeded in 0ms:
 ---
 name: 00-onboard
@@ -318,18 +318,18 @@ flowchart LR
 - Wait for an explicit reply before running anything.
 
 exec
-/bin/zsh -lc "pwd && rg --files -g 'AGENTS.md' -g 'RTK.md' -g 'CLAUDE.md' -g 'README*' -g 'package.json' -g 'pyproject.toml' -g 'go.mod'" in /private/tmp/claude-501/-Users-baptistelafourcade-Projects-freelance-aidd-aidd-framework/e56b2570-3814-4f77-9b5e-5b026f1c7453/scratchpad/fixtures/03-drift-tool-unwired
+/bin/zsh -lc "pwd && rg --files -g 'AGENTS.md' -g 'RTK.md' -g 'CLAUDE.md' -g 'README*' -g 'package.json' -g 'pyproject.toml' -g 'go.mod'" in <scratch>/fixtures/03-drift-tool-unwired
  succeeded in 0ms:
-/private/tmp/claude-501/-Users-baptistelafourcade-Projects-freelance-aidd-aidd-framework/e56b2570-3814-4f77-9b5e-5b026f1c7453/scratchpad/fixtures/03-drift-tool-unwired
+<scratch>/fixtures/03-drift-tool-unwired
 CLAUDE.md
 package.json
 
 codex
 The onboarding skill is intentionally lightweight: scan the project, assess the current state, then present concrete next options and wait before running guided work. I’m reading the local context and package metadata now.
 exec
-/bin/zsh -lc "sed -n '1,260p' CLAUDE.md" in /private/tmp/claude-501/-Users-baptistelafourcade-Projects-freelance-aidd-aidd-framework/e56b2570-3814-4f77-9b5e-5b026f1c7453/scratchpad/fixtures/03-drift-tool-unwired
+/bin/zsh -lc "sed -n '1,260p' CLAUDE.md" in <scratch>/fixtures/03-drift-tool-unwired
 exec
-/bin/zsh -lc "sed -n '1,240p' package.json" in /private/tmp/claude-501/-Users-baptistelafourcade-Projects-freelance-aidd-aidd-framework/e56b2570-3814-4f77-9b5e-5b026f1c7453/scratchpad/fixtures/03-drift-tool-unwired
+/bin/zsh -lc "sed -n '1,240p' package.json" in <scratch>/fixtures/03-drift-tool-unwired
  succeeded in 0ms:
 {"name":"demo","version":"1.0.0"}
 
@@ -350,7 +350,7 @@ exec
 </aidd_project_memory>
 
 exec
-/bin/zsh -lc "find . -maxdepth 3 -type f | sort | sed 's#"'^./##'"'" in /private/tmp/claude-501/-Users-baptistelafourcade-Projects-freelance-aidd-aidd-framework/e56b2570-3814-4f77-9b5e-5b026f1c7453/scratchpad/fixtures/03-drift-tool-unwired
+/bin/zsh -lc "find . -maxdepth 3 -type f | sort | sed 's#"'^./##'"'" in <scratch>/fixtures/03-drift-tool-unwired
  succeeded in 0ms:
 .codex/.keep
 .git/COMMIT_EDITMSG
@@ -387,18 +387,18 @@ package.json
 src/index.js
 
 exec
-/bin/zsh -lc 'git status --short --branch' in /private/tmp/claude-501/-Users-baptistelafourcade-Projects-freelance-aidd-aidd-framework/e56b2570-3814-4f77-9b5e-5b026f1c7453/scratchpad/fixtures/03-drift-tool-unwired
+/bin/zsh -lc 'git status --short --branch' in <scratch>/fixtures/03-drift-tool-unwired
  succeeded in 0ms:
 ## main
 
 codex
 This is a small fixture with AIDD memory already referenced from `CLAUDE.md`. I’m checking those memory files against the actual source so I can identify whether onboarding should start with setup, drift repair, testing, or feature work.
 exec
-/bin/zsh -lc "sed -n '1,240p' aidd_docs/memory/project-brief.md" in /private/tmp/claude-501/-Users-baptistelafourcade-Projects-freelance-aidd-aidd-framework/e56b2570-3814-4f77-9b5e-5b026f1c7453/scratchpad/fixtures/03-drift-tool-unwired
+/bin/zsh -lc "sed -n '1,240p' aidd_docs/memory/project-brief.md" in <scratch>/fixtures/03-drift-tool-unwired
 exec
-/bin/zsh -lc "sed -n '1,240p' aidd_docs/memory/codebase-map.md" in /private/tmp/claude-501/-Users-baptistelafourcade-Projects-freelance-aidd-aidd-framework/e56b2570-3814-4f77-9b5e-5b026f1c7453/scratchpad/fixtures/03-drift-tool-unwired
+/bin/zsh -lc "sed -n '1,240p' aidd_docs/memory/codebase-map.md" in <scratch>/fixtures/03-drift-tool-unwired
 exec
-/bin/zsh -lc "sed -n '1,240p' aidd_docs/memory/architecture.md" in /private/tmp/claude-501/-Users-baptistelafourcade-Projects-freelance-aidd-aidd-framework/e56b2570-3814-4f77-9b5e-5b026f1c7453/scratchpad/fixtures/03-drift-tool-unwired
+/bin/zsh -lc "sed -n '1,240p' aidd_docs/memory/architecture.md" in <scratch>/fixtures/03-drift-tool-unwired
  succeeded in 0ms:
 # project-brief
 
@@ -415,37 +415,37 @@ Real content for the codebase-map memory file of this demo project.
 Real content for the architecture memory file of this demo project.
 
 exec
-/bin/zsh -lc "sed -n '1,240p' aidd_docs/memory/testing.md" in /private/tmp/claude-501/-Users-baptistelafourcade-Projects-freelance-aidd-aidd-framework/e56b2570-3814-4f77-9b5e-5b026f1c7453/scratchpad/fixtures/03-drift-tool-unwired
+/bin/zsh -lc "sed -n '1,240p' aidd_docs/memory/testing.md" in <scratch>/fixtures/03-drift-tool-unwired
  succeeded in 0ms:
 # testing
 
 Real content for the testing memory file of this demo project.
 
 exec
-/bin/zsh -lc "sed -n '1,240p' aidd_docs/memory/coding-assertions.md" in /private/tmp/claude-501/-Users-baptistelafourcade-Projects-freelance-aidd-aidd-framework/e56b2570-3814-4f77-9b5e-5b026f1c7453/scratchpad/fixtures/03-drift-tool-unwired
+/bin/zsh -lc "sed -n '1,240p' aidd_docs/memory/coding-assertions.md" in <scratch>/fixtures/03-drift-tool-unwired
  succeeded in 0ms:
 # coding-assertions
 
 Real content for the coding-assertions memory file of this demo project.
 
 exec
-/bin/zsh -lc "sed -n '1,240p' src/index.js" in /private/tmp/claude-501/-Users-baptistelafourcade-Projects-freelance-aidd-aidd-framework/e56b2570-3814-4f77-9b5e-5b026f1c7453/scratchpad/fixtures/03-drift-tool-unwired
+/bin/zsh -lc "sed -n '1,240p' src/index.js" in <scratch>/fixtures/03-drift-tool-unwired
  succeeded in 0ms:
 export const hi = () => "hi"
 
 codex
 The memory files exist but contain placeholder “real content” rather than actionable project facts. I’m doing one more pass over the remaining memory and available scripts before I present the onboarding screen.
 exec
-/bin/zsh -lc "sed -n '1,220p' aidd_docs/memory/browsing.md" in /private/tmp/claude-501/-Users-baptistelafourcade-Projects-freelance-aidd-aidd-framework/e56b2570-3814-4f77-9b5e-5b026f1c7453/scratchpad/fixtures/03-drift-tool-unwired
+/bin/zsh -lc "sed -n '1,220p' aidd_docs/memory/browsing.md" in <scratch>/fixtures/03-drift-tool-unwired
  succeeded in 0ms:
 # browsing
 
 Real content for the browsing memory file of this demo project.
 
 exec
-/bin/zsh -lc "sed -n '1,220p' aidd_docs/memory/deployment.md" in /private/tmp/claude-501/-Users-baptistelafourcade-Projects-freelance-aidd-aidd-framework/e56b2570-3814-4f77-9b5e-5b026f1c7453/scratchpad/fixtures/03-drift-tool-unwired
+/bin/zsh -lc "sed -n '1,220p' aidd_docs/memory/deployment.md" in <scratch>/fixtures/03-drift-tool-unwired
 exec
-/bin/zsh -lc "sed -n '1,220p' aidd_docs/memory/vcs.md" in /private/tmp/claude-501/-Users-baptistelafourcade-Projects-freelance-aidd-aidd-framework/e56b2570-3814-4f77-9b5e-5b026f1c7453/scratchpad/fixtures/03-drift-tool-unwired
+/bin/zsh -lc "sed -n '1,220p' aidd_docs/memory/vcs.md" in <scratch>/fixtures/03-drift-tool-unwired
  succeeded in 0ms:
 # deployment
 
@@ -457,12 +457,12 @@ Real content for the deployment memory file of this demo project.
 Real content for the vcs memory file of this demo project.
 
 exec
-/bin/zsh -lc 'git log --oneline -5' in /private/tmp/claude-501/-Users-baptistelafourcade-Projects-freelance-aidd-aidd-framework/e56b2570-3814-4f77-9b5e-5b026f1c7453/scratchpad/fixtures/03-drift-tool-unwired
+/bin/zsh -lc 'git log --oneline -5' in <scratch>/fixtures/03-drift-tool-unwired
  succeeded in 0ms:
 5a509fb init
 
 exec
-/bin/zsh -lc 'npm run --silent 2>/dev/null || true' in /private/tmp/claude-501/-Users-baptistelafourcade-Projects-freelance-aidd-aidd-framework/e56b2570-3814-4f77-9b5e-5b026f1c7453/scratchpad/fixtures/03-drift-tool-unwired
+/bin/zsh -lc 'npm run --silent 2>/dev/null || true' in <scratch>/fixtures/03-drift-tool-unwired
  succeeded in 0ms:
 codex
 **Onboarding Screen**
@@ -516,14 +516,14 @@ Reply with `1`, `2`, `3`, or `4`.
 Reading additional input from stdin...
 OpenAI Codex v0.143.0
 --------
-workdir: /private/tmp/claude-501/-Users-baptistelafourcade-Projects-freelance-aidd-aidd-framework/e56b2570-3814-4f77-9b5e-5b026f1c7453/scratchpad/fixtures/04-drift-block-offshape
+workdir: <scratch>/fixtures/04-drift-block-offshape
 model: gpt-5.5
 provider: openai
 approval: never
 sandbox: read-only
 reasoning effort: high
 reasoning summaries: none
-session id: 019f4b35-5173-7281-88bc-02074997578d
+session id: <session>
 --------
 user
 onboard me
@@ -531,7 +531,7 @@ warning: Skill descriptions were shortened to fit the 2% skills context budget. 
 codex
 I’ll use the `aidd-context:00-onboard` skill because this is an AIDD onboarding request. I’m going to read the project instructions and the onboarding skill first, then I’ll inspect the repo enough to give you the right next step.
 exec
-/bin/zsh -lc "sed -n '1,260p' /Users/baptistelafourcade/.codex/plugins/cache/aidd-framework/aidd-context/2.2.0/skills/00-onboard/SKILL.md" in /private/tmp/claude-501/-Users-baptistelafourcade-Projects-freelance-aidd-aidd-framework/e56b2570-3814-4f77-9b5e-5b026f1c7453/scratchpad/fixtures/04-drift-block-offshape
+/bin/zsh -lc "sed -n '1,260p' <home>/.codex/plugins/cache/aidd-framework/aidd-context/2.2.0/skills/00-onboard/SKILL.md" in <scratch>/fixtures/04-drift-block-offshape
  succeeded in 0ms:
 ---
 name: 00-onboard
@@ -565,23 +565,23 @@ flowchart LR
 - Wait for an explicit reply before running anything.
 
 exec
-/bin/zsh -lc "sed -n '1,260p' RTK.md" in /private/tmp/claude-501/-Users-baptistelafourcade-Projects-freelance-aidd-aidd-framework/e56b2570-3814-4f77-9b5e-5b026f1c7453/scratchpad/fixtures/04-drift-block-offshape
+/bin/zsh -lc "sed -n '1,260p' RTK.md" in <scratch>/fixtures/04-drift-block-offshape
  exited 1 in 0ms:
 sed: RTK.md: No such file or directory
 
 exec
-/bin/zsh -lc "pwd && rg --files -g 'RTK.md' -g 'AGENTS.md' -g 'CLAUDE.md' -g 'README*' -g 'package.json' -g 'pyproject.toml' -g 'go.mod' -g 'Cargo.toml'" in /private/tmp/claude-501/-Users-baptistelafourcade-Projects-freelance-aidd-aidd-framework/e56b2570-3814-4f77-9b5e-5b026f1c7453/scratchpad/fixtures/04-drift-block-offshape
+/bin/zsh -lc "pwd && rg --files -g 'RTK.md' -g 'AGENTS.md' -g 'CLAUDE.md' -g 'README*' -g 'package.json' -g 'pyproject.toml' -g 'go.mod' -g 'Cargo.toml'" in <scratch>/fixtures/04-drift-block-offshape
  succeeded in 0ms:
-/private/tmp/claude-501/-Users-baptistelafourcade-Projects-freelance-aidd-aidd-framework/e56b2570-3814-4f77-9b5e-5b026f1c7453/scratchpad/fixtures/04-drift-block-offshape
+<scratch>/fixtures/04-drift-block-offshape
 CLAUDE.md
 package.json
 
 codex
 The onboarding skill is intentionally lightweight: scan the project, assess the next step, present options, and wait for your explicit choice before running guided work. The referenced `RTK.md` is not present in this fixture, so I’m using the available project files instead.
 exec
-/bin/zsh -lc "sed -n '1,260p' package.json" in /private/tmp/claude-501/-Users-baptistelafourcade-Projects-freelance-aidd-aidd-framework/e56b2570-3814-4f77-9b5e-5b026f1c7453/scratchpad/fixtures/04-drift-block-offshape
+/bin/zsh -lc "sed -n '1,260p' package.json" in <scratch>/fixtures/04-drift-block-offshape
 exec
-/bin/zsh -lc "sed -n '1,260p' CLAUDE.md" in /private/tmp/claude-501/-Users-baptistelafourcade-Projects-freelance-aidd-aidd-framework/e56b2570-3814-4f77-9b5e-5b026f1c7453/scratchpad/fixtures/04-drift-block-offshape
+/bin/zsh -lc "sed -n '1,260p' CLAUDE.md" in <scratch>/fixtures/04-drift-block-offshape
  succeeded in 0ms:
 {"name":"demo","version":"1.0.0"}
 
@@ -600,7 +600,7 @@ exec
 </aidd_project_memory>
 
 exec
-/bin/zsh -lc 'rg --files' in /private/tmp/claude-501/-Users-baptistelafourcade-Projects-freelance-aidd-aidd-framework/e56b2570-3814-4f77-9b5e-5b026f1c7453/scratchpad/fixtures/04-drift-block-offshape
+/bin/zsh -lc 'rg --files' in <scratch>/fixtures/04-drift-block-offshape
  succeeded in 0ms:
 src/index.js
 CLAUDE.md
@@ -615,7 +615,7 @@ aidd_docs/memory/vcs.md
 package.json
 
 exec
-/bin/zsh -lc 'find . -maxdepth 3 -type d | sort' in /private/tmp/claude-501/-Users-baptistelafourcade-Projects-freelance-aidd-aidd-framework/e56b2570-3814-4f77-9b5e-5b026f1c7453/scratchpad/fixtures/04-drift-block-offshape
+/bin/zsh -lc 'find . -maxdepth 3 -type d | sort' in <scratch>/fixtures/04-drift-block-offshape
  succeeded in 0ms:
 .
 ./.git
@@ -652,11 +652,11 @@ exec
 codex
 This is a very small Node fixture with an AIDD memory bank already wired through `CLAUDE.md`. I’m reading those memory files and the current source so the onboarding recommendation is based on the project’s recorded state, not just the directory shape.
 exec
-/bin/zsh -lc "sed -n '1,260p' aidd_docs/memory/project-brief.md" in /private/tmp/claude-501/-Users-baptistelafourcade-Projects-freelance-aidd-aidd-framework/e56b2570-3814-4f77-9b5e-5b026f1c7453/scratchpad/fixtures/04-drift-block-offshape
+/bin/zsh -lc "sed -n '1,260p' aidd_docs/memory/project-brief.md" in <scratch>/fixtures/04-drift-block-offshape
 exec
-/bin/zsh -lc "sed -n '1,260p' aidd_docs/memory/codebase-map.md" in /private/tmp/claude-501/-Users-baptistelafourcade-Projects-freelance-aidd-aidd-framework/e56b2570-3814-4f77-9b5e-5b026f1c7453/scratchpad/fixtures/04-drift-block-offshape
+/bin/zsh -lc "sed -n '1,260p' aidd_docs/memory/codebase-map.md" in <scratch>/fixtures/04-drift-block-offshape
 exec
-/bin/zsh -lc "sed -n '1,260p' aidd_docs/memory/deployment.md" in /private/tmp/claude-501/-Users-baptistelafourcade-Projects-freelance-aidd-aidd-framework/e56b2570-3814-4f77-9b5e-5b026f1c7453/scratchpad/fixtures/04-drift-block-offshape
+/bin/zsh -lc "sed -n '1,260p' aidd_docs/memory/deployment.md" in <scratch>/fixtures/04-drift-block-offshape
  succeeded in 0ms:
 # codebase-map
 
@@ -673,9 +673,9 @@ Real content for the project-brief memory file of this demo project.
 Real content for the deployment memory file of this demo project.
 
 exec
-/bin/zsh -lc "sed -n '1,260p' aidd_docs/memory/architecture.md" in /private/tmp/claude-501/-Users-baptistelafourcade-Projects-freelance-aidd-aidd-framework/e56b2570-3814-4f77-9b5e-5b026f1c7453/scratchpad/fixtures/04-drift-block-offshape
+/bin/zsh -lc "sed -n '1,260p' aidd_docs/memory/architecture.md" in <scratch>/fixtures/04-drift-block-offshape
 exec
-/bin/zsh -lc "sed -n '1,260p' aidd_docs/memory/vcs.md" in /private/tmp/claude-501/-Users-baptistelafourcade-Projects-freelance-aidd-aidd-framework/e56b2570-3814-4f77-9b5e-5b026f1c7453/scratchpad/fixtures/04-drift-block-offshape
+/bin/zsh -lc "sed -n '1,260p' aidd_docs/memory/vcs.md" in <scratch>/fixtures/04-drift-block-offshape
  succeeded in 0ms:
 # architecture
 
@@ -687,9 +687,9 @@ Real content for the architecture memory file of this demo project.
 Real content for the vcs memory file of this demo project.
 
 exec
-/bin/zsh -lc "sed -n '1,260p' aidd_docs/memory/coding-assertions.md" in /private/tmp/claude-501/-Users-baptistelafourcade-Projects-freelance-aidd-aidd-framework/e56b2570-3814-4f77-9b5e-5b026f1c7453/scratchpad/fixtures/04-drift-block-offshape
+/bin/zsh -lc "sed -n '1,260p' aidd_docs/memory/coding-assertions.md" in <scratch>/fixtures/04-drift-block-offshape
 exec
-/bin/zsh -lc "sed -n '1,260p' src/index.js" in /private/tmp/claude-501/-Users-baptistelafourcade-Projects-freelance-aidd-aidd-framework/e56b2570-3814-4f77-9b5e-5b026f1c7453/scratchpad/fixtures/04-drift-block-offshape
+/bin/zsh -lc "sed -n '1,260p' src/index.js" in <scratch>/fixtures/04-drift-block-offshape
  succeeded in 0ms:
 # coding-assertions
 
@@ -699,9 +699,9 @@ Real content for the coding-assertions memory file of this demo project.
 export const hi = () => "hi"
 
 exec
-/bin/zsh -lc "sed -n '1,260p' aidd_docs/memory/testing.md" in /private/tmp/claude-501/-Users-baptistelafourcade-Projects-freelance-aidd-aidd-framework/e56b2570-3814-4f77-9b5e-5b026f1c7453/scratchpad/fixtures/04-drift-block-offshape
+/bin/zsh -lc "sed -n '1,260p' aidd_docs/memory/testing.md" in <scratch>/fixtures/04-drift-block-offshape
 exec
-/bin/zsh -lc "sed -n '1,260p' aidd_docs/memory/browsing.md" in /private/tmp/claude-501/-Users-baptistelafourcade-Projects-freelance-aidd-aidd-framework/e56b2570-3814-4f77-9b5e-5b026f1c7453/scratchpad/fixtures/04-drift-block-offshape
+/bin/zsh -lc "sed -n '1,260p' aidd_docs/memory/browsing.md" in <scratch>/fixtures/04-drift-block-offshape
  succeeded in 0ms:
 # testing
 
@@ -713,7 +713,7 @@ Real content for the testing memory file of this demo project.
 Real content for the browsing memory file of this demo project.
 
 exec
-/bin/zsh -lc 'git status --short --branch' in /private/tmp/claude-501/-Users-baptistelafourcade-Projects-freelance-aidd-aidd-framework/e56b2570-3814-4f77-9b5e-5b026f1c7453/scratchpad/fixtures/04-drift-block-offshape
+/bin/zsh -lc 'git status --short --branch' in <scratch>/fixtures/04-drift-block-offshape
  succeeded in 0ms:
 ## main
 M  CLAUDE.md
@@ -722,9 +722,9 @@ codex
 You’re onboarded to the current fixture.
 
 Current state:
-- AIDD memory is wired in [CLAUDE.md](/private/tmp/claude-501/-Users-baptistelafourcade-Projects-freelance-aidd-aidd-framework/e56b2570-3814-4f77-9b5e-5b026f1c7453/scratchpad/fixtures/04-drift-block-offshape/CLAUDE.md:1).
+- AIDD memory is wired in [CLAUDE.md](<scratch>/fixtures/04-drift-block-offshape/CLAUDE.md:1).
 - Memory files exist under `aidd_docs/memory/`, but their contents are placeholder-style.
-- Codebase is tiny: [src/index.js](/private/tmp/claude-501/-Users-baptistelafourcade-Projects-freelance-aidd-aidd-framework/e56b2570-3814-4f77-9b5e-5b026f1c7453/scratchpad/fixtures/04-drift-block-offshape/src/index.js:1) exports `hi()`.
+- Codebase is tiny: [src/index.js](<scratch>/fixtures/04-drift-block-offshape/src/index.js:1) exports `hi()`.
 - `package.json` has no scripts.
 - Git is on `main` with `CLAUDE.md` modified.
 - The referenced `RTK.md` from `AGENTS.md` instructions is not present in this workspace.
@@ -741,9 +741,9 @@ Reply with one:
 You’re onboarded to the current fixture.
 
 Current state:
-- AIDD memory is wired in [CLAUDE.md](/private/tmp/claude-501/-Users-baptistelafourcade-Projects-freelance-aidd-aidd-framework/e56b2570-3814-4f77-9b5e-5b026f1c7453/scratchpad/fixtures/04-drift-block-offshape/CLAUDE.md:1).
+- AIDD memory is wired in [CLAUDE.md](<scratch>/fixtures/04-drift-block-offshape/CLAUDE.md:1).
 - Memory files exist under `aidd_docs/memory/`, but their contents are placeholder-style.
-- Codebase is tiny: [src/index.js](/private/tmp/claude-501/-Users-baptistelafourcade-Projects-freelance-aidd-aidd-framework/e56b2570-3814-4f77-9b5e-5b026f1c7453/scratchpad/fixtures/04-drift-block-offshape/src/index.js:1) exports `hi()`.
+- Codebase is tiny: [src/index.js](<scratch>/fixtures/04-drift-block-offshape/src/index.js:1) exports `hi()`.
 - `package.json` has no scripts.
 - Git is on `main` with `CLAUDE.md` modified.
 - The referenced `RTK.md` from `AGENTS.md` instructions is not present in this workspace.
@@ -766,14 +766,14 @@ Reply with one:
 Reading additional input from stdin...
 OpenAI Codex v0.143.0
 --------
-workdir: /private/tmp/claude-501/-Users-baptistelafourcade-Projects-freelance-aidd-aidd-framework/e56b2570-3814-4f77-9b5e-5b026f1c7453/scratchpad/fixtures/05-midwork
+workdir: <scratch>/fixtures/05-midwork
 model: gpt-5.5
 provider: openai
 approval: never
 sandbox: read-only
 reasoning effort: high
 reasoning summaries: none
-session id: 019f4b36-86ce-72b1-835b-a5deb516275f
+session id: <session>
 --------
 user
 onboard me
@@ -781,12 +781,12 @@ warning: Skill descriptions were shortened to fit the 2% skills context budget. 
 codex
 I’ll use the `aidd-context:00-onboard` skill for this, and first I’m going to read the project instructions plus the onboarding skill so I follow the repo’s intended workflow.
 exec
-/bin/zsh -lc "pwd && rg --files -g 'AGENTS.md' -g 'RTK.md' -g 'SKILL.md'" in /private/tmp/claude-501/-Users-baptistelafourcade-Projects-freelance-aidd-aidd-framework/e56b2570-3814-4f77-9b5e-5b026f1c7453/scratchpad/fixtures/05-midwork
+/bin/zsh -lc "pwd && rg --files -g 'AGENTS.md' -g 'RTK.md' -g 'SKILL.md'" in <scratch>/fixtures/05-midwork
  exited 1 in 0ms:
-/private/tmp/claude-501/-Users-baptistelafourcade-Projects-freelance-aidd-aidd-framework/e56b2570-3814-4f77-9b5e-5b026f1c7453/scratchpad/fixtures/05-midwork
+<scratch>/fixtures/05-midwork
 
 exec
-/bin/zsh -lc "sed -n '1,240p' /Users/baptistelafourcade/.codex/plugins/cache/aidd-framework/aidd-context/2.2.0/skills/00-onboard/SKILL.md" in /private/tmp/claude-501/-Users-baptistelafourcade-Projects-freelance-aidd-aidd-framework/e56b2570-3814-4f77-9b5e-5b026f1c7453/scratchpad/fixtures/05-midwork
+/bin/zsh -lc "sed -n '1,240p' <home>/.codex/plugins/cache/aidd-framework/aidd-context/2.2.0/skills/00-onboard/SKILL.md" in <scratch>/fixtures/05-midwork
  succeeded in 0ms:
 ---
 name: 00-onboard
@@ -822,7 +822,7 @@ flowchart LR
 codex
 The onboarding skill is intentionally lightweight: scan the project, assess the next useful step, present options, then wait before running any guided action. I’m checking what exists in this fixture so the recommendation is based on the actual state rather than a generic path.
 exec
-/bin/zsh -lc 'find .. -name AGENTS.md -o -name RTK.md -o -name CLAUDE.md -o -name README.md -o -name package.json -o -name pyproject.toml -o -name Cargo.toml -o -name go.mod -o -name .git -o -name .aidd -maxdepth 4' in /private/tmp/claude-501/-Users-baptistelafourcade-Projects-freelance-aidd-aidd-framework/e56b2570-3814-4f77-9b5e-5b026f1c7453/scratchpad/fixtures/05-midwork
+/bin/zsh -lc 'find .. -name AGENTS.md -o -name RTK.md -o -name CLAUDE.md -o -name README.md -o -name package.json -o -name pyproject.toml -o -name Cargo.toml -o -name go.mod -o -name .git -o -name .aidd -maxdepth 4' in <scratch>/fixtures/05-midwork
  succeeded in 0ms:
 ../03-drift-tool-unwired/package.json
 ../03-drift-tool-unwired/.git
@@ -846,7 +846,7 @@ exec
 ../05-midwork/CLAUDE.md
 
 exec
-/bin/zsh -lc 'rg --files' in /private/tmp/claude-501/-Users-baptistelafourcade-Projects-freelance-aidd-aidd-framework/e56b2570-3814-4f77-9b5e-5b026f1c7453/scratchpad/fixtures/05-midwork
+/bin/zsh -lc 'rg --files' in <scratch>/fixtures/05-midwork
  succeeded in 0ms:
 src/wip.js
 src/index.js
@@ -863,23 +863,23 @@ aidd_docs/tasks/2026_07/demo/plan.md
 package.json
 
 exec
-/bin/zsh -lc 'ls -la' in /private/tmp/claude-501/-Users-baptistelafourcade-Projects-freelance-aidd-aidd-framework/e56b2570-3814-4f77-9b5e-5b026f1c7453/scratchpad/fixtures/05-midwork
+/bin/zsh -lc 'ls -la' in <scratch>/fixtures/05-midwork
  succeeded in 0ms:
 total 16
-drwxr-xr-x   7 baptistelafourcade  wheel  224 Jul 10 10:37 .
-drwxr-xr-x  10 baptistelafourcade  wheel  320 Jul 10 10:37 ..
-drwxr-xr-x  12 baptistelafourcade  wheel  384 Jul 10 10:37 .git
--rw-r--r--   1 baptistelafourcade  wheel  338 Jul 10 10:37 CLAUDE.md
-drwxr-xr-x   4 baptistelafourcade  wheel  128 Jul 10 10:37 aidd_docs
--rw-r--r--   1 baptistelafourcade  wheel   34 Jul 10 10:37 package.json
-drwxr-xr-x   4 baptistelafourcade  wheel  128 Jul 10 10:37 src
+drwxr-xr-x   7 <user>  wheel  224 Jul 10 10:37 .
+drwxr-xr-x  10 <user>  wheel  320 Jul 10 10:37 ..
+drwxr-xr-x  12 <user>  wheel  384 Jul 10 10:37 .git
+-rw-r--r--   1 <user>  wheel  338 Jul 10 10:37 CLAUDE.md
+drwxr-xr-x   4 <user>  wheel  128 Jul 10 10:37 aidd_docs
+-rw-r--r--   1 <user>  wheel   34 Jul 10 10:37 package.json
+drwxr-xr-x   4 <user>  wheel  128 Jul 10 10:37 src
 
 codex
 This project already has AIDD memory and an active-looking task plan, so I’m reading those before I recommend the next step. I also checked for the referenced `RTK.md`; it does not appear to be present in this fixture.
 exec
-/bin/zsh -lc "sed -n '1,220p' CLAUDE.md" in /private/tmp/claude-501/-Users-baptistelafourcade-Projects-freelance-aidd-aidd-framework/e56b2570-3814-4f77-9b5e-5b026f1c7453/scratchpad/fixtures/05-midwork
+/bin/zsh -lc "sed -n '1,220p' CLAUDE.md" in <scratch>/fixtures/05-midwork
 exec
-/bin/zsh -lc "sed -n '1,260p' aidd_docs/tasks/2026_07/demo/plan.md" in /private/tmp/claude-501/-Users-baptistelafourcade-Projects-freelance-aidd-aidd-framework/e56b2570-3814-4f77-9b5e-5b026f1c7453/scratchpad/fixtures/05-midwork
+/bin/zsh -lc "sed -n '1,260p' aidd_docs/tasks/2026_07/demo/plan.md" in <scratch>/fixtures/05-midwork
  succeeded in 0ms:
 ---
 status: in-progress
@@ -904,13 +904,13 @@ status: in-progress
 </aidd_project_memory>
 
 exec
-/bin/zsh -lc 'git status --short --branch' in /private/tmp/claude-501/-Users-baptistelafourcade-Projects-freelance-aidd-aidd-framework/e56b2570-3814-4f77-9b5e-5b026f1c7453/scratchpad/fixtures/05-midwork
+/bin/zsh -lc 'git status --short --branch' in <scratch>/fixtures/05-midwork
  succeeded in 0ms:
 ## main
 ?? src/wip.js
 
 exec
-/bin/zsh -lc "for f in aidd_docs/memory/*.md; do printf '\\n## %s\\n' \""'$f"; sed -n '"'1,180p' \""'$f"; done' in /private/tmp/claude-501/-Users-baptistelafourcade-Projects-freelance-aidd-aidd-framework/e56b2570-3814-4f77-9b5e-5b026f1c7453/scratchpad/fixtures/05-midwork
+/bin/zsh -lc "for f in aidd_docs/memory/*.md; do printf '\\n## %s\\n' \""'$f"; sed -n '"'1,180p' \""'$f"; done' in <scratch>/fixtures/05-midwork
  succeeded in 0ms:
 
 ## aidd_docs/memory/architecture.md
@@ -954,7 +954,7 @@ Real content for the testing memory file of this demo project.
 Real content for the vcs memory file of this demo project.
 
 exec
-/bin/zsh -lc "sed -n '1,220p' package.json && sed -n '1,220p' src/index.js && sed -n '1,220p' src/wip.js" in /private/tmp/claude-501/-Users-baptistelafourcade-Projects-freelance-aidd-aidd-framework/e56b2570-3814-4f77-9b5e-5b026f1c7453/scratchpad/fixtures/05-midwork
+/bin/zsh -lc "sed -n '1,220p' package.json && sed -n '1,220p' src/index.js && sed -n '1,220p' src/wip.js" in <scratch>/fixtures/05-midwork
  succeeded in 0ms:
 {"name":"demo","version":"1.0.0"}
 export const hi = () => "hi"
@@ -1008,14 +1008,14 @@ Reply with one of these:
 Reading additional input from stdin...
 OpenAI Codex v0.143.0
 --------
-workdir: /private/tmp/claude-501/-Users-baptistelafourcade-Projects-freelance-aidd-aidd-framework/e56b2570-3814-4f77-9b5e-5b026f1c7453/scratchpad/fixtures/06-idle
+workdir: <scratch>/fixtures/06-idle
 model: gpt-5.5
 provider: openai
 approval: never
 sandbox: read-only
 reasoning effort: high
 reasoning summaries: none
-session id: 019f4b37-5fd9-7441-b287-3e136eac5140
+session id: <session>
 --------
 user
 onboard me
@@ -1023,9 +1023,9 @@ warning: Skill descriptions were shortened to fit the 2% skills context budget. 
 codex
 I’ll use the `aidd-context:00-onboard` skill because this is the project onboarding flow. I’m going to read its instructions and the local project guidance first so the onboarding matches this repo.
 exec
-/bin/zsh -lc "sed -n '1,220p' RTK.md" in /private/tmp/claude-501/-Users-baptistelafourcade-Projects-freelance-aidd-aidd-framework/e56b2570-3814-4f77-9b5e-5b026f1c7453/scratchpad/fixtures/06-idle
+/bin/zsh -lc "sed -n '1,220p' RTK.md" in <scratch>/fixtures/06-idle
 exec
-/bin/zsh -lc "sed -n '1,220p' /Users/baptistelafourcade/.codex/plugins/cache/aidd-framework/aidd-context/2.2.0/skills/00-onboard/SKILL.md" in /private/tmp/claude-501/-Users-baptistelafourcade-Projects-freelance-aidd-aidd-framework/e56b2570-3814-4f77-9b5e-5b026f1c7453/scratchpad/fixtures/06-idle
+/bin/zsh -lc "sed -n '1,220p' <home>/.codex/plugins/cache/aidd-framework/aidd-context/2.2.0/skills/00-onboard/SKILL.md" in <scratch>/fixtures/06-idle
  succeeded in 0ms:
 ---
 name: 00-onboard
@@ -1062,9 +1062,9 @@ flowchart LR
 sed: RTK.md: No such file or directory
 
 exec
-/bin/zsh -lc "pwd && rg --files -g '"'!*node_modules*'"' -g '"'!*.git*'"'" in /private/tmp/claude-501/-Users-baptistelafourcade-Projects-freelance-aidd-aidd-framework/e56b2570-3814-4f77-9b5e-5b026f1c7453/scratchpad/fixtures/06-idle
+/bin/zsh -lc "pwd && rg --files -g '"'!*node_modules*'"' -g '"'!*.git*'"'" in <scratch>/fixtures/06-idle
  succeeded in 0ms:
-/private/tmp/claude-501/-Users-baptistelafourcade-Projects-freelance-aidd-aidd-framework/e56b2570-3814-4f77-9b5e-5b026f1c7453/scratchpad/fixtures/06-idle
+<scratch>/fixtures/06-idle
 src/index.js
 CLAUDE.md
 aidd_docs/memory/deployment.md
@@ -1080,14 +1080,14 @@ package.json
 codex
 `RTK.md` is referenced by the local instructions but is not present in this fixture. The repo does have AIDD memory files, so I’m reading those plus the small code surface to assess the current state.
 exec
-/bin/zsh -lc "sed -n '1,220p' src/index.js" in /private/tmp/claude-501/-Users-baptistelafourcade-Projects-freelance-aidd-aidd-framework/e56b2570-3814-4f77-9b5e-5b026f1c7453/scratchpad/fixtures/06-idle
+/bin/zsh -lc "sed -n '1,220p' src/index.js" in <scratch>/fixtures/06-idle
  succeeded in 0ms:
 export const hi = () => "hi"
 
 exec
-/bin/zsh -lc "sed -n '1,220p' package.json" in /private/tmp/claude-501/-Users-baptistelafourcade-Projects-freelance-aidd-aidd-framework/e56b2570-3814-4f77-9b5e-5b026f1c7453/scratchpad/fixtures/06-idle
+/bin/zsh -lc "sed -n '1,220p' package.json" in <scratch>/fixtures/06-idle
 exec
-/bin/zsh -lc "sed -n '1,220p' CLAUDE.md" in /private/tmp/claude-501/-Users-baptistelafourcade-Projects-freelance-aidd-aidd-framework/e56b2570-3814-4f77-9b5e-5b026f1c7453/scratchpad/fixtures/06-idle
+/bin/zsh -lc "sed -n '1,220p' CLAUDE.md" in <scratch>/fixtures/06-idle
  succeeded in 0ms:
 {"name":"demo","version":"1.0.0"}
 
@@ -1108,7 +1108,7 @@ exec
 </aidd_project_memory>
 
 exec
-/bin/zsh -lc "for f in aidd_docs/memory/*.md; do printf '\\n## %s\\n' \""'$f"; sed -n '"'1,220p' \""'$f"; done' in /private/tmp/claude-501/-Users-baptistelafourcade-Projects-freelance-aidd-aidd-framework/e56b2570-3814-4f77-9b5e-5b026f1c7453/scratchpad/fixtures/06-idle
+/bin/zsh -lc "for f in aidd_docs/memory/*.md; do printf '\\n## %s\\n' \""'$f"; sed -n '"'1,220p' \""'$f"; done' in <scratch>/fixtures/06-idle
  succeeded in 0ms:
 
 ## aidd_docs/memory/architecture.md
@@ -1154,24 +1154,24 @@ Real content for the vcs memory file of this demo project.
 codex
 This is a very small demo fixture: one exported function, a bare `package.json`, and placeholder-style AIDD memory files. I’m doing one quick status check now so the recommended next step is based on the actual workspace state, not a stale assumption.
 exec
-/bin/zsh -lc 'ls -la' in /private/tmp/claude-501/-Users-baptistelafourcade-Projects-freelance-aidd-aidd-framework/e56b2570-3814-4f77-9b5e-5b026f1c7453/scratchpad/fixtures/06-idle
+/bin/zsh -lc 'ls -la' in <scratch>/fixtures/06-idle
  succeeded in 0ms:
 total 16
-drwxr-xr-x   7 baptistelafourcade  wheel  224 Jul 10 10:37 .
-drwxr-xr-x  10 baptistelafourcade  wheel  320 Jul 10 10:37 ..
-drwxr-xr-x  12 baptistelafourcade  wheel  384 Jul 10 10:37 .git
--rw-r--r--   1 baptistelafourcade  wheel  338 Jul 10 10:37 CLAUDE.md
-drwxr-xr-x   3 baptistelafourcade  wheel   96 Jul 10 10:37 aidd_docs
--rw-r--r--   1 baptistelafourcade  wheel   34 Jul 10 10:37 package.json
-drwxr-xr-x   3 baptistelafourcade  wheel   96 Jul 10 10:37 src
+drwxr-xr-x   7 <user>  wheel  224 Jul 10 10:37 .
+drwxr-xr-x  10 <user>  wheel  320 Jul 10 10:37 ..
+drwxr-xr-x  12 <user>  wheel  384 Jul 10 10:37 .git
+-rw-r--r--   1 <user>  wheel  338 Jul 10 10:37 CLAUDE.md
+drwxr-xr-x   3 <user>  wheel   96 Jul 10 10:37 aidd_docs
+-rw-r--r--   1 <user>  wheel   34 Jul 10 10:37 package.json
+drwxr-xr-x   3 <user>  wheel   96 Jul 10 10:37 src
 
 exec
-/bin/zsh -lc 'git status --short --branch' in /private/tmp/claude-501/-Users-baptistelafourcade-Projects-freelance-aidd-aidd-framework/e56b2570-3814-4f77-9b5e-5b026f1c7453/scratchpad/fixtures/06-idle
+/bin/zsh -lc 'git status --short --branch' in <scratch>/fixtures/06-idle
  succeeded in 0ms:
 ## main
 
 exec
-/bin/zsh -lc 'find .. -name RTK.md -maxdepth 4 -print' in /private/tmp/claude-501/-Users-baptistelafourcade-Projects-freelance-aidd-aidd-framework/e56b2570-3814-4f77-9b5e-5b026f1c7453/scratchpad/fixtures/06-idle
+/bin/zsh -lc 'find .. -name RTK.md -maxdepth 4 -print' in <scratch>/fixtures/06-idle
  succeeded in 0ms:
 codex
 **Onboarding**
@@ -1181,7 +1181,7 @@ Current project state:
 - Repo is clean on `main`.
 - `RTK.md` is referenced but missing.
 - AIDD memory exists under `aidd_docs/memory/`, but the files contain demo placeholder text.
-- Code surface is tiny: [src/index.js](/private/tmp/claude-501/-Users-baptistelafourcade-Projects-freelance-aidd-aidd-framework/e56b2570-3814-4f77-9b5e-5b026f1c7453/scratchpad/fixtures/06-idle/src/index.js:1) exports `hi = () => "hi"`.
+- Code surface is tiny: [src/index.js](<scratch>/fixtures/06-idle/src/index.js:1) exports `hi = () => "hi"`.
 - `package.json` has no scripts, dependencies, test command, or module metadata beyond name/version.
 - Current workspace is read-only, so I can assess and guide, but not modify files unless permissions change.
 
@@ -1201,7 +1201,7 @@ Current project state:
 - Repo is clean on `main`.
 - `RTK.md` is referenced but missing.
 - AIDD memory exists under `aidd_docs/memory/`, but the files contain demo placeholder text.
-- Code surface is tiny: [src/index.js](/private/tmp/claude-501/-Users-baptistelafourcade-Projects-freelance-aidd-aidd-framework/e56b2570-3814-4f77-9b5e-5b026f1c7453/scratchpad/fixtures/06-idle/src/index.js:1) exports `hi = () => "hi"`.
+- Code surface is tiny: [src/index.js](<scratch>/fixtures/06-idle/src/index.js:1) exports `hi = () => "hi"`.
 - `package.json` has no scripts, dependencies, test command, or module metadata beyond name/version.
 - Current workspace is read-only, so I can assess and guide, but not modify files unless permissions change.
 
@@ -1223,14 +1223,14 @@ Choose one:
 Reading additional input from stdin...
 OpenAI Codex v0.143.0
 --------
-workdir: /private/tmp/claude-501/-Users-baptistelafourcade-Projects-freelance-aidd-aidd-framework/e56b2570-3814-4f77-9b5e-5b026f1c7453/scratchpad/fixtures/07-plan-broken-status
+workdir: <scratch>/fixtures/07-plan-broken-status
 model: gpt-5.5
 provider: openai
 approval: never
 sandbox: read-only
 reasoning effort: high
 reasoning summaries: none
-session id: 019f4b38-0df7-7be3-bf94-e4a0f2427d3e
+session id: <session>
 --------
 user
 onboard me
@@ -1238,9 +1238,9 @@ warning: Skill descriptions were shortened to fit the 2% skills context budget. 
 codex
 I’ll use the `aidd-context:00-onboard` skill for the onboarding flow and first read its instructions plus the repo’s local `RTK.md` guidance.
 exec
-/bin/zsh -lc "sed -n '1,240p' /Users/baptistelafourcade/.codex/plugins/cache/aidd-framework/aidd-context/2.2.0/skills/00-onboard/SKILL.md" in /private/tmp/claude-501/-Users-baptistelafourcade-Projects-freelance-aidd-aidd-framework/e56b2570-3814-4f77-9b5e-5b026f1c7453/scratchpad/fixtures/07-plan-broken-status
+/bin/zsh -lc "sed -n '1,240p' <home>/.codex/plugins/cache/aidd-framework/aidd-context/2.2.0/skills/00-onboard/SKILL.md" in <scratch>/fixtures/07-plan-broken-status
 exec
-/bin/zsh -lc "sed -n '1,240p' RTK.md" in /private/tmp/claude-501/-Users-baptistelafourcade-Projects-freelance-aidd-aidd-framework/e56b2570-3814-4f77-9b5e-5b026f1c7453/scratchpad/fixtures/07-plan-broken-status
+/bin/zsh -lc "sed -n '1,240p' RTK.md" in <scratch>/fixtures/07-plan-broken-status
  succeeded in 0ms:
 ---
 name: 00-onboard
@@ -1277,7 +1277,7 @@ flowchart LR
 sed: RTK.md: No such file or directory
 
 exec
-/bin/zsh -lc "rg --files -g '"'!*node_modules*'"' -g '"'!*.png'"' -g '"'!*.jpg'"' -g '"'!*.jpeg'"' -g '"'!*.gif'"' -g '"'!*.pdf'"'" in /private/tmp/claude-501/-Users-baptistelafourcade-Projects-freelance-aidd-aidd-framework/e56b2570-3814-4f77-9b5e-5b026f1c7453/scratchpad/fixtures/07-plan-broken-status
+/bin/zsh -lc "rg --files -g '"'!*node_modules*'"' -g '"'!*.png'"' -g '"'!*.jpg'"' -g '"'!*.jpeg'"' -g '"'!*.gif'"' -g '"'!*.pdf'"'" in <scratch>/fixtures/07-plan-broken-status
  succeeded in 0ms:
 src/index.js
 CLAUDE.md
@@ -1295,9 +1295,9 @@ package.json
 codex
 The onboard skill is intentionally lightweight: scan, assess, present options, then wait. `RTK.md` was not in this fixture root, so I’m checking the nearby project files and memory instead of assuming those instructions.
 exec
-/bin/zsh -lc "sed -n '1,220p' CLAUDE.md" in /private/tmp/claude-501/-Users-baptistelafourcade-Projects-freelance-aidd-aidd-framework/e56b2570-3814-4f77-9b5e-5b026f1c7453/scratchpad/fixtures/07-plan-broken-status
+/bin/zsh -lc "sed -n '1,220p' CLAUDE.md" in <scratch>/fixtures/07-plan-broken-status
 exec
-/bin/zsh -lc "sed -n '1,220p' package.json" in /private/tmp/claude-501/-Users-baptistelafourcade-Projects-freelance-aidd-aidd-framework/e56b2570-3814-4f77-9b5e-5b026f1c7453/scratchpad/fixtures/07-plan-broken-status
+/bin/zsh -lc "sed -n '1,220p' package.json" in <scratch>/fixtures/07-plan-broken-status
  succeeded in 0ms:
 # CLAUDE.md
 
@@ -1318,10 +1318,10 @@ exec
 {"name":"demo","version":"1.0.0"}
 
 exec
-/bin/zsh -lc 'find .. -name RTK.md -print' in /private/tmp/claude-501/-Users-baptistelafourcade-Projects-freelance-aidd-aidd-framework/e56b2570-3814-4f77-9b5e-5b026f1c7453/scratchpad/fixtures/07-plan-broken-status
+/bin/zsh -lc 'find .. -name RTK.md -print' in <scratch>/fixtures/07-plan-broken-status
  succeeded in 0ms:
 exec
-/bin/zsh -lc "sed -n '1,260p' aidd_docs/tasks/2026_07/demo/plan.md" in /private/tmp/claude-501/-Users-baptistelafourcade-Projects-freelance-aidd-aidd-framework/e56b2570-3814-4f77-9b5e-5b026f1c7453/scratchpad/fixtures/07-plan-broken-status
+/bin/zsh -lc "sed -n '1,260p' aidd_docs/tasks/2026_07/demo/plan.md" in <scratch>/fixtures/07-plan-broken-status
  succeeded in 0ms:
 ---
 status: ??? garbage
@@ -1332,9 +1332,9 @@ status: ??? garbage
 codex
 This fixture is small and looks intentionally broken: the only task plan has `status: ??? garbage`. I’m reading the project memory now to determine the correct next step rather than treating that status as valid.
 exec
-/bin/zsh -lc "sed -n '1,220p' aidd_docs/memory/project-brief.md" in /private/tmp/claude-501/-Users-baptistelafourcade-Projects-freelance-aidd-aidd-framework/e56b2570-3814-4f77-9b5e-5b026f1c7453/scratchpad/fixtures/07-plan-broken-status
+/bin/zsh -lc "sed -n '1,220p' aidd_docs/memory/project-brief.md" in <scratch>/fixtures/07-plan-broken-status
 exec
-/bin/zsh -lc "sed -n '1,220p' aidd_docs/memory/coding-assertions.md" in /private/tmp/claude-501/-Users-baptistelafourcade-Projects-freelance-aidd-aidd-framework/e56b2570-3814-4f77-9b5e-5b026f1c7453/scratchpad/fixtures/07-plan-broken-status
+/bin/zsh -lc "sed -n '1,220p' aidd_docs/memory/coding-assertions.md" in <scratch>/fixtures/07-plan-broken-status
  succeeded in 0ms:
 # project-brief
 
@@ -1346,23 +1346,23 @@ Real content for the project-brief memory file of this demo project.
 Real content for the coding-assertions memory file of this demo project.
 
 exec
-/bin/zsh -lc "sed -n '1,220p' aidd_docs/memory/architecture.md" in /private/tmp/claude-501/-Users-baptistelafourcade-Projects-freelance-aidd-aidd-framework/e56b2570-3814-4f77-9b5e-5b026f1c7453/scratchpad/fixtures/07-plan-broken-status
+/bin/zsh -lc "sed -n '1,220p' aidd_docs/memory/architecture.md" in <scratch>/fixtures/07-plan-broken-status
  succeeded in 0ms:
 # architecture
 
 Real content for the architecture memory file of this demo project.
 
 exec
-/bin/zsh -lc "sed -n '1,220p' aidd_docs/memory/codebase-map.md" in /private/tmp/claude-501/-Users-baptistelafourcade-Projects-freelance-aidd-aidd-framework/e56b2570-3814-4f77-9b5e-5b026f1c7453/scratchpad/fixtures/07-plan-broken-status
+/bin/zsh -lc "sed -n '1,220p' aidd_docs/memory/codebase-map.md" in <scratch>/fixtures/07-plan-broken-status
  succeeded in 0ms:
 # codebase-map
 
 Real content for the codebase-map memory file of this demo project.
 
 exec
-/bin/zsh -lc "sed -n '1,220p' aidd_docs/memory/vcs.md" in /private/tmp/claude-501/-Users-baptistelafourcade-Projects-freelance-aidd-aidd-framework/e56b2570-3814-4f77-9b5e-5b026f1c7453/scratchpad/fixtures/07-plan-broken-status
+/bin/zsh -lc "sed -n '1,220p' aidd_docs/memory/vcs.md" in <scratch>/fixtures/07-plan-broken-status
 exec
-/bin/zsh -lc "sed -n '1,220p' aidd_docs/memory/testing.md" in /private/tmp/claude-501/-Users-baptistelafourcade-Projects-freelance-aidd-aidd-framework/e56b2570-3814-4f77-9b5e-5b026f1c7453/scratchpad/fixtures/07-plan-broken-status
+/bin/zsh -lc "sed -n '1,220p' aidd_docs/memory/testing.md" in <scratch>/fixtures/07-plan-broken-status
  succeeded in 0ms:
 # vcs
 
@@ -1376,26 +1376,26 @@ Real content for the testing memory file of this demo project.
 codex
 The memory files are present but placeholder-level. I’m doing one last structural check so the onboarding screen can point at concrete commands and the malformed plan status accurately.
 exec
-/bin/zsh -lc "sed -n '1,220p' aidd_docs/memory/deployment.md" in /private/tmp/claude-501/-Users-baptistelafourcade-Projects-freelance-aidd-aidd-framework/e56b2570-3814-4f77-9b5e-5b026f1c7453/scratchpad/fixtures/07-plan-broken-status
+/bin/zsh -lc "sed -n '1,220p' aidd_docs/memory/deployment.md" in <scratch>/fixtures/07-plan-broken-status
  succeeded in 0ms:
 # deployment
 
 Real content for the deployment memory file of this demo project.
 
 exec
-/bin/zsh -lc "sed -n '1,220p' aidd_docs/memory/browsing.md" in /private/tmp/claude-501/-Users-baptistelafourcade-Projects-freelance-aidd-aidd-framework/e56b2570-3814-4f77-9b5e-5b026f1c7453/scratchpad/fixtures/07-plan-broken-status
+/bin/zsh -lc "sed -n '1,220p' aidd_docs/memory/browsing.md" in <scratch>/fixtures/07-plan-broken-status
  succeeded in 0ms:
 # browsing
 
 Real content for the browsing memory file of this demo project.
 
 exec
-/bin/zsh -lc "sed -n '1,220p' src/index.js" in /private/tmp/claude-501/-Users-baptistelafourcade-Projects-freelance-aidd-aidd-framework/e56b2570-3814-4f77-9b5e-5b026f1c7453/scratchpad/fixtures/07-plan-broken-status
+/bin/zsh -lc "sed -n '1,220p' src/index.js" in <scratch>/fixtures/07-plan-broken-status
  succeeded in 0ms:
 export const hi = () => "hi"
 
 exec
-/bin/zsh -lc 'git status --short' in /private/tmp/claude-501/-Users-baptistelafourcade-Projects-freelance-aidd-aidd-framework/e56b2570-3814-4f77-9b5e-5b026f1c7453/scratchpad/fixtures/07-plan-broken-status
+/bin/zsh -lc 'git status --short' in <scratch>/fixtures/07-plan-broken-status
  succeeded in 0ms:
 codex
 **Onboarding**

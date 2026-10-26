@@ -25,7 +25,7 @@ const located = (
   remote,
   rootCommit: "c",
 });
-const ID = repositoryIdOf(located("/x")) ?? "";
+const repositoryId = () => repositoryIdOf(located("/x")) ?? "";
 const snapshot = (id: string): BranchSnapshot => ({
   repository_id: id,
   branch: "main",
@@ -90,7 +90,7 @@ function remember(
   const identity = cloneOf(clone);
   s.resolutions.resolutions.set(resolutionKey(cwd, identity), {
     dir: cwd,
-    repository_id: ID,
+    repository_id: repositoryId(),
     root: cwd,
     clone: identity,
     seen_at: "2026-10-01T00:00:00.000Z",
@@ -100,7 +100,7 @@ function remember(
 }
 
 function declaredAt(s: ReturnType<typeof setup>, taskKeys = 3): void {
-  s.snapshots.appended.push(snapshot(ID));
+  s.snapshots.appended.push(snapshot(repositoryId()));
   remember(s, "/w/repo", CLONE, { taskKeys });
 }
 
@@ -226,7 +226,7 @@ describe("forget with confirmation", () => {
 
   it("counts the repositories that declared a task and were never located", async () => {
     const s = setup([]);
-    s.snapshots.appended.push(snapshot(ID), snapshot("other-id"));
+    s.snapshots.appended.push(snapshot(repositoryId()), snapshot("other-id"));
     expect((await s.use.execute(false)).plan.unlocated).toBe(2);
   });
 

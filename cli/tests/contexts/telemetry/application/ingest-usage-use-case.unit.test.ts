@@ -9,6 +9,7 @@ import { readClaudeUsageLine } from "../../../../src/contexts/telemetry/domain/f
 import type { LocatedDirectory } from "../../../../src/contexts/telemetry/domain/ports/repository-locator.js";
 import { resolutionKey } from "../../../../src/contexts/telemetry/domain/repository-resolution.js";
 import {
+  ALREADY_MIGRATED,
   AUTUMN,
   cloneOf,
   FakeBindings,
@@ -100,9 +101,9 @@ function setup(options: { refused?: boolean; caseInsensitive?: boolean } = {}) {
   );
   const ingest = new IngestUsageUseCase(
     [
-      new ReadUsageUseCase(transcripts, readClaudeUsageLine),
+      new ReadUsageUseCase(transcripts, () => readClaudeUsageLine),
       // Another tool's format: the same lines, its own name on every record.
-      new ReadUsageUseCase(other, (text) => {
+      new ReadUsageUseCase(other, () => (text) => {
         const read = readClaudeUsageLine(text);
         return { ...read, records: read.records.map((r) => ({ ...r, tool: "codex" as const })) };
       }),
@@ -113,7 +114,8 @@ function setup(options: { refused?: boolean; caseInsensitive?: boolean } = {}) {
       now: () => NOW,
     }),
     snapshots,
-    { refusedByEnvironment: options.refused ?? false }
+    { refusedByEnvironment: options.refused ?? false },
+    ALREADY_MIGRATED
   );
   locator.directories.set("/work/a", repository("/work/a"));
   /** The clone at `path` consents: it says so now, and it opted in once. */
@@ -126,7 +128,7 @@ function setup(options: { refused?: boolean; caseInsensitive?: boolean } = {}) {
   const ingestReadingAll = () =>
     new IngestUsageUseCase(
       [transcripts, other].map((source) => {
-        const reader = new ReadUsageUseCase(source, readClaudeUsageLine);
+        const reader = new ReadUsageUseCase(source, () => readClaudeUsageLine);
         return { execute: (since) => reader.execute(since) } as ReadUsageUseCase;
       }),
       ledger,
@@ -135,7 +137,8 @@ function setup(options: { refused?: boolean; caseInsensitive?: boolean } = {}) {
         now: () => NOW,
       }),
       snapshots,
-      { refusedByEnvironment: false }
+      { refusedByEnvironment: false },
+      ALREADY_MIGRATED
     );
   return {
     ingestReadingAll,
@@ -370,15 +373,15 @@ describe("ingesting usage into the ledger", () => {
     expect([...(s.ledger.savedPartitions ?? [])]).toEqual(["2026-10-07"]);
   });
 
-  it("finishes a monthly partition its window read even when every call was already held", async () => {
+  it("settles an unsettled day its window read even when every call was already held", async () => {
     const s = setup();
     s.transcripts.files.set("/t/1.jsonl", [line("A", 10)]);
     await s.ingest.execute();
-    s.ledger.unsettled.add("2026-10");
+    s.ledger.unsettled.add("2026-10-07");
     s.ledger.stored = new Map();
     s.ledger.savedPartitions = undefined;
     expect(await s.ingest.execute()).toMatchObject({ added: 0, updated: 0 });
-    expect([...(s.ledger.savedPartitions ?? [])]).toEqual(["2026-10"]);
+    expect([...(s.ledger.savedPartitions ?? [])]).toEqual(["2026-10-07"]);
     expect(s.ledger.records).toHaveLength(1);
   });
 
@@ -676,6 +679,18 @@ describe("where a call was made", () => {
     const result = await s.ingest.execute();
     expect(result.notStored.undated).toBe(1);
     expect(result.added).toBe(0);
+  });
+
+  it("stores no call with no request id, and keeps it left out once, whatever its copies", async () => {
+    const s = setup();
+    s.transcripts.files.set("/t/1.jsonl", [
+      line("A", 1, { requestId: undefined }),
+      line("A", 2, { requestId: undefined }, "2026-10-07T10:00:05.000Z"),
+      line("B", 1),
+    ]);
+    expect((await s.ingest.execute()).added).toBe(1);
+    expect(s.ledger.records.map((r) => r.key)).toEqual(["msg_B:req_B"]);
+    expect(await s.ledger.leftOut.counts()).toMatchObject({ requestless: 1 });
   });
 
   it("keeps what it learned about a directory only when it learned something new", async () => {
@@ -1105,5 +1120,235 @@ describe("a call is judged at its own time", () => {
     const result = await s.ingest.execute();
     expect(result.notStored["unreadable-consent"]).toBe(1);
     expect(s.resolutions.resolutions.size).toBe(0);
+  });
+});
+
+describe("what was measured and could not be stored is kept, so a report run later says it", () => {
+  /** A clone that never opted in, at `/work/b`. */
+  const notOptedIn = (s: ReturnType<typeof setup>) =>
+    s.locator.directories.set("/work/b", repository("/work/b", { clone: cloneOf("/work/b/.git") }));
+  const junk = (cwd: string) => JSON.stringify({ type: "assistant", cwd, message: { usage: 7 } });
+
+  it("keeps nothing of a call a clone did not consent to, made outside any repository, or naming no directory", async () => {
+    const s = setup();
+    notOptedIn(s);
+    s.locator.directories.set("/work/c", { status: "outside-repository" });
+    s.transcripts.files.set("/t/1.jsonl", [
+      line("B", 1, { cwd: "/work/b" }),
+      line("C", 1, { cwd: "/work/c" }),
+      line("D", 1, { cwd: undefined }),
+    ]);
+    const result = await s.ingest.execute();
+    expect(result.notStored).toMatchObject({ "no-consent": 1, "outside-repo": 1, "no-cwd": 1 });
+    expect([...s.ledger.leftOut.lines]).toEqual([]);
+    expect(s.ledger.events).not.toContain("left-out-add");
+  });
+
+  it("keeps an undated call and a line that is no usage line of a clone that consents, by what they are", async () => {
+    const s = setup();
+    const missing = JSON.parse(line("M", 1));
+    delete missing.message.usage.output_tokens;
+    s.transcripts.files.set("/t/1.jsonl", [
+      junk("/work/a"),
+      line("U", 1, {}, "not a time"),
+      JSON.stringify(missing),
+      "{names no directory",
+      JSON.stringify({ type: "user", cwd: "/work/a", message: { content: "a prompt" } }),
+    ]);
+    await s.ingest.execute();
+    expect([...s.ledger.leftOut.lines].sort()).toEqual([
+      "undated claude-code\u0000msg_U:req_U",
+      `unrecognised ${junk("/work/a")}`,
+    ]);
+    expect(s.ledger.records.map((r) => [r.key, r.output])).toEqual([["msg_M:req_M", null]]);
+    // Kept, so nothing to read again.
+    expect(s.ledger.stored.get("/t/1.jsonl")?.offset).toBe(5);
+  });
+
+  it("keeps nothing of an undated call or a line that is no usage line of a clone that never opted in", async () => {
+    const s = setup();
+    notOptedIn(s);
+    s.transcripts.files.set("/t/1.jsonl", [
+      junk("/work/b"),
+      line("U", 1, { cwd: "/work/b" }, "not a time"),
+    ]);
+    await s.ingest.execute();
+    expect([...s.ledger.leftOut.lines]).toEqual([]);
+  });
+
+  it("judges a line that is no usage line by its own time, when it has one", async () => {
+    const s = setup();
+    const before = JSON.stringify({
+      type: "assistant",
+      cwd: "/work/a",
+      timestamp: "2025-06-01T00:00:00.000Z",
+      message: { usage: 7 },
+    });
+    s.transcripts.files.set("/t/1.jsonl", [before]);
+    await s.ingest.execute();
+    expect([...s.ledger.leftOut.lines]).toEqual([]);
+  });
+
+  it("keeps nothing of a call its clone did not consent to then, though it consents now", async () => {
+    const s = setup();
+    s.transcripts.files.set("/t/1.jsonl", [line("B", 1, {}, "2025-06-01T00:00:00.000Z")]);
+    const result = await s.ingest.execute();
+    expect(result.notStored["no-consent"]).toBe(1);
+    expect([...s.ledger.leftOut.lines]).toEqual([]);
+  });
+
+  it("keeps nothing of an undated call that names no directory, wherever git would look", async () => {
+    const s = setup();
+    // As a real locator asked for no directory looks where the command runs.
+    s.locator.locate = async () => repository("/work/a");
+    s.transcripts.files.set("/t/1.jsonl", [line("U", 1, { cwd: undefined }, "not a time")]);
+    await s.ingest.execute();
+    expect([...s.ledger.leftOut.lines]).toEqual([]);
+  });
+
+  it("judges a line that is no usage line with no usable time of its own at the read", async () => {
+    const s = setup();
+    const undatedJunk = JSON.stringify({
+      type: "assistant",
+      cwd: "/work/a",
+      timestamp: "not a time",
+      message: { usage: 7 },
+    });
+    s.transcripts.files.set("/t/1.jsonl", [undatedJunk]);
+    await s.ingest.execute();
+    expect([...s.ledger.leftOut.lines]).toEqual([`unrecognised ${undatedJunk}`]);
+  });
+
+  it("adds nothing when every position is forgotten and the same transcripts are read again", async () => {
+    const s = setup();
+    s.transcripts.files.set("/t/1.jsonl", [junk("/work/a"), line("U", 1, {}, "not a time")]);
+    await s.ingest.execute();
+    s.ledger.stored.clear();
+    await s.ingest.execute();
+    expect(s.ledger.leftOut.lines.size).toBe(2);
+    expect(s.ledger.leftOut.added).toBe(4);
+  });
+
+  it("does not move the positions when what it left out could not be kept", async () => {
+    const s = setup();
+    s.transcripts.files.set("/t/1.jsonl", [line("A", 1), junk("/work/a")]);
+    s.ledger.leftOut.failSave = true;
+    await expect(s.ingest.execute()).rejects.toThrow("disk full");
+    expect(s.ledger.stored.size).toBe(0);
+  });
+});
+
+describe("a call whose consent is not known yet is read again, never kept", () => {
+  it("keeps where a transcript stood before a call whose consent could not be read, and stores it once it can", async () => {
+    const s = setup();
+    s.consents.unreadableClones.add(cloneKey(A));
+    s.transcripts.files.set("/t/1.jsonl", [line("A", 1)]);
+    s.transcripts.files.set("/t/2.jsonl", [line("C", 1, { cwd: undefined })]);
+    const first = await s.ingest.execute();
+    expect(first.notStored["unreadable-consent"]).toBe(1);
+    expect(s.ledger.stored.has("/t/1.jsonl")).toBe(false);
+    expect(s.ledger.stored.get("/t/2.jsonl")?.offset).toBe(1);
+    s.consents.unreadableClones.clear();
+    expect(await s.ingest.execute()).toMatchObject({ added: 1 });
+    expect(s.ledger.records.map((r) => r.key)).toEqual(["msg_A:req_A"]);
+    expect(s.ledger.stored.get("/t/1.jsonl")?.offset).toBe(1);
+  });
+
+  it("says it again on every run while its consent still cannot be read, and keeps nothing of it", async () => {
+    const s = setup();
+    s.consents.unreadableClones.add(cloneKey(A));
+    s.transcripts.files.set("/t/1.jsonl", [line("A", 1)]);
+    for (const _ of [1, 2]) {
+      expect((await s.ingest.execute()).notStored["unreadable-consent"]).toBe(1);
+    }
+    expect([...s.ledger.leftOut.lines]).toEqual([]);
+    expect(s.ledger.records).toEqual([]);
+  });
+
+  it("holds an undated call and a line of a clone that consents but cannot be read, and keeps them once it can", async () => {
+    const s = setup();
+    s.consents.unreadableClones.add(cloneKey(A));
+    const junk = JSON.stringify({ type: "assistant", cwd: "/work/a", message: { usage: 7 } });
+    s.transcripts.files.set("/t/1.jsonl", [line("U", 1, {}, "not a time")]);
+    s.transcripts.files.set("/t/2.jsonl", [junk]);
+    await s.ingest.execute();
+    expect([...s.ledger.leftOut.lines]).toEqual([]);
+    expect([s.ledger.stored.has("/t/1.jsonl"), s.ledger.stored.has("/t/2.jsonl")]).toEqual([
+      false,
+      false,
+    ]);
+    s.consents.unreadableClones.clear();
+    await s.ingest.execute();
+    expect([...s.ledger.leftOut.lines].sort()).toEqual([
+      "undated claude-code\u0000msg_U:req_U",
+      `unrecognised ${junk}`,
+    ]);
+  });
+
+  it("moves on past a directory git refuses that no clone it knows of consents in, saying it once", async () => {
+    const s = setup();
+    s.locator.directories.set("/work/x", { status: "unreadable" });
+    s.transcripts.files.set("/t/1.jsonl", [
+      line("X", 1, { cwd: "/work/x" }),
+      line("U", 1, { cwd: "/work/x" }, "not a time"),
+      JSON.stringify({ type: "assistant", cwd: "/work/x", message: { usage: 7 } }),
+    ]);
+    expect((await s.ingest.execute()).notStored["unreadable-consent"]).toBe(1);
+    expect(s.ledger.stored.get("/t/1.jsonl")?.offset).toBe(3);
+    expect((await s.ingest.execute()).notStored["unreadable-consent"]).toBe(0);
+  });
+
+  it("moves on past a call of a clone it knows, made when that clone did not consent, though it cannot be read now", async () => {
+    const s = setup();
+    s.transcripts.files.set("/t/0.jsonl", [line("A", 1)]);
+    await s.ingest.execute();
+    s.consents.unreadableClones.add(cloneKey(A));
+    s.transcripts.files.set("/t/1.jsonl", [line("B", 1, {}, "2025-06-01T00:00:00.000Z")]);
+    await s.ingest.execute();
+    expect(s.ledger.stored.get("/t/1.jsonl")?.offset).toBe(1);
+  });
+
+  it("says a call of a directory gone before it was ever seen once, moves on, and keeps nothing of it", async () => {
+    const s = setup();
+    s.transcripts.files.set("/t/1.jsonl", [line("W", 1, { cwd: "/work/gone" })]);
+    expect((await s.ingest.execute()).notStored["never-seen-alive"]).toBe(1);
+    expect((await s.ingest.execute()).notStored["never-seen-alive"]).toBe(0);
+    expect(s.ledger.stored.get("/t/1.jsonl")?.offset).toBe(1);
+    expect([...s.ledger.leftOut.lines]).toEqual([]);
+    expect(s.resolutions.resolutions.size).toBe(0);
+  });
+
+  it("keeps a transcript's earlier position, not its start, while a call appended to it cannot be judged", async () => {
+    const s = setup();
+    s.transcripts.files.set("/t/1.jsonl", [line("A", 1)]);
+    await s.ingest.execute();
+    s.consents.unreadableClones.add(cloneKey(A));
+    s.transcripts.files.get("/t/1.jsonl")?.push(line("B", 2));
+    await s.ingest.execute();
+    expect(s.ledger.stored.get("/t/1.jsonl")?.offset).toBe(1);
+    s.consents.unreadableClones.clear();
+    expect(await s.ingest.execute()).toMatchObject({ filesRead: 1, added: 1, updated: 0 });
+  });
+
+  it("moves on past an undated call of a directory its clone left, though that clone consents", async () => {
+    const s = setup();
+    s.transcripts.files.set("/t/0.jsonl", [line("A", 1)]);
+    await s.ingest.execute();
+    // Its `.git` removed, the directory kept: no longer in any repository.
+    s.locator.directories.set("/work/a", { status: "outside-repository" });
+    s.transcripts.files.set("/t/1.jsonl", [line("U", 1, {}, "not a time")]);
+    await s.ingest.execute();
+    expect(s.ledger.stored.get("/t/1.jsonl")?.offset).toBe(1);
+  });
+
+  it("moves on while the consent log cannot be trusted: it stays so until forget, so a hold would never end", async () => {
+    const s = setup();
+    // Its directory was seen in a clone that consents, before the log was damaged.
+    s.transcripts.files.set("/t/0.jsonl", [line("A", 1)]);
+    await s.ingest.execute();
+    s.history.damaged = true;
+    s.transcripts.files.set("/t/1.jsonl", [line("B", 1)]);
+    await s.ingest.execute();
+    expect(s.ledger.stored.get("/t/1.jsonl")?.offset).toBe(1);
   });
 });

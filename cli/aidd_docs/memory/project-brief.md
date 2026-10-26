@@ -33,4 +33,4 @@ What this package is, the problem it solves, and its domain language.
 - Install, update and remove the framework for a tool, and repair what drifted.
 - Install plugins from a marketplace, driving a tool's own CLI where its project files are inert.
 - Translate an arbitrary source into a target-native plugin tree, recording nothing.
-- Count what Claude Code sessions consume, from local files, with no service and no upload.
+- Count what Claude Code and Codex sessions consume, from local files, with no service and no upload.

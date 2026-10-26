@@ -39,8 +39,9 @@ const expected = JSON.parse(text("expected.json")).binding as Record<
   string,
   { state: string; task?: string | null; ticket?: string | null; none?: boolean }
 >;
-const declarations = lines("sessions.jsonl").flatMap((line) => parseSessionDeclaration(line) ?? []);
-const carries = lines("carries.jsonl").flatMap((line) => parseSessionCarry(line) ?? []);
+const declarations = () =>
+  lines("sessions.jsonl").flatMap((line) => parseSessionDeclaration(line) ?? []);
+const carries = () => lines("carries.jsonl").flatMap((line) => parseSessionCarry(line) ?? []);
 
 function branchOutput(config: Config): string {
   return Object.entries(config.keys)
@@ -72,7 +73,7 @@ function reportAnswer(input: Case) {
       git_branch: binding?.branch ?? null,
       repository_id: "r",
     },
-    { declarations, carries, branches }
+    { declarations: declarations(), carries: carries(), branches }
   );
 }
 

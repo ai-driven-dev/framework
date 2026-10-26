@@ -1,37 +1,30 @@
 # Rule authoring
 
-The contract every generated rule must satisfy. A rule governs editor and agent behavior for a set of files.
-
 ## Rules
 
-- **R1.** One rule file, one topic. Split a crowded rule into several files.
-- **R2.** Bullets only. Keep each concise; preserve requested literals, conditions and exceptions over word limits.
-- **R3.** Scope every rule to the files it applies to, or mark it as applying to all.
-- **R4.** English only, regardless of conversation language.
-- **R5.** Do not add a rule bullet that repeats, weakens, or contradicts another active bullet in the same rule.
+- R1. One topic per file; split multiple topics.
+- R2. Concise bullets; keep literals, conditions and exceptions.
+- R3. Explicit scope or all files.
+- R4. English unless asked otherwise.
+- R5. Distinct bullets: none repeats, weakens or contradicts another.
 
-## File naming
+## Naming
 
-Format `#-slug[@version][-specificity]`. The `#` is the category index, single digit, no zero-pad. Examples: `2-typescript-naming`, `3-react@19-hooks`.
+`#-slug[@version][-specificity]`: single-digit category prefix, no zero-padding.
 
-## Category taxonomy
+| Index | Category | Covers |
+| --- | --- | --- |
+| 00 | architecture | system design |
+| 01 | standards | style/naming |
+| 02 | programming-languages | language rules |
+| 03 | frameworks-and-libraries | framework/library patterns |
+| 04 | tooling | tools/configuration |
+| 05 | testing | test patterns |
+| 06 | design-patterns | code design patterns |
+| 07 | quality | performance/security |
+| 08 | domain | business logic |
+| 09 | other | miscellaneous |
 
-| #   | Category                   | Covers                                        |
-| --- | -------------------------- | --------------------------------------------- |
-| 00  | `architecture`             | system patterns (Clean, Hexagonal, API design) |
-| 01  | `standards`                | code style, naming (camelCase, imports)       |
-| 02  | `programming-languages`    | language-specific rules (TS strict mode)      |
-| 03  | `frameworks-and-libraries` | framework/lib patterns (React, Prisma)        |
-| 04  | `tooling`                  | tool/infra config (ESLint, Docker, CI)        |
-| 05  | `testing`                  | test patterns (fixtures, mocking)             |
-| 06  | `design-patterns`          | code design (Repository, Factory)             |
-| 07  | `quality`                  | perf and security (caching, auth)             |
-| 08  | `domain`                   | business logic (entities, DTOs)               |
-| 09  | `other`                    | miscellaneous                                 |
+Pick in order: `03`, `02`, `01`, `00`, `04`–`08`, else `09`.
 
-Pick the most specific match: framework `03`, language syntax `02`, agnostic style `01`, architecture `00`, then `04`-`08` in order, else `09`.
-
-## Content
-
-- Group related bullets under a `## group` heading when the rule has several themes. Skip groups for a short rule.
-- Add one tiny example per group only when it removes ambiguity. Good code only.
+- Themes: `## group`, at most one tiny good-code example each.

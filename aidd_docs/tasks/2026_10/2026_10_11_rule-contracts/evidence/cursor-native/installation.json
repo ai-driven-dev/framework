@@ -1,9 +1,9 @@
 {
   "command": [
-    "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
-    "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/cli/dist/cli.js",
+    "<home>/.nvm/versions/node/v24.20.0/bin/node",
+    "<worktree>/cli/dist/cli.js",
     "translate",
-    "/Users/baptistelafourcade/orca/workspaces/framework/basketstar",
+    "<worktree>",
     "--to",
     "cursor",
     "--as",

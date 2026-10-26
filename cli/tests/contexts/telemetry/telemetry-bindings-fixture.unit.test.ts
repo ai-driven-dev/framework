@@ -34,7 +34,8 @@ const lines = (name: string): string[] =>
 
 interface GitConfigCase {
   branch: string;
-  keys: Record<string, string>;
+  /** Pairs in order when a key is listed twice, as `git branch -C` leaves it. */
+  keys: Record<string, string> | [string, string][];
 }
 interface BindingCase {
   session_id: string | null;
@@ -74,7 +75,7 @@ interface DirCase {
   home: string;
   env: NodeJS.ProcessEnv;
 }
-interface ClaudeOnlyCase {
+interface HookToolCase {
   payload_session_id: string | null;
   env_session_id: string | null;
   transcript_path: string | null;
@@ -89,7 +90,7 @@ const cases = JSON.parse(text("cases.json")) as {
   cloneIdentity: Record<string, StatCase>;
   environmentRefusal: Record<string, NodeJS.ProcessEnv>;
   telemetryDir: Record<string, DirCase>;
-  claudeOnly: Record<string, ClaudeOnlyCase>;
+  hookTool: Record<string, HookToolCase>;
 };
 const expected = JSON.parse(text("expected.json")) as Record<string, Record<string, unknown>>;
 
@@ -99,13 +100,13 @@ function logText(logLines: readonly LogLine[], tail = ""): string {
     .join("")}${tail}`;
 }
 
-const declarations = lines("sessions.jsonl").map((line) => parseSessionDeclaration(line));
-const carries = lines("carries.jsonl").map((line) => parseSessionCarry(line));
+const declarations = () => lines("sessions.jsonl").map((line) => parseSessionDeclaration(line));
+const carries = () => lines("carries.jsonl").map((line) => parseSessionCarry(line));
 
 /** What `git config --local -z --get-regexp` prints for a case: the variable part of every
  * key in lower case, the branch name as it is. */
 function gitConfigOutput(config: GitConfigCase): string {
-  return Object.entries(config.keys)
+  return (Array.isArray(config.keys) ? config.keys : Object.entries(config.keys))
     .map(([variable, value]) => `branch.${config.branch}.${variable.toLowerCase()}\n${value}\0`)
     .join("");
 }
@@ -117,16 +118,17 @@ describe("the shared fixture of task bindings", () => {
         Object.keys((cases as Record<string, object>)[section] ?? {}).sort()
       );
     }
-    expect(Object.keys(expected).sort()).toEqual(
-      Object.keys(cases)
-        .filter((section) => section !== "gitConfig")
-        .sort()
-    );
+    expect(Object.keys(expected).sort()).toEqual(Object.keys(cases).sort());
+  });
+
+  it.each(Object.entries(cases.gitConfig))("reads %s as the fixture says", (name, config) => {
+    const read = parseBranchConfig(gitConfigOutput(config));
+    expect(read.length === 1 ? "declared" : "undeclared").toBe(expected.gitConfig?.[name]);
   });
 
   it("holds only lines the CLI reads", () => {
-    expect(declarations).not.toContain(null);
-    expect(carries).not.toContain(null);
+    expect(declarations()).not.toContain(null);
+    expect(carries()).not.toContain(null);
   });
 
   it("is written with the fields the CLI writes: a renamed field turns this red", () => {
@@ -154,8 +156,8 @@ describe("the shared fixture of task bindings", () => {
     const binding = resolveBinding({
       sessionId: input.session_id,
       at: new Date(input.at),
-      declarations: declarations.filter((entry) => entry !== null),
-      carries: carries.filter((entry) => entry !== null),
+      declarations: declarations().filter((entry) => entry !== null),
+      carries: carries().filter((entry) => entry !== null),
       branch: declared,
     });
     const answer =
@@ -234,16 +236,17 @@ describe("the shared fixture of task bindings", () => {
     expect(telemetryDirOf(input.env, input.home, joinPath)).toBe(expected.telemetryDir?.[name]);
   });
 
-  it("states the Claude-only cases well formed, for the hook test to execute", () => {
-    for (const [name, input] of Object.entries(cases.claudeOnly)) {
-      expect(typeof expected.claudeOnly?.[name], name).toBe("boolean");
+  it("states which tool each hook payload is, well formed, for the hook test to execute", () => {
+    for (const [name, input] of Object.entries(cases.hookTool)) {
+      expect(["claude", "codex", null], name).toContain(expected.hookTool?.[name]);
       expect(Object.keys(input).sort(), name).toEqual([
         "env_session_id",
         "payload_session_id",
         "transcript_path",
       ]);
     }
-    expect(Object.values(expected.claudeOnly ?? {})).toContain(true);
-    expect(Object.values(expected.claudeOnly ?? {})).toContain(false);
+    expect(Object.values(expected.hookTool ?? {})).toEqual(
+      expect.arrayContaining(["claude", "codex", null])
+    );
   });
 });

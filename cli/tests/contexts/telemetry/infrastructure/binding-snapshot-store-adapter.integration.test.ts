@@ -8,6 +8,7 @@ import {
 } from "../../../../src/contexts/telemetry/domain/branch-binding.js";
 import { BindingSnapshotStoreAdapter } from "../../../../src/contexts/telemetry/infrastructure/binding-snapshot-store-adapter.js";
 import { PrivateStorageAdapter } from "../../../../src/runtime/filesystem/private-storage-adapter.js";
+import { NO_ALIASES } from "../../../helpers/ports/in-memory-telemetry.js";
 
 let root: string;
 let dir: string;
@@ -16,7 +17,7 @@ let store: BindingSnapshotStoreAdapter;
 beforeEach(async () => {
   root = await mkdtemp(join(tmpdir(), "aidd-snapshots-"));
   dir = join(root, "bindings");
-  store = new BindingSnapshotStoreAdapter(dir, new PrivateStorageAdapter());
+  store = new BindingSnapshotStoreAdapter(dir, new PrivateStorageAdapter(), NO_ALIASES);
 });
 afterEach(async () => {
   await rm(root, { recursive: true, force: true });

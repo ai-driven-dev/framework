@@ -23,7 +23,7 @@ jobs:
     name: Open and merge next into main
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+      - uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
         id: app-token
         with:
           app-id: ${{ secrets.AIDD_BOT_APP_ID }}
@@ -52,6 +52,11 @@ jobs:
             echo "next and main already hold the same tree; nothing to promote."
             exit 0
           fi
+
+          # What ships needs a scene in the release video, or a written reason to be left out.
+          # Checked here, before anything is pushed, so a refusal leaves no branch or PR behind.
+          git checkout --detach origin/next
+          node .claude/skills/release-video/assets/check-release-video.js
 
           # A snapshot of next, never next itself: a PR headed by the live branch widens as
           # work merges in during review. The snapshot is next's exact tip, so the merge base

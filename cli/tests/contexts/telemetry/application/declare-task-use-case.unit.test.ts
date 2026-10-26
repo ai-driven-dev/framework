@@ -221,6 +221,18 @@ describe("refusing to declare", () => {
     expect(events).toEqual([]);
   });
 
+  it("refuses a clone turned off as turned off, and writes nothing", async () => {
+    const { useCase, consents, sessions, branches, events } = setup();
+    consents.values.set(CWD, "off");
+    expect(await useCase.execute({ cwd: CWD, request: TASK, by: "command" })).toEqual({
+      status: "refused",
+      reason: "turned-off",
+    });
+    expect(sessions.lines).toEqual([]);
+    expect(branches.declared).toEqual([]);
+    expect(events).toEqual([]);
+  });
+
   it("refuses a clone with no consent, and one whose git config cannot be read, differently", async () => {
     const none = setup();
     none.consents.values.delete(CWD);

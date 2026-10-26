@@ -49,13 +49,19 @@ function branchRoleOf(headRef, originHeadRef) {
   return isDefault ? "default" : "working";
 }
 
-const FIELDS = { task: ".aiddtask", ticket: ".aiddticket", declared_at: ".aidddeclaredat" };
+const FIELDS = {
+  task: ".aiddtask",
+  ticket: ".aiddticket",
+  declared_for: ".aidddeclaredfor",
+  declared_at: ".aidddeclaredat",
+};
 
 /** `git config --local -z --get-regexp` output for one branch. git lists the variable part of
  * a key in lower case and the branch name keeps its case; the branch name may hold dots, so
  * the known suffix is cut off the end. */
 function parseBranchConfig(output, branch) {
-  const held = { task: null, ticket: null, declared_at: null };
+  const held = { task: null, ticket: null, declared_for: null, declared_at: null, listed_twice: false };
+  const seen = new Set();
   for (const entry of output.split("\0")) {
     if (!entry.startsWith("branch.")) continue;
     const newline = entry.indexOf("\n");
@@ -65,6 +71,8 @@ function parseBranchConfig(output, branch) {
     for (const [field, suffix] of Object.entries(FIELDS)) {
       if (!lower.endsWith(suffix)) continue;
       if (key.slice("branch.".length, key.length - suffix.length) === branch) {
+        held.listed_twice ||= seen.has(field);
+        seen.add(field);
         held[field] = value === "" ? null : value;
       }
     }
@@ -72,10 +80,22 @@ function parseBranchConfig(output, branch) {
   return held;
 }
 
+/** Only the command declares, and it writes `aiddDeclaredAt` last: a key without it was set by
+ * hand or cut short. A stamp naming another branch was carried here by `git branch -c` or
+ * `-m`. A key listed twice mixes the declaration copied by `-C` or `-M` with the branch's own:
+ * neither is whole. A declaration with no stamp was written before stamping existed and still
+ * counts. */
+function declaredByTheCommand(held, branch) {
+  return !held.listed_twice && held.declared_at !== null && (held.declared_for ?? branch) === branch;
+}
+
+/** The branch's declaration ({task, ticket, declared_at}) when the command made it on this
+ * branch, else null. */
 function branchDeclaration(cwd, branch, env) {
-  const run = git(cwd, ["config", "--local", "-z", "--get-regexp", "^branch\\..*\\.aidd(task|ticket|declaredat)$"], env);
-  if (run.status !== 0) return { task: null, ticket: null, declared_at: null };
-  return parseBranchConfig(run.stdout, branch);
+  const run = git(cwd, ["config", "--local", "-z", "--get-regexp", "^branch\\..*\\.aidd(task|ticket|declaredfor|declaredat)$"], env);
+  if (run.status !== 0) return null;
+  const held = parseBranchConfig(run.stdout, branch);
+  return declaredByTheCommand(held, branch) ? { task: held.task, ticket: held.ticket, declared_at: held.declared_at } : null;
 }
 
 /** HEAD and origin/HEAD for the working tree at `cwd`, and the role they give. */

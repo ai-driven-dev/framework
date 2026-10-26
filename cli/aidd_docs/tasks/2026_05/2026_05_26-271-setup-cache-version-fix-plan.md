@@ -350,7 +350,7 @@ Reproduces the user's flow against the canonical remote marketplace to verify th
 ```bash
 # In a fresh scratch directory
 mkdir -p /tmp/aidd-271-smoke && cd /tmp/aidd-271-smoke
-node /Users/baptistelafourcade/Projects/freelance/aidd/aidd/cli/dist/cli.js setup
+node "<worktree>/cli/dist/cli.js" setup
 #   - choose: remote framework (aidd-framework default)
 #   - choose: claude
 #   - select: aidd-context, aidd-dev
@@ -362,11 +362,11 @@ ls -la .aidd/cache/marketplaces/aidd-framework/
 # Expect: cloned subdir (github-ai-driven-dev-aidd-framework-HEAD/) containing .claude-plugin/, plugins/<name>/
 
 # Bug B reproduction
-node /Users/baptistelafourcade/Projects/freelance/aidd/aidd/cli/dist/cli.js ai install cursor
+node "<worktree>/cli/dist/cli.js" ai install cursor
 # Expect: aidd-context and aidd-dev propagated to cursor, no VersionMismatchError warning, one info line per drifted plugin if any.
 
 # Strict mode regression
-node /Users/baptistelafourcade/Projects/freelance/aidd/aidd/cli/dist/cli.js plugin install aidd-context@0.0.1
+node "<worktree>/cli/dist/cli.js" plugin install aidd-context@0.0.1
 # Expect: exit non-zero, VersionMismatchError on stderr.
 ```
 

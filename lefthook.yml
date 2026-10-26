@@ -130,6 +130,15 @@ pre-commit:
         # Both ignored trees hold deliberately unresolvable targets — fixture paths and
         # `@src/foo.ts` agent mentions — not links a reader is meant to follow.
         node scripts/check-markdown-links.js --ignore cli/tests/fixtures --ignore cli/aidd_docs/tasks
+    no-local-paths:
+      # Every text file, task evidence included: a path from one machine leaks its owner and
+      # stays in history once pushed. CI runs this hook with --all-files, so every tracked file.
+      run: |
+        if ! command -v node >/dev/null 2>&1; then
+          echo 'ℹ️  node not available; skipping no-local-paths'
+          exit 0
+        fi
+        node scripts/check-no-local-paths.js {staged_files}
     summarize-plugin-catalogs:
       run: sh scripts/summarize-plugin-catalogs.sh
     sync-readme-counts:

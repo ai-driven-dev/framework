@@ -17,7 +17,8 @@ export interface BranchConfigBinding {
  * the work it carried. */
 export interface BranchSnapshot extends BranchConfigBinding {
   readonly repository_id: string;
-  /** The oldest reflog entry when first read: the work before it was not on this branch. */
+  /** When the branch took its name, from its reflog when first read (see `branchCreatedAt`):
+   * the work before it was not on this branch. */
   readonly branch_created_at: string | null;
   readonly snapshot_at: string;
 }
@@ -31,22 +32,40 @@ const PREFIX = "branch.";
 const FIELDS = {
   task: ".aiddtask",
   ticket: ".aiddticket",
+  declared_for: ".aidddeclaredfor",
   declared_at: ".aidddeclaredat",
 } as const;
 
 interface DeclaredFields {
   task: string | null;
   ticket: string | null;
+  /** The branch the command declared on: a copy or a rename moves the keys, not this name. */
+  declared_for: string | null;
   declared_at: string | null;
+  /** The keys read so far: one read again was left twice by `git branch -C` or `-M`. */
+  seen: Set<string>;
+  listedTwice: boolean;
+}
+
+/** Only the command declares, and it writes `aiddDeclaredAt` last: a key without it was set by
+ * hand or cut short. A stamp naming another branch was carried here by `git branch -c` or
+ * `-m`. A key listed twice mixes the declaration copied by `-C` or `-M` with the branch's own:
+ * neither is whole. A declaration with no stamp was written before stamping existed and still
+ * counts. */
+function declaredByTheCommand(branch: string, fields: DeclaredFields): boolean {
+  return (
+    !fields.listedTwice && fields.declared_at !== null && (fields.declared_for ?? branch) === branch
+  );
 }
 
 function textOrNull(value: string): string | null {
   return value === "" ? null : value;
 }
 
-/** Reads `git config --local -z --get-regexp` output: entries end in NUL, a key and its value
- * are split by a newline, and a key given with no value has no newline at all. A branch name
- * can hold dots, so the known suffix is cut off the end, never split on. */
+/** Reads `git config --local -z --get-regexp` output into the branches the command declared:
+ * entries end in NUL, a key and its value are split by a newline, and a key given with no value
+ * has no newline at all. A branch name can hold dots, so the known suffix is cut off the end,
+ * never split on. */
 export function parseBranchConfig(output: string): BranchConfigBinding[] {
   const branches = new Map<string, DeclaredFields>();
   for (const entry of output.split("\0")) {
@@ -55,33 +74,62 @@ export function parseBranchConfig(output: string): BranchConfigBinding[] {
     const key = newline === -1 ? entry : entry.slice(0, newline);
     const value = newline === -1 ? "" : entry.slice(newline + 1);
     const lower = key.toLowerCase();
-    for (const [field, suffix] of Object.entries(FIELDS) as [keyof DeclaredFields, string][]) {
+    for (const [field, suffix] of Object.entries(FIELDS) as [keyof typeof FIELDS, string][]) {
       if (!lower.endsWith(suffix)) continue;
       const branch = key.slice(PREFIX.length, key.length - suffix.length);
-      const held = branches.get(branch) ?? { task: null, ticket: null, declared_at: null };
+      const held = branches.get(branch) ?? {
+        task: null,
+        ticket: null,
+        declared_for: null,
+        declared_at: null,
+        seen: new Set<string>(),
+        listedTwice: false,
+      };
+      held.listedTwice ||= held.seen.has(field);
+      held.seen.add(field);
       held[field] = textOrNull(value);
       branches.set(branch, held);
     }
   }
   return [...branches.entries()]
+    .filter(([branch, fields]) => declaredByTheCommand(branch, fields))
     .sort(([a], [b]) => compareText(a, b))
-    .map(([branch, fields]) => ({
+    .map(([branch, { task, ticket, declared_at }]) => ({
       branch,
-      ...fields,
-      none: fields.declared_at !== null && fields.task === null,
+      task,
+      ticket,
+      declared_at,
+      none: task === null,
     }));
 }
 
-/** `git reflog show --date=iso-strict --format=%gd` lists newest first, each as
- * `refs/heads/<name>@{<time>}`; the last line is the branch's creation. */
-export function oldestReflogTime(output: string): string | null {
-  const lines = output.split("\n").filter((line) => line !== "");
-  const last = lines.at(-1);
-  if (last === undefined) return null;
-  const open = last.lastIndexOf("@{");
-  if (open === -1 || !last.endsWith("}")) return null;
-  const instant = Date.parse(last.slice(open + 2, -1));
+/** git writes `Branch: renamed` or `Branch: copied`; libgit2, behind many git clients,
+ * `branch: renamed`. */
+const TOOK_NAME = /^branch: (renamed|copied) /i;
+
+function selectorTime(selector: string): string | null {
+  const open = selector.lastIndexOf("@{");
+  if (open === -1 || !selector.endsWith("}")) return null;
+  const instant = Date.parse(selector.slice(open + 2, -1));
   return Number.isNaN(instant) ? null : new Date(instant).toISOString();
+}
+
+/** When the branch took its name, from `git reflog show --date=iso-strict --format=%gd%x09%gs`:
+ * newest first, each `<selector>@{<time>}`, a tab, the entry's subject. A copy or a rename
+ * (`git branch -c`, `-m`, `-C`, `-M`) brings the source's reflog along, so the newest entry
+ * where the branch arrived under this name is its start; otherwise the oldest entry is its
+ * creation. A name used before keeps its earlier work apart from what came after. */
+export function branchCreatedAt(output: string, branch: string): string | null {
+  const lines = output.split("\n").filter((line) => line !== "");
+  const arrived = ` to refs/heads/${branch}`;
+  const tookName = lines.find((line) => {
+    const subject = line.slice(line.indexOf("\t") + 1);
+    return TOOK_NAME.test(subject) && subject.endsWith(arrived);
+  });
+  const entry = tookName ?? lines.at(-1);
+  if (entry === undefined) return null;
+  const tab = entry.indexOf("\t");
+  return selectorTime(tab === -1 ? entry : entry.slice(0, tab));
 }
 
 /** Whether the reflog has to be read at all: not when this declaration was already snapshotted

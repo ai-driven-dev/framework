@@ -24,7 +24,7 @@ test at scripts/__tests__/rule-reproduction-files.test.js:114:1
   
   'Error: Unexpected filesystem I/O'
   
-      at TestContext.<anonymous> (/Users/baptistelafourcade/orca/workspaces/framework/basketstar/scripts/__tests__/rule-reproduction-files.test.js:128:14)
+      at TestContext.<anonymous> (<worktree>/scripts/__tests__/rule-reproduction-files.test.js:128:14)
       at Test.runInAsyncScope (node:async_hooks:227:14)
       at Test.run (node:internal/test_runner/test:1397:25)
       at Test.processPendingSubtests (node:internal/test_runner/test:969:18)
@@ -34,12 +34,12 @@ test at scripts/__tests__/rule-reproduction-files.test.js:114:1
     generatedMessage: true,
     code: 'ERR_ASSERTION',
     actual: Error: Unexpected filesystem I/O
-        at Proxy.<anonymous> (/Users/baptistelafourcade/orca/workspaces/framework/basketstar/scripts/__tests__/rule-reproduction-files.test.js:123:38)
-        at Object.readRegular (/Users/baptistelafourcade/orca/workspaces/framework/basketstar/aidd_docs/tasks/2026_10/2026_10_09_autonomous-rule-generation/realistic-sandbox/reproduction/common.cjs:14:13)
-        at /Users/baptistelafourcade/orca/workspaces/framework/basketstar/scripts/__tests__/rule-reproduction-files.test.js:128:42
+        at Proxy.<anonymous> (<worktree>/scripts/__tests__/rule-reproduction-files.test.js:123:38)
+        at Object.readRegular (<worktree>/aidd_docs/tasks/2026_10/2026_10_09_autonomous-rule-generation/realistic-sandbox/reproduction/common.cjs:14:13)
+        at <worktree>/scripts/__tests__/rule-reproduction-files.test.js:128:42
         at getActual (node:assert:611:5)
         at strict.throws (node:assert:759:24)
-        at TestContext.<anonymous> (/Users/baptistelafourcade/orca/workspaces/framework/basketstar/scripts/__tests__/rule-reproduction-files.test.js:128:14)
+        at TestContext.<anonymous> (<worktree>/scripts/__tests__/rule-reproduction-files.test.js:128:14)
         at Test.runInAsyncScope (node:async_hooks:227:14)
         at Test.run (node:internal/test_runner/test:1397:25)
         at Test.processPendingSubtests (node:internal/test_runner/test:969:18)

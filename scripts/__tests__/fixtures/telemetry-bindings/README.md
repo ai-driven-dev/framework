@@ -28,9 +28,13 @@ answer, or an answer with no case, is an error.
 - The CLI marks a declaration made on a user's behalf by a hook with its hidden option
   `--by hook-intercept`. A manual declaration is `command`. It is an option, not an environment
   variable: an exported variable would silently relabel every manual declaration.
-- A branch declaration is three git config keys, written with `--local`:
-  `branch.<name>.aiddTask`, `branch.<name>.aiddTicket`, `branch.<name>.aiddDeclaredAt`. Declared
-  as "none" means `aiddDeclaredAt` is set and `aiddTask` is absent or empty. `git config
+- A branch declaration is four git config keys, written with `--local`:
+  `branch.<name>.aiddTask`, `branch.<name>.aiddTicket`, `branch.<name>.aiddDeclaredFor` (the
+  branch name itself) and, last, `branch.<name>.aiddDeclaredAt`. A branch is declared only when
+  `aiddDeclaredAt` is set and `aiddDeclaredFor`, when present, equals the branch read: a task with
+  no declaration time, or a stamp naming another branch (carried by `git branch -c` or `-m`),
+  declares nothing. A declaration with no stamp predates it and still counts. Declared
+  as "none" means it is declared and `aiddTask` is absent or empty. `git config
   --get-regexp` prints the variable part of a key in lower case (`aiddtask`), while the branch
   name keeps its case; a branch name may hold dots, so only the known suffix is cut off.
 
@@ -42,6 +46,8 @@ answer, or an answer with no case, is an error.
   own time, following chains, a cycle binding nothing), then the branch. A branch is read only
   when it is a working branch. A declaration made after an instant does not change the answer
   for that instant: earlier work keeps the earlier task.
+- `gitConfig`: whether each set of keys, written under its `branch`, declares that branch:
+  `declared` or `undeclared`.
 - `branchRole`: `working`, `default` or `detached`. The default branch is the target of
   `refs/remotes/origin/HEAD`; when the repository has none, `main` and `master`. Only a working
   branch is ever bound.
@@ -65,7 +71,10 @@ answer, or an answer with no case, is an error.
 - `telemetryDir`: `AIDD_TELEMETRY_DIR`, else `AIDD_USER_CONFIG_DIR/telemetry`, else
   `XDG_CONFIG_HOME/aidd/telemetry`, else `<home>/.config/aidd/telemetry`. An empty variable is
   unset. `win32` cases are joined with backslashes.
-- `claudeOnly`: a hook acts only when the payload's `session_id` equals `CLAUDE_CODE_SESSION_ID`
-  and the payload's `transcript_path`, separators normalised, runs under a `projects`
-  directory. The CLI has no such guard, so only the hook test executes these cases; the CLI
-  test checks that they are well formed.
+- `hookTool`: which tool's hooks a payload is, `claude`, `codex` or `null` (neither: the hook does
+  nothing). Claude Code: the payload's `session_id` equals `CLAUDE_CODE_SESSION_ID` and its
+  `transcript_path`, separators normalised, runs under a `projects` directory and is no Codex
+  session file. Codex: a `session_id` is set and the `transcript_path` is a Codex session file,
+  `…/sessions/YYYY/MM/DD/rollout-…`, whatever `CLAUDE_CODE_SESSION_ID` says: a Codex
+  started inside Claude Code inherits it. The CLI has no such guard, so only the hook test
+  executes these cases; the CLI test checks that they are well formed.

@@ -1,5 +1,6 @@
 // Sync SessionStart: records which session a Claude process is on, and when a /clear or a
-// branch starts a new session in the same process, carries the task it had.
+// branch starts a new session in the same process, carries the task it had. Codex gives a hook
+// no process id, so for Codex it does nothing: a Codex /clear or fork is asked again.
 const os = require("node:os");
 const path = require("node:path");
 const { readCarries, readDeclarations, resolveSession } = require("./lib/binding.cjs");
@@ -42,7 +43,7 @@ function describe(binding, source) {
 }
 
 runHook((payload) => {
-  const context = guardedContext(payload);
+  const context = guardedContext(payload, process.env, ["claude"]);
   if (context === null) return null;
   const dir = telemetryDir();
   const processes = path.join(dir, "bindings", "processes.jsonl");

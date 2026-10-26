@@ -12,24 +12,26 @@ status: implemented
 | Field      | Value                                                     |
 | ---------- | --------------------------------------------------------- |
 | **Goal**   | Replace the previous telemetry with a deterministic, declaration-attributed token count for Claude Code |
-| **Source** | [`spec.md`](./spec.md), with [`context/target.md`](./context/target.md) and [`context/usage-record-contract.md`](./context/usage-record-contract.md) |
+| **Source** | [`spec.md`](./spec.md), with [`context/target.md`](./context/target.md) |
 
 ## Phases
 
-| #   | Phase                                              | File                         |
-| --- | -------------------------------------------------- | ---------------------------- |
-| 1   | Remove the previous telemetry from the CLI         | [`phase-1.md`](./phase-1.md) |
-| 2   | Remove it from the plugins, scripts, CI and docs   | [`phase-2.md`](./phase-2.md) |
-| 3   | Count: Claude transcripts to usage records         | [`phase-3.md`](./phase-3.md) |
-| 4   | Store: the ledger, ingest, consent                 | [`phase-4.md`](./phase-4.md) |
-| 5   | Declare: the task command and its stores           | [`phase-5.md`](./phase-5.md) |
-| 6   | Ask: the plugin hooks                              | [`phase-6.md`](./phase-6.md) |
-| 7   | Attribute and report                               | [`phase-7.md`](./phase-7.md) |
-| 8   | Opt in, opt out, forget, and what V1 left behind   | [`phase-8.md`](./phase-8.md) |
-| 9   | Skills, docs, and the end-to-end proof             | [`phase-9.md`](./phase-9.md) |
+| #   | Phase                                              |
+| --- | -------------------------------------------------- |
+| 1   | Remove the previous telemetry from the CLI         |
+| 2   | Remove it from the plugins, scripts, CI and docs   |
+| 3   | Count: Claude transcripts to usage records         |
+| 4   | Store: the ledger, ingest, consent                 |
+| 5   | Declare: the task command and its stores           |
+| 6   | Ask: the plugin hooks                              |
+| 7   | Attribute and report                               |
+| 8   | Opt in, opt out, forget, and what V1 left behind   |
+| 9   | Skills, docs, and the end-to-end proof             |
 
 Phases 1 and 2 land as their own commits but never ship alone: the branch merges only once
 phase 9 is green, so `next` never carries a CLI without measurement.
+
+The per-phase files and the per-commit mutation log were removed once the work merged; git history keeps them.
 
 ## Resources
 

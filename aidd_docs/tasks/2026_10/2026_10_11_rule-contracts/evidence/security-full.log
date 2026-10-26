@@ -1,2 +1,2 @@
-{"sandbox":"/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT","smoke":false}
-{"sandbox":"/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT","checks":[{"name":"baseline API","exit":0},{"name":"install","exit":0},{"name":"lifecycle","exit":0},{"name":"negative-pipeline","exit":0},{"name":"cleanup-ownership","exit":0}],"evidence":"/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/reproduction-results.json"}
+{"sandbox":"<tmp>/aidd-realistic-rule-repro-kclpyT","smoke":false}
+{"sandbox":"<tmp>/aidd-realistic-rule-repro-kclpyT","checks":[{"name":"baseline API","exit":0},{"name":"install","exit":0},{"name":"lifecycle","exit":0},{"name":"negative-pipeline","exit":0},{"name":"cleanup-ownership","exit":0}],"evidence":"<tmp>/aidd-realistic-rule-repro-kclpyT/reproduction-results.json"}

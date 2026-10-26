@@ -10,7 +10,7 @@ status: implemented
 | Field      | Value                                                                                          |
 | ---------- | --------------------------------------------------------------------------------------------- |
 | **Goal**   | Install consumes framework-build output so installed == built content for every tool           |
-| **Source** | User request + design draft `/Users/baptistelafourcade/.claude/plans/modular-popping-stardust.md` |
+| **Source** | User request + design draft `<home>/.claude/plans/modular-popping-stardust.md` |
 
 ## Problem
 

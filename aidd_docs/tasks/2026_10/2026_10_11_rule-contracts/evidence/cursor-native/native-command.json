@@ -3,7 +3,7 @@
     "/usr/bin/sandbox-exec",
     "-f",
     "/private/tmp/aidd-oct11-cursor-native-FEFX3q/network-filesystem.sb",
-    "/Users/baptistelafourcade/.local/bin/cursor-agent",
+    "<home>/.local/bin/cursor-agent",
     "--workspace",
     "/private/tmp/aidd-oct11-cursor-native-FEFX3q/project",
     "--trust",

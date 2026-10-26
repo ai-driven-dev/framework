@@ -43,6 +43,19 @@ describe("what measurement keeps", () => {
     expect(existsSync(telemetry)).toBe(false);
   });
 
+  it.skipIf(process.platform === "win32" || process.getuid?.() === 0)(
+    "fails where the directory cannot be looked into, instead of reading it as empty",
+    async () => {
+      write(join(telemetry, "ledger", "2026-10-07.jsonl"));
+      chmodSync(telemetry, 0o000);
+      try {
+        await expect(erasure().inventory()).rejects.toThrow();
+      } finally {
+        chmodSync(telemetry, 0o700);
+      }
+    }
+  );
+
   it("is nothing where the directory is a file", async () => {
     writeFileSync(telemetry, "x");
     expect(await erasure(join(telemetry, "inside")).inventory()).toEqual([]);
@@ -66,9 +79,9 @@ describe("what measurement keeps", () => {
     ]);
   });
 
-  it("removes the ledger's daily and monthly partitions as the ledger, never as an earlier day file", async () => {
+  it("removes the ledger's day files as the ledger, never as an earlier day file", async () => {
     write(join(telemetry, "ledger", "2026-10-07.jsonl"));
-    write(join(telemetry, "ledger", "2026-09.jsonl"));
+    write(join(telemetry, "ledger", "2026-09-30.jsonl"));
     write(join(telemetry, "ledger", "offsets.json"));
     write(join(sink, "2026-10-05.jsonl"));
     const found = await erasure().inventory();

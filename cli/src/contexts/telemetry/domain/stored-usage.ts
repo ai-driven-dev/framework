@@ -1,5 +1,6 @@
 import { tryParseJson } from "../../../kernel/reading/json-file.js";
 import { asPlainObject } from "../../../kernel/reading/plain-object.js";
+import { isRequestless } from "./formats/claude-transcript-usage.js";
 import { compareText } from "./text-order.js";
 import { foldUsage } from "./usage-fold.js";
 import { USAGE_AGENTS, USAGE_TOOLS, type UsageRecord } from "./usage-record.js";
@@ -151,9 +152,22 @@ function isStoredUsage(
   );
 }
 
-/** A ledger line read back, or `null` when it is not one. */
-export function parseStoredUsage(line: string): StoredUsage | null {
+function readStoredUsage(line: string): StoredUsage | null {
   const parsed = tryParseJson(line);
   const object = parsed.ok ? asPlainObject(parsed.value) : null;
   return object !== null && isStoredUsage(object) ? object : null;
+}
+
+/** A ledger line read back, or `null` when it is not one this version accepts. A call with no
+ * request id is not: one an older CLI writes after the migration is kept as found, as any line
+ * that is not a record. */
+export function parseStoredUsage(line: string): StoredUsage | null {
+  const read = readStoredUsage(line);
+  return read !== null && !isRequestless(read) ? read : null;
+}
+
+/** The call a ledger line holds when it has no request id, which the migration leaves out. */
+export function requestlessIn(line: string): StoredUsage | null {
+  const read = readStoredUsage(line);
+  return read !== null && isRequestless(read) ? read : null;
 }

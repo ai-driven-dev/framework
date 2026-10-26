@@ -1,8 +1,6 @@
 import { stat } from "node:fs/promises";
-import { isErrnoException } from "../../../../kernel/reading/json-file.js";
+import { isAbsent } from "../../../../kernel/reading/text-file.js";
 import { type CloneIdentity, identityFromStat } from "../../domain/consent/clone-identity.js";
-
-const ABSENT = new Set(["ENOENT", "ENOTDIR"]);
 
 /** What the directory at a path is now: see `readCloneIdentity`. */
 export type CloneIdentityReader = (path: string) => Promise<CloneIdentity | "unidentified" | null>;
@@ -16,7 +14,7 @@ export const readCloneIdentity: CloneIdentityReader = async (path) => {
   try {
     return identityFromStat(path, await stat(path, { bigint: true })) ?? "unidentified";
   } catch (error) {
-    if (isErrnoException(error) && ABSENT.has(error.code ?? "")) return null;
+    if (isAbsent(error)) return null;
     return "unidentified";
   }
 };

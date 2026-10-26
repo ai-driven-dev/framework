@@ -96,9 +96,10 @@ const BASELINE: readonly { readonly path: string; readonly injected: number }[] 
   { path: "src/contexts/framework/application/plugin/plugin-remove-use-case.ts", injected: 9 },
   // Ingest is four stages, each owned by a collaborator: read what the transcripts gained,
   // tie each call to a repository, store it, snapshot the branch declarations. The fifth is
-  // the environment's refusal. A stage folded into another would hide where the ledger is
-  // written.
-  { path: "src/contexts/telemetry/application/ingest-usage-use-case.ts", injected: 5 },
+  // the environment's refusal. The sixth brings what an earlier version stored to today's key
+  // and id rules before anything is added to it, under the same lock. A stage folded into
+  // another would hide where the ledger is written.
+  { path: "src/contexts/telemetry/application/ingest-usage-use-case.ts", injected: 6 },
   // Tying a call to a clone is four things it cannot fold into one: where the directory is,
   // what its clone says now, what was remembered of the directory, and when the clone
   // consented. The fifth is the machine's spelling of a directory and the clock.

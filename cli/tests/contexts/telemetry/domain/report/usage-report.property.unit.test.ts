@@ -32,6 +32,7 @@ const usage = fc
     session_id: fc.constantFrom(...SESSIONS),
     repository_id: fc.constantFrom(...REPOS),
     git_branch: fc.option(fc.constantFrom(...BRANCHES), { nil: null }),
+    tool: fc.constantFrom("claude-code" as const, "codex" as const),
     model: fc.option(fc.constantFrom("m-1", "m-2"), { nil: null }),
     at: instant,
     input: counter,
@@ -42,7 +43,6 @@ const usage = fc
   .map(
     (r): StoredUsage => ({
       ...r,
-      tool: "claude-code",
       tool_version: null,
       agent: "main",
       cache_write_1h: null,
@@ -142,6 +142,20 @@ describe("every axis of a report adds up to the same totals", () => {
             const { rows, totals } = buildReport(records, attributionFacts, person, axis);
             const sum = (pick: (row: (typeof rows)[number]) => number) =>
               rows.reduce((n, row) => n + pick(row), 0);
+            if (axis === "tool") {
+              const counted = new Map<string, number>();
+              for (const record of records) {
+                counted.set(record.tool, (counted.get(record.tool) ?? 0) + 1);
+              }
+              expect(
+                new Map(
+                  rows.map((row) => [
+                    row.value.kind === "value" ? row.value.value : "",
+                    row.records,
+                  ])
+                )
+              ).toEqual(counted);
+            }
             expect(totals.records).toBe(records.length);
             expect(sum((row) => row.records)).toBe(records.length);
             expect(totals.total).toEqual({
@@ -163,7 +177,7 @@ describe("every axis of a report adds up to the same totals", () => {
       ),
       { numRuns: 200 }
     );
-  });
+  }, 30_000);
 
   it("whatever order the records arrive in", () => {
     fc.assert(

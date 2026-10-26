@@ -1,6 +1,7 @@
 import type {
   ReportCoverage,
   ReportResult,
+  ReportRun,
 } from "../../../contexts/telemetry/application/report/report-usage-use-case.js";
 import type { Period } from "../../../contexts/telemetry/domain/report/period.js";
 import {
@@ -15,13 +16,8 @@ import {
   type ReportRow,
   type Tally,
 } from "../../../contexts/telemetry/domain/report/usage-report.js";
-import type { NotStoredReason } from "../../../contexts/telemetry/domain/repository-resolution.js";
 import type { CLIOutput } from "../../output.js";
-import {
-  DAMAGED_CONSENT_LOG_WORDS,
-  NOT_STORED_WORDS,
-  UNRECOGNISED_WORDS,
-} from "../telemetry-display.js";
+import { count, grouped, leftOutLines } from "../telemetry-display.js";
 
 const SHORT = 8;
 const COLUMNS = ["Input", "Output", "Cache read", "Cache write", "Total"] as const;
@@ -36,6 +32,7 @@ const ABSENT: Readonly<Record<ReportAxis, string>> = {
   repository: "no repository",
   task: "no task",
   ticket: "no ticket",
+  tool: "no tool",
 };
 
 type Reason = Extract<AxisValue, { kind: "unattributed" }>["reason"];
@@ -74,10 +71,6 @@ function conflictWords(result: Extract<ReportResult, { status: "conflicting" }>)
     flag === "absent" ? `--absent ${result.absent}` : `--${flag}`
   );
   return `${first} and ${second} select on the same axis, so together they keep nothing: give one of them.`;
-}
-
-function grouped(n: number): string {
-  return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 }
 
 /** A sum that left calls out is marked `+?`; one with nothing known at all is `unknown`. */
@@ -123,34 +116,29 @@ function titleOf(axis: ReportAxis): string {
   return axis === "total" ? "Period" : axis[0]?.toUpperCase() + axis.slice(1);
 }
 
-function count(n: number, one: string, many: string): string {
-  return `${grouped(n)} ${n === 1 ? one : many}`;
-}
-
 function periodWords(period: Period): string {
   if (period.from !== null && period.to !== null) return `${period.from} to ${period.to}`;
   if (period.from !== null) return `since ${period.from}`;
   return period.to === null ? "all days" : `until ${period.to}`;
 }
 
-function coverageLines(coverage: ReportCoverage): string[] {
-  const lines = [
-    `Read ${count(coverage.filesRead, "transcript", "transcripts")} just now; ${count(coverage.records, "call", "calls")} in this period; oldest transcript on disk: ${coverage.oldestTranscriptAt?.slice(0, 10) ?? "none"}.`,
+function coverageLines(coverage: ReportCoverage, run: ReportRun): string[] {
+  const { undated, unrecognised, requestless } = coverage.leftOut;
+  return [
+    `Read ${count(run.filesRead, "transcript", "transcripts")} just now; ${count(coverage.records, "call", "calls")} in this period; oldest transcript on disk: ${run.oldestTranscriptAt?.slice(0, 10) ?? "none"}.`,
+    ...leftOutLines(run).map(({ text }) => text),
+    ...(unrecognised > 0
+      ? [
+          `Kept from every read: ${count(unrecognised, "line that is", "lines that are")} no usage line.`,
+        ]
+      : []),
+    ...(undated > 0
+      ? [`Kept from every read: ${count(undated, "call", "calls")} with no usable time.`]
+      : []),
+    ...(requestless > 0
+      ? [`Kept from every read: ${count(requestless, "call", "calls")} with no request id.`]
+      : []),
   ];
-  if (coverage.unrecognised > 0) {
-    lines.push(`${count(coverage.unrecognised, "shape", "shapes")} ${UNRECOGNISED_WORDS}`);
-  }
-  for (const [reason, n] of Object.entries(coverage.notStored) as [NotStoredReason, number][]) {
-    if (n > 0) lines.push(`Not stored: ${count(n, "call", "calls")} ${NOT_STORED_WORDS[reason]}.`);
-  }
-  if (coverage.consentLogDamaged) lines.push(DAMAGED_CONSENT_LOG_WORDS);
-  if (coverage.skippedLedgerLines > 0) {
-    const n = coverage.skippedLedgerLines;
-    lines.push(
-      `${count(n, "ledger line", "ledger lines")} ${n === 1 ? "was" : "were"} not a record and dropped.`
-    );
-  }
-  return lines;
 }
 
 export function printUsageReport(output: CLIOutput, result: ReportResult): void {
@@ -176,7 +164,7 @@ export function printUsageReport(output: CLIOutput, result: ReportResult): void 
     );
     return;
   }
-  const { report, coverage, period, filters } = result;
+  const { report, coverage, run, period, filters } = result;
   output.print(`Usage, ${periodWords(period)}, by ${report.axis}`);
   const selection = selectionLine(filters);
   if (selection !== null) output.print(selection);
@@ -198,5 +186,5 @@ export function printUsageReport(output: CLIOutput, result: ReportResult): void 
     }
   }
   output.print("");
-  for (const line of coverageLines(coverage)) output.print(line);
+  for (const line of coverageLines(coverage, run)) output.print(line);
 }

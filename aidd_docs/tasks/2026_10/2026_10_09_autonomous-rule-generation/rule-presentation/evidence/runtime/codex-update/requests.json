@@ -489,15 +489,15 @@
       "include": [
         "reasoning.encrypted_content"
       ],
-      "prompt_cache_key": "01a11f99-979c-7fc2-86e4-0e9de3e199cf",
+      "prompt_cache_key": "<session>",
       "client_metadata": {
         "root_turn_id": "01a11f99-97ce-7ed1-b28e-cda0d0b565ec",
-        "x-codex-turn-metadata": "{\"installation_id\":\"da6431a3-01c8-405b-af12-1f41cc386b27\",\"session_id\":\"01a11f99-979c-7fc2-86e4-0e9de3e199cf\",\"thread_id\":\"01a11f99-979c-7fc2-86e4-0e9de3e199cf\",\"agent_name\":\"/root\",\"turn_id\":\"01a11f99-97ce-7ed1-b28e-cda0d0b565ec\",\"window_id\":\"01a11f99-979c-7fc2-86e4-0e9de3e199cf:0\",\"window_number\":0,\"context_window_id\":\"01a11f99-979d-7db3-b7e8-031e67d0d1a9\",\"request_kind\":\"turn\",\"root_turn_id\":\"01a11f99-97ce-7ed1-b28e-cda0d0b565ec\",\"thread_source\":\"user\",\"turn_trigger\":\"exec\",\"sandbox\":\"seatbelt\",\"sandbox_mode\":\"read-only\",\"auto_review_enabled\":false,\"node_repl_auto_review_required\":false,\"node_repl_disabled\":false,\"turn_started_at_unix_ms\":1791531522002,\"analytics_enabled\":false,\"model\":\"gpt-5.1-codex\"}",
-        "x-codex-window-id": "01a11f99-979c-7fc2-86e4-0e9de3e199cf:0",
+        "x-codex-turn-metadata": "{\"installation_id\":\"<installation>\",\"session_id\":\"<session>\",\"thread_id\":\"<session>\",\"agent_name\":\"/root\",\"turn_id\":\"01a11f99-97ce-7ed1-b28e-cda0d0b565ec\",\"window_id\":\"<session>:0\",\"window_number\":0,\"context_window_id\":\"01a11f99-979d-7db3-b7e8-031e67d0d1a9\",\"request_kind\":\"turn\",\"root_turn_id\":\"01a11f99-97ce-7ed1-b28e-cda0d0b565ec\",\"thread_source\":\"user\",\"turn_trigger\":\"exec\",\"sandbox\":\"seatbelt\",\"sandbox_mode\":\"read-only\",\"auto_review_enabled\":false,\"node_repl_auto_review_required\":false,\"node_repl_disabled\":false,\"turn_started_at_unix_ms\":1791531522002,\"analytics_enabled\":false,\"model\":\"gpt-5.1-codex\"}",
+        "x-codex-window-id": "<session>:0",
         "turn_id": "01a11f99-97ce-7ed1-b28e-cda0d0b565ec",
-        "thread_id": "01a11f99-979c-7fc2-86e4-0e9de3e199cf",
-        "session_id": "01a11f99-979c-7fc2-86e4-0e9de3e199cf",
-        "x-codex-installation-id": "da6431a3-01c8-405b-af12-1f41cc386b27"
+        "thread_id": "<session>",
+        "session_id": "<session>",
+        "x-codex-installation-id": "<installation>"
       }
     }
   }

@@ -1,4 +1,5 @@
-import type { UsageLedger } from "../domain/ports/usage-ledger.js";
+import { isRequestless, requestlessCallOf } from "../domain/formats/claude-transcript-usage.js";
+import type { LeftOutEntry, UsageLedger } from "../domain/ports/usage-ledger.js";
 import type { NotStoredReason } from "../domain/repository-resolution.js";
 import { dayOf, type StoredUsage } from "../domain/stored-usage.js";
 import type { TranscriptPosition } from "../domain/transcript-position.js";
@@ -70,7 +71,9 @@ export class IngestUsageUseCase {
     private readonly ledger: UsageLedger,
     private readonly directories: DirectoryResolver,
     private readonly snapshots: SnapshotBindingsUseCase,
-    private readonly options: IngestOptions
+    private readonly options: IngestOptions,
+    /** Brings stored data to today's key and id rules first (`StoredUsageMigration`). */
+    private readonly migration: { execute(): Promise<void> }
   ) {}
 
   async execute(): Promise<IngestResult> {
@@ -92,6 +95,8 @@ export class IngestUsageUseCase {
   }
 
   private async ingest(): Promise<IngestResult> {
+    // Stored data first brought to the rules of now, before anything is added to it.
+    await this.migration.execute();
     const before = await this.ledger.positions();
     // The consent log first: a transcript last written before any interval opened is not read.
     const resolver = await this.directories.open();
@@ -103,11 +108,45 @@ export class IngestUsageUseCase {
 
     const notStored = { ...NOT_STORED };
     const toStore: StoredUsage[] = [];
+    // What was measured and cannot be stored is kept, so a later report says it, whoever ran
+    // this: only of a clone that consents, at the thing's own time or, with none, now.
+    const leftOut: LeftOutEntry[] = [];
+    // A transcript holding what a clone that consents could not be read for is read again
+    // next time; a hold that could never end (no clone known to consent there, a consent log
+    // that stays damaged until `forget`) is not taken.
+    const held = new Set<string>();
+    const hold = (path: string | undefined, cwd: string, at: string) => {
+      if (!resolver.consentLogDamaged && resolver.mayConsent(cwd, at)) held.add(path ?? "");
+    };
+    const measured = async (cwd: string | null, at: string | null, path: string | undefined) => {
+      if (cwd === null) return false;
+      const when = at !== null && dayOf(at) !== null ? at : resolver.now;
+      const outcome = await resolver.resolve(cwd, when);
+      if ("skipped" in outcome && outcome.skipped === "unreadable-consent") hold(path, cwd, when);
+      return "stored" in outcome;
+    };
+    for (const { line, cwd, at, path } of reading.dropped) {
+      if (await measured(cwd, at, path)) leftOut.push({ reason: "unrecognised", of: line });
+    }
     const live = new Map<string, string>();
     for (const record of reading.records) {
       const outcome = await this.outcomeOf(record, resolver);
       if ("skipped" in outcome) {
-        notStored[outcome.skipped] += 1;
+        const { skipped } = outcome;
+        notStored[skipped] += 1;
+        if (skipped === "unreadable-consent") {
+          hold(reading.fileOf.get(record), record.cwd ?? "", record.at);
+        }
+        if (
+          skipped === "undated" &&
+          (await measured(record.cwd, null, reading.fileOf.get(record)))
+        ) {
+          leftOut.push({ reason: "undated", of: `${record.tool}\u0000${record.key}` });
+        }
+        continue;
+      }
+      if (isRequestless(record)) {
+        leftOut.push({ reason: "requestless", of: requestlessCallOf(record) });
         continue;
       }
       toStore.push({ ...record, repository_id: outcome.stored.repository_id });
@@ -118,6 +157,7 @@ export class IngestUsageUseCase {
       toStore.length > 0
         ? await storeCalls(this.ledger, toStore)
         : { added: 0, updated: 0, skippedLines: 0 };
+    if (leftOut.length > 0) await this.ledger.leftOut.add(leftOut);
     await resolver.close();
     const consentLogDamaged = resolver.consentLogDamaged;
 
@@ -127,7 +167,13 @@ export class IngestUsageUseCase {
     }
 
     // Last, so a crash before it only means the same lines are read again.
-    if (movedPaths.length > 0) await this.ledger.savePositions(reading.positions);
+    const positions = new Map(reading.positions);
+    for (const path of held) {
+      const was = before.get(path);
+      if (was === undefined) positions.delete(path);
+      else positions.set(path, was);
+    }
+    if (movedPaths.length > 0) await this.ledger.savePositions(positions);
 
     return {
       refused: false,
@@ -157,6 +203,8 @@ export class IngestUsageUseCase {
       records: readings.flatMap((reading) => reading.records),
       positions: new Map([...before, ...readings.flatMap((reading) => [...reading.positions])]),
       unrecognised: readings.flatMap((reading) => reading.unrecognised),
+      fileOf: new Map(readings.flatMap((reading) => [...reading.fileOf])),
+      dropped: readings.flatMap((reading) => reading.dropped),
       oldestTranscriptAt: oldest[0] ?? null,
       skipped: new Set(readings.flatMap((reading) => [...reading.skipped])),
     };

@@ -8,9 +8,10 @@ import { readFileSync } from "node:fs";
 import { mkdir, readdir, readFile, writeFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { describe, expect, it } from "vitest";
+import { afterAll, describe, expect, it } from "vitest";
 import { AI_TOOL_IDS } from "../../src/kernel/tool.js";
-import { createTestEnv, runCli } from "../e2e/helpers.js";
+import { runCli } from "../e2e/helpers.js";
+import { twoCaptures } from "./two-captures.js";
 
 const ROOT = resolve(fileURLToPath(import.meta.url), "../../..");
 const FRAMEWORK_FIXTURE = join(ROOT, "tests/fixtures/framework-real");
@@ -107,87 +108,56 @@ async function captureAllCells(
   return captured;
 }
 
+const captures = twoCaptures("fb-golden-det", (env) =>
+  captureAllCells(env.projectDir, env.fakeHome, env.tempDir)
+);
+
 describe.concurrent("Framework build golden — 10-cell matrix", () => {
+  afterAll(captures.cleanup);
+
   // Two full 9-cell builds measured just past the 60s default on a Windows runner, not a
   // hang. Raised per test so no other e2e file's budget moves.
   it("snapshot is deterministic (two captures of each target are byte-identical)", async () => {
-    const env1 = await createTestEnv("fb-golden-det-1");
-    const env2 = await createTestEnv("fb-golden-det-2");
-    try {
-      for (const target of MARKETPLACE_TARGETS) {
-        const snap1 = await captureTarget(
-          target,
-          false,
-          env1.projectDir,
-          env1.fakeHome,
-          env1.tempDir
-        );
-        const snap2 = await captureTarget(
-          target,
-          false,
-          env2.projectDir,
-          env2.fakeHome,
-          env2.tempDir
-        );
-        expect(snap1, `target ${target}: capture 1 vs 2 differ`).toStrictEqual(snap2);
-      }
-      for (const target of FLAT_TARGETS) {
-        const snap1 = await captureTarget(
-          target,
-          true,
-          env1.projectDir,
-          env1.fakeHome,
-          env1.tempDir
-        );
-        const snap2 = await captureTarget(
-          target,
-          true,
-          env2.projectDir,
-          env2.fakeHome,
-          env2.tempDir
-        );
-        expect(snap1, `${target}:flat capture 1 vs 2 differ`).toStrictEqual(snap2);
-      }
-    } finally {
-      await env1.cleanup();
-      await env2.cleanup();
+    const snap1 = await captures.first();
+    const snap2 = await captures.second();
+    for (const target of MARKETPLACE_TARGETS) {
+      expect(snap1[target], `target ${target}: capture 1 vs 2 differ`).toStrictEqual(snap2[target]);
+    }
+    for (const target of FLAT_TARGETS) {
+      const key = `${target}:flat`;
+      expect(snap1[key], `${target}:flat capture 1 vs 2 differ`).toStrictEqual(snap2[key]);
     }
   }, 120_000);
 
   it("every one of the 10 cells is byte-identical to its stored baseline", async () => {
-    const { tempDir, projectDir, fakeHome, cleanup } = await createTestEnv("fb-golden-baseline");
-    try {
-      const captured = await captureAllCells(projectDir, fakeHome, tempDir);
+    const captured = await captures.first();
 
-      if (process.env.UPDATE_FRAMEWORK_GOLDEN === "1") {
-        await mkdir(join(ROOT, "tests/golden/snapshots/framework-build"), { recursive: true });
-        await writeFile(SNAPSHOT_FILE, `${JSON.stringify(captured, null, 2)}\n`, "utf-8");
-        console.log(`Framework build golden snapshot updated: ${SNAPSHOT_FILE}`);
-        return;
-      }
+    if (process.env.UPDATE_FRAMEWORK_GOLDEN === "1") {
+      await mkdir(join(ROOT, "tests/golden/snapshots/framework-build"), { recursive: true });
+      await writeFile(SNAPSHOT_FILE, `${JSON.stringify(captured, null, 2)}\n`, "utf-8");
+      console.log(`Framework build golden snapshot updated: ${SNAPSHOT_FILE}`);
+      return;
+    }
 
-      const stored = JSON.parse(await readFile(SNAPSHOT_FILE, "utf-8")) as GoldenSnapshot;
+    const stored = JSON.parse(await readFile(SNAPSHOT_FILE, "utf-8")) as GoldenSnapshot;
 
-      const expectedCells = [...MARKETPLACE_TARGETS, ...FLAT_TARGETS.map((t) => `${t}:flat`)];
-      for (const key of expectedCells) {
-        expect(stored[key], `stored snapshot missing cell: ${key}`).toBeDefined();
-        expect(Object.keys(stored[key]).length, `cell ${key} must have files`).toBeGreaterThan(0);
-      }
+    const expectedCells = [...MARKETPLACE_TARGETS, ...FLAT_TARGETS.map((t) => `${t}:flat`)];
+    for (const key of expectedCells) {
+      expect(stored[key], `stored snapshot missing cell: ${key}`).toBeDefined();
+      expect(Object.keys(stored[key]).length, `cell ${key} must have files`).toBeGreaterThan(0);
+    }
 
-      // Every mismatching cell at once, compared as sorted entries: key order follows the
-      // platform's directory listing, the fact under test is which files exist and hash to what.
-      const drifted = [...FROZEN_CELLS].filter(
-        (key) => canonical(captured[key] ?? {}) !== canonical(stored[key] ?? {})
-      );
-      const detail = drifted
-        .map((key) => `${key}: ${describeDrift(stored[key] ?? {}, captured[key] ?? {})}`)
-        .join("\n");
-      expect(drifted, `cells differing from their stored baseline\n${detail}`).toEqual([]);
-      for (const key of FROZEN_CELLS) {
-        expect(captured[key], `cell ${key}`).toStrictEqual(stored[key]);
-      }
-    } finally {
-      await cleanup();
+    // Every mismatching cell at once, compared as sorted entries: key order follows the
+    // platform's directory listing, the fact under test is which files exist and hash to what.
+    const drifted = [...FROZEN_CELLS].filter(
+      (key) => canonical(captured[key] ?? {}) !== canonical(stored[key] ?? {})
+    );
+    const detail = drifted
+      .map((key) => `${key}: ${describeDrift(stored[key] ?? {}, captured[key] ?? {})}`)
+      .join("\n");
+    expect(drifted, `cells differing from their stored baseline\n${detail}`).toEqual([]);
+    for (const key of FROZEN_CELLS) {
+      expect(captured[key], `cell ${key}`).toStrictEqual(stored[key]);
     }
   }, 120_000);
 

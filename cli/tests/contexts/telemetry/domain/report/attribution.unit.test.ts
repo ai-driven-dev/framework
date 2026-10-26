@@ -367,12 +367,27 @@ describe("attribution: a branch name used again", () => {
     expect(attribute(onBranch("2026-10-07T00:00:00.000Z"), f)).toEqual(task("beta"));
   });
 
-  it("lets a snapshot with no declaration time cover from the creation, before the dated ones", () => {
+  it("lets a snapshot with no declaration time attribute nothing: no command wrote it", () => {
     const orphan = snapshot({ task: "orphan", declared_at: null });
+    expect(attribute(onBranch("2026-10-02T00:00:00.000Z"), facts({ branches: [orphan] }))).toEqual(
+      unattributed("no-binding")
+    );
     const dated = snapshot({ task: "dated", declared_at: "2026-10-06T00:00:00.000Z" });
     const f = facts({ branches: [dated, orphan] });
-    expect(attribute(onBranch("2026-10-02T00:00:00.000Z"), f)).toEqual(task("orphan"));
+    expect(attribute(onBranch("2026-10-02T00:00:00.000Z"), f)).toEqual(task("dated"));
     expect(attribute(onBranch("2026-10-07T00:00:00.000Z"), f)).toEqual(task("dated"));
+  });
+
+  it("lets a newer generation with only a snapshot no command wrote attribute nothing, not the older one", () => {
+    const old = snapshot({ task: "old", branch_created_at: "2026-10-01T08:00:00.000Z" });
+    const handSet = snapshot({
+      task: "by-hand",
+      declared_at: null,
+      branch_created_at: "2026-10-05T08:00:00.000Z",
+    });
+    const f = facts({ branches: [old, handSet] });
+    expect(attribute(onBranch("2026-10-03T00:00:00.000Z"), f)).toEqual(task("old"));
+    expect(attribute(onBranch("2026-10-06T00:00:00.000Z"), f)).toEqual(unattributed("no-binding"));
   });
 
   it("belongs to the youngest generation created strictly before the call, an exact tie included", () => {

@@ -1,9 +1,9 @@
 [
   {
-    "project": "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/claude",
+    "project": "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/claude",
     "args": [
-      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
-      "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/cli/dist/cli.js",
+      "<home>/.nvm/versions/node/v24.20.0/bin/node",
+      "<worktree>/cli/dist/cli.js",
       "framework",
       "install",
       "--tool",
@@ -15,13 +15,13 @@
     "stderr": ""
   },
   {
-    "project": "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/claude",
+    "project": "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/claude",
     "args": [
-      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
-      "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/cli/dist/cli.js",
+      "<home>/.nvm/versions/node/v24.20.0/bin/node",
+      "<worktree>/cli/dist/cli.js",
       "plugin",
       "install",
-      "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/plugins/aidd-context",
+      "<worktree>/plugins/aidd-context",
       "--tool",
       "claude",
       "--scope",
@@ -33,10 +33,10 @@
     "stderr": ""
   },
   {
-    "project": "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/cursor",
+    "project": "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/cursor",
     "args": [
-      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
-      "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/cli/dist/cli.js",
+      "<home>/.nvm/versions/node/v24.20.0/bin/node",
+      "<worktree>/cli/dist/cli.js",
       "framework",
       "install",
       "--tool",
@@ -48,13 +48,13 @@
     "stderr": ""
   },
   {
-    "project": "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/cursor",
+    "project": "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/cursor",
     "args": [
-      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
-      "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/cli/dist/cli.js",
+      "<home>/.nvm/versions/node/v24.20.0/bin/node",
+      "<worktree>/cli/dist/cli.js",
       "plugin",
       "install",
-      "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/plugins/aidd-context",
+      "<worktree>/plugins/aidd-context",
       "--tool",
       "cursor",
       "--scope",
@@ -66,28 +66,28 @@
     "stderr": "Error: Tool 'cursor' does not support scope 'project'. Supported scope: 'user'. Re-run with --scope user or omit the flag.\n"
   },
   {
-    "project": "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/cursor",
+    "project": "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/cursor",
     "args": [
-      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
-      "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/cli/dist/cli.js",
+      "<home>/.nvm/versions/node/v24.20.0/bin/node",
+      "<worktree>/cli/dist/cli.js",
       "translate",
-      "/Users/baptistelafourcade/orca/workspaces/framework/basketstar",
+      "<worktree>",
       "--to",
       "cursor",
       "--as",
       "flat",
       "--out",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/cursor"
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/cursor"
     ],
     "exit": 0,
-    "stdout": "Flat-installed 9 plugins, 469 files written under /private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/cursor\n",
+    "stdout": "Flat-installed 9 plugins, 469 files written under <tmp>/aidd-realistic-rule-repro-kclpyT/projects/cursor\n",
     "stderr": ""
   },
   {
-    "project": "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/copilot",
+    "project": "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/copilot",
     "args": [
-      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
-      "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/cli/dist/cli.js",
+      "<home>/.nvm/versions/node/v24.20.0/bin/node",
+      "<worktree>/cli/dist/cli.js",
       "framework",
       "install",
       "--tool",
@@ -99,13 +99,13 @@
     "stderr": ""
   },
   {
-    "project": "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/copilot",
+    "project": "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/copilot",
     "args": [
-      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
-      "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/cli/dist/cli.js",
+      "<home>/.nvm/versions/node/v24.20.0/bin/node",
+      "<worktree>/cli/dist/cli.js",
       "plugin",
       "install",
-      "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/plugins/aidd-context",
+      "<worktree>/plugins/aidd-context",
       "--tool",
       "copilot",
       "--scope",
@@ -117,28 +117,28 @@
     "stderr": ""
   },
   {
-    "project": "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/copilot",
+    "project": "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/copilot",
     "args": [
-      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
-      "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/cli/dist/cli.js",
+      "<home>/.nvm/versions/node/v24.20.0/bin/node",
+      "<worktree>/cli/dist/cli.js",
       "translate",
-      "/Users/baptistelafourcade/orca/workspaces/framework/basketstar",
+      "<worktree>",
       "--to",
       "copilot",
       "--as",
       "flat",
       "--out",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/copilot"
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/copilot"
     ],
     "exit": 0,
-    "stdout": "Flat-installed 9 plugins, 469 files written under /private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/copilot\n",
+    "stdout": "Flat-installed 9 plugins, 469 files written under <tmp>/aidd-realistic-rule-repro-kclpyT/projects/copilot\n",
     "stderr": ""
   },
   {
-    "project": "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/codex",
+    "project": "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/codex",
     "args": [
-      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
-      "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/cli/dist/cli.js",
+      "<home>/.nvm/versions/node/v24.20.0/bin/node",
+      "<worktree>/cli/dist/cli.js",
       "framework",
       "install",
       "--tool",
@@ -150,13 +150,13 @@
     "stderr": ""
   },
   {
-    "project": "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/codex",
+    "project": "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/codex",
     "args": [
-      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
-      "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/cli/dist/cli.js",
+      "<home>/.nvm/versions/node/v24.20.0/bin/node",
+      "<worktree>/cli/dist/cli.js",
       "plugin",
       "install",
-      "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/plugins/aidd-context",
+      "<worktree>/plugins/aidd-context",
       "--tool",
       "codex",
       "--scope",
@@ -168,28 +168,28 @@
     "stderr": ""
   },
   {
-    "project": "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/codex",
+    "project": "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/codex",
     "args": [
-      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
-      "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/cli/dist/cli.js",
+      "<home>/.nvm/versions/node/v24.20.0/bin/node",
+      "<worktree>/cli/dist/cli.js",
       "translate",
-      "/Users/baptistelafourcade/orca/workspaces/framework/basketstar",
+      "<worktree>",
       "--to",
       "codex",
       "--as",
       "flat",
       "--out",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/codex"
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/codex"
     ],
     "exit": 0,
-    "stdout": "Flat-installed 9 plugins, 470 files written under /private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/codex\n",
+    "stdout": "Flat-installed 9 plugins, 470 files written under <tmp>/aidd-realistic-rule-repro-kclpyT/projects/codex\n",
     "stderr": ""
   },
   {
-    "project": "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/opencode",
+    "project": "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/opencode",
     "args": [
-      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
-      "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/cli/dist/cli.js",
+      "<home>/.nvm/versions/node/v24.20.0/bin/node",
+      "<worktree>/cli/dist/cli.js",
       "framework",
       "install",
       "--tool",
@@ -201,13 +201,13 @@
     "stderr": ""
   },
   {
-    "project": "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/opencode",
+    "project": "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/opencode",
     "args": [
-      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
-      "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/cli/dist/cli.js",
+      "<home>/.nvm/versions/node/v24.20.0/bin/node",
+      "<worktree>/cli/dist/cli.js",
       "plugin",
       "install",
-      "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/plugins/aidd-context",
+      "<worktree>/plugins/aidd-context",
       "--tool",
       "opencode",
       "--scope",
@@ -219,10 +219,10 @@
     "stderr": ""
   },
   {
-    "project": "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/mixed",
+    "project": "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/mixed",
     "args": [
-      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
-      "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/cli/dist/cli.js",
+      "<home>/.nvm/versions/node/v24.20.0/bin/node",
+      "<worktree>/cli/dist/cli.js",
       "framework",
       "install",
       "--tool",
@@ -234,13 +234,13 @@
     "stderr": ""
   },
   {
-    "project": "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/mixed",
+    "project": "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/mixed",
     "args": [
-      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
-      "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/cli/dist/cli.js",
+      "<home>/.nvm/versions/node/v24.20.0/bin/node",
+      "<worktree>/cli/dist/cli.js",
       "plugin",
       "install",
-      "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/plugins/aidd-context",
+      "<worktree>/plugins/aidd-context",
       "--tool",
       "claude",
       "--scope",
@@ -252,10 +252,10 @@
     "stderr": ""
   },
   {
-    "project": "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/mixed",
+    "project": "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/mixed",
     "args": [
-      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
-      "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/cli/dist/cli.js",
+      "<home>/.nvm/versions/node/v24.20.0/bin/node",
+      "<worktree>/cli/dist/cli.js",
       "framework",
       "install",
       "--tool",
@@ -267,13 +267,13 @@
     "stderr": ""
   },
   {
-    "project": "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/mixed",
+    "project": "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/mixed",
     "args": [
-      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
-      "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/cli/dist/cli.js",
+      "<home>/.nvm/versions/node/v24.20.0/bin/node",
+      "<worktree>/cli/dist/cli.js",
       "plugin",
       "install",
-      "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/plugins/aidd-context",
+      "<worktree>/plugins/aidd-context",
       "--tool",
       "cursor",
       "--scope",
@@ -285,28 +285,28 @@
     "stderr": "Error: Tool 'cursor' does not support scope 'project'. Supported scope: 'user'. Re-run with --scope user or omit the flag.\n"
   },
   {
-    "project": "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/mixed",
+    "project": "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/mixed",
     "args": [
-      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
-      "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/cli/dist/cli.js",
+      "<home>/.nvm/versions/node/v24.20.0/bin/node",
+      "<worktree>/cli/dist/cli.js",
       "translate",
-      "/Users/baptistelafourcade/orca/workspaces/framework/basketstar",
+      "<worktree>",
       "--to",
       "cursor",
       "--as",
       "flat",
       "--out",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/mixed"
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/mixed"
     ],
     "exit": 0,
-    "stdout": "Flat-installed 9 plugins, 469 files written under /private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/mixed\n",
+    "stdout": "Flat-installed 9 plugins, 469 files written under <tmp>/aidd-realistic-rule-repro-kclpyT/projects/mixed\n",
     "stderr": ""
   },
   {
-    "project": "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/mixed",
+    "project": "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/mixed",
     "args": [
-      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
-      "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/cli/dist/cli.js",
+      "<home>/.nvm/versions/node/v24.20.0/bin/node",
+      "<worktree>/cli/dist/cli.js",
       "framework",
       "install",
       "--tool",
@@ -318,13 +318,13 @@
     "stderr": ""
   },
   {
-    "project": "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/mixed",
+    "project": "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/mixed",
     "args": [
-      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
-      "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/cli/dist/cli.js",
+      "<home>/.nvm/versions/node/v24.20.0/bin/node",
+      "<worktree>/cli/dist/cli.js",
       "plugin",
       "install",
-      "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/plugins/aidd-context",
+      "<worktree>/plugins/aidd-context",
       "--tool",
       "copilot",
       "--scope",
@@ -336,28 +336,28 @@
     "stderr": ""
   },
   {
-    "project": "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/mixed",
+    "project": "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/mixed",
     "args": [
-      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
-      "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/cli/dist/cli.js",
+      "<home>/.nvm/versions/node/v24.20.0/bin/node",
+      "<worktree>/cli/dist/cli.js",
       "translate",
-      "/Users/baptistelafourcade/orca/workspaces/framework/basketstar",
+      "<worktree>",
       "--to",
       "copilot",
       "--as",
       "flat",
       "--out",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/mixed"
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/mixed"
     ],
     "exit": 0,
-    "stdout": "Flat-installed 9 plugins, 469 files written under /private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/mixed\n",
+    "stdout": "Flat-installed 9 plugins, 469 files written under <tmp>/aidd-realistic-rule-repro-kclpyT/projects/mixed\n",
     "stderr": ""
   },
   {
-    "project": "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/mixed",
+    "project": "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/mixed",
     "args": [
-      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
-      "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/cli/dist/cli.js",
+      "<home>/.nvm/versions/node/v24.20.0/bin/node",
+      "<worktree>/cli/dist/cli.js",
       "framework",
       "install",
       "--tool",
@@ -369,13 +369,13 @@
     "stderr": ""
   },
   {
-    "project": "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/mixed",
+    "project": "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/mixed",
     "args": [
-      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
-      "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/cli/dist/cli.js",
+      "<home>/.nvm/versions/node/v24.20.0/bin/node",
+      "<worktree>/cli/dist/cli.js",
       "plugin",
       "install",
-      "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/plugins/aidd-context",
+      "<worktree>/plugins/aidd-context",
       "--tool",
       "codex",
       "--scope",
@@ -387,28 +387,28 @@
     "stderr": ""
   },
   {
-    "project": "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/mixed",
+    "project": "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/mixed",
     "args": [
-      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
-      "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/cli/dist/cli.js",
+      "<home>/.nvm/versions/node/v24.20.0/bin/node",
+      "<worktree>/cli/dist/cli.js",
       "translate",
-      "/Users/baptistelafourcade/orca/workspaces/framework/basketstar",
+      "<worktree>",
       "--to",
       "codex",
       "--as",
       "flat",
       "--out",
-      "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/mixed"
+      "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/mixed"
     ],
     "exit": 0,
-    "stdout": "Flat-installed 9 plugins, 470 files written under /private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/mixed\n",
+    "stdout": "Flat-installed 9 plugins, 470 files written under <tmp>/aidd-realistic-rule-repro-kclpyT/projects/mixed\n",
     "stderr": ""
   },
   {
-    "project": "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/mixed",
+    "project": "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/mixed",
     "args": [
-      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
-      "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/cli/dist/cli.js",
+      "<home>/.nvm/versions/node/v24.20.0/bin/node",
+      "<worktree>/cli/dist/cli.js",
       "framework",
       "install",
       "--tool",
@@ -420,13 +420,13 @@
     "stderr": ""
   },
   {
-    "project": "/private/var/folders/xr/1vw6jx411dxf789cdlv_jg4c0000gn/T/aidd-realistic-rule-repro-kclpyT/projects/mixed",
+    "project": "<tmp>/aidd-realistic-rule-repro-kclpyT/projects/mixed",
     "args": [
-      "/Users/baptistelafourcade/.nvm/versions/node/v24.20.0/bin/node",
-      "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/cli/dist/cli.js",
+      "<home>/.nvm/versions/node/v24.20.0/bin/node",
+      "<worktree>/cli/dist/cli.js",
       "plugin",
       "install",
-      "/Users/baptistelafourcade/orca/workspaces/framework/basketstar/plugins/aidd-context",
+      "<worktree>/plugins/aidd-context",
       "--tool",
       "opencode",
       "--scope",

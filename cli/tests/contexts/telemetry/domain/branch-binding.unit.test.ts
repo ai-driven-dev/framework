@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
   type BranchSnapshot,
+  branchCreatedAt,
   needsReflog,
   nextSnapshot,
-  oldestReflogTime,
   parseBranchConfig,
   parseBranchSnapshot,
   snapshotKey,
@@ -12,39 +12,50 @@ import {
 const entry = (key: string, value: string): string => `${key}\n${value}`;
 const listing = (...entries: string[]): string => entries.map((e) => `${e}\0`).join("");
 
+const D = "2026-10-07T10:00:00.000Z";
+const declaredAt = (branch: string): string => entry(`branch.${branch}.aidddeclaredat`, D);
+
 describe("git config output is read into bindings", () => {
-  it("reads the three keys of a branch, which git lists in lower case", () => {
+  it("reads the keys of a branch, which git lists in lower case", () => {
     const out = listing(
       entry("branch.feat/x.aiddtask", "checkout-fix"),
       entry("branch.feat/x.aiddticket", "PROJ-12"),
-      entry("branch.feat/x.aidddeclaredat", "2026-10-07T10:00:00.000Z")
+      entry("branch.feat/x.aidddeclaredfor", "feat/x"),
+      entry("branch.feat/x.aidddeclaredat", D)
     );
     expect(parseBranchConfig(out)).toEqual([
       {
         branch: "feat/x",
         task: "checkout-fix",
         ticket: "PROJ-12",
-        declared_at: "2026-10-07T10:00:00.000Z",
+        declared_at: D,
         none: false,
       },
     ]);
   });
 
   it("reads the keys whatever case they are spelt in", () => {
-    const out = listing(entry("branch.x.aiddTask", "t"), entry("branch.x.AIDDDeclaredAt", "d"));
+    const out = listing(
+      entry("branch.x.aiddTask", "t"),
+      entry("branch.x.AIDDDeclaredFor", "x"),
+      entry("branch.x.AIDDDeclaredAt", "d")
+    );
     expect(parseBranchConfig(out)).toMatchObject([{ branch: "x", task: "t", declared_at: "d" }]);
   });
 
   it("keeps a branch name with dots and mixed case whole", () => {
-    const out = listing(entry("branch.Release/1.2.aiddtask", "t"));
+    const out = listing(entry("branch.Release/1.2.aiddtask", "t"), declaredAt("Release/1.2"));
     expect(parseBranchConfig(out).map((b) => b.branch)).toEqual(["Release/1.2"]);
   });
 
   it("lists branches apart, in name order", () => {
     const out = listing(
       entry("branch.b.aiddtask", "tb"),
+      declaredAt("b"),
       entry("branch.c.aiddtask", "tc"),
-      entry("branch.a.aiddtask", "ta")
+      declaredAt("c"),
+      entry("branch.a.aiddtask", "ta"),
+      declaredAt("a")
     );
     expect(parseBranchConfig(out).map((b) => [b.branch, b.task])).toEqual([
       ["a", "ta"],
@@ -54,54 +65,108 @@ describe("git config output is read into bindings", () => {
   });
 
   it("reads a declaration of no task as none", () => {
-    const out = listing(entry("branch.x.aidddeclaredat", "2026-10-07T10:00:00.000Z"));
+    const out = listing(declaredAt("x"));
     expect(parseBranchConfig(out)).toEqual([
-      {
-        branch: "x",
-        task: null,
-        ticket: null,
-        declared_at: "2026-10-07T10:00:00.000Z",
-        none: true,
-      },
+      { branch: "x", task: null, ticket: null, declared_at: D, none: true },
     ]);
   });
 
   it("reads an empty task as none too", () => {
-    const out = listing(
-      entry("branch.x.aiddtask", ""),
-      entry("branch.x.aidddeclaredat", "2026-10-07T10:00:00.000Z")
-    );
+    const out = listing(entry("branch.x.aiddtask", ""), declaredAt("x"));
     expect(parseBranchConfig(out)[0]).toMatchObject({ task: null, none: true });
   });
 
-  it("does not call a branch none while it has no declaration time", () => {
-    const out = listing(entry("branch.x.aiddticket", "T-1"));
-    expect(parseBranchConfig(out)[0]).toMatchObject({ task: null, declared_at: null, none: false });
-  });
-
   it("keeps a value holding a newline whole", () => {
-    const out = listing(entry("branch.x.aiddtask", "line one\nline two"));
+    const out = listing(entry("branch.x.aiddtask", "line one\nline two"), declaredAt("x"));
     expect(parseBranchConfig(out)[0]?.task).toBe("line one\nline two");
   });
 
   it("reads a key given with no value as an empty one", () => {
-    expect(parseBranchConfig("branch.x.aiddtask\0")[0]).toMatchObject({ task: null });
+    expect(parseBranchConfig(`branch.x.aiddtask\0${listing(declaredAt("x"))}`)[0]).toMatchObject({
+      task: null,
+      none: true,
+    });
   });
 
-  it("ignores keys that are not the three, and no output at all", () => {
+  it("ignores keys that are not the four, and no output at all", () => {
     expect(parseBranchConfig(listing(entry("branch.x.remote", "origin")))).toEqual([]);
     expect(parseBranchConfig(listing(entry("core.aiddtask", "x")))).toEqual([]);
     expect(parseBranchConfig("")).toEqual([]);
   });
 });
 
-describe("the oldest reflog entry is the branch's creation", () => {
+describe("only a declaration the command made on the branch counts", () => {
+  it("reads nothing from a task or a ticket with no declaration time", () => {
+    const out = listing(
+      entry("branch.x.aiddtask", "by-hand"),
+      entry("branch.y.aiddticket", "T-1"),
+      entry("branch.z.aidddeclaredfor", "z")
+    );
+    expect(parseBranchConfig(out)).toEqual([]);
+  });
+
+  it("reads nothing from a declaration made for another branch, as a copy or a rename leaves it", () => {
+    const out = listing(
+      entry("branch.copy.aiddtask", "theirs"),
+      entry("branch.copy.aidddeclaredfor", "original"),
+      declaredAt("copy")
+    );
+    expect(parseBranchConfig(out)).toEqual([]);
+  });
+
+  it("tells a stamp apart from a branch whose name differs only in case", () => {
+    const out = listing(
+      entry("branch.Feat.aiddtask", "t"),
+      entry("branch.Feat.aidddeclaredfor", "feat"),
+      declaredAt("Feat")
+    );
+    expect(parseBranchConfig(out)).toEqual([]);
+  });
+
+  it("reads nothing from a branch copied onto with -C, which lists a key twice", () => {
+    const out = listing(
+      entry("branch.y.aiddtask", "theirs"),
+      entry("branch.y.aidddeclaredfor", "x"),
+      declaredAt("y"),
+      entry("branch.y.aidddeclaredfor", "y"),
+      declaredAt("y")
+    );
+    expect(parseBranchConfig(out)).toEqual([]);
+  });
+
+  it("reads nothing from a branch whose task alone is listed twice", () => {
+    const out = listing(
+      entry("branch.y.aiddtask", "theirs"),
+      entry("branch.y.aiddtask", "ours"),
+      entry("branch.y.aidddeclaredfor", "y"),
+      declaredAt("y")
+    );
+    expect(parseBranchConfig(out)).toEqual([]);
+  });
+
+  it("still reads a declaration written before declarations were stamped", () => {
+    const out = listing(entry("branch.x.aiddtask", "legacy"), declaredAt("x"));
+    expect(parseBranchConfig(out)).toMatchObject([{ branch: "x", task: "legacy" }]);
+  });
+
+  it("keeps the declared branches when another one is not declared", () => {
+    const out = listing(
+      entry("branch.a.aiddtask", "kept"),
+      entry("branch.a.aidddeclaredfor", "a"),
+      declaredAt("a"),
+      entry("branch.b.aiddtask", "dropped")
+    );
+    expect(parseBranchConfig(out).map((b) => b.task)).toEqual(["kept"]);
+  });
+});
+
+describe("the reflog says when the branch took its name", () => {
   it("takes the last line, which git lists newest first, as UTC", () => {
     const out = [
       "refs/heads/x@{2026-10-09T12:00:00+02:00}",
       "refs/heads/x@{2026-10-07T12:00:00+02:00}",
     ].join("\n");
-    expect(oldestReflogTime(`${out}\n`)).toBe("2026-10-07T10:00:00.000Z");
+    expect(branchCreatedAt(`${out}\n`, "x")).toBe("2026-10-07T10:00:00.000Z");
   });
 
   it("takes the last of three lines, not the second", () => {
@@ -110,28 +175,58 @@ describe("the oldest reflog entry is the branch's creation", () => {
       "x@{2026-10-08T12:00:00+02:00}",
       "x@{2026-10-07T12:00:00+02:00}",
     ].join("\n");
-    expect(oldestReflogTime(out)).toBe("2026-10-07T10:00:00.000Z");
+    expect(branchCreatedAt(out, "x")).toBe("2026-10-07T10:00:00.000Z");
   });
 
   it("reads the selector git prints, which names the branch without refs/heads", () => {
-    expect(oldestReflogTime("feat/x@{2026-10-07T12:00:00+02:00}\n")).toBe(
+    expect(branchCreatedAt("feat/x@{2026-10-07T12:00:00+02:00}\n", "x")).toBe(
       "2026-10-07T10:00:00.000Z"
     );
   });
 
+  it("takes the newest entry where the branch took its name by a copy or a rename", () => {
+    const out = [
+      "y@{2026-10-09T12:00:00+02:00}\tcommit: later",
+      "y@{2026-10-08T12:00:00+02:00}\tBranch: renamed refs/heads/x to refs/heads/y",
+      "y@{2026-10-06T12:00:00+02:00}\tBranch: copied refs/heads/w to refs/heads/x",
+      "y@{2026-10-01T12:00:00+02:00}\tbranch: Created from main",
+    ].join("\n");
+    expect(branchCreatedAt(out, "y")).toBe("2026-10-08T10:00:00.000Z");
+    expect(branchCreatedAt(out.replace("renamed", "copied"), "y")).toBe("2026-10-08T10:00:00.000Z");
+  });
+
+  it("reads the rename libgit2 writes, in lower case, as git's own", () => {
+    const out = [
+      "y@{2026-10-08T12:00:00+02:00}\tbranch: renamed refs/heads/x to refs/heads/y",
+      "y@{2026-10-01T12:00:00+02:00}\tbranch: Created from main",
+    ].join("\n");
+    expect(branchCreatedAt(out, "y")).toBe("2026-10-08T10:00:00.000Z");
+  });
+
+  it("ignores an entry that moved another name, or that names this one only as a prefix", () => {
+    const out = [
+      "y@{2026-10-08T12:00:00+02:00}\tBranch: renamed refs/heads/x to refs/heads/yy",
+      "y@{2026-10-07T12:00:00+02:00}\tcommit: Branch: renamed refs/heads/x to refs/heads/y",
+      "y@{2026-10-01T12:00:00+02:00}\tbranch: Created from main",
+    ].join("\n");
+    expect(branchCreatedAt(out, "y")).toBe("2026-10-01T10:00:00.000Z");
+  });
+
   it("is none for a selector without its closing brace", () => {
-    expect(oldestReflogTime("x@{2026-10-07T12:00:00+02:00\n")).toBeNull();
+    expect(branchCreatedAt("x@{2026-10-07T12:00:00+02:00\n", "x")).toBeNull();
+    // A last character other than the brace, with a valid time before it.
+    expect(branchCreatedAt("x@{2026-10-07T12:00:00+02:00)\n", "x")).toBeNull();
   });
 
   it("is none for a time in braces with no selector before it", () => {
-    expect(oldestReflogTime("{2026-10-07T12:00:00+02:00}\n")).toBeNull();
+    expect(branchCreatedAt("{2026-10-07T12:00:00+02:00}\n", "x")).toBeNull();
   });
 
   it("is none for an empty reflog or a line it cannot read", () => {
-    expect(oldestReflogTime("")).toBeNull();
-    expect(oldestReflogTime("\n")).toBeNull();
-    expect(oldestReflogTime("refs/heads/x@{garbage}\n")).toBeNull();
-    expect(oldestReflogTime("no selector\n")).toBeNull();
+    expect(branchCreatedAt("", "x")).toBeNull();
+    expect(branchCreatedAt("\n", "x")).toBeNull();
+    expect(branchCreatedAt("refs/heads/x@{garbage}\n", "x")).toBeNull();
+    expect(branchCreatedAt("no selector\n", "x")).toBeNull();
   });
 });
 
