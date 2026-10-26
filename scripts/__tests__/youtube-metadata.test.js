@@ -57,6 +57,11 @@ test("the themes and the programme travel with the text, so an announcement can 
   assert.deepEqual(metadata.programme, plan.youtube.programme);
 });
 
+test("the contributors of the video travel with the text, so the announcements credit the same people", () => {
+  assert.deepEqual(youtubeMetadata(plan, context).contributors, ["alexsoyes", "blafourcade"]);
+  assert.deepEqual(youtubeMetadata({ ...plan, scenes: plan.scenes.slice(0, 2) }, context).contributors, []);
+});
+
 test("a plugin skill is written as a slash command and a CLI command is left as it is", () => {
   const { description } = youtubeMetadata(plan, context);
 
