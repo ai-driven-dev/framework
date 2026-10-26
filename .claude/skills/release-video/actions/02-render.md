@@ -4,7 +4,7 @@ Turn the accepted plan into the release video and look at it.
 
 ## Input
 
-`aidd_docs/release-video/scenes.json` that the check accepts, and the version the release will carry, such as `5.13`: the next minor when a `feat:` shipped since the last tag, never a placeholder, because it is on screen from the first frame.
+`aidd_docs/release-video/scenes.json` that the check accepts, and the version the release will carry, such as `5.13`: the next minor when a `feat:` shipped since the last tag, never a placeholder, because it is typed on screen.
 
 ## Output
 
@@ -27,7 +27,7 @@ Turn the accepted plan into the release video and look at it.
 | Plan the check refuses | no render; back to plan |
 | Account that no longer exists | video renders; the replaced avatar is reported |
 | Text that does not fit a window | seen on a frame, fixed in the plan, rendered again |
-| Version on screen | the real release version, not a placeholder |
+| Version typed on screen | the real release version, not a placeholder |
 | Frame read with the sound off | the picture alone says what the release brings |
 | Levels measured | the hook is the loudest, the bed about 4 dB lower under the scenes and the outro, the ending no louder than the bed, the interface sounds stand out of the bed |
 | Finished render | MP4 present, duration reported, nothing published |
