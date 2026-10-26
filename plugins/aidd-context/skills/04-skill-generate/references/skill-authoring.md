@@ -12,17 +12,17 @@ The contract every generated skill satisfies. `skill-generate` obeys it too.
 
 ## The router
 
-- **R6.** The router holds the flow, the action table, and the transversal rules. Nothing else.
-- **R7.** The mermaid flow shows every path a run can take: the nominal chain, one entry node per case, a back-edge per loop, a terminal node per outcome. A branch stated in prose is a branch missing from the flow.
-- **R8.** The action table is `| Action | Does |`, one row per action file, in run order. `Action` is the bare slug, no backticks and no number; two actions sharing a slug keep their number (`01-plan`, `04-plan`). `Does` is a lowercase imperative half-line with no final period. Above the table, one sentence: what to read next, nothing more.
+- **R6.** The router holds `## Actions` and `## Transversal rules`. Nothing else.
+- **R7.** `## Actions` opens with a mermaid flow of every path a run can take: the nominal chain by slug, one entry node per case, a back-edge per loop, a terminal node per outcome, each condition as a quoted edge label. A branch stated in prose is a branch missing from the flow.
+- **R8.** Below the flow, one line, `Read an action's file, then do what it says.`, then a `| Action | File |` table, one row per action file, in run order. `Action` is the bare slug, no backticks and no number; two actions sharing a slug keep their number (`01-plan`, `04-plan`). `File` links the action file.
 - **R9.** `## Transversal rules` holds the rules no single action or reference owns. A rule stated there is stated nowhere else.
 - **R10.** The router is loaded on every call, an action only when its turn comes: the router carries nothing an action or a reference could carry.
 
 ## An action
 
-- **R11.** Sections in this order: `## Input` when the action consumes something, then `## Output`, `## Process`, `## Test`. A section earns its content or is omitted, never invented or reordered.
-- **R12.** A `## Process` step opens with `**Label.**`, then one imperative sentence. A number is always a step run in order; a case, a branch, a loop back, or a constraint is a dash sub-item of the step it belongs to, never a number. A fenced block is content the action emits, not structure: leave it as its consumer needs it.
-- **R13.** `## Test` is a `| Case | Pass |` table, each row observable by real execution, never a mock.
+- **R11.** `# <NN> - <Title>`, then one sentence: what the action produces. Then `## Input` when the action consumes something, `## Process`, `## Output`, and `## Rules` when a constraint holds for the whole action. A section earns its content or is omitted, never invented or reordered.
+- **R12.** A `## Process` step is one imperative sentence, numbered in run order. A case or a loop back is a dash sub-item of its step, or a step that says where to go back to. When the flow continues, the last step names the next action file.
+- **R13.** `## Rules` holds what the action must or must not do throughout, one per line. A rule two actions share belongs to the router's transversal rules.
 
 ## A reference
 
@@ -36,5 +36,6 @@ The contract every generated skill satisfies. `skill-generate` obeys it too.
 ## Across all of them
 
 - **R17.** One fact, one home. An action acts within a router rule and cites a shared reference, never restating either.
-- **R18.** The first citation of a file in each authoring file is a relative Markdown link, `[name](path)`, except for sibling references under R14. Repeat mentions within the same file use only the filename in backticks when unambiguous; retain the link when ambiguous. Never an `@` include: nothing resolves those. A citation sits in the sentence that uses it, a `## Process` step to read the file, an `## Output` or `## Test` line to conform to it. Never a block or a line of its own.
+- **R18.** The first citation of a file in each authoring file is a relative Markdown link, `[name](path)`, except for sibling references under R14. Repeat mentions within the same file use only the filename in backticks when unambiguous; retain the link when ambiguous. Never an `@` include: nothing resolves those. A citation sits in the sentence that uses it, a `## Process` step to read the file, an `## Output` or `## Rules` line to conform to it. Never a block or a line of its own.
 - **R19.** One file, one artifact. Split two apart only when a path needs one without the other.
+- **R20.** No file names another skill or `/command`, its own plugin's included: it states the capability it needs, and the host finds a provider by description. Only an orchestrator's references name the providers they sequence.

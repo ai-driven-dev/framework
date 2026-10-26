@@ -6,22 +6,24 @@ argument-hint: create | modify
 
 # Skill Generate
 
+## Actions
+
 ```mermaid
 flowchart LR
   new([create]) --> scope --> plan --> write --> validate
   edit([modify]) --> plan
+  validate -->|"a fix changed a file"| validate
+  validate --> done((done))
 ```
 
-## Actions
+Read an action's file, then do what it says.
 
-Run the flow above. Read only the next action file.
-
-| Action   | Does                       |
-| -------- | -------------------------- |
-| scope    | frame the skill and target |
-| plan     | break it into actions      |
-| write    | write the router and files |
-| validate | review the files and fix   |
+| Action | File |
+| ------ | ---- |
+| scope | [actions/01-scope.md](actions/01-scope.md) |
+| plan | [actions/02-plan.md](actions/02-plan.md) |
+| write | [actions/03-write.md](actions/03-write.md) |
+| validate | [actions/04-validate.md](actions/04-validate.md) |
 
 ## Transversal rules
 
