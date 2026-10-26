@@ -1,7 +1,7 @@
 const assert = require("node:assert/strict");
 const test = require("node:test");
 
-const { buildHtml, measureRms, musicSegments, musicSections, sceneDuration, soundCues, soundTrack, thumbnailHtml, totalDuration } = require("../../.claude/skills/release-video/assets/render-release-video.cjs");
+const { buildHtml, measureRms, musicSegments, musicSections, sceneDuration, soundCues, posterArgs, soundTrack, thumbnailHtml, totalDuration } = require("../../.claude/skills/release-video/assets/render-release-video.cjs");
 
 const window = (rows) => ({ label: "Claude Code · ~/acme-app", rows });
 
@@ -80,6 +80,17 @@ test("the thumbnail is its own still composition: the logo, the release and the 
   assert.match(html, /<p class="themes">Télémétrie · Plan<\/p>/);
   assert.match(html, /data-duration="1"/);
   assert.doesNotMatch(html, /class="hl|typed|enter\(/);
+});
+
+test("the video opens on the thumbnail for one frame, so a chat shows it as the preview, and keeps its bitrate", () => {
+  const args = posterArgs({ video: "v.mp4", poster: "t.png", out: "o.mp4", bitrate: 866446 });
+  const joined = args.join(" ");
+
+  assert.ok(args.includes("t.png") && args.includes("v.mp4") && args.at(-1) === "o.mp4");
+  assert.match(joined, /concat=n=2:v=1:a=0/);
+  assert.match(joined, /adelay=34\|34/);
+  assert.equal(args[args.indexOf("-b:v") + 1], "866k");
+  assert.equal(args[args.indexOf("-maxrate") + 1], "1083k");
 });
 
 test("a thumbnail with no themes draws none", () => {
