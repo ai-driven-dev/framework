@@ -28,11 +28,7 @@ A printed report from [access-report.md](../assets/access-report.md), or one sto
    - `mcp`: a read tool of that server.
    - `http`: one authenticated `GET`, the token taken from the environment.
    - `web`: the assistant's browser tool, when it has one.
-4. **Report.** Fill the report, one status per row:
-   - ✅ the read on the expected target worked, as the expected account when memory records one.
-   - ❌ the read failed: name one corrective action, then probe the next row.
-   - 🔌 the command, server or browser tool is absent.
-   - ⚠️ the read worked as another account than memory records, naming both; or memory records no target, next step: record it in memory.
+4. **Report.** Follow [access-report.md](../assets/access-report.md).
 
 ## Test
 
