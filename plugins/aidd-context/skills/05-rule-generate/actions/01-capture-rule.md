@@ -13,6 +13,7 @@ Approved candidates with planned paths, or confirmed sources, operation and dest
 ## Process
 
 1. Confirm the operation and [destination](../references/rule-publication.md).
+   - Detect installed hosts using the shared AI tool detection contract. For Kilo, the six signals are `.kilo/`, root `kilo.json`, root `kilo.jsonc`, `.kilo/kilo.json`, `.kilo/kilo.jsonc`, and legacy `.kilocode/`; `AGENTS.md` is only a wiring target and OpenCode JSON alone is not a Kilo signal. Legacy detection never changes the canonical `.kilo/` output paths.
    - Hosts: reuse the existing rule's hosts, else ask. Missing hosts: detect, propose installation, await selection before drafting.
    - For Kilo, inspect all four project configurations before writing. If several are candidates and no unique configuration owns the exact rule path, present the candidates and require an explicit choice; do not publish without it.
    - Kilo does not support enforceable `paths` scope. If Kilo is selected, a path-scoped candidate is a refusal; remove `paths` or remove Kilo from the targets before replanning.

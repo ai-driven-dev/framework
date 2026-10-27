@@ -92,6 +92,18 @@ test("installed writer publishes a Kilo rule and exact instruction, then reruns 
   assert.deepEqual(JSON.parse(p.read(".kilo/kilo.jsonc")).instructions, []);
 });
 
+test("a legacy .kilocode project keeps new Kilo rule output under canonical .kilo paths", (t) => {
+  const p = publisher(t);
+  p.put(".kilocode/.gitkeep", "");
+  assert.equal(p.run().status, 0);
+  assert.match(p.read(instruction), /Use the sentinel word cobalt/);
+  assert.deepEqual(
+    [...p.snapshot().keys()].filter((name) => name.startsWith(".kilocode/")).sort(),
+    [".kilocode/", ".kilocode/.gitkeep"].sort(),
+  );
+  assert.equal(fs.existsSync(path.join(p.root, ".kilocode/rules")), false);
+});
+
 test("Kilo publication preserves JSONC comments, duplicate entries, order and unrelated values", (t) => {
   const p = publisher(t);
   const original = fixture("comments-and-trailing.jsonc");
