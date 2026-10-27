@@ -1,10 +1,10 @@
 # Nettoyage documentaire de la PR #992
 
-Date : 12 octobre 2026. Dossier concerné : cette archive de tâche uniquement.
+Date de l'archive initiale : 12 octobre 2026. Mise à jour de l'inventaire : 27 octobre 2026. Dossier concerné : cette archive de tâche uniquement.
 
 ## Résultat
 
-Inventaire initial : 212 fichiers, 2,1 Mo. Après suppression de 157 fichiers, 55 fichiers existants sont conservés ; ce rapport ajoute un 56e fichier. L’objectif était une réduction forte vers 42, pas un quota. Volume final : 472 Ko alloués (`du -sh`), 291 776 octets de taille apparente (`du -sb`).
+Inventaire initial : 212 fichiers, 2,1 Mo. L'archive issue de la PR #992 comptait 58 fichiers ; cette passe retire trois artefacts redondants et ajoute `review.md`, soit 56 fichiers après nettoyage. L’objectif était une réduction forte vers 42, pas un quota. Les tailles historiques ci-dessous ne sont pas réutilisées comme mesure de l'état courant ; l'inventaire courant est vérifié par les validations de cette passe.
 
 Les plans actifs, les six phases, rapports, matrice, décisions importantes, limites et un minimum de replay de phase 4 sont conservés. Les résultats historiques dont les journaux ont été retirés restent identifiés comme historiques ; aucun succès nouveau n’est revendiqué.
 
@@ -14,7 +14,7 @@ Le texte retrouvé en lecture seule dans `stash@{0}` indique que le backup local
 
 Le stash n’a pas été appliqué, dépilé ni supprimé. Ses deux nouveaux journaux phase 2 obsolètes n’ont pas été restaurés. Le changement utile de `replay-kilo.sh` a été reporté manuellement : les sorties masquent maintenant le `$HOME` courant en `$USER_HOME` par remplacement littéral et les répertoires temporaires utilisent `$TMPDIR` lorsqu’il est défini. Cela rend le masquage indépendant d’un home particulier et sûr face aux caractères spéciaux shell, sans ajouter de garantie macOS/Windows. Le script mis à jour n’a pas été exécuté. L’essai `attempt-04` conservé correspond à une version précédente du script. Un futur replay doit utiliser un nom d’essai inédit pour préserver cette capture.
 
-Preuves supplémentaires gardées : jeux d’entrée/sortie expurgés de l’observation phase 2 ; preuve minimale phase 4 avec JSONL réussi, code de sortie, modèle gratuit sélectionné et hashes avant/après ; logs de mutation phase 5 utiles à l’audit du contrat de sécurité ; description de la correction CodeQL et de ses limites de plateforme. Les exports de session historiques phase 4 ont été retirés car leurs marqueurs conservaient des identifiants techniques ; leur contenu n’est pas reconstruit.
+Preuves supplémentaires gardées : jeux d’entrée/sortie expurgés de l’observation phase 2 ; preuve minimale phase 4 avec JSONL réussi, code de sortie, modèle gratuit sélectionné et hashes avant/après ; log de mutations phase 5 utile à l’audit du contrat de sécurité ; description de la correction CodeQL et de ses limites de plateforme. Les exports de session historiques phase 4 ont été retirés car leurs marqueurs conservaient des identifiants techniques ; leur contenu n’est pas reconstruit.
 
 ## Limites de validation à conserver
 
@@ -27,7 +27,7 @@ Preuves supplémentaires gardées : jeux d’entrée/sortie expurgés de l’obs
 
 ## Vérifications après nettoyage
 
-Le contrôle Markdown rapporte 0 lien cassé dans 954 fichiers ; les 16 tests des vérificateurs documentaires passent. `bash -n` accepte `replay-kilo.sh`, les hashes de la fixture correspondent au manifeste et les fichiers de hash avant/après sont identiques. Le replay lui-même n’a pas été lancé. Aucune archive conservée n’est une dépendance d’un test ou script permanent du dépôt. Aucun code fonctionnel ni test permanent n’a été modifié. Aucun fichier n’a été staged ou commité. Le `git diff --check` standard signale les deux lignes modifiées de `user-request.md` parce que le document historique conserve ses fins CRLF ; le même contrôle passe lorsque Git reconnaît explicitement CRLF comme fin de ligne (`core.whitespace=cr-at-eol`).
+Le contrôle Markdown de cette passe rapporte 0 lien cassé dans 38 fichiers ; les 43 tests ciblés des vérificateurs documentaires et du contrat de revue passent. `bash -n` accepte `replay-kilo.sh`, les hashes de la fixture correspondent au manifeste et les fichiers de hash avant/après sont identiques selon les vérifications déjà consignées. Le replay lui-même n’a pas été lancé. Aucune archive conservée n’est une dépendance d’un test ou script permanent du dépôt. Aucun code fonctionnel ni test permanent n’a été modifié. Aucun fichier n’a été staged ou commité. `git diff --check` passe.
 
 Le scan de confidentialité n’a détecté aucun motif courant de secret (clés/API tokens, clés privées, mot de passe ou bearer token). L’identité du fork privé et les chemins personnels `$HOME` ont été expurgés ou normalisés dans les fichiers conservés où ils apparaissaient. Les journaux retenus demeurent des traces historiques expurgées, pas des sorties reproductibles.
 
@@ -51,7 +51,6 @@ Le scan de confidentialité n’a détecté aucun motif courant de secret (clés
 - `evidence/phase-4/attempt-04-outside-sandbox/workflow-run.redacted.jsonl`
 - `evidence/phase-4/caller-receipt.json`
 - `evidence/phase-4/extract-free-model.cjs`
-- `evidence/phase-4/generated-artifact-hashes.txt`
 - `evidence/phase-4/generated-project/.kilo/agents/assets/agent-payload.txt`
 - `evidence/phase-4/generated-project/.kilo/agents/verify-agent.md`
 - `evidence/phase-4/generated-project/.kilo/commands/verify-workflow.md`
@@ -59,7 +58,6 @@ Le scan de confidentialité n’a détecté aucun motif courant de secret (clés
 - `evidence/phase-4/replay-kilo.sh`
 - `evidence/phase-4/source-contract-hashes.txt`
 - `evidence/phase-4/validate-generation.cjs`
-- `evidence/phase-5/source-contract-final-sweep.log`
 - `evidence/phase-5/source-contract-mutations.log`
 - `evidence/security-fix/filesystem-access.md`
 - `evidence/security-fix/platform-followup.md`
@@ -85,12 +83,20 @@ Le scan de confidentialité n’a détecté aucun motif courant de secret (clés
 - `plan-adjustments.md`
 - `plan.md`
 - `planning-validation.md`
-- `remote-state.json`
+- `evidence/stage-b-targeted-validation.md`
+- `follow-up-path-scoping.md`
+- `review.md`
 - `test-strategy.md`
 - `user-request.md`
 - `cleanup-report.md` (ce manifeste et les décisions de nettoyage)
 
-## Fichiers supprimés
+## Fichiers retirés dans la passe minimale du 27 octobre 2026
+
+- `evidence/phase-4/generated-artifact-hashes.txt` : doublon de la preuve de hashes dans `generation-validation.json` et des sorties de replay conservées ; le nom reste utilisé uniquement pour les sorties générées par le script, pas comme artefact versionné.
+- `evidence/phase-5/source-contract-final-sweep.log` : détail redondant avec le résultat final et le log de mutations conservé, désormais référencés depuis `phase-5-report.md` et `coverage-matrix.md`.
+- `remote-state.json` : snapshot volumineux et sensible aux métadonnées distantes, remplacé par les faits d'audit minimaux dans `overlap-979.md`.
+
+## Fichiers supprimés lors du nettoyage initial
 
 - `assertions-phase-1.md`
 - `assertions-phase-3.md`

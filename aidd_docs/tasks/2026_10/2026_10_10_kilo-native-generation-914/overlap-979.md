@@ -2,7 +2,13 @@
 
 Lecture GitHub du 10 octobre 2026 : [#979](https://github.com/ai-driven-dev/framework/pull/979) open, draft=true, merged=false, base next, base_sha 7f0b344b4ae37c083aa9473e0e6347b196b630ef, head 303e17a1ba995dd19ec769381f7bbb594fbd1d7c. Le merge_commit_sha fourni pour une PR ouverte n'est pas une fusion réalisée. Base locale #914 : 41e91691b5837a8c27475d0115725131bb53bf41. Ne pas supposer que next distant correspond encore à cette base.
 
-Patch réellement inspecté : actions/02-write-rule.md et nouveau scripts/write-rule.cjs, après listing des fichiers modifiés (197). Métadonnées, description et listing archivés dans remote-state.json. Pas de revue exhaustive des 197 fichiers de #979 prétendue ici.
+Patch réellement inspecté : actions/02-write-rule.md et nouveau scripts/write-rule.cjs, après listing des fichiers modifiés (197). Les faits minimaux utiles de l'état distant sont synthétisés ci-dessous ; le listing complet n'est pas conservé. Pas de revue exhaustive des 197 fichiers de #979 prétendue ici.
+
+## État distant synthétisé
+
+Vérifié le 10 octobre 2026 : l'issue [#914](https://github.com/ai-driven-dev/framework/issues/914) était ouverte et intitulée « feat(aidd-context): add Kilo-native generation targets ». La PR [#979](https://github.com/ai-driven-dev/framework/pull/979) était ouverte, en brouillon, et marquée mergeable ; sa base était `next` à `7f0b344b4ae37c083aa9473e0e6347b196b630ef`, sa tête `303e17a1ba995dd19ec769381f7bbb594fbd1d7c`, avec 3 commits et 197 fichiers modifiés. Le champ `merge_commit_sha` observé n'est pas traité comme une fusion réalisée.
+
+La PR [#971](https://github.com/ai-driven-dev/framework/pull/971) était déjà fusionnée dans `next` le 8 octobre 2026, par le commit `12777d03808cee29f611e18d3816ae62ebc5c969`, avec 23 commits et 75 fichiers modifiés. Ces faits remplacent le snapshot machine-readable supprimé ; les identifiants d'utilisateurs, avatars, descriptions complètes et chemins de listing ne sont pas nécessaires à l'audit de #914.
 
 Le writer de #979 produit sources aidd_docs/rules, sorties Claude/Cursor/Copilot et contribution signée dans AGENTS.md pour Codex/OpenCode. Il exclut Kilo. Préflight global des destinations et ownership, puis renommages atomiques par fichier ; sa description exclut explicitement le rollback global après panne disque. Donc extension par simple ajout de kilo dans TOOLS insuffisante : il faut gérer config + règle + source comme une publication cohérente.
 

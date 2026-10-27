@@ -25,7 +25,7 @@ Two earlier sandbox runs historically reported `getaddrinfo ETIMEOUT api.kilo.ai
 
 ## Generation and artifact provenance
 
-`evidence/phase-4/caller-receipt.json` records generation by the current Codex caller following the installed `aidd-context` router and phase-4 capture/write/validate actions at HEAD `19c81c4f`. Inputs are explicitly synthetic, not interactive user answers. `generation-validation.json` records YAML, canonical path, allowed fields and body validation. `source-contract-hashes.txt` records the candidate sources; `generated-artifact-hashes.txt` records the generated artifacts.
+`evidence/phase-4/caller-receipt.json` records generation by the current Codex caller following the installed `aidd-context` router and phase-4 capture/write/validate actions at HEAD `19c81c4f`. Inputs are explicitly synthetic, not interactive user answers. `generation-validation.json` records YAML, canonical path, allowed fields and hashes for the generated artifacts. `source-contract-hashes.txt` records the candidate sources; replay attempts record their own before/after artifact hashes.
 
 `generated-project/` is the exact generated fixture: `.kilo/agents/verify-agent.md`, its bundled payload, and `.kilo/commands/verify-workflow.md`. The payload SHA-256 is `55630dd7c27452fb05892541f2cf1c2f0748853417b1bbe00c5e4345243bad6e`. The large full model catalog is not duplicated; the selected free entry is preserved as filtered stdout. See the [evidence inventory](evidence/phase-4/README.md).
 

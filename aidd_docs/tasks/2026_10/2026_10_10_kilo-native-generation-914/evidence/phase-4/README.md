@@ -1,6 +1,6 @@
 # Phase 4 evidence inventory
 
-- `caller-receipt.json`, `generation-validation.json`, `generated-artifact-hashes.txt`, `source-contract-hashes.txt`: synthetic caller inputs, structural validation and provenance.
+- `caller-receipt.json`, `generation-validation.json`, `source-contract-hashes.txt`: synthetic caller inputs, structural validation and provenance. The generated-artifact hashes are recorded in `generation-validation.json` and in each replay attempt.
 - `generated-project/`: exact generated Kilo agent, workflow and payload fixture.
 - `replay-kilo.sh`, `extract-free-model.cjs`, `validate-generation.cjs`: isolated replay, compact free-model catalog extraction and fixture validation.
 - `attempt-04-outside-sandbox/`: retained successful workflow JSONL and exit code, selected free-model catalog entry, and artifact hashes before and after Kilo consumed the fixture. This is historical evidence from the original authorized run.
