@@ -1,4 +1,5 @@
 const assert = require("node:assert/strict");
+const { createHash } = require("node:crypto");
 const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
@@ -48,6 +49,14 @@ function injected(t, root, source) {
 
 function modes(root, paths) {
   return new Map(paths.map((relative) => [relative, fs.statSync(path.join(root, relative)).mode & 0o7777]));
+}
+
+function hashes(root, paths) {
+  return new Map(paths.map((relative) => [relative, createHash("sha256").update(fs.readFileSync(path.join(root, relative))).digest("hex")]));
+}
+
+function temporaryFiles(snapshot) {
+  return [...snapshot.keys()].filter((name) => name.endsWith(".tmp"));
 }
 
 function publisher(t) {
@@ -229,12 +238,15 @@ test("late failure restores existing file bytes and modes", { skip: process.plat
   const tracked = [".kilo/kilo.jsonc", instruction, "aidd_docs/rules/01-standards/1-naming.md", "AGENTS.md"];
   const before = p.snapshot();
   const beforeModes = modes(p.root, tracked);
+  const beforeHashes = hashes(p.root, tracked);
   const env = injected(t, p.root, "const fs=require('node:fs');const rename=fs.renameSync;fs.renameSync=function(from,to){if(to.endsWith('/AGENTS.md'))throw new Error('injected late shared failure');return rename.apply(this,arguments)};");
   const result = p.run({ ...rule, body: "# Naming\n\nChanged body.\n" }, "codex,kilo", [], env);
   assert.notEqual(result.status, 0);
   assert.match(result.stderr, /injected late shared failure/);
   assert.deepEqual(p.snapshot(), before);
   assert.deepEqual(modes(p.root, tracked), beforeModes);
+  assert.deepEqual(hashes(p.root, tracked), beforeHashes);
+  assert.deepEqual(temporaryFiles(p.snapshot()), []);
 });
 
 test("successful config replacement preserves private mode", { skip: process.platform === "win32" }, (t) => {
@@ -295,6 +307,57 @@ test("late config rename failure restores canonical and native outputs", (t) => 
   assert.deepEqual(p.snapshot(), before);
 });
 
+test("hardlinked Kilo config and rule outputs are replaced without mutating their external links", { skip: process.platform === "win32" }, (t) => {
+  const p = publisher(t);
+  p.put(".kilo/kilo.jsonc", '{"other":true}\n');
+  const config = path.join(p.root, ".kilo/kilo.jsonc");
+  const outsideConfig = path.join(path.dirname(p.root), `aidd-kilo-config-hardlink-${process.pid}-${Math.random().toString(36).slice(2)}.jsonc`);
+  fs.linkSync(config, outsideConfig);
+  t.after(() => fs.rmSync(outsideConfig, { force: true }));
+  const externalConfig = fs.readFileSync(outsideConfig);
+  const externalConfigMode = fs.statSync(outsideConfig).mode & 0o7777;
+
+  assert.equal(p.run().status, 0);
+  assert.deepEqual(fs.readFileSync(outsideConfig), externalConfig);
+  assert.equal(fs.statSync(outsideConfig).mode & 0o7777, externalConfigMode);
+
+  const native = path.join(p.root, instruction);
+  const outsideNative = path.join(path.dirname(p.root), `aidd-kilo-rule-hardlink-${process.pid}-${Math.random().toString(36).slice(2)}.md`);
+  fs.linkSync(native, outsideNative);
+  t.after(() => fs.rmSync(outsideNative, { force: true }));
+  const externalNative = fs.readFileSync(outsideNative);
+  const externalNativeMode = fs.statSync(outsideNative).mode & 0o7777;
+
+  assert.equal(p.run({ ...rule, body: "# Naming\n\nChanged after hardlink.\n" }).status, 0);
+  assert.deepEqual(fs.readFileSync(outsideNative), externalNative);
+  assert.equal(fs.statSync(outsideNative).mode & 0o7777, externalNativeMode);
+  assert.match(p.read(instruction), /Changed after hardlink/);
+  assert.deepEqual(temporaryFiles(p.snapshot()), []);
+});
+
+test("Kilo rejects a non-regular config without writing", (t) => {
+  const p = publisher(t);
+  fs.mkdirSync(path.join(p.root, "kilo.jsonc"), { recursive: true });
+  const before = p.snapshot();
+  const result = p.run();
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /Cannot safely read|invalid config path|directory|regular/u);
+  assert.deepEqual(p.snapshot(), before);
+  assert.deepEqual(temporaryFiles(p.snapshot()), []);
+});
+
+test("Kilo rejects a non-regular rule output without writing", (t) => {
+  const p = publisher(t);
+  p.put(".kilo/kilo.jsonc", "{}\n");
+  fs.mkdirSync(path.join(p.root, ".kilo/rules/01-standards/1-naming.md"), { recursive: true });
+  const before = p.snapshot();
+  const result = p.run();
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /EISDIR|directory|regular|read/u);
+  assert.deepEqual(p.snapshot(), before);
+  assert.deepEqual(temporaryFiles(p.snapshot()), []);
+});
+
 test("no config proposes .kilo/kilo.jsonc without creating it", (t) => {
   const p = project(t);
   const before = p.snapshot();
@@ -312,37 +375,75 @@ test("each sole project config is selected, regardless of format or location", (
   }
 });
 
-test("one exact owner wins across four configs; nested, glob and comment witnesses do not", (t) => {
-  const p = project(t);
-  p.put(".kilo/kilo.jsonc", fixture("comments-and-trailing.jsonc"));
-  p.put(".kilo/kilo.json", '{"instructions":[".kilo/rules/*.md"]}\n');
-  p.put("kilo.json", `{"instructions":["${instruction}"]}\n`);
-  p.put("kilo.jsonc", `{// "${instruction}"\n "instructions":[]}`);
-  const choice = api().inspectProject(p.root, instruction);
-  assert.equal(choice.selectedPath, "kilo.json");
-  assert.equal(choice.needsChoice, false);
-  assert.deepEqual(choice.candidates.map((item) => item.path), [".kilo/kilo.json", ".kilo/kilo.jsonc", "kilo.json", "kilo.jsonc"]);
-});
+const configPaths = [".kilo/kilo.json", ".kilo/kilo.jsonc", "kilo.json", "kilo.jsonc"];
+const subsets = (values, size, start = 0, prefix = [], result = []) => {
+  if (prefix.length === size) return result.push([...prefix]), result;
+  for (let index = start; index <= values.length - (size - prefix.length); index++) {
+    prefix.push(values[index]);
+    subsets(values, size, index + 1, prefix, result);
+    prefix.pop();
+  }
+  return result;
+};
 
-test("multiple configs without an owner require choice; cancellation and explicit choice never write", (t) => {
-  const p = project(t);
-  p.put(".kilo/kilo.json", "{}\n");
-  p.put("kilo.jsonc", "{}\n");
-  const before = p.snapshot();
-  const undecided = api().inspectProject(p.root, instruction);
-  assert.equal(undecided.selectedPath, null);
-  assert.equal(undecided.needsChoice, true);
-  assert.equal(api().inspectProject(p.root, instruction, null).selectedPath, null);
-  assert.equal(api().inspectProject(p.root, instruction, "kilo.jsonc").selectedPath, "kilo.jsonc");
-  assert.deepEqual(p.snapshot(), before);
-});
+for (const owner of configPaths) {
+  test(`one exact owner wins across all four configs when it is ${owner}`, (t) => {
+    const p = project(t);
+    for (const relative of configPaths) {
+      p.put(relative, relative === owner ? `{"instructions":["${instruction}"]}\n` : "{}\n");
+    }
+    const before = p.snapshot();
+    const choice = api().inspectProject(p.root, instruction);
+    assert.equal(choice.selectedPath, owner);
+    assert.equal(choice.needsChoice, false);
+    assert.equal(choice.multipleOwners, undefined);
+    assert.deepEqual(choice.candidates.map((item) => item.path), configPaths);
+    assert.deepEqual(p.snapshot(), before);
+  });
+}
 
-test("two exact owners remain ambiguous until explicit selection", (t) => {
-  const p = project(t);
-  for (const name of [".kilo/kilo.json", "kilo.jsonc"]) p.put(name, `{"instructions":["${instruction}"]}`);
-  assert.equal(api().inspectProject(p.root, instruction).needsChoice, true);
-  assert.equal(api().inspectProject(p.root, instruction, "kilo.jsonc").selectedPath, "kilo.jsonc");
-});
+for (const size of [2, 3, 4]) {
+  for (const present of subsets(configPaths, size)) {
+    test(`configs without an owner require explicit choice for ${present.join(", ")}`, (t) => {
+      const p = project(t);
+      for (const relative of present) p.put(relative, "{}\n");
+      const before = p.snapshot();
+      const undecided = api().inspectProject(p.root, instruction);
+      assert.equal(undecided.selectedPath, null);
+      assert.equal(undecided.needsChoice, true);
+      assert.equal(undecided.multipleOwners, false);
+      assert.deepEqual(p.snapshot(), before);
+
+      const chosen = api().inspectProject(p.root, instruction, present[0]);
+      assert.equal(chosen.selectedPath, present[0]);
+      assert.equal(chosen.needsChoice, false);
+      assert.deepEqual(p.snapshot(), before);
+
+      assert.throws(() => api().inspectProject(p.root, instruction, "missing-kilo.jsonc"), /Chosen Kilo config is absent/u);
+      assert.deepEqual(p.snapshot(), before);
+    });
+  }
+}
+
+for (const owners of subsets(configPaths, 2)) {
+  test(`multiple owners remain ambiguous until explicit choice: ${owners.join(", ")}`, (t) => {
+    const p = project(t);
+    for (const relative of configPaths) {
+      p.put(relative, owners.includes(relative) ? `{"instructions":["${instruction}"]}\n` : "{}\n");
+    }
+    const before = p.snapshot();
+    const undecided = api().inspectProject(p.root, instruction);
+    assert.equal(undecided.selectedPath, null);
+    assert.equal(undecided.needsChoice, true);
+    assert.equal(undecided.multipleOwners, true);
+    assert.deepEqual(p.snapshot(), before);
+
+    const chosen = api().inspectProject(p.root, instruction, owners[1]);
+    assert.equal(chosen.selectedPath, owners[1]);
+    assert.equal(chosen.needsChoice, false);
+    assert.deepEqual(p.snapshot(), before);
+  });
+}
 
 test("JSONC insertion preserves every original byte, duplicate and order", () => {
   const original = fixture("comments-and-trailing.jsonc");
