@@ -24,9 +24,19 @@ if (!new Set(["claude", "codex"]).has(HOST)) {
   console.error(`Unsupported host: ${HOST}. Use --host=claude or --host=codex.`);
   process.exit(2);
 }
-const JOBS = Number((args.find((a) => a.startsWith("--jobs=")) || "--jobs=4").split("=")[1]);
+function positiveIntegerOption(name, fallback) {
+  const option = args.find((a) => a.startsWith(`${name}=`));
+  const raw = option === undefined ? String(fallback) : option.slice(name.length + 1);
+  const value = Number(raw);
+  if (!/^\d+$/u.test(raw) || !Number.isSafeInteger(value) || !Number.isFinite(value) || value <= 0) {
+    console.error(`${name} must be a finite positive integer; received "${raw}".`);
+    process.exit(2);
+  }
+  return value;
+}
+const JOBS = positiveIntegerOption("--jobs", 4);
 const filter = args.find((a) => !a.startsWith("--"));
-const REPEAT = Number((args.find((a) => a.startsWith("--repeat=")) || "--repeat=1").split("=")[1]);
+const REPEAT = positiveIntegerOption("--repeat", 1);
 const CASE = (args.find((a) => a.startsWith("--case=")) || "--case=").split("=")[1];
 const selected = CASES.filter(
   (c) => (!filter || c.skill === filter || c.plugin === filter) && (!CASE || c.name.toLowerCase().includes(CASE.toLowerCase())),

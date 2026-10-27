@@ -23,6 +23,42 @@ test("static skill-eval cases specify idempotence and critical refusal checks", 
   }
 });
 
+test("skill eval rejects invalid jobs and repeat counts before launching a host", (t) => {
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "skill-eval-counts-"));
+  t.after(() => fs.rmSync(tmp, { recursive: true, force: true }));
+  const spawnLog = path.join(tmp, "host-spawns.log");
+  const preload = path.join(tmp, "forbid-host.cjs");
+  fs.writeFileSync(preload, [
+    'const fs = require("node:fs");',
+    'const childProcess = require("node:child_process");',
+    'childProcess.spawn = (command) => {',
+    '  fs.appendFileSync(process.env.SKILL_EVAL_SPAWN_LOG, `${command}\\n`);',
+    '  throw new Error("host launch must not happen for invalid counts");',
+    '};',
+    'require("node:module").syncBuiltinESMExports();',
+  ].join("\n"));
+  const invalid = [
+    "--jobs=0", "--jobs=-1", "--jobs=1.5", "--jobs=Infinity", "--jobs=abc",
+    "--repeat=0", "--repeat=-1", "--repeat=1.5", "--repeat=NaN", "--repeat=abc",
+  ];
+  for (const option of invalid) {
+    const result = spawnSync(process.execPath, [
+      "--require", preload,
+      path.join(ROOT, "scripts/skill-eval.mjs"),
+      "--host=codex",
+      "--case=filename rule keeps a dotless name",
+      option,
+    ], {
+      encoding: "utf8",
+      env: { ...process.env, SKILL_EVAL_SPAWN_LOG: spawnLog },
+    });
+    assert.equal(result.status, 2, `${option}\n${result.stdout}${result.stderr}`);
+    assert.match(result.stderr, /(jobs|repeat).*positive integer/iu, option);
+    assert.doesNotMatch(result.stdout, /Running \d+ case/u, option);
+  }
+  assert.equal(fs.existsSync(spawnLog) ? fs.readFileSync(spawnLog, "utf8") : "", "");
+});
+
 test("bundled skills and agents leave model selection to the host", () => {
   const plugins = path.join(ROOT, "plugins");
   const files = fs.readdirSync(plugins, { recursive: true }).filter((file) =>
