@@ -45,7 +45,7 @@ Only `/aidd-orchestrator:01-sdlc` names an agent, by its role (`validator`), so 
 | [Explorer](../plugins/aidd-orchestrator/agents/explorer.md) | Find files and symbols, trace a flow, answer a codebase question before a change | The answer, with sources and unknowns | No |
 | [Executor](../plugins/aidd-orchestrator/agents/executor.md) | Write or fix code and docs within a defined scope, then verify them | `COMPLETE`, `INCOMPLETE` or `BLOCKED`, with changes and checks run | Yes |
 | [Validator](../plugins/aidd-orchestrator/agents/validator.md) | Confirm delivered work meets the request and its acceptance criteria | `Validated: yes` or `no`, with what failed | No; runs checks |
-| [Reviewer](../plugins/aidd-orchestrator/agents/reviewer.md) | Find defects, contradictions, duplication and needless complexity in finished work | `no actionable findings`, `changes needed` or `insufficient evidence`, with findings | No; only the review report a workflow asks for |
+| [Reviewer](../plugins/aidd-orchestrator/agents/reviewer.md) | Find defects, contradictions, duplication and needless complexity in finished work | `no actionable findings`, `changes needed` or `insufficient evidence`, with findings | No |
 
 ## 📦 Install
 
@@ -53,13 +53,28 @@ Install the `aidd-orchestrator` plugin: `/plugin install aidd-orchestrator@aidd-
 
 ## 🧠 Models
 
-No model is pinned. Each host applies its own default for subagents, usually the model of the session that called them. A model you declare in an agent reaches every host in its own format.
+The plugin ships no model, so an agent runs on the model of the session that called it. A build pins one per role and provider from [`agent-models.json`](../cli/src/contexts/tools/domain/formats/agent-models.json): the explorer, executor and validator get the provider's light model, the reviewer its standard one, each with an effort written the host's way.
+
+```bash
+aidd translate <framework> --to opencode --as flat --out . --provider openai
+```
+
+| Host | Providers | Written as |
+| --- | --- | --- |
+| Claude Code | anthropic | `model`, `effort` |
+| Codex | openai | `model`, `model_reasoning_effort` |
+| Copilot | openai, anthropic | `model`, `reasoningEffort` |
+| OpenCode | openai, anthropic, mistral | `model: <provider>/<model>#<effort>` |
+| Cursor | anthropic | `model: <model>[effort=<effort>]` |
+| Kilo | openai, anthropic, mistral | `model: <provider>/<model>`, `variant` |
+
+`make reload` reads the provider per host from [`scripts/reload-agents.json`](../scripts/reload-agents.json). A model an agent declares itself is kept.
 
 ## 🚧 Limits
 
 - **Tools:** every agent inherits the calling session's tools and permissions; what it writes is an instruction, not a restriction.
 - **Codex:** a Codex plugin cannot carry agents, so only the flat distribution installs them, in `.codex/agents/`. Codex loads them only in a trusted project.
-- **Models:** OpenCode V1 reads the same file but not the `#<effort>` variant.
+- **Models:** OpenCode V1 reads the same file but not the `#<effort>` variant. A plugin install (`/plugin install`, `aidd setup`) pins no model; only a build does.
 - **Updates:** reinstalling replaces the agents still shipped; one removed from the plugin stays where a copy put it until you delete it.
 
 Sources: [Claude Code sub-agents](https://code.claude.com/docs/en/sub-agents), [Copilot custom agents](https://docs.github.com/en/copilot/reference/custom-agents-configuration), [OpenCode agents](https://opencode.ai/v2/docs/agents), [Codex subagents](https://developers.openai.com/codex/subagents), [Cursor subagents](https://cursor.com/docs/subagents).

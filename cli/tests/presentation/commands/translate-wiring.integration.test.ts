@@ -217,6 +217,11 @@ describe("aidd translate — the help surface", () => {
       ["--out <dir>", "Output directory (marketplace dist or project root)", undefined],
       ["--as <marketplace|flat>", "Output layout", "marketplace"],
       ["--force", "Overwrite existing files at canonical paths under --out", undefined],
+      [
+        "--provider <provider>",
+        "Give each agent its role's model at this provider (openai, anthropic, mistral)",
+        undefined,
+      ],
     ]);
     expect(
       translateCommand()

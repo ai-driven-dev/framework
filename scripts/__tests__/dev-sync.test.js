@@ -195,6 +195,7 @@ function runSync(fakeBin, home, args = ["all"], overrides = {}) {
       COPILOT_INSTRUCTIONS: join(home, ".copilot/copilot-instructions.md"),
       CURSOR_INSTRUCTIONS: join(home, ".cursor/rules/aidd-agents.mdc"),
       CURSOR_PLUGINS: join(home, ".cursor/plugins/local"),
+      RELOAD_AGENTS: join(home, "no-reload-agents.json"),
       OPENCODE_DISABLE_CLAUDE_CODE: "",
       OPENCODE_DISABLE_CLAUDE_CODE_PROMPT: "",
       ...overrides,
@@ -779,6 +780,7 @@ for (const customPluginRoot of [false, true]) {
       const fakeBin = join(root, "bin"), home = join(root, "home"), config = join(home, "native-claude");
       const plugins = customPluginRoot ? join(home, "native-plugins") : join(config, "plugins");
       mkdirSync(fakeBin);
+      executable(join(fakeBin, "npx"), "exit 0");
       executable(join(fakeBin, "claude"), String.raw`if [ "$1 $2" = 'plugin install' ]; then
   cache="$CLAUDE_CONFIG_DIR/plugins"
   [ -z "$CLAUDE_CODE_PLUGIN_CACHE_DIR" ] || cache="$CLAUDE_CODE_PLUGIN_CACHE_DIR"
@@ -840,5 +842,27 @@ printf '%s\n' 'built executor' > "$out/plugins/aidd-dev/codex-agents/executor.to
     assert.equal(result.status, 0, result.stderr);
     assert.equal(readFileSync(join(agents, "aidd-dev-executor.toml"), "utf8"), "built executor\n");
     for (const file of existing) assert.equal(readFileSync(join(agents, file), "utf8"), `Personal ${file}\n`);
+  } finally { rmSync(root, { recursive: true, force: true }); }
+});
+
+test("reload builds each host with the agent provider its file names, and Claude from that build", () => {
+  const root = mkdtempSync(join(tmpdir(), "aidd-dev-sync-provider-"));
+  try {
+    const fakeBin = join(root, "bin"), home = join(root, "home");
+    mkdirSync(fakeBin);
+    const providers = join(home, "reload-agents.json");
+    mkdirSync(home, { recursive: true });
+    writeFileSync(providers, JSON.stringify({ claude: "anthropic", codex: "openai" }));
+    executable(join(fakeBin, "npx"), String.raw`printf '%s
+' "$*" >> "$HOME/translate-calls"`);
+    executable(join(fakeBin, "codex"), "exit 0");
+    executable(join(fakeBin, "claude"), String.raw`printf '%s
+' "$*" >> "$HOME/claude-calls"`);
+    const result = runSync(fakeBin, home, [], { RELOAD_AGENTS: providers });
+    assert.equal(result.status, 0, result.stderr);
+    const calls = readFileSync(join(home, "translate-calls"), "utf8");
+    assert.match(calls, /--to codex .*--provider openai/);
+    assert.match(calls, /--to claude .*--provider anthropic/);
+    assert.match(readFileSync(join(home, "claude-calls"), "utf8"), new RegExp(`marketplace add ${join(home, "build", "claude").replaceAll("\\", "\\\\")} --scope user`));
   } finally { rmSync(root, { recursive: true, force: true }); }
 });

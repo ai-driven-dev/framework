@@ -1,0 +1,5 @@
+{
+  "claude": "anthropic",
+  "codex": "openai",
+  "opencode": "mistral"
+}
