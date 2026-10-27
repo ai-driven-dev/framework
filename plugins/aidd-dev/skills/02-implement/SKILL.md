@@ -1,48 +1,47 @@
 ---
 name: 02-implement
-description: Write an existing plan's code, phase by phase, until every acceptance criterion holds. Use when a plan exists and needs implementing. Do NOT use to write a plan, review a diff.
-argument-hint: plan
+description: Implement an existing plan or one of its phases until its acceptance criteria hold. Use when a plan or an assigned phase needs implementing. Not for writing a plan or reviewing a diff.
+argument-hint: plan | phase
 ---
 
-# Skill: implement
-
-```mermaid
-flowchart LR
-  prepare --> execute --> finalize --> implemented
-  prepare -->|missing plan| stop
-  execute -->|fix, next task or phase| execute
-  execute --> blocked
-  execute --> replan
-  finalize -->|validation fails| finalize
-  finalize --> blocked
-  finalize --> replan
-```
+# Implement
 
 ## Actions
 
-Run actions in order.
-Read each action file in `actions/` before executing it.
+```mermaid
+flowchart LR
+  plan([plan]) --> prepare --> execute
+  delegated([phases to delegate]) --> prepare
+  phase([assigned phase]) --> execute
+  integrated([integrated phases]) --> finalize
+  prepare -->|"no readable plan"| stopped((stopped))
+  prepare -->|"phases to delegate"| caller((back to the caller))
+  execute -->|"next task or phase"| execute
+  execute -->|"assigned phase done or partial"| caller
+  execute -->|"every phase done"| finalize
+  execute -->|"only a human can unblock"| blocked((blocked))
+  execute -->|"criteria need a scope change"| replan((replan needed))
+  finalize -->|"a check fails: repair"| finalize
+  finalize --> implemented((implemented))
+```
 
-| Action   | Does                                  |
-| -------- | ------------------------------------- |
-| prepare  | resolve the plan and branch            |
-| execute  | implement and validate each task       |
-| finalize | validate and mark the plan implemented |
+Read an action's file, then do what it says.
+
+| Action | File |
+| ------ | ---- |
+| prepare | [actions/01-prepare.md](actions/01-prepare.md) |
+| execute | [actions/02-execute.md](actions/02-execute.md) |
+| finalize | [actions/03-finalize.md](actions/03-finalize.md) |
 
 ## Transversal rules
 
-- Track the plan through `pending → in-progress → implemented` (or `blocked`).
-  - Track phases through `pending → in-progress → done`.
-  - Treat `in-progress` as a runtime marker.
-  - Never commit `in-progress` alone.
-- Follow user and project commit instructions.
-  - Push only when requested.
-- By default, make one local commit per validated task.
-  - Include all its code, tests and docs together.
-  - Group tasks only when they cannot be validated separately.
-  - Never split a task by step or file.
-  - Exclude unrelated changes.
-- Include `done` in the phase's last task commit.
-- Make a final commit for `implemented`.
-- Use project formatters or hooks.
-  - Never format code manually.
+- Validate every acceptance criterion through the real affected workflow, with the interface it exposes (browser, CLI, API), checking actual against expected behavior at every step.
+- Count a validation only after a full successful run with observable evidence for every step; a blocked validation is never a success.
+- When only a human can unblock, follow [blocked.md](references/blocked.md) and leave unfinished code uncommitted.
+- When the criteria require changing scope or requirements, stop with `replan needed: <reason>`; never rewrite the plan.
+- Track the plan through `pending → in-progress → implemented`, or `blocked`, and a phase through `pending → in-progress → done`, or `partial`; a phase status lives in its `phase-<n>.md` when the plan has one.
+- Never commit `in-progress` alone.
+- Follow user and project commit instructions, and push only when asked.
+- Commit each validated task with its code, tests and docs; group tasks only when they cannot be validated apart, never split one by step or file, and exclude unrelated changes.
+- Include `done` in the phase's last task commit, and make a final commit for `implemented`.
+- Format through the project's formatters or hooks, never by hand.

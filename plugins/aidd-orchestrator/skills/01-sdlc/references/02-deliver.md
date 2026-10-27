@@ -2,9 +2,17 @@
 
 ## Behavior
 
-Turn the contract into a proportional plan, then give one executor the plan. The executor implements it and calls the validation skills, which own their checks and repair loops. Include architecture conformance whenever the project documents architecture. Run an end-to-end journey after every other validation when the plan calls for one, and none otherwise.
+Plan the contract, then give one implementation agent the whole plan. When phases are ready, deliver them in waves instead: one agent and checkout per ready phase, merge each, launch the phases the merge made ready, and finalize once all are integrated.
 
-Commit and push the validated work through the commit skill. Send only the clean committed candidate to Check.
+## Rules
+
+- A phase is ready when its dependencies are met and it shares no file with a running phase.
+- Prepare and finalize a delegated plan through the implementation skill; each agent's brief is its phase file.
+- After each merge, run the checks the phase affects. A `partial` or failing phase goes back to an agent with what remains.
+- The caller owns delegation, integration, plan status and final acceptance; the validation skills own their checks and repair loops.
+- Include architecture conformance whenever the project documents architecture.
+- Run an end-to-end journey last, only when the plan calls for one.
+- Send only the clean committed candidate to Check.
 
 ```mermaid
 ---
@@ -20,9 +28,11 @@ flowchart TD
 
   subgraph ExecuteStage["Execute and validate the plan"]
     direction TB
-    Executor(["@aidd-dev:executor"])
+    Executor(["Implementation agent"])
     Implement["/aidd-dev:02-implement"]
     Assert["/aidd-dev:03-assert"]
+    Integrate["Merge the phase and run the checks it affects"]
+    Finalize["/aidd-dev:02-implement finalize"]
     Test["/aidd-dev:06-test"]
     Commit["/aidd-vcs:01-commit"]
   end
@@ -35,11 +45,18 @@ flowchart TD
 
   Contract --> Plan
   Plan --> PlanArtifact
-  PlanArtifact --> Executor
+  PlanArtifact -- "Whole plan." --> Executor
+  PlanArtifact -- "One agent and checkout per ready phase." --> Executor
   Executor --> Implement
   Implement --> Assert
-  Assert -- "When no end-to-end journey is required, commit the result." --> Commit
-  Assert -- "When an end-to-end journey is required, run it last." --> Test
+  Assert -- "Delegated phase." --> Integrate
+  Integrate -- "Partial or failing: what remains." --> Executor
+  Integrate -- "Phases this merge made ready." --> Executor
+  Integrate -- "Every phase integrated." --> Finalize
+  Assert -- "Whole plan, no journey required." --> Commit
+  Finalize -- "No journey required." --> Commit
+  Assert -- "Whole plan, journey required: run it last." --> Test
+  Finalize -- "Journey required: run it last." --> Test
   Test -- "After the journey succeeds, commit the result." --> Commit
   Test -- "Return a failed journey for repair." --> Executor
   Commit --> CommittedCandidate
@@ -50,8 +67,8 @@ flowchart TD
   classDef artifact fill:#DCFCE7,stroke:#16A34A,color:#14532D,stroke-width:2px
   classDef zone fill:#F1F5F9,stroke:#64748B,color:#0F172A,stroke-width:2px
 
-  class Plan,Implement,Assert,Test,Commit skill
+  class Plan,Implement,Assert,Finalize,Test,Commit skill
   class Executor agent
   class Contract,PlanArtifact,CommittedCandidate artifact
-  class Check zone
+  class Integrate,Check zone
 ```
