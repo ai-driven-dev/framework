@@ -18,4 +18,4 @@ A short pass or fail line per agent file.
 
 ## Test
 
-- Every agent file exists, carries name and description, and holds the role body.
+- Every agent file exists, carries the target's required identity (frontmatter `name` where supported, filename for Kilo) and description, and holds the role body.
