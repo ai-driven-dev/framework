@@ -90,8 +90,8 @@ for (const contract of CONTRACTS) {
     }
     if (contract.includes('02-project-memory')) {
       assert.match(text, /new[^\n]*\.kilo\/[^\n]*never[^\n]*\.kilocode\//iu);
-      assert.ok(text.includes("https://kilo.ai/docs/getting-started/settings"));
-      assert.ok(text.includes("https://kilo.ai/docs/customize/agents-md"));
+      assert.match(text, /\]\(https:\/\/kilo\.ai\/docs\/getting-started\/settings\)/u);
+      assert.match(text, /\]\(https:\/\/kilo\.ai\/docs\/customize\/agents-md\)/u);
       assert.ok(text.includes("https://github.com/Kilo-Org/kilocode/blob/main/packages/opencode/src/kilocode/skills/kilo-config.md"));
       assert.match(text, /2026-09-25[^\n]*issue/u);
       assert.match(text, /2026-10-10/u);

@@ -601,7 +601,7 @@ test("a blockless README symlink is not an opted-in destination", () => {
 
 test("preflight refuses a denied creation parent without creating any context", () => {
   inProject({ "AGENTS.md": "# User\n" }, ({ root, invoke, read }) => {
-    const parent = path.join(root, ".github");
+    const parent = path.join(fs.realpathSync(root), ".github");
     fs.mkdirSync(parent);
     const preload = [
       "const fs = require('node:fs');",
@@ -709,7 +709,6 @@ for (const mode of ["automatic", "explicit"]) {
   for (const replacement of ["file", "parent"]) {
     test(`${mode} sync refuses a ${replacement} substitution after opening and preserves outside witnesses`, () => {
       const contextPath = replacement === "file" ? "AGENTS.md" : ".github/copilot-instructions.md";
-      const parentPath = path.dirname(contextPath);
       const privateRoot = fs.mkdtempSync(path.join(os.tmpdir(), "update-memory-race-"));
       const outside = path.join(privateRoot, "outside.md");
       const outsideDir = path.join(privateRoot, "outside-dir");
@@ -722,8 +721,9 @@ for (const mode of ["automatic", "explicit"]) {
       try {
         outsideWitness = openWitness(outsideFile);
         inProject({ [contextPath]: EMPTY_BLOCK }, ({ root, invoke }) => {
-          const absoluteTarget = path.join(root, contextPath);
-          const absoluteParent = path.join(root, parentPath);
+          const canonicalRoot = fs.realpathSync(root);
+          const absoluteTarget = path.join(canonicalRoot, contextPath);
+          const absoluteParent = path.dirname(absoluteTarget);
           const replacementPath = replacement === "file" ? outside : outsideDir;
           const oldPath = replacement === "file" ? `${absoluteTarget}.held` : `${absoluteParent}.held`;
           const windowsParentCheck = process.platform === "win32" && replacement === "parent";
@@ -800,7 +800,7 @@ test("explicit sync distinguishes BigInt parent identities beyond Number precisi
   try {
     outsideWitness = openWitness(outside);
     inProject({ [contextPath]: EMPTY_BLOCK }, ({ root, invoke }) => {
-      const target = path.join(root, contextPath);
+      const target = path.join(fs.realpathSync(root), contextPath);
       const parent = path.dirname(target);
       projectWitness = openWitness(target);
       const preload = [
