@@ -9,6 +9,7 @@
 | Copilot / `copilot` | `.github/instructions/<NN>-<name>.instructions.md` | comma-joined `applyTo`; all-files `**` |
 | Codex / `codex` | root `AGENTS.md` | shared signed `aidd_rules`, textual scope |
 | OpenCode / `opencode` | root `AGENTS.md` | same contribution |
+| Kilo / `kilo` | `.kilo/rules/<category>/<slug>.md`, referenced by the selected Kilo config | no path-scoped rules; only all-files rules are supported |
 
 Copilot `<name>` drops the slug's numeric prefix: category `01-standards`, slug `1-local-names` → `01-local-names.instructions.md`.
 
@@ -17,6 +18,8 @@ Copilot `<name>` drops the slug's numeric prefix: category `01-standards`, slug 
 Writer: absolute `scripts/write-rule.cjs` beside the loaded installed `SKILL.md`. Assume no checkout, project-relative or CLI path.
 
 Request JSON: category, slug, description, body; optional paths array, omitted for all files. Split comma globs; the writer refuses anything else invalid.
+
+Kilo cannot enforce a rule's `paths` metadata. A request that publishes a path-scoped rule to Kilo, including a mixed-target request, is refused before any canonical, native or configuration write. Remove `paths` for a Kilo-wide rule, or remove `kilo` from the targets. Claude, Cursor and Copilot keep their native path scoping. Removing Kilo as a target remains allowed when another target keeps the scope.
 
 ```sh
 node "$installed_rule_script" --project "$project_root" --tools "$confirmed_ids" --input "$request_json"
@@ -27,5 +30,6 @@ node "$installed_rule_script" --project "$project_root" --tools "$confirmed_ids"
 - `--delete category/slug` replaces `--input`: one source, all recorded publications; reports `files`.
 - `--plan` on any of the three: runs every refusal, writes nothing, reports `{"dryRun":true,"files":[...]}` with the exact paths a real run touches.
 - `--check --publish`: writes nothing, reports `{"drift":[...]}`, exits non-zero while a publication differs from its canonical source.
+- Kilo path-scoping refusal: all operations that would publish a path-scoped rule to Kilo fail before mutation, including `--plan`, `--publish`, `--check --publish`, create/update, and mixed-target fan-out.
 - Plugin: `plugins/<plugin>/rules/<category>/<slug>.md`; YAML `paths` for scope, or no frontmatter. No writer, project metadata or host fan-out.
 - Physical deduplication does not ensure unique host context; local 32 KiB passes do not ensure the total instruction budget.

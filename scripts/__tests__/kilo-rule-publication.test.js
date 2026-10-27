@@ -10,6 +10,7 @@ const rule = { category: "01-standards", slug: "1-naming", description: "Naming"
 const fixtureRoot = path.join(__dirname, "fixtures/context-generation/kilo-config");
 const modulePath = process.env.AIDD_KILO_CONFIG_MODULE || path.resolve(__dirname, "../../plugins/aidd-context/skills/05-rule-generate/scripts/kilo-config.cjs");
 const instruction = ".kilo/rules/01-standards/1-naming.md";
+const canonicalScopedRule = `<!-- aidd_rule:${JSON.stringify({ version: 1, category: rule.category, slug: rule.slug, description: rule.description, paths: ["src/**/*.ts"], targets: ["kilo"] })} -->\n${rule.body}`;
 
 function project(t) {
   const root = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "aidd-kilo-config-")));
@@ -93,10 +94,64 @@ test("Kilo publication preserves JSONC comments, duplicate entries, order and un
   assert.deepEqual(p.snapshot(), before);
 });
 
-test("Kilo rendering carries canonical file scope into the loaded Markdown", (t) => {
+test("Kilo refuses path-scoped rules before creating any publication", (t) => {
   const p = publisher(t);
-  assert.equal(p.run({ ...rule, paths: ["src/**/*.ts"] }).status, 0);
-  assert.match(p.read(instruction), /^Applies to: `src\/\*\*\/\*\.ts`\.\n\n# Naming/);
+  const before = p.snapshot();
+  const result = p.run({ ...rule, paths: ["src/**/*.ts", "test/**/*.ts"] });
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /Kilo does not support enforceable path scoping/);
+  assert.deepEqual(p.snapshot(), before);
+});
+
+test("mixed Kilo and Claude targets refuse path scope before fan-out", (t) => {
+  const p = publisher(t);
+  const before = p.snapshot();
+  const result = p.run({ ...rule, paths: ["src/**/*.ts"] }, "claude,kilo");
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /remove ["']?kilo["']? from targets/);
+  assert.deepEqual(p.snapshot(), before);
+});
+
+test("plan and publish check refuse path-scoped Kilo output without mutation", (t) => {
+  const p = publisher(t);
+  const before = p.snapshot();
+  const plan = p.run({ ...rule, paths: ["src/**/*.ts"] }, "kilo", ["--plan"]);
+  assert.notEqual(plan.status, 0);
+  assert.match(plan.stderr, /Kilo does not support enforceable path scoping/);
+  assert.deepEqual(p.snapshot(), before);
+
+  p.put("aidd_docs/rules/01-standards/1-naming.md", canonicalScopedRule);
+  const publishBefore = p.snapshot();
+  const check = p.run(null, "kilo", ["--check", "--publish"]);
+  assert.notEqual(check.status, 0);
+  assert.match(check.stderr, /Kilo does not support enforceable path scoping/);
+  assert.deepEqual(p.snapshot(), publishBefore);
+});
+
+test("updating an existing Kilo rule to path scope refuses without mutation", (t) => {
+  const p = publisher(t);
+  assert.equal(p.run().status, 0);
+  const before = p.snapshot();
+  const result = p.run({ ...rule, paths: ["src/**/*.ts"] });
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /Kilo does not support enforceable path scoping/);
+  assert.deepEqual(p.snapshot(), before);
+});
+
+test("removing Kilo while adding path scope for Claude remains supported", (t) => {
+  const p = publisher(t);
+  assert.equal(p.run().status, 0);
+  assert.equal(p.run({ ...rule, paths: ["src/**/*.ts"] }, "claude").status, 0);
+  assert.equal(fs.existsSync(path.join(p.root, instruction)), false);
+  assert.match(p.read(".claude/rules/01-standards/1-naming.md"), /^---\npaths:/);
+});
+
+test("Claude and Cursor retain native path scope without a Kilo publication", (t) => {
+  const p = publisher(t);
+  assert.equal(p.run({ ...rule, paths: ["src/**/*.ts"] }, "claude,cursor").status, 0);
+  assert.match(p.read(".claude/rules/01-standards/1-naming.md"), /^---\npaths:/);
+  assert.match(p.read(".cursor/rules/01-standards/1-naming.mdc"), /globs: "src\/\*\*\/\*\.ts"/);
+  assert.equal(fs.existsSync(path.join(p.root, instruction)), false);
 });
 
 test("ambiguous selection, unsafe last config and unowned Kilo output refuse the whole fan-out", (t) => {

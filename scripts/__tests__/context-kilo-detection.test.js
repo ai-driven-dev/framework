@@ -13,7 +13,6 @@ const CONTRACTS = [
   "plugins/aidd-context/skills/02-project-memory/references/tools.md",
 ];
 const GENERATORS = [
-  "plugins/aidd-context/skills/05-rule-generate",
   "plugins/aidd-context/skills/08-hook-generate",
 ];
 const SIGNALS = [

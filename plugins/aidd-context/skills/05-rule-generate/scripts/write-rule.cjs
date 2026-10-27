@@ -120,10 +120,17 @@ function renderNative(rule, tool, signed = true) {
   if (tool === "cursor") fields = `description: ${quote(rule.description)}\n${rule.paths.length ? `globs: ${quote(rule.paths.join(","))}\n` : ""}alwaysApply: ${!rule.paths.length}\n`;
   if (tool === "copilot") fields = `applyTo: ${quote(rule.paths.length ? rule.paths.join(",") : "**")}\n`;
   if (tool === "kilo") fields = "";
-  const kiloScope = tool === "kilo" && rule.paths.length ? `Applies to: ${rule.paths.map(codeSpan).join(", ")}.\n\n` : "";
-  const text = (fields ? `---\n${fields}---\n` : "") + kiloScope + rule.body;
+  const text = (fields ? `---\n${fields}---\n` : "") + rule.body;
   safeText(text);
   return signed ? `${text}\n<!-- aidd_rule_output:path=${nativePath(rule, tool)} sha256=${hash(text)} -->\n` : text;
+}
+
+function rejectUnsupportedKiloScope(rules, affected) {
+  if (!affected.has("kilo")) return;
+  const scoped = rules.find((rule) => rule.targets.includes("kilo") && rule.paths.length);
+  if (scoped) {
+    fail(`Kilo does not support enforceable path scoping for ${identity(scoped.category, scoped.slug)}; remove "paths" or remove "kilo" from targets.`);
+  }
 }
 
 function ownedNative(existing, prior, tool, relative) {
@@ -243,6 +250,7 @@ function main() {
   const nextRules = [...prospective.entries()].sort(([a], [b]) => a < b ? -1 : a > b ? 1 : 0).map(([, rule]) => rule);
   const affected = new Set(selected);
   if (changed && previous.has(changed)) for (const tool of previous.get(changed).targets) affected.add(tool);
+  rejectUnsupportedKiloScope(nextRules, affected);
   const writes = new Map();
   const configChoices = [];
   if (changed) writes.set(changed, prospective.has(changed) ? canonical(prospective.get(changed)) : null);
