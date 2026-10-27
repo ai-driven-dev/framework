@@ -55,6 +55,21 @@ function hashes(root, paths) {
   return new Map(paths.map((relative) => [relative, createHash("sha256").update(fs.readFileSync(path.join(root, relative))).digest("hex")]));
 }
 
+function fileSnapshot(filePath) {
+  const fd = fs.openSync(filePath, "r");
+  try {
+    const stat = fs.fstatSync(fd);
+    return {
+      content: fs.readFileSync(fd),
+      dev: stat.dev,
+      ino: stat.ino,
+      mode: stat.mode & 0o7777,
+    };
+  } finally {
+    fs.closeSync(fd);
+  }
+}
+
 function temporaryFiles(snapshot) {
   return [...snapshot.keys()].filter((name) => name.endsWith(".tmp"));
 }
@@ -326,23 +341,27 @@ test("hardlinked Kilo config and rule outputs are replaced without mutating thei
   const outsideConfig = path.join(path.dirname(p.root), `aidd-kilo-config-hardlink-${process.pid}-${Math.random().toString(36).slice(2)}.jsonc`);
   fs.linkSync(config, outsideConfig);
   t.after(() => fs.rmSync(outsideConfig, { force: true }));
-  const externalConfig = fs.readFileSync(outsideConfig);
-  const externalConfigMode = fs.statSync(outsideConfig).mode & 0o7777;
+  const externalConfig = fileSnapshot(outsideConfig);
 
   assert.equal(p.run().status, 0);
-  assert.deepEqual(fs.readFileSync(outsideConfig), externalConfig);
-  assert.equal(fs.statSync(outsideConfig).mode & 0o7777, externalConfigMode);
+  const externalConfigAfter = fileSnapshot(outsideConfig);
+  assert.deepEqual(externalConfigAfter.content, externalConfig.content);
+  assert.equal(externalConfigAfter.mode, externalConfig.mode);
+  assert.equal(externalConfigAfter.dev, externalConfig.dev);
+  assert.equal(externalConfigAfter.ino, externalConfig.ino);
 
   const native = path.join(p.root, instruction);
   const outsideNative = path.join(path.dirname(p.root), `aidd-kilo-rule-hardlink-${process.pid}-${Math.random().toString(36).slice(2)}.md`);
   fs.linkSync(native, outsideNative);
   t.after(() => fs.rmSync(outsideNative, { force: true }));
-  const externalNative = fs.readFileSync(outsideNative);
-  const externalNativeMode = fs.statSync(outsideNative).mode & 0o7777;
+  const externalNative = fileSnapshot(outsideNative);
 
   assert.equal(p.run({ ...rule, body: "# Naming\n\nChanged after hardlink.\n" }).status, 0);
-  assert.deepEqual(fs.readFileSync(outsideNative), externalNative);
-  assert.equal(fs.statSync(outsideNative).mode & 0o7777, externalNativeMode);
+  const externalNativeAfter = fileSnapshot(outsideNative);
+  assert.deepEqual(externalNativeAfter.content, externalNative.content);
+  assert.equal(externalNativeAfter.mode, externalNative.mode);
+  assert.equal(externalNativeAfter.dev, externalNative.dev);
+  assert.equal(externalNativeAfter.ino, externalNative.ino);
   assert.match(p.read(instruction), /Changed after hardlink/);
   assert.deepEqual(temporaryFiles(p.snapshot()), []);
 });
