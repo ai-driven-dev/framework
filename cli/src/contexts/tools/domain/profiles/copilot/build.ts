@@ -13,7 +13,6 @@ import {
 } from "../../../../../kernel/materialization/flat-paths.js";
 import { rewriteRelativeLinks } from "../../../../../kernel/materialization/relative-link-rewrite.js";
 import type { ToolBuildContract } from "../../build-contract.js";
-import { stripCopilotAgentFrontmatter } from "../../formats/agent-frontmatter-strip.js";
 import { flattenCopilotHooksShape } from "../../formats/flat-hooks-merge.js";
 import { PLUGIN_ROOT_TOKEN } from "../../formats/plugin-root-token.js";
 import { mergeVscodeMcp } from "../../formats/vscode-mcp-merge.js";
@@ -22,6 +21,7 @@ import {
   resolveVersion,
   synthesizeClaudeStyleManifest,
 } from "../../marketplace-catalog.js";
+import { copilotAgentFrontmatter } from "./copilot-agent.js";
 import { COPILOT_VSCODE_MCP_PATH, COPILOT_WORKSPACE_DIR } from "./copilot-paths.js";
 
 const OUTPUT_PLUGIN_MANIFEST_RELATIVE = ".plugin/plugin.json";
@@ -126,19 +126,18 @@ function transformCopilotAgent(content: string, _plugin: string, outName: string
   const rewrittenBody = rewriteRelativeLinks(body, {
     currentFilePluginRelative: `agents/${outName}`,
   });
-  return serializeFrontmatter(stripCopilotAgentFrontmatter(frontmatter), rewrittenBody);
+  return serializeFrontmatter(copilotAgentFrontmatter(frontmatter), rewrittenBody);
 }
 
 function transformCopilotFlatAgent(content: string, plugin: string, outName: string): string {
   const { frontmatter, body } = parseFrontmatter(content);
-  const stripped = stripCopilotAgentFrontmatter(frontmatter);
   const flatRelPath = copilotFlatAgentPath(plugin, `agents/${outName}`);
   const rewrittenBody = rewriteRelativeLinks(body, {
     currentFilePluginRelative: flatRelPath,
     resolveTargetPath: (rel) => copilotFlatResolveTarget(plugin, rel),
   });
-  const prefixedName = `${plugin}-${outName.replace(/\.md$/, "")}`;
-  return serializeFrontmatter({ ...stripped, name: prefixedName }, rewrittenBody);
+  const name = `${plugin}-${outName.replace(/\.md$/, "")}`;
+  return serializeFrontmatter(copilotAgentFrontmatter({ ...frontmatter, name }), rewrittenBody);
 }
 
 function copilotFlatResolveTarget(plugin: string, rel: string): string {

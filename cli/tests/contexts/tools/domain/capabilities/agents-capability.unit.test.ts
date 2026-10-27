@@ -1,17 +1,21 @@
 import { describe, expect, it } from "vitest";
 import { AgentsCapability } from "../../../../../src/contexts/tools/domain/capabilities/agents-capability.js";
 
+const identity = (fm: Record<string, unknown>) => fm;
+
 describe("AgentsCapability", () => {
   const markdownParams = {
     directory: ".claude/",
     toolSuffix: ".claude.md",
     format: "markdown" as const,
+    frontmatter: identity,
   };
 
   const tomlParams = {
     directory: ".codex/",
     toolSuffix: ".codex.md",
     format: "toml" as const,
+    frontmatter: identity,
   };
 
   describe("buildOutputPath", () => {
@@ -99,11 +103,13 @@ describe("AgentsCapability install paths", () => {
     directory: ".claude/",
     toolSuffix: ".claude.md",
     format: "markdown",
+    frontmatter: identity,
   });
   const toml = new AgentsCapability({
     directory: ".codex/",
     toolSuffix: ".codex.md",
     format: "toml",
+    frontmatter: identity,
   });
 
   it("installs a markdown agent under agents/ by its file name alone, the tool suffix dropped", () => {
@@ -125,6 +131,7 @@ describe("AgentsCapability install paths", () => {
       directory: ".x/",
       toolSuffix: ".x.md",
       format: "markdown",
+      frontmatter: identity,
       buildInstallPath: (fileName) => `custom/${fileName}`,
     });
 
@@ -137,6 +144,7 @@ describe("AgentsCapability file acceptance", () => {
     directory: ".claude/",
     toolSuffix: ".claude.md",
     format: "markdown",
+    frontmatter: identity,
   });
   const suffixes = [".claude.md", ".cursor.md", ".codex.md"];
 
@@ -151,72 +159,37 @@ describe("AgentsCapability file acceptance", () => {
 });
 
 describe("AgentsCapability frontmatter conversion", () => {
-  const markdown = new AgentsCapability({
-    directory: ".claude/",
-    toolSuffix: ".claude.md",
+  const cap = new AgentsCapability({
+    directory: ".x/",
+    toolSuffix: ".x.md",
     format: "markdown",
-  });
-  const toml = new AgentsCapability({
-    directory: ".codex/",
-    toolSuffix: ".codex.md",
-    format: "toml",
+    frontmatter: (fm) => ({ native: fm }),
   });
 
-  it("keeps the declared name and description, nothing else", () => {
-    expect(
-      markdown.convertFrontmatter({ name: "planner", description: "d", tools: ["x"] })
-    ).toStrictEqual({ name: "planner", description: "d" });
+  it("writes through the host's own frontmatter, the declared name kept", () => {
+    expect(cap.convertFrontmatter({ name: "planner", description: "d" })).toStrictEqual({
+      native: { name: "planner", description: "d" },
+    });
   });
 
-  it("derives the name from the file's own base name when the frontmatter declares none", () => {
-    expect(
-      markdown.convertFrontmatter({ description: "d" }, "agents/sub/planner.md")
-    ).toStrictEqual({ name: "planner", description: "d" });
-  });
-
-  it("leaves the name undefined when neither the frontmatter nor a file name gives one", () => {
-    expect(markdown.convertFrontmatter({ description: "d" })).toStrictEqual({
-      name: undefined,
-      description: "d",
+  it("names an agent after its file when the frontmatter declares none", () => {
+    expect(cap.convertFrontmatter({ description: "d" }, "agents/sub/planner.md")).toStrictEqual({
+      native: { description: "d", name: "planner" },
     });
   });
 
   it("refuses a declared name that is not a string", () => {
-    expect(markdown.convertFrontmatter({ name: 7, description: "d" })).toStrictEqual({
-      name: undefined,
-      description: "d",
-    });
-  });
-
-  it("carries the model into a toml agent only when one is declared", () => {
-    expect(toml.convertFrontmatter({ name: "p", description: "d", model: "m" })).toStrictEqual({
-      name: "p",
-      description: "d",
-      model: "m",
-    });
-    expect(toml.convertFrontmatter({ name: "p", description: "d" })).toStrictEqual({
-      name: "p",
-      description: "d",
-    });
-  });
-
-  it("asks the converter the tool declares before converting itself", () => {
-    const delegating = new AgentsCapability({
-      directory: ".x/",
-      toolSuffix: ".x.md",
-      format: "markdown",
-      convertFrontmatter: (fm, fileName) => ({ file: fileName, keys: Object.keys(fm) }),
-    });
-
-    expect(delegating.convertFrontmatter({ name: "p" }, "p.md")).toStrictEqual({
-      file: "p.md",
-      keys: ["name"],
-    });
+    expect(cap.convertFrontmatter({ name: 7 })).toStrictEqual({ native: { name: undefined } });
   });
 });
 
 describe("AgentsCapability equality", () => {
-  const base = { directory: ".claude/", toolSuffix: ".claude.md", format: "markdown" as const };
+  const base = {
+    directory: ".claude/",
+    toolSuffix: ".claude.md",
+    format: "markdown" as const,
+    frontmatter: identity,
+  };
 
   it("differs on the tool suffix", () => {
     expect(

@@ -20,8 +20,8 @@ import {
   buildClaudeStyleEntry,
   buildClaudeStyleMarketplace,
   synthesizeClaudeStyleManifest,
-  transformClaudeAgent,
 } from "../../marketplace-catalog.js";
+import { claudeAgentFrontmatter } from "./claude-agent.js";
 import {
   OUTPUT_CLAUDE_MANIFEST_RELATIVE,
   OUTPUT_CLAUDE_MARKETPLACE_RELATIVE,
@@ -94,6 +94,14 @@ function claudeFlatHooksPath(plugin: string, rel: string): string {
   return genericFlatHooksScriptPath(".claude/hooks/", plugin, rest);
 }
 
+function transformClaudeAgent(content: string, _plugin: string, outName: string): string {
+  const { frontmatter, body } = parseFrontmatter(content);
+  const rewrittenBody = rewriteRelativeLinks(body, {
+    currentFilePluginRelative: `agents/${outName}`,
+  });
+  return serializeFrontmatter(claudeAgentFrontmatter(frontmatter), rewrittenBody);
+}
+
 function claudeFlatResolveTarget(plugin: string, rel: string): string {
   if (rel.startsWith("agents/")) return claudeFlatAgentPath(plugin, rel);
   if (rel.startsWith("skills/")) return claudeFlatSkillPath(plugin, rel);
@@ -107,8 +115,8 @@ function transformClaudeFlatAgent(content: string, plugin: string, outName: stri
     currentFilePluginRelative: flatRelPath,
     resolveTargetPath: (rel) => claudeFlatResolveTarget(plugin, rel),
   });
-  const prefixedName = `${plugin}-${outName.replace(/\.md$/, "")}`;
-  return serializeFrontmatter({ ...frontmatter, name: prefixedName }, rewrittenBody);
+  const name = `${plugin}-${outName.replace(/\.md$/, "")}`;
+  return serializeFrontmatter(claudeAgentFrontmatter({ ...frontmatter, name }), rewrittenBody);
 }
 
 export function buildClaudeFlatContract(): ToolBuildContract {

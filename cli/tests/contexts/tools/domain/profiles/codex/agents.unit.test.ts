@@ -1,22 +1,51 @@
 import { describe, expect, it } from "vitest";
 import { codex } from "../../../../../../src/contexts/tools/domain/profiles/codex/profile.js";
+import { built, installed, NAMED_AGENT, UNNAMED_AGENT } from "../agent-fixture.js";
+
+const PREFIXED = `name = "aidd-dev-planner"
+description = "Plans the work"
+model = "m"
+model_reasoning_effort = "high"
+developer_instructions = "Plan before building.\\n"
+`;
 
 describe("codex agents", () => {
+  describe("name resolution", () => {
+    it("installs a plugin agent under its declared name, effort as model_reasoning_effort", () => {
+      expect(installed(codex, NAMED_AGENT)).toBe(`name = "planner"
+description = "Plans the work"
+model = "m"
+model_reasoning_effort = "high"
+developer_instructions = "Plan before building.\\n"
+`);
+    });
+
+    it("names an unnamed plugin agent after its file", () => {
+      expect(installed(codex, UNNAMED_AGENT)).toBe(`name = "planner"
+description = "Plans the work"
+developer_instructions = "Plan before building.\\n"
+`);
+    });
+
+    it("prefixes the name with the plugin in a marketplace build, which Codex copies into one directory", () => {
+      expect(built(codex, "marketplace", NAMED_AGENT)).toStrictEqual({
+        path: "codex-agents/planner.toml",
+        content: PREFIXED,
+      });
+    });
+
+    it("prefixes the name with the plugin in a flat build", () => {
+      expect(built(codex, "flat", NAMED_AGENT)).toStrictEqual({
+        path: ".codex/agents/aidd-dev-planner.toml",
+        content: PREFIXED,
+      });
+    });
+  });
+
   describe("capabilities.agents.buildInstallPath()", () => {
     it("builds .toml path under .codex/agents/", () => {
       const path = codex.capabilities.agents.buildInstallPath("alexia.md");
       expect(path).toBe(".codex/agents/alexia.toml");
     });
-  });
-
-  it("writes the same TOML as the built distributions: Claude selectors dropped, effort mapped", () => {
-    const agents = codex.capabilities.agents;
-    const fm = agents.convertFrontmatter(
-      { description: "d", model: "opus", effort: "high" },
-      "reviewer.md"
-    );
-    expect(agents.serialize(fm, "Body.\n")).toBe(
-      'name = "reviewer"\ndescription = "d"\nmodel_reasoning_effort = "high"\ndeveloper_instructions = "Body.\\n"\n'
-    );
   });
 });

@@ -16,8 +16,8 @@ import { rewriteRelativeLinks } from "../../../../../kernel/materialization/rela
 import type { FileReader } from "../../../../../kernel/ports/file-reader.js";
 import type { FileWriter } from "../../../../../kernel/ports/file-writer.js";
 import type { ArtifactContract, ToolBuildContract } from "../../build-contract.js";
-import { stripPathIdAgentFrontmatter } from "../../formats/agent-frontmatter-strip.js";
 import { buildOpencodeFlatConfig } from "../../formats/opencode-mcp-merge.js";
+import { opencodeAgentFrontmatter } from "./opencode-agent.js";
 import { generateOpencodeHooksBridge } from "./opencode-hooks-bridge.js";
 import {
   makeOpencodeHooksBridgePath,
@@ -133,11 +133,7 @@ function transformOpencodeFlatAgent(content: string, plugin: string, outName: st
     currentFilePluginRelative: flatRelPath,
     resolveTargetPath: (rel) => opencodeFlatResolveTarget(plugin, rel),
   });
-  // mode: subagent ensures opencode treats copied agents as subagents, not primary agents.
-  return serializeFrontmatter(
-    { ...stripPathIdAgentFrontmatter(frontmatter), mode: "subagent" },
-    rewrittenBody
-  );
+  return serializeFrontmatter(opencodeAgentFrontmatter(frontmatter), rewrittenBody);
 }
 
 async function resolveOpencodeJsonPath(outDir: string, fs: FsType): Promise<string> {

@@ -117,7 +117,12 @@ describe("PluginContentTranslator.translate()", () => {
       const agent = makeFile(
         "agents/reviewer.md",
         serializeFrontmatter(
-          { name: "reviewer", description: "Role", model: expected.model, effort: "medium" },
+          {
+            name: "reviewer",
+            description: "Role",
+            model: expected.model.replace(/#.*$/, ""),
+            effort: "medium",
+          },
           "Reviewer agent from sample-plugin."
         )
       );

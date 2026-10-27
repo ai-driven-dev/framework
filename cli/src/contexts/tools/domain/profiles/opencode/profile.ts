@@ -16,7 +16,6 @@ import type {
   HasRules,
   HasSkills,
 } from "../../contracts.js";
-import { stripPathIdAgentFrontmatter } from "../../formats/agent-frontmatter-strip.js";
 import {
   buildAiddCommandFilePath,
   convertCommandFrontmatterNoHint,
@@ -24,6 +23,7 @@ import {
 } from "../../formats/command.js";
 import { registerTool } from "../../registry.js";
 import { buildOpencodeFlatContract, transformMcpToOpencode } from "./build.js";
+import { opencodeAgentFrontmatter } from "./opencode-agent.js";
 import { generateOpencodeHooksBridge } from "./opencode-hooks-bridge.js";
 import {
   makeOpencodeHooksBridgePath,
@@ -59,7 +59,7 @@ export const opencode: AiTool<
       directory: DIRECTORY,
       toolSuffix: TOOL_SUFFIX,
       format: "markdown",
-      convertFrontmatter: (fm) => ({ ...stripPathIdAgentFrontmatter(fm), mode: "subagent" }),
+      frontmatter: opencodeAgentFrontmatter,
     }),
     skills: new SkillsCapability({
       directory: DIRECTORY,

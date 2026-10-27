@@ -13,9 +13,9 @@ import { rewriteRelativeLinks } from "../../../../../kernel/materialization/rela
 import type { FileReader } from "../../../../../kernel/ports/file-reader.js";
 import type { FileWriter } from "../../../../../kernel/ports/file-writer.js";
 import type { ToolBuildContract } from "../../build-contract.js";
-import { stripPathIdAgentFrontmatter } from "../../formats/agent-frontmatter-strip.js";
 import { buildOpencodeFlatConfig } from "../../formats/opencode-mcp-merge.js";
 import { transformMcpToOpencode } from "../opencode/build.js";
+import { kiloAgentFrontmatter } from "./kilo-agent.js";
 import { generateKiloHooksBridge } from "./kilo-hooks-bridge.js";
 import {
   KILO_DIRECTORY,
@@ -63,10 +63,7 @@ function transformKiloFlatAgent(content: string, plugin: string, outName: string
     currentFilePluginRelative: flatRelPath,
     resolveTargetPath: (rel) => kiloFlatResolveTarget(plugin, rel),
   });
-  return serializeFrontmatter(
-    { ...stripPathIdAgentFrontmatter(frontmatter), mode: "subagent" },
-    rewrittenBody
-  );
+  return serializeFrontmatter(kiloAgentFrontmatter(frontmatter), rewrittenBody);
 }
 
 async function collectKiloMcp(

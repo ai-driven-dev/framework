@@ -4,9 +4,9 @@ Behavior and sources are in [the agent guide](../../../../docs/SUBAGENTS.md).
 
 ## Scope
 
-- **Agents:** explorer, executor, validator and reviewer ship in `plugins/aidd-orchestrator/agents/`, installed with the plugin. No model is pinned, no tool list is declared: every host gives an agent all tools by default.
-- **Translation:** each host receives only the keys its documentation lists: name or file path as the ID, description, model, and Claude's `effort` under the host's own key. Codex agents go through one writer, `codexAgentToml`, whichever path installs them.
-- **Out of scope:** the `aidd agents` command and per-provider models.
+- **Agents:** explorer, executor, validator and reviewer ship in `plugins/aidd-orchestrator/agents/`, installed with the plugin. No tool list is declared: every host gives an agent all tools by default.
+- **Translation:** each host receives only the keys its documentation lists: name or file path as the ID, description, model, and Claude's `effort` under the host's own key. Each host has one agent frontmatter function, shared by the plugin install and its built distributions.
+- **Out of scope:** per-provider models and a model for the main session.
 
 ## Checks
 

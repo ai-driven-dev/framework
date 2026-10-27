@@ -304,7 +304,7 @@ describe("buildCopilotFlatContract()", () => {
     expect(
       transform?.("---\ndescription: Helps\n---\nBody.\n", "aidd-dev", "notes.md-helper.md")
     ).toBe(
-      "---\ndescription: 'Helps'\ninclude-custom-instructions: true\nname: 'aidd-dev-notes.md-helper'\n---\nBody.\n"
+      "---\nname: 'aidd-dev-notes.md-helper'\ndescription: 'Helps'\ninclude-custom-instructions: true\n---\nBody.\n"
     );
   });
 

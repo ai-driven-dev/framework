@@ -4,80 +4,32 @@ import { parseToml } from "../../../../../../src/contexts/tools/domain/profiles/
 
 describe("codexAgentMarkdownToToml()", () => {
   describe("name resolution", () => {
-    it.each([
-      [
-        "---\nname: planner\ndescription: A planner.\n---\n\nBody.",
-        "planner.md",
-        "aidd-dev-planner",
-      ],
-      ["---\ndescription: A reviewer.\n---\n\nBody.", "reviewer.md", "aidd-dev-reviewer"],
-      ["No frontmatter here.", "implementer.md", "aidd-dev-implementer"],
-    ])(
-      "prefixes the file's base name with the plugin, whatever the frontmatter name",
-      (source, file, name) => {
-        expect(parseToml(codexAgentMarkdownToToml(source, "aidd-dev", file)).name).toBe(name);
-      }
-    );
-  });
-
-  describe("key order", () => {
-    it("emits name before description before developer_instructions", () => {
-      const toml = codexAgentMarkdownToToml(
-        "---\nname: planner\ndescription: A planner.\n---\n\nBody here.",
-        "aidd-dev",
-        "planner.md"
-      );
-      const nameIdx = toml.indexOf("name =");
-      const descIdx = toml.indexOf("description =");
-      const instrIdx = toml.indexOf("developer_instructions =");
-      expect(nameIdx).toBeLessThan(descIdx);
-      expect(descIdx).toBeLessThan(instrIdx);
-    });
-
-    it("emits name before developer_instructions when description absent", () => {
-      const toml = codexAgentMarkdownToToml(
-        "---\nname: planner\n---\n\nBody here.",
-        "aidd-dev",
-        "planner.md"
-      );
-      const nameIdx = toml.indexOf("name =");
-      const instrIdx = toml.indexOf("developer_instructions =");
-      expect(nameIdx).toBeLessThan(instrIdx);
-    });
-  });
-
-  describe("explicit model preservation", () => {
-    it.each([
-      "opus",
-      "sonnet",
-      "haiku",
-      "inherit",
-      "default",
-      "opusplan",
-      "best",
-      "fable",
-      "sonnet[1m]",
-      "opus[1m]",
-    ])("omits Claude selector %s so the parent model is inherited", (model) => {
-      const toml = codexAgentMarkdownToToml(
-        `---\nname: planner\nmodel: ${model}\n---\n\nBody.`,
-        "aidd-dev",
-        "planner.md"
-      );
-      expect(parseToml(toml)).not.toHaveProperty("model");
-    });
-
-    it.each(["gpt-5-codex", "gpt-6-luna", "local-coder", "claude-opus-5-5"])(
-      "preserves explicit model identifier %s, and Claude's effort as model_reasoning_effort",
-      (model) => {
-        const toml = codexAgentMarkdownToToml(
-          `---\nname: planner\nmodel: ${model}\neffort: medium\n---\n\nBody.`,
+    it("prefixes the file's base name with the plugin, whatever the frontmatter name", () => {
+      expect(
+        codexAgentMarkdownToToml(
+          `---
+name: planner
+description: A planner.
+---
+Body.
+`,
           "aidd-dev",
           "planner.md"
-        );
-        expect(parseToml(toml)).toMatchObject({ model, model_reasoning_effort: "medium" });
-      }
-    );
+        )
+      ).toBe(`name = "aidd-dev-planner"
+description = "A planner."
+developer_instructions = "Body.\\n"
+`);
+    });
+
+    it("names an agent without frontmatter after its plugin and file, description empty", () => {
+      expect(
+        codexAgentMarkdownToToml("No frontmatter here.", "aidd-dev", "implementer.md")
+      ).toBe(`name = "aidd-dev-implementer"
+description = ""
+developer_instructions = "No frontmatter here."
+`);
+    });
   });
 
   describe("verbatim body preservation", () => {

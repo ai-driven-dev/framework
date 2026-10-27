@@ -10,7 +10,7 @@ argument-hint: request | interactive request
 
 Decide the mode as `mode.md` says, then read only it and the current zone's reference. Verify that every named provider is installed before calling it. A zone that cannot proceed stops the run and says what it would take to resume.
 
-Use available host agents by responsibility, or the host's default subagent with a scoped brief. Parallelize independent work when it is faster. Repeat the responsible zone when delegated work returns an actionable gap.
+Delegate to the agent each zone names, by its role, so every run delegates the same way; without it, give the same brief to the host's default subagent. Parallelize independent work when it is faster. Repeat the responsible zone when delegated work returns an actionable gap.
 
 ```mermaid
 ---

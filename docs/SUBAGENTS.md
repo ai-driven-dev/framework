@@ -36,7 +36,7 @@ sequenceDiagram
 
 Each step is optional: the main session calls only the agents the task needs, and repeats execution when validation or review finds a gap.
 
-Delegation is by responsibility: workflows such as `/aidd-orchestrator:01-sdlc` ask for "a fresh validation agent", and the host picks one of these if installed, or its default subagent otherwise. No workflow names an agent, because the name changes with the install: `aidd-orchestrator:validator` from the Claude Code marketplace, `aidd-orchestrator-validator` in a project distribution.
+Only `/aidd-orchestrator:01-sdlc` names an agent, by its role (`validator`), so a run delegates the same way every time; other workflows ask for a responsibility. The host resolves the role to its install, `aidd-orchestrator:validator` from the Claude Code marketplace or `aidd-orchestrator-validator` in a project distribution, or gives the brief to its default subagent when the agent is not installed.
 
 ## 🧭 Which agent for which task
 
@@ -53,12 +53,13 @@ Install the `aidd-orchestrator` plugin: `/plugin install aidd-orchestrator@aidd-
 
 ## 🧠 Models
 
-No model is pinned. Each host applies its own default for subagents, usually the model of the session that called them. A model you declare in an agent reaches every host as written; only Codex drops a Claude selector such as `opus`.
+No model is pinned. Each host applies its own default for subagents, usually the model of the session that called them. A model you declare in an agent reaches every host in its own format.
 
 ## 🚧 Limits
 
 - **Tools:** every agent inherits the calling session's tools and permissions; what it writes is an instruction, not a restriction.
 - **Codex:** a Codex plugin cannot carry agents, so only the flat distribution installs them, in `.codex/agents/`. Codex loads them only in a trusted project.
+- **Models:** OpenCode V1 reads the same file but not the `#<effort>` variant.
 - **Updates:** reinstalling replaces the agents still shipped; one removed from the plugin stays where a copy put it until you delete it.
 
 Sources: [Claude Code sub-agents](https://code.claude.com/docs/en/sub-agents), [Copilot custom agents](https://docs.github.com/en/copilot/reference/custom-agents-configuration), [OpenCode agents](https://opencode.ai/v2/docs/agents), [Codex subagents](https://developers.openai.com/codex/subagents), [Cursor subagents](https://cursor.com/docs/subagents).

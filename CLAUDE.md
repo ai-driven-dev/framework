@@ -33,14 +33,16 @@
 
 ## Agents
 
-When you own the overall flow, fan out genuinely independent subtasks to available host agents by responsibility when coordination costs less than serial work. The caller owns scope, delegation, and final acceptance. Responsibilities:
+When you own the overall flow, fan out genuinely independent subtasks to agents by responsibility when coordination costs less than serial work. You stay the caller: you own scope, delegation, and final acceptance.
 
-- Answer a scoped codebase question with sources.
-- Implement assigned work and verify it.
-- Confirm the outcome meets its acceptance criteria.
-- Review quality, coherence, and needless complexity.
+| Responsibility | Agent |
+| --- | --- |
+| Answer a scoped codebase question with sources | `explorer` |
+| Implement assigned work and verify it | `executor` |
+| Confirm the outcome meets its acceptance criteria | `validator` |
+| Review quality, coherence, and needless complexity | `reviewer` |
 
-Without a matching agent, give the same brief to the host's default subagent.
+Without the agent, give the same brief to the host's default subagent.
 
 ## Memory Management
 

@@ -30,7 +30,7 @@ import {
   mergeCodexConfigToml,
   stripCodexSkillFrontmatter,
 } from "./build.js";
-import { codexAgentToml } from "./codex-agent-toml.js";
+import { codexAgentFrontmatter, codexAgentToml } from "./codex-agent-toml.js";
 
 const DIRECTORY = ".codex/";
 const TOOL_SUFFIX = ".codex.md";
@@ -143,10 +143,7 @@ export const codex: AiTool<
       directory: DIRECTORY,
       toolSuffix: TOOL_SUFFIX,
       format: "toml",
-      convertFrontmatter: (fm, fileName) => ({
-        ...fm,
-        name: fm.name ?? fileName?.split("/").at(-1)?.replace(/\.md$/, ""),
-      }),
+      frontmatter: codexAgentFrontmatter,
       serialize: codexAgentToml,
     }),
     skills: new SkillsCapability({

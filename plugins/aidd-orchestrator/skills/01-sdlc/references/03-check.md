@@ -4,9 +4,9 @@
 
 Use a fresh agent for each step:
 
-- **Validate the committed candidate** against the contract, criteria, and mandatory checks.
-- **Review quality and coherence** after validation passes: run `/aidd-dev:05-review` on the code and relevancy axes with the acceptance evidence.
-- **Challenge the outcome** after review clears: verify that it is trustworthy and serves the user.
+- **Validate the committed candidate** with the `validator` agent, against the contract, criteria, and mandatory checks.
+- **Review quality and coherence** with the `reviewer` agent once validation passes: it runs `/aidd-dev:05-review` on the code and relevancy axes with the acceptance evidence.
+- **Challenge the outcome** after review clears: run `/aidd-refine:02-challenge` to verify that it is trustworthy and serves the user.
 
 ## Findings
 
@@ -33,9 +33,8 @@ flowchart TD
     Plan["$plan"]
     CommittedCandidate["$committed_candidate"]
     ValidationReports["$validation_reports"]
-    Validator(["Validation agent"])
-    Reviewer(["Review agent"])
-    Review["/aidd-dev:05-review"]
+    Validator(["validator agent"])
+    Reviewer(["reviewer agent: /aidd-dev:05-review"])
   end
 
   subgraph ChallengeStage["Challenge the outcome"]
@@ -63,9 +62,8 @@ flowchart TD
   ValidationReports --> Validator
   Validator -- "All criteria pass with evidence." --> Reviewer
   Validator -- "Fail or blocked." --> Findings
-  Reviewer -- "Runs code and relevancy axes." --> Review
-  Review -- "Return actionable review findings." --> Findings
-  Review -- "When the review clears, challenge the outcome." --> Challenge
+  Reviewer -- "Return actionable review findings." --> Findings
+  Reviewer -- "When the review clears, challenge the outcome." --> Challenge
   Challenge -- "Return actionable challenge findings." --> Findings
   Challenge -- "When the outcome is trustworthy, open the draft pull request." --> PullRequest
   Findings -- "Use product findings as the next Frame source." --> Frame
@@ -79,7 +77,7 @@ flowchart TD
   classDef artifact fill:#DCFCE7,stroke:#16A34A,color:#14532D,stroke-width:2px
   classDef zone fill:#F1F5F9,stroke:#64748B,color:#0F172A,stroke-width:2px
 
-  class Review,Challenge,Batch,PullRequest skill
+  class Challenge,Batch,PullRequest skill
   class Reviewer,Validator agent
   class Contract,Plan,CommittedCandidate,ValidationReports,Findings,PullRequestUrl artifact
   class Frame,Deliver zone

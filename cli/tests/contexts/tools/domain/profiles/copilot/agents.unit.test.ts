@@ -1,78 +1,55 @@
 import { describe, expect, it } from "vitest";
 import { copilot } from "../../../../../../src/contexts/tools/domain/profiles/copilot/profile.js";
+import { built, installed, NAMED_AGENT, UNNAMED_AGENT } from "../agent-fixture.js";
+
+const NATIVE = `---
+name: 'planner'
+description: 'Plans the work'
+model: 'm'
+reasoningEffort: 'high'
+include-custom-instructions: true
+---
+Plan before building.
+`;
 
 describe("copilot agents", () => {
-  describe("capabilities.agents.convertFrontmatter()", () => {
-    it("includes repository instructions in custom subagents by default", () => {
-      expect(copilot.capabilities.agents.convertFrontmatter({ name: "reviewer" })).toHaveProperty(
-        "include-custom-instructions",
-        true
-      );
+  describe("name resolution", () => {
+    it("installs a plugin agent under its declared name, with the repository instructions", () => {
+      expect(installed(copilot, NAMED_AGENT)).toBe(NATIVE);
     });
 
-    it("preserves an explicit repository-instruction opt-out", () => {
-      expect(
-        copilot.capabilities.agents.convertFrontmatter({
-          name: "reviewer",
-          "include-custom-instructions": false,
-        })
-      ).toHaveProperty("include-custom-instructions", false);
+    it("names an unnamed plugin agent after its file", () => {
+      expect(installed(copilot, UNNAMED_AGENT)).toBe(`---
+name: 'planner'
+description: 'Plans the work'
+include-custom-instructions: true
+---
+Plan before building.
+`);
     });
 
-    it("preserves an explicitly selected agent model", () => {
-      const fm = { name: "alexia", description: "Agent", model: "opus" };
-      const result = copilot.capabilities.agents.convertFrontmatter(fm);
-      expect(result).toEqual({
-        name: "alexia",
-        description: "Agent",
-        model: "opus",
-        "include-custom-instructions": true,
+    it("keeps the declared name inside the plugin of a marketplace build", () => {
+      expect(built(copilot, "marketplace", NAMED_AGENT)).toStrictEqual({
+        path: "agents/planner.md",
+        content: NATIVE,
       });
     });
 
-    it("names an unnamed agent after its own file, whatever folders it sits in", () => {
-      expect(
-        copilot.capabilities.agents.convertFrontmatter(
-          { description: "Reviews code" },
-          "team/reviews/code-reviewer.md"
-        )
-      ).toStrictEqual({
-        name: "code-reviewer",
-        description: "Reviews code",
-        "include-custom-instructions": true,
+    it("prefixes the name with the plugin in a flat build", () => {
+      expect(built(copilot, "flat", NAMED_AGENT)).toStrictEqual({
+        path: ".github/agents/aidd-dev-planner.agent.md",
+        content: NATIVE.replace("'planner'", "'aidd-dev-planner'"),
       });
     });
+  });
 
-    it("drops only the trailing .md from the file it names an agent after", () => {
-      expect(
-        copilot.capabilities.agents.convertFrontmatter(
-          { description: "Helps" },
-          "notes.md-helper.md"
-        )
-      ).toStrictEqual({
-        name: "notes.md-helper",
-        description: "Helps",
-        "include-custom-instructions": true,
-      });
-    });
-
-    it("leaves an agent unnamed when neither its frontmatter nor a file name gives one", () => {
-      expect(
-        copilot.capabilities.agents.convertFrontmatter({ description: "Helps" })
-      ).toStrictEqual({
-        description: "Helps",
-        "include-custom-instructions": true,
-      });
-    });
-
-    it("drops a name that is not a string rather than writing it", () => {
-      expect(
-        copilot.capabilities.agents.convertFrontmatter({ name: 42, description: "Helps" }, "x.md")
-      ).toStrictEqual({
-        description: "Helps",
-        "include-custom-instructions": true,
-      });
-    });
+  it("keeps an explicit opt-out of the repository instructions", () => {
+    expect(
+      copilot.capabilities.agents.convertFrontmatter({
+        name: "reviewer",
+        "include-custom-instructions": false,
+      })
+    ).toHaveProperty("include-custom-instructions", false);
   });
 
   describe("capabilities.agents.buildInstallPath()", () => {

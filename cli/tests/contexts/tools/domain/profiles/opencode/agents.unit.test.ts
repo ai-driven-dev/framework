@@ -1,7 +1,38 @@
 import { describe, expect, it } from "vitest";
 import { opencode } from "../../../../../../src/contexts/tools/domain/profiles/opencode/profile.js";
+import { built, installed, NAMED_AGENT, UNNAMED_AGENT } from "../agent-fixture.js";
+
+const NATIVE = `---
+description: 'Plans the work'
+model: 'm#high'
+mode: 'subagent'
+---
+Plan before building.
+`;
 
 describe("opencode agents", () => {
+  describe("name resolution", () => {
+    it("names a plugin agent after its file, so no name, effort as the model's variant", () => {
+      expect(installed(opencode, NAMED_AGENT)).toBe(NATIVE);
+    });
+
+    it("writes an unnamed plugin agent the same way", () => {
+      expect(installed(opencode, UNNAMED_AGENT)).toBe(`---
+description: 'Plans the work'
+mode: 'subagent'
+---
+Plan before building.
+`);
+    });
+
+    it("prefixes the file with the plugin in a flat build, which is the agent's name", () => {
+      expect(built(opencode, "flat", NAMED_AGENT)).toStrictEqual({
+        path: ".opencode/agents/aidd-dev-planner.md",
+        content: NATIVE,
+      });
+    });
+  });
+
   describe("capabilities.agents.buildInstallPath()", () => {
     it("builds path under .opencode/agents/", () => {
       const path = opencode.capabilities.agents.buildInstallPath("code-reviewer.md");
@@ -11,26 +42,6 @@ describe("opencode agents", () => {
     it("strips .opencode.md tool suffix", () => {
       const path = opencode.capabilities.agents.buildInstallPath("alexia.opencode.md");
       expect(path).toBe(".opencode/agents/alexia.md");
-    });
-  });
-
-  describe("capabilities.agents.convertFrontmatter()", () => {
-    it("adds mode subagent to OpenCode agent frontmatter", () => {
-      const fm = { name: "alexia", description: "Act like the user" };
-      const result = opencode.capabilities.agents.convertFrontmatter(fm);
-      expect(result).toStrictEqual({ description: "Act like the user", mode: "subagent" });
-    });
-
-    it("drops a tools allowlist, so the agent keeps every tool", () => {
-      const result = opencode.capabilities.agents.convertFrontmatter({
-        name: "explorer",
-        description: "Explore",
-        tools: "Read, Grep, Glob",
-      });
-      expect(result).toEqual({
-        description: "Explore",
-        mode: "subagent",
-      });
     });
   });
 });

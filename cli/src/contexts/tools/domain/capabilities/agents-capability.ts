@@ -1,4 +1,5 @@
 import { parseFrontmatter, serializeFrontmatter } from "../../../../kernel/markdown.js";
+import type { AgentFrontmatter } from "../formats/agent-format.js";
 
 function agentNameFromFrontmatter(
   fm: Record<string, unknown>,
@@ -35,18 +36,14 @@ export class AgentsCapability {
       directory: string;
       toolSuffix: string;
       format: "markdown" | "toml";
-      /** The host's key for Claude's `effort`; a host without one drops it. */
-      effortField?: string;
+      /** The host's own agent frontmatter, shared with its built distributions. */
+      frontmatter: AgentFrontmatter;
       userFileExt?: string;
       /** How frontmatter strings are quoted; `double` for readers that keep single quotes. */
       quote?: "single" | "double";
       /** Writes the agent file when the host's format is not markdown frontmatter. */
       serialize?: (frontmatter: Record<string, unknown>, body: string) => string;
       buildInstallPath?: (fileName: string) => string | null;
-      convertFrontmatter?: (
-        fm: Record<string, unknown>,
-        fileName?: string
-      ) => Record<string, unknown>;
     }
   ) {}
 
@@ -74,20 +71,7 @@ export class AgentsCapability {
   }
 
   convertFrontmatter(fm: Record<string, unknown>, fileName?: string): Record<string, unknown> {
-    const converted = this.convertAgentFrontmatter(fm, fileName);
-    if (fm.model !== undefined) converted.model = fm.model;
-    const effortField = this.params.effortField;
-    if (effortField !== undefined && fm.effort !== undefined) converted[effortField] = fm.effort;
-    return converted;
-  }
-
-  private convertAgentFrontmatter(
-    fm: Record<string, unknown>,
-    fileName?: string
-  ): Record<string, unknown> {
-    if (this.params.convertFrontmatter) return this.params.convertFrontmatter(fm, fileName);
-    const name = agentNameFromFrontmatter(fm, fileName);
-    return { name, description: fm.description };
+    return this.params.frontmatter({ ...fm, name: agentNameFromFrontmatter(fm, fileName) });
   }
 
   serialize(frontmatter: Record<string, unknown>, body: string): string {
