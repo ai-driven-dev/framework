@@ -95,6 +95,27 @@ describe("aidd translate — what it hands the build", () => {
     expect(build).toHaveBeenCalledWith(expect.objectContaining({ mode: "flat" }));
   });
 
+  it("carries an agent provider through to the factory alone", async () => {
+    await run(
+      "translate",
+      "framework",
+      "--to",
+      "claude",
+      "--out",
+      "dist-plugins",
+      "--provider",
+      "anthropic"
+    );
+
+    expect(vi.mocked(createFrameworkBuildUseCase)).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ provider: "anthropic" })
+    );
+    expect(build).toHaveBeenCalledWith(
+      expect.not.objectContaining({ provider: expect.anything() })
+    );
+  });
+
   it("carries an overwrite through to the factory alone", async () => {
     await run("translate", "framework", "--to", "claude", "--out", "dist-plugins", "--force");
 

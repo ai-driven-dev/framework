@@ -66,8 +66,9 @@ Review.
   });
 
   it("gives a Kilo agent a provider-prefixed model and the effort as its variant", () => {
-    expect(write(withAgentModels(buildKiloFlatContract(), "kilo", "anthropic"), "explorer.md"))
-      .toBe(`---
+    expect(
+      write(withAgentModels(buildKiloFlatContract(), "kilo", "anthropic"), "explorer.md")
+    ).toBe(`---
 description: 'Reviews the work'
 model: 'anthropic/claude-haiku-5-5'
 variant: 'medium'

@@ -863,6 +863,8 @@ test("reload builds each host with the agent provider its file names, and Claude
     const calls = readFileSync(join(home, "translate-calls"), "utf8");
     assert.match(calls, /--to codex .*--provider openai/);
     assert.match(calls, /--to claude .*--provider anthropic/);
-    assert.match(readFileSync(join(home, "claude-calls"), "utf8"), new RegExp(`marketplace add ${join(home, "build", "claude").replaceAll("\\", "\\\\")} --scope user`));
+    const added = readFileSync(join(home, "claude-calls"), "utf8").match(/marketplace add (.+) --scope user/);
+    assert.ok(added, "Claude marketplace was never added");
+    assert.equal(realpathSync(added[1]), realpathSync(join(home, "build/claude")));
   } finally { rmSync(root, { recursive: true, force: true }); }
 });
