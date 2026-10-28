@@ -19,12 +19,12 @@ A printed report from [access-report.md](../assets/access-report.md), or one sto
    - No `ecosystem.md`: propose `/aidd-context:02-project-memory refresh` to add it.
    - No `Agent` edge in `ecosystem.md`: report that nothing is for the assistant to check.
 2. **Map.** One row per `Agent -- <label> --> <Tool>` edge.
-   - The label is an access mode, or the command that reaches the tool, probed as `cli`.
+   - The label is `mcp`, `http`, `web`, or the command that reaches the tool.
    - `Human` and `App` edges get no row: their access is not the assistant's.
    - Take the expected target, and account if any, from the memory, never from the tool itself.
    - A tool argument keeps its rows only; an unknown tool stops with the tools the memory lists.
 3. **Probe.** One read per row on the target, noting the account it ran as.
-   - `cli`: a read-only command, such as an auth status, then a read on the target.
+   - a command: that command read-only, such as an auth status, then a read on the target.
    - `mcp`: a read tool of that server.
    - `http`: one authenticated `GET`, the token taken from the environment.
    - `web`: the assistant's browser tool, when it has one.

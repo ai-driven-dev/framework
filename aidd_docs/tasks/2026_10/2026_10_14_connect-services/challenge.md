@@ -10,11 +10,11 @@
 
   | Tool | Mode | Account / target | Status | Evidence / next step |
   | --- | --- | --- | --- | --- |
-  | GitHub | `gh` | `alexsoyes` / `ai-driven-dev/framework` | ⚠️ | `gh repo view` read the repo; record the expected account in `vcs.md` |
-  | Roadmap board | `gh` | `alexsoyes` / org project 8 | ⚠️ | `gh project view 8` read 107 items; record the expected account in `backlog.md` |
-  | GitHub Discussions | `gh` | `alexsoyes` / `ai-driven-dev/framework` | ⚠️ | `gh api graphql` read 7 discussions; record the expected account in `backlog.md` |
+  | GitHub | `gh` | `alexsoyes` / `ai-driven-dev/framework` | ✅ | `gh repo view` read the repo |
+  | Roadmap board | `gh` | `alexsoyes` / org project 8 | ✅ | `gh project view 8` read 107 items |
+  | GitHub Discussions | `gh` | `alexsoyes` / `ai-driven-dev/framework` | ✅ | `gh api graphql` read 7 discussions |
 
-  Re-run 2026-10-28 after the bank dropped the edge to the AI host and the `Human` edges its rules drop, and added `Agent -- gh --> Discussions`.
+  Re-run 2026-10-28 after the bank dropped the edge to the AI host and the `Human` edges its rules drop, added `Agent -- gh --> Discussions`, and `vcs.md` and `backlog.md` named the repository. No account is recorded: the bank is shared, so any contributor's account passes.
 
 - **Empty bank:** A directory without `aidd_docs/memory/` stops at Require with `/aidd-context:02-project-memory`, no file written.
 - **Recipe:** CLI, MCP, API and SDK each have one example; none targets a service whose CLI the recipe lists; tokens come from the environment; five client MCP guides answer 200.
