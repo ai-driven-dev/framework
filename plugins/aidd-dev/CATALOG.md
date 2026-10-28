@@ -41,15 +41,15 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 
 | Group | File | Description |
 |-------|------|---|
-| `actions` | [01-gather.md](skills/01-plan/actions/01-gather.md) | - |
+| `actions` | [01-capture.md](skills/01-plan/actions/01-capture.md) | - |
 | `actions` | [02-explore.md](skills/01-plan/actions/02-explore.md) | - |
-| `actions` | [03-wireframe.md](skills/01-plan/actions/03-wireframe.md) | - |
-| `actions` | [04-plan.md](skills/01-plan/actions/04-plan.md) | - |
+| `actions` | [03-conclude.md](skills/01-plan/actions/03-conclude.md) | - |
 | `assets` | [phase-template.md](skills/01-plan/assets/phase-template.md) | - |
 | `assets` | [plan-template.md](skills/01-plan/assets/plan-template.md) | - |
-| `references` | [plan-status.md](skills/01-plan/references/plan-status.md) | `Plan lifecycle status field - values, meaning, who writes each, and when.` |
+| `references` | [findings.md](skills/01-plan/references/findings.md) | - |
+| `references` | [plan-checks.md](skills/01-plan/references/plan-checks.md) | - |
 | `references` | [wireframe-conventions.md](skills/01-plan/references/wireframe-conventions.md) | - |
-| `-` | [SKILL.md](skills/01-plan/SKILL.md) | `Turn a request, ticket, or file into a phased implementation plan. Use to plan a feature before building, or to turn a ticket into phases. Do NOT use to write code or review a diff.` |
+| `-` | [SKILL.md](skills/01-plan/SKILL.md) | `Turn a request, ticket, or file into a phased implementation plan. Use to plan a feature before building, or to turn a ticket into phases. Not for writing code or reviewing a diff.` |
 
 #### `skills/02-implement`
 

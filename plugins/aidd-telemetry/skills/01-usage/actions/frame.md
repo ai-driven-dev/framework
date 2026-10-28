@@ -29,6 +29,7 @@ The command to run, and the period, axis and filters it stands for, said back to
    | each session | `--axis session` |
    | each repository | `--axis repository` |
    | each person | `--axis person` |
+   | Claude Code and Codex apart | `--axis tool` |
 
 3. **Filters.** A value the question fixes on another axis becomes a filter, so "what did task `auth` cost per day" is `--task auth --axis day`. Filters combine with AND, one per axis.
 
@@ -36,6 +37,7 @@ The command to run, and the period, axis and filters it stands for, said back to
    | --- | --- |
    | one task, ticket, person or model | `--task <name>`, `--ticket <ref>`, `--person <id>`, `--model <id>`, as the report's `key` prints it |
    | the main session, its sub-agents or the advisor | `--agent main`, `--agent subagent`, `--agent advisor` |
+   | one tool, Claude Code or Codex | `--tool claude-code`, `--tool codex` |
    | one session or repository | `--session <id>`, `--repository <id>`: the full id or its start, as the text report shows it |
    | the repository the person is in | `--repository .` |
    | work with no task | `--unattributed`, or `--unattributed no-binding` / `--unattributed declared-none` for one reason |

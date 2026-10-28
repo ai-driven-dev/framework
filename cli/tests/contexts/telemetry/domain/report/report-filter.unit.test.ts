@@ -20,7 +20,10 @@ import {
   type ReportAxis,
 } from "../../../../../src/contexts/telemetry/domain/report/usage-report.js";
 import type { StoredUsage } from "../../../../../src/contexts/telemetry/domain/stored-usage.js";
-import { USAGE_AGENTS } from "../../../../../src/contexts/telemetry/domain/usage-record.js";
+import {
+  USAGE_AGENTS,
+  USAGE_TOOLS,
+} from "../../../../../src/contexts/telemetry/domain/usage-record.js";
 
 const call = (over: Partial<StoredUsage> = {}): StoredUsage => ({
   tool: "claude-code",
@@ -73,6 +76,8 @@ describe("a filter", () => {
     expect(keeps({ model: "m-2" })).toBe(false);
     expect(keeps({ agent: "main" })).toBe(true);
     expect(keeps({ agent: "subagent" })).toBe(false);
+    expect(keeps({ tool: "claude-code" })).toBe(true);
+    expect(keeps({ tool: "codex" })).toBe(false);
     expect(keeps({ session: "s-1" })).toBe(true);
     expect(keeps({ session: "s-" })).toBe(false);
     expect(keeps({ repository: "repo-a" })).toBe(true);
@@ -204,6 +209,7 @@ const usage = fc
     session_id: fc.constantFrom(...SESSIONS),
     repository_id: fc.constantFrom("r-a", "r-b"),
     agent: fc.constantFrom(...USAGE_AGENTS),
+    tool: fc.constantFrom(...USAGE_TOOLS),
     model: fc.option(fc.constantFrom("m-1", "m-2"), { nil: null }),
     at: instant,
     input: fc.option(fc.nat(1000), { nil: null, freq: 4 }),
@@ -212,7 +218,6 @@ const usage = fc
   .map(
     (r): StoredUsage => ({
       ...r,
-      tool: "claude-code",
       tool_version: null,
       cache_read: 0,
       cache_write: 0,

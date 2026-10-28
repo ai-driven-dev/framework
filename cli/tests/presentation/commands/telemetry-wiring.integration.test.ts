@@ -107,6 +107,7 @@ const NO_FILTERS = {
   repository: null,
   absent: null,
   unattributed: null,
+  tool: null,
 };
 const reported = {
   status: "reported",
@@ -204,7 +205,8 @@ describe("aidd telemetry report, narrowed", () => {
     await run(
       "report",
       ...["--task", "  auth refactor ", "--ticket", "PROJ-1", "--person", "p-1"],
-      ...["--model", "m-1", "--agent", " subagent", "--session", "a1b2", "--repository", "r-1"]
+      ...["--model", "m-1", "--agent", " subagent", "--session", "a1b2", "--repository", "r-1"],
+      ...["--tool", " codex "]
     );
     expect(asked()).toEqual({
       ...NO_FILTERS,
@@ -215,6 +217,7 @@ describe("aidd telemetry report, narrowed", () => {
       agent: "subagent",
       session: "a1b2",
       repository: "r-1",
+      tool: "codex",
     });
     vi.clearAllMocks();
     await run("report", "--absent", " person ");
@@ -242,6 +245,8 @@ describe("aidd telemetry report, narrowed", () => {
     ["a bare flag given twice", ["--unattributed", "--unattributed"], "--unattributed"],
     ["a value empty once trimmed", ["--ticket", "   "], "--ticket"],
     ["an agent no call can have", ["--agent", "robot"], "--agent"],
+    ["a tool no call can have", ["--tool", "robot"], "--tool"],
+    ["a tool given twice", ["--tool", "codex", "--tool", "codex"], "--tool"],
     ["an axis no call lacks", ["--absent", "session"], "--absent"],
     ["a reason no call has", ["--unattributed", "no-task"], "--unattributed"],
   ])("refuses %s with exit 1, naming the flag, before reading anything", async (_, args, flag) => {

@@ -6,6 +6,8 @@ The version-control conventions this project follows: branches, commits, and the
 
 - Main branch: `<main, master, trunk>`
 - Platform: `<github, gitlab, bitbucket>`
+- Tickets: `<tracker, and how to read one>`
+- Hooks: `<what runs on commit, what runs on push>`
 
 ## Branches
 

@@ -26,7 +26,10 @@ import {
   type ReportAxis,
 } from "../../../../../src/contexts/telemetry/domain/report/usage-report.js";
 import type { StoredUsage } from "../../../../../src/contexts/telemetry/domain/stored-usage.js";
-import { USAGE_AGENTS } from "../../../../../src/contexts/telemetry/domain/usage-record.js";
+import {
+  USAGE_AGENTS,
+  USAGE_TOOLS,
+} from "../../../../../src/contexts/telemetry/domain/usage-record.js";
 import {
   ALREADY_MIGRATED,
   FakeBindings,
@@ -56,6 +59,7 @@ const call = fc.record({
   session: fc.constantFrom(...SESSIONS),
   repository: fc.constantFrom(...REPOSITORIES),
   agent: fc.constantFrom(...USAGE_AGENTS),
+  tool: fc.constantFrom(...USAGE_TOOLS),
   model: fc.constantFrom("m-1", "m-2", null),
   day: fc.constantFrom(...DAYS),
   hour: fc.integer({ min: 0, max: 23 }),
@@ -88,7 +92,7 @@ async function reporterOf({ calls, declarations, person }: Ledger) {
   const ledger = new InMemoryLedger();
   ledger.records = calls.map(
     (c, index): StoredUsage => ({
-      tool: index % 2 === 0 ? "claude-code" : "codex",
+      tool: c.tool,
       tool_version: null,
       key: `k${index}`,
       session_id: c.session,
@@ -192,6 +196,7 @@ const filters = fc
     person: fc.constantFrom(null, "p-1"),
     model: fc.constantFrom(null, "m-1", "m-2"),
     agent: fc.constantFrom(null, ...USAGE_AGENTS),
+    tool: fc.constantFrom(null, ...USAGE_TOOLS),
     // Each names at most one value: a start two values share is refused, not combined.
     session: fc.constantFrom(null, "a1b2c", "a1b2f", SESSIONS[2] as string, "zz"),
     repository: fc.constantFrom(null, "r-a1", "r-b"),

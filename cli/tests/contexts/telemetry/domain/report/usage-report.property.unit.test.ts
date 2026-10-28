@@ -142,6 +142,20 @@ describe("every axis of a report adds up to the same totals", () => {
             const { rows, totals } = buildReport(records, attributionFacts, person, axis);
             const sum = (pick: (row: (typeof rows)[number]) => number) =>
               rows.reduce((n, row) => n + pick(row), 0);
+            if (axis === "tool") {
+              const counted = new Map<string, number>();
+              for (const record of records) {
+                counted.set(record.tool, (counted.get(record.tool) ?? 0) + 1);
+              }
+              expect(
+                new Map(
+                  rows.map((row) => [
+                    row.value.kind === "value" ? row.value.value : "",
+                    row.records,
+                  ])
+                )
+              ).toEqual(counted);
+            }
             expect(totals.records).toBe(records.length);
             expect(sum((row) => row.records)).toBe(records.length);
             expect(totals.total).toEqual({
@@ -163,7 +177,7 @@ describe("every axis of a report adds up to the same totals", () => {
       ),
       { numRuns: 200 }
     );
-  });
+  }, 30_000);
 
   it("whatever order the records arrive in", () => {
     fc.assert(

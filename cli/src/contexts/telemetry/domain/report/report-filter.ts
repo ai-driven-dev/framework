@@ -4,7 +4,7 @@ import { type Attribution, UNATTRIBUTED_REASONS } from "./attribution.js";
 import { type AxisValue, axisValueOf, type ReportAxis } from "./usage-report.js";
 
 /** The axes a call can have no value for: no model said, no identity set, a task declared
- * without a ticket. `session`, `agent` and `repository` always have one, and work with no task
+ * without a ticket. `session`, `agent`, `tool` and `repository` always have one, and work with no task
  * is unattributed, not absent. */
 export const ABSENT_AXES = ["person", "model", "ticket"] as const;
 export type AbsentAxis = (typeof ABSENT_AXES)[number];
@@ -18,6 +18,7 @@ export const FILTER_AXES = [
   "agent",
   "session",
   "repository",
+  "tool",
 ] as const;
 export type FilterAxis = (typeof FILTER_AXES)[number];
 
@@ -43,6 +44,7 @@ export const NO_FILTERS: ReportFilters = {
   repository: null,
   absent: null,
   unattributed: null,
+  tool: null,
 };
 
 const FLAGS = Object.keys(NO_FILTERS) as FilterFlag[];

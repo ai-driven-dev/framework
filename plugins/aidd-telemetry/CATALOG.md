@@ -45,5 +45,5 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `actions` | [answer.md](skills/01-usage/actions/answer.md) | - |
 | `actions` | [frame.md](skills/01-usage/actions/frame.md) | - |
 | `references` | [envelope.md](skills/01-usage/references/envelope.md) | - |
-| `-` | [SKILL.md](skills/01-usage/SKILL.md) | `Answer what a period or one piece of work consumed in tokens, per day, model, agent, task, ticket, session, repository or person, from the local measurement. Use when the user asks how many tokens were spent, where the effort went, or what a task or ticket consumed. Not for turning measurement on or off.` |
+| `-` | [SKILL.md](skills/01-usage/SKILL.md) | `Answer what a period or one piece of work consumed in tokens, per day, model, agent, tool, task, ticket, session, repository or person, from the local measurement. Use when the user asks how many tokens were spent, where the effort went, or what a task or ticket consumed. Not for turning measurement on or off.` |
 

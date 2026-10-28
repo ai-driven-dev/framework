@@ -1,0 +1,384 @@
+{
+  "scenes": [
+    {
+      "template": "terminal-demo",
+      "pill": "Telemetry",
+      "title": "See what your AI costs,",
+      "accent": "in Codex too.",
+      "surfaces": [
+        "aidd telemetry"
+      ],
+      "window": {
+        "label": "Codex · ~/acme-app",
+        "rows": [
+          {
+            "prompt": "what did my work cost this week?"
+          },
+          {
+            "text": "$ aidd telemetry report --tool codex --axis task",
+            "tone": "dim"
+          },
+          {
+            "table": {
+              "head": [
+                "Task",
+                "Requests",
+                "Usage"
+              ],
+              "rows": [
+                [
+                  "fix the login bug",
+                  "38",
+                  "120k"
+                ],
+                [
+                  "add dark mode",
+                  "41",
+                  "190k"
+                ],
+                [
+                  "no task declared",
+                  "17",
+                  "100k"
+                ]
+              ]
+            }
+          }
+        ]
+      },
+      "note": "Example figures."
+    },
+    {
+      "template": "terminal-demo",
+      "pill": "Telemetry",
+      "title": "Know which tool",
+      "accent": "costs what.",
+      "surfaces": [
+        "aidd-telemetry:00-init"
+      ],
+      "window": {
+        "label": "Terminal · ~/acme-app",
+        "rows": [
+          {
+            "text": "$ aidd telemetry report --axis tool"
+          },
+          {
+            "table": {
+              "head": [
+                "Tool",
+                "Requests",
+                "Usage"
+              ],
+              "rows": [
+                [
+                  "Claude Code",
+                  "412",
+                  "1.8M"
+                ],
+                [
+                  "Codex",
+                  "96",
+                  "410k"
+                ]
+              ]
+            }
+          }
+        ]
+      },
+      "note": "Example figures."
+    },
+    {
+      "template": "before-after",
+      "pill": "Brainstorm",
+      "title": "38% leaner Brainstorm",
+      "accent": "for small models.",
+      "before": {
+        "label": "Before · 01-capture.md",
+        "rows": [
+          {
+            "del": "Require. If no idea is present, ask for one and wait."
+          },
+          {
+            "del": "Restate. Capture the idea in short bullets, preserving uncertainty."
+          },
+          {
+            "del": "Scan. Apply interview depth and discovery map silently."
+          },
+          {
+            "del": "Open. Hand the highest-impact open point to probe."
+          }
+        ]
+      },
+      "after": {
+        "label": "After · 01-capture.md",
+        "rows": [
+          {
+            "add": "With no idea, ask for one and stop."
+          },
+          {
+            "add": "Say the idea back briefly, in the user's words, keeping what is still uncertain."
+          },
+          {
+            "add": "Go to explore."
+          }
+        ]
+      }
+    },
+    {
+      "template": "terminal-demo",
+      "pill": "Brainstorm",
+      "title": "See what your AI",
+      "accent": "only guessed.",
+      "surfaces": [
+        "aidd-refine:01-brainstorm"
+      ],
+      "window": {
+        "label": "Claude Code · ~/acme-app",
+        "rows": [
+          {
+            "prompt": "/aidd-refine:01-brainstorm a way to share reports"
+          },
+          {
+            "text": "Who reads these reports, a teammate or a client?",
+            "tone": "amb"
+          },
+          {
+            "text": "Clear: clients read the reports",
+            "tone": "grn"
+          },
+          {
+            "text": "Assumed: a weekly report is enough",
+            "tone": "amb"
+          },
+          {
+            "text": "Open: who owns the data?",
+            "tone": "blu"
+          },
+          {
+            "text": "Approve, correct, or explore more?",
+            "tone": "amb"
+          }
+        ]
+      }
+    },
+    {
+      "template": "before-after",
+      "pill": "Planning",
+      "title": "51% leaner Planning",
+      "accent": "for small models.",
+      "before": {
+        "label": "Before · 01-gather.md",
+        "rows": [
+          {
+            "del": "Find. Identify what the request points to: a file path, a ticket URL or id, or raw text."
+          },
+          {
+            "del": "Pull. Read the file, fetch the ticket, or take the text as given."
+          },
+          {
+            "del": "Restate. Summarize the source in a few bullets: what is asked, and the hard constraints it states."
+          }
+        ]
+      },
+      "after": {
+        "label": "After · 01-capture.md",
+        "rows": [
+          {
+            "add": "With no source to plan from (file, ticket, or text), ask for one and stop."
+          },
+          {
+            "add": "Read it, noting what it asks and the constraints it states."
+          },
+          {
+            "add": "Read explore."
+          }
+        ]
+      }
+    },
+    {
+      "template": "two-panels",
+      "pill": "Planning",
+      "title": "Know what a plan",
+      "accent": "will change.",
+      "panels": [
+        {
+          "label": "plan.md · Phases",
+          "flex": 1,
+          "rows": [
+            {
+              "table": {
+                "head": [
+                  "Phase",
+                  "Depends on"
+                ],
+                "rows": [
+                  [
+                    "1 safety net",
+                    "none"
+                  ],
+                  [
+                    "2 theme switch",
+                    "1"
+                  ],
+                  [
+                    "3 settings page",
+                    "2"
+                  ]
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "label": "plan.md · Impact",
+          "flex": 1,
+          "rows": [
+            {
+              "text": "Runtime: the theme is read at startup",
+              "tone": "grn"
+            },
+            {
+              "text": "Regression: print pages stay light",
+              "tone": "amb"
+            },
+            {
+              "text": "Architecture: one theme provider",
+              "tone": "blu"
+            },
+            {
+              "text": "Documentation: a settings guide section",
+              "tone": "pnk"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "template": "terminal-demo",
+      "pill": "Planning",
+      "title": "Catch plan gaps",
+      "accent": "before you build.",
+      "surfaces": [
+        "aidd-dev:01-plan"
+      ],
+      "window": {
+        "label": "Claude Code · ~/acme-app",
+        "rows": [
+          {
+            "prompt": "/aidd-dev:01-plan add dark mode"
+          },
+          {
+            "text": "plan written, an independent reader checks it…",
+            "tone": "dim"
+          },
+          {
+            "text": "✗ Reading: the login page was not read",
+            "tone": "amb"
+          },
+          {
+            "text": "✗ Evidence: the settings page impact was assumed",
+            "tone": "amb"
+          },
+          {
+            "text": "Approve, correct, or explore more?",
+            "tone": "amb"
+          }
+        ]
+      }
+    },
+    {
+      "template": "terminal-demo",
+      "pill": "Rules",
+      "title": "Rules that never",
+      "accent": "contradict each other.",
+      "surfaces": [
+        "aidd-context:05-rule-generate"
+      ],
+      "window": {
+        "label": "Claude Code · ~/acme-app",
+        "rows": [
+          {
+            "prompt": "/aidd-context:05-rule-generate always use named exports"
+          },
+          {
+            "text": "checking your existing rules…",
+            "tone": "dim"
+          },
+          {
+            "text": "Conflict: another rule allows default exports",
+            "tone": "red"
+          },
+          {
+            "text": "Which one should win?  1 named exports   2 default exports",
+            "tone": "amb"
+          },
+          {
+            "text": "nothing is saved until you decide",
+            "tone": "grn"
+          }
+        ]
+      }
+    },
+    {
+      "template": "contributors",
+      "pill": "Team",
+      "title": "Shipped by",
+      "accent": "3 contributors.",
+      "logins": [
+        "alexsoyes",
+        "blafourcade",
+        "waewoo"
+      ]
+    }
+  ],
+  "skipped": [
+    {
+      "surface": "aidd-telemetry:01-usage",
+      "reason": "internal report format change; the command and the answer a user reads are the same"
+    }
+  ],
+  "intro": {
+    "highlights": [
+      "See what Codex costs you",
+      "Lean skills small models follow",
+      "See what your AI guessed",
+      "Catch plan gaps before building",
+      "No more contradicting rules"
+    ]
+  },
+  "youtube": {
+    "themes": [
+      "Télémétrie",
+      "Plan",
+      "Brainstorm",
+      "Règles"
+    ],
+    "programme": [
+      {
+        "surface": "aidd telemetry",
+        "theme": "Télémétrie",
+        "text": "compter aussi ce que coûte le travail fait avec Codex, avec le rapport complet."
+      },
+      {
+        "surface": "aidd-telemetry:00-init",
+        "theme": "Télémétrie",
+        "text": "activer la mesure, avec votre accord, du travail fait avec Claude Code et Codex."
+      },
+      {
+        "surface": "aidd-dev:01-plan",
+        "theme": "Plan",
+        "text": "alléger le plan de moitié, y lister l'ordre des phases et l'impact, et le faire relire par un juge indépendant."
+      },
+      {
+        "surface": "aidd-refine:01-brainstorm",
+        "theme": "Brainstorm",
+        "text": "alléger le brainstorm et distinguer ce qui est établi, supposé ou resté ouvert."
+      },
+      {
+        "surface": "aidd-context:05-rule-generate",
+        "theme": "Règles",
+        "text": "vérifier qu'une règle n'en contredit pas une autre, et décider laquelle garder."
+      }
+    ]
+  }
+}

@@ -25,6 +25,7 @@ const AXES = [
   "repository",
   "task",
   "ticket",
+  "tool",
 ];
 const COUNTERS = ["input", "output", "cache_read", "cache_write"] as const;
 
@@ -559,6 +560,8 @@ describe("the telemetry journey, on the built binary", () => {
       ["main", 2],
       ["subagent", 1],
     ]);
+    const tools = await report("tool", day, last);
+    expect(tools.rows.map((row) => [row.key, row.records])).toEqual([["codex", 3]]);
   });
 
   it("shows nothing, blocks nothing and stores nothing in a project that never opted in", async () => {

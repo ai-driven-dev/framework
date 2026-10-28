@@ -1,0 +1,116 @@
+{
+  "scenes": [
+    {
+      "template": "terminal-demo",
+      "pill": "/aidd-telemetry:01-usage",
+      "title": "Know what your work costs,",
+      "accent": "in tokens.",
+      "surfaces": ["aidd telemetry", "aidd-telemetry:01-usage"],
+      "window": {
+        "label": "Claude Code · ~/acme-app",
+        "rows": [
+          { "prompt": "/aidd-telemetry:01-usage how many tokens did ticket 412 use?" },
+          { "text": "$ aidd telemetry report --json", "tone": "dim" },
+          { "chips": ["input", "output", "cache read", "cache write"] },
+          { "text": "unknown stays unknown, never zero.", "tone": "amb" }
+        ]
+      },
+      "note": "Every figure comes from the local report. No estimate, no guess."
+    },
+    {
+      "template": "terminal-demo",
+      "pill": "/aidd-orchestrator:01-sdlc",
+      "title": "Deliver end to end.",
+      "accent": "You approve three times.",
+      "surfaces": ["aidd-orchestrator:01-sdlc"],
+      "window": {
+        "label": "Claude Code · ~/acme-app",
+        "rows": [{ "prompt": "/aidd-orchestrator:01-sdlc interactive add a dark mode toggle" }]
+      },
+      "flow": [
+        { "n": "01", "title": "Frame", "sub": "pause · contract" },
+        { "n": "02", "title": "Deliver", "sub": "pause · plan" },
+        { "n": "03", "title": "Check", "sub": "pause · outcome" },
+        { "title": "Draft PR", "final": true }
+      ]
+    },
+    {
+      "template": "terminal-demo",
+      "pill": "/aidd-dev:10-batch",
+      "title": "One prompt, parallel agents,",
+      "accent": "one report.",
+      "surfaces": ["aidd-dev:10-batch"],
+      "window": {
+        "label": "Claude Code · ~/acme-app",
+        "rows": [
+          { "prompt": "/aidd-dev:10-batch fix the README typo, add a --json flag, bump the lint rule" },
+          {
+            "table": {
+              "head": ["Agent", "Task", "Status", "Result"],
+              "rows": [
+                ["executor-1", "README typo", { "status": "Done" }, { "dim": "1 file changed" }],
+                ["executor-2", "--json flag", { "status": "Done" }, { "dim": "tests pass" }],
+                ["executor-3", "lint rule", { "status": "Done" }, { "dim": "lint clean" }]
+              ]
+            }
+          }
+        ]
+      },
+      "note": "Example run. Renamed from todo; each agent's status and result is reported."
+    },
+    {
+      "template": "two-panels",
+      "pill": "/aidd-vcs:05-resolve-conflict",
+      "title": "Git conflicts, resolved.",
+      "accent": "Never committed for you.",
+      "surfaces": ["aidd-vcs:05-resolve-conflict"],
+      "panels": [
+        { "label": "config.yml", "flex": 0.8, "rows": [{ "code": "<<<<<<< HEAD\ntimeout: 30\n=======\ntimeout: 60\n>>>>>>> feat/retry" }] },
+        {
+          "label": "resolve-conflict",
+          "flex": 1.6,
+          "rows": [
+            { "check": "deterministic conflicts resolved" },
+            { "check": "only resolved files staged" },
+            { "check": "a real choice? it proposes, then stops", "mark": "!" },
+            { "check": "stops before commit" }
+          ]
+        }
+      ]
+    },
+    {
+      "template": "bullet-grid",
+      "pill": "docs",
+      "title": "Docs that",
+      "accent": "pick for you.",
+      "cells": [
+        { "title": "MCP or CLI, by usage", "detail": "GitLab · Linear · Google Workspace · Sentry · Vercel · Supabase", "wide": true },
+        { "title": "Cook recipes refreshed", "detail": "practical guides now validated" },
+        { "title": "Rule generation covers OpenCode V1", "detail": "aidd-context" },
+        { "title": "Agent instructions, lighter to read", "detail": "less cognitive load" }
+      ]
+    },
+    {
+      "template": "bullet-grid",
+      "pill": "fixes from the community",
+      "title": "Reported by you,",
+      "accent": "fixed here.",
+      "cells": [
+        { "title": "Biome crashed on Windows", "detail": "reported by @kevin-lozada-santos" },
+        { "title": "Pre-commit failed in Git Bash", "detail": "reported by @goumies-creative" },
+        { "title": "Memory README links 404 on Windows", "detail": "reported by @VincentMenard76" },
+        { "title": "OpenCode v2: plugins failed to load", "detail": "reported by @ljulgold" },
+        { "title": "setup --scope user crashed", "detail": "reported by @dkp-consult" },
+        { "title": "Review skipped missing runtime evidence", "detail": "reported by @waewoo" }
+      ]
+    },
+    {
+      "template": "contributors",
+      "pill": "release notes",
+      "title": "Shipped by",
+      "accent": "8 contributors.",
+      "logins": ["blafourcade", "alexsoyes", "kevin-lozada-santos", "goumies-creative", "VincentMenard76", "ljulgold", "dkp-consult", "waewoo"]
+    }
+  ],
+  "skipped": []
+}
