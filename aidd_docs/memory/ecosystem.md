@@ -10,13 +10,10 @@ flowchart LR
   Discussions["GitHub Discussions · backlog.md"]
   Npm["npm registry · deployment.md"]
   Packages["GitHub Packages · deployment.md"]
-  Discord["Discord"]
+  Discord["Discord · human only"]
   ReleasePlease["release-please · deployment.md"]
   Dependabot["Dependabot · deployment.md"]
 
-  Human -- web --> GitHub
-  Human -- gh --> Board
-  Human -- web --> Discussions
   Human -- web --> Discord
   Agent -- gh --> GitHub
   Agent -- gh --> Board
