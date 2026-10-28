@@ -19,12 +19,12 @@ A printed report from [access-report.md](../assets/access-report.md), or one sto
    - No `ecosystem.md`: propose `/aidd-context:02-project-memory refresh` to add it.
    - No `Agent` edge in `ecosystem.md`: report that nothing is for the assistant to check.
 2. **Map.** One row per `Agent -- <label> --> <Tool>` edge, quoted or not.
-   - The label is `mcp`, `http`, `web`, or the command that reaches the tool.
+   - The label is the access mode: `cli`, `mcp`, `http` or `web`.
    - `Human` and `App` edges get no row: their access is not the assistant's.
-   - Take the expected target, and account if any, from the file named after the node's middle dot, never from the tool itself or a guess.
+   - Take the expected target, the command for `cli`, and account if any, from the file named after the node's middle dot, never from the tool itself or a guess.
    - A tool argument matches a node's name, case aside, and keeps its rows only; an unknown tool stops with the tools the memory lists.
 3. **Probe.** Find the account once per command or server, then one read per row on its target.
-   - a command: its auth status, any token line left out, then a read-only subcommand that lists or views the target.
+   - `cli`: the command's auth status, any token line left out, then a read-only subcommand that lists or views the target.
    - `mcp`: a read tool of that server.
    - `http`: one authenticated `GET`, the token taken from the environment.
    - `web`: the assistant's browser tool, when it has one.
@@ -42,6 +42,6 @@ A printed report from [access-report.md](../assets/access-report.md), or one sto
 | Target read, no account in memory | its row is ✅ |
 | Another account than memory records | its row is ⚠️, naming expected and observed |
 | Command missing or signed out | its row is 🔌, next step: install or sign in |
-| No target in memory | its row is ⚠️, next step: record it in memory |
+| No target in memory, or no command for `cli` | its row is ⚠️, next step: record it in memory |
 | Tool argument | only that tool's rows |
 | Every run | no file under the project changed, no secret printed |

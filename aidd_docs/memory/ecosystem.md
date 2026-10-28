@@ -15,9 +15,9 @@ flowchart LR
   Dependabot["Dependabot · deployment.md"]
 
   Human -- web --> Discord
-  Agent -- gh --> GitHub
-  Agent -- gh --> Board
-  Agent -- gh --> Discussions
+  Agent -- cli --> GitHub
+  Agent -- cli --> Board
+  Agent -- cli --> Discussions
   App -- http --> GitHub
   App -- http --> Npm
 
