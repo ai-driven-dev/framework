@@ -5,7 +5,7 @@
 | Support | Authority for | Role |
 | --- | --- | --- |
 | GitHub Issues | the work items, their type and their scope | where a change is agreed before a branch exists |
-| AIDD Roadmap board (org project 8) | order, status, and what ships next | the single source of truth for the roadmap |
+| AIDD Roadmap board (`ai-driven-dev` org project 8) | order, status, and what ships next | the single source of truth for the roadmap |
 | Milestones | themes | one milestone per theme; no milestone means backlog |
 | GitHub Discussions (`ai-driven-dev/framework`) | ideas and their upvotes | where an idea is weighed before it becomes an issue |
 | `aidd_docs/` task documents | the local plans, specs and reviews behind an issue | never a substitute for the issue |
