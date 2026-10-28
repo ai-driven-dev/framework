@@ -95,27 +95,6 @@ describe("aidd translate — what it hands the build", () => {
     expect(build).toHaveBeenCalledWith(expect.objectContaining({ mode: "flat" }));
   });
 
-  it("carries an agent provider through to the factory alone", async () => {
-    await run(
-      "translate",
-      "framework",
-      "--to",
-      "claude",
-      "--out",
-      "dist-plugins",
-      "--provider",
-      "anthropic"
-    );
-
-    expect(vi.mocked(createFrameworkBuildUseCase)).toHaveBeenCalledWith(
-      expect.anything(),
-      expect.objectContaining({ provider: "anthropic" })
-    );
-    expect(build).toHaveBeenCalledWith(
-      expect.not.objectContaining({ provider: expect.anything() })
-    );
-  });
-
   it("carries an overwrite through to the factory alone", async () => {
     await run("translate", "framework", "--to", "claude", "--out", "dist-plugins", "--force");
 
@@ -238,11 +217,6 @@ describe("aidd translate — the help surface", () => {
       ["--out <dir>", "Output directory (marketplace dist or project root)", undefined],
       ["--as <marketplace|flat>", "Output layout", "marketplace"],
       ["--force", "Overwrite existing files at canonical paths under --out", undefined],
-      [
-        "--provider <provider>",
-        "Give each agent its role's model at this provider (openai, anthropic, mistral)",
-        undefined,
-      ],
     ]);
     expect(
       translateCommand()

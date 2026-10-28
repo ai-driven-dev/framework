@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 import type { ToolBuildContract } from "../../../../../src/contexts/tools/domain/build-contract.js";
-import { withAgentModels } from "../../../../../src/contexts/tools/domain/formats/agent-models.js";
+import {
+  AGENT_MODELS,
+  withAgentModels,
+} from "../../../../../src/contexts/tools/domain/formats/agent-models.js";
 import { buildClaudeFlatContract } from "../../../../../src/contexts/tools/domain/profiles/claude/build.js";
 import { buildCodexFlatContract } from "../../../../../src/contexts/tools/domain/profiles/codex/build.js";
 import { buildCopilotFlatContract } from "../../../../../src/contexts/tools/domain/profiles/copilot/build.js";
@@ -85,5 +88,28 @@ Review.
     expect(() => withAgentModels(buildCodexFlatContract(), "vscode", "openai")).toThrow(
       'No agent provider is supported for "vscode".'
     );
+  });
+});
+
+describe("agent-models.json", () => {
+  const tiers = Object.keys(AGENT_MODELS.tiers);
+
+  it("names three tiers, and gives the main session and every role one of them", () => {
+    expect(tiers).toStrictEqual(["smart", "standard", "light"]);
+    expect(tiers).toContain(AGENT_MODELS.main);
+    for (const tier of Object.values(AGENT_MODELS.roles)) expect(tiers).toContain(tier);
+  });
+
+  it("defines every tier at every provider", () => {
+    for (const profiles of Object.values(AGENT_MODELS.providers)) {
+      expect(Object.keys(profiles).sort()).toStrictEqual([...tiers].sort());
+    }
+  });
+
+  it("offers each host only providers it defines", () => {
+    for (const host of Object.values(AGENT_MODELS.hosts)) {
+      for (const provider of host.providers)
+        expect(AGENT_MODELS.providers).toHaveProperty(provider);
+    }
   });
 });

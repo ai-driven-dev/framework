@@ -281,23 +281,23 @@ describe("aidd setup — what it refuses and what it reports", () => {
   );
 
   it.each([
-    { args: [], cause: "with no --ai", remedy: "Pass `--ai <ids>`" },
+    { args: [], cause: "with no --ide", remedy: "Pass `--ide <ids>`" },
     {
-      args: ["--ai", "claude", "--ide", "vscode"],
-      cause: "an IDE tool (vscode)",
-      remedy: "Drop --ide",
+      args: ["--ide", "claude,vscode"],
+      cause: "an editor (vscode)",
+      remedy: "Drop it from --ide",
     },
     {
-      args: ["--ai", "opencode"],
+      args: ["--ide", "opencode"],
       cause: "opencode declares no user-scope settings",
-      remedy: "Drop it from --ai",
+      remedy: "Drop it from --ide",
     },
-  ])("renders user-scope validation for $cause before building dependencies", async (test) => {
+  ])("renders global validation for $cause before building dependencies", async (test) => {
     const exit = vi.spyOn(process, "exit").mockImplementation(() => {
       throw new Error("exited");
     });
 
-    await expect(run("--scope", "user", ...test.args)).rejects.toThrow("exited");
+    await expect(run("--global", ...test.args)).rejects.toThrow("exited");
 
     expect(errors.join("")).toContain(test.cause);
     expect(errors.join("")).toContain(test.remedy);
@@ -395,13 +395,13 @@ describe("aidd setup — the help surface", () => {
     );
   });
 
-  it("offers a source, two tool lists, a plugin mode, a scope, and two switches", () => {
-    expect(setupCommand().options.map((option) => [option.flags, option.description])).toEqual([
+  it("offers a source, one tool list, a plugin mode, a scope, a provider, and its switches", () => {
+    const visible = setupCommand().options.filter((option) => !option.hidden);
+    expect(visible.map((option) => [option.flags, option.description])).toEqual([
       ["--source <mode>", "Framework source: remote or local"],
       ["--path <dir>", "Absolute path to local framework (required with --source local)"],
       ["--release <tag>", "Marketplace release tag to fetch (e.g., v1.2.3)"],
-      ["--ai <ids>", "Comma-separated AI tool IDs, or 'all' (e.g., claude,cursor or all)"],
-      ["--ide <ids>", "Comma-separated IDE tool IDs, or 'all' (e.g., vscode or all)"],
+      ["--ide <ids>", "Comma-separated tool IDs, or 'all' (e.g., claude,codex,vscode or all)"],
       ["--plugins <mode>", "Plugin install mode: none | all | recommended | comma-separated names"],
       [
         "--no-default-marketplace",
@@ -409,11 +409,20 @@ describe("aidd setup — the help surface", () => {
       ],
       ["--yes", "Accept defaults without prompting"],
       [
-        "--scope <scope>",
-        "project (default) installs into this project alone; user registers the shared " +
-          "framework source and supported tools machine-wide, writing nothing under this project; " +
-          "see user-scope requirements below",
+        "--global",
+        "register the shared framework source and supported tools machine-wide instead of " +
+          "installing into this project; see the requirements below",
       ],
+      [
+        "--provider <provider>",
+        "Run each tool's agents on this provider's model for their role (openai, anthropic, mistral)",
+      ],
+      ["--main", "with --provider, also run the main session on its smart model"],
     ]);
+    expect(
+      setupCommand()
+        .options.filter((option) => option.hidden)
+        .map((option) => option.flags)
+    ).toEqual(["--ai <ids>", "--scope <scope>"]);
   });
 });

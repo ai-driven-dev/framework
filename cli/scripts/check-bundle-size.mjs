@@ -46,6 +46,9 @@ const pkg = JSON.parse(readFileSync(resolve(root, "package.json"), "utf8"));
 // 709 KB: 695.3 KB, telemetry keeping what an ingest measured and could not store, ledger lines
 // no reader knows, and a bounded re-read of a call whose consent cannot be read yet (#1046,
 // +1.3 KB over next's 694.0 KB, after 1.7 KB of savings in telemetry code); 2.0% measured headroom.
+// 736 KB: 721.0 KB, the agents' models: a provider per IDE applied by every install build, the
+// main-session settings editor and the `aidd agents` command (+25.7 KB over the 695.3 KB above);
+// 2.0% measured headroom.
 const budgetKB = pkg.bundleBudgetKB ?? 500;
 const budgetBytes = budgetKB * 1024;
 

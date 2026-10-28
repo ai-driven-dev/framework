@@ -1,9 +1,8 @@
 #!/usr/bin/env bash
 # (Re)install every plugin into Claude, Codex, OpenCode, Copilot and Cursor from THIS checkout.
-# Every host installs from a tree the aidd CLI builds, so what runs locally matches what ships.
-# Codex and OpenCode load no agent from a plugin, so their built agents are copied to the
-# user's agents directory. A host listed in scripts/reload-agents.json (or the file
-# RELOAD_AGENTS names) gives each agent its role's model at that provider.
+# Claude reads the raw repo, already native; the others install from a tree the aidd CLI
+# builds, so what runs locally matches what ships. Codex and OpenCode load no
+# agent from a plugin, so their built agents are copied to the user's agents directory.
 #
 # NOT live: the install copies built files, so an edit needs a re-run. Idempotent; a tool
 # whose CLI is absent is skipped, and the first run needs network. A managed OpenCode host
@@ -35,7 +34,6 @@ FW="${FW:-$(dirname "$SCRIPT_DIR")}"
 MKT="${MKT:-aidd-framework}"
 AIDD_CLI_VERSION="${AIDD_CLI_VERSION:-latest}"  # published fallback for sources without a built CLI
 BUILD="${BUILD:-$HOME/.cache/aidd-framework-dev}"  # per-tool native trees the marketplaces point at
-RELOAD_AGENTS="${RELOAD_AGENTS:-$SCRIPT_DIR/reload-agents.json}"
 CODEX_CACHE="${CODEX_CACHE:-${CODEX_HOME:-$HOME/.codex}/plugins/cache}"
 CLAUDE_CACHE="${CLAUDE_CACHE:-${CLAUDE_CODE_PLUGIN_CACHE_DIR:-${CLAUDE_CONFIG_DIR:-$HOME/.claude}/plugins}/cache}"
 CODEX_AGENTS="${CODEX_AGENTS:-${CODEX_HOME:-$HOME/.codex}/agents}"
@@ -60,24 +58,17 @@ elif command -v agent >/dev/null 2>&1 && agent --help 2>/dev/null | grep 'Start 
   HAVE_CURSOR=1
 fi
 
-agent_provider() {
-  [ -f "$RELOAD_AGENTS" ] || return 0
-  node -e 'const p = JSON.parse(require("node:fs").readFileSync(process.argv[1], "utf8"))[process.argv[2]];
-    if (p !== undefined && typeof p !== "string") throw new Error(`${process.argv[2]} needs a provider name`);
-    process.stdout.write(p ?? "");' "$RELOAD_AGENTS" "$1"
-}
-
 build_tool() {
-  local tool="$1" provider
+  local tool="$1"
   rm -rf "$BUILD/$tool"; mkdir -p "$BUILD/$tool"
-  local -a args=(translate "$FW" --to "$tool" --out "$BUILD/$tool" --force)
-  [ "$tool" != opencode ] || args+=(--as flat)
-  provider="$(agent_provider "$tool")" || return 1
-  [ -z "$provider" ] || args+=(--provider "$provider")
+  local mode=marketplace
+  [ "$tool" != opencode ] || mode=flat
   if [ -f "$FW/cli/dist/cli.js" ]; then
-    node "$FW/cli/dist/cli.js" "${args[@]}" >/dev/null 2>&1
+    node "$FW/cli/dist/cli.js" translate "$FW" \
+      --to "$tool" --out "$BUILD/$tool" --as "$mode" --force >/dev/null 2>&1
   else
-    npx --yes "@ai-driven-dev/cli@${AIDD_CLI_VERSION}" "${args[@]}" >/dev/null 2>&1
+    npx --yes "@ai-driven-dev/cli@${AIDD_CLI_VERSION}" translate "$FW" \
+      --to "$tool" --out "$BUILD/$tool" --as "$mode" --force >/dev/null 2>&1
   fi
 }
 
@@ -147,11 +138,11 @@ register_marketplace() {
     codex)
       codex  plugin marketplace remove "$MKT" >/dev/null 2>&1 || true
       codex  plugin marketplace add "$BUILD/codex"  >/dev/null 2>&1 ;;
-    # Scope every Claude op to user: bare `marketplace remove` strips the declaration from
-    # EVERY scope, wiping the repo's own project-scoped config.
+    # Claude installs the native repository. Scope every op to user: bare `marketplace remove` strips
+    # the declaration from EVERY scope, wiping the repo's own project-scoped config.
     claude)
       claude plugin marketplace remove "$MKT" --scope user >/dev/null 2>&1 || true
-      claude plugin marketplace add "$BUILD/claude" --scope user >/dev/null 2>&1 ;;
+      claude plugin marketplace add "$FW" --scope user >/dev/null 2>&1 ;;
     copilot)
       local registered_source
       registered_source="$(copilot plugin marketplace list --json | node -e '
@@ -225,6 +216,8 @@ fi
 targets=()
 for d in "$FW"/plugins/*/; do targets+=("$(basename "$d")"); done
 
+# Codex needs a native plugin build; register against it. Claude installs from the raw
+# repo (already native), so it only needs the marketplace registered - no build.
 if [ "$HAVE_CODEX" = 1 ]; then
   printf '%-22s' "build codex"
   build_tool codex || { echo "FAIL"; echo "codex build failed; rerun the translate command in scripts/dev-sync.sh without output redirection for details." >&2; exit 1; }
@@ -232,10 +225,7 @@ if [ "$HAVE_CODEX" = 1 ]; then
   echo "ok"
 fi
 if [ "$HAVE_CLAUDE" = 1 ]; then
-  printf '%-22s' "build claude"
-  build_tool claude || { echo "FAIL"; echo "claude build failed; rerun the translate command in scripts/dev-sync.sh without output redirection for details." >&2; exit 1; }
-  register_marketplace claude || { echo "FAIL"; echo "Claude marketplace registration failed for $BUILD/claude." >&2; exit 1; }
-  echo "ok"
+  register_marketplace claude
 fi
 if [ "$HAVE_OPENCODE" = 1 ] && [ "$HAVE_MANAGED_OPENCODE" = 0 ]; then
   printf '%-22s' "build opencode"

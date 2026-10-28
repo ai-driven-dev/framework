@@ -21,7 +21,6 @@ interface TranslateExecutionParams {
   target: FrameworkBuildTarget;
   mode: FrameworkBuildMode;
   force: boolean;
-  provider?: string;
 }
 
 /** The build+report core, once `--to`/`--as`/`--out` flags are validated and resolved. */
@@ -34,7 +33,6 @@ async function runTranslateCore(params: TranslateExecutionParams): Promise<void>
       mode: params.mode,
       outDir: params.outDir,
       force: params.force,
-      ...(params.provider === undefined ? {} : { provider: params.provider }),
     });
     if (useCase === undefined) {
       params.output.error(
@@ -63,7 +61,6 @@ interface TranslateCmdOptions {
   out: string;
   as?: string;
   force?: boolean;
-  provider?: string;
 }
 
 export function registerTranslateCommand(program: Command): void {
@@ -80,10 +77,6 @@ export function registerTranslateCommand(program: Command): void {
     .requiredOption("--out <dir>", "Output directory (marketplace dist or project root)")
     .option("--as <marketplace|flat>", "Output layout", "marketplace")
     .option("--force", "Overwrite existing files at canonical paths under --out")
-    .option(
-      "--provider <provider>",
-      "Give each agent its role's model at this provider (openai, anthropic, mistral)"
-    )
     .action(async (source: string, cmdOptions: TranslateCmdOptions) => {
       const { verbose, output, projectRoot } = parseGlobalOptions(program);
 
@@ -113,7 +106,6 @@ export function registerTranslateCommand(program: Command): void {
         target: cmdOptions.to as FrameworkBuildTarget,
         mode,
         force: cmdOptions.force ?? false,
-        ...(cmdOptions.provider === undefined ? {} : { provider: cmdOptions.provider }),
       });
     });
 }

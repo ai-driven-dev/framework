@@ -61,10 +61,11 @@ export class UserPluginFileUpdater {
     plugin: InstalledPlugin,
     toolId: AiToolId,
     projectRoot: string,
-    logger: Logger
+    logger: Logger,
+    rebuild = false
   ): Promise<PlannedUserPluginFileUpdate | null> {
     const dist = await this.loader.loadLatest(plugin, projectRoot);
-    if (compareSemver(dist.manifest.version, plugin.version) <= 0) return null;
+    if (!rebuild && compareSemver(dist.manifest.version, plugin.version) <= 0) return null;
     const { files, componentPaths } = await this.materializeFiles(
       dist,
       toolId,

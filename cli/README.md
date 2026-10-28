@@ -24,7 +24,7 @@ aidd --version
 ## Quickstart
 
 ```sh
-aidd setup --ai claude --ide vscode --plugins recommended --yes
+aidd setup --ide claude,vscode --plugins recommended --yes
 aidd plugin install aidd-dev
 aidd doctor
 aidd sync
@@ -32,7 +32,8 @@ aidd update
 ```
 
 The first command bootstraps the project: manifest, default marketplace, tool configs, plugins.
-`--scope user` on `setup` registers the framework source and supported tools machine-wide instead, and writes nothing under the project. See the scope support below.
+`--global` on `setup` registers the framework source and supported tools machine-wide instead, and writes nothing under the project. See the scope support below.
+`--provider <openai|anthropic|mistral>` runs the framework's agents on that provider's models, and `--main` the main session too; `aidd agents set-model` changes the choice later.
 
 ## Authentication
 
@@ -68,9 +69,9 @@ Run `aidd --help`, then a group's own `--help`, for flags this page does not rep
 
 `setup`, `doctor`, `sync` and `clean` accept `--scope <project|user>`. Project scope is the default and acts on this project alone.
 
-`setup --scope user` requires an explicit supported `--ai` list, no `--ide`, and `--plugins none` (or omit `--plugins` in a scripted run). It records the source and tools in the user registry without installing tool configuration files or enabling plugins. `--ai all` includes unsupported tools and is refused.
+`setup --global` requires an explicit supported `--ide` list without an editor, and `--plugins none` (or omit `--plugins` in a scripted run). It records the source and tools in the user registry without installing tool configuration files or enabling plugins. `--ide all` includes unsupported tools and is refused.
 
-| Tool | `setup --scope user` |
+| Tool | `setup --global` |
 | --- | --- |
 | `claude`, `codex`, `copilot` | Registers the source and drives the tool's own CLI |
 | `cursor` | Records the source and tool only; no native activation |
@@ -79,7 +80,7 @@ Run `aidd --help`, then a group's own `--help`, for flags this page does not rep
 Native activation requires the corresponding `claude`, `codex`, or `copilot` executable on `PATH`. When it is missing, registration succeeds with a warning and activation remains unrun; install the host CLI, then run `aidd sync --scope user`.
 
 ```sh
-aidd setup --scope user --ai claude,codex,copilot --plugins none --yes
+aidd setup --global --ide claude,codex,copilot --plugins none --yes
 ```
 
 `aidd setup --help` prints the same support list, generated from the registry.

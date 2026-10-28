@@ -1,4 +1,10 @@
 {
+  "tiers": {
+    "smart": "The main session: frames the request, plans, delegates and accepts the result.",
+    "standard": "Judgment a fresh context must get right on its own: reviewing finished work.",
+    "light": "Bounded work with a precise brief: exploring, executing one task, validating against criteria."
+  },
+  "main": "smart",
   "roles": {
     "explorer": "light",
     "executor": "light",
@@ -7,10 +13,16 @@
   },
   "providers": {
     "openai": {
+      "smart": { "model": "gpt-6.1-sol", "effort": "high" },
       "standard": { "model": "gpt-6.1-sol", "effort": "medium" },
       "light": { "model": "gpt-6-luna", "effort": "medium" }
     },
     "anthropic": {
+      "smart": {
+        "model": "claude-opus-5-5",
+        "effort": "high",
+        "nativeModels": { "copilot": "claude-opus-5.5" }
+      },
       "standard": {
         "model": "claude-sonnet-5-5",
         "effort": "medium",
@@ -23,15 +35,26 @@
       }
     },
     "mistral": {
+      "smart": { "model": "mistral-large-4", "effort": "high" },
       "standard": { "model": "mistral-medium-latest", "effort": "high" },
       "light": { "model": "mistral-small-latest", "effort": "high" }
     }
   },
   "hosts": {
-    "claude": { "providers": ["anthropic"] },
-    "codex": { "providers": ["openai"] },
+    "claude": {
+      "providers": ["anthropic"],
+      "main": { "path": ".claude/settings.json", "effortKey": "effortLevel" }
+    },
+    "codex": {
+      "providers": ["openai"],
+      "main": { "path": ".codex/config.toml", "effortKey": "model_reasoning_effort" }
+    },
     "copilot": { "providers": ["openai", "anthropic"] },
-    "opencode": { "providers": ["openai", "anthropic", "mistral"], "providerPrefix": true },
+    "opencode": {
+      "providers": ["openai", "anthropic", "mistral"],
+      "providerPrefix": true,
+      "main": { "path": "opencode.json", "alternatives": ["opencode.jsonc"] }
+    },
     "cursor": { "providers": ["anthropic"] },
     "kilo": { "providers": ["openai", "anthropic", "mistral"], "providerPrefix": true }
   }

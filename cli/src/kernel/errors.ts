@@ -477,9 +477,9 @@ export class UserScopeUnavailableError extends Error {
 export class UserScopeIdeToolsError extends Error {
   constructor(ideTools: readonly string[]) {
     super(
-      `--scope user installs no project files, so an IDE tool (${ideTools.join(", ")}) has ` +
-        "nothing to install at user scope. Drop --ide, or run `aidd setup --ide <ids>` " +
-        "separately at project scope."
+      `--global installs no project files, so an editor (${ideTools.join(", ")}) has ` +
+        "nothing to install machine-wide. Drop it from --ide, or run `aidd setup --ide <ids>` " +
+        "separately in the project."
     );
     this.name = "UserScopeIdeToolsError";
   }
@@ -488,9 +488,9 @@ export class UserScopeIdeToolsError extends Error {
 export class UserScopeUnsupportedAiToolsError extends Error {
   constructor(aiTools: readonly string[]) {
     super(
-      `--scope user drives native activation machine-wide, and ${aiTools.join(", ")} declares ` +
-        "no user-scope settings this CLI can point at. Drop it from --ai, or run " +
-        "`aidd setup --ai <ids>` separately at project scope."
+      `--global drives native activation machine-wide, and ${aiTools.join(", ")} declares ` +
+        "no user-scope settings this CLI can point at. Drop it from --ide, or run " +
+        "`aidd setup --ide <ids>` separately in the project."
     );
     this.name = "UserScopeUnsupportedAiToolsError";
   }
@@ -499,8 +499,8 @@ export class UserScopeUnsupportedAiToolsError extends Error {
 export class UserScopeNoToolsError extends Error {
   constructor() {
     super(
-      "--scope user with no --ai registers the shared source for no tool at all. Pass " +
-        "`--ai <ids>` naming which tool to activate machine-wide."
+      "--global with no --ide registers the shared source for no tool at all. Pass " +
+        "`--ide <ids>` naming which tool to activate machine-wide."
     );
     this.name = "UserScopeNoToolsError";
   }
