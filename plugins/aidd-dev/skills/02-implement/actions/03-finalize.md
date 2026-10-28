@@ -1,26 +1,20 @@
 # 03 - Finalize
 
+Close the plan.
+
 ## Input
 
-The coded plan.
-
-## Output
-
-The validated plan marked `implemented`.
+The plan, every phase `done`.
 
 ## Process
 
-1. **Verify.** Run the plan's validation commands and tests.
-   - Start the required runtime if needed.
-2. **Mark.** Set the plan `status: implemented`.
-   - Commit according to the commit policy.
+1. Run the plan's validation commands and tests, starting the runtime when needed.
+2. If one fails, fix it and go back to step 1. If it needs a human or another scope, stop at once: follow [stop](../references/stop.md).
+3. Append a run to `run.md` beside the plan, from the [run template](../assets/run-template.md).
+4. Mark the plan `implemented`.
+5. Commit the plan with `run.md`, unless the project's [commit strategy](../references/commits.md) says otherwise.
+6. Run this skill's `scripts/validate-implement.cjs` with node on the feature folder, until it prints `OK`.
 
-## Rules
+## Output
 
-- Gate `implemented` on successful validation.
-  - Require every phase `done`.
-  - Require all validation commands and tests to pass.
-- Repair validation failures before `implemented`.
-  - Rerun the affected workflow after a repair.
-  - Rerun the validation commands and tests.
-  - Follow Execute's validation, blocker and drift rules.
+The plan `implemented`, the run appended, and a reply quoting the script's last line, with the branch and what the run left undone.

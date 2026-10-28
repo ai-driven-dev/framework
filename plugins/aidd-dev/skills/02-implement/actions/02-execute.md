@@ -1,44 +1,22 @@
 # 02 - Execute
 
+Build one phase at a time.
+
 ## Input
 
 The prepared plan.
 
-## Output
-
-Validated phases marked `done`.
-
-Or a `blocked` / `replan needed` report.
-
 ## Process
 
-1. **Open.** Walk phases in order.
-   - Set the current phase `status: in-progress`.
-   - In a feature folder, read `phase-<n>.md` beside `plan.md`.
-2. **Code.** Build the next task or inseparable group against its acceptance criteria.
-   - Follow the plan's task order.
-3. **Assert.** Apply the validation rules below to every acceptance criterion of the selected task or group.
-   - After the last task:
-     - Validate the full phase workflow.
-     - Set the phase `status: done` on success.
-4. **Complete.** Commit according to the commit policy.
-   - Repeat steps 2–4 for the remaining tasks.
+1. Run this skill's `scripts/validate-implement.cjs` with node on the feature folder. Its NEXT line says what follows: take a phase (step 2), build the next task or close the phase (step 3), or read [finalize](03-finalize.md).
+2. Mark the phase `in-progress`, uncommitted. Read its `phase-<n>.md`.
+3. Build the next task against its acceptance criteria, in the plan's order.
+4. Check each criterion by running its scenario from the phase's `Test Scope`, with observable evidence.
+5. If a criterion fails, fix it and go back to step 4. If it needs a human or another scope, stop at once: follow [stop](../references/stop.md).
+6. If this was the phase's last task, also run the phase's whole `Test Scope` and the plan's regression safety net, fix what fails, and mark the phase `done`, not the plan.
+7. Commit the task with its code, tests and docs, unless the project's [commit strategy](../references/commits.md) says otherwise.
+8. Go back to step 1.
 
-## Rules
+## Output
 
-- Validate every acceptance criterion through the real affected workflow.
-  - Use the appropriate interface (browser, CLI, API…).
-  - Check actual against expected behavior at every step.
-  - Fix any mismatch.
-  - Restart from the beginning after a repair.
-- Gate task commits and `done` on successful validation.
-  - Require a full successful run.
-  - Require observable evidence for every step.
-  - Report blocked validation.
-  - Never count blocked validation as success.
-- Follow [blocked.md](../references/blocked.md) when implementation is blocked.
-  - Record the blocked plan according to the commit policy.
-  - Leave unfinished code uncommitted.
-- Stop if satisfying the acceptance criteria requires changing scope or requirements.
-  - Report `replan needed: <reason>`.
-  - Never rewrite the plan.
+Every phase `done`, and the script's `OK`.

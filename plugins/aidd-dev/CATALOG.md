@@ -58,7 +58,9 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `actions` | [01-prepare.md](skills/02-implement/actions/01-prepare.md) | - |
 | `actions` | [02-execute.md](skills/02-implement/actions/02-execute.md) | - |
 | `actions` | [03-finalize.md](skills/02-implement/actions/03-finalize.md) | - |
-| `references` | [blocked.md](skills/02-implement/references/blocked.md) | `Conditions that make a plan blocked (needs a human).` |
+| `assets` | [run-template.md](skills/02-implement/assets/run-template.md) | - |
+| `references` | [commits.md](skills/02-implement/references/commits.md) | - |
+| `references` | [stop.md](skills/02-implement/references/stop.md) | - |
 | `-` | [SKILL.md](skills/02-implement/SKILL.md) | `Write an existing plan's code, phase by phase, until every acceptance criterion holds. Use when a plan exists and needs implementing. Do NOT use to write a plan, review a diff.` |
 
 #### `skills/03-assert`
