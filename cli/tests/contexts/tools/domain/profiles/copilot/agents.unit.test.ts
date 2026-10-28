@@ -1,21 +1,16 @@
 import { describe, expect, it } from "vitest";
 import { copilot } from "../../../../../../src/contexts/tools/domain/profiles/copilot/profile.js";
-import {
-  BODY,
-  built,
-  DESCRIPTION,
-  installed,
-  NAMED_AGENT,
-  UNNAMED_AGENT,
-  withModel,
-} from "../agent-fixture.js";
+import { built, installed, NAMED_AGENT, UNNAMED_AGENT } from "../agent-fixture.js";
 
 const NATIVE = `---
-name: 'explorer'
-description: '${DESCRIPTION}'
+name: 'planner'
+description: 'Plans the work'
+model: 'm'
+reasoningEffort: 'high'
 include-custom-instructions: true
 ---
-${BODY}`;
+Plan before building.
+`;
 
 describe("copilot agents", () => {
   describe("name resolution", () => {
@@ -24,33 +19,28 @@ describe("copilot agents", () => {
     });
 
     it("names an unnamed plugin agent after its file", () => {
-      expect(installed(copilot, UNNAMED_AGENT)).toBe(NATIVE);
+      expect(installed(copilot, UNNAMED_AGENT)).toBe(`---
+name: 'planner'
+description: 'Plans the work'
+include-custom-instructions: true
+---
+Plan before building.
+`);
     });
 
     it("keeps the declared name inside the plugin of a marketplace build", () => {
       expect(built(copilot, "marketplace", NAMED_AGENT)).toStrictEqual({
-        path: "agents/explorer.md",
+        path: "agents/planner.md",
         content: NATIVE,
       });
     });
 
     it("prefixes the name with the plugin in a flat build", () => {
       expect(built(copilot, "flat", NAMED_AGENT)).toStrictEqual({
-        path: ".github/agents/aidd-orchestrator-explorer.agent.md",
-        content: NATIVE.replace("'explorer'", "'aidd-orchestrator-explorer'"),
+        path: ".github/agents/aidd-dev-planner.agent.md",
+        content: NATIVE.replace("'planner'", "'aidd-dev-planner'"),
       });
     });
-  });
-
-  it("writes the effort as reasoningEffort", () => {
-    expect(installed(copilot, withModel(NAMED_AGENT))).toBe(`---
-name: 'explorer'
-description: '${DESCRIPTION}'
-model: 'm'
-reasoningEffort: 'high'
-include-custom-instructions: true
----
-${BODY}`);
   });
 
   it("keeps an explicit opt-out of the repository instructions", () => {
