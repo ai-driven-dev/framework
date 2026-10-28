@@ -13,4 +13,5 @@ Behavior and sources are in [the agent guide](../../../../docs/SUBAGENTS.md).
 - **Claude Code:** the four agents load and run from a project-scoped plugin install.
 - **OpenCode:** the four agents run from the flat distribution through `opencode run --standalone --agent <id>` with an OpenAI model, each answering after a `read` call.
 - **Codex:** the four agents load from the flat distribution in a trusted project; `codex exec` spawned each, and its session records the agent's role and instructions.
-- **Copilot, Cursor, Kilo:** no host binary in the test environment; build output covered by unit and golden tests only.
+- **Every host:** `cli/tests/e2e/agent-install.e2e.test.ts` builds the repository flat and checks each shipped agent's path, frontmatter and body against the host's documented format.
+- **Copilot, Cursor, Kilo:** no host binary in the test environment, so loading by the host is unverified. The Copilot plugin lists agent files where its documentation describes agent directories.

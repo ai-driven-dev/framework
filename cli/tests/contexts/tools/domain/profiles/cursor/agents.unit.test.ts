@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { cursor } from "../../../../../../src/contexts/tools/domain/profiles/cursor/profile.js";
-import { built, installed, NAMED_AGENT, UNNAMED_AGENT } from "../agent-fixture.js";
+import { inMarketplace, installed, NAMED_AGENT, UNNAMED_AGENT } from "../agent-fixture.js";
 
 const PREFIXED = `---
 name: "aidd-dev-planner"
@@ -32,15 +32,8 @@ Plan before building.
     });
 
     it("prefixes the name with the plugin in a marketplace build", () => {
-      expect(built(cursor, "marketplace", NAMED_AGENT)).toStrictEqual({
+      expect(inMarketplace(cursor, NAMED_AGENT)).toStrictEqual({
         path: "agents/planner.md",
-        content: PREFIXED,
-      });
-    });
-
-    it("prefixes the name with the plugin in a flat build", () => {
-      expect(built(cursor, "flat", NAMED_AGENT)).toStrictEqual({
-        path: ".cursor/agents/aidd-dev-planner.md",
         content: PREFIXED,
       });
     });

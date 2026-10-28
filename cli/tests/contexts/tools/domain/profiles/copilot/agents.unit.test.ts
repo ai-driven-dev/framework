@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { copilot } from "../../../../../../src/contexts/tools/domain/profiles/copilot/profile.js";
-import { built, installed, NAMED_AGENT, UNNAMED_AGENT } from "../agent-fixture.js";
+import { inMarketplace, installed, NAMED_AGENT, UNNAMED_AGENT } from "../agent-fixture.js";
 
 const NATIVE = `---
 name: 'planner'
@@ -29,16 +29,9 @@ Plan before building.
     });
 
     it("keeps the declared name inside the plugin of a marketplace build", () => {
-      expect(built(copilot, "marketplace", NAMED_AGENT)).toStrictEqual({
+      expect(inMarketplace(copilot, NAMED_AGENT)).toStrictEqual({
         path: "agents/planner.md",
         content: NATIVE,
-      });
-    });
-
-    it("prefixes the name with the plugin in a flat build", () => {
-      expect(built(copilot, "flat", NAMED_AGENT)).toStrictEqual({
-        path: ".github/agents/aidd-dev-planner.agent.md",
-        content: NATIVE.replace("'planner'", "'aidd-dev-planner'"),
       });
     });
   });
