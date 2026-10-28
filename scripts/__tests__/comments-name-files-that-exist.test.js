@@ -70,12 +70,25 @@ function repositoryBasenames(tracked) {
   }));
 }
 
+// find exits 1 when a directory vanishes mid-scan, as another test's temp directory does; what it
+// listed before that is still the answer.
+function listed(command) {
+  try {
+    return cp.execSync(command, { cwd: ROOT, encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] });
+  } catch (error) {
+    if (error.status === 1 && typeof error.stdout === "string") return error.stdout;
+    throw error;
+  }
+}
+
+// Another test's scratch directory (`.tmp-*`) is no part of the repository, and it may be gone
+// by the time its files are read.
 function findFiles(command) {
-  return cp
-    .execSync(command, { cwd: ROOT, encoding: "utf8" })
+  return listed(command)
     .trim()
     .split(/\r?\n/)
-    .filter(Boolean);
+    .filter(Boolean)
+    .filter((file) => !/(^|\/)\.tmp-/u.test(file));
 }
 
 function scannedFiles() {
