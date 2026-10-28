@@ -11,11 +11,6 @@ name: Promote next to main
 
 on:
   workflow_dispatch:
-    inputs:
-      skip_video:
-        description: Promote without checking the release video covers what ships. Urgent only.
-        type: boolean
-        default: false
 
 concurrency:
   group: promote
@@ -44,7 +39,6 @@ jobs:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
           REPO: ${{ github.repository }}
           RUN_ID: ${{ github.run_id }}
-          SKIP_VIDEO: ${{ inputs.skip_video }}
         run: |
           set -euo pipefail
 
@@ -61,10 +55,8 @@ jobs:
 
           # What ships needs a scene in the release video, or a written reason to be left out.
           # Checked here, before anything is pushed, so a refusal leaves no branch or PR behind.
-          if [ "${SKIP_VIDEO}" != "true" ]; then
-            git checkout --detach origin/next
-            node .claude/skills/release-video/assets/check-release-video.js
-          fi
+          git checkout --detach origin/next
+          node .claude/skills/release-video/assets/check-release-video.js
 
           # A snapshot of next, never next itself: a PR headed by the live branch widens as
           # work merges in during review. The snapshot is next's exact tip, so the merge base

@@ -1,7 +1,7 @@
 const assert = require("node:assert/strict");
 const test = require("node:test");
 
-const { buildHtml, measureRms, musicSegments, musicSections, sceneDuration, soundCues, soundTrack, totalDuration } = require("../../.claude/skills/release-video/assets/render-release-video.cjs");
+const { buildHtml, measureRms, musicSegments, musicSections, sceneDuration, soundCues, posterArgs, soundTrack, thumbnailHtml, totalDuration } = require("../../.claude/skills/release-video/assets/render-release-video.cjs");
 
 const window = (rows) => ({ label: "Claude Code · ~/acme-app", rows });
 
@@ -68,6 +68,33 @@ test("the intro starts with no version on screen and types it in", () => {
   assert.match(html, /<span id="ver-t"><\/span><span class="dot"><\/span><span id="ver-n"><\/span>/);
   assert.match(html, /const full = "5\.13"/);
   assert.match(html, /AIDD <span class="g">v5\.13<\/span>/);
+});
+
+test("the thumbnail is its own still composition: the logo, the release and the whole version, then the themes", () => {
+  const html = thumbnailHtml({ ...plan, youtube: { themes: ["Télémétrie", "Plan"], programme: [] } }, { version: "5.13" });
+
+  assert.match(html, /<span id="ver-t">v5<\/span><span class="dot">\.<\/span><span id="ver-n">13<\/span>/);
+  assert.match(html, /<img id="intro-logo"/);
+  assert.match(html, /AIDD Framework/);
+  assert.match(html, /NEW RELEASE/);
+  assert.match(html, /<p class="themes">Télémétrie · Plan<\/p>/);
+  assert.match(html, /data-duration="1"/);
+  assert.doesNotMatch(html, /class="hl|typed|enter\(/);
+});
+
+test("the video opens on the thumbnail for one frame, so a chat shows it as the preview, and keeps its bitrate", () => {
+  const args = posterArgs({ video: "v.mp4", poster: "t.png", out: "o.mp4", bitrate: 866446 });
+  const joined = args.join(" ");
+
+  assert.ok(args.includes("t.png") && args.includes("v.mp4") && args.at(-1) === "o.mp4");
+  assert.match(joined, /concat=n=2:v=1:a=0/);
+  assert.match(joined, /adelay=34\|34/);
+  assert.equal(args[args.indexOf("-b:v") + 1], "866k");
+  assert.equal(args[args.indexOf("-maxrate") + 1], "1083k");
+});
+
+test("a thumbnail with no themes draws none", () => {
+  assert.doesNotMatch(thumbnailHtml({ ...plan, youtube: undefined }, { version: "5.13" }), /class="themes"/);
 });
 
 test("a scene's note appears after its last row, not with its window", () => {
