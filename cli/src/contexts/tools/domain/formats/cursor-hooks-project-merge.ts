@@ -8,6 +8,7 @@
 import { rewriteClaudeRootInJson } from "../../../../kernel/materialization/claude-root-path-rewrite.js";
 import { genericFlatHooksScriptPath } from "../../../../kernel/materialization/flat-paths.js";
 import { mergeCursorFlatHooks } from "./flat-hooks-merge.js";
+import type { ProjectHookEntry, ProjectHooksFormat } from "./project-hooks-format.js";
 
 const HOOKS_PREFIX = "hooks/";
 const CURSOR_HOOKS_DIR = ".cursor/hooks/";
@@ -60,6 +61,26 @@ export function cursorProjectHooksScriptPath(
 export function cursorProjectHooksScriptDir(pluginName: string): string {
   return `${CURSOR_HOOKS_DIR}${pluginName}/`;
 }
+
+export const cursorProjectHooksFormat: ProjectHooksFormat = {
+  merge: mergeCursorProjectHooksJson,
+  unmerge: unmergeCursorProjectHooksJson,
+  contributedEntries: (content, pluginName) => {
+    const parsed = JSON.parse(content) as { hooks?: Record<string, ProjectHookEntry[]> };
+    const marker = cursorProjectHooksScriptDir(pluginName);
+    return Object.entries(parsed.hooks ?? {}).flatMap(([event, entries]) =>
+      entries
+        .filter((entry) => typeof entry.command === "string" && entry.command.includes(marker))
+        .map((entry) => ({ event, entry }))
+    );
+  },
+  isEmpty: (content) => {
+    const parsed = JSON.parse(content) as { hooks?: Record<string, unknown> };
+    return Object.keys(parsed.hooks ?? {}).length === 0;
+  },
+  scriptPath: cursorProjectHooksScriptPath,
+  scriptDir: cursorProjectHooksScriptDir,
+};
 
 function stripPluginEntries(existingJson: string, pluginName: string): CursorHooksFile {
   const parsed = JSON.parse(existingJson) as CursorHooksFile;

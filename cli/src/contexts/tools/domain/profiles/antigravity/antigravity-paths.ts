@@ -3,3 +3,5 @@
 
 export const ANTIGRAVITY_DIRECTORY = ".agents/";
 export const ANTIGRAVITY_SKILLS_DIR = `${ANTIGRAVITY_DIRECTORY}skills/`;
+export const ANTIGRAVITY_HOOKS_DIR = `${ANTIGRAVITY_DIRECTORY}hooks/`;
+export const ANTIGRAVITY_HOOKS_FILE = `${ANTIGRAVITY_DIRECTORY}hooks.json`;

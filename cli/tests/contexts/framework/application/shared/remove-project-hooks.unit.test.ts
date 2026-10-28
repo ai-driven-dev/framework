@@ -63,16 +63,21 @@ function plugin(options: { entry?: boolean; script?: string } = {}): InstalledPl
 }
 
 describe("removeProjectHooks", () => {
-  it.each(["entries", "scripts"] as const)(
-    "refuses a legacy install with only %s present before changing any files",
-    async (present) => {
+  it.each([
+    ["entries", {}],
+    ["scripts", {}],
+    ["entries", { overwriteEdited: true }],
+    ["scripts", { overwriteEdited: true }],
+  ] as const)(
+    "refuses a legacy install with only %s present, guard %o, before changing any files",
+    async (present, guard) => {
       const content = hooksFile(PLUGIN);
       const fs = new InMemoryFileAdapter(
         present === "entries" ? { [HOOKS_PATH]: content } : { [SCRIPT_PATH]: "legacy" }
       );
       const legacy = InstalledPlugin.fromJSON({ ...plugin().toJSON(), projectHooks: undefined });
 
-      await expect(removeProjectHooks(fs, legacy, "cursor", PROJECT_ROOT)).rejects.toThrow(
+      await expect(removeProjectHooks(fs, legacy, "cursor", PROJECT_ROOT, guard)).rejects.toThrow(
         `Cursor project hooks for '${PLUGIN}' have an unproven legacy install digest; detach refused.`
       );
 
@@ -133,6 +138,68 @@ describe("removeProjectHooks", () => {
 
     expect(fs.getFile(HOOKS_PATH)).toBe(content);
     expect(fs.getFile(join(PROJECT_ROOT, path))).toBe(script);
+  });
+
+  it.each([".cursor/hooks/aidd-dev/pre.js", "/foreign/pre.js"])(
+    "still refuses an unproven recorded script path %s when told to overwrite edits",
+    async (path) => {
+      const script = "installed script";
+      const fs = new InMemoryFileAdapter({
+        [HOOKS_PATH]: hooksFile(PLUGIN),
+        [join(PROJECT_ROOT, path)]: script,
+      });
+      const installed = plugin({ entry: true }).toJSON();
+      const invalid = InstalledPlugin.fromJSON({
+        ...installed,
+        projectHooks: {
+          entries: installed.projectHooks?.entries ?? [],
+          scripts: { [path]: createHash("md5").update(script).digest("hex") },
+        },
+      });
+
+      await expect(
+        removeProjectHooks(fs, invalid, "cursor", PROJECT_ROOT, { overwriteEdited: true })
+      ).rejects.toThrow(`Cursor hook script path '${path}' has unproven provenance`);
+
+      expect(fs.getFile(join(PROJECT_ROOT, path))).toBe(script);
+    }
+  );
+
+  it("refuses an unproven entry digest even when told to overwrite edits", async () => {
+    const installed = plugin({ entry: true }).toJSON();
+    const invalid = InstalledPlugin.fromJSON({
+      ...installed,
+      projectHooks: {
+        entries: (installed.projectHooks?.entries ?? []).map((e) => ({ ...e, digest: "x" })),
+        scripts: {},
+      },
+    });
+    const fs = new InMemoryFileAdapter({ [HOOKS_PATH]: hooksFile(PLUGIN) });
+
+    await expect(
+      removeProjectHooks(fs, invalid, "cursor", PROJECT_ROOT, { overwriteEdited: true })
+    ).rejects.toThrow(`Cursor project hooks for '${PLUGIN}' have an unproven install digest`);
+  });
+
+  it("removes an edited entry and an edited script when told to overwrite edits", async () => {
+    const edited = JSON.stringify({
+      version: 1,
+      hooks: { preToolUse: [{ ...entry(PLUGIN), timeout: 99 }, entry(OTHER)] },
+    });
+    const fs = new InMemoryFileAdapter({ [HOOKS_PATH]: edited, [SCRIPT_PATH]: "user edit" });
+    const installed = plugin({ entry: true, script: "installed script" });
+
+    await expect(removeProjectHooks(fs, installed, "cursor", PROJECT_ROOT)).rejects.toThrow(
+      /edited after install; detach refused\. Rerun aidd sync --force/
+    );
+    expect(
+      await removeProjectHooks(fs, installed, "cursor", PROJECT_ROOT, { overwriteEdited: true })
+    ).toBe(true);
+
+    expect(JSON.parse(fs.getFile(HOOKS_PATH) ?? "null").hooks).toStrictEqual({
+      preToolUse: [entry(OTHER)],
+    });
+    expect(fs.getFile(SCRIPT_PATH)).toBeUndefined();
   });
 
   it.each([
