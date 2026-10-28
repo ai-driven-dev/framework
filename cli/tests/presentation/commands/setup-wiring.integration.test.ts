@@ -20,6 +20,7 @@ const setupToolsPrompt = vi.fn();
 const detectContext = vi.fn();
 const setupMachineScope = vi.fn();
 const loadManifest = vi.fn();
+const setAgentModel = vi.fn();
 
 vi.mock("../../../src/runtime/wiring/framework.js", () => ({
   createDeps: vi.fn(async () => ({
@@ -33,6 +34,7 @@ vi.mock("../../../src/runtime/wiring/framework.js", () => ({
     setupToolsPromptUseCase: { execute: setupToolsPrompt },
     projectContextDetector: { execute: detectContext },
     setupMachineScopeUseCase: { execute: setupMachineScope },
+    setAgentModelUseCase: { execute: setAgentModel },
   })),
   createMenuDeps: vi.fn(),
 }));
@@ -163,6 +165,39 @@ describe("aidd setup — the flow a scripted run builds", () => {
     expect(flow.scope).toBe("user");
     expect(setupTools).not.toHaveBeenCalled();
     expect(resolveSourceIfNeeded).not.toHaveBeenCalled();
+  });
+});
+
+describe("aidd setup — the agents' provider", () => {
+  it("records the provider for the agent hosts it installs, before the install builds", async () => {
+    await run("--ide", "opencode,vscode", "--provider", "mistral", "--main");
+
+    expect(setAgentModel).toHaveBeenCalledWith({
+      projectRoot: PROJECT_ROOT,
+      hosts: ["opencode"],
+      provider: "mistral",
+      main: true,
+      scope: "project",
+    });
+    expect(setAgentModel.mock.invocationCallOrder[0]).toBeLessThan(
+      resolveSourceIfNeeded.mock.invocationCallOrder[0]
+    );
+  });
+
+  it.each([
+    [["--ide", "claude,codex", "--provider", "openai"], 'not supported for "claude"'],
+    [["--global", "--ide", "claude,vscode", "--provider", "anthropic", "--main"], "vscode"],
+    [["--ide", "claude", "--main"], "--main needs --provider"],
+  ])("refuses %j before building or writing anything", async (args, message) => {
+    vi.spyOn(process, "exit").mockImplementation(() => {
+      throw new Error("exited");
+    });
+
+    await expect(run(...args)).rejects.toThrow("exited");
+
+    expect(errors.join("")).toContain(message);
+    expect(vi.mocked(createDeps)).not.toHaveBeenCalled();
+    expect(setAgentModel).not.toHaveBeenCalled();
   });
 });
 
@@ -401,7 +436,7 @@ describe("aidd setup — the help surface", () => {
       ["--source <mode>", "Framework source: remote or local"],
       ["--path <dir>", "Absolute path to local framework (required with --source local)"],
       ["--release <tag>", "Marketplace release tag to fetch (e.g., v1.2.3)"],
-      ["--ide <ids>", "Comma-separated tool IDs, or 'all' (e.g., claude,codex,vscode or all)"],
+      ["--ide <ids>", "Comma-separated tool IDs, or 'all' (e.g., claude,vscode or all)"],
       ["--plugins <mode>", "Plugin install mode: none | all | recommended | comma-separated names"],
       [
         "--no-default-marketplace",

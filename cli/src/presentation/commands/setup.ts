@@ -3,7 +3,11 @@ import { type Command, Option } from "commander";
 import { MarketplaceSourceMode } from "../../contexts/distribution/domain/marketplace-source-mode.js";
 import { SetupUseCase } from "../../contexts/framework/application/setup-use-case.js";
 import { SetupFlow } from "../../contexts/framework/domain/setup-flow.js";
-import { agentProviders, isAgentHost } from "../../contexts/tools/domain/formats/agent-models.js";
+import {
+  agentProviders,
+  isAgentHost,
+  supportedProvider,
+} from "../../contexts/tools/domain/formats/agent-models.js";
 import {
   assertToolIdsMatchCategory,
   getAllRegisteredTools,
@@ -109,7 +113,7 @@ export function registerSetupCommand(program: Command): void {
     .option("--source <mode>", "Framework source: remote or local")
     .option("--path <dir>", "Absolute path to local framework (required with --source local)")
     .option("--release <tag>", "Marketplace release tag to fetch (e.g., v1.2.3)")
-    .option("--ide <ids>", "Comma-separated tool IDs, or 'all' (e.g., claude,codex,vscode or all)")
+    .option("--ide <ids>", "Comma-separated tool IDs, or 'all' (e.g., claude,vscode or all)")
     .addOption(new Option("--ai <ids>", "Former spelling of --ide, for AI tools").hideHelp())
     .option(
       "--plugins <mode>",
@@ -184,6 +188,13 @@ export function registerSetupCommand(program: Command): void {
           scope,
         });
 
+        // One provider per run: claude and codex each run one only, so pairing them is refused
+        // here, naming the host, before anything is built or written.
+        const agentHosts = toolIds.aiTools.filter(isAgentHost);
+        if (cmdOptions.provider !== undefined) {
+          for (const host of agentHosts) supportedProvider(host, cmdOptions.provider);
+        }
+
         if (interactive) printWelcomeBanner(output);
 
         const deps = await createDeps(projectRoot, { verbose }, output);
@@ -192,7 +203,7 @@ export function registerSetupCommand(program: Command): void {
         if (cmdOptions.provider !== undefined) {
           await deps.setAgentModelUseCase.execute({
             projectRoot,
-            hosts: toolIds.aiTools.filter(isAgentHost),
+            hosts: agentHosts,
             provider: cmdOptions.provider,
             main: cmdOptions.main === true,
             scope: scope ?? "project",

@@ -42,7 +42,7 @@ async function setModel(
       main: options.main === true,
       scope: options.global === true ? "user" : "project",
     });
-    report(output, provider, hosts, result);
+    report(output, provider, hosts, result, options.main === true);
   } catch (error) {
     new ErrorHandler(output).handle(error);
   }
@@ -52,7 +52,8 @@ function report(
   output: CLIOutput,
   provider: string | undefined,
   hosts: readonly AgentHost[],
-  result: { mainSet: readonly AgentHost[]; reinstalled: readonly string[] }
+  result: { mainSet: readonly AgentHost[]; reinstalled: readonly string[] },
+  main: boolean
 ): void {
   const agents =
     provider === undefined
@@ -60,6 +61,10 @@ function report(
       : `Agents for ${hosts.join(", ")} run on ${provider}.`;
   output.success(agents);
   if (result.mainSet.length > 0) output.success(`Main model set for ${result.mainSet.join(", ")}.`);
+  const skipped = main ? hosts.filter((host) => !result.mainSet.includes(host)) : [];
+  if (skipped.length > 0) {
+    output.warn(`No main-model setting at this scope for ${skipped.join(", ")}; left unchanged.`);
+  }
   if (result.reinstalled.length > 0) output.info(`Reinstalled: ${result.reinstalled.join(", ")}.`);
 }
 

@@ -68,6 +68,23 @@ describe("E2E: aidd agents set-model on an installed project", () => {
     }
   });
 
+  it("names an IDE whose main model has no setting at that scope, and leaves it alone", async () => {
+    const { projectDir, fakeHome, cleanup } = await createTestEnv("agent-models-no-main");
+    try {
+      const result = await runCli(
+        ["agents", "set-model", "mistral", "--ide", "opencode", "--global", "--main"],
+        projectDir,
+        fakeHome
+      );
+      expect(result.exitCode, result.stderr).toBe(0);
+      expect(`${result.stdout}${result.stderr}`).toContain(
+        "No main-model setting at this scope for opencode; left unchanged."
+      );
+    } finally {
+      await cleanup();
+    }
+  });
+
   it("refuses a provider the IDE cannot run, and changes nothing", async () => {
     const { projectDir, fakeHome, cleanup } = await createTestEnv("agent-models-refused");
     try {

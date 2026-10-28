@@ -271,6 +271,13 @@ describe("userMachineLocalFilesOf()", () => {
     ]);
   });
 
+  it("follows CLAUDE_CONFIG_DIR, where Claude Code keeps its settings when set", () => {
+    const env = (name: string) => (name === "CLAUDE_CONFIG_DIR" ? "/cfg/claude" : undefined);
+    expect(userMachineLocalFilesOf("claude", "/home/tester", env)).toEqual([
+      join("/cfg/claude", "settings.json"),
+    ]);
+  });
+
   it("returns nothing for a tool whose profile declares no userSettingsPath", () => {
     expect(userMachineLocalFilesOf("cursor", "/home/tester", () => undefined)).toEqual([]);
   });

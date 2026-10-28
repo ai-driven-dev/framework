@@ -9,6 +9,7 @@ import type { PluginUpdateOptions } from "../../../../../src/contexts/framework/
 import { Manifest } from "../../../../../src/contexts/framework/domain/manifest.js";
 import { InstalledPlugin } from "../../../../../src/contexts/framework/domain/plugins/installed-plugin.js";
 import { AgentModelStoreAdapter } from "../../../../../src/contexts/framework/infrastructure/agent-model-store-adapter.js";
+import { FaultingFileAdapter } from "../../../../helpers/ports/faulting-file-adapter.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
 
@@ -27,8 +28,11 @@ function plugin(scope: "project" | "user"): InstalledPlugin {
   });
 }
 
-function setup(seed?: (manifest: Manifest) => void, userManifest: Manifest | null = null) {
-  const fs = new InMemoryFileAdapter();
+function setup(
+  seed?: (manifest: Manifest) => void,
+  userManifest: Manifest | null = null,
+  fs: InMemoryFileAdapter = new InMemoryFileAdapter()
+) {
   const manifest = Manifest.create();
   seed?.(manifest);
   const updates: PluginUpdateOptions[] = [];
@@ -122,6 +126,30 @@ describe("SetAgentModelUseCase", () => {
     expect(fs.has(`${CONFIG}/main-model.json`)).toBe(true);
   });
 
+  it("records what a settings file held before writing it, so a failed run can still restore it", async () => {
+    const fs = new FaultingFileAdapter();
+    const { useCase } = setup(undefined, null, fs);
+    fs.setFile(`${PROJECT}/.claude/settings.json`, '{\n  "model": "mine"\n}\n');
+    fs.failOn("writeFile", `${PROJECT}/.claude/settings.json`, new Error("disk full"));
+
+    await expect(
+      useCase.execute({
+        projectRoot: PROJECT,
+        hosts: ["claude"],
+        provider: "anthropic",
+        main: true,
+        scope: "project",
+      })
+    ).rejects.toThrow("disk full");
+
+    expect(
+      JSON.parse(fs.getFile(`${PROJECT}/.aidd/main-model.json`) ?? "{}").claude.previous
+    ).toEqual({
+      model: "mine",
+      effortLevel: null,
+    });
+  });
+
   it("moves a main model already set to the new provider", async () => {
     const { fs, useCase } = setup();
     const base = { projectRoot: PROJECT, hosts: ["opencode"] as const, scope: "project" as const };
@@ -130,6 +158,28 @@ describe("SetAgentModelUseCase", () => {
     await useCase.execute({ ...base, provider: "openai" });
 
     expect(fs.getFile(`${PROJECT}/opencode.json`)).toBe('{\n  "model": "openai/gpt-6.1-sol"\n}\n');
+  });
+
+  it("refreshes this project globally too, and adds the machine-scope registrations", async () => {
+    const userManifest = Manifest.create();
+    userManifest.addTool("claude", "1.0.0", []);
+    const { useCase, updates, activations } = setup((manifest) => {
+      manifest.addTool("claude", "1.0.0", []);
+      manifest.addPlugin("claude", plugin("project"));
+    }, userManifest);
+
+    await useCase.execute({
+      projectRoot: PROJECT,
+      hosts: ["claude"],
+      provider: "anthropic",
+      scope: "user",
+    });
+
+    expect(updates).toStrictEqual([{ toolIds: ["claude"], projectRoot: PROJECT, rebuild: true }]);
+    expect(activations.map(({ toolIds, scope }) => ({ toolIds, scope }))).toStrictEqual([
+      { toolIds: ["claude"], scope: undefined },
+      { toolIds: ["claude"], scope: "user" },
+    ]);
   });
 
   it("rewrites a plugin installed in the user's home whatever the scope", async () => {
@@ -148,6 +198,22 @@ describe("SetAgentModelUseCase", () => {
     expect(userUpdates).toStrictEqual([
       { toolIds: ["cursor"], projectRoot: PROJECT, scope: "user", rebuild: true },
     ]);
+  });
+
+  it("refuses to start an opencode.json beside the opencode.jsonc that holds the settings", async () => {
+    const { fs, useCase } = setup();
+    fs.setFile(`${PROJECT}/opencode.jsonc`, "{}\n");
+
+    await expect(
+      useCase.execute({
+        projectRoot: PROJECT,
+        hosts: ["opencode"],
+        provider: "mistral",
+        main: true,
+        scope: "project",
+      })
+    ).rejects.toThrow("Settings live in opencode.jsonc; move them to opencode.json");
+    expect(fs.has(`${PROJECT}/opencode.json`)).toBe(false);
   });
 
   it("refuses a provider one host cannot run before writing anything", async () => {

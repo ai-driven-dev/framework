@@ -86,12 +86,14 @@ export class SetAgentModelUseCase {
       if (provider === undefined) delete providers[host];
       else providers[host] = provider;
     }
+    // The record goes first: a run stopped between two settings files still knows what each
+    // held before, so unsetting restores it instead of taking AIDD's value for the user's.
+    await this.store.saveMainModels(options.scope, options.projectRoot, mainModels);
+    await this.store.saveProviders(providers);
     for (const { path, content } of changes) {
       if (content === null) await this.fs.deleteFile(path);
       else await this.fs.writeFile(path, content);
     }
-    await this.store.saveMainModels(options.scope, options.projectRoot, mainModels);
-    await this.store.saveProviders(providers);
     return { mainSet, reinstalled: await this.reinstall(options) };
   }
 
@@ -153,10 +155,10 @@ export class SetAgentModelUseCase {
   }
 
   /** Files a plugin wrote are rewritten from the rebuilt tree, and a host that installs plugins
-   * itself is driven again, which hands it that tree. A plugin installed in the user's home,
-   * as Cursor's always is, is rewritten whatever the scope. */
+   * itself is driven again, which hands it that tree. The provider is machine-wide, so this
+   * project is always refreshed, and a plugin installed in the user's home, as Cursor's always
+   * is, too; `--global` adds the machine-scope registrations. */
   private async reinstall(options: SetAgentModelOptions): Promise<readonly string[]> {
-    const user = options.scope === "user";
     const rewritten = new Set<string>();
     const userManifest = await this.userManifestRepo.load();
     const userPlugins = options.hosts.filter((host) =>
@@ -171,13 +173,11 @@ export class SetAgentModelUseCase {
       });
       for (const name of names) rewritten.add(name);
     }
-    const manifest = user ? userManifest : await this.manifestRepo.load();
+    const manifest = await this.manifestRepo.load();
     const installed = options.hosts.filter((host) => manifest?.hasTool(host) === true);
-    const projectPlugins = user
-      ? []
-      : installed.filter((host) =>
-          manifest?.getPlugins(host).some((plugin) => plugin.scope !== "user")
-        );
+    const projectPlugins = installed.filter((host) =>
+      manifest?.getPlugins(host).some((plugin) => plugin.scope !== "user")
+    );
     if (projectPlugins.length > 0) {
       const names = await this.pluginUpdate.execute({
         toolIds: projectPlugins,
@@ -186,14 +186,20 @@ export class SetAgentModelUseCase {
       });
       for (const name of names) rewritten.add(name);
     }
-    if (installed.length > 0) {
-      const { errors } = await this.activation.execute({
-        projectRoot: options.projectRoot,
-        toolIds: installed,
-        ...(user ? { scope: "user" as const, manifestRepo: this.userManifestRepo } : {}),
-      });
-      if (errors.length > 0) throw new Error(errors.map((error) => error.message).join("\n"));
+    if (installed.length > 0) await this.activate(options.projectRoot, installed);
+    if (options.scope === "user") {
+      const machine = options.hosts.filter((host) => userManifest?.hasTool(host) === true);
+      if (machine.length > 0) await this.activate(options.projectRoot, machine, true);
     }
     return [...rewritten];
+  }
+
+  private async activate(projectRoot: string, toolIds: AgentHost[], user = false): Promise<void> {
+    const { errors } = await this.activation.execute({
+      projectRoot,
+      toolIds,
+      ...(user ? { scope: "user" as const, manifestRepo: this.userManifestRepo } : {}),
+    });
+    if (errors.length > 0) throw new Error(errors.map((error) => error.message).join("\n"));
   }
 }
