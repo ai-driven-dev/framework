@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { codex } from "../../../../../../src/contexts/tools/domain/profiles/codex/profile.js";
-import { built, installed, NAMED_AGENT, UNNAMED_AGENT } from "../agent-fixture.js";
+import { inMarketplace, installed, NAMED_AGENT, UNNAMED_AGENT } from "../agent-fixture.js";
 
 const PREFIXED = `name = "aidd-dev-planner"
 description = "Plans the work"
@@ -28,15 +28,8 @@ developer_instructions = "Plan before building.\\n"
     });
 
     it("prefixes the name with the plugin in a marketplace build, which Codex copies into one directory", () => {
-      expect(built(codex, "marketplace", NAMED_AGENT)).toStrictEqual({
+      expect(inMarketplace(codex, NAMED_AGENT)).toStrictEqual({
         path: "codex-agents/planner.toml",
-        content: PREFIXED,
-      });
-    });
-
-    it("prefixes the name with the plugin in a flat build", () => {
-      expect(built(codex, "flat", NAMED_AGENT)).toStrictEqual({
-        path: ".codex/agents/aidd-dev-planner.toml",
         content: PREFIXED,
       });
     });

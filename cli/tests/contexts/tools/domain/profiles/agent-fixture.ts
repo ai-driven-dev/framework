@@ -24,16 +24,14 @@ export function installed(tool: AiTool<HasAgents>, content: string): string {
   return agents.serialize(agents.convertFrontmatter(frontmatter, "planner.md"), body);
 }
 
-/** Where and what a built distribution writes for the plugin's `planner.md`. */
-export function built(
+/** Where and what a marketplace build writes for the plugin's `planner.md`. The flat build
+ * is checked against the shipped agents in `tests/e2e/agent-install.e2e.test.ts`. */
+export function inMarketplace(
   tool: AiTool<HasAgents>,
-  mode: "marketplace" | "flat",
   content: string
 ): { path: string; content: string } {
-  const contract =
-    mode === "flat" ? tool.buildContracts?.flat?.() : tool.buildContracts?.marketplace?.();
-  const agents = contract?.artifacts.agents;
-  if (!agents?.supported) throw new Error(`${tool.toolId} builds no ${mode} agent`);
+  const agents = tool.buildContracts?.marketplace?.().artifacts.agents;
+  if (!agents?.supported) throw new Error(`${tool.toolId} builds no marketplace agent`);
   return {
     path: agents.path("aidd-dev", "agents/planner.md"),
     content: agents.transform?.(content, "aidd-dev", "planner.md") ?? content,

@@ -11,12 +11,9 @@ const open = promote.jobs.promote.steps.find(
   (step) => step.name === "Open the promote PR, enable merge auto-merge",
 );
 
-test("promote offers a way to skip the release video check", () => {
-  const input = promote.on.workflow_dispatch.inputs.skip_video;
-
-  assert.equal(input.type, "boolean");
-  assert.equal(input.default, false);
-  assert.equal(open.env.SKIP_VIDEO, "${{ inputs.skip_video }}");
+test("promote has no way to skip the release video check", () => {
+  assert.equal(promote.on.workflow_dispatch?.inputs, undefined);
+  assert.equal(open.env.SKIP_VIDEO, undefined);
 });
 
 test("promote checks the release video on next's tip, before it pushes anything", () => {
@@ -28,6 +25,7 @@ test("promote checks the release video on next's tip, before it pushes anything"
   assert.match(open.run, /git checkout --detach origin\/next/);
 });
 
-test("the skip is the only way past the check", () => {
-  assert.match(open.run, /if \[ "\$\{SKIP_VIDEO\}" != "true" \]; then\n\s+git checkout --detach origin\/next\n\s+node \.claude\/skills\/release-video\/assets\/check-release-video\.js\nfi/);
+test("the check runs on every promotion", () => {
+  assert.doesNotMatch(open.run, /SKIP_VIDEO/);
+  assert.match(open.run, /git checkout --detach origin\/next\nnode \.claude\/skills\/release-video\/assets\/check-release-video\.js/);
 });

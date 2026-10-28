@@ -45,6 +45,7 @@
     "programme": [
       {
         "surface": "aidd command",
+        "theme": "Theme one",
         "text": "what it does for the user, in French."
       }
     ]
