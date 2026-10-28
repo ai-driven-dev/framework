@@ -22,7 +22,7 @@ the memory into are `tools.md`, not this.
 | Mode   | Means                                   |
 | ------ | --------------------------------------- |
 | `mcp`  | an MCP server the agent calls           |
-| `cli`  | a command run in a terminal             |
+| the command, such as `gh` | a command run in a terminal, named so the agent knows which |
 | `http` | a direct API call                       |
 | `web`  | a browser interface, nothing programmatic |
 

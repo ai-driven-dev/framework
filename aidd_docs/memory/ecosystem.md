@@ -5,7 +5,6 @@ flowchart LR
   Human([Human])
   Agent([Agent])
   App([App])
-  Tool["AI coding tool · project-brief.md"]
   GitHub["GitHub · vcs.md"]
   Board["Roadmap project board · backlog.md"]
   Discussions["GitHub Discussions · backlog.md"]
@@ -21,7 +20,7 @@ flowchart LR
   Human -- web --> Discord
   Agent -- gh --> GitHub
   Agent -- gh --> Board
-  Agent -- aidd --> Tool
+  Agent -- gh --> Discussions
   App -- http --> GitHub
   App -- http --> Npm
 

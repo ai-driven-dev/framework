@@ -1,6 +1,6 @@
 **Verdict:** READY
 **Scope:** Service access verification extracted from `02-project-memory` into `aidd-context:13-access-check`, the recipe reworked after the 2026-10-15 review, and onboarding ending its foundations with the check.
-**Evidence limits:** The skill was run by hand against this repository's memory on 2026-10-20; MCP, `http` and `web` probes were not exercised, this bank has `cli` edges only. Client guide URLs checked 2026-10-20.
+**Evidence limits:** The skill was run by hand against this repository's memory on 2026-10-20; MCP, `http` and `web` probes were not exercised, this bank has command edges only. Client guide URLs checked 2026-10-20.
 
 ## Verified
 
@@ -14,6 +14,8 @@
   | Roadmap board | `gh` | `alexsoyes` / org project 8 | ⚠️ | `gh project view 8` read 119 items; record the expected account in `backlog.md` |
   | AI coding tool | `aidd` | — | 🔌 | `aidd` not on `PATH`; install `@ai-driven-dev/cli` |
 
+  The `aidd` row came from an edge to the AI host, which is not an external service; the bank drops it and adds `Agent -- gh --> Discussions`.
+
 - **Empty bank:** A directory without `aidd_docs/memory/` stops at Require with `/aidd-context:02-project-memory`, no file written.
 - **Recipe:** CLI, MCP, API and SDK each have one example; none targets a service whose CLI the recipe lists; tokens come from the environment; five client MCP guides answer 200.
 
@@ -23,6 +25,4 @@ None.
 
 ## Suggestions
 
-| Finding | Evidence | Minimal improvement |
-| --- | --- | --- |
-| Banks label `Agent` edges with a command (`gh`) as often as a mode (`cli`) | this repository's `ecosystem.md` | `ecosystem-signals.md` could state which one an edge carries; the check reads both meanwhile |
+None.

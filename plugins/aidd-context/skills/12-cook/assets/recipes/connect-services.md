@@ -172,7 +172,9 @@ Require confirmation for writes; if your client cannot enforce it, disable write
 
 ### 3) ✅ Check the connection
 
-After recording the services and their targets in project memory, run the access check. It probes each access read-only and reports what to fix:
+Record each connection in project memory: run `/aidd-context:02-project-memory refresh` and name the service when it asks what the repository cannot prove. A CLI is recorded by its command, such as `gh`, an MCP server as `mcp`, an API as `http`; an SDK is your application's access, not the assistant's.
+
+Then run the access check. It probes each access read-only and reports what to fix:
 
 ```text
 /aidd-context:13-access-check
