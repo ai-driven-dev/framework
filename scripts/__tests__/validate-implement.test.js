@@ -43,6 +43,19 @@ const phaseMd = (status, tasks = 0) => `---\nstatus: ${status}\n---\n\n# Instruc
 const runMd = (number = 1, head = "abc1234", rows = ["| 1.1 | pnpm test | 80 passed |"]) =>
   `## Run ${number}\n\nHead: ${head}\n\n| Task | Validation | Result |\n| ---- | ---------- | ------ |\n${rows.join("\n")}\n\nLeft: none\n`;
 const RUN_MD = `# Run\n\n${runMd()}`;
+
+function withoutComments(text) {
+  let out = "";
+  for (let i = 0; i < text.length; ) {
+    const open = text.indexOf("<!--", i);
+    if (open < 0) return out + text.slice(i);
+    out += text.slice(i, open);
+    const close = text.indexOf("-->", open);
+    i = close < 0 ? text.length : close + 3;
+    while (text[i] === "\n") i += 1;
+  }
+  return out;
+}
 const RUN_TEMPLATE = path.resolve(__dirname, "../../plugins/aidd-dev/skills/02-implement/assets/run-template.md");
 
 function folder(plan, phases, { crlf = false, runs = plan === "implemented" ? RUN_MD : null, into = root } = {}) {
@@ -197,8 +210,6 @@ describe("validate-implement: uncommitted files once the plan is closed", () => 
 });
 
 describe("validate-implement: files and folders as real machines write them", () => {
-  const withBom = (text) => "\uFEFF" + text;
-
   it("works on a folder whose path holds spaces and is given with a trailing separator", () => {
     const parent = fs.mkdtempSync(path.join(root, "with space-"));
     const dir = path.join(parent, "my feature");
@@ -268,9 +279,7 @@ describe("validate-implement: the uncommitted files it names", () => {
 describe("validate-implement: what a run records", () => {
   const closedWith = (text) => run(folder("implemented", [{ status: "done" }], { runs: text }));
   const filledTemplate = () =>
-    fs
-      .readFileSync(RUN_TEMPLATE, "utf8")
-      .replace(/<!--[\s\S]*?-->\n*/g, "")
+    withoutComments(fs.readFileSync(RUN_TEMPLATE, "utf8"))
       .replace("{{number}}", "1")
       .replace("{{sha of HEAD when the validations ran}}", "abc1234")
       .replace("{{phase.task, such as 1.2}}", "1.1").replace("{{scenario of that task's criterion, and the command that ran it}}", "pnpm test")
