@@ -31,8 +31,10 @@ function topLevelEntries() {
  * `.aidd/config.json` is the telemetry opt-in switch a repository commits to turn measurement on;
  * this one has not, so that absence is the state the prose describes. The anchor appears as soon
  * as a contributor runs the CLI in this checkout, which is what turned a page into a refusal.
+ * `.agents/hooks.json` is the hooks file an Antigravity install writes into the reader's project;
+ * this repository tracks `.agents/` for its own skills only.
  */
-const READER_CREATED = new Set([".aidd/config.json"]);
+const READER_CREATED = new Set([".aidd/config.json", ".agents/hooks.json"]);
 
 const BACKTICKED = /`([^`\n]+)`/gu;
 

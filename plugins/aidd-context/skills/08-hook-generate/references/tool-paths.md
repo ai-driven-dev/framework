@@ -11,6 +11,7 @@ Per-tool hook support, event names, file formats, and scopes. Hook slice only: n
 | Cursor         | yes       | JSON config + script.                                           |
 | GitHub Copilot | yes       | JSON config + script. Also reads Claude's `.claude/` config.    |
 | OpenCode       | no        | Hooks are JS/TS plugin modules, not config. Skip with the reason below. |
+| Antigravity CLI | yes      | JSON config + script. Project scope only here, see below.       |
 
 **OpenCode skip reason.** OpenCode hooks are code, not a config entry plus a script. Point the user to write a plugin under `.opencode/plugins/` (project) or `~/.config/opencode/plugins/` (user), per `https://opencode.ai/docs/plugins`. This skill does not generate it.
 
@@ -29,6 +30,8 @@ Each tool names the same moment differently and supports a different subset. Cor
 | turn stop          | `Stop`             | `Stop`          | `stop`               | `Stop`             |
 | session end        | `SessionEnd`       | `SessionEnd`    | `sessionEnd`         | `SessionEnd`       |
 
+Antigravity CLI documents `PreToolUse`, `PostToolUse`, `PreInvocation`, `PostInvocation` and `Stop`; `SessionStart` works on `agy` 1.2.17 but is undocumented. Its tool names differ from Claude's, so a `matcher` never carries over.
+
 Each tool exposes more moments than these. For the full list, read the tool's docs: Claude `https://code.claude.com/docs/en/hooks`, Codex `https://developers.openai.com/codex/hooks`, Cursor `https://cursor.com/docs/hooks`, Copilot `https://docs.github.com/en/copilot/reference/hooks-configuration`. Confirm a moment exists before wiring it. Copilot also accepts the camelCase names (`sessionStart`, `preToolUse`).
 
 ## File and format per tool
@@ -39,8 +42,11 @@ Each tool exposes more moments than these. For the full list, read the tool's do
 | Codex CLI      | `~/.codex/hooks.json` or `[hooks]` in `config.toml`              | same entry shape as Claude.                       |
 | Cursor         | `.cursor/hooks.json`                                              | `{ "version": 1, "hooks": { "<event>": [ { "command": "..." } ] } }` |
 | GitHub Copilot | `.github/hooks/*.json` or a `hooks` block in `.github/copilot/settings.json` | `{ "version": 1, "hooks": { "<Event>": [ { "type": "command", "command": "..." } ] } }` |
+| Antigravity CLI | `.agents/hooks.json`                                             | `{ "<hook-name>": { "<Event>": [ { "type": "command", "command": "..." } ] } }`, no `hooks` wrapper; a `matcher` entry only for `PreToolUse` and `PostToolUse` |
 
 A Claude `settings.json` and a plugin or standalone `hooks/hooks.json` both wrap the event map under a top-level `hooks` key, so the file is `{ "hooks": { "<Event>": [ ... ] } }`. A Codex `config.toml` uses a `[hooks]` table instead.
+
+An Antigravity CLI handler runs from `<repo>/.agents`, through a shell: prefix a root-relative command with `cd .. && `. `agy` rejects a Claude-style nested `[ { "hooks": [ ... ] } ]` with `command hook must specify 'command'`.
 
 ## Scopes per tool
 
@@ -81,4 +87,4 @@ Written as `${VAR}` inside a command: `CLAUDE_PROJECT_DIR` (project root), `CLAU
 
 - **Asset-access precheck.** Before writing, confirm this reference is readable. If not, stop: the plugin is not installed in this host.
 - **Merge check.** Before writing, read the target file and confirm the new entry is appended to the moment's list, never overwriting a sibling.
-- **Write-target validation.** After writing, confirm the file is valid and every handler path is an approved `${VAR}` or an absolute path under the workspace (a hook command runs from an arbitrary cwd, so an absolute path or `${VAR}` is expected, not a relative one). Otherwise stop and report.
+- **Write-target validation.** After writing, confirm the file is valid and every handler path is an approved `${VAR}` or an absolute path under the workspace (a hook command runs from an arbitrary cwd, so an absolute path or `${VAR}` is expected, not a relative one; Antigravity CLI's `cd .. && ` prefix is the one relative form, since its cwd is fixed). Otherwise stop and report.

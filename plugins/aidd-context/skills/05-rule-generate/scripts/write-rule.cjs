@@ -6,7 +6,7 @@ const fs = require("node:fs");
 const path = require("node:path");
 const { createHash, randomUUID } = require("node:crypto");
 
-const TOOLS = ["claude", "cursor", "copilot", "codex", "opencode"];
+const TOOLS = ["claude", "cursor", "copilot", "codex", "opencode", "antigravity"];
 const CATEGORIES = ["architecture", "standards", "programming-languages", "frameworks-and-libraries", "tooling", "testing", "design-patterns", "quality", "domain", "other"];
 const SHARED = ["codex", "opencode"];
 const SOURCE = "aidd_docs/rules";
@@ -37,7 +37,7 @@ function options(args) {
 
 function tools(value) {
   const selected = typeof value === "string" ? value.split(",") : value;
-  if (!Array.isArray(selected) || !selected.length || new Set(selected).size !== selected.length || selected.some((tool) => !TOOLS.includes(tool))) fail("Targets must be distinct confirmed tools: claude,cursor,copilot,codex,opencode.");
+  if (!Array.isArray(selected) || !selected.length || new Set(selected).size !== selected.length || selected.some((tool) => !TOOLS.includes(tool))) fail("Targets must be distinct confirmed tools: claude,cursor,copilot,codex,opencode,antigravity.");
   return [...selected].sort();
 }
 
@@ -108,6 +108,8 @@ function nativePath(rule, tool) {
   const id = identity(rule.category, rule.slug);
   if (tool === "claude") return `.claude/rules/${id}.md`;
   if (tool === "cursor") return `.cursor/rules/${id}.mdc`;
+  // Antigravity loads only direct children; the slug's category digit keeps the flat name unique.
+  if (tool === "antigravity") return `.agents/rules/${rule.slug}.md`;
   return `.github/instructions/${rule.category.slice(0, 2)}-${rule.slug.slice(2)}.instructions.md`;
 }
 
@@ -117,9 +119,12 @@ function renderNative(rule, tool, signed = true) {
   if (tool === "claude") fields = rule.paths.length ? `paths:\n${rule.paths.map((glob) => `  - ${quote(glob)}\n`).join("")}` : "";
   if (tool === "cursor") fields = `description: ${quote(rule.description)}\n${rule.paths.length ? `globs: ${quote(rule.paths.join(","))}\n` : ""}alwaysApply: ${!rule.paths.length}\n`;
   if (tool === "copilot") fields = `applyTo: ${quote(rule.paths.length ? rule.paths.join(",") : "**")}\n`;
+  if (tool === "antigravity") fields = `trigger: ${rule.paths.length ? "glob" : "always_on"}\ndescription: ${quote(rule.description)}\n${rule.paths.length ? `globs: ${quote(rule.paths.join(","))}\n` : ""}`;
   const text = (fields ? `---\n${fields}---\n` : "") + rule.body;
   safeText(text);
-  return signed ? `${text}\n<!-- aidd_rule_output:path=${nativePath(rule, tool)} sha256=${hash(text)} -->\n` : text;
+  const output = signed ? `${text}\n<!-- aidd_rule_output:path=${nativePath(rule, tool)} sha256=${hash(text)} -->\n` : text;
+  if (tool === "antigravity" && Buffer.byteLength(output) > 24000) fail("Antigravity rule exceeds its 24,000-byte per-file limit.");
+  return output;
 }
 
 function ownedNative(existing, prior, tool, relative) {
