@@ -1,12 +1,11 @@
 import type { AiTool, HasAgents } from "../../../../../src/contexts/tools/domain/contracts.js";
 
-/** A Claude-format agent carrying every key a host may translate, and one none keeps. */
+/** A Claude-format agent carrying every key a host may translate. */
 export const NAMED_AGENT = `---
 name: planner
 description: Plans the work
 model: m
 effort: high
-tools: Read
 ---
 Plan before building.
 `;
