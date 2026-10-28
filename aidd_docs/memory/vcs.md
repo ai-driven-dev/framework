@@ -44,7 +44,3 @@ The version-control conventions this project follows: branches, commits, and the
 - Scope is optional and must be kebab-case. The encouraged list lives in `scope-enum` at warning level, so an unknown scope warns without blocking. Introduce a new one only when none fits.
 - The scope never routes a release: release-please attributes by changed path.
 - A breaking change goes in the footer as `BREAKING CHANGE: …`.
-
-## Commit Strategy
-
-AI should auto commit: `never`. Committing and pushing happen only when the user asks.
