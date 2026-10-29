@@ -60,7 +60,9 @@ More details: [compatibility](docs/COMPATIBILITY.md).
 
 ## Get started
 
-You need [Node](https://nodejs.org) 22.12 or later. Pick one way.
+You need [Node](https://nodejs.org) 22.12 or later.
+
+Pick one way.
 
 **Any tool: the CLI.**
 
@@ -113,7 +115,8 @@ flowchart TD
     projectMemory["<b>/aidd-context:02-project-memory</b><br/>writes the project memory"]
   end
   subgraph frame["Frame"]
-    writeContract["<b>/aidd-pm:04-spec</b><br/>writes the contract"]
+    direction LR
+    ticket["<b>/aidd-pm:01-ticket-info</b><br/>reads the ticket"] --> brainstorm["<b>/aidd-refine:01-brainstorm</b><br/>clarifies the need"] --> writeContract["<b>/aidd-pm:04-spec</b><br/>writes the contract"]
   end
   subgraph deliver["Deliver"]
     direction LR
@@ -121,13 +124,15 @@ flowchart TD
   end
   subgraph check["Check"]
     direction LR
-    review["<b>/aidd-dev:05-review</b><br/>reviews"] --> pr["<b>/aidd-vcs:02-pull-request</b><br/>opens a draft pull request"]
+    review["<b>/aidd-dev:05-review</b><br/>reviews"] --> challenge["<b>/aidd-refine:02-challenge</b><br/>challenges the outcome"] --> pr["<b>/aidd-vcs:02-pull-request</b><br/>opens a draft pull request"]
   end
   start --> memory --> frame --> deliver --> check
 
-  classDef skill fill:#6f42c1,stroke:#6f42c1,color:#fff
-  classDef entry fill:#fff,stroke:#6f42c1,stroke-width:3px,color:#6f42c1
-  class projectMemory,writeContract,plan,build,assert,review,pr skill
+  classDef skill fill:#e9ddff,stroke:#8250df,color:#3b1d78
+  classDef opt fill:#fff,stroke:#8250df,stroke-dasharray:4 3,color:#3b1d78
+  classDef entry fill:#fff,stroke:#8250df,stroke-width:3px,color:#3b1d78
+  class projectMemory,writeContract,plan,build,assert,review,challenge,pr skill
+  class ticket,brainstorm opt
   class start entry
   style memory fill:none,stroke:#8c959f
   style frame fill:none,stroke:#8c959f
@@ -135,11 +140,15 @@ flowchart TD
   style check fill:none,stroke:#8c959f
 ```
 
-Each box is a skill: run it by hand, or let `/aidd-orchestrator:01-sdlc` chain them. Other goals: [guides by goal](docs/GUIDES.md).
+- Each box is a skill you can run by hand.
+- `/aidd-orchestrator:01-sdlc` chains them for you.
+- Other goals: [guides by goal](docs/GUIDES.md).
 
 ## Plugins
 
-Install the stable ones. Beta, alpha and preview plugins are off the recommended path.
+Install the stable ones.
+
+Beta, alpha and preview plugins are off the recommended path.
 
 <!--plugins:start-->
 

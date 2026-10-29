@@ -9,15 +9,15 @@ What each AI tool receives from the framework.
 | Claude Code | `.claude/` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | Cursor | `.cursor/` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | GitHub Copilot | `.github/` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| OpenCode | `.opencode/` | ❌ | ✅ | ✅ | ✅ | ❌ | 🔌 |
-| Kilo Code | `.kilo/` | ❌ | ✅ | ✅ | ✅ | ❌ | 🔌 |
-| Codex | `.codex/` | ✅ | ✅ | ✅ | ✅ | 🟡 | ✅ |
+| OpenCode | `.opencode/` | ❌ | ✅ | ✅ | ✅ | ❌ | Some events |
+| Kilo Code | `.kilo/` | ❌ | ✅ | ✅ | ✅ | ❌ | Some events |
+| Codex | `.codex/` | ✅ | ✅ | ✅ | ✅ | Marketplace only | ✅ |
 
 <!--support:end-->
 
-| Symbol | Meaning |
+| Cell | Meaning |
 | --- | --- |
 | ✅ | Supported |
 | ❌ | Not supported |
-| 🟡 | Supported with some install methods only |
-| 🔌 | Partial: only `SessionStart`, `Stop` and `PostToolUse` |
+| Marketplace only | Supported when installed through the tool's marketplace, not as flat files |
+| Some events | Only `SessionStart`, `Stop` and `PostToolUse` |

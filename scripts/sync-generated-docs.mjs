@@ -89,7 +89,8 @@ function pluginsWithExtras() {
 /** One row per tool: how it installs, then what each surface becomes. A surface no tool carries gets no column. */
 function supportTables() {
   const record = JSON.parse(readFileSync(SUPPORT_RECORD, "utf8"));
-  const icon = (support) => (support === "no" ? "❌" : support === "bridge" ? "🔌" : "✅");
+  const icon = (support) => (support === "no" ? "❌" : support === "bridge" ? "Some events" : "✅");
+  const methodLabel = { marketplace: "Marketplace", flat: "Flat files" };
 
   const carried = SURFACES.filter(([key]) =>
     record.some((tool) => Object.values(tool.builds).some((build) => build[key] !== "no"))
@@ -99,7 +100,8 @@ function supportTables() {
     const layouts = Object.entries(tool.builds);
     const values = new Set(layouts.map(([, build]) => build[key]));
     if (values.size === 1) return icon([...values][0]);
-    return "🟡";
+    const carriers = layouts.filter(([, build]) => build[key] !== "no").map(([method]) => methodLabel[method]);
+    return `${carriers.join(" and ")} only`;
   };
 
   return table(

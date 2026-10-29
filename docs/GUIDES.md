@@ -1,86 +1,107 @@
 # Guides by goal
 
 > [!TIP]
-> Pick your goal and run its skills in order.
+> Follow the steps in order, or jump to your goal.
 > Dashed boxes are optional.
 
-| I want to | Go to |
+| Step | Goal |
 | --- | --- |
-| Join a project, start one, or look around | [Start](#start) |
-| Deliver a feature, from request to pull request | [Build a feature](#build-a-feature) |
-| Change, fix, refactor or ship code | [Everyday work](#everyday-work) |
-| Do many things at once, or retry until it works | [Parallel and retry](#parallel-and-retry) |
-| Plan the product and the backlog | [Plan the product](#plan-the-product) |
-| Investigate, challenge or audit | [Understand and decide](#understand-and-decide) |
-| Record knowledge or create a skill | [Learn and extend](#learn-and-extend) |
-| Check that it works, and what it costs | [Prove it works](#prove-it-works) |
+| [1. Start](#1-start) | Join a project, start one, or look around |
+| [2. Memory](#2-memory) | Give the AI a memory of the project |
+| [3. Engineering](#3-engineering) | Create your skills, rules, agents, commands and hooks |
+| [4. Flows](#4-flows) | Build, fix, refactor, ship, plan, decide, verify |
+| [5. Learn](#5-learn) | Keep what the work teaches you |
+| [6. Update](#6-update) | Keep the memory and the plugins current |
 
-## Start
+## 1. Start
 
 | Goal | Run |
 | --- | --- |
 | Join an existing project | `/aidd-context:00-onboard` |
-| Start a new project | `/aidd-context:01-bootstrap`, then `/aidd-context:02-project-memory` |
+| Start a new project | `/aidd-context:01-bootstrap` |
 | See what is installed, or which skill fits | `/aidd-context:11-explore` |
 
-## Build a feature
+## 2. Memory
+
+| Goal | Run |
+| --- | --- |
+| Give the AI a memory of the project | `/aidd-context:02-project-memory` |
+
+What it creates: [Concepts](CONCEPTS.md#project-memory).
+
+## 3. Engineering
+
+| Create | Run |
+| --- | --- |
+| A skill | `/aidd-context:04-skill-generate` |
+| A rule | `/aidd-context:05-rule-generate` |
+| An agent | `/aidd-context:06-agent-generate` |
+| A command | `/aidd-context:07-command-generate` |
+| A hook | `/aidd-context:08-hook-generate` |
+| Something, kind unknown | `/aidd-context:03-context-generate` |
+| Follow a how-to sheet | `/aidd-context:12-cook` |
+
+Bundled how-to sheets:
+
+- [MCP installation](../plugins/aidd-context/skills/12-cook/assets/recipes/mcp-installation.md)
+- [Token optimization](../plugins/aidd-context/skills/12-cook/assets/recipes/token-optimization.md)
+- [The AIDDy mascot in the ChatGPT desktop app](../plugins/aidd-context/skills/12-cook/assets/recipes/install-aiddy-in-codex.md)
+
+## 4. Flows
+
+### Build a feature
 
 | Goal | Run |
 | --- | --- |
 | Deliver a request end to end | `/aidd-orchestrator:01-sdlc` |
 | Turn issues into pull requests without you | `/aidd-orchestrator:00-async-dev` |
-| Go step by step | The skills in the flow below, in order |
+| Go step by step | The skills below, in order |
 
 > [!NOTE]
-> Delegate it all when you are sure of the task. To stay in the loop, start the request with `interactive`: you approve the contract, the plan and the outcome.
+> Delegate it all when you are sure of the task.
+> Start the request with `interactive` to approve the contract, the plan and the outcome (yellow).
 
 ```mermaid
 flowchart TD
   subgraph onboard["Onboarding"]
-    start(["/aidd-context:00-onboard<br/>guides you through every step below"])
+    direction TB
+    start(["/aidd-context:00-onboard<br/>guides you through every step"])
     subgraph memory["Memory, once per project"]
+      direction TB
       projectMemory["/aidd-context:02-project-memory"]
     end
     subgraph frame["Frame: write the contract"]
-      direction LR
+      direction TB
       request(["your request"]) --> ticket["/aidd-pm:01-ticket-info"] --> brainstorm["/aidd-refine:01-brainstorm"] --> spec["/aidd-pm:04-spec"] --> approveContract(["approve the contract"])
     end
     subgraph deliver["Deliver: build and validate"]
-      direction LR
+      direction TB
       plan["/aidd-dev:01-plan"] --> approvePlan(["approve the plan"]) --> implement["/aidd-dev:02-implement"] --> assert["/aidd-dev:03-assert"] --> commit["/aidd-vcs:01-commit"]
       assert -. "until checks pass" .-> implement
     end
     subgraph check["Check: independent review"]
-      direction LR
+      direction TB
       review["/aidd-dev:05-review"] --> challenge["/aidd-refine:02-challenge"] --> approveOutcome(["approve the outcome"]) --> pr["/aidd-vcs:02-pull-request"]
     end
     start --> memory --> frame --> deliver --> check
   end
-  subgraph legend["Legend"]
-    direction LR
-    keyAi["skill"] ~~~ keyOpt["optional skill"] ~~~ keyYou(["you approve<br/>with interactive"])
-  end
-  onboard ~~~ legend
 
-  classDef ai fill:#6f42c1,stroke:#6f42c1,color:#fff
-  classDef opt fill:#fff,stroke:#6f42c1,stroke-dasharray:4 3,color:#6f42c1
+  classDef skill fill:#e9ddff,stroke:#8250df,color:#3b1d78
+  classDef opt fill:#fff,stroke:#8250df,stroke-dasharray:4 3,color:#3b1d78
   classDef you fill:#fff8c5,stroke:#9a6700,color:#633c01
-  classDef entry fill:#fff,stroke:#6f42c1,stroke-width:3px,color:#6f42c1
+  classDef entry fill:#fff,stroke:#8250df,stroke-width:3px,color:#3b1d78
   classDef plain fill:#eaeef2,stroke:#57606a,color:#24292f
-  class keyAi,projectMemory,spec,plan,implement,assert,commit,review,challenge,pr ai
-  class keyOpt,ticket,brainstorm opt
-  class keyYou,approveContract,approvePlan,approveOutcome you
+  class projectMemory,spec,plan,implement,assert,commit,review,challenge,pr skill
+  class ticket,brainstorm opt
+  class approveContract,approvePlan,approveOutcome you
   class request plain
   class start entry
-  style legend fill:none,stroke:#8c959f
-  style onboard fill:none,stroke:#6f42c1,stroke-width:2px
+  style onboard fill:none,stroke:#8250df,stroke-width:2px
   style memory fill:none,stroke:#8c959f
   style frame fill:none,stroke:#8c959f
   style deliver fill:none,stroke:#8c959f
   style check fill:none,stroke:#8c959f
 ```
-
-## Everyday work
 
 ### Make a small change
 
@@ -95,14 +116,14 @@ flowchart TD
     n3["/aidd-dev:05-review"]
   end
   z0 --> z1
-  classDef spec fill:#0b7285,stroke:#0b7285,color:#fff
-  classDef specOpt fill:#cff4fc,stroke:#0b7285,stroke-dasharray:4 3,color:#0b4a57
-  classDef code fill:#6f42c1,stroke:#6f42c1,color:#fff
-  classDef codeOpt fill:#e9ddff,stroke:#6f42c1,stroke-dasharray:4 3,color:#3b1d78
-  classDef ship fill:#c2410c,stroke:#c2410c,color:#fff
-  classDef shipOpt fill:#ffe1d1,stroke:#c2410c,stroke-dasharray:4 3,color:#7a2606
-  classDef plain fill:#0969da,stroke:#0969da,color:#fff
-  classDef plainOpt fill:#ddf4ff,stroke:#0969da,stroke-dasharray:4 3,color:#0a3069
+  classDef spec fill:#cff4fc,stroke:#0b7285,color:#0b4a57
+  classDef specOpt fill:#ffffff,stroke:#0b7285,stroke-dasharray:4 3,color:#0b4a57
+  classDef code fill:#e9ddff,stroke:#8250df,color:#3b1d78
+  classDef codeOpt fill:#ffffff,stroke:#6f42c1,stroke-dasharray:4 3,color:#3b1d78
+  classDef ship fill:#ffe1d1,stroke:#c2410c,color:#7a2606
+  classDef shipOpt fill:#ffffff,stroke:#c2410c,stroke-dasharray:4 3,color:#7a2606
+  classDef plain fill:#ddf4ff,stroke:#0969da,color:#0a3069
+  classDef plainOpt fill:#ffffff,stroke:#0969da,stroke-dasharray:4 3,color:#0a3069
   class n0,n1,n2 code
   class n3 ship
   style z0 fill:none,stroke:#8c959f
@@ -126,14 +147,14 @@ flowchart TD
     n3["/aidd-dev:05-review"]
   end
   z0 --> z1 --> z2
-  classDef spec fill:#0b7285,stroke:#0b7285,color:#fff
-  classDef specOpt fill:#cff4fc,stroke:#0b7285,stroke-dasharray:4 3,color:#0b4a57
-  classDef code fill:#6f42c1,stroke:#6f42c1,color:#fff
-  classDef codeOpt fill:#e9ddff,stroke:#6f42c1,stroke-dasharray:4 3,color:#3b1d78
-  classDef ship fill:#c2410c,stroke:#c2410c,color:#fff
-  classDef shipOpt fill:#ffe1d1,stroke:#c2410c,stroke-dasharray:4 3,color:#7a2606
-  classDef plain fill:#0969da,stroke:#0969da,color:#fff
-  classDef plainOpt fill:#ddf4ff,stroke:#0969da,stroke-dasharray:4 3,color:#0a3069
+  classDef spec fill:#cff4fc,stroke:#0b7285,color:#0b4a57
+  classDef specOpt fill:#ffffff,stroke:#0b7285,stroke-dasharray:4 3,color:#0b4a57
+  classDef code fill:#e9ddff,stroke:#8250df,color:#3b1d78
+  classDef codeOpt fill:#ffffff,stroke:#6f42c1,stroke-dasharray:4 3,color:#3b1d78
+  classDef ship fill:#ffe1d1,stroke:#c2410c,color:#7a2606
+  classDef shipOpt fill:#ffffff,stroke:#c2410c,stroke-dasharray:4 3,color:#7a2606
+  classDef plain fill:#ddf4ff,stroke:#0969da,color:#0a3069
+  classDef plainOpt fill:#ffffff,stroke:#0969da,stroke-dasharray:4 3,color:#0a3069
   class n0 specOpt
   class n1,n2 code
   class n3 ship
@@ -155,14 +176,14 @@ flowchart TD
     n2["/aidd-dev:05-review"]
   end
   z0 --> z1
-  classDef spec fill:#0b7285,stroke:#0b7285,color:#fff
-  classDef specOpt fill:#cff4fc,stroke:#0b7285,stroke-dasharray:4 3,color:#0b4a57
-  classDef code fill:#6f42c1,stroke:#6f42c1,color:#fff
-  classDef codeOpt fill:#e9ddff,stroke:#6f42c1,stroke-dasharray:4 3,color:#3b1d78
-  classDef ship fill:#c2410c,stroke:#c2410c,color:#fff
-  classDef shipOpt fill:#ffe1d1,stroke:#c2410c,stroke-dasharray:4 3,color:#7a2606
-  classDef plain fill:#0969da,stroke:#0969da,color:#fff
-  classDef plainOpt fill:#ddf4ff,stroke:#0969da,stroke-dasharray:4 3,color:#0a3069
+  classDef spec fill:#cff4fc,stroke:#0b7285,color:#0b4a57
+  classDef specOpt fill:#ffffff,stroke:#0b7285,stroke-dasharray:4 3,color:#0b4a57
+  classDef code fill:#e9ddff,stroke:#8250df,color:#3b1d78
+  classDef codeOpt fill:#ffffff,stroke:#6f42c1,stroke-dasharray:4 3,color:#3b1d78
+  classDef ship fill:#ffe1d1,stroke:#c2410c,color:#7a2606
+  classDef shipOpt fill:#ffffff,stroke:#c2410c,stroke-dasharray:4 3,color:#7a2606
+  classDef plain fill:#ddf4ff,stroke:#0969da,color:#0a3069
+  classDef plainOpt fill:#ffffff,stroke:#0969da,stroke-dasharray:4 3,color:#0a3069
   class n0,n1 code
   class n2 ship
   style z0 fill:none,stroke:#8c959f
@@ -177,20 +198,18 @@ flowchart TD
     direction LR
     n0["/aidd-vcs:01-commit"] --> n1["/aidd-vcs:02-pull-request<br/><i>opens a draft</i>"] --> n2["/aidd-vcs:03-release-tag<br/><i>to cut a release</i>"]
   end
-  classDef spec fill:#0b7285,stroke:#0b7285,color:#fff
-  classDef specOpt fill:#cff4fc,stroke:#0b7285,stroke-dasharray:4 3,color:#0b4a57
-  classDef code fill:#6f42c1,stroke:#6f42c1,color:#fff
-  classDef codeOpt fill:#e9ddff,stroke:#6f42c1,stroke-dasharray:4 3,color:#3b1d78
-  classDef ship fill:#c2410c,stroke:#c2410c,color:#fff
-  classDef shipOpt fill:#ffe1d1,stroke:#c2410c,stroke-dasharray:4 3,color:#7a2606
-  classDef plain fill:#0969da,stroke:#0969da,color:#fff
-  classDef plainOpt fill:#ddf4ff,stroke:#0969da,stroke-dasharray:4 3,color:#0a3069
+  classDef spec fill:#cff4fc,stroke:#0b7285,color:#0b4a57
+  classDef specOpt fill:#ffffff,stroke:#0b7285,stroke-dasharray:4 3,color:#0b4a57
+  classDef code fill:#e9ddff,stroke:#8250df,color:#3b1d78
+  classDef codeOpt fill:#ffffff,stroke:#6f42c1,stroke-dasharray:4 3,color:#3b1d78
+  classDef ship fill:#ffe1d1,stroke:#c2410c,color:#7a2606
+  classDef shipOpt fill:#ffffff,stroke:#c2410c,stroke-dasharray:4 3,color:#7a2606
+  classDef plain fill:#ddf4ff,stroke:#0969da,color:#0a3069
+  classDef plainOpt fill:#ffffff,stroke:#0969da,stroke-dasharray:4 3,color:#0a3069
   class n0,n1 ship
   class n2 shipOpt
   style z0 fill:none,stroke:#8c959f
 ```
-
-## Parallel and retry
 
 ### Run tasks in parallel
 
@@ -199,48 +218,45 @@ flowchart LR
   request(["Your request"]) --> batch["/aidd-dev:10-batch<br/><i>splits it into independent tasks</i>"]
   batch --> a["task A"] & b["task B"] & c["task C"]
   a & b & c --> summary(["One summary:<br/>task, status, result"])
-  classDef code fill:#6f42c1,stroke:#6f42c1,color:#fff
-  classDef plain fill:#0969da,stroke:#0969da,color:#fff
+  classDef code fill:#e9ddff,stroke:#8250df,color:#3b1d78
+  classDef plain fill:#ddf4ff,stroke:#0969da,color:#0a3069
   class batch,a,b,c code
   class request,summary plain
 ```
 
-### Retry until a command passes
+### Plan the product
 
 ```mermaid
-flowchart LR
-  goal(["Your goal<br/>and a success command"]) --> forsure["/aidd-dev:09-for-sure"] --> run["Work on a step"] --> check{"Command<br/>passes?"}
-  check -->|no| run
-  check -->|yes| done(["Done"])
-  classDef code fill:#6f42c1,stroke:#6f42c1,color:#fff
-  classDef plain fill:#0969da,stroke:#0969da,color:#fff
-  class forsure,run code
-  class goal,done plain
-```
-
-## Plan the product
-
-### How the planning skills connect
-
-```mermaid
-flowchart LR
-  brief["/aidd-pm:06-product-brief"] --> epic["/aidd-pm:07-epic"] --> stories["/aidd-pm:02-user-stories"]
-  prd["/aidd-pm:03-prd"] --> spec["/aidd-pm:04-spec"]
-  amigos["/aidd-pm:08-three-amigos<br/><i>refines an Epic or a Story</i>"] -.-> epic
-  amigos -.-> stories
-  classDef plan fill:#0b7285,stroke:#0b7285,color:#fff
-  classDef side fill:#ddf4ff,stroke:#0969da,stroke-dasharray:4 3,color:#0a3069
-  class brief,epic,stories,prd,spec plan
+flowchart TD
+  backlog(["/aidd-orchestrator:02-backlog<br/>triages, refines and orders it all"])
+  subgraph define["Define"]
+    direction TB
+    brief["/aidd-pm:06-product-brief"] --> epic["/aidd-pm:07-epic"] --> stories["/aidd-pm:02-user-stories"]
+    amigos["/aidd-pm:08-three-amigos<br/>refines an Epic or a Story"] -.-> epic
+    amigos -.-> stories
+  end
+  subgraph specify["Specify"]
+    direction TB
+    prd["/aidd-pm:03-prd"] --> specDoc["/aidd-pm:04-spec"]
+  end
+  backlog --> define
+  backlog --> specify
+  classDef plan fill:#cff4fc,stroke:#0b7285,color:#0b4a57
+  classDef side fill:#fff,stroke:#0b7285,stroke-dasharray:4 3,color:#0b4a57
+  classDef entry fill:#fff,stroke:#0b7285,stroke-width:3px,color:#0b4a57
+  class brief,epic,stories,prd,specDoc plan
   class amigos side
+  class backlog entry
+  style define fill:none,stroke:#8c959f
+  style specify fill:none,stroke:#8c959f
 ```
 
 | Goal | Run |
 | --- | --- |
 | Add a task, a defect or a spike to the backlog | `/aidd-pm:10-task`, `/aidd-pm:09-defect`, `/aidd-pm:05-spike` |
 | Read a ticket | `/aidd-pm:01-ticket-info` |
-| Triage, refine, order and check the backlog | `/aidd-orchestrator:02-backlog` |
 
-## Understand and decide
+### Understand and decide
 
 | Goal | Run |
 | --- | --- |
@@ -251,31 +267,27 @@ flowchart LR
 | Check the facts in a text | `/aidd-refine:04-fact-check` |
 | Audit a codebase, read-only | `/aidd-dev:04-audit` |
 
-## Learn and extend
-
-| Goal | Run |
-| --- | --- |
-| Record a decision or a lesson | `/aidd-context:10-learn` |
-| Follow a how-to sheet | `/aidd-context:12-cook` |
-| Improve how you work with the AI | `/aidd-refine:05-improve` |
-
-| Create | Run |
-| --- | --- |
-| A skill | `/aidd-context:04-skill-generate` |
-| A rule | `/aidd-context:05-rule-generate` |
-| An agent | `/aidd-context:06-agent-generate` |
-| A command | `/aidd-context:07-command-generate` |
-| A hook | `/aidd-context:08-hook-generate` |
-| Something, kind unknown | `/aidd-context:03-context-generate` |
-
-Bundled how-to sheets: [MCP installation](../plugins/aidd-context/skills/12-cook/assets/recipes/mcp-installation.md), [token optimization](../plugins/aidd-context/skills/12-cook/assets/recipes/token-optimization.md), [the AIDDy mascot in the ChatGPT desktop app](../plugins/aidd-context/skills/12-cook/assets/recipes/install-aiddy-in-codex.md).
-
-## Prove it works
+### Prove it works
 
 | Goal | Run |
 | --- | --- |
 | Check a change in a browser, with video evidence | `/aidd-qa:01-acceptance-qa` |
 | Start counting tokens (opt-in, local) | `/aidd-telemetry:00-init` |
 | See what a task cost in tokens | `/aidd-telemetry:01-usage` |
+
+## 5. Learn
+
+| Goal | Run |
+| --- | --- |
+| Record a decision or a lesson | `/aidd-context:10-learn` |
+| Improve how you work with the AI | `/aidd-refine:05-improve` |
+
+## 6. Update
+
+| Goal | Run |
+| --- | --- |
+| Refresh the project memory | `/aidd-context:02-project-memory refresh` |
+| Wire the memory into another tool | `/aidd-context:02-project-memory rewire` |
+| Update the plugins | [Install guide](INSTALL.md#update) |
 
 Every skill is described in the [catalog](CATALOG.md).

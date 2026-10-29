@@ -1,14 +1,18 @@
 # Release
 
-How ships, and what to follow when you open a change. Weekly rolling releases, with a fast lane for urgent fixes.
+How a change ships.
+
+Weekly releases, with a fast lane for urgent fixes.
 
 - Branch naming, commit format, release tooling → [`aidd_docs/memory/vcs.md`](aidd_docs/memory/vcs.md).
 - Who may merge and release → [`GOVERNANCE.md`](GOVERNANCE.md).
 
 ## 🧭 Principle
 
-- `main` is production. The marketplace tracks it, so users only ever get released, versioned code.
-- `next` is integration. The week's work batches here, and ships in one weekly release.
+- `main` is production.
+- The marketplace tracks `main`, so users only get released, versioned code.
+- `next` is integration.
+- The week's work batches there and ships in one release.
 - A release happens only when there is work, and is cut automatically by release-please.
 - A `hotfix/*` skips `next`, it branches from `main` and ships its own release out of cycle, for urgent production fixes.
 
@@ -24,10 +28,10 @@ flowchart TD
   next -->|weekly promotion| main["main"]
   hotfix["hotfix/*"] -->|pull request, urgent| main
   main --> release["Release PR<br/><i>release-please, merged by the bot</i>"] --> tags["Tags and archives"] --> published(["Published<br/><i>after the video</i>"]) --> backmerge["Back-merge<br/><i>main into next</i>"]
-  classDef branch fill:#0969da,stroke:#0969da,color:#fff
-  classDef step fill:#6f42c1,stroke:#6f42c1,color:#fff
-  classDef urgent fill:#c2410c,stroke:#c2410c,color:#fff
-  classDef done fill:#1a7f37,stroke:#1a7f37,color:#fff
+  classDef branch fill:#ddf4ff,stroke:#0969da,color:#0a3069
+  classDef step fill:#e9ddff,stroke:#8250df,color:#3b1d78
+  classDef urgent fill:#ffe1d1,stroke:#c2410c,color:#7a2606
+  classDef done fill:#dafbe1,stroke:#1a7f37,color:#0f4d21
   class next,main branch
   class work,release,tags,backmerge step
   class hotfix urgent

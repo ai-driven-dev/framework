@@ -31,7 +31,7 @@ function scratchTree() {
         pluginMode: "native",
         nativeCli: "claude",
         builds: {
-          marketplace: { skills: "yes", agents: "yes", mcp: "yes", hooks: "yes", rules: "no", commands: "no" },
+          marketplace: { skills: "yes", agents: "yes", mcp: "yes", hooks: "bridge", rules: "no", commands: "no" },
           flat: { skills: "yes", agents: "yes", mcp: "no", hooks: "bridge", rules: "no", commands: "no" },
         },
       },
@@ -67,7 +67,7 @@ test("an empty block is reported stale, and syncing fills it from the tree", () 
     const catalog = fs.readFileSync(path.join(root, "docs/CATALOG.md"), "utf8");
     const compatibility = fs.readFileSync(path.join(root, "docs/COMPATIBILITY.md"), "utf8");
     assert.match(catalog, /\| `SessionStart` \| `hooks\/a\.js` \|/);
-    assert.match(compatibility, /\| Claude Code \| `\.claude\/` \| ✅ \| ✅ \| ✅ \| ✅ \| 🟡 \| 🟡 \|/);
+    assert.match(compatibility, /\| Claude Code \| `\.claude\/` \| ✅ \| ✅ \| ✅ \| ✅ \| Marketplace only \| Some events \|/);
     assert.doesNotMatch(compatibility, /Rules|Commands/);
     assert.match(catalog, /\| `helper` \| Does a small job \|/);
     const readme = fs.readFileSync(path.join(root, "README.md"), "utf8");

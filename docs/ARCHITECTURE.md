@@ -1,6 +1,8 @@
 # Architecture
 
-Where a capability belongs. For the terms, see [Concepts](CONCEPTS.md).
+Where a capability belongs.
+
+Terms: [Concepts](CONCEPTS.md).
 
 ## Anatomy of a plugin
 
@@ -19,11 +21,15 @@ Only the manifest and the skills are required.
 | MCP configuration | `.mcp.json` |
 | Documentation | `README.md`, `CATALOG.md` (generated), `CHANGELOG.md` |
 
-Project rules belong in your tool's rules directory, such as `.claude/rules/`. `aidd-context` generates them.
+Project rules live in your tool's rules directory, such as `.claude/rules/`.
+
+`aidd-context` generates them.
 
 ## Who owns what
 
-Put each capability in the plugin that owns its concern. Every other plugin delegates to it.
+Put each capability in the plugin that owns its concern.
+
+Every other plugin delegates to it.
 
 | Plugin | Owns |
 | --- | --- |
@@ -44,8 +50,8 @@ flowchart LR
   you(["You"]) --> skill["Skill"] --> action["Action"] --> result(["Result or file"])
   orchestrator["Orchestrator"] --> skill
   orchestrator -->|isolated work| subagent["Subagent"] --> skill
-  classDef step fill:#6f42c1,stroke:#6f42c1,color:#fff
-  classDef edge fill:#0969da,stroke:#0969da,color:#fff
+  classDef step fill:#e9ddff,stroke:#8250df,color:#3b1d78
+  classDef edge fill:#ddf4ff,stroke:#0969da,color:#0a3069
   class skill,action,orchestrator,subagent step
   class you,result edge
 ```
@@ -61,9 +67,9 @@ flowchart LR
 
 1. A skill links only inside its own directory.
 2. A bundled script is named in backticks, never linked.
-3. Address another plugin as `/plugin:folder` only in dispatch tables, orchestration references and agent permission lists. Elsewhere, name the responsibility.
-4. Find a provider in another plugin by its description. Check it is installed before dispatching to it.
+3. Address another plugin as `/plugin:folder` only in dispatch tables, orchestration references and agent permission lists.
+4. Find a provider in another plugin by its description.
 5. Keep a bundled script's tests in `scripts/__tests__/`, never in the plugin.
-6. Write only what the target tool supports. Warn about the rest.
+6. Write only what the target tool supports.
 
 More: [Maintainers guide](MAINTAINERS.md), [CLI architecture](../cli/ARCHITECTURE.md).

@@ -16,10 +16,10 @@ flowchart TD
     pr["Pull request to next"] --> review["Maintainer review"] --> merged(["Merged<br/><i>ships in the weekly release</i>"])
   end
   propose --> build --> merge
-  classDef cPropose fill:#0969da,stroke:#0969da,color:#fff
-  classDef cBuild fill:#6f42c1,stroke:#6f42c1,color:#fff
-  classDef cMerge fill:#c2410c,stroke:#c2410c,color:#fff
-  classDef done fill:#1a7f37,stroke:#1a7f37,color:#fff
+  classDef cPropose fill:#ddf4ff,stroke:#0969da,color:#0a3069
+  classDef cBuild fill:#e9ddff,stroke:#8250df,color:#3b1d78
+  classDef cMerge fill:#ffe1d1,stroke:#c2410c,color:#7a2606
+  classDef done fill:#dafbe1,stroke:#1a7f37,color:#0f4d21
   class start,discussions,issue,validated cPropose
   class branch,change,test,gate cBuild
   class pr,review cMerge
@@ -38,7 +38,9 @@ flowchart TD
 | A problem and its fix | [Quick contribution](https://github.com/ai-driven-dev/framework/issues/new?template=quick_contribution.yml) | problem, proposed solution |
 | A larger change | [Detailed contribution](https://github.com/ai-driven-dev/framework/issues/new?template=detailed_contribution.yml) | problem, scope, acceptance criteria |
 
-Your issue moves through the board. The board lives on the GitHub Project, not in this repository.
+Your issue moves through the board.
+
+The board lives on the GitHub Project, not in this repository.
 
 | Status | Means |
 | --- | --- |
@@ -56,7 +58,9 @@ Your issue moves through the board. The board lives on the GitHub Project, not i
 | [pnpm](https://pnpm.io) | any recent version |
 | `gh` and `jq` | for the skills that talk to GitHub |
 
-Fork the repository, or branch from it if you have write access. Then:
+Fork the repository, or branch from it if you have write access.
+
+Then:
 
 ```sh
 make setup

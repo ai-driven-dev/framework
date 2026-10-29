@@ -9,4 +9,6 @@
 | A security vulnerability | [`SECURITY.md`](../SECURITY.md). Never a public issue. |
 | Guides and training | [ai-driven-dev.fr](https://www.ai-driven-dev.fr/) |
 
-Not sure it is a bug? Start in Discussions. Support questions opened as issues are moved there.
+Not sure it is a bug? Start in Discussions.
+
+Support questions opened as issues are moved there.

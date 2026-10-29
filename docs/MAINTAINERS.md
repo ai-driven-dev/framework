@@ -8,8 +8,8 @@
 ```mermaid
 flowchart LR
   triage["Triage issues"] --> review["Review pull requests"] --> promote["Promote next to main"] --> release["Release<br/><i>automatic</i>"] --> backmerge["Back-merge<br/><i>automatic</i>"]
-  classDef manual fill:#6f42c1,stroke:#6f42c1,color:#fff
-  classDef auto fill:#1a7f37,stroke:#1a7f37,color:#fff
+  classDef manual fill:#e9ddff,stroke:#8250df,color:#3b1d78
+  classDef auto fill:#dafbe1,stroke:#1a7f37,color:#0f4d21
   class triage,review,promote manual
   class release,backmerge auto
 ```
@@ -62,27 +62,24 @@ If a bad squash turns `main` red, an admin:
 2. Force-pushes `main` back to the commit before the merge.
 3. Re-enables the ruleset, and runs **Promote** again.
 
-## Add a plugin
+## Add to the framework
 
-```mermaid
-flowchart LR
-  scaffold["Scaffold"] --> market["Marketplace entry"] --> release["Release config"] --> try["Try locally"] --> check["Pre-commit gate"] --> pr(["Pull request"])
-  classDef step fill:#6f42c1,stroke:#6f42c1,color:#fff
-  class scaffold,market,release,try,check,pr step
-```
-
-| Step | Do |
+| I want to add | Run |
 | --- | --- |
-| Scaffold | Name it `aidd-<name>`. Layout: [Architecture](ARCHITECTURE.md#anatomy-of-a-plugin). |
-| Marketplace entry | Add to `.claude-plugin/marketplace.json`: `name`, `source`, `strict: true`, `metadata: { "recommended": false }` |
-| Release config | Add the package to `release-please-config.json` and `.release-please-manifest.json` |
-| Try locally | `/plugin marketplace add ./`, then `/plugin install aidd-<name>@aidd-framework`. `/reload-plugins` after each edit. |
-| Check | `pnpm exec lefthook run pre-commit` |
-| Pull request | Title it `feat(aidd-<name>): ...` |
+| A skill | `/aidd-context:04-skill-generate` |
+| An agent | `/aidd-context:06-agent-generate` |
+| A rule | `/aidd-context:05-rule-generate` |
+| A command | `/aidd-context:07-command-generate` |
+| A hook | `/aidd-context:08-hook-generate` |
 
-To add a skill to an existing plugin, run `/aidd-context:03-context-generate`. Skip the marketplace and release steps.
+## Create a plugin
 
-Writing rules: English, hyphens instead of em-dashes, no cross-plugin references in descriptions, one `Use when ... / Not for ...` cue per skill.
+1. Create `plugins/aidd-<name>/` ([layout](ARCHITECTURE.md#anatomy-of-a-plugin)).
+2. Add it to `.claude-plugin/marketplace.json`, with `strict: true` and `metadata: { "recommended": false }`.
+3. Add it to `release-please-config.json` and `.release-please-manifest.json`.
+4. Try it: `/plugin marketplace add ./`, then `/plugin install aidd-<name>@aidd-framework`.
+5. Run `pnpm exec lefthook run pre-commit`.
+6. Open a pull request titled `feat(aidd-<name>): ...`.
 
 ## When protection or the bot breaks
 

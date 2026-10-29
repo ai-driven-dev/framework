@@ -2,14 +2,12 @@
 
 ## Roles
 
-Each role keeps the rights of the roles below it.
-
-| Role | Who | Adds |
+| Role | Who | Can |
 | --- | --- | --- |
 | **Public** | Anyone with a GitHub account | Open issues, comment, react, open a pull request on a validated issue |
-| **Core Team** | An active member of the [AIDD programme](https://www.ai-driven-dev.fr/) | A counted vote on the roadmap |
-| **Certified Member** | Passed the [AIDD certification](https://www.ai-driven-dev.fr/) | Validate contribution issues |
-| **Maintainer** | A certified member who gives AIDD trainings, or AIDD staff | Approve and merge pull requests, block a change, promote people |
+| **Core Team** | An active member of the [AIDD programme](https://www.ai-driven-dev.fr/) | Cast a counted vote on the roadmap |
+| **Certified Member** | Passed the [AIDD certification](https://www.ai-driven-dev.fr/) | Cast a counted vote, validate contribution issues |
+| **Maintainer** | A certified member who gives AIDD trainings, or AIDD staff | Cast a counted vote, validate issues, approve and merge pull requests, block a change, promote people |
 
 ## Code decisions
 
@@ -26,9 +24,9 @@ Only a Maintainer merges.
 ```mermaid
 flowchart LR
   idea(["Idea or issue"]) --> signal["Reactions<br/><i>a signal</i>"] --> vote["Votes<br/><i>counted</i>"] --> board(["Roadmap board<br/><i>sets the order</i>"])
-  classDef cOpen fill:#0969da,stroke:#0969da,color:#fff
-  classDef cVote fill:#6f42c1,stroke:#6f42c1,color:#fff
-  classDef cDone fill:#1a7f37,stroke:#1a7f37,color:#fff
+  classDef cOpen fill:#ddf4ff,stroke:#0969da,color:#0a3069
+  classDef cVote fill:#e9ddff,stroke:#8250df,color:#3b1d78
+  classDef cDone fill:#dafbe1,stroke:#1a7f37,color:#0f4d21
   class idea,signal cOpen
   class vote cVote
   class board cDone
@@ -42,7 +40,8 @@ flowchart LR
 
 - The board: [AIDD Roadmap](https://github.com/orgs/ai-driven-dev/projects/8).
 - A milestone is a theme. Items without one are the backlog, ordered by priority.
-- The vote orders the roadmap. It does not decide whether a validated issue can become a pull request.
+- The vote orders the roadmap.
+- It does not decide whether a validated issue becomes a pull request.
 
 ## Influence the roadmap
 
@@ -55,4 +54,5 @@ flowchart LR
 
 ## Conduct
 
-[Code of Conduct](CODE_OF_CONDUCT.md). Changes to this document need two Maintainer approvals.
+- [Code of Conduct](CODE_OF_CONDUCT.md)
+- Changes to this document need two Maintainer approvals.

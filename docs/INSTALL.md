@@ -2,7 +2,7 @@
 
 ## Requirements
 
-- [Node](https://nodejs.org) 22.12 or later. Check with `node --version`.
+- [Node](https://nodejs.org) 22.12 or later (`node --version`).
 - An AI coding tool: Claude Code, Cursor, GitHub Copilot, Codex, OpenCode or Kilo Code.
 
 ## Pick a method
@@ -13,7 +13,7 @@
 | [Marketplace](#marketplace) | You want your tool's plugin manager to install and update the plugins. |
 | [Flat files](#flat-files) | You want plain files in your project, to commit them or because your tool has no plugin manager. |
 
-Not every tool supports every method. Check your tool in the [compatibility table](COMPATIBILITY.md).
+Not every tool supports every method: see the [compatibility table](COMPATIBILITY.md).
 
 ## CLI
 
