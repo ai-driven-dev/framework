@@ -132,6 +132,18 @@ function toolsTable() {
   );
 }
 
+function agentCount(plugin) {
+  const agents = `${ROOT}plugins/${plugin}/agents`;
+  if (!existsSync(agents)) return 0;
+  return readdirSync(agents).filter((file) => file.endsWith(".md")).length;
+}
+
+function hookCount(plugin) {
+  const manifest = `${ROOT}plugins/${plugin}/hooks/hooks.json`;
+  if (!existsSync(manifest)) return 0;
+  return Object.keys(JSON.parse(readFileSync(manifest, "utf8")).hooks ?? {}).length;
+}
+
 function skillNames(plugin) {
   const skills = `${ROOT}plugins/${plugin}/skills`;
   if (!existsSync(skills)) return [];
@@ -153,7 +165,7 @@ function plugins() {
   if (missing.length > 0 || unknown.length > 0) {
     throw new Error(`plugins.json and plugins/ disagree. No entry: ${missing}. No plugin: ${unknown}`);
   }
-  return Object.keys(config).map((plugin) => ({ plugin, entry: config[plugin], skills: skillNames(plugin) }));
+  return Object.keys(config).map((plugin) => ({ plugin, entry: config[plugin], skills: skillNames(plugin), agents: agentCount(plugin), hooks: hookCount(plugin) }));
 }
 
 const STATUS = {
@@ -162,20 +174,24 @@ const STATUS = {
   alpha: { label: "alpha", color: "cf222e" },
   preview: { label: "preview", color: "0969da" },
 };
-const SHOWN_SKILLS = 4;
 
-/** A grid of three columns: GitHub shows an HTML table the way the old README did. */
+const plural = (count, word) => `${count} ${word}${count === 1 ? "" : "s"}`;
+
+/** A grid of three columns of clickable cards: GitHub shows an HTML table the way the old README did. */
 function pluginGrid() {
-  const cell = ({ plugin, entry, skills }) => {
-    const shown = skills.slice(0, SHOWN_SKILLS).map((name) => `<code>${name}</code>`).join(" · ");
-    const more = skills.length > SHOWN_SKILLS ? ` · +${skills.length - SHOWN_SKILLS}` : "";
-    const count = `${skills.length} ${skills.length === 1 ? "skill" : "skills"}`;
+  const cell = ({ plugin, entry, skills, agents, hooks }) => {
+    const status = STATUS[entry.status];
+    const counts = [plural(skills.length, "skill"), agents > 0 && plural(agents, "agent"), hooks > 0 && plural(hooks, "hook")]
+      .filter(Boolean)
+      .join(" · ");
     return [
       '<td width="33%" valign="top">',
-      `<h3>${entry.emoji} <a href="plugins/${plugin}/README.md">${plugin}</a></h3>`,
-      `<img alt="${STATUS[entry.status].label}" src="https://img.shields.io/badge/${STATUS[entry.status].label}-${STATUS[entry.status].color}?style=flat-square" /> ${count}<br />`,
-      `${entry.description}<br /><br />`,
-      `${shown}${more}`,
+      `<a href="plugins/${plugin}/README.md">`,
+      `<img align="right" alt="${status.label}" src="https://img.shields.io/badge/${status.label}-${status.color}?style=flat-square" />`,
+      `<h3>${entry.emoji} ${plugin}</h3>`,
+      `${counts}<br />`,
+      `${entry.description}`,
+      "</a>",
       "</td>",
     ].join("\n");
   };

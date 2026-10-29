@@ -38,8 +38,6 @@ You stay in the loop: you approve the contract, the plan and the result.
 
 https://github.com/user-attachments/assets/92474f4c-053a-471d-9c62-16560b7a2a09
 
-🟣 The AI runs the steps · 🟡 You approve the contract, the plan and the outcome (interactive mode)
-
 ## Works with your tool
 
 <!--tools:start-->
@@ -110,10 +108,6 @@ Each tool, updating, removing: [install guide](docs/INSTALL.md).
 
 ```mermaid
 flowchart TD
-  subgraph legend["Legend"]
-    direction LR
-    keyAi["AI skill"] ~~~ keyOpt["optional skill"] ~~~ keyYou(["you approve"])
-  end
   subgraph onboard["Onboarding"]
     start(["/aidd-context:00-onboard<br/>guides you through every step below"])
     subgraph memory["Memory, once per project"]
@@ -134,7 +128,11 @@ flowchart TD
     end
     start --> memory --> frame --> deliver --> check
   end
-  legend ~~~ onboard
+  subgraph legend["Legend"]
+    direction LR
+    keyAi["AI skill"] ~~~ keyOpt["optional skill"] ~~~ keyYou(["you approve"])
+  end
+  onboard ~~~ legend
 
   classDef ai fill:#6f42c1,stroke:#6f42c1,color:#fff
   classDef opt fill:#fff,stroke:#6f42c1,stroke-dasharray:4 3,color:#6f42c1
@@ -166,62 +164,80 @@ Install the stable ones. Beta, alpha and preview plugins are off the recommended
 <table>
 <tr>
 <td width="33%" valign="top">
-<h3>🧭 <a href="plugins/aidd-context/README.md">aidd-context</a></h3>
-<img alt="stable" src="https://img.shields.io/badge/stable-2da44e?style=flat-square" /> 13 skills<br />
-Project memory, context generation, learning<br /><br />
-<code>onboard</code> · <code>bootstrap</code> · <code>project-memory</code> · <code>context-generate</code> · +9
+<a href="plugins/aidd-context/README.md">
+<img align="right" alt="stable" src="https://img.shields.io/badge/stable-2da44e?style=flat-square" />
+<h3>🧭 aidd-context</h3>
+13 skills · 1 hook<br />
+Project memory, context generation, learning
+</a>
 </td>
 <td width="33%" valign="top">
-<h3>⚙️ <a href="plugins/aidd-dev/README.md">aidd-dev</a></h3>
-<img alt="stable" src="https://img.shields.io/badge/stable-2da44e?style=flat-square" /> 10 skills<br />
-Plan, build, review, test, debug<br /><br />
-<code>plan</code> · <code>implement</code> · <code>assert</code> · <code>audit</code> · +6
+<a href="plugins/aidd-dev/README.md">
+<img align="right" alt="stable" src="https://img.shields.io/badge/stable-2da44e?style=flat-square" />
+<h3>⚙️ aidd-dev</h3>
+10 skills · 2 agents<br />
+Plan, build, review, test, debug
+</a>
 </td>
 <td width="33%" valign="top">
-<h3>🌿 <a href="plugins/aidd-vcs/README.md">aidd-vcs</a></h3>
-<img alt="stable" src="https://img.shields.io/badge/stable-2da44e?style=flat-square" /> 6 skills<br />
-Commits, pull requests, release tags, issues<br /><br />
-<code>repo-init</code> · <code>commit</code> · <code>pull-request</code> · <code>release-tag</code> · +2
-</td>
-</tr>
-<tr>
-<td width="33%" valign="top">
-<h3>📋 <a href="plugins/aidd-pm/README.md">aidd-pm</a></h3>
-<img alt="stable" src="https://img.shields.io/badge/stable-2da44e?style=flat-square" /> 10 skills<br />
-Briefs, Epics, Stories, specs, Spikes, Defects<br /><br />
-<code>ticket-info</code> · <code>user-stories</code> · <code>prd</code> · <code>spec</code> · +6
-</td>
-<td width="33%" valign="top">
-<h3>🪞 <a href="plugins/aidd-refine/README.md">aidd-refine</a></h3>
-<img alt="stable" src="https://img.shields.io/badge/stable-2da44e?style=flat-square" /> 5 skills<br />
-Brainstorm, challenge, fact-check<br /><br />
-<code>brainstorm</code> · <code>challenge</code> · <code>shadow-areas</code> · <code>fact-check</code> · +1
-</td>
-<td width="33%" valign="top">
-<h3>🎼 <a href="plugins/aidd-orchestrator/README.md">aidd-orchestrator</a></h3>
-<img alt="stable" src="https://img.shields.io/badge/stable-2da44e?style=flat-square" /> 3 skills<br />
-Feature flow, issue-to-PR automation, backlog<br /><br />
-<code>async-dev</code> · <code>sdlc</code> · <code>backlog</code>
+<a href="plugins/aidd-vcs/README.md">
+<img align="right" alt="stable" src="https://img.shields.io/badge/stable-2da44e?style=flat-square" />
+<h3>🌿 aidd-vcs</h3>
+6 skills<br />
+Commits, pull requests, release tags, issues
+</a>
 </td>
 </tr>
 <tr>
 <td width="33%" valign="top">
-<h3>🎨 <a href="plugins/aidd-ui/README.md">aidd-ui</a></h3>
-<img alt="alpha" src="https://img.shields.io/badge/alpha-cf222e?style=flat-square" /> 1 skill<br />
-UI and UX design, smoke test only<br /><br />
-<code>hello</code>
+<a href="plugins/aidd-pm/README.md">
+<img align="right" alt="stable" src="https://img.shields.io/badge/stable-2da44e?style=flat-square" />
+<h3>📋 aidd-pm</h3>
+10 skills<br />
+Briefs, Epics, Stories, specs, Spikes, Defects
+</a>
 </td>
 <td width="33%" valign="top">
-<h3>📈 <a href="plugins/aidd-telemetry/README.md">aidd-telemetry</a></h3>
-<img alt="beta" src="https://img.shields.io/badge/beta-bf8700?style=flat-square" /> 2 skills<br />
-Token usage per task, opt-in<br /><br />
-<code>init</code> · <code>usage</code>
+<a href="plugins/aidd-refine/README.md">
+<img align="right" alt="stable" src="https://img.shields.io/badge/stable-2da44e?style=flat-square" />
+<h3>🪞 aidd-refine</h3>
+5 skills<br />
+Brainstorm, challenge, fact-check
+</a>
 </td>
 <td width="33%" valign="top">
-<h3>🎬 <a href="plugins/aidd-qa/README.md">aidd-qa</a></h3>
-<img alt="preview" src="https://img.shields.io/badge/preview-0969da?style=flat-square" /> 1 skill<br />
-Acceptance QA with video evidence<br /><br />
-<code>acceptance-qa</code>
+<a href="plugins/aidd-orchestrator/README.md">
+<img align="right" alt="stable" src="https://img.shields.io/badge/stable-2da44e?style=flat-square" />
+<h3>🎼 aidd-orchestrator</h3>
+3 skills<br />
+Feature flow, issue-to-PR automation, backlog
+</a>
+</td>
+</tr>
+<tr>
+<td width="33%" valign="top">
+<a href="plugins/aidd-ui/README.md">
+<img align="right" alt="alpha" src="https://img.shields.io/badge/alpha-cf222e?style=flat-square" />
+<h3>🎨 aidd-ui</h3>
+1 skill<br />
+UI and UX design, smoke test only
+</a>
+</td>
+<td width="33%" valign="top">
+<a href="plugins/aidd-telemetry/README.md">
+<img align="right" alt="beta" src="https://img.shields.io/badge/beta-bf8700?style=flat-square" />
+<h3>📈 aidd-telemetry</h3>
+2 skills · 2 hooks<br />
+Token usage per task, opt-in
+</a>
+</td>
+<td width="33%" valign="top">
+<a href="plugins/aidd-qa/README.md">
+<img align="right" alt="preview" src="https://img.shields.io/badge/preview-0969da?style=flat-square" />
+<h3>🎬 aidd-qa</h3>
+1 skill<br />
+Acceptance QA with video evidence
+</a>
 </td>
 </tr>
 </table>

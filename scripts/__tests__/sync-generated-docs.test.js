@@ -73,8 +73,9 @@ test("an empty block is reported stale, and syncing fills it from the tree", () 
     const readme = fs.readFileSync(path.join(root, "README.md"), "utf8");
     assert.match(readme, /<tr><td><b>Claude Code<\/b><\/td><td align="center">✅<\/td><td align="center">✅<\/td><td align="center">✅<\/td><\/tr>/);
     assert.match(readme, /<table>/);
-    assert.match(readme, /<h3>🧪 <a href="plugins\/aidd-x\/README\.md">aidd-x<\/a><\/h3>/);
-    assert.match(readme, /<img alt="beta" src="https:\/\/img\.shields\.io\/badge\/beta-bf8700\?style=flat-square" \/> 1 skill<br \/>\nDoes one thing<br \/><br \/>\n<code>a<\/code>/);
+    assert.match(readme, /<a href="plugins\/aidd-x\/README\.md">\n<img align="right" alt="beta"/);
+    assert.match(readme, /<h3>🧪 aidd-x<\/h3>/);
+    assert.match(readme, /1 skill · 1 agent · 1 hook<br \/>\nDoes one thing/);
 
     assert.equal(run(["--check", "--root", root]).status, 0);
   } finally {
