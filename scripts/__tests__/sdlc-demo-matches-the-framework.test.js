@@ -7,11 +7,11 @@ const { REPO_ROOT: ROOT } = require("../lib/repository-path.cjs");
 /**
  * The README animation is drawn from `docs/assets/sdlc-demo/scenes.json`. It names the steps of
  * the flow and the skills that run them, so it must agree with the README's chain diagram
- * (its Mermaid chain) and name only skills that exist.
+ * (the end-to-end Mermaid diagram in the guides) and name only skills that exist.
  */
 
 const scenes = JSON.parse(fs.readFileSync(path.join(ROOT, "docs/assets/sdlc-demo/scenes.json"), "utf8"));
-const readme = fs.readFileSync(path.join(ROOT, "README.md"), "utf8");
+const guides = fs.readFileSync(path.join(ROOT, "docs/GUIDES.md"), "utf8");
 
 function skillFolders() {
   const folders = new Set();
@@ -25,8 +25,8 @@ function skillFolders() {
 
 /** The skill names the README chain draws, in the order it draws them. */
 function drawnSkills() {
-  const chain = readme.match(/```mermaid\nflowchart TD\n  subgraph onboard[\s\S]*?```/)?.[0];
-  assert.ok(chain, "the README has no chain diagram");
+  const chain = guides.match(/```mermaid\nflowchart TD\n  subgraph onboard[\s\S]*?```/)?.[0];
+  assert.ok(chain, "the guides have no end-to-end diagram");
   return [...chain.matchAll(/\/aidd-[a-z]+:\d+-([a-z-]+)/g)].map((m) => m[1]);
 }
 

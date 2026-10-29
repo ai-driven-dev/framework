@@ -34,8 +34,6 @@ Unify **engineering teams** around **standardized workflows** and **shared best 
 
 From a rough idea to a reviewed pull request, inside the AI coding tool you already use.
 
-You stay in the loop: you approve the contract, the plan and the result.
-
 https://github.com/user-attachments/assets/92474f4c-053a-471d-9c62-16560b7a2a09
 
 ## Works with your tool
@@ -108,44 +106,30 @@ Each tool, updating, removing: [install guide](docs/INSTALL.md).
 
 ```mermaid
 flowchart TD
-  subgraph onboard["Onboarding"]
-    start(["/aidd-context:00-onboard<br/>guides you through every step below"])
-    subgraph memory["Memory, once per project"]
-      projectMemory["/aidd-context:02-project-memory"]
-    end
-    subgraph frame["Frame: write the contract"]
-      direction LR
-      request(["your request"]) --> ticket["/aidd-pm:01-ticket-info"] --> brainstorm["/aidd-refine:01-brainstorm"] --> spec["/aidd-pm:04-spec"] --> approveContract(["approve the contract"])
-    end
-    subgraph deliver["Deliver: build and validate"]
-      direction LR
-      plan["/aidd-dev:01-plan"] --> approvePlan(["approve the plan"]) --> implement["/aidd-dev:02-implement"] --> assert["/aidd-dev:03-assert"] --> commit["/aidd-vcs:01-commit"]
-      assert -. "until checks pass" .-> implement
-    end
-    subgraph check["Check: independent review"]
-      direction LR
-      review["/aidd-dev:05-review"] --> challenge["/aidd-refine:02-challenge"] --> approveOutcome(["approve the outcome"]) --> pr["/aidd-vcs:02-pull-request"]
-    end
-    start --> memory --> frame --> deliver --> check
+  start(["/aidd-context:00-onboard<br/>guides you through all of it"])
+  subgraph memory["Memory, once per project"]
+    projectMemory["AI<br/>writes the project memory"]
   end
-  subgraph legend["Legend"]
+  subgraph frame["Frame"]
     direction LR
-    keyAi["AI skill"] ~~~ keyOpt["optional skill"] ~~~ keyYou(["you approve"])
+    writeContract["AI<br/>writes the contract"] --> approveContract(["You<br/>approve the contract"])
   end
-  onboard ~~~ legend
+  subgraph deliver["Deliver"]
+    direction LR
+    plan["AI<br/>plans"] --> approvePlan(["You<br/>approve the plan"]) --> build["AI<br/>builds and validates"]
+  end
+  subgraph check["Check"]
+    direction LR
+    review["AI<br/>reviews"] --> approveOutcome(["You<br/>approve the outcome"]) --> pr["AI<br/>opens a draft pull request"]
+  end
+  start --> memory --> frame --> deliver --> check
 
   classDef ai fill:#6f42c1,stroke:#6f42c1,color:#fff
-  classDef opt fill:#fff,stroke:#6f42c1,stroke-dasharray:4 3,color:#6f42c1
   classDef you fill:#fff8c5,stroke:#9a6700,color:#633c01
   classDef entry fill:#fff,stroke:#6f42c1,stroke-width:3px,color:#6f42c1
-  classDef plain fill:#eaeef2,stroke:#57606a,color:#24292f
-  class keyAi,projectMemory,spec,plan,implement,assert,commit,review,challenge,pr ai
-  class keyOpt,ticket,brainstorm opt
-  class keyYou,approveContract,approvePlan,approveOutcome you
-  class request plain
+  class projectMemory,writeContract,plan,build,review,pr ai
+  class approveContract,approvePlan,approveOutcome you
   class start entry
-  style legend fill:none,stroke:#8c959f
-  style onboard fill:none,stroke:#6f42c1,stroke-width:2px
   style memory fill:none,stroke:#8c959f
   style frame fill:none,stroke:#8c959f
   style deliver fill:none,stroke:#8c959f
