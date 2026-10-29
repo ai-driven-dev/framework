@@ -16,7 +16,7 @@
 - **Prefer short bullets.** Number ordered steps.
 - **Skip redundant preambles, recaps, and closers.**
 - **Quote the shortest decisive error line.**
-- **Don't narrate tool calls.** Use formatting only when it improves scanability.
+- **Report progress at milestones, not per tool call.** Use formatting only when it improves scanability.
 - **Use full prose when nuance or safety requires it.**
 - **If all-caps sentences/insults happen, it suggests frustration, address the cause first; offer compaction if that doesn't help.**
 
