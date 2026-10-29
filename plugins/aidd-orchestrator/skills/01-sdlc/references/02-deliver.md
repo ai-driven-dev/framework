@@ -2,7 +2,7 @@
 
 ## Behavior
 
-Turn the contract into a proportional plan, then give one executor the plan. The executor implements it and calls the validation skills, which own their checks and repair loops. Include architecture conformance whenever the project documents architecture. Run an end-to-end journey after every other validation when the plan calls for one, and none otherwise.
+Turn the contract into a proportional plan, then give the `executor` agent the plan. It implements it and calls the validation skills, which own their checks and repair loops. Include architecture conformance whenever the project documents architecture. Run an end-to-end journey after every other validation when the plan calls for one, and none otherwise.
 
 Commit and push the validated work through the commit skill. Send only the clean committed candidate to Check.
 
@@ -20,7 +20,7 @@ flowchart TD
 
   subgraph ExecuteStage["Execute and validate the plan"]
     direction TB
-    Executor(["@aidd-dev:executor"])
+    Executor(["executor agent"])
     Implement["/aidd-dev:02-implement"]
     Assert["/aidd-dev:03-assert"]
     Test["/aidd-dev:06-test"]

@@ -28,7 +28,7 @@ A single atomic step inside a skill, stored at `plugins/<plugin>/skills/<NN-name
 
 ## 🤖 Agent
 
-A specialized AI persona under `plugins/<plugin>/agents/<name>.md`. Agents are scoped and spawned by an orchestrator when a step needs isolation in a dedicated role rather than the main thread.
+A specialized AI persona under `plugins/<plugin>/agents/<name>.md`. The main session or a skill hands it a scoped brief when a step needs a fresh context rather than the main thread.
 
 ## 📏 Rule
 

@@ -211,18 +211,6 @@ describe("CodexOutputStrategy", () => {
         expect(typeof parsed.developer_instructions).toBe("string");
       }
     });
-
-    it("TOML files do not contain model key (D-5)", async () => {
-      const fs = await makeSeededFsFromReal();
-      const uc = makeUseCase(fs);
-      await uc.execute({ sourceDir: REAL_FIXTURE_DIR, outDir: OUT_DIR, target: "codex" });
-      const tomlFiles = fs.listUnder(OUT_DIR).filter((p) => p.endsWith(".toml"));
-      for (const tomlPath of tomlFiles) {
-        const content = fs.getFile(tomlPath) ?? "";
-        const parsed = parseToml(content) as Record<string, unknown>;
-        expect(parsed.model).toBeUndefined();
-      }
-    });
   });
 
   describe("skill rewrite (AC #6)", () => {
@@ -445,18 +433,6 @@ describe("CodexOutputStrategy", () => {
       expect(instr).toContain("@./foo.md");
       expect(instr).toContain("@../bar.md");
       expect(instr).toContain(CLAUDE_ROOT_VAR);
-    });
-  });
-
-  describe("model key omission (D-5)", () => {
-    it("fixture agent with model: opus produces TOML with no model key", async () => {
-      const fs = await makeSeededFsFromCodex();
-      const uc = makeUseCase(fs);
-      await uc.execute({ sourceDir: CODEX_FIXTURE_DIR, outDir: OUT_DIR, target: "codex" });
-      const tomlContent =
-        fs.getFile(`${OUT_DIR}/plugins/aidd-codex-fixture/codex-agents/test-agent.toml`) ?? "";
-      const parsed = parseToml(tomlContent) as Record<string, unknown>;
-      expect(parsed.model).toBeUndefined();
     });
   });
 });

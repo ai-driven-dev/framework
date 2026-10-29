@@ -14,17 +14,27 @@ The per-tool agent path and the gate every run executes before writing. Agent sl
 
 Agents are supported on all five tools.
 
+User-level agents, for every project of the user: Claude Code `~/.claude/agents/` (`CLAUDE_CONFIG_DIR`), Codex `~/.codex/agents/` (`CODEX_HOME`), OpenCode `~/.config/opencode/agents/` (`XDG_CONFIG_HOME`), Copilot `~/.copilot/agents/<name>.agent.md` (`COPILOT_HOME`). Cursor documents `~/.cursor/agents/`; prefer the project path. Sources: [Claude](https://code.claude.com/docs/en/sub-agents), [Codex](https://developers.openai.com/codex/subagents), [OpenCode](https://opencode.ai/docs/agents), [Copilot](https://docs.github.com/en/copilot/reference/copilot-cli-reference/cli-config-dir-reference), [Cursor](https://cursor.com/docs/subagents).
+
+Cursor keeps single quotes as part of a frontmatter value: quote Cursor values with `"double quotes"` or not at all.
+
 ## Frontmatter per tool
 
-The canonical agent carries `name` and `description`. Emit those a row accepts, drop the rest. Optional fields, including `model`, only if the user asked. Never invent a value.
+The canonical agent carries `name` and `description` and no tool list: every host gives an agent all tools by default. Emit those a row accepts, drop the rest. Add model or effort settings only when requested and supported.
 
 | Tool           | Accepts                                                      |
 | -------------- | ----------------------------------------------------------- |
-| Claude Code    | `name`, `description`, optional `model`, `color`, `tools`   |
-| Cursor         | `name`, `description`, optional `model`, `readonly`, `is_background` |
-| OpenCode       | `name`, `description`, optional `model`, `temperature`, `permission` |
-| GitHub Copilot | `name`, `description`, optional `model`, `tools`            |
-| Codex CLI      | `name`, `description` (drops `model`)                       |
+| Claude Code    | `name`, `description`, optional `model`, `effort` |
+| Cursor         | `name`, `description`, optional `model` |
+| OpenCode V2    | `description`, `mode: subagent`, optional `model` as `provider/model#variant`. No `name`: the file path is the ID |
+| GitHub Copilot | `name`, `description`, optional `model`, `reasoningEffort`, `include-custom-instructions` |
+| Codex CLI      | `name`, `description`, optional `model`, `model_reasoning_effort` |
+
+Write OpenCode agents for V2 only: V2 still loads V1 definitions, and treats their `tools` and `permission` fields as legacy.
+
+Copilot subagents skip `AGENTS.md` and other repository instructions unless `include-custom-instructions: true`; set it by default.
+
+Sources: [Claude](https://code.claude.com/docs/en/sub-agents#frontmatter-reference), [Cursor](https://cursor.com/docs/subagents#file-format), [OpenCode V2](https://opencode.ai/v2/docs/agents#options), [V1 compatibility](https://opencode.ai/v2/docs/migrate-v1), [Copilot](https://docs.github.com/en/copilot/reference/copilot-cli-reference/cli-command-reference#custom-agent-frontmatter-fields), [Codex](https://developers.openai.com/codex/subagents#custom-agent-file-schema).
 
 ## Codex TOML conversion
 
@@ -32,7 +42,6 @@ Codex agents are TOML, not markdown. Convert:
 
 - Each frontmatter field becomes a top-level TOML key. Quote every string value with `"double quotes"` (a TOML basic string) and escape any embedded `"` or backslash, so a quote or apostrophe in the description stays valid TOML.
 - The body becomes `developer_instructions`, wrapped in `'''` literal delimiters (no escaping of the markdown).
-- Drop `model`.
 
 ## Detect (which tools are installed)
 

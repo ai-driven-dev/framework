@@ -3,13 +3,11 @@
  *
  * A tool's build contract otherwise lives entirely inside that tool's own profile directory;
  * these are the exception, since claude and cursor emit byte-identical plugin manifests and
- * catalog entries and claude and copilot transform an agent's frontmatter identically. One
- * tool importing another's directory would break the boundary, so both reach this instead.
+ * catalog entries. One tool importing another's directory would break the boundary, so both
+ * reach this instead.
  */
 import { join } from "node:path";
 import { InvalidSourceMarketplaceError } from "../../../kernel/errors.js";
-import { parseFrontmatter, serializeFrontmatter } from "../../../kernel/markdown.js";
-import { rewriteRelativeLinks } from "../../../kernel/materialization/relative-link-rewrite.js";
 import type { FileReader } from "../../../kernel/ports/file-reader.js";
 import type { FileWriter } from "../../../kernel/ports/file-writer.js";
 import type { PluginPresence } from "./build-contract.js";
@@ -22,16 +20,6 @@ type SrcEntry =
       metadata?: { recommended?: boolean };
     }
   | undefined;
-
-/** Marketplace-mode agent transform shared by claude and copilot: the frontmatter is kept
- * untouched and only relative links are rewritten to the flattened output path. */
-export function transformClaudeAgent(content: string, _plugin: string, outName: string): string {
-  const { frontmatter, body } = parseFrontmatter(content);
-  const rewrittenBody = rewriteRelativeLinks(body, {
-    currentFilePluginRelative: `agents/${outName}`,
-  });
-  return serializeFrontmatter(frontmatter, rewrittenBody);
-}
 
 export interface SynthesizeClaudeStyleManifestOpts {
   /** When true, include `agents` as a list of `./agents/*.md` file paths if agents are present. */
