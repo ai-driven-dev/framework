@@ -18,16 +18,9 @@
 
 ## Project memory
 
-### Create it
+### Create and refresh it
 
-Install the framework first: [install guide](INSTALL.md).
-
-| Run | Does |
-| --- | --- |
-| `/aidd-context:02-project-memory setup` | Scans the project, writes the memory, wires it into your tools |
-| `/aidd-context:02-project-memory refresh` | Shows what drifted, updates the files you approve |
-| `/aidd-context:02-project-memory rewire` | Wires the memory into a tool again |
-| `/aidd-context:10-learn` | Records a lasting decision or lesson |
+[Guides: memory](GUIDES.md#2-memory) and [update](GUIDES.md#6-update).
 
 ### What it holds
 

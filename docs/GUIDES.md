@@ -25,7 +25,7 @@
 
 | Goal | Run |
 | --- | --- |
-| Give the AI a memory of the project | `/aidd-context:02-project-memory` |
+| Give the AI a memory of the project | `/aidd-context:02-project-memory setup` |
 
 What it creates: [Concepts](CONCEPTS.md#project-memory).
 

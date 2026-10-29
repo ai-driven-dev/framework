@@ -60,42 +60,17 @@ More details: [compatibility](docs/COMPATIBILITY.md).
 
 ## Get started
 
-You need [Node](https://nodejs.org) 22.12 or later.
-
-Pick one way.
-
-**Any tool: the CLI.**
+Requires [Node](https://nodejs.org) 22.12 or later.
 
 ```sh
 npx @ai-driven-dev/cli@latest setup
 ```
 
-Bootstraps your project: tool configuration and plugins.
-
 <p align="center">
   <img src="docs/assets/install-demo.svg" alt="Terminal recording: npx @ai-driven-dev/cli setup installs the six recommended plugins into a new project" width="720" />
-  <br />
-  <sub>Real output, in an empty project, with the flags that skip the questions.</sub>
 </p>
 
-**Natively, for tools with a plugin marketplace.**
-
-<details>
-<summary>Show the commands (example: Claude Code)</summary>
-
-```text
-/plugin marketplace add ai-driven-dev/framework
-/plugin install aidd-context@aidd-framework
-/plugin install aidd-refine@aidd-framework
-/plugin install aidd-dev@aidd-framework
-/plugin install aidd-vcs@aidd-framework
-/plugin install aidd-pm@aidd-framework
-/plugin install aidd-orchestrator@aidd-framework
-```
-
-</details>
-
-Each tool, updating, removing: [install guide](docs/INSTALL.md).
+Marketplace, flat files, update, remove: [install guide](docs/INSTALL.md).
 
 ## Quick start
 

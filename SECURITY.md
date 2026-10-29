@@ -33,10 +33,6 @@ Include:
 | Previous major | Critical fixes only |
 | Older majors | No |
 
-## Before you install a plugin
-
-A plugin can run its skills, hooks and the MCP servers it declares, through your AI tool. Read a plugin's files before you install it. Take extra care with any plugin that runs in CI or with elevated permissions.
-
 ## Out of scope
 
 - Self-XSS, social engineering of contributors, or denial of service through legitimate features

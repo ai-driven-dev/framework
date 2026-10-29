@@ -42,25 +42,20 @@ The board and its fields live on the GitHub Project, not in the repository.
 | Type | Issue | What kind | `Bug`, `Feature`, `Task` (set by the issue form) |
 | Milestone | Repository | When | A theme |
 | Priority | Project | In what order | `Urgent`, `High`, `Medium`, `Low` |
-| Status | Project | Where it stands | `Ideation`, `Todo`, `In Progress`, `In review`, `Done` |
+| Status | Project | Where it stands | Listed in [Contributing](../CONTRIBUTING.md#1-propose) |
 
 - A milestone or a priority, never both.
 - The scope goes in the title: `feat(aidd-pm): ...`.
 
-## Releases
+## If `main` turns red after a bad squash
 
-| Rule | Why |
-| --- | --- |
-| Promote with a **merge commit** | A squash can fail `Commitlint` and skip the release. A rebase breaks the back-merge. |
-| The Release PR merges itself | `gh pr merge --merge --admin`, with the bot token |
-| Hotfix: merge with an empty description | Else release-please lists the change twice. See [Release](../RELEASE.md#-hotfix). |
-| Force a version | `release-as` in `release-please-config.json`. Remove it after the release. |
-
-If a bad squash turns `main` red, an admin:
+An admin:
 
 1. Disables the "main protection" ruleset.
 2. Force-pushes `main` back to the commit before the merge.
 3. Re-enables the ruleset, and runs **Promote** again.
+
+Release rules: [Release](../RELEASE.md#rules).
 
 ## Add to the framework
 
@@ -97,5 +92,3 @@ If a bad squash turns `main` red, an admin:
 | Tables and plugin cards in the README, `COMPATIBILITY.md`, `CATALOG.md` | `node scripts/sync-generated-docs.mjs` |
 | Counts in the README | `scripts/sync-readme-counts.mjs` |
 | Each plugin's `CATALOG.md` | `scripts/summarize-markdown.js` |
-
-Vulnerabilities: GitHub Security Advisories, never a public issue. See [`SECURITY.md`](../SECURITY.md).

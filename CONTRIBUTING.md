@@ -38,9 +38,7 @@ flowchart TD
 | A problem and its fix | [Quick contribution](https://github.com/ai-driven-dev/framework/issues/new?template=quick_contribution.yml) | problem, proposed solution |
 | A larger change | [Detailed contribution](https://github.com/ai-driven-dev/framework/issues/new?template=detailed_contribution.yml) | problem, scope, acceptance criteria |
 
-Your issue moves through the board.
-
-The board lives on the GitHub Project, not in this repository.
+Board status:
 
 | Status | Means |
 | --- | --- |
@@ -59,12 +57,6 @@ The board lives on the GitHub Project, not in this repository.
 | `gh` and `jq` | for the skills that talk to GitHub |
 
 Fork the repository, or branch from it if you have write access.
-
-Then:
-
-```sh
-make setup
-```
 
 | Run | Does |
 | --- | --- |
@@ -92,5 +84,3 @@ make setup
 | Branch off `next` and target `next` | [Exceptions](aidd_docs/memory/vcs.md#branches) |
 | Fill in the template | [Pull request template](.github/PULL_REQUEST_TEMPLATE.md) |
 | Wait for a Maintainer review | [Governance](GOVERNANCE.md#code-decisions) |
-
-[Architecture](docs/ARCHITECTURE.md) · [Concepts](docs/CONCEPTS.md) · [Maintainers guide](docs/MAINTAINERS.md)
