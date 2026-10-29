@@ -8,9 +8,10 @@ name: OpenCode agent
 # spend the subscription and feed untrusted text to an agent holding a write token. The check
 # is on the numeric user id, not the login, because a login can be renamed and reclaimed.
 #
-# The CLI is installed at a pinned v1 release instead of through `anomalyco/opencode/github`:
-# that action is no longer published, installs whatever OpenCode release is latest at run
-# time, and OpenCode v2 removed the `github run` command it calls.
+# The CLI is installed from npm instead of through `anomalyco/opencode/github`: that action is
+# no longer published, and it installs the latest OpenCode release, a v2, which no longer has
+# the `github run` command it calls. `opencode-ai@1` follows the newest v1 release, the line
+# that still ships it, and cannot jump to a major that drops it.
 
 on:
   issue_comment:
@@ -28,11 +29,14 @@ permissions: {}
 jobs:
   opencode:
     name: Run OpenCode
+    # 8973343 is @alexsoyes (Alex), the repository owner.
     if: |
       github.event.comment.user.id == 8973343 &&
       (contains(github.event.comment.body, '/oc') || contains(github.event.comment.body, '/opencode'))
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
+    # The agent mostly waits on the model API, so one vCPU is enough. ubuntu-slim stops any job
+    # at 15 minutes; the timeout below makes that ceiling explicit.
+    runs-on: ubuntu-slim
+    timeout-minutes: 15
     # id-token: write lets the CLI trade the run's OIDC token for an OpenCode Agent app token,
     # which is what pushes commits and comments. GITHUB_TOKEN itself stays read-only.
     permissions:
@@ -46,13 +50,14 @@ jobs:
 
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          node-version: "22"
+          node-version: lts/*
 
       - name: Install OpenCode
-        run: npm install --global opencode-ai@1.19.5
+        run: npm install --global opencode-ai@1
 
       - name: Run OpenCode
         env:
-          MODEL: opencode-go/kimi-k2.7-code
+          # Free on OpenCode Go for a limited time, prompts not used for training.
+          MODEL: opencode-go/beam-free
           OPENCODE_API_KEY: ${{ secrets.OPENCODE_API_KEY }}
         run: opencode github run
