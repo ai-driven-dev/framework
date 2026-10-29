@@ -260,6 +260,7 @@ Acceptance QA with video evidence
 
 Built by the [AI-Driven Dev](https://www.ai-driven-dev.fr/) community.
 
+- Based on the [AI-Driven Development Manifesto](https://www.ai-driven-development.org/)
 - 3 years of R&D
 - 500+ developers trained
 - Production software shipped with 100% AI-generated code
