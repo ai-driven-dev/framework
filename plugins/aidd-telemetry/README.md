@@ -4,6 +4,8 @@
 
 Counts the tokens your Claude Code and Codex sessions consume, each model call once, by person, session, model, agent, tool, day, repository, task and ticket. Local only: nothing is sent anywhere.
 
+> Status: beta.
+
 > For: people who measure their work. Formats, rules and limits: [usage contract](../../aidd_docs/product/usage-contract.md).
 
 ## How it works

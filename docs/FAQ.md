@@ -1,53 +1,40 @@
-# ❓ FAQ & Troubleshooting
+# FAQ
 
-Most "how do I…" answers live in the README; this page covers what isn't documented elsewhere, plus common install issues and the framework's limits.
+Answers that no other page gives. Install steps are in the [install guide](INSTALL.md).
 
-## 🤔 Why AIDD instead of your own skills?
+## Why AIDD instead of your own skills?
 
-You can write your own Claude Code skills — nothing stops you. AIDD exists because that setup is work every team repeats and re-debugs alone: the router/action split ([Skill](GLOSSARY.md#-skill) glossary entry), the plan → implement → review gating, the plugin packaging and versioning, the multi-tool support (Cursor, Copilot, Codex, OpenCode, Kilo Code). AIDD ships that scaffolding pre-built and maintained, so you start from a working SDLC loop and only author the skill content specific to your project. If your workflow doesn't match the framework's shape, [`CREATE_PLUGIN.md`](CREATE_PLUGIN.md) shows how to build on the same scaffolding instead of replacing it.
+You can write your own skills. AIDD exists because every team that does so builds and debugs the same scaffolding alone:
 
-## 📦 Install, update, other tools
+- the split between a router and its actions (see [Concepts](CONCEPTS.md#building-blocks));
+- the plan, implement, review gating;
+- plugin packaging and versioning;
+- support for several tools: Claude Code, Cursor, GitHub Copilot, Codex, OpenCode, Kilo Code.
 
-- **Install / first run** → [Quick start](../README.md#-quick-start).
-- **Update plugins** → `/plugin marketplace update aidd-framework`, or see [Versioning & updates](MARKETPLACE.md#-versioning--updates).
-- **Private repo?** Yes — `/plugin marketplace add` just needs GitHub read access (via `gh auth login` or a PAT).
-- **Cursor / Copilot / Codex / OpenCode / Kilo Code?** Each other tool installs via its own native mechanism (project files, local plugins, or a plugin command) from the [release](https://github.com/ai-driven-dev/framework/releases/latest) archives. Steps per tool → [Other tools](../README.md#other-tools).
+AIDD ships that scaffolding built and maintained, so you start from a working loop and write only what is specific to your project. If your workflow does not fit its shape, you can still reuse the plugin structure described in the [architecture](ARCHITECTURE.md#-anatomy-of-a-plugin).
 
-## 💸 Cost and quotas
+## Cost
 
-- **Does running plugins cost money?** The plugins are MIT-licensed and free; the Claude calls they make consume your Anthropic plan or API balance (per-invocation on a plan, per-token on an API key).
-- **Disable a plugin without uninstalling?** Run `/plugin` and toggle it off in the **Installed** tab, or remove its entry from `.claude/settings.json` `enabledPlugins` (project scope) or `~/.claude/plugins/` (user scope).
+- **Do the plugins cost money?** No, they are MIT-licensed. The model calls they trigger use your own plan or API balance.
+- **Can I turn a plugin off without uninstalling it?** In Claude Code, yes: press Space on it in the **Installed** tab of `/plugin`. For other tools, use that tool's own plugin settings.
 
-## 🔒 Security
+## Security
 
-- **What can a plugin do? Is it safe?** → [Trust and safety](../README.md#-trust-and-safety) and [`SECURITY.md`](../SECURITY.md). Plugins run commands, edit files, and call services through your AI tool — inspect a plugin's `actions/`, `hooks/hooks.json`, and `.mcp.json` before installing. Claude Code asks before tool calls by default.
-- **Report a vulnerability** → [`SECURITY.md`](../SECURITY.md) (GitHub Security Advisories; never a public issue).
+- **What can a plugin do?** Run commands, edit files and call services, through your AI tool and with your permissions. Before you install one, read its `README`, its `hooks/hooks.json` and its `.mcp.json`. Claude Code asks the first time it uses each tool, except for read-only actions inside the working directory.
+- **Which plugins run code on their own?** Two ship hooks: the [list](ARCHITECTURE.md#-bundled-hooks).
+- **How do I report a vulnerability?** Privately, as described in [`SECURITY.md`](../SECURITY.md). Never in a public issue.
 
-## 🤝 Contributing
+## Measurement
 
-- **Write your own plugin** → [`CREATE_PLUGIN.md`](CREATE_PLUGIN.md).
-- **File a bug / request a feature** → [issue templates](https://github.com/ai-driven-dev/framework/issues/new/choose).
-- **Community** → [Discord](https://discord.gg/EWySJSpjWs) · [website](https://www.ai-driven-dev.fr/) (more in the [README](../README.md#-the-ai-driven-dev)).
+**Nothing is measured until you opt in.** `aidd telemetry on` turns it on for the current clone, and `aidd telemetry forget --yes` removes everything it kept. It counts the tokens of Claude Code and Codex sessions and, as shipped, sends nothing anywhere. What it asks, what it keeps and what it needs are in the plugin's [README](../plugins/aidd-telemetry/README.md).
 
-## 🛠️ Troubleshooting
+## Limits
 
-- **Marketplace doesn't show my plugins after `/plugin marketplace add`** — refresh the cache: `/plugin marketplace update aidd-framework`, then open `/plugin` → **Discover**.
-- **`/plugin install` says the plugin is unknown** — the marketplace name must match the `name` in this repo's `.claude-plugin/marketplace.json` (`aidd-framework`). Install with `/plugin install <plugin-name>@aidd-framework`.
-- **A private repo won't add as a marketplace** — `/plugin marketplace add` needs read access; authenticate with `gh auth login` or a PAT on the machine running your AI tool.
-- **My new plugin's actions don't load** — run `/reload-plugins` in the same session, or restart the tool if a hook config changed.
+- **Some flows pause for you, others do not.** The feature flow runs on its own by default. Start your request with `interactive` to approve its contract, plan and outcome.
+- **Skills are written in Claude Code format.** The CLI and the release archives translate them for the other tools. What each tool receives is in [Compatibility](COMPATIBILITY.md).
+- **Skills expect their context.** A skill that needs a git repository, a `package.json` or a ticketing tool does not work without it. Check the plugin's README.
+- **There is no AIDD service today.** AIDD is prompt content you install into your own tool. There is no server and no account.
 
-## 🚧 Limitations (what AIDD does not do)
+## Still stuck?
 
-- **Execution depends on the workflow.** The SDLC flow is autonomous by default; `interactive` pauses for human review at its contract, plan and outcome checkpoints.
-- **Authored for Claude Code.** Other tools install via their native mechanism from the release archives ([Other tools](../README.md#other-tools)); public-marketplace publishing is on the way, native parity is a roadmap item.
-- **Plugins assume their own context.** A skill that expects a git repo, a `package.json`, or a ticketing tool won't work without it — check the plugin's README.
-- **No hosted service.** AIDD is prompt content you install into your own tool; there is no AIDD server and no account.
-- **Measurement is opt-in and local.** Nothing is recorded in a project until you turn it on, and nothing leaves your machine → [Measurement](#-measurement).
-
-## 📊 Measurement
-
-**Nothing is measured until you opt in.** `aidd telemetry on` turns it on for one project, and `aidd telemetry forget --yes` removes everything it kept. It counts the tokens of Claude Code and Codex sessions and sends nothing anywhere. What it asks, what it keeps and what it needs are in the plugin's [README](../plugins/aidd-telemetry/README.md).
-
-## 🆘 Still stuck?
-
-Ask in [Discussions](https://github.com/ai-driven-dev/framework/discussions) or on [Discord](https://discord.gg/EWySJSpjWs). For a bug, open an [issue](https://github.com/ai-driven-dev/framework/issues/new/choose). See [`SUPPORT.md`](../.github/SUPPORT.md).
+Ask in [Discussions](https://github.com/ai-driven-dev/framework/discussions) or on [Discord](https://discord.gg/EWySJSpjWs). For a bug, open an [issue](https://github.com/ai-driven-dev/framework/issues/new/choose). More in [`SUPPORT.md`](../.github/SUPPORT.md).

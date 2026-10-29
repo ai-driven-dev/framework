@@ -6,7 +6,7 @@ Orchestration plugin for the AI-Driven Development framework.
 
 > Status: stable for synchronous SDLC, `async-dev`, and backlog orchestration.
 
-First time? Install with `/plugin install aidd-orchestrator@aidd-framework`, then run `aidd-orchestrator:01-sdlc`. For async automation, run `aidd-orchestrator:00-async-dev` with `action=setup`. New to the framework? See the [quick start](../../README.md#-quick-start).
+First time? Install with `/plugin install aidd-orchestrator@aidd-framework`, then run `aidd-orchestrator:01-sdlc`. For async automation, run `aidd-orchestrator:00-async-dev` with `action=setup`. New to the framework? See the [quick start](../../README.md#quick-start).
 
 Composes capabilities into deterministic, auditable flows. Domain skills retain their own validation.
 

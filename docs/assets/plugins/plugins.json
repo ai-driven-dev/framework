@@ -1,0 +1,56 @@
+{
+  "aidd-context": {
+    "status": "stable",
+    "icon": "layers",
+    "accent": "#0969da",
+    "description": "Project memory, context generation, learning"
+  },
+  "aidd-dev": {
+    "status": "stable",
+    "icon": "code",
+    "accent": "#8250df",
+    "description": "Plan, build, review, test, debug"
+  },
+  "aidd-vcs": {
+    "status": "stable",
+    "icon": "branch",
+    "accent": "#bc4c00",
+    "description": "Commits, pull requests, release tags, issues"
+  },
+  "aidd-pm": {
+    "status": "stable",
+    "icon": "clipboard",
+    "accent": "#1a7f37",
+    "description": "Briefs, Epics, Stories, specs, Spikes, Defects"
+  },
+  "aidd-refine": {
+    "status": "stable",
+    "icon": "mirror",
+    "accent": "#bf3989",
+    "description": "Brainstorm, challenge, fact-check"
+  },
+  "aidd-orchestrator": {
+    "status": "stable",
+    "icon": "flow",
+    "accent": "#0a7e8c",
+    "description": "Feature flow, issue-to-PR automation, backlog"
+  },
+  "aidd-ui": {
+    "status": "alpha",
+    "icon": "window",
+    "accent": "#9a6700",
+    "description": "UI and UX design, smoke test only"
+  },
+  "aidd-telemetry": {
+    "status": "beta",
+    "icon": "bars",
+    "accent": "#5a67d8",
+    "description": "Token usage per task, opt-in"
+  },
+  "aidd-qa": {
+    "status": "new",
+    "icon": "play",
+    "accent": "#d1242f",
+    "description": "Acceptance QA with video evidence"
+  }
+}

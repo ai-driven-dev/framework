@@ -111,16 +111,16 @@ Memory ownership (CLAUDE.md, AGENTS.md, copilot-instructions.md) is delegated to
 OpenCode needs JS adapters. The CLI owns the shared host protocol; plugins own payload mapping. Its helper is delivered once outside plugin discovery, tracked as a tool file, and backfilled only when missing. Installation must neither rewrite user configuration nor claim existing untracked helpers. Generic `SessionStart` runs idempotently at host initialization.
 
 <details>
-<summary>Tool compatibility and adapter contracts</summary>
+<summary>Plugin root spelling per tool</summary>
 
-Hooks are authored with `${CLAUDE_PLUGIN_ROOT}`; the installer translates the root for each tool.
-| Tool           | Runs bundled hooks    | Plugin root            | Notes |
-| -------------- | --------------------- | ---------------------- | ----- |
-| Claude Code    | yes                   | `${CLAUDE_PLUGIN_ROOT}` | Authoring spelling, nothing substituted |
-| Codex          | yes                   | `${PLUGIN_ROOT}`       | Also expands `${CLAUDE_PLUGIN_ROOT}`; runs a hook only once trusted |
-| GitHub Copilot | yes                   | `${PLUGIN_ROOT}`       | Declared, never observed running |
-| Cursor         | declared              | `./`                   | Own hook format: the converter rewrites the root to a plugin-relative path before token substitution. No plugin hook observed firing headless; what registers a plugin in Cursor's plugin directory is unknown |
-| OpenCode       | no, by a second route | —                      | See below |
+Hooks are authored with `${CLAUDE_PLUGIN_ROOT}`; the installer translates the root for each tool. Which tools run the hooks, and what was observed, is in [Compatibility](../docs/COMPATIBILITY.md#hooks).
+| Tool           | Plugin root            | Notes |
+| -------------- | ---------------------- | ----- |
+| Claude Code    | `${CLAUDE_PLUGIN_ROOT}` | Authoring spelling, nothing substituted |
+| Codex          | `${PLUGIN_ROOT}`       | Also expands `${CLAUDE_PLUGIN_ROOT}` |
+| GitHub Copilot | `${PLUGIN_ROOT}`       | |
+| Cursor         | `./`                   | Own hook format: the converter rewrites the root to a plugin-relative path before token substitution |
+| OpenCode, Kilo Code | none              | No hooks file: a generated bridge replays the hooks |
 Runtime contracts: [hook bridge](src/contexts/tools/domain/profiles/opencode/opencode-hooks-bridge.ts), [shared V2 adapter](assets/configs/opencode/opencode-events.js.txt). The shared helper is `.opencode/hooks/opencode-events.js`. Unsupported hooks and skipped installation surfaces must be reported.
 
 </details>

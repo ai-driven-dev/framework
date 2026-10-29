@@ -56,7 +56,7 @@ make setup   # deps, git hooks, registers the marketplace, installs plugins into
 
 ## 📚 Reference
 
-[`ARCHITECTURE.md`](docs/ARCHITECTURE.md) · [`CREATE_PLUGIN.md`](docs/CREATE_PLUGIN.md) · [`GLOSSARY.md`](docs/GLOSSARY.md)
+[`ARCHITECTURE.md`](docs/ARCHITECTURE.md) · [`CONCEPTS.md`](docs/CONCEPTS.md) · [Maintainers guide](docs/MAINTAINERS.md#-add-a-plugin)
 
 ---
 

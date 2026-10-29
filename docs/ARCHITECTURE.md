@@ -1,58 +1,29 @@
 # Architecture
 
-AIDD packages AI-assisted work into plugins, each owning one concern.
-
-## Marketplace and installation
-
-```mermaid
-flowchart TB
-  Catalog["Marketplace catalog"] -->|lists sources| Plugins["Plugin packages"]
-  Plugins -->|native install| Claude["Claude Code"]
-  Plugins --> CLI["CLI: translate and install"]
-  CLI --> Tools["Supported AI tools"]
-```
-
-| Element | Responsibility |
-| --- | --- |
-| `.claude-plugin/marketplace.json` | Lists plugins and their sources. |
-| `plugins/<name>/` | Holds a plugin's manifest and capabilities. |
-| AI tool | Loads capabilities and executes work. |
-| CLI | Translates supported capabilities; reports unavailable surfaces. |
-
-Marketplace and plugins version independently. See the [marketplace guide](MARKETPLACE.md) for registration, scopes and updates.
+AIDD packages AI-assisted work into plugins, each owning one concern. This page is for contributors: where a capability belongs, and the rules that keep plugins independent. For the meaning of each term, see [Concepts](CONCEPTS.md).
 
 ## 🧩 Anatomy of a plugin
 
-Manifest and skills are required in AIDD; other capabilities are optional. Locations are relative to the plugin directory.
+A plugin needs a manifest and skills. Everything else is optional. Locations are relative to the plugin directory.
 
-| Component | Location | Role |
-| --- | --- | --- |
-| Manifest | `.claude-plugin/` | `plugin.json`: identity, version and declared capabilities. |
-| Skill | `skills/<name>/SKILL.md` | Routes requests to actions or a protocol. |
-| Actions | `skills/<name>/actions/` | Inputs, outputs, procedure and checks. |
-| Assets | `skills/<name>/assets/` | Reusable templates and static files. |
-| References | `skills/<name>/references/` | Supporting documentation and handoff protocols. |
-| Agents | `agents/` | Isolated specialist roles. |
-| Commands | `commands/` | Flat prompts invoked as slash commands. |
-| Hooks | `hooks/hooks.json` and `hooks/` scripts | Deterministic programs triggered by lifecycle events. |
-| MCP configuration | `.mcp.json` | External tools and data via Model Context Protocol servers. |
-| Documentation | `README.md` · `CATALOG.md` · `CHANGELOG.md` | Usage, capability inventory and release history. |
-
-Project rules belong in the host's rules directory, such as `.claude/rules/`. `aidd-context` generates them as project context, outside native Claude plugin surfaces.
-
-<details>
-<summary>Package validation</summary>
-
-| Check | Contract |
+| Component | Location |
 | --- | --- |
-| Manifests | [Plugin](https://www.schemastore.org/claude-code-plugin-manifest.json) and [marketplace](https://www.schemastore.org/claude-code-marketplace.json) schemas; validated by `lefthook` and the `validate` workflow. |
-| Tests | Keep in `scripts/__tests__/`, outside shipped trees: `hooks/` is copied recursively into user projects. |
+| Manifest | `.claude-plugin/`, holding `plugin.json` |
+| Skill | `skills/<name>/SKILL.md` |
+| Actions | `skills/<name>/actions/` |
+| Assets | `skills/<name>/assets/` |
+| References | `skills/<name>/references/` |
+| Agents | `agents/` |
+| Commands | `commands/` |
+| Hooks | `hooks/hooks.json` and the scripts beside it |
+| MCP configuration | `.mcp.json` |
+| Documentation | `README.md`, `CATALOG.md` (generated), `CHANGELOG.md` |
 
-</details>
+Project rules belong in the host's rules directory, such as `.claude/rules/`. `aidd-context` generates them as project context, outside the native Claude plugin surfaces.
 
 ## Responsibilities
 
-Place each capability in its owning concern and delegate to it.
+Place each capability in the plugin whose concern owns it, and delegate to it from everywhere else.
 
 | Plugin              | Concern              | Layer        |
 | ------------------- | -------------------- | ------------ |
@@ -62,27 +33,23 @@ Place each capability in its owning concern and delegate to it.
 | `aidd-dev`          | Code transformation  | Execution    |
 | `aidd-vcs`          | Version control      | External     |
 | `aidd-orchestrator` | Orchestration        | Coordination |
-| `aidd-ui`        | UI/UX design         | Execution    |
-| `aidd-telemetry` | Measurement          | Observation  |
-| `aidd-qa`         | Acceptance QA        | Execution    |
+| `aidd-ui`           | UI/UX design         | Execution    |
+| `aidd-telemetry`    | Measurement          | Observation  |
+| `aidd-qa`           | Acceptance QA        | Execution    |
 
-### Layer boundaries
+### Layers
 
 | Layer | Boundary |
 | --- | --- |
-| Knowledge | Produces context and specifications; never writes or runs application source. Context bootstrap creates no `package.json`. |
+| Knowledge | Produces context and specifications. Never writes or runs application source. Context bootstrap creates no `package.json`. |
 | Execution | Changes or validates application source. |
 | External | Owns version control. |
 | Coordination | Sequences artifacts (for example `INSTALL.md`). Domain logic and artifact contracts stay with their owners; direct and orchestrated calls obey the same contracts. |
-| Observation | Records work without changing observed artifacts. Productive flows never depend on it. |
+| Observation | Records work without changing the observed artifacts. Productive flows never depend on it. |
 
-### Measurement boundary
-
-`aidd-telemetry` counts the tokens of Claude Code and Codex sessions deterministically and attributes them to the task a person declared. The CLI reads, stores, attributes and reports; the plugin's hooks only ask, answer and record session facts. The contract is [`aidd_docs/product/usage-contract.md`](../aidd_docs/product/usage-contract.md).
+`aidd-telemetry` counts the tokens of Claude Code and Codex sessions and attributes them to the task a person declared. The CLI reads, stores, attributes and reports; the plugin's hooks only ask, answer and record session facts. The contract is [`aidd_docs/product/usage-contract.md`](../aidd_docs/product/usage-contract.md).
 
 ## Execution model
-
-### Skills and actions
 
 ```mermaid
 flowchart TB
@@ -96,55 +63,42 @@ flowchart TB
   Action --> Result["Result or artifact"]
 ```
 
-### Agents and delegation
-
 | Role | Contract |
 | --- | --- |
-| Skill | Host loads `SKILL.md` on invocation; work runs in the caller's context. |
-| Orchestrator | Owns routing; authorizes isolation or bounded fan-out. |
-| Agent | Isolates work and returns a result. Invokes only declared canonical recipe skills; never invokes orchestrators or reads skill files. |
-| Recipe | Never invents spawning; an isolated recipe never delegates flow work. |
-| Reconnaissance helper | Read-only; neither mutates nor spawns. |
-| Write path | At most two delegation layers; no cycles. |
-| SDLC | Owns planning; [delivery](../plugins/aidd-orchestrator/skills/01-sdlc/references/02-deliver.md) and [check](../plugins/aidd-orchestrator/skills/01-sdlc/references/03-check.md) govern execution, leaf executors, independent judgment and bounded repair. |
+| Skill | The host loads `SKILL.md` on invocation. Work runs in the caller's context. |
+| Orchestrator | Owns routing. Authorizes isolation or bounded fan-out. |
+| Agent | Isolates work and returns a result. Invokes only declared canonical recipe skills. Never invokes orchestrators or reads skill files. |
+| Recipe | Never invents spawning. An isolated recipe never delegates flow work. |
+| Reconnaissance helper | Read-only. Neither mutates nor spawns. |
+| Write path | At most two delegation layers, no cycles. |
+| SDLC | Owns planning. [Delivery](../plugins/aidd-orchestrator/skills/01-sdlc/references/02-deliver.md) and [check](../plugins/aidd-orchestrator/skills/01-sdlc/references/03-check.md) govern execution, leaf executors, independent judgment and bounded repair. |
 
-### 🪝 Bundled hooks
+## 🪝 Bundled hooks
 
-Dependency-free Node scripts declared in `hooks/hooks.json`; `node` must be on `PATH`.
+Dependency-free Node scripts declared in `hooks/hooks.json`. `node` must be on `PATH`. The table is generated from those files. Which tools run them: [Compatibility](COMPATIBILITY.md#hooks).
 
-| Plugin           | Event                                   | Runs                     | Purpose                                                     |
-| ---------------- | --------------------------------------- | ------------------------ | ----------------------------------------------------------- |
-| `aidd-context`   | `SessionStart`                          | `hooks/update_memory.js` | Refresh the project memory block in the AI context files    |
-| `aidd-telemetry` | `SessionStart` · `UserPromptSubmit`     | `hooks/session-start.cjs` · `hooks/catch-up.cjs` · `hooks/prompt-gate.cjs` | At session start, record which session a process is on and keep its task across `/clear`, and catch the ledger up (async); on a prompt, hold it on an undeclared branch until a task is declared, and answer the declaration without the model |
+<!--hooks:start-->
 
-## Portability
-
-| Surface | Contract | Reference |
+| Plugin | Event | Runs |
 | --- | --- | --- |
-| CLI output | Supported target capabilities only; `aidd translate` warns and skips rules and commands. | [Output layouts](../cli/README.md#translate) |
-| Skills | Links stay inside the skill directory. Flat distribution renames skills `<plugin>-<skill>`; marketplace installation preserves the tree. | [Portability guard](../scripts/__tests__/a-skill-links-only-inside-itself.test.js) |
-| Bundled scripts | Named plugin-relative in backticks, never linked. | [Portability guard](../scripts/__tests__/a-skill-links-only-inside-itself.test.js) |
-| Hook adapters | CLI owns OpenCode's shared host protocol; plugins own payload mapping. | [Delivery and compatibility](../cli/ARCHITECTURE.md#hook-adaptation) |
+| [`aidd-context`](../plugins/aidd-context/README.md) | `SessionStart` | `hooks/update_memory.js` |
+| [`aidd-telemetry`](../plugins/aidd-telemetry/README.md) | `SessionStart` · `UserPromptSubmit` | `hooks/session-start.cjs` · `hooks/catch-up.cjs` · `hooks/prompt-gate.cjs` |
 
-## Capability discovery and addressing
+<!--hooks:end-->
 
-| Context | Rule |
+## Rules that keep plugins independent
+
+| Rule | Held by |
 | --- | --- |
-| Dispatch tables (`## Actions`), orchestration references and agent permissions (`# Skills you may invoke`) | Canonical `/plugin:folder` or `@plugin:agent` addresses. Elsewhere, name the responsibility. |
-| Cross-plugin providers | Recipes discover by description rather than hardcoding siblings; orchestrators verify installation before dispatch. |
-| Backlog flow | Owned by `aidd-orchestrator:02-backlog`. |
-| Orthogonality exceptions | `isExemptFromOrthogonality` permits responsibility maps in `plugins/aidd-orchestrator/**` and onboarding menus in `plugins/aidd-context/skills/00-onboard/**`. The onboarding exemption ends with runtime provider discovery. |
+| A skill links only inside its own directory. The tree ships both flat (each tool lays skills out in its own folders) and as a marketplace, and no relative path survives both. | `scripts/__tests__/a-skill-links-only-inside-itself.test.js` |
+| A bundled script is named plugin-relative in backticks, never linked. | the same test |
+| A capability is addressed as `/plugin:folder` or `@plugin:agent` only in dispatch tables (`## Actions`), orchestration references and agent permission lists (`# Skills you may invoke`). Elsewhere, name the responsibility. | `scripts/check-architecture-rules.js` |
+| A recipe finds cross-plugin providers by description. An orchestrator verifies a plugin is installed before it dispatches to it. | review |
+| Two exemptions exist: responsibility maps in `plugins/aidd-orchestrator/**`, and the onboarding menus in `plugins/aidd-context/skills/00-onboard/**`. The second ends once onboarding finds its providers at runtime. | `isExemptFromOrthogonality` in `scripts/lib/architecture-rules.js` |
+| Tests for a bundled script live in `scripts/__tests__/`, never in the plugin, because `hooks/` is copied recursively into user projects. | review |
+| The CLI writes only the capabilities a tool supports and warns about the rest. | The tool-support record in [Compatibility](COMPATIBILITY.md) |
+| The CLI owns OpenCode's shared hook protocol. Plugins own the mapping of their own payloads. | [CLI architecture](../cli/ARCHITECTURE.md#hook-adaptation) |
 
-## References
+## Related pages
 
-| Document | Question answered |
-| --- | --- |
-| [Framework README](../README.md) | What can I use, and how do I start? |
-| [Marketplace guide](MARKETPLACE.md) | How do registration, scopes and updates work? |
-| [Create a plugin](CREATE_PLUGIN.md) | How do I author and publish a plugin? |
-| [Glossary](GLOSSARY.md) | What do the terms mean? |
-| [CLI reference](../cli/README.md) | Which commands and output layouts are supported? |
-| [CLI architecture](../cli/ARCHITECTURE.md) | How are translation and installation implemented? |
-| [Contributing](../CONTRIBUTING.md) | How do I contribute to this repository? |
-| [Maintainers guide](MAINTAINERS.md) | How are repository operations and releases managed? |
-| [Claude plugin reference](https://code.claude.com/docs/en/plugins-reference) | How do native plugin components behave? |
+[Maintainers guide](MAINTAINERS.md) for releases and adding a plugin. [CLI architecture](../cli/ARCHITECTURE.md) for translation and installation.

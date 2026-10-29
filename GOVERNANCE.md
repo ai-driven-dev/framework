@@ -26,6 +26,17 @@ Four roles form a **ladder**, each rung keeps every right of the rungs below and
 - This vote decides **roadmap priority**, not whether a contribution issue can
   move to a PR, that validation is immediate, see [`CONTRIBUTING.md`](CONTRIBUTING.md).
 
+## How to influence the roadmap
+
+The live roadmap is the [AIDD Roadmap board](https://github.com/orgs/ai-driven-dev/projects/8). A milestone is a theme due on a Thursday, and every item without a milestone is the backlog, ordered by priority. To weigh in:
+
+- Join the weekly Discord event [Framework Evolution 🇫🇷🥖](https://discord.gg/DyzRuZ7SF?event=1514565536695193710), where the roadmap is decided.
+- Open an issue or an idea in [GitHub Discussions](https://github.com/ai-driven-dev/framework/discussions), and 👍 what you want.
+- Talk in the [framework channel on Discord](https://discord.com/channels/1173363373115723796/1512081578858119238).
+- To fund work, see [`.github/FUNDING.yml`](./.github/FUNDING.yml).
+
+Shipped changes are in [`CHANGELOG.md`](./CHANGELOG.md).
+
 ## ✅ Code decisions
 
 - Merge authority is **Maintainer only**.

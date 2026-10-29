@@ -1,0 +1,553 @@
+{
+  "request": "add rate limiting to the /login endpoint",
+  "badge": "Simplified view of the flow. Illustration: example request, not a recording",
+  "steps": [
+    {
+      "id": "clarify",
+      "label": "Clarify"
+    },
+    {
+      "id": "plan",
+      "label": "Plan"
+    },
+    {
+      "id": "build",
+      "label": "Build"
+    },
+    {
+      "id": "validate",
+      "label": "Validate"
+    },
+    {
+      "id": "review",
+      "label": "Review"
+    },
+    {
+      "id": "ship",
+      "label": "Ship"
+    }
+  ],
+  "scenes": [
+    {
+      "id": "ask",
+      "step": null,
+      "duration": 3.2,
+      "lines": [
+        {
+          "at": 0.2,
+          "kind": "type",
+          "text": "/aidd-orchestrator:01-sdlc \"add rate limiting to the /login endpoint\""
+        }
+      ]
+    },
+    {
+      "id": "brainstorm",
+      "step": "clarify",
+      "duration": 6.4,
+      "lines": [
+        {
+          "at": 0.2,
+          "kind": "skill",
+          "text": "/aidd-refine:01-brainstorm"
+        },
+        {
+          "at": 0.5,
+          "kind": "does",
+          "text": "Asks only what could change what gets built"
+        },
+        {
+          "at": 1.2,
+          "kind": "ask",
+          "text": "Limit per IP or per account?"
+        },
+        {
+          "at": 1.9,
+          "kind": "answer",
+          "text": "per IP, 5 per minute"
+        },
+        {
+          "at": 2.7,
+          "kind": "ask",
+          "text": "Block the IP, or just refuse the request?"
+        },
+        {
+          "at": 3.4,
+          "kind": "answer",
+          "text": "just refuse it"
+        },
+        {
+          "at": 4.2,
+          "kind": "card",
+          "title": "Brief",
+          "icon": "file",
+          "rows": [
+            {
+              "text": "## Clear",
+              "at": 4.9,
+              "k": "h"
+            },
+            {
+              "text": "5 attempts per minute, per IP",
+              "at": 5.2,
+              "k": "plain"
+            },
+            {
+              "text": "## Assumed",
+              "at": 5.7,
+              "k": "h"
+            },
+            {
+              "text": "Over the limit: refuse with a 429",
+              "at": 6.0,
+              "k": "plain"
+            },
+            {
+              "text": "## Open",
+              "at": 6.5,
+              "k": "h"
+            },
+            {
+              "text": "none",
+              "at": 6.8,
+              "k": "plain"
+            }
+          ]
+        }
+      ],
+      "collapse": [
+        2,
+        3,
+        4,
+        5
+      ]
+    },
+    {
+      "id": "spec",
+      "step": "clarify",
+      "duration": 6.4,
+      "lines": [
+        {
+          "at": 0.2,
+          "kind": "skill",
+          "text": "/aidd-pm:04-spec"
+        },
+        {
+          "at": 0.5,
+          "kind": "does",
+          "text": "Turns the brief into a written contract"
+        },
+        {
+          "at": 1.1,
+          "kind": "card",
+          "title": "aidd_docs/tasks/\u2026/spec.md",
+          "icon": "file",
+          "rows": [
+            {
+              "text": "# Rate limiting on /login",
+              "at": 1.4,
+              "k": "h"
+            },
+            {
+              "text": "## Target",
+              "at": 1.9,
+              "k": "h"
+            },
+            {
+              "text": "Slow down password guessing",
+              "at": 2.2,
+              "k": "plain"
+            },
+            {
+              "text": "## Hard constraints",
+              "at": 2.8,
+              "k": "h"
+            },
+            {
+              "text": "5 attempts per minute, per IP",
+              "at": 3.1,
+              "k": "plain"
+            },
+            {
+              "text": "Over the limit: answer 429",
+              "at": 3.4,
+              "k": "plain"
+            },
+            {
+              "text": "## Non-goals",
+              "at": 4.0,
+              "k": "h"
+            },
+            {
+              "text": "Every other endpoint",
+              "at": 4.3,
+              "k": "plain"
+            },
+            {
+              "text": "## Done-when",
+              "at": 4.9,
+              "k": "h"
+            },
+            {
+              "text": "The 6th attempt in a minute gets a 429",
+              "at": 5.2,
+              "k": "plain"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "plan",
+      "step": "plan",
+      "duration": 6.6,
+      "lines": [
+        {
+          "at": 0.2,
+          "kind": "skill",
+          "text": "/aidd-dev:01-plan"
+        },
+        {
+          "at": 0.5,
+          "kind": "does",
+          "text": "Splits the contract into phases: one plan, one file per phase"
+        },
+        {
+          "at": 1.4,
+          "kind": "card",
+          "title": "aidd_docs/tasks/\u2026/plan.md",
+          "icon": "file",
+          "rows": [
+            {
+              "text": "# Plan: Rate limiting on /login",
+              "at": 1.7,
+              "k": "h"
+            },
+            {
+              "text": "#  Phase                File        Depends on",
+              "at": 2.1,
+              "k": "plain"
+            },
+            {
+              "text": "1  Add a rate limiter    phase-1.md  none",
+              "at": 2.6,
+              "k": "plain"
+            },
+            {
+              "text": "2  Apply it to /login    phase-2.md  1",
+              "at": 3.1,
+              "k": "plain"
+            },
+            {
+              "text": "3  Cover it with tests   phase-3.md  1, 2",
+              "at": 3.6,
+              "k": "plain"
+            },
+            {
+              "text": "Each phase file: tasks and acceptance criteria",
+              "at": 4.3,
+              "k": "plain"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "build",
+      "step": "build",
+      "duration": 7.4,
+      "lines": [
+        {
+          "at": 0.2,
+          "kind": "skill",
+          "text": "/aidd-dev:02-implement"
+        },
+        {
+          "at": 0.5,
+          "kind": "does",
+          "text": "Writes the code, one phase after the other, until its criteria hold"
+        },
+        {
+          "at": 1.4,
+          "kind": "card",
+          "title": "Phase by phase",
+          "icon": "code",
+          "rows": [
+            {
+              "text": "Phase 1  Add a rate limiter",
+              "at": 1.7,
+              "k": "h"
+            },
+            {
+              "text": "+ src/rate-limiter.ts",
+              "at": 2.1,
+              "k": "file"
+            },
+            {
+              "text": "criteria met",
+              "at": 2.5,
+              "k": "ok"
+            },
+            {
+              "text": "Phase 2  Apply it to /login",
+              "at": 3.2,
+              "k": "h"
+            },
+            {
+              "text": "~ src/routes/login.ts   ~ src/config.ts",
+              "at": 3.6,
+              "k": "file"
+            },
+            {
+              "text": "criteria met",
+              "at": 4.0,
+              "k": "ok"
+            },
+            {
+              "text": "Phase 3  Cover it with tests",
+              "at": 4.7,
+              "k": "h"
+            },
+            {
+              "text": "+ tests/rate-limiter.test.ts   ~ tests/login.test.ts",
+              "at": 5.1,
+              "k": "file"
+            },
+            {
+              "text": "criteria met",
+              "at": 5.5,
+              "k": "ok"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "validate",
+      "step": "validate",
+      "duration": 6.4,
+      "lines": [
+        {
+          "at": 0.2,
+          "kind": "skill",
+          "text": "/aidd-dev:03-assert"
+        },
+        {
+          "at": 0.5,
+          "kind": "does",
+          "text": "Runs the project's coding assertions until every one passes"
+        },
+        {
+          "at": 1.3,
+          "kind": "card",
+          "title": "Coding assertions",
+          "icon": "check",
+          "rows": [
+            {
+              "text": "Tests",
+              "at": 1.6,
+              "k": "ok"
+            },
+            {
+              "text": "Lint",
+              "at": 2.1,
+              "k": "ok"
+            },
+            {
+              "text": "Types",
+              "at": 2.6,
+              "k": "ok"
+            },
+            {
+              "text": "Architecture",
+              "at": 3.1,
+              "k": "ok"
+            },
+            {
+              "text": "All assertions pass",
+              "at": 3.9,
+              "k": "v"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "review",
+      "step": "review",
+      "duration": 6.6,
+      "lines": [
+        {
+          "at": 0.2,
+          "kind": "skill",
+          "text": "/aidd-dev:05-review"
+        },
+        {
+          "at": 0.5,
+          "kind": "does",
+          "text": "An independent reviewer checks the change against the contract and the plan"
+        },
+        {
+          "at": 1.6,
+          "kind": "card",
+          "title": "aidd_docs/tasks/\u2026/review.md",
+          "icon": "file",
+          "rows": [
+            {
+              "text": "# Review: Rate limiting on /login",
+              "at": 1.9,
+              "k": "h"
+            },
+            {
+              "text": "## Round 1",
+              "at": 2.3,
+              "k": "h"
+            },
+            {
+              "text": "Every other endpoint untouched",
+              "at": 2.8,
+              "k": "bad"
+            },
+            {
+              "text": "src/routes/login.ts also counts /health",
+              "at": 3.3,
+              "k": "red"
+            },
+            {
+              "text": "Verdict: not ready",
+              "at": 3.9,
+              "k": "red"
+            },
+            {
+              "text": "Back to Build, fixed, checks run again",
+              "at": 4.8,
+              "k": "warn"
+            },
+            {
+              "text": "## Round 2",
+              "at": 6.4,
+              "k": "h"
+            },
+            {
+              "text": "All criteria met",
+              "at": 6.9,
+              "k": "ok"
+            },
+            {
+              "text": "Verdict: ready to ship",
+              "at": 7.4,
+              "k": "v"
+            }
+          ]
+        }
+      ],
+      "redAt": 2.8,
+      "loop": {
+        "at": 4.8,
+        "steps": [
+          "build",
+          "validate"
+        ]
+      }
+    },
+    {
+      "id": "challenge",
+      "step": "review",
+      "duration": 5.4,
+      "lines": [
+        {
+          "at": 0.2,
+          "kind": "skill",
+          "text": "/aidd-refine:02-challenge"
+        },
+        {
+          "at": 0.5,
+          "kind": "does",
+          "text": "Rethinks the work: does it answer the request?"
+        },
+        {
+          "at": 1.3,
+          "kind": "card",
+          "title": "Challenge report",
+          "icon": "file",
+          "rows": [
+            {
+              "text": "My confidence level of correctness: 95%",
+              "at": 1.6,
+              "k": "h"
+            },
+            {
+              "text": "# Correctness",
+              "at": 2.2,
+              "k": "h"
+            },
+            {
+              "text": "Matches the request",
+              "at": 2.5,
+              "k": "ok"
+            },
+            {
+              "text": "# Deal breakers",
+              "at": 3.1,
+              "k": "h"
+            },
+            {
+              "text": "none",
+              "at": 3.4,
+              "k": "ok"
+            },
+            {
+              "text": "# Suggestions",
+              "at": 4.0,
+              "k": "h"
+            },
+            {
+              "text": "none",
+              "at": 4.3,
+              "k": "ok"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ship",
+      "step": "ship",
+      "duration": 5.0,
+      "lines": [
+        {
+          "at": 0.2,
+          "kind": "skill",
+          "text": "/aidd-vcs:02-pull-request"
+        },
+        {
+          "at": 0.5,
+          "kind": "does",
+          "text": "Opens the pull request as a draft"
+        },
+        {
+          "at": 1.2,
+          "kind": "card",
+          "title": "Draft pull request",
+          "icon": "pr",
+          "rows": [
+            {
+              "text": "Add rate limiting to /login",
+              "at": 1.5,
+              "k": "h"
+            },
+            {
+              "text": "Title and body written from the template",
+              "at": 2.1,
+              "k": "plain"
+            },
+            {
+              "text": "Opened as a draft: you promote it",
+              "at": 2.7,
+              "k": "plain"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

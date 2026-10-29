@@ -185,8 +185,7 @@ Per tool, the settings file the CLI writes:
 ## More
 
 - [Architecture](../docs/ARCHITECTURE.md)
-- [Write a plugin](../docs/CREATE_PLUGIN.md)
-- [Marketplace](../docs/MARKETPLACE.md)
-- [Glossary](../docs/GLOSSARY.md)
+- [Install guide](../docs/INSTALL.md)
+- [Concepts](../docs/CONCEPTS.md)
 - [FAQ](../docs/FAQ.md)
 - [Contributing](../CONTRIBUTING.md)

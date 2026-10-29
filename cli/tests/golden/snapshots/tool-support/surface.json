@@ -1,0 +1,136 @@
+[
+  {
+    "id": "claude",
+    "name": "Claude Code",
+    "directory": ".claude/",
+    "pluginMode": "native",
+    "nativeCli": "claude",
+    "builds": {
+      "marketplace": {
+        "skills": "yes",
+        "agents": "yes",
+        "mcp": "yes",
+        "hooks": "yes",
+        "rules": "no",
+        "commands": "no"
+      },
+      "flat": {
+        "skills": "yes",
+        "agents": "yes",
+        "mcp": "yes",
+        "hooks": "yes",
+        "rules": "no",
+        "commands": "no"
+      }
+    }
+  },
+  {
+    "id": "cursor",
+    "name": "Cursor",
+    "directory": ".cursor/",
+    "pluginMode": "native",
+    "nativeCli": null,
+    "builds": {
+      "marketplace": {
+        "skills": "yes",
+        "agents": "yes",
+        "mcp": "yes",
+        "hooks": "yes",
+        "rules": "no",
+        "commands": "no"
+      },
+      "flat": {
+        "skills": "yes",
+        "agents": "yes",
+        "mcp": "yes",
+        "hooks": "yes",
+        "rules": "no",
+        "commands": "no"
+      }
+    }
+  },
+  {
+    "id": "copilot",
+    "name": "GitHub Copilot",
+    "directory": ".github/",
+    "pluginMode": "native",
+    "nativeCli": "copilot",
+    "builds": {
+      "marketplace": {
+        "skills": "yes",
+        "agents": "yes",
+        "mcp": "yes",
+        "hooks": "yes",
+        "rules": "no",
+        "commands": "no"
+      },
+      "flat": {
+        "skills": "yes",
+        "agents": "yes",
+        "mcp": "yes",
+        "hooks": "yes",
+        "rules": "no",
+        "commands": "no"
+      }
+    }
+  },
+  {
+    "id": "opencode",
+    "name": "OpenCode",
+    "directory": ".opencode/",
+    "pluginMode": "flat",
+    "nativeCli": null,
+    "builds": {
+      "flat": {
+        "skills": "yes",
+        "agents": "yes",
+        "mcp": "no",
+        "hooks": "bridge",
+        "rules": "no",
+        "commands": "no"
+      }
+    }
+  },
+  {
+    "id": "kilo",
+    "name": "Kilo Code",
+    "directory": ".kilo/",
+    "pluginMode": "flat",
+    "nativeCli": null,
+    "builds": {
+      "flat": {
+        "skills": "yes",
+        "agents": "yes",
+        "mcp": "no",
+        "hooks": "bridge",
+        "rules": "no",
+        "commands": "no"
+      }
+    }
+  },
+  {
+    "id": "codex",
+    "name": "Codex",
+    "directory": ".codex/",
+    "pluginMode": "native",
+    "nativeCli": "codex",
+    "builds": {
+      "marketplace": {
+        "skills": "yes",
+        "agents": "yes",
+        "mcp": "yes",
+        "hooks": "yes",
+        "rules": "no",
+        "commands": "no"
+      },
+      "flat": {
+        "skills": "yes",
+        "agents": "yes",
+        "mcp": "no",
+        "hooks": "yes",
+        "rules": "no",
+        "commands": "no"
+      }
+    }
+  }
+]

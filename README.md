@@ -19,48 +19,65 @@ Unify **engineering teams** around **standardized workflows** and **shared best 
 [![Latest Release](https://img.shields.io/github/v/release/ai-driven-dev/framework?include_prereleases&sort=semver)](https://github.com/ai-driven-dev/framework/releases)
 [![CI](https://github.com/ai-driven-dev/framework/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/ai-driven-dev/framework/actions/workflows/ci.yml)
 
-
-<p>🗺️ <a href="https://github.com/orgs/ai-driven-dev/projects/8"><b>Live roadmap</b></a></p>
+<p>
+  <a href="docs/INSTALL.md"><b>Install</b></a> ·
+  <a href="docs/GUIDES.md"><b>Guides</b></a> ·
+  <a href="docs/CATALOG.md"><b>Catalog</b></a> ·
+  <a href="docs/FAQ.md"><b>FAQ</b></a> ·
+  <a href="CONTRIBUTING.md"><b>Contribute</b></a> ·
+  <a href="https://github.com/orgs/ai-driven-dev/projects/8"><b>Roadmap</b></a>
+</p>
 
 </div>
 
 ---
 
-The **AI-Driven Dev Framework** installs a working SDLC (Software Development Life Cycle) into your AI coding tool — **skills, agents, commands, rules** — that turns a rough idea into a reviewed, shipped pull request:
+From a rough idea to a reviewed pull request, inside the AI coding tool you already use.
 
-```text
-/aidd-orchestrator:01-sdlc "add rate limiting to the /login endpoint"
-→ frame when needed → plan → implement → validate → review → challenge → ship
+https://github.com/user-attachments/assets/92474f4c-053a-471d-9c62-16560b7a2a09
+
+## Works with your tool
+
+<!--tools:start-->
+
+<table>
+<thead><tr><th width="800">Tool</th><th width="400" align="center">CLI</th><th width="400" align="center">Plugin marketplace</th><th width="400" align="center">Flat files</th></tr></thead>
+<tbody><tr><td><b>Claude Code</b></td><td align="center">✅</td><td align="center">✅</td><td align="center">✅</td></tr>
+<tr><td><b>Cursor</b></td><td align="center">✅</td><td align="center">✅</td><td align="center">✅</td></tr>
+<tr><td><b>GitHub Copilot</b></td><td align="center">✅</td><td align="center">✅</td><td align="center">✅</td></tr>
+<tr><td><b>OpenCode</b></td><td align="center">✅</td><td align="center">—</td><td align="center">✅</td></tr>
+<tr><td><b>Kilo Code</b></td><td align="center">✅</td><td align="center">—</td><td align="center">✅</td></tr>
+<tr><td><b>Codex</b></td><td align="center">✅</td><td align="center">✅</td><td align="center">✅</td></tr></tbody>
+</table>
+
+<!--tools:end-->
+
+<br />
+
+More details: [compatibility](docs/COMPATIBILITY.md).
+
+## Get started
+
+You need [Node](https://nodejs.org) 22.12 or later. Pick one way.
+
+**Any tool: the CLI.**
+
+```sh
+npx @ai-driven-dev/cli@latest setup
 ```
 
-Why not just write your own commands? → [FAQ](docs/FAQ.md#-why-aidd-instead-of-your-own-skills).
+Bootstraps your project: tool configuration and plugins.
 
-## ✅ Prerequisites
+<p align="center">
+  <img src="docs/assets/install-demo.svg" alt="Terminal recording: npx @ai-driven-dev/cli setup installs the six recommended plugins into a new project" width="720" />
+  <br />
+  <sub>Real output, in an empty project, with the flags that skip the questions.</sub>
+</p>
 
-- **An AI coding tool** — Claude Code (native), or Cursor / Copilot / Codex / OpenCode / Kilo Code (see [Compatibility](#-compatibility)).
-- **[Node](https://nodejs.org) 22 or later** on your `PATH`, only for the plugin that ships hooks ([what they do](docs/ARCHITECTURE.md#-bundled-hooks)); the workflows themselves are markdown and need nothing.
+**Natively, for tools with a plugin marketplace.**
 
-## 🔌 Compatibility
-
-| Tool | Status | Release dist |
-| --- | --- | --- |
-| **Claude Code** | ✅ Native · recommended | Marketplace |
-| **Cursor** | ✅ Supported | Marketplace · Flat |
-| **GitHub Copilot** | ✅ Supported | Marketplace · Flat |
-| **Codex** | ✅ Supported | Marketplace · Flat |
-| **OpenCode** | ✅ Supported | Flat |
-| **Kilo Code** | ✅ Supported | Flat |
-| **Gemini · Mistral** | 🚧 In progress | — |
-
-<sub>**Marketplace** = installed and updated through your tool's plugin manager. **Flat** = files copied directly into your project, no plugin manager involved. Install steps per tool → [Other tools](#other-tools).</sub>
-
-## 📦 Install
-
-### Claude Code
-
-Installs the 6 stable plugins (`aidd-ui` is 🚧 alpha, `aidd-telemetry` 🧪 beta, and `aidd-qa` 🆕 new, install those separately — see [Plugins](#-plugins)).
-
-**In the session** (slash commands)
+<details>
+<summary>Show the commands (example: Claude Code)</summary>
 
 ```text
 /plugin marketplace add ai-driven-dev/framework
@@ -72,298 +89,85 @@ Installs the 6 stable plugins (`aidd-ui` is 🚧 alpha, `aidd-telemetry` 🧪 be
 /plugin install aidd-orchestrator@aidd-framework
 ```
 
-
-<details>
-<summary><strong>Command line</strong> (same, prefixed with `claude`)</summary>
-
-```bash
-claude plugin marketplace add ai-driven-dev/framework
-claude plugin install aidd-context@aidd-framework
-claude plugin install aidd-refine@aidd-framework
-claude plugin install aidd-dev@aidd-framework
-claude plugin install aidd-vcs@aidd-framework
-claude plugin install aidd-pm@aidd-framework
-claude plugin install aidd-orchestrator@aidd-framework
-```
-</details
-
-<br/>Update anytime: `/plugin marketplace update aidd-framework`.
-
-### Other tools
-
-Same plugin names as Claude Code.
-
-Download your tool's bundle from the [latest release](https://github.com/ai-driven-dev/framework/releases/latest), then follow its steps:
-
-> [!NOTE]
-> Installing the framework host-wide for several tools can make the same command appear more than once in a tool's list. This happens when one tool reads another tool's settings, and is harmless.
-
-<details>
-<summary><strong>Cursor</strong></summary>
-
-**Marketplace**
-
-1. Unzip the `cursor-marketplace` archive.
-2. Copy the plugins (Cursor reloads them automatically):
-
-```bash
-cp -r plugins/aidd-* ~/.cursor/plugins/local/
-```
-
-**Flat**
-
-1. Unzip the `cursor-flat` archive into your project root → `.cursor/`.
-
-_All plans; team marketplaces need Teams/Enterprise. Also reads Claude format (`.claude/skills/`)._
-
-Disable **Include Third-Party Plugins, Skills, and Other Configs** under **Settings → Rules, Skills, Subagents** to hide the duplicate commands.
-
-[Docs](https://cursor.com/docs/plugins)
-
 </details>
 
-<details>
-<summary><strong>GitHub Copilot</strong></summary>
+Each tool, updating, removing: [install guide](docs/INSTALL.md).
 
-**Marketplace**
-
-1. Unzip the `copilot-marketplace` archive.
-2. Run:
-
-```bash
-copilot plugin marketplace add ./aidd-framework-copilot-marketplace-<version>
-copilot plugin install aidd-context@aidd-framework   # per plugin
-```
-
-**Flat**
-
-1. Unzip the `copilot-flat` archive into your project root → `.github/`.
-
-_Also reads Claude format (`.claude/skills/`, `.claude/agents/`)._
-
-[Docs](https://docs.github.com/en/copilot/how-tos/copilot-cli/customize-copilot/plugins-finding-installing)
-
-</details>
-
-<details>
-<summary><strong>Codex</strong></summary>
-
-**Marketplace**
-
-1. Unzip the `codex-marketplace` archive.
-2. Run:
-
-```bash
-codex plugin marketplace add ./aidd-framework-codex-marketplace-<version>
-codex plugin add aidd-context@aidd-framework   # per plugin
-```
-
-**Flat**
-
-1. Unzip the `codex-flat` archive into your project root → `.codex/`.
-
-[Docs](https://developers.openai.com/codex/plugins/build)
-
-</details>
-
-<details>
-<summary><strong>OpenCode</strong> — Flat only</summary>
-
-1. Unzip the `opencode-flat` archive into your project root → `.opencode/`.
-
-[Docs](https://opencode.ai/docs/config/)
-
-</details>
-
-<details>
-<summary><strong>Kilo Code</strong> — Flat only</summary>
-
-1. Unzip the `kilo-flat` archive into your project root → `.kilo/`, including `.kilo/kilo.jsonc`.
-2. Start a new Kilo session so it loads the generated project plugin.
-
-[Plugins documentation](https://kilo.ai/docs/automate/extending/plugins)
-
-</details>
-
-## 🚀 Quick start
-
-Three ways in — pick one:
-
-| Start with | Command | When |
-| --- | --- | --- |
-| 🧭 **Guided onboarding** | `/aidd-context:00-onboard` | First time, or unsure what to run — it inspects the project and routes you. |
-| 🧠 **Project memory** | `/aidd-context:02-project-memory` | Build the project memory bank by hand. |
-| ⚙️ **Feature flow** | `/aidd-orchestrator:01-sdlc` | Ship a feature end to end, autonomous by default or supervised with `interactive` (frame → deliver → check → PR). |
-
-The full loop, and how onboarding sets it up:
-
-```mermaid
-flowchart TD
-    Onboard(["<b>/aidd-context:00-onboard</b><br/><i>inspect · guide</i>"])
-
-    subgraph setup["① Set up — once"]
-      Memory["<b>project memory</b><br/><i>durable project context</i>"]
-    end
-
-    subgraph loop["② Per feature — repeat"]
-      direction TB
-      subgraph frame["Frame"]
-        direction LR
-        N["functional need<br/>or User Story"] --> T["issue / ticket"] --> P["plan"]
-      end
-      subgraph deliver["Deliver"]
-        direction LR
-        I["implement"] --> V["validate"] --> R["review"]
-      end
-      subgraph ship["Ship"]
-        direction LR
-        PR["PR"] --> S(["✅ production"]) --> L["learn"]
-      end
-      P --> I
-      R --> PR
-    end
-
-    Onboard --> Memory --> N
-    L -. next need .-> N
-
-    classDef hub fill:#D97757,stroke:#9c4f37,color:#fff;
-    classDef done fill:#2ea043,stroke:#1a7f37,color:#fff;
-    class Onboard hub;
-    class S done;
-```
-
-Start with a functional need or User Story, then track it as an issue or ticket
-before planning. Shipping follows the project's own delivery process. Capture a
-learning only when it is durable enough to improve the next feature.
-
-> 🍳 **More flows** → bundled recipes: [MCP installations](plugins/aidd-context/skills/12-cook/assets/recipes/mcp-installation.md), [token optimization](plugins/aidd-context/skills/12-cook/assets/recipes/token-optimization.md), and [installing AIDDy](plugins/aidd-context/skills/12-cook/assets/recipes/install-aiddy-in-codex.md).
-
-## 🧩 Plugins
-
-Nine plugins covering the whole SDLC — **install the six stable ones**; they work together. (`aidd-ui` is 🚧 **alpha**, `aidd-telemetry` 🧪 **beta**, and `aidd-qa` 🆕 **new** — all three off the curated path.)
+## Quick start
 
 <table>
-<tr>
-<td width="33%" valign="top">
-
-### 🧭 [aidd-context](plugins/aidd-context/README.md)
-
-`13 skills` · stable
-
-Project init, memory bank, context-artifact generation, diagrams, learning, exploration.
-
-</td>
-<td width="33%" valign="top">
-
-### ⚙️ [aidd-dev](plugins/aidd-dev/README.md)
-
-`10 skills` · stable
-
-Code transformation: plan, implement, assert, audit, review, test, refactor, debug.
-
-</td>
-<td width="33%" valign="top">
-
-### 🌿 [aidd-vcs](plugins/aidd-vcs/README.md)
-
-`6 skills` · stable
-
-Repo init, commits, pull / merge requests, release tags, issues.
-
-</td>
-</tr>
-<tr>
-<td width="33%" valign="top">
-
-### 📋 [aidd-pm](plugins/aidd-pm/README.md)
-
-`10 skills` · stable
-
-Three Amigos refinement, Product Briefs, Epics, User Stories, Tasks, Spikes, Defects, PRD, and specs.
-
-</td>
-<td width="33%" valign="top">
-
-### 🪞 [aidd-refine](plugins/aidd-refine/README.md)
-
-`5 skills` · stable
-
-Brainstorm, challenge, shadow-areas, fact-check, improve.
-
-</td>
-<td width="33%" valign="top">
-
-### 🎼 [aidd-orchestrator](plugins/aidd-orchestrator/README.md)
-
-`3 skills` · stable
-
-Synchronous feature flow, async issue-to-PR automation, and product backlog.
-
-</td>
-</tr>
-<tr>
-<td width="33%" valign="top">
-
-### 🎨 [aidd-ui](plugins/aidd-ui/README.md) 🚧
-
-`1 skill` · **alpha**
-
-UI / UX design — smoke-test only, not ready for use.
-
-</td>
-<td width="33%" valign="top">
-
-### 📈 [aidd-telemetry](plugins/aidd-telemetry/README.md) 🧪
-
-`2 skills` · **beta**
-
-Counts the tokens of Claude Code and Codex sessions per task, ticket, model, tool and day. Opt-in, and local to your machine.
-
-</td>
-<td width="33%" valign="top">
-
-### 🎬 [aidd-qa](plugins/aidd-qa/README.md) 🆕
-
-`1 skill` · **new**
-
-Acceptance QA — locks browser scenarios from acceptance criteria and records reviewer evidence.
-
-</td>
-</tr>
+<thead><tr><th>Run</th><th>When</th></tr></thead>
+<tbody>
+<tr><td><code>/aidd-context:00-onboard</code></td><td>First time, or unsure what to do next. It reads the project and tells you.</td></tr>
+<tr><td><code>/aidd-context:02-project-memory</code></td><td>You want the AI to learn your project once, then remember it.</td></tr>
+<tr><td><code>/aidd-orchestrator:01-sdlc</code></td><td>You want a feature delivered end to end.</td></tr>
+</tbody>
 </table>
 
-Full catalog → [`CATALOG.md`](docs/CATALOG.md).
+Onboarding and project memory happen once. Then `/aidd-orchestrator:01-sdlc` runs every feature along the same chain.
 
-## 📚 Learn more
+<!--sdlc:start-->
 
-| | |
-| --- | --- |
-| 🍳 **Recipes** | Bundled how-to sheets: [MCP installations](plugins/aidd-context/skills/12-cook/assets/recipes/mcp-installation.md), [token optimization](plugins/aidd-context/skills/12-cook/assets/recipes/token-optimization.md), [install AIDDy](plugins/aidd-context/skills/12-cook/assets/recipes/install-aiddy-in-codex.md). Project recipes created by cook live in `aidd_docs/recipes/`. |
-| 🏛️ **[Architecture](docs/ARCHITECTURE.md)** | How the framework composes: plugins, skills, hooks, agents. |
-| 🧩 **[Create a plugin](docs/CREATE_PLUGIN.md)** | Build and publish your own. |
-| 🛒 **[Marketplace](docs/MARKETPLACE.md)** | Install scopes and versioning. |
-| ❓ **[FAQ & Troubleshooting](docs/FAQ.md)** · **[Glossary](docs/GLOSSARY.md)** | Common questions, fixes, and terms. |
+<p align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="docs/assets/diagrams/sdlc-dark.svg"><img src="docs/assets/diagrams/sdlc-light.svg" alt="Frame: request, ticket-info, brainstorm, spec. Deliver: plan, implement, assert, commit. Check: review, challenge, pull-request. assert repeats until checks pass, and Check findings go back to Deliver." width="640"></picture></p>
 
-## 🔒 Trust and safety
+<!--sdlc:end-->
 
-Plugins act with **your permissions**, and some run **Node hooks automatically** at session events ([the list](docs/ARCHITECTURE.md#-bundled-hooks)).
+Fixing a bug, changing one thing, investigating? See the [guides by goal](docs/GUIDES.md).
 
-Before installing any plugin, skim its `README`, `hooks/`, and `.mcp.json`. Found a vulnerability? Report it privately → [`SECURITY.md`](SECURITY.md).
+## Plugins
 
-## 🧑‍💻 The AI-Driven Dev
+Install the six stable ones. The other three are off the recommended path.
 
-Built by the [AI-Driven Dev](https://www.ai-driven-dev.fr/) community: 3 years of R&D, 500+ developers trained in English 🇬🇧 and French 🇫🇷, shipping production software with 100% AI-generated code.
+<!--plugins:start-->
 
-- **[Join the Discord 🇫🇷](https://discord.gg/EWySJSpjWs)** — public [roadmap](ROADMAP.md) decisions every Thursday morning.
-- **Want to train your team?** [See the programme](https://www.ai-driven-dev.fr/entreprise).
-- **AI is important to you?** [Join the ecosystem](https://www.ai-driven-dev.fr/ecosysteme).
+<p align="center">
+<a href="plugins/aidd-context/README.md"><picture><source media="(prefers-color-scheme: dark)" srcset="docs/assets/plugins/aidd-context-dark.svg"><img src="docs/assets/plugins/aidd-context-light.svg" alt="aidd-context, stable, 13 skills: Project memory, context generation, learning" width="292"></picture></a>
+<a href="plugins/aidd-dev/README.md"><picture><source media="(prefers-color-scheme: dark)" srcset="docs/assets/plugins/aidd-dev-dark.svg"><img src="docs/assets/plugins/aidd-dev-light.svg" alt="aidd-dev, stable, 10 skills: Plan, build, review, test, debug" width="292"></picture></a>
+<a href="plugins/aidd-vcs/README.md"><picture><source media="(prefers-color-scheme: dark)" srcset="docs/assets/plugins/aidd-vcs-dark.svg"><img src="docs/assets/plugins/aidd-vcs-light.svg" alt="aidd-vcs, stable, 6 skills: Commits, pull requests, release tags, issues" width="292"></picture></a>
+<a href="plugins/aidd-pm/README.md"><picture><source media="(prefers-color-scheme: dark)" srcset="docs/assets/plugins/aidd-pm-dark.svg"><img src="docs/assets/plugins/aidd-pm-light.svg" alt="aidd-pm, stable, 10 skills: Briefs, Epics, Stories, specs, Spikes, Defects" width="292"></picture></a>
+<a href="plugins/aidd-refine/README.md"><picture><source media="(prefers-color-scheme: dark)" srcset="docs/assets/plugins/aidd-refine-dark.svg"><img src="docs/assets/plugins/aidd-refine-light.svg" alt="aidd-refine, stable, 5 skills: Brainstorm, challenge, fact-check" width="292"></picture></a>
+<a href="plugins/aidd-orchestrator/README.md"><picture><source media="(prefers-color-scheme: dark)" srcset="docs/assets/plugins/aidd-orchestrator-dark.svg"><img src="docs/assets/plugins/aidd-orchestrator-light.svg" alt="aidd-orchestrator, stable, 3 skills: Feature flow, issue-to-PR automation, backlog" width="292"></picture></a>
+<a href="plugins/aidd-ui/README.md"><picture><source media="(prefers-color-scheme: dark)" srcset="docs/assets/plugins/aidd-ui-dark.svg"><img src="docs/assets/plugins/aidd-ui-light.svg" alt="aidd-ui, alpha, 1 skill: UI and UX design, smoke test only" width="292"></picture></a>
+<a href="plugins/aidd-telemetry/README.md"><picture><source media="(prefers-color-scheme: dark)" srcset="docs/assets/plugins/aidd-telemetry-dark.svg"><img src="docs/assets/plugins/aidd-telemetry-light.svg" alt="aidd-telemetry, beta, 2 skills: Token usage per task, opt-in" width="292"></picture></a>
+<a href="plugins/aidd-qa/README.md"><picture><source media="(prefers-color-scheme: dark)" srcset="docs/assets/plugins/aidd-qa-dark.svg"><img src="docs/assets/plugins/aidd-qa-light.svg" alt="aidd-qa, new, 1 skill: Acceptance QA with video evidence" width="292"></picture></a>
+</p>
 
-## 🤝 Contributing
+<!--plugins:end-->
 
-Free and open-source (MIT). If it saves you time, [a ⭐](https://github.com/ai-driven-dev/framework/stargazers) helps others find it.
+## Documentation
 
-- **Idea or bug?** [Open an issue](https://github.com/ai-driven-dev/framework/issues) or [start a discussion](https://github.com/ai-driven-dev/framework/discussions).
-- **Contribute code** → [`CONTRIBUTING.md`](CONTRIBUTING.md).
+<table>
+<thead><tr><th>For</th><th>Document</th><th>Read it to</th></tr></thead>
+<tbody>
+<tr><td rowspan="8"><b>Use it</b></td><td><a href="docs/INSTALL.md">Install</a></td><td>Install, update or remove it</td></tr>
+<tr><td><a href="docs/GUIDES.md">Guides</a></td><td>Find the skills for your goal: fix a bug, build a feature</td></tr>
+<tr><td><a href="docs/CONCEPTS.md">Concepts</a></td><td>Learn the terms and how project memory works</td></tr>
+<tr><td><a href="docs/CATALOG.md">Catalog</a></td><td>See every skill and what it does</td></tr>
+<tr><td><a href="docs/COMPATIBILITY.md">Compatibility</a></td><td>See what each tool receives</td></tr>
+<tr><td><a href="cli/README.md">CLI</a></td><td>Look up a command</td></tr>
+<tr><td><a href="docs/FAQ.md">FAQ</a></td><td>Check cost, security and limits</td></tr>
+<tr><td><a href="CHANGELOG.md">Changelog</a></td><td>See what changed</td></tr>
+<tr><td rowspan="2"><b>Contribute</b></td><td><a href="CONTRIBUTING.md">Contributing</a></td><td>Follow the contribution flow</td></tr>
+<tr><td><a href="docs/ARCHITECTURE.md">Architecture</a></td><td>Know where a capability belongs</td></tr>
+<tr><td rowspan="3"><b>Maintain</b></td><td><a href="docs/MAINTAINERS.md">Maintainers</a></td><td>Run releases, add a plugin</td></tr>
+<tr><td><a href="GOVERNANCE.md">Governance</a></td><td>See who decides, and how the roadmap is set</td></tr>
+<tr><td><a href="RELEASE.md">Releases</a></td><td>Follow the release cycle</td></tr>
+<tr><td rowspan="2"><b>Get help</b></td><td><a href=".github/SUPPORT.md">Support</a></td><td>Ask a question or report a bug</td></tr>
+<tr><td><a href="SECURITY.md">Security</a></td><td>Report a vulnerability privately</td></tr>
+</tbody>
+</table>
+
+## Security and privacy
+
+- **Permissions.** A plugin can run scripts. Read it before you install it: [what runs, and when](docs/ARCHITECTURE.md#-bundled-hooks).
+- **Telemetry.** Off by default. It only runs if you opt in: [how it works](docs/FAQ.md#measurement).
+- **Vulnerabilities.** Report them privately: [`SECURITY.md`](SECURITY.md).
+
+## Community
+
+Built by the [AI-Driven Dev](https://www.ai-driven-dev.fr/) community: 3 years of R&D, 500+ developers trained, production software shipped with 100% AI-generated code. Free and open source (MIT); a [⭐](https://github.com/ai-driven-dev/framework/stargazers) helps others find it.
+
+[Discord 🇫🇷](https://discord.gg/EWySJSpjWs) · [Discussions](https://github.com/ai-driven-dev/framework/discussions) · [Issues](https://github.com/ai-driven-dev/framework/issues) · [Team training](https://www.ai-driven-dev.fr/entreprise) · [How the roadmap is set](GOVERNANCE.md#how-to-influence-the-roadmap)
 
 [![Contributors](https://contrib.rocks/image?repo=ai-driven-dev/framework)](https://github.com/ai-driven-dev/framework/graphs/contributors)
 

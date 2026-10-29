@@ -7,7 +7,7 @@ The exhaustive list of AIDD plugins, skills, and actions. Skills are invoked thr
 - [aidd-pm](#-aidd-pm) - product management
 - [aidd-refine](#-aidd-refine) - meta-cognition
 - [aidd-vcs](#-aidd-vcs) - version control workflows
-- [aidd-orchestrator](#-aidd-orchestrator) - async orchestration (optional)
+- [aidd-orchestrator](#-aidd-orchestrator) - feature flow, async automation and backlog
 - [aidd-ui](#-aidd-ui) - UI / UX (🚧 alpha, not ready)
 - [aidd-telemetry](#-aidd-telemetry) - token measurement for Claude Code and Codex (🧪 beta, off the curated path)
 - [aidd-qa](#-aidd-qa) - acceptance QA (🆕 new, off the curated path)

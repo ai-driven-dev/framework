@@ -19,7 +19,7 @@ How to operate this repository day to day. This file is the **Maintainer** playb
 ## 📅 Daily
 
 - **Triage issues.** New issues auto-add to board #8. The form already stamped the type. You give the issue a **milestone** or a **priority**, never both.
-- **Roadmap.** Priority = the community vote (mechanism in `GOVERNANCE.md`). Accepted items live on board #8 — keep `ROADMAP.md` a pointer, don't maintain a second list.
+- **Roadmap.** Priority = the community vote (mechanism in `GOVERNANCE.md`). Accepted items live on board #8 — don't maintain a second list in a document.
 - **Review PRs.** Approve as CODEOWNERS, then squash-merge (merge policy → [`GOVERNANCE.md`](../GOVERNANCE.md#-code-decisions)).
 
 ## 📋 Four axes, one board
@@ -29,7 +29,7 @@ Each axis answers one question, and only `Status` lives on the board. Routing (`
 | Axis | Lives in | Answers | Values |
 | --- | --- | --- | --- |
 | **Type** | issue type, stamped by the form | what kind of work | `Bug` · `Feature` · `Task` |
-| **Milestone** | repo milestone | *when* it ships | one theme, due a Friday |
+| **Milestone** | repo milestone | *when* it ships | one theme, due on a Thursday |
 | **Priority** | org issue field | *in what order*, among what has no *when* | `Urgent` · `High` · `Medium` · `Low` |
 | **Status** | board field | where the work stands | `Ideation` · `Todo` · `In Progress` · `In review` · `Done` |
 
@@ -148,6 +148,20 @@ Roles, promotion, and inactivity rules → [`GOVERNANCE.md`](../GOVERNANCE.md#-r
 - Other tools are served by per-release archives the `aidd-cli` builds; this repo stays Claude-authored and tool-agnostic in its prose.
 - Keep tool-specific detail in plugin READMEs.
 
-## 🧱 Build your own plugin
+## 🧱 Add a plugin
 
-See [`CREATE_PLUGIN.md`](CREATE_PLUGIN.md).
+```mermaid
+flowchart LR
+    Scaffold["Scaffold the plugin dir"] --> Register["Register in marketplace.json and release config"] --> Test["Try locally"] --> PR["PR and review"] --> Release["release-please tags and publishes"]
+```
+
+Adding a skill to an existing plugin? Generate it with `/aidd-context:03-context-generate` and edit that plugin's `plugin.json` `skills[]`. Skip the registration below.
+
+1. **Scaffold.** Name it `aidd-<x>`, lowercase. The directory shape, `plugin.json` and the `SKILL.md` and action format are in [Anatomy of a plugin](ARCHITECTURE.md#-anatomy-of-a-plugin). The minimum is `<plugin>/.claude-plugin/plugin.json` plus `skills/<NN>-<name>/` with a `SKILL.md` and `actions/`.
+2. **Register in the marketplace.** Append an entry to `.claude-plugin/marketplace.json` with `name`, `source` (`./plugins/aidd-<x>`), `strict: true` and `metadata: { "recommended": false }`. The last field keeps the plugin off the curated install path until it is stable. It sits under `metadata` because Claude Code warns about any other field of its own.
+3. **Register for release.** Add the package to `release-please-config.json` `packages` and to `.release-please-manifest.json`. Without both, it is never versioned.
+4. **Try it locally.** Run `/plugin marketplace add ./` then `/plugin install aidd-<x>@aidd-framework`. Run `/reload-plugins` after each skill edit.
+5. **Check.** `pnpm exec lefthook run pre-commit` validates JSON, YAML and frontmatter, and regenerates the plugin's `CATALOG.md`.
+6. **Ship.** Open a PR titled `feat(aidd-<x>): …`. On merge, release-please tags `aidd-<x>-vX.Y.Z` and publishes.
+
+Writing rules: English prose, hyphens instead of em-dashes, no cross-plugin references in descriptions or READMEs, one sentence per `Use when … / Do NOT use for …` cue. A skill's `name:` is its folder slug (`01-hello`); the invocation token is `<plugin>:<folder>`.
