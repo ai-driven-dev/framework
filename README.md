@@ -1,3 +1,12 @@
+<p align="right">
+  <a href="https://github.com/ai-driven-dev/framework/stargazers">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="docs/assets/star-cta-dark.svg" />
+      <img src="docs/assets/star-cta-light.svg" alt="Support the community, star us! The button is at the top-right of this page" width="290" />
+    </picture>
+  </a>
+</p>
+
 <div align="center">
 
 <img src="docs/assets/logo.png" alt="AIDD" width="100" />
@@ -261,10 +270,8 @@ Acceptance QA with video evidence
 ## Community
 
 > [!TIP]
-> **Found it useful?**
+> **Found it useful? [⭐ Star the repository](https://github.com/ai-driven-dev/framework/stargazers).**
 > It helps other developers find it.
->
-> [![Star the repository](https://img.shields.io/github/stars/ai-driven-dev/framework?style=social)](https://github.com/ai-driven-dev/framework/stargazers)
 
 Built by the [AI-Driven Dev](https://www.ai-driven-dev.fr/) community.
 

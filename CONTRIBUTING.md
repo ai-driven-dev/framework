@@ -45,7 +45,7 @@ The board lives on the GitHub Project, not in this repository.
 | Status | Means |
 | --- | --- |
 | `Ideation` | Weighed, not agreed |
-| `Todo` | Validated by a Certified Member or a Maintainer. Anyone can take it. |
+| `Todo` | Validated by a Member or a Maintainer. Anyone can take it. |
 | `In Progress` | Someone is working on it |
 | `In review` | A pull request is open |
 | `Done` | Merged |

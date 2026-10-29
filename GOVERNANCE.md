@@ -5,9 +5,8 @@
 | Role | Who | Can |
 | --- | --- | --- |
 | **Public** | Anyone with a GitHub account | Open issues, comment, react, open a pull request on a validated issue |
-| **Core Team** | An active member of the [AIDD programme](https://www.ai-driven-dev.fr/) | Cast a counted vote on the roadmap |
-| **Certified Member** | Passed the [AIDD certification](https://www.ai-driven-dev.fr/) | Cast a counted vote, validate contribution issues |
-| **Maintainer** | A certified member who gives AIDD trainings, or AIDD staff | Cast a counted vote, validate issues, approve and merge pull requests, block a change, promote people |
+| **Member** | An active member of the [AIDD programme](https://www.ai-driven-dev.fr/) (Core Team), or someone who passed the [AIDD certification](https://www.ai-driven-dev.fr/) (Certified Member) | Cast a counted vote, validate contribution issues |
+| **Maintainer** | A certified member who gives AIDD trainings, or AIDD staff | Everything a Member can, plus approve and merge pull requests, block a change, promote people |
 
 ## Code decisions
 
@@ -35,7 +34,7 @@ flowchart LR
 | Who | Counts as |
 | --- | --- |
 | Anyone | A reaction: a signal |
-| Core Team, Certified Members, Maintainers | One equal vote each |
+| Members and Maintainers | One equal vote each |
 | Maintainer | Breaks ties |
 
 - The board: [AIDD Roadmap](https://github.com/orgs/ai-driven-dev/projects/8).
