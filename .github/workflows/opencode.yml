@@ -109,17 +109,41 @@ jobs:
       - name: Install OpenCode
         run: npm install --global @opencode/cli@latest
 
+      # Unattended, nothing can answer a prompt, so every action gets an explicit verdict.
+      # The default policy allows everything; on top of it: shell is denied except read-only
+      # git, so the agent edits files and CI tests the pushed commit; nothing outside the
+      # checkout can be read or written, which keeps OPENCODE_API_KEY out of reach; subagents
+      # are denied because the shipped `explore` agent re-allows shell and outside paths, and
+      # agent rules outrank this config. The file sits in the user config dir, outside the
+      # checkout, so it is never committed.
+      - name: Restrict what the agent may do
+        run: |
+          set -euo pipefail
+          mkdir -p ~/.config/opencode
+          cat > ~/.config/opencode/opencode.json <<'JSON'
+          {
+            "permissions": [
+              { "action": "shell", "resource": "*", "effect": "deny" },
+              { "action": "shell", "resource": "git status *", "effect": "allow" },
+              { "action": "shell", "resource": "git diff *", "effect": "allow" },
+              { "action": "shell", "resource": "git log *", "effect": "allow" },
+              { "action": "shell", "resource": "git show *", "effect": "allow" },
+              { "action": "external_directory", "resource": "*", "effect": "deny" },
+              { "action": "subagent", "resource": "*", "effect": "deny" }
+            ]
+          }
+          JSON
+
+      # No --auto: whatever the rules above leave at `ask` is rejected, not approved.
       - name: Run OpenCode
         id: agent
         env:
           # Free on OpenCode Go for a limited time, prompts not used for training.
           MODEL: opencode-go/beam-free
           OPENCODE_API_KEY: ${{ secrets.OPENCODE_API_KEY }}
-        # --auto approves what the agent asks for: the runner is disposable and holds no GitHub
-        # credential at this point.
         run: |
           set -euo pipefail
-          opencode run --standalone --auto --model "$MODEL" --format json \
+          opencode run --standalone --model "$MODEL" --format json \
             < "$RUNNER_TEMP/prompt.md" | tee "$RUNNER_TEMP/events.jsonl"
 
       - uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
