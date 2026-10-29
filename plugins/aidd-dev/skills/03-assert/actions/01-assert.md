@@ -1,23 +1,21 @@
 # 01 - Assert
 
-Iterate the project's coding assertions until the work passes every one, fixing each failure.
+Run the project's own checks on the work and report the verdict, without fixing anything.
 
 ## Input
 
-The work to assert, named or described, from the arguments or the context.
-
-## Output
-
-A pass or fail verdict: every applicable assertion passing in a final clean sweep, with the fixes applied listed.
+The work, and its task folder when it has one: the `aidd_docs/tasks/<yyyy_mm>/<yyyy_mm_dd>_<slug>/` of its plan, spec or brainstorm.
 
 ## Process
 
-1. **Enumerate.** List the assertions that apply, from the project conventions and `aidd_docs/memory/coding-assertions.md` when it exists.
-2. **Iterate.** For each assertion, fix what blocks it, then re-run it until it passes.
-3. **Sweep.** Once each has passed at least once, re-run them all in one pass to confirm none regressed.
-4. **Boundary.** Do not stop until every assertion passes the final sweep.
+1. Pick the checks the work can break, from `aidd_docs/memory/coding-assertions.md`, else from the project's manifest. When in doubt, take them all.
+2. Run this skill's `scripts/run-assertions.cjs` with node, with the longest timeout your shell tool allows:
+   - on the task folder when the work has one, which appends the round to its `assert.md`;
+   - then `--` and each check as one quoted argument, or nothing to run the whole "Before commit" table.
+3. `EMPTY` or `STOP`: do what its NEXT line says. When nothing names a check, stop and say so.
+4. Reply with the script's verdict and the report path. Without a task folder, reply with the round and end by asking whether to keep it in a file.
+5. On yes, run step 2 again on the folder the user names, else on a new `aidd_docs/tasks/<yyyy_mm>/<yyyy_mm_dd>_<slug>/` named after the work.
 
-## Test
+## Output
 
-- The final sweep passes every applicable assertion.
-- The fixes listed cite real diffs, with no placeholder entries.
+`PASS` or `FAIL`, and the round: the head judged, each check with its exit code, and the last lines of every failing one. Appended to the task folder's `assert.md` when there is one.

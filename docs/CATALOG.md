@@ -53,7 +53,7 @@ Code transformation: plan, implement, assert, audit, review, test, refactor, deb
 | --------------- | -------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
 | `01-plan`       | Turn a request, ticket, or file into a phased implementation plan: gather, explore, wireframe, plan | `01-gather`, `02-explore`, `03-wireframe`, `04-plan`          |
 | `02-implement`  | Execute a plan phase by phase until 100% complete                          | `01-implement`                                                                   |
-| `03-assert`     | Assert features work - general, architecture, frontend UI                  | `01-assert`, `02-assert-architecture`, `03-assert-frontend`                      |
+| `03-assert`     | Judge the work against the project's coding assertions                     | `01-assert`                                                                      |
 | `04-audit`      | Read-only codebase audit across quality pillars                            | `01-code-quality`, `02-architecture`, `03-security`, `04-dependencies`, `05-performance`, `06-tests`, `07-ui` |
 | `05-review`     | Read-only review of a diff - code quality and feature behavior             | `01-review-code`, `02-review-functional`                                         |
 | `06-test`       | Write and iterate developer-side tests, validate journeys in the browser during implementation - not independent acceptance QA or reviewer evidence | `01-test`, `02-test-journey` |
