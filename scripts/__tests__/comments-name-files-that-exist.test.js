@@ -40,7 +40,6 @@ const NOT_A_REPOSITORY_FILE = Object.freeze({
   ],
   // A seam artefact one plugin writes into a reader's own project and another reads back —
   // named here as the shape of that seam, never as a file this repository holds.
-  "docs/ARCHITECTURE.md": ["INSTALL.md"],
   "docs/CATALOG.md": ["INSTALL.md"],
   // The build artefact every e2e run refuses to share, named as what is avoided.
   "cli/tests/e2e/helpers.ts": ["dist/cli.js"],

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // Renders the tables a person must not type by hand: the hooks each plugin declares
-// (docs/ARCHITECTURE.md, from plugins/*/hooks/hooks.json) and what each tool is declared to
+// (docs/CATALOG.md, from plugins/*/hooks/hooks.json), the agents beside them (from plugins/*/agents/) and what each tool is declared to
 // support (docs/COMPATIBILITY.md and the tool list in README.md, from the CLI's stored
 // tool-support record), the plugin cards in README.md with the SVG files they show
 // (docs/assets/plugins/, from the tree and plugins.json). Each block sits between its own
@@ -14,8 +14,8 @@ import { cardSvg, cardsMarkup } from "./lib/plugin-cards.mjs";
 const rootFlag = process.argv.indexOf("--root");
 const ROOT =
   rootFlag === -1 ? fileURLToPath(new URL("..", import.meta.url)) : `${process.argv[rootFlag + 1]}/`;
-const ARCHITECTURE = `${ROOT}docs/ARCHITECTURE.md`;
 const COMPATIBILITY = `${ROOT}docs/COMPATIBILITY.md`;
+const CATALOG = `${ROOT}docs/CATALOG.md`;
 const README = `${ROOT}README.md`;
 const SUPPORT_RECORD = `${ROOT}cli/tests/golden/snapshots/tool-support/surface.json`;
 
@@ -65,10 +65,24 @@ function hooksTable() {
 }
 
 /** One row per tool: how it installs, then what each surface becomes. A surface no tool carries gets no column. */
+function agentsTable() {
+  const rows = [];
+  for (const plugin of readdirSync(`${ROOT}plugins`).sort()) {
+    const directory = `${ROOT}plugins/${plugin}/agents`;
+    if (!existsSync(directory)) continue;
+    for (const file of readdirSync(directory).sort()) {
+      if (!file.endsWith(".md")) continue;
+      const description = readFileSync(`${directory}/${file}`, "utf8").match(/^description:\s*(.+)$/m)?.[1];
+      if (!description) throw new Error(`${plugin}/agents/${file} has no description`);
+      rows.push([`\`${file.replace(/\.md$/, "")}\``, `[\`${plugin}\`](../plugins/${plugin}/README.md)`, description.split(". ")[0].replace(/\.$/, "")]);
+    }
+  }
+  return table(["Agent", "Plugin", "Role"], rows);
+}
+
 function supportTables() {
   const record = JSON.parse(readFileSync(SUPPORT_RECORD, "utf8"));
-  const icon = (support) => (support === "no" ? "❌" : support === "bridge" ? "✅ bridge" : "✅");
-  const layoutName = { marketplace: "marketplace", flat: "flat files" };
+  const icon = (support) => (support === "no" ? "❌" : support === "bridge" ? "🔌" : "✅");
 
   const carried = SURFACES.filter(([key]) =>
     record.some((tool) => Object.values(tool.builds).some((build) => build[key] !== "no"))
@@ -78,7 +92,7 @@ function supportTables() {
     const layouts = Object.entries(tool.builds);
     const values = new Set(layouts.map(([, build]) => build[key]));
     if (values.size === 1) return icon([...values][0]);
-    return layouts.map(([layout, build]) => `${icon(build[key])} ${layoutName[layout]}`).join(", ");
+    return "🟡";
   };
 
   return table(
@@ -151,7 +165,8 @@ function cardFiles() {
 const targets = [
   [README, "tools", toolsTable],
   [README, "plugins", () => cardsMarkup(cards())],
-  [ARCHITECTURE, "hooks", hooksTable],
+  [CATALOG, "hooks", hooksTable],
+  [CATALOG, "agents", agentsTable],
   [COMPATIBILITY, "support", supportTables],
 ];
 

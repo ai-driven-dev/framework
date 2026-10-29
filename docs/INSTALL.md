@@ -39,14 +39,16 @@ npx @ai-driven-dev/cli@latest doctor
 
 It lists what is installed and what needs fixing.
 
-Every command: [CLI reference](../cli/README.md).
+> Every command: [CLI reference](../cli/README.md).
 
 ## Marketplace
 
 <details>
-<summary>Claude Code</summary>
+<summary><b>Claude Code</b></summary>
 
-In a session:
+<br />
+
+In a session, run:
 
 ```text
 /plugin marketplace add ai-driven-dev/framework
@@ -61,43 +63,51 @@ In a session:
 </details>
 
 <details>
-<summary>GitHub Copilot</summary>
+<summary><b>GitHub Copilot</b></summary>
 
-Download `aidd-framework-copilot-marketplace-<version>.zip` from the [latest release](https://github.com/ai-driven-dev/framework/releases/latest) and unzip it. Then:
+<br />
+
+1. Download `aidd-framework-copilot-marketplace-<version>.zip` from the [latest release](https://github.com/ai-driven-dev/framework/releases/latest).
+2. Unzip it, and keep the folder where it is.
+3. Run, once per plugin:
 
 ```sh
 copilot plugin marketplace add ./aidd-framework-copilot-marketplace-<version>
 copilot plugin install aidd-context@aidd-framework
 ```
 
-Run the second line for each plugin. Keep the unzipped folder where it is.
-
 </details>
 
 <details>
-<summary>Codex</summary>
+<summary><b>Codex</b></summary>
 
-Download `aidd-framework-codex-marketplace-<version>.zip` from the [latest release](https://github.com/ai-driven-dev/framework/releases/latest) and unzip it. Then:
+<br />
+
+1. Download `aidd-framework-codex-marketplace-<version>.zip` from the [latest release](https://github.com/ai-driven-dev/framework/releases/latest).
+2. Unzip it.
+3. Run, once per plugin:
 
 ```sh
 codex plugin marketplace add ./aidd-framework-codex-marketplace-<version>
 codex plugin add aidd-context@aidd-framework
 ```
 
-Run the second line for each plugin.
-
 </details>
 
 <details>
-<summary>Cursor</summary>
+<summary><b>Cursor</b></summary>
 
-Download `aidd-framework-cursor-marketplace-<version>.zip` from the [latest release](https://github.com/ai-driven-dev/framework/releases/latest) and unzip it. Then:
+<br />
+
+1. Download `aidd-framework-cursor-marketplace-<version>.zip` from the [latest release](https://github.com/ai-driven-dev/framework/releases/latest).
+2. Unzip it.
+3. Copy the plugins:
 
 ```sh
 cp -r aidd-framework-cursor-marketplace-<version>/plugins/aidd-* ~/.cursor/plugins/local/
 ```
 
-Run **Developer: Reload Window** in Cursor.
+4. In Cursor, run **Developer: Reload Window**.
 
 </details>
 

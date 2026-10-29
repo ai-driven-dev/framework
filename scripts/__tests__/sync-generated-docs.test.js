@@ -37,7 +37,8 @@ function scratchTree() {
       },
     ])
   );
-  write("docs/ARCHITECTURE.md", "<!--hooks:start-->\n<!--hooks:end-->\n");
+  write("docs/CATALOG.md", "<!--hooks:start-->\n<!--hooks:end-->\n<!--agents:start-->\n<!--agents:end-->\n");
+  write("plugins/aidd-x/agents/helper.md", "---\nname: helper\ndescription: Does a small job. Use when asked.\n---\n");
   write("docs/COMPATIBILITY.md", "<!--support:start-->\n<!--support:end-->\n");
   write(
     "README.md",
@@ -63,11 +64,12 @@ test("an empty block is reported stale, and syncing fills it from the tree", () 
     assert.equal(run(["--check", "--root", root]).status, 1);
 
     assert.equal(run(["--root", root]).status, 0);
-    const architecture = fs.readFileSync(path.join(root, "docs/ARCHITECTURE.md"), "utf8");
+    const catalog = fs.readFileSync(path.join(root, "docs/CATALOG.md"), "utf8");
     const compatibility = fs.readFileSync(path.join(root, "docs/COMPATIBILITY.md"), "utf8");
-    assert.match(architecture, /\| \[`aidd-x`\]\(\.\.\/plugins\/aidd-x\/README\.md\) \| `SessionStart` \| `hooks\/a\.js` \|/);
-    assert.match(compatibility, /\| Claude Code \| `\.claude\/` \| ✅ \| ✅ \| ✅ \| ✅ \| ✅ marketplace, ❌ flat files \| ✅ marketplace, ✅ bridge flat files \|/);
+    assert.match(catalog, /\| \[`aidd-x`\]\(\.\.\/plugins\/aidd-x\/README\.md\) \| `SessionStart` \| `hooks\/a\.js` \|/);
+    assert.match(compatibility, /\| Claude Code \| `\.claude\/` \| ✅ \| ✅ \| ✅ \| ✅ \| 🟡 \| 🟡 \|/);
     assert.doesNotMatch(compatibility, /Rules|Commands/);
+    assert.match(catalog, /\| `helper` \| \[`aidd-x`\]\(\.\.\/plugins\/aidd-x\/README\.md\) \| Does a small job \|/);
     const readme = fs.readFileSync(path.join(root, "README.md"), "utf8");
     assert.match(readme, /<tr><td><b>Claude Code<\/b><\/td><td align="center">✅<\/td><td align="center">✅<\/td><td align="center">✅<\/td><\/tr>/);
     assert.match(readme, /<table>/);
@@ -113,7 +115,7 @@ test("a hand-edited row is overwritten rather than kept", () => {
   const root = scratchTree();
   try {
     run(["--root", root]);
-    const file = path.join(root, "docs/ARCHITECTURE.md");
+    const file = path.join(root, "docs/CATALOG.md");
     fs.writeFileSync(file, fs.readFileSync(file, "utf8").replace("`SessionStart`", "`Stop`"));
 
     assert.equal(run(["--check", "--root", root]).status, 1);
@@ -124,7 +126,8 @@ test("a hand-edited row is overwritten rather than kept", () => {
 
 test("the real documents carry the markers the script writes between", () => {
   for (const [file, marker] of [
-    ["docs/ARCHITECTURE.md", "hooks"],
+    ["docs/CATALOG.md", "hooks"],
+    ["docs/CATALOG.md", "agents"],
     ["docs/COMPATIBILITY.md", "support"],
     ["README.md", "tools"],
     ["README.md", "plugins"],

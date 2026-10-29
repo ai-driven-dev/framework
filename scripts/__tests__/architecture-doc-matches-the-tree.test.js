@@ -7,10 +7,11 @@ const { checkOrthogonality } = require("../lib/architecture-rules.js");
 
 const ROOT = path.resolve(__dirname, "../..");
 const DOC = path.join(ROOT, "docs/ARCHITECTURE.md");
+const CATALOG = path.join(ROOT, "docs/CATALOG.md");
 
 /**
- * `docs/ARCHITECTURE.md` describes the tree in two of its tables: the bundled hooks each plugin
- * declares, and the plugin roster. Both were right when written and nothing compared them to the
+ * `docs/CATALOG.md` lists the bundled hooks each plugin declares and `docs/ARCHITECTURE.md` holds the
+ * plugin roster. Both were right when written and nothing compared them to the
  * tree afterwards, which is how a document goes quietly wrong. These tests are that comparison.
  *
  * Tables are found by their header cells and read by column name, never by position, so adding a
@@ -38,11 +39,11 @@ function isSeparatorRow(cells) {
  * table split for grouping is still one table. Any other non-row line does, because otherwise two
  * tables separated by prose read as one.
  */
-function tables() {
+function tables(file) {
   const found = [];
   let current = null;
 
-  for (const line of fs.readFileSync(DOC, "utf8").split("\n")) {
+  for (const line of fs.readFileSync(file, "utf8").split("\n")) {
     if (!line.trim().startsWith("|")) {
       if (line.trim() !== "") current = null;
       continue;
@@ -60,14 +61,14 @@ function tables() {
 }
 
 /** The one table whose header holds every name given. Never two, never none. */
-function tableWithColumns(...names) {
-  const matches = tables().filter((table) =>
+function tableWithColumns(file, ...names) {
+  const matches = tables(file).filter((table) =>
     names.every((name) => table.header.some((cell) => cell.toLowerCase() === name.toLowerCase()))
   );
   assert.equal(
     matches.length,
     1,
-    `expected exactly one table in ARCHITECTURE.md with columns ${names.join(", ")}, found ${matches.length}`
+    `expected exactly one table in ${path.basename(file)} with columns ${names.join(", ")}, found ${matches.length}`
   );
   return matches[0];
 }
@@ -102,8 +103,8 @@ function declaredHookEvents(plugin) {
   return Object.keys(JSON.parse(fs.readFileSync(manifest, "utf8")).hooks ?? {}).sort();
 }
 
-const hooksTable = () => tableWithColumns("Plugin", "Event", "Runs");
-const concernsTable = () => tableWithColumns("Plugin", "Concern", "Layer");
+const hooksTable = () => tableWithColumns(CATALOG, "Plugin", "Event", "Runs");
+const concernsTable = () => tableWithColumns(DOC, "Plugin", "Owns");
 
 test("the bundled hooks table names every plugin that declares hooks, and no other", () => {
   const table = hooksTable();
@@ -143,7 +144,7 @@ test("the bundled hooks table names every script a plugin runs, each one existin
     assert.deepEqual(scripts, declaredHookScripts(name), `${name}: the Runs cell and plugins/${name}/hooks/hooks.json disagree`);
     for (const script of scripts) {
       const full = path.join(ROOT, "plugins", name, script);
-      assert.ok(fs.existsSync(full), `plugins/${name}/${script} is named in ARCHITECTURE.md and does not exist`);
+      assert.ok(fs.existsSync(full), `plugins/${name}/${script} is named in CATALOG.md and does not exist`);
     }
   }
 });

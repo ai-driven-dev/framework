@@ -34,6 +34,8 @@ Unify **engineering teams** around **standardized workflows** and **shared best 
 
 From a rough idea to a reviewed pull request, inside the AI coding tool you already use.
 
+You stay in the loop: you approve the contract, the plan and the result.
+
 https://github.com/user-attachments/assets/92474f4c-053a-471d-9c62-16560b7a2a09
 
 ## Works with your tool
@@ -104,42 +106,51 @@ Each tool, updating, removing: [install guide](docs/INSTALL.md).
 </tbody>
 </table>
 
-Onboarding and project memory run once. Then every feature follows this chain.
-
 ```mermaid
 flowchart TD
-  subgraph frame["Frame"]
-    direction LR
-    request(["request"]) --> ticket["ticket-info<br/><i>if a ticket</i>"] --> brainstorm["brainstorm<br/><i>if unclear</i>"] --> spec["spec<br/><i>the contract</i>"]
+  subgraph onboard["/aidd-context:00-onboard guides you through all of it"]
+    memory["project memory<br/><i>once per project</i>"]
+    subgraph frame["Frame"]
+      direction LR
+      request(["request"]) --> ticket["ticket-info<br/><i>if a ticket</i>"] --> brainstorm["brainstorm<br/><i>if unclear</i>"] --> spec["spec<br/><i>the contract</i>"] --> approveContract(["You approve<br/>the contract"])
+    end
+    subgraph deliver["Deliver"]
+      direction LR
+      plan["plan<br/><i>phases</i>"] --> approvePlan(["You approve<br/>the plan"]) --> implement["implement<br/><i>the code</i>"] --> assert["assert<br/><i>tests, lint, types</i>"] --> commit["commit<br/><i>validated work</i>"]
+      assert -. "until checks pass" .-> implement
+    end
+    subgraph check["Check"]
+      direction LR
+      review["review<br/><i>fresh reviewer</i>"] --> challenge["challenge<br/><i>right outcome?</i>"] --> approveOutcome(["You approve<br/>the outcome"]) --> pr["pull-request<br/><i>opens a draft</i>"]
+    end
+    memory --> frame --> deliver --> check
+    check -.-> back(["Findings go back to Deliver,<br/>then Check runs again"])
   end
-  subgraph deliver["Deliver"]
-    direction LR
-    plan["plan<br/><i>phases</i>"] --> implement["implement<br/><i>the code</i>"] --> assert["assert<br/><i>tests, lint, types</i>"] --> commit["commit<br/><i>validated work</i>"]
-    assert -. "until checks pass" .-> implement
-  end
-  subgraph check["Check"]
-    direction LR
-    review["review<br/><i>fresh reviewer</i>"] --> challenge["challenge<br/><i>right outcome?</i>"] --> pr["pull-request<br/><i>opens a draft</i>"]
-  end
-  frame --> deliver --> check
-  check -.-> back(["Findings go back to Deliver,<br/>then Check runs again"])
 
+  classDef memoryStep fill:#0969da,stroke:#0969da,color:#fff
   classDef frameStep fill:#0b7285,stroke:#0b7285,color:#fff
   classDef frameOpt fill:#cff4fc,stroke:#0b7285,stroke-dasharray:4 3,color:#0b4a57
   classDef deliverStep fill:#6f42c1,stroke:#6f42c1,color:#fff
   classDef checkStep fill:#c2410c,stroke:#c2410c,color:#fff
+  classDef human fill:#fff8c5,stroke:#9a6700,stroke-dasharray:4 3,color:#633c01
+  classDef note fill:none,stroke:#d97706,stroke-dasharray:4 3,color:#d97706
+  class memory memoryStep
   class request,spec frameStep
   class ticket,brainstorm frameOpt
   class plan,implement,assert,commit deliverStep
   class review,challenge,pr checkStep
-  classDef note fill:none,stroke:#d97706,stroke-dasharray:4 3,color:#d97706
+  class approveContract,approvePlan,approveOutcome human
   class back note
+  style onboard fill:none,stroke:#0969da,stroke-width:2px
   style frame fill:none,stroke:#0b7285,stroke-width:2px
   style deliver fill:none,stroke:#6f42c1,stroke-width:2px
   style check fill:none,stroke:#c2410c,stroke-width:2px
 ```
 
-Fixing a bug, changing one thing, investigating? See the [guides by goal](docs/GUIDES.md).
+- Yellow steps are your approvals. Start a request with `interactive` to get them.
+- Without `interactive`, the chain runs on its own up to a draft pull request.
+
+Other goals: [guides by goal](docs/GUIDES.md) · [every plugin](#plugins)
 
 ## Plugins
 
@@ -186,7 +197,7 @@ Install the six stable ones. The other three are off the recommended path.
 
 ## Security and privacy
 
-- **Permissions.** A plugin can run scripts. Read it before you install it: [what runs, and when](docs/ARCHITECTURE.md#-bundled-hooks).
+- **Permissions.** A plugin can run scripts. Read it before you install it: [what runs, and when](docs/CATALOG.md#hooks).
 - **Telemetry.** Off by default. It only runs if you opt in: [how it works](docs/FAQ.md#measurement).
 - **Vulnerabilities.** Report them privately: [`SECURITY.md`](SECURITY.md).
 
@@ -194,7 +205,7 @@ Install the six stable ones. The other three are off the recommended path.
 
 Built by the [AI-Driven Dev](https://www.ai-driven-dev.fr/) community: 3 years of R&D, 500+ developers trained, production software shipped with 100% AI-generated code. Free and open source (MIT); a [⭐](https://github.com/ai-driven-dev/framework/stargazers) helps others find it.
 
-[Discord 🇫🇷](https://discord.gg/EWySJSpjWs) · [Discussions](https://github.com/ai-driven-dev/framework/discussions) · [Issues](https://github.com/ai-driven-dev/framework/issues) · [Team training](https://www.ai-driven-dev.fr/entreprise) · [How the roadmap is set](GOVERNANCE.md#how-to-influence-the-roadmap)
+[Discord 🇫🇷](https://discord.gg/EWySJSpjWs) · [Discussions](https://github.com/ai-driven-dev/framework/discussions) · [Issues](https://github.com/ai-driven-dev/framework/issues) · [Team training](https://www.ai-driven-dev.fr/entreprise) · [How the roadmap is set](GOVERNANCE.md#influence-the-roadmap)
 
 [![Contributors](https://contrib.rocks/image?repo=ai-driven-dev/framework)](https://github.com/ai-driven-dev/framework/graphs/contributors)
 

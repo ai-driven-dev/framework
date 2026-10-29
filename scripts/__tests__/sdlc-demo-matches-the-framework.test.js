@@ -25,7 +25,7 @@ function skillFolders() {
 
 /** The skill names the README chain draws, in the order it draws them. */
 function drawnSkills() {
-  const chain = readme.match(/```mermaid\nflowchart TD\n  subgraph frame[\s\S]*?```/)?.[0];
+  const chain = readme.match(/```mermaid\nflowchart TD\n  subgraph onboard[\s\S]*?```/)?.[0];
   assert.ok(chain, "the README has no chain diagram");
   return [...chain.matchAll(/\["([a-z-]+)<br\/>/g)].map((m) => m[1]);
 }

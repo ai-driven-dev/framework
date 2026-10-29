@@ -11,6 +11,7 @@ The exhaustive list of AIDD plugins, skills, and actions. Skills are invoked thr
 - [aidd-ui](#-aidd-ui) - UI / UX (🚧 alpha, not ready)
 - [aidd-telemetry](#-aidd-telemetry) - token measurement for Claude Code and Codex (🧪 beta, off the curated path)
 - [aidd-qa](#-aidd-qa) - acceptance QA (🆕 new, off the curated path)
+- [Agents](#agents) and [Hooks](#hooks)
 
 ---
 
@@ -126,3 +127,29 @@ Locks a scenario scope from acceptance criteria, runs it against a reviewed cand
 | Skill               | Role                                                                 | Actions                                                              |
 | ------------------- | --------------------------------------------------------------------- | --------------------------------------------------------------------- |
 | `01-acceptance-qa`  | Lock scenarios from acceptance criteria, run them, and report a verdict per scenario | `01-load-scope`, `02-prerequisites`, `03-prepare-run`, `04-run-scenarios` |
+
+## Agents
+
+Specialists that skills start when a step needs isolation.
+
+<!--agents:start-->
+
+| Agent | Plugin | Role |
+| --- | --- | --- |
+| `checker` | [`aidd-dev`](../plugins/aidd-dev/README.md) | Judges finished work against its validator and the real need, leaving nothing unchecked |
+| `executor` | [`aidd-dev`](../plugins/aidd-dev/README.md) | Turns a dispatched task into working, validated code that fits the project |
+
+<!--agents:end-->
+
+## Hooks
+
+Programs your AI tool runs at a session event. They need `node` on your `PATH`. Which tools run them: [Compatibility](COMPATIBILITY.md).
+
+<!--hooks:start-->
+
+| Plugin | Event | Runs |
+| --- | --- | --- |
+| [`aidd-context`](../plugins/aidd-context/README.md) | `SessionStart` | `hooks/update_memory.js` |
+| [`aidd-telemetry`](../plugins/aidd-telemetry/README.md) | `SessionStart` · `UserPromptSubmit` | `hooks/session-start.cjs` · `hooks/catch-up.cjs` · `hooks/prompt-gate.cjs` |
+
+<!--hooks:end-->
