@@ -2,16 +2,24 @@
 
 # aidd-qa
 
-Acceptance QA concern for the AI-Driven Development framework.
+Acceptance QA with video evidence.
 
-> Status: preview, off the curated install path until proven.
-
-First time? Install with `/plugin install aidd-qa@aidd-framework`, then run `aidd-qa:01-acceptance-qa`.
-
-Validates a reviewed candidate's observable behavior against its acceptance criteria and records reviewer evidence. Scenarios come only from acceptance criteria, never from the diff or the source code. Browser is the only supported interface today; a scenario without a browser-observable outcome is listed out of interface rather than tested.
+| | |
+| --- | --- |
+| Status | preview, off the recommended path |
+| Install | `/plugin install aidd-qa@aidd-framework` |
+| Start with | `/aidd-qa:01-acceptance-qa` |
 
 ## Skills
 
-| Skill | Description |
-|---|---|
-| [acceptance-qa](skills/01-acceptance-qa/SKILL.md) | Validate a reviewed candidate against its acceptance criteria and record one short named video per locked scenario. |
+| Skill | Use it to |
+| --- | --- |
+| [`/aidd-qa:01-acceptance-qa`](skills/01-acceptance-qa/SKILL.md) | Check a reviewed change against its acceptance criteria and record a video per scenario |
+
+## Limits
+
+| Limit | Detail |
+| --- | --- |
+| Scenarios | Come from the acceptance criteria only, never from the diff or the code |
+| Interface | Browser only |
+| Not observable in a browser | Listed as out of interface, not tested |

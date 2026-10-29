@@ -2,33 +2,32 @@
 
 # aidd-context
 
-Knowledge production plugin for the AI-Driven Development framework.
+Project knowledge: memory, context files and generators.
 
-> Status: stable.
-
-First time? Install with `/plugin install aidd-context@aidd-framework`, then run `aidd-context:00-onboard`.
-
-Covers project bootstrap, the project memory bank, generation of context artifacts (skills, agents, rules, commands, hooks), Mermaid diagrams, learning, project exploration, recipes, and a plain-language onboarding guide.
+| | |
+| --- | --- |
+| Status | stable |
+| Install | `/plugin install aidd-context@aidd-framework` |
+| Start with | `/aidd-context:00-onboard` |
 
 ## Skills
 
-| Bracket ID | Skill          | Description                                                                                                                                                     |
-| ---------- | -------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [1.0]      | [onboard](skills/00-onboard/SKILL.md)                 | Guide the user through the AIDD flow on the current project, in plain language, and suggest the next logical step, adapted to the installed plugins.            |
-| [1.1]      | [bootstrap](skills/01-bootstrap/SKILL.md)             | Imagine and validate the technical architecture of a new SaaS through interactive Q&A, candidate-stack comparison, multi-agent audit, and an INSTALL.md output. |
-| [1.2]      | [project-memory](skills/02-project-memory/SKILL.md)       | Initialize or refresh the project memory bank from a capability-based model, and carry the memory block into the AI context files.                              |
-| [1.3]      | [context-generate](skills/03-context-generate/SKILL.md) | Generate context artifacts: router-based skills, agents, rules, slash commands, hooks, plugin scaffolds, and plugin marketplaces.                               |
-| [1.4]      | [mermaid](skills/09-mermaid/SKILL.md)                 | Generate high-quality Mermaid diagrams from markdown content using a structured plan-validate workflow.                                                         |
-| [1.5]      | [learn](skills/10-learn/SKILL.md)                     | Capture durable learnings from the conversation or git history, score each, and route the worthwhile ones to memory, a decision record, a rule, or a new skill. |
-| [1.6]      | [explore](skills/11-explore/SKILL.md)                 | Survey the project across three axes (tooling, context, codebase), then drill into one axis and point to the best-matching item for a goal.                      |
-| [1.7]      | [cook](skills/12-cook/SKILL.md)                       | Maintain project and bundled recipes: list, research, create/update, apply, or validate one or all.                                                        |
+| Skill | Use it to |
+| --- | --- |
+| [`/aidd-context:00-onboard`](skills/00-onboard/SKILL.md) | Find where your project stands and what to run next |
+| [`/aidd-context:01-bootstrap`](skills/01-bootstrap/SKILL.md) | Choose a stack and an architecture for a new project |
+| [`/aidd-context:02-project-memory`](skills/02-project-memory/SKILL.md) | Give the AI a memory of the project |
+| [`/aidd-context:03-context-generate`](skills/03-context-generate/SKILL.md) | Create a skill, rule, agent, command or hook when the kind is unknown |
+| [`/aidd-context:04-skill-generate`](skills/04-skill-generate/SKILL.md) | Create a skill |
+| [`/aidd-context:05-rule-generate`](skills/05-rule-generate/SKILL.md) | Create a rule |
+| [`/aidd-context:06-agent-generate`](skills/06-agent-generate/SKILL.md) | Create an agent |
+| [`/aidd-context:07-command-generate`](skills/07-command-generate/SKILL.md) | Create a command |
+| [`/aidd-context:08-hook-generate`](skills/08-hook-generate/SKILL.md) | Create a hook |
+| [`/aidd-context:09-mermaid`](skills/09-mermaid/SKILL.md) | Draw a Mermaid diagram from a text |
+| [`/aidd-context:10-learn`](skills/10-learn/SKILL.md) | Record a decision, a convention or a lesson |
+| [`/aidd-context:11-explore`](skills/11-explore/SKILL.md) | See what is installed, or which skill fits a goal |
+| [`/aidd-context:12-cook`](skills/12-cook/SKILL.md) | List, create, research or apply a how-to sheet |
 
-## Onboarding
+## Hooks
 
-New to AIDD, or unsure what to run next? Invoke `aidd-context:00-onboard`. The skill:
-
-1. Reads the project silently: the memory bank, the code and stack, any spec or plan, and which AIDD plugins are installed.
-2. Explains in plain language where the project sits in the AIDD flow and suggests the next logical step, resolved to a skill that is actually installed, then offers a short numbered menu.
-3. Loops back to reading the project after each step so the guidance always reflects the current state.
-
-Onboard adapts to whatever plugins are installed: it suggests by function and discovers the skills that fill each step, so a skill added later shows up on its own.
+[Catalog](../../docs/CATALOG.md#-aidd-context).

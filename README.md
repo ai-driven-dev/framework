@@ -1,10 +1,3 @@
-<a href="https://github.com/ai-driven-dev/framework/stargazers">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="docs/assets/star-cta-dark.svg" />
-    <img align="right" src="docs/assets/star-cta-light.svg" alt="Support the community, star us! The button is at the top-right of this page" width="150" />
-  </picture>
-</a>
-
 <div align="center">
 
 <img src="docs/assets/logo.png" alt="AIDD" width="100" />

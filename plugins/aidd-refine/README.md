@@ -2,20 +2,20 @@
 
 # aidd-refine
 
-Meta-cognition plugin for the AI-Driven Development framework.
+Thinking about the work: clarify, challenge, verify.
 
-> Status: stable.
-
-First time? Install with `/plugin install aidd-refine@aidd-framework`, then run `aidd-refine:01-brainstorm`.
-
-Five skills that refine inputs and outputs through reflection: clarify vague requests, challenge prior work for correctness, analytically scan artifacts for blind spots, verify factual claims, and improve completed conversations.
+| | |
+| --- | --- |
+| Status | stable |
+| Install | `/plugin install aidd-refine@aidd-framework` |
+| Start with | `/aidd-refine:01-brainstorm` |
 
 ## Skills
 
-| Bracket ID | Skill      | Description                                                                                                                                                                                   |
-| ---------- | ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [5.1]      | [brainstorm](skills/01-brainstorm/SKILL.md) | Clarify a vague product or technical intent through natural discovery, converging until the idea is precise enough to act on.                            |
-| [5.2]      | [challenge](skills/02-challenge/SKILL.md)  | Rethink prior work to verify correctness against an agreed plan, classifying findings with a confidence score.                                                                                |
-| [5.3]      | [shadow-areas](skills/03-shadow-areas/SKILL.md) | Analytical scan of a written artifact for blind spots: each gap is classified by category and severity, paired with a direct-question probe.                                              |
-| [5.4]      | [fact-check](skills/04-fact-check/SKILL.md) | Verify factual claims against authoritative sources and rewrite the text with footnote citations, hedging anything that cannot be confirmed.                                              |
-| [5.5]      | [improve](skills/05-improve/SKILL.md) | Read complete conversation evidence, recommend targeted improvements, and propose minimal file edits. |
+| Skill | Use it to |
+| --- | --- |
+| [`/aidd-refine:01-brainstorm`](skills/01-brainstorm/SKILL.md) | Sharpen a vague idea |
+| [`/aidd-refine:02-challenge`](skills/02-challenge/SKILL.md) | Challenge finished work against its plan |
+| [`/aidd-refine:03-shadow-areas`](skills/03-shadow-areas/SKILL.md) | Find the gaps in a written artifact |
+| [`/aidd-refine:04-fact-check`](skills/04-fact-check/SKILL.md) | Check the facts in a text |
+| [`/aidd-refine:05-improve`](skills/05-improve/SKILL.md) | Improve how you work with the AI, from a past conversation |
