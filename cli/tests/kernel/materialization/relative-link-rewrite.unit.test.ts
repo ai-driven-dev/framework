@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { rewriteRelativeLinks } from "../../../src/kernel/materialization/relative-link-rewrite.js";
+import {
+  relocateRelativeLinks,
+  rewriteRelativeLinks,
+} from "../../../src/kernel/materialization/relative-link-rewrite.js";
 
 // One options object serves them all: the third branch is not reached by @./ or @../.
 const STABLE_OPTS = { currentFilePluginRelative: "skills/foo/SKILL.md" };
@@ -142,5 +145,48 @@ describe("rewriteRelativeLinks", () => {
       const output = rewriteRelativeLinks(input, opts);
       expect(output).toBe("A: [foo.md](../flat/agents/foo.md) B: [bar.md](../flat/skills/bar.md)");
     });
+  });
+});
+
+describe("relocateRelativeLinks", () => {
+  const options = {
+    sourceFilePluginRelative: "rules/01-standards/naming.md",
+    materializedFileRelative: ".kilo/rules/aidd-test-01-standards-naming.md",
+    resolveTargetPath: (rel: string): string | null => {
+      if (rel.startsWith("rules/"))
+        return `.kilo/rules/aidd-test-${rel.slice(6).replaceAll("/", "-")}`;
+      if (rel.startsWith("skills/")) return `.kilo/skills/aidd-test/${rel.slice(7)}`;
+      return null;
+    },
+  };
+
+  it("repoints a markdown link at the sibling's materialized location, fragment kept", () => {
+    expect(relocateRelativeLinks("See [errors](./errors.md#codes).", options)).toBe(
+      "See [errors](./aidd-test-01-standards-errors.md#codes)."
+    );
+  });
+
+  it("repoints a link climbing out of the Rule tree into another artifact", () => {
+    expect(relocateRelativeLinks("Use [plan](../../skills/01-plan/SKILL.md).", options)).toBe(
+      "Use [plan](../skills/aidd-test/01-plan/SKILL.md)."
+    );
+  });
+
+  it("turns an @./ reference into a link to the materialized target", () => {
+    expect(relocateRelativeLinks("Read @./errors.md first.", options)).toBe(
+      "Read [errors.md](./aidd-test-01-standards-errors.md) first."
+    );
+  });
+
+  it("repoints a plugin-root reference from the materialized location", () => {
+    expect(relocateRelativeLinks(`See @${CLAUDE_ROOT}/rules/style.md now`, options)).toBe(
+      "See [style.md](./aidd-test-style.md) now"
+    );
+  });
+
+  it("leaves external, absolute, anchor-only and unmaterialized targets alone", () => {
+    const content =
+      "[a](https://x.dev/a.md) [b](/abs.md) [c](#top) [d](../../docs/x.md) [e](../../../out.md)";
+    expect(relocateRelativeLinks(content, options)).toBe(content);
   });
 });

@@ -462,7 +462,7 @@ describe("force behavior at the cache-rebuild path", () => {
         validator,
         assetProvider,
         buildCopilotFlatContract(),
-        true, // force:true — mirrors deps.ts wiring for every *:flat target
+        { force: true }, // mirrors deps.ts wiring for every *:flat target
         outDir,
         makeIsDirectory(memFs),
         new CapturingLogger()

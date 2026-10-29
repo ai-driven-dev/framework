@@ -41,6 +41,15 @@ export function genericFlatSkillTreePath(
   return `${skillsPrefix}${plugin}/${skillRelPath}`;
 }
 
+/** Group folders fold into the filename: one flat Rules directory, plugin origin kept. */
+export function genericFlatRulePath(
+  rulesPrefix: string,
+  plugin: string,
+  ruleRelPath: string
+): string {
+  return `${rulesPrefix}${plugin}-${ruleRelPath.replace(/^rules\//, "").replaceAll("/", "-")}`;
+}
+
 export function genericFlatHooksFile(hooksPrefix: string, plugin: string): string {
   return `${hooksPrefix}${plugin}.hooks.json`;
 }

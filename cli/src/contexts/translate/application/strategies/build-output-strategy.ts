@@ -26,6 +26,8 @@ export interface BuildOutputStrategy {
 
   writeSkills(pluginName: string, pluginSrc: string, outDir: string): Promise<number>;
 
+  writeRules(pluginName: string, pluginSrc: string, outDir: string): Promise<number>;
+
   writeHooks(pluginName: string, pluginSrc: string, outDir: string): Promise<number>;
 
   writeMcp(pluginName: string, pluginSrc: string, outDir: string): Promise<number>;

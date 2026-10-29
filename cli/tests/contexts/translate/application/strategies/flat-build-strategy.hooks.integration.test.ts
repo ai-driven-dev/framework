@@ -71,7 +71,7 @@ function makeStrategy(
     new AjvSchemaValidatorAdapter(),
     makeAssetProvider(),
     contractFn(),
-    false,
+    { force: false },
     ABS_OUT,
     makeIsDirectory(memFs),
     logger
@@ -188,7 +188,7 @@ describe("cursor flat hooks", () => {
       new AjvSchemaValidatorAdapter(),
       makeAssetProvider(),
       buildCursorFlatContract(),
-      false,
+      { force: false },
       ABS_OUT,
       makeIsDirectory(memFs),
       logger
@@ -318,7 +318,7 @@ describe("opencode flat hooks", () => {
       new AjvSchemaValidatorAdapter(),
       makeOpencodeAssetProvider(),
       buildOpencodeFlatContract(),
-      false,
+      { force: false },
       ABS_OUT,
       makeIsDirectory(memFs),
       logger

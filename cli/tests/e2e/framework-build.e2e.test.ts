@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 import { existsSync } from "node:fs";
-import { mkdir, readdir, readFile, writeFile } from "node:fs/promises";
-import { join } from "node:path";
+import { cp, mkdir, readdir, readFile, writeFile } from "node:fs/promises";
+import { dirname, join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { createTestEnv, FRAMEWORK_PATH, initProject, runCli } from "./helpers.js";
 
@@ -593,8 +593,55 @@ describe.concurrent("E2E: aidd translate", () => {
     }
   });
 
-  it("--target kilo --flat emits its agents, skills, generated hooks bridge and project config", async () => {
+  it("--target kilo --flat emits its agents, skills, Rules, hooks bridge and project config", async () => {
     const { tempDir, projectDir, fakeHome, cleanup } = await createTestEnv("fw-flat-kilo");
+    try {
+      // The canonical fixture Rule is path-scoped; this copy turns it into an all-files Rule.
+      const source = join(tempDir, "source");
+      await cp(FRAMEWORK_PATH, source, { recursive: true });
+      const rulesDir = join(source, "plugins", "aidd-test", "rules", "01-standards");
+      await writeFile(join(rulesDir, "naming.md"), "# Naming\nSee [errors](./errors.md).\n");
+      await writeFile(join(rulesDir, "errors.md"), "# Errors\n");
+      const projRoot = join(tempDir, "proj");
+      await mkdir(join(projRoot, ".kilo"), { recursive: true });
+      const configPath = join(projRoot, ".kilo", "kilo.jsonc");
+      await writeFile(configPath, '{\n  // user-owned\n  "instructions": ["z.md", "a.md"],\n}');
+      const args = ["translate", source, "--to", "kilo", "--as", "flat", "--out", projRoot];
+
+      const result = await runCli(args, projectDir, fakeHome);
+      expect(result.exitCode, result.stderr).toBe(0);
+      expect(result.stderr).not.toContain("Skipping rules/");
+      expect(existsSync(join(projRoot, ".kilo", "agents"))).toBe(true);
+      expect(existsSync(join(projRoot, ".kilo", "skills"))).toBe(true);
+      expect(existsSync(join(projRoot, ".kilo", "plugin", "aidd-test-hooks.js"))).toBe(true);
+      const rulePath = join(projRoot, ".kilo", "rules", "aidd-test-01-standards-naming.md");
+      const link = /\]\(([^)]+)\)/.exec(await readFile(rulePath, "utf-8"))?.[1] ?? "";
+      expect(existsSync(join(dirname(rulePath), link)), link).toBe(true);
+      const once = await readFile(configPath, "utf-8");
+      const kilo = JSON.parse(once) as Record<string, unknown>;
+      expect(kilo.$schema).toBe("https://app.kilo.ai/config.json");
+      expect(kilo.instructions).toEqual([
+        "z.md",
+        "a.md",
+        ".kilo/rules/aidd-test-01-standards-errors.md",
+        ".kilo/rules/aidd-test-01-standards-naming.md",
+      ]);
+      expect(kilo.mcp).toBeDefined();
+
+      const rebuilt = await runCli([...args, "--force"], projectDir, fakeHome);
+      expect(rebuilt.exitCode, rebuilt.stderr).toBe(0);
+      expect(await readFile(configPath, "utf-8")).toBe(once);
+      expect((await readdir(join(projRoot, ".kilo", "rules"))).sort()).toEqual([
+        "aidd-test-01-standards-errors.md",
+        "aidd-test-01-standards-naming.md",
+      ]);
+    } finally {
+      await cleanup();
+    }
+  });
+
+  it("--target kilo --flat fails on a path-scoped Rule, naming it and its scope", async () => {
+    const { tempDir, projectDir, fakeHome, cleanup } = await createTestEnv("fw-flat-kilo-scoped");
     try {
       const projRoot = join(tempDir, "proj");
       await mkdir(projRoot, { recursive: true });
@@ -603,16 +650,11 @@ describe.concurrent("E2E: aidd translate", () => {
         projectDir,
         fakeHome
       );
-      expect(result.exitCode).toBe(0);
-      expect(existsSync(join(projRoot, ".kilo", "agents"))).toBe(true);
-      expect(existsSync(join(projRoot, ".kilo", "skills"))).toBe(true);
-      expect(existsSync(join(projRoot, ".kilo", "plugin", "aidd-test-hooks.js"))).toBe(true);
-      const kilo = JSON.parse(
-        await readFile(join(projRoot, ".kilo", "kilo.jsonc"), "utf-8")
-      ) as Record<string, unknown>;
-      expect(kilo.$schema).toBe("https://app.kilo.ai/config.json");
-      expect(kilo.instructions).toBeUndefined();
-      expect(kilo.mcp).toBeDefined();
+      expect(result.exitCode).not.toBe(0);
+      expect(result.stderr).toContain("rules/01-standards/naming.md");
+      expect(result.stderr).toContain("src/**/*.ts");
+      expect(existsSync(join(projRoot, ".kilo", "rules"))).toBe(false);
+      expect(existsSync(join(projRoot, ".kilo", "kilo.jsonc"))).toBe(false);
     } finally {
       await cleanup();
     }

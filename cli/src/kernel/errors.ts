@@ -426,6 +426,26 @@ export class FlatTargetExistsError extends Error {
   }
 }
 
+export class PathScopedRuleUnsupportedError extends Error {
+  constructor(pluginName: string, rulePath: string, paths: unknown) {
+    super(
+      `Rule '${rulePath}' in plugin '${pluginName}' is scoped by paths ${JSON.stringify(paths)}, ` +
+        "which this target cannot express: only all-files Rules (no 'paths' frontmatter) are supported."
+    );
+    this.name = "PathScopedRuleUnsupportedError";
+  }
+}
+
+export class FlatRuleNameClashError extends Error {
+  constructor(first: string, second: string, destination: string) {
+    super(
+      `Flat build conflict: Rules '${first}' and '${second}' both flatten to '${destination}'. ` +
+        "Rename one of them."
+    );
+    this.name = "FlatRuleNameClashError";
+  }
+}
+
 export class MarketplaceOutDirNotEmptyError extends Error {
   constructor(outDir: string) {
     super(

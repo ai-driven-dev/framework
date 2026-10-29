@@ -90,6 +90,10 @@ export class MarketplaceBuildStrategy implements BuildOutputStrategy {
     return writeSkillTree(this.fs, pluginName, pluginSrc, pluginOut, artifact.transform);
   }
 
+  async writeRules(): Promise<number> {
+    return 0; // marketplace layouts ship no Rules yet
+  }
+
   async writeHooks(pluginName: string, pluginSrc: string, outDir: string): Promise<number> {
     const artifact = this.contract.artifacts.hooks;
     if (!artifact.supported) return 0;

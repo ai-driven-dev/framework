@@ -121,7 +121,7 @@ Dependency-free Node scripts declared in `hooks/hooks.json`; `node` must be on `
 
 | Surface | Contract | Reference |
 | --- | --- | --- |
-| CLI output | Supported target capabilities only; `aidd translate` warns and skips rules and commands. | [Output layouts](../cli/README.md#translate) |
+| CLI output | Supported target capabilities only; `aidd translate` warns and skips commands, and rules on every target but Kilo flat, which emits all-files Rules and refuses path-scoped ones; a Kilo install skips those with a warning. | [Output layouts](../cli/README.md#translate) |
 | Skills | Links stay inside the skill directory. Flat distribution renames skills `<plugin>-<skill>`; marketplace installation preserves the tree. | [Portability guard](../scripts/__tests__/a-skill-links-only-inside-itself.test.js) |
 | Bundled scripts | Named plugin-relative in backticks, never linked. | [Portability guard](../scripts/__tests__/a-skill-links-only-inside-itself.test.js) |
 | Hook adapters | CLI owns OpenCode's shared host protocol; plugins own payload mapping. | [Delivery and compatibility](../cli/ARCHITECTURE.md#hook-adaptation) |
