@@ -10,7 +10,7 @@ The exhaustive list of AIDD plugins, skills, and actions. Skills are invoked thr
 - [aidd-orchestrator](#-aidd-orchestrator) - feature flow, async automation and backlog
 - [aidd-ui](#-aidd-ui) - UI / UX (🚧 alpha, not ready)
 - [aidd-telemetry](#-aidd-telemetry) - token measurement for Claude Code and Codex (🧪 beta, off the curated path)
-- [aidd-qa](#-aidd-qa) - acceptance QA (🆕 new, off the curated path)
+- [aidd-qa](#-aidd-qa) - acceptance QA (🔭 preview, off the curated path)
 - [Agents](#agents) and [Hooks](#hooks)
 
 ---

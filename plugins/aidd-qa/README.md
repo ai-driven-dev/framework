@@ -4,7 +4,7 @@
 
 Acceptance QA concern for the AI-Driven Development framework.
 
-> Status: new, off the curated install path until proven.
+> Status: preview, off the curated install path until proven.
 
 First time? Install with `/plugin install aidd-qa@aidd-framework`, then run `aidd-qa:01-acceptance-qa`.
 

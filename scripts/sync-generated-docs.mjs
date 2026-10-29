@@ -156,7 +156,12 @@ function plugins() {
   return Object.keys(config).map((plugin) => ({ plugin, entry: config[plugin], skills: skillNames(plugin) }));
 }
 
-const STATUS = { stable: "🟢 stable", beta: "🧪 beta", alpha: "🚧 alpha", new: "🆕 new" };
+const STATUS = {
+  stable: { label: "stable", color: "2da44e" },
+  beta: { label: "beta", color: "bf8700" },
+  alpha: { label: "alpha", color: "cf222e" },
+  preview: { label: "preview", color: "0969da" },
+};
 const SHOWN_SKILLS = 4;
 
 /** A grid of three columns: GitHub shows an HTML table the way the old README did. */
@@ -168,7 +173,7 @@ function pluginGrid() {
     return [
       '<td width="33%" valign="top">',
       `<h3>${entry.emoji} <a href="plugins/${plugin}/README.md">${plugin}</a></h3>`,
-      `<b>${STATUS[entry.status]}</b> · ${count}<br />`,
+      `<img alt="${STATUS[entry.status].label}" src="https://img.shields.io/badge/${STATUS[entry.status].label}-${STATUS[entry.status].color}?style=flat-square" /> ${count}<br />`,
       `${entry.description}<br /><br />`,
       `${shown}${more}`,
       "</td>",

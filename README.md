@@ -4,7 +4,7 @@
 
 # AI-Driven Dev Framework
 
-## Enterprise-grade SDLC for high-quality software development.
+## Enterprise-grade SDLC for high-quality production software development.
 
 Unify **engineering teams** around **standardized workflows** and **shared best practices**, across modern stacks and **legacy systems**, while reducing **technical debt**.
 
@@ -37,6 +37,8 @@ From a rough idea to a reviewed pull request, inside the AI coding tool you alre
 You stay in the loop: you approve the contract, the plan and the result.
 
 https://github.com/user-attachments/assets/92474f4c-053a-471d-9c62-16560b7a2a09
+
+🟣 The AI runs the steps · 🟡 You approve the contract, the plan and the outcome (interactive mode)
 
 ## Works with your tool
 
@@ -108,56 +110,56 @@ Each tool, updating, removing: [install guide](docs/INSTALL.md).
 
 ```mermaid
 flowchart TD
+  subgraph legend["Legend"]
+    direction LR
+    keyAi["AI skill"] ~~~ keyOpt["optional skill"] ~~~ keyYou(["you approve"])
+  end
   subgraph onboard["Onboarding"]
-    start(["/aidd-context:00-onboard<br/><i>reads your project, then runs these steps with you</i>"])
-    subgraph memorybox["Memory"]
-      memory["project memory<br/><i>once per project</i>"]
+    start(["/aidd-context:00-onboard<br/>guides you through every step below"])
+    subgraph memory["Memory, once per project"]
+      projectMemory["/aidd-context:02-project-memory"]
     end
-    subgraph frame["Frame"]
+    subgraph frame["Frame: write the contract"]
       direction LR
-      request(["request"]) --> ticket["ticket-info<br/><i>if a ticket</i>"] --> brainstorm["brainstorm<br/><i>if unclear</i>"] --> spec["spec<br/><i>the contract</i>"] --> approveContract(["You approve<br/>the contract"])
+      request(["your request"]) --> ticket["/aidd-pm:01-ticket-info"] --> brainstorm["/aidd-refine:01-brainstorm"] --> spec["/aidd-pm:04-spec"] --> approveContract(["approve the contract"])
     end
-    subgraph deliver["Deliver"]
+    subgraph deliver["Deliver: build and validate"]
       direction LR
-      plan["plan<br/><i>phases</i>"] --> approvePlan(["You approve<br/>the plan"]) --> implement["implement<br/><i>the code</i>"] --> assert["assert<br/><i>tests, lint, types</i>"] --> commit["commit<br/><i>validated work</i>"]
+      plan["/aidd-dev:01-plan"] --> approvePlan(["approve the plan"]) --> implement["/aidd-dev:02-implement"] --> assert["/aidd-dev:03-assert"] --> commit["/aidd-vcs:01-commit"]
       assert -. "until checks pass" .-> implement
     end
-    subgraph check["Check"]
+    subgraph check["Check: independent review"]
       direction LR
-      review["review<br/><i>fresh reviewer</i>"] --> challenge["challenge<br/><i>right outcome?</i>"] --> approveOutcome(["You approve<br/>the outcome"]) --> pr["pull-request<br/><i>opens a draft</i>"]
+      review["/aidd-dev:05-review"] --> challenge["/aidd-refine:02-challenge"] --> approveOutcome(["approve the outcome"]) --> pr["/aidd-vcs:02-pull-request"]
     end
-    start --> memorybox --> frame --> deliver --> check
+    start --> memory --> frame --> deliver --> check
   end
+  legend ~~~ onboard
 
-  classDef startStep fill:#fff,stroke:#0969da,stroke-width:2px,color:#0969da
-  classDef memoryStep fill:#0969da,stroke:#0969da,color:#fff
-  classDef frameStep fill:#0b7285,stroke:#0b7285,color:#fff
-  classDef frameOpt fill:#cff4fc,stroke:#0b7285,stroke-dasharray:4 3,color:#0b4a57
-  classDef deliverStep fill:#6f42c1,stroke:#6f42c1,color:#fff
-  classDef checkStep fill:#c2410c,stroke:#c2410c,color:#fff
-  classDef human fill:#fff8c5,stroke:#9a6700,stroke-dasharray:4 3,color:#633c01
-  class memory memoryStep
-  class start startStep
-  class request,spec frameStep
-  class ticket,brainstorm frameOpt
-  class plan,implement,assert,commit deliverStep
-  class review,challenge,pr checkStep
-  class approveContract,approvePlan,approveOutcome human
-  style onboard fill:none,stroke:#0969da,stroke-width:2px
-  style memorybox fill:none,stroke:#0969da,stroke-width:2px
-  style frame fill:none,stroke:#0b7285,stroke-width:2px
-  style deliver fill:none,stroke:#6f42c1,stroke-width:2px
-  style check fill:none,stroke:#c2410c,stroke-width:2px
+  classDef ai fill:#6f42c1,stroke:#6f42c1,color:#fff
+  classDef opt fill:#fff,stroke:#6f42c1,stroke-dasharray:4 3,color:#6f42c1
+  classDef you fill:#fff8c5,stroke:#9a6700,color:#633c01
+  classDef entry fill:#fff,stroke:#6f42c1,stroke-width:3px,color:#6f42c1
+  classDef plain fill:#eaeef2,stroke:#57606a,color:#24292f
+  class keyAi,projectMemory,spec,plan,implement,assert,commit,review,challenge,pr ai
+  class keyOpt,ticket,brainstorm opt
+  class keyYou,approveContract,approvePlan,approveOutcome you
+  class request plain
+  class start entry
+  style legend fill:none,stroke:#8c959f
+  style onboard fill:none,stroke:#6f42c1,stroke-width:2px
+  style memory fill:none,stroke:#8c959f
+  style frame fill:none,stroke:#8c959f
+  style deliver fill:none,stroke:#8c959f
+  style check fill:none,stroke:#8c959f
 ```
 
-- Yellow steps are your approvals. Start a request with `interactive` to get them.
-- Without `interactive`, the chain runs on its own up to a draft pull request.
 
-Other goals: [guides by goal](docs/GUIDES.md) · [every plugin](#plugins)
+Other goals: [guides by goal](docs/GUIDES.md)
 
 ## Plugins
 
-Install the six stable ones. The other three are off the recommended path.
+Install the stable ones. Beta, alpha and preview plugins are off the recommended path.
 
 <!--plugins:start-->
 
@@ -165,19 +167,19 @@ Install the six stable ones. The other three are off the recommended path.
 <tr>
 <td width="33%" valign="top">
 <h3>🧭 <a href="plugins/aidd-context/README.md">aidd-context</a></h3>
-<b>🟢 stable</b> · 13 skills<br />
+<img alt="stable" src="https://img.shields.io/badge/stable-2da44e?style=flat-square" /> 13 skills<br />
 Project memory, context generation, learning<br /><br />
 <code>onboard</code> · <code>bootstrap</code> · <code>project-memory</code> · <code>context-generate</code> · +9
 </td>
 <td width="33%" valign="top">
 <h3>⚙️ <a href="plugins/aidd-dev/README.md">aidd-dev</a></h3>
-<b>🟢 stable</b> · 10 skills<br />
+<img alt="stable" src="https://img.shields.io/badge/stable-2da44e?style=flat-square" /> 10 skills<br />
 Plan, build, review, test, debug<br /><br />
 <code>plan</code> · <code>implement</code> · <code>assert</code> · <code>audit</code> · +6
 </td>
 <td width="33%" valign="top">
 <h3>🌿 <a href="plugins/aidd-vcs/README.md">aidd-vcs</a></h3>
-<b>🟢 stable</b> · 6 skills<br />
+<img alt="stable" src="https://img.shields.io/badge/stable-2da44e?style=flat-square" /> 6 skills<br />
 Commits, pull requests, release tags, issues<br /><br />
 <code>repo-init</code> · <code>commit</code> · <code>pull-request</code> · <code>release-tag</code> · +2
 </td>
@@ -185,19 +187,19 @@ Commits, pull requests, release tags, issues<br /><br />
 <tr>
 <td width="33%" valign="top">
 <h3>📋 <a href="plugins/aidd-pm/README.md">aidd-pm</a></h3>
-<b>🟢 stable</b> · 10 skills<br />
+<img alt="stable" src="https://img.shields.io/badge/stable-2da44e?style=flat-square" /> 10 skills<br />
 Briefs, Epics, Stories, specs, Spikes, Defects<br /><br />
 <code>ticket-info</code> · <code>user-stories</code> · <code>prd</code> · <code>spec</code> · +6
 </td>
 <td width="33%" valign="top">
 <h3>🪞 <a href="plugins/aidd-refine/README.md">aidd-refine</a></h3>
-<b>🟢 stable</b> · 5 skills<br />
+<img alt="stable" src="https://img.shields.io/badge/stable-2da44e?style=flat-square" /> 5 skills<br />
 Brainstorm, challenge, fact-check<br /><br />
 <code>brainstorm</code> · <code>challenge</code> · <code>shadow-areas</code> · <code>fact-check</code> · +1
 </td>
 <td width="33%" valign="top">
 <h3>🎼 <a href="plugins/aidd-orchestrator/README.md">aidd-orchestrator</a></h3>
-<b>🟢 stable</b> · 3 skills<br />
+<img alt="stable" src="https://img.shields.io/badge/stable-2da44e?style=flat-square" /> 3 skills<br />
 Feature flow, issue-to-PR automation, backlog<br /><br />
 <code>async-dev</code> · <code>sdlc</code> · <code>backlog</code>
 </td>
@@ -205,19 +207,19 @@ Feature flow, issue-to-PR automation, backlog<br /><br />
 <tr>
 <td width="33%" valign="top">
 <h3>🎨 <a href="plugins/aidd-ui/README.md">aidd-ui</a></h3>
-<b>🚧 alpha</b> · 1 skill<br />
+<img alt="alpha" src="https://img.shields.io/badge/alpha-cf222e?style=flat-square" /> 1 skill<br />
 UI and UX design, smoke test only<br /><br />
 <code>hello</code>
 </td>
 <td width="33%" valign="top">
 <h3>📈 <a href="plugins/aidd-telemetry/README.md">aidd-telemetry</a></h3>
-<b>🧪 beta</b> · 2 skills<br />
+<img alt="beta" src="https://img.shields.io/badge/beta-bf8700?style=flat-square" /> 2 skills<br />
 Token usage per task, opt-in<br /><br />
 <code>init</code> · <code>usage</code>
 </td>
 <td width="33%" valign="top">
 <h3>🎬 <a href="plugins/aidd-qa/README.md">aidd-qa</a></h3>
-<b>🆕 new</b> · 1 skill<br />
+<img alt="preview" src="https://img.shields.io/badge/preview-0969da?style=flat-square" /> 1 skill<br />
 Acceptance QA with video evidence<br /><br />
 <code>acceptance-qa</code>
 </td>

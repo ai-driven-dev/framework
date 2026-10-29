@@ -74,7 +74,7 @@ test("an empty block is reported stale, and syncing fills it from the tree", () 
     assert.match(readme, /<tr><td><b>Claude Code<\/b><\/td><td align="center">✅<\/td><td align="center">✅<\/td><td align="center">✅<\/td><\/tr>/);
     assert.match(readme, /<table>/);
     assert.match(readme, /<h3>🧪 <a href="plugins\/aidd-x\/README\.md">aidd-x<\/a><\/h3>/);
-    assert.match(readme, /<b>🧪 beta<\/b> · 1 skill<br \/>\nDoes one thing<br \/><br \/>\n<code>a<\/code>/);
+    assert.match(readme, /<img alt="beta" src="https:\/\/img\.shields\.io\/badge\/beta-bf8700\?style=flat-square" \/> 1 skill<br \/>\nDoes one thing<br \/><br \/>\n<code>a<\/code>/);
 
     assert.equal(run(["--check", "--root", root]).status, 0);
   } finally {
