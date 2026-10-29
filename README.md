@@ -177,6 +177,6 @@ Built by the [AI-Driven Dev](https://www.ai-driven-dev.fr/) community: 3 years o
 
 <a href="https://github.com/ai-driven-dev/framework/stargazers"><img src="https://raw.githubusercontent.com/ai-driven-dev/framework/star-history/star-history.svg" alt="Star History Chart" width="500" /></a>
 
-Made with care in France 🇫🇷 · ← [AIDD organisation](https://github.com/ai-driven-dev)
+Made with care in France 🇫🇷
 
 </div>
