@@ -89,7 +89,7 @@ describe("SetAgentModelUseCase", () => {
 
   it("sets the main session on the smart model, and restores what it replaced once unset", async () => {
     const { fs, useCase } = setup();
-    const settings = `${PROJECT}/.claude/settings.json`;
+    const settings = `${PROJECT}/.claude/settings.local.json`;
     fs.setFile(settings, '{\n  "model": "mine"\n}\n');
 
     await useCase.execute({
@@ -129,8 +129,8 @@ describe("SetAgentModelUseCase", () => {
   it("records what a settings file held before writing it, so a failed run can still restore it", async () => {
     const fs = new FaultingFileAdapter();
     const { useCase } = setup(undefined, null, fs);
-    fs.setFile(`${PROJECT}/.claude/settings.json`, '{\n  "model": "mine"\n}\n');
-    fs.failOn("writeFile", `${PROJECT}/.claude/settings.json`, new Error("disk full"));
+    fs.setFile(`${PROJECT}/.claude/settings.local.json`, '{\n  "model": "mine"\n}\n');
+    fs.failOn("writeFile", `${PROJECT}/.claude/settings.local.json`, new Error("disk full"));
 
     await expect(
       useCase.execute({

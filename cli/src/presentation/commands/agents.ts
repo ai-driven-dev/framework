@@ -60,6 +60,7 @@ function report(
       ? `Agents for ${hosts.join(", ")} run on the session's model.`
       : `Agents for ${hosts.join(", ")} run on ${provider}.`;
   output.success(agents);
+  output.info("Other projects on this machine pick it up at their next aidd update.");
   if (result.mainSet.length > 0) output.success(`Main model set for ${result.mainSet.join(", ")}.`);
   const skipped = main ? hosts.filter((host) => !result.mainSet.includes(host)) : [];
   if (skipped.length > 0) {

@@ -72,7 +72,7 @@ The provider is chosen per IDE for the whole machine, like the built framework t
 
 | Host | Providers | Agent written as | Main session |
 | --- | --- | --- | --- |
-| Claude Code | anthropic | `model`, `effort` | `.claude/settings.json`: `model`, `effortLevel` |
+| Claude Code | anthropic | `model`, `effort` | `settings.local.json` in `.claude/`, `settings.json` with `--global`: `model`, `effortLevel` |
 | Codex | openai | `model`, `model_reasoning_effort` | `.codex/config.toml`: `model`, `model_reasoning_effort` |
 | Copilot | openai, anthropic | `model`, `reasoningEffort` | none |
 | OpenCode | openai, anthropic, mistral | `model: <provider>/<model>#<effort>` | `opencode.json`: `model` |

@@ -150,8 +150,7 @@ export function registerSetupCommand(program: Command): void {
       const source = parseSourceFlag(cmdOptions, output);
       const scope = cmdOptions.global === true ? "user" : parseScopeFlag(cmdOptions.scope, output);
       if (cmdOptions.main === true && cmdOptions.provider === undefined) {
-        output.error("--main needs --provider.");
-        process.exit(1);
+        errorHandler.handle(new Error("--main needs --provider."));
       }
       const toolIds = parseToolIds(cmdOptions, errorHandler);
       if (toolIds === null) return;

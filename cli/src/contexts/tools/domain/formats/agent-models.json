@@ -43,7 +43,7 @@
   "hosts": {
     "claude": {
       "providers": ["anthropic"],
-      "main": { "path": ".claude/settings.json", "effortKey": "effortLevel" }
+      "main": { "path": ".claude/settings.local.json", "effortKey": "effortLevel" }
     },
     "codex": {
       "providers": ["openai"],
