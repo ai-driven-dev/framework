@@ -36,6 +36,8 @@ From a rough idea to a reviewed pull request, inside the AI coding tool you alre
 
 https://github.com/user-attachments/assets/92474f4c-053a-471d-9c62-16560b7a2a09
 
+<sub>The AI can run alone to a draft pull request, or you stay in the loop: add `interactive` and you approve the contract, the plan and the outcome.</sub>
+
 ## Works with your tool
 
 <!--tools:start-->
