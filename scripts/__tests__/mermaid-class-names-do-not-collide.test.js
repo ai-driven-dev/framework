@@ -18,6 +18,7 @@ const DOCUMENTS = [
   "docs/ARCHITECTURE.md",
   "docs/GUIDES.md",
   "docs/MAINTAINERS.md",
+  "cli/ARCHITECTURE.md",
 ];
 
 function diagrams(file) {

@@ -261,7 +261,10 @@ Acceptance QA with video evidence
 ## Community
 
 > [!TIP]
-> **Found it useful? [⭐ Star the repository](https://github.com/ai-driven-dev/framework/stargazers).** It helps other developers find it.
+> **Found it useful?**
+> It helps other developers find it.
+>
+> [![Star the repository](https://img.shields.io/github/stars/ai-driven-dev/framework?style=social)](https://github.com/ai-driven-dev/framework/stargazers)
 
 Built by the [AI-Driven Dev](https://www.ai-driven-dev.fr/) community.
 
