@@ -12,7 +12,7 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
   - [`skills/02-challenge`](#skills02-challenge)
   - [`skills/03-shadow-areas`](#skills03-shadow-areas)
   - [`skills/04-fact-check`](#skills04-fact-check)
-  - [`skills/05-improve`](#skills05-improve)
+  - [`skills/05-review-conversation`](#skills05-review-conversation)
 
 ---
 
@@ -73,14 +73,15 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `references` | [verification-cascade.md](skills/04-fact-check/references/verification-cascade.md) | - |
 | `-` | [SKILL.md](skills/04-fact-check/SKILL.md) | `Verify factual claims in a text against authoritative sources and rewrite it with footnote citations, hedging the unconfirmed. Use to fact-check, verify a claim, or cite sources on request. Not for judging code or clarifying requirements.` |
 
-#### `skills/05-improve`
+#### `skills/05-review-conversation`
 
 | Group | File | Description |
 |-------|------|---|
-| `actions` | [01-read-conversation.md](skills/05-improve/actions/01-read-conversation.md) | - |
-| `actions` | [02-recommend.md](skills/05-improve/actions/02-recommend.md) | - |
-| `actions` | [03-target-edits.md](skills/05-improve/actions/03-target-edits.md) | - |
-| `assets` | [conversation-sources.md](skills/05-improve/assets/conversation-sources.md) | - |
-| `assets` | [report.js](skills/05-improve/assets/report.js) | - |
-| `-` | [SKILL.md](skills/05-improve/SKILL.md) | `Reads complete conversation evidence, measures visible cost, and recommends minimal improvements. Use when the user wants to improve a conversation, reduce wasted time or tokens, or choose files to revise. Not for delivery review or automatic edits.` |
+| `actions` | [01-read-conversation.md](skills/05-review-conversation/actions/01-read-conversation.md) | - |
+| `actions` | [02-recommend.md](skills/05-review-conversation/actions/02-recommend.md) | - |
+| `actions` | [03-target-edits.md](skills/05-review-conversation/actions/03-target-edits.md) | - |
+| `assets` | [report.js](skills/05-review-conversation/assets/report.js) | - |
+| `assets` | [session-review-brief.md](skills/05-review-conversation/assets/session-review-brief.md) | - |
+| `references` | [conversation-sources.md](skills/05-review-conversation/references/conversation-sources.md) | - |
+| `-` | [SKILL.md](skills/05-review-conversation/SKILL.md) | `Reviews a finished conversation and every session it spawned to find what cost time, tokens, or correctness, and attributes each finding to the framework, the orchestration, the host, or the project. Use when the user wants to review a conversation, understand a wasted run, or choose which instruction to fix. Not for delivery review or automatic edits.` |
 

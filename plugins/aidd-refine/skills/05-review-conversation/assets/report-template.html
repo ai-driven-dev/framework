@@ -4,18 +4,18 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="color-scheme" content="light" />
-    <title>Improve report · AIDD</title>
+    <title>Conversation review · AIDD</title>
     <link rel="stylesheet" href="report.css" />
     <script src="report.js" defer></script>
   </head>
   <body>
     <header class="site-header">
-      <a class="brand" href="#report" aria-label="AIDD Improve report"><span class="brand-mark" aria-hidden="true">A</span><span>AIDD / improve</span></a>
+      <a class="brand" href="#report" aria-label="AIDD conversation review"><span class="brand-mark" aria-hidden="true">A</span><span>AIDD / review conversation</span></a>
     </header>
 
     <main id="report" data-label-accepted-one="{count} recommendation accepted" data-label-accepted-other="{count} recommendations accepted" data-label-duration-unavailable="Unavailable">
       <section class="intro" aria-labelledby="report-title">
-        <h1 id="report-title">Improve report</h1>
+        <h1 id="report-title">Conversation review</h1>
         <p>Fictional example, including all timings.</p>
       </section>
 
@@ -84,7 +84,7 @@
         <div class="findings" id="findings-list">
           <article class="finding" data-id="concise-output">
             <header class="finding-header">
-              <div class="finding-title"><h3>Replace the full-output requirement</h3></div>
+              <div class="finding-title"><h3>Replace the full-output requirement</h3><p class="finding-owner">Framework text · root, 12</p></div>
               <label class="accept-toggle"><input class="accept-input" type="checkbox" data-prompt="In docs/example-review.md, replace 'Before replying, print every tool result in full.' with 'Report the result and the shortest evidence needed to verify it.'" data-label-off="Accept" data-label-on="Accepted"><span>Accept</span></label>
             </header>
             <div class="finding-collapse"><div class="finding-body">
@@ -99,7 +99,7 @@
           </article>
           <article class="finding" data-id="duplicate-publishing-rule">
             <header class="finding-header">
-              <div class="finding-title"><h3>Remove the second publishing rule</h3></div>
+              <div class="finding-title"><h3>Remove the second publishing rule</h3><p class="finding-owner">Delegation brief · reviewer, 4</p></div>
               <label class="accept-toggle"><input class="accept-input" type="checkbox" data-prompt="In docs/example-guidance.md, remove the second duplicate 'Validate before publishing.' rule." data-label-off="Accept" data-label-on="Accepted"><span>Accept</span></label>
             </header>
             <div class="finding-collapse"><div class="finding-body">
@@ -113,6 +113,13 @@
             </div></div>
           </article>
         </div>
+      </section>
+
+      <section class="section" aria-labelledby="unedited-title">
+        <div class="section-heading"><h2 id="unedited-title">Reported without edit</h2></div>
+        <ul class="unedited-findings">
+          <li><strong>Host or environment · root, 14:</strong> the shell search was retried after a missing file.</li>
+        </ul>
       </section>
 
       <footer class="prompt-builder" aria-labelledby="prompt-title">

@@ -6,7 +6,7 @@ const { runInNewContext } = require('node:vm');
 
 const { composePrompt, formatCount, elapsedSeconds, formatDuration } = require(resolve(
   __dirname,
-  '../../plugins/aidd-refine/skills/05-improve/assets/report.js',
+  '../../plugins/aidd-refine/skills/05-review-conversation/assets/report.js',
 ));
 
 test('accepted edits keep report order and preserve manual prompt text', () => {
@@ -157,7 +157,7 @@ function loadReport(durations = []) {
 
   runInNewContext(readFileSync(resolve(
     __dirname,
-    '../../plugins/aidd-refine/skills/05-improve/assets/report.js',
+    '../../plugins/aidd-refine/skills/05-review-conversation/assets/report.js',
   ), 'utf8'), {
     document,
     navigator: { clipboard: { writeText: async (value) => writes.push(value) } },
