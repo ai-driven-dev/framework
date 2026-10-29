@@ -19,12 +19,10 @@ export interface ModelProfile {
 
 /** The project settings file where a host reads its main-session model. */
 export interface MainSettings {
-  /** Project-relative; its extension decides the format. */
+  /** Project-relative JSON file. */
   readonly path: string;
   /** The host's key for the effort, absent where its settings take none. */
   readonly effortKey?: string;
-  /** Equivalent files the host may read instead, which AIDD does not edit. */
-  readonly alternatives?: readonly string[];
 }
 
 export interface HostModels {

@@ -1,4 +1,4 @@
-import { basename, dirname, join } from "node:path";
+import { join } from "node:path";
 import type { FileReader } from "../../../../kernel/ports/file-reader.js";
 import type { FileWriter } from "../../../../kernel/ports/file-writer.js";
 import type { MarketplaceScope } from "../../../../kernel/scope.js";
@@ -13,7 +13,6 @@ import {
   mainModelValues,
   planMainModelInstall,
   planMainModelRemoval,
-  settingsFormat,
 } from "../../../tools/domain/formats/main-model-config.js";
 import { userMachineLocalFilesOf } from "../../../tools/domain/registry.js";
 import type { AgentModelStore, MainModels } from "../../domain/ports/agent-model-store.js";
@@ -109,26 +108,15 @@ export class SetAgentModelUseCase {
     if (!wanted && record === undefined) return null;
     const path = await this.settingsPath(options, host);
     if (path === undefined) return null;
-    const format = settingsFormat(path);
     const content = (await this.fs.fileExists(path)) ? await this.fs.readFile(path) : null;
     if (!wanted && record !== undefined) {
       delete mainModels[host];
-      const next = planMainModelRemoval(content, format, record);
+      const next = planMainModelRemoval(content, record);
       return next === content ? null : { path, content: next };
-    }
-    for (const alternative of content === null
-      ? (AGENT_MODELS.hosts[host].main?.alternatives ?? [])
-      : []) {
-      if (await this.fs.fileExists(join(dirname(path), alternative))) {
-        throw new Error(
-          `Settings live in ${alternative}; move them to ${basename(path)} before setting the main model.`
-        );
-      }
     }
     try {
       const plan = planMainModelInstall(
         content,
-        format,
         mainModelValues(host, provider as AgentProvider),
         record
       );

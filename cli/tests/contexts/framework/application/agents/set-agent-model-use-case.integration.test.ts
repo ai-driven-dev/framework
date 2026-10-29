@@ -114,14 +114,14 @@ describe("SetAgentModelUseCase", () => {
 
     await useCase.execute({
       projectRoot: PROJECT,
-      hosts: ["codex"],
-      provider: "openai",
+      hosts: ["claude"],
+      provider: "anthropic",
       main: true,
       scope: "user",
     });
 
-    expect(fs.getFile(`${HOME}/.codex/config.toml`)).toBe(
-      'model = "gpt-6.1-sol"\nmodel_reasoning_effort = "high"\n'
+    expect(fs.getFile(`${HOME}/.claude/settings.json`)).toBe(
+      '{\n  "model": "claude-opus-5-5",\n  "effortLevel": "high"\n}\n'
     );
     expect(fs.has(`${CONFIG}/main-model.json`)).toBe(true);
   });
@@ -198,22 +198,6 @@ describe("SetAgentModelUseCase", () => {
     expect(userUpdates).toStrictEqual([
       { toolIds: ["cursor"], projectRoot: PROJECT, scope: "user", rebuild: true },
     ]);
-  });
-
-  it("refuses to start an opencode.json beside the opencode.jsonc that holds the settings", async () => {
-    const { fs, useCase } = setup();
-    fs.setFile(`${PROJECT}/opencode.jsonc`, "{}\n");
-
-    await expect(
-      useCase.execute({
-        projectRoot: PROJECT,
-        hosts: ["opencode"],
-        provider: "mistral",
-        main: true,
-        scope: "project",
-      })
-    ).rejects.toThrow("Settings live in opencode.jsonc; move them to opencode.json");
-    expect(fs.has(`${PROJECT}/opencode.json`)).toBe(false);
   });
 
   it("refuses a provider one host cannot run before writing anything", async () => {

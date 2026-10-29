@@ -45,15 +45,12 @@
       "providers": ["anthropic"],
       "main": { "path": ".claude/settings.local.json", "effortKey": "effortLevel" }
     },
-    "codex": {
-      "providers": ["openai"],
-      "main": { "path": ".codex/config.toml", "effortKey": "model_reasoning_effort" }
-    },
+    "codex": { "providers": ["openai"] },
     "copilot": { "providers": ["openai", "anthropic"] },
     "opencode": {
       "providers": ["openai", "anthropic", "mistral"],
       "providerPrefix": true,
-      "main": { "path": "opencode.json", "alternatives": ["opencode.jsonc"] }
+      "main": { "path": "opencode.json" }
     },
     "cursor": { "providers": ["anthropic"] },
     "kilo": { "providers": ["openai", "anthropic", "mistral"], "providerPrefix": true }

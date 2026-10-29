@@ -73,7 +73,7 @@ The provider is chosen per IDE for the whole machine, like the built framework t
 | Host | Providers | Agent written as | Main session |
 | --- | --- | --- | --- |
 | Claude Code | anthropic | `model`, `effort` | `settings.local.json` in `.claude/`, `settings.json` with `--global`: `model`, `effortLevel` |
-| Codex | openai | `model`, `model_reasoning_effort` | `.codex/config.toml`: `model`, `model_reasoning_effort` |
+| Codex | openai | `model`, `model_reasoning_effort` | none |
 | Copilot | openai, anthropic | `model`, `reasoningEffort` | none |
 | OpenCode | openai, anthropic, mistral | `model: <provider>/<model>#<effort>` | `opencode.json`: `model` |
 | Cursor | anthropic | `model: <model>[effort=<effort>]` | none |
@@ -83,8 +83,9 @@ The provider is chosen per IDE for the whole machine, like the built framework t
 
 - **Tools:** every agent inherits the calling session's tools and permissions; what it writes is an instruction, not a restriction.
 - **Codex:** a Codex plugin cannot carry agents, so only the flat distribution installs them, in `.codex/agents/`. Codex loads them only in a trusted project.
-- **Models:** OpenCode V1 reads the same file but not the `#<effort>` variant. A host installing straight from the marketplace (`/plugin install`) pins no model; only an install through `aidd` does. Another project picks up a changed provider at its next `aidd update` or `aidd plugin update`. `set-model` re-drives each host's own plugin install; that Codex then reloads a rebuilt tree of the same plugin version is unverified. `--main` covers Claude, Codex and OpenCode in a project, and only Claude and Codex with `--global`; any other IDE is named and left unchanged. One run takes one provider: Claude runs only anthropic and Codex only openai, so `setup --ide claude,codex --provider …` is refused.
+- **Models:** OpenCode V1 reads the same file but not the `#<effort>` variant. A host installing straight from the marketplace (`/plugin install`) pins no model; only an install through `aidd` does. Another project picks up a changed provider at its next `aidd update` or `aidd plugin update`. `set-model` re-drives each host's own plugin install; that Codex then reloads a rebuilt tree of the same plugin version is unverified. `--main` covers Claude and OpenCode in a project, and only Claude with `--global`; any other IDE is named and left unchanged. One run takes one provider: Claude runs only anthropic and Codex only openai, so `setup --ide claude,codex --provider …` is refused.
 - **Machine-wide installs:** `aidd setup --global` registers the framework machine-wide but installs no plugin yet, so `make reload` still installs them itself, without models.
+- **Clean:** `aidd clean` leaves the provider and the main model in place; run `aidd agents unset-model` first.
 - **Updates:** reinstalling replaces the agents still shipped; one removed from the plugin stays where a copy put it until you delete it.
 
 Sources: [Claude Code sub-agents](https://code.claude.com/docs/en/sub-agents), [Copilot custom agents](https://docs.github.com/en/copilot/reference/custom-agents-configuration), [OpenCode agents](https://opencode.ai/v2/docs/agents), [Codex subagents](https://developers.openai.com/codex/subagents), [Cursor subagents](https://cursor.com/docs/subagents).
