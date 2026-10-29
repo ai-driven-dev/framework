@@ -19,6 +19,13 @@ const ALLOWLIST = [
       "whatever claude-code currently ships, not a version this repo controls. Pinning " +
       "it would defeat the point of the probe.",
   },
+  {
+    file: ".github/workflows/opencode.yml",
+    pattern: /npm install --global @opencode\/cli@latest\b/,
+    reason:
+      "Deliberately unpinned: the owner-triggered agent is meant to run the newest OpenCode v2. " +
+      "A release that breaks it fails only that job, which only the owner can start.",
+  },
 ];
 
 /** Every `run:` step's script across every job in one workflow file, each tagged with
