@@ -350,8 +350,8 @@ describe("aidd setup — what it refuses and what it reports", () => {
     },
     {
       args: ["--ide", "opencode"],
-      cause: "opencode declares no user-scope settings",
-      remedy: "Drop it from --ide",
+      cause: "none exists for: opencode",
+      remedy: "Drop them from --ide",
     },
   ])("renders global validation for $cause before building dependencies", async (test) => {
     const exit = vi.spyOn(process, "exit").mockImplementation(() => {

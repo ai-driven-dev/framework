@@ -488,7 +488,7 @@ describe("every error in the catalog", () => {
       build: () => new errors.UserScopeUnsupportedAiToolsError(["cursor", "opencode"]),
       name: "UserScopeUnsupportedAiToolsError",
       message:
-        "--global drives native activation machine-wide, and cursor, opencode declares no user-scope settings this CLI can point at. Drop it from --ide, or run `aidd setup --ide <ids>` separately in the project.",
+        "--global installs through an IDE's own plugin CLI, and none exists for: cursor, opencode. Drop them from --ide, or run `aidd setup --ide <ids>` in the project instead.",
     },
     {
       build: () => new errors.UserScopeNoToolsError(),

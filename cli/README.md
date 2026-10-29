@@ -32,8 +32,15 @@ aidd update
 ```
 
 The first command bootstraps the project: manifest, default marketplace, tool configs, plugins.
-`--global` on `setup` registers the framework source and supported tools machine-wide instead, and writes nothing under the project. See the scope support below.
-`--provider <openai|anthropic|mistral>` runs the framework's agents on that provider's models, and `--main` the main session too; `aidd agents set-model` changes the choice later.
+`--global` registers the framework machine-wide instead, and writes nothing under the project.
+`--provider` runs the framework's agents on that provider's models, `--main` the main session too, and `--provider none` undoes both.
+
+| Command | Lands in |
+| --- | --- |
+| `aidd setup --ide claude` | `.claude/` and `.aidd/` in this project |
+| `aidd setup --global --ide claude --plugins none` | `~/.claude/` and `~/.config/aidd/`, nothing in the project |
+| `aidd setup --ide opencode --provider mistral` | `.opencode/agents/` with Mistral models; the provider in `~/.config/aidd/agent-models.json`, for every project |
+| `aidd setup --ide opencode --provider mistral --main` | also `"model"` in `opencode.json`, or `.claude/settings.local.json` for Claude Code |
 
 ## Authentication
 

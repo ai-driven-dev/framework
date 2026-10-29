@@ -13,10 +13,10 @@ const MAX_FILES_PER_FOLDER = 10;
  * files are shuffled. The test asserts the count, so a reason nobody measured fails here.
  */
 const BASELINE: readonly { readonly path: string; readonly count: number }[] = [
-  // Thirteen files carry the command surface, plus three helpers no other folder imports. That
+  // Eleven files carry the command surface, plus three helpers no other folder imports. That
   // is the flattest mapping from the CLI's surface to its source; moving the helpers out
-  // would leave thirteen, still over the limit and clearer about nothing.
-  { path: "src/presentation/commands", count: 16 },
+  // would leave eleven, still over the limit and clearer about nothing.
+  { path: "src/presentation/commands", count: 15 },
   // One display module per command, mirroring `presentation/commands/`: that mirror is what
   // lets a command's rendering be asserted without running the binary. Fewer files would mean
   // one module rendering several commands, which is what put the printing in the actions.

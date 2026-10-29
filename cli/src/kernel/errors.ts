@@ -488,9 +488,8 @@ export class UserScopeIdeToolsError extends Error {
 export class UserScopeUnsupportedAiToolsError extends Error {
   constructor(aiTools: readonly string[]) {
     super(
-      `--global drives native activation machine-wide, and ${aiTools.join(", ")} declares ` +
-        "no user-scope settings this CLI can point at. Drop it from --ide, or run " +
-        "`aidd setup --ide <ids>` separately in the project."
+      `--global installs through an IDE's own plugin CLI, and none exists for: ${aiTools.join(", ")}. ` +
+        "Drop them from --ide, or run `aidd setup --ide <ids>` in the project instead."
     );
     this.name = "UserScopeUnsupportedAiToolsError";
   }
