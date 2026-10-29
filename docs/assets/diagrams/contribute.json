@@ -1,0 +1,12 @@
+{
+  "title": "How to contribute",
+  "steps": [
+    { "label": "Issue", "note": "bug, quick or detailed" },
+    { "label": "Validated", "note": "a green light" },
+    { "label": "Branch", "note": "off next" },
+    { "label": "Change", "note": "tested locally" },
+    { "label": "Pull request", "note": "targets next" },
+    { "label": "Review", "note": "a maintainer approves" },
+    { "label": "Merged", "note": "ships weekly" }
+  ]
+}

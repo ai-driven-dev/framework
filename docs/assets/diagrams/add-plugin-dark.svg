@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="520" height="164" viewBox="0 0 520 164" role="img" aria-label="How to add a plugin: Scaffold, Marketplace, Release, Try, Check, Pull request.">
+  <title>How to add a plugin: Scaffold, Marketplace, Release, Try, Check, Pull request.</title>
+  <defs><marker id="line" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="5.5" markerHeight="5.5" orient="auto" markerUnits="strokeWidth"><path d="M0 0 10 5 0 10Z" fill="#8b97a8"/></marker></defs>
+  <rect x="10" y="0" width="112" height="34" rx="12" fill="#2f81f7"/>
+  <circle cx="27" cy="17" r="10" fill="#ffffff" fill-opacity="0.25"/>
+  <text x="27" y="21" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans',Helvetica,Arial,sans-serif" font-size="11.5" font-weight="700" fill="#ffffff">1</text>
+  <text x="43" y="22" text-anchor="start" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans',Helvetica,Arial,sans-serif" font-size="12" font-weight="700" fill="#ffffff">Scaffold</text>
+  <text x="66" y="49" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans',Helvetica,Arial,sans-serif" font-size="10.5" font-weight="400" fill="#b6c0cc">aidd-&lt;name&gt;</text>
+  <path d="M125 17h8" fill="none" stroke="#8b97a8" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#line)"/>
+  <rect x="136" y="0" width="112" height="34" rx="12" fill="#8a63d2"/>
+  <circle cx="153" cy="17" r="10" fill="#ffffff" fill-opacity="0.25"/>
+  <text x="153" y="21" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans',Helvetica,Arial,sans-serif" font-size="11.5" font-weight="700" fill="#ffffff">2</text>
+  <text x="169" y="22" text-anchor="start" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans',Helvetica,Arial,sans-serif" font-size="12" font-weight="700" fill="#ffffff">Marketplace</text>
+  <text x="192" y="49" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans',Helvetica,Arial,sans-serif" font-size="10.5" font-weight="400" fill="#b6c0cc">add the entry</text>
+  <path d="M251 17h8" fill="none" stroke="#8b97a8" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#line)"/>
+  <rect x="262" y="0" width="112" height="34" rx="12" fill="#a371f7"/>
+  <circle cx="279" cy="17" r="10" fill="#ffffff" fill-opacity="0.25"/>
+  <text x="279" y="21" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans',Helvetica,Arial,sans-serif" font-size="11.5" font-weight="700" fill="#ffffff">3</text>
+  <text x="295" y="22" text-anchor="start" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans',Helvetica,Arial,sans-serif" font-size="12" font-weight="700" fill="#ffffff">Release</text>
+  <text x="318" y="49" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans',Helvetica,Arial,sans-serif" font-size="10.5" font-weight="400" fill="#b6c0cc">config and</text>
+  <text x="318" y="62" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans',Helvetica,Arial,sans-serif" font-size="10.5" font-weight="400" fill="#b6c0cc">manifest</text>
+  <path d="M377 17h8" fill="none" stroke="#8b97a8" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#line)"/>
+  <rect x="388" y="0" width="112" height="34" rx="12" fill="#d1569b"/>
+  <circle cx="405" cy="17" r="10" fill="#ffffff" fill-opacity="0.25"/>
+  <text x="405" y="21" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans',Helvetica,Arial,sans-serif" font-size="11.5" font-weight="700" fill="#ffffff">4</text>
+  <text x="421" y="22" text-anchor="start" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans',Helvetica,Arial,sans-serif" font-size="12" font-weight="700" fill="#ffffff">Try</text>
+  <text x="444" y="49" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans',Helvetica,Arial,sans-serif" font-size="10.5" font-weight="400" fill="#b6c0cc">install it</text>
+  <text x="444" y="62" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans',Helvetica,Arial,sans-serif" font-size="10.5" font-weight="400" fill="#b6c0cc">locally</text>
+  <path d="M503 17H504Q514 17 514 27V66Q514 76 504 76H76Q66 76 66 86V96" fill="none" stroke="#8b97a8" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#line)"/>
+  <rect x="10" y="100" width="112" height="34" rx="12" fill="#d9622b"/>
+  <circle cx="27" cy="117" r="10" fill="#ffffff" fill-opacity="0.25"/>
+  <text x="27" y="121" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans',Helvetica,Arial,sans-serif" font-size="11.5" font-weight="700" fill="#ffffff">5</text>
+  <text x="43" y="122" text-anchor="start" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans',Helvetica,Arial,sans-serif" font-size="12" font-weight="700" fill="#ffffff">Check</text>
+  <text x="66" y="149" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans',Helvetica,Arial,sans-serif" font-size="10.5" font-weight="400" fill="#b6c0cc">the pre-commit</text>
+  <text x="66" y="162" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans',Helvetica,Arial,sans-serif" font-size="10.5" font-weight="400" fill="#b6c0cc">gate</text>
+  <path d="M125 117h8" fill="none" stroke="#8b97a8" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#line)"/>
+  <rect x="136" y="100" width="112" height="34" rx="12" fill="#2da44e"/>
+  <circle cx="153" cy="117" r="10" fill="#ffffff" fill-opacity="0.25"/>
+  <text x="153" y="121" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans',Helvetica,Arial,sans-serif" font-size="11.5" font-weight="700" fill="#ffffff">6</text>
+  <text x="169" y="122" text-anchor="start" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans',Helvetica,Arial,sans-serif" font-size="12" font-weight="700" fill="#ffffff">Pull request</text>
+  <text x="192" y="149" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans',Helvetica,Arial,sans-serif" font-size="10.5" font-weight="400" fill="#b6c0cc">feat(aidd-&lt;name&gt;)</text>
+</svg>

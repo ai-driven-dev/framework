@@ -10,7 +10,7 @@
 import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { cardSvg, cardsMarkup } from "./lib/plugin-cards.mjs";
-import { chainMarkup, chainSvg } from "./lib/flow-diagram.mjs";
+import { chainMarkup, chainSvg, stepsMarkup, stepsSvg } from "./lib/flow-diagram.mjs";
 
 const rootFlag = process.argv.indexOf("--root");
 const ROOT =
@@ -18,6 +18,9 @@ const ROOT =
 const ARCHITECTURE = `${ROOT}docs/ARCHITECTURE.md`;
 const COMPATIBILITY = `${ROOT}docs/COMPATIBILITY.md`;
 const README = `${ROOT}README.md`;
+const CONTRIBUTING = `${ROOT}CONTRIBUTING.md`;
+const RELEASE = `${ROOT}RELEASE.md`;
+const MAINTAINERS = `${ROOT}docs/MAINTAINERS.md`;
 const SUPPORT_RECORD = `${ROOT}cli/tests/golden/snapshots/tool-support/surface.json`;
 
 const CARD_DIRECTORY = `${ROOT}docs/assets/plugins`;
@@ -25,6 +28,7 @@ const CARD_CONFIG = `${CARD_DIRECTORY}/plugins.json`;
 
 const DIAGRAM_DIRECTORY = `${ROOT}docs/assets/diagrams`;
 const SDLC_CHAIN = `${DIAGRAM_DIRECTORY}/sdlc.json`;
+const STEP_DIAGRAMS = ["contribute", "release", "add-plugin"];
 
 const SCRIPT_REFERENCE = /\$\{CLAUDE_PLUGIN_ROOT\}\/([^\s"]+)/g;
 const SURFACES = [
@@ -35,7 +39,6 @@ const SURFACES = [
   ["rules", "Rules"],
   ["commands", "Commands"],
 ];
-const WORDS = { yes: "yes", bridge: "bridge", no: "no" };
 
 function between(name) {
   return new RegExp(`(<!--${name}:start-->)[\\s\\S]*?(<!--${name}:end-->)`);
@@ -69,30 +72,33 @@ function hooksTable() {
   return table(["Plugin", "Event", "Runs"], rows);
 }
 
+/** One row per tool: how it installs, then what each surface becomes. A surface no tool carries gets no column. */
 function supportTables() {
   const record = JSON.parse(readFileSync(SUPPORT_RECORD, "utf8"));
+  const icon = (support) => (support === "no" ? "❌" : support === "bridge" ? "✅ bridge" : "✅");
+  const layoutName = { marketplace: "marketplace", flat: "flat files" };
 
-  const install = record.map((tool) => [
-    tool.name,
-    `\`${tool.directory}\``,
-    tool.builds.marketplace ? "yes" : "no",
-    tool.builds.flat ? "yes" : "no",
-    tool.nativeCli ? `\`${tool.nativeCli}\` command line` : "files written by `aidd`",
-  ]);
-
-  const builds = record.flatMap((tool) =>
-    Object.entries(tool.builds).map(([layout, support]) => [
-      tool.name,
-      layout === "flat" ? "flat files" : "marketplace",
-      ...SURFACES.map(([key]) => WORDS[support[key]]),
-    ])
+  const carried = SURFACES.filter(([key]) =>
+    record.some((tool) => Object.values(tool.builds).some((build) => build[key] !== "no"))
   );
 
-  return [
-    table(["Tool", "Directory", "Marketplace", "Flat files", "Registered through"], install),
-    "",
-    table(["Tool", "Layout", ...SURFACES.map(([, label]) => label)], builds),
-  ].join("\n");
+  const cell = (tool, key) => {
+    const layouts = Object.entries(tool.builds);
+    const values = new Set(layouts.map(([, build]) => build[key]));
+    if (values.size === 1) return icon([...values][0]);
+    return layouts.map(([layout, build]) => `${icon(build[key])} ${layoutName[layout]}`).join(", ");
+  };
+
+  return table(
+    ["Tool", "Directory", "Marketplace", "Flat files", ...carried.map(([, label]) => label)],
+    record.map((tool) => [
+      tool.name,
+      `\`${tool.directory}\``,
+      tool.builds.marketplace ? "✅" : "❌",
+      tool.builds.flat ? "✅" : "❌",
+      ...carried.map(([key]) => cell(tool, key)),
+    ])
+  );
 }
 
 /**
@@ -154,13 +160,26 @@ function sdlcChain() {
   return JSON.parse(readFileSync(SDLC_CHAIN, "utf8"));
 }
 
+function stepDiagram(name) {
+  return JSON.parse(readFileSync(`${DIAGRAM_DIRECTORY}/${name}.json`, "utf8"));
+}
+
 function diagramFiles() {
-  return ["light", "dark"].map((theme) => [`${DIAGRAM_DIRECTORY}/sdlc-${theme}.svg`, chainSvg(sdlcChain(), theme)]);
+  const themes = ["light", "dark"];
+  return [
+    ...themes.map((theme) => [`${DIAGRAM_DIRECTORY}/sdlc-${theme}.svg`, chainSvg(sdlcChain(), theme)]),
+    ...STEP_DIAGRAMS.flatMap((name) =>
+      themes.map((theme) => [`${DIAGRAM_DIRECTORY}/${name}-${theme}.svg`, stepsSvg(stepDiagram(name), theme)])
+    ),
+  ];
 }
 
 const targets = [
   [README, "tools", toolsTable],
   [README, "sdlc", () => chainMarkup(sdlcChain(), "docs/assets/diagrams/sdlc")],
+  [CONTRIBUTING, "contribute", () => stepsMarkup(stepDiagram("contribute"), "docs/assets/diagrams/contribute")],
+  [MAINTAINERS, "add-plugin", () => stepsMarkup(stepDiagram("add-plugin"), "assets/diagrams/add-plugin")],
+  [RELEASE, "release", () => stepsMarkup(stepDiagram("release"), "docs/assets/diagrams/release")],
   [README, "plugins", () => cardsMarkup(cards())],
   [ARCHITECTURE, "hooks", hooksTable],
   [COMPATIBILITY, "support", supportTables],

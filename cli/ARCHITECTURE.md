@@ -113,7 +113,7 @@ OpenCode needs JS adapters. The CLI owns the shared host protocol; plugins own p
 <details>
 <summary>Plugin root spelling per tool</summary>
 
-Hooks are authored with `${CLAUDE_PLUGIN_ROOT}`; the installer translates the root for each tool. Which tools run the hooks, and what was observed, is in [Compatibility](../docs/COMPATIBILITY.md#hooks).
+Hooks are authored with `${CLAUDE_PLUGIN_ROOT}`; the installer translates the root for each tool. Which tools run the hooks is in [Compatibility](../docs/COMPATIBILITY.md).
 | Tool           | Plugin root            | Notes |
 | -------------- | ---------------------- | ----- |
 | Claude Code    | `${CLAUDE_PLUGIN_ROOT}` | Authoring spelling, nothing substituted |

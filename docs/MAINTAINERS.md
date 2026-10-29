@@ -1,167 +1,94 @@
 # Maintainers guide
 
-How to operate this repository day to day. This file is the **Maintainer** playbook — it does not restate the others:
+How to run this repository day to day. For who may do what, see [Governance](../GOVERNANCE.md). For how contributors work, see [Contributing](../CONTRIBUTING.md).
 
-- **Who** may do what + decision rules → [`GOVERNANCE.md`](../GOVERNANCE.md).
-- **How contributors work** → [`CONTRIBUTING.md`](../CONTRIBUTING.md).
+## What you look after
 
-## 🧩 The moving parts
-
-| Thing | Where | Note |
-| ----- | ----- | ---- |
-| Published plugins | `.claude-plugin/marketplace.json` + `plugins/` | the only thing shipped in a release |
-| Live backlog & roadmap | [Project board #8](https://github.com/orgs/ai-driven-dev/projects/8) | single source of truth |
-| Roles → access | GitHub teams `trusted-partners` / `certified-members` / `core-team` | mapped to the role ladder |
-| Branch protection | ruleset "main protection" + `.github/rulesets/main.json` | `main` is PR-only |
-| Releases | release-please (`ci.yml`) + `release-please-config.json` | 11 packages (root + 9 plugins + `cli`), auto |
-| Pre-commit checks | `lefthook.yml` + `scripts/` | json/yaml/schema/frontmatter/catalogs/counts |
-
-## 📅 Daily
-
-- **Triage issues.** New issues auto-add to board #8. The form already stamped the type. You give the issue a **milestone** or a **priority**, never both.
-- **Roadmap.** Priority = the community vote (mechanism in `GOVERNANCE.md`). Accepted items live on board #8 — don't maintain a second list in a document.
-- **Review PRs.** Approve as CODEOWNERS, then squash-merge (merge policy → [`GOVERNANCE.md`](../GOVERNANCE.md#-code-decisions)).
-
-## 📋 Four axes, one board
-
-Each axis answers one question, and only `Status` lives on the board. Routing (`next`/`main`) is not an axis — it derives from the branch prefix ([routing table](../aidd_docs/memory/vcs.md#branches)).
-
-| Axis | Lives in | Answers | Values |
-| --- | --- | --- | --- |
-| **Type** | issue type, stamped by the form | what kind of work | `Bug` · `Feature` · `Task` |
-| **Milestone** | repo milestone | *when* it ships | one theme, due on a Thursday |
-| **Priority** | org issue field | *in what order*, among what has no *when* | `Urgent` · `High` · `Medium` · `Low` |
-| **Status** | board field | where the work stands | `Ideation` · `Todo` · `In Progress` · `In review` · `Done` |
-
-Two rules keep the axes orthogonal:
-
-- **A milestone or a priority, never both.** The milestone decided when; the order no longer matters.
-- **The scope lives in the title**, conventional and queryable: `feat(aidd-pm): …`. No `Area` field, no scope label. Find work with `gh issue list --search 'aidd-pm in:title'`.
-
-Status automation (Project → ⋯ → Workflows); `In Progress` is the one manual move:
-
-| Trigger (built-in) | Status |
+| Thing | Where |
 | --- | --- |
-| Item added | `Todo` |
-| PR linked / ready for review | `In review` |
-| PR merged · item closed | `Done` |
+| Published plugins | `.claude-plugin/marketplace.json` and `plugins/` |
+| Backlog and roadmap | [Project board](https://github.com/orgs/ai-driven-dev/projects/8), the single source of truth |
+| Roles and access | GitHub teams `core-team`, `certified-members` and `trusted-partners` |
+| Branch protection | `.github/rulesets/main.json`, applied as the "main protection" ruleset |
+| Releases | release-please: `ci.yml` and `release-please-config.json` |
+| Checks before a commit | `lefthook.yml` and `scripts/` |
 
-The roadmap layout cannot read a milestone as a date, so the milestone view is a **Table view grouped by `Milestone`**. Its `No milestone` group is the backlog, ordered by `Priority`.
+## Every day
 
-## 🏷️ Labels
+1. **Triage new issues.** They join the board on their own, and the form already set the type. Give each one a milestone or a priority, never both.
+2. **Review pull requests.** Approve as a code owner, then squash-merge. The merge rules are in [Governance](../GOVERNANCE.md#code-decisions).
+3. **Watch dependency updates.** Patch and minor bumps merge by themselves once checks pass. Review major bumps, then run `gh pr merge <n> --squash`.
 
-Labels categorize nothing: the **issue type** does. A label in [`.github/labels.yml`](../.github/labels.yml) exists only when a bot or a human reads it — `good first issue`, `dependencies` (dependabot), `autorelease: *` (release-please).
+## How work is tracked
 
-Nothing syncs the file to GitHub. Create and delete by hand, then check they agree:
+One board, four axes. Only the status lives on the board.
 
-```bash
+| Axis | Answers | Values |
+| --- | --- | --- |
+| Type | What kind of work | `Bug`, `Feature`, `Task`, set by the issue form |
+| Milestone | When it ships | One theme, due on a Thursday |
+| Priority | In what order, for work with no date | `Urgent`, `High`, `Medium`, `Low` |
+| Status | Where it stands | `Ideation`, `Todo`, `In Progress`, `In review`, `Done` |
+
+- **A milestone or a priority, never both.** The milestone already says when.
+- **The scope lives in the title**, as `feat(aidd-pm): ...`. Find work with `gh issue list --search 'aidd-pm in:title'`.
+- **Status moves on its own** when an item is added (`Todo`), when a pull request is linked (`In review`), and when it is merged or closed (`Done`). `In Progress` is the one manual move.
+- **Labels categorize nothing.** A label exists in [`.github/labels.yml`](../.github/labels.yml) only when a bot or a person reads it. Nothing syncs that file, so check it by hand:
+
+```sh
 diff <(gh label list --repo ai-driven-dev/framework | cut -f1 | sort) \
      <(yq e '.[].name' .github/labels.yml | sort)
 ```
 
-## 🚀 Releases
+## Release
 
-release-please opens/updates a `chore: release main` PR on each push to `main`.
+The weekly release steps are in [Release](../RELEASE.md). Rules that matter to you:
 
-1. (Optional) Review the version bumps + changelog. Authored by the **aidd-bot** App, so its checks run normally.
-2. CI **auto-merges** it with the App token (`--merge --admin`); no human step needed. `--admin` is required because a plain `gh pr merge` is refused even for the bypass App, and `--merge` matches the single method `.github/rulesets/main.json`'s `pull_request` rule declares for `main`.
-3. CI tags each bumped package, creates the GitHub Releases, and attaches the bundles:
-   - `aidd-framework-marketplace-X.Y.Z.zip` (`.claude-plugin/` + `plugins/`)
-   - `<plugin>-vX.Y.Z.zip`
-   - `aidd-framework-<tool>-<mode>-X.Y.Z.zip` - per-tool distributions (10 archives: 4 marketplace claude/cursor/copilot/codex + 6 flat incl. opencode and kilo), produced by the `build-per-tool` matrix job in `ci.yml`. It builds the CLI from this run's own checkout and runs `translate <source> --to <tool> --out <dir> --as <marketplace|flat>` — no published-version pin to bump.
+- **Promote with a merge commit, never a squash or a rebase.** Use the **Promote next to main** workflow. A squash can leave a subject that fails `Commitlint`, which skips release-please. A rebase leaves a stale merge base, so every later back-merge conflicts.
+- **The Release PR merges itself** with the App token, using `gh pr merge --merge --admin`.
+- **Force a version** with `release-as` in `release-please-config.json`, and remove it after the release.
+- **Hotfix:** merge with an empty description box, or `gh pr merge <n> --merge --body ""`. See [Release](../RELEASE.md#-hotfix) for why.
 
-Versions live in `.release-please-manifest.json`. Forcing a version / pre-release: `release-as` in `release-please-config.json` (remove it after the release ships).
+If a bad squash turns `main` red, an admin disables the "main protection" ruleset, force-pushes `main` back to the commit before the merge, re-enables the ruleset, and runs **Promote** again.
 
-## 🔄 Promotion & recovery
+## Add a plugin
 
-The weekly `next` → `main` promotion **must be a merge commit, never a squash and never a rebase**:
+<!--add-plugin:start-->
 
-- A squash collapses the batch's conventional commits into one subject from the PR title. If that title isn't a valid conventional type, `Commitlint` fails on `main` and **release-please is skipped** — no release. `ci.yml` now lints the PR title itself on every pull request, the promote PR included, so a bad subject fails the promote PR's own `Commitlint` check before merge; the recovery below is the fallback, not the expected path. release-please attributes each commit to a package by the **path it touched** (`release-please-config.json`'s `packages` map), not by its scope, and a squash hides which paths the batch actually touched.
-- A rebase keeps the commits but recopies them under new hashes, so git never records that the branches were reconciled. The merge base between `main` and `next` then goes stale, and every later back-merge conflicts on the release metadata release-please rewrites each time — a conflict with no real content behind it.
-- A merge commit does both jobs: the commits land verbatim, and its second parent keeps a shared merge base so the back-merge stays clean.
-- Use the **Promote next to main** workflow (it merges); merging by hand, pick **Create a merge commit** and give it a conventional subject.
-- `.github/rulesets/main.json`'s `pull_request` rule declares `allowed_merge_methods: ["merge"]`. A maintainer still has to push that file to the live `main protection` ruleset before GitHub itself refuses squash and rebase for everyone, the Release PR included; until then this rule is procedural, kept by this runbook and `ci.yml`, not yet enforced server-side.
+<p align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="assets/diagrams/add-plugin-dark.svg"><img src="assets/diagrams/add-plugin-light.svg" alt="How to add a plugin: Scaffold, Marketplace, Release, Try, Check, Pull request." width="520"></picture></p>
 
-**Recovery** — a bad squashed promote turns `main` red on `Commitlint` and skips **Release Please**. An admin:
+<!--add-plugin:end-->
 
-1. Temporarily disables the `main protection` ruleset (Settings → Rules).
-2. Force-pushes `main` back to the commit before the bad merge.
-3. Re-enables the ruleset, then re-runs **Promote**.
+Adding a skill to an existing plugin? Generate it with `/aidd-context:03-context-generate` and add it to that plugin's `plugin.json`. You can skip the registration below.
 
-## 🚑 Hotfix merge
+1. **Scaffold.** Name it `aidd-<name>`, in lowercase. The layout, `plugin.json` and the `SKILL.md` and action format are in [Anatomy of a plugin](ARCHITECTURE.md#-anatomy-of-a-plugin).
+2. **Register in the marketplace.** Add an entry to `.claude-plugin/marketplace.json` with `name`, `source` (`./plugins/aidd-<name>`), `strict: true` and `metadata: { "recommended": false }`. The last field keeps the plugin off the curated install path until it is stable.
+3. **Register for release.** Add the package to `release-please-config.json` and to `.release-please-manifest.json`. Without both, it is never versioned.
+4. **Try it locally.** Run `/plugin marketplace add ./` then `/plugin install aidd-<name>@aidd-framework`. Run `/reload-plugins` after each skill edit.
+5. **Check.** Run `pnpm exec lefthook run pre-commit`. It validates JSON, YAML and frontmatter, and regenerates the plugin's `CATALOG.md`.
+6. **Open a pull request** titled `feat(aidd-<name>): ...`. On merge, release-please tags and publishes it.
 
-Merge a `hotfix/*` PR with the merge dialog's description box cleared, or `gh pr merge <n> --merge --body ""` — see [`RELEASE.md`](../RELEASE.md#-hotfix) for why an empty body matters here.
+Writing rules: English, hyphens instead of em-dashes, no cross-plugin references in descriptions or READMEs, and one sentence per `Use when ... / Not for ...` cue. A skill's `name:` is its folder slug, such as `01-hello`, and it is invoked as `<plugin>:<folder>`.
 
-## 📦 Dependencies (Dependabot)
+## Branch protection and the bot
 
-- **Patch + minor bumps auto-merge** once checks pass (`.github/workflows/dependabot-auto-merge.yml`, via the aidd-bot App).
-- **Major bumps stay manual** — review, then `gh pr merge <n> --squash`.
-- Several lockfile bumps queued: the first merges and the rest re-base automatically (or comment `@dependabot rebase`).
+The policy (pull request only, code owner review, required checks) is in [Governance](../GOVERNANCE.md#code-decisions). The operations:
 
-## 🔒 Branch protection & the bot bypass
+- Two actors can bypass the pull request rule, and neither can push straight to `main`: the **aidd-bot GitHub App**, whose token release-please and the Dependabot auto-merge use, and the organization's `admin` team, whose members can merge their own pull request. The team confers no role.
+- The App's ID is in the secret `AIDD_BOT_APP_ID` and its key in `AIDD_BOT_PRIVATE_KEY`. If the App breaks, release and Dependabot pull requests stop merging. Fix the App rather than add an admin bypass.
+- Head branches are not deleted on merge. The promotion PR uses a disposable `promote/next-to-main-<run>` branch that the workflow deletes. The back-merge runs unattended, and if it cannot push it opens an issue: resync with a `main` to `next` pull request. If `next` is missing, run `git push origin main:next`.
+- To change protection, edit `.github/rulesets/main.json` (or `next.json`) first, then an admin applies it: `gh api -X PUT repos/ai-driven-dev/framework/rulesets/<id> --input .github/rulesets/main.json`. The file is the source, never the live ruleset.
 
-The protection policy (PR-only, CODEOWNERS review, required checks) is defined in [`GOVERNANCE.md`](../GOVERNANCE.md#-code-decisions); this is the ops.
+## Security
 
-Two bypass actors (both `pull_request` mode, so neither can push directly to `main`):
-- the **aidd-bot GitHub App** (`Integration`) - release-please and the Dependabot auto-merge mint a token from it (`actions/create-github-app-token`), so their PRs trigger the required checks *and* the App merges them past the human-review rule.
-- the org's **`admin` team** (team id `11783938`, the actor the rulesets record) - lead maintainers can merge their own PR without a second review. Everyone else needs a code-owner review. It is a separate team from the three `GOVERNANCE.md` maps roles to, and confers no role of its own.
+- Vulnerabilities go through GitHub Security Advisories, never a public issue. See [`SECURITY.md`](../SECURITY.md).
+- Secret scanning, push protection and Dependabot alerts are on. Push protection does not scan history, so never paste tokens.
+- Runtime risks of one plugin, such as CI permissions or MCP servers, belong in that plugin's README.
 
-The App: ID in secret `AIDD_BOT_APP_ID`, key in `AIDD_BOT_PRIVATE_KEY`. If the App is broken/uninstalled, release and Dependabot PRs stop merging - fix the App rather than re-adding an admin bypass.
+## Do not edit by hand
 
-Head branches are **not** auto-deleted on merge (`delete_branch_on_merge: false`):
+- The generated blocks in the README, [`COMPATIBILITY.md`](COMPATIBILITY.md), [`ARCHITECTURE.md`](ARCHITECTURE.md) and the diagram images. Run `node scripts/sync-generated-docs.mjs`.
+- The counts in the README, from `scripts/sync-readme-counts.mjs`.
+- Each plugin's `CATALOG.md`, from `scripts/summarize-markdown.js`.
 
-- The promote PR is headed by a disposable `promote/next-to-main-<run_id>` snapshot of `next`, which the workflow deletes on merge. `next` itself is never a head branch, so the back-merge never hits a missing branch.
-- The back-merge runs unattended (bot App `always` bypass on the `next` ruleset). If it can't push, it opens a tracking issue — resync with a `main` → `next` PR.
-- If `next` is ever missing, recreate it: `git push origin main:next`.
-
-To change protection, edit `.github/rulesets/main.json` (or `next.json`) first — it is the
-source, the live ruleset is applied from it, never the other way round. An admin then applies
-it, either through `gh api` or the UI:
-```bash
-gh api -X PUT repos/ai-driven-dev/framework/rulesets/<id> --input .github/rulesets/main.json
-```
-or Settings → Rules → Rulesets → edit the ruleset by hand to match the file. Keep the file and
-the live ruleset in sync either way.
-
-## 👥 People
-
-Roles, promotion, and inactivity rules → [`GOVERNANCE.md`](../GOVERNANCE.md#-roles). Team mechanics only:
-
-- Maintainer ↔ `trusted-partners` team + `CODEOWNERS`.
-- Core Team / Certified Member ↔ `core-team` / `certified-members` teams.
-
-## 🛡️ Security
-
-- Vulnerabilities: GitHub Security Advisories (see `SECURITY.md`); never a public issue.
-- Secret scanning + push protection + Dependabot alerts are enabled. Push protection blocks new secret commits; it does not scan history, so never paste tokens.
-- Plugin-specific runtime risks (CI permissions, MCP servers) belong in that plugin's README, not here.
-
-## ✋ Do NOT hand-edit
-
-- **README counts** — the hero `N plugins · N skills · N agents` block (between the `counts:start`/`counts:end` markers) and each per-plugin `N skills` span — auto-generated by `scripts/sync-readme-counts.mjs` via lefthook.
-- **Per-plugin `CATALOG.md`** — auto-generated by `scripts/summarize-markdown.js` via lefthook.
-- **README contributors mosaic** — the contrib.rocks image updates itself.
-
-## 🛠️ Multi-tool
-
-- The marketplace is Claude Code native.
-- Other tools are served by per-release archives the `aidd-cli` builds; this repo stays Claude-authored and tool-agnostic in its prose.
-- Keep tool-specific detail in plugin READMEs.
-
-## 🧱 Add a plugin
-
-```mermaid
-flowchart LR
-    Scaffold["Scaffold the plugin dir"] --> Register["Register in marketplace.json and release config"] --> Test["Try locally"] --> PR["PR and review"] --> Release["release-please tags and publishes"]
-```
-
-Adding a skill to an existing plugin? Generate it with `/aidd-context:03-context-generate` and edit that plugin's `plugin.json` `skills[]`. Skip the registration below.
-
-1. **Scaffold.** Name it `aidd-<x>`, lowercase. The directory shape, `plugin.json` and the `SKILL.md` and action format are in [Anatomy of a plugin](ARCHITECTURE.md#-anatomy-of-a-plugin). The minimum is `<plugin>/.claude-plugin/plugin.json` plus `skills/<NN>-<name>/` with a `SKILL.md` and `actions/`.
-2. **Register in the marketplace.** Append an entry to `.claude-plugin/marketplace.json` with `name`, `source` (`./plugins/aidd-<x>`), `strict: true` and `metadata: { "recommended": false }`. The last field keeps the plugin off the curated install path until it is stable. It sits under `metadata` because Claude Code warns about any other field of its own.
-3. **Register for release.** Add the package to `release-please-config.json` `packages` and to `.release-please-manifest.json`. Without both, it is never versioned.
-4. **Try it locally.** Run `/plugin marketplace add ./` then `/plugin install aidd-<x>@aidd-framework`. Run `/reload-plugins` after each skill edit.
-5. **Check.** `pnpm exec lefthook run pre-commit` validates JSON, YAML and frontmatter, and regenerates the plugin's `CATALOG.md`.
-6. **Ship.** Open a PR titled `feat(aidd-<x>): …`. On merge, release-please tags `aidd-<x>-vX.Y.Z` and publishes.
-
-Writing rules: English prose, hyphens instead of em-dashes, no cross-plugin references in descriptions or READMEs, one sentence per `Use when … / Do NOT use for …` cue. A skill's `name:` is its folder slug (`01-hello`); the invocation token is `<plugin>:<folder>`.
+Both run through lefthook. The contributors image updates itself.

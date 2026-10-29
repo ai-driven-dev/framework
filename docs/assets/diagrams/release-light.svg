@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="520" height="164" viewBox="0 0 520 164" role="img" aria-label="How a change ships: Pull request, Promotion, Release PR, Tags, Published, Back-merge.">
+  <title>How a change ships: Pull request, Promotion, Release PR, Tags, Published, Back-merge.</title>
+  <defs><marker id="line" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="5.5" markerHeight="5.5" orient="auto" markerUnits="strokeWidth"><path d="M0 0 10 5 0 10Z" fill="#6b7686"/></marker></defs>
+  <rect x="10" y="0" width="112" height="34" rx="12" fill="#0969da"/>
+  <circle cx="27" cy="17" r="10" fill="#ffffff" fill-opacity="0.25"/>
+  <text x="27" y="21" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans',Helvetica,Arial,sans-serif" font-size="11.5" font-weight="700" fill="#ffffff">1</text>
+  <text x="43" y="22" text-anchor="start" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans',Helvetica,Arial,sans-serif" font-size="12" font-weight="700" fill="#ffffff">Pull request</text>
+  <text x="66" y="49" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans',Helvetica,Arial,sans-serif" font-size="10.5" font-weight="400" fill="#4a5560">into next</text>
+  <path d="M125 17h8" fill="none" stroke="#6b7686" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#line)"/>
+  <rect x="136" y="0" width="112" height="34" rx="12" fill="#6f42c1"/>
+  <circle cx="153" cy="17" r="10" fill="#ffffff" fill-opacity="0.25"/>
+  <text x="153" y="21" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans',Helvetica,Arial,sans-serif" font-size="11.5" font-weight="700" fill="#ffffff">2</text>
+  <text x="169" y="22" text-anchor="start" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans',Helvetica,Arial,sans-serif" font-size="12" font-weight="700" fill="#ffffff">Promotion</text>
+  <text x="192" y="49" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans',Helvetica,Arial,sans-serif" font-size="10.5" font-weight="400" fill="#4a5560">next to main,</text>
+  <text x="192" y="62" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans',Helvetica,Arial,sans-serif" font-size="10.5" font-weight="400" fill="#4a5560">weekly</text>
+  <path d="M251 17h8" fill="none" stroke="#6b7686" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#line)"/>
+  <rect x="262" y="0" width="112" height="34" rx="12" fill="#8250df"/>
+  <circle cx="279" cy="17" r="10" fill="#ffffff" fill-opacity="0.25"/>
+  <text x="279" y="21" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans',Helvetica,Arial,sans-serif" font-size="11.5" font-weight="700" fill="#ffffff">3</text>
+  <text x="295" y="22" text-anchor="start" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans',Helvetica,Arial,sans-serif" font-size="12" font-weight="700" fill="#ffffff">Release PR</text>
+  <text x="318" y="49" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans',Helvetica,Arial,sans-serif" font-size="10.5" font-weight="400" fill="#4a5560">opened and merged</text>
+  <text x="318" y="62" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans',Helvetica,Arial,sans-serif" font-size="10.5" font-weight="400" fill="#4a5560">by the bot</text>
+  <path d="M377 17h8" fill="none" stroke="#6b7686" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#line)"/>
+  <rect x="388" y="0" width="112" height="34" rx="12" fill="#bf3989"/>
+  <circle cx="405" cy="17" r="10" fill="#ffffff" fill-opacity="0.25"/>
+  <text x="405" y="21" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans',Helvetica,Arial,sans-serif" font-size="11.5" font-weight="700" fill="#ffffff">4</text>
+  <text x="421" y="22" text-anchor="start" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans',Helvetica,Arial,sans-serif" font-size="12" font-weight="700" fill="#ffffff">Tags</text>
+  <text x="444" y="49" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans',Helvetica,Arial,sans-serif" font-size="10.5" font-weight="400" fill="#4a5560">versions and</text>
+  <text x="444" y="62" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans',Helvetica,Arial,sans-serif" font-size="10.5" font-weight="400" fill="#4a5560">archives</text>
+  <path d="M503 17H504Q514 17 514 27V66Q514 76 504 76H76Q66 76 66 86V96" fill="none" stroke="#6b7686" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#line)"/>
+  <rect x="10" y="100" width="112" height="34" rx="12" fill="#bc4c00"/>
+  <circle cx="27" cy="117" r="10" fill="#ffffff" fill-opacity="0.25"/>
+  <text x="27" y="121" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans',Helvetica,Arial,sans-serif" font-size="11.5" font-weight="700" fill="#ffffff">5</text>
+  <text x="43" y="122" text-anchor="start" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans',Helvetica,Arial,sans-serif" font-size="12" font-weight="700" fill="#ffffff">Published</text>
+  <text x="66" y="149" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans',Helvetica,Arial,sans-serif" font-size="10.5" font-weight="400" fill="#4a5560">after the video</text>
+  <path d="M125 117h8" fill="none" stroke="#6b7686" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#line)"/>
+  <rect x="136" y="100" width="112" height="34" rx="12" fill="#1a7f37"/>
+  <circle cx="153" cy="117" r="10" fill="#ffffff" fill-opacity="0.25"/>
+  <text x="153" y="121" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans',Helvetica,Arial,sans-serif" font-size="11.5" font-weight="700" fill="#ffffff">6</text>
+  <text x="169" y="122" text-anchor="start" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans',Helvetica,Arial,sans-serif" font-size="12" font-weight="700" fill="#ffffff">Back-merge</text>
+  <text x="192" y="149" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans',Helvetica,Arial,sans-serif" font-size="10.5" font-weight="400" fill="#4a5560">main into next</text>
+</svg>

@@ -13,6 +13,8 @@
 | [Marketplace](#marketplace) | You want your tool's plugin manager to install and update the plugins. |
 | [Flat files](#flat-files) | You want plain files in your project, to commit them or because your tool has no plugin manager. |
 
+Not every tool supports every method. Check your tool in the [compatibility table](COMPATIBILITY.md).
+
 ## CLI
 
 ### Install

@@ -1,63 +1,45 @@
-# Contributing to the AIDD Framework
+# Contributing
 
-## 👥 How to contribute
+One path, open to everyone. Who may do what is in [Governance](GOVERNANCE.md#roles).
 
-One path, open to everyone ([roles](./GOVERNANCE.md#-roles)). 
+<!--contribute:start-->
 
-```mermaid
-flowchart LR
-    Start(["Something to share?"]) -->|"just a question"| Discussion["💬 Discussions"]
-    Start --> Bug["🐛 Bug"]
-    Start --> Quick["🌱 Quick<br/>problem + solution"]
-    Start --> Detailed["📋 Detailed<br/>scope + acceptance criteria"]
-    Bug --> Validate["✅ Get validated"]
-    Quick --> Validate
-    Detailed --> Validate
-    Validate --> Setup["🔧 Set up"] --> Changes["✏️ Changes"] --> PR["🔀 Open PR"] --> Review["🛡️ Review"] --> Merge["✅ Merged"]
+<p align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="docs/assets/diagrams/contribute-dark.svg"><img src="docs/assets/diagrams/contribute-light.svg" alt="How to contribute: Issue, Validated, Branch, Change, Pull request, Review, Merged." width="520"></picture></p>
+
+<!--contribute:end-->
+
+## 1. Share it
+
+- Just a question? Ask in [Discussions](https://github.com/ai-driven-dev/framework/discussions).
+- Otherwise open an issue: a [bug report](https://github.com/ai-driven-dev/framework/issues/new?template=bug_report.yml), a [quick contribution](https://github.com/ai-driven-dev/framework/issues/new?template=quick_contribution.yml) (a problem and its solution) or a [detailed contribution](https://github.com/ai-driven-dev/framework/issues/new?template=detailed_contribution.yml) (a scope and acceptance criteria).
+- A Certified Member or a Maintainer validates it by moving it to `Todo`. Then anyone can pick it up, not only the person who opened it.
+
+## 2. Set up
+
+You need [Node](https://nodejs.org) 22.18+ or 24.11+ (26 and later also work) and [pnpm](https://pnpm.io). The skills that talk to GitHub also use `gh` and `jq`.
+
+Fork the repository, or branch from it if you have write access. Then:
+
+```sh
+make setup
 ```
 
-1. Just a question? → [Discussions](https://github.com/ai-driven-dev/framework/discussions).
-2. **Open an issue** — [🐛 Bug Report](https://github.com/ai-driven-dev/framework/issues/new?template=bug_report.yml), [🌱 Quick Contribution](https://github.com/ai-driven-dev/framework/issues/new?template=quick_contribution.yml), or [📋 Detailed Contribution](https://github.com/ai-driven-dev/framework/issues/new?template=detailed_contribution.yml).
-3. **Get it validated** — a Certified Member or Maintainer moves it to `Todo`. Green light.
-4. **Want to build it yourself?** → [Set up](#-set-up). Anyone can pick up a validated issue, not just the person who opened it.
-5. **Open your PR** → [Open a pull request](#-open-a-pull-request).
+It installs the dependencies and the git hooks, registers the marketplace, and installs the plugins into Claude Code and Codex. Run `make` to list every target, `make doctor` to check your environment and `make check` to run the pre-commit checks.
 
-## 📜 Principles
+## 3. Make your change
 
-What holds for every contribution, whatever you're building:
+1. **No slop.** Read every line before you propose it.
+2. **Spend tokens like they cost something.**
+3. **Write in Claude Code syntax.** Skills, agents and rules use it; the [CLI](cli/README.md) translates them for the other tools at release.
+4. **Follow the skill structure.** See the [architecture](docs/ARCHITECTURE.md) and generate with `/aidd-context:04-skill-generate`.
+5. **Evolve the memory** in [`aidd_docs/memory/`](aidd_docs/memory/).
+6. **Test locally.** Run `make reload`, restart your session, and test in Claude Code and in one other tool, for example Codex.
+7. **Commit as `<type>(<scope>): description`**, one scope per commit. See the [convention](aidd_docs/memory/vcs.md#commits).
 
-- **No slop** — read every line before proposing it.
-- **Spend tokens like they cost something.**
-- **Claude Code syntax only** — skills, agents, and rules are authored in Claude Code syntax (the [CLI](./cli/) adapts a per-tool archive at release).
-- **Follow the skill structure** → [`ARCHITECTURE.md`](docs/ARCHITECTURE.md), use the `/aidd-context:04-skill-generate`.
-- **Evolve the memory** → [`aidd_docs/memory/`](aidd_docs/memory/).
+## 4. Open a pull request
 
-## 🔧 Set up
+- Branch off `next` and target `next`. The [routing table](aidd_docs/memory/vcs.md#branches) lists the exceptions.
+- Fill in the [pull request template](.github/PULL_REQUEST_TEMPLATE.md): what changed and how you solved it.
+- A Maintainer review gates every merge: [how decisions are made](GOVERNANCE.md#code-decisions).
 
-Requires **Node `^22.18.0 || ^24.11.0 || >=26.0.0`**, **pnpm**, **jq**, **python3**, **pipx**.
-
-```bash
-make setup   # deps, git hooks, registers the marketplace, installs plugins into Claude + Codex
-```
-
-`make` lists every target; `make doctor` checks your environment, `make check` runs the pre-commit checks.
-
-## ✏️ Make your change
-
-- **Follow the [Principles](#-principles).**
-- **Test locally** — run `make reload`, restart your session(s). Test in Claude *and* one other tool (e.g. Codex).
-- **Commit** — `<type>(<scope>): description`, one scope per commit → [convention](aidd_docs/memory/vcs.md#commits).
-
-## 🔀 Open a pull request
-
-- **Branch off `next`, target `next`** → [routing table](aidd_docs/memory/vcs.md#branches).
-- **Fill the [PR template](.github/PULL_REQUEST_TEMPLATE.md)** — what changed, how you solved it.
-- **A Maintainer review gates every merge** → [`GOVERNANCE.md`](./GOVERNANCE.md#-code-decisions).
-
-## 📚 Reference
-
-[`ARCHITECTURE.md`](docs/ARCHITECTURE.md) · [`CONCEPTS.md`](docs/CONCEPTS.md) · [Maintainers guide](docs/MAINTAINERS.md#-add-a-plugin)
-
----
-
-■ [Back to framework](./README.md)
+More: [Architecture](docs/ARCHITECTURE.md) · [Concepts](docs/CONCEPTS.md) · [Maintainers guide](docs/MAINTAINERS.md) · [Back to the README](README.md)

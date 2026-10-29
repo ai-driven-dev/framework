@@ -75,7 +75,7 @@ flowchart TB
 
 ## 🪝 Bundled hooks
 
-Dependency-free Node scripts declared in `hooks/hooks.json`. `node` must be on `PATH`. The table is generated from those files. Which tools run them: [Compatibility](COMPATIBILITY.md#hooks).
+Dependency-free Node scripts declared in `hooks/hooks.json`. `node` must be on `PATH`. The table is generated from those files. Which tools run them: [Compatibility](COMPATIBILITY.md).
 
 <!--hooks:start-->
 

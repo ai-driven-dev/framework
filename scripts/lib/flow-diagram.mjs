@@ -129,3 +129,84 @@ function description(diagram) {
 export function chainMarkup(diagram, base) {
   return `<p align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="${base}-dark.svg"><img src="${base}-light.svg" alt="${escapeXml(description(diagram))}" width="${WIDTH}"></picture></p>`;
 }
+
+const STEP_COLORS = {
+  light: ["#0969da", "#6f42c1", "#8250df", "#bf3989", "#bc4c00", "#1a7f37", "#9a6700"],
+  dark: ["#2f81f7", "#8a63d2", "#a371f7", "#d1569b", "#d9622b", "#2da44e", "#bf8700"],
+};
+const STEP_WIDTH = 520;
+const STEP_CHIP = 112;
+const STEP_GAP = 14;
+const STEP_PAD = 10;
+const PER_ROW = 4;
+const NOTE_LIMIT = 17;
+
+function noteLines(note) {
+  const lines = [];
+  let line = "";
+  for (const word of note.split(" ")) {
+    if (line && `${line} ${word}`.length > NOTE_LIMIT) {
+      lines.push(line);
+      line = word;
+    } else {
+      line = line ? `${line} ${word}` : word;
+    }
+  }
+  if (line) lines.push(line);
+  if (lines.length > 2) throw new Error(`note does not fit two lines: ${note}`);
+  return lines;
+}
+
+/** Numbered steps in reading order, four to a row, joined by arrows and wrapped like a snake. */
+export function stepsSvg(diagram, themeName) {
+  const theme = THEMES[themeName];
+  const palette = STEP_COLORS[themeName];
+  const rowHeight = CHIP_HEIGHT + 30 + 36;
+  const rows = Math.ceil(diagram.steps.length / PER_ROW);
+  const body = [];
+  const centerOf = (position) => STEP_PAD + (position % PER_ROW) * (STEP_CHIP + STEP_GAP) + STEP_CHIP / 2;
+
+  diagram.steps.forEach((step, index) => {
+    const row = Math.floor(index / PER_ROW);
+    const x = centerOf(index) - STEP_CHIP / 2;
+    const y = row * rowHeight;
+    const color = palette[index % palette.length];
+    body.push(
+      `<rect x="${x}" y="${y}" width="${STEP_CHIP}" height="${CHIP_HEIGHT}" rx="12" fill="${color}"/>`,
+      `<circle cx="${x + 17}" cy="${y + CHIP_HEIGHT / 2}" r="10" fill="#ffffff" fill-opacity="0.25"/>`,
+      text(x + 17, y + CHIP_HEIGHT / 2 + 4, String(index + 1), { size: 11.5, weight: 700, anchor: "middle", fill: "#ffffff" }),
+      text(x + 33, y + 22, step.label, { size: 12, weight: 700, fill: "#ffffff" })
+    );
+    noteLines(step.note).forEach((line, at) => {
+      body.push(text(x + STEP_CHIP / 2, y + CHIP_HEIGHT + 15 + at * 13, line, { size: 10.5, anchor: "middle", fill: theme.muted }));
+    });
+    const last = index === diagram.steps.length - 1;
+    if (last) return;
+    const middle = y + CHIP_HEIGHT / 2;
+    if ((index + 1) % PER_ROW !== 0) {
+      body.push(path(`M${x + STEP_CHIP + 3} ${middle}h${STEP_GAP - 6}`, theme.line, { head: "line" }));
+    } else {
+      const edge = x + STEP_CHIP + 14;
+      const turn = y + CHIP_HEIGHT + 30 + 12;
+      const next = centerOf(0);
+      const r = 10;
+      body.push(
+        path(`M${x + STEP_CHIP + 3} ${middle}H${edge - r}Q${edge} ${middle} ${edge} ${middle + r}V${turn - r}Q${edge} ${turn} ${edge - r} ${turn}H${next + r}Q${next} ${turn} ${next} ${turn + r}V${y + rowHeight - 4}`, theme.line, { head: "line" })
+      );
+    }
+  });
+
+  const height = (rows - 1) * rowHeight + CHIP_HEIGHT + 30;
+  const title = `${diagram.title}: ${diagram.steps.map((step) => step.label).join(", ")}.`;
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${STEP_WIDTH}" height="${height}" viewBox="0 0 ${STEP_WIDTH} ${height}" role="img" aria-label="${escapeXml(title)}">
+  <title>${escapeXml(title)}</title>
+  <defs>${marker("line", theme.line)}</defs>
+  ${body.join("\n  ")}
+</svg>
+`;
+}
+
+export function stepsMarkup(diagram, base, prefix = "") {
+  const alt = escapeXml(`${diagram.title}: ${diagram.steps.map((step) => step.label).join(", ")}.`);
+  return `<p align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="${prefix}${base}-dark.svg"><img src="${prefix}${base}-light.svg" alt="${alt}" width="${STEP_WIDTH}"></picture></p>`;
+}
