@@ -68,7 +68,13 @@ export class UserPluginUpdateUseCase {
       targets.map(async ({ toolId, plugin }) => ({
         toolId,
         plugin,
-        plan: await this.fileUpdater.planUpdate(plugin, toolId, options.projectRoot, this.logger),
+        plan: await this.fileUpdater.planUpdate(
+          plugin,
+          toolId,
+          options.projectRoot,
+          this.logger,
+          options.rebuild === true
+        ),
       }))
     );
     const nativeUpdates = await Promise.all(

@@ -262,6 +262,8 @@ export function sandboxedEnv(
     AIDD_SKIP_UPDATE_CHECK: "1",
     // Codex reads `CODEX_HOME` before `HOME`, and so does the telemetry reader of its sessions.
     CODEX_HOME: join(fakeHome, ".codex"),
+    // Claude Code, and the CLI with it, reads `CLAUDE_CONFIG_DIR` before `HOME`.
+    CLAUDE_CONFIG_DIR: join(fakeHome, ".claude"),
     ...extra,
     HOME: fakeHome,
     XDG_CONFIG_HOME: join(fakeHome, ".config"),

@@ -20,6 +20,7 @@ const setupToolsPrompt = vi.fn();
 const detectContext = vi.fn();
 const setupMachineScope = vi.fn();
 const loadManifest = vi.fn();
+const setAgentModel = vi.fn();
 
 vi.mock("../../../src/runtime/wiring/framework.js", () => ({
   createDeps: vi.fn(async () => ({
@@ -33,6 +34,7 @@ vi.mock("../../../src/runtime/wiring/framework.js", () => ({
     setupToolsPromptUseCase: { execute: setupToolsPrompt },
     projectContextDetector: { execute: detectContext },
     setupMachineScopeUseCase: { execute: setupMachineScope },
+    setAgentModelUseCase: { execute: setAgentModel },
   })),
   createMenuDeps: vi.fn(),
 }));
@@ -67,6 +69,7 @@ beforeEach(() => {
     return true;
   });
   loadManifest.mockResolvedValue({});
+  setAgentModel.mockResolvedValue({ mainSet: [], reinstalled: [] });
   resolveSourceIfNeeded.mockResolvedValue(undefined);
   registerIfPresent.mockResolvedValue(undefined);
   activation.mockResolvedValue({ binaryMissing: [], errors: [] });
@@ -163,6 +166,64 @@ describe("aidd setup — the flow a scripted run builds", () => {
     expect(flow.scope).toBe("user");
     expect(setupTools).not.toHaveBeenCalled();
     expect(resolveSourceIfNeeded).not.toHaveBeenCalled();
+  });
+});
+
+describe("aidd setup — the agents' provider", () => {
+  it("records the provider for the agent hosts it installs, before the install builds", async () => {
+    await run("--ide", "opencode,vscode", "--provider", "mistral", "--main");
+
+    expect(setAgentModel).toHaveBeenCalledWith({
+      projectRoot: PROJECT_ROOT,
+      hosts: ["opencode"],
+      provider: "mistral",
+      main: true,
+      scope: "project",
+    });
+    expect(setAgentModel.mock.invocationCallOrder[0]).toBeLessThan(
+      resolveSourceIfNeeded.mock.invocationCallOrder[0]
+    );
+  });
+
+  it("names the main models it set, and warns about the hosts it could not", async () => {
+    setAgentModel.mockResolvedValue({ mainSet: ["opencode"], reinstalled: [] });
+
+    const lines = await run("--ide", "opencode,kilo", "--provider", "mistral", "--main");
+
+    expect(lines.slice(0, 3)).toEqual([
+      "Agents for opencode, kilo run on mistral.",
+      "Other projects on this machine pick it up at their next aidd update.",
+      "Main model set for opencode.",
+    ]);
+    expect(errors.join("")).toContain(
+      "Warning: No main-model setting at this scope for kilo; left unchanged.\n"
+    );
+  });
+
+  it("gives the agents back the session's model with none, without a main-model warning", async () => {
+    const lines = await run("--ide", "opencode", "--provider", "none", "--main");
+
+    expect(setAgentModel).toHaveBeenCalledWith(
+      expect.objectContaining({ hosts: ["opencode"], provider: undefined, main: true })
+    );
+    expect(lines[0]).toBe("Agents for opencode run on the session's model.");
+    expect(errors.join("")).not.toContain("main-model");
+  });
+
+  it.each([
+    [["--ide", "claude,codex", "--provider", "openai"], 'not supported for "claude"'],
+    [["--global", "--ide", "claude,vscode", "--provider", "anthropic", "--main"], "vscode"],
+    [["--ide", "claude", "--main"], "--main needs --provider"],
+  ])("refuses %j before building or writing anything", async (args, message) => {
+    vi.spyOn(process, "exit").mockImplementation(() => {
+      throw new Error("exited");
+    });
+
+    await expect(run(...args)).rejects.toThrow("exited");
+
+    expect(errors.join("")).toContain(message);
+    expect(vi.mocked(createDeps)).not.toHaveBeenCalled();
+    expect(setAgentModel).not.toHaveBeenCalled();
   });
 });
 
@@ -281,23 +342,23 @@ describe("aidd setup — what it refuses and what it reports", () => {
   );
 
   it.each([
-    { args: [], cause: "with no --ai", remedy: "Pass `--ai <ids>`" },
+    { args: [], cause: "with no --ide", remedy: "Pass `--ide <ids>`" },
     {
-      args: ["--ai", "claude", "--ide", "vscode"],
-      cause: "an IDE tool (vscode)",
-      remedy: "Drop --ide",
+      args: ["--ide", "claude,vscode"],
+      cause: "an editor (vscode)",
+      remedy: "Drop it from --ide",
     },
     {
-      args: ["--ai", "opencode"],
-      cause: "opencode declares no user-scope settings",
-      remedy: "Drop it from --ai",
+      args: ["--ide", "opencode"],
+      cause: "none exists for: opencode",
+      remedy: "Drop them from --ide",
     },
-  ])("renders user-scope validation for $cause before building dependencies", async (test) => {
+  ])("renders global validation for $cause before building dependencies", async (test) => {
     const exit = vi.spyOn(process, "exit").mockImplementation(() => {
       throw new Error("exited");
     });
 
-    await expect(run("--scope", "user", ...test.args)).rejects.toThrow("exited");
+    await expect(run("--global", ...test.args)).rejects.toThrow("exited");
 
     expect(errors.join("")).toContain(test.cause);
     expect(errors.join("")).toContain(test.remedy);
@@ -395,13 +456,13 @@ describe("aidd setup — the help surface", () => {
     );
   });
 
-  it("offers a source, two tool lists, a plugin mode, a scope, and two switches", () => {
-    expect(setupCommand().options.map((option) => [option.flags, option.description])).toEqual([
+  it("offers a source, one tool list, a plugin mode, a scope, a provider, and its switches", () => {
+    const visible = setupCommand().options.filter((option) => !option.hidden);
+    expect(visible.map((option) => [option.flags, option.description])).toEqual([
       ["--source <mode>", "Framework source: remote or local"],
       ["--path <dir>", "Absolute path to local framework (required with --source local)"],
       ["--release <tag>", "Marketplace release tag to fetch (e.g., v1.2.3)"],
-      ["--ai <ids>", "Comma-separated AI tool IDs, or 'all' (e.g., claude,cursor or all)"],
-      ["--ide <ids>", "Comma-separated IDE tool IDs, or 'all' (e.g., vscode or all)"],
+      ["--ide <ids>", "Comma-separated tool IDs, or 'all' (e.g., claude,vscode or all)"],
       ["--plugins <mode>", "Plugin install mode: none | all | recommended | comma-separated names"],
       [
         "--no-default-marketplace",
@@ -409,11 +470,20 @@ describe("aidd setup — the help surface", () => {
       ],
       ["--yes", "Accept defaults without prompting"],
       [
-        "--scope <scope>",
-        "project (default) installs into this project alone; user registers the shared " +
-          "framework source and supported tools machine-wide, writing nothing under this project; " +
-          "see user-scope requirements below",
+        "--global",
+        "register the shared framework source and supported tools machine-wide instead of " +
+          "installing into this project; see the requirements below",
       ],
+      [
+        "--provider <provider>",
+        "Run each tool's agents on this provider's model for their role (openai, anthropic, mistral), or none for the session's model",
+      ],
+      ["--main", "with --provider, also run the main session on its smart model"],
     ]);
+    expect(
+      setupCommand()
+        .options.filter((option) => option.hidden)
+        .map((option) => option.flags)
+    ).toEqual(["--ai <ids>", "--scope <scope>"]);
   });
 });

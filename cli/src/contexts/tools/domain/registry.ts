@@ -138,8 +138,8 @@ export function buildContractFor(
   return config.buildContracts?.[mode];
 }
 
-/** A tool's own user-scope settings file, absolute under `homedir` — never written by aidd,
- * only named by a diagnostic. Empty for a tool whose profile declares no
+/** A tool's own user-scope settings file, absolute under `homedir`. A diagnostic names it, and
+ * aidd writes into it only a global main model it records and restores. Empty for a tool whose profile declares no
  * `NativeActivation.userSettingsPath`. */
 export function userMachineLocalFilesOf(
   toolId: ToolId,

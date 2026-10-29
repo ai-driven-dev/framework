@@ -56,9 +56,9 @@ describe("E2E: setup --scope user writes nothing under the project", () => {
 
       expect(result.exitCode).toBe(0);
       expect(result.stderr).toBe("");
-      expect(result.stdout).toContain("--ai claude,codex,copilot,cursor");
+      expect(result.stdout).toContain("--ide claude,codex,copilot,cursor");
       expect(result.stdout).toContain("--plugins none");
-      expect(result.stdout).toContain("no --ide");
+      expect(result.stdout).toContain("no editor");
       expect(result.stdout).toContain("host CLI on PATH");
     } finally {
       await cleanup();

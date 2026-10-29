@@ -45,7 +45,7 @@ Only `/aidd-orchestrator:01-sdlc` names an agent, by its role (`validator`), so 
 | [Explorer](../plugins/aidd-orchestrator/agents/explorer.md) | Find files and symbols, trace a flow, answer a codebase question before a change | The answer, with sources and unknowns | No |
 | [Executor](../plugins/aidd-orchestrator/agents/executor.md) | Write or fix code and docs within a defined scope, then verify them | `COMPLETE`, `INCOMPLETE` or `BLOCKED`, with changes and checks run | Yes |
 | [Validator](../plugins/aidd-orchestrator/agents/validator.md) | Confirm delivered work meets the request and its acceptance criteria | `Validated: yes` or `no`, with what failed | No; runs checks |
-| [Reviewer](../plugins/aidd-orchestrator/agents/reviewer.md) | Find defects, contradictions, duplication and needless complexity in finished work | `no actionable findings`, `changes needed` or `insufficient evidence`, with findings | No; only the review report a workflow asks for |
+| [Reviewer](../plugins/aidd-orchestrator/agents/reviewer.md) | Find defects, contradictions, duplication and needless complexity in finished work | `no actionable findings`, `changes needed` or `insufficient evidence`, with findings | No |
 
 ## 📦 Install
 
@@ -53,13 +53,29 @@ Install the `aidd-orchestrator` plugin: `/plugin install aidd-orchestrator@aidd-
 
 ## 🧠 Models
 
-No model is pinned. Each host applies its own default for subagents, usually the model of the session that called them. A model you declare in an agent reaches every host in its own format.
+Agents run on the session's model unless you pick a provider when installing:
+
+```bash
+aidd setup --ide opencode --provider mistral --main   # agents, plus the main session
+aidd setup --ide opencode --provider none             # back to the session's model
+```
+
+| Runs | openai | anthropic | mistral |
+| --- | --- | --- | --- |
+| Main session, with `--main` | `gpt-6.1-sol` | `claude-opus-5-5` | `mistral-large-4` |
+| Reviewer | `gpt-6.1-sol` | `claude-sonnet-5-5` | `mistral-medium-latest` |
+| Explorer, executor, validator | `gpt-6-luna` | `claude-haiku-5-5` | `mistral-small-latest` |
+
+Claude Code takes anthropic, Codex openai, Copilot openai or anthropic, Cursor anthropic, OpenCode and Kilo all three. The mapping lives in [`agent-models.json`](../cli/src/contexts/tools/domain/formats/agent-models.json).
+
+- The provider holds for the whole machine: other projects pick it up at their next `aidd update`.
+- `--main` writes `settings.local.json` in `.claude/` or `opencode.json`, or `~/.claude/settings.json` with `--global`; set other IDEs yourself. `--provider none` restores what was there.
 
 ## 🚧 Limits
 
 - **Tools:** every agent inherits the calling session's tools and permissions; what it writes is an instruction, not a restriction.
-- **Codex:** a Codex plugin cannot carry agents, so only the flat distribution installs them, in `.codex/agents/`. Codex loads them only in a trusted project.
-- **Models:** OpenCode V1 reads the same file but not the `#<effort>` variant.
+- **Codex:** a Codex plugin cannot carry agents, so only the flat distribution installs them, in `.codex/agents/`, loaded in a trusted project only.
+- **Models:** only an install through `aidd setup` pins them, not `/plugin install`. `aidd setup --global` installs no plugin yet, so `make reload` installs agents without models. `aidd clean` keeps the provider and the main model: run `--provider none` first.
 - **Updates:** reinstalling replaces the agents still shipped; one removed from the plugin stays where a copy put it until you delete it.
 
 Sources: [Claude Code sub-agents](https://code.claude.com/docs/en/sub-agents), [Copilot custom agents](https://docs.github.com/en/copilot/reference/custom-agents-configuration), [OpenCode agents](https://opencode.ai/v2/docs/agents), [Codex subagents](https://developers.openai.com/codex/subagents), [Cursor subagents](https://cursor.com/docs/subagents).

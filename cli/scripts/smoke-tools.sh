@@ -64,7 +64,7 @@ project_tree_hash() {
   ' )
 }
 
-PARENTS=" plugin marketplace auth framework telemetry "
+PARENTS=" plugin marketplace auth framework telemetry agents "
 # A parent one level deeper than PARENTS, so a covered key needs three words there, not two.
 GRANDPARENTS=" "
 derive_key() {
@@ -224,6 +224,15 @@ run "telemetry off" 0 "Measurement is off" "$P_TEL" -- telemetry off
 run "telemetry forget (preview)" 0 "Nothing was removed" "$P_TEL" -- telemetry forget
 run "telemetry forget --yes" 0 "Removed" "$P_TEL" -- telemetry forget --yes
 run "telemetry off (after forget)" 0 "Measurement was not on" "$P_TEL" -- telemetry off
+
+# The provider lands in the sandboxed $AIDD_USER_CONFIG_DIR, never the real profile's.
+section "setup --provider (sandboxed profile)"
+P_AGENTS=$(new_project)
+SETUP_OC=(setup --source local --path "$FRAMEWORK_FIXTURE" --ide opencode --plugins none --yes)
+run "setup --provider" 0 "run on mistral" "$P_AGENTS" -- "${SETUP_OC[@]}" --provider mistral --main
+if grep -q 'mistral/mistral-large-4' "$P_AGENTS/opencode.json" 2>/dev/null; then ok "setup --provider --main writes opencode.json"; else bad "setup --provider --main did not write opencode.json"; fi
+run "setup --provider none" 0 "session's model" "$P_AGENTS" -- "${SETUP_OC[@]}" --provider none
+if ! grep -q '"model"' "$P_AGENTS/opencode.json" 2>/dev/null; then ok "setup --provider none restores opencode.json"; else bad "setup --provider none left the model" "$(cat "$P_AGENTS/opencode.json")"; fi
 
 section "update --check"
 out=$(cd "$ROOT" && node "$CLI" update --check 2>&1); rc=$?

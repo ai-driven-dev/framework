@@ -1,7 +1,7 @@
 import { resolve } from "node:path";
 import { InMemoryFileAdapter } from "./in-memory-file-adapter.js";
 
-type FaultableMethod = "readFile" | "realpath" | "listDirectory" | "deleteDirectory";
+type FaultableMethod = "readFile" | "writeFile" | "realpath" | "listDirectory" | "deleteDirectory";
 
 export class FaultingFileAdapter extends InMemoryFileAdapter {
   private readonly faults = new Map<string, Error>();
@@ -13,6 +13,11 @@ export class FaultingFileAdapter extends InMemoryFileAdapter {
   override async readFile(path: string): Promise<string> {
     this.throwIfFaulted("readFile", path);
     return super.readFile(path);
+  }
+
+  override async writeFile(path: string, content: string): Promise<void> {
+    this.throwIfFaulted("writeFile", path);
+    return super.writeFile(path, content);
   }
 
   override async realpath(path: string): Promise<string> {

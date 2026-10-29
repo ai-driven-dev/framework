@@ -47,6 +47,11 @@ const PUBLIC_MODULES: Readonly<Record<string, readonly string[]>> = {
     // The variable each tool expands to an installed plugin's directory: a tool declares it,
     // translate substitutes it, the diagnostic looks for it in what was installed.
     "src/contexts/tools/domain/formats/plugin-root-token.ts",
+    // Which model each agent role and the main session run on, per host and provider: the
+    // setter records the choice, the install build applies it, the CLI lists the names.
+    "src/contexts/tools/domain/formats/agent-models.ts",
+    // How a host's own settings file carries the main session's model, set and restored.
+    "src/contexts/tools/domain/formats/main-model-config.ts",
   ],
   translate: [
     // the canonical shapes framework produces and translate consumes

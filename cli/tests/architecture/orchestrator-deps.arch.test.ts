@@ -82,9 +82,17 @@ const BASELINE: readonly { readonly path: string; readonly injected: number }[] 
     injected: 5,
   },
   { path: "src/contexts/framework/application/shared/apply-plugin-files-use-case.ts", injected: 5 },
+  // The sixth is the provider chosen for a target's agents: it changes the built agents, so
+  // the cache that keeps a build fresh must read it.
   {
     path: "src/contexts/framework/application/shared/ensure-built-marketplace-use-case.ts",
-    injected: 5,
+    injected: 6,
+  },
+  // Setting a model touches what each scope installed: both manifests, both plugin updates, and
+  // native activation, since a host that installs plugins itself only sees a rebuild when driven.
+  {
+    path: "src/contexts/framework/application/agents/set-agent-model-use-case.ts",
+    injected: 9,
   },
   {
     path: "src/contexts/translate/application/strategies/marketplace-build-strategy.ts",

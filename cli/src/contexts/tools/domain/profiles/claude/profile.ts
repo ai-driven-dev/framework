@@ -132,8 +132,9 @@ export const claude: AiTool<HasAgents & HasSkills & HasCommands & HasRules & Has
           // marks an orphaned tree `.orphaned_at` but never deletes it itself.
           pluginCacheDir: (h) => join(h, ".claude", "plugins", "cache"),
           // Where a `--scope user` install or marketplace add lands, measured against the real
-          // binary. Never written by aidd; named here for a diagnostic alone.
-          userSettingsPath: (h) => join(h, ".claude", "settings.json"),
+          // binary, and where a global main model is set: `$CLAUDE_CONFIG_DIR` when set.
+          userSettingsPath: (h, env) =>
+            join(env("CLAUDE_CONFIG_DIR") || join(h, ".claude"), "settings.json"),
         },
         marketplaceSettings: {
           settingsPath: ".claude/settings.json",

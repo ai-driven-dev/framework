@@ -1,8 +1,13 @@
 import { resolve } from "node:path";
-import type { Command } from "commander";
+import { type Command, Option } from "commander";
 import { MarketplaceSourceMode } from "../../contexts/distribution/domain/marketplace-source-mode.js";
 import { SetupUseCase } from "../../contexts/framework/application/setup-use-case.js";
 import { SetupFlow } from "../../contexts/framework/domain/setup-flow.js";
+import {
+  agentProviders,
+  isAgentHost,
+  supportedProvider,
+} from "../../contexts/tools/domain/formats/agent-models.js";
 import {
   assertToolIdsMatchCategory,
   getAllRegisteredTools,
@@ -22,6 +27,23 @@ import type { CLIOutput } from "../output.js";
 import { parseGlobalOptions, parseScopeFlag } from "./global-options.js";
 import { reportSyncActivation } from "./sync-native-activation.js";
 
+function reportAgentModels(
+  output: CLIOutput,
+  provider: string | undefined,
+  hosts: readonly string[],
+  mainSet: readonly string[],
+  main: boolean
+): void {
+  output.success(`Agents for ${hosts.join(", ")} run on ${provider ?? "the session's model"}.`);
+  output.info("Other projects on this machine pick it up at their next aidd update.");
+  if (mainSet.length > 0) output.success(`Main model set for ${mainSet.join(", ")}.`);
+  const skipped =
+    main && provider !== undefined ? hosts.filter((host) => !mainSet.includes(host)) : [];
+  if (skipped.length > 0) {
+    output.warn(`No main-model setting at this scope for ${skipped.join(", ")}; left unchanged.`);
+  }
+}
+
 interface SetupCmdOptions {
   source?: "remote" | "local";
   path?: string;
@@ -32,6 +54,9 @@ interface SetupCmdOptions {
   yes?: boolean;
   defaultMarketplace?: boolean;
   scope?: string;
+  global?: boolean;
+  provider?: string;
+  main?: boolean;
 }
 
 export function parseSourceFlag(
@@ -58,22 +83,24 @@ export function expandAllKeyword(raw: string | undefined, all: readonly ToolId[]
     .filter(Boolean) as ToolId[];
 }
 
+/** `--ide` takes every tool, AI assistants and editors alike; `--ai`, its former spelling,
+ * still takes AI tools alone. Each id lands in the list its category decides. */
 export function parseToolIds(
   cmdOptions: SetupCmdOptions,
   errorHandler: ErrorHandler
 ): { aiTools: ToolId[]; ideTools: ToolId[] } | null {
   const aiIds = expandAllKeyword(cmdOptions.ai, AI_TOOL_IDS);
-  const ideIds = expandAllKeyword(cmdOptions.ide, IDE_TOOL_IDS);
+  const ids = expandAllKeyword(cmdOptions.ide, [...AI_TOOL_IDS, ...IDE_TOOL_IDS]);
   try {
     if (aiIds.length > 0 && cmdOptions.ai?.trim() !== "all")
       assertToolIdsMatchCategory(aiIds, "ai");
-    if (ideIds.length > 0 && cmdOptions.ide?.trim() !== "all")
-      assertToolIdsMatchCategory(ideIds, "ide");
   } catch (e) {
     errorHandler.handle(e);
     return null;
   }
-  return { aiTools: aiIds, ideTools: ideIds };
+  const isIde = (id: ToolId) => (IDE_TOOL_IDS as readonly string[]).includes(id);
+  const unique = [...new Set([...aiIds, ...ids])];
+  return { aiTools: unique.filter((id) => !isIde(id)), ideTools: unique.filter(isIde) };
 }
 
 type PluginsMode = "interactive" | "all" | "recommended" | "named" | "none";
@@ -103,8 +130,8 @@ export function registerSetupCommand(program: Command): void {
     .option("--source <mode>", "Framework source: remote or local")
     .option("--path <dir>", "Absolute path to local framework (required with --source local)")
     .option("--release <tag>", "Marketplace release tag to fetch (e.g., v1.2.3)")
-    .option("--ai <ids>", "Comma-separated AI tool IDs, or 'all' (e.g., claude,cursor or all)")
-    .option("--ide <ids>", "Comma-separated IDE tool IDs, or 'all' (e.g., vscode or all)")
+    .option("--ide <ids>", "Comma-separated tool IDs, or 'all' (e.g., claude,vscode or all)")
+    .addOption(new Option("--ai <ids>", "Former spelling of --ide, for AI tools").hideHelp())
     .option(
       "--plugins <mode>",
       "Plugin install mode: none | all | recommended | comma-separated names"
@@ -115,16 +142,21 @@ export function registerSetupCommand(program: Command): void {
     )
     .option("--yes", "Accept defaults without prompting")
     .option(
-      "--scope <scope>",
-      "project (default) installs into this project alone; user registers the shared " +
-        "framework source and supported tools machine-wide, writing nothing under this project; " +
-        "see user-scope requirements below"
+      "--global",
+      "register the shared framework source and supported tools machine-wide instead of " +
+        "installing into this project; see the requirements below"
     )
+    .addOption(new Option("--scope <scope>", "Former spelling: user means --global").hideHelp())
+    .option(
+      "--provider <provider>",
+      `Run each tool's agents on this provider's model for their role (${agentProviders().join(", ")}), or none for the session's model`
+    )
+    .option("--main", "with --provider, also run the main session on its smart model")
     .addHelpText(
       "after",
       () =>
-        "\nUser scope:\n" +
-        `  Pass --ai ${[...getAllRegisteredTools().keys()].filter(supportsUserScopeActivation).sort().join(",")} (choose one or more), --plugins none, and no --ide.\n` +
+        "\nGlobal:\n" +
+        `  Pass --ide ${[...getAllRegisteredTools().keys()].filter(supportsUserScopeActivation).sort().join(",")} (one or more, no editor) and --plugins none.\n` +
         "  Native activation requires the corresponding host CLI on PATH.\n" +
         "  Tools without native activation are registered only; setup installs no plugins or tool configuration files."
     )
@@ -133,7 +165,10 @@ export function registerSetupCommand(program: Command): void {
       const errorHandler = new ErrorHandler(output);
 
       const source = parseSourceFlag(cmdOptions, output);
-      const scope = parseScopeFlag(cmdOptions.scope, output);
+      const scope = cmdOptions.global === true ? "user" : parseScopeFlag(cmdOptions.scope, output);
+      if (cmdOptions.main === true && cmdOptions.provider === undefined) {
+        errorHandler.handle(new Error("--main needs --provider."));
+      }
       const toolIds = parseToolIds(cmdOptions, errorHandler);
       if (toolIds === null) return;
 
@@ -143,7 +178,9 @@ export function registerSetupCommand(program: Command): void {
         cmdOptions.ai ||
         cmdOptions.ide ||
         cmdOptions.plugins ||
-        cmdOptions.yes
+        cmdOptions.yes ||
+        cmdOptions.global ||
+        cmdOptions.provider
       );
       const interactive = process.stdout.isTTY && !hasScriptingFlags;
 
@@ -167,9 +204,30 @@ export function registerSetupCommand(program: Command): void {
           scope,
         });
 
+        // One provider per run: claude and codex each run one only, so pairing them is refused
+        // here, naming the host, before anything is built or written.
+        const agentHosts = toolIds.aiTools.filter(isAgentHost);
+        const provider = cmdOptions.provider === "none" ? undefined : cmdOptions.provider;
+        if (provider !== undefined) {
+          for (const host of agentHosts) supportedProvider(host, provider);
+        }
+
         if (interactive) printWelcomeBanner(output);
 
         const deps = await createDeps(projectRoot, { verbose }, output);
+
+        // Before the install, so its first build already carries the models.
+        if (cmdOptions.provider !== undefined) {
+          const main = cmdOptions.main === true;
+          const models = await deps.setAgentModelUseCase.execute({
+            projectRoot,
+            hosts: agentHosts,
+            provider,
+            main,
+            scope: scope ?? "project",
+          });
+          reportAgentModels(output, provider, agentHosts, models.mainSet, main);
+        }
 
         const result = await new SetupUseCase(
           deps.fs,
