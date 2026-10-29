@@ -253,7 +253,12 @@ Acceptance QA with video evidence
 
 ## Community
 
-Built by the [AI-Driven Dev](https://www.ai-driven-dev.fr/) community: 3 years of R&D, 500+ developers trained, production software shipped with 100% AI-generated code. Free and open source (MIT); a [⭐](https://github.com/ai-driven-dev/framework/stargazers) helps others find it.
+Built by the [AI-Driven Dev](https://www.ai-driven-dev.fr/) community.
+
+- 3 years of R&D
+- 500+ developers trained
+- Production software shipped with 100% AI-generated code
+- Free and open source (MIT). A [⭐](https://github.com/ai-driven-dev/framework/stargazers) helps others find it.
 
 [Discord 🇫🇷](https://discord.gg/EWySJSpjWs) · [Discussions](https://github.com/ai-driven-dev/framework/discussions) · [Issues](https://github.com/ai-driven-dev/framework/issues) · [Team training](https://www.ai-driven-dev.fr/entreprise) · [How the roadmap is set](GOVERNANCE.md#influence-the-roadmap)
 
