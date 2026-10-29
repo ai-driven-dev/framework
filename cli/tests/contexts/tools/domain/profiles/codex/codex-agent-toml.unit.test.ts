@@ -3,127 +3,36 @@ import { codexAgentMarkdownToToml } from "../../../../../../src/contexts/tools/d
 import { parseToml } from "../../../../../../src/contexts/tools/domain/profiles/codex/toml.js";
 
 describe("codexAgentMarkdownToToml()", () => {
-  describe("name resolution (D-16)", () => {
-    describe("marketplace mode (prefixName=false, default)", () => {
-      it("uses frontmatter name when present", () => {
-        const toml = codexAgentMarkdownToToml(
-          "---\nname: planner\ndescription: A planner.\n---\n\nBody.",
+  describe("name resolution", () => {
+    it("prefixes the file's base name with the plugin, whatever the frontmatter name", () => {
+      expect(
+        codexAgentMarkdownToToml(
+          `---
+name: planner
+description: A planner.
+---
+Body.
+`,
           "aidd-dev",
           "planner.md"
-        );
-        const parsed = parseToml(toml);
-        expect(parsed.name).toBe("planner");
-      });
-
-      it("falls back to plugin-prefixed basename when frontmatter name is absent", () => {
-        const toml = codexAgentMarkdownToToml(
-          "---\ndescription: A reviewer.\n---\n\nBody.",
-          "aidd-dev",
-          "reviewer.md"
-        );
-        const parsed = parseToml(toml);
-        expect(parsed.name).toBe("aidd-dev-reviewer");
-      });
-
-      it("falls back to plugin-prefixed basename when frontmatter is empty", () => {
-        const toml = codexAgentMarkdownToToml("No frontmatter here.", "aidd-dev", "implementer.md");
-        const parsed = parseToml(toml);
-        expect(parsed.name).toBe("aidd-dev-implementer");
-      });
+        )
+      ).toBe(`name = "aidd-dev-planner"
+description = "A planner."
+developer_instructions = "Body.\\n"
+`);
     });
 
-    describe("flat mode (prefixName=true)", () => {
-      it("always uses plugin-prefixed basename (ignores frontmatter name)", () => {
-        const toml = codexAgentMarkdownToToml(
-          "---\nname: planner\ndescription: A planner.\n---\n\nBody.",
-          "aidd-dev",
-          "planner.md",
-          true
-        );
-        const parsed = parseToml(toml);
-        expect(parsed.name).toBe("aidd-dev-planner");
-      });
-
-      it("uses plugin-prefix when frontmatter name is absent", () => {
-        const toml = codexAgentMarkdownToToml(
-          "---\ndescription: A reviewer.\n---\n\nBody.",
-          "aidd-dev",
-          "reviewer.md",
-          true
-        );
-        const parsed = parseToml(toml);
-        expect(parsed.name).toBe("aidd-dev-reviewer");
-      });
-
-      it("uses plugin-prefix when frontmatter is empty", () => {
-        const toml = codexAgentMarkdownToToml(
-          "No frontmatter here.",
-          "aidd-dev",
-          "implementer.md",
-          true
-        );
-        const parsed = parseToml(toml);
-        expect(parsed.name).toBe("aidd-dev-implementer");
-      });
+    it("names an agent without frontmatter after its plugin and file, description empty", () => {
+      expect(
+        codexAgentMarkdownToToml("No frontmatter here.", "aidd-dev", "implementer.md")
+      ).toBe(`name = "aidd-dev-implementer"
+description = ""
+developer_instructions = "No frontmatter here."
+`);
     });
   });
 
-  describe("key order (D-15)", () => {
-    it("emits name before description before developer_instructions", () => {
-      const toml = codexAgentMarkdownToToml(
-        "---\nname: planner\ndescription: A planner.\n---\n\nBody here.",
-        "aidd-dev",
-        "planner.md"
-      );
-      const nameIdx = toml.indexOf("name =");
-      const descIdx = toml.indexOf("description =");
-      const instrIdx = toml.indexOf("developer_instructions =");
-      expect(nameIdx).toBeLessThan(descIdx);
-      expect(descIdx).toBeLessThan(instrIdx);
-    });
-
-    it("emits name before developer_instructions when description absent", () => {
-      const toml = codexAgentMarkdownToToml(
-        "---\nname: planner\n---\n\nBody here.",
-        "aidd-dev",
-        "planner.md"
-      );
-      const nameIdx = toml.indexOf("name =");
-      const instrIdx = toml.indexOf("developer_instructions =");
-      expect(nameIdx).toBeLessThan(instrIdx);
-    });
-  });
-
-  describe("model omission (D-5)", () => {
-    it("omits model key when frontmatter has model: opus", () => {
-      const toml = codexAgentMarkdownToToml(
-        "---\nname: planner\ndescription: A planner.\nmodel: opus\n---\n\nBody.",
-        "aidd-dev",
-        "planner.md"
-      );
-      expect(toml).not.toContain("model");
-    });
-
-    it("omits model key when frontmatter has model: sonnet", () => {
-      const toml = codexAgentMarkdownToToml(
-        "---\nname: planner\nmodel: sonnet\n---\n\nBody.",
-        "aidd-dev",
-        "planner.md"
-      );
-      expect(toml).not.toContain("model");
-    });
-
-    it("omits model key for hypothetical Codex model id (MVP1 always omits)", () => {
-      const toml = codexAgentMarkdownToToml(
-        "---\nname: planner\nmodel: gpt-5-codex\n---\n\nBody.",
-        "aidd-dev",
-        "planner.md"
-      );
-      expect(toml).not.toContain("model");
-    });
-  });
-
-  describe("verbatim body preservation (D-4)", () => {
+  describe("verbatim body preservation", () => {
     it("preserves @./ references untouched in developer_instructions", () => {
       const body = "See @./foo.md for details.";
       const toml = codexAgentMarkdownToToml(
@@ -176,7 +85,7 @@ describe("codexAgentMarkdownToToml()", () => {
     });
   });
 
-  describe("idempotency (AC #2, D-15)", () => {
+  describe("idempotency", () => {
     it("produces byte-identical output on two consecutive calls with identical input", () => {
       const content =
         "---\nname: planner\ndescription: A planner.\nmodel: opus\n---\n\nBody with code:\n```bash\necho hi\n```\n";
@@ -235,13 +144,12 @@ describe("the name a Codex agent falls back to", () => {
     );
   });
 
-  it("drops only the trailing .md from the file it names a flat agent after", () => {
+  it("drops only the trailing .md from the file it names an agent after", () => {
     expect(
       codexAgentMarkdownToToml(
         "---\ndescription: Plans\n---\nBody.\n",
         "aidd-dev",
-        "notes.md-helper.md",
-        true
+        "notes.md-helper.md"
       )
     ).toBe(
       'name = "aidd-dev-notes.md-helper"\ndescription = "Plans"\ndeveloper_instructions = "Body.\\n"\n'

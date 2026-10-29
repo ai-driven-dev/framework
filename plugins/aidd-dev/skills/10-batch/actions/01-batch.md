@@ -17,7 +17,7 @@ One row per dispatched agent, identified by its name or ID. Status is `Done` (ta
 
 1. **Read.** Take `prompt` from the arguments; if empty, ask the user.
 2. **Split.** Divide the prompt into distinct, independent tasks. Inline, no agent.
-3. **Launch.** Spawn one `executor` agent per task, all in parallel (one message, multiple Task calls). Track each agent's name or ID and assigned task. Each agent prompt mandates, in order:
+3. **Launch.** Spawn one available implementation agent per task, all in parallel (one message, multiple Task calls). Track each agent's name or ID and assigned task. Each agent prompt mandates, in order:
    ```markdown
    1. Refine the task first: run a non-interactive refine capability if one is available (discovered at runtime, never a hardcoded plugin name); otherwise restate the task clearly and resolve obvious ambiguity inline. Never block on the user.
    2. Implement the refined task.

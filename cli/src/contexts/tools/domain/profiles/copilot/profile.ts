@@ -24,6 +24,7 @@ import { PLUGIN_ROOT_TOKEN } from "../../formats/plugin-root-token.js";
 import { claudeStyleMarketplaceKey } from "../../marketplace-entry.js";
 import { registerTool } from "../../registry.js";
 import { buildCopilotFlatContract, buildCopilotMarketplaceContract } from "./build.js";
+import { copilotAgentFrontmatter } from "./copilot-agent.js";
 import { COPILOT_WORKSPACE_DIR } from "./copilot-paths.js";
 
 const DIRECTORY = COPILOT_WORKSPACE_DIR;
@@ -94,11 +95,6 @@ const agentsHandler = {
     if (base === GITKEEP_FILE) return null;
     const name = base.endsWith(".md") ? `${base.slice(0, -3)}${EXT_AGENT}` : base;
     return `${DIRECTORY}agents/${name}`;
-  },
-  convertFrontmatter(fm: Record<string, unknown>, fileName?: string): Record<string, unknown> {
-    const base = fileName?.split("/").at(-1);
-    const name = fm.name ?? base?.replace(/\.md$/, "");
-    return { name: typeof name === "string" ? name : undefined, description: fm.description };
   },
 };
 
@@ -226,7 +222,7 @@ export const copilot: AiTool<
       format: "markdown",
       userFileExt: EXT_AGENT,
       buildInstallPath: (fileName) => agentsHandler.buildFilePath(fileName),
-      convertFrontmatter: (fm, fileName) => agentsHandler.convertFrontmatter(fm, fileName),
+      frontmatter: copilotAgentFrontmatter,
     }),
     skills: new SkillsCapability({
       directory: DIRECTORY,

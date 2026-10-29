@@ -151,7 +151,7 @@ export function buildCodexContract(): ToolBuildContract {
         source: { kind: "filteredTree", srcDir: "agents", inputExt: ".md" },
         path: (_p, rel) =>
           `${OUTPUT_CODEX_AGENTS_DIR}/${rel.replace(/^agents\//, "").replace(/\.md$/, ".toml")}`,
-        transform: (content, plugin, outName) => codexAgentMarkdownToToml(content, plugin, outName),
+        transform: codexAgentMarkdownToToml,
       },
       mcp: {
         supported: true,
@@ -243,8 +243,7 @@ export function buildCodexFlatContract(): ToolBuildContract {
         supported: true,
         source: { kind: "filteredTree", srcDir: "agents", inputExt: ".md" },
         path: codexFlatAgentPath,
-        transform: (content, plugin, outName) =>
-          codexAgentMarkdownToToml(content, plugin, outName, true),
+        transform: codexAgentMarkdownToToml,
       },
       mcp: { supported: false }, // handled by emitConfigArtifact (config.toml mcp_servers)
       hooks: {

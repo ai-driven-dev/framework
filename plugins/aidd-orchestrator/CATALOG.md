@@ -7,6 +7,7 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 ## Table of Contents
 
 - [`.claude-plugin`](#claude-plugin)
+- [`agents`](#agents)
 - [`skills`](#skills)
   - [`skills/00-async-dev`](#skills00-async-dev)
   - [`skills/01-sdlc`](#skills01-sdlc)
@@ -19,6 +20,15 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | File |
 |------|
 | [plugin.json](.claude-plugin/plugin.json) |
+
+### `agents`
+
+| File | Description |
+|------|---|
+| [executor.md](agents/executor.md) | `Implements assigned work within defined scope. Use to write or revise code and documentation, verify the result, and repair failures against the requested outcome.` |
+| [explorer.md](agents/explorer.md) | `Explores a codebase to answer scoped questions. Use to locate files and symbols, trace execution or dependencies, and return relevant code with an explanation before changes.` |
+| [reviewer.md](agents/reviewer.md) | `Reviews the quality and coherence of finished work. Use to find concrete defects, contradictions, duplication, and unnecessary complexity against project conventions and the real need.` |
+| [validator.md](agents/validator.md) | `Validates that delivered work satisfies the request and acceptance criteria. Use to independently confirm completion and explain failures or missing verification.` |
 
 ### `skills`
 

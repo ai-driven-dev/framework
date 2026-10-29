@@ -23,6 +23,7 @@ import {
 } from "../../formats/command.js";
 import { registerTool } from "../../registry.js";
 import { buildOpencodeFlatContract, transformMcpToOpencode } from "./build.js";
+import { opencodeAgentFrontmatter } from "./opencode-agent.js";
 import { generateOpencodeHooksBridge } from "./opencode-hooks-bridge.js";
 import {
   makeOpencodeHooksBridgePath,
@@ -58,7 +59,7 @@ export const opencode: AiTool<
       directory: DIRECTORY,
       toolSuffix: TOOL_SUFFIX,
       format: "markdown",
-      convertFrontmatter: (fm) => ({ description: fm.description, mode: "subagent" }),
+      frontmatter: opencodeAgentFrontmatter,
     }),
     skills: new SkillsCapability({
       directory: DIRECTORY,

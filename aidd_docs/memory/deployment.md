@@ -39,7 +39,7 @@ Branch model in `vcs.md`, cadence and safety rules in [`RELEASE.md`](../../RELEA
 flowchart TD
     RP["release-please PR, auto-merged"] --> Tags["tags + umbrella release as draft"]
     Tags --> Back["back-merge.yml: main into next"]
-    Tags --> Jobs["attach: bundle, 9 distributions, plugin archives, video"]
+    Tags --> Jobs["attach: bundle, per-tool distributions, plugin archives, video"]
     Tags --> Cli["publish-cli: npm"]
     Jobs --> Pub["publish-release: draft to latest"]
     Cli --> Recap
@@ -62,6 +62,10 @@ Config: `release-please-config.json`, eleven packages. Manifest: `.release-pleas
 ## Gotchas
 
 - `build-per-tool` builds the CLI from this run's own checkout (`pnpm build`, then `node cli/dist/cli.js translate`), never a pinned published version: nothing to bump, nothing to go stale.
+
+## Local reload
+
+`make reload` syncs all plugins and generic delegation guidance to installed hosts; details in `scripts/dev-sync.sh`.
 
 ## Monitoring
 
