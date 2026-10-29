@@ -6,7 +6,6 @@ The `aidd` binary, built from `cli/` and published to npm as `@ai-driven-dev/cli
 
 ## Commands
 
-- Twelve groups: `setup`, `framework`, `translate`, `agents`, `plugin`, `marketplace`, `auth`, `sync`, `update`, `doctor`, `clean`, `telemetry`.
 - `agents set-model` chooses the provider each IDE's agents run on, machine-wide: [agent guide](../../docs/SUBAGENTS.md#-models).
 - `telemetry` counts the tokens of Claude Code and Codex sessions locally: [usage contract](../product/usage-contract.md).
 - No list here. The surface moves; `aidd --help` is the only reading that stays true.

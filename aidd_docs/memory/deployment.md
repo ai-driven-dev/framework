@@ -39,7 +39,7 @@ Branch model in `vcs.md`, cadence and safety rules in [`RELEASE.md`](../../RELEA
 flowchart TD
     RP["release-please PR, auto-merged"] --> Tags["tags + umbrella release as draft"]
     Tags --> Back["back-merge.yml: main into next"]
-    Tags --> Jobs["attach: bundle, 9 distributions, plugin archives, video"]
+    Tags --> Jobs["attach: bundle, per-tool distributions, plugin archives, video"]
     Tags --> Cli["publish-cli: npm"]
     Jobs --> Pub["publish-release: draft to latest"]
     Cli --> Recap
