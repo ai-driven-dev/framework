@@ -88,10 +88,12 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `actions` | [03-review-functional.md](skills/05-review/actions/03-review-functional.md) | - |
 | `actions` | [04-review-relevancy.md](skills/05-review/actions/04-review-relevancy.md) | - |
 | `actions` | [05-finalize.md](skills/05-review/actions/05-finalize.md) | - |
+| `actions` | [06-answer-comments.md](skills/05-review/actions/06-answer-comments.md) | - |
+| `actions` | [07-propose-learnings.md](skills/05-review/actions/07-propose-learnings.md) | - |
 | `assets` | [review-template.md](skills/05-review/assets/review-template.md) | - |
 | `references` | [report-contract.md](skills/05-review/references/report-contract.md) | - |
 | `references` | [review-rubric.md](skills/05-review/references/review-rubric.md) | - |
-| `-` | [SKILL.md](skills/05-review/SKILL.md) | `Reviews a change or a diff and says whether it is ready to ship, naming every problem with its fix. Use when the user wants a change checked before it ships. Not for fixing what the review finds, and not for auditing a whole codebase.` |
+| `-` | [SKILL.md](skills/05-review/SKILL.md) | `Reviews a change or a diff and says whether it is ready to ship, naming every problem with its fix, or answers the review comments left on a pull request. Use when the user wants a change checked before it ships, or a pull request's comments answered. Not for fixing what the review finds, and not for auditing a whole codebase.` |
 
 #### `skills/06-test`
 
