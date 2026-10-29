@@ -1,0 +1,47 @@
+{
+  "aidd-context": {
+    "status": "stable",
+    "description": "Project memory, context generation, learning",
+    "emoji": "🧭"
+  },
+  "aidd-dev": {
+    "status": "stable",
+    "description": "Plan, build, review, test, debug",
+    "emoji": "⚙️"
+  },
+  "aidd-vcs": {
+    "status": "stable",
+    "description": "Commits, pull requests, release tags, issues",
+    "emoji": "🌿"
+  },
+  "aidd-pm": {
+    "status": "stable",
+    "description": "Briefs, Epics, Stories, specs, Spikes, Defects",
+    "emoji": "📋"
+  },
+  "aidd-refine": {
+    "status": "stable",
+    "description": "Brainstorm, challenge, fact-check",
+    "emoji": "🪞"
+  },
+  "aidd-orchestrator": {
+    "status": "stable",
+    "description": "Feature flow, issue-to-PR automation, backlog",
+    "emoji": "🎼"
+  },
+  "aidd-ui": {
+    "status": "alpha",
+    "description": "UI and UX design, smoke test only",
+    "emoji": "🎨"
+  },
+  "aidd-telemetry": {
+    "status": "beta",
+    "description": "Token usage per task, opt-in",
+    "emoji": "📈"
+  },
+  "aidd-qa": {
+    "status": "preview",
+    "description": "Acceptance QA with video evidence",
+    "emoji": "🎬"
+  }
+}

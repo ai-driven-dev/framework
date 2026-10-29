@@ -1,49 +1,55 @@
 # Release
 
-How ships, and what to follow when you open a change. Weekly rolling releases, with a fast lane for urgent fixes.
+Weekly releases, with a fast lane for urgent fixes.
 
-- Branch naming, commit format, release tooling → [`aidd_docs/memory/vcs.md`](aidd_docs/memory/vcs.md).
-- Who may merge and release → [`GOVERNANCE.md`](GOVERNANCE.md).
-
-## 🧭 Principle
-
-- `main` is production. The marketplace tracks it, so users only ever get released, versioned code.
-- `next` is integration. The week's work batches here, and ships in one weekly release.
-- A release happens only when there is work, and is cut automatically by release-please.
-- A `hotfix/*` skips `next`, it branches from `main` and ships its own release out of cycle, for urgent production fixes.
-
-## 🔀 Where your change goes
-
-- Almost everything flows through `next` and ships in the weekly release.
-- Only an urgent production fix takes the fast lane straight to `main`.
-- The branch prefix decides the target; the canonical prefix → target table lives in [`aidd_docs/memory/vcs.md`](aidd_docs/memory/vcs.md#branches).
+Branch prefix to target: [`vcs.md`](aidd_docs/memory/vcs.md#branches).
 
 ```mermaid
-flowchart LR
-    work["feat/* · fix/* · docs/* · …"] -->|PR| next
-    next -->|weekly promotion PR| main
-    main -->|release-please PR, auto-merged| rel["tag + version bump"]
-    rel -->|back-merge, auto| next
-    hotfix["hotfix/*"] -->|PR| main
+flowchart TD
+  work["feat/* · fix/* · docs/*"] -->|pull request| next["next"]
+  next -->|weekly promotion| main["main"]
+  hotfix["hotfix/*"] -->|pull request, urgent| main
+  main --> release["Release PR<br/><i>release-please, merged by the bot</i>"] --> tags["Tags and archives"] --> published(["Published<br/><i>after the video</i>"]) --> backmerge["Back-merge<br/><i>main into next</i>"]
+  classDef branch fill:#ddf4ff,stroke:#0969da,color:#0a3069
+  classDef step fill:#e9ddff,stroke:#8250df,color:#3b1d78
+  classDef urgent fill:#ffe1d1,stroke:#c2410c,color:#7a2606
+  classDef done fill:#dafbe1,stroke:#1a7f37,color:#0f4d21
+  class next,main branch
+  class work,release,tags,backmerge step
+  class hotfix urgent
+  class published done
 ```
 
-## 🛟 The two rules that keep it safe
+## Rules
 
-- **The Release PR is auto-merged.** Otherwise `main` briefly holds merged but unversioned code, and a new user installing in that window picks it up.
-- **The `main` → `next` back-merge is automatic.** Otherwise the version manifest and the changelog on `next` drift from `main`.
+| Rule | Why |
+| --- | --- |
+| `main` is production, and the marketplace tracks it | Users only get released, versioned code |
+| `next` is integration | The week's work batches there |
+| A release happens only when there is work | release-please cuts it |
+| The Release PR merges itself | Otherwise `main` briefly holds unversioned code |
+| The back-merge into `next` is automatic | Otherwise the manifest and changelog on `next` drift |
+| Promote with a **merge commit** | A squash can fail `Commitlint` and skip the release. A rebase breaks the back-merge |
+| Force a version with `release-as` in `release-please-config.json` | Remove it after the release |
 
-## 🗓️ Weekly release, step by step
+## Weekly release
 
-1. Plan the release video with the `release-video` skill (`.claude/skills/release-video`) until `node .claude/skills/release-video/assets/check-release-video.js` passes. The promotion refuses otherwise, and the release stays a draft until its video is attached.
-2. Open the [promotion `next` to `main`](https://github.com/ai-driven-dev/framework/actions/workflows/promote.yml) once the week's work is ready.
-3. release-please opens a Release PR on `main`: it is auto-merged.
-4. Tags and version bumps are created. The umbrella release is a draft: the bundle, the distributions and the rendered video are attached to it, then it is published. Announcements fire on that publication, with everything in place.
-5. The video is rendered by CI from the plan the promotion checked. A failed video, bundle or distribution holds the release, and it stays a draft. Publish it by hand with `gh release edit <tag> --draft=false --latest` once fixed.
-6. `main` is back-merged into `next` automatically.
+1. Plan the release video with the `release-video` skill, until `node .claude/skills/release-video/assets/check-release-video.js` passes.
+2. Run [Promote](https://github.com/ai-driven-dev/framework/actions/workflows/promote.yml): `next` to `main`.
+3. release-please opens the Release PR. It merges itself.
+4. Tags are created. The release stays a draft until the bundle, the distributions and the video are attached.
+5. Publishing the release fires the announcements.
+6. `main` is back-merged into `next`.
 
-## 🚑 Hotfix
+If the video, a bundle or a distribution fails, the release stays a draft.
+Once fixed: `gh release edit <tag> --draft=false --latest`.
 
-1. Branch `hotfix/*` from `main`, fix, PR back to `main`. `.github/rulesets/main.json` declares merge as the only method the PR may use, so write every commit on the branch as conventional on its own — none gets squashed away.
-2. Merge with an empty description — clear the box in the UI, or run `gh pr merge <n> --merge --body ""` — because this repository's merge commits default their body to the PR title, and release-please reads a non-empty body as a second, duplicate commit in the next release's notes.
-3. release-please cuts a dedicated patch release.
-4. `main` is back-merged into `next` automatically.
+## Hotfix
+
+1. Branch `hotfix/*` from `main`, fix, open a pull request to `main`.
+2. Write every commit as conventional: merge is the only method allowed, so none is squashed away.
+3. Merge with an empty description: `gh pr merge <n> --merge --body ""`.
+4. release-please cuts a patch release.
+5. `main` is back-merged into `next`.
+
+The empty description matters: release-please reads a body as a second commit and lists the change twice.

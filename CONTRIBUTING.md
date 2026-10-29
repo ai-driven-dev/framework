@@ -1,63 +1,86 @@
-# Contributing to the AIDD Framework
-
-## 👥 How to contribute
-
-One path, open to everyone ([roles](./GOVERNANCE.md#-roles)). 
+# Contributing
 
 ```mermaid
-flowchart LR
-    Start(["Something to share?"]) -->|"just a question"| Discussion["💬 Discussions"]
-    Start --> Bug["🐛 Bug"]
-    Start --> Quick["🌱 Quick<br/>problem + solution"]
-    Start --> Detailed["📋 Detailed<br/>scope + acceptance criteria"]
-    Bug --> Validate["✅ Get validated"]
-    Quick --> Validate
-    Detailed --> Validate
-    Validate --> Setup["🔧 Set up"] --> Changes["✏️ Changes"] --> PR["🔀 Open PR"] --> Review["🛡️ Review"] --> Merge["✅ Merged"]
+flowchart TD
+  subgraph propose["1 · Propose"]
+    direction LR
+    start(["Something to share?"]) -->|a question| discussions["Discussions"]
+    start -->|a bug or a change| issue["Open an issue"] --> validated["Validated<br/><i>Todo on the board</i>"]
+  end
+  subgraph build["2 · Build"]
+    direction LR
+    branch["Branch off next"] --> change["Change"] --> test["Test locally"] --> gate["make check"]
+  end
+  subgraph merge["3 · Merge"]
+    direction LR
+    pr["Pull request to next"] --> review["Maintainer review"] --> merged(["Merged<br/><i>ships in the weekly release</i>"])
+  end
+  propose --> build --> merge
+  classDef cPropose fill:#ddf4ff,stroke:#0969da,color:#0a3069
+  classDef cBuild fill:#e9ddff,stroke:#8250df,color:#3b1d78
+  classDef cMerge fill:#ffe1d1,stroke:#c2410c,color:#7a2606
+  classDef done fill:#dafbe1,stroke:#1a7f37,color:#0f4d21
+  class start,discussions,issue,validated cPropose
+  class branch,change,test,gate cBuild
+  class pr,review cMerge
+  class merged done
+  style propose fill:none,stroke:#0969da,stroke-width:2px
+  style build fill:none,stroke:#6f42c1,stroke-width:2px
+  style merge fill:none,stroke:#c2410c,stroke-width:2px
 ```
 
-1. Just a question? → [Discussions](https://github.com/ai-driven-dev/framework/discussions).
-2. **Open an issue** — [🐛 Bug Report](https://github.com/ai-driven-dev/framework/issues/new?template=bug_report.yml), [🌱 Quick Contribution](https://github.com/ai-driven-dev/framework/issues/new?template=quick_contribution.yml), or [📋 Detailed Contribution](https://github.com/ai-driven-dev/framework/issues/new?template=detailed_contribution.yml).
-3. **Get it validated** — a Certified Member or Maintainer moves it to `Todo`. Green light.
-4. **Want to build it yourself?** → [Set up](#-set-up). Anyone can pick up a validated issue, not just the person who opened it.
-5. **Open your PR** → [Open a pull request](#-open-a-pull-request).
+## 1. Propose
 
-## 📜 Principles
+| You have | Open | Required fields |
+| --- | --- | --- |
+| A question | [Discussions](https://github.com/ai-driven-dev/framework/discussions) | none |
+| A bug | [Bug report](https://github.com/ai-driven-dev/framework/issues/new?template=bug_report.yml) | description, expected and observed behaviour, AI tool, OS |
+| A problem and its fix | [Quick contribution](https://github.com/ai-driven-dev/framework/issues/new?template=quick_contribution.yml) | problem, proposed solution |
+| A larger change | [Detailed contribution](https://github.com/ai-driven-dev/framework/issues/new?template=detailed_contribution.yml) | problem, scope, acceptance criteria |
 
-What holds for every contribution, whatever you're building:
+Board status:
 
-- **No slop** — read every line before proposing it.
-- **Spend tokens like they cost something.**
-- **Claude Code syntax only** — skills, agents, and rules are authored in Claude Code syntax (the [CLI](./cli/) adapts a per-tool archive at release).
-- **Follow the skill structure** → [`ARCHITECTURE.md`](docs/ARCHITECTURE.md), use the `/aidd-context:04-skill-generate`.
-- **Evolve the memory** → [`aidd_docs/memory/`](aidd_docs/memory/).
+| Status | Means |
+| --- | --- |
+| `Ideation` | Weighed, not agreed |
+| `Todo` | Validated by a Member or a Maintainer. Anyone can take it. |
+| `In Progress` | Someone is working on it |
+| `In review` | A pull request is open |
+| `Done` | Merged |
 
-## 🔧 Set up
+## 2. Set up
 
-Requires **Node `^22.18.0 || ^24.11.0 || >=26.0.0`**, **pnpm**, **jq**, **python3**, **pipx**.
+| You need | Version |
+| --- | --- |
+| [Node](https://nodejs.org) | 22.18+ or 24.11+ (26 and later also work) |
+| [pnpm](https://pnpm.io) | any recent version |
+| `gh` and `jq` | for the skills that talk to GitHub |
 
-```bash
-make setup   # deps, git hooks, registers the marketplace, installs plugins into Claude + Codex
-```
+Fork the repository, or branch from it if you have write access.
 
-`make` lists every target; `make doctor` checks your environment, `make check` runs the pre-commit checks.
+| Run | Does |
+| --- | --- |
+| `make setup` | Installs dependencies and git hooks, registers the marketplace, installs the plugins into Claude Code and Codex |
+| `make doctor` | Checks your environment |
+| `make reload` | Reloads your checkout into your tools |
+| `make check` | Runs the pre-commit checks |
 
-## ✏️ Make your change
+## 3. The rules
 
-- **Follow the [Principles](#-principles).**
-- **Test locally** — run `make reload`, restart your session(s). Test in Claude *and* one other tool (e.g. Codex).
-- **Commit** — `<type>(<scope>): description`, one scope per commit → [convention](aidd_docs/memory/vcs.md#commits).
+| # | Rule |
+| --- | --- |
+| 1 | **No slop.** Read every line before you propose it. |
+| 2 | **Spend tokens like they cost something.** |
+| 3 | **Write in Claude Code syntax.** The [CLI](cli/README.md) translates it for other tools at release. |
+| 4 | **Follow the skill structure.** See the [architecture](docs/ARCHITECTURE.md), and generate with `/aidd-context:04-skill-generate`. |
+| 5 | **Evolve the memory** in [`aidd_docs/memory/`](aidd_docs/memory/). |
+| 6 | **Test in two tools.** Claude Code and one other, for example Codex. |
+| 7 | **Commit as `<type>(<scope>): description`.** One scope per commit: [convention](aidd_docs/memory/vcs.md#commits). |
 
-## 🔀 Open a pull request
+## 4. Open a pull request
 
-- **Branch off `next`, target `next`** → [routing table](aidd_docs/memory/vcs.md#branches).
-- **Fill the [PR template](.github/PULL_REQUEST_TEMPLATE.md)** — what changed, how you solved it.
-- **A Maintainer review gates every merge** → [`GOVERNANCE.md`](./GOVERNANCE.md#-code-decisions).
-
-## 📚 Reference
-
-[`ARCHITECTURE.md`](docs/ARCHITECTURE.md) · [`CREATE_PLUGIN.md`](docs/CREATE_PLUGIN.md) · [`GLOSSARY.md`](docs/GLOSSARY.md)
-
----
-
-■ [Back to framework](./README.md)
+| Do | Where |
+| --- | --- |
+| Branch off `next` and target `next` | [Exceptions](aidd_docs/memory/vcs.md#branches) |
+| Fill in the template | [Pull request template](.github/PULL_REQUEST_TEMPLATE.md) |
+| Wait for a Maintainer review | [Governance](GOVERNANCE.md#code-decisions) |
