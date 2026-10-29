@@ -15,17 +15,29 @@ Four roles form a ladder. Each one keeps the rights of the roles below it.
 
 ## Code decisions
 
-Only a Maintainer merges. By default:
+Only a Maintainer merges.
 
-- A Maintainer may merge after one Maintainer approval, passing checks, and 72 hours with no objection from another Maintainer.
-- Any Maintainer can block a change by requesting changes, until it is resolved.
-- A change across plugins, to a contract, to the license or to this document needs two Maintainer approvals.
+| Case | Rule |
+| --- | --- |
+| Default | One Maintainer approval, passing checks, and no objection from another Maintainer for 72 hours |
+| A change falls short | Any Maintainer blocks it by requesting changes, until resolved |
+| Across plugins, a contract, the license or this document | Two Maintainer approvals |
 
 ## The roadmap
 
-The live roadmap is the [AIDD Roadmap board](https://github.com/orgs/ai-driven-dev/projects/8). A milestone is a theme due on a Thursday. Items without a milestone are the backlog, ordered by priority.
+- Live roadmap: the [AIDD Roadmap board](https://github.com/orgs/ai-driven-dev/projects/8).
+- A milestone is a theme due on a Thursday.
+- Items without a milestone are the backlog, ordered by priority.
 
-Anyone can react to an idea. A reaction is a signal, not a vote: it moves the idea to a formal vote. Core Team members, Certified Members and Maintainers each cast one equal vote. A poll runs at least 7 days, and a Maintainer breaks ties. This vote sets the roadmap order. It does not decide whether a validated issue can become a pull request.
+| Who | Counts as |
+| --- | --- |
+| Anyone | A reaction is a signal. It moves the idea to a formal vote. |
+| Core Team, Certified Members, Maintainers | One equal vote each |
+| Maintainer | Breaks ties |
+
+- A poll runs at least 7 days.
+- The vote sets the roadmap order.
+- It does not decide whether a validated issue can become a pull request.
 
 ## How to influence the roadmap
 

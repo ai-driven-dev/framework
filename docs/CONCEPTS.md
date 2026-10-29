@@ -1,64 +1,65 @@
 # Concepts
 
-The words this framework uses, and how project memory works.
-
 ## Building blocks
 
-**Marketplace.** A catalog of plugins that your AI tool can install from. This repository is one: your tool reads its list and offers the plugins.
+| Term | What it is |
+| --- | --- |
+| Marketplace | A catalog of plugins your AI tool can install from. This repository is one. |
+| Plugin | An installable package for one concern, such as planning or version control. |
+| Skill | A workflow you start with a slash command or a plain request, such as `aidd-context:00-onboard`. |
+| Action | One step of a skill. You never call it directly. |
+| Orchestrator | A skill that runs other skills for you, such as `aidd-orchestrator:01-sdlc`. |
+| Agent | A specialist that works in its own context and returns only a result. |
+| Command | A single prompt you run as a slash command. |
+| Rule | A coding standard your tool loads on its own. |
+| Hook | A program your tool runs at a session event, such as the start of a session. Not a Git hook. |
+| Bracket ID | The label in a plugin README's skill table, such as `[2.1]`: the plugin, then the skill's row. |
 
-**Plugin.** An installable package that owns one concern, such as planning or version control. It groups skills, and sometimes agents, hooks and rules. Each plugin has a README, and the [catalog](CATALOG.md) lists what it contains.
-
-**Skill.** A workflow you start with a slash command or a plain request. Its name is `<plugin>:<skill>`, for example `aidd-context:00-onboard`. It is a router: it holds no logic and runs its actions in order.
-
-**Action.** One step of a skill, with its input, output, process and test. You never call an action directly.
-
-**Orchestrator.** A skill that drives other skills for you, such as `aidd-orchestrator:01-sdlc`, which takes a request to a draft pull request.
-
-**Agent.** A specialist that works in its own context and returns only a result. A skill starts it when a step needs isolation, for example an independent reviewer.
-
-**Command.** A single prompt you run as a slash command. Use a skill when the work has several steps.
-
-**Rule.** A coding standard that your tool loads on its own. Rules say how to write code; skills say what to do.
-
-**Hook.** A program your AI tool runs at a session event, such as the start of a session. It is not a Git hook. The ones that ship are listed in the [architecture](ARCHITECTURE.md#-bundled-hooks).
-
-**Bracket ID.** The short label in a plugin README's skill table, such as `[2.1]`. The first number is the plugin, the second is the skill's row in that plugin.
-
-How these parts fit together: [Architecture](ARCHITECTURE.md).
+How the parts fit together: [Architecture](ARCHITECTURE.md). The hooks that ship: [list](ARCHITECTURE.md#-bundled-hooks).
 
 ## Project memory
 
-Project memory is a set of Markdown files in `aidd_docs/memory/`. Your AI reads them at the start of every session, so it does not have to rediscover your project each time.
+Markdown files in `aidd_docs/memory/` that your AI reads at the start of every session.
 
 ### Create it
 
-Install the framework first (see the [install guide](INSTALL.md)), then run:
+Install the framework first: [install guide](INSTALL.md).
 
-| Command | Does |
+| Run | Does |
 | --- | --- |
-| `/aidd-context:02-project-memory setup` | First time: scans the project, writes the memory, wires it into your tools |
-| `/aidd-context:02-project-memory refresh` | Shows what drifted, then updates the files you approve |
-| `/aidd-context:02-project-memory rewire` | Wires the memory into a tool again, without rewriting it |
+| `/aidd-context:02-project-memory setup` | Scans the project, writes the memory, wires it into your tools |
+| `/aidd-context:02-project-memory refresh` | Shows what drifted, updates the files you approve |
+| `/aidd-context:02-project-memory rewire` | Wires the memory into a tool again |
 | `/aidd-context:10-learn` | Records a lasting decision or lesson |
 
-An existing file changes only through edits you approved.
-
-### What goes in
+### What it holds
 
 ```text
 aidd_docs/
 └── memory/
-    ├── <topic>.md      one file per concern, loaded every session
-    ├── internal/       workflow notes, loaded when a task needs them
-    └── external/       outside references, loaded when you ask
+    ├── <topic>.md      one file per concern
+    ├── internal/       workflow notes
+    └── external/       outside references
 ```
 
+| Part | Loaded |
+| --- | --- |
+| `memory/<topic>.md` | Every session |
+| `memory/internal/` | When a task needs it |
+| `memory/external/` | When you ask |
+
 - Every project gets a brief, the architecture, a codebase map, coding assertions, testing and version control.
-- More files appear when the project needs them: backlog, deployment, API, database and so on.
-- Each file holds the big picture and what the code cannot tell you. It points to the code instead of copying it.
+- Other files appear when needed: backlog, deployment, API, database.
+- Each file holds the big picture and what the code cannot tell you.
 
-### How it loads
+### How it reaches your AI
 
-A block in your tool's context file (`CLAUDE.md`, `AGENTS.md` or Copilot's instructions file) points to the memory files. A hook refreshes that block when a session starts, so new files are picked up on their own. It needs `node` on your `PATH`.
+- A block in your tool's context file points to the memory: `CLAUDE.md`, `AGENTS.md` or Copilot's instructions file.
+- A hook refreshes that block at session start.
+- The hook needs `node` on your `PATH`.
 
-If you edit a file by hand, keep it to one concern and to the current state, with no personal notes or to-do items.
+### Edit it by hand
+
+- One concern per file.
+- Current state only.
+- No personal notes or to-dos.

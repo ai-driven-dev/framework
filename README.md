@@ -96,7 +96,7 @@ Each tool, updating, removing: [install guide](docs/INSTALL.md).
 ## Quick start
 
 <table>
-<thead><tr><th>Run</th><th>When</th></tr></thead>
+<thead><tr><th width="800">Run</th><th width="1200">When</th></tr></thead>
 <tbody>
 <tr><td><code>/aidd-context:00-onboard</code></td><td>First time, or unsure what to do next. It reads the project and tells you.</td></tr>
 <tr><td><code>/aidd-context:02-project-memory</code></td><td>You want the AI to learn your project once, then remember it.</td></tr>
@@ -104,13 +104,40 @@ Each tool, updating, removing: [install guide](docs/INSTALL.md).
 </tbody>
 </table>
 
-Onboarding and project memory happen once. Then `/aidd-orchestrator:01-sdlc` runs every feature along the same chain.
+Onboarding and project memory run once. Then every feature follows this chain.
 
-<!--sdlc:start-->
+```mermaid
+flowchart TD
+  subgraph frame["Frame"]
+    direction LR
+    request(["request"]) --> ticket["ticket-info<br/><i>if a ticket</i>"] --> brainstorm["brainstorm<br/><i>if unclear</i>"] --> spec["spec<br/><i>the contract</i>"]
+  end
+  subgraph deliver["Deliver"]
+    direction LR
+    plan["plan<br/><i>phases</i>"] --> implement["implement<br/><i>the code</i>"] --> assert["assert<br/><i>tests, lint, types</i>"] --> commit["commit<br/><i>validated work</i>"]
+    assert -. "until checks pass" .-> implement
+  end
+  subgraph check["Check"]
+    direction LR
+    review["review<br/><i>fresh reviewer</i>"] --> challenge["challenge<br/><i>right outcome?</i>"] --> pr["pull-request<br/><i>opens a draft</i>"]
+  end
+  frame --> deliver --> check
+  check -.-> back(["Findings go back to Deliver,<br/>then Check runs again"])
 
-<p align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="docs/assets/diagrams/sdlc-dark.svg"><img src="docs/assets/diagrams/sdlc-light.svg" alt="Frame: request, ticket-info, brainstorm, spec. Deliver: plan, implement, assert, commit. Check: review, challenge, pull-request. assert repeats until checks pass, and Check findings go back to Deliver." width="640"></picture></p>
-
-<!--sdlc:end-->
+  classDef frameStep fill:#0b7285,stroke:#0b7285,color:#fff
+  classDef frameOpt fill:#cff4fc,stroke:#0b7285,stroke-dasharray:4 3,color:#0b4a57
+  classDef deliverStep fill:#6f42c1,stroke:#6f42c1,color:#fff
+  classDef checkStep fill:#c2410c,stroke:#c2410c,color:#fff
+  class request,spec frameStep
+  class ticket,brainstorm frameOpt
+  class plan,implement,assert,commit deliverStep
+  class review,challenge,pr checkStep
+  classDef note fill:none,stroke:#d97706,stroke-dasharray:4 3,color:#d97706
+  class back note
+  style frame fill:none,stroke:#0b7285,stroke-width:2px
+  style deliver fill:none,stroke:#6f42c1,stroke-width:2px
+  style check fill:none,stroke:#c2410c,stroke-width:2px
+```
 
 Fixing a bug, changing one thing, investigating? See the [guides by goal](docs/GUIDES.md).
 
@@ -137,7 +164,7 @@ Install the six stable ones. The other three are off the recommended path.
 ## Documentation
 
 <table>
-<thead><tr><th>For</th><th>Document</th><th>Read it to</th></tr></thead>
+<thead><tr><th width="300">For</th><th width="500">Document</th><th width="1200">Read it to</th></tr></thead>
 <tbody>
 <tr><td rowspan="8"><b>Use it</b></td><td><a href="docs/INSTALL.md">Install</a></td><td>Install, update or remove it</td></tr>
 <tr><td><a href="docs/GUIDES.md">Guides</a></td><td>Find the skills for your goal: fix a bug, build a feature</td></tr>

@@ -53,11 +53,12 @@ If a bad squash turns `main` red, an admin disables the "main protection" rulese
 
 ## Add a plugin
 
-<!--add-plugin:start-->
-
-<p align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="assets/diagrams/add-plugin-dark.svg"><img src="assets/diagrams/add-plugin-light.svg" alt="How to add a plugin: Scaffold, Marketplace, Release, Try, Check, Pull request." width="520"></picture></p>
-
-<!--add-plugin:end-->
+```mermaid
+flowchart LR
+  scaffold["Scaffold<br/><i>aidd-name</i>"] --> market["Marketplace entry"] --> release["Release config"] --> try["Try locally"] --> check["Pre-commit gate"] --> pr(["Pull request<br/><i>feat(aidd-name)</i>"])
+  classDef step fill:#6f42c1,stroke:#6f42c1,color:#fff
+  class scaffold,market,release,try,check,pr step
+```
 
 Adding a skill to an existing plugin? Generate it with `/aidd-context:03-context-generate` and add it to that plugin's `plugin.json`. You can skip the registration below.
 

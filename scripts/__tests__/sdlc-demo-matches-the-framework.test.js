@@ -7,11 +7,28 @@ const { REPO_ROOT: ROOT } = require("../lib/repository-path.cjs");
 /**
  * The README animation is drawn from `docs/assets/sdlc-demo/scenes.json`. It names the steps of
  * the flow and the skills that run them, so it must agree with the README's chain diagram
- * (`docs/assets/diagrams/sdlc.json`) and name only skills that exist.
+ * (its Mermaid chain) and name only skills that exist.
  */
 
 const scenes = JSON.parse(fs.readFileSync(path.join(ROOT, "docs/assets/sdlc-demo/scenes.json"), "utf8"));
-const chain = JSON.parse(fs.readFileSync(path.join(ROOT, "docs/assets/diagrams/sdlc.json"), "utf8"));
+const readme = fs.readFileSync(path.join(ROOT, "README.md"), "utf8");
+
+function skillFolders() {
+  const folders = new Set();
+  for (const plugin of fs.readdirSync(path.join(ROOT, "plugins"))) {
+    const skills = path.join(ROOT, "plugins", plugin, "skills");
+    if (!fs.existsSync(skills)) continue;
+    for (const skill of fs.readdirSync(skills)) folders.add(`${plugin}:${skill.replace(/^\d+-/, "")}`);
+  }
+  return folders;
+}
+
+/** The skill names the README chain draws, in the order it draws them. */
+function drawnSkills() {
+  const chain = readme.match(/```mermaid\nflowchart TD\n  subgraph frame[\s\S]*?```/)?.[0];
+  assert.ok(chain, "the README has no chain diagram");
+  return [...chain.matchAll(/\["([a-z-]+)<br\/>/g)].map((m) => m[1]);
+}
 
 describe("the README animation", () => {
   it("names only skills that exist", () => {
@@ -29,31 +46,34 @@ describe("the README animation", () => {
   });
 
   it("runs the skills the chain diagram draws", () => {
-    const drawn = new Set(chain.zones.flatMap((zone) => zone.steps.map((step) => step.skill).filter(Boolean)));
+    const drawn = new Set(drawnSkills());
     const shown = new Set(
-      scenes.scenes.flatMap((scene) => scene.lines.flatMap((line) => line.text?.match(/aidd-[a-z]+:[0-9a-z-]+/g) ?? [])),
+      scenes.scenes.flatMap((scene) =>
+        scene.lines.flatMap((line) => [...(line.text?.matchAll(/\/aidd-[a-z]+:\d+-([0-9a-z-]+)/g) ?? [])].map((m) => m[1])),
+      ),
     );
-    shown.delete("aidd-orchestrator:01-sdlc");
+    shown.delete("sdlc");
     for (const skill of shown) assert.ok(drawn.has(skill), `${skill} runs in the animation but is not in the chain diagram`);
   });
 });
 
 describe("the chain diagram", () => {
-  it("names only skills that exist", () => {
-    const skills = chain.zones.flatMap((zone) => zone.steps.map((step) => step.skill).filter(Boolean));
-    assert.ok(skills.length > 5, "the diagram names no skills");
-    for (const skill of skills) {
-      const [plugin, name] = skill.split(":");
-      assert.ok(
-        fs.existsSync(path.join(ROOT, "plugins", plugin, "skills", name, "SKILL.md")),
-        `${skill} is not a skill of this repository`,
-      );
-    }
+  it("draws only skills that exist", () => {
+    const names = new Set([...skillFolders()].map((id) => id.split(":")[1]));
+    const drawn = drawnSkills();
+    assert.ok(drawn.length > 5, "the diagram draws no skills");
+    for (const name of drawn) assert.ok(names.has(name), `${name} is not a skill of this repository`);
   });
+});
 
-  it("labels each step with its skill's name", () => {
-    for (const step of chain.zones.flatMap((zone) => zone.steps)) {
-      if (step.skill) assert.equal(step.skill.split(":")[1].replace(/^\d+-/, ""), step.label);
+describe("the documents that name skills", () => {
+  it("name only skills that exist", () => {
+    const known = skillFolders();
+    for (const file of ["README.md", "docs/GUIDES.md", "docs/CONCEPTS.md", "docs/INSTALL.md", "docs/FAQ.md"]) {
+      const text = fs.readFileSync(path.join(ROOT, file), "utf8");
+      for (const [, plugin, name] of text.matchAll(/\/(aidd-[a-z]+):\d+-([0-9a-z-]+)/g)) {
+        assert.ok(known.has(`${plugin}:${name}`), `${file} names /${plugin}:${name}, which is not a skill`);
+      }
     }
   });
 });

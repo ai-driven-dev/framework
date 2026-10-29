@@ -18,13 +18,21 @@ How ships, and what to follow when you open a change. Weekly rolling releases, w
 - Only an urgent production fix takes the fast lane straight to `main`.
 - The branch prefix decides the target; the canonical prefix → target table lives in [`aidd_docs/memory/vcs.md`](aidd_docs/memory/vcs.md#branches).
 
-<!--release:start-->
-
-<p align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="docs/assets/diagrams/release-dark.svg"><img src="docs/assets/diagrams/release-light.svg" alt="How a change ships: Pull request, Promotion, Release PR, Tags, Published, Back-merge." width="520"></picture></p>
-
-<!--release:end-->
-
-An urgent production fix takes the fast lane instead: a `hotfix/*` branch goes straight to `main`.
+```mermaid
+flowchart TD
+  work["feat/* · fix/* · docs/*"] -->|pull request| next["next"]
+  next -->|weekly promotion| main["main"]
+  hotfix["hotfix/*"] -->|pull request, urgent| main
+  main --> release["Release PR<br/><i>release-please, merged by the bot</i>"] --> tags["Tags and archives"] --> published(["Published<br/><i>after the video</i>"]) --> backmerge["Back-merge<br/><i>main into next</i>"]
+  classDef branch fill:#0969da,stroke:#0969da,color:#fff
+  classDef step fill:#6f42c1,stroke:#6f42c1,color:#fff
+  classDef urgent fill:#c2410c,stroke:#c2410c,color:#fff
+  classDef done fill:#1a7f37,stroke:#1a7f37,color:#fff
+  class next,main branch
+  class work,release,tags,backmerge step
+  class hotfix urgent
+  class published done
+```
 
 ## 🛟 The two rules that keep it safe
 

@@ -39,27 +39,9 @@ function scratchTree() {
   );
   write("docs/ARCHITECTURE.md", "<!--hooks:start-->\n<!--hooks:end-->\n");
   write("docs/COMPATIBILITY.md", "<!--support:start-->\n<!--support:end-->\n");
-  write("CONTRIBUTING.md", "<!--contribute:start-->\n<!--contribute:end-->\n");
-  write("RELEASE.md", "<!--release:start-->\n<!--release:end-->\n");
-  write("docs/MAINTAINERS.md", "<!--add-plugin:start-->\n<!--add-plugin:end-->\n");
-  for (const name of ["contribute", "release", "add-plugin"]) {
-    write(`docs/assets/diagrams/${name}.json`, JSON.stringify({ title: name, steps: [{ label: "First", note: "one" }, { label: "Second", note: "two" }] }));
-  }
   write(
     "README.md",
-    "<!--tools:start-->\n<!--tools:end-->\n<!--sdlc:start-->\n<!--sdlc:end-->\n<!--plugins:start-->\n<!--plugins:end-->\n"
-  );
-  write(
-    "docs/assets/diagrams/sdlc.json",
-    JSON.stringify({
-      zones: [
-        { name: "Frame", steps: [{ label: "spec", note: "the contract" }] },
-        { name: "Deliver", steps: [{ label: "plan", note: "phases" }, { label: "implement", note: "the code" }, { label: "assert", note: "checks" }] },
-        { name: "Check", steps: [{ label: "review", note: "a reviewer" }] },
-      ],
-      repeat: { from: "assert", to: "implement", label: "until checks pass" },
-      return: { from: "Check", to: "Deliver", label: ["Back"] },
-    })
+    "<!--tools:start-->\n<!--tools:end-->\n<!--plugins:start-->\n<!--plugins:end-->\n"
   );
   write("plugins/aidd-x/skills/01-a/SKILL.md", "---\nname: 01-a\n---\n");
   write(
@@ -86,15 +68,9 @@ test("an empty block is reported stale, and syncing fills it from the tree", () 
     assert.match(architecture, /\| \[`aidd-x`\]\(\.\.\/plugins\/aidd-x\/README\.md\) \| `SessionStart` \| `hooks\/a\.js` \|/);
     assert.match(compatibility, /\| Claude Code \| `\.claude\/` \| ✅ \| ✅ \| ✅ \| ✅ \| ✅ marketplace, ❌ flat files \| ✅ marketplace, ✅ bridge flat files \|/);
     assert.doesNotMatch(compatibility, /Rules|Commands/);
-    assert.match(fs.readFileSync(path.join(root, "CONTRIBUTING.md"), "utf8"), /contribute-light\.svg" alt="contribute: First, Second\."/);
-    assert.ok(fs.existsSync(path.join(root, "docs/assets/diagrams/release-dark.svg")));
     const readme = fs.readFileSync(path.join(root, "README.md"), "utf8");
     assert.match(readme, /<tr><td><b>Claude Code<\/b><\/td><td align="center">✅<\/td><td align="center">✅<\/td><td align="center">✅<\/td><\/tr>/);
     assert.match(readme, /<table>/);
-    assert.match(readme, /sdlc-light\.svg" alt="Frame: spec\. Deliver: plan, implement, assert\. Check: review\./);
-    const flow = fs.readFileSync(path.join(root, "docs/assets/diagrams/sdlc-dark.svg"), "utf8");
-    assert.match(flow, />implement</);
-    assert.match(flow, />until checks pass</);
     assert.match(readme, /<a href="plugins\/aidd-x\/README\.md">.*aidd-x-light\.svg" alt="aidd-x, beta, 1 skill: Does one thing"/);
     const card = fs.readFileSync(path.join(root, "docs/assets/plugins/aidd-x-dark.svg"), "utf8");
     assert.match(card, />aidd-x</);
@@ -151,10 +127,6 @@ test("the real documents carry the markers the script writes between", () => {
     ["docs/ARCHITECTURE.md", "hooks"],
     ["docs/COMPATIBILITY.md", "support"],
     ["README.md", "tools"],
-    ["README.md", "sdlc"],
-    ["CONTRIBUTING.md", "contribute"],
-    ["RELEASE.md", "release"],
-    ["docs/MAINTAINERS.md", "add-plugin"],
     ["README.md", "plugins"],
   ]) {
     const text = fs.readFileSync(path.join(REPOSITORY, file), "utf8");

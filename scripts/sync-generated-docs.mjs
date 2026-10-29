@@ -3,14 +3,13 @@
 // (docs/ARCHITECTURE.md, from plugins/*/hooks/hooks.json) and what each tool is declared to
 // support (docs/COMPATIBILITY.md and the tool list in README.md, from the CLI's stored
 // tool-support record), the plugin cards in README.md with the SVG files they show
-// (docs/assets/plugins/, from the tree and plugins.json), and the SDLC chain drawn from
-// docs/assets/diagrams/sdlc.json. Each block sits between its own markers. `--check` reports instead of writing; `--root <dir>` points the
-// script at another tree, which is how its test runs it.
+// (docs/assets/plugins/, from the tree and plugins.json). Each block sits between its own
+// markers. `--check` reports instead of writing; `--root <dir>` points the script at another
+// tree, which is how its test runs it.
 
 import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { cardSvg, cardsMarkup } from "./lib/plugin-cards.mjs";
-import { chainMarkup, chainSvg, stepsMarkup, stepsSvg } from "./lib/flow-diagram.mjs";
 
 const rootFlag = process.argv.indexOf("--root");
 const ROOT =
@@ -18,17 +17,10 @@ const ROOT =
 const ARCHITECTURE = `${ROOT}docs/ARCHITECTURE.md`;
 const COMPATIBILITY = `${ROOT}docs/COMPATIBILITY.md`;
 const README = `${ROOT}README.md`;
-const CONTRIBUTING = `${ROOT}CONTRIBUTING.md`;
-const RELEASE = `${ROOT}RELEASE.md`;
-const MAINTAINERS = `${ROOT}docs/MAINTAINERS.md`;
 const SUPPORT_RECORD = `${ROOT}cli/tests/golden/snapshots/tool-support/surface.json`;
 
 const CARD_DIRECTORY = `${ROOT}docs/assets/plugins`;
 const CARD_CONFIG = `${CARD_DIRECTORY}/plugins.json`;
-
-const DIAGRAM_DIRECTORY = `${ROOT}docs/assets/diagrams`;
-const SDLC_CHAIN = `${DIAGRAM_DIRECTORY}/sdlc.json`;
-const STEP_DIAGRAMS = ["contribute", "release", "add-plugin"];
 
 const SCRIPT_REFERENCE = /\$\{CLAUDE_PLUGIN_ROOT\}\/([^\s"]+)/g;
 const SURFACES = [
@@ -156,30 +148,8 @@ function cardFiles() {
   );
 }
 
-function sdlcChain() {
-  return JSON.parse(readFileSync(SDLC_CHAIN, "utf8"));
-}
-
-function stepDiagram(name) {
-  return JSON.parse(readFileSync(`${DIAGRAM_DIRECTORY}/${name}.json`, "utf8"));
-}
-
-function diagramFiles() {
-  const themes = ["light", "dark"];
-  return [
-    ...themes.map((theme) => [`${DIAGRAM_DIRECTORY}/sdlc-${theme}.svg`, chainSvg(sdlcChain(), theme)]),
-    ...STEP_DIAGRAMS.flatMap((name) =>
-      themes.map((theme) => [`${DIAGRAM_DIRECTORY}/${name}-${theme}.svg`, stepsSvg(stepDiagram(name), theme)])
-    ),
-  ];
-}
-
 const targets = [
   [README, "tools", toolsTable],
-  [README, "sdlc", () => chainMarkup(sdlcChain(), "docs/assets/diagrams/sdlc")],
-  [CONTRIBUTING, "contribute", () => stepsMarkup(stepDiagram("contribute"), "docs/assets/diagrams/contribute")],
-  [MAINTAINERS, "add-plugin", () => stepsMarkup(stepDiagram("add-plugin"), "assets/diagrams/add-plugin")],
-  [RELEASE, "release", () => stepsMarkup(stepDiagram("release"), "docs/assets/diagrams/release")],
   [README, "plugins", () => cardsMarkup(cards())],
   [ARCHITECTURE, "hooks", hooksTable],
   [COMPATIBILITY, "support", supportTables],
@@ -199,7 +169,7 @@ for (const [file, name, render] of targets) {
 }
 
 mkdirSync(CARD_DIRECTORY, { recursive: true });
-for (const [file, svg] of [...cardFiles(), ...diagramFiles()]) {
+for (const [file, svg] of cardFiles()) {
   if (existsSync(file) && readFileSync(file, "utf8") === svg) continue;
   drifted = true;
   if (!check) {
