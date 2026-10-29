@@ -21,6 +21,8 @@ flowchart TB
 
 Marketplace and plugins version independently. See the [marketplace guide](MARKETPLACE.md) for registration, scopes and updates.
 
+A Docker Sandbox mixin kit (`kits/<name>/spec.yaml`) is a separate distribution path outside this chain: it drives a sandbox's own `claude plugin` CLI directly, with no CLI or marketplace-registration step of its own, and is not a plugin.
+
 ## 🧩 Anatomy of a plugin
 
 Manifest and skills are required in AIDD; other capabilities are optional. Locations are relative to the plugin directory.

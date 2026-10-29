@@ -27,6 +27,7 @@ module.exports = {
         "qa",
         "cli",
         "kanban",
+        "kit",
         "framework",
         "marketplace",
         "release-please",
