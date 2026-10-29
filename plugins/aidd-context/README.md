@@ -32,3 +32,15 @@ New to AIDD, or unsure what to run next? Invoke `aidd-context:00-onboard`. The s
 3. Loops back to reading the project after each step so the guidance always reflects the current state.
 
 Onboard adapts to whatever plugins are installed: it suggests by function and discovers the skills that fill each step, so a skill added later shows up on its own.
+
+## Multi-tool capabilities
+
+The plugin supports Claude Code, Codex CLI, OpenCode, Cursor, GitHub Copilot, and Kilo. Onboarding detects installed AIDD plugins and their skills; each generator confirms the available host tools before preparing outputs.
+
+- **Project memory:** initialize and sync shared project context while preserving tool-specific links and imports.
+- **Rules:** generate project guidance in each confirmed tool's supported format.
+- **Skills:** create router-based skills and resolve native or portable placement where supported.
+- **Agents and workflows:** generate tool-specific agents and one-shot commands where supported.
+- **Hooks:** generate declarative hooks where supported and provide sourced plugin guidance otherwise; OpenCode and Kilo receive guidance only, and the generator writes no Kilo plugin or hook. See [hook paths](skills/08-hook-generate/references/tool-paths.md) and [hook authoring](skills/08-hook-generate/references/hook-authoring.md).
+
+Paths, formats, supported fields, and limits belong to each generator's tool references.

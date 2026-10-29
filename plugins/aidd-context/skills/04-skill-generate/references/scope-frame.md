@@ -7,6 +7,7 @@ The fields a scoped skill must define.
 - name: kebab-case.
 - flow: visible user journey.
 - mode: optional, `auto` or `interactive`.
+- placement: for Kilo, confirmed native or explicitly agreed portable; omit for other tools.
 - target: detected tool, plugin source, or dedicated tool.
 
 Modes:
@@ -22,3 +23,4 @@ Output shape:
 - flow:
 - mode: omit when absent.
 - target:
+- placement: omit when not applicable.

@@ -1,11 +1,11 @@
 import { spawn } from "node:child_process";
 import { existsSync } from "node:fs";
 import { mkdir, readdir, readFile, writeFile } from "node:fs/promises";
-import { createServer } from "node:http";
 import { delimiter, join } from "node:path";
 import { setTimeout as delay } from "node:timers/promises";
 import { describe, expect, it } from "vitest";
 import { REPOSITORY_ROOT } from "../helpers/repository-root.js";
+import { localModel } from "./helpers/kilo-local-model.js";
 import { createTestEnv, execFileAsync, runCli, sandboxedEnv } from "./helpers.js";
 
 const describeKiloRuntime = process.env.KILO_RUNTIME_SMOKE === "1" ? describe : describe.skip;
@@ -62,57 +62,6 @@ async function markerContent(path: string): Promise<string> {
   } catch {
     return "";
   }
-}
-
-async function localModel() {
-  const requests: Array<{ messages: Array<{ role: string; content: unknown }> }> = [];
-  let readSent = false;
-  const server = createServer((request, response) => {
-    let body = "";
-    request.on("data", (chunk) => {
-      body += String(chunk);
-    });
-    request.on("end", () => {
-      if (request.url !== "/v1/chat/completions") {
-        response.writeHead(404).end();
-        return;
-      }
-      const input = JSON.parse(body) as {
-        messages: Array<{ role: string; content: unknown }>;
-        tools?: Array<{ function: { name: string } }>;
-      };
-      requests.push(input);
-      response.writeHead(200, { "content-type": "text/event-stream" });
-      const chunk = (delta: unknown, finish_reason: string | null = null) => {
-        response.write(
-          `data: ${JSON.stringify({ id: "chatcmpl-local", object: "chat.completion.chunk", created: 1, model: "fake", choices: [{ index: 0, delta, finish_reason }] })}\n\n`
-        );
-      };
-      chunk({ role: "assistant" });
-      if (!readSent && input.tools?.some((tool) => tool.function.name === "read")) {
-        readSent = true;
-        chunk({
-          tool_calls: [
-            {
-              index: 0,
-              id: "call_local_read",
-              type: "function",
-              function: { name: "read", arguments: '{"filePath":"probe.txt"}' },
-            },
-          ],
-        });
-        chunk({}, "tool_calls");
-      } else {
-        chunk({ content: "KILO_LOCAL_READ_CONFIRMED" });
-        chunk({}, "stop");
-      }
-      response.end("data: [DONE]\n\n");
-    });
-  });
-  await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
-  const address = server.address();
-  if (address === null || typeof address === "string") throw new Error("Missing model port");
-  return { server, requests, url: `http://127.0.0.1:${address.port}/v1` };
 }
 
 function alive(pid: number): boolean {

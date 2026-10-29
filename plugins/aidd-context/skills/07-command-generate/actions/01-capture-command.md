@@ -20,6 +20,7 @@ In-context: the command name and one-line goal, its location, its arguments, the
 6. **Write mode.** Ask where the command goes:
    - **Host project**: detect the installed tools ([tool-paths.md](../references/tool-paths.md)), propose the supported ones, and confirm which to target. Never pick one silently.
    - **Plugin source**: confirm or create `plugins/<plugin>/commands/`.
+   - **Kilo**: when a Kilo signal is present, propose `.kilo/commands/<name>.md`, without a nested location. Capture only requested `agent`, `model`, `variant`, and `subtask`.
 
 ## Test
 
