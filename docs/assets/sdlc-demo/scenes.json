@@ -4,11 +4,13 @@
   "steps": [
     {
       "id": "clarify",
-      "label": "Clarify"
+      "label": "Clarify",
+      "approve": true
     },
     {
       "id": "plan",
-      "label": "Plan"
+      "label": "Plan",
+      "approve": true
     },
     {
       "id": "build",
@@ -20,7 +22,8 @@
     },
     {
       "id": "review",
-      "label": "Review"
+      "label": "Review",
+      "approve": true
     },
     {
       "id": "ship",
@@ -139,7 +142,7 @@
         {
           "at": 1.1,
           "kind": "card",
-          "title": "aidd_docs/tasks/\u2026/spec.md",
+          "title": "aidd_docs/tasks/…/spec.md",
           "icon": "file",
           "rows": [
             {
@@ -214,7 +217,7 @@
         {
           "at": 1.4,
           "kind": "card",
-          "title": "aidd_docs/tasks/\u2026/plan.md",
+          "title": "aidd_docs/tasks/…/plan.md",
           "icon": "file",
           "rows": [
             {
@@ -389,7 +392,7 @@
         {
           "at": 1.6,
           "kind": "card",
-          "title": "aidd_docs/tasks/\u2026/review.md",
+          "title": "aidd_docs/tasks/…/review.md",
           "icon": "file",
           "rows": [
             {

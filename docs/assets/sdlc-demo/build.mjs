@@ -110,7 +110,7 @@ function sceneFile(s) {
 
 function chromeFile() {
   const steps = data.steps;
-  const rail = steps.map((st) => `<div id="s-${st.id}" class="step"><span class="dot"></span>${esc(st.label)}</div>`);
+  const rail = steps.map((st) => `<div id="s-${st.id}" class="step"><span class="dot"></span>${esc(st.label)}${st.approve ? '<span class="you">you approve</span>' : ""}</div>`);
   const events = [];
   const paint = (id, t, state) => events.push({ id, t: +t.toFixed(2), state });
   for (const st of steps) {
@@ -151,6 +151,10 @@ function chromeFile() {
     .step { display: flex; align-items: center; gap: 22px; font-size: 40px; font-weight: 600; color: #6e7681; height: 96px; position: relative; }
     .step::after { content: ""; position: absolute; left: 7px; top: 56px; width: 2px; height: 80px; background: #30363d; }
     .step:last-child::after { display: none; }
+    .you { margin-left: 6px; padding: 4px 16px; border-radius: 999px; background: #fff8c5; color: #633c01; border: 2px solid #9a6700; font-size: 22px; font-weight: 700; }
+    #legend { position: absolute; left: 110px; top: 1018px; width: 1700px; text-align: center; font-size: 28px; font-weight: 700; letter-spacing: 0.04em; }
+    #legend .ai { color: #a371f7; }
+    #legend .yo { color: #e3b341; margin-left: 40px; }
     .dot { width: 16px; height: 16px; flex: none; border-radius: 50%; background: #30363d; }
     #divider { position: absolute; left: 600px; top: 154px; width: 2px; height: 786px; background: #232b36; }
     #badge { position: absolute; left: 110px; top: 974px; width: 1700px; text-align: center; font-size: 28px; color: #8b949e; letter-spacing: 0.04em; }
@@ -161,6 +165,7 @@ function chromeFile() {
     <div id="railhead">SDLC</div>
     <div id="rail">${rail.join("")}</div>
     <div id="badge">${esc(data.badge)}</div>
+    <div id="legend"><span class="ai">■ the AI works</span><span class="yo">■ you approve</span></div>
   </div>
   <script>
     const tl = gsap.timeline({ paused: true });

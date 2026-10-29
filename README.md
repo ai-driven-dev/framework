@@ -108,19 +108,19 @@ Each tool, updating, removing: [install guide](docs/INSTALL.md).
 flowchart TD
   start(["/aidd-context:00-onboard<br/>guides you through all of it"])
   subgraph memory["Memory, once per project"]
-    projectMemory["AI<br/>writes the project memory"]
+    projectMemory["AI<br/>writes the project memory<br/><i>/aidd-context:02-project-memory</i>"]
   end
   subgraph frame["Frame"]
     direction LR
-    writeContract["AI<br/>writes the contract"] --> approveContract(["You<br/>approve the contract"])
+    writeContract["AI<br/>writes the contract<br/><i>/aidd-pm:04-spec</i>"] --> approveContract(["You<br/>approve the contract"])
   end
   subgraph deliver["Deliver"]
     direction LR
-    plan["AI<br/>plans"] --> approvePlan(["You<br/>approve the plan"]) --> build["AI<br/>builds and validates"]
+    plan["AI<br/>plans<br/><i>/aidd-dev:01-plan</i>"] --> approvePlan(["You<br/>approve the plan"]) --> build["AI<br/>builds and validates<br/><i>/aidd-dev:02-implement<br/>/aidd-dev:03-assert</i>"]
   end
   subgraph check["Check"]
     direction LR
-    review["AI<br/>reviews"] --> approveOutcome(["You<br/>approve the outcome"]) --> pr["AI<br/>opens a draft pull request"]
+    review["AI<br/>reviews<br/><i>/aidd-dev:05-review</i>"] --> approveOutcome(["You<br/>approve the outcome"]) --> pr["AI<br/>opens a draft pull request<br/><i>/aidd-vcs:02-pull-request</i>"]
   end
   start --> memory --> frame --> deliver --> check
 
@@ -253,12 +253,15 @@ Acceptance QA with video evidence
 
 ## Community
 
+> [!TIP]
+> **Found it useful? [⭐ Star the repository](https://github.com/ai-driven-dev/framework/stargazers).** It helps other developers find it.
+
 Built by the [AI-Driven Dev](https://www.ai-driven-dev.fr/) community.
 
 - 3 years of R&D
 - 500+ developers trained
 - Production software shipped with 100% AI-generated code
-- Free and open source (MIT). A [⭐](https://github.com/ai-driven-dev/framework/stargazers) helps others find it.
+- Free and open source (MIT)
 
 [Discord 🇫🇷](https://discord.gg/EWySJSpjWs) · [Discussions](https://github.com/ai-driven-dev/framework/discussions) · [Issues](https://github.com/ai-driven-dev/framework/issues) · [Team training](https://www.ai-driven-dev.fr/entreprise) · [How the roadmap is set](GOVERNANCE.md#influence-the-roadmap)
 
