@@ -1,0 +1,58 @@
+name: OpenCode agent
+
+# Lets the repository owner hand work to OpenCode from a comment: `/oc` or `/opencode` in an
+# issue, a pull request, or a line-level review. On a pull request the agent commits to its
+# branch; on an issue it opens a branch and a pull request. Models run on OpenCode Go.
+#
+# Only one account can trigger it. The repository is public, so any comment would otherwise
+# spend the subscription and feed untrusted text to an agent holding a write token. The check
+# is on the numeric user id, not the login, because a login can be renamed and reclaimed.
+#
+# The CLI is installed at a pinned v1 release instead of through `anomalyco/opencode/github`:
+# that action is no longer published, installs whatever OpenCode release is latest at run
+# time, and OpenCode v2 removed the `github run` command it calls.
+
+on:
+  issue_comment:
+    types: [created]
+  pull_request_review_comment:
+    types: [created]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.issue.number || github.event.pull_request.number }}
+  cancel-in-progress: false
+
+# No default grant: a job added later starts with nothing.
+permissions: {}
+
+jobs:
+  opencode:
+    name: Run OpenCode
+    if: |
+      github.event.comment.user.id == 8973343 &&
+      (contains(github.event.comment.body, '/oc') || contains(github.event.comment.body, '/opencode'))
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    # id-token: write lets the CLI trade the run's OIDC token for an OpenCode Agent app token,
+    # which is what pushes commits and comments. GITHUB_TOKEN itself stays read-only.
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 1
+          persist-credentials: false
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "22"
+
+      - name: Install OpenCode
+        run: npm install --global opencode-ai@1.19.5
+
+      - name: Run OpenCode
+        env:
+          MODEL: opencode-go/kimi-k2.7-code
+          OPENCODE_API_KEY: ${{ secrets.OPENCODE_API_KEY }}
+        run: opencode github run

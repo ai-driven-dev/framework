@@ -17,6 +17,7 @@ Where the project runs and how it ships: CI/CD, environments, and release.
 | `dependabot-auto-merge.yml` | merges dependency PRs that pass |
 | `close-finished-milestones.yml` | closes a milestone once its issues are |
 | `star-history.yml` | refreshes the README star chart |
+| `opencode.yml` | runs the OpenCode agent on a `/oc` comment from the repository owner, nobody else |
 
 Push to `main` is automatic. Manual runs: `promote.yml`, `close-finished-milestones.yml`, `star-history.yml`.
 
