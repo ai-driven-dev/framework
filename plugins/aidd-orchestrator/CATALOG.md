@@ -26,6 +26,10 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 
 | Group | File | Description |
 |-------|------|---|
+| `actions` | [review.md](skills/00-async-dev/actions/review.md) | - |
+| `actions` | [route.md](skills/00-async-dev/actions/route.md) | - |
+| `actions` | [run.md](skills/00-async-dev/actions/run.md) | - |
+| `actions` | [setup.md](skills/00-async-dev/actions/setup.md) | - |
 | `references` | [routing.md](skills/00-async-dev/references/routing.md) | - |
 | `-` | [SKILL.md](skills/00-async-dev/SKILL.md) | `Drive the async-dev pipeline from one entry point, whether setup, run, or review. Use when the user wants to install async dev, run a ready issue, or address PR review comments, or on a webhook trigger. Not for plain status checks.` |
 
