@@ -11,7 +11,7 @@ Unify **engineering teams** around **standardized workflows** and **shared best 
 🧱 **IDE agnostic** · 🏗️ **Legacy systems** · 🌱 **Token-optimized** · 🇫🇷 **Made in France**
 
 <p>
-  <!--counts:start--><kbd>9 plugins</kbd> · <kbd>51 skills</kbd> · <kbd>2 agents</kbd><!--counts:end-->
+  <!--counts:start--><kbd>9 plugins</kbd> · <kbd>52 skills</kbd> · <kbd>2 agents</kbd><!--counts:end-->
 </p>
 
 [![Open Source](https://img.shields.io/badge/Open_Source-Yes-yellow?logo=open-source-initiative&logoColor=white)](https://opensource.org/)
@@ -236,7 +236,7 @@ Start with a functional need or User Story, then track it as an issue or ticket
 before planning. Shipping follows the project's own delivery process. Capture a
 learning only when it is durable enough to improve the next feature.
 
-> 🍳 **More flows** → bundled recipes: [MCP installations](plugins/aidd-context/skills/12-cook/assets/recipes/mcp-installation.md), [token optimization](plugins/aidd-context/skills/12-cook/assets/recipes/token-optimization.md), and [installing AIDDy](plugins/aidd-context/skills/12-cook/assets/recipes/install-aiddy-in-codex.md).
+> 🍳 **More flows** → bundled recipes: [Connect your services](plugins/aidd-context/skills/12-cook/assets/recipes/connect-services.md), [token optimization](plugins/aidd-context/skills/12-cook/assets/recipes/token-optimization.md), and [installing AIDDy](plugins/aidd-context/skills/12-cook/assets/recipes/install-aiddy-in-codex.md).
 
 ## 🧩 Plugins
 
@@ -248,7 +248,7 @@ Nine plugins covering the whole SDLC — **install the six stable ones**; they w
 
 ### 🧭 [aidd-context](plugins/aidd-context/README.md)
 
-`13 skills` · stable
+`14 skills` · stable
 
 Project init, memory bank, context-artifact generation, diagrams, learning, exploration.
 
@@ -338,7 +338,7 @@ Full catalog → [`CATALOG.md`](docs/CATALOG.md).
 
 | | |
 | --- | --- |
-| 🍳 **Recipes** | Bundled how-to sheets: [MCP installations](plugins/aidd-context/skills/12-cook/assets/recipes/mcp-installation.md), [token optimization](plugins/aidd-context/skills/12-cook/assets/recipes/token-optimization.md), [install AIDDy](plugins/aidd-context/skills/12-cook/assets/recipes/install-aiddy-in-codex.md). Project recipes created by cook live in `aidd_docs/recipes/`. |
+| 🍳 **Recipes** | Bundled how-to sheets: [Connect your services](plugins/aidd-context/skills/12-cook/assets/recipes/connect-services.md), [token optimization](plugins/aidd-context/skills/12-cook/assets/recipes/token-optimization.md), [install AIDDy](plugins/aidd-context/skills/12-cook/assets/recipes/install-aiddy-in-codex.md). Project recipes created by cook live in `aidd_docs/recipes/`. |
 | 🏛️ **[Architecture](docs/ARCHITECTURE.md)** | How the framework composes: plugins, skills, hooks, agents. |
 | 🧩 **[Create a plugin](docs/CREATE_PLUGIN.md)** | Build and publish your own. |
 | 🛒 **[Marketplace](docs/MARKETPLACE.md)** | Install scopes and versioning. |

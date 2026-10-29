@@ -394,8 +394,10 @@ function checkSteps(
   );
   const steps: RecipeStep[] = [];
   const categories: Heading[] = [];
+  let directStep: RecipeStep | undefined;
 
   for (const heading of scopedHeadings) {
+    if (heading.depth === 3) directStep = undefined;
     const source = `${"#".repeat(heading.depth)} ${heading.text}`;
     const match = source.match(STEP_PATTERN);
     if (match) {
@@ -409,7 +411,9 @@ function checkSteps(
           "Add one meaningful emoji between the step number and title."
         );
       }
-      steps.push({ ...heading, number: Number.parseInt(match[2], 10), icon, title: match[4] });
+      const step = { ...heading, number: Number.parseInt(match[2], 10), icon, title: match[4] };
+      steps.push(step);
+      if (heading.depth === 3) directStep = step;
       continue;
     }
 
@@ -423,13 +427,13 @@ function checkSteps(
       );
     } else if (heading.depth === 3) {
       categories.push(heading);
-    } else {
+    } else if (!directStep) {
       addFinding(
         findings,
         file,
         heading.line,
         "category-depth",
-        "Use level 3 for a category and level 4 only for its numbered steps."
+        "Use level 4 for numbered category steps or subsections of a direct numbered step."
       );
     }
   }

@@ -8,7 +8,7 @@ The version-control conventions this project follows: branches, commits, and the
 
 - Production branch: `main`. Integration branch: `next`, the target for day-to-day work.
 - GitHub's default branch is `main`, so `gh pr create` without `--base next` targets production.
-- Platform: GitHub, driven through `gh`. Tickets are GitHub Issues.
+- Platform: GitHub, repository `ai-driven-dev/framework`, driven through `gh`. Tickets are GitHub Issues.
 - Pull request template: `.github/PULL_REQUEST_TEMPLATE.md`.
 - The release model — weekly promotion, hotfix path — is in [`RELEASE.md`](../../RELEASE.md); the tooling behind it is in `deployment.md`.
 
