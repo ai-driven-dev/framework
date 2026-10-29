@@ -27,10 +27,8 @@
 | Question | Answer |
 | --- | --- |
 | Is anything measured? | Not until you opt in. |
-| How do I turn it on, or erase it? | `aidd telemetry on`, then `aidd telemetry forget --yes`. |
-| What does it count? | Tokens of Claude Code and Codex sessions. It sends nothing anywhere. |
-
-Details: [plugin README](../plugins/aidd-telemetry/README.md).
+| What does it count, and where does it go? | Tokens of Claude Code and Codex sessions. They stay on your machine. |
+| How do I turn it on, or erase it? | [aidd-telemetry](../plugins/aidd-telemetry/README.md) |
 
 ## Still stuck?
 
