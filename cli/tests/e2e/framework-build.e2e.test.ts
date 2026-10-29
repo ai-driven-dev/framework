@@ -252,9 +252,8 @@ describe.concurrent("E2E: aidd translate", () => {
         "name",
         "description",
         "model",
-        "tools",
-        "agents",
-        "argument-hint",
+        "reasoningEffort",
+        "include-custom-instructions",
       ]);
       const agentContent = await readFile(
         join(projRoot, ".github", "agents", "aidd-test-code-reviewer.agent.md"),

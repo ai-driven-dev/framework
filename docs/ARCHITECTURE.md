@@ -59,17 +59,19 @@ flowchart LR
 | Role | Rule |
 | --- | --- |
 | Skill | Runs in the caller's context. Holds no logic, only its actions. |
-| Orchestrator | Owns the routing. Decides what runs in isolation or in parallel. |
-| Subagent | Returns only a result. Calls only the skills it declares. Never calls an orchestrator. |
+| Caller | The session or skill that delegates. Owns scope, integration and acceptance. |
+| Orchestrator | Sequences capabilities for the caller. |
+| Subagent | Takes a scoped brief and returns only a result to the caller. Never calls an orchestrator. |
 | Delegation | At most two layers, no cycles. |
 
 ## Rules that keep plugins independent
 
 1. A skill links only inside its own directory.
 2. A bundled script is named in backticks, never linked.
-3. Address another plugin as `/plugin:folder` only in dispatch tables, orchestration references and agent permission lists.
+3. Address another plugin as `/plugin:folder` only in dispatch tables and orchestration references.
 4. Find a provider in another plugin by its description.
 5. Keep a bundled script's tests in `scripts/__tests__/`, never in the plugin.
 6. Write only what the target tool supports.
+7. Delegate agent work by responsibility, never by agent name.
 
 More: [Maintainers guide](MAINTAINERS.md), [CLI architecture](../cli/ARCHITECTURE.md).

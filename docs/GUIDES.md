@@ -43,7 +43,7 @@ What it creates: [Concepts](CONCEPTS.md#project-memory).
 
 Bundled how-to sheets:
 
-- [MCP installation](../plugins/aidd-context/skills/12-cook/assets/recipes/mcp-installation.md)
+- [Connect your services](../plugins/aidd-context/skills/12-cook/assets/recipes/connect-services.md)
 - [Token optimization](../plugins/aidd-context/skills/12-cook/assets/recipes/token-optimization.md)
 - [The AIDDy mascot in the ChatGPT desktop app](../plugins/aidd-context/skills/12-cook/assets/recipes/install-aiddy-in-codex.md)
 
@@ -280,7 +280,7 @@ flowchart TD
 | Goal | Run |
 | --- | --- |
 | Record a decision or a lesson | `/aidd-context:10-learn` |
-| Improve how you work with the AI | `/aidd-refine:05-improve` |
+| Review a finished conversation | `/aidd-refine:05-review-conversation` |
 
 ## 6. Update
 

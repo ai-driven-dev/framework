@@ -11,7 +11,7 @@ Unify **engineering teams** around **standardized workflows** and **shared best 
 🧱 **IDE agnostic** · 🏗️ **Legacy systems** · 🌱 **Token-optimized** · 🇫🇷 **Made in France**
 
 <p>
-  <!--counts:start--><kbd>9 plugins</kbd> · <kbd>51 skills</kbd> · <kbd>2 agents</kbd><!--counts:end-->
+  <!--counts:start--><kbd>9 plugins</kbd> · <kbd>52 skills</kbd> · <kbd>4 agents</kbd><!--counts:end-->
 </p>
 
 [![Open Source](https://img.shields.io/badge/Open_Source-Yes-yellow?logo=open-source-initiative&logoColor=white)](https://opensource.org/)
@@ -133,7 +133,7 @@ Beta, alpha and preview plugins are off the recommended path.
 <a href="plugins/aidd-context/README.md">
 <img align="right" alt="stable" src="https://img.shields.io/badge/stable-2da44e?style=flat-square" />
 <h3>🧭 aidd-context</h3>
-13 skills · 1 hook<br />
+14 skills · 1 hook<br />
 Project memory, context generation, learning
 </a>
 </td>
@@ -141,7 +141,7 @@ Project memory, context generation, learning
 <a href="plugins/aidd-dev/README.md">
 <img align="right" alt="stable" src="https://img.shields.io/badge/stable-2da44e?style=flat-square" />
 <h3>⚙️ aidd-dev</h3>
-10 skills · 2 agents<br />
+10 skills<br />
 Plan, build, review, test, debug
 </a>
 </td>
@@ -175,7 +175,7 @@ Brainstorm, challenge, fact-check
 <a href="plugins/aidd-orchestrator/README.md">
 <img align="right" alt="stable" src="https://img.shields.io/badge/stable-2da44e?style=flat-square" />
 <h3>🎼 aidd-orchestrator</h3>
-3 skills<br />
+3 skills · 4 agents<br />
 Feature flow, issue-to-PR automation, backlog
 </a>
 </td>
@@ -215,10 +215,11 @@ Acceptance QA with video evidence
 <table>
 <thead><tr><th width="300">For</th><th width="500">Document</th><th width="1200">Read it to</th></tr></thead>
 <tbody>
-<tr><td rowspan="8"><b>Use it</b></td><td><a href="docs/INSTALL.md">Install</a></td><td>Install, update or remove it</td></tr>
+<tr><td rowspan="9"><b>Use it</b></td><td><a href="docs/INSTALL.md">Install</a></td><td>Install, update or remove it</td></tr>
 <tr><td><a href="docs/GUIDES.md">Guides</a></td><td>Find the skills for your goal: fix a bug, build a feature</td></tr>
 <tr><td><a href="docs/CONCEPTS.md">Concepts</a></td><td>Learn the terms and how project memory works</td></tr>
 <tr><td><a href="docs/CATALOG.md">Catalog</a></td><td>See every skill and what it does</td></tr>
+<tr><td><a href="docs/SUBAGENTS.md">Subagents</a></td><td>Hand work to the four generic agents</td></tr>
 <tr><td><a href="docs/COMPATIBILITY.md">Compatibility</a></td><td>See what each tool receives</td></tr>
 <tr><td><a href="cli/README.md">CLI</a></td><td>Look up a command</td></tr>
 <tr><td><a href="docs/FAQ.md">FAQ</a></td><td>Check cost, security and measurement</td></tr>

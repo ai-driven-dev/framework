@@ -1,12 +1,41 @@
 import { describe, expect, it } from "vitest";
 import { cursor } from "../../../../../../src/contexts/tools/domain/profiles/cursor/profile.js";
+import { inMarketplace, installed, NAMED_AGENT, UNNAMED_AGENT } from "../agent-fixture.js";
+
+const PREFIXED = `---
+name: "aidd-dev-planner"
+description: "Plans the work"
+model: "m[effort=high]"
+---
+Plan before building.
+`;
 
 describe("cursor agents", () => {
-  describe("capabilities.agents.convertFrontmatter()", () => {
-    it("strips extra fields for agents sections — only name and description", () => {
-      const fm = { name: "alexia", description: "Agent", model: "opus" };
-      const result = cursor.capabilities.agents.convertFrontmatter(fm);
-      expect(result).toEqual({ name: "alexia", description: "Agent" });
+  describe("name resolution", () => {
+    it("installs a plugin agent under its declared name, double-quoted, effort inside the model", () => {
+      expect(installed(cursor, NAMED_AGENT)).toBe(`---
+name: "planner"
+description: "Plans the work"
+model: "m[effort=high]"
+---
+Plan before building.
+`);
+    });
+
+    it("names an unnamed plugin agent after its file", () => {
+      expect(installed(cursor, UNNAMED_AGENT)).toBe(`---
+name: "planner"
+description: "Plans the work"
+---
+Plan before building.
+`);
+    });
+
+    it("prefixes the name with the plugin in a marketplace build", () => {
+      expect(inMarketplace(cursor, NAMED_AGENT)).toStrictEqual({
+        path: "agents/planner.md",
+        content: PREFIXED,
+      });
     });
   });
 

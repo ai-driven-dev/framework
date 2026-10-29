@@ -9,16 +9,6 @@ import {
 } from "../../../../../../src/contexts/tools/domain/profiles/codex/build.js";
 import { InMemoryFileAdapter } from "../../../../../helpers/ports/in-memory-file-adapter.js";
 
-const AGENT_SOURCE = [
-  "---",
-  "name: planner",
-  "description: Plans the work",
-  "model: opus",
-  "---",
-  "Plan before building.",
-  "",
-].join("\n");
-
 const HOOKS_JSON = JSON.stringify({
   hooks: { Stop: [{ hooks: [{ type: "command", command: "node journal.cjs" }] }] },
 });
@@ -177,14 +167,6 @@ describe("buildCodexContract()", () => {
     ).toBe("---\nname: 'plan'\ndescription: 'Plan it'\n---\nBody.\n");
   });
 
-  it("names an agent after its own frontmatter when the plugin tree keeps them apart", () => {
-    const transform = supported(buildCodexContract().artifacts.agents).transform;
-
-    expect(transform?.(AGENT_SOURCE, "aidd-dev", "planner.md")).toBe(
-      'name = "planner"\ndescription = "Plans the work"\ndeveloper_instructions = "Plan before building.\\n"\n'
-    );
-  });
-
   it("renames the events of a plugin's hooks declaration, and copies every other hook file byte for byte", () => {
     const transform = supported(buildCodexContract().artifacts.hooks).transform;
 
@@ -301,14 +283,6 @@ describe("buildCodexFlatContract()", () => {
 
     expect(agents.path("aidd-dev", "agents/notes.md-helper.md")).toBe(
       ".codex/agents/aidd-dev-notes.md-helper.toml"
-    );
-  });
-
-  it("names a flat agent after its plugin, whatever its own frontmatter says", () => {
-    const transform = supported(buildCodexFlatContract().artifacts.agents).transform;
-
-    expect(transform?.(AGENT_SOURCE, "aidd-dev", "planner.md")).toBe(
-      'name = "aidd-dev-planner"\ndescription = "Plans the work"\ndeveloper_instructions = "Plan before building.\\n"\n'
     );
   });
 

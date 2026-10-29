@@ -33,6 +33,7 @@ Bootstrap, project init, context-artifact generation, diagrams, learning, and ex
 | `10-learn`             | Capture learnings, conventions, and decisions into memory, decisions, rules   | `01-gather`, `02-assess`, `03-write`, `04-sync`                                                          |
 | `11-explore`           | Survey the project across tooling, context, and codebase, then drill into one axis | `01-survey`, `02-drill`                                                                                  |
 | `12-cook`              | Manage and validate technical project or bundled recipes                       | `01-list`, `02-upsert`, `03-research`, `04-apply`, `05-validate`                                         |
+| `13-access-check`      | Check, read-only, that the assistant reaches the services in project memory    | `01-check`                                                                                               |
 
 <!--extras-aidd-context:start-->
 
@@ -61,17 +62,6 @@ Code transformation: plan, implement, assert, audit, review, test, refactor, deb
 | `09-for-sure`   | Iterative loop that retries until a success condition is met               | `01-init-tracking`, `02-auto-accept`, `03-autonomous-loop`                       |
 | `10-batch`       | Execute independent tasks in parallel and summarize each agent's status and result | `01-batch`                                                            |
 
-<!--extras-aidd-dev:start-->
-
-**Agents**
-
-| Agent | Role |
-| --- | --- |
-| `checker` | Judges finished work against its validator and the real need, leaving nothing unchecked |
-| `executor` | Turns a dispatched task into working, validated code that fits the project |
-
-<!--extras-aidd-dev:end-->
-
 ## 📋 aidd-pm
 
 Product backlog artifacts, refinement, Product Briefs, Epics, User Stories, Tasks, Spikes, Defects, requirements, and specs.
@@ -91,7 +81,7 @@ Product backlog artifacts, refinement, Product Briefs, Epics, User Stories, Task
 
 ## 🪞 aidd-refine
 
-Meta-cognition: brainstorm, challenge, blind-spot scan, fact-check.
+Meta-cognition: brainstorm, challenge, blind-spot scan, fact-check, conversation review.
 
 | Skill              | Role                                                        | Actions                                                                                       |
 | ------------------ | ---------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
@@ -99,6 +89,7 @@ Meta-cognition: brainstorm, challenge, blind-spot scan, fact-check.
 | `02-challenge`     | Rethink prior work to verify correctness against a plan    | `01-challenge`                                                                                |
 | `03-shadow-areas`  | Scan a markdown artifact for blind spots                   | `01-detect`, `02-render-report`, `03-diff`                                                    |
 | `04-fact-check`    | Verify factual claims against sources and cite them        | `01-identify-claims`, `02-verify`, `03-report`                                                |
+| `05-review-conversation` | Review a finished conversation and attribute each cost to its owner | `01-read-conversation`, `02-recommend`, `03-target-edits` |
 
 ## 🌿 aidd-vcs
 
@@ -122,6 +113,19 @@ Runs synchronous feature delivery, optional async issue automation, and the prod
 | `00-async-dev`   | Single entry point for the async-dev pipeline           | `setup`, `run`, `review`    |
 | `01-sdlc`        | Drive the full development flow end to end, autonomous or supervised | `frame`, `deliver`, `check` |
 | `02-backlog`     | Route backlog intake, refinement, lifecycle, and repair | `01-inspect` to `08-verify` |
+
+<!--extras-aidd-orchestrator:start-->
+
+**Agents**
+
+| Agent | Role |
+| --- | --- |
+| `executor` | Implements assigned work within defined scope |
+| `explorer` | Explores a codebase to answer scoped questions |
+| `reviewer` | Reviews the quality and coherence of finished work |
+| `validator` | Validates that delivered work satisfies the request and acceptance criteria |
+
+<!--extras-aidd-orchestrator:end-->
 
 ## 🎨 aidd-ui
 
