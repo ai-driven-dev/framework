@@ -37,9 +37,6 @@ Put each capability in the plugin that owns its concern. Every other plugin dele
 | `aidd-qa` | Acceptance QA with video evidence |
 | `aidd-telemetry` | Token measurement |
 
-- `aidd-context`, `aidd-pm` and `aidd-refine` never write or run your application code.
-- `aidd-telemetry` observes. No other flow depends on it.
-
 ## How a skill runs
 
 ```mermaid
@@ -60,20 +57,13 @@ flowchart LR
 | Subagent | Returns only a result. Calls only the skills it declares. Never calls an orchestrator. |
 | Delegation | At most two layers, no cycles. |
 
-<details>
-<summary>Rules that keep plugins independent</summary>
+## Rules that keep plugins independent
 
-| Rule | Held by |
-| --- | --- |
-| A skill links only inside its own directory. The tree ships both flat (each tool lays skills out in its own folders) and as a marketplace, and no relative path survives both. | `scripts/__tests__/a-skill-links-only-inside-itself.test.js` |
-| A bundled script is named plugin-relative in backticks, never linked. | the same test |
-| A capability is addressed as `/plugin:folder` or `@plugin:agent` only in dispatch tables (`## Actions`), orchestration references and agent permission lists (`# Skills you may invoke`). Elsewhere, name the responsibility. | `scripts/check-architecture-rules.js` |
-| A recipe finds cross-plugin providers by description. An orchestrator verifies a plugin is installed before it dispatches to it. | review |
-| Two exemptions exist: responsibility maps in `plugins/aidd-orchestrator/**`, and the onboarding menus in `plugins/aidd-context/skills/00-onboard/**`. The second ends once onboarding finds its providers at runtime. | `isExemptFromOrthogonality` in `scripts/lib/architecture-rules.js` |
-| Tests for a bundled script live in `scripts/__tests__/`, never in the plugin, because `hooks/` is copied recursively into user projects. | review |
-| The CLI writes only the capabilities a tool supports and warns about the rest. | The tool-support record in [Compatibility](COMPATIBILITY.md) |
-| The CLI owns OpenCode's shared hook protocol. Plugins own the mapping of their own payloads. | [CLI architecture](../cli/ARCHITECTURE.md#hook-adaptation) |
-
-</details>
+1. A skill links only inside its own directory.
+2. A bundled script is named in backticks, never linked.
+3. Address another plugin as `/plugin:folder` only in dispatch tables, orchestration references and agent permission lists. Elsewhere, name the responsibility.
+4. Find a provider in another plugin by its description. Check it is installed before dispatching to it.
+5. Keep a bundled script's tests in `scripts/__tests__/`, never in the plugin.
+6. Write only what the target tool supports. Warn about the rest.
 
 More: [Maintainers guide](MAINTAINERS.md), [CLI architecture](../cli/ARCHITECTURE.md).

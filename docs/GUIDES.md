@@ -4,6 +4,17 @@
 > Pick your goal and run its skills in order.
 > Dashed boxes are optional.
 
+| I want to | Go to |
+| --- | --- |
+| Join a project, start one, or look around | [Start](#start) |
+| Deliver a feature, from request to pull request | [Build a feature](#build-a-feature) |
+| Change, fix, refactor or ship code | [Everyday work](#everyday-work) |
+| Do many things at once, or retry until it works | [Parallel and retry](#parallel-and-retry) |
+| Plan the product and the backlog | [Plan the product](#plan-the-product) |
+| Investigate, challenge or audit | [Understand and decide](#understand-and-decide) |
+| Record knowledge or create a skill | [Learn and extend](#learn-and-extend) |
+| Check that it works, and what it costs | [Prove it works](#prove-it-works) |
+
 ## Start
 
 | Goal | Run |
@@ -12,7 +23,64 @@
 | Start a new project | `/aidd-context:01-bootstrap`, then `/aidd-context:02-project-memory` |
 | See what is installed, or which skill fits | `/aidd-context:11-explore` |
 
-## Build
+## Build a feature
+
+| Goal | Run |
+| --- | --- |
+| Deliver a request end to end | `/aidd-orchestrator:01-sdlc` |
+| Turn issues into pull requests without you | `/aidd-orchestrator:00-async-dev` |
+| Go step by step | The skills in the flow below, in order |
+
+> [!NOTE]
+> Delegate it all when you are sure of the task. To stay in the loop, start the request with `interactive`: you approve the contract, the plan and the outcome.
+
+```mermaid
+flowchart TD
+  subgraph onboard["Onboarding"]
+    start(["/aidd-context:00-onboard<br/>guides you through every step below"])
+    subgraph memory["Memory, once per project"]
+      projectMemory["/aidd-context:02-project-memory"]
+    end
+    subgraph frame["Frame: write the contract"]
+      direction LR
+      request(["your request"]) --> ticket["/aidd-pm:01-ticket-info"] --> brainstorm["/aidd-refine:01-brainstorm"] --> spec["/aidd-pm:04-spec"] --> approveContract(["approve the contract"])
+    end
+    subgraph deliver["Deliver: build and validate"]
+      direction LR
+      plan["/aidd-dev:01-plan"] --> approvePlan(["approve the plan"]) --> implement["/aidd-dev:02-implement"] --> assert["/aidd-dev:03-assert"] --> commit["/aidd-vcs:01-commit"]
+      assert -. "until checks pass" .-> implement
+    end
+    subgraph check["Check: independent review"]
+      direction LR
+      review["/aidd-dev:05-review"] --> challenge["/aidd-refine:02-challenge"] --> approveOutcome(["approve the outcome"]) --> pr["/aidd-vcs:02-pull-request"]
+    end
+    start --> memory --> frame --> deliver --> check
+  end
+  subgraph legend["Legend"]
+    direction LR
+    keyAi["skill"] ~~~ keyOpt["optional skill"] ~~~ keyYou(["you approve<br/>with interactive"])
+  end
+  onboard ~~~ legend
+
+  classDef ai fill:#6f42c1,stroke:#6f42c1,color:#fff
+  classDef opt fill:#fff,stroke:#6f42c1,stroke-dasharray:4 3,color:#6f42c1
+  classDef you fill:#fff8c5,stroke:#9a6700,color:#633c01
+  classDef entry fill:#fff,stroke:#6f42c1,stroke-width:3px,color:#6f42c1
+  classDef plain fill:#eaeef2,stroke:#57606a,color:#24292f
+  class keyAi,projectMemory,spec,plan,implement,assert,commit,review,challenge,pr ai
+  class keyOpt,ticket,brainstorm opt
+  class keyYou,approveContract,approvePlan,approveOutcome you
+  class request plain
+  class start entry
+  style legend fill:none,stroke:#8c959f
+  style onboard fill:none,stroke:#6f42c1,stroke-width:2px
+  style memory fill:none,stroke:#8c959f
+  style frame fill:none,stroke:#8c959f
+  style deliver fill:none,stroke:#8c959f
+  style check fill:none,stroke:#8c959f
+```
+
+## Everyday work
 
 ### Make a small change
 
@@ -39,41 +107,6 @@ flowchart TD
   class n3 ship
   style z0 fill:none,stroke:#8c959f
   style z1 fill:none,stroke:#8c959f
-```
-
-### Build a feature
-
-```mermaid
-flowchart TD
-  subgraph z0["Specify"]
-    direction LR
-    n0["/aidd-refine:01-brainstorm<br/><i>if the need is unclear</i>"] --> n1["/aidd-pm:04-spec<br/><i>the contract</i>"]
-  end
-  subgraph z1["Code"]
-    direction LR
-    n2["/aidd-dev:01-plan"] --> n3["/aidd-dev:02-implement"] --> n4["/aidd-dev:06-test<br/><i>more coverage or a browser journey</i>"] --> n5["/aidd-dev:03-assert"]
-  end
-  subgraph z2["Review and ship"]
-    direction LR
-    n6["/aidd-dev:05-review"] --> n7["/aidd-refine:02-challenge<br/><i>does it answer the request?</i>"] --> n8["/aidd-vcs:01-commit"] --> n9["/aidd-vcs:02-pull-request<br/><i>opens a draft</i>"]
-  end
-  z0 --> z1 --> z2
-  classDef spec fill:#0b7285,stroke:#0b7285,color:#fff
-  classDef specOpt fill:#cff4fc,stroke:#0b7285,stroke-dasharray:4 3,color:#0b4a57
-  classDef code fill:#6f42c1,stroke:#6f42c1,color:#fff
-  classDef codeOpt fill:#e9ddff,stroke:#6f42c1,stroke-dasharray:4 3,color:#3b1d78
-  classDef ship fill:#c2410c,stroke:#c2410c,color:#fff
-  classDef shipOpt fill:#ffe1d1,stroke:#c2410c,stroke-dasharray:4 3,color:#7a2606
-  classDef plain fill:#0969da,stroke:#0969da,color:#fff
-  classDef plainOpt fill:#ddf4ff,stroke:#0969da,stroke-dasharray:4 3,color:#0a3069
-  class n0,n1 specOpt
-  class n2,n3,n5 code
-  class n4 codeOpt
-  class n6,n8,n9 ship
-  class n7 shipOpt
-  style z0 fill:none,stroke:#8c959f
-  style z1 fill:none,stroke:#8c959f
-  style z2 fill:none,stroke:#8c959f
 ```
 
 ### Fix a bug
@@ -157,6 +190,8 @@ flowchart TD
   style z0 fill:none,stroke:#8c959f
 ```
 
+## Parallel and retry
+
 ### Run tasks in parallel
 
 ```mermaid
@@ -183,45 +218,6 @@ flowchart LR
   class goal,done plain
 ```
 
-## Understand and decide
-
-### Investigate a technical unknown
-
-```mermaid
-flowchart TD
-  subgraph z0["Investigate"]
-    direction LR
-    n0["/aidd-pm:05-spike"]
-  end
-  subgraph z1["Follow up"]
-    direction LR
-    n1["/aidd-pm:10-task"]
-    n2["/aidd-pm:04-spec"]
-  end
-  z0 --> z1
-  classDef spec fill:#0b7285,stroke:#0b7285,color:#fff
-  classDef specOpt fill:#cff4fc,stroke:#0b7285,stroke-dasharray:4 3,color:#0b4a57
-  classDef code fill:#6f42c1,stroke:#6f42c1,color:#fff
-  classDef codeOpt fill:#e9ddff,stroke:#6f42c1,stroke-dasharray:4 3,color:#3b1d78
-  classDef ship fill:#c2410c,stroke:#c2410c,color:#fff
-  classDef shipOpt fill:#ffe1d1,stroke:#c2410c,stroke-dasharray:4 3,color:#7a2606
-  classDef plain fill:#0969da,stroke:#0969da,color:#fff
-  classDef plainOpt fill:#ddf4ff,stroke:#0969da,stroke-dasharray:4 3,color:#0a3069
-  class n0 spec
-  class n1,n2 codeOpt
-  style z0 fill:none,stroke:#8c959f
-  style z1 fill:none,stroke:#8c959f
-```
-
-### Other ways to decide
-
-| Goal | Run |
-| --- | --- |
-| Sharpen a vague idea | `/aidd-refine:01-brainstorm` |
-| Find gaps in an idea, stories, a PRD or a spec | `/aidd-refine:03-shadow-areas` |
-| Check the facts in a text | `/aidd-refine:04-fact-check` |
-| Audit a codebase, read-only | `/aidd-dev:04-audit` |
-
 ## Plan the product
 
 ### How the planning skills connect
@@ -244,63 +240,16 @@ flowchart LR
 | Read a ticket | `/aidd-pm:01-ticket-info` |
 | Triage, refine, order and check the backlog | `/aidd-orchestrator:02-backlog` |
 
-## Let the framework drive
+## Understand and decide
 
 | Goal | Run |
 | --- | --- |
-| Deliver a request end to end | `/aidd-orchestrator:01-sdlc` |
-| Turn issues into pull requests without you | `/aidd-orchestrator:00-async-dev` |
-
-> [!NOTE]
-> Start a request with `interactive` to approve the contract, the plan and the outcome.
-
-### What `/aidd-orchestrator:01-sdlc` runs
-
-```mermaid
-flowchart TD
-  subgraph onboard["Onboarding"]
-    start(["/aidd-context:00-onboard<br/>guides you through every step below"])
-    subgraph memory["Memory, once per project"]
-      projectMemory["/aidd-context:02-project-memory"]
-    end
-    subgraph frame["Frame: write the contract"]
-      direction LR
-      request(["your request"]) --> ticket["/aidd-pm:01-ticket-info"] --> brainstorm["/aidd-refine:01-brainstorm"] --> spec["/aidd-pm:04-spec"] --> approveContract(["approve the contract"])
-    end
-    subgraph deliver["Deliver: build and validate"]
-      direction LR
-      plan["/aidd-dev:01-plan"] --> approvePlan(["approve the plan"]) --> implement["/aidd-dev:02-implement"] --> assert["/aidd-dev:03-assert"] --> commit["/aidd-vcs:01-commit"]
-      assert -. "until checks pass" .-> implement
-    end
-    subgraph check["Check: independent review"]
-      direction LR
-      review["/aidd-dev:05-review"] --> challenge["/aidd-refine:02-challenge"] --> approveOutcome(["approve the outcome"]) --> pr["/aidd-vcs:02-pull-request"]
-    end
-    start --> memory --> frame --> deliver --> check
-  end
-  subgraph legend["Legend"]
-    direction LR
-    keyAi["AI skill"] ~~~ keyOpt["optional skill"] ~~~ keyYou(["you approve"])
-  end
-  onboard ~~~ legend
-
-  classDef ai fill:#6f42c1,stroke:#6f42c1,color:#fff
-  classDef opt fill:#fff,stroke:#6f42c1,stroke-dasharray:4 3,color:#6f42c1
-  classDef you fill:#fff8c5,stroke:#9a6700,color:#633c01
-  classDef entry fill:#fff,stroke:#6f42c1,stroke-width:3px,color:#6f42c1
-  classDef plain fill:#eaeef2,stroke:#57606a,color:#24292f
-  class keyAi,projectMemory,spec,plan,implement,assert,commit,review,challenge,pr ai
-  class keyOpt,ticket,brainstorm opt
-  class keyYou,approveContract,approvePlan,approveOutcome you
-  class request plain
-  class start entry
-  style legend fill:none,stroke:#8c959f
-  style onboard fill:none,stroke:#6f42c1,stroke-width:2px
-  style memory fill:none,stroke:#8c959f
-  style frame fill:none,stroke:#8c959f
-  style deliver fill:none,stroke:#8c959f
-  style check fill:none,stroke:#8c959f
-```
+| Investigate a technical unknown | `/aidd-pm:05-spike`, then `/aidd-pm:10-task` or `/aidd-pm:04-spec` |
+| Sharpen a vague idea | `/aidd-refine:01-brainstorm` |
+| Challenge finished work against its plan | `/aidd-refine:02-challenge` |
+| Find gaps in an idea, stories, a PRD or a spec | `/aidd-refine:03-shadow-areas` |
+| Check the facts in a text | `/aidd-refine:04-fact-check` |
+| Audit a codebase, read-only | `/aidd-dev:04-audit` |
 
 ## Learn and extend
 

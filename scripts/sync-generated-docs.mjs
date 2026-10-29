@@ -1,6 +1,6 @@
 #!/usr/bin/env node
-// Renders the tables a person must not type by hand: the hooks each plugin declares
-// (docs/CATALOG.md, from plugins/*/hooks/hooks.json), the agents beside them (from plugins/*/agents/) and what each tool is declared to
+// Renders the tables a person must not type by hand: the agents and hooks each plugin ships
+// (docs/CATALOG.md, from plugins/*/agents/ and plugins/*/hooks/hooks.json) and what each tool is declared to
 // support (docs/COMPATIBILITY.md and the tool list in README.md, from the CLI's stored
 // tool-support record), the plugin grid in README.md
 // (from the tree and docs/assets/plugins/plugins.json). Each block sits between its own
@@ -45,39 +45,48 @@ function table(header, rows) {
   return [line(header), line(header.map(() => "---")), ...rows.map(line)].join("\n");
 }
 
-function hooksTable() {
-  const rows = [];
-  for (const plugin of readdirSync(`${ROOT}plugins`).sort()) {
-    const manifest = `${ROOT}plugins/${plugin}/hooks/hooks.json`;
-    if (!existsSync(manifest)) continue;
-    const raw = readFileSync(manifest, "utf8");
-    const events = Object.keys(JSON.parse(raw).hooks ?? {});
-    const scripts = [...new Set([...raw.matchAll(SCRIPT_REFERENCE)].map((match) => match[1]))];
-    rows.push([
-      `[\`${plugin}\`](../plugins/${plugin}/README.md)`,
-      events.map((event) => `\`${event}\``).join(" · "),
-      scripts.map((script) => `\`${script}\``).join(" · "),
-    ]);
-  }
-  return table(["Plugin", "Event", "Runs"], rows);
+/** The agents and hooks one plugin ships, as tables. Nothing when it ships neither. */
+function extrasBlock(plugin) {
+  const sections = [];
+
+  const agents = agentRows(plugin);
+  if (agents.length > 0) sections.push(`**Agents**\n\n${table(["Agent", "Role"], agents)}`);
+
+  const hooks = hookRows(plugin);
+  if (hooks.length > 0) sections.push(`**Hooks**\n\n${table(["Event", "Runs"], hooks)}`);
+
+  return sections.join("\n\n");
+}
+
+function agentRows(plugin) {
+  const directory = `${ROOT}plugins/${plugin}/agents`;
+  if (!existsSync(directory)) return [];
+  return readdirSync(directory)
+    .sort()
+    .filter((file) => file.endsWith(".md"))
+    .map((file) => {
+      const description = readFileSync(`${directory}/${file}`, "utf8").match(/^description:\s*(.+)$/m)?.[1];
+      if (!description) throw new Error(`${plugin}/agents/${file} has no description`);
+      return [`\`${file.replace(/\.md$/, "")}\``, description.split(". ")[0].replace(/\.$/, "")];
+    });
+}
+
+function hookRows(plugin) {
+  const manifest = `${ROOT}plugins/${plugin}/hooks/hooks.json`;
+  if (!existsSync(manifest)) return [];
+  return Object.entries(JSON.parse(readFileSync(manifest, "utf8")).hooks ?? {}).map(([event, handlers]) => {
+    const scripts = [...new Set([...JSON.stringify(handlers).matchAll(SCRIPT_REFERENCE)].map((match) => match[1]))];
+    return [`\`${event}\``, scripts.map((script) => `\`${script}\``).join(" · ")];
+  });
+}
+
+function pluginsWithExtras() {
+  return readdirSync(`${ROOT}plugins`)
+    .sort()
+    .filter((plugin) => agentRows(plugin).length > 0 || hookRows(plugin).length > 0);
 }
 
 /** One row per tool: how it installs, then what each surface becomes. A surface no tool carries gets no column. */
-function agentsTable() {
-  const rows = [];
-  for (const plugin of readdirSync(`${ROOT}plugins`).sort()) {
-    const directory = `${ROOT}plugins/${plugin}/agents`;
-    if (!existsSync(directory)) continue;
-    for (const file of readdirSync(directory).sort()) {
-      if (!file.endsWith(".md")) continue;
-      const description = readFileSync(`${directory}/${file}`, "utf8").match(/^description:\s*(.+)$/m)?.[1];
-      if (!description) throw new Error(`${plugin}/agents/${file} has no description`);
-      rows.push([`\`${file.replace(/\.md$/, "")}\``, `[\`${plugin}\`](../plugins/${plugin}/README.md)`, description.split(". ")[0].replace(/\.$/, "")]);
-    }
-  }
-  return table(["Agent", "Plugin", "Role"], rows);
-}
-
 function supportTables() {
   const record = JSON.parse(readFileSync(SUPPORT_RECORD, "utf8"));
   const icon = (support) => (support === "no" ? "❌" : support === "bridge" ? "🔌" : "✅");
@@ -208,8 +217,7 @@ function pluginGrid() {
 const targets = [
   [README, "tools", toolsTable],
   [README, "plugins", pluginGrid],
-  [CATALOG, "hooks", hooksTable],
-  [CATALOG, "agents", agentsTable],
+  ...pluginsWithExtras().map((plugin) => [CATALOG, `extras-${plugin}`, () => extrasBlock(plugin)]),
   [COMPATIBILITY, "support", supportTables],
 ];
 

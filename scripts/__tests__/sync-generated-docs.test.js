@@ -37,7 +37,7 @@ function scratchTree() {
       },
     ])
   );
-  write("docs/CATALOG.md", "<!--hooks:start-->\n<!--hooks:end-->\n<!--agents:start-->\n<!--agents:end-->\n");
+  write("docs/CATALOG.md", "<!--extras-aidd-x:start-->\n<!--extras-aidd-x:end-->\n");
   write("plugins/aidd-x/agents/helper.md", "---\nname: helper\ndescription: Does a small job. Use when asked.\n---\n");
   write("docs/COMPATIBILITY.md", "<!--support:start-->\n<!--support:end-->\n");
   write(
@@ -66,10 +66,10 @@ test("an empty block is reported stale, and syncing fills it from the tree", () 
     assert.equal(run(["--root", root]).status, 0);
     const catalog = fs.readFileSync(path.join(root, "docs/CATALOG.md"), "utf8");
     const compatibility = fs.readFileSync(path.join(root, "docs/COMPATIBILITY.md"), "utf8");
-    assert.match(catalog, /\| \[`aidd-x`\]\(\.\.\/plugins\/aidd-x\/README\.md\) \| `SessionStart` \| `hooks\/a\.js` \|/);
+    assert.match(catalog, /\| `SessionStart` \| `hooks\/a\.js` \|/);
     assert.match(compatibility, /\| Claude Code \| `\.claude\/` \| ✅ \| ✅ \| ✅ \| ✅ \| 🟡 \| 🟡 \|/);
     assert.doesNotMatch(compatibility, /Rules|Commands/);
-    assert.match(catalog, /\| `helper` \| \[`aidd-x`\]\(\.\.\/plugins\/aidd-x\/README\.md\) \| Does a small job \|/);
+    assert.match(catalog, /\| `helper` \| Does a small job \|/);
     const readme = fs.readFileSync(path.join(root, "README.md"), "utf8");
     assert.match(readme, /<tr><td><b>Claude Code<\/b><\/td><td align="center">✅<\/td><td align="center">✅<\/td><td align="center">✅<\/td><\/tr>/);
     assert.match(readme, /<table>/);
@@ -123,10 +123,16 @@ test("a hand-edited row is overwritten rather than kept", () => {
   }
 });
 
+test("the real catalog carries a block for every plugin that ships agents or hooks", () => {
+  const catalog = fs.readFileSync(path.join(REPOSITORY, "docs/CATALOG.md"), "utf8");
+  for (const plugin of fs.readdirSync(path.join(REPOSITORY, "plugins"))) {
+    const ships = ["agents", "hooks/hooks.json"].some((entry) => fs.existsSync(path.join(REPOSITORY, "plugins", plugin, entry)));
+    assert.equal(catalog.includes(`<!--extras-${plugin}:start-->`), ships, plugin);
+  }
+});
+
 test("the real documents carry the markers the script writes between", () => {
   for (const [file, marker] of [
-    ["docs/CATALOG.md", "hooks"],
-    ["docs/CATALOG.md", "agents"],
     ["docs/COMPATIBILITY.md", "support"],
     ["README.md", "tools"],
     ["README.md", "plugins"],

@@ -25,7 +25,7 @@ Only a Maintainer merges.
 
 ```mermaid
 flowchart LR
-  idea(["Idea or issue"]) --> signal["Reactions<br/><i>a signal</i>"] --> vote["Formal vote<br/><i>7 days or more</i>"] --> board(["Roadmap board<br/><i>sets the order</i>"])
+  idea(["Idea or issue"]) --> signal["Reactions<br/><i>a signal</i>"] --> vote["Votes<br/><i>counted</i>"] --> board(["Roadmap board<br/><i>sets the order</i>"])
   classDef cOpen fill:#0969da,stroke:#0969da,color:#fff
   classDef cVote fill:#6f42c1,stroke:#6f42c1,color:#fff
   classDef cDone fill:#1a7f37,stroke:#1a7f37,color:#fff
@@ -36,12 +36,12 @@ flowchart LR
 
 | Who | Counts as |
 | --- | --- |
-| Anyone | A reaction: a signal that opens a formal vote |
+| Anyone | A reaction: a signal |
 | Core Team, Certified Members, Maintainers | One equal vote each |
 | Maintainer | Breaks ties |
 
 - The board: [AIDD Roadmap](https://github.com/orgs/ai-driven-dev/projects/8).
-- A milestone is a theme due on a Thursday. Items without one are the backlog, ordered by priority.
+- A milestone is a theme. Items without one are the backlog, ordered by priority.
 - The vote orders the roadmap. It does not decide whether a validated issue can become a pull request.
 
 ## Influence the roadmap

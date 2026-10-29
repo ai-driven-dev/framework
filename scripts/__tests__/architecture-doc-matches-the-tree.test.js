@@ -10,7 +10,7 @@ const DOC = path.join(ROOT, "docs/ARCHITECTURE.md");
 const CATALOG = path.join(ROOT, "docs/CATALOG.md");
 
 /**
- * `docs/CATALOG.md` lists the bundled hooks each plugin declares and `docs/ARCHITECTURE.md` holds the
+ * `docs/CATALOG.md` lists the hooks each plugin declares under that plugin and `docs/ARCHITECTURE.md` holds the
  * plugin roster. Both were right when written and nothing compared them to the
  * tree afterwards, which is how a document goes quietly wrong. These tests are that comparison.
  *
@@ -40,10 +40,14 @@ function isSeparatorRow(cells) {
  * tables separated by prose read as one.
  */
 function tables(file) {
+  return tablesIn(fs.readFileSync(file, "utf8"));
+}
+
+function tablesIn(text) {
   const found = [];
   let current = null;
 
-  for (const line of fs.readFileSync(file, "utf8").split("\n")) {
+  for (const line of text.split("\n")) {
     if (!line.trim().startsWith("|")) {
       if (line.trim() !== "") current = null;
       continue;
@@ -103,29 +107,16 @@ function declaredHookEvents(plugin) {
   return Object.keys(JSON.parse(fs.readFileSync(manifest, "utf8")).hooks ?? {}).sort();
 }
 
-const hooksTable = () => tableWithColumns(CATALOG, "Plugin", "Event", "Runs");
+/** The hooks table inside the block `docs/CATALOG.md` generates for one plugin, or null when it has none. */
+function hooksTableOf(plugin) {
+  const block = fs
+    .readFileSync(CATALOG, "utf8")
+    .match(new RegExp(`<!--extras-${plugin}:start-->([\\s\\S]*?)<!--extras-${plugin}:end-->`))?.[1];
+  if (block === undefined) return null;
+  return tablesIn(block).find((table) => table.header.includes("Event")) ?? null;
+}
+
 const concernsTable = () => tableWithColumns(DOC, "Plugin", "Owns");
-
-test("the bundled hooks table names every plugin that declares hooks, and no other", () => {
-  const table = hooksTable();
-  const plugin = column(table, "Plugin");
-  const documented = table.rows.map((cells) => onlyBacktickedName(plugin(cells), "hooks table")).sort();
-  assert.deepEqual(documented, pluginDirectories().filter((name) => declaredHookEvents(name) !== null));
-});
-
-test("the bundled hooks table names the events each plugin actually declares", () => {
-  const table = hooksTable();
-  const plugin = column(table, "Plugin");
-  const event = column(table, "Event");
-  for (const cells of table.rows) {
-    const name = onlyBacktickedName(plugin(cells), "hooks table");
-    assert.deepEqual(
-      backticked(event(cells)).sort(),
-      declaredHookEvents(name),
-      `${name}: the table and plugins/${name}/hooks/hooks.json disagree`
-    );
-  }
-});
 
 /** The scripts a plugin's `hooks/hooks.json` runs, relative to the plugin. */
 function declaredHookScripts(plugin) {
@@ -133,18 +124,25 @@ function declaredHookScripts(plugin) {
   return [...new Set([...manifest.matchAll(/\$\{CLAUDE_PLUGIN_ROOT\}\/([^\s"]+)/g)].map((m) => m[1]))].sort();
 }
 
-test("the bundled hooks table names every script a plugin runs, each one existing", () => {
+test("every plugin that declares hooks lists them in its catalog section, and no other does", () => {
+  for (const name of pluginDirectories()) {
+    const declared = declaredHookEvents(name);
+    const table = hooksTableOf(name);
+    assert.equal(table !== null, declared !== null, `${name}: the catalog and plugins/${name}/hooks/hooks.json disagree on having hooks`);
+  }
+});
+
+test("a plugin's hooks table names the events and the scripts it actually declares, each script existing", () => {
   // Without this the table can point at a deleted hook, or leave one out, and still read as current.
-  const table = hooksTable();
-  const plugin = column(table, "Plugin");
-  const runs = column(table, "Runs");
-  for (const cells of table.rows) {
-    const name = onlyBacktickedName(plugin(cells), "hooks table");
-    const scripts = backticked(runs(cells)).sort();
-    assert.deepEqual(scripts, declaredHookScripts(name), `${name}: the Runs cell and plugins/${name}/hooks/hooks.json disagree`);
+  for (const name of pluginDirectories().filter((plugin) => declaredHookEvents(plugin) !== null)) {
+    const table = hooksTableOf(name);
+    const event = column(table, "Event");
+    const runs = column(table, "Runs");
+    assert.deepEqual(table.rows.flatMap((cells) => backticked(event(cells))).sort(), declaredHookEvents(name), `${name}: events disagree`);
+    const scripts = [...new Set(table.rows.flatMap((cells) => backticked(runs(cells))))].sort();
+    assert.deepEqual(scripts, declaredHookScripts(name), `${name}: scripts disagree`);
     for (const script of scripts) {
-      const full = path.join(ROOT, "plugins", name, script);
-      assert.ok(fs.existsSync(full), `plugins/${name}/${script} is named in CATALOG.md and does not exist`);
+      assert.ok(fs.existsSync(path.join(ROOT, "plugins", name, script)), `plugins/${name}/${script} is named in CATALOG.md and does not exist`);
     }
   }
 });
@@ -183,6 +181,6 @@ test("the 00-onboard exemption still protects something", () => {
   assert.ok(
     wouldViolate.length > 0,
     "00-onboard no longer hardcodes a sibling address. Delete ONBOARD_EXEMPT_PREFIX from " +
-      "scripts/lib/architecture-rules.js, its exemption bullet in docs/ARCHITECTURE.md, and this test."
+      "scripts/lib/architecture-rules.js and this test."
   );
 });

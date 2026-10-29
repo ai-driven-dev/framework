@@ -108,29 +108,26 @@ Each tool, updating, removing: [install guide](docs/INSTALL.md).
 
 ```mermaid
 flowchart TD
-  start(["/aidd-context:00-onboard<br/>guides you through all of it"])
+  start(["<b>/aidd-context:00-onboard</b><br/>guides you through all of it"])
   subgraph memory["Memory, once per project"]
-    projectMemory["AI<br/>writes the project memory<br/><i>/aidd-context:02-project-memory</i>"]
+    projectMemory["<b>/aidd-context:02-project-memory</b><br/>writes the project memory"]
   end
   subgraph frame["Frame"]
-    direction LR
-    writeContract["AI<br/>writes the contract<br/><i>/aidd-pm:04-spec</i>"] --> approveContract(["You<br/>approve the contract"])
+    writeContract["<b>/aidd-pm:04-spec</b><br/>writes the contract"]
   end
   subgraph deliver["Deliver"]
     direction LR
-    plan["AI<br/>plans<br/><i>/aidd-dev:01-plan</i>"] --> approvePlan(["You<br/>approve the plan"]) --> build["AI<br/>builds and validates<br/><i>/aidd-dev:02-implement<br/>/aidd-dev:03-assert</i>"]
+    plan["<b>/aidd-dev:01-plan</b><br/>plans"] --> build["<b>/aidd-dev:02-implement</b><br/>builds"] --> assert["<b>/aidd-dev:03-assert</b><br/>validates"]
   end
   subgraph check["Check"]
     direction LR
-    review["AI<br/>reviews<br/><i>/aidd-dev:05-review</i>"] --> approveOutcome(["You<br/>approve the outcome"]) --> pr["AI<br/>opens a draft pull request<br/><i>/aidd-vcs:02-pull-request</i>"]
+    review["<b>/aidd-dev:05-review</b><br/>reviews"] --> pr["<b>/aidd-vcs:02-pull-request</b><br/>opens a draft pull request"]
   end
   start --> memory --> frame --> deliver --> check
 
-  classDef ai fill:#6f42c1,stroke:#6f42c1,color:#fff
-  classDef you fill:#fff8c5,stroke:#9a6700,color:#633c01
+  classDef skill fill:#6f42c1,stroke:#6f42c1,color:#fff
   classDef entry fill:#fff,stroke:#6f42c1,stroke-width:3px,color:#6f42c1
-  class projectMemory,writeContract,plan,build,review,pr ai
-  class approveContract,approvePlan,approveOutcome you
+  class projectMemory,writeContract,plan,build,assert,review,pr skill
   class start entry
   style memory fill:none,stroke:#8c959f
   style frame fill:none,stroke:#8c959f
@@ -138,8 +135,7 @@ flowchart TD
   style check fill:none,stroke:#8c959f
 ```
 
-
-Other goals: [guides by goal](docs/GUIDES.md)
+Each box is a skill: run it by hand, or let `/aidd-orchestrator:01-sdlc` chain them. Other goals: [guides by goal](docs/GUIDES.md).
 
 ## Plugins
 

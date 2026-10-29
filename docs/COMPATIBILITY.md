@@ -19,8 +19,5 @@ What each AI tool receives from the framework.
 | --- | --- |
 | ✅ | Supported |
 | ❌ | Not supported |
-| 🟡 | Only with some install methods |
-| 🔌 | Through a generated plugin that replays the hooks |
-
-- Codex runs a hook only after you approve it once, in an interactive session.
-- OpenCode and Kilo Code replay `SessionStart`, `Stop` and `PostToolUse` only.
+| 🟡 | Supported with some install methods only |
+| 🔌 | Partial: only `SessionStart`, `Stop` and `PostToolUse` |

@@ -1,6 +1,7 @@
 # Maintainers guide
 
-Who may do what: [Governance](../GOVERNANCE.md). How contributors work: [Contributing](../CONTRIBUTING.md).
+- Who may do what: [Governance](../GOVERNANCE.md)
+- How contributors work: [Contributing](../CONTRIBUTING.md)
 
 ## Your week
 
@@ -15,7 +16,7 @@ flowchart LR
 
 | Task | How |
 | --- | --- |
-| Triage | New issues join the board. Give each a milestone or a priority, never both. |
+| Triage | New issues join the board. Give each a milestone or a priority. |
 | Review | Approve as a code owner, then squash-merge. Rules: [Governance](../GOVERNANCE.md#code-decisions). |
 | Dependencies | Patch and minor bumps merge on their own. For a major bump, review it, then `gh pr merge <n> --squash`. |
 | Promote | Run the **Promote next to main** workflow. Steps: [Release](../RELEASE.md). |
@@ -39,7 +40,7 @@ The board and its fields live on the GitHub Project, not in the repository.
 | Field | Where | Answers | Values |
 | --- | --- | --- | --- |
 | Type | Issue | What kind | `Bug`, `Feature`, `Task` (set by the issue form) |
-| Milestone | Repository | When | A theme, due on a Thursday |
+| Milestone | Repository | When | A theme |
 | Priority | Project | In what order | `Urgent`, `High`, `Medium`, `Low` |
 | Status | Project | Where it stands | `Ideation`, `Todo`, `In Progress`, `In review`, `Done` |
 
@@ -83,16 +84,14 @@ To add a skill to an existing plugin, run `/aidd-context:03-context-generate`. S
 
 Writing rules: English, hyphens instead of em-dashes, no cross-plugin references in descriptions, one `Use when ... / Not for ...` cue per skill.
 
-## Protection and the bot
+## When protection or the bot breaks
 
-| Item | Detail |
+| Case | Do |
 | --- | --- |
-| Bypass actors | The `aidd-bot` GitHub App and the `admin` team. Neither can push to `main` directly. |
-| App secrets | `AIDD_BOT_APP_ID` and `AIDD_BOT_PRIVATE_KEY`. If the App breaks, release and Dependabot pull requests stop merging. |
-| Head branches | Not deleted on merge. The promotion branch `promote/next-to-main-<run>` is deleted by its workflow. |
+| The `aidd-bot` App breaks | Release and Dependabot pull requests stop merging. Check its secrets `AIDD_BOT_APP_ID` and `AIDD_BOT_PRIVATE_KEY`. |
 | Back-merge fails | It opens an issue. Resync with a `main` to `next` pull request. |
-| `next` missing | `git push origin main:next` |
-| Change protection | Edit `.github/rulesets/main.json` first, then an admin runs `gh api -X PUT repos/ai-driven-dev/framework/rulesets/<id> --input .github/rulesets/main.json` |
+| `next` is missing | `git push origin main:next` |
+| Change the protection | Edit `.github/rulesets/main.json`, then an admin runs `gh api -X PUT repos/ai-driven-dev/framework/rulesets/<id> --input .github/rulesets/main.json` |
 
 ## Do not edit by hand
 
