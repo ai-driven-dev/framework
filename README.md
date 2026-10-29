@@ -108,8 +108,11 @@ Each tool, updating, removing: [install guide](docs/INSTALL.md).
 
 ```mermaid
 flowchart TD
-  subgraph onboard["/aidd-context:00-onboard guides you through all of it"]
-    memory["project memory<br/><i>once per project</i>"]
+  subgraph onboard["Onboarding"]
+    start(["/aidd-context:00-onboard<br/><i>reads your project, then runs these steps with you</i>"])
+    subgraph memorybox["Memory"]
+      memory["project memory<br/><i>once per project</i>"]
+    end
     subgraph frame["Frame"]
       direction LR
       request(["request"]) --> ticket["ticket-info<br/><i>if a ticket</i>"] --> brainstorm["brainstorm<br/><i>if unclear</i>"] --> spec["spec<br/><i>the contract</i>"] --> approveContract(["You approve<br/>the contract"])
@@ -123,25 +126,25 @@ flowchart TD
       direction LR
       review["review<br/><i>fresh reviewer</i>"] --> challenge["challenge<br/><i>right outcome?</i>"] --> approveOutcome(["You approve<br/>the outcome"]) --> pr["pull-request<br/><i>opens a draft</i>"]
     end
-    memory --> frame --> deliver --> check
-    check -.-> back(["Findings go back to Deliver,<br/>then Check runs again"])
+    start --> memorybox --> frame --> deliver --> check
   end
 
+  classDef startStep fill:#fff,stroke:#0969da,stroke-width:2px,color:#0969da
   classDef memoryStep fill:#0969da,stroke:#0969da,color:#fff
   classDef frameStep fill:#0b7285,stroke:#0b7285,color:#fff
   classDef frameOpt fill:#cff4fc,stroke:#0b7285,stroke-dasharray:4 3,color:#0b4a57
   classDef deliverStep fill:#6f42c1,stroke:#6f42c1,color:#fff
   classDef checkStep fill:#c2410c,stroke:#c2410c,color:#fff
   classDef human fill:#fff8c5,stroke:#9a6700,stroke-dasharray:4 3,color:#633c01
-  classDef note fill:none,stroke:#d97706,stroke-dasharray:4 3,color:#d97706
   class memory memoryStep
+  class start startStep
   class request,spec frameStep
   class ticket,brainstorm frameOpt
   class plan,implement,assert,commit deliverStep
   class review,challenge,pr checkStep
   class approveContract,approvePlan,approveOutcome human
-  class back note
   style onboard fill:none,stroke:#0969da,stroke-width:2px
+  style memorybox fill:none,stroke:#0969da,stroke-width:2px
   style frame fill:none,stroke:#0b7285,stroke-width:2px
   style deliver fill:none,stroke:#6f42c1,stroke-width:2px
   style check fill:none,stroke:#c2410c,stroke-width:2px
@@ -158,17 +161,68 @@ Install the six stable ones. The other three are off the recommended path.
 
 <!--plugins:start-->
 
-<p align="center">
-<a href="plugins/aidd-context/README.md"><picture><source media="(prefers-color-scheme: dark)" srcset="docs/assets/plugins/aidd-context-dark.svg"><img src="docs/assets/plugins/aidd-context-light.svg" alt="aidd-context, stable, 13 skills: Project memory, context generation, learning" width="292"></picture></a>
-<a href="plugins/aidd-dev/README.md"><picture><source media="(prefers-color-scheme: dark)" srcset="docs/assets/plugins/aidd-dev-dark.svg"><img src="docs/assets/plugins/aidd-dev-light.svg" alt="aidd-dev, stable, 10 skills: Plan, build, review, test, debug" width="292"></picture></a>
-<a href="plugins/aidd-vcs/README.md"><picture><source media="(prefers-color-scheme: dark)" srcset="docs/assets/plugins/aidd-vcs-dark.svg"><img src="docs/assets/plugins/aidd-vcs-light.svg" alt="aidd-vcs, stable, 6 skills: Commits, pull requests, release tags, issues" width="292"></picture></a>
-<a href="plugins/aidd-pm/README.md"><picture><source media="(prefers-color-scheme: dark)" srcset="docs/assets/plugins/aidd-pm-dark.svg"><img src="docs/assets/plugins/aidd-pm-light.svg" alt="aidd-pm, stable, 10 skills: Briefs, Epics, Stories, specs, Spikes, Defects" width="292"></picture></a>
-<a href="plugins/aidd-refine/README.md"><picture><source media="(prefers-color-scheme: dark)" srcset="docs/assets/plugins/aidd-refine-dark.svg"><img src="docs/assets/plugins/aidd-refine-light.svg" alt="aidd-refine, stable, 5 skills: Brainstorm, challenge, fact-check" width="292"></picture></a>
-<a href="plugins/aidd-orchestrator/README.md"><picture><source media="(prefers-color-scheme: dark)" srcset="docs/assets/plugins/aidd-orchestrator-dark.svg"><img src="docs/assets/plugins/aidd-orchestrator-light.svg" alt="aidd-orchestrator, stable, 3 skills: Feature flow, issue-to-PR automation, backlog" width="292"></picture></a>
-<a href="plugins/aidd-ui/README.md"><picture><source media="(prefers-color-scheme: dark)" srcset="docs/assets/plugins/aidd-ui-dark.svg"><img src="docs/assets/plugins/aidd-ui-light.svg" alt="aidd-ui, alpha, 1 skill: UI and UX design, smoke test only" width="292"></picture></a>
-<a href="plugins/aidd-telemetry/README.md"><picture><source media="(prefers-color-scheme: dark)" srcset="docs/assets/plugins/aidd-telemetry-dark.svg"><img src="docs/assets/plugins/aidd-telemetry-light.svg" alt="aidd-telemetry, beta, 2 skills: Token usage per task, opt-in" width="292"></picture></a>
-<a href="plugins/aidd-qa/README.md"><picture><source media="(prefers-color-scheme: dark)" srcset="docs/assets/plugins/aidd-qa-dark.svg"><img src="docs/assets/plugins/aidd-qa-light.svg" alt="aidd-qa, new, 1 skill: Acceptance QA with video evidence" width="292"></picture></a>
-</p>
+<table>
+<tr>
+<td width="33%" valign="top">
+<h3>🧭 <a href="plugins/aidd-context/README.md">aidd-context</a></h3>
+<b>🟢 stable</b> · 13 skills<br />
+Project memory, context generation, learning<br /><br />
+<code>onboard</code> · <code>bootstrap</code> · <code>project-memory</code> · <code>context-generate</code> · +9
+</td>
+<td width="33%" valign="top">
+<h3>⚙️ <a href="plugins/aidd-dev/README.md">aidd-dev</a></h3>
+<b>🟢 stable</b> · 10 skills<br />
+Plan, build, review, test, debug<br /><br />
+<code>plan</code> · <code>implement</code> · <code>assert</code> · <code>audit</code> · +6
+</td>
+<td width="33%" valign="top">
+<h3>🌿 <a href="plugins/aidd-vcs/README.md">aidd-vcs</a></h3>
+<b>🟢 stable</b> · 6 skills<br />
+Commits, pull requests, release tags, issues<br /><br />
+<code>repo-init</code> · <code>commit</code> · <code>pull-request</code> · <code>release-tag</code> · +2
+</td>
+</tr>
+<tr>
+<td width="33%" valign="top">
+<h3>📋 <a href="plugins/aidd-pm/README.md">aidd-pm</a></h3>
+<b>🟢 stable</b> · 10 skills<br />
+Briefs, Epics, Stories, specs, Spikes, Defects<br /><br />
+<code>ticket-info</code> · <code>user-stories</code> · <code>prd</code> · <code>spec</code> · +6
+</td>
+<td width="33%" valign="top">
+<h3>🪞 <a href="plugins/aidd-refine/README.md">aidd-refine</a></h3>
+<b>🟢 stable</b> · 5 skills<br />
+Brainstorm, challenge, fact-check<br /><br />
+<code>brainstorm</code> · <code>challenge</code> · <code>shadow-areas</code> · <code>fact-check</code> · +1
+</td>
+<td width="33%" valign="top">
+<h3>🎼 <a href="plugins/aidd-orchestrator/README.md">aidd-orchestrator</a></h3>
+<b>🟢 stable</b> · 3 skills<br />
+Feature flow, issue-to-PR automation, backlog<br /><br />
+<code>async-dev</code> · <code>sdlc</code> · <code>backlog</code>
+</td>
+</tr>
+<tr>
+<td width="33%" valign="top">
+<h3>🎨 <a href="plugins/aidd-ui/README.md">aidd-ui</a></h3>
+<b>🚧 alpha</b> · 1 skill<br />
+UI and UX design, smoke test only<br /><br />
+<code>hello</code>
+</td>
+<td width="33%" valign="top">
+<h3>📈 <a href="plugins/aidd-telemetry/README.md">aidd-telemetry</a></h3>
+<b>🧪 beta</b> · 2 skills<br />
+Token usage per task, opt-in<br /><br />
+<code>init</code> · <code>usage</code>
+</td>
+<td width="33%" valign="top">
+<h3>🎬 <a href="plugins/aidd-qa/README.md">aidd-qa</a></h3>
+<b>🆕 new</b> · 1 skill<br />
+Acceptance QA with video evidence<br /><br />
+<code>acceptance-qa</code>
+</td>
+</tr>
+</table>
 
 <!--plugins:end-->
 
@@ -183,7 +237,7 @@ Install the six stable ones. The other three are off the recommended path.
 <tr><td><a href="docs/CATALOG.md">Catalog</a></td><td>See every skill and what it does</td></tr>
 <tr><td><a href="docs/COMPATIBILITY.md">Compatibility</a></td><td>See what each tool receives</td></tr>
 <tr><td><a href="cli/README.md">CLI</a></td><td>Look up a command</td></tr>
-<tr><td><a href="docs/FAQ.md">FAQ</a></td><td>Check cost, security and limits</td></tr>
+<tr><td><a href="docs/FAQ.md">FAQ</a></td><td>Check cost, security and measurement</td></tr>
 <tr><td><a href="CHANGELOG.md">Changelog</a></td><td>See what changed</td></tr>
 <tr><td rowspan="2"><b>Contribute</b></td><td><a href="CONTRIBUTING.md">Contributing</a></td><td>Follow the contribution flow</td></tr>
 <tr><td><a href="docs/ARCHITECTURE.md">Architecture</a></td><td>Know where a capability belongs</td></tr>
@@ -194,12 +248,6 @@ Install the six stable ones. The other three are off the recommended path.
 <tr><td><a href="SECURITY.md">Security</a></td><td>Report a vulnerability privately</td></tr>
 </tbody>
 </table>
-
-## Security and privacy
-
-- **Permissions.** A plugin can run scripts. Read it before you install it: [what runs, and when](docs/CATALOG.md#hooks).
-- **Telemetry.** Off by default. It only runs if you opt in: [how it works](docs/FAQ.md#measurement).
-- **Vulnerabilities.** Report them privately: [`SECURITY.md`](SECURITY.md).
 
 ## Community
 

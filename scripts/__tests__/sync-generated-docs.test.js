@@ -47,7 +47,7 @@ function scratchTree() {
   write("plugins/aidd-x/skills/01-a/SKILL.md", "---\nname: 01-a\n---\n");
   write(
     "docs/assets/plugins/plugins.json",
-    JSON.stringify({ "aidd-x": { status: "beta", icon: "code", accent: "#0969da", description: "Does one thing" } })
+    JSON.stringify({ "aidd-x": { status: "beta", emoji: "🧪", description: "Does one thing" } })
   );
   return root;
 }
@@ -73,11 +73,8 @@ test("an empty block is reported stale, and syncing fills it from the tree", () 
     const readme = fs.readFileSync(path.join(root, "README.md"), "utf8");
     assert.match(readme, /<tr><td><b>Claude Code<\/b><\/td><td align="center">✅<\/td><td align="center">✅<\/td><td align="center">✅<\/td><\/tr>/);
     assert.match(readme, /<table>/);
-    assert.match(readme, /<a href="plugins\/aidd-x\/README\.md">.*aidd-x-light\.svg" alt="aidd-x, beta, 1 skill: Does one thing"/);
-    const card = fs.readFileSync(path.join(root, "docs/assets/plugins/aidd-x-dark.svg"), "utf8");
-    assert.match(card, />aidd-x</);
-    assert.match(card, />1 skill</);
-    assert.match(card, />BETA</);
+    assert.match(readme, /<h3>🧪 <a href="plugins\/aidd-x\/README\.md">aidd-x<\/a><\/h3>/);
+    assert.match(readme, /<b>🧪 beta<\/b> · 1 skill<br \/>\nDoes one thing<br \/><br \/>\n<code>a<\/code>/);
 
     assert.equal(run(["--check", "--root", root]).status, 0);
   } finally {
@@ -85,7 +82,7 @@ test("an empty block is reported stale, and syncing fills it from the tree", () 
   }
 });
 
-test("a plugin with no card entry is refused", () => {
+test("a plugin with no entry in plugins.json is refused", () => {
   const root = scratchTree();
   try {
     fs.mkdirSync(path.join(root, "plugins/aidd-y/skills"), { recursive: true });
@@ -99,11 +96,12 @@ test("a plugin with no card entry is refused", () => {
   }
 });
 
-test("a card file edited by hand is reported stale", () => {
+test("a plugin grid edited by hand is reported stale", () => {
   const root = scratchTree();
   try {
     run(["--root", root]);
-    fs.appendFileSync(path.join(root, "docs/assets/plugins/aidd-x-light.svg"), "<!-- hand edit -->");
+    const file = path.join(root, "README.md");
+    fs.writeFileSync(file, fs.readFileSync(file, "utf8").replace("Does one thing", "Does another thing"));
 
     assert.equal(run(["--check", "--root", root]).status, 1);
   } finally {

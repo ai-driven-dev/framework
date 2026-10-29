@@ -1,56 +1,47 @@
 {
   "aidd-context": {
     "status": "stable",
-    "icon": "layers",
-    "accent": "#0969da",
-    "description": "Project memory, context generation, learning"
+    "description": "Project memory, context generation, learning",
+    "emoji": "🧭"
   },
   "aidd-dev": {
     "status": "stable",
-    "icon": "code",
-    "accent": "#8250df",
-    "description": "Plan, build, review, test, debug"
+    "description": "Plan, build, review, test, debug",
+    "emoji": "⚙️"
   },
   "aidd-vcs": {
     "status": "stable",
-    "icon": "branch",
-    "accent": "#bc4c00",
-    "description": "Commits, pull requests, release tags, issues"
+    "description": "Commits, pull requests, release tags, issues",
+    "emoji": "🌿"
   },
   "aidd-pm": {
     "status": "stable",
-    "icon": "clipboard",
-    "accent": "#1a7f37",
-    "description": "Briefs, Epics, Stories, specs, Spikes, Defects"
+    "description": "Briefs, Epics, Stories, specs, Spikes, Defects",
+    "emoji": "📋"
   },
   "aidd-refine": {
     "status": "stable",
-    "icon": "mirror",
-    "accent": "#bf3989",
-    "description": "Brainstorm, challenge, fact-check"
+    "description": "Brainstorm, challenge, fact-check",
+    "emoji": "🪞"
   },
   "aidd-orchestrator": {
     "status": "stable",
-    "icon": "flow",
-    "accent": "#0a7e8c",
-    "description": "Feature flow, issue-to-PR automation, backlog"
+    "description": "Feature flow, issue-to-PR automation, backlog",
+    "emoji": "🎼"
   },
   "aidd-ui": {
     "status": "alpha",
-    "icon": "window",
-    "accent": "#9a6700",
-    "description": "UI and UX design, smoke test only"
+    "description": "UI and UX design, smoke test only",
+    "emoji": "🎨"
   },
   "aidd-telemetry": {
     "status": "beta",
-    "icon": "bars",
-    "accent": "#5a67d8",
-    "description": "Token usage per task, opt-in"
+    "description": "Token usage per task, opt-in",
+    "emoji": "📈"
   },
   "aidd-qa": {
     "status": "new",
-    "icon": "play",
-    "accent": "#d1242f",
-    "description": "Acceptance QA with video evidence"
+    "description": "Acceptance QA with video evidence",
+    "emoji": "🎬"
   }
 }
