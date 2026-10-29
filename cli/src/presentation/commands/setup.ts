@@ -27,6 +27,23 @@ import type { CLIOutput } from "../output.js";
 import { parseGlobalOptions, parseScopeFlag } from "./global-options.js";
 import { reportSyncActivation } from "./sync-native-activation.js";
 
+function reportAgentModels(
+  output: CLIOutput,
+  provider: string | undefined,
+  hosts: readonly string[],
+  mainSet: readonly string[],
+  main: boolean
+): void {
+  output.success(`Agents for ${hosts.join(", ")} run on ${provider ?? "the session's model"}.`);
+  output.info("Other projects on this machine pick it up at their next aidd update.");
+  if (mainSet.length > 0) output.success(`Main model set for ${mainSet.join(", ")}.`);
+  const skipped =
+    main && provider !== undefined ? hosts.filter((host) => !mainSet.includes(host)) : [];
+  if (skipped.length > 0) {
+    output.warn(`No main-model setting at this scope for ${skipped.join(", ")}; left unchanged.`);
+  }
+}
+
 interface SetupCmdOptions {
   source?: "remote" | "local";
   path?: string;
@@ -132,7 +149,7 @@ export function registerSetupCommand(program: Command): void {
     .addOption(new Option("--scope <scope>", "Former spelling: user means --global").hideHelp())
     .option(
       "--provider <provider>",
-      `Run each tool's agents on this provider's model for their role (${agentProviders().join(", ")})`
+      `Run each tool's agents on this provider's model for their role (${agentProviders().join(", ")}), or none for the session's model`
     )
     .option("--main", "with --provider, also run the main session on its smart model")
     .addHelpText(
@@ -190,8 +207,9 @@ export function registerSetupCommand(program: Command): void {
         // One provider per run: claude and codex each run one only, so pairing them is refused
         // here, naming the host, before anything is built or written.
         const agentHosts = toolIds.aiTools.filter(isAgentHost);
-        if (cmdOptions.provider !== undefined) {
-          for (const host of agentHosts) supportedProvider(host, cmdOptions.provider);
+        const provider = cmdOptions.provider === "none" ? undefined : cmdOptions.provider;
+        if (provider !== undefined) {
+          for (const host of agentHosts) supportedProvider(host, provider);
         }
 
         if (interactive) printWelcomeBanner(output);
@@ -200,13 +218,15 @@ export function registerSetupCommand(program: Command): void {
 
         // Before the install, so its first build already carries the models.
         if (cmdOptions.provider !== undefined) {
-          await deps.setAgentModelUseCase.execute({
+          const main = cmdOptions.main === true;
+          const models = await deps.setAgentModelUseCase.execute({
             projectRoot,
             hosts: agentHosts,
-            provider: cmdOptions.provider,
-            main: cmdOptions.main === true,
+            provider,
+            main,
             scope: scope ?? "project",
           });
+          reportAgentModels(output, provider, agentHosts, models.mainSet, main);
         }
 
         const result = await new SetupUseCase(

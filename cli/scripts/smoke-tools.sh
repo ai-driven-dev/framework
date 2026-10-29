@@ -30,7 +30,6 @@ ALL_COMMANDS=(
   "auth login" "auth logout" "auth status"
   "telemetry on" "telemetry off" "telemetry forget" "telemetry ingest"
   "telemetry task" "telemetry status" "telemetry report" "telemetry identity"
-  "agents set-model" "agents unset-model"
 )
 
 PASS=0; FAIL=0; SKIP=0
@@ -227,12 +226,13 @@ run "telemetry forget --yes" 0 "Removed" "$P_TEL" -- telemetry forget --yes
 run "telemetry off (after forget)" 0 "Measurement was not on" "$P_TEL" -- telemetry off
 
 # The provider lands in the sandboxed $AIDD_USER_CONFIG_DIR, never the real profile's.
-section "agents (sandboxed profile)"
+section "setup --provider (sandboxed profile)"
 P_AGENTS=$(new_project)
-run "agents set-model" 0 "run on mistral" "$P_AGENTS" -- agents set-model mistral --ide opencode --main
-if grep -q 'mistral/mistral-large-4' "$P_AGENTS/opencode.json" 2>/dev/null; then ok "agents set-model --main writes opencode.json"; else bad "agents set-model --main did not write opencode.json"; fi
-run "agents unset-model" 0 "session's model" "$P_AGENTS" -- agents unset-model --ide opencode
-if [[ ! -e "$P_AGENTS/opencode.json" ]]; then ok "agents unset-model restores the absent opencode.json"; else bad "agents unset-model left opencode.json" "$(cat "$P_AGENTS/opencode.json")"; fi
+SETUP_OC=(setup --source local --path "$FRAMEWORK_FIXTURE" --ide opencode --plugins none --yes)
+run "setup --provider" 0 "run on mistral" "$P_AGENTS" -- "${SETUP_OC[@]}" --provider mistral --main
+if grep -q 'mistral/mistral-large-4' "$P_AGENTS/opencode.json" 2>/dev/null; then ok "setup --provider --main writes opencode.json"; else bad "setup --provider --main did not write opencode.json"; fi
+run "setup --provider none" 0 "session's model" "$P_AGENTS" -- "${SETUP_OC[@]}" --provider none
+if ! grep -q '"model"' "$P_AGENTS/opencode.json" 2>/dev/null; then ok "setup --provider none restores opencode.json"; else bad "setup --provider none left the model" "$(cat "$P_AGENTS/opencode.json")"; fi
 
 section "update --check"
 out=$(cd "$ROOT" && node "$CLI" update --check 2>&1); rc=$?

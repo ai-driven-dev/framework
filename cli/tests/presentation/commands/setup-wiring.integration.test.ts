@@ -69,6 +69,7 @@ beforeEach(() => {
     return true;
   });
   loadManifest.mockResolvedValue({});
+  setAgentModel.mockResolvedValue({ mainSet: [], reinstalled: [] });
   resolveSourceIfNeeded.mockResolvedValue(undefined);
   registerIfPresent.mockResolvedValue(undefined);
   activation.mockResolvedValue({ binaryMissing: [], errors: [] });
@@ -182,6 +183,31 @@ describe("aidd setup — the agents' provider", () => {
     expect(setAgentModel.mock.invocationCallOrder[0]).toBeLessThan(
       resolveSourceIfNeeded.mock.invocationCallOrder[0]
     );
+  });
+
+  it("names the main models it set, and warns about the hosts it could not", async () => {
+    setAgentModel.mockResolvedValue({ mainSet: ["opencode"], reinstalled: [] });
+
+    const lines = await run("--ide", "opencode,kilo", "--provider", "mistral", "--main");
+
+    expect(lines.slice(0, 3)).toEqual([
+      "Agents for opencode, kilo run on mistral.",
+      "Other projects on this machine pick it up at their next aidd update.",
+      "Main model set for opencode.",
+    ]);
+    expect(errors.join("")).toContain(
+      "Warning: No main-model setting at this scope for kilo; left unchanged.\n"
+    );
+  });
+
+  it("gives the agents back the session's model with none, without a main-model warning", async () => {
+    const lines = await run("--ide", "opencode", "--provider", "none", "--main");
+
+    expect(setAgentModel).toHaveBeenCalledWith(
+      expect.objectContaining({ hosts: ["opencode"], provider: undefined, main: true })
+    );
+    expect(lines[0]).toBe("Agents for opencode run on the session's model.");
+    expect(errors.join("")).not.toContain("main-model");
   });
 
   it.each([
@@ -450,7 +476,7 @@ describe("aidd setup — the help surface", () => {
       ],
       [
         "--provider <provider>",
-        "Run each tool's agents on this provider's model for their role (openai, anthropic, mistral)",
+        "Run each tool's agents on this provider's model for their role (openai, anthropic, mistral), or none for the session's model",
       ],
       ["--main", "with --provider, also run the main session on its smart model"],
     ]);

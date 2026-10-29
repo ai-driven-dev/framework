@@ -14,35 +14,23 @@ async function fileExists(path: string): Promise<boolean> {
   );
 }
 
+const SETUP = ["setup", "--source", "local", "--path", REPOSITORY_ROOT, "--ide", "opencode"];
+
 async function agentModel(projectDir: string): Promise<unknown> {
   return parseFrontmatter(await readFile(join(projectDir, AGENT), "utf8")).frontmatter.model;
 }
 
-describe("E2E: aidd agents set-model on an installed project", () => {
-  it("re-installs the agents with the provider's models, sets the main session, and undoes both", async () => {
+describe("E2E: aidd setup --provider on a project", () => {
+  it("installs the agents with the provider's models, sets the main session, and undoes both", async () => {
     const { projectDir, fakeHome, cleanup } = await createTestEnv("agent-models");
     try {
-      const setup = await runCli(
-        [
-          "setup",
-          "--source",
-          "local",
-          "--path",
-          REPOSITORY_ROOT,
-          "--ide",
-          "opencode",
-          "--plugins",
-          "aidd-orchestrator",
-          "--yes",
-        ],
-        projectDir,
-        fakeHome
-      );
+      const install = ["--plugins", "aidd-orchestrator", "--yes"];
+      const setup = await runCli([...SETUP, ...install], projectDir, fakeHome);
       expect(setup.exitCode, setup.stderr).toBe(0);
       expect(await agentModel(projectDir)).toBeUndefined();
 
       const set = await runCli(
-        ["agents", "set-model", "mistral", "--ide", "opencode", "--main"],
+        [...SETUP, ...install, "--provider", "mistral", "--main"],
         projectDir,
         fakeHome
       );
@@ -53,7 +41,7 @@ describe("E2E: aidd agents set-model on an installed project", () => {
       );
 
       const unset = await runCli(
-        ["agents", "unset-model", "--ide", "opencode"],
+        [...SETUP, ...install, "--provider", "none"],
         projectDir,
         fakeHome
       );
@@ -68,28 +56,11 @@ describe("E2E: aidd agents set-model on an installed project", () => {
     }
   });
 
-  it("names an IDE whose main model has no setting at that scope, and leaves it alone", async () => {
-    const { projectDir, fakeHome, cleanup } = await createTestEnv("agent-models-no-main");
-    try {
-      const result = await runCli(
-        ["agents", "set-model", "mistral", "--ide", "opencode", "--global", "--main"],
-        projectDir,
-        fakeHome
-      );
-      expect(result.exitCode, result.stderr).toBe(0);
-      expect(`${result.stdout}${result.stderr}`).toContain(
-        "No main-model setting at this scope for opencode; left unchanged."
-      );
-    } finally {
-      await cleanup();
-    }
-  });
-
   it("refuses a provider the IDE cannot run, and changes nothing", async () => {
     const { projectDir, fakeHome, cleanup } = await createTestEnv("agent-models-refused");
     try {
       const result = await runCli(
-        ["agents", "set-model", "mistral", "--ide", "claude", "--main"],
+        ["setup", "--ide", "claude", "--plugins", "none", "--provider", "mistral", "--main"],
         projectDir,
         fakeHome
       );
