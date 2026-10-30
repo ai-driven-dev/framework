@@ -1,5 +1,5 @@
 // C1 to C7: each code link resolves, every file under a code root is linked or ignored, and UI
-// code holds no literal a token should carry. Non-web code is a stated limit.
+// code holds no colour literal. Other literals and non-web code are stated limits.
 const fs = require("node:fs");
 const path = require("node:path");
 const { list } = require("./markdown.cjs");
@@ -11,12 +11,13 @@ const EXPORT_SEPARATOR = "#";
 const PACKAGE_PREFIX = "package:";
 const CODE_ROOTS_KEY = "code-roots";
 const IGNORE_KEY = "ignore";
-const STYLESHEET_EXTENSIONS = [".css", ".scss"]; // units in script files are a stated limit
+const STYLESHEET_EXTENSIONS = [".css", ".scss"];
 const SCRIPT_EXTENSIONS = [".js", ".jsx", ".ts", ".tsx", ".vue", ".svelte"];
 const SCANNED_EXTENSIONS = [...STYLESHEET_EXTENSIONS, ...SCRIPT_EXTENSIONS, ".html"];
 const BLANK = " ";
 const CURRENT_FOLDER = ".";
 const PARENT_FOLDER = "..";
+const TRAILING_SEPARATORS = /\/+$/;
 
 const REGEX_SPECIALS = /[.*+?^${}()|[\]\\]/g;
 const NOT_LINE_BREAK = /[^\n]/g;
@@ -94,10 +95,14 @@ function libraryProblems(project) {
     .map(({ record, link }) => ({ file: record.file, message: `package "${link.library}" is not in system.md libraries` }));
 }
 
+/** A link covers its file and, unless that file sits at a code root, the file's whole folder:
+ * a component's styles, hooks and tests live beside it. */
 function coverageProblems(project) {
-  const targets = new Set(linked(project).flatMap(({ link }) => (link && link.library === null ? [link.target] : [])));
+  const targets = linked(project).flatMap(({ link }) => (link && link.library === null ? [path.posix.normalize(link.target)] : []));
+  const roots = codeRoots(project).map((root) => root.replace(TRAILING_SEPARATORS, ""));
+  const folders = targets.map((target) => path.posix.dirname(target)).filter((folder) => !roots.includes(folder));
   return codeFiles(project)
-    .filter((file) => !targets.has(file))
+    .filter((file) => !targets.includes(file) && !folders.some((folder) => isUnder(file, folder)))
     .map((file) => ({ file, message: "no record links it and no ignore covers it" }));
 }
 
@@ -132,7 +137,6 @@ const RULES = [
   libraryProblems, // C2
   coverageProblems, // C3
   literalProblems(PATTERNS.colour, SCANNED_EXTENSIONS), // C4
-  literalProblems(PATTERNS.unit, STYLESHEET_EXTENSIONS), // C4
   sharedLinkProblems, // C5
   literalProblems(PATTERNS.physical, STYLESHEET_EXTENSIONS, declaresRightToLeft), // C6
   rootProblems, // C7

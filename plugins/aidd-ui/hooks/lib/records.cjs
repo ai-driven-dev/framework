@@ -1,4 +1,4 @@
-// R1 to R16: the shape of each record and how records point at one another.
+// R1 to R17: the shape of each record and how records point at one another.
 const fs = require("node:fs");
 const path = require("node:path");
 const { list, table } = require("./markdown.cjs");
@@ -12,6 +12,7 @@ const NO_REPLACEMENT = "none";
 const DEFAULT_STATE = "default";
 const INTERACTIVE_STATES = ["hover", "focus", "disabled"];
 const KEYBOARD_SECTION = "Keyboard";
+const USAGE_SECTION = "Usage";
 const DEPRECATION_SECTION = "Deprecation";
 const STEPS_SECTION = "Steps";
 const VERDICTS_SECTION = "Verdicts";
@@ -21,7 +22,7 @@ const SYSTEM_ID = "system";
 const COMMON_KEYS = ["id", "kind", "status", "version"];
 const COMPONENT_KEYS = ["uses", "tokens", "variants", "states", "interactive", "role"];
 const KIND_KEYS = {
-  system: ["platforms", "breakpoints", "themes", "locales", "directions", "code-roots", "ignore", "libraries"],
+  system: ["platforms", "breakpoints", "themes", "locales", "directions", "primitives", "code-roots", "ignore", "libraries"],
   brand: [],
   atom: COMPONENT_KEYS,
   molecule: COMPONENT_KEYS,
@@ -40,6 +41,7 @@ const FOLDER_KINDS = {
   reviews: ["review"],
 };
 const COMPONENT_KINDS = FOLDER_KINDS.components;
+const ASSEMBLED_KINDS = ["molecule", "composition"]; // coded through what they use when no file is their own
 const DESIGN_KINDS = ["system", "brand", "review"];
 const LEVELS = { asset: 0, atom: 1, molecule: 2, composition: 3, screen: 4 }; // an element uses only lower levels
 
@@ -150,10 +152,23 @@ function stateProblems(project) {
   });
 }
 
+/** Whether an assembled element is coded through the components it uses: at least one, all
+ * coded. Assets are files, never code, so they count for nothing. */
+function codedThroughUses(record, index) {
+  const used = list(fm(record).uses)
+    .map((id) => index.get(id))
+    .filter((target) => !target || fm(target).kind !== "asset");
+  return ASSEMBLED_KINDS.includes(fm(record).kind) && used.length > 0 && used.every((target) => target && fm(target).status === "coded");
+}
+
 function codedProblems(project) {
+  const index = byId(project);
   return placed(project)
     .filter((record) => isElement(record) && fm(record).status === "coded" && !("code" in fm(record)))
-    .map((record) => problem(record, 'status coded needs "code"'));
+    .filter((record) => !codedThroughUses(record, index))
+    .map((record) =>
+      problem(record, ASSEMBLED_KINDS.includes(fm(record).kind) ? 'status coded needs "code", or every element it uses coded' : 'status coded needs "code"')
+    );
 }
 
 function deprecatedProblems(project) {
@@ -247,6 +262,12 @@ function designStatusProblems(project) {
     .map((record) => problem(record, `status "${fm(record).status}" is for elements: system, brand and reviews are ${listWithOr(DESIGN_STATUSES)}`));
 }
 
+function usageProblems(project) {
+  return placed(project)
+    .filter((record) => isComponent(record) && !(USAGE_SECTION in record.sections))
+    .map((record) => problem(record, `lacks "## ${USAGE_SECTION}", saying when to use it and when not`));
+}
+
 const RULES = [
   frontMatterProblems, // R1
   kindProblems, // R2
@@ -264,6 +285,7 @@ const RULES = [
   brandProblems, // R14
   assetProblems, // R15
   designStatusProblems, // R16
+  usageProblems, // R17
 ];
 
 /** Every broken record rule, as `{file, message}`, in rule order. */

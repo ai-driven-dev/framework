@@ -1,5 +1,5 @@
-// T1 to T8: tokens.json against the DTCG 2025.10 format and color modules, plus this plugin's
-// themes extension and its rem rule. Composite values are checked for presence only.
+// T1 to T9: tokens.json against the DTCG 2025.10 format and color modules, plus this plugin's
+// themes extension, its rem rule, and components citing semantic tokens only. Composite values are checked for presence only.
 const fs = require("node:fs");
 const nodePath = require("node:path");
 const { list } = require("./markdown.cjs");
@@ -204,6 +204,20 @@ function componentTokenProblems(tree, project) {
     );
 }
 
+/** Whether a token path sits under a group system.md declares primitive. */
+const isPrimitive = (name, groups) => groups.some((group) => name === group || name.startsWith(`${group}${PATH_SEPARATOR}`));
+
+function primitiveProblems(tree, project) {
+  const groups = list(systemOf(project)?.frontMatter.primitives);
+  return placed(project)
+    .filter((record) => COMPONENT_KINDS.includes(record.frontMatter.kind))
+    .flatMap((record) =>
+      list(record.frontMatter.tokens)
+        .filter((name) => isPrimitive(name, groups))
+        .map((name) => ({ file: record.file, message: `token "${name}" is a primitive, use a semantic token` }))
+    );
+}
+
 function remProblems(tree, project) {
   const at = tokenProblem(project);
   return [...tree.tokens]
@@ -221,6 +235,7 @@ const RULES = [
   themeProblems, // T6
   componentTokenProblems, // T7
   remProblems, // T8
+  primitiveProblems, // T9
 ];
 
 /** Every broken token rule, as `{file, message}`, in rule order. */

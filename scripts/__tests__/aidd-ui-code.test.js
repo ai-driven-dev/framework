@@ -85,6 +85,19 @@ describe("aidd-ui code link", () => {
       assert.deepEqual(problems(), ["src/ui/Orphan.tsx: no record links it and no ignore covers it"]);
     });
 
+    it("covers the folder of a linked file: its styles, hooks and tests", () => {
+      put(tmp, "src/ui/search/SearchField.tsx", "export function SearchField() {}\n");
+      put(tmp, "src/ui/search/search-field.hook.ts", "export const useSearch = () => null;\n");
+      put(tmp, "src/ui/search/__tests__/SearchField.test.tsx", "test();\n");
+      linkSearch("src/ui/search/SearchField.tsx#SearchField");
+      assert.deepEqual(problems(), []);
+    });
+
+    it("never lets a file at a code root cover its siblings", () => {
+      put(tmp, "src/ui/Orphan.css", ".orphan {}\n");
+      assert.deepEqual(problems(), ["src/ui/Orphan.css: no record links it and no ignore covers it"]);
+    });
+
     it("accepts a valid link on a proposed record", () => {
       edit(tmp, SEARCH, "status: validated", "status: proposed");
       put(tmp, "src/ui/SearchField.tsx", "export function SearchField() {}\n");
@@ -110,19 +123,9 @@ describe("aidd-ui code link", () => {
     });
   });
 
-  describe("C4 unit literals", () => {
-    it("names a unit literal in a stylesheet", () => {
+  describe("C4 other literals", () => {
+    it("leaves a unit literal in code alone, a stated limit", () => {
       linkedStylesheet(".SearchField { padding: 16px; }\n");
-      assert.deepEqual(problems(), [`${SEARCH_CSS}: line 1: literal "16px", only tokens carry values`]);
-    });
-
-    it("leaves the lengths of a @container prelude alone", () => {
-      linkedStylesheet("@container (min-width: 768px) { .SearchField { padding: var(--space-md); } }\n");
-      assert.deepEqual(problems(), []);
-    });
-
-    it("leaves units in script files alone, a stated limit", () => {
-      append("src/ui/Button.tsx", 'const style = "padding: 16px";');
       assert.deepEqual(problems(), []);
     });
   });

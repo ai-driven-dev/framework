@@ -52,7 +52,7 @@ describe("aidd-ui tokens and renders", () => {
   it("names every token's CSS custom property", () => {
     const names = tokens.cssNames(load(tmp));
     assert.ok(names.has("--color-text-default"));
-    assert.equal(names.size, 7);
+    assert.equal(names.size, 8);
   });
 
   describe("T1 JSON", () => {
@@ -142,8 +142,15 @@ describe("aidd-ui tokens and renders", () => {
 
   describe("T7 component tokens", () => {
     it("names a component token absent from tokens.json", () => {
-      edit(tmp, BUTTON, "tokens: [color.brand.primary,", "tokens: [space.huge, color.brand.primary,");
+      edit(tmp, BUTTON, "tokens: [color.action.default,", "tokens: [space.huge, color.action.default,");
       assert.deepEqual(problems(), [`${BUTTON}: token "space.huge" is not in tokens.json`]);
+    });
+  });
+
+  describe("T9 semantic tokens", () => {
+    it("names a component citing a primitive token", () => {
+      edit(tmp, BUTTON, "tokens: [color.action.default,", "tokens: [color.brand.primary, color.action.default,");
+      assert.deepEqual(problems(), [`${BUTTON}: token "color.brand.primary" is a primitive, use a semantic token`]);
     });
   });
 

@@ -34,10 +34,10 @@ Chaque fiche porte en tête : `id` (égal au nom du fichier, unique), `kind`, `s
 
 | Fiche | Contient en plus |
 | --- | --- |
-| `system.md` | version du design system, plateformes, breakpoints, thèmes, langues et sens d'écriture, dossiers UI du code, chemins ignorés, librairies de composants utilisées |
-| `brand.md` | projet, utilisateurs, domaine, plateformes, personnalité et ton, charte imposée s'il y en a une, références et anti-références |
+| `system.md` | version du design system, plateformes, breakpoints, thèmes, langues et sens d'écriture, groupes de tokens primitifs, dossiers UI du code, chemins ignorés, librairies de composants utilisées ; règles transverses s'il y en a |
+| `brand.md` | projet, utilisateurs, domaine, plateformes, personnalité et ton, charte imposée s'il y en a une, références et anti-références ; glossaire (mot à employer, mots interdits) s'il y en a un |
 | asset | type (icône, image, illustration), fichier, texte alternatif attendu |
-| atome, molécule, composition | éléments utilisés, tokens utilisés, variantes, états (au moins défaut ; survol, focus et désactivé quand il est interactif ; chargement ou erreur quand ils existent), comportement clavier et rôle accessible, lien vers le code |
+| atome, molécule, composition | quand l'utiliser et quand ne pas l'utiliser, éléments utilisés, tokens sémantiques utilisés, variantes, états (au moins défaut ; survol, focus et désactivé quand il est interactif ; chargement ou erreur quand ils existent), comportement clavier et rôle accessible, lien vers le code |
 | écran | éléments utilisés, états (au moins défaut, vide, chargement, erreur, sans droits quand ils existent), breakpoints couverts, route ou fichier réel, lien vers le code |
 | parcours | persona, étapes ordonnées, chaque étape un écran et l'action qui mène à la suivante |
 | review | écrans revus, verdict OK ou pas OK par écran et par état, commentaire, écrans restants |
@@ -46,15 +46,15 @@ Chaque fiche porte en tête : `id` (égal au nom du fichier, unique), `kind`, `s
 
 - `proposé` : créé, pas encore validé.
 - `validé` : rendu approuvé en review.
-- `codé` : un lien vers le code existe et le validateur le confirme.
+- `codé` : un lien vers le code existe et le validateur le confirme ; une molécule ou une composition sans fichier à elle est codée quand chaque composant qu'elle utilise l'est.
 - `déprécié` : ne doit plus être utilisé, nomme son remplaçant ou dit pourquoi il n'en a pas.
-- Le lien vers le code est obligatoire à `codé`, facultatif avant.
+- Le lien vers le code est obligatoire à `codé`, facultatif avant, sauf pour une molécule ou une composition codée par ce qu'elle utilise.
 - Modifier un élément `codé` le repasse à `proposé` le temps de la review ; il redevient `codé` quand le code suit sa nouvelle version.
 - Un élément non déprécié n'utilise jamais un élément déprécié.
 
 ### Lien avec le code
 
-- Un élément correspond à un seul fichier de code, identifié par son chemin et le nom du composant exporté.
+- Un élément correspond à un seul fichier d'entrée, identifié par son chemin et le nom du composant exporté. Ce lien couvre aussi le dossier du fichier (styles, hooks, tests), sauf quand le fichier est à la racine d'un dossier UI.
 - Un composant de librairie est lié à son paquet et à son nom exporté.
 - Chaque fichier sous un dossier UI déclaré est lié à une fiche ou couvert par un chemin ignoré.
 - Les usages se lisent dans les fiches : un token mène aux composants qui le déclarent, un composant aux compositions et écrans qui l'utilisent, un écran aux parcours, chaque élément à son fichier de code. Le rapport d'impact suit ce chemin.
@@ -82,6 +82,7 @@ Chaque fiche porte en tête : `id` (égal au nom du fichier, unique), `kind`, `s
 ### Rendus
 
 - Écrans et composants sont rendus en HTML avec les vrais tokens, sans valeur en dur.
+- Les tokens ont deux niveaux : les primitifs (la palette) et les sémantiques, qui pointent vers eux. Un composant n'utilise que des sémantiques.
 - Un écran montre tous ses états dans un seul fichier, avec un sélecteur d'état.
 - La vitrine est générée sans IA, à partir des fiches et de gabarits fixes : identique à chaque génération, elle montre chaque élément, ses variantes, ses états, ses usages et son lien vers le réel.
 - La vitrine affiche la version validée d'un écran et un lien vers le réel.
@@ -106,11 +107,12 @@ Chaque fiche porte en tête : `id` (égal au nom du fichier, unique), `kind`, `s
   - éléments utilisés et alias de tokens qui existent ;
   - cycle de vie respecté ;
   - liens vers le code valides, couverture des dossiers UI ;
-  - aucune valeur en dur dans les rendus ni dans le code ;
+  - aucune valeur en dur dans les rendus, aucune couleur en dur dans le code ;
+  - aucun token primitif dans un composant ;
   - versions en double dans un historique ;
   - propriétés physiques quand un sens droite-gauche est déclaré.
 - L'IA juge le sens : le code fait-il ce que disent `ui.md` et les fiches ?
-- L'audit UI constate et ne corrige rien : élément sans code, code sans élément, écart entre le validé et le réel, doublons proches, textes trop longs dans la langue la plus longue, accessibilité.
+- L'audit UI constate et ne corrige rien : élément sans code, code sans élément, écart entre le validé et le réel, doublons proches, valeurs en dur autres que les couleurs dans le code, mots interdits par le glossaire, textes trop longs dans la langue la plus longue, accessibilité.
 
 ### Format
 
@@ -120,7 +122,6 @@ Chaque fiche porte en tête : `id` (égal au nom du fichier, unique), `kind`, `s
 ## Non-goals
 
 - Plusieurs design systems dans un projet, ou une app web et une app mobile avec deux systèmes.
-- Un composant réparti sur plusieurs fichiers.
 - Synchronisation dans les deux sens avec Figma ou Claude Design, et import de maquettes existantes.
 - Retour à une version précédente du design system.
 - Travail à plusieurs, et parcours pour un designer qui ne code pas.

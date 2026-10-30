@@ -216,6 +216,17 @@ describe("aidd-ui records and history", () => {
       change(HOME, "code: src/ui/HomePage.tsx#HomePage\n", "");
       assert.deepEqual(problems(), [`${HOME}: status coded needs "code"`]);
     });
+
+    it("accepts a coded molecule without code when everything it uses is coded", () => {
+      change(SEARCH, "status: validated", "status: coded");
+      assert.deepEqual(problems(), []);
+    });
+
+    it("names a coded molecule without code that uses a component not coded", () => {
+      change(SEARCH, "status: validated", "status: coded");
+      change(BUTTON, "status: coded", "status: validated");
+      assert.deepEqual(problems(), [`${SEARCH}: status coded needs "code", or every element it uses coded`]);
+    });
   });
 
   describe("R9 deprecated", () => {
@@ -312,6 +323,13 @@ describe("aidd-ui records and history", () => {
         assert.deepEqual(problems(), [`${file}: status "${status}" is for elements: system, brand and reviews are proposed or validated`]);
       });
     }
+  });
+
+  describe("R17 usage", () => {
+    it("names a component without a usage section", () => {
+      change(DIALOG, "## Usage\n\nA decision that blocks the page.\n\n", "");
+      assert.deepEqual(problems(), [`${DIALOG}: lacks "## Usage", saying when to use it and when not`]);
+    });
   });
 
   describe("H1 history present", () => {

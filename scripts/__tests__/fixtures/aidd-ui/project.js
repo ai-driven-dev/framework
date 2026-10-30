@@ -15,6 +15,8 @@ const record = (frontMatter, ...sections) => `---\n${frontMatter.join("\n")}\n--
 
 const KEYBOARD = "## Keyboard\n\nTab focuses it, Enter or Space activates it.";
 
+const usage = (when) => `## Usage\n\n${when}`;
+
 const SYSTEM = record(
   [
     "id: system",
@@ -26,6 +28,7 @@ const SYSTEM = record(
     "themes: [light, dark]",
     "locales: [fr, ar]",
     "directions: [ltr, rtl]",
+    "primitives: [color.brand]",
     "code-roots: [src/ui]",
     "ignore: [src/ui/tokens.css]",
     "libraries: [@radix-ui/react-dialog]",
@@ -61,6 +64,7 @@ const TOKENS = {
       },
     },
     text: { default: { $value: "{color.brand.primary}" } },
+    action: { default: { $value: "{color.brand.primary}" } },
   },
   space: { md: { $type: "dimension", $value: { value: 1, unit: "rem" } } },
   border: { thin: { $type: "dimension", $value: { value: 0.0625, unit: "rem" } } },
@@ -86,7 +90,7 @@ const BUTTON = record(
     "status: coded",
     "version: 1",
     "uses: []",
-    "tokens: [color.brand.primary, color.text.default, space.md, border.thin, motion.fast, font.body, font.weight.bold]",
+    "tokens: [color.action.default, color.text.default, space.md, border.thin, motion.fast, font.body, font.weight.bold]",
     "variants: [primary, secondary]",
     "states: [default, hover, focus, disabled]",
     "interactive: yes",
@@ -94,6 +98,7 @@ const BUTTON = record(
     "code: src/ui/Button.tsx#Button",
   ],
   "# Button",
+  usage("Any action a person starts; never for navigation."),
   KEYBOARD,
   history(FIRST_ROW)
 );
@@ -112,6 +117,7 @@ const SEARCH_FIELD = record(
     "role: search",
   ],
   "# Search field",
+  usage("Searching a list; never for a form field."),
   KEYBOARD,
   history(FIRST_ROW)
 );
@@ -131,6 +137,7 @@ const DIALOG = record(
     "code: package:@radix-ui/react-dialog#Root",
   ],
   "# Dialog",
+  usage("A decision that blocks the page."),
   "## Keyboard\n\nEscape closes it; focus stays inside while it is open.",
   history(FIRST_ROW)
 );
@@ -142,7 +149,7 @@ const OLD_BUTTON = record(
     "status: deprecated",
     "version: 2",
     "uses: []",
-    "tokens: [color.brand.primary]",
+    "tokens: [color.action.default]",
     "variants: [default]",
     "states: [default]",
     "interactive: no",
@@ -150,6 +157,7 @@ const OLD_BUTTON = record(
     "replaced-by: button",
   ],
   "# Old button",
+  usage("Nowhere: replaced by button."),
   history(FIRST_ROW, ["2", "deprecated for button", "yes", "retire-old-button"])
 );
 

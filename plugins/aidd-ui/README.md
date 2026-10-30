@@ -38,15 +38,16 @@ Every record opens with flat front matter, `key: value` or `key: [a, b]`, and cl
 | Record | Front matter | Body |
 | --- | --- | --- |
 | every one | `id` (the file name), `kind`, `status` (`proposed`, `validated`, `coded`, `deprecated`), `version` | `## History` |
-| `system.md` | `version` in semver, `platforms`, `breakpoints`, `themes`, `locales`, `directions`, `code-roots`, `ignore`, `libraries` | |
-| `brand.md` | | `## Project`, `## Users`, `## Domain`, `## Platforms`, `## Personality and tone`, `## References`, `## Anti-references` |
-| atom, molecule, composition | `uses`, `tokens`, `variants`, `states`, `interactive` (`yes` or `no`), `role`, `code` | `## Keyboard` when interactive |
+| `system.md` | `version` in semver, `platforms`, `breakpoints`, `themes`, `locales`, `directions`, `primitives` (token groups components never cite), `code-roots`, `ignore`, `libraries` | optional `## Rules`: Id, Rule |
+| `brand.md` | | `## Project`, `## Users`, `## Domain`, `## Platforms`, `## Personality and tone`, `## References`, `## Anti-references`; optional `## Glossary`: Concept, Word, Forbidden |
+| atom, molecule, composition | `uses`, `tokens`, `variants`, `states`, `interactive` (`yes` or `no`), `role`, `code` | `## Usage`, and `## Keyboard` when interactive |
 | screen | `uses`, `states`, `breakpoints`, `route`, `code` | |
 | journey | `persona` | `## Steps`: Screen, Action |
 | asset | `type` (`icon`, `image`, `illustration`), `file`, `alt` | |
 | review | `scope`, `screens` | `## Verdicts`: Screen, State, Verdict (`ok`, `ko`, `pending`), Comment |
 
-- `code` is `path#Export`, or `package:<name>#Export` for a library component; required once `coded`.
+- `code` is `path#Export`, or `package:<name>#Export` for a library component; required once `coded`, except for a molecule or composition whose used components are all coded.
+- A link covers its file's folder too, styles, hooks and tests, unless the file sits at a code root.
 - A deprecated element names `replaced-by: <id>`, or `replaced-by: none` with a `## Deprecation` section.
 - A theme value is a token extension: `"$extensions": {"dev.ai-driven.themes": {"dark": <value>}}`.
 - A token's CSS name is `--` plus its path joined by `-`.
@@ -70,7 +71,7 @@ It prints `VALID`, or one `✗ <file>: <message>` line per problem and exits 1.
 - Composite tokens are checked for a `$value`, not for its shape.
 - Alias cycles are not detected.
 - `code-roots` and `ignore` are path prefixes, not globs.
-- Literals are found in web code only, and units in stylesheets only, not in script files.
+- In code, only colour literals are found, in web code only; other literals are left to the UI audit.
 - In script files, `.vue` and `.svelte` included, colours are found in string literals only.
 - A word of hex letters after `#` in a stylesheet or a string, such as `#add`, counts as a colour.
 - Fixed widths on text and long translations are left to the UI audit.

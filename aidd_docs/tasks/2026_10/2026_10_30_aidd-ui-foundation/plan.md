@@ -15,6 +15,7 @@ Source: aidd_docs/tasks/2026_10/2026_10_30_aidd-ui-rework/spec.md, pull request 
 | 2   | Tokens and renders | [`phase-2.md`](./phase-2.md) | 1 |
 | 3   | Code link | [`phase-3.md`](./phase-3.md) | 1 |
 | 4   | Entry, hook and docs | [`phase-4.md`](./phase-4.md) | 2, 3 |
+| 5   | Fit a real project | [`phase-5.md`](./phase-5.md) | 4 |
 
 ## External sources
 
