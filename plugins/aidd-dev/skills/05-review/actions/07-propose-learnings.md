@@ -1,4 +1,4 @@
-# 07 - Propose learnings
+# 07 - Propose Learnings
 
 Propose the feedback that should outlive the pull request, and post the summary.
 
@@ -8,31 +8,13 @@ The comments answered and settled, and the ones handed over.
 
 ## Output
 
-One summary comment on the pull request. No rule, memory or skill written.
+One summary comment on the pull request, shaped by [comments-summary-template.md](../assets/comments-summary-template.md). No rule, memory or skill written.
 
 ## Process
 
-1. **Keep.** Keep a comment only when it holds beyond this diff: a preference stated as a general one ("docs too long"), the same remark on several files, or a decision another change would face again. Drop one-off fixes.
+1. **Keep.** Keep a comment only when it holds beyond this diff: a preference stated as a general one ("docs too long"), the same remark on several files, or a decision another change would face again. Drop one-off changes.
 2. **Check.** When a project rule or memory already says it, name that rule as not followed instead of proposing it again.
-3. **Post.** Post one comment with `gh pr comment`, short enough to read on a phone, dropping an empty section:
-
-   ```markdown
-   ## Review comments
-
-   Fixed: <n> (<shas>). Answered: <n>.
-
-   ### FAQ: your call
-
-   1. **<question>** ([thread](<url>)): <option a> / <option b>
-
-   ### To fix
-
-   - <change> ([thread](<url>))
-
-   ### Learnings to keep
-
-   - <lesson> ([thread](<url>)): rule, memory or skill, to record with the skill that captures project learnings once you approve
-   ```
+3. **Post.** Fill `comments-summary-template.md` and post it with `gh pr comment`.
 
 ## Test
 

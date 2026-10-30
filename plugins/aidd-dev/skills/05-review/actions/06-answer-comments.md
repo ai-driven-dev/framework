@@ -1,4 +1,4 @@
-# 06 - Answer comments
+# 06 - Answer Comments
 
 Reply to each open review comment on a pull request, and resolve the ones settled.
 
@@ -12,7 +12,8 @@ Each open thread replied to, the settled ones resolved, and the comments left to
 
 ## Process
 
-1. **Collect.** Read the open review threads with `gh api graphql`, skipping a thread whose last reply already comes from this run's account.
+1. **Collect.** Read the open review threads with `gh api graphql`.
+   - Skip a thread whose last comment ends `Answer here.` or `To fix.`: it still waits on the user, whatever account posted it.
 2. **Sort.** Give each comment one kind:
    - `done`: a change it asked for is in a commit pushed after it.
    - `answer`: a question the code, docs, tests or history answer.
@@ -33,5 +34,6 @@ Each open thread replied to, the settled ones resolved, and the comments left to
 | --- | --- |
 | A rename asked, then pushed | a one-line reply naming the sha, the thread resolved |
 | "Keep both commands or one?" | the question and its options in the thread, ending `Answer here.`, the thread open |
-| The user answered "keep both" in that thread | `Decision: keep both.` replied, the thread resolved |
+| The user answered "keep both" in that thread, from the account the run posts with | the thread is read, `Decision: keep both.` replied, the thread resolved |
+| A thread still ending `Answer here.` | skipped, no second reply |
 | A change asked and not pushed | `To fix.` replied, the thread open, the comment handed over |

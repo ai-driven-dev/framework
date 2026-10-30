@@ -1,6 +1,6 @@
 ---
 name: 05-review
-description: Reviews a change or a diff and says whether it is ready to ship, naming every problem with its fix, or answers the review comments left on a pull request. Use when the user wants a change checked before it ships, or a pull request's comments answered. Not for fixing what the review finds, and not for auditing a whole codebase.
+description: Reviews a diff and says whether it is ready to ship, or answers a pull request's review comments. Use when the user wants a change checked before it ships, or its review comments answered. Not for fixing what the review finds.
 argument-hint: diff | plan | pull request
 ---
 
@@ -17,6 +17,7 @@ flowchart LR
   changes -.->|a later run| all
   blocked -.->|a later run| all
   pr([pull request comments]) --> answer-comments --> propose-learnings --> summary([summary posted])
+  summary -.->|the user answers in a thread| pr
 ```
 
 ## Actions
