@@ -8,7 +8,7 @@ argument-hint: request | interactive request
 
 ## Behavior
 
-Decide the mode as `mode.md` says, then read only it and the current zone's reference. Verify that every named provider is installed before calling it. A zone that cannot proceed stops the run and says what it would take to resume.
+Decide the mode as `mode.md` says, then read only it and the current zone's reference. Call every provider a zone names, in its flowchart's order and whatever the change's size, once verified installed; never do a provider's work yourself. A zone that cannot proceed stops the run and says what it would take to resume.
 
 Delegate to the agent each zone names, by its role, so every run delegates the same way; without it, give the same brief to the host's default subagent. Parallelize independent work when it is faster. Repeat the responsible zone when delegated work returns an actionable gap.
 
