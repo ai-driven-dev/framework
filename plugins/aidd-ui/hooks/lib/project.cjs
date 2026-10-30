@@ -22,16 +22,23 @@ function isUnder(file, prefix) {
   return file === folder || file.startsWith(`${folder}${PATH_SEPARATOR}`);
 }
 
-/** Every file under `dir`, sorted, minus the folders `skip` names; [] when it is no directory. */
-function walk(dir, skip = () => false) {
+/** Every file under `dir`, sorted, minus the folders `skip` names; [] when it is no directory.
+ * A folder that cannot be listed goes to `unlisted`, never a crash. */
+function walk(dir, skip = () => false, unlisted = () => {}) {
   if (!fs.existsSync(dir) || !fs.statSync(dir).isDirectory()) return [];
-  return fs
-    .readdirSync(dir, { withFileTypes: true })
+  let entries;
+  try {
+    entries = fs.readdirSync(dir, { withFileTypes: true });
+  } catch {
+    unlisted(dir);
+    return [];
+  }
+  return entries
     .sort((a, b) => a.name.localeCompare(b.name))
     .flatMap((entry) => {
       const full = path.join(dir, entry.name);
       if (!entry.isDirectory()) return [full];
-      return skip(full) ? [] : walk(full, skip);
+      return skip(full) ? [] : walk(full, skip, unlisted);
     });
 }
 
@@ -71,8 +78,9 @@ function load(root) {
   const uiDir = path.join(root, UI_DIR);
   if (!fs.existsSync(uiDir) || !fs.statSync(uiDir).isDirectory()) return null;
   const showcase = path.join(uiDir, SHOWCASE_DIR);
-  const files = walk(uiDir, (dir) => dir === showcase).map((file) => relative(root, file));
   const project = { root, texts: new Map(), tokensFile: `${UI_DIR}/${TOKENS_FILE}` };
+  const unlisted = (dir) => project.texts.set(relative(root, dir), null);
+  const files = walk(uiDir, (dir) => dir === showcase, unlisted).map((file) => relative(root, file));
   project.records = files.filter((file) => file.endsWith(RECORD_EXTENSION)).flatMap((file) => readRecord(project, file));
   project.renders = files.filter((file) => file.endsWith(RENDER_EXTENSION));
   return project;

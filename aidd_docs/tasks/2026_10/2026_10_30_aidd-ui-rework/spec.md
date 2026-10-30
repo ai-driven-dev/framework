@@ -37,7 +37,7 @@ Chaque fiche porte en tête : `id` (égal au nom du fichier, unique), `kind`, `s
 | `system.md` | version du design system, plateformes, breakpoints, thèmes, langues et sens d'écriture, dossiers UI du code, chemins ignorés, librairies de composants utilisées |
 | `brand.md` | projet, utilisateurs, domaine, plateformes, personnalité et ton, charte imposée s'il y en a une, références et anti-références |
 | asset | type (icône, image, illustration), fichier, texte alternatif attendu |
-| atome, molécule, composition | éléments utilisés, tokens utilisés, variantes, états (au moins défaut, survol, focus, désactivé, et chargement ou erreur quand ils existent), comportement clavier et rôle accessible, lien vers le code |
+| atome, molécule, composition | éléments utilisés, tokens utilisés, variantes, états (au moins défaut ; survol, focus et désactivé quand il est interactif ; chargement ou erreur quand ils existent), comportement clavier et rôle accessible, lien vers le code |
 | écran | éléments utilisés, états (au moins défaut, vide, chargement, erreur, sans droits quand ils existent), breakpoints couverts, route ou fichier réel, lien vers le code |
 | parcours | persona, étapes ordonnées, chaque étape un écran et l'action qui mène à la suivante |
 | review | écrans revus, verdict OK ou pas OK par écran et par état, commentaire, écrans restants |

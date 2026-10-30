@@ -269,4 +269,4 @@ const RULES = [
 /** Every broken record rule, as `{file, message}`, in rule order. */
 const check = (project) => RULES.flatMap((rule) => rule(project));
 
-module.exports = { check, readable, placed, byId, systemOf, isElement, fm, COMPONENT_KINDS, INTEGER_VERSION, SEMVER };
+module.exports = { check, placed, systemOf, isElement, fm, COMPONENT_KINDS, INTEGER_VERSION, SEMVER };

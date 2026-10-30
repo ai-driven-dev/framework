@@ -147,5 +147,15 @@ describe("aidd-ui validator entries", () => {
         err: "",
       });
     });
+
+    it("names an unreadable folder of the design system instead of crashing", { skip: process.getuid?.() === 0 }, () => {
+      const folder = path.join(tmp, UI, "journeys");
+      fs.chmodSync(folder, 0o000);
+      try {
+        assert.deepEqual(validate(tmp), { code: 1, out: [`✗ ${UI}/journeys: unreadable`], err: "" });
+      } finally {
+        fs.chmodSync(folder, 0o755);
+      }
+    });
   });
 });

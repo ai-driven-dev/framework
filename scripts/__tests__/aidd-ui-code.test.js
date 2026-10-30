@@ -146,4 +146,15 @@ describe("aidd-ui code link", () => {
       assert.deepEqual(problems(), []);
     });
   });
+
+  describe("C7 code roots inside the project", () => {
+    it("names a root that is the project or outside it, and walks nothing from it", () => {
+      edit(tmp, SYSTEM, "code-roots: [src/ui]", "code-roots: [src/ui, ., ../shared, /abs]");
+      assert.deepEqual(problems(), [
+        `${SYSTEM}: code root "." must name a folder inside the project`,
+        `${SYSTEM}: code root "../shared" must name a folder inside the project`,
+        `${SYSTEM}: code root "/abs" must name a folder inside the project`,
+      ]);
+    });
+  });
 });

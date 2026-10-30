@@ -1,4 +1,4 @@
-// C1 to C6: each code link resolves, every file under a code root is linked or ignored, and UI
+// C1 to C7: each code link resolves, every file under a code root is linked or ignored, and UI
 // code holds no literal a token should carry. Non-web code is a stated limit.
 const fs = require("node:fs");
 const path = require("node:path");
@@ -15,6 +15,8 @@ const STYLESHEET_EXTENSIONS = [".css", ".scss"]; // units in script files are a 
 const SCRIPT_EXTENSIONS = [".js", ".jsx", ".ts", ".tsx", ".vue", ".svelte"];
 const SCANNED_EXTENSIONS = [...STYLESHEET_EXTENSIONS, ...SCRIPT_EXTENSIONS, ".html"];
 const BLANK = " ";
+const CURRENT_FOLDER = ".";
+const PARENT_FOLDER = "..";
 
 const REGEX_SPECIALS = /[.*+?^${}()|[\]\\]/g;
 const NOT_LINE_BREAK = /[^\n]/g;
@@ -27,7 +29,9 @@ const stringsOnly = (source) => source.replace(SCRIPT_TOKEN, (found, literal) =>
 
 /** A `code-roots` or `ignore` list as normalised path prefixes, so `./src` reads as `src`. */
 const prefixes = (project, key) => list(systemOf(project)?.frontMatter[key]).map((prefix) => path.posix.normalize(prefix));
-const codeRoots = (project) => prefixes(project, CODE_ROOTS_KEY);
+/** Whether a normalised prefix names a folder inside the project, never the project itself. */
+const isInside = (prefix) => prefix !== CURRENT_FOLDER && !prefix.startsWith(PARENT_FOLDER) && !path.posix.isAbsolute(prefix);
+const codeRoots = (project) => prefixes(project, CODE_ROOTS_KEY).filter(isInside);
 
 /** A `code` value as `{target, name}`, `target` being a path or `package:<name>`; null when malformed. */
 function parseLink(value) {
@@ -116,6 +120,13 @@ function sharedLinkProblems(project) {
   });
 }
 
+function rootProblems(project) {
+  const system = systemOf(project);
+  return prefixes(project, CODE_ROOTS_KEY)
+    .filter((prefix) => !isInside(prefix))
+    .map((prefix) => ({ file: system.file, message: `code root "${prefix}" must name a folder inside the project` }));
+}
+
 const RULES = [
   linkProblems, // C1
   libraryProblems, // C2
@@ -124,6 +135,7 @@ const RULES = [
   literalProblems(PATTERNS.unit, STYLESHEET_EXTENSIONS), // C4
   sharedLinkProblems, // C5
   literalProblems(PATTERNS.physical, STYLESHEET_EXTENSIONS, declaresRightToLeft), // C6
+  rootProblems, // C7
 ];
 
 /** Every broken code rule, as `{file, message}`, in rule order. */
