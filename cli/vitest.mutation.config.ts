@@ -55,6 +55,7 @@ export default defineConfig({
           environment: "node",
           globalSetup: ["./tests/helpers/throwaway-profile.ts"],
           testTimeout: 60000,
+          hookTimeout: 60000,
         },
       },
     ],

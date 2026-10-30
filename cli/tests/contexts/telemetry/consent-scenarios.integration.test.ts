@@ -12,7 +12,7 @@ import {
   utimesSync,
   writeFileSync,
 } from "node:fs";
-import { delimiter, join } from "node:path";
+import { delimiter, dirname, join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { type TelemetryDeps, wireTelemetry } from "../../../src/runtime/wiring/telemetry.js";
 import { git, initRepository } from "../../helpers/git-sandbox.js";
@@ -37,6 +37,22 @@ const HOUR = 3_600;
 const SESSION = "00000000-0000-4000-8000-000000000001";
 const GATE = join(REPOSITORY_ROOT, "plugins", "aidd-telemetry", "hooks", "prompt-gate.cjs");
 const FAKE_AIDD = "process.exit(0);\n";
+
+/** A stand-in `aidd` the way the hook looks it up on `PATH`. Windows only tries `PATHEXT`
+ * extensions, so a bare file is never found and the machine's own `aidd` answers instead; a
+ * `.cmd` with its CLI entry beside it is run with this node, not through cmd.exe. */
+function writeAiddStandIn(bin: string): void {
+  mkdirSync(bin, { recursive: true });
+  if (process.platform === "win32") {
+    const entry = join(bin, "node_modules", "@ai-driven-dev", "cli", "dist", "cli.js");
+    mkdirSync(dirname(entry), { recursive: true });
+    writeFileSync(entry, FAKE_AIDD);
+    writeFileSync(join(bin, "aidd.cmd"), `@"${process.execPath}" "${entry}" %*\r\n`);
+    return;
+  }
+  writeFileSync(join(bin, "aidd"), `#!${process.execPath}\n${FAKE_AIDD}`);
+  chmodSync(join(bin, "aidd"), 0o755);
+}
 
 let box: TelemetrySandbox;
 let deps: TelemetryDeps;
@@ -64,9 +80,7 @@ class World {
    * the prompt was blocked. It reads the clock of the machine, not the faked one. */
   blocks(dir: string, attended = true): boolean {
     const bin = join(this.sandbox.root, "bin");
-    mkdirSync(bin, { recursive: true });
-    writeFileSync(join(bin, "aidd"), `#!${process.execPath}\n${FAKE_AIDD}`);
-    chmodSync(join(bin, "aidd"), 0o755);
+    writeAiddStandIn(bin);
     const env: NodeJS.ProcessEnv = {
       PATH: `${bin}${delimiter}${process.env.PATH ?? ""}`,
       HOME: this.sandbox.home,
