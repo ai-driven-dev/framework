@@ -82,25 +82,42 @@ describe("generateOpencodeHooksBridge", () => {
         }));
       }
 
-      /** Pure: \`message.part.updated\` for a completed tool part -> every PostToolUse hook whose
-       * matcher (absent, or an exact / pipe-separated tool name) allows this tool - or \`[]\` for
-       * any other event, an incomplete part, or one naming no tool. */
-      function postToolUseCallsFor(event, directory) {
-        if (event?.type !== "message.part.updated") return [];
-        const part = event.properties?.part;
-        if (part?.type !== "tool" || part.state?.status !== "completed") return [];
-        const toolName = part.tool;
-        const sessionId = event.properties?.sessionID;
-        const matches = (matcher) => !matcher || matcher.split("|").includes(toolName);
+      // Awaited, unlike runHook: exit 2 means the script has something the model must read.
+      function answerOf(script, args, payload, directory) {
+        return new Promise((resolve) => {
+          let stderr = "";
+          const child = spawn("node", [HOOKS_DIR + script, ...args], {
+            cwd: directory,
+            stdio: ["pipe", "ignore", "pipe"],
+            timeout: 5000,
+          });
+          child.stderr.on("data", (chunk) => {
+            stderr += chunk;
+          });
+          child.on("error", () => resolve(""));
+          child.on("close", (code) => resolve(code === 2 ? stderr.trim() : ""));
+          child.stdin.on("error", () => {});
+          child.stdin.end(JSON.stringify(payload));
+        });
+      }
+
+      /** Pure: a finished tool call -> every PostToolUse hook whose matcher allows its tool. OpenCode
+       * names the written file \`filePath\`; the scripts read Claude Code's \`file_path\`. */
+      function postToolUseCallsFor(call, directory) {
+        const tool = String(call?.tool ?? "");
+        const args = call?.args;
+        const matches = (matcher) =>
+          !matcher || matcher.split("|").some((name) => name.toLowerCase() === tool.toLowerCase());
+        const toolInput = typeof args?.filePath === "string" ? { ...args, file_path: args.filePath } : args;
         return POST_TOOL_USE.filter((hook) => matches(hook.matcher)).map((hook) => ({
           script: hook.script,
           args: hook.args,
           payload: {
             hook_event_name: "PostToolUse",
-            session_id: sessionId ?? null,
+            session_id: call?.sessionID ?? null,
             cwd: directory,
-            tool_name: toolName,
-            tool_input: part.state.input,
+            tool_name: tool,
+            tool_input: toolInput,
           },
         }));
       }
@@ -125,12 +142,18 @@ describe("generateOpencodeHooksBridge", () => {
           event: async ({ event }) => {
             try {
               const directory = event?.properties?.directory ?? input.directory;
-              const calls = [
-                ...stopCallsFor(event, directory),
-                ...postToolUseCallsFor(event, directory),
-              ];
-              for (const call of calls) {
+              for (const call of stopCallsFor(event, directory)) {
                 runHook(call.script, call.args, call.payload, directory);
+              }
+            } catch {
+              // Silent on purpose - see above.
+            }
+          },
+          "tool.execute.after": async (call, output) => {
+            try {
+              for (const hook of postToolUseCallsFor(call, input.directory)) {
+                const answer = await answerOf(hook.script, hook.args, hook.payload, input.directory);
+                if (answer) output.output = \`\${output.output ?? ""}\\n\\n\${answer}\`;
               }
             } catch {
               // Silent on purpose - see above.

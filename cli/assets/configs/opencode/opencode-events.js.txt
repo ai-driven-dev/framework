@@ -1,5 +1,6 @@
 // V2's tool lifecycle splits the name, arguments and completion across three events.
 // Keep only in-flight calls; consuming success once prevents duplicate PostToolUse calls.
+// A success reaches V1's tool.execute.after, whose answer has no tool output to land in here.
 function eventsForV2(event, toolCalls, directory) {
   const data = event?.data;
   if (typeof data?.sessionID !== "string") return [];
@@ -73,7 +74,13 @@ export async function setupOpencodeEvents(ctx, factory) {
       for await (const event of ctx.event.subscribe({ signal: controller.signal })) {
         if (controller.signal.aborted) break;
         for (const mapped of eventsForV2(event, toolCalls, ctx.location.directory)) {
-          await hooks.event({ event: mapped });
+          if (mapped.type === "message.part.updated") {
+            const { part, sessionID } = mapped.properties;
+            const call = { tool: part.tool, sessionID, args: part.state.input };
+            await hooks["tool.execute.after"](call, { output: "" });
+          } else {
+            await hooks.event({ event: mapped });
+          }
         }
       }
     } catch {

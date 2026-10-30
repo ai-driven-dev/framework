@@ -361,7 +361,7 @@ describeKiloRuntime("E2E: real Kilo runtime", () => {
       );
       await writeFile(
         join(proofPlugin, "hooks", "capture.js"),
-        `import { appendFileSync } from "node:fs"; import { join } from "node:path"; let input = ""; process.stdin.on("data", chunk => input += chunk); process.stdin.on("end", () => { const payload = JSON.parse(input); appendFileSync(join(payload.cwd, "payloads.jsonl"), JSON.stringify({ pid: process.pid, payload }) + "\\n"); });`
+        `import { appendFileSync } from "node:fs"; import { join } from "node:path"; let input = ""; process.stdin.on("data", chunk => input += chunk); process.stdin.on("end", () => { const payload = JSON.parse(input); appendFileSync(join(payload.cwd, "payloads.jsonl"), JSON.stringify({ pid: process.pid, payload }) + "\\n"); if (payload.hook_event_name === "PostToolUse") { process.stderr.write("KILO_HOOK_FEEDBACK\\n"); process.exitCode = 2; } });`
       );
       await writeFile(
         join(proofPlugin, "hooks", "hooks.json"),
@@ -421,6 +421,10 @@ describeKiloRuntime("E2E: real Kilo runtime", () => {
             role: "tool",
             content: expect.stringContaining("KILO_LOCAL_READ_OK"),
           }),
+          expect.objectContaining({
+            role: "tool",
+            content: expect.stringContaining("KILO_HOOK_FEEDBACK"),
+          }),
         ])
       );
       await expect
@@ -462,7 +466,7 @@ describeKiloRuntime("E2E: real Kilo runtime", () => {
             session_id: sessionId,
             cwd: generatedProject,
             tool_name: "read",
-            tool_input: { filePath: "probe.txt" },
+            tool_input: { filePath: "probe.txt", file_path: "probe.txt" },
           },
           { hook_event_name: "Stop", session_id: sessionId, cwd: generatedProject },
         ])

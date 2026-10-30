@@ -17,6 +17,9 @@ const HOOK_SCRIPT = `let input = "";
 process.stdin.on("data", (chunk) => { input += chunk; });
 process.stdin.on("end", () => {
   require("node:fs").appendFileSync("marker.jsonl", input + "\\n");
+  if (JSON.parse(input).hook_event_name !== "PostToolUse") return;
+  process.stderr.write("fix the edit\\n");
+  process.exitCode = 2;
 });\n`;
 
 // Concatenated, since biome reads a plain string holding "${...}" as a forgotten template
@@ -97,13 +100,14 @@ describe("opencode's generated event bridge, against the real build", () => {
          const { default: plugin } = await import(${JSON.stringify(pathToFileURL(bridgePath).href)});
          assert.equal(plugin.id, "aidd-test-hooks");
          const events = [null, { type: "server.connected" },
-           { type: "session.idle", properties: { sessionID: "s1" } },
-           { type: "message.part.updated", properties: { sessionID: "s1", part: {
-             type: "tool", tool: "Bash", state: { status: "completed", input: { command: "echo task" } }
-           } } }];
+           { type: "session.idle", properties: { sessionID: "s1" } }];
          if (process.argv[3] === "v1") {
            const hooks = await plugin.server({ directory: process.argv[2] });
            for (const event of events) await hooks.event({ event });
+           const output = { output: "done" };
+           await hooks["tool.execute.after"](
+             { tool: "bash", sessionID: "s1", args: { command: "echo task" } }, output);
+           assert.equal(output.output, "done\\n\\nfix the edit");
          } else {
            const call = { sessionID: "s1", assistantMessageID: "msg1", id: "call1" };
            const stale = { ...call, id: "stale" };
@@ -162,7 +166,7 @@ describe("opencode's generated event bridge, against the real build", () => {
         expect(calls.every((call) => call.cwd === directory)).toBe(true);
         expect(calls.find((call) => call.hook_event_name === "PostToolUse")).toMatchObject({
           session_id: "s1",
-          tool_name: "Bash",
+          tool_name: host === "v1" ? "bash" : "Bash",
           tool_input: { command: "echo task" },
         });
       }

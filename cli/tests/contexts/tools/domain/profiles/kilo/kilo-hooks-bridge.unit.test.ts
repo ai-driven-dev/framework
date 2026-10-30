@@ -102,7 +102,7 @@ describe("Kilo hooks bridge", () => {
         hooks: {
           SessionStart: [{ hooks: [call] }],
           Stop: [{ hooks: [call] }],
-          PostToolUse: [{ matcher: "read|write", hooks: [call] }],
+          PostToolUse: [{ matcher: "Read|Write", hooks: [call] }],
         },
       }),
       "probe"
@@ -125,29 +125,13 @@ describe("Kilo hooks bridge", () => {
       };
       await emit(created);
       await emit(created);
-      const part = {
-        id: "prt_one",
-        sessionID: "ses_one",
-        messageID: "msg_one",
-        callID: "call_one",
-        type: "tool",
-        tool: "read",
-        state: { status: "completed", input: { filePath: "probe.txt" } },
-      };
-      const updated = (value: unknown) => ({
-        type: "message.part.updated",
-        properties: { sessionID: "ses_one", part: value },
-      });
-      await emit(updated({ ...part, state: { status: "running" } }));
-      await emit(updated({ ...part, type: "text" }));
-      await emit(updated({ ...part, tool: "" }));
-      await emit(updated({ ...part, id: "" }));
-      await emit(updated({}));
-      await emit(undefined);
-      await emit(updated({ ...part, id: "other", tool: "bash" }));
-      await emit(updated({ ...part, id: "failed", state: { status: "error" } }));
-      await emit(updated(part));
-      await emit(updated(part));
+      const result = { output: "read" };
+      await server["tool.execute.after"]({ tool: "bash", sessionID: "ses_one", args: {} }, result);
+      await server["tool.execute.after"](
+        { tool: "read", sessionID: "ses_one", args: { filePath: "probe.txt" } },
+        result
+      );
+      expect(result.output).toBe("read");
       const idle = { type: "session.idle", properties: { sessionID: "ses_one" } };
       await emit(idle);
       await emit(idle);
@@ -182,7 +166,7 @@ describe("Kilo hooks bridge", () => {
               session_id: "ses_one",
               cwd: directory,
               tool_name: "read",
-              tool_input: { filePath: "probe.txt" },
+              tool_input: { filePath: "probe.txt", file_path: "probe.txt" },
             },
           },
           {
@@ -195,6 +179,33 @@ describe("Kilo hooks bridge", () => {
       expect(calls.filter((call) => call.payload.hook_event_name === "SessionStart")).toHaveLength(
         2
       );
+    } finally {
+      await rm(directory, { recursive: true, force: true });
+    }
+  });
+
+  it("appends a PostToolUse script's exit-2 stderr to the tool's output", async () => {
+    const directory = await mkdtemp(join(tmpdir(), "aidd-kilo-answer-"));
+    const generated = generateKiloHooksBridge(
+      JSON.stringify({
+        hooks: { PostToolUse: [{ hooks: [{ command: `node ${ROOT}/hooks/check.cjs` }] }] },
+      }),
+      "probe"
+    );
+    try {
+      await mkdir(join(directory, "hooks", "probe"), { recursive: true });
+      await mkdir(join(directory, "plugin"));
+      await writeFile(
+        join(directory, "hooks", "probe", "check.cjs"),
+        'process.stdin.resume(); process.stdin.on("end", () => { process.stderr.write("fix it\\n"); process.exitCode = 2; });'
+      );
+      const modulePath = join(directory, "plugin", "bridge.mjs");
+      await writeFile(modulePath, generated ?? "");
+      const module = await import(pathToFileURL(modulePath).href);
+      const server = await module.default.server({ directory });
+      const output = { output: "edited" };
+      await server["tool.execute.after"]({ tool: "edit", sessionID: "s", args: {} }, output);
+      expect(output.output).toBe("edited\n\nfix it");
     } finally {
       await rm(directory, { recursive: true, force: true });
     }

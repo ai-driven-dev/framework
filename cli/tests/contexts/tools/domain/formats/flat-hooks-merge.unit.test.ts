@@ -125,16 +125,22 @@ describe("flattenCopilotHooksShape", () => {
     expect(result.hooks.PreToolUse[0].command).toBe("./.github/hooks/plugin/check.sh");
   });
 
-  it("drops the matcher field (not in Copilot flat shape)", () => {
+  it("keeps a group's matcher on each of its entries, and writes none for a group without one", () => {
     const input = JSON.stringify({
       hooks: {
-        PreToolUse: [{ matcher: "some-matcher", hooks: [{ type: "command", command: "run.sh" }] }],
+        PostToolUse: [
+          { matcher: "Write|Edit", hooks: [{ type: "command", command: "run.sh" }] },
+          { hooks: [{ type: "command", command: "all.sh" }] },
+        ],
       },
     });
     const result = JSON.parse(flattenCopilotHooksShape(input)) as {
-      hooks: { PreToolUse: Array<Record<string, unknown>> };
+      hooks: { PostToolUse: Array<Record<string, unknown>> };
     };
-    expect(result.hooks.PreToolUse[0]).not.toHaveProperty("matcher");
+    expect(result.hooks.PostToolUse).toEqual([
+      { type: "command", command: "run.sh", matcher: "Write|Edit" },
+      { type: "command", command: "all.sh" },
+    ]);
   });
 
   it("preserves timeout when present", () => {

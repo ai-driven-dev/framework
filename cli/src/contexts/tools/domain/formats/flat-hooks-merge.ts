@@ -8,7 +8,7 @@ type ClaudeHookItem = { type?: string; command?: string; [key: string]: unknown 
 type ClaudeMatcherGroup = { matcher?: string; hooks: ClaudeHookItem[] };
 type ClaudeHooksShape = { hooks?: Record<string, ClaudeMatcherGroup[]> };
 
-type FlatHookEntry = { type: string; command: string; timeout?: number };
+type FlatHookEntry = { type: string; command: string; timeout?: number; matcher?: string };
 type CopilotFlatShape = { version: 1; hooks?: Record<string, FlatHookEntry[]> };
 
 type CursorHookEntry = { command: string };
@@ -90,7 +90,8 @@ function appendHooksEntries(
 }
 
 /** Flattens the Claude nested matcher-group shape into Copilot's flat `hooks.EVENT[]` of
- * `{type, command, timeout?}`. */
+ * `{type, command, timeout?, matcher?}`. Copilot CLI honours the matcher, measured live: a
+ * `Write|Edit` PostToolUse entry stays silent on Read. */
 export function flattenCopilotHooksShape(pluginHooksJson: string): string {
   const parsed = JSON.parse(pluginHooksJson) as ClaudeHooksShape;
   const claudeHooks = parsed.hooks ?? {};
@@ -111,7 +112,12 @@ function flattenMatcherGroups(matchers: ClaudeMatcherGroup[]): FlatHookEntry[] {
   for (const group of matchers) {
     for (const item of group.hooks ?? []) {
       if (typeof item.command !== "string") continue;
-      const entry: FlatHookEntry = { type: item.type ?? "command", command: item.command };
+      // An absent matcher is dropped when the entry is serialised.
+      const entry: FlatHookEntry = {
+        type: item.type ?? "command",
+        command: item.command,
+        matcher: group.matcher,
+      };
       if (typeof item.timeout === "number") entry.timeout = item.timeout;
       entries.push(entry);
     }
