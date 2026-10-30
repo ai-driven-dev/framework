@@ -121,6 +121,16 @@ describe("aidd-ui tokens and renders", () => {
       addToken("x", { $type: "color", $value: "{color.brand}" });
       assert.deepEqual(problems(), [`${TOKENS}: misc.x: alias {color.brand} names a group, not a token`]);
     });
+
+    it("names an alias to a token of another type", () => {
+      addToken("x", { $type: "dimension", $value: "{color.brand.primary}" });
+      assert.deepEqual(problems(), [`${TOKENS}: misc.x: alias {color.brand.primary} is a color, not a dimension`]);
+    });
+
+    it("names a broken alias once, not again for its missing type", () => {
+      addToken("x", { $value: "{color.missing}" });
+      assert.deepEqual(problems(), [`${TOKENS}: misc.x: alias {color.missing} names no token`]);
+    });
   });
 
   describe("T6 themes", () => {
@@ -131,7 +141,24 @@ describe("aidd-ui tokens and renders", () => {
         themes(tree).sepia = themes(tree).dark;
         delete themes(tree).dark;
       });
-      assert.deepEqual(problems(), [`${TOKENS}: color.brand.primary: theme "sepia" is not in system.md`]);
+      assert.deepEqual(problems(), [
+        `${TOKENS}: color.brand.primary: no value for theme "dark"`,
+        `${TOKENS}: color.brand.primary: theme "sepia" is not in system.md`,
+      ]);
+    });
+
+    it("names a themed token lacking a declared theme", () => {
+      editTokens(tmp, (tree) => delete themes(tree).dark);
+      editTokens(tmp, (tree) => (themes(tree).light = themes(tree).dark ?? { colorSpace: "srgb", components: [1, 1, 1] }));
+      assert.deepEqual(problems(), [
+        `${TOKENS}: color.brand.primary: no value for theme "dark"`,
+        `${TOKENS}: color.brand.primary: theme "light" is the base, its value is $value`,
+      ]);
+    });
+
+    it("names a theme value aliasing a token of another type", () => {
+      editTokens(tmp, (tree) => (themes(tree).dark = "{space.md}"));
+      assert.deepEqual(problems(), [`${TOKENS}: color.brand.primary: theme "dark": alias {space.md} is a dimension, not a color`]);
     });
 
     it("names a theme value of the wrong shape", () => {
@@ -147,17 +174,27 @@ describe("aidd-ui tokens and renders", () => {
     });
   });
 
-  describe("T9 semantic tokens", () => {
-    it("names a component citing a primitive token", () => {
-      edit(tmp, BUTTON, "tokens: [color.action.default,", "tokens: [color.brand.primary, color.action.default,");
-      assert.deepEqual(problems(), [`${BUTTON}: token "color.brand.primary" is a primitive, use a semantic token`]);
+  describe("raw CSS values", () => {
+    it("accepts a value DTCG cannot hold under its extension", () => {
+      addToken("x", { $extensions: { "dev.ai-driven.css": "color-mix(in srgb, var(--color-brand-primary) 20%, white)" } });
+      assert.deepEqual(problems(), []);
+    });
+
+    it("names an empty raw value", () => {
+      addToken("x", { $extensions: { "dev.ai-driven.css": "" } });
+      assert.deepEqual(problems(), [`${TOKENS}: misc.x: dev.ai-driven.css must be a CSS value`]);
+    });
+
+    it("names $root, which is not supported", () => {
+      addToken("x", { $root: { $type: "number", $value: 1 }, y: { $type: "number", $value: 2 } });
+      assert.deepEqual(problems(), [`${TOKENS}: misc.x.$root: "$root" is not supported, name the token`]);
     });
   });
 
-  describe("T8 sizes in rem", () => {
-    it("names a dimension in px", () => {
-      editTokens(tmp, (tree) => (tree.space.md.$value = { value: 16, unit: "px" }));
-      assert.deepEqual(problems(), [`${TOKENS}: space.md: sizes are in rem, not px`]);
+  describe("T8 semantic tokens", () => {
+    it("names a component citing a primitive token", () => {
+      edit(tmp, BUTTON, "tokens: [color.action.default,", "tokens: [color.brand.primary, color.action.default,");
+      assert.deepEqual(problems(), [`${BUTTON}: token "color.brand.primary" is a primitive, use a semantic token`]);
     });
   });
 
@@ -184,6 +221,11 @@ describe("aidd-ui tokens and renders", () => {
     it("names a custom property no token defines", () => {
       addToRender('<p style="color: var(--color-missing)">x</p>');
       assert.deepEqual(problems(), [`${BUTTON_RENDER}: line ${INSERTED_LINE}: var(--color-missing) names no token`]);
+    });
+
+    it("accepts a custom property the render sets itself", () => {
+      addToRender('<p style="--badge-dot: var(--color-text-default); color: var(--badge-dot)">x</p>');
+      assert.deepEqual(problems(), []);
     });
   });
 

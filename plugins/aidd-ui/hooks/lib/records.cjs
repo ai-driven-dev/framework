@@ -10,7 +10,7 @@ const ASSET_TYPES = ["icon", "image", "illustration"];
 const VERDICTS = ["ok", "ko", "pending"];
 const NO_REPLACEMENT = "none";
 const DEFAULT_STATE = "default";
-const INTERACTIVE_STATES = ["hover", "focus", "disabled"];
+const INTERACTIVE_STATE = "focus"; // hover and disabled only when they exist
 const KEYBOARD_SECTION = "Keyboard";
 const USAGE_SECTION = "Usage";
 const DEPRECATION_SECTION = "Deprecation";
@@ -43,7 +43,7 @@ const FOLDER_KINDS = {
 const COMPONENT_KINDS = FOLDER_KINDS.components;
 const ASSEMBLED_KINDS = ["molecule", "composition"]; // coded through what they use when no file is their own
 const DESIGN_KINDS = ["system", "brand", "review"];
-const LEVELS = { asset: 0, atom: 1, molecule: 2, composition: 3, screen: 4 }; // an element uses only lower levels
+const LEVELS = { asset: 0, atom: 1, molecule: 2, composition: 3, screen: 4 }; // an element uses its own level or lower
 
 const INTEGER_VERSION = /^[1-9]\d*$/;
 const SEMVER = /^(\d+)\.(\d+)\.(\d+)$/;
@@ -131,9 +131,10 @@ function usesProblems(project) {
       list(fm(record).uses).flatMap((id) => {
         const used = index.get(id);
         if (!used) return [problem(record, `uses "${id}", which no record has`)];
+        if (used === record) return [problem(record, "uses itself")];
         const kind = fm(record).kind;
         const usedKind = fm(used).kind;
-        return LEVELS[usedKind] < LEVELS[kind] ? [] : [problem(record, `${kind} cannot use ${usedKind} "${id}"`)];
+        return LEVELS[usedKind] <= LEVELS[kind] ? [] : [problem(record, `${kind} cannot use ${usedKind} "${id}"`)];
       })
     );
 }
@@ -146,7 +147,7 @@ function stateProblems(project) {
     const interactive = fm(record).interactive === "yes";
     return [
       ...(states.includes(DEFAULT_STATE) ? [] : [`component lacks state "${DEFAULT_STATE}"`]),
-      ...(interactive ? INTERACTIVE_STATES.filter((state) => !states.includes(state)).map((state) => `interactive component lacks state "${state}"`) : []),
+      ...(interactive && !states.includes(INTERACTIVE_STATE) ? [`interactive component lacks state "${INTERACTIVE_STATE}"`] : []),
       ...(interactive && !(KEYBOARD_SECTION in record.sections) ? [`interactive component lacks a "## ${KEYBOARD_SECTION}" section`] : []),
     ].map((message) => problem(record, message));
   });

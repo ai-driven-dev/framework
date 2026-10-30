@@ -47,9 +47,12 @@ Every record opens with flat front matter, `key: value` or `key: [a, b]`, and cl
 | review | `scope`, `screens` | `## Verdicts`: Screen, State, Verdict (`ok`, `ko`, `pending`), Comment |
 
 - `code` is `path#Export`, or `package:<name>#Export` for a library component; required once `coded`, except for a molecule or composition whose used components are all coded.
-- A link covers its file's folder too, styles, hooks and tests, unless the file sits at a code root.
+- A link to a file in a folder of its own name covers that folder, styles, hooks and tests; among siblings it covers only the files of its name.
+- An element uses elements of its own level or lower, never itself; an interactive component has `focus`, and `hover` or `disabled` only when they exist.
 - A deprecated element names `replaced-by: <id>`, or `replaced-by: none` with a `## Deprecation` section.
-- A theme value is a token extension: `"$extensions": {"dev.ai-driven.themes": {"dark": <value>}}`.
+- A theme value is a token extension: `"$extensions": {"dev.ai-driven.themes": {"dark": <value>}}`. The first theme in `system.md` is the base, held by `$value`; a themed token gives every other one.
+- A value DTCG cannot hold, such as `color-mix()` or `100%`, is raw CSS: `"$extensions": {"dev.ai-driven.css": "<value>"}`, checked for presence only.
+- `$root` is not supported: name the token.
 - A token's CSS name is `--` plus its path joined by `-`.
 
 ## Validation

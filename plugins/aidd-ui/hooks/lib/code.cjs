@@ -17,7 +17,6 @@ const SCANNED_EXTENSIONS = [...STYLESHEET_EXTENSIONS, ...SCRIPT_EXTENSIONS, ".ht
 const BLANK = " ";
 const CURRENT_FOLDER = ".";
 const PARENT_FOLDER = "..";
-const TRAILING_SEPARATORS = /\/+$/;
 
 const REGEX_SPECIALS = /[.*+?^${}()|[\]\\]/g;
 const NOT_LINE_BREAK = /[^\n]/g;
@@ -95,14 +94,21 @@ function libraryProblems(project) {
     .map(({ record, link }) => ({ file: record.file, message: `package "${link.library}" is not in system.md libraries` }));
 }
 
-/** A link covers its file and, unless that file sits at a code root, the file's whole folder:
- * a component's styles, hooks and tests live beside it. */
+/** The base name of a file up to its first dot: `ui-button.component.tsx` gives `ui-button`. */
+const stem = (file) => path.posix.basename(file).split(".")[0];
+
+/** Whether a link covers a file. A component in a folder of its own name covers that folder,
+ * styles, hooks and tests included; one among siblings covers only the files of its stem. */
+function covers(target, file) {
+  const folder = path.posix.dirname(target);
+  if (path.posix.basename(folder) === stem(target)) return isUnder(file, folder);
+  return path.posix.dirname(file) === folder && stem(file) === stem(target);
+}
+
 function coverageProblems(project) {
   const targets = linked(project).flatMap(({ link }) => (link && link.library === null ? [path.posix.normalize(link.target)] : []));
-  const roots = codeRoots(project).map((root) => root.replace(TRAILING_SEPARATORS, ""));
-  const folders = targets.map((target) => path.posix.dirname(target)).filter((folder) => !roots.includes(folder));
   return codeFiles(project)
-    .filter((file) => !targets.includes(file) && !folders.some((folder) => isUnder(file, folder)))
+    .filter((file) => !targets.some((target) => covers(target, file)))
     .map((file) => ({ file, message: "no record links it and no ignore covers it" }));
 }
 

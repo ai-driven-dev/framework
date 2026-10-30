@@ -177,22 +177,32 @@ describe("aidd-ui records and history", () => {
     });
 
     const levels = [
-      [OLD, "uses: []", "uses: [button]", 'atom cannot use atom "button"'],
+      [OLD, "uses: []", "uses: [search-field]", 'atom cannot use molecule "search-field"'],
       [SEARCH, "uses: [button, icon-search]", "uses: [button, icon-search, dialog]", 'molecule cannot use composition "dialog"'],
-      [HOME, "uses: [search-field, dialog]", "uses: [search-field, dialog, home]", 'screen cannot use screen "home"'],
+      [HOME, "uses: [search-field, dialog]", "uses: [search-field, dialog, home]", "uses itself"],
     ];
     for (const [file, from, to, message] of levels) {
-      it(`names a ${message.split(" ")[0]} using its own level or above`, () => {
+      it(`names ${message}`, () => {
         change(file, from, to);
         assert.deepEqual(problems(), [`${file}: ${message}`]);
       });
     }
   });
 
+  it("accepts an element using another of its own level", () => {
+    change(OLD, "uses: []", "uses: [button]");
+    assert.deepEqual(problems(), []);
+  });
+
   describe("R7 states and keyboard", () => {
-    it("names an interactive component without hover", () => {
-      change(BUTTON, "states: [default, hover, focus, disabled]", "states: [default, focus, disabled]");
-      assert.deepEqual(problems(), [`${BUTTON}: interactive component lacks state "hover"`]);
+    it("names an interactive component without focus", () => {
+      change(BUTTON, "states: [default, hover, focus, disabled]", "states: [default, hover, disabled]");
+      assert.deepEqual(problems(), [`${BUTTON}: interactive component lacks state "focus"`]);
+    });
+
+    it("accepts an interactive component without hover or disabled, which exist only when it has them", () => {
+      change(BUTTON, "states: [default, hover, focus, disabled]", "states: [default, focus]");
+      assert.deepEqual(problems(), []);
     });
 
     it("names a component without default", () => {

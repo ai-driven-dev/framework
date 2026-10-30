@@ -85,17 +85,18 @@ describe("aidd-ui code link", () => {
       assert.deepEqual(problems(), ["src/ui/Orphan.tsx: no record links it and no ignore covers it"]);
     });
 
-    it("covers the folder of a linked file: its styles, hooks and tests", () => {
-      put(tmp, "src/ui/search/SearchField.tsx", "export function SearchField() {}\n");
-      put(tmp, "src/ui/search/search-field.hook.ts", "export const useSearch = () => null;\n");
-      put(tmp, "src/ui/search/__tests__/SearchField.test.tsx", "test();\n");
-      linkSearch("src/ui/search/SearchField.tsx#SearchField");
+    it("covers a folder named after the linked file: its styles, hooks and tests", () => {
+      put(tmp, "src/ui/search-field/search-field.component.tsx", "export function SearchField() {}\n");
+      put(tmp, "src/ui/search-field/search-field-filter.ts", "export const filter = () => null;\n");
+      put(tmp, "src/ui/search-field/__tests__/search-field.test.tsx", "test();\n");
+      linkSearch("src/ui/search-field/search-field.component.tsx#SearchField");
       assert.deepEqual(problems(), []);
     });
 
-    it("never lets a file at a code root cover its siblings", () => {
-      put(tmp, "src/ui/Orphan.css", ".orphan {}\n");
-      assert.deepEqual(problems(), ["src/ui/Orphan.css: no record links it and no ignore covers it"]);
+    it("covers only the files of its stem among siblings", () => {
+      put(tmp, "src/ui/Button.module.css", ".ui {}\n");
+      put(tmp, "src/ui/Orphan.tsx", "export function Orphan() {}\n");
+      assert.deepEqual(problems(), ["src/ui/Orphan.tsx: no record links it and no ignore covers it"]);
     });
 
     it("accepts a valid link on a proposed record", () => {

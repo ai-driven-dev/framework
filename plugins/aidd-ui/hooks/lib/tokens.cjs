@@ -1,17 +1,19 @@
-// T1 to T9: tokens.json against the DTCG 2025.10 format and color modules, plus this plugin's
-// themes extension, its rem rule, and components citing semantic tokens only. Composite values are checked for presence only.
+// T1 to T8: tokens.json against the DTCG 2025.10 format and color modules, plus this plugin's
+// themes and raw CSS extensions, and components citing semantic tokens only. Composite values are checked for presence only.
 const fs = require("node:fs");
 const nodePath = require("node:path");
 const { list } = require("./markdown.cjs");
 const { placed, systemOf, COMPONENT_KINDS } = require("./records.cjs");
 const { text } = require("./project.cjs");
 
-const RESERVED_KEYS = ["$value", "$type", "$description", "$extensions", "$deprecated", "$extends", "$schema", "$root"];
+const RESERVED_KEYS = ["$value", "$type", "$description", "$extensions", "$deprecated", "$extends", "$schema"];
+const ROOT_KEY = "$root"; // a stated limit: a group's own token is a named child here
 const PROPERTY_PREFIX = "$";
 const PATH_SEPARATOR = ".";
 const CSS_PREFIX = "--";
 const CSS_SEPARATOR = "-";
 const THEMES_EXTENSION = "dev.ai-driven.themes";
+const RAW_CSS_EXTENSION = "dev.ai-driven.css"; // a CSS value DTCG cannot hold, such as color-mix() or 100%
 const MISSING = "missing";
 const NOT_JSON = "not JSON";
 
@@ -23,8 +25,6 @@ const COLOR_COMPONENTS = 3;
 const NO_COMPONENT = "none";
 const DIMENSION_UNITS = ["px", "rem"];
 const DURATION_UNITS = ["ms", "s"];
-const SIZE_UNIT = "rem";
-const PIXEL_UNIT = "px";
 const FONT_WEIGHT_MIN = 1;
 const FONT_WEIGHT_MAX = 1000;
 const FONT_WEIGHT_KEYWORDS = ["thin", "hairline", "extra-light", "ultra-light", "light", "normal", "regular", "book", "medium", "semi-bold", "demi-bold", "bold", "extra-bold", "ultra-bold", "black", "heavy", "extra-black", "ultra-black"];
@@ -47,7 +47,8 @@ function walk(node, path, groupType, found) {
     const child = node[key];
     const childPath = [...path, key];
     if (key.startsWith(PROPERTY_PREFIX)) {
-      if (!RESERVED_KEYS.includes(key)) found.badNames.push({ path: childPath.join(PATH_SEPARATOR), message: `"${key}" is not a reserved key` });
+      if (key === ROOT_KEY) found.badNames.push({ path: childPath.join(PATH_SEPARATOR), message: `"${ROOT_KEY}" is not supported, name the token` });
+      else if (!RESERVED_KEYS.includes(key)) found.badNames.push({ path: childPath.join(PATH_SEPARATOR), message: `"${key}" is not a reserved key` });
       continue;
     }
     if (FORBIDDEN_IN_NAME.test(key)) found.badNames.push({ path: childPath.join(PATH_SEPARATOR), message: 'a name never holds ".", "{" or "}"' });
@@ -80,6 +81,10 @@ function read(project) {
   }
   return isObject(tree) ? walk(tree, [], tree.$type, emptyTree()) : unusable(NOT_JSON);
 }
+
+/** A token's raw CSS value when it carries one: DTCG has no form for it, so no type or shape. */
+const rawCssOf = (token) => token.node.$extensions?.[RAW_CSS_EXTENSION];
+const isRaw = (token) => rawCssOf(token) !== undefined;
 
 /** A token's `$type`: its own, else its alias target's, else its closest group's. */
 function typeOf(tree, token, depth = 0) {
@@ -151,7 +156,9 @@ function nameProblems(tree, project) {
 function typeProblems(tree, project) {
   const at = tokenProblem(project);
   return [...tree.tokens].flatMap(([name, token]) => {
+    if (isRaw(token)) return typeof rawCssOf(token) === "string" && rawCssOf(token).trim() ? [] : [at(name, `${RAW_CSS_EXTENSION} must be a CSS value`)];
     if (!("$value" in token.node)) return [at(name, "no $value")];
+    if (aliasProblem(tree, token.node.$value)) return []; // T5 names the broken alias
     const type = typeOf(tree, token);
     if (type === undefined) return [at(name, "no $type on it, its alias or a parent group")];
     return TYPES.includes(type) ? [] : [at(name, `$type "${type}" is not a DTCG type`)];
@@ -161,36 +168,47 @@ function typeProblems(tree, project) {
 function shapeProblems(tree, project) {
   const at = tokenProblem(project);
   return [...tree.tokens].flatMap(([name, token]) => {
-    const message = "$value" in token.node ? shapeProblem(typeOf(tree, token), token.node.$value) : null;
+    const message = "$value" in token.node && !isRaw(token) ? shapeProblem(typeOf(tree, token), token.node.$value) : null;
     return message ? [at(name, message)] : [];
   });
 }
 
-function aliasProblem(tree, value) {
+/** What is wrong with an alias, or null: its target must be a token, of `type` when given. */
+function aliasProblem(tree, value, type) {
   const target = aliasOf(value);
-  if (target === undefined || tree.tokens.has(target)) return null;
-  return tree.groups.has(target) ? `alias {${target}} names a group, not a token` : `alias {${target}} names no token`;
+  if (target === undefined) return null;
+  if (!tree.tokens.has(target)) return tree.groups.has(target) ? `alias {${target}} names a group, not a token` : `alias {${target}} names no token`;
+  const targetType = typeOf(tree, tree.tokens.get(target));
+  return type === undefined || targetType === undefined || targetType === type ? null : `alias {${target}} is a ${targetType}, not a ${type}`;
 }
 
 function aliasProblems(tree, project) {
   const at = tokenProblem(project);
   return [...tree.tokens].flatMap(([name, token]) => {
-    const message = aliasProblem(tree, token.node.$value);
+    const message = aliasProblem(tree, token.node.$value, token.node.$type ?? token.groupType);
     return message ? [at(name, message)] : [];
   });
 }
 
+/** The first theme system.md declares is the base, held by `$value`; a themed token gives
+ * every other one. */
 function themeProblems(tree, project) {
   const at = tokenProblem(project);
   const system = systemOf(project);
-  const declared = list(system?.frontMatter.themes);
-  return [...tree.tokens].flatMap(([name, token]) =>
-    Object.entries(themesOf(token)).flatMap(([theme, value]) => {
-      if (system && !declared.includes(theme)) return [at(name, `theme "${theme}" is not in system.md`)];
-      const message = shapeProblem(typeOf(tree, token), value) ?? aliasProblem(tree, value);
+  const [base, ...others] = list(system?.frontMatter.themes);
+  return [...tree.tokens].flatMap(([name, token]) => {
+    const themes = themesOf(token);
+    if (Object.keys(themes).length === 0) return [];
+    const missing = system ? others.filter((theme) => !(theme in themes)).map((theme) => at(name, `no value for theme "${theme}"`)) : [];
+    const values = Object.entries(themes).flatMap(([theme, value]) => {
+      if (system && theme === base) return [at(name, `theme "${theme}" is the base, its value is $value`)];
+      if (system && !others.includes(theme)) return [at(name, `theme "${theme}" is not in system.md`)];
+      const type = typeOf(tree, token);
+      const message = shapeProblem(type, value) ?? aliasProblem(tree, value, type);
       return message ? [at(name, `theme "${theme}": ${message}`)] : [];
-    })
-  );
+    });
+    return [...missing, ...values];
+  });
 }
 
 function componentTokenProblems(tree, project) {
@@ -218,14 +236,6 @@ function primitiveProblems(tree, project) {
     );
 }
 
-function remProblems(tree, project) {
-  const at = tokenProblem(project);
-  return [...tree.tokens]
-    .filter(([, token]) => typeOf(tree, token) === "dimension")
-    .filter(([, token]) => [token.node.$value, ...Object.values(themesOf(token))].some((value) => isObject(value) && value.unit === PIXEL_UNIT))
-    .map(([name]) => at(name, `sizes are in ${SIZE_UNIT}, not ${PIXEL_UNIT}`));
-}
-
 const RULES = [
   jsonProblems, // T1
   nameProblems, // T2
@@ -234,8 +244,7 @@ const RULES = [
   aliasProblems, // T5
   themeProblems, // T6
   componentTokenProblems, // T7
-  remProblems, // T8
-  primitiveProblems, // T9
+  primitiveProblems, // T8
 ];
 
 /** Every broken token rule, as `{file, message}`, in rule order. */

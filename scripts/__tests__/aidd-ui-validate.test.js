@@ -19,7 +19,7 @@ const TOKENS = `${UI}/tokens.json`;
 /** One mutation from each family: records, tokens, code. */
 const FAILURES = [
   `✗ ${BRAND}: lacks "## Users"`,
-  `✗ ${TOKENS}: space.md: sizes are in rem, not px`,
+  `✗ ${TOKENS}: space.md: unit "em" must be px or rem`,
   `✗ ${DIALOG}: package "left-pad" is not in system.md libraries`,
 ];
 
@@ -37,7 +37,7 @@ afterEach(() => {
 
 function breakOnePerFamily() {
   edit(tmp, BRAND, "## Users\n\nAnalysts.\n\n", "");
-  editTokens(tmp, (tree) => (tree.space.md.$value = { value: 16, unit: "px" }));
+  editTokens(tmp, (tree) => (tree.space.md.$value = { value: 1, unit: "em" }));
   edit(tmp, DIALOG, "package:@radix-ui/react-dialog#Root", "package:left-pad#Pad");
 }
 

@@ -37,7 +37,7 @@ Chaque fiche porte en tête : `id` (égal au nom du fichier, unique), `kind`, `s
 | `system.md` | version du design system, plateformes, breakpoints, thèmes, langues et sens d'écriture, groupes de tokens primitifs, dossiers UI du code, chemins ignorés, librairies de composants utilisées ; règles transverses s'il y en a |
 | `brand.md` | projet, utilisateurs, domaine, plateformes, personnalité et ton, charte imposée s'il y en a une, références et anti-références ; glossaire (mot à employer, mots interdits) s'il y en a un |
 | asset | type (icône, image, illustration), fichier, texte alternatif attendu |
-| atome, molécule, composition | quand l'utiliser et quand ne pas l'utiliser, éléments utilisés, tokens sémantiques utilisés, variantes, états (au moins défaut ; survol, focus et désactivé quand il est interactif ; chargement ou erreur quand ils existent), comportement clavier et rôle accessible, lien vers le code |
+| atome, molécule, composition | quand l'utiliser et quand ne pas l'utiliser, éléments utilisés, tokens sémantiques utilisés, variantes, états (au moins défaut ; focus quand il est interactif ; survol, désactivé, chargement ou erreur quand ils existent), comportement clavier et rôle accessible, lien vers le code |
 | écran | éléments utilisés, états (au moins défaut, vide, chargement, erreur, sans droits quand ils existent), breakpoints couverts, route ou fichier réel, lien vers le code |
 | parcours | persona, étapes ordonnées, chaque étape un écran et l'action qui mène à la suivante |
 | review | écrans revus, verdict OK ou pas OK par écran et par état, commentaire, écrans restants |
@@ -54,7 +54,8 @@ Chaque fiche porte en tête : `id` (égal au nom du fichier, unique), `kind`, `s
 
 ### Lien avec le code
 
-- Un élément correspond à un seul fichier d'entrée, identifié par son chemin et le nom du composant exporté. Ce lien couvre aussi le dossier du fichier (styles, hooks, tests), sauf quand le fichier est à la racine d'un dossier UI.
+- Un élément correspond à un seul fichier d'entrée, identifié par son chemin et le nom du composant exporté. Quand ce fichier est dans un dossier qui porte son nom, le lien couvre tout le dossier (styles, hooks, tests) ; sinon, seulement les fichiers de même nom.
+- Un élément utilise des éléments de son niveau ou d'un niveau inférieur, jamais lui-même.
 - Un composant de librairie est lié à son paquet et à son nom exporté.
 - Chaque fichier sous un dossier UI déclaré est lié à une fiche ou couvert par un chemin ignoré.
 - Les usages se lisent dans les fiches : un token mène aux composants qui le déclarent, un composant aux compositions et écrans qui l'utilisent, un écran aux parcours, chaque élément à son fichier de code. Le rapport d'impact suit ce chemin.
@@ -83,6 +84,9 @@ Chaque fiche porte en tête : `id` (égal au nom du fichier, unique), `kind`, `s
 
 - Écrans et composants sont rendus en HTML avec les vrais tokens, sans valeur en dur.
 - Les tokens ont deux niveaux : les primitifs (la palette) et les sémantiques, qui pointent vers eux. Un composant n'utilise que des sémantiques.
+- `tokens.json` est la seule source des tokens ; ceux du code en sont générés.
+- Le premier thème déclaré est la base ; un token qui varie selon le thème donne une valeur pour chacun des autres. Un rendu montre un thème sous `[data-theme]`, avec les mêmes noms de variables.
+- Une valeur que DTCG ne sait pas porter (`color-mix()`, `%`, `em`) est gardée en CSS brut dans une extension du token.
 - Un écran montre tous ses états dans un seul fichier, avec un sélecteur d'état.
 - La vitrine est générée sans IA, à partir des fiches et de gabarits fixes : identique à chaque génération, elle montre chaque élément, ses variantes, ses états, ses usages et son lien vers le réel.
 - La vitrine affiche la version validée d'un écran et un lien vers le réel.
@@ -98,7 +102,7 @@ Chaque fiche porte en tête : `id` (égal au nom du fichier, unique), `kind`, `s
 - `system.md` déclare les langues et les sens d'écriture.
 - Les rendus utilisent des propriétés logiques plutôt que physiques quand un sens droite-gauche est déclaré, et aucune largeur fixe sur du texte.
 - Dates et nombres suivent la langue.
-- Base d'accessibilité : WCAG 2.2 AA, mobile d'abord, tailles en `rem`, aucun comportement qui n'existe qu'au survol sur écran tactile.
+- Base d'accessibilité : WCAG 2.2 AA, mobile d'abord, texte qui suit la taille choisie par la personne, aucun comportement qui n'existe qu'au survol sur écran tactile.
 
 ### Vérification
 
@@ -112,7 +116,7 @@ Chaque fiche porte en tête : `id` (égal au nom du fichier, unique), `kind`, `s
   - versions en double dans un historique ;
   - propriétés physiques quand un sens droite-gauche est déclaré.
 - L'IA juge le sens : le code fait-il ce que disent `ui.md` et les fiches ?
-- L'audit UI constate et ne corrige rien : élément sans code, code sans élément, écart entre le validé et le réel, doublons proches, valeurs en dur autres que les couleurs dans le code, mots interdits par le glossaire, textes trop longs dans la langue la plus longue, accessibilité.
+- L'audit UI constate et ne corrige rien : élément sans code, code sans élément, écart entre le validé et le réel, doublons proches, valeurs en dur autres que les couleurs dans le code, écart entre `tokens.json` et les tokens du code, mots interdits par le glossaire, textes trop longs dans la langue la plus longue, accessibilité.
 
 ### Format
 

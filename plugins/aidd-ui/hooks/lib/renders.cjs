@@ -11,6 +11,7 @@ const RIGHT_TO_LEFT = "rtl";
 const LINE_BREAK = "\n";
 
 const CUSTOM_PROPERTY = /var\(\s*(--[\w-]+)/g;
+const DECLARED_PROPERTY = /(--[\w-]+)\s*:/g; // a property the render sets itself, not a token
 const VAR_CALL = /var\([^()]*\)/g; // a fallback inside var() is the token's, not a literal
 const QUERY_PRELUDE = /@(?:media|container)\b[^{]*/g; // a query's lengths are breakpoints, not styles
 
@@ -65,17 +66,19 @@ function coverageProblems(project) {
 }
 
 function referenceProblems(project) {
-  const names = cssNames(project);
-  if (names === null) return [];
-  return project.renders.flatMap((file) =>
-    readRender(project, file)
+  const tokens = cssNames(project);
+  if (tokens === null) return [];
+  return project.renders.flatMap((file) => {
+    const html = readRender(project, file);
+    const names = new Set([...tokens, ...[...html.matchAll(DECLARED_PROPERTY)].map((match) => match[1])]);
+    return html
       .split(LINE_BREAK)
       .flatMap((line, index) =>
         [...line.matchAll(CUSTOM_PROPERTY)]
           .filter((match) => !names.has(match[1]))
           .map((match) => ({ file, message: `line ${index + 1}: var(${match[1]}) names no token` }))
-      )
-  );
+      );
+  });
 }
 
 const literalProblems = (pattern, applies = () => true) => (project) =>
