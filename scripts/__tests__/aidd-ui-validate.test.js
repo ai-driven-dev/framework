@@ -54,8 +54,14 @@ function hook(input) {
 }
 
 const postToolUse = (filePath) => JSON.stringify({ hook_event_name: "PostToolUse", cwd: tmp, tool_name: "Write", tool_input: { file_path: filePath } });
+/** A patch as Codex's apply_patch and Copilot's Edit write it: one header line per file. */
+const patch = (...headers) => `*** Begin Patch\n${headers.map((header) => `*** ${header}\n@@\n+x\n`).join("")}*** End Patch`;
+const codexPatch = (...headers) => JSON.stringify({ hook_event_name: "PostToolUse", cwd: tmp, tool_name: "apply_patch", tool_input: { command: patch(...headers) } });
+const copilotPatch = (...headers) => JSON.stringify({ hook_event_name: "PostToolUse", cwd: tmp, tool_name: "Edit", tool_input: patch(...headers) });
 const sessionStart = () => JSON.stringify({ hook_event_name: "SessionStart", cwd: tmp, source: "startup" });
 const silent = { code: 0, out: "", err: "" };
+// Claude Code and Codex read stderr at exit 2, Copilot only the additionalContext on stdout.
+const handedBack = (problems) => ({ code: 2, out: JSON.stringify({ additionalContext: problems.join("\n") }), err: `${problems.join("\n")}\n` });
 
 describe("aidd-ui validator entries", () => {
   it("prints VALID for the valid project", () => {
@@ -79,18 +85,39 @@ describe("aidd-ui validator entries", () => {
   describe("E3 PostToolUse", () => {
     it("hands the problems back when a write lands under aidd_docs/ui/", () => {
       breakOnePerFamily();
-      assert.deepEqual(hook(postToolUse(path.join(tmp, BRAND))), { code: 2, out: "", err: `${FAILURES.join("\n")}\n` });
+      assert.deepEqual(hook(postToolUse(path.join(tmp, BRAND))), handedBack(FAILURES));
     });
 
     it("hands the problems back when a write lands under a code root", () => {
       breakOnePerFamily();
-      assert.deepEqual(hook(postToolUse(path.join(tmp, "src/ui/Button.tsx"))), { code: 2, out: "", err: `${FAILURES.join("\n")}\n` });
+      assert.deepEqual(hook(postToolUse(path.join(tmp, "src/ui/Button.tsx"))), handedBack(FAILURES));
     });
 
     it("hands the problems back when a write lands under a code root written with a leading ./", () => {
       edit(tmp, `${UI}/system.md`, "code-roots: [src/ui]", "code-roots: [./src/ui]");
       breakOnePerFamily();
-      assert.deepEqual(hook(postToolUse(path.join(tmp, "src/ui/Button.tsx"))), { code: 2, out: "", err: `${FAILURES.join("\n")}\n` });
+      assert.deepEqual(hook(postToolUse(path.join(tmp, "src/ui/Button.tsx"))), handedBack(FAILURES));
+    });
+
+    it("hands the problems back when a Codex patch updates a file under aidd_docs/ui/", () => {
+      breakOnePerFamily();
+      assert.deepEqual(hook(codexPatch(`Update File: ${path.join(tmp, BRAND)}`)), handedBack(FAILURES));
+    });
+
+    it("hands the problems back when a Copilot patch adds a file under aidd_docs/ui/ after one elsewhere", () => {
+      breakOnePerFamily();
+      assert.deepEqual(hook(copilotPatch(`Add File: ${path.join(tmp, "README.md")}`, `Add File: ${path.join(tmp, BRAND)}`)), handedBack(FAILURES));
+    });
+
+    it("hands the problems back when Copilot's Edit replaces a string in a file under aidd_docs/ui/", () => {
+      breakOnePerFamily();
+      const input = JSON.stringify({ hook_event_name: "PostToolUse", cwd: tmp, tool_name: "Edit", tool_input: { path: path.join(tmp, BRAND), old_str: "a", new_str: "b" } });
+      assert.deepEqual(hook(input), handedBack(FAILURES));
+    });
+
+    it("stays silent when a patch touches only files elsewhere", () => {
+      breakOnePerFamily();
+      assert.deepEqual(hook(codexPatch(`Update File: ${path.join(tmp, "README.md")}`)), silent);
     });
 
     it("stays silent when a write lands elsewhere", () => {
@@ -136,7 +163,7 @@ describe("aidd-ui validator entries", () => {
       fs.symlinkSync(path.join(tmp, "nowhere.md"), path.join(tmp, DANGLING));
       assert.deepEqual(validate(tmp), { code: 1, out: [UNREADABLE], err: "" });
       assert.deepEqual(hook(sessionStart()), { code: 0, out: `aidd-ui: 1 problems\n${UNREADABLE}\n`, err: "" });
-      assert.deepEqual(hook(postToolUse(path.join(tmp, BRAND))), { code: 2, out: "", err: `${UNREADABLE}\n` });
+      assert.deepEqual(hook(postToolUse(path.join(tmp, BRAND))), handedBack([UNREADABLE]));
     });
 
     it("names an unreadable file under a code root", () => {

@@ -68,9 +68,9 @@ It prints `VALID`, or one `✗ <file>: <message>` line per problem and exits 1.
 ## Limits
 
 - Without `node` on `PATH`, the hook does nothing.
-- Outside Claude Code, a problem does not come back in the same turn.
-- Codex runs the hook only once you trust it.
-- The write matcher uses Claude Code's tool names; other hosts are unverified.
+- A problem comes back in the same turn on Claude Code, Codex and Copilot CLI. On OpenCode and Kilo it does not; Cursor is unverified.
+- Codex runs the hook only once you trust it; Copilot only in a folder it trusts, and says nothing otherwise.
+- A file written by a shell command, or deleted by a patch, is not seen.
 - Composite tokens are checked for a `$value`, not for its shape.
 - Alias cycles are not detected.
 - `code-roots` and `ignore` are path prefixes, not globs.

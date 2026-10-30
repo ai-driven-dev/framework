@@ -1,7 +1,8 @@
 // PostToolUse and SessionStart: runs the design system checks. After a write under
-// aidd_docs/ui/ or a code root, problems go back to the agent on stderr with exit 2; at session
-// start they are printed as context. A file that cannot be read is one problem; anything else
-// unexpected exits 0 in silence, so a broken check never blocks a session.
+// aidd_docs/ui/ or a code root, problems go back to the agent with exit 2: on stderr, which
+// Claude Code and Codex read, and as additionalContext on stdout, the only channel Copilot
+// reads. At session start they are printed as context. A file that cannot be read is one
+// problem; anything else unexpected exits 0 in silence, so a broken check never blocks a session.
 const fs = require("node:fs");
 const path = require("node:path");
 const { load, relative, isUnder, UI_DIR } = require("./lib/project.cjs");
@@ -11,7 +12,9 @@ const { problemsOf, format } = require("./validate-ui.cjs");
 const POST_TOOL_USE = "PostToolUse";
 const SESSION_START = "SessionStart";
 const EXIT_SILENT = 0;
-const EXIT_BLOCKING = 2; // Claude Code hands a PostToolUse hook's stderr back to the agent
+const EXIT_BLOCKING = 2;
+// Codex's apply_patch passes its patch as tool_input.command, Copilot's Edit as tool_input itself.
+const PATCHED_FILE = /^\*\*\* (?:Add|Update) File: (.+)$/gm;
 
 /** The JSON object on stdin, or null when there is none or it is not one. */
 function readPayload() {
@@ -29,12 +32,22 @@ function isWatched(project, filePath) {
   return [UI_DIR, ...codeRoots(project)].some((prefix) => isUnder(file, prefix));
 }
 
+/** The files a write tool touched: Claude Code and Copilot name one, a patch one per header line. */
+function writtenFiles(toolInput) {
+  if (typeof toolInput?.file_path === "string") return [toolInput.file_path];
+  if (typeof toolInput?.path === "string") return [toolInput.path];
+  const patch = typeof toolInput === "string" ? toolInput : toolInput?.command;
+  if (typeof patch !== "string") return [];
+  return [...patch.matchAll(PATCHED_FILE)].map((match) => match[1].trim());
+}
+
 function afterWrite(project, payload) {
-  const filePath = payload.tool_input?.file_path;
-  if (typeof filePath !== "string" || !isWatched(project, filePath)) return EXIT_SILENT;
+  if (!writtenFiles(payload.tool_input).some((file) => isWatched(project, file))) return EXIT_SILENT;
   const problems = problemsOf(project);
   if (!problems.length) return EXIT_SILENT;
-  process.stderr.write(`${format(problems).join("\n")}\n`);
+  const text = format(problems).join("\n");
+  process.stderr.write(`${text}\n`);
+  process.stdout.write(JSON.stringify({ additionalContext: text }));
   return EXIT_BLOCKING;
 }
 
