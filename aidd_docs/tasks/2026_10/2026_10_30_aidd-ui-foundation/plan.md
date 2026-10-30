@@ -1,6 +1,6 @@
 ---
 objective: "A deterministic validator, run by hand and by an aidd-ui hook on every write, rejects any UI record, token, render or code link that breaks the spec."
-status: pending
+status: implemented
 ---
 
 # Plan: aidd-ui foundation, every record and its validator

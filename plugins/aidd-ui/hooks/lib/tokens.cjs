@@ -1,0 +1,230 @@
+// T1 to T8: tokens.json against the DTCG 2025.10 format and color modules, plus this plugin's
+// themes extension and its rem rule. Composite values are checked for presence only.
+const { list } = require("./markdown.cjs");
+const { placed, systemOf } = require("./records.cjs");
+
+const RESERVED_KEYS = ["$value", "$type", "$description", "$extensions", "$deprecated", "$extends", "$schema", "$root"];
+const PROPERTY_PREFIX = "$";
+const PATH_SEPARATOR = ".";
+const CSS_PREFIX = "--";
+const CSS_SEPARATOR = "-";
+const THEMES_EXTENSION = "dev.ai-driven.themes";
+const COMPONENT_KINDS = ["atom", "molecule", "composition"];
+
+const PRIMITIVE_TYPES = ["color", "dimension", "fontFamily", "fontWeight", "duration", "cubicBezier", "number"];
+const COMPOSITE_TYPES = ["strokeStyle", "border", "transition", "shadow", "gradient", "typography"];
+const TYPES = [...PRIMITIVE_TYPES, ...COMPOSITE_TYPES];
+const COLOR_SPACES = ["srgb", "srgb-linear", "hsl", "hwb", "lab", "lch", "oklab", "oklch", "display-p3", "a98-rgb", "prophoto-rgb", "rec2020", "xyz-d65", "xyz-d50"];
+const COLOR_COMPONENTS = 3;
+const NO_COMPONENT = "none";
+const DIMENSION_UNITS = ["px", "rem"];
+const DURATION_UNITS = ["ms", "s"];
+const SIZE_UNIT = "rem";
+const PIXEL_UNIT = "px";
+const FONT_WEIGHT_MIN = 1;
+const FONT_WEIGHT_MAX = 1000;
+const FONT_WEIGHT_KEYWORDS = ["thin", "hairline", "extra-light", "ultra-light", "light", "normal", "regular", "book", "medium", "semi-bold", "demi-bold", "bold", "extra-bold", "ultra-bold", "black", "heavy", "extra-black", "ultra-black"];
+const BEZIER_POINTS = 4;
+const BEZIER_X_INDEXES = [0, 2];
+const MAX_ALIAS_DEPTH = 32; // alias cycles are a stated limit; this only stops the walk
+
+const FORBIDDEN_IN_NAME = /[{}.]/;
+const ALIAS = /^\{([^{}]+)\}$/;
+const HEX = /^#[0-9a-fA-F]{6}$/;
+
+const isObject = (value) => value !== null && typeof value === "object" && !Array.isArray(value);
+const isNumber = (value) => typeof value === "number" && Number.isFinite(value);
+const childKeys = (node) => Object.keys(node).filter((key) => !key.startsWith(PROPERTY_PREFIX));
+const aliasOf = (value) => (typeof value === "string" ? ALIAS.exec(value)?.[1] : undefined);
+
+/** Every token and group of the tree, each with its path and the closest group `$type`. */
+function walk(node, path, groupType, found) {
+  for (const key of Object.keys(node)) {
+    const child = node[key];
+    const childPath = [...path, key];
+    if (key.startsWith(PROPERTY_PREFIX)) {
+      if (!RESERVED_KEYS.includes(key)) found.badNames.push({ path: childPath.join(PATH_SEPARATOR), message: `"${key}" is not a reserved key` });
+      continue;
+    }
+    if (FORBIDDEN_IN_NAME.test(key)) found.badNames.push({ path: childPath.join(PATH_SEPARATOR), message: 'a name never holds ".", "{" or "}"' });
+    if (!isObject(child)) continue;
+    const name = childPath.join(PATH_SEPARATOR);
+    if ("$value" in child || childKeys(child).length === 0) found.tokens.set(name, { path: childPath, node: child, groupType });
+    else {
+      found.groups.add(name);
+      walk(child, childPath, child.$type ?? groupType, found);
+    }
+  }
+  return found;
+}
+
+/** The tree read once: its parse error, or its tokens, groups and bad names. */
+function read(project) {
+  if (project.tokens === null) return { missing: true, tokens: new Map(), groups: new Set(), badNames: [] };
+  let tree;
+  try {
+    tree = JSON.parse(project.tokens);
+  } catch {
+    return { invalid: true, tokens: new Map(), groups: new Set(), badNames: [] };
+  }
+  if (!isObject(tree)) return { invalid: true, tokens: new Map(), groups: new Set(), badNames: [] };
+  return walk(tree, [], tree.$type, { tokens: new Map(), groups: new Set(), badNames: [] });
+}
+
+/** A token's `$type`: its own, else its alias target's, else its closest group's. */
+function typeOf(tree, token, depth = 0) {
+  if (token.node.$type !== undefined) return token.node.$type;
+  const target = tree.tokens.get(aliasOf(token.node.$value));
+  if (target && depth < MAX_ALIAS_DEPTH) return typeOf(tree, target, depth + 1);
+  return token.groupType;
+}
+
+function colorProblem(value) {
+  if (!isObject(value)) return "a color is {colorSpace, components, alpha?, hex?}";
+  if (!COLOR_SPACES.includes(value.colorSpace)) return `colorSpace "${value.colorSpace}" is not a DTCG colour space`;
+  const components = value.components;
+  if (!Array.isArray(components) || components.length !== COLOR_COMPONENTS || !components.every((part) => isNumber(part) || part === NO_COMPONENT)) {
+    return 'components must be three numbers or "none"';
+  }
+  if (value.alpha !== undefined && !(isNumber(value.alpha) && value.alpha >= 0 && value.alpha <= 1)) return "alpha must be a number in 0..1";
+  if (value.hex !== undefined && !HEX.test(value.hex)) return `hex "${value.hex}" must be # and six hex digits`;
+  return null;
+}
+
+function measureProblem(value, units) {
+  if (!isObject(value) || !isNumber(value.value)) return `a measure is {value: number, unit: ${units.join(" or ")}}`;
+  return units.includes(value.unit) ? null : `unit "${value.unit}" must be ${units.join(" or ")}`;
+}
+
+function fontWeightProblem(value) {
+  if (isNumber(value) && value >= FONT_WEIGHT_MIN && value <= FONT_WEIGHT_MAX) return null;
+  if (FONT_WEIGHT_KEYWORDS.includes(value)) return null;
+  return `fontWeight ${JSON.stringify(value)} must be 1 to 1000 or a keyword`;
+}
+
+function cubicBezierProblem(value) {
+  const valid = Array.isArray(value) && value.length === BEZIER_POINTS && value.every(isNumber) && BEZIER_X_INDEXES.every((index) => value[index] >= 0 && value[index] <= 1);
+  return valid ? null : "cubicBezier needs four numbers, x in 0..1";
+}
+
+function fontFamilyProblem(value) {
+  const valid = typeof value === "string" || (Array.isArray(value) && value.length > 0 && value.every((name) => typeof name === "string"));
+  return valid ? null : "fontFamily is a name or a list of names";
+}
+
+const SHAPES = {
+  color: colorProblem,
+  dimension: (value) => measureProblem(value, DIMENSION_UNITS),
+  duration: (value) => measureProblem(value, DURATION_UNITS),
+  fontWeight: fontWeightProblem,
+  cubicBezier: cubicBezierProblem,
+  fontFamily: fontFamilyProblem,
+  number: (value) => (isNumber(value) ? null : "a number token holds a number"),
+};
+
+/** What is wrong with a value of `type`, or null. Aliases and composites are not shapes. */
+const shapeProblem = (type, value) => (aliasOf(value) !== undefined || !SHAPES[type] ? null : SHAPES[type](value));
+
+/** A problem builder for tokens.json, naming the token path first. */
+const tokenProblem = (project) => (path, message) => ({ file: project.tokensFile, message: `${path}: ${message}` });
+const themesOf = (token) => (isObject(token.node.$extensions?.[THEMES_EXTENSION]) ? token.node.$extensions[THEMES_EXTENSION] : {});
+
+function jsonProblems(tree, project) {
+  return tree.invalid ? [{ file: project.tokensFile, message: "not JSON" }] : [];
+}
+
+function nameProblems(tree, project) {
+  const at = tokenProblem(project);
+  return tree.badNames.map((bad) => at(bad.path, bad.message));
+}
+
+function typeProblems(tree, project) {
+  const at = tokenProblem(project);
+  return [...tree.tokens].flatMap(([name, token]) => {
+    if (!("$value" in token.node)) return [at(name, "no $value")];
+    const type = typeOf(tree, token);
+    if (type === undefined) return [at(name, "no $type on it, its alias or a parent group")];
+    return TYPES.includes(type) ? [] : [at(name, `$type "${type}" is not a DTCG type`)];
+  });
+}
+
+function shapeProblems(tree, project) {
+  const at = tokenProblem(project);
+  return [...tree.tokens].flatMap(([name, token]) => {
+    const message = "$value" in token.node ? shapeProblem(typeOf(tree, token), token.node.$value) : null;
+    return message ? [at(name, message)] : [];
+  });
+}
+
+function aliasProblem(tree, value) {
+  const target = aliasOf(value);
+  if (target === undefined || tree.tokens.has(target)) return null;
+  return tree.groups.has(target) ? `alias {${target}} names a group, not a token` : `alias {${target}} names no token`;
+}
+
+function aliasProblems(tree, project) {
+  const at = tokenProblem(project);
+  return [...tree.tokens].flatMap(([name, token]) => {
+    const message = aliasProblem(tree, token.node.$value);
+    return message ? [at(name, message)] : [];
+  });
+}
+
+function themeProblems(tree, project) {
+  const at = tokenProblem(project);
+  const system = systemOf(project);
+  const declared = list(system?.frontMatter.themes);
+  return [...tree.tokens].flatMap(([name, token]) =>
+    Object.entries(themesOf(token)).flatMap(([theme, value]) => {
+      if (system && !declared.includes(theme)) return [at(name, `theme "${theme}" is not in system.md`)];
+      const message = shapeProblem(typeOf(tree, token), value) ?? aliasProblem(tree, value);
+      return message ? [at(name, `theme "${theme}": ${message}`)] : [];
+    })
+  );
+}
+
+function componentTokenProblems(tree, project) {
+  if (tree.invalid) return [];
+  return placed(project)
+    .filter((record) => COMPONENT_KINDS.includes(record.frontMatter.kind))
+    .flatMap((record) =>
+      list(record.frontMatter.tokens)
+        .filter((name) => !tree.tokens.has(name))
+        .map((name) => ({ file: record.file, message: `token "${name}" is not in tokens.json` }))
+    );
+}
+
+function remProblems(tree, project) {
+  const at = tokenProblem(project);
+  return [...tree.tokens]
+    .filter(([, token]) => typeOf(tree, token) === "dimension")
+    .filter(([, token]) => [token.node.$value, ...Object.values(themesOf(token))].some((value) => isObject(value) && value.unit === PIXEL_UNIT))
+    .map(([name]) => at(name, `sizes are in ${SIZE_UNIT}, not ${PIXEL_UNIT}`));
+}
+
+const RULES = [
+  jsonProblems, // T1
+  nameProblems, // T2
+  typeProblems, // T3
+  shapeProblems, // T4
+  aliasProblems, // T5
+  themeProblems, // T6
+  componentTokenProblems, // T7
+  remProblems, // T8
+];
+
+/** Every broken token rule, as `{file, message}`, in rule order. */
+function check(project) {
+  const tree = read(project);
+  return RULES.flatMap((rule) => rule(tree, project));
+}
+
+/** Each token path and its CSS custom property, `--` plus the path joined by `-`; null when
+ * tokens.json cannot be read, so renders do not repeat T1. */
+function cssNames(project) {
+  const tree = read(project);
+  if (tree.invalid) return null;
+  return new Map([...tree.tokens.values()].map((token) => [token.path.join(PATH_SEPARATOR), `${CSS_PREFIX}${token.path.join(CSS_SEPARATOR)}`]));
+}
+
+module.exports = { check, cssNames };

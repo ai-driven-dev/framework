@@ -1,0 +1,133 @@
+const assert = require("node:assert/strict");
+const fs = require("node:fs");
+const os = require("node:os");
+const path = require("node:path");
+const { describe, it, beforeEach, afterEach } = require("node:test");
+const { UI, writeProject, edit, put } = require("./fixtures/aidd-ui/project.js");
+
+// Each rule has one mutation of the valid project, and the test asserts the whole problem
+// list: dropping the rule turns its own test red and leaves every other one green. Link
+// mutations land on search-field: it owns no file and is not coded, so none orphans a file.
+const LIB = path.resolve(__dirname, "../../plugins/aidd-ui/hooks/lib");
+const { load } = require(path.join(LIB, "project.cjs"));
+const code = require(path.join(LIB, "code.cjs"));
+
+const SYSTEM = `${UI}/system.md`;
+const BUTTON = `${UI}/components/button.md`;
+const SEARCH = `${UI}/components/search-field.md`;
+const DIALOG = `${UI}/components/dialog.md`;
+const SEARCH_CSS = "src/ui/SearchField.css";
+
+let tmp;
+
+beforeEach(() => {
+  tmp = fs.mkdtempSync(path.join(os.tmpdir(), "aidd-ui-code-"));
+  writeProject(tmp);
+});
+
+afterEach(() => {
+  fs.rmSync(tmp, { recursive: true, force: true });
+  assert.equal(fs.existsSync(tmp), false);
+});
+
+const problems = () => code.check(load(tmp)).map((problem) => `${problem.file}: ${problem.message}`);
+
+/** Gives search-field a code link. */
+const linkSearch = (link) => edit(tmp, SEARCH, "role: search", `role: search\ncode: ${link}`);
+
+/** Writes a stylesheet search-field links to, so only its content can raise a problem. */
+function linkedStylesheet(css) {
+  put(tmp, SEARCH_CSS, css);
+  linkSearch(`${SEARCH_CSS}#SearchField`);
+}
+
+/** Appends one line to a file of the project. */
+const append = (file, line) => fs.appendFileSync(path.join(tmp, file), `${line}\n`);
+
+describe("aidd-ui code link", () => {
+  it("passes the valid project", () => {
+    assert.deepEqual(problems(), []);
+  });
+
+  describe("C1 links", () => {
+    it("names a code file that does not exist", () => {
+      linkSearch("src/ui/Missing.tsx#SearchField");
+      assert.deepEqual(problems(), [`${SEARCH}: code file "src/ui/Missing.tsx" does not exist`]);
+    });
+
+    it("names an export absent from the file", () => {
+      edit(tmp, BUTTON, "#Button", "#Buttn");
+      assert.deepEqual(problems(), [`${BUTTON}: export "Buttn" is not in src/ui/Button.tsx`]);
+    });
+
+    it("names a link without #", () => {
+      linkSearch("src/ui/Button.tsx");
+      assert.deepEqual(problems(), [`${SEARCH}: code "src/ui/Button.tsx" must be path#Export or package:<name>#Export`]);
+    });
+  });
+
+  describe("C2 libraries", () => {
+    it("names a package system.md does not list", () => {
+      edit(tmp, DIALOG, "package:@radix-ui/react-dialog#Root", "package:left-pad#Pad");
+      assert.deepEqual(problems(), [`${DIALOG}: package "left-pad" is not in system.md libraries`]);
+    });
+  });
+
+  describe("C3 coverage", () => {
+    it("names a file under a code root no record links and no ignore covers", () => {
+      put(tmp, "src/ui/Orphan.tsx", "export function Orphan() {}\n");
+      assert.deepEqual(problems(), ["src/ui/Orphan.tsx: no record links it and no ignore covers it"]);
+    });
+
+    it("accepts a valid link on a proposed record", () => {
+      edit(tmp, SEARCH, "status: validated", "status: proposed");
+      put(tmp, "src/ui/SearchField.tsx", "export function SearchField() {}\n");
+      linkSearch("src/ui/SearchField.tsx#SearchField");
+      assert.deepEqual(problems(), []);
+    });
+  });
+
+  describe("C4 colour literals", () => {
+    it("names a colour literal in UI code, with its line", () => {
+      append("src/ui/Button.tsx", 'const style = "color: #ff0000";');
+      assert.deepEqual(problems(), ['src/ui/Button.tsx: line 4: colour literal "#ff0000", use a token']);
+    });
+
+    it("skips an ignored file", () => {
+      append("src/ui/tokens.css", ".x { color: #ff0000; }");
+      assert.deepEqual(problems(), []);
+    });
+  });
+
+  describe("C4 unit literals", () => {
+    it("names a unit literal in a stylesheet", () => {
+      linkedStylesheet(".SearchField { padding: 16px; }\n");
+      assert.deepEqual(problems(), [`${SEARCH_CSS}: line 1: literal "16px", only tokens carry values`]);
+    });
+
+    it("leaves units in script files alone, a stated limit", () => {
+      append("src/ui/Button.tsx", 'const style = "padding: 16px";');
+      assert.deepEqual(problems(), []);
+    });
+  });
+
+  describe("C5 one record per file", () => {
+    it("names two records sharing one code link", () => {
+      linkSearch("src/ui/Button.tsx#Button");
+      assert.deepEqual(problems(), [`${SEARCH}: code "src/ui/Button.tsx#Button" is also ${BUTTON}'s`]);
+    });
+  });
+
+  describe("C6 logical properties in code", () => {
+    it("names a physical property in a stylesheet when rtl is declared", () => {
+      linkedStylesheet(".SearchField { margin-left: 0; }\n");
+      assert.deepEqual(problems(), [`${SEARCH_CSS}: line 1: physical property "margin-left", use its logical form`]);
+    });
+
+    it("allows it when only ltr is declared", () => {
+      edit(tmp, SYSTEM, "directions: [ltr, rtl]", "directions: [ltr]");
+      linkedStylesheet(".SearchField { margin-left: 0; }\n");
+      assert.deepEqual(problems(), []);
+    });
+  });
+});
