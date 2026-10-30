@@ -186,7 +186,7 @@ Feature flow, issue-to-PR automation, backlog
 <img align="right" alt="alpha" src="https://img.shields.io/badge/alpha-cf222e?style=flat-square" />
 <h3>🎨 aidd-ui</h3>
 1 skill · 2 hooks<br />
-UI and UX design, smoke test only
+UI design system, checked on every write
 </a>
 </td>
 <td width="33%" valign="top">

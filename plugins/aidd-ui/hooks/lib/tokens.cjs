@@ -1,7 +1,10 @@
 // T1 to T8: tokens.json against the DTCG 2025.10 format and color modules, plus this plugin's
 // themes extension and its rem rule. Composite values are checked for presence only.
+const fs = require("node:fs");
+const nodePath = require("node:path");
 const { list } = require("./markdown.cjs");
-const { placed, systemOf } = require("./records.cjs");
+const { placed, systemOf, COMPONENT_KINDS } = require("./records.cjs");
+const { text } = require("./project.cjs");
 
 const RESERVED_KEYS = ["$value", "$type", "$description", "$extensions", "$deprecated", "$extends", "$schema", "$root"];
 const PROPERTY_PREFIX = "$";
@@ -9,7 +12,8 @@ const PATH_SEPARATOR = ".";
 const CSS_PREFIX = "--";
 const CSS_SEPARATOR = "-";
 const THEMES_EXTENSION = "dev.ai-driven.themes";
-const COMPONENT_KINDS = ["atom", "molecule", "composition"];
+const MISSING = "missing";
+const NOT_JSON = "not JSON";
 
 const PRIMITIVE_TYPES = ["color", "dimension", "fontFamily", "fontWeight", "duration", "cubicBezier", "number"];
 const COMPOSITE_TYPES = ["strokeStyle", "border", "transition", "shadow", "gradient", "typography"];
@@ -58,17 +62,23 @@ function walk(node, path, groupType, found) {
   return found;
 }
 
-/** The tree read once: its parse error, or its tokens, groups and bad names. */
+const emptyTree = () => ({ tokens: new Map(), groups: new Set(), badNames: [] });
+
+/** A tree no rule can read, with its T1 problem; null when unreadable, which the loader reports. */
+const unusable = (problem) => ({ ...emptyTree(), unusable: true, problem });
+
+/** The tree: its tokens, groups and bad names, or why it cannot be read. */
 function read(project) {
-  if (project.tokens === null) return { missing: true, tokens: new Map(), groups: new Set(), badNames: [] };
+  if (!fs.existsSync(nodePath.join(project.root, project.tokensFile))) return unusable(MISSING);
+  const source = text(project, project.tokensFile);
+  if (source === null) return unusable(null);
   let tree;
   try {
-    tree = JSON.parse(project.tokens);
+    tree = JSON.parse(source);
   } catch {
-    return { invalid: true, tokens: new Map(), groups: new Set(), badNames: [] };
+    return unusable(NOT_JSON);
   }
-  if (!isObject(tree)) return { invalid: true, tokens: new Map(), groups: new Set(), badNames: [] };
-  return walk(tree, [], tree.$type, { tokens: new Map(), groups: new Set(), badNames: [] });
+  return isObject(tree) ? walk(tree, [], tree.$type, emptyTree()) : unusable(NOT_JSON);
 }
 
 /** A token's `$type`: its own, else its alias target's, else its closest group's. */
@@ -130,7 +140,7 @@ const tokenProblem = (project) => (path, message) => ({ file: project.tokensFile
 const themesOf = (token) => (isObject(token.node.$extensions?.[THEMES_EXTENSION]) ? token.node.$extensions[THEMES_EXTENSION] : {});
 
 function jsonProblems(tree, project) {
-  return tree.invalid ? [{ file: project.tokensFile, message: "not JSON" }] : [];
+  return tree.problem ? [{ file: project.tokensFile, message: tree.problem }] : [];
 }
 
 function nameProblems(tree, project) {
@@ -184,7 +194,7 @@ function themeProblems(tree, project) {
 }
 
 function componentTokenProblems(tree, project) {
-  if (tree.invalid) return [];
+  if (tree.unusable) return [];
   return placed(project)
     .filter((record) => COMPONENT_KINDS.includes(record.frontMatter.kind))
     .flatMap((record) =>
@@ -219,12 +229,12 @@ function check(project) {
   return RULES.flatMap((rule) => rule(tree, project));
 }
 
-/** Each token path and its CSS custom property, `--` plus the path joined by `-`; null when
- * tokens.json cannot be read, so renders do not repeat T1. */
+/** Every token's CSS custom property, `--` plus its path joined by `-`; null when tokens.json
+ * cannot be read, so renders do not repeat T1. */
 function cssNames(project) {
   const tree = read(project);
-  if (tree.invalid) return null;
-  return new Map([...tree.tokens.values()].map((token) => [token.path.join(PATH_SEPARATOR), `${CSS_PREFIX}${token.path.join(CSS_SEPARATOR)}`]));
+  if (tree.unusable) return null;
+  return new Set([...tree.tokens.values()].map((token) => `${CSS_PREFIX}${token.path.join(CSS_SEPARATOR)}`));
 }
 
 module.exports = { check, cssNames };

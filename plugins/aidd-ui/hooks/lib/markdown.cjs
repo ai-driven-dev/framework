@@ -7,27 +7,34 @@ const TABLE_CELL_SEPARATOR = "|";
 const LIST_SEPARATOR = ",";
 
 const WINDOWS_LINE_ENDING = /\r\n/g;
-const ENTRY = /^([a-z][a-z0-9-]*):[ \t]*(\S.*)$/;
+const BYTE_ORDER_MARK = /^\uFEFF/;
+const ENTRY = /^([a-z][a-z0-9-]*):[ \t]*(.*)$/;
 const LIST = /^\[(.*)\]$/;
+const QUOTED = /^(["'])(.*)\1$/;
 const TABLE_SEPARATOR_ROW = /^\|[\s:|-]+\|$/;
 
 const NO_FRONT_MATTER = "no front matter, open and close it with a --- line";
 
-/** A front matter value: `[a, b]` as a list, anything else as trimmed text. */
+/** A value without the one pair of quotes around it, if any. */
+const unquote = (value) => value.match(QUOTED)?.[2] ?? value;
+
+/** A front matter value: `[a, b]` as a list, anything else as trimmed text, quotes dropped. */
 function parseValue(raw) {
   const list = raw.trim().match(LIST);
-  if (!list) return raw.trim();
+  if (!list) return unquote(raw.trim());
   return list[1]
     .split(LIST_SEPARATOR)
-    .map((item) => item.trim())
+    .map((item) => unquote(item.trim()))
     .filter(Boolean);
 }
+
+const isFence = (line) => line.trimEnd() === FENCE;
 
 /** Front matter between the first two `---` lines, with one problem per line that is neither
  * `key: value` nor `key: [a, b]`. Lines are numbered as in the file. */
 function parseFrontMatter(lines) {
-  const close = lines.indexOf(FENCE, 1);
-  if (lines[0] !== FENCE || close < 0) return { found: false, values: {}, end: 0, problems: [{ line: 1, message: NO_FRONT_MATTER }] };
+  const close = lines.findIndex((line, index) => index > 0 && isFence(line));
+  if (!isFence(lines[0]) || close < 0) return { found: false, values: {}, end: 0, problems: [{ line: 1, message: NO_FRONT_MATTER }] };
   const values = {};
   const problems = [];
   for (let index = 1; index < close; index += 1) {
@@ -75,7 +82,7 @@ function table(section) {
 
 /** A record's front matter, its problems, and its sections. */
 function parseRecord(text) {
-  const lines = text.replace(WINDOWS_LINE_ENDING, LINE_BREAK).split(LINE_BREAK);
+  const lines = text.replace(BYTE_ORDER_MARK, "").replace(WINDOWS_LINE_ENDING, LINE_BREAK).split(LINE_BREAK);
   const frontMatter = parseFrontMatter(lines);
   return {
     hasFrontMatter: frontMatter.found,
@@ -85,9 +92,9 @@ function parseRecord(text) {
   };
 }
 
-/** A front matter value as a list: a lone value is a list of one, an absent one is empty. */
+/** A front matter value as a list: a lone value is a list of one, an absent or empty one is empty. */
 function list(value) {
-  if (value === undefined) return [];
+  if (value === undefined || value === "") return [];
   return Array.isArray(value) ? value : [value];
 }
 

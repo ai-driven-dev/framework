@@ -1,17 +1,13 @@
 // H1 to H6: each versioned record's history, and the system version its tasks raise.
 const { table } = require("./markdown.cjs");
-const { placed, systemOf, isElement } = require("./records.cjs");
+const { placed, systemOf, isElement, fm, INTEGER_VERSION, SEMVER } = require("./records.cjs");
 
 const HISTORY_SECTION = "History";
 const BREAKING_VALUES = ["yes", "no"];
 const BREAKING = "yes";
 const SYSTEM_KIND = "system";
 
-const INTEGER_VERSION = /^[1-9]\d*$/;
-const SEMVER = /^(\d+)\.(\d+)\.(\d+)$/;
-
 const problem = (record, message) => ({ file: record.file, message });
-const fm = (record) => record.frontMatter;
 const isSystem = (record) => fm(record).kind === SYSTEM_KIND;
 const rowsOf = (record) => table(record.sections[HISTORY_SECTION]);
 
@@ -28,6 +24,13 @@ function compare(a, b) {
   for (let index = 0; index < a.length; index += 1) if (a[index] !== b[index]) return a[index] - b[index];
   return 0;
 }
+
+/** Rows whose version parses, each with its parts, lowest version first. */
+const byVersion = (rows, system) =>
+  rows
+    .map((row) => ({ row, parts: parts(row.Version, system) }))
+    .filter((entry) => entry.parts)
+    .sort((a, b) => compare(a.parts, b.parts));
 
 /** Records that carry a version, which every history rule reads. */
 const versioned = (project) => placed(project).filter((record) => "version" in fm(record));
@@ -51,17 +54,14 @@ function currentProblems(project) {
   return versioned(project).flatMap((record) => {
     const system = isSystem(record);
     const current = parts(fm(record).version, system);
-    const rows = rowsOf(record)
-      .map((row) => ({ version: row.Version, parts: parts(row.Version, system) }))
-      .filter((row) => row.parts)
-      .sort((a, b) => compare(a.parts, b.parts));
+    const rows = byVersion(rowsOf(record), system);
     if (!current || !rows.length) return [];
     const highest = rows.at(-1);
-    const problems = compare(current, highest.parts) === 0 ? [] : [`version ${fm(record).version} is not the highest history row, ${highest.version}`];
+    const problems = compare(current, highest.parts) === 0 ? [] : [`version ${fm(record).version} is not the highest history row, ${highest.row.Version}`];
     if (!system) {
       for (let index = 1; index < rows.length; index += 1) {
         const step = rows[index].parts[0] - rows[index - 1].parts[0];
-        if (step > 1) problems.push(`history jumps from ${rows[index - 1].version} to ${rows[index].version}`);
+        if (step > 1) problems.push(`history jumps from ${rows[index - 1].row.Version} to ${rows[index].row.Version}`);
       }
     }
     return problems.map((message) => problem(record, message));
@@ -90,10 +90,13 @@ function elementTasks(project) {
   return tasks;
 }
 
-/** The system row a task raised, with the row before it; null when the task has none. */
+/** The system row a task raised, with the row before it by version; null when the task has none. */
 function systemRow(rows, task) {
-  const index = rows.findIndex((row) => row.Task === task);
-  return index < 0 ? null : { row: rows[index], previous: rows[index - 1] };
+  const row = rows.find((candidate) => candidate.Task === task);
+  if (!row) return null;
+  const ordered = byVersion(rows, true);
+  const index = ordered.findIndex((entry) => entry.row === row);
+  return { row, previous: index > 0 ? ordered[index - 1].row : undefined };
 }
 
 function bumpProblems(project) {

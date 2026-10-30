@@ -67,6 +67,35 @@ describe("aidd-ui records and history", () => {
       change(JOURNEY, "persona: a first-time analyst", "persona: a first-time analyst\n  - nested");
       assert.deepEqual(problems(), [`${JOURNEY}: line 7: expected "key: value" or "key: [a, b]", got "- nested"`]);
     });
+
+    it("reads front matter behind a byte order mark", () => {
+      const file = path.join(tmp, JOURNEY);
+      fs.writeFileSync(file, `\uFEFF${fs.readFileSync(file, "utf8")}`);
+      assert.deepEqual(problems(), []);
+    });
+
+    it("reads a fence line with trailing spaces", () => {
+      change(JOURNEY, "---\nid: onboarding", "--- \nid: onboarding");
+      assert.deepEqual(problems(), []);
+    });
+
+    it("reads CRLF line endings", () => {
+      const file = path.join(tmp, JOURNEY);
+      fs.writeFileSync(file, fs.readFileSync(file, "utf8").replace(/\n/g, "\r\n"));
+      assert.deepEqual(problems(), []);
+    });
+
+    it("unquotes scalar values and list items", () => {
+      change(SEARCH, "id: search-field", "id: 'search-field'");
+      change(SEARCH, "status: validated", 'status: "validated"');
+      change(SEARCH, "uses: [button, icon-search]", `uses: ["button", 'icon-search']`);
+      assert.deepEqual(problems(), []);
+    });
+
+    it("reads an empty value as an empty list", () => {
+      change(OLD, "uses: []", "uses:");
+      assert.deepEqual(problems(), []);
+    });
   });
 
   describe("R2 kind and folder", () => {
@@ -216,6 +245,19 @@ describe("aidd-ui records and history", () => {
       change(SEARCH, "uses: [button, icon-search]", "uses: [button, icon-search, old-button]");
       assert.deepEqual(problems(), [`${SEARCH}: uses "old-button", which is deprecated`]);
     });
+
+    it("names an atom using a deprecated asset", () => {
+      put(
+        tmp,
+        `${UI}/assets/icon-old.md`,
+        record(
+          ["id: icon-old", "kind: asset", "status: deprecated", "version: 2", "type: icon", "file: icon-search.svg", "alt: Search", "replaced-by: icon-search"],
+          history(["1", "created", "no", "ds-init"], ["2", "deprecated for icon-search", "yes", "retire-old-button"])
+        )
+      );
+      change(BUTTON, "uses: []", "uses: [icon-old]");
+      assert.deepEqual(problems(), [`${BUTTON}: uses "icon-old", which is deprecated`]);
+    });
   });
 
   describe("R11 breakpoints", () => {
@@ -319,6 +361,15 @@ describe("aidd-ui records and history", () => {
       change(SYSTEM, "version: 2.0.0", "version: 2.0.1");
       change(SYSTEM, "| 2.0.0 | old-button retired | yes | retire-old-button |", "| 2.0.0 | old-button retired | yes | retire-old-button |\n| 2.0.1 | button padding | no | tweak |");
       assert.deepEqual(problems(), [`${SYSTEM}: task "tweak" changes an element, yet system.md 2.0.1 raises neither major nor minor`]);
+    });
+
+    it("reads a newest-first system history by version", () => {
+      change(
+        SYSTEM,
+        "| 1.0.0 | first system | no | ds-init |\n| 2.0.0 | old-button retired | yes | retire-old-button |",
+        "| 2.0.0 | old-button retired | yes | retire-old-button |\n| 1.0.0 | first system | no | ds-init |"
+      );
+      assert.deepEqual(problems(), []);
     });
 
     it("names a task system.md has no row for", () => {

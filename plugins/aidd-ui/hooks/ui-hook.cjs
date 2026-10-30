@@ -1,10 +1,10 @@
 // PostToolUse and SessionStart: runs the design system checks. After a write under
 // aidd_docs/ui/ or a code root, problems go back to the agent on stderr with exit 2; at session
-// start they are printed as context. Anything unexpected exits 0 in silence: a broken check
-// never blocks a session.
+// start they are printed as context. A file that cannot be read is one problem; anything else
+// unexpected exits 0 in silence, so a broken check never blocks a session.
 const fs = require("node:fs");
 const path = require("node:path");
-const { load, UI_DIR } = require("./lib/project.cjs");
+const { load, relative, isUnder, UI_DIR } = require("./lib/project.cjs");
 const { codeRoots } = require("./lib/code.cjs");
 const { problemsOf, format } = require("./validate-ui.cjs");
 
@@ -12,7 +12,6 @@ const POST_TOOL_USE = "PostToolUse";
 const SESSION_START = "SessionStart";
 const EXIT_SILENT = 0;
 const EXIT_BLOCKING = 2; // Claude Code hands a PostToolUse hook's stderr back to the agent
-const PATH_SEPARATOR = "/";
 
 /** The JSON object on stdin, or null when there is none or it is not one. */
 function readPayload() {
@@ -24,15 +23,9 @@ function readPayload() {
   }
 }
 
-/** Whether `file` lies under `prefix`, both relative to the project root. */
-const isUnder = (file, prefix) => {
-  const folder = prefix.replace(/\/+$/, "");
-  return file === folder || file.startsWith(`${folder}${PATH_SEPARATOR}`);
-};
-
 /** Whether a written file belongs to the design system or to its code. */
 function isWatched(project, filePath) {
-  const file = path.relative(project.root, path.resolve(project.root, filePath)).split(path.sep).join(PATH_SEPARATOR);
+  const file = relative(project.root, path.resolve(project.root, filePath));
   return [UI_DIR, ...codeRoots(project)].some((prefix) => isUnder(file, prefix));
 }
 

@@ -31,7 +31,7 @@
   },
   "aidd-ui": {
     "status": "alpha",
-    "description": "UI and UX design, smoke test only",
+    "description": "UI design system, checked on every write",
     "emoji": "🎨"
   },
   "aidd-telemetry": {

@@ -51,7 +51,7 @@ describe("aidd-ui tokens and renders", () => {
 
   it("names every token's CSS custom property", () => {
     const names = tokens.cssNames(load(tmp));
-    assert.equal(names.get("color.text.default"), "--color-text-default");
+    assert.ok(names.has("--color-text-default"));
     assert.equal(names.size, 7);
   });
 
@@ -59,6 +59,11 @@ describe("aidd-ui tokens and renders", () => {
     it("names a tokens file that is not JSON", () => {
       fs.writeFileSync(path.join(tmp, TOKENS), "{ not json");
       assert.deepEqual(problems(), [`${TOKENS}: not JSON`]);
+    });
+
+    it("names a missing tokens file once, and nothing that depends on it", () => {
+      fs.rmSync(path.join(tmp, TOKENS));
+      assert.deepEqual(problems(), [`${TOKENS}: missing`]);
     });
   });
 
@@ -191,6 +196,14 @@ describe("aidd-ui tokens and renders", () => {
         assert.deepEqual(problems(), [`${BUTTON_RENDER}: line ${INSERTED_LINE}: literal "${literal}", only tokens carry values`]);
       });
     }
+  });
+
+  describe("V6 media and container queries", () => {
+    it("leaves the lengths of @media and @container preludes alone", () => {
+      addToRender("<style>@media (min-width: 768px) { .ui { color: var(--color-text-default); } }</style>");
+      addToRender("<style>@container (width > 40rem) { .ui { color: var(--color-text-default); } }</style>");
+      assert.deepEqual(problems(), []);
+    });
   });
 
   describe("V5 logical properties", () => {

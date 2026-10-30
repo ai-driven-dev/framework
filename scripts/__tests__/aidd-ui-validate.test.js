@@ -87,6 +87,12 @@ describe("aidd-ui validator entries", () => {
       assert.deepEqual(hook(postToolUse(path.join(tmp, "src/ui/Button.tsx"))), { code: 2, out: "", err: `${FAILURES.join("\n")}\n` });
     });
 
+    it("hands the problems back when a write lands under a code root written with a leading ./", () => {
+      edit(tmp, `${UI}/system.md`, "code-roots: [src/ui]", "code-roots: [./src/ui]");
+      breakOnePerFamily();
+      assert.deepEqual(hook(postToolUse(path.join(tmp, "src/ui/Button.tsx"))), { code: 2, out: "", err: `${FAILURES.join("\n")}\n` });
+    });
+
     it("stays silent when a write lands elsewhere", () => {
       breakOnePerFamily();
       assert.deepEqual(hook(postToolUse(path.join(tmp, "README.md"))), silent);
@@ -120,11 +126,26 @@ describe("aidd-ui validator entries", () => {
         assert.deepEqual(hook(input), silent);
       });
     }
+  });
 
-    it("never blocks when a check throws", { skip: process.platform === "win32" }, () => {
-      fs.symlinkSync(path.join(tmp, "nowhere.md"), path.join(tmp, UI, "dangling.md"));
-      assert.deepEqual(hook(sessionStart()), silent);
-      assert.deepEqual(hook(postToolUse(path.join(tmp, BRAND))), silent);
+  describe("E6 unreadable files", { skip: process.platform === "win32" }, () => {
+    const DANGLING = `${UI}/dangling.md`;
+    const UNREADABLE = `✗ ${DANGLING}: unreadable`;
+
+    it("names an unreadable record and checks the rest, in every entry", () => {
+      fs.symlinkSync(path.join(tmp, "nowhere.md"), path.join(tmp, DANGLING));
+      assert.deepEqual(validate(tmp), { code: 1, out: [UNREADABLE], err: "" });
+      assert.deepEqual(hook(sessionStart()), { code: 0, out: `aidd-ui: 1 problems\n${UNREADABLE}\n`, err: "" });
+      assert.deepEqual(hook(postToolUse(path.join(tmp, BRAND))), { code: 2, out: "", err: `${UNREADABLE}\n` });
+    });
+
+    it("names an unreadable file under a code root", () => {
+      fs.symlinkSync(path.join(tmp, "src/ui"), path.join(tmp, "src/ui/Folder.css"));
+      assert.deepEqual(validate(tmp), {
+        code: 1,
+        out: ["✗ src/ui/Folder.css: no record links it and no ignore covers it", "✗ src/ui/Folder.css: unreadable"],
+        err: "",
+      });
     });
   });
 });

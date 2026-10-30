@@ -2,7 +2,7 @@
 // Usage: node validate-ui.cjs [project-root]
 // Checks a project's design system under aidd_docs/ui/: records, history, tokens, renders and
 // code links. Prints VALID, or one line per problem and exits 1. Prints nothing without one.
-const { load } = require("./lib/project.cjs");
+const { load, unreadable } = require("./lib/project.cjs");
 const records = require("./lib/records.cjs");
 const history = require("./lib/history.cjs");
 const tokens = require("./lib/tokens.cjs");
@@ -15,8 +15,8 @@ const EXIT_VALID = 0;
 const EXIT_INVALID = 1;
 const PROBLEM_MARK = "✗";
 
-/** Every problem of a loaded project, check by check. */
-const problemsOf = (project) => CHECKS.flatMap((check) => check.check(project));
+/** Every problem of a loaded project, check by check, then each file no check could read. */
+const problemsOf = (project) => [...CHECKS.flatMap((check) => check.check(project)), ...unreadable(project)];
 
 /** The problems of the design system under `root`, or null when it has none. */
 function validate(root) {

@@ -44,7 +44,7 @@ const DESIGN_KINDS = ["system", "brand", "review"];
 const LEVELS = { asset: 0, atom: 1, molecule: 2, composition: 3, screen: 4 }; // an element uses only lower levels
 
 const INTEGER_VERSION = /^[1-9]\d*$/;
-const SEMVER = /^\d+\.\d+\.\d+$/;
+const SEMVER = /^(\d+)\.(\d+)\.(\d+)$/;
 
 const listWithOr = (values) => `${values.slice(0, -1).join(", ")} or ${values.at(-1)}`;
 const problem = (record, message) => ({ file: record.file, message });
@@ -269,4 +269,4 @@ const RULES = [
 /** Every broken record rule, as `{file, message}`, in rule order. */
 const check = (project) => RULES.flatMap((rule) => rule(project));
 
-module.exports = { check, readable, placed, byId, systemOf, isElement };
+module.exports = { check, readable, placed, byId, systemOf, isElement, fm, COMPONENT_KINDS, INTEGER_VERSION, SEMVER };

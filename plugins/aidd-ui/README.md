@@ -71,7 +71,8 @@ It prints `VALID`, or one `✗ <file>: <message>` line per problem and exits 1.
 - Alias cycles are not detected.
 - `code-roots` and `ignore` are path prefixes, not globs.
 - Literals are found in web code only, and units in stylesheets only, not in script files.
-- A word of hex letters after `#`, such as `#add`, counts as a colour.
+- In script files, `.vue` and `.svelte` included, colours are found in string literals only.
+- A word of hex letters after `#` in a stylesheet or a string, such as `#add`, counts as a colour.
 - Fixed widths on text and long translations are left to the UI audit.
 
 ## Try it from a checkout

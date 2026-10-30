@@ -55,6 +55,12 @@ describe("aidd-ui code link", () => {
       assert.deepEqual(problems(), [`${SEARCH}: code file "src/ui/Missing.tsx" does not exist`]);
     });
 
+    it("reads code-roots and ignore written with a leading ./", () => {
+      edit(tmp, SYSTEM, "code-roots: [src/ui]", "code-roots: [./src/ui]");
+      edit(tmp, SYSTEM, "ignore: [src/ui/tokens.css]", "ignore: [./src/ui/tokens.css]");
+      assert.deepEqual(problems(), []);
+    });
+
     it("names an export absent from the file", () => {
       edit(tmp, BUTTON, "#Button", "#Buttn");
       assert.deepEqual(problems(), [`${BUTTON}: export "Buttn" is not in src/ui/Button.tsx`]);
@@ -93,6 +99,11 @@ describe("aidd-ui code link", () => {
       assert.deepEqual(problems(), ['src/ui/Button.tsx: line 4: colour literal "#ff0000", use a token']);
     });
 
+    it("leaves a hex word in a script comment alone", () => {
+      append("src/ui/Button.tsx", "// toggles #add");
+      assert.deepEqual(problems(), []);
+    });
+
     it("skips an ignored file", () => {
       append("src/ui/tokens.css", ".x { color: #ff0000; }");
       assert.deepEqual(problems(), []);
@@ -103,6 +114,11 @@ describe("aidd-ui code link", () => {
     it("names a unit literal in a stylesheet", () => {
       linkedStylesheet(".SearchField { padding: 16px; }\n");
       assert.deepEqual(problems(), [`${SEARCH_CSS}: line 1: literal "16px", only tokens carry values`]);
+    });
+
+    it("leaves the lengths of a @container prelude alone", () => {
+      linkedStylesheet("@container (min-width: 768px) { .SearchField { padding: var(--space-md); } }\n");
+      assert.deepEqual(problems(), []);
     });
 
     it("leaves units in script files alone, a stated limit", () => {
