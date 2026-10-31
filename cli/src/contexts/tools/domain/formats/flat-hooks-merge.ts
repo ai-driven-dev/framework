@@ -33,32 +33,6 @@ const CURSOR_EVENT_MAP: Record<string, readonly string[]> = {
   SubagentStop: ["subagentStop"],
 };
 
-// Codex keeps Claude's event names but has no `Stop`: probed live, a `codex exec` run with all
-// four subscribed fired SessionStart and SessionEnd and never Stop, so a hook subscribed to Stop
-// never ran. SessionEnd bounds the session rather than each turn: a hook that closes the whole
-// session is the honest answer rather than none at all.
-const CODEX_EVENT_MAP: Record<string, readonly string[]> = {
-  Stop: ["SessionEnd"],
-};
-
-/**
- * Renames a plugin hooks.json's events to the ones Codex delivers, without merging.
- *
- * Codex is installed two ways — a built marketplace tree and a merged project config — and both
- * call this, so the rename cannot land on one route and not the other.
- */
-export function renameCodexHookEvents(pluginHooksJson: string): string {
-  const parsed = JSON.parse(pluginHooksJson) as ClaudeHooksShape;
-  if (!parsed.hooks) return pluginHooksJson;
-  const renamed: Record<string, ClaudeMatcherGroup[]> = {};
-  for (const [event, matchers] of Object.entries(parsed.hooks)) {
-    for (const codexEvent of CODEX_EVENT_MAP[event] ?? [event]) {
-      renamed[codexEvent] = [...(renamed[codexEvent] ?? []), ...matchers];
-    }
-  }
-  return `${JSON.stringify({ ...parsed, hooks: renamed }, null, 2)}\n`;
-}
-
 /** Merges a plugin's hooks (Claude nested shape) additively into the top-level `hooks` key of
  * `.claude/settings.json`, preserving every other settings key. */
 export function mergeClaudeSettingsHooks(
@@ -180,12 +154,7 @@ export function mergeCodexFrameworkHooksJson(
   const pluginHooks = plugin.hooks ?? {};
 
   for (const [event, matchers] of Object.entries(pluginHooks)) {
-    for (const codexEvent of CODEX_EVENT_MAP[event] ?? [event]) {
-      codex.hooks[codexEvent] = [
-        ...(codex.hooks[codexEvent] ?? []),
-        ...convertToCodexEntries(matchers),
-      ];
-    }
+    codex.hooks[event] = [...(codex.hooks[event] ?? []), ...convertToCodexEntries(matchers)];
   }
 
   return {

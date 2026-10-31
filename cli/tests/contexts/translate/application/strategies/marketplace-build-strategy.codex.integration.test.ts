@@ -303,7 +303,7 @@ describe("CodexOutputStrategy", () => {
   // Codex has no `Stop`: a built tree that keeps it subscribes the turn-end hook to an
   // event that never arrives, and the turn is never closed, in silence.
   describe("hook events Codex actually delivers (#707)", () => {
-    it("renames Stop to SessionEnd in a built plugin's hooks.json", async () => {
+    it("keeps Stop in a built plugin's hooks.json", async () => {
       const fs = await makeSeededFsFromReal();
       // No fixture plugin declares Stop today, so the source is seeded with one rather than
       // asserted against a tree that cannot exercise the rename.
@@ -321,8 +321,8 @@ describe("CodexOutputStrategy", () => {
       const destHooks = fs.getFile(`${OUT_DIR}/plugins/aidd-context/hooks/hooks.json`) ?? "";
       const events = Object.keys((JSON.parse(destHooks) as { hooks: object }).hooks);
 
-      expect(events).toContain("SessionEnd");
-      expect(events).not.toContain("Stop");
+      expect(events).toContain("Stop");
+      expect(events).not.toContain("SessionEnd");
       expect(destHooks).toContain("turn-end");
     });
 
