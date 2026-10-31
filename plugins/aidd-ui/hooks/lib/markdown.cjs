@@ -6,8 +6,6 @@ const SECTION_PREFIX = "## ";
 const TABLE_CELL_SEPARATOR = "|";
 const LIST_SEPARATOR = ",";
 
-const WINDOWS_LINE_ENDING = /\r\n/g;
-const BYTE_ORDER_MARK = /^\uFEFF/;
 const ENTRY = /^([a-z][a-z0-9-]*):[ \t]*(.*)$/;
 const LIST = /^\[(.*)\]$/;
 const QUOTED = /^(["'])(.*)\1$/;
@@ -82,7 +80,7 @@ function table(section) {
 
 /** A record's front matter, its problems, and its sections. */
 function parseRecord(text) {
-  const lines = text.replace(BYTE_ORDER_MARK, "").replace(WINDOWS_LINE_ENDING, LINE_BREAK).split(LINE_BREAK);
+  const lines = text.split(LINE_BREAK);
   const frontMatter = parseFrontMatter(lines);
   return {
     hasFrontMatter: frontMatter.found,

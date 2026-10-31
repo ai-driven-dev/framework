@@ -104,6 +104,16 @@ describe("aidd-ui records and history", () => {
       assert.deepEqual(problems(), [`${JOURNEY}: unknown kind "widget"`]);
     });
 
+    it("names a kind that only an object's prototype holds as unknown", () => {
+      change(JOURNEY, "kind: journey", "kind: toString");
+      assert.deepEqual(problems(), [`${JOURNEY}: unknown kind "toString"`]);
+    });
+
+    it("names a record in a folder that only an object's prototype holds", () => {
+      put(tmp, `${UI}/constructor/extra.md`, record(["id: extra", "kind: atom", "status: proposed", "version: 1"], history(["1", "created", "no", "ds-init"])));
+      assert.deepEqual(problems(), [`${UI}/constructor/extra.md: kind "atom" does not belong in constructor/`]);
+    });
+
     it("names a kind outside its folder", () => {
       put(tmp, `${UI}/screens/extra.md`, record(["id: extra", "kind: atom", "status: proposed", "version: 1"], history(["1", "created", "no", "ds-init"])));
       assert.deepEqual(problems(), [`${UI}/screens/extra.md: kind "atom" does not belong in screens/`]);

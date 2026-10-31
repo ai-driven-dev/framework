@@ -50,12 +50,14 @@ function markFile(sessionId) {
   return path.join(os.tmpdir(), `aidd-ui-turn-${sessionId}`);
 }
 
-/** Creates the mark only where nothing exists, so a link planted at its path is never followed. */
+/** Creates the mark only where nothing exists, so a link planted at its path is never followed.
+ * The mark serves Stop alone: a mark already there, or one that cannot be written, never costs
+ * the write its feedback. */
 function leaveMark(mark) {
   try {
     fs.writeFileSync(mark, "", { flag: "wx", mode: 0o600 });
-  } catch (error) {
-    if (error.code !== "EEXIST") throw error;
+  } catch {
+    // already marked this turn, or no writable temp dir
   }
 }
 
@@ -79,12 +81,17 @@ function afterWrite(project, payload) {
   return EXIT_SILENT;
 }
 
-/** Blocks the turn's end once while a marked turn still leaves problems behind. */
-function atStop(project, payload) {
+/** Whether this Stop ends a turn that wrote a watched file and was not itself forced: consumes
+ * the mark either way, so the next turn starts clean. */
+function consumeMark(payload) {
   const mark = markFile(payload.session_id);
-  if (!mark || !fs.existsSync(mark)) return EXIT_SILENT;
+  if (!mark || !fs.existsSync(mark)) return false;
   fs.rmSync(mark, { force: true });
-  if (payload.stop_hook_active === true) return EXIT_SILENT;
+  return payload.stop_hook_active !== true;
+}
+
+/** Blocks the turn's end once while a marked turn still leaves problems behind. */
+function atStop(project) {
   const problems = problemsOf(project);
   if (!problems.length) return EXIT_SILENT;
   const reason = [`aidd-ui: the design system has ${problems.length} problems, fix them before you finish:`, ...format(problems)].join("\n");
@@ -101,11 +108,13 @@ function atSessionStart(project) {
 function run() {
   const payload = readPayload();
   if (payload === null) return EXIT_SILENT;
+  // Stop fires on every turn: one that wrote no watched file costs no read of the project.
+  if (payload.hook_event_name === STOP && !consumeMark(payload)) return EXIT_SILENT;
   const project = load(typeof payload.cwd === "string" ? payload.cwd : process.cwd());
   if (project === null) return EXIT_SILENT;
   if (payload.hook_event_name === POST_TOOL_USE) return afterWrite(project, payload);
   if (payload.hook_event_name === SESSION_START) return atSessionStart(project);
-  if (payload.hook_event_name === STOP) return atStop(project, payload);
+  if (payload.hook_event_name === STOP) return atStop(project);
   return EXIT_SILENT;
 }
 

@@ -12,6 +12,8 @@ const PATH_SEPARATOR = "/";
 const UNREADABLE = "unreadable";
 
 const TRAILING_SEPARATORS = /\/+$/;
+const BYTE_ORDER_MARK = /^﻿/;
+const WINDOWS_LINE_ENDING = /\r\n/g;
 
 /** A path relative to the project root, with forward slashes on every platform. */
 const relative = (root, file) => path.relative(root, file).split(path.sep).join(PATH_SEPARATOR);
@@ -42,12 +44,13 @@ function walk(dir, skip = () => false, unlisted = () => {}) {
     });
 }
 
-/** A file's text, read once per run; null when it cannot be read, which `unreadable` reports. */
+/** A file's text, read once per run, without a byte order mark and with `\n` line ends, as
+ * Windows editors may write otherwise; null when it cannot be read, which `unreadable` reports. */
 function text(project, file) {
   if (!project.texts.has(file)) {
     let content = null;
     try {
-      content = fs.readFileSync(path.join(project.root, file), "utf8");
+      content = fs.readFileSync(path.join(project.root, file), "utf8").replace(BYTE_ORDER_MARK, "").replace(WINDOWS_LINE_ENDING, "\n");
     } catch {
       // a dangling link or a folder named like a file: one problem, never a crash
     }

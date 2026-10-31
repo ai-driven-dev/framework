@@ -61,6 +61,12 @@ describe("aidd-ui tokens and renders", () => {
       assert.deepEqual(problems(), [`${TOKENS}: not JSON`]);
     });
 
+    it("reads a tokens file behind a byte order mark, as Windows editors write it", () => {
+      const file = path.join(tmp, TOKENS);
+      fs.writeFileSync(file, `﻿${fs.readFileSync(file, "utf8")}`);
+      assert.deepEqual(problems(), []);
+    });
+
     it("names a missing tokens file once, and nothing that depends on it", () => {
       fs.rmSync(path.join(tmp, TOKENS));
       assert.deepEqual(problems(), [`${TOKENS}: missing`]);

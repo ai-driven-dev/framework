@@ -11,6 +11,8 @@ const { UI, writeProject, edit, editTokens } = require("./fixtures/aidd-ui/proje
 const HOOKS = path.resolve(__dirname, "../../plugins/aidd-ui/hooks");
 const VALIDATE = path.join(HOOKS, "validate-ui.cjs");
 const HOOK = path.join(HOOKS, "ui-hook.cjs");
+const { problemsOf, format } = require(VALIDATE);
+const { load } = require(path.join(HOOKS, "lib/project.cjs"));
 
 const BRAND = `${UI}/brand.md`;
 const DIALOG = `${UI}/components/dialog.md`;
@@ -103,6 +105,13 @@ describe("aidd-ui validator entries", () => {
       breakOnePerFamily();
       assert.deepEqual(validate(tmp), { code: 1, out: FAILURES, err: "" });
     });
+
+    it("names a check that throws and still runs the others", () => {
+      breakOnePerFamily();
+      const broken = { check: () => { throw new Error("boom"); } };
+      const found = problemsOf(load(tmp), { broken, records: require(path.join(HOOKS, "lib/records.cjs")) });
+      assert.deepEqual(format(found), [`✗ ${UI}: check "broken" failed: boom`, FAILURES[0]]);
+    });
   });
 
   describe("E3 PostToolUse", () => {
@@ -179,6 +188,12 @@ describe("aidd-ui validator entries", () => {
       breakOnePerFamily();
       hook(postToolUse(path.join(tmp, BRAND)));
       assert.deepEqual(hook(postToolUse(path.join(tmp, BRAND))), claudeFeedback(FAILURES));
+    });
+
+    it("still hands the problems back when the turn mark cannot be written", () => {
+      breakOnePerFamily();
+      const run = spawnSync(process.execPath, [HOOK], { input: postToolUse(path.join(tmp, BRAND)), encoding: "utf8", env: { ...process.env, TMPDIR: path.join(tmp, "no-such-dir"), TMP: path.join(tmp, "no-such-dir"), TEMP: path.join(tmp, "no-such-dir") } });
+      assert.deepEqual({ code: run.status, out: run.stdout, err: run.stderr }, claudeFeedback(FAILURES));
     });
 
     it("never writes through a link planted at the mark's path", () => {

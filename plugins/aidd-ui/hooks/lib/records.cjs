@@ -51,7 +51,9 @@ const SEMVER = /^(\d+)\.(\d+)\.(\d+)$/;
 const listWithOr = (values) => `${values.slice(0, -1).join(", ")} or ${values.at(-1)}`;
 const problem = (record, message) => ({ file: record.file, message });
 const fm = (record) => record.frontMatter;
-const isElement = (record) => fm(record).kind in LEVELS;
+const isElement = (record) => Object.hasOwn(LEVELS, fm(record).kind);
+/** Whether `kind` belongs in `folder`: own keys only, so `constructor` names no folder. */
+const belongs = (folder, kind) => Object.hasOwn(FOLDER_KINDS, folder) && FOLDER_KINDS[folder].includes(kind);
 const isComponent = (record) => COMPONENT_KINDS.includes(fm(record).kind);
 const isDeprecated = (record) => fm(record).status === "deprecated";
 const folderLabel = (folder) => (folder ? `${folder}/` : "aidd_docs/ui/");
@@ -60,7 +62,7 @@ const folderLabel = (folder) => (folder ? `${folder}/` : "aidd_docs/ui/");
 const readable = (project) => project.records.filter((record) => record.hasFrontMatter);
 
 /** Readable records whose kind is known and in its folder: kind rules read only those. */
-const placed = (project) => readable(project).filter((record) => FOLDER_KINDS[record.folder]?.includes(fm(record).kind));
+const placed = (project) => readable(project).filter((record) => belongs(record.folder, fm(record).kind));
 
 /** The first record holding each id, in load order. */
 function byId(project) {
@@ -79,8 +81,8 @@ function kindProblems(project) {
   return readable(project).flatMap((record) => {
     const kind = fm(record).kind;
     if (kind === undefined) return [];
-    if (!(kind in KIND_KEYS)) return [problem(record, `unknown kind "${kind}"`)];
-    if (FOLDER_KINDS[record.folder]?.includes(kind)) return [];
+    if (!Object.hasOwn(KIND_KEYS, kind)) return [problem(record, `unknown kind "${kind}"`)];
+    if (belongs(record.folder, kind)) return [];
     return [problem(record, `kind "${kind}" does not belong in ${folderLabel(record.folder)}`)];
   });
 }
