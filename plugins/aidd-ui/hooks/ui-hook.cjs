@@ -45,7 +45,8 @@ function afterWrite(project, payload) {
   if (!writtenFiles(payload.tool_input).some((file) => isWatched(project, file))) return EXIT_SILENT;
   const problems = problemsOf(project);
   if (!problems.length) return EXIT_SILENT;
-  const text = format(problems).join("\n");
+  // Exit 2 after a write reads as a refused edit to some models: say the write landed.
+  const text = [`aidd-ui: the write was saved, fix ${problems.length} problems:`, ...format(problems)].join("\n");
   process.stderr.write(`${text}\n`);
   process.stdout.write(JSON.stringify({ additionalContext: text }));
   return EXIT_BLOCKING;

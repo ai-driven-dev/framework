@@ -61,7 +61,11 @@ const copilotPatch = (...headers) => JSON.stringify({ hook_event_name: "PostTool
 const sessionStart = () => JSON.stringify({ hook_event_name: "SessionStart", cwd: tmp, source: "startup" });
 const silent = { code: 0, out: "", err: "" };
 // Claude Code and Codex read stderr at exit 2, Copilot only the additionalContext on stdout.
-const handedBack = (problems) => ({ code: 2, out: JSON.stringify({ additionalContext: problems.join("\n") }), err: `${problems.join("\n")}\n` });
+// The first line says the write landed: a Codex model read a bare exit 2 as a refused edit.
+const handedBack = (problems) => {
+  const text = [`aidd-ui: the write was saved, fix ${problems.length} problems:`, ...problems].join("\n");
+  return { code: 2, out: JSON.stringify({ additionalContext: text }), err: `${text}\n` };
+};
 
 describe("aidd-ui validator entries", () => {
   it("prints VALID for the valid project", () => {
