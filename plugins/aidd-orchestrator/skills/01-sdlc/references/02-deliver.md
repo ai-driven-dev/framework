@@ -2,7 +2,7 @@
 
 ## Behavior
 
-Plan the contract with `/aidd-dev:01-plan`, sized to the change, then give the `executor` agent the plan's folder, not its steps: it implements the plan with `/aidd-dev:02-implement`, then asserts the work with `/aidd-dev:03-assert`. A failing assert report goes back to the executor, which repairs the code, in its own commit when the plan did not cause the failure, and asserts again. Run an end-to-end journey after every other validation when the plan calls for one, and none otherwise.
+Turn the contract into a plan, then give the `executor` agent the plan. It implements it, calls the validation skills, and repairs whatever they report until they pass. Run an end-to-end journey after every other validation when the plan calls for one, and none otherwise.
 
 Commit and push the validated work through the commit skill. Send only the clean committed candidate to Check.
 
