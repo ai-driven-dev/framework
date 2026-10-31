@@ -1,5 +1,6 @@
-// C1 to C7: each code link resolves, every file under a code root is linked or ignored, and UI
-// code holds no colour literal. Other literals and non-web code are stated limits.
+// C1 to C8: each code link resolves, every file under a code root is linked or ignored, UI code
+// outside its tests holds no colour literal, and the code's token file exists. Other literals
+// and non-web code are stated limits.
 const fs = require("node:fs");
 const path = require("node:path");
 const { list } = require("./markdown.cjs");
@@ -10,7 +11,10 @@ const { walk, text, relative, isUnder } = require("./project.cjs");
 const EXPORT_SEPARATOR = "#";
 const PACKAGE_PREFIX = "package:";
 const CODE_ROOTS_KEY = "code-roots";
+const CODE_TOKENS_KEY = "code-tokens"; // where the code consumes the tokens: generated from them, so no literal there is a fault
 const IGNORE_KEY = "ignore";
+// A test or a mock states colours to check them, as a token contract test does.
+const TEST_FILE = /(?:^|\/)(?:__tests__|__mocks__)\/|\.(?:test|spec)\.[^/]+$/;
 const STYLESHEET_EXTENSIONS = [".css", ".scss"];
 const SCRIPT_EXTENSIONS = [".js", ".jsx", ".ts", ".tsx", ".vue", ".svelte"];
 const SCANNED_EXTENSIONS = [...STYLESHEET_EXTENSIONS, ...SCRIPT_EXTENSIONS, ".html"];
@@ -52,11 +56,19 @@ const hasWord = (text, word) => new RegExp(`(?<![\\w$])${word.replace(REGEX_SPEC
 
 const trees = new WeakMap();
 
-/** The code side, walked once per run: every file under a code root, and the ignored prefixes. */
+/** The code's token file system.md names, normalised; null when it names none. */
+function codeTokens(project) {
+  const value = systemOf(project)?.frontMatter[CODE_TOKENS_KEY];
+  return typeof value === "string" && value ? path.posix.normalize(value) : null;
+}
+
+/** The code side, walked once per run: every file under a code root, and the ignored prefixes,
+ * the code's token file among them. */
 function codeTree(project) {
   if (!trees.has(project)) {
     const files = codeRoots(project).flatMap((root) => walk(path.join(project.root, root)).map((file) => relative(project.root, file)));
-    trees.set(project, { files: [...new Set(files)], ignore: prefixes(project, IGNORE_KEY) });
+    const tokenFile = codeTokens(project);
+    trees.set(project, { files: [...new Set(files)], ignore: [...prefixes(project, IGNORE_KEY), ...(tokenFile ? [tokenFile] : [])] });
   }
   return trees.get(project);
 }
@@ -114,10 +126,16 @@ function coverageProblems(project) {
 
 const literalProblems = (pattern, extensions, applies = () => true) => (project) =>
   applies(project)
-    ? scanned(project, extensions).flatMap((file) =>
-        findLiterals(searchable(project, file), pattern).map(({ message }) => ({ file, message }))
-      )
+    ? scanned(project, extensions)
+        .filter((file) => !TEST_FILE.test(file))
+        .flatMap((file) => findLiterals(searchable(project, file), pattern).map(({ message }) => ({ file, message })))
     : [];
+
+function codeTokensProblems(project) {
+  const file = codeTokens(project);
+  if (file === null || fs.existsSync(path.join(project.root, file))) return [];
+  return [{ file: systemOf(project).file, message: `code-tokens "${file}" does not exist` }];
+}
 
 function sharedLinkProblems(project) {
   const owners = new Map();
@@ -146,6 +164,7 @@ const RULES = [
   sharedLinkProblems, // C5
   literalProblems(PATTERNS.physical, STYLESHEET_EXTENSIONS, declaresRightToLeft), // C6
   rootProblems, // C7
+  codeTokensProblems, // C8
 ];
 
 /** Every broken code rule, as `{file, message}`, in rule order. */

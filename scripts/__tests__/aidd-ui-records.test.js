@@ -160,7 +160,7 @@ describe("aidd-ui records and history", () => {
     });
 
     it("names an id two records hold", () => {
-      const screen = ["id: brand", "kind: screen", "status: proposed", "version: 1", "uses: []", "states: [default]", "breakpoints: [mobile]", "route: /brand"];
+      const screen = ["id: brand", "kind: screen", "status: proposed", "version: 1", "uses: []", "tokens: []", "states: [default]", "breakpoints: [mobile]", "route: /brand"];
       put(tmp, `${UI}/screens/brand.md`, record(screen, history(["1", "created", "no", "aidd_docs/tasks/ds-init"])));
       assert.deepEqual(problems(), [`${UI}/screens/brand.md: id "brand" already belongs to ${BRAND}`]);
     });

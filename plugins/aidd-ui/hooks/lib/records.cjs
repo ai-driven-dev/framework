@@ -29,7 +29,7 @@ const KIND_KEYS = {
   atom: COMPONENT_KEYS,
   molecule: COMPONENT_KEYS,
   composition: COMPONENT_KEYS,
-  screen: ["uses", "states", "breakpoints", "route"],
+  screen: ["uses", "tokens", "states", "breakpoints", "route"],
   journey: ["persona"],
   asset: ["type", "file", "alt"],
   review: ["scope", "screens"],
@@ -45,6 +45,7 @@ const FOLDER_KINDS = {
 const COMPONENT_KINDS = FOLDER_KINDS.components;
 const ASSEMBLED_KINDS = ["molecule", "composition"]; // implemented through what they use when no file is their own
 const IMPLEMENTED_KINDS = [...COMPONENT_KINDS, "screen"];
+const TOKENED_KINDS = IMPLEMENTED_KINDS; // components and screens cite the tokens their render uses
 const DESIGN_KINDS = ["system", "brand", "review"];
 const LEVELS = { asset: 0, atom: 1, molecule: 2, composition: 3, screen: 4 }; // an element uses its own level or lower
 
@@ -321,4 +322,4 @@ const RULES = [
 /** Every broken record rule, as `{file, message}`, in rule order. */
 const check = (project) => RULES.flatMap((rule) => rule(project));
 
-module.exports = { check, formatProblem, placed, systemOf, isElement, fm, COMPONENT_KINDS, INTEGER_VERSION, SEMVER };
+module.exports = { check, formatProblem, placed, systemOf, isElement, fm, COMPONENT_KINDS, TOKENED_KINDS, INTEGER_VERSION, SEMVER };

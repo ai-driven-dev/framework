@@ -1,9 +1,10 @@
-// T1 to T8: tokens.json against the DTCG 2025.10 format and color modules, plus this plugin's
-// themes and raw CSS extensions, and components citing semantic tokens only. Composite values are checked for presence only.
+// T1 to T9: tokens.json against the DTCG 2025.10 format and color modules, themes through its
+// Resolver module, raw CSS extensions, and components and screens citing semantic tokens only.
+// Composite values are checked for presence only.
 const fs = require("node:fs");
 const nodePath = require("node:path");
 const { list } = require("./markdown.cjs");
-const { placed, systemOf, COMPONENT_KINDS } = require("./records.cjs");
+const { placed, systemOf, TOKENED_KINDS } = require("./records.cjs");
 const { text } = require("./project.cjs");
 
 const RESERVED_KEYS = ["$value", "$type", "$description", "$extensions", "$deprecated", "$extends", "$schema"];
@@ -12,8 +13,11 @@ const PROPERTY_PREFIX = "$";
 const PATH_SEPARATOR = ".";
 const CSS_PREFIX = "--";
 const CSS_SEPARATOR = "-";
-const THEMES_EXTENSION = "dev.ai-driven.themes";
 const RAW_CSS_EXTENSION = "dev.ai-driven.css"; // a CSS value DTCG cannot hold, such as color-mix() or 100%
+const RESOLVER_FILE = "tokens.resolver.json";
+const RESOLVER_VERSION = "2025.10";
+const THEME_MODIFIER = "theme";
+const THEME_ORDER_REF = `#/modifiers/${THEME_MODIFIER}`;
 const MISSING = "missing";
 const NOT_JSON = "not JSON";
 
@@ -35,6 +39,7 @@ const MAX_ALIAS_DEPTH = 32; // alias cycles are a stated limit; this only stops 
 const FORBIDDEN_IN_NAME = /[{}.]/;
 const ALIAS = /^\{([^{}]+)\}$/;
 const HEX = /^#[0-9a-fA-F]{6}$/;
+const CSS_VARIABLE = /var\(\s*(--[\w-]+)/g;
 
 const isObject = (value) => value !== null && typeof value === "object" && !Array.isArray(value);
 const isNumber = (value) => typeof value === "number" && Number.isFinite(value);
@@ -65,21 +70,30 @@ function walk(node, path, groupType, found) {
 
 const emptyTree = () => ({ tokens: new Map(), groups: new Set(), badNames: [] });
 
-/** A tree no rule can read, with its T1 problem; null when unreadable, which the loader reports. */
-const unusable = (problem) => ({ ...emptyTree(), unusable: true, problem });
-
-/** The tree: its tokens, groups and bad names, or why it cannot be read. */
-function read(project) {
-  if (!fs.existsSync(nodePath.join(project.root, project.tokensFile))) return unusable(MISSING);
-  const source = text(project, project.tokensFile);
-  if (source === null) return unusable(null);
-  let tree;
+/** A JSON object of the design system, or the one problem it earns: null when unreadable,
+ * which the loader reports. */
+function readJson(project, file) {
+  if (!fs.existsSync(nodePath.join(project.root, file))) return { problem: MISSING };
+  const source = text(project, file);
+  if (source === null) return { problem: null };
   try {
-    tree = JSON.parse(source);
+    const value = JSON.parse(source);
+    return isObject(value) ? { value } : { problem: NOT_JSON };
   } catch {
-    return unusable(NOT_JSON);
+    return { problem: NOT_JSON };
   }
-  return isObject(tree) ? walk(tree, [], tree.$type, emptyTree()) : unusable(NOT_JSON);
+}
+
+/** A token file's tree: its tokens, groups and bad names, or why it cannot be read. */
+function readTree(project, file) {
+  const json = readJson(project, file);
+  return json.value ? walk(json.value, [], json.value.$type, emptyTree()) : { ...emptyTree(), unusable: true, problem: json.problem };
+}
+
+/** tokens.json's tree, read once per run. */
+function read(project) {
+  project.tokenTree ??= readTree(project, project.tokensFile);
+  return project.tokenTree;
 }
 
 /** A token's raw CSS value when it carries one: DTCG has no form for it, so no type or shape. */
@@ -140,9 +154,9 @@ const SHAPES = {
 /** What is wrong with a value of `type`, or null. Aliases and composites are not shapes. */
 const shapeProblem = (type, value) => (aliasOf(value) !== undefined || !SHAPES[type] ? null : SHAPES[type](value));
 
-/** A problem builder for tokens.json, naming the token path first. */
-const tokenProblem = (project) => (path, message) => ({ file: project.tokensFile, message: `${path}: ${message}` });
-const themesOf = (token) => (isObject(token.node.$extensions?.[THEMES_EXTENSION]) ? token.node.$extensions[THEMES_EXTENSION] : {});
+/** A problem builder for a token file, tokens.json by default, naming the token path first. */
+const tokenProblem = (project, file = project.tokensFile) => (path, message) => ({ file, message: `${path}: ${message}` });
+const cssName = (path) => `${CSS_PREFIX}${path.join(CSS_SEPARATOR)}`;
 
 function jsonProblems(tree, project) {
   return tree.problem ? [{ file: project.tokensFile, message: tree.problem }] : [];
@@ -190,36 +204,78 @@ function aliasProblems(tree, project) {
   });
 }
 
-/** The first theme system.md declares is the base, held by `$value`; a themed token gives
- * every other one. */
-function themeProblems(tree, project) {
-  const at = tokenProblem(project);
-  const system = systemOf(project);
-  const [base, ...others] = list(system?.frontMatter.themes);
-  return [...tree.tokens].flatMap(([name, token]) => {
-    const themes = themesOf(token);
-    if (Object.keys(themes).length === 0) return [];
-    const missing = system ? others.filter((theme) => !(theme in themes)).map((theme) => at(name, `no value for theme "${theme}"`)) : [];
-    const values = Object.entries(themes).flatMap(([theme, value]) => {
-      if (system && theme === base) return [at(name, `theme "${theme}" is the base, its value is $value`)];
-      if (system && !others.includes(theme)) return [at(name, `theme "${theme}" is not in system.md`)];
-      const type = typeOf(tree, token);
-      const message = shapeProblem(type, value) ?? aliasProblem(tree, value, type);
-      return message ? [at(name, `theme "${theme}": ${message}`)] : [];
-    });
-    return [...missing, ...values];
+/** The Resolver's theme contexts as `{theme: [file]}`, with what keeps it from naming them.
+ * This plugin reads one profile of the module: a set holding tokens.json, then a `theme`
+ * modifier whose contexts are the themes system.md declares, each a list of `$ref` files. */
+function resolverContexts(resolver, themes, project, file) {
+  const at = (message) => ({ file, message });
+  const problems = [];
+  if (resolver.version !== RESOLVER_VERSION) problems.push(at(`version must be "${RESOLVER_VERSION}"`));
+  const holdsTokens = Object.values(isObject(resolver.sets) ? resolver.sets : {}).some((set) => (set?.sources ?? []).some((source) => source?.$ref === nodePath.posix.basename(project.tokensFile)));
+  if (!holdsTokens) problems.push(at(`no set holds ${nodePath.posix.basename(project.tokensFile)}`));
+  const modifier = resolver.modifiers?.[THEME_MODIFIER];
+  if (!isObject(modifier) || !isObject(modifier.contexts)) return { problems: [...problems, at(`no "${THEME_MODIFIER}" modifier with contexts`)], contexts: {} };
+  if (!(resolver.resolutionOrder ?? []).some((step) => step?.$ref === THEME_ORDER_REF)) problems.push(at(`resolutionOrder never applies ${THEME_ORDER_REF}`));
+  if (modifier.default !== themes[0]) problems.push(at(`the theme modifier's default must be "${themes[0]}", the first theme in system.md`));
+  for (const theme of themes) if (!Object.hasOwn(modifier.contexts, theme)) problems.push(at(`no context for theme "${theme}"`));
+  const contexts = {};
+  for (const [theme, sources] of Object.entries(modifier.contexts)) {
+    if (!themes.includes(theme)) problems.push(at(`context "${theme}" is not a theme in system.md`));
+    const refs = (Array.isArray(sources) ? sources : []).map((source) => source?.$ref);
+    if (refs.some((ref) => typeof ref !== "string")) problems.push(at(`context "${theme}": each source is {"$ref": "<file>"}`));
+    contexts[theme] = refs.filter((ref) => typeof ref === "string").map((ref) => nodePath.posix.join(nodePath.posix.dirname(file), ref));
+  }
+  return { problems, contexts };
+}
+
+/** What a theme file earns: each token it redefines exists in tokens.json, keeps its type, and
+ * holds a value of that type. */
+function themeFileProblems(tree, project, theme, file) {
+  const themed = readTree(project, file);
+  if (themed.unusable) return themed.problem ? [{ file, message: themed.problem }] : [];
+  const at = tokenProblem(project, file);
+  return [...themed.tokens].flatMap(([name, token]) => {
+    const base = tree.tokens.get(name);
+    if (!base) return [at(name, `theme "${theme}" redefines no token of tokens.json`)];
+    const type = typeOf(tree, base);
+    if (token.node.$type !== undefined && token.node.$type !== type) return [at(name, `$type "${token.node.$type}" differs from tokens.json's "${type}"`)];
+    const message = shapeProblem(type, token.node.$value) ?? aliasProblem(tree, token.node.$value, type);
+    return message ? [at(name, `theme "${theme}": ${message}`)] : [];
   });
 }
 
-function componentTokenProblems(tree, project) {
+/** The first theme system.md declares is the base, held by tokens.json; every other one is a
+ * context of tokens.resolver.json, whose files redefine base tokens only. */
+function themeProblems(tree, project) {
+  const themes = list(systemOf(project)?.frontMatter.themes);
+  const file = nodePath.posix.join(nodePath.posix.dirname(project.tokensFile), RESOLVER_FILE);
+  const resolver = readJson(project, file);
+  if (resolver.problem === MISSING && themes.length < 2) return [];
+  if (!resolver.value) return resolver.problem ? [{ file, message: resolver.problem }] : [];
+  const { problems, contexts } = resolverContexts(resolver.value, themes, project, file);
+  if (tree.unusable) return problems; // a theme file is read against tokens.json, which T1 names
+  return [...problems, ...Object.entries(contexts).flatMap(([theme, files]) => files.flatMap((themeFile) => themeFileProblems(tree, project, theme, themeFile)))];
+}
+
+/** A raw CSS value's `var()`s name tokens: they are its dependencies. */
+function rawCssProblems(tree, project) {
+  const at = tokenProblem(project);
+  const names = new Set([...tree.tokens.values()].map((token) => cssName(token.path)));
+  return [...tree.tokens]
+    .filter(([, token]) => typeof rawCssOf(token) === "string")
+    .flatMap(([name, token]) => [...rawCssOf(token).matchAll(CSS_VARIABLE)].filter((match) => !names.has(match[1])).map((match) => at(name, `var(${match[1]}) names no token`)));
+}
+
+/** Components and screens, which cite tokens. */
+const tokened = (project) => placed(project).filter((record) => TOKENED_KINDS.includes(record.frontMatter.kind));
+
+function citedTokenProblems(tree, project) {
   if (tree.unusable) return [];
-  return placed(project)
-    .filter((record) => COMPONENT_KINDS.includes(record.frontMatter.kind))
-    .flatMap((record) =>
-      list(record.frontMatter.tokens)
-        .filter((name) => !tree.tokens.has(name))
-        .map((name) => ({ file: record.file, message: `token "${name}" is not in tokens.json` }))
-    );
+  return tokened(project).flatMap((record) =>
+    list(record.frontMatter.tokens)
+      .filter((name) => !tree.tokens.has(name))
+      .map((name) => ({ file: record.file, message: `token "${name}" is not in tokens.json` }))
+  );
 }
 
 /** Whether a token path sits under a group system.md declares primitive. */
@@ -227,13 +283,11 @@ const isPrimitive = (name, groups) => groups.some((group) => name === group || n
 
 function primitiveProblems(tree, project) {
   const groups = list(systemOf(project)?.frontMatter.primitives);
-  return placed(project)
-    .filter((record) => COMPONENT_KINDS.includes(record.frontMatter.kind))
-    .flatMap((record) =>
-      list(record.frontMatter.tokens)
-        .filter((name) => isPrimitive(name, groups))
-        .map((name) => ({ file: record.file, message: `token "${name}" is a primitive, use a semantic token` }))
-    );
+  return tokened(project).flatMap((record) =>
+    list(record.frontMatter.tokens)
+      .filter((name) => isPrimitive(name, groups))
+      .map((name) => ({ file: record.file, message: `token "${name}" is a primitive, use a semantic token` }))
+  );
 }
 
 const RULES = [
@@ -243,8 +297,9 @@ const RULES = [
   shapeProblems, // T4
   aliasProblems, // T5
   themeProblems, // T6
-  componentTokenProblems, // T7
+  citedTokenProblems, // T7
   primitiveProblems, // T8
+  rawCssProblems, // T9
 ];
 
 /** Every broken token rule, as `{file, message}`, in rule order. */
@@ -257,8 +312,10 @@ function check(project) {
  * cannot be read, so renders do not repeat T1. */
 function cssNames(project) {
   const tree = read(project);
-  if (tree.unusable) return null;
-  return new Set([...tree.tokens.values()].map((token) => `${CSS_PREFIX}${token.path.join(CSS_SEPARATOR)}`));
+  return tree.unusable ? null : new Set([...tree.tokens.values()].map((token) => cssName(token.path)));
 }
 
-module.exports = { check, cssNames };
+/** A token path's CSS custom property. */
+const cssNameOf = (name) => cssName(name.split(PATH_SEPARATOR));
+
+module.exports = { check, cssNames, cssNameOf };

@@ -1,9 +1,9 @@
-// V1 to V6: each component and screen has its HTML render, showing every variant and state
-// through tokens alone.
+// V1 to V7: each component and screen has its HTML render, showing every variant and state
+// through the tokens its record declares alone.
 const path = require("node:path");
 const { list } = require("./markdown.cjs");
 const { placed, systemOf, COMPONENT_KINDS } = require("./records.cjs");
-const { cssNames } = require("./tokens.cjs");
+const { cssNames, cssNameOf } = require("./tokens.cjs");
 const { text, RENDER_EXTENSION } = require("./project.cjs");
 
 const RENDERED_KINDS = [...COMPONENT_KINDS, "screen"];
@@ -81,6 +81,25 @@ function referenceProblems(project) {
   });
 }
 
+/** A render uses only the tokens its record declares, so an impact report read from the
+ * records misses none of them. */
+function declaredProblems(project) {
+  const tokens = cssNames(project);
+  if (tokens === null) return [];
+  return rendered(project)
+    .filter((record) => project.renders.includes(renderOf(record)))
+    .flatMap((record) => {
+      const declared = new Set(list(record.frontMatter.tokens).map(cssNameOf));
+      return readRender(project, renderOf(record))
+        .split(LINE_BREAK)
+        .flatMap((line, index) =>
+          [...line.matchAll(CUSTOM_PROPERTY)]
+            .filter((match) => tokens.has(match[1]) && !declared.has(match[1]))
+            .map((match) => ({ file: renderOf(record), message: `line ${index + 1}: var(${match[1]}) is a token ${record.frontMatter.id} does not declare` }))
+        );
+    });
+}
+
 const literalProblems = (pattern, applies = () => true) => (project) =>
   applies(project) ? project.renders.flatMap((file) => findLiterals(readRender(project, file), pattern).map(({ message }) => ({ file, message }))) : [];
 
@@ -91,6 +110,7 @@ const RULES = [
   literalProblems(PATTERNS.colour), // V4
   literalProblems(PATTERNS.physical, declaresRightToLeft), // V5
   literalProblems(PATTERNS.unit), // V6
+  declaredProblems, // V7
 ];
 
 /** Every broken render rule, as `{file, message}`, in rule order. */

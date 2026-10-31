@@ -57,7 +57,7 @@ describe("aidd-ui code link", () => {
 
     it("reads code-roots and ignore written with a leading ./", () => {
       edit(tmp, SYSTEM, "code-roots: [src/ui]", "code-roots: [./src/ui]");
-      edit(tmp, SYSTEM, "ignore: [src/ui/tokens.css]", "ignore: [./src/ui/tokens.css]");
+      edit(tmp, SYSTEM, "ignore: [src/ui/vendor]", "ignore: [./src/ui/vendor]");
       assert.deepEqual(problems(), []);
     });
 
@@ -119,7 +119,17 @@ describe("aidd-ui code link", () => {
     });
 
     it("skips an ignored file", () => {
+      append("src/ui/vendor/reset.css", ".x { color: #ff0000; }");
+      assert.deepEqual(problems(), []);
+    });
+
+    it("skips the code's token file, generated from the tokens", () => {
       append("src/ui/tokens.css", ".x { color: #ff0000; }");
+      assert.deepEqual(problems(), []);
+    });
+
+    it("skips a test, which states colours to check them", () => {
+      put(tmp, "src/ui/Button.test.tsx", 'expect(color).toBe("#336699");\n');
       assert.deepEqual(problems(), []);
     });
   });
@@ -148,6 +158,13 @@ describe("aidd-ui code link", () => {
       edit(tmp, SYSTEM, "directions: [ltr, rtl]", "directions: [ltr]");
       linkedStylesheet(".SearchField { margin-left: 0; }\n");
       assert.deepEqual(problems(), []);
+    });
+  });
+
+  describe("C8 code tokens", () => {
+    it("names a code token file that does not exist", () => {
+      fs.rmSync(path.join(tmp, "src/ui/tokens.css"));
+      assert.deepEqual(problems(), [`${SYSTEM}: code-tokens "src/ui/tokens.css" does not exist`]);
     });
   });
 

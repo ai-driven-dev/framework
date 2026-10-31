@@ -17,6 +17,8 @@ const KEYBOARD = "## Keyboard\n\nTab focuses it, Enter or Space activates it.";
 
 const usage = (when) => `## Usage\n\n${when}`;
 
+const BUTTON_TOKENS = ["color.action.default", "color.text.default", "space.md", "border.thin", "motion.fast", "font.body", "font.weight.bold"];
+
 const SYSTEM = record(
   [
     "id: system",
@@ -31,7 +33,8 @@ const SYSTEM = record(
     "directions: [ltr, rtl]",
     "primitives: [color.brand]",
     "code-roots: [src/ui]",
-    "ignore: [src/ui/tokens.css]",
+    "code-tokens: src/ui/tokens.css",
+    "ignore: [src/ui/vendor]",
     "libraries: [@radix-ui/react-dialog]",
   ],
   "# Design system",
@@ -59,9 +62,6 @@ const TOKENS = {
     brand: {
       primary: {
         $value: { colorSpace: "srgb", components: [0.2, 0.4, 0.6], hex: "#336699" },
-        $extensions: {
-          "dev.ai-driven.themes": { dark: { colorSpace: "srgb", components: [0.4, 0.6, 0.8], hex: "#6699cc" } },
-        },
       },
     },
     text: { default: { $value: "{color.brand.primary}" } },
@@ -74,6 +74,16 @@ const TOKENS = {
     body: { $type: "fontFamily", $value: ["Inter", "sans-serif"] },
     weight: { bold: { $type: "fontWeight", $value: 700 } },
   },
+};
+
+// The dark theme redefines one base token; the Resolver names its file.
+const DARK = { color: { brand: { primary: { $value: { colorSpace: "srgb", components: [0.4, 0.6, 0.8], hex: "#6699cc" } } } } };
+
+const RESOLVER = {
+  version: "2025.10",
+  sets: { base: { sources: [{ $ref: "tokens.json" }] } },
+  modifiers: { theme: { contexts: { light: [], dark: [{ $ref: "themes/dark.json" }] }, default: "light" } },
+  resolutionOrder: [{ $ref: "#/sets/base" }, { $ref: "#/modifiers/theme" }],
 };
 
 const ICON = record(
@@ -92,7 +102,7 @@ const BUTTON = record(
     "version: 1",
     "implemented-version: 1",
     "uses: []",
-    "tokens: [color.action.default, color.text.default, space.md, border.thin, motion.fast, font.body, font.weight.bold]",
+    `tokens: [${BUTTON_TOKENS.join(", ")}]`,
     "variants: [primary, secondary]",
     "states: [default, hover, focus, disabled]",
     "interactive: yes",
@@ -172,6 +182,7 @@ const HOME = record(
     "version: 1",
     "implemented-version: 1",
     "uses: [search-field, dialog]",
+    "tokens: [space.md, color.text.default]",
     "states: [default, empty, loading, error]",
     "breakpoints: [mobile, desktop]",
     "route: /",
@@ -204,37 +215,27 @@ const REVIEW = record(
   history(FIRST_ROW)
 );
 
-const STYLE = [
-  ".ui {",
-  "  padding-block: var(--space-md);",
-  "  padding-inline: var(--space-md);",
-  "  margin-inline-start: 0;",
-  "  color: var(--color-text-default);",
-  "  background: var(--color-brand-primary);",
-  "  border: var(--border-thin) solid var(--color-brand-primary);",
-  "  font-family: var(--font-body);",
-  "  font-weight: var(--font-weight-bold);",
-  "  transition: background var(--motion-fast);",
-  "  text-align: start;",
-  "}",
-].join("\n");
+/** A render's style: one custom property per token its record declares, so it uses them all
+ * and nothing else. */
+const style = (tokens) => [".ui {", ...tokens.map((token, index) => `  --use-${index}: var(--${token.replaceAll(".", "-")});`), "}"].join("\n");
 
-const render = (title, body) =>
-  `<!doctype html>\n<html lang="en">\n<head>\n<meta charset="utf-8">\n<title>${title}</title>\n<style>\n${STYLE}\n</style>\n</head>\n<body>\n${body.join("\n")}\n</body>\n</html>\n`;
+const render = (title, tokens, body) =>
+  `<!doctype html>\n<html lang="en">\n<head>\n<meta charset="utf-8">\n<title>${title}</title>\n<style>\n${style(tokens)}\n</style>\n</head>\n<body>\n${body.join("\n")}\n</body>\n</html>\n`;
 
 const statesOf = (variant, states) =>
   states.map((state) => `<button class="ui" data-variant="${variant}" data-state="${state}">Search</button>`);
 
 const RENDERS = {
-  "components/button.html": render("button", [
+  "components/button.html": render("button", BUTTON_TOKENS, [
     ...statesOf("primary", ["default", "hover", "focus", "disabled"]),
     ...statesOf("secondary", ["default", "hover", "focus", "disabled"]),
   ]),
-  "components/search-field.html": render("search-field", statesOf("default", ["default", "hover", "focus", "disabled"])),
-  "components/dialog.html": render("dialog", statesOf("default", ["default", "hover", "focus", "disabled"])),
-  "components/old-button.html": render("old-button", statesOf("default", ["default"])),
+  "components/search-field.html": render("search-field", ["space.md", "color.text.default"], statesOf("default", ["default", "hover", "focus", "disabled"])),
+  "components/dialog.html": render("dialog", ["space.md"], statesOf("default", ["default", "hover", "focus", "disabled"])),
+  "components/old-button.html": render("old-button", ["color.action.default"], statesOf("default", ["default"])),
   "screens/home.html": render(
     "home",
+    ["space.md", "color.text.default"],
     ["default", "empty", "loading", "error"].map((state) => `<section class="ui" data-state="${state}">Home, ${state}</section>`)
   ),
 };
@@ -243,12 +244,15 @@ const CODE = {
   "src/ui/Button.tsx": 'export function Button() {\n  return <button className="ui">Search</button>;\n}\n',
   "src/ui/HomePage.tsx": 'import { Button } from "./Button";\n\nexport function HomePage() {\n  return <main className="ui"><Button /></main>;\n}\n',
   "src/ui/tokens.css": ":root {\n  --color-brand-primary: #336699;\n  --space-md: 1rem;\n}\n",
+  "src/ui/vendor/reset.css": "body { margin: 0; color: #000000; }\n",
 };
 
 const FILES = {
   [`${UI}/system.md`]: SYSTEM,
   [`${UI}/brand.md`]: BRAND,
   [`${UI}/tokens.json`]: `${JSON.stringify(TOKENS, null, 2)}\n`,
+  [`${UI}/tokens.resolver.json`]: `${JSON.stringify(RESOLVER, null, 2)}\n`,
+  [`${UI}/themes/dark.json`]: `${JSON.stringify(DARK, null, 2)}\n`,
   [`${UI}/assets/icon-search.md`]: ICON,
   [`${UI}/assets/icon-search.svg`]: ICON_FILE,
   [`${UI}/components/button.md`]: BUTTON,

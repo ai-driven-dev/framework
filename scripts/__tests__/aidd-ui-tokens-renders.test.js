@@ -3,7 +3,7 @@ const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
 const { describe, it, beforeEach, afterEach } = require("node:test");
-const { UI, writeProject, edit, editTokens } = require("./fixtures/aidd-ui/project.js");
+const { UI, writeProject, edit, editTokens, put } = require("./fixtures/aidd-ui/project.js");
 
 // Each rule has one mutation of the valid project, and the test asserts the whole problem
 // list: dropping the rule turns its own test red and leaves every other one green.
@@ -18,7 +18,10 @@ const BUTTON = `${UI}/components/button.md`;
 const BUTTON_RENDER = `${UI}/components/button.html`;
 const DIALOG = `${UI}/components/dialog.md`;
 const DIALOG_RENDER = `${UI}/components/dialog.html`;
-const INSERTED_LINE = 30; // the line before </body> in button.html
+const HOME = `${UI}/screens/home.md`;
+const RESOLVER = `${UI}/tokens.resolver.json`;
+const DARK = `${UI}/themes/dark.json`;
+const INSERTED_LINE = 27; // the line before </body> in button.html
 
 let tmp;
 
@@ -140,47 +143,87 @@ describe("aidd-ui tokens and renders", () => {
   });
 
   describe("T6 themes", () => {
-    const themes = (tree) => tree.color.brand.primary.$extensions["dev.ai-driven.themes"];
+    /** Rewrites a JSON file of the project through `change`, which edits it in place. */
+    const editJson = (file, change) => {
+      const full = path.join(tmp, file);
+      const value = JSON.parse(fs.readFileSync(full, "utf8"));
+      change(value);
+      fs.writeFileSync(full, JSON.stringify(value));
+    };
+    const contexts = (resolver) => resolver.modifiers.theme.contexts;
 
-    it("names a theme system.md lacks", () => {
-      editTokens(tmp, (tree) => {
-        themes(tree).sepia = themes(tree).dark;
-        delete themes(tree).dark;
+    it("names a missing resolver when system.md declares more than one theme", () => {
+      fs.rmSync(path.join(tmp, RESOLVER));
+      assert.deepEqual(problems(), [`${RESOLVER}: missing`]);
+    });
+
+    it("needs no resolver for one theme", () => {
+      fs.rmSync(path.join(tmp, RESOLVER));
+      edit(tmp, SYSTEM, "themes: [light, dark]", "themes: [light]");
+      assert.deepEqual(problems(), []);
+    });
+
+    const resolverCases = [
+      ["a version other than 2025.10", (r) => (r.version = "2024"), 'version must be "2025.10"'],
+      ["no set holding tokens.json", (r) => (r.sets.base.sources = []), "no set holds tokens.json"],
+      ["no theme modifier", (r) => delete r.modifiers.theme, 'no "theme" modifier with contexts'],
+      ["a resolution order that never applies the themes", (r) => r.resolutionOrder.pop(), "resolutionOrder never applies #/modifiers/theme"],
+      ["a default that is not the first theme", (r) => (r.modifiers.theme.default = "dark"), `the theme modifier's default must be "light", the first theme in system.md`],
+      ["a theme without its context", (r) => delete contexts(r).dark, 'no context for theme "dark"'],
+      ["a context system.md lacks", (r) => (contexts(r).sepia = []), 'context "sepia" is not a theme in system.md'],
+      ["a source that is no file reference", (r) => contexts(r).dark.push({ color: {} }), 'context "dark": each source is {"$ref": "<file>"}'],
+    ];
+    for (const [name, change, message] of resolverCases) {
+      it(`names ${name}`, () => {
+        editJson(RESOLVER, change);
+        assert.deepEqual(problems(), [`${RESOLVER}: ${message}`]);
       });
-      assert.deepEqual(problems(), [
-        `${TOKENS}: color.brand.primary: no value for theme "dark"`,
-        `${TOKENS}: color.brand.primary: theme "sepia" is not in system.md`,
-      ]);
+    }
+
+    it("names a theme file the resolver names but the project lacks", () => {
+      fs.rmSync(path.join(tmp, DARK));
+      assert.deepEqual(problems(), [`${DARK}: missing`]);
     });
 
-    it("names a themed token lacking a declared theme", () => {
-      editTokens(tmp, (tree) => delete themes(tree).dark);
-      editTokens(tmp, (tree) => (themes(tree).light = themes(tree).dark ?? { colorSpace: "srgb", components: [1, 1, 1] }));
-      assert.deepEqual(problems(), [
-        `${TOKENS}: color.brand.primary: no value for theme "dark"`,
-        `${TOKENS}: color.brand.primary: theme "light" is the base, its value is $value`,
-      ]);
+    it("names a themed token tokens.json lacks", () => {
+      editJson(DARK, (tree) => (tree.color.ghost = { $value: "{color.brand.primary}" }));
+      assert.deepEqual(problems(), [`${DARK}: color.ghost: theme "dark" redefines no token of tokens.json`]);
     });
 
-    it("names a theme value aliasing a token of another type", () => {
-      editTokens(tmp, (tree) => (themes(tree).dark = "{space.md}"));
-      assert.deepEqual(problems(), [`${TOKENS}: color.brand.primary: theme "dark": alias {space.md} is a dimension, not a color`]);
+    it("names a themed token whose type differs from its base", () => {
+      editJson(DARK, (tree) => (tree.color.brand.primary.$type = "dimension"));
+      assert.deepEqual(problems(), [`${DARK}: color.brand.primary: $type "dimension" differs from tokens.json's "color"`]);
     });
 
     it("names a theme value of the wrong shape", () => {
-      editTokens(tmp, (tree) => (themes(tree).dark.components = [0.4, 0.6]));
-      assert.deepEqual(problems(), [`${TOKENS}: color.brand.primary: theme "dark": components must be three numbers or "none"`]);
+      editJson(DARK, (tree) => (tree.color.brand.primary.$value.components = [0.4, 0.6]));
+      assert.deepEqual(problems(), [`${DARK}: color.brand.primary: theme "dark": components must be three numbers or "none"`]);
+    });
+
+    it("names a theme value aliasing a token of another type", () => {
+      editJson(DARK, (tree) => (tree.color.brand.primary.$value = "{space.md}"));
+      assert.deepEqual(problems(), [`${DARK}: color.brand.primary: theme "dark": alias {space.md} is a dimension, not a color`]);
     });
   });
 
-  describe("T7 component tokens", () => {
+  describe("T7 cited tokens", () => {
     it("names a component token absent from tokens.json", () => {
       edit(tmp, BUTTON, "tokens: [color.action.default,", "tokens: [space.huge, color.action.default,");
       assert.deepEqual(problems(), [`${BUTTON}: token "space.huge" is not in tokens.json`]);
     });
+
+    it("names a screen token absent from tokens.json", () => {
+      edit(tmp, HOME, "tokens: [space.md,", "tokens: [space.huge, space.md,");
+      assert.deepEqual(problems(), [`${HOME}: token "space.huge" is not in tokens.json`]);
+    });
   });
 
   describe("raw CSS values", () => {
+    it("names a var() in a raw value that names no token, since it is a dependency", () => {
+      addToken("x", { $extensions: { "dev.ai-driven.css": "color-mix(in srgb, var(--color-brand-gone) 20%, white)" } });
+      assert.deepEqual(problems(), [`${TOKENS}: misc.x: var(--color-brand-gone) names no token`]);
+    });
+
     it("accepts a value DTCG cannot hold under its extension", () => {
       addToken("x", { $extensions: { "dev.ai-driven.css": "color-mix(in srgb, var(--color-brand-primary) 20%, white)" } });
       assert.deepEqual(problems(), []);
@@ -258,6 +301,13 @@ describe("aidd-ui tokens and renders", () => {
       addToRender("<style>@media (min-width: 768px) { .ui { color: var(--color-text-default); } }</style>");
       addToRender("<style>@container (width > 40rem) { .ui { color: var(--color-text-default); } }</style>");
       assert.deepEqual(problems(), []);
+    });
+  });
+
+  describe("V7 declared tokens", () => {
+    it("names a render using a token its record does not declare", () => {
+      edit(tmp, `${UI}/components/dialog.html`, "</body>", '<p style="color: var(--color-text-default)">x</p>\n</body>');
+      assert.deepEqual(problems(), [`${DIALOG_RENDER}: line 17: var(--color-text-default) is a token dialog does not declare`]);
     });
   });
 
