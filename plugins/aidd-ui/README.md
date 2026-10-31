@@ -68,8 +68,9 @@ It prints `VALID`, or one `✗ <file>: <message>` line per problem and exits 1.
 ## Limits
 
 - Without `node` on `PATH`, the hook does nothing.
-- A problem comes back in the same turn on Claude Code, Codex and Copilot CLI. On OpenCode and Kilo it does not; Cursor is unverified.
-- Codex shows the problem as a blocked edit, though the file is written; a small model may report the write as failed.
+- After a write under the design system or a code root, the problems go back to the model in the same turn on Claude Code, Codex and Copilot CLI.
+- At the end of a turn that wrote such a file, the hook blocks once while problems remain. A forced continuation is never blocked again. The mark lives in the OS temp directory; without a session id, no end-of-turn check runs.
+- On OpenCode and Kilo the problems do not reach the model; OpenCode V2 runs the hook but its answer does not reach the model either. Cursor is unverified.
 - Codex runs the hook only once you trust it; Copilot only in a folder it trusts, and says nothing otherwise.
 - A file written by a shell command, or deleted by a patch, is not seen.
 - Composite tokens are checked for a `$value`, not for its shape.

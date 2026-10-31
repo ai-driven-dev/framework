@@ -24,14 +24,18 @@ const FAILURES = [
 ];
 
 let tmp;
+let sid;
+let sessionCount = 0;
 
 beforeEach(() => {
   tmp = fs.mkdtempSync(path.join(os.tmpdir(), "aidd-ui-validate-"));
   writeProject(tmp);
+  sid = `t${process.pid}-${sessionCount++}`;
 });
 
 afterEach(() => {
   fs.rmSync(tmp, { recursive: true, force: true });
+  fs.rmSync(path.join(os.tmpdir(), `aidd-ui-turn-${sid}`), { force: true });
   assert.equal(fs.existsSync(tmp), false);
 });
 
@@ -53,19 +57,21 @@ function hook(input) {
   return { code: run.status, out: run.stdout, err: run.stderr };
 }
 
-const postToolUse = (filePath) => JSON.stringify({ hook_event_name: "PostToolUse", cwd: tmp, tool_name: "Write", tool_input: { file_path: filePath } });
+// Claude Code and Codex carry tool_response, Copilot tool_result: that is how the hook tells them apart.
+const postToolUse = (filePath) => JSON.stringify({ hook_event_name: "PostToolUse", cwd: tmp, session_id: sid, tool_name: "Write", tool_input: { file_path: filePath }, tool_response: {} });
 /** A patch as Codex's apply_patch and Copilot's Edit write it: one header line per file. */
 const patch = (...headers) => `*** Begin Patch\n${headers.map((header) => `*** ${header}\n@@\n+x\n`).join("")}*** End Patch`;
-const codexPatch = (...headers) => JSON.stringify({ hook_event_name: "PostToolUse", cwd: tmp, tool_name: "apply_patch", tool_input: { command: patch(...headers) } });
-const copilotPatch = (...headers) => JSON.stringify({ hook_event_name: "PostToolUse", cwd: tmp, tool_name: "Edit", tool_input: patch(...headers) });
+const codexPatch = (...headers) => JSON.stringify({ hook_event_name: "PostToolUse", cwd: tmp, session_id: sid, tool_name: "apply_patch", tool_input: { command: patch(...headers) }, tool_response: {} });
+const copilotPatch = (...headers) => JSON.stringify({ hook_event_name: "PostToolUse", cwd: tmp, session_id: sid, tool_name: "Edit", tool_input: patch(...headers), tool_result: {} });
 const sessionStart = () => JSON.stringify({ hook_event_name: "SessionStart", cwd: tmp, source: "startup" });
+const stop = (active = false) => JSON.stringify({ hook_event_name: "Stop", cwd: tmp, session_id: sid, stop_hook_active: active });
 const silent = { code: 0, out: "", err: "" };
-// Claude Code and Codex read stderr at exit 2, Copilot only the additionalContext on stdout.
-// The first line says the write landed: a Codex model read a bare exit 2 as a refused edit.
-const handedBack = (problems) => {
-  const text = [`aidd-ui: the write was saved, fix ${problems.length} problems:`, ...problems].join("\n");
-  return { code: 2, out: JSON.stringify({ additionalContext: text }), err: `${text}\n` };
-};
+const feedbackText = (problems) => [`aidd-ui: the write was saved, fix ${problems.length} problems:`, ...problems].join("\n");
+// Claude Code and Codex read additionalContext under hookSpecificOutput; Codex fails the hook on any other key.
+const claudeFeedback = (problems) => ({ code: 0, out: JSON.stringify({ hookSpecificOutput: { hookEventName: "PostToolUse", additionalContext: feedbackText(problems) } }), err: "" });
+// Copilot reads only a top-level additionalContext.
+const copilotFeedback = (problems) => ({ code: 0, out: JSON.stringify({ additionalContext: feedbackText(problems) }), err: "" });
+const finish = (problems) => ({ code: 0, out: JSON.stringify({ decision: "block", reason: [`aidd-ui: the design system has ${problems.length} problems, fix them before you finish:`, ...problems].join("\n") }), err: "" });
 
 describe("aidd-ui validator entries", () => {
   it("prints VALID for the valid project", () => {
@@ -89,34 +95,34 @@ describe("aidd-ui validator entries", () => {
   describe("E3 PostToolUse", () => {
     it("hands the problems back when a write lands under aidd_docs/ui/", () => {
       breakOnePerFamily();
-      assert.deepEqual(hook(postToolUse(path.join(tmp, BRAND))), handedBack(FAILURES));
+      assert.deepEqual(hook(postToolUse(path.join(tmp, BRAND))), claudeFeedback(FAILURES));
     });
 
     it("hands the problems back when a write lands under a code root", () => {
       breakOnePerFamily();
-      assert.deepEqual(hook(postToolUse(path.join(tmp, "src/ui/Button.tsx"))), handedBack(FAILURES));
+      assert.deepEqual(hook(postToolUse(path.join(tmp, "src/ui/Button.tsx"))), claudeFeedback(FAILURES));
     });
 
     it("hands the problems back when a write lands under a code root written with a leading ./", () => {
       edit(tmp, `${UI}/system.md`, "code-roots: [src/ui]", "code-roots: [./src/ui]");
       breakOnePerFamily();
-      assert.deepEqual(hook(postToolUse(path.join(tmp, "src/ui/Button.tsx"))), handedBack(FAILURES));
+      assert.deepEqual(hook(postToolUse(path.join(tmp, "src/ui/Button.tsx"))), claudeFeedback(FAILURES));
     });
 
     it("hands the problems back when a Codex patch updates a file under aidd_docs/ui/", () => {
       breakOnePerFamily();
-      assert.deepEqual(hook(codexPatch(`Update File: ${path.join(tmp, BRAND)}`)), handedBack(FAILURES));
+      assert.deepEqual(hook(codexPatch(`Update File: ${path.join(tmp, BRAND)}`)), claudeFeedback(FAILURES));
     });
 
     it("hands the problems back when a Copilot patch adds a file under aidd_docs/ui/ after one elsewhere", () => {
       breakOnePerFamily();
-      assert.deepEqual(hook(copilotPatch(`Add File: ${path.join(tmp, "README.md")}`, `Add File: ${path.join(tmp, BRAND)}`)), handedBack(FAILURES));
+      assert.deepEqual(hook(copilotPatch(`Add File: ${path.join(tmp, "README.md")}`, `Add File: ${path.join(tmp, BRAND)}`)), copilotFeedback(FAILURES));
     });
 
     it("hands the problems back when Copilot's Edit replaces a string in a file under aidd_docs/ui/", () => {
       breakOnePerFamily();
-      const input = JSON.stringify({ hook_event_name: "PostToolUse", cwd: tmp, tool_name: "Edit", tool_input: { path: path.join(tmp, BRAND), old_str: "a", new_str: "b" } });
-      assert.deepEqual(hook(input), handedBack(FAILURES));
+      const input = JSON.stringify({ hook_event_name: "PostToolUse", cwd: tmp, tool_name: "Edit", tool_input: { path: path.join(tmp, BRAND), old_str: "a", new_str: "b" }, tool_result: {} });
+      assert.deepEqual(hook(input), copilotFeedback(FAILURES));
     });
 
     it("stays silent when a patch touches only files elsewhere", () => {
@@ -131,6 +137,66 @@ describe("aidd-ui validator entries", () => {
 
     it("stays silent on a valid project", () => {
       assert.deepEqual(hook(postToolUse(path.join(tmp, BRAND))), silent);
+    });
+  });
+
+  describe("E7 Stop", () => {
+    it("blocks once after a write under aidd_docs/ui/, with the problems as the reason", () => {
+      breakOnePerFamily();
+      hook(postToolUse(path.join(tmp, BRAND)));
+      assert.deepEqual(hook(stop()), finish(FAILURES));
+    });
+
+    it("lets the turn end on the repeated Stop, the one it asked for", () => {
+      breakOnePerFamily();
+      hook(postToolUse(path.join(tmp, BRAND)));
+      hook(stop());
+      assert.deepEqual(hook(stop(true)), silent);
+    });
+
+    it("ends the forced turn even when that turn writes a UI file again", () => {
+      breakOnePerFamily();
+      hook(postToolUse(path.join(tmp, BRAND)));
+      hook(stop());
+      hook(postToolUse(path.join(tmp, BRAND)));
+      assert.deepEqual(hook(stop(true)), silent);
+    });
+
+    it("consumes the turn mark: a later Stop without a new write is silent", () => {
+      breakOnePerFamily();
+      hook(postToolUse(path.join(tmp, BRAND)));
+      hook(stop());
+      assert.deepEqual(hook(stop()), silent);
+    });
+
+    it("stays silent at Stop when no UI file was written this turn", () => {
+      breakOnePerFamily();
+      assert.deepEqual(hook(stop()), silent);
+    });
+
+    it("stays silent at Stop when the write landed elsewhere", () => {
+      breakOnePerFamily();
+      hook(postToolUse(path.join(tmp, "README.md")));
+      assert.deepEqual(hook(stop()), silent);
+    });
+
+    it("stays silent at Stop once the problems are fixed", () => {
+      breakOnePerFamily();
+      hook(postToolUse(path.join(tmp, BRAND)));
+      writeProject(tmp);
+      assert.deepEqual(hook(stop()), silent);
+    });
+
+    it("still hands the problems back when the session id is not a file-name part", () => {
+      breakOnePerFamily();
+      const input = JSON.stringify({ hook_event_name: "PostToolUse", cwd: tmp, session_id: "a/b", tool_name: "Write", tool_input: { file_path: path.join(tmp, BRAND) }, tool_response: {} });
+      assert.deepEqual(hook(input), claudeFeedback(FAILURES));
+    });
+
+    it("stays silent without a session id, since it cannot tell a turn apart", () => {
+      breakOnePerFamily();
+      hook(JSON.stringify({ hook_event_name: "PostToolUse", cwd: tmp, tool_name: "Write", tool_input: { file_path: path.join(tmp, BRAND) }, tool_response: {} }));
+      assert.deepEqual(hook(JSON.stringify({ hook_event_name: "Stop", cwd: tmp })), silent);
     });
   });
 
@@ -167,7 +233,7 @@ describe("aidd-ui validator entries", () => {
       fs.symlinkSync(path.join(tmp, "nowhere.md"), path.join(tmp, DANGLING));
       assert.deepEqual(validate(tmp), { code: 1, out: [UNREADABLE], err: "" });
       assert.deepEqual(hook(sessionStart()), { code: 0, out: `aidd-ui: 1 problems\n${UNREADABLE}\n`, err: "" });
-      assert.deepEqual(hook(postToolUse(path.join(tmp, BRAND))), handedBack([UNREADABLE]));
+      assert.deepEqual(hook(postToolUse(path.join(tmp, BRAND))), claudeFeedback([UNREADABLE]));
     });
 
     it("names an unreadable file under a code root", () => {
