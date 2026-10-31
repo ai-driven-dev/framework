@@ -2,7 +2,7 @@
 
 ## Round {{the count of round headings, this one included}}
 
-- Head: `{{short sha of HEAD before the checks ran}}`{{ plus the working tree, when it held changes}}
+- Head: `{{short sha of HEAD before the checks ran}}`{{", plus the working tree" when it held changes, else nothing}}
 - Verdict: {{PASS | FAIL}}
 
 | Check | Exit | Failure |
