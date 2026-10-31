@@ -66,6 +66,17 @@ describe("aidd-ui code link", () => {
       assert.deepEqual(problems(), [`${BUTTON}: export "Buttn" is not in src/ui/Button.tsx`]);
     });
 
+    it("names an export that is only part of a word in the file", () => {
+      edit(tmp, BUTTON, "#Button", "#Butto");
+      assert.deepEqual(problems(), [`${BUTTON}: export "Butto" is not in src/ui/Button.tsx`]);
+    });
+
+    it("reads code-roots and ignore written with a trailing /", () => {
+      edit(tmp, SYSTEM, "code-roots: [src/ui]", "code-roots: [src/ui/]");
+      edit(tmp, SYSTEM, "ignore: [src/ui/vendor]", "ignore: [src/ui/vendor/]");
+      assert.deepEqual(problems(), []);
+    });
+
     it("names a link without #", () => {
       linkSearch("src/ui/Button.tsx");
       assert.deepEqual(problems(), [`${SEARCH}: code "src/ui/Button.tsx" must be path#Export or package:<name>#Export`]);

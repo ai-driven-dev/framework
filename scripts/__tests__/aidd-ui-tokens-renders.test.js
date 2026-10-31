@@ -136,6 +136,23 @@ describe("aidd-ui tokens and renders", () => {
       assert.deepEqual(problems(), [`${TOKENS}: misc.x: alias {color.brand.primary} is a color, not a dimension`]);
     });
 
+    it("names each token of an alias cycle, and still checks the rest", () => {
+      addToken("a", { $value: "{misc.b}" });
+      addToken("b", { $value: "{misc.a}" });
+      assert.deepEqual(problems(), [`${TOKENS}: misc.a: alias {misc.b} loops back to misc.a`, `${TOKENS}: misc.b: alias {misc.a} loops back to misc.b`]);
+    });
+
+    it("ends the walk from a token that leads into a cycle it is not part of", () => {
+      addToken("a", { $value: "{misc.b}" });
+      addToken("b", { $value: "{misc.a}" });
+      addToken("c", { $value: "{misc.a}" });
+      assert.deepEqual(problems(), [
+        `${TOKENS}: misc.c: no $type on it, its alias or a parent group`,
+        `${TOKENS}: misc.a: alias {misc.b} loops back to misc.a`,
+        `${TOKENS}: misc.b: alias {misc.a} loops back to misc.b`,
+      ]);
+    });
+
     it("names a broken alias once, not again for its missing type", () => {
       addToken("x", { $value: "{color.missing}" });
       assert.deepEqual(problems(), [`${TOKENS}: misc.x: alias {color.missing} names no token`]);
@@ -294,6 +311,13 @@ describe("aidd-ui tokens and renders", () => {
         assert.deepEqual(problems(), [`${BUTTON_RENDER}: line ${INSERTED_LINE}: literal "${literal}", only tokens carry values`]);
       });
     }
+  });
+
+  describe("V6 var() fallbacks", () => {
+    it("leaves a length inside var() alone: the fallback belongs to the token", () => {
+      addToRender('<p style="padding-block: var(--space-md, 16px)">x</p>');
+      assert.deepEqual(problems(), []);
+    });
   });
 
   describe("V6 media and container queries", () => {

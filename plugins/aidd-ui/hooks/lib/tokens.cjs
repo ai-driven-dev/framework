@@ -34,7 +34,6 @@ const FONT_WEIGHT_MAX = 1000;
 const FONT_WEIGHT_KEYWORDS = ["thin", "hairline", "extra-light", "ultra-light", "light", "normal", "regular", "book", "medium", "semi-bold", "demi-bold", "bold", "extra-bold", "ultra-bold", "black", "heavy", "extra-black", "ultra-black"];
 const BEZIER_POINTS = 4;
 const BEZIER_X_INDEXES = [0, 2];
-const MAX_ALIAS_DEPTH = 32; // alias cycles are a stated limit; this only stops the walk
 
 const FORBIDDEN_IN_NAME = /[{}.]/;
 const ALIAS = /^\{([^{}]+)\}$/;
@@ -100,12 +99,24 @@ function read(project) {
 const rawCssOf = (token) => token.node.$extensions?.[RAW_CSS_EXTENSION];
 const isRaw = (token) => rawCssOf(token) !== undefined;
 
-/** A token's `$type`: its own, else its alias target's, else its closest group's. */
-function typeOf(tree, token, depth = 0) {
+/** A token's `$type`: its own, else its alias target's, else its closest group's. A cycle
+ * stops at the token it comes back to. */
+function typeOf(tree, token, seen = new Set()) {
   if (token.node.$type !== undefined) return token.node.$type;
   const target = tree.tokens.get(aliasOf(token.node.$value));
-  if (target && depth < MAX_ALIAS_DEPTH) return typeOf(tree, target, depth + 1);
-  return token.groupType;
+  if (!target || seen.has(target)) return token.groupType;
+  seen.add(token);
+  return typeOf(tree, target, seen);
+}
+
+/** Whether following aliases from `value` comes back to the token `name`. */
+function loopsBack(tree, value, name) {
+  const seen = new Set();
+  for (let target = aliasOf(value); tree.tokens.has(target) && !seen.has(target); target = aliasOf(tree.tokens.get(target).node.$value)) {
+    if (target === name) return true;
+    seen.add(target);
+  }
+  return false;
 }
 
 function colorProblem(value) {
@@ -172,7 +183,7 @@ function typeProblems(tree, project) {
   return [...tree.tokens].flatMap(([name, token]) => {
     if (isRaw(token)) return typeof rawCssOf(token) === "string" && rawCssOf(token).trim() ? [] : [at(name, `${RAW_CSS_EXTENSION} must be a CSS value`)];
     if (!("$value" in token.node)) return [at(name, "no $value")];
-    if (aliasProblem(tree, token.node.$value)) return []; // T5 names the broken alias
+    if (aliasProblem(tree, token.node.$value, undefined, name)) return []; // T5 names the broken alias
     const type = typeOf(tree, token);
     if (type === undefined) return [at(name, "no $type on it, its alias or a parent group")];
     return TYPES.includes(type) ? [] : [at(name, `$type "${type}" is not a DTCG type`)];
@@ -187,11 +198,13 @@ function shapeProblems(tree, project) {
   });
 }
 
-/** What is wrong with an alias, or null: its target must be a token, of `type` when given. */
-function aliasProblem(tree, value, type) {
+/** What is wrong with an alias, or null: its target must be a token, of `type` when given, that
+ * never leads back to the token `name` holding it. */
+function aliasProblem(tree, value, type, name) {
   const target = aliasOf(value);
   if (target === undefined) return null;
   if (!tree.tokens.has(target)) return tree.groups.has(target) ? `alias {${target}} names a group, not a token` : `alias {${target}} names no token`;
+  if (name !== undefined && loopsBack(tree, value, name)) return `alias {${target}} loops back to ${name}`;
   const targetType = typeOf(tree, tree.tokens.get(target));
   return type === undefined || targetType === undefined || targetType === type ? null : `alias {${target}} is a ${targetType}, not a ${type}`;
 }
@@ -199,7 +212,7 @@ function aliasProblem(tree, value, type) {
 function aliasProblems(tree, project) {
   const at = tokenProblem(project);
   return [...tree.tokens].flatMap(([name, token]) => {
-    const message = aliasProblem(tree, token.node.$value, token.node.$type ?? token.groupType);
+    const message = aliasProblem(tree, token.node.$value, token.node.$type ?? token.groupType, name);
     return message ? [at(name, message)] : [];
   });
 }
