@@ -45,7 +45,7 @@ describe("aidd-ui impact", () => {
         screens: ["home"],
         journeys: ["onboarding"],
         renders: RENDERS,
-        code: ["src/ui/Button.tsx", "src/ui/HomePage.tsx"],
+        code: ["src/ui/Button.tsx", "src/ui/HomePage.tsx", "src/ui/tokens.css"],
       });
     });
 
@@ -66,9 +66,29 @@ describe("aidd-ui impact", () => {
       assert.deepEqual(impact("color.brand.primary", "--root", tmp).report.tokens, ["chain.second", "color.action.default", "color.brand.primary", "color.text.default"]);
     });
 
+    it("reaches a token that aliases it in a theme file, and the component declaring that one", () => {
+      editTokens(tmp, (tree) => {
+        tree.color.accent = { $value: { colorSpace: "srgb", components: [1, 0, 0], hex: "#ff0000" } };
+        tree.color.focus = { $value: { colorSpace: "srgb", components: [0, 0, 1], hex: "#0000ff" } };
+      });
+      put(tmp, `${UI}/themes/dark.json`, JSON.stringify({ color: { focus: { $value: "{color.accent}" } } }));
+      put(tmp, `${UI}/components/badge.md`, fs.readFileSync(path.join(tmp, BUTTON), "utf8").replace("id: button", "id: badge").replace(/tokens: \[.*\]/, "tokens: [color.focus]"));
+      const { report } = impact("color.accent", "--root", tmp);
+      assert.deepEqual(report.tokens, ["color.accent", "color.focus"]);
+      assert.deepEqual(report.elements, ["badge"]);
+    });
+
+    it("takes a CSS name for the token it names", () => {
+      assert.deepEqual(impact("--color-brand-primary", "--root", tmp).report, impact("color.brand.primary", "--root", tmp).report);
+    });
+
+    it("names an unknown CSS name as it was given", () => {
+      assert.equal(impact("--color-brand-missing", "--root", tmp).err, 'aidd-ui: no token or element named "--color-brand-missing"\n');
+    });
+
     it("reaches nothing beyond a token no record declares", () => {
       editTokens(tmp, (tree) => (tree.misc = { unused: { $type: "number", $value: 1 } }));
-      assert.deepEqual(impact("misc.unused", "--root", tmp).report, { tokens: ["misc.unused"], elements: [], screens: [], journeys: [], renders: [], code: [] });
+      assert.deepEqual(impact("misc.unused", "--root", tmp).report, { tokens: ["misc.unused"], elements: [], screens: [], journeys: [], renders: [], code: ["src/ui/tokens.css"] });
     });
   });
 
@@ -108,7 +128,7 @@ describe("aidd-ui impact", () => {
         screens: ["home"],
         journeys: ["onboarding"],
         renders: RENDERS,
-        code: ["src/ui/Button.tsx", "src/ui/HomePage.tsx"],
+        code: ["src/ui/Button.tsx", "src/ui/HomePage.tsx", "src/ui/tokens.css"],
       });
     });
   });

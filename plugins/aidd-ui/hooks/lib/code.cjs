@@ -175,4 +175,4 @@ const RULES = {
 /** Every broken code rule, in rule order. */
 const check = checkOf(RULES);
 
-module.exports = { check, codeRoots, codeOwner, codeFileOf };
+module.exports = { check, codeRoots, codeOwner, codeFileOf, codeTokens };

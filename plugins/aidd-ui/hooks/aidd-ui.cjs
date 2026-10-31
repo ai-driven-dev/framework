@@ -6,8 +6,8 @@
 //             per problem, and exits 1 when an error remains. Prints nothing without a design system.
 //   tokens    writes aidd_docs/ui/tokens.css from the tokens and prints its path. Writes nothing and
 //             exits 1 while a token has an error or a composite token has no raw CSS.
-//   impact    prints as JSON what a change to those tokens or elements reaches: tokens, elements,
-//             screens, journeys, renders and code files, each sorted. An unknown ref is named on
+//   impact    prints as JSON what a change to those tokens, by path or CSS name, or elements reaches:
+//             tokens, elements, screens, journeys, renders and code files, each sorted. An unknown ref is named on
 //             stderr and exits 2.
 const fs = require("node:fs");
 const path = require("node:path");

@@ -5,8 +5,8 @@
 const { list, table } = require("./markdown.cjs");
 const { placed, fm, COMPONENT_KINDS } = require("./model.cjs");
 const { renderOf } = require("./renders.cjs");
-const { codeOwner, codeFileOf } = require("./code.cjs");
-const { citations } = require("./tokens.cjs");
+const { codeOwner, codeFileOf, codeTokens } = require("./code.cjs");
+const { citations, tokenNameOf } = require("./tokens.cjs");
 const { isUnder, UI_DIR } = require("./project.cjs");
 
 // Files every record reads: a write to one reaches the whole design system.
@@ -57,13 +57,15 @@ function closure(seed, candidates, keyOf, citesOf) {
   return found;
 }
 
-/** What a change to `refs`, token names and record ids, reaches, each list sorted; `unknown` names
- * the refs that are neither. A ref is reached itself. */
-function usages(project, refs) {
+/** What a change to `refs`, token names, CSS names and record ids, reaches, each list sorted;
+ * `unknown` names the refs that are none. A ref is reached itself, and any token reached reaches
+ * the file where the code consumes the tokens. */
+function usages(project, given) {
   const cites = citations(project);
+  const refs = given.map((ref) => tokenNameOf(project, ref));
   const records = placed(project).filter((record) => fm(record).id);
   const isRecord = (ref) => records.some((record) => fm(record).id === ref);
-  const unknown = refs.filter((ref) => !cites.has(ref) && !isRecord(ref));
+  const unknown = given.filter((_, index) => !cites.has(refs[index]) && !isRecord(refs[index]));
   if (unknown.length) return { unknown };
   const tokens = closure(refs.filter((ref) => cites.has(ref)), [...cites], ([name]) => name, ([, cited]) => cited);
   const declaring = records.filter((record) => list(fm(record).tokens).some((token) => tokens.has(token)));
@@ -74,7 +76,7 @@ function usages(project, refs) {
     tokens: [...tokens].sort(),
     ...Object.fromEntries(Object.entries(REPORT_KINDS).map(([key, kinds]) => [key, idsOf(kinds)])),
     renders: reachedRecords.map(renderOf).filter((file) => project.renders.includes(file)).sort(),
-    code: [...new Set(reachedRecords.map((record) => codeFileOf(fm(record).code)).filter(Boolean))].sort(),
+    code: [...new Set([...reachedRecords.map((record) => codeFileOf(fm(record).code)), tokens.size ? codeTokens(project) : null].filter(Boolean))].sort(),
   };
 }
 

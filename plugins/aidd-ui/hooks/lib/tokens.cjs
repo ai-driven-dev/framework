@@ -315,16 +315,20 @@ function entryOf(name, token, type, file) {
   return alias === undefined ? { name, type, file, value: token.node.$value } : { name, type, file, alias };
 }
 
-/** What each non-base theme redefines, in system.md order, as its Resolver context files list it. */
-function themeEntries(tree, project) {
+/** What each non-base theme redefines, in system.md order, as its Resolver context files list it:
+ * `{theme, files: [{file, tree}]}`. */
+function themeTrees(project) {
   const themes = list(systemOf(project)?.frontMatter.themes);
   const resolver = readJson(project, resolverFileOf(project));
   const { contexts } = resolver.value ? resolverContexts(resolver.value, themes, project, resolverFileOf(project)) : { contexts: {} };
-  return themes.slice(1).map((theme) => ({
-    theme,
-    tokens: (contexts[theme] ?? []).flatMap((file) => [...readTree(project, file).tokens].map(([name, token]) => entryOf(name, token, typeOf(tree, tree.tokens.get(name)), file))),
-  }));
+  return themes.slice(1).map((theme) => ({ theme, files: (contexts[theme] ?? []).map((file) => ({ file, tree: readTree(project, file) })) }));
 }
+
+const themeEntries = (tree, project) =>
+  themeTrees(project).map(({ theme, files }) => ({
+    theme,
+    tokens: files.flatMap(({ file, tree: themed }) => [...themed.tokens].map(([name, token]) => entryOf(name, token, typeOf(tree, tree.tokens.get(name)), file))),
+  }));
 
 /** The stylesheet of tokens that have no error, `{css, problems}`: `css` is null when a composite
  * token has no raw CSS, which `problems` names. */
@@ -377,21 +381,28 @@ function cssNames(project) {
   return tree.unusable ? null : new Set([...tree.tokens.values()].map((token) => cssName(token.path)));
 }
 
+/** Every token's name by its CSS custom property. */
+const namesByProperty = (tree) => new Map([...tree.tokens].map(([name, token]) => [cssName(token.path), name]));
+
 /** The tokens each token cites, by name: the one its alias names and those whose custom property
- * a `var()` of its raw CSS names. Empty when tokens.json cannot be read. */
+ * a `var()` of its raw CSS names, in tokens.json or in any theme file. Empty when tokens.json
+ * cannot be read. */
 function citations(project) {
   const tree = read(project);
-  const byProperty = new Map([...tree.tokens].map(([name, token]) => [cssName(token.path), name]));
-  const rawCss = (token) => (typeof rawCssOf(token) === "string" ? rawCssOf(token) : "");
-  return new Map(
-    [...tree.tokens].map(([name, token]) => [
-      name,
-      [aliasOf(token.node.$value), ...[...rawCss(token).matchAll(CSS_VARIABLE)].map((match) => byProperty.get(match[1]))].filter((cited) => tree.tokens.has(cited)),
-    ])
-  );
+  const byProperty = namesByProperty(tree);
+  const citedBy = (token) => [aliasOf(token.node.$value), ...[...(typeof rawCssOf(token) === "string" ? rawCssOf(token) : "").matchAll(CSS_VARIABLE)].map((match) => byProperty.get(match[1]))];
+  const found = new Map([...tree.tokens].map(([name, token]) => [name, citedBy(token)]));
+  for (const { files } of themeTrees(project)) {
+    for (const { tree: themed } of files) for (const [name, token] of themed.tokens) found.get(name)?.push(...citedBy(token));
+  }
+  return new Map([...found].map(([name, cited]) => [name, [...new Set(cited.filter((target) => tree.tokens.has(target)))]]));
 }
+
+/** The token a ref names, whether written as its path or as its CSS custom property; the ref
+ * itself when it names none. */
+const tokenNameOf = (project, ref) => namesByProperty(read(project)).get(ref) ?? ref;
 
 /** A token path's CSS custom property. */
 const cssNameOf = customProperty;
 
-module.exports = { check, blockers, generate, citations, cssNames, cssNameOf, cssFileOf };
+module.exports = { check, blockers, generate, citations, tokenNameOf, cssNames, cssNameOf, cssFileOf };
