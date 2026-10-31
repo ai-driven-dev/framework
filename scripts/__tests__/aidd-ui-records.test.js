@@ -641,8 +641,13 @@ describe("aidd-ui records and history", () => {
         assert.deepEqual(found, [`${BUTTON}: breaking "maybe" in version 1 must be yes or no (H4)`, `${FAILED(DUBIOUS)} (H8)`]);
       });
 
+      it("is named for a repository the real git refuses, whose owner is another", () => {
+        const refusing = `PATH='${process.env.PATH}' GIT_TEST_ASSUME_DIFFERENT_OWNER=1 GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_NOSYSTEM=1 exec git "$@"`;
+        assert.deepEqual(withGit(refusing, edited), [FAILED(`fatal: detected dubious ownership in repository at '${fs.realpathSync(tmp)}'`)]);
+      });
+
       it("is named when only the read of a committed file fails", () => {
-        const found = withGit(`[ "$1" = diff ] && { printf '${BUTTON}\\0'; exit 0; }\necho "fatal: bad object HEAD" >&2\nexit 128`, edited);
+        const found = withGit(`[ "$1" = diff-index ] && { printf '${BUTTON}\\0'; exit 0; }\necho "fatal: bad object HEAD" >&2\nexit 128`, edited);
         assert.deepEqual(found, [FAILED("fatal: bad object HEAD")]);
       });
 
@@ -665,12 +670,12 @@ describe("aidd-ui records and history", () => {
       };
 
       it("asks git for nothing but the changed files while every validated element is unchanged", () => {
-        assert.deepEqual(gitCalls(), { found: [], args: ["diff"] });
+        assert.deepEqual(gitCalls(), { found: [], args: ["diff-index"] });
       });
 
       it("reads from git only the elements that changed", () => {
         change(BUTTON, BUTTON_USAGE, WIDENED);
-        assert.deepEqual(gitCalls(), { found: [EDITED(1)], args: ["diff", "show"] });
+        assert.deepEqual(gitCalls(), { found: [EDITED(1)], args: ["diff-index", "show"] });
       });
     });
 

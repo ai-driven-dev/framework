@@ -10,9 +10,7 @@ const GIT_TIMEOUT_MS = 5000;
 const GIT_VARIABLE_PREFIX = "GIT_";
 const NUL = "\0";
 const NOT_INSTALLED = "ENOENT";
-// git's words under C for no repository, then no commit, then a file never committed. Outside a
-// repository, `git diff` reads HEAD as a path to compare, hence its first form.
-const NO_BASELINE = [/could not access 'HEAD'/i, /not a git repository/i, /bad revision 'HEAD'/, /exists on disk, but not in 'HEAD'/];
+const NO_BASELINE = [/not a git repository/, /bad revision 'HEAD'/, /exists on disk, but not in 'HEAD'/]; // git's words under C
 
 /** The environment without git's own variables, which would point git at another repository, as a
  * commit hook's do, and with git's messages in the one language NO_BASELINE reads. */
@@ -38,9 +36,11 @@ function show(project, file) {
 }
 
 /** The design system's files that differ from HEAD, read once per run; empty when git cannot say.
- * A file git does not list is unchanged, or new and without a baseline: nothing to compare. */
+ * A file git does not list is unchanged, or new and without a baseline: nothing to compare.
+ * `diff-index`, since `git diff` falls back to comparing two paths when it cannot use a repository,
+ * so a repository git refuses would read as none. */
 function changed(project) {
-  project.changedFiles ??= new Set((git(project, ["diff", "--name-only", "--relative", "-z", "HEAD", "--", UI_DIR]) ?? "").split(NUL).filter(Boolean));
+  project.changedFiles ??= new Set((git(project, ["diff-index", "--name-only", "--relative", "-z", "HEAD", "--", UI_DIR]) ?? "").split(NUL).filter(Boolean));
   return project.changedFiles;
 }
 
