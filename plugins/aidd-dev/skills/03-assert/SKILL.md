@@ -1,31 +1,28 @@
 ---
 name: 03-assert
-description: Assert the work behaves by iterating the project's coding assertions until they pass, plus optional architecture and frontend facets. Use to validate an implementation. Not for reviewing or writing tests.
-argument-hint: work | scope
+description: Assert the work against the project's coding assertions into a pass or fail report. Use to verify an implementation. Not for fixing code, reviewing a diff, or writing tests.
+argument-hint: work | task folder
 ---
 
-# Skill: assert
-
-Validate that the work behaves as intended: run the project's assertions, iterating and fixing until they pass.
+# Assert
 
 ## Actions
 
-| #   | Action                | Facet                                                       |
-| --- | --------------------- | ----------------------------------------------------------- |
-| 01  | `assert`              | Run the project's coding assertions, fixing until they pass |
-| 02  | `assert-architecture` | Report where the code breaks the documented architecture    |
-| 03  | `assert-frontend`     | Inspect the running UI, fixing until the behavior is right   |
+```mermaid
+flowchart LR
+  assert["assert<br>actions/01-assert.md"] -->|"task folder: a round appended"| report["assert.md"]
+  assert -->|"no task folder: keep it in a file?"| user((user answers))
+  user -->|yes| report
+  user -->|no| done((done))
+  report --> done
+  assert -->|"no check found"| stop((stop))
+```
 
-Run every applicable facet by default, or one when named. Coding (`01`) always applies; add `03` when the work has a UI and a frontend is running, the facet resolving the URL itself; run `02` only when architecture conformance is asked for. Skip a facet whose precondition is absent, with a noted reason. Ask only when the intent is genuinely ambiguous.
-Before running an action, read its file in `actions/`, not only the table or assets.
+Each box is a file: read it, then do what it says.
 
 ## Transversal rules
 
-- Gate: it returns a pass or fail verdict on the work.
-- Fix loop: the coding and frontend facets fix and re-run until they pass. The architecture facet only reports, never fixes.
-- Stop only when every selected assertion passes a final clean sweep.
-- On supplied CI failures, fixing facets collect all failed checks, repair each reproducible failure locally, and rerun every applicable command in the final sweep; the caller pushes once after green if authorized, with CI-only checks unverified.
-
-## Assets
-
-- `assets/task-template.md`: the tracking file the frontend facet fills across its fix loop.
+- Speak only to ask or to give the final reply; otherwise call tools.
+- Verdict from exit codes only: one non-zero exit is a FAIL.
+- Change nothing but the report: no code, no test, no config.
+- Do not commit or push.

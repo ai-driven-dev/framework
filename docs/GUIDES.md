@@ -110,6 +110,7 @@ flowchart TD
   subgraph z0["Code"]
     direction LR
     n0["/aidd-dev:01-plan"] --> n1["/aidd-dev:02-implement"] --> n2["/aidd-dev:03-assert"]
+    n2 -. "until checks pass" .-> n1
   end
   subgraph z1["Review"]
     direction LR
@@ -141,6 +142,7 @@ flowchart TD
   subgraph z1["Code"]
     direction LR
     n1["/aidd-dev:08-debug<br/><i>reproduces with a test, then fixes</i>"] --> n2["/aidd-dev:03-assert"]
+    n2 -. "until checks pass" .-> n1
   end
   subgraph z2["Review"]
     direction LR
@@ -170,6 +172,7 @@ flowchart TD
   subgraph z0["Code"]
     direction LR
     n0["/aidd-dev:07-refactor"] --> n1["/aidd-dev:03-assert"]
+    n1 -. "until checks pass" .-> n0
   end
   subgraph z1["Review"]
     direction LR

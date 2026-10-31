@@ -46,6 +46,10 @@ flowchart TD
   class Frame,Deliver,Check zone
 ```
 
+## Transversal rules
+
+- Run every step through the skill or agent its zone names, whatever the change's size.
+
 ## References
 
 | #   | Reference                               |

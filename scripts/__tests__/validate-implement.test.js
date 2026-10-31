@@ -41,8 +41,8 @@ const taskHeadings = (tasks) => Array.from({ length: tasks }, (_, i) => `\n### \
 const phaseMd = (status, tasks = 0) => `---\nstatus: ${status}\n---\n\n# Instruction: x\n${taskHeadings(tasks)}`;
 
 const runMd = (number = 1, head = "abc1234", rows = ["| 1.1 | pnpm test | 80 passed |"]) =>
-  `## Run ${number}\n\nHead: ${head}\n\n| Task | Validation | Result |\n| ---- | ---------- | ------ |\n${rows.join("\n")}\n\nLeft: none\n`;
-const RUN_MD = `# Run\n\n${runMd()}`;
+  `## Run ${number}\n\n- Head: \`${head}\`\n- Left: none\n\n| Task | Validation | Result |\n| ---- | ---------- | ------ |\n${rows.join("\n")}\n`;
+const RUN_MD = `# Run: A plan\n\n${runMd()}`;
 
 function withoutComments(text) {
   let out = "";
@@ -171,7 +171,7 @@ function commitWithRun(dir) {
   git(dir, "add", "-A");
   git(dir, "commit", "-q", "-m", "plan");
   const head = git(dir, "rev-parse", "HEAD").stdout.trim();
-  fs.writeFileSync(path.join(dir, "run.md"), `# Run\n\n${runMd(1, head)}`);
+  fs.writeFileSync(path.join(dir, "run.md"), `# Run: A plan\n\n${runMd(1, head)}`);
   git(dir, "add", "-A");
   git(dir, "commit", "-q", "-m", "run");
   return dir;
@@ -280,6 +280,7 @@ describe("validate-implement: what a run records", () => {
   const closedWith = (text) => run(folder("implemented", [{ status: "done" }], { runs: text }));
   const filledTemplate = () =>
     withoutComments(fs.readFileSync(RUN_TEMPLATE, "utf8"))
+      .replace("{{the plan's title}}", "A plan")
       .replace("{{number}}", "1")
       .replace("{{sha of HEAD when the validations ran}}", "abc1234")
       .replace("{{phase.task, such as 1.2}}", "1.1").replace("{{scenario of that task's criterion, and the command that ran it}}", "pnpm test")
@@ -295,20 +296,20 @@ describe("validate-implement: what a run records", () => {
   });
 
   it("accepts several runs numbered in order", () => {
-    assert.match(closedWith(`# Run\n\n${runMd(1)}\n${runMd(2)}`).out, /^OK(\n|$)/);
+    assert.match(closedWith(`# Run: A plan\n\n${runMd(1)}\n${runMd(2)}`).out, /^OK(\n|$)/);
   });
 
   it("refuses a run that names no head", () => {
-    assert.match(closedWith(`# Run\n\n${runMd(1).replace("Head: abc1234\n", "")}`).out, /run 1: "Head:" needs a commit sha/);
+    assert.match(closedWith(`# Run: A plan\n\n${runMd(1).replace("- Head: `abc1234`\n", "")}`).out, /run 1: "Head:" needs a commit sha/);
   });
 
   it("refuses a head that is not a sha", () => {
-    assert.match(closedWith(`# Run\n\n${runMd(1, "latest")}`).out, /run 1: "Head:" needs a commit sha/);
+    assert.match(closedWith(`# Run: A plan\n\n${runMd(1, "latest")}`).out, /run 1: "Head:" needs a commit sha/);
   });
 
   it("refuses a head that is no commit of the repository", () => {
     const dir = commitWithRun(folder("implemented", [{ status: "done" }], { runs: null }));
-    fs.writeFileSync(path.join(dir, "run.md"), `# Run\n\n${runMd(1, "deadbeef")}`);
+    fs.writeFileSync(path.join(dir, "run.md"), `# Run: A plan\n\n${runMd(1, "deadbeef")}`);
     git(dir, "add", "-A");
     git(dir, "commit", "-q", "-m", "wrong head");
     assert.match(run(dir).out, /run 1: head deadbeef is not a commit/);
@@ -316,20 +317,20 @@ describe("validate-implement: what a run records", () => {
 
   it("refuses a run with no validation row", () => {
     const empty = runMd(1, "abc1234", []);
-    assert.match(closedWith(`# Run\n\n${empty}`).out, /run 1: needs a "Task \| Validation \| Result" table with a row/);
+    assert.match(closedWith(`# Run: A plan\n\n${empty}`).out, /run 1: needs a "Task \| Validation \| Result" table with a row/);
   });
 
   it("refuses a validation row left empty", () => {
     const empty = runMd(1, "abc1234", ["| 1.1 | pnpm test |  |"]);
-    assert.match(closedWith(`# Run\n\n${empty}`).out, /run 1: needs a "Task \| Validation \| Result" table with a row/);
+    assert.match(closedWith(`# Run: A plan\n\n${empty}`).out, /run 1: needs a "Task \| Validation \| Result" table with a row/);
   });
 
   it("refuses a run that does not say what is left", () => {
-    assert.match(closedWith(`# Run\n\n${runMd(1).replace("Left: none\n", "")}`).out, /run 1: "Left:" missing/);
+    assert.match(closedWith(`# Run: A plan\n\n${runMd(1).replace("- Left: none\n", "")}`).out, /run 1: "Left:" missing/);
   });
 
   it("refuses a comment left in the run file", () => {
-    assert.match(closedWith(`# Run\n\n<!-- note -->\n${runMd(1)}`).out, /run\.md: placeholder or comment left/);
+    assert.match(closedWith(`# Run: A plan\n\n<!-- note -->\n${runMd(1)}`).out, /run\.md: placeholder or comment left/);
   });
 });
 
@@ -373,7 +374,7 @@ describe("validate-implement: what it says comes next", () => {
 
 describe("validate-implement: a run covers every task of the plan", () => {
   const withTasks = (rows, tasks = [2, 1]) => {
-    const dir = folder("implemented", tasks.map(() => ({ status: "done" })), { runs: `# Run\n\n${runMd(1, "abc1234", rows)}` });
+    const dir = folder("implemented", tasks.map(() => ({ status: "done" })), { runs: `# Run: A plan\n\n${runMd(1, "abc1234", rows)}` });
     tasks.forEach((count, i) => fs.writeFileSync(path.join(dir, `phase-${i + 1}.md`), phaseMd("done", count)));
     return run(dir);
   };
@@ -392,13 +393,13 @@ describe("validate-implement: a run covers every task of the plan", () => {
   });
 
   it("reads the last run alone: an earlier one may cover less", () => {
-    const dir = folder("implemented", [{ status: "done" }], { runs: `# Run\n\n${runMd(1, "abc1234", [row("1.1")])}\n${runMd(2, "abc1234", [row("1.1"), row("1.2")])}` });
+    const dir = folder("implemented", [{ status: "done" }], { runs: `# Run: A plan\n\n${runMd(1, "abc1234", [row("1.1")])}\n${runMd(2, "abc1234", [row("1.1"), row("1.2")])}` });
     fs.writeFileSync(path.join(dir, "phase-1.md"), phaseMd("done", 2));
     assert.match(run(dir).out, /^OK(\n|$)/);
   });
 
   it("refuses a last run that covers less than the plan", () => {
-    const dir = folder("implemented", [{ status: "done" }], { runs: `# Run\n\n${runMd(1, "abc1234", [row("1.1"), row("1.2")])}\n${runMd(2, "abc1234", [row("1.1")])}` });
+    const dir = folder("implemented", [{ status: "done" }], { runs: `# Run: A plan\n\n${runMd(1, "abc1234", [row("1.1"), row("1.2")])}\n${runMd(2, "abc1234", [row("1.1")])}` });
     fs.writeFileSync(path.join(dir, "phase-1.md"), phaseMd("done", 2));
     assert.match(run(dir).out, /run 2 has no row for task 1\.2/);
   });

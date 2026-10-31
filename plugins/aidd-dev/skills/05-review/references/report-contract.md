@@ -8,7 +8,7 @@ Where a review lands, what it reviews, and how a round joins it.
 | --- | --- |
 | What | one `review.md`, appended to, never rewritten |
 | Where | the reviewed work's feature folder, `aidd_docs/tasks/<yyyy_mm>/<yyyy_mm_dd>_<slug>/`, beside `plan.md` |
-| When the work has no folder | resolve one from the change |
+| When the work has no folder | ask for one; none named, the work's feature folder, reused when one exists |
 | Form | [review-template.md](../assets/review-template.md), in the shape [review-validator.yml](../assets/review-validator.yml) declares |
 
 ## The diff

@@ -2,7 +2,7 @@
 
 ## Behavior
 
-Turn the contract into a proportional plan, then give the `executor` agent the plan. It implements it and calls the validation skills, which own their checks and repair loops. Include architecture conformance whenever the project documents architecture. Run an end-to-end journey after every other validation when the plan calls for one, and none otherwise.
+Turn the contract into a plan, then give the `executor` agent the plan. It implements it, calls the validation skills, and repairs whatever they report until they pass. Include architecture conformance whenever the project documents architecture. Run an end-to-end journey after every other validation when the plan calls for one, and none otherwise.
 
 Commit and push the validated work through the commit skill. Send only the clean committed candidate to Check.
 
@@ -38,6 +38,7 @@ flowchart TD
   PlanArtifact --> Executor
   Executor --> Implement
   Implement --> Assert
+  Assert -- "Return a failing report for repair." --> Executor
   Assert -- "When no end-to-end journey is required, commit the result." --> Commit
   Assert -- "When an end-to-end journey is required, run it last." --> Test
   Test -- "After the journey succeeds, commit the result." --> Commit

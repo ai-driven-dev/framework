@@ -60,10 +60,8 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | Group | File | Description |
 |-------|------|---|
 | `actions` | [01-assert.md](skills/03-assert/actions/01-assert.md) | - |
-| `actions` | [02-assert-architecture.md](skills/03-assert/actions/02-assert-architecture.md) | - |
-| `actions` | [03-assert-frontend.md](skills/03-assert/actions/03-assert-frontend.md) | - |
-| `assets` | [task-template.md](skills/03-assert/assets/task-template.md) | - |
-| `-` | [SKILL.md](skills/03-assert/SKILL.md) | `Assert the work behaves by iterating the project's coding assertions until they pass, plus optional architecture and frontend facets. Use to validate an implementation. Not for reviewing or writing tests.` |
+| `assets` | [assert-template.md](skills/03-assert/assets/assert-template.md) | - |
+| `-` | [SKILL.md](skills/03-assert/SKILL.md) | `Assert the work against the project's coding assertions into a pass or fail report. Use to verify an implementation. Not for fixing code, reviewing a diff, or writing tests.` |
 
 #### `skills/04-audit`
 
