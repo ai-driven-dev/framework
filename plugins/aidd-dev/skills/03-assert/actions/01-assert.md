@@ -11,6 +11,7 @@ The work, and its task folder if any.
 1. Pick the assertions the work concerns:
    - from `aidd_docs/memory/coding-assertions.md`;
    - else from the project's own checks;
+   - plus the checks a supplied CI run failed, `not run` when they only run in CI;
    - none: stop and say so.
 2. Run them:
    - in parallel when you can;
