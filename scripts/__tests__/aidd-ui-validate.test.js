@@ -175,6 +175,20 @@ describe("aidd-ui validator entries", () => {
       assert.deepEqual(hook(stop(true)), silent);
     });
 
+    it("hands the problems back on a second write in the same turn", () => {
+      breakOnePerFamily();
+      hook(postToolUse(path.join(tmp, BRAND)));
+      assert.deepEqual(hook(postToolUse(path.join(tmp, BRAND))), claudeFeedback(FAILURES));
+    });
+
+    it("never writes through a link planted at the mark's path", () => {
+      const target = path.join(tmp, "victim.txt");
+      fs.writeFileSync(target, "keep");
+      fs.symlinkSync(target, path.join(os.tmpdir(), `aidd-ui-turn-${sid}`));
+      hook(postToolUse(path.join(tmp, BRAND)));
+      assert.equal(fs.readFileSync(target, "utf8"), "keep");
+    });
+
     it("consumes the turn mark: a later Stop without a new write is silent", () => {
       breakOnePerFamily();
       hook(postToolUse(path.join(tmp, BRAND)));

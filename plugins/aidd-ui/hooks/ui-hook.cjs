@@ -50,6 +50,15 @@ function markFile(sessionId) {
   return path.join(os.tmpdir(), `aidd-ui-turn-${sessionId}`);
 }
 
+/** Creates the mark only where nothing exists, so a link planted at its path is never followed. */
+function leaveMark(mark) {
+  try {
+    fs.writeFileSync(mark, "", { flag: "wx", mode: 0o600 });
+  } catch (error) {
+    if (error.code !== "EEXIST") throw error;
+  }
+}
+
 /** Copilot's payload carries tool_result where Claude Code and Codex carry tool_response. */
 function isCopilot(payload) {
   return "tool_result" in payload && !("tool_response" in payload);
@@ -58,7 +67,7 @@ function isCopilot(payload) {
 function afterWrite(project, payload) {
   if (!writtenFiles(payload.tool_input).some((file) => isWatched(project, file))) return EXIT_SILENT;
   const mark = markFile(payload.session_id);
-  if (mark) fs.writeFileSync(mark, "");
+  if (mark) leaveMark(mark);
   const problems = problemsOf(project);
   if (!problems.length) return EXIT_SILENT;
   const text = [`aidd-ui: the write was saved, fix ${problems.length} problems:`, ...format(problems)].join("\n");
