@@ -1,10 +1,10 @@
 const assert = require("node:assert/strict");
-const { spawnSync } = require("node:child_process");
+const { execFileSync, spawnSync } = require("node:child_process");
 const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
 const { describe, it, beforeEach, afterEach } = require("node:test");
-const { UI, writeProject, put } = require("./fixtures/aidd-ui/project.js");
+const { UI, writeProject, edit, editTokens, put } = require("./fixtures/aidd-ui/project.js");
 
 // The record templates are what the skill's model starts from, so each is filled the way an
 // action says and the design system around it must still validate. A placeholder the table does
@@ -143,6 +143,50 @@ describe("aidd-ui 01-system templates", () => {
     const html = filled("render");
     assert.ok(html.includes('<link rel="stylesheet" href="../tokens.css">'));
     assert.ok(html.includes('data-variant="default"') && html.includes('data-state="default"'));
+  });
+});
+
+describe("aidd-ui 01-system change flow", () => {
+  /** git without the variables a commit hook exports, which would point it at the real repository. */
+  const git = (...args) =>
+    execFileSync("git", ["-c", "user.name=test", "-c", "user.email=test@example.com", "-c", "commit.gpgsign=false", ...args], {
+      cwd: tmp,
+      env: Object.fromEntries(Object.entries(process.env).filter(([key]) => !key.startsWith("GIT_"))),
+      stdio: "ignore",
+    });
+  const FIRST_ROW = "| 1 | created | no | aidd_docs/tasks/ds-init |";
+  const TASK_ROW = "| 2 | new action colour | no | aidd_docs/tasks/recolour |";
+  const FILE_OF = { button: "components/button", dialog: "components/dialog", "search-field": "components/search-field", home: "screens/home" };
+  const engine = (...args) => spawnSync(process.execPath, [ENGINE, ...args], { encoding: "utf8" });
+
+  it("takes a token change reaching a screen under review to a design system that validates", () => {
+    git("init", "-q");
+    git("add", "-A");
+    git("commit", "-q", "--no-verify", "-m", "snapshot");
+    const deprecated = fs.readFileSync(path.join(tmp, `${UI}/components/old-button.md`), "utf8");
+
+    const report = JSON.parse(engine("impact", "color.action.default", "--root", tmp).stdout);
+    assert.deepEqual([report.elements, report.screens], [["button", "dialog", "old-button", "search-field"], ["home"]]);
+
+    for (const id of [...report.elements, ...report.screens].filter((reached) => reached !== "old-button")) {
+      const file = `${UI}/${FILE_OF[id]}.md`;
+      edit(tmp, file, "\nversion: 1\n", "\nversion: 2\n");
+      edit(tmp, file, "status: validated", "status: proposed");
+      edit(tmp, file, FIRST_ROW, `${FIRST_ROW}\n${TASK_ROW}`);
+    }
+    const pending = ["default", "empty", "loading", "error"].map((state) => `| home | ${state} | 2 | pending | |`);
+    edit(tmp, `${UI}/reviews/first-pass.md`, "| home | error | 1 | pending | |", ["| home | error | 1 | pending | |", ...pending].join("\n"));
+    editTokens(tmp, (tree) => (tree.color.action.default.$value = { colorSpace: "srgb", components: [0.1, 0.1, 0.1], hex: "#1a1a1a" }));
+    assert.equal(engine("tokens", tmp).status, 0);
+
+    assert.deepEqual(validate(), { code: 0, out: ["VALID"] });
+    assert.equal(fs.readFileSync(path.join(tmp, `${UI}/components/old-button.md`), "utf8"), deprecated);
+  });
+
+  it("says so in its steps: deprecated elements left untouched, pending rows for a screen under review", () => {
+    const steps = fs.readFileSync(path.join(SKILL, "actions/06-change.md"), "utf8");
+    assert.ok(steps.includes("A deprecated element in the report is named to the person and left untouched"));
+    assert.ok(steps.includes("one `pending` row per state at its new version"));
   });
 });
 
