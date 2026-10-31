@@ -9,7 +9,7 @@ const UI = "aidd_docs/ui";
 const history = (...rows) =>
   ["## History", "", "| Version | Change | Breaking | Task |", "| --- | --- | --- | --- |", ...rows.map((row) => `| ${row.join(" | ")} |`)].join("\n");
 
-const FIRST_ROW = ["1", "created", "no", "ds-init"];
+const FIRST_ROW = ["1", "created", "no", "aidd_docs/tasks/ds-init"];
 
 const record = (frontMatter, ...sections) => `---\n${frontMatter.join("\n")}\n---\n\n${sections.join("\n\n")}\n`;
 
@@ -23,6 +23,7 @@ const SYSTEM = record(
     "kind: system",
     "status: validated",
     "version: 2.0.0",
+    "format: 1",
     "platforms: [web]",
     "breakpoints: [mobile, desktop]",
     "themes: [light, dark]",
@@ -35,7 +36,7 @@ const SYSTEM = record(
   ],
   "# Design system",
   "## Breakpoints\n\n| Name | From |\n| --- | --- |\n| mobile | 0 |\n| desktop | 64rem |",
-  history(["1.0.0", "first system", "no", "ds-init"], ["2.0.0", "old-button retired", "yes", "retire-old-button"])
+  history(["1.0.0", "first system", "no", "aidd_docs/tasks/ds-init"], ["2.0.0", "old-button retired", "yes", "aidd_docs/tasks/retire-old-button"])
 );
 
 const BRAND = record(
@@ -87,8 +88,9 @@ const BUTTON = record(
   [
     "id: button",
     "kind: atom",
-    "status: coded",
+    "status: validated",
     "version: 1",
+    "implemented-version: 1",
     "uses: []",
     "tokens: [color.action.default, color.text.default, space.md, border.thin, motion.fast, font.body, font.weight.bold]",
     "variants: [primary, secondary]",
@@ -126,8 +128,9 @@ const DIALOG = record(
   [
     "id: dialog",
     "kind: composition",
-    "status: coded",
+    "status: validated",
     "version: 1",
+    "implemented-version: 1",
     "uses: [button]",
     "tokens: [space.md]",
     "variants: [default]",
@@ -158,15 +161,16 @@ const OLD_BUTTON = record(
   ],
   "# Old button",
   usage("Nowhere: replaced by button."),
-  history(FIRST_ROW, ["2", "deprecated for button", "yes", "retire-old-button"])
+  history(FIRST_ROW, ["2", "deprecated for button", "yes", "aidd_docs/tasks/retire-old-button"])
 );
 
 const HOME = record(
   [
     "id: home",
     "kind: screen",
-    "status: coded",
+    "status: validated",
     "version: 1",
+    "implemented-version: 1",
     "uses: [search-field, dialog]",
     "states: [default, empty, loading, error]",
     "breakpoints: [mobile, desktop]",
@@ -190,12 +194,12 @@ const REVIEW = record(
   [
     "## Verdicts",
     "",
-    "| Screen | State | Verdict | Comment |",
-    "| --- | --- | --- | --- |",
-    "| home | default | ok | |",
-    "| home | empty | ok | |",
-    "| home | loading | ko | spinner too small |",
-    "| home | error | pending | |",
+    "| Screen | State | Version | Verdict | Comment |",
+    "| --- | --- | --- | --- | --- |",
+    "| home | default | 1 | ok | |",
+    "| home | empty | 1 | ok | |",
+    "| home | loading | 1 | ko | spinner too small |",
+    "| home | error | 1 | pending | |",
   ].join("\n"),
   history(FIRST_ROW)
 );

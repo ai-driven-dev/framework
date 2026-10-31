@@ -50,7 +50,7 @@ Deux axes, jamais mêlés : où en est le design, et quelle version le code impl
 
 - `status` dit le design : `proposé` (créé, pas encore validé), `validé` (rendu approuvé en review), `déprécié` (ne doit plus être utilisé, nomme son remplaçant ou dit pourquoi il n'en a pas).
 - `implemented-version` dit le code : la version de l'élément que le code implémente. Le code est à jour quand elle égale `version`, en retard quand elle est plus petite, absente tant que rien n'est codé.
-- Le lien vers le code est obligatoire dès qu'`implemented-version` existe, sauf pour une molécule ou une composition implémentée par ce qu'elle utilise : chaque élément utilisé l'est, au moins à la même version.
+- Le lien vers le code est obligatoire dès qu'`implemented-version` existe, sauf pour une molécule ou une composition implémentée par ce qu'elle utilise : chaque élément utilisé, hors assets, est implémenté.
 - Modifier un élément implémenté monte sa `version` et le repasse à `proposé` ; son `implemented-version` ne bouge pas, et le retard reste visible jusqu'à ce que la feature fasse suivre le code.
 - Un élément non déprécié n'utilise jamais un élément déprécié.
 

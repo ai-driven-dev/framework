@@ -106,6 +106,12 @@ describe("aidd-ui validator entries", () => {
       assert.deepEqual(validate(tmp), { code: 1, out: FAILURES, err: "" });
     });
 
+    it("prints one line, never an avalanche, for a design system written in another format", () => {
+      breakOnePerFamily();
+      edit(tmp, `${UI}/system.md`, "format: 1", "format: 2");
+      assert.deepEqual(validate(tmp), { code: 1, out: [`✗ ${UI}/system.md: format "2" is not 1, the one this validator reads`], err: "" });
+    });
+
     it("names a check that throws and still runs the others", () => {
       breakOnePerFamily();
       const broken = { check: () => { throw new Error("boom"); } };

@@ -16,17 +16,22 @@ const EXIT_INVALID = 1;
 const PROBLEM_MARK = "✗";
 
 /** Every problem of a loaded project, check by check, then each file no check could read. A
- * check that throws is one problem naming it, so the others still speak. */
-const problemsOf = (project, checks = CHECKS) => [
-  ...Object.entries(checks).flatMap(([name, check]) => {
-    try {
-      return check.check(project);
-    } catch (error) {
-      return [{ file: UI_DIR, message: `check "${name}" failed: ${error.message}` }];
-    }
-  }),
-  ...unreadable(project),
-];
+ * check that throws is one problem naming it, so the others still speak. A design system
+ * written for another format is that one problem alone. */
+function problemsOf(project, checks = CHECKS) {
+  const otherFormat = records.formatProblem(project);
+  if (otherFormat) return [otherFormat];
+  return [
+    ...Object.entries(checks).flatMap(([name, check]) => {
+      try {
+        return check.check(project);
+      } catch (error) {
+        return [{ file: UI_DIR, message: `check "${name}" failed: ${error.message}` }];
+      }
+    }),
+    ...unreadable(project),
+  ];
+}
 
 /** The problems of the design system under `root`, or null when it has none. */
 function validate(root) {

@@ -1,15 +1,19 @@
-// H1 to H6: each versioned record's history, and the system version its tasks raise.
-const { table } = require("./markdown.cjs");
+// H1 to H7: each versioned record's history, the system version its publications raise, and
+// the task folder each change names.
+const { table, list } = require("./markdown.cjs");
 const { placed, systemOf, isElement, fm, INTEGER_VERSION, SEMVER } = require("./records.cjs");
 
 const HISTORY_SECTION = "History";
 const BREAKING_VALUES = ["yes", "no"];
 const BREAKING = "yes";
 const SYSTEM_KIND = "system";
+const TASKS_DIR = "aidd_docs/tasks/";
 
 const problem = (record, message) => ({ file: record.file, message });
 const isSystem = (record) => fm(record).kind === SYSTEM_KIND;
 const rowsOf = (record) => table(record.sections[HISTORY_SECTION]);
+/** A system row's Task cell: the tasks one publication lists, comma-separated. */
+const taskList = (cell) => list(cell?.split(",").map((task) => task.trim()).filter(Boolean));
 
 /** A version as comparable numbers: [n] for an element, [major, minor, patch] for the system. */
 function parts(version, system) {
@@ -76,47 +80,41 @@ function breakingProblems(project) {
   );
 }
 
-/** For each element task, whether any of its rows breaks, and which records it touches. */
-function elementTasks(project) {
-  const tasks = new Map();
+/** The tasks that broke an element, read from every element history. */
+function breakingTasks(project) {
+  const tasks = new Set();
   for (const record of versioned(project).filter((candidate) => !isSystem(candidate))) {
-    for (const row of rowsOf(record)) {
-      const task = tasks.get(row.Task) ?? { breaking: false, records: [] };
-      task.breaking ||= row.Breaking === BREAKING;
-      if (!task.records.includes(record)) task.records.push(record);
-      tasks.set(row.Task, task);
-    }
+    for (const row of rowsOf(record)) if (row.Breaking === BREAKING) tasks.add(row.Task);
   }
   return tasks;
 }
 
-/** The system row a task raised, with the row before it by version; null when the task has none. */
-function systemRow(rows, task) {
-  const row = rows.find((candidate) => candidate.Task === task);
-  if (!row) return null;
-  const ordered = byVersion(rows, true);
-  const index = ordered.findIndex((entry) => entry.row === row);
-  return { row, previous: index > 0 ? ordered[index - 1].row : undefined };
-}
-
-function bumpProblems(project) {
+/** A system row publishes a list of tasks. It breaks, and raises the major version, when one of
+ * them broke an element or when it says so itself, for tokens alone; otherwise it raises the
+ * minor. A task no row lists yet is unpublished, never a problem. */
+function publicationProblems(project) {
   const system = systemOf(project);
-  const rows = system ? rowsOf(system) : [];
-  return [...elementTasks(project)].flatMap(([task, { breaking, records }]) => {
-    const found = systemRow(rows, task);
-    if (!found) return records.map((record) => problem(record, `task "${task}" has no row in system.md`));
-    if (!found.previous) return [];
-    const now = parts(found.row.Version, true);
-    const before = parts(found.previous.Version, true);
-    if (!now || !before) return [];
-    if (breaking && now[0] <= before[0]) {
-      return [problem(system, `task "${task}" breaks an element, yet system.md ${found.row.Version} raises no major version`)];
-    }
-    if (!breaking && compare(now.slice(0, 2), before.slice(0, 2)) <= 0) {
-      return [problem(system, `task "${task}" changes an element, yet system.md ${found.row.Version} raises neither major nor minor`)];
-    }
+  if (!system) return [];
+  const breaking = breakingTasks(project);
+  const ordered = byVersion(rowsOf(system), true);
+  return ordered.slice(1).flatMap(({ row, parts: now }, index) => {
+    const before = ordered[index].parts;
+    const broke = taskList(row.Task).find((task) => breaking.has(task));
+    if (broke && row.Breaking !== BREAKING) return [problem(system, `${row.Version} publishes "${broke}", which breaks an element, so it is breaking`)];
+    if (row.Breaking === BREAKING && now[0] <= before[0]) return [problem(system, `${row.Version} is breaking, yet raises no major version`)];
+    if (compare(now.slice(0, 2), before.slice(0, 2)) <= 0) return [problem(system, `${row.Version} raises neither major nor minor`)];
     return [];
   });
+}
+
+function taskProblems(project) {
+  return versioned(project).flatMap((record) =>
+    rowsOf(record).flatMap((row) =>
+      (isSystem(record) ? taskList(row.Task) : [row.Task])
+        .filter((task) => !task?.startsWith(TASKS_DIR))
+        .map((task) => problem(record, `task "${task ?? ""}" in version ${row.Version} must be a task folder, ${TASKS_DIR}…`))
+    )
+  );
 }
 
 function deprecationProblems(project) {
@@ -131,8 +129,9 @@ const RULES = [
   duplicateProblems, // H2
   currentProblems, // H3
   breakingProblems, // H4
-  bumpProblems, // H5
+  publicationProblems, // H5
   deprecationProblems, // H6
+  taskProblems, // H7
 ];
 
 /** Every broken history rule, as `{file, message}`, in rule order. */

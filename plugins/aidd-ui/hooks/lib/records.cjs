@@ -3,8 +3,10 @@ const fs = require("node:fs");
 const path = require("node:path");
 const { list, table } = require("./markdown.cjs");
 
-const STATUSES = ["proposed", "validated", "coded", "deprecated"];
-const DESIGN_STATUSES = ["proposed", "validated"]; // R16: system, brand and reviews are never coded
+const STATUSES = ["proposed", "validated", "deprecated"];
+const DESIGN_STATUSES = ["proposed", "validated"]; // R16: system, brand and reviews are never deprecated
+const IMPLEMENTED_VERSION = "implemented-version"; // the version of an element its code implements
+const FORMAT = "1"; // the record format this validator reads
 const YES_NO = ["yes", "no"];
 const ASSET_TYPES = ["icon", "image", "illustration"];
 const VERDICTS = ["ok", "ko", "pending"];
@@ -22,7 +24,7 @@ const SYSTEM_ID = "system";
 const COMMON_KEYS = ["id", "kind", "status", "version"];
 const COMPONENT_KEYS = ["uses", "tokens", "variants", "states", "interactive", "role"];
 const KIND_KEYS = {
-  system: ["platforms", "breakpoints", "themes", "locales", "directions", "primitives", "code-roots", "ignore", "libraries"],
+  system: ["format", "platforms", "breakpoints", "themes", "locales", "directions", "primitives", "code-roots", "ignore", "libraries"],
   brand: [],
   atom: COMPONENT_KEYS,
   molecule: COMPONENT_KEYS,
@@ -41,7 +43,8 @@ const FOLDER_KINDS = {
   reviews: ["review"],
 };
 const COMPONENT_KINDS = FOLDER_KINDS.components;
-const ASSEMBLED_KINDS = ["molecule", "composition"]; // coded through what they use when no file is their own
+const ASSEMBLED_KINDS = ["molecule", "composition"]; // implemented through what they use when no file is their own
+const IMPLEMENTED_KINDS = [...COMPONENT_KINDS, "screen"];
 const DESIGN_KINDS = ["system", "brand", "review"];
 const LEVELS = { asset: 0, atom: 1, molecule: 2, composition: 3, screen: 4 }; // an element uses its own level or lower
 
@@ -155,23 +158,36 @@ function stateProblems(project) {
   });
 }
 
-/** Whether an assembled element is coded through the components it uses: at least one, all
- * coded. Assets are files, never code, so they count for nothing. */
-function codedThroughUses(record, index) {
+const isImplemented = (record) => IMPLEMENTED_VERSION in fm(record);
+
+/** Whether an assembled element is implemented through the elements it uses: at least one, all
+ * implemented. Assets are files, never code, so they count for nothing. */
+function implementedThroughUses(record, index) {
   const used = list(fm(record).uses)
     .map((id) => index.get(id))
     .filter((target) => !target || fm(target).kind !== "asset");
-  return ASSEMBLED_KINDS.includes(fm(record).kind) && used.length > 0 && used.every((target) => target && fm(target).status === "coded");
+  return ASSEMBLED_KINDS.includes(fm(record).kind) && used.length > 0 && used.every((target) => target && isImplemented(target));
 }
 
-function codedProblems(project) {
+/** What is wrong with an element's implemented version, or null. */
+function implementedProblem(record, index) {
+  const { kind, version } = fm(record);
+  const implemented = fm(record)[IMPLEMENTED_VERSION];
+  if (!IMPLEMENTED_KINDS.includes(kind)) return `${IMPLEMENTED_VERSION} is for components and screens, never a ${kind}`;
+  if (!INTEGER_VERSION.test(implemented)) return `${IMPLEMENTED_VERSION} "${implemented}" must be an integer from 1`;
+  if (INTEGER_VERSION.test(version) && Number(implemented) > Number(version)) return `${IMPLEMENTED_VERSION} ${implemented} is ahead of version ${version}`;
+  if ("code" in fm(record) || implementedThroughUses(record, index)) return null;
+  return ASSEMBLED_KINDS.includes(kind) ? `${IMPLEMENTED_VERSION} needs "code", or every element it uses implemented` : `${IMPLEMENTED_VERSION} needs "code"`;
+}
+
+function implementedProblems(project) {
   const index = byId(project);
   return placed(project)
-    .filter((record) => isElement(record) && fm(record).status === "coded" && !("code" in fm(record)))
-    .filter((record) => !codedThroughUses(record, index))
-    .map((record) =>
-      problem(record, ASSEMBLED_KINDS.includes(fm(record).kind) ? 'status coded needs "code", or every element it uses coded' : 'status coded needs "code"')
-    );
+    .filter(isImplemented)
+    .flatMap((record) => {
+      const message = implementedProblem(record, index);
+      return message ? [problem(record, message)] : [];
+    });
 }
 
 function deprecatedProblems(project) {
@@ -233,11 +249,14 @@ function reviewProblems(project) {
     .filter((record) => fm(record).kind === "review")
     .flatMap((record) => {
       const rows = table(record.sections[VERDICTS_SECTION]);
-      const missing = list(fm(record).screens).flatMap((id) =>
-        list(index.get(id) && fm(index.get(id)).states)
-          .filter((state) => !rows.some((row) => row.Screen === id && row.State === state))
-          .map((state) => `no verdict row for ${id} / ${state}`)
-      );
+      // A verdict judges one version: a row for an older one leaves the current one unreviewed.
+      const missing = list(fm(record).screens).flatMap((id) => {
+        const screen = index.get(id);
+        const version = screen && fm(screen).version;
+        return list(screen && fm(screen).states)
+          .filter((state) => !rows.some((row) => row.Screen === id && row.State === state && row.Version === version))
+          .map((state) => `no verdict row for ${id} / ${state} at version ${version}`);
+      });
       const verdicts = rows
         .filter((row) => !VERDICTS.includes(row.Verdict))
         .map((row) => `verdict "${row.Verdict}" for ${row.Screen} / ${row.State} must be ${listWithOr(VERDICTS)}`);
@@ -271,6 +290,14 @@ function usageProblems(project) {
     .map((record) => problem(record, `lacks "## ${USAGE_SECTION}", saying when to use it and when not`));
 }
 
+/** The one problem a system.md written for another format earns, since every rule would misread
+ * it; null when the format is this one or not stated, which R3 names. */
+function formatProblem(project) {
+  const system = systemOf(project);
+  const format = system && fm(system).format;
+  return format === undefined || format === FORMAT ? null : problem(system, `format "${format}" is not ${FORMAT}, the one this validator reads`);
+}
+
 const RULES = [
   frontMatterProblems, // R1
   kindProblems, // R2
@@ -279,7 +306,7 @@ const RULES = [
   versionProblems, // R5
   usesProblems, // R6
   stateProblems, // R7
-  codedProblems, // R8
+  implementedProblems, // R8
   deprecatedProblems, // R9
   deprecatedUseProblems, // R10
   breakpointProblems, // R11
@@ -294,4 +321,4 @@ const RULES = [
 /** Every broken record rule, as `{file, message}`, in rule order. */
 const check = (project) => RULES.flatMap((rule) => rule(project));
 
-module.exports = { check, placed, systemOf, isElement, fm, COMPONENT_KINDS, INTEGER_VERSION, SEMVER };
+module.exports = { check, formatProblem, placed, systemOf, isElement, fm, COMPONENT_KINDS, INTEGER_VERSION, SEMVER };
