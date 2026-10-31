@@ -36,6 +36,8 @@ const FIXTURE_STYLESHEET = [
   "",
   '[data-theme="dark"] {',
   "  --color-brand-primary: #6699cc;",
+  "  --color-text-default: var(--color-brand-primary);",
+  "  --color-action-default: var(--color-brand-primary);",
   "}",
   "",
 ].join("\n");

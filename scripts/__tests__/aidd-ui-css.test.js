@@ -121,14 +121,61 @@ describe("aidd-ui css", () => {
           "",
           '[data-theme="dark"] {',
           "  --color-brand-primary: #6699cc;",
+          "  --color-text-default: var(--color-brand-primary);",
           "}",
           "",
           '[data-theme="sepia"] {',
           "  --color-brand-primary: #80664d;",
+          "  --color-text-default: var(--color-brand-primary);",
           "}",
           "",
         ].join("\n")
       );
+    });
+
+    describe("a theme block, so the variable recomputes in a nested region", () => {
+      const space = { name: "space.md", type: "dimension", value: { value: 1, unit: "rem" } };
+      /** The dark block of a stylesheet: every line between its selector and its closing brace. */
+      const darkBlock = (base, tokens) => {
+        const lines = render({ base, baseTheme: "light", themes: [{ theme: "dark", tokens }] }).css.split("\n");
+        return lines.slice(lines.indexOf('[data-theme="dark"] {') + 1, -2);
+      };
+
+      it("redeclares a base alias of a token the theme redefines, and leaves an unrelated token out", () => {
+        assert.deepEqual(darkBlock([brand, text, space], [dark]), ["  --color-brand-primary: #6699cc;", "  --color-text-default: var(--color-brand-primary);"]);
+      });
+
+      it("follows raw CSS var()s, transitively, its base text kept", () => {
+        const mixed = { name: "color.text.soft", type: "color", raw: "color-mix(in srgb, var(--color-text-default) 50%, transparent)" };
+        assert.deepEqual(darkBlock([brand, text, mixed, space], [dark]), [
+          "  --color-brand-primary: #6699cc;",
+          "  --color-text-default: var(--color-brand-primary);",
+          "  --color-text-soft: color-mix(in srgb, var(--color-text-default) 50%, transparent);",
+        ]);
+      });
+
+      it("writes what it redeclares in tree order, whatever cites what", () => {
+        const first = { name: "a.first", type: "color", alias: "z.last" };
+        const last = { name: "z.last", type: "color", alias: "color.brand.primary" };
+        assert.deepEqual(darkBlock([first, brand, last], [dark]), ["  --color-brand-primary: #6699cc;", "  --a-first: var(--z-last);", "  --z-last: var(--color-brand-primary);"]);
+      });
+
+      it("keeps the value of a token the theme redefines itself, on one line", () => {
+        const ownText = { name: "color.text.default", type: "color", value: srgb([0, 0, 0], { hex: "#000000" }) };
+        assert.deepEqual(darkBlock([brand, text], [dark, ownText]), ["  --color-brand-primary: #6699cc;", "  --color-text-default: #000000;"]);
+      });
+
+      it("redeclares what depends on a token the theme redefines, through that token too", () => {
+        const ownText = { name: "color.text.default", type: "color", value: srgb([0, 0, 0], { hex: "#000000" }) };
+        const quote = { name: "color.text.quote", type: "color", alias: "color.text.default" };
+        assert.deepEqual(darkBlock([brand, text, quote], [ownText]), ["  --color-text-default: #000000;", "  --color-text-quote: var(--color-text-default);"]);
+      });
+
+      it("ends on raw CSS that cites itself in a loop", () => {
+        const one = { name: "loop.one", type: "number", raw: "var(--loop-two)" };
+        const two = { name: "loop.two", type: "number", raw: "calc(var(--loop-one) + var(--color-brand-primary))" };
+        assert.deepEqual(darkBlock([brand, one, two], [dark]), ["  --color-brand-primary: #6699cc;", "  --loop-one: var(--loop-two);", "  --loop-two: calc(var(--loop-one) + var(--color-brand-primary));"]);
+      });
     });
 
     it("names a composite token without raw CSS, in the base and in a theme, and writes no text", () => {
