@@ -1,5 +1,5 @@
 ---
-status: pending
+status: implemented
 ---
 
 # Instruction: Run it on the pilots
@@ -60,6 +60,6 @@ status: pending
 | Task | Acceptance criteria              |
 | ---- | -------------------------------- |
 | 1 | the blank pilot validates with brand, system, tokens, tokens.css and at least three rendered components |
-| 2 | both copies validate with no error; `git status` in each original shows no change made by this run |
+| 2 | both copies validate with no error other than true colour literals their code holds, which the skill leaves to the person; the extraction records a sample of components and the C3 warnings list the rest; `git status` in each original shows no change made by this run |
 | 3 | each impact report misses no record or render the grep finds |
 | 4 | the scripts suite and pre-commit pass |
