@@ -139,6 +139,11 @@ describe("aidd-ui code link", () => {
       assert.deepEqual(problems(), []);
     });
 
+    it("skips a mock folder, which states colours to stand in for real data", () => {
+      put(tmp, "src/ui/__mocks__/theme.ts", 'export const primary = "#336699";\n');
+      assert.deepEqual(problems().filter((problem) => !problem.includes("no record links it")), []);
+    });
+
     it("skips a test, which states colours to check them", () => {
       put(tmp, "src/ui/Button.test.tsx", 'expect(color).toBe("#336699");\n');
       assert.deepEqual(problems(), []);

@@ -14,7 +14,8 @@ const CODE_ROOTS_KEY = "code-roots";
 const CODE_TOKENS_KEY = "code-tokens"; // where the code consumes the tokens: generated from them, so no literal there is a fault
 const IGNORE_KEY = "ignore";
 // A test or a mock states colours to check them, as a token contract test does.
-const TEST_FILE = /(?:^|\/)(?:__tests__|__mocks__)\/|\.(?:test|spec)\.[^/]+$/;
+const TEST_FOLDER = /(?:^|\/)(?:__tests__|__mocks__)\//;
+const TEST_NAME = /\.(?:test|spec)\.[^/]+$/;
 const STYLESHEET_EXTENSIONS = [".css", ".scss"];
 const SCRIPT_EXTENSIONS = [".js", ".jsx", ".ts", ".tsx", ".vue", ".svelte"];
 const SCANNED_EXTENSIONS = [...STYLESHEET_EXTENSIONS, ...SCRIPT_EXTENSIONS, ".html"];
@@ -125,7 +126,7 @@ function coverageProblems(project) {
 const literalProblems = (pattern, extensions, applies = () => true) => (project) =>
   applies(project)
     ? scanned(project, extensions)
-        .filter((file) => !TEST_FILE.test(file))
+        .filter((file) => !TEST_FOLDER.test(file) && !TEST_NAME.test(file))
         .flatMap((file) => findLiterals(searchable(project, file), pattern).map((found) => ({ file, ...found })))
     : [];
 

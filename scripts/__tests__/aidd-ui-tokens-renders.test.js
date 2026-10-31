@@ -3,7 +3,7 @@ const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
 const { describe, it, beforeEach, afterEach } = require("node:test");
-const { UI, writeProject, edit, editTokens, put } = require("./fixtures/aidd-ui/project.js");
+const { UI, writeProject, edit, editTokens } = require("./fixtures/aidd-ui/project.js");
 
 // Each rule has one mutation of the valid project, and the test asserts the whole problem
 // list: dropping the rule turns its own test red and leaves every other one green.
