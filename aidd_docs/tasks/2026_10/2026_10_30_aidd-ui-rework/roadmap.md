@@ -30,4 +30,4 @@ La vérification est un hook, déclenché à chaque écriture dans `aidd_docs/ui
 
 ## Limites connues
 
-- Le retour du hook à l'agent est garanti sur Claude Code. Codex ne lance le hook qu'une fois approuvé ; Kilo et opencode perdent sa sortie ; Cursor et Copilot le lancent sur chaque outil. Ailleurs, la commande à la main est la garantie.
+- Le retour du hook à l'agent est garanti sur Claude Code. Codex ne lance le hook qu'une fois approuvé ; Copilot ne le lance que dans un dossier approuvé ; Kilo et opencode le reçoivent et relancent l'agent en fin de tour, une fois. Cursor n'est pas vérifié. Ailleurs, la commande à la main est la garantie.
