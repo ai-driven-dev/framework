@@ -586,6 +586,53 @@ describe("aidd-ui records and history", () => {
       }
     });
 
+    it("stays silent in a repository with no commit", () => {
+      fs.rmSync(path.join(tmp, ".git"), { recursive: true });
+      git(tmp, "init", "-q");
+      change(BUTTON, BUTTON_USAGE, WIDENED);
+      assert.deepEqual(edited(), []);
+    });
+
+    describe("a git that fails", { skip: process.platform === "win32" }, () => {
+      const DUBIOUS = "fatal: detected dubious ownership in repository at '/elsewhere'";
+      const FAILED = (failure) => `${UI}: git failed, so nothing was held to its committed version: ${failure}`;
+      /** `read`'s result with a `git` on PATH that runs `script`. */
+      const withGit = (script, read) => {
+        const bin = `${tmp}-bin`;
+        const path_ = process.env.PATH;
+        fs.mkdirSync(bin);
+        fs.writeFileSync(path.join(bin, "git"), `#!/bin/sh\n${script}\n`, { mode: 0o755 });
+        process.env.PATH = `${bin}${path.delimiter}${path_}`;
+        try {
+          return read();
+        } finally {
+          process.env.PATH = path_;
+          fs.rmSync(bin, { recursive: true, force: true });
+        }
+      };
+      const all = () => historyRules.check(load(tmp)).map((found) => `${found.file}: ${found.message} (${found.rule})`);
+
+      it("is one H8 problem naming the failure's first line, and the other rules still run", () => {
+        change(BUTTON, "| 1 | created | no |", "| 1 | created | maybe |");
+        const found = withGit(`echo "${DUBIOUS}" >&2\necho "To add an exception, run this" >&2\nexit 128`, all);
+        assert.deepEqual(found, [`${BUTTON}: breaking "maybe" in version 1 must be yes or no (H4)`, `${FAILED(DUBIOUS)} (H8)`]);
+      });
+
+      it("is named when only the read of a committed file fails", () => {
+        const found = withGit(`[ "$1" = diff ] && { printf '${BUTTON}\\0'; exit 0; }\necho "fatal: bad object HEAD" >&2\nexit 128`, edited);
+        assert.deepEqual(found, [FAILED("fatal: bad object HEAD")]);
+      });
+
+      it("is named when git times out", () => {
+        assert.deepEqual(withGit("exec sleep 30", edited), [FAILED("spawnSync git ETIMEDOUT")]);
+      });
+
+      it("reads git's messages in one language, whatever the machine's", () => {
+        const found = withGit('[ "$LC_ALL" = C ] && echo "fatal: not a git repository" >&2 || echo "fatal: ni ceci ni cela" >&2\nexit 128', edited);
+        assert.deepEqual(found, []);
+      });
+    });
+
     describe("git calls", () => {
       afterEach(() => mock.restoreAll());
       const gitCalls = () => {

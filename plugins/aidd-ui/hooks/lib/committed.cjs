@@ -1,49 +1,53 @@
 // A project file as git last committed it, the baseline a validated record is held to. git is
 // read through its command line; without git, a repository, a commit or the file, there is no
-// baseline, and nothing is held to it. git is asked once which files changed, and for the text of
-// those alone, so a run costs a call per changed file, not per element.
+// baseline, and nothing is held to it. Any other failure is kept for H8 to name. git is asked once
+// which files changed, and for the text of those alone, so a run costs a call per changed file, not
+// per element.
 const childProcess = require("node:child_process");
 const { clean, UI_DIR } = require("./project.cjs");
 
 const GIT_TIMEOUT_MS = 5000;
 const GIT_VARIABLE_PREFIX = "GIT_";
 const NUL = "\0";
+const NOT_INSTALLED = "ENOENT";
+// git's words under C for no repository, then no commit, then a file never committed. Outside a
+// repository, `git diff` reads HEAD as a path to compare, hence its first form.
+const NO_BASELINE = [/could not access 'HEAD'/i, /not a git repository/i, /bad revision 'HEAD'/, /exists on disk, but not in 'HEAD'/];
 
 /** The environment without git's own variables, which would point git at another repository, as a
- * commit hook's do. */
-const environment = () => Object.fromEntries(Object.entries(process.env).filter(([key]) => !key.startsWith(GIT_VARIABLE_PREFIX)));
+ * commit hook's do, and with git's messages in the one language NO_BASELINE reads. */
+const environment = () => ({ ...Object.fromEntries(Object.entries(process.env).filter(([key]) => !key.startsWith(GIT_VARIABLE_PREFIX))), LC_ALL: "C" });
 
-/** git's output for `args` run in the project root; throws without git, a repository or a commit.
- * The paths it names are relative to that root, which may lie below the repository's root. */
-const git = (root, args) =>
-  childProcess.execFileSync("git", args, { cwd: root, env: environment(), encoding: "utf8", timeout: GIT_TIMEOUT_MS, stdio: ["ignore", "pipe", "ignore"], windowsHide: true });
-
-/** `file` as HEAD holds it, cleaned; null when git, the repository, HEAD or the file is missing. */
-function show(root, file) {
+/** git's output for `args` run in the project root; null when it fails, the project keeping the
+ * first failure that is no mere absence of a baseline. The paths it names are relative to that
+ * root, which may lie below the repository's root. */
+function git(project, args) {
   try {
-    return clean(git(root, ["show", `HEAD:./${file}`]));
-  } catch {
+    return childProcess.execFileSync("git", args, { cwd: project.root, env: environment(), encoding: "utf8", timeout: GIT_TIMEOUT_MS, stdio: ["ignore", "pipe", "pipe"], windowsHide: true });
+  } catch (error) {
+    const said = error.stderr ?? "";
+    if (error.code !== NOT_INSTALLED && !NO_BASELINE.some((absence) => absence.test(said))) project.gitFailure ??= said.trim().split("\n")[0] || error.message;
     return null;
   }
+}
+
+/** `file` as HEAD holds it, cleaned; null when there is no such baseline or git failed. */
+function show(project, file) {
+  const content = git(project, ["show", `HEAD:./${file}`]);
+  return content === null ? null : clean(content);
 }
 
 /** The design system's files that differ from HEAD, read once per run; empty when git cannot say.
  * A file git does not list is unchanged, or new and without a baseline: nothing to compare. */
 function changed(project) {
-  if (!project.changedFiles) {
-    try {
-      project.changedFiles = new Set(git(project.root, ["diff", "--name-only", "--relative", "-z", "HEAD", "--", UI_DIR]).split(NUL).filter(Boolean));
-    } catch {
-      project.changedFiles = new Set();
-    }
-  }
+  project.changedFiles ??= new Set((git(project, ["diff", "--name-only", "--relative", "-z", "HEAD", "--", UI_DIR]) ?? "").split(NUL).filter(Boolean));
   return project.changedFiles;
 }
 
 /** A project-relative file as HEAD holds it, whether or not it changed, read once per run. */
 function baseline(project, file) {
   project.committedTexts ??= new Map();
-  if (!project.committedTexts.has(file)) project.committedTexts.set(file, show(project.root, file));
+  if (!project.committedTexts.has(file)) project.committedTexts.set(file, show(project, file));
   return project.committedTexts.get(file);
 }
 

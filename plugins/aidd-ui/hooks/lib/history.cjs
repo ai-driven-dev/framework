@@ -3,7 +3,7 @@
 // value, without a new version.
 const { table, list, parseRecord } = require("./markdown.cjs");
 const { placed, systemOf, byId, tokensUsedBy, isElement, isSystem, problem, fm, INTEGER_VERSION, SEMVER } = require("./model.cjs");
-const { checkOf, text } = require("./project.cjs");
+const { checkOf, text, UI_DIR } = require("./project.cjs");
 const { committed, baseline, changed } = require("./committed.cjs");
 const { cssFileOf, cssNameOf } = require("./tokens.cjs");
 const { renderOf } = require("./renders.cjs");
@@ -234,7 +234,8 @@ function valueProblems(project, named) {
 
 function editedProblems(project) {
   const edited = textProblems(project);
-  return [...edited, ...valueProblems(project, new Set(edited.map((found) => found.file)))];
+  const found = [...edited, ...valueProblems(project, new Set(edited.map((each) => each.file)))];
+  return project.gitFailure ? [...found, { file: UI_DIR, message: `git failed, so nothing was held to its committed version: ${project.gitFailure}` }] : found;
 }
 
 const RULES = {
