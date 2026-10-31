@@ -4,15 +4,13 @@
 const fs = require("node:fs");
 const nodePath = require("node:path");
 const { list } = require("./markdown.cjs");
-const { placed, systemOf, TOKENED_KINDS } = require("./records.cjs");
+const { placed, systemOf, TOKENED_KINDS } = require("./model.cjs");
 const { text, checkOf } = require("./project.cjs");
 
 const RESERVED_KEYS = ["$value", "$type", "$description", "$extensions", "$deprecated", "$extends", "$schema"];
 const ROOT_KEY = "$root"; // a stated limit: a group's own token is a named child here
 const PROPERTY_PREFIX = "$";
 const PATH_SEPARATOR = ".";
-const CSS_PREFIX = "--";
-const CSS_SEPARATOR = "-";
 const RAW_CSS_EXTENSION = "dev.ai-driven.css"; // a CSS value DTCG cannot hold, such as color-mix() or 100%
 const RESOLVER_FILE = "tokens.resolver.json";
 const RESOLVER_VERSION = "2025.10";
@@ -46,7 +44,7 @@ const childKeys = (node) => Object.keys(node).filter((key) => !key.startsWith(PR
 const aliasOf = (value) => (typeof value === "string" ? ALIAS.exec(value)?.[1] : undefined);
 
 /** Every token and group of the tree, each with its path and the closest group `$type`. */
-function walk(node, path, groupType, found) {
+function collect(node, path, groupType, found) {
   for (const key of Object.keys(node)) {
     const child = node[key];
     const childPath = [...path, key];
@@ -61,7 +59,7 @@ function walk(node, path, groupType, found) {
     if ("$value" in child || childKeys(child).length === 0) found.tokens.set(name, { path: childPath, node: child, groupType });
     else {
       found.groups.add(name);
-      walk(child, childPath, child.$type ?? groupType, found);
+      collect(child, childPath, child.$type ?? groupType, found);
     }
   }
   return found;
@@ -86,7 +84,7 @@ function readJson(project, file) {
 /** A token file's tree: its tokens, groups and bad names, or why it cannot be read. */
 function readTree(project, file) {
   const json = readJson(project, file);
-  return json.value ? walk(json.value, [], json.value.$type, emptyTree()) : { ...emptyTree(), unusable: true, problem: json.problem };
+  return json.value ? collect(json.value, [], json.value.$type, emptyTree()) : { ...emptyTree(), unusable: true, problem: json.problem };
 }
 
 /** tokens.json's tree, read once per run. */
@@ -167,7 +165,7 @@ const shapeProblem = (type, value) => (aliasOf(value) !== undefined || !SHAPES[t
 
 /** A problem builder for a token file, tokens.json by default, naming the token path first. */
 const tokenProblem = (project, file = project.tokensFile) => (path, message) => ({ file, message: `${path}: ${message}` });
-const cssName = (path) => `${CSS_PREFIX}${path.join(CSS_SEPARATOR)}`;
+const cssName = (path) => `--${path.join("-")}`;
 
 function jsonProblems(tree, project) {
   return tree.problem ? [{ file: project.tokensFile, message: tree.problem }] : [];

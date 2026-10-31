@@ -3,6 +3,7 @@ const fs = require("node:fs");
 const path = require("node:path");
 const { list, table } = require("./markdown.cjs");
 const { checkOf } = require("./project.cjs");
+const { COMPONENT_KINDS, IMPLEMENTED_KINDS, LEVELS, INTEGER_VERSION, SEMVER, problem, fm, isElement, isComponent, isSystem, belongs, readable, placed, byId, systemOf } = require("./model.cjs");
 
 const STATUSES = ["proposed", "validated", "deprecated"];
 const DESIGN_STATUSES = ["proposed", "validated"]; // R16: system, brand and reviews are never deprecated
@@ -20,7 +21,6 @@ const DEPRECATION_SECTION = "Deprecation";
 const STEPS_SECTION = "Steps";
 const VERDICTS_SECTION = "Verdicts";
 const BRAND_HEADINGS = ["Project", "Users", "Domain", "Platforms", "Personality and tone", "References", "Anti-references"];
-const SYSTEM_ID = "system";
 
 const COMMON_KEYS = ["id", "kind", "status", "version"];
 const COMPONENT_KEYS = ["uses", "tokens", "variants", "states", "interactive", "role"];
@@ -35,48 +35,11 @@ const KIND_KEYS = {
   asset: ["type", "file", "alt"],
   review: ["scope", "screens"],
 };
-const FOLDER_KINDS = {
-  "": ["system", "brand"],
-  components: ["atom", "molecule", "composition"],
-  screens: ["screen"],
-  journeys: ["journey"],
-  assets: ["asset"],
-  reviews: ["review"],
-};
-const COMPONENT_KINDS = FOLDER_KINDS.components;
 const ASSEMBLED_KINDS = ["molecule", "composition"]; // implemented through what they use when no file is their own
-const IMPLEMENTED_KINDS = [...COMPONENT_KINDS, "screen"];
-const TOKENED_KINDS = IMPLEMENTED_KINDS; // components and screens cite the tokens their render uses
 const DESIGN_KINDS = ["system", "brand", "review"];
-const LEVELS = { asset: 0, atom: 1, molecule: 2, composition: 3, screen: 4 }; // an element uses its own level or lower
-
-const INTEGER_VERSION = /^[1-9]\d*$/;
-const SEMVER = /^(\d+)\.(\d+)\.(\d+)$/;
-
 const listWithOr = (values) => `${values.slice(0, -1).join(", ")} or ${values.at(-1)}`;
-const problem = (record, message) => ({ file: record.file, message });
-const fm = (record) => record.frontMatter;
-const isElement = (record) => Object.hasOwn(LEVELS, fm(record).kind);
-/** Whether `kind` belongs in `folder`: own keys only, so `constructor` names no folder. */
-const belongs = (folder, kind) => Object.hasOwn(FOLDER_KINDS, folder) && FOLDER_KINDS[folder].includes(kind);
-const isComponent = (record) => COMPONENT_KINDS.includes(fm(record).kind);
 const isDeprecated = (record) => fm(record).status === "deprecated";
 const folderLabel = (folder) => (folder ? `${folder}/` : "aidd_docs/ui/");
-
-/** The records the other rules can read: a file without front matter is R1's alone. */
-const readable = (project) => project.records.filter((record) => record.hasFrontMatter);
-
-/** Readable records whose kind is known and in its folder: kind rules read only those. */
-const placed = (project) => readable(project).filter((record) => belongs(record.folder, fm(record).kind));
-
-/** The first record holding each id, in load order. */
-function byId(project) {
-  const index = new Map();
-  for (const record of readable(project)) if (fm(record).id && !index.has(fm(record).id)) index.set(fm(record).id, record);
-  return index;
-}
-
-const systemOf = (project) => readable(project).find((record) => fm(record).kind === SYSTEM_ID);
 
 function frontMatterProblems(project) {
   return project.records.flatMap((record) => record.problems.map((parse) => problem(record, `line ${parse.line}: ${parse.message}`)));
@@ -125,7 +88,7 @@ function versionProblems(project) {
   return placed(project).flatMap((record) => {
     const version = fm(record).version;
     if (version === undefined) return [];
-    if (fm(record).kind === SYSTEM_ID) return SEMVER.test(version) ? [] : [problem(record, `version "${version}" must be semver, such as 2.0.0`)];
+    if (isSystem(record)) return SEMVER.test(version) ? [] : [problem(record, `version "${version}" must be semver, such as 2.0.0`)];
     return INTEGER_VERSION.test(version) ? [] : [problem(record, `version "${version}" must be an integer from 1`)];
   });
 }
@@ -323,4 +286,4 @@ const RULES = {
 /** Every broken record rule, in rule order. */
 const check = checkOf(RULES);
 
-module.exports = { check, formatProblem, placed, systemOf, isElement, fm, COMPONENT_KINDS, TOKENED_KINDS, INTEGER_VERSION, SEMVER };
+module.exports = { check, formatProblem };

@@ -23,11 +23,10 @@ const SAFE_SESSION_ID = /^[A-Za-z0-9_-]{1,128}$/;
 // Codex's apply_patch passes its patch as tool_input.command, Copilot's Edit as tool_input itself.
 const PATCHED_FILE = /^\*\*\* (?:Add|Update) File: (.+)$/gm;
 
-/** The JSON object on stdin, or null when there is none or it is not one. */
+/** The JSON on stdin, or null when it is none. */
 function readPayload() {
   try {
-    const parsed = JSON.parse(fs.readFileSync(0, "utf8"));
-    return parsed !== null && typeof parsed === "object" && !Array.isArray(parsed) ? parsed : null;
+    return JSON.parse(fs.readFileSync(0, "utf8"));
   } catch {
     return null;
   }
@@ -42,7 +41,7 @@ function writtenFiles(toolInput) {
   if (typeof toolInput?.path === "string") return [toolInput.path];
   const patch = typeof toolInput === "string" ? toolInput : toolInput?.command;
   if (typeof patch !== "string") return [];
-  return [...patch.matchAll(PATCHED_FILE)].map((match) => match[1].trim());
+  return [...patch.matchAll(PATCHED_FILE)].map((match) => match[1]);
 }
 
 /** The mark a turn leaves for its Stop: one empty file per session, in the OS temp dir. */
@@ -128,7 +127,7 @@ function atSessionStart(project) {
 
 function run() {
   const payload = readPayload();
-  if (payload === null) return EXIT_SILENT;
+  if (typeof payload?.hook_event_name !== "string") return EXIT_SILENT;
   // Stop fires on every turn: one that wrote no watched file costs no read of the project.
   if (payload.hook_event_name === STOP && !consumeMark(payload)) return EXIT_SILENT;
   const project = load(typeof payload.cwd === "string" ? payload.cwd : process.cwd());

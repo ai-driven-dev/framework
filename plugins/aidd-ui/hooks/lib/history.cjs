@@ -1,17 +1,14 @@
 // H1 to H7: each versioned record's history, the system version its publications raise, and
 // the task folder each change names.
 const { table, list } = require("./markdown.cjs");
-const { placed, systemOf, isElement, fm, INTEGER_VERSION, SEMVER } = require("./records.cjs");
+const { placed, systemOf, isElement, isSystem, problem, fm, INTEGER_VERSION, SEMVER } = require("./model.cjs");
 const { checkOf } = require("./project.cjs");
 
 const HISTORY_SECTION = "History";
 const BREAKING_VALUES = ["yes", "no"];
 const BREAKING = "yes";
-const SYSTEM_KIND = "system";
 const TASKS_DIR = "aidd_docs/tasks/";
 
-const problem = (record, message) => ({ file: record.file, message });
-const isSystem = (record) => fm(record).kind === SYSTEM_KIND;
 const rowsOf = (record) => table(record.sections[HISTORY_SECTION]);
 /** A system row's Task cell: the tasks one publication lists, comma-separated. */
 const taskList = (cell) => list(cell?.split(",").map((task) => task.trim()).filter(Boolean));

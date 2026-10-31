@@ -1,10 +1,8 @@
 // Reads a UI record: flat front matter, `## ` sections, and a section's first table.
 
 const LINE_BREAK = "\n";
-const FENCE = "---";
 const SECTION_PREFIX = "## ";
 const TABLE_CELL_SEPARATOR = "|";
-const LIST_SEPARATOR = ",";
 
 const ENTRY = /^([a-z][a-z0-9-]*):[ \t]*(.*)$/;
 const LIST = /^\[(.*)\]$/;
@@ -21,12 +19,12 @@ function parseValue(raw) {
   const list = raw.trim().match(LIST);
   if (!list) return unquote(raw.trim());
   return list[1]
-    .split(LIST_SEPARATOR)
+    .split(",")
     .map((item) => unquote(item.trim()))
     .filter(Boolean);
 }
 
-const isFence = (line) => line.trimEnd() === FENCE;
+const isFence = (line) => line.trimEnd() === "---";
 
 /** Front matter between the first two `---` lines, with one problem per line that is neither
  * `key: value` nor `key: [a, b]`. Lines are numbered as in the file. */

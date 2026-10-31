@@ -4,8 +4,8 @@
 const fs = require("node:fs");
 const path = require("node:path");
 const { list } = require("./markdown.cjs");
-const { placed, systemOf, isElement, fm } = require("./records.cjs");
-const { PATTERNS, findLiterals, declaresRightToLeft } = require("./renders.cjs");
+const { placed, systemOf, isElement, fm } = require("./model.cjs");
+const { PATTERNS, findLiterals, declaresRightToLeft } = require("./literals.cjs");
 const { walk, text, relative, isUnder, checkOf, WARNING } = require("./project.cjs");
 
 const EXPORT_SEPARATOR = "#";
@@ -18,23 +18,20 @@ const TEST_FILE = /(?:^|\/)(?:__tests__|__mocks__)\/|\.(?:test|spec)\.[^/]+$/;
 const STYLESHEET_EXTENSIONS = [".css", ".scss"];
 const SCRIPT_EXTENSIONS = [".js", ".jsx", ".ts", ".tsx", ".vue", ".svelte"];
 const SCANNED_EXTENSIONS = [...STYLESHEET_EXTENSIONS, ...SCRIPT_EXTENSIONS, ".html"];
-const BLANK = " ";
-const CURRENT_FOLDER = ".";
-const PARENT_FOLDER = "..";
 
 const REGEX_SPECIALS = /[.*+?^${}()|[\]\\]/g;
 const NOT_LINE_BREAK = /[^\n]/g;
 // a comment, then a string or template literal, then any other character
-const SCRIPT_TOKEN = /\/\/[^\n]*|\/\*[\s\S]*?\*\/|("(?:\\.|[^"\\\n])*"|'(?:\\.|[^'\\\n])*'|`(?:\\[\s\S]|[^`\\])*`)|[^\n]/g;
+const SCRIPT_TOKEN = /\/\/[^\n]*|\/\*[\s\S]*?\*\/|("(?:\\.|[^"\\\n])*"|'(?:\\.|[^'\\\n])*'|`(?:\\[\s\S]|[^`\\])*`)|[^\n"'`/]+|[^\n]/g;
 
 /** A script with all but its string and template literals blanked, lines kept: a colour in
  * code lives in a string, and a `#` in a comment is an issue number. */
-const stringsOnly = (source) => source.replace(SCRIPT_TOKEN, (found, literal) => literal ?? found.replace(NOT_LINE_BREAK, BLANK));
+const stringsOnly = (source) => source.replace(SCRIPT_TOKEN, (found, literal) => literal ?? found.replace(NOT_LINE_BREAK, " "));
 
 /** A `code-roots` or `ignore` list as normalised path prefixes, so `./src` reads as `src`. */
 const prefixes = (project, key) => list(systemOf(project)?.frontMatter[key]).map((prefix) => path.posix.normalize(prefix));
 /** Whether a normalised prefix names a folder inside the project, never the project itself. */
-const isInside = (prefix) => prefix !== CURRENT_FOLDER && !prefix.startsWith(PARENT_FOLDER) && !path.posix.isAbsolute(prefix);
+const isInside = (prefix) => prefix !== "." && !prefix.startsWith("..") && !path.posix.isAbsolute(prefix);
 const codeRoots = (project) => prefixes(project, CODE_ROOTS_KEY).filter(isInside);
 
 /** A `code` value as `{target, name}`, `target` being a path or `package:<name>`; null when malformed. */
@@ -54,8 +51,6 @@ const linked = (project) =>
 
 const hasWord = (text, word) => new RegExp(`(?<![\\w$])${word.replace(REGEX_SPECIALS, "\\$&")}(?![\\w$])`).test(text);
 
-const trees = new WeakMap();
-
 /** The code's token file system.md names, normalised; null when it names none. */
 function codeTokens(project) {
   const value = systemOf(project)?.frontMatter[CODE_TOKENS_KEY];
@@ -65,12 +60,12 @@ function codeTokens(project) {
 /** The code side, walked once per run: every file under a code root, and the ignored prefixes,
  * the code's token file among them. */
 function codeTree(project) {
-  if (!trees.has(project)) {
+  if (!project.codeTree) {
     const files = codeRoots(project).flatMap((root) => walk(path.join(project.root, root)).map((file) => relative(project.root, file)));
     const tokenFile = codeTokens(project);
-    trees.set(project, { files: [...new Set(files)], ignore: [...prefixes(project, IGNORE_KEY), ...(tokenFile ? [tokenFile] : [])] });
+    project.codeTree = { files: [...new Set(files)], ignore: [...prefixes(project, IGNORE_KEY), ...(tokenFile ? [tokenFile] : [])] };
   }
-  return trees.get(project);
+  return project.codeTree;
 }
 
 /** Every file under a code root that no `ignore` prefix covers, relative to the project root. */

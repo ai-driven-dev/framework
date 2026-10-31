@@ -29,7 +29,6 @@ function isUnder(file, prefix) {
 /** Every file under `dir`, sorted, minus the folders `skip` names; [] when it is no directory.
  * A folder that cannot be listed goes to `unlisted`, never a crash. */
 function walk(dir, skip = () => false, unlisted = () => {}) {
-  if (!fs.existsSync(dir) || !fs.statSync(dir).isDirectory()) return [];
   let entries;
   try {
     entries = fs.readdirSync(dir, { withFileTypes: true });
@@ -38,7 +37,7 @@ function walk(dir, skip = () => false, unlisted = () => {}) {
     return [];
   }
   return entries
-    .sort((a, b) => a.name.localeCompare(b.name))
+    .sort((a, b) => (a.name < b.name ? -1 : 1)) // by code unit, the same order on every machine
     .flatMap((entry) => {
       const full = path.join(dir, entry.name);
       if (!entry.isDirectory()) return [full];

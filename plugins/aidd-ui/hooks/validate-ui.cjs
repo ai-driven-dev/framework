@@ -34,12 +34,6 @@ function problemsOf(project, checks = CHECKS) {
   ];
 }
 
-/** The problems of the design system under `root`, or null when it has none. */
-function validate(root) {
-  const project = load(root);
-  return project === null ? null : problemsOf(project);
-}
-
 /** Whether a problem blocks: anything a rule does not call a warning. */
 const isError = (problem) => problem.severity !== WARNING;
 
@@ -48,12 +42,13 @@ const isError = (problem) => problem.severity !== WARNING;
 const format = (problems) => problems.map((problem) => `${isError(problem) ? ERROR_MARK : WARNING_MARK} ${problem.file}: ${problem.message}${problem.rule ? ` (${problem.rule})` : ""}`);
 
 function main(args) {
-  const problems = validate(args[0] ?? process.cwd());
-  if (problems === null) return EXIT_VALID;
+  const project = load(args[0] ?? process.cwd());
+  if (project === null) return EXIT_VALID;
+  const problems = problemsOf(project);
   console.log(problems.length ? format(problems).join("\n") : VERDICT_VALID);
   return problems.some(isError) ? EXIT_INVALID : EXIT_VALID;
 }
 
 if (require.main === module) process.exitCode = main(process.argv.slice(2));
 
-module.exports = { validate, problemsOf, format, isError };
+module.exports = { problemsOf, format, isError };

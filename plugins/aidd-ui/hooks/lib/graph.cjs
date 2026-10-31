@@ -2,7 +2,7 @@
 // and every record citing that one. The feedback after a write names what it broke elsewhere
 // without repeating the whole design system.
 const { list, table } = require("./markdown.cjs");
-const { placed, fm } = require("./records.cjs");
+const { placed, fm } = require("./model.cjs");
 const { renderOf } = require("./renders.cjs");
 const { codeOwner } = require("./code.cjs");
 const { isUnder, UI_DIR } = require("./project.cjs");
