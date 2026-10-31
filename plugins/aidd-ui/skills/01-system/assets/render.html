@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="{{BCP 47 language}}" dir="{{ltr or rtl}}">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{component id}}</title>
+<link rel="stylesheet" href="../tokens.css">
+<style>
+.{{component id}} {
+  padding-block: var(--{{spacing token CSS name}});
+  color: var(--{{text token CSS name}});
+}
+</style>
+</head>
+<body>
+<!-- Replace every `{{...}}` with its answer and delete every comment. Show one block per variant and state the record declares, repeating the block below, each with data-variant and data-state, and style them with var() of the tokens the record lists, never a value. Use logical properties such as padding-inline when a right-to-left direction is declared. On a screen, drop data-variant and show one block per state. -->
+<div class="{{component id}}" data-variant="{{variant}}" data-state="{{first state}}">{{first state}}</div>
+<div class="{{component id}}" data-variant="{{variant}}" data-state="{{next state}}">{{next state}}</div>
+</body>
+</html>

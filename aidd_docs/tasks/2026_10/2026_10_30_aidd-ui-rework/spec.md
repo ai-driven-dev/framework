@@ -158,9 +158,9 @@ Deux axes, jamais mêlés : où en est le design, et quelle version le code impl
 
 | PR | Décision |
 | --- | --- |
-| 2 | Un élément modifié sans montée de version se détecte en comparant à la version committée ; le moteur expose le graphe d'usages en JSON pour le rapport d'impact. |
-| 2 | Le flux de changement vit dans `01-system` : il régénère les rendus touchés, écrans compris, par une sous-commande du moteur, puis s'arrête et dit qu'une review est attendue, sans nommer le skill qui la conduit. |
-| 2 | Un composant Vue ou Svelte, qui n'a pas de nom exporté, se lie par son seul chemin, quand l'extraction en rencontre un. |
+| 2 | Réalisé : la règle H8 compare un élément validé ou déprécié à sa fiche et son rendu committés (`HEAD`, lus par `git`) ; `status`, `implemented-version`, `code` et l'historique ne comptent pas comme une modification, et sans git, sans dépôt ou sans fiche committée la règle se tait. La sous-commande `impact` imprime le graphe d'usages en JSON (tokens, éléments, écrans, parcours, rendus, fichiers de code). |
+| 2 | Réalisé : le flux de changement vit dans `01-system`. Un rendu charge `../tokens.css` au lieu de porter les valeurs ; la sous-commande `tokens` régénère ce seul fichier, et le skill réécrit le balisage des rendus touchés, écrans compris, d'après le rapport d'impact. Il s'arrête en disant qu'une review est attendue, sans nommer le skill qui la conduit. |
+| 2 | Non réalisé, reste une limite écrite : un composant Vue ou Svelte se lie avec un nom exporté, faute de cas observé dans les données réelles. |
 | 3 | La page de review est un fichier statique : elle produit la fiche review à enregistrer, sans serveur. |
 | 4 | `ui.md` cite les éléments par `id@version`, pour que la vérification d'après code voie ce qui a bougé pendant la feature. |
 | 5 | `system.md` nomme le catalogue de traductions pour les textes trop longs ; l'audit d'une app existante part d'une base d'écarts acceptés, sinon il noie la personne. |

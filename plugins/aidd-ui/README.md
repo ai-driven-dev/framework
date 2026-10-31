@@ -8,7 +8,7 @@ UI and UX design.
 | --- | --- |
 | Status | alpha |
 | Install | `/plugin install aidd-ui@aidd-framework` |
-| Start with | `/aidd-ui:01-hello` |
+| Start with | `/aidd-ui:01-system` |
 | Skills, agents, hooks | [Catalog](../../docs/CATALOG.md#-aidd-ui) |
 
 > [!WARNING]
@@ -26,6 +26,7 @@ aidd_docs/ui/
 ├── tokens.json           tokens of the base theme, DTCG 2025.10
 ├── tokens.resolver.json  the other themes, DTCG Resolver 2025.10
 ├── themes/<theme>.json   the tokens one theme redefines
+├── tokens.css            generated from the tokens by the engine, never written by hand
 ├── assets/<id>.md        an icon, image or illustration, its file beside it
 ├── components/<id>.md    an atom, molecule or composition
 ├── components/<id>.html  its render: every variant and state
@@ -67,14 +68,27 @@ Every record opens with flat front matter, `key: value` or `key: [a, b]`, and cl
 - A value DTCG cannot hold, such as `color-mix()` or `100%`, is raw CSS: `"$extensions": {"dev.ai-driven.css": "<value>"}`. Each `var()` in it must name a token.
 - `$root` is not supported: name the token.
 - A token's CSS name is `--` plus its path joined by `-`.
+- `tokens.css` is generated: a custom property per token, the base in `:root`, each other theme in `[data-theme="<theme>"]`, an alias as `var()`, raw CSS verbatim. A composite token (shadow, border, typography, ...) has no CSS of its own: it needs a raw CSS extension to appear in it.
+- A component or screen render loads it with `<link rel="stylesheet" href="../tokens.css">`, so a token change reaches every render without rewriting one.
+- A validated or deprecated element edited since its committed version, without a new `version`, is an error. A change to `status`, `implemented-version`, `code` or the History table is not an edit.
 
-## Validation
+## Commands
 
 ```sh
 node <plugin>/hooks/aidd-ui.cjs validate [project-root]
+node <plugin>/hooks/aidd-ui.cjs tokens [project-root]
+node <plugin>/hooks/aidd-ui.cjs impact <id or token>… [--root <dir>]
 ```
 
-It prints `VALID`, or one `✗ <file>: <message> (<rule>)` line per error and `⚠` per warning, and exits 1 when an error remains. Warnings: a file under a code root no record links, and a render length of 2px or less.
+| Command | Does |
+| --- | --- |
+| `validate` | checks the whole design system |
+| `tokens` | writes `aidd_docs/ui/tokens.css` and prints its path; writes nothing and exits 1 while a token has an error or a composite token has no raw CSS |
+| `impact` | prints as JSON the `tokens`, `elements`, `screens`, `journeys`, `renders` and `code` files a change to those tokens or elements reaches, each sorted; a name that is neither exits 2 |
+
+## Validation
+
+`validate` prints `VALID`, or one `✗ <file>: <message> (<rule>)` line per error and `⚠` per warning, and exits 1 when an error remains. Warnings: a file under a code root no record links, and a render length of 2px or less.
 
 A hook runs the same check:
 
@@ -86,6 +100,8 @@ A hook runs the same check:
 
 Each output stops at 20 problem lines and names the command that prints the rest.
 
+Rules: records R1 to R17, history H1 to H8, tokens T1 to T10, renders V1 to V8, code C1 to C8.
+
 ## Limits
 
 - Without `node` on `PATH`, the hook does nothing.
@@ -95,7 +111,10 @@ Each output stops at 20 problem lines and names the command that prints the rest
 - A file written by a shell command, or deleted by a patch, is not seen.
 - A problem a write causes in a record that does not cite the written one, such as a use of a renamed id, appears at turn end only.
 - The Resolver is read in one profile: a `theme` modifier with file sources. Inline sources and other modifiers are not checked.
-- Composite tokens are checked for a `$value`, not for its shape.
+- Composite tokens are checked for a `$value`, not for its shape, and reach `tokens.css` only as raw CSS.
+- `impact` reads aliases from `tokens.json`, not from theme files, and leaves reviews out of its report.
+- A web design system only: a native app, such as an Expo one, is outside it.
+- The committed baseline of H8 is `HEAD`: without `git`, a repository or a commit, the rule is silent. Each element costs a `git` call per run.
 - `code-roots` and `ignore` are path prefixes, not globs. Every folder under a code root is walked, `node_modules`, build output and dot-folders included: ignore them. A linked folder counts as one file no record links.
 - A render shows a variant or state when it holds its `data-variant` or `data-state` attribute; an export exists when its name is a word of the linked file, a comment included.
 - The hook command names `${CLAUDE_PLUGIN_ROOT}` unquoted, like every plugin here: a plugin path with spaces breaks it.
