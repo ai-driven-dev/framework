@@ -8,6 +8,8 @@ const VAR_CALL = /var\([^()]*\)/g; // a fallback inside var() is the token's, no
 const QUERY_PRELUDE = /@(?:media|container)\b[^{]*/g; // a query's lengths are breakpoints, not styles
 const HAIRLINE_PX = 2; // up to 2px: a border or outline width code keeps literal
 const LINE_BREAK = "\n";
+const NOT_LINE_BREAK = /[^\n]/g;
+const STYLE = /<style\b[^>]*>([\s\S]*?)<\/style>|\sstyle\s*=\s*"([^"]*)"|\sstyle\s*=\s*'([^']*)'/gid; // a style block, or a style attribute's value
 
 /** Literals a render or UI code must not hold, each with the message it earns. */
 const PATTERNS = {
@@ -27,6 +29,21 @@ const PATTERNS = {
   },
 };
 
+const blank = (text) => text.replace(NOT_LINE_BREAK, " ");
+
+/** `source` with its style blocks and style attribute values kept and the rest passed through
+ * `other`, blanked by default, so the patterns read styles and not copy; lines are kept. */
+function styled(source, other = blank) {
+  let kept = "";
+  let at = 0;
+  for (const match of source.matchAll(STYLE)) {
+    const [start, end] = match.indices.slice(1).find(Boolean);
+    kept += other(source.slice(at, start)) + source.slice(start, end);
+    at = end;
+  }
+  return kept + other(source.slice(at));
+}
+
 /** Each match of `pattern` in `text`, as `{severity, message}`, lines numbered from 1. */
 function findLiterals(text, pattern) {
   return text.split(LINE_BREAK).flatMap((line, index) => {
@@ -38,4 +55,4 @@ function findLiterals(text, pattern) {
 /** Whether the design system declares a right-to-left direction. */
 const declaresRightToLeft = (project) => list(systemOf(project)?.frontMatter.directions).includes(RIGHT_TO_LEFT);
 
-module.exports = { PATTERNS, findLiterals, declaresRightToLeft };
+module.exports = { PATTERNS, findLiterals, styled, declaresRightToLeft };

@@ -343,6 +343,14 @@ describe("aidd-ui tokens and renders", () => {
     });
   });
 
+  describe("V2 attributes outside style", () => {
+    it("does not take a selector in a style block for the state shown", () => {
+      edit(tmp, DIALOG_RENDER, 'data-state="hover"', 'data-state="default"');
+      edit(tmp, DIALOG_RENDER, "</style>", '[data-state="hover"] { color: var(--space-md); }\n</style>');
+      assert.deepEqual(problems(), [`${DIALOG_RENDER}: no data-state="hover"`]);
+    });
+  });
+
   describe("V3 token references", () => {
     it("names a custom property no token defines", () => {
       addToRender('<p style="color: var(--color-missing)">x</p>');
@@ -362,6 +370,18 @@ describe("aidd-ui tokens and renders", () => {
         assert.deepEqual(problems(), [`${BUTTON_RENDER}: line ${INSERTED_LINE}: colour literal "${found}", use a token`]);
       });
     }
+  });
+
+  describe("V4 to V6 scope", () => {
+    it("reads copy as copy: a hash and a length in the text are no literal", () => {
+      addToRender("<p>Rapport #412, 16px de large, margin-left</p>");
+      assert.deepEqual(problems(), []);
+    });
+
+    it("reads a style block, with its line", () => {
+      addToRender("<style>\n.x { color: #336699; }\n</style>");
+      assert.deepEqual(problems(), [`${BUTTON_RENDER}: line ${INSERTED_LINE + 1}: colour literal "#336699", use a token`]);
+    });
   });
 
   describe("V6 unit literals", () => {
@@ -390,8 +410,17 @@ describe("aidd-ui tokens and renders", () => {
 
   describe("V7 declared tokens", () => {
     it("names a render using a token its record does not declare", () => {
-      edit(tmp, `${UI}/components/dialog.html`, "</body>", '<p style="color: var(--color-text-default)">x</p>\n</body>');
-      assert.deepEqual(problems(), [`${DIALOG_RENDER}: line 18: var(--color-text-default) is a token dialog does not declare`]);
+      edit(tmp, `${UI}/components/dialog.html`, "</body>", '<p style="color: var(--color-brand-primary)">x</p>\n</body>');
+      assert.deepEqual(problems(), [`${DIALOG_RENDER}: line 18: var(--color-brand-primary) is a token dialog does not declare`]);
+    });
+  });
+
+  describe("V7 tokens of the elements a record uses", () => {
+    it("lets a molecule's render show the tokens of what it uses, transitively", () => {
+      edit(tmp, `${UI}/components/search-field.html`, "</body>", '<p style="color: var(--color-action-default)">x</p>\n</body>');
+      edit(tmp, `${UI}/components/dialog.md`, "uses: [button]", "uses: [search-field]");
+      edit(tmp, `${UI}/components/dialog.html`, "</body>", '<p style="color: var(--color-action-default)">x</p>\n</body>');
+      assert.deepEqual(problems(), []);
     });
   });
 

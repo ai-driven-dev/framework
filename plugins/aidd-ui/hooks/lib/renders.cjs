@@ -2,8 +2,8 @@
 // through the tokens its record declares alone, from the stylesheet generated out of the tokens.
 const path = require("node:path");
 const { list } = require("./markdown.cjs");
-const { placed, TOKENED_KINDS } = require("./model.cjs");
-const { PATTERNS, findLiterals, declaresRightToLeft } = require("./literals.cjs");
+const { placed, byId, TOKENED_KINDS } = require("./model.cjs");
+const { PATTERNS, findLiterals, styled, declaresRightToLeft } = require("./literals.cjs");
 const { cssNames, cssNameOf } = require("./tokens.cjs");
 const { text, checkOf, RENDER_EXTENSION } = require("./project.cjs");
 
@@ -11,6 +11,7 @@ const LINE_BREAK = "\n";
 const STYLESHEET_HREF = "../tokens.css"; // renders sit one folder below the generated stylesheet
 const STYLESHEET_LINK = `<link rel="stylesheet" href="${STYLESHEET_HREF}">`;
 const LINK_TAG = /<link\b[^>]*>/g;
+const STYLE_BLOCK = /<style\b[^>]*>[\s\S]*?<\/style>/gi;
 
 const CUSTOM_PROPERTY = /var\(\s*(--[\w-]+)/g;
 const DECLARED_PROPERTY = /(--[\w-]+)\s*:/g; // a property the render sets itself, not a token
@@ -30,8 +31,8 @@ function coverageProblems(project) {
   return rendered(project)
     .filter((record) => project.renders.includes(renderOf(record)))
     .flatMap((record) => {
-      const html = text(project, renderOf(record));
-      if (html === null) return [];
+      const html = text(project, renderOf(record))?.replace(STYLE_BLOCK, ""); // a selector in a style block shows nothing
+      if (html === undefined) return [];
       const wanted = [...list(record.frontMatter.variants).map((value) => `data-variant="${value}"`), ...list(record.frontMatter.states).map((value) => `data-state="${value}"`)];
       return wanted.filter((attribute) => !html.includes(attribute)).map((attribute) => ({ file: renderOf(record), message: `no ${attribute}` }));
     });
@@ -53,15 +54,23 @@ function referenceProblems(project) {
   });
 }
 
-/** A render uses only the tokens its record declares, so an impact report read from the
- * records misses none of them. */
+/** The tokens a record declares and those of every element it uses, transitively. */
+function declaredBy(index, record, seen = new Set()) {
+  seen.add(record);
+  for (const id of list(record.frontMatter.uses)) if (index.has(id) && !seen.has(index.get(id))) declaredBy(index, index.get(id), seen);
+  return new Set([...seen].flatMap((each) => list(each.frontMatter.tokens).map(cssNameOf)));
+}
+
+/** A render uses only the tokens its record declares, or the elements it shows declare, so an
+ * impact report read from the records misses none of them. */
 function declaredProblems(project) {
   const tokens = cssNames(project);
   if (tokens === null) return [];
+  const index = byId(project);
   return rendered(project)
     .filter((record) => project.renders.includes(renderOf(record)))
     .flatMap((record) => {
-      const declared = new Set(list(record.frontMatter.tokens).map(cssNameOf));
+      const declared = declaredBy(index, record);
       return readRender(project, renderOf(record))
         .split(LINE_BREAK)
         .flatMap((line, index) =>
@@ -84,7 +93,7 @@ function stylesheetProblems(project) {
 }
 
 const literalProblems = (pattern, applies = () => true) => (project) =>
-  applies(project) ? project.renders.flatMap((file) => findLiterals(readRender(project, file), pattern).map((found) => ({ file, ...found }))) : [];
+  applies(project) ? project.renders.flatMap((file) => findLiterals(styled(readRender(project, file)), pattern).map((found) => ({ file, ...found }))) : [];
 
 const RULES = {
   V1: presenceProblems,
