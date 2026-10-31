@@ -13,6 +13,7 @@ const LIB = path.resolve(__dirname, "../../plugins/aidd-ui/hooks/lib");
 const { load } = require(path.join(LIB, "project.cjs"));
 const records = require(path.join(LIB, "records.cjs"));
 const historyRules = require(path.join(LIB, "history.cjs"));
+const { problemsOf } = require(path.join(LIB, "../aidd-ui.cjs"));
 
 const SYSTEM = `${UI}/system.md`;
 const BRAND = `${UI}/brand.md`;
@@ -24,6 +25,7 @@ const HOME = `${UI}/screens/home.md`;
 const JOURNEY = `${UI}/journeys/onboarding.md`;
 const ICON = `${UI}/assets/icon-search.md`;
 const REVIEW = `${UI}/reviews/first-pass.md`;
+const STYLESHEET = `${UI}/tokens.css`;
 const BUTTON_RENDER = `${UI}/components/button.html`;
 const HOME_RENDER = `${UI}/screens/home.html`;
 const BUTTON_USAGE = "Any action a person starts; never for navigation.";
@@ -502,6 +504,8 @@ describe("aidd-ui records and history", () => {
     };
     /** Only H8's own problems, so a case about what H8 leaves alone does not depend on the others. */
     const edited = () => historyRules.check(load(tmp)).filter((found) => found.rule === "H8").map((found) => `${found.file}: ${found.message}`);
+    /** Every problem of every check, as the engine reports them: a check that crashes is one more line. */
+    const whole = () => problemsOf(load(tmp)).map((found) => `${found.file}: ${found.message}`);
 
     beforeEach(() => repository());
 
@@ -567,6 +571,25 @@ describe("aidd-ui records and history", () => {
     it("stays silent for brand.md, which is no element", () => {
       change(BRAND, "A search tool.", "A catalogue tool.");
       assert.deepEqual(edited(), []);
+    });
+
+    it("holds a record committed with CRLF line ends to its version", () => {
+      const file = path.join(tmp, BUTTON);
+      fs.writeFileSync(file, fs.readFileSync(file, "utf8").replaceAll("\n", "\r\n"));
+      git(tmp, "-c", "core.autocrlf=false", "add", "-A");
+      git(tmp, "commit", "-q", "--no-verify", "-m", "windows line ends");
+      change(BUTTON, BUTTON_USAGE, WIDENED);
+      assert.deepEqual(edited(), [EDITED(1)]);
+    });
+
+    it("asks the project's own repository, whatever GIT_DIR a commit hook exports", () => {
+      change(BUTTON, BUTTON_USAGE, WIDENED);
+      process.env.GIT_DIR = path.join(tmp, "no-such-repository");
+      try {
+        assert.deepEqual(edited(), [EDITED(1)]);
+      } finally {
+        delete process.env.GIT_DIR;
+      }
     });
 
     it("stays silent in a folder that is no git repository", () => {
@@ -712,7 +735,26 @@ describe("aidd-ui records and history", () => {
         git(tmp, "rm", "-q", "--cached", `${UI}/tokens.css`);
         git(tmp, "commit", "-q", "--no-verify", "-m", "unstage the stylesheet");
         setBold(600);
-        assert.deepEqual(edited(), []);
+        assert.deepEqual(whole(), []);
+      });
+
+      it("leaves a deleted tokens.css to T10, one problem", () => {
+        fs.rmSync(path.join(tmp, STYLESHEET));
+        assert.deepEqual(whole(), [`${STYLESHEET}: missing, generate it with the engine's tokens command`]);
+      });
+
+      it("leaves a tokens.css it cannot read as that one problem", () => {
+        fs.rmSync(path.join(tmp, STYLESHEET));
+        fs.mkdirSync(path.join(tmp, STYLESHEET));
+        assert.deepEqual(whole(), [`${STYLESHEET}: unreadable`]);
+      });
+
+      it("resolves values through raw CSS that loops", () => {
+        const looping = (target) => ({ $type: "number", $value: 0, $extensions: { "dev.ai-driven.css": `var(--loop-${target})` } });
+        editTokens(tmp, (tree) => (tree.loop = { one: looping("two"), two: looping("one") }));
+        commit();
+        setBold(600);
+        assert.deepEqual(whole(), THROUGH_BOLD);
       });
 
       it("does not name an element already named for its text", () => {

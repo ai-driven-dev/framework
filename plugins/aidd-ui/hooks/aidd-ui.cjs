@@ -78,7 +78,7 @@ function generateTokens([root = process.cwd()]) {
 }
 
 const ROOT_FLAG = "--root";
-const IMPACT_USAGE = `usage: node aidd-ui.cjs impact <id or token>… [${ROOT_FLAG} <dir>]`;
+const IMPACT_USAGE = `node aidd-ui.cjs impact <id or token>… [${ROOT_FLAG} <dir>]`;
 
 /** What the tokens and elements named change, read from the same graph the hook uses. */
 function impact(args) {
@@ -86,7 +86,7 @@ function impact(args) {
   const root = at < 0 ? process.cwd() : args[at + 1];
   const refs = args.filter((arg, index) => at < 0 || (index !== at && index !== at + 1));
   if (!refs.length || root === undefined) {
-    console.error(IMPACT_USAGE);
+    console.error(`usage: ${IMPACT_USAGE}`);
     return EXIT_USAGE;
   }
   const project = load(root);
@@ -104,7 +104,7 @@ const COMMANDS = { validate, tokens: generateTokens, impact };
 
 function main([command, ...args]) {
   if (Object.hasOwn(COMMANDS, command)) return COMMANDS[command](args);
-  console.error(`usage: node aidd-ui.cjs <validate|tokens> [project-root]\n       node aidd-ui.cjs impact <id or token>… [${ROOT_FLAG} <dir>]`);
+  console.error(`usage: node aidd-ui.cjs <validate|tokens> [project-root]\n       ${IMPACT_USAGE}`);
   return EXIT_USAGE;
 }
 

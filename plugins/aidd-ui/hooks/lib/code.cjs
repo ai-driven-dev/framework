@@ -43,7 +43,7 @@ const codeRoots = (project) => prefixes(project, CODE_ROOTS_KEY).filter(isInside
 function parseLink(value) {
   if (typeof value !== "string") return null;
   const at = value.lastIndexOf(EXPORT_SEPARATOR);
-  if (at < 0 && value.endsWith(ASTRO_EXTENSION) && !value.startsWith(PACKAGE_PREFIX)) return { target: value, name: null, library: null };
+  if (at < 0 && value.endsWith(ASTRO_EXTENSION)) return { target: value, name: null, library: null };
   if (at <= 0 || at === value.length - 1) return null;
   const target = value.slice(0, at);
   return { target, name: value.slice(at + 1), library: target.startsWith(PACKAGE_PREFIX) ? target.slice(PACKAGE_PREFIX.length) : null };

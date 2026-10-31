@@ -1,6 +1,8 @@
 // H1 to H8: each versioned record's history, the system version its publications raise, the task
 // folder each change names, and a held element that changed, or a validated one whose token changed
 // value, without a new version.
+const fs = require("node:fs");
+const nodePath = require("node:path");
 const { table, list, parseRecord } = require("./markdown.cjs");
 const { placed, systemOf, byId, tokensUsedBy, isElement, isSystem, problem, fm, INTEGER_VERSION, SEMVER } = require("./model.cjs");
 const { checkOf, text, UI_DIR } = require("./project.cjs");
@@ -218,7 +220,7 @@ function changedProperties(before, after) {
 function valueProblems(project, named) {
   const file = cssFileOf(project);
   const before = committed(project, file);
-  const after = text(project, file);
+  const after = fs.existsSync(nodePath.join(project.root, file)) ? text(project, file) : null; // a deleted file is T10's alone
   if (before === null || after === null) return [];
   const moved = changedProperties(declarationsOf(before), declarationsOf(after));
   const index = byId(project);
