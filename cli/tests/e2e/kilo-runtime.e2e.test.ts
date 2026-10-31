@@ -468,7 +468,12 @@ describeKiloRuntime("E2E: real Kilo runtime", () => {
             tool_name: "read",
             tool_input: { filePath: "probe.txt", file_path: "probe.txt" },
           },
-          { hook_event_name: "Stop", session_id: sessionId, cwd: generatedProject },
+          {
+            hook_event_name: "Stop",
+            session_id: sessionId,
+            cwd: generatedProject,
+            stop_hook_active: false,
+          },
         ])
       );
       for (const call of calls) await expect.poll(() => alive(call.pid)).toBe(false);
