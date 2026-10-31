@@ -1,4 +1,5 @@
 const assert = require("node:assert/strict");
+const { execFileSync } = require("node:child_process");
 const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
@@ -22,6 +23,11 @@ const HOME = `${UI}/screens/home.md`;
 const JOURNEY = `${UI}/journeys/onboarding.md`;
 const ICON = `${UI}/assets/icon-search.md`;
 const REVIEW = `${UI}/reviews/first-pass.md`;
+const BUTTON_RENDER = `${UI}/components/button.html`;
+const HOME_RENDER = `${UI}/screens/home.html`;
+const BUTTON_USAGE = "Any action a person starts; never for navigation.";
+const WIDENED = "Any action a person starts on purpose; never for navigation.";
+const EDITED = (version) => `${BUTTON}: edited since its committed version ${version}, raise its version with a History row`;
 
 let tmp;
 
@@ -469,6 +475,119 @@ describe("aidd-ui records and history", () => {
     it("names a published task that is not a task folder", () => {
       change(SYSTEM, "| 2.0.0 | old-button retired | yes | aidd_docs/tasks/retire-old-button |", "| 2.0.0 | old-button retired | yes | aidd_docs/tasks/retire-old-button, PROJ-12 |");
       assert.deepEqual(problems(), [`${SYSTEM}: task "PROJ-12" in version 2.0.0 must be a task folder, aidd_docs/tasks/…`]);
+    });
+  });
+
+  describe("H8 edited without a new version", () => {
+    /** git without the variables a commit hook exports, which would point it at the real repository. */
+    const git = (dir, ...args) =>
+      execFileSync("git", ["-c", "user.name=test", "-c", "user.email=test@example.com", "-c", "commit.gpgsign=false", ...args], {
+        cwd: dir,
+        env: Object.fromEntries(Object.entries(process.env).filter(([key]) => !key.startsWith("GIT_"))),
+        stdio: "ignore",
+      });
+    const commit = (dir = tmp) => {
+      git(dir, "add", "-A");
+      git(dir, "commit", "-q", "--no-verify", "-m", "snapshot");
+    };
+    const repository = (dir = tmp) => {
+      git(dir, "init", "-q");
+      commit(dir);
+    };
+    /** Only H8's own problems, so a case about what H8 leaves alone does not depend on the others. */
+    const edited = () => historyRules.check(load(tmp)).filter((found) => found.rule === "H8").map((found) => `${found.file}: ${found.message}`);
+
+    beforeEach(() => repository());
+
+    it("names a validated element whose text changed and whose version did not", () => {
+      change(BUTTON, BUTTON_USAGE, WIDENED);
+      assert.deepEqual(problems(), [EDITED(1)]);
+    });
+
+    it("names a validated element whose render changed and whose version did not", () => {
+      edit(tmp, BUTTON_RENDER, "</body>", "<!-- one more look -->\n</body>");
+      assert.deepEqual(edited(), [EDITED(1)]);
+    });
+
+    it("names a deprecated element too", () => {
+      change(OLD, "Nowhere: replaced by button.", "Nowhere: use button.");
+      assert.deepEqual(edited(), [`${OLD}: edited since its committed version 2, raise its version with a History row`]);
+    });
+
+    it("reads a screen as an element", () => {
+      edit(tmp, HOME_RENDER, "</body>", "<!-- one more look -->\n</body>");
+      assert.deepEqual(edited(), [`${HOME}: edited since its committed version 1, raise its version with a History row`]);
+    });
+
+    it("stays silent once the version rose with a history row", () => {
+      change(BUTTON, BUTTON_USAGE, WIDENED);
+      change(BUTTON, "version: 1", "version: 2");
+      change(BUTTON, "| 1 | created | no | aidd_docs/tasks/ds-init |", "| 1 | created | no | aidd_docs/tasks/ds-init |\n| 2 | wider usage | no | aidd_docs/tasks/widen-button |");
+      assert.deepEqual(problems(), []);
+    });
+
+    it("stays silent when only the status changed", () => {
+      change(BUTTON, "status: validated", "status: proposed");
+      assert.deepEqual(edited(), []);
+    });
+
+    it("stays silent when only implemented-version changed", () => {
+      change(BUTTON, "implemented-version: 1\n", "");
+      assert.deepEqual(edited(), []);
+    });
+
+    it("stays silent when only the code link changed", () => {
+      change(BUTTON, "code: src/ui/Button.tsx#Button", "code: src/ui/Button.tsx#Primary");
+      assert.deepEqual(edited(), []);
+    });
+
+    it("stays silent when only the history changed", () => {
+      change(BUTTON, "| 1 | created | no | aidd_docs/tasks/ds-init |", "| 1 | created | no | aidd_docs/tasks/ds-init |\n| 2 | wider usage | no | aidd_docs/tasks/widen-button |");
+      assert.deepEqual(edited(), []);
+    });
+
+    it("stays silent for a record committed as proposed: it is still being designed", () => {
+      change(BUTTON, "status: validated", "status: proposed");
+      commit();
+      change(BUTTON, BUTTON_USAGE, WIDENED);
+      assert.deepEqual(edited(), []);
+    });
+
+    it("stays silent for a record the repository does not hold yet", () => {
+      put(tmp, `${UI}/components/badge.md`, fs.readFileSync(path.join(tmp, BUTTON), "utf8").replace("id: button", "id: badge"));
+      assert.deepEqual(edited(), []);
+    });
+
+    it("stays silent for brand.md, which is no element", () => {
+      change(BRAND, "A search tool.", "A catalogue tool.");
+      assert.deepEqual(edited(), []);
+    });
+
+    it("stays silent in a folder that is no git repository", () => {
+      fs.rmSync(path.join(tmp, ".git"), { recursive: true });
+      change(BUTTON, BUTTON_USAGE, WIDENED);
+      assert.deepEqual(edited(), []);
+    });
+
+    it("stays silent when git is not installed", () => {
+      change(BUTTON, BUTTON_USAGE, WIDENED);
+      const path_ = process.env.PATH;
+      process.env.PATH = os.tmpdir();
+      try {
+        assert.deepEqual(edited(), []);
+      } finally {
+        process.env.PATH = path_;
+      }
+    });
+
+    it("finds the committed record when the project lies below the repository's root", () => {
+      for (const name of ["aidd_docs", "src", ".git"]) fs.rmSync(path.join(tmp, name), { recursive: true });
+      const app = path.join(tmp, "app");
+      fs.mkdirSync(app);
+      writeProject(app);
+      repository();
+      edit(app, BUTTON, BUTTON_USAGE, WIDENED);
+      assert.deepEqual(historyRules.check(load(app)).filter((found) => found.rule === "H8").map((found) => found.message), [EDITED(1).slice(BUTTON.length + 2)]);
     });
   });
 

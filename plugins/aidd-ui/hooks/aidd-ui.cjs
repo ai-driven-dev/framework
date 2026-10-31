@@ -1,10 +1,14 @@
 #!/usr/bin/env node
-// Usage: node aidd-ui.cjs <command> [project-root]
+// Usage: node aidd-ui.cjs <validate|tokens> [project-root]
+//        node aidd-ui.cjs impact <id or token>… [--root <dir>]
 // The design system engine the hook and every skill call, one command per job:
 //   validate  checks records, history, tokens, renders and code links. Prints VALID, or one line
 //             per problem, and exits 1 when an error remains. Prints nothing without a design system.
 //   tokens    writes aidd_docs/ui/tokens.css from the tokens and prints its path. Writes nothing and
 //             exits 1 while a token has an error or a composite token has no raw CSS.
+//   impact    prints as JSON what a change to those tokens or elements reaches: tokens, elements,
+//             screens, journeys, renders and code files, each sorted. An unknown ref is named on
+//             stderr and exits 2.
 const fs = require("node:fs");
 const path = require("node:path");
 const { load, unreadable, UI_DIR, WARNING } = require("./lib/project.cjs");
@@ -13,6 +17,7 @@ const history = require("./lib/history.cjs");
 const tokens = require("./lib/tokens.cjs");
 const renders = require("./lib/renders.cjs");
 const code = require("./lib/code.cjs");
+const { usages } = require("./lib/graph.cjs");
 
 const CHECKS = { records, history, tokens, renders, code };
 const VERDICT_VALID = "VALID";
@@ -72,11 +77,34 @@ function generateTokens([root = process.cwd()]) {
   return EXIT_VALID;
 }
 
-const COMMANDS = { validate, tokens: generateTokens };
+const ROOT_FLAG = "--root";
+const IMPACT_USAGE = `usage: node aidd-ui.cjs impact <id or token>… [${ROOT_FLAG} <dir>]`;
+
+/** What the tokens and elements named change, read from the same graph the hook uses. */
+function impact(args) {
+  const at = args.indexOf(ROOT_FLAG);
+  const root = at < 0 ? process.cwd() : args[at + 1];
+  const refs = args.filter((arg, index) => at < 0 || (index !== at && index !== at + 1));
+  if (!refs.length || root === undefined) {
+    console.error(IMPACT_USAGE);
+    return EXIT_USAGE;
+  }
+  const project = load(root);
+  if (project === null) return EXIT_VALID;
+  const { unknown, ...report } = usages(project, refs);
+  if (unknown) {
+    for (const ref of unknown) console.error(`aidd-ui: no token or element named "${ref}"`);
+    return EXIT_USAGE;
+  }
+  console.log(JSON.stringify(report, null, 2));
+  return EXIT_VALID;
+}
+
+const COMMANDS = { validate, tokens: generateTokens, impact };
 
 function main([command, ...args]) {
   if (Object.hasOwn(COMMANDS, command)) return COMMANDS[command](args);
-  console.error(`usage: node aidd-ui.cjs <${Object.keys(COMMANDS).join("|")}> [project-root]`);
+  console.error(`usage: node aidd-ui.cjs <validate|tokens> [project-root]\n       node aidd-ui.cjs impact <id or token>… [${ROOT_FLAG} <dir>]`);
   return EXIT_USAGE;
 }
 

@@ -1,13 +1,20 @@
-// H1 to H7: each versioned record's history, the system version its publications raise, and
-// the task folder each change names.
-const { table, list } = require("./markdown.cjs");
+// H1 to H8: each versioned record's history, the system version its publications raise, the task
+// folder each change names, and a validated element that changed without a new version.
+const { table, list, parseRecord } = require("./markdown.cjs");
 const { placed, systemOf, isElement, isSystem, problem, fm, INTEGER_VERSION, SEMVER } = require("./model.cjs");
-const { checkOf } = require("./project.cjs");
+const { checkOf, text } = require("./project.cjs");
+const { committed } = require("./committed.cjs");
+const { renderOf } = require("./renders.cjs");
 
 const HISTORY_SECTION = "History";
 const BREAKING_VALUES = ["yes", "no"];
 const BREAKING = "yes";
 const TASKS_DIR = "aidd_docs/tasks/";
+const HELD_STATUSES = ["validated", "deprecated"]; // a proposed element is still being designed
+const UNVERSIONED_KEYS = ["status", "implemented-version", "code"]; // a review, a code catch-up: no new version
+const FRONT_MATTER_FENCE = "---";
+const SECTION_PREFIX = "## ";
+const LINE_BREAK = "\n";
 
 const rowsOf = (record) => table(record.sections[HISTORY_SECTION]);
 /** A system row's Task cell: the tasks one publication lists, comma-separated. */
@@ -122,6 +129,43 @@ function deprecationProblems(project) {
     .map((record) => problem(record, "deprecated, yet its last history row is not breaking"));
 }
 
+/** A record's text without what a version never covers: the status, the implementation link and
+ * the History section. */
+function substance(content) {
+  const lines = content.split(LINE_BREAK);
+  const close = lines.findIndex((line, index) => index > 0 && line.trimEnd() === FRONT_MATTER_FENCE);
+  let inHistory = false;
+  return lines
+    .filter((line, index) => {
+      if (index <= close) return !UNVERSIONED_KEYS.some((key) => line.startsWith(`${key}:`));
+      if (line.startsWith(SECTION_PREFIX)) inHistory = line.trim() === `${SECTION_PREFIX}${HISTORY_SECTION}`;
+      return !inHistory;
+    })
+    .join(LINE_BREAK);
+}
+
+/** Whether a record's render now differs from the committed one; a render absent on either side
+ * is not a change. */
+function renderChanged(project, record) {
+  const file = renderOf(record);
+  const before = committed(project, file);
+  return before !== null && project.renders.includes(file) && text(project, file) !== before;
+}
+
+function editedProblems(project) {
+  return versioned(project)
+    .filter(isElement)
+    .flatMap((record) => {
+      const before = committed(project, record.file);
+      if (before === null) return [];
+      const was = parseRecord(before).frontMatter;
+      const comparable = [was.version, fm(record).version].every((version) => INTEGER_VERSION.test(version ?? ""));
+      if (!HELD_STATUSES.includes(was.status) || !comparable || Number(fm(record).version) > Number(was.version)) return [];
+      const changed = substance(text(project, record.file)) !== substance(before) || renderChanged(project, record);
+      return changed ? [problem(record, `edited since its committed version ${was.version}, raise its version with a History row`)] : [];
+    });
+}
+
 const RULES = {
   H1: presenceProblems,
   H2: duplicateProblems,
@@ -130,6 +174,7 @@ const RULES = {
   H5: publicationProblems,
   H6: deprecationProblems,
   H7: taskProblems,
+  H8: editedProblems,
 };
 
 /** Every broken history rule, in rule order. */

@@ -44,6 +44,12 @@ function parseLink(value) {
   return { target, name: value.slice(at + 1), library: target.startsWith(PACKAGE_PREFIX) ? target.slice(PACKAGE_PREFIX.length) : null };
 }
 
+/** The file a `code` value links; null for a library component or a malformed value. */
+function codeFileOf(value) {
+  const link = parseLink(value);
+  return link && link.library === null ? link.target : null;
+}
+
 /** Elements with a `code` value, each with its parsed link. */
 const linked = (project) =>
   placed(project)
@@ -169,4 +175,4 @@ const RULES = {
 /** Every broken code rule, in rule order. */
 const check = checkOf(RULES);
 
-module.exports = { check, codeRoots, codeOwner };
+module.exports = { check, codeRoots, codeOwner, codeFileOf };

@@ -377,7 +377,21 @@ function cssNames(project) {
   return tree.unusable ? null : new Set([...tree.tokens.values()].map((token) => cssName(token.path)));
 }
 
+/** The tokens each token cites, by name: the one its alias names and those whose custom property
+ * a `var()` of its raw CSS names. Empty when tokens.json cannot be read. */
+function citations(project) {
+  const tree = read(project);
+  const byProperty = new Map([...tree.tokens].map(([name, token]) => [cssName(token.path), name]));
+  const rawCss = (token) => (typeof rawCssOf(token) === "string" ? rawCssOf(token) : "");
+  return new Map(
+    [...tree.tokens].map(([name, token]) => [
+      name,
+      [aliasOf(token.node.$value), ...[...rawCss(token).matchAll(CSS_VARIABLE)].map((match) => byProperty.get(match[1]))].filter((cited) => tree.tokens.has(cited)),
+    ])
+  );
+}
+
 /** A token path's CSS custom property. */
 const cssNameOf = customProperty;
 
-module.exports = { check, blockers, generate, cssNames, cssNameOf, cssFileOf };
+module.exports = { check, blockers, generate, citations, cssNames, cssNameOf, cssFileOf };

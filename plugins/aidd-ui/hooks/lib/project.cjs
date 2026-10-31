@@ -45,13 +45,16 @@ function walk(dir, skip = () => false, unlisted = () => {}) {
     });
 }
 
-/** A file's text, read once per run, without a byte order mark and with `\n` line ends, as
- * Windows editors may write otherwise; null when it cannot be read, which `unreadable` reports. */
+/** A text without a byte order mark and with `\n` line ends, as Windows editors may write otherwise. */
+const clean = (content) => content.replace(BYTE_ORDER_MARK, "").replace(WINDOWS_LINE_ENDING, "\n");
+
+/** A file's text, read once per run, cleaned; null when it cannot be read, which `unreadable`
+ * reports. */
 function text(project, file) {
   if (!project.texts.has(file)) {
     let content = null;
     try {
-      content = fs.readFileSync(path.join(project.root, file), "utf8").replace(BYTE_ORDER_MARK, "").replace(WINDOWS_LINE_ENDING, "\n");
+      content = clean(fs.readFileSync(path.join(project.root, file), "utf8"));
     } catch {
       // a dangling link or a folder named like a file: one problem, never a crash
     }
@@ -95,4 +98,4 @@ function load(root) {
   return project;
 }
 
-module.exports = { load, walk, text, unreadable, relative, isUnder, checkOf, UI_DIR, RENDER_EXTENSION, ERROR, WARNING };
+module.exports = { load, walk, text, clean, unreadable, relative, isUnder, checkOf, UI_DIR, RENDER_EXTENSION, ERROR, WARNING };
