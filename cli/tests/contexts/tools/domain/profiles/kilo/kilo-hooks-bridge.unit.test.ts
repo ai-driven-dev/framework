@@ -171,7 +171,12 @@ describe("Kilo hooks bridge", () => {
           },
           {
             args: ["--quiet"],
-            payload: { hook_event_name: "Stop", session_id: "ses_one", cwd: directory },
+            payload: {
+              hook_event_name: "Stop",
+              session_id: "ses_one",
+              cwd: directory,
+              stop_hook_active: false,
+            },
           },
         ])
       );
@@ -179,6 +184,58 @@ describe("Kilo hooks bridge", () => {
       expect(calls.filter((call) => call.payload.hook_event_name === "SessionStart")).toHaveLength(
         2
       );
+    } finally {
+      await rm(directory, { recursive: true, force: true });
+    }
+  });
+
+  it("sends a Stop script's block reason as the next prompt, and tells the next Stop it is a continuation", async () => {
+    const directory = await mkdtemp(join(tmpdir(), "aidd-kilo-stop-"));
+    const log = join(directory, "stop.jsonl");
+    const generated = generateKiloHooksBridge(
+      JSON.stringify({
+        hooks: { Stop: [{ hooks: [{ command: `node ${ROOT}/hooks/stop.cjs` }] }] },
+      }),
+      "probe"
+    );
+    try {
+      await mkdir(join(directory, "hooks", "probe"), { recursive: true });
+      await mkdir(join(directory, "plugin"));
+      await writeFile(
+        join(directory, "hooks", "probe", "stop.cjs"),
+        `let input = ""; process.stdin.on("data", (c) => { input += c; }); process.stdin.on("end", () => {
+          const payload = JSON.parse(input);
+          require("node:fs").appendFileSync(${JSON.stringify(log)}, JSON.stringify(payload) + "\\n");
+          if (!payload.stop_hook_active) process.stdout.write(JSON.stringify({ decision: "block", reason: "fix it" }));
+        });`
+      );
+      const modulePath = join(directory, "plugin", "bridge.mjs");
+      await writeFile(modulePath, generated ?? "");
+      const module = await import(pathToFileURL(modulePath).href);
+      const prompts: unknown[] = [];
+      const client = {
+        session: { promptAsync: async (request: unknown) => void prompts.push(request) },
+      };
+      const server = await module.default.server({ directory, client });
+      const sessionEvent = (type: string) => ({ event: { type, properties: { sessionID: "s1" } } });
+
+      await server.event(sessionEvent("session.idle"));
+      await server.event({
+        event: {
+          type: "session.status",
+          properties: { sessionID: "s1", status: { type: "busy" } },
+        },
+      });
+      await server.event(sessionEvent("session.idle"));
+
+      expect(prompts).toStrictEqual([
+        { path: { id: "s1" }, body: { parts: [{ type: "text", text: "fix it" }] } },
+      ]);
+      const payloads = (await readFile(log, "utf8"))
+        .trim()
+        .split("\n")
+        .map((line) => JSON.parse(line));
+      expect(payloads.map((payload) => payload.stop_hook_active)).toStrictEqual([false, true]);
     } finally {
       await rm(directory, { recursive: true, force: true });
     }

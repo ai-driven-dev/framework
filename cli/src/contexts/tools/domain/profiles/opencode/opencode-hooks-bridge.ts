@@ -174,7 +174,8 @@ function answerFrom(code, stdout, stderr) {
   }
 }
 
-function answerOf(script, args, payload, directory) {
+/** Runs one hook script with its payload on stdin and collects what it wrote. */
+function runCapture(script, args, payload, directory) {
   return new Promise((resolve) => {
     let stdout = "";
     let stderr = "";
@@ -189,10 +190,29 @@ function answerOf(script, args, payload, directory) {
     child.stderr.on("data", (chunk) => {
       stderr += chunk;
     });
-    child.on("error", () => resolve(""));
-    child.on("close", (code) => resolve(answerFrom(code, stdout, stderr)));
+    child.on("error", () => resolve({ code: null, stdout: "", stderr: "" }));
+    child.on("close", (code) => resolve({ code, stdout, stderr }));
     child.stdin.on("error", () => {});
     child.stdin.end(JSON.stringify(payload));
+  });
+}
+
+function answerOf(script, args, payload, directory) {
+  return runCapture(script, args, payload, directory).then(({ code, stdout, stderr }) =>
+    answerFrom(code, stdout, stderr)
+  );
+}
+
+/** A Stop script's {"decision":"block","reason"} on stdout: the reason to keep working on. */
+function stopReasonOf(script, args, payload, directory) {
+  return runCapture(script, args, payload, directory).then(({ code, stdout }) => {
+    if (code !== 0) return "";
+    try {
+      const output = JSON.parse(stdout);
+      return output?.decision === "block" ? String(output.reason ?? "").trim() : "";
+    } catch {
+      return "";
+    }
   });
 }
 
@@ -218,6 +238,8 @@ function postToolUseCallsFor(call, directory) {
 }
 
 export const ${ident} = async (input) => {
+  // Sessions whose last Stop asked the model to continue: their next Stop carries stop_hook_active.
+  const continued = new Set();
   // SessionStart's own approximation (module doc comment above): fired once here, never
   // per session. Silent on purpose: a memory refresh
   // that breaks OpenCode's own startup is worse than one that never ran.
@@ -238,7 +260,18 @@ export const ${ident} = async (input) => {
       try {
         const directory = event?.properties?.directory ?? input.directory;
         for (const call of stopCallsFor(event, directory)) {
-          runHook(call.script, call.args, call.payload, directory);
+          const sessionId = call.payload.session_id;
+          const payload = { ...call.payload, stop_hook_active: continued.has(sessionId) };
+          const reason = await stopReasonOf(call.script, call.args, payload, directory);
+          if (!reason) {
+            continued.delete(sessionId);
+            continue;
+          }
+          continued.add(sessionId);
+          // Not awaited: the prompt is the session's next turn, and this handler must not hold it.
+          input.client.session
+            .promptAsync({ path: { id: sessionId }, body: { parts: [{ type: "text", text: reason }] } })
+            .catch(() => {});
         }
       } catch {
         // Silent on purpose - see above.

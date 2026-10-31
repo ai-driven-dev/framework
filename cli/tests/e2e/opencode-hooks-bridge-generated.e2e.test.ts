@@ -109,23 +109,21 @@ describe("opencode's generated event bridge, against the real build", () => {
              { tool: "bash", sessionID: "s1", args: { command: "echo task" } }, output);
            assert.equal(output.output, "done\\n\\nfix the edit");
          } else {
+           const toolHooks = {};
+           const prompts = [];
            const call = { sessionID: "s1", assistantMessageID: "msg1", id: "call1" };
-           const stale = { ...call, id: "stale" };
            const v2Events = [null, { type: "server.connected" },
-             { type: "session.tool.input.started", data: { ...stale, name: "Bash" } },
-             { type: "session.tool.called", data: { ...stale, input: { command: "echo stale" }, executed: false } },
-             { type: "session.execution.interrupted", data: { sessionID: "s1", reason: "shutdown" } },
-             { type: "session.tool.success", data: { ...stale, content: [], executed: false } },
-             { type: "session.tool.input.started", data: { ...call, name: "Bash" } },
-             { type: "session.tool.called", data: { ...call, input: { command: "echo task" }, executed: false } },
-             { type: "session.tool.success", data: { ...call, content: [], executed: false } },
-             { type: "session.tool.success", data: { ...call, content: [], executed: false } },
+             { type: "session.created", data: { sessionID: "s1", location: { directory: process.argv[2] } } },
              { type: "session.execution.succeeded", data: { sessionID: "s1" } }];
            let signal;
            let closed = false;
            let done;
            const processed = new Promise((resolve) => { done = resolve; });
-           const cleanup = await plugin.setup({ location: { directory: process.argv[2] }, event: {
+           const cleanup = await plugin.setup({
+             location: { directory: process.argv[2] },
+             tool: { hook: async (name, callback) => { toolHooks[name] = callback; return { dispose: async () => {} }; } },
+             session: { prompt: async (input) => { prompts.push(input); } },
+             event: {
              subscribe(options) {
                signal = options.signal;
                return (async function* () {
@@ -140,7 +138,11 @@ describe("opencode's generated event bridge, against the real build", () => {
            } });
            assert.equal(typeof cleanup, "function");
            await processed;
-           cleanup();
+           const result = { status: "completed", tool: "Bash", sessionID: "s1", input: { command: "echo task" }, result: { content: "done" } };
+           await toolHooks["execute.after"](result);
+           assert.equal(result.result.content, "done\\n\\nfix the edit");
+           await new Promise((resolve) => setImmediate(resolve));
+           await cleanup();
            await new Promise((resolve) => setImmediate(resolve));
            assert.equal(signal.aborted, true);
            assert.equal(closed, true);

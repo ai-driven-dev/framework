@@ -107,6 +107,31 @@ function answerFrom(code, stdout, stderr) {
   }
 }
 
+/** A Stop script's {"decision":"block","reason"} on stdout: the reason to keep working on. */
+function stopReasonOf(script, args, payload, directory) {
+  return new Promise((resolve) => {
+    let stdout = "";
+    const child = spawn("node", [HOOKS_DIR + script, ...args], {
+      cwd: directory,
+      stdio: ["pipe", "pipe", "ignore"],
+      timeout: 5000,
+    });
+    child.stdout.on("data", (chunk) => { stdout += chunk; });
+    child.on("error", () => resolve(""));
+    child.on("close", (code) => {
+      if (code !== 0) return resolve("");
+      try {
+        const output = JSON.parse(stdout);
+        resolve(output?.decision === "block" ? String(output.reason ?? "").trim() : "");
+      } catch {
+        resolve("");
+      }
+    });
+    child.stdin.on("error", () => {});
+    child.stdin.end(JSON.stringify(payload));
+  });
+}
+
 function answerOf(script, args, payload, directory) {
   return new Promise((resolve) => {
     let stdout = "";
@@ -148,7 +173,7 @@ function sessionStartCallsFor(event, directory) {
   }));
 }
 
-const ${identifier} = async ({ directory }) => {
+const ${identifier} = async ({ directory, client }) => {
   const sessions = new Map();
   return {
   event: async ({ event }) => {
@@ -157,7 +182,7 @@ const ${identifier} = async ({ directory }) => {
       const id = properties?.sessionID;
       if (typeof id !== "string") return;
       if (event?.type === "session.deleted") { sessions.delete(id); return; }
-      if (!sessions.has(id)) sessions.set(id, { started: false, idle: false, directory });
+      if (!sessions.has(id)) sessions.set(id, { started: false, idle: false, continued: false, directory });
       const session = sessions.get(id);
       let calls = [];
       if (event?.type === "session.created" && !session.started) {
@@ -168,7 +193,17 @@ const ${identifier} = async ({ directory }) => {
         session.idle = false;
       } else if (event?.type === "session.idle" && !session.idle) {
         session.idle = true;
-        calls = STOP.map(hook => ({ ...hook, payload: { hook_event_name: "Stop", session_id: id, cwd: session.directory } }));
+        for (const hook of STOP) {
+          const payload = { hook_event_name: "Stop", session_id: id, cwd: session.directory, stop_hook_active: session.continued };
+          const reason = await stopReasonOf(hook.script, hook.args, payload, session.directory);
+          session.continued = reason !== "";
+          // Not awaited: the prompt is the session's next turn, and this handler must not hold it.
+          if (reason) {
+            client.session
+              .promptAsync({ path: { id }, body: { parts: [{ type: "text", text: reason }] } })
+              .catch(() => {});
+          }
+        }
       }
       for (const call of calls) {
         runHook(call.script, call.args, call.payload, call.payload.cwd);
