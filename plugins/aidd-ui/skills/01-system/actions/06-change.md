@@ -17,7 +17,7 @@ The change the person wants: the tokens and elements it touches.
    - An element this change deprecates names `replaced-by`, or `none` with a `## Deprecation` section.
    - For each reached screen a review under `aidd_docs/ui/reviews/` names in `screens`, add to that review's `## Verdicts` one `pending` row per state at its new version; the older rows stay. The report leaves reviews out, so read them.
    - Leave `implemented-version` and `code` as they are: the code follows in the feature that carries the change.
-   - A change of a token's value alone bumps every element reached, `no` in Breaking; the engine refuses a validated element that uses the token, directly or through an element it uses, and was not bumped.
+   - A change of a token's value alone bumps every element reached but a deprecated one, `no` in Breaking; the engine refuses a validated element that uses the token, directly or through an element it uses, and was not bumped.
    - Leave `system.md`'s version alone: a publication adds its row.
 3. **Regenerate.** When tokens or themes changed, run `tokens`; it exits 1 while a token has an error, so fix it first.
 4. **Render.** Rewrite the markup of each reached render whose element changed, so it shows every variant and state; a render only loads `../tokens.css`, so a changed token value needs no markup change.

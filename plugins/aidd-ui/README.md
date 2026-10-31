@@ -114,11 +114,11 @@ Rules: records R1 to R17, history H1 to H8, tokens T1 to T10, renders V1 to V8, 
 - Composite tokens are checked for a `$value`, not for its shape, and reach `tokens.css` only as raw CSS.
 - `impact` leaves reviews out of its report.
 - A web design system only: a native app, such as an Expo one, is outside it.
-- The committed baseline of H8 is `HEAD`: without `git`, a repository, a commit or the committed file, the rule is silent, and committing an edit without raising the version hides it. Any other failure of `git`, such as a repository it refuses to read or its five-second timeout, is one H8 problem on `aidd_docs/ui`. A run asks `git` once which files changed, then reads only those, plus the committed record of an element declaring a token whose value changed.
+- The committed baseline of H8 is `HEAD`: without `git`, a repository, a commit or the committed file, the rule is silent, and committing an edit without raising the version hides it. Any other failure of `git`, such as a repository it refuses to read or its five-second timeout, is one H8 problem on `aidd_docs/ui`. A run asks `git` once which files changed, then reads only those, plus the committed record of an element using a token whose value changed.
 - A version raise that stays `validated` passes until a review can prove it.
 - A `tokens.css` kept out of git by `.gitignore` has no committed baseline, which disables H8's token-value part: commit it.
 - Blank lines added to a held record count as an edit for H8.
-- A colour with a `hex` is written as that `hex`, which drops a wider gamut its `colorSpace` holds.
+- An opaque colour with a `hex` is written as that `hex`, which drops a wider gamut its `colorSpace` holds.
 - A token value that depends on a breakpoint has no place yet.
 - A component has one `variants` axis.
 - A review validates screens only for now, so components are validated by hand until the review page exists.
