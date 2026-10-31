@@ -1,5 +1,5 @@
-// A token tree as CSS text: one custom property per token, the base in `:root` and each other
-// theme in a `[data-theme]` block. The same tokens always give the same bytes. A value DTCG has
+// A token tree as CSS text: one custom property per token, the base in `:root` and under its own
+// theme's name, so a region can switch back to it, and each other theme in a `[data-theme]` block. The same tokens always give the same bytes. A value DTCG has
 // no CSS for is a composite type; it reaches the stylesheet only as raw CSS.
 const PATH_SEPARATOR = ".";
 const RAW_CSS_EXTENSION = "dev.ai-driven.css";
@@ -51,10 +51,10 @@ function declarationOf(entry) {
 
 const block = (selector, declarations) => [`${selector} {`, ...declarations.map(([name, value]) => `${INDENT}${customProperty(name)}: ${value};`), "}"];
 
-/** The stylesheet of `base`, then of each `{theme, tokens}` of `themes` in order, with the
+/** The stylesheet of `base`, named `baseTheme`, then of each `{theme, tokens}` of `themes` in order, with the
  * problems naming each token that has no CSS. Each token is `{name, type, value | alias | raw, file}`.
  * `css` is null when a problem remains. */
-function render({ base, themes }) {
+function render({ base, baseTheme, themes }) {
   const problems = [];
   const declare = (tokens) =>
     tokens.flatMap((entry) => {
@@ -62,7 +62,8 @@ function render({ base, themes }) {
       if (value === null) problems.push({ file: entry.file, message: `${entry.name}: a ${entry.type} has no CSS of its own, give it a ${RAW_CSS_EXTENSION} value` });
       return value === null ? [] : [[entry.name, value]];
     });
-  const blocks = [block(":root", declare(base)), ...themes.map(({ theme, tokens }) => block(`[data-theme="${theme}"]`, declare(tokens)))];
+  const baseSelector = baseTheme === undefined ? ":root" : `:root, [data-theme="${baseTheme}"]`;
+  const blocks = [block(baseSelector, declare(base)), ...themes.map(({ theme, tokens }) => block(`[data-theme="${theme}"]`, declare(tokens)))];
   return { css: problems.length ? null : `${[HEADER, ...blocks.map((lines) => lines.join(LINE_BREAK))].join(PARAGRAPH_BREAK)}${LINE_BREAK}`, problems };
 }
 

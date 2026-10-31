@@ -85,6 +85,11 @@ describe("aidd-ui tokens and renders", () => {
       assert.deepEqual(problems(), [`${TOKENS}: color.$foo: "$foo" is not a reserved key`]);
     });
 
+    it("names a token that holds tokens: its children would be dropped", () => {
+      editTokens(tmp, (tree) => (tree.space.md.wide = { $type: "dimension", $value: { value: 2, unit: "rem" } }));
+      assert.deepEqual(problems(), [`${TOKENS}: space.md: a token never contains tokens, name them beside it`]);
+    });
+
     it("names a name holding a dot", () => {
       addToken("a.b", { $type: "number", $value: 1 });
       assert.deepEqual(problems(), [`${TOKENS}: misc.a.b: a name never holds ".", "{" or "}"`]);

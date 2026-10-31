@@ -110,6 +110,13 @@ describe("aidd-ui code link", () => {
       assert.deepEqual(problems(), ["src/ui/Orphan.tsx: no record links it and no ignore covers it"]);
     });
 
+    it("leaves a test file and a mock folder out of the backlog, as C4 does", () => {
+      put(tmp, "src/ui/__tests__/orphan.tsx", "test();\n");
+      put(tmp, "src/ui/__mocks__/data.ts", "export const data = {};\n");
+      put(tmp, "src/ui/Orphan.spec.ts", "test();\n");
+      assert.deepEqual(problems(), []);
+    });
+
     it("accepts a valid link on a proposed record", () => {
       edit(tmp, SEARCH, "status: validated", "status: proposed");
       put(tmp, "src/ui/SearchField.tsx", "export function SearchField() {}\n");
@@ -154,6 +161,35 @@ describe("aidd-ui code link", () => {
     it("leaves a unit literal in code alone, a stated limit", () => {
       linkedStylesheet(".SearchField { padding: 16px; }\n");
       assert.deepEqual(problems(), []);
+    });
+  });
+
+  describe("Astro components", () => {
+    const HERO = "src/ui/Hero.astro";
+    const hero = (body) => {
+      put(tmp, HERO, body);
+      linkSearch(HERO);
+    };
+
+    it("links by a bare path, an Astro component having no named export", () => {
+      hero("---\n---\n<h1>Hero</h1>\n");
+      assert.deepEqual(problems(), []);
+    });
+
+    it("still takes a path#Export link, the export being checked", () => {
+      hero("---\n---\n<h1>Hero</h1>\n");
+      edit(tmp, SEARCH, `code: ${HERO}`, `code: ${HERO}#Missing`);
+      assert.deepEqual(problems(), [`${SEARCH}: export "Missing" is not in ${HERO}`]);
+    });
+
+    it("finds a colour literal in its style block, with its line", () => {
+      hero("---\n---\n<style>\n  h1 { color: #ff0000; }\n</style>\n");
+      assert.deepEqual(problems(), [`${HERO}: line 4: colour literal "#ff0000", use a token`]);
+    });
+
+    it("finds a colour literal in a string, and leaves one in its markup text alone", () => {
+      hero('---\nconst c = "#ff0000";\n---\n<p>Rapport #412 and #add</p>\n');
+      assert.deepEqual(problems(), [`${HERO}: line 2: colour literal "#ff0000", use a token`]);
     });
   });
 

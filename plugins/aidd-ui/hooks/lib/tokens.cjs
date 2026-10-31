@@ -56,6 +56,7 @@ function collect(node, path, groupType, found) {
       else if (!RESERVED_KEYS.includes(key)) found.badNames.push({ path: childPath.join(PATH_SEPARATOR), message: `"${key}" is not a reserved key` });
       continue;
     }
+    if (isObject(child) && "$value" in child && childKeys(child).some((name) => isObject(child[name]))) found.badNames.push({ path: childPath.join(PATH_SEPARATOR), message: "a token never contains tokens, name them beside it" });
     if (FORBIDDEN_IN_NAME.test(key)) found.badNames.push({ path: childPath.join(PATH_SEPARATOR), message: 'a name never holds ".", "{" or "}"' });
     if (!isObject(child)) continue;
     const name = childPath.join(PATH_SEPARATOR);
@@ -335,7 +336,7 @@ const themeEntries = (tree, project) =>
 function generate(project) {
   const tree = read(project);
   const base = [...tree.tokens].map(([name, token]) => entryOf(name, token, typeOf(tree, token), project.tokensFile));
-  return render({ base, themes: themeEntries(tree, project) });
+  return render({ base, baseTheme: list(systemOf(project)?.frontMatter.themes)[0], themes: themeEntries(tree, project) });
 }
 
 const BASE_RULES = {

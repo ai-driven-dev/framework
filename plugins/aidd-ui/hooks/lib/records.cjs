@@ -58,6 +58,7 @@ function kindProblems(project) {
 function valueProblems(record) {
   const { status, interactive, type, kind } = fm(record);
   return [
+    ...(kind === "system" && Array.isArray(fm(record)["code-tokens"]) ? ["code-tokens must name one file, not a list"] : []),
     ...(status !== undefined && !STATUSES.includes(status) ? [`status "${status}" must be ${listWithOr(STATUSES)}`] : []),
     ...(COMPONENT_KINDS.includes(kind) && interactive !== undefined && !YES_NO.includes(interactive) ? [`interactive "${interactive}" must be ${listWithOr(YES_NO)}`] : []),
     ...(kind === "asset" && type !== undefined && !ASSET_TYPES.includes(type) ? [`type "${type}" must be ${listWithOr(ASSET_TYPES)}`] : []),

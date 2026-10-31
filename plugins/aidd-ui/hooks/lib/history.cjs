@@ -1,9 +1,11 @@
 // H1 to H8: each versioned record's history, the system version its publications raise, the task
-// folder each change names, and a validated element that changed without a new version.
+// folder each change names, and a validated element that changed, or whose token changed value,
+// without a new version.
 const { table, list, parseRecord } = require("./markdown.cjs");
 const { placed, systemOf, isElement, isSystem, problem, fm, INTEGER_VERSION, SEMVER } = require("./model.cjs");
 const { checkOf, text } = require("./project.cjs");
-const { committed } = require("./committed.cjs");
+const { committed, baseline, changed } = require("./committed.cjs");
+const { cssFileOf, cssNameOf } = require("./tokens.cjs");
 const { renderOf } = require("./renders.cjs");
 
 const HISTORY_SECTION = "History";
@@ -152,18 +154,84 @@ function renderChanged(project, record) {
   return before !== null && project.renders.includes(file) && text(project, file) !== before;
 }
 
-function editedProblems(project) {
+/** The committed front matter of a record that was validated or deprecated and whose version has
+ * not risen since; null for any other. */
+function heldFront(record, before) {
+  const was = parseRecord(before).frontMatter;
+  const comparable = [was.version, fm(record).version].every((version) => INTEGER_VERSION.test(version ?? ""));
+  return HELD_STATUSES.includes(was.status) && comparable && Number(fm(record).version) <= Number(was.version) ? was : null;
+}
+
+function textProblems(project) {
   return versioned(project)
     .filter(isElement)
     .flatMap((record) => {
-      const before = committed(project, record.file);
-      if (before === null) return [];
-      const was = parseRecord(before).frontMatter;
-      const comparable = [was.version, fm(record).version].every((version) => INTEGER_VERSION.test(version ?? ""));
-      if (!HELD_STATUSES.includes(was.status) || !comparable || Number(fm(record).version) > Number(was.version)) return [];
-      const changed = substance(text(project, record.file)) !== substance(before) || renderChanged(project, record);
-      return changed ? [problem(record, `edited since its committed version ${was.version}, raise its version with a History row`)] : [];
+      const touched = [record.file, renderOf(record)].some((file) => changed(project).has(file));
+      const before = touched ? baseline(project, record.file) : null;
+      const was = before === null ? null : heldFront(record, before);
+      if (was === null) return [];
+      const edited = substance(text(project, record.file)) !== substance(before) || renderChanged(project, record);
+      return edited ? [problem(record, `edited since its committed version ${was.version}, raise its version with a History row`)] : [];
     });
+}
+
+const BASE_KEY = "";
+const COMMENT = /\/\*[\s\S]*?\*\//g;
+const RULE_BLOCK = /([^{}]+)\{([^{}]*)\}/g;
+const DECLARATION = /(--[\w-]+)\s*:\s*([^;]+);/g;
+const VAR_CALL = /var\(\s*(--[\w-]+)\s*(?:,[^)]*)?\)/g;
+
+/** A generated stylesheet's custom properties by selector: the base, `:root`, under BASE_KEY. */
+function declarationsOf(css) {
+  const found = new Map();
+  for (const [, selector, body] of css.replace(COMMENT, "").matchAll(RULE_BLOCK)) {
+    const key = selector.includes(":root") ? BASE_KEY : selector.trim();
+    const own = found.get(key) ?? new Map();
+    for (const [, name, value] of body.matchAll(DECLARATION)) own.set(name, value.trim());
+    found.set(key, own);
+  }
+  return found;
+}
+
+/** A custom property's value with each `var()` it holds replaced by its target's, down to a value. */
+function resolved(values, name, path = new Set()) {
+  const value = values.get(name);
+  if (value === undefined || path.has(name)) return value;
+  return value.replace(VAR_CALL, (call, target) => resolved(values, target, new Set([...path, name])) ?? call);
+}
+
+/** The custom properties whose resolved value differs between two stylesheets in a theme both hold. */
+function changedProperties(before, after) {
+  const changed = new Set();
+  for (const key of [...before.keys()].filter((theme) => after.has(theme))) {
+    const within = (sheet) => new Map([...(sheet.get(BASE_KEY) ?? []), ...sheet.get(key)]);
+    const [was, now] = [within(before), within(after)];
+    for (const name of new Set([...was.keys(), ...now.keys()])) if (resolved(was, name) !== resolved(now, name)) changed.add(name);
+  }
+  return changed;
+}
+
+/** A validated or deprecated element declaring a token whose value changed since the committed
+ * stylesheet, its version unraised. `named` are the elements already reported. */
+function valueProblems(project, named) {
+  const file = cssFileOf(project);
+  const before = committed(project, file);
+  const after = text(project, file);
+  if (before === null || after === null) return [];
+  const moved = changedProperties(declarationsOf(before), declarationsOf(after));
+  return versioned(project)
+    .filter((record) => isElement(record) && !named.has(record.file))
+    .flatMap((record) => {
+      const tokens = list(fm(record).tokens).filter((token) => moved.has(cssNameOf(token)));
+      const committedRecord = tokens.length ? baseline(project, record.file) : null;
+      const was = committedRecord === null ? null : heldFront(record, committedRecord);
+      return was === null ? [] : [problem(record, `value of ${tokens.join(", ")} changed since its committed version ${was.version}, raise its version with a History row`)];
+    });
+}
+
+function editedProblems(project) {
+  const edited = textProblems(project);
+  return [...edited, ...valueProblems(project, new Set(edited.map((found) => found.file)))];
 }
 
 const RULES = {

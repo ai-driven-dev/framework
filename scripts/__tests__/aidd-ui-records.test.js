@@ -1,10 +1,11 @@
 const assert = require("node:assert/strict");
-const { execFileSync } = require("node:child_process");
+const childProcess = require("node:child_process");
+const { execFileSync } = childProcess;
 const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
-const { describe, it, beforeEach, afterEach } = require("node:test");
-const { UI, writeProject, edit, put, record, history } = require("./fixtures/aidd-ui/project.js");
+const { describe, it, beforeEach, afterEach, mock } = require("node:test");
+const { UI, writeProject, edit, editTokens, put, record, history } = require("./fixtures/aidd-ui/project.js");
 
 // Each rule has one mutation of the valid project, and the test asserts the whole problem
 // list: dropping the rule turns its own test red and leaves every other one green.
@@ -142,6 +143,11 @@ describe("aidd-ui records and history", () => {
         assert.deepEqual(problems(), [`${file}: missing key "${key}"`]);
       });
     }
+
+    it("names code-tokens given as a list: it is one file", () => {
+      change(SYSTEM, "code-tokens: src/ui/tokens.css", "code-tokens: [src/ui/tokens.css, src/ui/other.css]");
+      assert.deepEqual(problems(), [`${SYSTEM}: code-tokens must name one file, not a list`]);
+    });
 
     it("names an unknown status", () => {
       change(JOURNEY, "status: validated", "status: done");
@@ -578,6 +584,88 @@ describe("aidd-ui records and history", () => {
       } finally {
         process.env.PATH = path_;
       }
+    });
+
+    describe("git calls", () => {
+      afterEach(() => mock.restoreAll());
+      const gitCalls = () => {
+        const spy = mock.method(childProcess, "execFileSync");
+        const found = edited();
+        return { found, args: spy.mock.calls.map((call) => call.arguments[1][0]) };
+      };
+
+      it("asks git for nothing but the changed files while every validated element is unchanged", () => {
+        assert.deepEqual(gitCalls(), { found: [], args: ["diff"] });
+      });
+
+      it("reads from git only the elements that changed", () => {
+        change(BUTTON, BUTTON_USAGE, WIDENED);
+        assert.deepEqual(gitCalls(), { found: [EDITED(1)], args: ["diff", "show"] });
+      });
+    });
+
+    describe("a token value that changed", () => {
+      const TOKEN_CHANGED = (file, tokens, version = 1) => `${file}: value of ${tokens} changed since its committed version ${version}, raise its version with a History row`;
+      const setBold = (weight) => editTokens(tmp, (tree) => (tree.font.weight.bold.$value = weight));
+      const raiseButton = () => {
+        change(BUTTON, "version: 1", "version: 2");
+        change(BUTTON, "| 1 | created | no | aidd_docs/tasks/ds-init |", "| 1 | created | no | aidd_docs/tasks/ds-init |\n| 2 | lighter bold | no | aidd_docs/tasks/lighten |");
+      };
+
+      it("names the validated element declaring it, with the token", () => {
+        setBold(600);
+        assert.deepEqual(edited(), [TOKEN_CHANGED(BUTTON, "font.weight.bold")]);
+      });
+
+      const THROUGH_PRIMARY = [
+        TOKEN_CHANGED(BUTTON, "color.action.default, color.text.default"),
+        TOKEN_CHANGED(OLD, "color.action.default", 2),
+        TOKEN_CHANGED(SEARCH, "color.text.default"),
+        TOKEN_CHANGED(HOME, "color.text.default"),
+      ];
+
+      it("reaches it through an alias, and a deprecated element too", () => {
+        editTokens(tmp, (tree) => (tree.color.brand.primary.$value = { colorSpace: "srgb", components: [0.1, 0.1, 0.1], hex: "#1a1a1a" }));
+        assert.deepEqual(edited(), THROUGH_PRIMARY);
+      });
+
+      it("reaches it in a theme", () => {
+        edit(tmp, `${UI}/themes/dark.json`, "#6699cc", "#112233");
+        editTokens(tmp, () => {});
+        assert.deepEqual(edited(), THROUGH_PRIMARY);
+      });
+
+      it("stays silent for a token no element declares", () => {
+        editTokens(tmp, (tree) => (tree.misc = { unused: { $type: "number", $value: 1 } }));
+        commit();
+        editTokens(tmp, (tree) => (tree.misc.unused.$value = 2));
+        assert.deepEqual(edited(), []);
+      });
+
+      it("stays silent once the element's version rose", () => {
+        setBold(600);
+        raiseButton();
+        assert.deepEqual(edited(), []);
+      });
+
+      it("names only the elements the repository holds", () => {
+        put(tmp, `${UI}/components/badge.md`, fs.readFileSync(path.join(tmp, BUTTON), "utf8").replace("id: button", "id: badge"));
+        setBold(600);
+        assert.deepEqual(edited(), [TOKEN_CHANGED(BUTTON, "font.weight.bold")]);
+      });
+
+      it("stays silent without a committed tokens.css", () => {
+        git(tmp, "rm", "-q", "--cached", `${UI}/tokens.css`);
+        git(tmp, "commit", "-q", "--no-verify", "-m", "unstage the stylesheet");
+        setBold(600);
+        assert.deepEqual(edited(), []);
+      });
+
+      it("does not name an element already named for its text", () => {
+        setBold(600);
+        change(BUTTON, BUTTON_USAGE, WIDENED);
+        assert.deepEqual(edited(), [EDITED(1)]);
+      });
     });
 
     it("finds the committed record when the project lies below the repository's root", () => {

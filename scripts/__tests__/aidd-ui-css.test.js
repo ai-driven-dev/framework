@@ -106,15 +106,15 @@ describe("aidd-ui css", () => {
       });
     });
 
-    it("holds the base in :root then one block per theme, in the order given", () => {
-      const { css, problems } = render({ base: [brand, text], themes: [{ theme: "dark", tokens: [dark] }, { theme: "sepia", tokens: [sepia] }] });
+    it("holds the base in :root and under its theme's name, then one block per theme, in the order given", () => {
+      const { css, problems } = render({ base: [brand, text], baseTheme: "light", themes: [{ theme: "dark", tokens: [dark] }, { theme: "sepia", tokens: [sepia] }] });
       assert.deepEqual(problems, []);
       assert.equal(
         css,
         [
           HEADER,
           "",
-          ":root {",
+          ':root, [data-theme="light"] {',
           "  --color-brand-primary: #336699;",
           "  --color-text-default: var(--color-brand-primary);",
           "}",
@@ -144,7 +144,7 @@ describe("aidd-ui css", () => {
     });
 
     it("writes the same bytes twice", () => {
-      const tokens = { base: [brand, text], themes: [{ theme: "dark", tokens: [dark] }] };
+      const tokens = { base: [brand, text], baseTheme: "light", themes: [{ theme: "dark", tokens: [dark] }] };
       assert.equal(render(tokens).css, render(tokens).css);
     });
   });

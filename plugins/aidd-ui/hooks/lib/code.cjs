@@ -5,7 +5,7 @@ const fs = require("node:fs");
 const path = require("node:path");
 const { list } = require("./markdown.cjs");
 const { placed, systemOf, isElement, fm } = require("./model.cjs");
-const { PATTERNS, findLiterals, declaresRightToLeft } = require("./literals.cjs");
+const { PATTERNS, findLiterals, styled, declaresRightToLeft } = require("./literals.cjs");
 const { walk, text, relative, isUnder, checkOf, WARNING } = require("./project.cjs");
 
 const EXPORT_SEPARATOR = "#";
@@ -17,8 +17,11 @@ const IGNORE_KEY = "ignore";
 const TEST_FOLDER = /(?:^|\/)(?:__tests__|__mocks__)\//;
 const TEST_NAME = /\.(?:test|spec)\.[^/]+$/;
 const STYLESHEET_EXTENSIONS = [".css", ".scss"];
-const SCRIPT_EXTENSIONS = [".js", ".jsx", ".ts", ".tsx", ".vue", ".svelte"];
+const ASTRO_EXTENSION = ".astro"; // a component with no named export, so its link may be a bare path
+const SCRIPT_EXTENSIONS = [".js", ".jsx", ".ts", ".tsx", ".vue", ".svelte", ASTRO_EXTENSION];
 const SCANNED_EXTENSIONS = [...STYLESHEET_EXTENSIONS, ...SCRIPT_EXTENSIONS, ".html"];
+
+const isTest = (file) => TEST_FOLDER.test(file) || TEST_NAME.test(file);
 
 const REGEX_SPECIALS = /[.*+?^${}()|[\]\\]/g;
 const NOT_LINE_BREAK = /[^\n]/g;
@@ -35,10 +38,12 @@ const prefixes = (project, key) => list(systemOf(project)?.frontMatter[key]).map
 const isInside = (prefix) => prefix !== "." && !prefix.startsWith("..") && !path.posix.isAbsolute(prefix);
 const codeRoots = (project) => prefixes(project, CODE_ROOTS_KEY).filter(isInside);
 
-/** A `code` value as `{target, name}`, `target` being a path or `package:<name>`; null when malformed. */
+/** A `code` value as `{target, name}`, `target` being a path or `package:<name>`; null when malformed.
+ * An Astro file alone is a link without a name. */
 function parseLink(value) {
   if (typeof value !== "string") return null;
   const at = value.lastIndexOf(EXPORT_SEPARATOR);
+  if (at < 0 && value.endsWith(ASTRO_EXTENSION) && !value.startsWith(PACKAGE_PREFIX)) return { target: value, name: null, library: null };
   if (at <= 0 || at === value.length - 1) return null;
   const target = value.slice(0, at);
   return { target, name: value.slice(at + 1), library: target.startsWith(PACKAGE_PREFIX) ? target.slice(PACKAGE_PREFIX.length) : null };
@@ -83,9 +88,11 @@ function codeFiles(project) {
 
 const scanned = (project, extensions) => codeFiles(project).filter((file) => extensions.includes(path.extname(file)));
 
-/** A code file's text as the literal patterns read it: scripts keep only their strings. */
+/** A code file's text as the literal patterns read it: scripts keep only their strings, and an
+ * Astro file its style blocks too. */
 function searchable(project, file) {
   const source = text(project, file) ?? "";
+  if (path.extname(file) === ASTRO_EXTENSION) return styled(source, stringsOnly);
   return SCRIPT_EXTENSIONS.includes(path.extname(file)) ? stringsOnly(source) : source;
 }
 
@@ -96,7 +103,7 @@ function linkProblems(project) {
     const full = path.join(project.root, link.target);
     if (!fs.existsSync(full) || !fs.statSync(full).isFile()) return [{ file: record.file, message: `code file "${link.target}" does not exist` }];
     const source = text(project, link.target);
-    if (source === null || hasWord(source, link.name)) return [];
+    if (source === null || link.name === null || hasWord(source, link.name)) return [];
     return [{ file: record.file, message: `export "${link.name}" is not in ${link.target}` }];
   });
 }
@@ -125,14 +132,14 @@ const codeOwner = (project, file) => linked(project).find(({ link }) => link && 
 function coverageProblems(project) {
   const targets = linked(project).flatMap(({ link }) => (link && link.library === null ? [path.posix.normalize(link.target)] : []));
   return codeFiles(project)
-    .filter((file) => !targets.some((target) => covers(target, file)))
+    .filter((file) => !isTest(file) && !targets.some((target) => covers(target, file)))
     .map((file) => ({ severity: WARNING, file, message: "no record links it and no ignore covers it" }));
 }
 
 const literalProblems = (pattern, extensions, applies = () => true) => (project) =>
   applies(project)
     ? scanned(project, extensions)
-        .filter((file) => !TEST_FOLDER.test(file) && !TEST_NAME.test(file))
+        .filter((file) => !isTest(file))
         .flatMap((file) => findLiterals(searchable(project, file), pattern).map((found) => ({ file, ...found })))
     : [];
 
