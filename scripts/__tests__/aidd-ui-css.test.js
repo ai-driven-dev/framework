@@ -178,6 +178,72 @@ describe("aidd-ui css", () => {
       });
     });
 
+    describe("a breakpoint block", () => {
+      const space = { name: "space.md", type: "dimension", value: { value: 1, unit: "rem" } };
+      const wide = { name: "space.md", type: "dimension", value: { value: 2, unit: "rem" } };
+      const wider = { name: "space.md", type: "dimension", value: { value: 3, unit: "rem" } };
+      const gap = { name: "space.gap", type: "dimension", alias: "space.md" };
+      const MEDIA = "(min-width: 48rem)";
+
+      it("comes after the theme blocks, one per breakpoint in the order given, under the base's selector", () => {
+        const { css, problems } = render({ base: [brand, space], baseTheme: "light", themes: [{ theme: "dark", tokens: [dark] }], breakpoints: [{ media: MEDIA, tokens: [wide] }, { media: "(min-width: 64rem)", tokens: [wider] }] });
+        assert.deepEqual(problems, []);
+        assert.equal(
+          css,
+          [
+            HEADER,
+            "",
+            ':root, [data-theme="light"] {',
+            "  --color-brand-primary: #336699;",
+            "  --space-md: 1rem;",
+            "}",
+            "",
+            '[data-theme="dark"] {',
+            "  --color-brand-primary: #6699cc;",
+            "}",
+            "",
+            `@media ${MEDIA} {`,
+            '  :root, [data-theme="light"] {',
+            "    --space-md: 2rem;",
+            "  }",
+            "}",
+            "",
+            "@media (min-width: 64rem) {",
+            '  :root, [data-theme="light"] {',
+            "    --space-md: 3rem;",
+            "  }",
+            "}",
+            "",
+          ].join("\n")
+        );
+      });
+
+      it("targets :root alone when no theme is declared", () => {
+        assert.ok(render({ base: [space], themes: [], breakpoints: [{ media: MEDIA, tokens: [wide] }] }).css.endsWith(`@media ${MEDIA} {\n  :root {\n    --space-md: 2rem;\n  }\n}\n`));
+      });
+
+      it("redeclares no dependent: a var() recomputes on the element holding the new value", () => {
+        const css = render({ base: [space, gap], themes: [], breakpoints: [{ media: MEDIA, tokens: [wide] }] }).css;
+        assert.equal(css.split("--space-gap:").length - 1, 1);
+      });
+
+      it("is not frozen by a theme block redeclaring a dependent: that block holds the var(), never the value", () => {
+        const both = { name: "misc.both", type: "dimension", raw: "calc(var(--space-md) + var(--color-brand-primary))" };
+        const lines = render({ base: [brand, space, both], baseTheme: "light", themes: [{ theme: "dark", tokens: [dark] }], breakpoints: [{ media: MEDIA, tokens: [wide] }] }).css.split("\n");
+        const darkLines = lines.slice(lines.indexOf('[data-theme="dark"] {'), lines.indexOf(`@media ${MEDIA} {`));
+        assert.ok(darkLines.includes("  --misc-both: calc(var(--space-md) + var(--color-brand-primary));"));
+        assert.equal(darkLines.some((line) => line.includes("--space-md:")), false);
+      });
+
+      it("names a composite value without raw CSS, with its file", () => {
+        const shadow = { name: "elevation.low", type: "shadow", value: { any: "shape" }, file: "ui/breakpoints/desktop.json" };
+        assert.deepEqual(render({ base: [], themes: [], breakpoints: [{ media: MEDIA, tokens: [shadow] }] }), {
+          css: null,
+          problems: [{ file: "ui/breakpoints/desktop.json", message: "elevation.low: a shadow has no CSS of its own, give it a dev.ai-driven.css value" }],
+        });
+      });
+    });
+
     it("names a composite token without raw CSS, in the base and in a theme, and writes no text", () => {
       const shadow = { name: "elevation.low", type: "shadow", value: { any: "shape" }, file: "ui/tokens.json" };
       const themed = { ...shadow, name: "elevation.high", file: "ui/themes/dark.json" };

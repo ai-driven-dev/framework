@@ -40,6 +40,12 @@ const FIXTURE_STYLESHEET = [
   "  --color-action-default: var(--color-brand-primary);",
   "}",
   "",
+  "@media (min-width: 64rem) {",
+  '  :root, [data-theme="light"] {',
+  "    --space-md: 1.5rem;",
+  "  }",
+  "}",
+  "",
 ].join("\n");
 
 /** One mutation from each family: records, tokens, code. */

@@ -17,12 +17,17 @@ The brand and `system.md`, and the tokens extract found when the code already ha
    - The resolver has `"version": "2025.10"`, a set holding `{"$ref": "tokens.json"}`, a `theme` modifier with one context per theme and the base as `default`, and `{"$ref": "#/modifiers/theme"}` in `resolutionOrder`.
    - A context lists `{"$ref": "themes/<theme>.json"}`; that file redefines base tokens only, with their type.
    - For themes `light` and `dark`: `{"version": "2025.10", "sets": {"base": {"sources": [{"$ref": "tokens.json"}]}}, "modifiers": {"theme": {"default": "light", "contexts": {"light": [], "dark": [{"$ref": "themes/dark.json"}]}}}, "resolutionOrder": [{"$ref": "#/sets/base"}, {"$ref": "#/modifiers/theme"}]}`.
-3. **Generate.** Run `tokens`, which writes `aidd_docs/ui/tokens.css`; when it exits 1, fix the tokens it names and run it again. Commit `tokens.css`, never gitignore it: the version guard reads the committed one.
-4. **Link.** When the code consumes the tokens through a file, set `code-tokens` in `system.md` to it.
+3. **Breakpoints.** When a value depends on the width, `tokens.json` keeps the value of the breakpoint the styles start from, and each other value is a context of a `breakpoint` modifier in the same resolver, which a project with one theme then needs too.
+   - The starting breakpoint is the modifier's `default`, its context empty. Another context lists `{"$ref": "breakpoints/<breakpoint>.json"}`; that file redefines base tokens only, with their type.
+   - Its media query goes verbatim in the modifier's `dev.ai-driven.media` extension, under the context's name.
+   - A token a theme sets, directly or through what it cites, cannot also change with the width: split it, or the validator names it.
+   - For breakpoints `mobile` and `desktop` with one theme: `{"version": "2025.10", "sets": {"base": {"sources": [{"$ref": "tokens.json"}]}}, "modifiers": {"breakpoint": {"default": "mobile", "contexts": {"mobile": [], "desktop": [{"$ref": "breakpoints/desktop.json"}]}, "$extensions": {"dev.ai-driven.media": {"desktop": "(min-width: 64rem)"}}}}, "resolutionOrder": [{"$ref": "#/sets/base"}, {"$ref": "#/modifiers/breakpoint"}]}`, and `breakpoints/desktop.json` holds `{"space": {"md": {"$value": {"value": 1.5, "unit": "rem"}}}}`.
+4. **Generate.** Run `tokens`, which writes `aidd_docs/ui/tokens.css`; when it exits 1, fix the tokens it names and run it again. Commit `tokens.css`, never gitignore it: the version guard reads the committed one.
+5. **Link.** When the code consumes the tokens through a file, set `code-tokens` in `system.md` to it.
 
 ## Output
 
-`tokens.json`, `tokens.resolver.json` and `themes/` when there is more than one theme, and the generated `tokens.css`.
+`tokens.json`, `tokens.resolver.json` with `themes/` when there is more than one theme, with `breakpoints/` when a value depends on the width, and the generated `tokens.css`.
 
 ## Test
 
@@ -31,5 +36,6 @@ The brand and `system.md`, and the tokens extract found when the code already ha
 | Valid tokens | `tokens` exits 0 and prints the stylesheet path |
 | Alias | the stylesheet holds `var(--group-name)` for it |
 | Second theme | the stylesheet holds a `[data-theme]` block for it |
+| Value depending on the width | the stylesheet ends with an `@media` block holding it |
 | Composite without raw CSS | `tokens` exits 1, names the token and writes nothing |
 | Token changed after generating | the hook names the stylesheet as out of date until `tokens` runs |

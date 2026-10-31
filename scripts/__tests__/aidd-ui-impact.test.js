@@ -9,6 +9,9 @@ const { UI, writeProject, edit, editTokens, put } = require("./fixtures/aidd-ui/
 // The impact command is driven as a subprocess, as the skill calls it: its refs on the command
 // line, its report as JSON on stdout.
 const ENGINE = path.resolve(__dirname, "../../plugins/aidd-ui/hooks/aidd-ui.cjs");
+const LIB = path.resolve(__dirname, "../../plugins/aidd-ui/hooks/lib");
+const { load } = require(path.join(LIB, "project.cjs"));
+const { reached } = require(path.join(LIB, "graph.cjs"));
 
 const BUTTON = `${UI}/components/button.md`;
 
@@ -34,6 +37,13 @@ const BUTTON_AND_THOSE_USING_IT = ["button", "dialog", "old-button", "search-fie
 const RENDERS = ["components/button", "components/dialog", "components/old-button", "components/search-field", "screens/home"].map((name) => `${UI}/${name}.html`);
 
 describe("aidd-ui impact", () => {
+  describe("a write", () => {
+    it("to a breakpoint file reaches everything, as one to a theme file does", () => {
+      assert.equal(reached(load(tmp), [`${UI}/breakpoints/desktop.json`]), null);
+      assert.equal(reached(load(tmp), [`${UI}/themes/dark.json`]), null);
+    });
+  });
+
   describe("from a token", () => {
     it("reaches the tokens aliasing it, the components declaring them, what uses those, and their renders and code", () => {
       const { code, report, err } = impact("color.brand.primary", "--root", tmp);
@@ -72,6 +82,18 @@ describe("aidd-ui impact", () => {
         tree.color.focus = { $value: { colorSpace: "srgb", components: [0, 0, 1], hex: "#0000ff" } };
       });
       put(tmp, `${UI}/themes/dark.json`, JSON.stringify({ color: { focus: { $value: "{color.accent}" } } }));
+      put(tmp, `${UI}/components/badge.md`, fs.readFileSync(path.join(tmp, BUTTON), "utf8").replace("id: button", "id: badge").replace(/tokens: \[.*\]/, "tokens: [color.focus]"));
+      const { report } = impact("color.accent", "--root", tmp);
+      assert.deepEqual(report.tokens, ["color.accent", "color.focus"]);
+      assert.deepEqual(report.elements, ["badge"]);
+    });
+
+    it("reaches a token that aliases it in a breakpoint file, and the component declaring that one", () => {
+      editTokens(tmp, (tree) => {
+        tree.color.accent = { $value: { colorSpace: "srgb", components: [1, 0, 0], hex: "#ff0000" } };
+        tree.color.focus = { $value: { colorSpace: "srgb", components: [0, 0, 1], hex: "#0000ff" } };
+      });
+      put(tmp, `${UI}/breakpoints/desktop.json`, JSON.stringify({ color: { focus: { $value: "{color.accent}" } } }));
       put(tmp, `${UI}/components/badge.md`, fs.readFileSync(path.join(tmp, BUTTON), "utf8").replace("id: button", "id: badge").replace(/tokens: \[.*\]/, "tokens: [color.focus]"));
       const { report } = impact("color.accent", "--root", tmp);
       assert.deepEqual(report.tokens, ["color.accent", "color.focus"]);

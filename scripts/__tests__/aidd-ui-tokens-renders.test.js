@@ -24,6 +24,7 @@ const STYLESHEET = `${UI}/tokens.css`;
 const STYLESHEET_LINK = '<link rel="stylesheet" href="../tokens.css">\n';
 const RESOLVER = `${UI}/tokens.resolver.json`;
 const DARK = `${UI}/themes/dark.json`;
+const DESKTOP = `${UI}/breakpoints/desktop.json`;
 const INSERTED_LINE = 28; // the line before </body> in button.html
 
 let tmp;
@@ -49,6 +50,14 @@ const addToken = (name, token) => editTokens(tmp, (tree) => (tree.misc = { ...tr
 
 /** Adds one element to button.html, on the line before </body>. */
 const addToRender = (html) => edit(tmp, BUTTON_RENDER, "</body>", `${html}\n</body>`);
+
+/** Rewrites a JSON file of the project through `change`, which edits it in place. */
+const editJson = (file, change) => {
+  const full = path.join(tmp, file);
+  const value = JSON.parse(fs.readFileSync(full, "utf8"));
+  change(value);
+  fs.writeFileSync(full, JSON.stringify(value));
+};
 
 describe("aidd-ui tokens and renders", () => {
   it("passes the valid project", () => {
@@ -168,13 +177,6 @@ describe("aidd-ui tokens and renders", () => {
   });
 
   describe("T6 themes", () => {
-    /** Rewrites a JSON file of the project through `change`, which edits it in place. */
-    const editJson = (file, change) => {
-      const full = path.join(tmp, file);
-      const value = JSON.parse(fs.readFileSync(full, "utf8"));
-      change(value);
-      fs.writeFileSync(full, JSON.stringify(value));
-    };
     const contexts = (resolver) => resolver.modifiers.theme.contexts;
 
     it("names a missing resolver when system.md declares more than one theme", () => {
@@ -193,7 +195,7 @@ describe("aidd-ui tokens and renders", () => {
       ["a version other than 2025.10", (r) => (r.version = "2024"), 'version must be "2025.10"'],
       ["no set holding tokens.json", (r) => (r.sets.base.sources = []), "no set holds tokens.json"],
       ["no theme modifier", (r) => delete r.modifiers.theme, 'no "theme" modifier with contexts'],
-      ["a resolution order that never applies the themes", (r) => r.resolutionOrder.pop(), "resolutionOrder never applies #/modifiers/theme"],
+      ["a resolution order that never applies the themes", (r) => r.resolutionOrder.splice(1, 1), "resolutionOrder never applies #/modifiers/theme"],
       ["a default that is not the first theme", (r) => (r.modifiers.theme.default = "dark"), `the theme modifier's default must be "light", the first theme in system.md`],
       ["a theme without its context", (r) => delete contexts(r).dark, 'no context for theme "dark"'],
       ["a context system.md lacks", (r) => (contexts(r).sepia = []), 'context "sepia" is not a theme in system.md'],
@@ -229,6 +231,108 @@ describe("aidd-ui tokens and renders", () => {
     it("names a theme value aliasing a token of another type", () => {
       editJson(DARK, (tree) => (tree.color.brand.primary.$value = "{space.md}"));
       assert.deepEqual(problems(), [`${DARK}: color.brand.primary: theme "dark": alias {space.md} is a dimension, not a color`]);
+    });
+  });
+
+  describe("T6 breakpoints", () => {
+    const modifier = (resolver) => resolver.modifiers.breakpoint;
+    const media = (resolver) => modifier(resolver).$extensions["dev.ai-driven.media"];
+
+    const resolverCases = [
+      ["a modifier without contexts", (r) => delete modifier(r).contexts, 'no "breakpoint" modifier with contexts'],
+      ["a resolution order that never applies it", (r) => r.resolutionOrder.pop(), "resolutionOrder never applies #/modifiers/breakpoint"],
+      ["a context system.md lacks", (r) => { modifier(r).contexts.tablet = []; media(r).tablet = "(min-width: 40rem)"; }, 'context "tablet" is not a breakpoint in system.md'],
+      ["no default, so no input resolves it", (r) => delete modifier(r).default, "the breakpoint modifier's default must name the context tokens.json holds"],
+      ["a default that is no context", (r) => (modifier(r).default = "tablet"), "the breakpoint modifier's default must name the context tokens.json holds"],
+      ["a default context listing a source its block would never carry", (r) => modifier(r).contexts.mobile.push({ $ref: "breakpoints/desktop.json" }), 'context "mobile" is the default, held by tokens.json: it lists no source'],
+      ["a media query for the default context", (r) => (media(r).mobile = "(max-width: 10rem)"), 'dev.ai-driven.media "mobile" names no context outside the default'],
+      ["a media query for no context", (r) => (media(r).tablet = "(min-width: 40rem)"), 'dev.ai-driven.media "tablet" names no context outside the default'],
+      ["a context without its media query", (r) => delete media(r).desktop, 'context "desktop" has no media string under dev.ai-driven.media'],
+      ["an empty media query", (r) => (media(r).desktop = " "), 'context "desktop" has no media string under dev.ai-driven.media'],
+      ["a source that is no file reference", (r) => modifier(r).contexts.desktop.push({ space: {} }), 'context "desktop": each source is {"$ref": "<file>"}'],
+    ];
+    for (const [name, change, message] of resolverCases) {
+      it(`names ${name}`, () => {
+        editJson(RESOLVER, change);
+        assert.deepEqual(problems(), [`${RESOLVER}: ${message}`]);
+      });
+    }
+
+    it("names a context file the project lacks", () => {
+      fs.rmSync(path.join(tmp, DESKTOP));
+      assert.deepEqual(problems(), [`${DESKTOP}: missing`]);
+    });
+
+    it("names a token tokens.json lacks", () => {
+      editJson(DESKTOP, (tree) => (tree.space.ghost = { $value: { value: 1, unit: "rem" } }));
+      assert.deepEqual(problems(), [`${DESKTOP}: space.ghost: breakpoint "desktop" redefines no token of tokens.json`]);
+    });
+
+    it("names a token whose type differs from its base", () => {
+      editJson(DESKTOP, (tree) => (tree.space.md.$type = "color"));
+      assert.deepEqual(problems(), [`${DESKTOP}: space.md: $type "color" differs from tokens.json's "dimension"`]);
+    });
+
+    it("names a value of the wrong shape", () => {
+      editJson(DESKTOP, (tree) => (tree.space.md.$value.unit = "em"));
+      assert.deepEqual(problems(), [`${DESKTOP}: space.md: breakpoint "desktop": unit "em" must be px or rem`]);
+    });
+
+    describe("set by a theme too", () => {
+      const BOTH = (name) => `${DESKTOP}: ${name}: theme "dark" and breakpoint "desktop" both set it, so a themed region would ignore the breakpoint`;
+
+      it("names a token both redefine", () => {
+        editJson(DARK, (tree) => (tree.space = { md: { $value: { value: 3, unit: "rem" } } }));
+        assert.deepEqual(problems(), [BOTH("space.md")]);
+      });
+
+      it("names a token the theme block redeclares as a dependent, which would freeze it", () => {
+        editJson(DESKTOP, (tree) => (tree.color = { text: { default: { $value: { colorSpace: "srgb", components: [0, 0, 0], hex: "#000000" } } } }));
+        assert.deepEqual(problems(), [BOTH("color.text.default")]);
+      });
+
+      it("names a breakpoint value citing a token a theme redefines, which a themed region would inherit stale", () => {
+        addToken("accent", { $type: "color", $value: { colorSpace: "srgb", components: [1, 0, 0], hex: "#ff0000" } });
+        editJson(DESKTOP, (tree) => (tree.misc = { accent: { $value: "{color.brand.primary}" } }));
+        assert.deepEqual(problems(), [BOTH("misc.accent")]);
+      });
+
+      it("accepts a dependent citing one token of each: its var()s recompute", () => {
+        addToken("both", { $type: "dimension", $extensions: { "dev.ai-driven.css": "calc(var(--space-md) + var(--color-brand-primary))" } });
+        assert.deepEqual(problems(), []);
+      });
+    });
+
+    describe("with one theme", () => {
+      const oneTheme = () => {
+        edit(tmp, SYSTEM, "themes: [light, dark]", "themes: [light]");
+        editJson(RESOLVER, (r) => {
+          delete r.modifiers.theme;
+          r.resolutionOrder.splice(1, 1);
+        });
+      };
+
+      it("takes a resolver for breakpoints alone", () => {
+        oneTheme();
+        generateStylesheet(tmp);
+        assert.deepEqual(problems(), []);
+        assert.ok(fs.readFileSync(path.join(tmp, STYLESHEET), "utf8").includes("@media (min-width: 64rem) {"));
+      });
+
+      it("still checks it", () => {
+        oneTheme();
+        editJson(RESOLVER, (r) => delete modifier(r).default);
+        assert.deepEqual(problems(), [`${RESOLVER}: the breakpoint modifier's default must name the context tokens.json holds`]);
+      });
+    });
+
+    it("needs no modifier", () => {
+      editJson(RESOLVER, (r) => {
+        delete r.modifiers.breakpoint;
+        r.resolutionOrder.pop();
+      });
+      generateStylesheet(tmp);
+      assert.deepEqual(problems(), []);
     });
   });
 
@@ -284,6 +388,17 @@ describe("aidd-ui tokens and renders", () => {
     it("names a stylesheet a theme file no longer generates", () => {
       edit(tmp, DARK, "#6699cc", "#112233");
       assert.deepEqual(problems(), [`${STYLESHEET}: out of date with the tokens, regenerate it ${REGENERATE}`]);
+    });
+
+    it("names a stylesheet a breakpoint file no longer generates", () => {
+      edit(tmp, DESKTOP, '"value": 1.5', '"value": 2');
+      assert.deepEqual(problems(), [`${STYLESHEET}: out of date with the tokens, regenerate it ${REGENERATE}`]);
+    });
+
+    it("holds the media query verbatim, after the theme block", () => {
+      const css = fs.readFileSync(path.join(tmp, STYLESHEET), "utf8");
+      assert.ok(css.endsWith('@media (min-width: 64rem) {\n  :root, [data-theme="light"] {\n    --space-md: 1.5rem;\n  }\n}\n'));
+      assert.ok(css.indexOf('[data-theme="dark"] {') < css.indexOf("@media"));
     });
 
     it("names a stylesheet edited by hand", () => {

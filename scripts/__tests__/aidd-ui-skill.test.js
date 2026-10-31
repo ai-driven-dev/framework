@@ -158,6 +158,20 @@ describe("aidd-ui 01-system variant axes", () => {
   });
 });
 
+describe("aidd-ui 01-system breakpoints", () => {
+  it("gives an example of a resolver for breakpoints alone that validates as written", () => {
+    const steps = fs.readFileSync(path.join(SKILL, "actions/04-tokens.md"), "utf8");
+    const [resolver] = steps.match(/\{"version": "2025\.10"[^`]*"dev\.ai-driven\.media"[^`]*\}/);
+    const [file] = steps.match(/\{"space": [^`]*\}/);
+    put(tmp, `${UI}/tokens.resolver.json`, resolver);
+    put(tmp, `${UI}/breakpoints/desktop.json`, file);
+    edit(tmp, `${UI}/system.md`, "themes: [light, dark]", "themes: [light]");
+    assert.equal(spawnSync(process.execPath, [ENGINE, "tokens", tmp], { encoding: "utf8" }).status, 0);
+    assert.deepEqual(validate(), { code: 0, out: ["VALID"] });
+    assert.ok(fs.readFileSync(path.join(tmp, `${UI}/tokens.css`), "utf8").includes("@media (min-width: 64rem) {"));
+  });
+});
+
 describe("aidd-ui 01-system change flow", () => {
   /** git without the variables a commit hook exports, which would point it at the real repository. */
   const git = (...args) =>

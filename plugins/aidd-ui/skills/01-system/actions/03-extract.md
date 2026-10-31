@@ -10,6 +10,7 @@ The code roots from `system.md`.
 
 1. **Read.** Read the code roots: where colours, spacing, type and motion are defined, the components and their props, the icons and images.
 2. **Tokens.** Write what the code defines as `aidd_docs/ui/tokens.json` in the format [tokens](04-tokens.md) describes, a token per defined value, nothing invented.
+   - A media query overriding a token's value is a breakpoint context of that format, never dropped: the value outside the query stays in `tokens.json`, the override goes in `breakpoints/<breakpoint>.json`, the query verbatim in the resolver.
 3. **Elements.** Write one record per asset and component, each with its `code` link and `implemented-version: 1`.
    - Use the [component template](../assets/component.md) and the [asset template](../assets/asset.md), then add the code link lines the template's comment names. An `.astro` component links by its bare path, having no named export.
    - Props that vary on their own become axes: a `size` and a `tone` prop give `variants: [size=sm, size=md, tone=danger]`, never their combinations.
@@ -27,6 +28,7 @@ The code roots from `system.md`.
 | Case | Pass |
 | --- | --- |
 | Code with custom properties | each one is a token, none is invented |
+| A custom property overridden in a media query | the override is in a breakpoint file, `tokens.css` holds the same query |
 | A linked component | its record carries `code` and `implemented-version: 1` |
 | A component with `size` and `tone` props | `variants` lists each value as `size=<value>` or `tone=<value>` |
 | An unlinked file | the C3 warning is gone by a record or by `ignore`, or kept as backlog |

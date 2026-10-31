@@ -2,7 +2,10 @@
 // theme's name, so a region can switch back to it, and each other theme in a `[data-theme]` block.
 // A theme block also redeclares the base tokens that depend on one it redefines, since a `var()`
 // computes where it is declared: otherwise a nested region keeps their base value. The same tokens
-// always give the same bytes. A value DTCG has no CSS for is a composite type; it reaches the
+// always give the same bytes. Each breakpoint follows in an `@media` block on the base's selector:
+// the dependents of what it redefines are not redeclared, their `var()`s recompute on the same
+// element, and a theme block never holds a token a breakpoint redefines, which the tokens' rules
+// refuse, so it holds a `var()` of it and never freezes its value. A value DTCG has no CSS for is a composite type; it reaches the
 // stylesheet only as raw CSS.
 const PATH_SEPARATOR = ".";
 const RAW_CSS_EXTENSION = "dev.ai-driven.css";
@@ -55,7 +58,7 @@ function declarationOf(entry) {
 
 /** The custom properties a token's declaration cites: its alias's target, or each var() of its raw CSS. */
 function citedBy(entry) {
-  if (entry.raw !== undefined) return [...entry.raw.matchAll(VAR_CALL)].map((match) => match[1]);
+  if (typeof entry.raw === "string") return [...entry.raw.matchAll(VAR_CALL)].map((match) => match[1]);
   return entry.alias === undefined ? [] : [customProperty(entry.alias)];
 }
 
@@ -78,10 +81,13 @@ function dependents(base, redefined) {
 
 const block = (selector, declarations) => [`${selector} {`, ...declarations.map(([name, value]) => `${INDENT}${customProperty(name)}: ${value};`), "}"];
 
-/** The stylesheet of `base`, named `baseTheme`, then of each `{theme, tokens}` of `themes` in order, with the
+/** A rule block nested in an `@media` block. */
+const mediaBlock = (media, lines) => [`@media ${media} {`, ...lines.map((line) => `${INDENT}${line}`), "}"];
+
+/** The stylesheet of `base`, named `baseTheme`, then of each `{theme, tokens}` of `themes` and each `{media, tokens}` of `breakpoints` in order, with the
  * problems naming each token that has no CSS. Each token is `{name, type, value | alias | raw, file}`.
  * `css` is null when a problem remains. */
-function render({ base, baseTheme, themes }) {
+function render({ base, baseTheme, themes, breakpoints = [] }) {
   const problems = [];
   const declare = (tokens) =>
     tokens.flatMap((entry) => {
@@ -90,8 +96,8 @@ function render({ base, baseTheme, themes }) {
       return value === null ? [] : [[entry.name, value]];
     });
   const baseSelector = baseTheme === undefined ? ":root" : `:root, [data-theme="${baseTheme}"]`;
-  const blocks = [block(baseSelector, declare(base)), ...themes.map(({ theme, tokens }) => block(`[data-theme="${theme}"]`, [...declare(tokens), ...declare(dependents(base, tokens))]))];
+  const blocks = [block(baseSelector, declare(base)), ...themes.map(({ theme, tokens }) => block(`[data-theme="${theme}"]`, [...declare(tokens), ...declare(dependents(base, tokens))])), ...breakpoints.map(({ media, tokens }) => mediaBlock(media, block(baseSelector, declare(tokens))))];
   return { css: problems.length ? null : `${[HEADER, ...blocks.map((lines) => lines.join(LINE_BREAK))].join(PARAGRAPH_BREAK)}${LINE_BREAK}`, problems };
 }
 
-module.exports = { valueOf, render, customProperty };
+module.exports = { valueOf, render, customProperty, dependents };

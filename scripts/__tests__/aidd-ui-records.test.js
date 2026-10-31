@@ -726,6 +726,44 @@ describe("aidd-ui records and history", () => {
         assert.deepEqual(edited(), THROUGH_PRIMARY);
       });
 
+      describe("in a breakpoint", () => {
+        const THROUGH_SPACE = [BUTTON, DIALOG, SEARCH, HOME].map((file) => TOKEN_CHANGED(file, "space.md"));
+        const DESKTOP = `${UI}/breakpoints/desktop.json`;
+
+        it("reaches a value only a breakpoint file holds", () => {
+          edit(tmp, DESKTOP, '"value": 1.5', '"value": 2');
+          editTokens(tmp, () => {});
+          assert.deepEqual(edited(), THROUGH_SPACE);
+        });
+
+        it("still reads the base value of a token a breakpoint redefines", () => {
+          editTokens(tmp, (tree) => (tree.space.md.$value.value = 2));
+          assert.deepEqual(edited(), THROUGH_SPACE);
+        });
+
+        it("reaches a token that depends on it", () => {
+          editTokens(tmp, (tree) => {
+            tree.space.gap = { $value: "{space.md}" };
+          });
+          change(DIALOG, "tokens: [space.md]", "tokens: [space.md, space.gap]");
+          commit();
+          edit(tmp, DESKTOP, '"value": 1.5', '"value": 2');
+          editTokens(tmp, () => {});
+          assert.ok(edited().includes(TOKEN_CHANGED(DIALOG, "space.md, space.gap")));
+        });
+
+        it("reaches a media query that changed, whose value moved at some widths", () => {
+          edit(tmp, `${UI}/tokens.resolver.json`, "(min-width: 64rem)", "(min-width: 80rem)");
+          editTokens(tmp, () => {});
+          assert.deepEqual(edited(), THROUGH_SPACE);
+        });
+
+        it("stays silent when nothing moved", () => {
+          editTokens(tmp, () => {});
+          assert.deepEqual(edited(), []);
+        });
+      });
+
       it("stays silent for a token no element declares", () => {
         editTokens(tmp, (tree) => (tree.misc = { unused: { $type: "number", $value: 1 } }));
         commit();

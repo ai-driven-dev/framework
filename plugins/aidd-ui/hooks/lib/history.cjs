@@ -179,16 +179,18 @@ function textProblems(project) {
 }
 
 const BASE_KEY = "";
+const MEDIA_PREFIX = "@media ";
 const COMMENT = /\/\*[\s\S]*?\*\//g;
-const RULE_BLOCK = /([^{}]+)\{([^{}]*)\}/g;
+const RULE_BLOCK = /(?:@media\s+([^{}]+?)\s*\{)?([^{}]+)\{([^{}]*)\}/g; // a breakpoint's rule holds its query
 const DECLARATION = /(--[\w-]+)\s*:\s*([^;]+);/g;
 const VAR_CALL = /var\(\s*(--[\w-]+)\s*(?:,[^)]*)?\)/g;
 
-/** A generated stylesheet's custom properties by selector: the base, `:root`, under BASE_KEY. */
+/** A generated stylesheet's custom properties by selector: the base, `:root`, under BASE_KEY, and
+ * a breakpoint under its query, its rule sharing the base's selector. */
 function declarationsOf(css) {
   const found = new Map();
-  for (const [, selector, body] of css.replace(COMMENT, "").matchAll(RULE_BLOCK)) {
-    const key = selector.includes(":root") ? BASE_KEY : selector.trim();
+  for (const [, media, selector, body] of css.replace(COMMENT, "").matchAll(RULE_BLOCK)) {
+    const key = media ? `${MEDIA_PREFIX}${media}` : selector.includes(":root") ? BASE_KEY : selector.trim();
     const own = found.get(key) ?? new Map();
     for (const [, name, value] of body.matchAll(DECLARATION)) own.set(name, value.trim());
     found.set(key, own);
@@ -203,11 +205,13 @@ function resolved(values, name, path = new Set()) {
   return value.replace(VAR_CALL, (call, target) => resolved(values, target, new Set([...path, name])) ?? call);
 }
 
-/** The custom properties whose resolved value differs between two stylesheets in a theme both hold. */
+/** The custom properties whose resolved value differs between two stylesheets, in a theme both
+ * hold, or at a breakpoint either holds, since a width without one reads the base. */
 function changedProperties(before, after) {
   const changed = new Set();
-  for (const key of [...before.keys()].filter((theme) => after.has(theme))) {
-    const within = (sheet) => new Map([...(sheet.get(BASE_KEY) ?? []), ...sheet.get(key)]);
+  const compared = [...new Set([...before.keys(), ...after.keys()])].filter((key) => key.startsWith(MEDIA_PREFIX) || (before.has(key) && after.has(key)));
+  for (const key of compared) {
+    const within = (sheet) => new Map([...(sheet.get(BASE_KEY) ?? []), ...(sheet.get(key) ?? [])]);
     const [was, now] = [within(before), within(after)];
     for (const name of new Set([...was.keys(), ...now.keys()])) if (resolved(was, name) !== resolved(now, name)) changed.add(name);
   }

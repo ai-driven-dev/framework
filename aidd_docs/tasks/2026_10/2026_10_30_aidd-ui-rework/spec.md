@@ -15,8 +15,9 @@ aidd_docs/ui/
 ├── system.md                 racine du design system
 ├── brand.md                  identité de marque
 ├── tokens.json               tokens du thème de base, format W3C DTCG 2025.10
-├── tokens.resolver.json      thèmes, module Resolver de DTCG 2025.10
+├── tokens.resolver.json      thèmes et breakpoints, module Resolver de DTCG 2025.10
 ├── themes/<thème>.json       valeurs qui changent pour un thème
+├── breakpoints/<nom>.json    valeurs qui changent à un breakpoint
 ├── tokens.css                généré depuis les tokens, jamais écrit à la main
 ├── assets/<id>.md            icône, image, illustration, avec son fichier à côté
 ├── components/<id>.md        atome, molécule ou composition
@@ -90,6 +91,7 @@ Deux axes, jamais mêlés : où en est le design, et quelle version le code impl
 - Les tokens ont deux niveaux : les primitifs (la palette) et les sémantiques, qui pointent vers eux. Un composant ou un écran n'utilise que des sémantiques, et son rendu n'emploie que les tokens que sa fiche déclare et ceux des éléments qu'il utilise : le rapport d'impact, qui suit `uses`, n'en oublie aucun.
 - Les tokens sont la seule source ; aidd-ui génère `aidd_docs/ui/tokens.css` et n'écrit jamais dans le code. `system.md` nomme le fichier où le code consomme les tokens ; la feature le fait suivre, l'audit compare les deux.
 - Les thèmes suivent le module Resolver de DTCG : `tokens.json` porte le premier thème déclaré, la base ; chaque autre thème a son fichier, qui ne redéfinit que des tokens de la base, avec le même type. Un rendu montre un thème sous `[data-theme]`, avec les mêmes noms de variables.
+- Une valeur qui dépend de la largeur suit le même module : `tokens.json` porte le breakpoint de départ, contexte par défaut et vide ; chaque autre breakpoint a son fichier, qui ne redéfinit que des tokens de la base avec le même type, et sa media query telle quelle dans une extension du modificateur. `tokens.css` la porte dans un bloc `@media` après les thèmes. Un token qu'un bloc de thème porte, redéfini ou redéclaré comme dépendant, ne change jamais à un breakpoint : ce bloc cacherait sa valeur.
 - Une valeur que DTCG ne sait pas porter (`color-mix()`, `%`, `em`) est gardée en CSS brut dans une extension du token ; les `var()` qu'elle cite sont des tokens existants et comptent comme des dépendances.
 - Un écran montre tous ses états dans un seul fichier, avec un sélecteur d'état.
 - Une variante est une valeur nue, montrée par `data-variant`, ou `axe=valeur` pour une propriété qui varie seule (`size=sm`), montrée par `data-<axe>` ; `state` et `variant` ne sont jamais des axes.

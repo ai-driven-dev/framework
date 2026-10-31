@@ -21,19 +21,20 @@ One file per element, under `aidd_docs/ui/`.
 
 ```txt
 aidd_docs/ui/
-├── system.md             the design system
-├── brand.md              the brand
-├── tokens.json           tokens of the base theme, DTCG 2025.10
-├── tokens.resolver.json  the other themes, DTCG Resolver 2025.10
-├── themes/<theme>.json   the tokens one theme redefines
-├── tokens.css            generated from the tokens by the engine, never written by hand
-├── assets/<id>.md        an icon, image or illustration, its file beside it
-├── components/<id>.md    an atom, molecule or composition
-├── components/<id>.html  its render: every variant and state
-├── screens/<id>.md       a screen
-├── screens/<id>.html     its render: every state
-├── journeys/<id>.md      a user journey
-└── reviews/<id>.md       the verdicts of a review
+├── system.md                the design system
+├── brand.md                 the brand
+├── tokens.json              tokens of the base theme, DTCG 2025.10
+├── tokens.resolver.json     the other themes and the breakpoints, DTCG Resolver 2025.10
+├── themes/<theme>.json      the tokens one theme redefines
+├── breakpoints/<name>.json  the tokens one breakpoint redefines
+├── tokens.css               generated from the tokens by the engine, never written by hand
+├── assets/<id>.md           an icon, image or illustration, its file beside it
+├── components/<id>.md       an atom, molecule or composition
+├── components/<id>.html     its render: every variant and state
+├── screens/<id>.md          a screen
+├── screens/<id>.html        its render: every state
+├── journeys/<id>.md         a user journey
+└── reviews/<id>.md          the verdicts of a review
 ```
 
 Every record opens with flat front matter, `key: value` or `key: [a, b]`, and closes with a `## History` table: Version, Change, Breaking (`yes` or `no`), Task. A task is its folder, `aidd_docs/tasks/…`.
@@ -65,13 +66,15 @@ Every record opens with flat front matter, `key: value` or `key: [a, b]`, and cl
 - A render uses only the tokens its record lists in `tokens`, or those of the elements it uses, transitively. Its literals are read in `<style>` blocks and `style=""` values, never in its text, and its colours also in `fill`, `stroke`, `color` and `bgcolor` values, where a value opening with `var()` is a token; a variant or state counts when an element outside `<style>` carries its `data-` attribute: `data-variant="<value>"` for a bare item, `data-<axis>="<value>"` for `axis=value`, `data-state="<value>"` for a state.
 - An axis matches `[a-z][a-z-]*`, is never `state` or `variant`, and its value is never empty.
 - `code-tokens` names the file where the code consumes the tokens; it is never checked for literals or coverage.
-- Themes: the first theme in `system.md` is held by `tokens.json`. `tokens.resolver.json` has a set whose sources hold `{"$ref": "tokens.json"}`, a `theme` modifier with one context per theme and the base as `default`, and `{"$ref": "#/modifiers/theme"}` in `resolutionOrder`. A context lists `{"$ref": "<file>"}` sources, each redefining base tokens with their type.
+- Themes: the first theme in `system.md` is held by `tokens.json`. `tokens.resolver.json`, required from two themes on and checked whenever present, has a set whose sources hold `{"$ref": "tokens.json"}`, a `theme` modifier with one context per theme and the base as `default`, and `{"$ref": "#/modifiers/theme"}` in `resolutionOrder`. A context lists `{"$ref": "<file>"}` sources, each redefining base tokens with their type.
+- Breakpoints: a value that depends on the width is a context of an optional `breakpoint` modifier, with `{"$ref": "#/modifiers/breakpoint"}` in `resolutionOrder`. Its `default` is the breakpoint `tokens.json` holds, an empty context, since the Resolver needs one to resolve without an input. Every other context is a breakpoint in `system.md` listing `{"$ref": "<file>"}` sources, like a theme's, with its media query verbatim in the modifier's `"$extensions": {"dev.ai-driven.media": {"<breakpoint>": "<query>"}}`.
+- A token a breakpoint redefines is never one a theme block holds, redefined or redeclared as a dependent, and its value never cites one: on a nested region that block would hide it, or leave it stale. A token depending on both a theme's token and a breakpoint's is allowed: its `var()`s recompute.
 - A value DTCG cannot hold, such as `color-mix()` or `100%`, is raw CSS: `"$extensions": {"dev.ai-driven.css": "<value>"}`. Each `var()` in it must name a token.
 - `$root` is not supported: name the token. A token holding both `$value` and child tokens is an error: its children would be dropped.
 - A token's CSS name is `--` plus its path joined by `-`.
-- `tokens.css` is generated: a custom property per token, the base in `:root, [data-theme="<base theme>"]`, so a nested region can switch back to it, each other theme in `[data-theme="<theme>"]`, an alias as `var()`, raw CSS verbatim. A theme block also redeclares, in tree order after its own tokens, every base token that depends on one it redefines, through an alias or a `var()`, transitively, so a theme set on a nested element recomputes it there. A composite token (shadow, border, typography, ...) has no CSS of its own: it needs a raw CSS extension to appear in it.
+- `tokens.css` is generated: a custom property per token, the base in `:root, [data-theme="<base theme>"]`, so a nested region can switch back to it, each other theme in `[data-theme="<theme>"]`, an alias as `var()`, raw CSS verbatim. A theme block also redeclares, in tree order after its own tokens, every base token that depends on one it redefines, through an alias or a `var()`, transitively, so a theme set on a nested element recomputes it there. After them, each breakpoint in resolver order is `@media <query> { :root, [data-theme="<base theme>"] { ... } }`, tokens in tree order, without what depends on them, which recomputes through `var()`. A composite token (shadow, border, typography, ...) has no CSS of its own: it needs a raw CSS extension to appear in it.
 - A component or screen render loads it with `<link rel="stylesheet" href="../tokens.css">`, so a token change reaches every render without rewriting one.
-- A validated or deprecated element edited since its committed version, without a new `version`, is an error. A change to `status`, `implemented-version`, `code` or the History table is not an edit. A validated element is also held to the resolved value, in any theme, of each token it or an element it uses declares, compared with the committed `tokens.css`; a token change leaves a deprecated element as it is.
+- A validated or deprecated element edited since its committed version, without a new `version`, is an error. A change to `status`, `implemented-version`, `code` or the History table is not an edit. A validated element is also held to the resolved value, in any theme or breakpoint, of each token it or an element it uses declares, compared with the committed `tokens.css`; a token change leaves a deprecated element as it is.
 
 ## Commands
 
@@ -96,7 +99,7 @@ A hook runs the same check:
 | Moment | Prints |
 | --- | --- |
 | Session start | the counts, then the errors |
-| After a write under `aidd_docs/ui/` or a code root | the problems of the written files, their record's render and the records citing it, or all of them after a write to `system.md`, the tokens or a theme; then the count of other errors |
+| After a write under `aidd_docs/ui/` or a code root | the problems of the written files, their record's render and the records citing it, or all of them after a write to `system.md`, the tokens, a theme or a breakpoint; then the count of other errors |
 | End of a turn that wrote such a file | the errors, as a reason to continue, once |
 
 Each output stops at 20 problem lines and names the command that prints the rest.
@@ -111,7 +114,10 @@ Rules: records R1 to R17, history H1 to H8, tokens T1 to T10, renders V1 to V8, 
 - Codex runs the hook only once you trust it; Copilot only in a folder it trusts, and says nothing otherwise.
 - A file written by a shell command, or deleted by a patch, is not seen.
 - A problem a write causes in a record that does not cite the written one, such as a use of a renamed id, appears at turn end only.
-- The Resolver is read in one profile: a `theme` modifier with file sources. Inline sources and other modifiers are not checked.
+- The Resolver is read in one profile: `theme` and `breakpoint` modifiers with file sources. Inline sources and other modifiers are not checked.
+- A theme or breakpoint file cannot give a typed token raw CSS: its value is checked against the token's type.
+- Breakpoint blocks cascade in the stylesheet, where the Resolver applies one context: at a width two queries match, a token only the earlier one redefines keeps that value.
+- H8 compares a breakpoint's values over the base, not inside each theme, so a theme value citing a token a breakpoint redefines is not followed.
 - Composite tokens are checked for a `$value`, not for its shape, and reach `tokens.css` only as raw CSS.
 - `impact` leaves reviews out of its report.
 - A web design system only: a native app, such as an Expo one, is outside it.
@@ -120,7 +126,6 @@ Rules: records R1 to R17, history H1 to H8, tokens T1 to T10, renders V1 to V8, 
 - A `tokens.css` kept out of git by `.gitignore` has no committed baseline, which disables H8's token-value part: commit it.
 - Blank lines added to a held record count as an edit for H8.
 - An opaque colour with a `hex` is written as that `hex`, which drops a wider gamut its `colorSpace` holds.
-- A token value that depends on a breakpoint has no place yet.
 - A review validates screens only for now, so components are validated by hand until the review page exists.
 - `code-roots` and `ignore` are path prefixes, not globs. Every folder under a code root is walked, `node_modules`, build output and dot-folders included: ignore them. A linked folder counts as one file no record links.
 - A render shows a variant or state when its text holds the attribute, whatever the element; an export exists when its name is a word of the linked file, a comment included.

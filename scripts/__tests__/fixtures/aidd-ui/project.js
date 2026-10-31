@@ -83,11 +83,21 @@ const TOKENS = {
 // The dark theme redefines one base token; the Resolver names its file.
 const DARK = { color: { brand: { primary: { $value: { colorSpace: "srgb", components: [0.4, 0.6, 0.8], hex: "#6699cc" } } } } };
 
+// Desktop redefines one base token; mobile, the modifier's default, is tokens.json itself.
+const DESKTOP = { space: { md: { $value: { value: 1.5, unit: "rem" } } } };
+
 const RESOLVER = {
   version: "2025.10",
   sets: { base: { sources: [{ $ref: "tokens.json" }] } },
-  modifiers: { theme: { contexts: { light: [], dark: [{ $ref: "themes/dark.json" }] }, default: "light" } },
-  resolutionOrder: [{ $ref: "#/sets/base" }, { $ref: "#/modifiers/theme" }],
+  modifiers: {
+    theme: { contexts: { light: [], dark: [{ $ref: "themes/dark.json" }] }, default: "light" },
+    breakpoint: {
+      contexts: { mobile: [], desktop: [{ $ref: "breakpoints/desktop.json" }] },
+      default: "mobile",
+      $extensions: { "dev.ai-driven.media": { desktop: "(min-width: 64rem)" } },
+    },
+  },
+  resolutionOrder: [{ $ref: "#/sets/base" }, { $ref: "#/modifiers/theme" }, { $ref: "#/modifiers/breakpoint" }],
 };
 
 const ICON = record(
@@ -257,6 +267,7 @@ const FILES = {
   [`${UI}/tokens.json`]: `${JSON.stringify(TOKENS, null, 2)}\n`,
   [`${UI}/tokens.resolver.json`]: `${JSON.stringify(RESOLVER, null, 2)}\n`,
   [`${UI}/themes/dark.json`]: `${JSON.stringify(DARK, null, 2)}\n`,
+  [`${UI}/breakpoints/desktop.json`]: `${JSON.stringify(DESKTOP, null, 2)}\n`,
   [`${UI}/assets/icon-search.md`]: ICON,
   [`${UI}/assets/icon-search.svg`]: ICON_FILE,
   [`${UI}/components/button.md`]: BUTTON,

@@ -1,5 +1,5 @@
-// T1 to T10: tokens.json against the DTCG 2025.10 format and color modules, themes through its
-// Resolver module, raw CSS extensions, components and screens citing semantic tokens only, and
+// T1 to T10: tokens.json against the DTCG 2025.10 format and color modules, themes and breakpoints
+// through its Resolver module, raw CSS extensions, components and screens citing semantic tokens only, and
 // the generated tokens.css agreeing with all of it. Composite values are checked for presence
 // only, and reach tokens.css as raw CSS alone.
 const fs = require("node:fs");
@@ -7,7 +7,7 @@ const nodePath = require("node:path");
 const { list } = require("./markdown.cjs");
 const { placed, systemOf, TOKENED_KINDS } = require("./model.cjs");
 const { text, checkOf } = require("./project.cjs");
-const { render, customProperty } = require("./css.cjs");
+const { render, customProperty, dependents } = require("./css.cjs");
 
 const RESERVED_KEYS = ["$value", "$type", "$description", "$extensions", "$deprecated", "$extends", "$schema"];
 const ROOT_KEY = "$root"; // a stated limit: a group's own token is a named child here
@@ -18,7 +18,10 @@ const RESOLVER_FILE = "tokens.resolver.json";
 const CSS_FILE = "tokens.css";
 const RESOLVER_VERSION = "2025.10";
 const THEME_MODIFIER = "theme";
-const THEME_ORDER_REF = `#/modifiers/${THEME_MODIFIER}`;
+const BREAKPOINT_MODIFIER = "breakpoint";
+const MEDIA_EXTENSION = "dev.ai-driven.media"; // a breakpoint's media query, verbatim: DTCG has no place for one
+const MIN_THEMES_FOR_RESOLVER = 2;
+const orderRef = (modifier) => `#/modifiers/${modifier}`;
 const MISSING = "missing";
 const NOT_JSON = "not JSON";
 
@@ -223,9 +226,20 @@ const resolverFileOf = (project) => nodePath.posix.join(nodePath.posix.dirname(p
 /** The generated stylesheet beside tokens.json, project-relative. */
 const cssFileOf = (project) => nodePath.posix.join(nodePath.posix.dirname(project.tokensFile), CSS_FILE);
 
+const applies = (resolver, modifier) => (resolver.resolutionOrder ?? []).some((step) => step?.$ref === orderRef(modifier));
+
+/** A context's files, resolver-relative paths made project-relative, with the problem of a source
+ * that is no file reference. */
+function contextFiles(name, sources, file, problems) {
+  const refs = (Array.isArray(sources) ? sources : []).map((source) => source?.$ref);
+  if (refs.some((ref) => typeof ref !== "string")) problems.push({ file, message: `context "${name}": each source is {"$ref": "<file>"}` });
+  return refs.filter((ref) => typeof ref === "string").map((ref) => nodePath.posix.join(nodePath.posix.dirname(file), ref));
+}
+
 /** The Resolver's theme contexts as `{theme: [file]}`, with what keeps it from naming them.
  * This plugin reads one profile of the module: a set holding tokens.json, then a `theme`
- * modifier whose contexts are the themes system.md declares, each a list of `$ref` files. */
+ * modifier whose contexts are the themes system.md declares, each a list of `$ref` files, needed
+ * from two themes on. */
 function resolverContexts(resolver, themes, project, file) {
   const at = (message) => ({ file, message });
   const problems = [];
@@ -233,47 +247,84 @@ function resolverContexts(resolver, themes, project, file) {
   const holdsTokens = Object.values(isObject(resolver.sets) ? resolver.sets : {}).some((set) => (set?.sources ?? []).some((source) => source?.$ref === nodePath.posix.basename(project.tokensFile)));
   if (!holdsTokens) problems.push(at(`no set holds ${nodePath.posix.basename(project.tokensFile)}`));
   const modifier = resolver.modifiers?.[THEME_MODIFIER];
+  if (modifier === undefined && themes.length < MIN_THEMES_FOR_RESOLVER) return { problems, contexts: {} };
   if (!isObject(modifier) || !isObject(modifier.contexts)) return { problems: [...problems, at(`no "${THEME_MODIFIER}" modifier with contexts`)], contexts: {} };
-  if (!(resolver.resolutionOrder ?? []).some((step) => step?.$ref === THEME_ORDER_REF)) problems.push(at(`resolutionOrder never applies ${THEME_ORDER_REF}`));
+  if (!applies(resolver, THEME_MODIFIER)) problems.push(at(`resolutionOrder never applies ${orderRef(THEME_MODIFIER)}`));
   if (modifier.default !== themes[0]) problems.push(at(`the theme modifier's default must be "${themes[0]}", the first theme in system.md`));
   for (const theme of themes) if (!Object.hasOwn(modifier.contexts, theme)) problems.push(at(`no context for theme "${theme}"`));
   const contexts = {};
   for (const [theme, sources] of Object.entries(modifier.contexts)) {
     if (!themes.includes(theme)) problems.push(at(`context "${theme}" is not a theme in system.md`));
-    const refs = (Array.isArray(sources) ? sources : []).map((source) => source?.$ref);
-    if (refs.some((ref) => typeof ref !== "string")) problems.push(at(`context "${theme}": each source is {"$ref": "<file>"}`));
-    contexts[theme] = refs.filter((ref) => typeof ref === "string").map((ref) => nodePath.posix.join(nodePath.posix.dirname(file), ref));
+    contexts[theme] = contextFiles(theme, sources, file, problems);
   }
   return { problems, contexts };
 }
 
-/** What a theme file earns: each token it redefines exists in tokens.json, keeps its type, and
- * holds a value of that type. */
-function themeFileProblems(tree, project, theme, file) {
+/** The Resolver's breakpoint contexts in its order, `[{breakpoint, media, files}]`, with what keeps
+ * it from naming them. The modifier is optional. Its `default` is the context tokens.json holds,
+ * so it lists no source and has no query: the module needs it to resolve without an input. Every
+ * other context lists `$ref` files, and its query sits in the modifier's extension, a context
+ * being an array that has no place for one. */
+function breakpointContexts(resolver, breakpoints, file) {
+  const at = (message) => ({ file, message });
+  const modifier = resolver.modifiers?.[BREAKPOINT_MODIFIER];
+  if (modifier === undefined) return { problems: [], contexts: [] };
+  if (!isObject(modifier) || !isObject(modifier.contexts)) return { problems: [at(`no "${BREAKPOINT_MODIFIER}" modifier with contexts`)], contexts: [] };
+  const problems = [];
+  if (!applies(resolver, BREAKPOINT_MODIFIER)) problems.push(at(`resolutionOrder never applies ${orderRef(BREAKPOINT_MODIFIER)}`));
+  if (!Object.hasOwn(modifier.contexts, modifier.default)) return { problems: [...problems, at("the breakpoint modifier's default must name the context tokens.json holds")], contexts: [] };
+  const extension = modifier.$extensions?.[MEDIA_EXTENSION];
+  const queries = isObject(extension) ? extension : {};
+  for (const name of Object.keys(queries)) if (name === modifier.default || !Object.hasOwn(modifier.contexts, name)) problems.push(at(`${MEDIA_EXTENSION} "${name}" names no context outside the default`));
+  const contexts = [];
+  for (const [breakpoint, sources] of Object.entries(modifier.contexts)) {
+    if (!breakpoints.includes(breakpoint)) problems.push(at(`context "${breakpoint}" is not a breakpoint in system.md`));
+    if (breakpoint === modifier.default) {
+      if (Array.isArray(sources) && sources.length) problems.push(at(`context "${breakpoint}" is the default, held by tokens.json: it lists no source`));
+      continue;
+    }
+    const media = queries[breakpoint];
+    if (typeof media !== "string" || !media.trim()) problems.push(at(`context "${breakpoint}" has no media string under ${MEDIA_EXTENSION}`));
+    contexts.push({ breakpoint, media, files: contextFiles(breakpoint, sources, file, problems) });
+  }
+  return { problems, contexts };
+}
+
+/** What a theme or breakpoint file earns: each token it redefines exists in tokens.json, keeps its
+ * type, and holds a value of that type. `owner` names who redefines it. */
+function redefinitionProblems(tree, project, owner, file) {
   const themed = readTree(project, file);
   if (themed.unusable) return themed.problem ? [{ file, message: themed.problem }] : [];
   const at = tokenProblem(project, file);
   return [...themed.tokens].flatMap(([name, token]) => {
     const base = tree.tokens.get(name);
-    if (!base) return [at(name, `theme "${theme}" redefines no token of tokens.json`)];
+    if (!base) return [at(name, `${owner} redefines no token of tokens.json`)];
     const type = typeOf(tree, base);
     if (token.node.$type !== undefined && token.node.$type !== type) return [at(name, `$type "${token.node.$type}" differs from tokens.json's "${type}"`)];
     const message = shapeProblem(type, token.node.$value) ?? aliasProblem(tree, token.node.$value, type);
-    return message ? [at(name, `theme "${theme}": ${message}`)] : [];
+    return message ? [at(name, `${owner}: ${message}`)] : [];
   });
 }
 
-/** The first theme system.md declares is the base, held by tokens.json; every other one is a
- * context of tokens.resolver.json, whose files redefine base tokens only. */
-function themeProblems(tree, project) {
+/** The first theme system.md declares is the base, held by tokens.json; every other one, and every
+ * breakpoint that changes a value, is a context of tokens.resolver.json, whose files redefine base
+ * tokens only and never the same one: each token has one owner, so no block hides another. */
+function resolverProblems(tree, project) {
   const themes = list(systemOf(project)?.frontMatter.themes);
   const file = resolverFileOf(project);
   const resolver = readJson(project, file);
-  if (resolver.problem === MISSING && themes.length < 2) return [];
+  if (resolver.problem === MISSING && themes.length < MIN_THEMES_FOR_RESOLVER) return [];
   if (!resolver.value) return resolver.problem ? [{ file, message: resolver.problem }] : [];
   const { problems, contexts } = resolverContexts(resolver.value, themes, project, file);
-  if (tree.unusable) return problems; // a theme file is read against tokens.json, which T1 names
-  return [...problems, ...Object.entries(contexts).flatMap(([theme, files]) => files.flatMap((themeFile) => themeFileProblems(tree, project, theme, themeFile)))];
+  const breakpoints = breakpointContexts(resolver.value, list(systemOf(project)?.frontMatter.breakpoints), file);
+  const found = [...problems, ...breakpoints.problems];
+  if (tree.unusable) return found; // a context file is read against tokens.json, which T1 names
+  return [
+    ...found,
+    ...Object.entries(contexts).flatMap(([theme, files]) => files.flatMap((themeFile) => redefinitionProblems(tree, project, `theme "${theme}"`, themeFile))),
+    ...breakpoints.contexts.flatMap(({ breakpoint, files }) => files.flatMap((context) => redefinitionProblems(tree, project, `breakpoint "${breakpoint}"`, context))),
+    ...ownerProblems(tree, project),
+  ];
 }
 
 /** A raw CSS value's `var()`s name tokens: they are its dependencies. */
@@ -325,18 +376,44 @@ function themeTrees(project) {
   return themes.slice(1).map((theme) => ({ theme, files: (contexts[theme] ?? []).map((file) => ({ file, tree: readTree(project, file) })) }));
 }
 
-const themeEntries = (tree, project) =>
-  themeTrees(project).map(({ theme, files }) => ({
-    theme,
-    tokens: files.flatMap(({ file, tree: themed }) => [...themed.tokens].map(([name, token]) => entryOf(name, token, typeOf(tree, tree.tokens.get(name)), file))),
-  }));
+/** What each breakpoint context redefines, in the Resolver's order: `{breakpoint, media, files: [{file, tree}]}`. */
+function breakpointTrees(project) {
+  const resolver = readJson(project, resolverFileOf(project));
+  const { contexts } = resolver.value ? breakpointContexts(resolver.value, list(systemOf(project)?.frontMatter.breakpoints), resolverFileOf(project)) : { contexts: [] };
+  return contexts.map(({ files, ...context }) => ({ ...context, files: files.map((file) => ({ file, tree: readTree(project, file) })) }));
+}
+
+/** The tokens of context files as the stylesheet sees them, `typeFor` giving each its type. */
+const contextEntries = (files, typeFor = () => undefined) => files.flatMap(({ file, tree: own }) => [...own.tokens].map(([name, token]) => entryOf(name, token, typeFor(name), file)));
+
+/** A token a theme block holds, whether redefined there or redeclared as depending on one that is,
+ * cannot also be a breakpoint's: on a nested region that block would hide the breakpoint's value.
+ * A breakpoint value citing such a token counts too: a nested region would inherit it stale. */
+function ownerProblems(tree, project) {
+  const breakpoints = breakpointTrees(project).map(({ breakpoint, files }) => ({ breakpoint, tokens: contextEntries(files) }));
+  const base = [...tree.tokens].map(([name, token]) => entryOf(name, token, undefined, project.tokensFile));
+  const everyDeclaration = [...base, ...breakpoints.flatMap(({ tokens }) => tokens)];
+  return themeTrees(project).flatMap(({ theme, files }) => {
+    const own = contextEntries(files);
+    const held = new Set([...own, ...dependents(everyDeclaration, own)].map((entry) => entry.name));
+    return breakpoints.flatMap(({ breakpoint, tokens }) =>
+      tokens.filter((entry) => held.has(entry.name)).map((entry) => ({ file: entry.file, message: `${entry.name}: theme "${theme}" and breakpoint "${breakpoint}" both set it, so a themed region would ignore the breakpoint` }))
+    );
+  });
+}
 
 /** The stylesheet of tokens that have no error, `{css, problems}`: `css` is null when a composite
  * token has no raw CSS, which `problems` names. */
 function generate(project) {
   const tree = read(project);
   const base = [...tree.tokens].map(([name, token]) => entryOf(name, token, typeOf(tree, token), project.tokensFile));
-  return render({ base, baseTheme: list(systemOf(project)?.frontMatter.themes)[0], themes: themeEntries(tree, project) });
+  const typeFor = (name) => typeOf(tree, tree.tokens.get(name));
+  return render({
+    base,
+    baseTheme: list(systemOf(project)?.frontMatter.themes)[0],
+    themes: themeTrees(project).map(({ theme, files }) => ({ theme, tokens: contextEntries(files, typeFor) })),
+    breakpoints: breakpointTrees(project).map(({ media, files }) => ({ media, tokens: contextEntries(files, typeFor) })),
+  });
 }
 
 const BASE_RULES = {
@@ -345,7 +422,7 @@ const BASE_RULES = {
   T3: typeProblems,
   T4: shapeProblems,
   T5: aliasProblems,
-  T6: themeProblems,
+  T6: resolverProblems,
   T7: citedTokenProblems,
   T8: primitiveProblems,
   T9: rawCssProblems,
@@ -386,14 +463,14 @@ function cssNames(project) {
 const namesByProperty = (tree) => new Map([...tree.tokens].map(([name, token]) => [cssName(token.path), name]));
 
 /** The tokens each token cites, by name: the one its alias names and those whose custom property
- * a `var()` of its raw CSS names, in tokens.json or in any theme file. Empty when tokens.json
+ * a `var()` of its raw CSS names, in tokens.json or in any theme or breakpoint file. Empty when tokens.json
  * cannot be read. */
 function citations(project) {
   const tree = read(project);
   const byProperty = namesByProperty(tree);
   const citedBy = (token) => [aliasOf(token.node.$value), ...[...(typeof rawCssOf(token) === "string" ? rawCssOf(token) : "").matchAll(CSS_VARIABLE)].map((match) => byProperty.get(match[1]))];
   const found = new Map([...tree.tokens].map(([name, token]) => [name, citedBy(token)]));
-  for (const { files } of themeTrees(project)) {
+  for (const { files } of [...themeTrees(project), ...breakpointTrees(project)]) {
     for (const { tree: themed } of files) for (const [name, token] of themed.tokens) found.get(name)?.push(...citedBy(token));
   }
   return new Map([...found].map(([name, cited]) => [name, [...new Set(cited.filter((target) => tree.tokens.has(target)))]]));
