@@ -17,7 +17,7 @@ The brand and `system.md`, and the tokens extract found when the code already ha
    - The resolver has `"version": "2025.10"`, a set holding `{"$ref": "tokens.json"}`, a `theme` modifier with one context per theme and the base as `default`, and `{"$ref": "#/modifiers/theme"}` in `resolutionOrder`.
    - A context lists `{"$ref": "themes/<theme>.json"}`; that file redefines base tokens only, with their type.
    - For themes `light` and `dark`: `{"version": "2025.10", "sets": {"base": {"sources": [{"$ref": "tokens.json"}]}}, "modifiers": {"theme": {"default": "light", "contexts": {"light": [], "dark": [{"$ref": "themes/dark.json"}]}}}, "resolutionOrder": [{"$ref": "#/sets/base"}, {"$ref": "#/modifiers/theme"}]}`.
-3. **Generate.** Run `tokens`, which writes `aidd_docs/ui/tokens.css`; when it exits 1, fix the tokens it names and run it again.
+3. **Generate.** Run `tokens`, which writes `aidd_docs/ui/tokens.css`; when it exits 1, fix the tokens it names and run it again. Commit `tokens.css`, never gitignore it: the version guard reads the committed one.
 4. **Link.** When the code consumes the tokens through a file, set `code-tokens` in `system.md` to it.
 
 ## Output

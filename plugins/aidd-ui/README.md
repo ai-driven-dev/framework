@@ -115,10 +115,15 @@ Rules: records R1 to R17, history H1 to H8, tokens T1 to T10, renders V1 to V8, 
 - `impact` leaves reviews out of its report.
 - A web design system only: a native app, such as an Expo one, is outside it.
 - The committed baseline of H8 is `HEAD`: without `git`, a repository, a commit or the committed file, the rule is silent, and committing an edit without raising the version hides it. Any other failure of `git`, such as a repository it refuses to read or its five-second timeout, is one H8 problem on `aidd_docs/ui`. A run asks `git` once which files changed, then reads only those, plus the committed record of an element declaring a token whose value changed.
+- A version raise that stays `validated` passes until a review can prove it.
+- A `tokens.css` kept out of git by `.gitignore` has no committed baseline, which disables H8's token-value part: commit it.
+- Blank lines added to a held record count as an edit for H8.
+- A colour with a `hex` is written as that `hex`, which drops a wider gamut its `colorSpace` holds.
 - A token value that depends on a breakpoint has no place yet.
 - A component has one `variants` axis.
 - A review validates screens only for now, so components are validated by hand until the review page exists.
 - `code-roots` and `ignore` are path prefixes, not globs. Every folder under a code root is walked, `node_modules`, build output and dot-folders included: ignore them. A linked folder counts as one file no record links.
+- A colour in a `fill`, `stroke`, `color` or `bgcolor` attribute of a render is not found: only `<style>` blocks and `style=""` values are read.
 - A render shows a variant or state when it holds its `data-variant` or `data-state` attribute; an export exists when its name is a word of the linked file, a comment included.
 - The hook command names `${CLAUDE_PLUGIN_ROOT}` unquoted, like every plugin here: a plugin path with spaces breaks it.
 - In code, only colour literals are found, in web code only, outside tests and mocks, which C3 leaves out of the backlog too; other literals are left to the UI audit.

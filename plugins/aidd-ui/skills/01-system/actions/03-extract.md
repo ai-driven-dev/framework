@@ -11,7 +11,7 @@ The code roots from `system.md`.
 1. **Read.** Read the code roots: where colours, spacing, type and motion are defined, the components and their props, the icons and images.
 2. **Tokens.** Write what the code defines as `aidd_docs/ui/tokens.json` in the format [tokens](04-tokens.md) describes, a token per defined value, nothing invented.
 3. **Elements.** Write one record per asset and component, each with its `code` link and `implemented-version: 1`.
-   - Use the [component template](../assets/component.md) and the [asset template](../assets/asset.md), then add the code link lines the template's comment names.
+   - Use the [component template](../assets/component.md) and the [asset template](../assets/asset.md), then add the code link lines the template's comment names. An `.astro` component links by its bare path, having no named export.
    - Level by what a component uses: an atom uses no component, a molecule uses atoms, a composition uses molecules.
 4. **Cover.** Run `validate` and take each C3 warning as a file under a code root no record links yet.
    - Link it with a record, or add its path to `ignore` in `system.md`. Components not recorded yet are a backlog these warnings list, not a failure.
