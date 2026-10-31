@@ -7,6 +7,8 @@ status: implemented
 
 Source: aidd_docs/tasks/2026_10/2026_10_30_aidd-ui-rework/spec.md, pull request 1 of aidd_docs/tasks/2026_10/2026_10_30_aidd-ui-rework/roadmap.md.
 
+> The format decisions taken after this plan ran (the version the code implements, publication rows, the Resolver for themes, severities, one engine command) live in the spec and the plugin README, which supersede the names and rules below.
+
 ## Phases
 
 | #   | Phase        | File                         | Depends on |

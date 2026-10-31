@@ -96,7 +96,9 @@ Each output stops at 20 problem lines and names the command that prints the rest
 - A problem a write causes in a record that does not cite the written one, such as a use of a renamed id, appears at turn end only.
 - The Resolver is read in one profile: a `theme` modifier with file sources. Inline sources and other modifiers are not checked.
 - Composite tokens are checked for a `$value`, not for its shape.
-- `code-roots` and `ignore` are path prefixes, not globs.
+- `code-roots` and `ignore` are path prefixes, not globs. Every folder under a code root is walked, `node_modules`, build output and dot-folders included: ignore them. A linked folder counts as one file no record links.
+- A render shows a variant or state when it holds its `data-variant` or `data-state` attribute; an export exists when its name is a word of the linked file, a comment included.
+- The hook command names `${CLAUDE_PLUGIN_ROOT}` unquoted, like every plugin here: a plugin path with spaces breaks it.
 - In code, only colour literals are found, in web code only, outside tests and mocks; other literals are left to the UI audit.
 - In script files, `.vue` and `.svelte` included, colours are found in string literals only. A Vue or Svelte component needs an export name in its link.
 - A word of hex letters after `#` in a stylesheet or a string, such as `#add`, counts as a colour.

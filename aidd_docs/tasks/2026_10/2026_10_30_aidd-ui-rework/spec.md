@@ -159,6 +159,7 @@ Deux axes, jamais mêlés : où en est le design, et quelle version le code impl
 | PR | Décision |
 | --- | --- |
 | 2 | Un élément modifié sans montée de version se détecte en comparant à la version committée ; le moteur expose le graphe d'usages en JSON pour le rapport d'impact. |
+| 2 | Le flux de changement vit dans `01-system` : il régénère les rendus touchés, écrans compris, par une sous-commande du moteur, puis s'arrête et dit qu'une review est attendue, sans nommer le skill qui la conduit. |
 | 2 | Un composant Vue ou Svelte, qui n'a pas de nom exporté, se lie par son seul chemin, quand l'extraction en rencontre un. |
 | 3 | La page de review est un fichier statique : elle produit la fiche review à enregistrer, sans serveur. |
 | 4 | `ui.md` cite les éléments par `id@version`, pour que la vérification d'après code voie ce qui a bougé pendant la feature. |
