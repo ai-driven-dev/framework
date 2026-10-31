@@ -184,6 +184,33 @@ describe("Kilo hooks bridge", () => {
     }
   });
 
+  it("appends the additionalContext a PostToolUse script prints at exit 0", async () => {
+    const directory = await mkdtemp(join(tmpdir(), "aidd-kilo-json-"));
+    const generated = generateKiloHooksBridge(
+      JSON.stringify({
+        hooks: { PostToolUse: [{ hooks: [{ command: `node ${ROOT}/hooks/check.cjs` }] }] },
+      }),
+      "probe"
+    );
+    try {
+      await mkdir(join(directory, "hooks", "probe"), { recursive: true });
+      await mkdir(join(directory, "plugin"));
+      await writeFile(
+        join(directory, "hooks", "probe", "check.cjs"),
+        'process.stdin.resume(); process.stdin.on("end", () => { process.stdout.write(JSON.stringify({ hookSpecificOutput: { hookEventName: "PostToolUse", additionalContext: "fix it" } })); });'
+      );
+      const modulePath = join(directory, "plugin", "bridge.mjs");
+      await writeFile(modulePath, generated ?? "");
+      const module = await import(pathToFileURL(modulePath).href);
+      const server = await module.default.server({ directory });
+      const output = { output: "edited" };
+      await server["tool.execute.after"]({ tool: "edit", sessionID: "s", args: {} }, output);
+      expect(output.output).toBe("edited\n\nfix it");
+    } finally {
+      await rm(directory, { recursive: true, force: true });
+    }
+  });
+
   it("appends a PostToolUse script's exit-2 stderr to the tool's output", async () => {
     const directory = await mkdtemp(join(tmpdir(), "aidd-kilo-answer-"));
     const generated = generateKiloHooksBridge(

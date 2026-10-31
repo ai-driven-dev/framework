@@ -161,20 +161,36 @@ function stopCallsFor(event, directory) {
   }));
 }
 
-// Awaited, unlike runHook: exit 2 means the script has something the model must read.
+// Awaited, unlike runHook: the script has something the model must read.
+// Exit 2 puts it on stderr; exit 0 puts it in additionalContext on stdout.
+function answerFrom(code, stdout, stderr) {
+  if (code === 2) return stderr.trim();
+  if (code !== 0) return "";
+  try {
+    const output = JSON.parse(stdout);
+    return String(output?.hookSpecificOutput?.additionalContext ?? output?.additionalContext ?? "").trim();
+  } catch {
+    return "";
+  }
+}
+
 function answerOf(script, args, payload, directory) {
   return new Promise((resolve) => {
+    let stdout = "";
     let stderr = "";
     const child = spawn("node", [HOOKS_DIR + script, ...args], {
       cwd: directory,
-      stdio: ["pipe", "ignore", "pipe"],
+      stdio: ["pipe", "pipe", "pipe"],
       timeout: 5000,
+    });
+    child.stdout.on("data", (chunk) => {
+      stdout += chunk;
     });
     child.stderr.on("data", (chunk) => {
       stderr += chunk;
     });
     child.on("error", () => resolve(""));
-    child.on("close", (code) => resolve(code === 2 ? stderr.trim() : ""));
+    child.on("close", (code) => resolve(answerFrom(code, stdout, stderr)));
     child.stdin.on("error", () => {});
     child.stdin.end(JSON.stringify(payload));
   });

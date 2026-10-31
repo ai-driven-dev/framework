@@ -1,3 +1,7 @@
+import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { pathToFileURL } from "node:url";
 import { describe, expect, it } from "vitest";
 import {
   generateOpencodeHooksBridge,
@@ -82,20 +86,36 @@ describe("generateOpencodeHooksBridge", () => {
         }));
       }
 
-      // Awaited, unlike runHook: exit 2 means the script has something the model must read.
+      // Awaited, unlike runHook: the script has something the model must read.
+      // Exit 2 puts it on stderr; exit 0 puts it in additionalContext on stdout.
+      function answerFrom(code, stdout, stderr) {
+        if (code === 2) return stderr.trim();
+        if (code !== 0) return "";
+        try {
+          const output = JSON.parse(stdout);
+          return String(output?.hookSpecificOutput?.additionalContext ?? output?.additionalContext ?? "").trim();
+        } catch {
+          return "";
+        }
+      }
+
       function answerOf(script, args, payload, directory) {
         return new Promise((resolve) => {
+          let stdout = "";
           let stderr = "";
           const child = spawn("node", [HOOKS_DIR + script, ...args], {
             cwd: directory,
-            stdio: ["pipe", "ignore", "pipe"],
+            stdio: ["pipe", "pipe", "pipe"],
             timeout: 5000,
+          });
+          child.stdout.on("data", (chunk) => {
+            stdout += chunk;
           });
           child.stderr.on("data", (chunk) => {
             stderr += chunk;
           });
           child.on("error", () => resolve(""));
-          child.on("close", (code) => resolve(code === 2 ? stderr.trim() : ""));
+          child.on("close", (code) => resolve(answerFrom(code, stdout, stderr)));
           child.stdin.on("error", () => {});
           child.stdin.end(JSON.stringify(payload));
         });
@@ -172,6 +192,40 @@ describe("generateOpencodeHooksBridge", () => {
       };
       "
     `);
+  });
+
+  it("appends the additionalContext a PostToolUse script prints at exit 0", async () => {
+    const directory = await mkdtemp(join(tmpdir(), "aidd-opencode-json-"));
+    const generated = generateOpencodeHooksBridge(
+      JSON.stringify({
+        hooks: { PostToolUse: [{ hooks: [{ command: `node ${ROOT}/hooks/check.cjs` }] }] },
+      }),
+      "probe"
+    );
+    try {
+      await mkdir(join(directory, "hooks", "probe"), { recursive: true });
+      await mkdir(join(directory, "plugin"));
+      await writeFile(
+        join(directory, "hooks", "opencode-events.js"),
+        "export function setupOpencodeEvents() {}\n"
+      );
+      await writeFile(
+        join(directory, "hooks", "probe", "check.cjs"),
+        'process.stdin.resume(); process.stdin.on("end", () => { process.stdout.write(JSON.stringify({ hookSpecificOutput: { hookEventName: "PostToolUse", additionalContext: "fix it" } })); });'
+      );
+      const modulePath = join(directory, "plugin", "bridge.mjs");
+      await writeFile(modulePath, generated ?? "");
+      const module = await import(pathToFileURL(modulePath).href);
+      const hooks = await module.default.server({ directory });
+      const output = { output: "edited" };
+      await hooks["tool.execute.after"](
+        { tool: "edit", sessionID: "s", args: { filePath: "a.md" } },
+        output
+      );
+      expect(output.output).toBe("edited\n\nfix it");
+    } finally {
+      await rm(directory, { recursive: true, force: true });
+    }
   });
 
   it("returns null for a hooks.json naming only an unmapped event", () => {

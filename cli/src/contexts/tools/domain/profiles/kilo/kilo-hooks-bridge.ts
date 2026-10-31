@@ -95,24 +95,40 @@ function runHook(script, args, payload, directory) {
   child.stdin.end(body);
 }
 
+// Exit 2 puts the answer on stderr; exit 0 puts it in additionalContext on stdout.
+function answerFrom(code, stdout, stderr) {
+  if (code === 2) return stderr.trim();
+  if (code !== 0) return "";
+  try {
+    const output = JSON.parse(stdout);
+    return String(output?.hookSpecificOutput?.additionalContext ?? output?.additionalContext ?? "").trim();
+  } catch {
+    return "";
+  }
+}
+
 function answerOf(script, args, payload, directory) {
   return new Promise((resolve) => {
+    let stdout = "";
     let stderr = "";
     const child = spawn("node", [HOOKS_DIR + script, ...args], {
       cwd: directory,
-      stdio: ["pipe", "ignore", "pipe"],
+      stdio: ["pipe", "pipe", "pipe"],
       timeout: 5000,
     });
     const fail = (error) => {
       reportHookFailure(script, error);
       resolve("");
     };
+    child.stdout.on("data", (chunk) => { stdout += chunk; });
     child.stderr.on("data", (chunk) => { stderr += chunk; });
     child.on("error", fail);
     child.on("close", (code, signal) => {
-      if (code === 2) resolve(stderr.trim());
-      else if (code !== 0 || signal !== null) fail("exited with code " + String(code) + (signal === null ? "" : " (" + signal + ")"));
-      else resolve("");
+      if ((code !== 0 && code !== 2) || signal !== null) {
+        fail("exited with code " + String(code) + (signal === null ? "" : " (" + signal + ")"));
+        return;
+      }
+      resolve(answerFrom(code, stdout, stderr));
     });
     child.stdin.on("error", () => {});
     child.stdin.end(JSON.stringify(payload));
