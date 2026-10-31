@@ -2,7 +2,7 @@
 // Usage: node validate-ui.cjs [project-root]
 // Checks a project's design system under aidd_docs/ui/: records, history, tokens, renders and
 // code links. Prints VALID, or one line per problem and exits 1. Prints nothing without one.
-const { load, unreadable, UI_DIR } = require("./lib/project.cjs");
+const { load, unreadable, UI_DIR, WARNING } = require("./lib/project.cjs");
 const records = require("./lib/records.cjs");
 const history = require("./lib/history.cjs");
 const tokens = require("./lib/tokens.cjs");
@@ -13,7 +13,8 @@ const CHECKS = { records, history, tokens, renders, code };
 const VERDICT_VALID = "VALID";
 const EXIT_VALID = 0;
 const EXIT_INVALID = 1;
-const PROBLEM_MARK = "✗";
+const ERROR_MARK = "✗";
+const WARNING_MARK = "⚠";
 
 /** Every problem of a loaded project, check by check, then each file no check could read. A
  * check that throws is one problem naming it, so the others still speak. A design system
@@ -39,16 +40,20 @@ function validate(root) {
   return project === null ? null : problemsOf(project);
 }
 
-/** One `✗ <file>: <message>` line per problem, the file relative to the project root. */
-const format = (problems) => problems.map((problem) => `${PROBLEM_MARK} ${problem.file}: ${problem.message}`);
+/** Whether a problem blocks: anything a rule does not call a warning. */
+const isError = (problem) => problem.severity !== WARNING;
+
+/** One `✗ <file>: <message> (<rule>)` line per problem, `⚠` for a warning, the file relative to
+ * the project root. */
+const format = (problems) => problems.map((problem) => `${isError(problem) ? ERROR_MARK : WARNING_MARK} ${problem.file}: ${problem.message}${problem.rule ? ` (${problem.rule})` : ""}`);
 
 function main(args) {
   const problems = validate(args[0] ?? process.cwd());
   if (problems === null) return EXIT_VALID;
   console.log(problems.length ? format(problems).join("\n") : VERDICT_VALID);
-  return problems.length ? EXIT_INVALID : EXIT_VALID;
+  return problems.some(isError) ? EXIT_INVALID : EXIT_VALID;
 }
 
 if (require.main === module) process.exitCode = main(process.argv.slice(2));
 
-module.exports = { validate, problemsOf, format };
+module.exports = { validate, problemsOf, format, isError };

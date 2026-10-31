@@ -10,6 +10,8 @@ const RECORD_EXTENSION = ".md";
 const RENDER_EXTENSION = ".html";
 const PATH_SEPARATOR = "/";
 const UNREADABLE = "unreadable";
+const ERROR = "error"; // blocks the end of a turn
+const WARNING = "warning"; // informs, never blocks
 
 const TRAILING_SEPARATORS = /\/+$/;
 const BYTE_ORDER_MARK = /^﻿/;
@@ -59,6 +61,11 @@ function text(project, file) {
   return project.texts.get(file);
 }
 
+/** A check that runs each rule of `rules`, an object keyed by rule id, through `run`: every
+ * problem carries its rule, and is an error unless the rule says it is a warning. */
+const checkOf = (rules, run = (find, project) => find(project)) => (project) =>
+  Object.entries(rules).flatMap(([rule, find]) => run(find, project).map((problem) => ({ rule, severity: ERROR, ...problem })));
+
 /** One problem per file a check could not read. */
 const unreadable = (project) => [...project.texts].filter(([, content]) => content === null).map(([file]) => ({ file, message: UNREADABLE }));
 
@@ -89,4 +96,4 @@ function load(root) {
   return project;
 }
 
-module.exports = { load, walk, text, unreadable, relative, isUnder, UI_DIR, RENDER_EXTENSION };
+module.exports = { load, walk, text, unreadable, relative, isUnder, checkOf, UI_DIR, RENDER_EXTENSION, ERROR, WARNING };

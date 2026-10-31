@@ -6,7 +6,7 @@ const path = require("node:path");
 const { list } = require("./markdown.cjs");
 const { placed, systemOf, isElement, fm } = require("./records.cjs");
 const { PATTERNS, findLiterals, declaresRightToLeft } = require("./renders.cjs");
-const { walk, text, relative, isUnder } = require("./project.cjs");
+const { walk, text, relative, isUnder, checkOf, WARNING } = require("./project.cjs");
 
 const EXPORT_SEPARATOR = "#";
 const PACKAGE_PREFIX = "package:";
@@ -117,18 +117,21 @@ function covers(target, file) {
   return path.posix.dirname(file) === folder && stem(file) === stem(target);
 }
 
+/** The record whose code link covers `file`, project-relative; undefined when none does. */
+const codeOwner = (project, file) => linked(project).find(({ link }) => link && link.library === null && covers(path.posix.normalize(link.target), file))?.record;
+
 function coverageProblems(project) {
   const targets = linked(project).flatMap(({ link }) => (link && link.library === null ? [path.posix.normalize(link.target)] : []));
   return codeFiles(project)
     .filter((file) => !targets.some((target) => covers(target, file)))
-    .map((file) => ({ file, message: "no record links it and no ignore covers it" }));
+    .map((file) => ({ severity: WARNING, file, message: "no record links it and no ignore covers it" }));
 }
 
 const literalProblems = (pattern, extensions, applies = () => true) => (project) =>
   applies(project)
     ? scanned(project, extensions)
         .filter((file) => !TEST_FILE.test(file))
-        .flatMap((file) => findLiterals(searchable(project, file), pattern).map(({ message }) => ({ file, message })))
+        .flatMap((file) => findLiterals(searchable(project, file), pattern).map((found) => ({ file, ...found })))
     : [];
 
 function codeTokensProblems(project) {
@@ -156,18 +159,18 @@ function rootProblems(project) {
     .map((prefix) => ({ file: system.file, message: `code root "${prefix}" must name a folder inside the project` }));
 }
 
-const RULES = [
-  linkProblems, // C1
-  libraryProblems, // C2
-  coverageProblems, // C3
-  literalProblems(PATTERNS.colour, SCANNED_EXTENSIONS), // C4
-  sharedLinkProblems, // C5
-  literalProblems(PATTERNS.physical, STYLESHEET_EXTENSIONS, declaresRightToLeft), // C6
-  rootProblems, // C7
-  codeTokensProblems, // C8
-];
+const RULES = {
+  C1: linkProblems,
+  C2: libraryProblems,
+  C3: coverageProblems,
+  C4: literalProblems(PATTERNS.colour, SCANNED_EXTENSIONS),
+  C5: sharedLinkProblems,
+  C6: literalProblems(PATTERNS.physical, STYLESHEET_EXTENSIONS, declaresRightToLeft),
+  C7: rootProblems,
+  C8: codeTokensProblems,
+};
 
-/** Every broken code rule, as `{file, message}`, in rule order. */
-const check = (project) => RULES.flatMap((rule) => rule(project));
+/** Every broken code rule, in rule order. */
+const check = checkOf(RULES);
 
-module.exports = { check, codeRoots };
+module.exports = { check, codeRoots, codeOwner };

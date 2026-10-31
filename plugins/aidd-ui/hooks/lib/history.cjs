@@ -2,6 +2,7 @@
 // the task folder each change names.
 const { table, list } = require("./markdown.cjs");
 const { placed, systemOf, isElement, fm, INTEGER_VERSION, SEMVER } = require("./records.cjs");
+const { checkOf } = require("./project.cjs");
 
 const HISTORY_SECTION = "History";
 const BREAKING_VALUES = ["yes", "no"];
@@ -124,17 +125,17 @@ function deprecationProblems(project) {
     .map((record) => problem(record, "deprecated, yet its last history row is not breaking"));
 }
 
-const RULES = [
-  presenceProblems, // H1
-  duplicateProblems, // H2
-  currentProblems, // H3
-  breakingProblems, // H4
-  publicationProblems, // H5
-  deprecationProblems, // H6
-  taskProblems, // H7
-];
+const RULES = {
+  H1: presenceProblems,
+  H2: duplicateProblems,
+  H3: currentProblems,
+  H4: breakingProblems,
+  H5: publicationProblems,
+  H6: deprecationProblems,
+  H7: taskProblems,
+};
 
-/** Every broken history rule, as `{file, message}`, in rule order. */
-const check = (project) => RULES.flatMap((rule) => rule(project));
+/** Every broken history rule, in rule order. */
+const check = checkOf(RULES);
 
 module.exports = { check };

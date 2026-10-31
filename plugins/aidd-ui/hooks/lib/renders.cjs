@@ -4,7 +4,7 @@ const path = require("node:path");
 const { list } = require("./markdown.cjs");
 const { placed, systemOf, COMPONENT_KINDS } = require("./records.cjs");
 const { cssNames, cssNameOf } = require("./tokens.cjs");
-const { text, RENDER_EXTENSION } = require("./project.cjs");
+const { text, checkOf, RENDER_EXTENSION, ERROR, WARNING } = require("./project.cjs");
 
 const RENDERED_KINDS = [...COMPONENT_KINDS, "screen"];
 const RIGHT_TO_LEFT = "rtl";
@@ -14,6 +14,7 @@ const CUSTOM_PROPERTY = /var\(\s*(--[\w-]+)/g;
 const DECLARED_PROPERTY = /(--[\w-]+)\s*:/g; // a property the render sets itself, not a token
 const VAR_CALL = /var\([^()]*\)/g; // a fallback inside var() is the token's, not a literal
 const QUERY_PRELUDE = /@(?:media|container)\b[^{]*/g; // a query's lengths are breakpoints, not styles
+const HAIRLINE_PX = 2; // up to 2px: a border or outline width code keeps literal
 
 /** Literals a render or UI code must not hold, each with the message it earns. */
 const PATTERNS = {
@@ -24,6 +25,7 @@ const PATTERNS = {
   unit: {
     regex: /(?<![\w#.-])-?(?:\d*\.)?\d+(?:px|rem|em|ms|s)\b/g,
     message: (found) => `literal "${found}", only tokens carry values`,
+    severity: (found) => (found.endsWith("px") && Math.abs(parseFloat(found)) <= HAIRLINE_PX ? WARNING : ERROR),
     strip: [VAR_CALL, QUERY_PRELUDE],
   },
   physical: {
@@ -32,11 +34,11 @@ const PATTERNS = {
   },
 };
 
-/** Each match of `pattern` in `text`, as `{line, message}`, lines numbered from 1. */
+/** Each match of `pattern` in `text`, as `{severity, message}`, lines numbered from 1. */
 function findLiterals(text, pattern) {
   return text.split(LINE_BREAK).flatMap((line, index) => {
     const searched = (pattern.strip ?? []).reduce((kept, regex) => kept.replace(regex, ""), line);
-    return [...searched.matchAll(pattern.regex)].map((match) => ({ line: index + 1, message: `line ${index + 1}: ${pattern.message(match[0])}` }));
+    return [...searched.matchAll(pattern.regex)].map(([found]) => ({ severity: pattern.severity?.(found) ?? ERROR, message: `line ${index + 1}: ${pattern.message(found)}` }));
   });
 }
 
@@ -101,19 +103,19 @@ function declaredProblems(project) {
 }
 
 const literalProblems = (pattern, applies = () => true) => (project) =>
-  applies(project) ? project.renders.flatMap((file) => findLiterals(readRender(project, file), pattern).map(({ message }) => ({ file, message }))) : [];
+  applies(project) ? project.renders.flatMap((file) => findLiterals(readRender(project, file), pattern).map((found) => ({ file, ...found }))) : [];
 
-const RULES = [
-  presenceProblems, // V1
-  coverageProblems, // V2
-  referenceProblems, // V3
-  literalProblems(PATTERNS.colour), // V4
-  literalProblems(PATTERNS.physical, declaresRightToLeft), // V5
-  literalProblems(PATTERNS.unit), // V6
-  declaredProblems, // V7
-];
+const RULES = {
+  V1: presenceProblems,
+  V2: coverageProblems,
+  V3: referenceProblems,
+  V4: literalProblems(PATTERNS.colour),
+  V5: literalProblems(PATTERNS.physical, declaresRightToLeft),
+  V6: literalProblems(PATTERNS.unit),
+  V7: declaredProblems,
+};
 
-/** Every broken render rule, as `{file, message}`, in rule order. */
-const check = (project) => RULES.flatMap((rule) => rule(project));
+/** Every broken render rule, in rule order. */
+const check = checkOf(RULES);
 
-module.exports = { check, PATTERNS, findLiterals, declaresRightToLeft };
+module.exports = { check, renderOf, PATTERNS, findLiterals, declaresRightToLeft };

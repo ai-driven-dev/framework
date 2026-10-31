@@ -5,7 +5,7 @@ const fs = require("node:fs");
 const nodePath = require("node:path");
 const { list } = require("./markdown.cjs");
 const { placed, systemOf, TOKENED_KINDS } = require("./records.cjs");
-const { text } = require("./project.cjs");
+const { text, checkOf } = require("./project.cjs");
 
 const RESERVED_KEYS = ["$value", "$type", "$description", "$extensions", "$deprecated", "$extends", "$schema"];
 const ROOT_KEY = "$root"; // a stated limit: a group's own token is a named child here
@@ -290,23 +290,20 @@ function primitiveProblems(tree, project) {
   );
 }
 
-const RULES = [
-  jsonProblems, // T1
-  nameProblems, // T2
-  typeProblems, // T3
-  shapeProblems, // T4
-  aliasProblems, // T5
-  themeProblems, // T6
-  citedTokenProblems, // T7
-  primitiveProblems, // T8
-  rawCssProblems, // T9
-];
+const RULES = {
+  T1: jsonProblems,
+  T2: nameProblems,
+  T3: typeProblems,
+  T4: shapeProblems,
+  T5: aliasProblems,
+  T6: themeProblems,
+  T7: citedTokenProblems,
+  T8: primitiveProblems,
+  T9: rawCssProblems,
+};
 
-/** Every broken token rule, as `{file, message}`, in rule order. */
-function check(project) {
-  const tree = read(project);
-  return RULES.flatMap((rule) => rule(tree, project));
-}
+/** Every broken token rule, in rule order. */
+const check = checkOf(RULES, (find, project) => find(read(project), project));
 
 /** Every token's CSS custom property, `--` plus its path joined by `-`; null when tokens.json
  * cannot be read, so renders do not repeat T1. */

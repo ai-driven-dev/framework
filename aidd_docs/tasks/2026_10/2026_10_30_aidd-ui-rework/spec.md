@@ -120,7 +120,7 @@ Deux axes, jamais mêlés : où en est le design, et quelle version le code impl
   - aucun token primitif dans un composant ;
   - versions en double dans un historique ;
   - propriétés physiques quand un sens droite-gauche est déclaré.
-- Chaque problème porte sa règle et sa gravité. Une erreur bloque la fin du tour ; un avertissement informe sans bloquer : fichier de code sans fiche, trait fin en px. Après une écriture, l'IA voit les problèmes des fichiers écrits, ou tous quand elle a écrit un fichier partagé (tokens, thèmes, `system.md`), et le nombre des autres ; la sortie du hook est plafonnée, la commande à la main montre tout.
+- Chaque problème porte sa règle et sa gravité. Une erreur bloque la fin du tour ; un avertissement informe sans bloquer : fichier de code sans fiche, trait fin en px. Après une écriture, l'IA voit les problèmes des fichiers écrits et de ceux qui en dépendent (le rendu de l'élément écrit, les fiches qui le citent), ou tous quand elle a écrit un fichier partagé (tokens, thèmes, `system.md`), et le nombre des autres erreurs ; en fin de tour, toutes les erreurs ; la sortie du hook est plafonnée, la commande à la main montre tout.
 - Une règle qui plante devient un problème qui la nomme, jamais un silence.
 - Un seul moteur porte la lecture des fiches, la vérification et, plus tard, le graphe, la génération des tokens, la vitrine et la page de review ; chaque skill l'appelle par sous-commande.
 - L'IA juge le sens : le code fait-il ce que disent `ui.md` et les fiches ?

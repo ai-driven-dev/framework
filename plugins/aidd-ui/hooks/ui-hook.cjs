@@ -1,19 +1,23 @@
 // Runs the design system checks at three moments. After a write under aidd_docs/ui/ or a code
-// root, the turn is marked and the problems come back as context. At Stop, a marked turn gets
-// its problems back once, as the reason to keep working. At session start they are printed as
-// context. A file that cannot be read is one problem; anything else unexpected exits 0 in
-// silence, so a broken check never blocks a session.
+// root, the turn is marked and the problems of the files the write reached come back as context.
+// At Stop, a marked turn gets its errors back once, as the reason to keep working; warnings never
+// block. At session start the counts and the errors are printed as context. Each moment prints
+// at most LIMIT problem lines. A file that cannot be read is one problem; anything else
+// unexpected exits 0 in silence, so a broken check never blocks a session.
 const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
 const { load, relative, isUnder, UI_DIR } = require("./lib/project.cjs");
 const { codeRoots } = require("./lib/code.cjs");
-const { problemsOf, format } = require("./validate-ui.cjs");
+const { reached } = require("./lib/graph.cjs");
+const { problemsOf, format, isError } = require("./validate-ui.cjs");
 
 const POST_TOOL_USE = "PostToolUse";
 const SESSION_START = "SessionStart";
 const STOP = "Stop";
 const EXIT_SILENT = 0;
+const LIMIT = 20; // problem lines a hook prints; the validator by hand prints them all
+const VALIDATOR = path.join(__dirname, "validate-ui.cjs");
 // A session id is a file-name part, so only these characters reach the mark's path.
 const SAFE_SESSION_ID = /^[A-Za-z0-9_-]{1,128}$/;
 // Codex's apply_patch passes its patch as tool_input.command, Copilot's Edit as tool_input itself.
@@ -29,11 +33,8 @@ function readPayload() {
   }
 }
 
-/** Whether a written file belongs to the design system or to its code. */
-function isWatched(project, filePath) {
-  const file = relative(project.root, path.resolve(project.root, filePath));
-  return [UI_DIR, ...codeRoots(project)].some((prefix) => isUnder(file, prefix));
-}
+/** Whether a project-relative file belongs to the design system or to its code. */
+const isWatched = (project, file) => [UI_DIR, ...codeRoots(project)].some((prefix) => isUnder(file, prefix));
 
 /** The files a write tool touched: Claude Code and Copilot name one, a patch one per header line. */
 function writtenFiles(toolInput) {
@@ -66,13 +67,31 @@ function isCopilot(payload) {
   return "tool_result" in payload && !("tool_response" in payload);
 }
 
+const errorsOf = (problems) => problems.filter(isError);
+
+/** At most LIMIT problem lines, then one saying how many are left and how to see them. */
+function capped(project, problems) {
+  const rest = problems.length - LIMIT;
+  return [...format(problems.slice(0, LIMIT)), ...(rest > 0 ? [`… and ${rest} more: node ${VALIDATOR} ${project.root}`] : [])];
+}
+
 function afterWrite(project, payload) {
-  if (!writtenFiles(payload.tool_input).some((file) => isWatched(project, file))) return EXIT_SILENT;
+  const written = writtenFiles(payload.tool_input)
+    .map((file) => relative(project.root, path.resolve(project.root, file)))
+    .filter((file) => isWatched(project, file));
+  if (!written.length) return EXIT_SILENT;
   const mark = markFile(payload.session_id);
   if (mark) leaveMark(mark);
   const problems = problemsOf(project);
-  if (!problems.length) return EXIT_SILENT;
-  const text = [`aidd-ui: the write was saved, fix ${problems.length} problems:`, ...format(problems)].join("\n");
+  const scope = reached(project, written);
+  const shown = scope ? problems.filter((problem) => scope.has(problem.file)) : problems;
+  if (!shown.length) return EXIT_SILENT;
+  const elsewhere = errorsOf(problems).length - errorsOf(shown).length;
+  const text = [
+    "aidd-ui: the write was saved, fix these problems:",
+    ...capped(project, shown),
+    ...(elsewhere > 0 ? [`${elsewhere} more errors elsewhere in the design system`] : []),
+  ].join("\n");
   // Each host reads one key: Copilot the top level, Claude Code and Codex hookSpecificOutput.
   const output = isCopilot(payload)
     ? { additionalContext: text }
@@ -90,18 +109,20 @@ function consumeMark(payload) {
   return payload.stop_hook_active !== true;
 }
 
-/** Blocks the turn's end once while a marked turn still leaves problems behind. */
+/** Blocks the turn's end once while a marked turn still leaves errors behind. */
 function atStop(project) {
-  const problems = problemsOf(project);
-  if (!problems.length) return EXIT_SILENT;
-  const reason = [`aidd-ui: the design system has ${problems.length} problems, fix them before you finish:`, ...format(problems)].join("\n");
+  const errors = errorsOf(problemsOf(project));
+  if (!errors.length) return EXIT_SILENT;
+  const reason = [`aidd-ui: the design system has ${errors.length} errors, fix them before you finish:`, ...capped(project, errors)].join("\n");
   process.stdout.write(JSON.stringify({ decision: "block", reason }));
   return EXIT_SILENT;
 }
 
 function atSessionStart(project) {
   const problems = problemsOf(project);
-  if (problems.length) process.stdout.write(`aidd-ui: ${problems.length} problems\n${format(problems).join("\n")}\n`);
+  if (!problems.length) return EXIT_SILENT;
+  const errors = errorsOf(problems);
+  process.stdout.write(`${[`aidd-ui: ${errors.length} errors, ${problems.length - errors.length} warnings`, ...capped(project, errors)].join("\n")}\n`);
   return EXIT_SILENT;
 }
 

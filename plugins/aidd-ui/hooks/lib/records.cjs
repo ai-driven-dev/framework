@@ -2,6 +2,7 @@
 const fs = require("node:fs");
 const path = require("node:path");
 const { list, table } = require("./markdown.cjs");
+const { checkOf } = require("./project.cjs");
 
 const STATUSES = ["proposed", "validated", "deprecated"];
 const DESIGN_STATUSES = ["proposed", "validated"]; // R16: system, brand and reviews are never deprecated
@@ -299,27 +300,27 @@ function formatProblem(project) {
   return format === undefined || format === FORMAT ? null : problem(system, `format "${format}" is not ${FORMAT}, the one this validator reads`);
 }
 
-const RULES = [
-  frontMatterProblems, // R1
-  kindProblems, // R2
-  requiredKeyProblems, // R3
-  identityProblems, // R4
-  versionProblems, // R5
-  usesProblems, // R6
-  stateProblems, // R7
-  implementedProblems, // R8
-  deprecatedProblems, // R9
-  deprecatedUseProblems, // R10
-  breakpointProblems, // R11
-  journeyProblems, // R12
-  reviewProblems, // R13
-  brandProblems, // R14
-  assetProblems, // R15
-  designStatusProblems, // R16
-  usageProblems, // R17
-];
+const RULES = {
+  R1: frontMatterProblems,
+  R2: kindProblems,
+  R3: requiredKeyProblems,
+  R4: identityProblems,
+  R5: versionProblems,
+  R6: usesProblems,
+  R7: stateProblems,
+  R8: implementedProblems,
+  R9: deprecatedProblems,
+  R10: deprecatedUseProblems,
+  R11: breakpointProblems,
+  R12: journeyProblems,
+  R13: reviewProblems,
+  R14: brandProblems,
+  R15: assetProblems,
+  R16: designStatusProblems,
+  R17: usageProblems,
+};
 
-/** Every broken record rule, as `{file, message}`, in rule order. */
-const check = (project) => RULES.flatMap((rule) => rule(project));
+/** Every broken record rule, in rule order. */
+const check = checkOf(RULES);
 
 module.exports = { check, formatProblem, placed, systemOf, isElement, fm, COMPONENT_KINDS, TOKENED_KINDS, INTEGER_VERSION, SEMVER };
