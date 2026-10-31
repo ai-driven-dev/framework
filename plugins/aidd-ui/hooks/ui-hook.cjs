@@ -10,14 +10,14 @@ const path = require("node:path");
 const { load, relative, isUnder, UI_DIR } = require("./lib/project.cjs");
 const { codeRoots } = require("./lib/code.cjs");
 const { reached } = require("./lib/graph.cjs");
-const { problemsOf, format, isError } = require("./validate-ui.cjs");
+const { problemsOf, format, isError } = require("./aidd-ui.cjs");
 
 const POST_TOOL_USE = "PostToolUse";
 const SESSION_START = "SessionStart";
 const STOP = "Stop";
 const EXIT_SILENT = 0;
 const LIMIT = 20; // problem lines a hook prints; the validator by hand prints them all
-const VALIDATOR = path.join(__dirname, "validate-ui.cjs");
+const ENGINE = path.join(__dirname, "aidd-ui.cjs");
 // A session id is a file-name part, so only these characters reach the mark's path.
 const SAFE_SESSION_ID = /^[A-Za-z0-9_-]{1,128}$/;
 // Codex's apply_patch passes its patch as tool_input.command, Copilot's Edit as tool_input itself.
@@ -71,7 +71,7 @@ const errorsOf = (problems) => problems.filter(isError);
 /** At most LIMIT problem lines, then one saying how many are left and how to see them. */
 function capped(project, problems) {
   const rest = problems.length - LIMIT;
-  return [...format(problems.slice(0, LIMIT)), ...(rest > 0 ? [`… and ${rest} more: node ${VALIDATOR} ${project.root}`] : [])];
+  return [...format(problems.slice(0, LIMIT)), ...(rest > 0 ? [`… and ${rest} more: node ${ENGINE} validate ${project.root}`] : [])];
 }
 
 function afterWrite(project, payload) {

@@ -9,9 +9,9 @@ const { UI, writeProject, edit, editTokens } = require("./fixtures/aidd-ui/proje
 // The entries are scripts a user's machine runs, so each is driven as a subprocess with its
 // argument or its hook payload on stdin, which is what ships.
 const HOOKS = path.resolve(__dirname, "../../plugins/aidd-ui/hooks");
-const VALIDATE = path.join(HOOKS, "validate-ui.cjs");
+const ENGINE = path.join(HOOKS, "aidd-ui.cjs");
 const HOOK = path.join(HOOKS, "ui-hook.cjs");
-const { problemsOf, format } = require(VALIDATE);
+const { problemsOf, format } = require(ENGINE);
 const { load } = require(path.join(HOOKS, "lib/project.cjs"));
 
 const BRAND = `${UI}/brand.md`;
@@ -51,7 +51,7 @@ function breakOnePerFamily() {
 const lines = (text) => text.split("\n").filter(Boolean);
 
 function validate(root) {
-  const run = spawnSync(process.execPath, [VALIDATE, root], { encoding: "utf8" });
+  const run = spawnSync(process.execPath, [ENGINE, "validate", root], { encoding: "utf8" });
   return { code: run.status, out: lines(run.stdout), err: run.stderr };
 }
 
@@ -126,6 +126,13 @@ describe("aidd-ui validator entries", () => {
         ],
         err: "",
       });
+    });
+  });
+
+  describe("E9 commands", () => {
+    it("names the commands and exits 2 on one it does not know", () => {
+      const run = spawnSync(process.execPath, [ENGINE, "valdate", tmp], { encoding: "utf8" });
+      assert.deepEqual({ code: run.status, out: run.stdout, err: run.stderr }, { code: 2, out: "", err: "usage: node aidd-ui.cjs <validate> [project-root]\n" });
     });
   });
 
@@ -218,7 +225,7 @@ describe("aidd-ui validator entries", () => {
       const render = `${UI}/components/button.html`;
       edit(tmp, render, "</body>", `${'<p style="color: #000000">x</p>\n'.repeat(25)}</body>`);
       const shown = Array.from({ length: 20 }, (_, index) => `✗ ${render}: line ${27 + index}: colour literal "#000000", use a token (V4)`);
-      assert.deepEqual(hook(postToolUse(path.join(tmp, render))), claudeFeedback([...shown, `… and 5 more: node ${VALIDATE} ${tmp}`]));
+      assert.deepEqual(hook(postToolUse(path.join(tmp, render))), claudeFeedback([...shown, `… and 5 more: node ${ENGINE} validate ${tmp}`]));
     });
 
     it("stays silent when a write lands elsewhere", () => {
