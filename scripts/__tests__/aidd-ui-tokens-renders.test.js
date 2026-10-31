@@ -377,6 +377,38 @@ describe("aidd-ui tokens and renders", () => {
     }
   });
 
+  describe("V4 colours in attributes", () => {
+    for (const attribute of ['fill="#336699"', "stroke='#336699'", 'color="#336699"', 'bgcolor="#336699"']) {
+      it(`names ${attribute}`, () => {
+        addToRender(`<svg ${attribute}></svg>`);
+        assert.deepEqual(problems(), [`${BUTTON_RENDER}: line ${INSERTED_LINE}: colour literal "#336699", use a token`]);
+      });
+    }
+
+    it("names a colour function too", () => {
+      addToRender('<svg fill="rgb(0, 0, 0)"></svg>');
+      assert.deepEqual(problems(), [`${BUTTON_RENDER}: line ${INSERTED_LINE}: colour literal "rgb(", use a token`]);
+    });
+
+    for (const value of ["currentColor", "none", "transparent", "inherit", "var(--color-text-default)", "var(--color-text-default, #336699)", "var(--color-text-default, rgb(0, 0, 0))"]) {
+      it(`allows ${value}`, () => {
+        addToRender(`<svg fill="${value}"></svg>`);
+        assert.deepEqual(problems(), []);
+      });
+    }
+
+    it("reads no other attribute, and no attribute of the same name in the text", () => {
+      addToRender('<svg data-fill="#336699" aria-label="#336699"></svg>');
+      addToRender("<p>fill #336699</p>");
+      assert.deepEqual(problems(), []);
+    });
+
+    it("holds the attribute to colours alone: a length there is not V6's", () => {
+      addToRender('<svg fill="16px"></svg>');
+      assert.deepEqual(problems(), []);
+    });
+  });
+
   describe("V4 to V6 scope", () => {
     it("reads copy as copy: a hash and a length in the text are no literal", () => {
       addToRender("<p>Rapport #412, 16px de large, margin-left</p>");

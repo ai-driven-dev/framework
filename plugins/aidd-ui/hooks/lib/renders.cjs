@@ -3,7 +3,7 @@
 const path = require("node:path");
 const { list } = require("./markdown.cjs");
 const { placed, byId, tokensUsedBy, TOKENED_KINDS } = require("./model.cjs");
-const { PATTERNS, findLiterals, styled, declaresRightToLeft } = require("./literals.cjs");
+const { PATTERNS, findLiterals, styled, painted, declaresRightToLeft } = require("./literals.cjs");
 const { cssNames, cssNameOf } = require("./tokens.cjs");
 const { text, checkOf, RENDER_EXTENSION } = require("./project.cjs");
 
@@ -85,15 +85,15 @@ function stylesheetProblems(project) {
     .map((file) => ({ file, message: `does not load ${STYLESHEET_HREF}, add ${STYLESHEET_LINK}` }));
 }
 
-const literalProblems = (pattern, applies = () => true) => (project) =>
-  applies(project) ? project.renders.flatMap((file) => findLiterals(styled(readRender(project, file)), pattern).map((found) => ({ file, ...found }))) : [];
+const literalProblems = (pattern, { applies = () => true, scanned = styled } = {}) => (project) =>
+  applies(project) ? project.renders.flatMap((file) => findLiterals(scanned(readRender(project, file)), pattern).map((found) => ({ file, ...found }))) : [];
 
 const RULES = {
   V1: presenceProblems,
   V2: coverageProblems,
   V3: referenceProblems,
-  V4: literalProblems(PATTERNS.colour),
-  V5: literalProblems(PATTERNS.physical, declaresRightToLeft),
+  V4: literalProblems(PATTERNS.colour, { scanned: painted }),
+  V5: literalProblems(PATTERNS.physical, { applies: declaresRightToLeft }),
   V6: literalProblems(PATTERNS.unit),
   V7: declaredProblems,
   V8: stylesheetProblems,
