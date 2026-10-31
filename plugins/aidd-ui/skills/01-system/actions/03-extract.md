@@ -14,8 +14,8 @@ The code roots from `system.md`.
    - Use the [component template](../assets/component.md) and the [asset template](../assets/asset.md), then add the code link lines the template's comment names.
    - Level by what a component uses: an atom uses no component, a molecule uses atoms, a composition uses molecules.
 4. **Cover.** Run `validate` and take each C3 warning as a file under a code root no record links yet.
-   - Link it with a record, or add its path to `ignore` in `system.md`.
-5. **Report.** List each colour literal the validator reports in the code and add its file to `ignore`: this skill never writes in the code, the feature that touches the file removes the literal.
+   - Link it with a record, or add its path to `ignore` in `system.md`. Components not recorded yet are a backlog these warnings list, not a failure.
+5. **Report.** List each colour literal the validator reports in the code and leave the error for the person: this skill never writes in the code, the feature that touches the file removes the literal. Never `ignore` a file to silence a literal, it hides the file from coverage too; narrow `code-roots` instead.
 
 ## Output
 
@@ -27,5 +27,5 @@ The code roots from `system.md`.
 | --- | --- |
 | Code with custom properties | each one is a token, none is invented |
 | A linked component | its record carries `code` and `implemented-version: 1` |
-| An unlinked file | the C3 warning is gone, by a record or by `ignore` |
-| A colour literal in the code | the code is untouched and its file is in `ignore` |
+| An unlinked file | the C3 warning is gone by a record or by `ignore`, or kept as backlog |
+| A colour literal in the code | the code is untouched, the file is not in `ignore`, the error is left and listed |

@@ -14,6 +14,8 @@ The user's request.
    - No `aidd_docs/ui/`, web UI code: existing code.
    - `aidd_docs/ui/system.md` present: design system. Run `validate` and keep its problems.
    - Only native or non-web UI: stop, saying this design system covers web apps.
+   - Web and native together: cover the web part only, and write in `brand.md` Platforms that the native part is out of scope.
+   - A blank project: `code-roots` names the folder the UI will live in.
 3. **Confirm.** Tell the person in one line what was found and which path follows; ask only when the request and the code disagree.
 4. **Route.** Read the next action for the state.
    - Blank or existing code: read [brand](02-brand.md).
@@ -32,3 +34,4 @@ The state, `blank`, `existing code` or `design system`, with the code roots foun
 | Project with components and styles | state `existing code`, the code roots are named |
 | Project with `system.md` | state `design system`, its problems are kept |
 | Mobile-only app | the run stops and says the design system covers web apps |
+| Web and native app | the web part only, the native part named out of scope in `brand.md` Platforms |

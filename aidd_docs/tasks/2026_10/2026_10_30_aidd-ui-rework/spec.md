@@ -162,6 +162,7 @@ Deux axes, jamais mêlés : où en est le design, et quelle version le code impl
 | 2 | Réalisé : le flux de changement vit dans `01-system`. Un rendu charge `../tokens.css` au lieu de porter les valeurs ; la sous-commande `tokens` régénère ce seul fichier, et le skill réécrit le balisage des rendus touchés, écrans compris, d'après le rapport d'impact. Il s'arrête en disant qu'une review est attendue, sans nommer le skill qui la conduit. |
 | 2 | Non réalisé, reste une limite écrite : un composant Vue ou Svelte se lie avec un nom exporté, faute de cas observé dans les données réelles. |
 | 3 | La page de review est un fichier statique : elle produit la fiche review à enregistrer, sans serveur. |
+| 3 | La review couvre aussi les composants, pour qu'un composant puisse passer à validé. |
 | 4 | `ui.md` cite les éléments par `id@version`, pour que la vérification d'après code voie ce qui a bougé pendant la feature. |
 | 5 | `system.md` nomme le catalogue de traductions pour les textes trop longs ; l'audit d'une app existante part d'une base d'écarts acceptés, sinon il noie la personne. |
 | 5 | Tailwind et Storybook restent hors détection ; l'audit les nomme comme limites quand il les trouve. |

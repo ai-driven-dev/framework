@@ -11,10 +11,12 @@ The brand and `system.md`, and the tokens extract found when the code already ha
 1. **Define.** Write `aidd_docs/ui/tokens.json` in two levels: primitives, the palette and scales, in the groups `system.md` lists as `primitives`, then semantic tokens that alias them as `{group.name}`.
    - A colour is `{"colorSpace": "srgb", "components": [r, g, b], "hex": "#rrggbb"}`, a dimension `{"value": 1, "unit": "rem"}`, a duration `{"value": 150, "unit": "ms"}`.
    - A value the format cannot hold, such as `color-mix()` or `100%`, goes in `"$extensions": {"dev.ai-driven.css": "<css>"}`, its `var()`s naming existing tokens.
-   - A composite token, such as a shadow or a border, carries its CSS the same way; without it the stylesheet cannot be generated.
+   - A composite token, such as a shadow or a border, carries its CSS the same way; without it the stylesheet cannot be generated. A raw CSS token still needs its `$type`.
+   - Primitives are the groups components never read; `primitives: []` is allowed when the code has no palette. Extracted tokens keep the code's own structure: invent no primitive layer.
 2. **Themes.** The first theme in `system.md` is the base held by `tokens.json`; every other theme is a context of `aidd_docs/ui/tokens.resolver.json`.
    - The resolver has `"version": "2025.10"`, a set holding `{"$ref": "tokens.json"}`, a `theme` modifier with one context per theme and the base as `default`, and `{"$ref": "#/modifiers/theme"}` in `resolutionOrder`.
    - A context lists `{"$ref": "themes/<theme>.json"}`; that file redefines base tokens only, with their type.
+   - For themes `light` and `dark`: `{"version": "2025.10", "sets": {"base": {"sources": [{"$ref": "tokens.json"}]}}, "modifiers": {"theme": {"default": "light", "contexts": {"light": [], "dark": [{"$ref": "themes/dark.json"}]}}}, "resolutionOrder": [{"$ref": "#/sets/base"}, {"$ref": "#/modifiers/theme"}]}`.
 3. **Generate.** Run `tokens`, which writes `aidd_docs/ui/tokens.css`; when it exits 1, fix the tokens it names and run it again.
 4. **Link.** When the code consumes the tokens through a file, set `code-tokens` in `system.md` to it.
 

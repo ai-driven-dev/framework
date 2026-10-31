@@ -16,7 +16,7 @@ ignore: [{{paths under a code root no record links}}]
 libraries: [{{component packages the code uses}}]
 ---
 
-<!-- Replace every `{{...}}` with its answer, delete a front matter line whose answer is none, give `## Breakpoints` one row per breakpoint, and delete every comment. -->
+<!-- Replace every `{{...}}` with its answer, write `[]` for a list whose answer is none and never delete a key that is required (only `code-tokens` may go), give `## Breakpoints` one row per breakpoint, and delete every comment. -->
 
 # Design system
 

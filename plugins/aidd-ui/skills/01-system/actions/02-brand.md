@@ -26,6 +26,6 @@ The state from survey.
 
 | Case | Pass |
 | --- | --- |
-| Blank project | both files exist and the hook reports no problem on them |
+| Blank project | both files exist and the hook reports only what a later step still owes |
 | Existing code | `code-roots` names the folders survey found |
 | Unknown task folder | the person is asked for it before the History row is written |

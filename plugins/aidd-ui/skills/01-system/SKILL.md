@@ -32,6 +32,7 @@ Each box is a file: read it, then do what it says.
 - The engine is the plugin's `hooks/aidd-ui.cjs`, run with node from the project root as `validate`, `tokens` or `impact`; when it is absent, the skill shipped alone, so stop and say the engine is missing.
 - Write only under `aidd_docs/ui/`, never in the code, and never `tokens.css` by hand: the `tokens` command writes it.
 - Every write under `aidd_docs/ui/` is followed by the hook's feedback: fix its problems before going on. Without the hook, run `validate` after each write.
+- During setup, the errors of a step not yet done are expected: no tokens yet (T1), no stylesheet (T10), a record without its render (V1). Fix the others.
 - Every History row names the task folder of the work being done, `aidd_docs/tasks/...`; ask for it when it is not known.
 - A new or changed record is `proposed`: only a review validates it.
 - Commit and push only when asked.
