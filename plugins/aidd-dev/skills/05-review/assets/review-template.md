@@ -1,15 +1,11 @@
-# Review: {{feature}}
+# Review: {{the plan's title, else the task folder's slug}}
 
-- Rounds: {{the count of round sections}}
-- Started: {{round 1's date, never changed}}
+## Round {{the count of round headings, this one included}}
 
-## Round {{the count of round headings, this one included}} · r-{{4 hex characters, drawn once}}
-
-- Date: {{yyyy-mm-dd}}
-- By: {{git config user.name}}
-- Diff: `{{base}}...{{head}}`{{ plus the working tree, when it held changes}}
-- Axes: {{the axes that ran, from code, functional, relevancy}}
-- Verdict: {{verdict}}
+- Diff: `{{base}}...{{short sha of HEAD}}`
+- Uncommitted changes: {{yes | no}}
+- Axes: {{the axes that ran}}
+- Verdict: {{approve | changes-requested | blocked}}
 - Score: {{n_met}}/{{n_plan}} met, {{n_unmet}} unmet, {{n_unverified}} unverified at runtime, {{n_out}} out of the diff, or not scored
 
 ### Criteria
@@ -23,4 +19,8 @@
 
 - `{{file:line}}` : {{issue}} → {{fix}} — {{🔴 critical | 🟡 major | 🟢 minor}}, {{kind}}
 
-<!-- Every placeholder is replaced by observed data, and a list no axis of this round owns is left out. One left standing is a bug. -->
+### Limits
+
+- {{a shape nothing can reach}} — {{why}}
+
+<!-- Append one round per pass, never rewrite an earlier one. Replace every `{{...}}`, delete every comment, and leave out a list with nothing to hold. -->

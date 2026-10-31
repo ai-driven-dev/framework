@@ -1,25 +1,19 @@
 # 01 - Prepare
 
-Resolve what is reviewed and where it lands, then open this round.
+Settle what is reviewed, against what, on which axes.
 
 ## Input
 
-The arguments, and the plan when one is named.
-
-## Output
-
-A round appended to the report, and the diff the axes read.
+The arguments: a diff or a base, a plan, a task folder, axes, any recorded evidence.
 
 ## Process
 
-1. **Resolve.** Resolve the diff and the report per [report-contract.md](../references/report-contract.md).
-2. **Open.** Append a round from the template `report-contract.md` names, recording the selected axes and filling what is known before they run.
-3. **Hand over.** Name the diff and the round the axes write into.
+1. Resolve the diff: `<base>...HEAD` plus the working tree, tracked and untracked, without the report itself. The base comes from the arguments, else the branch's pull request target, else the repository default branch.
+2. Empty: stop and say so.
+3. Take the need: the plan, else the ticket, else the request.
+4. Take the axes named, else `code` and `relevancy`, plus `functional` when there is a plan.
+5. Read [review](02-review.md).
 
-## Test
+## Output
 
-| Case | Pass |
-| --- | --- |
-| A fresh report | round 1 appended, its date as the start date |
-| A report holding two rounds | a third appended, the header counting 3, the first two unchanged |
-| A run naming axes | the round names and runs only those axes |
+The diff, the need and the axes.

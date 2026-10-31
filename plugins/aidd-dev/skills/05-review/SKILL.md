@@ -6,31 +6,24 @@ argument-hint: diff | plan
 
 # Review
 
-```mermaid
-flowchart LR
-  all([all axes]) --> prepare
-  one([selected axes]) --> prepare
-  prepare -->|selected only| review-code & review-functional & review-relevancy --> finalize
-  finalize --> approve([approve])
-  finalize --> changes([changes-requested])
-  finalize --> blocked([blocked])
-  changes -.->|a later run| all
-  blocked -.->|a later run| all
-```
-
 ## Actions
 
-Run the flow above, reading only the next action file.
+```mermaid
+flowchart LR
+  prepare["prepare<br>actions/01-prepare.md"] --> review["review<br>actions/02-review.md<br>references/axis-*.md"]
+  review --> conclude["conclude<br>actions/03-conclude.md"]
+  prepare -->|"empty diff"| stop((stop))
+  conclude --> approve([approve])
+  conclude --> changes([changes-requested])
+  conclude --> blocked([blocked])
+  changes -.->|a later run| prepare
+  blocked -.->|a later run| prepare
+```
 
-| Action | Does |
-| --- | --- |
-| prepare | resolve the diff and open the round |
-| review-code | grade the changed lines on clean code |
-| review-functional | trace the diff against the plan's criteria |
-| review-relevancy | judge whether the change belongs |
-| finalize | judge the round and check its shape |
+Each box is a file: read it, then do what it says.
 
 ## Transversal rules
 
-- Ask which entry the caller wants when the request does not say.
+- Speak only to ask or to give the final reply; otherwise call tools.
 - Review statically: never run the app.
+- Change nothing but the report: no code, no test, no config.
