@@ -185,7 +185,7 @@ Feature flow, issue-to-PR automation, backlog
 <a href="plugins/aidd-ui/README.md">
 <img align="right" alt="alpha" src="https://img.shields.io/badge/alpha-cf222e?style=flat-square" />
 <h3>🎨 aidd-ui</h3>
-1 skill · 2 hooks<br />
+1 skill · 3 hooks<br />
 UI design system, checked on every write
 </a>
 </td>

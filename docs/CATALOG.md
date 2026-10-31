@@ -143,6 +143,7 @@ Runs synchronous feature delivery, optional async issue automation, and the prod
 | --- | --- |
 | `SessionStart` | `hooks/ui-hook.cjs` |
 | `PostToolUse` | `hooks/ui-hook.cjs` |
+| `Stop` | `hooks/ui-hook.cjs` |
 
 <!--extras-aidd-ui:end-->
 

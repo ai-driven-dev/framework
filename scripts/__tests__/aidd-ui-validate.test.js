@@ -73,6 +73,19 @@ const claudeFeedback = (problems) => ({ code: 0, out: JSON.stringify({ hookSpeci
 const copilotFeedback = (problems) => ({ code: 0, out: JSON.stringify({ additionalContext: feedbackText(problems) }), err: "" });
 const finish = (problems) => ({ code: 0, out: JSON.stringify({ decision: "block", reason: [`aidd-ui: the design system has ${problems.length} problems, fix them before you finish:`, ...problems].join("\n") }), err: "" });
 
+// The plugin's own declaration: every host builds its hooks from this file, so a missing event
+// here means no install runs that check.
+describe("aidd-ui hooks declaration", () => {
+  const declared = JSON.parse(fs.readFileSync(path.join(HOOKS, "hooks.json"), "utf8")).hooks;
+
+  it("runs the hook at every moment it handles: session start, after a write, turn end", () => {
+    for (const event of ["SessionStart", "PostToolUse", "Stop"]) {
+      const commands = declared[event].flatMap((group) => group.hooks.map((hook) => hook.command));
+      assert.deepEqual(commands, [`node \${CLAUDE_PLUGIN_ROOT}/hooks/ui-hook.cjs`]);
+    }
+  });
+});
+
 describe("aidd-ui validator entries", () => {
   it("prints VALID for the valid project", () => {
     assert.deepEqual(validate(tmp), { code: 0, out: ["VALID"], err: "" });
