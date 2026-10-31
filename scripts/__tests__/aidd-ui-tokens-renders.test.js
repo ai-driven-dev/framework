@@ -234,6 +234,30 @@ describe("aidd-ui tokens and renders", () => {
     });
   });
 
+  describe("T6 raw CSS in a theme file", () => {
+    const rawDark = (css) =>
+      editJson(DARK, (tree) => {
+        tree.color.brand.primary = { $extensions: { "dev.ai-driven.css": css } };
+      });
+
+    it("accepts a value DTCG cannot hold, and writes it in the theme block", () => {
+      rawDark("color-mix(in oklab, black 20%, white)");
+      generateStylesheet(tmp);
+      assert.deepEqual(problems(), []);
+      assert.match(fs.readFileSync(path.join(tmp, STYLESHEET), "utf8"), /--color-brand-primary: color-mix\(in oklab, black 20%, white\);/);
+    });
+
+    it("names a var() that names no token", () => {
+      rawDark("var(--nope)");
+      assert.deepEqual(problems(), [`${DARK}: color.brand.primary: var(--nope) names no token`]);
+    });
+
+    it("names an empty raw value", () => {
+      rawDark(" ");
+      assert.deepEqual(problems(), [`${DARK}: color.brand.primary: dev.ai-driven.css must be a CSS value`]);
+    });
+  });
+
   describe("T6 breakpoints", () => {
     const modifier = (resolver) => resolver.modifiers.breakpoint;
     const media = (resolver) => modifier(resolver).$extensions["dev.ai-driven.media"];

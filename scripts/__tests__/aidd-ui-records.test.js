@@ -835,6 +835,7 @@ describe("aidd-ui records and history", () => {
       ["size=", 'variant "size=": no value'],
       ["state=hover", 'variant "state=hover": axis "state" is taken, data-state shows the states'],
       ["variant=big", 'variant "variant=big": axis "variant" is taken, data-variant shows the bare variants'],
+      ["theme=dark", 'variant "theme=dark": axis "theme" is taken, data-theme switches the token theme'],
     ];
     for (const [item, message] of cases) {
       it(`names ${item}`, () => {

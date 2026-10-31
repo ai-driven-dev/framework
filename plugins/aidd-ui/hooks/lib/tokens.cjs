@@ -290,17 +290,26 @@ function breakpointContexts(resolver, breakpoints, file) {
   return { problems, contexts };
 }
 
+/** What keeps a raw CSS value from reaching the stylesheet: it is empty, or a `var()` in it names no token. */
+function rawValueProblems(token, names) {
+  const raw = rawCssOf(token);
+  if (typeof raw !== "string" || !raw.trim()) return [`${RAW_CSS_EXTENSION} must be a CSS value`];
+  return [...raw.matchAll(CSS_VARIABLE)].filter((match) => !names.has(match[1])).map((match) => `var(${match[1]}) names no token`);
+}
+
 /** What a theme or breakpoint file earns: each token it redefines exists in tokens.json, keeps its
- * type, and holds a value of that type. `owner` names who redefines it. */
+ * type, and holds a value of that type or raw CSS. `owner` names who redefines it. */
 function redefinitionProblems(tree, project, owner, file) {
   const themed = readTree(project, file);
   if (themed.unusable) return themed.problem ? [{ file, message: themed.problem }] : [];
   const at = tokenProblem(project, file);
+  const names = new Set([...tree.tokens.values()].map((token) => cssName(token.path)));
   return [...themed.tokens].flatMap(([name, token]) => {
     const base = tree.tokens.get(name);
     if (!base) return [at(name, `${owner} redefines no token of tokens.json`)];
     const type = typeOf(tree, base);
     if (token.node.$type !== undefined && token.node.$type !== type) return [at(name, `$type "${token.node.$type}" differs from tokens.json's "${type}"`)];
+    if (isRaw(token)) return rawValueProblems(token, names).map((message) => at(name, message));
     const message = shapeProblem(type, token.node.$value) ?? aliasProblem(tree, token.node.$value, type);
     return message ? [at(name, `${owner}: ${message}`)] : [];
   });
@@ -331,9 +340,7 @@ function resolverProblems(tree, project) {
 function rawCssProblems(tree, project) {
   const at = tokenProblem(project);
   const names = new Set([...tree.tokens.values()].map((token) => cssName(token.path)));
-  return [...tree.tokens]
-    .filter(([, token]) => typeof rawCssOf(token) === "string")
-    .flatMap(([name, token]) => [...rawCssOf(token).matchAll(CSS_VARIABLE)].filter((match) => !names.has(match[1])).map((match) => at(name, `var(${match[1]}) names no token`)));
+  return [...tree.tokens].filter(([, token]) => typeof rawCssOf(token) === "string" && rawCssOf(token).trim()).flatMap(([name, token]) => rawValueProblems(token, names).map((message) => at(name, message)));
 }
 
 /** Components and screens, which cite tokens. */

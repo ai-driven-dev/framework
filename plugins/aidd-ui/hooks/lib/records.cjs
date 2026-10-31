@@ -36,7 +36,7 @@ const KIND_KEYS = {
   review: ["scope", "screens"],
 };
 const AXIS_NAME = /^[a-z][a-z-]*$/;
-const TAKEN_AXES = { state: "data-state shows the states", variant: "data-variant shows the bare variants" };
+const TAKEN_AXES = { state: "data-state shows the states", variant: "data-variant shows the bare variants", theme: "data-theme switches the token theme" };
 const ASSEMBLED_KINDS = ["molecule", "composition"]; // implemented through what they use when no file is their own
 const DESIGN_KINDS = ["system", "brand", "review"];
 const listWithOr = (values) => `${values.slice(0, -1).join(", ")} or ${values.at(-1)}`;
