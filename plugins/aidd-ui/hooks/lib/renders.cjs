@@ -1,5 +1,5 @@
-// V1 to V7: each component and screen has its HTML render, showing every variant and state
-// through the tokens its record declares alone.
+// V1 to V8: each component and screen has its HTML render, showing every variant and state
+// through the tokens its record declares alone, from the stylesheet generated out of the tokens.
 const path = require("node:path");
 const { list } = require("./markdown.cjs");
 const { placed, TOKENED_KINDS } = require("./model.cjs");
@@ -8,6 +8,9 @@ const { cssNames, cssNameOf } = require("./tokens.cjs");
 const { text, checkOf, RENDER_EXTENSION } = require("./project.cjs");
 
 const LINE_BREAK = "\n";
+const STYLESHEET_HREF = "../tokens.css"; // renders sit one folder below the generated stylesheet
+const STYLESHEET_LINK = `<link rel="stylesheet" href="${STYLESHEET_HREF}">`;
+const LINK_TAG = /<link\b[^>]*>/g;
 
 const CUSTOM_PROPERTY = /var\(\s*(--[\w-]+)/g;
 const DECLARED_PROPERTY = /(--[\w-]+)\s*:/g; // a property the render sets itself, not a token
@@ -69,6 +72,17 @@ function declaredProblems(project) {
     });
 }
 
+/** Whether a render has a `<link>` that loads the generated stylesheet. */
+const loadsStylesheet = (html) => (html.match(LINK_TAG) ?? []).some((tag) => tag.includes(`href="${STYLESHEET_HREF}"`));
+
+/** A render takes its token values from the generated stylesheet, so a token change reaches it. */
+function stylesheetProblems(project) {
+  return rendered(project)
+    .map(renderOf)
+    .filter((file) => project.renders.includes(file) && text(project, file) !== null && !loadsStylesheet(text(project, file)))
+    .map((file) => ({ file, message: `does not load ${STYLESHEET_HREF}, add ${STYLESHEET_LINK}` }));
+}
+
 const literalProblems = (pattern, applies = () => true) => (project) =>
   applies(project) ? project.renders.flatMap((file) => findLiterals(readRender(project, file), pattern).map((found) => ({ file, ...found }))) : [];
 
@@ -80,6 +94,7 @@ const RULES = {
   V5: literalProblems(PATTERNS.physical, declaresRightToLeft),
   V6: literalProblems(PATTERNS.unit),
   V7: declaredProblems,
+  V8: stylesheetProblems,
 };
 
 /** Every broken render rule, in rule order. */

@@ -3,6 +3,10 @@
 // The design system engine the hook and every skill call, one command per job:
 //   validate  checks records, history, tokens, renders and code links. Prints VALID, or one line
 //             per problem, and exits 1 when an error remains. Prints nothing without a design system.
+//   tokens    writes aidd_docs/ui/tokens.css from the tokens and prints its path. Writes nothing and
+//             exits 1 while a token has an error or a composite token has no raw CSS.
+const fs = require("node:fs");
+const path = require("node:path");
 const { load, unreadable, UI_DIR, WARNING } = require("./lib/project.cjs");
 const records = require("./lib/records.cjs");
 const history = require("./lib/history.cjs");
@@ -43,7 +47,7 @@ const isError = (problem) => problem.severity !== WARNING;
  * the project root. */
 const format = (problems) => problems.map((problem) => `${isError(problem) ? ERROR_MARK : WARNING_MARK} ${problem.file}: ${problem.message}${problem.rule ? ` (${problem.rule})` : ""}`);
 
-function validate(root) {
+function validate([root = process.cwd()]) {
   const project = load(root);
   if (project === null) return EXIT_VALID;
   const problems = problemsOf(project);
@@ -51,10 +55,27 @@ function validate(root) {
   return problems.some(isError) ? EXIT_INVALID : EXIT_VALID;
 }
 
-const COMMANDS = { validate };
+/** Regenerates the stylesheet the renders load. A token with an error, or a composite token with no
+ * raw CSS, leaves it untouched: the problems are printed instead. */
+function generateTokens([root = process.cwd()]) {
+  const project = load(root);
+  if (project === null) return EXIT_VALID;
+  const blocked = tokens.blockers(project);
+  const { css, problems } = blocked.length ? { css: null, problems: blocked } : tokens.generate(project);
+  if (css === null) {
+    console.log(format(problems).join("\n"));
+    return EXIT_INVALID;
+  }
+  const file = tokens.cssFileOf(project);
+  fs.writeFileSync(path.join(root, file), css);
+  console.log(file);
+  return EXIT_VALID;
+}
 
-function main([command, root = process.cwd()]) {
-  if (Object.hasOwn(COMMANDS, command)) return COMMANDS[command](root);
+const COMMANDS = { validate, tokens: generateTokens };
+
+function main([command, ...args]) {
+  if (Object.hasOwn(COMMANDS, command)) return COMMANDS[command](args);
   console.error(`usage: node aidd-ui.cjs <${Object.keys(COMMANDS).join("|")}> [project-root]`);
   return EXIT_USAGE;
 }

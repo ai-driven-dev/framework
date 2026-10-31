@@ -1,11 +1,13 @@
-// T1 to T9: tokens.json against the DTCG 2025.10 format and color modules, themes through its
-// Resolver module, raw CSS extensions, and components and screens citing semantic tokens only.
-// Composite values are checked for presence only.
+// T1 to T10: tokens.json against the DTCG 2025.10 format and color modules, themes through its
+// Resolver module, raw CSS extensions, components and screens citing semantic tokens only, and
+// the generated tokens.css agreeing with all of it. Composite values are checked for presence
+// only, and reach tokens.css as raw CSS alone.
 const fs = require("node:fs");
 const nodePath = require("node:path");
 const { list } = require("./markdown.cjs");
 const { placed, systemOf, TOKENED_KINDS } = require("./model.cjs");
 const { text, checkOf } = require("./project.cjs");
+const { render, customProperty } = require("./css.cjs");
 
 const RESERVED_KEYS = ["$value", "$type", "$description", "$extensions", "$deprecated", "$extends", "$schema"];
 const ROOT_KEY = "$root"; // a stated limit: a group's own token is a named child here
@@ -13,6 +15,7 @@ const PROPERTY_PREFIX = "$";
 const PATH_SEPARATOR = ".";
 const RAW_CSS_EXTENSION = "dev.ai-driven.css"; // a CSS value DTCG cannot hold, such as color-mix() or 100%
 const RESOLVER_FILE = "tokens.resolver.json";
+const CSS_FILE = "tokens.css";
 const RESOLVER_VERSION = "2025.10";
 const THEME_MODIFIER = "theme";
 const THEME_ORDER_REF = `#/modifiers/${THEME_MODIFIER}`;
@@ -165,7 +168,7 @@ const shapeProblem = (type, value) => (aliasOf(value) !== undefined || !SHAPES[t
 
 /** A problem builder for a token file, tokens.json by default, naming the token path first. */
 const tokenProblem = (project, file = project.tokensFile) => (path, message) => ({ file, message: `${path}: ${message}` });
-const cssName = (path) => `--${path.join("-")}`;
+const cssName = (path) => customProperty(path.join(PATH_SEPARATOR));
 
 function jsonProblems(tree, project) {
   return tree.problem ? [{ file: project.tokensFile, message: tree.problem }] : [];
@@ -215,6 +218,10 @@ function aliasProblems(tree, project) {
   });
 }
 
+const resolverFileOf = (project) => nodePath.posix.join(nodePath.posix.dirname(project.tokensFile), RESOLVER_FILE);
+/** The generated stylesheet beside tokens.json, project-relative. */
+const cssFileOf = (project) => nodePath.posix.join(nodePath.posix.dirname(project.tokensFile), CSS_FILE);
+
 /** The Resolver's theme contexts as `{theme: [file]}`, with what keeps it from naming them.
  * This plugin reads one profile of the module: a set holding tokens.json, then a `theme`
  * modifier whose contexts are the themes system.md declares, each a list of `$ref` files. */
@@ -259,7 +266,7 @@ function themeFileProblems(tree, project, theme, file) {
  * context of tokens.resolver.json, whose files redefine base tokens only. */
 function themeProblems(tree, project) {
   const themes = list(systemOf(project)?.frontMatter.themes);
-  const file = nodePath.posix.join(nodePath.posix.dirname(project.tokensFile), RESOLVER_FILE);
+  const file = resolverFileOf(project);
   const resolver = readJson(project, file);
   if (resolver.problem === MISSING && themes.length < 2) return [];
   if (!resolver.value) return resolver.problem ? [{ file, message: resolver.problem }] : [];
@@ -301,7 +308,33 @@ function primitiveProblems(tree, project) {
   );
 }
 
-const RULES = {
+/** A token as the stylesheet sees it: its raw CSS, else the token its alias names, else its value. */
+function entryOf(name, token, type, file) {
+  const alias = aliasOf(token.node.$value);
+  if (isRaw(token)) return { name, type, file, raw: rawCssOf(token) };
+  return alias === undefined ? { name, type, file, value: token.node.$value } : { name, type, file, alias };
+}
+
+/** What each non-base theme redefines, in system.md order, as its Resolver context files list it. */
+function themeEntries(tree, project) {
+  const themes = list(systemOf(project)?.frontMatter.themes);
+  const resolver = readJson(project, resolverFileOf(project));
+  const { contexts } = resolver.value ? resolverContexts(resolver.value, themes, project, resolverFileOf(project)) : { contexts: {} };
+  return themes.slice(1).map((theme) => ({
+    theme,
+    tokens: (contexts[theme] ?? []).flatMap((file) => [...readTree(project, file).tokens].map(([name, token]) => entryOf(name, token, typeOf(tree, tree.tokens.get(name)), file))),
+  }));
+}
+
+/** The stylesheet of tokens that have no error, `{css, problems}`: `css` is null when a composite
+ * token has no raw CSS, which `problems` names. */
+function generate(project) {
+  const tree = read(project);
+  const base = [...tree.tokens].map(([name, token]) => entryOf(name, token, typeOf(tree, token), project.tokensFile));
+  return render({ base, themes: themeEntries(tree, project) });
+}
+
+const BASE_RULES = {
   T1: jsonProblems,
   T2: nameProblems,
   T3: typeProblems,
@@ -313,8 +346,29 @@ const RULES = {
   T9: rawCssProblems,
 };
 
+const run = (find, project) => find(read(project), project);
+
+/** The problems that keep tokens.css from being generated: every token rule but T10. */
+const blockers = checkOf(BASE_RULES, run);
+
+const REGENERATE = "with the engine's tokens command";
+
+/** tokens.css is what the tokens generate. It is not judged while the tokens have an error, and a
+ * composite token without raw CSS is named, since no stylesheet can carry it. */
+function stylesheetProblems(tree, project) {
+  if (blockers(project).length) return [];
+  const { css, problems } = generate(project);
+  if (css === null) return problems;
+  const file = cssFileOf(project);
+  if (!fs.existsSync(nodePath.join(project.root, file))) return [{ file, message: `missing, generate it ${REGENERATE}` }];
+  const current = text(project, file);
+  return current === null || current === css ? [] : [{ file, message: `out of date with the tokens, regenerate it ${REGENERATE}` }];
+}
+
+const RULES = { ...BASE_RULES, T10: stylesheetProblems };
+
 /** Every broken token rule, in rule order. */
-const check = checkOf(RULES, (find, project) => find(read(project), project));
+const check = checkOf(RULES, run);
 
 /** Every token's CSS custom property, `--` plus its path joined by `-`; null when tokens.json
  * cannot be read, so renders do not repeat T1. */
@@ -324,6 +378,6 @@ function cssNames(project) {
 }
 
 /** A token path's CSS custom property. */
-const cssNameOf = (name) => cssName(name.split(PATH_SEPARATOR));
+const cssNameOf = customProperty;
 
-module.exports = { check, cssNames, cssNameOf };
+module.exports = { check, blockers, generate, cssNames, cssNameOf, cssFileOf };

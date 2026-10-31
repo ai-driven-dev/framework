@@ -3,7 +3,7 @@ const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
 const { describe, it, beforeEach, afterEach } = require("node:test");
-const { UI, writeProject, edit, editTokens } = require("./fixtures/aidd-ui/project.js");
+const { UI, writeProject, generateStylesheet, edit, editTokens } = require("./fixtures/aidd-ui/project.js");
 
 // Each rule has one mutation of the valid project, and the test asserts the whole problem
 // list: dropping the rule turns its own test red and leaves every other one green.
@@ -19,9 +19,12 @@ const BUTTON_RENDER = `${UI}/components/button.html`;
 const DIALOG = `${UI}/components/dialog.md`;
 const DIALOG_RENDER = `${UI}/components/dialog.html`;
 const HOME = `${UI}/screens/home.md`;
+const HOME_RENDER = `${UI}/screens/home.html`;
+const STYLESHEET = `${UI}/tokens.css`;
+const STYLESHEET_LINK = '<link rel="stylesheet" href="../tokens.css">\n';
 const RESOLVER = `${UI}/tokens.resolver.json`;
 const DARK = `${UI}/themes/dark.json`;
-const INSERTED_LINE = 27; // the line before </body> in button.html
+const INSERTED_LINE = 28; // the line before </body> in button.html
 
 let tmp;
 
@@ -177,6 +180,7 @@ describe("aidd-ui tokens and renders", () => {
     it("needs no resolver for one theme", () => {
       fs.rmSync(path.join(tmp, RESOLVER));
       edit(tmp, SYSTEM, "themes: [light, dark]", "themes: [light]");
+      generateStylesheet(tmp);
       assert.deepEqual(problems(), []);
     });
 
@@ -264,6 +268,62 @@ describe("aidd-ui tokens and renders", () => {
     });
   });
 
+  describe("T10 generated stylesheet", () => {
+    const REGENERATE = "with the engine's tokens command";
+
+    it("names a stylesheet the tokens no longer generate", () => {
+      edit(tmp, TOKENS, '"value": 1,', '"value": 2,');
+      assert.deepEqual(problems(), [`${STYLESHEET}: out of date with the tokens, regenerate it ${REGENERATE}`]);
+    });
+
+    it("names a stylesheet a theme file no longer generates", () => {
+      edit(tmp, DARK, "#6699cc", "#112233");
+      assert.deepEqual(problems(), [`${STYLESHEET}: out of date with the tokens, regenerate it ${REGENERATE}`]);
+    });
+
+    it("names a stylesheet edited by hand", () => {
+      edit(tmp, STYLESHEET, "--space-md: 1rem;", "--space-md: 2rem;");
+      assert.deepEqual(problems(), [`${STYLESHEET}: out of date with the tokens, regenerate it ${REGENERATE}`]);
+    });
+
+    it("names a missing stylesheet", () => {
+      fs.rmSync(path.join(tmp, STYLESHEET));
+      assert.deepEqual(problems(), [`${STYLESHEET}: missing, generate it ${REGENERATE}`]);
+    });
+
+    it("leaves the stylesheet alone while the tokens have an error: that error comes first", () => {
+      editTokens(tmp, (tree) => (tree.space.md.$value = { value: 1, unit: "em" }));
+      assert.deepEqual(problems(), [`${TOKENS}: space.md: unit "em" must be px or rem`]);
+    });
+
+    it("names a composite token without raw CSS, which no stylesheet can carry", () => {
+      addToken("shadow", { $type: "shadow", $value: { color: "#000000" } });
+      assert.deepEqual(problems(), [`${TOKENS}: misc.shadow: a shadow has no CSS of its own, give it a dev.ai-driven.css value`]);
+    });
+
+    it("accepts a composite token that has raw CSS", () => {
+      addToken("shadow", { $type: "shadow", $value: { color: "#000000" }, $extensions: { "dev.ai-driven.css": "0 1px 2px black" } });
+      assert.deepEqual(problems(), []);
+    });
+  });
+
+  describe("V8 stylesheet linked", () => {
+    it("names a component render that does not load tokens.css", () => {
+      edit(tmp, BUTTON_RENDER, STYLESHEET_LINK, "");
+      assert.deepEqual(problems(), [`${BUTTON_RENDER}: does not load ../tokens.css, add ${STYLESHEET_LINK.trim()}`]);
+    });
+
+    it("names a screen render that does not load tokens.css", () => {
+      edit(tmp, HOME_RENDER, STYLESHEET_LINK, "");
+      assert.deepEqual(problems(), [`${HOME_RENDER}: does not load ../tokens.css, add ${STYLESHEET_LINK.trim()}`]);
+    });
+
+    it("names a render that links another stylesheet", () => {
+      edit(tmp, BUTTON_RENDER, "../tokens.css", "../other.css");
+      assert.deepEqual(problems(), [`${BUTTON_RENDER}: does not load ../tokens.css, add ${STYLESHEET_LINK.trim()}`]);
+    });
+  });
+
   describe("V1 render present", () => {
     it("names a component without its render", () => {
       fs.rmSync(path.join(tmp, DIALOG_RENDER));
@@ -331,7 +391,7 @@ describe("aidd-ui tokens and renders", () => {
   describe("V7 declared tokens", () => {
     it("names a render using a token its record does not declare", () => {
       edit(tmp, `${UI}/components/dialog.html`, "</body>", '<p style="color: var(--color-text-default)">x</p>\n</body>');
-      assert.deepEqual(problems(), [`${DIALOG_RENDER}: line 17: var(--color-text-default) is a token dialog does not declare`]);
+      assert.deepEqual(problems(), [`${DIALOG_RENDER}: line 18: var(--color-text-default) is a token dialog does not declare`]);
     });
   });
 

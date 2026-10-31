@@ -1,6 +1,10 @@
 const fs = require("node:fs");
 const path = require("node:path");
 
+const HOOKS = path.resolve(__dirname, "../../../../plugins/aidd-ui/hooks/lib");
+const { load } = require(path.join(HOOKS, "project.cjs"));
+const tokensCheck = require(path.join(HOOKS, "tokens.cjs"));
+
 // One complete, valid aidd-ui project: every record kind, tokens, renders, and the code they
 // link to. Each validator test writes it, breaks one thing, and expects exactly one problem.
 
@@ -220,7 +224,7 @@ const REVIEW = record(
 const style = (tokens) => [".ui {", ...tokens.map((token, index) => `  --use-${index}: var(--${token.replaceAll(".", "-")});`), "}"].join("\n");
 
 const render = (title, tokens, body) =>
-  `<!doctype html>\n<html lang="en">\n<head>\n<meta charset="utf-8">\n<title>${title}</title>\n<style>\n${style(tokens)}\n</style>\n</head>\n<body>\n${body.join("\n")}\n</body>\n</html>\n`;
+  `<!doctype html>\n<html lang="en">\n<head>\n<meta charset="utf-8">\n<title>${title}</title>\n<link rel="stylesheet" href="../tokens.css">\n<style>\n${style(tokens)}\n</style>\n</head>\n<body>\n${body.join("\n")}\n</body>\n</html>\n`;
 
 const statesOf = (variant, states) =>
   states.map((state) => `<button class="ui" data-variant="${variant}" data-state="${state}">Search</button>`);
@@ -266,6 +270,15 @@ const FILES = {
   ...CODE,
 };
 
+/** Writes `tokens.css` as the engine generates it from the tokens under `dir`; leaves it alone
+ * while the tokens cannot be generated, which is a case a test sets up on purpose. */
+function generateStylesheet(dir) {
+  const project = load(dir);
+  if (tokensCheck.blockers(project).length) return;
+  const { css } = tokensCheck.generate(project);
+  if (css !== null) fs.writeFileSync(path.join(dir, tokensCheck.cssFileOf(project)), css);
+}
+
 /** Writes the valid project under `dir`. */
 function writeProject(dir) {
   for (const [name, content] of Object.entries(FILES)) {
@@ -273,6 +286,7 @@ function writeProject(dir) {
     fs.mkdirSync(path.dirname(file), { recursive: true });
     fs.writeFileSync(file, content);
   }
+  generateStylesheet(dir);
 }
 
 /** Replaces every `from` with `to` in one file of the project, failing when `from` is not
@@ -290,6 +304,7 @@ function editTokens(dir, change) {
   const tree = JSON.parse(fs.readFileSync(file, "utf8"));
   change(tree);
   fs.writeFileSync(file, `${JSON.stringify(tree, null, 2)}\n`);
+  generateStylesheet(dir);
 }
 
 /** Writes one file of the project. */
@@ -299,4 +314,4 @@ function put(dir, name, content) {
   fs.writeFileSync(file, content);
 }
 
-module.exports = { UI, writeProject, edit, editTokens, put, record, history };
+module.exports = { UI, writeProject, generateStylesheet, edit, editTokens, put, record, history };
