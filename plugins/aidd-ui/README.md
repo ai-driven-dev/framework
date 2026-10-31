@@ -69,6 +69,7 @@ It prints `VALID`, or one `✗ <file>: <message>` line per problem and exits 1.
 
 - Without `node` on `PATH`, the hook does nothing.
 - A problem comes back in the same turn on Claude Code, Codex and Copilot CLI. On OpenCode and Kilo it does not; Cursor is unverified.
+- Codex shows the problem as a blocked edit, though the file is written; a small model may report the write as failed.
 - Codex runs the hook only once you trust it; Copilot only in a folder it trusts, and says nothing otherwise.
 - A file written by a shell command, or deleted by a patch, is not seen.
 - Composite tokens are checked for a `$value`, not for its shape.
