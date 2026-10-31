@@ -1,11 +1,11 @@
 // H1 to H8: each versioned record's history, the system version its publications raise, the task
 // folder each change names, and a held element that changed, or a validated one whose token changed
-// value, without a new version.
+// value, without a new version. A git that fails only warns: a slow machine must not block a turn.
 const fs = require("node:fs");
 const nodePath = require("node:path");
 const { table, list, parseRecord } = require("./markdown.cjs");
 const { placed, systemOf, byId, tokensUsedBy, isElement, isSystem, problem, fm, INTEGER_VERSION, SEMVER } = require("./model.cjs");
-const { checkOf, text, UI_DIR } = require("./project.cjs");
+const { checkOf, text, UI_DIR, WARNING } = require("./project.cjs");
 const { committed, baseline, changed } = require("./committed.cjs");
 const { cssFileOf, cssNameOf } = require("./tokens.cjs");
 const { renderOf } = require("./renders.cjs");
@@ -237,7 +237,7 @@ function valueProblems(project, named) {
 function editedProblems(project) {
   const edited = textProblems(project);
   const found = [...edited, ...valueProblems(project, new Set(edited.map((each) => each.file)))];
-  return project.gitFailure ? [...found, { file: UI_DIR, message: `git failed, so nothing was held to its committed version: ${project.gitFailure}` }] : found;
+  return project.gitFailure ? [...found, { file: UI_DIR, severity: WARNING, message: `git failed, so nothing was held to its committed version: ${project.gitFailure}` }] : found;
 }
 
 const RULES = {

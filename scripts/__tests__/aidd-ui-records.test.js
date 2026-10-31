@@ -13,7 +13,7 @@ const LIB = path.resolve(__dirname, "../../plugins/aidd-ui/hooks/lib");
 const { load } = require(path.join(LIB, "project.cjs"));
 const records = require(path.join(LIB, "records.cjs"));
 const historyRules = require(path.join(LIB, "history.cjs"));
-const { problemsOf } = require(path.join(LIB, "../aidd-ui.cjs"));
+const { problemsOf, isError } = require(path.join(LIB, "../aidd-ui.cjs"));
 
 const SYSTEM = `${UI}/system.md`;
 const BRAND = `${UI}/brand.md`;
@@ -504,6 +504,7 @@ describe("aidd-ui records and history", () => {
     };
     /** Only H8's own problems, so a case about what H8 leaves alone does not depend on the others. */
     const edited = () => historyRules.check(load(tmp)).filter((found) => found.rule === "H8").map((found) => `${found.file}: ${found.message}`);
+    const ownProblems = () => historyRules.check(load(tmp)).filter((found) => found.rule === "H8");
     /** Every problem of every check, as the engine reports them: a check that crashes is one more line. */
     const whole = () => problemsOf(load(tmp)).map((found) => `${found.file}: ${found.message}`);
 
@@ -651,8 +652,16 @@ describe("aidd-ui records and history", () => {
         assert.deepEqual(found, [FAILED("fatal: bad object HEAD")]);
       });
 
-      it("is named when git times out", () => {
-        assert.deepEqual(withGit("exec sleep 30", edited), [FAILED("spawnSync git ETIMEDOUT")]);
+      it("is named when git times out, as a warning: a slow machine blocks no turn", () => {
+        const found = withGit("exec sleep 30", ownProblems);
+        assert.deepEqual(found.map((each) => `${each.file}: ${each.message}`), [FAILED("spawnSync git ETIMEDOUT")]);
+        assert.equal(found.some(isError), false);
+      });
+
+      it("warns on any failure, while an edit git could read stays an error", () => {
+        assert.equal(withGit(`echo "${DUBIOUS}" >&2\nexit 128`, ownProblems).some(isError), false);
+        change(BUTTON, BUTTON_USAGE, WIDENED);
+        assert.deepEqual(ownProblems().map(isError), [true]);
       });
 
       it("reads git's messages in one language, whatever the machine's", () => {
