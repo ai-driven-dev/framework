@@ -14,7 +14,7 @@ Cinq pull requests empilées, chacune planifiée, codée et revue à son tour. L
 
 Un skill ne nomme jamais un autre skill.
 
-La vérification est un hook, déclenché à chaque écriture dans `aidd_docs/ui/` : chaque skill en hérite et voit l'erreur pendant qu'il travaille. Elle se lance aussi à la main. Chaque skill porte ses propres scripts de génération : `tokens.css` pour `01-system`, la vitrine pour `02-screens`, la page de review pour `03-review`.
+La vérification est un hook, déclenché à chaque écriture dans `aidd_docs/ui/` : chaque skill en hérite et voit l'erreur pendant qu'il travaille. Elle se lance aussi à la main. Un seul moteur, livré avec le hook, porte la lecture des fiches et chaque génération ; les skills l'appellent par sous-commande : `tokens.css` pour `01-system`, la vitrine pour `02-screens`, la page de review pour `03-review`.
 
 `01-hello` disparaît avec la PR 2.
 
