@@ -135,6 +135,18 @@ Runs synchronous feature delivery, optional async issue automation, and the prod
 | ---------- | ----------------------------------------- | ---------- |
 | `01-hello` | Smoke-test that confirms the plugin loads | `01-greet` |
 
+<!--extras-aidd-ui:start-->
+
+**Hooks**
+
+| Event | Runs |
+| --- | --- |
+| `SessionStart` | `hooks/ui-hook.cjs` |
+| `PostToolUse` | `hooks/ui-hook.cjs` |
+| `Stop` | `hooks/ui-hook.cjs` |
+
+<!--extras-aidd-ui:end-->
+
 ## 📈 aidd-telemetry
 
 🧪 **Beta.** Measurement: counts the tokens of Claude Code and Codex sessions, per person, session, model, agent, tool, day, repository, task and ticket, and keeps everything on your machine.
