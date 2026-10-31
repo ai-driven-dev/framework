@@ -3,7 +3,7 @@ const fs = require("node:fs");
 const path = require("node:path");
 const { list, table } = require("./markdown.cjs");
 const { checkOf } = require("./project.cjs");
-const { COMPONENT_KINDS, IMPLEMENTED_KINDS, LEVELS, INTEGER_VERSION, SEMVER, problem, fm, isElement, isComponent, isSystem, belongs, readable, placed, byId, systemOf } = require("./model.cjs");
+const { AXIS_SEPARATOR, variantOf, COMPONENT_KINDS, IMPLEMENTED_KINDS, LEVELS, INTEGER_VERSION, SEMVER, problem, fm, isElement, isComponent, isSystem, belongs, readable, placed, byId, systemOf } = require("./model.cjs");
 
 const STATUSES = ["proposed", "validated", "deprecated"];
 const DESIGN_STATUSES = ["proposed", "validated"]; // R16: system, brand and reviews are never deprecated
@@ -35,6 +35,8 @@ const KIND_KEYS = {
   asset: ["type", "file", "alt"],
   review: ["scope", "screens"],
 };
+const AXIS_NAME = /^[a-z][a-z-]*$/;
+const TAKEN_AXES = { state: "data-state shows the states", variant: "data-variant shows the bare variants" };
 const ASSEMBLED_KINDS = ["molecule", "composition"]; // implemented through what they use when no file is their own
 const DESIGN_KINDS = ["system", "brand", "review"];
 const listWithOr = (values) => `${values.slice(0, -1).join(", ")} or ${values.at(-1)}`;
@@ -55,6 +57,14 @@ function kindProblems(project) {
   });
 }
 
+/** What is wrong with an `axis=value` item of `variants`, or null: a bare item is any value. */
+function variantProblem(item) {
+  const { axis, value } = variantOf(item);
+  if (Object.hasOwn(TAKEN_AXES, axis)) return `variant "${item}": axis "${axis}" is taken, ${TAKEN_AXES[axis]}`;
+  if (!AXIS_NAME.test(axis)) return `variant "${item}": axis "${axis}" must match ${AXIS_NAME.source.slice(1, -1)}`;
+  return value ? null : `variant "${item}": no value`;
+}
+
 function valueProblems(record) {
   const { status, interactive, type, kind } = fm(record);
   return [
@@ -62,6 +72,7 @@ function valueProblems(record) {
     ...(status !== undefined && !STATUSES.includes(status) ? [`status "${status}" must be ${listWithOr(STATUSES)}`] : []),
     ...(COMPONENT_KINDS.includes(kind) && interactive !== undefined && !YES_NO.includes(interactive) ? [`interactive "${interactive}" must be ${listWithOr(YES_NO)}`] : []),
     ...(kind === "asset" && type !== undefined && !ASSET_TYPES.includes(type) ? [`type "${type}" must be ${listWithOr(ASSET_TYPES)}`] : []),
+    ...list(fm(record).variants).filter((item) => item.includes(AXIS_SEPARATOR)).map(variantProblem).filter(Boolean),
   ].map((message) => problem(record, message));
 }
 

@@ -146,6 +146,18 @@ describe("aidd-ui 01-system templates", () => {
   });
 });
 
+describe("aidd-ui 01-system variant axes", () => {
+  it("shows an axis in the templates, and the axis they show validates", () => {
+    assert.ok(template("component").includes("`variants: [size=sm, size=md, tone=danger]`"));
+    assert.ok(template("render").includes('data-size="sm" for size=sm'));
+    edit(tmp, `${UI}/components/dialog.md`, "variants: [default]", "variants: [size=sm, size=md, tone=danger]");
+    edit(tmp, `${UI}/components/dialog.html`, 'data-variant="default" data-state="default"', 'data-size="sm" data-state="default"');
+    edit(tmp, `${UI}/components/dialog.html`, 'data-variant="default" data-state="hover"', 'data-size="md" data-state="hover"');
+    edit(tmp, `${UI}/components/dialog.html`, 'data-variant="default" data-state="focus"', 'data-tone="danger" data-state="focus"');
+    assert.deepEqual(validate(), { code: 0, out: ["VALID"] });
+  });
+});
+
 describe("aidd-ui 01-system change flow", () => {
   /** git without the variables a commit hook exports, which would point it at the real repository. */
   const git = (...args) =>

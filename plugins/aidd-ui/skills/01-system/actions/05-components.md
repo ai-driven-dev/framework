@@ -14,7 +14,7 @@ The tokens, and the elements extract found or the person asked for.
    - List only semantic tokens, never a primitive, in `tokens`.
    - Declare `focus` when it is interactive, and `hover` or `disabled` only when it has them.
 4. **Render.** Write its HTML from the [render skeleton](../assets/render.html) beside the record.
-   - Show every variant and state, each with `data-variant` and `data-state` on an element, never only in a style selector.
+   - Show every variant and state, each with `data-variant`, or `data-<axis>` for an `axis=value` item, and `data-state` on an element, never only in a style selector.
    - A molecule or composition shows the elements it uses, each with its own tokens, which its render may use too.
    - Style with `var()` of the tokens the record and the elements it uses list. The check forbids colour literals and lengths in `<style>` and `style=""`, and physical properties such as `margin-left` when `rtl` is declared; copy is not read.
 5. **Check.** Fix what the hook reports on the record and its render, then do the next element.

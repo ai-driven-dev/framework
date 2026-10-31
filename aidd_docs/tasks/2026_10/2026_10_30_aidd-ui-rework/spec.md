@@ -92,6 +92,7 @@ Deux axes, jamais mêlés : où en est le design, et quelle version le code impl
 - Les thèmes suivent le module Resolver de DTCG : `tokens.json` porte le premier thème déclaré, la base ; chaque autre thème a son fichier, qui ne redéfinit que des tokens de la base, avec le même type. Un rendu montre un thème sous `[data-theme]`, avec les mêmes noms de variables.
 - Une valeur que DTCG ne sait pas porter (`color-mix()`, `%`, `em`) est gardée en CSS brut dans une extension du token ; les `var()` qu'elle cite sont des tokens existants et comptent comme des dépendances.
 - Un écran montre tous ses états dans un seul fichier, avec un sélecteur d'état.
+- Une variante est une valeur nue, montrée par `data-variant`, ou `axe=valeur` pour une propriété qui varie seule (`size=sm`), montrée par `data-<axe>` ; `state` et `variant` ne sont jamais des axes.
 - La vitrine est générée sans IA, à partir des fiches et de gabarits fixes : identique à chaque génération, elle montre chaque élément, ses variantes, ses états, ses usages et son lien vers le réel.
 - La vitrine affiche la version validée d'un écran et un lien vers le réel.
 

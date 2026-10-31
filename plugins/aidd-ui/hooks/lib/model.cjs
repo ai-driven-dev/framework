@@ -16,6 +16,9 @@ const IMPLEMENTED_KINDS = [...COMPONENT_KINDS, "screen"];
 const TOKENED_KINDS = IMPLEMENTED_KINDS; // components and screens cite the tokens their render uses
 const LEVELS = { asset: 0, atom: 1, molecule: 2, composition: 3, screen: 4 }; // an element uses its own level or lower
 
+const VARIANT_AXIS = "variant"; // a bare item of `variants`, shown by data-variant
+const AXIS_SEPARATOR = "=";
+
 const INTEGER_VERSION = /^[1-9]\d*$/;
 const SEMVER = /^(\d+)\.(\d+)\.(\d+)$/;
 
@@ -52,7 +55,13 @@ function tokensUsedBy(index, record) {
   return [...new Set([...seen].flatMap((each) => list(fm(each).tokens)))];
 }
 
+/** A `variants` item as its axis and value: `axis=value`, or a bare value on the `variant` axis. */
+function variantOf(item) {
+  const at = item.indexOf(AXIS_SEPARATOR);
+  return at < 0 ? { axis: VARIANT_AXIS, value: item } : { axis: item.slice(0, at), value: item.slice(at + 1) };
+}
+
 const systemOf = (project) => readable(project).find((record) => fm(record).kind === SYSTEM_ID);
 const isSystem = (record) => fm(record).kind === SYSTEM_ID;
 
-module.exports = { FOLDER_KINDS, COMPONENT_KINDS, IMPLEMENTED_KINDS, TOKENED_KINDS, LEVELS, INTEGER_VERSION, SEMVER, problem, fm, isElement, isComponent, isSystem, belongs, readable, placed, byId, systemOf, tokensUsedBy };
+module.exports = { AXIS_SEPARATOR, variantOf, FOLDER_KINDS, COMPONENT_KINDS, IMPLEMENTED_KINDS, TOKENED_KINDS, LEVELS, INTEGER_VERSION, SEMVER, problem, fm, isElement, isComponent, isSystem, belongs, readable, placed, byId, systemOf, tokensUsedBy };

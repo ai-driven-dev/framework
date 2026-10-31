@@ -789,6 +789,28 @@ describe("aidd-ui records and history", () => {
     });
   });
 
+  describe("R3 variant items", () => {
+    const VARIANTS = "variants: [primary, secondary]";
+    const cases = [
+      ["Size=sm", 'variant "Size=sm": axis "Size" must match [a-z][a-z-]*'],
+      ["=sm", 'variant "=sm": axis "" must match [a-z][a-z-]*'],
+      ["size=", 'variant "size=": no value'],
+      ["state=hover", 'variant "state=hover": axis "state" is taken, data-state shows the states'],
+      ["variant=big", 'variant "variant=big": axis "variant" is taken, data-variant shows the bare variants'],
+    ];
+    for (const [item, message] of cases) {
+      it(`names ${item}`, () => {
+        change(BUTTON, VARIANTS, `variants: [primary, ${item}]`);
+        assert.deepEqual(problems(), [`${BUTTON}: ${message}`]);
+      });
+    }
+
+    it("accepts bare items and axes together, on a hyphenated axis too", () => {
+      change(BUTTON, VARIANTS, "variants: [primary, size=sm, size=md, icon-side=start]");
+      assert.deepEqual(problems(), []);
+    });
+  });
+
   describe("format", () => {
     it("names a system.md without a format", () => {
       change(SYSTEM, "format: 1\n", "");

@@ -348,6 +348,28 @@ describe("aidd-ui tokens and renders", () => {
     });
   });
 
+  describe("V2 variant axes", () => {
+    const withAxes = () => edit(tmp, BUTTON, "variants: [primary, secondary]", "variants: [primary, secondary, size=sm, tone=danger]");
+
+    it("asks for data-<axis> on an element, for each axis=value", () => {
+      withAxes();
+      assert.deepEqual(problems(), [`${BUTTON_RENDER}: no data-size="sm"`, `${BUTTON_RENDER}: no data-tone="danger"`]);
+    });
+
+    it("accepts an element carrying them", () => {
+      withAxes();
+      addToRender('<button class="ui" data-size="sm" data-tone="danger">Search</button>');
+      assert.deepEqual(problems(), []);
+    });
+
+    it("does not take data-variant, or a selector in a style block, for the axis shown", () => {
+      withAxes();
+      addToRender('<button class="ui" data-variant="size=sm" data-tone="danger">Search</button>');
+      edit(tmp, BUTTON_RENDER, "</style>", '[data-size="sm"] { color: var(--color-text-default); }\n</style>');
+      assert.deepEqual(problems(), [`${BUTTON_RENDER}: no data-size="sm"`]);
+    });
+  });
+
   describe("V2 attributes outside style", () => {
     it("does not take a selector in a style block for the state shown", () => {
       edit(tmp, DIALOG_RENDER, 'data-state="hover"', 'data-state="default"');

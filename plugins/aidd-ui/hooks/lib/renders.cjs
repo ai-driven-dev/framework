@@ -1,8 +1,8 @@
-// V1 to V8: each component and screen has its HTML render, showing every variant and state
+// V1 to V8: each component and screen has its HTML render, showing every variant, axis and state
 // through the tokens its record declares alone, from the stylesheet generated out of the tokens.
 const path = require("node:path");
 const { list } = require("./markdown.cjs");
-const { placed, byId, tokensUsedBy, TOKENED_KINDS } = require("./model.cjs");
+const { placed, byId, tokensUsedBy, variantOf, TOKENED_KINDS } = require("./model.cjs");
 const { PATTERNS, findLiterals, styled, painted, declaresRightToLeft } = require("./literals.cjs");
 const { cssNames, cssNameOf } = require("./tokens.cjs");
 const { text, checkOf, RENDER_EXTENSION } = require("./project.cjs");
@@ -27,13 +27,19 @@ function presenceProblems(project) {
     .map((record) => ({ file: record.file, message: `no render beside it, expected ${path.basename(renderOf(record))}` }));
 }
 
+/** The attribute that shows a `variants` item on an element. */
+function variantAttribute(item) {
+  const { axis, value } = variantOf(item);
+  return `data-${axis}="${value}"`;
+}
+
 function coverageProblems(project) {
   return rendered(project)
     .filter((record) => project.renders.includes(renderOf(record)))
     .flatMap((record) => {
       const html = text(project, renderOf(record))?.replace(STYLE_BLOCK, ""); // a selector in a style block shows nothing
       if (html === undefined) return [];
-      const wanted = [...list(record.frontMatter.variants).map((value) => `data-variant="${value}"`), ...list(record.frontMatter.states).map((value) => `data-state="${value}"`)];
+      const wanted = [...list(record.frontMatter.variants).map(variantAttribute), ...list(record.frontMatter.states).map((value) => `data-state="${value}"`)];
       return wanted.filter((attribute) => !html.includes(attribute)).map((attribute) => ({ file: renderOf(record), message: `no ${attribute}` }));
     });
 }

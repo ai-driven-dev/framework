@@ -43,7 +43,7 @@ Every record opens with flat front matter, `key: value` or `key: [a, b]`, and cl
 | every one | `id` (the file name), `kind`, `status` (`proposed`, `validated`, `deprecated`), `version` | `## History` |
 | `system.md` | `format` (`1`), `version` in semver, `platforms`, `breakpoints`, `themes`, `locales`, `directions`, `primitives` (token groups components never cite), `code-roots`, `ignore`, `libraries`, each `[]` when empty; optional `code-tokens`, one file | optional `## Rules`: Id, Rule |
 | `brand.md` | | `## Project`, `## Users`, `## Domain`, `## Platforms`, `## Personality and tone`, `## References`, `## Anti-references`; optional `## Glossary`: Concept, Word, Forbidden |
-| atom, molecule, composition | `uses`, `tokens`, `variants`, `states`, `interactive` (`yes` or `no`), `role`; optional `code`, `implemented-version` | `## Usage`, and `## Keyboard` when interactive |
+| atom, molecule, composition | `uses`, `tokens`, `variants` (a bare value, or `axis=value` per independent prop), `states`, `interactive` (`yes` or `no`), `role`; optional `code`, `implemented-version` | `## Usage`, and `## Keyboard` when interactive |
 | screen | `uses`, `tokens`, `states`, `breakpoints`, `route`; optional `code`, `implemented-version` | |
 | journey | `persona` | `## Steps`: Screen, Action |
 | asset | `type` (`icon`, `image`, `illustration`), `file`, `alt` | |
@@ -62,7 +62,8 @@ Every record opens with flat front matter, `key: value` or `key: [a, b]`, and cl
 - A link to a file in a folder of its own name covers that folder, styles, hooks and tests; among siblings it covers only the files of its name.
 - An element uses elements of its own level or lower, never itself; an interactive component has `focus`, and `hover` or `disabled` only when they exist.
 - A deprecated element names `replaced-by: <id>`, or `replaced-by: none` with a `## Deprecation` section.
-- A render uses only the tokens its record lists in `tokens`, or those of the elements it uses, transitively. Its literals are read in `<style>` blocks and `style=""` values, never in its text, and its colours also in `fill`, `stroke`, `color` and `bgcolor` values, where a value opening with `var()` is a token; a variant or state counts when an element outside `<style>` carries its `data-` attribute.
+- A render uses only the tokens its record lists in `tokens`, or those of the elements it uses, transitively. Its literals are read in `<style>` blocks and `style=""` values, never in its text, and its colours also in `fill`, `stroke`, `color` and `bgcolor` values, where a value opening with `var()` is a token; a variant or state counts when an element outside `<style>` carries its `data-` attribute: `data-variant="<value>"` for a bare item, `data-<axis>="<value>"` for `axis=value`, `data-state="<value>"` for a state.
+- An axis matches `[a-z][a-z-]*`, is never `state` or `variant`, and its value is never empty.
 - `code-tokens` names the file where the code consumes the tokens; it is never checked for literals or coverage.
 - Themes: the first theme in `system.md` is held by `tokens.json`. `tokens.resolver.json` has a set whose sources hold `{"$ref": "tokens.json"}`, a `theme` modifier with one context per theme and the base as `default`, and `{"$ref": "#/modifiers/theme"}` in `resolutionOrder`. A context lists `{"$ref": "<file>"}` sources, each redefining base tokens with their type.
 - A value DTCG cannot hold, such as `color-mix()` or `100%`, is raw CSS: `"$extensions": {"dev.ai-driven.css": "<value>"}`. Each `var()` in it must name a token.
@@ -120,10 +121,9 @@ Rules: records R1 to R17, history H1 to H8, tokens T1 to T10, renders V1 to V8, 
 - Blank lines added to a held record count as an edit for H8.
 - An opaque colour with a `hex` is written as that `hex`, which drops a wider gamut its `colorSpace` holds.
 - A token value that depends on a breakpoint has no place yet.
-- A component has one `variants` axis.
 - A review validates screens only for now, so components are validated by hand until the review page exists.
 - `code-roots` and `ignore` are path prefixes, not globs. Every folder under a code root is walked, `node_modules`, build output and dot-folders included: ignore them. A linked folder counts as one file no record links.
-- A render shows a variant or state when it holds its `data-variant` or `data-state` attribute; an export exists when its name is a word of the linked file, a comment included.
+- A render shows a variant or state when its text holds the attribute, whatever the element; an export exists when its name is a word of the linked file, a comment included.
 - The hook command names `${CLAUDE_PLUGIN_ROOT}` unquoted, like every plugin here: a plugin path with spaces breaks it.
 - In code, only colour literals are found, in web code only, outside tests and mocks, which C3 leaves out of the backlog too; other literals are left to the UI audit.
 - In script files, `.vue` and `.svelte` included, colours are found in string literals only. A Vue or Svelte component needs an export name in its link. An `.astro` file is read the same way, plus its `<style>` blocks.

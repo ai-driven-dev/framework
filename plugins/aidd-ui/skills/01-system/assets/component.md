@@ -11,7 +11,7 @@ interactive: {{yes or no}}
 role: {{accessible role}}
 ---
 
-<!-- Replace every `{{...}}` with its answer and delete every comment. Delete `## Keyboard` when interactive is no. Once the code exists, add `code: <path>#<Export>`, `code: package:<name>#<Export>` for a library component, or a bare `code: <path>` for an `.astro` component, and `implemented-version: 1` to the front matter. -->
+<!-- Replace every `{{...}}` with its answer and delete every comment. List a prop that varies on its own as an axis, such as `variants: [size=sm, size=md, tone=danger]`; a bare item is a plain variant. Delete `## Keyboard` when interactive is no. Once the code exists, add `code: <path>#<Export>`, `code: package:<name>#<Export>` for a library component, or a bare `code: <path>` for an `.astro` component, and `implemented-version: 1` to the front matter. -->
 
 # {{Component name}}
 
