@@ -1,4 +1,4 @@
-# Run: {{the plan's title without its `Plan:` prefix}}
+# Run: {{the plan's title}}
 
 <!-- Append one `## Run` per pass, never rewrite an earlier one. One row per task of the plan. Replace every `{{...}}`, delete every comment. -->
 

@@ -61,7 +61,7 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 |-------|------|---|
 | `actions` | [01-assert.md](skills/03-assert/actions/01-assert.md) | - |
 | `assets` | [assert-template.md](skills/03-assert/assets/assert-template.md) | - |
-| `-` | [SKILL.md](skills/03-assert/SKILL.md) | `Assert the work against the project's coding assertions into a pass or fail report. Use to verify an implementation before it ships. Not for fixing code, reviewing a diff, or writing tests.` |
+| `-` | [SKILL.md](skills/03-assert/SKILL.md) | `Assert the work against the project's coding assertions into a pass or fail report. Use to verify an implementation. Not for fixing code, reviewing a diff, or writing tests.` |
 
 #### `skills/04-audit`
 

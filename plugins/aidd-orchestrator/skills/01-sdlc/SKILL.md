@@ -49,7 +49,6 @@ flowchart TD
 ## Transversal rules
 
 - Run every step through the skill or agent its zone names, whatever the change's size.
-- Never do a named skill's or agent's work yourself.
 
 ## References
 

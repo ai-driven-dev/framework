@@ -2,7 +2,7 @@
 
 ## Behavior
 
-Turn the contract into a plan, then give the `executor` agent the plan. It implements it, calls the validation skills, and repairs whatever they report until they pass. Run an end-to-end journey after every other validation when the plan calls for one, and none otherwise.
+Turn the contract into a plan, then give the `executor` agent the plan. It implements it, calls the validation skills, and repairs whatever they report until they pass. Include architecture conformance whenever the project documents architecture. Run an end-to-end journey after every other validation when the plan calls for one, and none otherwise.
 
 Commit and push the validated work through the commit skill. Send only the clean committed candidate to Check.
 

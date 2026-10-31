@@ -1,6 +1,6 @@
 ---
 name: 03-assert
-description: Assert the work against the project's coding assertions into a pass or fail report. Use to verify an implementation before it ships. Not for fixing code, reviewing a diff, or writing tests.
+description: Assert the work against the project's coding assertions into a pass or fail report. Use to verify an implementation. Not for fixing code, reviewing a diff, or writing tests.
 argument-hint: work | task folder
 ---
 

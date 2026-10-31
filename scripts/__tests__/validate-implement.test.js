@@ -280,7 +280,7 @@ describe("validate-implement: what a run records", () => {
   const closedWith = (text) => run(folder("implemented", [{ status: "done" }], { runs: text }));
   const filledTemplate = () =>
     withoutComments(fs.readFileSync(RUN_TEMPLATE, "utf8"))
-      .replace("{{the plan's title without its `Plan:` prefix}}", "A plan")
+      .replace("{{the plan's title}}", "A plan")
       .replace("{{number}}", "1")
       .replace("{{sha of HEAD when the validations ran}}", "abc1234")
       .replace("{{phase.task, such as 1.2}}", "1.1").replace("{{scenario of that task's criterion, and the command that ran it}}", "pnpm test")
