@@ -70,7 +70,7 @@ Every record opens with flat front matter, `key: value` or `key: [a, b]`, and cl
 - A token's CSS name is `--` plus its path joined by `-`.
 - `tokens.css` is generated: a custom property per token, the base in `:root, [data-theme="<base theme>"]`, so a nested region can switch back to it, each other theme in `[data-theme="<theme>"]`, an alias as `var()`, raw CSS verbatim. A composite token (shadow, border, typography, ...) has no CSS of its own: it needs a raw CSS extension to appear in it.
 - A component or screen render loads it with `<link rel="stylesheet" href="../tokens.css">`, so a token change reaches every render without rewriting one.
-- A validated or deprecated element edited since its committed version, without a new `version`, is an error. A change to `status`, `implemented-version`, `code` or the History table is not an edit. So is a change, in any theme, to the resolved value of a token the element declares, compared with the committed `tokens.css`.
+- A validated or deprecated element edited since its committed version, without a new `version`, is an error. A change to `status`, `implemented-version`, `code` or the History table is not an edit. A validated element is also held to the resolved value, in any theme, of each token it or an element it uses declares, compared with the committed `tokens.css`; a token change leaves a deprecated element as it is.
 
 ## Commands
 

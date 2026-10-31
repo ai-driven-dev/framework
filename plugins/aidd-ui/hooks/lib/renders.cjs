@@ -2,7 +2,7 @@
 // through the tokens its record declares alone, from the stylesheet generated out of the tokens.
 const path = require("node:path");
 const { list } = require("./markdown.cjs");
-const { placed, byId, TOKENED_KINDS } = require("./model.cjs");
+const { placed, byId, tokensUsedBy, TOKENED_KINDS } = require("./model.cjs");
 const { PATTERNS, findLiterals, styled, declaresRightToLeft } = require("./literals.cjs");
 const { cssNames, cssNameOf } = require("./tokens.cjs");
 const { text, checkOf, RENDER_EXTENSION } = require("./project.cjs");
@@ -54,13 +54,6 @@ function referenceProblems(project) {
   });
 }
 
-/** The tokens a record declares and those of every element it uses, transitively. */
-function declaredBy(index, record, seen = new Set()) {
-  seen.add(record);
-  for (const id of list(record.frontMatter.uses)) if (index.has(id) && !seen.has(index.get(id))) declaredBy(index, index.get(id), seen);
-  return new Set([...seen].flatMap((each) => list(each.frontMatter.tokens).map(cssNameOf)));
-}
-
 /** A render uses only the tokens its record declares, or the elements it shows declare, so an
  * impact report read from the records misses none of them. */
 function declaredProblems(project) {
@@ -70,7 +63,7 @@ function declaredProblems(project) {
   return rendered(project)
     .filter((record) => project.renders.includes(renderOf(record)))
     .flatMap((record) => {
-      const declared = declaredBy(index, record);
+      const declared = new Set(tokensUsedBy(index, record).map(cssNameOf));
       return readRender(project, renderOf(record))
         .split(LINE_BREAK)
         .flatMap((line, index) =>

@@ -607,24 +607,31 @@ describe("aidd-ui records and history", () => {
     describe("a token value that changed", () => {
       const TOKEN_CHANGED = (file, tokens, version = 1) => `${file}: value of ${tokens} changed since its committed version ${version}, raise its version with a History row`;
       const setBold = (weight) => editTokens(tmp, (tree) => (tree.font.weight.bold.$value = weight));
-      const raiseButton = () => {
-        change(BUTTON, "version: 1", "version: 2");
-        change(BUTTON, "| 1 | created | no | aidd_docs/tasks/ds-init |", "| 1 | created | no | aidd_docs/tasks/ds-init |\n| 2 | lighter bold | no | aidd_docs/tasks/lighten |");
+      const raise = (file) => {
+        change(file, "\nversion: 1\n", "\nversion: 2\n");
+        change(file, "| 1 | created | no | aidd_docs/tasks/ds-init |", "| 1 | created | no | aidd_docs/tasks/ds-init |\n| 2 | lighter bold | no | aidd_docs/tasks/lighten |");
       };
+      const THROUGH_BOLD = [BUTTON, DIALOG, SEARCH, HOME].map((file) => TOKEN_CHANGED(file, "font.weight.bold"));
 
-      it("names the validated element declaring it, with the token", () => {
+      it("names the validated element declaring it, and each one using that element, with the token", () => {
         setBold(600);
-        assert.deepEqual(edited(), [TOKEN_CHANGED(BUTTON, "font.weight.bold")]);
+        assert.deepEqual(edited(), THROUGH_BOLD);
+      });
+
+      it("names a validated element whose token only an element it uses declares", () => {
+        setBold(600);
+        [BUTTON, SEARCH, HOME].forEach(raise);
+        assert.deepEqual(edited(), [TOKEN_CHANGED(DIALOG, "font.weight.bold")]);
       });
 
       const THROUGH_PRIMARY = [
         TOKEN_CHANGED(BUTTON, "color.action.default, color.text.default"),
-        TOKEN_CHANGED(OLD, "color.action.default", 2),
-        TOKEN_CHANGED(SEARCH, "color.text.default"),
-        TOKEN_CHANGED(HOME, "color.text.default"),
+        TOKEN_CHANGED(DIALOG, "color.action.default, color.text.default"),
+        TOKEN_CHANGED(SEARCH, "color.text.default, color.action.default"),
+        TOKEN_CHANGED(HOME, "color.text.default, color.action.default"),
       ];
 
-      it("reaches it through an alias, and a deprecated element too", () => {
+      it("reaches it through an alias, and leaves a deprecated element as it is", () => {
         editTokens(tmp, (tree) => (tree.color.brand.primary.$value = { colorSpace: "srgb", components: [0.1, 0.1, 0.1], hex: "#1a1a1a" }));
         assert.deepEqual(edited(), THROUGH_PRIMARY);
       });
@@ -642,16 +649,16 @@ describe("aidd-ui records and history", () => {
         assert.deepEqual(edited(), []);
       });
 
-      it("stays silent once the element's version rose", () => {
+      it("stays silent once every reached element's version rose", () => {
         setBold(600);
-        raiseButton();
+        [BUTTON, DIALOG, SEARCH, HOME].forEach(raise);
         assert.deepEqual(edited(), []);
       });
 
       it("names only the elements the repository holds", () => {
         put(tmp, `${UI}/components/badge.md`, fs.readFileSync(path.join(tmp, BUTTON), "utf8").replace("id: button", "id: badge"));
         setBold(600);
-        assert.deepEqual(edited(), [TOKEN_CHANGED(BUTTON, "font.weight.bold")]);
+        assert.deepEqual(edited(), THROUGH_BOLD);
       });
 
       it("stays silent without a committed tokens.css", () => {
@@ -664,7 +671,7 @@ describe("aidd-ui records and history", () => {
       it("does not name an element already named for its text", () => {
         setBold(600);
         change(BUTTON, BUTTON_USAGE, WIDENED);
-        assert.deepEqual(edited(), [EDITED(1)]);
+        assert.deepEqual(edited(), [EDITED(1), ...THROUGH_BOLD.slice(1)]);
       });
     });
 

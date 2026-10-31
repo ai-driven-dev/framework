@@ -12,10 +12,11 @@ The change the person wants: the tokens and elements it touches.
    - An unknown name: the command names it and exits 2; correct the name and run it again.
    - The person refuses: stop.
 2. **Apply.** Make the change in `tokens.json`, a theme file or the records.
-   - For each element or screen the report lists, in the same change: raise `version` by one, add a History row with the change, `yes` in Breaking when it removes a variant, state or property, renames or deletes a token, or deprecates the element (otherwise `no`), and the task folder, then set `status: proposed`.
-   - A deprecated element names `replaced-by`, or `none` with a `## Deprecation` section.
+   - For each element or screen the report lists, deprecated ones aside, in the same change: raise `version` by one, add a History row with the change, `yes` in Breaking when it removes a variant, state or property, renames or deletes a token, or deprecates the element (otherwise `no`), and the task folder, then set `status: proposed`.
+   - A deprecated element in the report is named to the person and left untouched: it keeps its version and status.
+   - An element this change deprecates names `replaced-by`, or `none` with a `## Deprecation` section.
    - Leave `implemented-version` and `code` as they are: the code follows in the feature that carries the change.
-   - A change of a token's value alone bumps every element reached, `no` in Breaking; the engine refuses a validated element that declares the token and was not bumped.
+   - A change of a token's value alone bumps every element reached, `no` in Breaking; the engine refuses a validated element that uses the token, directly or through an element it uses, and was not bumped.
    - Leave `system.md`'s version alone: a publication adds its row.
 3. **Regenerate.** When tokens or themes changed, run `tokens`; it exits 1 while a token has an error, so fix it first.
 4. **Render.** Rewrite the markup of each reached render whose element changed, so it shows every variant and state; a render only loads `../tokens.css`, so a changed token value needs no markup change.
@@ -33,5 +34,6 @@ The changed files, regenerated `tokens.css`, rewritten renders, new versions wit
 | Token value changed | the report lists the tokens, components, screens and journeys reached, and `tokens.css` holds the new value |
 | Element edited | its version rose by one, its History has the row, its status is `proposed`, and the hook reports no H8 |
 | Variant removed | the History row says `yes` in Breaking |
+| A deprecated element reached | it is named, its version and status unchanged, and the hook reports no H8 |
 | Unknown name | the command exits 2 and nothing is written |
 | End of the run | the message says a review is expected and names no skill |

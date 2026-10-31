@@ -1,8 +1,8 @@
 // H1 to H8: each versioned record's history, the system version its publications raise, the task
-// folder each change names, and a validated element that changed, or whose token changed value,
-// without a new version.
+// folder each change names, and a held element that changed, or a validated one whose token changed
+// value, without a new version.
 const { table, list, parseRecord } = require("./markdown.cjs");
-const { placed, systemOf, isElement, isSystem, problem, fm, INTEGER_VERSION, SEMVER } = require("./model.cjs");
+const { placed, systemOf, byId, tokensUsedBy, isElement, isSystem, problem, fm, INTEGER_VERSION, SEMVER } = require("./model.cjs");
 const { checkOf, text } = require("./project.cjs");
 const { committed, baseline, changed } = require("./committed.cjs");
 const { cssFileOf, cssNameOf } = require("./tokens.cjs");
@@ -12,7 +12,8 @@ const HISTORY_SECTION = "History";
 const BREAKING_VALUES = ["yes", "no"];
 const BREAKING = "yes";
 const TASKS_DIR = "aidd_docs/tasks/";
-const HELD_STATUSES = ["validated", "deprecated"]; // a proposed element is still being designed
+const VALIDATED = "validated";
+const HELD_STATUSES = [VALIDATED, "deprecated"]; // a proposed element is still being designed
 const UNVERSIONED_KEYS = ["status", "implemented-version", "code"]; // a review, a code catch-up: no new version
 const FRONT_MATTER_FENCE = "---";
 const SECTION_PREFIX = "## ";
@@ -211,21 +212,23 @@ function changedProperties(before, after) {
   return changed;
 }
 
-/** A validated or deprecated element declaring a token whose value changed since the committed
- * stylesheet, its version unraised. `named` are the elements already reported. */
+/** A validated element using a token whose value changed since the committed stylesheet, its
+ * version unraised; a token change leaves a deprecated one as it is. `named` are the elements
+ * already reported. */
 function valueProblems(project, named) {
   const file = cssFileOf(project);
   const before = committed(project, file);
   const after = text(project, file);
   if (before === null || after === null) return [];
   const moved = changedProperties(declarationsOf(before), declarationsOf(after));
+  const index = byId(project);
   return versioned(project)
     .filter((record) => isElement(record) && !named.has(record.file))
     .flatMap((record) => {
-      const tokens = list(fm(record).tokens).filter((token) => moved.has(cssNameOf(token)));
+      const tokens = tokensUsedBy(index, record).filter((token) => moved.has(cssNameOf(token)));
       const committedRecord = tokens.length ? baseline(project, record.file) : null;
       const was = committedRecord === null ? null : heldFront(record, committedRecord);
-      return was === null ? [] : [problem(record, `value of ${tokens.join(", ")} changed since its committed version ${was.version}, raise its version with a History row`)];
+      return was?.status !== VALIDATED ? [] : [problem(record, `value of ${tokens.join(", ")} changed since its committed version ${was.version}, raise its version with a History row`)];
     });
 }
 

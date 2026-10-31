@@ -1,5 +1,7 @@
 // The record model every check reads: which kinds exist, where each lives, and the records a
 // rule can trust.
+const { list } = require("./markdown.cjs");
+
 const SYSTEM_ID = "system";
 const FOLDER_KINDS = {
   "": ["system", "brand"],
@@ -37,7 +39,20 @@ function byId(project) {
   return index;
 }
 
+/** The tokens a record declares, then those of every element it uses, transitively: what its render
+ * may show, so what a token change reaches. */
+function tokensUsedBy(index, record) {
+  const seen = new Set();
+  const visit = (each) => {
+    if (seen.has(each)) return;
+    seen.add(each);
+    for (const id of list(fm(each).uses)) if (index.has(id)) visit(index.get(id));
+  };
+  visit(record);
+  return [...new Set([...seen].flatMap((each) => list(fm(each).tokens)))];
+}
+
 const systemOf = (project) => readable(project).find((record) => fm(record).kind === SYSTEM_ID);
 const isSystem = (record) => fm(record).kind === SYSTEM_ID;
 
-module.exports = { FOLDER_KINDS, COMPONENT_KINDS, IMPLEMENTED_KINDS, TOKENED_KINDS, LEVELS, INTEGER_VERSION, SEMVER, problem, fm, isElement, isComponent, isSystem, belongs, readable, placed, byId, systemOf };
+module.exports = { FOLDER_KINDS, COMPONENT_KINDS, IMPLEMENTED_KINDS, TOKENED_KINDS, LEVELS, INTEGER_VERSION, SEMVER, problem, fm, isElement, isComponent, isSystem, belongs, readable, placed, byId, systemOf, tokensUsedBy };
