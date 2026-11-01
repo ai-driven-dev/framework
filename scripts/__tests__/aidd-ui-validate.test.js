@@ -321,7 +321,7 @@ describe("aidd-ui validator entries", () => {
       fs.appendFileSync(path.join(tmp, "src/ui/Button.tsx"), 'const a = "#ff0000";\nconst b = "#00ff00";\n');
       const orphans = Array.from({ length: 25 }, (_, index) => `src/ui/Orphan${String(index).padStart(2, "0")}.tsx`);
       for (const orphan of orphans) fs.writeFileSync(path.join(tmp, orphan), "export function Orphan() {}\n");
-      const errors = [`✗ src/ui/Button.tsx: line 4: colour literal "#ff0000", use a token (C4)`, `✗ src/ui/Button.tsx: line 5: colour literal "#00ff00", use a token (C4)`];
+      const errors = ["line 4: colour literal \"#ff0000\"", "line 5: colour literal \"#00ff00\""].map((literal) => `✗ src/ui/Button.tsx: ${literal}, use a token (counted as new: no git commit to compare it with) (C4)`);
       const warnings = orphans.slice(0, 18).map((orphan) => `⚠ ${orphan}: no record links it and no ignore covers it (C3)`);
       assert.deepEqual(hook(postToolUse(path.join(tmp, TOKENS))), claudeFeedback([...errors, ...warnings, `… and 7 more: node ${ENGINE} validate ${tmp}`]));
     });

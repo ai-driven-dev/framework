@@ -20,7 +20,8 @@ The code roots from `system.md`, and the token source even outside them.
    - Level by what a component uses: an atom uses no component, a molecule uses atoms, a composition uses molecules.
 4. **Cover.** Run `validate` and take each C3 warning as a file under a code root no record links yet.
    - Link it with a record, or add its path to `ignore` in `system.md`. Components not recorded yet are a backlog these warnings list, not a failure.
-5. **Report.** Colour literals in committed files are existing debt, reported as warnings: list them for the person. This skill never writes in the code, the feature that touches the file removes the literal. Never `ignore` a file or narrow `code-roots` to silence one: both hide code from coverage.
+5. **Report.** Colour literals in committed files are existing debt, reported as warnings: list them for the person. This skill never writes in the code, the feature that touches the file removes the literal. Never `ignore` a hand-written file or narrow `code-roots` to silence one: both hide code from coverage.
+   - A literal in generated output, such as a gitignored file under a code root, is no debt: that output goes in `ignore`.
 
 ## Output
 
@@ -38,3 +39,4 @@ The code roots from `system.md`, and the token source even outside them.
 | A component with `size` and `tone` props | `variants` lists each value as `size=<value>` or `tone=<value>` |
 | An unlinked file | the C3 warning is gone by a record or by `ignore`, or kept as backlog |
 | A committed colour literal in the code | the code is untouched, the file is not in `ignore`, the warning is listed |
+| A colour literal in a gitignored generated file | the file is in `ignore`, the error is gone |

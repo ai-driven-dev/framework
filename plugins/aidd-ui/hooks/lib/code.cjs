@@ -7,7 +7,7 @@ const { list } = require("./markdown.cjs");
 const { placed, systemOf, isElement, fm } = require("./model.cjs");
 const { PATTERNS, findLiterals, styled, declaresRightToLeft } = require("./literals.cjs");
 const { walk, text, relative, isUnder, checkOf, WARNING } = require("./project.cjs");
-const { identicalToHead } = require("./committed.cjs");
+const { unclearedByHead } = require("./committed.cjs");
 
 const EXPORT_SEPARATOR = "#";
 const PACKAGE_PREFIX = "package:";
@@ -140,13 +140,14 @@ const literalProblems = (pattern, extensions, applies = () => true) => (project)
         .flatMap((file) => findLiterals(searchable(project, file), pattern).map((found) => ({ file, ...found })))
     : [];
 
-/** A colour literal is new drift, an error, unless git confirms its file is as HEAD holds it:
- * then it is existing debt, a warning, since nothing in this change wrote it. */
+/** A colour literal is new drift, an error saying why git could not clear it, unless git confirms
+ * its file is as HEAD holds it: then it is existing debt, a warning, since nothing in this change
+ * wrote it. */
 function colourProblems(project) {
   const found = literalProblems(PATTERNS.colour, SCANNED_EXTENSIONS)(project);
   if (!found.length) return [];
-  const debt = identicalToHead(project, [...new Set(found.map((each) => each.file))]);
-  return found.map((each) => (debt.has(each.file) ? { ...each, severity: WARNING } : each));
+  const uncleared = unclearedByHead(project, [...new Set(found.map((each) => each.file))]);
+  return found.map((each) => (uncleared.has(each.file) ? { ...each, message: `${each.message} (counted as new: ${uncleared.get(each.file)})` } : { ...each, severity: WARNING }));
 }
 
 function codeTokensProblems(project) {

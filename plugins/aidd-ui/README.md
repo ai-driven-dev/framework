@@ -92,7 +92,7 @@ node <plugin>/hooks/aidd-ui.cjs impact <id or token>… [--root <dir>]
 
 ## Validation
 
-`validate` prints `VALID`, or one `✗ <file>: <message> (<rule>)` line per error and `⚠` per warning, and exits 1 when an error remains. Warnings: a file under a code root no record links, a colour literal in a code file identical to `HEAD`, a render length of 2px or less, and a failure of `git` in H8. A colour literal in a code file changed or untracked since `HEAD`, or where `git` cannot answer, whatever the reason, is an error.
+`validate` prints `VALID`, or one `✗ <file>: <message> (<rule>)` line per error and `⚠` per warning, and exits 1 when an error remains. Warnings: a file under a code root no record links, a colour literal in a code file identical to `HEAD`, a render length of 2px or less, and a failure of `git` in H8. A colour literal in a code file changed or untracked since `HEAD`, or where `git` cannot answer, whatever the reason, is an error that says which.
 
 A hook runs the same check:
 

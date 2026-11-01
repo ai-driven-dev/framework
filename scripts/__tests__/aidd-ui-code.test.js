@@ -43,6 +43,7 @@ function linkedStylesheet(css) {
 }
 
 /** Appends one line to a file of the project. */
+const NO_COMMIT = " (counted as new: no git commit to compare it with)";
 const append = (file, line) => fs.appendFileSync(path.join(tmp, file), `${line}\n`);
 
 describe("aidd-ui code link", () => {
@@ -129,7 +130,7 @@ describe("aidd-ui code link", () => {
   describe("C4 colour literals", () => {
     it("names a colour literal in UI code, with its line", () => {
       append("src/ui/Button.tsx", 'const style = "color: #ff0000";');
-      assert.deepEqual(problems(), ['src/ui/Button.tsx: line 4: colour literal "#ff0000", use a token']);
+      assert.deepEqual(problems(), [`src/ui/Button.tsx: line 4: colour literal "#ff0000", use a token${NO_COMMIT}`]);
     });
 
     it("leaves a hex word in a script comment alone", () => {
@@ -166,6 +167,10 @@ describe("aidd-ui code link", () => {
     const severities = (project = load(tmp)) => code.check(project).filter((found) => found.rule === "C4").map((found) => `${found.severity} ${found.file}`);
     const BUTTON_FILE = "src/ui/Button.tsx";
     const HOME_FILE = "src/ui/HomePage.tsx";
+    /** Each C4 problem's message, what follows the literal saying why git could not clear it. */
+    const reasons = (project = load(tmp)) => code.check(project).filter((found) => found.rule === "C4").map((found) => found.message.split("use a token")[1]);
+    const CHANGED = " (counted as new: it changed since HEAD)";
+    const NOT_COMMITTED = " (counted as new: it is not committed)";
 
     it("warns on a literal in a file identical to HEAD: existing debt", () => {
       append(BUTTON_FILE, LITERAL);
@@ -186,6 +191,7 @@ describe("aidd-ui code link", () => {
       commitAll(tmp);
       append(BUTTON_FILE, "// edited");
       assert.deepEqual(severities(), [`${ERROR} ${BUTTON_FILE}`]);
+      assert.deepEqual(reasons(), [CHANGED]);
     });
 
     it("errs on a literal in an untracked file, and warns on the committed one beside it", () => {
@@ -193,11 +199,21 @@ describe("aidd-ui code link", () => {
       commitAll(tmp);
       put(tmp, "src/ui/New.tsx", `${LITERAL}\n`);
       assert.deepEqual(severities(), [`${WARNING} ${BUTTON_FILE}`, `${ERROR} src/ui/New.tsx`]);
+      assert.deepEqual(reasons(), ["", NOT_COMMITTED]);
+    });
+
+    it("says a gitignored file is not committed", () => {
+      put(tmp, ".gitignore", "src/ui/generated.css\n");
+      commitAll(tmp);
+      put(tmp, "src/ui/generated.css", "a { color: #123456; }\n");
+      assert.deepEqual(severities(), [`${ERROR} src/ui/generated.css`]);
+      assert.deepEqual(reasons(), [NOT_COMMITTED]);
     });
 
     it("errs in a folder that is no repository", () => {
       append(BUTTON_FILE, LITERAL);
       assert.deepEqual(severities(), [`${ERROR} ${BUTTON_FILE}`]);
+      assert.deepEqual(reasons(), [NO_COMMIT]);
     });
 
     it("errs in a repository with no commit, which is no failure of git", () => {
@@ -247,6 +263,7 @@ describe("aidd-ui code link", () => {
         append(BUTTON_FILE, LITERAL);
         commitAll(tmp);
         assert.deepEqual(withGit('echo "fatal: detected dubious ownership" >&2\nexit 128', severities), [`${ERROR} ${BUTTON_FILE}`]);
+        assert.deepEqual(withGit('echo "fatal: detected dubious ownership" >&2\nexit 128', reasons), [" (counted as new: git failed: fatal: detected dubious ownership)"]);
       });
 
       it("keeps the error when only the hash of the current files fails", () => {
@@ -254,6 +271,7 @@ describe("aidd-ui code link", () => {
         commitAll(tmp);
         const real = `PATH='${process.env.PATH}' exec git "$@"`;
         assert.deepEqual(withGit(`[ "$1" = hash-object ] && { echo "fatal: cannot hash" >&2; exit 128; }\n${real}`, severities), [`${ERROR} ${BUTTON_FILE}`]);
+        assert.deepEqual(withGit(`[ "$1" = hash-object ] && { echo "fatal: cannot hash" >&2; exit 128; }\n${real}`, reasons), [" (counted as new: git failed: fatal: cannot hash)"]);
       });
     });
 
@@ -306,12 +324,12 @@ describe("aidd-ui code link", () => {
 
     it("finds a colour literal in its style block, with its line", () => {
       hero("---\n---\n<style>\n  h1 { color: #ff0000; }\n</style>\n");
-      assert.deepEqual(problems(), [`${HERO}: line 4: colour literal "#ff0000", use a token`]);
+      assert.deepEqual(problems(), [`${HERO}: line 4: colour literal "#ff0000", use a token${NO_COMMIT}`]);
     });
 
     it("finds a colour literal in a string, and leaves one in its markup text alone", () => {
       hero('---\nconst c = "#ff0000";\n---\n<p>Rapport #412 and #add</p>\n');
-      assert.deepEqual(problems(), [`${HERO}: line 2: colour literal "#ff0000", use a token`]);
+      assert.deepEqual(problems(), [`${HERO}: line 2: colour literal "#ff0000", use a token${NO_COMMIT}`]);
     });
   });
 
