@@ -7,13 +7,12 @@ const nodePath = require("node:path");
 const { list } = require("./markdown.cjs");
 const { placed, systemOf, TOKENED_KINDS } = require("./model.cjs");
 const { text, checkOf } = require("./project.cjs");
-const { FONT_WEIGHTS, render, customProperty, dependents, loopOf } = require("./css.cjs");
+const { FONT_WEIGHTS, RAW_CSS_EXTENSION, VAR_REFERENCE, render, customProperty, citedBy, dependents, loopOf } = require("./css.cjs");
 
 const RESERVED_KEYS = ["$value", "$type", "$description", "$extensions", "$deprecated", "$extends", "$schema"];
 const ROOT_KEY = "$root"; // a stated limit: a group's own token is a named child here
 const PROPERTY_PREFIX = "$";
 const PATH_SEPARATOR = ".";
-const RAW_CSS_EXTENSION = "dev.ai-driven.css"; // a CSS value DTCG cannot hold, such as color-mix() or 100%
 const RESOLVER_FILE = "tokens.resolver.json";
 const CSS_FILE = "tokens.css";
 const RESOLVER_VERSION = "2025.10";
@@ -41,7 +40,6 @@ const BEZIER_X_INDEXES = [0, 2];
 const FORBIDDEN_IN_NAME = /[{}.]/;
 const ALIAS = /^\{([^{}]+)\}$/;
 const HEX = /^#[0-9a-fA-F]{6}$/;
-const CSS_VARIABLE = /var\(\s*(--[\w-]+)/g;
 
 const isObject = (value) => value !== null && typeof value === "object" && !Array.isArray(value);
 const isNumber = (value) => typeof value === "number" && Number.isFinite(value);
@@ -142,7 +140,7 @@ function measureProblem(value, units) {
 
 function fontWeightProblem(value) {
   if (isNumber(value) && value >= FONT_WEIGHT_MIN && value <= FONT_WEIGHT_MAX) return null;
-  if (typeof value === "string" && Object.hasOwn(FONT_WEIGHTS, value)) return null;
+  if (Object.hasOwn(FONT_WEIGHTS, value)) return null;
   return `fontWeight ${JSON.stringify(value)} must be 1 to 1000 or a keyword`;
 }
 
@@ -171,7 +169,8 @@ const shapeProblem = (type, value) => (aliasOf(value) !== undefined || !SHAPES[t
 
 /** A problem builder for a token file, tokens.json by default, naming the token path first. */
 const tokenProblem = (project, file = project.tokensFile) => (path, message) => ({ file, message: `${path}: ${message}` });
-const cssName = (path) => customProperty(path.join(PATH_SEPARATOR));
+/** Every token's CSS custom property. */
+const propertiesOf = (tree) => new Set([...tree.tokens.keys()].map(customProperty));
 
 function jsonProblems(tree, project) {
   return tree.problem ? [{ file: project.tokensFile, message: tree.problem }] : [];
@@ -298,7 +297,7 @@ function breakpointContexts(resolver, breakpoints, file) {
 function rawValueProblems(token, names) {
   const raw = rawCssOf(token);
   if (typeof raw !== "string" || !raw.trim()) return [`${RAW_CSS_EXTENSION} must be a CSS value`];
-  return [...raw.matchAll(CSS_VARIABLE)].filter((match) => !names.has(match[1])).map((match) => `var(${match[1]}) names no token`);
+  return [...raw.matchAll(VAR_REFERENCE)].filter((match) => !names.has(match[1])).map((match) => `var(${match[1]}) names no token`);
 }
 
 /** What a theme or breakpoint file earns: each token it redefines exists in tokens.json, keeps its
@@ -307,7 +306,7 @@ function redefinitionProblems(tree, project, owner, file) {
   const themed = readTree(project, file);
   if (themed.unusable) return themed.problem ? [{ file, message: themed.problem }] : [];
   const at = tokenProblem(project, file);
-  const names = new Set([...tree.tokens.values()].map((token) => cssName(token.path)));
+  const names = propertiesOf(tree);
   return [...themed.tokens].flatMap(([name, token]) => {
     const base = tree.tokens.get(name);
     if (!base) return [at(name, `${owner} redefines no token of tokens.json`)];
@@ -346,7 +345,7 @@ function resolverProblems(tree, project) {
  * A cycle of aliases alone has no raw value here: T5 names it. */
 function rawCssProblems(tree, project) {
   const at = tokenProblem(project);
-  const names = new Set([...tree.tokens.values()].map((token) => cssName(token.path)));
+  const names = propertiesOf(tree);
   const base = baseEntries(tree, project);
   return [...tree.tokens].filter(([, token]) => typeof rawCssOf(token) === "string" && rawCssOf(token).trim()).flatMap(([name, token]) => [...rawValueProblems(token, names), loopProblem(base, entryOf(name, token))].filter(Boolean).map((message) => at(name, message)));
 }
@@ -496,11 +495,11 @@ const check = checkOf(RULES, run);
  * cannot be read, so renders do not repeat T1. */
 function cssNames(project) {
   const tree = read(project);
-  return tree.unusable ? null : new Set([...tree.tokens.values()].map((token) => cssName(token.path)));
+  return tree.unusable ? null : propertiesOf(tree);
 }
 
 /** Every token's name by its CSS custom property. */
-const namesByProperty = (tree) => new Map([...tree.tokens].map(([name, token]) => [cssName(token.path), name]));
+const namesByProperty = (tree) => new Map([...tree.tokens.keys()].map((name) => [customProperty(name), name]));
 
 /** The tokens each token cites, by name: the one its alias names and those whose custom property
  * a `var()` of its raw CSS names, in tokens.json or in any theme or breakpoint file. Empty when tokens.json
@@ -508,19 +507,15 @@ const namesByProperty = (tree) => new Map([...tree.tokens].map(([name, token]) =
 function citations(project) {
   const tree = read(project);
   const byProperty = namesByProperty(tree);
-  const citedBy = (token) => [aliasOf(token.node.$value), ...[...(typeof rawCssOf(token) === "string" ? rawCssOf(token) : "").matchAll(CSS_VARIABLE)].map((match) => byProperty.get(match[1]))];
-  const found = new Map([...tree.tokens].map(([name, token]) => [name, citedBy(token)]));
+  const found = new Map(baseEntries(tree, project).map((entry) => [entry.name, citedBy(entry)]));
   for (const { files } of [...themeTrees(project), ...breakpointTrees(project)]) {
-    for (const { tree: themed } of files) for (const [name, token] of themed.tokens) found.get(name)?.push(...citedBy(token));
+    for (const entry of contextEntries(files)) found.get(entry.name)?.push(...citedBy(entry));
   }
-  return new Map([...found].map(([name, cited]) => [name, [...new Set(cited.filter((target) => tree.tokens.has(target)))]]));
+  return new Map([...found].map(([name, cited]) => [name, [...new Set(cited.map((property) => byProperty.get(property)).filter(Boolean))]]));
 }
 
 /** The token a ref names, whether written as its path or as its CSS custom property; the ref
  * itself when it names none. */
 const tokenNameOf = (project, ref) => namesByProperty(read(project)).get(ref) ?? ref;
 
-/** A token path's CSS custom property. */
-const cssNameOf = customProperty;
-
-module.exports = { check, blockers, generate, citations, tokenNameOf, cssNames, cssNameOf, cssFileOf };
+module.exports = { check, blockers, generate, citations, tokenNameOf, cssNames, cssFileOf };

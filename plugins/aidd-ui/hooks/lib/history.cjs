@@ -7,7 +7,8 @@ const { table, list, parseRecord } = require("./markdown.cjs");
 const { placed, systemOf, byId, tokensUsedBy, isElement, isSystem, problem, fm, INTEGER_VERSION, SEMVER } = require("./model.cjs");
 const { checkOf, text, UI_DIR, WARNING } = require("./project.cjs");
 const { committed, baseline, changed } = require("./committed.cjs");
-const { cssFileOf, cssNameOf } = require("./tokens.cjs");
+const { customProperty } = require("./css.cjs");
+const { cssFileOf } = require("./tokens.cjs");
 const { renderOf } = require("./renders.cjs");
 
 const HISTORY_SECTION = "History";
@@ -231,7 +232,7 @@ function valueProblems(project, named) {
   return versioned(project)
     .filter((record) => isElement(record) && !named.has(record.file))
     .flatMap((record) => {
-      const tokens = tokensUsedBy(index, record).filter((token) => moved.has(cssNameOf(token)));
+      const tokens = tokensUsedBy(index, record).filter((token) => moved.has(customProperty(token)));
       const committedRecord = tokens.length ? baseline(project, record.file) : null;
       const was = committedRecord === null ? null : heldFront(record, committedRecord);
       return was?.status !== VALIDATED ? [] : [problem(record, `value of ${tokens.join(", ")} changed since its committed version ${was.version}, raise its version with a History row`)];

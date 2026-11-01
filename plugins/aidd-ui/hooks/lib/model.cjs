@@ -64,4 +64,4 @@ function variantOf(item) {
 const systemOf = (project) => readable(project).find((record) => fm(record).kind === SYSTEM_ID);
 const isSystem = (record) => fm(record).kind === SYSTEM_ID;
 
-module.exports = { AXIS_SEPARATOR, variantOf, FOLDER_KINDS, COMPONENT_KINDS, IMPLEMENTED_KINDS, TOKENED_KINDS, LEVELS, INTEGER_VERSION, SEMVER, problem, fm, isElement, isComponent, isSystem, belongs, readable, placed, byId, systemOf, tokensUsedBy };
+module.exports = { AXIS_SEPARATOR, variantOf, COMPONENT_KINDS, IMPLEMENTED_KINDS, TOKENED_KINDS, LEVELS, INTEGER_VERSION, SEMVER, problem, fm, isElement, isComponent, isSystem, belongs, readable, placed, byId, systemOf, tokensUsedBy };

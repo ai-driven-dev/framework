@@ -4,7 +4,8 @@ const path = require("node:path");
 const { list } = require("./markdown.cjs");
 const { placed, byId, tokensUsedBy, variantOf, TOKENED_KINDS } = require("./model.cjs");
 const { PATTERNS, findLiterals, styled, painted, declaresRightToLeft } = require("./literals.cjs");
-const { cssNames, cssNameOf } = require("./tokens.cjs");
+const { VAR_REFERENCE, customProperty } = require("./css.cjs");
+const { cssNames } = require("./tokens.cjs");
 const { text, checkOf, RENDER_EXTENSION } = require("./project.cjs");
 
 const LINE_BREAK = "\n";
@@ -13,7 +14,6 @@ const STYLESHEET_LINK = `<link rel="stylesheet" href="${STYLESHEET_HREF}">`;
 const LINK_TAG = /<link\b[^>]*>/g;
 const STYLE_BLOCK = /<style\b[^>]*>[\s\S]*?<\/style>/gi;
 
-const CUSTOM_PROPERTY = /var\(\s*(--[\w-]+)/g;
 const DECLARED_PROPERTY = /(--[\w-]+)\s*:/g; // a property the render sets itself, not a token
 
 const renderOf = (record) => `${path.dirname(record.file)}/${record.frontMatter.id}${RENDER_EXTENSION}`;
@@ -53,7 +53,7 @@ function referenceProblems(project) {
     return html
       .split(LINE_BREAK)
       .flatMap((line, index) =>
-        [...line.matchAll(CUSTOM_PROPERTY)]
+        [...line.matchAll(VAR_REFERENCE)]
           .filter((match) => !names.has(match[1]))
           .map((match) => ({ file, message: `line ${index + 1}: var(${match[1]}) names no token` }))
       );
@@ -69,11 +69,11 @@ function declaredProblems(project) {
   return rendered(project)
     .filter((record) => project.renders.includes(renderOf(record)))
     .flatMap((record) => {
-      const declared = new Set(tokensUsedBy(index, record).map(cssNameOf));
+      const declared = new Set(tokensUsedBy(index, record).map(customProperty));
       return readRender(project, renderOf(record))
         .split(LINE_BREAK)
         .flatMap((line, index) =>
-          [...line.matchAll(CUSTOM_PROPERTY)]
+          [...line.matchAll(VAR_REFERENCE)]
             .filter((match) => tokens.has(match[1]) && !declared.has(match[1]))
             .map((match) => ({ file: renderOf(record), message: `line ${index + 1}: var(${match[1]}) is a token ${record.frontMatter.id} does not declare` }))
         );
