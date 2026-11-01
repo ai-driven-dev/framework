@@ -5,7 +5,7 @@ status: proposed
 version: 1.0.0
 format: 1
 platforms: [{{platforms}}]
-breakpoints: [{{breakpoints, smallest first}}]
+breakpoints: [{{breakpoints, the query that must win last: smallest first with min-width, largest first with max-width}}]
 themes: [{{themes, the base first}}]
 locales: [{{locales}}]
 directions: [{{directions, ltr or rtl}}]
@@ -22,9 +22,9 @@ libraries: [{{component packages the code uses}}]
 
 ## Breakpoints
 
-| Name | From |
+| Name | Width |
 | --- | --- |
-| {{breakpoint name}} | {{its width}} |
+| {{breakpoint name}} | {{the widths it covers}} |
 
 ## History
 

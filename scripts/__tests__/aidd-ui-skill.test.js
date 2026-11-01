@@ -20,7 +20,7 @@ const TASK = "aidd_docs/tasks/ds-init";
 const FILLS = {
   system: {
     platforms: "web",
-    "breakpoints, smallest first": "mobile, desktop",
+    "breakpoints, the query that must win last: smallest first with min-width, largest first with max-width": "mobile, desktop",
     "themes, the base first": "light, dark",
     locales: "fr, ar",
     "directions, ltr or rtl": "ltr, rtl",
@@ -30,7 +30,7 @@ const FILLS = {
     "paths under a code root no record links": "src/ui/vendor",
     "component packages the code uses": "@radix-ui/react-dialog",
     "breakpoint name": "mobile",
-    "its width": "0",
+    "the widths it covers": "below 64rem",
     "task folder": TASK,
   },
   brand: {
@@ -164,6 +164,7 @@ describe("aidd-ui 01-system breakpoints", () => {
     const [resolver] = steps.match(/\{"version": "2025\.10"[^`]*"dev\.ai-driven\.media"[^`]*\}/);
     const [file] = steps.match(/\{"space": [^`]*\}/);
     put(tmp, `${UI}/tokens.resolver.json`, resolver);
+    assert.equal(JSON.parse(file).space.md.$type, "dimension");
     put(tmp, `${UI}/breakpoints/desktop.json`, file);
     edit(tmp, `${UI}/system.md`, "themes: [light, dark]", "themes: [light]");
     assert.equal(spawnSync(process.execPath, [ENGINE, "tokens", tmp], { encoding: "utf8" }).status, 0);
