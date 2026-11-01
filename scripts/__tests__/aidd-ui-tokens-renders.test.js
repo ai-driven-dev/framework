@@ -333,6 +333,13 @@ describe("aidd-ui tokens and renders", () => {
       assert.deepEqual(problems(), [`${DESKTOP}: space.md: $type "color" differs from tokens.json's "dimension"`]);
     });
 
+    it("names the missing type of a base token holding none, never \"undefined\"", () => {
+      addToken("ring", { $extensions: { "dev.ai-driven.css": "0 0 0 2px red" } });
+      editJson(DESKTOP, (tree) => (tree.misc = { ring: { $type: "shadow", $extensions: { "dev.ai-driven.css": "none" } } }));
+      generateStylesheet(tmp);
+      assert.deepEqual(problems(), [`${DESKTOP}: misc.ring: $type "shadow" has nothing to match, tokens.json's token has no $type`]);
+    });
+
     it("names a value of the wrong shape", () => {
       editJson(DESKTOP, (tree) => (tree.space.md.$value.unit = "em"));
       assert.deepEqual(problems(), [`${DESKTOP}: space.md: breakpoint "desktop": unit "em" must be px or rem`]);

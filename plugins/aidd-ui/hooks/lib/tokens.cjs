@@ -312,6 +312,7 @@ function redefinitionProblems(tree, project, owner, file) {
     const base = tree.tokens.get(name);
     if (!base) return [at(name, `${owner} redefines no token of tokens.json`)];
     const type = typeOf(tree, base);
+    if (token.node.$type !== undefined && type === undefined) return [at(name, `$type "${token.node.$type}" has nothing to match, tokens.json's token has no $type`)];
     if (token.node.$type !== undefined && token.node.$type !== type) return [at(name, `$type "${token.node.$type}" differs from tokens.json's "${type}"`)];
     if (isRaw(token)) return rawValueProblems(token, names).map((message) => at(name, message));
     const message = shapeProblem(type, token.node.$value) ?? aliasProblem(tree, token.node.$value, type);

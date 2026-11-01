@@ -149,7 +149,7 @@ function implementedThroughUses(record, index) {
 function implementedProblem(record, index) {
   const { kind, version } = fm(record);
   const implemented = fm(record)[IMPLEMENTED_VERSION];
-  if (!IMPLEMENTED_KINDS.includes(kind)) return `${IMPLEMENTED_VERSION} is for components and screens, never a ${kind}`;
+  if (!IMPLEMENTED_KINDS.includes(kind)) return `${IMPLEMENTED_VERSION} is for components and screens, never ${/^[aeiou]/.test(kind) ? "an" : "a"} ${kind}`;
   if (!INTEGER_VERSION.test(implemented)) return `${IMPLEMENTED_VERSION} "${implemented}" must be an integer from 1`;
   if (INTEGER_VERSION.test(version) && Number(implemented) > Number(version)) return `${IMPLEMENTED_VERSION} ${implemented} is ahead of version ${version}`;
   if ("code" in fm(record) || implementedThroughUses(record, index)) return null;

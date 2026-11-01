@@ -277,6 +277,11 @@ describe("aidd-ui records and history", () => {
       assert.deepEqual(problems(), [`${BUTTON}: implemented-version "yes" must be an integer from 1`]);
     });
 
+    it("names an implemented version on an asset, with its article", () => {
+      change(ICON, "version: 1", "version: 1\nimplemented-version: 1");
+      assert.deepEqual(problems(), [`${ICON}: implemented-version is for components and screens, never an asset`]);
+    });
+
     it("names an implemented version on a record that is never code", () => {
       change(JOURNEY, "version: 1", "version: 1\nimplemented-version: 1");
       assert.deepEqual(problems(), [`${JOURNEY}: implemented-version is for components and screens, never a journey`]);
