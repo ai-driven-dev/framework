@@ -94,7 +94,7 @@ Deux axes, jamais mêlés : où en est le design, et quelle version le code impl
 - Une valeur qui dépend de la largeur suit le même module : `tokens.json` porte le breakpoint de départ, contexte par défaut et vide ; chaque autre breakpoint a son fichier, qui ne redéfinit que des tokens de la base avec le même type, et sa media query telle quelle dans une extension du modificateur. `tokens.css` la porte dans un bloc `@media` après les thèmes. Un token qu'un bloc de thème porte, redéfini ou redéclaré comme dépendant, ne change jamais à un breakpoint : ce bloc cacherait sa valeur.
 - Une valeur que DTCG ne sait pas porter (`color-mix()`, `%`, `em`) est gardée en CSS brut dans une extension du token ; les `var()` qu'elle cite sont des tokens existants et comptent comme des dépendances.
 - Un écran montre tous ses états dans un seul fichier, avec un sélecteur d'état.
-- Une variante est une valeur nue, montrée par `data-variant`, ou `axe=valeur` pour une propriété qui varie seule (`size=sm`), montrée par `data-<axe>` ; `state` et `variant` ne sont jamais des axes.
+- Une variante est une valeur nue, montrée par `data-variant`, ou `axe=valeur` pour une propriété qui varie seule (`size=sm`), montrée par `data-<axe>` ; `state`, `variant` et `theme` ne sont jamais des axes.
 - La vitrine est générée sans IA, à partir des fiches et de gabarits fixes : identique à chaque génération, elle montre chaque élément, ses variantes, ses états, ses usages et son lien vers le réel.
 - La vitrine affiche la version validée d'un écran et un lien vers le réel.
 
