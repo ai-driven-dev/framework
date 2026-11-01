@@ -798,9 +798,8 @@ describe("aidd-ui records and history", () => {
         assert.deepEqual(whole(), [`${STYLESHEET}: unreadable`]);
       });
 
-      it("resolves values through raw CSS that loops", () => {
-        const looping = (target) => ({ $type: "number", $value: 0, $extensions: { "dev.ai-driven.css": `var(--loop-${target})` } });
-        editTokens(tmp, (tree) => (tree.loop = { one: looping("two"), two: looping("one") }));
+      it("resolves values through a committed stylesheet that loops, as one edited by hand may", () => {
+        edit(tmp, STYLESHEET, "--space-md: 1rem;", "--space-md: 1rem;\n  --loop-one: var(--loop-two);\n  --loop-two: var(--loop-one);");
         commit();
         setBold(600);
         assert.deepEqual(whole(), THROUGH_BOLD);

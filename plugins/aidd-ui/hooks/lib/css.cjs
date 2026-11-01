@@ -79,6 +79,12 @@ function dependents(base, redefined) {
   return base.filter((entry) => reached.has(customProperty(entry.name)) && !own.has(customProperty(entry.name)));
 }
 
+/** The custom property `entry` cites that leads back to it among `declarations`; undefined when none does. */
+function loopOf(declarations, entry) {
+  const back = new Set([entry, ...dependents(declarations, [entry])].map((each) => customProperty(each.name)));
+  return citedBy(entry).find((cited) => back.has(cited));
+}
+
 const block = (selector, declarations) => [`${selector} {`, ...declarations.map(([name, value]) => `${INDENT}${customProperty(name)}: ${value};`), "}"];
 
 /** A rule block nested in an `@media` block. */
@@ -100,4 +106,4 @@ function render({ base, baseTheme, themes, breakpoints = [] }) {
   return { css: problems.length ? null : `${[HEADER, ...blocks.map((lines) => lines.join(LINE_BREAK))].join(PARAGRAPH_BREAK)}${LINE_BREAK}`, problems };
 }
 
-module.exports = { valueOf, render, customProperty, dependents };
+module.exports = { valueOf, render, customProperty, dependents, loopOf };

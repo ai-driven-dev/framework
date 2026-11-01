@@ -7,7 +7,7 @@ const nodePath = require("node:path");
 const { list } = require("./markdown.cjs");
 const { placed, systemOf, TOKENED_KINDS } = require("./model.cjs");
 const { text, checkOf } = require("./project.cjs");
-const { render, customProperty, dependents } = require("./css.cjs");
+const { render, customProperty, dependents, loopOf } = require("./css.cjs");
 
 const RESERVED_KEYS = ["$value", "$type", "$description", "$extensions", "$deprecated", "$extends", "$schema"];
 const ROOT_KEY = "$root"; // a stated limit: a group's own token is a named child here
@@ -339,14 +339,17 @@ function resolverProblems(tree, project) {
     ...Object.entries(contexts).flatMap(([theme, files]) => files.flatMap((themeFile) => redefinitionProblems(tree, project, `theme "${theme}"`, themeFile))),
     ...breakpoints.contexts.flatMap(({ breakpoint, files }) => files.flatMap((context) => redefinitionProblems(tree, project, `breakpoint "${breakpoint}"`, context))),
     ...ownerProblems(tree, project),
+    ...contextLoopProblems(tree, project),
   ];
 }
 
-/** A raw CSS value's `var()`s name tokens: they are its dependencies. */
+/** A raw CSS value's `var()`s name tokens, and never lead back to it: they are its dependencies.
+ * A cycle of aliases alone has no raw value here: T5 names it. */
 function rawCssProblems(tree, project) {
   const at = tokenProblem(project);
   const names = new Set([...tree.tokens.values()].map((token) => cssName(token.path)));
-  return [...tree.tokens].filter(([, token]) => typeof rawCssOf(token) === "string" && rawCssOf(token).trim()).flatMap(([name, token]) => rawValueProblems(token, names).map((message) => at(name, message)));
+  const base = baseEntries(tree, project);
+  return [...tree.tokens].filter(([, token]) => typeof rawCssOf(token) === "string" && rawCssOf(token).trim()).flatMap(([name, token]) => [...rawValueProblems(token, names), loopProblem(base, entryOf(name, token))].filter(Boolean).map((message) => at(name, message)));
 }
 
 /** Components and screens, which cite tokens. */
@@ -399,13 +402,38 @@ function breakpointTrees(project) {
 /** The tokens of context files as the stylesheet sees them, `typeFor` giving each its type. */
 const contextEntries = (files, typeFor = () => undefined) => files.flatMap(({ file, tree: own }) => [...own.tokens].map(([name, token]) => entryOf(name, token, typeFor(name), file)));
 
+/** The tokens of tokens.json as the stylesheet sees them. */
+const baseEntries = (tree, project) => contextEntries([{ file: project.tokensFile, tree }]);
+
+/** What a declaration earns when it depends on itself among `declarations`, or null: the browser
+ * computes such a value as if the property were never set. */
+function loopProblem(declarations, entry) {
+  const cited = loopOf(declarations, entry);
+  if (cited === undefined) return null;
+  return cited === customProperty(entry.name) ? "cites itself, so the browser computes nothing: write a primitive value" : `cites ${cited}, which leads back to it`;
+}
+
+/** A context's value depending on itself once the context is layered on the base, which neither
+ * file shows alone. */
+function contextLoopProblems(tree, project) {
+  const base = baseEntries(tree, project);
+  const contexts = [...themeTrees(project).map(({ theme, files }) => ({ owner: `theme "${theme}"`, files })), ...breakpointTrees(project).map(({ breakpoint, files }) => ({ owner: `breakpoint "${breakpoint}"`, files }))];
+  return contexts.flatMap(({ owner, files }) => {
+    const own = contextEntries(files);
+    const layered = [...base.filter((entry) => !own.some((each) => each.name === entry.name)), ...own];
+    return own.flatMap((entry) => {
+      const message = loopProblem(layered, entry);
+      return message ? [{ file: entry.file, message: `${entry.name}: ${owner}: ${message}` }] : [];
+    });
+  });
+}
+
 /** A token a theme block holds, whether redefined there or redeclared as depending on one that is,
  * cannot also be a breakpoint's: on a nested region that block would hide the breakpoint's value.
  * A breakpoint value citing such a token counts too: a nested region would inherit it stale. */
 function ownerProblems(tree, project) {
   const breakpoints = breakpointTrees(project).map(({ breakpoint, files }) => ({ breakpoint, tokens: contextEntries(files) }));
-  const base = [...tree.tokens].map(([name, token]) => entryOf(name, token, undefined, project.tokensFile));
-  const everyDeclaration = [...base, ...breakpoints.flatMap(({ tokens }) => tokens)];
+  const everyDeclaration = [...baseEntries(tree, project), ...breakpoints.flatMap(({ tokens }) => tokens)];
   return themeTrees(project).flatMap(({ theme, files }) => {
     const own = contextEntries(files);
     const held = new Set([...own, ...dependents(everyDeclaration, own)].map((entry) => entry.name));

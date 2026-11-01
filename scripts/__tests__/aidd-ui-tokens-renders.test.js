@@ -415,6 +415,60 @@ describe("aidd-ui tokens and renders", () => {
     });
   });
 
+  describe("a loop across declarations", () => {
+    const SELF = "cites itself, so the browser computes nothing: write a primitive value";
+    const raw = (css, type = "dimension") => ({ $type: type, $extensions: { "dev.ai-driven.css": css } });
+
+    it("names a theme value citing a token that aliases it", () => {
+      editJson(DARK, (tree) => (tree.color.brand.primary.$value = "{color.text.default}"));
+      assert.deepEqual(problems(), [`${DARK}: color.brand.primary: theme "dark": cites --color-text-default, which leads back to it`]);
+    });
+
+    it("names a theme's raw value citing itself, and says what to write", () => {
+      editJson(DARK, (tree) => (tree.color.brand.primary = { $extensions: { "dev.ai-driven.css": "color-mix(in srgb, var(--color-brand-primary) 80%, black)" } }));
+      assert.deepEqual(problems(), [`${DARK}: color.brand.primary: theme "dark": ${SELF}`]);
+    });
+
+    it("names a breakpoint value citing a token that depends on it", () => {
+      addToken("gap", { $type: "dimension", $value: "{space.md}" });
+      editJson(DESKTOP, (tree) => (tree.space.md = { $extensions: { "dev.ai-driven.css": "calc(var(--misc-gap) * 2)" } }));
+      assert.deepEqual(problems(), [`${DESKTOP}: space.md: breakpoint "desktop": cites --misc-gap, which leads back to it`]);
+    });
+
+    it("names each raw token of a cycle in tokens.json", () => {
+      addToken("a", raw("var(--misc-b)"));
+      addToken("b", raw("var(--misc-a)"));
+      assert.deepEqual(problems(), [`${TOKENS}: misc.a: cites --misc-b, which leads back to it`, `${TOKENS}: misc.b: cites --misc-a, which leads back to it`]);
+    });
+
+    it("names a raw token of tokens.json citing itself", () => {
+      addToken("a", raw("calc(var(--misc-a) * 2)"));
+      assert.deepEqual(problems(), [`${TOKENS}: misc.a: ${SELF}`]);
+    });
+
+    it("leaves a token depending on a cycle it is not part of to that cycle's names", () => {
+      addToken("a", raw("var(--misc-b)"));
+      addToken("b", raw("var(--misc-a)"));
+      addToken("c", raw("var(--misc-a)"));
+      assert.deepEqual(problems(), [`${TOKENS}: misc.a: cites --misc-b, which leads back to it`, `${TOKENS}: misc.b: cites --misc-a, which leads back to it`]);
+    });
+
+    it("accepts a theme inverting an alias, the base's citation being replaced", () => {
+      editJson(DARK, (tree) => {
+        tree.color.brand.primary.$value = "{color.text.default}";
+        tree.color.text = { default: { $value: { colorSpace: "srgb", components: [1, 1, 1], hex: "#ffffff" } } };
+      });
+      generateStylesheet(tmp);
+      assert.deepEqual(problems(), []);
+    });
+
+    it("accepts a theme value citing a token that does not lead back", () => {
+      editJson(DARK, (tree) => (tree.color.action = { default: { $value: "{color.brand.primary}" } }));
+      generateStylesheet(tmp);
+      assert.deepEqual(problems(), []);
+    });
+  });
+
   describe("T7 cited tokens", () => {
     it("names a component token absent from tokens.json", () => {
       edit(tmp, BUTTON, "tokens: [color.action.default,", "tokens: [space.huge, color.action.default,");
