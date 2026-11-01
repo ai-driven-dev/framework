@@ -89,7 +89,7 @@ const template = (name) => fs.readFileSync(path.join(SKILL, "assets", TEMPLATES[
 
 /** A template as an action fills it: every placeholder answered, every comment deleted. */
 function filled(name) {
-  const text = template(name).replace(COMMENT, "").replace(PLACEHOLDER, (_, slot) => {
+  const text = template(name).split(COMMENT).join("").replace(PLACEHOLDER, (_, slot) => {
     assert.ok(Object.hasOwn(FILLS[name], slot), `${TEMPLATES[name]}: no fill for {{${slot}}}`);
     return FILLS[name][slot];
   });

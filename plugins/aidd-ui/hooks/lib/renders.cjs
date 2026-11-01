@@ -37,7 +37,7 @@ function coverageProblems(project) {
   return rendered(project)
     .filter((record) => project.renders.includes(renderOf(record)))
     .flatMap((record) => {
-      const html = text(project, renderOf(record))?.replace(STYLE_BLOCK, ""); // a selector in a style block shows nothing
+      const html = text(project, renderOf(record))?.split(STYLE_BLOCK).join(""); // a selector in a style block shows nothing
       if (html === undefined) return [];
       const wanted = [...list(record.frontMatter.variants).map(variantAttribute), ...list(record.frontMatter.states).map((value) => `data-state="${value}"`)];
       return wanted.filter((attribute) => !html.includes(attribute)).map((attribute) => ({ file: renderOf(record), message: `no ${attribute}` }));
