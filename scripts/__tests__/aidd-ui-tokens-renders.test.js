@@ -3,7 +3,7 @@ const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
 const { describe, it, beforeEach, afterEach } = require("node:test");
-const { UI, writeProject, generateStylesheet, edit, editTokens } = require("./fixtures/aidd-ui/project.js");
+const { UI, writeProject, generateStylesheet, edit, editTokens, put } = require("./fixtures/aidd-ui/project.js");
 
 // Each rule has one mutation of the valid project, and the test asserts the whole problem
 // list: dropping the rule turns its own test red and leaves every other one green.
@@ -281,6 +281,42 @@ describe("aidd-ui tokens and renders", () => {
         assert.deepEqual(problems(), [`${RESOLVER}: ${message}`]);
       });
     }
+
+    describe("in the order of system.md", () => {
+      const TABLET = `${UI}/breakpoints/tablet.json`;
+      /** Three breakpoints in system.md, with the resolver's contexts in `order`. */
+      const threeBreakpoints = (declared, order, defaultContext) => {
+        edit(tmp, `${UI}/system.md`, "breakpoints: [mobile, desktop]", `breakpoints: [${declared.join(", ")}]`);
+        put(tmp, TABLET, JSON.stringify({ space: { md: { $type: "dimension", $value: { value: 1.25, unit: "rem" } } } }));
+        const files = { tablet: [{ $ref: "breakpoints/tablet.json" }], desktop: [{ $ref: "breakpoints/desktop.json" }], mobile: [{ $ref: "breakpoints/desktop.json" }] };
+        editJson(RESOLVER, (r) => {
+          modifier(r).default = defaultContext;
+          modifier(r).contexts = Object.fromEntries(order.map((name) => [name, name === defaultContext ? [] : files[name]]));
+          modifier(r).$extensions["dev.ai-driven.media"] = Object.fromEntries(order.filter((name) => name !== defaultContext).map((name) => [name, `(width: ${name})`]));
+        });
+        generateStylesheet(tmp);
+      };
+
+      it("passes contexts in that order, smallest first", () => {
+        threeBreakpoints(["mobile", "tablet", "desktop"], ["mobile", "tablet", "desktop"], "mobile");
+        assert.deepEqual(problems(), []);
+      });
+
+      it("passes contexts in that order, largest first", () => {
+        threeBreakpoints(["desktop", "tablet", "mobile"], ["desktop", "tablet", "mobile"], "desktop");
+        assert.deepEqual(problems(), []);
+      });
+
+      it("names a swap, which would change which value wins", () => {
+        threeBreakpoints(["mobile", "tablet", "desktop"], ["mobile", "desktop", "tablet"], "mobile");
+        assert.deepEqual(problems(), [`${RESOLVER}: breakpoint contexts mobile, desktop, tablet must follow system.md, mobile, tablet, desktop: the order of the @media blocks decides which value wins`]);
+      });
+
+      it("reads the order without a context system.md lacks", () => {
+        threeBreakpoints(["mobile", "desktop"], ["mobile", "tablet", "desktop"], "mobile");
+        assert.deepEqual(problems(), [`${RESOLVER}: context "tablet" is not a breakpoint in system.md`]);
+      });
+    });
 
     it("names a context file the project lacks", () => {
       fs.rmSync(path.join(tmp, DESKTOP));

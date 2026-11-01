@@ -264,7 +264,8 @@ function resolverContexts(resolver, themes, project, file) {
  * it from naming them. The modifier is optional. Its `default` is the context tokens.json holds,
  * so it lists no source and has no query: the module needs it to resolve without an input. Every
  * other context lists `$ref` files, and its query sits in the modifier's extension, a context
- * being an array that has no place for one. */
+ * being an array that has no place for one. Contexts follow system.md's order, which the @media
+ * blocks take. */
 function breakpointContexts(resolver, breakpoints, file) {
   const at = (message) => ({ file, message });
   const modifier = resolver.modifiers?.[BREAKPOINT_MODIFIER];
@@ -276,6 +277,9 @@ function breakpointContexts(resolver, breakpoints, file) {
   const extension = modifier.$extensions?.[MEDIA_EXTENSION];
   const queries = isObject(extension) ? extension : {};
   for (const name of Object.keys(queries)) if (name === modifier.default || !Object.hasOwn(modifier.contexts, name)) problems.push(at(`${MEDIA_EXTENSION} "${name}" names no context outside the default`));
+  const listed = Object.keys(modifier.contexts).filter((name) => breakpoints.includes(name));
+  const expected = breakpoints.filter((name) => listed.includes(name));
+  if (listed.join() !== expected.join()) problems.push(at(`breakpoint contexts ${listed.join(", ")} must follow system.md, ${expected.join(", ")}: the order of the @media blocks decides which value wins`));
   const contexts = [];
   for (const [breakpoint, sources] of Object.entries(modifier.contexts)) {
     if (!breakpoints.includes(breakpoint)) problems.push(at(`context "${breakpoint}" is not a breakpoint in system.md`));
