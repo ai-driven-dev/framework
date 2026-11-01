@@ -42,7 +42,7 @@ Every record opens with flat front matter, `key: value` or `key: [a, b]`, and cl
 | Record | Front matter | Body |
 | --- | --- | --- |
 | every one | `id` (the file name), `kind`, `status` (`proposed`, `validated`, `deprecated`), `version` | `## History` |
-| `system.md` | `format` (`1`), `version` in semver, `platforms`, `breakpoints`, `themes`, `locales`, `directions`, `primitives` (token groups components never cite), `code-roots`, `ignore`, `libraries`, each `[]` when empty; optional `code-tokens`, one file or a list | optional `## Rules`: Id, Rule |
+| `system.md` | `format` (`1`), `version` in semver, `platforms`, `breakpoints`, `themes`, `locales`, `directions`, `primitives` (token groups components never cite, nested such as `color.brand` too), `code-roots`, `ignore`, `libraries`, each `[]` when empty; optional `code-tokens`, one file or a list | `## Breakpoints`: Name, Width, one row per breakpoint; optional `## Rules`: Id, Rule |
 | `brand.md` | | `## Project`, `## Users`, `## Domain`, `## Platforms`, `## Personality and tone`, `## References`, `## Anti-references`; optional `## Glossary`: Concept, Word, Forbidden |
 | atom, molecule, composition | `uses`, `tokens`, `variants` (a bare value, or `axis=value` per independent prop), `states`, `interactive` (`yes` or `no`), `role`; optional `code`, `implemented-version` | `## Usage`, and `## Keyboard` when interactive |
 | screen | `uses`, `tokens`, `states`, `breakpoints`, `route`; optional `code`, `implemented-version` | |
@@ -64,7 +64,7 @@ Every record opens with flat front matter, `key: value` or `key: [a, b]`, and cl
 - An element uses elements of its own level or lower, never itself; an interactive component has `focus`, and `hover` or `disabled` only when they exist.
 - A deprecated element names `replaced-by: <id>`, or `replaced-by: none` with a `## Deprecation` section.
 - A render uses only the tokens its record lists in `tokens`, or those of the elements it uses, transitively. Its literals are read in `<style>` blocks and `style=""` values, never in its text, and its colours also in `fill`, `stroke`, `color` and `bgcolor` values, where a value opening with `var()` is a token; a variant or state counts when an element outside `<style>` carries its `data-` attribute: `data-variant="<value>"` for a bare item, `data-<axis>="<value>"` for `axis=value`, `data-state="<value>"` for a state.
-- An axis matches `[a-z][a-z-]*`, is never `state` or `variant`, and its value is never empty.
+- An axis matches `[a-z][a-z-]*`, is never `state`, `variant` or `theme`, and its value is never empty.
 - `code-tokens` names the file where the code consumes the tokens, or a list, one per app; each is never checked for literals or coverage.
 - Themes: the first theme in `system.md` is held by `tokens.json`. `tokens.resolver.json`, required from two themes on and checked whenever present, has a set whose sources hold `{"$ref": "tokens.json"}`, a `theme` modifier with one context per theme and the base as `default`, and `{"$ref": "#/modifiers/theme"}` in `resolutionOrder`. A context lists `{"$ref": "<file>"}` sources, each redefining base tokens with their type.
 - Breakpoints: a value that depends on the width is a context of an optional `breakpoint` modifier, with `{"$ref": "#/modifiers/breakpoint"}` in `resolutionOrder`. Its `default` is the breakpoint `tokens.json` holds, an empty context, since the Resolver needs one to resolve without an input. Contexts follow the order of `breakpoints` in `system.md`, which the `@media` blocks take. Every other context is a breakpoint in `system.md` listing `{"$ref": "<file>"}` sources, like a theme's, with its media query verbatim in the modifier's `"$extensions": {"dev.ai-driven.media": {"<breakpoint>": "<query>"}}`.
@@ -123,11 +123,16 @@ Rules: records R1 to R17, history H1 to H8, tokens T1 to T10, renders V1 to V8, 
 - The committed baseline of H8 is `HEAD`: without `git`, a repository, a commit or the committed file, the rule is silent, and committing an edit without raising the version hides it. Any other failure of `git`, such as a repository it refuses to read or its five-second timeout, is one H8 warning on `aidd_docs/ui`, naming the failure. A run asks `git` once which files changed, then reads only those, plus the committed record of an element using a token whose value changed; C4 asks twice more when it finds a literal, naming each file that holds one.
 - A version raise that stays `validated` passes until a review can prove it.
 - A `tokens.css` kept out of git by `.gitignore` has no committed baseline, which disables H8's token-value part: commit it.
-- Blank lines added to a held record count as an edit for H8.
+- A blank line added to a held record, inside a body too, counts as an edit for H8.
+- A `;` inside a raw `url()` hides a change of that value from H8.
+- Deleting a validated record is not caught.
+- A Task cell's folder is not checked for existence.
+- Two token paths with one CSS name are not detected.
+- A breakpoint's table width and its media query are not compared.
 - An opaque colour with a `hex` is written as that `hex`, which drops a wider gamut its `colorSpace` holds.
 - A review validates screens only for now, so components are validated by hand until the review page exists.
 - `code-roots` and `ignore` are path prefixes, not globs. Every folder under a code root is walked, `node_modules`, build output and dot-folders included: ignore them. A linked folder counts as one file no record links.
-- A render shows a variant or state when its text holds the attribute, whatever the element; an export exists when its name is a word of the linked file, a comment included.
+- A render shows a variant or state when its text holds the attribute, whatever the element; an export exists when its name is a word of the linked file, a comment included, so `stylesheet#word` passes C1 and covers the whole stylesheet.
 - The hook command names `${CLAUDE_PLUGIN_ROOT}` unquoted, like every plugin here: a plugin path with spaces breaks it.
 - In code, only colour literals are found, in web code only, outside tests and mocks, which C3 leaves out of the backlog too; other literals are left to the UI audit.
 - In script files, `.vue` and `.svelte` included, colours are found in string literals only. A Vue or Svelte component needs an export name in its link. An `.astro` file is read the same way, plus its `<style>` blocks.
