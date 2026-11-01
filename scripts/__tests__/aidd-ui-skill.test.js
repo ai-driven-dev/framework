@@ -201,6 +201,37 @@ describe("aidd-ui 01-system change flow", () => {
     assert.equal(fs.readFileSync(path.join(tmp, `${UI}/components/old-button.md`), "utf8"), deprecated);
   });
 
+  it("takes a token rename a deprecated element cites to a design system that validates, once that element is updated too", () => {
+    commitAll(tmp);
+    const report = JSON.parse(engine("impact", "color.action.default", "--root", tmp).stdout);
+    const reached = [...report.elements, ...report.screens];
+    for (const id of reached.filter((one) => one !== "old-button")) {
+      const file = `${UI}/${FILE_OF[id]}.md`;
+      edit(tmp, file, "\nversion: 1\n", "\nversion: 2\n");
+      edit(tmp, file, "status: validated", "status: proposed");
+      edit(tmp, file, FIRST_ROW, `${FIRST_ROW}\n| 2 | action colour renamed | yes | aidd_docs/tasks/rename |`);
+    }
+    const pending = ["default", "empty", "loading", "error"].map((state) => `| home | ${state} | 2 | pending | |`);
+    edit(tmp, `${UI}/reviews/first-pass.md`, "| home | error | 1 | pending | |", ["| home | error | 1 | pending | |", ...pending].join("\n"));
+    editTokens(tmp, (tree) => {
+      tree.color.action.primary = tree.color.action.default;
+      delete tree.color.action.default;
+    });
+    edit(tmp, `${UI}/components/button.md`, "color.action.default", "color.action.primary");
+    edit(tmp, `${UI}/components/button.html`, "--color-action-default", "--color-action-primary");
+    edit(tmp, `${UI}/components/old-button.md`, "color.action.default", "color.action.primary");
+    edit(tmp, `${UI}/components/old-button.html`, "--color-action-default", "--color-action-primary");
+    assert.equal(engine("tokens", tmp).status, 0);
+    assert.deepEqual(validate().out, [`✗ ${UI}/components/old-button.md: edited since its committed version 2, raise its version with a History row (H8)`]);
+
+    edit(tmp, `${UI}/components/old-button.md`, "\nversion: 2\n", "\nversion: 3\n");
+    edit(tmp, `${UI}/components/old-button.md`, "| 2 | deprecated for button | yes | aidd_docs/tasks/retire-old-button |", "| 2 | deprecated for button | yes | aidd_docs/tasks/retire-old-button |\n| 3 | action colour renamed | yes | aidd_docs/tasks/rename |");
+    assert.deepEqual(validate(), { code: 0, out: ["VALID"] });
+
+    const steps = fs.readFileSync(path.join(SKILL, "actions/06-change.md"), "utf8");
+    assert.ok(steps.includes("Only a value change leaves it so"));
+  });
+
   it("says so in its steps: deprecated elements left untouched, pending rows for a screen under review", () => {
     const steps = fs.readFileSync(path.join(SKILL, "actions/06-change.md"), "utf8");
     assert.ok(steps.includes("A deprecated element in the report is named to the person and left untouched"));
@@ -230,6 +261,16 @@ describe("aidd-ui 01-system skill", () => {
       assert.equal(/\d{4}[-_]\d{2}[-_]\d{2}/.test(text), false, `${file} holds a date`);
       assert.equal(text.includes("—"), false, `${file} holds an em-dash`);
     }
+  });
+
+  it("routes a design system whose tokens are open to the tokens action, in the survey and the router", () => {
+    const survey = fs.readFileSync(path.join(SKILL, "actions/01-survey.md"), "utf8");
+    assert.ok(survey.includes("Design system with T1 or T10 among its problems: read [tokens](04-tokens.md)."));
+    assert.ok(fs.readFileSync(path.join(SKILL, "SKILL.md"), "utf8").includes('survey -->|"design system, T1 or T10 open"| tokens'));
+  });
+
+  it("finds the engine under any tool's folder in a flat install", () => {
+    assert.ok(fs.readFileSync(path.join(SKILL, "SKILL.md"), "utf8").includes("look under the tool's folder for `hooks/aidd-ui/aidd-ui.cjs`"));
   });
 
   it("is the only skill the plugin lists and holds", () => {

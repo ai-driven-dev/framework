@@ -116,12 +116,17 @@ Rules: records R1 to R17, history H1 to H8, tokens T1 to T10, renders V1 to V8, 
 - A problem a write causes in a record that does not cite the written one, such as a use of a renamed id, appears at turn end only.
 - The Resolver is read in one profile: `theme` and `breakpoint` modifiers with file sources. Inline sources and other modifiers are not checked.
 - Breakpoint blocks cascade in the stylesheet, where the Resolver applies one context: at a width two queries match, a token only the earlier one redefines keeps that value.
+- A loop only two breakpoints form together, at a width both queries match, is not named.
+- A breakpoint file no resolver context names is not read.
+- With 3 or more themes, a nested region inherits the outer theme's values for the tokens its own theme does not redefine.
 - H8 compares a breakpoint's values over the base, not inside each theme, so a theme value citing a token a breakpoint redefines is not followed.
 - Composite tokens are checked for a `$value`, not for its shape, and reach `tokens.css` only as raw CSS.
 - `impact` leaves reviews out of its report.
 - A web design system only: a native app, such as an Expo one, is outside it.
 - The committed baseline of H8 is `HEAD`: without `git`, a repository, a commit or the committed file, the rule is silent, and committing an edit without raising the version hides it. Any other failure of `git`, such as a repository it refuses to read or its five-second timeout, is one H8 warning on `aidd_docs/ui`, naming the failure. A run asks `git` once which files changed, then reads only those, plus the committed record of an element using a token whose value changed; C4 asks at most twice more when it finds a literal, naming each file that holds one.
 - A version raise that stays `validated` passes until a review can prove it.
+- H8 does not watch an asset's file, a journey or `brand.md`.
+- C4 reads the state against `HEAD`: a committed literal is only a warning, and a clean checkout never fails it. A `git mv`, a committed symlink, or any edit of a debt file turns its literals into errors.
 - A `tokens.css` kept out of git by `.gitignore` has no committed baseline, which disables H8's token-value part: commit it.
 - A blank line added to a held record, inside a body too, counts as an edit for H8.
 - A `;` inside a raw `url()` hides a change of that value from H8.

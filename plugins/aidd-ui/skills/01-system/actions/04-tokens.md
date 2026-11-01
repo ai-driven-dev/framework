@@ -8,7 +8,7 @@ The brand and `system.md`, and the tokens extract found when the code already ha
 
 ## Process
 
-1. **Define.** Write `aidd_docs/ui/tokens.json`. A blank project takes two levels: primitives, the palette and scales, in the groups `system.md` lists as `primitives`, then semantic tokens that alias them as `{group.name}`.
+1. **Define.** Write `aidd_docs/ui/tokens.json`; when it exists and only the stylesheet is stale, go straight to Generate. A blank project takes two levels: primitives, the palette and scales, in the groups `system.md` lists as `primitives`, then semantic tokens that alias them as `{group.name}`.
    - A token never contains a token: a hover variant of `a.b` is the leaf `a.b-hover` when `a.b` is a token.
    - A colour is `{"colorSpace": "srgb", "components": [r, g, b], "alpha": 0.5, "hex": "#rrggbb"}`, `alpha` optional, a dimension `{"value": 1, "unit": "rem"}`, a duration `{"value": 150, "unit": "ms"}`.
    - A value the format cannot hold, such as `color-mix()` or `100%`, goes in `"$extensions": {"dev.ai-driven.css": "<css>"}`, its `var()`s naming existing tokens.

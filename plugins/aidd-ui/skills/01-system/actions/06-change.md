@@ -14,7 +14,7 @@ The change the person wants: the tokens and elements it touches. When it is name
    - The person refuses: stop.
 2. **Apply.** Make the change in `tokens.json`, a theme or breakpoint file or the records, checking every theme and breakpoint file that redefines the changed token.
    - For each element or screen the report lists, deprecated ones aside, in the same change: raise `version` by one, add a History row with the change, `yes` in Breaking when it removes a variant, state or property, renames or deletes a token, or deprecates the element (otherwise `no`), and the task folder, then set `status: proposed`.
-   - A deprecated element in the report is named to the person and left untouched: it keeps its version and status.
+   - A deprecated element in the report is named to the person and left untouched: it keeps its version and status. Only a value change leaves it so: when a token it cites is renamed or deleted, update it too, raise its version by one with a History row, `yes` in Breaking, keeping `status: deprecated`, since `validate` refuses a record citing a token that is gone.
    - An element this change deprecates names `replaced-by`, or `none` with a `## Deprecation` section.
    - For each reached screen a review under `aidd_docs/ui/reviews/` names in `screens`, add to that review's `## Verdicts`, columns Screen, State, Version, Verdict, Comment, one `pending` row per state at its new version; the older rows stay. The report leaves reviews out, so read them.
    - Leave `implemented-version` and `code` as they are: the code follows in the feature that carries the change.
@@ -36,7 +36,8 @@ The changed files, regenerated `tokens.css`, rewritten renders, new versions wit
 | Token value changed | the report lists the tokens, components, screens and journeys reached, and `tokens.css` holds the new value |
 | Element edited | its version rose by one, its History has the row, its status is `proposed`, and the hook reports no H8 |
 | Variant removed | the History row says `yes` in Breaking |
-| A deprecated element reached | it is named, its version and status unchanged, and the hook reports no H8 |
+| A deprecated element reached by a value change | it is named, its version and status unchanged, and the hook reports no H8 |
+| A token a deprecated element cites renamed | its record and render cite the new name, its version rose by one, Breaking `yes`, still `deprecated` |
 | A reached screen a review names | the review holds one `pending` row per state at the new version, and the hook reports no R13 |
 | Another token holding the same value | it is named to the person before applying |
 | Unknown name | the command exits 2 and nothing is written |
