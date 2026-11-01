@@ -317,6 +317,15 @@ describe("aidd-ui validator entries", () => {
       assert.deepEqual(hook(postToolUse(path.join(tmp, render))), claudeFeedback([...shown, `… and 5 more: node ${ENGINE} validate ${tmp}`]));
     });
 
+    it("prints errors before warnings, keeping each one's order, so the cap never cuts an error", () => {
+      fs.appendFileSync(path.join(tmp, "src/ui/Button.tsx"), 'const a = "#ff0000";\nconst b = "#00ff00";\n');
+      const orphans = Array.from({ length: 25 }, (_, index) => `src/ui/Orphan${String(index).padStart(2, "0")}.tsx`);
+      for (const orphan of orphans) fs.writeFileSync(path.join(tmp, orphan), "export function Orphan() {}\n");
+      const errors = [`✗ src/ui/Button.tsx: line 4: colour literal "#ff0000", use a token (C4)`, `✗ src/ui/Button.tsx: line 5: colour literal "#00ff00", use a token (C4)`];
+      const warnings = orphans.slice(0, 18).map((orphan) => `⚠ ${orphan}: no record links it and no ignore covers it (C3)`);
+      assert.deepEqual(hook(postToolUse(path.join(tmp, TOKENS))), claudeFeedback([...errors, ...warnings, `… and 7 more: node ${ENGINE} validate ${tmp}`]));
+    });
+
     it("stays silent when a write lands elsewhere", () => {
       breakOnePerFamily();
       assert.deepEqual(hook(postToolUse(path.join(tmp, "README.md"))), silent);

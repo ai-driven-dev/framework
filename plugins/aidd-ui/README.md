@@ -102,7 +102,7 @@ A hook runs the same check:
 | After a write under `aidd_docs/ui/` or a code root | the problems of the written files, their record's render and the records citing it, or all of them after a write to `system.md`, the tokens, a theme or a breakpoint; then the count of other errors |
 | End of a turn that wrote such a file | the errors, as a reason to continue, once |
 
-Each output stops at 20 problem lines and names the command that prints the rest.
+Each output lists errors before warnings, stops at 20 problem lines and names the command that prints the rest.
 
 Rules: records R1 to R17, history H1 to H8, tokens T1 to T10, renders V1 to V8, code C1 to C8.
 

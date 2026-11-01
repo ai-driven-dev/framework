@@ -68,10 +68,12 @@ function isCopilot(payload) {
 
 const errorsOf = (problems) => problems.filter(isError);
 
-/** At most LIMIT problem lines, then one saying how many are left and how to see them. */
+/** At most LIMIT problem lines, errors before warnings so the cap never cuts an error for a
+ * warning, then one saying how many are left and how to see them. */
 function capped(project, problems) {
   const rest = problems.length - LIMIT;
-  return [...format(problems.slice(0, LIMIT)), ...(rest > 0 ? [`… and ${rest} more: node ${ENGINE} validate ${project.root}`] : [])];
+  const ordered = [...errorsOf(problems), ...problems.filter((problem) => !isError(problem))];
+  return [...format(ordered.slice(0, LIMIT)), ...(rest > 0 ? [`… and ${rest} more: node ${ENGINE} validate ${project.root}`] : [])];
 }
 
 function afterWrite(project, payload) {
