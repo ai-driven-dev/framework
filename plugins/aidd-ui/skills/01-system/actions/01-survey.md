@@ -19,7 +19,7 @@ The user's request.
 3. **Confirm.** Tell the person in one line what was found and which path follows; ask only when the request and the code disagree.
 4. **Route.** Read the next action for the state.
    - Blank or existing code: read [brand](02-brand.md).
-   - Design system with T1 or T10 among its problems: read [tokens](04-tokens.md).
+   - Design system with T1 or T10 among its problems: read [tokens](04-tokens.md), then route the request below.
    - Design system and a change to a token or an element: read [change](06-change.md).
    - Design system and new elements: read [components](05-components.md).
 

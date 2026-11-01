@@ -15,6 +15,7 @@ flowchart LR
   extract --> tokens
   tokens -->|"the command exits 1"| tokens
   tokens --> components["components<br>actions/05-components.md"]
+  tokens -->|"design system, a change"| change
   components -->|"another element"| components
   components --> done((done))
   survey -->|"design system, T1 or T10 open"| tokens
@@ -30,7 +31,7 @@ Each box is a file: read it, then do what it says.
 ## Transversal rules
 
 - Speak only to ask, to give the confirmation survey asks for, or to give the final reply; otherwise call tools.
-- The engine is the plugin's `hooks/aidd-ui.cjs`; in a flat install, look under the tool's folder for `hooks/aidd-ui/aidd-ui.cjs`, such as `.github` for Copilot or `.kilo` for Kilo. Run it with node from the project root as `validate`, `tokens` or `impact`; when neither exists, the skill shipped alone, so stop and say the engine is missing.
+- The engine is the plugin's `hooks/aidd-ui.cjs`; in a flat install, look under the tool's folder for `hooks/aidd-ui/aidd-ui.cjs`, such as `.github`, `.kilo`, `.codex`, `.cursor` or `.opencode`. Run it with node from the project root as `validate`, `tokens` or `impact`; when neither exists, the skill shipped alone, so stop and say the engine is missing.
 - Write only under `aidd_docs/ui/`, or the impact report in the task folder, never in the code, and never `tokens.css` by hand: the `tokens` command writes it.
 - Every write under `aidd_docs/ui/` is followed by the hook's feedback: fix its problems before going on, colour literals in the code aside, which this skill never edits. Without the hook, run `validate` after each write.
 - During setup, the errors of a step not yet done are expected: no tokens yet (T1), no resolver yet (T6), no stylesheet (T10), a record without its render (V1). Fix the others. During a change, a stale stylesheet (T10) is expected until the regenerate step.

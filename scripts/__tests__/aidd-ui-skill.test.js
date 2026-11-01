@@ -265,12 +265,14 @@ describe("aidd-ui 01-system skill", () => {
 
   it("routes a design system whose tokens are open to the tokens action, in the survey and the router", () => {
     const survey = fs.readFileSync(path.join(SKILL, "actions/01-survey.md"), "utf8");
-    assert.ok(survey.includes("Design system with T1 or T10 among its problems: read [tokens](04-tokens.md)."));
-    assert.ok(fs.readFileSync(path.join(SKILL, "SKILL.md"), "utf8").includes('survey -->|"design system, T1 or T10 open"| tokens'));
+    assert.ok(survey.includes("Design system with T1 or T10 among its problems: read [tokens](04-tokens.md), then route the request below."));
+    const router = fs.readFileSync(path.join(SKILL, "SKILL.md"), "utf8");
+    assert.ok(router.includes('survey -->|"design system, T1 or T10 open"| tokens'));
+    assert.ok(router.includes('tokens -->|"design system, a change"| change'));
   });
 
   it("finds the engine under any tool's folder in a flat install", () => {
-    assert.ok(fs.readFileSync(path.join(SKILL, "SKILL.md"), "utf8").includes("look under the tool's folder for `hooks/aidd-ui/aidd-ui.cjs`"));
+    assert.ok(fs.readFileSync(path.join(SKILL, "SKILL.md"), "utf8").includes("look under the tool's folder for `hooks/aidd-ui/aidd-ui.cjs`, such as `.github`, `.kilo`, `.codex`, `.cursor` or `.opencode`"));
   });
 
   it("is the only skill the plugin lists and holds", () => {
