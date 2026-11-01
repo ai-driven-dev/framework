@@ -200,6 +200,7 @@ describe("aidd-ui tokens and renders", () => {
       ["a theme without its context", (r) => delete contexts(r).dark, 'no context for theme "dark"'],
       ["a context system.md lacks", (r) => (contexts(r).sepia = []), 'context "sepia" is not a theme in system.md'],
       ["a source that is no file reference", (r) => contexts(r).dark.push({ color: {} }), 'context "dark": each source is {"$ref": "<file>"}'],
+      ["a base context listing a source its block would never carry", (r) => contexts(r).light.push({ $ref: "themes/dark.json" }), 'context "light" is the base, held by tokens.json: it lists no source'],
     ];
     for (const [name, change, message] of resolverCases) {
       it(`names ${name}`, () => {
@@ -309,7 +310,18 @@ describe("aidd-ui tokens and renders", () => {
 
       it("names a swap, which would change which value wins", () => {
         threeBreakpoints(["mobile", "tablet", "desktop"], ["mobile", "desktop", "tablet"], "mobile");
-        assert.deepEqual(problems(), [`${RESOLVER}: breakpoint contexts mobile, desktop, tablet must follow system.md, mobile, tablet, desktop: the order of the @media blocks decides which value wins`]);
+        assert.deepEqual(problems(), [`${RESOLVER}: breakpoint contexts desktop, tablet must follow system.md, tablet, desktop: the order of the @media blocks decides which value wins`]);
+      });
+
+      it("passes a default listed before a context system.md places first: the default writes no block", () => {
+        put(tmp, `${UI}/breakpoints/mobile.json`, JSON.stringify({ space: { md: { $value: { value: 0.75, unit: "rem" } } } }));
+        editJson(RESOLVER, (r) => {
+          modifier(r).default = "desktop";
+          modifier(r).contexts = { desktop: [], mobile: [{ $ref: "breakpoints/mobile.json" }] };
+          modifier(r).$extensions["dev.ai-driven.media"] = { mobile: "(max-width: 640px)" };
+        });
+        generateStylesheet(tmp);
+        assert.deepEqual(problems(), []);
       });
 
       it("reads the order without a context system.md lacks", () => {

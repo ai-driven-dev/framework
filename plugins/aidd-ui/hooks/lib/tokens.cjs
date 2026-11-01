@@ -255,6 +255,7 @@ function resolverContexts(resolver, themes, project, file) {
   const contexts = {};
   for (const [theme, sources] of Object.entries(modifier.contexts)) {
     if (!themes.includes(theme)) problems.push(at(`context "${theme}" is not a theme in system.md`));
+    if (theme === themes[0] && Array.isArray(sources) && sources.length) problems.push(at(`context "${theme}" is the base, held by tokens.json: it lists no source`));
     contexts[theme] = contextFiles(theme, sources, file, problems);
   }
   return { problems, contexts };
@@ -277,7 +278,7 @@ function breakpointContexts(resolver, breakpoints, file) {
   const extension = modifier.$extensions?.[MEDIA_EXTENSION];
   const queries = isObject(extension) ? extension : {};
   for (const name of Object.keys(queries)) if (name === modifier.default || !Object.hasOwn(modifier.contexts, name)) problems.push(at(`${MEDIA_EXTENSION} "${name}" names no context outside the default`));
-  const listed = Object.keys(modifier.contexts).filter((name) => breakpoints.includes(name));
+  const listed = Object.keys(modifier.contexts).filter((name) => name !== modifier.default && breakpoints.includes(name)); // the default writes no block, so it has no place in the order
   const expected = breakpoints.filter((name) => listed.includes(name));
   if (listed.join() !== expected.join()) problems.push(at(`breakpoint contexts ${listed.join(", ")} must follow system.md, ${expected.join(", ")}: the order of the @media blocks decides which value wins`));
   const contexts = [];
