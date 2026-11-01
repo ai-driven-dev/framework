@@ -527,6 +527,17 @@ describe("aidd-ui records and history", () => {
       assert.deepEqual(edited(), [`${HOME}: edited since its committed version 1, raise its version with a History row`]);
     });
 
+    it("holds a lowered version to the committed one", () => {
+      change(OLD, "Nowhere: replaced by button.", "Nowhere: use button.");
+      change(OLD, "\nversion: 2\n", "\nversion: 1\n");
+      assert.deepEqual(edited(), [`${OLD}: edited since its committed version 2, raise its version with a History row`]);
+    });
+
+    it("leaves a deleted render to V1 alone", () => {
+      fs.rmSync(path.join(tmp, BUTTON_RENDER));
+      assert.deepEqual(whole(), [`${BUTTON}: no render beside it, expected button.html`]);
+    });
+
     it("stays silent once the version rose with a history row", () => {
       change(BUTTON, BUTTON_USAGE, WIDENED);
       change(BUTTON, "version: 1", "version: 2");
@@ -803,6 +814,15 @@ describe("aidd-ui records and history", () => {
         commit();
         setBold(600);
         assert.deepEqual(whole(), THROUGH_BOLD);
+      });
+
+      it("stays silent when a theme is added: no element held a value in it", () => {
+        put(tmp, `${UI}/themes/sepia.json`, JSON.stringify({ color: { brand: { primary: { $value: { colorSpace: "srgb", components: [0.5, 0.4, 0.3], hex: "#80664d" } } } } }));
+        edit(tmp, `${UI}/tokens.resolver.json`, '"dark": [', '"sepia": [{ "$ref": "themes/sepia.json" }],\n        "dark": [');
+        edit(tmp, SYSTEM, "themes: [light, dark]", "themes: [light, sepia, dark]");
+        editTokens(tmp, () => {});
+        assert.deepEqual(edited(), []);
+        assert.ok(fs.readFileSync(path.join(tmp, STYLESHEET), "utf8").includes('[data-theme="sepia"] {'));
       });
 
       it("does not name an element already named for its text", () => {
