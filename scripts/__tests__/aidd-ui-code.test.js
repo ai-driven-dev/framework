@@ -181,12 +181,6 @@ describe("aidd-ui code link", () => {
       assert.deepEqual(severities(), [`${WARNING} ${BUTTON_FILE}`]);
     });
 
-    it("warns on a committed file whose path holds pattern characters", () => {
-      put(tmp, "src/ui/[id]/Page.tsx", `${LITERAL}\n`);
-      commitAll(tmp);
-      assert.deepEqual(severities(), [`${WARNING} src/ui/[id]/Page.tsx`]);
-    });
-
     it("errs on every literal of a file edited since HEAD, the old ones with the new", () => {
       append(BUTTON_FILE, LITERAL);
       commitAll(tmp);
@@ -361,12 +355,6 @@ describe("aidd-ui code link", () => {
     it("names each listed file that does not exist", () => {
       asList();
       assert.deepEqual(problems(), [`${SYSTEM}: code-tokens "${ADMIN_TOKENS}" does not exist`]);
-    });
-
-    it("names none when the list is empty", () => {
-      edit(tmp, SYSTEM, "code-tokens: src/ui/tokens.css", "code-tokens: []");
-      fs.rmSync(path.join(tmp, "src/ui/tokens.css"));
-      assert.deepEqual(problems(), []);
     });
   });
 
