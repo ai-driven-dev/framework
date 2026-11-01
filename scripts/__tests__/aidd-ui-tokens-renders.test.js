@@ -128,6 +128,7 @@ describe("aidd-ui tokens and renders", () => {
       [{ $type: "duration", $value: { value: 1, unit: "min" } }, 'unit "min" must be ms or s'],
       [{ $type: "fontWeight", $value: 1200 }, "fontWeight 1200 must be 1 to 1000 or a keyword"],
       [{ $type: "fontWeight", $value: "semibold" }, 'fontWeight "semibold" must be 1 to 1000 or a keyword'],
+      [{ $type: "fontWeight", $value: ["bold"] }, 'fontWeight ["bold"] must be 1 to 1000 or a keyword'],
       [{ $type: "cubicBezier", $value: [1.5, 0, 0.5, 1] }, "cubicBezier needs four numbers, x in 0..1"],
     ];
     for (const [token, message] of cases) {

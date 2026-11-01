@@ -74,7 +74,7 @@ Every record opens with flat front matter, `key: value` or `key: [a, b]`, and cl
 - A token's CSS name is `--` plus its path joined by `-`.
 - `tokens.css` is generated: a custom property per token, the base in `:root, [data-theme="<base theme>"]`, so a nested region can switch back to it, each other theme in `[data-theme="<theme>"]`, an alias as `var()`, raw CSS verbatim, a font weight keyword as its DTCG number. A theme block also redeclares, in tree order after its own tokens, every base token that depends on one it redefines, through an alias or a `var()`, transitively, so a theme set on a nested element recomputes it there. After them, each breakpoint in resolver order is `@media <query> { :root, [data-theme="<base theme>"] { ... } }`, tokens in tree order, without what depends on them, which recomputes through `var()`. A composite token (shadow, border, typography, ...) has no CSS of its own: it needs a raw CSS extension to appear in it.
 - A component or screen render loads it with `<link rel="stylesheet" href="../tokens.css">`, so a token change reaches every render without rewriting one.
-- A validated or deprecated element edited since its committed version, without a new `version`, is an error. A change to `status`, `implemented-version`, `code` or the History table is not an edit. A validated element is also held to the resolved value, in any theme or breakpoint, of each token it or an element it uses declares, compared with the committed `tokens.css`; a token change leaves a deprecated element as it is.
+- A validated or deprecated element edited since its committed version, without a new `version`, is an error. A change to `status`, `implemented-version`, `code` or the History table is not an edit. A validated element is also held to the resolved value, in any theme or breakpoint, of each token it or an element it uses declares, compared with the committed `tokens.css`; a token's value change leaves a deprecated element as it is.
 
 ## Commands
 
@@ -126,7 +126,7 @@ Rules: records R1 to R17, history H1 to H8, tokens T1 to T10, renders V1 to V8, 
 - The committed baseline of H8 is `HEAD`: without `git`, a repository, a commit or the committed file, the rule is silent, and committing an edit without raising the version hides it. Any other failure of `git`, such as a repository it refuses to read or its five-second timeout, is one H8 warning on `aidd_docs/ui`, naming the failure. A run asks `git` once which files changed, then reads only those, plus the committed record of an element using a token whose value changed; C4 asks at most twice more when it finds a literal, naming each file that holds one.
 - A version raise that stays `validated` passes until a review can prove it.
 - H8 does not watch an asset's file, a journey or `brand.md`.
-- C4 reads the state against `HEAD`: a committed literal is only a warning, and a clean checkout never fails it. A `git mv`, a committed symlink, or any edit of a debt file turns its literals into errors.
+- C4 reads the state against `HEAD`: a committed literal is only a warning, so a clean checkout fails it only through a committed symlink, whose target git cannot match. A `git mv` or any edit of a debt file also turns its literals into errors.
 - A `tokens.css` kept out of git by `.gitignore` has no committed baseline, which disables H8's token-value part: commit it.
 - A blank line added to a held record, inside a body too, counts as an edit for H8.
 - A `;` inside a raw `url()` hides a change of that value from H8.

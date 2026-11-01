@@ -272,7 +272,7 @@ describe("aidd-ui 01-system skill", () => {
   });
 
   it("finds the engine under any tool's folder in a flat install", () => {
-    assert.ok(fs.readFileSync(path.join(SKILL, "SKILL.md"), "utf8").includes("look under the tool's folder for `hooks/aidd-ui/aidd-ui.cjs`, such as `.github`, `.kilo`, `.codex`, `.cursor` or `.opencode`"));
+    assert.ok(fs.readFileSync(path.join(SKILL, "SKILL.md"), "utf8").includes("look under the tool's folder for `hooks/aidd-ui/aidd-ui.cjs`, such as `.claude`, `.github`, `.kilo`, `.codex`, `.cursor` or `.opencode`"));
   });
 
   it("is the only skill the plugin lists and holds", () => {

@@ -140,7 +140,7 @@ function measureProblem(value, units) {
 
 function fontWeightProblem(value) {
   if (isNumber(value) && value >= FONT_WEIGHT_MIN && value <= FONT_WEIGHT_MAX) return null;
-  if (Object.hasOwn(FONT_WEIGHTS, value)) return null;
+  if (typeof value === "string" && Object.hasOwn(FONT_WEIGHTS, value)) return null;
   return `fontWeight ${JSON.stringify(value)} must be 1 to 1000 or a keyword`;
 }
 
@@ -501,8 +501,8 @@ function cssNames(project) {
 /** Every token's name by its CSS custom property. */
 const namesByProperty = (tree) => new Map([...tree.tokens.keys()].map((name) => [customProperty(name), name]));
 
-/** The tokens each token cites, by name: the one its alias names and those whose custom property
- * a `var()` of its raw CSS names, in tokens.json or in any theme or breakpoint file. Empty when tokens.json
+/** The tokens each token cites, by name: those whose custom property a `var()` of its raw CSS
+ * names, or else the one its alias names, in tokens.json or in any theme or breakpoint file. Empty when tokens.json
  * cannot be read. */
 function citations(project) {
   const tree = read(project);
