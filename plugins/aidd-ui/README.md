@@ -42,7 +42,7 @@ Every record opens with flat front matter, `key: value` or `key: [a, b]`, and cl
 | Record | Front matter | Body |
 | --- | --- | --- |
 | every one | `id` (the file name), `kind`, `status` (`proposed`, `validated`, `deprecated`), `version` | `## History` |
-| `system.md` | `format` (`1`), `version` in semver, `platforms`, `breakpoints`, `themes`, `locales`, `directions`, `primitives` (token groups components never cite), `code-roots`, `ignore`, `libraries`, each `[]` when empty; optional `code-tokens`, one file | optional `## Rules`: Id, Rule |
+| `system.md` | `format` (`1`), `version` in semver, `platforms`, `breakpoints`, `themes`, `locales`, `directions`, `primitives` (token groups components never cite), `code-roots`, `ignore`, `libraries`, each `[]` when empty; optional `code-tokens`, one file or a list | optional `## Rules`: Id, Rule |
 | `brand.md` | | `## Project`, `## Users`, `## Domain`, `## Platforms`, `## Personality and tone`, `## References`, `## Anti-references`; optional `## Glossary`: Concept, Word, Forbidden |
 | atom, molecule, composition | `uses`, `tokens`, `variants` (a bare value, or `axis=value` per independent prop), `states`, `interactive` (`yes` or `no`), `role`; optional `code`, `implemented-version` | `## Usage`, and `## Keyboard` when interactive |
 | screen | `uses`, `tokens`, `states`, `breakpoints`, `route`; optional `code`, `implemented-version` | |
@@ -65,7 +65,7 @@ Every record opens with flat front matter, `key: value` or `key: [a, b]`, and cl
 - A deprecated element names `replaced-by: <id>`, or `replaced-by: none` with a `## Deprecation` section.
 - A render uses only the tokens its record lists in `tokens`, or those of the elements it uses, transitively. Its literals are read in `<style>` blocks and `style=""` values, never in its text, and its colours also in `fill`, `stroke`, `color` and `bgcolor` values, where a value opening with `var()` is a token; a variant or state counts when an element outside `<style>` carries its `data-` attribute: `data-variant="<value>"` for a bare item, `data-<axis>="<value>"` for `axis=value`, `data-state="<value>"` for a state.
 - An axis matches `[a-z][a-z-]*`, is never `state` or `variant`, and its value is never empty.
-- `code-tokens` names the file where the code consumes the tokens; it is never checked for literals or coverage.
+- `code-tokens` names the file where the code consumes the tokens, or a list, one per app; each is never checked for literals or coverage.
 - Themes: the first theme in `system.md` is held by `tokens.json`. `tokens.resolver.json`, required from two themes on and checked whenever present, has a set whose sources hold `{"$ref": "tokens.json"}`, a `theme` modifier with one context per theme and the base as `default`, and `{"$ref": "#/modifiers/theme"}` in `resolutionOrder`. A context lists `{"$ref": "<file>"}` sources, each redefining base tokens with their type.
 - Breakpoints: a value that depends on the width is a context of an optional `breakpoint` modifier, with `{"$ref": "#/modifiers/breakpoint"}` in `resolutionOrder`. Its `default` is the breakpoint `tokens.json` holds, an empty context, since the Resolver needs one to resolve without an input. Every other context is a breakpoint in `system.md` listing `{"$ref": "<file>"}` sources, like a theme's, with its media query verbatim in the modifier's `"$extensions": {"dev.ai-driven.media": {"<breakpoint>": "<query>"}}`.
 - A token a breakpoint redefines is never one a theme block holds, redefined or redeclared as a dependent, and its value never cites one: on a nested region that block would hide it, or leave it stale. A token depending on both a theme's token and a breakpoint's is allowed: its `var()`s recompute.
@@ -88,7 +88,7 @@ node <plugin>/hooks/aidd-ui.cjs impact <id or token>… [--root <dir>]
 | --- | --- |
 | `validate` | checks the whole design system |
 | `tokens` | writes `aidd_docs/ui/tokens.css` and prints its path; writes nothing and exits 1 while a token has an error or a composite token has no raw CSS |
-| `impact` | prints as JSON the `tokens`, `elements`, `screens`, `journeys`, `renders` and `code` files a change to those tokens or elements reaches, each sorted; a token is named by its path or its CSS name, and any token reached adds the `code-tokens` file to `code`; a name that is neither exits 2 |
+| `impact` | prints as JSON the `tokens`, `elements`, `screens`, `journeys`, `renders` and `code` files a change to those tokens or elements reaches, each sorted; a token is named by its path or its CSS name, and any token reached adds the `code-tokens` files to `code`; a name that is neither exits 2 |
 
 ## Validation
 

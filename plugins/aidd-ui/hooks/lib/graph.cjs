@@ -59,7 +59,7 @@ function closure(seed, candidates, keyOf, citesOf) {
 
 /** What a change to `refs`, token names, CSS names and record ids, reaches, each list sorted;
  * `unknown` names the refs that are none. A ref is reached itself, and any token reached reaches
- * the file where the code consumes the tokens. */
+ * the files where the code consumes the tokens. */
 function usages(project, given) {
   const cites = citations(project);
   const refs = given.map((ref) => tokenNameOf(project, ref));
@@ -76,7 +76,7 @@ function usages(project, given) {
     tokens: [...tokens].sort(),
     ...Object.fromEntries(Object.entries(REPORT_KINDS).map(([key, kinds]) => [key, idsOf(kinds)])),
     renders: reachedRecords.map(renderOf).filter((file) => project.renders.includes(file)).sort(),
-    code: [...new Set([...reachedRecords.map((record) => codeFileOf(fm(record).code)), tokens.size ? codeTokens(project) : null].filter(Boolean))].sort(),
+    code: [...new Set([...reachedRecords.map((record) => codeFileOf(fm(record).code)), ...(tokens.size ? codeTokens(project) : [])].filter(Boolean))].sort(),
   };
 }
 

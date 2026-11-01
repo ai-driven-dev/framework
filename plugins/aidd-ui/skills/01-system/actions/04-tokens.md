@@ -23,7 +23,7 @@ The brand and `system.md`, and the tokens extract found when the code already ha
    - A token a theme sets, directly or through what it cites, cannot also change with the width: split it, or the validator names it.
    - For breakpoints `mobile` and `desktop` with one theme: `{"version": "2025.10", "sets": {"base": {"sources": [{"$ref": "tokens.json"}]}}, "modifiers": {"breakpoint": {"default": "mobile", "contexts": {"mobile": [], "desktop": [{"$ref": "breakpoints/desktop.json"}]}, "$extensions": {"dev.ai-driven.media": {"desktop": "(min-width: 64rem)"}}}}, "resolutionOrder": [{"$ref": "#/sets/base"}, {"$ref": "#/modifiers/breakpoint"}]}`, and `breakpoints/desktop.json` holds `{"space": {"md": {"$value": {"value": 1.5, "unit": "rem"}}}}`.
 4. **Generate.** Run `tokens`, which writes `aidd_docs/ui/tokens.css`; when it exits 1, fix the tokens it names and run it again. Commit `tokens.css`, never gitignore it: the version guard reads the committed one.
-5. **Link.** When the code consumes the tokens through a file, set `code-tokens` in `system.md` to it.
+5. **Link.** When the code consumes the tokens through a file, set `code-tokens` in `system.md` to it, or to a list when each app holds its own.
 
 ## Output
 

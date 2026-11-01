@@ -100,6 +100,13 @@ describe("aidd-ui impact", () => {
       assert.deepEqual(report.elements, ["badge"]);
     });
 
+    it("reaches every code token file a monorepo lists, and none from an element alone", () => {
+      edit(tmp, `${UI}/system.md`, "code-tokens: src/ui/tokens.css", "code-tokens: [src/ui/tokens.css, apps/landing/tokens.css]");
+      put(tmp, "apps/landing/tokens.css", ":root {}\n");
+      assert.deepEqual(impact("space.md", "--root", tmp).report.code, ["apps/landing/tokens.css", "src/ui/Button.tsx", "src/ui/HomePage.tsx", "src/ui/tokens.css"]);
+      assert.deepEqual(impact("dialog", "--root", tmp).report.code, ["src/ui/HomePage.tsx"]);
+    });
+
     it("takes a CSS name for the token it names", () => {
       assert.deepEqual(impact("--color-brand-primary", "--root", tmp).report, impact("color.brand.primary", "--root", tmp).report);
     });

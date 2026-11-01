@@ -12,7 +12,7 @@ const { identicalToHead } = require("./committed.cjs");
 const EXPORT_SEPARATOR = "#";
 const PACKAGE_PREFIX = "package:";
 const CODE_ROOTS_KEY = "code-roots";
-const CODE_TOKENS_KEY = "code-tokens"; // where the code consumes the tokens: generated from them, so no literal there is a fault
+const CODE_TOKENS_KEY = "code-tokens"; // where the code consumes the tokens, a file per app: generated from them, so no literal there is a fault
 const IGNORE_KEY = "ignore";
 // A test or a mock states colours to check them, as a token contract test does.
 const TEST_FOLDER = /(?:^|\/)(?:__tests__|__mocks__)\//;
@@ -33,7 +33,7 @@ const SCRIPT_TOKEN = /\/\/[^\n]*|\/\*[\s\S]*?\*\/|("(?:\\.|[^"\\\n])*"|'(?:\\.|[
  * code lives in a string, and a `#` in a comment is an issue number. */
 const stringsOnly = (source) => source.replace(SCRIPT_TOKEN, (found, literal) => literal ?? found.replace(NOT_LINE_BREAK, " "));
 
-/** A `code-roots` or `ignore` list as normalised path prefixes, so `./src` reads as `src`. */
+/** A `code-roots`, `ignore` or `code-tokens` list as normalised path prefixes, so `./src` reads as `src`. */
 const prefixes = (project, key) => list(systemOf(project)?.frontMatter[key]).map((prefix) => path.posix.normalize(prefix));
 /** Whether a normalised prefix names a folder inside the project, never the project itself. */
 const isInside = (prefix) => prefix !== "." && !prefix.startsWith("..") && !path.posix.isAbsolute(prefix);
@@ -64,19 +64,15 @@ const linked = (project) =>
 
 const hasWord = (text, word) => new RegExp(`(?<![\\w$])${word.replace(REGEX_SPECIALS, "\\$&")}(?![\\w$])`).test(text);
 
-/** The code's token file system.md names, normalised; null when it names none. */
-function codeTokens(project) {
-  const value = systemOf(project)?.frontMatter[CODE_TOKENS_KEY];
-  return typeof value === "string" && value ? path.posix.normalize(value) : null;
-}
+/** The code's token files system.md names, normalised. */
+const codeTokens = (project) => prefixes(project, CODE_TOKENS_KEY);
 
 /** The code side, walked once per run: every file under a code root, and the ignored prefixes,
- * the code's token file among them. */
+ * the code's token files among them. */
 function codeTree(project) {
   if (!project.codeTree) {
     const files = codeRoots(project).flatMap((root) => walk(path.join(project.root, root)).map((file) => relative(project.root, file)));
-    const tokenFile = codeTokens(project);
-    project.codeTree = { files: [...new Set(files)], ignore: [...prefixes(project, IGNORE_KEY), ...(tokenFile ? [tokenFile] : [])] };
+    project.codeTree = { files: [...new Set(files)], ignore: [...prefixes(project, IGNORE_KEY), ...codeTokens(project)] };
   }
   return project.codeTree;
 }
@@ -154,9 +150,9 @@ function colourProblems(project) {
 }
 
 function codeTokensProblems(project) {
-  const file = codeTokens(project);
-  if (file === null || fs.existsSync(path.join(project.root, file))) return [];
-  return [{ file: systemOf(project).file, message: `code-tokens "${file}" does not exist` }];
+  return codeTokens(project)
+    .filter((file) => !fs.existsSync(path.join(project.root, file)))
+    .map((file) => ({ file: systemOf(project).file, message: `code-tokens "${file}" does not exist` }));
 }
 
 function sharedLinkProblems(project) {

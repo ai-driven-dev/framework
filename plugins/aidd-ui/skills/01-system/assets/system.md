@@ -11,7 +11,7 @@ locales: [{{locales}}]
 directions: [{{directions, ltr or rtl}}]
 primitives: [{{token groups components never cite}}]
 code-roots: [{{UI folders of the code}}]
-code-tokens: {{file where the code consumes the tokens}}
+code-tokens: {{file where the code consumes the tokens, or a list of them, one per app}}
 ignore: [{{paths under a code root no record links}}]
 libraries: [{{component packages the code uses}}]
 ---

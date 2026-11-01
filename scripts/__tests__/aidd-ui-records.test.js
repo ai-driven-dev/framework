@@ -145,9 +145,9 @@ describe("aidd-ui records and history", () => {
       });
     }
 
-    it("names code-tokens given as a list: it is one file", () => {
+    it("takes code-tokens as a list: a monorepo's apps each hold their own", () => {
       change(SYSTEM, "code-tokens: src/ui/tokens.css", "code-tokens: [src/ui/tokens.css, src/ui/other.css]");
-      assert.deepEqual(problems(), [`${SYSTEM}: code-tokens must name one file, not a list`]);
+      assert.deepEqual(problems(), []);
     });
 
     it("names an unknown status", () => {

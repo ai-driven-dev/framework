@@ -348,6 +348,28 @@ describe("aidd-ui code link", () => {
     });
   });
 
+  describe("code-tokens as a list", () => {
+    const ADMIN_TOKENS = "src/ui/admin-tokens.css";
+    const asList = () => edit(tmp, SYSTEM, "code-tokens: src/ui/tokens.css", `code-tokens: [src/ui/tokens.css, ./${ADMIN_TOKENS}]`);
+
+    it("leaves every listed file out of literals and coverage", () => {
+      asList();
+      put(tmp, ADMIN_TOKENS, ":root { --x: #ff0000; }\n");
+      assert.deepEqual(problems(), []);
+    });
+
+    it("names each listed file that does not exist", () => {
+      asList();
+      assert.deepEqual(problems(), [`${SYSTEM}: code-tokens "${ADMIN_TOKENS}" does not exist`]);
+    });
+
+    it("names none when the list is empty", () => {
+      edit(tmp, SYSTEM, "code-tokens: src/ui/tokens.css", "code-tokens: []");
+      fs.rmSync(path.join(tmp, "src/ui/tokens.css"));
+      assert.deepEqual(problems(), []);
+    });
+  });
+
   describe("C7 code roots inside the project", () => {
     it("names a root that is the project or outside it, and walks nothing from it", () => {
       edit(tmp, SYSTEM, "code-roots: [src/ui]", "code-roots: [src/ui, ., ../shared, /abs]");

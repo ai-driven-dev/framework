@@ -37,7 +37,7 @@ Chaque fiche porte en tête : `id` (égal au nom du fichier, unique), `kind`, `s
 
 | Fiche | Contient en plus |
 | --- | --- |
-| `system.md` | version du format des fiches, version du design system, plateformes, breakpoints, thèmes, langues et sens d'écriture, groupes de tokens primitifs, dossiers UI du code, fichier où le code consomme les tokens, chemins ignorés, librairies de composants utilisées ; règles transverses s'il y en a |
+| `system.md` | version du format des fiches, version du design system, plateformes, breakpoints, thèmes, langues et sens d'écriture, groupes de tokens primitifs, dossiers UI du code, fichier(s) où le code consomme les tokens, chemins ignorés, librairies de composants utilisées ; règles transverses s'il y en a |
 | `brand.md` | projet, utilisateurs, domaine, plateformes, personnalité et ton, charte imposée s'il y en a une, références et anti-références ; glossaire (mot à employer, mots interdits) s'il y en a un |
 | asset | type (icône, image, illustration), fichier, texte alternatif attendu |
 | atome, molécule, composition | quand l'utiliser et quand ne pas l'utiliser, éléments utilisés, tokens sémantiques utilisés, variantes, états (au moins défaut ; focus quand il est interactif ; survol, désactivé, chargement ou erreur quand ils existent), comportement clavier et rôle accessible, lien vers le code |
@@ -89,7 +89,7 @@ Deux axes, jamais mêlés : où en est le design, et quelle version le code impl
 
 - Écrans et composants sont rendus en HTML avec les vrais tokens, sans valeur en dur.
 - Les tokens ont deux niveaux : les primitifs (la palette) et les sémantiques, qui pointent vers eux. Un composant ou un écran n'utilise que des sémantiques, et son rendu n'emploie que les tokens que sa fiche déclare et ceux des éléments qu'il utilise : le rapport d'impact, qui suit `uses`, n'en oublie aucun.
-- Les tokens sont la seule source ; aidd-ui génère `aidd_docs/ui/tokens.css` et n'écrit jamais dans le code. `system.md` nomme le fichier où le code consomme les tokens ; la feature le fait suivre, l'audit compare les deux.
+- Les tokens sont la seule source ; aidd-ui génère `aidd_docs/ui/tokens.css` et n'écrit jamais dans le code. `system.md` nomme le ou les fichier(s) où le code consomme les tokens ; la feature les fait suivre, l'audit compare les deux.
 - Les thèmes suivent le module Resolver de DTCG : `tokens.json` porte le premier thème déclaré, la base ; chaque autre thème a son fichier, qui ne redéfinit que des tokens de la base, avec le même type. Un rendu montre un thème sous `[data-theme]`, avec les mêmes noms de variables.
 - Une valeur qui dépend de la largeur suit le même module : `tokens.json` porte le breakpoint de départ, contexte par défaut et vide ; chaque autre breakpoint a son fichier, qui ne redéfinit que des tokens de la base avec le même type, et sa media query telle quelle dans une extension du modificateur. `tokens.css` la porte dans un bloc `@media` après les thèmes. Un token qu'un bloc de thème porte, redéfini ou redéclaré comme dépendant, ne change jamais à un breakpoint : ce bloc cacherait sa valeur.
 - Une valeur que DTCG ne sait pas porter (`color-mix()`, `%`, `em`) est gardée en CSS brut dans une extension du token ; les `var()` qu'elle cite sont des tokens existants et comptent comme des dépendances.

@@ -26,7 +26,7 @@ const FILLS = {
     "directions, ltr or rtl": "ltr, rtl",
     "token groups components never cite": "color.brand",
     "UI folders of the code": "src/ui",
-    "file where the code consumes the tokens": "src/ui/tokens.css",
+    "file where the code consumes the tokens, or a list of them, one per app": "[src/ui/tokens.css]",
     "paths under a code root no record links": "src/ui/vendor",
     "component packages the code uses": "@radix-ui/react-dialog",
     "breakpoint name": "mobile",
