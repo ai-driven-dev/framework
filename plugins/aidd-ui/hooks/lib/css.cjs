@@ -33,6 +33,28 @@ function colorOf({ colorSpace, components, alpha, hex }) {
 /** A font family list, a name holding a space in quotes. */
 const familyOf = (value) => [value].flat().map((name) => (HAS_SPACE.test(name) ? `"${name}"` : name)).join(", ");
 
+/** DTCG's font weight keywords and the number each stands for: CSS reads few of them. */
+const FONT_WEIGHTS = {
+  thin: 100,
+  hairline: 100,
+  "extra-light": 200,
+  "ultra-light": 200,
+  light: 300,
+  normal: 400,
+  regular: 400,
+  book: 400,
+  medium: 500,
+  "semi-bold": 600,
+  "demi-bold": 600,
+  bold: 700,
+  "extra-bold": 800,
+  "ultra-bold": 800,
+  black: 900,
+  heavy: 900,
+  "extra-black": 950,
+  "ultra-black": 950,
+};
+
 const MEASURE = ({ value, unit }) => `${value}${unit}`;
 const AS_IS = (value) => String(value);
 
@@ -41,7 +63,7 @@ const WRITERS = {
   dimension: MEASURE,
   duration: MEASURE,
   number: AS_IS,
-  fontWeight: AS_IS,
+  fontWeight: (value) => String(FONT_WEIGHTS[value] ?? value),
   fontFamily: familyOf,
   cubicBezier: (points) => `cubic-bezier(${points.join(", ")})`,
 };
@@ -106,4 +128,4 @@ function render({ base, baseTheme, themes, breakpoints = [] }) {
   return { css: problems.length ? null : `${[HEADER, ...blocks.map((lines) => lines.join(LINE_BREAK))].join(PARAGRAPH_BREAK)}${LINE_BREAK}`, problems };
 }
 
-module.exports = { valueOf, render, customProperty, dependents, loopOf };
+module.exports = { FONT_WEIGHTS, valueOf, render, customProperty, dependents, loopOf };

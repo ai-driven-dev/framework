@@ -53,11 +53,33 @@ describe("aidd-ui css", () => {
       assert.equal(valueOf("duration", { value: 0.2, unit: "s" }), "0.2s");
     });
 
-    it("writes a number and a font weight as they are", () => {
+    it("writes a number and a numeric font weight as they are", () => {
       assert.equal(valueOf("number", 1.25), "1.25");
       assert.equal(valueOf("fontWeight", 700), "700");
-      assert.equal(valueOf("fontWeight", "bold"), "bold");
     });
+  });
+
+  describe("a font weight keyword", () => {
+    // The table of the DTCG 2025.10 format: CSS has no such keywords as semi-bold.
+    const KEYWORDS = {
+      100: ["thin", "hairline"],
+      200: ["extra-light", "ultra-light"],
+      300: ["light"],
+      400: ["normal", "regular", "book"],
+      500: ["medium"],
+      600: ["semi-bold", "demi-bold"],
+      700: ["bold"],
+      800: ["extra-bold", "ultra-bold"],
+      900: ["black", "heavy"],
+      950: ["extra-black", "ultra-black"],
+    };
+    for (const [weight, keywords] of Object.entries(KEYWORDS)) {
+      for (const keyword of keywords) {
+        it(`writes ${keyword} as ${weight}`, () => {
+          assert.equal(valueOf("fontWeight", keyword), weight);
+        });
+      }
+    }
   });
 
   describe("font family", () => {

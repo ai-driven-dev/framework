@@ -7,7 +7,7 @@ const nodePath = require("node:path");
 const { list } = require("./markdown.cjs");
 const { placed, systemOf, TOKENED_KINDS } = require("./model.cjs");
 const { text, checkOf } = require("./project.cjs");
-const { render, customProperty, dependents, loopOf } = require("./css.cjs");
+const { FONT_WEIGHTS, render, customProperty, dependents, loopOf } = require("./css.cjs");
 
 const RESERVED_KEYS = ["$value", "$type", "$description", "$extensions", "$deprecated", "$extends", "$schema"];
 const ROOT_KEY = "$root"; // a stated limit: a group's own token is a named child here
@@ -35,7 +35,6 @@ const DIMENSION_UNITS = ["px", "rem"];
 const DURATION_UNITS = ["ms", "s"];
 const FONT_WEIGHT_MIN = 1;
 const FONT_WEIGHT_MAX = 1000;
-const FONT_WEIGHT_KEYWORDS = ["thin", "hairline", "extra-light", "ultra-light", "light", "normal", "regular", "book", "medium", "semi-bold", "demi-bold", "bold", "extra-bold", "ultra-bold", "black", "heavy", "extra-black", "ultra-black"];
 const BEZIER_POINTS = 4;
 const BEZIER_X_INDEXES = [0, 2];
 
@@ -143,7 +142,7 @@ function measureProblem(value, units) {
 
 function fontWeightProblem(value) {
   if (isNumber(value) && value >= FONT_WEIGHT_MIN && value <= FONT_WEIGHT_MAX) return null;
-  if (FONT_WEIGHT_KEYWORDS.includes(value)) return null;
+  if (typeof value === "string" && Object.hasOwn(FONT_WEIGHTS, value)) return null;
   return `fontWeight ${JSON.stringify(value)} must be 1 to 1000 or a keyword`;
 }
 
