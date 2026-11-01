@@ -13,7 +13,7 @@ const NOT_INSTALLED = "ENOENT";
 const NO_BASELINE = [/not a git repository/, /bad revision 'HEAD'/, /Not a valid object name HEAD/, /exists on disk, but not in 'HEAD'/]; // git's words under C
 const NO_COMMIT = "no git commit to compare it with";
 const NOT_COMMITTED = "it is not committed"; // untracked, or kept out by .gitignore
-const CHANGED = "it changed since HEAD";
+const CHANGED = "its bytes differ from HEAD's"; // an edit, or a symlink, whose target git hashes against the link's blob
 const TREE_ENTRY = /^\S+ \S+ (\S+)\t(.*)$/s; // <mode> <type> <id>, a tab, <path>
 
 /** The environment without git's own variables, which would point git at another repository, as a

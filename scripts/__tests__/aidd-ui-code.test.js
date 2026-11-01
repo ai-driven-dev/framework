@@ -169,7 +169,7 @@ describe("aidd-ui code link", () => {
     const HOME_FILE = "src/ui/HomePage.tsx";
     /** Each C4 problem's message, what follows the literal saying why git could not clear it. */
     const reasons = (project = load(tmp)) => code.check(project).filter((found) => found.rule === "C4").map((found) => found.message.split("use a token")[1]);
-    const CHANGED = " (counted as new: it changed since HEAD)";
+    const CHANGED = " (counted as new: its bytes differ from HEAD's)";
     const NOT_COMMITTED = " (counted as new: it is not committed)";
 
     it("warns on a literal in a file identical to HEAD: existing debt", () => {
