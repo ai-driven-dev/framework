@@ -92,7 +92,7 @@ node <plugin>/hooks/aidd-ui.cjs impact <id or token>… [--root <dir>]
 
 ## Validation
 
-`validate` prints `VALID`, or one `✗ <file>: <message> (<rule>)` line per error and `⚠` per warning, and exits 1 when an error remains. Warnings: a file under a code root no record links, a render length of 2px or less, and a failure of `git` in H8.
+`validate` prints `VALID`, or one `✗ <file>: <message> (<rule>)` line per error and `⚠` per warning, and exits 1 when an error remains. Warnings: a file under a code root no record links, a colour literal in a code file identical to `HEAD`, a render length of 2px or less, and a failure of `git` in H8. A colour literal in a code file changed or untracked since `HEAD`, or where `git` cannot answer, whatever the reason, is an error.
 
 A hook runs the same check:
 
@@ -120,7 +120,7 @@ Rules: records R1 to R17, history H1 to H8, tokens T1 to T10, renders V1 to V8, 
 - Composite tokens are checked for a `$value`, not for its shape, and reach `tokens.css` only as raw CSS.
 - `impact` leaves reviews out of its report.
 - A web design system only: a native app, such as an Expo one, is outside it.
-- The committed baseline of H8 is `HEAD`: without `git`, a repository, a commit or the committed file, the rule is silent, and committing an edit without raising the version hides it. Any other failure of `git`, such as a repository it refuses to read or its five-second timeout, is one H8 warning on `aidd_docs/ui`, naming the failure. A run asks `git` once which files changed, then reads only those, plus the committed record of an element using a token whose value changed.
+- The committed baseline of H8 is `HEAD`: without `git`, a repository, a commit or the committed file, the rule is silent, and committing an edit without raising the version hides it. Any other failure of `git`, such as a repository it refuses to read or its five-second timeout, is one H8 warning on `aidd_docs/ui`, naming the failure. A run asks `git` once which files changed, then reads only those, plus the committed record of an element using a token whose value changed; C4 asks twice more when it finds a literal, naming each file that holds one.
 - A version raise that stays `validated` passes until a review can prove it.
 - A `tokens.css` kept out of git by `.gitignore` has no committed baseline, which disables H8's token-value part: commit it.
 - Blank lines added to a held record count as an edit for H8.

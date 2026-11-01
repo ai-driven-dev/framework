@@ -1,5 +1,5 @@
 // C1 to C8: each code link resolves, every file under a code root is linked or ignored, UI code
-// outside its tests holds no colour literal, and the code's token file exists. Other literals
+// outside its tests holds no new colour literal, and the code's token file exists. Other literals
 // and non-web code are stated limits.
 const fs = require("node:fs");
 const path = require("node:path");
@@ -7,6 +7,7 @@ const { list } = require("./markdown.cjs");
 const { placed, systemOf, isElement, fm } = require("./model.cjs");
 const { PATTERNS, findLiterals, styled, declaresRightToLeft } = require("./literals.cjs");
 const { walk, text, relative, isUnder, checkOf, WARNING } = require("./project.cjs");
+const { identicalToHead } = require("./committed.cjs");
 
 const EXPORT_SEPARATOR = "#";
 const PACKAGE_PREFIX = "package:";
@@ -143,6 +144,15 @@ const literalProblems = (pattern, extensions, applies = () => true) => (project)
         .flatMap((file) => findLiterals(searchable(project, file), pattern).map((found) => ({ file, ...found })))
     : [];
 
+/** A colour literal is new drift, an error, unless git confirms its file is as HEAD holds it:
+ * then it is existing debt, a warning, since nothing in this change wrote it. */
+function colourProblems(project) {
+  const found = literalProblems(PATTERNS.colour, SCANNED_EXTENSIONS)(project);
+  if (!found.length) return [];
+  const debt = identicalToHead(project, [...new Set(found.map((each) => each.file))]);
+  return found.map((each) => (debt.has(each.file) ? { ...each, severity: WARNING } : each));
+}
+
 function codeTokensProblems(project) {
   const file = codeTokens(project);
   if (file === null || fs.existsSync(path.join(project.root, file))) return [];
@@ -172,7 +182,7 @@ const RULES = {
   C1: linkProblems,
   C2: libraryProblems,
   C3: coverageProblems,
-  C4: literalProblems(PATTERNS.colour, SCANNED_EXTENSIONS),
+  C4: colourProblems,
   C5: sharedLinkProblems,
   C6: literalProblems(PATTERNS.physical, STYLESHEET_EXTENSIONS, declaresRightToLeft),
   C7: rootProblems,

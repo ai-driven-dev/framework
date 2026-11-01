@@ -4,7 +4,7 @@ const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
 const { describe, it, beforeEach, afterEach } = require("node:test");
-const { UI, writeProject, edit, editTokens } = require("./fixtures/aidd-ui/project.js");
+const { UI, writeProject, edit, editTokens, commitAll } = require("./fixtures/aidd-ui/project.js");
 
 // The entries are scripts a user's machine runs, so each is driven as a subprocess with its
 // argument or its hook payload on stdin, which is what ships.
@@ -150,6 +150,14 @@ describe("aidd-ui validator entries", () => {
     it("never blocks the end of a turn on warnings", () => {
       orphan();
       hook(postToolUse(path.join(tmp, "src/ui/Orphan.tsx")));
+      assert.deepEqual(hook(stop()), silent);
+    });
+
+    it("takes a committed colour literal as a warning: it fails no check and blocks no turn", () => {
+      fs.appendFileSync(path.join(tmp, "src/ui/Button.tsx"), 'const style = "color: #ff0000";\n');
+      commitAll(tmp);
+      assert.deepEqual(validate(tmp), { code: 0, out: ['⚠ src/ui/Button.tsx: line 4: colour literal "#ff0000", use a token (C4)'], err: "" });
+      hook(postToolUse(path.join(tmp, BRAND)));
       assert.deepEqual(hook(stop()), silent);
     });
 

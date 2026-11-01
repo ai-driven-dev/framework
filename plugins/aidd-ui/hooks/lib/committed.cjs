@@ -2,7 +2,7 @@
 // read through its command line; without git, a repository, a commit or the file, there is no
 // baseline, and nothing is held to it. Any other failure is kept for H8 to name. git is asked once
 // which files changed, and for the text of those alone, so a run costs a call per changed file, not
-// per element.
+// per element. C4 asks two questions more, only when it found a literal, however many files hold one.
 const childProcess = require("node:child_process");
 const { clean, UI_DIR } = require("./project.cjs");
 
@@ -10,7 +10,8 @@ const GIT_TIMEOUT_MS = 5000;
 const GIT_VARIABLE_PREFIX = "GIT_";
 const NUL = "\0";
 const NOT_INSTALLED = "ENOENT";
-const NO_BASELINE = [/not a git repository/, /bad revision 'HEAD'/, /exists on disk, but not in 'HEAD'/]; // git's words under C
+const NO_BASELINE = [/not a git repository/, /bad revision 'HEAD'/, /Not a valid object name HEAD/, /exists on disk, but not in 'HEAD'/]; // git's words under C
+const TREE_ENTRY = /^\S+ \S+ (\S+)\t(.*)$/s; // <mode> <type> <id>, a tab, <path>
 
 /** The environment without git's own variables, which would point git at another repository, as a
  * commit hook's do, and with git's messages in the one language NO_BASELINE reads. */
@@ -54,4 +55,17 @@ function baseline(project, file) {
 /** A file's committed text when it changed since, else null. */
 const committed = (project, file) => (changed(project).has(file) ? baseline(project, file) : null);
 
-module.exports = { committed, baseline, changed };
+/** Those of `files` git confirms hold the bytes HEAD holds, by comparing blob ids, so a file only
+ * touched since still counts; none when git cannot say. */
+function identicalToHead(project, files) {
+  const listed = git(project, ["ls-tree", "-z", "HEAD", "--", ...files]);
+  if (!listed) return new Set();
+  const atHead = new Map(listed.split(NUL).filter(Boolean).map((entry) => TREE_ENTRY.exec(entry).slice(1).reverse()));
+  const held = files.filter((file) => atHead.has(file));
+  const ids = held.length ? git(project, ["hash-object", "--", ...held]) : null;
+  if (ids === null) return new Set();
+  const now = ids.trim().split("\n");
+  return new Set(held.filter((file, index) => now[index] === atHead.get(file)));
+}
+
+module.exports = { committed, baseline, changed, identicalToHead };

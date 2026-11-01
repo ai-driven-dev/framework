@@ -1,11 +1,10 @@
 const assert = require("node:assert/strict");
 const childProcess = require("node:child_process");
-const { execFileSync } = childProcess;
 const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
 const { describe, it, beforeEach, afterEach, mock } = require("node:test");
-const { UI, writeProject, edit, editTokens, put, record, history } = require("./fixtures/aidd-ui/project.js");
+const { UI, writeProject, edit, editTokens, put, record, history, git } = require("./fixtures/aidd-ui/project.js");
 
 // Each rule has one mutation of the valid project, and the test asserts the whole problem
 // list: dropping the rule turns its own test red and leaves every other one green.
@@ -487,13 +486,6 @@ describe("aidd-ui records and history", () => {
   });
 
   describe("H8 edited without a new version", () => {
-    /** git without the variables a commit hook exports, which would point it at the real repository. */
-    const git = (dir, ...args) =>
-      execFileSync("git", ["-c", "user.name=test", "-c", "user.email=test@example.com", "-c", "commit.gpgsign=false", ...args], {
-        cwd: dir,
-        env: Object.fromEntries(Object.entries(process.env).filter(([key]) => !key.startsWith("GIT_"))),
-        stdio: "ignore",
-      });
     const commit = (dir = tmp) => {
       git(dir, "add", "-A");
       git(dir, "commit", "-q", "--no-verify", "-m", "snapshot");

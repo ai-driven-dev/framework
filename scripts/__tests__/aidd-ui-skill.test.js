@@ -1,10 +1,10 @@
 const assert = require("node:assert/strict");
-const { execFileSync, spawnSync } = require("node:child_process");
+const { spawnSync } = require("node:child_process");
 const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
 const { describe, it, beforeEach, afterEach } = require("node:test");
-const { UI, writeProject, edit, editTokens, put } = require("./fixtures/aidd-ui/project.js");
+const { UI, writeProject, edit, editTokens, put, commitAll } = require("./fixtures/aidd-ui/project.js");
 
 // The record templates are what the skill's model starts from, so each is filled the way an
 // action says and the design system around it must still validate. A placeholder the table does
@@ -173,22 +173,13 @@ describe("aidd-ui 01-system breakpoints", () => {
 });
 
 describe("aidd-ui 01-system change flow", () => {
-  /** git without the variables a commit hook exports, which would point it at the real repository. */
-  const git = (...args) =>
-    execFileSync("git", ["-c", "user.name=test", "-c", "user.email=test@example.com", "-c", "commit.gpgsign=false", ...args], {
-      cwd: tmp,
-      env: Object.fromEntries(Object.entries(process.env).filter(([key]) => !key.startsWith("GIT_"))),
-      stdio: "ignore",
-    });
   const FIRST_ROW = "| 1 | created | no | aidd_docs/tasks/ds-init |";
   const TASK_ROW = "| 2 | new action colour | no | aidd_docs/tasks/recolour |";
   const FILE_OF = { button: "components/button", dialog: "components/dialog", "search-field": "components/search-field", home: "screens/home" };
   const engine = (...args) => spawnSync(process.execPath, [ENGINE, ...args], { encoding: "utf8" });
 
   it("takes a token change reaching a screen under review to a design system that validates", () => {
-    git("init", "-q");
-    git("add", "-A");
-    git("commit", "-q", "--no-verify", "-m", "snapshot");
+    commitAll(tmp);
     const deprecated = fs.readFileSync(path.join(tmp, `${UI}/components/old-button.md`), "utf8");
 
     const report = JSON.parse(engine("impact", "color.action.default", "--root", tmp).stdout);

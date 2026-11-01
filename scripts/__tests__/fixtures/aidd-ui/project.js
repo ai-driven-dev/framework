@@ -1,3 +1,4 @@
+const { execFileSync } = require("node:child_process");
 const fs = require("node:fs");
 const path = require("node:path");
 
@@ -325,4 +326,19 @@ function put(dir, name, content) {
   fs.writeFileSync(file, content);
 }
 
-module.exports = { UI, writeProject, generateStylesheet, edit, editTokens, put, record, history };
+/** git in `dir` without the variables a commit hook exports, which would point it at the real repository. */
+const git = (dir, ...args) =>
+  execFileSync("git", ["-c", "user.name=test", "-c", "user.email=test@example.com", "-c", "commit.gpgsign=false", ...args], {
+    cwd: dir,
+    env: Object.fromEntries(Object.entries(process.env).filter(([key]) => !key.startsWith("GIT_"))),
+    stdio: "ignore",
+  });
+
+/** Makes `dir` a repository whose one commit holds everything in it. */
+function commitAll(dir) {
+  git(dir, "init", "-q");
+  git(dir, "add", "-A");
+  git(dir, "commit", "-q", "--no-verify", "-m", "snapshot");
+}
+
+module.exports = { UI, writeProject, generateStylesheet, edit, editTokens, put, record, history, git, commitAll };

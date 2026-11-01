@@ -2,8 +2,9 @@ const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
-const { describe, it, beforeEach, afterEach } = require("node:test");
-const { UI, writeProject, edit, put } = require("./fixtures/aidd-ui/project.js");
+const { describe, it, beforeEach, afterEach, mock } = require("node:test");
+const childProcess = require("node:child_process");
+const { UI, writeProject, edit, put, git, commitAll } = require("./fixtures/aidd-ui/project.js");
 
 // Each rule has one mutation of the valid project, and the test asserts the whole problem
 // list: dropping the rule turns its own test red and leaves every other one green. Link
@@ -154,6 +155,133 @@ describe("aidd-ui code link", () => {
     it("skips a test, which states colours to check them", () => {
       put(tmp, "src/ui/Button.test.tsx", 'expect(color).toBe("#336699");\n');
       assert.deepEqual(problems(), []);
+    });
+  });
+
+  describe("C4 severity", () => {
+    const LITERAL = 'const style = "color: #ff0000";';
+    const WARNING = "warning";
+    const ERROR = "error";
+    /** Each C4 problem's severity and file. */
+    const severities = (project = load(tmp)) => code.check(project).filter((found) => found.rule === "C4").map((found) => `${found.severity} ${found.file}`);
+    const BUTTON_FILE = "src/ui/Button.tsx";
+    const HOME_FILE = "src/ui/HomePage.tsx";
+
+    it("warns on a literal in a file identical to HEAD: existing debt", () => {
+      append(BUTTON_FILE, LITERAL);
+      commitAll(tmp);
+      assert.deepEqual(severities(), [`${WARNING} ${BUTTON_FILE}`]);
+    });
+
+    it("still warns on a committed file touched without a change, as a formatter leaves it", () => {
+      append(BUTTON_FILE, LITERAL);
+      commitAll(tmp);
+      const later = new Date(Date.now() + 60_000);
+      fs.utimesSync(path.join(tmp, BUTTON_FILE), later, later);
+      assert.deepEqual(severities(), [`${WARNING} ${BUTTON_FILE}`]);
+    });
+
+    it("warns on a committed file whose path holds pattern characters", () => {
+      put(tmp, "src/ui/[id]/Page.tsx", `${LITERAL}\n`);
+      commitAll(tmp);
+      assert.deepEqual(severities(), [`${WARNING} src/ui/[id]/Page.tsx`]);
+    });
+
+    it("errs on every literal of a file edited since HEAD, the old ones with the new", () => {
+      append(BUTTON_FILE, LITERAL);
+      commitAll(tmp);
+      append(BUTTON_FILE, "// edited");
+      assert.deepEqual(severities(), [`${ERROR} ${BUTTON_FILE}`]);
+    });
+
+    it("errs on a literal in an untracked file, and warns on the committed one beside it", () => {
+      append(BUTTON_FILE, LITERAL);
+      commitAll(tmp);
+      put(tmp, "src/ui/New.tsx", `${LITERAL}\n`);
+      assert.deepEqual(severities(), [`${WARNING} ${BUTTON_FILE}`, `${ERROR} src/ui/New.tsx`]);
+    });
+
+    it("errs in a folder that is no repository", () => {
+      append(BUTTON_FILE, LITERAL);
+      assert.deepEqual(severities(), [`${ERROR} ${BUTTON_FILE}`]);
+    });
+
+    it("errs in a repository with no commit, which is no failure of git", () => {
+      append(BUTTON_FILE, LITERAL);
+      git(tmp, "init", "-q");
+      const project = load(tmp);
+      assert.deepEqual(severities(project), [`${ERROR} ${BUTTON_FILE}`]);
+      assert.equal(project.gitFailure, undefined);
+    });
+
+    it("errs when git is not installed", () => {
+      append(BUTTON_FILE, LITERAL);
+      commitAll(tmp);
+      const path_ = process.env.PATH;
+      process.env.PATH = os.tmpdir();
+      try {
+        assert.deepEqual(severities(), [`${ERROR} ${BUTTON_FILE}`]);
+      } finally {
+        process.env.PATH = path_;
+      }
+    });
+
+    it("reads the files of a project below the repository's root", () => {
+      const inner = path.join(tmp, "apps/web");
+      writeProject(inner);
+      append(`apps/web/${BUTTON_FILE}`, LITERAL);
+      commitAll(tmp);
+      assert.deepEqual(severities(load(inner)), [`${WARNING} ${BUTTON_FILE}`]);
+    });
+
+    describe("a git that fails", { skip: process.platform === "win32" }, () => {
+      const withGit = (script, read) => {
+        const bin = `${tmp}-bin`;
+        const path_ = process.env.PATH;
+        fs.mkdirSync(bin);
+        fs.writeFileSync(path.join(bin, "git"), `#!/bin/sh\n${script}\n`, { mode: 0o755 });
+        process.env.PATH = `${bin}${path.delimiter}${path_}`;
+        try {
+          return read();
+        } finally {
+          process.env.PATH = path_;
+          fs.rmSync(bin, { recursive: true, force: true });
+        }
+      };
+
+      it("keeps the error when it refuses the repository", () => {
+        append(BUTTON_FILE, LITERAL);
+        commitAll(tmp);
+        assert.deepEqual(withGit('echo "fatal: detected dubious ownership" >&2\nexit 128', severities), [`${ERROR} ${BUTTON_FILE}`]);
+      });
+
+      it("keeps the error when only the hash of the current files fails", () => {
+        append(BUTTON_FILE, LITERAL);
+        commitAll(tmp);
+        const real = `PATH='${process.env.PATH}' exec git "$@"`;
+        assert.deepEqual(withGit(`[ "$1" = hash-object ] && { echo "fatal: cannot hash" >&2; exit 128; }\n${real}`, severities), [`${ERROR} ${BUTTON_FILE}`]);
+      });
+    });
+
+    describe("git calls", () => {
+      afterEach(() => mock.restoreAll());
+      const gitCalls = () => {
+        const spy = mock.method(childProcess, "execFileSync");
+        severities();
+        return spy.mock.calls.map((call) => call.arguments[1][0]);
+      };
+
+      it("asks git nothing when C4 finds nothing", () => {
+        commitAll(tmp);
+        assert.deepEqual(gitCalls(), []);
+      });
+
+      it("asks git the same two questions however many files hold a literal", () => {
+        append(BUTTON_FILE, LITERAL);
+        append(HOME_FILE, LITERAL);
+        commitAll(tmp);
+        assert.deepEqual(gitCalls(), ["ls-tree", "hash-object"]);
+      });
     });
   });
 
