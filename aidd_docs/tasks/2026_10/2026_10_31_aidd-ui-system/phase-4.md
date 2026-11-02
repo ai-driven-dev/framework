@@ -20,7 +20,7 @@ status: implemented
 | Setup        | in the scratchpad: a blank web project; Gouvernail's copy; a Kairos copy without `node_modules`; each a git repository | three projects, nothing installed, the originals untouched | system |
 | Happy path   | follow 01-system on the blank project from the brand | validate prints VALID; `tokens.css` generated; components rendered | cli |
 | Happy path   | follow 01-system on Gouvernail and Kairos, extracting from the code | validate prints no error; each component links its code; C3 warnings are only what the record says is left | cli |
-| Happy path   | on each, commit, then change one semantic token through `06-change` | the impact report names every reached component, screen, render and code file; versions rise with history rows; validate prints no error; a review is said to be expected | cli |
+| Happy path   | on each, commit, then change one semantic token through the change flow | the impact report names every reached component, screen, render and code file; versions rise with history rows; validate prints no error; a review is said to be expected | cli |
 | Edge case    | edit a validated component without the flow | H8 names it | cli |
 | Teardown     | none: the scratchpad holds the copies | originals untouched, checked by `git status` on each | system |
 
@@ -45,7 +45,7 @@ status: implemented
 
 > A token change reaches everything it should.
 
-1. On each pilot, commit, then change one semantic token through `06-change`.
+1. On each pilot, commit, then change one semantic token through the change flow.
 2. Compare the impact report with a grep of the token across records and renders.
 
 ### `4)` Fix and record

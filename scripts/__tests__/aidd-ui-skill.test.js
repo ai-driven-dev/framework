@@ -20,15 +20,15 @@ const TASK = "aidd_docs/tasks/ds-init";
 const FILLS = {
   system: {
     platforms: "web",
-    "breakpoints, the query that must win last: smallest first with min-width, largest first with max-width": "mobile, desktop",
+    "breakpoints, the winning query last": "mobile, desktop",
     "themes, the base first": "light, dark",
     locales: "fr, ar",
-    "directions, ltr or rtl": "ltr, rtl",
-    "token groups components never cite": "color.brand",
+    "ltr, rtl": "ltr, rtl",
+    "primitive token groups": "color.brand",
     "UI folders of the code": "src/ui",
-    "file where the code consumes the tokens, or a list of them, one per app": "[src/ui/tokens.css]",
-    "paths under a code root no record links": "src/ui/vendor",
-    "component packages the code uses": "@radix-ui/react-dialog",
+    "token file of the code, or one per app": "[src/ui/tokens.css]",
+    "paths no record links": "src/ui/vendor",
+    "component packages used": "@radix-ui/react-dialog",
     "breakpoint name": "mobile",
     "the widths it covers": "below 64rem",
     "task folder": TASK,
@@ -47,10 +47,10 @@ const FILLS = {
     "component id": "badge",
     "Component name": "Badge",
     "atom, molecule or composition": "atom",
-    "ids of the elements it uses, of its level or lower": "",
-    "semantic tokens its render uses": "space.md, color.text.default",
-    "variants, or default when it has one only": "default",
-    "default, then focus when interactive, then hover, disabled, loading or error when they exist": "default, focus",
+    "ids it uses": "",
+    "semantic tokens": "space.md, color.text.default",
+    "variants": "default",
+    "states": "default, focus",
     "yes or no": "yes",
     "accessible role": "status",
     "when to use it, and when not": "A short status beside a label; never for an action.",
@@ -148,8 +148,6 @@ describe("aidd-ui 01-system templates", () => {
 
 describe("aidd-ui 01-system variant axes", () => {
   it("shows an axis in the templates, and the axis they show validates", () => {
-    assert.ok(template("component").includes("`variants: [size=sm, size=md, tone=danger]`"));
-    assert.ok(template("render").includes('data-size="sm" for size=sm'));
     edit(tmp, `${UI}/components/dialog.md`, "variants: [default]", "variants: [size=sm, size=md, tone=danger]");
     edit(tmp, `${UI}/components/dialog.html`, 'data-variant="default" data-state="default"', 'data-size="sm" data-state="default"');
     edit(tmp, `${UI}/components/dialog.html`, 'data-variant="default" data-state="hover"', 'data-size="md" data-state="hover"');
@@ -160,7 +158,7 @@ describe("aidd-ui 01-system variant axes", () => {
 
 describe("aidd-ui 01-system breakpoints", () => {
   it("gives an example of a resolver for breakpoints alone that validates as written", () => {
-    const steps = fs.readFileSync(path.join(SKILL, "actions/04-tokens.md"), "utf8");
+    const steps = fs.readFileSync(path.join(SKILL, "references/tokens.md"), "utf8");
     const [resolver] = steps.match(/\{"version": "2025\.10"[^`]*"dev\.ai-driven\.media"[^`]*\}/);
     const [file] = steps.match(/\{"space": [^`]*\}/);
     put(tmp, `${UI}/tokens.resolver.json`, resolver);
@@ -227,15 +225,6 @@ describe("aidd-ui 01-system change flow", () => {
     edit(tmp, `${UI}/components/old-button.md`, "\nversion: 2\n", "\nversion: 3\n");
     edit(tmp, `${UI}/components/old-button.md`, "| 2 | deprecated for button | yes | aidd_docs/tasks/retire-old-button |", "| 2 | deprecated for button | yes | aidd_docs/tasks/retire-old-button |\n| 3 | action colour renamed | yes | aidd_docs/tasks/rename |");
     assert.deepEqual(validate(), { code: 0, out: ["VALID"] });
-
-    const steps = fs.readFileSync(path.join(SKILL, "actions/06-change.md"), "utf8");
-    assert.ok(steps.includes("Only a value change leaves it so"));
-  });
-
-  it("says so in its steps: deprecated elements left untouched, pending rows for a screen under review", () => {
-    const steps = fs.readFileSync(path.join(SKILL, "actions/06-change.md"), "utf8");
-    assert.ok(steps.includes("A deprecated element in the report is named to the person and left untouched"));
-    assert.ok(steps.includes("one `pending` row per state at its new version"));
   });
 });
 
@@ -251,9 +240,8 @@ describe("aidd-ui 01-system skill", () => {
     }
   });
 
-  it("ends its change flow by saying a review is expected", () => {
-    const closing = fs.readFileSync(path.join(SKILL, "actions/06-change.md"), "utf8").split("\n").find((line) => line.startsWith("6. **Close.**"));
-    assert.ok(closing?.endsWith("and that a review is expected."));
+  it("ends by saying a review is expected, naming no skill", () => {
+    assert.ok(fs.readFileSync(path.join(SKILL, "actions/03-conclude.md"), "utf8").includes("and that a review is expected."));
   });
 
   it("holds no date, ticket id or em-dash", () => {
@@ -261,18 +249,6 @@ describe("aidd-ui 01-system skill", () => {
       assert.equal(/\d{4}[-_]\d{2}[-_]\d{2}/.test(text), false, `${file} holds a date`);
       assert.equal(text.includes("—"), false, `${file} holds an em-dash`);
     }
-  });
-
-  it("routes a design system whose tokens are open to the tokens action, in the survey and the router", () => {
-    const survey = fs.readFileSync(path.join(SKILL, "actions/01-survey.md"), "utf8");
-    assert.ok(survey.includes("Design system with T1 or T10 among its problems: read [tokens](04-tokens.md), then route the request below."));
-    const router = fs.readFileSync(path.join(SKILL, "SKILL.md"), "utf8");
-    assert.ok(router.includes('survey -->|"design system, T1 or T10 open"| tokens'));
-    assert.ok(router.includes('tokens -->|"design system, a change"| change'));
-  });
-
-  it("finds the engine under any tool's folder in a flat install", () => {
-    assert.ok(fs.readFileSync(path.join(SKILL, "SKILL.md"), "utf8").includes("look under the tool's folder for `hooks/aidd-ui/aidd-ui.cjs`, such as `.claude`, `.github`, `.kilo`, `.codex`, `.cursor` or `.opencode`"));
   });
 
   it("is the only skill the plugin lists and holds", () => {

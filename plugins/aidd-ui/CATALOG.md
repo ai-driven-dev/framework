@@ -31,15 +31,17 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 
 | Group | File | Description |
 |-------|------|---|
-| `actions` | [01-survey.md](skills/01-system/actions/01-survey.md) | - |
-| `actions` | [02-brand.md](skills/01-system/actions/02-brand.md) | - |
-| `actions` | [03-extract.md](skills/01-system/actions/03-extract.md) | - |
-| `actions` | [04-tokens.md](skills/01-system/actions/04-tokens.md) | - |
-| `actions` | [05-components.md](skills/01-system/actions/05-components.md) | - |
-| `actions` | [06-change.md](skills/01-system/actions/06-change.md) | - |
+| `actions` | [01-prepare.md](skills/01-system/actions/01-prepare.md) | - |
+| `actions` | [02-write.md](skills/01-system/actions/02-write.md) | - |
+| `actions` | [03-conclude.md](skills/01-system/actions/03-conclude.md) | - |
 | `assets` | [asset.md](skills/01-system/assets/asset.md) | - |
 | `assets` | [brand.md](skills/01-system/assets/brand.md) | - |
 | `assets` | [component.md](skills/01-system/assets/component.md) | - |
 | `assets` | [system.md](skills/01-system/assets/system.md) | - |
-| `-` | [SKILL.md](skills/01-system/SKILL.md) | `Lay a web project's design system, from nothing or extracted from its code, then carry a token or component change through its impact and new versions. Use when the user wants to set up, extract, or change a design system. Not for screens, journeys, or reviews.` |
+| `references` | [elements.md](skills/01-system/references/elements.md) | - |
+| `references` | [engine.md](skills/01-system/references/engine.md) | - |
+| `references` | [extraction.md](skills/01-system/references/extraction.md) | - |
+| `references` | [tokens.md](skills/01-system/references/tokens.md) | - |
+| `references` | [versions.md](skills/01-system/references/versions.md) | - |
+| `-` | [SKILL.md](skills/01-system/SKILL.md) | `Lay a web project's design system, from nothing or from its code, or carry a token or component change to its new versions. Use when the user wants to set up, extract, or change a design system. Not for screens, journeys, or reviews.` |
 

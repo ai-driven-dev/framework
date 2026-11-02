@@ -5,8 +5,6 @@ status: proposed
 version: 1
 ---
 
-<!-- Replace every `{{...}}` with its answer and delete every comment. Add `## Imposed charter` after `## Personality and tone` when the brand has a charter to follow, and `## Glossary` with the table `| Concept | Word | Forbidden |` when the project has a vocabulary. -->
-
 # Brand
 
 ## Project
@@ -42,3 +40,9 @@ version: 1
 | Version | Change | Breaking | Task |
 | --- | --- | --- | --- |
 | 1 | created | no | {{task folder}} |
+
+<!--
+- Replace every `{{...}}` and delete every comment.
+- Add `## Imposed charter` after `## Personality and tone` when a charter is imposed.
+- Add `## Glossary`, `| Concept | Word | Forbidden |`, when the project has a vocabulary.
+-->

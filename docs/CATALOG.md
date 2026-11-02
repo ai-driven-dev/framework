@@ -133,7 +133,7 @@ Runs synchronous feature delivery, optional async issue automation, and the prod
 
 | Skill      | Role                                      | Actions    |
 | ---------- | ----------------------------------------- | ---------- |
-| `01-system` | Lay a web design system from nothing or from the code, and carry a change through its impact and versions | `01-survey` to `06-change` |
+| `01-system` | Lay a web design system from nothing or from the code, and carry a change through its impact and versions | `01-prepare`, `02-write`, `03-conclude` |
 
 <!--extras-aidd-ui:start-->
 

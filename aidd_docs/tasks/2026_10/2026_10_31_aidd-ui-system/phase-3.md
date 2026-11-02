@@ -21,12 +21,15 @@ status: implemented
         └── 01-system/                   ✅
             ├── SKILL.md                 router
             ├── actions/
-            │   ├── 01-survey.md         blank or existing, what is already there
-            │   ├── 02-brand.md          brand.md and system.md
-            │   ├── 03-extract.md        tokens, assets and components read from the code
-            │   ├── 04-tokens.md         tokens, themes, tokens.css
-            │   ├── 05-components.md     assets, components and their renders
-            │   └── 06-change.md         impact, apply, regenerate, versions, review expected
+            │   ├── 01-prepare.md        engine, state, task folder, a change's agreed impact
+            │   ├── 02-write.md          brand and system, tokens, elements, versions, in order
+            │   └── 03-conclude.md       validate, warnings left, review expected
+            ├── references/
+            │   ├── engine.md            paths, commands, problems a later step owes
+            │   ├── extraction.md        what in the code goes where
+            │   ├── tokens.md            shapes, themes, breakpoints, resolver examples
+            │   ├── elements.md          records and renders
+            │   └── versions.md          versions, Breaking, status, deprecation, reviews
             └── assets/
                 ├── system.md            record templates
                 ├── brand.md
@@ -54,7 +57,7 @@ status: implemented
 2. Each action: Input, Process, Output, Test. Every write is followed by the hook's feedback; without the hook, the action runs the engine's `validate` itself.
 3. The engine is the plugin's `hooks/aidd-ui.cjs`; when the skill ships alone without it, the action stops and says the engine is missing.
 4. `03-extract` reads code roots, existing token files and components, writes tokens and records with `code` links and `implemented-version`, and uses the C3 warnings to find what is left.
-5. `06-change`: `impact` first and show the report; after the person agrees, apply, run `tokens` when tokens changed, rewrite the markup of reached renders whose elements changed, raise each changed element's version with a history row naming the task folder, set it back to `proposed`, then stop saying a review is expected.
+5. The change flow: `impact` first and show the report; after the person agrees, apply, run `tokens` when tokens changed, rewrite the markup of reached renders whose elements changed, raise each changed element's version with a history row naming the task folder, set it back to `proposed`, then stop saying a review is expected.
 
 ### `2)` Record templates
 

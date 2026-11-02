@@ -3,15 +3,13 @@ id: {{component id}}
 kind: {{atom, molecule or composition}}
 status: proposed
 version: 1
-uses: [{{ids of the elements it uses, of its level or lower}}]
-tokens: [{{semantic tokens its render uses}}]
-variants: [{{variants, or default when it has one only}}]
-states: [{{default, then focus when interactive, then hover, disabled, loading or error when they exist}}]
+uses: [{{ids it uses}}]
+tokens: [{{semantic tokens}}]
+variants: [{{variants}}]
+states: [{{states}}]
 interactive: {{yes or no}}
 role: {{accessible role}}
 ---
-
-<!-- Replace every `{{...}}` with its answer and delete every comment. List a prop that varies on its own as an axis, such as `variants: [size=sm, size=md, tone=danger]`; a bare item is a plain variant. Delete `## Keyboard` when interactive is no. Once the code exists, add `code: <path>#<Export>`, `code: package:<name>#<Export>` for a library component, or a bare `code: <path>` for an `.astro` component, and `implemented-version: 1` to the front matter. -->
 
 # {{Component name}}
 
@@ -28,3 +26,10 @@ role: {{accessible role}}
 | Version | Change | Breaking | Task |
 | --- | --- | --- | --- |
 | 1 | created | no | {{task folder}} |
+
+<!--
+- Replace every `{{...}}` and delete every comment.
+- An axis is `axis=value`, such as `variants: [size=sm, size=md, tone=danger]`; a bare item is a plain variant.
+- Delete `## Keyboard` when `interactive` is `no`.
+- Once coded, add `code` and `implemented-version: 1` to the front matter.
+-->

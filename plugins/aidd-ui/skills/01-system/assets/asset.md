@@ -8,8 +8,6 @@ file: {{file name beside this record}}
 alt: {{alternative text}}
 ---
 
-<!-- Replace every `{{...}}` with its answer and delete every comment. The file named in `file` sits beside this record. -->
-
 # {{Asset name}}
 
 ## History
@@ -17,3 +15,8 @@ alt: {{alternative text}}
 | Version | Change | Breaking | Task |
 | --- | --- | --- | --- |
 | 1 | created | no | {{task folder}} |
+
+<!--
+- Replace every `{{...}}` and delete every comment.
+- Put the file `file` names beside this record.
+-->

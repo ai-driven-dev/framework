@@ -13,8 +13,13 @@
 </style>
 </head>
 <body>
-<!-- Replace every `{{...}}` with its answer and delete every comment. Show each variant value and each state the record declares at least once, repeating the block below, with no product of the axes and no repeat per theme: each block with data-variant and data-state, an `axis=value` item as its own attribute instead, such as data-size="sm" for size=sm, and style them with var() of the tokens the record lists, never a value. Use logical properties such as padding-inline when a right-to-left direction is declared. On a screen, drop data-variant and show one block per state. -->
 <div class="{{component id}}" data-variant="{{variant}}" data-state="{{first state}}">{{first state}}</div>
 <div class="{{component id}}" data-variant="{{variant}}" data-state="{{next state}}">{{next state}}</div>
 </body>
 </html>
+
+<!--
+- Replace every `{{...}}` and delete every comment.
+- One block per variant value and per state, at least once each: an `axis=value` item as its own attribute, such as data-size="sm" for size=sm.
+- A screen drops data-variant and shows one block per state.
+-->
