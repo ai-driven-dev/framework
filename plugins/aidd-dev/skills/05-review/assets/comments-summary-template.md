@@ -1,12 +1,12 @@
 ## Review comments
 
-Done: {{n}} ({{short shas}}). Answered: {{n}}.
+Done: {{n}}{{ (short shas), when there are any}}. Answered: {{n}}.
 
 ### FAQ: your call
 
 1. **{{question}}** ([thread]({{url}})): {{option a}} / {{option b}}
 
-### To fix
+### To do
 
 - {{change}} ([thread]({{url}}))
 
