@@ -1,6 +1,6 @@
 # Axis: functional
 
-Trace the criteria, phase by phase, from the files as the diff leaves them.
+A criterion is a row of the plan's acceptance criteria tables, or one the caller gives. Trace them, phase by phase, from the files as the diff leaves them.
 
 | The criterion | Its line |
 | --- | --- |

@@ -5,9 +5,7 @@
 - Diff: `{{base}}...{{short sha of HEAD}}`
 - Uncommitted changes: {{yes | no}}
 - Axes: {{the axes that ran}}
-- Verdict: {{approve | changes-requested | blocked}}
-- Score: {{n}} critical, {{n}} major, {{n}} minor
-- Coverage: {{n}}/{{the plan's whole criteria total}} met, {{n}} unmet, {{n}} unverified at runtime, {{n}} out of the diff
+- Verdict: {{approve | changes-requested | blocked}}, because {{what sets it}}
 
 ### Criteria
 
@@ -16,12 +14,20 @@
 - Unverified at runtime: {{criterion}} — {{what a run would show}}
 - Out of the diff: {{phase-name}} ({{n}} criteria)
 
+### Assumptions
+
+- {{what the diff takes for granted}} — {{holds, finding or limit}}, checked at `{{file:line}}`
+
 ### Findings
 
-- `{{file:line}}` : {{issue}} → {{fix}} — {{🔴 critical | 🟡 major | 🟢 minor}}, {{kind}}
+- `{{file:line}}` : {{issue}}, proof `{{file:line}}` → {{fix}} — {{🔴 critical | 🟡 major | 🟢 minor}}
 
 ### Limits
 
-- {{a shape nothing can reach}} — {{why}}
+- {{the doubt}} — {{what would settle it}}
 
-<!-- Append one round per pass, never rewrite an earlier one. Replace every `{{...}}`, delete every comment, and leave out what has nothing to hold. -->
+<!--
+- Append one round per pass, never rewrite an earlier one.
+- Replace every `{{...}}` and delete every comment.
+- Leave out what has nothing to hold.
+-->

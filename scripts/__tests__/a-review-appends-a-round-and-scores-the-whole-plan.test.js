@@ -31,7 +31,7 @@ describe("a review appends a round and scores the whole plan", () => {
 
   it("a review takes the work alone, and functional only with a plan", () => {
     assert.match(read("actions/01-prepare.md"), /The work, and its plan, criteria, ticket, task folder or evidence if any/u);
-    assert.match(read("actions/01-prepare.md"), /else all of them, `functional` only with a plan or criteria; named without them, ask/u);
+    assert.match(read("actions/01-prepare.md"), /else all of them:\n {3}- `functional` only with a plan or criteria;\n {3}- named without them, ask/u);
   });
 
   it("the round is written once, at the end, and an earlier one is never judged", () => {
@@ -42,35 +42,47 @@ describe("a review appends a round and scores the whole plan", () => {
     assert.match(template(), /Append one round per pass, never rewrite an earlier one/u);
   });
 
-  it("alone, the reply can hold the round", () => {
-    assert.match(read("actions/03-conclude.md"), /without one, ask whether to keep it in a file/u);
+  it("the round goes to the folder named, else the plan's, and alone the reply can hold it", () => {
+    assert.match(read("actions/03-conclude.md"), /the task folder named, else of the plan's\. Neither: ask whether to keep it in a file/u);
     assert.match(read("actions/03-conclude.md"), /no: the reply holds it/u);
   });
 
   it("the round's fields are the template's, in order", () => {
     const round = template().slice(template().indexOf("## Round"), template().indexOf("### Criteria"));
     const fields = [...round.matchAll(/^- ([A-Z][\w ]*):/gmu)].map((match) => match[1]);
-    assert.deepEqual(fields, ["Diff", "Uncommitted changes", "Axes", "Verdict", "Score", "Coverage"]);
-    for (const list of ["Criteria", "Findings", "Limits"]) assert.match(template(), new RegExp(`^### ${list}$`, "mu"));
+    assert.deepEqual(fields, ["Diff", "Uncommitted changes", "Axes", "Verdict"]);
+    for (const list of ["Criteria", "Assumptions", "Findings", "Limits"]) assert.match(template(), new RegExp(`^### ${list}$`, "mu"));
   });
 
   it("a finding carries no box, so no state of it can be copied", () => {
     assert.doesNotMatch(template().slice(template().indexOf("### Findings")), /^- \[[ x]\]/mu);
   });
 
-  it("a finding is reachable, and what nothing can reach is kept as a limit", () => {
-    assert.match(rubric(), /tied to the diff, reachable from a real input, caller or contract/u);
-    assert.match(rubric(), /What nothing can reach is a limit, never a finding/u);
+  it("a finding carries its proof, and a doubt left unproven is a limit", () => {
+    assert.match(rubric(), /^\| Proof \| the `file:line` that makes the defect real/mu);
+    assert.match(rubric(), /^\| Limit \| a doubt left unproven, or a shape nothing reaches; never a finding \|$/mu);
+    assert.match(read("actions/02-review.md"), /check each where the value is produced or used/u);
+    assert.match(template(), /— \{\{holds, finding or limit\}\}, checked at `\{\{file:line\}\}`/u);
+    assert.match(template(), /, proof `\{\{file:line\}\}` →/u);
   });
 
-  it("one defect makes one finding, whichever axes found it", () => {
-    assert.match(read("actions/02-review.md"), /one finding per defect, whichever axes found it/u);
+  it("every axis starts from what the diff assumes and what it misses", () => {
+    const review = read("actions/02-review.md");
+    const assumes = review.indexOf("List what it assumes");
+    const misses = review.indexOf("List what the diff should have changed and did not");
+    const axes = review.indexOf("Apply each axis");
+    assert.ok(assumes > -1 && misses > assumes && axes > misses);
+    assert.match(review, /and what the plan or a comment claims/u);
+  });
+
+  it("one defect makes one finding, whichever step found it", () => {
+    assert.match(read("actions/02-review.md"), /one finding per defect, whichever step found it/u);
   });
 
   it("the severity scale is one scale, decided by harm", () => {
     assert.match(rubric(), /^\| 🔴 critical \| would harm production, its users, their data or what depends on it \|$/mu);
-    assert.match(rubric(), /^\| 🟡 major \| a user or a caller will hit it, or the next change will \|$/mu);
-    assert.match(rubric(), /^\| 🟢 minor \| nothing breaks if it stays \|$/mu);
+    assert.match(rubric(), /^\| 🟡 major \| any other defect worth fixing \|$/mu);
+    assert.match(rubric(), /^\| 🟢 minor \| a matter of taste: style, wording, an optional improvement \|$/mu);
     assert.match(template(), /\{\{🔴 critical \| 🟡 major \| 🟢 minor\}\}/u);
   });
 
@@ -79,11 +91,11 @@ describe("a review appends a round and scores the whole plan", () => {
     assert.match(rubric(), /^\| `changes-requested` \| a major finding, an unchecked criterion, or `functional` with no criterion met \|$/mu);
   });
 
-  it("code reads what the diff reaches, each kind saying what to look for", () => {
-    assert.match(code(), /Read the diff and what it reaches/u);
-    for (const kind of ["correctness", "compatibility", "security", "error-handling", "performance", "architecture", "interface", "code-health", "tests", "regression", "adversarial"]) {
-      assert.match(code(), new RegExp(`^\\| \`${kind}\` \\| [a-z]`, "mu"), kind);
+  it("code lists areas to look at, and a finding carries no label to argue about", () => {
+    for (const area of ["correctness", "compatibility", "security", "failure", "performance", "architecture", "interface", "tests", "code health"]) {
+      assert.match(code(), new RegExp(`^\\| ${area} \\| [a-z]`, "mu"), area);
     }
+    assert.doesNotMatch(template(), /\{\{kind\}\}/u);
   });
 
   it("relevancy holds the documents the change contradicts", () => {
@@ -101,7 +113,7 @@ describe("a review appends a round and scores the whole plan", () => {
   });
 
   it("a weakened test is a defect, with or without a plan", () => {
-    assert.match(code(), /`regression` \| an existing test weakened or deleted/u);
+    assert.match(code(), /an existing test weakened or deleted/u);
   });
 
   it("an unmet criterion has one home, and it is not Findings", () => {
@@ -113,10 +125,14 @@ describe("a review appends a round and scores the whole plan", () => {
     assert.match(template(), /^- Unverified at runtime: \{\{criterion\}\} — \{\{what a run would show\}\}$/mu);
   });
 
-  it("the score is always there and explains the verdict, the coverage only with criteria", () => {
-    assert.match(template(), /^- Score: \{\{n\}\} critical, \{\{n\}\} major, \{\{n\}\} minor$/mu);
-    assert.match(template(), /leave out what has nothing to hold/u);
-    assert.match(template(), /^- Coverage: \{\{n\}\}\/\{\{the plan's whole criteria total\}\} met, \{\{n\}\} unmet, \{\{n\}\} unverified at runtime, \{\{n\}\} out of the diff$/mu);
+  it("the verdict says what sets it, and no count reads as a grade", () => {
+    assert.match(template(), /^- Verdict: \{\{approve \| changes-requested \| blocked\}\}, because \{\{what sets it\}\}$/mu);
+    assert.doesNotMatch(template(), /Score|Coverage/u);
+    assert.match(template(), /Leave out what has nothing to hold/u);
+  });
+
+  it("a criterion is a row of the plan's tables, never one inferred from prose", () => {
+    assert.match(functional(), /A criterion is a row of the plan's acceptance criteria tables, or one the caller gives/u);
   });
 
   it("the flow draws every step and verdict", () => {
