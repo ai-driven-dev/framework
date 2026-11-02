@@ -6,7 +6,8 @@
 - Uncommitted changes: {{yes | no}}
 - Axes: {{the axes that ran}}
 - Verdict: {{approve | changes-requested | blocked}}
-- Score: {{n_met}}/{{n_plan}} met, {{n_unmet}} unmet, {{n_unverified}} unverified at runtime, {{n_out}} out of the diff, or not scored
+- Score: {{n}} critical, {{n}} major, {{n}} minor
+- Coverage: {{n}}/{{the plan's whole criteria total}} met, {{n}} unmet, {{n}} unverified at runtime, {{n}} out of the diff
 
 ### Criteria
 
@@ -23,4 +24,4 @@
 
 - {{a shape nothing can reach}} — {{why}}
 
-<!-- Append one round per pass, never rewrite an earlier one. Replace every `{{...}}`, delete every comment, and leave out a list with nothing to hold. -->
+<!-- Append one round per pass, never rewrite an earlier one. Replace every `{{...}}`, delete every comment, and leave out what has nothing to hold. -->
