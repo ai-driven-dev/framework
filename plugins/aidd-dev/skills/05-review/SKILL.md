@@ -38,3 +38,4 @@ Run the flow above, reading only the next action file.
 
 - Ask which entry the caller wants when the request does not say.
 - Review statically: never run the app.
+- Reach a pull request through the VCS tool `aidd_docs/memory/vcs.md` names, else the one the remote points to.

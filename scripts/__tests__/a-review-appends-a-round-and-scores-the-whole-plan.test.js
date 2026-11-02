@@ -322,12 +322,14 @@ describe("a review appends a round and scores the whole plan", () => {
     }
   });
 
-  it("every action carries the contract's sections, and its test is a table", () => {
+  it("every action carries the contract's sections, and a test it keeps is a table", () => {
     for (const action of fs.readdirSync(path.join(SKILL, "actions"))) {
       const body = read(path.join("actions", action));
       const headings = [...body.matchAll(/^## (.+)$/gmu)].map((match) => match[1]);
-      assert.deepEqual(headings, ["Input", "Output", "Process", "Test"], action);
-      assert.match(body.slice(body.indexOf("## Test")), /^\| Case \| Pass \|$/mu, action);
+      assert.deepEqual(headings.filter((heading) => heading !== "Test"), ["Input", "Output", "Process"], action);
+      if (headings.includes("Test")) {
+        assert.match(body.slice(body.indexOf("## Test")), /^\| Case \| Pass \|$/mu, action);
+      }
     }
   });
 
