@@ -11,6 +11,7 @@ DTCG 2025.10 in `aidd_docs/ui/tokens.json`.
 | nesting | a token never holds a token: the hover of token `a.b` is `a.b-hover` |
 | themes | the first theme is `tokens.json`; each other is a `theme` context of `tokens.resolver.json` listing `themes/<theme>.json` |
 | breakpoints | the starting one is `tokens.json`; each other is a `breakpoint` context listing `breakpoints/<name>.json`, its query in `dev.ai-driven.media`, in `breakpoints` order, the winning query last |
+| both | one resolver holding both modifiers, both in `resolutionOrder` |
 | context file | redefines base tokens only, with their type |
 | theme and breakpoint | a token a theme sets, directly or through what it cites, never changes with the width |
 | code | `code-tokens` names the file the code consumes them from, or one per app |
