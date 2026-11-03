@@ -22,6 +22,7 @@ import {
 import { registerTool } from "../../registry.js";
 import { transformMcpToOpencode } from "../opencode/build.js";
 import { buildKiloFlatContract } from "./build.js";
+import { kiloAgentFrontmatter } from "./kilo-agent.js";
 import { generateKiloHooksBridge } from "./kilo-hooks-bridge.js";
 import {
   KILO_DIRECTORY,
@@ -50,7 +51,7 @@ export const kilo: AiTool<HasAgents & HasSkills & HasCommands & HasRules & HasMc
       directory: KILO_DIRECTORY,
       toolSuffix: TOOL_SUFFIX,
       format: "markdown",
-      convertFrontmatter: (fm) => ({ description: fm.description, mode: "subagent" }),
+      frontmatter: kiloAgentFrontmatter,
     }),
     skills: new SkillsCapability({
       directory: KILO_DIRECTORY,

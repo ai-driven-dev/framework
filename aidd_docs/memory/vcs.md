@@ -8,7 +8,7 @@ The version-control conventions this project follows: branches, commits, and the
 
 - Production branch: `main`. Integration branch: `next`, the target for day-to-day work.
 - GitHub's default branch is `main`, so `gh pr create` without `--base next` targets production.
-- Platform: GitHub, driven through `gh`. Tickets are GitHub Issues.
+- Platform: GitHub, repository `ai-driven-dev/framework`, driven through `gh`. Tickets are GitHub Issues.
 - Pull request template: `.github/PULL_REQUEST_TEMPLATE.md`.
 - The release model — weekly promotion, hotfix path — is in [`RELEASE.md`](../../RELEASE.md); the tooling behind it is in `deployment.md`.
 
@@ -44,7 +44,3 @@ The version-control conventions this project follows: branches, commits, and the
 - Scope is optional and must be kebab-case. The encouraged list lives in `scope-enum` at warning level, so an unknown scope warns without blocking. Introduce a new one only when none fits.
 - The scope never routes a release: release-please attributes by changed path.
 - A breaking change goes in the footer as `BREAKING CHANGE: …`.
-
-## Commit Strategy
-
-AI should auto commit: `never`. Committing and pushing happen only when the user asks.

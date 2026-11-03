@@ -280,8 +280,9 @@ describeKiloRuntime("E2E: real Kilo runtime", () => {
         shell: KILO_SHELL,
         maxBuffer: 8 * 1024 * 1024,
       });
-      expect(agents.stdout).toContain("aidd-dev-checker");
-      expect(agents.stdout).toContain("aidd-dev-executor");
+      for (const role of ["explorer", "executor", "validator", "reviewer"]) {
+        expect(agents.stdout).toContain(`aidd-orchestrator-${role}`);
+      }
 
       const mcpProject = join(tempDir, "generated-mcp");
       await mkdir(mcpProject, { recursive: true });
@@ -300,6 +301,13 @@ describeKiloRuntime("E2E: real Kilo runtime", () => {
         fakeHome
       );
       expect(mcpBuild.exitCode, mcpBuild.stderr).toBe(0);
+      const fixtureAgents = await execFileAsync(KILO_BIN, ["agent", "list"], {
+        cwd: mcpProject,
+        env,
+        shell: KILO_SHELL,
+        maxBuffer: 8 * 1024 * 1024,
+      });
+      expect(fixtureAgents.stdout).toContain("aidd-test-code-reviewer");
       const mcp = await execFileAsync(KILO_BIN, ["mcp", "list"], {
         cwd: mcpProject,
         env,
@@ -353,7 +361,7 @@ describeKiloRuntime("E2E: real Kilo runtime", () => {
       );
       await writeFile(
         join(proofPlugin, "hooks", "capture.js"),
-        `import { appendFileSync } from "node:fs"; import { join } from "node:path"; let input = ""; process.stdin.on("data", chunk => input += chunk); process.stdin.on("end", () => { const payload = JSON.parse(input); appendFileSync(join(payload.cwd, "payloads.jsonl"), JSON.stringify({ pid: process.pid, payload }) + "\\n"); });`
+        `import { appendFileSync } from "node:fs"; import { join } from "node:path"; let input = ""; process.stdin.on("data", chunk => input += chunk); process.stdin.on("end", () => { const payload = JSON.parse(input); appendFileSync(join(payload.cwd, "payloads.jsonl"), JSON.stringify({ pid: process.pid, payload }) + "\\n"); if (payload.hook_event_name === "PostToolUse") { process.stderr.write("KILO_HOOK_FEEDBACK\\n"); process.exitCode = 2; } });`
       );
       await mkdir(join(proofPlugin, "rules"));
       await writeFile(join(proofPlugin, "rules", "runtime.md"), "KILO_RULE_MARKER\n");
@@ -419,6 +427,10 @@ describeKiloRuntime("E2E: real Kilo runtime", () => {
             role: "tool",
             content: expect.stringContaining("KILO_LOCAL_READ_OK"),
           }),
+          expect.objectContaining({
+            role: "tool",
+            content: expect.stringContaining("KILO_HOOK_FEEDBACK"),
+          }),
         ])
       );
       await expect
@@ -460,9 +472,14 @@ describeKiloRuntime("E2E: real Kilo runtime", () => {
             session_id: sessionId,
             cwd: generatedProject,
             tool_name: "read",
-            tool_input: { filePath: "probe.txt" },
+            tool_input: { filePath: "probe.txt", file_path: "probe.txt" },
           },
-          { hook_event_name: "Stop", session_id: sessionId, cwd: generatedProject },
+          {
+            hook_event_name: "Stop",
+            session_id: sessionId,
+            cwd: generatedProject,
+            stop_hook_active: false,
+          },
         ])
       );
       for (const call of calls) await expect.poll(() => alive(call.pid)).toBe(false);

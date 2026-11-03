@@ -63,7 +63,7 @@ A component-scoped hook runs only while that component (the skill or agent) is a
 
 The shared `command` handler: a script the tool runs at the moment. It reads the event JSON on stdin, then signals back.
 
-- **Claude / Codex / Copilot.** Exit `0` is success (stdout may carry a JSON object or, on some moments, context). Exit `2` blocks on a moment that honors it (stderr surfaces to the model). Any other code is a non-blocking error.
+- **Claude / Codex / Copilot.** Exit `0` is success (stdout may carry a JSON object or, on some moments, context). Exit `2` blocks on a moment that honors it (stderr surfaces to the model). Any other code is a non-blocking error. After a tool, the model reads context only from stdout, and each host reads a different key: Claude Code and Codex read `{ "hookSpecificOutput": { "hookEventName": "PostToolUse", "additionalContext": "..." } }`, Copilot CLI reads a top-level `{ "additionalContext": "..." }`. Codex fails the hook on any other key, so a hook meant for every tool writes the one each host reads, chosen by the payload (Copilot's carries `tool_result`).
 - **Cursor.** Exit `0` success, exit `2` blocks (same as `permission: "deny"`), any other code fails open. Set `failClosed: true` on the entry to make a crash block instead. Gating moments return `{ "permission": "allow" | "deny" | "ask" }` on stdout.
 
 Per-tool stdout schemas and which moments can block live in each tool's docs (linked above). Codex also has a `notify` mechanism (user scope only, single turn-complete event, JSON on argv not stdin) for a simple turn-complete notification.

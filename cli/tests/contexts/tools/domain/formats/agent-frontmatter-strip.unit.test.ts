@@ -2,75 +2,68 @@ import { describe, expect, it } from "vitest";
 import {
   COPILOT_AGENT_FRONTMATTER_KEYS,
   CURSOR_AGENT_FRONTMATTER_KEYS,
-  stripAgentFrontmatter,
+  stripCopilotAgentFrontmatter,
   stripCursorAgentFrontmatter,
+  stripPathIdAgentFrontmatter,
 } from "../../../../../src/contexts/tools/domain/formats/agent-frontmatter-strip.js";
 
-describe("stripAgentFrontmatter", () => {
-  describe("keeps allowlisted keys", () => {
-    it("preserves all six allowed keys when all are present", () => {
-      const input = {
+describe("stripCopilotAgentFrontmatter", () => {
+  it("keeps name, description and model, and reads Claude's effort as reasoningEffort", () => {
+    expect(
+      stripCopilotAgentFrontmatter({
         name: "reviewer",
         description: "Reviews code",
         model: "claude-sonnet",
-        tools: ["Read", "Write"],
-        agents: ["helper"],
-        "argument-hint": "[file]",
-      };
-      const result = stripAgentFrontmatter(input);
-      expect(result).toEqual(input);
-    });
-
-    it("preserves a subset of allowed keys", () => {
-      const input = { name: "reviewer", description: "Reviews code" };
-      const result = stripAgentFrontmatter(input);
-      expect(result).toEqual({ name: "reviewer", description: "Reviews code" });
+        effort: "high",
+      })
+    ).toEqual({
+      name: "reviewer",
+      description: "Reviews code",
+      model: "claude-sonnet",
+      reasoningEffort: "high",
+      "include-custom-instructions": true,
     });
   });
 
-  describe("drops non-allowlisted keys", () => {
-    it("drops paths key", () => {
-      const input = { name: "reviewer", paths: ["src/**/*.ts"] };
-      const result = stripAgentFrontmatter(input);
-      expect(result).not.toHaveProperty("paths");
-      expect(result).toHaveProperty("name");
+  it("drops tools and every other key, so the agent keeps Copilot's default of all tools", () => {
+    const result = stripCopilotAgentFrontmatter({
+      name: "reviewer",
+      tools: ["Read"],
+      agents: ["helper"],
+      "argument-hint": "[file]",
+      color: "red",
     });
+    expect(Object.keys(result)).toEqual(["name", "include-custom-instructions"]);
+  });
 
-    it("drops tags key", () => {
-      const input = { name: "reviewer", tags: ["code", "review"], description: "Reviews" };
-      const result = stripAgentFrontmatter(input);
-      expect(result).not.toHaveProperty("tags");
-      expect(result).toHaveProperty("description");
-    });
-
-    it("drops multiple unknown keys at once", () => {
-      const input = { name: "test", version: "1.0", custom: true, description: "desc" };
-      const result = stripAgentFrontmatter(input);
-      expect(Object.keys(result)).toEqual(COPILOT_AGENT_FRONTMATTER_KEYS.filter((k) => k in input));
+  it("preserves an explicit repository-instruction opt-out", () => {
+    expect(stripCopilotAgentFrontmatter({ "include-custom-instructions": false })).toEqual({
+      "include-custom-instructions": false,
     });
   });
 
-  describe("drops undefined values", () => {
-    it("excludes keys whose value is undefined", () => {
-      const input = { name: "reviewer", model: undefined, description: "desc" };
-      const result = stripAgentFrontmatter(input);
-      expect(result).not.toHaveProperty("model");
-      expect(result).toHaveProperty("name");
-      expect(result).toHaveProperty("description");
+  it("returns keys in allowlist order for deterministic serialization", () => {
+    const result = stripCopilotAgentFrontmatter({
+      effort: "low",
+      model: "sonnet",
+      name: "reviewer",
+      description: "desc",
     });
+    expect(Object.keys(result)).toEqual(COPILOT_AGENT_FRONTMATTER_KEYS);
   });
+});
 
-  describe("key ordering", () => {
-    it("returns keys in allowlist order for deterministic serialization", () => {
-      const input = {
-        "argument-hint": "[file]",
-        model: "sonnet",
-        name: "reviewer",
-        description: "desc",
-      };
-      const result = stripAgentFrontmatter(input);
-      expect(Object.keys(result)).toEqual(["name", "description", "model", "argument-hint"]);
-    });
+describe("stripPathIdAgentFrontmatter", () => {
+  it("keeps description and model only: the file name is the ID, and no key restricts tools", () => {
+    expect(
+      stripPathIdAgentFrontmatter({
+        name: "explorer",
+        description: "d",
+        model: "openai/gpt",
+        effort: "high",
+        tools: "Read",
+      })
+    ).toEqual({ description: "d", model: "openai/gpt" });
   });
 });
 

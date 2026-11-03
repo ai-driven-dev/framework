@@ -53,6 +53,11 @@ jobs:
             exit 0
           fi
 
+          # What ships needs a scene in the release video, or a written reason to be left out.
+          # Checked here, before anything is pushed, so a refusal leaves no branch or PR behind.
+          git checkout --detach origin/next
+          node .claude/skills/release-video/assets/check-release-video.js
+
           # A snapshot of next, never next itself: a PR headed by the live branch widens as
           # work merges in during review. The snapshot is next's exact tip, so the merge base
           # still refreshes.

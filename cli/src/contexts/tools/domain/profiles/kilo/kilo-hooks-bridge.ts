@@ -1,8 +1,10 @@
 /**
  * Kilo loads JavaScript modules from `.kilo/plugin/` and requires a default descriptor with
  * `{ id, server }`. Declarative hooks.json has no Kilo runtime, so this generator turns its
- * replayable commands into that native module. Kilo 7.7.5 delivers session.created,
- * completed tool parts and session.idle through its event hook.
+ * replayable commands into that native module. Kilo 7.7.5 delivers session.created and
+ * session.idle through its event hook; PostToolUse runs from tool.execute.after, which waits
+ * for the script and appends its exit-2 stderr to the tool's output for the model to read.
+ * Matchers ignore case, since Kilo names its tools in lowercase.
  */
 
 interface ClaudeHookItem {
@@ -93,6 +95,71 @@ function runHook(script, args, payload, directory) {
   child.stdin.end(body);
 }
 
+// Exit 2 puts the answer on stderr; exit 0 puts it in additionalContext on stdout.
+function answerFrom(code, stdout, stderr) {
+  if (code === 2) return stderr.trim();
+  if (code !== 0) return "";
+  try {
+    const output = JSON.parse(stdout);
+    return String(output?.hookSpecificOutput?.additionalContext ?? output?.additionalContext ?? "").trim();
+  } catch {
+    return "";
+  }
+}
+
+/** A Stop script's {"decision":"block","reason"} on stdout: the reason to keep working on. */
+function stopReasonOf(script, args, payload, directory) {
+  return new Promise((resolve) => {
+    let stdout = "";
+    const child = spawn("node", [HOOKS_DIR + script, ...args], {
+      cwd: directory,
+      stdio: ["pipe", "pipe", "ignore"],
+      timeout: 5000,
+    });
+    child.stdout.on("data", (chunk) => { stdout += chunk; });
+    child.on("error", () => resolve(""));
+    child.on("close", (code) => {
+      if (code !== 0) return resolve("");
+      try {
+        const output = JSON.parse(stdout);
+        resolve(output?.decision === "block" ? String(output.reason ?? "").trim() : "");
+      } catch {
+        resolve("");
+      }
+    });
+    child.stdin.on("error", () => {});
+    child.stdin.end(JSON.stringify(payload));
+  });
+}
+
+function answerOf(script, args, payload, directory) {
+  return new Promise((resolve) => {
+    let stdout = "";
+    let stderr = "";
+    const child = spawn("node", [HOOKS_DIR + script, ...args], {
+      cwd: directory,
+      stdio: ["pipe", "pipe", "pipe"],
+      timeout: 5000,
+    });
+    const fail = (error) => {
+      reportHookFailure(script, error);
+      resolve("");
+    };
+    child.stdout.on("data", (chunk) => { stdout += chunk; });
+    child.stderr.on("data", (chunk) => { stderr += chunk; });
+    child.on("error", fail);
+    child.on("close", (code, signal) => {
+      if ((code !== 0 && code !== 2) || signal !== null) {
+        fail("exited with code " + String(code) + (signal === null ? "" : " (" + signal + ")"));
+        return;
+      }
+      resolve(answerFrom(code, stdout, stderr));
+    });
+    child.stdin.on("error", () => {});
+    child.stdin.end(JSON.stringify(payload));
+  });
+}
+
 function reportHookFailure(script, error) {
   console.warn("[aidd] Kilo hook " + script + " failed: " + String(error));
 }
@@ -106,7 +173,7 @@ function sessionStartCallsFor(event, directory) {
   }));
 }
 
-const ${identifier} = async ({ directory }) => {
+const ${identifier} = async ({ directory, client }) => {
   const sessions = new Map();
   return {
   event: async ({ event }) => {
@@ -115,7 +182,7 @@ const ${identifier} = async ({ directory }) => {
       const id = properties?.sessionID;
       if (typeof id !== "string") return;
       if (event?.type === "session.deleted") { sessions.delete(id); return; }
-      if (!sessions.has(id)) sessions.set(id, { started: false, idle: false, tools: new Set(), directory });
+      if (!sessions.has(id)) sessions.set(id, { started: false, idle: false, continued: false, directory });
       const session = sessions.get(id);
       let calls = [];
       if (event?.type === "session.created" && !session.started) {
@@ -126,15 +193,35 @@ const ${identifier} = async ({ directory }) => {
         session.idle = false;
       } else if (event?.type === "session.idle" && !session.idle) {
         session.idle = true;
-        calls = STOP.map(hook => ({ ...hook, payload: { hook_event_name: "Stop", session_id: id, cwd: session.directory } }));
-      } else if (event?.type === "message.part.updated") {
-        const part = properties?.part;
-        if (part?.type !== "tool" || part.state?.status !== "completed" || !part.tool || !part.id || session.tools.has(part.id)) return;
-        session.tools.add(part.id);
-        calls = POST_TOOL_USE.filter(hook => !hook.matcher || hook.matcher.split("|").includes(part.tool)).map(hook => ({ ...hook, payload: { hook_event_name: "PostToolUse", session_id: id, cwd: session.directory, tool_name: part.tool, tool_input: part.state.input } }));
+        for (const hook of STOP) {
+          const payload = { hook_event_name: "Stop", session_id: id, cwd: session.directory, stop_hook_active: session.continued };
+          const reason = await stopReasonOf(hook.script, hook.args, payload, session.directory);
+          session.continued = reason !== "";
+          // Not awaited: the prompt is the session's next turn, and this handler must not hold it.
+          if (reason) {
+            client.session
+              .promptAsync({ path: { id }, body: { parts: [{ type: "text", text: reason }] } })
+              .catch(() => {});
+          }
+        }
       }
       for (const call of calls) {
         runHook(call.script, call.args, call.payload, call.payload.cwd);
+      }
+    } catch (error) {
+      console.warn("[aidd] Kilo hook dispatch failed: " + String(error));
+    }
+  },
+  "tool.execute.after": async (call, output) => {
+    try {
+      const tool = String(call?.tool ?? "");
+      const cwd = sessions.get(call?.sessionID)?.directory ?? directory;
+      // Kilo names the written file filePath; the scripts read Claude Code's file_path.
+      const args = call?.args;
+      const toolInput = typeof args?.filePath === "string" ? { ...args, file_path: args.filePath } : args;
+      for (const hook of POST_TOOL_USE.filter(hook => !hook.matcher || hook.matcher.split("|").some(name => name.toLowerCase() === tool.toLowerCase()))) {
+        const answer = await answerOf(hook.script, hook.args, { hook_event_name: "PostToolUse", session_id: call?.sessionID ?? null, cwd, tool_name: tool, tool_input: toolInput }, cwd);
+        if (answer) output.output = \`\${output.output ?? ""}\\n\\n\${answer}\`;
       }
     } catch (error) {
       console.warn("[aidd] Kilo hook dispatch failed: " + String(error));

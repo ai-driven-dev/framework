@@ -19,6 +19,7 @@ import type { FileWriter } from "../../../../../kernel/ports/file-writer.js";
 import type { ToolBuildContract } from "../../build-contract.js";
 import { buildOpencodeFlatConfig } from "../../formats/opencode-mcp-merge.js";
 import { transformMcpToOpencode } from "../opencode/build.js";
+import { kiloAgentFrontmatter } from "./kilo-agent.js";
 import { generateKiloHooksBridge } from "./kilo-hooks-bridge.js";
 import {
   KILO_DIRECTORY,
@@ -75,10 +76,7 @@ function transformKiloFlatAgent(content: string, plugin: string, outName: string
     currentFilePluginRelative: flatRelPath,
     resolveTargetPath: (rel) => kiloFlatResolveTarget(plugin, rel),
   });
-  return serializeFrontmatter(
-    { ...frontmatter, name: `${plugin}-${outName.replace(/\.md$/, "")}`, mode: "subagent" },
-    rewrittenBody
-  );
+  return serializeFrontmatter(kiloAgentFrontmatter(frontmatter), rewrittenBody);
 }
 
 // Kilo loads `instructions` for every session: a `paths` scope would silently widen to all files.

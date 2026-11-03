@@ -6,7 +6,6 @@ import {
   mergeClaudeSettingsHooks,
   mergeCodexFrameworkHooksJson,
   mergeCursorFlatHooks,
-  renameCodexHookEvents,
 } from "../../../../../src/contexts/tools/domain/formats/flat-hooks-merge.js";
 import { REPOSITORY_ROOT } from "../../../../helpers/repository-root.js";
 
@@ -125,16 +124,22 @@ describe("flattenCopilotHooksShape", () => {
     expect(result.hooks.PreToolUse[0].command).toBe("./.github/hooks/plugin/check.sh");
   });
 
-  it("drops the matcher field (not in Copilot flat shape)", () => {
+  it("keeps a group's matcher on each of its entries, and writes none for a group without one", () => {
     const input = JSON.stringify({
       hooks: {
-        PreToolUse: [{ matcher: "some-matcher", hooks: [{ type: "command", command: "run.sh" }] }],
+        PostToolUse: [
+          { matcher: "Write|Edit", hooks: [{ type: "command", command: "run.sh" }] },
+          { hooks: [{ type: "command", command: "all.sh" }] },
+        ],
       },
     });
     const result = JSON.parse(flattenCopilotHooksShape(input)) as {
-      hooks: { PreToolUse: Array<Record<string, unknown>> };
+      hooks: { PostToolUse: Array<Record<string, unknown>> };
     };
-    expect(result.hooks.PreToolUse[0]).not.toHaveProperty("matcher");
+    expect(result.hooks.PostToolUse).toEqual([
+      { type: "command", command: "run.sh", matcher: "Write|Edit" },
+      { type: "command", command: "all.sh" },
+    ]);
   });
 
   it("preserves timeout when present", () => {
@@ -292,9 +297,8 @@ describe("mergeCursorFlatHooks", () => {
 });
 
 describe("mergeCodexFrameworkHooksJson", () => {
-  // Codex has no `Stop` event: its vocabulary is SessionStart / SessionEnd / PostToolUse /
-  // PreToolUse, so subscribing to Stop journals a session_start with nothing after it.
-  it("maps Stop to SessionEnd, the event Codex actually delivers", () => {
+  // Codex delivers Stop once per turn (measured on 0.166, flat install): keep it under its name.
+  it("keeps Stop, the event Codex delivers at the end of each turn", () => {
     // Split literal, the way a plugin-root token is written: biome's noTemplateCurlyInString
     // cannot tell one from a botched template.
     const command = `node $${"{PLUGIN_ROOT}"}/hooks/journal.cjs turn-end`;
@@ -304,9 +308,8 @@ describe("mergeCodexFrameworkHooksJson", () => {
     const { content } = mergeCodexFrameworkHooksJson(null, plugin);
     const result = JSON.parse(content) as { hooks: Record<string, unknown[]> };
 
-    expect(Object.keys(result.hooks)).toEqual(["SessionEnd"]);
-    expect(result.hooks).not.toHaveProperty("Stop");
-    expect(JSON.stringify(result.hooks.SessionEnd)).toContain(command);
+    expect(Object.keys(result.hooks)).toEqual(["Stop"]);
+    expect(JSON.stringify(result.hooks.Stop)).toContain(command);
   });
 
   it("leaves the events Codex does share with Claude under their own names", () => {
@@ -395,36 +398,6 @@ describe("mergeCodexFrameworkHooksJson", () => {
       hooks: { SessionStart: Array<{ matcher?: string }> };
     };
     expect(result.hooks.SessionStart[0].matcher).toBe("startup");
-  });
-});
-
-describe("renameCodexHookEvents", () => {
-  it("returns a document without hooks byte for byte", () => {
-    expect(renameCodexHookEvents('{"x":1}')).toBe('{"x":1}');
-  });
-
-  it("renames Stop to SessionEnd and leaves the other events under their own names", () => {
-    const renamed = renameCodexHookEvents(
-      JSON.stringify({
-        hooks: {
-          Stop: [{ hooks: [{ type: "command", command: "a" }] }],
-          PreToolUse: [{ hooks: [] }],
-        },
-      })
-    );
-
-    expect(renamed).toBe(
-      `${JSON.stringify(
-        {
-          hooks: {
-            SessionEnd: [{ hooks: [{ type: "command", command: "a" }] }],
-            PreToolUse: [{ hooks: [] }],
-          },
-        },
-        null,
-        2
-      )}\n`
-    );
   });
 });
 
@@ -517,7 +490,7 @@ describe("mergeCodexFrameworkHooksJson, entry by entry", () => {
 
     expect(JSON.parse(content)).toStrictEqual({
       hooks: {
-        SessionEnd: [
+        Stop: [
           {
             hooks: [
               { type: "command", command: "a", timeout: 5, statusMessage: "working", async: true },
@@ -548,7 +521,7 @@ describe("the telemetry plugin's hooks on both Codex routes", () => {
 
   it("writes the same entries as the plugin tree, so one trust review covers both", () => {
     const merged = JSON.parse(mergeCodexFrameworkHooksJson(null, shipped()).content);
-    expect(merged).toStrictEqual(JSON.parse(renameCodexHookEvents(shipped())));
+    expect(merged).toStrictEqual(JSON.parse(shipped()));
   });
 });
 

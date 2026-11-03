@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.7.1](https://github.com/ai-driven-dev/framework/compare/aidd-dev-v2.7.0...aidd-dev-v2.7.1) (2026-10-26)
+
+
+### Refactoring
+
+* **aidd-dev:** lean the plan skill for small models ([#1080](https://github.com/ai-driven-dev/framework/issues/1080)) ([b7763ea](https://github.com/ai-driven-dev/framework/commit/b7763ea7c87694ad48f6330176e57860edf50d37))
+
 ## [2.7.0](https://github.com/ai-driven-dev/framework/compare/aidd-dev-v2.6.0...aidd-dev-v2.7.0) (2026-10-16)
 
 

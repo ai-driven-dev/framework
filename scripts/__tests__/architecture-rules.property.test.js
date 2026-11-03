@@ -214,7 +214,11 @@ function realSkills() {
   return skills;
 }
 
-/** The skill's content with every table row citing `name` removed. */
+/**
+ * The skill's content with every citation of `name` removed: the table rows citing it, and the
+ * `actions/<name>` path in a fenced block (a mermaid node), which has no row to remove and is
+ * pointed at a file that does not exist instead.
+ */
 function withoutCitationOf(content, name) {
   const stem = stemOf(name).toLowerCase();
   const noExt = name.replace(/\.md$/, "").toLowerCase();
@@ -230,6 +234,7 @@ function withoutCitationOf(content, name) {
         .map((cell) => cell.trim().replace(/^`|`$/g, "").toLowerCase());
       return !cells.includes(stem) && !cells.includes(noExt) && !cells.includes(name.toLowerCase());
     })
+    .map((line) => line.replaceAll(`actions/${name}`, "actions/removed.md"))
     .join("\n");
 }
 
@@ -243,14 +248,10 @@ test("every router in the tree cites every action it provides", () => {
 });
 
 test("removing a real router's citation is caught, for every action in the tree", () => {
-  // `aidd-dev:10-batch` names its one action as a fenced path rather than a table row, so there
-  // is no row to remove and nothing to catch. It is the one documented exception.
-  const FENCED_PATH_SKILL = "plugins/aidd-dev/skills/10-batch/SKILL.md";
   const missed = [];
   let checked = 0;
 
   for (const { relPath, content, names } of realSkills()) {
-    if (relPath === FENCED_PATH_SKILL) continue;
     for (const name of names) {
       checked += 1;
       const violations = checkRouterCoherence(relPath, withoutCitationOf(content, name), names);

@@ -449,7 +449,7 @@ enabled = false
 
 Set `enabled = true` or remove the override to restore the server.
 
-See [Claude Code MCP](https://code.claude.com/docs/en/mcp#scale-with-mcp-tool-search), [Codex MCP](https://learn.chatgpt.com/docs/extend/mcp?surface=cli), and [`mcp-installation.md`](mcp-installation.md).
+See [Claude Code MCP](https://code.claude.com/docs/en/mcp#scale-with-mcp-tool-search), [Codex MCP](https://learn.chatgpt.com/docs/extend/mcp?surface=cli), and [`connect-services.md`](connect-services.md).
 
 ### 🔴 Expert
 

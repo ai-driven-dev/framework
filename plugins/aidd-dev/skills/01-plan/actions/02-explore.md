@@ -1,23 +1,24 @@
 # 02 - Explore
 
-Read the codebase to ground the plan: what it touches, which rules apply, what is feasible. Read only.
+Ground the plan in the codebase.
 
 ## Input
 
-The gathered source from `01-gather`.
-
-## Output
-
-The architecture projection (files to modify, create, delete, each with a one-line reason), the project rules that apply (each justified in one line, or none), the feasibility checks (each source consulted, a doc URL or an in-repo file, and what it settled), and the risks.
+The source from capture.
 
 ## Process
 
-1. **Read.** Explore the code the source touches. Build the projection and list the infrastructure assumptions.
-2. **Check.** Verify against the official docs or the in-repo code. Keep each source and what it settled. Flag blockers and risks.
-3. **Select.** Keep the project rules that apply to the projection.
+1. Read the code the source touches and gather the [findings](../references/findings.md).
+2. Take stock: what each finding establishes with its evidence, and what is missing.
+3. Decide what comes next:
+   - If something is missing, go back to step 1 with it.
+   - If only the user can settle it and it blocks the plan, ask and wait, then go back to step 1.
+   - Otherwise read [conclude](03-conclude.md).
 
-## Test
+## Output
 
-- The projection lists files to modify, create, and delete, each with a one-line reason.
-- Every feasibility check records its source and what it settled.
-- The applicable rules are identified and justified, or none apply.
+The findings: files to modify, create, and delete, the impact, the rules, and the docs checked.
+
+## Rules
+
+- Name a file to modify or delete only after reading it.

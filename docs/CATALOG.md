@@ -1,16 +1,16 @@
 # Skill Catalog
 
-The exhaustive list of AIDD plugins, skills, and actions. Skills are invoked through your AI tool by their `plugin:NN-slug` name (slash command, MCP, or natural-language trigger). Actions are the internal steps a skill runs; you do not call them directly.
+The exhaustive list of AIDD plugins, skills, and actions. Skills are invoked through your AI tool by their `plugin:NN-slug` name (slash command, MCP, or natural-language trigger). Actions are the internal steps a skill runs; you do not call them directly. Hooks need `node` on your `PATH`; which tools run them is in [Compatibility](COMPATIBILITY.md).
 
 - [aidd-context](#-aidd-context) - knowledge production
 - [aidd-dev](#-aidd-dev) - code transformation
 - [aidd-pm](#-aidd-pm) - product management
 - [aidd-refine](#-aidd-refine) - meta-cognition
 - [aidd-vcs](#-aidd-vcs) - version control workflows
-- [aidd-orchestrator](#-aidd-orchestrator) - async orchestration (optional)
+- [aidd-orchestrator](#-aidd-orchestrator) - feature flow, async automation and backlog
 - [aidd-ui](#-aidd-ui) - UI / UX (🚧 alpha, not ready)
 - [aidd-telemetry](#-aidd-telemetry) - token measurement for Claude Code and Codex (🧪 beta, off the curated path)
-- [aidd-qa](#-aidd-qa) - acceptance QA (🆕 new, off the curated path)
+- [aidd-qa](#-aidd-qa) - acceptance QA (🔭 preview, off the curated path)
 
 ---
 
@@ -33,18 +33,29 @@ Bootstrap, project init, context-artifact generation, diagrams, learning, and ex
 | `10-learn`             | Capture learnings, conventions, and decisions into memory, decisions, rules   | `01-gather`, `02-assess`, `03-write`, `04-sync`                                                          |
 | `11-explore`           | Survey the project across tooling, context, and codebase, then drill into one axis | `01-survey`, `02-drill`                                                                                  |
 | `12-cook`              | Manage and validate technical project or bundled recipes                       | `01-list`, `02-upsert`, `03-research`, `04-apply`, `05-validate`                                         |
+| `13-access-check`      | Check, read-only, that the assistant reaches the services in project memory    | `01-check`                                                                                               |
+
+<!--extras-aidd-context:start-->
+
+**Hooks**
+
+| Event | Runs |
+| --- | --- |
+| `SessionStart` | `hooks/update_memory.js` |
+
+<!--extras-aidd-context:end-->
 
 ## 💻 aidd-dev
 
-Code transformation: plan, implement, assert, audit, review, test, refactor, debug, for-sure, todo.
+Code transformation: plan, implement, assert, audit, review, test, refactor, debug, for-sure, batch.
 
 | Skill           | Role                                                                       | Actions                                                                         |
 | --------------- | -------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
 | `01-plan`       | Turn a request, ticket, or file into a phased implementation plan: gather, explore, wireframe, plan | `01-gather`, `02-explore`, `03-wireframe`, `04-plan`          |
 | `02-implement`  | Execute a plan phase by phase until 100% complete                          | `01-implement`                                                                   |
-| `03-assert`     | Assert features work - general, architecture, frontend UI                  | `01-assert`, `02-assert-architecture`, `03-assert-frontend`                      |
+| `03-assert`     | Assert the work against the project's coding assertions                   | `01-assert`                                                                      |
 | `04-audit`      | Read-only codebase audit across quality pillars                            | `01-code-quality`, `02-architecture`, `03-security`, `04-dependencies`, `05-performance`, `06-tests`, `07-ui` |
-| `05-review`     | Read-only review of a diff - code quality and feature behavior             | `01-review-code`, `02-review-functional`                                         |
+| `05-review`     | Read-only review of a diff - code quality and feature behavior             | `01-prepare`, `02-review`, `03-conclude`                                          |
 | `06-test`       | Write and iterate developer-side tests, validate journeys in the browser during implementation - not independent acceptance QA or reviewer evidence | `01-test`, `02-test-journey` |
 | `07-refactor`   | Improve code without changing behavior across four axes                    | `01-performance`, `02-security`, `03-cleanup`, `04-architecture`                 |
 | `08-debug`      | Reproduce and fix bugs with a test-driven workflow                         | `01-reproduce`, `02-debug`, `03-reflect-issue`                                   |
@@ -70,7 +81,7 @@ Product backlog artifacts, refinement, Product Briefs, Epics, User Stories, Task
 
 ## 🪞 aidd-refine
 
-Meta-cognition: brainstorm, challenge, blind-spot scan, fact-check.
+Meta-cognition: brainstorm, challenge, blind-spot scan, fact-check, conversation review.
 
 | Skill              | Role                                                        | Actions                                                                                       |
 | ------------------ | ---------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
@@ -78,6 +89,7 @@ Meta-cognition: brainstorm, challenge, blind-spot scan, fact-check.
 | `02-challenge`     | Rethink prior work to verify correctness against a plan    | `01-challenge`                                                                                |
 | `03-shadow-areas`  | Scan a markdown artifact for blind spots                   | `01-detect`, `02-render-report`, `03-diff`                                                    |
 | `04-fact-check`    | Verify factual claims against sources and cite them        | `01-identify-claims`, `02-verify`, `03-report`                                                |
+| `05-review-conversation` | Review a finished conversation and attribute each cost to its owner | `01-read-conversation`, `02-recommend`, `03-target-edits` |
 
 ## 🌿 aidd-vcs
 
@@ -102,6 +114,19 @@ Runs synchronous feature delivery, optional async issue automation, and the prod
 | `01-sdlc`        | Drive the full development flow end to end, autonomous or supervised | `frame`, `deliver`, `check` |
 | `02-backlog`     | Route backlog intake, refinement, lifecycle, and repair | `01-inspect` to `08-verify` |
 
+<!--extras-aidd-orchestrator:start-->
+
+**Agents**
+
+| Agent | Role |
+| --- | --- |
+| `executor` | Implements assigned work within defined scope |
+| `explorer` | Explores a codebase to answer scoped questions |
+| `reviewer` | Reviews the quality and coherence of finished work |
+| `validator` | Validates that delivered work satisfies the request and acceptance criteria |
+
+<!--extras-aidd-orchestrator:end-->
+
 ## 🎨 aidd-ui
 
 🚧 **Alpha — not ready for use.** UI / UX: design, review, and improve frontend interfaces. Currently a smoke-test only.
@@ -109,6 +134,18 @@ Runs synchronous feature delivery, optional async issue automation, and the prod
 | Skill      | Role                                      | Actions    |
 | ---------- | ----------------------------------------- | ---------- |
 | `01-hello` | Smoke-test that confirms the plugin loads | `01-greet` |
+
+<!--extras-aidd-ui:start-->
+
+**Hooks**
+
+| Event | Runs |
+| --- | --- |
+| `SessionStart` | `hooks/ui-hook.cjs` |
+| `PostToolUse` | `hooks/ui-hook.cjs` |
+| `Stop` | `hooks/ui-hook.cjs` |
+
+<!--extras-aidd-ui:end-->
 
 ## 📈 aidd-telemetry
 
@@ -118,6 +155,17 @@ Runs synchronous feature delivery, optional async issue automation, and the prod
 | ----- | ---- | ------- |
 | `00-init` | Opt in after consent, stop, set or remove an identity, forget | `start`, `identity`, `stop`, `forget` |
 | `01-usage` | Answer what a period, a task or a ticket consumed | `frame`, `answer` |
+
+<!--extras-aidd-telemetry:start-->
+
+**Hooks**
+
+| Event | Runs |
+| --- | --- |
+| `SessionStart` | `hooks/session-start.cjs` · `hooks/catch-up.cjs` |
+| `UserPromptSubmit` | `hooks/prompt-gate.cjs` |
+
+<!--extras-aidd-telemetry:end-->
 
 ## 🎬 aidd-qa
 

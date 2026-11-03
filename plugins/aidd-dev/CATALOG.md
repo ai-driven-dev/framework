@@ -7,7 +7,6 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 ## Table of Contents
 
 - [`.claude-plugin`](#claude-plugin)
-- [`agents`](#agents)
 - [`skills`](#skills)
   - [`skills/01-plan`](#skills01-plan)
   - [`skills/02-implement`](#skills02-implement)
@@ -28,28 +27,21 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 |------|
 | [plugin.json](.claude-plugin/plugin.json) |
 
-### `agents`
-
-| File | Description |
-|------|---|
-| [checker.md](agents/checker.md) | `Judges finished work against its validator and the real need, leaving nothing unchecked. Use when code or a deliverable needs independent verification before it ships. Never edits the work, never implements the fix.` |
-| [executor.md](agents/executor.md) | `Turns a dispatched task into working, validated code that fits the project. Use when an approved scope must become code. Never plans, never judges its own work.` |
-
 ### `skills`
 
 #### `skills/01-plan`
 
 | Group | File | Description |
 |-------|------|---|
-| `actions` | [01-gather.md](skills/01-plan/actions/01-gather.md) | - |
+| `actions` | [01-capture.md](skills/01-plan/actions/01-capture.md) | - |
 | `actions` | [02-explore.md](skills/01-plan/actions/02-explore.md) | - |
-| `actions` | [03-wireframe.md](skills/01-plan/actions/03-wireframe.md) | - |
-| `actions` | [04-plan.md](skills/01-plan/actions/04-plan.md) | - |
+| `actions` | [03-conclude.md](skills/01-plan/actions/03-conclude.md) | - |
 | `assets` | [phase-template.md](skills/01-plan/assets/phase-template.md) | - |
 | `assets` | [plan-template.md](skills/01-plan/assets/plan-template.md) | - |
-| `references` | [plan-status.md](skills/01-plan/references/plan-status.md) | `Plan lifecycle status field - values, meaning, who writes each, and when.` |
+| `references` | [findings.md](skills/01-plan/references/findings.md) | - |
+| `references` | [plan-checks.md](skills/01-plan/references/plan-checks.md) | - |
 | `references` | [wireframe-conventions.md](skills/01-plan/references/wireframe-conventions.md) | - |
-| `-` | [SKILL.md](skills/01-plan/SKILL.md) | `Turn a request, ticket, or file into a phased implementation plan. Use to plan a feature before building, or to turn a ticket into phases. Do NOT use to write code or review a diff.` |
+| `-` | [SKILL.md](skills/01-plan/SKILL.md) | `Turn a request, ticket, or file into a phased implementation plan. Use to plan a feature before building, or to turn a ticket into phases. Not for writing code or reviewing a diff.` |
 
 #### `skills/02-implement`
 
@@ -58,7 +50,9 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `actions` | [01-prepare.md](skills/02-implement/actions/01-prepare.md) | - |
 | `actions` | [02-execute.md](skills/02-implement/actions/02-execute.md) | - |
 | `actions` | [03-finalize.md](skills/02-implement/actions/03-finalize.md) | - |
-| `references` | [blocked.md](skills/02-implement/references/blocked.md) | `Conditions that make a plan blocked (needs a human).` |
+| `assets` | [run-template.md](skills/02-implement/assets/run-template.md) | - |
+| `references` | [commits.md](skills/02-implement/references/commits.md) | - |
+| `references` | [stop.md](skills/02-implement/references/stop.md) | - |
 | `-` | [SKILL.md](skills/02-implement/SKILL.md) | `Write an existing plan's code, phase by phase, until every acceptance criterion holds. Use when a plan exists and needs implementing. Do NOT use to write a plan, review a diff.` |
 
 #### `skills/03-assert`
@@ -66,10 +60,8 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | Group | File | Description |
 |-------|------|---|
 | `actions` | [01-assert.md](skills/03-assert/actions/01-assert.md) | - |
-| `actions` | [02-assert-architecture.md](skills/03-assert/actions/02-assert-architecture.md) | - |
-| `actions` | [03-assert-frontend.md](skills/03-assert/actions/03-assert-frontend.md) | - |
-| `assets` | [task-template.md](skills/03-assert/assets/task-template.md) | - |
-| `-` | [SKILL.md](skills/03-assert/SKILL.md) | `Assert the work behaves by iterating the project's coding assertions until they pass, plus optional architecture and frontend facets. Use to validate an implementation. Not for reviewing or writing tests.` |
+| `assets` | [assert-template.md](skills/03-assert/assets/assert-template.md) | - |
+| `-` | [SKILL.md](skills/03-assert/SKILL.md) | `Assert the work against the project's coding assertions into a pass or fail report. Use to verify an implementation. Not for fixing code, reviewing a diff, or writing tests.` |
 
 #### `skills/04-audit`
 
@@ -90,14 +82,14 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | Group | File | Description |
 |-------|------|---|
 | `actions` | [01-prepare.md](skills/05-review/actions/01-prepare.md) | - |
-| `actions` | [02-review-code.md](skills/05-review/actions/02-review-code.md) | - |
-| `actions` | [03-review-functional.md](skills/05-review/actions/03-review-functional.md) | - |
-| `actions` | [04-review-relevancy.md](skills/05-review/actions/04-review-relevancy.md) | - |
-| `actions` | [05-finalize.md](skills/05-review/actions/05-finalize.md) | - |
+| `actions` | [02-review.md](skills/05-review/actions/02-review.md) | - |
+| `actions` | [03-conclude.md](skills/05-review/actions/03-conclude.md) | - |
 | `assets` | [review-template.md](skills/05-review/assets/review-template.md) | - |
-| `references` | [report-contract.md](skills/05-review/references/report-contract.md) | - |
-| `references` | [review-rubric.md](skills/05-review/references/review-rubric.md) | - |
-| `-` | [SKILL.md](skills/05-review/SKILL.md) | `Reviews a change or a diff and says whether it is ready to ship, naming every problem with its fix. Use when the user wants a change checked before it ships. Not for fixing what the review finds, and not for auditing a whole codebase.` |
+| `references` | [axis-code.md](skills/05-review/references/axis-code.md) | - |
+| `references` | [axis-functional.md](skills/05-review/references/axis-functional.md) | - |
+| `references` | [axis-relevancy.md](skills/05-review/references/axis-relevancy.md) | - |
+| `references` | [rubric.md](skills/05-review/references/rubric.md) | - |
+| `-` | [SKILL.md](skills/05-review/SKILL.md) | `Reviews work and says whether it is ready, naming each defect with its fix. Use when the user wants a change or diff reviewed. Not for fixing what the review finds, and not for auditing a whole codebase.` |
 
 #### `skills/06-test`
 

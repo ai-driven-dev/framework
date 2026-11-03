@@ -23,7 +23,10 @@ const HOOKS_JSON = JSON.stringify({
   hooks: {
     Stop: [{ hooks: [{ type: "command", command: `node ${ROOT}/hooks/turn.js` }] }],
     PostToolUse: [
-      { matcher: "bash", hooks: [{ type: "command", command: `node ${ROOT}/hooks/on-tool.js` }] },
+      {
+        matcher: "Write|Edit",
+        hooks: [{ type: "command", command: `node ${ROOT}/hooks/on-tool.js` }],
+      },
     ],
   },
 });
@@ -35,7 +38,7 @@ afterEach(async () => {
 
 async function importGeneratedModule(): Promise<{
   stopCallsFor: (event: unknown, directory: string) => unknown[];
-  postToolUseCallsFor: (event: unknown, directory: string) => unknown[];
+  postToolUseCallsFor: (call: unknown, directory: string) => unknown[];
 }> {
   const generated = generateOpencodeHooksBridge(HOOKS_JSON, "aidd-sample");
   if (generated === null) throw new Error("expected a generated module");
@@ -64,7 +67,7 @@ async function importGeneratedModule(): Promise<{
 
 interface BridgeFactory {
   stopCallsFor: (event: unknown, directory: string) => unknown[];
-  postToolUseCallsFor: (event: unknown, directory: string) => unknown[];
+  postToolUseCallsFor: (call: unknown, directory: string) => unknown[];
 }
 
 /** The factory is a function carrying its two pure mapping seams as properties. */
@@ -101,36 +104,39 @@ describe("the generated bridge's own mapping, called directly (no spawn)", () =>
     expect(stopCallsFor({ type: "session.created" }, "/home/user/project")).toEqual([]);
   });
 
-  it("a completed tool part matching the matcher produces the PostToolUse hook's call", async () => {
+  it("a finished edit produces the PostToolUse call, matched ignoring case, with file_path", async () => {
     const { postToolUseCallsFor } = await importGeneratedModule();
-    const part = await loadFixture("opencode-tool-part-completed.json");
+    const call = {
+      tool: "edit",
+      sessionID: "ses_a",
+      args: { filePath: "/p/a.md", oldString: "x" },
+    };
 
-    // The captured fixture's own tool is "read"; retarget it at this test's matcher without
-    // inventing a second capture — the part's shape is what is verified, not the tool name.
-    const retargeted = JSON.parse(JSON.stringify(part).replace('"tool":"read"', '"tool":"bash"'));
-
-    const calls = postToolUseCallsFor(retargeted, "/home/user/project");
-
-    expect(calls).toEqual([
+    expect(postToolUseCallsFor(call, "/home/user/project")).toEqual([
       {
         script: "on-tool.js",
         args: [],
         payload: {
           hook_event_name: "PostToolUse",
-          session_id: "ses_aaaaaaaaaaaaaaaaaaaaaaaaaa",
+          session_id: "ses_a",
           cwd: "/home/user/project",
-          tool_name: "bash",
-          tool_input: (retargeted as { properties: { part: { state: { input: unknown } } } })
-            .properties.part.state.input,
+          tool_name: "edit",
+          tool_input: { filePath: "/p/a.md", oldString: "x", file_path: "/p/a.md" },
         },
       },
     ]);
   });
 
-  it("a completed tool part whose tool the matcher excludes produces no call", async () => {
+  it("a tool the matcher excludes produces no call", async () => {
     const { postToolUseCallsFor } = await importGeneratedModule();
-    const part = await loadFixture("opencode-tool-part-completed.json"); // tool: "read"
 
-    expect(postToolUseCallsFor(part, "/home/user/project")).toEqual([]);
+    expect(postToolUseCallsFor({ tool: "read", args: {} }, "/home/user/project")).toEqual([]);
+  });
+
+  it("a tool without a written file keeps its arguments as they came", async () => {
+    const { postToolUseCallsFor } = await importGeneratedModule();
+    const [call] = postToolUseCallsFor({ tool: "write", args: { content: "x" } }, "/p");
+
+    expect(call).toMatchObject({ payload: { tool_input: { content: "x" } } });
   });
 });

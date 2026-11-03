@@ -2,8 +2,8 @@
 
 ## Foundations (state-aware)
 
-- Existing (code present): memory first, stack skipped. `project memory` → `connect to the AI`.
-- Greenfield (empty): `design tech stack` → `project memory` → `connect to the AI`.
+- Existing (code present): memory first, stack skipped. `project memory` → `connect to the AI` → `check service access`.
+- Greenfield (empty): `design tech stack` → `project memory` → `connect to the AI` → `check service access`.
 
 ## Feature flow — 8 steps
 

@@ -11,12 +11,12 @@ const LOAD_ERROR = {
 function testFile(state: "pass" | "fail", tasks: RunnerTestFile["tasks"] = []): RunnerTestFile {
   const file: RunnerTestFile = {
     id: "cursor",
-    name: "cursor.unit.test.ts",
-    fullName: "cursor.unit.test.ts",
+    name: "cursor/agents.unit.test.ts",
+    fullName: "cursor/agents.unit.test.ts",
     mode: "run",
     meta: {},
     type: "suite",
-    filepath: "/repo/cli/tests/contexts/tools/domain/profiles/cursor.unit.test.ts",
+    filepath: "/repo/cli/tests/contexts/tools/domain/profiles/cursor/agents.unit.test.ts",
     projectName: "unit",
     concurrencyId: 0,
     workerId: 0,

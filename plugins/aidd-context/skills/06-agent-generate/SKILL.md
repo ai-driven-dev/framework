@@ -6,7 +6,7 @@ argument-hint: role
 
 # Agent Generate
 
-Write one canonical agent from intent and render it per confirmed host tool, or once as a plugin source.
+Write an agent once and render it as one file per confirmed host tool, or once as a plugin source.
 
 ## Actions
 

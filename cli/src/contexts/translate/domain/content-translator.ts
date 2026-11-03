@@ -349,6 +349,15 @@ export class PluginContentTranslator {
     // Same rule as the native path: prose is rewritten, an artefact is carried. Rewriting every
     // flat file left a script intact only where a tool's own rewrite happened to spare it.
     const content = isProse(file.relativePath) ? tool.rewriteContent(file.content) : file.content;
+    if (section === "agents" && hasAgents(tool)) {
+      const artifact = tool.buildContracts?.flat?.().artifacts.agents;
+      if (artifact?.supported) {
+        return this.makeFile(
+          artifact.path(pluginName, file.relativePath),
+          artifact.transform?.(content, pluginName, fileName) ?? content
+        );
+      }
+    }
     return this.makeFile(`${tool.directory}${section}/${pluginName}/${fileName}`, content);
   }
 

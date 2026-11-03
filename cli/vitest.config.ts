@@ -41,6 +41,8 @@ export default defineConfig({
           globals: false,
           environment: "node",
           testTimeout: 60000,
+          // A `beforeEach` that spawns git is slower than the 10s default on a loaded Windows runner.
+          hookTimeout: 60000,
           globalSetup: [
             "./tests/helpers/sweep-stale-temp-dirs.ts",
             "./tests/helpers/throwaway-profile.ts",

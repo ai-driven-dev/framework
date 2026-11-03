@@ -149,6 +149,14 @@ pre-commit:
         fi
         node scripts/sync-readme-counts.mjs >/dev/null
         git add README.md 2>/dev/null || true
+    sync-generated-docs:
+      run: |
+        if ! command -v node >/dev/null 2>&1; then
+          echo 'ℹ️  node not available; skipping sync-generated-docs'
+          exit 0
+        fi
+        node scripts/sync-generated-docs.mjs >/dev/null
+        git add README.md docs/ARCHITECTURE.md docs/COMPATIBILITY.md docs/assets/plugins 2>/dev/null || true
     cli-biome:
       glob: "cli/**"
       run: cd cli && pnpm lint

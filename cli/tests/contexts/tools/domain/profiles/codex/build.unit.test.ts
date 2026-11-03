@@ -9,16 +9,6 @@ import {
 } from "../../../../../../src/contexts/tools/domain/profiles/codex/build.js";
 import { InMemoryFileAdapter } from "../../../../../helpers/ports/in-memory-file-adapter.js";
 
-const AGENT_SOURCE = [
-  "---",
-  "name: planner",
-  "description: Plans the work",
-  "model: opus",
-  "---",
-  "Plan before building.",
-  "",
-].join("\n");
-
 const HOOKS_JSON = JSON.stringify({
   hooks: { Stop: [{ hooks: [{ type: "command", command: "node journal.cjs" }] }] },
 });
@@ -177,30 +167,6 @@ describe("buildCodexContract()", () => {
     ).toBe("---\nname: 'plan'\ndescription: 'Plan it'\n---\nBody.\n");
   });
 
-  it("names an agent after its own frontmatter when the plugin tree keeps them apart", () => {
-    const transform = supported(buildCodexContract().artifacts.agents).transform;
-
-    expect(transform?.(AGENT_SOURCE, "aidd-dev", "planner.md")).toBe(
-      'name = "planner"\ndescription = "Plans the work"\ndeveloper_instructions = "Plan before building.\\n"\n'
-    );
-  });
-
-  it("renames the events of a plugin's hooks declaration, and copies every other hook file byte for byte", () => {
-    const transform = supported(buildCodexContract().artifacts.hooks).transform;
-
-    expect({
-      declaration: transform?.(HOOKS_JSON, "aidd-dev", "hooks.json"),
-      script: transform?.("#!/usr/bin/env node\n", "aidd-dev", "journal.cjs"),
-    }).toStrictEqual({
-      declaration: `${JSON.stringify(
-        { hooks: { SessionEnd: [{ hooks: [{ type: "command", command: "node journal.cjs" }] }] } },
-        null,
-        2
-      )}\n`,
-      script: "#!/usr/bin/env node\n",
-    });
-  });
-
   it("builds the catalog Codex discovers, at .agents/plugins/marketplace.json", async () => {
     const built = await buildCodexContract().buildMarketplaceCatalog?.(
       { name: "aidd", displayName: "AI Driven Dev", plugins: [] },
@@ -304,14 +270,6 @@ describe("buildCodexFlatContract()", () => {
     );
   });
 
-  it("names a flat agent after its plugin, whatever its own frontmatter says", () => {
-    const transform = supported(buildCodexFlatContract().artifacts.agents).transform;
-
-    expect(transform?.(AGENT_SOURCE, "aidd-dev", "planner.md")).toBe(
-      'name = "aidd-dev-planner"\ndescription = "Plans the work"\ndeveloper_instructions = "Plan before building.\\n"\n'
-    );
-  });
-
   it("nests a plugin's hook scripts under its own folder and merges its declaration into .codex/hooks.json", () => {
     const hooks = supported(buildCodexFlatContract().artifacts.hooks);
 
@@ -325,7 +283,7 @@ describe("buildCodexFlatContract()", () => {
       merged: {
         content: `${JSON.stringify(
           {
-            hooks: { SessionEnd: [{ hooks: [{ type: "command", command: "node journal.cjs" }] }] },
+            hooks: { Stop: [{ hooks: [{ type: "command", command: "node journal.cjs" }] }] },
           },
           null,
           2

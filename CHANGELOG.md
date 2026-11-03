@@ -1,5 +1,61 @@
 # Changelog
 
+## [5.13.0](https://github.com/ai-driven-dev/framework/compare/v5.12.0...v5.13.0) (2026-10-26)
+
+
+### Features
+
+* **aidd-context:** assess existing rules before writing ([#1006](https://github.com/ai-driven-dev/framework/issues/1006)) ([708eefa](https://github.com/ai-driven-dev/framework/commit/708eefad4e5125cc2795c6c4cf2ef446fab81ffa))
+* **telemetry:** ask a codex tui session for its task ([#1058](https://github.com/ai-driven-dev/framework/issues/1058)) ([c338b19](https://github.com/ai-driven-dev/framework/commit/c338b195464abaa7a872e46f652b7afac4251cea))
+* **telemetry:** measure codex from its own session files ([#1057](https://github.com/ai-driven-dev/framework/issues/1057)) ([e8aabe0](https://github.com/ai-driven-dev/framework/commit/e8aabe0e6fc224c9fa1e3f6ee6a8d51b0bf0ed4a))
+* **telemetry:** report envelope v2 keeps the figures apart from the run ([#1048](https://github.com/ai-driven-dev/framework/issues/1048)) ([940e8e3](https://github.com/ai-driven-dev/framework/commit/940e8e36517c153b320b8496093650770859e253))
+* **telemetry:** split and filter the report by tool ([#1064](https://github.com/ai-driven-dev/framework/issues/1064)) ([78938c9](https://github.com/ai-driven-dev/framework/commit/78938c9c4a47e590daf3368d12d6c9f0eb98e172))
+
+
+### Bug Fixes
+
+* **telemetry:** bind a branch only by the command's own declaration ([#1045](https://github.com/ai-driven-dev/framework/issues/1045)) ([8f1b968](https://github.com/ai-driven-dev/framework/commit/8f1b96864ecaa0f7bbcb004c2eeafb9328e84997))
+* **telemetry:** nothing measured is lost silently ([#1046](https://github.com/ai-driven-dev/framework/issues/1046)) ([1202ff5](https://github.com/ai-driven-dev/framework/commit/1202ff53ca9c9f8922a2bffa67f30d58d9406c6f))
+* **telemetry:** one call one key, one repository one id ([#1049](https://github.com/ai-driven-dev/framework/issues/1049)) ([3167d69](https://github.com/ai-driven-dev/framework/commit/3167d690145db3a7cbd39843d95f64b653ebd1aa))
+* **telemetry:** read a transcript a block at a time ([#1047](https://github.com/ai-driven-dev/framework/issues/1047)) ([616dbbe](https://github.com/ai-driven-dev/framework/commit/616dbbea6cb9700ce7ca469e51df67b18536dc57))
+* **telemetry:** small defects the R1 audit reproduced ([#1055](https://github.com/ai-driven-dev/framework/issues/1055)) ([5a46c34](https://github.com/ai-driven-dev/framework/commit/5a46c344c02602128ad2cd1cb91f48d20b35009f))
+* **telemetry:** status after off says measurement was turned off ([#1041](https://github.com/ai-driven-dev/framework/issues/1041)) ([b5c2525](https://github.com/ai-driven-dev/framework/commit/b5c2525c8299276679e3b14ddd5c1df36ff59399))
+* **telemetry:** the simplest true rule for a call with no request id ([#1054](https://github.com/ai-driven-dev/framework/issues/1054)) ([856a8b3](https://github.com/ai-driven-dev/framework/commit/856a8b38ec1f08af05de9c9fe3d40423db5f5d48))
+
+
+### Miscellaneous
+
+* carry the video programme in the release video text ([#1094](https://github.com/ai-driven-dev/framework/issues/1094)) ([4753f05](https://github.com/ai-driven-dev/framework/commit/4753f05f5ca43881247f7dfe8db61516e4d0d714))
+* **deps-dev:** bump the npm-dev-dependencies group with 2 updates ([#1059](https://github.com/ai-driven-dev/framework/issues/1059)) ([8419f25](https://github.com/ai-driven-dev/framework/commit/8419f259d3942a4a9f3d69dbd66b97805b41a350))
+* **deps-dev:** bump vitest ([61465f8](https://github.com/ai-driven-dev/framework/commit/61465f829614bbd8674951b82332e08078cfaf61))
+* **deps-dev:** bump vitest from 5.0.3 to 5.0.5 in /kanban in the npm-dev-dependencies group ([#1061](https://github.com/ai-driven-dev/framework/issues/1061)) ([61465f8](https://github.com/ai-driven-dev/framework/commit/61465f829614bbd8674951b82332e08078cfaf61))
+* **deps-dev:** update cli build and test tooling ([da3a99c](https://github.com/ai-driven-dev/framework/commit/da3a99c5903f911df5e4e6201d946a28c7937efd))
+* **deps:** bump ink from 7.1.1 to 8.0.0 in /kanban ([#1025](https://github.com/ai-driven-dev/framework/issues/1025)) ([b1dc3c7](https://github.com/ai-driven-dev/framework/commit/b1dc3c708233df4adb6947670c3ae2e4a53c8153))
+* **deps:** bump react from 19.3.0 to 19.3.1 in /kanban ([#1062](https://github.com/ai-driven-dev/framework/issues/1062)) ([2932494](https://github.com/ai-driven-dev/framework/commit/2932494cbb625933369c7b93d6ea4beef1d8a6a9))
+* draw the release thumbnail as its own composition ([#1100](https://github.com/ai-driven-dev/framework/issues/1100)) ([b2e5864](https://github.com/ai-driven-dev/framework/commit/b2e5864f744e5940aef6f773bf35c5b795ad5b63))
+* draw the release video intro at its first frame ([#1097](https://github.com/ai-driven-dev/framework/issues/1097)) ([790c03b](https://github.com/ai-driven-dev/framework/commit/790c03ba25b2eead1e35c150afab673e0ed6e949))
+* group the release video programme by theme ([#1096](https://github.com/ai-driven-dev/framework/issues/1096)) ([c367cdc](https://github.com/ai-driven-dev/framework/commit/c367cdc9a9b2be63908cfb2220a23a52236d1dda))
+* no local path, username or session id in the repository ([#1051](https://github.com/ai-driven-dev/framework/issues/1051)) ([5721e2f](https://github.com/ai-driven-dev/framework/commit/5721e2f97fcc44689b0d2fd1fcd871e091d54b41))
+* open the release video on its thumbnail for one frame ([#1101](https://github.com/ai-driven-dev/framework/issues/1101)) ([aa3d777](https://github.com/ai-driven-dev/framework/commit/aa3d77707faeb9ea46214d5e25975a73c4b41334))
+* plan and render the release video locally ([#1056](https://github.com/ai-driven-dev/framework/issues/1056)) ([196cd62](https://github.com/ai-driven-dev/framework/commit/196cd62c96643bc7a2a92a66bad8603bb563c51b))
+* **release:** remove the 5.12 version pins ([#1040](https://github.com/ai-driven-dev/framework/issues/1040)) ([45a48d6](https://github.com/ai-driven-dev/framework/commit/45a48d6855213933690ab505fd954f7e05cf14a3))
+* replan the release video from the full log and shorten its pauses ([#1085](https://github.com/ai-driven-dev/framework/issues/1085)) ([3689983](https://github.com/ai-driven-dev/framework/commit/3689983d0eaab45a67fedcd300e808546abebe76))
+* say what the measurement opt-in does for Codex ([#1102](https://github.com/ai-driven-dev/framework/issues/1102)) ([00d4491](https://github.com/ai-driven-dev/framework/commit/00d4491f9a38c58636752b8a0b8535a11111b364))
+* take the thumbnail on the logo and the whole version ([#1099](https://github.com/ai-driven-dev/framework/issues/1099)) ([3421ebf](https://github.com/ai-driven-dev/framework/commit/3421ebfba91a6595f96e6d77bc054ba712631ba2))
+* **telemetry:** clean up what the R1 work left behind ([#1053](https://github.com/ai-driven-dev/framework/issues/1053)) ([7876341](https://github.com/ai-driven-dev/framework/commit/7876341520f955abb994787e63733f0723291809))
+
+
+### Documentation
+
+* **aidd-context:** ask the project memory for its tickets and hooks ([#1066](https://github.com/ai-driven-dev/framework/issues/1066)) ([160caf3](https://github.com/ai-driven-dev/framework/commit/160caf3f84b9cd21eafefa03c763e6b85ff43153))
+* let the aidd-dev skills alone decide a task folder's shape ([#1073](https://github.com/ai-driven-dev/framework/issues/1073)) ([c9d1c42](https://github.com/ai-driven-dev/framework/commit/c9d1c42d75fa790c8b799068616f2db7b718df2f))
+
+
+### Refactoring
+
+* **aidd-dev:** lean the plan skill for small models ([#1080](https://github.com/ai-driven-dev/framework/issues/1080)) ([b7763ea](https://github.com/ai-driven-dev/framework/commit/b7763ea7c87694ad48f6330176e57860edf50d37))
+* **aidd-refine:** lean the brainstorm skill for small models ([#1072](https://github.com/ai-driven-dev/framework/issues/1072)) ([f9a1ba2](https://github.com/ai-driven-dev/framework/commit/f9a1ba2b9d01b1d3b7bf9ff93111a2b88d2d973a))
+
 ## [5.12.0](https://github.com/ai-driven-dev/framework/compare/v5.11.0...v5.12.0) (2026-10-16)
 
 

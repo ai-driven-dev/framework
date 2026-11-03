@@ -1,13 +1,15 @@
 # Probing
 
-Probe the live fork, not the whole map.
+Techniques to sharpen a question when the live point needs it. 
 
-Rules:
+| Technique | Use when | Example question |
+| --------- | -------- | --- |
+| Name the fork | two outcomes are still possible | "Is it X or Y?" |
+| Force a choice | a fork is unranked | "If only one could stay, which?" |
+| Reach the outcome | the idea is a solution | "What does this get you?" |
+| Alternatives | the user holds to one solution | "What else would get the same result?" |
+| Hidden assumption | success is taken for granted | "What must be true for this to work?" |
+| Limits | limits are unsaid | "What must it never do?" |
+| Premortem | a risk matters | "It shipped and failed: why?" |
 
-- Ask at the user's altitude: product, technical, operational, or mixed. Leave finer how-to as a flagged assumption for planning.
-- Follow the thread opened by the last answer before switching points.
-- Name the fork when two different outcomes are still possible.
-- Ask for examples when a word can mean two things.
-- Challenge a solution-shaped idea by asking what outcome it serves.
-- Use premortem for risk: shipped, failed, why?
-- Stop when remaining gaps are explicit assumptions, not hidden ambiguity.
+Adapt the example question to the idea.

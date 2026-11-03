@@ -20,6 +20,7 @@ import { CLAUDE_PLUGIN_ROOT_TOKEN } from "../../formats/plugin-root-token.js";
 import { claudeStyleMarketplaceKey } from "../../marketplace-entry.js";
 import { registerTool } from "../../registry.js";
 import { buildClaudeContract, buildClaudeFlatContract } from "./build.js";
+import { claudeAgentFrontmatter } from "./claude-agent.js";
 
 const DIRECTORY = ".claude/";
 const TOOL_SUFFIX = ".claude.md";
@@ -48,6 +49,7 @@ export const claude: AiTool<HasAgents & HasSkills & HasCommands & HasRules & Has
         directory: DIRECTORY,
         toolSuffix: TOOL_SUFFIX,
         format: "markdown",
+        frontmatter: claudeAgentFrontmatter,
       }),
       skills: new SkillsCapability({
         directory: DIRECTORY,

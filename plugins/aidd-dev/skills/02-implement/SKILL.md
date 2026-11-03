@@ -3,46 +3,26 @@ name: 02-implement
 description: Write an existing plan's code, phase by phase, until every acceptance criterion holds. Use when a plan exists and needs implementing. Do NOT use to write a plan, review a diff.
 argument-hint: plan
 ---
-
-# Skill: implement
-
-```mermaid
-flowchart LR
-  prepare --> execute --> finalize --> implemented
-  prepare -->|missing plan| stop
-  execute -->|fix, next task or phase| execute
-  execute --> blocked
-  execute --> replan
-  finalize -->|validation fails| finalize
-  finalize --> blocked
-  finalize --> replan
-```
+# Implement
 
 ## Actions
 
-Run actions in order.
-Read each action file in `actions/` before executing it.
+```mermaid
+flowchart LR
+  prepare["prepare<br>actions/01-prepare.md"] --> execute["execute<br>actions/02-execute.md<br>script: scripts/validate-implement.cjs"]
+  execute -->|"a phase is not done"| execute
+  execute -->|"every phase is done"| finalize["finalize<br>actions/03-finalize.md<br>script: scripts/validate-implement.cjs"]
+  finalize --> done((done))
+  prepare -->|"no plan"| stop((stop))
+  execute -->|"human needed, or another scope"| stop
+  finalize -->|"human needed, or another scope"| stop
+```
 
-| Action   | Does                                  |
-| -------- | ------------------------------------- |
-| prepare  | resolve the plan and branch            |
-| execute  | implement and validate each task       |
-| finalize | validate and mark the plan implemented |
+Read an action's file, then do what it says.
 
 ## Transversal rules
 
-- Track the plan through `pending → in-progress → implemented` (or `blocked`).
-  - Track phases through `pending → in-progress → done`.
-  - Treat `in-progress` as a runtime marker.
-  - Never commit `in-progress` alone.
-- Follow user and project commit instructions.
-  - Push only when requested.
-- By default, make one local commit per validated task.
-  - Include all its code, tests and docs together.
-  - Group tasks only when they cannot be validated separately.
-  - Never split a task by step or file.
-  - Exclude unrelated changes.
-- Include `done` in the phase's last task commit.
-- Make a final commit for `implemented`.
-- Use project formatters or hooks.
-  - Never format code manually.
+- Speak only to ask or to give the final reply; otherwise call tools.
+- Code only: the plan is never rewritten.
+- Push only when asked.
+- Do what a hook asks; never bypass one.
