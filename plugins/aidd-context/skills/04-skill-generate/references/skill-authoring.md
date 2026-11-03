@@ -4,42 +4,56 @@ The contract every generated skill satisfies. `skill-generate` obeys it too.
 
 ## The skill
 
-- **R1.** One skill, one domain. Named per `naming.md`.
-- **R2.** `name` is not the invocation token: a colon or prefix breaks loading. In prose call a skill `plugin:folder`.
-- **R3.** `description` is the only always-on text: verb-led, third person, about 240 chars, `Use when the user wants to <intents>` and an optional `Not for <X>`. No colon or dash, no other skill or `/command` named.
-- **R4.** In plugin source, `argument-hint` names what the user brings: the cases they can ask for (`setup | refresh | rewire`) or the artifact consumed (`request | epic`). One or two words per case; avoid action slugs. Omit when no action declares an `## Input`. Native publication follows `tool-write.md`.
+- **R1.** One domain per skill; name it per `naming.md`.
+- **R2.** Keep colons and invocation prefixes out of `name`: they break loading. In prose, use `plugin:folder`.
+- **R3.** `description` is the only always-on text. Use a verb-led, third-person description of about 240 characters: `Use when the user wants to <intents>`, optionally `Not for <X>`. Use no colon or dash.
+- **R4.** In plugin source, `argument-hint` names requested cases (`setup | refresh | rewire`) or consumed artifacts (`request | epic`).
+  - Use one or two words per case; avoid action slugs.
+  - Omit it when no action declares `## Input`.
+  - Native publication follows `tool-write.md`.
 - **R5.** Prefer English unless the user requests another language.
 
 ## The router
 
-- **R6.** After its title, the router holds the flow and `## Transversal rules`, without an Actions heading, action table or generic reading instruction.
-- **R7.** The mermaid flow shows every path a run can take: the nominal chain by slug, one entry node per case, a back-edge per loop, a terminal node per outcome, each condition as a quoted edge label. A branch stated in prose is a branch missing from the flow.
-- **R8.** Each action node names its slug and relative file path, such as `actions/01-scope.md`. Two actions sharing a slug keep their number (`01-plan`, `04-plan`).
-- **R9.** `## Transversal rules` holds the rules no single action or reference owns. A rule stated there is stated nowhere else.
-- **R10.** The router is loaded on every call, an action only when its turn comes: the router carries nothing an action or a reference could carry.
+- **R6.** After its title, keep only the flow and `## Transversal rules`: no Actions heading, action table or generic reading instruction.
+- **R7.** Show every path in the Mermaid flow, including branches described in prose: the nominal chain by slug, an entry node per case, a back-edge per loop, a terminal per outcome, and quoted edge labels for conditions.
+- **R8.** Label action nodes only with their relative file paths. Retain numbering, including when slugs repeat (`actions/01-plan.md`, `actions/04-plan.md`).
+- **R9.** Put rules no single action or reference owns in `## Transversal rules`.
+- **R10.** The router loads on every call; keep action and reference detail in those files.
 
 ## An action
 
-- **R11.** `# <NN> - <Title>`, then one sentence: what the action produces. Then `## Input` when the action consumes something, `## Process`, `## Output`, and `## Rules` when a constraint holds for the whole action. A section earns its content or is omitted, never invented or reordered.
-- **R12.** A `## Process` step is one imperative sentence, numbered in run order. Cases, branches and step-specific constraints are dash sub-items of their step; a loop can also use a step naming where to return. Verify observable success through real execution without mocks, and handle failure. When the flow continues, the last step names the next action file.
-- **R13.** `## Rules` holds what the action must or must not do throughout, one per line. A rule two actions share belongs to the router's transversal rules.
+- **R11.** Start with `# <NN> - <Title>` and one sentence naming the result.
+  - Follow with `## Input` when needed, `## Process`, `## Output`, then `## Rules`.
+  - Input names what the action consumes; Rules follows R13.
+  - Omit sections with no content; add none and preserve this order.
+- **R12.** Number imperative process steps in execution order, one sentence each.
+  - Put cases, branches and step-specific constraints under their owning step as dash sub-items.
+  - A loop may also use a step naming where to return.
+  - Verify observable success through real execution without mocks, and handle failure.
+  - When the flow continues, the final step names the next action file.
+- **R13.** `## Rules` holds whole-action constraints, one per line. Move rules shared by actions to the router's transversal rules.
 
 ## A reference
 
-- **R14.** References stay flat, nesting one directory deep only as a load boundary. Each stands alone, never pulling in another. It names a sibling in backticks and never links it.
-- **R15.** A reference carries one fact per row: a table, a mermaid, or a list. Prose is what is left when neither fits.
+- **R14.** Keep references flat; nest one directory deep only for a load boundary. Each stands alone without pulling in another. Name siblings in backticks, without links.
+- **R15.** Use tables, Mermaid diagrams or lists, one fact per row. Use prose only when none fits.
 
 ## An asset
 
-- **R16.** An asset states how it is filled and what is removed. Nothing of its scaffold survives in the artifact produced from it.
+- **R16.** State how to fill the asset and what to remove. Leave no scaffold in the resulting artifact.
 
 ## Across all of them
 
-- **R17.** One fact, one home. An action applies router rules and cites shared references instead of restating them. Before adding or changing instructions, check the whole skill for overlap or conflict; resolve either by proposing a coherent revision of the owning rule.
-- **R18.** The first prose citation of a file in each authoring file is a relative Markdown link, `[name](path)`, except for sibling references under R14. Repeat mentions within that same file use its filename in backticks when unambiguous; retain the link otherwise. Use relative Markdown links rather than unresolved `@` includes. Place each citation in the sentence, process step, output or rule that uses it, rather than on its own line.
-- **R19.** One file, one artifact. Split two apart only when a path needs one without the other.
-- **R20.** No file names another skill or `/command`, its own plugin's included: it states the capability it needs, and the host finds a provider by description. Only an orchestrator's references name the providers they sequence.
-- **R21.** Write for scanning: short sentences, one idea each. Group related instructions; use sub-items only when they improve readability. In bullets, bold important opening words instead of adding procedural labels.
+- **R17.** One fact, one home. Actions apply router rules and cite shared references instead of restating either. Before adding or changing instructions, check the whole skill for overlap or conflict; resolve either by proposing a coherent revision of the owning rule.
+- **R18.** In each authoring file:
+  - Use a relative Markdown link, `[name](path)`, for a file's first prose citation, except sibling references under R14.
+  - For repeat mentions within that file, use the filename in backticks when unambiguous; otherwise retain the link.
+  - Place citations in the sentence, step, output or rule using them, rather than on standalone lines.
+  - Avoid unresolved `@` includes.
+- **R19.** One artifact per file. Split artifacts only when a path needs one without the other.
+- **R20.** State needed capabilities; the host discovers providers by description. Naming another skill or `/command`, including within the same plugin, is reserved for orchestrator references naming the providers they sequence.
+- **R21.** Write short sentences, one idea each. Group related instructions; use sub-items only when they improve readability. Bold meaningful bullet openings instead of adding procedural labels.
 - **R22.** Identify content to read or edit by purpose, rather than line numbers, exact headings or quoted anchors. Retain exact names required by the artifact's format.
 - **R23.** Prefer positive instructions or `avoid` over `never`. Express mandatory boundaries as explicit conditions.
 - **R24.** Keep emitted fenced content in the format its consumer requires.
