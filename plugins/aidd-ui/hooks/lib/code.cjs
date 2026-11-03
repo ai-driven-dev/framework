@@ -253,6 +253,9 @@ function platformOf(project, link) {
   return root ? { platform: root.platform } : { platform: soleOf(project), unknown: "is under no code root, so its platform is unknown" };
 }
 
+/** The platform of a code file, project-relative, as C9 reads a path link's: `{platform, unknown}`. */
+const platformOfFile = (project, file) => platformOf(project, { library: null, target: file });
+
 function platformProblems(project) {
   const declared = platformsOf(project);
   const seen = new Set();
@@ -286,4 +289,4 @@ const RULES = {
 /** Every broken code rule, in rule order. */
 const check = checkOf(RULES);
 
-module.exports = { check, codeRoots, codeOwner, codeFilesOf, codeTokens };
+module.exports = { check, codeRoots, codeOwner, codeFilesOf, codeTokens, platformOfFile };

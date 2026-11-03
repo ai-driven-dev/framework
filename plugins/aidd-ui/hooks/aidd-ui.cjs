@@ -1,14 +1,17 @@
 #!/usr/bin/env node
 // Usage: node aidd-ui.cjs <validate|tokens> [project-root]
 //        node aidd-ui.cjs impact <id or token>… [--root <dir>]
+//        node aidd-ui.cjs extract [--force] [--root <dir>]
 // The design system engine the hook and every skill call, one command per job:
 //   validate  checks records, history, tokens, renders and code links. Prints VALID, or one line
 //             per problem, and exits 1 when an error remains. Prints nothing without a design system.
 //   tokens    writes aidd_docs/ui/tokens.css from the tokens and prints its path. Writes nothing and
 //             exits 1 while a token has an error or a composite token has no raw CSS.
 //   impact    prints as JSON what a change to those tokens, by path or CSS name, or elements reaches:
-//             tokens, elements, screens, journeys, renders and code files, each sorted. An unknown ref is named on
-//             stderr and exits 2.
+//             tokens, the tokens holding the same value without citing them, elements, screens, journeys, renders and code
+//             files, each sorted. An unknown ref is named on stderr and exits 2.
+//   extract   writes the token files from the code-tokens files of system.md, and prints as JSON what it wrote and
+//             what it left. Exits 1 with a message when it cannot, or when tokens.json exists and --force is not given.
 const fs = require("node:fs");
 const path = require("node:path");
 const { load, unreadable, UI_DIR, WARNING } = require("./lib/project.cjs");
@@ -18,6 +21,8 @@ const tokens = require("./lib/tokens.cjs");
 const renders = require("./lib/renders.cjs");
 const code = require("./lib/code.cjs");
 const { usages } = require("./lib/graph.cjs");
+const { extract } = require("./lib/extract.cjs");
+const { parse, Refusal } = require("./lib/args.cjs");
 
 const CHECKS = { records, history, tokens, renders, code };
 const VERDICT_VALID = "VALID";
@@ -78,20 +83,20 @@ function generateTokens([root = process.cwd()]) {
 }
 
 const ROOT_FLAG = "--root";
+const FORCE_FLAG = "--force";
 const IMPACT_USAGE = `node aidd-ui.cjs impact <id or token>… [${ROOT_FLAG} <dir>]`;
+const EXTRACT_USAGE = `node aidd-ui.cjs extract [${FORCE_FLAG}] [${ROOT_FLAG} <dir>]`;
 
 /** What the tokens and elements named change, read from the same graph the hook uses. */
 function impact(args) {
-  const at = args.indexOf(ROOT_FLAG);
-  const root = at < 0 ? process.cwd() : args[at + 1];
-  const refs = args.filter((arg, index) => at < 0 || (index !== at && index !== at + 1));
-  if (!refs.length || root === undefined) {
+  const { values, rest, error } = parse(args, { options: [ROOT_FLAG] });
+  if (error || !rest.length) {
     console.error(`usage: ${IMPACT_USAGE}`);
     return EXIT_USAGE;
   }
-  const project = load(root);
+  const project = load(values[ROOT_FLAG] ?? process.cwd());
   if (project === null) return EXIT_VALID;
-  const { unknown, ...report } = usages(project, refs);
+  const { unknown, ...report } = usages(project, rest);
   if (unknown) {
     for (const ref of unknown) console.error(`aidd-ui: no token or element named "${ref}"`);
     return EXIT_USAGE;
@@ -100,11 +105,35 @@ function impact(args) {
   return EXIT_VALID;
 }
 
-const COMMANDS = { validate, tokens: generateTokens, impact };
+/** Runs a command that refuses with a message and an exit code instead of printing a result. */
+function refusing(run) {
+  try {
+    return run();
+  } catch (error) {
+    if (!(error instanceof Refusal)) throw error;
+    console.error(`aidd-ui: ${error.message}`);
+    return error.code;
+  }
+}
+
+/** Writes the token files from the code the design system names, and says what it left. */
+function extractTokens(args) {
+  const { values, flags, rest, error } = parse(args, { options: [ROOT_FLAG], flags: [FORCE_FLAG] });
+  if (error || rest.length) {
+    console.error(`usage: ${EXTRACT_USAGE}`);
+    return EXIT_USAGE;
+  }
+  return refusing(() => {
+    console.log(JSON.stringify(extract(values[ROOT_FLAG] ?? process.cwd(), { force: flags.has(FORCE_FLAG) }), null, 2));
+    return EXIT_VALID;
+  });
+}
+
+const COMMANDS = { validate, tokens: generateTokens, impact, extract: extractTokens };
 
 function main([command, ...args]) {
   if (Object.hasOwn(COMMANDS, command)) return COMMANDS[command](args);
-  console.error(`usage: node aidd-ui.cjs <validate|tokens> [project-root]\n       ${IMPACT_USAGE}`);
+  console.error(`usage: node aidd-ui.cjs <validate|tokens> [project-root]\n       ${IMPACT_USAGE}\n       ${EXTRACT_USAGE}`);
   return EXIT_USAGE;
 }
 
