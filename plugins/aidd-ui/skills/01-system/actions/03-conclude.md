@@ -10,7 +10,7 @@ What write wrote.
 
 1. Run `validate` and fix each error it reports.
 2. List the warnings left: colour literals in the code, files no record links yet, lengths no token holds.
-3. Reply with the elements now `proposed` and their versions, the deprecated ones left as they are, that the code is untouched, and that a review is expected.
+3. Reply with the elements now `proposed` and their versions, the deprecated ones a change left, that the code is untouched, and that a review is expected.
 
 ## Output
 

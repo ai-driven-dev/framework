@@ -31,5 +31,5 @@ role: {{accessible role}}
 - Replace every `{{...}}` and delete every comment.
 - An axis is `axis=value`, such as `variants: [size=sm, size=md, tone=danger]`; a bare item is a plain variant.
 - Delete `## Keyboard` when `interactive` is `no`.
-- Once coded, add `code` and `implemented-version: 1` to the front matter.
+- Once coded, add `code` and `implemented-version` to the front matter.
 -->
