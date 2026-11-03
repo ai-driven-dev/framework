@@ -13,7 +13,7 @@
 | package link | `platform=package:<name>#Export@<version>` when `system.md` lists several platforms |
 | no link | an assembled molecule or composition whose used elements are all coded, an element coded nowhere yet |
 | render coverage | each variant value and each state at least once, on an element: `data-variant`, `data-<axis>`, `data-state`; no product of axes; one theme or platform shown by `data-theme` or `data-platform` on a wrapper, the base needing none |
-| render style | `var()` of its tokens and of the elements it uses; no colour or length literal; logical properties when `rtl` is declared |
+| render style | `var()` of its tokens and of the elements it uses; no colour literal; no length literal but a hairline, as below; logical properties when `rtl` is declared |
 | element no render shows faithfully | rendered as close as tokens allow, the gap named to the user |
 | molecule render | copies the markup and style of the elements it uses; the impact of a change to them lists it |
 | length no token holds | up to 2px, a warning; larger, the nearest token, the gap named to the user |

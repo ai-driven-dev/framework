@@ -9,7 +9,7 @@ Run it with node from the project root.
 
 | Command | Gives |
 | --- | --- |
-| `validate` | `VALID`, or one line per problem with its rule; exit 1 on an error |
+| `validate` | `VALID` when nothing is wrong, else one line per problem with its rule; exit 1 only on an error |
 | `tokens` | writes `aidd_docs/ui/tokens.css`; exit 1 names what blocks it |
 | `impact <token or id>…` | JSON: tokens, elements, screens, journeys, renders, code; a token as its path or its CSS name; exit 2 on an unknown one |
 
