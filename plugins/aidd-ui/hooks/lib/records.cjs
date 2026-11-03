@@ -7,7 +7,6 @@ const { AXIS_SEPARATOR, variantOf, COMPONENT_KINDS, IMPLEMENTED_KINDS, LEVELS, I
 
 const STATUSES = ["proposed", "validated", "deprecated"];
 const DESIGN_STATUSES = ["proposed", "validated"]; // R16: system, brand and reviews are never deprecated
-const IMPLEMENTED_VERSION = "implemented-version"; // the version of an element its code implements
 const FORMAT = "1"; // the record format this validator reads
 const YES_NO = ["yes", "no"];
 const ASSET_TYPES = ["icon", "image", "illustration"];
@@ -37,7 +36,6 @@ const KIND_KEYS = {
 };
 const AXIS_NAME = /^[a-z][a-z-]*$/;
 const TAKEN_AXES = { state: "data-state shows the states", variant: "data-variant shows the bare variants", theme: "data-theme switches the token theme" };
-const ASSEMBLED_KINDS = ["molecule", "composition"]; // implemented through what they use when no file is their own
 const DESIGN_KINDS = ["system", "brand", "review"];
 const listWithOr = (values) => `${values.slice(0, -1).join(", ")} or ${values.at(-1)}`;
 const isDeprecated = (record) => fm(record).status === "deprecated";
@@ -134,36 +132,18 @@ function stateProblems(project) {
   });
 }
 
-const isImplemented = (record) => IMPLEMENTED_VERSION in fm(record);
-
-/** Whether an assembled element is implemented through the elements it uses: at least one, all
- * implemented. Assets are files, never code, so they count for nothing. */
-function implementedThroughUses(record, index) {
-  const used = list(fm(record).uses)
-    .map((id) => index.get(id))
-    .filter((target) => !target || fm(target).kind !== "asset");
-  return ASSEMBLED_KINDS.includes(fm(record).kind) && used.length > 0 && used.every((target) => target && isImplemented(target));
-}
-
-/** What is wrong with an element's implemented version, or null. */
-function implementedProblem(record, index) {
-  const { kind, version } = fm(record);
-  const implemented = fm(record)[IMPLEMENTED_VERSION];
-  if (!IMPLEMENTED_KINDS.includes(kind)) return `${IMPLEMENTED_VERSION} is for components and screens, never ${/^[aeiou]/.test(kind) ? "an" : "a"} ${kind}`;
-  if (!INTEGER_VERSION.test(implemented)) return `${IMPLEMENTED_VERSION} "${implemented}" must be an integer from 1`;
-  if (INTEGER_VERSION.test(version) && Number(implemented) > Number(version)) return `${IMPLEMENTED_VERSION} ${implemented} is ahead of version ${version}`;
-  if ("code" in fm(record) || implementedThroughUses(record, index)) return null;
-  return ASSEMBLED_KINDS.includes(kind) ? `${IMPLEMENTED_VERSION} needs "code", or every element it uses implemented` : `${IMPLEMENTED_VERSION} needs "code"`;
-}
-
-function implementedProblems(project) {
-  const index = byId(project);
-  return placed(project)
-    .filter(isImplemented)
-    .flatMap((record) => {
-      const message = implementedProblem(record, index);
-      return message ? [problem(record, message)] : [];
-    });
+/** The platforms of a component or screen, each one system.md declares; `code` and `platforms`
+ * belong to components and screens alone, assets being files. */
+function implementationProblems(project) {
+  const declared = list(systemOf(project) && fm(systemOf(project)).platforms);
+  return placed(project).flatMap((record) => {
+    const { kind } = fm(record);
+    const wrong = (isSystem(record) ? ["code"] : ["code", "platforms"]).filter((key) => key in fm(record) && !IMPLEMENTED_KINDS.includes(kind));
+    if (wrong.length) return wrong.map((key) => problem(record, `${key} is for components and screens, never ${/^[aeiou]/.test(kind) ? "an" : "a"} ${kind}`));
+    return list(fm(record).platforms)
+      .filter((platform) => !declared.includes(platform))
+      .map((platform) => problem(record, `platform "${platform}" is not in system.md`));
+  });
 }
 
 function deprecatedProblems(project) {
@@ -282,7 +262,7 @@ const RULES = {
   R5: versionProblems,
   R6: usesProblems,
   R7: stateProblems,
-  R8: implementedProblems,
+  R8: implementationProblems,
   R9: deprecatedProblems,
   R10: deprecatedUseProblems,
   R11: breakpointProblems,

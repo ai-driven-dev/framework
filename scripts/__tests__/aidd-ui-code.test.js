@@ -39,7 +39,7 @@ const linkSearch = (link) => edit(tmp, SEARCH, "role: search", `role: search\nco
 /** Writes a stylesheet search-field links to, so only its content can raise a problem. */
 function linkedStylesheet(css) {
   put(tmp, SEARCH_CSS, css);
-  linkSearch(`${SEARCH_CSS}#SearchField`);
+  linkSearch(`${SEARCH_CSS}#SearchField@1`);
 }
 
 /** Appends one line to a file of the project. */
@@ -53,7 +53,7 @@ describe("aidd-ui code link", () => {
 
   describe("C1 links", () => {
     it("names a code file that does not exist", () => {
-      linkSearch("src/ui/Missing.tsx#SearchField");
+      linkSearch("src/ui/Missing.tsx#SearchField@1");
       assert.deepEqual(problems(), [`${SEARCH}: code file "src/ui/Missing.tsx" does not exist`]);
     });
 
@@ -64,12 +64,12 @@ describe("aidd-ui code link", () => {
     });
 
     it("names an export absent from the file", () => {
-      edit(tmp, BUTTON, "#Button", "#Buttn");
+      edit(tmp, BUTTON, "#Button@1", "#Buttn@1");
       assert.deepEqual(problems(), [`${BUTTON}: export "Buttn" is not in src/ui/Button.tsx`]);
     });
 
     it("names an export that is only part of a word in the file", () => {
-      edit(tmp, BUTTON, "#Button", "#Butto");
+      edit(tmp, BUTTON, "#Button@1", "#Butto@1");
       assert.deepEqual(problems(), [`${BUTTON}: export "Butto" is not in src/ui/Button.tsx`]);
     });
 
@@ -79,15 +79,61 @@ describe("aidd-ui code link", () => {
       assert.deepEqual(problems(), []);
     });
 
-    it("names a link without #", () => {
-      linkSearch("src/ui/Button.tsx");
-      assert.deepEqual(problems(), [`${SEARCH}: code "src/ui/Button.tsx" must be path#Export or package:<name>#Export`]);
+    it("takes a link without an export, whatever the techno", () => {
+      linkedStylesheet(".SearchField {}\n");
+      edit(tmp, SEARCH, "#SearchField@1", "@1");
+      assert.deepEqual(problems(), []);
+    });
+
+    it("names a link whose export is empty", () => {
+      linkSearch("src/ui/Button.tsx#@1");
+      assert.deepEqual(problems(), [`${SEARCH}: code "src/ui/Button.tsx#@1" must be path[#Export]@<version> or package:<name>[#Export]@<version>`]);
+    });
+
+    it("names a link without a version", () => {
+      linkedStylesheet(".SearchField {}\n");
+      edit(tmp, SEARCH, "#SearchField@1", "#SearchField");
+      assert.deepEqual(problems(), [`${SEARCH}: code "${SEARCH_CSS}#SearchField" lacks its version, @<version>`]);
+    });
+
+    it("names a package link without a version, not a scope read as one", () => {
+      edit(tmp, DIALOG, "#Root@1", "#Root");
+      assert.deepEqual(problems(), [`${DIALOG}: code "package:@radix-ui/react-dialog#Root" lacks its version, @<version>`]);
+    });
+
+    it("names a package link without export or version, not its scope read as a version", () => {
+      edit(tmp, DIALOG, "#Root@1", "");
+      assert.deepEqual(problems(), [`${DIALOG}: code "package:@radix-ui/react-dialog" lacks its version, @<version>`]);
+    });
+
+    it("names a version that is no integer from 1", () => {
+      linkedStylesheet(".SearchField {}\n");
+      edit(tmp, SEARCH, "@1", "@one");
+      assert.deepEqual(problems(), [`${SEARCH}: code "${SEARCH_CSS}#SearchField@one": version "one" must be an integer from 1`]);
+    });
+
+    it("names a version above the record's", () => {
+      linkedStylesheet(".SearchField {}\n");
+      edit(tmp, SEARCH, "@1", "@2");
+      assert.deepEqual(problems(), [`${SEARCH}: code "${SEARCH_CSS}#SearchField@2": version 2 is ahead of version 1`]);
+    });
+
+    it("takes a version behind the record's: the code follows in the feature", () => {
+      linkedStylesheet(".SearchField {}\n");
+      edit(tmp, SEARCH, "\nversion: 1\n", "\nversion: 3\n");
+      assert.deepEqual(problems(), []);
+    });
+
+    it("takes a list of links", () => {
+      put(tmp, SEARCH_CSS, ".SearchField {}\n");
+      linkSearch(`[${SEARCH_CSS}#SearchField@1]`);
+      assert.deepEqual(problems(), []);
     });
   });
 
   describe("C2 libraries", () => {
     it("names a package system.md does not list", () => {
-      edit(tmp, DIALOG, "package:@radix-ui/react-dialog#Root", "package:left-pad#Pad");
+      edit(tmp, DIALOG, "package:@radix-ui/react-dialog#Root@1", "package:left-pad#Pad@1");
       assert.deepEqual(problems(), [`${DIALOG}: package "left-pad" is not in system.md libraries`]);
     });
   });
@@ -102,7 +148,7 @@ describe("aidd-ui code link", () => {
       put(tmp, "src/ui/search-field/search-field.component.tsx", "export function SearchField() {}\n");
       put(tmp, "src/ui/search-field/search-field-filter.ts", "export const filter = () => null;\n");
       put(tmp, "src/ui/search-field/__tests__/search-field.test.tsx", "test();\n");
-      linkSearch("src/ui/search-field/search-field.component.tsx#SearchField");
+      linkSearch("src/ui/search-field/search-field.component.tsx#SearchField@1");
       assert.deepEqual(problems(), []);
     });
 
@@ -122,7 +168,7 @@ describe("aidd-ui code link", () => {
     it("accepts a valid link on a proposed record", () => {
       edit(tmp, SEARCH, "status: validated", "status: proposed");
       put(tmp, "src/ui/SearchField.tsx", "export function SearchField() {}\n");
-      linkSearch("src/ui/SearchField.tsx#SearchField");
+      linkSearch("src/ui/SearchField.tsx#SearchField@1");
       assert.deepEqual(problems(), []);
     });
   });
@@ -308,17 +354,17 @@ describe("aidd-ui code link", () => {
     const HERO = "src/ui/Hero.astro";
     const hero = (body) => {
       put(tmp, HERO, body);
-      linkSearch(HERO);
+      linkSearch(`${HERO}@1`);
     };
 
-    it("links by a bare path, an Astro component having no named export", () => {
+    it("links an Astro component without an export", () => {
       hero("---\n---\n<h1>Hero</h1>\n");
       assert.deepEqual(problems(), []);
     });
 
     it("still takes a path#Export link, the export being checked", () => {
       hero("---\n---\n<h1>Hero</h1>\n");
-      edit(tmp, SEARCH, `code: ${HERO}`, `code: ${HERO}#Missing`);
+      edit(tmp, SEARCH, `code: ${HERO}@1`, `code: ${HERO}#Missing@1`);
       assert.deepEqual(problems(), [`${SEARCH}: export "Missing" is not in ${HERO}`]);
     });
 
@@ -334,9 +380,98 @@ describe("aidd-ui code link", () => {
   });
 
   describe("C5 one record per file", () => {
+    it("compares a link without its version: two versions of one file are still one file", () => {
+      edit(tmp, BUTTON, "\nversion: 1\n", "\nversion: 2\n");
+      edit(tmp, BUTTON, "#Button@1", "#Button@2");
+      linkSearch("src/ui/Button.tsx#Button@1");
+      assert.deepEqual(problems(), [`${SEARCH}: code "src/ui/Button.tsx#Button@1" is also ${BUTTON}'s`]);
+    });
+
     it("names two records sharing one code link", () => {
-      linkSearch("src/ui/Button.tsx#Button");
-      assert.deepEqual(problems(), [`${SEARCH}: code "src/ui/Button.tsx#Button" is also ${BUTTON}'s`]);
+      linkSearch("src/ui/Button.tsx#Button@1");
+      assert.deepEqual(problems(), [`${SEARCH}: code "src/ui/Button.tsx#Button@1" is also ${BUTTON}'s`]);
+    });
+  });
+
+  describe("platforms", () => {
+    const MOBILE = "src/mobile/Button.swift";
+    const WEB_LINK = "src/ui/Button.tsx#Button@1";
+    const MOBILE_LINK = `${MOBILE}#Button@1`;
+    const PACKAGE = "package:@radix-ui/react-dialog#Root@1";
+
+    /** Web and mobile, one root each; the button is linked on both, the dialog's package link names its platform. */
+    function twoPlatforms() {
+      edit(tmp, SYSTEM, "platforms: [web]", "platforms: [web, mobile]");
+      edit(tmp, SYSTEM, "code-roots: [src/ui]", "code-roots: [web=src/ui, mobile=src/mobile]");
+      edit(tmp, DIALOG, PACKAGE, `web=${PACKAGE}`);
+      put(tmp, MOBILE, "struct Button {}\n");
+      edit(tmp, BUTTON, `code: ${WEB_LINK}`, `code: [${WEB_LINK}, ${MOBILE_LINK}]`);
+    }
+
+    it("takes a component linked on both platforms at different versions", () => {
+      twoPlatforms();
+      edit(tmp, BUTTON, "\nversion: 1\n", "\nversion: 2\n");
+      edit(tmp, BUTTON, WEB_LINK, "src/ui/Button.tsx#Button@2");
+      assert.deepEqual(problems(), []);
+    });
+
+    it("takes a bare root and a platform=path root with one platform", () => {
+      edit(tmp, SYSTEM, "code-roots: [src/ui]", "code-roots: [web=src/ui]");
+      assert.deepEqual(problems(), []);
+    });
+
+    it("names a root with no platform among several", () => {
+      twoPlatforms();
+      edit(tmp, SYSTEM, "mobile=src/mobile", "src/mobile");
+      assert.deepEqual(problems().filter((problem) => problem.startsWith(SYSTEM)), [`${SYSTEM}: code root "src/mobile" must be written platform=path: system.md declares several platforms`]);
+    });
+
+    it("names a root whose platform system.md does not list", () => {
+      twoPlatforms();
+      edit(tmp, SYSTEM, "mobile=src/mobile", "tablet=src/mobile");
+      assert.deepEqual(problems().filter((problem) => problem.startsWith(SYSTEM)), [`${SYSTEM}: code root "tablet=src/mobile": platform "tablet" is not in system.md`]);
+    });
+
+    it("names a link under a root of a platform the record does not list", () => {
+      twoPlatforms();
+      edit(tmp, BUTTON, "role: button", "role: button\nplatforms: [web]");
+      assert.deepEqual(problems(), [`${BUTTON}: code "${MOBILE_LINK}" is on platform "mobile", which button does not list`]);
+    });
+
+    it("names the second link on one platform", () => {
+      twoPlatforms();
+      put(tmp, "src/ui/ButtonAlt.tsx", "export const Button = 1;\n");
+      fs.rmSync(path.join(tmp, MOBILE));
+      edit(tmp, BUTTON, MOBILE_LINK, "src/ui/ButtonAlt.tsx#Button@1");
+      assert.deepEqual(problems(), [`${BUTTON}: code "src/ui/ButtonAlt.tsx#Button@1" is a second link on platform "web"`]);
+    });
+
+    it("names a package link without a platform among several", () => {
+      twoPlatforms();
+      edit(tmp, DIALOG, `web=${PACKAGE}`, PACKAGE);
+      assert.deepEqual(problems(), [`${DIALOG}: code "${PACKAGE}" needs a platform=: system.md declares several platforms`]);
+    });
+
+    it("names a package link whose platform system.md does not list", () => {
+      twoPlatforms();
+      edit(tmp, DIALOG, `web=${PACKAGE}`, `tablet=${PACKAGE}`);
+      assert.deepEqual(problems(), [`${DIALOG}: code "tablet=${PACKAGE}": platform "tablet" is not in system.md`]);
+    });
+
+    it("names a link under no code root among several: its platform is unknown", () => {
+      twoPlatforms();
+      put(tmp, "lib/Field.ts", "export const Field = 1;\n");
+      linkSearch("lib/Field.ts#Field@1");
+      assert.deepEqual(problems(), [`${SEARCH}: code "lib/Field.ts#Field@1" is under no code root, so its platform is unknown`]);
+    });
+
+    it("gives a link the platform of the innermost root holding it", () => {
+      twoPlatforms();
+      edit(tmp, SYSTEM, "mobile=src/mobile", "mobile=src/ui/native");
+      put(tmp, "src/ui/native/Button.swift", "struct Button {}\n");
+      fs.rmSync(path.join(tmp, MOBILE));
+      edit(tmp, BUTTON, MOBILE_LINK, "src/ui/native/Button.swift#Button@1");
+      assert.deepEqual(problems(), []);
     });
   });
 

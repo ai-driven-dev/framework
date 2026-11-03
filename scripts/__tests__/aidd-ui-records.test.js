@@ -244,47 +244,32 @@ describe("aidd-ui records and history", () => {
     });
   });
 
-  describe("R8 implemented version", () => {
-    it("names an implemented record without code", () => {
-      change(HOME, "code: src/ui/HomePage.tsx#HomePage\n", "");
-      assert.deepEqual(problems(), [`${HOME}: implemented-version needs "code"`]);
-    });
-
-    it("accepts an implemented molecule without code when everything it uses is implemented", () => {
-      change(SEARCH, "version: 1", "version: 1\nimplemented-version: 1");
-      assert.deepEqual(problems(), []);
-    });
-
-    it("names an implemented molecule without code that uses a component not implemented", () => {
-      change(SEARCH, "version: 1", "version: 1\nimplemented-version: 1");
-      change(BUTTON, "implemented-version: 1\n", "");
-      assert.deepEqual(problems(), [`${SEARCH}: implemented-version needs "code", or every element it uses implemented`]);
-    });
-
-    it("accepts code that lags behind the design, as a feature leaves it until it follows", () => {
+  describe("R8 implementation", () => {
+    it("accepts a link behind the design, as a feature leaves it until it follows", () => {
       change(BUTTON, "version: 1", "version: 2");
       change(BUTTON, "| 1 | created | no | aidd_docs/tasks/ds-init |", "| 1 | created | no | aidd_docs/tasks/ds-init |\n| 2 | larger | no | aidd_docs/tasks/tweak |");
       assert.deepEqual(problems(), []);
     });
 
-    it("names an implemented version ahead of the design", () => {
-      change(BUTTON, "implemented-version: 1", "implemented-version: 2");
-      assert.deepEqual(problems(), [`${BUTTON}: implemented-version 2 is ahead of version 1`]);
+    it("names code on an asset, with its article", () => {
+      change(ICON, "alt: Search", "alt: Search\ncode: src/ui/Button.tsx#Button@1");
+      assert.deepEqual(problems(), [`${ICON}: code is for components and screens, never an asset`]);
     });
 
-    it("names an implemented version that is no integer", () => {
-      change(BUTTON, "implemented-version: 1", "implemented-version: yes");
-      assert.deepEqual(problems(), [`${BUTTON}: implemented-version "yes" must be an integer from 1`]);
+    it("names platforms on a record that is never code", () => {
+      change(JOURNEY, "version: 1", "version: 1\nplatforms: [web]");
+      assert.deepEqual(problems(), [`${JOURNEY}: platforms is for components and screens, never a journey`]);
     });
 
-    it("names an implemented version on an asset, with its article", () => {
-      change(ICON, "version: 1", "version: 1\nimplemented-version: 1");
-      assert.deepEqual(problems(), [`${ICON}: implemented-version is for components and screens, never an asset`]);
+    it("accepts platforms that are a subset of the system's", () => {
+      change(BUTTON, "role: button", "role: button\nplatforms: [web]");
+      assert.deepEqual(problems(), []);
     });
 
-    it("names an implemented version on a record that is never code", () => {
-      change(JOURNEY, "version: 1", "version: 1\nimplemented-version: 1");
-      assert.deepEqual(problems(), [`${JOURNEY}: implemented-version is for components and screens, never a journey`]);
+    it("names a platform system.md does not declare, on a component and on a screen", () => {
+      change(BUTTON, "role: button", "role: button\nplatforms: [web, ios]");
+      change(HOME, "route: /", "route: /\nplatforms: [android]");
+      assert.deepEqual(problems(), [`${BUTTON}: platform "ios" is not in system.md`, `${HOME}: platform "android" is not in system.md`]);
     });
   });
 
@@ -550,13 +535,8 @@ describe("aidd-ui records and history", () => {
       assert.deepEqual(edited(), []);
     });
 
-    it("stays silent when only implemented-version changed", () => {
-      change(BUTTON, "implemented-version: 1\n", "");
-      assert.deepEqual(edited(), []);
-    });
-
     it("stays silent when only the code link changed", () => {
-      change(BUTTON, "code: src/ui/Button.tsx#Button", "code: src/ui/Button.tsx#Primary");
+      change(BUTTON, "code: src/ui/Button.tsx#Button@1", "code: src/ui/Button.tsx#Primary@1");
       assert.deepEqual(edited(), []);
     });
 

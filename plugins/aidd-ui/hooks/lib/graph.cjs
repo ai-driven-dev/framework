@@ -5,7 +5,7 @@
 const { list, table } = require("./markdown.cjs");
 const { placed, fm, COMPONENT_KINDS } = require("./model.cjs");
 const { renderOf } = require("./renders.cjs");
-const { codeOwner, codeFileOf, codeTokens } = require("./code.cjs");
+const { codeOwner, codeFilesOf, codeTokens } = require("./code.cjs");
 const { citations, tokenNameOf } = require("./tokens.cjs");
 const { isUnder, UI_DIR } = require("./project.cjs");
 
@@ -76,7 +76,7 @@ function usages(project, given) {
     tokens: [...tokens].sort(),
     ...Object.fromEntries(Object.entries(REPORT_KINDS).map(([key, kinds]) => [key, idsOf(kinds)])),
     renders: reachedRecords.map(renderOf).filter((file) => project.renders.includes(file)).sort(),
-    code: [...new Set([...reachedRecords.map((record) => codeFileOf(fm(record).code)), ...(tokens.size ? codeTokens(project) : [])].filter(Boolean))].sort(),
+    code: [...new Set([...reachedRecords.flatMap((record) => codeFilesOf(fm(record).code)), ...(tokens.size ? codeTokens(project) : [])].filter(Boolean))].sort(),
   };
 }
 

@@ -75,7 +75,7 @@ afterEach(() => {
 function breakOnePerFamily() {
   edit(tmp, BRAND, "## Users\n\nAnalysts.\n\n", "");
   editTokens(tmp, (tree) => (tree.space.md.$value = { value: 1, unit: "em" }));
-  edit(tmp, DIALOG, "package:@radix-ui/react-dialog#Root", "package:left-pad#Pad");
+  edit(tmp, DIALOG, "package:@radix-ui/react-dialog#Root@1", "package:left-pad#Pad@1");
 }
 
 const lines = (text) => text.split("\n").filter(Boolean);

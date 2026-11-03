@@ -100,6 +100,15 @@ describe("aidd-ui impact", () => {
       assert.deepEqual(report.elements, ["badge"]);
     });
 
+    it("reaches the code of every platform an element is linked on", () => {
+      edit(tmp, `${UI}/system.md`, "platforms: [web]", "platforms: [web, mobile]");
+      edit(tmp, `${UI}/system.md`, "code-roots: [src/ui]", "code-roots: [web=src/ui, mobile=src/mobile]");
+      edit(tmp, `${UI}/components/dialog.md`, "code: package", "code: web=package");
+      edit(tmp, BUTTON, "code: src/ui/Button.tsx#Button@1", "code: [src/ui/Button.tsx#Button@1, src/mobile/Button.swift#Button@1]");
+      put(tmp, "src/mobile/Button.swift", "struct Button {}\n");
+      assert.deepEqual(impact("button", "--root", tmp).report.code, ["src/mobile/Button.swift", "src/ui/Button.tsx", "src/ui/HomePage.tsx"]);
+    });
+
     it("reaches every code token file a monorepo lists, and none from an element alone", () => {
       edit(tmp, `${UI}/system.md`, "code-tokens: src/ui/tokens.css", "code-tokens: [src/ui/tokens.css, apps/landing/tokens.css]");
       put(tmp, "apps/landing/tokens.css", ":root {}\n");

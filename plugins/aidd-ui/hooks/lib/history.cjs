@@ -17,7 +17,7 @@ const BREAKING = "yes";
 const TASKS_DIR = "aidd_docs/tasks/";
 const VALIDATED = "validated";
 const HELD_STATUSES = [VALIDATED, "deprecated"]; // a proposed element is still being designed
-const UNVERSIONED_KEYS = ["status", "implemented-version", "code"]; // a review, a code catch-up: no new version
+const UNVERSIONED_KEYS = ["status", "code"]; // a review, a code catch-up: no new version
 const FRONT_MATTER_FENCE = "---";
 const SECTION_PREFIX = "## ";
 const LINE_BREAK = "\n";
@@ -135,7 +135,7 @@ function deprecationProblems(project) {
     .map((record) => problem(record, "deprecated, yet its last history row is not breaking"));
 }
 
-/** A record's text without what a version never covers: the status, the implementation link and
+/** A record's text without what a version never covers: the status, the code links and
  * the History section. */
 function substance(content) {
   const lines = content.split(LINE_BREAK);

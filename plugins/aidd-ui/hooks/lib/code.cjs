@@ -1,10 +1,11 @@
-// C1 to C8: each code link resolves, every file under a code root is linked or ignored, UI code
-// outside its tests holds no new colour literal, and the code's token file exists. Other literals
-// and non-web code are stated limits.
+// C1 to C9: each code link resolves and names the version it implements, every file under a code
+// root is linked or ignored, UI code outside its tests holds no new colour literal, the code's
+// token file exists, and each link sits on a platform its record lists. Other literals are a stated
+// limit.
 const fs = require("node:fs");
 const path = require("node:path");
 const { list } = require("./markdown.cjs");
-const { placed, systemOf, isElement, fm } = require("./model.cjs");
+const { placed, systemOf, fm, IMPLEMENTED_KINDS, INTEGER_VERSION } = require("./model.cjs");
 const { PATTERNS, findLiterals, styled, declaresRightToLeft } = require("./literals.cjs");
 const { walk, text, relative, isUnder, checkOf, WARNING } = require("./project.cjs");
 const { unclearedByHead } = require("./committed.cjs");
@@ -18,9 +19,14 @@ const IGNORE_KEY = "ignore";
 const TEST_FOLDER = /(?:^|\/)(?:__tests__|__mocks__)\//;
 const TEST_NAME = /\.(?:test|spec)\.[^/]+$/;
 const STYLESHEET_EXTENSIONS = [".css", ".scss"];
-const ASTRO_EXTENSION = ".astro"; // a component with no named export, so its link may be a bare path
+const ASTRO_EXTENSION = ".astro";
 const SCRIPT_EXTENSIONS = [".js", ".jsx", ".ts", ".tsx", ".vue", ".svelte", ASTRO_EXTENSION];
 const SCANNED_EXTENSIONS = [...STYLESHEET_EXTENSIONS, ...SCRIPT_EXTENSIONS, ".html"];
+const PLATFORMS_KEY = "platforms";
+const ROOT_PLATFORM = /^([\w-]+)=(.*)$/; // web=src/ui
+const LINK_PLATFORM = /^([\w-]+)=(?=package:)/; // web=package:name#Export@1, the only link a root cannot place
+const VERSION_SUFFIX = /@([^@#/]*)$/; // a scope's @ is followed by a path, so never taken for a version
+const LINK_FORM = "path[#Export]@<version> or package:<name>[#Export]@<version>";
 
 const isTest = (file) => TEST_FOLDER.test(file) || TEST_NAME.test(file);
 
@@ -33,34 +39,51 @@ const SCRIPT_TOKEN = /\/\/[^\n]*|\/\*[\s\S]*?\*\/|("(?:\\.|[^"\\\n])*"|'(?:\\.|[
  * code lives in a string, and a `#` in a comment is an issue number. */
 const stringsOnly = (source) => source.replace(SCRIPT_TOKEN, (found, literal) => literal ?? found.replace(NOT_LINE_BREAK, " "));
 
-/** A `code-roots`, `ignore` or `code-tokens` list as normalised path prefixes, so `./src` reads as `src`. */
+/** An `ignore` or `code-tokens` list as normalised path prefixes, so `./src` reads as `src`. */
 const prefixes = (project, key) => list(systemOf(project)?.frontMatter[key]).map((prefix) => path.posix.normalize(prefix));
 /** Whether a normalised prefix names a folder inside the project, never the project itself. */
 const isInside = (prefix) => prefix !== "." && !prefix.startsWith("..") && !path.posix.isAbsolute(prefix);
-const codeRoots = (project) => prefixes(project, CODE_ROOTS_KEY).filter(isInside);
+const platformsOf = (project) => list(systemOf(project)?.frontMatter[PLATFORMS_KEY]);
+/** The platform a bare root or package link belongs to: the one declared, none among several. */
+const soleOf = (project) => (platformsOf(project).length === 1 ? platformsOf(project)[0] : null);
 
-/** A `code` value as `{target, name}`, `target` being a path or `package:<name>`; null when malformed.
- * An Astro file alone is a link without a name. */
+/** The `code-roots` as `{item, named, platform, path}`: `platform=path` names its platform, a bare
+ * path belongs to the only one declared, and the path is normalised so `./src` reads as `src`. */
+function rootEntries(project) {
+  return list(systemOf(project)?.frontMatter[CODE_ROOTS_KEY]).map((item) => {
+    const named = ROOT_PLATFORM.exec(item);
+    return { item, named: named !== null, platform: named ? named[1] : soleOf(project), path: path.posix.normalize(named ? named[2] : item) };
+  });
+}
+const codeRoots = (project) => rootEntries(project).map((root) => root.path).filter(isInside);
+
+/** A `code` value as `{platform, target, name, version, library}`: `target` is a path or
+ * `package:<name>`, `platform` the prefix of a package link, `name` and `version` null when not written;
+ * null when malformed. */
 function parseLink(value) {
   if (typeof value !== "string") return null;
-  const at = value.lastIndexOf(EXPORT_SEPARATOR);
-  if (at < 0 && value.endsWith(ASTRO_EXTENSION)) return { target: value, name: null, library: null };
-  if (at <= 0 || at === value.length - 1) return null;
-  const target = value.slice(0, at);
-  return { target, name: value.slice(at + 1), library: target.startsWith(PACKAGE_PREFIX) ? target.slice(PACKAGE_PREFIX.length) : null };
+  const prefix = LINK_PLATFORM.exec(value);
+  const unprefixed = prefix ? value.slice(prefix[0].length) : value;
+  const suffix = VERSION_SUFFIX.exec(unprefixed);
+  const unversioned = suffix ? unprefixed.slice(0, suffix.index) : unprefixed;
+  const at = unversioned.lastIndexOf(EXPORT_SEPARATOR);
+  const target = at < 0 ? unversioned : unversioned.slice(0, at);
+  const name = at < 0 ? null : unversioned.slice(at + 1);
+  if (target === "" || target === PACKAGE_PREFIX || name === "") return null;
+  return { platform: prefix ? prefix[1] : null, target, name, version: suffix ? suffix[1] : null, library: target.startsWith(PACKAGE_PREFIX) ? target.slice(PACKAGE_PREFIX.length) : null };
 }
 
-/** The file a `code` value links; null for a library component or a malformed value. */
-function codeFileOf(value) {
-  const link = parseLink(value);
-  return link && link.library === null ? link.target : null;
-}
+/** The files a record's `code` links; none for a library component or a malformed value. */
+const codeFilesOf = (value) => list(value).flatMap((each) => {
+  const link = parseLink(each);
+  return link && link.library === null ? [link.target] : [];
+});
 
-/** Elements with a `code` value, each with its parsed link. */
+/** Every link of a component or screen, each with its record and parsed form. */
 const linked = (project) =>
   placed(project)
-    .filter((record) => isElement(record) && "code" in fm(record))
-    .map((record) => ({ record, value: fm(record).code, link: parseLink(fm(record).code) }));
+    .filter((record) => IMPLEMENTED_KINDS.includes(fm(record).kind) && "code" in fm(record))
+    .flatMap((record) => list(fm(record).code).map((value) => ({ record, value, link: parseLink(value) })));
 
 const hasWord = (text, word) => new RegExp(`(?<![\\w$])${word.replace(REGEX_SPECIALS, "\\$&")}(?![\\w$])`).test(text);
 
@@ -93,15 +116,25 @@ function searchable(project, file) {
   return SCRIPT_EXTENSIONS.includes(path.extname(file)) ? stringsOnly(source) : source;
 }
 
+/** What is wrong with a link's version, or null: written, an integer, and not above the record's. */
+function versionProblem(record, value, link) {
+  if (link.version === null) return `code "${value}" lacks its version, @<version>`;
+  if (!INTEGER_VERSION.test(link.version)) return `code "${value}": version "${link.version}" must be an integer from 1`;
+  const current = fm(record).version;
+  return INTEGER_VERSION.test(current) && Number(link.version) > Number(current) ? `code "${value}": version ${link.version} is ahead of version ${current}` : null;
+}
+
 function linkProblems(project) {
   return linked(project).flatMap(({ record, value, link }) => {
-    if (!link) return [{ file: record.file, message: `code "${value}" must be path#Export or package:<name>#Export` }];
-    if (link.library !== null) return [];
+    const at = (message) => ({ file: record.file, message });
+    if (!link) return [at(`code "${value}" must be ${LINK_FORM}`)];
+    const version = versionProblem(record, value, link);
+    const found = version ? [at(version)] : [];
+    if (link.library !== null) return found;
     const full = path.join(project.root, link.target);
-    if (!fs.existsSync(full) || !fs.statSync(full).isFile()) return [{ file: record.file, message: `code file "${link.target}" does not exist` }];
+    if (!fs.existsSync(full) || !fs.statSync(full).isFile()) return [...found, at(`code file "${link.target}" does not exist`)];
     const source = text(project, link.target);
-    if (source === null || link.name === null || hasWord(source, link.name)) return [];
-    return [{ file: record.file, message: `export "${link.name}" is not in ${link.target}` }];
+    return source === null || link.name === null || hasWord(source, link.name) ? found : [...found, at(`export "${link.name}" is not in ${link.target}`)];
   });
 }
 
@@ -158,10 +191,12 @@ function codeTokensProblems(project) {
 
 function sharedLinkProblems(project) {
   const owners = new Map();
-  return linked(project).flatMap(({ record, value }) => {
-    const owner = owners.get(value);
+  return linked(project).flatMap(({ record, value, link }) => {
+    if (!link) return [];
+    const key = `${link.target}${EXPORT_SEPARATOR}${link.name ?? ""}`; // the version says how far the code is, not which code
+    const owner = owners.get(key);
     if (!owner) {
-      owners.set(value, record);
+      owners.set(key, record);
       return [];
     }
     return [{ file: record.file, message: `code "${value}" is also ${owner.file}'s` }];
@@ -169,10 +204,45 @@ function sharedLinkProblems(project) {
 }
 
 function rootProblems(project) {
-  const system = systemOf(project);
-  return prefixes(project, CODE_ROOTS_KEY)
-    .filter((prefix) => !isInside(prefix))
-    .map((prefix) => ({ file: system.file, message: `code root "${prefix}" must name a folder inside the project` }));
+  const platforms = platformsOf(project);
+  const file = systemOf(project)?.file;
+  return rootEntries(project).flatMap(({ item, named, platform, path: root }) => [
+    ...(isInside(root) ? [] : [{ file, message: `code root "${root}" must name a folder inside the project` }]),
+    ...(!named && platforms.length > 1 ? [{ file, message: `code root "${item}" must be written platform=path: system.md declares several platforms` }] : []),
+    ...(named && !platforms.includes(platform) ? [{ file, message: `code root "${item}": platform "${platform}" is not in system.md` }] : []),
+  ]);
+}
+
+/** The code root holding `file`, the innermost when roots nest. */
+const rootOf = (project, file) =>
+  rootEntries(project)
+    .filter((root) => isInside(root.path) && isUnder(file, root.path))
+    .sort((a, b) => b.path.length - a.path.length)[0];
+
+/** A link's platform: a package link's prefix, else the platform of the root holding a file. When it
+ * has none, `unknown` says why if the link is to blame; a bare root among several is C7's. */
+function platformOf(project, link) {
+  if (link.library !== null) return { platform: link.platform ?? soleOf(project), unknown: "needs a platform=: system.md declares several platforms" };
+  const root = rootOf(project, path.posix.normalize(link.target));
+  return root ? { platform: root.platform } : { platform: soleOf(project), unknown: "is under no code root, so its platform is unknown" };
+}
+
+function platformProblems(project) {
+  const declared = platformsOf(project);
+  const seen = new Set();
+  return linked(project).flatMap(({ record, value, link }) => {
+    if (!link) return [];
+    const at = (message) => ({ file: record.file, message: `code "${value}" ${message}` });
+    if (link.platform !== null && !declared.includes(link.platform)) return [{ file: record.file, message: `code "${value}": platform "${link.platform}" is not in system.md` }];
+    const { platform, unknown } = platformOf(project, link);
+    if (platform === null) return unknown && declared.length > 1 ? [at(unknown)] : [];
+    const listed = PLATFORMS_KEY in fm(record) ? list(fm(record)[PLATFORMS_KEY]) : declared;
+    if (!listed.includes(platform)) return [at(`is on platform "${platform}", which ${fm(record).id} does not list`)];
+    const key = `${record.file} ${platform}`;
+    if (seen.has(key)) return [at(`is a second link on platform "${platform}"`)];
+    seen.add(key);
+    return [];
+  });
 }
 
 const RULES = {
@@ -184,9 +254,10 @@ const RULES = {
   C6: literalProblems(PATTERNS.physical, STYLESHEET_EXTENSIONS, declaresRightToLeft),
   C7: rootProblems,
   C8: codeTokensProblems,
+  C9: platformProblems,
 };
 
 /** Every broken code rule, in rule order. */
 const check = checkOf(RULES);
 
-module.exports = { check, codeRoots, codeOwner, codeFileOf, codeTokens };
+module.exports = { check, codeRoots, codeOwner, codeFilesOf, codeTokens };
