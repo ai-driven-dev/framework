@@ -188,6 +188,12 @@ describe("validate-plan", () => {
       const r = run(good(tree(["└── ❌ src/old.js"]), tree(["└── ✏️ src/old.js"])));
       assert.match(r.out, /phase-2\.md: src\/old\.js is marked modify but does not exist/);
     });
+    it("accepts a file an earlier phase deletes, a later phase creates again and a third modifies", () => {
+      const files = good(tree(["└── ❌ src/old.js"]), tree(["└── ✅ src/old.js"]));
+      files["plan.md"] = files["plan.md"].replace(/(\| 2 .*\n)/, "$1| 3 | x | x | none |\n");
+      files["phase-3.md"] = fill(template("phase-template.md"), tree(["└── ✏️ src/old.js"]));
+      assert.match(run(files).out, /^VALID$/);
+    });
     it("refuses a file only a later phase creates, modified by an earlier one", () => {
       const r = run(good(tree(["└── ✏️ src/late.js"]), tree(["└── ✅ src/late.js"])));
       assert.match(r.out, /phase-1\.md: src\/late\.js is marked modify but does not exist/);

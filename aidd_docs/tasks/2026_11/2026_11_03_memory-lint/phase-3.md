@@ -2,7 +2,7 @@
 status: pending
 ---
 
-# Instruction: Write hook
+# Instruction: Lint engine
 
 ## Architecture projection
 
@@ -11,56 +11,56 @@ status: pending
 ```txt
 .
 ├── plugins/aidd-context/hooks/
-│   ├── hooks.json ✏️
-│   └── memory-hook.js ✅
+│   ├── lib/memory-rules.js ✅
+│   └── memory-lint.js ✅
 └── scripts/__tests__/
-    └── memory-hook.test.js ✅
+    └── memory-lint.test.js ✅
 ```
 
 ## Test Scope
 
 | Scenario     | Action                  | Observable outcome   | Actor                           |
 | ------------ | ----------------------- | -------------------- | ------------------------------- |
-| Setup        | a temp project with a bank holding one breach per rule | files on disk | system |
-| Happy path   | pipe a Claude Code `PostToolUse` payload naming a memory file with breaches | stdout holds one JSON `hookSpecificOutput.additionalContext` with that file's problems, exit 0 | system |
-| Edge case    | a payload naming a file outside `aidd_docs/memory/` | no output, exit 0, the bank is never read | system |
-| Edge case    | a Codex `apply_patch` payload, and a Copilot payload with `tool_result` | the same problems, Copilot's as a top-level `additionalContext` | system |
-| Edge case    | a Cursor payload: `tool_name` `Write`, absolute `tool_input.file_path`, `workspace_roots`, `cursor_version`, no `cwd` | the same problems, root taken from `workspace_roots` | system |
-| Edge case    | invalid JSON, a missing file, an engine that throws | no output, exit 0 | system |
-| Edge case    | a payload with no path at all, as any non-write tool or an unknown host sends | no output, exit 0, no file read | system |
-| Edge case    | the engine and the hook sources | they require only `node:fs` and `node:path`: no child process, network or temp file | system |
-| Edge case    | a file with more than ten problems | ten lines, errors first, then one line naming the command for the rest | system |
-| Edge case    | a clean memory file | no output, exit 0 | system |
+| Setup        | write a bank of memory files in a temp project | files on disk | system |
+| Happy path   | run `node memory-lint.js <root>` on a bank of tables, bullets and headings | prints nothing that is an error, exits 0 | cli |
+| Edge case    | one file per rule M1 to M7 breaking it | one line naming the file, the line, the rule id and its severity; exit 1 when an error is among them | cli |
+| Edge case    | a line that only looks like a breach: a code fence, a mermaid block, `TODO'd`, a version, a `README.md` | no problem | cli |
+| Edge case    | a rule that throws | one problem naming that rule, the other rules still report | system |
+| Edge case    | no `aidd_docs/memory/` in the root | prints nothing, exits 0 | cli |
 | Teardown     | remove the temp project | baseline restored | system |
 
 ## Tasks to do
 
-### `1)` Hook
+### `1)` Rules
 
-> Hands a written memory file's problems back to the model, and never stands in the way.
+> Each rule is a pure function of a file's text and what the bank and project hold, in `hooks/lib/memory-rules.js`; it reads nothing itself.
 
-1. Read the payload; take the written paths from `tool_input.file_path`, `tool_input.path`, or a patch's `*** Add|Update File:` lines; resolve the project root from `cwd`, else `workspace_roots[0]`, else `CURSOR_PROJECT_DIR` or `CLAUDE_PROJECT_DIR`, else the process directory.
-2. Keep only paths under `aidd_docs/memory/` ending in `.md`, other than `README.md`; with none, exit 0 before any read of the bank.
-3. Lint each with the engine; print at most ten problem lines, errors first, plus one line naming `node memory-lint.js` for the rest.
-4. Print `{"hookSpecificOutput":{"hookEventName":"PostToolUse","additionalContext":…}}`, or `{"additionalContext":…}` for a Copilot payload; exit 0 whatever happens.
+1. M1 error: a line outside a table, list, heading, code fence, blockquote, comment or diagram over 25 words.
+2. M2 error: a count of things (commits, branches, files, tests, lines, issues, pull requests, users, records, runs, sessions), an ISO date, `currently`, `as of`, `right now`, `at the moment`.
+3. M3 error: `{{`, a bare `TODO`, `TODO:` or `TBD`.
+4. M4 error: a backticked path with an extension whose top-level entry exists in the project while the path does not, copied from `scripts/check-referenced-paths.js`; existence comes in as a function the engine gives.
+5. M5 warning: a bullet or a table cell over 35 words.
+6. M6 warning: a file over 400 words.
+7. M7 warning: a sentence of 12 words or more found in another memory file, copied from `scripts/check-doc-duplication.js`.
 
-### `2)` Wiring
+### `2)` Engine
 
-> The hook runs after every write, beside the memory sync.
+> One function the hook and a person call alike; the only file that reads the disk.
 
-1. Add a `PostToolUse` group, matcher `Write|Edit|MultiEdit`, command `node ${CLAUDE_PLUGIN_ROOT}/hooks/memory-hook.js`, timeout 5, to `plugins/aidd-context/hooks/hooks.json`, the `SessionStart` group unchanged.
+1. Export `lintFile(root, file)` and `lintBank(root)`, `README.md` excluded, each problem `{ file, line, rule, severity, message }`, errors before warnings.
+2. A rule that throws becomes one problem naming it.
+3. As a script: `node memory-lint.js [root] [file...]` prints one `✗` or `⚠` line per problem, exits 1 when an error remains, 0 otherwise.
 
-### `3)` Contributor checks
+### `3)` Calibration
 
-> The repository's own gates pass.
+> The rules fire on real banks the way the issue measured, and on nothing that only looks like a breach.
 
-1. Run `node scripts/check-tests-leave-git-alone.js -- node --test 'scripts/__tests__/**/*.test.js'`.
-2. Run `pnpm exec lefthook run pre-commit`, which regenerates `docs/CATALOG.md`.
+1. Run the engine on this repository's two banks, `aidd_docs/memory/` and `cli/aidd_docs/memory/`, and read each error back; a false positive becomes a fixture and a fix.
 
 ## Test acceptance criteria
 
 | Task | Acceptance criteria              |
 | ---- | -------------------------------- |
-| 1 | every payload shape yields the written file's problems, nothing else ever produces output, the hook exits 0 in every scenario, and its sources require nothing beyond `node:fs` and `node:path` |
-| 2 | `hooks.json` declares both groups, and both catalogs list the new hook after the pre-commit |
-| 3 | the scripts suite and the pre-commit pass |
+| 1 | each of M1 to M7 reports its fixture with its id and severity, and no look-alike fixture |
+| 2 | `lintBank` skips `README.md`; a throwing rule is one named problem; the script exits 1 only with an error |
+| 3 | every error the engine reports on this repository's banks is a true breach |

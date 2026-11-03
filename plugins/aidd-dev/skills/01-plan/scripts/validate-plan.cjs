@@ -262,7 +262,10 @@ function phaseReport(folder, number, phaseTemplate, earlier) {
   const projection = projectedFiles(file, findSection(doc, SECTION_PROJECTION)?.body ?? "", earlier);
   return {
     problems: [...templateIssues, ...projection.problems, ...wireframeProblems(file, doc), ...taskProblems(file, markdown, doc)],
-    files: { created: [...earlier.created, ...projection.created], deleted: [...earlier.deleted, ...projection.deleted] },
+    files: {
+      created: [...earlier.created, ...projection.created],
+      deleted: [...earlier.deleted.filter((deleted) => !projection.created.includes(deleted)), ...projection.deleted],
+    },
   };
 }
 
