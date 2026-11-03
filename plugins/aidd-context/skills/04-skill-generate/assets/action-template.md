@@ -9,7 +9,8 @@
 ## Process
 
 1. <Imperative step. Sub-bullet for a case or a loop back.>
-2. <Next step. The last one names the next action file when the flow continues.>
+2. <Run the observable success check and handle failure.>
+3. <Name the next action file when the flow continues; omit at a terminal action.>
 
 ## Output
 
