@@ -32,3 +32,26 @@
 | --- | --- | --- |
 | `pnpm exec lefthook run pre-commit --all-files` | 0 | |
 | `pnpm exec commitlint --edit` | 0 | |
+
+## Round 4
+
+- Head: `d29961e2e`
+- Uncommitted changes: yes
+- Verdict: PASS
+
+| Check | Exit | Failure |
+| --- | --- | --- |
+| `pnpm exec lefthook run pre-commit` | 0 | |
+| `pnpm exec commitlint --edit` | 0 | |
+| `pnpm exec lefthook run pre-push` | 0 | |
+
+## Round 5
+
+- Head: `d29961e2e`
+- Uncommitted changes: yes
+- Verdict: PASS
+
+| Check | Exit | Failure |
+| --- | --- | --- |
+| `pnpm exec lefthook run pre-commit --all-files` | 0 | |
+| `pnpm exec lefthook run pre-push` | 0 | |

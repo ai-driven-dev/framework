@@ -8,6 +8,7 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 
 - [`.claude-plugin`](#claude-plugin)
 - [`hooks`](#hooks)
+  - [`hooks/lib`](#hookslib)
 - [`skills`](#skills)
   - [`skills/00-onboard`](#skills00-onboard)
   - [`skills/01-bootstrap`](#skills01-bootstrap)
@@ -37,7 +38,14 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | File |
 |------|
 | [hooks.json](hooks/hooks.json) |
+| [memory-lint.js](hooks/memory-lint.js) |
 | [update_memory.js](hooks/update_memory.js) |
+
+#### `hooks/lib`
+
+| File |
+|------|
+| [memory-rules.js](hooks/lib/memory-rules.js) |
 
 ### `skills`
 
