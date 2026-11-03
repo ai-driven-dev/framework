@@ -1,4 +1,5 @@
 import { spawnSync } from "node:child_process";
+import { homedir } from "node:os";
 import { describe, expect, it, vi } from "vitest";
 import { NativePluginCliAdapter } from "../../../../src/contexts/tools/infrastructure/native-plugin-cli-adapter.js";
 
@@ -77,6 +78,38 @@ describe("ClaudeCliAdapter — plugin enable/uninstall carry the requested scope
       "claude",
       ["plugin", "uninstall", "aidd-context@aidd-framework", "--scope", "user"],
       expect.anything()
+    );
+  });
+});
+
+describe("ClaudeCliAdapter — removing a user-scope marketplace deletes its registration", () => {
+  const adapter = () =>
+    new NativePluginCliAdapter("claude", {
+      scopeArgs: { project: ["--scope", "local"], user: ["--scope", "user"] },
+      userRemoveArgs: [],
+    });
+
+  it("names no scope at user scope, from the home directory, so the registration goes too", () => {
+    mockSpawnSync.mockReturnValue(makeResult({}));
+
+    adapter().removeMarketplace("aidd-framework", "user");
+
+    expect(mockSpawnSync).toHaveBeenCalledWith(
+      "claude",
+      ["plugin", "marketplace", "remove", "aidd-framework"],
+      expect.objectContaining({ cwd: homedir() })
+    );
+  });
+
+  it("keeps the project scope's own arguments, from the current directory", () => {
+    mockSpawnSync.mockReturnValue(makeResult({}));
+
+    adapter().removeMarketplace("aidd-framework", "project");
+
+    expect(mockSpawnSync).toHaveBeenCalledWith(
+      "claude",
+      ["plugin", "marketplace", "remove", "aidd-framework", "--scope", "local"],
+      expect.not.objectContaining({ cwd: expect.anything() })
     );
   });
 });

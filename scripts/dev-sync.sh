@@ -62,14 +62,17 @@ aidd_cli() {
 # A plugin keeps its version across edits to this checkout, so Claude and Codex would keep the
 # copy they cached: each reload hands them the plugins afresh. Copilot loads a local
 # marketplace live, and its uninstall leaves each plugin disabled rather than gone, which the
-# CLI then reads as a ref it does not own, so it is left alone.
+# CLI then reads as a ref it does not own, so it is left alone. Claude's `remove --scope user`
+# drops only the settings declaration and keeps the registration, which setup --global then
+# takes as still declared: the marketplace is removed from every scope, from HOME so no
+# project's settings are among them.
 release_native_plugins() {
   local name
   for name in "${targets[@]}"; do
     [ "$HAVE_CLAUDE" = 0 ] || claude plugin uninstall "$name@$MKT" --scope user >/dev/null 2>&1 || true
     [ "$HAVE_CODEX" = 0 ] || codex plugin remove "$name@$MKT" >/dev/null 2>&1 || true
   done
-  [ "$HAVE_CLAUDE" = 0 ] || claude plugin marketplace remove "$MKT" --scope user >/dev/null 2>&1 || true
+  [ "$HAVE_CLAUDE" = 0 ] || (cd "$HOME" && claude plugin marketplace remove "$MKT") >/dev/null 2>&1 || true
   [ "$HAVE_CODEX" = 0 ] || codex plugin marketplace remove "$MKT" >/dev/null 2>&1 || true
 }
 
