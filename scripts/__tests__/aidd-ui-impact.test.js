@@ -55,6 +55,7 @@ describe("aidd-ui impact", () => {
       assert.equal(err, "");
       assert.deepEqual(report, {
         tokens: ["color.action.default", "color.brand.primary", "color.text.default"],
+        "same-value": [],
         elements: BUTTON_AND_THOSE_USING_IT,
         screens: ["home"],
         journeys: ["onboarding"],
@@ -142,7 +143,57 @@ describe("aidd-ui impact", () => {
 
     it("reaches nothing beyond a token no record declares", () => {
       editTokens(tmp, (tree) => (tree.misc = { unused: { $type: "number", $value: 1 } }));
-      assert.deepEqual(impact("misc.unused", "--root", tmp).report, { tokens: ["misc.unused"], elements: [], screens: [], journeys: [], renders: [], code: ["src/ui/tokens.css"] });
+      assert.deepEqual(impact("misc.unused", "--root", tmp).report, { tokens: ["misc.unused"], "same-value": [], elements: [], screens: [], journeys: [], renders: [], code: ["src/ui/tokens.css"] });
+    });
+  });
+
+  describe("the tokens holding the same value", () => {
+    const sameValue = (...refs) => impact(...refs, "--root", tmp).report["same-value"];
+    const COLOUR = { colorSpace: "srgb", components: [0.2, 0.4, 0.6], hex: "#336699" };
+
+    it("lists a token holding a reached token's value without aliasing it, and none that aliases it", () => {
+      editTokens(tmp, (tree) => (tree.misc = { link: { $type: "color", $value: COLOUR } }));
+      assert.deepEqual(sameValue("color.brand.primary"), ["misc.link"]);
+    });
+
+    it("lists a token holding it only in a theme", () => {
+      editTokens(tmp, (tree) => (tree.misc = { dim: { $type: "color", $value: { colorSpace: "srgb", components: [0, 0, 0], hex: "#000000" } } }));
+      put(tmp, `${UI}/themes/dark.json`, JSON.stringify({ color: { brand: { primary: { $value: { colorSpace: "srgb", components: [0.4, 0.6, 0.8], hex: "#6699cc" } } } }, misc: { dim: { $value: { colorSpace: "srgb", components: [0.4, 0.6, 0.8], hex: "#6699cc" } } } }));
+      assert.deepEqual(sameValue("color.brand.primary"), ["misc.dim"]);
+    });
+
+    it("lists a token holding it only at a breakpoint", () => {
+      editTokens(tmp, (tree) => (tree.misc = { wide: { $type: "dimension", $value: { value: 1.5, unit: "rem" } } }));
+      assert.deepEqual(sameValue("space.md"), ["misc.wide"]);
+    });
+
+    it("lists a token holding it only on a platform", () => {
+      edit(tmp, `${UI}/system.md`, "platforms: [web]", "platforms: [web, mobile]");
+      editTokens(tmp, (tree) => (tree.misc = { tall: { $type: "dimension", $value: { value: 3, unit: "rem" } } }));
+      const resolver = path.join(tmp, UI, "tokens.resolver.json");
+      const json = JSON.parse(fs.readFileSync(resolver, "utf8"));
+      json.modifiers.platform = { default: "web", contexts: { web: [], mobile: [{ $ref: "platforms/mobile.json" }] } };
+      json.resolutionOrder.push({ $ref: "#/modifiers/platform" });
+      fs.writeFileSync(resolver, JSON.stringify(json));
+      put(tmp, `${UI}/platforms/mobile.json`, JSON.stringify({ misc: { tall: { $value: { value: 1, unit: "rem" } } } }));
+      assert.deepEqual(sameValue("space.md"), ["misc.tall"]);
+    });
+
+    it("does not list a token whose value only equals a reached one in another context", () => {
+      const LIGHT = { colorSpace: "srgb", components: [0.4, 0.6, 0.8], hex: "#6699cc" };
+      editTokens(tmp, (tree) => (tree.misc = { swapped: { $type: "color", $value: LIGHT } }));
+      put(tmp, `${UI}/themes/dark.json`, JSON.stringify({ color: { brand: { primary: { $value: LIGHT } } }, misc: { swapped: { $value: COLOUR } } }));
+      assert.deepEqual(sameValue("color.brand.primary"), []);
+    });
+
+    it("lists the target a reached alias points at, since nothing cites the reached token there", () => {
+      assert.deepEqual(sameValue("color.action.default"), ["color.brand.primary", "color.text.default"]);
+    });
+
+    it("is empty when no token is reached, and sorted otherwise", () => {
+      assert.deepEqual(sameValue("button"), []);
+      editTokens(tmp, (tree) => (tree.misc = { zed: { $type: "color", $value: COLOUR }, alpha: { $type: "color", $value: COLOUR } }));
+      assert.deepEqual(sameValue("color.brand.primary"), ["misc.alpha", "misc.zed"]);
     });
   });
 
@@ -150,6 +201,7 @@ describe("aidd-ui impact", () => {
     it("reaches itself and everything using it, through uses and replaced-by, up to the journeys", () => {
       assert.deepEqual(impact("button", "--root", tmp).report, {
         tokens: [],
+        "same-value": [],
         elements: BUTTON_AND_THOSE_USING_IT,
         screens: ["home"],
         journeys: ["onboarding"],
@@ -178,6 +230,7 @@ describe("aidd-ui impact", () => {
     it("joins the reach of several refs, tokens and elements together", () => {
       assert.deepEqual(impact("icon-search", "space.md", "--root", tmp).report, {
         tokens: ["space.md"],
+        "same-value": [],
         elements: ["button", "dialog", "icon-search", "old-button", "search-field"],
         screens: ["home"],
         journeys: ["onboarding"],

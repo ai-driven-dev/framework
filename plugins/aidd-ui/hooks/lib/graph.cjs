@@ -6,7 +6,7 @@ const { list, table } = require("./markdown.cjs");
 const { placed, fm, COMPONENT_KINDS } = require("./model.cjs");
 const { renderOf } = require("./renders.cjs");
 const { codeOwner, codeFilesOf, codeTokens } = require("./code.cjs");
-const { citations, tokenNameOf } = require("./tokens.cjs");
+const { citations, resolvedValues, tokenNameOf } = require("./tokens.cjs");
 const { isUnder, UI_DIR } = require("./project.cjs");
 
 // Files every record reads: a write to one reaches the whole design system.
@@ -57,6 +57,17 @@ function closure(seed, candidates, keyOf, citesOf) {
   return found;
 }
 
+/** The tokens outside `reached` that hold the value of one inside it, in the base or in the same
+ * theme, platform or breakpoint, sorted: none of them cites a reached token, or it would be in it. */
+function sameValue(project, reachedTokens) {
+  const found = new Set();
+  for (const values of resolvedValues(project).values()) {
+    const held = new Set([...reachedTokens].map((name) => values.get(name)).filter((value) => value !== undefined));
+    for (const [name, value] of values) if (!reachedTokens.has(name) && held.has(value)) found.add(name);
+  }
+  return [...found].sort();
+}
+
 /** What a change to `refs`, token names, CSS names and record ids, reaches, each list sorted;
  * `unknown` names the refs that are none. A ref is reached itself, and any token reached reaches
  * the files where the code consumes the tokens. */
@@ -74,6 +85,7 @@ function usages(project, given) {
   const idsOf = (kinds) => reachedRecords.filter((record) => kinds.includes(fm(record).kind)).map((record) => fm(record).id).sort();
   return {
     tokens: [...tokens].sort(),
+    "same-value": sameValue(project, tokens),
     ...Object.fromEntries(Object.entries(REPORT_KINDS).map(([key, kinds]) => [key, idsOf(kinds)])),
     renders: reachedRecords.map(renderOf).filter((file) => project.renders.includes(file)).sort(),
     code: [...new Set([...reachedRecords.flatMap((record) => codeFilesOf(fm(record).code)), ...(tokens.size ? codeTokens(project) : [])].filter(Boolean))].sort(),

@@ -7,7 +7,7 @@ const nodePath = require("node:path");
 const { list } = require("./markdown.cjs");
 const { placed, systemOf, TOKENED_KINDS } = require("./model.cjs");
 const { text, checkOf } = require("./project.cjs");
-const { FONT_WEIGHTS, RAW_CSS_EXTENSION, VAR_REFERENCE, render, customProperty, citedBy, dependents, loopOf } = require("./css.cjs");
+const { FONT_WEIGHTS, RAW_CSS_EXTENSION, VAR_REFERENCE, render, customProperty, citedBy, dependents, loopOf, declarationsOf, layered, resolved } = require("./css.cjs");
 
 const RESERVED_KEYS = ["$value", "$type", "$description", "$extensions", "$deprecated", "$extends", "$schema"];
 const ROOT_KEY = "$root"; // a stated limit: a group's own token is a named child here
@@ -550,8 +550,24 @@ function citations(project) {
   return new Map([...found].map(([name, cited]) => [name, [...new Set(cited.map((property) => byProperty.get(property)).filter(Boolean))]]));
 }
 
+/** Each token's value once its `var()`s are followed, in the base and in every theme, platform and
+ * breakpoint the stylesheet holds: `Map<context, Map<token, value>>`, the context being its key in
+ * the stylesheet. Empty when no stylesheet can be generated. */
+function resolvedValues(project) {
+  const { css } = generate(project);
+  if (css === null) return new Map();
+  const sheet = declarationsOf(css);
+  const names = namesByProperty(read(project));
+  return new Map(
+    [...sheet.keys()].map((key) => {
+      const values = layered(sheet, key);
+      return [key, new Map([...values.keys()].filter((property) => names.has(property)).map((property) => [names.get(property), resolved(values, property)]))];
+    })
+  );
+}
+
 /** The token a ref names, whether written as its path or as its CSS custom property; the ref
  * itself when it names none. */
 const tokenNameOf = (project, ref) => namesByProperty(read(project)).get(ref) ?? ref;
 
-module.exports = { check, blockers, generate, citations, tokenNameOf, cssNames, cssFileOf };
+module.exports = { check, blockers, generate, citations, resolvedValues, tokenNameOf, cssNames, cssFileOf };
