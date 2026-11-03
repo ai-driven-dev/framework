@@ -253,29 +253,6 @@ function loopOf(declarations, entry) {
   return citedBy(entry).find((cited) => back.has(cited));
 }
 
-/** The tokens of `base`, in its order, that depend on one of `redefined`, transitively, and are not
- * among them. */
-function dependents(base, redefined) {
-  const own = new Set(redefined.map((entry) => customProperty(entry.name)));
-  const reached = new Set(own);
-  for (let grew = true; grew; ) {
-    grew = false;
-    for (const entry of base) {
-      const name = customProperty(entry.name);
-      if (reached.has(name) || !citedBy(entry).some((cited) => reached.has(cited))) continue;
-      reached.add(name);
-      grew = true;
-    }
-  }
-  return base.filter((entry) => reached.has(customProperty(entry.name)) && !own.has(customProperty(entry.name)));
-}
-
-/** The custom property `entry` cites that leads back to it among `declarations`; undefined when none does. */
-function loopOf(declarations, entry) {
-  const back = new Set([entry, ...dependents(declarations, [entry])].map((each) => customProperty(each.name)));
-  return citedBy(entry).find((cited) => back.has(cited));
-}
-
 const block = (selector, declarations) => [`${selector} {`, ...declarations.map(([name, value]) => `${INDENT}${customProperty(name)}: ${value};`), "}"];
 
 const DEFAULT_ORDER = ["theme", "platform", "breakpoint"];
