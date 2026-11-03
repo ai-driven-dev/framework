@@ -15,6 +15,7 @@ Source: pull request 2 of aidd_docs/tasks/2026_10/2026_10_30_aidd-ui-rework/road
 | 2   | Impact and version guard | [`phase-2.md`](./phase-2.md) | none |
 | 3   | The 01-system skill | [`phase-3.md`](./phase-3.md) | 1, 2 |
 | 4   | Run it on the pilots | [`phase-4.md`](./phase-4.md) | 3 |
+| 5   | Platform-agnostic norm | [`phase-5.md`](./phase-5.md) | 4 |
 
 ## External sources
 

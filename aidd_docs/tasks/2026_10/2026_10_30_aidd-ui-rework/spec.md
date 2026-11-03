@@ -8,7 +8,7 @@ Dans un projet, un dev qui conçoit l'UI avec une IA obtient un design system ve
 
 ### Arborescence
 
-Tout le design system vit dans `aidd_docs/ui/`, un fichier par élément, rien à côté du code.
+Tout le design system vit dans `aidd_docs/ui/`, un fichier par élément, rien à côté du code. C'est la norme du projet, quelles que soient ses plateformes et ses technos : un design system déjà présent dans le code sert de matière à l'extraction, puis n'est plus qu'une implémentation confrontée à la norme, jamais une seconde source.
 
 ```txt
 aidd_docs/ui/
@@ -37,11 +37,11 @@ Chaque fiche porte en tête : `id` (égal au nom du fichier, unique), `kind`, `s
 
 | Fiche | Contient en plus |
 | --- | --- |
-| `system.md` | version du format des fiches, version du design system, plateformes, breakpoints, thèmes, langues et sens d'écriture, groupes de tokens primitifs, dossiers UI du code, fichier(s) où le code consomme les tokens, chemins ignorés, librairies de composants utilisées ; règles transverses s'il y en a |
+| `system.md` | version du format des fiches, version du design system, plateformes, breakpoints, thèmes, langues et sens d'écriture, groupes de tokens primitifs, dossiers UI du code, chacun rattaché à une plateforme, fichier(s) où le code consomme les tokens, chemins ignorés, librairies de composants utilisées ; règles transverses s'il y en a |
 | `brand.md` | projet, utilisateurs, domaine, plateformes, personnalité et ton, charte imposée s'il y en a une, références et anti-références ; glossaire (mot à employer, mots interdits) s'il y en a un |
 | asset | type (icône, image, illustration), fichier, texte alternatif attendu |
-| atome, molécule, composition | quand l'utiliser et quand ne pas l'utiliser, éléments utilisés, tokens sémantiques utilisés, variantes, états (au moins défaut ; focus quand il est interactif ; survol, désactivé, chargement ou erreur quand ils existent), comportement clavier et rôle accessible, lien vers le code |
-| écran | éléments utilisés, tokens sémantiques utilisés, états (au moins défaut, vide, chargement, erreur, sans droits quand ils existent), breakpoints couverts, route ou fichier réel, lien vers le code |
+| atome, molécule, composition | quand l'utiliser et quand ne pas l'utiliser, éléments utilisés, tokens sémantiques utilisés, variantes, états (au moins défaut ; focus quand il est interactif ; survol, désactivé, chargement ou erreur quand ils existent), comportement clavier et rôle accessible, plateformes où il existe (toutes par défaut), un lien vers le code par plateforme |
+| écran | éléments utilisés, tokens sémantiques utilisés, états (au moins défaut, vide, chargement, erreur, sans droits quand ils existent), breakpoints couverts, route ou fichier réel, plateformes où il existe, un lien vers le code par plateforme |
 | parcours | persona, étapes ordonnées, chaque étape un écran et l'action qui mène à la suivante |
 | review | écrans revus, verdict OK ou pas OK par écran, par état et par version revue, commentaire, écrans restants |
 
@@ -50,14 +50,13 @@ Chaque fiche porte en tête : `id` (égal au nom du fichier, unique), `kind`, `s
 Deux axes, jamais mêlés : où en est le design, et quelle version le code implémente.
 
 - `status` dit le design : `proposé` (créé, pas encore validé), `validé` (rendu approuvé en review), `déprécié` (ne doit plus être utilisé, nomme son remplaçant ou dit pourquoi il n'en a pas).
-- `implemented-version` dit le code : la version de l'élément que le code implémente. Le code est à jour quand elle égale `version`, en retard quand elle est plus petite, absente tant que rien n'est codé.
-- Le lien vers le code est obligatoire dès qu'`implemented-version` existe, sauf pour une molécule ou une composition implémentée par ce qu'elle utilise : chaque élément utilisé, hors assets, est implémenté.
-- Modifier un élément implémenté monte sa `version` et le repasse à `proposé` ; son `implemented-version` ne bouge pas, et le retard reste visible jusqu'à ce que la feature fasse suivre le code.
+- Chaque lien vers le code porte la version de l'élément que ce code implémente. Une plateforme est à jour quand elle égale `version`, en retard quand elle est plus petite ; un élément sans lien n'est codé nulle part, sauf une molécule ou une composition implémentée par ce qu'elle utilise.
+- Modifier un élément implémenté monte sa `version` et le repasse à `proposé` ; les versions de ses liens ne bougent pas, et le retard de chaque plateforme reste visible jusqu'à ce que la feature fasse suivre son code.
 - Un élément non déprécié n'utilise jamais un élément déprécié.
 
 ### Lien avec le code
 
-- Un élément correspond à un seul fichier d'entrée, identifié par son chemin et le nom du composant exporté. Quand ce fichier est dans un dossier qui porte son nom, le lien couvre tout le dossier (styles, hooks, tests) ; sinon, seulement les fichiers de même nom.
+- Un élément a au plus un fichier d'entrée par plateforme, identifié par son chemin, le nom exporté quand sa techno en a un, et la version qu'il implémente. La plateforme d'un lien est celle du dossier UI qui le contient, et figure parmi celles de l'élément. Quand ce fichier est dans un dossier qui porte son nom, le lien couvre tout le dossier (styles, hooks, tests) ; sinon, seulement les fichiers de même nom.
 - Un élément utilise des éléments de son niveau ou d'un niveau inférieur, jamais lui-même.
 - Un composant de librairie est lié à son paquet et à son nom exporté.
 - Chaque fichier sous un dossier UI déclaré est lié à une fiche ou couvert par un chemin ignoré.
@@ -88,6 +87,7 @@ Deux axes, jamais mêlés : où en est le design, et quelle version le code impl
 ### Rendus
 
 - Écrans et composants sont rendus en HTML avec les vrais tokens, sans valeur en dur.
+- Une valeur de token propre à une plateforme est un contexte `platform` du Resolver, comme un thème ou un breakpoint.
 - Les tokens ont deux niveaux : les primitifs (la palette) et les sémantiques, qui pointent vers eux. Un composant ou un écran n'utilise que des sémantiques, et son rendu n'emploie que les tokens que sa fiche déclare et ceux des éléments qu'il utilise : le rapport d'impact, qui suit `uses`, n'en oublie aucun.
 - Les tokens sont la seule source ; aidd-ui génère `aidd_docs/ui/tokens.css` et n'écrit jamais dans le code. `system.md` nomme le ou les fichier(s) où le code consomme les tokens ; la feature les fait suivre, l'audit compare les deux.
 - Les thèmes suivent le module Resolver de DTCG : `tokens.json` porte le premier thème déclaré, la base ; chaque autre thème a son fichier, qui ne redéfinit que des tokens de la base, avec le même type. Un rendu montre un thème sous `[data-theme]`, avec les mêmes noms de variables.
@@ -118,8 +118,8 @@ Deux axes, jamais mêlés : où en est le design, et quelle version le code impl
   - format de chaque fiche et du fichier de tokens ;
   - éléments utilisés et alias de tokens qui existent ;
   - cycle de vie respecté ;
-  - liens vers le code valides, couverture des dossiers UI ;
-  - aucune valeur en dur dans les rendus, aucune couleur en dur nouvelle dans le code : erreur dans un fichier modifié ou non suivi par rapport à `HEAD`, ou quand git ne sait pas répondre ; avertissement dans un fichier identique à `HEAD`, dette existante ;
+  - liens vers le code valides et cohérents avec leurs plateformes, couverture des dossiers UI ;
+  - aucune valeur en dur dans les rendus, aucune couleur en dur nouvelle dans le code, quelle que soit sa techno (documents, données et images exclus) : erreur dans un fichier modifié ou non suivi par rapport à `HEAD`, ou quand git ne sait pas répondre ; avertissement dans un fichier identique à `HEAD`, dette existante ;
   - aucun token primitif dans un composant ;
   - versions en double dans un historique ;
   - propriétés physiques quand un sens droite-gauche est déclaré.
@@ -136,12 +136,10 @@ Deux axes, jamais mêlés : où en est le design, et quelle version le code impl
 
 ## Non-goals
 
-- Plusieurs design systems dans un projet, ou une app web et une app mobile avec deux systèmes.
+- Plusieurs design systems concurrents dans un projet : la personne choisit celui qui fait foi, les autres ne sont pas suivis.
 - Synchronisation dans les deux sens avec Figma ou Claude Design, et import de maquettes existantes.
 - Retour à une version précédente du design system.
 - Travail à plusieurs, et parcours pour un designer qui ne code pas.
-- Rendu du réel hors web.
-- Détection des valeurs en dur dans du code non web.
 
 ## Done-when
 
@@ -166,6 +164,7 @@ Deux axes, jamais mêlés : où en est le design, et quelle version le code impl
 | 2 | Non réalisé, reste une limite écrite : un composant Vue ou Svelte se lie avec un nom exporté, faute de cas observé dans les données réelles. |
 | 3 | La page de review est un fichier statique : elle produit la fiche review à enregistrer, sans serveur. |
 | 3 | La review couvre aussi les composants, pour qu'un composant puisse passer à validé. |
+| 3 | La review confronte le rendu à une capture de l'app réelle par état et par plateforme, posée à côté de la fiche avec la version qu'elle montre ; aidd-ui ne lance jamais l'app. Capture obligatoire ou non : à trancher. |
 | 4 | `ui.md` cite les éléments par `id@version`, pour que la vérification d'après code voie ce qui a bougé pendant la feature. |
 | 5 | `system.md` nomme le catalogue de traductions pour les textes trop longs ; l'audit d'une app existante part d'une base d'écarts acceptés, sinon il noie la personne. |
 | 5 | Tailwind et Storybook restent hors détection ; l'audit les nomme comme limites quand il les trouve. |
