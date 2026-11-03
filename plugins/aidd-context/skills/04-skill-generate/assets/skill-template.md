@@ -6,18 +6,18 @@ argument-hint: <what the user brings: their cases, or the artifact consumed>
 
 # <Skill Name>
 
-```mermaid
-flowchart LR
-  <the journey: chain the slugs, a back-edge for a loop, an entry node per case for a branch, a dotted edge for a self-skip>
-```
-
 ## Actions
 
-Run the flow above. Read only the next action file.
+```mermaid
+flowchart LR
+  <the journey: chain the slugs, a back-edge for a loop, an entry node per case for a branch, a quoted label per condition>
+```
 
-| Action  | Does                             |
-| ------- | -------------------------------- |
-| <slug>  | <lowercase imperative half-line> |
+Read an action's file, then do what it says.
+
+| Action | File |
+| ------ | ---- |
+| <slug> | [actions/<NN>-<slug>.md](actions/<NN>-<slug>.md) |
 
 ## Transversal rules
 

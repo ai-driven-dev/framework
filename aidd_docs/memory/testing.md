@@ -8,7 +8,7 @@ How the project is tested: the layers, the tools, and the conventions. Where tes
 
 | Surface | Validated by |
 | --- | --- |
-| Skills, agents, rules (markdown) | each action's own `## Test`, run end to end against a real project |
+| Skills, agents, rules (markdown) | run end to end against a real project |
 | `scripts/` and bundled hooks | `node --test` under the wrapper below |
 | `cli/` | vitest, four projects — see the CLI bank |
 | `kanban/` | its own vitest suite. It shares no code with `cli/` |

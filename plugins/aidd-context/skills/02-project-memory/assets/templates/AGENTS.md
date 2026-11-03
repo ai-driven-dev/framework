@@ -14,6 +14,7 @@
 - **Use as few words as possible** without changing meaning: "Less is more".
 - **Maximize precision per word**: no filler, repetition, or redundant paraphrasing.
 - **Prefer short bullets.** Number ordered steps.
+- **When clarification is needed,** prefer the host's question tool when available; otherwise ask in chat. Offer clear options and put the recommended choice first.
 - **Skip redundant preambles, recaps, and closers.**
 - **Quote the shortest decisive error line.**
 - **Report progress at milestones, not per tool call.** Use formatting only when it improves scanability.
@@ -29,7 +30,6 @@
 - **Solve your own issues before escalating.**
 - **Don't assume your knowledge is current**: the doc could also be wrong.
 - **Verify APIs, signatures, flags, and behavior against source or docs.**
-- **Ask one sharp question when ambiguity materially changes the scope or outcome.**
 - **Batch independent operations when it saves time or context.**
 - **Name by intention, scope by responsibility** ; not mechanism.
 
