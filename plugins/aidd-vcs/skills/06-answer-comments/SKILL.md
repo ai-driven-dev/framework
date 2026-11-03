@@ -1,15 +1,15 @@
 ---
 name: 06-answer-comments
-description: Answers pull request review comments, resolves settled threads, and proposes learnings. Use when the user wants review feedback answered or pending decisions summarized. Not for reviewing a diff or fixing code.
-argument-hint: pull request
+description: Answers pull or merge request review comments, resolves settled threads, and proposes learnings. Use when the user wants review feedback answered or pending decisions summarized. Not for reviewing a diff or fixing code.
+argument-hint: pull request | merge request
 ---
 
 # Answer Comments
 
 ```mermaid
 flowchart LR
-  pr([pull request]) --> answer-comments --> propose-learnings --> summary([summary updated])
-  summary -.->|new reply or pushed commit| pr
+  request([pull or merge request]) --> answer-comments --> propose-learnings --> summary([summary updated])
+  summary -.->|new reply or pushed commit| request
 ```
 
 ## Actions

@@ -1,6 +1,6 @@
 # Learnings
 
-Which review feedback outlives its pull request.
+Which review feedback outlives its pull or merge request.
 
 | Feedback | Becomes |
 | --- | --- |

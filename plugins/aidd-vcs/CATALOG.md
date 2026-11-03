@@ -90,5 +90,5 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `assets` | [comments-summary-template.md](skills/06-answer-comments/assets/comments-summary-template.md) | - |
 | `references` | [comment-kinds.md](skills/06-answer-comments/references/comment-kinds.md) | - |
 | `references` | [learnings.md](skills/06-answer-comments/references/learnings.md) | - |
-| `-` | [SKILL.md](skills/06-answer-comments/SKILL.md) | `Answers pull request review comments, resolves settled threads, and proposes learnings. Use when the user wants review feedback answered or pending decisions summarized. Not for reviewing a diff or fixing code.` |
+| `-` | [SKILL.md](skills/06-answer-comments/SKILL.md) | `Answers pull or merge request review comments, resolves settled threads, and proposes learnings. Use when the user wants review feedback answered or pending decisions summarized. Not for reviewing a diff or fixing code.` |
 
