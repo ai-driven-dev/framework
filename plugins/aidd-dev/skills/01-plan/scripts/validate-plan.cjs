@@ -33,6 +33,7 @@ const VERDICT_INVALID = "INVALID";
 const EXIT_VALID = 0;
 const EXIT_INVALID = 1;
 
+const CREATE_MARK = "✅";
 const MODIFY_MARK = "✏";
 const DELETE_MARK = "❌";
 const TREE_MARKS = /✅|✏|❌/;
@@ -168,10 +169,12 @@ function matchTemplate(file, markdown, template) {
   return { doc, problems };
 }
 
-function projectedFiles(file, body) {
+const NO_FILES = { created: [], deleted: [] };
+
+function projectedFiles(file, body, earlier) {
   const block = (body.match(FENCED_BLOCK_BODY) ?? [, ""])[1];
-  const start = { folders: [], problems: [] };
-  const { problems } = block.split(LINE_BREAK).reduce((state, raw) => {
+  const start = { folders: [], problems: [], created: [], deleted: [] };
+  const { problems, created, deleted } = block.split(LINE_BREAK).reduce((state, raw) => {
     const mark = (raw.match(TREE_MARKS) ?? [""])[0];
     const line = raw.replace(TREE_MARKS_AND_SELECTOR, " ").match(TREE_LINE);
     if (!line || line[2] === CURRENT_FOLDER || !PLAIN_PATH.test(line[2])) return state;
@@ -181,14 +184,17 @@ function projectedFiles(file, body) {
     const isFolder = name.endsWith(PATH_SEPARATOR);
     const folders = isFolder ? [...parents, { indent: indent.length, name: name.replace(TRAILING_SLASH, "") }] : parents;
     const needsExisting = mark === MODIFY_MARK || mark === DELETE_MARK;
-    const missing = needsExisting && !fs.existsSync(path.resolve(relative));
+    const present = (fs.existsSync(path.resolve(relative)) || earlier.created.includes(relative)) && !earlier.deleted.includes(relative);
+    const missing = needsExisting && !present;
     const action = mark === MODIFY_MARK ? "modify" : "delete";
     return {
       folders,
       problems: missing ? [...state.problems, `${file}: ${relative} is marked ${action} but does not exist`] : state.problems,
+      created: mark === CREATE_MARK ? [...state.created, relative] : state.created,
+      deleted: mark === DELETE_MARK ? [...state.deleted, relative] : state.deleted,
     };
   }, start);
-  return { problems };
+  return { problems, created, deleted };
 }
 
 function phaseRows(plan) {
@@ -247,14 +253,28 @@ function taskProblems(file, markdown, doc) {
   ];
 }
 
-function phaseProblems(folder, number, phaseTemplate) {
+function phaseReport(folder, number, phaseTemplate, earlier) {
   const file = phaseFileName(number);
   const fullPath = path.join(folder, file);
-  if (!fs.existsSync(fullPath)) return [];
+  if (!fs.existsSync(fullPath)) return { problems: [], files: earlier };
   const markdown = readMarkdown(fullPath);
   const { doc, problems: templateIssues } = matchTemplate(file, markdown, phaseTemplate);
-  const projection = projectedFiles(file, findSection(doc, SECTION_PROJECTION)?.body ?? "");
-  return [...templateIssues, ...projection.problems, ...wireframeProblems(file, doc), ...taskProblems(file, markdown, doc)];
+  const projection = projectedFiles(file, findSection(doc, SECTION_PROJECTION)?.body ?? "", earlier);
+  return {
+    problems: [...templateIssues, ...projection.problems, ...wireframeProblems(file, doc), ...taskProblems(file, markdown, doc)],
+    files: { created: [...earlier.created, ...projection.created], deleted: [...earlier.deleted, ...projection.deleted] },
+  };
+}
+
+function phasesProblems(folder, numbers, phaseTemplate) {
+  const { problems } = numbers.reduce(
+    (state, number) => {
+      const report = phaseReport(folder, number, phaseTemplate, state.files);
+      return { problems: [...state.problems, ...report.problems], files: report.files };
+    },
+    { problems: [], files: NO_FILES }
+  );
+  return problems;
 }
 
 function planProblems(folder) {
@@ -268,7 +288,7 @@ function planProblems(folder) {
   const listed = (phasesBody.match(LISTED_PHASE_ROW) ?? []).length;
   const rows = phaseRows(plan);
   const numbers = Array.from({ length: listed }, (_, index) => FIRST_PHASE_NUMBER + index);
-  const phases = numbers.map((number) => phaseProblems(folder, number, phaseTemplate));
+  const phases = phasesProblems(folder, numbers, phaseTemplate);
 
   return [
     ...(insideSkill ? [`${folder}: folder is inside the skill itself, write the plan in the project`] : []),
@@ -277,7 +297,7 @@ function planProblems(folder) {
     ...dependencyProblems(rows),
     ...phaseFileProblems(folder, listed),
     ...externalSourceProblems(plan),
-    ...phases.flat(),
+    ...phases,
   ];
 }
 
