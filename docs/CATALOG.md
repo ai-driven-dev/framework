@@ -55,7 +55,7 @@ Code transformation: plan, implement, assert, audit, review, test, refactor, deb
 | `02-implement`  | Execute a plan phase by phase until 100% complete                          | `01-implement`                                                                   |
 | `03-assert`     | Assert the work against the project's coding assertions                   | `01-assert`                                                                      |
 | `04-audit`      | Read-only codebase audit across quality pillars                            | `01-code-quality`, `02-architecture`, `03-security`, `04-dependencies`, `05-performance`, `06-tests`, `07-ui` |
-| `05-review`     | Read-only review of a diff, or answers to a pull request's review comments | `01-prepare`, `02-review-code`, `03-review-functional`, `04-review-relevancy`, `05-finalize`, `06-answer-comments`, `07-propose-learnings` |
+| `05-review`     | Read-only review of a diff - code quality and feature behavior             | `01-prepare`, `02-review`, `03-conclude`                                          |
 | `06-test`       | Write and iterate developer-side tests, validate journeys in the browser during implementation - not independent acceptance QA or reviewer evidence | `01-test`, `02-test-journey` |
 | `07-refactor`   | Improve code without changing behavior across four axes                    | `01-performance`, `02-security`, `03-cleanup`, `04-architecture`                 |
 | `08-debug`      | Reproduce and fix bugs with a test-driven workflow                         | `01-reproduce`, `02-debug`, `03-reflect-issue`                                   |
@@ -103,6 +103,7 @@ Version-control workflows: repo init, commit, pull/merge request, release tag, i
 | `03-release-tag`  | Cut a semver release with annotated tag and notes                              | `01-release-tag`                        |
 | `04-issue-create` | Create an issue in the configured ticketing tool                               | `01-issue-create`                       |
 | `05-resolve-conflict` | Resolve deterministic conflicts or approved choices | `01-resolve` |
+| `06-answer-comments` | Answer review comments, resolve settled threads, and propose learnings | `01-answer-comments`, `02-propose-learnings` |
 
 ## 🎼 aidd-orchestrator
 

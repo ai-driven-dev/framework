@@ -7,334 +7,144 @@ const SKILL = path.resolve(__dirname, "../../plugins/aidd-dev/skills/05-review")
 
 /**
  * A review is appended to, one section per round, so a past round sits in the file while the next
- * one is written: the rules that forbid reading it are the only thing between the two. The field
- * set and the template are the two sides of a round's shape, an unmet criterion has one home, and
- * the score counts over the whole plan so a covered third cannot read as a finished plan.
+ * one is written: the rule that forbids reading it is the only thing between the two. An unmet
+ * criterion has one home, and the score counts over the whole plan so a covered third cannot read
+ * as a finished plan.
  */
 
 function read(relative) {
   return fs.readFileSync(path.join(SKILL, relative), "utf8");
 }
 
-/** The router's transversal rules, whatever bullet each one sits on. */
-function rules() {
-  const router = read("SKILL.md");
-  return router.slice(router.indexOf("## Transversal rules"));
-}
-
-/** One `## Process` step with the sub-items that qualify it. */
-function step(relative, label) {
-  const body = read(relative);
-  const opens = new RegExp(`^\\d+\\. \\*\\*${label}\\.\\*\\*`, "mu").exec(body);
-  if (!opens) return "";
-  const rest = body.slice(opens.index);
-  const ends = /^(?:\d+\. |## )/mu.exec(rest.slice(1));
-  return ends ? rest.slice(0, ends.index + 1) : rest;
-}
-
-function everyMarkdown(directory, into) {
-  for (const entry of fs.readdirSync(directory, { withFileTypes: true })) {
-    const full = path.join(directory, entry.name);
-    if (entry.isDirectory()) everyMarkdown(full, into);
-    else if (entry.name.endsWith(".md")) into.push(full);
-  }
-  return into;
-}
-
-/** A path under the skill, spelled the way the documents spell it, on every platform. */
-function inSkill(file) {
-  return path.relative(SKILL, file).split(path.sep).join("/");
-}
+const template = () => read("assets/review-template.md");
+const rubric = () => read("references/rubric.md");
+const functional = () => read("references/axis-functional.md");
+const code = () => read("references/axis-code.md");
 
 describe("a review appends a round and scores the whole plan", () => {
-  it("a round is appended, and an earlier one is never read back", () => {
-    const reference = read("references/report-contract.md");
-    assert.match(reference, /Append a round, derived from the plan, the current diff and a run recorded on its head alone/u);
-    assert.match(
-      reference,
-      /Count the `## Round` headings, never read their bodies/u,
-      "and reads no earlier round",
-    );
-  });
-
-  it("the report's address, its diff and its rounds have one home", () => {
-    const homes = everyMarkdown(SKILL, [])
-      .filter((file) =>
-        /Count the `## Round` headings|aidd_docs\/tasks\/<yyyy_mm>|branch's pull request target/u.test(
-          fs.readFileSync(file, "utf8"),
-        ),
-      )
-      .map(inSkill);
-    assert.deepEqual(homes, ["references/report-contract.md"]);
-  });
-
-  it("the artifact is named, and no file of the skill can pass for it", () => {
-    assert.match(read("references/report-contract.md"), /one `review\.md`, appended to, never rewritten/u);
-    const lookalikes = fs
-      .readdirSync(path.join(SKILL, "references"))
-      .concat(fs.readdirSync(path.join(SKILL, "assets")))
-      .filter((file) => /^review[-_]/u.test(file) && !/template|validator|rubric/u.test(file));
-    assert.deepEqual(lookalikes, [], "a sibling named review-* reads as the artifact");
-  });
-
-  it("the report reference is read by prepare and finalize, not by an axis", () => {
-    const cites = fs
-      .readdirSync(path.join(SKILL, "actions"))
-      .filter((action) => /report-contract\.md/u.test(read(path.join("actions", action))));
-    assert.deepEqual(cites, ["01-prepare.md", "05-finalize.md"]);
-    for (const action of cites) {
-      const links = read(path.join("actions", action)).match(
-        /\[report-contract\.md\]\(\.\.\/references\/report-contract\.md\)/gu,
-      );
-      assert.equal(links?.length, 1, `${action} cites it once as a link`);
+  it("the steps are actions and the axes are references read on demand", () => {
+    assert.deepEqual(fs.readdirSync(path.join(SKILL, "actions")).sort(), ["01-prepare.md", "02-review.md", "03-conclude.md"]);
+    for (const axis of ["code", "functional", "relevancy"]) {
+      assert.match(read("actions/02-review.md"), new RegExp(`\\[${axis}\\]\\(\\.\\./references/axis-${axis}\\.md\\)`, "u"));
     }
   });
 
-  it("the header says how it stays true as rounds are added", () => {
-    const template = read("assets/review-template.md");
-    assert.match(template, /^- Rounds: \{\{the count of round sections\}\}$/mu);
-    assert.match(template, /^- Started: \{\{round 1's date, never changed\}\}$/mu);
+  it("a review takes the work alone, and functional only with a plan", () => {
+    assert.match(read("actions/01-prepare.md"), /The work, and its plan, criteria, ticket, task folder or evidence if any/u);
+    assert.match(read("actions/01-prepare.md"), /else all of them:\n {3}- `functional` only with a plan or criteria;\n {3}- named without them, ask/u);
   });
 
-  it("a round's number and id come from the sections already present", () => {
-    const heading = read("assets/review-template.md").match(/^## Round .+$/mu)?.[0] ?? "";
-    assert.match(heading, /\{\{the count of round headings, this one included\}\}/u);
-    assert.match(heading, /r-\{\{4 hex characters, drawn once\}\}/u, "two rounds appended in parallel still differ");
+  it("the round is written once, at the end, and an earlier one is never judged", () => {
+    assert.doesNotMatch(read("actions/01-prepare.md"), /template|`review\.md`/u);
+    assert.doesNotMatch(read("actions/02-review.md"), /template|`review\.md`/u);
+    assert.match(read("SKILL.md"), /^- Judge this work alone, never an earlier round\.$/mu);
+    assert.match(template(), /\{\{the count of round headings, this one included\}\}/u);
+    assert.match(template(), /Append one round per pass, never rewrite an earlier one/u);
+  });
+
+  it("the round goes to the folder named, else the plan's, and alone the reply can hold it", () => {
+    assert.match(read("actions/03-conclude.md"), /the task folder named, else of the plan's\. Neither: ask whether to keep it in a file/u);
+    assert.match(read("actions/03-conclude.md"), /no: the reply holds it/u);
+  });
+
+  it("the round's fields are the template's, in order", () => {
+    const round = template().slice(template().indexOf("## Round"), template().indexOf("### Criteria"));
+    const fields = [...round.matchAll(/^- ([A-Z][\w ]*):/gmu)].map((match) => match[1]);
+    assert.deepEqual(fields, ["Diff", "Uncommitted changes", "Axes", "Verdict"]);
+    for (const list of ["Criteria", "Assumptions", "Findings", "Limits"]) assert.match(template(), new RegExp(`^### ${list}$`, "mu"));
   });
 
   it("a finding carries no box, so no state of it can be copied", () => {
-    const template = read("assets/review-template.md");
-    assert.doesNotMatch(template.slice(template.indexOf("### Findings")), /^- \[[ x]\]/mu);
+    assert.doesNotMatch(template().slice(template().indexOf("### Findings")), /^- \[[ x]\]/mu);
   });
 
-  it("finalize checks the round against its declared shape before it ships", () => {
-    assert.match(step("actions/05-finalize.md", "Check"), /Verify the round against the shape/u);
+  it("a finding carries its proof, and a doubt left unproven is a limit", () => {
+    assert.match(rubric(), /^\| Proof \| the `file:line` that makes the defect real/mu);
+    assert.match(rubric(), /^\| Limit \| a doubt left unproven, or a shape nothing reaches; never a finding \|$/mu);
+    assert.match(read("actions/02-review.md"), /check each where the value is produced or used/u);
+    assert.match(template(), /— \{\{holds, finding or limit\}\}, checked at `\{\{file:line\}\}`/u);
+    assert.match(template(), /, proof `\{\{file:line\}\}` →/u);
   });
 
-  it("the template refuses a placeholder and an empty list", () => {
-    assert.match(
-      read("assets/review-template.md"),
-      /Every placeholder is replaced by observed data, and a list no axis of this round owns is left out/u,
-    );
+  it("every axis starts from what the diff assumes and what it misses", () => {
+    const review = read("actions/02-review.md");
+    const assumes = review.indexOf("List what it assumes");
+    const misses = review.indexOf("List what the diff should have changed and did not");
+    const axes = review.indexOf("Apply each axis");
+    assert.ok(assumes > -1 && misses > assumes && axes > misses);
+    assert.match(review, /and what the plan or a comment claims/u);
   });
 
-  it("a phase's projected files have one address", () => {
-    const homes = everyMarkdown(SKILL, [])
-      .filter((file) => /## Architecture projection/u.test(fs.readFileSync(file, "utf8")))
-      .map(inSkill);
-    assert.deepEqual(homes, ["actions/03-review-functional.md"]);
+  it("one defect makes one finding, whichever step found it", () => {
+    assert.match(read("actions/02-review.md"), /one finding per defect, whichever step found it/u);
   });
 
-  it("the closed field set and the template render the same round", () => {
-    const validator = read("assets/review-validator.yml");
-    const template = read("assets/review-template.md");
-    const declared = validator.slice(validator.indexOf("fields:"), validator.indexOf("lists:"));
-    const fields = [...declared.matchAll(/^ {2}- (\w+)/gmu)].map((match) => match[1]);
-    assert.deepEqual(fields, ["Date", "By", "Diff", "Axes", "Verdict", "Score"]);
-    const head = validator.slice(validator.indexOf("header:"), validator.indexOf("fields:"));
-    const headerItems = [...head.matchAll(/^ {2}- (\w+)/gmu)].map((match) => match[1]);
-    assert.deepEqual(headerItems, ["Rounds", "Started"]);
-    for (const line of headerItems) {
-      assert.match(template, new RegExp(`^- ${line}: `, "mu"), "the header renders what it declares");
+  it("the severity scale is one scale, decided by harm", () => {
+    assert.match(rubric(), /^\| 🔴 critical \| would harm production, its users, their data or what depends on it \|$/mu);
+    assert.match(rubric(), /^\| 🟡 major \| any other defect worth fixing \|$/mu);
+    assert.match(rubric(), /^\| 🟢 minor \| a matter of taste: style, wording, an optional improvement \|$/mu);
+    assert.match(template(), /\{\{🔴 critical \| 🟡 major \| 🟢 minor\}\}/u);
+  });
+
+  it("the verdict is the strictest that holds, and nothing in scope never approves", () => {
+    assert.match(rubric(), /^\| `blocked` \| a critical finding \|$/mu);
+    assert.match(rubric(), /^\| `changes-requested` \| a major finding, an unchecked criterion, or `functional` with no criterion met \|$/mu);
+  });
+
+  it("code lists areas to look at, and a finding carries no label to argue about", () => {
+    for (const area of ["correctness", "compatibility", "security", "failure", "performance", "architecture", "interface", "tests", "code health"]) {
+      assert.match(code(), new RegExp(`^\\| ${area} \\| [a-z]`, "mu"), area);
     }
-    const round = template.slice(template.indexOf("## Round"));
-    const rendered = [...round.matchAll(/^- (\w+):/gmu)].map((match) => match[1]);
-    assert.deepEqual(rendered, fields, "the round renders them all, in order, and nothing else");
+    assert.doesNotMatch(template(), /\{\{kind\}\}/u);
   });
 
-  it("the lists a round declares are the lists the template renders", () => {
-    const validator = read("assets/review-validator.yml");
-    const lists = [...validator.slice(validator.indexOf("lists:")).matchAll(/^ {2}- (\w+)/gmu)].map(
-      (match) => match[1],
-    );
-    assert.deepEqual(lists, ["Criteria", "Findings"]);
-    for (const list of lists) {
-      assert.match(read("assets/review-template.md"), new RegExp(`^### ${list}$`, "mu"));
-    }
+  it("relevancy holds the documents the change contradicts", () => {
+    assert.match(read("references/axis-relevancy.md"), /a document the change contradicts/u);
   });
 
   it("a phase out of the diff has one line, and the template renders it", () => {
-    assert.match(
-      step("actions/03-review-functional.md", "Trace"),
-      /untouched: out of the diff, no box/u,
-    );
-    assert.match(
-      read("assets/review-template.md"),
-      /^- Out of the diff: \{\{phase-name\}\} \(\{\{n\}\} criteria\)$/mu,
-    );
+    assert.match(functional(), /projected files all untouched \| out of the diff, no box/u);
+    assert.match(template(), /^- Out of the diff: \{\{phase-name\}\} \(\{\{n\}\} criteria\)$/mu);
   });
 
-  it("a phase projecting no file is traced, not called out of the diff", () => {
-    assert.match(
-      step("actions/03-review-functional.md", "Trace"),
-      /A phase projecting no file is traced, never out of the diff/u,
-    );
+  it("the safety net and a finished plan's documentation are traced even when untouched", () => {
+    assert.match(functional(), /In the safety-net phase \| traced, even untouched/u);
+    assert.match(functional(), /In the phase an `implemented` plan's `## Impact` documentation row names \| traced, even untouched/u);
+  });
+
+  it("a weakened test is a defect, with or without a plan", () => {
+    assert.match(code(), /an existing test weakened or deleted/u);
   });
 
   it("an unmet criterion has one home, and it is not Findings", () => {
-    assert.match(step("actions/03-review-functional.md", "Trace"), /unchecked, never a finding/u);
-    const homes = everyMarkdown(SKILL, [])
-      .filter((file) =>
-        /(?:unmet|unchecked) criterion(?![^.]*no `Findings`)[^.]*`Findings`/u.test(
-          fs.readFileSync(file, "utf8"),
-        ),
-      )
-      .map(inSkill);
-    assert.deepEqual(homes, []);
+    assert.match(functional(), /a name echoing it with no behaviour behind \| unchecked, never a finding/u);
   });
 
-  it("a context line of the diff is evidence, not only an added one", () => {
-    assert.match(
-      step("actions/03-review-functional.md", "Trace"),
-      /Met by the files as the diff leaves them, an added line or a context line: checked/u,
-    );
+  it("a criterion only a run could show is unverified, unless a run on this head settles it", () => {
+    assert.match(functional(), /Only a run could show it \| unverified, unless a run recorded on this head settles it/u);
+    assert.match(template(), /^- Unverified at runtime: \{\{criterion\}\} — \{\{what a run would show\}\}$/mu);
   });
 
-  it("a label echoing the criterion is not evidence", () => {
-    const body = read("actions/03-review-functional.md");
-    assert.match(
-      body.slice(body.indexOf("## Test")),
-      /a name echoing it with no behaviour behind \| unchecked, naming the gap/u,
-    );
+  it("the verdict says what sets it, and no count reads as a grade", () => {
+    assert.match(template(), /^- Verdict: \{\{approve \| changes-requested \| blocked\}\}, because \{\{what sets it\}\}$/mu);
+    assert.doesNotMatch(template(), /Score|Coverage/u);
+    assert.match(template(), /Leave out what has nothing to hold/u);
   });
 
-  it("a criterion whose subject is absent is a gap", () => {
-    assert.match(
-      step("actions/03-review-functional.md", "Trace"),
-      /its subject absent[^:\n]*: unchecked/u,
-    );
+  it("a criterion is a row of the plan's tables, never one inferred from prose", () => {
+    assert.match(functional(), /A criterion is a row of the plan's acceptance criteria tables, or one the caller gives/u);
   });
 
-  it("a criterion only a run could show is unverified, never met on the code alone", () => {
-    const trace = step("actions/03-review-functional.md", "Trace");
-    assert.match(trace, /its outcome one only a run could show[^\n]*: unverified, never checked from the code/u);
-    assert.match(trace, /only a run could show, what a screen displays, a timing, an outside system's answer:/u, "a display is a run's to show, even beside a timing");
-    assert.match(trace, /A run recorded beside the plan on the reviewed head shows it passing: checked, citing the record; failing: unchecked; recorded on another head: unverified/u);
-    const strays = everyMarkdown(SKILL, [])
-      .filter((file) => /not-applicable/u.test(fs.readFileSync(file, "utf8")))
-      .map(inSkill);
-    assert.deepEqual(strays, [], "one state for a criterion the code cannot prove");
-  });
-
-  it("an unverified criterion neither blocks nor asks for changes", () => {
-    assert.match(
-      read("references/review-rubric.md"),
-      /^\| A criterion unverified at runtime \| in scope, neither unchecked nor blocking \|$/mu,
-    );
-  });
-
-  it("the severity scale is one scale: critical, major, minor", () => {
-    assert.match(read("references/review-rubric.md"), /- 🟡 major: should fix\./u);
-    assert.match(
-      read("assets/review-template.md"),
-      /\{\{🔴 critical \| 🟡 major \| 🟢 minor\}\}/u,
-      "the template renders the scale the rubric names",
-    );
-    const strays = everyMarkdown(SKILL, [])
-      .filter((file) => /\bwarning\b/iu.test(fs.readFileSync(file, "utf8")))
-      .map(inSkill);
-    assert.deepEqual(strays, [], "a severity the rubric does not name");
-  });
-
-  it("a critical is decided by the harm a merge would do, never by how strictly a rule is worded", () => {
-    assert.match(
-      read("references/review-rubric.md"),
-      /^- 🔴 critical: would harm production, its users, their data or what depends on it; must not merge as-is\.$/mu,
-    );
-  });
-
-  it("a round without functional is judged on its findings alone", () => {
-    assert.match(
-      read("references/review-rubric.md"),
-      /A round without functional \| a verdict from its findings alone/u,
-    );
-  });
-
-  it("a round with nothing in scope asks for changes, and never says approve", () => {
-    const rubric = read("references/review-rubric.md");
-    assert.match(rubric, /^\| `changes-requested` \| .*no criterion in scope \|$/mu);
-    assert.match(rubric, /where functional ran, at least one criterion in scope and none unchecked/u);
-    assert.doesNotMatch(rubric, /fixable critical/u, "one critical has one verdict");
-  });
-
-  it("no verdict of the skill is fixed: a round records no state of its own", () => {
-    const homes = everyMarkdown(SKILL, [])
-      .filter((file) => /`fixed`|\/ fixed\b/u.test(fs.readFileSync(file, "utf8")))
-      .map(inSkill);
-    assert.deepEqual(homes, []);
-  });
-
-  it("each axis owns its own vocabulary", () => {
-    const owner = (pattern) =>
-      everyMarkdown(SKILL, [])
-        .filter((file) => pattern.test(fs.readFileSync(file, "utf8")))
-        .map(inSkill);
-    assert.deepEqual(owner(/`error-handling`/u), ["actions/02-review-code.md"]);
-    assert.deepEqual(owner(/`rot`:/u), ["actions/04-review-relevancy.md"]);
-  });
-
-  it("the template renders every form a round can hold", () => {
-    const template = read("assets/review-template.md");
-    assert.match(template, /or not scored/u);
-    assert.match(template, /^- Unverified at runtime: \{\{criterion\}\} — \{\{what a run would show\}\}$/mu);
-  });
-
-  it("the score counts over the whole plan, and the template holds its form", () => {
-    const score = step("actions/03-review-functional.md", "Score");
-    assert.match(score, /whole criteria total/u, "the count is over the plan, not over what is in scope");
-    assert.match(score, /met \+ unmet \+ unverified \+ out of the diff = the plan's whole criteria total/u, "and the four numbers are checkable against it");
-    assert.doesNotMatch(score, /\{\{/u, "a rule names no template placeholder");
-    assert.match(
-      step("actions/03-review-functional.md", "Read"),
-      /None to be had: not scored/u,
-      "and a run with no criteria says so instead of scoring",
-    );
-    assert.match(
-      read("assets/review-template.md"),
-      /\{\{n_met\}\}\/\{\{n_plan\}\} met, \{\{n_unmet\}\} unmet, \{\{n_unverified\}\} unverified at runtime, \{\{n_out\}\} out of the diff/u,
-      "the form is rendered by the template, not spelled out in a rule",
-    );
-  });
-
-  it("the router routes: it carries the flow, the actions and the rules, and nothing else", () => {
+  it("the flow draws every step and verdict", () => {
     const router = read("SKILL.md");
-    const headings = [...router.matchAll(/^## (.+)$/gmu)].map((match) => match[1]);
-    assert.deepEqual(headings, ["Actions", "Transversal rules"]);
-    assert.match(router, /^\| Action \| Does \|$/mu, "the action table is the contract's own");
-    const intro = router.slice(router.indexOf("## Actions") + 10, router.indexOf("| Action |")).trim();
-    assert.equal(intro.split(/(?<=\.)\s/u).length, 1, "one sentence above the table, nothing more");
-    for (const slug of ["prepare", "review-code", "review-functional", "review-relevancy", "finalize"]) {
-      assert.match(router, new RegExp(`^\\| ${slug} \\| [a-z]`, "mu"), "each row is a bare slug");
-    }
-  });
-
-  it("the flow draws every path a run can take", () => {
-    const router = read("SKILL.md");
-    const flow = router.slice(router.indexOf("```mermaid"), router.indexOf("## Actions"));
-    for (const slug of ["prepare", "review-code", "review-functional", "review-relevancy", "finalize"]) {
-      assert.match(flow, new RegExp(slug, "u"), "every action is a node");
-    }
-    for (const outcome of ["approve", "changes", "blocked"]) {
-      assert.match(flow, new RegExp(`${outcome}\\(\\[`, "u"), "every verdict is a terminal node");
-    }
-    for (const outcome of ["changes", "blocked"]) {
-      assert.match(flow, new RegExp(`^  ${outcome} -\\.->`, "mu"), "a verdict asking for work loops back");
-    }
-  });
-
-  it("every action carries the contract's sections, and a test it keeps is a table", () => {
-    for (const action of fs.readdirSync(path.join(SKILL, "actions"))) {
-      const body = read(path.join("actions", action));
-      const headings = [...body.matchAll(/^## (.+)$/gmu)].map((match) => match[1]);
-      assert.deepEqual(headings.filter((heading) => heading !== "Test"), ["Input", "Output", "Process"], action);
-      if (headings.includes("Test")) {
-        assert.match(body.slice(body.indexOf("## Test")), /^\| Case \| Pass \|$/mu, action);
-      }
-    }
+    const flow = router.slice(router.indexOf("```mermaid"), router.indexOf("Each box"));
+    for (const file of ["actions/01-prepare.md", "actions/02-review.md", "actions/03-conclude.md"]) assert.ok(flow.includes(file), file);
+    for (const outcome of ["approve", "changes", "blocked"]) assert.match(flow, new RegExp(`${outcome}\\(\\[`, "u"));
   });
 
   it("a review reads the code and never runs or fixes it", () => {
-    assert.match(rules(), /^- Review statically: never run the app\.$/mu);
+    assert.match(read("SKILL.md"), /^- Read only: never run the app or its checks\.$/mu);
+    assert.match(read("SKILL.md"), /^- Change nothing but the report: no code, no test, no config\.$/mu);
     assert.match(read("SKILL.md"), /Not for fixing what the review finds/u);
   });
 });

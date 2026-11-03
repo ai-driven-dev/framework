@@ -2,7 +2,7 @@
   "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
   "name": "aidd-vcs",
   "version": "2.5.0",
-  "description": "External artifacts: repo-init, commit, pull-request, release-tag, issue-create, resolve-conflict",
+  "description": "External artifacts: repo-init, commit, pull-request, release-tag, issue-create, resolve-conflict, answer-comments",
   "author": {
     "name": "AI-Driven Dev",
     "url": "https://github.com/ai-driven-dev"
@@ -13,7 +13,8 @@
     "./skills/02-pull-request",
     "./skills/03-release-tag",
     "./skills/04-issue-create",
-    "./skills/05-resolve-conflict"
+    "./skills/05-resolve-conflict",
+    "./skills/06-answer-comments"
   ],
   "keywords": [
     "git",

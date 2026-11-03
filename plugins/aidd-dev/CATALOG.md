@@ -82,19 +82,14 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | Group | File | Description |
 |-------|------|---|
 | `actions` | [01-prepare.md](skills/05-review/actions/01-prepare.md) | - |
-| `actions` | [02-review-code.md](skills/05-review/actions/02-review-code.md) | - |
-| `actions` | [03-review-functional.md](skills/05-review/actions/03-review-functional.md) | - |
-| `actions` | [04-review-relevancy.md](skills/05-review/actions/04-review-relevancy.md) | - |
-| `actions` | [05-finalize.md](skills/05-review/actions/05-finalize.md) | - |
-| `actions` | [06-answer-comments.md](skills/05-review/actions/06-answer-comments.md) | - |
-| `actions` | [07-propose-learnings.md](skills/05-review/actions/07-propose-learnings.md) | - |
-| `assets` | [comments-summary-template.md](skills/05-review/assets/comments-summary-template.md) | - |
+| `actions` | [02-review.md](skills/05-review/actions/02-review.md) | - |
+| `actions` | [03-conclude.md](skills/05-review/actions/03-conclude.md) | - |
 | `assets` | [review-template.md](skills/05-review/assets/review-template.md) | - |
-| `references` | [comment-kinds.md](skills/05-review/references/comment-kinds.md) | - |
-| `references` | [learnings.md](skills/05-review/references/learnings.md) | - |
-| `references` | [report-contract.md](skills/05-review/references/report-contract.md) | - |
-| `references` | [review-rubric.md](skills/05-review/references/review-rubric.md) | - |
-| `-` | [SKILL.md](skills/05-review/SKILL.md) | `Reviews a diff and says whether it is ready to ship, or answers a pull request's review comments. Use when the user wants a change checked before it ships, or its review comments answered. Not for fixing what the review finds.` |
+| `references` | [axis-code.md](skills/05-review/references/axis-code.md) | - |
+| `references` | [axis-functional.md](skills/05-review/references/axis-functional.md) | - |
+| `references` | [axis-relevancy.md](skills/05-review/references/axis-relevancy.md) | - |
+| `references` | [rubric.md](skills/05-review/references/rubric.md) | - |
+| `-` | [SKILL.md](skills/05-review/SKILL.md) | `Reviews work and says whether it is ready, naming each defect with its fix. Use when the user wants a change or diff reviewed. Not for fixing what the review finds, and not for auditing a whole codebase.` |
 
 #### `skills/06-test`
 

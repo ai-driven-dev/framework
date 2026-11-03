@@ -14,6 +14,7 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
   - [`skills/03-release-tag`](#skills03-release-tag)
   - [`skills/04-issue-create`](#skills04-issue-create)
   - [`skills/05-resolve-conflict`](#skills05-resolve-conflict)
+  - [`skills/06-answer-comments`](#skills06-answer-comments)
 
 ---
 
@@ -79,4 +80,15 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `actions` | [01-resolve.md](skills/05-resolve-conflict/actions/01-resolve.md) | - |
 | `assets` | [resolution-table.md](skills/05-resolve-conflict/assets/resolution-table.md) | - |
 | `-` | [SKILL.md](skills/05-resolve-conflict/SKILL.md) | `Resolves deterministic Git conflicts or approved choices. Use when the user wants to resolve a merge, rebase, or cherry-pick conflict. Not for deciding between competing implementations or committing changes.` |
+
+#### `skills/06-answer-comments`
+
+| Group | File | Description |
+|-------|------|---|
+| `actions` | [01-answer-comments.md](skills/06-answer-comments/actions/01-answer-comments.md) | - |
+| `actions` | [02-propose-learnings.md](skills/06-answer-comments/actions/02-propose-learnings.md) | - |
+| `assets` | [comments-summary-template.md](skills/06-answer-comments/assets/comments-summary-template.md) | - |
+| `references` | [comment-kinds.md](skills/06-answer-comments/references/comment-kinds.md) | - |
+| `references` | [learnings.md](skills/06-answer-comments/references/learnings.md) | - |
+| `-` | [SKILL.md](skills/06-answer-comments/SKILL.md) | `Answers pull request review comments, resolves settled threads, and proposes learnings. Use when the user wants review feedback answered or pending decisions summarized. Not for reviewing a diff or fixing code.` |
 
