@@ -213,6 +213,23 @@ describe("aidd-ui extract", () => {
       ]);
     });
 
+    it("reads the platform a code-tokens item names, a token file outside every code root included", () => {
+      const files = { "apps/web/src/styles/tokens.css": WEB_CSS, "apps/mobile/src/theme/tokens.ts": MOBILE_TS };
+      setup({ platforms: ["web", "mobile"], roots: ["web=apps/web/src/components", "mobile=apps/mobile/src"], tokens: ["web=apps/web/src/styles/tokens.css", "apps/mobile/src/theme/tokens.ts"], files });
+      const { report } = extract();
+      assert.equal(read("tokens.json").color.ink.$value.hex, "#1b1f23");
+      assert.deepEqual(read("platforms/mobile.json").space, { sm: { $value: { value: 8, unit: "px" } } });
+      assert.deepEqual(report.left.filter((each) => each.why.includes("platform")), []);
+    });
+
+    it("lists a code-tokens file whose platform system.md does not declare", () => {
+      const files = { "src/web/tokens.css": WEB_CSS, "src/tv.css": ":root { --color-extra: #fff; }\n" };
+      setup({ platforms: ["web", "mobile"], roots: ["web=src/web", "mobile=src/mobile"], tokens: ["src/web/tokens.css", "tv=src/tv.css"], files });
+      const { report } = extract();
+      assert.deepEqual(report.left.filter((each) => each.file === "src/tv.css"), [{ file: "src/tv.css", line: null, name: null, why: 'platform "tv" is not in system.md' }]);
+      assert.equal(read("tokens.json").color.extra, undefined);
+    });
+
     it("leaves a token file under no code root whole, when several platforms are declared", () => {
       setup({ platforms: ["web", "mobile"], roots: ["web=src/web", "mobile=src/mobile"], tokens: ["src/web/tokens.css", "styles/tokens.css"], files: { "src/web/tokens.css": WEB_CSS, "styles/tokens.css": ":root { --color-extra: #fff; }\n" } });
       const { report } = extract();

@@ -33,6 +33,6 @@ libraries: [{{component packages used}}]
 <!--
 - Replace every `{{...}}` and delete every comment.
 - A list with no answer is `[]`; only `code-tokens` may go.
-- With several platforms, each `code-roots` item is `platform=path`.
+- With several platforms, each `code-roots` item is `platform=path`, and so is a `code-tokens` item outside every code root.
 - One `## Breakpoints` row per breakpoint.
 -->

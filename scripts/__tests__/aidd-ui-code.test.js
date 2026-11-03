@@ -559,6 +559,19 @@ describe("aidd-ui code link", () => {
     });
   });
 
+  describe("code-tokens naming a platform", () => {
+    it("takes platform=path, the file leaving literals and coverage as a bare one does", () => {
+      edit(tmp, SYSTEM, "code-tokens: src/ui/tokens.css", "code-tokens: web=src/ui/tokens.css");
+      put(tmp, "src/ui/tokens.css", ":root { --x: #ff0000; }\n");
+      assert.deepEqual(problems(), []);
+    });
+
+    it("names a platform system.md does not declare", () => {
+      edit(tmp, SYSTEM, "code-tokens: src/ui/tokens.css", "code-tokens: tv=src/ui/tokens.css");
+      assert.deepEqual(problems(), [`${SYSTEM}: code-tokens "tv=src/ui/tokens.css": platform "tv" is not in system.md`]);
+    });
+  });
+
   describe("C7 code roots inside the project", () => {
     it("names a root that is the project or outside it, and walks nothing from it", () => {
       edit(tmp, SYSTEM, "code-roots: [src/ui]", "code-roots: [src/ui, ., ../shared, /abs]");

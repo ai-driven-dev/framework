@@ -43,7 +43,7 @@ Every record opens with flat front matter, `key: value` or `key: [a, b]`, and cl
 | Record | Front matter | Body |
 | --- | --- | --- |
 | every one | `id` (the file name), `kind`, `status` (`proposed`, `validated`, `deprecated`), `version` | `## History` |
-| `system.md` | `format` (`1`), `version` in semver, `platforms`, `breakpoints`, `themes`, `locales`, `directions`, `primitives` (token groups components never cite, nested such as `color.brand` too), `code-roots` (`platform=path`, or a bare path when one platform is declared), `ignore`, `libraries`, each `[]` when empty; optional `code-tokens`, one file or a list | `## Breakpoints`: Name, Width, one row per breakpoint; optional `## Rules`: Id, Rule |
+| `system.md` | `format` (`1`), `version` in semver, `platforms`, `breakpoints`, `themes`, `locales`, `directions`, `primitives` (token groups components never cite, nested such as `color.brand` too), `code-roots` (`platform=path`, or a bare path when one platform is declared), `ignore`, `libraries`, each `[]` when empty; optional `code-tokens`, one file or a list, each `platform=path` like `code-roots` | `## Breakpoints`: Name, Width, one row per breakpoint; optional `## Rules`: Id, Rule |
 | `brand.md` | | `## Project`, `## Users`, `## Domain`, `## Platforms`, `## Personality and tone`, `## References`, `## Anti-references`; optional `## Glossary`: Concept, Word, Forbidden |
 | atom, molecule, composition | `uses`, `tokens`, `variants` (a bare value, or `axis=value` per independent prop), `states`, `interactive` (`yes` or `no`), `role`; optional `code`, `platforms` | `## Usage`, and `## Keyboard` when interactive |
 | screen | `uses`, `tokens`, `states`, `breakpoints`, `route`; optional `code`, `platforms` | |
@@ -68,7 +68,7 @@ Every record opens with flat front matter, `key: value` or `key: [a, b]`, and cl
 - A render uses only the tokens its record lists in `tokens`, or those of the elements it uses, transitively. Its literals are read in `<style>` blocks and `style=""` values, never in its text, and its colours also in `fill`, `stroke`, `color` and `bgcolor` values, where a value opening with `var()` is a token; a variant or state counts when an element outside `<style>` carries its `data-` attribute: `data-variant="<value>"` for a bare item, `data-<axis>="<value>"` for `axis=value`, `data-state="<value>"` for a state.
 - An axis matches `[a-z][a-z-]*`, is never `state`, `variant` or `theme`, and its value is never empty.
 - Each `code-roots` item belongs to a platform: `platform=path`, required once `system.md` declares several, whose names it must list; a bare path belongs to the only one declared.
-- `code-tokens` names the file where the code consumes the tokens, or a list, one per app; each is never checked for literals or coverage.
+- `code-tokens` names the file where the code consumes the tokens, or a list, one per app; each is never checked for literals or coverage. An item is `platform=path` like a `code-roots` item, so a file outside every code root has its platform; a bare one belongs to the only platform declared, else to the platform of the root holding it.
 - Themes: the first theme in `system.md` is held by `tokens.json`. `tokens.resolver.json`, required from two themes on and checked whenever present, has a set whose sources hold `{"$ref": "tokens.json"}`, a `theme` modifier with one context per theme and the base as `default`, an empty context, and `{"$ref": "#/modifiers/theme"}` in `resolutionOrder`. Another context lists `{"$ref": "<file>"}` sources, each redefining base tokens with their type.
 - Platforms: the first platform in `system.md` is held by `tokens.json`. A value that depends on the platform is a context of an optional `platform` modifier, built like the theme one, with `{"$ref": "#/modifiers/platform"}` in `resolutionOrder`: one context per platform, the base as `default` and an empty context, another listing `{"$ref": "<file>"}` sources, such as `platforms/<name>.json`, each redefining base tokens with their type.
 - Breakpoints: a value that depends on the width is a context of an optional `breakpoint` modifier, with `{"$ref": "#/modifiers/breakpoint"}` in `resolutionOrder`. Its `default` is the breakpoint `tokens.json` holds, an empty context, since the Resolver needs one to resolve without an input. The other contexts follow the order of `breakpoints` in `system.md`, which the `@media` blocks take. Each is a breakpoint in `system.md` listing `{"$ref": "<file>"}` sources, like a theme's, with its media query verbatim in the modifier's `"$extensions": {"dev.ai-driven.media": {"<breakpoint>": "<query>"}}`.
@@ -108,7 +108,7 @@ node <plugin>/hooks/aidd-ui.cjs bump --task <aidd_docs/tasks/…> --change "<tex
 
 ### Extraction
 
-`extract` reads, from each `code-tokens` file, only these shapes. A file's platform is its code root's, the first platform of `system.md` being the base.
+`extract` reads, from each `code-tokens` file, only these shapes. A file's platform is the one its `code-tokens` item names, else its code root's, the first platform of `system.md` being the base.
 
 | Read | Becomes |
 | --- | --- |
@@ -129,7 +129,7 @@ node <plugin>/hooks/aidd-ui.cjs bump --task <aidd_docs/tasks/…> --change "<tex
 
 - `--a-b-c` is the path `a.b.c`; when a shorter name is already a token, the rest joins its leaf, `color.accent` and `color.accent-hover`, so a path always gives its CSS name back.
 - A context keeps only what differs from the base. A context value its base's type cannot hold stays CSS, so does an alias to a token of another type, and an alias to a token of no type is raw `var()` CSS, since nothing could type it.
-- Left, with the file, the line, the name and why: a property in another selector or at-rule, an `@media` that is no width query or matches no breakpoint, a theme `system.md` does not declare, a script value that is no string or number literal, an object nested deeper than one level, a token citing a custom property that is no token, a file of neither kind, a token file under no code root while several platforms are declared, and a token only some of the platforms hold, which stays in the base.
+- Left, with the file, the line, the name and why: a property in another selector or at-rule, an `@media` that is no width query or matches no breakpoint, a theme `system.md` does not declare, a script value that is no string or number literal, an object nested deeper than one level, a token citing a custom property that is no token, a file of neither kind, a bare token file under no code root while several platforms are declared, a token file naming a platform `system.md` does not declare, and a token only some of the platforms hold, which stays in the base.
 
 ### Bump
 

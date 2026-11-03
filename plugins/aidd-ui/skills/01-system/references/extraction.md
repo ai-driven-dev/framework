@@ -6,7 +6,7 @@ A design system already in the code, of any techno, is matter for extraction, th
 
 | In the code | In `aidd_docs/ui/` |
 | --- | --- |
-| token file the code consumes | in `code-tokens`, before `extract` runs; the drift between the files of several apps named to the user |
+| token file the code consumes | in `code-tokens`, before `extract` runs, as `platform=path` when it sits outside the code root of its platform; the drift between the files of several apps named to the user |
 | theme switched by `[data-theme]` | in `themes`, the one `:root` holds first |
 | what `extract` leaves, a property scoped to a component, one written by a script or `color-scheme` among it | nothing: named to the user; a media query matching no breakpoint is a `## Breakpoints` row of `system.md` to settle, then `extract --force` |
 | component file | a record with a `code` link: its version equal to the record's `version`, its platform its code root's |

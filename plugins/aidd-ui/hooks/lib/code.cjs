@@ -46,7 +46,7 @@ const SCRIPT_TOKEN = /\/\/[^\n]*|\/\*[\s\S]*?\*\/|("(?:\\.|[^"\\\n])*"|'(?:\\.|[
  * code lives in a string, and a `#` in a comment is an issue number. */
 const stringsOnly = (source) => source.replace(SCRIPT_TOKEN, (found, literal) => literal ?? found.replace(NOT_LINE_BREAK, " "));
 
-/** An `ignore` or `code-tokens` list as normalised path prefixes, so `./src` reads as `src`. */
+/** An `ignore` list as normalised path prefixes, so `./src` reads as `src`. */
 const prefixes = (project, key) => list(systemOf(project)?.frontMatter[key]).map((prefix) => path.posix.normalize(prefix));
 /** Whether a normalised prefix names a folder inside the project, never the project itself. */
 const isInside = (prefix) => prefix !== "." && !prefix.startsWith("..") && !path.posix.isAbsolute(prefix);
@@ -54,14 +54,17 @@ const platformsOf = (project) => list(systemOf(project)?.frontMatter[PLATFORMS_K
 /** The platform a bare root or package link belongs to: the one declared, none among several. */
 const soleOf = (project) => (platformsOf(project).length === 1 ? platformsOf(project)[0] : null);
 
-/** The `code-roots` as `{item, named, platform, path}`: `platform=path` names its platform, a bare
+/** The items of a list as `{item, named, platform, path}`: `platform=path` names its platform, a bare
  * path belongs to the only one declared, and the path is normalised so `./src` reads as `src`. */
-function rootEntries(project) {
-  return list(systemOf(project)?.frontMatter[CODE_ROOTS_KEY]).map((item) => {
+function platformEntries(project, key) {
+  return list(systemOf(project)?.frontMatter[key]).map((item) => {
     const named = ROOT_PLATFORM.exec(item);
     return { item, named: named !== null, platform: named ? named[1] : soleOf(project), path: path.posix.normalize(named ? named[2] : item) };
   });
 }
+const rootEntries = (project) => platformEntries(project, CODE_ROOTS_KEY);
+/** The `code-tokens` items, a file each. */
+const tokenEntries = (project) => platformEntries(project, CODE_TOKENS_KEY);
 const codeRoots = (project) => rootEntries(project).map((root) => root.path).filter(isInside);
 
 /** A `code` value as `{platform, target, name, version, library}`: `target` is a path or
@@ -95,7 +98,7 @@ const linked = (project) =>
 const hasWord = (text, word) => new RegExp(`(?<![\\w$])${word.replace(REGEX_SPECIALS, "\\$&")}(?![\\w$])`).test(text);
 
 /** The code's token files system.md names, normalised. */
-const codeTokens = (project) => prefixes(project, CODE_TOKENS_KEY);
+const codeTokens = (project) => tokenEntries(project).map((entry) => entry.path);
 
 /** The code side, walked once per run: every file under a code root, and the ignored prefixes,
  * the code's token files among them. */
@@ -210,9 +213,11 @@ function colourProblems(project) {
 }
 
 function codeTokensProblems(project) {
-  return codeTokens(project)
-    .filter((file) => !fs.existsSync(path.join(project.root, file)))
-    .map((file) => ({ file: systemOf(project).file, message: `code-tokens "${file}" does not exist` }));
+  const file = systemOf(project)?.file;
+  return tokenEntries(project).flatMap(({ item, named, platform, path: tokens }) => [
+    ...(fs.existsSync(path.join(project.root, tokens)) ? [] : [{ file, message: `code-tokens "${tokens}" does not exist` }]),
+    ...(named && !platformsOf(project).includes(platform) ? [{ file, message: `code-tokens "${item}": platform "${platform}" is not in system.md` }] : []),
+  ]);
 }
 
 function sharedLinkProblems(project) {
@@ -289,4 +294,4 @@ const RULES = {
 /** Every broken code rule, in rule order. */
 const check = checkOf(RULES);
 
-module.exports = { check, codeRoots, codeOwner, codeFilesOf, codeTokens, platformOfFile };
+module.exports = { check, codeRoots, codeOwner, codeFilesOf, codeTokens, tokenEntries, platformOfFile };

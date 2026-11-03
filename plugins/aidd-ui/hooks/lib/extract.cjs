@@ -7,7 +7,7 @@ const path = require("node:path");
 const { list, table } = require("./markdown.cjs");
 const { systemOf, fm } = require("./model.cjs");
 const { load, text, UI_DIR } = require("./project.cjs");
-const { codeTokens, platformOfFile } = require("./code.cjs");
+const { tokenEntries, platformOfFile } = require("./code.cjs");
 const { rulesOf, declarationsIn, RAW_CSS_EXTENSION } = require("./css.cjs");
 const { RESOLVER_FILE, RESOLVER_VERSION, MEDIA_EXTENSION, MODIFIERS } = require("./tokens.cjs");
 const { objectsOf } = require("./script.cjs");
@@ -285,17 +285,18 @@ function extract(root, { force }) {
   const project = load(root);
   if (project === null) throw new Refusal(`no design system under ${UI_DIR}`, 1);
   if (!systemOf(project)) throw new Refusal(`${UI_DIR}/system.md is missing, write it first`, 1);
-  const files = codeTokens(project);
-  if (!files.length) throw new Refusal("system.md lists no code-tokens", 1);
+  const entries = tokenEntries(project);
+  if (!entries.length) throw new Refusal("system.md lists no code-tokens", 1);
   if (fs.existsSync(path.join(root, project.tokensFile)) && !force) throw new Refusal(`${project.tokensFile} already exists, --force replaces it`, 1);
   const left = [];
   const leave = (file, line, name, why) => left.push({ file, line, name, why });
   const sources = [];
-  for (const file of files) {
+  for (const { path: file, named, platform: written } of entries) {
     const source = fs.existsSync(path.join(root, file)) && fs.statSync(path.join(root, file)).isFile() ? text(project, file) : null;
     if (source === null) throw new Refusal(`code-tokens "${file}" is no readable file`, 1);
-    const { platform, unknown } = platformOfFile(project, file);
+    const { platform, unknown } = named ? { platform: written } : platformOfFile(project, file);
     if (path.extname(file) !== STYLE_EXTENSION && !SCRIPT_EXTENSIONS.includes(path.extname(file))) leave(file, null, null, "neither a stylesheet nor a script");
+    else if (named && !list(fm(systemOf(project)).platforms).includes(written)) leave(file, null, null, `platform "${written}" is not in system.md`);
     else if (platform === null && list(fm(systemOf(project)).platforms).length > 1) leave(file, null, null, unknown ?? "its code root names no platform");
     else sources.push({ file, platform, source });
   }
