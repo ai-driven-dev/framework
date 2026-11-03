@@ -171,13 +171,13 @@ function fixture(home, plugins = ["aidd-dev"]) {
 const BASE_PATH =
   process.platform === "win32" ? (process.env.PATH ?? "") : ["/usr/bin", "/bin"].join(delimiter);
 
-function runSync(fakeBin, home, args = ["all"], overrides = {}) {
+function runSync(fakeBin, home, args = ["all"], overrides = {}, cwd = home) {
   executable(join(fakeBin, "node"), `exec '${process.execPath}' "$@"`);
   // `bash`, resolved on PATH, never the literal `/bin/bash`: that path does not exist on
   // Windows, where bash is the one Git for Windows ships. `spawnSync` resolves a bare name
   // through the platform's own rules on both.
   return spawnSync("bash", [join(repo, "scripts/dev-sync.sh"), ...args], {
-    cwd: home,
+    cwd,
     env: {
       ...process.env,
       PATH: [fakeBin, BASE_PATH].join(delimiter),
@@ -196,14 +196,15 @@ function runSync(fakeBin, home, args = ["all"], overrides = {}) {
   });
 }
 
-test("reload fixtures run from their temporary home", () => {
+test("the global install runs from HOME, never the checkout whose settings enable the plugins", () => {
   const root = mkdtempSync(join(tmpdir(), "aidd-dev-sync-cwd-"));
   try {
     const fakeBin = join(root, "bin"), home = join(root, "home");
     mkdirSync(fakeBin);
     executable(join(fakeBin, "opencode"), "exit 0");
-    recordingCli(fixture(home), 'fs.writeFileSync(path.join(process.env.HOME, "observed-cwd"), process.cwd());');
-    const result = runSync(fakeBin, home, []);
+    const source = fixture(home);
+    recordingCli(source, 'fs.writeFileSync(path.join(process.env.HOME, "observed-cwd"), process.cwd());');
+    const result = runSync(fakeBin, home, [], {}, source);
     assert.equal(result.status, 0, result.stderr);
     assert.equal(realpathSync(readFileSync(join(home, "observed-cwd"), "utf8").trim()), realpathSync(home));
   } finally { rmSync(root, { recursive: true, force: true }); }
@@ -298,12 +299,10 @@ test("every host takes this checkout through aidd setup --global, afresh", () =>
     for (const plugin of ["aidd-dev", "aidd-pm"]) {
       assert.match(hostCalls, new RegExp(`claude plugin uninstall ${plugin}@aidd-framework --scope user`));
       assert.match(hostCalls, new RegExp(`codex plugin remove ${plugin}@aidd-framework`));
-      assert.match(hostCalls, new RegExp(`copilot plugin uninstall ${plugin}@aidd-framework`));
     }
     assert.match(hostCalls, /claude plugin marketplace remove aidd-framework --scope user/);
     assert.match(hostCalls, /codex plugin marketplace remove aidd-framework/);
-    assert.match(hostCalls, /copilot plugin marketplace remove aidd-framework --force/);
-    assert.doesNotMatch(hostCalls, /^(cursor-agent|kilo|opencode) /m);
+    assert.doesNotMatch(hostCalls, /^(copilot|cursor-agent|kilo|opencode) /m);
   } finally { rmSync(root, { recursive: true, force: true }); }
 });
 

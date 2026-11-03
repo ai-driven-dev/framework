@@ -32,9 +32,14 @@ function settingsDeclaring(names: string[]): string {
 
 async function issuesFor(
   settings: string | null,
-  options: { toolId?: ToolId; toolInstalled?: boolean; allowedIds?: Set<string> | null } = {}
+  options: {
+    toolId?: ToolId;
+    toolInstalled?: boolean;
+    allowedIds?: Set<string> | null;
+    machine?: boolean;
+  } = {}
 ) {
-  const { toolId = "claude", toolInstalled = true, allowedIds = null } = options;
+  const { toolId = "claude", toolInstalled = true, allowedIds = null, machine } = options;
   const fs = new InMemoryFileAdapter();
   if (settings !== null) await fs.writeFile(LOCAL_SETTINGS, settings);
   const registry = new InMemoryMarketplaceRegistry();
@@ -64,6 +69,7 @@ async function issuesFor(
     manifest,
     projectRoot: PROJECT_ROOT,
     allowedIds,
+    machine,
   });
 }
 
@@ -79,6 +85,10 @@ describe("DoctorRegistrationUseCase", () => {
 
   it("reports the marketplace the file no longer declares", async () => {
     expect(await issuesFor(settingsDeclaring([]))).toStrictEqual([UNDECLARED]);
+  });
+
+  it("asks no project to declare a machine-wide install, which writes nothing there", async () => {
+    expect(await issuesFor(null, { machine: true })).toStrictEqual([]);
   });
 
   it("reports it when the whole file is gone — nothing else would notice", async () => {
