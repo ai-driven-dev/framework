@@ -92,9 +92,69 @@ const BASELINE: readonly { readonly path: string; readonly named: number }[] = [
   },
   // Claude Code's own settings files, read to say how long it keeps a transcript.
   { path: "src/contexts/telemetry/infrastructure/switch/claude-settings-adapter.ts", named: 1 },
-  // Cursor's project hooks file, named after the tool whose file it is: the directory it
-  // writes into is Cursor's own, not a list a sixth tool joins.
-  { path: "src/contexts/tools/domain/formats/cursor-hooks-project-merge.ts", named: 1 },
+];
+
+const STRING_LITERAL = /(["'`])(?:(?!\1)[^\\\n]|\\.)*\1/g;
+const IDENTIFIER = /[A-Za-z_$][A-Za-z0-9_$]*/g;
+const ISOLATED_FROM_TOOLS = /^src\/contexts\/[^/]+\/(?:application\/|domain\/formats\/)/;
+
+function words(identifier: string): string[] {
+  return identifier
+    .replace(/([a-z0-9])([A-Z])/g, "$1 $2")
+    .replace(/([A-Z]+)([A-Z][a-z])/g, "$1 $2")
+    .split(/[\s_$]+/)
+    .map((word) => word.toLowerCase())
+    .filter((word) => word !== "");
+}
+
+/**
+ * Identifiers a file declares or imports that carry a tool's name as one of their words
+ * (`mergeCursorX`, `ClaudeHooksShape`): a function named after a tool is a branch a sixth tool
+ * must join. Strings and comments are removed first, so prose and messages never count.
+ */
+function toolIdentifiersIn(source: string, ids: readonly string[]): string[] {
+  const body = code(source).replace(STRING_LITERAL, '""');
+  const named = new Set<string>();
+  for (const match of body.matchAll(IDENTIFIER)) {
+    if (words(match[0]).some((word) => ids.includes(word))) named.add(match[0]);
+  }
+  return [...named].sort();
+}
+
+/**
+ * Files under `application/` or `domain/formats/` still naming a tool in an identifier, with
+ * how many distinct identifiers; the list may only shrink, and a listed file may not take on
+ * another.
+ */
+const IDENTIFIER_BASELINE: readonly { readonly path: string; readonly named: number }[] = [
+  { path: "src/contexts/distribution/application/fetch-marketplace-source-use-case.ts", named: 1 },
+  { path: "src/contexts/distribution/application/marketplace-refresh-use-case.ts", named: 1 },
+  { path: "src/contexts/framework/application/clean/clean-user-scope-use-case.ts", named: 1 },
+  {
+    path: "src/contexts/framework/application/framework/translator/flat-mcp-materializer.ts",
+    named: 1,
+  },
+  {
+    path: "src/contexts/framework/application/framework/translator/mode-b-flat-materialization-translator.ts",
+    named: 1,
+  },
+  {
+    path: "src/contexts/framework/application/install/install-runtime-config-use-case.ts",
+    named: 1,
+  },
+  { path: "src/contexts/framework/application/ownership/project-plugin-cleanup.ts", named: 1 },
+  { path: "src/contexts/framework/application/plugin/plugin-remove-use-case.ts", named: 1 },
+  { path: "src/contexts/framework/application/restore/restore-use-case.ts", named: 4 },
+  { path: "src/contexts/telemetry/application/switch/telemetry-on-use-case.ts", named: 2 },
+  { path: "src/contexts/telemetry/domain/formats/claude-transcript-usage.ts", named: 2 },
+  { path: "src/contexts/telemetry/domain/formats/codex-transcript-usage.ts", named: 2 },
+  { path: "src/contexts/tools/domain/formats/agent-frontmatter-strip.ts", named: 4 },
+  { path: "src/contexts/tools/domain/formats/opencode-mcp-merge.ts", named: 4 },
+  { path: "src/contexts/tools/domain/formats/plugin-root-token.ts", named: 2 },
+  { path: "src/contexts/tools/domain/formats/vscode-mcp-merge.ts", named: 1 },
+  { path: "src/contexts/translate/application/strategies/flat-build-strategy.ts", named: 3 },
+  { path: "src/contexts/translate/domain/formats/cursor-hooks.ts", named: 7 },
+  { path: "src/contexts/translate/domain/formats/plugin-root-token-rewrite.ts", named: 1 },
 ];
 
 describe("a tool identifier stays inside its own profile", () => {
@@ -175,5 +235,49 @@ describe("the guard itself", () => {
       toolsNamedIn(content, ids),
       "the same literal project-hooks-materializer.ts and plugin-remove-use-case.ts carried"
     ).toEqual(["cursor"]);
+  });
+});
+
+describe("a tool never names an identifier in application or format code", () => {
+  const scoped = () => sourceFiles().filter((file) => ISOLATED_FROM_TOOLS.test(file));
+
+  it("no application or format file declares or imports an identifier carrying a tool name", () => {
+    const ids = toolIds(sourceFiles());
+    const violations = scoped().filter((file) => toolIdentifiersIn(read(file), ids).length > 0);
+
+    const { added, fixed } = expectRatchet(
+      violations,
+      IDENTIFIER_BASELINE.map((entry) => entry.path)
+    );
+    expect(
+      added,
+      "tool-named identifier outside its profile — read it from the capability"
+    ).toEqual([]);
+    expect(fixed, "fixed — remove these from IDENTIFIER_BASELINE").toEqual([]);
+  });
+
+  it("holds each listed file to the identifiers it was measured with", () => {
+    const ids = toolIds(sourceFiles());
+    const recorded = IDENTIFIER_BASELINE.map(({ path, named }) => `${path}: ${named}`);
+    const actual = IDENTIFIER_BASELINE.map(
+      ({ path }) => `${path}: ${toolIdentifiersIn(read(path), ids).length}`
+    );
+
+    expect(actual, "a listed file took on another tool-named identifier").toEqual(recorded);
+  });
+
+  it("sees a tool as one word of a camelCase, PascalCase or upper-case identifier", () => {
+    const ids = ["claude", "cursor"];
+
+    expect(toolIdentifiersIn("export function mergeCursorX() {}", ids)).toEqual(["mergeCursorX"]);
+    expect(toolIdentifiersIn("import type { ClaudeHooksShape } from './x.js';", ids)).toEqual([
+      "ClaudeHooksShape",
+    ]);
+    expect(toolIdentifiersIn("const CLAUDE_ROOT = 1;", ids)).toEqual(["CLAUDE_ROOT"]);
+    expect(toolIdentifiersIn("const cursorless = 1; const claudette = 2;", ids)).toEqual([]);
+    expect(
+      toolIdentifiersIn('// mergeCursorX\nthrow new Error("Cursor is missing");', ids),
+      "a comment and a message"
+    ).toEqual([]);
   });
 });

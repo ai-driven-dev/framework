@@ -119,6 +119,12 @@ describe("what a tool's plugin capability declares about activation", () => {
           plugins: nativePlugins({
             hooksDestination: "project",
             projectHooksRelativePath: ".cursor/hooks.json",
+            projectHooksFormat: {
+              merge: () => ({ content: "", warnings: [] }),
+              unmerge: () => "",
+              scriptPath: () => "",
+              scriptDir: () => "",
+            },
           }),
         },
         null

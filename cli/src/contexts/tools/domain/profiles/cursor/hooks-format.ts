@@ -5,9 +5,68 @@
  * that same destination, one plugin at a time.
  */
 
-import { rewriteClaudeRootInJson } from "../../../../kernel/materialization/claude-root-path-rewrite.js";
-import { genericFlatHooksScriptPath } from "../../../../kernel/materialization/flat-paths.js";
-import { mergeCursorFlatHooks } from "./flat-hooks-merge.js";
+import { rewriteClaudeRootInJson } from "../../../../../kernel/materialization/claude-root-path-rewrite.js";
+import { genericFlatHooksScriptPath } from "../../../../../kernel/materialization/flat-paths.js";
+import type { PluginHooksShape, PluginMatcherGroup } from "../../formats/plugin-hooks-shape.js";
+
+type CursorHookEntry = { command: string };
+type CursorFlatShape = { version: 1; hooks: Record<string, CursorHookEntry[]> };
+
+// `Stop` fans out to two Cursor events, not one: interactive sessions fire `stop` and headless
+// ones `sessionEnd` instead — never both from the same run, but which one depends on how the
+// session ends, so both are subscribed. A run file already tolerates more than one `turn_end`
+// line, so a session firing both is not a problem.
+const CURSOR_EVENT_MAP: Record<string, readonly string[]> = {
+  SessionStart: ["sessionStart"],
+  UserPromptSubmit: ["beforeSubmitPrompt"],
+  PreToolUse: ["preToolUse"],
+  PostToolUse: ["postToolUse"],
+  Stop: ["stop", "sessionEnd"],
+  SubagentStop: ["subagentStop"],
+};
+
+/** Merges a plugin's hooks (Claude nested shape) into the accumulated `.cursor/hooks.json`:
+ * version 1, event-mapped keys, flat `{command}` entries. An unmapped event is skipped and
+ * reported in the returned warnings. */
+export function mergeCursorFlatHooks(
+  existingCursorJson: string | null,
+  pluginHooksJson: string
+): { content: string; warnings: readonly string[] } {
+  const cursor = parseCursorHooks(existingCursorJson);
+  const plugin = JSON.parse(pluginHooksJson) as PluginHooksShape;
+  const pluginHooks = plugin.hooks ?? {};
+  const warnings: string[] = [];
+
+  for (const [claudeEvent, matchers] of Object.entries(pluginHooks)) {
+    const cursorEvents = CURSOR_EVENT_MAP[claudeEvent];
+    if (!cursorEvents) {
+      warnings.push(`cursor: unmapped event '${claudeEvent}' skipped`);
+      continue;
+    }
+    const entries = extractCursorEntries(matchers);
+    for (const cursorEvent of cursorEvents) {
+      cursor.hooks[cursorEvent] = [...(cursor.hooks[cursorEvent] ?? []), ...entries];
+    }
+  }
+
+  return { content: `${JSON.stringify(cursor, null, 2)}\n`, warnings };
+}
+
+function parseCursorHooks(content: string | null): CursorFlatShape {
+  if (!content) return { version: 1, hooks: {} };
+  const parsed = JSON.parse(content) as Partial<CursorFlatShape>;
+  return { version: 1, hooks: parsed.hooks ?? {} };
+}
+
+function extractCursorEntries(matchers: PluginMatcherGroup[]): CursorHookEntry[] {
+  const entries: CursorHookEntry[] = [];
+  for (const group of matchers) {
+    for (const item of group.hooks ?? []) {
+      if (typeof item.command === "string") entries.push({ command: item.command });
+    }
+  }
+  return entries;
+}
 
 const HOOKS_PREFIX = "hooks/";
 const CURSOR_HOOKS_DIR = ".cursor/hooks/";

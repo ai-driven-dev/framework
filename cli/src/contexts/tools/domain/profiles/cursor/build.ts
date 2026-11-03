@@ -13,7 +13,6 @@ import {
 } from "../../../../../kernel/materialization/flat-paths.js";
 import { rewriteRelativeLinks } from "../../../../../kernel/materialization/relative-link-rewrite.js";
 import type { ToolBuildContract } from "../../build-contract.js";
-import { mergeCursorFlatHooks } from "../../formats/flat-hooks-merge.js";
 import { CURSOR_PLUGIN_ROOT_TOKEN } from "../../formats/plugin-root-token.js";
 import { mergeVscodeMcp } from "../../formats/vscode-mcp-merge.js";
 import {
@@ -26,6 +25,7 @@ import {
   OUTPUT_CURSOR_MANIFEST_RELATIVE,
   OUTPUT_CURSOR_MARKETPLACE_RELATIVE,
 } from "./cursor-paths.js";
+import { mergeCursorFlatHooks } from "./hooks-format.js";
 
 function transformCursorAgent(content: string, plugin: string, outName: string): string {
   const { frontmatter, body } = parseFrontmatter(content);

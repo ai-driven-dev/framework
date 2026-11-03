@@ -24,6 +24,12 @@ import { CURSOR_PLUGIN_ROOT_TOKEN } from "../../formats/plugin-root-token.js";
 import { registerTool } from "../../registry.js";
 import { buildCursorContract, buildCursorFlatContract } from "./build.js";
 import { cursorAgentFrontmatter } from "./cursor-agent.js";
+import {
+  cursorProjectHooksScriptDir,
+  cursorProjectHooksScriptPath,
+  mergeCursorProjectHooksJson,
+  unmergeCursorProjectHooksJson,
+} from "./hooks-format.js";
 
 const DIRECTORY = ".cursor/";
 const TOOL_SUFFIX = ".cursor.md";
@@ -117,6 +123,12 @@ export const cursor: AiTool<HasAgents & HasSkills & HasCommands & HasRules & Has
         hooksContentFormat: "flat",
         hooksDestination: "project",
         projectHooksRelativePath: ".cursor/hooks.json",
+        projectHooksFormat: {
+          merge: mergeCursorProjectHooksJson,
+          unmerge: unmergeCursorProjectHooksJson,
+          scriptPath: cursorProjectHooksScriptPath,
+          scriptDir: cursorProjectHooksScriptDir,
+        },
         acceptsMcp: true,
         mcpRelativePath: "mcp.json",
         installScope: "user",

@@ -40,10 +40,6 @@ const PUBLIC_MODULES: Readonly<Record<string, readonly string[]>> = {
     "src/contexts/tools/domain/plugin-translation-mode.ts",
     "src/contexts/tools/domain/hooks-format.ts",
     "src/contexts/tools/domain/models/plugin-install-notice.ts",
-    // The shape of the file a tool's hooks land in, read by the installer that merges them
-    // and the diagnostic that answers whether the tool will run them.
-    "src/contexts/tools/domain/formats/flat-hooks-merge.ts",
-    "src/contexts/tools/domain/formats/cursor-hooks-project-merge.ts",
     // The variable each tool expands to an installed plugin's directory: a tool declares it,
     // translate substitutes it, the diagnostic looks for it in what was installed.
     "src/contexts/tools/domain/formats/plugin-root-token.ts",
