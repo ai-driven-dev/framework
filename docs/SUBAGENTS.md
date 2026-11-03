@@ -51,10 +51,10 @@ Only `/aidd-orchestrator:01-sdlc` names an agent, by its role (`validator`), so 
 
 Install the `aidd-orchestrator` plugin: `/plugin install aidd-orchestrator@aidd-framework` in Claude Code, or see the [quick start](../README.md#quick-start) for the other tools. The agents come with it, except as a Codex plugin (see [Limits](#-limits)); open a new session so the tool loads them.
 
-For every project on the machine at once, Claude Code, Codex and OpenCode included:
+For every project on the machine at once:
 
 ```bash
-aidd setup --global --ide claude,codex,opencode --plugins all
+aidd setup --global --ide claude,codex,copilot,cursor,kilo,opencode --plugins all
 aidd sync --global   # after a framework update
 ```
 

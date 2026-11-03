@@ -4,7 +4,8 @@ import "../../../../src/contexts/tools/domain/profiles/claude/profile.js";
 import "../../../../src/contexts/tools/domain/profiles/codex/profile.js";
 import "../../../../src/contexts/tools/domain/profiles/copilot/profile.js";
 import "../../../../src/contexts/tools/domain/profiles/cursor/profile.js";
-import "../../../../src/contexts/tools/domain/profiles/kilo/profile.js";
+import { kilo } from "../../../../src/contexts/tools/domain/profiles/kilo/profile.js";
+import { registerTool } from "../../../../src/contexts/tools/domain/registry.js";
 import "../../../../src/contexts/tools/domain/profiles/opencode/profile.js";
 import "../../../../src/contexts/tools/domain/profiles/vscode/profile.js";
 import {
@@ -121,10 +122,20 @@ describe("SetupFlow", () => {
       expect(() => makeFlow({ scope: "user" })).toThrow(UserScopeNoToolsError);
     });
 
-    it("refuses an AI tool with no user-scope activation at --scope user (kilo)", () => {
-      expect(() => makeFlow({ scope: "user", aiTools: ["kilo"] })).toThrow(
-        UserScopeUnsupportedAiToolsError
-      );
+    it("refuses an AI tool with no user-scope activation at --scope user", () => {
+      const { plugins: _plugins, ...withoutPlugins } = kilo.capabilities;
+      registerTool({ ...kilo, capabilities: withoutPlugins });
+      try {
+        expect(() => makeFlow({ scope: "user", aiTools: ["kilo"] })).toThrow(
+          UserScopeUnsupportedAiToolsError
+        );
+      } finally {
+        registerTool(kilo);
+      }
+    });
+
+    it("accepts an AI tool that copies machine files at --scope user (kilo)", () => {
+      expect(() => makeFlow({ scope: "user", aiTools: ["kilo"] })).not.toThrow();
     });
 
     it("accepts an AI tool that copies machine files at --scope user (opencode)", () => {

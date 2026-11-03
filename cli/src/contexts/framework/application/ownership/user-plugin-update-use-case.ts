@@ -66,19 +66,18 @@ export class UserPluginUpdateUseCase {
         "Multiple native catalogues match this plugin name; use an exact <plugin>@<catalogue> ref for targeted update."
       );
     }
-    const filePlans = await Promise.all(
-      targets.map(async ({ toolId, plugin }) => ({
-        toolId,
+    // One plan at a time: plans for one tool share its built tree, which the first one builds.
+    const filePlans = [];
+    for (const { toolId, plugin } of targets) {
+      const plan = await this.fileUpdater.planUpdate(
         plugin,
-        plan: await this.fileUpdater.planUpdate(
-          plugin,
-          toolId,
-          options.projectRoot,
-          this.logger,
-          options.rebuild === true
-        ),
-      }))
-    );
+        toolId,
+        options.projectRoot,
+        this.logger,
+        options.rebuild === true
+      );
+      filePlans.push({ toolId, plugin, plan });
+    }
     const nativeUpdates = await Promise.all(
       nativeTargets.map(async ({ toolId, claim, registrations }) => ({
         toolId,

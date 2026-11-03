@@ -5,9 +5,10 @@ import { SetupUseCase } from "../../contexts/framework/application/setup-use-cas
 import { SetupFlow } from "../../contexts/framework/domain/setup-flow.js";
 import {
   assertToolIdsMatchCategory,
+  copiesPluginFilesForMachine,
   getAllRegisteredTools,
-  machineFilesOf,
   nativeActivationOf,
+  resolvePluginsCapability,
   supportsUserScopeActivation,
 } from "../../contexts/tools/domain/registry.js";
 import type { ToolId } from "../../kernel/tool.js";
@@ -103,16 +104,15 @@ export function parsePluginsFlag(
 export function globalSetupHelp(): string {
   const tools = [...getAllRegisteredTools().keys()].filter(supportsUserScopeActivation).sort();
   const native = tools.filter((id) => nativeActivationOf(id) !== undefined);
-  const copying = tools.filter((id) => machineFilesOf(id) !== null);
-  const recorded = tools.filter((id) => !native.includes(id) && !copying.includes(id));
-  const where = (id: ToolId) => machineFilesOf(id)?.dir("~").replaceAll("\\", "/");
+  const copying = tools.filter(copiesPluginFilesForMachine);
+  const where = (id: ToolId) =>
+    resolvePluginsCapability(id)?.userPluginsBaseDir("~")?.replaceAll("\\", "/");
   return [
     "",
     "Global:",
     `  Pass --ide ${tools.join(",")} (one or more, no editor) and --plugins all, recommended, none or names.`,
     `  ${native.join(", ")} enable the plugins through their own CLI, which must be on PATH.`,
     `  ${copying.map((id) => `${id} gets their files in ${where(id)}`).join(", ")}.`,
-    `  ${recorded.join(", ")} only records the framework source.`,
     "  `aidd sync --global` refreshes them from the framework source.",
   ].join("\n");
 }

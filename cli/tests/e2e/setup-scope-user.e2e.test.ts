@@ -81,7 +81,7 @@ describe("E2E: setup --scope user writes nothing under the project", () => {
 
       expect(result.exitCode).toBe(0);
       expect(result.stderr).toBe("");
-      expect(result.stdout).toContain("--ide claude,codex,copilot,cursor,opencode");
+      expect(result.stdout).toContain("--ide claude,codex,copilot,cursor,kilo,opencode");
       expect(result.stdout).toContain("--plugins all, recommended, none or names");
       expect(result.stdout).toContain("no editor");
       expect(result.stdout).toContain("must be on PATH");

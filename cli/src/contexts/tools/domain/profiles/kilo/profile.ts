@@ -1,8 +1,9 @@
+import { join } from "node:path";
 import { AgentsCapability } from "../../capabilities/agents-capability.js";
 import { CommandsCapability } from "../../capabilities/commands-capability.js";
 import { CONFIG_MCP } from "../../capabilities/config-refs.js";
 import { McpCapability } from "../../capabilities/mcp-capability.js";
-import { PluginsCapability } from "../../capabilities/plugins-capability.js";
+import { flatMachineFilePath, PluginsCapability } from "../../capabilities/plugins-capability.js";
 import { RulesCapability } from "../../capabilities/rules-capability.js";
 import { SkillsCapability } from "../../capabilities/skills-capability.js";
 import type {
@@ -89,6 +90,10 @@ export const kilo: AiTool<HasAgents & HasSkills & HasCommands & HasRules & HasMc
     plugins: new PluginsCapability({
       mode: "flat",
       flatNamespacePrefix: "aidd-",
+      machineFiles: {
+        dir: (homedir) => join(homedir, ".config", "kilo"),
+        map: flatMachineFilePath(KILO_DIRECTORY),
+      },
       acceptsHooks: true,
       flatHooksDir: KILO_HOOKS_DIR,
       flatHooksLoaderEntry: { dir: KILO_PLUGIN_DIR, baseName: KILO_PLUGIN_ENTRY_BASENAME },

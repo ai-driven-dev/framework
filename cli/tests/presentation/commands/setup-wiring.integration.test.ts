@@ -370,8 +370,7 @@ describe("aidd setup — the help surface", () => {
       "Global:",
       "  Pass --ide claude,codex,copilot,cursor,opencode (one or more, no editor) and --plugins all, recommended, none or names.",
       "  claude, codex, copilot enable the plugins through their own CLI, which must be on PATH.",
-      "  codex gets their files in ~/.codex, opencode gets their files in ~/.config/opencode.",
-      "  cursor only records the framework source.",
+      "  codex gets their files in ~/.codex, cursor gets their files in ~/.cursor/plugins/local, opencode gets their files in ~/.config/opencode.",
       "  `aidd sync --global` refreshes them from the framework source.",
     ]);
   });
