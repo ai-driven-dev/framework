@@ -40,7 +40,7 @@ describe("aidd-ui bump", () => {
     it("raises each reached element and screen by one, proposed, with its History row, and lists the files it changed", () => {
       const { code, report, err } = change("color.action.default");
       assert.deepEqual([code, err], [0, ""]);
-      assert.deepEqual(report, { changed: REACHED });
+      assert.deepEqual(report, { changed: REACHED, left: [{ id: "old-button", why: "deprecated" }] });
       for (const id of ["components/button", "components/dialog", "components/search-field", "screens/home"]) {
         const record = read(`${UI}/${id}.md`);
         assert.ok(record.includes("\nversion: 2\n"), id);
@@ -62,6 +62,31 @@ describe("aidd-ui bump", () => {
       for (const [name, bytes] of Object.entries(before)) assert.equal(read(`${UI}/${name}.md`), bytes, name);
     });
 
+    it("raises an element once per task: a second run for the same task leaves it, and says so", () => {
+      change("color.action.default");
+      const again = change("color.action.default");
+      assert.deepEqual(again.report, { changed: [], left: ["button", "dialog", "home", "search-field"].map((id) => ({ id, why: "already raised for this task" })).concat([{ id: "old-button", why: "deprecated" }]).sort((a, b) => (a.id < b.id ? -1 : 1)) });
+      assert.ok(read(`${UI}/components/button.md`).includes("\nversion: 2\n"));
+      assert.equal(read(`${UI}/reviews/first-pass.md`).split("| home | default | 2 | pending | |").length, 2);
+    });
+
+    it("raises it again for another task", () => {
+      change("color.action.default");
+      bump("--task", "aidd_docs/tasks/other", "--change", "again", "color.action.default");
+      assert.ok(read(`${UI}/components/button.md`).includes("\nversion: 3\n"));
+    });
+
+    it("keeps the line ends of a record and of a review written with CRLF, the lines it sets and inserts included", () => {
+      const crlf = (name) => fs.writeFileSync(path.join(tmp, name), read(name).replace(/\n/g, "\r\n"));
+      crlf(`${UI}/components/button.md`);
+      crlf(`${UI}/reviews/first-pass.md`);
+      change("color.action.default");
+      for (const name of ["components/button", "reviews/first-pass"]) assert.equal(/[^\r]\n/.test(read(`${UI}/${name}.md`)), false, name);
+      assert.ok(read(`${UI}/components/button.md`).includes("\r\nversion: 2\r\n"));
+      assert.ok(read(`${UI}/reviews/first-pass.md`).includes("| home | default | 2 | pending | |\r\n"));
+      assert.equal(/\r/.test(read(`${UI}/components/dialog.md`)), false);
+    });
+
     it("keeps the code links of what it raises, and an element no ref reaches as it was", () => {
       change("space.md");
       assert.ok(read(`${UI}/components/button.md`).includes("code: src/ui/Button.tsx#Button@1\n"));
@@ -70,12 +95,28 @@ describe("aidd-ui bump", () => {
   });
 
   describe("a breaking change", () => {
-    it("raises a deprecated element too, as breaking, keeping its status", () => {
-      const { report } = bump("--task", "aidd_docs/tasks/rename", "--change", "action colour renamed", "--breaking", "color.action.default");
+    const rename = (...refs) => bump("--task", "aidd_docs/tasks/rename", "--change", "action colour renamed", "--breaking", ...refs);
+
+    it("raises a deprecated element citing the token, as breaking, keeping its status", () => {
+      const { report } = rename("color.action.default");
       assert.deepEqual(report.changed, [`${UI}/components/button.md`, `${UI}/components/dialog.md`, `${UI}/components/old-button.md`, `${UI}/components/search-field.md`, `${UI}/reviews/first-pass.md`, `${UI}/screens/home.md`]);
+      assert.deepEqual(report.left, []);
       const old = read(`${UI}/components/old-button.md`);
       assert.ok(old.includes("\nversion: 3\n") && old.includes("\nstatus: deprecated\n"));
       assert.ok(old.includes("| 3 | action colour renamed | yes | aidd_docs/tasks/rename |"));
+    });
+
+    it("raises a deprecated element that reaches the token through an element it uses", () => {
+      edit(tmp, `${UI}/components/old-button.md`, "uses: []", "uses: [button]");
+      edit(tmp, `${UI}/components/old-button.md`, "tokens: [color.action.default]", "tokens: []");
+      assert.ok(rename("color.action.default").report.changed.includes(`${UI}/components/old-button.md`));
+    });
+
+    it("leaves a deprecated element when only an element it uses changes", () => {
+      edit(tmp, `${UI}/components/old-button.md`, "uses: []", "uses: [button]");
+      const { report } = rename("button");
+      assert.equal(report.changed.includes(`${UI}/components/old-button.md`), false);
+      assert.deepEqual(report.left, [{ id: "old-button", why: "deprecated" }]);
     });
   });
 

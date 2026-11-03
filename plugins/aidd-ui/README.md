@@ -104,7 +104,7 @@ node <plugin>/hooks/aidd-ui.cjs bump --task <aidd_docs/tasks/…> --change "<tex
 | `tokens` | writes `aidd_docs/ui/tokens.css` and prints its path; writes nothing and exits 1 while a token has an error or a composite token has no raw CSS |
 | `impact` | prints as JSON the `tokens`, the tokens that hold a reached token's value in some context without citing it (`same-value`), and the `elements`, `screens`, `journeys`, `renders` and `code` files a change to those tokens or elements reaches, each sorted; a token is named by its path or its CSS name, and any token reached adds the `code-tokens` files to `code`; a name that is neither exits 2 |
 | `extract` | writes the token files from the `code-tokens` files and prints `{"written": […], "left": [{file, line, name, why}]}`, the same bytes on a second run; exits 1 with a message when `system.md` or its `code-tokens` are missing, a file is unreadable, or `tokens.json` exists and `--force` is absent |
-| `bump` | raises the versions a change to those refs reaches and prints `{"changed": […]}`; exits 2 with a message, before any write, on an unknown ref, a task outside `aidd_docs/tasks/`, a change that is empty or holds a pipe or a line break, or a record it cannot raise |
+| `bump` | raises the versions a change to those refs reaches and prints `{"changed": […], "left": [{id, why}]}`, `left` naming each element reached and not raised, `deprecated` or `already raised for this task`; exits 2 with a message, before any write, on an unknown ref, a task outside `aidd_docs/tasks/`, a change that is empty or holds a pipe or a line break, or a record it cannot raise |
 
 ### Extraction
 
@@ -133,7 +133,7 @@ node <plugin>/hooks/aidd-ui.cjs bump --task <aidd_docs/tasks/…> --change "<tex
 
 ### Bump
 
-For each element or screen the refs reach: `version` +1, `status: proposed`, a History row `| <version> | <change> | yes or no | <task> |`. A deprecated one is left, or with `--breaking` raised as breaking and still deprecated. Each review naming a raised screen gets, in its `## Verdicts`, one `pending` row per state at the new version. `code` links, `system.md` and `validated` are untouched.
+For each element or screen the refs reach: `version` +1, `status: proposed`, a History row `| <version> | <change> | yes or no | <task> |`. A deprecated one is left, or with `--breaking` raised as breaking and still deprecated when a ref is a token it cites, directly or through what it uses; an element whose latest History row already names the task is not raised again. Each review naming a raised screen gets, in its `## Verdicts`, one `pending` row per state at the new version. `code` links, `system.md` and `validated` are untouched.
 
 ## Validation
 
@@ -166,9 +166,9 @@ Rules: records R1 to R17, history H1 to H8, tokens T1 to T10, renders V1 to V8, 
 - With 3 or more themes, a nested region inherits the outer theme's values for the tokens its own theme does not redefine.
 - H8 compares a breakpoint's values over the base, not inside each theme, so a theme value citing a token a breakpoint redefines is not followed.
 - Composite tokens are checked for a `$value`, not for its shape, and reach `tokens.css` only as raw CSS.
-- `impact` leaves reviews out of its report; `same-value` compares resolved CSS text, so two spellings of one colour differ, and lists the target of a reached alias, which nothing cites.
+- `impact` leaves reviews out of its report; `same-value` compares resolved CSS text, so two spellings of one colour differ.
 - `extract` keeps the last of a custom property declared twice in a context, merges two files of one platform the same way, reads a script key `colorBGPrimary` as `color-b-g-primary`, writes a value with `!important` as raw CSS with it, and replaces the files it writes without removing one an earlier run left.
-- `bump` rewrites a record it raises with `\n` line ends, and does not see a review that lives in a task folder.
+- `bump` does not see a review that lives in a task folder.
 - A nested region cannot switch back to the first platform: tokens.css writes no block for it, nor for a platform that redefines no token. A region of the base theme inside a platform region restores the base values, and a platform region inside a theme region gets its own block only, so a token both redefine takes the platform's value whatever `resolutionOrder` says.
 - A loop that only two contexts of two modifiers form together, and breakpoints that match at once with a pair of contexts, are not named: a pair resolves one breakpoint at a time.
 - The committed baseline of H8 is `HEAD`: without `git`, a repository, a commit or the committed file, the rule is silent, and committing an edit without raising the version hides it. Any other failure of `git`, such as a repository it refuses to read or its five-second timeout, is one H8 warning on `aidd_docs/ui`, naming the failure. A run asks `git` once which files changed, then reads only those, plus the committed record of an element using a token whose value changed; C4 asks at most twice more when it finds a literal, naming each file that holds one.

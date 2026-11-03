@@ -186,7 +186,12 @@ describe("aidd-ui impact", () => {
       assert.deepEqual(sameValue("color.brand.primary"), []);
     });
 
-    it("lists the target a reached alias points at, since nothing cites the reached token there", () => {
+    it("does not list what a reached token cites, an alias's target or the target's own, but lists a sibling alias of it", () => {
+      assert.deepEqual(sameValue("color.action.default"), ["color.text.default"]);
+      editTokens(tmp, (tree) => {
+        tree.misc = { base: { $type: "color", $value: COLOUR }, brand: { $value: "{misc.base}" } };
+        tree.color.action.default.$value = "{misc.brand}";
+      });
       assert.deepEqual(sameValue("color.action.default"), ["color.brand.primary", "color.text.default"]);
     });
 

@@ -57,13 +57,23 @@ function closure(seed, candidates, keyOf, citesOf) {
   return found;
 }
 
-/** The tokens outside `reached` that hold the value of one inside it, in the base or in the same
- * theme, platform or breakpoint, sorted: none of them cites a reached token, or it would be in it. */
-function sameValue(project, reachedTokens) {
+/** The tokens outside `reachedTokens` that hold the value of one inside it, in the base or in the same
+ * theme, platform or breakpoint, sorted: none of them cites a reached token, or it would be in it,
+ * and none is cited by one, an alias's target being the value it was given. */
+function sameValue(project, reachedTokens, cites) {
+  const upstream = new Set();
+  const todo = [...reachedTokens];
+  while (todo.length) {
+    for (const cited of cites.get(todo.pop()) ?? []) {
+      if (upstream.has(cited)) continue;
+      upstream.add(cited);
+      todo.push(cited);
+    }
+  }
   const found = new Set();
   for (const values of resolvedValues(project).values()) {
     const held = new Set([...reachedTokens].map((name) => values.get(name)).filter((value) => value !== undefined));
-    for (const [name, value] of values) if (!reachedTokens.has(name) && held.has(value)) found.add(name);
+    for (const [name, value] of values) if (!reachedTokens.has(name) && !upstream.has(name) && held.has(value)) found.add(name);
   }
   return [...found].sort();
 }
@@ -85,7 +95,7 @@ function usages(project, given) {
   const idsOf = (kinds) => reachedRecords.filter((record) => kinds.includes(fm(record).kind)).map((record) => fm(record).id).sort();
   return {
     tokens: [...tokens].sort(),
-    "same-value": sameValue(project, tokens),
+    "same-value": sameValue(project, tokens, cites),
     ...Object.fromEntries(Object.entries(REPORT_KINDS).map(([key, kinds]) => [key, idsOf(kinds)])),
     renders: reachedRecords.map(renderOf).filter((file) => project.renders.includes(file)).sort(),
     code: [...new Set([...reachedRecords.flatMap((record) => codeFilesOf(fm(record).code)), ...(tokens.size ? codeTokens(project) : [])].filter(Boolean))].sort(),
