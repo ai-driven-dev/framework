@@ -461,6 +461,15 @@ describe("aidd-ui validator entries", () => {
       });
     });
 
+    it("names an unreadable file of a techno with no reader once, not binary for want of a read", () => {
+      fs.symlinkSync(path.join(tmp, "src/ui"), path.join(tmp, "src/ui/Folder.swift"));
+      assert.deepEqual(validate(tmp), {
+        code: 1,
+        out: ["⚠ src/ui/Folder.swift: no record links it and no ignore covers it (C3)", "✗ src/ui/Folder.swift: unreadable"],
+        err: "",
+      });
+    });
+
     it("names an unreadable folder of the design system instead of crashing", { skip: process.getuid?.() === 0 }, () => {
       const folder = path.join(tmp, UI, "journeys");
       fs.chmodSync(folder, 0o000);

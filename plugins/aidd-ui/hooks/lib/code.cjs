@@ -19,9 +19,16 @@ const IGNORE_KEY = "ignore";
 const TEST_FOLDER = /(?:^|\/)(?:__tests__|__mocks__)\//;
 const TEST_NAME = /\.(?:test|spec)\.[^/]+$/;
 const STYLESHEET_EXTENSIONS = [".css", ".scss"];
-const ASTRO_EXTENSION = ".astro";
-const SCRIPT_EXTENSIONS = [".js", ".jsx", ".ts", ".tsx", ".vue", ".svelte", ASTRO_EXTENSION];
-const SCANNED_EXTENSIONS = [...STYLESHEET_EXTENSIONS, ...SCRIPT_EXTENSIONS, ".html"];
+const ASTRO_EXTENSION = ".astro"; // its style blocks are read too
+const RAW_EXTENSIONS = [...STYLESHEET_EXTENSIONS, ".html"]; // read whole: styles and markup are not strings
+// Under a code root these hold no UI code: documents, data, images and fonts, and any file with a NUL byte.
+const SKIPPED_EXTENSIONS = [
+  ".md", ".mdx", ".txt", ".rst", ".adoc",
+  ".json", ".yaml", ".yml", ".csv", ".toml", ".xml",
+  ".png", ".jpg", ".jpeg", ".gif", ".webp", ".avif", ".ico", ".bmp", ".svg",
+  ".woff", ".woff2", ".ttf", ".otf", ".eot",
+];
+const SNIFFED_BYTES = 8000;
 const PLATFORMS_KEY = "platforms";
 const ROOT_PLATFORM = /^([\w-]+)=(.*)$/; // web=src/ui
 const LINK_PLATFORM = /^([\w-]+)=(?=package:)/; // web=package:name#Export@1, the only link a root cannot place
@@ -100,20 +107,39 @@ function codeTree(project) {
   return project.codeTree;
 }
 
-/** Every file under a code root that no `ignore` prefix covers, relative to the project root. */
-function codeFiles(project) {
-  const tree = codeTree(project);
-  return tree.files.filter((file) => !tree.ignore.some((prefix) => isUnder(file, prefix)));
+/** Whether the first bytes of a file hold a NUL, as a binary file does; false when it cannot be read,
+ * which the loader reports once. */
+function holdsNul(project, file) {
+  let descriptor;
+  try {
+    descriptor = fs.openSync(path.join(project.root, file), "r");
+    const head = Buffer.alloc(SNIFFED_BYTES);
+    return head.subarray(0, fs.readSync(descriptor, head, 0, SNIFFED_BYTES, 0)).includes(0);
+  } catch {
+    return false;
+  } finally {
+    if (descriptor !== undefined) fs.closeSync(descriptor);
+  }
 }
 
-const scanned = (project, extensions) => codeFiles(project).filter((file) => extensions.includes(path.extname(file)));
+/** Whether a file is code to read: not a document, data, image or font, and not binary. */
+const isRead = (project, file) => !SKIPPED_EXTENSIONS.includes(path.extname(file)) && !holdsNul(project, file);
 
-/** A code file's text as the literal patterns read it: scripts keep only their strings, and an
- * Astro file its style blocks too. */
+/** Every file to read under a code root that no `ignore` prefix covers, relative to the project root. */
+function codeFiles(project) {
+  const tree = codeTree(project);
+  tree.read ??= tree.files.filter((file) => !tree.ignore.some((prefix) => isUnder(file, prefix))).filter((file) => isRead(project, file));
+  return tree.read;
+}
+
+const scanned = (project, extensions) => codeFiles(project).filter((file) => !extensions || extensions.includes(path.extname(file)));
+
+/** A code file's text as the literal patterns read it: styles and markup whole, an Astro file its
+ * strings and style blocks, any other file its strings only, since a colour in code lives in one. */
 function searchable(project, file) {
   const source = text(project, file) ?? "";
   if (path.extname(file) === ASTRO_EXTENSION) return styled(source, stringsOnly);
-  return SCRIPT_EXTENSIONS.includes(path.extname(file)) ? stringsOnly(source) : source;
+  return RAW_EXTENSIONS.includes(path.extname(file)) ? source : stringsOnly(source);
 }
 
 /** What is wrong with a link's version, or null: written, an integer, and not above the record's. */
@@ -166,7 +192,7 @@ function coverageProblems(project) {
     .map((file) => ({ severity: WARNING, file, message: "no record links it and no ignore covers it" }));
 }
 
-const literalProblems = (pattern, extensions, applies = () => true) => (project) =>
+const literalProblems = (pattern, extensions = null, applies = () => true) => (project) =>
   applies(project)
     ? scanned(project, extensions)
         .filter((file) => !isTest(file))
@@ -177,7 +203,7 @@ const literalProblems = (pattern, extensions, applies = () => true) => (project)
  * its file is as HEAD holds it: then it is existing debt, a warning, since nothing in this change
  * wrote it. */
 function colourProblems(project) {
-  const found = literalProblems(PATTERNS.colour, SCANNED_EXTENSIONS)(project);
+  const found = literalProblems(PATTERNS.colour)(project);
   if (!found.length) return [];
   const uncleared = unclearedByHead(project, [...new Set(found.map((each) => each.file))]);
   return found.map((each) => (uncleared.has(each.file) ? { ...each, message: `${each.message} (counted as new: ${uncleared.get(each.file)})` } : { ...each, severity: WARNING }));

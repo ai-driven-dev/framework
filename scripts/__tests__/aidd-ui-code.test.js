@@ -379,6 +379,54 @@ describe("aidd-ui code link", () => {
     });
   });
 
+  describe("code of any techno", () => {
+    const CARD = "src/ui/Card.swift";
+    const card = (body) => {
+      put(tmp, CARD, body);
+      linkSearch(`${CARD}#Card@1`);
+    };
+    const RED = (line) => `${CARD}: line ${line}: colour literal "#ff0000", use a token${NO_COMMIT}`;
+
+    it("finds a colour literal in a string of a file it has no reader for, with its line", () => {
+      card('struct Card {}\nlet c = "#ff0000"\n');
+      assert.deepEqual(problems(), [RED(2)]);
+    });
+
+    it("leaves a colour in a comment of such a file alone", () => {
+      card("struct Card {}\n// was #ff0000\n/* and #ff0000 */\n");
+      assert.deepEqual(problems(), []);
+    });
+
+    it("does not find a colour written as a number, a stated limit", () => {
+      card("struct Card {}\nlet c = Color(0xFF336699)\n");
+      assert.deepEqual(problems(), []);
+    });
+
+    it("lists such a file when no record links it", () => {
+      put(tmp, CARD, "struct Card {}\n");
+      assert.deepEqual(problems(), [`${CARD}: no record links it and no ignore covers it`]);
+    });
+
+    const SKIPPED = {
+      documents: [".md", ".mdx", ".txt", ".rst", ".adoc"],
+      data: [".json", ".yaml", ".yml", ".csv", ".toml", ".xml"],
+      images: [".png", ".jpg", ".jpeg", ".gif", ".webp", ".avif", ".ico", ".bmp", ".svg"],
+      fonts: [".woff", ".woff2", ".ttf", ".otf", ".eot"],
+    };
+    for (const [kind, extensions] of Object.entries(SKIPPED)) {
+      it(`reads no ${kind} file: neither covered nor scanned`, () => {
+        for (const extension of extensions) put(tmp, `src/ui/skipped${extension}`, '{"color": "#ff0000"}\n');
+        assert.deepEqual(problems(), []);
+      });
+    }
+
+    it("reads no file holding a NUL byte, whatever its extension", () => {
+      fs.writeFileSync(path.join(tmp, "src/ui/blob.bin"), Buffer.from([0x89, 0x00, ...Buffer.from('"#ff0000"')]));
+      fs.writeFileSync(path.join(tmp, "src/ui/Compiled.swift"), Buffer.from([0x00, ...Buffer.from('"#ff0000"')]));
+      assert.deepEqual(problems(), []);
+    });
+  });
+
   describe("C5 one record per file", () => {
     it("compares a link without its version: two versions of one file are still one file", () => {
       edit(tmp, BUTTON, "\nversion: 1\n", "\nversion: 2\n");
