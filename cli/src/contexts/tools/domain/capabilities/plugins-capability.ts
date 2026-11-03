@@ -1,7 +1,6 @@
 import { CapabilityConfigError } from "../../../../kernel/errors.js";
 import type { FlatHooksLoaderEntry } from "../../../../kernel/materialization/flat-paths.js";
-import type { ProjectHooksFormat } from "../formats/project-hooks-format.js";
-import type { HooksContentFormat } from "../hooks-format.js";
+import type { HooksContentFormat, ProjectHooksFormat } from "../hooks-format.js";
 import type { MarketplaceSettings } from "../marketplace-settings.js";
 import type { PluginTranslationMode } from "../plugin-translation-mode.js";
 

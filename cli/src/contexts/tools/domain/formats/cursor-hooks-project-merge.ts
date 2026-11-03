@@ -7,8 +7,8 @@
 
 import { rewriteClaudeRootInJson } from "../../../../kernel/materialization/claude-root-path-rewrite.js";
 import { genericFlatHooksScriptPath } from "../../../../kernel/materialization/flat-paths.js";
+import type { ProjectHookEntry, ProjectHooksFormat } from "../hooks-format.js";
 import { mergeCursorFlatHooks } from "./flat-hooks-merge.js";
-import type { ProjectHookEntry, ProjectHooksFormat } from "./project-hooks-format.js";
 
 const HOOKS_PREFIX = "hooks/";
 const CURSOR_HOOKS_DIR = ".cursor/hooks/";

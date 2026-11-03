@@ -5,7 +5,7 @@ import type { Hasher } from "../../../../kernel/ports/hasher.js";
 import type { AiToolId } from "../../../../kernel/tool.js";
 import type { MarketplaceRegistry } from "../../../distribution/domain/ports/marketplace-registry.js";
 import type { PluginFetcher } from "../../../distribution/domain/ports/plugin-fetcher.js";
-import type { ToolConfig } from "../../../tools/domain/registry.js";
+import { projectHooksDeliveryOf, type ToolConfig } from "../../../tools/domain/registry.js";
 import { PluginContentTranslator } from "../../../translate/domain/content-translator.js";
 import type { PluginDistribution } from "../../../translate/domain/plugin-distribution.js";
 import type { Manifest } from "../../domain/manifest.js";
@@ -54,7 +54,11 @@ export class ApplyPluginFilesUseCase {
     const localPath = await this.pluginFetcher.fetch(options.plugin.source, options.cacheDir);
     const dist = await this.pluginDistributionReader.read(localPath);
     const translator = this.resolveTranslator(options.toolConfig);
-    if (translator !== null && options.plugin.marketplace !== undefined) {
+    if (
+      translator !== null &&
+      (options.plugin.marketplace !== undefined ||
+        (!options.fileFilter && projectHooksDeliveryOf(options.toolId) !== null))
+    ) {
       return this.restoreViaTranslator(translator, dist, options);
     }
     return this.restoreViaTranslate(dist, options);

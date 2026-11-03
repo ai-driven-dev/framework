@@ -54,6 +54,28 @@ describe("antigravityProjectHooksFormat", () => {
       expect(second).toBe(first);
     });
 
+    it.each([false, true])("keeps enabled: %s when replacing the plugin's handlers", (enabled) => {
+      const { content } = format.merge(USER_HOOKS, MEMORY_HOOKS, "aidd-context");
+      const existing = JSON.parse(content);
+      existing["aidd-context"].enabled = enabled;
+
+      const merged = format.merge(
+        JSON.stringify(existing),
+        MEMORY_HOOKS.replace("update_memory.js", "refresh.js"),
+        "aidd-context"
+      );
+
+      expect(JSON.parse(merged.content)).toEqual({
+        ...JSON.parse(USER_HOOKS),
+        "aidd-context": {
+          enabled,
+          SessionStart: [
+            { type: "command", command: "cd .. && node ./.agents/hooks/aidd-context/refresh.js" },
+          ],
+        },
+      });
+    });
+
     it("refuses a file it cannot parse rather than overwriting it", () => {
       expect(() => format.merge("{ not json", MEMORY_HOOKS, "aidd-context")).toThrow();
     });
@@ -105,6 +127,16 @@ describe("antigravityProjectHooksFormat", () => {
   });
 
   describe("contributedEntries", () => {
+    it.each([false, true])("reads handlers when the named hook has enabled: %s", (enabled) => {
+      const { content } = format.merge(null, MEMORY_HOOKS, "aidd-context");
+      const existing = JSON.parse(content);
+      existing["aidd-context"].enabled = enabled;
+
+      expect(format.contributedEntries(JSON.stringify(existing), "aidd-context")).toEqual(
+        format.contributedEntries(content, "aidd-context")
+      );
+    });
+
     it("lists the plugin's handlers with their event, and nothing of the user's", () => {
       const { content } = format.merge(USER_HOOKS, MEMORY_HOOKS, "aidd-context");
 

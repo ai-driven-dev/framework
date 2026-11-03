@@ -1,6 +1,6 @@
 import { rewriteClaudeRootInJson } from "../../../../../kernel/materialization/claude-root-path-rewrite.js";
 import { genericFlatHooksScriptPath } from "../../../../../kernel/materialization/flat-paths.js";
-import type { ProjectHookEntry, ProjectHooksFormat } from "../../formats/project-hooks-format.js";
+import type { ProjectHookEntry, ProjectHooksFormat } from "../../hooks-format.js";
 import { ANTIGRAVITY_HOOKS_DIR } from "./antigravity-paths.js";
 
 const HOOKS_PREFIX = "hooks/";
@@ -9,7 +9,11 @@ const MAPPED_EVENTS = new Set(["SessionStart"]);
 // agy runs a workspace hook through a shell from `<repo>/.agents`, and rejects nested groups.
 const FROM_REPO_ROOT = "cd .. && ";
 
-type NamedHooks = Record<string, Record<string, ProjectHookEntry[]>>;
+type NamedHook = {
+  enabled?: boolean;
+  [key: string]: ProjectHookEntry[] | boolean | undefined;
+};
+type NamedHooks = Record<string, NamedHook>;
 type ClaudeHooks = { hooks?: Record<string, { hooks?: ProjectHookEntry[] }[]> };
 
 function scriptPath(pluginName: string, hooksRelativePath: string): string {
@@ -59,17 +63,30 @@ function serialize(hooks: NamedHooks): string {
 
 export const antigravityProjectHooksFormat: ProjectHooksFormat = {
   merge(existingJson, pluginHooksJson, pluginName) {
-    const kept = existingJson === null ? {} : withoutPlugin(existingJson, pluginName);
+    const { [pluginName]: previous, ...kept } =
+      existingJson === null ? {} : (JSON.parse(existingJson) as NamedHooks);
     const { events, warnings } = convert(pluginHooksJson, pluginName);
-    const merged = Object.keys(events).length > 0 ? { ...kept, [pluginName]: events } : kept;
+    const merged =
+      Object.keys(events).length > 0
+        ? {
+            ...kept,
+            [pluginName]: {
+              ...(previous?.enabled === undefined ? {} : { enabled: previous.enabled }),
+              ...events,
+            },
+          }
+        : kept;
     return { content: serialize(merged), warnings };
   },
   unmerge: (existingJson, pluginName) => serialize(withoutPlugin(existingJson, pluginName)),
   contributedEntries(content, pluginName) {
-    const events = (JSON.parse(content) as NamedHooks)[pluginName] ?? {};
-    return Object.entries(events).flatMap(([event, entries]) =>
-      entries.map((entry) => ({ event, entry }))
-    );
+    const { enabled: _enabled, ...events } = (JSON.parse(content) as NamedHooks)[pluginName] ?? {};
+    return Object.entries(events).flatMap(([event, entries]) => {
+      if (!Array.isArray(entries)) {
+        throw new Error(`Antigravity hook '${pluginName}.${event}' must be an array.`);
+      }
+      return entries.map((entry) => ({ event, entry }));
+    });
   },
   isEmpty: (content) => Object.keys(JSON.parse(content) as NamedHooks).length === 0,
   scriptPath,

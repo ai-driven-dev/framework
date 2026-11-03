@@ -54,6 +54,33 @@ async function editEntry(test: Env): Promise<void> {
 }
 
 describe("E2E: antigravity hooks the user edited after setup", () => {
+  it("keeps a disabled AIDD hook disabled through sync and removes it on clean", async () => {
+    const test = await createTestEnv("antigravity-disabled-hook");
+    try {
+      const hooks = await installWithUserLintHook(test);
+      const hooksFile = join(test.projectDir, ".agents/hooks.json");
+      const disabled = {
+        ...hooks,
+        [PLUGIN]: { ...(hooks[PLUGIN] as object), enabled: false },
+        lint: LINT_HOOK,
+      };
+      await writeFile(hooksFile, JSON.stringify(disabled));
+
+      for (const args of [["sync"], ["sync", "--force"]]) {
+        const sync = await runCli(args, test.projectDir, test.fakeHome);
+        expect(sync.exitCode, sync.stderr).toBe(0);
+        expect(await readHooks(test)).toEqual(disabled);
+      }
+
+      const clean = await runCli(["clean", "--force"], test.projectDir, test.fakeHome);
+      expect(clean.exitCode, clean.stderr).toBe(0);
+      expect(await readHooks(test)).toEqual({ lint: LINT_HOOK });
+      expect(existsSync(join(test.projectDir, SCRIPT))).toBe(false);
+    } finally {
+      await test.cleanup();
+    }
+  });
+
   it("records a project-delivered hook script once, under the hooks provenance only", async () => {
     const test = await createTestEnv("antigravity-hook-owner");
     try {
