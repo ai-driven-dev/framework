@@ -2,7 +2,7 @@
 
 Which AI tools the project uses, and whether each has its memory wired. For the state block's AI-tools line.
 
-A tool is used when its own dir exists, or when a file only that tool reads exists. A file several tools read (`AGENTS.md`) is a wiring target, never a detection signal.
+Prefer the project's declared tools and AIDD manifest. Use tool-specific paths as hints; shared `AGENTS.md` and `.agents/` paths are not proof of a host. Ask before wiring an ambiguous target.
 
 | Tool     | Used when                                                                            | Wired when this file has the block |
 | -------- | ------------------------------------------------------------------------------------ | ---------------------------------- |

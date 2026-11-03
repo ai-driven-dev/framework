@@ -13,7 +13,7 @@
 
 Copilot `<name>` drops the slug's numeric prefix: category `01-standards`, slug `1-local-names` → `01-local-names.instructions.md`.
 
-Antigravity reads only the direct `.md` children of `.agents/rules/`, so it drops the category folder and keeps the slug, e.g. `1-local-names.md`; the slug's category digit keeps that flat name unique. Measured, `agy` truncates a rule file near 23 to 25 KB, so a rendered Antigravity rule over 24,000 bytes refuses the request before writes. Whether `agy` activates a `glob` rule only on matching files is unmeasured.
+The writer refuses Antigravity output over 24,000 bytes. Scoped activation remains unverified in the host.
 
 ## Operations
 

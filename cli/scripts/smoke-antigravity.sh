@@ -15,8 +15,8 @@ CLI="$ROOT/dist/cli.js"
 TURN_SECONDS="${SMOKE_AGY_TIMEOUT:-60}"
 
 SKILL="aidd-context-11-explore"
-AGENT="aidd-dev-executor"
-GHOST_AGENT="aidd-dev-ghost"
+AGENT="aidd-orchestrator-executor"
+GHOST_AGENT="aidd-orchestrator-ghost"
 
 command -v agy >/dev/null 2>&1 || { echo "FATAL: agy not on PATH — install Antigravity CLI and log in"; exit 1; }
 [[ -f "$CLI" ]] || { echo "FATAL: $CLI missing — run 'pnpm build' first"; exit 1; }

@@ -47,6 +47,8 @@ Codex agents are TOML, not markdown. Convert:
 
 ## Detect (which tools are installed)
 
+Resolve tools from project declarations or the AIDD manifest before using directory hints. Shared `AGENTS.md` and `.agents/` paths require host confirmation.
+
 | Signal                            | Tool(s)                               |
 | --------------------------------- | ------------------------------------- |
 | `.claude/` or `CLAUDE.md`         | Claude Code                           |
@@ -55,7 +57,6 @@ Codex agents are TOML, not markdown. Convert:
 | `.codex/`                         | Codex CLI                             |
 | `.github/copilot-instructions.md` | GitHub Copilot                        |
 | `.agents/agents/`, `.agents/rules/` or `.agents/hooks.json` | Antigravity CLI |
-| `AGENTS.md`                       | Cursor, OpenCode, Codex, or Antigravity CLI (list all) |
 
 ## Write targets
 

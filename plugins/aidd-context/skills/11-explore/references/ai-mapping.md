@@ -4,7 +4,7 @@ Where to look for each artifact type per AI tool. Scan-only: the paths and forma
 
 ## Presence signal
 
-A tool is present only when one of its own mapped surfaces below holds a file. A shared parent directory is never a signal by itself. `.agents/skills/` is mapped for both Codex CLI and Antigravity CLI, so alone it is no signal for either.
+Identify tools from project declarations or the AIDD manifest first. The surfaces below are scan hints, not host identity: shared `.agents/` paths may serve several tools. Report ambiguous ownership instead of assigning those files to a host.
 
 ## AI quick map - content artifacts
 
@@ -26,7 +26,7 @@ A tool is present only when one of its own mapped surfaces below holds a file. A
 | OpenCode       | JS/TS module under `.opencode/plugins/` (parse as JS, not JSON)                                | Not supported                |
 | GitHub Copilot | `.github/hooks/*.json` (workspace), `~/.copilot/hooks` (user), `<plugin>/hooks.json` or `<plugin>/hooks/hooks.json` (plugin) | `plugin.json` at plugin root |
 | Codex CLI      | `.codex/hooks.json` (project / user) OR `[hooks]` table in `.codex/config.toml`               | `.codex-plugin/plugin.json`  |
-| Antigravity CLI | `.agents/hooks.json` (project), keyed by hook name                                            | `plugin.json` at plugin root |
+| Antigravity CLI | `.agents/hooks.json` (project), keyed by hook name                                            | Not mapped |
 
 ## MCP config per tool
 
@@ -59,4 +59,4 @@ Where to scan when enumerating installed plugins (not the plugin manifest path i
 | OpenCode       | `~/.config/opencode/plugins/` (global JS/TS modules); `~/.cache/opencode/node_modules/` (npm-installed); project `.opencode/plugins/` |
 | GitHub Copilot | macOS: `~/Library/Application Support/Code/agentPlugins/` ; Linux: `~/.config/Code/agentPlugins/` ; Windows: `%APPDATA%\Code\agentPlugins\` ; CLI-installed: `~/.copilot/installed-plugins/` |
 | Codex CLI      | `~/.codex/plugins/cache/$MARKETPLACE/$PLUGIN/$VERSION/` |
-| Antigravity CLI | Unmeasured: `~/.gemini/config/plugins/<plugin>/` (`agy plugin install`) and project `.agents/plugins/` are assumed, not observed |
+| Antigravity CLI | Not mapped |

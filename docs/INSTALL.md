@@ -124,6 +124,8 @@ npx @ai-driven-dev/cli@latest translate ./framework --to cursor --as flat --out 
 
 Replace `cursor` with your tool: `claude`, `cursor`, `copilot`, `codex`, `opencode`, `kilo` or `antigravity`.
 
+For an Antigravity archive, follow the [Antigravity steps](#antigravity-cli) to preserve existing hooks.
+
 <details>
 <summary>Without Node</summary>
 
@@ -135,6 +137,15 @@ cp -R aidd-framework-<tool>-flat-<version>/. .
 ```
 
 </details>
+
+### Antigravity CLI
+
+1. Extract `antigravity-flat` into an empty directory. Find `.agents/` inside the extracted archive's enclosing folder.
+2. Copy its skills, agents and hook scripts into the matching `.agents/` paths in your project. Resolve any existing-file conflicts before replacing files.
+3. If your project has no `.agents/hooks.json`, copy the archive's file. Otherwise merge its named top-level entries into the existing JSON, preserving user entries. Resolve any same-name conflict explicitly; extraction does not merge JSON files.
+4. Start `agy` in the project.
+
+Codex flat also uses `.agents/skills/`. Removing either tool can delete skills the other still uses.
 
 ## Update
 

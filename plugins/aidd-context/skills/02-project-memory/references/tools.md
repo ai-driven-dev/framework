@@ -12,6 +12,7 @@ The AI tools a project can use.
 | copilot  | `.github/copilot-instructions.md` or `.github/{instructions,agents,skills,prompts}/` | `.github/copilot-instructions.md` |
 
 - A shared `AGENTS.md` is a wiring target, never a detection signal.
+- Resolve shared `.agents/` paths from declared project tools or the AIDD manifest; otherwise ask which tool to wire.
 - Tools sharing a context file wire it once; the block serves them all.
 - A context file carries the block under a `## Memory Management` section, shaped like `assets/templates/AGENTS.md`.
 - An existing context file keeps everything else: add only what is missing.
