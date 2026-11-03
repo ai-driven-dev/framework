@@ -59,18 +59,18 @@ aidd_cli() {
   fi
 }
 
-# A plugin keeps its version across edits to this checkout, so the native hosts would keep the
-# copy they cached: each reload hands them the plugins afresh.
+# A plugin keeps its version across edits to this checkout, so Claude and Codex would keep the
+# copy they cached: each reload hands them the plugins afresh. Copilot loads a local
+# marketplace live, and its uninstall leaves each plugin disabled rather than gone, which the
+# CLI then reads as a ref it does not own, so it is left alone.
 release_native_plugins() {
   local name
   for name in "${targets[@]}"; do
     [ "$HAVE_CLAUDE" = 0 ] || claude plugin uninstall "$name@$MKT" --scope user >/dev/null 2>&1 || true
     [ "$HAVE_CODEX" = 0 ] || codex plugin remove "$name@$MKT" >/dev/null 2>&1 || true
-    [ "$HAVE_COPILOT" = 0 ] || copilot plugin uninstall "$name@$MKT" >/dev/null 2>&1 || true
   done
   [ "$HAVE_CLAUDE" = 0 ] || claude plugin marketplace remove "$MKT" --scope user >/dev/null 2>&1 || true
   [ "$HAVE_CODEX" = 0 ] || codex plugin marketplace remove "$MKT" >/dev/null 2>&1 || true
-  [ "$HAVE_COPILOT" = 0 ] || copilot plugin marketplace remove "$MKT" --force >/dev/null 2>&1 || true
 }
 
 hosts=()
@@ -91,7 +91,9 @@ done
 
 printf '%-22s' "global install"
 release_native_plugins
-output="$(aidd_cli setup --global --source local --path "$FW" --ide "$(IFS=,; echo "${hosts[*]}")" \
+# From HOME, not this checkout: its own .claude/settings.json enables the plugins at project
+# scope, which the host CLIs report and setup --global would refuse as refs it does not own.
+output="$(cd "$HOME" && aidd_cli setup --global --source local --path "$FW" --ide "$(IFS=,; echo "${hosts[*]}")" \
   --plugins all --yes 2>&1)" || {
   echo "FAIL"; printf '%s\n' "$output" >&2
   echo "aidd setup --global failed for ${hosts[*]}." >&2; exit 1

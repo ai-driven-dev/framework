@@ -853,7 +853,7 @@
   {
     "command": "[user-scope-clean] doctor --scope user",
     "exitCode": 0,
-    "stdout": "Nothing registered at user scope yet — run `aidd setup --scope user` first.\n",
+    "stdout": "Nothing registered at user scope yet — run `aidd setup --global` first.\n",
     "stderr": "",
     "filesWritten": [],
     "manifest": null

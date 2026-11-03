@@ -109,14 +109,14 @@ async function runUserScopeDoctor(
   projectRoot: string,
   cmdOptions: DoctorCmdOptions
 ): Promise<void> {
-  // No plugin is tracked at user scope yet — there is nothing `--plugin` could narrow —
-  // so it is refused rather than silently read and discarded.
+  // At user scope doctor checks registrations, not plugin files — there is nothing `--plugin`
+  // could narrow — so it is refused rather than silently read and discarded.
   if (cmdOptions.plugin !== undefined) {
     throw new UserScopeFilterUnsupportedError("--plugin", "doctor --plugin <name>");
   }
   const manifest = await deps.userManifestRepo.load();
   if (manifest === null) {
-    output.success("Nothing registered at user scope yet — run `aidd setup --scope user` first.");
+    output.success("Nothing registered at user scope yet — run `aidd setup --global` first.");
     return;
   }
   const toolId = cmdOptions.tool as ToolId | undefined;
@@ -139,6 +139,7 @@ async function runUserScopeDoctor(
     manifest,
     projectRoot,
     allowedIds,
+    machine: true,
   });
   printScopeIssues(output, "User scope", { issues });
   const healthy = issues.every((i) => i.severity !== "error");

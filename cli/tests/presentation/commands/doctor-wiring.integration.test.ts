@@ -402,6 +402,7 @@ describe("aidd doctor --scope user", () => {
       manifest: expect.anything(),
       projectRoot: PROJECT_ROOT,
       allowedIds: null,
+      machine: true,
     });
     expect(doctorAll).not.toHaveBeenCalled();
   });
@@ -416,7 +417,7 @@ describe("aidd doctor --scope user", () => {
     loadUserManifest.mockResolvedValue(null);
 
     expect(await run("--scope", "user")).toEqual([
-      "Nothing registered at user scope yet — run `aidd setup --scope user` first.",
+      "Nothing registered at user scope yet — run `aidd setup --global` first.",
     ]);
     expect(doctorRegistration).not.toHaveBeenCalled();
   });

@@ -240,7 +240,7 @@ describe("E2E: setup --scope user writes nothing under the project", () => {
       const doctorResult = await runCli(["doctor", "--scope", "user"], projectDir, fakeHome);
       expect(doctorResult.exitCode).toBe(0);
       expect(doctorResult.stdout).toContain("Nothing registered at user scope yet");
-      expect(doctorResult.stdout).toContain("aidd setup --scope user");
+      expect(doctorResult.stdout).toContain("aidd setup --global");
 
       const syncResult = await runCli(["sync", "--scope", "user"], projectDir, fakeHome);
       expect(syncResult.exitCode).toBe(0);
