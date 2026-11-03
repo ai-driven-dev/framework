@@ -10,6 +10,8 @@
 //   impact    prints as JSON what a change to those tokens, by path or CSS name, or elements reaches:
 //             tokens, the tokens holding the same value without citing them, elements, screens, journeys, renders and code
 //             files, each sorted. An unknown ref is named on stderr and exits 2.
+//   bump      raises the versions a change to those refs reaches, and prints as JSON the files it changed. A refusal
+//             before any write exits 2.
 //   extract   writes the token files from the code-tokens files of system.md, and prints as JSON what it wrote and
 //             what it left. Exits 1 with a message when it cannot, or when tokens.json exists and --force is not given.
 const fs = require("node:fs");
@@ -22,6 +24,7 @@ const renders = require("./lib/renders.cjs");
 const code = require("./lib/code.cjs");
 const { usages } = require("./lib/graph.cjs");
 const { extract } = require("./lib/extract.cjs");
+const { bump } = require("./lib/bump.cjs");
 const { parse, Refusal } = require("./lib/args.cjs");
 
 const CHECKS = { records, history, tokens, renders, code };
@@ -85,6 +88,10 @@ function generateTokens([root = process.cwd()]) {
 const ROOT_FLAG = "--root";
 const FORCE_FLAG = "--force";
 const IMPACT_USAGE = `node aidd-ui.cjs impact <id or token>… [${ROOT_FLAG} <dir>]`;
+const TASK_FLAG = "--task";
+const CHANGE_FLAG = "--change";
+const BREAKING_FLAG = "--breaking";
+const BUMP_USAGE = `node aidd-ui.cjs bump ${TASK_FLAG} <aidd_docs/tasks/…> ${CHANGE_FLAG} "<text>" [${BREAKING_FLAG}] <token or id>… [${ROOT_FLAG} <dir>]`;
 const EXTRACT_USAGE = `node aidd-ui.cjs extract [${FORCE_FLAG}] [${ROOT_FLAG} <dir>]`;
 
 /** What the tokens and elements named change, read from the same graph the hook uses. */
@@ -129,11 +136,25 @@ function extractTokens(args) {
   });
 }
 
-const COMMANDS = { validate, tokens: generateTokens, impact, extract: extractTokens };
+/** Raises the versions a change reaches, as the versions rules say. */
+function bumpVersions(args) {
+  const { values, flags, rest, error } = parse(args, { options: [ROOT_FLAG, TASK_FLAG, CHANGE_FLAG], flags: [BREAKING_FLAG] });
+  if (error || !rest.length || values[TASK_FLAG] === undefined || values[CHANGE_FLAG] === undefined) {
+    console.error(`usage: ${BUMP_USAGE}`);
+    return EXIT_USAGE;
+  }
+  return refusing(() => {
+    const done = bump(values[ROOT_FLAG] ?? process.cwd(), { task: values[TASK_FLAG], change: values[CHANGE_FLAG], breaking: flags.has(BREAKING_FLAG), refs: rest });
+    console.log(JSON.stringify(done, null, 2));
+    return EXIT_VALID;
+  });
+}
+
+const COMMANDS = { validate, tokens: generateTokens, impact, extract: extractTokens, bump: bumpVersions };
 
 function main([command, ...args]) {
   if (Object.hasOwn(COMMANDS, command)) return COMMANDS[command](args);
-  console.error(`usage: node aidd-ui.cjs <validate|tokens> [project-root]\n       ${IMPACT_USAGE}\n       ${EXTRACT_USAGE}`);
+  console.error(`usage: node aidd-ui.cjs <validate|tokens> [project-root]\n       ${IMPACT_USAGE}\n       ${EXTRACT_USAGE}\n       ${BUMP_USAGE}`);
   return EXIT_USAGE;
 }
 

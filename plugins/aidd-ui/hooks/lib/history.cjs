@@ -232,4 +232,4 @@ const RULES = {
 /** Every broken history rule, in rule order. */
 const check = checkOf(RULES);
 
-module.exports = { check };
+module.exports = { check, TASKS_DIR };

@@ -188,26 +188,17 @@ describe("aidd-ui 01-system platforms", () => {
 });
 
 describe("aidd-ui 01-system change flow", () => {
-  const FIRST_ROW = "| 1 | created | no | aidd_docs/tasks/ds-init |";
-  const TASK_ROW = "| 2 | new action colour | no | aidd_docs/tasks/recolour |";
-  const FILE_OF = { button: "components/button", dialog: "components/dialog", "search-field": "components/search-field", home: "screens/home" };
   const engine = (...args) => spawnSync(process.execPath, [ENGINE, ...args], { encoding: "utf8" });
 
-  it("takes a token change reaching a screen under review to a design system that validates", () => {
+  it("takes a token change reaching a screen under review to a design system that validates, the engine raising the versions", () => {
     commitAll(tmp);
     const deprecated = fs.readFileSync(path.join(tmp, `${UI}/components/old-button.md`), "utf8");
 
     const report = JSON.parse(engine("impact", "color.action.default", "--root", tmp).stdout);
     assert.deepEqual([report.elements, report.screens], [["button", "dialog", "old-button", "search-field"], ["home"]]);
 
-    for (const id of [...report.elements, ...report.screens].filter((reached) => reached !== "old-button")) {
-      const file = `${UI}/${FILE_OF[id]}.md`;
-      edit(tmp, file, "\nversion: 1\n", "\nversion: 2\n");
-      edit(tmp, file, "status: validated", "status: proposed");
-      edit(tmp, file, FIRST_ROW, `${FIRST_ROW}\n${TASK_ROW}`);
-    }
-    const pending = ["default", "empty", "loading", "error"].map((state) => `| home | ${state} | 2 | pending | |`);
-    edit(tmp, `${UI}/reviews/first-pass.md`, "| home | error | 1 | pending | |", ["| home | error | 1 | pending | |", ...pending].join("\n"));
+    const raised = JSON.parse(engine("bump", "--task", "aidd_docs/tasks/recolour", "--change", "new action colour", "color.action.default", "--root", tmp).stdout);
+    assert.deepEqual(raised.changed.map((file) => path.posix.basename(file)), ["button.md", "dialog.md", "search-field.md", "first-pass.md", "home.md"]);
     editTokens(tmp, (tree) => (tree.color.action.default.$value = { colorSpace: "srgb", components: [0.1, 0.1, 0.1], hex: "#1a1a1a" }));
     assert.equal(engine("tokens", tmp).status, 0);
 
@@ -215,18 +206,9 @@ describe("aidd-ui 01-system change flow", () => {
     assert.equal(fs.readFileSync(path.join(tmp, `${UI}/components/old-button.md`), "utf8"), deprecated);
   });
 
-  it("takes a token rename a deprecated element cites to a design system that validates, once that element is updated too", () => {
+  it("takes a token rename a deprecated element cites to a design system that validates, the engine raising that element too", () => {
     commitAll(tmp);
-    const report = JSON.parse(engine("impact", "color.action.default", "--root", tmp).stdout);
-    const reached = [...report.elements, ...report.screens];
-    for (const id of reached.filter((one) => one !== "old-button")) {
-      const file = `${UI}/${FILE_OF[id]}.md`;
-      edit(tmp, file, "\nversion: 1\n", "\nversion: 2\n");
-      edit(tmp, file, "status: validated", "status: proposed");
-      edit(tmp, file, FIRST_ROW, `${FIRST_ROW}\n| 2 | action colour renamed | yes | aidd_docs/tasks/rename |`);
-    }
-    const pending = ["default", "empty", "loading", "error"].map((state) => `| home | ${state} | 2 | pending | |`);
-    edit(tmp, `${UI}/reviews/first-pass.md`, "| home | error | 1 | pending | |", ["| home | error | 1 | pending | |", ...pending].join("\n"));
+    engine("bump", "--task", "aidd_docs/tasks/rename", "--change", "action colour renamed", "--breaking", "color.action.default", "--root", tmp);
     editTokens(tmp, (tree) => {
       tree.color.action.primary = tree.color.action.default;
       delete tree.color.action.default;
@@ -236,10 +218,6 @@ describe("aidd-ui 01-system change flow", () => {
     edit(tmp, `${UI}/components/old-button.md`, "color.action.default", "color.action.primary");
     edit(tmp, `${UI}/components/old-button.html`, "--color-action-default", "--color-action-primary");
     assert.equal(engine("tokens", tmp).status, 0);
-    assert.deepEqual(validate().out, [`✗ ${UI}/components/old-button.md: edited since its committed version 2, raise its version with a History row (H8)`]);
-
-    edit(tmp, `${UI}/components/old-button.md`, "\nversion: 2\n", "\nversion: 3\n");
-    edit(tmp, `${UI}/components/old-button.md`, "| 2 | deprecated for button | yes | aidd_docs/tasks/retire-old-button |", "| 2 | deprecated for button | yes | aidd_docs/tasks/retire-old-button |\n| 3 | action colour renamed | yes | aidd_docs/tasks/rename |");
     assert.deepEqual(validate(), { code: 0, out: ["VALID"] });
   });
 });
