@@ -182,6 +182,49 @@ describe("ProjectHooksMaterializer", () => {
     });
   });
 
+  it("replaces the plugin's older matcher-less entries on reinstall, leaving another plugin's alone", async () => {
+    const command = `node ./.cursor/hooks/${PLUGIN_NAME}/pre.js`;
+    const foreign = { command: "node ./.cursor/hooks/other-plugin/check.js" };
+    const fs = new InMemoryFileAdapter({
+      [HOOKS_PATH]: JSON.stringify({ version: 1, hooks: { postToolUse: [foreign] } }),
+    });
+    const materializer = new ProjectHooksMaterializer(fs);
+    const first = await materializer.materializeWithProvenance(
+      distWithHooks([SCRIPT, hooksManifest("PostToolUse")]),
+      "cursor",
+      PROJECT_ROOT
+    );
+    expect(JSON.parse(fs.getFile(HOOKS_PATH) ?? "null").hooks.postToolUse).toStrictEqual([
+      foreign,
+      { command },
+    ]);
+    const matched: PluginComponentFile = {
+      relativePath: "hooks/hooks.json",
+      content: JSON.stringify({
+        hooks: {
+          PostToolUse: [
+            {
+              matcher: "Write|Edit|MultiEdit",
+              hooks: [{ type: "command", command: `node ${PLUGIN_ROOT_VAR}/hooks/pre.js` }],
+            },
+          ],
+        },
+      }),
+    };
+
+    await materializer.materializeWithProvenance(
+      distWithHooks([SCRIPT, matched]),
+      "cursor",
+      PROJECT_ROOT,
+      first.projectHooks
+    );
+
+    expect(JSON.parse(fs.getFile(HOOKS_PATH) ?? "null")).toStrictEqual({
+      version: 1,
+      hooks: { postToolUse: [foreign, { command, matcher: "Write|Edit|MultiEdit" }] },
+    });
+  });
+
   it("reports an event the tool cannot map as a hooks skip for this plugin", async () => {
     const fs = new InMemoryFileAdapter();
 

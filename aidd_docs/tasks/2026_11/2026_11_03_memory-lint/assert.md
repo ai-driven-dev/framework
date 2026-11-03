@@ -110,3 +110,14 @@
 | --- | --- | --- |
 | `pnpm exec lefthook run pre-commit --all-files` | 0 | |
 | `pnpm exec lefthook run pre-push` | 0 | |
+
+## Round 11
+
+- Head: `c35ca70a5`
+- Uncommitted changes: yes
+- Verdict: PASS
+
+| Check | Exit | Failure |
+| --- | --- | --- |
+| `pnpm exec lefthook run pre-commit --all-files` | 0 | |
+| `pnpm exec lefthook run pre-push` | 0 | |
