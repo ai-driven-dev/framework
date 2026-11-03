@@ -67,10 +67,15 @@ export function printActivationOutcome(output: CLIOutput, activation: Activation
   for (const e of activation.errors) output.warn(`[${e.scope}] ${e.message}`);
 }
 
-export function printUserScopeSyncOutcome(output: CLIOutput, activated: readonly string[]): void {
-  if (activated.length === 0) {
-    output.success("Nothing to sync — no tool is registered at user scope yet.");
-  } else {
+export function printUserScopeSyncOutcome(
+  output: CLIOutput,
+  activated: readonly string[],
+  refreshed: readonly string[] = []
+): void {
+  if (refreshed.length > 0) output.success(`Refreshed machine files for: ${refreshed.join(", ")}`);
+  if (activated.length > 0) {
     output.success(`Synced native activation for: ${activated.join(", ")}`);
+  } else if (refreshed.length === 0) {
+    output.success("Nothing to sync — no tool is registered at user scope yet.");
   }
 }

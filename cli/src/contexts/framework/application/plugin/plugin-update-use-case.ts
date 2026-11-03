@@ -31,6 +31,9 @@ export interface PluginUpdateOptions {
   toolIds: AiToolId[] | "all";
   projectRoot: string;
   scope?: "project" | "user";
+  /** Re-materialize at the same version: the source changed, not the plugin's version. Read by
+   * the machine-scope update, which `sync --global` drives. */
+  rebuild?: boolean;
 }
 
 export class PluginUpdateUseCase {

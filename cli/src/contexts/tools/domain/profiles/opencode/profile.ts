@@ -33,6 +33,7 @@ import {
   OPENCODE_FLAT_HOOKS_DIR,
   OPENCODE_HOOKS_DIR,
   OPENCODE_PLUGIN_ENTRY_BASENAME,
+  opencodeMachineFilePath,
 } from "./opencode-paths.js";
 
 const DIRECTORY = OPENCODE_DIRECTORY;
@@ -106,6 +107,10 @@ export const opencode: AiTool<
     plugins: new PluginsCapability({
       mode: "flat",
       flatNamespacePrefix: "aidd-",
+      machineFiles: {
+        dir: (homedir) => join(homedir, ".config", "opencode"),
+        map: opencodeMachineFilePath,
+      },
       acceptsHooks: true,
       flatHooksDir: OPENCODE_HOOKS_DIR,
       flatHooksLoaderEntry: {

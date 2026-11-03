@@ -51,6 +51,13 @@ Only `/aidd-orchestrator:01-sdlc` names an agent, by its role (`validator`), so 
 
 Install the `aidd-orchestrator` plugin: `/plugin install aidd-orchestrator@aidd-framework` in Claude Code, or see the [quick start](../README.md#quick-start) for the other tools. The agents come with it, except as a Codex plugin (see [Limits](#-limits)); open a new session so the tool loads them.
 
+For every project on the machine at once, Claude Code, Codex and OpenCode included:
+
+```bash
+aidd setup --global --ide claude,codex,opencode --plugins all
+aidd sync --global   # after a framework update
+```
+
 ## 🧠 Models
 
 No model is pinned. Each host applies its own default for subagents, usually the model of the session that called them. A model you declare in an agent reaches every host in its own format.
@@ -58,7 +65,7 @@ No model is pinned. Each host applies its own default for subagents, usually the
 ## 🚧 Limits
 
 - **Tools:** every agent inherits the calling session's tools and permissions; what it writes is an instruction, not a restriction.
-- **Codex:** a Codex plugin cannot carry agents, so only the flat distribution installs them, in `.codex/agents/`. Codex loads them only in a trusted project.
+- **Codex:** a Codex plugin cannot carry agents, so only the flat distribution installs them, in `.codex/agents/`, and Codex loads them only in a trusted project; `aidd setup --global` puts them in `~/.codex/agents/` instead.
 - **Models:** OpenCode V1 reads the same file but not the `#<effort>` variant.
 - **Updates:** reinstalling replaces the agents still shipped; one removed from the plugin stays where a copy put it until you delete it.
 

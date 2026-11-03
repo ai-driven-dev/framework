@@ -51,6 +51,7 @@ import { PluginSearchUseCase } from "../../contexts/framework/application/plugin
 import { PluginUpdateUseCase } from "../../contexts/framework/application/plugin/plugin-update-use-case.js";
 import { ValidateRecipesUseCase } from "../../contexts/framework/application/recipes/validate-recipes-use-case.js";
 import { RestoreUseCase } from "../../contexts/framework/application/restore/restore-use-case.js";
+import { InstallMachinePluginsUseCase } from "../../contexts/framework/application/setup/install-machine-plugins-use-case.js";
 import { ProjectContextDetectorUseCase } from "../../contexts/framework/application/setup/project-context-detector-use-case.js";
 import { SetupMachineScopeUseCase } from "../../contexts/framework/application/setup/setup-machine-scope-use-case.js";
 import { SetupMarketplaceSourceUseCase } from "../../contexts/framework/application/setup/setup-marketplace-source-use-case.js";
@@ -485,13 +486,6 @@ export async function createDeps(
     releaseResolver,
     userSourceReferences
   );
-  const setupMachineScopeUseCase = new SetupMachineScopeUseCase(
-    userManifestRepo,
-    setupMarketplaceRegistration,
-    marketplaceSyncSettingsUseCase,
-    currentVersionProvider
-  );
-  const statusUseCase = new StatusUseCase(fs, manifestRepo, hasher, detectPluginDriftUseCase);
   // Restore re-materializes through the build pipeline, matching what install wrote:
   // rewriting raw content instead would itself be drift.
   const builtMaterializationDeps = {
@@ -499,6 +493,26 @@ export async function createDeps(
     marketplaceRegistry,
     homedir,
   };
+  // One writer for a machine-scope plugin's files, whether setup installs it or update rebuilds it.
+  const userPluginFileUpdater = new UserPluginFileUpdater(
+    fs,
+    new PluginDistributionLoader(pluginFetcher, pluginDistributionReader),
+    hasher,
+    builtMaterializationDeps
+  );
+  const setupMachineScopeUseCase = new SetupMachineScopeUseCase(
+    userManifestRepo,
+    setupMarketplaceRegistration,
+    marketplaceSyncSettingsUseCase,
+    currentVersionProvider,
+    new InstallMachinePluginsUseCase(
+      marketplaceRegistry,
+      resolveMarketplaceUseCase,
+      userPluginFileUpdater,
+      logger
+    )
+  );
+  const statusUseCase = new StatusUseCase(fs, manifestRepo, hasher, detectPluginDriftUseCase);
   const pluginUpdateUseCase = new PluginUpdateUseCase(
     fs,
     manifestRepo,
@@ -509,12 +523,7 @@ export async function createDeps(
   );
   const userPluginUpdateUseCase = new UserPluginUpdateUseCase(
     userManifestRepo,
-    new UserPluginFileUpdater(
-      fs,
-      new PluginDistributionLoader(pluginFetcher, pluginDistributionReader),
-      hasher,
-      builtMaterializationDeps
-    ),
+    userPluginFileUpdater,
     logger,
     nativeHostRegistrationGate
   );

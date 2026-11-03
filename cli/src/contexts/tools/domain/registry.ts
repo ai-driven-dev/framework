@@ -16,6 +16,7 @@ import {
 import type { ToolBuildContract } from "./build-contract.js";
 import type {
   EnvironmentReader,
+  MachineFiles,
   NativeActivation,
   PluginsCapability,
 } from "./capabilities/plugins-capability.js";
@@ -117,13 +118,22 @@ export function pluginEnablementIsMachineGlobal(toolId: ToolId): boolean {
   return nativeActivationOf(toolId)?.scopeArgs === undefined;
 }
 
-/** Whether `--scope user` has anywhere to point this tool: either it drives its own CLI
- * machine-wide, or it installs a plugin's files into a user-scope directory. `false` for a
- * tool declaring neither — opencode today, with no such directory and no CLI to drive. */
+/** Whether `--scope user` has anywhere to point this tool: it drives its own CLI machine-wide,
+ * installs a plugin's files into a user-scope directory, or copies machine files into the
+ * user's configuration directory. `false` for a tool declaring none — kilo today. */
 export function supportsUserScopeActivation(toolId: ToolId): boolean {
   const capability = resolvePluginsCapability(toolId);
   if (capability === null) return false;
-  return capability.nativeActivation !== null || capability.installScope === "user";
+  return (
+    capability.nativeActivation !== null ||
+    capability.installScope === "user" ||
+    capability.machineFiles !== null
+  );
+}
+
+/** See {@link MachineFiles}: `null` for a tool whose machine-scope install copies no file. */
+export function machineFilesOf(toolId: ToolId): MachineFiles | null {
+  return resolvePluginsCapability(toolId)?.machineFiles ?? null;
 }
 
 /** The tool's declared build contract for one framework-build mode, or undefined when the tool

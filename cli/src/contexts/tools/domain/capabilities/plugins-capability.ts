@@ -63,6 +63,32 @@ export interface NativeActivation {
 /** One variable, as the caller reads it: a profile is a declaration and reaches no global. */
 export type EnvironmentReader = (name: string) => string | undefined;
 
+/**
+ * What a machine-scope install (`setup --global`) copies out of this tool's built tree into
+ * the user's own configuration directory, for a host that loads those files from there rather
+ * than from a plugin it enables itself: OpenCode's skills and agents, Codex's agents.
+ */
+export interface MachineFiles {
+  /** The user configuration directory the files land in, given a homedir. */
+  readonly dir: (homedir: string) => string;
+  /** A built-tree path (relative to the tool's built dir) to its path under `dir` for one
+   * plugin, or `null` when that file is not this plugin's or is not installed machine-wide. */
+  readonly map: (builtPath: string, plugin: MachinePlugin) => string | null;
+}
+
+/** The plugin a machine file is read for: its name, and the agents its source ships, by base
+ * name. A flat build prefixes an agent with its plugin, so a prefix alone cannot tell
+ * `aidd-dev`'s agents from those of a plugin named `aidd-dev-tools`. */
+export interface MachinePlugin {
+  readonly name: string;
+  readonly agents: ReadonlySet<string>;
+}
+
+/** Shared by every mode: where a tool's machine-scope files go, when it has any. */
+interface MachineFilesParams {
+  machineFiles?: MachineFiles;
+}
+
 export interface NativePluginsParams {
   mode: "native";
   pluginsDir: string;
@@ -149,10 +175,12 @@ export type HooksSupport =
   | { acceptsHooks: true; hooksTrustNotice?: string }
   | { acceptsHooks: false; hooksUnsupportedReason: string };
 
-type PluginsParams =
+type PluginsParams = (
   | (NativePluginsParams & HooksSupport)
   | FlatPluginsParams
-  | UnsupportedPluginsParams;
+  | UnsupportedPluginsParams
+) &
+  MachineFilesParams;
 
 export class PluginsCapability {
   readonly mode: PluginsMode;
@@ -184,11 +212,14 @@ export class PluginsCapability {
   readonly nativeActivation: NativeActivation | null;
   readonly translationMode: PluginTranslationMode | null;
   readonly installScope: "project" | "user";
+  /** See {@link MachineFiles}, or `null` when a machine-scope install copies no file. */
+  readonly machineFiles: MachineFiles | null;
 
   private readonly _userPluginsDir?: (homedir: string) => string;
 
   constructor(params: PluginsParams) {
     this.mode = params.mode;
+    this.machineFiles = params.machineFiles ?? null;
     this.translationMode = PluginsCapability.resolveTranslationMode(params);
     this.installScope = PluginsCapability.resolveInstallScope(params);
     PluginsCapability.validateUserScope(params);
@@ -268,7 +299,7 @@ export class PluginsCapability {
    * independently of this capability's own `installScope`: a caller resolving a *recorded*
    * scope still needs the directory that scope means. */
   userPluginsBaseDir(homedir: string): string | null {
-    return this._userPluginsDir?.(homedir) ?? null;
+    return this._userPluginsDir?.(homedir) ?? this.machineFiles?.dir(homedir) ?? null;
   }
 
   pluginOutputDir(pluginName: string): string | null {

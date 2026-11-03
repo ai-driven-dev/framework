@@ -90,6 +90,32 @@ describe("printSetupOutcome", () => {
     expect(output.at("success")).toEqual([]);
   });
 
+  it("names the plugins a machine-wide run installed, and nothing about the project", () => {
+    const output = new CapturingOutput(false);
+
+    printSetupOutcome(
+      output,
+      { kind: "initialized", install: { results: [] }, machinePlugins: ["aidd-dev", "aidd-pm"] },
+      false
+    );
+
+    expect(output.lines).toEqual([
+      "Installed for every project on this machine: aidd-dev, aidd-pm.",
+    ]);
+  });
+
+  it("says a machine-wide run with no plugin only registered the source", () => {
+    const output = new CapturingOutput(false);
+
+    printSetupOutcome(
+      output,
+      { kind: "up-to-date", install: { results: [] }, machinePlugins: [] },
+      false
+    );
+
+    expect(output.lines).toEqual(["Registered for every project on this machine."]);
+  });
+
   it("warns about a tool already installed rather than counting it as installed", () => {
     const output = new CapturingOutput(false);
 

@@ -216,6 +216,10 @@ describe("aidd clean — the help surface", () => {
         "project (default) cleans this project alone; user undoes the machine-wide " +
           "registration setup --scope user wrote and purges the shared source itself",
       ],
+      [
+        "--global",
+        "act on the machine-wide install `setup --global` wrote, and purge the shared source",
+      ],
     ]);
   });
 });
