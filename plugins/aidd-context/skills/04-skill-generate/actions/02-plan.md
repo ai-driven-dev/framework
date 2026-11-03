@@ -13,7 +13,7 @@ Break the skill into atomic actions: one action, one job.
    - **Modify:** start from the existing actions, preserve the user's edits, and touch only the jobs the user named.
 2. Prefer few actions, a job each, not a step; merge two that share most logic.
 3. Name and number each action, and state its input, output, observable success check and rules, per [skill-authoring.md](../references/skill-authoring.md).
-4. Confirm the table with the user, including each success check, then read [write](03-write.md).
+4. Confirm the table with the user, including each success check, then continue to [write](03-write.md).
 
 ## Output
 

@@ -8,8 +8,8 @@ argument-hint: create | modify
 
 ```mermaid
 flowchart LR
-  new([create]) --> scope["scope<br>actions/01-scope.md"]
-  scope --> plan["plan<br>actions/02-plan.md"] --> write["write<br>actions/03-write.md"] --> validate["validate<br>actions/04-validate.md"]
+  new([create]) --> scope["actions/01-scope.md"]
+  scope --> plan["actions/02-plan.md"] --> write["actions/03-write.md"] --> validate["actions/04-validate.md"]
   edit([modify]) --> plan
   validate -->|"fix a breach or failed trial"| validate
   validate -->|"trial needs approval"| user((user answers)) --> validate
