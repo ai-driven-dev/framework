@@ -19,6 +19,8 @@
  * alternation, ignoring case: OpenCode names its tools in lowercase. Absent, every tool matches.
  */
 
+import type { PluginHooksShape, PluginMatcherGroup } from "../../formats/plugin-hooks-shape.js";
+
 interface ParsedHookCall {
   readonly script: string;
   readonly args: readonly string[];
@@ -32,20 +34,6 @@ interface OpencodeHookTable {
   readonly sessionStart: readonly ParsedHookCall[];
   readonly stop: readonly ParsedHookCall[];
   readonly postToolUse: readonly ParsedPostToolUseCall[];
-}
-
-interface ClaudeHookItem {
-  readonly type?: string;
-  readonly command?: string;
-}
-
-interface ClaudeMatcherGroup {
-  readonly matcher?: string;
-  readonly hooks?: readonly ClaudeHookItem[];
-}
-
-interface ClaudeHooksShape {
-  readonly hooks?: Record<string, readonly ClaudeMatcherGroup[]>;
 }
 
 // Only a command this generator can actually replay: `node ${CLAUDE_PLUGIN_ROOT}/hooks/<rel>
@@ -62,7 +50,7 @@ function parseCommand(command: string | undefined): ParsedHookCall | null {
   return { script, args };
 }
 
-function parseGroups(groups: readonly ClaudeMatcherGroup[] | undefined): ParsedPostToolUseCall[] {
+function parseGroups(groups: readonly PluginMatcherGroup[] | undefined): ParsedPostToolUseCall[] {
   const calls: ParsedPostToolUseCall[] = [];
   for (const group of groups ?? []) {
     for (const item of group.hooks ?? []) {
@@ -79,7 +67,7 @@ function parseGroups(groups: readonly ClaudeMatcherGroup[] | undefined): ParsedP
  * every other flat target needs buys this one nothing — reduced to the three mapped events.
  * Exported for the generator's own unit test. */
 export function parseHooksJsonForBridge(rawHooksJson: string): OpencodeHookTable {
-  const parsed = JSON.parse(rawHooksJson) as ClaudeHooksShape;
+  const parsed = JSON.parse(rawHooksJson) as PluginHooksShape;
   const hooks = parsed.hooks ?? {};
   return {
     sessionStart: parseGroups(hooks.SessionStart),

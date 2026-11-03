@@ -5,7 +5,7 @@ import {
   PluginsCapability,
 } from "../../../../src/contexts/tools/domain/capabilities/plugins-capability.js";
 import type { AiTool } from "../../../../src/contexts/tools/domain/contracts.js";
-import { cursorProjectHooksFormat } from "../../../../src/contexts/tools/domain/formats/cursor-hooks-project-merge.js";
+import { cursorProjectHooksFormat } from "../../../../src/contexts/tools/domain/profiles/cursor/hooks-format.js";
 import {
   getToolConfig,
   hasToolSignals,

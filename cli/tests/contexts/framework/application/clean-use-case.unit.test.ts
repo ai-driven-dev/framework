@@ -14,10 +14,10 @@ import { GitignoreUseCase } from "../../../../src/contexts/framework/application
 import { Manifest } from "../../../../src/contexts/framework/domain/manifest.js";
 import { InstalledPlugin } from "../../../../src/contexts/framework/domain/plugins/installed-plugin.js";
 import { UserSourceReferencesAdapter } from "../../../../src/contexts/framework/infrastructure/user-source-references-adapter.js";
-import { cursorProjectHooksScriptDir } from "../../../../src/contexts/tools/domain/formats/cursor-hooks-project-merge.js";
 import type { HostPluginRegistryReader } from "../../../../src/contexts/tools/domain/ports/host-plugin-registry-reader.js";
 import type { NativeMarketplaceSourceReader } from "../../../../src/contexts/tools/domain/ports/native-marketplace-source-reader.js";
 import type { NativePluginActivator } from "../../../../src/contexts/tools/domain/ports/native-plugin-activator.js";
+import { cursorProjectHooksScriptDir } from "../../../../src/contexts/tools/domain/profiles/cursor/hooks-format.js";
 import { FileHash, InstallationFile } from "../../../../src/kernel/file.js";
 import type { AiToolId, ToolId } from "../../../../src/kernel/tool.js";
 import { buildUnitDeps, initAndInstall } from "../../../helpers/ports/build-unit-deps.js";

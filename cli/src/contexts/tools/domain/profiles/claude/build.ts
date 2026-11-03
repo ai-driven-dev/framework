@@ -13,7 +13,6 @@ import {
 } from "../../../../../kernel/materialization/flat-paths.js";
 import { rewriteRelativeLinks } from "../../../../../kernel/materialization/relative-link-rewrite.js";
 import type { ToolBuildContract } from "../../build-contract.js";
-import { mergeClaudeSettingsHooks } from "../../formats/flat-hooks-merge.js";
 import { CLAUDE_PLUGIN_ROOT_TOKEN } from "../../formats/plugin-root-token.js";
 import { mergeVscodeMcp } from "../../formats/vscode-mcp-merge.js";
 import {
@@ -26,6 +25,7 @@ import {
   OUTPUT_CLAUDE_MANIFEST_RELATIVE,
   OUTPUT_CLAUDE_MARKETPLACE_RELATIVE,
 } from "./claude-build-paths.js";
+import { mergeClaudeSettingsHooks } from "./hooks-format.js";
 
 export function buildClaudeContract(): ToolBuildContract {
   const manifestRelative = OUTPUT_CLAUDE_MANIFEST_RELATIVE;

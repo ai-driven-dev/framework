@@ -20,11 +20,11 @@ import {
   convertCommandFrontmatter,
   stripToolSuffix,
 } from "../../formats/command.js";
-import { cursorProjectHooksFormat } from "../../formats/cursor-hooks-project-merge.js";
 import { CURSOR_PLUGIN_ROOT_TOKEN } from "../../formats/plugin-root-token.js";
 import { registerTool } from "../../registry.js";
 import { buildCursorContract, buildCursorFlatContract } from "./build.js";
 import { cursorAgentFrontmatter } from "./cursor-agent.js";
+import { cursorProjectHooksFormat } from "./hooks-format.js";
 
 const DIRECTORY = ".cursor/";
 const TOOL_SUFFIX = ".cursor.md";

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { PluginsCapability } from "../../../../../src/contexts/tools/domain/capabilities/plugins-capability.js";
-import { cursorProjectHooksFormat } from "../../../../../src/contexts/tools/domain/formats/cursor-hooks-project-merge.js";
+import { cursorProjectHooksFormat } from "../../../../../src/contexts/tools/domain/profiles/cursor/hooks-format.js";
 
 const MARKETPLACE_SETTINGS = {
   settingsPath: ".claude/settings.json",
@@ -301,6 +301,12 @@ describe("PluginsCapability base directory resolution", () => {
           projectHooksRelativePath: ".x/hooks.json",
         })
     ).toThrow("hooksDestination 'project' requires a projectHooksFormat.");
+  });
+
+  it("refuses a project hooks format without a project hooks destination", () => {
+    expect(
+      () => new PluginsCapability({ ...native, projectHooksFormat: cursorProjectHooksFormat })
+    ).toThrow("projectHooksFormat requires hooksDestination 'project'.");
   });
 
   it("lets a flat capability merge its hooks into a project hooks file", () => {

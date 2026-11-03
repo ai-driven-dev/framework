@@ -14,7 +14,6 @@ import {
 import type { FileReader } from "../../../../../kernel/ports/file-reader.js";
 import type { FileWriter } from "../../../../../kernel/ports/file-writer.js";
 import type { PluginPresence, ToolBuildContract } from "../../build-contract.js";
-import { mergeCodexFrameworkHooksJson } from "../../formats/flat-hooks-merge.js";
 import { PLUGIN_ROOT_TOKEN } from "../../formats/plugin-root-token.js";
 import { buildCodexMarketplace, buildCodexMarketplaceEntry } from "../../marketplace-catalog.js";
 import { codexAgentMarkdownToToml } from "./codex-agent-toml.js";
@@ -23,6 +22,7 @@ import {
   OUTPUT_CODEX_MANIFEST_RELATIVE,
   OUTPUT_CODEX_MARKETPLACE_RELATIVE,
 } from "./codex-paths.js";
+import { mergeCodexFrameworkHooksJson } from "./hooks-format.js";
 import { parseToml, stringifyToml } from "./toml.js";
 
 type FsType = FileReader & FileWriter;

@@ -372,7 +372,12 @@ export class PluginsCapability {
 
   private static validateProjectHooks(params: PluginsParams): void {
     if (params.mode === "unsupported" || !params.acceptsHooks) return;
-    if (params.hooksDestination !== "project") return;
+    if (params.hooksDestination !== "project") {
+      if (params.projectHooksFormat !== undefined) {
+        throw new CapabilityConfigError("projectHooksFormat requires hooksDestination 'project'.");
+      }
+      return;
+    }
     if (params.projectHooksRelativePath === undefined) {
       throw new CapabilityConfigError(
         "hooksDestination 'project' requires a projectHooksRelativePath."

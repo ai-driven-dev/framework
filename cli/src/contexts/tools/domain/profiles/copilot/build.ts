@@ -13,7 +13,6 @@ import {
 } from "../../../../../kernel/materialization/flat-paths.js";
 import { rewriteRelativeLinks } from "../../../../../kernel/materialization/relative-link-rewrite.js";
 import type { ToolBuildContract } from "../../build-contract.js";
-import { flattenCopilotHooksShape } from "../../formats/flat-hooks-merge.js";
 import { PLUGIN_ROOT_TOKEN } from "../../formats/plugin-root-token.js";
 import { mergeVscodeMcp } from "../../formats/vscode-mcp-merge.js";
 import {
@@ -23,6 +22,7 @@ import {
 } from "../../marketplace-catalog.js";
 import { copilotAgentFrontmatter } from "./copilot-agent.js";
 import { COPILOT_VSCODE_MCP_PATH, COPILOT_WORKSPACE_DIR } from "./copilot-paths.js";
+import { flattenCopilotHooksShape } from "./hooks-format.js";
 
 const OUTPUT_PLUGIN_MANIFEST_RELATIVE = ".plugin/plugin.json";
 
