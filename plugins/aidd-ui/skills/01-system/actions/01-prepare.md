@@ -16,8 +16,7 @@ The request.
 3. Take the task folder named, else ask for it: History rows cite it, nothing is written in it.
 4. For a change:
    - vague: ask which token or element, and which value;
-   - run `impact` on it and show the report;
-   - name the tokens holding the same value in a theme without aliasing it, for the user to include or leave;
+   - run `impact` on it and show the report, its `same-value` tokens for the user to include or leave;
    - wait; refused: stop.
 5. Read [write](02-write.md).
 

@@ -73,7 +73,8 @@ Deux axes, jamais mêlés : où en est le design, et quelle version le code impl
 
 ### Changements
 
-- Un changement produit d'abord un rapport d'impact : éléments, écrans, parcours et fichiers de code touchés.
+- Un changement produit d'abord un rapport d'impact : éléments, écrans, parcours et fichiers de code touchés, et les tokens de même valeur sans alias.
+- Le moteur applique ensuite les versions et l'historique de ce que le rapport atteint, par la sous-commande `bump` : l'IA n'y décide que le texte du changement et s'il est cassant.
 - Après validation, les rendus HTML touchés sont régénérés, revus si leur aspect change, puis versions et historiques sont mis à jour.
 - Le code suit dans la feature qui porte le changement, jamais en dehors.
 
@@ -126,6 +127,7 @@ Deux axes, jamais mêlés : où en est le design, et quelle version le code impl
 - Chaque problème porte sa règle et sa gravité. Une erreur bloque la fin du tour ; un avertissement informe sans bloquer : fichier de code sans fiche, couleur en dur déjà committée, trait fin en px, échec de git. Après une écriture, l'IA voit les problèmes des fichiers écrits et de ceux qui en dépendent (le rendu de l'élément écrit, les fiches qui le citent), ou tous quand elle a écrit un fichier partagé (tokens, thèmes, `system.md`), et le nombre des autres erreurs ; en fin de tour, toutes les erreurs ; la sortie du hook est plafonnée, la commande à la main montre tout.
 - Une règle qui plante devient un problème qui la nomme, jamais un silence.
 - Un seul moteur porte la lecture des fiches, la vérification et, plus tard, le graphe, la génération des tokens, la vitrine et la page de review ; chaque skill l'appelle par sous-commande.
+- Le moteur écrit aussi les fichiers de tokens depuis le code que `system.md` désigne, par la sous-commande `extract`, et liste ce qu'il laisse sans le deviner.
 - L'IA juge le sens : le code fait-il ce que disent `ui.md` et les fiches ?
 - L'audit UI constate et ne corrige rien : élément sans code, code sans élément, écart entre le validé et le réel, doublons proches, valeurs en dur autres que les couleurs dans le code, écart entre `tokens.json` et les tokens du code, mots interdits par le glossaire, textes trop longs dans la langue la plus longue, accessibilité.
 

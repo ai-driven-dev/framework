@@ -6,11 +6,9 @@ A design system already in the code, of any techno, is matter for extraction, th
 
 | In the code | In `aidd_docs/ui/` |
 | --- | --- |
-| document-level custom property | a token, its structure kept |
-| value overridden in a media query | the value outside it in `tokens.json`, the override in a breakpoint file |
-| property scoped to a component or written by a script, `color-scheme` | nothing: named to the user |
-| token file of another app | in `code-tokens`; its drift named to the user |
-| token file the code consumes | read for the tokens, and listed in `code-tokens` |
+| token file the code consumes | in `code-tokens`, before `extract` runs; the drift between the files of several apps named to the user |
+| theme switched by `[data-theme]` | in `themes`, the one `:root` holds first |
+| what `extract` leaves, a property scoped to a component, one written by a script or `color-scheme` among it | nothing: named to the user; a media query matching no breakpoint is a `## Breakpoints` row of `system.md` to settle, then `extract --force` |
 | component file | a record with a `code` link: its version equal to the record's `version`, its platform its code root's |
 | component on only some platforms | `platforms` lists them |
 | variant or state one platform's code lacks | kept in the record, named to the user as that platform's gap |

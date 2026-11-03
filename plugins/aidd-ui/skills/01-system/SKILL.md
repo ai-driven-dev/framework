@@ -9,7 +9,7 @@ argument-hint: request | change
 
 ```mermaid
 flowchart LR
-  prepare["prepare<br>actions/01-prepare.md<br>engine: impact, for a change"] --> write["write<br>actions/02-write.md<br>engine: tokens"]
+  prepare["prepare<br>actions/01-prepare.md<br>engine: impact, for a change"] --> write["write<br>actions/02-write.md<br>engine: extract, bump, tokens"]
   write --> conclude["conclude<br>actions/03-conclude.md<br>engine: validate"]
   conclude --> done((done))
   prepare -->|"no engine or impact refused"| stop((stop))

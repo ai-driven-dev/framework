@@ -80,19 +80,60 @@ Every record opens with flat front matter, `key: value` or `key: [a, b]`, and cl
 - A component or screen render loads it with `<link rel="stylesheet" href="../tokens.css">`, so a token change reaches every render without rewriting one.
 - A validated or deprecated element edited since its committed version, without a new `version`, is an error. A change to `status`, `code` or the History table is not an edit. A validated element is also held to the resolved value, in any theme, platform or breakpoint, of each token it or an element it uses declares, compared with the committed `tokens.css`; a token's value change leaves a deprecated element as it is.
 
+## Responsibilities
+
+| Part | Owns | Never |
+| --- | --- | --- |
+| Engine, `hooks/aidd-ui.cjs` and `hooks/lib/` | every rule and every write that needs no judgement; it sits in `hooks/` because the CLI ships only that folder of a plugin to every host, and several skills call it | decides a name, a brand or a style |
+| Hook, `hooks/ui-hook.cjs` | the adapter: a host event in, the scoped `validate`, the host's output | holds a rule, writes in the project |
+| Skill, `skills/01-system/` | what to do and when, the inputs it passes, the outputs it reads, the judgement: brand, names, primitives, style | restates a mechanical rule the engine applies |
+
 ## Commands
 
 ```sh
 node <plugin>/hooks/aidd-ui.cjs validate [project-root]
 node <plugin>/hooks/aidd-ui.cjs tokens [project-root]
 node <plugin>/hooks/aidd-ui.cjs impact <id or token>… [--root <dir>]
+node <plugin>/hooks/aidd-ui.cjs extract [--force] [--root <dir>]
+node <plugin>/hooks/aidd-ui.cjs bump --task <aidd_docs/tasks/…> --change "<text>" [--breaking] <token or id>… [--root <dir>]
 ```
 
 | Command | Does |
 | --- | --- |
 | `validate` | checks the whole design system |
 | `tokens` | writes `aidd_docs/ui/tokens.css` and prints its path; writes nothing and exits 1 while a token has an error or a composite token has no raw CSS |
-| `impact` | prints as JSON the `tokens`, `elements`, `screens`, `journeys`, `renders` and `code` files a change to those tokens or elements reaches, each sorted; a token is named by its path or its CSS name, and any token reached adds the `code-tokens` files to `code`; a name that is neither exits 2 |
+| `impact` | prints as JSON the `tokens`, the tokens that hold a reached token's value in some context without citing it (`same-value`), and the `elements`, `screens`, `journeys`, `renders` and `code` files a change to those tokens or elements reaches, each sorted; a token is named by its path or its CSS name, and any token reached adds the `code-tokens` files to `code`; a name that is neither exits 2 |
+| `extract` | writes the token files from the `code-tokens` files and prints `{"written": […], "left": [{file, line, name, why}]}`, the same bytes on a second run; exits 1 with a message when `system.md` or its `code-tokens` are missing, a file is unreadable, or `tokens.json` exists and `--force` is absent |
+| `bump` | raises the versions a change to those refs reaches and prints `{"changed": […]}`; exits 2 with a message, before any write, on an unknown ref, a task outside `aidd_docs/tasks/`, a change that is empty or holds a pipe or a line break, or a record it cannot raise |
+
+### Extraction
+
+`extract` reads, from each `code-tokens` file, only these shapes. A file's platform is its code root's, the first platform of `system.md` being the base.
+
+| Read | Becomes |
+| --- | --- |
+| custom property in `:root` or `html` | a base token |
+| custom property in `[data-theme="<t>"]` or `html[data-theme="<t>"]` | a `themes/<t>.json` token; the base theme's block next to `:root` in one rule is the base, alone it is left |
+| custom property in `@media (min-width|max-width …) { :root {…} }` | a `breakpoints/<b>.json` token, the query verbatim; `<b>` is the breakpoint whose `## Breakpoints` row names every length of the query, else the next free one in order when as many are left as queries |
+| `export const <name> = { key: "literal" or number }`, one level nested allowed | a base token, a key `colorAccent` being `color-accent`; the export's name is no part of it |
+| a token another platform's file also holds with a different value | a `platforms/<p>.json` token |
+
+| Value | Becomes |
+| --- | --- |
+| `#rgb`, `#rrggbb`, `#rrggbbaa`, `rgb()` or `rgba()` of numbers | a colour in srgb, its `hex` when opaque |
+| `<n>px`, `<n>rem` | a dimension |
+| `<n>ms`, `<n>s` | a duration |
+| `var(--x)` alone | an alias to `x` |
+| a bare number in a script | a px dimension when a word of its name is `size`, `radius`, `space` or `spacing`, else a number |
+| anything else | raw CSS, typed `color` for a colour function and `fontFamily` for a font stack, else untyped |
+
+- `--a-b-c` is the path `a.b.c`; when a shorter name is already a token, the rest joins its leaf, `color.accent` and `color.accent-hover`, so a path always gives its CSS name back.
+- A context keeps only what differs from the base. A context value its base's type cannot hold stays CSS, so does an alias to a token of another type, and an alias to a token of no type is raw `var()` CSS, since nothing could type it.
+- Left, with the file, the line, the name and why: a property in another selector or at-rule, an `@media` that is no width query or matches no breakpoint, a theme `system.md` does not declare, a script value that is no string or number literal, an object nested deeper than one level, a token citing a custom property that is no token, a file of neither kind, a token file under no code root while several platforms are declared, and a token only some of the platforms hold, which stays in the base.
+
+### Bump
+
+For each element or screen the refs reach: `version` +1, `status: proposed`, a History row `| <version> | <change> | yes or no | <task> |`. A deprecated one is left, or with `--breaking` raised as breaking and still deprecated. Each review naming a raised screen gets, in its `## Verdicts`, one `pending` row per state at the new version. `code` links, `system.md` and `validated` are untouched.
 
 ## Validation
 
@@ -125,7 +166,9 @@ Rules: records R1 to R17, history H1 to H8, tokens T1 to T10, renders V1 to V8, 
 - With 3 or more themes, a nested region inherits the outer theme's values for the tokens its own theme does not redefine.
 - H8 compares a breakpoint's values over the base, not inside each theme, so a theme value citing a token a breakpoint redefines is not followed.
 - Composite tokens are checked for a `$value`, not for its shape, and reach `tokens.css` only as raw CSS.
-- `impact` leaves reviews out of its report.
+- `impact` leaves reviews out of its report; `same-value` compares resolved CSS text, so two spellings of one colour differ, and lists the target of a reached alias, which nothing cites.
+- `extract` keeps the last of a custom property declared twice in a context, merges two files of one platform the same way, reads a script key `colorBGPrimary` as `color-b-g-primary`, writes a value with `!important` as raw CSS with it, and replaces the files it writes without removing one an earlier run left.
+- `bump` rewrites a record it raises with `\n` line ends, and does not see a review that lives in a task folder.
 - A nested region cannot switch back to the first platform: tokens.css writes no block for it, nor for a platform that redefines no token.
 - The committed baseline of H8 is `HEAD`: without `git`, a repository, a commit or the committed file, the rule is silent, and committing an edit without raising the version hides it. Any other failure of `git`, such as a repository it refuses to read or its five-second timeout, is one H8 warning on `aidd_docs/ui`, naming the failure. A run asks `git` once which files changed, then reads only those, plus the committed record of an element using a token whose value changed; C4 asks at most twice more when it finds a literal, naming each file that holds one.
 - A version raise that stays `validated` passes until a review can prove it.
