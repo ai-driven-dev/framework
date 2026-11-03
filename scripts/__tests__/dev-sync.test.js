@@ -183,18 +183,11 @@ function runSync(fakeBin, home, args = ["all"], overrides = {}) {
       PATH: [fakeBin, BASE_PATH].join(delimiter),
       HOME: home,
       FW: fixture(home),
-      BUILD: join(home, "build"),
-      CODEX_CACHE: join(home, ".codex/plugins/cache"),
-      CLAUDE_CACHE: join(home, ".claude/plugins/cache"),
-      OPENCODE_SKILLS: join(home, ".config/opencode/skills"),
-      CODEX_AGENTS: join(home, ".codex/agents"),
-      OPENCODE_AGENTS: join(home, ".config/opencode/agents"),
       CODEX_INSTRUCTIONS: join(home, ".codex/AGENTS.md"),
       CLAUDE_INSTRUCTIONS: join(home, ".claude/CLAUDE.md"),
       OPENCODE_INSTRUCTIONS: join(home, ".config/opencode/AGENTS.md"),
       COPILOT_INSTRUCTIONS: join(home, ".copilot/copilot-instructions.md"),
       CURSOR_INSTRUCTIONS: join(home, ".cursor/rules/aidd-agents.mdc"),
-      CURSOR_PLUGINS: join(home, ".cursor/plugins/local"),
       OPENCODE_DISABLE_CLAUDE_CODE: "",
       OPENCODE_DISABLE_CLAUDE_CODE_PROMPT: "",
       ...overrides,
@@ -284,31 +277,33 @@ if (args[0] !== "setup") process.exit(2);
 ${setupBody}`);
 }
 
-test("Claude, Codex and OpenCode take this checkout through aidd setup --global, afresh", () => {
+test("every host takes this checkout through aidd setup --global, afresh", () => {
   const root = mkdtempSync(join(tmpdir(), "aidd-dev-sync-global-"));
   try {
     const fakeBin = join(root, "bin"), home = join(root, "home");
     mkdirSync(fakeBin);
     const source = fixture(home, ["aidd-dev", "aidd-pm"]);
     recordingCli(source);
-    for (const host of ["claude", "codex", "opencode"]) {
+    for (const host of ["claude", "codex", "copilot", "cursor-agent", "kilo", "opencode"]) {
       executable(join(fakeBin, host), `printf '%s\\n' "${host} $*" >> "$HOME/host-calls"`);
     }
     const result = runSync(fakeBin, home, []);
     assert.equal(result.status, 0, result.stderr);
-    assert.match(result.stdout, /global install\s+ok \(claude,codex,opencode\)/);
+    assert.match(result.stdout, /global install\s+ok \(claude,codex,copilot,cursor,kilo,opencode\)/);
     assert.equal(
       readFileSync(join(home, "aidd-calls"), "utf8"),
-      `setup --global --source local --path ${source} --ide claude,codex,opencode --plugins all --yes\n`
+      `setup --global --source local --path ${source} --ide claude,codex,copilot,cursor,kilo,opencode --plugins all --yes\n`
     );
     const hostCalls = readFileSync(join(home, "host-calls"), "utf8");
     for (const plugin of ["aidd-dev", "aidd-pm"]) {
       assert.match(hostCalls, new RegExp(`claude plugin uninstall ${plugin}@aidd-framework --scope user`));
       assert.match(hostCalls, new RegExp(`codex plugin remove ${plugin}@aidd-framework`));
+      assert.match(hostCalls, new RegExp(`copilot plugin uninstall ${plugin}@aidd-framework`));
     }
     assert.match(hostCalls, /claude plugin marketplace remove aidd-framework --scope user/);
     assert.match(hostCalls, /codex plugin marketplace remove aidd-framework/);
-    assert.doesNotMatch(hostCalls, /opencode/);
+    assert.match(hostCalls, /copilot plugin marketplace remove aidd-framework --force/);
+    assert.doesNotMatch(hostCalls, /^(cursor-agent|kilo|opencode) /m);
   } finally { rmSync(root, { recursive: true, force: true }); }
 });
 
@@ -340,290 +335,60 @@ test("a global install from the published CLI is used when the checkout has none
   } finally { rmSync(root, { recursive: true, force: true }); }
 });
 
-for (const host of ["copilot", "cursor"]) {
-  test(`reload fails when the installed ${host} host's build fails`, () => {
-    const root = mkdtempSync(join(tmpdir(), "aidd-dev-sync-build-failed-"));
-    try {
-      const fakeBin = join(root, "bin");
-      const home = join(root, "home");
-      mkdirSync(fakeBin);
-      executable(join(fakeBin, host), "exit 0");
-      executable(join(fakeBin, "npx"), "exit 7");
-      const result = runSync(fakeBin, home, []);
-      assert.notEqual(result.status, 0);
-      assert.match(result.stderr, new RegExp(`${host} build failed`));
-      assert.doesNotMatch(result.stdout, /Done\./);
-    } finally {
-      rmSync(root, { recursive: true, force: true });
-    }
-  });
-}
-
-for (const host of ["copilot"]) {
-  test(`reload fails when the installed ${host} host rejects a plugin`, () => {
-    const root = mkdtempSync(join(tmpdir(), "aidd-dev-sync-install-failed-"));
-    try {
-      const fakeBin = join(root, "bin");
-      const home = join(root, "home");
-      mkdirSync(fakeBin);
-      fixture(home, ["aidd-pm"]);
-      executable(join(fakeBin, host), `if [ "$1 $2" = 'plugin marketplace' ] && [ "$3" = list ]; then echo '[]'; fi\nif [ "$1" = plugin ] && [ "$2" = ${host === "codex" ? "add" : "install"} ]; then exit 8; fi\nexit 0`);
-      executable(join(fakeBin, "npx"), host === "copilot" ? nativeBuildStub() : "exit 0");
-      const result = runSync(fakeBin, home, []);
-      assert.notEqual(result.status, 0);
-      assert.match(result.stderr, /plugin install failed for aidd-pm/);
-      assert.doesNotMatch(result.stdout, /Done\./);
-    } finally {
-      rmSync(root, { recursive: true, force: true });
-    }
-  });
-}
-
-function nativeBuildStub(omitSkill = false) {
-  return String.raw`out=""; tool=""
-while [ "$#" -gt 0 ]; do
-  case "$1" in --out) shift; out=$1 ;; --to) shift; tool=$1 ;; esac
-  shift
-done
-for source in "$FW/plugins/"*/; do
-  plugin="$(basename "$source")"
-  target="$out/plugins/$plugin"
-  manifest=".$tool-plugin"
-  [ "$tool" != copilot ] || manifest=".plugin"
-  mkdir -p "$target/$manifest" "$target/skills"
-  printf '{"name":"%s"}\n' "$plugin" > "$target/$manifest/plugin.json"
-  ${omitSkill ? ":" : 'cp -R "$FW/plugins/$plugin/skills/." "$target/skills/"'}
-done`;
-}
-
 for (const binary of ["cursor-agent", "agent", "cursor"]) {
-  test(`Cursor reload through ${binary} installs every built plugin and preserves personal content`, () => {
+  test(`Cursor found through ${binary} is installed globally with its always-on rule`, () => {
     const root = mkdtempSync(join(tmpdir(), "aidd-dev-sync-cursor-"));
     try {
       const fakeBin = join(root, "bin"), home = join(root, "home");
       mkdirSync(fakeBin);
-      fixture(home, ["aidd-dev", "aidd-pm"]);
-      const personal = [".cursor/agents/executor.md", ".cursor/rules/personal.mdc", ".cursor/mcp.json", ".cursor/plugins/local/personal/notes.md"];
-      for (const file of personal) {
-        mkdirSync(dirname(join(home, file)), { recursive: true });
-        writeFileSync(join(home, file), "personal bytes\n");
-      }
-      const stale = join(home, ".cursor/plugins/local/aidd-dev/agents/removed.md");
-      mkdirSync(dirname(stale), { recursive: true });
-      writeFileSync(stale, "retired role\n");
+      recordingCli(fixture(home));
       executable(join(fakeBin, binary), "echo 'Start the Cursor Agent'");
-      executable(join(fakeBin, "npx"), nativeBuildStub());
       const result = runSync(fakeBin, home, []);
       assert.equal(result.status, 0, result.stderr);
-      for (const [plugin, skill] of [["aidd-dev", "01-plan"], ["aidd-pm", "03-prd"]]) {
-        assert.equal(readFileSync(join(home, `.cursor/plugins/local/${plugin}/skills/${skill}/SKILL.md`), "utf8"), "source skill\n");
-      }
-      assert.equal(existsSync(join(home, ".cursor/plugins/local/aidd-dev/agents")), false);
-      assert.match(readFileSync(join(home, ".cursor/rules/aidd-agents.mdc"), "utf8"), /Use available agents when useful/);
-      assert.equal(existsSync(stale), false);
-      for (const file of personal) assert.equal(readFileSync(join(home, file), "utf8"), "personal bytes\n");
-      const first = readFileSync(join(home, ".cursor/plugins/local/aidd-dev/skills/01-plan/SKILL.md"), "utf8");
-      assert.equal(runSync(fakeBin, home, []).status, 0);
-      assert.equal(readFileSync(join(home, ".cursor/plugins/local/aidd-dev/skills/01-plan/SKILL.md"), "utf8"), first);
+      assert.match(readFileSync(join(home, "aidd-calls"), "utf8"), / --ide cursor /);
+      assert.match(readFileSync(join(home, ".cursor/rules/aidd-agents.mdc"), "utf8"), /^---\nalwaysApply: true\n---\n/);
     } finally { rmSync(root, { recursive: true, force: true }); }
   });
 }
 
-test("Cursor reload rejects incomplete native output before changing installed plugins", () => {
-  const root = mkdtempSync(join(tmpdir(), "aidd-dev-sync-cursor-incomplete-"));
-  try {
-    const fakeBin = join(root, "bin"), home = join(root, "home");
-    mkdirSync(fakeBin);
-    const installed = join(home, ".cursor/plugins/local/aidd-dev/agents/executor.md");
-    mkdirSync(dirname(installed), { recursive: true });
-    writeFileSync(installed, "old role\n");
-    executable(join(fakeBin, "cursor-agent"), "exit 0");
-    executable(join(fakeBin, "npx"), nativeBuildStub(true));
-    const result = runSync(fakeBin, home, []);
-    assert.notEqual(result.status, 0);
-    assert.match(result.stderr, /no built cursor skill/);
-    assert.equal(readFileSync(installed, "utf8"), "old role\n");
-  } finally { rmSync(root, { recursive: true, force: true }); }
-});
-
-test("another tool named agent does not trigger Cursor installation", () => {
+test("another tool named agent is not taken for Cursor", () => {
   const root = mkdtempSync(join(tmpdir(), "aidd-dev-sync-other-agent-"));
   try {
     const fakeBin = join(root, "bin"), home = join(root, "home");
     mkdirSync(fakeBin);
+    recordingCli(fixture(home));
     executable(join(fakeBin, "agent"), "echo 'Grok Build TUI'");
-    executable(join(fakeBin, "npx"), "exit 9");
     const result = runSync(fakeBin, home, []);
     assert.equal(result.status, 0, result.stderr);
-    assert.equal(existsSync(join(home, "build/cursor")), false);
+    assert.match(result.stdout, /No supported host installation found/);
+    assert.equal(existsSync(join(home, "aidd-calls")), false);
   } finally { rmSync(root, { recursive: true, force: true }); }
 });
 
-const copilotMarketplaceList = String.raw`node -e 'process.stdout.write(JSON.stringify([{name:"aidd-framework",source:"Local: "+process.argv[1]}]))'`;
-const copilotStub = String.raw`printf '%s\n' "$*" >> "$HOME/copilot-calls"
-case "$1 $2 $3" in
-  'plugin marketplace list')
-    if [ -f "$HOME/copilot-source" ]; then
-      ${copilotMarketplaceList} "$(cat "$HOME/copilot-source")"
-    else echo '[]'; fi ;;
-  'plugin marketplace add')
-    if [ -f "$HOME/copilot-source" ]; then echo 'Marketplace "aidd-framework" already registered' >&2; exit 1; fi
-    printf '%s' "$4" > "$HOME/copilot-source" ;;
-  'plugin marketplace remove') rm "$HOME/copilot-source" ;;
-  'plugin marketplace update') : ;;
-esac`;
-
-test("Copilot fixture serializes Windows paths and quotes as JSON", () => {
-  const root = mkdtempSync(join(tmpdir(), "aidd-dev-sync-copilot-json-"));
-  try {
-    const fakeBin = join(root, "bin"), home = join(root, "home");
-    mkdirSync(fakeBin); mkdirSync(home);
-    const source = String.raw`D:\Work\Example "quoted"\Framework`;
-    writeFileSync(join(home, "copilot-source"), source);
-    executable(join(fakeBin, "node"), `exec '${process.execPath}' "$@"`);
-    const binary = join(fakeBin, "copilot");
-    executable(binary, copilotStub);
-    const result = spawnSync("bash", [binary, "plugin", "marketplace", "list", "--json"], {
-      cwd: home,
-      env: { ...process.env, HOME: home, PATH: [fakeBin, BASE_PATH].join(delimiter) },
-      encoding: "utf8",
-    });
-    assert.equal(result.status, 0, result.stderr);
-    assert.deepEqual(JSON.parse(result.stdout), [{ name: "aidd-framework", source: `Local: ${source}` }]);
-  } finally { rmSync(root, { recursive: true, force: true }); }
-});
-
-test("Copilot reload builds all native plugins, migrates its own source, and preserves personal files", () => {
-  const root = mkdtempSync(join(tmpdir(), "aidd-dev-sync-copilot-"));
-  try {
-    const fakeBin = join(root, "bin"), home = join(root, "home");
-    mkdirSync(fakeBin); mkdirSync(home);
-    const source = fixture(home, ["aidd-dev", "aidd-pm"]);
-    writeFileSync(join(home, "copilot-source"), source);
-    const personal = [".copilot/agents/executor.agent.md", ".copilot/instructions/personal.instructions.md", ".copilot/settings.json"];
-    for (const file of personal) {
-      mkdirSync(dirname(join(home, file)), { recursive: true });
-      writeFileSync(join(home, file), "personal bytes\n");
-    }
-    executable(join(fakeBin, "copilot"), copilotStub);
-    executable(join(fakeBin, "npx"), nativeBuildStub());
-    const first = runSync(fakeBin, home, []);
-    assert.equal(first.status, 0, first.stderr);
-    assert.equal(realpathSync(readFileSync(join(home, "copilot-source"), "utf8")), realpathSync(join(home, "build/copilot")));
-    for (const plugin of ["aidd-dev", "aidd-pm"]) {
-      assert.match(readFileSync(join(home, "copilot-calls"), "utf8"), new RegExp(`plugin install ${plugin}@aidd-framework`));
-      assert.equal(JSON.parse(readFileSync(join(home, `build/copilot/plugins/${plugin}/.plugin/plugin.json`), "utf8")).name, plugin);
-    }
-    assert.match(readFileSync(join(home, ".copilot/copilot-instructions.md"), "utf8"), /Use available agents when useful/);
-    assert.equal(runSync(fakeBin, home, []).status, 0);
-    assert.match(readFileSync(join(home, "copilot-calls"), "utf8"), /marketplace update aidd-framework/);
-    for (const file of personal) assert.equal(readFileSync(join(home, file), "utf8"), "personal bytes\n");
-  } finally { rmSync(root, { recursive: true, force: true }); }
-});
-
-test("Copilot refuses another source registered under the same marketplace name", () => {
-  const root = mkdtempSync(join(tmpdir(), "aidd-dev-sync-copilot-foreign-"));
-  try {
-    const fakeBin = join(root, "bin"), home = join(root, "home");
-    mkdirSync(fakeBin); mkdirSync(home);
-    writeFileSync(join(home, "copilot-source"), "/another/framework");
-    executable(join(fakeBin, "copilot"), copilotStub);
-    executable(join(fakeBin, "npx"), nativeBuildStub());
-    const result = runSync(fakeBin, home, []);
-    assert.notEqual(result.status, 0);
-    assert.match(result.stderr, /different Copilot marketplace source/);
-    assert.equal(readFileSync(join(home, "copilot-source"), "utf8"), "/another/framework");
-    assert.doesNotMatch(readFileSync(join(home, "copilot-calls"), "utf8"), /marketplace remove|plugin install/);
-  } finally { rmSync(root, { recursive: true, force: true }); }
-});
-
-test("Copilot rejects incomplete native output before registering or installing", () => {
-  const root = mkdtempSync(join(tmpdir(), "aidd-dev-sync-copilot-incomplete-"));
+test("Kilo is installed globally and gets no global instructions file", () => {
+  const root = mkdtempSync(join(tmpdir(), "aidd-dev-sync-kilo-"));
   try {
     const fakeBin = join(root, "bin"), home = join(root, "home");
     mkdirSync(fakeBin);
-    executable(join(fakeBin, "copilot"), copilotStub);
-    executable(join(fakeBin, "npx"), nativeBuildStub(true));
-    const result = runSync(fakeBin, home, []);
-    assert.notEqual(result.status, 0);
-    assert.match(result.stderr, /no built copilot skill/);
-    assert.equal(existsSync(join(home, "copilot-calls")), false);
-  } finally { rmSync(root, { recursive: true, force: true }); }
-});
-
-test("Copilot registers an inherited own marketplace without trying to remove it", () => {
-  const root = mkdtempSync(join(tmpdir(), "aidd-dev-sync-copilot-inherited-"));
-  try {
-    const fakeBin = join(root, "bin"), home = join(root, "home");
-    mkdirSync(fakeBin);
-    executable(join(fakeBin, "copilot"), String.raw`printf '%s\n' "$*" >> "$HOME/copilot-calls"
-case "$1 $2 $3" in
-  'plugin marketplace list') ${copilotMarketplaceList} "$FW" ;;
-  'plugin marketplace remove') echo 'Marketplace "aidd-framework" is not registered' >&2; exit 1 ;;
-  'plugin marketplace add') printf '%s' "$4" > "$HOME/copilot-source" ;;
-esac`);
-    executable(join(fakeBin, "npx"), nativeBuildStub());
+    recordingCli(fixture(home));
+    executable(join(fakeBin, "kilo"), "exit 0");
     const result = runSync(fakeBin, home, []);
     assert.equal(result.status, 0, result.stderr);
-    assert.equal(realpathSync(readFileSync(join(home, "copilot-source"), "utf8")), realpathSync(join(home, "build/copilot")));
-    assert.doesNotMatch(readFileSync(join(home, "copilot-calls"), "utf8"), /marketplace remove/);
+    assert.match(readFileSync(join(home, "aidd-calls"), "utf8"), / --ide kilo /);
+    assert.equal(existsSync(join(home, ".config/kilo/AGENTS.md")), false);
   } finally { rmSync(root, { recursive: true, force: true }); }
 });
-
-for (const command of ["add", "update", "install"]) {
-  test(`Copilot ${command} failure retains the native cause`, () => {
-    const root = mkdtempSync(join(tmpdir(), "aidd-dev-sync-copilot-cause-"));
-    try {
-      const fakeBin = join(root, "bin"), home = join(root, "home");
-      mkdirSync(fakeBin);
-      executable(join(fakeBin, "copilot"), String.raw`case "$1 $2 $3" in
-  'plugin marketplace list') ${command === "update" ? `${copilotMarketplaceList} "$BUILD/copilot"` : "echo '[]'"} ;;
-  'plugin marketplace ${command}'${command === "install" ? "|\'plugin install aidd-dev@aidd-framework\'" : ""}) echo 'fixture native permission denied' >&2; exit 9 ;;
-esac`);
-      executable(join(fakeBin, "npx"), nativeBuildStub());
-      const result = runSync(fakeBin, home, []);
-      assert.notEqual(result.status, 0);
-      assert.match(result.stderr, /fixture native permission denied/);
-    } finally { rmSync(root, { recursive: true, force: true }); }
-  });
-}
 
 test("reload rejects plugin selection arguments before changing any host", () => {
   const root = mkdtempSync(join(tmpdir(), "aidd-dev-sync-no-filter-"));
   try {
     const fakeBin = join(root, "bin"), home = join(root, "home");
     mkdirSync(fakeBin);
+    executable(join(fakeBin, "claude"), `printf '%s\\n' "$*" >> "$HOME/host-calls"`);
     const result = runSync(fakeBin, home, ["aidd-dev"]);
     assert.notEqual(result.status, 0);
     assert.match(result.stderr, /every plugin/);
-    assert.equal(existsSync(join(home, "build")), false);
-  } finally { rmSync(root, { recursive: true, force: true }); }
-});
-
-test("reload uses the checkout's built CLI instead of a published translator", () => {
-  const root = mkdtempSync(join(tmpdir(), "aidd-dev-sync-local-cli-"));
-  try {
-    const fakeBin = join(root, "bin"), home = join(root, "home");
-    mkdirSync(fakeBin);
-    const source = fixture(home), binary = join(source, "cli/dist/cli.js");
-    mkdirSync(dirname(binary), { recursive: true });
-    writeFileSync(binary, String.raw`const fs = require("node:fs"), path = require("node:path");
-const args = process.argv.slice(2);
-if (args[0] !== "translate") process.exit(2);
-const out = args[args.indexOf("--out") + 1];
-const source = args[1];
-for (const plugin of fs.readdirSync(path.join(source, "plugins"))) {
-  const target = path.join(out, "plugins", plugin);
-  fs.mkdirSync(path.join(target, ".cursor-plugin"), { recursive: true });
-  fs.writeFileSync(path.join(target, ".cursor-plugin/plugin.json"), JSON.stringify({ name: plugin }));
-  fs.cpSync(path.join(source, "plugins", plugin, "skills"), path.join(target, "skills"), { recursive: true });
-
-}`);
-    executable(join(fakeBin, "cursor-agent"), "echo 'Start the Cursor Agent'");
-    executable(join(fakeBin, "npx"), "exit 19");
-    const result = runSync(fakeBin, home, []);
-    assert.equal(result.status, 0, result.stderr);
-    assert.equal(readFileSync(join(home, ".cursor/plugins/local/aidd-dev/skills/01-plan/SKILL.md"), "utf8"), "source skill\n");
+    assert.equal(existsSync(join(home, "host-calls")), false);
   } finally { rmSync(root, { recursive: true, force: true }); }
 });
 
@@ -632,8 +397,8 @@ test("Copilot instructions follow its native home with task overrides taking pre
   try {
     const fakeBin = join(root, "bin"), home = join(root, "home"), nativeHome = join(home, "native-copilot");
     mkdirSync(fakeBin);
-    executable(join(fakeBin, "copilot"), copilotStub);
-    executable(join(fakeBin, "npx"), nativeBuildStub());
+    recordingCli(fixture(home));
+    executable(join(fakeBin, "copilot"), "exit 0");
     const result = runSync(fakeBin, home, [], { COPILOT_HOME: nativeHome, COPILOT_INSTRUCTIONS: "" });
     assert.equal(result.status, 0, result.stderr);
     assert.match(readFileSync(join(nativeHome, "copilot-instructions.md"), "utf8"), /Use available agents when useful/);
@@ -642,8 +407,6 @@ test("Copilot instructions follow its native home with task overrides taking pre
     assert.match(readFileSync(join(home, ".copilot/copilot-instructions.md"), "utf8"), /Use available agents when useful/);
   } finally { rmSync(root, { recursive: true, force: true }); }
 });
-
-
 
 for (const override of ["CLAUDE_CONFIG_DIR", "CLAUDE_INSTRUCTIONS"]) {
   test(`OpenCode preserves its actual Claude fallback despite ${override}`, () => {

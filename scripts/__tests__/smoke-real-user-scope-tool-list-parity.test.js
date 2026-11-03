@@ -28,7 +28,11 @@ function aiToolIds() {
 function declaresUserScopeActivation(toolId) {
   const profile = path.join(ROOT, "cli/src/contexts/tools/domain/profiles", toolId, "profile.ts");
   const text = fs.readFileSync(profile, "utf8");
-  return /nativeActivation:\s*\{/u.test(text) || /installScope:\s*"user"/u.test(text);
+  return (
+    /nativeActivation:\s*\{/u.test(text) ||
+    /installScope:\s*"user"/u.test(text) ||
+    /machineFiles:\s*\{/u.test(text)
+  );
 }
 
 function scriptUserAiList() {
@@ -41,13 +45,19 @@ function scriptUserAiList() {
 describe("smoke-real.sh drives --scope user with the tools the profiles support", () => {
   it("names every AI tool whose profile declares machine-wide activation, and no other", () => {
     const supported = aiToolIds().filter(declaresUserScopeActivation);
-    assert.deepEqual([...supported].sort(), ["claude", "codex", "copilot", "cursor"]);
+    assert.deepEqual([...supported].sort(), [
+      "claude",
+      "codex",
+      "copilot",
+      "cursor",
+      "kilo",
+      "opencode",
+    ]);
     assert.deepEqual([...scriptUserAiList()].sort(), [...supported].sort());
   });
 
-  it("leaves out AI tools that declare neither, which setup --scope user refuses", () => {
+  it("leaves out AI tools that declare none, which setup --scope user refuses", () => {
     const unsupported = aiToolIds().filter((id) => !declaresUserScopeActivation(id));
-    assert.deepEqual([...unsupported].sort(), ["kilo", "opencode"]);
     for (const toolId of unsupported) {
       assert.ok(
         !scriptUserAiList().includes(toolId),

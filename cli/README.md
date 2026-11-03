@@ -37,6 +37,7 @@ Check: `aidd --version`.
 | Command | Lands in |
 | --- | --- |
 | `aidd setup --ide claude` | `.claude/` and `.aidd/` in this project |
+| `aidd setup --global --ide opencode --plugins all` | `~/.config/opencode/` and `~/.config/aidd/`, nothing in this project |
 
 ## Commands
 
@@ -209,7 +210,7 @@ Under `$AIDD_USER_CONFIG_DIR`, else `$XDG_CONFIG_HOME/aidd`, else `~/.config/aid
 | `auth.json` | The user-level credential |
 | `marketplaces.json` | The user-scope registry |
 | `references.json` | The projects claiming it |
-| `manifest.json` | What `--scope user` owns |
+| `manifest.json` | What `--global` owns |
 | `cache/built/<version>/` | One built tree per CLI version |
 
 ### Settings written per tool

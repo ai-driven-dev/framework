@@ -47,7 +47,7 @@ One registration of `aidd-framework` per machine, shared by every project. Read 
 
 ## `setup --scope user`
 
-- Registers the shared local source; native machine-wide activation requires verified current host source/ref proof. Unsupported Copilot versions refuse it.
+- Registers the shared local source; native machine-wide activation requires verified current host source/ref proof. Copilot proves its source through `plugin marketplace list --json` (1.0.98); a version rejecting `--json` (1.0.83) refuses it.
 - Writes nothing under `projectRoot`: no content, no plugin prompt, no gitignore touch.
 - `--plugins all|recommended|<names>` picks plugins from the shared source's catalog. A tool with native activation gets them through `MarketplaceSyncSettingsOptions.enablePlugins`; a tool declaring `PluginsCapability.machineFiles` (opencode's and kilo's skills and agents, codex's agents) or installing into a user plugins directory (cursor) gets them copied there as `scope: "user"` plugins, written by `UserPluginFileUpdater`, so `sync --scope user` rebuilds them and `clean --scope user` removes them. An interactive pick is refused (`UserScopePluginModeError`).
 - Its manifest: `userManifestPath(userConfigDir())`, `userConfigDir()/manifest.json`, same schema and version as the project one.
@@ -58,5 +58,5 @@ One registration of `aidd-framework` per machine, shared by every project. Read 
 - `sync --scope user` resolves the same manifest, rebuilds its `scope: "user"` plugin files, then drives native activation.
 - `--scope <project|user>` on all three, default `project`.
 - Refuses an `--ide` tool (`UserScopeIdeToolsError`): IDE config is project-relative.
-- Refuses an AI tool without machine-wide activation (`UserScopeUnsupportedAiToolsError`; `registry.ts`'s `supportsUserScopeActivation`, false for kilo alone).
+- Refuses an AI tool without machine-wide activation (`UserScopeUnsupportedAiToolsError`; `registry.ts`'s `supportsUserScopeActivation`); every registered AI tool supports it today.
 - Both refusals fire in `SetupFlow`'s constructor; `--ai all` is unusable at this scope.

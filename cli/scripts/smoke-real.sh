@@ -167,11 +167,12 @@ PROJ_U=$(mktemp -d "$TMPROOT/proj-user.XXXXXX")
 (cd "$PROJ_U" && git init -q)
 
 # `setup --scope user` exits 1 for a tool declaring no machine-wide activation
-# (`registry.ts`'s `supportsUserScopeActivation`; opencode today), before anything is
+# (`registry.ts`'s `supportsUserScopeActivation`; none today), before anything is
 # written — so the machine-scope phases carry their own tool list, never `ai_list`.
+# kilo is listed for parity but never measured: `AI_TOOLS` does not probe for it.
 user_ai_list() {
   local ids=()
-  for t in claude codex copilot cursor; do
+  for t in claude codex copilot cursor kilo opencode; do
     [[ -n "${PRESENT[$t]:-}" ]] && ids+=("$t")
   done
   (IFS=,; echo "${ids[*]}")

@@ -66,7 +66,7 @@ Config: `release-please-config.json`, eleven packages. Manifest: `.release-pleas
 
 ## Local reload
 
-`make reload` syncs all plugins and generic delegation guidance to installed hosts; details in `scripts/dev-sync.sh`.
+`make reload` installs every plugin into the installed hosts with `aidd setup --global` from this checkout, then syncs generic delegation guidance; details in `scripts/dev-sync.sh`.
 
 ## Monitoring
 
