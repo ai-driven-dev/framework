@@ -162,7 +162,7 @@ describe("aidd-ui 01-system breakpoints", () => {
     const [resolver] = steps.match(/\{"version": "2025\.10"[^`]*"dev\.ai-driven\.media"[^`]*\}/);
     const [file] = steps.match(/\{"space": [^`]*\}/);
     put(tmp, `${UI}/tokens.resolver.json`, resolver);
-    assert.equal(JSON.parse(file).space.md.$type, "dimension");
+    assert.equal(Object.hasOwn(JSON.parse(file).space.md, "$type"), false);
     put(tmp, `${UI}/breakpoints/desktop.json`, file);
     edit(tmp, `${UI}/system.md`, "themes: [light, dark]", "themes: [light]");
     assert.equal(spawnSync(process.execPath, [ENGINE, "tokens", tmp], { encoding: "utf8" }).status, 0);

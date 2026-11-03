@@ -14,7 +14,7 @@ DTCG 2025.10 in `aidd_docs/ui/tokens.json`.
 | breakpoints | the starting one is `tokens.json`; each other is a `breakpoint` context listing `breakpoints/<name>.json`, its query in `dev.ai-driven.media`, in `breakpoints` order, the winning query last |
 | platforms | the first is `tokens.json`; each other with its own values is a `platform` context listing `platforms/<name>.json`; the modifier is optional |
 | themes, platforms and breakpoints | one resolver holding their modifiers, each in `resolutionOrder`; a token several set takes the value of the later one |
-| context file | redefines base tokens only, with their type |
+| context file | redefines base tokens only, keeping their type; `$type` left out, as `extract` writes it |
 | code | `code-tokens` names the file the code consumes them from, or one per app |
 | `tokens.css` | written by `tokens` only, never by hand; tracked, since the version guard reads the committed one |
 
@@ -33,7 +33,7 @@ Breakpoints `mobile` and `desktop`, one theme:
 with `breakpoints/desktop.json`:
 
 ```json
-{"space": {"md": {"$type": "dimension", "$value": {"value": 1.5, "unit": "rem"}}}}
+{"space": {"md": {"$value": {"value": 1.5, "unit": "rem"}}}}
 ```
 
 Platforms `web` and `mobile`, one theme:
