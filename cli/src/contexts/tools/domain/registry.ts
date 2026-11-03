@@ -131,6 +131,13 @@ export function supportsUserScopeActivation(toolId: ToolId): boolean {
   );
 }
 
+/** Whether a ref the host's registry lists is a plugin in use: an enabled one always; a disabled
+ * one unless the host's uninstall itself leaves refs disabled, where the two cannot be told
+ * apart and the ref is taken for what an uninstall left behind. */
+export function hostRefInUse(toolId: ToolId, enabled: boolean): boolean {
+  return enabled || nativeActivationOf(toolId)?.uninstallLeavesRefDisabled !== true;
+}
+
 /** Whether `setup --global` writes a plugin's files itself for this tool, into its user plugins
  * directory or its user configuration directory, instead of only enabling the plugin through
  * the tool's own CLI. */

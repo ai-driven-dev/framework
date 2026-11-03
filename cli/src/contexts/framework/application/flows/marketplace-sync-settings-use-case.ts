@@ -38,6 +38,7 @@ import type {
 } from "../../../tools/domain/ports/native-marketplace-source-reader.js";
 import type { NativePluginActivator } from "../../../tools/domain/ports/native-plugin-activator.js";
 import {
+  hostRefInUse,
   nativeActivationOf,
   pluginEnablementIsMachineGlobal,
   resolvePluginsCapability,
@@ -840,9 +841,10 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
         ? []
         : (project?.getNativeRegistrations(toolId)?.pluginRefs ?? [])),
     ]);
-    const foreignRef = [...reading.refs.keys()].find(
-      (ref) => ref.endsWith(`@${hostName}`) && !claimed.has(ref)
-    );
+    const foreignRef = [...reading.refs].find(
+      ([ref, entry]) =>
+        hostRefInUse(toolId, entry.enabled) && ref.endsWith(`@${hostName}`) && !claimed.has(ref)
+    )?.[0];
     return { ...base, hostReadable: true, ...(foreignRef === undefined ? {} : { foreignRef }) };
   }
 

@@ -117,6 +117,7 @@ export const claude: AiTool<HasAgents & HasSkills & HasCommands & HasRules & Has
         nativeActivation: {
           binary: "claude",
           scopeArgs: { project: ["--scope", "local"], user: ["--scope", "user"] },
+          userRemoveArgs: [],
           enableVerb: "install",
           disableVerb: "uninstall",
           upgradeVerb: "update",

@@ -1,4 +1,5 @@
 import { type SpawnSyncReturns, spawnSync } from "node:child_process";
+import { homedir } from "node:os";
 import { NativePluginCliError } from "../../../kernel/errors.js";
 import type { MarketplaceScope } from "../../../kernel/scope.js";
 import type { NativePluginActivator } from "../domain/ports/native-plugin-activator.js";
@@ -28,9 +29,15 @@ export abstract class AbstractNativePluginCliAdapter implements NativePluginActi
    * quoted; anything else is spawned by its bare name. */
   private spawn(
     args: readonly string[],
-    stdio: ["ignore", "ignore" | "pipe", "ignore" | "pipe"]
+    stdio: ["ignore", "ignore" | "pipe", "ignore" | "pipe"],
+    cwd?: string
   ): SpawnSyncReturns<string> {
-    const options = { timeout: COMMAND_TIMEOUT_MS, stdio, encoding: "utf-8" as const };
+    const options = {
+      timeout: COMMAND_TIMEOUT_MS,
+      stdio,
+      encoding: "utf-8" as const,
+      ...(cwd === undefined ? {} : { cwd }),
+    };
     const executable = resolveExecutableOnPath(this.binary, hostExecutableLookup());
     if (executable !== undefined && runsThroughShell(executable)) {
       return spawnSync(windowsCommandLine(executable, args), { ...options, shell: true });
@@ -42,6 +49,9 @@ export abstract class AbstractNativePluginCliAdapter implements NativePluginActi
   protected abstract scopeArgsFor(scope: MarketplaceScope): readonly string[];
   /** Arguments that force a removal past installed plugins, empty when unsupported. */
   protected abstract forceRemoveArgs(): readonly string[];
+  /** Scope arguments a user-scope remove takes instead, run from the home directory;
+   * `undefined` when the user scope's own arguments undo the add. */
+  protected abstract userRemoveArgs(): readonly string[] | undefined;
 
   addMarketplace(source: string, scope: MarketplaceScope): void {
     this.run(
@@ -52,9 +62,18 @@ export abstract class AbstractNativePluginCliAdapter implements NativePluginActi
 
   removeMarketplace(name: string, scope: MarketplaceScope, options?: { force?: boolean }): void {
     const force = options?.force === true ? this.forceRemoveArgs() : [];
+    const userArgs = scope === "user" ? this.userRemoveArgs() : undefined;
     this.run(
-      ["plugin", "marketplace", "remove", name, ...this.scopeArgsFor(scope), ...force],
-      `marketplace remove ${name}`
+      [
+        "plugin",
+        "marketplace",
+        "remove",
+        name,
+        ...(userArgs ?? this.scopeArgsFor(scope)),
+        ...force,
+      ],
+      `marketplace remove ${name}`,
+      userArgs === undefined ? undefined : homedir()
     );
   }
 
@@ -70,8 +89,8 @@ export abstract class AbstractNativePluginCliAdapter implements NativePluginActi
     return result.error === undefined && result.status === 0;
   }
 
-  protected run(args: readonly string[], label: string): void {
-    const result = this.spawn(args, ["ignore", "pipe", "pipe"]);
+  protected run(args: readonly string[], label: string, cwd?: string): void {
+    const result = this.spawn(args, ["ignore", "pipe", "pipe"], cwd);
     if (result.error) {
       throw new NativePluginCliError(`${this.binary} ${label} failed: ${result.error.message}`);
     }

@@ -288,6 +288,9 @@ export const copilot: AiTool<
         disableVerb: "uninstall",
         sourceCheckVerb: "update",
         forceRemoveArgs: ["--force"],
+        // Measured on 1.0.98: `plugin uninstall` sets the ref to `false` in enabledPlugins
+        // rather than deleting it.
+        uninstallLeavesRefDisabled: true,
         // Where `copilot plugin marketplace add`/`install` land, measured against the real
         // binary. Never written by aidd; named here for a diagnostic alone.
         userSettingsPath: (h) => join(h, ".copilot", "settings.json"),

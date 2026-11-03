@@ -300,7 +300,7 @@ test("every host takes this checkout through aidd setup --global, afresh", () =>
       assert.match(hostCalls, new RegExp(`claude plugin uninstall ${plugin}@aidd-framework --scope user`));
       assert.match(hostCalls, new RegExp(`codex plugin remove ${plugin}@aidd-framework`));
     }
-    assert.match(hostCalls, /claude plugin marketplace remove aidd-framework --scope user/);
+    assert.match(hostCalls, /^claude plugin marketplace remove aidd-framework$/m);
     assert.match(hostCalls, /codex plugin marketplace remove aidd-framework/);
     assert.doesNotMatch(hostCalls, /^(copilot|cursor-agent|kilo|opencode) /m);
   } finally { rmSync(root, { recursive: true, force: true }); }
