@@ -345,6 +345,69 @@ describe("aidd-ui extract", () => {
     });
   });
 
+  describe("what a stylesheet holds that the token files cannot", () => {
+    const withSheet = (css, options = {}) => setup({ themes: ["light", "dark"], files: { "src/tokens.css": css }, ...options });
+
+    it("reads an html block as the base, as a :root one", () => {
+      withSheet("html { --color-a: #111111; }\n");
+      const { report } = extract();
+      assert.deepEqual(report.left, []);
+      assert.equal(read("tokens.json").color.a.$value.hex, "#111111");
+    });
+
+    it("keeps a theme's raw CSS that differs from the base's raw CSS, and drops one that equals it", () => {
+      withSheet(':root { --shadow-a: 0 1px red; --shadow-b: 0 1px red; }\n[data-theme="dark"] { --shadow-a: 0 2px blue; --shadow-b: 0 1px red; }\n');
+      extract();
+      assert.deepEqual(read("themes/dark.json"), { shadow: { a: { $extensions: { "dev.ai-driven.css": "0 2px blue" } } } });
+    });
+
+    it("writes an alias to a token of another type as raw CSS in a context, an alias to one of its own type as an alias", () => {
+      withSheet(':root { --color-a: #111111; --color-b: #222222; --space-md: 1rem; }\n[data-theme="dark"] { --color-a: var(--space-md); --color-b: var(--color-a); }\n');
+      extract();
+      assert.deepEqual(read("themes/dark.json"), { color: { a: { $extensions: { "dev.ai-driven.css": "var(--space-md)" } }, b: { $value: "{color.a}" } } });
+    });
+
+    it("lists a custom property of a theme block inside a width @media, and writes no breakpoint for it", () => {
+      withSheet(':root { --space-a: 1rem; }\n@media (min-width: 48rem) { [data-theme="dark"] { --space-a: 2rem; } }\n');
+      const { report } = extract();
+      assert.deepEqual(report.left.map((each) => [each.line, each.name, each.why]), [[2, "--space-a", 'selector "[data-theme="dark"]" inside @media is no :root or html block']]);
+      assert.equal(fs.existsSync(path.join(tmp, UI, "breakpoints")), false);
+    });
+
+    it("lists the custom properties inside an @supports or an @layer, where their line is", () => {
+      withSheet(":root { --space-a: 1rem; }\n@supports (display: grid) {\n  :root { --space-b: 2rem; }\n}\n@layer base {\n  :root {\n    --space-c: 3rem;\n  }\n}\n");
+      const { report } = extract();
+      assert.deepEqual(report.left.map((each) => [each.line, each.name, each.why]), [
+        [3, "--space-b", "inside @supports (display: grid)"],
+        [7, "--space-c", "inside @layer base"],
+      ]);
+      assert.deepEqual(Object.keys(read("tokens.json").space), ["a"]);
+    });
+
+    it("lists a custom property declared with no value", () => {
+      withSheet(":root { --space-a: ; --space-b: 1rem; }\n");
+      const { report } = extract();
+      assert.deepEqual(report.left.map((each) => [each.line, each.name, each.why]), [[1, "--space-a", "no value"]]);
+      assert.deepEqual(Object.keys(read("tokens.json").space), ["b"]);
+    });
+
+    it("places a query naming no length on no breakpoint, even the only one left", () => {
+      withSheet(":root { --space-a: 1rem; --space-b: 1rem; }\n@media (min-width: 0) { :root { --space-a: 2rem; } }\n@media (min-width: 99rem) { :root { --space-b: 2rem; } }\n", { themes: ["light"] });
+      const { report } = extract();
+      assert.deepEqual(report.left.map((each) => [each.name, each.why]), [
+        ["--space-a", "@media (min-width: 0) matches no breakpoint of system.md"],
+        ["--space-b", "@media (min-width: 99rem) matches no breakpoint of system.md"],
+      ]);
+    });
+
+    it("lists a theme value citing a custom property that is no token, and writes none of it", () => {
+      withSheet(':root { --color-a: #111111; --color-b: #222222; }\n[data-theme="dark"] { --color-a: var(--color-missing); --color-b: #333333; }\n');
+      const { report } = extract();
+      assert.deepEqual(report.left.map((each) => [each.line, each.name, each.why]), [[2, "--color-a", 'theme "dark" cites --color-missing, which is no token']]);
+      assert.deepEqual(Object.keys(read("themes/dark.json").color), ["b"]);
+    });
+  });
+
   describe("a CSS name", () => {
     const NAMES = ["--a-b-c-d", "--a-b", "--color-accent-hover", "--a", "--color-accent", "--a-b-c", "--font-size-2xl", "--color-accent-hover-strong"];
 
