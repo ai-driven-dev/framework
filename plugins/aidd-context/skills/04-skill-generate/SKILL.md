@@ -6,28 +6,21 @@ argument-hint: create | modify
 
 # Skill Generate
 
-## Actions
-
 ```mermaid
 flowchart LR
-  new([create]) --> scope --> plan --> write --> validate
+  new([create]) --> scope["scope<br>actions/01-scope.md"]
+  scope --> plan["plan<br>actions/02-plan.md"] --> write["write<br>actions/03-write.md"] --> validate["validate<br>actions/04-validate.md"]
   edit([modify]) --> plan
-  validate -->|"a fix changed a file"| validate
-  validate --> done((done))
+  validate -->|"fix a breach or failed trial"| validate
+  validate -->|"trial needs approval"| user((user answers)) --> validate
+  validate -->|"trial passed"| done((validated))
+  validate -->|"declined, unavailable or already delegated"| unverified((runtime unverified))
+  validate -->|"unresolved breach or failure"| blocked((blocked))
 ```
-
-Read an action's file, then do what it says.
-
-| Action | File |
-| ------ | ---- |
-| scope | [actions/01-scope.md](actions/01-scope.md) |
-| plan | [actions/02-plan.md](actions/02-plan.md) |
-| write | [actions/03-write.md](actions/03-write.md) |
-| validate | [actions/04-validate.md](actions/04-validate.md) |
 
 ## Transversal rules
 
-- Default to `create`; follow `modify` when asked.
-- If a cited reference cannot be read, stop and report the missing file.
-- Confirm every target and name with the user.
-- Never write silently.
+- **Default to `create`**; follow `modify` when asked.
+- **If a cited reference cannot be read**, stop and report the missing file.
+- **Confirm every target and name** with the user.
+- **Announce intended writes** before editing.

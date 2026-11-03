@@ -20,6 +20,6 @@
 
 <OPTIONAL. What the action must or must not do throughout, one per line. Omit when none.>
 
-- <rule>
+- **<Important opening words>** <rest of the rule>
 
 > Fill every `<...>` and delete this line. An angle bracket left in the written file is a bug.
