@@ -24,7 +24,7 @@
     "sdlc-automation",
     "prompt-engineering"
   ],
-  "packageManager": "pnpm@12.3.4",
+  "packageManager": "pnpm@12.16.1",
   "engines": {
     "node": "^22.18.0 || ^24.11.0 || >=26.0.0"
   },
