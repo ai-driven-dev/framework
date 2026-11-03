@@ -8,7 +8,7 @@ The contract every generated skill satisfies. `skill-generate` obeys it too.
 - **R2.** `name` is not the invocation token: a colon or prefix breaks loading. In prose call a skill `plugin:folder`.
 - **R3.** `description` is the only always-on text: verb-led, third person, about 240 chars, `Use when the user wants to <intents>` and an optional `Not for <X>`. No colon or dash, no other skill or `/command` named.
 - **R4.** `argument-hint` names what the user brings: the cases they can ask for (`setup | refresh | rewire`) or the artifact the skill consumes (`request | epic`). One or two words per case, never the action slugs. Present unless no action declares an `## Input`, which means the skill takes nothing.
-- **R5.** English only, one idea per sentence.
+- **R5.** Prefer English unless the user requests another language.
 
 ## The router
 
@@ -21,7 +21,7 @@ The contract every generated skill satisfies. `skill-generate` obeys it too.
 ## An action
 
 - **R11.** `# <NN> - <Title>`, then one sentence: what the action produces. Then `## Input` when the action consumes something, `## Process`, `## Output`, and `## Rules` when a constraint holds for the whole action. A section earns its content or is omitted, never invented or reordered.
-- **R12.** A `## Process` step is one imperative sentence, numbered in run order. A case or a loop back is a dash sub-item of its step, or a step that says where to go back to. When the flow continues, the last step names the next action file.
+- **R12.** A `## Process` step is one imperative sentence, numbered in run order. A case or a loop back is a dash sub-item of its step, or a step that says where to go back to. Verify observable success through real execution in the process, and handle failure. When the flow continues, the last step names the next action file.
 - **R13.** `## Rules` holds what the action must or must not do throughout, one per line. A rule two actions share belongs to the router's transversal rules.
 
 ## A reference
@@ -35,7 +35,9 @@ The contract every generated skill satisfies. `skill-generate` obeys it too.
 
 ## Across all of them
 
-- **R17.** One fact, one home. An action acts within a router rule and cites a shared reference, never restating either.
+- **R17.** One fact, one home. An action acts within a router rule and cites a shared reference, never restating either. Before adding or changing instructions, check the whole skill for overlap or conflict and revise the owning rule.
 - **R18.** The first citation of a file in each authoring file is a relative Markdown link, `[name](path)`, except for sibling references under R14. Repeat mentions within the same file use only the filename in backticks when unambiguous; retain the link when ambiguous. Never an `@` include: nothing resolves those. A citation sits in the sentence that uses it, a `## Process` step to read the file, an `## Output` or `## Rules` line to conform to it. Never a block or a line of its own.
 - **R19.** One file, one artifact. Split two apart only when a path needs one without the other.
 - **R20.** No file names another skill or `/command`, its own plugin's included: it states the capability it needs, and the host finds a provider by description. Only an orchestrator's references name the providers they sequence.
+- **R21.** Write for scanning: short sentences, one idea each. Group related instructions; use sub-items only when they improve readability.
+- **R22.** Identify content to read or edit by purpose, rather than line numbers or quoted anchors. Retain exact names required by the artifact's format.
