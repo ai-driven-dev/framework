@@ -38,7 +38,9 @@ vi.mock("../../../src/runtime/wiring/framework.js", () => ({
 }));
 
 const { createDeps } = await import("../../../src/runtime/wiring/framework.js");
-const { registerSetupCommand } = await import("../../../src/presentation/commands/setup.js");
+const { globalSetupHelp, registerSetupCommand } = await import(
+  "../../../src/presentation/commands/setup.js"
+);
 
 const PROJECT_ROOT = process.cwd();
 
@@ -258,46 +260,19 @@ describe("aidd setup — every flag that makes a run a scripted one", () => {
 });
 
 describe("aidd setup — what it refuses and what it reports", () => {
-  it.each(["all", "recommended", "aidd-dev"])(
-    "refuses user-scope plugin mode %s before building dependencies",
-    async (plugins) => {
-      const exit = vi.spyOn(process, "exit").mockImplementation(() => {
-        throw new Error("exited");
-      });
-
-      await expect(run("--scope", "user", "--ai", "claude", "--plugins", plugins)).rejects.toThrow(
-        "exited"
-      );
-
-      expect(errors.join("")).toBe(
-        "Error: --scope user has no manifest entry a plugin can be recorded against yet, so " +
-          "--plugins has nothing to enable. Drop --plugins, or run `aidd plugin install` " +
-          "separately at project scope.\n"
-      );
-      expect(exit).toHaveBeenCalledWith(1);
-      expect(vi.mocked(createDeps)).not.toHaveBeenCalled();
-      expect(written).toEqual([]);
-    }
-  );
-
   it.each([
-    { args: [], cause: "with no --ai", remedy: "Pass `--ai <ids>`" },
+    { args: [], cause: "with no --ide", remedy: "Pass `--ide <ids>`" },
     {
-      args: ["--ai", "claude", "--ide", "vscode"],
-      cause: "an IDE tool (vscode)",
-      remedy: "Drop --ide",
+      args: ["--ide", "claude,vscode"],
+      cause: "an editor (vscode)",
+      remedy: "Drop it from --ide",
     },
-    {
-      args: ["--ai", "opencode"],
-      cause: "opencode declares no user-scope settings",
-      remedy: "Drop it from --ai",
-    },
-  ])("renders user-scope validation for $cause before building dependencies", async (test) => {
+  ])("renders global validation for $cause before building dependencies", async (test) => {
     const exit = vi.spyOn(process, "exit").mockImplementation(() => {
       throw new Error("exited");
     });
 
-    await expect(run("--scope", "user", ...test.args)).rejects.toThrow("exited");
+    await expect(run("--global", ...test.args)).rejects.toThrow("exited");
 
     expect(errors.join("")).toContain(test.cause);
     expect(errors.join("")).toContain(test.remedy);
@@ -389,19 +364,31 @@ describe("aidd setup — the help surface", () => {
     return setup;
   }
 
+  it("says what --global does for each tool, read from its profile", () => {
+    expect(globalSetupHelp().split("\n")).toEqual([
+      "",
+      "Global:",
+      "  Pass --ide claude,codex,copilot,cursor,opencode (one or more, no editor) and --plugins all, recommended, none or names.",
+      "  claude, codex, copilot enable the plugins through their own CLI, which must be on PATH.",
+      "  codex gets their files in ~/.codex, opencode gets their files in ~/.config/opencode.",
+      "  cursor only records the framework source.",
+      "  `aidd sync --global` refreshes them from the framework source.",
+    ]);
+  });
+
   it("describes itself against the command that acts on the framework alone", () => {
     expect(setupCommand().description()).toBe(
       "Set up or update the project to a correct state — bootstraps the whole project (marketplace, framework, tools, plugins); see `framework install`, which acts on the framework alone"
     );
   });
 
-  it("offers a source, two tool lists, a plugin mode, a scope, and two switches", () => {
-    expect(setupCommand().options.map((option) => [option.flags, option.description])).toEqual([
+  it("offers a source, one tool list, a plugin mode, a scope, a provider, and its switches", () => {
+    const visible = setupCommand().options.filter((option) => !option.hidden);
+    expect(visible.map((option) => [option.flags, option.description])).toEqual([
       ["--source <mode>", "Framework source: remote or local"],
       ["--path <dir>", "Absolute path to local framework (required with --source local)"],
       ["--release <tag>", "Marketplace release tag to fetch (e.g., v1.2.3)"],
-      ["--ai <ids>", "Comma-separated AI tool IDs, or 'all' (e.g., claude,cursor or all)"],
-      ["--ide <ids>", "Comma-separated IDE tool IDs, or 'all' (e.g., vscode or all)"],
+      ["--ide <ids>", "Comma-separated tool IDs, or 'all' (e.g., claude,vscode or all)"],
       ["--plugins <mode>", "Plugin install mode: none | all | recommended | comma-separated names"],
       [
         "--no-default-marketplace",
@@ -409,11 +396,15 @@ describe("aidd setup — the help surface", () => {
       ],
       ["--yes", "Accept defaults without prompting"],
       [
-        "--scope <scope>",
-        "project (default) installs into this project alone; user registers the shared " +
-          "framework source and supported tools machine-wide, writing nothing under this project; " +
-          "see user-scope requirements below",
+        "--global",
+        "install for every project on this machine instead of into this project; see the " +
+          "requirements below",
       ],
     ]);
+    expect(
+      setupCommand()
+        .options.filter((option) => option.hidden)
+        .map((option) => option.flags)
+    ).toEqual(["--ai <ids>", "--scope <scope>"]);
   });
 });

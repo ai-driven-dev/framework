@@ -4,7 +4,7 @@ import {
   SyncFailedError,
   UserScopeFilterUnsupportedError,
 } from "../../kernel/errors.js";
-import type { ToolId } from "../../kernel/tool.js";
+import type { AiToolId, ToolId } from "../../kernel/tool.js";
 import { createDeps } from "../../runtime/wiring/framework.js";
 import {
   printActivationOutcome,
@@ -14,17 +14,19 @@ import {
 } from "../display/sync-display.js";
 import { ErrorHandler } from "../error-handler.js";
 import type { CLIOutput } from "../output.js";
-import { parseGlobalOptions, parseScopeFlag } from "./global-options.js";
+import { GLOBAL_FLAG_HELP, parseGlobalOptions, resolveScopeFlags } from "./global-options.js";
 
 interface SyncCmdOptions {
   force: boolean;
   tool?: string;
   plugin?: string;
   scope?: string;
+  global?: boolean;
 }
 
-/** A user-scope install writes nothing under any project, so this skips `restoreAllUseCase`
- * and drives only native activation, through `deps.userManifestRepo` and never this
+/** A user-scope install writes nothing under any project, so this skips `restoreAllUseCase`:
+ * it rebuilds the machine files aidd copied into each tool's user directory from the shared
+ * source, then drives native activation, through `deps.userManifestRepo` and never this
  * project's own manifest. */
 async function runUserScopeSync(
   deps: Awaited<ReturnType<typeof createDeps>>,
@@ -42,6 +44,19 @@ async function runUserScopeSync(
     throw new UserScopeFilterUnsupportedError("a file argument", "sync <files...>");
   }
   const toolIds = cmdOptions.tool !== undefined ? [cmdOptions.tool as ToolId] : undefined;
+  const machine = await deps.userManifestRepo.load();
+  const withFiles = (toolIds ?? machine?.getInstalledToolIds() ?? []).filter((toolId) =>
+    machine?.getPlugins(toolId as AiToolId).some((plugin) => plugin.scope === "user")
+  ) as AiToolId[];
+  const refreshed =
+    withFiles.length === 0
+      ? []
+      : await deps.userPluginUpdateUseCase.execute({
+          toolIds: withFiles,
+          projectRoot,
+          scope: "user",
+          rebuild: true,
+        });
   const activation = await deps.marketplaceSyncSettingsUseCase.execute({
     projectRoot,
     scope: "user",
@@ -51,7 +66,7 @@ async function runUserScopeSync(
   });
   printActivationOutcome(output, activation);
   if (activation.errors.length > 0) throw new SyncFailedError(activation.errors);
-  printUserScopeSyncOutcome(output, activation.activated);
+  printUserScopeSyncOutcome(output, activation.activated, [...new Set(refreshed)]);
 }
 
 async function runSyncAction(
@@ -63,7 +78,7 @@ async function runSyncAction(
   const errorHandler = new ErrorHandler(output);
   try {
     const deps = await createDeps(projectRoot, { verbose }, output);
-    const scope = parseScopeFlag(cmdOptions.scope, output) ?? "project";
+    const scope = resolveScopeFlags(cmdOptions, output) ?? "project";
 
     if (scope === "user") {
       await runUserScopeSync(deps, output, projectRoot, fileArgs, cmdOptions);
@@ -145,6 +160,7 @@ export function registerSyncCommand(program: Command): void {
       "project (default) resolves this project's own manifest; user resolves the " +
         "machine-wide manifest --scope user setup wrote, restoring no project files"
     )
+    .option("--global", `${GLOBAL_FLAG_HELP}, rebuilding its files from the framework source`)
     .action(async (fileArgs: string[], cmdOptions: SyncCmdOptions) => {
       await runSyncAction(program, fileArgs, cmdOptions);
     });

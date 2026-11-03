@@ -95,6 +95,12 @@ export interface MarketplaceSyncSettingsOptions {
    * never a fallback to every one.
    */
   marketplaceNames?: readonly string[];
+  /**
+   * Framework plugins a tool with native activation also enables at this run's scope, on top
+   * of the ones its manifest records — what `setup --global --plugins` asks for, since a
+   * machine-scope install records no plugin a host loads by itself.
+   */
+  enablePlugins?: readonly string[];
 }
 
 interface ActivationOutcome {
@@ -231,7 +237,8 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
       manifest,
       marketplaces,
       toolIds,
-      scope
+      scope,
+      options.enablePlugins ?? []
     );
     let declarativeChanged = false;
     if (scope === "project") {
@@ -403,7 +410,8 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
     manifest: Manifest,
     marketplaces: readonly Marketplace[],
     toolIds: readonly ToolId[],
-    scope: MarketplaceScope
+    scope: MarketplaceScope,
+    enablePlugins: readonly string[]
   ): Promise<ActivationRun> {
     const outcomes = new Map<ToolId, ActivationOutcome>();
     const binaryMissing: { toolId: ToolId; binary: string }[] = [];
@@ -426,7 +434,8 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
           manifest,
           marketplaces,
           warnings,
-          scope
+          scope,
+          enablePlugins
         );
         outcomes.set(toolId, outcome);
       } catch (error) {
@@ -529,7 +538,8 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
     manifest: Manifest,
     marketplaces: readonly Marketplace[],
     warnings: string[],
-    scope: MarketplaceScope
+    scope: MarketplaceScope,
+    enablePlugins: readonly string[]
   ): Promise<ActivationOutcome> {
     // Every known marketplace, never only the ones a plugin points at: declaring a marketplace
     // and installing a plugin from it are two acts. Measured against the real `claude` binary —
@@ -608,9 +618,17 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
         );
     }
     const hostNameByAlias = new Map(stillProven.map((m) => [m.alias, m.hostName]));
+    const frameworkHost = hostNameByAlias.get(FRAMEWORK_MARKETPLACE_NAME);
+    const requested =
+      frameworkHost === undefined ? [] : enablePlugins.map((name) => `${name}@${frameworkHost}`);
     const { refsToEnable, alreadyOwnedRefs } = await this.refsThisProjectEnables(
       toolId,
-      this.pluginRefsToEnable(toolId, manifest, marketplaces, hostNameByAlias),
+      [
+        ...new Set([
+          ...this.pluginRefsToEnable(toolId, manifest, marketplaces, hostNameByAlias),
+          ...requested,
+        ]),
+      ],
       manifest,
       projectRoot
     );

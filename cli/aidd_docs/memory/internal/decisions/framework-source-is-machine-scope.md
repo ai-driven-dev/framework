@@ -49,13 +49,14 @@ One registration of `aidd-framework` per machine, shared by every project. Read 
 
 - Registers the shared local source; native machine-wide activation requires verified current host source/ref proof. Unsupported Copilot versions refuse it.
 - Writes nothing under `projectRoot`: no content, no plugin prompt, no gitignore touch.
+- `--plugins all|recommended|<names>` picks plugins from the shared source's catalog. A tool with native activation gets them through `MarketplaceSyncSettingsOptions.enablePlugins`; a tool declaring `PluginsCapability.machineFiles` (opencode's skills and agents, codex's agents) gets them copied into its user directory as `scope: "user"` plugins, written by `UserPluginFileUpdater`, so `sync --scope user` rebuilds them and `clean --scope user` removes them. An interactive pick is refused (`UserScopePluginModeError`).
 - Its manifest: `userManifestPath(userConfigDir())`, `userConfigDir()/manifest.json`, same schema and version as the project one.
 - `UserManifestRepositoryAdapter` reuses `Manifest.fromJSON`/`toJSON`; its `delete()` removes that one file only.
 - Each AI tool gets a manifest entry with an empty file list, so `MarketplaceSyncSettingsUseCase` has something to iterate.
 - Records no `references.json` claim: absence is the state until `clean --scope user`.
 - `doctor --scope user` runs only `DoctorRegistrationUseCase`.
-- `sync --scope user` resolves the same manifest.
+- `sync --scope user` resolves the same manifest, rebuilds its `scope: "user"` plugin files, then drives native activation.
 - `--scope <project|user>` on all three, default `project`.
 - Refuses an `--ide` tool (`UserScopeIdeToolsError`): IDE config is project-relative.
-- Refuses an AI tool without machine-wide activation (`UserScopeUnsupportedAiToolsError`; `registry.ts`'s `supportsUserScopeActivation`, false for opencode alone).
+- Refuses an AI tool without machine-wide activation (`UserScopeUnsupportedAiToolsError`; `registry.ts`'s `supportsUserScopeActivation`, false for kilo alone).
 - Both refusals fire in `SetupFlow`'s constructor; `--ai all` is unusable at this scope.

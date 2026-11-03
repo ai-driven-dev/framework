@@ -25,13 +25,18 @@ Check: `aidd --version`.
 
 | Step | Run |
 | --- | --- |
-| Bootstrap the project | `aidd setup --ai claude --ide vscode --plugins recommended --yes` |
+| Bootstrap the project | `aidd setup --ide claude,vscode --plugins recommended --yes` |
 | Add a plugin | `aidd plugin install aidd-dev` |
 | Check the state | `aidd doctor` |
 | Restore owned files | `aidd sync` |
 | Update the CLI | `aidd update` |
 
 `setup` writes the manifest, the default marketplace, the tool configs and the plugins.
+`--global` installs for the machine instead, and writes nothing under the project.
+
+| Command | Lands in |
+| --- | --- |
+| `aidd setup --ide claude` | `.claude/` and `.aidd/` in this project |
 
 ## Commands
 
@@ -101,31 +106,34 @@ Counts the tokens of Claude Code and Codex sessions, locally. Details: [FAQ](../
 
 ## Scope
 
-`setup`, `doctor`, `sync` and `clean` accept `--scope <project|user>`.
+`setup`, `doctor`, `sync` and `clean` accept `--global`, or its former spelling `--scope user`.
 
 | Scope | Acts on |
 | --- | --- |
-| `project` (default) | This project alone |
-| `user` | The machine: registers the framework source and supported tools, writes nothing under the project |
+| project (default) | This project alone |
+| `--global` | Every project on the machine; writes nothing under the project |
 
-`setup --scope user` needs:
+`setup --global` needs:
 
-- An explicit `--ai` list of supported tools (`--ai all` is refused).
-- `--plugins none`, or no `--plugins` in a scripted run.
-- No `--ide`.
+- An explicit `--ide` list of supported tools, no editor (`--ide all` is refused).
+- `--plugins all`, `recommended`, `none` or comma-separated names.
 
-| Tool | `setup --scope user` |
+| Tool | `setup --global --plugins …` |
 | --- | --- |
-| `claude`, `codex`, `copilot` | Registers the source and drives the tool's own CLI |
-| `cursor` | Records the source and tool only, no native activation |
-| `opencode`, `kilo` | Unsupported: use project scope |
+| `claude`, `copilot` | Registers the source and enables the plugins through the tool's own CLI |
+| `codex` | The same, plus the plugins' agents in `~/.codex/agents/` |
+| `opencode` | Copies the plugins' skills and agents into `~/.config/opencode/` |
+| `cursor` | Records the source and tool only |
+| `kilo` | Unsupported: use project scope |
 
 Native activation needs the tool's executable on `PATH`.
 Without it, registration succeeds with a warning and activation stays unrun.
-Install it, then run `aidd sync --scope user`.
+Install it, then run `aidd sync --global`.
 
 ```sh
-aidd setup --scope user --ai claude,codex,copilot --plugins none --yes
+aidd setup --global --ide claude,codex,opencode --plugins all --yes
+aidd sync --global    # rebuild the copied files and refresh the hosts from the framework source
+aidd clean --global   # remove what --global installed and purge the shared source
 ```
 
 ## Authentication

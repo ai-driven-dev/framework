@@ -3,13 +3,14 @@ import { createDeps } from "../../runtime/wiring/framework.js";
 import { printProjectCleanOutcome, printUserScopeCleanOutcome } from "../display/clean-display.js";
 import { ErrorHandler } from "../error-handler.js";
 import type { CLIOutput } from "../output.js";
-import { parseGlobalOptions, parseScopeFlag } from "./global-options.js";
+import { GLOBAL_FLAG_HELP, parseGlobalOptions, resolveScopeFlags } from "./global-options.js";
 
 type Deps = Awaited<ReturnType<typeof createDeps>>;
 
 interface CleanCmdOptions {
   force: boolean;
   scope?: string;
+  global?: boolean;
 }
 
 async function runProjectScopeClean(
@@ -56,10 +57,11 @@ export function registerCleanCommand(program: Command): void {
       "project (default) cleans this project alone; user undoes the machine-wide " +
         "registration setup --scope user wrote and purges the shared source itself"
     )
+    .option("--global", `${GLOBAL_FLAG_HELP}, and purge the shared source`)
     .action(async (cmdOptions: CleanCmdOptions) => {
       const { verbose, output, projectRoot } = parseGlobalOptions(program);
       const errorHandler = new ErrorHandler(output);
-      const scope = parseScopeFlag(cmdOptions.scope, output) ?? "project";
+      const scope = resolveScopeFlags(cmdOptions, output) ?? "project";
 
       try {
         const deps = await createDeps(projectRoot, { verbose }, output);

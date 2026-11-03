@@ -39,7 +39,9 @@ export class UserPluginUpdateUseCase {
         )
         .map((plugin) => ({ toolId, plugin }))
     );
-    const nativeTargets = toolIds.flatMap((toolId) =>
+    // A rebuild re-materializes the files aidd wrote; a host enabling plugins itself picks the
+    // rebuilt tree up through its own marketplace refresh, which activation drives.
+    const nativeTargets = (options.rebuild === true ? [] : toolIds).flatMap((toolId) =>
       (manifest.getNativeRegistrations(toolId)?.pluginClaims ?? [])
         .filter(
           (claim) =>
@@ -68,7 +70,13 @@ export class UserPluginUpdateUseCase {
       targets.map(async ({ toolId, plugin }) => ({
         toolId,
         plugin,
-        plan: await this.fileUpdater.planUpdate(plugin, toolId, options.projectRoot, this.logger),
+        plan: await this.fileUpdater.planUpdate(
+          plugin,
+          toolId,
+          options.projectRoot,
+          this.logger,
+          options.rebuild === true
+        ),
       }))
     );
     const nativeUpdates = await Promise.all(

@@ -8,6 +8,7 @@ const loadManifest = vi.fn();
 const getToolVersion = vi.fn();
 const currentVersion = vi.fn();
 const userManifestRepo = { load: vi.fn() };
+const userPluginUpdate = vi.fn();
 
 vi.mock("../../../src/runtime/wiring/framework.js", () => ({
   createDeps: vi.fn(async () => ({
@@ -16,6 +17,7 @@ vi.mock("../../../src/runtime/wiring/framework.js", () => ({
     marketplaceSyncSettingsUseCase: { execute: activation },
     manifestRepo: { load: loadManifest },
     userManifestRepo,
+    userPluginUpdateUseCase: { execute: userPluginUpdate },
     currentVersionProvider: { get: currentVersion },
   })),
   createMenuDeps: vi.fn(),
@@ -65,7 +67,10 @@ beforeEach(() => {
   getToolVersion.mockReturnValue("5.1.0");
   loadManifest.mockResolvedValue({ getToolVersion });
   currentVersion.mockReturnValue("5.2.2");
-  userManifestRepo.load.mockResolvedValue({ getInstalledToolIds: () => ["claude"] });
+  userManifestRepo.load.mockResolvedValue({
+    getInstalledToolIds: () => ["claude"],
+    getPlugins: () => [],
+  });
 });
 
 afterEach(() => {
@@ -231,6 +236,7 @@ describe("aidd sync --scope user", () => {
       toolIds: undefined,
       recreateFrameworkIfMissing: true,
     });
+    expect(userPluginUpdate).not.toHaveBeenCalled();
     expect(restoreAll).not.toHaveBeenCalled();
     expect(restoreOne).not.toHaveBeenCalled();
   });
@@ -239,6 +245,23 @@ describe("aidd sync --scope user", () => {
     expect(await run("--scope", "user")).toEqual([
       "Nothing to sync — no tool is registered at user scope yet.",
     ]);
+  });
+
+  it("rebuilds the machine files a tool owns before driving activation, under --global", async () => {
+    userManifestRepo.load.mockResolvedValue({
+      getInstalledToolIds: () => ["claude", "opencode"],
+      getPlugins: (toolId: string) => (toolId === "opencode" ? [{ scope: "user" }] : []),
+    });
+    userPluginUpdate.mockResolvedValue(["aidd-dev", "aidd-dev"]);
+
+    expect(await run("--global")).toEqual(["Refreshed machine files for: aidd-dev"]);
+    expect(userPluginUpdate).toHaveBeenCalledWith({
+      toolIds: ["opencode"],
+      projectRoot: PROJECT_ROOT,
+      scope: "user",
+      rebuild: true,
+    });
+    expect(activation).toHaveBeenCalledWith(expect.objectContaining({ scope: "user" }));
   });
 
   it("narrows to the one tool named, still off the machine-wide manifest", async () => {
@@ -349,6 +372,10 @@ describe("aidd sync — the help surface", () => {
         "--scope <scope>",
         "project (default) resolves this project's own manifest; user resolves the " +
           "machine-wide manifest --scope user setup wrote, restoring no project files",
+      ],
+      [
+        "--global",
+        "act on the machine-wide install `setup --global` wrote, rebuilding its files from the framework source",
       ],
     ]);
   });

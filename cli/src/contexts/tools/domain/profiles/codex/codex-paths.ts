@@ -3,6 +3,8 @@
  * even where the literal values coincide: a change to either side must not collapse them.
  */
 
+import type { MachinePlugin } from "../../capabilities/plugins-capability.js";
+
 /** Relative path for the Codex-native plugin manifest inside each plugin output directory. */
 export const OUTPUT_CODEX_MANIFEST_RELATIVE = ".codex-plugin/plugin.json";
 
@@ -15,3 +17,14 @@ export const OUTPUT_CODEX_MARKETPLACE_RELATIVE = ".agents/plugins/marketplace.js
 
 /** Subdirectory name inside each plugin output for staged Codex agent TOML files. */
 export const OUTPUT_CODEX_AGENTS_DIR = "codex-agents";
+
+/**
+ * A Codex plugin cannot carry agents, and Codex loads them from `~/.codex/agents/` for every
+ * project, so a machine-scope install copies each staged TOML there, prefixed with its plugin.
+ */
+export function codexMachineFilePath(builtPath: string, plugin: MachinePlugin): string | null {
+  const staged = `plugins/${plugin.name}/${OUTPUT_CODEX_AGENTS_DIR}/`;
+  if (!builtPath.startsWith(staged) || !builtPath.endsWith(".toml")) return null;
+  const name = builtPath.slice(staged.length);
+  return name.includes("/") ? null : `agents/${plugin.name}-${name}`;
+}

@@ -537,6 +537,7 @@ describe("aidd doctor — the help surface", () => {
         "project (default) checks this project's own manifest; user checks the " +
           "machine-wide manifest --scope user setup wrote",
       ],
+      ["--global", "act on the machine-wide install `setup --global` wrote"],
     ]);
   });
 });

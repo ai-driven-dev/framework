@@ -2,7 +2,25 @@
  * contract can read the same values: the profile imports the contract, so the contract cannot
  * import the profile back. */
 
+import type { MachinePlugin } from "../../capabilities/plugins-capability.js";
+
 export const OPENCODE_DIRECTORY = ".opencode/";
+
+/**
+ * A machine-scope install puts a plugin's skills and agents where OpenCode loads them for every
+ * project: its global config directory takes the same `skills/` and `agents/` a project's
+ * `.opencode/` does. Hooks, commands and MCP entries stay project-scoped.
+ */
+export function opencodeMachineFilePath(builtPath: string, plugin: MachinePlugin): string | null {
+  const relative = builtPath.startsWith(OPENCODE_DIRECTORY)
+    ? builtPath.slice(OPENCODE_DIRECTORY.length)
+    : null;
+  if (relative === null) return null;
+  if (relative.startsWith(`skills/${plugin.name}/`)) return relative;
+  const agent = /^agents\/(.+)\.md$/.exec(relative)?.[1];
+  if (agent === undefined || !agent.startsWith(`${plugin.name}-`)) return null;
+  return plugin.agents.has(agent.slice(plugin.name.length + 1)) ? relative : null;
+}
 
 /**
  * The directory OpenCode's own plugin loader scans (`{plugin,plugins}/*.{ts,js}`, one level, no

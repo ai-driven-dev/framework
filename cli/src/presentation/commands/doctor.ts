@@ -16,7 +16,7 @@ import {
 } from "../display/doctor-display.js";
 import { ErrorHandler } from "../error-handler.js";
 import type { CLIOutput } from "../output.js";
-import { parseGlobalOptions, parseScopeFlag } from "./global-options.js";
+import { GLOBAL_FLAG_HELP, parseGlobalOptions, resolveScopeFlags } from "./global-options.js";
 
 type Deps = Awaited<ReturnType<typeof createDeps>>;
 
@@ -153,6 +153,7 @@ interface DoctorCmdOptions {
   tool?: string;
   plugin?: string;
   scope?: string;
+  global?: boolean;
 }
 
 export function registerDoctorCommand(program: Command): void {
@@ -168,12 +169,13 @@ export function registerDoctorCommand(program: Command): void {
       "project (default) checks this project's own manifest; user checks the " +
         "machine-wide manifest --scope user setup wrote"
     )
+    .option("--global", GLOBAL_FLAG_HELP)
     .action(async (cmdOptions: DoctorCmdOptions) => {
       const { verbose, output, projectRoot } = parseGlobalOptions(program);
       const errorHandler = new ErrorHandler(output);
       try {
         const deps = await createDeps(projectRoot, { verbose }, output);
-        const scope = parseScopeFlag(cmdOptions.scope, output) ?? "project";
+        const scope = resolveScopeFlags(cmdOptions, output) ?? "project";
         if (scope === "user") {
           await runUserScopeDoctor(deps, output, projectRoot, cmdOptions);
         } else if (cmdOptions.tool !== undefined) {

@@ -582,6 +582,7 @@ describe("setup --scope user", () => {
       install: { results: [] },
       activation: { updatedTools: [] },
       context: undefined,
+      machinePlugins: [],
     });
   });
 
@@ -598,6 +599,7 @@ describe("setup --scope user", () => {
       install: { results: [] },
       activation: { updatedTools: [] },
       context: undefined,
+      machinePlugins: [],
     });
   });
 

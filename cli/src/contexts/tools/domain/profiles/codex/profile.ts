@@ -31,6 +31,7 @@ import {
   stripCodexSkillFrontmatter,
 } from "./build.js";
 import { codexAgentFrontmatter, codexAgentToml } from "./codex-agent-toml.js";
+import { codexMachineFilePath } from "./codex-paths.js";
 
 const DIRECTORY = ".codex/";
 const TOOL_SUFFIX = ".codex.md";
@@ -181,6 +182,7 @@ export const codex: AiTool<
       mode: "native",
       pluginsDir: ".codex/plugins/",
       pluginManifestRelativePath: "plugin.json",
+      machineFiles: { dir: (homedir) => join(homedir, ".codex"), map: codexMachineFilePath },
       acceptsMcp: true,
       translationMode: "marketplace",
       // Codex only enables plugins from its user-global config plus its own plugin cache; a

@@ -25,7 +25,7 @@
   {
     "command": "setup --source local --path <FRAMEWORK_FIXTURE> --ai claude --plugins none --yes --scope user",
     "exitCode": 0,
-    "stdout": "Fetching marketplace 'aidd-framework'...\nProject initialized.\n",
+    "stdout": "Fetching marketplace 'aidd-framework'...\nRegistered for every project on this machine.\n",
     "stderr": "Warning: claude CLI not found on PATH — skipping native plugin activation.\n",
     "filesWritten": [],
     "manifest": {
@@ -823,7 +823,7 @@
   {
     "command": "[user-scope-clean] setup --source local --path <FRAMEWORK_FIXTURE> --ai claude --plugins none --yes --scope user",
     "exitCode": 0,
-    "stdout": "Fetching marketplace 'aidd-framework'...\nProject initialized.\n",
+    "stdout": "Fetching marketplace 'aidd-framework'...\nRegistered for every project on this machine.\n",
     "stderr": "Warning: claude CLI not found on PATH — skipping native plugin activation.\n",
     "filesWritten": [],
     "manifest": null,
