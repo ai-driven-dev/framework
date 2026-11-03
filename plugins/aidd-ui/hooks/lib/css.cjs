@@ -1,4 +1,4 @@
-// A token tree as CSS text: one custom property per token, the base in `:root` and under its own
+// A token tree as CSS text, and a stylesheet read back as rules and custom properties by line: one custom property per token, the base in `:root` and under its own
 // theme's name, so a region can switch back to it, and each other theme in a `[data-theme]` block,
 // then each platform but the default in a `[data-platform]` block. A theme or platform block also redeclares the base tokens that depend on one it redefines, since a `var()`
 // computes where it is declared: otherwise a nested region keeps their base value. The same tokens
@@ -17,6 +17,119 @@ const OWN_FUNCTION_SPACES = ["hsl", "hwb", "lab", "lch", "oklab", "oklch"];
 const OPAQUE = 1;
 const HAS_SPACE = /\s/;
 const VAR_REFERENCE = /var\(\s*(--[\w-]+)/g; // the custom property a `var()` names
+
+const COMMENT = /\/\*[\s\S]*?\*\//g;
+const NOT_LINE_BREAK = /[^\n]/g;
+const VAR_CALL = /var\(\s*(--[\w-]+)\s*(?:,[^)]*)?\)/g;
+const CUSTOM_PROPERTY = /^(\s*)(--[\w-]+)\s*:([\s\S]*)$/;
+const MEDIA_RULE = /^@media\s+([\s\S]*)$/;
+const AT_RULE = "@";
+const BASE_KEY = ""; // a stylesheet's custom properties by selector: the base, `:root`, under this key
+const MEDIA_PREFIX = "@media ";
+
+/** A stylesheet with its comments blanked and its lines kept, so a position still names its line. */
+const blankComments = (css) => css.replace(COMMENT, (found) => found.replace(NOT_LINE_BREAK, " "));
+
+const lineAt = (text, offset) => text.slice(0, offset).split(LINE_BREAK).length;
+
+/** The offset of the `}` closing a block whose body starts at `from`; a quoted string hides braces. */
+function closeOf(text, from) {
+  let depth = 1;
+  let quote = null;
+  for (let at = from; at < text.length; at += 1) {
+    const char = text[at];
+    if (quote) {
+      if (char === "\\") at += 1;
+      else if (char === quote) quote = null;
+    } else if (char === '"' || char === "'") quote = char;
+    else if (char === "{") depth += 1;
+    else if (char === "}" && (depth -= 1) === 0) return at;
+  }
+  return text.length;
+}
+
+/** The rules of a stylesheet as `{media, selector, body, line, bodyLine}`, `media` being the query of
+ * the `@media` block holding a rule, else null; and the other at-rules, nested ones included, as
+ * `{prelude, body, line, bodyLine}`. A statement such as `@import` is neither. */
+function rulesOf(css) {
+  const text = blankComments(css);
+  const rules = [];
+  const others = [];
+  const scan = (from, to, media) => {
+    let at = from;
+    for (;;) {
+      const open = text.indexOf("{", at);
+      if (open < 0 || open >= to) return;
+      const statement = text.indexOf(";", at);
+      if (statement >= 0 && statement < open) {
+        at = statement + 1;
+        continue;
+      }
+      const close = closeOf(text, open + 1);
+      const prelude = text.slice(at, open).trim();
+      const start = at + text.slice(at, open).indexOf(prelude);
+      const block = { line: lineAt(text, start), bodyLine: lineAt(text, open + 1), body: text.slice(open + 1, close) };
+      const query = media === null ? MEDIA_RULE.exec(prelude)?.[1].trim() : undefined;
+      if (query !== undefined) scan(open + 1, close, query);
+      else if (prelude.startsWith(AT_RULE)) others.push({ prelude, ...block });
+      else rules.push({ media, selector: prelude, ...block });
+      at = close + 1;
+    }
+  };
+  scan(0, text.length, null);
+  return { rules, others };
+}
+
+/** The custom properties a rule's body declares, `{name, value, line}`: the value as written,
+ * trimmed, the last declaration needing no `;`. A `;` inside quotes or parentheses ends nothing. */
+function declarationsIn(body, bodyLine) {
+  const found = [];
+  let begin = 0;
+  let depth = 0;
+  let quote = null;
+  const end = (at) => {
+    const statement = body.slice(begin, at);
+    const match = CUSTOM_PROPERTY.exec(statement);
+    if (match) found.push({ name: match[2], value: match[3].trim(), line: bodyLine + body.slice(0, begin + match[1].length).split(LINE_BREAK).length - 1 });
+    begin = at + 1;
+  };
+  for (let at = 0; at < body.length; at += 1) {
+    const char = body[at];
+    if (quote) {
+      if (char === "\\") at += 1;
+      else if (char === quote) quote = null;
+    } else if (char === '"' || char === "'") quote = char;
+    else if (char === "(") depth += 1;
+    else if (char === ")") depth -= 1;
+    else if (char === ";" && depth === 0) end(at);
+  }
+  end(body.length);
+  return found;
+}
+
+/** A generated stylesheet's custom properties by selector: the base, `:root`, under BASE_KEY, and
+ * a breakpoint under its query, its rule sharing the base's selector. */
+function declarationsOf(css) {
+  const found = new Map();
+  for (const { media, selector, body, bodyLine } of rulesOf(css).rules) {
+    const key = media ? `${MEDIA_PREFIX}${media}` : selector.includes(":root") ? BASE_KEY : selector;
+    const own = found.get(key) ?? new Map();
+    for (const { name, value } of declarationsIn(body, bodyLine)) own.set(name, value);
+    found.set(key, own);
+  }
+  return found;
+}
+
+/** The custom properties in force under `key` of a stylesheet read by `declarationsOf`: the base's,
+ * those of `key` over them. */
+const layered = (sheet, key) => new Map([...(sheet.get(BASE_KEY) ?? []), ...(sheet.get(key) ?? [])]);
+
+/** A custom property's value with each `var()` it holds replaced by its target's, down to a value. */
+function resolved(values, name, path = new Set()) {
+  const value = values.get(name);
+  if (value === undefined || path.has(name)) return value;
+  return value.replace(VAR_CALL, (call, target) => resolved(values, target, new Set([...path, name])) ?? call);
+}
 
 /** A token's CSS custom property, `--` plus its path joined by `-`. */
 const customProperty = (name) => `--${name.split(PATH_SEPARATOR).join("-")}`;
@@ -129,4 +242,4 @@ function render({ base, baseTheme, themes, platforms = [], breakpoints = [] }) {
   return { css: problems.length ? null : `${[HEADER, ...blocks.map((lines) => lines.join(LINE_BREAK))].join(PARAGRAPH_BREAK)}${LINE_BREAK}`, problems };
 }
 
-module.exports = { FONT_WEIGHTS, RAW_CSS_EXTENSION, VAR_REFERENCE, render, customProperty, citedBy, dependents, loopOf };
+module.exports = { FONT_WEIGHTS, RAW_CSS_EXTENSION, VAR_REFERENCE, BASE_KEY, MEDIA_PREFIX, render, customProperty, citedBy, dependents, loopOf, rulesOf, declarationsIn, declarationsOf, layered, resolved };
