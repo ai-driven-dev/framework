@@ -15,6 +15,7 @@ One summary comment on the pull or merge request, shaped by [comments-summary-te
 1. **Keep.** Sort the feedback per [learnings.md](../references/learnings.md).
 2. **Fill.** Fill `comments-summary-template.md`.
 3. **Post.** Post it on the first run; on a later one, edit the comment opening with `## Review comments` instead.
+4. **Offer.** If there are learnings, propose running the skill that captures durable project learnings with this summary as input.
 
 ## Rules
 

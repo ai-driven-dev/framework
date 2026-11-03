@@ -12,6 +12,6 @@ Done: {{n}}{{ (short shas), when there are any}}. Answered: {{n}}.
 
 ### Learnings to keep
 
-- {{lesson}} ([thread]({{url}})): rule, memory or skill, to record with the skill that captures project learnings once you approve
+- {{lesson}} ([thread]({{url}}))
 
 <!-- Fill every {{...}}, one line per item. Drop a section left empty, and this comment. Keep it short enough to read on a phone. -->
