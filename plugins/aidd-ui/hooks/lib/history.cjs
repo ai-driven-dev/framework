@@ -7,7 +7,7 @@ const { table, list, parseRecord } = require("./markdown.cjs");
 const { placed, systemOf, byId, tokensUsedBy, isElement, isSystem, problem, fm, INTEGER_VERSION, SEMVER } = require("./model.cjs");
 const { checkOf, text, UI_DIR, WARNING } = require("./project.cjs");
 const { committed, baseline, changed } = require("./committed.cjs");
-const { customProperty, declarationsOf, layered, resolved, MEDIA_PREFIX } = require("./css.cjs");
+const { customProperty, declarationsOf, layered, contextsOf, resolved } = require("./css.cjs");
 const { cssFileOf } = require("./tokens.cjs");
 const { renderOf } = require("./renders.cjs");
 
@@ -179,14 +179,12 @@ function textProblems(project) {
     });
 }
 
-/** The custom properties whose resolved value differs between two stylesheets, in a theme both
- * hold, or at a breakpoint either holds, since a width without one reads the base. */
+/** The custom properties whose resolved value differs between two stylesheets, on the roots both
+ * can be asked about: the base and each theme both hold, at each width either holds. */
 function changedProperties(before, after) {
   const changed = new Set();
-  const compared = [...new Set([...before.keys(), ...after.keys()])].filter((key) => key.startsWith(MEDIA_PREFIX) || (before.has(key) && after.has(key)));
-  for (const key of compared) {
-    const within = (sheet) => layered(sheet, key);
-    const [was, now] = [within(before), within(after)];
+  for (const key of contextsOf([before, after])) {
+    const [was, now] = [layered(before, key), layered(after, key)];
     for (const name of new Set([...was.keys(), ...now.keys()])) if (resolved(was, name) !== resolved(now, name)) changed.add(name);
   }
   return changed;

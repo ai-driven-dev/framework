@@ -372,7 +372,7 @@ describe("aidd-ui tokens and renders", () => {
         editJson(DARK, (tree) => (tree.space = { md: { $value: { value: 3, unit: "rem" } } }));
         generateStylesheet(tmp);
         assert.deepEqual(problems(), []);
-        assert.ok(stylesheet().includes('@media (min-width: 64rem) {\n  [data-theme="dark"] {\n    --space-md: 1.5rem;\n  }\n}'));
+        assert.ok(stylesheet().includes('@media (min-width: 64rem) {\n  :root {\n    --space-md: 1.5rem;\n  }\n  :root[data-theme="dark"] {\n    --space-md: 1.5rem;\n  }\n}'));
       });
 
       it("accepts a breakpoint value of a token the theme block redeclares as a dependent", () => {
@@ -444,16 +444,17 @@ describe("aidd-ui tokens and renders", () => {
 
     it("writes the non-default platform as its own block, after the themes and before the breakpoints", () => {
       withMobile();
-      assert.ok(css().includes('[data-platform="mobile"] {\n  --border-thin: 0.125rem;\n}'));
-      assert.ok(css().indexOf('[data-theme="dark"] {') < css().indexOf('[data-platform="mobile"] {'));
-      assert.ok(css().indexOf('[data-platform="mobile"] {') < css().indexOf("@media"));
+      assert.ok(css().includes(':root[data-platform="mobile"] {\n  --border-thin: 0.125rem;\n}'));
+      assert.ok(css().indexOf(':root[data-theme="dark"] {') < css().indexOf(':root[data-platform="mobile"] {'));
+      assert.ok(css().indexOf(':root[data-platform="mobile"] {') < css().indexOf("@media"));
       assert.equal(css().includes('[data-platform="web"]'), false);
     });
 
-    it("redeclares what depends on a token it redefines, as a theme block does", () => {
+    it("leaves what depends on a token it redefines to its var(), on the root", () => {
       addToken("edge", { $type: "dimension", $value: "{border.thin}" });
       withMobile();
-      assert.ok(css().includes('[data-platform="mobile"] {\n  --border-thin: 0.125rem;\n  --misc-edge: var(--border-thin);\n}'));
+      assert.ok(css().includes(':root[data-platform="mobile"] {\n  --border-thin: 0.125rem;\n}'));
+      assert.equal(css().split("--misc-edge:").length - 1, 1);
     });
 
     const resolverCases = [
@@ -507,14 +508,15 @@ describe("aidd-ui tokens and renders", () => {
     describe("set by a theme too", () => {
       const black = { $value: { colorSpace: "srgb", components: [0, 0, 0], hex: "#000000" } };
 
-      const PAIR = '[data-platform="mobile"] [data-theme="dark"], [data-platform="mobile"][data-theme="dark"] {\n  --color-brand-primary:';
+      const PAIR = ':root[data-platform="mobile"][data-theme="dark"] {\n  --color-brand-primary:';
 
-      it("accepts a token both redefine, the stylesheet holding the pair the resolution order decides", () => {
+      it("accepts a token both redefine, the platform block giving the pair what the resolution order decides", () => {
         withMobile();
         editJson(MOBILE, (tree) => (tree.color = { brand: { primary: black } }));
         generateStylesheet(tmp);
         assert.deepEqual(problems(), []);
-        assert.ok(css().includes(`${PAIR} #000000;`));
+        assert.equal(css().includes(PAIR), false);
+        assert.ok(css().includes(':root[data-platform="mobile"] {\n  --color-brand-primary: #000000;\n  --border-thin: 0.125rem;\n}'));
       });
 
       it("gives the pair to the theme when the resolution order puts it after the platform", () => {
@@ -534,8 +536,8 @@ describe("aidd-ui tokens and renders", () => {
         generateStylesheet(tmp);
         assert.deepEqual(problems(), []);
         const css = fs.readFileSync(path.join(tmp, STYLESHEET), "utf8");
-        assert.ok(css.includes('[data-platform="mobile"] {\n  --space-md: 3rem;'));
-        assert.equal(css.includes('@media (min-width: 64rem) {\n  [data-platform="mobile"]'), false);
+        assert.ok(css.includes(':root[data-platform="mobile"] {\n  --space-md: 3rem;'));
+        assert.equal(css.slice(css.indexOf("@media")).includes('[data-platform="mobile"]'), false);
       });
     });
   });
@@ -655,8 +657,8 @@ describe("aidd-ui tokens and renders", () => {
 
     it("holds the media query verbatim, after the theme block", () => {
       const css = fs.readFileSync(path.join(tmp, STYLESHEET), "utf8");
-      assert.ok(css.endsWith('@media (min-width: 64rem) {\n  :root, [data-theme="light"] {\n    --space-md: 1.5rem;\n  }\n}\n'));
-      assert.ok(css.indexOf('[data-theme="dark"] {') < css.indexOf("@media"));
+      assert.ok(css.endsWith('@media (min-width: 64rem) {\n  :root {\n    --space-md: 1.5rem;\n  }\n}\n'));
+      assert.ok(css.indexOf(':root[data-theme="dark"] {') < css.indexOf("@media"));
     });
 
     it("names a stylesheet edited by hand", () => {
@@ -699,6 +701,47 @@ describe("aidd-ui tokens and renders", () => {
     it("names a render that links another stylesheet", () => {
       edit(tmp, BUTTON_RENDER, "../tokens.css", "../other.css");
       assert.deepEqual(problems(), [`${BUTTON_RENDER}: does not load ../tokens.css, add ${STYLESHEET_LINK.trim()}`]);
+    });
+  });
+
+  describe("V9 theme and platform on <html> alone", () => {
+    const NAMED = (attribute, tag) => [`${BUTTON_RENDER}: line ${INSERTED_LINE}: ${attribute} on <${tag}>, set it on <html> alone`];
+
+    for (const attribute of ["data-theme", "data-platform"]) {
+      it(`names ${attribute} on a wrapper`, () => {
+        addToRender(`<div ${attribute}="dark"><p>x</p></div>`);
+        assert.deepEqual(problems(), NAMED(attribute, "div"));
+      });
+    }
+
+    it("names a tag whatever its case, and an attribute among others", () => {
+      addToRender('<SECTION class="ui" DATA-Theme=dark>x</SECTION>');
+      assert.deepEqual(problems(), NAMED("data-theme", "section"));
+    });
+
+    it("names both attributes of one element", () => {
+      addToRender('<div data-theme="dark" data-platform="mobile">x</div>');
+      assert.deepEqual(problems(), [...NAMED("data-theme", "div"), ...NAMED("data-platform", "div")]);
+    });
+
+    it("accepts them on <html>, whatever its case", () => {
+      edit(tmp, BUTTON_RENDER, '<html lang="en">', '<HTML lang="en" data-theme="dark" data-platform="mobile">');
+      assert.deepEqual(problems(), []);
+    });
+
+    it("reads markup only: a comment, a style block, a script and an attribute's value name nothing", () => {
+      addToRender('<!-- <div data-theme="dark"> --><style>[data-theme="dark"] { display: block }</style><script>el.setAttribute("data-platform", "x"); const t = "<div data-theme=1>"</script><p title="a data-theme b">x</p>');
+      assert.deepEqual(problems(), []);
+    });
+
+    it("names an attribute that is exactly data-theme or data-platform, not one that starts with them", () => {
+      addToRender('<div data-theme-note="x" data-platformer="y">x</div>');
+      assert.deepEqual(problems(), []);
+    });
+
+    it("counts lines through a multiline comment", () => {
+      addToRender('<!--\n-->\n<div data-theme="dark">x</div>');
+      assert.deepEqual(problems(), [`${BUTTON_RENDER}: line ${INSERTED_LINE + 2}: data-theme on <div>, set it on <html> alone`]);
     });
   });
 

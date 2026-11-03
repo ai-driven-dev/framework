@@ -194,8 +194,9 @@ describe("aidd-ui extract", () => {
       assert.deepEqual(read("platforms/mobile.json").color.ink.$value.hex, "#000000");
       assert.deepEqual(tokenProblems(), { generated: 0, found: [] });
       const css = fs.readFileSync(path.join(tmp, UI, "tokens.css"), "utf8");
-      assert.ok(css.includes('[data-platform="mobile"] [data-theme="dark"], [data-platform="mobile"][data-theme="dark"] {\n  --color-ink: #000000;\n}'));
-      assert.ok(css.includes('@media (min-width: 48rem) {\n  [data-platform="mobile"] {\n    --font-size-title: 2rem;\n  }\n}'));
+      assert.equal(css.includes(':root[data-platform="mobile"][data-theme="dark"]'), false);
+      assert.ok(css.includes(':root[data-platform="mobile"] {\n  --color-ink: #000000;\n'));
+      assert.ok(css.includes('@media (min-width: 48rem) {\n  :root {\n    --space-md: 1.5rem;\n    --font-size-title: 2rem;\n  }\n  :root[data-platform="mobile"] {\n    --font-size-title: 2rem;\n  }\n}'));
     });
 
     it("lists an object nested deeper than one level, and a theme or media block of a platform that is not the first", () => {
@@ -286,7 +287,7 @@ describe("aidd-ui extract", () => {
   describe("a theme block", () => {
     const withSheet = (css, themes = ["light", "dark"]) => setup({ themes, files: { "src/tokens.css": css } });
 
-    it("holds the base theme in :root when the stylesheet writes both selectors, as tokens.css does", () => {
+    it("holds the base theme in :root when the stylesheet writes both selectors", () => {
       withSheet(':root, [data-theme="light"] { --color-a: #111111; }\n[data-theme="dark"] { --color-a: #eeeeee; }\n');
       const { report } = extract();
       assert.deepEqual(report.left, []);

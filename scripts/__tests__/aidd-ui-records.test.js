@@ -754,6 +754,17 @@ describe("aidd-ui records and history", () => {
           assert.ok(edited().includes(TOKEN_CHANGED(DIALOG, "space.md, space.gap")));
         });
 
+        it("reaches a theme's value citing a token the breakpoint redefines, at that width", () => {
+          editTokens(tmp, (tree) => (tree.space.gap = { $type: "dimension", $value: { value: 1, unit: "rem" } }));
+          put(tmp, `${UI}/themes/dark.json`, JSON.stringify({ ...JSON.parse(fs.readFileSync(path.join(tmp, UI, "themes/dark.json"), "utf8")), space: { gap: { $value: "{space.md}" } } }));
+          change(DIALOG, "tokens: [space.md]", "tokens: [space.md, space.gap]");
+          commit();
+          edit(tmp, DESKTOP, '"value": 1.5', '"value": 2');
+          editTokens(tmp, () => {});
+          console.log(edited(), fs.readFileSync(path.join(tmp, UI, 'tokens.css'), 'utf8'));
+          assert.ok(edited().some((found) => found.startsWith(DIALOG) && found.includes("space.gap")));
+        });
+
         it("reaches a media query that changed, whose value moved at some widths", () => {
           edit(tmp, `${UI}/tokens.resolver.json`, "(min-width: 64rem)", "(min-width: 80rem)");
           editTokens(tmp, () => {});
@@ -817,6 +828,20 @@ describe("aidd-ui records and history", () => {
         editTokens(tmp, () => {});
         assert.deepEqual(edited(), []);
         assert.ok(fs.readFileSync(path.join(tmp, STYLESHEET), "utf8").includes('[data-theme="sepia"] {'));
+      });
+
+      it("stays silent when a theme is removed: no element holds a value in it any more", () => {
+        const SEPIA = '"sepia": [{ "$ref": "themes/sepia.json" }],\n        "dark": [';
+        put(tmp, `${UI}/themes/sepia.json`, JSON.stringify({ color: { brand: { primary: { $value: { colorSpace: "srgb", components: [0.5, 0.4, 0.3], hex: "#80664d" } } } } }));
+        edit(tmp, `${UI}/tokens.resolver.json`, '"dark": [', SEPIA);
+        edit(tmp, SYSTEM, "themes: [light, dark]", "themes: [light, sepia, dark]");
+        editTokens(tmp, () => {});
+        commit();
+        edit(tmp, `${UI}/tokens.resolver.json`, SEPIA, '"dark": [');
+        edit(tmp, SYSTEM, "themes: [light, sepia, dark]", "themes: [light, dark]");
+        editTokens(tmp, () => {});
+        assert.deepEqual(edited(), []);
+        assert.equal(fs.readFileSync(path.join(tmp, STYLESHEET), "utf8").includes("sepia"), false);
       });
 
       it("does not name an element already named for its text", () => {

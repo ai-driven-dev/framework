@@ -167,6 +167,12 @@ describe("aidd-ui impact", () => {
       assert.deepEqual(sameValue("space.md"), ["misc.wide"]);
     });
 
+    it("lists a token holding it only in a theme at a breakpoint", () => {
+      editTokens(tmp, (tree) => (tree.misc = { x: { $type: "dimension", $value: { value: 9, unit: "rem" } } }));
+      put(tmp, `${UI}/themes/dark.json`, JSON.stringify({ misc: { x: { $value: { value: 1.5, unit: "rem" } } } }));
+      assert.deepEqual(sameValue("space.md"), ["misc.x"]);
+    });
+
     it("lists a token holding it only on a platform", () => {
       edit(tmp, `${UI}/system.md`, "platforms: [web]", "platforms: [web, mobile]");
       editTokens(tmp, (tree) => (tree.misc = { tall: { $type: "dimension", $value: { value: 3, unit: "rem" } } }));

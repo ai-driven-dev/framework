@@ -7,7 +7,7 @@ const nodePath = require("node:path");
 const { list } = require("./markdown.cjs");
 const { placed, systemOf, TOKENED_KINDS } = require("./model.cjs");
 const { text, checkOf } = require("./project.cjs");
-const { FONT_WEIGHTS, RAW_CSS_EXTENSION, VAR_REFERENCE, render, customProperty, citedBy, loopOf, declarationsOf, layered, resolved } = require("./css.cjs");
+const { FONT_WEIGHTS, RAW_CSS_EXTENSION, VAR_REFERENCE, render, customProperty, citedBy, loopOf, declarationsOf, layered, contextsOf, resolved } = require("./css.cjs");
 
 const RESERVED_KEYS = ["$value", "$type", "$description", "$extensions", "$deprecated", "$extends", "$schema"];
 const ROOT_KEY = "$root"; // a stated limit: a group's own token is a named child here
@@ -454,7 +454,6 @@ function generate(project) {
   const typeFor = (name) => typeOf(tree, tree.tokens.get(name));
   return render({
     base,
-    baseTheme: list(systemOf(project)?.frontMatter.themes)[0],
     themes: themeTrees(project).map(({ name, files }) => ({ theme: name, tokens: contextEntries(files, typeFor) })),
     platforms: platformTrees(project).map(({ name, files }) => ({ platform: name, tokens: contextEntries(files, typeFor) })).filter(({ tokens }) => tokens.length), // a platform that changes no value needs no block
     breakpoints: breakpointTrees(project).map(({ media, files }) => ({ media, tokens: contextEntries(files, typeFor) })),
@@ -530,7 +529,7 @@ function resolvedValues(project) {
   const sheet = declarationsOf(css);
   const names = namesByProperty(read(project));
   return new Map(
-    [...sheet.keys()].map((key) => {
+    contextsOf([sheet]).map((key) => {
       const values = layered(sheet, key);
       return [key, new Map([...values.keys()].filter((property) => names.has(property)).map((property) => [names.get(property), resolved(values, property)]))];
     })

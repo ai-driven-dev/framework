@@ -76,8 +76,8 @@ Every record opens with flat front matter, `key: value` or `key: [a, b]`, and cl
 - A value DTCG cannot hold, such as `color-mix()` or `100%`, is raw CSS: `"$extensions": {"dev.ai-driven.css": "<value>"}`. Each `var()` in it must name a token. No value may lead back to its own token, through an alias or a `var()`, across the base and the context it sits in: the browser would compute nothing. A theme or breakpoint file may redefine a token this way too.
 - `$root` is not supported: name the token. A token holding both `$value` and child tokens is an error: its children would be dropped.
 - A token's CSS name is `--` plus its path joined by `-`.
-- `tokens.css` is generated: a custom property per token, the base in `:root, [data-theme="<base theme>"]`, so a nested region can switch back to it, each other theme in `[data-theme="<theme>"]`, then each platform but the first that redefines a token in `[data-platform="<name>"]`, an alias as `var()`, raw CSS verbatim, a font weight keyword as its DTCG number. A theme or platform block also redeclares, in tree order after its own tokens, every base token that depends on one it redefines, through an alias or a `var()`, transitively, so a theme or platform set on a nested element recomputes it there. Each platform and theme then get `[data-platform="<p>"] [data-theme="<t>"], [data-platform="<p>"][data-theme="<t>"]`, holding the tokens, resolved in `resolutionOrder`, that a region of both would not already get from the two blocks. After them, each breakpoint in resolver order repeats the base's selector and each selector above in an `@media <query>` block, tokens in tree order, holding those whose value changes at that width, without what depends on them, which recomputes through `var()`. A composite token (shadow, border, typography, ...) has no CSS of its own: it needs a raw CSS extension to appear in it.
-- A component or screen render loads it with `<link rel="stylesheet" href="../tokens.css">`, so a token change reaches every render without rewriting one.
+- `tokens.css` is generated: a custom property per token, every one on the root element, an alias as `var()`, raw CSS verbatim, a font weight keyword as its DTCG number. The base is `:root`. Each other theme, each platform but the first that redefines a token, and each pair of the two follow as `:root[data-theme="<t>"]`, `:root[data-platform="<p>"]` and `:root[data-platform="<p>"][data-theme="<t>"]`, the specificity growing with the combination, each holding the tokens, resolved in `resolutionOrder`, whose text differs from what the blocks before it already give that root. After them, each breakpoint in resolver order is one `@media <query>` block repeating `:root` and those selectors under the same rule. Since all sit on one element, a `var()` computes against the final values and no dependent is written again. A composite token (shadow, border, typography, ...) has no CSS of its own: it needs a raw CSS extension to appear in it.
+- A component or screen render loads it with `<link rel="stylesheet" href="../tokens.css">`, so a token change reaches every render without rewriting one. It sets `data-theme` and `data-platform` on `<html>` alone, V9: another theme or platform is another document, or the same one with that attribute toggled.
 - A validated or deprecated element edited since its committed version, without a new `version`, is an error. A change to `status`, `code` or the History table is not an edit. A validated element is also held to the resolved value, in any theme, platform or breakpoint, of each token it or an element it uses declares, compared with the committed `tokens.css`; a token's value change leaves a deprecated element as it is.
 
 ## Responsibilities
@@ -149,7 +149,7 @@ A hook runs the same check:
 
 Each output lists errors before warnings, stops at 20 problem lines and names the command that prints the rest.
 
-Rules: records R1 to R17, history H1 to H8, tokens T1 to T10, renders V1 to V8, code C1 to C9.
+Rules: records R1 to R17, history H1 to H8, tokens T1 to T10, renders V1 to V9, code C1 to C9.
 
 ## Limits
 
@@ -163,13 +163,10 @@ Rules: records R1 to R17, history H1 to H8, tokens T1 to T10, renders V1 to V8, 
 - Breakpoint blocks cascade in the stylesheet, where the Resolver applies one context: at a width two queries match, a token only the earlier one redefines keeps that value.
 - A loop only two breakpoints form together, at a width both queries match, is not named.
 - A breakpoint file no resolver context names is not read.
-- With 3 or more themes, a nested region inherits the outer theme's values for the tokens its own theme does not redefine.
-- H8 compares a breakpoint's values over the base, not inside each theme, so a theme value citing a token a breakpoint redefines is not followed.
 - Composite tokens are checked for a `$value`, not for its shape, and reach `tokens.css` only as raw CSS.
 - `impact` leaves reviews out of its report; `same-value` compares resolved CSS text, so two spellings of one colour differ.
 - `extract` keeps the last of a custom property declared twice in a context, merges two files of one platform the same way, reads a script key `colorBGPrimary` as `color-b-g-primary`, writes a value with `!important` as raw CSS with it, and replaces the files it writes without removing one an earlier run left.
 - `bump` does not see a review that lives in a task folder.
-- A nested region cannot switch back to the first platform: tokens.css writes no block for it, nor for a platform that redefines no token. A region of the base theme inside a platform region restores the base values, and a platform region inside a theme region gets its own block only, so a token both redefine takes the platform's value whatever `resolutionOrder` says.
 - A loop that only two contexts of two modifiers form together, and breakpoints that match at once with a pair of contexts, are not named: a pair resolves one breakpoint at a time.
 - The committed baseline of H8 is `HEAD`: without `git`, a repository, a commit or the committed file, the rule is silent, and committing an edit without raising the version hides it. Any other failure of `git`, such as a repository it refuses to read or its five-second timeout, is one H8 warning on `aidd_docs/ui`, naming the failure. A run asks `git` once which files changed, then reads only those, plus the committed record of an element using a token whose value changed; C4 asks at most twice more when it finds a literal, naming each file that holds one.
 - A version raise that stays `validated` passes until a review can prove it.

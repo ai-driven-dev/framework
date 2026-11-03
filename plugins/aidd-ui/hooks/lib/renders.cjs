@@ -1,4 +1,4 @@
-// V1 to V8: each component and screen has its HTML render, showing every variant, axis and state
+// V1 to V9: each component and screen has its HTML render, showing every variant, axis and state
 // through the tokens its record declares alone, from the stylesheet generated out of the tokens.
 const path = require("node:path");
 const { list } = require("./markdown.cjs");
@@ -13,6 +13,13 @@ const STYLESHEET_HREF = "../tokens.css"; // renders sit one folder below the gen
 const STYLESHEET_LINK = `<link rel="stylesheet" href="${STYLESHEET_HREF}">`;
 const LINK_TAG = /<link\b[^>]*>/g;
 const STYLE_BLOCK = /<style\b[^>]*>[\s\S]*?<\/style>/gi;
+
+const NOT_LINE_BREAK = /[^\n]/g;
+const NOT_MARKUP = /<!--[\s\S]*?-->|<(style|script)\b[\s\S]*?<\/\1\s*>/gi; // copy and code, not tags
+const TAG = /<([a-z][\w:-]*)((?:"[^"]*"|'[^']*'|[^>"'])*)>/gi;
+const QUOTED_VALUE = /"[^"]*"|'[^']*'/g;
+const SWITCH_ATTRIBUTE = /\sdata-(theme|platform)(?![\w-])/gi; // what shows another theme or platform
+const SWITCHED_ELEMENT = "html";
 
 const DECLARED_PROPERTY = /(--[\w-]+)\s*:/g; // a property the render sets itself, not a token
 
@@ -80,6 +87,21 @@ function declaredProblems(project) {
     });
 }
 
+/** A theme or a platform is shown by the document's own attribute, so it is set on `<html>` alone. */
+function switchProblems(project) {
+  return project.renders.flatMap((file) => {
+    const markup = readRender(project, file).replace(NOT_MARKUP, (found) => found.replace(NOT_LINE_BREAK, " "));
+    return [...markup.matchAll(TAG)]
+      .filter(([, tag]) => tag.toLowerCase() !== SWITCHED_ELEMENT)
+      .flatMap(({ 1: tag, 2: attributes, index }) =>
+        [...attributes.replace(QUOTED_VALUE, "").matchAll(SWITCH_ATTRIBUTE)].map(([, kind]) => ({
+          file,
+          message: `line ${markup.slice(0, index).split(LINE_BREAK).length}: data-${kind.toLowerCase()} on <${tag.toLowerCase()}>, set it on <html> alone`,
+        }))
+      );
+  });
+}
+
 /** Whether a render has a `<link>` that loads the generated stylesheet. */
 const loadsStylesheet = (html) => (html.match(LINK_TAG) ?? []).some((tag) => tag.includes(`href="${STYLESHEET_HREF}"`));
 
@@ -103,6 +125,7 @@ const RULES = {
   V6: literalProblems(PATTERNS.unit),
   V7: declaredProblems,
   V8: stylesheetProblems,
+  V9: switchProblems,
 };
 
 /** Every broken render rule, in rule order. */

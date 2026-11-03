@@ -134,84 +134,46 @@ describe("aidd-ui css", () => {
       });
     });
 
-    it("holds the base in :root and under its theme's name, then one block per theme, in the order given", () => {
-      const { css, problems } = render({ base: [brand, text], baseTheme: "light", themes: [{ theme: "dark", tokens: [dark] }, { theme: "sepia", tokens: [sepia] }] });
+    it("holds the base in :root, then one block per theme in the order given, each with the tokens whose text differs", () => {
+      const { css, problems } = render({ base: [brand, text], themes: [{ theme: "dark", tokens: [dark] }, { theme: "sepia", tokens: [sepia] }] });
       assert.deepEqual(problems, []);
-      assert.equal(
-        css,
-        [
-          HEADER,
-          "",
-          ':root, [data-theme="light"] {',
-          "  --color-brand-primary: #336699;",
-          "  --color-text-default: var(--color-brand-primary);",
-          "}",
-          "",
-          '[data-theme="dark"] {',
-          "  --color-brand-primary: #6699cc;",
-          "  --color-text-default: var(--color-brand-primary);",
-          "}",
-          "",
-          '[data-theme="sepia"] {',
-          "  --color-brand-primary: #80664d;",
-          "  --color-text-default: var(--color-brand-primary);",
-          "}",
-          "",
-        ].join("\n")
-      );
+      assert.equal(css, [HEADER, "", ":root {", "  --color-brand-primary: #336699;", "  --color-text-default: var(--color-brand-primary);", "}", "", ':root[data-theme="dark"] {', "  --color-brand-primary: #6699cc;", "}", "", ':root[data-theme="sepia"] {', "  --color-brand-primary: #80664d;", "}", ""].join("\n"));
     });
 
-    it("holds each platform in its own block after the themes and redeclares what depends on it, as a theme block does", () => {
+    it("keeps a block for a theme that changes nothing, so a theme stays listed", () => {
+      assert.ok(render({ base: [brand], themes: [{ theme: "dark", tokens: [{ ...brand }] }] }).css.endsWith(':root[data-theme="dark"] {\n}\n'));
+    });
+
+    it("holds each platform in its own block after the themes", () => {
       const edge = { name: "border.thin", type: "dimension", value: { value: 0.0625, unit: "rem" } };
       const hair = { name: "border.hair", type: "dimension", alias: "border.thin" };
       const wide = { name: "border.thin", type: "dimension", value: { value: 0.125, unit: "rem" } };
-      const { css, problems } = render({ base: [edge, hair], baseTheme: "light", themes: [{ theme: "dark", tokens: [] }], platforms: [{ platform: "mobile", tokens: [wide] }] });
+      const { css, problems } = render({ base: [edge, hair], themes: [{ theme: "dark", tokens: [] }], platforms: [{ platform: "mobile", tokens: [wide] }] });
       assert.deepEqual(problems, []);
-      assert.equal(css, [HEADER, "", ':root, [data-theme="light"] {', "  --border-thin: 0.0625rem;", "  --border-hair: var(--border-thin);", "}", "", '[data-theme="dark"] {', "}", "", '[data-platform="mobile"] {', "  --border-thin: 0.125rem;", "  --border-hair: var(--border-thin);", "}", ""].join("\n"));
+      assert.equal(css, [HEADER, "", ":root {", "  --border-thin: 0.0625rem;", "  --border-hair: var(--border-thin);", "}", "", ':root[data-theme="dark"] {', "}", "", ':root[data-platform="mobile"] {', "  --border-thin: 0.125rem;", "}", ""].join("\n"));
     });
 
-    describe("a theme block, so the variable recomputes in a nested region", () => {
+    describe("a theme block, every custom property being on the root", () => {
       const space = { name: "space.md", type: "dimension", value: { value: 1, unit: "rem" } };
       /** The dark block of a stylesheet: every line between its selector and its closing brace. */
       const darkBlock = (base, tokens) => {
-        const lines = render({ base, baseTheme: "light", themes: [{ theme: "dark", tokens }] }).css.split("\n");
-        return lines.slice(lines.indexOf('[data-theme="dark"] {') + 1, -2);
+        const lines = render({ base, themes: [{ theme: "dark", tokens }] }).css.split("\n");
+        return lines.slice(lines.indexOf(':root[data-theme="dark"] {') + 1, -2);
       };
 
-      it("redeclares a base alias of a token the theme redefines, and leaves an unrelated token out", () => {
-        assert.deepEqual(darkBlock([brand, text, space], [dark]), ["  --color-brand-primary: #6699cc;", "  --color-text-default: var(--color-brand-primary);"]);
+      it("leaves out an alias of a token it redefines: the var() computes on the root, against the new value", () => {
+        assert.deepEqual(darkBlock([brand, text, space], [dark]), ["  --color-brand-primary: #6699cc;"]);
       });
 
-      it("follows raw CSS var()s, transitively, its base text kept", () => {
+      it("leaves out raw CSS citing a token it redefines, its text being the base's", () => {
         const mixed = { name: "color.text.soft", type: "color", raw: "color-mix(in srgb, var(--color-text-default) 50%, transparent)" };
-        assert.deepEqual(darkBlock([brand, text, mixed, space], [dark]), [
-          "  --color-brand-primary: #6699cc;",
-          "  --color-text-default: var(--color-brand-primary);",
-          "  --color-text-soft: color-mix(in srgb, var(--color-text-default) 50%, transparent);",
-        ]);
+        assert.deepEqual(darkBlock([brand, text, mixed, space], [dark]), ["  --color-brand-primary: #6699cc;"]);
       });
 
-      it("writes what it redeclares in tree order, whatever cites what", () => {
-        const first = { name: "a.first", type: "color", alias: "z.last" };
-        const last = { name: "z.last", type: "color", alias: "color.brand.primary" };
-        assert.deepEqual(darkBlock([first, brand, last], [dark]), ["  --color-brand-primary: #6699cc;", "  --a-first: var(--z-last);", "  --z-last: var(--color-brand-primary);"]);
-      });
-
-      it("keeps the value of a token the theme redefines itself, on one line", () => {
-        const ownText = { name: "color.text.default", type: "color", value: srgb([0, 0, 0], { hex: "#000000" }) };
-        assert.deepEqual(darkBlock([brand, text], [dark, ownText]), ["  --color-brand-primary: #6699cc;", "  --color-text-default: #000000;"]);
-      });
-
-      it("redeclares what depends on a token the theme redefines, through that token too", () => {
-        const ownText = { name: "color.text.default", type: "color", value: srgb([0, 0, 0], { hex: "#000000" }) };
-        const quote = { name: "color.text.quote", type: "color", alias: "color.text.default" };
-        assert.deepEqual(darkBlock([brand, text, quote], [ownText]), ["  --color-text-default: #000000;", "  --color-text-quote: var(--color-text-default);"]);
-      });
-
-      it("ends on raw CSS that cites itself in a loop", () => {
-        const one = { name: "loop.one", type: "number", raw: "var(--loop-two)" };
-        const two = { name: "loop.two", type: "number", raw: "calc(var(--loop-one) + var(--color-brand-primary))" };
-        assert.deepEqual(darkBlock([brand, one, two], [dark]), ["  --color-brand-primary: #6699cc;", "  --loop-one: var(--loop-two);", "  --loop-two: calc(var(--loop-one) + var(--color-brand-primary));"]);
+      it("holds a token it redefines to its own text, an alias staying a var()", () => {
+        const ownText = { name: "color.text.default", type: "color", alias: "color.text.quote" };
+        const quote = { name: "color.text.quote", type: "color", value: srgb([0, 0, 0], { hex: "#000000" }) };
+        assert.deepEqual(darkBlock([brand, text, quote], [ownText]), ["  --color-text-default: var(--color-text-quote);"]);
       });
     });
 
@@ -222,41 +184,13 @@ describe("aidd-ui css", () => {
       const gap = { name: "space.gap", type: "dimension", alias: "space.md" };
       const MEDIA = "(min-width: 48rem)";
 
-      it("comes after the theme blocks, one per breakpoint in the order given, under the base's selector", () => {
-        const { css, problems } = render({ base: [brand, space], baseTheme: "light", themes: [{ theme: "dark", tokens: [dark] }], breakpoints: [{ media: MEDIA, tokens: [wide] }, { media: "(min-width: 64rem)", tokens: [wider] }] });
+      it("comes after the theme blocks, one @media per breakpoint in the order given, holding :root", () => {
+        const { css, problems } = render({ base: [brand, space], themes: [{ theme: "dark", tokens: [dark] }], breakpoints: [{ media: MEDIA, tokens: [wide] }, { media: "(min-width: 64rem)", tokens: [wider] }] });
         assert.deepEqual(problems, []);
         assert.equal(
           css,
-          [
-            HEADER,
-            "",
-            ':root, [data-theme="light"] {',
-            "  --color-brand-primary: #336699;",
-            "  --space-md: 1rem;",
-            "}",
-            "",
-            '[data-theme="dark"] {',
-            "  --color-brand-primary: #6699cc;",
-            "}",
-            "",
-            `@media ${MEDIA} {`,
-            '  :root, [data-theme="light"] {',
-            "    --space-md: 2rem;",
-            "  }",
-            "}",
-            "",
-            "@media (min-width: 64rem) {",
-            '  :root, [data-theme="light"] {',
-            "    --space-md: 3rem;",
-            "  }",
-            "}",
-            "",
-          ].join("\n")
+          [HEADER, "", ":root {", "  --color-brand-primary: #336699;", "  --space-md: 1rem;", "}", "", ':root[data-theme="dark"] {', "  --color-brand-primary: #6699cc;", "}", "", `@media ${MEDIA} {`, "  :root {", "    --space-md: 2rem;", "  }", "}", "", "@media (min-width: 64rem) {", "  :root {", "    --space-md: 3rem;", "  }", "}", ""].join("\n")
         );
-      });
-
-      it("targets :root alone when no theme is declared", () => {
-        assert.ok(render({ base: [space], themes: [], breakpoints: [{ media: MEDIA, tokens: [wide] }] }).css.endsWith(`@media ${MEDIA} {\n  :root {\n    --space-md: 2rem;\n  }\n}\n`));
       });
 
       it("redeclares no dependent: a var() recomputes on the element holding the new value", () => {
@@ -264,12 +198,15 @@ describe("aidd-ui css", () => {
         assert.equal(css.split("--space-gap:").length - 1, 1);
       });
 
-      it("is not frozen by a theme block redeclaring a dependent: that block holds the var(), never the value", () => {
-        const both = { name: "misc.both", type: "dimension", raw: "calc(var(--space-md) + var(--color-brand-primary))" };
-        const lines = render({ base: [brand, space, both], baseTheme: "light", themes: [{ theme: "dark", tokens: [dark] }], breakpoints: [{ media: MEDIA, tokens: [wide] }] }).css.split("\n");
-        const darkLines = lines.slice(lines.indexOf('[data-theme="dark"] {'), lines.indexOf(`@media ${MEDIA} {`));
-        assert.ok(darkLines.includes("  --misc-both: calc(var(--space-md) + var(--color-brand-primary));"));
-        assert.equal(darkLines.some((line) => line.includes("--space-md:")), false);
+      it("holds at a width only what that width changes, never undoing what another breakpoint's rule gave", () => {
+        const tall = { name: "space.tall", type: "dimension", value: { value: 4, unit: "rem" } };
+        const taller = { name: "space.tall", type: "dimension", value: { value: 5, unit: "rem" } };
+        const css = render({ base: [space, tall], themes: [], breakpoints: [{ media: MEDIA, tokens: [wide] }, { media: "(min-width: 64rem)", tokens: [taller] }] }).css;
+        assert.ok(css.endsWith("@media (min-width: 64rem) {\n  :root {\n    --space-tall: 5rem;\n  }\n}\n"));
+      });
+
+      it("writes no @media for a breakpoint that changes nothing", () => {
+        assert.equal(render({ base: [space], themes: [], breakpoints: [{ media: MEDIA, tokens: [{ ...space }] }] }).css.includes("@media"), false);
       });
 
       it("names a composite value without raw CSS, with its file", () => {
@@ -293,6 +230,11 @@ describe("aidd-ui css", () => {
       });
     });
 
+    it("names a composite value without raw CSS wherever it is written, even when a theme gives the same absence", () => {
+      const shadow = { name: "elevation.low", type: "shadow", value: { any: "shape" }, file: "ui/tokens.json" };
+      assert.deepEqual(render({ base: [shadow], themes: [{ theme: "dark", tokens: [{ ...shadow, file: "ui/themes/dark.json" }] }] }).problems.map(({ file }) => file), ["ui/tokens.json", "ui/themes/dark.json"]);
+    });
+
     it("writes the same bytes twice", () => {
       const tokens = { base: [brand, text], baseTheme: "light", themes: [{ theme: "dark", tokens: [dark] }] };
       assert.equal(render(tokens).css, render(tokens).css);
@@ -300,6 +242,46 @@ describe("aidd-ui css", () => {
   });
 
   describe("a combination of contexts", () => {
+    const dimension = (name, value) => ({ name, type: "dimension", value: { value, unit: "px" } });
+    const small = (order) => render({ base: [dimension("t.a", 1), { name: "t.b", type: "dimension", alias: "t.a" }], themes: [{ theme: "dark", tokens: [dimension("t.a", 2)] }], platforms: [{ platform: "mobile", tokens: [dimension("t.a", 4)] }], breakpoints: [{ media: "(min-width: 768px)", tokens: [dimension("t.a", 3)] }], order }).css;
+    const DARK = ':root[data-theme="dark"]';
+    const MOBILE = ':root[data-platform="mobile"]';
+    const PAIR = ':root[data-platform="mobile"][data-theme="dark"]';
+    const rule = (selector, value, indent = "") => [`${indent}${selector} {`, `${indent}  --t-a: ${value}px;`, `${indent}}`].join("\n");
+    /** The small stylesheet: the base, a theme, a platform, then the pair and the @media rules the order of resolution asks for. */
+    const sheet = ({ pair, media }) => [HEADER, "", ":root {\n  --t-a: 1px;\n  --t-b: var(--t-a);\n}", "", rule(DARK, 2), "", rule(MOBILE, 4), ...(pair === undefined ? [] : ["", rule(PAIR, pair)]), "", `@media (min-width: 768px) {\n${media.map(([selector, value]) => rule(selector, value, "  ")).join("\n")}\n}`, ""].join("\n");
+
+    const EXPECTED = {
+      "theme platform breakpoint": sheet({ media: [[":root", 3], [DARK, 3], [MOBILE, 3]] }),
+      "theme breakpoint platform": sheet({ media: [[":root", 3], [DARK, 3], [PAIR, 4]] }),
+      "platform theme breakpoint": sheet({ pair: 2, media: [[":root", 3], [DARK, 3], [MOBILE, 3], [PAIR, 3]] }),
+      "platform breakpoint theme": sheet({ pair: 2, media: [[":root", 3], [MOBILE, 3]] }),
+      "breakpoint theme platform": sheet({ media: [[":root", 3]] }),
+      "breakpoint platform theme": sheet({ pair: 2, media: [[":root", 3]] }),
+    };
+    for (const [order, expected] of Object.entries(EXPECTED)) {
+      it(`writes, for the resolution order ${order.split(" ").join(" then ")}, the rules the cascade needs and no more`, () => {
+        assert.equal(small(order.split(" ")), expected);
+      });
+    }
+
+    it("writes a pair after the single blocks, the @media rules after every block, with the specificity growing", () => {
+      const css = small(["platform", "theme", "breakpoint"]);
+      assert.deepEqual([DARK, MOBILE, PAIR].map((selector) => css.indexOf(`\n${selector} {`)).every((at, i, all) => at > 0 && (i === 0 || at > all[i - 1])), true);
+      assert.ok(css.indexOf(`\n${PAIR} {`) < css.indexOf("@media"));
+    });
+
+    it("holds a theme at a breakpoint when the breakpoint wins over the theme, and a value citing a redefined token as written", () => {
+      const css = render({
+        base: [dimension("t.a", 1), dimension("t.b", 5)],
+        themes: [{ theme: "dark", tokens: [dimension("t.a", 2)] }],
+        breakpoints: [{ media: "(min-width: 768px)", tokens: [{ name: "t.b", type: "dimension", alias: "t.a" }] }],
+        order: ["theme", "breakpoint"],
+      }).css;
+      assert.ok(css.endsWith("@media (min-width: 768px) {\n  :root {\n    --t-b: var(--t-a);\n  }\n}\n"));
+      assert.equal(css.split("--t-b:").length - 1, 2);
+    });
+
     const hex = (value) => ({ colorSpace: "srgb", components: [0, 0, 0], hex: value });
     const rem = (value) => ({ value, unit: "rem" });
     const color = (name, value) => ({ name, type: "color", value: hex(value) });
@@ -313,126 +295,70 @@ describe("aidd-ui css", () => {
       { name: "space.gap", type: "dimension", raw: "calc(var(--space-md) * 2)" },
       { name: "misc.both", type: "dimension", raw: "calc(var(--font-title) + var(--space-md))" },
       size("ring.width", 0.0625),
+      { name: "misc.ink", type: "dimension", alias: "space.gap" },
     ];
-    const dark = [color("color.ink", "#eeeeee"), color("color.accent", "#ff00ff")];
+    const dark = [color("color.ink", "#eeeeee"), color("color.accent", "#ff00ff"), { name: "space.gap", type: "dimension", raw: "calc(var(--font-title) * 2)" }];
     const mobile = [color("color.ink", "#000000"), size("font.title", 1.5), size("ring.width", 0.125)];
     const MEDIUM = "(min-width: 48rem)";
     const LARGE = "(min-width: 64rem)";
-    const medium = [size("font.title", 3), size("space.md", 2), color("color.accent", "#00ff00")];
+    const medium = [size("font.title", 3), size("space.md", 2), color("color.accent", "#00ff00"), { name: "misc.both", type: "dimension", alias: "ring.width" }];
     const large = [size("space.md", 3), size("ring.width", 0.25), color("color.ink", "#333333")];
-    const inputs = (order) => ({ base, baseTheme: "light", themes: [{ theme: "dark", tokens: dark }], platforms: [{ platform: "mobile", tokens: mobile }], breakpoints: [{ media: MEDIUM, tokens: medium }, { media: LARGE, tokens: large }], order });
-    const COMBINED = '[data-platform="mobile"] [data-theme="dark"], [data-platform="mobile"][data-theme="dark"]';
-    const sections = (css) => css.split("\n\n").slice(1).map((each) => each.trimEnd());
-    const blocksOf = (css, selector) => sections(css).filter((section) => section.startsWith(`${selector} {`) || section.includes(`\n  ${selector} {`));
+    const inputs = (order) => ({ base, themes: [{ theme: "dark", tokens: dark }], platforms: [{ platform: "mobile", tokens: mobile }], breakpoints: [{ media: MEDIUM, tokens: medium }, { media: LARGE, tokens: large }], order });
 
-    it("holds a pair of a theme and a platform in a block the winner of the resolution order decides", () => {
-      const where = (order) => blocksOf(render(inputs(order)).css, COMBINED)[0];
-      assert.equal(where(["theme", "platform", "breakpoint"]), `${COMBINED} {\n  --color-ink: #000000;\n}`);
-      assert.equal(where(["platform", "theme", "breakpoint"]), `${COMBINED} {\n  --color-ink: #eeeeee;\n}`);
-    });
-
-    it("holds, for a pair, only what the single blocks do not already give a region of both", () => {
-      const css = render(inputs(["theme", "platform", "breakpoint"])).css;
-      const pairs = sections(css).filter((section) => section.startsWith(`${COMBINED} {`));
-      assert.deepEqual(pairs, [`${COMBINED} {\n  --color-ink: #000000;\n}`]);
-    });
-
-    it("repeats a selector inside the @media of each breakpoint that changes a value there", () => {
-      const css = render(inputs(["theme", "platform", "breakpoint"])).css;
-      assert.deepEqual(sections(css).filter((each) => each.startsWith(`@media ${MEDIUM}`)), [
-        `@media ${MEDIUM} {\n  :root, [data-theme="light"] {\n    --color-accent: #00ff00;\n    --font-title: 3rem;\n    --space-md: 2rem;\n  }\n}`,
-        `@media ${MEDIUM} {\n  [data-theme="dark"] {\n    --color-accent: #00ff00;\n  }\n}`,
-        `@media ${MEDIUM} {\n  [data-platform="mobile"] {\n    --font-title: 3rem;\n  }\n}`,
-      ]);
-    });
-
-    it("holds in a breakpoint's block its own tokens only, the breakpoint before it being left to the cascade", () => {
-      const css = render(inputs(["theme", "platform", "breakpoint"])).css;
-      assert.equal(sections(css).find((each) => each.startsWith(`@media ${LARGE}`)), `@media ${LARGE} {\n  :root, [data-theme="light"] {\n    --color-ink: #333333;\n    --space-md: 3rem;\n    --ring-width: 0.25rem;\n  }\n}`);
-    });
-
-    it("lets the breakpoint's value win over the platform's only when it is later in the resolution order", () => {
-      const mediumMobile = (order) => blocksOf(render(inputs(order)).css, '[data-platform="mobile"]').filter((each) => each.startsWith(`@media ${MEDIUM}`));
-      assert.equal(mediumMobile(["theme", "platform", "breakpoint"]).length, 1);
-      assert.equal(mediumMobile(["theme", "breakpoint", "platform"]).length, 0);
-    });
-
-    it("repeats a pair inside an @media only when the width changes what the pair already holds", () => {
-      const repeated = (order) => sections(render(inputs(order)).css).filter((section) => section.startsWith(`@media ${LARGE} {\n  ${COMBINED}`));
-      assert.deepEqual(repeated(["theme", "platform", "breakpoint"]), [`@media ${LARGE} {\n  ${COMBINED} {\n    --color-ink: #333333;\n  }\n}`]);
-      assert.deepEqual(repeated(["breakpoint", "platform", "theme"]), []);
-    });
-
-    /** The cascade of a generated stylesheet on a chain of elements, each `{theme?, platform?}`, root first, at the width of `active`:
-     * the custom properties computed on the last one. Selectors read are `:root` and attribute compounds joined by descendant combinators. */
-    function cascade(css, chain, active) {
-      const attributes = (compound) => [...compound.matchAll(/\[data-(\w+)="([^"]+)"\]/g)].map(([, kind, value]) => [kind, value]);
-      const fits = (parts, at, last) =>
-        (parts[last] === ":root" ? at === 0 : attributes(parts[last]).every(([kind, value]) => chain[at][kind] === value)) && (last === 0 || chain.slice(0, at).some((_, ancestor) => fits(parts, ancestor, last - 1)));
-      const declared = chain.map(() => new Map());
+    /** The cascade of a generated stylesheet on the root alone, carrying `attributes`, at the width of `active`: its custom
+     * properties computed there. The weight of a rule is the number of its `:root` and attribute parts; the later rule wins a tie. */
+    function cascade(css, attributes, active) {
+      const parts = (selector) => selector.match(/:root|\[data-\w+="[^"]+"\]/g);
+      const holds = (part) => part === ":root" || attributes.some(([kind, value]) => part === `[data-${kind}="${value}"]`);
+      const declared = new Map();
       rulesOf(css).rules.forEach(({ media, selector, body, bodyLine }, order) => {
         if (media !== null && media !== active) return;
-        const alts = selector.split(",").map((each) => each.trim().split(/\s+/));
-        chain.forEach((_, at) => {
-          const weights = alts.filter((parts) => fits(parts, at, parts.length - 1)).map((parts) => parts.reduce((sum, part) => sum + (part === ":root" ? 1 : attributes(part).length), 0));
-          if (!weights.length) return;
-          for (const { name, value } of declarationsIn(body, bodyLine)) {
-            const held = declared[at].get(name);
-            if (!held || Math.max(...weights) >= held.weight) declared[at].set(name, { weight: Math.max(...weights), value, order });
-          }
-        });
+        const own = parts(selector);
+        if (!own.every(holds)) return;
+        for (const { name, value } of declarationsIn(body, bodyLine)) if (!declared.has(name) || own.length >= declared.get(name).weight) declared.set(name, { weight: own.length, value, order });
       });
-      const computed = (at, name) => {
-        const held = declared[at].get(name);
-        if (!held) return at === 0 ? undefined : computed(at - 1, name);
-        return held.value.replace(/var\((--[\w-]+)\)/g, (_, target) => computed(at, target));
-      };
-      return (name) => computed(chain.length - 1, name);
+      const computed = (name) => declared.get(name)?.value.replace(/var\((--[\w-]+)\)/g, (_, target) => computed(target));
+      return computed;
     }
 
-    /** What the Resolver gives the last element of `chain`: the nearest theme and platform among the elements, each modifier overriding the earlier. */
-    function expected(chain, active, order) {
-      const nearest = (kind) => chain.map((each) => each[kind]).filter(Boolean).at(-1);
-      const picked = { theme: nearest("theme"), platform: nearest("platform"), breakpoint: active };
-      const lists = { theme: dark, platform: mobile, breakpoint: active === MEDIUM ? medium : active === LARGE ? large : [] };
+    /** What the Resolver gives the root: the theme and the platform it carries and the breakpoint active, each modifier overriding the earlier. */
+    function expected(attributes, active, order) {
+      const picked = { theme: attributes.find(([kind]) => kind === "theme")?.[1], platform: attributes.find(([kind]) => kind === "platform")?.[1], breakpoint: active };
+      const lists = { theme: { dark }, platform: { mobile }, breakpoint: { [MEDIUM]: medium, [LARGE]: large } };
       const entries = new Map(base.map((entry) => [entry.name, entry]));
-      for (const modifier of order) if (picked[modifier]) for (const entry of lists[modifier]) entries.set(entry.name, entry);
+      for (const modifier of order) for (const entry of lists[modifier][picked[modifier]] ?? []) entries.set(entry.name, entry);
       const text = (entry) => entry.raw ?? (entry.alias ? `var(${customProperty(entry.alias)})` : entry.type === "color" ? entry.value.hex : `${entry.value.value}${entry.value.unit}`);
       const value = (name) => text(entries.get(name)).replace(/var\((--[\w-]+)\)/g, (_, target) => value([...entries.keys()].find((each) => customProperty(each) === target)));
       return value;
     }
 
-    it("reads a pair's and a breakpoint's custom properties layered over the blocks the element also gets", () => {
-      const sheet = declarationsOf(render(inputs(["theme", "platform", "breakpoint"])).css);
-      const pair = layered(sheet, COMBINED);
-      assert.deepEqual([pair.get("--color-ink"), pair.get("--font-title"), pair.get("--space-md")], ["#000000", "1.5rem", "1rem"]);
-      const wide = layered(sheet, `@media ${MEDIUM}\n[data-platform="mobile"]`);
-      assert.equal(resolved(wide, "--misc-both"), "calc(3rem + 2rem)");
-      assert.equal(layered(sheet, `@media ${MEDIUM}`).get("--font-title"), "3rem");
-    });
-
     const ORDERS = [["theme", "platform", "breakpoint"], ["theme", "breakpoint", "platform"], ["platform", "theme", "breakpoint"], ["platform", "breakpoint", "theme"], ["breakpoint", "theme", "platform"], ["breakpoint", "platform", "theme"]];
-    const ATTRIBUTES = [{}, { theme: "dark" }, { platform: "mobile" }, { theme: "dark", platform: "mobile" }];
-    // A platform region inside a theme region is not a nesting the stylesheet resolves.
-    const chains = () => {
-      const all = [[{}]];
-      for (const _ of [1, 2]) all.push(...all.filter((chain) => chain.length === _).flatMap((chain) => ATTRIBUTES.map((each) => [...chain, each])));
-      return all.filter((chain) => chain.every((each, at) => !each.platform || each.theme || !chain.slice(0, at).some((outer) => outer.theme)));
-    };
+    const CARRIED = [[], [["theme", "light"]], [["theme", "dark"]], [["platform", "mobile"]], [["theme", "dark"], ["platform", "mobile"]]];
 
     for (const order of ORDERS) {
-      it(`gives every nesting of regions at every width what the resolution order ${order.join(" then ")} resolves`, () => {
+      it(`gives the root, with any theme and platform on it at any width, what the resolution order ${order.join(" then ")} resolves`, () => {
         const { css } = render(inputs(order));
         const mismatches = [];
-        for (const chain of chains()) {
+        for (const attributes of CARRIED) {
           for (const active of [null, MEDIUM, LARGE]) {
-            const [got, want] = [cascade(css, chain, active), expected(chain, active, order)];
-            for (const { name } of base) if (got(customProperty(name)) !== want(name)) mismatches.push(`${JSON.stringify(chain)} at ${active}: ${name} is ${got(customProperty(name))}, not ${want(name)}`);
+            const [got, want] = [cascade(css, attributes, active), expected(attributes, active, order)];
+            for (const { name } of base) if (got(customProperty(name)) !== want(name)) mismatches.push(`${JSON.stringify(attributes)} at ${active}: ${name} is ${got(customProperty(name))}, not ${want(name)}`);
           }
         }
         assert.deepEqual(mismatches, []);
       });
     }
+
+    it("reads the custom properties in force on the root with a pair of attributes at a breakpoint, layered by specificity", () => {
+      const sheet = declarationsOf(render(inputs(["theme", "platform", "breakpoint"])).css);
+      const pair = layered(sheet, `@media ${MEDIUM}\n:root[data-platform="mobile"][data-theme="dark"]`);
+      assert.equal(resolved(pair, "--misc-both"), "0.125rem");
+      assert.equal(resolved(pair, "--font-title"), "3rem");
+      assert.equal(resolved(pair, "--space-gap"), "calc(3rem * 2)");
+      assert.equal(resolved(pair, "--color-ink"), "#000000");
+      assert.equal(layered(sheet, "").get("--font-title"), "2rem");
+      assert.equal(layered(sheet, `@media ${MEDIUM}`).get("--font-title"), "3rem");
+    });
   });
 
   describe("a stylesheet read back", () => {
