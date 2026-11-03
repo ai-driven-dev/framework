@@ -55,3 +55,14 @@
 | --- | --- | --- |
 | `pnpm exec lefthook run pre-commit --all-files` | 0 | |
 | `pnpm exec lefthook run pre-push` | 0 | |
+
+## Round 6
+
+- Head: `1a8ff2f42`
+- Uncommitted changes: yes
+- Verdict: PASS
+
+| Check | Exit | Failure |
+| --- | --- | --- |
+| `pnpm exec lefthook run pre-commit --all-files` | 0 | |
+| `pnpm exec lefthook run pre-push` | 0 | |
