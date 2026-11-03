@@ -1,6 +1,6 @@
 // A token tree as CSS text: one custom property per token, the base in `:root` and under its own
-// theme's name, so a region can switch back to it, and each other theme in a `[data-theme]` block.
-// A theme block also redeclares the base tokens that depend on one it redefines, since a `var()`
+// theme's name, so a region can switch back to it, and each other theme in a `[data-theme]` block,
+// then each platform but the default in a `[data-platform]` block. A theme or platform block also redeclares the base tokens that depend on one it redefines, since a `var()`
 // computes where it is declared: otherwise a nested region keeps their base value. The same tokens
 // always give the same bytes. Each breakpoint follows in an `@media` block on the base's selector:
 // the dependents of what it redefines are not redeclared, their `var()`s recompute on the same
@@ -112,10 +112,10 @@ const block = (selector, declarations) => [`${selector} {`, ...declarations.map(
 /** A rule block nested in an `@media` block. */
 const mediaBlock = (media, lines) => [`@media ${media} {`, ...lines.map((line) => `${INDENT}${line}`), "}"];
 
-/** The stylesheet of `base`, named `baseTheme`, then of each `{theme, tokens}` of `themes` and each `{media, tokens}` of `breakpoints` in order, with the
- * problems naming each token that has no CSS. Each token is `{name, type, value | alias | raw, file}`.
+/** The stylesheet of `base`, named `baseTheme`, then of each `{theme, tokens}` of `themes`, each `{platform, tokens}` of `platforms` and each `{media, tokens}` of `breakpoints`, in
+ * order, with the problems naming each token that has no CSS. Each token is `{name, type, value | alias | raw, file}`.
  * `css` is null when a problem remains. */
-function render({ base, baseTheme, themes, breakpoints = [] }) {
+function render({ base, baseTheme, themes, platforms = [], breakpoints = [] }) {
   const problems = [];
   const declare = (tokens) =>
     tokens.flatMap((entry) => {
@@ -124,7 +124,8 @@ function render({ base, baseTheme, themes, breakpoints = [] }) {
       return value === null ? [] : [[entry.name, value]];
     });
   const baseSelector = baseTheme === undefined ? ":root" : `:root, [data-theme="${baseTheme}"]`;
-  const blocks = [block(baseSelector, declare(base)), ...themes.map(({ theme, tokens }) => block(`[data-theme="${theme}"]`, [...declare(tokens), ...declare(dependents(base, tokens))])), ...breakpoints.map(({ media, tokens }) => mediaBlock(media, block(baseSelector, declare(tokens))))];
+  const region = (attribute, name, tokens) => block(`[data-${attribute}="${name}"]`, [...declare(tokens), ...declare(dependents(base, tokens))]);
+  const blocks = [block(baseSelector, declare(base)), ...themes.map(({ theme, tokens }) => region("theme", theme, tokens)), ...platforms.map(({ platform, tokens }) => region("platform", platform, tokens)), ...breakpoints.map(({ media, tokens }) => mediaBlock(media, block(baseSelector, declare(tokens))))];
   return { css: problems.length ? null : `${[HEADER, ...blocks.map((lines) => lines.join(LINE_BREAK))].join(PARAGRAPH_BREAK)}${LINE_BREAK}`, problems };
 }
 

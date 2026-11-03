@@ -38,6 +38,10 @@ const RENDERS = ["components/button", "components/dialog", "components/old-butto
 
 describe("aidd-ui impact", () => {
   describe("a write", () => {
+    it("to a platform file reaches everything, as one to a theme file does", () => {
+      assert.equal(reached(load(tmp), [`${UI}/platforms/mobile.json`]), null);
+    });
+
     it("to a breakpoint file reaches everything, as one to a theme file does", () => {
       assert.equal(reached(load(tmp), [`${UI}/breakpoints/desktop.json`]), null);
       assert.equal(reached(load(tmp), [`${UI}/themes/dark.json`]), null);
@@ -107,6 +111,18 @@ describe("aidd-ui impact", () => {
       edit(tmp, BUTTON, "code: src/ui/Button.tsx#Button@1", "code: [src/ui/Button.tsx#Button@1, src/mobile/Button.swift#Button@1]");
       put(tmp, "src/mobile/Button.swift", "struct Button {}\n");
       assert.deepEqual(impact("button", "--root", tmp).report.code, ["src/mobile/Button.swift", "src/ui/Button.tsx", "src/ui/HomePage.tsx"]);
+    });
+
+    it("follows an alias only a platform file holds", () => {
+      edit(tmp, `${UI}/system.md`, "platforms: [web]", "platforms: [web, mobile]");
+      editTokens(tmp, (tree) => (tree.misc = { accent: { $type: "dimension", $value: { value: 2, unit: "rem" } } }));
+      const resolver = path.join(tmp, UI, "tokens.resolver.json");
+      const json = JSON.parse(fs.readFileSync(resolver, "utf8"));
+      json.modifiers.platform = { default: "web", contexts: { web: [], mobile: [{ $ref: "platforms/mobile.json" }] } };
+      json.resolutionOrder.push({ $ref: "#/modifiers/platform" });
+      fs.writeFileSync(resolver, JSON.stringify(json));
+      put(tmp, `${UI}/platforms/mobile.json`, JSON.stringify({ misc: { accent: { $value: "{space.md}" } } }));
+      assert.deepEqual(impact("space.md", "--root", tmp).report.tokens, ["misc.accent", "space.md"]);
     });
 
     it("reaches every code token file a monorepo lists, and none from an element alone", () => {

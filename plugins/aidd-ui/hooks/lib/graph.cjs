@@ -11,7 +11,7 @@ const { isUnder, UI_DIR } = require("./project.cjs");
 
 // Files every record reads: a write to one reaches the whole design system.
 const SHARED_FILES = ["system.md", "tokens.json", "tokens.resolver.json"].map((name) => `${UI_DIR}/${name}`);
-const SHARED_DIRS = [`${UI_DIR}/themes`, `${UI_DIR}/breakpoints`];
+const SHARED_DIRS = [`${UI_DIR}/themes`, `${UI_DIR}/platforms`, `${UI_DIR}/breakpoints`];
 const STEPS_SECTION = "Steps";
 
 const isShared = (file) => SHARED_FILES.includes(file) || SHARED_DIRS.some((dir) => isUnder(file, dir));

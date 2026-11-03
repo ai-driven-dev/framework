@@ -423,6 +423,134 @@ describe("aidd-ui tokens and renders", () => {
     });
   });
 
+  describe("T6 platforms", () => {
+    const MOBILE = `${UI}/platforms/mobile.json`;
+    const modifier = (resolver) => resolver.modifiers.platform;
+
+    /** Web and mobile, mobile redefining the hairline border, in a platform context of the resolver. */
+    function withMobile() {
+      edit(tmp, SYSTEM, "platforms: [web]", "platforms: [web, mobile]");
+      editJson(RESOLVER, (r) => {
+        r.modifiers.platform = { default: "web", contexts: { web: [], mobile: [{ $ref: "platforms/mobile.json" }] } };
+        r.resolutionOrder.push({ $ref: "#/modifiers/platform" });
+      });
+      put(tmp, MOBILE, JSON.stringify({ border: { thin: { $value: { value: 0.125, unit: "rem" } } } }));
+      generateStylesheet(tmp);
+    }
+    const css = () => fs.readFileSync(path.join(tmp, STYLESHEET), "utf8");
+
+    it("takes a platform context redefining a base token", () => {
+      withMobile();
+      assert.deepEqual(problems(), []);
+    });
+
+    it("needs no modifier, even from two platforms, and writes no block for one", () => {
+      edit(tmp, SYSTEM, "platforms: [web]", "platforms: [web, mobile]");
+      assert.deepEqual(problems(), []);
+      assert.equal(css().includes("data-platform"), false);
+    });
+
+    it("writes the non-default platform as its own block, after the themes and before the breakpoints", () => {
+      withMobile();
+      assert.ok(css().includes('[data-platform="mobile"] {\n  --border-thin: 0.125rem;\n}'));
+      assert.ok(css().indexOf('[data-theme="dark"] {') < css().indexOf('[data-platform="mobile"] {'));
+      assert.ok(css().indexOf('[data-platform="mobile"] {') < css().indexOf("@media"));
+      assert.equal(css().includes('[data-platform="web"]'), false);
+    });
+
+    it("redeclares what depends on a token it redefines, as a theme block does", () => {
+      addToken("edge", { $type: "dimension", $value: "{border.thin}" });
+      withMobile();
+      assert.ok(css().includes('[data-platform="mobile"] {\n  --border-thin: 0.125rem;\n  --misc-edge: var(--border-thin);\n}'));
+    });
+
+    const resolverCases = [
+      ["a modifier without contexts", (r) => delete modifier(r).contexts, 'no "platform" modifier with contexts'],
+      ["a resolution order that never applies it", (r) => r.resolutionOrder.pop(), "resolutionOrder never applies #/modifiers/platform"],
+      ["a default that is not the first platform", (r) => (modifier(r).default = "mobile"), `the platform modifier's default must be "web", the first platform in system.md`],
+      ["a platform without its context", (r) => delete modifier(r).contexts.mobile, 'no context for platform "mobile"'],
+      ["a context system.md lacks", (r) => (modifier(r).contexts.tablet = []), 'context "tablet" is not a platform in system.md'],
+      ["a source that is no file reference", (r) => modifier(r).contexts.mobile.push({ border: {} }), 'context "mobile": each source is {"$ref": "<file>"}'],
+      ["a default context listing a source its block would never carry", (r) => modifier(r).contexts.web.push({ $ref: "platforms/mobile.json" }), 'context "web" is the base, held by tokens.json: it lists no source'],
+    ];
+    for (const [name, change, message] of resolverCases) {
+      it(`names ${name}`, () => {
+        withMobile();
+        editJson(RESOLVER, change);
+        assert.deepEqual(problems(), [`${RESOLVER}: ${message}`]);
+      });
+    }
+
+    it("names a platform file the resolver names but the project lacks", () => {
+      withMobile();
+      fs.rmSync(path.join(tmp, MOBILE));
+      assert.deepEqual(problems(), [`${MOBILE}: missing`]);
+    });
+
+    it("names a token tokens.json lacks", () => {
+      withMobile();
+      editJson(MOBILE, (tree) => (tree.border.ghost = { $value: { value: 1, unit: "px" } }));
+      assert.deepEqual(problems(), [`${MOBILE}: border.ghost: platform "mobile" redefines no token of tokens.json`]);
+    });
+
+    it("names a value of the wrong shape", () => {
+      withMobile();
+      editJson(MOBILE, (tree) => (tree.border.thin.$value.unit = "em"));
+      assert.deepEqual(problems(), [`${MOBILE}: border.thin: platform "mobile": unit "em" must be px or rem`]);
+    });
+
+    it("names a stylesheet a platform file no longer generates", () => {
+      withMobile();
+      edit(tmp, MOBILE, "0.125", "0.25");
+      assert.deepEqual(problems(), [`${STYLESHEET}: out of date with the tokens, regenerate it with the engine's tokens command`]);
+    });
+
+    it("names a platform value citing a token that aliases it", () => {
+      addToken("edge", { $type: "dimension", $value: "{border.thin}" });
+      withMobile();
+      editJson(MOBILE, (tree) => (tree.border.thin = { $extensions: { "dev.ai-driven.css": "var(--misc-edge)" } }));
+      assert.deepEqual(problems(), [`${MOBILE}: border.thin: platform "mobile": cites --misc-edge, which leads back to it`]);
+    });
+
+    describe("set by a theme too", () => {
+      const HIDE = 'theme "dark" and platform "mobile" both set it, so one block would hide the other';
+      const black = { $value: { colorSpace: "srgb", components: [0, 0, 0], hex: "#000000" } };
+
+      it("names a token both redefine", () => {
+        withMobile();
+        editJson(MOBILE, (tree) => (tree.color = { brand: { primary: black } }));
+        assert.deepEqual(problems(), [`${MOBILE}: color.brand.primary: ${HIDE}`]);
+      });
+
+      it("names a token the theme block redeclares as a dependent, which the platform block would override", () => {
+        withMobile();
+        editJson(MOBILE, (tree) => (tree.color = { text: { default: black } }));
+        assert.deepEqual(problems(), [`${MOBILE}: color.text.default: ${HIDE}`]);
+      });
+
+      it("names a token the platform block redeclares as a dependent, which would override the theme's", () => {
+        addToken("edge", { $type: "dimension", $value: "{border.thin}" });
+        withMobile();
+        editJson(DARK, (tree) => (tree.misc = { edge: { $value: { value: 2, unit: "px" } } }));
+        assert.deepEqual(problems(), [`${DARK}: misc.edge: ${HIDE}`]);
+      });
+
+      it("accepts a dependent citing one token of each: its var()s recompute", () => {
+        addToken("both", { $type: "dimension", $extensions: { "dev.ai-driven.css": "calc(var(--border-thin) + var(--color-brand-primary))" } });
+        withMobile();
+        assert.deepEqual(problems(), []);
+      });
+    });
+
+    describe("set by a breakpoint too", () => {
+      it("names a token both redefine", () => {
+        withMobile();
+        editJson(MOBILE, (tree) => (tree.space = { md: { $value: { value: 3, unit: "rem" } } }));
+        assert.deepEqual(problems(), [`${DESKTOP}: space.md: platform "mobile" and breakpoint "desktop" both set it, so a platform region would ignore the breakpoint`]);
+      });
+    });
+  });
+
   describe("a loop across declarations", () => {
     const SELF = "cites itself, so the browser computes nothing: write a primitive value";
     const raw = (css, type = "dimension") => ({ $type: type, $extensions: { "dev.ai-driven.css": css } });

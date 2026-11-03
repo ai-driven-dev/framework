@@ -714,6 +714,20 @@ describe("aidd-ui records and history", () => {
         assert.deepEqual(edited(), THROUGH_PRIMARY);
       });
 
+      it("reaches a value only a platform file holds", () => {
+        change(SYSTEM, "platforms: [web]", "platforms: [web, mobile]");
+        const resolver = JSON.parse(fs.readFileSync(path.join(tmp, `${UI}/tokens.resolver.json`), "utf8"));
+        resolver.modifiers.platform = { default: "web", contexts: { web: [], mobile: [{ $ref: "platforms/mobile.json" }] } };
+        resolver.resolutionOrder.push({ $ref: "#/modifiers/platform" });
+        fs.writeFileSync(path.join(tmp, `${UI}/tokens.resolver.json`), JSON.stringify(resolver));
+        put(tmp, `${UI}/platforms/mobile.json`, JSON.stringify({ border: { thin: { $value: { value: 0.125, unit: "rem" } } } }));
+        editTokens(tmp, () => {});
+        commit();
+        edit(tmp, `${UI}/platforms/mobile.json`, "0.125", "0.25");
+        editTokens(tmp, () => {});
+        assert.deepEqual(edited(), [BUTTON, DIALOG, SEARCH, HOME].map((file) => TOKEN_CHANGED(file, "border.thin")));
+      });
+
       describe("in a breakpoint", () => {
         const THROUGH_SPACE = [BUTTON, DIALOG, SEARCH, HOME].map((file) => TOKEN_CHANGED(file, "space.md"));
         const DESKTOP = `${UI}/breakpoints/desktop.json`;

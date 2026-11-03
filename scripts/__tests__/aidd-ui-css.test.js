@@ -161,6 +161,15 @@ describe("aidd-ui css", () => {
       );
     });
 
+    it("holds each platform in its own block after the themes and redeclares what depends on it, as a theme block does", () => {
+      const edge = { name: "border.thin", type: "dimension", value: { value: 0.0625, unit: "rem" } };
+      const hair = { name: "border.hair", type: "dimension", alias: "border.thin" };
+      const wide = { name: "border.thin", type: "dimension", value: { value: 0.125, unit: "rem" } };
+      const { css, problems } = render({ base: [edge, hair], baseTheme: "light", themes: [{ theme: "dark", tokens: [] }], platforms: [{ platform: "mobile", tokens: [wide] }] });
+      assert.deepEqual(problems, []);
+      assert.equal(css, [HEADER, "", ':root, [data-theme="light"] {', "  --border-thin: 0.0625rem;", "  --border-hair: var(--border-thin);", "}", "", '[data-theme="dark"] {', "}", "", '[data-platform="mobile"] {', "  --border-thin: 0.125rem;", "  --border-hair: var(--border-thin);", "}", ""].join("\n"));
+    });
+
     describe("a theme block, so the variable recomputes in a nested region", () => {
       const space = { name: "space.md", type: "dimension", value: { value: 1, unit: "rem" } };
       /** The dark block of a stylesheet: every line between its selector and its closing brace. */

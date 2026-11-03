@@ -1,5 +1,5 @@
-// T1 to T10: tokens.json against the DTCG 2025.10 format and color modules, themes and breakpoints
-// through its Resolver module, raw CSS extensions, components and screens citing semantic tokens only, and
+// T1 to T10: tokens.json against the DTCG 2025.10 format and color modules, themes, platforms and
+// breakpoints through its Resolver module, raw CSS extensions, components and screens citing semantic tokens only, and
 // the generated tokens.css agreeing with all of it. Composite values are checked for presence
 // only, and reach tokens.css as raw CSS alone.
 const fs = require("node:fs");
@@ -17,6 +17,7 @@ const RESOLVER_FILE = "tokens.resolver.json";
 const CSS_FILE = "tokens.css";
 const RESOLVER_VERSION = "2025.10";
 const THEME_MODIFIER = "theme";
+const PLATFORM_MODIFIER = "platform";
 const BREAKPOINT_MODIFIER = "breakpoint";
 const MEDIA_EXTENSION = "dev.ai-driven.media"; // a breakpoint's media query, verbatim: DTCG has no place for one
 const MIN_THEMES_FOR_RESOLVER = 2;
@@ -234,27 +235,39 @@ function contextFiles(name, sources, file, problems) {
   return refs.filter((ref) => typeof ref === "string").map((ref) => nodePath.posix.join(nodePath.posix.dirname(file), ref));
 }
 
-/** The Resolver's theme contexts as `{theme: [file]}`, with what keeps it from naming them.
- * This plugin reads one profile of the module: a set holding tokens.json, then a `theme`
- * modifier whose contexts are the themes system.md declares, each a list of `$ref` files, needed
- * from two themes on. */
-function resolverContexts(resolver, themes, project, file) {
+/** What keeps the Resolver from being the profile this plugin reads: its version, and a set holding
+ * tokens.json. */
+function resolverBaseProblems(resolver, project, file) {
+  const at = (message) => ({ file, message });
+  const holdsTokens = Object.values(isObject(resolver.sets) ? resolver.sets : {}).some((set) => (set?.sources ?? []).some((source) => source?.$ref === nodePath.posix.basename(project.tokensFile)));
+  return [...(resolver.version !== RESOLVER_VERSION ? [at(`version must be "${RESOLVER_VERSION}"`)] : []), ...(holdsTokens ? [] : [at(`no set holds ${nodePath.posix.basename(project.tokensFile)}`)])];
+}
+
+/** The two kinds of named context: a theme, whose modifier is needed from two on, and a platform,
+ * whose modifier is optional. `names` are those system.md declares, the first being the base. */
+const themeKind = (project) => {
+  const names = list(systemOf(project)?.frontMatter.themes);
+  return { modifier: THEME_MODIFIER, names, required: names.length >= MIN_THEMES_FOR_RESOLVER, region: "themed" };
+};
+const platformKind = (project) => ({ modifier: PLATFORM_MODIFIER, names: list(systemOf(project)?.frontMatter.platforms), required: false, region: "platform" });
+
+/** The Resolver's contexts of one kind as `{name: [file]}`, with what keeps it from naming them. This
+ * plugin reads one profile of the module: a modifier whose contexts are the names system.md
+ * declares, each a list of `$ref` files, the base the `default`. */
+function namedContexts(resolver, { modifier: key, names, required }, file) {
   const at = (message) => ({ file, message });
   const problems = [];
-  if (resolver.version !== RESOLVER_VERSION) problems.push(at(`version must be "${RESOLVER_VERSION}"`));
-  const holdsTokens = Object.values(isObject(resolver.sets) ? resolver.sets : {}).some((set) => (set?.sources ?? []).some((source) => source?.$ref === nodePath.posix.basename(project.tokensFile)));
-  if (!holdsTokens) problems.push(at(`no set holds ${nodePath.posix.basename(project.tokensFile)}`));
-  const modifier = resolver.modifiers?.[THEME_MODIFIER];
-  if (modifier === undefined && themes.length < MIN_THEMES_FOR_RESOLVER) return { problems, contexts: {} };
-  if (!isObject(modifier) || !isObject(modifier.contexts)) return { problems: [...problems, at(`no "${THEME_MODIFIER}" modifier with contexts`)], contexts: {} };
-  if (!applies(resolver, THEME_MODIFIER)) problems.push(at(`resolutionOrder never applies ${orderRef(THEME_MODIFIER)}`));
-  if (modifier.default !== themes[0]) problems.push(at(`the theme modifier's default must be "${themes[0]}", the first theme in system.md`));
-  for (const theme of themes) if (!Object.hasOwn(modifier.contexts, theme)) problems.push(at(`no context for theme "${theme}"`));
+  const modifier = resolver.modifiers?.[key];
+  if (modifier === undefined && !required) return { problems, contexts: {} };
+  if (!isObject(modifier) || !isObject(modifier.contexts)) return { problems: [at(`no "${key}" modifier with contexts`)], contexts: {} };
+  if (!applies(resolver, key)) problems.push(at(`resolutionOrder never applies ${orderRef(key)}`));
+  if (modifier.default !== names[0]) problems.push(at(`the ${key} modifier's default must be "${names[0]}", the first ${key} in system.md`));
+  for (const name of names) if (!Object.hasOwn(modifier.contexts, name)) problems.push(at(`no context for ${key} "${name}"`));
   const contexts = {};
-  for (const [theme, sources] of Object.entries(modifier.contexts)) {
-    if (!themes.includes(theme)) problems.push(at(`context "${theme}" is not a theme in system.md`));
-    if (theme === themes[0] && Array.isArray(sources) && sources.length) problems.push(at(`context "${theme}" is the base, held by tokens.json: it lists no source`));
-    contexts[theme] = contextFiles(theme, sources, file, problems);
+  for (const [name, sources] of Object.entries(modifier.contexts)) {
+    if (!names.includes(name)) problems.push(at(`context "${name}" is not a ${key} in system.md`));
+    if (name === names[0] && Array.isArray(sources) && sources.length) problems.push(at(`context "${name}" is the base, held by tokens.json: it lists no source`));
+    contexts[name] = contextFiles(name, sources, file, problems);
   }
   return { problems, contexts };
 }
@@ -319,24 +332,25 @@ function redefinitionProblems(tree, project, owner, file) {
   });
 }
 
-/** The first theme system.md declares is the base, held by tokens.json; every other one, and every
- * breakpoint that changes a value, is a context of tokens.resolver.json, whose files redefine base
- * tokens only and never the same one: each token has one owner, so no block hides another. */
+/** The first theme and the first platform system.md declares are the base, held by tokens.json;
+ * every other one, and every breakpoint that changes a value, is a context of
+ * tokens.resolver.json, whose files redefine base tokens only and never the same one: each token
+ * has one owner, so no block hides another. */
 function resolverProblems(tree, project) {
-  const themes = list(systemOf(project)?.frontMatter.themes);
   const file = resolverFileOf(project);
   const resolver = readJson(project, file);
-  if (resolver.problem === MISSING && themes.length < MIN_THEMES_FOR_RESOLVER) return [];
+  if (resolver.problem === MISSING && !themeKind(project).required) return [];
   if (!resolver.value) return resolver.problem ? [{ file, message: resolver.problem }] : [];
-  const { problems, contexts } = resolverContexts(resolver.value, themes, project, file);
+  const kinds = [themeKind(project), platformKind(project)].map((kind) => ({ ...kind, ...namedContexts(resolver.value, kind, file) }));
   const breakpoints = breakpointContexts(resolver.value, list(systemOf(project)?.frontMatter.breakpoints), file);
-  const found = [...problems, ...breakpoints.problems];
+  const found = [...resolverBaseProblems(resolver.value, project, file), ...kinds.flatMap((kind) => kind.problems), ...breakpoints.problems];
   if (tree.unusable) return found; // a context file is read against tokens.json, which T1 names
   return [
     ...found,
-    ...Object.entries(contexts).flatMap(([theme, files]) => files.flatMap((themeFile) => redefinitionProblems(tree, project, `theme "${theme}"`, themeFile))),
+    ...kinds.flatMap(({ modifier, contexts }) => Object.entries(contexts).flatMap(([name, files]) => files.flatMap((each) => redefinitionProblems(tree, project, `${modifier} "${name}"`, each)))),
     ...breakpoints.contexts.flatMap(({ breakpoint, files }) => files.flatMap((context) => redefinitionProblems(tree, project, `breakpoint "${breakpoint}"`, context))),
     ...ownerProblems(tree, project),
+    ...regionProblems(tree, project),
     ...contextLoopProblems(tree, project),
   ];
 }
@@ -381,14 +395,15 @@ function entryOf(name, token, type, file) {
   return alias === undefined ? { name, type, file, value: token.node.$value } : { name, type, file, alias };
 }
 
-/** What each non-base theme redefines, in system.md order, as its Resolver context files list it:
- * `{theme, files: [{file, tree}]}`. */
-function themeTrees(project) {
-  const themes = list(systemOf(project)?.frontMatter.themes);
+/** What each non-base context of a kind redefines, in system.md order, as its Resolver context files
+ * list it: `{owner, region, name, files: [{file, tree}]}`, `owner` naming it as a message does. */
+function regionTrees(project, kind) {
   const resolver = readJson(project, resolverFileOf(project));
-  const { contexts } = resolver.value ? resolverContexts(resolver.value, themes, project, resolverFileOf(project)) : { contexts: {} };
-  return themes.slice(1).map((theme) => ({ theme, files: (contexts[theme] ?? []).map((file) => ({ file, tree: readTree(project, file) })) }));
+  const { contexts } = resolver.value ? namedContexts(resolver.value, kind, resolverFileOf(project)) : { contexts: {} };
+  return kind.names.slice(1).map((name) => ({ owner: `${kind.modifier} "${name}"`, region: kind.region, name, files: (contexts[name] ?? []).map((file) => ({ file, tree: readTree(project, file) })) }));
 }
+const themeTrees = (project) => regionTrees(project, themeKind(project));
+const platformTrees = (project) => regionTrees(project, platformKind(project));
 
 /** What each breakpoint context redefines, in the Resolver's order: `{breakpoint, media, files: [{file, tree}]}`. */
 function breakpointTrees(project) {
@@ -415,7 +430,7 @@ function loopProblem(declarations, entry) {
  * file shows alone. */
 function contextLoopProblems(tree, project) {
   const base = baseEntries(tree, project);
-  const contexts = [...themeTrees(project).map(({ theme, files }) => ({ owner: `theme "${theme}"`, files })), ...breakpointTrees(project).map(({ breakpoint, files }) => ({ owner: `breakpoint "${breakpoint}"`, files }))];
+  const contexts = [...themeTrees(project), ...platformTrees(project), ...breakpointTrees(project).map(({ breakpoint, files }) => ({ owner: `breakpoint "${breakpoint}"`, files }))];
   return contexts.flatMap(({ owner, files }) => {
     const own = contextEntries(files);
     const layered = [...base.filter((entry) => !own.some((each) => each.name === entry.name)), ...own];
@@ -426,19 +441,39 @@ function contextLoopProblems(tree, project) {
   });
 }
 
-/** A token a theme block holds, whether redefined there or redeclared as depending on one that is,
- * cannot also be a breakpoint's: on a nested region that block would hide the breakpoint's value.
- * A breakpoint value citing such a token counts too: a nested region would inherit it stale. */
+/** The tokens a theme or platform block holds: those it redefines, `own`, and those it redeclares
+ * because they depend on one of them. */
+function heldBy({ files }, declarations) {
+  const own = contextEntries(files);
+  return { own, held: new Set([...own, ...dependents(declarations, own)].map((entry) => entry.name)) };
+}
+
+/** A token a theme or platform block holds, whether redefined there or redeclared as depending on one
+ * that is, cannot also be a breakpoint's: on a nested region that block would hide the breakpoint's
+ * value. A breakpoint value citing such a token counts too: a nested region would inherit it stale. */
 function ownerProblems(tree, project) {
   const breakpoints = breakpointTrees(project).map(({ breakpoint, files }) => ({ breakpoint, tokens: contextEntries(files) }));
   const everyDeclaration = [...baseEntries(tree, project), ...breakpoints.flatMap(({ tokens }) => tokens)];
-  return themeTrees(project).flatMap(({ theme, files }) => {
-    const own = contextEntries(files);
-    const held = new Set([...own, ...dependents(everyDeclaration, own)].map((entry) => entry.name));
+  return [...themeTrees(project), ...platformTrees(project)].flatMap((region) => {
+    const { held } = heldBy(region, everyDeclaration);
     return breakpoints.flatMap(({ breakpoint, tokens }) =>
-      tokens.filter((entry) => held.has(entry.name)).map((entry) => ({ file: entry.file, message: `${entry.name}: theme "${theme}" and breakpoint "${breakpoint}" both set it, so a themed region would ignore the breakpoint` }))
+      tokens.filter((entry) => held.has(entry.name)).map((entry) => ({ file: entry.file, message: `${entry.name}: ${region.owner} and breakpoint "${breakpoint}" both set it, so a ${region.region} region would ignore the breakpoint` }))
     );
   });
+}
+
+/** A token a theme block sets cannot also be a platform's, redefined or redeclared as a dependent:
+ * both blocks sit on one element, and the later one would hide the other's value. A dependent in
+ * both is the same `var()` twice, which is fine. */
+function regionProblems(tree, project) {
+  const base = baseEntries(tree, project);
+  return themeTrees(project).flatMap((theme) =>
+    platformTrees(project).flatMap((platform) => {
+      const [mine, theirs] = [heldBy(theme, base), heldBy(platform, base)];
+      const clashes = [...theirs.own.filter((entry) => mine.held.has(entry.name)), ...mine.own.filter((entry) => theirs.held.has(entry.name))];
+      return clashes.filter((entry, index) => clashes.findIndex((each) => each.name === entry.name) === index).map((entry) => ({ file: entry.file, message: `${entry.name}: ${theme.owner} and ${platform.owner} both set it, so one block would hide the other` }));
+    })
+  );
 }
 
 /** The stylesheet of tokens that have no error, `{css, problems}`: `css` is null when a composite
@@ -450,7 +485,8 @@ function generate(project) {
   return render({
     base,
     baseTheme: list(systemOf(project)?.frontMatter.themes)[0],
-    themes: themeTrees(project).map(({ theme, files }) => ({ theme, tokens: contextEntries(files, typeFor) })),
+    themes: themeTrees(project).map(({ name, files }) => ({ theme: name, tokens: contextEntries(files, typeFor) })),
+    platforms: platformTrees(project).map(({ name, files }) => ({ platform: name, tokens: contextEntries(files, typeFor) })).filter(({ tokens }) => tokens.length), // a platform that changes no value needs no block
     breakpoints: breakpointTrees(project).map(({ media, files }) => ({ media, tokens: contextEntries(files, typeFor) })),
   });
 }
@@ -502,13 +538,13 @@ function cssNames(project) {
 const namesByProperty = (tree) => new Map([...tree.tokens.keys()].map((name) => [customProperty(name), name]));
 
 /** The tokens each token cites, by name: those whose custom property a `var()` of its raw CSS
- * names, or else the one its alias names, in tokens.json or in any theme or breakpoint file. Empty when tokens.json
+ * names, or else the one its alias names, in tokens.json or in any theme, platform or breakpoint file. Empty when tokens.json
  * cannot be read. */
 function citations(project) {
   const tree = read(project);
   const byProperty = namesByProperty(tree);
   const found = new Map(baseEntries(tree, project).map((entry) => [entry.name, citedBy(entry)]));
-  for (const { files } of [...themeTrees(project), ...breakpointTrees(project)]) {
+  for (const { files } of [...themeTrees(project), ...platformTrees(project), ...breakpointTrees(project)]) {
     for (const entry of contextEntries(files)) found.get(entry.name)?.push(...citedBy(entry));
   }
   return new Map([...found].map(([name, cited]) => [name, [...new Set(cited.map((property) => byProperty.get(property)).filter(Boolean))]]));
