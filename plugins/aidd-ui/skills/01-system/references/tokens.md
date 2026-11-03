@@ -8,7 +8,7 @@ DTCG 2025.10 in `aidd_docs/ui/tokens.json`.
 | colour | `{"colorSpace": "srgb", "components": [r, g, b], "alpha": 0.5, "hex": "#rrggbb"}`, `alpha` optional |
 | dimension, duration | `{"value": 1, "unit": "rem"}`, `{"value": 150, "unit": "ms"}` |
 | value DTCG cannot hold, composite | `"$extensions": {"dev.ai-driven.css": "<css>"}`, its `var()`s naming tokens; a `$type` when a token aliases it |
-| nesting | a token never holds a token: the hover of token `a.b` is `a.b-hover` |
+| nesting | a token never has child tokens, aliases aside: the hover of token `a.b` is `a.b-hover` |
 | themes | the first theme is `tokens.json`; each other is a `theme` context of `tokens.resolver.json` listing `themes/<theme>.json` |
 | breakpoints | the starting one is `tokens.json`; each other is a `breakpoint` context listing `breakpoints/<name>.json`, its query in `dev.ai-driven.media`, in `breakpoints` order, the winning query last |
 | platforms | the first is `tokens.json`; each other with its own values is a `platform` context listing `platforms/<name>.json`; the modifier is optional |

@@ -4,7 +4,7 @@ Run it with node from the project root.
 
 | Install | Path |
 | --- | --- |
-| plugin | the plugin's `hooks/aidd-ui.cjs` |
+| plugin | `hooks/aidd-ui.cjs` in the plugin folder holding this skill's `skills/` folder |
 | flat | `hooks/aidd-ui/aidd-ui.cjs` under the tool's folder: `.claude`, `.github`, `.kilo`, `.codex`, `.cursor`, `.opencode` |
 
 | Command | Gives |

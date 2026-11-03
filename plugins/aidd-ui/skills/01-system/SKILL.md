@@ -20,5 +20,5 @@ Each box is a file: read it, then do what it says.
 ## Transversal rules
 
 - Speak only to ask or to give the final reply; otherwise call tools.
-- Write only under `aidd_docs/ui/`, never in the code.
+- Paths are from the project root, the working directory, never this skill's folder; write only under its `aidd_docs/ui/`, never in the code.
 - Commit and push only when asked.

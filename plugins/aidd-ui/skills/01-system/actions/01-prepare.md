@@ -13,7 +13,7 @@ The request.
    - no `system.md`, no UI code: blank;
    - no `system.md`, UI code: existing code;
    - `system.md`: design system.
-3. Take the task folder named, else ask for it.
+3. Take the task folder named, else ask for it: History rows cite it, nothing is written in it.
 4. For a change:
    - vague: ask which token or element, and which value;
    - run `impact` on it and show the report;
