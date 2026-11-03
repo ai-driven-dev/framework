@@ -105,6 +105,7 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `assets` | [skill-template.md](skills/04-skill-generate/assets/skill-template.md) | `<what it produces>. Use when the user wants to <intents>. <Not for X when needed.>` |
 | `references` | [naming.md](skills/04-skill-generate/references/naming.md) | - |
 | `references` | [review-protocol.md](skills/04-skill-generate/references/review-protocol.md) | - |
+| `references` | [runtime-validation.md](skills/04-skill-generate/references/runtime-validation.md) | - |
 | `references` | [scope-frame.md](skills/04-skill-generate/references/scope-frame.md) | - |
 | `references` | [skill-authoring.md](skills/04-skill-generate/references/skill-authoring.md) | - |
 | `references` | [skill-tree.md](skills/04-skill-generate/references/skill-tree.md) | - |

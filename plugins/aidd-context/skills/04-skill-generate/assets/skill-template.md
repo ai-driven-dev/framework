@@ -6,23 +6,15 @@ argument-hint: <what the user brings: their cases, or the artifact consumed>
 
 # <Skill Name>
 
-## Actions
-
 ```mermaid
 flowchart LR
-  <the journey: chain the slugs, a back-edge for a loop, an entry node per case for a branch, a quoted label per condition>
+  <the journey: each action node names its slug and actions/NN-slug.md path; a back-edge per loop, an entry per case, a quoted label per condition, a terminal per outcome>
 ```
-
-Read an action's file, then do what it says.
-
-| Action | File |
-| ------ | ---- |
-| <slug> | [actions/<NN>-<slug>.md](actions/<NN>-<slug>.md) |
 
 ## Transversal rules
 
 <Rules owned by no reference or single action, one per line.>
 
-- <rule>
+- **<Important opening words>** <rest of the rule>
 
 > Fill every `<...>` and delete this line. An angle bracket left in the written file is a bug.

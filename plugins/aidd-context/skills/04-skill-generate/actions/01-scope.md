@@ -19,5 +19,5 @@ The confirmed frame, written nowhere, per `scope-frame.md`.
 
 ## Rules
 
-- Write no file.
-- Ask one question at a time, only for a field you cannot propose.
+- **Write no file.**
+- **Ask one question at a time**, only for a field you cannot propose.

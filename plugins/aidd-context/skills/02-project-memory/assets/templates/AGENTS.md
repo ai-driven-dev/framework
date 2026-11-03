@@ -23,6 +23,7 @@
 
 ## Action
 
+- **When following a skill, read each action's file before executing it.**
 - **Support `works`, `tested`, and `fixed` with evidence.**
 - **Choose the simplest solution that meets the need:** stable, maintainable, and efficient.
 - **Keep changes minimal** and scoped, no over-engineering.

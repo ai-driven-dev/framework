@@ -102,8 +102,8 @@ flowchart TB
 | --- | --- |
 | Skill | Host loads `SKILL.md` on invocation; work runs in the caller's context. |
 | Orchestrator | Owns routing; authorizes isolation or bounded fan-out. |
-| Agent | Isolates work and returns a result. Invokes only declared canonical recipe skills; never invokes orchestrators or reads skill files. |
-| Recipe | Never invents spawning; an isolated recipe never delegates flow work. |
+| Agent | Isolates work and returns a result. Invokes declared canonical recipe skills; an approved generated-skill trial may read and execute only the designated skill. Never invokes orchestrators. |
+| Recipe | May delegate a generated-skill trial with explicit user approval from the main context. An isolated recipe returns the proposal to its caller without spawning. |
 | Reconnaissance helper | Read-only; neither mutates nor spawns. |
 | Write path | At most two delegation layers; no cycles. |
 | SDLC | Owns planning; [delivery](../plugins/aidd-orchestrator/skills/01-sdlc/references/02-deliver.md) and [check](../plugins/aidd-orchestrator/skills/01-sdlc/references/03-check.md) govern execution, leaf executors, independent judgment and bounded repair. |
