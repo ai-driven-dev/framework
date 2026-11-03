@@ -15,7 +15,7 @@ import {
 } from "../../../tools/domain/registry.js";
 import { PluginContentTranslator } from "../../../translate/domain/content-translator.js";
 import type { PluginDistribution } from "../../../translate/domain/plugin-distribution.js";
-import { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";
+import { InstalledPlugin, PLUGIN_NAME_REGEX } from "../../domain/plugins/installed-plugin.js";
 import {
   readBuiltUserPluginFiles,
   withoutHooksPrefix,
@@ -137,8 +137,13 @@ export class UserPluginFileUpdater {
       await assertMachineFilesWritable(this.fs, toolId, plugin, plugin.name, files, home);
       return;
     }
-    await assertUserScopeWriteBoundary(this.fs, toolId, plugin.name, [...files], home);
     const baseDir = resolveBaseDirFromRecord("user", toolId, "", () => home);
+    // A first machine-wide install owns no file yet: its directory is created so the
+    // containment proof has a real path to resolve. The name is one safe path segment.
+    if (plugin.files.size === 0 && PLUGIN_NAME_REGEX.test(plugin.name)) {
+      await this.fs.createDirectory(join(baseDir, plugin.name));
+    }
+    await assertUserScopeWriteBoundary(this.fs, toolId, plugin.name, [...files], home);
     await this.assertNewFilesDoNotCollide(plugin, toolId, baseDir, files);
   }
 

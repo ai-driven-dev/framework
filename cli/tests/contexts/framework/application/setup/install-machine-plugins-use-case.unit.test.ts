@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import "../../../../../src/contexts/tools/domain/profiles/claude/profile.js";
+import "../../../../../src/contexts/tools/domain/profiles/cursor/profile.js";
 import "../../../../../src/contexts/tools/domain/profiles/opencode/profile.js";
 import type { PluginCatalogEntry } from "../../../../../src/contexts/distribution/domain/catalog.js";
 import { Marketplace } from "../../../../../src/contexts/distribution/domain/marketplace.js";
@@ -98,6 +99,29 @@ describe("InstallMachinePluginsUseCase", () => {
     ]);
     expect(manifest.getPlugins("claude")).toEqual([]);
     expect(planUpdate).toHaveBeenCalledTimes(2);
+  });
+
+  it("also writes the plugins of a tool installing into a user plugins directory", async () => {
+    const { manifest, useCase, planUpdate } = setup();
+    manifest.addTool("cursor", "1.0.0", []);
+
+    await useCase.execute(manifest, {
+      projectRoot: "/project",
+      toolIds: ["cursor"],
+      mode: "recommended",
+      pluginNames: [],
+    });
+
+    expect(manifest.getPlugins("cursor").map((p) => [p.name, p.scope])).toEqual([
+      ["aidd-dev", "user"],
+    ]);
+    expect(planUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({ name: "aidd-dev" }),
+      "cursor",
+      "/project",
+      expect.anything(),
+      true
+    );
   });
 
   it("keeps the recommended plugins alone", async () => {

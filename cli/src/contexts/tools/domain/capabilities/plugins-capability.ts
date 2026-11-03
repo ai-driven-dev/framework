@@ -66,7 +66,7 @@ export type EnvironmentReader = (name: string) => string | undefined;
 /**
  * What a machine-scope install (`setup --global`) copies out of this tool's built tree into
  * the user's own configuration directory, for a host that loads those files from there rather
- * than from a plugin it enables itself: OpenCode's skills and agents, Codex's agents.
+ * than from a plugin it enables itself: OpenCode's and Kilo's skills and agents, Codex's agents.
  */
 export interface MachineFiles {
   /** The user configuration directory the files land in, given a homedir. */
@@ -82,6 +82,23 @@ export interface MachineFiles {
 export interface MachinePlugin {
   readonly name: string;
   readonly agents: ReadonlySet<string>;
+}
+
+/**
+ * The machine-file mapping of a flat tool whose user configuration directory takes the same
+ * `skills/` and `agents/` its project directory does (OpenCode, Kilo): a plugin's skills and
+ * agents under `directory` keep their path below it. Hooks, commands and MCP entries stay
+ * project-scoped.
+ */
+export function flatMachineFilePath(directory: string): MachineFiles["map"] {
+  return (builtPath, plugin) => {
+    if (!builtPath.startsWith(directory)) return null;
+    const relative = builtPath.slice(directory.length);
+    if (relative.startsWith(`skills/${plugin.name}/`)) return relative;
+    const agent = /^agents\/(.+)\.md$/.exec(relative)?.[1];
+    if (agent === undefined || !agent.startsWith(`${plugin.name}-`)) return null;
+    return plugin.agents.has(agent.slice(plugin.name.length + 1)) ? relative : null;
+  };
 }
 
 /** Shared by every mode: where a tool's machine-scope files go, when it has any. */

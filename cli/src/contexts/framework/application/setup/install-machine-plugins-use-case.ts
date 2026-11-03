@@ -4,7 +4,7 @@ import type { ResolveMarketplace } from "../../../distribution/application/resol
 import type { PluginCatalogEntry } from "../../../distribution/domain/catalog.js";
 import { FRAMEWORK_MARKETPLACE_NAME } from "../../../distribution/domain/marketplace.js";
 import type { MarketplaceRegistry } from "../../../distribution/domain/ports/marketplace-registry.js";
-import { machineFilesOf } from "../../../tools/domain/registry.js";
+import { copiesPluginFilesForMachine } from "../../../tools/domain/registry.js";
 import type { Manifest } from "../../domain/manifest.js";
 import { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";
 import { resolvePluginSourceFromMarketplace } from "../../domain/plugins/plugin-source-resolver.js";
@@ -25,8 +25,8 @@ export interface InstallMachinePluginsResult {
 
 /**
  * `setup --global --plugins …`: picks the framework plugins from the shared source's catalog and
- * copies each one's machine files (OpenCode's skills and agents, Codex's agents) into the tool's
- * user configuration directory, recording them in the machine manifest as user-scope plugins so
+ * copies each one's files into the tool's user configuration directory (OpenCode's and Kilo's
+ * skills and agents, Codex's agents) or user plugins directory (Cursor), recording them in the machine manifest as user-scope plugins so
  * `plugin update --scope user`, `sync --scope user` and `clean --scope user` own them. A first
  * install is a rebuild of a plugin that owns no file yet, so both go through one writer. A tool
  * that enables plugins through its own CLI is handed the chosen names by the caller instead.
@@ -58,7 +58,7 @@ export class InstallMachinePluginsUseCase {
     });
     const entries = selectEntries(catalog?.plugins ?? [], options);
     for (const toolId of options.toolIds) {
-      if (machineFilesOf(toolId) === null) continue;
+      if (!copiesPluginFilesForMachine(toolId)) continue;
       for (const entry of entries) {
         const owned = manifest.getPlugins(toolId).find((plugin) => plugin.name === entry.name);
         const plugin =

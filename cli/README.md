@@ -122,16 +122,17 @@ Counts the tokens of Claude Code and Codex sessions, locally. Details: [FAQ](../
 | --- | --- |
 | `claude`, `copilot` | Registers the source and enables the plugins through the tool's own CLI |
 | `codex` | The same, plus the plugins' agents in `~/.codex/agents/` |
-| `opencode` | Copies the plugins' skills and agents into `~/.config/opencode/` |
-| `cursor` | Records the source and tool only |
-| `kilo` | Unsupported: use project scope |
+| `opencode`, `kilo` | Copies the plugins' skills and agents into `~/.config/opencode/` or `~/.config/kilo/` |
+| `cursor` | Copies the plugins into `~/.cursor/plugins/local/`; Cursor must allow local plugin imports |
+
+Copilot needs a CLI whose `plugin marketplace list` accepts `--json` (verified with 1.0.98; 1.0.83 refuses it).
 
 Native activation needs the tool's executable on `PATH`.
 Without it, registration succeeds with a warning and activation stays unrun.
 Install it, then run `aidd sync --global`.
 
 ```sh
-aidd setup --global --ide claude,codex,opencode --plugins all --yes
+aidd setup --global --ide claude,codex,copilot,cursor,kilo,opencode --plugins all --yes
 aidd sync --global    # rebuild the copied files and refresh the hosts from the framework source
 aidd clean --global   # remove what --global installed and purge the shared source
 ```
