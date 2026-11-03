@@ -11,7 +11,7 @@
 | --- | --- |
 | `validated` | set by the user only, after looking at the render |
 | History row | Version, Change, Breaking, Task: the task folder's path, created or not; the reasons go to the user, never in the record |
-| `implemented-version`, `code` | unchanged: the code follows in the feature |
+| `code` links and their versions | unchanged: the code follows in the feature |
 | `system.md` version | unchanged: a publication adds its row |
 | deprecating | `replaced-by: <id>`, or `none` with a `## Deprecation` section |
 | reached screen under review | in that review's `## Verdicts`, one `pending` row per state at the new version; `impact` lists no review, read them |

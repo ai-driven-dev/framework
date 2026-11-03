@@ -171,6 +171,22 @@ describe("aidd-ui 01-system breakpoints", () => {
   });
 });
 
+describe("aidd-ui 01-system platforms", () => {
+  it("gives an example of a resolver for platforms that validates as written, among platform roots and links", () => {
+    const steps = fs.readFileSync(path.join(SKILL, "references/tokens.md"), "utf8");
+    const [resolver] = steps.match(/\{"version": "2025\.10"[^`]*"platform"[^`]*\}/);
+    put(tmp, `${UI}/tokens.resolver.json`, resolver);
+    put(tmp, `${UI}/platforms/mobile.json`, JSON.stringify({ border: { thin: { $type: "dimension", $value: { value: 0.125, unit: "rem" } } } }));
+    edit(tmp, `${UI}/system.md`, "themes: [light, dark]", "themes: [light]");
+    edit(tmp, `${UI}/system.md`, "platforms: [web]", "platforms: [web, mobile]");
+    edit(tmp, `${UI}/system.md`, "code-roots: [src/ui]", "code-roots: [web=src/ui, mobile=src/mobile]");
+    edit(tmp, `${UI}/components/dialog.md`, "code: package", "code: web=package");
+    assert.equal(spawnSync(process.execPath, [ENGINE, "tokens", tmp], { encoding: "utf8" }).status, 0);
+    assert.deepEqual(validate(), { code: 0, out: ["VALID"] });
+    assert.ok(fs.readFileSync(path.join(tmp, `${UI}/tokens.css`), "utf8").includes('[data-platform="mobile"] {'));
+  });
+});
+
 describe("aidd-ui 01-system change flow", () => {
   const FIRST_ROW = "| 1 | created | no | aidd_docs/tasks/ds-init |";
   const TASK_ROW = "| 2 | new action colour | no | aidd_docs/tasks/recolour |";

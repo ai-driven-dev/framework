@@ -7,8 +7,10 @@
 | `tokens` | semantic tokens only, never a primitive |
 | `states` | `default`; `focus` when interactive; `hover`, `disabled`, `loading`, `error` when they exist |
 | `variants` | bare items, or `axis=value` for a prop varying on its own; never `state`, `variant` or `theme` as an axis |
-| `code` | `path#Export`, `package:<name>#Export`, or the bare path of an `.astro` file |
-| `implemented-version` | the version the code implements, set with `code`; without `code` only on a molecule or composition whose used elements are implemented |
+| `platforms` | optional, a subset of `system.md`'s; absent means all |
+| `code` | one link or a list, each `path[#Export]@<version>` or `package:<name>[#Export]@<version>`; `#Export` when the techno has one; `<version>` the one the code implements, at most `version`; at most one link per platform, a path link on its code root's |
+| package link | `platform=package:<name>#Export@<version>` when `system.md` lists several platforms |
+| no link | an assembled molecule or composition whose used elements are all coded, an element coded nowhere yet |
 | render coverage | each variant value and each state at least once, on an element: `data-variant`, `data-<axis>`, `data-state`; no product of axes, no repeat per theme |
 | render style | `var()` of its tokens and of the elements it uses; no colour or length literal; logical properties when `rtl` is declared |
 | molecule render | shows the elements it uses, with their tokens |

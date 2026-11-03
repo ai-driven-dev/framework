@@ -43,5 +43,5 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `references` | [extraction.md](skills/01-system/references/extraction.md) | - |
 | `references` | [tokens.md](skills/01-system/references/tokens.md) | - |
 | `references` | [versions.md](skills/01-system/references/versions.md) | - |
-| `-` | [SKILL.md](skills/01-system/SKILL.md) | `Lay a web project's design system, from nothing or from its code, or carry a token or component change to its new versions. Use when the user wants to set up, extract, or change a design system. Not for screens, journeys, or reviews.` |
+| `-` | [SKILL.md](skills/01-system/SKILL.md) | `Lay a project's design system, from nothing or from its code, or carry a token or component change to its new versions. Use when the user wants to set up, extract, or change a design system. Not for screens, journeys, or reviews.` |
 

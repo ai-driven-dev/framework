@@ -1,6 +1,6 @@
 ---
 name: 01-system
-description: Lay a web project's design system, from nothing or from its code, or carry a token or component change to its new versions. Use when the user wants to set up, extract, or change a design system. Not for screens, journeys, or reviews.
+description: Lay a project's design system, from nothing or from its code, or carry a token or component change to its new versions. Use when the user wants to set up, extract, or change a design system. Not for screens, journeys, or reviews.
 argument-hint: request | change
 ---
 # System
@@ -12,7 +12,7 @@ flowchart LR
   prepare["prepare<br>actions/01-prepare.md<br>engine: impact"] --> write["write<br>actions/02-write.md<br>engine: tokens"]
   write --> conclude["conclude<br>actions/03-conclude.md<br>engine: validate"]
   conclude --> done((done))
-  prepare -->|"no engine, no web UI, or impact refused"| stop((stop))
+  prepare -->|"no engine or impact refused"| stop((stop))
 ```
 
 Each box is a file: read it, then do what it says.

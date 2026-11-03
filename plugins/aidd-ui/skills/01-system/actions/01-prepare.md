@@ -9,11 +9,10 @@ The request.
 ## Process
 
 1. Find the [engine](../references/engine.md); none: stop and say it is missing.
-2. Read `aidd_docs/ui/` and the web code, and name the state:
-   - no `system.md`, no web UI: blank;
-   - no `system.md`, web UI: existing code;
-   - `system.md`: design system;
-   - native UI only: stop, saying it covers web apps; web and native: the web part only.
+2. Read `aidd_docs/ui/` and the UI code, whatever its platforms, and name the state:
+   - no `system.md`, no UI code: blank;
+   - no `system.md`, UI code: existing code;
+   - `system.md`: design system.
 3. Take the task folder named, else ask for it.
 4. For a change:
    - vague: ask which token or element, and which value;

@@ -23,9 +23,10 @@ One file per element, under `aidd_docs/ui/`.
 aidd_docs/ui/
 ├── system.md                the design system
 ├── brand.md                 the brand
-├── tokens.json              tokens of the base theme, DTCG 2025.10
-├── tokens.resolver.json     the other themes and the breakpoints, DTCG Resolver 2025.10
+├── tokens.json              tokens of the base theme and platform, DTCG 2025.10
+├── tokens.resolver.json     the other themes, platforms and breakpoints, DTCG Resolver 2025.10
 ├── themes/<theme>.json      the tokens one theme redefines
+├── platforms/<name>.json    the tokens one platform redefines
 ├── breakpoints/<name>.json  the tokens one breakpoint redefines
 ├── tokens.css               generated from the tokens by the engine, never written by hand
 ├── assets/<id>.md           an icon, image or illustration, its file beside it
@@ -42,18 +43,19 @@ Every record opens with flat front matter, `key: value` or `key: [a, b]`, and cl
 | Record | Front matter | Body |
 | --- | --- | --- |
 | every one | `id` (the file name), `kind`, `status` (`proposed`, `validated`, `deprecated`), `version` | `## History` |
-| `system.md` | `format` (`1`), `version` in semver, `platforms`, `breakpoints`, `themes`, `locales`, `directions`, `primitives` (token groups components never cite, nested such as `color.brand` too), `code-roots`, `ignore`, `libraries`, each `[]` when empty; optional `code-tokens`, one file or a list | `## Breakpoints`: Name, Width, one row per breakpoint; optional `## Rules`: Id, Rule |
+| `system.md` | `format` (`1`), `version` in semver, `platforms`, `breakpoints`, `themes`, `locales`, `directions`, `primitives` (token groups components never cite, nested such as `color.brand` too), `code-roots` (`platform=path`, or a bare path when one platform is declared), `ignore`, `libraries`, each `[]` when empty; optional `code-tokens`, one file or a list | `## Breakpoints`: Name, Width, one row per breakpoint; optional `## Rules`: Id, Rule |
 | `brand.md` | | `## Project`, `## Users`, `## Domain`, `## Platforms`, `## Personality and tone`, `## References`, `## Anti-references`; optional `## Glossary`: Concept, Word, Forbidden |
-| atom, molecule, composition | `uses`, `tokens`, `variants` (a bare value, or `axis=value` per independent prop), `states`, `interactive` (`yes` or `no`), `role`; optional `code`, `implemented-version` | `## Usage`, and `## Keyboard` when interactive |
-| screen | `uses`, `tokens`, `states`, `breakpoints`, `route`; optional `code`, `implemented-version` | |
+| atom, molecule, composition | `uses`, `tokens`, `variants` (a bare value, or `axis=value` per independent prop), `states`, `interactive` (`yes` or `no`), `role`; optional `code`, `platforms` | `## Usage`, and `## Keyboard` when interactive |
+| screen | `uses`, `tokens`, `states`, `breakpoints`, `route`; optional `code`, `platforms` | |
 | journey | `persona` | `## Steps`: Screen, Action |
 | asset | `type` (`icon`, `image`, `illustration`), `file`, `alt` | |
 | review | `scope`, `screens` | `## Verdicts`: Screen, State, Version, Verdict (`ok`, `ko`, `pending`), Comment |
 
 ### Versions
 
-- `status` tracks the design; `implemented-version` is the version the code implements. Code is current when it equals `version`, behind when lower.
-- `code` is `path#Export`, or `package:<name>#Export` for a library component; an `.astro` file may be a bare path, an Astro component having no named export. It is required with `implemented-version`, except for a molecule or composition whose used elements are all implemented.
+- `status` tracks the design; each `code` link carries the version the code implements. A platform is current when it equals `version`, behind when lower; an element with no link is coded nowhere.
+- `platforms` is one platform or a list, a subset of `system.md`'s; absent means all.
+- `code` is one link or a list, each `path[#Export]@<version>`, or `package:<name>[#Export]@<version>` for a library component. `#Export` is optional, whatever the techno; `@<version>` is an integer from 1, at most the record's `version`. A path link's platform is the one of the code root holding it, the innermost when roots nest; with several platforms declared, a package link names its own, `platform=package:<name>#Export@<version>`. A link's platform is one of the record's, and no platform has two links. A molecule or composition whose used elements are all coded needs no link.
 - `system.md` takes a history row only when a version is published; its Task cell lists the published tasks, comma-separated. A row that publishes a task which broke an element is breaking and raises the major; a token-only change says `yes` itself. Any other row raises the minor.
 - A verdict counts for the version it names only.
 - A `format` this validator does not read is reported alone.
@@ -65,16 +67,18 @@ Every record opens with flat front matter, `key: value` or `key: [a, b]`, and cl
 - A deprecated element names `replaced-by: <id>`, or `replaced-by: none` with a `## Deprecation` section.
 - A render uses only the tokens its record lists in `tokens`, or those of the elements it uses, transitively. Its literals are read in `<style>` blocks and `style=""` values, never in its text, and its colours also in `fill`, `stroke`, `color` and `bgcolor` values, where a value opening with `var()` is a token; a variant or state counts when an element outside `<style>` carries its `data-` attribute: `data-variant="<value>"` for a bare item, `data-<axis>="<value>"` for `axis=value`, `data-state="<value>"` for a state.
 - An axis matches `[a-z][a-z-]*`, is never `state`, `variant` or `theme`, and its value is never empty.
+- Each `code-roots` item belongs to a platform: `platform=path`, required once `system.md` declares several, whose names it must list; a bare path belongs to the only one declared.
 - `code-tokens` names the file where the code consumes the tokens, or a list, one per app; each is never checked for literals or coverage.
 - Themes: the first theme in `system.md` is held by `tokens.json`. `tokens.resolver.json`, required from two themes on and checked whenever present, has a set whose sources hold `{"$ref": "tokens.json"}`, a `theme` modifier with one context per theme and the base as `default`, an empty context, and `{"$ref": "#/modifiers/theme"}` in `resolutionOrder`. Another context lists `{"$ref": "<file>"}` sources, each redefining base tokens with their type.
+- Platforms: the first platform in `system.md` is held by `tokens.json`. A value that depends on the platform is a context of an optional `platform` modifier, built like the theme one, with `{"$ref": "#/modifiers/platform"}` in `resolutionOrder`: one context per platform, the base as `default` and an empty context, another listing `{"$ref": "<file>"}` sources, such as `platforms/<name>.json`, each redefining base tokens with their type.
 - Breakpoints: a value that depends on the width is a context of an optional `breakpoint` modifier, with `{"$ref": "#/modifiers/breakpoint"}` in `resolutionOrder`. Its `default` is the breakpoint `tokens.json` holds, an empty context, since the Resolver needs one to resolve without an input. The other contexts follow the order of `breakpoints` in `system.md`, which the `@media` blocks take. Each is a breakpoint in `system.md` listing `{"$ref": "<file>"}` sources, like a theme's, with its media query verbatim in the modifier's `"$extensions": {"dev.ai-driven.media": {"<breakpoint>": "<query>"}}`.
-- A token a breakpoint redefines is never one a theme block holds, redefined or redeclared as a dependent, and its value never cites one: on a nested region that block would hide it, or leave it stale. A token depending on both a theme's token and a breakpoint's is allowed: its `var()`s recompute.
+- A token a breakpoint redefines is never one a theme or platform block holds, redefined or redeclared as a dependent, and its value never cites one: on a nested region that block would hide it, or leave it stale. A token a theme redefines is never one a platform holds either, redefined or redeclared as a dependent: both blocks sit on one element and the later hides the other. A token depending on tokens of two of them is allowed: its `var()`s recompute.
 - A value DTCG cannot hold, such as `color-mix()` or `100%`, is raw CSS: `"$extensions": {"dev.ai-driven.css": "<value>"}`. Each `var()` in it must name a token. No value may lead back to its own token, through an alias or a `var()`, across the base and the context it sits in: the browser would compute nothing. A theme or breakpoint file may redefine a token this way too.
 - `$root` is not supported: name the token. A token holding both `$value` and child tokens is an error: its children would be dropped.
 - A token's CSS name is `--` plus its path joined by `-`.
-- `tokens.css` is generated: a custom property per token, the base in `:root, [data-theme="<base theme>"]`, so a nested region can switch back to it, each other theme in `[data-theme="<theme>"]`, an alias as `var()`, raw CSS verbatim, a font weight keyword as its DTCG number. A theme block also redeclares, in tree order after its own tokens, every base token that depends on one it redefines, through an alias or a `var()`, transitively, so a theme set on a nested element recomputes it there. After them, each breakpoint in resolver order is `@media <query> { :root, [data-theme="<base theme>"] { ... } }`, tokens in tree order, without what depends on them, which recomputes through `var()`. A composite token (shadow, border, typography, ...) has no CSS of its own: it needs a raw CSS extension to appear in it.
+- `tokens.css` is generated: a custom property per token, the base in `:root, [data-theme="<base theme>"]`, so a nested region can switch back to it, each other theme in `[data-theme="<theme>"]`, then each platform but the first that redefines a token in `[data-platform="<name>"]`, an alias as `var()`, raw CSS verbatim, a font weight keyword as its DTCG number. A theme or platform block also redeclares, in tree order after its own tokens, every base token that depends on one it redefines, through an alias or a `var()`, transitively, so a theme or platform set on a nested element recomputes it there. After them, each breakpoint in resolver order is `@media <query> { :root, [data-theme="<base theme>"] { ... } }`, tokens in tree order, without what depends on them, which recomputes through `var()`. A composite token (shadow, border, typography, ...) has no CSS of its own: it needs a raw CSS extension to appear in it.
 - A component or screen render loads it with `<link rel="stylesheet" href="../tokens.css">`, so a token change reaches every render without rewriting one.
-- A validated or deprecated element edited since its committed version, without a new `version`, is an error. A change to `status`, `implemented-version`, `code` or the History table is not an edit. A validated element is also held to the resolved value, in any theme or breakpoint, of each token it or an element it uses declares, compared with the committed `tokens.css`; a token's value change leaves a deprecated element as it is.
+- A validated or deprecated element edited since its committed version, without a new `version`, is an error. A change to `status`, `code` or the History table is not an edit. A validated element is also held to the resolved value, in any theme, platform or breakpoint, of each token it or an element it uses declares, compared with the committed `tokens.css`; a token's value change leaves a deprecated element as it is.
 
 ## Commands
 
@@ -99,12 +103,12 @@ A hook runs the same check:
 | Moment | Prints |
 | --- | --- |
 | Session start | the counts, then the errors |
-| After a write under `aidd_docs/ui/` or a code root | the problems of the written files, their record's render and the records citing it, or all of them after a write to `system.md`, the tokens, a theme or a breakpoint; then the count of other errors |
+| After a write under `aidd_docs/ui/` or a code root | the problems of the written files, their record's render and the records citing it, or all of them after a write to `system.md`, the tokens, a theme, a platform or a breakpoint; then the count of other errors |
 | End of a turn that wrote such a file | the errors, as a reason to continue, once |
 
 Each output lists errors before warnings, stops at 20 problem lines and names the command that prints the rest.
 
-Rules: records R1 to R17, history H1 to H8, tokens T1 to T10, renders V1 to V8, code C1 to C8.
+Rules: records R1 to R17, history H1 to H8, tokens T1 to T10, renders V1 to V8, code C1 to C9.
 
 ## Limits
 
@@ -114,7 +118,7 @@ Rules: records R1 to R17, history H1 to H8, tokens T1 to T10, renders V1 to V8, 
 - Codex runs the hook only once you trust it; Copilot only in a folder it trusts, and says nothing otherwise.
 - A file written by a shell command, or deleted by a patch, is not seen.
 - A problem a write causes in a record that does not cite the written one, such as a use of a renamed id, appears at turn end only.
-- The Resolver is read in one profile: `theme` and `breakpoint` modifiers with file sources. Inline sources and other modifiers are not checked.
+- The Resolver is read in one profile: `theme`, `platform` and `breakpoint` modifiers with file sources. Inline sources and other modifiers are not checked.
 - Breakpoint blocks cascade in the stylesheet, where the Resolver applies one context: at a width two queries match, a token only the earlier one redefines keeps that value.
 - A loop only two breakpoints form together, at a width both queries match, is not named.
 - A breakpoint file no resolver context names is not read.
@@ -122,7 +126,7 @@ Rules: records R1 to R17, history H1 to H8, tokens T1 to T10, renders V1 to V8, 
 - H8 compares a breakpoint's values over the base, not inside each theme, so a theme value citing a token a breakpoint redefines is not followed.
 - Composite tokens are checked for a `$value`, not for its shape, and reach `tokens.css` only as raw CSS.
 - `impact` leaves reviews out of its report.
-- A web design system only: a native app, such as an Expo one, is outside it.
+- A nested region cannot switch back to the first platform: tokens.css writes no block for it, nor for a platform that redefines no token.
 - The committed baseline of H8 is `HEAD`: without `git`, a repository, a commit or the committed file, the rule is silent, and committing an edit without raising the version hides it. Any other failure of `git`, such as a repository it refuses to read or its five-second timeout, is one H8 warning on `aidd_docs/ui`, naming the failure. A run asks `git` once which files changed, then reads only those, plus the committed record of an element using a token whose value changed; C4 asks at most twice more when it finds a literal, naming each file that holds one.
 - A version raise that stays `validated` passes until a review can prove it.
 - H8 does not watch an asset's file, a journey or `brand.md`.
@@ -139,8 +143,10 @@ Rules: records R1 to R17, history H1 to H8, tokens T1 to T10, renders V1 to V8, 
 - `code-roots` and `ignore` are path prefixes, not globs. Every folder under a code root is walked, `node_modules`, build output and dot-folders included: ignore them. A linked folder counts as one file no record links.
 - A render shows a variant or state when its text holds the attribute, whatever the element; an export exists when its name is a word of the linked file, a comment included, so `stylesheet#word` passes C1 and covers the whole stylesheet.
 - The hook command names `${CLAUDE_PLUGIN_ROOT}` unquoted, like every plugin here: a plugin path with spaces breaks it.
-- In code, only colour literals are found, in web code only, outside tests and mocks, which C3 leaves out of the backlog too; other literals are left to the UI audit.
-- In script files, `.vue` and `.svelte` included, colours are found in string literals only. A Vue or Svelte component needs an export name in its link. An `.astro` file is read the same way, plus its `<style>` blocks.
+- In code, only colour literals are found, outside tests and mocks, which C3 leaves out of the backlog too; other literals are left to the UI audit. A test is a file in a `__tests__` or `__mocks__` folder or named `.test.` or `.spec.`, whatever the techno.
+- Under a code root, documents (`.md`, `.mdx`, `.txt`, `.rst`, `.adoc`), data (`.json`, `.yaml`, `.yml`, `.csv`, `.toml`, `.xml`), images (`.png`, `.jpg`, `.jpeg`, `.gif`, `.webp`, `.avif`, `.ico`, `.bmp`, `.svg`), fonts (`.woff`, `.woff2`, `.ttf`, `.otf`, `.eot`) and any file with a NUL byte in its first 8000 are neither covered by C3 nor scanned by C4.
+- Stylesheets and `.html` are read whole. Every other file, scripts and `.vue` and `.svelte` and any techno included, has its colours found in string literals only, comments left out; an `.astro` file also in its `<style>` blocks. A colour written as a number, such as Dart's `0xFF336699`, or by a constructor, is not found.
+- A path link takes no `platform=` prefix, its code root decides; a path link to a file under no code root has no platform, which is an error once several are declared.
 - A word of hex letters after `#` in a stylesheet, a string or a colour attribute, such as `#add` or `url(#add)`, counts as a colour. A named colour, such as `red`, is not found.
 - Fixed widths on text and long translations are left to the UI audit.
 
