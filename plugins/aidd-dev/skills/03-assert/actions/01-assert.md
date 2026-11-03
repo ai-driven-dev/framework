@@ -16,7 +16,6 @@ The work, and its task folder if any.
    - in parallel when you can;
    - each command exactly as written, its flags included;
    - each to its end, with the longest timeout;
-   - a job its runner skips for want of input, as no matching files, counts as not run; a test a suite skips by design stays the suite's;
    - each result read from its own run alone, its exit code unpiped;
    - a failure recorded, never fixed.
 3. Fill a round from the [assert template](../assets/assert-template.md).
