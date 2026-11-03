@@ -10,7 +10,7 @@ import { genericFlatHooksScriptPath } from "../../../../../kernel/materializatio
 import type { PluginHooksShape, PluginMatcherGroup } from "../../formats/plugin-hooks-shape.js";
 import type { ProjectHookEntry, ProjectHooksFormat } from "../../hooks-format.js";
 
-type CursorHookEntry = { command: string };
+type CursorHookEntry = { command: string; matcher?: string };
 type CursorFlatShape = { version: 1; hooks: Record<string, CursorHookEntry[]> };
 
 // `Stop` fans out to two Cursor events, not one: interactive sessions fire `stop` and headless
@@ -63,7 +63,12 @@ function extractCursorEntries(matchers: PluginMatcherGroup[]): CursorHookEntry[]
   const entries: CursorHookEntry[] = [];
   for (const group of matchers) {
     for (const item of group.hooks ?? []) {
-      if (typeof item.command === "string") entries.push({ command: item.command });
+      if (typeof item.command !== "string") continue;
+      entries.push(
+        group.matcher
+          ? { command: item.command, matcher: group.matcher }
+          : { command: item.command }
+      );
     }
   }
   return entries;
@@ -74,7 +79,7 @@ const CURSOR_HOOKS_DIR = ".cursor/hooks/";
 
 interface CursorHooksFile {
   version?: number;
-  hooks?: Record<string, Array<{ command: string }>>;
+  hooks?: Record<string, CursorHookEntry[]>;
 }
 
 /**
@@ -144,7 +149,7 @@ export const cursorProjectHooksFormat: ProjectHooksFormat = {
 function stripPluginEntries(existingJson: string, pluginName: string): CursorHooksFile {
   const parsed = JSON.parse(existingJson) as CursorHooksFile;
   const marker = cursorProjectHooksScriptDir(pluginName);
-  const hooks: Record<string, Array<{ command: string }>> = {};
+  const hooks: Record<string, CursorHookEntry[]> = {};
   for (const [event, entries] of Object.entries(parsed.hooks ?? {})) {
     const kept = entries.filter((entry) => !entry.command.includes(marker));
     if (kept.length > 0) hooks[event] = kept;

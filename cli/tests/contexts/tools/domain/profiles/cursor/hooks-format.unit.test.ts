@@ -147,6 +147,40 @@ describe("mergeCursorFlatHooks, entry by entry", () => {
   });
 });
 
+describe("a group's matcher", () => {
+  const MATCHER = "Write|Edit|MultiEdit";
+  const grouped = (matcher?: string) =>
+    JSON.stringify({
+      hooks: {
+        PostToolUse: [{ ...(matcher ? { matcher } : {}), hooks: [{ command: "node run.js" }] }],
+      },
+    });
+
+  it("is kept on the entries of a flat translate", () => {
+    expect(JSON.parse(mergeCursorFlatHooks(null, grouped(MATCHER)).content)).toStrictEqual({
+      version: 1,
+      hooks: { postToolUse: [{ command: "node run.js", matcher: MATCHER }] },
+    });
+  });
+
+  it("is kept on the entries of a project install", () => {
+    expect(
+      JSON.parse(mergeCursorProjectHooksJson(null, grouped(MATCHER), "plugin-a").content)
+    ).toStrictEqual({
+      version: 1,
+      hooks: { postToolUse: [{ command: "node run.js", matcher: MATCHER }] },
+    });
+  });
+
+  it("leaves no matcher key on the entries of a group without one", () => {
+    const flat = JSON.parse(mergeCursorFlatHooks(null, grouped()).content);
+    const project = JSON.parse(mergeCursorProjectHooksJson(null, grouped(), "plugin-a").content);
+
+    expect(flat.hooks.postToolUse[0]).not.toHaveProperty("matcher");
+    expect(project.hooks.postToolUse[0]).not.toHaveProperty("matcher");
+  });
+});
+
 describe("a matcher group that declares no hooks list", () => {
   const groupless = JSON.stringify({
     hooks: { Stop: [{ matcher: "x" }, { hooks: [{ command: "a" }] }] },

@@ -1,5 +1,5 @@
 ---
-status: pending
+status: done
 ---
 
 # Instruction: Each tool's hook format in its profile, Cursor's keeping the matcher
