@@ -366,26 +366,18 @@ describe("aidd-ui tokens and renders", () => {
     });
 
     describe("set by a theme too", () => {
-      const BOTH = (name) => `${DESKTOP}: ${name}: theme "dark" and breakpoint "desktop" both set it, so a themed region would ignore the breakpoint`;
+      const stylesheet = () => fs.readFileSync(path.join(tmp, STYLESHEET), "utf8");
 
-      it("names a token both redefine", () => {
+      it("accepts a token both redefine, the breakpoint winning over the theme as it comes later in the resolution order", () => {
         editJson(DARK, (tree) => (tree.space = { md: { $value: { value: 3, unit: "rem" } } }));
-        assert.deepEqual(problems(), [BOTH("space.md")]);
+        generateStylesheet(tmp);
+        assert.deepEqual(problems(), []);
+        assert.ok(stylesheet().includes('@media (min-width: 64rem) {\n  [data-theme="dark"] {\n    --space-md: 1.5rem;\n  }\n}'));
       });
 
-      it("names a token the theme block redeclares as a dependent, which would freeze it", () => {
+      it("accepts a breakpoint value of a token the theme block redeclares as a dependent", () => {
         editJson(DESKTOP, (tree) => (tree.color = { text: { default: { $value: { colorSpace: "srgb", components: [0, 0, 0], hex: "#000000" } } } }));
-        assert.deepEqual(problems(), [BOTH("color.text.default")]);
-      });
-
-      it("names a breakpoint value citing a token a theme redefines, which a themed region would inherit stale", () => {
-        addToken("accent", { $type: "color", $value: { colorSpace: "srgb", components: [1, 0, 0], hex: "#ff0000" } });
-        editJson(DESKTOP, (tree) => (tree.misc = { accent: { $value: "{color.brand.primary}" } }));
-        assert.deepEqual(problems(), [BOTH("misc.accent")]);
-      });
-
-      it("accepts a dependent citing one token of each: its var()s recompute", () => {
-        addToken("both", { $type: "dimension", $extensions: { "dev.ai-driven.css": "calc(var(--space-md) + var(--color-brand-primary))" } });
+        generateStylesheet(tmp);
         assert.deepEqual(problems(), []);
       });
     });
@@ -513,40 +505,37 @@ describe("aidd-ui tokens and renders", () => {
     });
 
     describe("set by a theme too", () => {
-      const HIDE = 'theme "dark" and platform "mobile" both set it, so one block would hide the other';
       const black = { $value: { colorSpace: "srgb", components: [0, 0, 0], hex: "#000000" } };
 
-      it("names a token both redefine", () => {
+      const PAIR = '[data-platform="mobile"] [data-theme="dark"], [data-platform="mobile"][data-theme="dark"] {\n  --color-brand-primary:';
+
+      it("accepts a token both redefine, the stylesheet holding the pair the resolution order decides", () => {
         withMobile();
         editJson(MOBILE, (tree) => (tree.color = { brand: { primary: black } }));
-        assert.deepEqual(problems(), [`${MOBILE}: color.brand.primary: ${HIDE}`]);
-      });
-
-      it("names a token the theme block redeclares as a dependent, which the platform block would override", () => {
-        withMobile();
-        editJson(MOBILE, (tree) => (tree.color = { text: { default: black } }));
-        assert.deepEqual(problems(), [`${MOBILE}: color.text.default: ${HIDE}`]);
-      });
-
-      it("names a token the platform block redeclares as a dependent, which would override the theme's", () => {
-        addToken("edge", { $type: "dimension", $value: "{border.thin}" });
-        withMobile();
-        editJson(DARK, (tree) => (tree.misc = { edge: { $value: { value: 2, unit: "px" } } }));
-        assert.deepEqual(problems(), [`${DARK}: misc.edge: ${HIDE}`]);
-      });
-
-      it("accepts a dependent citing one token of each: its var()s recompute", () => {
-        addToken("both", { $type: "dimension", $extensions: { "dev.ai-driven.css": "calc(var(--border-thin) + var(--color-brand-primary))" } });
-        withMobile();
+        generateStylesheet(tmp);
         assert.deepEqual(problems(), []);
+        assert.ok(css().includes(`${PAIR} #000000;`));
+      });
+
+      it("gives the pair to the theme when the resolution order puts it after the platform", () => {
+        withMobile();
+        editJson(MOBILE, (tree) => (tree.color = { brand: { primary: black } }));
+        editJson(RESOLVER, (r) => r.resolutionOrder.splice(1, 0, r.resolutionOrder.pop()));
+        generateStylesheet(tmp);
+        assert.deepEqual(problems(), []);
+        assert.ok(css().includes(`${PAIR} #6699cc;`));
       });
     });
 
     describe("set by a breakpoint too", () => {
-      it("names a token both redefine", () => {
+      it("accepts a token both redefine, the platform winning over the breakpoint as it comes later in the resolution order", () => {
         withMobile();
         editJson(MOBILE, (tree) => (tree.space = { md: { $value: { value: 3, unit: "rem" } } }));
-        assert.deepEqual(problems(), [`${DESKTOP}: space.md: platform "mobile" and breakpoint "desktop" both set it, so a platform region would ignore the breakpoint`]);
+        generateStylesheet(tmp);
+        assert.deepEqual(problems(), []);
+        const css = fs.readFileSync(path.join(tmp, STYLESHEET), "utf8");
+        assert.ok(css.includes('[data-platform="mobile"] {\n  --space-md: 3rem;'));
+        assert.equal(css.includes('@media (min-width: 64rem) {\n  [data-platform="mobile"]'), false);
       });
     });
   });

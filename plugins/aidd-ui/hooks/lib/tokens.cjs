@@ -7,7 +7,7 @@ const nodePath = require("node:path");
 const { list } = require("./markdown.cjs");
 const { placed, systemOf, TOKENED_KINDS } = require("./model.cjs");
 const { text, checkOf } = require("./project.cjs");
-const { FONT_WEIGHTS, RAW_CSS_EXTENSION, VAR_REFERENCE, render, customProperty, citedBy, dependents, loopOf, declarationsOf, layered, resolved } = require("./css.cjs");
+const { FONT_WEIGHTS, RAW_CSS_EXTENSION, VAR_REFERENCE, render, customProperty, citedBy, loopOf, declarationsOf, layered, resolved } = require("./css.cjs");
 
 const RESERVED_KEYS = ["$value", "$type", "$description", "$extensions", "$deprecated", "$extends", "$schema"];
 const ROOT_KEY = "$root"; // a stated limit: a group's own token is a named child here
@@ -334,8 +334,8 @@ function redefinitionProblems(tree, project, owner, file) {
 
 /** The first theme and the first platform system.md declares are the base, held by tokens.json;
  * every other one, and every breakpoint that changes a value, is a context of
- * tokens.resolver.json, whose files redefine base tokens only and never the same one: each token
- * has one owner, so no block hides another. */
+ * tokens.resolver.json, whose files redefine base tokens only. A token several modifiers redefine
+ * takes the value of the one later in `resolutionOrder`. */
 function resolverProblems(tree, project) {
   const file = resolverFileOf(project);
   const resolver = readJson(project, file);
@@ -349,8 +349,6 @@ function resolverProblems(tree, project) {
     ...found,
     ...kinds.flatMap(({ modifier, contexts }) => Object.entries(contexts).flatMap(([name, files]) => files.flatMap((each) => redefinitionProblems(tree, project, `${modifier} "${name}"`, each)))),
     ...breakpoints.contexts.flatMap(({ breakpoint, files }) => files.flatMap((context) => redefinitionProblems(tree, project, `breakpoint "${breakpoint}"`, context))),
-    ...ownerProblems(tree, project),
-    ...regionProblems(tree, project),
     ...contextLoopProblems(tree, project),
   ];
 }
@@ -441,39 +439,11 @@ function contextLoopProblems(tree, project) {
   });
 }
 
-/** The tokens a theme or platform block holds: those it redefines, `own`, and those it redeclares
- * because they depend on one of them. */
-function heldBy({ files }, declarations) {
-  const own = contextEntries(files);
-  return { own, held: new Set([...own, ...dependents(declarations, own)].map((entry) => entry.name)) };
-}
-
-/** A token a theme or platform block holds, whether redefined there or redeclared as depending on one
- * that is, cannot also be a breakpoint's: on a nested region that block would hide the breakpoint's
- * value. A breakpoint value citing such a token counts too: a nested region would inherit it stale. */
-function ownerProblems(tree, project) {
-  const breakpoints = breakpointTrees(project).map(({ breakpoint, files }) => ({ breakpoint, tokens: contextEntries(files) }));
-  const everyDeclaration = [...baseEntries(tree, project), ...breakpoints.flatMap(({ tokens }) => tokens)];
-  return [...themeTrees(project), ...platformTrees(project)].flatMap((region) => {
-    const { held } = heldBy(region, everyDeclaration);
-    return breakpoints.flatMap(({ breakpoint, tokens }) =>
-      tokens.filter((entry) => held.has(entry.name)).map((entry) => ({ file: entry.file, message: `${entry.name}: ${region.owner} and breakpoint "${breakpoint}" both set it, so a ${region.region} region would ignore the breakpoint` }))
-    );
-  });
-}
-
-/** A token a theme block sets cannot also be a platform's, redefined or redeclared as a dependent:
- * both blocks sit on one element, and the later one would hide the other's value. A dependent in
- * both is the same `var()` twice, which is fine. */
-function regionProblems(tree, project) {
-  const base = baseEntries(tree, project);
-  return themeTrees(project).flatMap((theme) =>
-    platformTrees(project).flatMap((platform) => {
-      const [mine, theirs] = [heldBy(theme, base), heldBy(platform, base)];
-      const clashes = [...theirs.own.filter((entry) => mine.held.has(entry.name)), ...mine.own.filter((entry) => theirs.held.has(entry.name))];
-      return clashes.filter((entry, index) => clashes.findIndex((each) => each.name === entry.name) === index).map((entry) => ({ file: entry.file, message: `${entry.name}: ${theme.owner} and ${platform.owner} both set it, so one block would hide the other` }));
-    })
-  );
+/** The modifiers of the Resolver in its `resolutionOrder`, the one that wins last. */
+function modifierOrder(project) {
+  const resolver = readJson(project, resolverFileOf(project)).value ?? {};
+  const steps = (resolver.resolutionOrder ?? []).map((step) => step?.$ref);
+  return [THEME_MODIFIER, PLATFORM_MODIFIER, BREAKPOINT_MODIFIER].filter((modifier) => steps.includes(orderRef(modifier))).sort((a, b) => steps.indexOf(orderRef(a)) - steps.indexOf(orderRef(b)));
 }
 
 /** The stylesheet of tokens that have no error, `{css, problems}`: `css` is null when a composite
@@ -488,6 +458,7 @@ function generate(project) {
     themes: themeTrees(project).map(({ name, files }) => ({ theme: name, tokens: contextEntries(files, typeFor) })),
     platforms: platformTrees(project).map(({ name, files }) => ({ platform: name, tokens: contextEntries(files, typeFor) })).filter(({ tokens }) => tokens.length), // a platform that changes no value needs no block
     breakpoints: breakpointTrees(project).map(({ media, files }) => ({ media, tokens: contextEntries(files, typeFor) })),
+    order: modifierOrder(project),
   });
 }
 

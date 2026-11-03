@@ -1,6 +1,6 @@
 // Token files of the code, in the shapes real projects hold, written for these tests alone: a
 // stylesheet with `:root`, a `[data-theme]` block and `@media` overrides, and a script of camelCase
-// literals. Their token sets are disjoint across themes, platforms and breakpoints, as T6 requires.
+// literals.
 const WEB_CSS = `/* Tokens of the web app. */
 :root {
   --color-ink: #1b1f23;

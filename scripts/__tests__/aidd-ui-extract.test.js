@@ -187,6 +187,17 @@ describe("aidd-ui extract", () => {
       assert.ok(fs.readFileSync(path.join(tmp, UI, "tokens.css"), "utf8").includes('[data-platform="mobile"] {'));
     });
 
+    it("leaves a design system that generates when the platform sets what a theme and a breakpoint of the web set too", () => {
+      put(tmp, "src/mobile/tokens.ts", MOBILE_TS.replace('colorInk: "#1b1f23"', 'colorInk: "#000000"').replace("spaceSm: 8,", "spaceSm: 8,\n  fontSizeTitle: 24,"));
+      extract();
+      assert.deepEqual(read("platforms/mobile.json").font.size.title.$value, { value: 24, unit: "px" });
+      assert.deepEqual(read("platforms/mobile.json").color.ink.$value.hex, "#000000");
+      assert.deepEqual(tokenProblems(), { generated: 0, found: [] });
+      const css = fs.readFileSync(path.join(tmp, UI, "tokens.css"), "utf8");
+      assert.ok(css.includes('[data-platform="mobile"] [data-theme="dark"], [data-platform="mobile"][data-theme="dark"] {\n  --color-ink: #000000;\n}'));
+      assert.ok(css.includes('@media (min-width: 48rem) {\n  [data-platform="mobile"] {\n    --font-size-title: 2rem;\n  }\n}'));
+    });
+
     it("lists an object nested deeper than one level, and a theme or media block of a platform that is not the first", () => {
       const files = {
         "src/web/tokens.css": WEB_CSS,
