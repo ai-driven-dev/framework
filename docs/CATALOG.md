@@ -42,6 +42,7 @@ Bootstrap, project init, context-artifact generation, diagrams, learning, and ex
 | Event | Runs |
 | --- | --- |
 | `SessionStart` | `hooks/update_memory.js` |
+| `PostToolUse` | `hooks/memory-hook.js` |
 
 <!--extras-aidd-context:end-->
 
