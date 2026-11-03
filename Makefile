@@ -15,6 +15,6 @@ doctor: ## Check the local toolchain
 check: ## Run the pre-commit checks
 	pnpm exec lefthook run pre-commit
 
-reload: ## Dev: reload all plugins into Claude, Codex, OpenCode, Copilot, and Cursor
+reload: ## Dev: reload all plugins into Claude, Codex, OpenCode, Kilo, Copilot, and Cursor via aidd setup --global
 	pnpm --dir cli build
 	scripts/dev-sync.sh
