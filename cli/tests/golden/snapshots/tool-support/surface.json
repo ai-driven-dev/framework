@@ -142,7 +142,7 @@
     "builds": {
       "flat": {
         "skills": "yes",
-        "agents": "no",
+        "agents": "yes",
         "mcp": "no",
         "hooks": "yes",
         "rules": "no",

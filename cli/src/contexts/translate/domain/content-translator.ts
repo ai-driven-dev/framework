@@ -343,9 +343,18 @@ export class PluginContentTranslator {
     pluginName: string,
     tool: AiTool<HasPlugins>
   ): InstallationFile | null {
-    if (!sectionPresent(tool, section)) return null;
     const sectionDir = `${section}/`;
     const fileName = file.relativePath.slice(sectionDir.length);
+    if (!sectionPresent(tool, section)) {
+      const artifact =
+        section === "agents" ? tool.buildContracts?.flat?.().artifacts.agents : undefined;
+      if (!artifact?.supported || !isProse(file.relativePath)) return null;
+      const content = tool.rewriteContent(file.content);
+      return this.makeFile(
+        artifact.path(pluginName, file.relativePath),
+        artifact.transform?.(content, pluginName, fileName) ?? content
+      );
+    }
     // Same rule as the native path: prose is rewritten, an artefact is carried. Rewriting every
     // flat file left a script intact only where a tool's own rewrite happened to spare it.
     const content = isProse(file.relativePath) ? tool.rewriteContent(file.content) : file.content;

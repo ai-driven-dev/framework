@@ -12,7 +12,7 @@ What each AI tool receives from the framework.
 | OpenCode | `.opencode/` | ❌ | ✅ | ✅ | ✅ | ❌ | Some events |
 | Kilo Code | `.kilo/` | ❌ | ✅ | ✅ | ✅ | ❌ | Some events |
 | Codex | `.codex/` | ✅ | ✅ | ✅ | ✅ | Marketplace only | ✅ |
-| Antigravity CLI | `.agents/` | ❌ | ✅ | ✅ | ❌ | ❌ | ✅ |
+| Antigravity CLI | `.agents/` | ❌ | ✅ | ✅ | ✅ | ❌ | ✅ |
 
 <!--support:end-->
 
