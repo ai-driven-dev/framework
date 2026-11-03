@@ -102,7 +102,7 @@ flowchart TB
 | --- | --- |
 | Skill | Host loads `SKILL.md` on invocation; work runs in the caller's context. |
 | Orchestrator | Owns routing; authorizes isolation or bounded fan-out. |
-| Agent | Isolates work and returns a result. Invokes declared canonical recipe skills; an approved generated-skill trial may read and execute only the designated skill. Never invokes orchestrators. |
+| Agent | Isolates work and returns a result. Invokes only declared canonical recipe skills; reads skill files only for an approved trial of the designated generated skill. Never invokes orchestrators. |
 | Recipe | May delegate a generated-skill trial with explicit user approval from the main context. An isolated recipe returns the proposal to its caller without spawning. |
 | Reconnaissance helper | Read-only; neither mutates nor spawns. |
 | Write path | At most two delegation layers; no cycles. |
