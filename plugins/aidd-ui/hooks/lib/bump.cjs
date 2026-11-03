@@ -1,5 +1,6 @@
 // Applies a change to the versions it reaches: each element or screen `impact` reaches is raised by
-// one and set `proposed` with a History row, once per task. A deprecated one is left unless the
+// one and set `proposed` with a History row, once per task; a later breaking change to one already
+// raised for the task turns that row to breaking instead. A deprecated one is left unless the
 // change breaks a token it cites, directly or through what it uses. Each review naming a raised
 // screen gets a `pending` verdict per state at its new version.
 const fs = require("node:fs");
@@ -19,6 +20,7 @@ const HISTORY_HEADING = "## History";
 const HISTORY_SECTION = "History";
 const VERDICTS_HEADING = "## Verdicts";
 const DEPRECATED = "deprecated";
+const BREAKING = "yes";
 const ALREADY_RAISED = "already raised for this task";
 const CARRIAGE_RETURN = "\r";
 const CELL_BREAKERS = /[|\r\n]/;
@@ -34,20 +36,24 @@ function setFront(lines, key, value, end, file) {
   lines[at] = `${key}: ${value}${end}`;
 }
 
-/** `lines` with `row` added, ending as `end` says, after the last row of the first table under `heading`. */
-function addRow(lines, heading, row, end, file) {
+/** The index of the last row of the first table under `heading` in `lines`. */
+function lastRowOf(lines, heading, file) {
   const section = lines.findIndex((line) => line.trim() === heading);
   const start = section < 0 ? -1 : lines.findIndex((line, at) => at > section && line.trim().startsWith(ROW_START));
   if (start < 0) throw refuse(`${file} has no table under "${heading}"`);
   let last = start;
   while (lines[last + 1]?.trim().startsWith(ROW_START)) last += 1;
-  lines.splice(last + 1, 0, `${row}${end}`);
+  return last;
 }
+
+/** `lines` with `row` added, ending as `end` says, after the last row of the first table under `heading`. */
+const addRow = (lines, heading, row, end, file) => lines.splice(lastRowOf(lines, heading, file) + 1, 0, `${row}${end}`);
 
 const rowOf = (...cells) => `${ROW_START}${cells.map((cell) => (cell === "" ? " " : ` ${cell} `)).join(ROW_START)}${ROW_START}`;
 
 /** Raises the versions `refs` reach, as `change` of `task`; returns the files changed and `left`,
- * the elements reached and not raised with why: deprecated, or already raised for this task. A
+ * the elements reached and not raised with why: deprecated, or already raised for this task and
+ * left as its row says. A
  * refusal is a `Refusal`, thrown before any file is written. */
 function bump(root, { task, change, breaking, refs }) {
   const folder = path.posix.normalize(task).replace(TRAILING_SEPARATORS, "");
@@ -78,14 +84,21 @@ function bump(root, { task, change, breaking, refs }) {
     const held = fm(record).status === DEPRECATED;
     const history = table(record.sections[HISTORY_SECTION]);
     if (held && !followed.has(id)) left.push({ id, why: DEPRECATED });
-    else if (history.at(-1)?.Task === folder) left.push({ id, why: ALREADY_RAISED });
+    else if (history.at(-1)?.Task === folder) {
+      const row = history.at(-1);
+      if (!breaking || row.Breaking === BREAKING) left.push({ id, why: ALREADY_RAISED });
+      else {
+        const { lines, end } = editOf(record);
+        lines[lastRowOf(lines, HISTORY_HEADING, record.file)] = `${rowOf(row.Version, `${row.Change}; ${change.trim()}`, BREAKING, folder)}${end}`;
+      }
+    }
     else {
       if (!INTEGER_VERSION.test(fm(record).version ?? "")) throw refuse(`${record.file}: version "${fm(record).version}" is no integer`);
       const version = Number(fm(record).version) + 1;
       const { lines, end } = editOf(record);
       setFront(lines, "version", version, end, record.file);
       if (!held) setFront(lines, "status", "proposed", end, record.file);
-      addRow(lines, HISTORY_HEADING, rowOf(version, change.trim(), breaking ? "yes" : "no", folder), end, record.file);
+      addRow(lines, HISTORY_HEADING, rowOf(version, change.trim(), breaking ? BREAKING : "no", folder), end, record.file);
       raised.set(id, version);
     }
   }

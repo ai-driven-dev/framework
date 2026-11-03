@@ -9,6 +9,8 @@
 | `--task` | the task folder, `aidd_docs/tasks/…` |
 | refs | the tokens or ids of the agreed impact |
 
+Within one task an element is raised once: a later `--breaking` change turns its row to breaking, with the change text added.
+
 | Topic | Rule |
 | --- | --- |
 | `validated` | set by the user only, after looking at the render |

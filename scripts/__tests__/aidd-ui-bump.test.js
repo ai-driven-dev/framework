@@ -70,6 +70,38 @@ describe("aidd-ui bump", () => {
       assert.equal(read(`${UI}/reviews/first-pass.md`).split("| home | default | 2 | pending | |").length, 2);
     });
 
+    it("turns the row of an element already raised for the task to breaking when a later change breaks, appending the change", () => {
+      change("color.action.default");
+      const { report } = bump("--task", TASK, "--change", "renamed", "--breaking", "color.action.default");
+      assert.deepEqual(report.changed, ["components/button", "components/dialog", "components/old-button", "components/search-field", "screens/home"].map((name) => `${UI}/${name}.md`));
+      assert.deepEqual(report.left, []);
+      const record = read(`${UI}/components/button.md`);
+      assert.ok(record.includes(`| 1 | created | no | aidd_docs/tasks/ds-init |\n| 2 | new action colour; renamed | yes | ${TASK} |\n`));
+      assert.ok(record.includes("\nversion: 2\n"));
+      assert.equal(record.split(`| ${TASK} |`).length, 2);
+      assert.equal(read(`${UI}/reviews/first-pass.md`).split("| home | default | 2 | pending | |").length, 2);
+      assert.equal(validate().code, 0);
+    });
+
+    it("leaves an element already raised as breaking, and one a non-breaking change reaches again, as they were", () => {
+      bump("--task", TASK, "--change", "renamed", "--breaking", "color.action.default");
+      const before = read(`${UI}/components/button.md`);
+      const again = bump("--task", TASK, "--change", "renamed again", "--breaking", "color.action.default");
+      const lighter = change("color.action.default");
+      assert.deepEqual(again.report.changed, []);
+      assert.deepEqual(lighter.report.changed, []);
+      assert.ok(again.report.left.some(({ id, why }) => id === "button" && why === "already raised for this task"));
+      assert.equal(read(`${UI}/components/button.md`), before);
+    });
+
+    it("keeps the line ends of a row it turns to breaking", () => {
+      change("color.action.default");
+      fs.writeFileSync(path.join(tmp, `${UI}/components/button.md`), read(`${UI}/components/button.md`).replace(/\n/g, "\r\n"));
+      bump("--task", TASK, "--change", "renamed", "--breaking", "color.action.default");
+      assert.equal(/[^\r]\n/.test(read(`${UI}/components/button.md`)), false);
+      assert.ok(read(`${UI}/components/button.md`).includes(`| 2 | new action colour; renamed | yes | ${TASK} |\r\n`));
+    });
+
     it("raises it again for another task", () => {
       change("color.action.default");
       bump("--task", "aidd_docs/tasks/other", "--change", "again", "color.action.default");
