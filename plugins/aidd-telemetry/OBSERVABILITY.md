@@ -40,7 +40,16 @@ The examples are fictional. `C` is Claude Code, `X` is Codex, `O1` is OpenCode 1
 
 Local OTLP collection and sync require private POSIX files and are not supported on Windows.
 
-With the local OTLP capture already running, start one process per configured provider:
+Start the collector, then configure the tools in another shell:
+
+```sh
+aidd telemetry otel collect
+# In another shell:
+aidd telemetry otel init --config=claude --endpoint=dev
+aidd telemetry otel init --config=codex --endpoint=dev
+```
+
+Restart the tools to load their settings. With local telemetry measurement enabled, start one sync process per provider:
 
 ```sh
 # Set the relevant connector token in the environment without putting it in command arguments.
