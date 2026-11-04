@@ -1,28 +1,32 @@
 # Provider telemetry field mapping
 
+Use this page to see what each provider can emit, what the local collector keeps, and what the development sync actually sends. For the three modes, opt-in and identity rules, start with the [README](README.md#choose-a-mode).
+
 This is an inventory of source fields, not a promise that the AIDD report ingests them. Claude Code and Codex fields below were observed in local OTLP captures; OpenCode 2 fields were observed in its session event stream. OpenCode 1 fields are from its published session schema, not a verified OTLP capture. Presence depends on version, configuration, event and provider. A missing value is unknown, not zero.
 
 The examples are fictional. `C` is Claude Code, `X` is Codex, `O1` is OpenCode 1 and `O2` is OpenCode 2. OTLP attribute names below are keys in the record, span or resource's `attributes` array, not necessarily JSON object properties. For O1, `info` denotes the message in `message.updated`, `part` the part in `message.part.updated`, and session information comes from `session.created` or `session.updated`; these are session-event schemas, not OTLP attributes.
 
-| Common element | Data | Example | Source properties |
-| --- | --- | --- | --- |
-| Time | Event or operation time | `2026-11-04T10:20:00+08:00` | **C/X:** `event.timestamp`, `timeUnixNano`, `observedTimeUnixNano`; spans have `startTimeUnixNano`, `endTimeUnixNano`. **O1:** `info.time.created`, `part.time.start` / `end` when provided. **O2:** `created`, `data.started` on step start. |
-| Event type | Kind of event | `tool_result` | **C:** `event.name`, log `body.stringValue`, span or metric name. **X:** `event.name`; `eventName` may identify a source location instead. **O1/O2:** event `type`. |
-| Application version | Client version | `2.2.5` | **C:** resource `service.version`. **X:** `app.version`, resource `service.version`. **O1:** session `info.version`. **O2:** `data.version` on `session.created`; OTLP resource `service.version`. |
-| Session | Tool-specific session ID | `session-abc` | **C:** `session.id`. **X:** `conversation.id`; trace `thread.id`. **O1:** `info.sessionID`, `part.sessionID`. **O2:** `data.sessionID`; session-event `durable.aggregateID`. |
-| Provider | Provider identifier | `openai` | **C:** `anthropic.provider`, `gen_ai.provider.name`, `gen_ai.system`. **X:** `provider_name`, trace `provider`. **O1:** assistant `info.providerID`, user `info.model.providerID`. **O2:** `data.model.providerID` on step start. Provider labels are not necessarily equivalent across tools. |
-| Model | Model identifier | `model-xyz` | **C:** `model`, `gen_ai.request.model`. **X:** `model`. **O1:** assistant `info.modelID`, user `info.model.modelID`. **O2:** `data.model.id` on step start. |
-| User input | User-role text when captured | `Fix the test` | **C:** `prompt`, `prompt_text`, span `user_prompt`. **X:** `prompt`. **O1:** text part `part.text`, joined to a user-role message via `messageID`. **O2:** `data.item.payload.text` in `session.inbox.enqueued` with `data.item.type=user`. A `user` role alone does not prove a human authored it. |
-| Assistant response | Response text | `The test is fixed.` | **C/X:** `response`. **O1:** text part `part.text`, joined to an assistant-role message. **O2:** `data.text` on `session.text.ended`; `data.delta` on `session.text.delta`. |
-| Input tokens | Input count | `1,200` | **C:** `input_tokens`; metric `claude_code.token.usage` with `type=input`. **X:** `input_token_count`, `codex.turn.token_usage.input_tokens`, `gen_ai.usage.input_tokens`; metric `codex.turn.token_usage` with `token_type=input`. Trace `codex.turn.token_usage.non_cached_input_tokens` is a separate count. **O1:** assistant `info.tokens.input` or step-finish `part.tokens.input`. **O2:** `data.tokens.input`. |
-| Output tokens | Output count | `350` | **C:** `output_tokens`; metric `type=output`. **X:** `output_token_count`, `codex.turn.token_usage.output_tokens`, `gen_ai.usage.output_tokens`; metric `token_type=output`. **O1:** `info.tokens.output` or `part.tokens.output`. **O2:** `data.tokens.output`. |
-| Cache read | Tokens read from cache | `800` | **C:** `cache_read_tokens`; metric `type=cacheRead`. **X:** `cached_token_count`, `codex.turn.token_usage.cached_input_tokens`, `gen_ai.usage.cache_read.input_tokens`; metric `token_type=cached_input`. **O1:** `info.tokens.cache.read` or `part.tokens.cache.read`. **O2:** `data.tokens.cache.read`. |
-| Cache write | Tokens written to cache | `200` | **C:** `cache_creation_tokens`, `cache_creation_5m_tokens`, `cache_creation_1h_tokens`; metric `type=cacheCreation`. **X:** `cache_write_token_count`, `codex.turn.token_usage.cache_write_input_tokens`, `gen_ai.usage.cache_write.input_tokens`; metric `token_type=cache_write_input`. **O1:** `info.tokens.cache.write` or `part.tokens.cache.write`. **O2:** `data.tokens.cache.write`. |
-| Tool call ID | Tool-specific call ID | `call-abc` | **C:** `tool_use_id`, `gen_ai.tool.call.id`. **X:** `call_id`; trace `runtime_tool_call_id` is a separate identifier. **O1:** tool `part.callID`. **O2:** `data.id` on tool events. |
-| Tool name | Invoked tool | `read_file` | **C:** `tool_name`, `gen_ai.tool.name`. **X:** `tool_name`; metric label `tool`. **O1:** tool `part.tool`. **O2:** `data.name` on `session.tool.input.started`. |
-| Tool input | Tool arguments | `{"path":"src/app.ts"}` | **C:** `tool_parameters`, `tool_input`. **X:** `arguments`. **O1:** tool `part.state.input`. **O2:** `data.input` on `session.tool.called`; serialized `data.text` on `session.tool.input.ended`. |
-| Tool output | Returned content | `File contents…` | **C:** `output` on span event `tool.output`. **X:** `output` on `codex.tool_result`. **O1:** completed tool `part.state.output`. **O2:** `data.content[].text` on `session.tool.success`. |
-| Tool outcome | Success or failure | `success` | **C/X:** `success` on tool result. **O1:** `part.state.status` (`pending`, `running`, `completed`, `error`); error `part.state.error`. **O2:** event `session.tool.success` or `session.tool.failed`; failure `data.error.type`, `data.error.message`. |
+| Common element | Example | Claude Code | Codex | OpenCode (v1 / v2) |
+| --- | --- | --- | --- | --- |
+| Time | `2026-11-04T10:20:00+08:00` | `event.timestamp`, `timeUnixNano`, `observedTimeUnixNano`; span `startTimeUnixNano` / `endTimeUnixNano` | Same OTLP times | **v1:** `info.time.created`, `part.time.start` / `end`; **v2:** `created`, `data.started` on step start |
+| Event type | `tool_result` | `event.name`, log body, span or metric name | `event.name`; `eventName` may instead identify a source location | **v1/v2:** event `type` |
+| Application version | `2.2.5` | resource `service.version` | `app.version`, resource `service.version` | **v1:** session `info.version`; **v2:** `data.version` on `session.created` or resource `service.version` |
+| Session | `session-abc` | `session.id` | `conversation.id`; trace `thread.id` | **v1:** `info.sessionID`, `part.sessionID`; **v2:** `data.sessionID`, event `durable.aggregateID` |
+| Provider | `openai` | `anthropic.provider`, `gen_ai.provider.name`, `gen_ai.system` | `provider_name`, trace `provider` | **v1:** assistant `info.providerID`, user `info.model.providerID`; **v2:** `data.model.providerID` on step start |
+| Model | `model-xyz` | `model`, `gen_ai.request.model` | `model` | **v1:** assistant `info.modelID`, user `info.model.modelID`; **v2:** `data.model.id` on step start |
+| User input | `Fix the test` | `prompt`, `prompt_text`, span `user_prompt` | `prompt` | **v1:** `part.text` joined by `messageID` to a user message; **v2:** `data.item.payload.text` on `session.inbox.enqueued` with `data.item.type=user` |
+| Assistant response | `The test is fixed.` | `response` | `response` | **v1:** `part.text` joined by `messageID` to an assistant message; **v2:** `data.text` on `session.text.ended`, `data.delta` on `session.text.delta` |
+| Input tokens | `1,200` | `input_tokens`; `claude_code.token.usage` metric, `type=input` | `input_token_count`, `codex.turn.token_usage.input_tokens`, `gen_ai.usage.input_tokens`; metric `token_type=input` | **v1:** `info.tokens.input` or `part.tokens.input`; **v2:** `data.tokens.input` |
+| Output tokens | `350` | `output_tokens`; metric `type=output` | `output_token_count`, `codex.turn.token_usage.output_tokens`, `gen_ai.usage.output_tokens`; metric `token_type=output` | **v1:** `info.tokens.output` or `part.tokens.output`; **v2:** `data.tokens.output` |
+| Cache read | `800` | `cache_read_tokens`; metric `type=cacheRead` | `cached_token_count`, `codex.turn.token_usage.cached_input_tokens`, `gen_ai.usage.cache_read.input_tokens`; metric `token_type=cached_input` | **v1:** `info.tokens.cache.read` or `part.tokens.cache.read`; **v2:** `data.tokens.cache.read` |
+| Cache write | `200` | `cache_creation_tokens`, `cache_creation_5m_tokens`, `cache_creation_1h_tokens`; metric `type=cacheCreation` | `cache_write_token_count`, `codex.turn.token_usage.cache_write_input_tokens`, `gen_ai.usage.cache_write.input_tokens`; metric `token_type=cache_write_input` | **v1:** `info.tokens.cache.write` or `part.tokens.cache.write`; **v2:** `data.tokens.cache.write` |
+| Tool call ID | `call-abc` | `tool_use_id`, `gen_ai.tool.call.id` | `call_id`; trace `runtime_tool_call_id` is distinct | **v1:** `part.callID`; **v2:** `data.id` |
+| Tool name | `read_file` | `tool_name`, `gen_ai.tool.name` | `tool_name`; metric `tool` | **v1:** `part.tool`; **v2:** `data.name` on `session.tool.input.started` |
+| Tool input | `{"path":"src/app.ts"}` | `tool_parameters`, `tool_input` | `arguments` | **v1:** `part.state.input`; **v2:** `data.input` on `session.tool.called`, serialized `data.text` on `session.tool.input.ended` |
+| Tool output | `File contents…` | `output` on span event `tool.output` | `output` on `codex.tool_result` | **v1:** completed `part.state.output`; **v2:** `data.content[].text` on `session.tool.success` |
+| Tool outcome | `success` | `success` on tool result | `success` on tool result | **v1:** `part.state.status` and `part.state.error`; **v2:** `session.tool.success` or `session.tool.failed`, with `data.error.type` / `data.error.message` |
+
+Provider labels are not necessarily equivalent across tools. A user role does not prove a human authored the input. Some v1 fields require correlating a part with its message; v2 text and model fields depend on the event type. Codex trace `codex.turn.token_usage.non_cached_input_tokens` is a separate count.
 
 ## Interpretation and coverage
 
@@ -36,9 +40,53 @@ The examples are fictional. `C` is Claude Code, `X` is Codex, `O1` is OpenCode 1
 - OpenCode 2's rich session events are SSE, not the observed OTLP logs. The O1 schema above does not prove its fields are emitted over OTLP. The schema event's `durable.version` is not an application major version.
 - Prompts, responses, tool arguments and results can contain secrets. Capture and retain them only with the appropriate consent and local access controls.
 
+## What sync sends
+
+The collector keeps the provider's raw OTLP JSON locally. The separate dev sync selects only consented sessions and sends:
+
+- **Claude Code:** `tool_result` logs and selected metrics: token usage, active time, edit decisions, lines changed, sessions, commits, pull requests and the provider's `cost.usage` metric when present. The dashboard does not calculate a cost.
+- **Codex:** `conversation_starts`, `tool_result` and `response.completed` events, including available token counts.
+- **Both:** available event time, session, model, application version, provider email/account/organization IDs, tool name, call ID, outcome and duration. Confirmed framework feature bindings additionally carry the declared branch and ticket; an invalidation can be sent when a binding becomes ambiguous.
+
+The sync excludes fields for prompt and response text, tool arguments and output, raw API bodies, metric exemplars and traces. It filters attribute keys, not secrets or free text inside allowed values. OpenCode is not forwarded by this sync. These are forwarding rules, not guarantees about what the raw collector receives.
+
+### Example: a Claude metric sent locally
+
+The structure below was produced by `selectTransfers` from one real local Claude capture. The timestamps, metric value, session, organization, email, account, model and query source have been replaced with fictional values; attribute presence varies by event. It is the filtered request body, not the raw capture or its authorization header.
+
+```json
+{
+  "resourceMetrics": [{
+    "scopeMetrics": [{
+      "metrics": [{
+        "name": "claude_code.token.usage",
+        "sum": {
+          "aggregationTemporality": 1,
+          "isMonotonic": true,
+          "dataPoints": [{
+            "startTimeUnixNano": "1767225600000000000",
+            "timeUnixNano": "1767225660000000000",
+            "asDouble": 123,
+            "attributes": [
+              { "key": "session.id", "value": { "stringValue": "session-example" } },
+              { "key": "organization.id", "value": { "stringValue": "organization-example" } },
+              { "key": "user.email", "value": { "stringValue": "person@example.test" } },
+              { "key": "user.account_id", "value": { "stringValue": "account-example" } },
+              { "key": "model", "value": { "stringValue": "model-example" } },
+              { "key": "query_source", "value": { "stringValue": "example" } },
+              { "key": "type", "value": { "stringValue": "input" } }
+            ]
+          }]
+        }
+      }]
+    }]
+  }]
+}
+```
+
 ## Local Gouvernail sync
 
-Local OTLP collection and sync require private POSIX files and are not supported on Windows.
+OTLP initialization, verification, local collection and sync require private POSIX files and are not supported on Windows.
 
 Start the collector, then configure the tools in another shell:
 
