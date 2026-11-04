@@ -20,12 +20,6 @@ role: {{accessible role}}
 
 {{how the keyboard drives it}}
 
-## History
-
-| Version | Change | Breaking | Task |
-| --- | --- | --- | --- |
-| 1 | created | no | {{task folder}} |
-
 <!--
 - Replace every `{{...}}` and delete every comment.
 - An axis is `axis=value`, such as `variants: [size=sm, size=md, tone=danger]`; a bare item is a plain variant.

@@ -12,9 +12,9 @@ Run only the steps of the case, in this order:
 
 | Case | Steps |
 | --- | --- |
-| from scratch | 2, 4, 5, 6 |
-| from the code | 1, 2, 3, 5, 6 |
-| new elements | 4 if tokens are new, 5, 6 |
+| from scratch | 2, 4, 5, 6, 8 |
+| from the code | 1, 2, 3, 5, 6, 8 |
+| new elements | 4 if tokens are new, 5, 6, 8 |
 | change | 7, then 4 if a token changes, then 5 for the renders whose markup changes, 6 |
 
 1. Read the code per [extraction](../references/extraction.md).
@@ -24,6 +24,7 @@ Run only the steps of the case, in this order:
 5. For each element, write its record and its render together, per [elements](../references/elements.md), from the [component](../assets/component.md), [asset](../assets/asset.md) and [render](../assets/render.html) templates.
 6. Run `node <engine> tokens` until it exits 0; it writes `tokens.css` and the resolver.
 7. Run `node <engine> bump --task <task folder> --change "<one line>" [--breaking] <agreed refs>`, before touching the tokens or records, `--breaking` per [versions](../references/versions.md).
+8. Run `node <engine> bump --task <task folder> --created <id>…` with the id of each record written in this run, `system` included, never `brand`: it writes their first row in `aidd_docs/ui/history.md`, which you never edit.
 
 After each write, fix what the hook reports, or what `node <engine> validate` reports without a hook, except what [engine](../references/engine.md) says a later step owes.
 

@@ -1,10 +1,11 @@
 // One read of a project's design system, shared by every check.
 const fs = require("node:fs");
 const path = require("node:path");
-const { parseRecord } = require("./markdown.cjs");
+const { parseRecord, table } = require("./markdown.cjs");
 
 const UI_DIR = "aidd_docs/ui";
 const TOKENS_FILE = "tokens.json";
+const HISTORY_FILE = `${UI_DIR}/history.md`; // the engine's: one row per version of each record, no record itself
 const SHOWCASE_DIR = "showcase";
 const RECORD_EXTENSION = ".md";
 const RENDER_EXTENSION = ".html";
@@ -93,9 +94,10 @@ function load(root) {
   const project = { root, texts: new Map(), tokensFile: `${UI_DIR}/${TOKENS_FILE}` };
   const unlisted = (dir) => project.texts.set(relative(root, dir), null);
   const files = walk(uiDir, (dir) => dir === showcase, unlisted).map((file) => relative(root, file));
-  project.records = files.filter((file) => file.endsWith(RECORD_EXTENSION)).flatMap((file) => readRecord(project, file));
+  project.records = files.filter((file) => file.endsWith(RECORD_EXTENSION) && file !== HISTORY_FILE).flatMap((file) => readRecord(project, file));
+  project.history = files.includes(HISTORY_FILE) ? table({ lines: (text(project, HISTORY_FILE) ?? "").split("\n") }) : [];
   project.renders = files.filter((file) => file.endsWith(RENDER_EXTENSION));
   return project;
 }
 
-module.exports = { load, walk, text, clean, unreadable, relative, isUnder, checkOf, UI_DIR, RENDER_EXTENSION, ERROR, WARNING };
+module.exports = { load, walk, text, clean, unreadable, relative, isUnder, checkOf, UI_DIR, HISTORY_FILE, RENDER_EXTENSION, ERROR, WARNING };

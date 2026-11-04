@@ -4,7 +4,7 @@ const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
 const { describe, it, beforeEach, afterEach, mock } = require("node:test");
-const { UI, writeProject, edit, editTokens, put, record, history, git } = require("../fixtures/aidd-ui/project.js");
+const { UI, HISTORY, addHistory, writeProject, edit, editTokens, put, record, git } = require("../fixtures/aidd-ui/project.js");
 
 // Each rule has one mutation of the valid project, and the test asserts the whole problem
 // list: dropping the rule turns its own test red and leaves every other one green.
@@ -29,7 +29,7 @@ const BUTTON_RENDER = `${UI}/components/button.html`;
 const HOME_RENDER = `${UI}/screens/home.html`;
 const BUTTON_USAGE = "Any action a person starts; never for navigation.";
 const WIDENED = "Any action a person starts on purpose; never for navigation.";
-const EDITED = (version) => `${BUTTON}: edited since its committed version ${version}, raise its version with a History row`;
+const EDITED = (version) => `${BUTTON}: edited since its committed version ${version}, raise its version with a history row`;
 
 let tmp;
 
@@ -118,12 +118,12 @@ describe("aidd-ui records and history", () => {
     });
 
     it("names a record in a folder that only an object's prototype holds", () => {
-      put(tmp, `${UI}/constructor/extra.md`, record(["id: extra", "kind: atom", "status: proposed", "version: 1"], history(["1", "created", "no", "aidd_docs/tasks/ds-init"])));
+      put(tmp, `${UI}/constructor/extra.md`, record(["id: extra", "kind: atom", "status: proposed", "version: 1"]));
       assert.deepEqual(problems(), [`${UI}/constructor/extra.md: kind "atom" does not belong in constructor/`]);
     });
 
     it("names a kind outside its folder", () => {
-      put(tmp, `${UI}/screens/extra.md`, record(["id: extra", "kind: atom", "status: proposed", "version: 1"], history(["1", "created", "no", "aidd_docs/tasks/ds-init"])));
+      put(tmp, `${UI}/screens/extra.md`, record(["id: extra", "kind: atom", "status: proposed", "version: 1"]));
       assert.deepEqual(problems(), [`${UI}/screens/extra.md: kind "atom" does not belong in screens/`]);
     });
   });
@@ -131,7 +131,7 @@ describe("aidd-ui records and history", () => {
   describe("R3 required keys and values", () => {
     const missing = [
       [SYSTEM, "locales: [fr, ar]\n", "locales"],
-      [BRAND, "version: 1\n", "version"],
+      [BUTTON, "version: 1\n", "version"],
       [BUTTON, "role: button\n", "role"],
       [HOME, "route: /\n", "route"],
       [JOURNEY, "persona: a first-time analyst\n", "persona"],
@@ -169,7 +169,8 @@ describe("aidd-ui records and history", () => {
 
     it("names an id two records hold", () => {
       const screen = ["id: brand", "kind: screen", "status: proposed", "version: 1", "uses: []", "tokens: []", "states: [default]", "breakpoints: [mobile]", "route: /brand"];
-      put(tmp, `${UI}/screens/brand.md`, record(screen, history(["1", "created", "no", "aidd_docs/tasks/ds-init"])));
+      put(tmp, `${UI}/screens/brand.md`, record(screen));
+      addHistory(tmp, ["brand", "1", "created", "no", "aidd_docs/tasks/ds-init"]);
       assert.deepEqual(problems(), [`${UI}/screens/brand.md: id "brand" already belongs to ${BRAND}`]);
     });
   });
@@ -183,8 +184,8 @@ describe("aidd-ui records and history", () => {
     }
 
     it("names a system version that is not semver", () => {
-      change(SYSTEM, "version: 2.0.0", "version: 1.0");
-      assert.deepEqual(problems(), [`${SYSTEM}: version "1.0" must be semver, such as 2.0.0`]);
+      change(HISTORY, "| system | 2.0.0 |", "| system | 1.0 |");
+      assert.deepEqual(problems(), [`${HISTORY}: version "1.0" of system must be semver, such as 2.0.0`]);
     });
   });
 
@@ -220,7 +221,7 @@ describe("aidd-ui records and history", () => {
 
     it("accepts a component without focus and without a keyboard section", () => {
       change(BUTTON, "states: [default, hover, focus, disabled]", "states: [default, hover, disabled]");
-      change(BUTTON, "## Keyboard\n\nTab focuses it, Enter or Space activates it.\n\n", "");
+      change(BUTTON, "\n\n## Keyboard\n\nTab focuses it, Enter or Space activates it.", "");
       assert.deepEqual(problems(), []);
     });
 
@@ -235,7 +236,7 @@ describe("aidd-ui records and history", () => {
     });
 
     it("names a component with focus and without a keyboard section", () => {
-      change(DIALOG, "## Keyboard\n\nEscape closes it; focus stays inside while it is open.\n\n", "");
+      change(DIALOG, "\n\n## Keyboard\n\nEscape closes it; focus stays inside while it is open.", "");
       assert.deepEqual(problems(), [`${DIALOG}: state "focus" needs a "## Keyboard" section`]);
     });
   });
@@ -243,7 +244,7 @@ describe("aidd-ui records and history", () => {
   describe("R8 implementation", () => {
     it("accepts a link behind the design, as a feature leaves it until it follows", () => {
       change(BUTTON, "version: 1", "version: 2");
-      change(BUTTON, "| 1 | created | no | aidd_docs/tasks/ds-init |", "| 1 | created | no | aidd_docs/tasks/ds-init |\n| 2 | larger | no | aidd_docs/tasks/tweak |");
+      addHistory(tmp, ["button", "2", "larger", "no", "aidd_docs/tasks/tweak"]);
       assert.deepEqual(problems(), []);
     });
 
@@ -301,11 +302,9 @@ describe("aidd-ui records and history", () => {
       put(
         tmp,
         `${UI}/assets/icon-old.md`,
-        record(
-          ["id: icon-old", "kind: asset", "status: deprecated", "version: 2", "type: icon", "file: icon-search.svg", "alt: Search", "replaced-by: icon-search"],
-          history(["1", "created", "no", "aidd_docs/tasks/ds-init"], ["2", "deprecated for icon-search", "yes", "aidd_docs/tasks/retire-old-button"])
-        )
+        record(["id: icon-old", "kind: asset", "status: deprecated", "version: 2", "type: icon", "file: icon-search.svg", "alt: Search", "replaced-by: icon-search"])
       );
+      addHistory(tmp, ["icon-old", "1", "created", "no", "aidd_docs/tasks/ds-init"], ["icon-old", "2", "deprecated for icon-search", "yes", "aidd_docs/tasks/retire-old-button"]);
       change(BUTTON, "uses: []", "uses: [icon-old]");
       assert.deepEqual(problems(), [`${BUTTON}: uses "icon-old", which is deprecated`]);
     });
@@ -356,18 +355,11 @@ describe("aidd-ui records and history", () => {
     });
   });
 
-  describe("R16 system, brand and review statuses", () => {
-    const cases = [
-      [SYSTEM, "status: validated", "deprecated"],
-      [BRAND, "status: validated", "deprecated"],
-      [REVIEW, "status: proposed", "deprecated"],
-    ];
-    for (const [file, from, status] of cases) {
-      it(`names ${path.basename(file)} with status ${status}`, () => {
-        change(file, from, `status: ${status}`);
-        assert.deepEqual(problems(), [`${file}: status "${status}" is for elements: system, brand and reviews are proposed or validated`]);
-      });
-    }
+  describe("R16 review statuses", () => {
+    it("names a review with status deprecated", () => {
+      change(REVIEW, "status: proposed", "status: deprecated");
+      assert.deepEqual(problems(), [`${REVIEW}: status "deprecated" is for elements: reviews are proposed or validated`]);
+    });
   });
 
   describe("R17 usage", () => {
@@ -378,16 +370,25 @@ describe("aidd-ui records and history", () => {
   });
 
   describe("H1 history present", () => {
-    it("names a versioned record without a history table", () => {
-      change(JOURNEY, "## History", "## Changes");
-      assert.deepEqual(problems(), [`${JOURNEY}: no "## History" table`]);
+    it("names a versioned record without a row in history.md", () => {
+      change(HISTORY, "| onboarding | 1 | created | no | aidd_docs/tasks/ds-init |\n", "");
+      assert.deepEqual(problems(), [`${JOURNEY}: no row in history.md`]);
+    });
+
+    it("names the system without a publication row", () => {
+      change(HISTORY, "| system | 1.0.0 | first system | no | aidd_docs/tasks/ds-init |\n| system | 2.0.0 | old-button retired | yes | aidd_docs/tasks/retire-old-button |\n", "");
+      assert.deepEqual(problems(), [`${SYSTEM}: no row in history.md`]);
     });
   });
 
   describe("H2 one change per version", () => {
-    it("names two rows claiming one version, as a merge of two branches leaves", () => {
-      change(OLD, "| 2 | deprecated for button |", "| 2 | larger label | no | aidd_docs/tasks/ds-init |\n| 2 | deprecated for button |");
-      assert.deepEqual(problems(), [`${OLD}: two changes claim version 2, renumber one`]);
+    it("names two rows claiming one version of an element, as a merge of two branches leaves", () => {
+      change(HISTORY, "| old-button | 2 | deprecated for button |", "| old-button | 2 | larger label | no | aidd_docs/tasks/ds-init |\n| old-button | 2 | deprecated for button |");
+      assert.deepEqual(problems(), [`${HISTORY}: two changes claim version 2 of old-button, renumber one`]);
+    });
+
+    it("accepts two elements at one version", () => {
+      assert.deepEqual(problems(), []);
     });
   });
 
@@ -399,75 +400,74 @@ describe("aidd-ui records and history", () => {
 
     it("names a gap in the history", () => {
       change(BUTTON, "version: 1", "version: 3");
-      change(BUTTON, "| 1 | created | no | aidd_docs/tasks/ds-init |", "| 1 | created | no | aidd_docs/tasks/ds-init |\n| 3 | larger | no | aidd_docs/tasks/ds-init |");
+      addHistory(tmp, ["button", "3", "larger", "no", "aidd_docs/tasks/ds-init"]);
       assert.deepEqual(problems(), [`${BUTTON}: history jumps from 1 to 3`]);
     });
   });
 
   describe("H4 breaking", () => {
     it("names a breaking value that is neither yes nor no", () => {
-      change(JOURNEY, "| 1 | created | no |", "| 1 | created | maybe |");
-      assert.deepEqual(problems(), [`${JOURNEY}: breaking "maybe" in version 1 must be yes or no`]);
+      change(HISTORY, "| onboarding | 1 | created | no |", "| onboarding | 1 | created | maybe |");
+      assert.deepEqual(problems(), [`${HISTORY}: breaking "maybe" in version 1 of onboarding must be yes or no`]);
     });
   });
 
   describe("H5 system version follows its publications", () => {
-    const SECOND = "| 2.0.0 | old-button retired | yes | aidd_docs/tasks/retire-old-button |";
+    const FIRST = "| system | 1.0.0 | first system | no | aidd_docs/tasks/ds-init |";
+    const SECOND = "| system | 2.0.0 | old-button retired | yes | aidd_docs/tasks/retire-old-button |";
 
     it("names a publication of a breaking task that is not breaking itself", () => {
-      change(SYSTEM, SECOND, "| 2.0.0 | old-button retired | no | aidd_docs/tasks/retire-old-button |");
-      assert.deepEqual(problems(), [`${SYSTEM}: 2.0.0 publishes "aidd_docs/tasks/retire-old-button", which breaks an element, so it is breaking`]);
+      change(HISTORY, SECOND, "| system | 2.0.0 | old-button retired | no | aidd_docs/tasks/retire-old-button |");
+      assert.deepEqual(problems(), [`${HISTORY}: 2.0.0 publishes "aidd_docs/tasks/retire-old-button", which breaks an element, so it is breaking`]);
     });
 
     it("names a breaking publication without a major bump", () => {
-      change(SYSTEM, "version: 2.0.0", "version: 1.1.0");
-      change(SYSTEM, "| 2.0.0 |", "| 1.1.0 |");
-      assert.deepEqual(problems(), [`${SYSTEM}: 1.1.0 is breaking, yet raises no major version`]);
+      change(HISTORY, "| system | 2.0.0 |", "| system | 1.1.0 |");
+      assert.deepEqual(problems(), [`${HISTORY}: 1.1.0 is breaking, yet raises no major version`]);
     });
 
     it("names a publication that raises neither major nor minor", () => {
-      change(SYSTEM, "version: 2.0.0", "version: 2.0.1");
-      change(SYSTEM, SECOND, `${SECOND}\n| 2.0.1 | button padding | no | aidd_docs/tasks/tweak |`);
-      assert.deepEqual(problems(), [`${SYSTEM}: 2.0.1 raises neither major nor minor`]);
+      addHistory(tmp, ["system", "2.0.1", "button padding", "no", "aidd_docs/tasks/tweak"]);
+      assert.deepEqual(problems(), [`${HISTORY}: 2.0.1 raises neither major nor minor`]);
     });
 
     it("accepts a breaking publication of tokens alone, which no element history shows", () => {
-      change(SYSTEM, "version: 2.0.0", "version: 3.0.0");
-      change(SYSTEM, SECOND, `${SECOND}\n| 3.0.0 | color.brand renamed | yes | aidd_docs/tasks/rename-brand |`);
+      addHistory(tmp, ["system", "3.0.0", "color.brand renamed", "yes", "aidd_docs/tasks/rename-brand"]);
       assert.deepEqual(problems(), []);
     });
 
     it("accepts a publication listing several tasks", () => {
-      change(SYSTEM, SECOND, "| 2.0.0 | old-button retired | yes | aidd_docs/tasks/ds-init, aidd_docs/tasks/retire-old-button |");
+      change(HISTORY, SECOND, "| system | 2.0.0 | old-button retired | yes | aidd_docs/tasks/ds-init, aidd_docs/tasks/retire-old-button |");
       assert.deepEqual(problems(), []);
     });
 
     it("reads a newest-first system history by version", () => {
-      change(SYSTEM, `| 1.0.0 | first system | no | aidd_docs/tasks/ds-init |\n${SECOND}`, `${SECOND}\n| 1.0.0 | first system | no | aidd_docs/tasks/ds-init |`);
+      change(HISTORY, `${FIRST}\n${SECOND}`, `${SECOND}\n${FIRST}`);
       assert.deepEqual(problems(), []);
     });
 
     it("accepts an element task no publication lists yet, as two parallel features leave", () => {
-      change(JOURNEY, "| no | aidd_docs/tasks/ds-init |", "| no | aidd_docs/tasks/new-flow |");
+      change(HISTORY, "| onboarding | 1 | created | no | aidd_docs/tasks/ds-init |", "| onboarding | 1 | created | no | aidd_docs/tasks/new-flow |");
       assert.deepEqual(problems(), []);
     });
   });
 
   describe("H6 deprecation breaks", () => {
     it("names a deprecated record whose last row is not breaking", () => {
-      change(OLD, "| yes | aidd_docs/tasks/retire-old-button |", "| no | aidd_docs/tasks/retire-old-button |");
+      change(HISTORY, "| old-button | 2 | deprecated for button | yes |", "| old-button | 2 | deprecated for button | no |");
       assert.deepEqual(problems(), [`${OLD}: deprecated, yet its last history row is not breaking`]);
     });
   });
+
   describe("H7 tasks are folders", () => {
     it("names an element task that is not a task folder", () => {
-      change(JOURNEY, "| no | aidd_docs/tasks/ds-init |", "| no | ds-init |");
-      assert.deepEqual(problems(), [`${JOURNEY}: task "ds-init" in version 1 must be a task folder, aidd_docs/tasks/…`]);
+      change(HISTORY, "| onboarding | 1 | created | no | aidd_docs/tasks/ds-init |", "| onboarding | 1 | created | no | ds-init |");
+      assert.deepEqual(problems(), [`${HISTORY}: task "ds-init" in version 1 of onboarding must be a task folder, aidd_docs/tasks/…`]);
     });
 
     it("names a published task that is not a task folder", () => {
-      change(SYSTEM, "| 2.0.0 | old-button retired | yes | aidd_docs/tasks/retire-old-button |", "| 2.0.0 | old-button retired | yes | aidd_docs/tasks/retire-old-button, PROJ-12 |");
-      assert.deepEqual(problems(), [`${SYSTEM}: task "PROJ-12" in version 2.0.0 must be a task folder, aidd_docs/tasks/…`]);
+      change(HISTORY, "| system | 2.0.0 | old-button retired | yes | aidd_docs/tasks/retire-old-button |", "| system | 2.0.0 | old-button retired | yes | aidd_docs/tasks/retire-old-button, PROJ-12 |");
+      assert.deepEqual(problems(), [`${HISTORY}: task "PROJ-12" in version 2.0.0 of system must be a task folder, aidd_docs/tasks/…`]);
     });
   });
 
@@ -500,18 +500,18 @@ describe("aidd-ui records and history", () => {
 
     it("names a deprecated element too", () => {
       change(OLD, "Nowhere: replaced by button.", "Nowhere: use button.");
-      assert.deepEqual(edited(), [`${OLD}: edited since its committed version 2, raise its version with a History row`]);
+      assert.deepEqual(edited(), [`${OLD}: edited since its committed version 2, raise its version with a history row`]);
     });
 
     it("reads a screen as an element", () => {
       edit(tmp, HOME_RENDER, "</body>", "<!-- one more look -->\n</body>");
-      assert.deepEqual(edited(), [`${HOME}: edited since its committed version 1, raise its version with a History row`]);
+      assert.deepEqual(edited(), [`${HOME}: edited since its committed version 1, raise its version with a history row`]);
     });
 
     it("holds a lowered version to the committed one", () => {
       change(OLD, "Nowhere: replaced by button.", "Nowhere: use button.");
       change(OLD, "\nversion: 2\n", "\nversion: 1\n");
-      assert.deepEqual(edited(), [`${OLD}: edited since its committed version 2, raise its version with a History row`]);
+      assert.deepEqual(edited(), [`${OLD}: edited since its committed version 2, raise its version with a history row`]);
     });
 
     it("leaves a deleted render to V1 alone", () => {
@@ -522,7 +522,7 @@ describe("aidd-ui records and history", () => {
     it("stays silent once the version rose with a history row", () => {
       change(BUTTON, BUTTON_USAGE, WIDENED);
       change(BUTTON, "version: 1", "version: 2");
-      change(BUTTON, "| 1 | created | no | aidd_docs/tasks/ds-init |", "| 1 | created | no | aidd_docs/tasks/ds-init |\n| 2 | wider usage | no | aidd_docs/tasks/widen-button |");
+      addHistory(tmp, ["button", "2", "wider usage", "no", "aidd_docs/tasks/widen-button"]);
       assert.deepEqual(problems(), []);
     });
 
@@ -533,11 +533,6 @@ describe("aidd-ui records and history", () => {
 
     it("stays silent when only the code link changed", () => {
       change(BUTTON, "code: src/ui/Button.tsx#Button@1", "code: src/ui/Button.tsx#Primary@1");
-      assert.deepEqual(edited(), []);
-    });
-
-    it("stays silent when only the history changed", () => {
-      change(BUTTON, "| 1 | created | no | aidd_docs/tasks/ds-init |", "| 1 | created | no | aidd_docs/tasks/ds-init |\n| 2 | wider usage | no | aidd_docs/tasks/widen-button |");
       assert.deepEqual(edited(), []);
     });
 
@@ -621,9 +616,9 @@ describe("aidd-ui records and history", () => {
       const all = () => historyRules.check(load(tmp)).map((found) => `${found.file}: ${found.message} (${found.rule})`);
 
       it("is one H8 problem naming the failure's first line, and the other rules still run", () => {
-        change(BUTTON, "| 1 | created | no |", "| 1 | created | maybe |");
+        change(HISTORY, "| button | 1 | created | no |", "| button | 1 | created | maybe |");
         const found = withGit(`echo "${DUBIOUS}" >&2\necho "To add an exception, run this" >&2\nexit 128`, all);
-        assert.deepEqual(found, [`${BUTTON}: breaking "maybe" in version 1 must be yes or no (H4)`, `${FAILED(DUBIOUS)} (H8)`]);
+        assert.deepEqual(found, [`${HISTORY}: breaking "maybe" in version 1 of button must be yes or no (H4)`, `${FAILED(DUBIOUS)} (H8)`]);
       });
 
       it("is named for a repository the real git refuses, whose owner is another", () => {
@@ -673,11 +668,11 @@ describe("aidd-ui records and history", () => {
     });
 
     describe("a token value that changed", () => {
-      const TOKEN_CHANGED = (file, tokens, version = 1) => `${file}: value of ${tokens} changed since its committed version ${version}, raise its version with a History row`;
+      const TOKEN_CHANGED = (file, tokens, version = 1) => `${file}: value of ${tokens} changed since its committed version ${version}, raise its version with a history row`;
       const setBold = (weight) => editTokens(tmp, (tree) => (tree.font.weight.bold.$value = weight));
       const raise = (file) => {
         change(file, "\nversion: 1\n", "\nversion: 2\n");
-        change(file, "| 1 | created | no | aidd_docs/tasks/ds-init |", "| 1 | created | no | aidd_docs/tasks/ds-init |\n| 2 | lighter bold | no | aidd_docs/tasks/lighten |");
+        addHistory(tmp, [path.basename(file, ".md"), "2", "lighter bold", "no", "aidd_docs/tasks/lighten"]);
       };
       const THROUGH_BOLD = [BUTTON, DIALOG, SEARCH, HOME].map((file) => TOKEN_CHANGED(file, "font.weight.bold"));
 

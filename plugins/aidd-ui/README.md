@@ -45,7 +45,7 @@ flowchart LR
 ## Rules
 
 - One norm lives in `aidd_docs/ui/`: `system.md`, `brand.md`, one record per element, one render per component and screen.
-- The engine writes `tokens.css`, `tokens.resolver.json` and the versions; never edit them by hand.
+- The engine writes `tokens.css`, `tokens.resolver.json`, the versions and `history.md`, one row per version of each record; never edit them by hand.
 - A problem prints as `<file>[:<line>] <rule> [warning] <message>`; the hook shows at most 10 lines, then `+N more: <command>`.
 - The end of a turn that wrote under `aidd_docs/ui/` or a code root is blocked once while an error remains; warnings never block.
 - A colour literal in code already committed is a warning; a new one is an error.

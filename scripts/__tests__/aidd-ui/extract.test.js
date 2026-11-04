@@ -4,7 +4,7 @@ const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
 const { describe, it, beforeEach, afterEach } = require("node:test");
-const { UI, put, record, history } = require("../fixtures/aidd-ui/project.js");
+const { UI, put, record } = require("../fixtures/aidd-ui/project.js");
 const { WEB_CSS, MOBILE_TS } = require("../fixtures/aidd-ui/token-sources.js");
 
 // The extract command is driven as a subprocess, as the skill calls it. Its output is judged by the
@@ -16,7 +16,6 @@ const { fromCss, fromNumber } = require(path.join(LIB, "values.cjs"));
 const { objectsOf } = require(path.join(LIB, "script.cjs"));
 const { customProperty } = require(path.join(LIB, "css.cjs"));
 
-const FIRST_ROW = ["1.0.0", "first system", "no", "aidd_docs/tasks/ds-init"];
 let tmp;
 
 beforeEach(() => {
@@ -35,10 +34,9 @@ function setup({ platforms = ["web"], themes = ["light", "dark"], breakpoints = 
     tmp,
     `${UI}/system.md`,
     record(
-      ["id: system", "kind: system", "status: proposed", "version: 1.0.0", "format: 1", `platforms: [${platforms.join(", ")}]`, `breakpoints: [${breakpoints.join(", ")}]`, `themes: [${themes.join(", ")}]`, "locales: [en]", "directions: [ltr]", "primitives: []", `code-roots: [${roots.join(", ")}]`, `code-tokens: [${tokens.join(", ")}]`, "ignore: []", "libraries: []"],
+      ["id: system", "kind: system", "format: 1", `platforms: [${platforms.join(", ")}]`, `breakpoints: [${breakpoints.join(", ")}]`, `themes: [${themes.join(", ")}]`, "locales: [en]", "directions: [ltr]", "primitives: []", `code-roots: [${roots.join(", ")}]`, `code-tokens: [${tokens.join(", ")}]`, "ignore: []", "libraries: []"],
       "# Design system",
-      `## Breakpoints\n\n| Name | Query |\n| --- | --- |\n${rows.join("\n")}`,
-      history(FIRST_ROW)
+      `## Breakpoints\n\n| Name | Query |\n| --- | --- |\n${rows.join("\n")}`
     )
   );
   for (const [name, content] of Object.entries(files)) put(tmp, name, content);

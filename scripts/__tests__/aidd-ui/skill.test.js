@@ -31,7 +31,6 @@ const FILLS = {
     "component packages used": "@radix-ui/react-dialog",
     "breakpoint name": "mobile",
     "its media query, empty for the first": "",
-    "task folder": TASK,
   },
   brand: {
     "what the project is": "A search tool.",
@@ -41,7 +40,6 @@ const FILLS = {
     "how it sounds and looks": "Plain and calm.",
     "what it looks like and why": "A library catalogue.",
     "what it must never look like": "A casino.",
-    "task folder": TASK,
   },
   component: {
     "component id": "badge",
@@ -51,11 +49,9 @@ const FILLS = {
     "semantic tokens": "space.md, color.text.default",
     "variants": "default",
     "states": "default, focus",
-    "yes or no": "yes",
     "accessible role": "status",
     "when to use it, and when not": "A short status beside a label; never for an action.",
     "how the keyboard drives it": "Tab focuses it, Enter activates it.",
-    "task folder": TASK,
   },
   asset: {
     "asset id": "logo",
@@ -63,7 +59,6 @@ const FILLS = {
     "icon, image or illustration": "image",
     "file name beside this record": "logo.svg",
     "alternative text": "The search tool's logo",
-    "task folder": TASK,
   },
   render: {
     "BCP 47 language": "en",
@@ -128,15 +123,21 @@ describe("aidd-ui 01-system templates", () => {
     put(tmp, `${UI}/components/badge.html`, filled("render"));
     put(tmp, `${UI}/assets/logo.md`, filled("asset"));
     put(tmp, `${UI}/assets/logo.svg`, '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><circle cx="10" cy="10" r="7"/></svg>\n');
+    assert.equal(spawnSync(process.execPath, [ENGINE, "bump", "--task", TASK, "--created", "badge", "logo", "--root", tmp], { encoding: "utf8" }).status, 0);
     assert.deepEqual(validate(), { code: 0, out: ["VALID"] });
   });
 
-  it("start every record as proposed at version 1 or 1.0.0", () => {
-    for (const [name, version] of [["system", "1.0.0"], ["brand", "1"], ["component", "1"], ["asset", "1"]]) {
+  it("start every element as proposed at version 1, the system and the brand with neither status nor version", () => {
+    for (const name of ["component", "asset"]) {
       const text = filled(name);
       assert.ok(text.includes("status: proposed\n"), name);
-      assert.ok(text.includes(`version: ${version}\n`), name);
+      assert.ok(text.includes("version: 1\n"), name);
     }
+    for (const name of ["system", "brand"]) assert.equal(/^(status|version):/m.test(filled(name)), false, name);
+  });
+
+  it("hold no history section: history.md is the engine's", () => {
+    for (const name of ["system", "brand", "component", "asset"]) assert.equal(template(name).includes("## History"), false, name);
   });
 
   it("make a render load the generated stylesheet and show its variant and state", () => {
@@ -186,7 +187,7 @@ describe("aidd-ui 01-system change flow", () => {
     assert.deepEqual([report.elements, report.screens], [["button", "dialog", "old-button", "search-field"], ["home"]]);
 
     const raised = JSON.parse(engine("bump", "--task", "aidd_docs/tasks/recolour", "--change", "new action colour", "color.action.default", "--root", tmp).stdout);
-    assert.deepEqual(raised.changed.map((file) => path.posix.basename(file)), ["button.md", "dialog.md", "search-field.md", "first-pass.md", "home.md"]);
+    assert.deepEqual(raised.changed.map((file) => path.posix.basename(file)), ["button.md", "dialog.md", "search-field.md", "history.md", "first-pass.md", "home.md"]);
     editTokens(tmp, (tree) => (tree.color.action.default.$value = { colorSpace: "srgb", components: [0.1, 0.1, 0.1], hex: "#1a1a1a" }));
     assert.equal(engine("tokens", tmp).status, 0);
 

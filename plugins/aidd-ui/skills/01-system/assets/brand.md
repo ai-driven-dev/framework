@@ -1,8 +1,6 @@
 ---
 id: brand
 kind: brand
-status: proposed
-version: 1
 ---
 
 # Brand
@@ -34,12 +32,6 @@ version: 1
 ## Anti-references
 
 {{what it must never look like}}
-
-## History
-
-| Version | Change | Breaking | Task |
-| --- | --- | --- | --- |
-| 1 | created | no | {{task folder}} |
 
 <!--
 - Replace every `{{...}}` and delete every comment.

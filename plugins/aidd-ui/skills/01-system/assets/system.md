@@ -1,8 +1,6 @@
 ---
 id: system
 kind: system
-status: proposed
-version: 1.0.0
 format: 1
 platforms: [{{platforms}}]
 breakpoints: [{{breakpoints, the winning query last}}]
@@ -23,12 +21,6 @@ libraries: [{{component packages used}}]
 | Name | Query |
 | --- | --- |
 | {{breakpoint name}} | {{its media query, empty for the first}} |
-
-## History
-
-| Version | Change | Breaking | Task |
-| --- | --- | --- | --- |
-| 1.0.0 | first system | no | {{task folder}} |
 
 <!--
 - Replace every `{{...}}` and delete every comment.

@@ -1,17 +1,17 @@
-// H1 to H8: each versioned record's history, the system version its publications raise, the task
-// folder each change names, and a held element that changed, or a validated one whose token changed
-// value, without a new version. A git that fails only warns: a slow machine must not block a turn.
+// H1 to H8: the history of each versioned record, read from history.md, the system version its
+// publications raise, the task folder each change names, and a held element that changed, or a
+// validated one whose token changed value, without a new version. A git that fails only warns: a
+// slow machine must not block a turn.
 const fs = require("node:fs");
 const nodePath = require("node:path");
-const { table, list, parseRecord } = require("./markdown.cjs");
-const { placed, systemOf, byId, tokensUsedBy, isElement, isSystem, problem, fm, INTEGER_VERSION, SEMVER } = require("./model.cjs");
-const { checkOf, text, UI_DIR, WARNING } = require("./project.cjs");
+const { list, parseRecord } = require("./markdown.cjs");
+const { placed, systemOf, byId, tokensUsedBy, isElement, isSystem, problem, fm, SYSTEM_ID, INTEGER_VERSION, SEMVER } = require("./model.cjs");
+const { checkOf, text, UI_DIR, HISTORY_FILE, WARNING } = require("./project.cjs");
 const { committed, baseline, changed } = require("./committed.cjs");
 const { customProperty, declarationsOf, layered, contextsOf, resolved } = require("./css.cjs");
 const { cssFileOf } = require("./tokens.cjs");
 const { renderOf } = require("./renders.cjs");
 
-const HISTORY_SECTION = "History";
 const BREAKING_VALUES = ["yes", "no"];
 const BREAKING = "yes";
 const TASKS_DIR = "aidd_docs/tasks/";
@@ -19,10 +19,10 @@ const VALIDATED = "validated";
 const HELD_STATUSES = [VALIDATED, "deprecated"]; // a proposed element is still being designed
 const UNVERSIONED_KEYS = ["status", "code"]; // a review, a code catch-up: no new version
 const FRONT_MATTER_FENCE = "---";
-const SECTION_PREFIX = "## ";
 const LINE_BREAK = "\n";
 
-const rowsOf = (record) => table(record.sections[HISTORY_SECTION]);
+const rowsOf = (project, id) => project.history.filter((row) => row.Id === id);
+const inHistory = (message) => problem({ file: HISTORY_FILE }, message);
 /** A system row's Task cell: the tasks one publication lists, comma-separated. */
 const taskList = (cell) => list(cell?.split(",").map((task) => task.trim()).filter(Boolean));
 
@@ -47,107 +47,87 @@ const byVersion = (rows, system) =>
     .filter((entry) => entry.parts)
     .sort((a, b) => compare(a.parts, b.parts));
 
-/** Records that carry a version, which every history rule reads. */
-const versioned = (project) => placed(project).filter((record) => "version" in fm(record));
+/** Records that carry a history, which every history rule reads: all but the brand. */
+const versioned = (project) => placed(project).filter((record) => fm(record).id === record.name && fm(record).kind !== "brand");
 
 function presenceProblems(project) {
   return versioned(project)
-    .filter((record) => rowsOf(record).length === 0)
-    .map((record) => problem(record, `no "## ${HISTORY_SECTION}" table`));
+    .filter((record) => rowsOf(project, fm(record).id).length === 0)
+    .map((record) => problem(record, "no row in history.md"));
 }
 
 function duplicateProblems(project) {
-  return versioned(project).flatMap((record) => {
-    const seen = new Set();
-    const claimed = new Set();
-    for (const row of rowsOf(record)) (seen.has(row.Version) ? claimed : seen).add(row.Version);
-    return [...claimed].map((version) => problem(record, `two changes claim version ${version}, renumber one`));
-  });
+  const seen = new Set();
+  const claimed = new Map();
+  for (const { Id: id, Version: version } of project.history) {
+    const key = `${id} ${version}`;
+    if (seen.has(key)) claimed.set(key, `two changes claim version ${version} of ${id}, renumber one`);
+    seen.add(key);
+  }
+  return [...claimed.values()].map(inHistory);
 }
 
 function currentProblems(project) {
-  return versioned(project).flatMap((record) => {
-    const system = isSystem(record);
-    const current = parts(fm(record).version, system);
-    const rows = byVersion(rowsOf(record), system);
-    if (!current || !rows.length) return [];
-    const highest = rows.at(-1);
-    const problems = compare(current, highest.parts) === 0 ? [] : [`version ${fm(record).version} is not the highest history row, ${highest.row.Version}`];
-    if (!system) {
+  return versioned(project)
+    .filter((record) => !isSystem(record))
+    .flatMap((record) => {
+      const current = parts(fm(record).version, false);
+      const rows = byVersion(rowsOf(project, fm(record).id), false);
+      if (!current || !rows.length) return [];
+      const highest = rows.at(-1);
+      const problems = compare(current, highest.parts) === 0 ? [] : [`version ${fm(record).version} is not the highest history row, ${highest.row.Version}`];
       for (let index = 1; index < rows.length; index += 1) {
         const step = rows[index].parts[0] - rows[index - 1].parts[0];
         if (step > 1) problems.push(`history jumps from ${rows[index - 1].row.Version} to ${rows[index].row.Version}`);
       }
-    }
-    return problems.map((message) => problem(record, message));
-  });
+      return problems.map((message) => problem(record, message));
+    });
 }
 
 function breakingProblems(project) {
-  return versioned(project).flatMap((record) =>
-    rowsOf(record)
-      .filter((row) => !BREAKING_VALUES.includes(row.Breaking))
-      .map((row) => problem(record, `breaking "${row.Breaking}" in version ${row.Version} must be yes or no`))
-  );
-}
-
-/** The tasks that broke an element, read from every element history. */
-function breakingTasks(project) {
-  const tasks = new Set();
-  for (const record of versioned(project).filter((candidate) => !isSystem(candidate))) {
-    for (const row of rowsOf(record)) if (row.Breaking === BREAKING) tasks.add(row.Task);
-  }
-  return tasks;
+  return project.history.filter((row) => !BREAKING_VALUES.includes(row.Breaking)).map((row) => inHistory(`breaking "${row.Breaking}" in version ${row.Version} of ${row.Id} must be yes or no`));
 }
 
 /** A system row publishes a list of tasks. It breaks, and raises the major version, when one of
  * them broke an element or when it says so itself, for tokens alone; otherwise it raises the
  * minor. A task no row lists yet is unpublished, never a problem. */
 function publicationProblems(project) {
-  const system = systemOf(project);
-  if (!system) return [];
-  const breaking = breakingTasks(project);
-  const ordered = byVersion(rowsOf(system), true);
+  if (!systemOf(project)) return [];
+  const breaking = new Set(project.history.filter((row) => row.Breaking === BREAKING).map((row) => row.Task));
+  const ordered = byVersion(rowsOf(project, SYSTEM_ID), true);
   return ordered.slice(1).flatMap(({ row, parts: now }, index) => {
     const before = ordered[index].parts;
     const broke = taskList(row.Task).find((task) => breaking.has(task));
-    if (broke && row.Breaking !== BREAKING) return [problem(system, `${row.Version} publishes "${broke}", which breaks an element, so it is breaking`)];
-    if (row.Breaking === BREAKING && now[0] <= before[0]) return [problem(system, `${row.Version} is breaking, yet raises no major version`)];
-    if (compare(now.slice(0, 2), before.slice(0, 2)) <= 0) return [problem(system, `${row.Version} raises neither major nor minor`)];
+    if (broke && row.Breaking !== BREAKING) return [inHistory(`${row.Version} publishes "${broke}", which breaks an element, so it is breaking`)];
+    if (row.Breaking === BREAKING && now[0] <= before[0]) return [inHistory(`${row.Version} is breaking, yet raises no major version`)];
+    if (compare(now.slice(0, 2), before.slice(0, 2)) <= 0) return [inHistory(`${row.Version} raises neither major nor minor`)];
     return [];
   });
 }
 
 function taskProblems(project) {
-  return versioned(project).flatMap((record) =>
-    rowsOf(record).flatMap((row) =>
-      (isSystem(record) ? taskList(row.Task) : [row.Task])
-        .filter((task) => !task?.startsWith(TASKS_DIR))
-        .map((task) => problem(record, `task "${task ?? ""}" in version ${row.Version} must be a task folder, ${TASKS_DIR}…`))
-    )
+  return project.history.flatMap((row) =>
+    (row.Id === SYSTEM_ID ? taskList(row.Task) : [row.Task])
+      .filter((task) => !task?.startsWith(TASKS_DIR))
+      .map((task) => inHistory(`task "${task ?? ""}" in version ${row.Version} of ${row.Id} must be a task folder, ${TASKS_DIR}…`))
   );
 }
 
 function deprecationProblems(project) {
   return versioned(project)
     .filter((record) => isElement(record) && fm(record).status === "deprecated")
-    .filter((record) => rowsOf(record).length && rowsOf(record).at(-1).Breaking !== BREAKING)
+    .filter((record) => {
+      const last = byVersion(rowsOf(project, fm(record).id), false).at(-1);
+      return last && last.row.Breaking !== BREAKING;
+    })
     .map((record) => problem(record, "deprecated, yet its last history row is not breaking"));
 }
 
-/** A record's text without what a version never covers: the status, the code links and
- * the History section. */
+/** A record's text without what a version never covers: the status and the code links. */
 function substance(content) {
   const lines = content.split(LINE_BREAK);
   const close = lines.findIndex((line, index) => index > 0 && line.trimEnd() === FRONT_MATTER_FENCE);
-  let inHistory = false;
-  return lines
-    .filter((line, index) => {
-      if (index <= close) return !UNVERSIONED_KEYS.some((key) => line.startsWith(`${key}:`));
-      if (line.startsWith(SECTION_PREFIX)) inHistory = line.trim() === `${SECTION_PREFIX}${HISTORY_SECTION}`;
-      return !inHistory;
-    })
-    .join(LINE_BREAK);
+  return lines.filter((line, index) => index > close || !UNVERSIONED_KEYS.some((key) => line.startsWith(`${key}:`))).join(LINE_BREAK);
 }
 
 /** Whether a record's render now differs from the committed one; a render absent on either side
@@ -167,7 +147,7 @@ function heldFront(record, before) {
 }
 
 function textProblems(project) {
-  return versioned(project)
+  return placed(project)
     .filter(isElement)
     .flatMap((record) => {
       const touched = [record.file, renderOf(record)].some((file) => changed(project).has(file));
@@ -175,7 +155,7 @@ function textProblems(project) {
       const was = before === null ? null : heldFront(record, before);
       if (was === null) return [];
       const edited = substance(text(project, record.file)) !== substance(before) || renderChanged(project, record);
-      return edited ? [problem(record, `edited since its committed version ${was.version}, raise its version with a History row`)] : [];
+      return edited ? [problem(record, `edited since its committed version ${was.version}, raise its version with a history row`)] : [];
     });
 }
 
@@ -200,13 +180,13 @@ function valueProblems(project, named) {
   if (before === null || after === null) return [];
   const moved = changedProperties(declarationsOf(before), declarationsOf(after));
   const index = byId(project);
-  return versioned(project)
+  return placed(project)
     .filter((record) => isElement(record) && !named.has(record.file))
     .flatMap((record) => {
       const tokens = tokensUsedBy(index, record).filter((token) => moved.has(customProperty(token)));
       const committedRecord = tokens.length ? baseline(project, record.file) : null;
       const was = committedRecord === null ? null : heldFront(record, committedRecord);
-      return was?.status !== VALIDATED ? [] : [problem(record, `value of ${tokens.join(", ")} changed since its committed version ${was.version}, raise its version with a History row`)];
+      return was?.status !== VALIDATED ? [] : [problem(record, `value of ${tokens.join(", ")} changed since its committed version ${was.version}, raise its version with a history row`)];
     });
 }
 

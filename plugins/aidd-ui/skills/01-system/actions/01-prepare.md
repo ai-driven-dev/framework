@@ -18,7 +18,7 @@ The request.
    | new elements | `system.md` exists, the request adds tokens or elements |
    | change | `system.md` exists, the request changes or removes a token or an element |
 
-3. Take the task folder the user named, else ask for it. It is only cited in History rows: it need not exist, nothing is written in it.
+3. Take the task folder the user named, else ask for it. It is only cited in `history.md` rows: it need not exist, nothing is written in it.
 4. Change only:
    - vague: ask which token or element changes, and to which value;
    - run `node <engine> impact <token or id>…` and show the user its report, with its `same-value` tokens for them to include or leave;

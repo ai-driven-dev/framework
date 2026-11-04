@@ -4,13 +4,13 @@ const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
 const { describe, it, beforeEach, afterEach } = require("node:test");
-const { UI, writeProject, edit } = require("../fixtures/aidd-ui/project.js");
+const { UI, HISTORY, writeProject, edit, put, record } = require("../fixtures/aidd-ui/project.js");
 
 // The bump command is driven as a subprocess, as the skill calls it, and judged by the engine's own
 // validator once the change it carries is made.
 const ENGINE = path.resolve(__dirname, "../../../plugins/aidd-ui/hooks/aidd-ui.cjs");
 const TASK = "aidd_docs/tasks/recolour";
-const REACHED = ["components/button", "components/dialog", "components/search-field", "reviews/first-pass", "screens/home"].map((name) => `${UI}/${name}.md`);
+const REACHED = ["components/button", "components/dialog", "components/search-field", "history", "reviews/first-pass", "screens/home"].map((name) => `${UI}/${name}.md`);
 
 let tmp;
 
@@ -37,7 +37,7 @@ const snapshot = (dir = tmp) => fs.readdirSync(dir, { withFileTypes: true }).fla
 
 describe("aidd-ui bump", () => {
   describe("a token change", () => {
-    it("raises each reached element and screen by one, proposed, with its History row, and lists the files it changed", () => {
+    it("raises each reached element and screen by one, proposed, with its row in history.md, and lists the files it changed", () => {
       const { code, report, err } = change("color.action.default");
       assert.deepEqual([code, err], [0, ""]);
       assert.deepEqual(report, { changed: REACHED, left: [{ id: "old-button", why: "deprecated" }] });
@@ -45,7 +45,8 @@ describe("aidd-ui bump", () => {
         const record = read(`${UI}/${id}.md`);
         assert.ok(record.includes("\nversion: 2\n"), id);
         assert.ok(record.includes("\nstatus: proposed\n"), id);
-        assert.ok(record.includes(`| 1 | created | no | aidd_docs/tasks/ds-init |\n| 2 | new action colour | no | ${TASK} |`), id);
+        assert.ok(read(HISTORY).includes(`| ${path.basename(id)} | 1 | created | no | aidd_docs/tasks/ds-init |\n`), id);
+        assert.ok(read(HISTORY).includes(`| ${path.basename(id)} | 2 | new action colour | no | ${TASK} |\n`), id);
       }
     });
 
@@ -73,33 +74,32 @@ describe("aidd-ui bump", () => {
     it("turns the row of an element already raised for the task to breaking when a later change breaks, appending the change", () => {
       change("color.action.default");
       const { report } = bump("--task", TASK, "--change", "renamed", "--breaking", "color.action.default");
-      assert.deepEqual(report.changed, ["components/button", "components/dialog", "components/old-button", "components/search-field", "screens/home"].map((name) => `${UI}/${name}.md`));
+      assert.deepEqual(report.changed, ["components/old-button", "history"].map((name) => `${UI}/${name}.md`));
       assert.deepEqual(report.left, []);
-      const record = read(`${UI}/components/button.md`);
-      assert.ok(record.includes(`| 1 | created | no | aidd_docs/tasks/ds-init |\n| 2 | new action colour; renamed | yes | ${TASK} |\n`));
-      assert.ok(record.includes("\nversion: 2\n"));
-      assert.equal(record.split(`| ${TASK} |`).length, 2);
+      assert.ok(read(HISTORY).includes(`| button | 2 | new action colour; renamed | yes | ${TASK} |\n`));
+      assert.ok(read(`${UI}/components/button.md`).includes("\nversion: 2\n"));
+      assert.equal(read(HISTORY).split("| button | 2 |").length, 2);
       assert.equal(read(`${UI}/reviews/first-pass.md`).split("| home | default | 2 | pending | |").length, 2);
       assert.equal(validate().code, 0);
     });
 
     it("leaves an element already raised as breaking, and one a non-breaking change reaches again, as they were", () => {
       bump("--task", TASK, "--change", "renamed", "--breaking", "color.action.default");
-      const before = read(`${UI}/components/button.md`);
+      const before = read(HISTORY);
       const again = bump("--task", TASK, "--change", "renamed again", "--breaking", "color.action.default");
       const lighter = change("color.action.default");
       assert.deepEqual(again.report.changed, []);
       assert.deepEqual(lighter.report.changed, []);
       assert.ok(again.report.left.some(({ id, why }) => id === "button" && why === "already raised for this task"));
-      assert.equal(read(`${UI}/components/button.md`), before);
+      assert.equal(read(HISTORY), before);
     });
 
     it("keeps the line ends of a row it turns to breaking", () => {
       change("color.action.default");
-      fs.writeFileSync(path.join(tmp, `${UI}/components/button.md`), read(`${UI}/components/button.md`).replace(/\n/g, "\r\n"));
+      fs.writeFileSync(path.join(tmp, HISTORY), read(HISTORY).replace(/\n/g, "\r\n"));
       bump("--task", TASK, "--change", "renamed", "--breaking", "color.action.default");
-      assert.equal(/[^\r]\n/.test(read(`${UI}/components/button.md`)), false);
-      assert.ok(read(`${UI}/components/button.md`).includes(`| 2 | new action colour; renamed | yes | ${TASK} |\r\n`));
+      assert.equal(/[^\r]\n/.test(read(HISTORY)), false);
+      assert.ok(read(HISTORY).includes(`| button | 2 | new action colour; renamed | yes | ${TASK} |\r\n`));
     });
 
     it("raises it again for another task", () => {
@@ -108,12 +108,14 @@ describe("aidd-ui bump", () => {
       assert.ok(read(`${UI}/components/button.md`).includes("\nversion: 3\n"));
     });
 
-    it("keeps the line ends of a record and of a review written with CRLF, the lines it sets and inserts included", () => {
+    it("keeps the line ends of a record, a review and the history written with CRLF, the lines it sets and inserts included", () => {
       const crlf = (name) => fs.writeFileSync(path.join(tmp, name), read(name).replace(/\n/g, "\r\n"));
       crlf(`${UI}/components/button.md`);
       crlf(`${UI}/reviews/first-pass.md`);
+      crlf(HISTORY);
       change("color.action.default");
-      for (const name of ["components/button", "reviews/first-pass"]) assert.equal(/[^\r]\n/.test(read(`${UI}/${name}.md`)), false, name);
+      for (const name of ["components/button", "reviews/first-pass", "history"]) assert.equal(/[^\r]\n/.test(read(`${UI}/${name}.md`)), false, name);
+      assert.ok(read(HISTORY).includes(`| button | 2 | new action colour | no | ${TASK} |\r\n`));
       assert.ok(read(`${UI}/components/button.md`).includes("\r\nversion: 2\r\n"));
       assert.ok(read(`${UI}/reviews/first-pass.md`).includes("| home | default | 2 | pending | |\r\n"));
       assert.equal(/\r/.test(read(`${UI}/components/dialog.md`)), false);
@@ -131,11 +133,11 @@ describe("aidd-ui bump", () => {
 
     it("raises a deprecated element citing the token, as breaking, keeping its status", () => {
       const { report } = rename("color.action.default");
-      assert.deepEqual(report.changed, [`${UI}/components/button.md`, `${UI}/components/dialog.md`, `${UI}/components/old-button.md`, `${UI}/components/search-field.md`, `${UI}/reviews/first-pass.md`, `${UI}/screens/home.md`]);
+      assert.deepEqual(report.changed, [`${UI}/components/button.md`, `${UI}/components/dialog.md`, `${UI}/components/old-button.md`, `${UI}/components/search-field.md`, HISTORY, `${UI}/reviews/first-pass.md`, `${UI}/screens/home.md`]);
       assert.deepEqual(report.left, []);
       const old = read(`${UI}/components/old-button.md`);
       assert.ok(old.includes("\nversion: 3\n") && old.includes("\nstatus: deprecated\n"));
-      assert.ok(old.includes("| 3 | action colour renamed | yes | aidd_docs/tasks/rename |"));
+      assert.ok(read(HISTORY).includes("| old-button | 3 | action colour renamed | yes | aidd_docs/tasks/rename |"));
     });
 
     it("raises a deprecated element that reaches the token through an element it uses", () => {
@@ -170,16 +172,17 @@ describe("aidd-ui bump", () => {
 
     it("takes the task as a folder, a slash at its end not counting", () => {
       assert.equal(bump("--task", `${TASK}/`, "--change", "x", "space.md").code, 0);
-      assert.ok(read(`${UI}/components/button.md`).includes(`| 2 | x | no | ${TASK} |`));
+      assert.ok(read(HISTORY).includes(`| button | 2 | x | no | ${TASK} |`));
     });
 
-    it("names a change that is empty or would break the History table, writing nothing", () => {
+    it("names a change that is empty or would break the history table, writing nothing", () => {
       for (const text of ["", "  ", "a | b", "a\nb"]) refused(["--task", TASK, "--change", text, "space.md"], 'aidd-ui: the change must be one line without "|"\n');
     });
 
     it("prints the usage and exits 2 without a task, a change or a ref", () => {
-      const usage = 'usage: node aidd-ui.cjs bump --task <aidd_docs/tasks/…> --change "<text>" [--breaking] <token or id>… [--root <dir>]\n';
-      for (const args of [["--change", "x", "space.md"], ["--task", TASK, "space.md"], ["--task", TASK, "--change", "x"], ["--task", TASK, "--change"]]) refused(args, usage);
+      const usage = 'usage: node aidd-ui.cjs bump --task <aidd_docs/tasks/…> (--change "<text>" [--breaking] | --created) <token or id>… [--root <dir>]\n';
+      const cases = [["--change", "x", "space.md"], ["--task", TASK, "space.md"], ["--task", TASK, "--change", "x"], ["--task", TASK, "--change"]];
+      for (const args of [...cases, ["--task", TASK, "--created"], ["--task", TASK, "--created", "--change", "x", "button"], ["--task", TASK, "--created", "--breaking", "button"]]) refused(args, usage);
     });
 
     it("names a project without a design system", () => {
@@ -187,15 +190,56 @@ describe("aidd-ui bump", () => {
       refused(["--task", TASK, "--change", "x", "space.md"], "aidd-ui: no design system under aidd_docs/ui\n");
     });
 
-    it("names a record it cannot raise: a version that is no integer, no status line, no History table, writing nothing", () => {
+    it("names a record it cannot raise: a version that is no integer, no status line, writing nothing", () => {
       edit(tmp, `${UI}/components/dialog.md`, "\nversion: 1\n", "\nversion: 1.5\n");
       refused(["--task", TASK, "--change", "x", "space.md"], `aidd-ui: ${UI}/components/dialog.md: version "1.5" is no integer\n`);
       edit(tmp, `${UI}/components/dialog.md`, "\nversion: 1.5\n", "\nversion: 1\n");
       edit(tmp, `${UI}/components/button.md`, "status: validated\n", "");
       refused(["--task", TASK, "--change", "x", "space.md"], `aidd-ui: ${UI}/components/button.md has no status line in its front matter\n`);
-      edit(tmp, `${UI}/components/button.md`, "uses: []\n", "status: validated\nuses: []\n");
-      edit(tmp, `${UI}/components/button.md`, "## History", "## Past");
-      refused(["--task", TASK, "--change", "x", "space.md"], `aidd-ui: ${UI}/components/button.md has no table under "## History"\n`);
+    });
+
+    it("names a history.md without a table, writing nothing", () => {
+      put(tmp, HISTORY, "# History\n");
+      refused(["--task", TASK, "--change", "x", "space.md"], `aidd-ui: ${HISTORY} has no table\n`);
+    });
+  });
+
+  describe("a creation", () => {
+    const create = (...refs) => bump("--task", TASK, "--created", ...refs);
+    const addLogo = () => {
+      put(tmp, `${UI}/assets/logo.md`, record(["id: logo", "kind: asset", "status: proposed", "version: 1", "type: icon", "file: logo.svg", "alt: Logo"]));
+      put(tmp, `${UI}/assets/logo.svg`, '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><circle cx="10" cy="10" r="7"/></svg>\n');
+    };
+
+    it("writes the first row of a new record, its version 1, and leaves the design system valid", () => {
+      addLogo();
+      assert.equal(validate().code, 1);
+      const { code, report, err } = create("logo");
+      assert.deepEqual([code, err, report], [0, "", { changed: [HISTORY] }]);
+      assert.ok(read(HISTORY).includes(`| logo | 1 | created | no | ${TASK} |\n`));
+      assert.deepEqual(validate(), { code: 0, out: ["VALID"] });
+    });
+
+    it("writes the first publication of the system as 1.0.0, and builds history.md when there is none", () => {
+      fs.rmSync(path.join(tmp, HISTORY));
+      create("system");
+      assert.equal(read(HISTORY), `# History\n\n| Id | Version | Change | Breaking | Task |\n| --- | --- | --- | --- | --- |\n| system | 1.0.0 | created | no | ${TASK} |\n`);
+    });
+
+    it("writes one row per id, once", () => {
+      addLogo();
+      create("logo", "logo");
+      assert.equal(read(HISTORY).split("| logo |").length, 2);
+    });
+
+    it("names an id that is no versioned record, or already has history, writing nothing", () => {
+      const refusals = [["ghost", 'no versioned record named "ghost"'], ["brand", 'no versioned record named "brand"'], ["button", '"button" already has history']];
+      for (const [id, message] of refusals) {
+        const before = snapshot();
+        const done = create(id);
+        assert.deepEqual([done.code, done.report, done.err], [2, null, `aidd-ui: ${message}\n`]);
+        assert.deepEqual(snapshot(), before);
+      }
     });
   });
 });

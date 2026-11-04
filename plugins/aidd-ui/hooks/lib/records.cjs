@@ -2,11 +2,11 @@
 const fs = require("node:fs");
 const path = require("node:path");
 const { list, table } = require("./markdown.cjs");
-const { checkOf } = require("./project.cjs");
-const { AXIS_SEPARATOR, variantOf, IMPLEMENTED_KINDS, LEVELS, INTEGER_VERSION, SEMVER, problem, fm, isElement, isComponent, isSystem, belongs, readable, placed, byId, systemOf } = require("./model.cjs");
+const { checkOf, HISTORY_FILE } = require("./project.cjs");
+const { SYSTEM_ID, AXIS_SEPARATOR, variantOf, IMPLEMENTED_KINDS, LEVELS, INTEGER_VERSION, SEMVER, problem, fm, isElement, isComponent, isSystem, belongs, readable, placed, byId, systemOf } = require("./model.cjs");
 
 const STATUSES = ["proposed", "validated", "deprecated"];
-const DESIGN_STATUSES = ["proposed", "validated"]; // R16: system, brand and reviews are never deprecated
+const REVIEW_STATUSES = ["proposed", "validated"]; // R16: a review is never deprecated
 const FORMAT = "1"; // the record format this validator reads
 const ASSET_TYPES = ["icon", "image", "illustration"];
 const VERDICTS = ["ok", "ko", "pending"];
@@ -20,22 +20,22 @@ const STEPS_SECTION = "Steps";
 const VERDICTS_SECTION = "Verdicts";
 const BRAND_HEADINGS = ["Project", "Users", "Domain", "Platforms", "Personality and tone", "References", "Anti-references"];
 
-const COMMON_KEYS = ["id", "kind", "status", "version"];
-const COMPONENT_KEYS = ["uses", "tokens", "variants", "states", "role"];
+const COMMON_KEYS = ["id", "kind"];
+const VERSIONED_KEYS = ["status", "version"]; // all but the system, whose versions are its publications, and the brand
+const COMPONENT_KEYS = [...VERSIONED_KEYS, "uses", "tokens", "variants", "states", "role"];
 const KIND_KEYS = {
   system: ["format", "platforms", "breakpoints", "themes", "locales", "directions", "primitives", "code-roots", "ignore", "libraries"],
   brand: [],
   atom: COMPONENT_KEYS,
   molecule: COMPONENT_KEYS,
   composition: COMPONENT_KEYS,
-  screen: ["uses", "tokens", "states", "breakpoints", "route"],
-  journey: ["persona"],
-  asset: ["type", "file", "alt"],
-  review: ["scope", "screens"],
+  screen: [...VERSIONED_KEYS, "uses", "tokens", "states", "breakpoints", "route"],
+  journey: [...VERSIONED_KEYS, "persona"],
+  asset: [...VERSIONED_KEYS, "type", "file", "alt"],
+  review: [...VERSIONED_KEYS, "scope", "screens"],
 };
 const AXIS_NAME = /^[a-z][a-z-]*$/;
 const TAKEN_AXES = { state: "data-state shows the states", variant: "data-variant shows the bare variants", theme: "data-theme switches the token theme" };
-const DESIGN_KINDS = ["system", "brand", "review"];
 const listWithOr = (values) => `${values.slice(0, -1).join(", ")} or ${values.at(-1)}`;
 const isDeprecated = (record) => fm(record).status === "deprecated";
 const folderLabel = (folder) => (folder ? `${folder}/` : "aidd_docs/ui/");
@@ -92,12 +92,14 @@ function identityProblems(project) {
 }
 
 function versionProblems(project) {
-  return placed(project).flatMap((record) => {
-    const version = fm(record).version;
-    if (version === undefined) return [];
-    if (isSystem(record)) return SEMVER.test(version) ? [] : [problem(record, `version "${version}" must be semver, such as 2.0.0`)];
-    return INTEGER_VERSION.test(version) ? [] : [problem(record, `version "${version}" must be an integer from 1`)];
-  });
+  const published = project.history.filter((row) => row.Id === SYSTEM_ID && !SEMVER.test(row.Version));
+  return [
+    ...placed(project).flatMap((record) => {
+      const version = fm(record).version;
+      return version === undefined || INTEGER_VERSION.test(version) ? [] : [problem(record, `version "${version}" must be an integer from 1`)];
+    }),
+    ...published.map((row) => problem({ file: HISTORY_FILE }, `version "${row.Version}" of ${SYSTEM_ID} must be semver, such as 2.0.0`)),
+  ];
 }
 
 function usesProblems(project) {
@@ -229,11 +231,11 @@ function assetProblems(project) {
     .map((record) => problem(record, `file "${fm(record).file}" does not exist beside it`));
 }
 
-function designStatusProblems(project) {
+function reviewStatusProblems(project) {
   return placed(project)
-    .filter((record) => DESIGN_KINDS.includes(fm(record).kind))
-    .filter((record) => STATUSES.includes(fm(record).status) && !DESIGN_STATUSES.includes(fm(record).status))
-    .map((record) => problem(record, `status "${fm(record).status}" is for elements: system, brand and reviews are ${listWithOr(DESIGN_STATUSES)}`));
+    .filter((record) => fm(record).kind === "review")
+    .filter((record) => STATUSES.includes(fm(record).status) && !REVIEW_STATUSES.includes(fm(record).status))
+    .map((record) => problem(record, `status "${fm(record).status}" is for elements: reviews are ${listWithOr(REVIEW_STATUSES)}`));
 }
 
 function usageProblems(project) {
@@ -266,7 +268,7 @@ const RULES = {
   R13: reviewProblems,
   R14: brandProblems,
   R15: assetProblems,
-  R16: designStatusProblems,
+  R16: reviewStatusProblems,
   R17: usageProblems,
 };
 

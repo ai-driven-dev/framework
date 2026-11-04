@@ -1,13 +1,14 @@
 // Applies a change to the versions it reaches: each element or screen `impact` reaches is raised by
-// one and set `proposed` with a History row, once per task; a later breaking change to one already
-// raised for the task turns that row to breaking instead. A deprecated one is left unless the
-// change breaks a token it cites, directly or through what it uses. Each review naming a raised
-// screen gets a `pending` verdict per state at its new version.
+// one and set `proposed` with a row in history.md, once per task; a later breaking change to one
+// already raised for the task turns that row to breaking instead. A deprecated one is left unless
+// the change breaks a token it cites, directly or through what it uses. Each review naming a raised
+// screen gets a `pending` verdict per state at its new version. A creation writes the first row of
+// each record named.
 const fs = require("node:fs");
 const path = require("node:path");
-const { list, table } = require("./markdown.cjs");
-const { placed, fm, INTEGER_VERSION } = require("./model.cjs");
-const { load } = require("./project.cjs");
+const { list, cells } = require("./markdown.cjs");
+const { placed, byId, isSystem, fm, INTEGER_VERSION } = require("./model.cjs");
+const { load, HISTORY_FILE } = require("./project.cjs");
 const { usages } = require("./graph.cjs");
 const { TASKS_DIR } = require("./history.cjs");
 const { Refusal } = require("./args.cjs");
@@ -16,8 +17,10 @@ const EXIT_REFUSED = 2;
 const FENCE = "---";
 const LINE_BREAK = "\n";
 const ROW_START = "|";
-const HISTORY_HEADING = "## History";
-const HISTORY_SECTION = "History";
+const HISTORY_HEADER = ["# History", "", "| Id | Version | Change | Breaking | Task |", "| --- | --- | --- | --- | --- |"].join(LINE_BREAK) + LINE_BREAK;
+const FIRST_VERSION = "1";
+const FIRST_SYSTEM_VERSION = "1.0.0";
+const CREATED = "created";
 const VERDICTS_HEADING = "## Verdicts";
 const DEPRECATED = "deprecated";
 const BREAKING = "yes";
@@ -36,11 +39,11 @@ function setFront(lines, key, value, end, file) {
   lines[at] = `${key}: ${value}${end}`;
 }
 
-/** The index of the last row of the first table under `heading` in `lines`. */
+/** The index of the last row of the first table under `heading` in `lines`, or of the first table when there is no heading. */
 function lastRowOf(lines, heading, file) {
-  const section = lines.findIndex((line) => line.trim() === heading);
-  const start = section < 0 ? -1 : lines.findIndex((line, at) => at > section && line.trim().startsWith(ROW_START));
-  if (start < 0) throw refuse(`${file} has no table under "${heading}"`);
+  const section = heading === null ? -1 : lines.findIndex((line) => line.trim() === heading);
+  const start = heading !== null && section < 0 ? -1 : lines.findIndex((line, at) => at > section && line.trim().startsWith(ROW_START));
+  if (start < 0) throw refuse(heading === null ? `${file} has no table` : `${file} has no table under "${heading}"`);
   let last = start;
   while (lines[last + 1]?.trim().startsWith(ROW_START)) last += 1;
   return last;
@@ -51,13 +54,57 @@ const addRow = (lines, heading, row, end, file) => lines.splice(lastRowOf(lines,
 
 const rowOf = (...cells) => `${ROW_START}${cells.map((cell) => (cell === "" ? " " : ` ${cell} `)).join(ROW_START)}${ROW_START}`;
 
-/** Raises the versions `refs` reach, as `change` of `task`; returns the files changed and `left`,
- * the elements reached and not raised with why: deprecated, or already raised for this task and
- * left as its row says. A
- * refusal is a `Refusal`, thrown before any file is written. */
-function bump(root, { task, change, breaking, refs }) {
+/** The lines of the files being changed, each with the line end it was written with, and what
+ * writing them takes. */
+function editing(root) {
+  const edited = new Map(); // file -> {lines, end}
+  return {
+    editOf(file, fallback = null) {
+      if (!edited.has(file)) {
+        const full = path.join(root, file);
+        const content = fallback !== null && !fs.existsSync(full) ? fallback : fs.readFileSync(full, "utf8"); // as written, so a line end or a byte order mark survives
+        edited.set(file, { lines: content.split(LINE_BREAK), end: content.includes(`${CARRIAGE_RETURN}${LINE_BREAK}`) ? CARRIAGE_RETURN : "" });
+      }
+      return edited.get(file);
+    },
+    save() {
+      for (const [file, { lines }] of edited) fs.writeFileSync(path.join(root, file), lines.join(LINE_BREAK));
+      return [...edited.keys()].sort();
+    },
+  };
+}
+
+/** The index of the row of `id` at `version` in the history `lines`. */
+const rowAt = (lines, id, version) => lines.findIndex((line) => {
+  const [rowId, rowVersion] = cells(line);
+  return rowId === id && rowVersion === String(version);
+});
+
+/** Writes the first row of each record named, its version 1 and its task `folder`: the system's
+ * first publication is 1.0.0. */
+function create(root, folder, ids) {
+  const project = load(root);
+  if (project === null) throw refuse("no design system under aidd_docs/ui");
+  const index = byId(project);
+  const files = editing(root);
+  const { lines, end } = files.editOf(HISTORY_FILE, HISTORY_HEADER);
+  for (const id of new Set(ids)) {
+    const record = index.get(id);
+    if (!record || fm(record).kind === "brand") throw refuse(`no versioned record named "${id}"`);
+    if (project.history.some((row) => row.Id === id)) throw refuse(`"${id}" already has history`);
+    addRow(lines, null, rowOf(id, isSystem(record) ? FIRST_SYSTEM_VERSION : FIRST_VERSION, CREATED, "no", folder), end, HISTORY_FILE);
+  }
+  return { changed: files.save() };
+}
+
+/** Raises the versions `refs` reach, as `change` of `task`, or with `created` writes the first row
+ * of the records `refs` name. Returns the files changed and, for a change, `left`, the elements
+ * reached and not raised with why: deprecated, or already raised for this task and left as its row
+ * says. A refusal is a `Refusal`, thrown before any file is written. */
+function bump(root, { task, change, breaking, created, refs }) {
   const folder = path.posix.normalize(task).replace(TRAILING_SEPARATORS, "");
   if (!folder.startsWith(TASKS_DIR)) throw refuse(`the task "${task}" must be a folder under ${TASKS_DIR}`);
+  if (created) return create(root, folder, refs);
   if (!change.trim() || CELL_BREAKERS.test(change)) throw refuse('the change must be one line without "|"');
   const project = load(root);
   if (project === null) throw refuse("no design system under aidd_docs/ui");
@@ -71,34 +118,28 @@ function bump(root, { task, change, breaking, refs }) {
   const followed = breaking ? new Set([...usages(project, tokenRefs).elements, ...usages(project, tokenRefs).screens]) : new Set();
   const raised = new Map(); // id -> new version
   const left = [];
-  const edited = new Map(); // file -> {lines, end}
-  const editOf = (record) => {
-    if (!edited.has(record.file)) {
-      const content = fs.readFileSync(path.join(root, record.file), "utf8"); // as written, so a line end or a byte order mark survives
-      edited.set(record.file, { lines: content.split(LINE_BREAK), end: content.includes(`${CARRIAGE_RETURN}${LINE_BREAK}`) ? CARRIAGE_RETURN : "" });
-    }
-    return edited.get(record.file);
-  };
+  const files = editing(root);
+  const historyOf = () => files.editOf(HISTORY_FILE, HISTORY_HEADER);
   for (const record of records.filter((each) => reached.has(fm(each).id))) {
     const { id } = fm(record);
     const held = fm(record).status === DEPRECATED;
-    const history = table(record.sections[HISTORY_SECTION]);
+    const current = project.history.find((row) => row.Id === id && row.Version === fm(record).version);
     if (held && !followed.has(id)) left.push({ id, why: DEPRECATED });
-    else if (history.at(-1)?.Task === folder) {
-      const row = history.at(-1);
-      if (!breaking || row.Breaking === BREAKING) left.push({ id, why: ALREADY_RAISED });
+    else if (current?.Task === folder) {
+      if (!breaking || current.Breaking === BREAKING) left.push({ id, why: ALREADY_RAISED });
       else {
-        const { lines, end } = editOf(record);
-        lines[lastRowOf(lines, HISTORY_HEADING, record.file)] = `${rowOf(row.Version, `${row.Change}; ${change.trim()}`, BREAKING, folder)}${end}`;
+        const { lines, end } = historyOf();
+        lines[rowAt(lines, id, current.Version)] = `${rowOf(id, current.Version, `${current.Change}; ${change.trim()}`, BREAKING, folder)}${end}`;
       }
     }
     else {
       if (!INTEGER_VERSION.test(fm(record).version ?? "")) throw refuse(`${record.file}: version "${fm(record).version}" is no integer`);
       const version = Number(fm(record).version) + 1;
-      const { lines, end } = editOf(record);
+      const { lines, end } = files.editOf(record.file);
       setFront(lines, "version", version, end, record.file);
       if (!held) setFront(lines, "status", "proposed", end, record.file);
-      addRow(lines, HISTORY_HEADING, rowOf(version, change.trim(), breaking ? BREAKING : "no", folder), end, record.file);
+      const history = historyOf();
+      addRow(history.lines, null, rowOf(id, version, change.trim(), breaking ? BREAKING : "no", folder), history.end, HISTORY_FILE);
       raised.set(id, version);
     }
   }
@@ -106,13 +147,12 @@ function bump(root, { task, change, breaking, refs }) {
   for (const review of records.filter((each) => fm(each).kind === "review")) {
     for (const id of list(fm(review).screens).filter((screen) => raised.has(screen))) {
       const screen = records.find((each) => fm(each).id === id);
-      const { lines, end } = editOf(review);
+      const { lines, end } = files.editOf(review.file);
       for (const state of list(fm(screen).states)) addRow(lines, VERDICTS_HEADING, rowOf(id, state, raised.get(id), "pending", ""), end, review.file);
     }
   }
 
-  for (const [file, { lines }] of edited) fs.writeFileSync(path.join(root, file), lines.join(LINE_BREAK));
-  return { changed: [...edited.keys()].sort(), left: left.sort((a, b) => (a.id < b.id ? -1 : 1)) };
+  return { changed: files.save(), left: left.sort((a, b) => (a.id < b.id ? -1 : 1)) };
 }
 
 module.exports = { bump };

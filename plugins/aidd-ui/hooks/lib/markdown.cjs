@@ -94,4 +94,4 @@ function list(value) {
   return Array.isArray(value) ? value : [value];
 }
 
-module.exports = { parseRecord, table, list };
+module.exports = { parseRecord, table, list, cells };

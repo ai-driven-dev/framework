@@ -33,11 +33,11 @@ Le contrat UI d'une feature, `ui.md`, vit dans le dossier de sa tâche, à côt�
 
 ### Fiches
 
-Chaque fiche porte en tête : `id` (égal au nom du fichier, unique), `kind`, `status`, `version`.
+Chaque fiche porte en tête : `id` (égal au nom du fichier, unique), `kind`. Les éléments, les parcours et les reviews portent en plus `status` et `version` ; `system.md` et `brand.md` n'ont ni l'un ni l'autre.
 
 | Fiche | Contient en plus |
 | --- | --- |
-| `system.md` | version du format des fiches, version du design system, plateformes, breakpoints, thèmes, langues et sens d'écriture, groupes de tokens primitifs, dossiers UI du code, chacun rattaché à une plateforme, fichier(s) où le code consomme les tokens, chemins ignorés, librairies de composants utilisées ; règles transverses s'il y en a |
+| `system.md` | version du format des fiches, plateformes, breakpoints, thèmes, langues et sens d'écriture, groupes de tokens primitifs, dossiers UI du code, chacun rattaché à une plateforme, fichier(s) où le code consomme les tokens, chemins ignorés, librairies de composants utilisées ; règles transverses s'il y en a |
 | `brand.md` | projet, utilisateurs, domaine, plateformes, personnalité et ton, charte imposée s'il y en a une, références et anti-références ; glossaire (mot à employer, mots interdits) s'il y en a un |
 | asset | type (icône, image, illustration), fichier, texte alternatif attendu |
 | atome, molécule, composition | quand l'utiliser et quand ne pas l'utiliser, éléments utilisés, tokens sémantiques utilisés, variantes, états (au moins défaut ; focus quand il prend le focus, et alors une section clavier ; survol, désactivé, chargement ou erreur quand ils existent), comportement clavier et rôle accessible, plateformes où il existe (toutes par défaut), un lien vers le code par plateforme |
@@ -64,11 +64,11 @@ Deux axes, jamais mêlés : où en est le design, et quelle version le code impl
 
 ### Versions et historique
 
-- Chaque élément a une version entière et un historique : une ligne par version, avec le changement, s'il est cassant, et la tâche qui l'a fait.
+- Chaque élément a une version entière, la seule chose d'historique que sa fiche porte. Un seul fichier, `aidd_docs/ui/history.md`, tient l'historique de tout : un tableau `Id | Version | Change | Breaking | Task`, une ligne par version de chaque fiche, avec le changement, s'il est cassant, et la tâche qui l'a fait. Le moteur l'écrit : `bump` ajoute la ligne de chaque version qu'il monte, `bump --created` écrit la première ligne (version 1, `created`) des fiches qu'on lui nomme, `1.0.0` pour `system` ; l'IA n'y touche jamais.
 - Une tâche se nomme par le chemin de son dossier, `aidd_docs/tasks/…` : historiques, `ui.md` et plan se rejoignent sur cette valeur.
 - Est cassant : retirer une variante, un état ou une propriété, renommer ou supprimer un token, déprécier un élément.
-- Le design system a sa propre version dans `system.md`, qui ne bouge qu'à une publication : une ligne liste les tâches publiées ; elle est cassante, et monte la majeure, quand une de ces tâches a cassé un élément ou quand elle le dit elle-même, pour un changement de tokens seuls ; sinon elle monte la mineure. Une tâche pas encore publiée n'est pas une erreur, et deux features parallèles sur des éléments distincts n'entrent jamais en conflit.
-- Deux lignes d'historique qui revendiquent la même version d'un élément sont signalées, pour que la personne tranche, comme un conflit git.
+- Le design system a sa propre version, celle de la dernière ligne d'id `system` de `history.md`, qui ne bouge qu'à une publication, ajoutée par la personne qui publie : une ligne liste les tâches publiées ; elle est cassante, et monte la majeure, quand une de ces tâches a cassé un élément ou quand elle le dit elle-même, pour un changement de tokens seuls ; sinon elle monte la mineure. Une tâche pas encore publiée n'est pas une erreur, et deux features parallèles sur des éléments distincts n'entrent jamais en conflit.
+- Deux lignes de `history.md` qui revendiquent la même version d'une même fiche sont signalées, pour que la personne tranche, comme un conflit git.
 - `system.md` porte la version du format des fiches ; une version que le validateur ne connaît pas donne un seul message, jamais une avalanche.
 
 ### Changements
@@ -161,7 +161,7 @@ Deux axes, jamais mêlés : où en est le design, et quelle version le code impl
 
 | PR | Décision |
 | --- | --- |
-| 2 | Réalisé : la règle H8 compare un élément validé ou déprécié à sa fiche et son rendu committés (`HEAD`, lus par `git`) ; `status`, `code` (liens et versions) et l'historique ne comptent pas comme une modification, et sans git, sans dépôt ou sans fiche committée la règle se tait. La sous-commande `impact` imprime le graphe d'usages en JSON (tokens, éléments, écrans, parcours, rendus, fichiers de code). |
+| 2 | Réalisé : la règle H8 compare un élément validé ou déprécié à sa fiche et son rendu committés (`HEAD`, lus par `git`) ; `status` et `code` (liens et versions) ne comptent pas comme une modification, et sans git, sans dépôt ou sans fiche committée la règle se tait. La sous-commande `impact` imprime le graphe d'usages en JSON (tokens, éléments, écrans, parcours, rendus, fichiers de code). |
 | 2 | Réalisé : le flux de changement vit dans `01-system`. Un rendu charge `../tokens.css` au lieu de porter les valeurs ; la sous-commande `tokens` régénère ce seul fichier, et le skill réécrit le balisage des rendus touchés, écrans compris, d'après le rapport d'impact. Il s'arrête en disant qu'une review est attendue, sans nommer le skill qui la conduit. |
 | 2 | Réalisé : `#Export` est facultatif pour toute techno, un composant Vue, Svelte ou Astro se lie par son chemin et sa version, sans cas particulier. Les couleurs d'un fichier sans lecteur propre sont cherchées dans ses chaînes seulement ; une couleur écrite en nombre, comme le `0xFF…` de Dart, n'est pas trouvée. |
 | 3 | La page de review est un fichier statique : elle produit la fiche review à enregistrer, sans serveur. |

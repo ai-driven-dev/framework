@@ -11,10 +11,22 @@ const tokensCheck = require(path.join(HOOKS, "tokens.cjs"));
 
 const UI = "aidd_docs/ui";
 
-const history = (...rows) =>
-  ["## History", "", "| Version | Change | Breaking | Task |", "| --- | --- | --- | --- |", ...rows.map((row) => `| ${row.join(" | ")} |`)].join("\n");
+const HISTORY = `${UI}/history.md`;
 
-const FIRST_ROW = ["1", "created", "no", "aidd_docs/tasks/ds-init"];
+const row = (...cells) => `| ${cells.join(" | ")} |`;
+
+/** history.md for these rows, each `[id, version, change, breaking, task]`. */
+const history = (...rows) => ["# History", "", "| Id | Version | Change | Breaking | Task |", "| --- | --- | --- | --- | --- |", ...rows.map((each) => row(...each))].join("\n") + "\n";
+
+const TASK = "aidd_docs/tasks/ds-init";
+const created = (id) => [id, "1", "created", "no", TASK];
+
+const ROWS = [
+  ["system", "1.0.0", "first system", "no", TASK],
+  ["system", "2.0.0", "old-button retired", "yes", "aidd_docs/tasks/retire-old-button"],
+  ...["icon-search", "button", "search-field", "dialog", "old-button", "home", "onboarding", "first-pass"].map(created),
+  ["old-button", "2", "deprecated for button", "yes", "aidd_docs/tasks/retire-old-button"],
+];
 
 const record = (frontMatter, ...sections) => `---\n${frontMatter.join("\n")}\n---\n\n${sections.join("\n\n")}\n`;
 
@@ -28,8 +40,6 @@ const SYSTEM = record(
   [
     "id: system",
     "kind: system",
-    "status: validated",
-    "version: 2.0.0",
     "format: 1",
     "platforms: [web]",
     "breakpoints: [mobile, desktop]",
@@ -43,12 +53,11 @@ const SYSTEM = record(
     "libraries: [@radix-ui/react-dialog]",
   ],
   "# Design system",
-  "## Breakpoints\n\n| Name | Query |\n| --- | --- |\n| mobile | |\n| desktop | (min-width: 64rem) |",
-  history(["1.0.0", "first system", "no", "aidd_docs/tasks/ds-init"], ["2.0.0", "old-button retired", "yes", "aidd_docs/tasks/retire-old-button"])
+  "## Breakpoints\n\n| Name | Query |\n| --- | --- |\n| mobile | |\n| desktop | (min-width: 64rem) |"
 );
 
 const BRAND = record(
-  ["id: brand", "kind: brand", "status: validated", "version: 1"],
+  ["id: brand", "kind: brand"],
   "# Brand",
   "## Project\n\nA search tool.",
   "## Users\n\nAnalysts.",
@@ -57,8 +66,7 @@ const BRAND = record(
   "## Personality and tone\n\nPlain and calm.",
   "## Imposed charter\n\nNone.",
   "## References\n\nA library catalogue.",
-  "## Anti-references\n\nA casino.",
-  history(FIRST_ROW)
+  "## Anti-references\n\nA casino."
 );
 
 const TOKENS = {
@@ -103,8 +111,7 @@ const RESOLVER = {
 
 const ICON = record(
   ["id: icon-search", "kind: asset", "status: validated", "version: 1", "type: icon", "file: icon-search.svg", "alt: Search"],
-  "# Search icon",
-  history(FIRST_ROW)
+  "# Search icon"
 );
 
 const ICON_FILE = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><circle cx="10" cy="10" r="7"/></svg>\n';
@@ -124,8 +131,7 @@ const BUTTON = record(
   ],
   "# Button",
   usage("Any action a person starts; never for navigation."),
-  KEYBOARD,
-  history(FIRST_ROW)
+  KEYBOARD
 );
 
 const SEARCH_FIELD = record(
@@ -142,8 +148,7 @@ const SEARCH_FIELD = record(
   ],
   "# Search field",
   usage("Searching a list; never for a form field."),
-  KEYBOARD,
-  history(FIRST_ROW)
+  KEYBOARD
 );
 
 const DIALOG = record(
@@ -161,8 +166,7 @@ const DIALOG = record(
   ],
   "# Dialog",
   usage("A decision that blocks the page."),
-  "## Keyboard\n\nEscape closes it; focus stays inside while it is open.",
-  history(FIRST_ROW)
+  "## Keyboard\n\nEscape closes it; focus stays inside while it is open."
 );
 
 const OLD_BUTTON = record(
@@ -179,8 +183,7 @@ const OLD_BUTTON = record(
     "replaced-by: button",
   ],
   "# Old button",
-  usage("Nowhere: replaced by button."),
-  history(FIRST_ROW, ["2", "deprecated for button", "yes", "aidd_docs/tasks/retire-old-button"])
+  usage("Nowhere: replaced by button.")
 );
 
 const HOME = record(
@@ -196,15 +199,13 @@ const HOME = record(
     "route: /",
     "code: src/ui/HomePage.tsx#HomePage@1",
   ],
-  "# Home",
-  history(FIRST_ROW)
+  "# Home"
 );
 
 const ONBOARDING = record(
   ["id: onboarding", "kind: journey", "status: validated", "version: 1", "persona: a first-time analyst"],
   "# Onboarding",
-  "## Steps\n\n| Screen | Action |\n| --- | --- |\n| home | types a query |\n| home | opens a result |",
-  history(FIRST_ROW)
+  "## Steps\n\n| Screen | Action |\n| --- | --- |\n| home | types a query |\n| home | opens a result |"
 );
 
 const REVIEW = record(
@@ -219,8 +220,7 @@ const REVIEW = record(
     "| home | empty | 1 | ok | |",
     "| home | loading | 1 | ko | spinner too small |",
     "| home | error | 1 | pending | |",
-  ].join("\n"),
-  history(FIRST_ROW)
+  ].join("\n")
 );
 
 /** A render's style: one custom property per token its record declares, so it uses them all
@@ -258,6 +258,7 @@ const CODE = {
 const FILES = {
   [`${UI}/system.md`]: SYSTEM,
   [`${UI}/brand.md`]: BRAND,
+  [HISTORY]: history(...ROWS),
   [`${UI}/tokens.json`]: `${JSON.stringify(TOKENS, null, 2)}\n`,
   [`${UI}/tokens.resolver.json`]: `${JSON.stringify(RESOLVER, null, 2)}\n`,
   [`${UI}/themes/dark.json`]: `${JSON.stringify(DARK, null, 2)}\n`,
@@ -312,6 +313,12 @@ function editTokens(dir, change) {
   generateStylesheet(dir);
 }
 
+/** Appends rows, each `[id, version, change, breaking, task]`, to history.md. */
+function addHistory(dir, ...rows) {
+  const file = path.join(dir, HISTORY);
+  fs.writeFileSync(file, fs.readFileSync(file, "utf8") + rows.map((each) => `${row(...each)}\n`).join(""));
+}
+
 /** Writes one file of the project. */
 function put(dir, name, content) {
   const file = path.join(dir, name);
@@ -334,4 +341,4 @@ function commitAll(dir) {
   git(dir, "commit", "-q", "--no-verify", "-m", "snapshot");
 }
 
-module.exports = { UI, writeProject, generateStylesheet, edit, editTokens, put, record, history, git, commitAll };
+module.exports = { UI, HISTORY, addHistory, writeProject, generateStylesheet, edit, editTokens, put, record, history, git, commitAll };
