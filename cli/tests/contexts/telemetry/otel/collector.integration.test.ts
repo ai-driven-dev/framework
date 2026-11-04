@@ -6,8 +6,17 @@ import { gzipSync } from "node:zlib";
 import { expect, it, vi } from "vitest";
 import { startOtelCollector } from "../../../../src/contexts/telemetry/infrastructure/otel/actions/collect.js";
 
+const TOKEN = "example-private-collector-token";
+
+async function seedToken(home: string): Promise<void> {
+  const directory = join(home, ".local/share/aidd-otel-observation");
+  await mkdir(directory, { recursive: true, mode: 0o700 });
+  await writeFile(join(directory, "collector-token"), `${TOKEN}\n`, { mode: 0o600 });
+}
+
 it("captures authenticated OTLP locally, rejects unauthenticated requests, and keeps files private", async () => {
   const home = await mkdtemp(join(tmpdir(), "aidd-collector-"));
+  await seedToken(home);
   const listen = vi.spyOn(Server.prototype, "listen");
   const collector = await startOtelCollector({ home, port: 0 });
   try {
@@ -18,9 +27,11 @@ it("captures authenticated OTLP locally, rejects unauthenticated requests, and k
       expect(await readFile(file, "utf8")).toBe("");
       expect((await stat(file)).mode & 0o777).toBe(0o600);
     }
-    const token = (
-      await readFile(join(home, ".local/share/aidd-otel-observation/collector-token"), "utf8")
-    ).trim();
+    expect(
+      (
+        await readFile(join(home, ".local/share/aidd-otel-observation/collector-token"), "utf8")
+      ).trim()
+    ).toBe(TOKEN);
     const url = `http://127.0.0.1:${collector.port}/claude/v1/logs`;
     const body = JSON.stringify({ resourceLogs: [{ scopeLogs: [] }] });
     expect((await fetch(url, { method: "POST", body })).status).toBe(403);
@@ -32,7 +43,7 @@ it("captures authenticated OTLP locally, rejects unauthenticated requests, and k
       (
         await fetch(url, {
           method: "POST",
-          headers: { authorization: `Bearer ${token}`, "content-encoding": "gzip" },
+          headers: { authorization: `Bearer ${TOKEN}`, "content-encoding": "gzip" },
           body: gzipSync(body),
         })
       ).status
@@ -41,7 +52,7 @@ it("captures authenticated OTLP locally, rejects unauthenticated requests, and k
       (
         await fetch(url, {
           method: "POST",
-          headers: { authorization: `Bearer ${token}` },
+          headers: { authorization: `Bearer ${TOKEN}` },
           body: "not json",
         })
       ).status
@@ -50,7 +61,7 @@ it("captures authenticated OTLP locally, rejects unauthenticated requests, and k
       (
         await fetch(`http://127.0.0.1:${collector.port}/not-a-tool/v1/logs`, {
           method: "POST",
-          headers: { authorization: `Bearer ${token}` },
+          headers: { authorization: `Bearer ${TOKEN}` },
           body,
         })
       ).status
@@ -67,6 +78,19 @@ it("captures authenticated OTLP locally, rejects unauthenticated requests, and k
     ).toBe(0o600);
   } finally {
     listen.mockRestore();
+    await collector.close();
+    await rm(home, { recursive: true, force: true });
+  }
+});
+
+it("creates a private random token when none exists", async () => {
+  const home = await mkdtemp(join(tmpdir(), "aidd-collector-token-"));
+  const collector = await startOtelCollector({ home, port: 0 });
+  try {
+    const path = join(home, ".local/share/aidd-otel-observation/collector-token");
+    expect((await readFile(path, "utf8")).trim()).toMatch(/^[A-Za-z0-9_-]{43}$/);
+    expect((await stat(path)).mode & 0o777).toBe(0o600);
+  } finally {
     await collector.close();
     await rm(home, { recursive: true, force: true });
   }
@@ -89,16 +113,16 @@ it("does not follow an existing token symlink or replace its target", async () =
 
 it("serializes concurrent appends into complete records", async () => {
   const home = await mkdtemp(join(tmpdir(), "aidd-collector-concurrent-"));
+  await seedToken(home);
   const collector = await startOtelCollector({ home, port: 0 });
   try {
     const directory = join(home, ".local/share/aidd-otel-observation");
-    const token = (await readFile(join(directory, "collector-token"), "utf8")).trim();
     const url = `http://127.0.0.1:${collector.port}/codex/v1/logs`;
     const statuses = await Promise.all(
       Array.from({ length: 8 }, (_, number) =>
         fetch(url, {
           method: "POST",
-          headers: { authorization: `Bearer ${token}` },
+          headers: { authorization: `Bearer ${TOKEN}` },
           body: JSON.stringify({ number }),
         }).then((response) => response.status)
       )
