@@ -181,6 +181,62 @@ describe("a group's matcher", () => {
   });
 });
 
+describe("a hook's timeout", () => {
+  const timed = (timeout?: unknown) =>
+    JSON.stringify({
+      hooks: {
+        PostToolUse: [
+          { hooks: [{ command: "node run.js", ...(timeout === undefined ? {} : { timeout }) }] },
+        ],
+      },
+    });
+
+  it("is carried, in Cursor's seconds, onto the entries of a flat translate", () => {
+    expect(JSON.parse(mergeCursorFlatHooks(null, timed(5)).content)).toStrictEqual({
+      version: 1,
+      hooks: { postToolUse: [{ command: "node run.js", timeout: 5 }] },
+    });
+  });
+
+  it("is carried onto the entries of a project install", () => {
+    expect(
+      JSON.parse(mergeCursorProjectHooksJson(null, timed(5), "plugin-a").content)
+    ).toStrictEqual({
+      version: 1,
+      hooks: { postToolUse: [{ command: "node run.js", timeout: 5 }] },
+    });
+  });
+
+  it("leaves no timeout key on an entry whose source declares none", () => {
+    expect(
+      JSON.parse(mergeCursorFlatHooks(null, timed()).content).hooks.postToolUse[0]
+    ).not.toHaveProperty("timeout");
+  });
+
+  it("is dropped when it is not a number", () => {
+    expect(
+      JSON.parse(mergeCursorFlatHooks(null, timed("5")).content).hooks.postToolUse[0]
+    ).not.toHaveProperty("timeout");
+  });
+
+  it("does not stop an entry installed without one from being uninstalled", () => {
+    const legacy = JSON.stringify({
+      version: 1,
+      hooks: { postToolUse: [{ command: "node ./.cursor/hooks/aidd-a/journal.cjs" }] },
+    });
+    const { content } = mergeCursorProjectHooksJson(
+      legacy,
+      hooksJson(`node ${PLUGIN_ROOT_VAR}/hooks/journal.cjs`).replace("}]}]", ',"timeout":5}]}]'),
+      "aidd-a"
+    );
+    const entries = JSON.parse(content).hooks.postToolUse;
+    expect(entries).toStrictEqual([
+      { command: "node ./.cursor/hooks/aidd-a/journal.cjs", timeout: 5 },
+    ]);
+    expect(JSON.parse(unmergeCursorProjectHooksJson(content, "aidd-a")).hooks).toStrictEqual({});
+  });
+});
+
 describe("a matcher group that declares no hooks list", () => {
   const groupless = JSON.stringify({
     hooks: { Stop: [{ matcher: "x" }, { hooks: [{ command: "a" }] }] },
