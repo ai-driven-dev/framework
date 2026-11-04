@@ -6,6 +6,27 @@ import { describe, expect, it } from "vitest";
 import { cliPath, createTestEnv, runCli, sandboxedEnv } from "./helpers.js";
 
 describe.skipIf(process.platform === "win32")("native OTLP launch", () => {
+  it("verifies captured receipt through the CLI and fails when capture is absent", async () => {
+    const { projectDir, fakeHome, cleanup } = await createTestEnv("telemetry-verify");
+    const directory = join(fakeHome, ".local/share/aidd-otel-observation");
+    try {
+      await mkdir(directory, { recursive: true });
+      await writeFile(join(directory, "collector-token"), "test-token", { mode: 0o600 });
+      const args = ["--config=claude", "--endpoint=dev"];
+      const init = await runCli(["telemetry", "otel", "init", ...args], projectDir, fakeHome);
+      expect(init.exitCode).toBe(0);
+      const missing = await runCli(["telemetry", "otel", "verify", ...args], projectDir, fakeHome);
+      expect(missing.exitCode).not.toBe(0);
+      await writeFile(join(directory, "claude.jsonl"), '{"signal":"logs"}\n', { mode: 0o600 });
+      const verified = await runCli(["telemetry", "otel", "verify", ...args], projectDir, fakeHome);
+      expect(verified.exitCode).toBe(0);
+      expect(verified.stdout).toContain("1 captured lines");
+      expect(verified.stdout).not.toContain("test-token");
+    } finally {
+      await cleanup();
+    }
+  });
+
   it.each([
     ["SIGINT", 42],
     ["SIGTERM", 43],

@@ -1,8 +1,8 @@
-import { mkdir, mkdtemp, readFile, rm, stat, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, open, readFile, rm, stat, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { initializeOtel } from "../../../../src/contexts/telemetry/infrastructure/otel/init-otel.js";
+import { initializeOtel } from "../../../../src/contexts/telemetry/infrastructure/otel/actions/init.js";
 
 const TOKEN = "example-private-token";
 let home: string;
@@ -47,8 +47,10 @@ describe.skipIf(process.platform === "win32")("OTLP initialization", () => {
     );
     const result = await initializeOtel("claude", "dev", { home, env: {} });
     expect(result.changed).toBe(true);
-    expect((await stat(path)).mode & 0o777).toBe(0o600);
-    const content = await readFile(path, "utf8");
+    const handle = await open(path, "r");
+    const content = await handle.readFile("utf8");
+    expect((await handle.stat()).mode & 0o777).toBe(0o600);
+    await handle.close();
     expect(JSON.parse(content)).toMatchObject({
       permissions: { allow: [] },
       env: {
@@ -64,6 +66,16 @@ describe.skipIf(process.platform === "win32")("OTLP initialization", () => {
       changed: false,
     });
     expect(await readFile(path, "utf8")).toBe(content);
+  });
+
+  it("refuses a symlink without reading or replacing its target", async () => {
+    await seedToken();
+    const target = join(home, "original.json");
+    await seed(target, "{}");
+    await mkdir(join(home, ".claude"));
+    await symlink(target, join(home, ".claude/settings.json"));
+    await expect(initializeOtel("claude", "dev", { home, env: {} })).rejects.toThrow();
+    expect(await readFile(target, "utf8")).toBe("{}");
   });
 
   it("refuses invalid config or a conflicting exporter without altering the file", async () => {

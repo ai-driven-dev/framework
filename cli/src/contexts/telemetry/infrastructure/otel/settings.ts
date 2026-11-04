@@ -1,13 +1,12 @@
-import { execFile, spawn } from "node:child_process";
-import { randomUUID } from "node:crypto";
+import { execFile } from "node:child_process";
 import { constants } from "node:fs";
-import { lstat, mkdir, open, readFile, rename, rm, writeFile } from "node:fs/promises";
-import { constants as osConstants } from "node:os";
-import { dirname, join } from "node:path";
+import { open } from "node:fs/promises";
+import { join } from "node:path";
 import { promisify } from "node:util";
 import { claudeConfigDir } from "../../domain/claude-projects-root.js";
-import claudeTemplate from "./claude-dev.json" with { type: "json" };
-import codexTemplate from "./codex-dev.json" with { type: "json" };
+import claudeTemplate from "./config/claude.json" with { type: "json" };
+import codexTemplate from "./config/codex.json" with { type: "json" };
+import opencodeTemplate from "./config/opencode.json" with { type: "json" };
 import {
   mergeCodexExporters,
   mergeJsonEnvironment,
@@ -15,21 +14,21 @@ import {
   openCodeInstrumentation,
   rejectConflict,
 } from "./config-edits.js";
-import opencodeTemplate from "./opencode-dev.json" with { type: "json" };
+import { readSettings } from "./files.js";
 
 export const OPENCODE_CONFIG_ID = "opencode";
 export const OTEL_CONFIGS = ["claude", "codex", OPENCODE_CONFIG_ID] as const;
 export const OTEL_ENDPOINTS = ["dev", "prod"] as const;
-type Config = (typeof OTEL_CONFIGS)[number];
-type Endpoint = (typeof OTEL_ENDPOINTS)[number];
+export type Config = (typeof OTEL_CONFIGS)[number];
+export type Endpoint = (typeof OTEL_ENDPOINTS)[number];
 
-interface Host {
+export interface Host {
   readonly home: string;
   readonly env: NodeJS.ProcessEnv;
   readonly opencodeVersion?: () => Promise<string>;
 }
 
-interface Edit {
+export interface Edit {
   readonly path: string;
   readonly initial: string;
   readonly update: (content: string) => string;
@@ -41,7 +40,7 @@ const COLLECTOR = "http://127.0.0.1:14318";
 const TOKEN_PATH = ".local/share/aidd-otel-observation/collector-token";
 const SIGNALS = ["LOGS", "METRICS", "TRACES"] as const;
 
-function interpolate(template: Readonly<Record<string, string>>, token: string) {
+export function interpolate(template: Readonly<Record<string, string>>, token: string) {
   return Object.fromEntries(
     Object.entries(template).map(([key, value]) => [
       key,
@@ -50,7 +49,7 @@ function interpolate(template: Readonly<Record<string, string>>, token: string) 
   );
 }
 
-async function readToken(home: string): Promise<string> {
+export async function readToken(home: string): Promise<string> {
   try {
     const handle = await open(join(home, TOKEN_PATH), constants.O_RDONLY | constants.O_NOFOLLOW);
     try {
@@ -95,7 +94,7 @@ function claudeEdit(host: Host, token: string): Edit {
   };
 }
 
-async function openCodeVersion(host: Host): Promise<"1" | "2"> {
+export async function openCodeVersion(host: Host): Promise<"1" | "2"> {
   let output: string;
   try {
     output = host.opencodeVersion
@@ -126,7 +125,7 @@ function openCodeGlobalDir(host: Host): string {
   return join(host.env.XDG_CONFIG_HOME || join(host.home, ".config"), OPENCODE_CONFIG_ID);
 }
 
-async function openCodeV1Edit(host: Host): Promise<Edit> {
+export async function openCodeV1Edit(host: Host): Promise<Edit> {
   const global = openCodeGlobalDir(host);
   const custom = host.env.OPENCODE_CONFIG_DIR;
   const initial = "{}\n";
@@ -175,88 +174,7 @@ async function openCodeEdit(host: Host, token: string): Promise<Edit> {
   };
 }
 
-export async function runOtelOpenCode(args: readonly string[], host: Host): Promise<number> {
-  if ((await openCodeVersion(host)) !== "1") {
-    throw new Error("OTLP launch is for OpenCode 1. Use the background service with OpenCode 2.");
-  }
-  const edit = await openCodeV1Edit(host);
-  const current = await readSettings(edit.path, edit.initial);
-  if (edit.update(current.content) !== current.content) {
-    throw new Error(
-      "Initialize OpenCode 1 OTLP with aidd telemetry otel init --config=opencode --endpoint=dev."
-    );
-  }
-  const token = await readToken(host.home);
-  const additions = interpolate(opencodeTemplate.env, token);
-  for (const [key, value] of Object.entries(additions))
-    rejectConflict(key, host.env[key] || undefined, value);
-  const child = spawn(OPENCODE_CONFIG_ID, args, {
-    env: { ...host.env, ...additions },
-    stdio: "inherit",
-  });
-  const interrupt = () => child.kill("SIGINT");
-  const terminate = () => child.kill("SIGTERM");
-  process.on("SIGINT", interrupt);
-  process.on("SIGTERM", terminate);
-  try {
-    return await new Promise((resolve, reject) => {
-      child.once("error", () => reject(new Error("Could not launch OpenCode.")));
-      child.once("exit", (code, signal) =>
-        resolve(code ?? (signal ? 128 + osConstants.signals[signal] : 1))
-      );
-    });
-  } finally {
-    process.off("SIGINT", interrupt);
-    process.off("SIGTERM", terminate);
-  }
-}
-
-async function readSettings(path: string, initial: string) {
-  const info = await lstat(path).catch((error) => {
-    if (error.code === "ENOENT") return null;
-    throw error;
-  });
-  if (!info) return { content: initial, private: false, exists: false };
-  if (!info.isFile()) throw new Error("OTLP configuration must be a regular file.");
-  return {
-    content: await readFile(path, "utf8"),
-    private: (info.mode & 0o077) === 0,
-    exists: true,
-  };
-}
-
-async function applyEdit(edit: Edit): Promise<boolean> {
-  const before = await readSettings(edit.path, edit.initial);
-  const next = edit.update(before.content);
-  if (next === before.content && (before.private || edit.containsToken === false)) return false;
-
-  await mkdir(dirname(edit.path), { recursive: true, mode: 0o700 });
-  const lockPath = `${edit.path}.aidd-otel.lock`;
-  const lock = await open(lockPath, "wx", 0o600);
-  try {
-    const current = await readSettings(edit.path, edit.initial);
-    if (
-      current.content !== before.content ||
-      current.private !== before.private ||
-      current.exists !== before.exists
-    ) {
-      throw new Error("OTLP settings changed during initialization. Retry with the updated file.");
-    }
-    const temporary = `${edit.path}.${randomUUID()}.tmp`;
-    try {
-      await writeFile(temporary, next, { flag: "wx", mode: 0o600 });
-      await rename(temporary, edit.path);
-    } finally {
-      await rm(temporary, { force: true });
-    }
-  } finally {
-    await lock.close();
-    await rm(lockPath, { force: true });
-  }
-  return true;
-}
-
-export async function initializeOtel(config: Config, endpoint: Endpoint, host: Host) {
+export async function configurationEdit(config: Config, endpoint: Endpoint, host: Host) {
   if (endpoint === "prod") {
     throw new Error(
       "OTLP production configuration is unavailable until the Gouvernail endpoint is published."
@@ -290,5 +208,5 @@ export async function initializeOtel(config: Config, endpoint: Endpoint, host: H
       edit = await openCodeEdit(host, token);
       break;
   }
-  return { path: edit.path, launch: edit.launch, changed: await applyEdit(edit) };
+  return edit;
 }

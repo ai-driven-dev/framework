@@ -27,7 +27,12 @@ import { USAGE_AGENTS, USAGE_TOOLS } from "../../contexts/telemetry/domain/usage
 import type { Prompter } from "../../kernel/ports/prompter.js";
 import { createDeps } from "../../runtime/wiring/framework.js";
 import type { TelemetryDeps } from "../../runtime/wiring/telemetry.js";
-import { configureOtel, launchOtel, otelOptions } from "../../runtime/wiring/telemetry-otel.js";
+import {
+  checkOtel,
+  configureOtel,
+  launchOtel,
+  otelOptions,
+} from "../../runtime/wiring/telemetry-otel.js";
 import {
   printForgetResult,
   printIdentityRule,
@@ -130,39 +135,57 @@ export function registerTelemetryCommand(program: Command): void {
     .command("telemetry")
     .description("Measure what Claude Code and Codex sessions consume, locally");
   const otel = telemetry.command("otel").description("Configure native OpenTelemetry exporters");
-  otel
-    .command("init")
-    .description("Enable detailed local OTLP export in one tool's user configuration")
-    .addOption(
-      new Option("--config <tool>", "User configuration to merge")
-        .choices(otelOptions.configs)
-        .makeOptionMandatory()
-    )
-    .addOption(
-      new Option("--endpoint <environment>", "Collector destination")
-        .choices(otelOptions.endpoints)
-        .makeOptionMandatory()
-    )
-    .action(
-      async (options: {
-        config: (typeof otelOptions.configs)[number];
-        endpoint: (typeof otelOptions.endpoints)[number];
-      }) => {
-        const { output } = parseGlobalOptions(program);
-        try {
-          const result = await configureOtel(options.config, options.endpoint);
-          output.info(
-            result.changed ? `Updated ${result.path}` : `Already configured in ${result.path}`
-          );
-          output.info(
-            "Local OTLP capture may include prompts, responses, commands and tool output."
-          );
-          output.info(result.launch);
-        } catch (error) {
-          new ErrorHandler(output).handle(error);
+  for (const action of ["init", "verify"] as const) {
+    otel
+      .command(action)
+      .description(
+        action === "init"
+          ? "Enable detailed local OTLP export in one tool's user configuration"
+          : "Check native OTLP configuration and existing local capture without changing files"
+      )
+      .addOption(
+        new Option(
+          "--config <tool>",
+          `User configuration to ${action === "init" ? "merge" : "verify"}`
+        )
+          .choices(otelOptions.configs)
+          .makeOptionMandatory()
+      )
+      .addOption(
+        new Option("--endpoint <environment>", "Collector destination")
+          .choices(otelOptions.endpoints)
+          .makeOptionMandatory()
+      )
+      .action(
+        async (options: {
+          config: (typeof otelOptions.configs)[number];
+          endpoint: (typeof otelOptions.endpoints)[number];
+        }) => {
+          const { output } = parseGlobalOptions(program);
+          try {
+            if (action === "init") {
+              const result = await configureOtel(options.config, options.endpoint);
+              output.info(
+                result.changed ? `Updated ${result.path}` : `Already configured in ${result.path}`
+              );
+              output.info(
+                "Local OTLP capture may include prompts, responses, commands and tool output."
+              );
+              output.info(result.launch);
+            } else {
+              const result = await checkOtel(options.config, options.endpoint);
+              output.info(`Configuration verified in ${result.path}`);
+              output.info(
+                `${result.lines} captured lines in ${result.capture}; last modified ${result.modifiedAt}`
+              );
+              output.info("Existing capture does not prove delivery from the current session.");
+            }
+          } catch (error) {
+            new ErrorHandler(output).handle(error);
+          }
         }
-      }
-    );
+      );
+  }
 
   otel
     .command("run [args...]")

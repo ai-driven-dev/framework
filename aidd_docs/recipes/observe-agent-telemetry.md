@@ -1,6 +1,6 @@
 # Observe agent telemetry locally
 
-Configure native telemetry for Claude Code, Codex and OpenCode against the private development collector, then compare observed fields.
+Configure native telemetry for Claude Code, Codex and OpenCode against the private development collector, then verify receipt.
 
 ## Steps to observe agent telemetry locally
 
@@ -31,29 +31,14 @@ Claude and Codex also support native OTLP logs, metrics and traces; Claude traci
 
 ### 3) 🧪 Verify receipt
 
-Run a short test session and a non-destructive tool, then check that the relevant local file grows. OpenCode session SSE and native OTLP are separate captures; the SSE capture depends on a running subscriber.
+Run a short session with the selected tool, then ask the CLI to check its configuration and captured telemetry:
 
 ```sh
-for file in "$HOME/.local/share/aidd-otel-observation/claude.jsonl" \
-  "$HOME/.local/share/aidd-otel-observation/codex.jsonl" \
-  "$HOME/.local/share/aidd-otel-observation/opencode.jsonl" \
-  "$HOME/.local/share/aidd-otel-observation/opencode/events.jsonl"; do
-  if [ -f "$file" ]; then wc -l "$file"; fi
-done
+aidd telemetry otel verify --config=claude --endpoint=dev
+aidd telemetry otel verify --config=codex --endpoint=dev
+aidd telemetry otel verify --config=opencode --endpoint=dev
 ```
 
-A configured exporter does not prove delivery. Existing sessions may need restarting. OpenCode SSE misses events during disconnection and does not cover another server or `--standalone` session.
+Use only the command for the tool you configured. Verification reads the selected tool's local capture and reports its nonempty line count and modification time. Historical records prove previous receipt, not delivery from the current session; compare the reported time with your test session. Follow the CLI's failure message if configuration or captured lines are missing.
 
-### 4) 📊 Compare observed fields
-
-| Field | Claude Code | Codex | OpenCode v2 SSE |
-| --- | --- | --- | --- |
-| Session | `session.id` | `conversation.id` | `data.sessionID` |
-| Model | `model` | `model` | `data.model.id` |
-| Input / output tokens | `input_tokens` / `output_tokens` | `input_token_count` / `output_token_count` | `data.tokens.input` / `data.tokens.output` |
-| Cache reads | `cache_read_tokens` | `cached_token_count` | `data.tokens.cache.read` |
-| Tool activity | `tool_result` | `codex.tool_result` | `session.tool.input.started`, `session.tool.success` |
-
-These fields were observed in local samples, not guaranteed in every session. Align token definitions before comparing them: for example, Claude input excludes cache reads and writes. OpenCode v2 can turn unavailable token values into zero, so zero is not proof of no usage. See [Claude token counters](https://code.claude.com/docs/en/monitoring-usage) and [OpenCode usage normalization](https://github.com/anomalyco/opencode/blob/v2.2.5/packages/core/src/session/usage.ts), accessed 2026-11-04.
-
-Files grow without automatic rotation. Configuration and receipt do not establish a Gouvernail integration; forwarding, normalization and retention remain future work.
+Captured files need a retention policy; initialization and verification do not rotate or delete them.

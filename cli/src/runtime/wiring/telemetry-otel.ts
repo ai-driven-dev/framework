@@ -1,11 +1,12 @@
 import { homedir } from "node:os";
+import { initializeOtel } from "../../contexts/telemetry/infrastructure/otel/actions/init.js";
+import { runOtelOpenCode } from "../../contexts/telemetry/infrastructure/otel/actions/run.js";
+import { verifyOtel } from "../../contexts/telemetry/infrastructure/otel/actions/verify.js";
 import {
-  initializeOtel,
   OPENCODE_CONFIG_ID,
   OTEL_CONFIGS,
   OTEL_ENDPOINTS,
-  runOtelOpenCode,
-} from "../../contexts/telemetry/infrastructure/otel/init-otel.js";
+} from "../../contexts/telemetry/infrastructure/otel/settings.js";
 
 export const otelOptions = {
   configs: OTEL_CONFIGS,
@@ -22,4 +23,11 @@ export function configureOtel(
 
 export function launchOtel(args: readonly string[]) {
   return runOtelOpenCode(args, { home: homedir(), env: process.env });
+}
+
+export function checkOtel(
+  config: (typeof OTEL_CONFIGS)[number],
+  endpoint: (typeof OTEL_ENDPOINTS)[number]
+) {
+  return verifyOtel(config, endpoint, { home: homedir(), env: process.env });
 }

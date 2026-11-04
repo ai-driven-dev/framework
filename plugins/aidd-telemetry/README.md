@@ -55,4 +55,4 @@ Codex: trust the plugin's hooks once, with `/hooks` in the TUI.
 
 ## Provider OpenTelemetry
 
-`aidd telemetry otel init --config=<claude|codex|opencode> --endpoint=<dev|prod>` configures the selected provider to send its native OpenTelemetry to the selected collector. This is a separate opt-in from local usage measurement. Raw provider telemetry can contain sensitive data, including secrets. The private development collector listens at `http://127.0.0.1:14318` and requires a bearer token in `~/.local/share/aidd-otel-observation/collector-token`. Start the collector separately before sending telemetry. Production is refused until its destination is configured.
+Configure an exporter with `aidd telemetry otel init --config=<claude|codex|opencode> --endpoint=dev`, follow its launch instructions, then run `aidd telemetry otel verify` with the same options after a test session. The collector must already be running. See the [setup recipe](../../aidd_docs/recipes/observe-agent-telemetry.md) for destination requirements and verification limits.

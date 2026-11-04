@@ -1,43 +1,36 @@
 ---
 name: 00-init
-description: Turn AIDD measurement on for a project after explicit consent, stop it, choose to be named on your own measurement, or delete what was measured. Use when the user wants to start or stop measuring what their work consumes, add or remove their name, or forget measured data. Also use for explicit requests to configure provider-native OpenTelemetry export. Not for answering what a period consumed.
-argument-hint: opt in | my name | opt out | delete | otel --config=tool --endpoint=environment
+description: Configure and verify provider OpenTelemetry or manage local AIDD measurement. Use when the user wants to enable export, check receipt, start or stop usage measurement, change their identity, or delete measured data. Not for usage reports.
+argument-hint: provider export | verify receipt | local measurement | my name | stop | delete
 ---
 
 # Init
 
 ```mermaid
 flowchart TD
-  request([request]) --> route{which case}
-  route -->|"configure provider OpenTelemetry"| otel --> done([reported as it ran])
-  route -->|"local usage measurement"| probe{"aidd answers telemetry on?"}
-  probe -->|"no"| absent([say it is missing, change nothing])
-  probe -->|"yes"| local{which local case}
-  local -->|"start measuring"| start --> done
-  local -->|"name me, or stop naming me"| identity --> done
-  local -->|"stop measuring"| stop --> done
-  local -->|"delete what was measured"| forget
-  forget -->|"person confirms the preview"| done
-  forget -->|"person declines"| kept([nothing removed])
+  export(["provider export"]) --> init["actions/06-otel-init.md"]
+  receipt(["verify receipt"]) --> verify["actions/07-otel-verify.md"]
+  init -->|"configured"| verify
+  init -->|"declined or unavailable"| unchanged(["nothing changed"])
+  verify --> result(["reported CLI result"])
+  local(["local usage measurement"]) --> probe["actions/01-probe.md"]
+  probe -->|"CLI unavailable"| unchanged
+  probe -->|"start"| start["actions/02-start.md"]
+  probe -->|"identity"| identity["actions/03-identity.md"]
+  probe -->|"stop"| stop["actions/04-stop.md"]
+  probe -->|"delete"| forget["actions/05-forget.md"]
+  start -->|"consent given"| result
+  start -->|"declined"| unchanged
+  identity --> result
+  stop -->|"confirmed"| result
+  stop -->|"declined"| unchanged
+  forget -->|"confirmed"| result
+  forget -->|"declined or empty"| unchanged
 ```
-
-## Actions
-
-Run the flow above. Read only the action file the case needs.
-
-| Action | Does |
-| --- | --- |
-| otel | configure the chosen provider to export native OpenTelemetry to the chosen collector |
-| start | ask for consent, then turn measurement on for this project |
-| identity | set, show or remove the name on the person's own measurement |
-| stop | turn measurement off for this project, keeping what was measured |
-| forget | preview, then on confirmation delete everything measured on this machine |
 
 ## Transversal rules
 
-- Probe first. For provider OpenTelemetry, use the probe in the `otel` action. For local usage measurement, run `aidd telemetry on --help` before any action. When `aidd` is not found, the command exits non-zero, or its help does not list `--anonymous`, stop and say plainly that `aidd` is missing or too old to measure, name `@ai-driven-dev/cli` as what to install or update, and state that nothing was changed. Never go on, and never answer as if it had worked.
-- Every change goes through `aidd telemetry`. Never edit git config, `.aidd/config.json` or any file by hand.
-- Never run a command that changes anything before the person has said yes to what it does. A silence, a previous yes to another case, or a standing instruction is not a yes.
-- Report what each command printed, including every warning, with credentials redacted, and never claim a result the output did not show.
-- Never choose, derive or guess a name for the person: not from git, from the machine, nor from the session. Only the identifier the person types is used. `aidd telemetry on` run in a terminal offers the git name itself.
-- When a command exits non-zero, show its message and stop. Do not retry with other flags.
+- Keep provider export and local usage measurement separate; run only the requested path.
+- Apply changes through `aidd telemetry`, with the person's explicit authorization for that operation.
+- Report command output and warnings with credentials redacted; a non-zero exit ends the action without retrying with other flags.
+- Use only identifiers supplied by the person, rather than deriving one from git, the machine or the session.

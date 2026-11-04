@@ -167,7 +167,7 @@
   {
     "invocation": "aidd telemetry otel",
     "exitCode": 0,
-    "help": "Usage: aidd telemetry otel [options] [command]\n\nConfigure native OpenTelemetry exporters\n\nOptions:\n  -h, --help               display help for command\n\nCommands:\n  init [options]           Enable detailed local OTLP export in one tool's user\n                           configuration\n  run [options] [args...]  Launch OpenCode 1 with local OTLP export. Pass tool\n                           arguments after --\n  help [command]           display help for command"
+    "help": "Usage: aidd telemetry otel [options] [command]\n\nConfigure native OpenTelemetry exporters\n\nOptions:\n  -h, --help               display help for command\n\nCommands:\n  init [options]           Enable detailed local OTLP export in one tool's user\n                           configuration\n  verify [options]         Check native OTLP configuration and existing local\n                           capture without changing files\n  run [options] [args...]  Launch OpenCode 1 with local OTLP export. Pass tool\n                           arguments after --\n  help [command]           display help for command"
   },
   {
     "invocation": "aidd telemetry otel init",
@@ -178,6 +178,11 @@
     "invocation": "aidd telemetry otel run",
     "exitCode": 0,
     "help": "Usage: aidd telemetry otel run [options] [args...]\n\nLaunch OpenCode 1 with local OTLP export. Pass tool arguments after --\n\nOptions:\n  --config <tool>  Tool to launch (choices: \"opencode\")\n  -h, --help       display help for command"
+  },
+  {
+    "invocation": "aidd telemetry otel verify",
+    "exitCode": 0,
+    "help": "Usage: aidd telemetry otel verify [options]\n\nCheck native OTLP configuration and existing local capture without changing\nfiles\n\nOptions:\n  --config <tool>           User configuration to verify (choices: \"claude\",\n                            \"codex\", \"opencode\")\n  --endpoint <environment>  Collector destination (choices: \"dev\", \"prod\")\n  -h, --help                display help for command"
   },
   {
     "invocation": "aidd telemetry report",
