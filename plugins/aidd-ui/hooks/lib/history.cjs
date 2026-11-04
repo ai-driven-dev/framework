@@ -1,13 +1,12 @@
-// H1 to H8: the history of each versioned record, read from history.md, the system version its
-// publications raise, the task folder each change names, and a held element that changed, or a
-// validated one whose token changed value, without a new version. A git that fails only warns: a
-// slow machine must not block a turn.
+// H1 to H9: the history of each versioned record, read from history.md, the system version its
+// publications raise, the task folder each change names, a held element whose fingerprint no
+// longer matches the one its validation wrote, and a removal its records do not follow.
+const crypto = require("node:crypto");
 const fs = require("node:fs");
 const nodePath = require("node:path");
-const { list, parseRecord, frontMatterEnd, LINE_BREAK } = require("./markdown.cjs");
+const { list, frontMatterEnd, LINE_BREAK } = require("./markdown.cjs");
 const { placed, systemOf, byId, tokensUsedBy, isElement, isSystem, problem, fm, SYSTEM_ID, INTEGER_VERSION, SEMVER, STATUS_DEPRECATED, BREAKING, BREAKING_VALUES } = require("./model.cjs");
-const { checkOf, text, UI_DIR, HISTORY_FILE, WARNING } = require("./project.cjs");
-const { committed, baseline, changed } = require("./committed.cjs");
+const { checkOf, text, unreadable, HISTORY_FILE } = require("./project.cjs");
 const { customProperty, declarationsOf, layered, contextsOf, resolved } = require("./css.cjs");
 const { cssFileOf } = require("./tokens.cjs");
 const { renderOf } = require("./renders.cjs");
@@ -16,6 +15,8 @@ const TASKS_DIR = "aidd_docs/tasks/";
 const VALIDATED = "validated";
 const HELD_STATUSES = [VALIDATED, STATUS_DEPRECATED]; // a proposed element is still being designed
 const UNVERSIONED_KEYS = ["status", "code"]; // a review, a code catch-up: no new version
+const FINGERPRINT_LENGTH = 12;
+const REMOVED = "removed"; // the Change of the row that takes an id out of the design system
 
 const rowsOf = (project, id) => project.history.filter((row) => row.Id === id);
 const inHistory = (message) => problem({ file: HISTORY_FILE }, message);
@@ -64,8 +65,9 @@ function duplicateProblems(project) {
 }
 
 function currentProblems(project) {
+  const removed = removedIds(project);
   return versioned(project)
-    .filter((record) => !isSystem(record))
+    .filter((record) => !isSystem(record) && !removed.has(fm(record).id))
     .flatMap((record) => {
       const current = parts(fm(record).version, false);
       const rows = byVersion(rowsOf(project, fm(record).id), false);
@@ -129,70 +131,77 @@ function substance(content) {
   return lines.filter((line, index) => index > close || !UNVERSIONED_KEYS.some((key) => line.startsWith(`${key}:`))).join(LINE_BREAK);
 }
 
-/** Whether a record's render now differs from the committed one; a render absent on either side
- * is not a change. */
-function renderChanged(project, record) {
-  const file = renderOf(record);
-  const before = committed(project, file);
-  return before !== null && project.renders.includes(file) && text(project, file) !== before;
-}
-
-/** The committed front matter of a record that was validated or deprecated and whose version has
- * not risen since; null for any other. */
-function heldFront(record, before) {
-  const was = parseRecord(before).frontMatter;
-  const comparable = [was.version, fm(record).version].every((version) => INTEGER_VERSION.test(version ?? ""));
-  return HELD_STATUSES.includes(was.status) && comparable && Number(fm(record).version) <= Number(was.version) ? was : null;
-}
-
-function textProblems(project) {
-  return placed(project)
-    .filter(isElement)
-    .flatMap((record) => {
-      const touched = [record.file, renderOf(record)].some((file) => changed(project).has(file));
-      const before = touched ? baseline(project, record.file) : null;
-      const was = before === null ? null : heldFront(record, before);
-      if (was === null) return [];
-      const edited = substance(text(project, record.file)) !== substance(before) || renderChanged(project, record);
-      return edited ? [problem(record, `edited since its committed version ${was.version}, raise its version with a history row`)] : [];
-    });
-}
-
-/** The custom properties whose resolved value differs between two stylesheets, on the roots both
- * can be asked about: the base and each theme both hold, at each width either holds. */
-function changedProperties(before, after) {
-  const changed = new Set();
-  for (const key of contextsOf([before, after])) {
-    const [was, now] = [layered(before, key), layered(after, key)];
-    for (const name of new Set([...was.keys(), ...now.keys()])) if (resolved(was, name) !== resolved(now, name)) changed.add(name);
+/** The custom property values a stylesheet holds, by context key, read once per run; empty
+ * without one, which is T10's. */
+function sheetOf(project) {
+  if (!project.fingerprintSheet) {
+    const file = cssFileOf(project);
+    const css = fs.existsSync(nodePath.join(project.root, file)) ? text(project, file) : null;
+    const sheet = css === null ? new Map() : declarationsOf(css);
+    project.fingerprintSheet = new Map(contextsOf([sheet]).map((key) => [key, layered(sheet, key)]));
   }
-  return changed;
+  return project.fingerprintSheet;
 }
 
-/** A validated element using a token whose value changed since the committed stylesheet, its
- * version unraised; a token change leaves a deprecated one as it is. `named` are the elements
- * already reported. */
-function valueProblems(project, named) {
-  const file = cssFileOf(project);
-  const before = committed(project, file);
-  const after = fs.existsSync(nodePath.join(project.root, file)) ? text(project, file) : null; // a deleted file is T10's alone
-  if (before === null || after === null) return [];
-  const moved = changedProperties(declarationsOf(before), declarationsOf(after));
-  const index = byId(project);
+/** What an element is as validated, hashed: its record without the unversioned keys, its render
+ * when there is one, an asset's file bytes when it has one, then each token it uses with its
+ * resolved value in every context of tokens.css, one `token TAB context TAB value` line each, sorted.
+ * Each part is its label, a NUL, its content and a NUL. The first 12 hex characters of the sha256. */
+function fingerprint(project, record) {
+  const hash = crypto.createHash("sha256");
+  const part = (label, content) => hash.update(`${label}\0`).update(content).update("\0");
+  part("record", substance(text(project, record.file) ?? ""));
+  const render = renderOf(record);
+  if (project.renders.includes(render)) part("render", text(project, render) ?? "");
+  const asset = fm(record).kind === "asset" && typeof fm(record).file === "string" ? nodePath.join(project.root, nodePath.dirname(record.file), fm(record).file) : null;
+  if (asset && fs.existsSync(asset)) part("asset", fs.readFileSync(asset));
+  const tokens = tokensUsedBy(byId(project), record);
+  const lines = [...sheetOf(project)].flatMap(([key, values]) =>
+    tokens.flatMap((token) => {
+      const value = resolved(values, customProperty(token));
+      return value === undefined ? [] : [`${token}\t${key}\t${value}`];
+    })
+  );
+  part("tokens", lines.sort().join(LINE_BREAK));
+  return hash.digest("hex").slice(0, FINGERPRINT_LENGTH);
+}
+
+/** The row of a record's current version, or undefined. */
+const currentRow = (project, record) => project.history.find((row) => row.Id === fm(record).id && row.Version === fm(record).version);
+
+/** A validated element is held to the fingerprint `publish` wrote in its current row; a deprecated
+ * one only when that row carries one. A proposed or draft element is still being designed. */
+function fingerprintProblems(project) {
   return placed(project)
-    .filter((record) => isElement(record) && !named.has(record.file))
+    .filter((record) => isElement(record) && HELD_STATUSES.includes(fm(record).status))
     .flatMap((record) => {
-      const tokens = tokensUsedBy(index, record).filter((token) => moved.has(customProperty(token)));
-      const committedRecord = tokens.length ? baseline(project, record.file) : null;
-      const was = committedRecord === null ? null : heldFront(record, committedRecord);
-      return was?.status !== VALIDATED ? [] : [problem(record, `value of ${tokens.join(", ")} changed since its committed version ${was.version}, raise its version with a history row`)];
+      const row = currentRow(project, record);
+      if (!row) return []; // H1 and H3 name it
+      const written = row.Fingerprint ?? "";
+      if (written === "") return fm(record).status === VALIDATED ? [problem(record, `validated without a fingerprint, run publish ${fm(record).id}`)] : [];
+      return written === fingerprint(project, record) ? [] : [problem(record, `edited since version ${fm(record).version} was validated, raise its version with bump`)];
     });
 }
 
-function editedProblems(project) {
-  const edited = textProblems(project);
-  const found = [...edited, ...valueProblems(project, new Set(edited.map((each) => each.file)))];
-  return project.gitFailure ? [...found, { file: UI_DIR, severity: WARNING, message: `git failed, so nothing was held to its committed version: ${project.gitFailure}` }] : found;
+/** The last row of each id, by version, the system aside. */
+function lastRows(project) {
+  const ids = new Set(project.history.map((row) => row.Id).filter((id) => id !== SYSTEM_ID));
+  return [...ids].flatMap((id) => byVersion(rowsOf(project, id), false).slice(-1).map(({ row }) => row));
+}
+
+/** The ids whose last row removes them. */
+const removedIds = (project) => new Set(lastRows(project).filter((row) => row.Change === REMOVED).map((row) => row.Id));
+
+/** A removed id keeps no record, and an id with history keeps its record until a row removes it. */
+function removalProblems(project) {
+  const index = byId(project);
+  const blind = unreadable(project).length > 0; // a record in a folder it cannot list is not missing
+  return lastRows(project).flatMap((row) => {
+    const record = index.get(row.Id);
+    if (row.Change === REMOVED) return record ? [problem(record, "removed in history.md, delete its record and render")] : [];
+    const kept = record || blind || project.records.some((each) => each.name === row.Id); // a record R1 or R4 already names
+    return kept ? [] : [inHistory(`${row.Id} has history but no record: restore it or run bump --removed`)];
+  });
 }
 
 const RULES = {
@@ -203,10 +212,11 @@ const RULES = {
   H5: publicationProblems,
   H6: deprecationProblems,
   H7: taskProblems,
-  H8: editedProblems,
+  H8: fingerprintProblems,
+  H9: removalProblems,
 };
 
 /** Every broken history rule, in rule order. */
 const check = checkOf(RULES);
 
-module.exports = { check, TASKS_DIR, byVersion, rowsOf, taskList, brokenTasks };
+module.exports = { check, fingerprint, currentRow, TASKS_DIR, REMOVED, VALIDATED, byVersion, rowsOf, taskList, brokenTasks };

@@ -10,6 +10,7 @@ const ENGINE = path.join(HOOKS, "aidd-ui.cjs");
 const HOOK = path.join(HOOKS, "ui-hook.cjs");
 const { load } = require(path.join(LIB, "project.cjs"));
 const tokensCheck = require(path.join(LIB, "tokens.cjs"));
+const { fingerprint } = require(path.join(LIB, "history.cjs"));
 
 // One complete, valid aidd-ui project: every record kind, tokens, renders, and the code they
 // link to. Each validator test writes it, breaks one thing, and expects exactly one problem.
@@ -40,10 +41,16 @@ const PATHS = {
   HOME_RENDER: `${UI}/screens/home.html`,
 };
 
-const row = (...cells) => `| ${cells.join(" | ")} |`;
+const COLUMNS = ["Id", "Version", "Change", "Breaking", "Task", "Fingerprint"];
 
-/** history.md for these rows, each `[id, version, change, breaking, task]`. */
-const history = (...rows) => ["# History", "", "| Id | Version | Change | Breaking | Task |", "| --- | --- | --- | --- | --- |", ...rows.map((each) => row(...each))].join("\n") + "\n";
+/** A table row as the engine writes it: an empty cell is one space. */
+const tableRow = (...cells) => `|${cells.map((cell) => (cell === "" ? " " : ` ${cell} `)).join("|")}|`;
+
+/** A history row, `[id, version, change, breaking, task]` with an empty fingerprint unless one is given. */
+const row = (...cells) => tableRow(...COLUMNS.map((_, at) => cells[at] ?? ""));
+
+/** history.md for these rows. */
+const history = (...rows) => ["# History", "", tableRow(...COLUMNS), tableRow(...COLUMNS.map(() => "---")), ...rows.map((each) => row(...each))].join("\n") + "\n";
 
 const TASK = "aidd_docs/tasks/ds-init";
 const created = (id) => [id, "1", "created", "no", TASK];
@@ -309,10 +316,24 @@ function generateStylesheet(dir) {
   if (css !== null) fs.writeFileSync(path.join(dir, tokensCheck.cssFileOf(project)), css);
 }
 
-/** Writes the valid project under `dir`. */
+/** Writes in history.md the fingerprint of each validated element, as validating it does. */
+function stamp(dir) {
+  const project = load(dir);
+  const file = path.join(dir, HISTORY);
+  const held = new Map(project.records.filter((each) => each.frontMatter.status === "validated").map((each) => [`${each.frontMatter.id} ${each.frontMatter.version}`, each]));
+  const stamped = fs.readFileSync(file, "utf8").split("\n").map((line) => {
+    const cells = line.split("|").slice(1, -1).map((cell) => cell.trim());
+    const record = held.get(`${cells[0]} ${cells[1]}`);
+    return record && ["atom", "molecule", "composition", "screen", "asset"].includes(record.frontMatter.kind) ? row(...cells.slice(0, 5), fingerprint(project, record)) : line;
+  });
+  fs.writeFileSync(file, stamped.join("\n"));
+}
+
+/** Writes the valid project under `dir`, each validated element published. */
 function writeProject(dir) {
   for (const [name, content] of Object.entries(FILES)) put(dir, name, content);
   generateStylesheet(dir);
+  stamp(dir);
 }
 
 /** Replaces every `from` with `to` in one file of the project, failing when `from` is not
@@ -332,6 +353,10 @@ function editTokens(dir, change) {
   fs.writeFileSync(file, `${JSON.stringify(tree, null, 2)}\n`);
   generateStylesheet(dir);
 }
+
+/** Sets each record named back to proposed, an element under design whose edits no fingerprint
+ * holds: for a case about another rule that edits a validated one. */
+const propose = (dir, ...names) => names.forEach((name) => edit(dir, name, "status: validated", "status: proposed"));
 
 /** Appends rows, each `[id, version, change, breaking, task]`, to history.md. */
 function addHistory(dir, ...rows) {
@@ -385,4 +410,4 @@ function commitAll(dir) {
   git(dir, "commit", "-q", "--no-verify", "-m", "snapshot");
 }
 
-module.exports = { UI, HISTORY, PATHS, HOOKS, LIB, ENGINE, HOOK, makeTmp, removeTmp, filesUnder, engine, engineIn, lines, validate, addHistory, writeProject, generateStylesheet, edit, editTokens, put, record, history, git, commitAll };
+module.exports = { UI, HISTORY, PATHS, HOOKS, LIB, ENGINE, HOOK, makeTmp, removeTmp, filesUnder, engine, engineIn, lines, validate, addHistory, writeProject, generateStylesheet, edit, editTokens, propose, put, record, history, git, commitAll };

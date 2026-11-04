@@ -4,7 +4,7 @@ const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
 const { describe, it, beforeEach, afterEach } = require("node:test");
-const { UI, PATHS, HOOKS, LIB, ENGINE, HOOK, makeTmp, removeTmp, lines, validate, writeProject, edit, editTokens, commitAll } = require("../fixtures/aidd-ui/project.js");
+const { UI, PATHS, HOOKS, LIB, ENGINE, HOOK, makeTmp, removeTmp, lines, validate, writeProject, edit, editTokens, propose, commitAll } = require("../fixtures/aidd-ui/project.js");
 
 // The entries are scripts a user's machine runs, so each is driven as a subprocess with its
 // argument or its hook payload on stdin, which is what ships.
@@ -12,7 +12,7 @@ const { problemsOf, format } = require(ENGINE);
 const { load } = require(path.join(LIB, "project.cjs"));
 const { HEADER } = require(path.join(LIB, "css.cjs"));
 
-const { BRAND, DIALOG, TOKENS, STYLESHEET, RESOLVER, BUTTON_RENDER: RENDER } = PATHS;
+const { BRAND, BUTTON, DIALOG, SEARCH, HOME, TOKENS, STYLESHEET, RESOLVER, BUTTON_RENDER: RENDER } = PATHS;
 
 // The fixture's tokens as CSS: the base in :root, then the one theme system.md names after the base.
 const FIXTURE_STYLESHEET = [
@@ -56,6 +56,7 @@ let sessionCount = 0;
 beforeEach(() => {
   tmp = fs.realpathSync(makeTmp("aidd-ui-validate-")); // the real path: the engine is found relative to it
   writeProject(tmp);
+  propose(tmp, BUTTON); // the entries' cases edit the button and its render, which a validation would hold
   sid = `t${process.pid}-${sessionCount++}`;
 });
 
@@ -174,7 +175,7 @@ describe("aidd-ui validator entries", () => {
   describe("E9 commands", () => {
     it("names the commands and exits 2 on one it does not know", () => {
       const run = spawnSync(process.execPath, [ENGINE, "valdate", tmp], { encoding: "utf8" });
-      assert.deepEqual({ code: run.status, out: run.stdout, err: run.stderr }, { code: 2, out: "", err: "usage: node aidd-ui.cjs <validate|tokens> [project-root]\n       node aidd-ui.cjs impact <id or token>… [--root <dir>]\n       node aidd-ui.cjs extract [--force] [--root <dir>]\n       node aidd-ui.cjs bump --task <aidd_docs/tasks/…> (--change \"<text>\" [--breaking] | --created) <token or id>… [--root <dir>]\n       node aidd-ui.cjs publish [--breaking] [--root <dir>]\n" });
+      assert.deepEqual({ code: run.status, out: run.stdout, err: run.stderr }, { code: 2, out: "", err: "usage: node aidd-ui.cjs <validate|tokens> [project-root]\n       node aidd-ui.cjs impact <id or token>… [--root <dir>]\n       node aidd-ui.cjs extract [--force] [--root <dir>]\n       node aidd-ui.cjs bump --task <aidd_docs/tasks/…> (--change \"<text>\" [--breaking] | --created | --removed) <token or id>… [--root <dir>]\n       node aidd-ui.cjs publish ([--breaking] | <id>…) [--root <dir>]\n" });
     });
   });
 
@@ -193,6 +194,7 @@ describe("aidd-ui validator entries", () => {
     });
 
     it("regenerates a stylesheet the tokens left behind", () => {
+      propose(tmp, DIALOG, SEARCH, HOME);
       edit(tmp, TOKENS, '"value": 1,', '"value": 2,');
       assert.equal(validate(tmp).code, 1);
       generate(tmp);

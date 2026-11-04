@@ -1,22 +1,20 @@
 const assert = require("node:assert/strict");
-const childProcess = require("node:child_process");
+const crypto = require("node:crypto");
 const fs = require("node:fs");
-const os = require("node:os");
 const path = require("node:path");
-const { describe, it, beforeEach, afterEach, mock } = require("node:test");
-const { UI, HISTORY, PATHS, LIB, makeTmp, removeTmp, addHistory, writeProject, edit, editTokens, put, record, git } = require("../fixtures/aidd-ui/project.js");
+const { describe, it, beforeEach, afterEach } = require("node:test");
+const { UI, HISTORY, PATHS, LIB, makeTmp, removeTmp, addHistory, writeProject, edit, editTokens, put, record, engine } = require("../fixtures/aidd-ui/project.js");
 
 // Each rule has one mutation of the valid project, and the test asserts the whole problem
 // list: dropping the rule turns its own test red and leaves every other one green.
 const { load } = require(path.join(LIB, "project.cjs"));
 const records = require(path.join(LIB, "records.cjs"));
 const historyRules = require(path.join(LIB, "history.cjs"));
-const { problemsOf, isError } = require(path.join(LIB, "../aidd-ui.cjs"));
+const { problemsOf } = require(path.join(LIB, "../aidd-ui.cjs"));
 
 const { SYSTEM, BRAND, BUTTON, SEARCH, DIALOG, OLD, HOME, JOURNEY, ICON, REVIEW, STYLESHEET, BUTTON_RENDER, HOME_RENDER } = PATHS;
 const BUTTON_USAGE = "Any action a person starts; never for navigation.";
 const WIDENED = "Any action a person starts on purpose; never for navigation.";
-const EDITED = (version) => `${BUTTON}: edited since its committed version ${version}, raise its version with a history row`;
 
 let tmp;
 
@@ -27,10 +25,11 @@ beforeEach(() => {
 
 afterEach(() => removeTmp(tmp));
 
-/** Every problem both checks find, as `file: message`. */
+/** Every problem both checks find, as `file: message`, H8 aside: a mutation of a validated element
+ * breaks its fingerprint too, and H8's own cases read it alone. */
 function problems() {
   const project = load(tmp);
-  return [...records.check(project), ...historyRules.check(project)].map((problem) => `${problem.file}: ${problem.message}`);
+  return [...records.check(project), ...historyRules.check(project)].filter((problem) => problem.rule !== "H8").map((problem) => `${problem.file}: ${problem.message}`);
 }
 
 const change = (file, from, to) => edit(tmp, file, from, to);
@@ -360,12 +359,12 @@ describe("aidd-ui records and history", () => {
 
   describe("H1 history present", () => {
     it("names a versioned record without a row in history.md", () => {
-      change(HISTORY, "| onboarding | 1 | created | no | aidd_docs/tasks/ds-init |\n", "");
+      change(HISTORY, "| onboarding | 1 | created | no | aidd_docs/tasks/ds-init | |\n", "");
       assert.deepEqual(problems(), [`${JOURNEY}: no row in history.md`]);
     });
 
     it("names the system without a publication row", () => {
-      change(HISTORY, "| system | 1.0.0 | first system | no | aidd_docs/tasks/ds-init |\n| system | 2.0.0 | old-button retired | yes | aidd_docs/tasks/retire-old-button |\n", "");
+      change(HISTORY, "| system | 1.0.0 | first system | no | aidd_docs/tasks/ds-init | |\n| system | 2.0.0 | old-button retired | yes | aidd_docs/tasks/retire-old-button | |\n", "");
       assert.deepEqual(problems(), [`${SYSTEM}: no row in history.md`]);
     });
   });
@@ -402,11 +401,11 @@ describe("aidd-ui records and history", () => {
   });
 
   describe("H5 system version follows its publications", () => {
-    const FIRST = "| system | 1.0.0 | first system | no | aidd_docs/tasks/ds-init |";
-    const SECOND = "| system | 2.0.0 | old-button retired | yes | aidd_docs/tasks/retire-old-button |";
+    const FIRST = "| system | 1.0.0 | first system | no | aidd_docs/tasks/ds-init | |";
+    const SECOND = "| system | 2.0.0 | old-button retired | yes | aidd_docs/tasks/retire-old-button | |";
 
     it("names a publication of a breaking task that is not breaking itself", () => {
-      change(HISTORY, SECOND, "| system | 2.0.0 | old-button retired | no | aidd_docs/tasks/retire-old-button |");
+      change(HISTORY, SECOND, "| system | 2.0.0 | old-button retired | no | aidd_docs/tasks/retire-old-button | |");
       assert.deepEqual(problems(), [`${HISTORY}: 2.0.0 publishes "aidd_docs/tasks/retire-old-button", which breaks an element, so it is breaking`]);
     });
 
@@ -426,7 +425,7 @@ describe("aidd-ui records and history", () => {
     });
 
     it("accepts a publication listing several tasks", () => {
-      change(HISTORY, SECOND, "| system | 2.0.0 | old-button retired | yes | aidd_docs/tasks/ds-init, aidd_docs/tasks/retire-old-button |");
+      change(HISTORY, SECOND, "| system | 2.0.0 | old-button retired | yes | aidd_docs/tasks/ds-init, aidd_docs/tasks/retire-old-button | |");
       assert.deepEqual(problems(), []);
     });
 
@@ -460,385 +459,171 @@ describe("aidd-ui records and history", () => {
     });
   });
 
-  describe("H8 edited without a new version", () => {
-    const commit = (dir = tmp) => {
-      git(dir, "add", "-A");
-      git(dir, "commit", "-q", "--no-verify", "-m", "snapshot");
-    };
-    const repository = (dir = tmp) => {
-      git(dir, "init", "-q");
-      commit(dir);
-    };
-    /** Only H8's own problems, so a case about what H8 leaves alone does not depend on the others. */
-    const edited = () => historyRules.check(load(tmp)).filter((found) => found.rule === "H8").map((found) => `${found.file}: ${found.message}`);
-    const ownProblems = () => historyRules.check(load(tmp)).filter((found) => found.rule === "H8");
-    /** Every problem of every check, as the engine reports them: a check that crashes is one more line. */
+  describe("H8 validated as fingerprinted", () => {
+    /** Only H8's own problems, as `file: message`. */
+    const held = () => historyRules.check(load(tmp)).filter((found) => found.rule === "H8").map((found) => `${found.file}: ${found.message}`);
+    /** Every problem of every check, as the engine reports them. */
     const whole = () => problemsOf(load(tmp)).map((found) => `${found.file}: ${found.message}`);
+    const EDITED = (file, version = 1) => `${file}: edited since version ${version} was validated, raise its version with bump`;
+    const THROUGH = (...files) => files.map((file) => EDITED(file));
+    /** Sets the Fingerprint cell of the history row of `id` at `version`. */
+    const setFingerprint = (id, version, cell) => {
+      const file = path.join(tmp, HISTORY);
+      const rows = fs.readFileSync(file, "utf8").split("\n").map((line) => {
+        const cells = line.split("|").slice(1, -1).map((each) => each.trim());
+        return cells[0] === id && cells[1] === version ? `| ${[...cells.slice(0, 5), cell].join(" | ")} |` : line;
+      });
+      fs.writeFileSync(file, rows.join("\n"));
+    };
 
-    beforeEach(() => repository());
+    it("passes the valid project, every validated element fingerprinted", () => {
+      assert.deepEqual(held(), []);
+    });
+
+    it("hashes the record without its status, then the asset's bytes, each part labelled and NUL-ended, to 12 hex characters", () => {
+      const recordText = fs.readFileSync(path.join(tmp, ICON), "utf8").replace("status: validated\n", "");
+      const hash = crypto.createHash("sha256");
+      for (const [label, content] of [["record", recordText], ["asset", fs.readFileSync(path.join(tmp, UI, "assets/icon-search.svg"))], ["tokens", ""]]) hash.update(`${label}\0`).update(content).update("\0");
+      assert.equal(historyRules.fingerprint(load(tmp), load(tmp).records.find((each) => each.file === ICON)), hash.digest("hex").slice(0, 12));
+    });
+
+    it("names a validated element without a fingerprint", () => {
+      setFingerprint("button", "1", "");
+      assert.deepEqual(held(), [`${BUTTON}: validated without a fingerprint, run publish button`]);
+    });
 
     it("names a validated element whose text changed and whose version did not", () => {
       change(BUTTON, BUTTON_USAGE, WIDENED);
-      assert.deepEqual(problems(), [EDITED(1)]);
+      assert.deepEqual(held(), [EDITED(BUTTON)]);
     });
 
-    it("names a validated element whose render changed and whose version did not", () => {
+    it("names a validated element whose render changed", () => {
       edit(tmp, BUTTON_RENDER, "</body>", "<!-- one more look -->\n</body>");
-      assert.deepEqual(edited(), [EDITED(1)]);
+      assert.deepEqual(held(), [EDITED(BUTTON)]);
     });
 
-    it("names a deprecated element too", () => {
-      change(OLD, "Nowhere: replaced by button.", "Nowhere: use button.");
-      assert.deepEqual(edited(), [`${OLD}: edited since its committed version 2, raise its version with a history row`]);
+    it("names a validated asset whose file changed", () => {
+      edit(tmp, `${UI}/assets/icon-search.svg`, 'r="7"', 'r="8"');
+      assert.deepEqual(held(), [EDITED(ICON)]);
     });
 
     it("reads a screen as an element", () => {
       edit(tmp, HOME_RENDER, "</body>", "<!-- one more look -->\n</body>");
-      assert.deepEqual(edited(), [`${HOME}: edited since its committed version 1, raise its version with a history row`]);
+      assert.deepEqual(held(), [EDITED(HOME)]);
     });
 
-    it("holds a lowered version to the committed one", () => {
-      change(OLD, "Nowhere: replaced by button.", "Nowhere: use button.");
-      change(OLD, "\nversion: 2\n", "\nversion: 1\n");
-      assert.deepEqual(edited(), [`${OLD}: edited since its committed version 2, raise its version with a history row`]);
-    });
-
-    it("leaves a deleted render to V1 alone", () => {
+    it("names a deleted render too, beside V1", () => {
       fs.rmSync(path.join(tmp, BUTTON_RENDER));
-      assert.deepEqual(whole(), [`${BUTTON}: no render beside it, expected button.html`]);
-    });
-
-    it("stays silent once the version rose with a history row", () => {
-      change(BUTTON, BUTTON_USAGE, WIDENED);
-      change(BUTTON, "version: 1", "version: 2");
-      addHistory(tmp, ["button", "2", "wider usage", "no", "aidd_docs/tasks/widen-button"]);
-      assert.deepEqual(problems(), []);
-    });
-
-    it("stays silent when only the status changed", () => {
-      change(BUTTON, "status: validated", "status: proposed");
-      assert.deepEqual(edited(), []);
+      assert.deepEqual(whole(), [EDITED(BUTTON), `${BUTTON}: no render beside it, expected button.html`]);
     });
 
     it("stays silent when only the code link changed", () => {
       change(BUTTON, "code: src/ui/Button.tsx#Button@1", "code: src/ui/Button.tsx#Primary@1");
-      assert.deepEqual(edited(), []);
+      assert.deepEqual(held(), []);
     });
 
-    it("stays silent for a record committed as proposed: it is still being designed", () => {
+    it("stays silent for a proposed element: it is still being designed", () => {
       change(BUTTON, "status: validated", "status: proposed");
-      commit();
       change(BUTTON, BUTTON_USAGE, WIDENED);
-      assert.deepEqual(edited(), []);
+      assert.deepEqual(held(), []);
     });
 
-    it("stays silent for a record the repository does not hold yet", () => {
-      put(tmp, `${UI}/components/badge.md`, fs.readFileSync(path.join(tmp, BUTTON), "utf8").replace("id: button", "id: badge"));
-      assert.deepEqual(edited(), []);
+    it("holds a deprecated element only once its row carries a fingerprint, and never to its status", () => {
+      change(OLD, "Nowhere: replaced by button.", "Nowhere: use button.");
+      assert.deepEqual(held(), []);
+      change(BUTTON, "status: validated", "status: deprecated");
+      assert.deepEqual(held(), []);
+      setFingerprint("old-button", "2", "000000000000");
+      assert.deepEqual(held(), [EDITED(OLD, 2)]);
     });
 
-    it("stays silent for brand.md, which is no element", () => {
-      change(BRAND, "A search tool.", "A catalogue tool.");
-      assert.deepEqual(edited(), []);
-    });
-
-    it("holds a record committed with CRLF line ends to its version", () => {
+    it("reads a record written with CRLF line ends as the one fingerprinted", () => {
       const file = path.join(tmp, BUTTON);
       fs.writeFileSync(file, fs.readFileSync(file, "utf8").replaceAll("\n", "\r\n"));
-      git(tmp, "-c", "core.autocrlf=false", "add", "-A");
-      git(tmp, "commit", "-q", "--no-verify", "-m", "windows line ends");
-      change(BUTTON, BUTTON_USAGE, WIDENED);
-      assert.deepEqual(edited(), [EDITED(1)]);
+      assert.deepEqual(held(), []);
     });
 
-    it("asks the project's own repository, whatever GIT_DIR a commit hook exports", () => {
-      change(BUTTON, BUTTON_USAGE, WIDENED);
-      process.env.GIT_DIR = path.join(tmp, "no-such-repository");
-      try {
-        assert.deepEqual(edited(), [EDITED(1)]);
-      } finally {
-        delete process.env.GIT_DIR;
-      }
-    });
-
-    it("stays silent in a folder that is no git repository", () => {
-      fs.rmSync(path.join(tmp, ".git"), { recursive: true });
-      change(BUTTON, BUTTON_USAGE, WIDENED);
-      assert.deepEqual(edited(), []);
-    });
-
-    it("stays silent when git is not installed", () => {
-      change(BUTTON, BUTTON_USAGE, WIDENED);
-      const path_ = process.env.PATH;
-      process.env.PATH = os.tmpdir();
-      try {
-        assert.deepEqual(edited(), []);
-      } finally {
-        process.env.PATH = path_;
-      }
-    });
-
-    it("stays silent in a repository with no commit", () => {
-      fs.rmSync(path.join(tmp, ".git"), { recursive: true });
-      git(tmp, "init", "-q");
-      change(BUTTON, BUTTON_USAGE, WIDENED);
-      assert.deepEqual(edited(), []);
-    });
-
-    describe("a git that fails", { skip: process.platform === "win32" }, () => {
-      const DUBIOUS = "fatal: detected dubious ownership in repository at '/elsewhere'";
-      const FAILED = (failure) => `${UI}: git failed, so nothing was held to its committed version: ${failure}`;
-      /** `read`'s result with a `git` on PATH that runs `script`. */
-      const withGit = (script, read) => {
-        const bin = `${tmp}-bin`;
-        const path_ = process.env.PATH;
-        fs.mkdirSync(bin);
-        fs.writeFileSync(path.join(bin, "git"), `#!/bin/sh\n${script}\n`, { mode: 0o755 });
-        process.env.PATH = `${bin}${path.delimiter}${path_}`;
-        try {
-          return read();
-        } finally {
-          process.env.PATH = path_;
-          fs.rmSync(bin, { recursive: true, force: true });
-        }
-      };
-      const all = () => historyRules.check(load(tmp)).map((found) => `${found.file}: ${found.message} (${found.rule})`);
-
-      it("is one H8 problem naming the failure's first line, and the other rules still run", () => {
-        change(HISTORY, "| button | 1 | created | no |", "| button | 1 | created | maybe |");
-        const found = withGit(`echo "${DUBIOUS}" >&2\necho "To add an exception, run this" >&2\nexit 128`, all);
-        assert.deepEqual(found, [`${HISTORY}: breaking "maybe" in version 1 of button must be yes or no (H4)`, `${FAILED(DUBIOUS)} (H8)`]);
-      });
-
-      it("is named for a repository the real git refuses, whose owner is another", () => {
-        const refusing = `PATH='${process.env.PATH}' GIT_TEST_ASSUME_DIFFERENT_OWNER=1 GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_NOSYSTEM=1 exec git "$@"`;
-        assert.deepEqual(withGit(refusing, edited), [FAILED(`fatal: detected dubious ownership in repository at '${fs.realpathSync(tmp)}'`)]);
-      });
-
-      it("is named when only the read of a committed file fails", () => {
-        const found = withGit(`[ "$1" = diff-index ] && { printf '${BUTTON}\\0'; exit 0; }\necho "fatal: bad object HEAD" >&2\nexit 128`, edited);
-        assert.deepEqual(found, [FAILED("fatal: bad object HEAD")]);
-      });
-
-      it("is named when git times out, as a warning: a slow machine blocks no turn", () => {
-        const found = withGit("exec sleep 30", ownProblems);
-        assert.deepEqual(found.map((each) => `${each.file}: ${each.message}`), [FAILED("spawnSync git ETIMEDOUT")]);
-        assert.equal(found.some(isError), false);
-      });
-
-      it("warns on any failure, while an edit git could read stays an error", () => {
-        assert.equal(withGit(`echo "${DUBIOUS}" >&2\nexit 128`, ownProblems).some(isError), false);
-        change(BUTTON, BUTTON_USAGE, WIDENED);
-        assert.deepEqual(ownProblems().map(isError), [true]);
-      });
-
-      it("reads git's messages in one language, whatever the machine's", () => {
-        const found = withGit('[ "$LC_ALL" = C ] && echo "fatal: not a git repository" >&2 || echo "fatal: ni ceci ni cela" >&2\nexit 128', edited);
-        assert.deepEqual(found, []);
-      });
-    });
-
-    describe("git calls", () => {
-      afterEach(() => mock.restoreAll());
-      const gitCalls = () => {
-        const spy = mock.method(childProcess, "execFileSync");
-        const found = edited();
-        return { found, args: spy.mock.calls.map((call) => call.arguments[1][0]) };
-      };
-
-      it("asks git for nothing but the changed files while every validated element is unchanged", () => {
-        assert.deepEqual(gitCalls(), { found: [], args: ["diff-index"] });
-      });
-
-      it("reads from git only the elements that changed", () => {
-        change(BUTTON, BUTTON_USAGE, WIDENED);
-        assert.deepEqual(gitCalls(), { found: [EDITED(1)], args: ["diff-index", "show"] });
-      });
+    it("reads a history table written before the Fingerprint column, a validated element then unfingerprinted", () => {
+      const file = path.join(tmp, HISTORY);
+      const fiveColumns = fs.readFileSync(file, "utf8").split("\n").map((line) => line.replace(/ \| [^|]*\|$/, " |")).join("\n");
+      fs.writeFileSync(file, fiveColumns);
+      const unfingerprinted = [[ICON, "icon-search"], [BUTTON, "button"], [DIALOG, "dialog"], [SEARCH, "search-field"], [HOME, "home"]];
+      assert.deepEqual(held(), unfingerprinted.map(([file, id]) => `${file}: validated without a fingerprint, run publish ${id}`));
     });
 
     describe("a token value that changed", () => {
-      const TOKEN_CHANGED = (file, tokens, version = 1) => `${file}: value of ${tokens} changed since its committed version ${version}, raise its version with a history row`;
-      const setBold = (weight) => editTokens(tmp, (tree) => (tree.font.weight.bold.$value = weight));
-      const raise = (file) => {
-        change(file, "\nversion: 1\n", "\nversion: 2\n");
-        addHistory(tmp, [path.basename(file, ".md"), "2", "lighter bold", "no", "aidd_docs/tasks/lighten"]);
-      };
-      const THROUGH_BOLD = [BUTTON, DIALOG, SEARCH, HOME].map((file) => TOKEN_CHANGED(file, "font.weight.bold"));
-
-      it("names the validated element declaring it, and each one using that element, with the token", () => {
-        setBold(600);
-        assert.deepEqual(edited(), THROUGH_BOLD);
+      it("names the validated element declaring it, and each one using that element", () => {
+        editTokens(tmp, (tree) => (tree.font.weight.bold.$value = 600));
+        assert.deepEqual(held(), THROUGH(BUTTON, DIALOG, SEARCH, HOME));
       });
 
-      it("names a validated element whose token only an element it uses declares", () => {
-        setBold(600);
-        [BUTTON, SEARCH, HOME].forEach(raise);
-        assert.deepEqual(edited(), [TOKEN_CHANGED(DIALOG, "font.weight.bold")]);
-      });
-
-      const THROUGH_PRIMARY = [
-        TOKEN_CHANGED(BUTTON, "color.action.default, color.text.default"),
-        TOKEN_CHANGED(DIALOG, "color.action.default, color.text.default"),
-        TOKEN_CHANGED(SEARCH, "color.text.default, color.action.default"),
-        TOKEN_CHANGED(HOME, "color.text.default, color.action.default"),
-      ];
-
-      it("reaches it through an alias, and leaves a deprecated element as it is", () => {
+      it("reaches it through an alias, and leaves a deprecated element without a fingerprint as it is", () => {
         editTokens(tmp, (tree) => (tree.color.brand.primary.$value = { colorSpace: "srgb", components: [0.1, 0.1, 0.1], hex: "#1a1a1a" }));
-        assert.deepEqual(edited(), THROUGH_PRIMARY);
+        assert.deepEqual(held(), THROUGH(BUTTON, DIALOG, SEARCH, HOME));
       });
 
       it("reaches it in a theme", () => {
         edit(tmp, `${UI}/themes/dark.json`, "#6699cc", "#112233");
         editTokens(tmp, () => {});
-        assert.deepEqual(edited(), THROUGH_PRIMARY);
+        assert.deepEqual(held(), THROUGH(BUTTON, DIALOG, SEARCH, HOME));
       });
 
-      it("reaches a value only a platform file holds", () => {
-        change(SYSTEM, "platforms: [web]", "platforms: [web, mobile]");
-        const resolver = JSON.parse(fs.readFileSync(path.join(tmp, `${UI}/tokens.resolver.json`), "utf8"));
-        resolver.modifiers.platform = { default: "web", contexts: { web: [], mobile: [{ $ref: "platforms/mobile.json" }] } };
-        resolver.resolutionOrder.push({ $ref: "#/modifiers/platform" });
-        fs.writeFileSync(path.join(tmp, `${UI}/tokens.resolver.json`), JSON.stringify(resolver));
-        put(tmp, `${UI}/platforms/mobile.json`, JSON.stringify({ border: { thin: { $value: { value: 0.125, unit: "rem" } } } }));
+      it("reaches a value only a breakpoint file holds", () => {
+        edit(tmp, `${UI}/breakpoints/desktop.json`, '"value": 1.5', '"value": 2');
         editTokens(tmp, () => {});
-        commit();
-        edit(tmp, `${UI}/platforms/mobile.json`, "0.125", "0.25");
+        assert.deepEqual(held(), THROUGH(BUTTON, DIALOG, SEARCH, HOME));
+      });
+
+      it("reaches a media query that changed", () => {
+        edit(tmp, `${UI}/tokens.resolver.json`, "(min-width: 64rem)", "(min-width: 80rem)");
         editTokens(tmp, () => {});
-        assert.deepEqual(edited(), [BUTTON, DIALOG, SEARCH, HOME].map((file) => TOKEN_CHANGED(file, "border.thin")));
+        assert.deepEqual(held(), THROUGH(BUTTON, DIALOG, SEARCH, HOME));
       });
 
-      describe("in a breakpoint", () => {
-        const THROUGH_SPACE = [BUTTON, DIALOG, SEARCH, HOME].map((file) => TOKEN_CHANGED(file, "space.md"));
-        const DESKTOP = `${UI}/breakpoints/desktop.json`;
-
-        it("reaches a value only a breakpoint file holds", () => {
-          edit(tmp, DESKTOP, '"value": 1.5', '"value": 2');
-          editTokens(tmp, () => {});
-          assert.deepEqual(edited(), THROUGH_SPACE);
-        });
-
-        it("still reads the base value of a token a breakpoint redefines", () => {
-          editTokens(tmp, (tree) => (tree.space.md.$value.value = 2));
-          assert.deepEqual(edited(), THROUGH_SPACE);
-        });
-
-        it("reaches a token that depends on it", () => {
-          editTokens(tmp, (tree) => {
-            tree.space.gap = { $value: "{space.md}" };
-          });
-          change(DIALOG, "tokens: [space.md]", "tokens: [space.md, space.gap]");
-          commit();
-          edit(tmp, DESKTOP, '"value": 1.5', '"value": 2');
-          editTokens(tmp, () => {});
-          assert.ok(edited().includes(TOKEN_CHANGED(DIALOG, "space.md, space.gap")));
-        });
-
-        it("reaches a theme's value citing a token the breakpoint redefines, at that width", () => {
-          editTokens(tmp, (tree) => (tree.space.gap = { $type: "dimension", $value: { value: 1, unit: "rem" } }));
-          put(tmp, `${UI}/themes/dark.json`, JSON.stringify({ ...JSON.parse(fs.readFileSync(path.join(tmp, UI, "themes/dark.json"), "utf8")), space: { gap: { $value: "{space.md}" } } }));
-          change(DIALOG, "tokens: [space.md]", "tokens: [space.md, space.gap]");
-          commit();
-          edit(tmp, DESKTOP, '"value": 1.5', '"value": 2');
-          editTokens(tmp, () => {});
-          console.log(edited(), fs.readFileSync(path.join(tmp, UI, 'tokens.css'), 'utf8'));
-          assert.ok(edited().some((found) => found.startsWith(DIALOG) && found.includes("space.gap")));
-        });
-
-        it("reaches a media query that changed, whose value moved at some widths", () => {
-          edit(tmp, `${UI}/tokens.resolver.json`, "(min-width: 64rem)", "(min-width: 80rem)");
-          editTokens(tmp, () => {});
-          assert.deepEqual(edited(), THROUGH_SPACE);
-        });
-
-        it("stays silent when nothing moved", () => {
-          editTokens(tmp, () => {});
-          assert.deepEqual(edited(), []);
-        });
-      });
-
-      it("stays silent for a token no element declares", () => {
-        editTokens(tmp, (tree) => (tree.misc = { unused: { $type: "number", $value: 1 } }));
-        commit();
-        editTokens(tmp, (tree) => (tree.misc.unused.$value = 2));
-        assert.deepEqual(edited(), []);
-      });
-
-      it("stays silent once every reached element's version rose", () => {
-        setBold(600);
-        [BUTTON, DIALOG, SEARCH, HOME].forEach(raise);
-        assert.deepEqual(edited(), []);
-      });
-
-      it("names only the elements the repository holds", () => {
-        put(tmp, `${UI}/components/badge.md`, fs.readFileSync(path.join(tmp, BUTTON), "utf8").replace("id: button", "id: badge"));
-        setBold(600);
-        assert.deepEqual(edited(), THROUGH_BOLD);
-      });
-
-      it("stays silent without a committed tokens.css", () => {
-        git(tmp, "rm", "-q", "--cached", `${UI}/tokens.css`);
-        git(tmp, "commit", "-q", "--no-verify", "-m", "unstage the stylesheet");
-        setBold(600);
-        assert.deepEqual(whole(), []);
-      });
-
-      it("leaves a deleted tokens.css to T10, one problem", () => {
-        fs.rmSync(path.join(tmp, STYLESHEET));
-        assert.deepEqual(whole(), [`${STYLESHEET}: missing, generate it with the engine's tokens command`]);
-      });
-
-      it("leaves a tokens.css it cannot read as that one problem", () => {
-        fs.rmSync(path.join(tmp, STYLESHEET));
-        fs.mkdirSync(path.join(tmp, STYLESHEET));
-        assert.deepEqual(whole(), [`${STYLESHEET}: unreadable`]);
-      });
-
-      it("resolves values through a committed stylesheet that loops, as one edited by hand may", () => {
-        edit(tmp, STYLESHEET, "--space-md: 1rem;", "--space-md: 1rem;\n  --loop-one: var(--loop-two);\n  --loop-two: var(--loop-one);");
-        commit();
-        setBold(600);
-        assert.deepEqual(whole(), THROUGH_BOLD);
-      });
-
-      it("stays silent when a theme is added: no element held a value in it", () => {
+      it("reaches a theme added, whose values every token-using element now shows", () => {
         put(tmp, `${UI}/themes/sepia.json`, JSON.stringify({ color: { brand: { primary: { $value: { colorSpace: "srgb", components: [0.5, 0.4, 0.3], hex: "#80664d" } } } } }));
         edit(tmp, `${UI}/tokens.resolver.json`, '"dark": [', '"sepia": [{ "$ref": "themes/sepia.json" }],\n        "dark": [');
         edit(tmp, SYSTEM, "themes: [light, dark]", "themes: [light, sepia, dark]");
         editTokens(tmp, () => {});
-        assert.deepEqual(edited(), []);
-        assert.ok(fs.readFileSync(path.join(tmp, STYLESHEET), "utf8").includes('[data-theme="sepia"] {'));
+        assert.deepEqual(held(), THROUGH(BUTTON, DIALOG, SEARCH, HOME));
       });
 
-      it("stays silent when a theme is removed: no element holds a value in it any more", () => {
-        const SEPIA = '"sepia": [{ "$ref": "themes/sepia.json" }],\n        "dark": [';
-        put(tmp, `${UI}/themes/sepia.json`, JSON.stringify({ color: { brand: { primary: { $value: { colorSpace: "srgb", components: [0.5, 0.4, 0.3], hex: "#80664d" } } } } }));
-        edit(tmp, `${UI}/tokens.resolver.json`, '"dark": [', SEPIA);
-        edit(tmp, SYSTEM, "themes: [light, dark]", "themes: [light, sepia, dark]");
+      it("stays silent when nothing moved", () => {
         editTokens(tmp, () => {});
-        commit();
-        edit(tmp, `${UI}/tokens.resolver.json`, SEPIA, '"dark": [');
-        edit(tmp, SYSTEM, "themes: [light, sepia, dark]", "themes: [light, dark]");
-        editTokens(tmp, () => {});
-        assert.deepEqual(edited(), []);
-        assert.equal(fs.readFileSync(path.join(tmp, STYLESHEET), "utf8").includes("sepia"), false);
+        assert.deepEqual(held(), []);
       });
 
-      it("does not name an element already named for its text", () => {
-        setBold(600);
-        change(BUTTON, BUTTON_USAGE, WIDENED);
-        assert.deepEqual(edited(), [EDITED(1), ...THROUGH_BOLD.slice(1)]);
+      it("stays silent for a token no element uses", () => {
+        editTokens(tmp, (tree) => (tree.misc = { unused: { $type: "number", $value: 1 } }));
+        assert.deepEqual(held(), []);
+      });
+
+      it("stays silent once bump raised every reached element", () => {
+        editTokens(tmp, (tree) => (tree.font.weight.bold.$value = 600));
+        assert.equal(engine("bump", "--task", "aidd_docs/tasks/lighten", "--change", "lighter bold", "font.weight.bold", "--root", tmp).status, 0);
+        assert.deepEqual(held(), []);
       });
     });
+  });
 
-    it("finds the committed record when the project lies below the repository's root", () => {
-      for (const name of ["aidd_docs", "src", ".git"]) fs.rmSync(path.join(tmp, name), { recursive: true });
-      const app = path.join(tmp, "app");
-      fs.mkdirSync(app);
-      writeProject(app);
-      repository();
-      edit(app, BUTTON, BUTTON_USAGE, WIDENED);
-      assert.deepEqual(historyRules.check(load(app)).filter((found) => found.rule === "H8").map((found) => found.message), [EDITED(1).slice(BUTTON.length + 2)]);
+  describe("H9 removal", () => {
+    const REMOVE_OLD = ["old-button", "3", "removed", "yes", "aidd_docs/tasks/drop-old-button"];
+    const deleteOld = () => ["components/old-button.md", "components/old-button.html"].forEach((name) => fs.rmSync(path.join(tmp, UI, name)));
+
+    it("names a removed id whose record is still there, and no version gap for it", () => {
+      addHistory(tmp, REMOVE_OLD);
+      assert.deepEqual(problems(), [`${OLD}: removed in history.md, delete its record and render`]);
+    });
+
+    it("accepts a removed id once its record and render are gone, H1 included", () => {
+      addHistory(tmp, REMOVE_OLD);
+      deleteOld();
+      assert.deepEqual(problems(), []);
+    });
+
+    it("names an id with history and no record, removed by no row", () => {
+      deleteOld();
+      assert.deepEqual(problems(), [`${HISTORY}: old-button has history but no record: restore it or run bump --removed`]);
     });
   });
 

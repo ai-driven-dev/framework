@@ -11,7 +11,7 @@ const renders = require("./lib/renders.cjs");
 const code = require("./lib/code.cjs");
 const { usages } = require("./lib/graph.cjs");
 const { extract } = require("./lib/extract.cjs");
-const { bump, publish } = require("./lib/bump.cjs");
+const { bump, publish, validate: validateElements } = require("./lib/bump.cjs");
 
 const CHECKS = { records, history, tokens, renders, code };
 const VERDICT_VALID = "VALID";
@@ -90,8 +90,9 @@ const TASK_FLAG = "--task";
 const CHANGE_FLAG = "--change";
 const BREAKING_FLAG = "--breaking";
 const CREATED_FLAG = "--created";
-const BUMP_USAGE = `node aidd-ui.cjs bump ${TASK_FLAG} <aidd_docs/tasks/…> (${CHANGE_FLAG} "<text>" [${BREAKING_FLAG}] | ${CREATED_FLAG}) <token or id>… [${ROOT_FLAG} <dir>]`;
-const PUBLISH_USAGE = `node aidd-ui.cjs publish [${BREAKING_FLAG}] [${ROOT_FLAG} <dir>]`;
+const REMOVED_FLAG = "--removed";
+const BUMP_USAGE = `node aidd-ui.cjs bump ${TASK_FLAG} <aidd_docs/tasks/…> (${CHANGE_FLAG} "<text>" [${BREAKING_FLAG}] | ${CREATED_FLAG} | ${REMOVED_FLAG}) <token or id>… [${ROOT_FLAG} <dir>]`;
+const PUBLISH_USAGE = `node aidd-ui.cjs publish ([${BREAKING_FLAG}] | <id>…) [${ROOT_FLAG} <dir>]`;
 const EXTRACT_USAGE = `node aidd-ui.cjs extract [${FORCE_FLAG}] [${ROOT_FLAG} <dir>]`;
 
 /** `args` as `{values, flags, rest}`: `values` holds each of `options` given with its value, `flags`
@@ -155,29 +156,33 @@ function extractTokens(args) {
 
 /** Raises the versions a change reaches, as the versions rules say. */
 function bumpVersions(args) {
-  const { values, flags, rest, error } = parse(args, { options: [ROOT_FLAG, TASK_FLAG, CHANGE_FLAG], flags: [BREAKING_FLAG, CREATED_FLAG] });
+  const { values, flags, rest, error } = parse(args, { options: [ROOT_FLAG, TASK_FLAG, CHANGE_FLAG], flags: [BREAKING_FLAG, CREATED_FLAG, REMOVED_FLAG] });
   const created = flags?.has(CREATED_FLAG);
-  const stated = created ? values[CHANGE_FLAG] === undefined && !flags.has(BREAKING_FLAG) : values?.[CHANGE_FLAG] !== undefined;
+  const removed = flags?.has(REMOVED_FLAG);
+  // one of a change, a creation or a removal; a creation or a removal states no change
+  const stated = created || removed ? !(created && removed) && values[CHANGE_FLAG] === undefined && !flags.has(BREAKING_FLAG) : values?.[CHANGE_FLAG] !== undefined;
   if (error || !rest.length || values[TASK_FLAG] === undefined || !stated) {
     console.error(`usage: ${BUMP_USAGE}`);
     return EXIT_USAGE;
   }
   return refusing(() => {
-    const done = bump(values[ROOT_FLAG] ?? process.cwd(), { task: values[TASK_FLAG], change: values[CHANGE_FLAG], breaking: flags.has(BREAKING_FLAG), created, refs: rest });
+    const done = bump(values[ROOT_FLAG] ?? process.cwd(), { task: values[TASK_FLAG], change: values[CHANGE_FLAG], breaking: flags.has(BREAKING_FLAG), created, removed, refs: rest });
     console.log(JSON.stringify(done, null, 2));
     return EXIT_VALID;
   });
 }
 
-/** Writes the system's next publication, as the versions rules say. */
+/** Writes the system's next publication, or with ids validates those elements, as the versions
+ * rules say. */
 function publishSystem(args) {
   const { values, flags, rest, error } = parse(args, { options: [ROOT_FLAG], flags: [BREAKING_FLAG] });
-  if (error || rest.length) {
+  if (error || (rest.length && flags.has(BREAKING_FLAG))) {
     console.error(`usage: ${PUBLISH_USAGE}`);
     return EXIT_USAGE;
   }
+  const root = values[ROOT_FLAG] ?? process.cwd();
   return refusing(() => {
-    console.log(JSON.stringify(publish(values[ROOT_FLAG] ?? process.cwd(), { breaking: flags.has(BREAKING_FLAG) }), null, 2));
+    console.log(JSON.stringify(rest.length ? validateElements(root, rest) : publish(root, { breaking: flags.has(BREAKING_FLAG) }), null, 2));
     return EXIT_VALID;
   });
 }

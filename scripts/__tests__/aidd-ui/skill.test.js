@@ -2,7 +2,7 @@ const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const path = require("node:path");
 const { describe, it, beforeEach, afterEach } = require("node:test");
-const { UI, makeTmp, removeTmp, filesUnder, engine, validate, writeProject, edit, editTokens, put, commitAll } = require("../fixtures/aidd-ui/project.js");
+const { UI, makeTmp, removeTmp, filesUnder, engine, validate, writeProject, edit, editTokens, propose, put } = require("../fixtures/aidd-ui/project.js");
 
 // The record templates are what the skill's model starts from, so each is filled the way an
 // action says and the design system around it must still validate. A placeholder the table does
@@ -130,6 +130,7 @@ describe("aidd-ui 01-system templates", () => {
 
 describe("aidd-ui 01-system variant axes", () => {
   it("shows an axis in the templates, and the axis they show validates", () => {
+    propose(tmp, `${UI}/components/dialog.md`);
     edit(tmp, `${UI}/components/dialog.md`, "variants: [default]", "variants: [size=sm, size=md, tone=danger]");
     edit(tmp, `${UI}/components/dialog.html`, 'data-variant="default" data-state="default"', 'data-size="sm" data-state="default"');
     edit(tmp, `${UI}/components/dialog.html`, 'data-variant="default" data-state="hover"', 'data-size="md" data-state="hover"');
@@ -146,6 +147,7 @@ describe("aidd-ui 01-system resolver", () => {
   it("has a breakpoint's query written in the template's table, and the engine turn it into the stylesheet", () => {
     const template = fs.readFileSync(path.join(SKILL, "assets/system-template.md"), "utf8");
     assert.ok(template.includes("| Name | Query |"));
+    propose(tmp, ...["components/button", "components/dialog", "components/search-field", "screens/home"].map((name) => `${UI}/${name}.md`));
     put(tmp, `${UI}/breakpoints/desktop.json`, JSON.stringify({ space: { md: { $value: { value: 1.5, unit: "rem" } } } }));
     edit(tmp, `${UI}/system.md`, "themes: [light, dark]", "themes: [light]");
     fs.rmSync(path.join(tmp, `${UI}/tokens.resolver.json`));
@@ -157,7 +159,6 @@ describe("aidd-ui 01-system resolver", () => {
 
 describe("aidd-ui 01-system change flow", () => {
   it("takes a token change reaching a screen under review to a design system that validates, the engine raising the versions", () => {
-    commitAll(tmp);
     const deprecated = fs.readFileSync(path.join(tmp, `${UI}/components/old-button.md`), "utf8");
 
     const report = JSON.parse(engine("impact", "color.action.default", "--root", tmp).stdout);
@@ -173,7 +174,6 @@ describe("aidd-ui 01-system change flow", () => {
   });
 
   it("takes a token rename a deprecated element cites to a design system that validates, the engine raising that element too", () => {
-    commitAll(tmp);
     engine("bump", "--task", "aidd_docs/tasks/rename", "--change", "action colour renamed", "--breaking", "color.action.default", "--root", tmp);
     editTokens(tmp, (tree) => {
       tree.color.action.primary = tree.color.action.default;
