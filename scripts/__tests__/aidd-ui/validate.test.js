@@ -418,9 +418,22 @@ describe("aidd-ui validator entries", () => {
   });
 
   describe("E7 Stop", () => {
-    it("blocks once after a write under aidd_docs/ui/, with the problems as the reason", () => {
+    it("blocks once after a write under aidd_docs/ui/, with the errors of what it reached as the reason", () => {
       breakOnePerFamily();
       hook(postToolUse(path.join(tmp, BRAND)));
+      assert.deepEqual(hook(stop()), finish([BRAND_FAILURE]));
+    });
+
+    it("blocks on every error once a shell command also marked the turn, whatever the writes reached", () => {
+      breakOnePerFamily();
+      hook(postToolUse(path.join(tmp, BRAND)));
+      hook(shell(`node ${ENGINE} tokens ${tmp}`));
+      assert.deepEqual(hook(stop()), finish(FAILURES));
+    });
+
+    it("blocks on every error when the mark names no file", () => {
+      breakOnePerFamily();
+      fs.writeFileSync(path.join(os.tmpdir(), `aidd-ui-turn-${sid}`), "", { mode: 0o600 });
       assert.deepEqual(hook(stop()), finish(FAILURES));
     });
 
@@ -536,7 +549,7 @@ describe("aidd-ui validator entries", () => {
     it("asks for one follow-up at stop after a write, as followup_message", () => {
       breakOnePerFamily();
       hook(cursorWrite());
-      assert.deepEqual(hook(cursor("stop", { status: "completed", loop_count: 0 })), { code: 0, out: JSON.stringify({ followup_message: text(FAILURES) }), err: "" });
+      assert.deepEqual(hook(cursor("stop", { status: "completed", loop_count: 0 })), { code: 0, out: JSON.stringify({ followup_message: text([BRAND_FAILURE]) }), err: "" });
     });
 
     it("asks for no second follow-up", () => {

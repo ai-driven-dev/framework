@@ -38,6 +38,7 @@ flowchart LR
 - Windows is untested.
 - The hook command names `${CLAUDE_PLUGIN_ROOT}` unquoted, and the OpenCode and Kilo bridges replay only that form: a plugin path with spaces breaks it.
 - Cursor: the stop is proven on a payload, not in `-p`.
+- Stop checks what the turn's writes reached, as after a write; once a shell command marked the turn, it checks every file, since the hook cannot tell which ones the command wrote.
 - A shell write the hook does not know is not seen; it knows redirections, `tee`, `sed -i`, `mv`, `cp`, `rm`, `touch`, `mkdir`, `patch`, `git apply`, `checkout`, `restore` and the engine.
 - Overlapping breakpoint queries cascade in the stylesheet: at a width two match, the later keeps a token the earlier alone redefines.
 - A render shows a variant or state when its text holds the attribute; native behaviour (focus, validity) no render shows.
