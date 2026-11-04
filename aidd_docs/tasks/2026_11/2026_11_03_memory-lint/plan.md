@@ -16,6 +16,7 @@ Source: issue #1141, first slice: the memory-file linter and its write hook
 | 3   | Lint engine | [`phase-3.md`](./phase-3.md) | none |
 | 4   | Write hook | [`phase-4.md`](./phase-4.md) | 3 |
 | 5   | Each tool's hook format in its profile, Cursor's keeping the matcher | [`phase-5.md`](./phase-5.md) | none |
+| 6   | Review fixes: a hook that loads anywhere and answers in one glance | [`phase-6.md`](./phase-6.md) | 4, 5 |
 
 ## External sources
 
@@ -47,11 +48,14 @@ Source: issue #1141, first slice: the memory-file linter and its write hook
 
 | Decision   | Why   |
 | ---------- | ----- |
+| The hook answers in the fewest lines that let the model fix at once: errors only, on the lines this write produced, five lines at most | hooks share the model's context; warnings and inherited problems belong to the engine run by hand and to `check` |
 | The hook informs and never blocks: no exit 2, no Stop event | every rule is lexical and checkable file by file, so nothing needs the end of the turn, and a memory write must never stall a user's session |
-| One engine, two callers: by hand and by the hook | a file written through a shell command never reaches the hook, so the same rules must be runnable on the whole bank |
+| One engine, two callers: by hand and by the hook | a write the hook cannot see, such as a shell command that never names the bank, still needs the same rules run on the whole bank |
+| A shell command reaches the hook only when its text names the bank, and only the bank files it changed in the last two seconds are checked | models also write through the shell, measured on Codex; the name test keeps every other command at the cost of starting Node, and the window keeps a later read from repeating a file's errors |
+| A line says where, what with its offending value, and how to fix | `file:line rule message`, the form a model knows from compilers, shared with the other AIDD hooks |
 | A payload naming no memory file costs only the parse, then exit | a host may still start the hook after every tool call, and an unknown shape yields no path and so no output |
 | Cursor's translation keeps each group's matcher | Cursor honours it, measured: dropping it starts every AIDD hook after every tool call, aidd-ui's included. Only the project-scope merge changes: Cursor never fires a plugin-scope `hooks.json` |
 | No domain model beyond a problem and a rule | the engine checks text; a value object for a problem and one function per rule are all the shape it needs |
 | The host payload parsing is copied from `aidd-ui`, not shared | a plugin never links outside itself; two copies are recorded debt, to unify only if a third hook needs it |
 | The project root comes from the payload's `cwd`, else its first `workspace_roots` entry, else `CURSOR_PROJECT_DIR` or `CLAUDE_PROJECT_DIR`, else the process directory | Cursor's Write payload carries no `cwd` |
-| Codex `apply_patch` reaches the hook | measured with `gpt-6-luna`: a `Write\|Edit\|MultiEdit` group fires for `apply_patch`, whose `tool_input.command` holds the patch with paths relative to the payload's `cwd`, and the Claude-shaped `hookSpecificOutput.additionalContext` reaches the model; in one run of three the model wrote through a shell command instead, which no write hook sees |
+| Codex `apply_patch` reaches the hook | measured with `gpt-6-luna`: a `Write\|Edit\|MultiEdit` group fires for `apply_patch`, whose `tool_input.command` holds the patch with paths relative to the payload's `cwd`, and the Claude-shaped `hookSpecificOutput.additionalContext` reaches the model; in one run of three the model wrote through a shell command instead; Codex names its shell tool `Bash`, and a shell write then got its errors back, measured |

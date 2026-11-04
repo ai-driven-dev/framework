@@ -78,7 +78,9 @@ describe("ProjectHooksMaterializer", () => {
         PROJECT_ROOT,
         first.projectHooks
       )
-    ).rejects.toThrow(/user-owned.*install refused/);
+    ).rejects.toThrow(
+      `Cursor hook script '${join(".cursor/hooks", PLUGIN_NAME, "extra.js")}' is user-owned; install refused.`
+    );
 
     expect(fs.getFile(scriptPath)).toBe("user script");
     expect(fs.getFile(HOOKS_PATH)).toBe(originalHooks);

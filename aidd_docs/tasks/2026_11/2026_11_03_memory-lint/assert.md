@@ -121,3 +121,14 @@
 | --- | --- | --- |
 | `pnpm exec lefthook run pre-commit --all-files` | 0 | |
 | `pnpm exec lefthook run pre-push` | 0 | |
+
+## Round 12
+
+- Head: `4f7dbee26`
+- Uncommitted changes: yes
+- Verdict: PASS
+
+| Check | Exit | Failure |
+| --- | --- | --- |
+| `pnpm exec lefthook run pre-commit --all-files` | 0 | |
+| `pnpm exec lefthook run pre-push` | 0 | |

@@ -3,13 +3,13 @@
  * Checks a project's memory files against the bank's format rules, M1 to M7. The only file
  * here that reads the disk; the rules themselves are pure and live in the rules library beside it.
  *
- * `node memory-lint.js [root] [file...]` prints one line per problem and exits 1 when an error
+ * `node memory-lint.cjs [root] [file...]` prints one line per problem and exits 1 when an error
  * remains. With no file it checks the whole bank. A project without a bank has nothing to check.
  */
 
 const fs = require("node:fs");
 const path = require("node:path");
-const { ERROR, RULES } = require("./lib/memory-rules.js");
+const { ERROR, RULES } = require("./lib/memory-rules.cjs");
 
 const MEMORY_DIR = path.join("aidd_docs", "memory");
 const EXCLUDED_FILE = "README.md";
