@@ -305,6 +305,20 @@ test("a shell append of an error line reports that line only", () => {
   });
 });
 
+test("a shell append whose error line holds an escaped quote still reports it", () => {
+  inProject({ "a.md": `${DIRTY}We don't keep 41 commits.\n` }, (root) => {
+    const { stdout } = hook(shell(root, `printf '%s\\n' 'We don'\\''t keep 41 commits.' >> ${MEMORY}/a.md`));
+    assert.equal(textOf(stdout), 'aidd_docs/memory/a.md:6 M2 "41 commits" goes stale: name the thing, not how many');
+  });
+});
+
+test("a shell append whose error line holds an escaped backtick still reports it", () => {
+  inProject({ "a.md": `${DIRTY}See \`aidd_docs/nope.md\` here\n` }, (root) => {
+    const { stdout } = hook(shell(root, `echo "See \\\`aidd_docs/nope.md\\\` here" >> ${MEMORY}/a.md`));
+    assert.match(textOf(stdout), /^aidd_docs\/memory\/a\.md:6 M4 /u);
+  });
+});
+
 test("a shell read of a file just modified reports nothing", () => {
   inProject({ "a.md": DIRTY }, (root) => {
     assert.deepEqual(hook(shell(root, `cat ${MEMORY}/a.md`)), { status: 0, stdout: "" });
