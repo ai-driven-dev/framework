@@ -35,7 +35,6 @@ flowchart LR
 
 ## Limits
 
-- Windows is untested.
 - The hook command names `${CLAUDE_PLUGIN_ROOT}` unquoted, and the OpenCode and Kilo bridges replay only that form: a plugin path with spaces breaks it.
 - Cursor: the stop is proven on a payload, not in `-p`.
 - Stop checks what the turn's writes reached, as after a write; once a shell command marked the turn, it checks every file, since the hook cannot tell which ones the command wrote.
