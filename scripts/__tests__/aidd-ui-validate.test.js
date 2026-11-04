@@ -508,6 +508,60 @@ describe("aidd-ui validator entries", () => {
     });
   });
 
+  describe("E12 Cursor", () => {
+    // Cursor sends camelCase events, workspace_roots instead of cwd, and cursor_version on every payload.
+    const CONVERSATION = `${sid}-conversation`;
+    const cursor = (event, extra = {}) => JSON.stringify({ hook_event_name: event, conversation_id: CONVERSATION, session_id: "other", cursor_version: "2026.10.22", workspace_roots: [tmp], ...extra });
+    const cursorWrite = (filePath = path.join(tmp, BRAND)) => cursor("postToolUse", { tool_name: "Write", tool_input: { file_path: filePath }, tool_output: "" });
+    const cursorMarked = () => fs.existsSync(path.join(os.tmpdir(), `aidd-ui-turn-${CONVERSATION}`));
+    afterEach(() => fs.rmSync(path.join(os.tmpdir(), `aidd-ui-turn-${CONVERSATION}`), { force: true }));
+
+    it("hands the problems back after a write, as additional_context", () => {
+      breakOnePerFamily();
+      assert.deepEqual(hook(cursorWrite()), { code: 0, out: JSON.stringify({ additional_context: text([BRAND_FAILURE], 2) }), err: "" });
+    });
+
+    it("reads the project from the first workspace root when the payload has no cwd", () => {
+      breakOnePerFamily();
+      const input = JSON.stringify({ hook_event_name: "postToolUse", cursor_version: "2026.10.22", workspace_roots: [tmp, os.tmpdir()], tool_input: { file_path: BRAND } });
+      assert.deepEqual(hook(input), { code: 0, out: JSON.stringify({ additional_context: text([BRAND_FAILURE], 2) }), err: "" });
+    });
+
+    it("prefers cwd over the workspace roots", () => {
+      breakOnePerFamily();
+      const input = JSON.stringify({ hook_event_name: "postToolUse", cursor_version: "2026.10.22", cwd: tmp, workspace_roots: [os.tmpdir()], tool_input: { file_path: BRAND } });
+      assert.deepEqual(hook(input), { code: 0, out: JSON.stringify({ additional_context: text([BRAND_FAILURE], 2) }), err: "" });
+    });
+
+    it("prints the errors at session start as additional_context", () => {
+      breakOnePerFamily();
+      assert.deepEqual(hook(cursor("sessionStart", { is_background_agent: false })), { code: 0, out: JSON.stringify({ additional_context: `aidd-ui: 3 errors\n${FAILURES.join("\n")}` }), err: "" });
+    });
+
+    it("asks for one follow-up at stop after a write, as followup_message", () => {
+      breakOnePerFamily();
+      hook(cursorWrite());
+      assert.deepEqual(hook(cursor("stop", { status: "completed", loop_count: 0 })), { code: 0, out: JSON.stringify({ followup_message: text(FAILURES) }), err: "" });
+    });
+
+    it("asks for no second follow-up", () => {
+      breakOnePerFamily();
+      hook(cursorWrite());
+      assert.deepEqual(hook(cursor("stop", { status: "completed", loop_count: 1 })), silent);
+    });
+
+    it("marks the turn by conversation, which every Cursor event carries", () => {
+      breakOnePerFamily();
+      hook(cursorWrite());
+      assert.equal(cursorMarked(), true);
+    });
+
+    it("stays silent at stop when no UI file was written", () => {
+      breakOnePerFamily();
+      assert.deepEqual(hook(cursor("stop", { status: "completed", loop_count: 0 })), silent);
+    });
+  });
+
   describe("E11 engine commands", () => {
     const ENGINE_COMMANDS = [
       ["runs the engine", `node ${ENGINE} tokens ${tmp}`],

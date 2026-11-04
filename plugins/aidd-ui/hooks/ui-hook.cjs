@@ -1,4 +1,4 @@
-// Runs the design system checks at three moments, and prints the same short text on every host:
+// Runs the design system checks at three moments, and prints the same short text on every host (Cursor's camelCase events included):
 // problem lines, then at most one line counting the errors left out. After a write under
 // aidd_docs/ui/ or a code root, the turn is marked and the errors of the files the write reached
 // come back, with the warnings of the written files; a shell command that runs the engine or names
@@ -17,6 +17,8 @@ const { problemsOf, format, isError } = require("./aidd-ui.cjs");
 const POST_TOOL_USE = "PostToolUse";
 const SESSION_START = "SessionStart";
 const STOP = "Stop";
+// Cursor names its events in camelCase.
+const EVENTS = { PostToolUse: POST_TOOL_USE, postToolUse: POST_TOOL_USE, SessionStart: SESSION_START, sessionStart: SESSION_START, Stop: STOP, stop: STOP };
 const EXIT_SILENT = 0;
 const LIMIT = 10; // problem lines after a write and at Stop; the validator by hand prints them all
 const START_LIMIT = 5; // error lines at session start
@@ -55,8 +57,15 @@ function writtenFiles(toolInput) {
 /** Whether a tool ran a shell command that reaches the design system: it is no patch. */
 const isEngineCommand = (toolInput) => !writtenFiles(toolInput).length && ENGINE_COMMAND.test(commandOf(toolInput) ?? "");
 
+/** Cursor sends cursor_version on every payload, as no other host does. */
+const isCursor = (payload) => "cursor_version" in payload;
+
+/** What identifies the turn's session: Cursor's conversation_id, which its documentation lists on every event, else session_id. */
+const sessionOf = (payload) => (isCursor(payload) ? payload.conversation_id : payload.session_id);
+
 /** The mark a turn leaves for its Stop: one empty file per session, in the OS temp dir. */
-function markFile(sessionId) {
+function markFile(payload) {
+  const sessionId = sessionOf(payload);
   if (typeof sessionId !== "string" || !SAFE_SESSION_ID.test(sessionId)) return null;
   return path.join(os.tmpdir(), `aidd-ui-turn-${sessionId}`);
 }
@@ -74,7 +83,7 @@ function leaveMark(mark) {
 
 /** Marks the turn for its Stop. */
 function markTurn(payload) {
-  const mark = markFile(payload.session_id);
+  const mark = markFile(payload);
   if (mark) leaveMark(mark);
 }
 
@@ -113,10 +122,10 @@ function afterWrite(project, payload) {
   const shown = [...errors.filter((problem) => !scope || scope.has(problem.file)), ...problems.filter((problem) => !isError(problem) && written.includes(problem.file))];
   if (!shown.length) return EXIT_SILENT;
   const text = lean(project, shown, LIMIT, errors.length).join("\n");
-  // Each host reads one key: Copilot the top level, Claude Code and Codex hookSpecificOutput.
-  const output = isCopilot(payload)
-    ? { additionalContext: text }
-    : { hookSpecificOutput: { hookEventName: POST_TOOL_USE, additionalContext: text } };
+  // Each host reads one key: Cursor additional_context, Copilot additionalContext, Claude Code and Codex hookSpecificOutput.
+  let output = { hookSpecificOutput: { hookEventName: POST_TOOL_USE, additionalContext: text } };
+  if (isCursor(payload)) output = { additional_context: text };
+  else if (isCopilot(payload)) output = { additionalContext: text };
   process.stdout.write(JSON.stringify(output));
   return EXIT_SILENT;
 }
@@ -124,43 +133,53 @@ function afterWrite(project, payload) {
 /** Whether this Stop ends a turn that wrote a watched file and was not itself forced: consumes
  * the mark either way, so the next turn starts clean. */
 function consumeMark(payload) {
-  const mark = markFile(payload.session_id);
+  const mark = markFile(payload);
   if (!mark || !fs.existsSync(mark)) return false;
   fs.rmSync(mark, { force: true });
-  return payload.stop_hook_active !== true;
+  // Cursor counts the follow-ups a Stop already caused in loop_count; the others flag the forced one.
+  return isCursor(payload) ? payload.loop_count === 0 : payload.stop_hook_active !== true;
 }
 
 /** Blocks the turn's end once while a marked turn still leaves errors behind. */
-function atStop(project) {
+function atStop(project, payload) {
   const errors = errorsOf(problemsOf(project));
   if (!errors.length) return EXIT_SILENT;
-  process.stdout.write(JSON.stringify({ decision: "block", reason: lean(project, errors, LIMIT, errors.length).join("\n") }));
+  const reason = lean(project, errors, LIMIT, errors.length).join("\n");
+  process.stdout.write(JSON.stringify(isCursor(payload) ? { followup_message: reason } : { decision: "block", reason }));
   return EXIT_SILENT;
 }
 
-function atSessionStart(project) {
+function atSessionStart(project, payload) {
   const errors = errorsOf(problemsOf(project));
   if (!errors.length) return EXIT_SILENT;
-  process.stdout.write(`${[`aidd-ui: ${errors.length} errors`, ...format(errors.slice(0, START_LIMIT))].join("\n")}\n`);
+  const text = [`aidd-ui: ${errors.length} errors`, ...format(errors.slice(0, START_LIMIT))].join("\n");
+  process.stdout.write(isCursor(payload) ? JSON.stringify({ additional_context: text }) : `${text}\n`);
   return EXIT_SILENT;
+}
+
+/** The directory the host works in: Claude Code, Codex and Copilot send cwd, Cursor its first workspace root. */
+function rootOf(payload) {
+  if (typeof payload.cwd === "string") return payload.cwd;
+  const [first] = Array.isArray(payload.workspace_roots) ? payload.workspace_roots : [];
+  return typeof first === "string" ? first : process.cwd();
 }
 
 function run() {
   const payload = readPayload();
-  if (typeof payload?.hook_event_name !== "string") return EXIT_SILENT;
+  const event = EVENTS[payload?.hook_event_name];
+  if (!event) return EXIT_SILENT;
   // A shell command reaching the design system marks the turn and costs no read of the project; any other does nothing.
-  if (payload.hook_event_name === POST_TOOL_USE && isEngineCommand(payload.tool_input)) {
+  if (event === POST_TOOL_USE && isEngineCommand(payload.tool_input)) {
     markTurn(payload);
     return EXIT_SILENT;
   }
   // Stop fires on every turn: one that wrote no watched file costs no read of the project.
-  if (payload.hook_event_name === STOP && !consumeMark(payload)) return EXIT_SILENT;
-  const project = load(typeof payload.cwd === "string" ? payload.cwd : process.cwd());
+  if (event === STOP && !consumeMark(payload)) return EXIT_SILENT;
+  const project = load(rootOf(payload));
   if (project === null) return EXIT_SILENT;
-  if (payload.hook_event_name === POST_TOOL_USE) return afterWrite(project, payload);
-  if (payload.hook_event_name === SESSION_START) return atSessionStart(project);
-  if (payload.hook_event_name === STOP) return atStop(project);
-  return EXIT_SILENT;
+  if (event === POST_TOOL_USE) return afterWrite(project, payload);
+  if (event === SESSION_START) return atSessionStart(project, payload);
+  return atStop(project, payload);
 }
 
 try {

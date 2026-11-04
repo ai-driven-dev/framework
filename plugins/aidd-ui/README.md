@@ -152,7 +152,7 @@ Rules: records R1 to R17, history H1 to H8, tokens T1 to T10, renders V1 to V9, 
 
 - Without `node` on `PATH`, the hook does nothing.
 - After a write, the problems reach the model in the same turn on Claude Code, Codex, Copilot CLI, OpenCode and Kilo. At turn end, OpenCode and Kilo receive the errors as the next prompt. A forced continuation is never asked again. The turn mark lives in the OS temp directory; without a session id, no end-of-turn check runs.
-- Cursor is unverified.
+- Cursor: the hook protocol is handled and checked on a payload, with its camelCase events, `workspace_roots` and `additional_context` / `followup_message` output; `stop` was not observed in `cursor-agent -p`. The end-of-turn follow-up is asked once (`loop_count` 0), and the turn is marked by `conversation_id`. `cursor-agent` writes `~/.cursor/ai-tracking` even with its config and data directories overridden.
 - Codex runs the hook only once you trust it; Copilot only in a folder it trusts, and says nothing otherwise.
 - A file written by a shell command is not seen when it is written: the command is, so the turn end reads it, and only when it runs the engine or names `aidd_docs/ui/`. A file deleted by a patch is not seen.
 - Windows is untested.
