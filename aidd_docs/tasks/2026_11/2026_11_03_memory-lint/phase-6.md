@@ -20,9 +20,13 @@ status: done
 │       ├── memory-rules.js ❌
 │       └── memory-rules.cjs ✅
 ├── cli/src/contexts/framework/application/framework/translator/project-hooks-materializer.ts ✏️
-└── scripts/__tests__/
-    ├── memory-hook.test.js ✏️
-    └── memory-lint.test.js ✏️
+├── cli/tests/contexts/framework/application/framework/translator/project-hooks-materializer.unit.test.ts ✏️
+└── scripts/
+    ├── summarize-markdown.js ✏️
+    └── __tests__/
+        ├── memory-hook.test.js ✏️
+        ├── memory-lint.test.js ✏️
+        └── summarize-markdown.test.js ✅
 ```
 
 ## Test Scope
@@ -52,7 +56,8 @@ status: done
 
 1. Write the failing tests first.
 2. Check only the lines this write produced: the `new_string` of an `Edit`, each `edits[].new_string` of a `MultiEdit`, the `+` lines of a patch, the whole file for a `Write`.
-3. Report errors only, at most five lines, each `<file>:<line> <rule> <short reason>`, then `+N` when more; warnings stay for the engine by hand.
+3. Report errors only, at most five lines, each `<file>:<line> <rule> <message>`, the message quoting the offending value and saying how to fix it, then `+N more: <command>`, the root left out when the hook runs in it; warnings stay for the engine by hand.
+4. Watch the shell tool too: a command whose text names the bank gets the errors of the bank files it changed in the last two seconds, on the lines its text carries, escapes undone.
 
 ### `3)` Minor findings
 
@@ -60,6 +65,8 @@ status: done
 
 1. Make the error message in `project-hooks-materializer.ts` name no tool.
 2. Add the test where the engine throws: no output, exit 0.
+3. Pin the materializer message in its test.
+4. List `.cjs` files in the plugin catalogs.
 
 ### `4)` Gates
 
@@ -72,6 +79,6 @@ status: done
 | Task | Acceptance criteria              |
 | ---- | -------------------------------- |
 | 1 | the hook answers and exits 0 inside a `"type": "module"` project |
-| 2 | an edit to a file with older errors reports only its own; no answer exceeds five lines or carries a warning |
-| 3 | the materializer message names no tool; a throwing engine gives no output and exit 0 |
+| 2 | an edit to a file with older errors reports only its own; no answer exceeds five lines or carries a warning; a shell write reports its own lines, a read reports nothing |
+| 3 | the materializer message names no tool and its test pins it; a throwing engine gives no output and exit 0; the catalogs list `.cjs` hooks |
 | 4 | every suite and gate passes, nothing skipped beyond the opt-in e2e |

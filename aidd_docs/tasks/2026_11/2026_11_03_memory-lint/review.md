@@ -45,3 +45,46 @@
 - Copilot's payload shape (`tool_result`, `tool_input.path`) is copied from `aidd-ui`, not measured in this plan — a live Copilot write would settle it
 - OpenCode and Kilo receive the new `PostToolUse` group through their bridges, and the plan claims neither — a live write on each would show whether the hook stays silent there
 - The ESM crash was confirmed by piping a Cursor payload into a scratch copy of the hook under a `"type": "module"` `package.json`, outside the project; the finding stands on the static proof alone
+
+## Round 2
+
+- Diff: `4f7dbee26..7693d7353`
+- Axes: code
+- Verdict: changes-requested, because the catalog lost the hook and a shell write reported errors it did not write
+
+### Findings
+
+- `scripts/summarize-markdown.js:115-124`: `isScannableFile` reads no `.cjs`, so `plugins/aidd-context/CATALOG.md` dropped the hook after the rename → add `.cjs` — 🟡 major
+- `plugins/aidd-context/hooks/memory-hook.cjs:104-112`: the shell path checked whole files, so an append to a file with older errors, or a read beside an edit, reported them → keep only the lines the command carries — 🟡 major
+- `plugins/aidd-context/hooks/memory-hook.cjs:106`: a PowerShell `aidd_docs\memory` path is not matched — 🟢 minor
+
+### Limits
+
+- `linesOf` matches each occurrence of an edit's text, so a common word picks up older errors on its other lines, capped at five
+- OpenCode, Kilo, Copilot and Claude Code untested live; settled since: all six hosts fired and reached the model, recorded in `run.md` run 2
+
+## Round 3
+
+- Diff: `7693d7353..861f997d3`
+- Axes: code
+- Verdict: changes-requested, because an escaped character on a shell-written line hid its error
+
+### Findings
+
+- `plugins/aidd-context/hooks/memory-hook.cjs:102`: the raw command is compared with the file's text after the shell undid its escapes, so `'\''` or an escaped backtick hides the line's error → also match the command with those escapes undone — 🟡 major
+
+### Limits
+
+- A read that quotes the error line itself, within two seconds of the write, repeats it
+- `sed -i`, `cp` and `mv` report nothing; stated in the hook, left to the skill's check
+
+## Round 4
+
+- Diff: `861f997d3..248a103b7`
+- Axes: code
+- Verdict: approve, because both escaped writes now report their error, run for real through `sh`, and a clean append to a dirty file stays silent
+
+### Limits
+
+- The escapes are undone inside single quotes too, where the shell keeps backslashes, so an older error line holding exactly the unescaped text would be reported; never seen in real data
+- The two escape tests write the expected line directly; the shell's own behaviour is proven by the review's live runs

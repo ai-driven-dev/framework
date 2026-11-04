@@ -1,6 +1,6 @@
 ---
 objective: "A memory file that breaks the bank's format is named, rule by rule, by an engine anyone can run and by a write hook that never blocks a session, on every host AIDD installs it to, Cursor included."
-status: in-progress
+status: implemented
 ---
 
 # Plan: Memory lint
