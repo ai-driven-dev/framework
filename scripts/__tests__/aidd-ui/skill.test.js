@@ -199,8 +199,8 @@ describe("aidd-ui 01-system skill", () => {
     }
   });
 
-  it("ends by saying a review is expected, naming no skill", () => {
-    assert.ok(fs.readFileSync(path.join(SKILL, "actions/03-conclude.md"), "utf8").includes("that the code is untouched and a review is expected."));
+  it("ends by saying the user validates each element after its review, naming no skill", () => {
+    assert.ok(fs.readFileSync(path.join(SKILL, "actions/03-conclude.md"), "utf8").includes("each element stays `proposed` until the user, after looking at its render, runs `node <engine> publish <id>`."));
   });
 
   it("holds no date, ticket id or em-dash", () => {

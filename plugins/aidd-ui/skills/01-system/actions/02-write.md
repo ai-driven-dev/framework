@@ -15,7 +15,7 @@ The case, `<engine>`, the task folder, and for a change its agreed impact.
 5. Tokens not extracted, new or changed: write them in `aidd_docs/ui/tokens.json` and its context files per [tokens](../references/tokens.md).
 6. Elements new, extracted, or reached by a change: write each record and its render together, per [elements](../references/elements.md), from the [component](../assets/component-template.md), [asset](../assets/asset-template.md) and [render](../assets/render-template.html) templates; for a change, rewrite only the renders whose markup changes, and deprecate per [versions](../references/versions.md).
 7. Run `node <engine> tokens` until it exits 0.
-8. Records this run created, `system.md` among them when step 2 ran: run `node <engine> bump --task <task folder> --created <id>…`.
+8. Records this run created, `system` among them when step 2 ran: run `node <engine> bump --task <task folder> --created <id>…`.
 9. Read [conclude](03-conclude.md).
 
 ## Output

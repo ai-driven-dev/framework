@@ -12,7 +12,7 @@ Leave a design system that validates, and tell the user what follows.
 2. Reply to the user with:
    - the elements created or raised, with their versions; for a change, also those `bump` left, from its `left` list;
    - what `validate` still prints, errors in the code included;
-   - that the code is untouched and a review is expected.
+   - that the code is untouched, and that each element stays `proposed` until the user, after looking at its render, runs `node <engine> publish <id>`.
 
 ## Output
 
